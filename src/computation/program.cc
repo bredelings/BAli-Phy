@@ -5,6 +5,7 @@
 #include "models/model.H"
 #include "expression/expression.H"
 #include "expression/dummy.H"
+#include "util/assert.hh"
 
 using std::vector;
 using std::set;

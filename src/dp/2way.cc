@@ -19,6 +19,7 @@
 
 #include "2way.H"
 #include "alignment/alignment-util.H"
+#include "util/assert.hh"
 
 using namespace std;
 using boost::dynamic_bitset;

@@ -216,9 +216,6 @@ vector< pair<int,int> > get_x_ranges_for_band(int D, const vector<int>& seq1, co
     int W = seq1.size();
     int H = seq2.size();
 
-    int x = 0;
-    int y = 0;
-
     // we'll compute the first and last indices, instead of first and last+1
     vector< pair<int,int> > xboundaries(H+1, pair<int,int>(0,W));
 
@@ -444,10 +441,10 @@ vector< pair<int,int> > boundaries_intersection(const vector< pair<int,int> >& b
     assert(boundaries1[0].first == 0);
     assert(boundaries2[0].first == 0);
 
-    int L1 = boundaries1.size()-1;
+//    int L1 = boundaries1.size()-1;
 
     assert(boundaries1.back().second == boundaries2.back().second);
-    int L2 = boundaries1.back().second;
+//    int L2 = boundaries1.back().second;
 
     vector< pair<int,int> > boundaries3 = boundaries1;
 

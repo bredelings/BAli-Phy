@@ -27,6 +27,7 @@
 #include "rng.H"
 #include "probability/choose.H"
 #include "computation/expression/expression.H"
+#include "util/assert.hh"
 
 using std::vector;
 

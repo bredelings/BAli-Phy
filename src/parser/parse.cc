@@ -1,3 +1,4 @@
+#pragma GCC diagnostic ignored "-Wparentheses"
 //#define BOOST_SPIRIT_DEBUG
 //#define BOOST_SPIRIT_LEXERTL_DEBUG
 #include "parse.H"

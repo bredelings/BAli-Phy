@@ -16,6 +16,7 @@
 #include <bitset>
 #include "CacheList.H"
 #include "computation/loader.H"
+#include "util/assert.hh"
 
 struct Step
 {

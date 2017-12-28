@@ -1,5 +1,6 @@
 #include <iostream>
 #include "graph_register.H"
+#include "util/assert.hh"
 
 using std::vector;
 using std::pair;

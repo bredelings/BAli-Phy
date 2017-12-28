@@ -1,5 +1,6 @@
 #include <iostream>
 #include <unordered_map>
+#include <boost/optional.hpp>
 #include "computation/operations.H"
 #include "computation/loader.H"
 #include "computation/expression/expression.H"
@@ -15,8 +16,8 @@
 #include "occurrence.H"
 #include "inliner.H"
 
-#include <boost/optional.hpp>
 #include "simplifier.H"
+#include "util/assert.hh"
 
 // TODO: when building let expressions to bind variables, pass those expressions into the simplifier
 //       * 1. stop translating wildcards to named variables.
@@ -495,7 +496,7 @@ expression_ref peel_n_lambdas1(const expression_ref& E, int n)
 }
       
 // @ E x1 .. xn.  The E and the x[i] have already been simplified.
-expression_ref rebuild_apply(const simplifier_options& options, expression_ref E, const substitution& S, in_scope_set& bound_vars, inline_context context)
+expression_ref rebuild_apply(const simplifier_options& options, expression_ref E, const substitution& /*S*/, in_scope_set& /*bound_vars*/, inline_context /*context*/)
 {
     expression_ref object = E.sub()[0];
 

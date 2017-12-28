@@ -32,6 +32,7 @@
 #include "statistics.H"
 #include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include "util/assert.hh"
 
 using std::vector;
 using std::valarray;
@@ -376,7 +377,7 @@ dynamic_bitset<> diffuse(const dynamic_bitset<>& v, int d)
     return w;
 }
 
-vector<int> diffuse(const vector<int>& v, int d, int label)
+vector<int> diffuse(const vector<int>& v, int d, int /*label*/)
 {
     auto w = v;
 
@@ -414,9 +415,6 @@ HAPLOTYPES
 */
 void write_dical2(std::ostream& o, const alignment& A)
 {
-    auto& a = A.get_alphabet();
-    int last_snp = -1;
-
     vector<vector<int>> haplotypes(A.n_sequences());
     vector<int> segregating_sites;
     for(int column=0;column<A.length();column++)
@@ -587,13 +585,13 @@ int main(int argc,char* argv[])
 	}
     
 	int n_different  = different.count();
-	int n_same = A.length() - n_different;
+//	int n_same = A.length() - n_different;
 	int n_informative  = informative.count();
 
-	int n_different2 = different2.count();
-	int n_same2 = A.length() - n_different2;
-	int n_informative2 = informative2.count();
-	int n_with_gaps = contains_a_gap.count();
+//	int n_different2 = different2.count();
+//	int n_same2 = A.length() - n_different2;
+//	int n_informative2 = informative2.count();
+//	int n_with_gaps = contains_a_gap.count();
 
 	int non_masked_columns = A.length() - is_masked.count();
 

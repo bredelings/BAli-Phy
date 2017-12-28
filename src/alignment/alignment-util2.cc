@@ -29,6 +29,7 @@
 #include "util.H"
 #include "setup.H"
 #include "io.H"
+#include "util/assert.hh"
 
 using std::string;
 using std::vector;
@@ -169,7 +170,7 @@ void minimally_connect_leaf_characters(alignment& A,const TreeInterface& t)
 }    
 
 /// Check that internal node states are consistent
-void check_internal_nodes_connected(const alignment& A,const TreeInterface& t,const vector<int>& ignore)
+void check_internal_nodes_connected(const alignment& A,const TreeInterface& t,const vector<int>&)
 {
     // Only check if A in fact has internal node sequences.
     if (A.n_sequences() == t.n_leaves()) return;

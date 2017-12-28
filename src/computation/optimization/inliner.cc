@@ -1,5 +1,6 @@
 #include <iostream>
 #include <unordered_map>
+#include <boost/optional.hpp>
 #include "computation/operations.H"
 #include "computation/loader.H"
 #include "computation/expression/expression.H"
@@ -15,8 +16,7 @@
 #include "occurrence.H"
 #include "inliner.H"
 #include "simplifier.H"
-
-#include <boost/optional.hpp>
+#include "util/assert.hh"
 
 using std::string;
 using std::vector;

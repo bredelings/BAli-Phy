@@ -31,6 +31,7 @@
 #include <boost/shared_ptr.hpp>
 #include "dp/dp-matrix.H"
 #include "substitution/substitution.H"
+#include "util/assert.hh"
 
 //Assumptions:
 //  a) we assume that the internal node is the parent sequence in each of the sub-alignments
@@ -106,7 +107,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition 
 	a23 = convert_to_bits(P0.get_pairwise_alignment(b4),1,2);
 
 	// The branch that the subtree was pruned from.
-	int b5 = t.find_branch(nodes0[2], nodes0[3]);
+//	int b5 = t.find_branch(nodes0[2], nodes0[3]);
 	assert(t0.is_connected(nodes0[2],nodes0[0]));
 	assert(t0.is_connected(nodes0[3],nodes0[0]));
 
