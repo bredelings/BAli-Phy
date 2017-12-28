@@ -166,7 +166,7 @@ int main(int argc,char* argv[])
 	}
 	if (args.count("above")) {
 	    lower = (unsigned) ceil(S * args["above"].as<double>());
-	    lower = std::max(lower,0U);
+//	    lower = std::max(lower,0U);
 	}
 
 	//----------- Load Partitions ---------------//
