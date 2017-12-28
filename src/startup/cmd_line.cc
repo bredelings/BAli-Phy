@@ -332,10 +332,10 @@ po::options_description general_options(int level)
 	;
     if (level >= 1)
 	general.add_options()
+	    ("verbose,V",value<int>()->implicit_value(1),"Print extra output in case of error.")
 	    ("config,c", value<string>(),"Config file to read.");
     if (level >= 2)
 	general.add_options()
-	    ("verbose,V",value<int>()->implicit_value(1),"Print extra output in case of error.")
 	    ("package-path,P",value<string>(),"Directories to search for packages.")
 	    ("set",value<vector<string> >()->composing(),"Set key=<value>");
     return general;
