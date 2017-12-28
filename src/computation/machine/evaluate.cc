@@ -516,7 +516,7 @@ class RegOperationArgsUnchangeable: public OperationArgs
 
     const closure& evaluate_reg_to_closure_(int R2)
 	{
-	    return evaluate_reg_to_closure_(R2);
+	    return evaluate_reg_to_closure(R2);
 	}
 
 public:
