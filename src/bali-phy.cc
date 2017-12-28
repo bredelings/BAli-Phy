@@ -446,7 +446,26 @@ int main(int argc,char* argv[])
 	if (log_verbose < 1) out_cache<<"random seed = "<<seed<<endl<<endl;
 
 	//------------- Parse the Hierarchical Model description -----------//
-	if (args.count("model"))
+	if (args.count("print"))
+	{
+	    (*M) += { "SModel","Distributions","Range","PopGen","Alignment","IModel" };
+	    const string mstring = args["print"].as<string>();
+	    Rules R(get_package_paths(argv[0], args));
+	    model_t print = get_model(R,"a",mstring);
+
+	    expression_ref print_exp = print.expression;
+	    print_exp = (dummy("Distributions.sample'"), dummy("[]"), true, 0.0, print_exp);
+	    print_exp = (dummy("Prelude.unsafePerformIO'"),print_exp);
+	    print_exp = (dummy("Parameters.evaluate"),-1,print_exp);
+	    print_exp = (dummy("Prelude.show"),print_exp );
+	    print_exp = (dummy("Prelude.listToString"),print_exp );
+	    int print_exp_index = M->add_compute_expression( print_exp );
+	    auto print_result = M->evaluate(print_exp_index);
+	    std::cout<<(string)print_result.as_<String>()<<"\n";
+
+	    exit(0);
+	}
+	else if (args.count("model"))
 	{
 	    const string filename = args["model"].as<string>();
 	    read_add_model(*M,filename);
@@ -456,7 +475,6 @@ int main(int argc,char* argv[])
 	    const string filename = args["Model"].as<string>();
 	    add_model(*M,filename);
 	}
-      
 
 	if (args.count("tree") and M.as<Parameters>())
 	{

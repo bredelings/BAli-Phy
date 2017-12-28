@@ -429,6 +429,7 @@ po::options_description model_options(int level)
 	model.add_options()
 	    ("model,m",value<string>(),"File containing hierarchical model.")
 	    ("Model,M",value<string>(),"Module containing hierarchical model.")
+	    ("print,p",value<string>(),"Evaluate and print expression.")
 	    ("initial-value",value<vector<string> >()->composing(),"Set parameter=<initial value>");
     return model;
 }
@@ -564,14 +565,26 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     load_bali_phy_rc(args,all);
 
-    if (args.count("align") and (args.count("model") or args.count("Model")))
-	throw myexception()<<"You cannot specify both sequence files and a generic model.\n\nTry `"<<argv[0]<<" --help' for more information.";
+    std::set<string> commands;
+    for(auto word : {"align", "Model", "model", "print", "test-module"})
+	if (args.count(word))
+	    commands.insert(word);
 
-    if (not args.count("align") and not args.count("model") and not args.count("Model") and not args.count("test-module"))
+    if (commands.empty())
 	throw myexception()<<"You must specify alignment files or a generic model (--model or --Model).\n\nTry `"<<argv[0]<<" --help' for more information.";
 
-    if (args.count("model") and args.count("Model"))
-	throw myexception()<<"You cannot specify both --model and --Model.\n\nTry `"<<argv[0]<<" --help' for more information.";
+    if (commands.size() > 1)
+    {
+	if (commands.count("align"))
+	{
+	    commands.erase(commands.find("align"));
+	    throw myexception()<<"You cannot specify both sequence files and \"--"<<*commands.begin()<<"\".\n\nTry `"<<argv[0]<<" --help' for more information.";
+	}
+	auto first = commands.begin();
+	auto second = first;
+	second++;
+	throw myexception()<<"You cannot specify both \"--"<<*first<<"\" and \"--"<<*second<<"\".\n\nTry `"<<argv[0]<<" --help' for more information.";
+    }
 
     return args;
 }

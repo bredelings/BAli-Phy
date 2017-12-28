@@ -384,24 +384,7 @@ extern "C" closure builtin_function_show(OperationArgs& Args)
     auto x = Args.evaluate(0);
   
     object_ptr<String> v (new String);
-
-    if (x.is_double())
-	*v = convertToString<double>(x.as_double());
-    else if (x.is_int())
-	*v = convertToString<int>(x.as_int());
-    else if (x.is_log_double())
-	*v = "LD"+convertToString<double>(x.as_log_double().log());
-    else if (x.is_char())
-    {
-	std::string s;
-	s = x.as_char();
-	*v = s;
-    }
-    else if (x.is_a<String>())
-	*v = x.as_<String>();
-    else
-	throw myexception()<<"show: object '"<<x.print()<<"' is not double, int, log_double, char, or string'";
-
+    *v = x.print();
     return v;
 }
 
