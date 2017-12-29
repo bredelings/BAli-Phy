@@ -3,7 +3,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 # Should we build our own copy of some BOOST libraries?
 if NO_SYSTEM_BOOST
-  MAYBE_BOOST = boost/
+  MAYBE_BOOST = external/boost/
 endif
 
 # Build in these subdirectories

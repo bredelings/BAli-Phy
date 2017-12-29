@@ -73,14 +73,14 @@ endif
 if get_option('with-system-boost')
   boost = dependency('boost', modules : boost_modules)
 else
-  subdir('boost')
+  subdir('external/boost')
 endif
 
 
 if get_option('with-system-eigen')
   eigen = dependency('eigen3')
 else
-  eigen = include_directories('include', is_system: true)
+  eigen = include_directories('external/eigen3', is_system: true)
   eigen = declare_dependency(include_directories: eigen)
 endif
 

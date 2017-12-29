@@ -73,7 +73,7 @@ AM_CXXFLAGS = @AM_CXXFLAGS@
 
 LIBS = @libs@
 if NO_SYSTEM_BOOST
-LIBS += ../boost/lib/libboost_myparts.la
+LIBS += ../external/boost/lib/libboost_myparts.la
 endif
 
 

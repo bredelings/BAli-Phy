@@ -349,7 +349,7 @@ if test "$use_system_eigen" = yes ; then
 					   exit 1])
 else
   echo " * Not using system Eigen headers: we'll use our own."
-  eigen_includes="-isystem \$(top_srcdir)/include"
+  eigen_includes="-isystem \$(top_srcdir)/external/eigen3/"
   AM_CXXFLAGS="$eigen_includes $AM_CXXFLAGS"
 fi
 #---------------------- Check for BOOST ------------------#
@@ -423,7 +423,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 else
   echo " * Not using system BOOST libraries: we'll build our own."
 
-  boost_includes="-isystem \$(top_srcdir)/boost/include"
+  boost_includes="-isystem \$(top_srcdir)/external/boost/include"
 
   AM_CXXFLAGS="$boost_includes $AM_CXXFLAGS"
 fi
@@ -444,18 +444,18 @@ AC_DEFINE_UNQUOTED([CONFIG_FLAGS],["$AM_CXXFLAGS $CXXFLAGS"] , ["AM_CXXFLAGS tha
 AC_DEFINE_UNQUOTED([_ARCH_],["$host"] , ["Host architecture."])
 
 AC_CONFIG_FILES([
-  Makefile 
-  src/Makefile 
-  src/builtins/Makefile 
-  boost/Makefile 
-  boost/lib/Makefile 
-  boost/lib/chrono/Makefile 
-  boost/lib/random/Makefile 
-  boost/lib/filesystem/Makefile 
-  boost/lib/system/Makefile 
-  boost/lib/program_options/Makefile
-  boost/lib/serialization/Makefile
-  boost/lib/mpi/Makefile
+  Makefile
+  src/Makefile
+  src/builtins/Makefile
+  external/boost/Makefile
+  external/boost/lib/Makefile
+  external/boost/lib/chrono/Makefile
+  external/boost/lib/random/Makefile
+  external/boost/lib/filesystem/Makefile
+  external/boost/lib/system/Makefile
+  external/boost/lib/program_options/Makefile
+  external/boost/lib/serialization/Makefile
+  external/boost/lib/mpi/Makefile
 ])
 AC_OUTPUT
 
