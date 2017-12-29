@@ -788,20 +788,26 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
     }
 
     // Create the parameters that hold branch lengths
+    bool some_branch_lengths_not_set = false;
     for(int b=0;b<T.n_branches();b++)
     {
-	int branch_duration_reg = p->add_compute_expression( (dummy("Prelude.!"), branch_durations, b) );
+	int index = p->add_compute_expression( (dummy("Prelude.!"), branch_durations, b) );
+	auto R = p->compute_expression_is_modifiable_reg(index);
 
-	auto R = p->compute_expression_is_modifiable_reg(branch_duration_reg);
+	branch_duration_index.push_back(index);
+	branch_duration_regs.push_back(R);
 
-	if (not R)
-	    throw myexception()<<"Branch "<<b<<": branch length is not directly modifiable!";
-
-	branch_duration_regs.push_back(*R);
 	const context* c = p;
 	if (T.branch(b).has_length())
-	    const_cast<context*>(c)->set_modifiable_value(*R, T.branch(b).length());
+	{
+	    if (R)
+		const_cast<context*>(c)->set_modifiable_value(*R, T.branch(b).length());
+	    else
+		some_branch_lengths_not_set = true;
+	}
     }
+    if (some_branch_lengths_not_set)
+	std::cerr<<"Warning!  Some branch lengths not set because they are not directly modifiable.\n\n";
 }
 
 bool Parameters::variable_alignment() const
@@ -1427,7 +1433,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	PC->branch_length_indices.push_back(vector<int>());
 	for(int b=0;b<t().n_branches();b++)
 	{
-	    expression_ref length = reg_var(TC->branch_duration_regs[b]);
+	    expression_ref length = get_expression(TC->branch_duration_index[b]);
 	    int index = add_compute_expression( (dummy("Prelude.*"),scale,length) );
 	    PC->branch_length_indices[s].push_back(index);
 	}

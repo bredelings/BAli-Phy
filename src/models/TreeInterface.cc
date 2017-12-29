@@ -278,13 +278,22 @@ tree_edge TreeInterface::edge(int n1, int n2) const
 double TreeInterface::branch_length(int b) const
 {
     b %= n_branches();
-    return P->get_modifiable_value(P->TC->branch_duration_regs[b]).as_double();
+    return P->evaluate(P->TC->branch_duration_index[b]).as_double();
+}
+
+bool TreeInterface::can_set_branch_length(int b)
+{
+    b %= n_branches();
+    return bool(P->TC->branch_duration_regs[b]);
 }
 
 void TreeInterface::set_branch_length(int b, double l)
 {
+    auto& R = P->TC->branch_duration_regs[b];
+    if (not R)
+	throw myexception()<<"Trying to set length for branch "<<b<<" which is not directly modifiable.";
     b %= n_branches();
-    const_cast<Parameters*>(P)->set_modifiable_value(P->TC->branch_duration_regs[b], l);
+    const_cast<Parameters*>(P)->set_modifiable_value(*R, l);
 }
 
 vector<int> branches_from_leaves(const TreeInterface& t) 
