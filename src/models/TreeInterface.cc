@@ -289,10 +289,10 @@ bool TreeInterface::can_set_branch_length(int b)
 
 void TreeInterface::set_branch_length(int b, double l)
 {
+    b %= n_branches();
     auto& R = P->TC->branch_duration_regs[b];
     if (not R)
 	throw myexception()<<"Trying to set length for branch "<<b<<" which is not directly modifiable.";
-    b %= n_branches();
     const_cast<Parameters*>(P)->set_modifiable_value(*R, l);
 }
 
