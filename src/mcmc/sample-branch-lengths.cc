@@ -369,6 +369,12 @@ void scale_means_only(owned_ptr<Model>& P,MoveStats& Stats)
     //------------ Propose scaling ratio ------------//
     const double sigma = P->load_value("log_branch_mean_sigma",0.6);
 
+    for(int b=0;b<PP->t().n_branches();b++) {
+	if (not PP->t().can_set_branch_length(b))
+	    return;
+    }
+
+
     Bounds<double> b;
     for(int i=0; i<PP->n_branch_scales(); i++)
     {
