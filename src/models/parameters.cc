@@ -1362,7 +1362,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     expression_ref scales_list_action = (dummy("Prelude.sequence"), get_list(scales));
     int scales_list_index = add_compute_expression( perform_exp(scales_list_action) );
     expression_ref scales_list = get_expression(scales_list_index);
-    add_parameter("Scales", scales_list);
+    add_parameter("Scale", scales_list);
 
     for(int i=0; i<n_branch_scales();i++)
 	PC->scale_parameter_indices[i] = add_compute_expression( (dummy("Prelude.!!"),scales_list,i) );
