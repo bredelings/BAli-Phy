@@ -1,0 +1,19 @@
+{
+    "name": "uniform_discretize",
+    "result_type": "List[Double]",
+    "title": "Uniformly discretize a continuous distribution",
+    "call": "Distributions.uniformDiscretize[dist,n]",
+    "args": [
+        {
+            "arg_name": "dist",
+            "arg_type": "Distribution[Double]",
+	    "description": "The distribution to discretize"
+        },
+        {
+            "arg_name": "n",
+            "arg_type": "Int",
+	    "description": "The number of bins in the discretization"
+        }
+    ],
+    "description": "Discretize a continuous distribution using evenly spaced quantiles."
+}
