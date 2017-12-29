@@ -13,7 +13,7 @@ template<> expression_ref get_list<>(const vector<expression_ref>& v)
     expression_ref E = List();
 
     for(int i=v.size()-1;i>=0;i--)
-	E = v[i]&E;
+	E = constructor(":",2)+v[i]+E;
 
     return E;
 }
