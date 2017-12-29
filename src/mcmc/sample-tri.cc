@@ -219,10 +219,10 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition 
 sample_A3_multi_calculation::sample_A3_multi_calculation(vector<Parameters>& pp,const vector< vector<int> >& nodes_,
 							 bool do_OS_,bool do_OP_, int b)
     :
+    p(pp),
 #ifndef NDEBUG_DP
     P0(p[0]),
 #endif
-    p(pp),
     nodes(nodes_),
     Matrices(p.size()),
     do_OS(do_OS_),

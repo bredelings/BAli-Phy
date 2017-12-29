@@ -64,10 +64,10 @@ int sample_cube_multi(std::vector<Parameters>& p,const std::vector< std::vector<
 
 struct sample_A3_multi_calculation
 {
+    std::vector<Parameters>& p;
 #ifndef NDEBUG_DP
     const Parameters P0;
 #endif
-    std::vector<Parameters>& p;
     std::vector<std::vector<int> > nodes;
     std::vector<log_double_t> rho;
     std::vector<std::vector<boost::shared_ptr<DPengine> > > Matrices;
