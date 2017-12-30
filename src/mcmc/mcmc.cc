@@ -520,46 +520,6 @@ namespace MCMC {
 	 total_movement(0)
     {}
 
-    void Parameter_Slice_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int)
-    {
-	double v1 = P->get_parameter_value(index).as_double();
-
-	parameter_slice_function logp(*P,index,transform,inverse);
-
-	double v2 = sample(*P,logp,v1);
-
-	//---------- Record Statistics - -------------//
-	Result result(2);
-	result.totals[0] = std::abs(v2-v1);
-	result.totals[1] = logp.count;
-    
-	Stats.inc(name,result);
-    }
-
-    Parameter_Slice_Move::Parameter_Slice_Move(const string& s,int i,
-					       double W_)
-	:Slice_Move(s,W_),index(i)
-    {}
-
-    Parameter_Slice_Move::Parameter_Slice_Move(const string& s, const string& v,int i,
-					       double W_)
-	:Slice_Move(s,v,W_),index(i)
-    {}
-
-    Parameter_Slice_Move::Parameter_Slice_Move(const string& s,int i,
-					       double W_,
-					       double(*f1)(double),
-					       double(*f2)(double))
-	:Slice_Move(s,"",W_,f1,f2),index(i)
-    {}
-
-    Parameter_Slice_Move::Parameter_Slice_Move(const string& s, const string& v,int i,
-					       double W_,
-					       double(*f1)(double),
-					       double(*f2)(double))
-	:Slice_Move(s,v,W_,f1,f2),index(i)
-    {}
-
     void Modifiable_Slice_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int)
     {
 	if (log_verbose >= 3) clog<<" [modifiable slice] move = "<<m_index<<endl;

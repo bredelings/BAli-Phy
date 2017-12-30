@@ -40,42 +40,6 @@ double slice_function::current_value() const
     std::abort();
 }
 
-double parameter_slice_function::operator()(double x)
-{
-    count++;
-    P.set_parameter_value(n,inverse(x));
-    return log(P.heated_probability());
-}
-
-double parameter_slice_function::operator()()
-{
-    count++;
-    return log(P.heated_probability());
-}
-
-double parameter_slice_function::current_value() const
-{
-    return P.get_parameter_value(n).as_double();
-}
-
-parameter_slice_function::parameter_slice_function(Model& P_,int n_)
-    :parameter_slice_function(P_, n_, slice_sampling::identity, slice_sampling::identity)
-{ }
-
-parameter_slice_function::parameter_slice_function(Model& P_,int n_,
-						   double(*f1)(double),
-						   double(*f2)(double))
-    :slice_function(P_.get_bounds(n_)),
-     count(0),P(P_),n(n_),transform(f1),inverse(f2)
-{
-    if (has_lower_bound)
-	lower_bound = transform(lower_bound);
-    if (has_upper_bound)
-	upper_bound = transform(upper_bound);
-}
-
-
-
 double modifiable_slice_function::operator()(double x)
 {
     count++;

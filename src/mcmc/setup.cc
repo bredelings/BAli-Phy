@@ -103,13 +103,11 @@ void add_MH_move(Model& P,const Proposal_Fn& proposal, const string& name, const
     add_MH_move(P, proposal, names, {pname}, {sigma}, M, weight);
 }
 
-
 double default_sampling_rate(const Model& /*M*/, const string& /*parameter_name*/)
 {
     return 1.0;
 }
 
-
 /// \brief Add a 1-D slice-sampling sub-move for parameter name to M
 ///
 /// \param P             The model that contains the parameters.
@@ -117,66 +115,22 @@ double default_sampling_rate(const Model& /*M*/, const string& /*parameter_name*
 /// \param M             The group of moves to which to add the newly-created sub-move
 /// \param weight        How often to run this move.
 ///
-void add_slice_move(Model& P, const string& parameter_name, MCMC::MoveAll& M, double rate)
+bool add_slice_move_with_rate(const Model& P, int r, MCMC::MoveAll& M, double rate)
 {
-    int index = P.find_parameter(parameter_name);
+    auto range = P.get_range_for_reg(r);
+    if (not range.is_a<Bounds<double>>()) return false;
 
-    M.add(rate, MCMC::Parameter_Slice_Move(string("slice_sample_")+parameter_name, index, 1.0) );
+    auto& bounds = range.as_<Bounds<double>>();
+    string name = "m_real_"+convertToString<int>(r);
+    M.add( rate , MCMC::Modifiable_Slice_Move(name, r, bounds, 1.0) );
+    return true;
 }
 
 
-/// \brief Add a 1-D slice-sampling sub-move for parameter name to M
-///
-/// \param P             The model that contains the parameters.
-/// \param name          The name of the parameter to create a move for.
-/// \param M             The group of moves to which to add the newly-created sub-move
-/// \param weight        How often to run this move.
-///
-void add_slice_move(Model& P, const string& parameter_name, MCMC::MoveAll& M)
+bool add_slice_move(const Model& P, int r, MCMC::MoveAll& M, double weight = 1.0)
 {
-    double rate = default_sampling_rate(P, parameter_name);
-
-    add_slice_move(P, parameter_name, M, rate);
-}
-
-
-/// \brief Add a 1-D slice-sampling sub-move for parameter name to M
-///
-/// \param P             The model that contains the parameters.
-/// \param name          The name of the parameter to create a move for.
-/// \param M             The group of moves to which to add the newly-created sub-move
-/// \param weight        How often to run this move.
-///
-void add_slice_moves(Model& P, const string& name, 
-		     MCMC::MoveAll& M,
-		     double weight)
-{
-    vector<int> indices = flatten( parameters_with_extension(P,name) );
-    for(int i=0;i<indices.size();i++) 
-    {
-	string parameter_name = P.parameter_name(indices[i]);
-
-	add_slice_move(P, parameter_name, M, weight);
-    }
-}
-
-/// \brief Add a 1-D slice-sampling sub-move for parameter name to M
-///
-/// \param P             The model that contains the parameters.
-/// \param name          The name of the parameter to create a move for.
-/// \param M             The group of moves to which to add the newly-created sub-move
-/// \param weight        How often to run this move.
-///
-void add_slice_moves(Model& P, const string& name, 
-		     MCMC::MoveAll& M)
-{
-    vector<int> indices = flatten( parameters_with_extension(P,name) );
-    for(int i=0;i<indices.size();i++) 
-    {
-	string parameter_name = P.parameter_name(indices[i]);
-
-	add_slice_move(P, parameter_name, M);
-    }
+    double rate = P.get_rate_for_reg(r);
+    return add_slice_move_with_rate(P, r, M, rate * weight);
 }
 
 void add_boolean_MH_moves(const Model& P, MCMC::MoveAll& M, double weight)
@@ -198,14 +152,7 @@ void add_boolean_MH_moves(const Model& P, MCMC::MoveAll& M, double weight)
 void add_real_slice_moves(const Model& P, MCMC::MoveAll& M, double weight)
 {
     for(int r: P.random_modifiables())
-    {
-	auto range = P.get_range_for_reg(r);
-	double rate = P.get_rate_for_reg(r);
-	if (not range.is_a<Bounds<double>>()) continue;
-	auto& bounds = range.as_<Bounds<double>>();
-	string name = "m_real_"+convertToString<int>(r);
-	M.add( rate*weight , MCMC::Modifiable_Slice_Move(name, r, bounds, 1.0) );
-    }
+	add_slice_move(P, r, M, weight);
 }
 
 /// Find parameters with distribution name Dist
@@ -295,8 +242,11 @@ MCMC::MoveAll get_parameter_MH_moves(Model& M)
 
     if (Parameters* P = dynamic_cast<Parameters*>(&M))
 	for(int i=0;i<P->n_branch_scales();i++)
-	    if (scale_is_modifiable_reg(M, i))
-		add_MH_move(M, log_scaled(Between(-20,20,shift_cauchy)),    "Scale"+convertToString(i+1),             "Scale_scale_sigma",     0.6,  MH_moves);
+	    if (auto r = scale_is_modifiable_reg(M, i))
+	    {
+		string name = "scale_scale_"+convertToString<int>(i+1);
+		add_modifiable_MH_move(name, log_scaled(Between(-20,20,shift_cauchy)),    *r, {1.0}, MH_moves);
+	    }
 
 
     /*
@@ -365,8 +315,9 @@ MCMC::MoveAll get_scale_slice_moves(Parameters& P)
 {
     MCMC::MoveAll slice_moves("parameters:scale:MH");
     for(int i=0;i<P.n_branch_scales();i++)
-	if (scale_is_modifiable_reg(P,i))
-	    add_slice_moves(P, "Scale"+convertToString(i+1), slice_moves);
+	if (auto r = scale_is_modifiable_reg(P,i))
+	    add_slice_move_with_rate(P, *r, slice_moves, 1.0);
+
     return slice_moves;
 }
 
@@ -382,8 +333,8 @@ MCMC::MoveAll get_parameter_slice_moves(Model& M)
     {
 	// scale parameters - do we need this?
 	for(int i=0;i<P->n_branch_scales();i++)
-	    if (scale_is_modifiable_reg(M,i))
-		add_slice_moves(*P, "Scale"+convertToString(i+1), slice_moves);
+	    if (auto r = scale_is_modifiable_reg(M,i))
+		add_slice_move_with_rate(*P, *r, slice_moves, 1.0);
 
 	if (all_scales_modifiable(M))
 	    slice_moves.add(2,MCMC::Scale_Means_Only_Slice_Move("scale_Scales_only_slice",0.6));

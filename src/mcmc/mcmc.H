@@ -301,39 +301,6 @@ namespace MCMC {
 		   double(*f2)(double));
     };
 
-    class Parameter_Slice_Move: public Slice_Move
-    {
-	int index;
-
-    public:
-	Parameter_Slice_Move* clone() const {return new Parameter_Slice_Move(*this);}
-
-	void iterate(owned_ptr<Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
-
-	void iterate(owned_ptr<Model>& P,MoveStats&,int);
-
-	Parameter_Slice_Move(const std::string& s,int i, double W_);
-
-	Parameter_Slice_Move(const std::string& s, const std::string& v,int i,
-			     double W_);
-
-	Parameter_Slice_Move(const std::string& s,int i,
-			     double (*W_)(const Model&));
-
-	Parameter_Slice_Move(const std::string& s, const std::string& v,int i,
-			     double (*W_)(const Model&));
-
-	Parameter_Slice_Move(const std::string& s,int i,
-			     double W_,
-			     double(*f1)(double),
-			     double(*f2)(double));
-
-	Parameter_Slice_Move(const std::string& s, const std::string& v,int i,
-			     double W_,
-			     double(*f1)(double),
-			     double(*f2)(double));
-    };
-
     class Modifiable_Slice_Move: public Slice_Move
     {
 	int m_index;

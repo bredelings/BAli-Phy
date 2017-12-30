@@ -62,30 +62,6 @@ std::pair<int,double> slice_sample_multi(std::vector<double>& X0, std::vector<sl
 std::pair<int,double> slice_sample_multi(std::vector<slice_function*>& g, double w, int m);
 
 /// A slice_function for slice-sampling a single parameter
-struct parameter_slice_function:public slice_function
-{
-    int count;
-
-    Model& P;
-
-    int n;
-
-    double operator()(double);
-
-    double operator()();
-
-    double current_value() const;
-
-    // function to go from the stored value to the value on which the prior is.
-    double (*transform)(double);
-    // function to go from the value on which the prior is to the stored value.
-    double (*inverse)(double);
-
-    parameter_slice_function(Model&,int);
-    parameter_slice_function(Model&,int,double(*)(double),double(*)(double));
-};
-
-/// A slice_function for slice-sampling a single parameter
 struct modifiable_slice_function:public slice_function
 {
     int count;
