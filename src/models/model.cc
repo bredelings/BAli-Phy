@@ -134,7 +134,7 @@ void show_parameters(std::ostream& o,const Model& M, bool show_hidden) {
 
 	o<<"    "<<name<<" = ";
 
-	string output = M.get_parameter_value(i).print();
+	string output = M.recursive_evaluate_parameter(i).print();
 	if (output.find(10) != string::npos or output.find(13) != string::npos)
 	    output = "[multiline]";
 	o<<output;

@@ -102,6 +102,12 @@ public:
     /// Return the value of a particular index, computing it if necessary
     const expression_ref& perform_expression(const expression_ref&,bool=false) const;
 
+    /// Return a structure where all fields are evaluated and substituted.
+    expression_ref recursive_evaluate_reg(int r) const;
+
+    /// Return a structure where all fields are evaluated and substituted.
+    expression_ref recursive_evaluate_parameter(int r) const;
+
     /// Find the name of the ith named parameter
     std::string parameter_name(int i) const;
 

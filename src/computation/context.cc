@@ -128,6 +128,42 @@ const expression_ref& context::perform_expression(const expression_ref& E,bool e
     return evaluate_expression_( preprocess(E2), ec);
 }
 
+expression_ref context::recursive_evaluate_reg(int r) const
+{
+    auto& C = memory()->lazy_evaluate(r, context_index);
+    if (C.exp.is_atomic())
+	return C.exp;
+    expression* E = new expression(C.exp.as_expression());
+
+    // Before we do any evaluation, lookup regs in the closure C.
+    for(auto& e: E->sub)
+    {
+	if (e.is_index_var())
+	{
+	    int i = e.as_index_var();
+	    int r = C.lookup_in_env(i);
+	    e = index_var(r);
+	}
+    }
+
+    // Having finished with C, it is now safe to do evaluation.
+    for(auto& e: E->sub)
+    {
+	if (e.is_index_var())
+	{
+	    int r = e.as_index_var();
+	    e = recursive_evaluate_reg(r);
+	}
+    }
+    return expression_ref(E);
+}
+
+expression_ref context::recursive_evaluate_parameter(int i) const
+{
+    return recursive_evaluate_reg(get_parameter_reg(i));
+}
+
+
 void context::perform_transition_kernel(int i)
 {
     int r = memory()->transition_kernels()[i];
