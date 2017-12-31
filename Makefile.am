@@ -148,9 +148,8 @@ nobase_functions_DATA = functions/AA.json \
 # Distributed in the doc/ directory
 docdir = $(datadir)/doc/@PACKAGE@
 doc_DATA = doc/README.html doc/README.xhtml doc/docbook.css doc/README.pdf \
-		scripts/plot-path-graph.R \
-		scripts/fixedpt-alignment-distances \
-		scripts/pairwise-alignment-distances
+		scripts/plot-path-graph.R
+
 
 
 examplesdir = $(datadir)/@PACKAGE@/
