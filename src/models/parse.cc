@@ -325,6 +325,8 @@ string unparse(const ptree& p)
 	string R = unparse(p.get_child("R"));
 	return Q + " + " + R;
     }
+    if (s == "Sample")
+	return "~" + unparse(p.begin()->second);
     if (auto xs = get_list_elements(p))
     {
 	vector<string> ss;
@@ -344,11 +346,6 @@ string unparse(const ptree& p)
 	if (pair.first == "submodel") {
 	    submodel = unparse(pair.second);
 	    args.push_back("");
-	}
-	else if (pair.second.get_value<string>() == "Sample")
-	{
-	    auto p2 = pair.second.begin()->second;
-	    args.push_back( "~" + unparse(p2) );
 	}
 	else
 	    args.push_back( unparse(pair.second) );
