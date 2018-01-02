@@ -84,6 +84,10 @@ else
   eigen = declare_dependency(include_directories: eigen)
 endif
 
+json = include_directories('external/nlohmann')
+json = declare_dependency(include_directories: json)
+
+
 subdir('src')
 
 run_tests = files('scripts/run-tests.sh')
