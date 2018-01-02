@@ -642,7 +642,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 		    expression_ref l = B.sub()[1];
 		    if (is_irrefutable_pat(p))
 		    {
-			expression_ref f {AST_node("Lambda"),{p,E2}};
+			expression_ref f  = AST_node("Lambda") + p + E2;
 			E2 = AST_node("Apply") + AST_node("id","Prelude.concatMap") + f + l;
 		    }
 		    else
@@ -777,7 +777,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	    if (v.size())
 		return expression_ref{ constructor(S.name,S.arity), v };
 	    else
-		return { constructor(S.name,S.arity) };
+		return constructor(S.name,S.arity);
 	}
 	else if (n.type == "If")
 	{
