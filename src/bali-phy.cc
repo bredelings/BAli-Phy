@@ -424,11 +424,12 @@ int main(int argc,char* argv[])
 	}
 
 	//---------- Create model object -----------//
+	json info;
 	owned_ptr<Model> M;
 	if (args.count("align"))
 	{
 	    Rules R(get_package_paths(argv[0], args));
-	    M = create_A_and_T_model(R, args, L, out_cache, out_screen, out_both, proc_id);
+	    M = create_A_and_T_model(R, args, L, out_cache, out_screen, out_both, info, proc_id);
 	}
 	else
 	{
@@ -437,6 +438,7 @@ int main(int argc,char* argv[])
 		keys = parse_key_map(args["set"].as<vector<string> >());
 	    M = Model(L, keys);
 	}
+	run_info(info, proc_id, argc, argv);
 	M->set_args(trailing_args(argc, argv, trailing_args_separator));
 
 	L.reset();
@@ -551,6 +553,9 @@ int main(int argc,char* argv[])
 	    cerr.flush() ; cerr.rdbuf(files[1]->rdbuf());
 	    clog.flush() ; clog.rdbuf(files[1]->rdbuf());
 
+	    //------ Write run info to C1.json ------//
+	    *files[2]<<info.dump(4)<<std::endl;
+
 	    //------ Redirect output to files -------//
 
 	    // Force the creation of parameters
@@ -574,6 +579,7 @@ int main(int argc,char* argv[])
 	    {
 		out_screen<<"   - Sampled trees logged to '"<<dir_name<<"/C1.trees'"<<endl;
 		out_screen<<"   - Sampled alignments logged to '"<<dir_name<<"/C1.P<partition>.fastas'"<<endl;
+		out_screen<<"   - Run info written to '"<<dir_name<<"/C1.run.json'"<<endl;
 	    }
 	    out_screen<<"   - Sampled numerical parameters logged to '"<<dir_name<<"/C1.log'"<<endl;
 	    out_screen<<endl;

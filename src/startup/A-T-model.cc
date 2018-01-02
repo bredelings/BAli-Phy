@@ -131,41 +131,83 @@ get_imodels(const Rules& R, const shared_items<string>& imodel_names_mapping, co
     return imodels;
 }
 
-void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
+template <typename T>
+json optional_to_json(const boost::optional<T>& o)
+{
+    if (not o)
+	return nullptr;
+    else
+	return *o;
+}
+
+json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 		 const vector<model_t>& IModels, const vector<model_t>& SModels,
 		 const vector<model_t>& ScaleModels,
 		 const model_t& branch_length_model,
 		 const Parameters& P,const variables_map& args)
 {
+    json info;
+    json partitions;
+
     //-------- Log some stuff -----------//
     vector<string> filenames = args["align"].as<vector<string> >();
-    for(int i=0;i<filenames.size();i++) {
-	out_cache<<"data"<<i+1<<" = "<<filenames[i]<<endl<<endl;
-	out_cache<<"alphabet"<<i+1<<" = "<<P[i].get_alphabet().name<<endl<<endl;
-    }
 
-    for(int i=0;i<P.n_data_partitions();i++) {
+    for(int i=0;i<P.n_data_partitions();i++)
+    {
+	string a_name = P[i].get_alphabet().name;
+
+	out_cache<<"data"<<i+1<<" = "<<filenames[i]<<endl<<endl;
+	out_cache<<"alphabet"<<i+1<<" = "<<a_name<<endl<<endl;
 	out_cache<<"smodel-index"<<i+1<<" = "<<P.smodel_index_for_partition(i)<<endl;
 	out_cache<<"imodel-index"<<i+1<<" = "<<P.imodel_index_for_partition(i)<<endl;
 	out_cache<<"scale-index"<<i+1<<" = "<<P.scale_index_for_partition(i)<<endl;
+
+	json partition;
+
+	partition["smodel"] = optional_to_json( P.smodel_index_for_partition(i) );
+	partition["imodel"] = optional_to_json( P.imodel_index_for_partition(i) );
+	partition["scale"] = optional_to_json( P.scale_index_for_partition(i) );
+	partition["filename"] = filenames[i];
+	partition["alphabet"] = a_name;
+
+	partitions.push_back(partition);
     }
     out_cache<<endl;
 
+    json smodels = json::array();
     for(int i=0;i<P.n_smodels();i++)
+    {
 	//    out_cache<<"subst model"<<i+1<<" = "<<P.SModel(i).name()<<endl<<endl;
 	out_cache<<"subst model"<<i+1<<" "<<show_model(SModels[i].description)<<endl<<endl;
+	smodels.push_back(unparse(SModels[i].description));
+    }
 
+    json imodels = json::array();
     for(int i=0;i<P.n_imodels();i++)
+    {
 	out_cache<<"indel model"<<i+1<<" "<<show_model(IModels[i].description)<<endl<<endl;
+	imodels.push_back(unparse(IModels[i].description));
+    }
 
+    json scales = json::array();
     for(int i=0;i<P.n_branch_scales();i++)
+    {
 	out_cache<<"scale model"<<i+1<<" "<<show_model(ScaleModels[i].description)<<endl<<endl;
+	scales.push_back(unparse(ScaleModels[i].description));
+    }
 
+    json tree;
     if (P.t().n_branches() > 1)
+    {
 	out_both<<"T:topology ~ uniform on tree topologies\n";
+	tree["topology"] = "uniform";
+    }
 
     if (P.t().n_branches() > 0)
+    {
+	tree["lengths"] = unparse(branch_length_model.description);
 	out_both<<"T:lengths "<<show_model(branch_length_model.description)<<endl<<endl;
+    }
 
     for(int i=0;i<P.n_data_partitions();i++)
     {
@@ -188,6 +230,13 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 	out_screen<<"#"<<i+1<<": scale "<<show_model(ScaleModels[*scale_index].description)<<" (Scale"<<*scale_index+1<<")\n";
 	out_screen<<endl;
     }
+
+    info["partitions"] = partitions;
+    info["smodels"] = smodels;
+    info["imodels"] = imodels;
+    info["scales"] = scales;
+    info["tree"] = tree;
+    return info;
 }
 
 void check_alignment_names(const alignment& A)
@@ -337,7 +386,7 @@ alignment unalign_A(const alignment& A)
 
 
 owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,
-				      ostream& out_cache, ostream& out_screen, ostream& out_both,
+				      ostream& out_cache, ostream& out_screen, ostream& out_both, json& info,
 				      int proc_id)
 {
     //------ Determine number of partitions ------//
@@ -619,7 +668,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     write_branch_numbers(out_cache, T);
 
     //-------------------- Log model -------------------------//
-    log_summary(out_cache, out_screen, out_both, full_imodels, full_smodels, full_scale_models, branch_length_model, P,args);
+    info = log_summary(out_cache, out_screen, out_both, full_imodels, full_smodels, full_scale_models, branch_length_model, P,args);
 
     //----------------- Tree-based constraints ----------------//
     if (args.count("t-constraint"))

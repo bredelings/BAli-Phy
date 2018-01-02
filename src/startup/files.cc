@@ -154,6 +154,36 @@ string quote_string(const string& s,char q='"')
 	return s;
 }
 
+void run_info(json& info, int proc_id, int argc, char* argv[])
+{
+    json command;
+    for(int i=0;i<argc;i++)
+	command.push_back(argv[i]);
+
+    time_t now = time(NULL);
+    string start_time = ctime(&now);
+
+    json env;
+    for(auto& var: {"SLURM_JOBID", "JOB_ID", "LSB_JOBID"})
+	if (auto evar = getenv(var))
+	    env[var] = evar;
+
+    info["command"] = command;
+    info["directory"] = fs::initial_path().string();
+    info["start time"] = start_time;
+    info["environment"] = env;
+    info["pid"] = getpid();
+    info["hostname"] = hostname();
+
+#ifdef HAVE_MPI
+    json mpi;
+    mpi::communicator world;
+    mpi["MPI_RANK"] = world.rank();
+    mpi["MPI_SIZE"] = world.size();
+    info["mpi"] = mpi;
+#endif
+}
+
 /// Create output files for thread 'proc_id' in directory 'dirname'
 vector<shared_ptr<ostream>> init_files(int proc_id, const string& dirname,
 				       int argc,char* argv[])
@@ -163,6 +193,7 @@ vector<shared_ptr<ostream>> init_files(int proc_id, const string& dirname,
     vector<string> filenames;
     filenames.push_back("out");
     filenames.push_back("err");
+    filenames.push_back("run.json");
 
     vector<shared_ptr<ofstream>> files2 = open_files(proc_id, dirname+"/",filenames);
     files.clear();
