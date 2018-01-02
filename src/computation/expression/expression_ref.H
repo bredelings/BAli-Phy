@@ -108,9 +108,6 @@ public:
 		return sub().size();
 	}
 
-    // do i still need this?
-    expression_ref operator()(const std::vector<expression_ref>& args) const;
-
     template <typename T>
     bool is_a() const
 	{

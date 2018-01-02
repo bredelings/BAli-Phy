@@ -277,10 +277,6 @@ expression_ref operator,(const expression_ref& E1, const expression_ref& E2)
 {
     return apply(E1, E2);
 }
-expression_ref expression_ref::operator()(const std::vector<expression_ref>& args) const
-{
-    return apply(*this,args);
-}
 
 expression_ref operator&(const expression_ref& E1, const expression_ref& E2)
 {
