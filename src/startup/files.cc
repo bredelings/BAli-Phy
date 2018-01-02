@@ -154,7 +154,7 @@ string quote_string(const string& s,char q='"')
 	return s;
 }
 
-void run_info(json& info, int proc_id, int argc, char* argv[])
+void run_info(json& info, int /*proc_id*/, int argc, char* argv[])
 {
     json command;
     for(int i=0;i<argc;i++)
@@ -163,7 +163,7 @@ void run_info(json& info, int proc_id, int argc, char* argv[])
     time_t now = time(NULL);
     string start_time = ctime(&now);
 
-    json env;
+    json env = {};
     for(auto& var: {"SLURM_JOBID", "JOB_ID", "LSB_JOBID"})
 	if (auto evar = getenv(var))
 	    env[var] = evar;
@@ -174,7 +174,9 @@ void run_info(json& info, int proc_id, int argc, char* argv[])
     info["environment"] = env;
     info["pid"] = getpid();
     info["hostname"] = hostname();
-    info["version"] = version_info();
+    json program = version_info();
+    program["name"] = "bali-phy";
+    info["program"] = program;
 
 #ifdef HAVE_MPI
     json mpi;
