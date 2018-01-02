@@ -2,6 +2,7 @@
 #define EXPRESSION_REF_H
 
 #include <vector>
+#include <memory>
 #include <valarray>
 #include <set>
 #include <string>
@@ -245,6 +246,8 @@ public:
 
     expression_ref(const expression* e);
 
+    expression_ref(std::unique_ptr<expression> e):expression_ref(e.release()) {};
+
     expression_ref(const object_ptr<const expression>& e):expression_ref(e.get()) { }
 
     expression_ref(const object_ptr<expression>& e):expression_ref(e.get()) { }
@@ -307,8 +310,6 @@ expression_ref operator&(const expression_ref&, const expression_ref&);
 
 /// This does lambda-quantify
 expression_ref operator^(const expression_ref& x, const expression_ref& T);
-
-expression_ref operator+(const expression_ref& E1, const expression_ref& E2);
 
 /*
  *  By separating out the head from the children, each expression now represents
@@ -401,6 +402,14 @@ template<>
 inline std::string Box<std::pair<expression_ref,expression_ref>>::print() const
 {
     return std::string("(") + first.print() + "," + second.print() + ")";
+}
+
+std::unique_ptr<expression> operator+(const expression_ref& E1, const expression_ref& E2);
+std::unique_ptr<expression> operator+(const expression& E1, const expression_ref& E2);
+inline std::unique_ptr<expression> operator+(std::unique_ptr<expression> E1, const expression_ref& E2)
+{
+    E1->sub.push_back(E2);
+    return E1;
 }
 
 #endif

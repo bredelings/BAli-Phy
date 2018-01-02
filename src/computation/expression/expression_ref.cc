@@ -21,6 +21,7 @@ using std::vector;
 using std::string;
 using std::set;
 using std::multiset;
+using std::unique_ptr;
 
 using boost::dynamic_pointer_cast;
 
@@ -280,12 +281,18 @@ expression_ref operator^(const expression_ref& x, const expression_ref& T)
     return lambda_quantify(x,T);
 }
 
-expression_ref operator+(const expression_ref& E1, const expression_ref&E2)
+unique_ptr<expression> operator+(const expression_ref& E1, const expression_ref&E2)
 {
     expression* E3 = new expression(E1.head());
     if (not E1.is_atomic())
 	E3->sub = E1.sub();
     E3->sub.push_back(E2);
-    return E3;
+    return unique_ptr<expression>(E3);
 }
 
+unique_ptr<expression> operator+(const expression& E1, const expression_ref& E2)
+{
+    auto E3 = E1.clone();
+    E3->sub.push_back(E2);
+    return unique_ptr<expression>(E3);
+}
