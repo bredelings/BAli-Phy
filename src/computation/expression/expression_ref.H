@@ -298,9 +298,6 @@ public:
 };
 
 
-/// This does lambda-quantify
-expression_ref operator^(const expression_ref& x, const expression_ref& T);
-
 /*
  *  By separating out the head from the children, each expression now represents
  *  a node in a directed acyclic graph, where each node has an Object on in.

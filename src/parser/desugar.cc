@@ -14,6 +14,7 @@
 #include "computation/expression/constructor.H"
 #include "computation/expression/tuple.H"
 #include "computation/expression/list.H"
+#include "computation/expression/lambda.H"
 #include "computation/expression/dummy.H"
 #include "desugar.H"
 
@@ -810,7 +811,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	    if (not free_vars.empty())
 		safe_dummy_index = max_index(free_vars)+1;
 	    dummy vsafe(safe_dummy_index);
-	    return vsafe^apply_expression(apply_expression(v[0],vsafe),v[1]);
+	    return lambda_quantify(vsafe,apply_expression(apply_expression(v[0],vsafe),v[1]));
 	}
 	else if (n.type == "Let")
 	{

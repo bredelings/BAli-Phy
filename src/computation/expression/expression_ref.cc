@@ -273,11 +273,6 @@ expression_ref::expression_ref(const std::initializer_list<expression_ref>& es)
     }
 }
 
-expression_ref operator^(const expression_ref& x, const expression_ref& T)
-{
-    return lambda_quantify(x,T);
-}
-
 unique_ptr<expression> operator+(const expression_ref& E1, const expression_ref&E2)
 {
     expression* E3 = new expression(E1.head());
