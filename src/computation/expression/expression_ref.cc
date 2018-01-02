@@ -278,11 +278,6 @@ expression_ref operator,(const expression_ref& E1, const expression_ref& E2)
     return apply(E1, E2);
 }
 
-expression_ref operator&(const expression_ref& E1, const expression_ref& E2)
-{
-    return constructor(":",2)+E1+E2;
-}
-
 expression_ref operator^(const expression_ref& x, const expression_ref& T)
 {
     return lambda_quantify(x,T);

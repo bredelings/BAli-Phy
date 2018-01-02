@@ -301,9 +301,6 @@ public:
 /// This represents function application: a,b,c = a(b)(c) and not a(b(c)). The precedence is 18 (low).
 expression_ref operator,(const expression_ref&, const expression_ref&);
 
-/// This represents the Cons constructor: a&b = Cons a b = a:b.  The precedence is 3 (high).
-expression_ref operator&(const expression_ref&, const expression_ref&);
-
 /// This does lambda-quantify
 expression_ref operator^(const expression_ref& x, const expression_ref& T);
 
