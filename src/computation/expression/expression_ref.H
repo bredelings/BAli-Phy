@@ -252,9 +252,7 @@ public:
 
     expression_ref(const object_ptr<expression>& e):expression_ref(e.get()) { }
 
-    expression_ref(const expression_ref& e, const std::initializer_list<expression_ref> v);
-
-    expression_ref(const expression_ref& e, const std::vector<expression_ref>& v);
+    explicit expression_ref(const expression_ref& e, const std::vector<expression_ref>& v);
 
     // Object arguments
     expression_ref(Object* v):O(v),type_(v->type()) { }
@@ -367,8 +365,6 @@ inline const std::vector<expression_ref>& expression_ref::sub() const {return as
 inline expression_ref::expression_ref(expression* e):O(e),type_(expression_type) { }
 
 inline expression_ref::expression_ref(const expression* e):O(e),type_(expression_type) { }
-
-inline expression_ref::expression_ref(const expression_ref& e, const std::initializer_list<expression_ref> v):expression_ref(new expression(e,v)) { }
 
 inline expression_ref::expression_ref(const expression_ref& e, const std::vector<expression_ref>& v):expression_ref(new expression(e,v)) { }
 

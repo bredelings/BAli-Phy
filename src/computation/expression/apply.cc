@@ -11,7 +11,7 @@ expression_ref apply_expression(const expression_ref& R,const expression_ref& ar
     if (R.head().is_a<Apply>())
 	return R+arg;
     else
-	return {Apply(),{R,arg}};
+	return Apply() + R + arg;
 }
 
 expression_ref apply_expression(const expression_ref& E,

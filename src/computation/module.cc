@@ -151,7 +151,7 @@ void Module::add_import(bool qualified, const string& modid)
 	sub.push_back(String("qualified"));
     sub.push_back(String(modid));
   
-    add_impdecl({AST_node("impdecl"),sub});
+    add_impdecl(expression_ref{AST_node("impdecl"),sub});
 }
 
 void Module::add_import_as(bool qualified, const string& modid, const string& modid2)
@@ -163,7 +163,7 @@ void Module::add_import_as(bool qualified, const string& modid, const string& mo
     sub.push_back(String("as"));
     sub.push_back(String(modid2));
   
-    add_impdecl({AST_node("impdecl"),sub});
+    add_impdecl(expression_ref{AST_node("impdecl"),sub});
 }
 
 void Module::add_impdecl(const expression_ref& impdecl)
@@ -172,7 +172,7 @@ void Module::add_impdecl(const expression_ref& impdecl)
     if (impdecls)
 	sub = impdecls.sub();
     sub.push_back(impdecl);
-    impdecls = {AST_node("impdecls"),sub};
+    impdecls = expression_ref{AST_node("impdecls"),sub};
 }
 
 // Question: what if we import m1.s, which depends on an unimported m2.s?
@@ -291,7 +291,7 @@ void Module::compile(const Program& P)
 	for(auto& decl: topdecls.sub())
 	    if (is_AST(decl,"Decl"))
 		decls.push_back(decl);
-	topdecls = {AST_node("TopDecls"),decls};
+	topdecls = expression_ref{AST_node("TopDecls"),decls};
     }
 
     // Check for duplicate top-level names.
@@ -732,10 +732,10 @@ void Module::optimize(const Program& P)
 		body = let_float(body);
 		body = graph_normalize(body);
 
-		new_decls.push_back({AST_node("Decl"),{decl.sub()[0], body}});
+		new_decls.push_back(AST_node("Decl") + decl.sub()[0] + body);
 	    }
 	}
-	topdecls = {AST_node("TopDecls"),new_decls};
+	topdecls = expression_ref{AST_node("TopDecls"),new_decls};
 
 	if (do_optimize)
 	{
@@ -793,11 +793,11 @@ void Module::load_builtins(const module_loader& L)
 
 	    function_name = lookup_symbol(function_name).name;
 
-	    new_decls.push_back({AST_node("Decl"),{dummy(function_name),body}});
+	    new_decls.push_back(AST_node("Decl") + dummy(function_name) + body);
 	}
 	else
 	    new_decls.push_back(decl);
-    topdecls = {AST_node("TopDecls"), new_decls};
+    topdecls = expression_ref{AST_node("TopDecls"), new_decls};
 }
 
 void Module::load_constructors()
@@ -831,7 +831,7 @@ void Module::load_constructors()
 			std::abort();
 		    string qualified_name = name+"."+cname;
 		    expression_ref body = lambda_expression( constructor(qualified_name, arity) );
-		    new_decls.push_back({AST_node("Decl"),{dummy(qualified_name),body}});
+		    new_decls.push_back(AST_node("Decl") + dummy(qualified_name) + body);
 		}
 	    }
             // Strip out the constructor definition here new_decls.push_back(decl);
@@ -839,7 +839,7 @@ void Module::load_constructors()
 	else
 	    new_decls.push_back(decl);
 
-    topdecls = {AST_node("TopDecls"), new_decls};
+    topdecls = expression_ref{AST_node("TopDecls"), new_decls};
 }
 
 bool Module::is_declared(const std::string& name) const
@@ -1128,13 +1128,13 @@ set<string> find_all_ids(const expression_ref& E);
 
 void Module::add_decl(const std::string& fname, const expression_ref& body)
 {
-    expression_ref decl = {AST_node("Decl"),{dummy(name + "." + fname),body}};
+    expression_ref decl = AST_node("Decl") + dummy(name + "." + fname) + body;
 
     if (not topdecls)
     {
 	skip_desugaring = true;
 	vector<expression_ref> decls = {decl};
-	topdecls = {AST_node("TopDecls"),decls};
+	topdecls = expression_ref{AST_node("TopDecls"),decls};
     }
     else
     {
@@ -1143,7 +1143,7 @@ void Module::add_decl(const std::string& fname, const expression_ref& body)
 
 	vector<expression_ref> decls = topdecls.sub();
 	decls.push_back(decl);
-	topdecls = {AST_node("TopDecls"),decls};
+	topdecls = expression_ref{AST_node("TopDecls"),decls};
     }
 }
 

@@ -6,6 +6,7 @@
 #include "expression/lambda.H"
 #include "expression/case.H"
 #include "expression/dummy.H"
+#include "expression/apply.H"
 
 using std::vector;
 using std::string;
@@ -114,8 +115,7 @@ closure apply_op(OperationArgs& Args)
     {
 	int new_head_ref = Args.allocate(std::move(C));
 	closure::Env_t Env = {new_head_ref};
-	vector<expression_ref> args = {index_var(n_args_given - n_args_needed)};
-
+	vector<expression_ref> args;
 	for(int i=n_args_needed;i<n_args_given;i++)
 	{
 	    int arg = Args.current_closure().lookup_in_env( Args.reference(i+1).as_index_var() );
@@ -123,7 +123,7 @@ closure apply_op(OperationArgs& Args)
 
 	    args.push_back(index_var(n_args_given - i -1));
 	}
-	expression_ref E2 = {Apply(),args};
+	expression_ref E2 = apply_expression( index_var(n_args_given - n_args_needed), args );
 	return {E2,Env};
     }
 }

@@ -263,7 +263,7 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
 
 	int r0 = rules[c][0];
 
-	simple_patterns.push_back({H,S});
+	simple_patterns.push_back(expression_ref{H,S});
 	simple_bodies.push_back({});
     
 	// Construct the objects for the sub-case expression: x2[i] = v1...v[arity], x[2]...x[N]

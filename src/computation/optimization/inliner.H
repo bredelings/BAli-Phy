@@ -28,7 +28,7 @@ public:
     inline_context() {};
     inline_context(const expression_ref& E):data(E) {}
     inline_context(const std::string& s, const expression_ref E, const inline_context& context)
-	:data({AST_node(s),{E, context.data}}) {}
+	:data(AST_node(s) + E + context.data) {}
 };
 
 

@@ -708,7 +708,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	    {
 		expression_ref e = first.sub()[0];
 		expression_ref qop = AST_node("id","Prelude.>>");
-		result = {AST_node("infixexp"),{e, qop, do_stmts}};
+		result = AST_node("infixexp") + e + qop + do_stmts;
 	    }
 
 	    // do { p <- e ; stmts} => let {ok p = do {stmts}; ok _ = fail "..."} in e >>= ok
@@ -721,33 +721,33 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 
 		if (is_irrefutable_pat(p))
 		{
-		    expression_ref lambda = {AST_node("Lambda"),{p,do_stmts}};
-		    result = {AST_node("infixexp"),{e,qop,lambda}};
+		    expression_ref lambda = AST_node("Lambda") + p + do_stmts;
+		    result = AST_node("infixexp") + e + qop + lambda;
 		}
 		else
 		{
-		    expression_ref fail = {AST_node("Apply"),{AST_node("id","Prelude.fail"),"Fail!"}};
+		    expression_ref fail = AST_node("Apply") + AST_node("id","Prelude.fail") + "Fail!";
 		    expression_ref ok = get_fresh_id("ok",E);
 	  
-		    expression_ref lhs1 = {AST_node("funlhs1"),{ok,p}};
-		    expression_ref rhs1 = {AST_node("rhs"),{do_stmts}};
-		    expression_ref decl1 = {AST_node("Decl"),{lhs1,rhs1}};
+		    expression_ref lhs1 = AST_node("funlhs1") + ok + p;
+		    expression_ref rhs1 = AST_node("rhs") + do_stmts;
+		    expression_ref decl1 = AST_node("Decl") + lhs1 + rhs1;
 	  
-		    expression_ref lhs2 = {AST_node("funlhs1"),{ok,AST_node("WildcardPattern")}};
-		    expression_ref rhs2 = {AST_node("rhs"),{fail}};
-		    expression_ref decl2 = {AST_node("Decl"),{lhs2,rhs2}};
-		    expression_ref decls = {AST_node("Decls"),{decl1, decl2}};
+		    expression_ref lhs2 = AST_node("funlhs1") + ok + AST_node("WildcardPattern");
+		    expression_ref rhs2 = AST_node("rhs") + fail;
+		    expression_ref decl2 = AST_node("Decl") + lhs2 + rhs2;
+		    expression_ref decls = AST_node("Decls") + decl1 +  decl2;
 
-		    expression_ref body = {AST_node("infixexp"),{e,qop,ok}};
+		    expression_ref body = AST_node("infixexp") + e + qop + ok;
 
-		    result = {AST_node("Let"),{decls,body}};
+		    result = AST_node("Let") + decls + body;
 		}
 	    }
 	    // do {let decls ; rest} = let decls in do {stmts}
 	    else if (is_AST(first,"LetStmt"))
 	    {
 		expression_ref decls = first.sub()[0];
-		result = {AST_node("Let"),{decls,do_stmts}};
+		result = AST_node("Let") + decls + do_stmts;
 	    }
 	    else if (is_AST(first,"EmptyStmt"))
 		result = do_stmts;
@@ -833,9 +833,9 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 			if (is_AST(pat0,"Tuple"))
 			{
 			    if (decls_.size() != 1) throw myexception()<<"Can't currently handle pattern let with more than one decl.";
-			    expression_ref alt = {AST_node("alt"),{pat, body}};
-			    expression_ref alts = {AST_node("alts"),{alt}};
-			    expression_ref EE = {AST_node("Case"), {rhs.sub()[0], alts}};
+			    expression_ref alt = AST_node("alt") + pat + body;
+			    expression_ref alts = AST_node("alts") + alt;
+			    expression_ref EE = AST_node("Case") + rhs.sub()[0] + alts;
 			    return desugar(m, EE, bound);
 			}
 		    }
@@ -888,7 +888,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 		if (alt.size() == 3)
 		{
 		    assert(is_AST(alt.sub()[2],"Decls"));
-		    body = {AST_node("Let"),{alt.sub()[2],body}};
+		    body = AST_node("Let") + alt.sub()[2] + body;
 		}
 
 		bodies.push_back(desugar(m, body, bound2) );
