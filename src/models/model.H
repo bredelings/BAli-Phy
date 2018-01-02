@@ -72,14 +72,16 @@ public:
     cow_ptr< key_map_t > keys;
 
     bool contains_key(const std::string& key) const { return keys->count(key);}
-    double lookup_key(const std::string& key) const { return keys->find(key)->second;}
-    double load_value(const std::string& key,double v) const 
+    json lookup_key(const std::string& key) const { return keys->find(key)->second;}
+
+    template<typename T>
+    T load_value(const std::string& key, const T& t) const 
 	{ 
 	    auto loc = keys->find(key);
 	    if (loc != keys->end())
 		return loc->second;
 	    else
-		return v;
+		return t;
 	}
 
     /// Make a copy of this object
