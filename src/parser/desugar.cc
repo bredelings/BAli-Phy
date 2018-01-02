@@ -100,7 +100,7 @@ expression_ref infix_parse(const Module& m, const symbol_info& op1, const expres
 	if (op2.symbol_type == constructor_symbol)
 	{
 	    assert(op2.arity == 2);
-	    E1_op2_E3 = {constructor(op2.name, 2),{E1,E3}};
+	    E1_op2_E3 = constructor(op2.name, 2) + E1 + E3;
 	}
 
 	return infix_parse(m, op1, E1_op2_E3, T);
@@ -208,7 +208,7 @@ expression_ref infixpat_parse(const Module& m, const symbol_info& op1, const exp
 	    throw myexception()<<"Using non-constructor operator '"<<op2.name<<"' in pattern is not allowed.";
 	if (op2.arity != 2)
 	    throw myexception()<<"Using constructor operator '"<<op2.name<<"' with arity '"<<op2.arity<<"' is not allowed.";
-	expression_ref constructor_pattern = {constructor(op2.name, 2),{E1,E3}};
+	expression_ref constructor_pattern = constructor(op2.name, 2) + E1 + E3;
 
 	return infixpat_parse(m, op1, constructor_pattern, T);
     }
@@ -323,21 +323,6 @@ expression_ref get_body(const expression_ref& decl)
     return rhs.sub()[0];
 }
 
-expression_ref append(const expression_ref& E1, const expression_ref& E2)
-{
-    vector<expression_ref> sub = E1.sub();
-    sub.push_back(E2);
-    return {E1.head(), sub};
-}
-
-expression_ref append(const expression_ref& E1, const vector<expression_ref>& E2s)
-{
-    vector<expression_ref> sub = E1.sub();
-    for(const auto& E2: E2s)
-	sub.push_back(E2);
-    return {E1.head(), sub};
-}
-
 expression_ref translate_funlhs(const expression_ref& E)
 {
     if (is_AST(E,"funlhs1"))
@@ -350,14 +335,14 @@ expression_ref translate_funlhs(const expression_ref& E)
 	//       In cases like x:y +++ z the parser should identify that +++ is the function because it isn't a constructor.
 	//       What if the constructor is an imported symbol?  Then we need to export +++ before we can check the infix parsing.
     
-	return {AST_node("funlhs1"),{E.sub()[1],E.sub()[0],E.sub()[2]}};
+	return AST_node("funlhs1") + E.sub()[1] + E.sub()[0] + E.sub()[2];
     }
     else if (is_AST(E,"funlhs3"))
     {
 	expression_ref fun1 = translate_funlhs(E.sub()[0]);
 	vector<expression_ref> args = fun1.sub();
 	for(int i=1;i<E.size();i++)
-	    fun1 = append(fun1,E.sub()[i]);
+	    fun1 = fun1 + E.sub()[i];
 	return fun1;
     }
     else
@@ -370,7 +355,7 @@ expression_ref translate_funlhs_decl(const expression_ref& E)
     {
 	vector<expression_ref> sub = E.sub();
 	sub[0] = funlhs;
-	return {E.head(),sub};
+	return expression_ref{E.head(),sub};
     }
     else
 	return E;
@@ -390,7 +375,7 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
 
 	// If its not a function binding, accept it as is, and continue.
 	if (v[i].sub()[0].is_a<dummy>())
-	    decls.push_back({v[i].head(), { v[i].sub()[0], v[i].sub()[1].sub()[0] } } );
+	    decls.push_back(v[i].head() + v[i].sub()[0] + v[i].sub()[1].sub()[0]);
 	else if (is_AST(v[i].sub()[0], "funlhs1"))
 	{
 	    vector<vector<expression_ref> > patterns;
@@ -410,7 +395,7 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
 		if (patterns.back().size() != patterns.front().size())
 		    throw myexception()<<"Function '"<<name<<"' has different numbers of arguments!";
 	    }
-	    decls.push_back({AST_node("Decl"), {dummy(name), def_function(patterns,bodies) } } );
+	    decls.push_back(AST_node("Decl") + dummy(name) + def_function(patterns,bodies) );
 
 	    // skip the other bindings for this function
 	    i += (patterns.size()-1);
@@ -547,7 +532,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 			auto x = decl.sub()[0].as_<dummy>();
 			if (not is_qualified_symbol(x.name))
 			    x.name = m.name + "." + x.name;
-			new_decls.push_back({AST_node("Decl"),{x,decl.sub()[1]}});
+			new_decls.push_back(AST_node("Decl") + x + decl.sub()[1]);
 		    }
 		    else
 			new_decls.push_back(decl);
@@ -555,7 +540,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 		decls = new_decls;
 	    }
 
-	    return {E.head(),decls};
+	    return expression_ref{E.head(),decls};
 	}
 	else if (n.type == "Decl")
 	{
@@ -570,7 +555,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 		for(auto& e: v)
 		    e = desugar(m, e, bound2);
 
-		return {E.head(),v};
+		return expression_ref{E.head(),v};
 	    }
 
 	    // Is this a set of pattern bindings?
@@ -586,8 +571,8 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	    {
 		expression_ref decls = E.sub()[1];
 		assert(is_AST(decls,"Decls"));
-		expression_ref E2 = {AST_node("Let"),{decls,E.sub()[0]}};
-		E2 = {AST_node("rhs"),{E2}};
+		expression_ref E2 = AST_node("Let") + decls + E.sub()[0];
+		E2 = AST_node("rhs") + E2;
 		return desugar(m,E2,bound);
 	    }
 	    else
@@ -636,21 +621,21 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	    // [ e | p<-l, Q]  =  let {ok p = [ e | Q ]; ok _ = []} in Prelude.concatMap ok l
 	    // [ e | let decls, Q] = let decls in [ e | Q ]
 
-	    expression_ref True {AST_node("SimpleQual"),{constructor("Prelude.True",0)}};
+	    expression_ref True = AST_node("SimpleQual") + constructor("Prelude.True",0);
 
 	    assert(v.size() >= 2);
 	    if (v.size() == 2 and (v[1] == True))
-		E2 = {AST_node("List"),{v[0]}};
+		E2 = AST_node("List") + v[0];
 	    else if (v.size() == 2)
-		E2 = {E.head(),{v[0],v[1],True}};
+		E2 = E.head() + v[0] + v[1] + True;
 	    else 
 	    {
 		expression_ref B = v[1];
 		v.erase(v.begin()+1);
-		E2 = {E.head(),v};
+		E2 = expression_ref{E.head(),v};
 
 		if (is_AST(B, "SimpleQual"))
-		    E2 = {AST_node("If"),{B.sub()[0],E2,AST_node("id","[]")}};
+		    E2 = AST_node("If") + B.sub()[0] + E2 + AST_node("id","[]");
 		else if (is_AST(B, "PatQual"))
 		{
 		    expression_ref p = B.sub()[0];
@@ -658,29 +643,29 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 		    if (is_irrefutable_pat(p))
 		    {
 			expression_ref f {AST_node("Lambda"),{p,E2}};
-			E2 = {AST_node("Apply"),{AST_node("id","Prelude.concatMap"),f,l}};
+			E2 = AST_node("Apply") + AST_node("id","Prelude.concatMap") + f + l;
 		    }
 		    else
 		    {
 			// Problem: "ok" needs to be a fresh variable.
 			expression_ref ok = get_fresh_id("ok",E);
 
-			expression_ref lhs1 = {AST_node("funlhs1"),{ok,p}};
-			expression_ref rhs1 = {AST_node("rhs"),{E2}};
-			expression_ref decl1 = {AST_node("Decl"),{lhs1,rhs1}};
+			expression_ref lhs1 = AST_node("funlhs1") + ok + p;
+			expression_ref rhs1 = AST_node("rhs") + E2;
+			expression_ref decl1 = AST_node("Decl") + lhs1 + rhs1;
 
-			expression_ref lhs2 = {AST_node("funlhs1"),{ok,AST_node("WildcardPattern")}};
-			expression_ref rhs2 = {AST_node("rhs"),{AST_node("id","[]")}};
-			expression_ref decl2 = {AST_node("Decl"),{lhs2,rhs2}};
+			expression_ref lhs2 = AST_node("funlhs1") + ok + AST_node("WildcardPattern");
+			expression_ref rhs2 = AST_node("rhs") + AST_node("id","[]");
+			expression_ref decl2 = AST_node("Decl") + lhs2 + rhs2;
 
-			expression_ref decls = {AST_node("Decls"),{decl1, decl2}};
-			expression_ref body = {AST_node("Apply"),{AST_node("id","Prelude.concatMap"),ok,l}};
+			expression_ref decls = AST_node("Decls") + decl1 + decl2;
+			expression_ref body = AST_node("Apply") + AST_node("id","Prelude.concatMap") + ok + l;
 
-			E2 = {AST_node("Let"),{decls,body}};
+			E2 = AST_node("Let") + decls + body;
 		    }
 		}
 		else if (is_AST(B, "LetQual"))
-		    E2 = {AST_node("Let"),{B.sub()[0],E2}};
+		    E2 = AST_node("Let") + B.sub()[0] + E2;
 	    }
 	    return desugar(m,E2,bound);
 	}
@@ -715,7 +700,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 
 	    expression_ref first = stmts[0];
 	    stmts.erase(stmts.begin());
-	    expression_ref do_stmts = {AST_node("Do"),{{AST_node("Stmts"),stmts}}};
+	    expression_ref do_stmts = AST_node("Do") + expression_ref(AST_node("Stmts"),stmts);
 	    expression_ref result;
       
 	    // do {e ; stmts }  =>  e >> do { stmts }
@@ -790,7 +775,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 		e = desugar(m, e, bound);
 
 	    if (v.size())
-		return { constructor(S.name,S.arity), v };
+		return expression_ref{ constructor(S.name,S.arity), v };
 	    else
 		return { constructor(S.name,S.arity) };
 	}
@@ -933,7 +918,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
     for(auto& e: v)
 	e = desugar(m, e, bound);
     if (E.size())
-	return {E.head(),v};
+	return expression_ref{E.head(),v};
     else
 	return E;
 }
