@@ -174,6 +174,7 @@ void run_info(json& info, int proc_id, int argc, char* argv[])
     info["environment"] = env;
     info["pid"] = getpid();
     info["hostname"] = hostname();
+    info["version"] = version_info();
 
 #ifdef HAVE_MPI
     json mpi;
