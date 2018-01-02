@@ -136,7 +136,7 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
 		}
 
 		// assert that D contains no free variables that are bound in patterns[i]
-		changed = (do_substitute(bodies[i], D, E2) or changed);
+		changed = do_substitute(bodies[i], D, E2) or changed;
 	    }
 
 	    if (changed)
@@ -195,7 +195,7 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
     // Since this is an expression, substitute into sub-expressions
     object_ptr<expression> E1_ (E1.as_expression().clone());
     for(int i=0;i<E1_->size();i++)
-	changed = (do_substitute(E1_->sub[i], D, E2) or changed);
+	changed = do_substitute(E1_->sub[i], D, E2) or changed;
 
     if (changed)
 	E1 = E1_;

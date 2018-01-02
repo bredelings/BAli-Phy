@@ -124,7 +124,7 @@ const expression_ref& context::evaluate_expression(const expression_ref& E,bool 
 
 const expression_ref& context::perform_expression(const expression_ref& E,bool ec) const
 {
-    expression_ref E2 = (get_expression(perform_io_head),E);
+    expression_ref E2 = {get_expression(perform_io_head),E};
     return evaluate_expression_( preprocess(E2), ec);
 }
 
@@ -167,7 +167,7 @@ expression_ref context::recursive_evaluate_parameter(int i) const
 void context::perform_transition_kernel(int i)
 {
     int r = memory()->transition_kernels()[i];
-    expression_ref E = (reg_var(r), get_context_index());
+    expression_ref E = {reg_var(r), get_context_index()};
     perform_expression(E);
 }
 

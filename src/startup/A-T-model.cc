@@ -545,7 +545,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 	if (alphabet_type.get_value<string>() == "AA" and not dynamic_cast<const AminoAcids*>(&a))
 	    throw myexception()<<"Substitution model S"<<i+1<<" requires an amino-acid alphabet, but sequences are '"<<a.name<<"'";;
 
-	full_smodels[i].expression = (full_smodels[i].expression, a);
+	full_smodels[i].expression = {full_smodels[i].expression, a};
     }
 
     //-------------- Which partitions share a scale? -----------//

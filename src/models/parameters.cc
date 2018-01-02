@@ -1411,7 +1411,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     for(int i=0;i<n_imodels();i++) 
     {
 	string prefix = "I" + convertToString(i+1);
-	auto imodel = (IMs[i].expression, my_tree());
+	auto imodel = {IMs[i].expression, my_tree()};
 	imodels_.push_back(perform_exp(imodel, prefix));
     }
 
