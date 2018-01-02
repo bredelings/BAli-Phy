@@ -416,7 +416,7 @@ extern "C" closure builtin_function_reapply(OperationArgs& Args)
     {
 	expression_ref fE = index_var(1);
 	expression_ref argE = index_var(0);
-	apply_E = (fE, argE);
+	apply_E = {fE, argE};
     }
 
     // %1 %0 {R1,R2}

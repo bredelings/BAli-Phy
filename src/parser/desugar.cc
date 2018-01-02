@@ -53,7 +53,7 @@ expression_ref infix_parse_neg(const Module& m, const symbol_info& op1, deque<ex
 
 	E1 = infix_parse_neg(m, symbol_info("-",variable_symbol,unknown_scope, 2,6,left_fix), T);
 
-	return infix_parse(m, op1, (dummy("Prelude.negate"),E1), T);
+	return infix_parse(m, op1, {dummy("Prelude.negate"),E1}, T);
     }
     // If E1 is not a neg, E1 should be an expression, and the next thing should be an Op.
     else
@@ -95,7 +95,7 @@ expression_ref infix_parse(const Module& m, const symbol_info& op1, const expres
 	T.pop_front();
 	expression_ref E3 = infix_parse_neg(m, op2, T);
 
-	expression_ref E1_op2_E3 = (dummy(op2.name), E1, E3);
+	expression_ref E1_op2_E3 = {dummy(op2.name), E1, E3};
 
 	if (op2.symbol_type == constructor_symbol)
 	{
@@ -255,7 +255,7 @@ expression_ref make_apply(const vector<expression_ref>& v)
     assert(not v.empty());
     expression_ref E = v[0];
     for(int i=1;i<v.size();i++)
-	E = (E,v[i]);
+	E = {E,v[i]};
     return E;
 }
 
@@ -609,7 +609,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	    expression_ref E2 = v[0];
 
 	    for(int i=1;i<v.size();i++)
-		E2 = (E2,v[i]);
+		E2 = {E2,v[i]};
 	    return E2;
 	}
 	else if (n.type == "ListComprehension")
@@ -900,7 +900,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	    expression_ref E2 = dummy("Prelude.enumFrom");
 	    for(auto& e: v) {
 		e = desugar(m, e, bound);
-		E2 = (E2,e);
+		E2 = {E2,e};
 	    }
 	    return E2;
 	}
@@ -909,7 +909,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	    expression_ref E2 = dummy("Prelude.enumFromTo");
 	    for(auto& e: v) {
 		e = desugar(m, e, bound);
-		E2 = (E2,e);
+		E2 = {E2,e};
 	    }
 	    return E2;
 	}
@@ -958,5 +958,5 @@ void read_add_model(Model& M, const std::string& filename)
 void add_model(Model& M, const std::string& name)
 {
     M += name;
-    M.perform_expression((dummy("Distributions.gen_model"),dummy(name+".main")));
+    M.perform_expression({dummy("Distributions.gen_model"),dummy(name+".main")});
 }

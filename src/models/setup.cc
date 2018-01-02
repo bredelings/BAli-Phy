@@ -214,14 +214,14 @@ expression_ref arg_to_apply(const ptree& expression)
 	E = dummy(top);
 
     for(auto& arg: expression)
-	E = (E, arg_to_apply(arg.second));
+	E = {E, arg_to_apply(arg.second)};
 
     return E;
 }
 
 expression_ref apply_args(expression_ref action, const ptree& applied_args)
 {
-    return (action, arg_to_apply(applied_args));
+    return {action, arg_to_apply(applied_args)};
 }
 
 optional<vector<double>> get_frequencies_from_tree(const ptree& model_rep, const alphabet& a)
@@ -262,11 +262,11 @@ expression_ref get_constant_model(const ptree& required_type, const ptree& model
 	    throw myexception()<<"An integer constant cannot have arguments!";
 
 	if (required_type.get_value<string>() == "Double")
-	    return (dummy("Prelude.return"), convertTo<double>(name));
+	    return {dummy("Prelude.return"), convertTo<double>(name)};
 
 	require_type(model_rep, required_type, "Int");
 
-	return (dummy("Prelude.return"), convertTo<int>(name));
+	return {dummy("Prelude.return"), convertTo<int>(name)};
     }
 
     // 2. If its an integer constant
@@ -277,7 +277,7 @@ expression_ref get_constant_model(const ptree& required_type, const ptree& model
 
 	require_type(model_rep, required_type, "Double");
 
-	return (dummy("Prelude.return"), convertTo<double>(name));
+	return {dummy("Prelude.return"), convertTo<double>(name)};
     }
 
     // 3. If its a string constant
@@ -288,7 +288,7 @@ expression_ref get_constant_model(const ptree& required_type, const ptree& model
 
 	require_type(model_rep, required_type, "String");
 
-	return (dummy("Prelude.return"), name.substr(1,name.size()-2));
+	return {dummy("Prelude.return"), name.substr(1,name.size()-2)};
     }
 
     return {};
@@ -300,7 +300,7 @@ expression_ref get_variable_model(const ptree& E, const set<string>& scope)
     {
 	auto name = E.get_value<string>();
 	if (scope.count(name))
-	    return (dummy("Prelude.return"),dummy(string("arg_") + name));
+	    return {dummy("Prelude.return"),dummy(string("arg_") + name)};
     }
     return {};
 }
@@ -369,7 +369,7 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 
 	    ptree arg_type = arg_tree.get_child("arg_type");
 	    expression_ref arg = get_model_as(R, arg_type, model_rep.get_child(arg_name), scope);
-	    E = (E,arg);
+	    E = {E,arg};
 	}
 	return E;
     }
@@ -382,11 +382,11 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
     for(int i=0;i<call.size();i++)
     {
 	string call_arg_name = array_index(call,i).get_value<string>();
-	E = (E,dummy("arg_" + call_arg_name));
+	E = {E, dummy("arg_" + call_arg_name)};
     }
 
     // 3. Return the function call: 'return (f call.name1 call.name2 call.name3)'
-    E = (dummy("Prelude.return"),E);
+    E = {dummy("Prelude.return"),E};
 
     // 4. Peform the rule arguments 'Prefix "arg_name" (arg_+arg_name) >>= (\arg_name -> (Log "arg_name" arg_name) << E)'
     int i=0;
@@ -407,17 +407,17 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 
 	auto log_name = name + ":" + arg_name;
 	// Prefix "arg_name" (arg_+arg_name)
-	if (not no_log) arg = (Prefix, log_name, arg);
+	if (not no_log) arg = {Prefix, log_name, arg};
 
 	// E = Log "arg_name" arg_name >> E
 	if (should_log(R, model_rep, arg_name))
 	{
-	    auto log_action = (Log, log_name, dummy("arg_"+arg_name));
-	    E = (dummy("Prelude.>>"),log_action,E);
+	    expression_ref log_action = {Log, log_name, dummy("arg_"+arg_name)};
+	    E = {dummy("Prelude.>>"), log_action, E};
 	}
 
 	// E = 'arg <<= (\arg_name -> E)
-	E = (dummy("Prelude.>>="), arg, lambda_quantify(dummy("arg_"+arg_name), E));
+	E = {dummy("Prelude.>>="), arg, lambda_quantify(dummy("arg_"+arg_name), E)};
     }
 
     for(;i<args.size();i++)

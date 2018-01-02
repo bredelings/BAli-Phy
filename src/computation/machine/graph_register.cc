@@ -1440,8 +1440,8 @@ int reg_heap::add_transition_kernel(int r)
 int reg_heap::add_modifiable_parameter(const string& full_name)
 {
     expression_ref E = dummy("Parameters.new_modifiable");
-    E = (dummy("Prelude.unsafePerformIO"), E);
-    E = (dummy("Parameters.evaluate"),-1,E);
+    E = {dummy("Prelude.unsafePerformIO"), E};
+    E = {dummy("Parameters.evaluate"),-1,E};
 
     return add_parameter(full_name, E);
 }

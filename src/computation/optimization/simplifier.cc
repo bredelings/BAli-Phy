@@ -441,7 +441,7 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 	    expression_ref f_call = f;
 	    for(int j=0;j<used_vars.size();j++)
 	    {
-		f_call = (f_call,used_vars[j]);
+		f_call = {f_call,used_vars[j]};
 		f_body = lambda_quantify(used_vars[used_vars.size()-1-j],f_body);
 	    }
 
@@ -523,7 +523,7 @@ expression_ref rebuild_apply(const simplifier_options& options, expression_ref E
 	    object = peel_n_lambdas1(object,1);
 	}
 	else
-	    object = (object, argument);
+	    object = {object, argument};
     }
     object = let_expression(apply_decls, object);
 
