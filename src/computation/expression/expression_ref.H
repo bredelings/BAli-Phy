@@ -276,6 +276,7 @@ public:
     expression_ref(const char* s);
     expression_ref(const char& c2):c(c2),type_(char_type) {}
     expression_ref(const String& s):expression_ref(s.clone()) { }
+    expression_ref(const std::initializer_list<expression_ref>&);
 
     expression_ref& operator=(const expression_ref& E)
 	{

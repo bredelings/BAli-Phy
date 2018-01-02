@@ -262,6 +262,17 @@ expression_ref::expression_ref(const std::string& s)
 
 expression_ref::expression_ref(const index_var& iv):i(iv.index),type_(index_var_type) {}
 
+expression_ref::expression_ref(const std::initializer_list<expression_ref>& es)
+{
+    for(auto& e: es)
+    {
+	if (not (*this))
+	    (*this) = e;
+	else
+	    (*this) = apply((*this),e);
+    }
+}
+
 expression_ref operator,(const expression_ref& E1, const expression_ref& E2)
 {
     return apply(E1, E2);
