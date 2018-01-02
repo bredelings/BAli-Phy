@@ -275,7 +275,7 @@ expression_ref::expression_ref(const std::initializer_list<expression_ref>& es)
 
 expression_ref operator,(const expression_ref& E1, const expression_ref& E2)
 {
-    return apply(E1, E2);
+    std::abort();
 }
 
 expression_ref operator^(const expression_ref& x, const expression_ref& T)
