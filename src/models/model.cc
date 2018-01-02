@@ -484,9 +484,7 @@ Model::key_map_t parse_key_map(const vector<string>& key_value_strings)
 
 	string key = parse[0];
 
-	double value = convertTo<double>(parse[1]);
-
-	keys[key] = value;
+	keys[key] = json::parse(parse[1]);
     }
 
     return keys;

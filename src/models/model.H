@@ -39,6 +39,7 @@
 #include "computation/operation.H"
 #include "computation/context.H"
 #include "cow-ptr.H"
+#include "util/json.hh"
 
 class Model;
 
@@ -65,7 +66,7 @@ class Model: public context
     ////  \param indices The indices of the parameters that changed.
 
 public:
-    typedef std::map<std::string,double> key_map_t;
+    typedef std::map<std::string, json> key_map_t;
 
     /// An object for key-value pairs.
     cow_ptr< key_map_t > keys;

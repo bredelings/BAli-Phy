@@ -69,7 +69,7 @@ void add_MH_move(Model& P, const Proposal_Fn& proposal, const vector<string>& na
     if (pnames.size() != pvalues.size()) std::abort();
 
     for(int i=0;i<pnames.size();i++)
-	set_if_undef(*P.keys.modify(), pnames[i], pvalues[i]);
+	set_if_undef(*P.keys.modify(), pnames[i], json(pvalues[i]));
 
     // 2. For each MCMC parameter, create a move for it.
     for(const auto& parameter_name: names) 
