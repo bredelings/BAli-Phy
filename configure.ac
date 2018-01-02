@@ -352,7 +352,16 @@ else
   eigen_includes="-isystem \$(top_srcdir)/external/eigen3/"
   AM_CXXFLAGS="$eigen_includes $AM_CXXFLAGS"
 fi
-#---------------------- Check for BOOST ------------------#
+#---------------------- end: Check for BOOST ------------------#
+
+
+#--------------------- start: include nlohmann::json ----------#
+
+
+json_includes="-isystem \$(top_srcdir)/external/nlohmann/"
+AM_CXXFLAGS="$json_includes $AM_CXXFLAGS"
+
+#------------------------end: include nlohmann:json -----------#
 
 echo "------------------------------------------"
 if test "$use_system_boost" = yes ; then
