@@ -1482,7 +1482,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     }
 
     // create data partitions
-    bool allow_compression = load_value("compression",1) > 0.5;
+    bool allow_compression = load_value("compression",true);
 
     assert(like_calcs.size() == A.size());
     for(int i=0;i<A.size();i++)

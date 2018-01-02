@@ -250,7 +250,7 @@ int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 
 void cube_sample_alignment(Parameters& P,int node1,int node2) 
 {
-    int bandwidth = P.load_value("bandwidth",-1.0);
+    int bandwidth = P.load_value("bandwidth", -1);
 
     P.set_root(node1);
 

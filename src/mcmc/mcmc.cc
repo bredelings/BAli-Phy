@@ -1107,7 +1107,7 @@ namespace MCMC {
 	P->compile();
 #endif
 
-	int alignment_burnin_iterations = (int)P->load_value("alignment-burnin",10.0);
+	int alignment_burnin_iterations = P->load_value("alignment-burnin",10);
 
 	if (owned_ptr<Parameters> PP = P.as<Parameters>())
 	{

@@ -1317,7 +1317,7 @@ void sample_SPR_all(owned_ptr<Model>& P,MoveStats& Stats)
 	sample_SPR_search_one(PP, Stats, PP.t().edge(b1));
     }
 
-    if (P->load_value("SPR_longest", 1.0) > 0.5)
+    if (P->load_value("SPR_longest", true))
     {
 	// Try moving the longest or least-determined branch every time.
 	int least_informed_branch = argmax(effective_lengths_min(PP.t()));
@@ -1467,7 +1467,7 @@ void sample_SPR_flat(owned_ptr<Model>& P,MoveStats& Stats)
 	sample_SPR_flat_one(P, Stats, b1);
     }
 
-    if (P->load_value("SPR_longest", 1.0) > 0.5)
+    if (P->load_value("SPR_longest", true))
     {
 	// Try moving the longest or least-determined branch every time.
 	int least_informed_branch = argmax(effective_lengths_min(PP.t()));
@@ -1502,7 +1502,7 @@ void sample_SPR_nodes(owned_ptr<Model>& P,MoveStats& Stats)
 	}
     }
 
-    if (P->load_value("SPR_longest", 1.0) > 0.5)
+    if (P->load_value("SPR_longest", true))
     {
 	// Try moving the longest or least-determined branch every time.
 	int least_informed_branch = argmax(effective_lengths_min(PP.t()));

@@ -152,7 +152,7 @@ void sample_parameter_and_alignment_on_branch(owned_ptr<Model>& P, MoveStats& St
 {
   Parameters* PP = P.as<Parameters>();
 
-  if ( PP->load_value("parameter_tri",1.0) < 0.5) return;
+  if (not PP->load_value("parameter_tri", true)) return;
 
   MCMC::Result result(2);
 
