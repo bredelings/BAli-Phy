@@ -1,3 +1,4 @@
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/algorithm/string.hpp>
 #include "startup/cmd_line.H"
@@ -114,22 +115,10 @@ std::map<string,string> load_help_files(const std::vector<fs::path>& package_pat
 }
 
 
-string indent_line(int n, const string& line)
+string indent(int n, const string& lines)
 {
-    return string(n,' ') + line;
-}
-
-string indent_lines(int n, const string& lines)
-{
-    std::ostringstream s;
-    for(auto& line: split(lines,"\n"))
-    {
-	if (line.empty())
-	    s<<std::endl;
-	else
-	    s<<string(n,' ')<<line<<std::endl;
-    }
-    return s.str();
+    string spaces(n,' ');
+    return spaces + boost::replace_all_copy(lines, "\n", "\n"+spaces);
 }
 
 
@@ -302,7 +291,7 @@ string get_help_for_rule(const Rule& rule)
     if (auto description = rule.get_optional<string>("description"))
     {
 	help<<"Description:\n\n";
-	help<<indent_lines(3, *description)<<std::endl;
+	help<<indent(3, *description)<<std::endl<<std::endl;
     }
 
     if (auto examples = rule.get_child_optional("examples"))
@@ -310,16 +299,16 @@ string get_help_for_rule(const Rule& rule)
 	help<<"Examples:\n\n";
 	for(auto& x: *examples)
 	{
-	    help<<indent_lines(3, x.second.get_value<string>())<<"\n\n";
+	    help<<indent(3, x.second.get_value<string>())<<"\n\n";
 	}
     }
 
     if (auto citation = get_citation(rule,false))
     {
 	help<<"Citation:\n\n";
-	help<<indent_line(3,*citation)<<std::endl;
+	help<<indent(3,*citation)<<std::endl;
 	if (auto url = get_citation_url(rule))
-	    help<<indent_line(3,*url)<<std::endl;
+	    help<<indent(3,*url)<<std::endl;
 	help<<std::endl;
     }
     
