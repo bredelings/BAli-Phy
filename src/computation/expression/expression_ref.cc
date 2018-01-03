@@ -96,7 +96,7 @@ string expression::print() const
 
 	expression_ref body;
 	vector<pair<dummy, expression_ref>> decls;
-	if (parse_let_expression(this, decls, body))
+	if (parse_let_expression(*this, decls, body))
 	{
 	    result = "let {";
 	    vector<string> parts;
@@ -107,7 +107,7 @@ string expression::print() const
 	    return result;
 	}
 
-	if (parse_indexed_let_expression(this, bodies, T))
+	if (parse_indexed_let_expression(*this, bodies, T))
 	{
 	    result = "let {";
 	    result += join(bodies,", ");
@@ -123,7 +123,7 @@ string expression::print() const
 	    return result;
 	}
 
-	if (parse_case_expression(this, T, vars, bodies))
+	if (parse_case_expression(*this, T, vars, bodies))
 	{
 	    result = "case " + T.print() + " of {";
 	    vector<string> parts;
@@ -174,7 +174,7 @@ string expression::print() const
 	}
 	else if (O.name() == ":" and size() == 2)
 	{
-	    return print_list(this);
+	    return print_list(*this);
 	}
 	else if (O.precedence() > -1 and size() == 2)
 	{
