@@ -154,6 +154,13 @@ string quote_string(const string& s,char q='"')
 	return s;
 }
 
+inline void rtrim(std::string &s)
+{
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
+        return !std::isspace(ch);
+    }).base(), s.end());
+}
+
 void run_info(json& info, int /*proc_id*/, int argc, char* argv[])
 {
     json command;
@@ -162,6 +169,7 @@ void run_info(json& info, int /*proc_id*/, int argc, char* argv[])
 
     time_t now = time(NULL);
     string start_time = ctime(&now);
+    rtrim(start_time);
 
     json env = json::object();
     for(auto& var: {"SLURM_JOBID", "JOB_ID", "LSB_JOBID"})
