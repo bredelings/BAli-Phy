@@ -15,7 +15,7 @@
             "arg_name": "logLambda",
             "arg_type": "Double",
             "default_value": "~Laplace[-4,0.707]",
-            "description": "The log of the insertion-deletion rate."
+            "description": "The log of the insertion-deletion rate"
         },
         {
             "arg_name": "meanIndelLength",
