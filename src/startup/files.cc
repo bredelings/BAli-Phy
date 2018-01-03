@@ -163,7 +163,7 @@ void run_info(json& info, int /*proc_id*/, int argc, char* argv[])
     time_t now = time(NULL);
     string start_time = ctime(&now);
 
-    json env = {};
+    json env = json::object();
     for(auto& var: {"SLURM_JOBID", "JOB_ID", "LSB_JOBID"})
 	if (auto evar = getenv(var))
 	    env[var] = evar;
