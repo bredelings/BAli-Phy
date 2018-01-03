@@ -2,10 +2,14 @@
     "name": "Bernoulli",
     "result_type": "Distribution[Int]",
     "call": "Distributions.bernoulli[p]",
+    "title": "The Bernoulli distribution",
     "args": [
         {
             "arg_name": "p",
-            "arg_type": "Double"
+            "arg_type": "Double",
+	    "description": "Probability of drawing a 1"
         }
-    ]
+    ],
+    "description":"The Bernoulli distribution yields 1 with probability p, and 0 with probability (1-p).",
+    "examples": ["~Bernoulli[0.5]"]
 }
