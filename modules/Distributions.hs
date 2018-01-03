@@ -138,8 +138,7 @@ sample_poisson mu = Random (IOAction1 builtin_sample_poisson mu);
 poisson mu = ProbDensity (poisson_density mu) (no_quantile "Poisson") (sample_poisson mu) (integer_above 0);
 
 builtin builtin_sample_bernoulli 1 "sample_bernoulli" "Distribution";
--- sample_bernoulli p = Random (IOAction1 builtin_sample_bernoulli p);
-sample_bernoulli p = Random (IOReturn 0);
+sample_bernoulli p = Random (IOAction1 builtin_sample_bernoulli p);
 bernoulli_density2 p q 1 = (doubleToLogDouble p);
 bernoulli_density2 p q 0 = (doubleToLogDouble q);
 bernoulli2 p q = ProbDensity (bernoulli_density2 p q) (no_quantile "bernoulli") (sample_bernoulli p) (integer_between 0 1);
