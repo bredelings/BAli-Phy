@@ -121,6 +121,28 @@ string indent(int n, const string& lines)
     return spaces + boost::replace_all_copy(lines, "\n", "\n"+spaces);
 }
 
+const std::string ansi_plain("\033[0m");
+const std::string ansi_under("\033[4m");
+const std::string ansi_bold("\033[1m");
+const std::string ansi_red("\033[1;31m");
+const std::string ansi_green("\033[1;32m");
+const std::string ansi_yellow("\033[1;33m");
+const std::string ansi_cyan("\033[1;36m");
+
+string bold(const string& line)
+{
+    return ansi_bold + line + ansi_plain;
+}
+
+string underline(const string& line)
+{
+    return ansi_under + line + ansi_plain;
+}
+
+string header(const string& text)
+{
+    return underline(text) + ":\n\n";
+}
 
 optional<string> get_authors(const Rule& rule)
 {
@@ -249,7 +271,7 @@ string get_help_for_rule(const Rule& rule)
 {
     std::ostringstream help;
     if (auto title = rule.get_optional<string>("title"))
-	help<<*title<<std::endl<<std::endl;
+	help<<bold(*title)<<std::endl<<std::endl;
 
     string name = rule.get<string>("name");
     string result_type = unparse_type(rule.get_child("result_type"));
@@ -269,12 +291,12 @@ string get_help_for_rule(const Rule& rule)
 	if (arg.get_child_optional("no_apply")) continue;
 	args_names_types.push_back(arg.get<string>("arg_name") + " :: " + unparse_type(arg.get_child("arg_type")));
     }
-    help<<"Usage:\n\n";
-    help<<"   "<<name;
+    help<<header("Usage");
+    help<<"   "<<bold(name);
     if (args_names_types.size()) help<<"["<<join(args_names_types,", ")<<"]";
     help<<" -> "<<result_type << std::endl<<std::endl;
     
-    help<<"Arguments:\n\n";
+    help<<header("Arguments");
     for(auto& argpair: args)
     {
 	auto& arg = argpair.second;
@@ -290,13 +312,13 @@ string get_help_for_rule(const Rule& rule)
     }
     if (auto description = rule.get_optional<string>("description"))
     {
-	help<<"Description:\n\n";
+	help<<header("Description");
 	help<<indent(3, *description)<<std::endl<<std::endl;
     }
 
     if (auto examples = rule.get_child_optional("examples"))
     {
-	help<<"Examples:\n\n";
+	help<<header("Examples");
 	for(auto& x: *examples)
 	{
 	    help<<indent(3, x.second.get_value<string>())<<"\n\n";
@@ -305,7 +327,7 @@ string get_help_for_rule(const Rule& rule)
 
     if (auto citation = get_citation(rule,false))
     {
-	help<<"Citation:\n\n";
+	help<<header("Citation");
 	help<<indent(3,*citation)<<std::endl;
 	if (auto url = get_citation_url(rule))
 	    help<<indent(3,*url)<<std::endl;
