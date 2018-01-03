@@ -133,7 +133,7 @@ expression_ref context::recursive_evaluate_reg(int r) const
     auto& C = memory()->lazy_evaluate(r, context_index);
     if (C.exp.is_atomic())
 	return C.exp;
-    expression* E = new expression(C.exp.as_expression());
+    unique_ptr<expression> E (new expression(C.exp.as_expression()));
 
     // Before we do any evaluation, lookup regs in the closure C.
     for(auto& e: E->sub)
@@ -155,7 +155,7 @@ expression_ref context::recursive_evaluate_reg(int r) const
 	    e = recursive_evaluate_reg(r);
 	}
     }
-    return expression_ref(E);
+    return expression_ref(std::move(E));
 }
 
 expression_ref context::recursive_evaluate_parameter(int i) const
