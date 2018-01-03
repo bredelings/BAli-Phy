@@ -7,7 +7,7 @@
         {
             "arg_name": "p",
             "arg_type": "Double",
-	    "description": "Probability of drawing a 1"
+	    "description": "Probability of success (i.e. drawing a 1)"
         }
     ],
     "description":"The Bernoulli distribution yields 1 with probability p, and 0 with probability (1-p).",

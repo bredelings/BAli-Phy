@@ -2,14 +2,19 @@
     "name": "Binomial",
     "result_type": "Distribution[Int]",
     "call": "Distributions.binomial[n,p]",
+    "title": "Binomial distribution",
     "args": [
         {
             "arg_name": "n",
-            "arg_type": "Int"
+            "arg_type": "Int",
+	    "description": "Number of trials"
         },
         {
             "arg_name": "p",
-            "arg_type": "Double"
+            "arg_type": "Double",
+	    "description": "Probability of success in each trial"
         }
-    ]
+    ],
+    "description": "The Binomial distribution gives the number of successes in n trials, where each trial has probability p.  Thus the sum of n Bernoulli random variables with success probability p follows the Binomal[n,p] distribution.",
+    "examples": ["~Binomial[10,0.25]"]
 }
