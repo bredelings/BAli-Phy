@@ -323,7 +323,7 @@ string unparse(const ptree& p)
     {
 	string Q = unparse(p.get_child("Q"));
 	string R = unparse(p.get_child("R"));
-	return Q + " + " + R;
+	return Q + "+" + R;
     }
     if (s == "Sample")
 	return "~" + unparse(p.begin()->second);
