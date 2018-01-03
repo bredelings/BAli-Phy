@@ -1,5 +1,6 @@
 //#define DEBUG_OPTIMIZE
 
+#include <memory>
 #include "computation/context.H"
 #include "computation/machine/graph_register.H"
 #include "computation/program.H"
@@ -16,6 +17,7 @@ using std::vector;
 using std::map;
 using std::pair;
 using std::set;
+using std::unique_ptr;
 using boost::dynamic_pointer_cast;
 using boost::optional;
 
