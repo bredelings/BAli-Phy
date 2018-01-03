@@ -8,5 +8,6 @@
             "arg_type": "a",
             "no_apply": "true"
         }
-    ]
+    ],
+    "title": "The Jukes-Cantor substitution rate matrix"
 }

@@ -15,17 +15,19 @@
             "arg_name": "logLambda",
             "arg_type": "Double",
             "default_value": "~Laplace[-4,0.707]",
-            "description": "The log of the insertion-deletion rate, normalized to the substitution rate."
+            "description": "The log of the insertion-deletion rate."
         },
         {
             "arg_name": "meanIndelLength",
             "arg_type": "Double",
-            "default_value": "Add[1,~Exponential[10]]"
+            "default_value": "Add[1,~Exponential[10]]",
+	    "description": "The mean indel length"
         },
         {
             "arg_name": "tree",
             "arg_type": "tree",
             "no_apply": "true"
         }
-    ]
+    ],
+    "description": "This model allows insertion and deletions (indels) of multiple residues.  Insertions and deletions are symmetric in this model.\nNote that the insertion-deletion rate is normalized to the substitution rate, so that if logLambda=0, then the insertion-deletion rate is the same as the substitution rate.\nNote that the mean indel length must be at least 1."
 }
