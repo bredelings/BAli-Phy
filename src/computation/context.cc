@@ -165,6 +165,10 @@ expression_ref context::recursive_evaluate_parameter(int i) const
     return recursive_evaluate_reg(get_parameter_reg(i));
 }
 
+expression_ref context::recursive_evaluate(int i) const
+{
+    return recursive_evaluate_reg(get_compute_expression_reg(i));
+}
 
 void context::perform_transition_kernel(int i)
 {
@@ -546,6 +550,13 @@ int context::get_parameter_reg(int index) const
     assert(index >= 0 and index < n_parameters());
 
     return parameters()[index].second;
+}
+
+int context::get_compute_expression_reg(int index) const
+{
+    assert(index >= 0 and index < heads().size());
+
+    return heads()[index];
 }
 
 int context::get_modifiable_reg(int r) const

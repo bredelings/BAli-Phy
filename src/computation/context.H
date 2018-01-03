@@ -47,6 +47,8 @@ public:
 
     int get_parameter_reg(int i) const;
 
+    int get_compute_expression_reg(int i) const;
+
     int get_modifiable_reg(int i) const;
 
     const reg_heap& get_memory() const {return *memory();}
@@ -106,7 +108,10 @@ public:
     expression_ref recursive_evaluate_reg(int r) const;
 
     /// Return a structure where all fields are evaluated and substituted.
-    expression_ref recursive_evaluate_parameter(int r) const;
+    expression_ref recursive_evaluate(int r) const;
+
+    /// Return a structure where all fields are evaluated and substituted.
+    expression_ref recursive_evaluate_parameter(int) const;
 
     /// Find the name of the ith named parameter
     std::string parameter_name(int i) const;
