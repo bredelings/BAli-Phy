@@ -39,15 +39,15 @@ private:
     int push_temp_head() const;
     void pop_temp_head() const;
 
-    int get_parameter_reg(int i) const;
-
-    int get_modifiable_reg(int i) const;
-
     closure preprocess(const closure& C) const;
 
     Program& get_Program();
 
 public:
+
+    int get_parameter_reg(int i) const;
+
+    int get_modifiable_reg(int i) const;
 
     const reg_heap& get_memory() const {return *memory();}
 
