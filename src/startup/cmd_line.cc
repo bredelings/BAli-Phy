@@ -114,7 +114,12 @@ std::map<string,string> load_help_files(const std::vector<fs::path>& package_pat
 }
 
 
-string indent_lines(const string& lines, int n)
+string indent_line(int n, const string& line)
+{
+    return string(n,' ') + line;
+}
+
+string indent_lines(int n, const string& lines)
 {
     std::ostringstream s;
     for(auto& line: split(lines,"\n"))
@@ -257,14 +262,6 @@ string get_help_for_rule(const Rule& rule)
     if (auto title = rule.get_optional<string>("title"))
 	help<<*title<<std::endl<<std::endl;
 
-    if (auto citation = get_citation(rule,false))
-    {
-	help<<*citation<<std::endl;
-	if (auto url = get_citation_url(rule))
-	    help<<*url<<std::endl;
-	help<<std::endl;
-    }
-    
     string name = rule.get<string>("name");
     string result_type = unparse_type(rule.get_child("result_type"));
     auto args = rule.get_child("args");
@@ -283,39 +280,49 @@ string get_help_for_rule(const Rule& rule)
 	if (arg.get_child_optional("no_apply")) continue;
 	args_names_types.push_back(arg.get<string>("arg_name") + " :: " + unparse_type(arg.get_child("arg_type")));
     }
-    help<<name;
+    help<<"Usage:\n\n";
+    help<<"   "<<name;
     if (args_names_types.size()) help<<"["<<join(args_names_types,", ")<<"]";
     help<<" -> "<<result_type << std::endl<<std::endl;
-
+    
+    help<<"Arguments:\n\n";
     for(auto& argpair: args)
     {
 	auto& arg = argpair.second;
 	if (arg.get_child_optional("no_apply")) continue;
 	auto default_value = arg.get_child_optional("default_value");
 	optional<string> description = arg.get_optional<string>("description");
-	if (default_value or description)
 	{
-	    help<<"   "<<arg.get<string>("arg_name");
+	    help<<"   "<<arg.get<string>("arg_name")<<": "<<description<<"."<<std::endl;
 	    if (default_value)
-		help<<" "<<show_model(*default_value)<<std::endl;
-	    else
-		help<<":"<<std::endl;
-	    if (description)
-		help<<indent_lines(*description,7);
+		help<<"       default "<<show_model(*default_value)<<std::endl;
 	    help<<std::endl;
 	}
     }
     if (auto description = rule.get_optional<string>("description"))
-	help<<indent_lines(*description,1)<<std::endl;
+    {
+	help<<"Description:\n\n";
+	help<<indent_lines(3, *description)<<std::endl;
+    }
 
     if (auto examples = rule.get_child_optional("examples"))
     {
-	help<<"Examples:\n";
+	help<<"Examples:\n\n";
 	for(auto& x: *examples)
 	{
-	    help<<"   "<<x.second.get_value<string>()<<std::endl;
+	    help<<indent_lines(3, x.second.get_value<string>())<<"\n\n";
 	}
     }
+
+    if (auto citation = get_citation(rule,false))
+    {
+	help<<"Citation:\n\n";
+	help<<indent_line(3,*citation)<<std::endl;
+	if (auto url = get_citation_url(rule))
+	    help<<indent_line(3,*url)<<std::endl;
+	help<<std::endl;
+    }
+    
     return help.str();
 }
 
