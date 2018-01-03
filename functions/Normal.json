@@ -1,15 +1,19 @@
 {
     "name": "Normal",
     "result_type": "Distribution[Double]",
-    "call": "Distributions.normal[mu,sigma]",
+    "call": "Distributions.normal[mean,sigma]",
     "args": [
         {
-            "arg_name": "mu",
-            "arg_type": "Double"
+            "arg_name": "mean",
+            "arg_type": "Double",
+	    "description": "The mean parameter"
         },
         {
             "arg_name": "sigma",
-            "arg_type": "Double"
+            "arg_type": "Double",
+	    "description": "The standard deviation parameter"
         }
-    ]
+    ],
+    "title": "The normal distribution",
+    "examples": ["~Normal[0,1]","~iid[10,Normal[0,1]]"]
 }
