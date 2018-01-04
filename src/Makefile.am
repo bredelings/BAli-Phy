@@ -112,7 +112,7 @@ bali_phy_SOURCES = parser/parse.cc dp/dp_hmm.cc parser/desugar.cc sequence/seque
 	  setup.cc mcmc/sample-two-nodes.cc sequence/sequence-format.cc \
 	  util-random.cc alignment/alignment-random.cc models/setup.cc mcmc/sample-topology-SPR.cc \
 	  dp/alignment-sums.cc alignment/alignment-util.cc probability/probability.cc models/model.cc \
-	  alignment/alignment-constraint.cc monitor.cc \
+	  alignment/alignment-constraint.cc monitor.cc startup/help.cc \
 	  tree/tree-util.cc myexception.cc math/pow2.cc substitution/parsimony.cc \
 	  tools/partition.cc mcmc/proposals.cc n_indels.cc n_indels2.cc alignment/alignment-util2.cc \
 	  tools/parsimony.cc tools/parsimony2.cc version.cc mcmc/slice-sampling.cc timer_stack.cc \
