@@ -24,7 +24,7 @@ it is a function of an unnamed modifiable variable created by
 
 Usually a value directly sampled from a distribution is modifiable,
 but there are exceptions.  For example, sampling from the
-logNormal distributions results in exp[~Normal[lmean,lsigma],
+logNormal distributions results in exp[~Normal[lmean,lsigma]],
 which is not modifiable.
 
 Likewise, components of Dirichlet distributions are not
@@ -32,6 +32,7 @@ modifiable, so it is not possible to set the initial values of
 nucleotide frequencies constructed from Dirichlet priors.
 
 Examples:
+
   # This works.
   bali-phy dna.fasta --initial-value RS07:logLambda=-4.0
 

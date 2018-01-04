@@ -9,7 +9,7 @@ modifiable.  (See help for "initial-value").
 
 When Rao-Blackwellizing <parameter>, BAli-Phy creates a new
 parameter called RB-<parameter>.  Each iteration, BAli-Phy
-write out
+writes out
    log(E/(1-E)),
 where E is the expectation of <parameter> conditional on all
 the other parameters.
