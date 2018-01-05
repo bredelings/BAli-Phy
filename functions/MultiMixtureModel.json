@@ -1,7 +1,7 @@
 {
     "name": "MultiMixtureModel",
     "result_type": "MultiMixtureModel[a]",
-    "no_log": "true",
+    "no_log": true,
     "call": "SModel.mmm[submodel]",
     "args": [
         {
@@ -12,7 +12,7 @@
         {
             "arg_name": "A",
             "arg_type": "a",
-            "no_apply": "true"
+            "no_apply": true
         }
     ]
 }

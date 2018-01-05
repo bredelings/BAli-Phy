@@ -1,7 +1,7 @@
 {
     "name": "exp",
     "result_type": "Double",
-    "no_log": "true",
+    "no_log": true,
     "call": "Prelude.exp[x]",
     "args": [
         {

@@ -2,7 +2,7 @@
     "title": "Function to convert an integer to a double-precision number:",
     "name": "intToDouble",
     "result_type": "Double",
-    "no_log": "true",
+    "no_log": true,
     "call": "Prelude.intToDouble[x]",
     "args": [
         {

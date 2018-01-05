@@ -1,7 +1,7 @@
 {
     "name": "Sample",
     "result_type": "a",
-    "no_log": "true",
+    "no_log": true,
     "call": "Distributions.perform_exp[x]",
     "args": [
         {

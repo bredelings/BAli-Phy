@@ -1,7 +1,7 @@
 {
     "name": "UnitMixture",
     "result_type": "MixtureModel[a]",
-    "no_log": "true",
+    "no_log": true,
     "call": "SModel.unit_mixture[submodel]",
     "args": [
         {
@@ -12,7 +12,7 @@
         {
             "arg_name": "A",
             "arg_type": "a",
-            "no_apply": "true"
+            "no_apply": true
         }
     ]
 }

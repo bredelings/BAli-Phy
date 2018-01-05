@@ -12,7 +12,7 @@
         {
             "arg_name": "A",
             "arg_type": "a",
-            "no_apply": "true"
+            "no_apply": true
         }
     ]
 }

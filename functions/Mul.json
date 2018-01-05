@@ -1,7 +1,7 @@
 {
     "name": "Mul",
     "result_type": "a",
-    "no_log": "true",
+    "no_log": true,
     "constraints": ["Num[a]"],
     "call": "Prelude.*[x,y]",
     "args": [

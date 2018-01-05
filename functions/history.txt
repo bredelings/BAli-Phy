@@ -1,0 +1,14 @@
+help(rbernoulli)
+help(rnorm)
+rnormal
+?rnormal
+rbinomial
+?rbinomial
+q
+?hky
+HKY
+?HKY
+?rnorm
+q()
+?dbinomial
+q()

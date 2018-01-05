@@ -1,7 +1,7 @@
 {
     "name": "quantile",
     "result_type": "Double",
-    "no_log": "true",
+    "no_log": true,
     "call": "Distributions.quantile[dist,p]",
     "args": [
         {

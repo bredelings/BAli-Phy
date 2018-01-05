@@ -1,7 +1,7 @@
 {
     "name": "num_branches",
     "result_type": "Int",
-    "no_log": "true",
+    "no_log": true,
     "call": "Tree.numBranches[t]",
     "args": [
         {

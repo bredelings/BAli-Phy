@@ -1,7 +1,7 @@
 {
     "name": "Div",
     "result_type": "Double",
-    "no_log": "true",
+    "no_log": true,
     "call": "Prelude.\/[x,y]",
     "args": [
         {
