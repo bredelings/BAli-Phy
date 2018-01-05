@@ -207,7 +207,19 @@ variables_map parse_cmd_line(int argc,char* argv[])
     positional_options_description p;
     p.add("align", -1);
 
+    string command;
+    string topic;
     vector<string> cargs = drop_trailing_args(argc, argv, trailing_args_separator);
+    if (cargs.size()>=1 and cargs[0] == "help")
+    {
+	command = "help";
+	cargs.erase(cargs.begin());
+	if (cargs.size() >= 1)
+	{
+	    topic = cargs[0];
+	    cargs.erase(cargs.begin());
+	}
+    }
     variables_map args;
     store(command_line_parser(cargs).options(all).positional(p).run(), args);
     notify(args);    
@@ -219,9 +231,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     if (args.count("verbose")) log_verbose = args["verbose"].as<int>();
 
-    if (args.count("help"))
+    if (args.count("help") or command == "help")
     {
-	string topic = args["help"].as<string>();
+	if (topic.empty()) topic = args["help"].as<string>();
 	auto package_paths = get_package_paths(argv[0], args);
 	if (topic == "simple")
 	{
