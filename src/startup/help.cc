@@ -360,10 +360,10 @@ void show_help(const string& topic, const vector<fs::path>& package_paths)
     Rules R(package_paths);
     if (topic == "functions")
     {
-	for(auto& rule: R)
+	for(auto& rule: R.get_rules())
 	{
-	    string name = rule.get_child("name").get_value<string>();
-	    string result_type = unparse_type(rule.get_child("result_type"));
+	    string name = rule.second.get_child("name").get_value<string>();
+	    string result_type = unparse_type(rule.second.get_child("result_type"));
 	    std::cout<<name<<" :: "<<result_type << std::endl;
 	}
 	return;

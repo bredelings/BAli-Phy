@@ -16,18 +16,19 @@ type_t get_type_for_arg(const Rule& rule, const std::string& arg);
 
 std::string get_keyword_for_positional_arg(const Rule& rule, int i);
 
-class Rules: public std::vector<Rule>
+class Rules
 {
+    std::map<std::string,Rule> rules;
+
     std::vector<boost::filesystem::path> path_list;
 
-    Rule load_rule(const std::string& s) const;
+    void add_rule(const boost::filesystem::path&);
 
-    void add_rule(const std::string& s);
-
-    std::vector<std::string> find_all_rules() const;
-    boost::optional<boost::filesystem::path> get_path_for_function(const std::string& name) const;
 public:
     boost::optional<Rule> get_rule_for_func(const std::string& s) const;
+
+    const std::map<std::string, Rule>& get_rules() const;
+
     Rule require_rule_for_func(const std::string& s) const;
 
     type_t get_result_type(const std::string& func) const;

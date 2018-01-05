@@ -9,6 +9,7 @@
 
 using std::vector;
 using std::set;
+using std::map;
 using std::string;
 using boost::optional;
 namespace pt = boost::property_tree;
@@ -172,17 +173,17 @@ ptree convert_rule(const Rules& R, Rule rule)
     return rule;
 }
 
-vector<Rule> get_rules(const Rules& R)
+const map<std::string, Rule>& Rules::get_rules() const
 {
-    return R;
+    return rules;
 }
 
 optional<Rule> Rules::get_rule_for_func(const string& s) const
 {
-    for(const auto& rule: *this)
-	if (rule.get<string>("name") == s)
-	    return rule;
-    return boost::none;
+    auto it = rules.find(s);
+    if (it == rules.end())
+	return boost::none;
+    return it->second;
 }
 
 Rule Rules::require_rule_for_func(const string& s) const
@@ -248,49 +249,6 @@ ptree Rules::get_result_type(const ptree& model_rep) const
 }
 
 
-string get_function_name_from_rel_path(fs::path path)
-{
-    path.replace_extension();
-    vector<string> xx;
-    assert(path.is_relative());
-    for(auto& x: path)
-	xx.push_back(x.string());
-    return join(xx,".");
-}
-
-fs::path get_rel_path_from_function_name(const std::string& s)
-{
-    fs::path path;
-    for(auto& x: split(s,"."))
-    {
-	if (x.empty()) throw myexception ()<<"Empty element in rule name '"<<s<<"'";
-	path = path / x;
-    }
-    return path;
-}
-
-optional<fs::path> Rules::get_path_for_function(const std::string& name) const
-{
-    if (name.empty())
-	throw myexception()<<"Can't load rule for empty string!";
-
-    auto rel_path = get_rel_path_from_function_name(name);
-
-    for(auto& path: path_list)
-    {
-	assert(fs::exists(path));
-
-	auto abs_path = path / rel_path;
-
-	abs_path.replace_extension("json");
-	
-	if (fs::exists(abs_path))
-	    return abs_path;
-    }
-
-    return boost::none;
-}
-
 string show_paths(const vector<fs::path>& paths)
 {
     vector<string> spaths;
@@ -299,66 +257,29 @@ string show_paths(const vector<fs::path>& paths)
     return join(spaths,":");
 }
 
-Rule Rules::load_rule(const std::string& name) const
+void Rules::add_rule(const fs::path& path)
 {
-    auto path = get_path_for_function(name);
-    if (not path)
-	throw myexception()<<"can't find JSON definition file for function '"<<name<<"' in path '"<<show_paths(path_list)<<"'";
-
-    checked_ifstream infile(path->string(),"function file");
+    checked_ifstream infile(path.string(),"function file");
     Rule rule;
     try {
 	pt::read_json(infile, rule);
     }
     catch (...)
     {
-	throw myexception()<<"Error parsing JSON function description '"<<path->string()<<"'\n";
+	throw myexception()<<"Error parsing JSON function description '"<<path.string()<<"'\n";
     }
 
-    // Complain if the file name doesn't descript the file name.
-    if (rule.get<string>("name") != name)
-	throw myexception()<<"Function file '"<<path->string()
-			   <<"' contains function '"<<rule.get<string>("name")
-			   <<"' instead of '"<<name<<"'";
+    string name = rule.get<string>("name");
 
-    return rule;
-}
-
-void Rules::add_rule(const std::string& s)
-{
-    try{
-	push_back(load_rule(s));
-    }
-    catch (std::exception& e)
-    {
-	std::cerr<<"Error loading rule for '"<<s<<"'\n";
-    }
-    catch (...) { }
-}
-
-vector<string> Rules::find_all_rules() const
-{
-    set<string> paths;
-    for(auto& path: path_list)
-    {
-	assert(fs::exists(path));
-
-	for(auto& dir_entry: fs::recursive_directory_iterator(path))
-	{
-	    auto rel_path = fs::relative(dir_entry.path(), path);
-
-	    if (rel_path.extension() == ".json")
-		paths.insert( get_function_name_from_rel_path(rel_path));
-	}
-    }
-    vector<string> pathsv;
-    pathsv.insert(pathsv.begin(), paths.begin(), paths.end());
-    return pathsv;
+    if (rules.count(name))
+	std::cerr<<"Warning: ignoring additional definition of function '"<<name<<"' from file '"<<path<<"'";
+    else
+	rules[name] = rule;
 }
 
 Rules::Rules(const vector<fs::path>& pl)
 {
-    // 1. Add path/functions for each path in the list, if it exists
+    // 1. Only keep paths that have a /functions/ subdir
     for(auto& path: pl)
     {
 	auto fpath = path / "functions";
@@ -366,11 +287,20 @@ Rules::Rules(const vector<fs::path>& pl)
 	    path_list.push_back(fpath);
     }
 
-    // 2. Load all the rules
-    for(auto& rule_name : find_all_rules())
-	add_rule(rule_name);
-    
+    // 2. Find all the files in the rules directory that end with '.json'
+    for(auto& path: path_list)
+    {
+	assert(fs::exists(path));
+
+	for(auto& dir_entry: fs::recursive_directory_iterator(path))
+	{
+	    auto abs_path = dir_entry.path();
+	    if (abs_path.extension() == ".json")
+		add_rule(abs_path);
+	}
+    }
+
     // 3. Convert the rules - FIXME: should we convert default args in a later step?
-    for(auto& rule: *this)
-	rule = convert_rule(*this, rule);
+    for(auto& rule: rules)
+	rule.second = convert_rule(*this, rule.second);
 }
