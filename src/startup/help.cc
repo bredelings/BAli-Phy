@@ -238,6 +238,23 @@ optional<string> get_citation_url(const Rule& rule)
     return boost::none;
 }
 
+string show_model_abbrev(boost::property_tree::ptree p)
+{
+    bool top_sample = false;
+    if (p.get_value<string>() == "Sample")
+    {
+	top_sample = true;
+	p = p.begin()->second;
+    }
+
+    string output = p.get_value<string>();
+    if (p.size())
+	output += "[..]";
+    string connector = top_sample?"~ ":"= ";
+
+    return connector + output;
+}
+
 string get_help_for_rule(const Rule& rule)
 {
     std::ostringstream help;
@@ -260,27 +277,42 @@ string get_help_for_rule(const Rule& rule)
     {
 	auto& arg = argpair.second;
 	if (arg.get_child_optional("no_apply")) continue;
-	args_names_types.push_back(arg.get<string>("arg_name") + " :: " + unparse_type(arg.get_child("arg_type")));
+	string arg_name = arg.get<string>("arg_name");
+	if (auto default_value = arg.get_child_optional("default_value"))
+	{
+	    string def = show_model(*default_value);
+	    if (def.size() > 15)
+		def = show_model_abbrev(*default_value);
+	    arg_name += " " + def;
+	}
+	args_names_types.push_back(arg_name);
     }
     help<<header("Usage");
     help<<"   "<<bold(name);
-    if (args_names_types.size()) help<<"["<<join(args_names_types,", ")<<"]";
-    help<<" -> "<<result_type << std::endl<<std::endl;
+    if (args_names_types.size()) help<<"["<<join(args_names_types,", ")<<"]\n\n";
     
     help<<header("Arguments");
     for(auto& argpair: args)
     {
 	auto& arg = argpair.second;
 	if (arg.get_child_optional("no_apply")) continue;
-	auto default_value = arg.get_child_optional("default_value");
+
+	// 1. arg: description
 	optional<string> description = arg.get_optional<string>("description");
-	{
-	    help<<"   "<<arg.get<string>("arg_name")<<": "<<description<<"."<<std::endl;
-	    if (default_value)
-		help<<"       default "<<show_model(*default_value)<<std::endl;
-	    help<<std::endl;
-	}
+	help<<"   "<<arg.get<string>("arg_name")<<": "<<description<<".\n";
+
+	// 2. type: type
+	help<<"       type: "<<unparse_type(arg.get_child("arg_type"))<<"\n";
+
+	// 3. default =/~ default
+	if (auto default_value = arg.get_child_optional("default_value"))
+	    help<<"       default "<<show_model(*default_value)<<"\n";
+
+	help<<std::endl;
     }
+    help<<header("Result type");
+    help<<indent(3,result_type)<<"\n\n";
+
     if (auto description = rule.get_optional<string>("description"))
     {
 	help<<header("Description");
