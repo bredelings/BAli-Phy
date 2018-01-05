@@ -1,7 +1,7 @@
 {
     "name": "AA",
     "result_type": "Alphabet",
-    "generate_function": "false",
+    "generate_function": false,
     "call": "aa",
     "args": ""
 }

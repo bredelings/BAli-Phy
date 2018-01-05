@@ -1,7 +1,7 @@
 {
     "name": "Codons",
     "result_type": "Alphabet",
-    "generate_function": "false",
+    "generate_function": false,
     "call": "codons[nuc,aa]",
     "args": [
         {

@@ -1,7 +1,7 @@
 {
     "name": "RS07RelaxedRates",
     "result_type": "IndelModel",
-    "generate_function": "false",
+    "generate_function": false,
     "call": "IModel.rs07_relaxed_rates_model",
     "args": ""
 }
