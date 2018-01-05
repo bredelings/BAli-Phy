@@ -6,6 +6,8 @@ using std::string;
 using std::vector;
 using std::pair;
 
+using boost::optional;
+
 std::ostream& operator<<(std::ostream& o,const monostate&) {o<<"()";return o;}
 
 bool ptree::value_is_empty() const
@@ -22,12 +24,12 @@ void ptree::erase(const std::string& key)
     std::swap(*this, children2);
 }
 
-int ptree::get_child_index(const std::string& key) const
+optional<int> ptree::get_child_index(const std::string& key) const
 {
     for(int i=0;i<size();i++)
 	if ((*this)[i].first == key)
 	    return i;
-    return -1;
+    return boost::none;
 }
 
 int ptree::count(const std::string& key) const
@@ -52,17 +54,19 @@ bool ptree::operator!=(const ptree& p2) const
 boost::optional<ptree&>
 ptree::get_child_optional(const std::string& key)
 {
-    int index = get_child_index(key);
-    if (index == -1) return boost::none;
-    return (*this)[index].second;
+    if (auto index = get_child_index(key))
+	return (*this)[*index].second;
+    else
+	return boost::none;
 }
 
 boost::optional<const ptree&>
 ptree::get_child_optional(const std::string& key) const
 {
-    int index = get_child_index(key);
-    if (index == -1) return boost::none;
-    return (*this)[index].second;
+    if (auto index = get_child_index(key))
+	return (*this)[*index].second;
+    else
+	return boost::none;
 }
 
 ptree& ptree::get_child(const std::string& key)

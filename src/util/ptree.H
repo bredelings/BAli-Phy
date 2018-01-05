@@ -36,7 +36,7 @@ public:
 
     void erase(const std::string& key);
 
-    int get_child_index(const std::string& key) const;
+    boost::optional<int> get_child_index(const std::string& key) const;
 
     int count(const std::string& key) const;
 
