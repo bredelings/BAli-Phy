@@ -395,7 +395,7 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	auto argi = array_index(args,i);
 
 	if (argi.get("no_apply",false)) break;
-	string arg_name = array_index(argi,0).get_value<string>();
+	string arg_name = argi.get_child("arg_name").get_value<string>();
 	ptree arg_tree = get_arg(*rule, arg_name);
 	ptree arg_type = arg_tree.get_child("arg_type");
 	expression_ref arg = get_model_as(R, arg_type, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
@@ -424,7 +424,7 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
     {
 	// E = (\arg_name -> E)
 	auto argi = array_index(args,i);
-	string arg_name = array_index(argi,0).get_value<string>();
+	string arg_name = argi.get_child("arg_name").get_value<string>();
 	E = lambda_quantify(dummy("arg_"+arg_name), E);
 	continue;
     }
