@@ -4,8 +4,9 @@
 #include "myexception.H"
 #include "util.H"
 #include "io.H"
-#include <boost/property_tree/json_parser.hpp>
 #include <boost/optional.hpp>
+#include "util/json.hh"
+#include "models/setup.H"
 
 using std::vector;
 using std::set;
@@ -257,12 +258,52 @@ string show_paths(const vector<fs::path>& paths)
     return join(spaths,":");
 }
 
+ptree json_to_ptree(const json& j)
+{
+    ptree p;
+    switch(j.type())
+    {
+    case json::value_t::null:
+	break;
+	// j.is_boolean()
+    case json::value_t::boolean:
+    case json::value_t::number_integer:
+	// j.is_number_unsigned()
+    case json::value_t::number_unsigned:
+    case json::value_t::number_float:
+	p = ptree(j.dump());
+	break;
+    case json::value_t::string:
+	p = ptree(j.get<string>());
+	break;
+	// j.is_array()
+    case json::value_t::array:
+	for(auto& x: j)
+	    p.push_back({"", json_to_ptree(x)});
+	break;
+    case json::value_t::object:
+	for(auto it: json::iterator_wrapper(j))
+	    p.push_back({it.key(), json_to_ptree(it.value())});
+	break;
+    default:
+	break;
+    }
+    return p;
+}
+
 void Rules::add_rule(const fs::path& path)
 {
     checked_ifstream infile(path.string(),"function file");
+
     Rule rule;
     try {
-	pt::read_json(infile, rule);
+	json j;
+	infile>>j;
+	rule = json_to_ptree(j);
+    }
+    catch (const std::exception& e)
+    {
+	throw myexception()<<"Error parsing JSON function description '"<<path.string()<<"'\n:  "<<e.what();
     }
     catch (...)
     {
