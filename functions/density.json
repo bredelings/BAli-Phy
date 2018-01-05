@@ -1,0 +1,16 @@
+{
+    "name": "density",
+    "result_type": "LogDouble",
+    "no_log": "true",
+    "call": "Distributions.density[dist,x]",
+    "args": [
+        {
+            "arg_name": "dist",
+            "arg_type": "Distribution[a]"
+        },
+        {
+            "arg_name": "x",
+            "arg_type": "a"
+        }
+    ]
+}

@@ -143,7 +143,9 @@ nobase_functions_DATA = functions/AA.json \
 	functions/Cons.json \
 	functions/Nil.json \
 	functions/num_branches.json \
-	functions/uniform_discretize.json
+	functions/uniform_discretize.json \
+	functions/density.json \
+	functions/quantile.json
 
 # Distributed in the doc/ directory
 docdir = $(datadir)/doc/@PACKAGE@

@@ -1,0 +1,16 @@
+{
+    "name": "quantile",
+    "result_type": "Double",
+    "no_log": "true",
+    "call": "Distributions.quantile[dist,p]",
+    "args": [
+        {
+            "arg_name": "dist",
+            "arg_type": "Distribution[Double]"
+        },
+        {
+            "arg_name": "p",
+            "arg_type": "Double"
+        }
+    ]
+}
