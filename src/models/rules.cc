@@ -13,8 +13,6 @@ using std::set;
 using std::map;
 using std::string;
 using boost::optional;
-namespace pt = boost::property_tree;
-using pt::ptree;
 namespace fs = boost::filesystem;
 
 // TODO: reject HKY+HKY -- reduce constraints.
@@ -267,11 +265,17 @@ ptree json_to_ptree(const json& j)
 	break;
 	// j.is_boolean()
     case json::value_t::boolean:
+	p = ptree(j.get<bool>());
+	break;
     case json::value_t::number_integer:
+	p = ptree(j.get<int>());
+	break;
 	// j.is_number_unsigned()
     case json::value_t::number_unsigned:
+	p = ptree(int(j.get<unsigned>()));
+	break;
     case json::value_t::number_float:
-	p = ptree(j.dump());
+	p = ptree(j.get<double>());
 	break;
     case json::value_t::string:
 	p = ptree(j.get<string>());

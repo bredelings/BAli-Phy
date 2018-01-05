@@ -3,15 +3,15 @@
 
 #include <vector>
 #include <string>
-#include <boost/property_tree/ptree.hpp>
 #include <utility>
 #include "unification.H"
+#include "util/ptree.H"
 
 class Rules;
 
-std::pair<boost::property_tree::ptree,equations> translate_model(const Rules& R,
-								 const boost::property_tree::ptree& required_type,
-								 boost::property_tree::ptree model,
-								 const std::vector<std::pair<std::string,term_t>>& scope);
+std::pair<ptree,equations> translate_model(const Rules& R,
+					   const ptree& required_type,
+					   ptree model,
+					   const std::vector<std::pair<std::string,term_t>>& scope);
 
 #endif

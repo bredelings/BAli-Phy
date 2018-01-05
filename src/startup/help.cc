@@ -1,5 +1,6 @@
 #include "startup/help.hh"
 
+#include <boost/optional/optional_io.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/algorithm/string.hpp>
@@ -22,9 +23,6 @@ namespace po = boost::program_options;
 using po::variables_map;
 
 namespace fs = boost::filesystem;
-
-namespace pt = boost::property_tree;
-using pt::ptree;
 
 string get_topic_from_string(const string& s)
 {
@@ -238,7 +236,7 @@ optional<string> get_citation_url(const Rule& rule)
     return boost::none;
 }
 
-string show_model_abbrev(boost::property_tree::ptree p)
+string show_model_abbrev(ptree p)
 {
     bool top_sample = false;
     if (p.get_value<string>() == "Sample")

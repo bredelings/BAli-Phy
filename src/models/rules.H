@@ -2,15 +2,15 @@
 #define RULES_H
 
 #include <string>
-#include <boost/property_tree/ptree.hpp>
+#include "util/ptree.H"
 #include <boost/optional.hpp>
 #include <boost/filesystem/operations.hpp>
 
-typedef boost::property_tree::ptree Rule;
+typedef ptree Rule;
 
-typedef boost::property_tree::ptree type_t;
+typedef ptree type_t;
 
-boost::property_tree::ptree get_arg(const Rule& rule, const std::string& arg_name);
+ptree get_arg(const Rule& rule, const std::string& arg_name);
 
 type_t get_type_for_arg(const Rule& rule, const std::string& arg);
 
@@ -32,7 +32,7 @@ public:
     Rule require_rule_for_func(const std::string& s) const;
 
     type_t get_result_type(const std::string& func) const;
-    type_t get_result_type(const boost::property_tree::ptree& func) const;
+    type_t get_result_type(const ptree& func) const;
 
     Rules(const std::vector<boost::filesystem::path>& path_list);
 };

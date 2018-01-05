@@ -10,16 +10,12 @@ using std::map;
 using std::set;
 using std::string;
 using boost::optional;
-using boost::property_tree::ptree;
 
 
 bool is_wildcard(const ptree& p)
 {
-    if (not p.empty()) return false;
-    return (p.get_value<string>() == "_");
+    return p == "_";
 }
-
-string show(const ptree& pt, int depth = 0);
 
 /// Split a string of the form key=value into {key,value}
 string show(const equations& E)
@@ -276,9 +272,8 @@ set<string> equations::referenced_vars() const
 
 bool is_variable(const ptree& p)
 {
-    if (not p.empty()) return false;
+    if (not p.has_value<string>()) return false;
     const string& s = p.get_value<string>();
-    if (s.empty()) return false;
     char first_letter = s[0];
     return (first_letter >= 97 and first_letter <= 122);
 }
@@ -377,9 +372,6 @@ void substitute(const map<string,term_t>& R, term_t& T)
 
 bool equations::unify(const term_t& T1, const term_t& T2)
 {
-    string head1 = T1.get_value<string>();
-    string head2 = T2.get_value<string>();
-
     // 1. If either term is a wildcard, then we are done.
     if (is_wildcard(T1) or is_wildcard(T2))
 	return valid;
@@ -388,17 +380,17 @@ bool equations::unify(const term_t& T1, const term_t& T2)
     {
 	// 2. var1 = var2
 	if (is_variable(T2))
-	    return add_var_condition(head1, head2);
+	    return add_var_condition(T1, T2);
 	// 3. var1 = T2
 	else
-	    return add_condition(head1, T2);
+	    return add_condition(T1, T2);
     }
     else if (is_variable(T2))
 	// 4. var2 = T1
-	return add_condition(head2, T1);
+	return add_condition(T2, T1);
 
     // 5. If the heads don't match then unification fails
-    if (head1 != head2)
+    if (T1.value != T2.value)
 	valid = false;
 
     // 6. If the arity doesn't match then unification fails

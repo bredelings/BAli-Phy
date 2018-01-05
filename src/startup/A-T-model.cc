@@ -9,6 +9,7 @@
 #include "models/rules.H"
 #include "startup/paths.H"
 #include "computation/expression/lambda.H"
+#include <boost/optional/optional_io.hpp>
 
 namespace po = boost::program_options;
 using po::variables_map;

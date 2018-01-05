@@ -2,14 +2,14 @@
 #define MODELS_PARSE_H
 
 #include <string>
-#include <boost/property_tree/ptree.hpp>
+#include "util/ptree.H"
 
 class Rules;
 
-std::string unparse(const boost::property_tree::ptree& p);
-std::string unparse_type(const boost::property_tree::ptree& p);
-std::string show_model(const boost::property_tree::ptree p);
+std::string unparse(const ptree& p);
+std::string unparse_type(const ptree& p);
+std::string show_model(const ptree p);
 
-boost::property_tree::ptree parse_type(const std::string& s);
-boost::property_tree::ptree parse(const Rules& R, const std::string& s);
+ptree parse_type(const std::string& s);
+ptree parse(const Rules& R, const std::string& s);
 #endif

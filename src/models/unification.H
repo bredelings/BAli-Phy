@@ -1,13 +1,13 @@
 #ifndef UNIFICATION_H
 #define UNIFICATION_H
 
-#include <boost/property_tree/ptree.hpp>
 #include <boost/optional.hpp>
 #include <set>
 #include <list>
 #include <map>
+#include "util/ptree.H"
 
-typedef boost::property_tree::ptree term_t;
+typedef ptree term_t;
 
 // GCC5 can't handle 'struct std::less<>'
 namespace std
@@ -74,7 +74,7 @@ void substitute(const std::map<std::string, term_t>& replace, term_t& T);
 
 equations operator&&(const equations& p1, const equations& p2);
 
-bool is_wildcard(const boost::property_tree::ptree& p);
+bool is_wildcard(const ptree& p);
 
 std::string show(const equations& E);
 

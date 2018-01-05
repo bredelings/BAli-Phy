@@ -81,10 +81,7 @@
 #include "models/setup.H"
 #include "util.H"
 #include "myexception.H"
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/info_parser.hpp>
 #include <boost/optional.hpp>
-#include <boost/property_tree/json_parser.hpp>
 #include "models/rules.H"
 #include "models/parse.H"
 #include "models/translate.H"
@@ -96,7 +93,6 @@
 #include "computation/expression/list.H"
 #include "computation/operations.H"
 
-using boost::property_tree::ptree;
 using boost::optional;
 using std::string;
 using std::pair;
@@ -105,21 +101,6 @@ using std::vector;
 using std::valarray;
 using boost::program_options::variables_map;
 using boost::shared_ptr;
-
-/// Split a string of the form key=value into {key,value}
-string show(const ptree& pt, int depth)
-{
-    string result = "";
-    string indent(depth,' ');
-    string indent2(depth+2,' ');
-    result += "'"+pt.get_value<string>()+"'\n";
-    for(auto c: pt)
-    {
-	result += indent2 + c.first + " : ";
-	result += show(c.second,depth+4);
-    }
-    return result;
-}
 
 string show(vector<string> args)
 {
@@ -334,7 +315,7 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
     //  ptree model_rep = parse(model);
 
     // 1. Complain on empty expressions
-    if (model_rep.empty() and model_rep.data().empty())
+    if (model_rep.empty() and model_rep.value_is_empty())
 	throw myexception()<<"Can't construct type '"<<unparse_type(required_type)<<"' from empty description!";
 
     // 2. Handle constant expressions

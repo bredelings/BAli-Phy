@@ -10,6 +10,7 @@
 #include "models/rules.H"
 #include "models/parse.H"
 #include "help.hh"
+#include "util/ptree.H"
 
 using std::string;
 using std::map;
@@ -23,9 +24,6 @@ using po::variables_map;
 const string trailing_args_separator = "---";
 
 namespace fs = boost::filesystem;
-
-namespace pt = boost::property_tree;
-using pt::ptree;
 
 vector<string> drop_trailing_args(int argc, char* argv[], const string& separator)
 {

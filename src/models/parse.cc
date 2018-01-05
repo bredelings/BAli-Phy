@@ -11,7 +11,6 @@ using std::vector;
 using std::list;
 using std::string;
 using std::pair;
-using boost::property_tree::ptree;
 using boost::optional;
 
 optional<pair<string,string>> split_keyword(const string& s, char c)
@@ -370,7 +369,7 @@ string unparse_type(const ptree& p)
     return s;
 }
 
-string show_model(boost::property_tree::ptree p)
+string show_model(ptree p)
 {
     bool top_sample = false;
     if (p.get_value<string>() == "Sample")

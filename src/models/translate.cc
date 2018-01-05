@@ -13,7 +13,6 @@ using std::set;
 using std::pair;
 using std::map;
 using std::string;
-using boost::property_tree::ptree;
 using boost::optional;
 
 // Translate pass M+FM -> RCTMC[M,FM]
