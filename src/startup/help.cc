@@ -161,7 +161,7 @@ optional<string> get_citation(const Rule& rule, bool show_title)
     if (not citation)
 	return boost::none;
 
-    if (not citation->get_value<string>().empty())
+    if (citation->is_a<string>())
 	return citation->get_value<string>();
 
     vector<string> cite;
