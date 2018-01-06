@@ -11,6 +11,8 @@
 
 struct monostate{};
 std::ostream& operator<<(std::ostream& o,const monostate&);
+inline bool operator<(const monostate&, const monostate&) {return false;}
+inline bool operator>(const monostate&, const monostate&) {return false;}
 inline bool operator==(const monostate&, const monostate&) {return true;}
 inline bool operator!=(const monostate&, const monostate&) {return false;}
 
