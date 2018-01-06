@@ -174,8 +174,8 @@ optional<term_t> equations::value_of_var(const string& x) const
 
 bool compare(const ptree& a, const ptree& b)
 {
-    if (a.get_value<string>() < b.get_value<string>()) return true;
-    if (a.get_value<string>() > b.get_value<string>()) return false;
+    if (a.value < b.value) return true;
+    if (a.value > b.value) return false;
 
     if (a.size() < b.size()) return true;
     if (a.size() > b.size()) return false;
