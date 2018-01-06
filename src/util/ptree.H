@@ -112,10 +112,10 @@ public:
     ptree(const char* s):value(std::string(s)) {};
 };
 
-template <>  inline bool ptree::has_value<bool>()   const {return value.which() == 4;};
-template <>  inline bool ptree::has_value<int>()    const {return value.which() == 2;};
-template <>  inline bool ptree::has_value<double>() const {return value.which() == 3;};
-template <>  inline bool ptree::has_value<std::string>() const {return value.which() == 1;};
+template <>  inline bool ptree::has_value<bool>()   const {return value.which() == 4;}
+template <>  inline bool ptree::has_value<int>()    const {return value.which() == 2;}
+template <>  inline bool ptree::has_value<double>() const {return value.which() == 3;}
+template <>  inline bool ptree::has_value<std::string>() const {return value.which() == 1;}
 
 std::string show(const ptree& pt, int depth=0);
 
