@@ -319,7 +319,7 @@ void Rules::add_rule(const fs::path& path)
     string name = rule.get<string>("name");
 
     if (rules.count(name))
-	std::cerr<<"Warning: ignoring additional definition of function '"<<name<<"' from file '"<<path<<"'";
+	std::cerr<<"Warning: ignoring additional definition of function '"<<name<<"' from file '"<<path<<"'\n";
     else
 	rules[name] = rule;
 }
