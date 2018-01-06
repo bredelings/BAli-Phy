@@ -223,11 +223,6 @@ void ptree_map(std::function<void(ptree&)> f, ptree& p)
     f2(p);
 }
 
-bool is_null(const ptree& p)
-{
-    return p.value_is_empty() and p.empty();
-}
-
 void handle_positional_args(ptree& model, const Rules& R)
 {
     if (model.size() == 0) return;
@@ -254,7 +249,7 @@ void handle_positional_args(ptree& model, const Rules& R)
 	    if (model.count(keyword))
 		throw myexception()<<"Trying to set value for "<<head<<"."<<keyword<<" both by position and by keyword: \n"<<unparse(model);
 
-	    if (is_null(child.second))
+	    if (child.second.is_null())
 	    {
 		i++;
 		continue;
