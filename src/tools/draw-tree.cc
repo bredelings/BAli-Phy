@@ -3410,7 +3410,7 @@ MC_tree_with_lengths collapse_nodes(const MC_tree_with_lengths& MC1)
 int main(int argc,char* argv[]) 
 {
     try {
-#if defined(HAVE_FENV_H) && !defined(NDEBUG)
+#if defined(HAVE_FEEANBLEECEPT) && !defined(NDEBUG)
 	feenableexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
 #endif
 
