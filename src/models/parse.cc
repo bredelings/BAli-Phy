@@ -395,7 +395,8 @@ string show_model(ptree p)
     if (p.has_value<string>() and p.get_value<string>() == "Sample")
     {
 	top_sample = true;
-	p = p.begin()->second;
+	auto q = p[0].second;
+	std::swap(p,q);
     }
 
     string output = unparse(p);
