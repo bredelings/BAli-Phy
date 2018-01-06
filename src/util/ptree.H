@@ -24,6 +24,8 @@ public:
 
     bool value_is_empty() const;
 
+    bool is_null() const;
+
     template <typename T>     bool has_value() const {return false;}
     template <typename T>     bool is_a() const {return empty() and has_value<T>();}
 
