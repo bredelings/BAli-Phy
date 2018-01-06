@@ -184,27 +184,32 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
     // 0b. Any type variables in scope must also be listed as bound
     assert(includes(bound_vars, find_type_variables_from_scope(scope)));
 
-    auto name = model.get_value<string>();
-
     // 1. Get result type and the rule, if there is one.
     type_t result_type;
     optional<Rule> rule;
-    if (can_be_converted_to<int>(name))
+    if (model.is_a<int>())
 	result_type=type_t("Int");
-    else if (can_be_converted_to<double>(name))
+    else if (model.is_a<double>())
 	result_type=type_t("Double");
-    else if (name.size()>=2 and name[0] == '"' and name.back() == '"' and required_type.get_value<string>() == "String") 
-	result_type=type_t("String");
-    else if (auto type = type_for_var_in_scope(name, scope))
-	result_type = *type;
+    else if (model.is_a<bool>())
+	result_type=type_t("Bool");
     else
     {
-	rule = R.require_rule_for_func(name);
-	rule = freshen_type_vars(*rule, bound_vars);
+	auto name = model.get_value<string>();
 
-	//	std::cout<<"name = "<<name<<" required_type = "<<unparse_type(required_type)<<"  result_type = "<<unparse_type(result_type)<<std::endl;
+	if (name.size()>=2 and name[0] == '"' and name.back() == '"')
+	    result_type=type_t("String");
+	else if (auto type = type_for_var_in_scope(name, scope))
+	    result_type = *type;
+	else
+	{
+	    rule = R.require_rule_for_func(name);
+	    rule = freshen_type_vars(*rule, bound_vars);
 
-	result_type = rule->get_child("result_type");
+	    //	std::cout<<"name = "<<name<<" required_type = "<<unparse_type(required_type)<<"  result_type = "<<unparse_type(result_type)<<std::endl;
+
+	    result_type = rule->get_child("result_type");
+	}
     }
 
     // 2. Unify required type with rule result type
@@ -219,7 +224,7 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	if (convertible_to(model, result_type, required_type))
 	    return pass2(R, required_type, model, bound_vars, scope);
 	else
-	    throw myexception()<<"Term '"<<model.get_value<string>()<<"' of type '"<<unparse_type(result_type)
+	    throw myexception()<<"Term '"<<unparse(model)<<"' of type '"<<unparse_type(result_type)
 			       <<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
     }
 
@@ -227,7 +232,7 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
     if (not rule)
     {
 	if (not model.empty())
-	    throw myexception()<<"Term '"<<model.get_value<string>()<<"' of type '"<<unparse_type(result_type)
+	    throw myexception()<<"Term '"<<model.value<<"' of type '"<<unparse_type(result_type)
 			       <<"' should not have arguments!";
 	return E;
     }
@@ -245,6 +250,7 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	    throw myexception()<<"Rule for function '"<<rule->get<string>("name")<<"' doesn't allow specifying a value for '"<<child.first<<"'.";
 
     // Create the new model tree with args in correct order
+    auto name = model.get_value<string>();
     ptree model2(name);
 
     // 7. Handle arguments in rule order

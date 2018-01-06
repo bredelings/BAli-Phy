@@ -133,6 +133,9 @@ ptree parse(const string& s);
 /// Parse strings of the form {~}head[value1, value2, key3=value3, ...]
 ptree parse_no_submodel(const string& s)
 {
+    if (s.empty())
+	return ptree();
+
     // 0. Handle ~
     if (not s.empty() and s[0] == '~')
 	return add_sample(parse_no_submodel(s.substr(1)));
@@ -145,8 +148,19 @@ ptree parse_no_submodel(const string& s)
     args.erase(args.begin());
 
     ptree result;
-    result.put_value(head);
-  
+    if (auto i = can_be_converted_to<int>(head))
+	result.put_value(*i);
+    else if (auto d = can_be_converted_to<double>(head))
+	result.put_value(*d);
+    else if (auto b = can_be_converted_to<bool>(head))
+	result.put_value(*b);
+    // Currently we leave literal (i.e. quoted) strings as strings w/ quotes.
+    else
+	result.put_value(head);
+
+    if (args.size() and not result.is_a<string>())
+	throw myexception()<<"Error parsing '"<<s<<"': constant '"<<head<<"' should not have arguments, but has "<<args.size()<<"!";
+
     // 3. Attempt to set the supplied arguments
     for(int i=0;i<args.size();i++)
     {
@@ -211,7 +225,7 @@ void ptree_map(std::function<void(ptree&)> f, ptree& p)
 
 bool is_null(const ptree& p)
 {
-    return p.get_value<string>().empty() and p.empty();
+    return p.value_is_empty() and p.empty();
 }
 
 void handle_positional_args(ptree& model, const Rules& R)
@@ -265,7 +279,7 @@ void handle_positional_args(ptree& model, const Rules& R)
 // Convert List[x1,x2...] -> Cons[x1,[Cons[x2,...]]
 void pass_list(ptree& p)
 {
-    if (p.get_value<string>() == "List")
+    if (p.has_value<string>() and p.get_value<string>() == "List")
     {
 	ptree l = ptree("Nil");
 	for(auto& child: reverse(p))
@@ -317,6 +331,17 @@ optional<list<ptree>> get_list_elements(const ptree& p)
 
 string unparse(const ptree& p)
 {
+    using namespace std::string_literals;
+
+    if (p.is_a<int>())
+	return convertToString(p.get_value<int>());
+    else if (p.is_a<double>())
+	return convertToString(p.get_value<double>());
+    else if (p.is_a<bool>())
+	return convertToString(p.get_value<bool>());
+    else if (p.is_a<string>() and is_constant(p))
+	return p.get_value<string>();
+
     string s = p.get_value<string>();
     if (s == "RCTMC")
     {
@@ -372,7 +397,7 @@ string unparse_type(const ptree& p)
 string show_model(ptree p)
 {
     bool top_sample = false;
-    if (p.get_value<string>() == "Sample")
+    if (p.has_value<string>() and p.get_value<string>() == "Sample")
     {
 	top_sample = true;
 	p = p.begin()->second;

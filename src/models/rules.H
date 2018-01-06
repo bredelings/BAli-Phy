@@ -31,7 +31,6 @@ public:
 
     Rule require_rule_for_func(const std::string& s) const;
 
-    type_t get_result_type(const std::string& func) const;
     type_t get_result_type(const ptree& func) const;
 
     Rules(const std::vector<boost::filesystem::path>& path_list);

@@ -7,6 +7,7 @@
 #include <boost/optional.hpp>
 #include "util/json.hh"
 #include "models/setup.H"
+#include "models/parse.H" // for is_constant( )
 
 using std::vector;
 using std::set;
@@ -231,20 +232,21 @@ ptree get_type_for_arg(const string& func, const string& arg) const
 }
 */
 
-ptree Rules::get_result_type(const string& func) const
+ptree Rules::get_result_type(const ptree& model_rep) const
 {
-    if (can_be_converted_to<int>(func)) return ptree("Int");
-    if (can_be_converted_to<double>(func)) return ptree("Double");
+    if (model_rep.is_a<int>())
+	return ptree("Int");
+    else if (model_rep.is_a<double>())
+	return ptree("Double");
+    else if (model_rep.is_a<bool>())
+	return ptree("Bool");
+    else if (model_rep.is_a<string>() and is_constant(model_rep))
+	return ptree("String");
 
-    if (auto rule = get_rule_for_func(func))
+    if (auto rule = get_rule_for_func(model_rep.get_value<string>()))
 	return rule->get_child("result_type");
     else
 	return ptree("?");
-}
-
-ptree Rules::get_result_type(const ptree& model_rep) const
-{
-    return get_result_type(model_rep.get_value<string>());
 }
 
 

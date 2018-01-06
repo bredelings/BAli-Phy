@@ -155,6 +155,8 @@ bool is_loggable_function(const Rules& R, const string& name)
 
 bool is_unlogged_random(const Rules& R, const ptree& model)
 {
+    if (is_constant(model)) return false;
+
     auto name = model.get_value<string>();
 
     // 1. If this function is random, then yes.
@@ -173,6 +175,8 @@ bool is_unlogged_random(const Rules& R, const ptree& model)
 
 bool should_log(const Rules& R, const ptree& model, const string& arg_name)
 {
+    if (is_constant(model)) return false;
+
     auto name = model.get_value<string>();
 
     if (not is_loggable_function(R, name)) return false;
@@ -187,6 +191,15 @@ bool should_log(const Rules& R, const ptree& model, const string& arg_name)
 
 expression_ref arg_to_apply(const ptree& expression)
 {
+    if (expression.is_a<int>())
+	return expression.get_value<int>();
+    else if (expression.is_a<double>())
+	return expression.get_value<double>();
+    else if (expression.is_a<bool>())
+	return expression.get_value<bool>();
+    else if (is_constant(expression) and expression.is_a<string>())
+	return expression.get_value<string>();
+	    
     expression_ref E;
     string top = expression.get_value<string>();
     if (top.find('.') == string::npos)
@@ -226,43 +239,43 @@ optional<vector<double>> get_frequencies_from_tree(const ptree& model_rep, const
 
 void require_type(const ptree& E, const ptree& required_type, const string& type2)
 {
-    string name = E.get_value<string>();
-
     if (not unify(ptree(type2), required_type))
-	throw myexception()<<"Expected type '"<<unparse_type(required_type)<<"' but got '"<<name<<"' of type 'Int'";
+	throw myexception()<<"Expected type '"<<unparse_type(required_type)<<"' but '"<<unparse(E)<<"' of type '"<<unparse_type(type2)<<"'";
 }
 
 expression_ref get_constant_model(const ptree& required_type, const ptree& model_rep)
 {
-    string name = model_rep.get_value<string>();
-
     // 1. If its an integer constant
-    if (can_be_converted_to<int>(name))
+    if (model_rep.is_a<int>())
     {
-	if (model_rep.size() != 0)
-	    throw myexception()<<"An integer constant cannot have arguments!";
-
 	if (required_type.get_value<string>() == "Double")
-	    return {dummy("Prelude.return"), convertTo<double>(name)};
+	    return {dummy("Prelude.return"), (double)model_rep};
 
 	require_type(model_rep, required_type, "Int");
 
-	return {dummy("Prelude.return"), convertTo<int>(name)};
+	return {dummy("Prelude.return"), (int)model_rep};
     }
 
     // 2. If its an integer constant
-    else if (can_be_converted_to<double>(name))
+    if (model_rep.is_a<double>())
     {
-	if (model_rep.size() != 0)
-	    throw myexception()<<"An floating point constant cannot have arguments!";
-
 	require_type(model_rep, required_type, "Double");
 
-	return {dummy("Prelude.return"), convertTo<double>(name)};
+	return {dummy("Prelude.return"), (double)model_rep};
     }
 
-    // 3. If its a string constant
-    else if (name.size() > 2 and name[0] == '"' and name.back() == '"')
+    // 3. If its a bool constant
+    if (model_rep.is_a<bool>())
+    {
+	require_type(model_rep, required_type, "Bool");
+
+	return {dummy("Prelude.return"), (bool)model_rep};
+    }
+
+    string name = model_rep.get_value<string>();
+
+    // 4. If its a string constant
+    if (name.size() > 2 and name[0] == '"' and name.back() == '"')
     {
 	if (model_rep.size() != 0)
 	    throw myexception()<<"An string constant cannot have arguments!";
@@ -277,13 +290,13 @@ expression_ref get_constant_model(const ptree& required_type, const ptree& model
 
 expression_ref get_variable_model(const ptree& E, const set<string>& scope)
 {
-    if (not E.size())
-    {
-	auto name = E.get_value<string>();
-	if (scope.count(name))
-	    return {dummy("Prelude.return"),dummy(string("arg_") + name)};
-    }
-    return {};
+    if (E.size() or not E.is_a<string>()) return {};
+
+    auto name = E.get_value<string>();
+    if (scope.count(name))
+	return {dummy("Prelude.return"),dummy(string("arg_") + name)};
+    else
+	return {};
 }
 
 
