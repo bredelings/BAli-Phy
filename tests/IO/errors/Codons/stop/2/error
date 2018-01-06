@@ -2,4 +2,4 @@ bali-phy: Error! In file 'test.fasta': sequence #1 '1':
  Sequence of 10 nucleotides cannot be divided into codons: not a multiple of 3 nucleotides!
  Alignment row of 10 columns cannot be divided into codons: not a multiple of 3 columns!
  Sequence contains 2 stop codons: not allowed!
-   First stop codon is 'UAA' in column 1   (genetic code = standard)
+   First stop codon is 'UAA' at nucleotide column 1   (genetic code = standard)

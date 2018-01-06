@@ -614,7 +614,7 @@ vector<int> Triplets::operator()(const string& letters) const
 
 	int col = stop_codons[0];
 	string stop = letters.substr(col*letter_size, letter_size);
-	e<<"   First stop codon is '"<<stop<<"' in column "<<col+1<<"   (genetic code = "<<C->getGenetic_Code().name()<<")";
+	e<<"   First stop codon is '"<<stop<<"' at nucleotide column "<<3*col+1<<"   (genetic code = "<<C->getGenetic_Code().name()<<")";
     }
 
     if (not ok)
