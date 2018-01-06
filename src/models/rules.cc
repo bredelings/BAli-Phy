@@ -206,8 +206,8 @@ ptree get_arg(const Rule& rule, const string& arg_name)
 string get_keyword_for_positional_arg(const Rule& rule, int i)
 {
     const auto arguments = rule.get_child("args");
-    auto name = rule.get_child("result_type").get_value<string>();
-    if (i > arguments.size())
+    auto name = rule.get<string>("name");
+    if (i >= arguments.size())
 	throw myexception()<<"Trying to access positional arg "<<i+1<<" for '"<<name<<"', which only has "<<arguments.size()<<" positional arguments.";
 
     auto it = arguments.begin();
