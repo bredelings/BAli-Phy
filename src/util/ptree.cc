@@ -97,7 +97,7 @@ ptree::operator bool () const
 
 ptree::operator int () const
 {
-    if (not is_a<bool>())
+    if (not is_a<int>())
 	throw myexception()<<"Trying to convert non-int to int";
     else
 	return get_value<int>();
