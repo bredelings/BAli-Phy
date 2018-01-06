@@ -15,6 +15,11 @@ bool ptree::value_is_empty() const
     return value.which() == 0;
 }
 
+bool ptree::is_null() const
+{
+    return value_is_empty() and empty();
+}
+
 void ptree::erase(const std::string& key)
 {
     vector<pair<string,ptree>> children2;
