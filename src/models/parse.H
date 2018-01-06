@@ -12,4 +12,6 @@ std::string show_model(const ptree p);
 
 ptree parse_type(const std::string& s);
 ptree parse(const Rules& R, const std::string& s);
+
+bool is_constant(const ptree& p);
 #endif

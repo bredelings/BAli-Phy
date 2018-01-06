@@ -384,3 +384,16 @@ string show_model(ptree p)
     return connector + output;
 }
 
+bool is_constant(const ptree& model)
+{
+    if (model.value_is_empty())
+	throw myexception()<<"is_constant( ): got a null value!";
+
+    if (model.is_a<int>() or model.is_a<double>() or model.is_a<bool>()) return true;
+
+    assert(model.has_value<string>());
+
+    string name = model.get_value<string>();
+
+    return (name.size()>=2 and name[0] == '"' and name.back() == '"');
+}
