@@ -89,7 +89,7 @@ Matrix expm1(const EigenValues& solution,double t)
 #ifndef NDEBUG
     for(int i=0;i<E.size1();i++)
 	for(int j=0;j<E.size2();j++)
-	    assert(E(i,j) + (i==j)?1.0:0.0 >= -1.0e-13);
+	    assert(E(i,j) + ((i==j)?1.0:0.0) >= -1.0e-13);
 #endif
 
     return E;
