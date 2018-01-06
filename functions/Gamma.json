@@ -5,11 +5,21 @@
     "args": [
         {
             "arg_name": "a",
-            "arg_type": "Double"
+            "arg_type": "Double",
+	    "description": "The shape parameter"
         },
         {
             "arg_name": "b",
-            "arg_type": "Double"
+            "arg_type": "Double",
+	    "description": "The scale parameter"
         }
-    ]
+    ],
+    "title" : "The gamma distribution",
+    "description": "mean = a * b\nvariance = a*b^2",
+    "examples": ["~Gamma[1.0,mu]                  # An exponential",
+		 "~iid[10,Gamma[0.5,2]]            # 10 samples",
+		 "quantile[Gamma[0.5,2],0.95]",
+		 "density[Gamma[0.5,2],0.95]"
+		]
+
 }
