@@ -63,6 +63,11 @@ public:
 	return (is_a<std::string>() and get_value<std::string>() == s);
     }
 
+    bool operator==(const char* s) const
+    {
+	return (*this) == std::string(s);
+    }
+
     boost::optional<ptree&> get_child_optional(const std::string& key);
     boost::optional<const ptree&> get_child_optional(const std::string& key) const;
 
