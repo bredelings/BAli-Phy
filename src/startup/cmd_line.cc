@@ -231,7 +231,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     if (args.count("help") or command == "help")
     {
-	if (topic.empty()) topic = args["help"].as<string>();
+	if (topic.empty())
+	    topic = args.count("help")?args["help"].as<string>():"simple";
+
 	auto package_paths = get_package_paths(argv[0], args);
 	if (topic == "simple")
 	{
