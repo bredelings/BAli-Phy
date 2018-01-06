@@ -126,13 +126,14 @@ string ptree::show() const
 
 string show(const ptree& pt, int depth)
 {
-    string result = "";
     string indent(depth,' ');
     string indent2(depth+2,' ');
-    result += "'"+convertToString(pt.value)+"'\n";
+    string result = convertToString(pt.value);
+    if (pt.has_value<string>())
+	result = "'" + result + "'";
     for(auto c: pt)
     {
-	result += indent2 + c.first + " : ";
+	result += "\n" + indent2 + c.first + " : ";
 	result += show(c.second,depth+4);
     }
     return result;
