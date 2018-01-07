@@ -47,17 +47,24 @@ Get some information about the alignment:
 What version of bali-phy are you running?  When was it compiled?  Which compiler?  For what computer type?
 % bali-phy -v
 Look at the list of command line options:
-% bali-phy --help 
-Look at them with the ability to scroll back:
 % bali-phy --help | less
 Some options have a short form which is a single letter:
 % bali-phy -h | less
 </para>
+
+<para>
+You can also show help for advanced options:
+% bali-phy --help=advanced | less
+% bali-phy --help=expert | less
+You can get help on the command line options:
+% bali-phy --help=iterations | less
+You can also get help on models, distributions, and functions:
+% bali-phy --help=TN | less
+% bali-phy --help=Normal | less
+% bali-phy --help=quantile
+</para>
+
 </section>
-
-
-
-
 
 <section ><info><title>Analysis 1: variable alignment</title></info>
 <para>Let's do an analysis of intergenic transcribed spacer (ITS) genes from 20 specimens of lichenized fungi (Gaya et al, 2011 analyzes 68). This analysis will estimate the alignment, phylogeny, and evolutionary parameters using MCMC.</para>
@@ -207,7 +214,7 @@ The report should give us an indication of
   <listitem>What is consensus alignment for each partition?</listitem>
   <listitem>How much alignment uncertainty is there in each partition?</listitem>
   <listitem>How much do the split frequencies differ between runs?</listitem>
-  <listitem>What is the effective sample size (Ne) for the Scale1?  For |A1|?</listitem>
+  <listitem>What is the effective sample size (Ne) for the Scale[1]?  For |A1|?</listitem>
 </orderedlist>
 </para>
 
@@ -272,7 +279,7 @@ This means that the information is <emphasis>pooled</emphasis> between the parti
 <para>We can also specify that some partitions share the same scaling factor for branch lengths:
 % bali-phy {ITS1,5.8S,ITS2}.fasta --smodel=1,3:GTR --imodel=1,3:RS07 --smodel=2:TN --imodel=2:none --scale=1,3: --test
 This means that the branch lengths for partitions 1 and 3 are the same, instead of being independently estimated.</para>
-<para>Take a look at the model parameters.  There is no longer a Scale3 parameter.  Instead, partitions 1 and 3 share Scale1.</para>
+<para>Take a look at the model parameters.  There is no longer a Scale[3] parameter.  Instead, partitions 1 and 3 share Scale[1].</para>
 </section>
 </section>
 
