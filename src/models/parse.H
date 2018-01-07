@@ -9,6 +9,7 @@ class Rules;
 std::string unparse(const ptree& p);
 std::string unparse_type(const ptree& p);
 std::string show_model(const ptree p);
+std::string show_model_abbrev(const ptree p, int length);
 
 ptree parse_type(const std::string& s);
 ptree parse(const Rules& R, const std::string& s);

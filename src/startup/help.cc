@@ -236,23 +236,6 @@ optional<string> get_citation_url(const Rule& rule)
     return boost::none;
 }
 
-string show_model_abbrev(ptree p)
-{
-    bool top_sample = false;
-    if (p.get_value<string>() == "Sample")
-    {
-	top_sample = true;
-	p = p.begin()->second;
-    }
-
-    string output = p.get_value<string>();
-    if (p.size())
-	output += "[..]";
-    string connector = top_sample?"~ ":"= ";
-
-    return connector + output;
-}
-
 string get_help_for_rule(const Rule& rule)
 {
     std::ostringstream help;
@@ -277,12 +260,7 @@ string get_help_for_rule(const Rule& rule)
 	if (arg.get_child_optional("no_apply")) continue;
 	string arg_name = arg.get<string>("arg_name");
 	if (auto default_value = arg.get_child_optional("default_value"))
-	{
-	    string def = show_model(*default_value);
-	    if (def.size() > 15)
-		def = show_model_abbrev(*default_value);
-	    arg_name += " " + def;
-	}
+	    arg_name += " " + show_model_abbrev(*default_value, 15);
 	args_names_types.push_back(arg_name);
     }
     help<<header("Usage");

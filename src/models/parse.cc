@@ -389,20 +389,41 @@ string unparse_type(const ptree& p)
     return s;
 }
 
+optional<ptree> peel_sample(ptree p)
+{
+    if (p.has_value<string>() and p.get_value<string>() == "Sample")
+	return p[0].second;
+    else
+	return boost::none;
+}
+
+string unparse_abbrev(ptree p, int length)
+{
+    string output = unparse(p);
+    if (output.size() > length)
+    {
+	output = convertToString(p.value);
+	if (p.size())
+	    output += "[..]";
+    }
+    return output;
+}
+
 string show_model(ptree p)
 {
-    bool top_sample = false;
-    if (p.has_value<string>() and p.get_value<string>() == "Sample")
-    {
-	top_sample = true;
-	auto q = p[0].second;
-	std::swap(p,q);
-    }
+    if (auto q = peel_sample(p))
+	return "~ " + unparse(*q);
+    else
+	return "= " + unparse(p);
+}
 
-    string output = unparse(p);
-    string connector = top_sample?"~ ":"= ";
 
-    return connector + output;
+string show_model_abbrev(ptree p, int length)
+{
+    if (auto q = peel_sample(p))
+	return "~ " + unparse_abbrev(*q,length-2);
+    else
+	return "= " + unparse_abbrev( p,length-2);
 }
 
 bool is_constant(const ptree& model)
