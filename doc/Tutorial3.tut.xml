@@ -163,8 +163,8 @@ We can use the TN+Gamma[4]+INV model without specifying parameters:
 However, we can also fix parameter values:
 % bali-phy Globins/bglobin.fasta --test --smodel=TN+Rates.Gamma[n=4,alpha=1]+INV[pInv=0.2]
 Here we have set the shape parameter for the Gamma distribution to 1, and the
-fraction of invariant sites to 20%.  Since these parameters are fixed, they are will
-not be estimated. Their values will not be shown in the log file since they are constant.
+fraction of invariant sites to 20%.  Since these parameters are fixed, they will
+not be estimated and their values will not be shown in the log file.
 </para>
 <para>
 You can see the parameters for a model by using the <userinput>help</userinput> command, as in:
