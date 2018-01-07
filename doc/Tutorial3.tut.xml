@@ -145,13 +145,53 @@ The M0 model takes a nucleotide exchange model as a parameter. This parameter is
 % bali-phy Globins/bglobin.fasta --test --smodel=M0[,GTR]
 You can make the codon frequencies to be generated from a single set of nucleotide frequencies:
 % bali-phy Globins/bglobin.fasta --test --smodel=M0[,GTR]+MG94
-The M7 model is a mixture of M0 codon models with different dN/dS values:
+The M7 model allows different sites to have different dN/dS values, where the probability of dN/dS values follows a beta distribution:
 % bali-phy Globins/bglobin.fasta --test --smodel=M7
 The M7 model has parameters as well. Here are the defaults:
 % bali-phy Globins/bglobin.fasta --test --smodel=M7[4,HKY,F61]
+The M3 model allows different sites to have different dN/dS values, but directly estimates what these values are:
+% bali-phy Globins/bglobin.fasta --test --smodel=M3[n=3]
 The M8a_Test model allows testing for positive selection in some fraction of the sites:
 % bali-phy Globins/bglobin.fasta --test --smodel=M8a_Test[4,HKY,F3x4]
 </para>
+</section>
+
+<section><info><title>Fixing parameter values</title></info>
+<para>
+We can use the TN+Gamma[4]+INV model without specifying parameters:
+% bali-phy Globins/bglobin.fasta --test --smodel=TN+Rates.Gamma+INV
+However, we can also fix parameter values:
+% bali-phy Globins/bglobin.fasta --test --smodel=TN+Rates.Gamma[n=4,alpha=1]+INV[pInv=0.2]
+Here we have set the shape parameter for the Gamma distribution to 1, and the
+fraction of invariant sites to 20%.  Since these parameters are fixed, they are will
+not be estimated. Their values will not be shown in the log file since they are constant.
+</para>
+<para>
+You can see the parameters for a model by using the <userinput>help</userinput> command, as in:
+% bali-phy help Rates.Gamma
+This will show the default value or default prior for each parameter, if there is one.
+</para>
+</section>
+
+<section><info><title>Priors</title></info>
+<para>
+By default the fraction of invariant sites follows a Uniform[0,1] distribution:
+% bali-phy help INV
+However, we can specify an alternative prior:
+% bali-phy Globins/bglobin.fasta --test -S TN+Rates.Gamma[n=4]+INV[pInv~Uniform[0,0.2]]
+We can also specify parameters as positional arguments instead of using variable names:
+% bali-phy Globins/bglobin.fasta --test -S TN+Rates.Gamma[4]+INV[~Uniform[0,0.2]]
+Here "<userinput>~</userinput>" indicates a sample from the Uniform distribution instead of the distribution
+itself.
+</para>
+<para>
+The insertion-deletion model also has parameters.
+% bali-phy help RS07
+Here the default value for meanIndelLength is Add[1,~Exponential[10]].  This indicates
+a random value that is obtained by sampling an Exponential random variable with mean 10
+and then adding 1 to it.
+</para>
+
 </section>
 </section>
 

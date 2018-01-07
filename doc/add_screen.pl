@@ -10,6 +10,11 @@ while(my $line = <>)
 	$screen = $screen . $line;
 	next;
     }
+    elsif ($line =~ m/^\| (.*)$/)
+    {
+	$screen = $screen . $line;
+	next;
+    }
     elsif ($screen ne "")
     {
 	print "<screen>$screen</screen>";
