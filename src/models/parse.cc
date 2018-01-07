@@ -331,7 +331,13 @@ string unparse(const ptree& p)
     if (p.is_a<int>())
 	return convertToString(p.get_value<int>());
     else if (p.is_a<double>())
-	return convertToString(p.get_value<double>());
+    {
+	auto s = convertToString(p.get_value<double>());
+	if (s.find('.') != std::string::npos)
+	    while(s.size() > 3 and s.back() == '0')
+		s.pop_back();
+	return s;
+    }
     else if (p.is_a<bool>())
 	return convertToString(p.get_value<bool>());
     else if (p.is_a<string>() and is_constant(p))
