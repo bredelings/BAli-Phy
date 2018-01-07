@@ -1,7 +1,7 @@
 {
     "name": "Rates.logNormal",
     "result_type": "MixtureModel[a]",
-    "call": "SModel.log_normal_rates[submodel,sigmaOverMu,n]",
+    "call": "SModel.log_normal_rates[submodel,lsigma,n]",
     "args": [
         {
             "arg_name": "n",
@@ -10,13 +10,15 @@
             "description": "The number of bins for discretizing the logNormal distribution"
         },
         {
-            "arg_name": "sigmaOverMu",
+            "arg_name": "lsigma",
             "arg_type": "Double",
+            "description": "The standard deviation parameter",
             "default_value": "~logLaplace[-3,1]"
         },
         {
             "arg_name": "submodel",
             "arg_type": "MixtureModel[a]",
+            "description": "The model being scaled",
             "applied_args": "A"
         },
         {
@@ -24,5 +26,6 @@
             "arg_type": "a",
             "no_apply": true
         }
-    ]
+    ],
+    "examples": ["GTR+Rates.logNormal[4]+INV"]
 }

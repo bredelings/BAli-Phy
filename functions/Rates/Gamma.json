@@ -7,17 +7,18 @@
             "arg_name": "n",
             "arg_type": "Int",
             "default_value": "4",
-            "description": "The number of bins for discretizing the Gamma distribution."
+            "description": "The number of bins for discretizing the Gamma distribution"
         },
         {
             "arg_name": "alpha",
             "arg_type": "Double",
             "default_value": "~logLaplace[-6,2]",
-            "description": "The shape parameter for the Gamma distribution."
+            "description": "The shape parameter for the Gamma distribution"
         },
         {
             "arg_name": "submodel",
             "arg_type": "MixtureModel[a]",
+            "description": "The model being scaled",
             "applied_args": "A"
         },
         {
@@ -25,5 +26,6 @@
             "arg_type": "a",
             "no_apply": true
         }
-    ]
+    ],
+    "examples": ["GTR+Rates.Gamma[4]+INV"]
 }
