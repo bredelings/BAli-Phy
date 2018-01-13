@@ -435,6 +435,19 @@ MCMC::Result sample_SPR(Parameters& P, int b1, int b2, bool slice = false)
 	vector<log_double_t> rho = {1, 1};
 	int C = sample_tri_multi(p, nodes, rho, true, true);
 
+	for(auto& x : p)
+	{
+	    for(int b=0; b<2*x.t().n_branches(); b++)
+		for(int i=0;i<x.n_data_partitions(); i++)
+		{
+		    auto A = x[i].get_pairwise_alignment(b);
+		    int n1 = x.t().source(b);
+		    int n2 = x.t().target(b);
+		    assert(A.length1() == x[i].seqlength(n1));
+		    assert(A.length2() == x[i].seqlength(n2));
+		}
+	}
+
 	// 7. Move to the new configuration if chosen.
 
 	if (C != -1)  P = p[C];
@@ -496,6 +509,11 @@ void sample_SPR_flat_one(owned_ptr<Model>& P,MoveStats& Stats,int b1)
     Parameters& PP = *P.as<Parameters>();
 
     if (PP.t().is_leaf_node(PP.t().target(b1))) return;
+
+    // When we don't have an alignment matrix, we can't just attach to some
+    // random branch if we don't know where it is, unless we can re-align.
+    for(int i=0; i< PP.n_data_partitions(); i++)
+	if (not PP[i].variable_alignment()) return;
 
     double p = P->load_value("SPR_slice_fraction",-0.25);
 
@@ -1484,6 +1502,12 @@ void sample_SPR_flat(owned_ptr<Model>& P,MoveStats& Stats)
 void sample_SPR_nodes(owned_ptr<Model>& P,MoveStats& Stats) 
 {
     Parameters& PP = *P.as<Parameters>();
+
+    // When we don't have an alignment matrix, we can't just attach to some
+    // random branch if we don't know where it is, unless we can re-align.
+    for(int i=0; i< PP.n_data_partitions(); i++)
+	if (not PP[i].variable_alignment()) return;
+
     int n = n_SPR_moves(PP);
 
     double p = P->load_value("SPR_slice_fraction",-0.25);
