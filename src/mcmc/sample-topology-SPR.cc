@@ -510,6 +510,9 @@ void sample_SPR_flat_one(owned_ptr<Model>& P,MoveStats& Stats,int b1)
 
     if (PP.t().is_leaf_node(PP.t().target(b1))) return;
 
+    // Allow turning off these moves.
+    if (not PP.load_value("SPR-jump",true)) return;
+
     // When we don't have an alignment matrix, we can't just attach to some
     // random branch if we don't know where it is, unless we can re-align.
     for(int i=0; i< PP.n_data_partitions(); i++)
@@ -1502,6 +1505,9 @@ void sample_SPR_flat(owned_ptr<Model>& P,MoveStats& Stats)
 void sample_SPR_nodes(owned_ptr<Model>& P,MoveStats& Stats) 
 {
     Parameters& PP = *P.as<Parameters>();
+
+    // Allow turning off these moves.
+    if (not PP.load_value("SPR-jump",true)) return;
 
     // When we don't have an alignment matrix, we can't just attach to some
     // random branch if we don't know where it is, unless we can re-align.
