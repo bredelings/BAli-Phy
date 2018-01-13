@@ -150,7 +150,7 @@ int topology_sample_SPR_slice_slide_node(vector<Parameters>& p,int b)
 }
 
 /// Do a SPR move on T1, moving the subtree behind b1_ to branch b2
-double do_SPR(Parameters& P, int b1,int b2)
+double do_SPR(Parameters& P, int b1,int b2, const vector<int>& nodes0)
 {
     auto t = P.t();
   
@@ -162,7 +162,36 @@ double do_SPR(Parameters& P, int b1,int b2)
 	t.source(b2) == t.target(b1))
 	;
     else
-	std::abort(); //P.SPR(t.reverse(b1),b2);
+    {
+	// For the method of choosing A23 here, see section MCMC: sample_tri + SPR in bali-phy.lyx
+
+        // 1. First prune the subtree behind b1
+
+	auto B1 = P.t().edge(b1);
+	auto B2 = P.t().edge(b2);
+
+	// 1a. Find the right pairwise alignment between nodes[2] and nodes[3]
+	vector<pairwise_alignment_t> A23(P.n_data_partitions());
+	for(int i = 0; i < P.n_data_partitions(); i++)
+	{
+	    auto b0123 = A3::get_bitpath(P[i], nodes0);
+	    A23[i]  = get_pairwise_alignment_from_bits(b0123, 2, 3);
+	}
+
+	// 1b. Pull out (nodes0[1],nodes0[0]) by connecting (nodes0[2],nodes0[3])
+	//                                              and (nodes0[0],nodes0[0]) - a circular edge!
+	P.prune_subtree(B1);
+
+	// 1c. Set the correct pairwise alignment for the branch (nodes0[2],nodes0[3])
+	int branch_from_2_to_3 = P.t().find_branch(nodes0[2],nodes0[3]);
+	for(int i = 0; i < P.n_data_partitions(); i++)
+	    P[i].set_pairwise_alignment(branch_from_2_to_3, A23[i]);
+
+	// 2. Second, graft the subtree behind b1 onto b2.
+
+	// Graft (nodes0[1],nodes0[0]) into b2=(nodes1[2],nodes1[3])
+	P.regraft_subtree(B1, B2);
+    }
 
     //------ Find the two new branches ------//
     vector<int> connected2 = t.branches_after(b1);
@@ -337,110 +366,84 @@ MCMC::Result SPR_stats(const TreeInterface& T1, const TreeInterface& T2, bool su
     return SPR_stats(T1,T2,success,bins,b1);
 }
 
-/* 
- * What causes things to be invalidated in an SPR move?
- * - Cause #1: branch length changes (propagate away from branch in both directions)
- *   (This therefore includes one direction -- but not both directions -- of every branch in the tree)
- * - Cause #2: pruning and regrafting.  This changes subA indices, and also changes cached likelihoods.
- *
- * What has to be invalidated in an SPR move?
- * - All likelihood caches on and after both directions of the now-united branch from which the subtree was pruned.
- * - All subA indices on and after both directions of the now-united branch from which the subtree was pruned.
- * - Likelihood caches and subA indices for the direction of that branch that was pointed away from the pruned subtree.
- * 
- * - Likelihood caches on all the same branches.
- * - Likelihood caches on all the same (directed) branches.
-
- * Query: is this the same as invalidating all subA indices and likelihood caches on all branches after the attachment node
- (i) first on the initial tree
- *        (ii) and then on the target tree?
- * Answer: Yes, I think so.  At least I don't see what is missing...
- *
- *
- * Also, we have to mark pairwise alignments for updating on the merged-branch and the two parts of the split-branch.
- */
-
-/*
- * Q: Now, the procedure below simply changes the length on the merge and split branches (2 or 3 total)
- *     and also calls invalidate_subA_index_branch( ) on them.
- *    So, why does the procedure below actually work? 
- * A: Well, both of these calls go out bidirectionally and invalidate neighbors on both sides.
- *    o Therefore the fact that we have only one direction of the merged-branch doesn't matter. 
- *    o Therefore the fact that we don't explicitly invalidate the branches behind b1 is OK - they get invalidated
- anyway, from one of the directions of their immediate children.
- *
- * Actually this is could be overkill.  We don't need to invalidate BOTH directions of their children.
- * We just need to invalidate the direction that points away from the attachment node.  Of course, the likelihood
- * caches of both directions are going to get blown away anyway, because the length of the child branches is changing.
- * But we could preserve the subA indices of the directed branches that point toward the attachment node.
- *
- * However, this bi-directional invalidation of the three child branches is fairly simply, and blows away everything with one stone.
- * We don't need to explicitly blow away both directions of the moveable branch. (i.e. the one unduplicated in remove_duplicates)
- */
-
-MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false) 
+MCMC::Result sample_SPR(Parameters& P, int b1, int b2, bool slice = false)
 {
+    // Defs: ----- Object P stores alignment A0 on tree T1
+
     const int bins = 6;
 
-    int n1 = P.t().target(b1);
-    int n2 = P.t().source(b1);
+    // 0. Check that b2 isn't behind b1
     assert(P.t().partition(b1)[P.t().target(b2)]);
     assert(P.t().partition(b1)[P.t().source(b2)]);
 
-    //----- Generate the Different Topologies ----//
+    // 1. ----- Create objects p[0] and p[1] to store new alignments A1 and A2 for tree T1 and T2 ----//
+    int n1 = P.t().target(b1);
+    int n2 = P.t().source(b1);
+
     P.set_root(n1);
     vector<Parameters> p(2,P);
 
-    //---------------- find the changed branches ------------------//
-    //  std::cerr<<"before = "<<p[1].T<<endl;
+    // 2. ----- Generate the node order for 3-way alignment paths P.t().target(b1)) -------- //
 
-    // FIXME - do we need to USE the ratio anywhere?
-    /* double ratio = */ do_SPR(p[1],b1,b2);
+    vector< vector<int> > nodes(2);      // Using two random orders can lead to different total
+                                         // probabilities for p[i] and p[j] when p[i].t() == p[j].t().
 
-    std::vector<int> nodes = A3::get_nodes_branch(p[0].t(),n1,n2);
-    assert(p[0].t().is_connected(nodes[0],nodes[1]));
-    assert(p[0].t().is_connected(nodes[0],nodes[2]));
-    assert(p[0].t().is_connected(nodes[0],nodes[3]));
+    nodes[0] = A3::get_nodes_branch_random(p[0].t(), n1, n2);
+
+    // 3. ----- Create the new tree T2 and the pairwise alignment on the (fused) edge that we prune from.
+
+    /* double ratio = */ do_SPR(p[1], b1, b2, nodes[0]); // FIXME - do we need to USE the ratio anywhere?
+
+    // 4. ----- Generate the node order for 3-way alignment paths at p[1].t().target(b1) --- //
+
+    nodes[1] = A3::get_nodes_branch_random(p[1].t(), n1, n2);
+
+    // 5. ----- Check that nodes[i] are connected correctly in p[i].t()
+    for(int i=0; i < p.size(); i++)
+    {
+	assert(p[i].t().is_connected(nodes[i][0],nodes[i][1]));
+	assert(p[i].t().is_connected(nodes[i][0],nodes[i][2]));
+	assert(p[i].t().is_connected(nodes[i][0],nodes[i][3]));
+    }
+
+    // 6. ----- Check that we are propagating variable_alignment correctly.
+    assert(p.size() == 2);
+    assert(p[0].variable_alignment() == p[1].variable_alignment());
 
     //  bool tree_changed = not p[1].t().is_connected(nodes[0],nodes[2]) or not p[1].t().is_connected(nodes[0],nodes[3]);
 
-    // enforce tree constraints
-    //  if (not extends(p[1].t(), P.PC->TC))
-    //    return MCMC::Result(2+bins,0);
 
-    //  std::cerr<<"after = "<<p[1].T<<endl;
-
-    int C;
+    // SLICE: optionall quit here and do the slide_node slice-sampling move variant instead.
     if (slice)
     {
-	C = topology_sample_SPR_slice_slide_node(p,b1);
+	int C = topology_sample_SPR_slice_slide_node(p,b1);
 	if (C != -1)
 	    P = p[C];
+	return SPR_stats(p[0].t(), p[1].t(), C>0, bins, b1);
     }
-    else {
-
-	//------------- change connecting branch length ----------------//
-	vector<log_double_t> rho(2,1);
-
-	//----------- sample alignments and choose topology -----------//
-	C = topology_sample_SPR(p,rho,n1,n2);
     
-	if (C != -1) 
-	{
-	    for(int i=0;i<P.n_data_partitions();i++) {
-		//	dynamic_bitset<> s1 = constraint_satisfied(P[i].alignment_constraint, P[i].A());
-		//	dynamic_bitset<> s2 = constraint_satisfied(p[C][i].alignment_constraint, p[C][i].A());
-	
-		//	report_constraints(s1,s2,i);
-	    }
-	    P = p[C];
+    try
+    {
+	// 6. ----- Choose * (C == -1) the original tree/alignment (C==-1)
+	//                 * (C ==  0) the original tree with a new alignment
+	//                 * (C ==  1) the      new tree with a new alignment
 
-	    // If the new topology conflicts with the constraints, then it should have P=0
-	    // and therefore not be chosen.  So the following SHOULD be safe!
-	}
+	vector<log_double_t> rho = {1, 1};
+	int C = sample_tri_multi(p, nodes, rho, true, true);
+
+	// 7. Move to the new configuration if chosen.
+
+	if (C != -1)  P = p[C];
+
+	// 8. Return statistics about how far we did (or didn't) move via SPR.
+
+	return SPR_stats(p[0].t(), p[1].t(), C>0, bins, b1);
     }
-
-    return SPR_stats(p[0].t(), p[1].t(), C>0, bins, b1);
+    catch (choose_exception<log_double_t>& c)
+    {
+	c.prepend(string(__PRETTY_FUNCTION__)+"\n");
+	throw c;
+    }
 }
 
 int choose_subtree_branch_uniform(const TreeInterface& T) 
