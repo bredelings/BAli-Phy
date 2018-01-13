@@ -332,8 +332,11 @@ double do_SPR(Parameters& P, int b1,int b2, const vector<int>& nodes0)
 	vector<pairwise_alignment_t> A23(P.n_data_partitions());
 	for(int i = 0; i < P.n_data_partitions(); i++)
 	{
+	    // The central node (nodes[0]) is mapped to bit 3!
 	    auto b0123 = A3::get_bitpath(P[i], nodes0);
-	    A23[i]  = get_pairwise_alignment_from_bits(b0123, 2, 3);
+	    A23[i]  = get_pairwise_alignment_from_bits(b0123, 1, 2);
+	    assert(A23[i].length1() == P[i].seqlength(nodes0[2]));
+	    assert(A23[i].length2() == P[i].seqlength(nodes0[3]));
 	}
 
 	// 1b. Pull out (nodes0[1],nodes0[0]) by connecting (nodes0[2],nodes0[3])
