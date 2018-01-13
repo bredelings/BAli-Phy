@@ -149,66 +149,6 @@ int topology_sample_SPR_slice_slide_node(vector<Parameters>& p,int b)
     return choice.first;
 }
 
-/// Do a SPR move on T1, moving the subtree behind b1_ to branch b2
-double do_SPR(Parameters& P, int b1,int b2, const vector<int>& nodes0)
-{
-    auto t = P.t();
-  
-    //------ Find the two old branches ------//
-    vector<int> connected1 = t.branches_after(b1);
-
-    //------ Generate the new topology ------//
-    if (t.target(b2) == t.target(b1) or 
-	t.source(b2) == t.target(b1))
-	;
-    else
-    {
-	// For the method of choosing A23 here, see section MCMC: sample_tri + SPR in bali-phy.lyx
-
-        // 1. First prune the subtree behind b1
-
-	auto B1 = P.t().edge(b1);
-	auto B2 = P.t().edge(b2);
-
-	// 1a. Find the right pairwise alignment between nodes[2] and nodes[3]
-	vector<pairwise_alignment_t> A23(P.n_data_partitions());
-	for(int i = 0; i < P.n_data_partitions(); i++)
-	{
-	    auto b0123 = A3::get_bitpath(P[i], nodes0);
-	    A23[i]  = get_pairwise_alignment_from_bits(b0123, 2, 3);
-	}
-
-	// 1b. Pull out (nodes0[1],nodes0[0]) by connecting (nodes0[2],nodes0[3])
-	//                                              and (nodes0[0],nodes0[0]) - a circular edge!
-	P.prune_subtree(B1);
-
-	// 1c. Set the correct pairwise alignment for the branch (nodes0[2],nodes0[3])
-	int branch_from_2_to_3 = P.t().find_branch(nodes0[2],nodes0[3]);
-	for(int i = 0; i < P.n_data_partitions(); i++)
-	    P[i].set_pairwise_alignment(branch_from_2_to_3, A23[i]);
-
-	// 2. Second, graft the subtree behind b1 onto b2.
-
-	// Graft (nodes0[1],nodes0[0]) into b2=(nodes1[2],nodes1[3])
-	P.regraft_subtree(B1, B2);
-    }
-
-    //------ Find the two new branches ------//
-    vector<int> connected2 = t.branches_after(b1);
-
-    assert(connected1.size() == 2);
-    assert(connected2.size() == 2);
-
-    //------- Place the split randomly -------//
-    double L1 = t.branch_length(connected1[0]) + t.branch_length(connected1[1]);
-    double L2 = t.branch_length(connected2[0]) + t.branch_length(connected2[1]);
-
-    P.setlength(connected2[0], uniform() * L2 );
-    P.setlength(connected2[1], L2 - t.branch_length(connected2[0]) );
-
-    return L2/L1;
-}
-
 // Consider penalizing lengths for being too close to equilibrium: branches couldn't get infinitely long.
 // Consider using actual substitution matrices.
 // Consider measuring similarities/differences by counting.
@@ -364,6 +304,67 @@ MCMC::Result SPR_stats(const TreeInterface& T1, const TreeInterface& T2, bool su
 {
     int b1 = T1.find_branch(B1);
     return SPR_stats(T1,T2,success,bins,b1);
+}
+
+// Do an SPR (moving the subtree behind b1 to branch b2) and create the pairwise alignment
+// on the (fused) edge that we prune from.
+double do_SPR(Parameters& P, int b1,int b2, const vector<int>& nodes0)
+{
+    auto t = P.t();
+  
+    //------ Find the two old branches ------//
+    vector<int> connected1 = t.branches_after(b1);
+
+    //------ Generate the new topology ------//
+    if (t.target(b2) == t.target(b1) or 
+	t.source(b2) == t.target(b1))
+	;
+    else
+    {
+	// For the method of choosing A23 here, see section MCMC: sample_tri + SPR in bali-phy.lyx
+
+        // 1. First prune the subtree behind b1
+
+	auto B1 = P.t().edge(b1);
+	auto B2 = P.t().edge(b2);
+
+	// 1a. Find the right pairwise alignment between nodes[2] and nodes[3]
+	vector<pairwise_alignment_t> A23(P.n_data_partitions());
+	for(int i = 0; i < P.n_data_partitions(); i++)
+	{
+	    auto b0123 = A3::get_bitpath(P[i], nodes0);
+	    A23[i]  = get_pairwise_alignment_from_bits(b0123, 2, 3);
+	}
+
+	// 1b. Pull out (nodes0[1],nodes0[0]) by connecting (nodes0[2],nodes0[3])
+	//                                              and (nodes0[0],nodes0[0]) - a circular edge!
+	P.prune_subtree(B1);
+
+	// 1c. Set the correct pairwise alignment for the branch (nodes0[2],nodes0[3])
+	int branch_from_2_to_3 = P.t().find_branch(nodes0[2],nodes0[3]);
+	for(int i = 0; i < P.n_data_partitions(); i++)
+	    P[i].set_pairwise_alignment(branch_from_2_to_3, A23[i]);
+
+	// 2. Second, graft the subtree behind b1 onto b2.
+
+	// Graft (nodes0[1],nodes0[0]) into b2=(nodes1[2],nodes1[3])
+	P.regraft_subtree(B1, B2);
+    }
+
+    //------ Find the two new branches ------//
+    vector<int> connected2 = t.branches_after(b1);
+
+    assert(connected1.size() == 2);
+    assert(connected2.size() == 2);
+
+    //------- Place the split randomly -------//
+    double L1 = t.branch_length(connected1[0]) + t.branch_length(connected1[1]);
+    double L2 = t.branch_length(connected2[0]) + t.branch_length(connected2[1]);
+
+    P.setlength(connected2[0], uniform() * L2 );
+    P.setlength(connected2[1], L2 - t.branch_length(connected2[0]) );
+
+    return L2/L1;
 }
 
 MCMC::Result sample_SPR(Parameters& P, int b1, int b2, bool slice = false)
