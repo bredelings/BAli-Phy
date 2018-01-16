@@ -173,10 +173,17 @@ optional<string> get_citation(const Rule& rule, bool show_title)
 	cite.push_back(*authors);
     if (year)
 	cite.push_back("("+*year+")");
+
+    if (authors or year)
+    {
+	string x = join(cite, " ");
+	cite.clear();
+	cite.push_back(x);
+    }
     if (title and show_title)
 	cite.push_back(*title);
 
-    return join(cite," ");
+    return join(cite,"\n");
 }
 
 
@@ -302,7 +309,7 @@ string get_help_for_rule(const Rule& rule)
 	}
     }
 
-    if (auto citation = get_citation(rule,false))
+    if (auto citation = get_citation(rule,true))
     {
 	help<<header("Citation");
 	help<<indent(3,*citation)<<std::endl;
