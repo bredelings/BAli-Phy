@@ -183,8 +183,6 @@ optional<string> get_citation(const Rule& rule, bool show_title)
 
 optional<string> get_citation_doi(const Rule& rule)
 {
-    optional<string> url;
-
     // 1. Check if there is a citation field.
     auto citation = rule.get_child_optional("citation");
     if (not citation) return boost::none;
