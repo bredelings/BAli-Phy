@@ -7,33 +7,47 @@
             "arg_name": "nuc_model",
             "arg_type": "ExchangeModel[a]",
             "default_value": "HKY",
-            "applied_args": "Alphabet.getNucleotides[A]"
+            "applied_args": "Alphabet.getNucleotides[A]",
+	    "description": "The nucleotide exchange model"
         },
         {
             "arg_name": "freq_model",
             "arg_type": "FrequencyModel[Codons[a]]",
             "default_value": "F61",
-            "applied_args": "A"
+            "applied_args": "A",
+	    "description": "The codon frequency model"
         },
         {
             "arg_name": "ps",
             "arg_type": "List[Double]",
-            "default_value": "~Dirichlet[n,2]"
+            "default_value": "~Dirichlet[n,2]",
+	    "description": "The frequency of each omega"
         },
         {
             "arg_name": "omegas",
             "arg_type": "List[Double]",
-            "default_value": "~iid[n,Uniform[0,1]]"
+            "default_value": "~iid[n,Uniform[0,1]]",
+	    "description": "The omega (i.e. dN/dS) values"
         },
         {
             "arg_name": "n",
             "arg_type": "Int",
-            "default_value": "4"
+            "default_value": "4",
+	    "description": "The number of omega categories, if not specified"
         },
         {
             "arg_name": "A",
             "arg_type": "a",
             "no_apply": true
         }
-    ]
+    ],
+    "title": "The M3 model",
+    "description": "A dN/dS model with heterogenous dN/dS values among sites.",
+    "citation": {"type": "article",
+		 "title": "Codon-Substitution Models for Heterogeneous Selection Pressure at Amino Acid Sites",
+		 "year": "2000",
+		 "author": [{"name": "Yang, Ziheng"}, {"name": "Nielsen, Rasmus"}, {"name": "Goldman, Nick"},{"name": "Pederson, Anne-Mette Krabbe"}],
+		 "journal": {"name": "Genetics", "volume": "155", "number": "1", "pages": "431--449"}
+		},
+    "url": "http://www.genetics.org/content/155/1/431.full"
 }
