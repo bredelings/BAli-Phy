@@ -839,6 +839,7 @@ spr_attachment_points get_spr_attachment_points(const TreeInterface& T, const tr
     return locations;
 }
 
+/// Extract the relationship between {x,a,b}, and unset the pairwise alignments on (x,y),(y,a),(y,b)
 // OK so if B1=(x,y) and initial_edge = (a,b) then we should have edges (y,a) and (y.b) in the tree
 // Here we are aligning {x,a,b} with y undefined.
 vector<HMM::bitmask_t> get_3way_alignment(data_partition P, int a, int b, int x, int y)
@@ -928,6 +929,18 @@ void set_3way_alignments(Parameters& P, const tree_edge& b_subtree, const tree_e
 	set_3way_alignment(P[i], bxy, bya, byb, get<3>(alignments)[i]);
 }
 
+
+/// Given tree with edges (a,b),(b,c),(b,d) where (x,y) is considered to attach on edge (a,b):
+//    Given alignment bitpath for {abx} and
+//    Given that the pairwise alignment for (a,b) is unset:
+//     (1) construct alignment bitpath for {abxcd}
+//     (2) update bitpath for SPR moving x from (a,b) -> (b,c).
+//     (3)  set the pairwise alignment for (a,b)
+//     (4)  modify the pairwise alignment for (b,d)
+//     (5)  unset the pairwise alignment for (b,c)
+//     (6)  return the alignment bitpath for {bcx}
+//    Steps 5&6 maintain the invariant that for the edges that (x,y) is considered to attach to,
+//    we don't have a pairwise alignment.
 vector<HMM::bitmask_t>
 move_pruned_subtree(data_partition P, const vector<HMM::bitmask_t>& alignment_prev, int b_ab, int b_bc, int b_bd)
 {
@@ -949,12 +962,13 @@ move_pruned_subtree(data_partition P, const vector<HMM::bitmask_t>& alignment_pr
 	if (a.test(0)) inc++;
 	if (a.test(4)) inc++;
 	if (a.test(2) or a.test(3)) inc++;
-	a.set(1, inc > 1);
+	a.set(b_bit, inc > 1);
     }
 
     // 3. Modify the pairwise alignments along ab and bd since b has been modified.
     P.set_pairwise_alignment(b_ab, get_pairwise_alignment_from_bits(A_abxcd, a_bit, b_bit));
     P.set_pairwise_alignment(b_bd, get_pairwise_alignment_from_bits(A_abxcd, b_bit, d_bit));
+    P.unset_pairwise_alignment(b_bc);
 
     // 4. Return alignment of bc with x.  (0 <- b, 1 <- c, 2 <- x)
     return remap_bitpath(A_abxcd, {{b_bit,0}, {c_bit,1}, {x_bit,2}});
