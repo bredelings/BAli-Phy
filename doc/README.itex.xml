@@ -1197,9 +1197,11 @@ A value must be given for each parameter, unless the parameter has a default val
   </para>
 	<note>
 	  <para>
-	    If you are using the C-shell command line shell (<command>csh</command> or <command>tcsh</command>), then it will try to interpret the square brackets <userinput>[..]</userinput> as an array reference, giving the error message "bali-phy: No match."  To avoid this, put quotes around the substitution model, like this:
-<programlisting><userinput>--smodel=HKY[kappa=2]</userinput>       // csh complains, bash does not
-<userinput>--smodel="HKY[kappa=2]"</userinput>     // csh and bash are both happy</programlisting>
+	    If you are using the C-shell command line shell (<command>csh</command> or <command>tcsh</command>), then it will try to interpret the square brackets <userinput>[..]</userinput> as an array reference and give the rather confusing error message "bali-phy: No match."
+	    <screen> <prompt>%</prompt> <userinput>bali-phy file.fasta --smodel=HKY[kappa=2]</userinput>
+bali-phy: No match.</screen>
+	    To avoid this, put quotes around the substitution model, like this:
+<screen><prompt>%</prompt> <userinput>bali-phy file.fasta --smodel="HKY[kappa=2]"</userinput></screen>
 	  </para>
 	</note>
 
@@ -1232,8 +1234,8 @@ In contrast, the following are both of type <userinput>Double</userinput>:
 ~Uniform[0,1]</programlisting>
 This is important when passing distributions as arguments to other
 distributions and functions.  For example, the distribution <userinput>iid</userinput> is used to generate a specific number of samples from another distribution.  Thus, it needs to receive a distribution as an argument:
-<programlisting>iid[4,Normal[0,1]]      // OK    : 4 samples from the Normal[0,1] distribution
-iid[4,~Normal[0,1]]     // not OK: 4 samples from ... a random number?</programlisting>
+<programlisting>~iid[4,Normal[0,1]]      // OK    : 4 samples from the Normal[0,1] distribution
+~iid[4,~Normal[0,1]]     // not OK: 4 samples from ... a random number?</programlisting>
 (See <xref linkend="types"/>.)
 </para>
   </section>
