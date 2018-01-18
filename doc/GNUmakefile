@@ -16,13 +16,7 @@ clean:
 %.xhtml: %.xml docbook-xhtml.xsl
 	xsltproc --nonet --xinclude docbook-xhtml.xsl $*.xml > $@
 
-%.fo: %.xml docbook-fo.xsl
-	xsltproc --nonet --xinclude docbook-fo.xsl $*.xml > $@
-
-%.pdf: %.fo
-	fop $*.fo $*.pdf
-
-%.txt: %.xml
-	fop $*.fo -txt $*.txt
+%.pdf: %.xhtml
+	wkhtmltopdf -B 10 -T 10 -R 10 -L 10 -s Letter $*.xhtml $*.pdf
 
 #xalan -XSLT /usr/share/xml/docbook/stylesheet/nwalsh/xhtml/docbook.xsl -IN %.xml
