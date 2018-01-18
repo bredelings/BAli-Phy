@@ -326,8 +326,7 @@ This means that the branch lengths for partitions 1 and 3 are the same, instead 
 <section><info><title>Option files</title></info>
 You can collect command line options into a file for later use.  Make
 a text file called <filename>analysis1.script</filename>:
-<programlisting>
-align = ITS1.fasta
+<programlisting>align = ITS1.fasta
 align = 5.8S.fasta
 align = ITS2.fasta
 smodel = 1,3:TN+DP[n=3]

@@ -77,7 +77,7 @@ However, note that this might conflict with R installed from other places, such 
     However, there isn't a Debian or Ubuntu package for Tracer at the moment.
 </p></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="path"></a>2.5. Add BAli-Phy to your <code class="envar">PATH</code></h3></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idm214"></a>2.5.1. Is bali-phy in your PATH already?</h4></div></div></div><p> First check if the executable is in your PATH.
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy --version</code></strong></pre><p>
-If this shows version info, then <span class="command"><strong>bali-phy</strong></span> is already in your PATH and you can skip this section.  This should be true if you installed <span class="command"><strong>bali-phy</strong></span> using homebrew, or if you've already added it to your PATH.</p><p>If bali-phy is not in your path, the you should see:
+If this shows version info, then <span class="command"><strong>bali-phy</strong></span> is already in your PATH and you can skip this section.  This should be true if you installed <span class="command"><strong>bali-phy</strong></span> using homebrew, or if you've already added it to your PATH.</p><p>If bali-phy is not in your path, then you should see:
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy --version</code></strong>
 bali-phy: command not found.</pre><p>
 If bali-phy is not in your PATH, then continue with this section.
@@ -488,7 +488,7 @@ It is even possible to mix positional and named arguments, as long as all the po
 Normal[mean=0,1]    // not OK</pre><p>
 
   The order and type of parameters for a function can be found with the <strong class="userinput"><code>help</code></strong> command.  For example,
-</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy help TN</code></strong></pre><p>
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy help HKY</code></strong></pre><p>
 A value must be given for each parameter, unless the parameter has a default value (See <a class="xref" href="#default_values" title="7.4. Default values and default priors">Section 7.4, “Default values and default priors”</a>).
   </p><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
 	    If you are using the C-shell command line shell (<span class="command"><strong>csh</strong></span> or <span class="command"><strong>tcsh</strong></span>), then it will try to interpret the square brackets <strong class="userinput"><code>[..]</code></strong> as an array reference and give the rather confusing error message "bali-phy: No match."
