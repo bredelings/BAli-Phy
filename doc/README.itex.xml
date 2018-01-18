@@ -194,7 +194,7 @@ However, note that this might conflict with R installed from other places, such 
 <para> First check if the executable is in your PATH.
 <screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
 If this shows version info, then <command>bali-phy</command> is already in your PATH and you can skip this section.  This should be true if you installed <command>bali-phy</command> using homebrew, or if you've already added it to your PATH.</para>
-<para>If bali-phy is not in your path, the you should see:
+<para>If bali-phy is not in your path, then you should see:
 <screen><prompt>%</prompt> <userinput>bali-phy --version</userinput>
 bali-phy: command not found.</screen>
 If bali-phy is not in your PATH, then continue with this section.
