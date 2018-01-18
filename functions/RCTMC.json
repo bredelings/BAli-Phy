@@ -5,19 +5,24 @@
     "call": "SModel.reversible_markov[Q,R]",
     "args": [
         {
-            "arg_name": "Q",
+            "arg_name": "S",
             "arg_type": "ExchangeModel[a]",
-            "applied_args": "A"
+            "applied_args": "A",
+	    "description": "Symmetric (exchangability) matrix"
         },
         {
             "arg_name": "R",
             "arg_type": "FrequencyModel[a]",
-            "applied_args": "A"
+            "applied_args": "A",
+	    "description": "Frequency model"
         },
         {
             "arg_name": "A",
             "arg_type": "a",
             "no_apply": true
         }
-    ]
+    ],
+    "title": "RCTMC: Reversible continuous-time Markov chain",
+    "description":"Create a rate matrix Q from a symmetric matrix S and a matrix R:\n   Q(i,j) = S(i,j) * R(i,j)\n\nIt is possible to write S+R as short-hand for RCTMC[S,R].  BAli-Phy will translate this internally into RCTMC[S,R].\n\nIn the traditional '+F' model, R(i,j) = pi(j) so that\n   Q(i,j)=S(i,j)*pi(j).\nHowever other approaches are possible.  For codon models, we might want to use the frequency of individual nucleotides instead of the frequency of the codon, for example.",
+    "examples": ["RCTMC[GTR,F]","GTR+F        // same as above","M0+F3x4","M0+MG94"]
 }
