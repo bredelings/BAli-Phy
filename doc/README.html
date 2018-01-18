@@ -1022,14 +1022,14 @@ iid[4,~Normal[0,1]]     // not OK: 4 samples from ... a random number?</pre><p>
   </div>
 
   <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp57"></a>7.3. Models and '<strong class="userinput"><code>+</code></strong>' notation</h3></div></div></div>
-  <p>BAli-Phy allows using <strong class="userinput"><code>+</code></strong> as a short-cut to combine models.  Internally models expressed this way are rewritten internally to a more precise form:
+  <p>BAli-Phy allows using <strong class="userinput"><code>+</code></strong> as a short-cut to combine models.  Models expressed this way are rewritten internally to a more precise form:
 </p><pre class="programlisting">WAG+F             // rewritten to RCTMC[WAG,F]
 M0+F3x4           // rewritten to RCTMC[M0,F3x4]
 HKY+Rates.Gamma   // rewritten to Rates.Gamma[submodel=HKY]
 HKY+INV           // rewritten to INV[submodel=HKY]</pre><p>
 </p>
 <p>These examples illustrate the two rules for rewriting <strong class="userinput"><code>+</code></strong>-expressions. In the first rule, an expression such as <strong class="userinput"><code>M1[args1]+M2[args2]</code></strong> is rewritten to <strong class="userinput"><code>RCTMC[M1[args1],M2[args2]]</code></strong> if <strong class="userinput"><code>M1</code></strong> has type <strong class="userinput"><code>ExchangeModel[a]</code></strong> and <strong class="userinput"><code>M2</code></strong> has type <strong class="userinput"><code>FrequencyModel[a]</code></strong>.  This allows natural syntax for creating a reversible continuous-time Markov chain (RCTMC) from an exchange model (such as WAG or M0) and a frequency model (such as +F or +F3x4).</p>
-  <p>In the second rule, an expression such as <strong class="userinput"><code>model+M[args]</code></strong> is rewritten to <strong class="userinput"><code>M[args,submodel=model]</code></strong> if <strong class="userinput"><code>M</code></strong> has a <strong class="userinput"><code>submodel</code></strong> argument.  When <strong class="userinput"><code>+</code></strong> occurs multiple times, the submodel is assumed to be as large as possible thus&gt;
+<p>In the second rule, an expression such as <strong class="userinput"><code>model+M[args]</code></strong> is rewritten to <strong class="userinput"><code>M[args,submodel=model]</code></strong> if <strong class="userinput"><code>M</code></strong> has a <strong class="userinput"><code>submodel</code></strong> argument.  When <strong class="userinput"><code>+</code></strong> occurs multiple times, the submodel is assumed to be as large as possible thus:
 </p><pre class="programlisting">HKY+F+Rates.Gamma+INV</pre><p>
 is rewritten to
 </p><pre class="programlisting">INV[submodel=Rates.Gamma[submodel=RCTMC[HKY,F]]]</pre><p>
@@ -1039,20 +1039,20 @@ This allows a simple method for combining models, when one model is an argument 
 
   <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="default_values"></a>7.4. Default values and default priors</h3></div></div></div>
   <p>
-Some function arguments have default values specified.  For example, the <strong class="userinput"><code>Rates.Gamma</code></strong> parameter <strong class="userinput"><code>n</code></strong> has a default value of 4.  Thus the following are equivalent:
+Some function arguments have default values.  For example, the <strong class="userinput"><code>Rates.Gamma</code></strong> parameter <strong class="userinput"><code>n</code></strong> has a default value of 4.  Thus the following are equivalent:
 </p><pre class="programlisting">HKY+Rates.Gamma[n=4]+INV
 HKY+Rates.Gamma+INV</pre>
 
-  <p>When the default value is random, then the argument has a default prior.
-  When these values are random values, then the argument has a default prior. For example, the <strong class="userinput"><code>kappa</code></strong> parameter of <strong class="userinput"><code>HKY</code></strong> has a default value of <strong class="userinput"><code>~logNormal[log[2],0.25]</code></strong>, so the following are equivalent:
+  <p>When the default value is random, then the argument has a default prior. For example, the <strong class="userinput"><code>kappa</code></strong> parameter of <strong class="userinput"><code>HKY</code></strong> has a default value of <strong class="userinput"><code>~logNormal[log[2],0.25]</code></strong>, so the following are equivalent:
 </p><pre class="programlisting">HKY[kappa~logNormal[log[2],0.25]]
-HKY</pre>
+HKY</pre><p>
+The <strong class="userinput"><code>help</code></strong> can be used to determine the default value for a parameter, if there is one.</p>
   </div>
 
   <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="types"></a>7.5. Argument and result types</h3></div></div></div>
   <p>  Every function has a <span class="emphasis"><em>result type</em></span>, as well as an <span class="emphasis"><em>argument type</em></span> for each argument.  The argument type specifies what kind of arguments are acceptable, and the result type specifies what kind of result the function produces.  Types include <strong class="userinput"><code>Int</code></strong> for integers, <strong class="userinput"><code>Double</code></strong> for double-precision floating point numbers, and <strong class="userinput"><code>String</code></strong> for text strings.  Integer arguments are implicitly converted to <strong class="userinput"><code>Double</code></strong> when the argument type is <strong class="userinput"><code>Double</code></strong>.</p>
 
-  <p>Some types contain parameters.  For example <strong class="userinput"><code>List[Int]</code></strong> indicates a list of integers and <strong class="userinput"><code>List[Double]</code></strong> indicates a list of real numbers.  In order to indicate a list of unknown type, we use a <span class="emphasis"><em>type variable</em></span> <strong class="userinput"><code>a</code></strong> and write <strong class="userinput"><code>List[a]</code></strong>.  Type variables always being with a lower-case letter.  They are able to match any specific type, and their value is found by pattern-matching.  For example, the function <strong class="userinput"><code>Add[x,y]</code></strong> takes two arguments of type <strong class="userinput"><code>a</code></strong> and has a result of type <strong class="userinput"><code>a</code></strong>.  Thus:
+  <p>Some types contain parameters.  For example <strong class="userinput"><code>List[Int]</code></strong> indicates a list of integers and <strong class="userinput"><code>List[Double]</code></strong> indicates a list of real numbers.  In order to indicate a list of unknown type, we use a <span class="emphasis"><em>type variable</em></span> <strong class="userinput"><code>a</code></strong> and write <strong class="userinput"><code>List[a]</code></strong>.  Type variables always begin with a lower-case letter.  They are able to match any specific type, and their value is found by pattern-matching.  For example, the function <strong class="userinput"><code>Add[x,y]</code></strong> takes two arguments of type <strong class="userinput"><code>a</code></strong> and has a result of type <strong class="userinput"><code>a</code></strong>.  Thus:
 </p><pre class="programlisting">Add[1,2]        // arguments are a=Int, so result is of type Int
 Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</pre><p>
 <strong class="userinput"><code>Pair[a,b]</code></strong> is a parameterized type that can be specialized to (for example) <strong class="userinput"><code>Pair[String,Double]</code></strong> and <strong class="userinput"><code>Pair[Int,Int]</code></strong>.
@@ -1106,7 +1106,7 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</pre><p>
 	TN+x3, GTR+x3, JTT, WAG, LG, and M0.  Each of these models is a
 	way of specifying the exchangeability matrix <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><msub><mi>S</mi> <mi>ij</mi></msub></math>.</p>
 
-	<div class="table"><a name="idp1365"></a><p class="title"><b>Table 1. Substitution Models</b></p><div class="table-contents">
+	<div class="table"><a name="idp1366"></a><p class="title"><b>Table 1. Substitution Models</b></p><div class="table-contents">
 	  
 	  <table class="table" summary="Substitution Models" border="0"><colgroup><col class="col1"><col class="col2"><col class="col3"></colgroup><thead><tr><th>Model</th><th>Alphabet</th><th>Parameters</th></tr></thead><tbody><tr><td><strong class="userinput"><code>EQU</code></strong></td><td>any</td><td>none</td></tr><tr><td>
 		  <p><strong class="userinput"><code>HKY</code></strong></p>
@@ -1170,7 +1170,7 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</pre><p>
 	<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>R</mi></math>).
       </p>
 
-      <div class="table"><a name="idp1561"></a><p class="title"><b>Table 2. Frequency Models</b></p><div class="table-contents">
+      <div class="table"><a name="idp1562"></a><p class="title"><b>Table 2. Frequency Models</b></p><div class="table-contents">
 	
 	<table class="table" summary="Frequency Models" border="0"><colgroup><col class="col1"><col class="col2"><col class="col3"></colgroup><thead><tr><th>Model</th><th>Alphabet</th><th>Parameters</th></tr></thead><tbody><tr><td>
 		<p><strong class="userinput"><code>F</code></strong></p>
@@ -1235,7 +1235,7 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</pre><p>
       or have different parameters (e.g. an M2a codon model).
     </p>
 
-      <div class="table"><a name="idp1672"></a><p class="title"><b>Table 3. CTMC Mixture Models</b></p><div class="table-contents">
+      <div class="table"><a name="idp1673"></a><p class="title"><b>Table 3. CTMC Mixture Models</b></p><div class="table-contents">
 	
 	<table class="table" summary="CTMC Mixture Models" border="0"><colgroup><col><col><col></colgroup><thead><tr><th>Model</th><th>Alphabet</th><th>Parameters</th></tr></thead><tbody><tr><td>
 		<p><strong class="userinput"><code><em class="replaceable"><code>model</code></em> + Rates.Gamma</code></strong></p>
@@ -1328,11 +1328,11 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</pre><p>
     <p>In order to use the branch-site substitution model, the user needs to
     </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">Specify an unrooted tree topology in Newick format.</li><li class="listitem">Label foreground branches on the tree using NHX attributes.</li><li class="listitem">Disable topology changes in order to fix the tree topology (branch lengths are estimated).</li></ul></div><p>
     Here is an example tree file:
-</p><div class="example"><a name="idp2057"></a><p class="title"><b>Example 4. An initial tree file with branch lengths</b></p><div class="example-contents">
+</p><div class="example"><a name="idp2058"></a><p class="title"><b>Example 4. An initial tree file with branch lengths</b></p><div class="example-contents">
 (((A1:0.1, B1:0.1):0.1,(C1:0.1, D1:0.1):0.1):0.1,((E1:0.1, F1:0.1):0.1,(G1:0.1, H1:0.1):0.1):0.1,(((A2:0.1, B2:0.1):0.1,(C2:0.1, D2:0.1):0.1):0.1,((E2:0.1, F2:0.1):0.1,(G2:0.1, H2:0.1):0.1):0.1):[&amp;&amp;NHX:foreground=1]0.2);
 </div></div><p><br class="example-break">
 Any branch lengths provided will be used as initial values in the MCMC analysis.  However, it is not necessary to provide them:
-</p><div class="example"><a name="idp2059"></a><p class="title"><b>Example 5. An initial tree file without branch lengths</b></p><div class="example-contents">
+</p><div class="example"><a name="idp2060"></a><p class="title"><b>Example 5. An initial tree file without branch lengths</b></p><div class="example-contents">
 (((A1, B1),(C1, D1)),((E1, F1),(G1, H1)),(((A2, B2),(C2, D2)),((E2, F2),(G2, H2))):[&amp;&amp;NHX:foreground=1]);
 </div></div><p><br class="example-break">
 The NHX attribute must be applied to the branch, not the node.  Therefore it must occur after a colon.  Multiple branches may be marked as foreground branches.
@@ -1380,7 +1380,7 @@ See section <a class="xref" href="#functions" title="7. Models and Priors">Secti
 
     <p>Each of these models is a probability distribution on pairwise alignments.  The probability distribution on multiple sequence alignments <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>Pr</mi><mo stretchy="false">(</mo><mi>A</mi><mo stretchy="false">&#8739;</mo><mi>T</mi><mo>,</mo><mi>&#964;</mi><mo>,</mo><mi>&#923;</mi><mo stretchy="false">)</mo></math> is constructed by factoring the multiple sequence alignment into pairwise alignments along each branch of the tree, as described in Redelings and Suchard (2005).</p>
 
-<div class="table"><a name="idp2127"></a><p class="title"><b>Table 4. Substitution Models</b></p><div class="table-contents">
+<div class="table"><a name="idp2128"></a><p class="title"><b>Table 4. Substitution Models</b></p><div class="table-contents">
 	  
 	  <table class="table" summary="Substitution Models" border="0"><colgroup><col class="col1"><col class="col2"><col class="col3"></colgroup><thead><tr><th>Model</th><th>Parameters</th><th>Description</th></tr></thead><tbody><tr><td>
 		  <p><strong class="userinput"><code>RS05</code></strong></p>
@@ -1731,8 +1731,8 @@ The stabilization criterion is the same one described above for numerical values
   <div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="FAQ"></a>13. Frequently Asked Questions (FAQ)</h2></div></div></div>
     
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp84"></a>13.1. Input files</h3></div></div></div>
-      <div class="qandaset"><a name="idp2440"></a><dl><dt>13.1.1. <a href="#idp2441">Does BAli-Phy accept the wildcard characters "N" or "X"?  How does it treat them?</a></dt><dt>13.1.2. <a href="#idp2447">Does BAli-Phy accept "?" characters?</a></dt><dt>13.1.3. <a href="#idp2455">Does BAli-Phy accept the characters "R" and "Y", etc.?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2441"></a><a name="idp2442"></a><p><b>13.1.1.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept the wildcard characters "N" or "X"?  How does it treat them?</p></td></tr>
+      <div class="qandaset"><a name="idp2441"></a><dl><dt>13.1.1. <a href="#idp2442">Does BAli-Phy accept the wildcard characters "N" or "X"?  How does it treat them?</a></dt><dt>13.1.2. <a href="#idp2448">Does BAli-Phy accept "?" characters?</a></dt><dt>13.1.3. <a href="#idp2456">Does BAli-Phy accept the characters "R" and "Y", etc.?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2442"></a><a name="idp2443"></a><p><b>13.1.1.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept the wildcard characters "N" or "X"?  How does it treat them?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes, BAli-Phy accepts the wildcard characters "N"
 	    (for DNA) and "X" (for proteins).  These characters
 	    indicate that some letter is present (as opposed to a
@@ -1740,7 +1740,7 @@ The stabilization criterion is the same one described above for numerical values
 	    letter it is.  
 	    </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2447"></a><a name="idp2448"></a><p><b>13.1.2.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept "?" characters?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2448"></a><a name="idp2449"></a><p><b>13.1.2.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept "?" characters?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
 	      No.  "?" characters are often used to indicate
 	      <span class="emphasis"><em>either</em></span> letter presence (e.g. "N",
@@ -1754,7 +1754,7 @@ The stabilization criterion is the same one described above for numerical values
 	    alternatives are quite different.)
 	    </p></td></tr>
 	
-	<tr class="question"><td align="left" valign="top"><a name="idp2455"></a><a name="idp2456"></a><p><b>13.1.3.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept the characters "R" and "Y", etc.?</p></td></tr>
+	<tr class="question"><td align="left" valign="top"><a name="idp2456"></a><a name="idp2457"></a><p><b>13.1.3.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept the characters "R" and "Y", etc.?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
 	      Yes.  BAli-Phy accepts the characters Y, R, W, S, K, M,
 	      B, D, H, and V for DNA, RNA, and Codon alphabets.
@@ -1780,17 +1780,17 @@ The stabilization criterion is the same one described above for numerical values
 
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp85"></a>13.2. Running <span class="command"><strong>bali-phy</strong></span>.</h3></div></div></div>
 
-      <div class="qandaset"><a name="idp2467"></a><dl><dt>13.2.1. <a href="#idp2468">Can I fix the alignment and ignore indel information, like MrBayes, BEAST, PhyloBayes and other MCMC programs?</a></dt><dt>13.2.2. <a href="#idp2475">Can I fix the tree topology, while allowing the alignment to vary?</a></dt><dt>13.2.3. <a href="#idp2482">Can I fix the tree topology and relative branch lengths, while allowing the alignment to vary?</a></dt><dt>13.2.4. <a href="#idp2490">Can I fix the tree topology and absolute branch lengths in all data partitions, while allowing the alignment to vary?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2468"></a><a name="idp2469"></a><p><b>13.2.1.</b></p></td><td align="left" valign="top"><p>Can I fix the alignment and ignore indel information, like MrBayes, BEAST, PhyloBayes and other MCMC programs?</p></td></tr>
+      <div class="qandaset"><a name="idp2468"></a><dl><dt>13.2.1. <a href="#idp2469">Can I fix the alignment and ignore indel information, like MrBayes, BEAST, PhyloBayes and other MCMC programs?</a></dt><dt>13.2.2. <a href="#idp2476">Can I fix the tree topology, while allowing the alignment to vary?</a></dt><dt>13.2.3. <a href="#idp2483">Can I fix the tree topology and relative branch lengths, while allowing the alignment to vary?</a></dt><dt>13.2.4. <a href="#idp2491">Can I fix the tree topology and absolute branch lengths in all data partitions, while allowing the alignment to vary?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2469"></a><a name="idp2470"></a><p><b>13.2.1.</b></p></td><td align="left" valign="top"><p>Can I fix the alignment and ignore indel information, like MrBayes, BEAST, PhyloBayes and other MCMC programs?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes.  Add <strong class="userinput"><code>-Inone</code></strong> or <strong class="userinput"><code>--imodel=none</code></strong> on the command line.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2475"></a><a name="idp2476"></a><p><b>13.2.2.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology, while allowing the alignment to vary?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2476"></a><a name="idp2477"></a><p><b>13.2.2.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology, while allowing the alignment to vary?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes.  Add <strong class="userinput"><code>--disable=topology --tree=<em class="replaceable"><code>treefile</code></em></code></strong> on the command line.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2482"></a><a name="idp2483"></a><p><b>13.2.3.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology and <span class="emphasis"><em>relative</em></span> branch lengths, while allowing the alignment to vary?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2483"></a><a name="idp2484"></a><p><b>13.2.3.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology and <span class="emphasis"><em>relative</em></span> branch lengths, while allowing the alignment to vary?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes.  Add <strong class="userinput"><code>--disable=tree --tree=<em class="replaceable"><code>treefile</code></em></code></strong> on the command line.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2490"></a><a name="idp2491"></a><p><b>13.2.4.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology and <span class="emphasis"><em>absolute</em></span> branch lengths <span class="emphasis"><em>in all data partitions</em></span>, while allowing the alignment to vary?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2491"></a><a name="idp2492"></a><p><b>13.2.4.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology and <span class="emphasis"><em>absolute</em></span> branch lengths <span class="emphasis"><em>in all data partitions</em></span>, while allowing the alignment to vary?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes.  Add <strong class="userinput"><code>--disable=tree --tree=<em class="replaceable"><code>treefile</code></em> --scale=1</code></strong> on the command line.</p></td></tr>
 	</tbody></table></div>
 
@@ -1799,8 +1799,8 @@ The stabilization criterion is the same one described above for numerical values
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp86"></a>13.3. Run-time error messages</h3></div></div></div>
       
       
-      <div class="qandaset"><a name="idp2502"></a><dl><dt>13.3.1. <a href="#idp2503">I tried to use --smodel LG+Rates.Gamma[6] and I got an error message "bali-phy: No match."  What gives?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2503"></a><a name="idp2504"></a><p><b>13.3.1.</b></p></td><td align="left" valign="top"><p>I tried to use <strong class="userinput"><code>--smodel LG+Rates.Gamma[6]</code></strong> and I got an error message "bali-phy: No match."  What gives?</p></td></tr>
+      <div class="qandaset"><a name="idp2503"></a><dl><dt>13.3.1. <a href="#idp2504">I tried to use --smodel LG+Rates.Gamma[6] and I got an error message "bali-phy: No match."  What gives?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2504"></a><a name="idp2505"></a><p><b>13.3.1.</b></p></td><td align="left" valign="top"><p>I tried to use <strong class="userinput"><code>--smodel LG+Rates.Gamma[6]</code></strong> and I got an error message "bali-phy: No match."  What gives?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>You are probably using the C-shell as your command line shell.  It is trying to interpret <strong class="userinput"><code>LG+Rates.Gamma[6]</code></strong> as an array before running the command, and it is not succeeding.  Therefore, it doesn't even run <span class="command"><strong>bali-phy</strong></span>.</p><p>To avoid this, put quotes around the substitution model, like this: <strong class="userinput"><code>--smodel "LG+Rates.Gamma[6]"</code></strong>.  This will keep the C-shell from interfering with your command.
 	    </p></td></tr>
 	</tbody></table></div>
@@ -1809,17 +1809,17 @@ The stabilization criterion is the same one described above for numerical values
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp87"></a>13.4. Stopping <span class="command"><strong>bali-phy</strong></span>.</h3></div></div></div>
       
 
-      <div class="qandaset"><a name="idp2518"></a><dl><dt>13.4.1. <a href="#idp2519">Why is bali-phy still
-	      running? How long will it take?</a></dt><dt>13.4.2. <a href="#idp2525">How do I stop a bali-phy
-	  run on my personal computer?</a></dt><dt>13.4.3. <a href="#idp2543">How do I stop a bali-phy
-	  run on a computing cluster?</a></dt><dt>13.4.4. <a href="#idp2552">So, how can I know when to stop it?</a></dt><dt>13.4.5. <a href="#idp2557">How can I tell when the chain has converged?</a></dt><dt>13.4.6. <a href="#idp2563">How can I check how many iterations the chain
+      <div class="qandaset"><a name="idp2519"></a><dl><dt>13.4.1. <a href="#idp2520">Why is bali-phy still
+	      running? How long will it take?</a></dt><dt>13.4.2. <a href="#idp2526">How do I stop a bali-phy
+	  run on my personal computer?</a></dt><dt>13.4.3. <a href="#idp2544">How do I stop a bali-phy
+	  run on a computing cluster?</a></dt><dt>13.4.4. <a href="#idp2553">So, how can I know when to stop it?</a></dt><dt>13.4.5. <a href="#idp2558">How can I tell when the chain has converged?</a></dt><dt>13.4.6. <a href="#idp2564">How can I check how many iterations the chain
 	      has finished?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2519"></a><a name="idp2520"></a><p><b>13.4.1.</b></p></td><td align="left" valign="top"><p>Why is <span class="command"><strong>bali-phy</strong></span> still
+	  <tr class="question"><td align="left" valign="top"><a name="idp2520"></a><a name="idp2521"></a><p><b>13.4.1.</b></p></td><td align="left" valign="top"><p>Why is <span class="command"><strong>bali-phy</strong></span> still
 	      running? How long will it take?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>It runs until you stop it.  Stop it when its
 	      done.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2525"></a><a name="idp2526"></a><p><b>13.4.2.</b></p></td><td align="left" valign="top"><p>How do I stop a <span class="command"><strong>bali-phy</strong></span>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2526"></a><a name="idp2527"></a><p><b>13.4.2.</b></p></td><td align="left" valign="top"><p>How do I stop a <span class="command"><strong>bali-phy</strong></span>
 	  run on my personal computer?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Simply kill the process -- there is no special
 	    command to stop <span class="command"><strong>bali-phy</strong></span>. If you are
@@ -1852,7 +1852,7 @@ However, be aware that this will terminate <span class="emphasis"><em>all</em></
 your <span class="command"><strong>bali-phy</strong></span> runs on that computer.
 	    </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2543"></a><a name="idp2544"></a><p><b>13.4.3.</b></p></td><td align="left" valign="top"><p>How do I stop a <span class="command"><strong>bali-phy</strong></span>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2544"></a><a name="idp2545"></a><p><b>13.4.3.</b></p></td><td align="left" valign="top"><p>How do I stop a <span class="command"><strong>bali-phy</strong></span>
 	  run on a computing cluster?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Simply terminate the submitted job.  The specific command
 	    to terminate a job will depend on the queue manager that
@@ -1868,14 +1868,14 @@ your <span class="command"><strong>bali-phy</strong></span> runs on that compute
 	    commands. 
 	    </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2552"></a><a name="idp2553"></a><p><b>13.4.4.</b></p></td><td align="left" valign="top"><p>So, how can I know when to stop it?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2553"></a><a name="idp2554"></a><p><b>13.4.4.</b></p></td><td align="left" valign="top"><p>So, how can I know when to stop it?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>You can stop when it has both converged and also run for long enough to give
 	      you &gt;1000 effectively independent samples.  </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2557"></a><a name="idp2558"></a><p><b>13.4.5.</b></p></td><td align="left" valign="top"><p>How can I tell when the chain has converged?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2558"></a><a name="idp2559"></a><p><b>13.4.5.</b></p></td><td align="left" valign="top"><p>How can I tell when the chain has converged?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>See section <a class="xref" href="#mixing_and_convergence" title="10. Convergence and Mixing: Is it done yet?">Section 10, &#8220;Convergence and Mixing: Is it done yet?&#8221;</a>.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2563"></a><a name="idp2564"></a><p><b>13.4.6.</b></p></td><td align="left" valign="top"><p>How can I check how many iterations the chain
+	  <tr class="question"><td align="left" valign="top"><a name="idp2564"></a><a name="idp2565"></a><p><b>13.4.6.</b></p></td><td align="left" valign="top"><p>How can I check how many iterations the chain
 	      has finished?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Run <span class="command"><strong>wc -l C1.log</strong></span> inside the output
 	      directory, and subtract 2.
@@ -1885,17 +1885,17 @@ your <span class="command"><strong>bali-phy</strong></span> runs on that compute
 
 
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp88"></a>13.5. Running <span class="command"><strong>bp-analyze</strong></span>.</h3></div></div></div>
-      <div class="qandaset"><a name="idp2574"></a><dl><dt>13.5.1. <a href="#idp2575">Why does bp-analyze say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</a></dt><dt>13.5.2. <a href="#idp2583">Why does bp-analyze say "Program 'gnuplot' not found.  Trace plots will not be generated"?</a></dt><dt>13.5.3. <a href="#idp2591">Why does bp-analyze say "Program 'R' not found.  Some mixing graphs will not be generated"?</a></dt><dt>13.5.4. <a href="#idp2598">Why is bp-analyze stopping early, or failing to generate some files?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2575"></a><a name="idp2576"></a><p><b>13.5.1.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze</strong></span> say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</p></td></tr>
+      <div class="qandaset"><a name="idp2575"></a><dl><dt>13.5.1. <a href="#idp2576">Why does bp-analyze say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</a></dt><dt>13.5.2. <a href="#idp2584">Why does bp-analyze say "Program 'gnuplot' not found.  Trace plots will not be generated"?</a></dt><dt>13.5.3. <a href="#idp2592">Why does bp-analyze say "Program 'R' not found.  Some mixing graphs will not be generated"?</a></dt><dt>13.5.4. <a href="#idp2599">Why is bp-analyze stopping early, or failing to generate some files?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2576"></a><a name="idp2577"></a><p><b>13.5.1.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze</strong></span> say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>The program <span class="command"><strong>draw-tree</strong></span> was not distributed on this platform (Windows, Mac).  This is not a fatal error message, it just means that a pretty picture of the tree will not be generated automatically.  You can still view the tree with <span class="application">FigTree</span>, for example.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2583"></a><a name="idp2584"></a><p><b>13.5.2.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze</strong></span> say "Program 'gnuplot' not found.  Trace plots will not be generated"?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2584"></a><a name="idp2585"></a><p><b>13.5.2.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze</strong></span> say "Program 'gnuplot' not found.  Trace plots will not be generated"?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>This is because you have not installed <span class="application">gnuplot</span>.  This is not a fatal error message, it just means that pictures of traces, partition support, and SRQ plots will not be generated automatically.  You can still view MCMC traces with <span class="application">Tracer</span>.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2591"></a><a name="idp2592"></a><p><b>13.5.3.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze</strong></span> say "Program 'R' not found.  Some mixing graphs will not be generated"?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2592"></a><a name="idp2593"></a><p><b>13.5.3.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze</strong></span> say "Program 'R' not found.  Some mixing graphs will not be generated"?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>This is because you have not installed <span class="application">R</span>.  This is not a fatal error message, it just means that a plot showing differences in clade probabilities between runs will not be generated.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2598"></a><a name="idp2599"></a><p><b>13.5.4.</b></p></td><td align="left" valign="top"><p>Why is <span class="command"><strong>bp-analyze</strong></span> stopping early, or failing to generate some files?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2599"></a><a name="idp2600"></a><p><b>13.5.4.</b></p></td><td align="left" valign="top"><p>Why is <span class="command"><strong>bp-analyze</strong></span> stopping early, or failing to generate some files?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Look in the file <code class="filename">Results/bp-analyze.log</code>.  This should contain the actual commands that were run, along with error message from these commands.  These error message should give you a hint as to what the problem might be.</p></td></tr>
 	</tbody></table></div>
     </div>
@@ -1904,11 +1904,11 @@ your <span class="command"><strong>bali-phy</strong></span> runs on that compute
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp89"></a>13.6. Interpreting the results.</h3></div></div></div>
       
 
-      <div class="qandaset"><a name="idp2608"></a><dl><dt>13.6.1. <a href="#idp2609">How do I compute the clade support?</a></dt><dt>13.6.2. <a href="#idp2614">How do I compute the split/bi-partition support?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2609"></a><a name="idp2610"></a><p><b>13.6.1.</b></p></td><td align="left" valign="top"><p>How do I compute the clade support?</p></td></tr>
+      <div class="qandaset"><a name="idp2609"></a><dl><dt>13.6.1. <a href="#idp2610">How do I compute the clade support?</a></dt><dt>13.6.2. <a href="#idp2615">How do I compute the split/bi-partition support?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2610"></a><a name="idp2611"></a><p><b>13.6.1.</b></p></td><td align="left" valign="top"><p>How do I compute the clade support?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Actually, BAli-Phy uses unrooted trees, so it only estimates bi-partition support.  A bi-partition is a division of taxa into two groups, but it does not specify which group contains the root. </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2614"></a><a name="idp2615"></a><p><b>13.6.2.</b></p></td><td align="left" valign="top"><p>How do I compute the split/bi-partition support?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2615"></a><a name="idp2616"></a><p><b>13.6.2.</b></p></td><td align="left" valign="top"><p>How do I compute the split/bi-partition support?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>After you analyze the output (<a class="xref" href="#analysis" title="6.4. Summarizing the output - scripted">Section 6.4, &#8220;Summarizing the output - scripted&#8221;</a>), the partition support is indicated in
 	      <code class="filename">Results/consensus</code> and in <code class="filename">Results/c50.PP.tree</code>. </p></td></tr>
 	</tbody></table></div>
@@ -1916,23 +1916,23 @@ your <span class="command"><strong>bali-phy</strong></span> runs on that compute
 
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp90"></a>13.7. How do I...</h3></div></div></div>
       
-      <div class="qandaset"><a name="idp2625"></a><dl><dt>13.7.1. <a href="#idp2626">How do I concatenate alignments?</a></dt><dt>13.7.2. <a href="#idp2635">How do I select columns from an alignment?</a></dt><dt>13.7.3. <a href="#idp2643">How do I create an alignment-constraint file
+      <div class="qandaset"><a name="idp2626"></a><dl><dt>13.7.1. <a href="#idp2627">How do I concatenate alignments?</a></dt><dt>13.7.2. <a href="#idp2636">How do I select columns from an alignment?</a></dt><dt>13.7.3. <a href="#idp2644">How do I create an alignment-constraint file
 	      from an alignment?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2626"></a><a name="idp2627"></a><p><b>13.7.1.</b></p></td><td align="left" valign="top"><p>How do I concatenate alignments?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2627"></a><a name="idp2628"></a><p><b>13.7.1.</b></p></td><td align="left" valign="top"><p>How do I concatenate alignments?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
  	    </p><pre class="screen"><code class="prompt">%</code> alignment-cat <em class="replaceable"><code>filename1.fasta</code></em> <em class="replaceable"><code>filename2.fasta</code></em> &gt; result.fasta</pre><p>
 	      The alignments must have the same sequence names, but
 	      the names need not be in the same order.
 	    </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2635"></a><a name="idp2636"></a><p><b>13.7.2.</b></p></td><td align="left" valign="top"><p>How do I select columns from an alignment?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2636"></a><a name="idp2637"></a><p><b>13.7.2.</b></p></td><td align="left" valign="top"><p>How do I select columns from an alignment?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
 	    </p><pre class="screen"><code class="prompt">%</code> alignment-cat -c1-10,50-100,600- <em class="replaceable"><code>filename.fasta</code></em> &gt; result.fasta</pre><p>
 	    The resulting alignment will contain the selected columns
 	    in the order you specified.
 	  </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2643"></a><a name="generating_constraint_files"></a><p><b>13.7.3.</b></p></td><td align="left" valign="top"><p>How do I create an alignment-constraint file
+	  <tr class="question"><td align="left" valign="top"><a name="idp2644"></a><a name="generating_constraint_files"></a><p><b>13.7.3.</b></p></td><td align="left" valign="top"><p>How do I create an alignment-constraint file
 	      from an alignment?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>To constrain the alignment to match some alignment
 	      file <em class="replaceable"><code>filename.fasta</code></em> in columns
