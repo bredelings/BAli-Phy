@@ -24,9 +24,16 @@
 	padding-right: 15px;
 }
 
+code { margin: 0; padding: 0}
+
 pre.programlisting {
-	background-color: #F0F0F0;
-	padding: 6px;
+//    background-color: #E0F0E0;
+
+//    border: solid green;
+    margin: 0;
+//	margin-left: 3em;
+	padding: 0.3em;
+	padding-left: 3em;
 }
 
 pre.screen {
