@@ -1190,7 +1190,7 @@ Normal[0,1]</programlisting>
 It is even possible to mix positional and named arguments, as long as all the positional arguments come before all the named arguments:
 <programlisting>Normal[0,sigma=1]   // OK
 Normal[mean=0,1]    // not OK</programlisting>
-The order and type of parameters function a function can be found with the <userinput>help</userinput> command.  For example,
+The order and type of parameters for a function can be found with the <userinput>help</userinput> command.  For example,
 <screen><prompt>%</prompt> <userinput>bali-phy help TN</userinput></screen>
   </para>
   </section>
