@@ -25,5 +25,6 @@
 	    "description": "The codon alphabet"
         }
     ],
-    "examples": ["M0","HKY+M0+F61","M0[omega=2.0,HKY]+MG94"]
+    "examples": ["M0","HKY+M0+F61","M0[omega=2.0,HKY]+MG94"],
+    "citation": "Nielsen and Yang (1998)"
 }
