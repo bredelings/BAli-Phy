@@ -1310,7 +1310,7 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	  by transition rates $Q_{ij}$ from letter $i$ to letter $j$.
 	  After a given time $t$ the probability for transition from state
 	  $i$ to state $j$ is given by \[P(t)_{ij}=e^{Q_{ij} \times t}\]
-	  using a matrix exponential.  Becase the CTMC models used in
+	  using a matrix exponential.  Because the CTMC models used in
 	  <application>BAli-Phy</application> are all reversible, the rate
 	  matrix for these reversible models can be decomposed into a
 	  symmetric matrix $S$ and equilibrium frequencies $\pi$ as
@@ -1910,7 +1910,7 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
 </para>
 <para>The posterior probability of positive selection is the posterior mean of the posSelection parameter.  This may be computed using the statreport program with the <userinput>--mean</userinput> option.
 </para>
-<para>In case this probability is extremely close to 1 or 0, you may wish to add the option <userinput>--Rao-Blackwellize S1.BranchSiteTest.posSelection</userinput>.  This will report the log-probability of positive selection each iteration.  The user may exponentiate the reported values and then average them (using R, for example) in order to compute a more accurate estimate of the posterior probability of positive selection.
+<para>In case this probability is extremely close to 1 or 0, you may wish to add the option <userinput>--Rao-Blackwellize S1::BranchSiteTest:posSelection</userinput>.  This will report the log-probability of positive selection each iteration.  The user may exponentiate the reported values and then average them (using R, for example) in order to compute a more accurate estimate of the posterior probability of positive selection.
     </para>
     </section>
     <section><info><title>Substitution model examples</title></info>
