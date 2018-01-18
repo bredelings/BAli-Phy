@@ -1192,7 +1192,7 @@ It is even possible to mix positional and named arguments, as long as all the po
 Normal[mean=0,1]    // not OK</programlisting>
 
   The order and type of parameters for a function can be found with the <userinput>help</userinput> command.  For example,
-<screen><prompt>%</prompt> <userinput>bali-phy help TN</userinput></screen>
+<screen><prompt>%</prompt> <userinput>bali-phy help HKY</userinput></screen>
 A value must be given for each parameter, unless the parameter has a default value (See <xref linkend="default_values"/>).
   </para>
 	<note>
