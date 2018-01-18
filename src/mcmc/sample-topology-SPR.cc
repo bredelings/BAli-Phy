@@ -1043,6 +1043,8 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
     if (I.n_attachment_branches() == 1) return spr_attachment_probabilities();
 
     /*----------------------- Initialize likelihood for each attachment point ----------------------- */
+    // FIXME - don't create extra detached / initial objects?
+
     Parameters initial = P;
     Parameters detached = initial;
     detached.prune_subtree(subtree_edge);
@@ -1057,7 +1059,11 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
     Ps.reserve(I.attachment_branch_pairs.size());
     Ps.push_back(detached);
     alignments3way.reserve(I.attachment_branch_pairs.size());
+
+    // 1. Prune subtree and store homology bitpath
     alignments3way.push_back(get_3way_alignments(initial, subtree_edge, I.initial_edge));
+
+    // 2. Move to each attachment branch and compute homology bitpath, but don't attch
     for(int i=1;i<I.attachment_branch_pairs.size();i++)
     {
 	// Define target branch b2 - pointing away from subtree_edge
@@ -1073,6 +1079,8 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
 	auto& p = Ps.back();
 	alignments3way.push_back( move_pruned_subtree(p, alignments3way[prev_i], subtree_edge, prev_target_edge, next_target_edge, BB.sibling) );
     }
+
+    // 3. Attach at each attachment branch at compute probabilities
     for(int i=(int)I.attachment_branch_pairs.size()-1;i>0;i--)
     {
 	const tree_edge& next_target_edge = I.attachment_branch_pairs[i].edge;
