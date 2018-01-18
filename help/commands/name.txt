@@ -13,7 +13,7 @@ If the <name> is not given, the input-file names are concatenated
 to construct a name.
 
 The <name> is allowed to contain directory separators '/'. Thus
-"--name=hi/there" is create the directory "hi/there-1".  The
+"--name=hi/there" will create the directory "hi/there-1".  The
 directory "hi" will also be created if it does not exist.
 
 Examples:
