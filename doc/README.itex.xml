@@ -1264,7 +1264,7 @@ HKY+Rates.Gamma+INV</programlisting></para>
   <para>When the default value is random, then the argument has a default prior. For example, the <userinput>kappa</userinput> parameter of <userinput>HKY</userinput> has a default value of <userinput>~logNormal[log[2],0.25]</userinput>, so the following are equivalent:
 <programlisting>HKY[kappa~logNormal[log[2],0.25]]
 HKY</programlisting>
-The <userinput>help</userinput> can be used to determine the default value for a parameter, if there is one.</para>
+The <userinput>help</userinput> command can be used to determine the default value for a parameter, if there is one.</para>
   </section>
 
   <section xml:id="types"><info><title>Argument and result types</title></info>
