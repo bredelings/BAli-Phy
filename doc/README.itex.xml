@@ -1183,19 +1183,18 @@ The majority consensus tree is usually not fully resolved, so we recommend using
   <programlisting>HKY[kappa=2]              // model
 log[x=2]                  // function
 Normal[mean=0,sigma=1]    // probability distribution</programlisting>
-  It is also possible to leave off parameter names and supply arguments by position:
+It is possible to specify parameter values by position instead of by name:
   <programlisting>HKY[2]
 log[2]
 Normal[0,1]</programlisting>
 It is even possible to mix positional and named arguments, as long as all the positional arguments come before all the named arguments:
 <programlisting>Normal[0,sigma=1]   // OK
 Normal[mean=0,1]    // not OK</programlisting>
-The order and type of parameters for a function can be found with the <userinput>help</userinput> command.  For example,
-<screen><prompt>%</prompt> <userinput>bali-phy help TN</userinput></screen>
-  </para>
-  </section>
-   <para>Values are given with <userinput>=</userinput>, and priors are given with <userinput>~</userinput>. A value or prior for a parameter must be given, unless a default value specified (See <xref linkend="default_values"/>). </para>
 
+  The order and type of parameters for a function can be found with the <userinput>help</userinput> command.  For example,
+<screen><prompt>%</prompt> <userinput>bali-phy help TN</userinput></screen>
+A value must be given for each parameter, unless the parameter has a default value (See <xref linkend="default_values"/>).
+  </para>
 	<note>
 	  <para>
 	    If you are using the C-shell command line shell (<command>csh</command> or <command>tcsh</command>), then it will try to interpret the square brackets <userinput>[..]</userinput> as an array reference, giving the error message "bali-phy: No match."  To avoid this, put quotes around the substitution model, like this:
@@ -1203,6 +1202,8 @@ The order and type of parameters for a function can be found with the <userinput
 <userinput>--smodel="HKY[kappa=2]"</userinput>     // csh and bash are both happy</programlisting>
 	  </para>
 	</note>
+
+  </section>
 
   <section xml:id="priors"><info><title>Priors</title></info>
   <section><info><title>Specifying priors</title></info>
@@ -1225,14 +1226,14 @@ In such cases the parameter value should be specified with <userinput>=</userinp
 <section><info><title>Distributions are not random values</title></info>
 <para>Random values and distributions have different types.  For example, the
 following is of type <userinput>Distribution[Double]</userinput>:
-<programlisting>Uniform[0,1]]</programlisting>
+<programlisting>Uniform[0,1]</programlisting>
 In contrast, the following are both of type <userinput>Double</userinput>:
-<programlisting>Sample[Uniform[0,1]]]
+<programlisting>Sample[Uniform[0,1]]
 ~Uniform[0,1]</programlisting>
 This is important when passing distributions as arguments to other
 distributions and functions.  For example, the distribution <userinput>iid</userinput> is used to generate a specific number of samples from another distribution.  Thus, it needs to receive a distribution as an argument:
-<programlisting>iid[4,Normal[0,1]]]      // OK    : 4 samples from the Normal[0,1] distribution
-iid[4,~Normal[0,1]]]     // not OK: 4 samples from ... a random number?</programlisting>
+<programlisting>iid[4,Normal[0,1]]      // OK    : 4 samples from the Normal[0,1] distribution
+iid[4,~Normal[0,1]]     // not OK: 4 samples from ... a random number?</programlisting>
 (See <xref linkend="types"/>.)
 </para>
   </section>
@@ -1256,7 +1257,7 @@ This allows a simple method for combining models, when one model is an argument 
 
   <section xml:id="default_values"><info><title>Default values and default priors</title></info>
   <para>
-  Some function arguments have default values specified.  For example, the <userinput>Rates.Gamma</userinput> parameter <userinput>n</userinput> has a default value of 4.  Thus the following are equivalent:
+Some function arguments have default values specified.  For example, the <userinput>Rates.Gamma</userinput> parameter <userinput>n</userinput> has a default value of 4.  Thus the following are equivalent:
 <programlisting>HKY+Rates.Gamma[n=4]+INV
 HKY+Rates.Gamma+INV</programlisting></para>
 
