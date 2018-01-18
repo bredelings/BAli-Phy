@@ -199,8 +199,7 @@ same parameters for that model:
 </pre><p>This means that the branch lengths for partitions 1 and 3 are the same, instead of being independently estimated.</p><p>Take a look at the model parameters.  There is no longer a Scale[3] parameter.  Instead, partitions 1 and 3 share Scale[1].</p></div></div><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idm368"></a>10. Option files</h2></div></div></div>
 You can collect command line options into a file for later use.  Make
 a text file called <code class="filename">analysis1.script</code>:
-<pre class="programlisting">
-align = ITS1.fasta
+<pre class="programlisting">align = ITS1.fasta
 align = 5.8S.fasta
 align = ITS2.fasta
 smodel = 1,3:TN+DP[n=3]
