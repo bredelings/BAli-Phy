@@ -70,7 +70,7 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
     }
     else if (t2.get_value<string>() == "MixtureModel")
     {
-	t2.put_value("RA");
+	t2.put_value("RevCTMC");
 	E = convertible_to(model,t1,t2);
 	if (E)
 	{
@@ -80,7 +80,7 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
 	    model = result;
 	}
     }
-    else if (t2.get_value<string>() == "RA")
+    else if (t2.get_value<string>() == "RevCTMC")
     {
 	t2.put_value("ExchangeModel");
 	E = convertible_to(model,t1,t2);

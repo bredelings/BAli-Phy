@@ -1,6 +1,6 @@
 {
     "name": "F81",
-    "result_type": "RA[a]",
+    "result_type": "RevCTMC[a]",
     "call": "SModel.f81[pi,A]",
     "args": [
         {

@@ -1,6 +1,6 @@
 {
     "name": "RCTMC",
-    "result_type": "RA[a]",
+    "result_type": "RevCTMC[a]",
     "no_log": true,
     "call": "SModel.reversible_markov[S,R]",
     "args": [

@@ -6,7 +6,7 @@
     "args": [
         {
             "arg_name": "submodel",
-            "arg_type": "RA[a]",
+            "arg_type": "RevCTMC[a]",
             "applied_args": "A"
         },
         {

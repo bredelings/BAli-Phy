@@ -1,6 +1,6 @@
 {
     "name": "fMutSel0",
-    "result_type": "RA[Codons[a]]",
+    "result_type": "RevCTMC[Codons[a]]",
     "generate_function": false,
     "call": "SModel.fMutSel0_model[submodel,omega,ws]",
     "args": [
@@ -16,7 +16,7 @@
         },
         {
             "arg_name": "submodel",
-            "arg_type": "RA[a]",
+            "arg_type": "RevCTMC[a]",
             "default_value": "HKY"
         }
     ]
