@@ -31,7 +31,7 @@ void pass1(const Rules& R, ptree& p)
 	
 	ptree result = {};
 	result.put_value("RCTMC");
-	result.push_back({"Q",q});
+	result.push_back({"S",q});
 	result.push_back({"R",r});
 	p = result;
     }
@@ -88,7 +88,7 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
 	{
 	    ptree result;
 	    result.put_value("RCTMC");
-	    result.push_back({"Q",model});
+	    result.push_back({"S",model});
 	    result.push_back({"R",ptree("F")});
 	    model = result;
 	}

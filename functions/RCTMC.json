@@ -2,7 +2,7 @@
     "name": "RCTMC",
     "result_type": "RA[a]",
     "no_log": true,
-    "call": "SModel.reversible_markov[Q,R]",
+    "call": "SModel.reversible_markov[S,R]",
     "args": [
         {
             "arg_name": "S",

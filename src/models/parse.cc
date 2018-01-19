@@ -346,7 +346,7 @@ string unparse(const ptree& p)
     string s = p.get_value<string>();
     if (s == "RCTMC")
     {
-	string Q = unparse(p.get_child("Q"));
+	string Q = unparse(p.get_child("S"));
 	string R = unparse(p.get_child("R"));
 	return Q + "+" + R;
     }
