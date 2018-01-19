@@ -98,6 +98,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("dical2","Output file for DiCal2")
 	("msmc","Output file for MSMC")
 	("psmc","Output file for PSMC")
+	("autoclean","Mask blocks with too many SNPs")
+	("histogram",value<int>(),"Output SNP counts for blocks of arg bases")
 	;
 
     // positional options
@@ -132,7 +134,7 @@ int n_letters(const valarray<int>& count,int level) {
 bool is_informative(const valarray<int>& count,int level) 
 {
     int n = n_letters(count,level);
-    if (level == 0) assert(n > 0);
+//??    if (level == 0) assert(n > 0);
     return n>1;
 }
 
@@ -282,6 +284,17 @@ void remove_columns(alignment& A, const std::function<bool(int)>& remove)
     A.changelength(j);
 }
 
+
+void mask_column(alignment& A, int column)
+{
+    for(int k=0;k<A.n_sequences();k++)
+    {
+	int value = A(column,k);
+	if (alphabet::is_feature(value))
+	    A.set_value(column,k, alphabet::not_gap);
+    }
+}
+
 void remove_and_mask_columns(alignment& A, const std::function<int(int)>& remove_or_mask)
 {
     int j=0;
@@ -294,14 +307,9 @@ void remove_and_mask_columns(alignment& A, const std::function<int(int)>& remove
 	    continue;
 
 	// Mask the features in this column
-	else if (fate == 1) {
-	    for(int k=0;k<A.n_sequences();k++)
-	    {
-		int value = A(i,k);
-		if (alphabet::is_feature(value))
-		    A.set_value(j,k, alphabet::not_gap);
-	    }
-	}
+	else if (fate == 1)
+	    mask_column(A,i);
+
 	// Copy column i -> j
 	else if (i != 0)
 	    for(int k=0;k<A.n_sequences();k++)
@@ -514,6 +522,66 @@ void write_psmc(std::ostream& o, const alignment& A, int x1, int x2)
 }
 
 
+int n_snps(const alignment& A)
+{
+    int count = 0;
+    for(int i=0;i<A.length();i++)
+	if (is_variant_column(A,i))
+	    count++;
+    return count;
+}
+
+vector<int> snps_in_blocks(const alignment& A, int blocksize)
+{
+    vector<int> counts;
+    for(int i=0;i<A.length();)
+    {
+	int count=0;
+	int end = i+blocksize;
+	for(;i<A.length() and i<end;i++)
+	    if (is_variant_column(A,i))
+		count++;
+	counts.push_back(count);
+    }
+    return counts;
+}
+
+void write_histogram(std::ostream& o, int blocksize, const alignment& A)
+{
+    for(int count: snps_in_blocks(A,blocksize))
+	o<<count<<"\n";
+}
+
+
+// The counts should be Poisson distributed.  It will be relatively rate to get
+// counts more than 10 times higher than the mean
+
+// FIXME - this does depend on the window boundaries.
+// Change so that we use a sliding window.
+
+int autoclean(alignment& A)
+{
+    constexpr double mean = 2.0;
+    constexpr double factor = 10.0;
+    int L = A.length();
+    int S = n_snps(A);
+    if (S < 100) throw myexception()<<"Refusing to autoclean chromosome with < 100 variant sites.";
+
+    int masked = 0;
+    int blocksize = int(L*(mean/S)+0.5);
+    auto counts = snps_in_blocks(A, blocksize);
+
+    for(int i=0;i<counts.size();i++)
+	if (counts[i] >= mean*factor)
+	{
+	    masked++;
+	    for(int j=i*blocksize;j<A.length() and j<(i+1)*blocksize;j++)
+		mask_column(A, j);
+	}
+    return masked;
+}
+
+
 int main(int argc,char* argv[]) 
 { 
     try {
@@ -529,6 +597,15 @@ int main(int argc,char* argv[])
 	auto A = A0;
 	const alphabet& a = A.get_alphabet();
     
+	if (args.count("autoclean"))
+	    autoclean(A);
+
+	if (args.count("histogram"))
+	{
+	    write_histogram(std::cout, args["histogram"].as<int>(), A);
+	    exit(0);
+	}
+
 	if (args.count("mask-gaps"))
 	{
 	    // 1. label gap columns with 2 to remove them.
