@@ -873,7 +873,8 @@ vector<HMM::bitmask_t> get_3way_alignment(data_partition P, int a, int b, int x,
 }
 
 tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>
-prune_subtree_and_get_3way_alignments(Parameters& P,  const tree_edge& b_subtree, const tree_edge& b_target)
+prune_subtree_and_get_3way_alignments(Parameters& P,  const tree_edge& b_subtree, const tree_edge& b_target,
+				      const vector<int>& nodes0, bool update_variable_A=false)
 {
     int a = b_target.node1; // bit 0
     int b = b_target.node2; // bit 1
@@ -1070,7 +1071,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
     alignments3way.reserve(I.attachment_branch_pairs.size());
 
     // 1. Prune subtree and store homology bitpath
-    alignments3way.push_back(prune_subtree_and_get_3way_alignments(Ps[0], subtree_edge, I.initial_edge));
+    alignments3way.push_back(prune_subtree_and_get_3way_alignments(Ps[0], subtree_edge, I.initial_edge, nodes0, true));
 
     // 2. Move to each attachment branch and compute homology bitpath, but don't attch
     for(int i=1;i<I.attachment_branch_pairs.size();i++)
