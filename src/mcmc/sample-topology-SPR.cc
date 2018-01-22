@@ -26,6 +26,7 @@
 #include <cmath>
 #include "util/assert.hh"
 #include <iostream>
+#include <boost/optional.hpp>
 #include "sample.H"
 #include "rng.H"
 #include "probability/choose.H"
@@ -46,6 +47,7 @@ using std::string;
 using std::map;
 using std::pair;
 using std::tuple;
+using boost::optional;
 
 using std::cout;
 using std::cerr;
@@ -870,7 +872,7 @@ vector<HMM::bitmask_t> get_3way_alignment(data_partition P, int a, int b, int x,
     return Aabxy;
 }
 
-tuple<int,int,int,vector<vector<HMM::bitmask_t>>>
+tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>
 prune_subtree_and_get_3way_alignments(Parameters& P,  const tree_edge& b_subtree, const tree_edge& b_target)
 {
     int a = b_target.node1; // bit 0
@@ -878,13 +880,13 @@ prune_subtree_and_get_3way_alignments(Parameters& P,  const tree_edge& b_subtree
     int x = b_subtree.node1; // bit 2
     int y = b_subtree.node2; // bit 3
 
-    vector<vector<HMM::bitmask_t>> As(P.n_data_partitions());
+    vector<optional<vector<HMM::bitmask_t>>> As(P.n_data_partitions());
     for(int i=0;i<P.n_data_partitions();i++)
 	As[i] = get_3way_alignment(P.get_data_partition(i), a, b, x, y);
 
     P.prune_subtree(b_subtree);
 
-    return tuple<int,int,int,vector<vector<HMM::bitmask_t>>>{a, b, x, As};
+    return tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>{a, b, x, std::move(As)};
 }
 
 void set_3way_alignment(data_partition P, int bxy, int bya, int byb, vector<HMM::bitmask_t> alignment)
@@ -910,7 +912,7 @@ void set_3way_alignment(data_partition P, int bxy, int bya, int byb, vector<HMM:
     P.set_pairwise_alignment(byb, get_pairwise_alignment_from_bits(alignment, y_bit, b_bit));
 }
 
-void regraft_subtree_and_set_3way_alignments(Parameters& P, const tree_edge& b_subtree, const tree_edge& b_target, const tuple<int,int,int,vector<vector<HMM::bitmask_t>>>& alignments)
+void regraft_subtree_and_set_3way_alignments(Parameters& P, const tree_edge& b_subtree, const tree_edge& b_target, const tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>& alignments)
 {
     using std::get;
 
@@ -932,7 +934,8 @@ void regraft_subtree_and_set_3way_alignments(Parameters& P, const tree_edge& b_s
     assert(get<2>(alignments) == x);
     assert(get<0>(alignments) == a and get<1>(alignments) == b);
     for(int i=0; i<P.n_data_partitions(); i++)
-	set_3way_alignment(P[i], bxy, bya, byb, get<3>(alignments)[i]);
+	if (get<3>(alignments)[i])
+	    set_3way_alignment(P[i], bxy, bya, byb, *get<3>(alignments)[i]);
 }
 
 
@@ -980,9 +983,9 @@ move_pruned_subtree(data_partition P, const vector<HMM::bitmask_t>& alignment_pr
     return remap_bitpath(A_abxcd, {{b_bit,0}, {c_bit,1}, {x_bit,2}});
 }
 
-tuple<int,int,int,vector<vector<HMM::bitmask_t>>>
+tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>
 move_pruned_subtree(Parameters& P,
-		    const tuple<int,int,int,vector<vector<HMM::bitmask_t>>>& alignments_prev,
+		    const tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>& alignments_prev,
 		    const tree_edge& b_subtree, tree_edge b_prev, const tree_edge& b_next, const tree_edge& b_sibling)
 {
     using std::get;
@@ -1017,14 +1020,17 @@ move_pruned_subtree(Parameters& P,
     int b_bd = P.t().find_branch(b,d);
 
     // 3. Adjust pairwise alignments and construct 3-node alignment for attaching to new edge
-    vector<vector<HMM::bitmask_t>> alignments_next(P.n_data_partitions());
+    vector<optional<vector<HMM::bitmask_t>>> alignments_next(P.n_data_partitions());
     for(int i=0; i<P.n_data_partitions(); i++)
-	if (flip_prev_A)
-	    alignments_next[i] = move_pruned_subtree(P[i], remap_bitpath(std::get<3>(alignments_prev)[i],{1,0,2,3,4}), b_ab, b_bc, b_bd);
-	else
-	    alignments_next[i] = move_pruned_subtree(P[i], std::get<3>(alignments_prev)[i], b_ab, b_bc, b_bd);
+	if (get<3>(alignments_prev)[i])
+	{
+	    if (flip_prev_A)
+		alignments_next[i] = move_pruned_subtree(P[i], remap_bitpath(*std::get<3>(alignments_prev)[i],{1,0,2,3,4}), b_ab, b_bc, b_bd);
+	    else
+		alignments_next[i] = move_pruned_subtree(P[i], *std::get<3>(alignments_prev)[i], b_ab, b_bc, b_bd);
+	}
 
-    return tuple<int,int,int,vector<vector<HMM::bitmask_t>>>{b, c, x, alignments_next};
+    return tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>{b, c, x, std::move(alignments_next)};
 }
 
 /// Compute the probability of pruning b1^t and regraftion at \a locations
@@ -1059,7 +1065,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
     Pr.LLL[I.initial_edge] = P.heated_likelihood();
 #endif
 
-    vector<tuple<int,int,int,vector<vector<HMM::bitmask_t>>>> alignments3way;
+    vector<tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>> alignments3way;
     alignments3way.reserve(I.attachment_branch_pairs.size());
 
     // 1. Prune subtree and store homology bitpath
