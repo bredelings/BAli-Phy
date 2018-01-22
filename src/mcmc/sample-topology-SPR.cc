@@ -871,7 +871,7 @@ vector<HMM::bitmask_t> get_3way_alignment(data_partition P, int a, int b, int x,
 }
 
 tuple<int,int,int,vector<vector<HMM::bitmask_t>>>
-get_3way_alignments(const Parameters& P,  const tree_edge& b_subtree, const tree_edge& b_target)
+prune_subtree_and_get_3way_alignments(Parameters& P,  const tree_edge& b_subtree, const tree_edge& b_target)
 {
     int a = b_target.node1; // bit 0
     int b = b_target.node2; // bit 1
@@ -881,6 +881,9 @@ get_3way_alignments(const Parameters& P,  const tree_edge& b_subtree, const tree
     vector<vector<HMM::bitmask_t>> As(P.n_data_partitions());
     for(int i=0;i<P.n_data_partitions();i++)
 	As[i] = get_3way_alignment(P.get_data_partition(i), a, b, x, y);
+
+    P.prune_subtree(b_subtree);
+
     return tuple<int,int,int,vector<vector<HMM::bitmask_t>>>{a, b, x, As};
 }
 
@@ -1043,25 +1046,21 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
     if (I.n_attachment_branches() == 1) return spr_attachment_probabilities();
 
     /*----------------------- Initialize likelihood for each attachment point ----------------------- */
-    // FIXME - don't create extra detached / initial objects?
+    vector<Parameters> Ps;
+    Ps.reserve(I.attachment_branch_pairs.size());
+    Ps.push_back(P);
 
-    Parameters initial = P;
-    Parameters detached = initial;
-    detached.prune_subtree(subtree_edge);
     spr_attachment_probabilities Pr;
-    Pr[I.initial_edge] = initial.heated_likelihood() * initial.prior_no_alignment();
+    Pr[I.initial_edge] = P.heated_likelihood() * P.prior_no_alignment();
 #ifdef DEBUG_SPR_ALL
-    Pr.LLL[I.initial_edge] = initial.heated_likelihood();
+    Pr.LLL[I.initial_edge] = P.heated_likelihood();
 #endif
 
-    vector<Parameters> Ps;
     vector<tuple<int,int,int,vector<vector<HMM::bitmask_t>>>> alignments3way;
-    Ps.reserve(I.attachment_branch_pairs.size());
-    Ps.push_back(detached);
     alignments3way.reserve(I.attachment_branch_pairs.size());
 
     // 1. Prune subtree and store homology bitpath
-    alignments3way.push_back(get_3way_alignments(initial, subtree_edge, I.initial_edge));
+    alignments3way.push_back(prune_subtree_and_get_3way_alignments(Ps[0], subtree_edge, I.initial_edge));
 
     // 2. Move to each attachment branch and compute homology bitpath, but don't attch
     for(int i=1;i<I.attachment_branch_pairs.size();i++)
