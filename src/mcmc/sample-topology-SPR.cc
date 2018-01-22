@@ -1128,7 +1128,8 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
 					const vector<log_double_t>& Pr,
 					const vector<log_double_t>& PrL,
 					const spr_info& I, int C,
-					const spr_attachment_points& locations
+					const spr_attachment_points& locations,
+					const std::vector<int>& nodes0
     )
 {
     tree_edge E_parent = I.b_parent;
@@ -1142,7 +1143,7 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
 
     //----------------- Generate the Different node lists ---------------//
     vector< vector<int> > nodes(2);
-    nodes[0] = A3::get_nodes_branch_random(p[0].t(), n1, n2);     // Using two random orders can lead to different total
+    nodes[0] = nodes0;                                            // Using two random orders can lead to different total
     nodes[1] = A3::get_nodes_branch_random(p[1].t(), n1, n2);     //  probabilities for p[0] and p[1] when p[0] == p[1].
     bool do_cube = (uniform() < p[0].load_value("cube_fraction",0.0));
 
@@ -1339,8 +1340,14 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     /// \todo Mixing: Should we realign at least one other attachment location, if P.variable_alignment()?
     try
     {
+	tree_edge E_parent = I.b_parent;
+	int n1 = E_parent.node2;
+	int n2 = E_parent.node1;
 	if (C > 0)
-	    accepted = SPR_accept_or_reject_proposed_tree(P, p, Pr, PrL, I, C, locations);
+	{
+	    auto nodes0 = A3::get_nodes_branch_random(p[0].t(), n1, n2);     // Using two random orders can lead to different total
+	    accepted = SPR_accept_or_reject_proposed_tree(P, p, Pr, PrL, I, C, locations, nodes0);
+	}
     }
     catch (std::bad_alloc&) {
 	std::cerr<<"Allocation failed in sample_try_multi (in SPR_search_one)!  Proceeding."<<std::endl;
