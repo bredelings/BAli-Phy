@@ -2,7 +2,7 @@
     "name": "M0",
     "result_type": "ExchangeModel[Codons[a]]",
     "constraints": ["Nucleotides[a]"],
-    "title": "The Yang & Nielsen (2000) model of dN\/dS",
+    "title": "The Goldman & Yang (1994) model of dN\/dS",
     "call": "SModel.m0[A,submodel,omega]",
     "args": [
         {
@@ -26,5 +26,14 @@
         }
     ],
     "examples": ["M0","HKY+M0+F61","M0[omega=2.0,HKY]+MG94"],
-    "citation": "Nielsen and Yang (1998)"
+    "citation": {"type": "article",
+		 "title": "A codon-based model of nucleotide substitution for protein-coding DNA sequences",
+		 "author": [{"name": "Goldman, Nick"},{"name": "Yang, Ziheng"}],
+		 "journal": {"name": "Molecular biology and evolution",
+			     "volume":"11",
+			     "number":"5",
+			     "pages":"725--736"},
+		 "year":"1994",
+		 "link":[{"url":"http://www.genetics.org/content/148/3/929.short"}]
+		}
 }
