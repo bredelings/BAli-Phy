@@ -8,17 +8,10 @@ vcs_tag(
   fallback: '',
 )
 
-libdl = []
 extra_link_args = []
-extra_includes = []
-if host_machine.system() == 'linux'
-  extra_link_args += [ '-rdynamic' ]
-  libdl = cpp.find_library('dl')
-elif host_machine.system() == 'windows'
-  extra_link_args += [ '-Wl,--export-all-symbols' ]
+if get_option('static-cpp-libs')
+  extra_link_args += ['-static-libgcc','-static-libstdc++']
 endif
-
-#extra_link_args += ['-static-libgcc','-static-libstdc++']
 
 # tools/findroot.cc -> tools/optimize.cc
 libbaliphy_sources = ['io.cc','util.cc','tree/sequencetree.cc','tree/tree.cc','sequence/alphabet.cc','sequence/sequence.cc','tree/tree-util.cc','tools/read-trees.cc','sequence/sequence-format.cc','alignment/alignment-util.cc','rng.cc','alignment/load.cc','alignment/alignment.cc','tools/statistics.cc','tools/partition.cc','tools/tree-dist.cc','alignment/alignment-random.cc','setup.cc','tree/randomtree.cc','util-random.cc','tools/parsimony.cc','alignment/index-matrix.cc','tools/mctree.cc','tools/stats-table.cc','tools/findroot.cc','tools/optimize.cc','tools/distance-report.cc','n_indels.cc','tools/inverse.cc','tools/joint-A-T.cc','tools/distance-methods.cc','tools/consensus-tree.cc']
@@ -67,12 +60,17 @@ baliphy_sources = ['parser/parse.cc','dp/dp_hmm.cc','parser/desugar.cc',
    'computation/optimization/inliner.cc']
 
 
+libdl = []
+extra_includes = []
 if host_machine.system() == 'windows'
   # We should have a system of 'cygwin' for cygwin.
   baliphy_sources += [ 'dlfcn-win32/dlfcn.c' ]
   extra_includes = include_directories('dlfcn-win32/')
+else
+  libdl = cpp.find_library('dl')
 endif
 
+# maybe we don't need this if we are doing static linking
 extra_rpath = ''
 if host_machine.system() == 'linux'
   extra_rpath = '$ORIGIN/../lib/bali-phy/'
@@ -86,11 +84,7 @@ baliphy = executable('bali-phy',
 		     link_with: [libbaliphy, libsums],
 		     install_rpath: extra_rpath,
 		     install: true,
-		     implib: true)
-
-#FIXME: use 'export_dynamic:true' instead of 'implib: true'?
-# Does this set both export-all-symbols on windows and -rdynamic on linux?
-# That would simplify things.
+		     export_dynamic: true)
 
 subdir('builtins')
 
