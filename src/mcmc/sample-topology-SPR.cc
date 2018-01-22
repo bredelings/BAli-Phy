@@ -1038,7 +1038,8 @@ move_pruned_subtree(Parameters& P,
 /// After this routine, likelihood caches and subalignment indices for branches in the
 /// non-pruned subtree should reflect the situation where the subtree has been pruned.
 ///
-spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const spr_attachment_points& locations)
+spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const spr_attachment_points& locations,
+							  const vector<int>& nodes0)
 {
 #ifndef NDEBUG
     auto peels0 = substitution::total_peel_internal_branches + substitution::total_peel_leaf_branches;
@@ -1272,7 +1273,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 
     if (I.n_attachment_branches() == 1) return false;
 
-    spr_attachment_probabilities PrB = SPR_search_attachment_points(p[1], subtree_edge, locations);
+    spr_attachment_probabilities PrB = SPR_search_attachment_points(p[1], subtree_edge, locations, nodes0);
 
     vector<log_double_t> Pr = I.convert_to_vector(PrB);
 #ifdef DEBUG_SPR_ALL
@@ -1343,9 +1344,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     try
     {
 	if (C > 0)
-	{
 	    accepted = SPR_accept_or_reject_proposed_tree(P, p, Pr, PrL, I, C, locations, nodes0);
-	}
     }
     catch (std::bad_alloc&) {
 	std::cerr<<"Allocation failed in sample_try_multi (in SPR_search_one)!  Proceeding."<<std::endl;
