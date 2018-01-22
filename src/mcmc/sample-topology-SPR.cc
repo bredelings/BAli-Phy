@@ -1265,6 +1265,8 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 
     spr_info I(P.t(), subtree_edge);
 
+    auto nodes0 = A3::get_nodes_branch_random(P.t(), I.b_parent.node2, I.b_parent.node1);
+
     // Compute total lengths for each of the possible attachment branches
     vector<double> L = I.attachment_branch_lengths();
 
@@ -1340,12 +1342,8 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     /// \todo Mixing: Should we realign at least one other attachment location, if P.variable_alignment()?
     try
     {
-	tree_edge E_parent = I.b_parent;
-	int n1 = E_parent.node2;
-	int n2 = E_parent.node1;
 	if (C > 0)
 	{
-	    auto nodes0 = A3::get_nodes_branch_random(p[0].t(), n1, n2);     // Using two random orders can lead to different total
 	    accepted = SPR_accept_or_reject_proposed_tree(P, p, Pr, PrL, I, C, locations, nodes0);
 	}
     }
