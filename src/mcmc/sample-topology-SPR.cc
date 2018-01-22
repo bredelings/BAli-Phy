@@ -910,9 +910,12 @@ void set_3way_alignment(data_partition P, int bxy, int bya, int byb, vector<HMM:
     P.set_pairwise_alignment(byb, get_pairwise_alignment_from_bits(alignment, y_bit, b_bit));
 }
 
-void set_3way_alignments(Parameters& P, const tree_edge& b_subtree, const tree_edge& b_target, const tuple<int,int,int,vector<vector<HMM::bitmask_t>>>& alignments)
+void regraft_subtree_and_set_3way_alignments(Parameters& P, const tree_edge& b_subtree, const tree_edge& b_target, const tuple<int,int,int,vector<vector<HMM::bitmask_t>>>& alignments)
 {
     using std::get;
+
+    // 1. Reconnect the tree
+    P.regraft_subtree(b_subtree, b_target);
 
     int a = b_target.node1; // bit 0
     int b = b_target.node2; // bit 1
@@ -1086,17 +1089,14 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
 	auto& p = Ps[i];
 	double L = p.t().branch_length(p.t().find_branch(next_target_edge));
 
-	// 1. Reconnect the tree
-	p.regraft_subtree(subtree_edge, next_target_edge);
+	// 1. Regraft subtree and set pairwise alignments on three branches
+	regraft_subtree_and_set_3way_alignments(p, subtree_edge, next_target_edge, alignments3way[i]);
 
         // 2. Set branch lengths
 	int n0 = subtree_edge.node2;
 	set_lengths_at_location(p, n0, L, next_target_edge, locations);
 
-	// 3. Set pairwise alignments on three branches
-	set_3way_alignments(p, subtree_edge, next_target_edge, alignments3way[i]);
-
-	// 4. Compute likelihood and probability
+	// 3. Compute likelihood and probability
 	Pr[next_target_edge] = p.heated_likelihood() * p.prior_no_alignment();
 
 #ifdef DEBUG_SPR_ALL
