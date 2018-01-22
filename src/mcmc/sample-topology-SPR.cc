@@ -913,7 +913,7 @@ void set_3way_alignment(data_partition P, int bxy, int bya, int byb, vector<HMM:
     P.set_pairwise_alignment(byb, get_pairwise_alignment_from_bits(alignment, y_bit, b_bit));
 }
 
-void regraft_subtree_and_set_3way_alignments(Parameters& P, const tree_edge& b_subtree, const tree_edge& b_target, const tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>& alignments)
+void regraft_subtree_and_set_3way_alignments(Parameters& P, const tree_edge& b_subtree, const tree_edge& b_target, const tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>& alignments, bool update_variable_A=false)
 {
     using std::get;
 
@@ -987,7 +987,8 @@ move_pruned_subtree(data_partition P, const vector<HMM::bitmask_t>& alignment_pr
 tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>
 move_pruned_subtree(Parameters& P,
 		    const tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>& alignments_prev,
-		    const tree_edge& b_subtree, tree_edge b_prev, const tree_edge& b_next, const tree_edge& b_sibling)
+		    const tree_edge& b_subtree, tree_edge b_prev, const tree_edge& b_next, const tree_edge& b_sibling,
+		    bool update_variable_A=false)
 {
     using std::get;
     // 1. Rotate b_prev to point toward b_next
@@ -1087,7 +1088,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
 	Ps.push_back(Ps[prev_i]);
 	assert(Ps.size() == i+1);
 	auto& p = Ps.back();
-	alignments3way.push_back( move_pruned_subtree(p, alignments3way[prev_i], subtree_edge, prev_target_edge, next_target_edge, BB.sibling) );
+	alignments3way.push_back( move_pruned_subtree(p, alignments3way[prev_i], subtree_edge, prev_target_edge, next_target_edge, BB.sibling, true) );
     }
 
     // 3. Attach at each attachment branch at compute probabilities
@@ -1098,7 +1099,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
 	double L = p.t().branch_length(p.t().find_branch(next_target_edge));
 
 	// 1. Regraft subtree and set pairwise alignments on three branches
-	regraft_subtree_and_set_3way_alignments(p, subtree_edge, next_target_edge, alignments3way[i]);
+	regraft_subtree_and_set_3way_alignments(p, subtree_edge, next_target_edge, alignments3way[i], true);
 
         // 2. Set branch lengths
 	int n0 = subtree_edge.node2;
