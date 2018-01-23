@@ -3,7 +3,7 @@ The --scale command:
 -R      [partitions:]prior                  Prior on the Scale.
 --scale [partitions:]prior
 
-The branch lengths on the shared tree are multiple by a
+The branch lengths on the shared tree are multiplied by a
 partition-specific scale factor to yield the branch lengths for
 each partition. Estimating this scale factor allows
 estimating the evolutionary rate for the partition.
