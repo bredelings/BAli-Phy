@@ -553,83 +553,6 @@ struct spr_attachment_probabilities: public map<tree_edge,log_double_t>
     map<tree_edge,log_double_t> LLL;
 };
 
-bool points_to(const tree_edge& E1, const tree_edge& E2)
-{
-    return (E1.node2 == E2.node1 or E1.node2 == E2.node2);
-}
-
-bool behind_edge(const TreeInterface& T, const tree_edge& E1, const tree_edge& E2, bool close=false)
-{
-    if (points_to(E1, E2)) return true;
-    if (not close) {
-	int b = T.find_branch(E1);
-	return T.partition(b)[E2.node1] and T.partition(b)[E2.node2];
-    }
-    else
-	return false;
-}
-
-/* We need to NNI to ONE of the 4 grandchild edges */
-// E1, E3, and E5 all point away from E1.node1.
-void SPR_by_NNI(Parameters& P, const tree_edge& E1, const tree_edge& E2, bool close, bool disconnect_subtree)
-{
-    const auto& t = P.t();
-
-    assert(behind_edge(t, E1.reverse(), E2));
-
-    if (points_to(E1.reverse(),E2))
-	return; //already attached to edge E2!
-
-    // 1. Get edges E3 and E5 behind E1.reverse(), and decide which one points to E2.
-    vector<int> connected = t.branches_after(t.reverse(t.find_branch(E1)));
-    assert(connected.size() == 2);
-    tree_edge E3 = t.edge(connected[0]);
-    tree_edge E5 = t.edge(connected[1]);
-
-    if (behind_edge(t, E3, E2, close))
-	std::swap(E3,E5);
-    else if (behind_edge(t, E5, E2, close))
-	; // OK
-    else
-    {
-	std::abort();
-    }
-
-    assert(behind_edge(t, E5, E2, close));
-
-    // 2. Get edges E4a and E4b in front of E5, and decide which one points to E2.
-    connected = t.branches_after(t.find_branch(E5));
-
-    tree_edge E4a = t.edge(connected[0]);
-    tree_edge E4b = t.edge(connected[1]);
-
-    if (E2 == E4a or behind_edge(t,E4a,E2,close))
-	std::swap(E4a,E4b);
-    else if (E2 == E4b or behind_edge(t,E4b,E2,close))
-	; // OK
-    else
-	std::abort();
-
-    if (close)
-	assert(E2 == E4b);
-    else
-	assert(E2 == E4b or behind_edge(t,E4b,E2));
-
-    // 3. Record lengths for branches before NNI.
-    double L3 = t.branch_length(t.find_branch(E3));
-    /* double L2 = */ t.branch_length(t.find_branch(E2));
-    double L5 = t.branch_length(t.find_branch(E5));
-
-    // 4. Do NNI.
-    P.NNI(E3, E4b, disconnect_subtree); // Source nodes for E4b/E2 and E3 are not moved, but branch names are moved.
-    std::swap(E4b.node1, E3.node1);
-
-    // 5. Fix up branch lengths and source nodes for E4b/E2 and E3.
-    P.setlength(P.t().find_branch(E3), L3 + L5);
-    P.setlength(P.t().find_branch(E5), 0.0);
-}
-
-
 // Let b_target = (x,y).  Then we have (x,n0) and (n0,y).
 // B_unbroken_target specifies the orientation for the distance U.
 void set_lengths_at_location(Parameters& P, int n0, double L, const tree_edge& b_target, const spr_attachment_points& locations)
@@ -657,42 +580,6 @@ void set_lengths_at_location(Parameters& P, int n0, double L, const tree_edge& b
     // 5. Set the lengths of the two branches
     P.setlength(b1, L1);
     P.setlength(b2, L2);
-}
-
-/// Perform an SPR move: move the subtree BEHIND \a b1 to the branch indicated by \a b2,
-///  and choose the point on the branch specified in \a locations.
-void SPR_at_location(Parameters& P, const tree_edge& b_subtree, const tree_edge& b_target, const spr_attachment_points& locations, bool disconnect_subtree=false)
-{
-#ifndef NDEBUG
-    double total_length_before = tree_length(P.t());
-#endif
-
-    // If we are already at b_target, then its one of the branches after b_subtree.  Then do nothing.
-    if (b_subtree.node2 == b_target.node1 or b_subtree.node2 == b_target.node2)
-	return;
-
-    // unbroken target branch
-    /// \todo Correctly handle moving to the same topology -- but allow branch lengths to change.
-    double L = P.t().branch_length(P.t().find_branch(b_target));
-
-    // node joining the subtree to the rest of the tree
-    int n0 = b_subtree.node2;
-
-    // Perform the SPR operation (specified by a branch TOWARD the pruned subtree)
-    SPR_by_NNI(P, b_subtree.reverse(), b_target, true, disconnect_subtree);
-
-    set_lengths_at_location(P, n0, L, b_target, locations);
-
-#ifndef NDEBUG
-    double total_length_after = tree_length(P.t());
-    assert(std::abs(total_length_after - total_length_before) < 1.0e-9);
-#endif
-
-    //  FIXME - switch SPR_at_location( ) to use NNI.
-    //  FIXME - split spr_search routines into separate file?
-    //  FIXME - Don't send a variable parameters object into spr_search_attachment_points
-    //  NOTE - The NNI doesn't actually change the alignment MATRIX.
-    //         Since we are actually using the MATRIX, perhaps we should fix this.
 }
 
 struct attachment_branch
