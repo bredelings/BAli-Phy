@@ -1332,8 +1332,29 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 		indices.push_back(I2);
 	}
 	std::reverse(indices.begin(), indices.end());
-	for(int i: indices)
-	    SPR_at_location(p[1], subtree_edge, I.attachment_branch_pairs[i].edge, locations, true);
+
+	// 1. Prune subtree and store homology bitpath
+	vector<tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>> alignments3way;
+	alignments3way.reserve(I.attachment_branch_pairs.size());
+	alignments3way.push_back(prune_subtree_and_get_3way_alignments(p[1], subtree_edge, I.initial_edge, nodes0, false));
+
+	// 2. Move subtree one branch at a time to handle fixed-A partitions represented with pairwise alignments
+	indices.insert(indices.begin(),0);
+	for(int j=1;j<indices.size();j++)
+	{
+	    const auto& BB = I.attachment_branch_pairs[indices[j]];
+	    const tree_edge& next_target_edge = BB.edge;
+	    const tree_edge& sibling_edge = BB.sibling;
+	    const tree_edge& prev_target_edge = I.attachment_branch_pairs[BB.prev_i].edge;
+
+	    alignments3way.push_back( move_pruned_subtree(p[1], alignments3way[j-1], subtree_edge, prev_target_edge, next_target_edge, sibling_edge, false) );
+	}
+
+	// 3. Regraft the subtree to the correct edge and set branch lengths
+	auto target_edge = I.attachment_branch_pairs[C].edge;
+	double L = p[1].t().branch_length(p[1].t().find_branch(target_edge));
+	regraft_subtree_and_set_3way_alignments(p[1], subtree_edge, target_edge, alignments3way.back(), false);
+	set_lengths_at_location(p[1], subtree_edge.node2, L, target_edge, locations);
     }
 
     // enforce tree constraints
