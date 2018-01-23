@@ -336,6 +336,8 @@ my %Burnin = ();
 
 &print_index_html();
 
+print "Report written to 'Results/index.html'\n";
+
 #---------------------------------------- end execution ---------------------------
 
 sub get_n_sequences
