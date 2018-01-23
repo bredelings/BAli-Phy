@@ -874,18 +874,39 @@ vector<HMM::bitmask_t> get_3way_alignment(data_partition P, int a, int b, int x,
 
 tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>
 prune_subtree_and_get_3way_alignments(Parameters& P,  const tree_edge& b_subtree, const tree_edge& b_target,
-				      const vector<int>& nodes0, bool update_variable_A=false)
+				      const vector<int>& nodes0, bool preserve_homology=false)
 {
     int a = b_target.node1; // bit 0
     int b = b_target.node2; // bit 1
     int x = b_subtree.node1; // bit 2
     int y = b_subtree.node2; // bit 3
 
+    vector<optional<pairwise_alignment_t>> A23(P.n_data_partitions());
     vector<optional<vector<HMM::bitmask_t>>> As(P.n_data_partitions());
     for(int i=0;i<P.n_data_partitions();i++)
-	As[i] = get_3way_alignment(P.get_data_partition(i), a, b, x, y);
+	// 1a. For variable alignments that we aren't preserving homologies for: record the pairwise alignment A{2,3}
+	if (P[i].variable_alignment() and not preserve_homology)
+	{
+	    auto b0123 = A3::get_bitpath(P[i], nodes0); 	    // The central node (nodes[0]) is mapped to bit 3!
+	    A23[i]  = get_pairwise_alignment_from_bits(b0123, 1, 2);
+	    assert(A23[i]->length1() == P[i].seqlength(nodes0[2]));
+	    assert(A23[i]->length2() == P[i].seqlength(nodes0[3]));
+	}
+        // 1b. If we are preserving homology, then record the alignment A{a,b,x}
+	else
+	    As[i] = get_3way_alignment(P.get_data_partition(i), a, b, x, y);
 
     P.prune_subtree(b_subtree);
+
+    // 2. For variable alignment partitions that we aren't preserving homologies for,
+    //    set the correct pairwise alignment for the branch (nodes0[2],nodes0[3])
+    int branch_from_2_to_3 = P.t().find_branch(nodes0[2],nodes0[3]);
+    for(int i=0;i<P.n_data_partitions();i++)
+	if (P[i].variable_alignment() and not preserve_homology)
+	{
+	    P[i].set_pairwise_alignment(branch_from_2_to_3, *A23[i]);
+	    // clear other pairwise alignments??
+	}
 
     return tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>{a, b, x, std::move(As)};
 }
@@ -913,7 +934,7 @@ void set_3way_alignment(data_partition P, int bxy, int bya, int byb, vector<HMM:
     P.set_pairwise_alignment(byb, get_pairwise_alignment_from_bits(alignment, y_bit, b_bit));
 }
 
-void regraft_subtree_and_set_3way_alignments(Parameters& P, const tree_edge& b_subtree, const tree_edge& b_target, const tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>& alignments, bool update_variable_A=false)
+void regraft_subtree_and_set_3way_alignments(Parameters& P, const tree_edge& b_subtree, const tree_edge& b_target, const tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>& alignments, bool preserve_homology=false)
 {
     using std::get;
 
@@ -935,7 +956,7 @@ void regraft_subtree_and_set_3way_alignments(Parameters& P, const tree_edge& b_s
     assert(get<2>(alignments) == x);
     assert(get<0>(alignments) == a and get<1>(alignments) == b);
     for(int i=0; i<P.n_data_partitions(); i++)
-	if (get<3>(alignments)[i])
+	if (preserve_homology or not P[i].variable_alignment())
 	    set_3way_alignment(P[i], bxy, bya, byb, *get<3>(alignments)[i]);
 }
 
@@ -988,7 +1009,7 @@ tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>
 move_pruned_subtree(Parameters& P,
 		    const tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>& alignments_prev,
 		    const tree_edge& b_subtree, tree_edge b_prev, const tree_edge& b_next, const tree_edge& b_sibling,
-		    bool update_variable_A=false)
+		    bool preserve_homology=false)
 {
     using std::get;
     // 1. Rotate b_prev to point toward b_next
@@ -1024,7 +1045,7 @@ move_pruned_subtree(Parameters& P,
     // 3. Adjust pairwise alignments and construct 3-node alignment for attaching to new edge
     vector<optional<vector<HMM::bitmask_t>>> alignments_next(P.n_data_partitions());
     for(int i=0; i<P.n_data_partitions(); i++)
-	if (get<3>(alignments_prev)[i])
+	if (preserve_homology or not P[i].variable_alignment())
 	{
 	    if (flip_prev_A)
 		alignments_next[i] = move_pruned_subtree(P[i], remap_bitpath(*std::get<3>(alignments_prev)[i],{1,0,2,3,4}), b_ab, b_bc, b_bd);
