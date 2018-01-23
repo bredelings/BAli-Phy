@@ -336,7 +336,7 @@ my %Burnin = ();
 
 &print_index_html();
 
-print "Report written to 'Results/index.html'\n";
+print "\nReport written to 'Results/index.html'\n";
 
 #---------------------------------------- end execution ---------------------------
 
