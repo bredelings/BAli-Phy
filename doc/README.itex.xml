@@ -403,25 +403,10 @@ The command <command>bali-phy</command> and its associated tools should then be 
 	
       <para>You can select the C++ compiler by setting the CXX variable.  A useful example of this is to use <command>g++-5</command> on systems where <command>g++</command> invokes a compiler that is too old:
  <screen><prompt>%</prompt> <userinput>../BAli-Phy/configure --prefix=&#36;HOME/Applications/bali-phy-&version; CXX=g++-5</userinput></screen>
-        You may also set compiler and linker options using the CXXFLAGS and LDFLAGS variables.  A useful example of this is to produce an OS X executuable on that can run on older versions of OS X:
+ You may also set compiler and linker options using the CXXFLAGS and LDFLAGS variables.  For example, you can set the CPPFLAGS and LDFLAGS variables to instruct the compiler where to look for libraries, such as cairo:
+	  <screen><prompt>%</prompt> <userinput>../BAli-Phy/configure --prefix=&#36;HOME/Applications/bali-phy-&version; CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib"</userinput></screen>
+ Another useful example of this is to produce an OS X executuable on that can run on older versions of OS X:
 	  <screen><prompt>%</prompt> <userinput>../BAli-Phy/configure --prefix=&#36;HOME/Applications/bali-phy-&version; CXXFLAGS="-mmacosx-version-min=10.9" LDFLAGS="-mmacosx-version-min=10.9"</userinput></screen>	</para>
-
-      </section>
-      <section><info><title>Options: where to find libraries and header files (e.g. Cairo)</title></info>
-	
-	<para>You can instruct the compiler to look for include files
-	  in directory <replaceable>dir</replaceable> by passing
-	  <parameter>--with-extra-includes=<replaceable>dir</replaceable></parameter> to the <command>configure</command> script.
-	</para>
-
-	<para>You can instruct the compiler to look for libraries
-	  files in directory
-	  <filename><replaceable>dir</replaceable></filename> by
-	  passing
-	  <parameter>--with-extra-libs=<replaceable>dir</replaceable></parameter> to the <command>configure</command> script.  
-	</para> 
-
-	<para>For example, if your system has Cairo installed in <filename>/usr/local/</filename>, then you might need to add "<userinput>--with-extra-includes=/usr/local/include --with-extra-libs=/usr/local/lib</userinput>" to the configure script arguments so that the compiler can find the Cairo include files and libraries.</para>
       </section>
 
     </section>
