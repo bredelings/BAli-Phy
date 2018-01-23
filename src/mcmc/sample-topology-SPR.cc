@@ -1115,22 +1115,22 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
     // 3. Attach at each attachment branch at compute probabilities
     for(int i=(int)I.attachment_branch_pairs.size()-1;i>0;i--)
     {
-	const tree_edge& next_target_edge = I.attachment_branch_pairs[i].edge;
+	const tree_edge& target_edge = I.attachment_branch_pairs[i].edge;
 	auto& p = Ps[i];
-	double L = p.t().branch_length(p.t().find_branch(next_target_edge));
+	double L = p.t().branch_length(p.t().find_branch(target_edge));
 
 	// 1. Regraft subtree and set pairwise alignments on three branches
-	regraft_subtree_and_set_3way_alignments(p, subtree_edge, next_target_edge, alignments3way[i], true);
+	regraft_subtree_and_set_3way_alignments(p, subtree_edge, target_edge, alignments3way[i], true);
 
         // 2. Set branch lengths
 	int n0 = subtree_edge.node2;
-	set_lengths_at_location(p, n0, L, next_target_edge, locations);
+	set_lengths_at_location(p, n0, L, target_edge, locations);
 
 	// 3. Compute likelihood and probability
-	Pr[next_target_edge] = p.heated_likelihood() * p.prior_no_alignment();
+	Pr[target_edge] = p.heated_likelihood() * p.prior_no_alignment();
 
 #ifdef DEBUG_SPR_ALL
-	Pr.LLL[next_target_edge] = p.heated_likelihood();
+	Pr.LLL[target_edge] = p.heated_likelihood();
 #endif
 	Ps.pop_back();
     }
