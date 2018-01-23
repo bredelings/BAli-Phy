@@ -1328,7 +1328,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 	{
 	    int I1 = indices[i];
 	    int I2 = I.attachment_branch_pairs[I1].prev_i;
-	    if (I2 > 0)
+	    if (I2 >= 0)
 		indices.push_back(I2);
 	}
 	std::reverse(indices.begin(), indices.end());
@@ -1339,7 +1339,6 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 	alignments3way.push_back(prune_subtree_and_get_3way_alignments(p[1], subtree_edge, I.initial_edge, nodes0, false));
 
 	// 2. Move subtree one branch at a time to handle fixed-A partitions represented with pairwise alignments
-	indices.insert(indices.begin(),0);
 	for(int j=1;j<indices.size();j++)
 	{
 	    const auto& BB = I.attachment_branch_pairs[indices[j]];
