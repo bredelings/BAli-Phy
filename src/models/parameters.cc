@@ -301,7 +301,7 @@ bool data_partition::pairwise_alignment_is_unset(int b) const
     return E.is_int();
 }
 
-void data_partition::unset_pairwise_alignment(int b)
+void mutable_data_partition::unset_pairwise_alignment(int b)
 {
     assert(not has_IModel() or likelihood_calculator() == 0);
     int B = t().reverse(b);
@@ -314,7 +314,7 @@ void data_partition::unset_pairwise_alignment(int b)
 }
 
 /// Set the pairwise alignment value, but don't mark the alignment & sequence lengths as changed.
-void data_partition::set_pairwise_alignment(int b, const pairwise_alignment_t& pi)
+void mutable_data_partition::set_pairwise_alignment(int b, const pairwise_alignment_t& pi)
 {
     assert(not has_IModel() or likelihood_calculator() == 0);
     int B = t().reverse(b);
@@ -482,6 +482,10 @@ alignment compress_alignment(const alignment& A, const TreeInterface& t, vector<
 
 data_partition::data_partition(const Parameters* p, int i)
     :P(p),partition_index(i)
+{ }
+
+mutable_data_partition::mutable_data_partition(const Parameters* p, int i)
+    :data_partition(p,i)
 { }
 
 data_partition_constants::data_partition_constants(Parameters* p, int i, const alignment& AA, const vector<int>& counts, int like_calc)
@@ -833,6 +837,11 @@ data_partition Parameters::get_data_partition(int i) const
     return data_partition(this,i);
 }
 
+mutable_data_partition Parameters::get_data_partition(int i)
+{
+    return mutable_data_partition(this,i);
+}
+
 void Parameters::set_beta(double b)
 {
     set_parameter_value(0,b);
@@ -1030,7 +1039,7 @@ void disconnect_subtree(vector<HMM::bitmask_t>& a123456)
     }
 }
 
-void data_partition::set_alignment(const alignment& A)
+void mutable_data_partition::set_alignment(const alignment& A)
 {
     // 1. Check if the alphabet on the alignment is right.
     if (get_alphabet() != A.get_alphabet())
@@ -1051,7 +1060,7 @@ void data_partition::set_alignment(const alignment& A)
     }
 }
 
-void data_partition::unalign_sequences()
+void mutable_data_partition::unalign_sequences()
 {
     auto T = t();
     for(int b = 0; b<T.n_branches(); b++)

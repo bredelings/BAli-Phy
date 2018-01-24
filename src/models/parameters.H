@@ -98,7 +98,7 @@ class data_partition
 public:
     const Parameters* P;
 
-private:
+protected:
     int partition_index;
 
     const data_partition_constants& DPC() const;
@@ -156,17 +156,9 @@ public:
 
     const pairwise_alignment_t& get_pairwise_alignment(int b) const;
 
-    void set_pairwise_alignment(int b, const pairwise_alignment_t&);
-
-    void unset_pairwise_alignment(int b);
-
     bool pairwise_alignment_is_unset(int b) const;
 
     const matrix<int>& alignment_constraint() const;
-
-    void set_alignment(const alignment&);
-
-    void unalign_sequences();
 
     // The prior, likelihood, and probability
     log_double_t prior_no_alignment() const;
@@ -181,6 +173,19 @@ public:
     log_double_t heated_probability() const {return heated_prior() * heated_likelihood();}
 
     data_partition(const Parameters* P, int i);
+};
+
+struct mutable_data_partition: public data_partition
+{
+    void set_alignment(const alignment&);
+
+    void unalign_sequences();
+
+    void set_pairwise_alignment(int b, const pairwise_alignment_t&);
+
+    void unset_pairwise_alignment(int b);
+
+    mutable_data_partition(const Parameters* P, int i);
 };
 
 struct smodel_methods
@@ -324,11 +329,15 @@ public:
 
     void variable_alignment(bool b);
 
-    data_partition get_data_partition(int i) const;
+            data_partition get_data_partition(int i) const;
+
+    mutable_data_partition get_data_partition(int i);
 
     int n_data_partitions() const {return PC->DPC.size();}
 
-    data_partition operator[](int i) const {return get_data_partition(i);}
+            data_partition operator[](int i) const {return get_data_partition(i);}
+
+    mutable_data_partition operator[](int i)       {return get_data_partition(i);}
 
     boost::optional<int> smodel_index_for_partition(int i) const {return PC->smodel_for_partition[i];}
 

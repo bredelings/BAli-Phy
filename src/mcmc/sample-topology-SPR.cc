@@ -731,7 +731,7 @@ spr_attachment_points get_spr_attachment_points(const TreeInterface& T, const tr
 /// Extract the relationship between {x,a,b}, and unset the pairwise alignments on (x,y),(y,a),(y,b)
 // OK so if B1=(x,y) and initial_edge = (a,b) then we should have edges (y,a) and (y.b) in the tree
 // Here we are aligning {x,a,b} with y undefined.
-vector<HMM::bitmask_t> get_3way_alignment(data_partition P, int a, int b, int x, int y)
+vector<HMM::bitmask_t> get_3way_alignment(mutable_data_partition P, int a, int b, int x, int y)
 {
     constexpr int a_bit = 0;
     constexpr int b_bit = 1;
@@ -798,7 +798,7 @@ prune_subtree_and_get_3way_alignments(Parameters& P,  const tree_edge& b_subtree
     return tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>{a, b, x, std::move(As)};
 }
 
-void set_3way_alignment(data_partition P, int bxy, int bya, int byb, vector<HMM::bitmask_t> alignment)
+void set_3way_alignment(mutable_data_partition P, int bxy, int bya, int byb, vector<HMM::bitmask_t> alignment)
 {
     constexpr int a_bit = 0;
     constexpr int b_bit = 1;
@@ -860,7 +860,7 @@ void regraft_subtree_and_set_3way_alignments(Parameters& P, const tree_edge& b_s
 //    Steps 5&6 maintain the invariant that for the edges that (x,y) is considered to attach to,
 //    we don't have a pairwise alignment.
 vector<HMM::bitmask_t>
-move_pruned_subtree(data_partition P, const vector<HMM::bitmask_t>& alignment_prev, int b_ab, int b_bc, int b_bd)
+move_pruned_subtree(mutable_data_partition P, const vector<HMM::bitmask_t>& alignment_prev, int b_ab, int b_bc, int b_bd)
 {
     constexpr int a_bit = 0;
     constexpr int b_bit = 1;
