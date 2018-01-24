@@ -949,7 +949,7 @@ move_pruned_subtree(Parameters& P,
 /// non-pruned subtree should reflect the situation where the subtree has been pruned.
 ///
 spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const spr_attachment_points& locations,
-							  const vector<int>& nodes0, bool sum_out_A=false)
+							  const map<tree_edge,vector<int>>& nodes, bool sum_out_A = false)
 {
 #ifndef NDEBUG
     auto peels0 = substitution::total_peel_internal_branches + substitution::total_peel_leaf_branches;
@@ -980,7 +980,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
     alignments3way.reserve(I.attachment_branch_pairs.size());
 
     // 1. Prune subtree and store homology bitpath
-    alignments3way.push_back(prune_subtree_and_get_3way_alignments(Ps[0], subtree_edge, I.initial_edge, nodes0, not sum_out_A));
+    alignments3way.push_back(prune_subtree_and_get_3way_alignments(Ps[0], subtree_edge, I.initial_edge, nodes.at(I.initial_edge), not sum_out_A));
 
     // 2. Move to each attachment branch and compute homology bitpath, but don't attch
     for(int i=1;i<I.attachment_branch_pairs.size();i++)
@@ -1040,12 +1040,10 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
 					const vector<log_double_t>& PrL,
 					const spr_info& I, int C,
 					const spr_attachment_points& locations,
-					const std::vector<int>& nodes0
+					const map<tree_edge, vector<int>>& nodes_for_branch
     )
 {
     tree_edge E_parent = I.b_parent;
-    int n1 = E_parent.node2;
-    int n2 = E_parent.node1;
 
     assert(p.size() == 2);
     assert(p[0].variable_alignment() == p[1].variable_alignment());
@@ -1054,8 +1052,8 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
 
     //----------------- Generate the Different node lists ---------------//
     vector< vector<int> > nodes(2);
-    nodes[0] = nodes0;                                            // Using two random orders can lead to different total
-    nodes[1] = A3::get_nodes_branch_random(p[1].t(), n1, n2);     //  probabilities for p[0] and p[1] when p[0] == p[1].
+    nodes[0] = nodes_for_branch.at(I.initial_edge);                                 // If p[1].t() == p[0].t() then nodes[0] == nodes[1]
+    nodes[1] = nodes_for_branch.at(I.attachment_branch_pairs[C].edge);              // in this formulation.
     bool do_cube = (uniform() < p[0].load_value("cube_fraction",0.0));
 
     boost::shared_ptr<sample_A3_multi_calculation> tri;
@@ -1072,7 +1070,7 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
     if (P.variable_alignment())
 #endif
     {
-	spr_attachment_probabilities PrB2 = SPR_search_attachment_points(p[1], E_parent, locations, nodes0);
+	spr_attachment_probabilities PrB2 = SPR_search_attachment_points(p[1], E_parent, locations, nodes_for_branch);
 	vector<log_double_t> Pr2 = I.convert_to_vector(PrB2);
     
 	if (not P.variable_alignment())
@@ -1176,14 +1174,22 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 
     spr_info I(P.t(), subtree_edge);
 
-    auto nodes0 = A3::get_nodes_branch_random(P.t(), I.b_parent.node2, I.b_parent.node1);
+    map<tree_edge,vector<int>> nodes;
+    for(auto& E: I.attachment_branch_pairs)
+    {
+	vector<int> edge_nodes { subtree_edge.node2, subtree_edge.node1, E.edge.node1, E.edge.node2 };
+	if (uniform() < 0.5)
+	    std::swap(edge_nodes[2], edge_nodes[3]);
+	nodes[E.edge] = edge_nodes;
+    }
+    const auto& nodes0 = nodes[I.initial_edge];
 
     // Compute total lengths for each of the possible attachment branches
     vector<double> L = I.attachment_branch_lengths();
 
     if (I.n_attachment_branches() == 1) return false;
 
-    spr_attachment_probabilities PrB = SPR_search_attachment_points(p[1], subtree_edge, locations, nodes0);
+    spr_attachment_probabilities PrB = SPR_search_attachment_points(p[1], subtree_edge, locations, nodes);
 
     vector<log_double_t> Pr = I.convert_to_vector(PrB);
 #ifdef DEBUG_SPR_ALL
@@ -1274,7 +1280,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     try
     {
 	if (C > 0)
-	    accepted = SPR_accept_or_reject_proposed_tree(P, p, Pr, PrL, I, C, locations, nodes0);
+	    accepted = SPR_accept_or_reject_proposed_tree(P, p, Pr, PrL, I, C, locations, nodes);
     }
     catch (std::bad_alloc&) {
 	std::cerr<<"Allocation failed in sample_try_multi (in SPR_search_one)!  Proceeding."<<std::endl;
