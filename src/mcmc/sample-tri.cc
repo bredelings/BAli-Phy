@@ -41,6 +41,7 @@ using std::vector;
 using std::pair;
 using std::endl;
 using boost::dynamic_bitset;
+using boost::optional;
 
 boost::shared_ptr<DPmatrixConstrained>
 tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, const vector<HMM::bitmask_t>& a23,
@@ -172,13 +173,39 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
     return Matrices;
 }
 
+// If there is an original 3way alignment, then we need to construct a 3way path and project to 2way
+// in order for the constraint to be consistent with the original 3-way path.
+//
+// (In other cases, there maybe not be any original path to be consistent with.)
+vector<HMM::bitmask_t> A23_constraint(data_partition P, const vector<int>& nodes, bool consistent_with_original)
+{
+    if (consistent_with_original)
+    {
+	HMM::bitmask_t m23; m23.set(1); m23.set(2);
+	vector<HMM::bitmask_t> a123 = A3::get_bitpath(P, nodes);
+	return remove_silent(a123, m23);
+    }
+    else
+    {
+	int b4 = P.t().find_branch(nodes[2],nodes[3]);
+	return convert_to_bits(P.get_pairwise_alignment(b4),1,2);
+    }
+}
+
+vector<optional<vector<HMM::bitmask_t>>> A23_constraints(const Parameters& P, const vector<int>& nodes, bool consistent_with_original)
+{
+    vector<optional<vector<HMM::bitmask_t>>> a23(P.n_data_partitions());
+    for(int i=0; i<P.n_data_partitions();i++)
+	if (P[i].variable_alignment())
+	    a23[i] = A23_constraint(P[i], nodes, consistent_with_original);
+    return a23;
+}
+
 boost::shared_ptr<DPmatrixConstrained>
 tri_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
 			  const vector<int>& nodes, const vector<int>& nodes0,
 			  int bandwidth)
 {
-    const auto t0 = P0.t();
-
     assert(t0.is_connected(nodes[0],nodes[1]));
     assert(nodes0[0] == nodes[0]);
     bool tree_changed = not t0.is_connected(nodes[0],nodes[2]) or not t0.is_connected(nodes[0],nodes[3]);
@@ -199,26 +226,14 @@ tri_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
 
     if (tree_changed)
     {
-	int b4 = t0.find_branch(nodes[2],nodes[3]);
-	// Does this give the right order so that the move is reversible?
-	// FIXME: Check that when we project a123_new to a12_new at the end, this does not change!!!
-	a23 = convert_to_bits(P0.get_pairwise_alignment(b4),1,2);
-
-	// The branch that the subtree was pruned from.
-//	int b5 = t.find_branch(nodes0[2], nodes0[3]);
-	assert(t0.is_connected(nodes0[2],nodes0[0]));
+	assert(P.t().is_connected(nodes0[2], nodes0[3]));  // The old attachment point should not be split in the new      tree
+	assert(t0.is_connected(nodes0[2],nodes0[0]));  // The old attachment point should     be split in the original tree
 	assert(t0.is_connected(nodes0[3],nodes0[0]));
 
-	// Make sure the column order on the pruned branch matches the projected column order from the original alignment.
-	//    vector<HMM::bitmask_t> b123 = A3::get_bitpath(P0, nodes0);
-	//    P.set_pairwise_alignment(b5, get_pairwise_alignment_from_bits(b123,1,2));
+	a23 = A23_constraint(P0, nodes, false);
     }
     else
-    {
-	HMM::bitmask_t m23; m23.set(1); m23.set(2);
-	vector<HMM::bitmask_t> a123 = A3::get_bitpath(P, nodes);
-	a23 = remove_silent(a123, m23);
-    }
+	a23 = A23_constraint(P, nodes, true);
 
     return tri_sample_alignment_base(P, nodes, a23, bandwidth);
 }
@@ -240,6 +255,26 @@ sample_A3_multi_calculation::sample_A3_multi_calculation(vector<Parameters>& pp,
     Pr(p.size()),
     bandwidth(b)
 {
+}
+
+log_double_t pr_sum_out_A_tri(Parameters P, const vector<optional<vector<HMM::bitmask_t>>>& a23, const vector<int>& nodes)
+{
+    log_double_t Pr = P.prior_no_alignment();
+
+    // sum of substitution and alignment probability over all paths
+    for(int j=0;j<P.n_data_partitions();j++)
+    {
+	if (P[j].variable_alignment()) {
+	    auto Matrices = tri_sample_alignment_base(P[j], nodes, *a23[j], -1);
+	    Pr *= Matrices->Pr_sum_all_paths();
+	    Pr *= pow(other_subst(P[j], nodes), P[j].get_beta());
+	    Pr *= other_prior(P[j], nodes);
+	}
+	else
+	    Pr *= P[j].heated_likelihood();
+    }
+
+    return Pr;
 }
 
 void sample_A3_multi_calculation::run_dp()
