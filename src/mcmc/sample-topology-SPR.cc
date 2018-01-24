@@ -949,7 +949,7 @@ move_pruned_subtree(Parameters& P,
 /// non-pruned subtree should reflect the situation where the subtree has been pruned.
 ///
 spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const spr_attachment_points& locations,
-							  const vector<int>& nodes0)
+							  const vector<int>& nodes0, bool sum_out_A=false)
 {
 #ifndef NDEBUG
     auto peels0 = substitution::total_peel_internal_branches + substitution::total_peel_leaf_branches;
@@ -980,7 +980,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
     alignments3way.reserve(I.attachment_branch_pairs.size());
 
     // 1. Prune subtree and store homology bitpath
-    alignments3way.push_back(prune_subtree_and_get_3way_alignments(Ps[0], subtree_edge, I.initial_edge, nodes0, true));
+    alignments3way.push_back(prune_subtree_and_get_3way_alignments(Ps[0], subtree_edge, I.initial_edge, nodes0, not sum_out_A));
 
     // 2. Move to each attachment branch and compute homology bitpath, but don't attch
     for(int i=1;i<I.attachment_branch_pairs.size();i++)
@@ -996,7 +996,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
 	Ps.push_back(Ps[prev_i]);
 	assert(Ps.size() == i+1);
 	auto& p = Ps.back();
-	alignments3way.push_back( move_pruned_subtree(p, alignments3way[prev_i], subtree_edge, prev_target_edge, next_target_edge, BB.sibling, true) );
+	alignments3way.push_back( move_pruned_subtree(p, alignments3way[prev_i], subtree_edge, prev_target_edge, next_target_edge, BB.sibling, not sum_out_A) );
     }
 
     // 3. Attach at each attachment branch at compute probabilities
@@ -1007,7 +1007,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
 	double L = p.t().branch_length(p.t().find_branch(target_edge));
 
 	// 1. Regraft subtree and set pairwise alignments on three branches
-	regraft_subtree_and_set_3way_alignments(p, subtree_edge, target_edge, alignments3way[i], true);
+	regraft_subtree_and_set_3way_alignments(p, subtree_edge, target_edge, alignments3way[i], not sum_out_A);
 
         // 2. Set branch lengths
 	int n0 = subtree_edge.node2;
