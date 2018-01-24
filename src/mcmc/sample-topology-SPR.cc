@@ -1103,12 +1103,6 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
     if (C2 == -1) return false;
 
     //---------------------- Update P based on choice ------------------//
-    for(int i=0;i<P.n_data_partitions();i++) {
-	//    dynamic_bitset<> s1 = constraint_satisfied(P[i].alignment_constraint, P[i].A());
-	//    dynamic_bitset<> s2 = constraint_satisfied(p[C2][i].alignment_constraint, p[C2][i].A());
-    
-	//    report_constraints(s1,s2,i);
-    }
     P = p[C2];
   
     return (C2 == 1);
