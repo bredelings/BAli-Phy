@@ -206,6 +206,8 @@ tri_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
 			  const vector<int>& nodes, const vector<int>& nodes0,
 			  int bandwidth)
 {
+    const auto t0 = P0.t();
+
     assert(t0.is_connected(nodes[0],nodes[1]));
     assert(nodes0[0] == nodes[0]);
     bool tree_changed = not t0.is_connected(nodes[0],nodes[2]) or not t0.is_connected(nodes[0],nodes[3]);
