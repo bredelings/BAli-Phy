@@ -943,6 +943,9 @@ move_pruned_subtree(Parameters& P,
     return tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>{b, c, x, std::move(alignments_next)};
 }
 
+vector<optional<vector<HMM::bitmask_t>>> A23_constraints(const Parameters& P, const vector<int>& nodes, bool original);
+log_double_t pr_sum_out_A_tri(Parameters P, const vector<optional<vector<HMM::bitmask_t>>>& a23, const vector<int>& nodes);
+
 /// Compute the probability of pruning b1^t and regraftion at \a locations
 ///
 /// After this routine, likelihood caches and subalignment indices for branches in the
@@ -971,7 +974,13 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
     Ps.push_back(P);
 
     spr_attachment_probabilities Pr;
-    Pr[I.initial_edge] = P.heated_likelihood() * P.prior_no_alignment();
+    if (sum_out_A)
+    {
+	auto& nodes_ = nodes.at(I.initial_edge);
+	Pr[I.initial_edge] = pr_sum_out_A_tri(P, A23_constraints(P, nodes_, true), nodes_);
+    }
+    else
+	Pr[I.initial_edge] = P.heated_likelihood() * P.prior_no_alignment();
 #ifdef DEBUG_SPR_ALL
     Pr.LLL[I.initial_edge] = P.heated_likelihood();
 #endif
@@ -1005,6 +1014,12 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
 	const tree_edge& target_edge = I.attachment_branch_pairs[i].edge;
 	auto& p = Ps[i];
 	double L = p.t().branch_length(p.t().find_branch(target_edge));
+	auto& nodes_ = nodes.at(target_edge);
+
+	// 0. Save constraints before we regraft
+	vector<optional<vector<HMM::bitmask_t>>> a23_constraint;
+	if (sum_out_A)
+	    a23_constraint = A23_constraints(p, nodes_, false);
 
 	// 1. Regraft subtree and set pairwise alignments on three branches
 	regraft_subtree_and_set_3way_alignments(p, subtree_edge, target_edge, alignments3way[i], not sum_out_A);
@@ -1014,7 +1029,10 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
 	set_lengths_at_location(p, n0, L, target_edge, locations);
 
 	// 3. Compute likelihood and probability
-	Pr[target_edge] = p.heated_likelihood() * p.prior_no_alignment();
+	if (sum_out_A)
+	    Pr[target_edge] = pr_sum_out_A_tri(p, a23_constraint, nodes_);
+	else
+	    Pr[target_edge] = p.heated_likelihood() * p.prior_no_alignment();
 
 #ifdef DEBUG_SPR_ALL
 	Pr.LLL[target_edge] = p.heated_likelihood();
