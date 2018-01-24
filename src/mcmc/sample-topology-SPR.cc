@@ -1303,7 +1303,10 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 
     MCMC::Result result = SPR_stats(p[0].t(), p[1].t(), accepted, bins, subtree_edge);
     double L_effective = effective_length(P.t(), subtree_edge);
-    SPR_inc(Stats, result, "SPR (all)", L_effective);
+    if (sum_out_A)
+	SPR_inc(Stats, result, "SPR (all-sum)", L_effective);
+    else
+	SPR_inc(Stats, result, "SPR (all)", L_effective);
 
     return ((C != 0) and accepted);
 }
