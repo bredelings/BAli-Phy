@@ -42,34 +42,18 @@ using std::pair;
 using std::endl;
 using boost::dynamic_bitset;
 
-boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(mutable_data_partition P, const data_partition& P0, 
-								 const vector<int>& nodes, const vector<int>& nodes0,
-								 int bandwidth)
+boost::shared_ptr<DPmatrixConstrained>
+tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, const vector<HMM::bitmask_t>& a23,
+			  int /* bandwidth */)
 {
+
     const auto t = P.t();
-    const auto t0 = P0.t();
   
     assert(P.variable_alignment());
 
     assert(t.is_connected(nodes[0],nodes[1]));
     assert(t.is_connected(nodes[0],nodes[2]));
     assert(t.is_connected(nodes[0],nodes[3]));
-
-    assert(t0.is_connected(nodes[0],nodes[1]));
-    assert(nodes0[0] == nodes[0]);
-    bool tree_changed = not t0.is_connected(nodes[0],nodes[2]) or not t0.is_connected(nodes[0],nodes[3]);
-
-    // If the tree changed, assert that previously nodes 2 and 3 were connected.
-    if (tree_changed)
-    {
-	assert(bandwidth < 0);
-	assert(t0.is_connected(nodes[2],nodes[3]));
-    }
-    else
-    {
-	assert(t0.is_connected(nodes[0],nodes[2]));
-	assert(t0.is_connected(nodes[0],nodes[3]));
-    }
 
     // std::cerr<<"A = "<<A<<endl;
 
@@ -89,37 +73,9 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(mutable_data_pa
     m123.B = P.get_beta();
 
     //------------- Compute sequence properties --------------//
-    dynamic_bitset<> group1 = t.partition(t.find_branch(nodes[0],nodes[1]));
-    dynamic_bitset<> group2 = t.partition(t.find_branch(nodes[0],nodes[2]));
-    dynamic_bitset<> group3 = t.partition(t.find_branch(nodes[0],nodes[3]));
-
     int a1 = P.seqlength(nodes[1]);
 
-    vector<HMM::bitmask_t> a23;
-
     HMM::bitmask_t m23; m23.set(1); m23.set(2);
-
-    if (tree_changed)
-    {
-	int b4 = t0.find_branch(nodes[2],nodes[3]);
-	// Does this give the right order so that the move is reversible?
-	// FIXME: Check that when we project a123_new to a12_new at the end, this does not change!!!
-	a23 = convert_to_bits(P0.get_pairwise_alignment(b4),1,2);
-
-	// The branch that the subtree was pruned from.
-//	int b5 = t.find_branch(nodes0[2], nodes0[3]);
-	assert(t0.is_connected(nodes0[2],nodes0[0]));
-	assert(t0.is_connected(nodes0[3],nodes0[0]));
-
-	// Make sure the column order on the pruned branch matches the projected column order from the original alignment.
-	//    vector<HMM::bitmask_t> b123 = A3::get_bitpath(P0, nodes0);
-	//    P.set_pairwise_alignment(b5, get_pairwise_alignment_from_bits(b123,1,2));
-    }
-    else
-    {
-	vector<HMM::bitmask_t> a123 = A3::get_bitpath(P, nodes);
-	a23 = remove_silent(a123, m23);
-    }
 
     auto dists1 = substitution::get_column_likelihoods(P, {b1}, get_indices_n(P.seqlength(nodes[1])), 2);
     auto dists23 = substitution::get_column_likelihoods(P, {b2, b3}, get_indices_from_bitpath_w(a23, {1,2}, m23), 2);
@@ -215,6 +171,58 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(mutable_data_pa
 
     return Matrices;
 }
+
+boost::shared_ptr<DPmatrixConstrained>
+tri_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
+			  const vector<int>& nodes, const vector<int>& nodes0,
+			  int bandwidth)
+{
+    const auto t0 = P0.t();
+
+    assert(t0.is_connected(nodes[0],nodes[1]));
+    assert(nodes0[0] == nodes[0]);
+    bool tree_changed = not t0.is_connected(nodes[0],nodes[2]) or not t0.is_connected(nodes[0],nodes[3]);
+
+    // If the tree changed, assert that previously nodes 2 and 3 were connected.
+    if (tree_changed)
+    {
+	assert(bandwidth < 0);
+	assert(t0.is_connected(nodes[2],nodes[3]));
+    }
+    else
+    {
+	assert(t0.is_connected(nodes[0],nodes[2]));
+	assert(t0.is_connected(nodes[0],nodes[3]));
+    }
+
+    vector<HMM::bitmask_t> a23;
+
+    if (tree_changed)
+    {
+	int b4 = t0.find_branch(nodes[2],nodes[3]);
+	// Does this give the right order so that the move is reversible?
+	// FIXME: Check that when we project a123_new to a12_new at the end, this does not change!!!
+	a23 = convert_to_bits(P0.get_pairwise_alignment(b4),1,2);
+
+	// The branch that the subtree was pruned from.
+//	int b5 = t.find_branch(nodes0[2], nodes0[3]);
+	assert(t0.is_connected(nodes0[2],nodes0[0]));
+	assert(t0.is_connected(nodes0[3],nodes0[0]));
+
+	// Make sure the column order on the pruned branch matches the projected column order from the original alignment.
+	//    vector<HMM::bitmask_t> b123 = A3::get_bitpath(P0, nodes0);
+	//    P.set_pairwise_alignment(b5, get_pairwise_alignment_from_bits(b123,1,2));
+    }
+    else
+    {
+	HMM::bitmask_t m23; m23.set(1); m23.set(2);
+	vector<HMM::bitmask_t> a123 = A3::get_bitpath(P, nodes);
+	a23 = remove_silent(a123, m23);
+    }
+
+    return tri_sample_alignment_base(P, nodes, a23, bandwidth);
+}
+
 
 sample_A3_multi_calculation::sample_A3_multi_calculation(vector<Parameters>& pp,const vector< vector<int> >& nodes_,
 							 bool do_OS_,bool do_OP_, int b)
