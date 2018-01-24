@@ -1172,6 +1172,8 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 
     if (P.t().is_leaf_node(subtree_edge.node2)) return false;
 
+    sum_out_A = sum_out_A or (uniform() < P.load_value("spr_sum_out_A",0.0));
+
     // The attachment node for the pruned subtree.
     // This node will move around, but we will always peel up to this node to calculate the likelihood.
     int root_node = subtree_edge.node2;
