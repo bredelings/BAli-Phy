@@ -22,7 +22,6 @@
         {
             "arg_name": "alphabet",
             "arg_type": "a",
-	    "alphabet": "getAlphabet",
 	    "default_value": "getAlphabet"
         }
     ],

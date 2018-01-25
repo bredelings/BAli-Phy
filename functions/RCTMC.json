@@ -7,13 +7,11 @@
         {
             "arg_name": "S",
             "arg_type": "ExchangeModel[a]",
-            "alphabet": "getAlphabet",
 	    "description": "Symmetric (exchangability) matrix"
         },
         {
             "arg_name": "R",
             "arg_type": "FrequencyModel[a]",
-            "alphabet": "getAlphabet",
 	    "description": "Frequency model"
         }
     ],

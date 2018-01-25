@@ -6,8 +6,7 @@
     "args": [
         {
             "arg_name": "submodel",
-            "arg_type": "MixtureModel[a]",
-            "alphabet": "getAlphabet"
+            "arg_type": "MixtureModel[a]"
         }
     ]
 }

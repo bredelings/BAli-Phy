@@ -27,7 +27,7 @@
         {
             "arg_name": "A",
             "arg_type": "a",
-            "no_apply": true,
+	    "default_value": "getAlphabet",
             "description": "The nucleotide alphabet (DNA or RNA)."
         }
     ]

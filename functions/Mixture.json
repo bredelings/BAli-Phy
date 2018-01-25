@@ -1,26 +1,23 @@
 {
     "name": "Mixture",
     "result_type": "MixtureModel[a]",
-    "call": "SModel.scaled_mixture[Prelude.mapM[models,A],rates,frequencies]",
+    "call": "SModel.scaled_mixture[models,rates,frequencies]",
     "args": [
         {
             "arg_name": "models",
-            "arg_type": "List[MixtureModel[a]]"
+            "arg_type": "List[MixtureModel[a]]",
+	    "alphabet": "getAlphabet"
         },
         {
             "arg_name": "rates",
             "arg_type": "List[Double]",
-            "default_value": "~Dirichlet[Length[models],2]"
+            "default_value": "~Dirichlet[Length[models],2]",
+	    "alphabet": "getAlphabet"
         },
         {
             "arg_name": "frequencies",
             "arg_type": "List[Double]",
             "default_value": "~Dirichlet[Length[models],3]"
-        },
-        {
-            "arg_name": "A",
-            "arg_type": "a",
-            "no_apply": true
         }
     ]
 }

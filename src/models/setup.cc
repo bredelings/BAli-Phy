@@ -414,11 +414,6 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	    auto A = get_model_as(R, alphabet_type, *alphabet_expression, alphabet_scope);
 	    arg = {dummy("Distributions.set_alphabet"),A,arg};
 	}
-	else
-	{
-	    auto A = dummy("Prelude.Nothing");
-	    arg = {dummy("Distributions.SetAlphabet"),A,arg};
-	}
 
 	// E = Log "arg_name" arg_name >> E
 	if (should_log(R, model_rep, arg_name))
