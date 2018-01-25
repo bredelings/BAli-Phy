@@ -45,7 +45,9 @@ sample' alpha ps True rate (Log name x) = add_parameter (prefix_name ps name) x;
 sample' alpha ps False rate (Log name x) = return ();
 sample' alpha ps l rate (SamplingRate rate2 a) = sample' alpha ps l (rate*rate2) a;
 sample' alpha _ _ _ GetAlphabet = alpha;
-sample' alpha ps l rate (SetAlphabet a2 x) = sample' a2' ps l rate x where {a2' = sample' alpha ps l rate a2};
+sample' alpha ps l rate (SetAlphabet a2 x) = sample' a2 ps l rate x;
+
+set_alphabet a x = do {a' <- a; SetAlphabet a' x};
                                                  
 add_prefix p m = Prefix p m;
 gen_model m = sample' Nothing [] True 1.0 m;
