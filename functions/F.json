@@ -1,17 +1,18 @@
 {
     "name": "F",
     "result_type": "FrequencyModel[a]",
-    "call": "SModel.plus_f'[A,pi]",
+    "call": "SModel.plus_f'[alphabet,pi]",
     "args": [
         {
             "arg_name": "pi",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "~DirichletOn[letters[A],1]"
+            "default_value": "~DirichletOn[letters[alphabet],1]"
         },
         {
-            "arg_name": "A",
+            "arg_name": "alphabet",
             "arg_type": "a",
-            "no_apply": true
+	    "alphabet": "getAlphabet",
+	    "default_value": "getAlphabet"
         }
     ]
 }

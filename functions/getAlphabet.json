@@ -1,0 +1,8 @@
+{
+    "name": "getAlphabet",
+    "result_type": "a",
+    "perform": true,
+    "call": "Distributions.GetAlphabet",
+    "args": [],
+    "title" : "The current alphabet"
+}

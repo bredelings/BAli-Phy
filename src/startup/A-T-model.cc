@@ -577,7 +577,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 	    full_smodels[i] = get_model(R, "MultiMixtureModel[a]",smodel_names_mapping.unique(i));
 	}
     
-    // 8. Check that alignment alphabet fits requirements from smodel. Apply alphabet.
+    // 8. Check that alignment alphabet fits requirements from smodel.
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
     {
 	int first_index = smodel_names_mapping.partitions_for_item[i][0];
@@ -594,8 +594,6 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 
 	if (alphabet_type.get_value<string>() == "AA" and not dynamic_cast<const AminoAcids*>(&a))
 	    throw myexception()<<"Substitution model S"<<i+1<<" requires an amino-acid alphabet, but sequences are '"<<a.name<<"'";;
-
-	full_smodels[i].expression = {full_smodels[i].expression, a};
     }
 
     //-------------- Which partitions share a scale? -----------//

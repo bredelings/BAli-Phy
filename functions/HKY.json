@@ -22,7 +22,8 @@
         {
             "arg_name": "alphabet",
             "arg_type": "a",
-            "no_apply": true
+	    "alphabet": "getAlphabet",
+	    "default_value": "getAlphabet"
         }
     ],
     "description":"Technically, this is just the symmetric matrix from HKY"

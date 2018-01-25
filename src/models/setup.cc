@@ -346,6 +346,7 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	
     // 5. Extract parts of the rule
     bool generate_function = rule->get("generate_function",true);
+    bool perform_function = rule->get("perform",false);
     bool no_log = rule->get("no_log",false);
     ptree call = rule->get_child("call");
     ptree args = rule->get_child("args");
@@ -353,14 +354,14 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
     if (not is_qualified_symbol(call.get_value<string>()) and not is_haskell_builtin_con_name(call.get_value<string>()))
 	throw myexception()<<"For rule '"<<name<<"', function '"<<call.get_value<string>()<<"' must be a qualified symbol or a builtin constructor like '(,)', but it is neither!";
     expression_ref E = dummy(call.get_value<string>());
+
+    // This means (i) don't perform the arguments first and (ii) don't add "return" to the result.
     if (not generate_function)
     {
 	for(int i=0;i<call.size();i++)
 	{
 	    string arg_name = array_index(call,i).get_value<string>();
 	    ptree arg_tree = get_arg(*rule, arg_name);
-	    if (arg_tree.get("no_apply",false)) continue;
-
 	    ptree arg_type = arg_tree.get_child("arg_type");
 	    expression_ref arg = get_model_as(R, arg_type, model_rep.get_child(arg_name), scope);
 	    E = {E,arg};
@@ -380,7 +381,8 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
     }
 
     // 3. Return the function call: 'return (f call.name1 call.name2 call.name3)'
-    E = {dummy("Prelude.return"),E};
+    if (not perform_function)
+	E = {dummy("Prelude.return"),E};
 
     // 4. Peform the rule arguments 'Prefix "arg_name" (arg_+arg_name) >>= (\arg_name -> (Log "arg_name" arg_name) << E)'
     int i=0;
@@ -402,6 +404,21 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	auto log_name = name + ":" + arg_name;
 	// Prefix "arg_name" (arg_+arg_name)
 	if (not no_log) arg = {Prefix, log_name, arg};
+
+	// Wrap the argument in its appropriate Alphabet type
+	if (auto alphabet_expression = argi.get_child_optional("alphabet"))
+	{
+	    auto alphabet_scope = extend_scope(*rule, i, scope);
+	    ptree alphabet_type = get_fresh_type_var(alphabet_scope);
+	    alphabet_scope.insert(alphabet_type);
+	    auto A = get_model_as(R, alphabet_type, *alphabet_expression, alphabet_scope);
+	    arg = {dummy("Distributions.set_alphabet"),A,arg};
+	}
+	else
+	{
+	    auto A = dummy("Prelude.Nothing");
+	    arg = {dummy("Distributions.SetAlphabet"),A,arg};
+	}
 
 	// E = Log "arg_name" arg_name >> E
 	if (should_log(R, model_rep, arg_name))

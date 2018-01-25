@@ -7,12 +7,7 @@
         {
             "arg_name": "submodel",
             "arg_type": "RevCTMC[a]",
-            "applied_args": "A"
-        },
-        {
-            "arg_name": "A",
-            "arg_type": "a",
-            "no_apply": true
+            "alphabet": "getAlphabet"
         }
     ]
 }

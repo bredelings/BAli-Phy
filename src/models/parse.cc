@@ -365,13 +365,19 @@ string unparse(const ptree& p)
 	if (auto child = p.get_child_optional("submodel"))
 	    return unparse(*child);
     vector<string> args;
-    string submodel;
+    optional<string> submodel;
     for(const auto& pair: p)
     {
-	if (pair.first == "submodel") {
+	// Don't print submodel arguments: move out to submodel + <this>
+	if (pair.first == "submodel")
+	{
+	    assert(not submodel);
 	    submodel = unparse(pair.second);
 	    args.push_back("");
 	}
+	// Don't print alphabet=getAlphabet (FIXME: change to x=getAlphabet, if this is a default value)
+	else if (pair.second == "getAlphabet" and pair.first == "alphabet")
+	    ;
 	else
 	    args.push_back( unparse(pair.second) );
     }
@@ -379,8 +385,8 @@ string unparse(const ptree& p)
 	args.pop_back();
     if (not args.empty())
 	s = s + "[" + join(args,',') + "]";
-    if (not submodel.empty())
-	s = submodel + " + " + s;
+    if (submodel)
+	s = *submodel + " + " + s;
     return s;
 }
 

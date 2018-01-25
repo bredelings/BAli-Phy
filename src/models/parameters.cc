@@ -1410,9 +1410,20 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     {
 	string prefix = "S" + convertToString(i+1);
 
-	expression_ref smodel = SMs[i].expression;
+	optional<int> first_index;
+	for(int j=0;j<s_mapping.size();j++)
+	    if (s_mapping[j] and *s_mapping[j] == i)
+		first_index = j;
 
-	PC->SModels.push_back( smodel_methods( perform_exp(smodel,prefix), *this) );
+	const alphabet& a = A[*first_index].get_alphabet();
+
+	expression_ref smodel = SMs[i].expression;
+	smodel = {dummy("Distributions.add_prefix"),prefix,smodel};
+	smodel = {dummy("Distributions.sample'"), a, dummy("[]"), true, 0.0, smodel};
+	smodel = {dummy("Prelude.unsafePerformIO'"),smodel};
+	smodel = {dummy("Parameters.evaluate"),-1,smodel};
+
+	PC->SModels.push_back( smodel_methods( smodel, *this) );
     }
 
     // register the indel models as sub-models
