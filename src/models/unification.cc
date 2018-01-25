@@ -303,7 +303,11 @@ int find_unused_index(const set<string>& vars)
     return index+1;
 }
 
-//
+term_t get_fresh_type_var(const set<string>& vars)
+{
+    int index = find_unused_index(vars);
+    return term_t(string("var")+convertToString(index+1));
+}
 
 map<string,term_t> alpha_rename(const set<string>& vars, const set<string>& vars_to_avoid)
 {
