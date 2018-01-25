@@ -145,7 +145,7 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 		 const vector<model_t>& IModels, const vector<model_t>& SModels,
 		 const vector<model_t>& ScaleModels,
 		 const model_t& branch_length_model,
-		 const Parameters& P,const variables_map& args)
+		 const Parameters& P,const variables_map& args, const Rules& rules)
 {
     json info;
     json partitions;
@@ -179,22 +179,22 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
     for(int i=0;i<P.n_smodels();i++)
     {
 	//    out_cache<<"subst model"<<i+1<<" = "<<P.SModel(i).name()<<endl<<endl;
-	out_cache<<"subst model"<<i+1<<" "<<show_model(SModels[i].description)<<endl<<endl;
-	smodels.push_back(unparse(SModels[i].description));
+	out_cache<<"subst model"<<i+1<<" "<<show_model(SModels[i].description, rules)<<endl<<endl;
+	smodels.push_back(unparse(SModels[i].description, rules));
     }
 
     json imodels = json::array();
     for(int i=0;i<P.n_imodels();i++)
     {
-	out_cache<<"indel model"<<i+1<<" "<<show_model(IModels[i].description)<<endl<<endl;
-	imodels.push_back(unparse(IModels[i].description));
+	out_cache<<"indel model"<<i+1<<" "<<show_model(IModels[i].description, rules)<<endl<<endl;
+	imodels.push_back(unparse(IModels[i].description, rules));
     }
 
     json scales = json::array();
     for(int i=0;i<P.n_branch_scales();i++)
     {
-	out_cache<<"scale model"<<i+1<<" "<<show_model(ScaleModels[i].description)<<endl<<endl;
-	scales.push_back(unparse(ScaleModels[i].description));
+	out_cache<<"scale model"<<i+1<<" "<<show_model(ScaleModels[i].description, rules)<<endl<<endl;
+	scales.push_back(unparse(ScaleModels[i].description, rules));
     }
 
     json tree;
@@ -206,8 +206,8 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 
     if (P.t().n_branches() > 0)
     {
-	tree["lengths"] = unparse(branch_length_model.description);
-	out_both<<"T:lengths "<<show_model(branch_length_model.description)<<endl<<endl;
+	tree["lengths"] = unparse(branch_length_model.description, rules);
+	out_both<<"T:lengths "<<show_model(branch_length_model.description, rules)<<endl<<endl;
     }
 
     for(int i=0;i<P.n_data_partitions();i++)
@@ -216,19 +216,19 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 	//    out_screen<<"#"<<i+1<<": subst ~ "<<P.SModel(s_index).name()<<" ("<<s_index+1<<")    ";
 	out_screen<<"#"<<i+1 <<": alphabet = "<<P.get_data_partition(i).get_alphabet().name<<"\n";
 
-	out_screen<<"#"<<i+1<<": subst "<<show_model(SModels[*s_index].description)<<" (S"<<*s_index+1<<")\n";
+	out_screen<<"#"<<i+1<<": subst "<<show_model(SModels[*s_index].description, rules)<<" (S"<<*s_index+1<<")\n";
 
 	auto i_index = P.imodel_index_for_partition(i);
 	string i_name = "= none";
 	if (i_index)
-	    i_name = show_model(IModels[*i_index].description);
+	    i_name = show_model(IModels[*i_index].description, rules);
 	out_screen<<"#"<<i+1<<": indel "<<i_name;
 	if (i_index and *i_index >= 0)
 	    out_screen<<" (I"<<*i_index+1<<")";
 	out_screen<<endl;
 
 	auto scale_index = P.scale_index_for_partition(i);
-	out_screen<<"#"<<i+1<<": scale "<<show_model(ScaleModels[*scale_index].description)<<" (Scale"<<*scale_index+1<<")\n";
+	out_screen<<"#"<<i+1<<": scale "<<show_model(ScaleModels[*scale_index].description, rules)<<" (Scale"<<*scale_index+1<<")\n";
 	out_screen<<endl;
     }
 
@@ -667,7 +667,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     write_branch_numbers(out_cache, T);
 
     //-------------------- Log model -------------------------//
-    info = log_summary(out_cache, out_screen, out_both, full_imodels, full_smodels, full_scale_models, branch_length_model, P,args);
+    info = log_summary(out_cache, out_screen, out_both, full_imodels, full_smodels, full_scale_models, branch_length_model, P,args, R);
 
     //----------------- Tree-based constraints ----------------//
     if (args.count("t-constraint"))

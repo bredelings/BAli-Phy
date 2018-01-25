@@ -237,13 +237,13 @@ optional<vector<double>> get_frequencies_from_tree(const ptree& model_rep, const
 	return pi;
 }
 
-void require_type(const ptree& E, const ptree& required_type, const string& type2)
+void require_type(const ptree& E, const ptree& required_type, const string& type2, const Rules& rules)
 {
     if (not unify(ptree(type2), required_type))
-	throw myexception()<<"Expected type '"<<unparse_type(required_type)<<"' but '"<<unparse(E)<<"' of type '"<<unparse_type(type2)<<"'";
+	throw myexception()<<"Expected type '"<<unparse_type(required_type)<<"' but '"<<unparse(E, rules)<<"' of type '"<<unparse_type(type2)<<"'";
 }
 
-expression_ref get_constant_model(const ptree& required_type, const ptree& model_rep)
+expression_ref get_constant_model(const ptree& required_type, const ptree& model_rep, const Rules& rules)
 {
     // 1. If its an integer constant
     if (model_rep.is_a<int>())
@@ -251,7 +251,7 @@ expression_ref get_constant_model(const ptree& required_type, const ptree& model
 	if (required_type.get_value<string>() == "Double")
 	    return {dummy("Prelude.return"), (double)model_rep};
 
-	require_type(model_rep, required_type, "Int");
+	require_type(model_rep, required_type, "Int", rules);
 
 	return {dummy("Prelude.return"), (int)model_rep};
     }
@@ -259,7 +259,7 @@ expression_ref get_constant_model(const ptree& required_type, const ptree& model
     // 2. If its an integer constant
     if (model_rep.is_a<double>())
     {
-	require_type(model_rep, required_type, "Double");
+	require_type(model_rep, required_type, "Double", rules);
 
 	return {dummy("Prelude.return"), (double)model_rep};
     }
@@ -267,7 +267,7 @@ expression_ref get_constant_model(const ptree& required_type, const ptree& model
     // 3. If its a bool constant
     if (model_rep.is_a<bool>())
     {
-	require_type(model_rep, required_type, "Bool");
+	require_type(model_rep, required_type, "Bool", rules);
 
 	return {dummy("Prelude.return"), (bool)model_rep};
     }
@@ -280,7 +280,7 @@ expression_ref get_constant_model(const ptree& required_type, const ptree& model
 	if (model_rep.size() != 0)
 	    throw myexception()<<"An string constant cannot have arguments!";
 
-	require_type(model_rep, required_type, "String");
+	require_type(model_rep, required_type, "String", rules);
 
 	return {dummy("Prelude.return"), name.substr(1,name.size()-2)};
     }
@@ -332,7 +332,7 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	throw myexception()<<"Can't construct type '"<<unparse_type(required_type)<<"' from empty description!";
 
     // 2. Handle constant expressions
-    if (auto constant = get_constant_model(required_type, model_rep)) return constant;
+    if (auto constant = get_constant_model(required_type, model_rep, R)) return constant;
 
     // 3. Handle variables
     if (auto variable = get_variable_model(model_rep, scope)) return variable;
@@ -478,7 +478,7 @@ model_t get_model(const Rules& R, const string& type, const string& model, const
     substitute(equations, required_type);
     if (log_verbose >= 1)
     {
-	std::cout<<"model = "<<unparse(model_rep)<<std::endl;
+	std::cout<<"model = "<<unparse(model_rep, R)<<std::endl;
 	std::cout<<"type = "<<unparse_type(required_type)<<std::endl;
 	std::cout<<"equations: "<<show(equations)<<std::endl;
 	std::cout<<"structure = "<<show(model_rep)<<std::endl;

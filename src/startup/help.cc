@@ -241,7 +241,7 @@ optional<string> get_citation_url(const Rule& rule)
     return boost::none;
 }
 
-string get_help_for_rule(const Rule& rule)
+string get_help_for_rule(const Rules& rules, const Rule& rule)
 {
     std::ostringstream help;
     if (auto title = rule.get_optional<string>("title"))
@@ -265,7 +265,7 @@ string get_help_for_rule(const Rule& rule)
 	if (arg.get_child_optional("no_apply")) continue;
 	string arg_name = arg.get<string>("arg_name");
 	if (auto default_value = arg.get_child_optional("default_value"))
-	    arg_name += " " + show_model_abbrev(*default_value, 15);
+	    arg_name += " " + show_model_abbrev(*default_value, rules, 15);
 	args_names_types.push_back(arg_name);
     }
     help<<header("Usage");
@@ -287,7 +287,7 @@ string get_help_for_rule(const Rule& rule)
 
 	// 3. default =/~ default
 	if (auto default_value = arg.get_child_optional("default_value"))
-	    help<<"       default "<<show_model(*default_value)<<"\n";
+	    help<<"       default "<<show_model(*default_value, rules)<<"\n";
 
 	help<<std::endl;
     }
@@ -352,7 +352,7 @@ void show_help(const string& topic, const vector<fs::path>& package_paths)
 
     if (auto rule = R.get_rule_for_func(topic))
     {
-	std::cout<<get_help_for_rule(*rule);
+	std::cout<<get_help_for_rule(R, *rule);
 	return;
     }
     else

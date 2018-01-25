@@ -224,7 +224,7 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	if (convertible_to(model, result_type, required_type))
 	    return pass2(R, required_type, model, bound_vars, scope);
 	else
-	    throw myexception()<<"Term '"<<unparse(model)<<"' of type '"<<unparse_type(result_type)
+	    throw myexception()<<"Term '"<<unparse(model, R)<<"' of type '"<<unparse_type(result_type)
 			       <<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
     }
 
@@ -271,7 +271,7 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	    ptree arg_value = model.get_child(arg_name);
 	    E = E && pass2(R, arg_required_type, arg_value, bound_vars, extend_scope(*rule,skip,scope));
 	    if (not E)
-		throw myexception()<<"Expression '"<<unparse(arg_value)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
+		throw myexception()<<"Expression '"<<unparse(arg_value, R)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
 	    model2.push_back({arg_name, arg_value});
 	    add(bound_vars, E.referenced_vars());
 	}
@@ -289,7 +289,7 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	    auto default_arg = argument.get_child("default_value");
 	    E = E && pass2(R, arg_required_type, default_arg, bound_vars, extend_scope(*rule, skip, scope));
 	    if (not E)
-		throw myexception()<<"Expression '"<<unparse(default_arg)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
+		throw myexception()<<"Expression '"<<unparse(default_arg, R)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
 	    add(bound_vars, E.referenced_vars());
 
 	    model2.push_back({arg_name, default_arg});

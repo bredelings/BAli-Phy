@@ -242,12 +242,12 @@ void handle_positional_args(ptree& model, const Rules& R)
 	if (child.first.empty())
 	{
 	    if (seen_keyword)
-		throw myexception()<<"Positional argument after keyword argument in '"<<unparse(model)<<"'!";
+		throw myexception()<<"Positional argument after keyword argument in '"<<unparse(model, R)<<"'!";
 
 	    auto keyword = get_keyword_for_positional_arg(rule, i);
 
 	    if (model.count(keyword))
-		throw myexception()<<"Trying to set value for "<<head<<"."<<keyword<<" both by position and by keyword: \n"<<unparse(model);
+		throw myexception()<<"Trying to set value for "<<head<<"."<<keyword<<" both by position and by keyword: \n"<<unparse(model, R);
 
 	    if (child.second.is_null())
 	    {
@@ -324,7 +324,7 @@ optional<list<ptree>> get_list_elements(const ptree& p)
     return boost::none;
 }
 
-string unparse(const ptree& p)
+string unparse(const ptree& p, const Rules& rules)
 {
     using namespace std::string_literals;
 
@@ -346,24 +346,24 @@ string unparse(const ptree& p)
     string s = p.get_value<string>();
     if (s == "RCTMC")
     {
-	string Q = unparse(p.get_child("S"));
-	string R = unparse(p.get_child("R"));
+	string Q = unparse(p.get_child("S"), rules);
+	string R = unparse(p.get_child("R"), rules);
 	return Q + "+" + R;
     }
     if (s == "Sample")
-	return "~" + unparse(p.begin()->second);
+	return "~" + unparse(p.begin()->second, rules);
     if (auto xs = get_list_elements(p))
     {
 	vector<string> ss;
 	for(auto& x: *xs)
-	    ss.push_back(unparse(x));
+	    ss.push_back(unparse(x, rules));
 	return "List[" + join(ss,",") + "]";
     }
     if (s == "intToDouble")
-	return unparse(p.get_child("x"));
+	return unparse(p.get_child("x"), rules);
     if (s == "UnitMixture" or s == "MultiMixtureModel")
 	if (auto child = p.get_child_optional("submodel"))
-	    return unparse(*child);
+	    return unparse(*child, rules);
     vector<string> args;
     optional<string> submodel;
     for(const auto& pair: p)
@@ -372,14 +372,16 @@ string unparse(const ptree& p)
 	if (pair.first == "submodel")
 	{
 	    assert(not submodel);
-	    submodel = unparse(pair.second);
+	    submodel = unparse(pair.second, rules);
 	    args.push_back("");
 	}
 	// Don't print alphabet=getAlphabet (FIXME: change to x=getAlphabet, if this is a default value)
-	else if (pair.second == "getAlphabet" and pair.first == "alphabet")
+	else if (pair.second == "getAlphabet" and
+		 get_arg(rules.require_rule_for_func(s), pair.first).count("default_value") and
+		 get_arg(rules.require_rule_for_func(s), pair.first).get_child("default_value") == ptree("getAlphabet"))
 	    ;
 	else
-	    args.push_back( unparse(pair.second) );
+	    args.push_back( unparse(pair.second, rules) );
     }
     if (args.size() and args.back() == "")
 	args.pop_back();
@@ -395,7 +397,7 @@ string unparse_type(const ptree& p)
     string s = p.get_value<string>();
     vector<string> args;
     for(const auto& pair: p)
-	args.push_back( unparse(pair.second) );
+	args.push_back( unparse_type(pair.second) );
     if (not args.empty())
 	s = s + "[" + join(args,',') + "]";
     return s;
@@ -409,9 +411,9 @@ optional<ptree> peel_sample(ptree p)
 	return boost::none;
 }
 
-string unparse_abbrev(ptree p, int length)
+string unparse_abbrev(ptree p, const Rules& rules, int length)
 {
-    string output = unparse(p);
+    string output = unparse(p, rules);
     if (output.size() > length)
     {
 	output = convertToString(p.value);
@@ -421,21 +423,21 @@ string unparse_abbrev(ptree p, int length)
     return output;
 }
 
-string show_model(ptree p)
+string show_model(ptree p, const Rules& rules)
 {
     if (auto q = peel_sample(p))
-	return "~ " + unparse(*q);
+	return "~ " + unparse(*q, rules);
     else
-	return "= " + unparse(p);
+	return "= " + unparse(p, rules);
 }
 
 
-string show_model_abbrev(ptree p, int length)
+string show_model_abbrev(ptree p, const Rules& rules, int length)
 {
     if (auto q = peel_sample(p))
-	return "~ " + unparse_abbrev(*q,length-2);
+	return "~ " + unparse_abbrev(*q, rules, length-2);
     else
-	return "= " + unparse_abbrev( p,length-2);
+	return "= " + unparse_abbrev( p, rules, length-2);
 }
 
 bool is_constant(const ptree& model)
