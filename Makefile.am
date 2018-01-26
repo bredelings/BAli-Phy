@@ -94,7 +94,7 @@ nobase_functions_DATA = functions/AA.json \
 	functions/JTT.json \
 	functions/K80.json \
 	functions/Laplace.json \
-	functions/Length.json \
+	functions/length.json \
 	functions/LG.json \
 	functions/logGamma.json \
 	functions/log.json \
@@ -145,7 +145,9 @@ nobase_functions_DATA = functions/AA.json \
 	functions/num_branches.json \
 	functions/uniform_discretize.json \
 	functions/density.json \
-	functions/quantile.json
+	functions/quantile.json \
+	functions/take.json \
+	functions/zip.json
 
 # Distributed in the doc/ directory
 docdir = $(datadir)/doc/@PACKAGE@
