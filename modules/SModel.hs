@@ -284,6 +284,10 @@ where {codon_w = [w'!aa| codon <- codons,let {aa = translate a codon}];
          codons = take n_letters [0..];
          n_letters = alphabetSize a};
 
+fMutSel0' codon_a amino_ws' omega nuc_model = fMutSel0 codon_a amino_ws omega nuc_model
+                                               where {amino_ws = get_ordered_elements (alphabet_letters amino_a) amino_ws' "fitnesses";
+                                                      amino_a = getAminoAcids codon_a};
+
 -- The argument for ws should be something like:
 --   (zip (letters a) (iid (length $ letters a) (logNormal 0.0 0.5)))
 -- Alternatively we could use something like
