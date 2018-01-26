@@ -1,0 +1,15 @@
+{
+    "name": "take",
+    "result_type": "List[a]",
+    "call": "Prelude.take[n,xs]",
+    "args": [
+        {
+            "arg_name": "n",
+            "arg_type": "Int"
+        },
+        {
+            "arg_name": "xs",
+            "arg_type": "List[a]"
+        }
+    ]
+}
