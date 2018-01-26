@@ -147,7 +147,8 @@ nobase_functions_DATA = functions/AA.json \
 	functions/density.json \
 	functions/quantile.json \
 	functions/take.json \
-	functions/zip.json
+	functions/zip.json \
+	functions/getAminoAcids.json
 
 # Distributed in the doc/ directory
 docdir = $(datadir)/doc/@PACKAGE@

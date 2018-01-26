@@ -1,0 +1,11 @@
+{
+    "name": "getAminoAcids",
+    "result_type": "AA",
+    "call": "Alphabet.getAminoAcids[A]",
+    "args": [
+        {
+            "arg_name": "A",
+            "arg_type": "Codons[a]"
+        }
+    ]
+}
