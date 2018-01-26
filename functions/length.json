@@ -1,5 +1,5 @@
 {
-    "name": "Length",
+    "name": "length",
     "result_type": "Int",
     "call": "Prelude.length[x]",
     "args": [
