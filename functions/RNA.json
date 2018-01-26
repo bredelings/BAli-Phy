@@ -1,7 +1,6 @@
 {
     "name": "RNA",
-    "result_type": "Alphabet",
-    "generate_function": false,
-    "call": "rna",
-    "args": ""
+    "result_type": "RNA",
+    "call": "Alphabet.rna",
+    "args": []
 }

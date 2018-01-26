@@ -1,17 +1,16 @@
 {
     "name": "Codons",
-    "result_type": "Alphabet",
-    "generate_function": false,
-    "call": "codons[nuc,aa]",
+    "result_type": "Codons[a]",
+    "call": "codons[nucleotides,code]",
     "args": [
         {
-            "arg_name": "nuc",
-            "arg_type": "Alphabet"
+            "arg_name": "nucleotides",
+            "arg_type": "a"
         },
         {
-            "arg_name": "aa",
-            "arg_type": "Alphabet",
-            "default_value": "AA"
+            "arg_name": "code",
+            "arg_type": "GeneticCode",
+            "default_value": "standard_code"
         }
     ]
 }

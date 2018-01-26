@@ -1,7 +1,6 @@
 {
     "name": "DNA",
-    "result_type": "Alphabet",
-    "no_log": true,
+    "result_type": "DNA",
     "call": "Alphabet.dna",
-    "args": ""
+    "args": []
 }
