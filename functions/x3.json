@@ -7,13 +7,13 @@
         {
             "arg_name": "submodel",
             "arg_type": "a",
-            "applied_args": "Alphabet.getNucleotides[A]",
+            "alphabet": "getNucleotides[A]",
 	    "description": "The singlet exchange model"
         },
         {
             "arg_name": "A",
             "arg_type": "Triplets[a]",
-            "no_apply": true,
+            "default_value": "getAlphabet",
 	    "description": "The Triplets alphabet"
         }
     ],

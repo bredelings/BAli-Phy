@@ -18,13 +18,7 @@
         {
             "arg_name": "submodel",
             "arg_type": "MixtureModel[a]",
-            "description": "The model being scaled",
-            "applied_args": "A"
-        },
-        {
-            "arg_name": "A",
-            "arg_type": "a",
-            "no_apply": true
+            "description": "The model being scaled"
         }
     ],
     "examples": ["GTR+Rates.Gamma[4]+INV"]
