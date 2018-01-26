@@ -22,7 +22,7 @@
         {
             "arg_name": "A",
             "arg_type": "a",
-            "no_apply": true
+            "default_value": "getAlphabet"
         }
     ]
 }
