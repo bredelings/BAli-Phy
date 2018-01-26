@@ -1,6 +1,7 @@
 {
     "name": "length",
     "result_type": "Int",
+    "no_log": true,
     "call": "Prelude.length[x]",
     "args": [
         {

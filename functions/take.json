@@ -1,6 +1,7 @@
 {
     "name": "take",
     "result_type": "List[a]",
+    "no_log": true,
     "call": "Prelude.take[n,xs]",
     "args": [
         {

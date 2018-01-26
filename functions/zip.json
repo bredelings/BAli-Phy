@@ -1,6 +1,7 @@
 {
     "name": "zip",
     "result_type": "List[Pair[a,b]]",
+    "no_log": true,
     "call": "Prelude.zip[x,y]",
     "args": [
         {

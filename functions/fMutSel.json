@@ -1,8 +1,7 @@
 {
     "name": "fMutSel",
     "result_type": "RevCTMC[Codons[a]]",
-    "generate_function": false,
-    "call": "SModel.fMutSel_model[submodel,omega,ws]",
+    "call": "SModel.fMutSel'[A,w,omega,submodel]",
     "args": [
         {
             "arg_name": "omega",
@@ -10,14 +9,20 @@
             "default_value": "~Uniform[0,1]"
         },
         {
-            "arg_name": "ws",
-            "arg_type": "List[Double]",
-            "default_value": "~iid[61,logNormal[0,0.5]]"
+            "arg_name": "w",
+            "arg_type": "List[Pair[String,Double]]",
+            "default_value": "zip[letters[A],~iid[length[letters[A]],logNormal[0,0.5]]]"
         },
         {
             "arg_name": "submodel",
             "arg_type": "RevCTMC[a]",
-            "default_value": "HKY"
-        }
+            "default_value": "HKY",
+	    "alphabet": "getNucleotides[A]"
+        },
+	{
+	    "arg_name": "A",
+	    "arg_type": "Codons[a]",
+	    "default_value": "getAlphabet"
+	}
     ]
 }
