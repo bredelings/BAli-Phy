@@ -164,6 +164,11 @@ ptree convert_rule(const Rules& R, Rule rule)
 	    (*default_value) = parse(R, default_value->get_value<string>());
 	}
 
+	if (auto alphabet = x.get_child_optional("alphabet"))
+	{
+	    (*alphabet) = parse(R, alphabet->get_value<string>());
+	}
+
 	if (auto applied_args= x.get_child_optional("applied_args"))
 	{
 	    (*applied_args) = parse_type(applied_args->get_value<string>());

@@ -16,12 +16,12 @@
             "arg_type": "ExchangeModel[a]",
             "default_value": "HKY",
             "description": "The nucleotide exchange model - HKY in the original paper.",
-            "applied_args": "Alphabet.getNucleotides[A]"
+            "alphabet": "getNucleotides[A]"
         },
         {
             "arg_name": "A",
             "arg_type": "a",
-            "no_apply": true,
+	    "default_value": "getAlphabet",
 	    "description": "The codon alphabet"
         }
     ],
