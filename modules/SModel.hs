@@ -288,48 +288,6 @@ fMutSel0' codon_a amino_ws' omega nuc_model = fMutSel0 codon_a amino_ws omega nu
                                                where {amino_ws = get_ordered_elements (alphabet_letters amino_a) amino_ws' "fitnesses";
                                                       amino_a = getAminoAcids codon_a};
 
--- The argument for ws should be something like:
---   (zip (letters a) (iid (length $ letters a) (logNormal 0.0 0.5)))
--- Alternatively we could use something like
---   DirichletOn[letters[A],1.0]
--- However the first prior would be rather easier to encode AFTER we stop performing actions,
--- so I'll let this remain unchanged for now.
-
-fMutSel_model nuc_rm omega ws codon_a = Prefix "fMutSel" $ do
-{
-  let {n_letters = alphabetSize codon_a;
-       letters = alphabet_letters codon_a;
-       nuc_a = getNucleotides codon_a};
-
-  nuc_rm' <- nuc_rm nuc_a;
-  
-  omega' <- Prefix "omega" omega;
-  Log "omega" omega';
-
-  ws' <- ws;
-  sequence_ $ zipWith (\w l -> Log ("w"++l) w) ws' letters;
-
-  return $ fMutSel codon_a ws' omega' nuc_rm';
-};
-
-fMutSel0_model nuc_rm omega ws codon_a = Prefix "fMutSel" $ do
-{
-  let {aa = getAminoAcids codon_a;
-       n_letters = alphabetSize aa;
-       letters = alphabet_letters aa;
-       nuc_a = getNucleotides codon_a};
-
-  nuc_rm' <- nuc_rm nuc_a;
-
-  omega' <- Prefix "omega" omega;
-  Log "omega" omega';
-
-  ws' <- ws;
-  sequence_ $ zipWith (\w l -> Log ("w"++l) w) ws' letters;
-
-  return $ fMutSel0 codon_a ws' omega' nuc_rm';
-};
-
 -- Issue: bad mixing on fMutSel model
 -- Issue: how to make M2/M8/branchsite/etc versions of fMutSel model?
 
