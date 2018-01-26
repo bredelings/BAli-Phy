@@ -4,11 +4,6 @@
     "call": "SModel.scaled_mixture[models,rates,frequencies]",
     "args": [
         {
-            "arg_name": "models",
-            "arg_type": "List[MixtureModel[a]]",
-	    "alphabet": "getAlphabet"
-        },
-        {
             "arg_name": "rates",
             "arg_type": "List[Double]",
             "default_value": "~Dirichlet[Length[models],2]",
@@ -18,6 +13,10 @@
             "arg_name": "frequencies",
             "arg_type": "List[Double]",
             "default_value": "~Dirichlet[Length[models],3]"
+        },
+        {
+            "arg_name": "models",
+            "arg_type": "List[MixtureModel[a]]"
         }
     ]
 }

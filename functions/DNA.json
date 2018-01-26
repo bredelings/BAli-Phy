@@ -1,8 +1,7 @@
 {
     "name": "DNA",
     "result_type": "Alphabet",
-    "generate_function": false,
     "no_log": true,
-    "call": "dna",
+    "call": "Alphabet.dna",
     "args": ""
 }

@@ -1,7 +1,6 @@
 {
     "name": "Length",
     "result_type": "Int",
-    "generate_function": false,
     "call": "Prelude.length[x]",
     "args": [
         {

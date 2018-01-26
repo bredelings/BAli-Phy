@@ -24,13 +24,7 @@
         {
             "arg_name": "submodel",
             "arg_type": "MixtureModel[a]",
-            "applied_args": "A",
 	    "description": "The model to be scaled"
-        },
-        {
-            "arg_name": "A",
-            "arg_type": "a",
-            "no_apply": true
         }
     ],
     "title": "Free rates model",
