@@ -1,5 +1,6 @@
 #include "startup/help.hh"
 
+#include <list>
 #include <boost/optional/optional_io.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -14,6 +15,7 @@
 #include "models/parse.H"
 
 using std::string;
+using std::list;
 using std::map;
 using std::vector;
 using std::cout;
@@ -83,11 +85,109 @@ std::map<string,string> load_help_files(const std::vector<fs::path>& package_pat
     return help;
 }
 
-
-string indent(int n, const string& lines)
+list<string> get_lines(const string& line)
 {
-    string spaces(n,' ');
-    return spaces + boost::replace_all_copy(lines, "\n", "\n"+spaces);
+    list<string> lines;
+
+    for(int pos=0; pos<line.size();)
+    {
+	int next = line.find('\n', pos);
+	if (next == string::npos)
+	    next = line.size();
+	lines.push_back(line.substr(pos,next-pos));
+	pos = next + 1;
+    }
+    return lines;
+}
+
+
+// Given a line containing no line breaks, return the first wrapped line and the rest of the line.
+optional<list<string>> wrap(string line, int width)
+{
+    if (line.size() < width) return list<string>{line};
+
+    int loc = line.find_last_of(" \t", width-1);
+
+    if (loc != string::npos)
+    {
+	if (loc+1 < line.size())
+	    return list<string>{line.substr(0,loc),line.substr(loc+1)};
+	else
+	    return list<string>{line.substr(0,loc)};
+    }
+
+    return boost::none;
+}
+
+void wrap_and_indent_one_line(int indent, int width, list<string>& lines, list<string>& wrapped_lines)
+{
+    lines.front() = string(indent,' ') + lines.front();
+    if (auto wrap_first = wrap(lines.front(), width))
+    {
+	// Move wrapped first line into wrapped_lines
+	wrapped_lines.push_back(wrap_first->front());
+	wrap_first->pop_front();
+
+	// Move remaining lines into wrapped_lines
+	lines.pop_front();
+	lines.insert(lines.begin(), wrap_first->begin(), wrap_first->end());
+    }
+    else
+    {
+	// Move the unwrapped lines into wrapped_lines
+	wrapped_lines.push_back(lines.front());
+	lines.pop_front();
+    }
+}
+
+string indent_and_wrap(int indent_first_line, int indent_other_lines, int width, const string& text)
+{
+    if (text.empty()) return text;
+
+    list<string> wrapped_lines;
+
+    auto lines = get_lines(text);
+    assert(not lines.empty());
+
+    // 1. Indent and wrap the first line
+    wrap_and_indent_one_line(indent_first_line, width, lines, wrapped_lines);
+
+    while(not lines.empty())
+	wrap_and_indent_one_line(indent_other_lines, width, lines, wrapped_lines);
+
+    return join(wrapped_lines, '\n');
+}
+
+string indent_and_wrap_citation(int indent, int extra_indent, int width, const string& text)
+{
+    if (text.empty()) return text;
+
+    list<string> wrapped_lines;
+
+    auto lines = get_lines(text);
+    assert(not lines.empty());
+
+    for(auto& line: lines)
+	wrapped_lines.push_back(indent_and_wrap(indent, indent+extra_indent, width, line));
+
+    return join(wrapped_lines, '\n');
+}
+
+
+int terminal_width()
+{
+    int width = 80;
+    return width-2;
+}
+
+string indent_and_wrap(int indent, int width, const string& text)
+{
+    return indent_and_wrap(indent, indent, width, text);
+}
+
+string indent(int indent, const string& text)
+{
+    return indent_and_wrap(indent, 100000, text);
 }
 
 const std::string ansi_plain("\033[0m");
@@ -297,7 +397,7 @@ string get_help_for_rule(const Rules& rules, const Rule& rule)
     if (auto description = rule.get_optional<string>("description"))
     {
 	help<<header("Description");
-	help<<indent(3, *description)<<std::endl<<std::endl;
+	help<<indent_and_wrap(3, terminal_width(), *description)<<std::endl<<std::endl;
     }
 
     if (auto examples = rule.get_child_optional("examples"))
@@ -312,7 +412,7 @@ string get_help_for_rule(const Rules& rules, const Rule& rule)
     if (auto citation = get_citation(rule,true))
     {
 	help<<header("Citation");
-	help<<indent(3,*citation)<<std::endl;
+	help<<indent_and_wrap_citation(3,3,terminal_width(),*citation)<<std::endl;
 	if (auto url = get_citation_url(rule))
 	    help<<indent(3,*url)<<std::endl;
 	help<<std::endl;
