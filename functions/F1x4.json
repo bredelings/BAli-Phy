@@ -7,12 +7,16 @@
         {
             "arg_name": "pi",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "~DirichletOn[letters[getNucleotides[A]],1.0]"
+            "default_value": "~DirichletOn[letters[getNucleotides[A]],1.0]",
+	    "description": "Nucleotide frequencies"
         },
         {
             "arg_name": "A",
             "arg_type": "a",
-	    "default_value": "getAlphabet"
+	    "default_value": "getAlphabet",
+	    "description": "The alphabet"
         }
-    ]
+    ],
+    "title": "The F1x4 codon frequency model",
+    "description": "The F1x4 model describes codon frequencies in terms of 4 nucleotide frequencies.  Considering a transition from a codon ijk to a codon ilk the F1x4 model considers the frequencies of all nucleotides in the target codon:\n   R(ijk,ilk) = pi[i]*pi[l]*pi[k],\nso that substitution happens at a slower rate at nucleotides that are adjacent to a low-frequency nucleotide.\nThe MG94 mode, on the other hand, considers only the frequency of l (the nucleotide that changed):\n   R(ijk,ilk) = pi[l].\nThus the rate of substitution does not depend on neighboring nucleotides i and k."
 }

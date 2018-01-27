@@ -26,6 +26,5 @@
 	"journal": {"name": "Molecular biology and evolution", "volume": "11", "number": "5", "pages": "715--724"},
 	"link": [{"url":"https://academic.oup.com/mbe/article/11/5/715/1008710"}]
     },
-    "description": "The MG94 model describes codon frequencies in terms of only 4 nucleotide frequences.  This is similar to the F1x4 model.  However, considering a transition from a codon ijk to a codon ilk the MG94 model considers only the frequency of l (the nucleotide that changed) whereas the F1x4 model consider both.  Thus for MG94,\n   R(ijk,ilk) = pi[l],\nwhereas for F1x4,\n   R(ijk,ilk) = pi[i]*pi[k]*pi[l]\nThis means that for the F1x4 model, substitution happens at a slower rate at nucleotides that are adjacent to a low-frequency nucleotide."
-
+    "description": "The MG94 model describes codon frequencies in terms of 4 nucleotide frequencies.  Considering a transition from a codon ijk to a codon ilk the MG94 model considers only the frequency of l (the nucleotide that changed):\n   R(ijk,ilk) = pi[l].\nThus the rate of substitution does not depend on neighboring nucleotides i and k.  For F1x4, on the other hand\n   R(ijk,ilk) = pi[i]*pi[l]*pi[k],\nso that substitution happens at a slower rate at nucleotides that are adjacent to a low-frequency nucleotide."
 }
