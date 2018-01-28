@@ -1,3 +1,6 @@
+#include <set>
+#include <boost/optional.hpp>
+
 #include "loggers.H"
 #include "tools/parsimony.H"
 #include "computation/expression/expression.H"
@@ -5,8 +8,6 @@
 #include "mcmc/mcmc.H"
 #include "mcmc/logger.H"
 #include "substitution/parsimony.H"
-
-#include <set>
 
 using std::vector;
 using std::map;
@@ -16,6 +17,8 @@ using std::shared_ptr;
 using std::make_shared;
 
 using std::to_string;
+
+using boost::optional;
 
 map<string,set<string>> extract_signature(const map<string,map<string,int>>& extensions)
 {
@@ -178,6 +181,46 @@ void find_sub_loggers(Model& M, int& index, const string& name, vector<int>& log
     }
 }
 
+string translate_structures(const string& name)
+{
+    vector<string> path = split(name, model_separator);
+
+    vector<string> path2;
+    optional<int> elem;
+    for(auto& x: path)
+    {
+	if (x == "Cons:second")
+	{
+	    if (elem)
+		elem = 1+*elem;
+	    else
+		elem = 1;
+	}
+	else if (x == "Cons:first")
+	{
+	    if (path2.empty()) path2.push_back("");
+	    if (not elem) elem = 0;
+	    elem = 1+*elem;
+
+	    path2.back() += "[" + convertToString(*elem) + "]";
+	}
+	else if (x == "Pair::first")
+	{
+	    if (path2.empty()) path2.push_back("");
+	    path2.back() += "[1]";
+	}
+	else if (x == "Pair::second")
+	{
+	    if (path2.empty()) path2.push_back("");
+	    path2.back() += "[2]";
+	}
+	else
+	    path2.push_back(x);
+    }
+    return join(path2, model_separator);
+}
+
+
 owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>& M, const vector<string>& Rao_Blackwellize)
 {
     owned_ptr<Parameters> P = M.as<Parameters>();
@@ -198,7 +241,10 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
 	vector<int> logged_computations;
 	vector<string> logged_names;
 
-	vector<string> names_ = short_parameter_names(*M);
+	vector<string> names_ = parameter_names(*M);
+	for(auto& name: names_)
+	    name = translate_structures(name);
+	names_ = short_parameter_names(names_);
 	set<string> names(names_.begin(), names_.end());
 
 	for(int i=0;i<M->n_parameters();i++)
