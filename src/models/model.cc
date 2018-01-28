@@ -446,7 +446,7 @@ map<string,map<string,int>> parameters_with_extension(const vector<string>& M, s
 	if (m)
 	{
 	    pattern.pop_back();
-	    indices[join(pattern,"::")][*m] = i;
+	    indices[join(pattern, model_separator)][*m] = i;
 	}
     }
 
