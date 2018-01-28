@@ -203,19 +203,24 @@ string translate_structures(const string& name)
 	    elem = 1+*elem;
 
 	    path2.back() += "[" + convertToString(*elem) + "]";
-	}
-	else if (x == "Pair::first")
-	{
-	    if (path2.empty()) path2.push_back("");
-	    path2.back() += "[1]";
-	}
-	else if (x == "Pair::second")
-	{
-	    if (path2.empty()) path2.push_back("");
-	    path2.back() += "[2]";
+	    elem = boost::none;
 	}
 	else
-	    path2.push_back(x);
+	{
+	    elem = boost::none;
+	    if (x == "Pair::first")
+	    {
+		if (path2.empty()) path2.push_back("");
+		path2.back() += "[1]";
+	    }
+	    else if (x == "Pair::second")
+	    {
+		if (path2.empty()) path2.push_back("");
+		path2.back() += "[2]";
+	    }
+	    else
+		path2.push_back(x);
+	}
     }
     return join(path2, model_separator);
 }
