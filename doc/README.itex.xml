@@ -87,7 +87,10 @@
       </note -->
   </section>
   <section><info><title>Install a Unix command line: Msys2 (alternative)</title></info>
-      <para>You can optionally use <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.msys2.org">MSYS2</link> instead of Cygwin. Both MSYS2 and Cygwin can be installed at the same time.  After installing MSYS2, You may access the Unix command line environment by running the MSYS2 shell (not the normal windows command line).  The MSYS2 shell mounts the <filename>C:</filename> drive on <filename>/c/</filename>, so you can access the directory <filename>C:/Users/</filename> as <filename>/c/Users/</filename> from within the MSYS2 shell, for example.</para> 
+  <para>You can optionally use <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.msys2.org">MSYS2</link> instead of Cygwin. Both MSYS2 and Cygwin can be installed at the same time.  After installing MSYS2, You may access the Unix command line environment by running the MSYS2 shell (not the normal windows command line).  The MSYS2 shell mounts the <filename>C:</filename> drive on <filename>/c/</filename>, so you can access the directory <filename>C:/Users/</filename> as <filename>/c/Users/</filename> from within the MSYS2 shell, for example.</para>
+  <para>After installing MSYS2 you will need to install a few packages before you proceed.  Run the MSYS2 shell, and enter the command:
+  <screen><prompt>%</prompt> pacman -S perl tar</screen>
+  </para>
 
   </section>
   <section><info><title>Install BAli-Phy executables from website</title></info>
