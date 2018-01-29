@@ -2,6 +2,7 @@
 #define RULES_H
 
 #include <string>
+#include <map>
 #include "util/ptree.H"
 #include <boost/optional.hpp>
 #include <boost/filesystem/operations.hpp>
