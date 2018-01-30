@@ -104,6 +104,7 @@ public:
     int append_trees(const tree_sample&);
 
     tree_sample() {}
+    tree_sample(const std::vector<std::string>&);
     tree_sample(std::istream&,int skip=0,boost::optional<int> last=boost::none,int subsample=1,boost::optional<int> max=boost::none,const std::vector<std::string>& prune=std::vector<std::string>());
     tree_sample(const std::string& filename,int skip=0,boost::optional<int> last=boost::none,int subsample=1,boost::optional<int> max=boost::none,const std::vector<std::string>& prune=std::vector<std::string>());
 };
@@ -113,4 +114,5 @@ void scan_trees(std::istream&, int skip, boost::optional<int> last, int subsampl
 void scan_trees(std::istream&, int skip, boost::optional<int> last, int subsample, const std::vector<std::string>& prune, const std::vector<std::string>& leaf_order, accumulator<SequenceTree>& op);
 
 tree_sample read_trees(boost::program_options::variables_map& args);
+tree_sample read_trees(boost::program_options::variables_map& args, const std::vector<std::string>& leaf_labels);
 #endif

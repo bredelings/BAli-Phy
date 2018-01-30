@@ -315,6 +315,11 @@ int tree_sample::append_trees(const tree_sample& trees)
     return trees.size();
 }
 
+tree_sample::tree_sample(const vector<string>& L)
+    :leaf_names(L)
+{
+}
+
 tree_sample::tree_sample(istream& file, int skip, optional<int> last,int subsample, optional<int> max, const vector<string>& prune)
 {
     load_file(file,skip,last,subsample,max,prune);
@@ -371,7 +376,7 @@ void scan_trees(istream& file,int skip,optional<int> last,int subsample,
     scan_trees(file,skip,last,subsample,vector<string>(),op);
 }
 
-tree_sample read_trees(variables_map& args)
+tree_sample read_trees(variables_map& args, const vector<string>& leaf_labels)
 {
     int skip = 0;
     double skip_fraction=0;
@@ -406,6 +411,8 @@ tree_sample read_trees(variables_map& args)
 	files = args["files"].as<vector<string> >();
 
     tree_sample tree_dist;
+    if (not leaf_labels.empty())
+	tree_dist = tree_sample(leaf_labels);
 
     vector<tree_sample> trees(files.size());
     optional<int> min_trees;
@@ -445,3 +452,7 @@ tree_sample read_trees(variables_map& args)
 }
 
 
+tree_sample read_trees(variables_map& args)
+{
+    return read_trees(args,{});
+}
