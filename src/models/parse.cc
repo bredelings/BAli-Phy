@@ -228,6 +228,19 @@ void handle_positional_args(ptree& model, const Rules& R)
     if (model.size() == 0) return;
 
     auto head = model.get_value<string>();
+
+    if (head == "let")
+    {
+	if (model.size() != 2)
+	    throw myexception()<<"let: got "<<model.size()<<" arguments, 2 arguments required.\n  "<<model.show();
+	if (model[0].first.empty())
+	    throw myexception()<<"let: first argument must have variable name!\n  "<<model.show();
+	if (not model[1].first.empty())
+	    throw myexception()<<"let: second argument must not have a variable name!\n  "<<model.show();
+	model[1].first = "body";
+	return;
+    }
+
     auto rule = R.require_rule_for_func(head);
 
     int i=0;
@@ -349,6 +362,11 @@ string unparse(const ptree& p, const Rules& rules)
 	string Q = unparse(p.get_child("S"), rules);
 	string R = unparse(p.get_child("R"), rules);
 	return Q + "+" + R;
+    }
+    if (s == "let")
+    {
+	string name = p[1].first;
+	return "let["+name+"="+unparse(p[1].second,rules)+","+unparse(p[0].second,rules)+"]";
     }
     if (s == "Sample")
 	return "~" + unparse(p.begin()->second, rules);

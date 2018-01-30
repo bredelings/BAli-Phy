@@ -42,6 +42,8 @@ using std::list;
 using std::valarray;
 using std::pair;
 
+using boost::optional;
+
 // mark nodes in T according to what node of Q they map to
 vector<int> get_nodes_map(const SequenceTree& Q,const SequenceTree& T,
 			  const vector<int>& branches_map)
@@ -336,7 +338,7 @@ int main(int argc,char* argv[])
 
 	int skip = args["skip"].as<int>();
 
-	int last = -1;
+	optional<int> last;
 	if (args.count("until"))
 	    last = args["until"].as<int>();
 

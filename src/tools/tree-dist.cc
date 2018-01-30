@@ -33,7 +33,8 @@ using std::istream;
 
 using boost::dynamic_bitset;
 using boost::shared_ptr;
-
+using boost::optional;
+using boost::program_options::variables_map;
 
 int cmp(const tree_record& t1, const tree_record& t2)
 {
@@ -208,15 +209,15 @@ void tree_sample::add_tree(RootedTree& T)
 
 
 
-int tree_sample::load_file(istream& file, int skip, int last, int subsample, int max, const vector<string>& prune)
+int tree_sample::load_file(istream& file, int skip, optional<int> last, int subsample, optional<int> max, const vector<string>& prune)
 {
     using namespace trees_format;
 
     //----------- Construct File Reader / Filter -----------//
     shared_ptr<reader_t> trees_in(new Newick_or_NEXUS(file));
 
-    if (last > 0)
-	trees_in = shared_ptr<reader_t>(new Last(last,*trees_in));
+    if (last)
+	trees_in = shared_ptr<reader_t>(new Last(*last,*trees_in));
 
     if (skip > 0)
 	trees_in = shared_ptr<reader_t>(new Skip(skip,*trees_in));
@@ -255,12 +256,12 @@ int tree_sample::load_file(istream& file, int skip, int last, int subsample, int
 	t++;
     }
 
-    if (max != -1 and t > max)
+    if (max and t > *max)
     {
 	assert(trees.size() == old_size + t);
 
 	double N = t;
-	double n = max;
+	double n = *max;
 	double inc = double((N-1)/(n-1));
 	assert(inc > 1.0);
 	vector<tree_record> trees2;
@@ -281,7 +282,7 @@ int tree_sample::load_file(istream& file, int skip, int last, int subsample, int
     return t;
 }
 
-int tree_sample::load_file(const string& filename, int skip, int last, int subsample, int max, const vector<string>& prune)
+int tree_sample::load_file(const string& filename, int skip, optional<int> last, int subsample, optional<int> max, const vector<string>& prune)
 {
     checked_ifstream file(filename,"tree samples file");
   
@@ -314,17 +315,17 @@ int tree_sample::append_trees(const tree_sample& trees)
     return trees.size();
 }
 
-tree_sample::tree_sample(istream& file, int skip, int last,int subsample, int max, const vector<string>& prune)
+tree_sample::tree_sample(istream& file, int skip, optional<int> last,int subsample, optional<int> max, const vector<string>& prune)
 {
     load_file(file,skip,last,subsample,max,prune);
 }
 
-tree_sample::tree_sample(const string& filename, int skip, int last,int subsample, int max, const vector<string>& prune)
+tree_sample::tree_sample(const string& filename, int skip, optional<int> last,int subsample, optional<int> max, const vector<string>& prune)
 {
     load_file(filename,skip,last,subsample,max,prune);
 }
 
-void scan_trees(istream& file, int skip, int last, int subsample, const vector<string>& prune,
+void scan_trees(istream& file, int skip, optional<int> last, int subsample, const vector<string>& prune,
 		const vector<string>& leaf_order, accumulator<SequenceTree>& op)
 {
     using namespace trees_format;
@@ -338,8 +339,8 @@ void scan_trees(istream& file, int skip, int last, int subsample, const vector<s
     if (subsample > 1)
 	trees = shared_ptr<reader_t>(new Subsample(subsample,*trees));
 
-    if (last > 0)
-	trees = shared_ptr<reader_t>(new Last(last,*trees));
+    if (last)
+	trees = shared_ptr<reader_t>(new Last(*last,*trees));
 
     trees = shared_ptr<reader_t>(new Fixroot(*trees));
 
@@ -358,15 +359,89 @@ void scan_trees(istream& file, int skip, int last, int subsample, const vector<s
     op.finalize();
 }
 
-void scan_trees(istream& file,int skip,int last,int subsample, const vector<string>& prune,
+void scan_trees(istream& file,int skip,optional<int> last,int subsample, const vector<string>& prune,
 		accumulator<SequenceTree>& op)
 {
     scan_trees(file,skip,last,subsample,prune,vector<string>(),op);
 }
 
-void scan_trees(istream& file,int skip,int last,int subsample,
+void scan_trees(istream& file,int skip,optional<int> last,int subsample,
 		accumulator<SequenceTree>& op)
 {
     scan_trees(file,skip,last,subsample,vector<string>(),op);
 }
+
+tree_sample read_trees(variables_map& args)
+{
+    int skip = 0;
+    double skip_fraction=0;
+    {
+	string s = args["skip"].as<string>();
+	if (not can_be_converted_to<int>(s)) {
+	    skip = 0;
+	    if (not s.size() or s[s.size()-1] != '%')
+		throw myexception()<<"Argument to --skip="<<s<<" is neither an integer nor a percent";
+	    else
+		skip_fraction = convertTo<double>(s.substr(0,s.size()-1))/100;
+	}
+    }
+
+    int subsample=args["subsample"].as<int>();
+
+    optional<int> last;
+    if (args.count("until"))
+	last = args["until"].as<int>();
+
+    optional<int> max;
+    if (args.count("max"))
+	max = args["max"].as<int>();
+
+    // leaf taxa to ignore
+    vector<string> ignore;
+    if (args.count("ignore") and args["ignore"].as<string>().size() > 0)
+	ignore = split(args["ignore"].as<string>(),',');
+    
+    vector<string> files;
+    if (args.count("files"))
+	files = args["files"].as<vector<string> >();
+
+    tree_sample tree_dist;
+
+    vector<tree_sample> trees(files.size());
+    optional<int> min_trees;
+    for(int i=0;i<files.size();i++) 
+    {
+	int count = 0;
+	if (files[i] == "-")
+	    count = trees[i].load_file(std::cin,skip,last,subsample,max,ignore);
+	else
+	    count = trees[i].load_file(files[i],skip,last,subsample,max,ignore);      
+
+	if (log_verbose)
+	    std::cerr<<"Read "<<count<<" trees from '"<<files[i]<<"'"<<std::endl;
+
+	if (not min_trees)
+	    min_trees = count;
+	else
+	    min_trees = std::min(*min_trees, count);
+    }
+
+    int min_skip = 0;
+    if (skip == 0)
+	min_skip = (int)(skip_fraction * (*min_trees));
+
+    if (log_verbose and min_skip > 0)
+	cerr<<"Skipping "<<skip_fraction*100<<"% of "<<*min_trees<<" = "<<min_skip<<endl;
+
+    for(int i=0;i<trees.size();i++) {
+	if (skip == 0 and skip_fraction > 0) {
+	    int my_skip = std::min<int>(min_skip, trees[i].trees.size());
+	    trees[i].trees.erase(trees[i].trees.begin(), trees[i].trees.begin() + my_skip);
+	}
+	tree_dist.append_trees(trees[i]);
+    }
+    
+    return tree_dist;
+}
+
 

@@ -43,6 +43,8 @@ using po::variables_map;
 using namespace std;
 using namespace statistics;
 
+using boost::optional;
+
 template <typename T>
 void print_matrix(const matrix<T>& M, char space=' ', char eol='\n')
 {
@@ -663,11 +665,11 @@ int main(int argc,char* argv[])
 
 	int subsample=args["subsample"].as<int>();
 
-	int last = -1;
+	optional<int> last;
 	if (args.count("until"))
 	    last = args["until"].as<int>();
 
-	int max = -1;
+	optional<int> max;
 	if (args.count("max"))
 	    max = args["max"].as<int>();
 

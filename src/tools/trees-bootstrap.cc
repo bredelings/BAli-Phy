@@ -67,6 +67,7 @@ using std::valarray;
 using std::ios;
 
 using boost::dynamic_bitset;
+using boost::optional;
 
 using namespace statistics;
 
@@ -128,7 +129,7 @@ public:
 
     tree_sample_collection() {}
 
-    tree_sample_collection(const vector<vector<string> >& filenames, int skip, int last, int subsample, int max)
+    tree_sample_collection(const vector<vector<string> >& filenames, int skip, optional<int> last, int subsample, optional<int> max)
 	{
 	    for(int i=0;i<filenames.size();i++) 
 	    {
@@ -668,11 +669,11 @@ int main(int argc,char* argv[])
 	}
 
 
-	int last = -1;
+	optional<int> last;
 	if (args.count("until"))
 	    last = args["until"].as<int>();
     
-	int max = -1;
+	optional<int> max;
 	if (args.count("max"))
 	    max = args["max"].as<int>();
 

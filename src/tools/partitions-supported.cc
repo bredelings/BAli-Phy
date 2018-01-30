@@ -33,12 +33,14 @@
 #include <map>
 #include <list>
 
+#include <boost/program_options.hpp>
+#include <boost/optional.hpp>
+
 #include "tree/sequencetree.H"
 #include "util.H"
 #include "statistics.H"
 #include "tree-dist.H"
 
-#include <boost/program_options.hpp>
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -50,7 +52,7 @@ using std::endl;
 using std::string;
 using std::vector;
 using std::ios;
-
+using boost::optional;
 
 using namespace statistics;
 
@@ -71,9 +73,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description input("Input options");
     input.add_options()
 	("help", "produce help message")
-	("skip",value<unsigned>()->default_value(0),"number of trees to skip")
-	("max",value<unsigned>(),"maximum number of trees to read")
-	("subsample",value<unsigned>(),"factor by which to sub-sample")
+	("skip",value<unsigned>()->default_value(0),"Number of trees to skip.")
+	("until",value<unsigned>(),"Read until this number of trees.")
+	("max",value<unsigned>(),"Thin down to this number of trees.")
+	("subsample",value<unsigned>(),"Factor by which to sub-sample.")
 	("verbose","Output more log messages on stderr.")
 	;
   
@@ -117,9 +120,13 @@ tree_sample load_tree_file(const variables_map& args, const string& filename)
 {
     int skip = args["skip"].as<unsigned>();
 
-    int max = -1;
+    optional<int> max;
     if (args.count("max"))
 	max = args["max"].as<unsigned>();
+
+    optional<int> last;
+    if (args.count("until"))
+	last = args["until"].as<unsigned>();
 
     int subsample=1;
     if (args.count("subsample"))
@@ -127,13 +134,13 @@ tree_sample load_tree_file(const variables_map& args, const string& filename)
 
     if (filename == "-") {
 	if (log_verbose) cerr<<"partitions-supported: Loading trees from STDIN...\n";
-	return tree_sample(cin,skip,subsample,max);
+	return tree_sample(cin,skip,last,subsample,max);
     }
 
     checked_ifstream file(filename,"tree samples file");
   
     cerr<<"partitions-supported: Loading trees from '"<<filename<<"'...\n";
-    return tree_sample(file,skip,subsample,max);
+    return tree_sample(file,skip,last,subsample,max);
 }
 
 int main(int argc,char* argv[]) 

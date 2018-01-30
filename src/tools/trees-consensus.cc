@@ -41,6 +41,7 @@
 #include "rng.H"
 
 #include <boost/program_options.hpp>
+#include <boost/optional.hpp>
 
 /// FIXME - construct a full tree by extending the moveable
 ///  a) randomly
@@ -78,6 +79,7 @@ using std::ios;
 using std::ofstream;
 
 using statistics::odds;
+using boost::optional;
 
 // What if everything in 'split' is true?
 // What if everything in 'split' is true, but 1 taxa?
@@ -460,6 +462,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     if (args.count("verbose")) log_verbose = 1;
 
+    if (not args.count("files") or args["files"].as<vector<string>>().empty())
+	throw myexception()<<"No filenames for trees specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
     return args;
 }
 
@@ -968,39 +972,11 @@ int main(int argc,char* argv[])
 	else
 	    myrand_init();
 
-	int skip = 0;
-	double skip_fraction=0;
-	{
-	    string s = args["skip"].as<string>();
-	    if (not can_be_converted_to<int>(s)) {
-		skip = 0;
-		if (not s.size() or s[s.size()-1] != '%')
-		    throw myexception()<<"Argument to --skip="<<s<<" is neither an integer nor a percent";
-		else
-		    skip_fraction = convertTo<double>(s.substr(0,s.size()-1))/100;
-	    }
-	}
-
-	int subsample=args["subsample"].as<int>();
-
-	int last = -1;
-	if (args.count("until"))
-	    last = args["until"].as<int>();
-
-	int max = -1;
-	if (args.count("max"))
-	    max = args["max"].as<int>();
-
 	double min_support = args["min-support"].as<double>();
 
 	double report_ratio = args["odds-ratio"].as<double>();
 
 	bool show_sub = args.count("sub-partitions") or args.count("extended-consensus") or args.count("extended-consensus-L");
-
-	// leaf taxa to ignore
-	vector<string> ignore;
-	if (args.count("ignore") and args["ignore"].as<string>().size() > 0)
-	    ignore = split(args["ignore"].as<string>(),',');
 
 	// consensus levels 
 	string c_levels = args.count("consensus") ? args["consensus"].as<string>() : "";
@@ -1029,47 +1005,7 @@ int main(int argc,char* argv[])
 	}
 
 	//-------------- Read in tree distributions --------------//
-	vector<string> files;
-	if (args.count("files"))
-	    files = args["files"].as<vector<string> >();
-	if (not files.size())
-	    throw myexception()<<"No filenames for trees specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
-
-	tree_sample tree_dist;
-
-	vector<tree_sample> trees(files.size());
-	int min_trees = -1;
-	for(int i=0;i<files.size();i++) 
-	{
-	    int count = 0;
-	    if (files[i] == "-")
-		count = trees[i].load_file(std::cin,skip,last,subsample,max,ignore);
-	    else
-		count = trees[i].load_file(files[i],skip,last,subsample,max,ignore);      
-
-	    if (log_verbose)
-		std::cerr<<"Read "<<count<<" trees from '"<<files[i]<<"'"<<std::endl;
-
-	    if (min_trees == -1)
-		min_trees = count;
-	    else
-		min_trees = std::min(min_trees, count);
-	}
-
-	int min_skip = 0;
-	if (skip == 0)
-	    min_skip = (int)(skip_fraction * min_trees);
-
-	if (log_verbose and min_skip > 0)
-	    cerr<<"Skipping "<<skip_fraction*100<<"% of "<<min_trees<<" = "<<min_skip<<endl;
-	for(int i=0;i<trees.size();i++) {
-	    if (skip == 0 and skip_fraction > 0) {
-		int my_skip = std::min<int>(min_skip, trees[i].trees.size());
-		trees[i].trees.erase(trees[i].trees.begin(), trees[i].trees.begin() + my_skip);
-	    }
-	    tree_dist.append_trees(trees[i]);
-	}
-    
+	auto tree_dist = read_trees(args);
 
 	const unsigned N = tree_dist.size();
 

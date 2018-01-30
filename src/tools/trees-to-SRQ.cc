@@ -42,6 +42,8 @@ using std::cerr;
 using std::endl;
 using std::string;
 
+using boost::optional;
+
 string topology(const string& t) {
     SequenceTree T = standardized(t);
     return T.write(false);
@@ -118,11 +120,11 @@ int main(int argc,char* argv[])
 
 	int subsample=args["subsample"].as<int>();
 
-	int last = -1;
+	optional<int> last;
 	if (args.count("until"))
 	    last = args["until"].as<int>();
 
-	int max_points = -1;
+	optional<int> max_points;
 	if (args.count("max-points"))
 	    max_points = args["max-points"].as<int>();
 
@@ -168,7 +170,7 @@ int main(int argc,char* argv[])
 	{
 	    // write out plots
 
-	    const double delta = 1.0/max_points;
+	    const double delta = 1.0/(*max_points);
 	    for(int i=0;i<plots.size();i++) {
 		double scale_x = plots[i].size()-1;
 		double scale_y = plots[i].back();

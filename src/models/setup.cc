@@ -339,7 +339,37 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 
     // 4. Now we have a function -- get the rule
     auto name = model_rep.get_value<string>();
+
     auto rule = R.get_rule_for_func(name);
+    if (name == "let")
+    {
+	// The problem with this is that the order is wrong.
+	string var_name = model_rep[1].first;
+
+	Rule arg_var;
+	arg_var.push_back({"arg_name",ptree(var_name)});
+	arg_var.push_back({"arg_type",ptree("a")});
+
+	Rule arg_body;;
+	arg_body.push_back({"arg_name","body"});
+	arg_body.push_back({"arg_type",ptree("b")});
+
+	Rule args;
+	args.push_back({"",arg_body});
+	args.push_back({"",arg_var});
+	    
+	Rule call("Prelude.id");
+	call.push_back({"",ptree("body")});
+
+	Rule r;
+	r.push_back({"name",ptree("let")});
+	r.push_back({"constraints",ptree()});
+	r.push_back({"result_type",ptree("b")});
+	r.push_back({"args", args});
+	r.push_back({"call", call});
+
+	rule = r;
+    }
 
     if (not rule) throw myexception()<<"No rule for '"<<name<<"'";
     if (not rule->count("call")) throw myexception()<<"No call for '"<<name<<"'";

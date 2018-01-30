@@ -201,6 +201,37 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	    result_type=type_t("String");
 	else if (auto type = type_for_var_in_scope(name, scope))
 	    result_type = *type;
+	else if (name == "let")  //let[m=E,F]
+	{
+	    // The problem with this is that the order is wrong.
+	    string var_name = model[0].first;
+
+	    Rule arg1;
+	    arg1.push_back({"arg_name",ptree(var_name)});
+	    arg1.push_back({"arg_type",ptree("a")});
+
+	    Rule arg2;
+	    arg2.push_back({"arg_name","body"});
+	    arg2.push_back({"arg_type",ptree("b")});
+
+	    Rule args;
+	    args.push_back({"",arg2});
+	    args.push_back({"",arg1});
+	    
+	    Rule call("Prelude.id");
+	    call.push_back({"",ptree("body")});
+
+	    Rule r;
+	    r.push_back({"name",ptree("let")});
+	    r.push_back({"constraints",ptree()});
+	    r.push_back({"result_type",ptree("b")});
+	    r.push_back({"args", args});
+	    r.push_back({"call", call});
+
+	    rule = r;
+	    rule = freshen_type_vars(*rule, bound_vars);
+	    result_type = rule->get_child("result_type");
+	}
 	else
 	{
 	    rule = R.require_rule_for_func(name);
