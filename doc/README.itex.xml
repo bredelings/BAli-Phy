@@ -1498,7 +1498,7 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	      </entry>
 	      <entry>any</entry>
 	      <entry>
-		<para>pi<replaceable>l</replaceable>: frequency of letter <replaceable>l</replaceable>.</para>
+		<para>pi[<replaceable>l</replaceable>]: frequency of letter <replaceable>l</replaceable>.</para>
 	      </entry>
 	    </row>
 	    <row>
@@ -1508,7 +1508,7 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	      </entry>
 	      <entry>any</entry>
 	      <entry>
-		<para>pi<replaceable>l</replaceable>: frequency of letter <replaceable>l</replaceable>.</para>
+		<para>pi[<replaceable>l</replaceable>]: frequency of letter <replaceable>l</replaceable>.</para>
 	      </entry>
 	    </row>
 	    <row>
@@ -1519,7 +1519,7 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	      <entry>any</entry>
 	      <entry>
 		<para>f: determines cause of high-frequency letters.</para>
-		<para>pi<replaceable>l</replaceable>: frequency of letter <replaceable>l</replaceable>.</para>
+		<para>pi[<replaceable>l</replaceable>]: frequency of letter <replaceable>l</replaceable>.</para>
 	      </entry>
 	    </row>
 	    <row>
@@ -1529,8 +1529,8 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	      </entry>
 	      <entry>Triplets</entry>
 	      <entry>
-		<para>pi<replaceable>l</replaceable>: frequency
-		of nucleotide <replaceable>l</replaceable> in first codon position.</para>
+		<para>pi[<replaceable>l</replaceable>]: frequency
+		of nucleotide <replaceable>l</replaceable>.</para>
 	      </entry>
 	    </row>
 	    <row>
@@ -1540,12 +1540,12 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	      </entry>
 	      <entry>Triplets</entry>
 	      <entry>
-		<para>Site1.pi<replaceable>l</replaceable>: frequency
-		of letter <replaceable>l</replaceable> in first codon position.</para>
-		<para>Site2.pi<replaceable>l</replaceable>: frequency
-		of letter <replaceable>l</replaceable> in first codon position.</para>
-		<para>Site3.pi<replaceable>l</replaceable>: frequency
-		of letter <replaceable>l</replaceable> in first codon position.</para>
+		<para>pi1[<replaceable>l</replaceable>]: frequency
+		of letter <replaceable>l</replaceable> in codon position 1.</para>
+		<para>pi2[<replaceable>l</replaceable>]: frequency
+		of letter <replaceable>l</replaceable> in codon position 2.</para>
+		<para>pi3[<replaceable>l</replaceable>]: frequency
+		of letter <replaceable>l</replaceable> in codon position 3.</para>
 	      </entry>
 	    </row>
 	    <row>
@@ -1556,8 +1556,8 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	      </entry>
 	      <entry>Triplets</entry>
 	      <entry>
-		<para>pi<replaceable>l</replaceable>: frequency
-		of nucleotide <replaceable>l</replaceable> in first codon position.</para>
+		<para>pi[<replaceable>l</replaceable>]: frequency
+		of nucleotide <replaceable>l</replaceable>.</para>
 	      </entry>
 	    </row>
 	    <row>
@@ -1568,12 +1568,12 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	      </entry>
 	      <entry>Triplets</entry>
 	      <entry>
-		<para>Site1.pi<replaceable>l</replaceable>: frequency
-		of letter <replaceable>l</replaceable> in first codon position.</para>
-		<para>Site2.pi<replaceable>l</replaceable>: frequency
-		of letter <replaceable>l</replaceable> in first codon position.</para>
-		<para>Site3.pi<replaceable>l</replaceable>: frequency
-		of letter <replaceable>l</replaceable> in first codon position.</para>
+		<para>pi[<replaceable>l</replaceable>]: frequency
+		of letter <replaceable>l</replaceable> in codon position 1.</para>
+		<para>pi[<replaceable>l</replaceable>]: frequency
+		of letter <replaceable>l</replaceable> in codon position 2.</para>
+		<para>pi[<replaceable>l</replaceable>]: frequency
+		of letter <replaceable>l</replaceable> in codon position 3.</para>
 	      </entry>
 	    </row>
 	    <!-- row>
