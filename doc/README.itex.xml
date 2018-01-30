@@ -538,20 +538,27 @@ Finally, you may specify <userinput>-Inone</userinput> or <userinput>--imodel no
 	<para>
 	  For example, consider the following
 	  option file:
-	  <programlisting>#select a data set to analyze
-align = examples/sequences/EF-Tu/5d.fasta
+	  <programlisting># sequence data for 3 genes/partitions
+align = ITS1.fasta
+align = 5.8S.fasta
+align = ITS2.fasta
 
-#select an substitution model
-smodel = LG+Rates.logNormal+INV
+# linked substitution model for 1st and 3rd partition
+smodel = 1,3:TN+DP[n=3]
 
-#fix the alignment and do not model indels
-imodel = none
-	  </programlisting>
-          The first option, <userinput>align</userinput>, is the name of
+# substitution model for 2nd partition
+smodel = 2:TN
+
+# indel model for second partition
+imodel = 2:none
+
+# linked scale for 1st and 3rd partition
+scale = 1,3:</programlisting>
+          The <userinput>align</userinput> option indicates sequence files, and has no name on the command line.
 	  the sequence file, which has no name on the command line.
 	  Lines that begin with # are comments, and blank lines are
-	  ignored.
-	  <screen><prompt>%</prompt> <userinput>bali-phy examples/sequences/EF-Tu/5d.fasta --smodel LG+Rates.logNormal+INV --imodel none</userinput></screen>
+	  ignored.  This is thus equivalent to the rather long command line:
+	  <screen><prompt>%</prompt> <userinput>bali-phy ITS1.fasta 5.8S.fasta ITS2.fasta --smodel=1,3:TN+DP[n=3] --smodel=2:TN --imodel=2:none --scale=1,3:</userinput></screen>
 	</para>
       </section>
 
