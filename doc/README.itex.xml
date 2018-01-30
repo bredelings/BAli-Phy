@@ -485,14 +485,12 @@ Finally, you may specify <userinput>-Inone</userinput> or <userinput>--imodel no
     </section>
     <section><info><title>Linking models via the <userinput>link</userinput> command</title></info>
     
-    <para>It is also possible to link partitions by specifying <userinput>--link=<replaceable>partitions</replaceable>[:<replaceable>attributes</replaceable>]</userinput>:
-    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:TN --link=1,2 -t</userinput></screen>
-    The link command is provided to facilitate the situation where the the user specifies a model for each partition separately, and then chooses afterwards which partitions to link.
+    <para>It is also possible to link partitions by specifying <userinput>--link=<replaceable>partitions</replaceable>[:<replaceable>attributes</replaceable>]</userinput>.  The link command is provided to allw a user to specify a model for each partition separately, and then afterwards choose which partitions to link.
+    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:TN --link=1,2 -t</userinput>
+<prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel TN                 --link=1,2 -t</userinput>   </screen>
     If the linked partitions are specified as having the same model, BAli-Phy will give an error and refuse to run.
-    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --link=1,2 -t</userinput>   // not OK!
-bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing values 'TN' and ''
-
-<prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel   TN --link=1,2 -t</userinput>   // OK: linking 'TN' and 'TN'.</screen></para>
+    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --link=1,2 -t</userinput>
+bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing values 'TN' and ''</screen></para>
     <para>You can also specify which of the 3 attributes "smodel", "imodel", and "scale" are being linked:
     <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --link=1,2:smodel,scale -t</userinput>    // Don't link the indel model</screen>
     </para>
