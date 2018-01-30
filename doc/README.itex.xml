@@ -456,27 +456,47 @@ This can be done simply by starting several instances of the program, and does n
   	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --imodel none</userinput></screen></para>
     </section>
 
-    <section><info><title>Multiple genes or data partitions</title></info>
-      
+    <section><info><title>Multiple genes/partitions, models, and linking</title></info>
+
+    <section><info><title>Multiple genes</title></info>
       <para>You may analyze multiple genes by putting each one it its own data partition:
 	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable></userinput></screen>
 	You should put the data from the first gene in <replaceable>sequence-file1</replaceable> and the second gene
-	in <replaceable>sequence-file2</replaceable>.  The sequence names in both files should be the same.  In this scenario, both genes share the same tree, but their alignments vary independently.  Furthermore, the branch lengths for each gene are scaled by an independent factor.  By default, each partition will have its own default alphabet, substitution model, insertion/deletion model, and tree length.    
+	in <replaceable>sequence-file2</replaceable>.  The sequence names in both files should be the same.  In this scenario, both genes share the same tree, but their alignments vary independently.  Furthermore, the branch lengths for each gene are scaled by an independent factor.  By default, each partition will have its own default alphabet, substitution model, insertion/deletion model, and tree length.
       </para>
+    </section>
 
-      <para>By default, each partition will recieve an independent copy of the model, and will not share parameter values:
+    <section><info><title>Multiple partitions with unlinked models</title></info>
+      <para>A substitution model or insertion-deletion model that is specified without qualification will apply to every partition.  However, each partition will recieve its own copy of each model with separate, or "unlinked", parameter values
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel TN --imodel RS07</userinput></screen>
-However, you can select partition-specific values for 5 options: <userinput>--smodel</userinput>, <userinput>--imodel</userinput>, <userinput>--alphabet</userinput>, and <userinput>--scale</userinput>.  For example, to specify different substitution models but the same alphabet:
-<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:GTR --alphabet 1,2:DNA</userinput></screen>
+You can select partition-specific values for 4 options: <userinput>--smodel</userinput>, <userinput>--imodel</userinput>, <userinput>--alphabet</userinput>, and <userinput>--scale</userinput>.  For example, to specify different substitution models but the same alphabet:
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:GTR --alphabet DNA</userinput></screen>
 You can fix the alignment and ignore insertion/deletion information in one partition, while allowing the alignment to vary and using insertion/deletion information in another partition:
-<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --imodel 1:RS07 --imodel 2:none</userinput></screen>
-You can also specify that two partitions share a single copy of a single substitution model or indel model.  This reduces the number of parameters and also pools information between the partitions:
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --imodel 1:RS07 --imodel 2:none</userinput></screen></para>
+    </section>
+    <section><info><title>Multiple partitions with linked models</title></info>
+<para>You can also specify that two partitions share a single copy of a single substitution model or indel model.  This reduces the number of parameters and also pools information between the partitions:
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1,2:TN --imodel 1,2:RS07</userinput></screen>
 By default each partition has a separate scale, but you can force groups of partitions to share a scale. If you leave the value of the scale blank, the default distribution on scales will be used:
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:GTR --scale 1,2:</userinput></screen>
 Finally, you may specify <userinput>-Inone</userinput> or <userinput>--imodel none</userinput>, which affects all partitions:
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:GTR -t</userinput></screen>
-      </para>
+</para>
+    </section>
+    <section><info><title>Linking models via the <userinput>link</userinput> command</title></info>
+    
+    <para>It is also possible to link partitions by specifying <userinput>--link=<replaceable>partitions</replaceable>[:<replaceable>attributes</replaceable>]</userinput>:
+    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:TN --link=1,2 -t</userinput></screen>
+    The link command is provided to facilitate the situation where the the user specifies a model for each partition separately, and then chooses afterwards which partitions to link.
+    If the linked partitions are specified as having the same model, BAli-Phy will give an error and refuse to run.
+    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --link=1,2 -t</userinput>   // not OK!
+bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing values 'TN' and ''
+
+<prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel   TN --link=1,2 -t</userinput>   // OK: linking 'TN' and 'TN'.</screen></para>
+    <para>You can also specify which of the 3 attributes "smodel", "imodel", and "scale" are being linked:
+    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --link=1,2:smodel,scale -t</userinput>    // Don't link the indel model</screen>
+    </para>
+    </section>
     </section>
 
     <section xml:id="cluster"><info><title>Running on computing clusters</title></info>
