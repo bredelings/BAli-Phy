@@ -380,6 +380,7 @@ tree_sample read_trees(variables_map& args, const vector<string>& leaf_labels)
 {
     int skip = 0;
     double skip_fraction=0;
+    if (args.count("skip"))
     {
 	string s = args["skip"].as<string>();
 	if (not can_be_converted_to<int>(s)) {
