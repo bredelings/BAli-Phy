@@ -22,7 +22,8 @@
     user-select: none
 }
 
-.userinput { background-color: #F0F0F0;}
+p .userinput { background-color: #F0F0F0;}
+table .userinput {background-color: transparent;}
 
 .note {
 	border: solid;
@@ -63,7 +64,7 @@ pre.screen {
 tr { margin: 0.2em; padding: 0.2em; }
  
 .variablelist {
-	background-color: #F0F0F0;
+//	background-color: #F0F0F0;
 	padding: 6px;
 }
 
@@ -87,7 +88,14 @@ table td .variablelist table tr td {padding: 0; margin: 0}
 
 /* End term list stuff */
 
-td { background-color: #F0F0F0;  }
+table {border-collapse: collapse}
+table.table > tbody > tr:nth-child(odd) > td { background-color: #E0E0E0; margin:0  }
+.qandaset  tr:nth-child(4n+1) > td { background-color: #E0E0E0; margin:0  }
+.qandaset  tr:nth-child(4n+2) > td { background-color: #E0E0E0; margin:0  }
+
+
+//.qandaset td { background-color: #E0E0E0; margin:0  }
+//.qandaset table {border-collapse: separate}
 
 .toc {
 	background-color: #F0F0F0;
