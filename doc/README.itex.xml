@@ -341,7 +341,16 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
     <section xml:id="compilation"><info><title>Compiling <application>BAli-Phy</application></title></info>
     
 
-    <para>Compiling <application>BAli-Phy</application> is intended to be a relatively painless process.  However, most people will want to follow the standard installation instructions at <xref linkend="installation"/> instead of compiling BAli-Phy themselves.
+    <para>Compiling <application>BAli-Phy</application> is intended to be a relatively painless process.  However, most people will want to use the pre-compiled binaries as described in the standard installation instructions at <xref linkend="installation"/> instead of compiling BAli-Phy themselves.  You might want to compile BAli-Phy yourself if you want to 
+    <itemizedlist>
+      <listitem>run BAli-Phy on a non-Intel CPU (such as ARM64 or Alpha).</listitem>
+      <listitem>run BAli-Phy on Mac OS X versions older than 10.9</listitem>
+      <listitem>enable the <application>draw-tree</application> program on Windows or Mac (this requires the Cairo graphics library).</listitem>
+      <listitem>modify the source code and submit a patch with new functionality.</listitem>
+      <listitem>change the optimization options used to compile BAli-Phy in the pre-compiled binaries.</listitem>
+      <listitem>compile with debugging options to find the cause of a bug, and maybe fix it.</listitem>
+    </itemizedlist>
+    Otherwise, the pre-compiled binaries will be fine.
     </para>
 
     <section><info><title>Setup</title></info>
@@ -406,7 +415,10 @@ The command <command>bali-phy</command> and its associated tools should then be 
 	
       <para>You can select the C++ compiler by setting the CXX variable.  A useful example of this is to use <command>g++-5</command> on systems where <command>g++</command> invokes a compiler that is too old:
  <screen><prompt>%</prompt> <userinput>../BAli-Phy/configure --prefix=&#36;HOME/Applications/bali-phy-&version; CXX=g++-5</userinput></screen>
- You may also set compiler and linker options using the CXXFLAGS and LDFLAGS variables.  For example, you can set the CPPFLAGS and LDFLAGS variables to instruct the compiler where to look for libraries, such as cairo:
+ You may also set compiler and linker options using the CPPFLAGS, CXXFLAGS, and LDFLAGS variables.  For example, you can instruct the compiler to use all the features of your chip, instead of producing generic code that will run anywhere:
+ <screen><prompt>%</prompt> <userinput>../BAli-Phy/configure --prefix=&#36;HOME/Applications/bali-phy-&version; CXXFLAGS="-mtune=native -march=native"</userinput></screen>
+
+ For example, you can set the CPPFLAGS and LDFLAGS variables to instruct the compiler where to look for libraries, such as cairo:
 	  <screen><prompt>%</prompt> <userinput>../BAli-Phy/configure --prefix=&#36;HOME/Applications/bali-phy-&version; CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib"</userinput></screen>
  Another useful example of this is to produce an OS X executuable on that can run on older versions of OS X:
 	  <screen><prompt>%</prompt> <userinput>../BAli-Phy/configure --prefix=&#36;HOME/Applications/bali-phy-&version; CXXFLAGS="-mmacosx-version-min=10.9" LDFLAGS="-mmacosx-version-min=10.9"</userinput></screen>	</para>
