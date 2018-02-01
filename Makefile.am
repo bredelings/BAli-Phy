@@ -137,6 +137,7 @@ nobase_functions_DATA = functions/AA.json \
 	functions/DirichletOn.json \
 	functions/letters.json \
 	functions/getNucleotides.json \
+	functions/getAlphabet.json \
 	functions/letter_pairs.json \
 	functions/intToDouble.json \
 	functions/replicate.json \
