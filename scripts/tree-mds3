@@ -1,0 +1,65 @@
+#!/usr/bin/python
+
+from __future__ import print_function
+import os
+import subprocess
+import sys
+import shlex
+
+def which(program):
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
+
+def get_n_lines(filename):
+    return sum(1 for line in open(filename))
+
+if which('trees-distances') is None:
+    print("Error: I can't find the program 'trees-distances'!")
+    print("Error: Is it installed?")
+    exit(1)
+
+if which('R') is None:
+    print("Error: I can't find the program 'R'!")
+    print("Error: Is it installed?")
+    exit(1)
+
+cmd = sys.argv[1:]
+
+trees_file1 = cmd[0]
+trees_file2 = cmd[1]
+trees_file3 = cmd[2]
+N = 400
+L1 = min(N, get_n_lines(trees_file1))
+L2 = min(N, get_n_lines(trees_file2))
+L3 = min(N, get_n_lines(trees_file3))
+matfile_name = "tree-1-2-3.M"
+outfile_name = "tree-1-2-3.svg"
+
+# 1. Generate the matrix
+matfile = open(matfile_name,'w+')
+cmd1 = ["trees-distances", "matrix", "--max={}".format(N), "--jitter=0.3"] + cmd
+p = subprocess.Popen(cmd1, stdin=None, stdout=matfile, stderr=subprocess.STDOUT, close_fds=True)
+p.wait()
+
+if p.returncode != 0:
+    print("matrix generation failed!\n")
+    exit(p.returncode)
+
+# 2. Draw the graph
+script=open('tree-plot3.R')
+outfile=open(outfile_name,'w+')
+p = subprocess.Popen(["R","--slave","--vanilla","--args",str(L1),str(L2),str(L3),matfile_name,outfile_name], cwd=os.getcwd(), stdin=script,stdout=None)
+p.wait()
