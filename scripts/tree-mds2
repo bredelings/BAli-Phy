@@ -48,7 +48,7 @@ outfile_name = "tree-1-2.svg"
 
 # 1. Generate the matrix
 matfile = open(matfile_name,'w+')
-cmd1 = ["trees-distances", "matrix", "--max={}".format(N), "--jitter=0.3", trees_file1, trees_file2]
+cmd1 = ["trees-distances", "matrix", "--max={}".format(N), "--jitter=0.3"] + cmd
 p = subprocess.Popen(cmd1, stdin=None, stdout=matfile, stderr=subprocess.STDOUT, close_fds=True)
 p.wait()
 
