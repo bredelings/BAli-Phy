@@ -94,6 +94,9 @@ double letter_fraction(const string& letters, const string& gaps, const vector<s
 
 string guess_alphabet(const vector<sequence>& sequences)
 {
+    if (total_length(sequences) <= 0)
+	throw myexception()<<"Can't get alphabet from 0 letters!";
+
     // FIXME - we should maybe count things one time into a map from char -> int.
     double ATGCN = letter_fraction("ATGCN","-?",sequences);
     double AUGCN = letter_fraction("AUGCN","-?",sequences);
