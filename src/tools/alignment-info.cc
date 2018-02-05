@@ -128,7 +128,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	exit(0);
     }
 
-    cout<<endl;
     return args;
 }
 
