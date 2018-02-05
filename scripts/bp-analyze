@@ -1420,7 +1420,7 @@ sub compute_wpd_alignments
 
 	for(my $i=0;$i<$n_partitions;$i++) 
 	{
-	    next if ($imodel_indices[$i] == -1);
+	    next if ($imodel_indices[$i] eq "--");
 	
 	    my $p = $i+1;
 	    my $infile = $partition_samples[0][$i];
@@ -1491,7 +1491,7 @@ sub draw_alignments
 	my $p;
 	if ($alignment =~ /^P([^-]+)-/) {
 	    $p=$1;
-	    next if ($imodel_indices[$p-1] == -1);
+	    next if ($imodel_indices[$p-1] eq "--");
 	}
 	else {
 	    next;
