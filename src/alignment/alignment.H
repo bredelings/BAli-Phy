@@ -161,14 +161,11 @@ public:
     /// Construct an empty alignment, with alphabet a
     explicit alignment(const alphabet& a);
 
-    /// Unsafe - Construct an empty alignment, with n sequences of length 0
-    explicit alignment(const alphabet& a,int n);
-
     /// Unsafe - Construct an alignment from sequences, but with any empty array
     explicit alignment(const alphabet&,const std::vector<sequence>& sequence);
 
-    /// Unsafe - Construct an empty n x L alignment.
-    explicit alignment(const alphabet&,int n,int L);
+    /// Unsafe - Construct an alignment from sequences, but with any empty array
+    explicit alignment(const alphabet&,const std::vector<sequence>& sequence, int L);
 
     /// Construct an alignment from file filename using alphabet a
     explicit alignment(const alphabet& a,const std::string& filename);

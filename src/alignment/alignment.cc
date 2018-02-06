@@ -345,18 +345,16 @@ alignment::alignment(const alphabet& a1)
     :a(a1.clone())
 {}
 
-alignment::alignment(const alphabet& a1,int L,int n)
-    :array(L,n),sequences(vector<sequence>(n)),a(a1.clone())
-{
-}
-
-alignment::alignment(const alphabet& a1,int n)
-    :array(0,n),sequences(vector<sequence>(n)),a(a1.clone())
-{
-}
 
 alignment::alignment(const alphabet& a1, const vector<sequence>& S) 
     :array(0,S.size()),sequences(S),a(a1.clone())
+{
+    // Do NOT load the sequences here -- this is used for constructing
+    // new alignment matrices during MCMC for some reason.
+}
+
+alignment::alignment(const alphabet& a1, const vector<sequence>& S, int L) 
+    :array(L,S.size()),sequences(S),a(a1.clone())
 {
     // Do NOT load the sequences here -- this is used for constructing
     // new alignment matrices during MCMC for some reason.
@@ -455,16 +453,15 @@ alignment blank_copy(const alignment& A1,int length)
 
 alignment reorder_sequences(const alignment& A, const vector<int>& order)
 {
-    unsigned L = A.length();
+    const unsigned L = A.length();
 
-    alignment A2(A.get_alphabet(), L, order.size());
+    alignment A2(A.get_alphabet(), A.seqs(), L);
 
     for(int i=0;i<order.size();i++) 
     {
 	int j = order[i];
 	assert(0 <= j and j < A.n_sequences());
 
-	A2.seq(i) = A.seq(j);
 	for(int c=0;c<L;c++)
 	    A2.set_value(c,i, A(c,j) );
     }
