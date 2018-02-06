@@ -344,7 +344,7 @@ sub get_n_sequences
 {
     if ($personality =~ "bali-phy.*")
     {
-	my $p1_features = get_alignment_info("Results/P1-initial.fasta");
+	my $p1_features = get_alignment_info("Results/C1.P1.initial.fasta");
 
 	return ${$p1_features}{"n_sequences"};
     }
@@ -442,7 +442,7 @@ sub print_data_and_model
 	$section .= " <td>".($p+1)."</td>\n";
 	$section .= " <td>$input_file_names[$p]</td>\n";
 
-	my $features = get_alignment_info("Results/P".($p+1)."-initial.fasta");
+	my $features = get_alignment_info("Results/C1.P".($p+1).".initial.fasta");
 	my $min = $features->{'min_length'};
 	my $max = $features->{'max_length'};
 	my $alphabet = $alphabets[$p];
@@ -466,7 +466,7 @@ sub print_data_and_model
 
 	my $imodel ="none";
 
-	$imodel = $imodels[$imodel_indices[$p]] if ($imodel_indices[$p] != -1);
+	$imodel = $imodels[$imodel_indices[$p]] if ($imodel_indices[$p] ne "--");
 	$section .= " <td>$imodel</td>\n";
 
 	if ($personality =~ "bali-phy.*")
@@ -1332,28 +1332,15 @@ sub compute_initial_alignments
 	for(my $i=0;$i<$n_partitions;$i++)
 	{
 	    my $p = $i+1;
-	    my $name = "P$p-initial";
+	    my $name = "C1.P$p.initial";
 	    push @alignments,$name;
 	    $alignment_names{$name} = "Initial";
 	    
 	    # These initial alignments should never change!
 	    if (! -s "Results/Work/$name-unordered.fasta") 
 	    {
-		my $initial_name = $partition_samples[0][$i];
-		$initial_name =~ s/\.fastas/\.initial\.fasta/;
-
-		# Version > 2.1.1
-		if (-e $initial_name)
-		{
-		    exec_show("cp $initial_name Results/Work/$name-unordered.fasta");
-		}
-		else
-		{
-		    exec_show("alignment-find --first < $partition_samples[0][$i] > Results/Work/$name-unordered.fasta 2>/dev/null");
-		    if ($? && $n_chains==1 && defined($MAP_file)) {
-			exec_show("alignment-find --first < $MAP_file > Results/Work/$name-unordered.fasta");
-		    }
-		}
+		my $dir1 = $subdirectories[0];
+		exec_show("cp $dir1/$name.fasta Results/Work/$name-unordered.fasta");
 	    }
 	}
 	print "done.\n";
