@@ -2697,7 +2697,7 @@ sub tree_MDS
 	my $matfile = "Results/tree-1-2.M";
 	my $outfile = "Results/tree-1-2.svg";
 #	print "L1 = $L1  L2 = $L2\n";
-	exec_show("trees-distances matrix --max=$N --jitter=0.3 $skip $tf1 $tf2 > $matfile");
+	exec_show("trees-distances matrix --max=$N --jitter=0.3 $subsample_string  $skip $tf1 $tf2 > $matfile");
 	Rexec($script,"$L1 $L2 $matfile $outfile");
 
 	my $script3d = get_libexec_script("tree-plot2-3D.R");
@@ -2720,7 +2720,7 @@ sub tree_MDS
 	my $matfile = "Results/tree-1-2-3.M";
 	my $outfile = "Results/tree-1-2-3.svg";
 #	print "L1 = $L1  L2 = $L2\n";
-	exec_show("trees-distances matrix --max=$N --jitter=0.3 $skip $tf1 $tf2 $tf3 > $matfile");
+	exec_show("trees-distances matrix --max=$N --jitter=0.3 $subsample_string  $skip $tf1 $tf2 $tf3 > $matfile");
 	Rexec($script,"$L1 $L2 $L3 $matfile $outfile");
 
 	my $script3d = get_libexec_script("tree-plot3-3D.R");
