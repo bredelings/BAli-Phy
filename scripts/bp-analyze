@@ -1444,7 +1444,7 @@ sub compute_consensus_alignments
     print "Computing consensus alignments:\n";
     for(my $i=0;$i<$n_partitions;$i++)
     {
-	next if ($imodel_indices[$i] == -1);
+	next if ($imodel_indices[$i] eq "--");
 
 	my $p = $i+1;
 	my $infile = $partition_samples[0][$i];
