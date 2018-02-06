@@ -462,6 +462,7 @@ alignment reorder_sequences(const alignment& A, const vector<int>& order)
 	int j = order[i];
 	assert(0 <= j and j < A.n_sequences());
 
+	A2.seq(i) = A.seq(j);
 	for(int c=0;c<L;c++)
 	    A2.set_value(c,i, A(c,j) );
     }
