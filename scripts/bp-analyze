@@ -2675,7 +2675,7 @@ sub tree_MDS
 	my $script = get_libexec_script("tree-plot1.R");
 	my $matfile = "Results/tree${i}.M";
 	my $outfile = "Results/tree${i}.svg";
-	exec_show("trees-distances matrix --max=300 --jitter=0.3 $skip $tree_file > $matfile");
+	exec_show("trees-distances matrix --jitter=0.3 $subsample_string $skip $tree_file > $matfile");
 	Rexec($script,"$matfile $outfile");
 
 	my $script3d = get_libexec_script("tree-plot1-3D.R");
