@@ -1307,32 +1307,28 @@ void sample_SPR_all(owned_ptr<Model>& P,MoveStats& Stats)
     }
 }
 
-void sample_SPR_search_all(owned_ptr<Model>& P,MoveStats& Stats) 
+void sample_SPR_search_all(owned_ptr<Model>& P,MoveStats& Stats, bool sum_out_A) 
 {
     int B = P.as<Parameters>()->t().n_branches();
 
-    for(int b=0;b<2*B;b++) {
+    for(int b=0;b<2*B;b++)
+    {
 	slice_sample_branch_length(P,Stats,b);
 	auto& PP = *P.as<Parameters>();
-	bool changed = sample_SPR_search_one(PP,Stats,PP.t().edge(b));
+	bool changed = sample_SPR_search_one(PP, Stats, PP.t().edge(b), sum_out_A);
 	if (not changed) three_way_topology_sample(P,Stats,b);
 	slice_sample_branch_length(P,Stats,b);
     }
 }
 
+void sample_SPR_search_all(owned_ptr<Model>& P,MoveStats& Stats) 
+{
+    sample_SPR_search_all(P, Stats, false);
+}
+
 void sample_SPR_A_search_all(owned_ptr<Model>& P,MoveStats& Stats) 
 {
-    int B = P.as<Parameters>()->t().n_branches();
-
-    for(int b=0;b<2*B;b++) {
-	slice_sample_branch_length(P,Stats,b);
-	sample_SPR_flat_one(P, Stats, b);
-	auto& PP = *P.as<Parameters>();
-	bool changed = sample_SPR_search_one(PP,Stats,PP.t().edge(b));
-	if (not changed) three_way_topology_sample(P,Stats,b);
-	slice_sample_branch_length(P,Stats,b);
-	scale_means_only(P,Stats);
-    }
+    sample_SPR_search_all(P, Stats, true);
 }
 
 vector<int> path_to(const TreeInterface& T,int n1, int n2) 
