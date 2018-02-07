@@ -1187,9 +1187,6 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     // Because the attachment node keeps its name, this will stay in effect throughout the likelihood calculations.
     P.set_root(root_node);
 
-    // Compute and cache conditional likelihoods up to the (likelihood) root node.
-    P.heated_likelihood();
-
     spr_attachment_points locations = get_spr_attachment_points(P.t(), subtree_edge);
 
     vector<Parameters> p(2,P);
