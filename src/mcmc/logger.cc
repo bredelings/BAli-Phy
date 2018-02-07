@@ -206,14 +206,19 @@ namespace MCMC {
 	return total;
     }
 
+    int alignment_length(const Parameters& P)
+    {
+	int total = 0;
+	for(int p=0;p<P.n_data_partitions();p++)
+	    total += alignment_length(P[p]);
+	return total;
+    }
+
     string Get_Total_Alignment_Length_Function::operator()(const Model& M, long)
     {
 	const Parameters& P = dynamic_cast<const Parameters&>(M);
 
-	int total = 0;
-	for(int p=0;p<P.n_data_partitions();p++)
-	    total += alignment_length(P[p]);
-	return convertToString(total);
+	return convertToString(alignment_length(P));
     }
 
     string Get_Total_Num_Substitutions_Function::operator()(const Model& M, long)

@@ -52,6 +52,8 @@ namespace MCMC {
 
     int alignment_length(const data_partition& P);
 
+    int alignment_length(const Parameters& P);
+
     int n_indels(const data_partition& P);
 
     int total_length_indels(const data_partition& P);
