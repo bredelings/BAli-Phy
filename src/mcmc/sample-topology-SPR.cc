@@ -308,68 +308,111 @@ MCMC::Result SPR_stats(const TreeInterface& T1, const TreeInterface& T2, bool su
     return SPR_stats(T1,T2,success,bins,b1);
 }
 
-// Do an SPR (moving the subtree behind b1 to branch b2) and create the pairwise alignment
-// on the (fused) edge that we prune from.
-double do_SPR(Parameters& P, int b1,int b2, const vector<int>& nodes0)
+struct attachment_branch
 {
-    auto t = P.t();
-  
-    //------ Find the two old branches ------//
-    vector<int> connected1 = t.branches_after(b1);
+    int prev_i = -1;
+    tree_edge edge;
+    tree_edge sibling;
+};
 
-    //------ Generate the new topology ------//
-    if (t.target(b2) == t.target(b1) or 
-	t.source(b2) == t.target(b1))
-	;
-    else
-    {
-	// For the method of choosing A23 here, see section MCMC: sample_tri + SPR in bali-phy.lyx
+/// A struct to compute and store information about attachment points their branch names
+struct spr_info
+{
+public:
+    const TreeInterface T;
 
-        // 1. First prune the subtree behind b1
+    /// The branch pointing AWAY from the subtree to prune
+    tree_edge b_parent;
 
-	auto B1 = P.t().edge(b1);
-	auto B2 = P.t().edge(b2);
+    /// The two branches that make up the current attachment branch
+    vector<int> child_branches;
 
-	// 1a. Find the right pairwise alignment between nodes[2] and nodes[3]
-	vector<pairwise_alignment_t> A23(P.n_data_partitions());
-	for(int i = 0; i < P.n_data_partitions(); i++)
+    /// The current attachment branch, specified in terms of its endpoint nodes
+    tree_edge initial_edge;
+
+    vector<attachment_branch> attachment_branch_pairs;
+
+    // Lengths of branches
+    vector<double> L;
+
+    /// The number of places we could regraft, including the current site
+    unsigned n_attachment_branches() const {return attachment_branch_pairs.size();}
+
+    /// The length of each attachment branch, indexed in the same way as attachment_branches
+    const vector<double>& attachment_branch_lengths() const
 	{
-	    // The central node (nodes[0]) is mapped to bit 3!
-	    auto b0123 = A3::get_bitpath(P[i], nodes0);
-	    A23[i]  = get_pairwise_alignment_from_bits(b0123, 1, 2);
-	    assert(A23[i].length1() == P[i].seqlength(nodes0[2]));
-	    assert(A23[i].length2() == P[i].seqlength(nodes0[3]));
+	    return L;
 	}
 
-	// 1b. Pull out (nodes0[1],nodes0[0]) by connecting (nodes0[2],nodes0[3])
-	//                                              and (nodes0[0],nodes0[0]) - a circular edge!
-	P.prune_subtree(B1);
+    /// Express a branch \a in attachment_branches in terms of its endpoint nodes
+    tree_edge get_tree_edge(int b) const
+	{
+#ifndef NDEBUG
+	    if (not T.subtree_contains_branch(T.find_branch(b_parent),b))
+		throw myexception()<<"spr_info::get_tree_edge( ): Subtree does not contain branch "<<b;
+#endif
 
-	// 1c. Set the correct pairwise alignment for the branch (nodes0[2],nodes0[3])
-	int branch_from_2_to_3 = P.t().find_branch(nodes0[2],nodes0[3]);
-	for(int i = 0; i < P.n_data_partitions(); i++)
-	    P[i].set_pairwise_alignment(branch_from_2_to_3, A23[i]);
+	    int n0 = b_parent.node2;
+	    if (T.target(b) == n0 or T.source(b) == n0)
+		return initial_edge;
 
-	// 2. Second, graft the subtree behind b1 onto b2.
+	    return T.edge(b);
+	}
 
-	// Graft (nodes0[1],nodes0[0]) into b2=(nodes1[2],nodes1[3])
-	P.regraft_subtree(B1, B2);
+    /// Express properties of branches as vectors indexed by their position in attachment_branch_pairs
+    template<typename U>
+    vector<U> convert_to_vector(const map<tree_edge,U>& M) const
+	{
+	    assert(M.size() == n_attachment_branches());
+	    vector<U> v;
+	    v.reserve(n_attachment_branches());
+	    for(const auto& bp : attachment_branch_pairs)
+		v.push_back( M.at( bp.edge ) );      // Assumes a particular orientation of the edge
+
+	    return v;
+	}
+
+    spr_info(const TreeInterface& T, const tree_edge& b);
+}; 
+
+void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0);
+
+// Do an SPR (moving the subtree behind b1 to branch b2) and create the pairwise alignment
+// on the (fused) edge that we prune from.
+void do_SPR(Parameters& P, int b1,int b2, const vector<int>& nodes0)
+{
+    auto B1 = P.t().edge(b1);
+  
+    auto B2 = P.t().edge(b2);
+
+    if (B1.node2 == B2.node1 or B1.node2 == B2.node2)
+    {
+	// B2 is one of the two branches that get fused when we pull out B1.
     }
+    else
+    {
+	auto I = spr_info(P.t(), B1);
 
-    //------ Find the two new branches ------//
-    vector<int> connected2 = t.branches_after(b1);
+	// 1. Find the index in the attachment branch pairs
+	optional<int> index;
+	for(int i=0; i< I.attachment_branch_pairs.size(); i++)
+	    if (I.attachment_branch_pairs[i].edge == B2)
+		index = i;
 
-    assert(connected1.size() == 2);
-    assert(connected2.size() == 2);
+	// 2. Get the original length of the attachment edge
+	double original_length = P.t().branch_length(b2);
 
-    //------- Place the split randomly -------//
-    double L1 = t.branch_length(connected1[0]) + t.branch_length(connected1[1]);
-    double L2 = t.branch_length(connected2[0]) + t.branch_length(connected2[1]);
+	// 3. Attach to the target edge
+	spr_to_index(P, I, *index, nodes0);
 
-    P.setlength(connected2[0], uniform() * L2 );
-    P.setlength(connected2[1], L2 - t.branch_length(connected2[0]) );
+	// 4. Choose the split uniformly at random
+	int b3 = P.t().find_branch(B1.node2, B2.node1);
+	int b4 = P.t().find_branch(B1.node2, B2.node2);
 
-    return L2/L1;
+	auto U = uniform();
+	P.setlength(b3, original_length * U );
+	P.setlength(b4, original_length * (1-U) );
+    }
 }
 
 MCMC::Result sample_SPR(Parameters& P, int b1, int b2, bool slice = false)
@@ -515,11 +558,6 @@ void sample_SPR_flat_one(owned_ptr<Model>& P,MoveStats& Stats,int b1)
     // Allow turning off these moves.
     if (not PP.load_value("SPR-jump",true)) return;
 
-    // When we don't have an alignment matrix, we can't just attach to some
-    // random branch if we don't know where it is, unless we can re-align.
-    for(int i=0; i< PP.n_data_partitions(); i++)
-	if (not PP[i].variable_alignment()) return;
-
     double p = P->load_value("SPR_slice_fraction",-0.25);
 
     int b2 = choose_SPR_target(PP.t(),b1);
@@ -581,73 +619,6 @@ void set_lengths_at_location(Parameters& P, int n0, double L, const tree_edge& b
     P.setlength(b1, L1);
     P.setlength(b2, L2);
 }
-
-struct attachment_branch
-{
-    int prev_i = -1;
-    tree_edge edge;
-    tree_edge sibling;
-};
-
-/// A struct to compute and store information about attachment points their branch names
-struct spr_info
-{
-public:
-    const TreeInterface T;
-
-    /// The branch pointing AWAY from the subtree to prune
-    tree_edge b_parent;
-
-    /// The two branches that make up the current attachment branch
-    vector<int> child_branches;
-
-    /// The current attachment branch, specified in terms of its endpoint nodes
-    tree_edge initial_edge;
-
-    vector<attachment_branch> attachment_branch_pairs;
-
-    // Lengths of branches
-    vector<double> L;
-
-    /// The number of places we could regraft, including the current site
-    unsigned n_attachment_branches() const {return attachment_branch_pairs.size();}
-
-    /// The length of each attachment branch, indexed in the same way as attachment_branches
-    const vector<double>& attachment_branch_lengths() const
-	{
-	    return L;
-	}
-  
-    /// Express a branch \a in attachment_branches in terms of its endpoint nodes
-    tree_edge get_tree_edge(int b) const
-	{
-#ifndef NDEBUG
-	    if (not T.subtree_contains_branch(T.find_branch(b_parent),b))
-		throw myexception()<<"spr_info::get_tree_edge( ): Subtree does not contain branch "<<b;
-#endif
-
-	    int n0 = b_parent.node2;
-	    if (T.target(b) == n0 or T.source(b) == n0)
-		return initial_edge;
-
-	    return T.edge(b);
-	}
-
-    /// Express properties of branches as vectors indexed by their position in attachment_branch_pairs
-    template<typename U>
-    vector<U> convert_to_vector(const map<tree_edge,U>& M) const
-	{
-	    assert(M.size() == n_attachment_branches());
-	    vector<U> v;
-	    v.reserve(n_attachment_branches());
-	    for(const auto& bp : attachment_branch_pairs)
-		v.push_back( M.at( bp.edge ) );      // Assumes a particular orientation of the edge
-
-	    return v;
-	}
-
-    spr_info(const TreeInterface& T, const tree_edge& b);
-}; 
 
 void branch_pairs_after(const TreeInterface& T, int prev_i, const tree_edge& prev_b, vector<attachment_branch>& branch_pairs)
 {
@@ -1501,11 +1472,6 @@ void sample_SPR_nodes(owned_ptr<Model>& P,MoveStats& Stats)
 
     // Allow turning off these moves.
     if (not PP.load_value("SPR-jump",true)) return;
-
-    // When we don't have an alignment matrix, we can't just attach to some
-    // random branch if we don't know where it is, unless we can re-align.
-    for(int i=0; i< PP.n_data_partitions(); i++)
-	if (not PP[i].variable_alignment()) return;
 
     int n = n_SPR_moves(PP);
 
