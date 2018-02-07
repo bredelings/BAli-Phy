@@ -341,6 +341,28 @@ vector<int> get_distance(const TreeInterface& t, int n)
   return D;
 }
 
+vector<int> walk_tree_path_toward_branch(const TreeInterface& t, int b)
+{
+    vector<int> branches;
+    for(auto b: t.branches_before(b))
+    {
+	auto x = walk_tree_path_toward_branch(t, b);
+	branches.insert(branches.end(), x.begin(), x.end());
+    }
+    branches.push_back(b);
+    return branches;
+}
+
+vector<int> walk_tree_path_toward(const TreeInterface& t, int root)
+{
+    vector<int> branches;
+    for(auto b: t.branches_in(root))
+    {
+	auto x = walk_tree_path_toward_branch(t, b);
+	branches.insert(branches.end(), x.begin(), x.end());
+    }
+    return branches;
+}
 
 vector<int> walk_tree_path(const TreeInterface& t, int root)
 {
@@ -541,6 +563,24 @@ void walk_tree_sample_alignments(owned_ptr<Model>& P, MoveStats& Stats)
     }
     else
       sample_alignments_one(P,Stats,b);
+  }
+}
+
+void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats) 
+{
+  Parameters& PP = *P.as<Parameters>();
+  vector<int> branches = walk_tree_path_toward(PP.t(), PP[0].subst_root());
+
+  for(int b: branches)
+  {
+      sample_branch_length_(P,Stats,b);
+      auto t = P.as<Parameters>()->t();
+      int node1 = t.source(b);
+      int node2 = t.target(b);
+      if (node2 >= t.n_leaves())
+	  tri_sample_alignment(*P.as<Parameters>(), node2, node1);
+      sample_branch_length_(P,Stats,b);
+      three_way_topology_sample(P,Stats,b);
   }
 }
 

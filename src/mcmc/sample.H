@@ -83,6 +83,7 @@ void walk_tree_sample_branch_lengths(owned_ptr<Model>&, MCMC::MoveStats&);
 void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<Model>&, MCMC::MoveStats&);
 void walk_tree_sample_NNI(owned_ptr<Model>&, MCMC::MoveStats&);
 void walk_tree_sample_NNI_and_A(owned_ptr<Model>&, MCMC::MoveStats&);
+void realign_from_tips(owned_ptr<Model>&, MCMC::MoveStats&);
 
 void sample_alignments_one(owned_ptr<Model>&, MCMC::MoveStats&, int);
 void sample_tri_one(owned_ptr<Model>&, MCMC::MoveStats&, int);
