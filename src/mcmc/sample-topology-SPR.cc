@@ -1181,18 +1181,17 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 
     sum_out_A = sum_out_A or (uniform() < P.load_value("spr_sum_out_A",0.0));
 
-    // The attachment node for the pruned subtree.
-    // This node will move around, but we will always peel up to this node to calculate the likelihood.
-    int root_node = subtree_edge.node2;
-    // Because the attachment node keeps its name, this will stay in effect throughout the likelihood calculations.
-    P.set_root(root_node);
+    // 1. Always peel up to attachment node to calculate the likelihood.
+    // * The attachment node keeps its name as we regraft on different branches.
+    P.set_root( subtree_edge.node2 );
 
+    // 2. Compute the fractions along each edge that we will attach at.
     spr_attachment_points locations = get_spr_attachment_points(P.t(), subtree_edge);
 
-    vector<Parameters> p(2,P);
-
+    // 3. Construct data structure with information for incremental regrafting.
     spr_info I(P.t(), subtree_edge);
 
+    // 4. Compute the nodes for each edge.
     map<tree_edge,vector<int>> nodes;
     for(auto& E: I.attachment_branch_pairs)
     {
@@ -1203,24 +1202,26 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     }
     const auto& nodes0 = nodes[I.initial_edge];
 
-    // Compute total lengths for each of the possible attachment branches
+    // 5. Compute total lengths for each of the possible attachment branches
     vector<double> L = I.attachment_branch_lengths();
 
     if (I.n_attachment_branches() == 1) return false;
 
-    spr_attachment_probabilities PrB = SPR_search_attachment_points(p[1], subtree_edge, locations, nodes, sum_out_A);
+    // 6. Compute the probabilities for attaching on each branch.
+    spr_attachment_probabilities PrB = SPR_search_attachment_points(P, subtree_edge, locations, nodes, sum_out_A);
 
     vector<log_double_t> Pr = I.convert_to_vector(PrB);
 #ifdef DEBUG_SPR_ALL
     vector<log_double_t> LLL = I.convert_to_vector(PrB.LLL);
 #endif
 
-    // Step N-1: CHOOSE an attachment point
-
+    // 7. Scale the attachment probabilities by 1/(1/L), since we don't have to propose an attachment point for the starting branch.
     vector<log_double_t> PrL = Pr;
     for(int i=0;i<PrL.size();i++)
 	PrL[i] *= L[i];
 
+
+    // 8. Choose the attachment branch.
     int C = -1;
     try {
 	C = choose_MH(0,PrL);
@@ -1231,7 +1232,8 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 	throw c;
     }
 
-    // Step N: ATTACH to that point
+    // 9. Compute the proposed tree by attaching to the selected branch.
+    vector<Parameters> p(2,P);
     if (C != 0)
     {
 	auto target_edge = I.attachment_branch_pairs[C].edge;
@@ -1239,10 +1241,6 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 	spr_to_index(p[1], I, C, nodes0);
 	set_lengths_at_location(p[1], subtree_edge.node2, original_length, target_edge, locations);
     }
-
-    // enforce tree constraints
-    //  if (not extends(p[1].t(), P.PC->TC))
-    //    return false;
 
 #ifdef DEBUG_SPR_ALL
     // The likelihood for attaching at a particular place should not depend on the initial attachment point.
@@ -1260,14 +1258,9 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 	assert(std::abs(diff) < 1.0e-9);
 #endif
 
-    // Step N+1: Use the chosen tree as a proposal, allowing us to sample the alignment.
-    //           (This should always succeed, if the alignment is fixed.)
-
-    // Do we accept the tree proposed above?
+    // 10. Accept or reject the proposed tree by integrating out the alignment.
+    //     (This should always succeed, if the alignment is fixed.)
     bool accepted = true;
-
-    // Only resample the alignment if we are proposing a different topology.
-    /// \todo Mixing: Should we realign at least one other attachment location, if P.variable_alignment()?
     try
     {
 	if (C > 0)
@@ -1278,7 +1271,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 	return false;
     }
 
-
+    // 11. Record SPR move statistics.
     MCMC::Result result = SPR_stats(p[0].t(), p[1].t(), accepted, bins, subtree_edge);
     double L_effective = effective_length(P.t(), subtree_edge);
     if (sum_out_A)
@@ -1286,6 +1279,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     else
 	SPR_inc(Stats, result, "SPR (all)", L_effective);
 
+    // Return true if we accept a DIFFERENT tree.
     return ((C != 0) and accepted);
 }
 
