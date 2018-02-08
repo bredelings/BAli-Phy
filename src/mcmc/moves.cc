@@ -364,6 +364,32 @@ vector<int> walk_tree_path_toward(const TreeInterface& t, int root)
     return branches;
 }
 
+vector<int> reverse_branch_path(const TreeInterface& t, const vector<int>& branches)
+{
+    auto branches2 = branches;
+    for(auto& b: branches2)
+	b = t.reverse(b);
+    std::reverse(branches2);
+    return branches2;
+}
+
+vector<int> walk_tree_path_away(const TreeInterface& t, int node)
+{
+    return reverse_branch_path(t, walk_tree_path_toward(t, node));
+}
+
+vector<int> walk_tree_path_toward_and_away(const TreeInterface& t, int node)
+{
+    // Branches toward the node
+    auto branches = walk_tree_path_toward(t, node);
+
+    vector<int> branches2 = reverse_branch_path(t, branches);
+
+    branches.insert(branches.end(), branches2.begin(), branches2.end());
+    return branches;
+}
+
+
 vector<int> walk_tree_path(const TreeInterface& t, int root)
 {
   vector<int> cost = get_cost(t);
@@ -569,8 +595,9 @@ void walk_tree_sample_alignments(owned_ptr<Model>& P, MoveStats& Stats)
 void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats) 
 {
   Parameters& PP = *P.as<Parameters>();
-  int toward_node = uniform(PP.t().n_leaves(), PP.t().n_nodes()-1);
-  vector<int> branches = walk_tree_path_toward(PP.t(), toward_node);
+  auto t = PP.t();
+  int toward_node = uniform(t.n_leaves(), t.n_nodes()-1);
+  vector<int> branches = walk_tree_path_toward_and_away(t, toward_node);
 
   for(int b: branches)
   {
