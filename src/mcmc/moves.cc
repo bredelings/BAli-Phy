@@ -569,7 +569,8 @@ void walk_tree_sample_alignments(owned_ptr<Model>& P, MoveStats& Stats)
 void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats) 
 {
   Parameters& PP = *P.as<Parameters>();
-  vector<int> branches = walk_tree_path_toward(PP.t(), PP[0].subst_root());
+  int toward_node = uniform(PP.t().n_leaves(), PP.t().n_nodes()-1);
+  vector<int> branches = walk_tree_path_toward(PP.t(), toward_node);
 
   for(int b: branches)
   {
