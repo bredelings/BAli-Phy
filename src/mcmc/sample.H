@@ -77,6 +77,9 @@ int two_way_topology_sample(std::vector<Parameters>& p,const std::vector<log_dou
 
 
 /*-------------- Top Level Sampling Routines -----------*/
+std::vector<int> walk_tree_path_toward(const TreeInterface& t, int node);
+std::vector<int> walk_tree_path_away(const TreeInterface& t, int node);
+std::vector<int> walk_tree_path_toward_and_away(const TreeInterface& t, int node);
 
 void walk_tree_sample_alignments(owned_ptr<Model>&, MCMC::MoveStats&);
 void walk_tree_sample_branch_lengths(owned_ptr<Model>&, MCMC::MoveStats&);
