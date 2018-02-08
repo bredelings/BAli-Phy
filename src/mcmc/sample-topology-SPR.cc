@@ -315,6 +315,10 @@ struct attachment_branch
     tree_edge sibling;
 };
 
+typedef std::map<tree_edge, bool> spr_range;
+
+spr_range spr_full_range(const TreeInterface& T, const tree_edge& b_parent);
+
 /// A struct to compute and store information about attachment points their branch names
 struct spr_info
 {
@@ -323,6 +327,9 @@ public:
 
     /// The branch pointing AWAY from the subtree to prune
     tree_edge b_parent;
+
+    /// The edges the parent is allowed to attach on.
+    spr_range range;
 
     /// The two branches that make up the current attachment branch
     vector<int> child_branches;
@@ -372,8 +379,13 @@ public:
 	    return v;
 	}
 
-    spr_info(const TreeInterface& T, const tree_edge& b);
-}; 
+    /// Construct a full range if we weren't passed a range - or an optional range?
+    spr_info(const TreeInterface& T, const tree_edge& b)
+	:spr_info(T, b, spr_full_range(T,b))
+	{ }
+
+    spr_info(const TreeInterface& T, const tree_edge& b, const spr_range& r);
+};
 
 void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0);
 
@@ -620,7 +632,7 @@ void set_lengths_at_location(Parameters& P, int n0, double L, const tree_edge& b
     P.setlength(b2, L2);
 }
 
-void branch_pairs_after(const TreeInterface& T, int prev_i, const tree_edge& prev_b, vector<attachment_branch>& branch_pairs)
+void branch_pairs_after(const TreeInterface& T, int prev_i, const tree_edge& prev_b, vector<attachment_branch>& branch_pairs, const spr_range& range)
 {
     vector<int> after = T.branches_after(T.find_branch(prev_b));
     assert(after.size() == 0 or after.size() == 2);
@@ -630,12 +642,16 @@ void branch_pairs_after(const TreeInterface& T, int prev_i, const tree_edge& pre
 	tree_edge sibling = T.edge(after[1-j]);
 	branch_pairs.push_back({prev_i, curr_b, sibling});
 	int curr_i = branch_pairs.size()-1;
-	branch_pairs_after(T, curr_i, curr_b, branch_pairs);
+	branch_pairs_after(T, curr_i, curr_b, branch_pairs, range);
     }
 }
 
+spr_range spr_full_range(const TreeInterface& T, const tree_edge& b_parent)
+{
+    return {};
+}
 
-vector<attachment_branch> branch_pairs_after(const TreeInterface& T, const tree_edge& b_parent)
+vector<attachment_branch> branch_pairs_after(const TreeInterface& T, const tree_edge& b_parent, const spr_range& range)
 {
     auto child_branches = T.branches_after(T.find_branch(b_parent));
     auto b1 = T.edge( child_branches[0] );
@@ -645,14 +661,14 @@ vector<attachment_branch> branch_pairs_after(const TreeInterface& T, const tree_
     vector<attachment_branch> branch_pairs;
     branch_pairs.push_back({-1,b0,{}});
 
-    branch_pairs_after(T, 0, b1, branch_pairs);
-    branch_pairs_after(T, 0, b2, branch_pairs);
+    branch_pairs_after(T, 0, b1, branch_pairs, range);
+    branch_pairs_after(T, 0, b2, branch_pairs, range);
 
     return branch_pairs;
 }
 
-spr_info::spr_info(const TreeInterface& T_, const tree_edge& b)
-    :T(T_),b_parent(b)
+spr_info::spr_info(const TreeInterface& T_, const tree_edge& b, const spr_range& r)
+    :T(T_), b_parent(b), range(r)
 {
     child_branches = sort_and_randomize(T.branches_after(T.find_branch(b_parent)));
     assert(child_branches.size() == 2);
@@ -665,7 +681,7 @@ spr_info::spr_info(const TreeInterface& T_, const tree_edge& b)
     // \todo - With tree constraints, or with a variable alignment and alignment constraints,
     //          we really should eliminate branches that we couldn't attach to, here.
 
-    attachment_branch_pairs = branch_pairs_after(T, b_parent);
+    attachment_branch_pairs = branch_pairs_after(T, b_parent, range);
 
     for(const auto& bp: attachment_branch_pairs)
     {
