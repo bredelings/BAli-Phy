@@ -244,9 +244,19 @@ return -1;
     vector< vector< vector<int> > >paths(p.size());
 
     //------------------- Check offsets from path_Q -> P -----------------//
-    for(int i=0;i<p.size();i++) 
+    for(int i=0;i<p.size();i++)
+    {
+	// check whether this arrangement has probability 0 for some reason.
+	bool ok = true;
 	for(int j=0;j<p[i].n_data_partitions();j++) 
-	    if (p[i][j].variable_alignment())
+	    if (p[i][j].variable_alignment() and Matrices[i][j]->Pr_sum_all_paths() <= 0.0) 
+		ok = false;
+
+	if (not ok)
+	    assert(i != 0 and i != p.size()-1);
+
+	for(int j=0;j<p[i].n_data_partitions();j++)
+	    if (p[i][j].variable_alignment() and ok)
 	    {
 		paths[i].push_back( get_path_unique(A5::get_bitpath(p[i][j], order[i]), *Matrices[i][j]) );
     
@@ -259,12 +269,25 @@ return -1;
 	    }
 	    else
 		paths[i].push_back( vector<int>() );
+    }
 
     //--------- Compute path probabilities and sampling probabilities ---------//
-    vector< vector<log_double_t> > PR(p.size());
+    vector< vector<log_double_t> > PR(p.size(), vector<log_double_t>(4,1));
 
     for(int i=0;i<p.size();i++) 
     {
+	// check whether this arrangement violates a constraint in any partition
+	bool ok = true;
+	for(int j=0;j<p[i].n_data_partitions();j++)
+	    if (p[i][j].variable_alignment() and Matrices[i][j]->Pr_sum_all_paths() <= 0.0) 
+		ok = false;
+
+	if (not ok) {
+	    PR[i][0] = 0;
+	    assert(i != 0 and i != p.size()-1);
+	    continue;
+	}
+
 	log_double_t choice_ratio = 1;
 	if (i<Pr.size())
 	    choice_ratio = choose_MH_P(0,i,Pr)/choose_MH_P(i,0,Pr);
@@ -273,7 +296,6 @@ return -1;
       
 	// sample_P(p[i][j], choice_ratio, rho[i], paths[i][j], *Matrices[i][j]);
 	// PR[i][j][0] *= A5::correction(p[i][j],nodes[i]);
-	PR[i] = vector<log_double_t>(4,1);
 	PR[i][0] = p[i].heated_probability(); // p[i].prior_no_alignment() * p[i].prior_alignment() * p[i].likelihood();
 	PR[i][2] = rho[i];
 	PR[i][3] = choice_ratio;
