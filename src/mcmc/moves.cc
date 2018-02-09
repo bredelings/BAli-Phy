@@ -341,15 +341,15 @@ vector<int> get_distance(const TreeInterface& t, int n)
   return D;
 }
 
-vector<int> walk_tree_path_toward_branch(const TreeInterface& t, int b)
+vector<int> walk_tree_path_toward_branch(const TreeInterface& t, int b0)
 {
     vector<int> branches;
-    for(auto b: t.branches_before(b))
+    for(auto b: t.branches_before(b0))
     {
 	auto x = walk_tree_path_toward_branch(t, b);
 	branches.insert(branches.end(), x.begin(), x.end());
     }
-    branches.push_back(b);
+    branches.push_back(b0);
     return branches;
 }
 
