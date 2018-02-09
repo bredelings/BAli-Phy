@@ -26,6 +26,7 @@
 
 #include <map>
 #include <boost/optional.hpp>
+#include "util/assert.hh"
 
 #include "models/parameters.H"
 #include "rng.H"
@@ -449,14 +450,13 @@ vector<vector<int>> compress_site_patterns(const alignment& A, int n, vector<int
     for(int c=0;c<A.length();c++)
 	mapping[c] = add_column(M, site_pattern(A,n,c), columns, counts);
 
+    assert(counts.size() == columns.size());
     return columns;
 }
 
-alignment alignment_from_patterns(const alignment& old, const vector<vector<int>>& patterns, const vector<int>& counts, const TreeInterface& t)
+alignment alignment_from_patterns(const alignment& old, const vector<vector<int>>& patterns, const TreeInterface& t)
 {
     assert(old.n_sequences() <= t.n_nodes());
-    assert(counts.size() <= old.length());
-    assert(counts.size() == patterns.size());
     assert(t.n_leaves() == patterns[0].size());
     assert(old.seqs().size() == t.n_nodes());
 
@@ -477,7 +477,7 @@ alignment alignment_from_patterns(const alignment& old, const vector<vector<int>
 alignment compress_alignment(const alignment& A, const TreeInterface& t, vector<int>& counts, vector<int>& mapping)
 {
     auto patterns = compress_site_patterns(A, t.n_leaves(), counts, mapping);
-    return alignment_from_patterns(A, patterns, counts, t);
+    return alignment_from_patterns(A, patterns, t);
 }
 
 
