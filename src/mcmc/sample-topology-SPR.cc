@@ -673,10 +673,13 @@ void branch_pairs_after(const TreeInterface& T, int prev_i, const tree_edge& pre
     for(int j=0; j<after.size(); j++)
     {
 	tree_edge curr_b = T.edge(after[j]);
-	tree_edge sibling = T.edge(after[1-j]);
-	branch_pairs.push_back({prev_i, curr_b, sibling});
-	int curr_i = branch_pairs.size()-1;
-	branch_pairs_after(T, curr_i, curr_b, branch_pairs, range);
+	if (range.count(curr_b))
+	{
+	    tree_edge sibling = T.edge(after[1-j]);
+	    branch_pairs.push_back({prev_i, curr_b, sibling});
+	    int curr_i = branch_pairs.size()-1;
+	    branch_pairs_after(T, curr_i, curr_b, branch_pairs, range);
+	}
     }
 }
 
