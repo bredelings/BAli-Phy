@@ -317,7 +317,41 @@ struct attachment_branch
 
 typedef std::map<tree_edge, bool> spr_range;
 
-spr_range spr_full_range(const TreeInterface& T, const tree_edge& b_parent);
+vector<int> attachment_sub_branches(const TreeInterface& T, const tree_edge& b_parent)
+{
+    auto child_branches = T.branches_after(T.find_branch(b_parent));
+    if (child_branches.size() != 2)
+	throw myexception()<<"SPR: expected two child branches after subtree edge!";
+    int b1 = child_branches[0];
+    int b2 = child_branches[1];
+    return vector<int>({b1,b2});
+}
+
+tree_edge attachment_edge(const TreeInterface& T, const tree_edge& b_parent)
+{
+    auto child_branches = attachment_sub_branches(T, b_parent);
+    return tree_edge(T.target(child_branches[0]), T.target(child_branches[1]));
+}
+
+double attachment_edge_length(const TreeInterface& T, const tree_edge& b_parent)
+{
+    auto child_branches = attachment_sub_branches(T, b_parent);
+    return T.branch_length(child_branches[0]) + T.branch_length(child_branches[1]);
+}
+
+spr_range spr_full_range(const TreeInterface& T, const tree_edge& b_parent)
+{
+    spr_range range;
+    auto child_branches = attachment_sub_branches(T, b_parent);
+    auto initial_edge = tree_edge(T.target(child_branches[0]), T.target(child_branches[1]));
+    range[initial_edge] = true;
+
+    for(int cb: child_branches)
+	for(int b: T.all_branches_after(cb))
+	    range[T.edge(b)] = true;
+
+    return range;
+}
 
 /// A struct to compute and store information about attachment points their branch names
 struct spr_info
@@ -644,11 +678,6 @@ void branch_pairs_after(const TreeInterface& T, int prev_i, const tree_edge& pre
 	int curr_i = branch_pairs.size()-1;
 	branch_pairs_after(T, curr_i, curr_b, branch_pairs, range);
     }
-}
-
-spr_range spr_full_range(const TreeInterface& T, const tree_edge& b_parent)
-{
-    return {};
 }
 
 vector<attachment_branch> branch_pairs_after(const TreeInterface& T, const tree_edge& b_parent, const spr_range& range)
