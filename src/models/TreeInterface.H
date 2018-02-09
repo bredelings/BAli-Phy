@@ -29,10 +29,14 @@ public:
     std::vector<int> branches_in(int n) const;
     void append_branches_before(int b, std::vector<int>&) const;
     void append_branches_after(int b, std::vector<int>&) const;
+    void append_all_branches_before(int b, std::vector<int>&) const;
+    void append_all_branches_after(int b, std::vector<int>&) const;
     std::vector<int> branches_before(int b) const;
     std::vector<int> branches_after(int b) const;
     std::vector<int> all_branches_before_inclusive(int b) const;
     std::vector<int> all_branches_after_inclusive(int b) const;
+    std::vector<int> all_branches_before(int b) const;
+    std::vector<int> all_branches_after(int b) const;
     std::vector<int> all_branches_from_node(int n) const;
     std::vector<int> all_branches_toward_node(int n) const;
 

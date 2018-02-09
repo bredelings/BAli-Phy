@@ -117,16 +117,42 @@ vector<int> TreeInterface::branches_after(int b) const
     return branches;
 }
 
+void TreeInterface::append_all_branches_before(int b, vector<int>& branches) const
+{
+    int i=branches.size();
+    append_branches_before(b, branches);
+    for(;i<branches.size();i++)
+    {
+	int b2 = branches[i];
+	append_branches_before(b2, branches);
+    }
+}
+
+void TreeInterface::append_all_branches_after(int b, vector<int>& branches) const
+{
+    int i=branches.size();
+    append_branches_after(b, branches);
+    for(;i<branches.size();i++)
+    {
+	int b2 = branches[i];
+	append_branches_after(b2, branches);
+    }
+}
+
 vector<int> TreeInterface::all_branches_before_inclusive(int b) const
 {
     vector<int> branches;
     branches.reserve(n_branches());
     branches.push_back(b);
-    for(int i=0;i<branches.size();i++)
-    {
-	int b2 = branches[i];
-	append_branches_before(b2, branches);
-    }
+    append_all_branches_before(b, branches);
+    return branches;
+}
+
+vector<int> TreeInterface::all_branches_before(int b) const
+{
+    vector<int> branches;
+    branches.reserve(n_branches());
+    append_all_branches_before(b, branches);
     return branches;
 }
 
@@ -135,11 +161,15 @@ vector<int> TreeInterface::all_branches_after_inclusive(int b) const
     vector<int> branches;
     branches.reserve(n_branches());
     branches.push_back(b);
-    for(int i=0;i<branches.size();i++)
-    {
-	int b2 = branches[i];
-	append_branches_after(b2, branches);
-    }
+    append_branches_after(b, branches);
+    return branches;
+}
+
+vector<int> TreeInterface::all_branches_after(int b) const
+{
+    vector<int> branches;
+    branches.reserve(n_branches());
+    append_branches_after(b, branches);
     return branches;
 }
 
