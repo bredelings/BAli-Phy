@@ -696,6 +696,9 @@ vector<attachment_branch> branch_pairs_after(const TreeInterface& T, const tree_
     branch_pairs_after(T, 0, b1, branch_pairs, range);
     branch_pairs_after(T, 0, b2, branch_pairs, range);
 
+    // Check that the range is connected, and connected to b_parent
+    assert(branch_pairs.size() == range.size());
+
     return branch_pairs;
 }
 
