@@ -970,8 +970,9 @@ log_double_t pr_sum_out_A_tri(Parameters P, const vector<optional<vector<HMM::bi
 /// After this routine, likelihood caches and subalignment indices for branches in the
 /// non-pruned subtree should reflect the situation where the subtree has been pruned.
 ///
-spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const spr_attachment_points& locations,
-							  const map<tree_edge,vector<int>>& nodes, bool sum_out_A)
+spr_attachment_probabilities
+SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const spr_range& range, const spr_attachment_points& locations,
+			     const map<tree_edge,vector<int>>& nodes, bool sum_out_A)
 {
 #ifndef NDEBUG
     auto peels0 = substitution::total_peel_internal_branches + substitution::total_peel_leaf_branches;
@@ -983,7 +984,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
     // Because the attachment node keeps its name, this will stay in effect throughout the likelihood calculations.
     P.set_root(root_node);
 
-    spr_info I(P.t(), subtree_edge);
+    spr_info I(P.t(), subtree_edge, range);
 
     if (I.n_attachment_branches() == 1) return spr_attachment_probabilities();
 
@@ -1108,7 +1109,7 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
     if (P.variable_alignment() and not sum_out_A)
 #endif
     {
-	spr_attachment_probabilities PrB2 = SPR_search_attachment_points(p[1], E_parent, locations, nodes_for_branch, sum_out_A);
+	spr_attachment_probabilities PrB2 = SPR_search_attachment_points(p[1], E_parent, I.range, locations, nodes_for_branch, sum_out_A);
 	vector<log_double_t> Pr2 = I.convert_to_vector(PrB2);
     
 	if (not P.variable_alignment() or sum_out_A)
@@ -1220,8 +1221,7 @@ void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0)
  *
  */
 
-
-bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subtree_edge, bool sum_out_A = false)
+bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subtree_edge, const spr_range& range, bool sum_out_A = false)
 {
     const int bins = 6;
 
@@ -1256,7 +1256,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     if (I.n_attachment_branches() == 1) return false;
 
     // 6. Compute the probabilities for attaching on each branch.
-    spr_attachment_probabilities PrB = SPR_search_attachment_points(P, subtree_edge, locations, nodes, sum_out_A);
+    spr_attachment_probabilities PrB = SPR_search_attachment_points(P, subtree_edge, range, locations, nodes, sum_out_A);
 
     vector<log_double_t> Pr = I.convert_to_vector(PrB);
 #ifdef DEBUG_SPR_ALL
@@ -1329,6 +1329,11 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 
     // Return true if we accept a DIFFERENT tree.
     return ((C != 0) and accepted);
+}
+
+bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subtree_edge, bool sum_out_A = false)
+{
+    return sample_SPR_search_one(P, Stats, subtree_edge, spr_full_range(P.t(), subtree_edge), sum_out_A);
 }
 
 void sample_SPR_all(owned_ptr<Model>& P,MoveStats& Stats) 
