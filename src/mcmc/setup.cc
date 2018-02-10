@@ -278,14 +278,13 @@ MCMC::MoveAll get_parameter_MH_moves(Model& M)
 	MH_moves.add(4,MCMC::SingleMove(scale_means_only, "scale_Scales_only", "scale"));
   
     add_MH_move(M, shift_delta,                  "b*.delta",       "lambda_shift_sigma",     0.35, MH_moves, 10);
-    add_MH_move(M, Between(-40,0,shift_cauchy),  "*.logLambda",      "lambda_shift_sigma",    0.35, MH_moves, 10);
-    add_MH_move(M, more_than(0.0, shift_cauchy), "*.meanIndelLengthMinus1",     "epsilon_shift_sigma",   0.1, MH_moves, 10);
-
+    add_MH_move(M, Between(-40,0,shift_cauchy),  model_path({"*","logLambda"}),      "lambda_shift_sigma",    0.35, MH_moves, 10);
+    add_MH_move(M, more_than(0.0, shift_cauchy), model_path({"*","meanIndelLengthMinus1"}),     "epsilon_shift_sigma",   0.1, MH_moves, 10);
 
     // Resample logLambda and alignment
     if (false)
     {
-	int index = M.find_parameter("I1.RS07.logLambda");
+	int index = M.find_parameter(model_path({"I1","RS07","logLambda"}));
 
 	if (index != -1)
 	{
@@ -298,7 +297,7 @@ MCMC::MoveAll get_parameter_MH_moves(Model& M)
     // Resample meanIndelLengthMinus1 and alignment
     if (false)
     {
-	int index = M.find_parameter("I1.RS07.meanIndelLengthMinus1");
+	int index = M.find_parameter(model_path({"I1","RS07","meanIndelLengthMinus1"}));
 
 	if (index != -1)
 	{
