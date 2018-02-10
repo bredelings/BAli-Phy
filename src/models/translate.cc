@@ -252,37 +252,14 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 		string arg_name = argument.get<string>("arg_name");
 		bool arg_is_required = not argument.get("no_apply",false);
 
-		// If this is a supplied argument
-		if (model.count(arg_name))
-		{
-		    type_t arg_required_type = get_type_for_arg(*rule, arg_name);
-		    substitute(E, arg_required_type);
-		    ptree arg_value = model.get_child(arg_name);
-		    E = E && pass2(R, arg_required_type, arg_value, bound_vars, extend_scope(*rule,skip,scope));
-		    if (not E)
-			throw myexception()<<"Expression '"<<unparse(arg_value, R)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
-		    model2.push_back({arg_name, arg_value});
-		    add(bound_vars, E.referenced_vars());
-		}
-
-		// If there's no default arg 
-		else if (not argument.count("default_value"))
-		{
-		    if (arg_is_required)
-			throw myexception()<<"Command '"<<name<<"' missing required argument '"<<arg_name<<"'";
-		}
-		else
-		{
-		    auto arg_required_type = argument.get_child("arg_type");
-		    substitute(E, arg_required_type);
-		    auto default_arg = argument.get_child("default_value");
-		    E = E && pass2(R, arg_required_type, default_arg, bound_vars, extend_scope(*rule, skip, scope));
-		    if (not E)
-			throw myexception()<<"Expression '"<<unparse(default_arg, R)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
-		    add(bound_vars, E.referenced_vars());
-
-		    model2.push_back({arg_name, default_arg});
-		}
+		type_t arg_required_type = get_type_for_arg(*rule, arg_name);
+		substitute(E, arg_required_type);
+		ptree arg_value = model.get_child(arg_name);
+		E = E && pass2(R, arg_required_type, arg_value, bound_vars, extend_scope(*rule,skip,scope));
+		if (not E)
+		    throw myexception()<<"Expression '"<<unparse(arg_value, R)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
+		model2.push_back({arg_name, arg_value});
+		add(bound_vars, E.referenced_vars());
 	    }
 
 	    model = model2;
