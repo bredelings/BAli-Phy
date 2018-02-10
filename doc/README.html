@@ -518,7 +518,6 @@ imodel = 2:none
 # linked scale for 1st and 3rd partition
 scale = 1,3:</pre><p>
           The <strong class="userinput"><code>align</code></strong> option indicates sequence files, and has no name on the command line.
-	  the sequence file, which has no name on the command line.
 	  Lines that begin with # are comments, and blank lines are
 	  ignored.  This is thus equivalent to the rather long command line:
 	  </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy ITS1.fasta 5.8S.fasta ITS2.fasta --smodel=1,3:TN+DP[n=3] --smodel=2:TN --imodel=2:none --scale=1,3:</code></strong></pre><p>
@@ -747,13 +746,13 @@ scale = 1,3:</pre><p>
 
       <div class="section"><div class="titlepage"><div><div><h5 class="title"><a name="idp43"></a>6.2.1.2. Model parameter names</h5></div></div></div>
 
-      <p>The prefixes "S<em class="replaceable"><code>n</code></em>::" and "I<em class="replaceable"><code>n</code></em>::" will be dropped if not necessary to disambiguate parameters with the same name in different sub-models.</p>
+      <p>The prefixes "S<em class="replaceable"><code>n</code></em>|" and "I<em class="replaceable"><code>n</code></em>|" will be dropped if not necessary to disambiguate parameters with the same name in different sub-models.</p>
 
       <div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">Scale<em class="replaceable"><code>n</code></em></span></p></td><td>
 	    <p>The average number of substitutions per branch in partition group <em class="replaceable"><code>n</code></em>.  This ordinarily applies to the <em class="replaceable"><code>n</code></em>th partition, unless multiple partitions are forced to have the same branch length scale using <strong class="userinput"><code>--scale</code></strong>.</p>
-	  </td></tr><tr><td><p><span class="term">S<em class="replaceable"><code>n</code></em>::<em class="replaceable"><code>name</code></em></span></p></td><td>
+	  </td></tr><tr><td><p><span class="term">S<em class="replaceable"><code>n</code></em>|<em class="replaceable"><code>name</code></em></span></p></td><td>
 	    <p>Parameter <em class="replaceable"><code>name</code></em> in the <em class="replaceable"><code>n</code></em>th substitution model.</p>
-	  </td></tr><tr><td><p><span class="term">I<em class="replaceable"><code>n</code></em>::<em class="replaceable"><code>name</code></em></span></p></td><td>
+	  </td></tr><tr><td><p><span class="term">I<em class="replaceable"><code>n</code></em>|<em class="replaceable"><code>name</code></em></span></p></td><td>
 	    <p>Parameter <em class="replaceable"><code>name</code></em> in the <em class="replaceable"><code>n</code></em>th insertion/deletion model.</p>
 	  </td></tr></tbody></table></div>
       </div>
@@ -1362,7 +1361,7 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
 </p>
 <p>The posterior probability of positive selection is the posterior mean of the posSelection parameter.  This may be computed using the statreport program with the <strong class="userinput"><code>--mean</code></strong> option.
 </p>
-<p>In case this probability is extremely close to 1 or 0, you may wish to add the option <strong class="userinput"><code>--Rao-Blackwellize S1::BranchSiteTest:posSelection</code></strong>.  This will report the log-probability of positive selection each iteration.  The user may exponentiate the reported values and then average them (using R, for example) in order to compute a more accurate estimate of the posterior probability of positive selection.
+<p>In case this probability is extremely close to 1 or 0, you may wish to add the option <strong class="userinput"><code>--Rao-Blackwellize BranchSiteTest:posSelection</code></strong>.  This will report the log-probability of positive selection each iteration.  The user may exponentiate the reported values and then average them (using R, for example) in order to compute a more accurate estimate of the posterior probability of positive selection.
     </p>
     </div>
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp64"></a>8.6. Substitution model examples</h3></div></div></div>
