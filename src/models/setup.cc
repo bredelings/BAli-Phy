@@ -416,7 +416,7 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const set<st
 
 	auto log_name = name + ":" + arg_name;
 	// Prefix "arg_name" (arg_+arg_name)
-	if (not no_log) arg = {Prefix, log_name, arg};
+	arg = {Prefix, log_name, arg};
 
 	// Wrap the argument in its appropriate Alphabet type
 	if (auto alphabet_expression = argi.get_child_optional("alphabet"))
