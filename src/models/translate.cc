@@ -216,24 +216,24 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 
 	    auto a = get_fresh_type_var(bound_vars);
 	    bound_vars.insert(a);
-	    auto b = required_type;
 
-	    // Create the new model tree with args in correct order
-	    auto name = model.get_value<string>();
-	    ptree model2(name);
-
+	    // 1. Analyze the body, forcing it to have the required type
 	    equations E = pass2(R, required_type, body_exp, bound_vars, extend_scope(scope, var_name, a));
 	    if (not E)
 		throw myexception()<<"Expression '"<<unparse(body_exp, R)<<"' is not of required type "<<unparse_type(required_type)<<"!";
-	    model2.push_back({"body", body_exp});
 	    add(bound_vars, E.referenced_vars());
 
+	    // 2. Analyze the bound expression with type a
 	    substitute(E, a);
 	    E = E && pass2(R, a, var_exp, bound_vars, scope);
 	    if (not E)
 		throw myexception()<<"Expression '"<<unparse(var_exp, R)<<"' is not of required type "<<unparse_type(a)<<"!";
-	    model2.push_back({var_name, var_exp});
 
+	    // Create the new model tree with args in correct order
+	    auto name = model.get_value<string>();
+	    ptree model2(name);
+	    model2.push_back({"body", body_exp});
+	    model2.push_back({var_name, var_exp});
 	    model = model2;
 
 	    auto keep = find_variables_in_type(required_type);
