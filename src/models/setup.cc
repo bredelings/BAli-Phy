@@ -421,8 +421,8 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const set<st
 	if (auto alphabet_expression = argi.get_child_optional("alphabet"))
 	{
 	    auto alphabet_scope = extend_scope(*rule, i, scope);
-	    ptree alphabet_type = get_fresh_type_var(alphabet_scope);
-	    alphabet_scope.insert(alphabet_type);
+//	    ptree alphabet_type = get_fresh_type_var(alphabet_scope);
+//	    alphabet_scope.insert(alphabet_type);
 	    auto A = get_model_as(R, *alphabet_expression, alphabet_scope);
 	    arg = {dummy("Distributions.set_alphabet"),A,arg};
 	}
