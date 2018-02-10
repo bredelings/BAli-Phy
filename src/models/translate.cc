@@ -205,6 +205,8 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	{
 	    // The problem with this is that the order is wrong.
 	    string var_name = model[0].first;
+	    ptree var_exp = model[0].second;
+	    ptree body_exp = model[1].second;
 
 	    auto a = get_fresh_type_var(bound_vars);
 	    bound_vars.insert(a);
@@ -248,25 +250,22 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 		skip++;
 		string arg_name = "body";
 
-		type_t arg_required_type = get_type_for_arg(*rule, arg_name);
-		ptree arg_value = model.get_child(arg_name);
-		E = E && pass2(R, arg_required_type, arg_value, bound_vars, extend_scope(*rule,skip,scope));
+		E = E && pass2(R, required_type, body_exp, bound_vars, extend_scope(*rule,skip,scope));
 		if (not E)
-		    throw myexception()<<"Expression '"<<unparse(arg_value, R)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
-		model2.push_back({arg_name, arg_value});
+		    throw myexception()<<"Expression '"<<unparse(body_exp, R)<<"' is not of required type "<<unparse_type(required_type)<<"!";
+		model2.push_back({arg_name, body_exp});
 		add(bound_vars, E.referenced_vars());
 	    }
 	    {
 		skip++;
 		string arg_name = var_name;
 
-		type_t arg_required_type = get_type_for_arg(*rule, arg_name);
+		type_t arg_required_type = a;
 		substitute(E, arg_required_type);
-		ptree arg_value = model.get_child(arg_name);
-		E = E && pass2(R, arg_required_type, arg_value, bound_vars, extend_scope(*rule,skip,scope));
+		E = E && pass2(R, arg_required_type, var_exp, bound_vars, extend_scope(*rule,skip,scope));
 		if (not E)
-		    throw myexception()<<"Expression '"<<unparse(arg_value, R)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
-		model2.push_back({arg_name, arg_value});
+		    throw myexception()<<"Expression '"<<unparse(var_exp, R)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
+		model2.push_back({arg_name, var_exp});
 		add(bound_vars, E.referenced_vars());
 	    }
 
