@@ -391,10 +391,7 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	expression_ref E = {dummy("Prelude.return"),dummy("arg_body")};
 
 	// 4. Peform the rule arguments 'Prefix "arg_name" (arg_+arg_name) >>= (\arg_name -> (Log "arg_name" arg_name) << E)'
-	int i=0;
 	{
-	    auto argi = array_index(args,i);
-
 	    string arg_name = "body";
 	    expression_ref arg = get_model_as(R, "b", model_rep.get_child(arg_name), extend_scope(scope,{var_name}));
 
@@ -412,11 +409,8 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	    // E = 'arg <<= (\arg_name -> E)
 	    E = {dummy("Prelude.>>="), arg, lambda_quantify(dummy("arg_"+arg_name), E)};
 	}
-	i=1;
 	{
-	    auto argi = array_index(args,i);
-
-	    string arg_name = argi.get_child("arg_name").get_value<string>();
+	    string arg_name = var_name;
 	    expression_ref arg = get_model_as(R, "a", model_rep.get_child(arg_name), scope);
 
 	    auto log_name = name + ":" + arg_name;
