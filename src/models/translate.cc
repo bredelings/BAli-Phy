@@ -156,6 +156,12 @@ optional<ptree> type_for_var_in_scope(const string& name, const vector<pair<stri
     return boost::none;
 }
 
+vector<pair<string, ptree>> extend_scope(const vector<pair<string, ptree>>& scope, const string& var, const type_t type)
+{
+    auto scope2 = scope;
+    scope2.push_back({var,type});
+    return scope2;
+}
 
 vector<pair<string, ptree>> extend_scope(const ptree& rule, int skip, const vector<pair<string, ptree>>& scope)
 {
@@ -244,29 +250,19 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	    auto name = model.get_value<string>();
 	    ptree model2(name);
 
-	    // 7. Handle arguments in rule order
-	    int skip=0;
 	    {
-		skip++;
-		string arg_name = "body";
-
-		E = E && pass2(R, required_type, body_exp, bound_vars, extend_scope(*rule,skip,scope));
+		E = E && pass2(R, required_type, body_exp, bound_vars, extend_scope(scope, var_name, a));
 		if (not E)
 		    throw myexception()<<"Expression '"<<unparse(body_exp, R)<<"' is not of required type "<<unparse_type(required_type)<<"!";
-		model2.push_back({arg_name, body_exp});
+		model2.push_back({"body", body_exp});
 		add(bound_vars, E.referenced_vars());
 	    }
 	    {
-		skip++;
-		string arg_name = var_name;
-
-		type_t arg_required_type = a;
-		substitute(E, arg_required_type);
-		E = E && pass2(R, arg_required_type, var_exp, bound_vars, extend_scope(*rule,skip,scope));
+		substitute(E, a);
+		E = E && pass2(R, a, var_exp, bound_vars, scope);
 		if (not E)
-		    throw myexception()<<"Expression '"<<unparse(var_exp, R)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
-		model2.push_back({arg_name, var_exp});
-		add(bound_vars, E.referenced_vars());
+		    throw myexception()<<"Expression '"<<unparse(var_exp, R)<<"' is not of required type "<<unparse_type(a)<<"!";
+		model2.push_back({var_name, var_exp});
 	    }
 
 	    model = model2;
