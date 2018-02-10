@@ -342,6 +342,8 @@ double attachment_edge_length(const TreeInterface& T, const tree_edge& b_parent)
 spr_range spr_full_range(const TreeInterface& T, const tree_edge& b_parent)
 {
     spr_range range;
+    if (T.is_leaf_node(b_parent.node2)) return range;
+
     auto child_branches = attachment_sub_branches(T, b_parent);
     auto initial_edge = tree_edge(T.target(child_branches[0]), T.target(child_branches[1]));
     range[initial_edge] = true;
