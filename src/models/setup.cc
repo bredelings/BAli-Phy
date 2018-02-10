@@ -357,38 +357,32 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
     auto rule = R.get_rule_for_func(name);
     if (name == "let")
     {
+	// Construct the expresion from the inside out.
+
 	// The problem with this is that the order is wrong.
 	string var_name = model_rep[1].first;
 	ptree var_exp = model_rep[1].second;
 	ptree body_exp = model_rep[0].second;
     
-	expression_ref E = {dummy("Prelude.return"),dummy("arg_body")};
+	// 1. Perform the body with var_name in scope
+	expression_ref E = get_model_as(R, "b", body_exp, extend_scope(scope,{var_name}));
 
-	// 4. Peform the rule arguments 'Prefix "arg_name" (arg_+arg_name) >>= (\arg_name -> (Log "arg_name" arg_name) << E)'
+	// 2. Perform the variable expression
 	{
-	    string arg_name = "body";
-	    expression_ref arg = get_model_as(R, "b", body_exp, extend_scope(scope,{var_name}));
-
-	    // Prefix "arg_name" (arg_+arg_name)
-	    arg = {Prefix, "let:body", arg};
-
-	    // E = 'arg <<= (\arg_name -> E)
-	    E = {dummy("Prelude.>>="), arg, lambda_quantify(dummy("arg_"+arg_name), E)};
-	}
-	{
-	    string arg_name = var_name;
 	    expression_ref arg = get_model_as(R, "a", var_exp, scope);
 
-	    auto log_name = "let:" + arg_name;
-	    arg = {Prefix, log_name, arg};
+	    arg = {Prefix, var_name, arg};
 
-	    // E = Log "arg_name" arg_name >> E
-	    expression_ref log_action = {Log, log_name, dummy("arg_"+arg_name)};
+	    // E = Log "var_name" var >> E
+	    expression_ref log_action = {Log, var_name, dummy("arg_"+var_name)};
 	    E = {dummy("Prelude.>>"), log_action, E};
 
-	    // E = 'arg <<= (\arg_name -> E)
-	    E = {dummy("Prelude.>>="), arg, lambda_quantify(dummy("arg_"+arg_name), E)};
+	    // E = 'arg <<= (\var -> E)
+	    E = {dummy("Prelude.>>="), arg, lambda_quantify(dummy("arg_"+var_name), E)};
 	}
+
+	// 3. Prefix the whole thing
+	E = {Prefix, "let", E};
 
 	return E;
     }
