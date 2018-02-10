@@ -161,7 +161,7 @@ vector<int> TreeInterface::all_branches_after_inclusive(int b) const
     vector<int> branches;
     branches.reserve(n_branches());
     branches.push_back(b);
-    append_branches_after(b, branches);
+    append_all_branches_after(b, branches);
     return branches;
 }
 
@@ -169,7 +169,7 @@ vector<int> TreeInterface::all_branches_after(int b) const
 {
     vector<int> branches;
     branches.reserve(n_branches());
-    append_branches_after(b, branches);
+    append_all_branches_after(b, branches);
     return branches;
 }
 
