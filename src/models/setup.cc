@@ -247,49 +247,28 @@ void require_type(const ptree& E, const ptree& required_type, const string& type
 	throw myexception()<<"Expected type '"<<unparse_type(required_type)<<"' but '"<<unparse(E, rules)<<"' of type '"<<unparse_type(type2)<<"'";
 }
 
-expression_ref get_constant_model(const ptree& required_type, const ptree& model_rep, const Rules& rules)
+expression_ref parse_constant(const ptree& model)
 {
-    // 1. If its an integer constant
-    if (model_rep.is_a<int>())
-    {
-	if (required_type.get_value<string>() == "Double")
-	    return {dummy("Prelude.return"), (double)model_rep};
+    if (model.value_is_empty())
+	throw myexception()<<"parse_constant( ): got a null value!";
 
-	require_type(model_rep, required_type, "Int", rules);
-
-	return {dummy("Prelude.return"), (int)model_rep};
-    }
-
-    // 2. If its an integer constant
-    if (model_rep.is_a<double>())
-    {
-	require_type(model_rep, required_type, "Double", rules);
-
-	return {dummy("Prelude.return"), (double)model_rep};
-    }
-
-    // 3. If its a bool constant
-    if (model_rep.is_a<bool>())
-    {
-	require_type(model_rep, required_type, "Bool", rules);
-
-	return {dummy("Prelude.return"), (bool)model_rep};
-    }
-
-    string name = model_rep.get_value<string>();
-
-    // 4. If its a string constant
-    if (name.size() > 2 and name[0] == '"' and name.back() == '"')
-    {
-	if (model_rep.size() != 0)
-	    throw myexception()<<"An string constant cannot have arguments!";
-
-	require_type(model_rep, required_type, "String", rules);
-
-	return {dummy("Prelude.return"), name.substr(1,name.size()-2)};
-    }
-
+    if (model.is_a<int>()) return (int)model;
+    if (model.is_a<double>()) return (double)model;
+    if (model.is_a<bool>()) return (bool)model;
+    string name = model.get_value<string>();
+    if (name.size() > 2 and name[0] == '"' and name.back() =='"') return name.substr(1,name.size()-2);
     return {};
+}
+
+expression_ref get_constant_model(const ptree& model_rep)
+{
+    if (expression_ref C = parse_constant(model_rep))
+    {
+	if (model_rep.size() != 0) throw myexception()<<"An constant cannot have arguments!\n  '"<<model_rep.show()<<"'";
+	return {dummy("Prelude.return"), C};
+    }
+    else
+	return {};
 }
 
 expression_ref get_variable_model(const ptree& E, const set<string>& scope)
@@ -329,7 +308,7 @@ set<string> extend_scope(const ptree& rule, int skip, const set<string>& scope)
     return scope2;
 }
 
-expression_ref get_model_as(const Rules& R, const ptree& required_type, const ptree& model_rep, const set<string>& scope)
+expression_ref get_model_as(const Rules& R, const ptree& model_rep, const set<string>& scope)
 {
     //  std::cout<<"model = "<<model<<std::endl;
     //  auto result = parse(model);
@@ -340,10 +319,10 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 
     // 1. Complain on empty expressions
     if (model_rep.empty() and model_rep.value_is_empty())
-	throw myexception()<<"Can't construct type '"<<unparse_type(required_type)<<"' from empty description!";
+	throw myexception()<<"Can't construct model from from empty description!";
 
     // 2. Handle constant expressions
-    if (auto constant = get_constant_model(required_type, model_rep, R)) return constant;
+    if (auto constant = get_constant_model(model_rep)) return constant;
 
     // 3. Handle variables
     if (auto variable = get_variable_model(model_rep, scope)) return variable;
@@ -365,11 +344,11 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	ptree body_exp = model_rep[0].second;
     
 	// 1. Perform the body with var_name in scope
-	expression_ref E = get_model_as(R, "b", body_exp, extend_scope(scope,{var_name}));
+	expression_ref E = get_model_as(R, body_exp, extend_scope(scope,{var_name}));
 
 	// 2. Perform the variable expression
 	{
-	    expression_ref arg = get_model_as(R, "a", var_exp, scope);
+	    expression_ref arg = get_model_as(R, var_exp, scope);
 
 	    arg = {Prefix, var_name, arg};
 
@@ -409,7 +388,7 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	    string arg_name = array_index(call,i).get_value<string>();
 	    ptree arg_tree = get_arg(*rule, arg_name);
 	    ptree arg_type = arg_tree.get_child("arg_type");
-	    expression_ref arg = get_model_as(R, arg_type, model_rep.get_child(arg_name), scope);
+	    expression_ref arg = get_model_as(R, model_rep.get_child(arg_name), scope);
 	    E = {E,arg};
 	}
 	return E;
@@ -437,7 +416,7 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	string arg_name = argi.get_child("arg_name").get_value<string>();
 	ptree arg_tree = get_arg(*rule, arg_name);
 	ptree arg_type = arg_tree.get_child("arg_type");
-	expression_ref arg = get_model_as(R, arg_type, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
+	expression_ref arg = get_model_as(R, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
 
 	// Apply arguments if necessary
 	auto applied_args = argi.get_child_optional("applied_args");
@@ -454,7 +433,7 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	    auto alphabet_scope = extend_scope(*rule, i, scope);
 	    ptree alphabet_type = get_fresh_type_var(alphabet_scope);
 	    alphabet_scope.insert(alphabet_type);
-	    auto A = get_model_as(R, alphabet_type, *alphabet_expression, alphabet_scope);
+	    auto A = get_model_as(R, *alphabet_expression, alphabet_scope);
 	    arg = {dummy("Distributions.set_alphabet"),A,arg};
 	}
 
@@ -491,7 +470,7 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& constraints, const ptree& model_rep, const set<string>& scope)
 {
     // --------- Convert model to MultiMixtureModel ------------//
-    expression_ref full_model = get_model_as(R, type, model_rep, scope);
+    expression_ref full_model = get_model_as(R, model_rep, scope);
 
     if (log_verbose >= 2)
 	std::cout<<"full_model = "<<full_model<<std::endl;
