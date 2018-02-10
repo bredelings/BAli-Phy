@@ -359,6 +359,8 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
     {
 	// The problem with this is that the order is wrong.
 	string var_name = model_rep[1].first;
+	ptree var_exp = model_rep[1].second;
+	ptree body_exp = model_rep[0].second;
 
 	Rule arg_var;
 	arg_var.push_back({"arg_name",ptree(var_name)});
@@ -393,7 +395,7 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	// 4. Peform the rule arguments 'Prefix "arg_name" (arg_+arg_name) >>= (\arg_name -> (Log "arg_name" arg_name) << E)'
 	{
 	    string arg_name = "body";
-	    expression_ref arg = get_model_as(R, "b", model_rep.get_child(arg_name), extend_scope(scope,{var_name}));
+	    expression_ref arg = get_model_as(R, "b", body_exp, extend_scope(scope,{var_name}));
 
 	    // Prefix "arg_name" (arg_+arg_name)
 	    arg = {Prefix, "let:body", arg};
@@ -403,18 +405,14 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	}
 	{
 	    string arg_name = var_name;
-	    expression_ref arg = get_model_as(R, "a", model_rep.get_child(arg_name), scope);
+	    expression_ref arg = get_model_as(R, "a", var_exp, scope);
 
-	    auto log_name = name + ":" + arg_name;
-	    // Prefix "arg_name" (arg_+arg_name)
-	    if (not no_log) arg = {Prefix, log_name, arg};
+	    auto log_name = "let:" + arg_name;
+	    arg = {Prefix, log_name, arg};
 
 	    // E = Log "arg_name" arg_name >> E
-	    if (should_log(R, model_rep, arg_name))
-	    {
-		expression_ref log_action = {Log, log_name, dummy("arg_"+arg_name)};
-		E = {dummy("Prelude.>>"), log_action, E};
-	    }
+	    expression_ref log_action = {Log, log_name, dummy("arg_"+arg_name)};
+	    E = {dummy("Prelude.>>"), log_action, E};
 
 	    // E = 'arg <<= (\arg_name -> E)
 	    E = {dummy("Prelude.>>="), arg, lambda_quantify(dummy("arg_"+arg_name), E)};
