@@ -376,8 +376,6 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	r.push_back({"call", call});
 
 	rule = r;
-	if (not rule) throw myexception()<<"No rule for '"<<name<<"'";
-	if (not rule->count("call")) throw myexception()<<"No call for '"<<name<<"'";
 	
 	// 5. Extract parts of the rule
 	bool no_log = rule->get("no_log",false);
@@ -387,11 +385,47 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 
 	// 4. Peform the rule arguments 'Prefix "arg_name" (arg_+arg_name) >>= (\arg_name -> (Log "arg_name" arg_name) << E)'
 	int i=0;
-	for(;i<args.size();i++)
 	{
 	    auto argi = array_index(args,i);
 
-	    if (argi.get("no_apply",false)) break;
+	    string arg_name = argi.get_child("arg_name").get_value<string>();
+	    ptree arg_tree = get_arg(*rule, arg_name);
+	    ptree arg_type = arg_tree.get_child("arg_type");
+	    expression_ref arg = get_model_as(R, arg_type, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
+
+	    // Apply arguments if necessary
+	    auto applied_args = argi.get_child_optional("applied_args");
+	    if (applied_args)
+		arg = apply_args(arg, *applied_args);
+
+	    auto log_name = name + ":" + arg_name;
+	    // Prefix "arg_name" (arg_+arg_name)
+	    if (not no_log) arg = {Prefix, log_name, arg};
+
+	    // Wrap the argument in its appropriate Alphabet type
+	    if (auto alphabet_expression = argi.get_child_optional("alphabet"))
+	    {
+		auto alphabet_scope = extend_scope(*rule, i, scope);
+		ptree alphabet_type = get_fresh_type_var(alphabet_scope);
+		alphabet_scope.insert(alphabet_type);
+		auto A = get_model_as(R, alphabet_type, *alphabet_expression, alphabet_scope);
+		arg = {dummy("Distributions.set_alphabet"),A,arg};
+	    }
+
+	    // E = Log "arg_name" arg_name >> E
+	    if (should_log(R, model_rep, arg_name))
+	    {
+		expression_ref log_action = {Log, log_name, dummy("arg_"+arg_name)};
+		E = {dummy("Prelude.>>"), log_action, E};
+	    }
+
+	    // E = 'arg <<= (\arg_name -> E)
+	    E = {dummy("Prelude.>>="), arg, lambda_quantify(dummy("arg_"+arg_name), E)};
+	}
+	i=1;
+	{
+	    auto argi = array_index(args,i);
+
 	    string arg_name = argi.get_child("arg_name").get_value<string>();
 	    ptree arg_tree = get_arg(*rule, arg_name);
 	    ptree arg_type = arg_tree.get_child("arg_type");
