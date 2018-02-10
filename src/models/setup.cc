@@ -241,12 +241,6 @@ optional<vector<double>> get_frequencies_from_tree(const ptree& model_rep, const
 	return pi;
 }
 
-void require_type(const ptree& E, const ptree& required_type, const string& type2, const Rules& rules)
-{
-    if (not unify(ptree(type2), required_type))
-	throw myexception()<<"Expected type '"<<unparse_type(required_type)<<"' but '"<<unparse(E, rules)<<"' of type '"<<unparse_type(type2)<<"'";
-}
-
 expression_ref parse_constant(const ptree& model)
 {
     if (model.value_is_empty())
