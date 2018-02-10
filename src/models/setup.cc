@@ -149,6 +149,8 @@ ptree array_index(const ptree& p, int i)
 bool is_loggable_function(const Rules& R, const string& name)
 {
     auto rule = R.get_rule_for_func(name);
+    if (name == "let") return true;
+
     if (not rule) return false;
     return not rule->get("no_log",false);
 }
@@ -175,9 +177,11 @@ bool is_unlogged_random(const Rules& R, const ptree& model)
 
 bool should_log(const Rules& R, const ptree& model, const string& arg_name)
 {
-    if (is_constant(model)) return false;
-
     auto name = model.get_value<string>();
+
+    if (name == "let") return (arg_name!="body");
+
+    if (is_constant(model)) return false;
 
     if (not is_loggable_function(R, name)) return false;
 
