@@ -206,13 +206,18 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	    // The problem with this is that the order is wrong.
 	    string var_name = model[0].first;
 
+	    auto a = get_fresh_type_var(bound_vars);
+	    bound_vars.insert(a);
+	    auto b = get_fresh_type_var(bound_vars);
+	    bound_vars.insert(b);
+
 	    Rule arg1;
 	    arg1.push_back({"arg_name",ptree(var_name)});
-	    arg1.push_back({"arg_type",ptree("a")});
+	    arg1.push_back({"arg_type",a});
 
 	    Rule arg2;
 	    arg2.push_back({"arg_name","body"});
-	    arg2.push_back({"arg_type",ptree("b")});
+	    arg2.push_back({"arg_type",b});
 
 	    Rule args;
 	    args.push_back({"",arg2});
@@ -224,13 +229,104 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	    Rule r;
 	    r.push_back({"name",ptree("let")});
 	    r.push_back({"constraints",ptree()});
-	    r.push_back({"result_type",ptree("b")});
+	    r.push_back({"result_type",b});
 	    r.push_back({"args", args});
 	    r.push_back({"call", call});
 
 	    rule = r;
-	    rule = freshen_type_vars(*rule, bound_vars);
-	    result_type = rule->get_child("result_type");
+
+	    result_type = b;
+	    // 2. Unify required type with rule result type
+	    auto E = unify(result_type, required_type);
+	    if (rule)
+		for(const auto& constraint: rule->get_child("constraints"))
+		    E.add_constraint(constraint.second);
+    
+	    // 3. Attempt a conversion if the result_type and the required_type don't match.
+	    if (not E)
+	    {
+		if (convertible_to(model, result_type, required_type))
+		    return pass2(R, required_type, model, bound_vars, scope);
+		else
+		    throw myexception()<<"Term '"<<unparse(model, R)<<"' of type '"<<unparse_type(result_type)
+				       <<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
+	    }
+
+	    // 4. If this is a constant or variable, then we are done here.
+	    if (not rule)
+	    {
+		if (not model.empty())
+		    throw myexception()<<"Term '"<<model.value<<"' of type '"<<unparse_type(result_type)
+				       <<"' should not have arguments!";
+		return E;
+	    }
+
+	    // 5.1 Update required type and rules with discovered constraints
+	    rule = substitute_in_rule_types(E, *rule);
+
+	    // 5.2 Record any new variables that we are using as bound variables
+	    //     (I think that only rules can introduce new variables)
+	    add(bound_vars, find_rule_type_vars(*rule));
+    
+	    // 6. Complain if undescribed arguments are supplied
+	    for(auto& child: model)
+		if (get_arg(*rule, child.first).get("no_apply",false))
+		    throw myexception()<<"Rule for function '"<<rule->get<string>("name")<<"' doesn't allow specifying a value for '"<<child.first<<"'.";
+
+	    // Create the new model tree with args in correct order
+	    auto name = model.get_value<string>();
+	    ptree model2(name);
+
+	    // 7. Handle arguments in rule order
+	    int skip=0;
+	    for(const auto& arg: rule->get_child("args"))
+	    {
+		skip++;
+		const auto& argument = arg.second;
+
+		string arg_name = argument.get<string>("arg_name");
+		bool arg_is_required = not argument.get("no_apply",false);
+
+		// If this is a supplied argument
+		if (model.count(arg_name))
+		{
+		    type_t arg_required_type = get_type_for_arg(*rule, arg_name);
+		    substitute(E, arg_required_type);
+		    ptree arg_value = model.get_child(arg_name);
+		    E = E && pass2(R, arg_required_type, arg_value, bound_vars, extend_scope(*rule,skip,scope));
+		    if (not E)
+			throw myexception()<<"Expression '"<<unparse(arg_value, R)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
+		    model2.push_back({arg_name, arg_value});
+		    add(bound_vars, E.referenced_vars());
+		}
+
+		// If there's no default arg 
+		else if (not argument.count("default_value"))
+		{
+		    if (arg_is_required)
+			throw myexception()<<"Command '"<<name<<"' missing required argument '"<<arg_name<<"'";
+		}
+		else
+		{
+		    auto arg_required_type = argument.get_child("arg_type");
+		    substitute(E, arg_required_type);
+		    auto default_arg = argument.get_child("default_value");
+		    E = E && pass2(R, arg_required_type, default_arg, bound_vars, extend_scope(*rule, skip, scope));
+		    if (not E)
+			throw myexception()<<"Expression '"<<unparse(default_arg, R)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
+		    add(bound_vars, E.referenced_vars());
+
+		    model2.push_back({arg_name, default_arg});
+		}
+	    }
+
+	    model = model2;
+
+	    auto keep = find_variables_in_type(required_type);
+	    add(keep, find_type_variables_from_scope(scope));
+	    E.eliminate_except(keep);
+
+	    return E;
 	}
 	else
 	{
