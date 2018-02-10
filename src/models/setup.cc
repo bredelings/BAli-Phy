@@ -427,15 +427,6 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	    E = {dummy("Prelude.>>="), arg, lambda_quantify(dummy("arg_"+arg_name), E)};
 	}
 
-	for(;i<args.size();i++)
-	{
-	    // E = (\arg_name -> E)
-	    auto argi = array_index(args,i);
-	    string arg_name = argi.get_child("arg_name").get_value<string>();
-	    E = lambda_quantify(dummy("arg_"+arg_name), E);
-	    continue;
-	}
-
 	return E;
     }
 
