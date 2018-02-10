@@ -145,5 +145,7 @@ std::string show_probability_expression(const expression_ref&);
 
 std::vector< std::string > show_probability_expressions(const context& C);
 
-extern const std::string model_separator;
+std::string model_extend_path(const std::string&,const std::string&);
+std::string model_path(const std::vector<std::string>&);
+std::vector<std::string> model_split_path(const std::string&);
 #endif

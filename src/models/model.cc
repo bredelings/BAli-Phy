@@ -39,7 +39,25 @@ using std::multiset;
 
 using boost::dynamic_pointer_cast;
 
-const string model_separator = "::";
+const string model_separator = "|";
+
+string model_extend_path(const string& path,const string& x)
+{
+    if (path.empty())
+	return x;
+    else
+	return path + model_separator + x;
+}
+
+string model_path(const vector<string>& path)
+{
+    return join(path, model_separator);
+}
+
+vector<string> model_split_path(const string& path)
+{
+    return split(path, model_separator);
+}
 
 vector<expression_ref> model_parameter_expressions(const Model& M)
 {
@@ -222,13 +240,8 @@ void copy_to_vec(const ptree& p, vector<string>& names2, const string& path = ""
     }
 
     if (not p.empty())
-    {
 	for(auto& x: p)
-	    if (path.empty())
-		copy_to_vec(x.second, names2, x.first);
-	    else
-		copy_to_vec(x.second, names2, path + model_separator + x.first);
-    }
+	    copy_to_vec(x.second, names2, model_extend_path(path, x.first));
 }
 
 
@@ -336,7 +349,7 @@ vector<string> short_parameter_names(const vector<string>& names)
 	    hidden[i] = true;
 	}
 
-	add_path(paths, split(path, model_separator), i);
+	add_path(paths, model_split_path(path), i);
     }
 
     // Remove levels that aren't needed for disambiguation
@@ -434,10 +447,10 @@ map<string,map<string,int>> parameters_with_extension(const vector<string>& M, s
 {
     map<string,map<string,int>> indices;
 
-    const vector<string> key = split(name, model_separator);
+    const vector<string> key = model_split_path(name);
     for(int i=0;i<M.size();i++)
     {
-	vector<string> pattern = split(M[i], model_separator);
+	vector<string> pattern = model_split_path(M[i]);
 
 	assert(not pattern.empty());
 
@@ -446,7 +459,7 @@ map<string,map<string,int>> parameters_with_extension(const vector<string>& M, s
 	if (m)
 	{
 	    pattern.pop_back();
-	    indices[join(pattern, model_separator)][*m] = i;
+	    indices[model_path(pattern)][*m] = i;
 	}
     }
 

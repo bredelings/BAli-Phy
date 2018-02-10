@@ -54,7 +54,7 @@ gen_model m = sample' Nothing [] True 1.0 m;
 
 perform_exp dist = Parameters.evaluate (-1) $ unsafePerformIO' $ gen_model dist;
 
-prefix_name ps name = foldl (\a b -> b++"::"++a) name ps;
+prefix_name ps name = foldl (\a b -> b++"|"++a) name ps;
 add_logger name x = do {Log name x ; return x};
 name ~~ dist = do { x <- dist ; Log name x ; return x};
 name @@ a = Prefix name a;

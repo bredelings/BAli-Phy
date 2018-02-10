@@ -183,7 +183,7 @@ void find_sub_loggers(Model& M, int& index, const string& name, vector<int>& log
 
 string translate_structures(const string& name)
 {
-    vector<string> path = split(name, model_separator);
+    vector<string> path = model_split_path(name);
 
     vector<string> path2;
     optional<int> elem;
@@ -222,7 +222,7 @@ string translate_structures(const string& name)
 		path2.push_back(x);
 	}
     }
-    return join(path2, model_separator);
+    return model_path(path2);
 }
 
 
