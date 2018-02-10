@@ -304,6 +304,13 @@ expression_ref get_variable_model(const ptree& E, const set<string>& scope)
 }
 
 
+set<string> extend_scope(set<string> scope, const vector<string>& vars)
+{
+    for(auto& var: vars)
+	scope.insert(var);
+    return scope;
+}
+
 set<string> extend_scope(const ptree& rule, int skip, const set<string>& scope)
 {
     auto scope2 = scope;
@@ -388,10 +395,10 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	{
 	    auto argi = array_index(args,i);
 
-	    string arg_name = argi.get_child("arg_name").get_value<string>();
+	    string arg_name = "body";
 	    ptree arg_tree = get_arg(*rule, arg_name);
 	    ptree arg_type = arg_tree.get_child("arg_type");
-	    expression_ref arg = get_model_as(R, arg_type, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
+	    expression_ref arg = get_model_as(R, arg_type, model_rep.get_child(arg_name), extend_scope(scope,{var_name}));
 
 	    // Apply arguments if necessary
 	    auto applied_args = argi.get_child_optional("applied_args");
@@ -429,7 +436,7 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	    string arg_name = argi.get_child("arg_name").get_value<string>();
 	    ptree arg_tree = get_arg(*rule, arg_name);
 	    ptree arg_type = arg_tree.get_child("arg_type");
-	    expression_ref arg = get_model_as(R, arg_type, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
+	    expression_ref arg = get_model_as(R, arg_type, model_rep.get_child(arg_name), scope);
 
 	    // Apply arguments if necessary
 	    auto applied_args = argi.get_child_optional("applied_args");
