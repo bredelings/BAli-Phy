@@ -402,16 +402,6 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	    // Prefix "arg_name" (arg_+arg_name)
 	    if (not no_log) arg = {Prefix, log_name, arg};
 
-	    // Wrap the argument in its appropriate Alphabet type
-	    if (auto alphabet_expression = argi.get_child_optional("alphabet"))
-	    {
-		auto alphabet_scope = extend_scope(*rule, i, scope);
-		ptree alphabet_type = get_fresh_type_var(alphabet_scope);
-		alphabet_scope.insert(alphabet_type);
-		auto A = get_model_as(R, alphabet_type, *alphabet_expression, alphabet_scope);
-		arg = {dummy("Distributions.set_alphabet"),A,arg};
-	    }
-
 	    // E = Log "arg_name" arg_name >> E
 	    if (should_log(R, model_rep, arg_name))
 	    {
@@ -432,16 +422,6 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	    auto log_name = name + ":" + arg_name;
 	    // Prefix "arg_name" (arg_+arg_name)
 	    if (not no_log) arg = {Prefix, log_name, arg};
-
-	    // Wrap the argument in its appropriate Alphabet type
-	    if (auto alphabet_expression = argi.get_child_optional("alphabet"))
-	    {
-		auto alphabet_scope = extend_scope(*rule, i, scope);
-		ptree alphabet_type = get_fresh_type_var(alphabet_scope);
-		alphabet_scope.insert(alphabet_type);
-		auto A = get_model_as(R, alphabet_type, *alphabet_expression, alphabet_scope);
-		arg = {dummy("Distributions.set_alphabet"),A,arg};
-	    }
 
 	    // E = Log "arg_name" arg_name >> E
 	    if (should_log(R, model_rep, arg_name))
