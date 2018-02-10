@@ -321,13 +321,12 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const set<st
     // 3. Handle variables
     if (auto variable = get_variable_model(model_rep, scope)) return variable;
 
-    // 4. Now we have a function -- get the rule
     auto name = model_rep.get_value<string>();
 
     auto Prefix = lambda_expression( constructor("Distributions.Prefix",2) );
     auto Log = lambda_expression( constructor("Distributions.Log",2) );
 
-    auto rule = R.get_rule_for_func(name);
+    // 4. Handle let expressions
     if (name == "let")
     {
 	// Construct the expresion from the inside out.
@@ -360,10 +359,12 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const set<st
 	return E;
     }
 
+    // 5. Now we have a function -- get the rule
+    auto rule = R.get_rule_for_func(name);
     if (not rule) throw myexception()<<"No rule for '"<<name<<"'";
     if (not rule->count("call")) throw myexception()<<"No call for '"<<name<<"'";
 	
-    // 5. Extract parts of the rule
+    // 6a. Extract parts of the rule
     bool generate_function = rule->get("generate_function",true);
     bool perform_function = rule->get("perform",false);
     bool no_log = rule->get("no_log",false);
@@ -386,7 +387,7 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const set<st
 	return E;
     }
 
-    // 2. Apply the arguments listed in the call : 'f call.name1 call.name2 call.name3'
+    // 6b. Apply the arguments listed in the call : 'f call.name1 call.name2 call.name3'
     //    There could be fewer of these than the rule arguments.
     for(int i=0;i<call.size();i++)
     {
@@ -394,11 +395,11 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const set<st
 	E = {E, dummy("arg_" + call_arg_name)};
     }
 
-    // 3. Return the function call: 'return (f call.name1 call.name2 call.name3)'
+    // 6c. Return the function call: 'return (f call.name1 call.name2 call.name3)'
     if (not perform_function)
 	E = {dummy("Prelude.return"),E};
 
-    // 4. Peform the rule arguments 'Prefix "arg_name" (arg_+arg_name) >>= (\arg_name -> (Log "arg_name" arg_name) << E)'
+    // 6d. Peform the rule arguments 'Prefix "arg_name" (arg_+arg_name) >>= (\arg_name -> (Log "arg_name" arg_name) << E)'
     int i=0;
     for(;i<args.size();i++)
     {
