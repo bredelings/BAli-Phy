@@ -230,9 +230,8 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 		throw myexception()<<"Expression '"<<unparse(var_exp, R)<<"' is not of required type "<<unparse_type(a)<<"!";
 
 	    // Create the new model tree with args in correct order
-	    auto name = model.get_value<string>();
-	    ptree model2(name);
-	    model2.push_back({"body", body_exp});
+	    ptree model2("let");
+	    model2.push_back({"", body_exp});
 	    model2.push_back({var_name, var_exp});
 	    model = model2;
 
