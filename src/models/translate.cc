@@ -246,12 +246,9 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	    int skip=0;
 	    {
 		skip++;
-		const auto& argument = arg2;
-
-		string arg_name = argument.get<string>("arg_name");
+		string arg_name = "body";
 
 		type_t arg_required_type = get_type_for_arg(*rule, arg_name);
-		substitute(E, arg_required_type);
 		ptree arg_value = model.get_child(arg_name);
 		E = E && pass2(R, arg_required_type, arg_value, bound_vars, extend_scope(*rule,skip,scope));
 		if (not E)
@@ -261,9 +258,7 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	    }
 	    {
 		skip++;
-		const auto& argument = arg1;
-
-		string arg_name = argument.get<string>("arg_name");
+		string arg_name = var_name;
 
 		type_t arg_required_type = get_type_for_arg(*rule, arg_name);
 		substitute(E, arg_required_type);
