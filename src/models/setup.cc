@@ -396,9 +396,7 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	    auto argi = array_index(args,i);
 
 	    string arg_name = "body";
-	    ptree arg_tree = get_arg(*rule, arg_name);
-	    ptree arg_type = arg_tree.get_child("arg_type");
-	    expression_ref arg = get_model_as(R, arg_type, model_rep.get_child(arg_name), extend_scope(scope,{var_name}));
+	    expression_ref arg = get_model_as(R, "b", model_rep.get_child(arg_name), extend_scope(scope,{var_name}));
 
 	    // Apply arguments if necessary
 	    auto applied_args = argi.get_child_optional("applied_args");
@@ -434,9 +432,7 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	    auto argi = array_index(args,i);
 
 	    string arg_name = argi.get_child("arg_name").get_value<string>();
-	    ptree arg_tree = get_arg(*rule, arg_name);
-	    ptree arg_type = arg_tree.get_child("arg_type");
-	    expression_ref arg = get_model_as(R, arg_type, model_rep.get_child(arg_name), scope);
+	    expression_ref arg = get_model_as(R, "a", model_rep.get_child(arg_name), scope);
 
 	    // Apply arguments if necessary
 	    auto applied_args = argi.get_child_optional("applied_args");
