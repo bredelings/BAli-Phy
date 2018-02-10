@@ -380,8 +380,6 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const set<st
 	for(int i=0;i<call.size();i++)
 	{
 	    string arg_name = array_index(call,i).get_value<string>();
-	    ptree arg_tree = get_arg(*rule, arg_name);
-	    ptree arg_type = arg_tree.get_child("arg_type");
 	    expression_ref arg = get_model_as(R, model_rep.get_child(arg_name), scope);
 	    E = {E,arg};
 	}
@@ -408,8 +406,6 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const set<st
 
 	if (argi.get("no_apply",false)) break;
 	string arg_name = argi.get_child("arg_name").get_value<string>();
-	ptree arg_tree = get_arg(*rule, arg_name);
-	ptree arg_type = arg_tree.get_child("arg_type");
 	expression_ref arg = get_model_as(R, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
 
 	// Apply arguments if necessary
