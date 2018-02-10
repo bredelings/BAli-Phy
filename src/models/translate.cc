@@ -244,13 +244,26 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 
 	    // 7. Handle arguments in rule order
 	    int skip=0;
-	    for(const auto& arg: rule->get_child("args"))
 	    {
 		skip++;
-		const auto& argument = arg.second;
+		const auto& argument = arg2;
 
 		string arg_name = argument.get<string>("arg_name");
-		bool arg_is_required = not argument.get("no_apply",false);
+
+		type_t arg_required_type = get_type_for_arg(*rule, arg_name);
+		substitute(E, arg_required_type);
+		ptree arg_value = model.get_child(arg_name);
+		E = E && pass2(R, arg_required_type, arg_value, bound_vars, extend_scope(*rule,skip,scope));
+		if (not E)
+		    throw myexception()<<"Expression '"<<unparse(arg_value, R)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
+		model2.push_back({arg_name, arg_value});
+		add(bound_vars, E.referenced_vars());
+	    }
+	    {
+		skip++;
+		const auto& argument = arg1;
+
+		string arg_name = argument.get<string>("arg_name");
 
 		type_t arg_required_type = get_type_for_arg(*rule, arg_name);
 		substitute(E, arg_required_type);
