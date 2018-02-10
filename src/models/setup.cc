@@ -361,34 +361,6 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	string var_name = model_rep[1].first;
 	ptree var_exp = model_rep[1].second;
 	ptree body_exp = model_rep[0].second;
-
-	Rule arg_var;
-	arg_var.push_back({"arg_name",ptree(var_name)});
-	arg_var.push_back({"arg_type",ptree("a")});
-
-	Rule arg_body;;
-	arg_body.push_back({"arg_name","body"});
-	arg_body.push_back({"arg_type",ptree("b")});
-
-	Rule args;
-	args.push_back({"",arg_body});
-	args.push_back({"",arg_var});
-	    
-	Rule call("Prelude.id");
-	call.push_back({"",ptree("body")});
-
-	Rule r;
-	r.push_back({"name",ptree("let")});
-	r.push_back({"constraints",ptree()});
-	r.push_back({"result_type",ptree("b")});
-	r.push_back({"args", args});
-	r.push_back({"call", call});
-
-	rule = r;
-	
-	// 5. Extract parts of the rule
-	bool no_log = rule->get("no_log",false);
-	args = rule->get_child("args");
     
 	expression_ref E = {dummy("Prelude.return"),dummy("arg_body")};
 
