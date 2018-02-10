@@ -242,25 +242,6 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 		for(const auto& constraint: rule->get_child("constraints"))
 		    E.add_constraint(constraint.second);
     
-	    // 3. Attempt a conversion if the result_type and the required_type don't match.
-	    if (not E)
-	    {
-		if (convertible_to(model, result_type, required_type))
-		    return pass2(R, required_type, model, bound_vars, scope);
-		else
-		    throw myexception()<<"Term '"<<unparse(model, R)<<"' of type '"<<unparse_type(result_type)
-				       <<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
-	    }
-
-	    // 4. If this is a constant or variable, then we are done here.
-	    if (not rule)
-	    {
-		if (not model.empty())
-		    throw myexception()<<"Term '"<<model.value<<"' of type '"<<unparse_type(result_type)
-				       <<"' should not have arguments!";
-		return E;
-	    }
-
 	    // 5.1 Update required type and rules with discovered constraints
 	    rule = substitute_in_rule_types(E, *rule);
 
