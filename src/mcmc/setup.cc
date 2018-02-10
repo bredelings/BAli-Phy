@@ -446,7 +446,7 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
     MoveAll tree_moves("tree");
     MoveAll topology_move("topology");
     MoveEach NNI_move("NNI");
-    MoveOne SPR_move("SPR");
+    MoveAll SPR_move("SPR");
 
     bool has_imodel = P.variable_alignment();
 
@@ -476,15 +476,19 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
 	    );
 
 
-    if (has_imodel) {
-	SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_and_A_flat", "topology:lengths:nodes:alignment:alignment_branch"));
-	SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_and_A_nodes", "topology:lengths:nodes:alignment:alignment_branch"));
-	SPR_move.add(5,SingleMove(sample_SPR_all,"SPR_and_A_all", "topology:lengths:nodes:alignment:alignment_branch"));
+    if (has_imodel)
+    {
+	// Try to intelligently consider which branch to do the alignment integration on, based on the current alignment.
+	SPR_move.add(1, SingleMove(sample_SPR_all,"SPR_and_A_all", "topology:lengths:nodes:alignment:alignment_branch"));
+
+	// If the alignment is variable, then we really need to propose things in a way that doesn't depend on the current alignment.
+	SPR_move.add(0.5, SingleMove(sample_SPR_flat,"SPR_and_A_flat", "topology:lengths:nodes:alignment:alignment_branch"));
+	SPR_move.add(0.5, SingleMove(sample_SPR_nodes,"SPR_and_A_nodes", "topology:lengths:nodes:alignment:alignment_branch"));
     }
     else {
-	SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_flat", "topology:lengths"));
-	SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_nodes", "topology:lengths"));
-	SPR_move.add(10,SingleMove(sample_SPR_all,"SPR_all", "topology:lengths"));
+	SPR_move.add(0.1,SingleMove(sample_SPR_flat,"SPR_flat", "topology:lengths"));
+	SPR_move.add(0.1,SingleMove(sample_SPR_nodes,"SPR_nodes", "topology:lengths"));
+	SPR_move.add(1,SingleMove(sample_SPR_all,"SPR_all", "topology:lengths"));
     }
 
     topology_move.add(1,NNI_move,false);
