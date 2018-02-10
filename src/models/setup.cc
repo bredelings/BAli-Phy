@@ -398,11 +398,6 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 	    string arg_name = "body";
 	    expression_ref arg = get_model_as(R, "b", model_rep.get_child(arg_name), extend_scope(scope,{var_name}));
 
-	    // Apply arguments if necessary
-	    auto applied_args = argi.get_child_optional("applied_args");
-	    if (applied_args)
-		arg = apply_args(arg, *applied_args);
-
 	    auto log_name = name + ":" + arg_name;
 	    // Prefix "arg_name" (arg_+arg_name)
 	    if (not no_log) arg = {Prefix, log_name, arg};
@@ -433,11 +428,6 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 
 	    string arg_name = argi.get_child("arg_name").get_value<string>();
 	    expression_ref arg = get_model_as(R, "a", model_rep.get_child(arg_name), scope);
-
-	    // Apply arguments if necessary
-	    auto applied_args = argi.get_child_optional("applied_args");
-	    if (applied_args)
-		arg = apply_args(arg, *applied_args);
 
 	    auto log_name = name + ":" + arg_name;
 	    // Prefix "arg_name" (arg_+arg_name)
