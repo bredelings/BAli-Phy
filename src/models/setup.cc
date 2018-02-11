@@ -361,9 +361,11 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
 	string var_name = model_rep[0].first;
 	ptree var_exp = model_rep[0].second;
 	ptree body_exp = model_rep[1].second;
-    
+
+	bool var_is_random = is_random(var_exp, scope);
+
 	// 1. Perform the body with var_name in scope
-	expression_ref E = get_model_as(R, body_exp, extend_scope(scope,var_name,is_random(var_exp, scope)));
+	expression_ref E = get_model_as(R, body_exp, extend_scope(scope, var_name, var_is_random));
 
 	// 2. Perform the variable expression
 	{
@@ -372,8 +374,11 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
 	    arg = {Prefix, var_name, arg};
 
 	    // E = Log "var_name" var >> E
-	    expression_ref log_action = {Log, var_name, dummy("arg_"+var_name)};
-	    E = {dummy("Prelude.>>"), log_action, E};
+	    if (var_is_random)
+	    {
+		expression_ref log_action = {Log, var_name, dummy("arg_"+var_name)};
+		E = {dummy("Prelude.>>"), log_action, E};
+	    }
 
 	    // E = 'arg <<= (\var -> E)
 	    E = {dummy("Prelude.>>="), arg, lambda_quantify(dummy("arg_"+var_name), E)};
