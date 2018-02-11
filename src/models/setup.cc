@@ -358,9 +358,9 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
 	// Construct the expresion from the inside out.
 
 	// The problem with this is that the order is wrong.
-	string var_name = model_rep[1].first;
-	ptree var_exp = model_rep[1].second;
-	ptree body_exp = model_rep[0].second;
+	string var_name = model_rep[0].first;
+	ptree var_exp = model_rep[0].second;
+	ptree body_exp = model_rep[1].second;
     
 	// 1. Perform the body with var_name in scope
 	expression_ref E = get_model_as(R, body_exp, extend_scope(scope,var_name,is_random(var_exp, scope)));

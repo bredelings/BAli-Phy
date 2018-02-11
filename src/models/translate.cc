@@ -231,8 +231,8 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 
 	    // Create the new model tree with args in correct order
 	    ptree model2("let");
-	    model2.push_back({"", body_exp});
 	    model2.push_back({var_name, var_exp});
+	    model2.push_back({"", body_exp});
 	    model = model2;
 
 	    auto keep = find_variables_in_type(required_type);

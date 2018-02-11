@@ -365,8 +365,8 @@ string unparse(const ptree& p, const Rules& rules)
     }
     if (s == "let")
     {
-	string name = p[1].first;
-	return "let["+name+"="+unparse(p[1].second,rules)+","+unparse(p[0].second,rules)+"]";
+	string name = p[0].first;
+	return "let["+name+"="+unparse(p[0].second,rules)+","+unparse(p[1].second,rules)+"]";
     }
     if (s == "Sample")
 	return "~" + unparse(p.begin()->second, rules);
