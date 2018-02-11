@@ -6,12 +6,16 @@
         {
             "arg_name": "pi",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "~DirichletOn[letters[A],1]"
+            "default_value": "~DirichletOn[letters[A],1]",
+	    "description": "Letter frequencies"
         },
         {
             "arg_name": "A",
             "arg_type": "a",
-	    "default_value": "getAlphabet"
+	    "default_value": "getAlphabet",
+	    "description": "The alphabet"
         }
-    ]
+    ],
+    "title": "The +F frequency model",
+    "description": "The +F frequency model species the rate matrix Q as:\n  Q(i,j) = S(i,j) * pi[j]."
 }
