@@ -39,7 +39,7 @@ using std::multiset;
 
 using boost::dynamic_pointer_cast;
 
-const string model_separator = "|";
+const string model_separator = "/";
 
 string model_extend_path(const string& path,const string& x)
 {
