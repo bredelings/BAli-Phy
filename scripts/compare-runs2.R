@@ -36,7 +36,7 @@ axis(side=1,at=1:L,1:L)
 # plot results from another analysis for comparison
 # lines(avePP_other,col=hsv(0.63,0.4,1),lwd=2)
 
-ptcolor = hsv(0, 1, 0, 0.5)
+ptcolor = hsv(0, 1, 0, 0.125)
 
 for(i in 1:(N-1)) {
     xs = 1:L
