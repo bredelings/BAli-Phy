@@ -379,14 +379,13 @@ sub html_header
 #topbar {
 	background-color: rgb(201,217,233);
 	margin: 0;
-	width: 99%;
 	padding: 0.5em;
 	display: table;
         width: 100%;
 }
 
 #topbar #menu {
-	font-size: 90%;
+//	font-size: 90%;
 	display: table-cell;
 	text-align: right; 
 }
@@ -1453,7 +1452,6 @@ sub draw_alignments
 	    next if ($imodel_indices[$p-1] eq "--");
 	}
 	else {
-	    print "skipping $alignment\n";
 	    next;
 	}
 	
