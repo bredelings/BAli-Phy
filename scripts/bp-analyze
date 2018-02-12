@@ -407,6 +407,8 @@ sub html_header
       a[title] {vertical-align:top;color:#00f;font-size:70%; border-bottom:1px dotted;}
       .floating_picture {float:left;padding-left:0.5em;padding-right:0.5em;margin:0.5em;}    
       .r_floating_picture {float:right;padding-left:0.5em;padding-right:0.5em;margin:0.5em;}    
+      table.backlit2 {border-collapse: collapse}
+      table.backlit2 tr:nth-child(even) td { background-color: #F0F0F0; margin:0}
       .clear {clear:both;}    
     </style>
 </head>
@@ -845,23 +847,22 @@ print "NOTE: PSRF-RCF = $psrf_rcf\n" if defined($psrf_rcf);
 
 sub section_scalar_variables
 {
-    return "" if ($#var_names == -1);
-    
     my $section = "";
+    if ($#var_names != -1) {
+	$section .= "<h2 class=\"clear\"><a name=\"parameters\">Scalar variables</a></h2>\n";
 
-    $section .= "<h2 class=\"clear\"><a name=\"parameters\">Scalar variables</a></h2>\n";
-
-    $section .= "<table>\n";
-    $section .= "<tr><th>Statistic</th><th>Median</th><th title=\"95% Bayesian Credible Interval\">95% BCI</th><th title=\"Auto-Correlation Time\">ACT</th><th title=\"Effective Sample Size\">ESS</th><th>burnin</th></tr>\n";
+	$section .= "<table class=\"backlit2\">\n";
+	$section .= "<tr><th>Statistic</th><th>Median</th><th title=\"95% Bayesian Credible Interval\">95% BCI</th><th title=\"Auto-Correlation Time\">ACT</th><th title=\"Effective Sample Size\">ESS</th><th>burnin</th><th title=\"Potential Scale Reduction Factor based on width of 80% credible interval\">PSRF-CI80%</th><th>PSRF-RCF</th></tr>\n";
+    }
     
     for(my $i=1;$i <= $#var_names; $i++) 
     {
 	my $var = $var_names[$i];
-	
+
 	next if ($var eq "iter");
 	next if (($var eq "time") && ($personality eq "phylobayes"));
 	next if (($var eq "#treegen") && ($personality eq "phylobayes"));
-	
+
 	my $style = "";
 	$style = 'style="font-style:italic"' if (!defined($CI_low{$var}));
 	$section .= "<tr $style>\n";
@@ -879,9 +880,33 @@ sub section_scalar_variables
 	    $style = "";
 	    $style = ' style="color:red"' if ($Burnin{$var} eq "Not Converged!");
 	    $section .= "<td $style>$Burnin{$var}</td>\n";
-	    $section .= "<td><a href=\"$i.trace.png\">Trace</a></td>\n";
+	    if (defined($PSRF_CI80{$var}))
+	    {
+		my $style = "";
+		$style = ' style = "color:orange"' if ($PSRF_CI80{$var} >= 1.05);
+		$style = ' style = "color:red"' if ($PSRF_CI80{$var} >= 1.2);
+		$section .= "<td $style>$PSRF_CI80{$var}</td>";
+	    }
+	    else
+	    {
+		$section .= "<td>NA</td>";
+	    }
+	    if (defined($PSRF_RCF{$var}))
+	    {
+		my $style = "";
+		$style = ' style = "color:orange"' if ($PSRF_RCF{$var} >= 1.05);
+		$style = ' style = "color:red"' if ($PSRF_RCF{$var} >= 1.2);
+		$section .= "<td $style>$PSRF_RCF{$var}</td>";
+	    }
+	    else
+	    {
+		$section .= "<td>NA</td>";
+	    }
+	    $section .= "<td><a href=\"$i.trace.png\">Trace</a></td>\n" if ($do_trace_plots);
 	}
 	else {
+	    $section .= "<td></td>";
+	    $section .= "<td></td>";
 	    $section .= "<td></td>";
 	    $section .= "<td></td>";
 	    $section .= "<td></td>";
@@ -890,6 +915,11 @@ sub section_scalar_variables
 	$section .= "</tr>\n";
     }
     $section .= "</table>\n";
+
+
+    $section .= "  </body>\n";
+    $section .= "</html>\n";
+
     return $section;
 }
 
@@ -902,92 +932,24 @@ sub print_index_html
 
     my $title = "MCMC Post-hoc Analysis";
     $title = $title . ": $n_sequences sequences" if defined($n_sequences);
-
+    
     print $index &html_header($title);
 
     print $index &topbar();
 
-print $index "<h1>$title</h1>\n";
+    print $index "<h1>$title</h1>\n";
 
-print $index &print_data_and_model();
+    print $index &print_data_and_model();
 
-print $index &section_analysis();
+    print $index &section_analysis();
 
-print $index &section_phylogeny_distribution();
+    print $index &section_phylogeny_distribution();
 
-print $index &section_alignment_distribution();
+    print $index &section_alignment_distribution();
 
-print $index &section_mixing();
+    print $index &section_mixing();
 
-if ($#var_names != -1) {
-    print $index "<h2 class=\"clear\"><a name=\"parameters\">Scalar variables</a></h2>\n";
-
-    print $index "<table>\n";
-    print $index "<tr><th>Statistic</th><th>Median</th><th title=\"95% Bayesian Credible Interval\">95% BCI</th><th title=\"Auto-Correlation Time\">ACT</th><th title=\"Effective Sample Size\">ESS</th><th>burnin</th><th title=\"Potential Scale Reduction Factor based on width of 80% credible interval\">PSRF-CI80%</th><th>PSRF-RCF</th></tr>\n";
-}
-    
-for(my $i=1;$i <= $#var_names; $i++) 
-{
-    my $var = $var_names[$i];
-
-    next if ($var eq "iter");
-    next if (($var eq "time") && ($personality eq "phylobayes"));
-    next if (($var eq "#treegen") && ($personality eq "phylobayes"));
-
-    my $style = "";
-    $style = 'style="font-style:italic"' if (!defined($CI_low{$var}));
-    print $index "<tr $style>\n";
-    print $index "<td>$var</td>\n";
-    print $index "<td>$median{$var}</td>\n";
-    if (defined($CI_low{$var})) {
-	print $index "<td>($CI_low{$var}, $CI_high{$var})</td>\n";
-	my $style = "";
-	$style = ' style="color:red"' if ($ESS{$var} <= $min_ESS);
-	print $index "<td $style>$ACT{$var}</td>\n";
-	$style = "";
-	$style = ' style="color:orange"' if ($ESS{$var} < 300);
-	$style = ' style="color:red"' if ($ESS{$var} < 100);
-	print $index "<td $style>$ESS{$var}</td>\n";
-	$style = "";
-	$style = ' style="color:red"' if ($Burnin{$var} eq "Not Converged!");
-	print $index "<td $style>$Burnin{$var}</td>\n";
-	if (defined($PSRF_CI80{$var}))
-	{
-	    my $style = "";
-	    $style = ' style = "color:orange"' if ($PSRF_CI80{$var} >= 1.05);
-	    $style = ' style = "color:red"' if ($PSRF_CI80{$var} >= 1.2);
-	    print $index "<td $style>$PSRF_CI80{$var}</td>";
-	}
-	else
-	{
-	    print $index "<td>NA</td>";
-	}
-	if (defined($PSRF_RCF{$var}))
-	{
-	    my $style = "";
-	    $style = ' style = "color:orange"' if ($PSRF_RCF{$var} >= 1.05);
-	    $style = ' style = "color:red"' if ($PSRF_RCF{$var} >= 1.2);
-	    print $index "<td $style>$PSRF_RCF{$var}</td>";
-	}
-	else
-	{
-	    print $index "<td>NA</td>";
-	}
-	print $index "<td><a href=\"$i.trace.png\">Trace</a></td>\n" if ($do_trace_plots);
-    }
-    else {
-	print $index "<td></td>";
-	print $index "<td></td>";
-	print $index "<td></td>";
-	print $index "<td></td>";
-    }
-    print $index "</tr>\n";
-}
-print $index "</table>\n";
-
-
-print $index "  </body>\n";
-print $index "</html>\n";
+    print $index &section_scalar_variables();
 }
 
 sub Rexec
@@ -2677,13 +2639,16 @@ sub tree_MDS
 	my $N = 400;
 	my $matfile = "Results/tree1.M";
 	my $outfile = "Results/tree1.svg";
-	exec_show("trees-distances matrix --max=$N --jitter=0.3 $subsample_string $skip $tree_file > $matfile");
-	Rexec($script,"$matfile $outfile");
+	if (! more_recent_than($outfile, $tree_file))
+	{
+	    exec_show("trees-distances matrix --max=$N --jitter=0.3 $subsample_string $skip $tree_file > $matfile");
+	    Rexec($script,"$matfile $outfile");
 
-	my $script3d = get_libexec_script("tree-plot1-3D.R");
+	    my $script3d = get_libexec_script("tree-plot1-3D.R");
 
-	my $point_string = Rexec($script3d, "$matfile");
-	&write_x3d_file("Results","tree-3D1-1.points", $point_string);
+	    my $point_string = Rexec($script3d, "$matfile");
+	    &write_x3d_file("Results","tree-3D1-1.points", $point_string);
+	}
     }
 
     elsif ($#tree_files+1 == 2)
@@ -2692,19 +2657,22 @@ sub tree_MDS
 	my $tf1 = $tree_files[0];
 	my $tf2 = $tree_files[1];
 	my $N = 400;
-	my $L1 = min([$N, get_n_lines($tf1)-$burnin]);
-	my $L2 = min([$N, get_n_lines($tf2)-$burnin]);
-	my $matfile = "Results/tree-1-2.M";
 	my $outfile = "Results/tree-1-2.svg";
-#	print "L1 = $L1  L2 = $L2\n";
-	exec_show("trees-distances matrix --max=$N --jitter=0.3 $subsample_string  $skip $tf1 $tf2 > $matfile");
-	Rexec($script,"$L1 $L2 $matfile $outfile");
+	if (! more_recent_than($outfile, $tf1) || ! more_recent_than($outfile, $tf2))
+	{
+	    my $L1 = min([$N, get_n_lines($tf1)-$burnin]);
+	    my $L2 = min([$N, get_n_lines($tf2)-$burnin]);
+	    my $matfile = "Results/tree-1-2.M";
+	    #	print "L1 = $L1  L2 = $L2\n";
+	    exec_show("trees-distances matrix --max=$N --jitter=0.3 $subsample_string  $skip $tf1 $tf2 > $matfile");
+	    Rexec($script,"$L1 $L2 $matfile $outfile");
 
-	my $script3d = get_libexec_script("tree-plot2-3D.R");
-#	print "3d script is at '${script3d}'\n";
-	my $point_string = Rexec($script3d, "$L1 $L2 $matfile");
+	    my $script3d = get_libexec_script("tree-plot2-3D.R");
+	    #	print "3d script is at '${script3d}'\n";
+	    my $point_string = Rexec($script3d, "$L1 $L2 $matfile");
 
-	&write_x3d_file("Results","tree-1-2.points", $point_string);
+	    &write_x3d_file("Results","tree-1-2.points", $point_string);
+	}
     }
 
     elsif ($#tree_files+1 >= 3)
@@ -2720,14 +2688,17 @@ sub tree_MDS
 	my $matfile = "Results/tree-1-2-3.M";
 	my $outfile = "Results/tree-1-2-3.svg";
 #	print "L1 = $L1  L2 = $L2\n";
-	exec_show("trees-distances matrix --max=$N --jitter=0.3 $subsample_string  $skip $tf1 $tf2 $tf3 > $matfile");
-	Rexec($script,"$L1 $L2 $L3 $matfile $outfile");
+	if (! more_recent_than($outfile, $tf1) || ! more_recent_than($outfile, $tf2) || ! more_recent_than($outfile, $tf3))
+	{
+	    exec_show("trees-distances matrix --max=$N --jitter=0.3 $subsample_string  $skip $tf1 $tf2 $tf3 > $matfile");
+	    Rexec($script,"$L1 $L2 $L3 $matfile $outfile");
 
-	my $script3d = get_libexec_script("tree-plot3-3D.R");
-#	print "3d script is at '${script3d}'\n";
-	my $point_string = Rexec($script3d, "$L1 $L2 $L3 $matfile");
+	    my $script3d = get_libexec_script("tree-plot3-3D.R");
+	    #	print "3d script is at '${script3d}'\n";
+	    my $point_string = Rexec($script3d, "$L1 $L2 $L3 $matfile");
 
-	&write_x3d_file("Results","tree-1-2-3.points", $point_string);
+	    &write_x3d_file("Results","tree-1-2-3.points", $point_string);
+	}
     }
 
 }
