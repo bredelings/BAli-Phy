@@ -124,6 +124,12 @@ for(my $i=1;$i<=$#commands;$i++)
     }
 }
 @directories = get_header_attributes("directory",@out_files);
+my $directories_differ=0;
+for(my $i=1;$i<=$#directories;$i++)
+{
+    $directories_differ=1 if ($directories[$i] ne $directories[0]);
+}
+
 @subdirs    = get_header_attributes("subdirectory",@out_files);
 
 my $betas = get_cmdline_attribute("beta");
@@ -505,14 +511,18 @@ sub print_data_and_model
 sub section_analysis
 {
     my $section = "";
-$section .= "<h2><a name=\"analysis\">Analysis</a></h2>\n";
-$section .= "<p><b>command line</b>: $commands[0]</p>\n" if (!$commands_differ);
-$section .= '<table style="width:100%">'."\n";
+    $section .= "<h2><a name=\"analysis\">Analysis</a></h2>\n";
+    $section .= "<p style=\"margin-bottom:0\"><b>command line</b>: $commands[0]</p>\n" if (!$commands_differ);
+    $section .= "<p style=\"margin-top:0\"><b>directory</b>: $directories[0]</p>\n" if (!$directories_differ);
+    $section .= '<table style="width:100%">'."\n";
 
-$section .= '<table class="backlit2 center" style="width:100%">'."\n";
-$section .= "<tr><th>chain #</th><th>burnin</th><th>subsample</th><th>Iterations (remaining)</th>";
-$section .= "<th>command line</th>" if ($commands_differ);
-$section .= "<th>subdirectory</th><th>directory</th></tr></tr>\n";
+    #$section .= '<table class="backlit2 center" style="width:100%">'."\n";
+    $section .= '<table class="backlit2 center">'."\n";
+    $section .= "<tr><th>chain #</th><th>burnin</th><th>subsample</th><th>Iterations (remaining)</th>";
+    $section .= "<th>command line</th>" if ($commands_differ);
+    $section .= "<th>subdirectory</th>";
+    $section .= "<th>directory</th>" if ($directories_differ);
+    $section .= "</tr>\n";
     for(my $i=0;$i<=$#out_files;$i++)
     {
 $section .= "<tr>\n";
@@ -527,7 +537,7 @@ $section .= "  <td>$remaining</td>\n";
 
 $section .= "  <td>$commands[$i]</td>\n" if ($commands_differ);
 $section .= "  <td>$subdirs[$i]</td>\n";
-$section .= "  <td>$directories[$i]</td>\n";
+$section .= "  <td>$directories[$i]</td>\n" if ($directories_differ);
 
 $section .= "</tr>\n";
     }
