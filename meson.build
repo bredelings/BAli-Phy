@@ -32,7 +32,11 @@ configure_file(output : 'config.h', configuration : conf_data)
 root_inc = include_directories('.')
 add_project_arguments('-DHAVE_CONFIG_H', language : 'cpp')
 
-add_project_arguments(['-Wall','-Wno-maybe-uninitialized','-Wextra','-Wno-sign-compare','-Woverloaded-virtual','-Wstrict-aliasing','-Wno-unknown-pragmas'], language : 'cpp')
+add_project_arguments(['-Wall','-Wextra','-Wno-sign-compare','-Woverloaded-virtual','-Wstrict-aliasing','-Wno-unknown-pragmas'], language : 'cpp')
+
+if cpp.has_argument('-Wno-maybe-uninitialized')
+  add_project_arguments(['-Wno-maybe-uninitialized'], language: 'cpp')
+endif
 
 if get_option('buildtype') == 'release' or get_option('buildtype') == 'plain'
   add_project_arguments(['-DNDEBUG','-DNDEBUG_DP','-O3','-funroll-loops','-ffast-math'], language : 'cpp')
