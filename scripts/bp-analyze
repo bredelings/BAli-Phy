@@ -368,6 +368,7 @@ sub html_header
     $section .= "<title>BAli-Phy: $title</title>\n";
     $section .= 
 '    <style type="text/css">
+      body {margin:0; padding:0}
       ol li {padding-bottom:0.5em}
 
       th {padding-left: 0.5em; padding-right:0.5em}
@@ -379,7 +380,7 @@ sub html_header
 	background-color: rgb(201,217,233);
 	margin: 0;
 	width: 99%;
-	padding: 0.2em 0.2em 0.5em 0.2em; /* .5 is on the bottom */
+	padding: 0.5em;
 	display: table;
         width: 100%;
 }
@@ -395,6 +396,8 @@ sub html_header
 	text-align: left; 
 	white-space: nowrap;
 }
+
+      .content {margin:1em}
       .backlit td {background: rgb(220,220,220);}
 
       h1 {font-size: 150%;}
@@ -402,6 +405,8 @@ sub html_header
       h3 {font-size: 110%; margin-top: 0.3em ; margin-bottom: 0.2em}
 
       ul {margin-top: 0.4em;}
+
+      .center td {text-align: center};
 
       *[title] {cursor:help;}
       a[title] {vertical-align:top;color:#00f;font-size:70%; border-bottom:1px dotted;}
@@ -412,6 +417,7 @@ sub html_header
       .clear {clear:both;}    
     </style>
 </head>
+<body>
 ';
     return $section;
 }
@@ -436,7 +442,7 @@ sub print_data_and_model
 {
     my $section = "";
     $section .= "<h2 style=\"clear:both\"><a name=\"data\">Data &amp; Model</a></h2>\n";
-    $section .= "<table class=\"backlit\">\n";
+    $section .= "<table class=\"backlit2\">\n";
     $section .= "<tr><th>Partition</th><th>Sequences</th><th>Lengths</th><th>Alphabet</th><th>Substitution&nbsp;Model</th><th>Indel&nbsp;Model</th><th>Scale&nbsp;Model</tr>\n";
     for(my $p=0;$p<=$#input_file_names;$p++) 
     {
@@ -488,7 +494,7 @@ sub print_data_and_model
 
 
     $section .= "<h2 style=\"clear:both\"><a name=\"data\">Tree Model</a></h2>\n";
-#    $section .= "<table class=\"backlit\">\n";
+#    $section .= "<table class=\"backlit2\">\n";
     $section .= "<table>\n";
     $section .= "<tr><td>topology</td><td>$topology_prior</td></tr>" if (defined($topology_prior));
     $section .= "<tr><td>branch lengths</td><td>$branch_prior</td></tr>" if (defined($topology_prior));
@@ -504,7 +510,7 @@ $section .= "<h2><a name=\"analysis\">Analysis</a></h2>\n";
 $section .= "<p><b>command line</b>: $commands[0]</p>\n" if (!$commands_differ);
 $section .= '<table style="width:100%">'."\n";
 
-$section .= '<table class="backlit" style="width:100%">'."\n";
+$section .= '<table class="backlit2 center" style="width:100%">'."\n";
 $section .= "<tr><th>chain #</th><th>burnin</th><th>subsample</th><th>Iterations (remaining)</th>";
 $section .= "<th>command line</th>" if ($commands_differ);
 $section .= "<th>subdirectory</th><th>directory</th></tr></tr>\n";
@@ -671,7 +677,7 @@ sub section_alignment_distribution
 	$section .= "</tr>\n";
 	for my $alignment (@alignments)
 	{
-	    next if ($alignment !~ /^P$p-/);
+	    next if ($alignment !~ /^C1.P$p./ && $alignment !~ /^P$p./);
 	    my $name = $alignment_names{$alignment};
 	    my $features = get_alignment_info("Results/$alignment.fasta");
 	    
@@ -917,6 +923,7 @@ sub section_scalar_variables
     $section .= "</table>\n";
 
 
+    $section .= "  </div>\n";
     $section .= "  </body>\n";
     $section .= "</html>\n";
 
@@ -937,6 +944,7 @@ sub print_index_html
 
     print $index &topbar();
 
+    print $index "<div class=\"content\">\n";
     print $index "<h1>$title</h1>\n";
 
     print $index &print_data_and_model();
@@ -1435,14 +1443,17 @@ sub draw_alignments
 	}
     }
     
+    # Generate  alignments-diff
     for my $alignment (@alignments) 
     {
 	my $p;
-	if ($alignment =~ /^P([^-]+)-/) {
+	if ($alignment =~ /^C1\.P([^-]+)\./)
+	{
 	    $p=$1;
 	    next if ($imodel_indices[$p-1] eq "--");
 	}
 	else {
+	    print "skipping $alignment\n";
 	    next;
 	}
 	
