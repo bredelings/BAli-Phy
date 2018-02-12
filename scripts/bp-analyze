@@ -2669,24 +2669,24 @@ sub tree_MDS
     return if (!$have_R);
 
     print "\nGenerate MDS plots of topology burnin ... ";
-    my $i=1;
-    foreach my $tree_file (@tree_files)
+
+    if ($#tree_files+1 == 1)
     {
 	my $script = get_libexec_script("tree-plot1.R");
-	my $matfile = "Results/tree${i}.M";
-	my $outfile = "Results/tree${i}.svg";
-	exec_show("trees-distances matrix --jitter=0.3 $subsample_string $skip $tree_file > $matfile");
+	my $tree_file = $tree_files[0];
+	my $N = 400;
+	my $matfile = "Results/tree1.M";
+	my $outfile = "Results/tree1.svg";
+	exec_show("trees-distances matrix --max=$N --jitter=0.3 $subsample_string $skip $tree_file > $matfile");
 	Rexec($script,"$matfile $outfile");
 
 	my $script3d = get_libexec_script("tree-plot1-3D.R");
 
 	my $point_string = Rexec($script3d, "$matfile");
-	&write_x3d_file("Results","tree-3D1-${i}.points", $point_string);
-
-	$i++;
+	&write_x3d_file("Results","tree-3D1-1.points", $point_string);
     }
 
-    if ($#tree_files+1 == 2)
+    elsif ($#tree_files+1 == 2)
     {
 	my $script = get_libexec_script("tree-plot2.R");
 	my $tf1 = $tree_files[0];
