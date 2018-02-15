@@ -3,7 +3,7 @@ The Triplets alphabet:
 Triplets[nucleotides]
 
 The Triplets alphabet is used for triplets of DNA or RNA data.
-It is like the Codons alphabet, with the different that:
+It is like the Codons alphabet, with the difference that:
  * stop codons not excluded from a Triplets alphabet.
  * the genetic code is not known by a Triplets alphabet.
 Therefore, the Triplets alphabet cannot be used in models that
