@@ -5,11 +5,16 @@
     "args": [
         {
             "arg_name": "lmu",
-            "arg_type": "Double"
+            "arg_type": "Double",
+	    "description": "The mean parameter (log scale)"
         },
         {
             "arg_name": "lsigma",
-            "arg_type": "Double"
+            "arg_type": "Double",
+	    "description": "The standard deviation parameter (log scale)"
         }
-    ]
+    ],
+    "title": "The log-normal distribution",
+    "examples": ["~logNormal[0,1]","~iid[10,logNormal[0,1]]"],
+    "description": "A variable X is log-normal if log[X] is normal."
 }
