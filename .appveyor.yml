@@ -24,4 +24,5 @@ build_script:
   - bash -lc "cd C:/ && tar -zcf bali-phy.tgz bali-phy/"
 
 test_script:
-  - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && make check"
+  - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && make install"
+#  - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && make check"
