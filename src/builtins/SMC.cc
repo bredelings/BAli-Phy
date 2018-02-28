@@ -23,7 +23,7 @@ vector<double> get_bin_boundaries(int n, double eta)
     return b;
 }
 
-vector<double> get_bin_times(int n, double eta)
+vector<double> get_bin_centers(int n, double eta)
 {
     vector<double> t(n);
     for(int i=0;i<n;i++)
@@ -38,12 +38,6 @@ vector<double> get_equilibrium(const vector<double>& B, double eta)
 	pi[i] = cdf(eta,B[i+1])-cdf(eta,B[i]);
     pi.back() = 1.0 - cdf(eta, B.back());
     return pi;
-}
-
-Matrix get_transition_probabilities(int n, double rho, double theta)
-{
-    Matrix P(n,n);
-    return P;
 }
 
 // initially assume JC model?
@@ -71,6 +65,19 @@ vector<Matrix> get_emission_probabilities(const vector<double>& t)
     return E;
 }
 
+Matrix get_transition_probabilities(const vector<double>& B, const vector<double>& T, double rho)
+{
+    assert(B.size() == T.size());
+    const int n = B.size();
+    Matrix P(n,n);
+    for(int i=0;i<n; i++)
+	for(int j=0;j<n; j++)
+	{
+	    P(i,j) = rho/n;
+	}
+    return P;
+}
+
 log_double_t smc(const double rho, double theta, const matrix<int>& data)
 {
     assert(rho >= 0);
@@ -83,18 +90,21 @@ log_double_t smc(const double rho, double theta, const matrix<int>& data)
     // Lower end of each bin. boundaries[0] = 0. The upper end of the last bin is \infty
     auto bin_boundaries = get_bin_boundaries(n_bins, 2.0/theta);
 
-    auto bin_times = get_bin_times(n_bins, 2.0/theta);
-
-    auto pi = get_equilibrium(bin_boundaries, 2.0/theta);
-
-    auto transition = get_transition_probabilities(n_bins, rho, theta);
+    auto bin_times = get_bin_centers(n_bins, 2.0/theta);
 
     auto emission_probabilities = get_emission_probabilities(bin_times);
 
-    vector<log_double_t> L(n_bins, 1.0);
+    // # Compute the likelihoods for the first column
+    auto pi = get_equilibrium(bin_boundaries, 2.0/theta);
+    vector<log_double_t> L(n_bins);
     vector<log_double_t> L2(n_bins);
+    for(int i=0;i< n_bins; i++)
+	L[i] = pi[i] * emission_probabilities[i](data(0,0), data(1,0));
 
-    for(int l=0; l < data.size2(); l++)
+    // # Iteratively compute likelihoods for remaining columns
+    auto transition = get_transition_probabilities(bin_boundaries, bin_times, rho);
+
+    for(int l=1; l < data.size2(); l++)
     {
 	for(int j=0; j < n_bins; j++)
 	{
@@ -106,6 +116,7 @@ log_double_t smc(const double rho, double theta, const matrix<int>& data)
 	std::swap(L, L2);
     }
 
+    // # Compute the total likelihood
     log_double_t Pr = 1;
     for(int i=0; i < n_bins; i++)
 	Pr += L[i];
