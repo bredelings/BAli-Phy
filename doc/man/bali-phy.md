@@ -96,7 +96,7 @@ bali-phy dna.fasta amino.fasta codons.fasta -S 1:GTR -S 2:LG -S 3:M0
 
 # REPORTING BUGS
 
-BAli-Phy online help: <http://www.bali-phy.org/docs/>.
+BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
 
 Please send bug reports to <bali-phy-users@googlegroups.com>.
 
