@@ -3,7 +3,7 @@ The --seed command:
 -s     <number>                             Specify a random seed.
 --seed <number>
 
-Use <number> as a random seem.  BAli-phy uses this random seed
+Use <number> as a random seed.  BAli-phy uses this random seed
 to initialize the pseudo-random number generator.
 
 If a seed is not provided, bali-phy will randomly generate a
