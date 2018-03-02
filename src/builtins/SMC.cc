@@ -4,6 +4,7 @@
 #include "math/log-double.H"
 
 #include <Eigen/Dense>
+#include <unsupported/Eigen/MatrixFunctions>
 
 using std::vector;
 typedef Eigen::MatrixXd EMatrix;
@@ -20,9 +21,10 @@ double quantile(double eta, double p)
 
 vector<double> get_bin_boundaries(int n, double eta)
 {
-    vector<double> b(n);
+    vector<double> b(n+1);
     for(int i=0;i<n;i++)
 	b[i] = quantile(eta, double(i)/n);
+    b[n] = 10000;
     return b;
 }
 
@@ -36,10 +38,15 @@ vector<double> get_bin_centers(int n, double eta)
 
 vector<double> get_equilibrium(const vector<double>& B, double eta)
 {
-    vector<double> pi(B.size());
-    for(int i=0;i<B.size()-1;i++)
+    int n_bins = B.size() - 1;
+    vector<double> pi(n_bins);
+    for(int i=0;i<n_bins-1;i++)
 	pi[i] = cdf(eta,B[i+1])-cdf(eta,B[i]);
-    pi.back() = 1.0 - cdf(eta, B.back());
+    pi[n_bins-1] = 1.0 - cdf(eta, B.back());
+
+    // The equilibrium distribution should sum to 1.
+    assert(std::(sum(pi) - 1.0) < 1.0e-9);
+
     return pi;
 }
 
@@ -111,7 +118,7 @@ EMatrix smc_coalescence()
     return C;
 }
 
-EMatrix smc_rates(double rho, double theta)
+EMatrix smc_rates(double theta, double rho)
 {
     double recombination_rate = rho/theta;
     double coalescence_rate = 2/theta;
@@ -163,7 +170,7 @@ EMatrix smc_prime_coalescence()
     return C;
 }
 
-EMatrix smc_prime_rates(double rho, double theta)
+EMatrix smc_prime_rates(double theta, double rho)
 {
     double recombination_rate = rho/theta;
     double coalescence_rate = 2/theta;
@@ -230,25 +237,58 @@ EMatrix finite_markov_coalescence()
     return C;
 }
 
-EMatrix finite_markov_rates(double rho, double theta)
+EMatrix finite_markov_rates(double theta, double rho)
 {
     double recombination_rate = rho/theta;
     double coalescence_rate = 2/theta;
     return recombination_rate * finite_markov_recombination() + coalescence_rate * finite_markov_coalescence();
 }
 
-Matrix get_transition_probabilities(const vector<double>& B, const vector<double>& T, double rho)
+Matrix get_transition_probabilities(const vector<double>& B, const vector<double>& T, double theta, double rho)
 {
-    Matrix Omega(4,4);
+    const int n = T.size();
+    assert(B.size() == n+1);
 
-    assert(B.size() == T.size());
-    const int n = B.size();
+    auto Omega = finite_markov_rates(theta,rho);
+
+    // exp(Omega*t) for bin boundaries
+    vector<EMatrix> expB(n);
+    for(int i=0;i<n;i++)
+	expB[n] = (Omega*B[i]).exp();
+
+    // exp(Omega*t) for bin centers
+    vector<EMatrix> expT;
+    for(auto t: T)
+	expT.push_back((Omega*t).exp());
+
+    // Coalescence rate
+    double eta = 2.0/theta;
+
     Matrix P(n,n);
-    for(int i=0;i<n; i++)
-	for(int j=0;j<n; j++)
+    for(int j=0;j<n; j++)
+	for(int k=0;k<n; k++)
 	{
-	    P(i,j) = rho/n;
+	    if (k < j)
+	    {
+		P(j,k) = expB[k+1](0,3) - expB[k](0,3);
+	    }
+	    else if (k > j)
+	    {
+		assert(B[k] - T[j] > 0);
+		P(j,k) = (expT[j](0,1) + expT[j](0,2)) * exp(-eta * (B[k] - T[j])) * (1.0 - exp(-eta*(B[k+1] - B[k])));
+	    }
+	    else if (k == j)
+	    {
+		// t = t_j
+		double p = expT[j](0,0);
+		// t \in [b_j, t_j)
+		p += (expT[j](0,3) - expB[j](0,3));
+		// t \in (t_j, b_j+1]
+		p += (expT[j](0,1) + expT[j](0,2)) * (1.0 - exp(-eta*(B[j+1] - T[j])));
+		P(j,k) = p;
+	    }
 	}
+
     return P;
 }
 
@@ -276,7 +316,7 @@ log_double_t smc(double rho, double theta, const matrix<int>& data)
 	L[i] = pi[i] * emission_probabilities[i](data(0,0), data(1,0));
 
     // # Iteratively compute likelihoods for remaining columns
-    auto transition = get_transition_probabilities(bin_boundaries, bin_times, rho);
+    auto transition = get_transition_probabilities(bin_boundaries, bin_times, theta, rho);
 
     for(int l=1; l < data.size2(); l++)
     {
