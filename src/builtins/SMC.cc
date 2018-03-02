@@ -2,8 +2,11 @@
 #include <vector>
 #include "matrix.H"
 #include "math/log-double.H"
-using std::vector;
 
+#include <Eigen/Dense>
+
+using std::vector;
+typedef Eigen::MatrixXd EMatrix;
 
 double cdf(double eta, double t)
 {
@@ -65,8 +68,179 @@ vector<Matrix> get_emission_probabilities(const vector<double>& t)
     return E;
 }
 
+// SMC model.
+//
+// State 0 = {{A,B},{A,B}}   = two chromosomes (initial state)
+// State 1 = {{A,B},{A},{B}} = after recombining
+// State 2 = {{A,B},{A}}     = locus B coalesces before locus A
+//
+// The matrix is [-rho  rho   0 ]    rho   [ -2  2  0]          [0   0  0]
+//               [ 0   -eta  eta]  = --- * [  0  0  0]  + eta * [0  -1  1]
+//               [ 0      0    0]     2    [  0  0  0]          [0   0  0]
+//
+//  On the substitution timescale we replace:
+//    * rho/2 -> (rho/2) / (theta/2) == rho/theta
+//    * eta   -> 1       / (theta/2) ==   2/theta
+
+EMatrix smc_recombination()
+{
+    // [ -2 2 0 ]
+    // [  0 0 0 ]
+    // [  0 0 0 ]
+    EMatrix R(3,3);
+    for(int i=0;i<3;i++)
+	for(int j=0;j<3;j++)
+	    R(i,j) = 0;
+    R(0,0) = -2;
+    R(0,1) = 2;
+    return R;
+}
+
+EMatrix smc_coalescence()
+{
+    // [ 0  0 0 ]
+    // [ 1 -2 1 ]
+    // [ 0  0 0 ]
+    EMatrix C(3,3);
+    for(int i=0;i<3;i++)
+	for(int j=0;j<3;j++)
+	    C(i,j) = 0;
+    C(1,0) = 1;
+    C(1,1) = -2;
+    C(1,2) = 1;
+    return C;
+}
+
+EMatrix smc_rates(double rho, double theta)
+{
+    double recombination_rate = rho/theta;
+    double coalescence_rate = 2/theta;
+    return recombination_rate * smc_recombination() + coalescence_rate * smc_coalescence();
+}
+
+// end SMC model
+
+EMatrix smc_prime_recombination()
+{
+    // [ -2 2 0 ]
+    // [  0 0 0 ]
+    // [  0 0 0 ]
+    EMatrix R(3,3);
+    for(int i=0;i<3;i++)
+	for(int j=0;j<3;j++)
+	    R(i,j) = 0;
+    R(0,0) = -2;
+    R(0,1) = 2;
+    return R;
+}
+
+// SMC' Model
+//
+// State 0 = {{A,B},{A,B}}   = two chromosomes (initial state)
+// State 1 = {{A,B},{A},{B}} = after recombining
+// State 2 = {{A,B},{A}}     = locus B coalesces before locus A
+//
+// The matrix is [-rho    rho   0 ]    rho   [ -2  2  0]          [0   0  0]
+//               [ eta -2*eta  eta]  = --- * [  0  0  0]  + eta * [1  -2  1]
+//               [ 0        0    0]     2    [  0  0  0]          [0   0  0]
+//
+//  On the substitution timescale we replace:
+//    * rho/2 -> (rho/2) / (theta/2) == rho/theta
+//    * eta   -> 1       / (theta/2) ==   2/theta
+
+EMatrix smc_prime_coalescence()
+{
+    // [ 0  0 0 ]
+    // [ 1 -2 1 ]
+    // [ 0  0 0 ]
+    EMatrix C(3,3);
+    for(int i=0;i<3;i++)
+	for(int j=0;j<3;j++)
+	    C(i,j) = 0;
+    C(1,0) = 1;
+    C(1,1) = -2;
+    C(1,2) = 1;
+    return C;
+}
+
+EMatrix smc_prime_rates(double rho, double theta)
+{
+    double recombination_rate = rho/theta;
+    double coalescence_rate = 2/theta;
+    return recombination_rate * smc_prime_recombination() + coalescence_rate * smc_prime_coalescence();
+}
+
+// End SMC' model
+
+
+// Finite Markov approximation: adds state 3 to smc_prime.
+//
+// State 0 = {{A,B},{A,B}}      = two chromosomes (initial state)
+// State 1 = {{A,B},{A},{B}}    = after recombining
+// State 2 = {{A},{B},{A},{B}}  = four chromosomes, after at least two recombinations
+// State 3 = {{A,B},{A}}        = locus B coalesces before locus A  [ = State 2 in SMC and SMC' ]
+//
+// The matrix is [-rho    rho   0        0]    rho   [ -2  2  0  0]          [0  0  0  0]
+//               [ eta -2*eta   rho/2  eta]  = --- * [  0 -1  1  0]  + eta * [1 -2  0  1]
+//               [ 0    4*eta -5*eta   eta]     2    [  0  0  0  0]          [0  4 -5  1]
+//               [ 0        0    0       0]          [  0  0  0  0]          [0  0  0  0]
+//
+//  On the substitution timescale we replace:
+//    * rho/2 -> (rho/2) / (theta/2) == rho/theta
+//    * eta   -> 1       / (theta/2) ==   2/theta
+
+EMatrix finite_markov_recombination()
+{
+    // [ -2  2  0  0 ]
+    // [  0 -1  1  0 ]
+    // [  0  0  0  0 ]
+    // [  0  0  0  0 ]
+    EMatrix R(3,3);
+    for(int i=0;i<3;i++)
+	for(int j=0;j<3;j++)
+	    R(i,j) = 0;
+
+    R(0,0) = -2;
+    R(0,1) = 2;
+
+    R(1,1) = -1;
+    R(1,2) = 1;
+
+    return R;
+}
+
+EMatrix finite_markov_coalescence()
+{
+    // [ 0  0  0  0 ]
+    // [ 1 -2  0  1 ]
+    // [ 0  4 -5  1 ]
+    // [ 0  0  0  0 ]
+    EMatrix C(4,4);
+    for(int i=0;i<4;i++)
+	for(int j=0;j<4;j++)
+	    C(i,j) = 0;
+    C(1,0) = 1;
+    C(1,1) = -2;
+    C(1,3) = 1;
+
+    C(2,1) = 4;
+    C(2,2) = -5;
+    C(2,3) = 1;
+
+    return C;
+}
+
+EMatrix finite_markov_rates(double rho, double theta)
+{
+    double recombination_rate = rho/theta;
+    double coalescence_rate = 2/theta;
+    return recombination_rate * finite_markov_recombination() + coalescence_rate * finite_markov_coalescence();
+}
+
 Matrix get_transition_probabilities(const vector<double>& B, const vector<double>& T, double rho)
 {
+    Matrix Omega(4,4);
+
     assert(B.size() == T.size());
     const int n = B.size();
     Matrix P(n,n);
@@ -78,7 +252,7 @@ Matrix get_transition_probabilities(const vector<double>& B, const vector<double
     return P;
 }
 
-log_double_t smc(const double rho, double theta, const matrix<int>& data)
+log_double_t smc(double rho, double theta, const matrix<int>& data)
 {
     assert(rho >= 0);
     assert(theta > 0);
