@@ -148,6 +148,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
+    cout<<"Compute marginal likelihoods using stabilized harmonic mean estimator\n";
     cout<<"Usage: model_P < in-file\n";
     cout<<all<<"\n";
     exit(0);
