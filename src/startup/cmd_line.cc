@@ -185,6 +185,16 @@ po::options_description developer_options()
     return developer;
 }
 
+string short_description()
+{
+    return "Bayesian Inference of Alignment and Phylogeny";
+}
+
+string usage()
+{
+    return "Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]";
+}
+
 variables_map parse_cmd_line(int argc,char* argv[]) 
 { 
     using namespace po;
@@ -237,25 +247,29 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	auto package_paths = get_package_paths(argv[0], args);
 	if (topic == "simple")
 	{
-	    cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
+	    cout<<short_description()<<"\n";
+	    cout<<usage()<<"\n";
 	    cout<<simple<<"\n";
 	    cout<<"Try --help=help for a list of topics to ask for help on.\n\n";
 	}
 	else if (topic == "advanced")
 	{
-	    cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
+	    cout<<short_description()<<"\n";
+	    cout<<usage()<<"\n";
 	    cout<<advanced<<"\n";
 	    cout<<"Try --help=help for a list of topics to ask for help on.\n\n";
 	}
 	else if (topic == "expert")
 	{
-	    cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
+	    cout<<short_description()<<"\n";
+	    cout<<usage()<<"\n";
 	    cout<<expert<<"\n";
 	    cout<<"Try --help=help for a list of topics to ask for help on.\n\n";
 	}
 	else if (topic == "developer")
 	{
-	    cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
+	    cout<<short_description()<<"\n";
+	    cout<<usage()<<"\n";
 	    cout<<all<<"\n";
 	    cout<<"Try --help=help for a list of topics to ask for help on.\n\n";
 	}
