@@ -2,3 +2,4 @@ option('with-system-eigen', type : 'boolean', value : false, description: 'Use t
 option('with-system-boost', type : 'boolean', value : false, description: 'Use the Boost libraries installed on the system, instead of building our own')
 option('with-mpi', type : 'boolean', value : false, description: 'Compile with MPI')
 option('static-cpp-libs', type: 'boolean', value: false, description: 'Link in libgcc and libstdc++ statically')
+option('extra-tools', type: 'boolean', value: true, description: 'Build extra tools')

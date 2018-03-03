@@ -94,32 +94,17 @@ executable('model_P', modelp_sources, dependencies: boost, link_with: libbaliphy
 statreport_sources = ['tools/statreport.cc']
 executable('statreport', statreport_sources, dependencies: boost, link_with:libbaliphy, install:true)
 
-stats_merge_sources = ['tools/stats-merge.cc']
-executable('stats-merge', stats_merge_sources, dependencies: boost, link_with:libbaliphy, install:true)
-
 stats_select_sources = ['tools/stats-select.cc']
 executable('stats-select', stats_select_sources, dependencies: boost, link_with:libbaliphy, install:true)
 
-stats_cat_sources = ['tools/stats-cat.cc']
-executable('stats-cat', stats_cat_sources, dependencies:boost, link_with: libbaliphy, install: true)
-
 alignment_gild_sources = ['tools/alignment-gild.cc']
 executable('alignment-gild', alignment_gild_sources, dependencies: boost, link_with: libbaliphy, install: true)
-
-alignment_median_sources = ['tools/alignment-median.cc']
-executable('alignment-median', alignment_median_sources, dependencies:boost, link_with: libbaliphy, install: true)
 
 alignment_consensus_sources = ['tools/alignment-consensus.cc']
 executable('alignment-consensus', alignment_consensus_sources, dependencies:boost, link_with: libbaliphy, install: true)
 
 alignment_max_sources = ['tools/alignment-max.cc']
 executable('alignment-max', alignment_max_sources, dependencies:boost, link_with: libbaliphy, install: true)
-
-alignment_compare_sources = ['tools/alignment-compare.cc']
-executable('alignment-compare', alignment_compare_sources, dependencies:boost, link_with:libbaliphy, install: true)
-
-alignment_identity_sources = ['tools/alignment-identity.cc']
-executable('alignment-identity', alignment_identity_sources, dependencies:boost, link_with: libbaliphy, install: true)
 
 alignment_thin_sources = ['tools/alignment-thin.cc']
 executable('alignment-thin', alignment_thin_sources, dependencies:boost, link_with: libbaliphy, install: true)
@@ -136,17 +121,8 @@ executable('alignments-diff', alignments_diff_sources, dependencies:boost, link_
 alignment_draw_sources = ['tools/alignment-draw.cc', 'tools/colors.cc']
 executable('alignment-draw', alignment_draw_sources, dependencies:boost, link_with: libbaliphy, install: true)
 
-joint_indels_sources = ['tools/joint-indels.cc']
-executable('joint-indels', joint_indels_sources, dependencies:boost, link_with: libbaliphy, install: true)
-
-joint_parsimony_sources = ['tools/joint-parsimony.cc']
-executable('joint-parsimony', joint_parsimony_sources, dependencies:boost, link_with: libbaliphy, install: true)
-
 alignment_info_sources = ['tools/alignment-info.cc']
 executable('alignment-info', alignment_info_sources, dependencies:boost, link_with: libbaliphy, install: true)
-
-alignment_smc_sources = ['tools/alignment-smc.cc']
-executable('alignment-smc', alignment_smc_sources, dependencies:boost, link_with: libbaliphy, install: true)
 
 alignment_cat_sources = ['tools/alignment-cat.cc']
 executable('alignment-cat', alignment_cat_sources, dependencies:boost, link_with: libbaliphy, install: true)
@@ -157,23 +133,11 @@ executable('alignment-translate', alignment_translate_sources, dependencies:boos
 alignment_find_sources = ['tools/alignment-find.cc']
 executable('alignment-find', alignment_find_sources, dependencies:boost, link_with: libbaliphy, install: true)
 
-alignment_convert_sources = ['tools/alignment-convert.cc']
-executable('alignment-convert', alignment_convert_sources, dependencies:boost, link_with: libbaliphy, install: true)
-
-alignment_find_conserved_sources = ['tools/alignment-find-conserved.cc']
-executable('alignment-find-conserved', alignment_find_conserved_sources, dependencies:boost, link_with: libbaliphy, install: true)
-
 trees_consensus_sources = ['tools/trees-consensus.cc']
 executable('trees-consensus', trees_consensus_sources, dependencies:boost, link_with: libbaliphy, install: true)
 
 trees_bootstrap_sources = ['tools/trees-bootstrap.cc', 'tools/bootstrap.cc']
 executable('trees-bootstrap', trees_bootstrap_sources, dependencies:boost, link_with: libbaliphy, install: true)
-
-partitions_supported_sources = ['tools/partitions-supported.cc']
-executable('partitions-supported', partitions_supported_sources, dependencies:boost, link_with: libbaliphy, install: true)
-
-draw_graph_sources = ['tools/draw-graph.cc']
-executable('draw-graph', draw_graph_sources, dependencies:boost, link_with: libbaliphy, install: true)
 
 tree_mean_lengths_sources = ['tools/tree-mean-lengths.cc']
 executable('tree-mean-lengths', tree_mean_lengths_sources, dependencies:boost, link_with: libbaliphy, install: true)
@@ -181,17 +145,8 @@ executable('tree-mean-lengths', tree_mean_lengths_sources, dependencies:boost, l
 mctree_mean_lengths_sources = ['tools/mctree-mean-lengths.cc']
 executable('mctree-mean-lengths', mctree_mean_lengths_sources, dependencies:boost, link_with: libbaliphy, install: true)
 
-trees_pair_distances_sources = ['tools/trees-pair-distances.cc']
-executable('trees-pair-distances', trees_pair_distances_sources, dependencies:boost, link_with: libbaliphy, install: true)
-
-tree_partitions_sources = ['tools/tree-partitions.cc']
-executable('tree-partitions', tree_partitions_sources, dependencies:boost, link_with: libbaliphy, install: true)
-
 trees_to_SRQ_sources = ['tools/trees-to-SRQ.cc']
 executable('trees-to-SRQ', trees_to_SRQ_sources, dependencies:boost, link_with: libbaliphy, install: true)
-
-tree_reroot_sources = ['tools/tree-reroot.cc']
-executable('tree-reroot', tree_reroot_sources, dependencies:boost, link_with: libbaliphy, install: true)
 
 pickout_sources = ['tools/pickout.cc', 'util.cc', 'io.cc']
 executable('pickout', pickout_sources, dependencies:boost, link_with: libbaliphy, install: true)
@@ -208,6 +163,12 @@ executable('trees-distances', trees_distances_sources, dependencies:boost, link_
 draw_tree_sources = ['tools/draw-tree.cc']
 executable('draw-tree', draw_tree_sources, dependencies: [boost, cairo], include_directories: root_inc, link_with: libbaliphy, install:true)
 
-path_graph_sources = ['tools/path-graph.cc']
-executable('path-graph', path_graph_sources, dependencies:boost, link_with: libbaliphy, install: true)
+if get_option('extra-tools')
+  extra_tools = ['stats-merge', 'stats-cat', 'alignment-median', 'alignment-identity', 'alignment-compare', 'joint-indels', 'joint-parsimony', 'alignment-smc',
+		 'alignment-convert', 'alignment-find-conserved','partitions-supported','draw-graph','trees-pair-distances','tree-partitions','tree-reroot',
+		 'path-graph']
+  foreach tool : extra_tools
+    executable( tool, ['tools/' + tool + '.cc'], dependencies: boost, link_with:libbaliphy, install:true)
+  endforeach
+endif
 
