@@ -105,7 +105,7 @@ executable('trees-bootstrap', ['tools/trees-bootstrap.cc', 'tools/bootstrap.cc']
 
 executable('draw-tree', ['tools/draw-tree.cc'], dependencies: [boost, cairo], include_directories: root_inc, link_with: libbaliphy, install:true)
 
-main_tools = [simple_tools,'alignment-draw','trees-bootstrap','draw-tree']
+all_progs = ['bali-phy'] + simple_tools + ['alignment-draw','trees-bootstrap','draw-tree']
 
 #--------- Build rules for tools that are SOMETIMES installed ------------#
 
@@ -116,5 +116,6 @@ if get_option('extra-tools')
   foreach tool : extra_tools
     executable( tool, ['tools/' + tool + '.cc'], dependencies: boost, link_with:libbaliphy, install:true)
   endforeach
+  all_progs = all_progs + extra_tools
 endif
 
