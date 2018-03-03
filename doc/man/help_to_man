@@ -1,0 +1,115 @@
+#!/usr/bin/python3
+
+import sys
+import re
+
+def get_name(lines):
+    for line in lines:
+        if line.startswith('Usage: '):
+            return line[7:].strip().split()[0]
+    pass
+
+def get_usage(lines):
+    for line in lines:
+        if line.startswith('Usage: '):
+            return line[7:].strip()
+    pass
+
+def get_description(lines):
+    return lines[0].strip()
+    pass
+
+def get_options(lines):
+    name = None
+    options = {}
+    option_line = re.compile(r'^([^:]*[Oo]ptions):')
+    flag_line = re.compile(r'^\s*--([^\s]+)(?: (arg)( \(=[^\s]+\))?)?\s+([^\s].*)$')
+#    flag_line = re.compile(r'^\s*--([^\s]+)(?: (arg))?\s+([^\s].*)$')
+    short_flag_line = re.compile(r'^\s*-(\w) \[ --([^\s]+) \](?: (arg)( \(=[^\s]+\))?)?\s+([^\s].*)$')
+    current_option = False
+    for line in lines:
+        if line.strip() == '':
+            current_option = False
+            continue;
+
+        m = option_line.match(line)
+        if m:
+            name = m.group(1)
+            options[name] = []
+            current_option = False
+            continue
+
+        m = flag_line.match(line)
+        if m:
+            options[name].append([m.group(1),m.group(2),m.group(3),m.group(4)])
+            current_option = True
+            continue
+
+        m = short_flag_line.match(line)
+        if m:
+            options[name].append([m.group(2),m.group(1),m.group(3),m.group(4),m.group(5)])
+            current_option = True
+            continue;
+
+        if current_option:
+            options[name][-1][-1] = options[name][-1][-1] + ' ' + line.strip()
+    return options
+
+            
+
+def get_examples(lines):
+    examples = None
+    for line in lines:
+        if examples is not None:
+            examples  = examples + '\n\n' +line
+        if line.startswith('Examples'):
+            examples = ''
+    return examples
+          
+
+help = {}
+
+lines = sys.stdin.readlines()
+lines = [x.strip() for x in lines]
+
+help['name'] = get_name(lines)
+help['usage'] = get_usage(lines)
+help['description'] = get_description(lines)
+help['options'] = get_options(lines)
+help['examples'] = get_examples(lines)
+
+print('% {}(1)'.format(help['name']))
+print('% Benjamin Redelings')
+print('% Feb 2018')
+print()
+print('# NAME\n\n**{}** -- {}\n'.format(help['name'],help['description']))
+
+synopsis = help['usage']
+synopsis = re.sub(r'^([^\s]+)',r'**\1**',synopsis)
+synopsis = re.sub(r'<([^\s>][^>]*[^\s>])>',r'_\1_',synopsis)
+print('# SYNOPSIS\n\n{}\n'.format(synopsis))
+
+print('# DESCRIPTION\n\n{}\n'.format(help['description']))
+
+for option_group in help['options']:
+    options = help['options'][option_group]
+    if len(options):
+        print('# {}:'.format(option_group).upper())
+        for option in options:
+#            print(option)
+            arg = ' _arg_' if option[-3] is not None else ''
+            value = option[-2]
+            value = value if value else ''
+            has_short = (len(option) == 5)
+            description = option[-1].replace('[','\[').replace(']','\]')
+            if has_short:
+                print("**-{}**{}{}, ".format(option[1],arg,value),end="")
+            print("**--{}**{}{}\n: {}\n".format(option[0],arg,value,description))
+        print()
+
+if help['examples'] is not None:
+    print("# EXAMPLES:\n {}\n".format(help['examples']))
+
+print("# REPORTING BUGS:\n BAli-Phy online help: <http://www.bali-phy.org/docs.php>.\n\nPlease send bug reports to <bali-phy-users@googlegroups.com>.\n");
+
+#print("# SEE ALSO:")
