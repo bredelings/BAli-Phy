@@ -56,7 +56,6 @@ install_data(['scripts/compare-runs.R', 'scripts/compare-runs2.R', 'scripts/tree
 	      'scripts/tree-plot2.R', 'scripts/tree-plot3.R', 'scripts/tree-plot2-3D.R',
 	      'scripts/tree-plot1-3D.R', 'scripts/tree-plot3-3D.R'],
 	     install_dir:'lib/bali-phy/libexec')
-install_data(['doc/README.html','doc/README.xhtml','doc/README.pdf'], install_dir: 'share/doc/bali-phy')
 
 ## we need to build libdl if we are on windows (cygwin or mingw64, and then find the library
 install_subdir('modules', install_dir: 'lib/bali-phy')
@@ -94,6 +93,8 @@ json = declare_dependency(include_directories: json)
 
 
 subdir('src')
+
+subdir('doc')
 
 run_tests = files('scripts/run-tests.sh')
 baliphyexe = join_paths(meson.build_root(),'src/bali-phy')
