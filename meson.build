@@ -19,7 +19,7 @@ conf_data = configuration_data()
 # 2.1. Write some info to 'config.h'
 conf_data.set_quoted('PACKAGE_VERSION', meson.project_version())
 conf_data.set_quoted('_ARCH_', host_machine.system()+' ' + host_machine.cpu_family())
-conf_data.set_quoted('_COMPILER_', cpp.get_id() + ' ' + cpp.version()+' ' + host_machine.cpu_family())
+conf_data.set_quoted('_COMPILER_', cpp.get_id() + ' ' + cpp.version() + ' ' + host_machine.cpu_family())
 
 # 2.2. Write header and function checks to'config.h'
 conf_data.set('HAVE_SYS_RESOURCE_H', cpp.has_header('sys/resource.h'))
@@ -73,6 +73,9 @@ if get_option('with-mpi')
 endif
 
 # FIXME: configure these things as sub-projects
+# FIXME: Build our own boost if cpp_debug_stl
+# FIXME: Only do the 'auto' approach (basically fallback)?
+# FIXME: Perhaps use our own if we think the system one won't work
 
 ## Handle auto / system / internal method of finding/building BOOST
 if get_option('boost') == 'auto'
