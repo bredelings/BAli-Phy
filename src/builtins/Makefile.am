@@ -12,7 +12,7 @@ AM_CPPFLAGS = -I@top_srcdir@/include -I@top_srcdir@/src
 pkglib_LTLIBRARIES = Prelude.la Array.la Alphabet.la \
 		Alignment.la Vector.la Pair.la Modifiables.la \
 		PopGen.la Distribution.la Range.la SModel.la MCMC.la \
-		Environment.la Data.la
+		Environment.la Data.la SMC.la
 
 
 if HOST_WIN_ALL
@@ -74,4 +74,7 @@ Vector_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 Environment_la_SOURCES = Environment.cc
 Environment_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
+
+SMC_la_SOURCES = SMC.cc
+SMC_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 

@@ -4,6 +4,7 @@
 #include "imodel/imodel.H"
 #include "computation/expression/expression.H"
 #include <boost/dynamic_bitset.hpp>
+#include "alignment/alignment.H"
 
 extern "C" closure builtin_function_pairwise_alignment_probability_from_counts(OperationArgs& Args)
 {
@@ -292,3 +293,11 @@ extern "C" closure builtin_function_bitmask_from_alignment(OperationArgs& Args)
     return mask_;
 }
 
+extern "C" closure builtin_function_load_alignment(OperationArgs& Args)
+{
+    std::string filename = Args.evaluate(0).as_<String>();
+
+    object_ptr<alignment> A(new alignment(DNA(),filename));
+
+    return A;
+}

@@ -25,7 +25,7 @@ modulesdir = $(libdir)/@PACKAGE@/
 nobase_modules_DATA = modules/Distributions.hs modules/PopGen.hs modules/Prelude.hs modules/Range.hs modules/SModel.hs \
 		modules/Tree.hs modules/Alphabet.hs modules/Parameters.hs modules/Alignment.hs \
 		modules/MCMC.hs modules/IModel.hs modules/System/Environment.hs modules/Data/ReadFile.hs \
-		modules/SubAIndex.hs
+		modules/SubAIndex.hs modules/SMC.hs
 
 helpdir = $(libdir)/@PACKAGE@/
 nobase_help_DATA = help/commands/alphabet.txt \

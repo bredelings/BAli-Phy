@@ -1,7 +1,11 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
+
 #include <vector>
+
 #include "matrix.H"
 #include "math/log-double.H"
+#include "alignment/alignment.H"
+#include "computation/computation.H"
 
 #include <Eigen/Dense>
 #include <unsupported/Eigen/MatrixFunctions>
@@ -11,7 +15,7 @@ typedef Eigen::MatrixXd EMatrix;
 
 double cdf(double eta, double t)
 {
-    return eta * exp(-t*eta);
+    return 1.0 - exp(-t*eta);
 }
 
 double quantile(double eta, double p)
@@ -45,7 +49,7 @@ vector<double> get_equilibrium(const vector<double>& B, double eta)
     pi[n_bins-1] = 1.0 - cdf(eta, B.back());
 
     // The equilibrium distribution should sum to 1.
-    assert(std::(sum(pi) - 1.0) < 1.0e-9);
+    assert((sum(pi) - 1.0) < 1.0e-9);
 
     return pi;
 }
@@ -202,9 +206,9 @@ EMatrix finite_markov_recombination()
     // [  0 -1  1  0 ]
     // [  0  0  0  0 ]
     // [  0  0  0  0 ]
-    EMatrix R(3,3);
-    for(int i=0;i<3;i++)
-	for(int j=0;j<3;j++)
+    EMatrix R(4,4);
+    for(int i=0;i<4;i++)
+	for(int j=0;j<4;j++)
 	    R(i,j) = 0;
 
     R(0,0) = -2;
@@ -254,7 +258,7 @@ Matrix get_transition_probabilities(const vector<double>& B, const vector<double
     // exp(Omega*t) for bin boundaries
     vector<EMatrix> expB(n);
     for(int i=0;i<n;i++)
-	expB[n] = (Omega*B[i]).exp();
+	expB[i] = (Omega*B[i]).exp();
 
     // exp(Omega*t) for bin centers
     vector<EMatrix> expT;
@@ -288,15 +292,24 @@ Matrix get_transition_probabilities(const vector<double>& B, const vector<double
 		P(j,k) = p;
 	    }
 	}
+#ifndef NDEBUG
+    for(int j=0;j<n; j++)
+    {
+	double total = 0;
+	for(int k=0;k<n; k++)
+	    total += P(j,k);
+	assert(std::abs(1.0-total) < 1.0e-9);
+    }
 
+#endif
     return P;
 }
 
-log_double_t smc(double rho, double theta, const matrix<int>& data)
+log_double_t smc(double theta, double rho, const alignment& A)
 {
     assert(rho >= 0);
     assert(theta > 0);
-    assert(data.size1() == 2);
+    assert(A.n_sequences() == 2);
 
     // How many bins
     const int n_bins = 100;
@@ -313,19 +326,19 @@ log_double_t smc(double rho, double theta, const matrix<int>& data)
     vector<log_double_t> L(n_bins);
     vector<log_double_t> L2(n_bins);
     for(int i=0;i< n_bins; i++)
-	L[i] = pi[i] * emission_probabilities[i](data(0,0), data(1,0));
+	L[i] = pi[i] * emission_probabilities[i](A(0,0), A(0,1));
 
     // # Iteratively compute likelihoods for remaining columns
     auto transition = get_transition_probabilities(bin_boundaries, bin_times, theta, rho);
 
-    for(int l=1; l < data.size2(); l++)
+    for(int l=1; l < A.length(); l++)
     {
 	for(int j=0; j < n_bins; j++)
 	{
 	    double Pr = 1;
 	    for(int i=0;i<n_bins; i++)
 		Pr += L[i] * transition(i,j);
-	    L2[j] = Pr * emission_probabilities[j](data(0,l), data(1,l));
+	    L2[j] = Pr * emission_probabilities[j](A(l,0), A(l,1));
 	}	    
 	std::swap(L, L2);
     }
@@ -335,4 +348,16 @@ log_double_t smc(double rho, double theta, const matrix<int>& data)
     for(int i=0; i < n_bins; i++)
 	Pr += L[i];
     return Pr;
+}
+
+extern "C" closure builtin_function_smc_density(OperationArgs& Args)
+{
+    double theta = Args.evaluate(0).as_double();
+
+    double rho = Args.evaluate(1).as_double();
+
+    auto a = Args.evaluate(2);
+    auto& A = a.as_<alignment>();
+
+    return { smc(theta, rho, A) };
 }
