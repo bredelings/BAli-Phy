@@ -13,7 +13,7 @@ Documentation
 
 * [http://bali-phy.org/](http://bali-phy.org/)
 * [Manual](http://bali-phy.org/README.xhtml)
-* [Tutorial](http://bali-phy.org/Tutorial2.html)
+* [Tutorial](http://bali-phy.org/Tutorial3.html)
 
 The Manual describes [how to install](http://bali-phy.org/README.xhtml#installation) bali-phy in detail.  Simplified instructions are below.
 
