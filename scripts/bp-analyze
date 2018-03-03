@@ -980,6 +980,16 @@ sub Rexec
     exec_show("R --slave --vanilla --args $args < $script");
 }
 
+sub show_help()
+{
+    print "Generate an HTML report summarizing bali-phy runs.\n\n";
+    print "Usage: bp-analyze [OPTIONS] <directory1> [<directory2> ... ]\n\n";
+    print "Options:\n";
+    print "  -h [ --help ]             Print usage information.\n";
+    print "  --skip=NUM                Skip NUM iterations as burnin\n";
+    print "  --subsample=NUM           Keep only ever NUM iterations\n\n";
+}
+
 sub parse_command_line
 {
     while ($#ARGV > -1) 
@@ -987,6 +997,11 @@ sub parse_command_line
 	my $arg = shift @ARGV;
 	if ($arg eq "clean" || $arg eq "--clean") {
 	    do_cleanup();
+	    exit;
+	}
+	elsif ($arg eq "-h" || $arg eq "--help")
+	{
+	    show_help();
 	    exit;
 	}
 	elsif ($arg =~ /--skip=(.*)/) {
