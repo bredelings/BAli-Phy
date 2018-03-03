@@ -87,7 +87,7 @@ if get_option('boost') == 'auto'
 elif get_option('boost') == 'system'
   boost = dependency('boost', modules : boost_modules)
 else
-    subdir('external/boost')
+  subdir('external/boost')
 endif
 
 ## Handle auto / system / internal method of finding/building EIGEN
