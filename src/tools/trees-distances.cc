@@ -129,12 +129,12 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     options_description analysis("Analysis options");
     analysis.add_options()
-	("analysis", value<string>()->default_value("matrix"), "Analysis: matrix, autocorrelation, diameter, compare, convergence, converged,")
-	("metric", value<string>()->default_value("topology"),"Tree distance: topology, branch, internal-branch")
+	("analysis", value<string>()->default_value("matrix"), "Analysis: matrix, autocorrelation, diameter, compare, convergence, converged.")
+	("metric", value<string>()->default_value("topology"),"Tree distance: topology, branch, internal-branch.")
 	("remove-duplicates","[matrix]: disallow zero distances  between points.")
 	("max-lag",value<int>(),"[autocorrelation]: max lag to consider.")
-	("CI",value<double>()->default_value(0.95),"Confidence interval size.")
-	("converged",value<double>()->default_value(0.05),"Comma-separated quantiles of distance required for converged? (smaller is more strict).")
+	("CI",value<double>()->default_value(0.95,"0.95"),"Confidence interval size.")
+	("converged",value<double>()->default_value(0.05,"0.05"),"Comma-separated quantiles of distance required for converged? (smaller is more strict).")
 	("mean", "Show mean and standard deviation")
 	("median", "Show median and confidence interval")
 	("minmax", "Show minumum and maximum distances")
@@ -160,7 +160,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     // store(parse_command_line(argc, argv, desc), args);
     notify(args);    
 
-    if (args.count("help")) {
+    if (args.count("help"))
+    {
 	cout<<"Compute autocorrelations or other functions of tree distances.\n\n";
 	cout<<"Usage: trees-distances <analysis> trees-file1 [trees-file2 ...]\n\n";
 	cout<<visible<<"\n";
