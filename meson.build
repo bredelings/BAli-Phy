@@ -84,6 +84,7 @@ if get_option('boost') == 'auto'
 elif get_option('boost') == 'system'
   boost = dependency('boost', modules : boost_modules)
 else
+    subdir('external/boost')
 endif
 
 ## Handle auto / system / internal method of finding/building EIGEN
@@ -96,7 +97,7 @@ if get_option('eigen') == 'auto'
   endif
 elif get_option('eigen') == 'system'
   eigen = dependency('eigen3')
-elif
+else
   eigen = include_directories('external/eigen3', is_system: true)
   eigen = declare_dependency(include_directories: eigen)
 endif
