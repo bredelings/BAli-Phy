@@ -305,6 +305,10 @@ Matrix get_transition_probabilities(const vector<double>& B, const vector<double
     return P;
 }
 
+constexpr double scale_factor = 115792089237316195423570985008687907853269984665640564039457584007913129639936e0;
+constexpr double scale_min = 1.0/scale_factor;
+constexpr double log_scale_min = -177.445678223345999210811423093293201427328034396225345054e0;
+
 log_double_t smc(double theta, double rho, const alignment& A)
 {
     assert(rho >= 0);
@@ -323,8 +327,10 @@ log_double_t smc(double theta, double rho, const alignment& A)
 
     // # Compute the likelihoods for the first column
     auto pi = get_equilibrium(bin_boundaries, 2.0/theta);
-    vector<log_double_t> L(n_bins);
-    vector<log_double_t> L2(n_bins);
+    vector<double> L(n_bins);
+    vector<double> L2(n_bins);
+    int scale = 0;
+
     for(int i=0;i< n_bins; i++)
 	L[i] = pi[i] * emission_probabilities[i](A(0,0), A(0,1));
 
@@ -333,13 +339,23 @@ log_double_t smc(double theta, double rho, const alignment& A)
 
     for(int l=1; l < A.length(); l++)
     {
-	for(int j=0; j < n_bins; j++)
+	bool need_scale = true;
+	for(int k=0; k < n_bins; k++)
 	{
-	    double Pr = 1;
-	    for(int i=0;i<n_bins; i++)
-		Pr += L[i] * transition(i,j);
-	    L2[j] = Pr * emission_probabilities[j](A(l,0), A(l,1));
-	}	    
+	    double temp = 1;
+	    for(int j=0;j<n_bins; j++)
+		temp += L[j] * transition(j,k);
+	    temp *= emission_probabilities[k](A(l,0), A(l,1));
+	    L2[k] = temp;
+
+	    need_scale = need_scale and (temp < scale_min);
+	}
+	if (need_scale)
+	{
+	    scale++;
+	    for(int k=0; k < n_bins; k++)
+		L2[k] *= scale_factor;
+	}
 	std::swap(L, L2);
     }
 
@@ -347,6 +363,7 @@ log_double_t smc(double theta, double rho, const alignment& A)
     log_double_t Pr = 1;
     for(int i=0; i < n_bins; i++)
 	Pr += L[i];
+    Pr.log() += log_scale_min * scale;
     return Pr;
 }
 
