@@ -24,21 +24,50 @@ You will need a C++ compiler that understands C++14.
  * XCode 6.0 (or higher) works
 
 You will also need to install
+ * cairo graphics library (optional, but required to build the `draw-tree` program)
+
+If you build with meson and ninja, you need
+ * python3
+ * ninja
+
+If you build with autotools, you need
  * autoconf
  * automake
  * libtool
- * cairo graphics library (optional, but required to build the `draw-tree` program)
 
-Build
------
+Build with meson (fastest)
+----------------
+```bash
+sudo apt-get install g++ libcairo2-dev ninja-build python3
+
+git clone https://github.com/bredelings/BAli-Phy.git
+cd BAli-Phy/
+git submodule update --init
+
+# We need a recent version of meson
+python3 -m venv meson
+source meson/bin/activate
+pip3 install meson
+
+meson build --prefix=$HOME/Applications/bali-phy  # Two warnings about 'export_dynamic' are OK.
+cd build
+ninja install
+```
+
+Build with autotools (slower)
+-------------------
 
 ```bash
+sudo apt-get install g++ libcairo2-dev autoconf automake libtool
+
 git clone https://github.com/bredelings/BAli-Phy.git
+cd BAli-Phy/
 git submodule update --init
-(cd BAli-Phy/ ; ./bootstrap.sh )
-mkdir bali-phy-build
-cd bali-phy-build
-../BAli-Phy/configure --prefix=$HOME/Applications/bali-phy/
+
+./bootstrap.sh
+mkdir build
+cd build
+../configure --prefix=$HOME/Applications/bali-phy/
 make
 make check
 make install
