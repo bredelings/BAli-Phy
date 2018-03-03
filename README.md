@@ -6,6 +6,8 @@ Install
 
 Please visit the [releases page](http://www.bali-phy.org/download.php) to download official binaries.
 
+You can also install via homebrew on a Mac.
+
 Documentation
 ------------
 
