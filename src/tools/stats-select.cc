@@ -69,8 +69,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     notify(args);    
 
     if (args.count("help")) {
-	cout<<"Usage: stats-select [OPTIONS] column-name [column-name ...] < data-file \n";
 	cout<<"Select columns from a Tracer-format data file.\n\n";
+	cout<<"Usage: stats-select [OPTIONS] column-name [column-name ...] < data-file \n";
 	cout<<visible<<"\n";
 	exit(0);
     }

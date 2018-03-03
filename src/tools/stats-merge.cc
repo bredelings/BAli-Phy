@@ -48,7 +48,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   options_description visible("All options");
   visible.add_options()
-    ("help", "Produce help message")
+    ("help,h", "Produce help message")
     ;
 
   options_description all("All options");
@@ -64,8 +64,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: stats-merge <file1> [<file2> ... ]\n";
     cout<<"Combine columns from different Tracer-format data files.\n\n";
+    cout<<"Usage: stats-merge <file1> [<file2> ... ]\n\n";
     cout<<visible<<"\n";
     exit(0);
   }

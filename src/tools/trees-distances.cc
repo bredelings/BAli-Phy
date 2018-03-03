@@ -161,8 +161,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     notify(args);    
 
     if (args.count("help")) {
-	cout<<"Usage: trees-distances <analysis> trees-file1 [trees-file2 ...]\n";
 	cout<<"Compute autocorrelations or other functions of tree distances.\n\n";
+	cout<<"Usage: trees-distances <analysis> trees-file1 [trees-file2 ...]\n\n";
 	cout<<visible<<"\n";
 	exit(0);
     }

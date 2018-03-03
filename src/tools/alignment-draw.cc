@@ -626,8 +626,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);
 
   if (args.count("help")) {
-    cout<<"Usage: alignment-draw <alignment> [<AU file>] [OPTIONS]\n";
     cout<<"Draw an alignment to HTML, optionally coloring residues by AU.\n\n";
+    cout<<"Usage: alignment-draw <alignment> [<AU file>] [OPTIONS]\n\n";
     cout<<all<<"\n";
     cout<<"Base Color Schemes:\n";
     cout<<"    plain, bw, Rainbow, RedBlue, BlueRed, AA, DNA\n";

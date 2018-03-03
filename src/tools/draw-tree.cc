@@ -151,9 +151,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     // named options
     options_description input("Input options");
     input.add_options()
-	("help", "Produce help message")
-	("width,w",value<double>()->default_value(8.5),"Page width in inches")
-	("height,h",value<double>()->default_value(11),"Page height in inches")
+	("help,h", "Produce help message")
+	("width,W",value<double>()->default_value(8.5),"Page width in inches")
+	("height,H",value<double>()->default_value(11),"Page height in inches")
 	("file",value<string>(),"predicates to examine")
 	("output",value<string>()->default_value("pdf"),"Type of output to write: tree, topology, mtree, lengths, dot, ps, pdf, svg")
 	("out",value<string>(),"Output filename (without extension)")
@@ -186,8 +186,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     notify(args);    
 
     if (args.count("help")) {
-	cout<<"Usage: draw-tree [OPTIONS] <tree file>\n";
-	cout<<"Draw NEWICK (and some other) formatted files.\n";
+	cout<<"Draw NEWICK (and some other) formatted files.\n\n";
+	cout<<"Usage: draw-tree [OPTIONS] <tree file>\n\n";
 	cout<<all<<"\n";
 	exit(0);
     }

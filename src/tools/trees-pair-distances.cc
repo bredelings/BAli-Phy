@@ -47,7 +47,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // named options
   options_description all("Allowed options");
   all.add_options()
-    ("help", "produce help message")
+    ("help,h", "produce help message")
     ("skip",value<int>()->default_value(0),"number of tree samples to skip")
     ("max",value<int>(),"maximum number of tree samples to read")
     ("subsample",value<int>()->default_value(1),"factor by which to sub-sample")
@@ -60,8 +60,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: trees-pair-distances < in-file\n";
     cout<<"Compute the mean (stddev) of all leaf-leaf distances.\n\n";
+    cout<<"Usage: trees-pair-distances < in-file\n\n";
     cout<<all<<"\n";
     exit(0);
   }

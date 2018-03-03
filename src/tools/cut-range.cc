@@ -40,7 +40,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     // named options
     options_description all("Allowed options");
     all.add_options()
-	("help", "produce help message")
+	("help,h", "produce help message")
 	("key", value<string>()->default_value("iterations"),"cut based on values of <key>=value")
 	("skip",value<int>(),"the number of samples to skip")
 	("size",value<int>(),"maximum number of samples to use")
@@ -53,8 +53,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     notify(args);    
 
     if (args.count("help")) {
-	cout<<"Usage: cut-range [OPTIONS]\n";
 	cout<<"Select lines between certain values of a key. (e.g. iterations)\n\n";
+	cout<<"Usage: cut-range [OPTIONS]\n\n";
 	cout<<all<<"\n";
 	exit(0);
     }

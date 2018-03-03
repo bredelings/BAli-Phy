@@ -98,9 +98,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: alignment-median [OPTIONS] < in-file\n";
     cout<<"Don't use this program.  It doesn't work.\n";
     cout<<"Find the 'median' alignment in a list of alignments.\n\n";
+    cout<<"Usage: alignment-median [OPTIONS] < in-file\n\n";
     cout<<visible<<"\n";
     exit(0);
   }

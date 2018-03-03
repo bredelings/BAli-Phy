@@ -72,7 +72,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     options_description input("Input options");
     input.add_options()
-	("help", "produce help message")
+	("help,h", "produce help message")
 	("skip",value<unsigned>()->default_value(0),"Number of trees to skip.")
 	("until",value<unsigned>(),"Read until this number of trees.")
 	("max",value<unsigned>(),"Thin down to this number of trees.")
@@ -102,8 +102,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     notify(args);    
 
     if (args.count("help")) {
-	cout<<"Usage: trees-bootstrap <partitions-file> <trees-file> [OPTIONS]\n";
 	cout<<"Select only partitions with support in the specified range.\n\n";
+	cout<<"Usage: trees-bootstrap <partitions-file> <trees-file> [OPTIONS]\n\n";
 	cout<<input<<reporting<<"\n";
 	exit(0);
     }

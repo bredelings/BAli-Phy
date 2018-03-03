@@ -117,7 +117,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     // named options
     options_description all("Allowed options");
     all.add_options()
-	("help", "produce help message")
+	("help,h", "produce help message")
 	("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
 	("with-indels", "Calculate percent-identity w/ indels")
 	("seed", value<unsigned long>(),"random seed")
@@ -134,8 +134,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     notify(args);    
 
     if (args.count("help")) {
-	cout<<"Usage: alignment-identity [OPTIONS] < sequence-file\n";
 	cout<<"Report statistics on pairwise identity.\n\n";
+	cout<<"Usage: alignment-identity [OPTIONS] < sequence-file\n\n";
 	cout<<all<<"\n";
 	exit(0);
     }

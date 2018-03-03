@@ -69,7 +69,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // named options
   options_description all("Allowed options");
   all.add_options()
-    ("help", "produce help message")
+    ("help,h", "produce help message")
     ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
     ("seed", value<unsigned long>(),"random seed")
     ("skip",value<unsigned>()->default_value(0),"number of tree samples to skip")
@@ -85,8 +85,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: alignment-consensus [OPTIONS] < alignments-file\n";
     cout<<"Construct a consensus alignment to summarize an alignment sample.\n\n";
+    cout<<"Usage: alignment-consensus [OPTIONS] < alignments-file\n\n";
     cout<<all<<"\n";
     exit(0);
   }

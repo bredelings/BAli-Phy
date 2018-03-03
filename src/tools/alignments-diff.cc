@@ -71,7 +71,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // named options
   options_description all("Allowed options");
   all.add_options()
-    ("help", "produce help message")
+    ("help,h", "produce help message")
     ("alignment1", value<string>(),"First alignment")
     ("alignment2", value<string>(),"Second alignment")
     ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
@@ -93,8 +93,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: alignment-align alignment-file1 alignment-file2 ... [OPTIONS] < alignments-file\n";
-    cout<<"Align two alignments for comparison.\n";
+    cout<<"Align two alignments for comparison.\n\n";
+    cout<<"Usage: alignment-align alignment-file1 alignment-file2 ... [OPTIONS] < alignments-file\n\n";
     cout<<all<<"\n";
     exit(0);
   }

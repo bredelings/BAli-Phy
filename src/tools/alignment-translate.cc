@@ -63,8 +63,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: alignment-translate [OPTIONS] < sequence-file [OPTIONS]\n";
     cout<<"Translate a DNA/RNA alignment into amino acids.\n\n";
+    cout<<"Usage: alignment-translate [OPTIONS] < sequence-file [OPTIONS]\n";
     cout<<all<<"\n";
     cout<<" Examples:\n\n";
     cout<<"  Translate DNA or RNA to amino acids in reading frame 1:\n";

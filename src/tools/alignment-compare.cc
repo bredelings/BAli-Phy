@@ -123,7 +123,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // 
   options_description visible("Allowed options");
   visible.add_options()
-    ("help", "produce help message")
+    ("help,h", "produce help message")
     ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
     ("seed", value<unsigned long>(),"random seed")
     ("align", value<string>(),"alignment to output values for.")
@@ -145,10 +145,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: alignment-compare <alignment-file1> <alignment-file2> [OPTIONS]\n";
     cout<<"Compare two alignment distributions.\n";
     cout<<" o label each residue by its maximum pairwise homology deviance.\n";
     cout<<" o output AU-style annotations for the alignment given by --align.\n\n";
+    cout<<"Usage: alignment-compare <alignment-file1> <alignment-file2> [OPTIONS]\n\n";
     cout<<visible<<"\n";
     exit(0);
   }

@@ -89,8 +89,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: alignment-max [OPTIONS] < alignments-file\n";
     cout<<"Construct a posterior decoding alignment to summarize an alignment sample.\n\n";
+    cout<<"Usage: alignment-max [OPTIONS] < alignments-file\n\n";
     cout<<all<<"\n";
     exit(0);
   }

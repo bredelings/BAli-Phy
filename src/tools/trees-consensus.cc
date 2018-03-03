@@ -447,8 +447,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     notify(args);    
 
     if (args.count("help")) {
-	cout<<"Usage: trees-consensus [OPTIONS] <sampled-trees> [<sampled-trees> ... <sampled-trees>]\n";
 	cout<<"Find consensus trees and supported splits.\n\n";
+	cout<<"Usage: trees-consensus [OPTIONS] <sampled-trees> [<sampled-trees> ... <sampled-trees>]\n\n";
 	cout<<input<<"\n";
 	cout<<reporting<<"\n";
 	cout<<search<<"\n";

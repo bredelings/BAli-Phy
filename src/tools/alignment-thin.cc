@@ -54,7 +54,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     // named options
     options_description all("Allowed options");
     all.add_options()
-	("help", "produce help message")
+	("help,h", "produce help message")
 	("align", value<string>(),"file with sequences and initial alignment")
 	("find-dups", value<string>(),"for each other sequence, find the closest sequence")
 	("cutoff",value<unsigned>(),"only leave taxa with more mismatches than this value")
@@ -83,8 +83,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     notify(args);    
 
     if (args.count("help")) {
-	cout<<"Usage: alignment-thin <alignment-file>\n";
-	cout<<"Remove the most closely related sequences from an alignment.\n\n";
+	cout<<"Remove sequences or columns from an alignment.\n\n";
+	cout<<"Usage: alignment-thin <alignment-file>\n\n";
 	cout<<all<<"\n";
 	exit(0);
     }

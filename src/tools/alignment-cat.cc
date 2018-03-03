@@ -228,8 +228,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
   bool error = false;
 
   if (args.count("help") or error) {
-    cout<<"Usage: alignment-cat [file1] {[file2] ...} \n";
     cout<<"Concatenate several alignments (with the same sequence names) end-to-end.\n\n";
+    cout<<"Usage: alignment-cat <file1> [<file2> ...] \n\n";
     cout<<visible<<"\n";
     cout<<" Examples:\n\n";
     cout<<"  To select columns from an alignment:\n";

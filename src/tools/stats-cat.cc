@@ -42,8 +42,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);
 
   if (args.count("help")) {
-    cout<<"Usage: stats-cat [OPTIONS] file1 [file2 file3 ... ] \n";
-    cout<<"Compute summary statistics for tab-delimited data files.\n\n";
+    cout<<"Append tab-delimited files with the same field names.\n\n";
+    cout<<"Usage: stats-cat [OPTIONS] file1 [file2 file3 ... ] \n\n";
     cout<<visible<<"\n";
     cout<<"Default: Report the median and 95% credible interval for each column.\n\n";
     exit(0);

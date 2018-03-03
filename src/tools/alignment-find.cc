@@ -38,7 +38,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // named options
   options_description all("Allowed options");
   all.add_options()
-    ("help", "produce help message")
+    ("help,h", "produce help message")
     ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
     ("first", "get the first alignment in the file")
     ("last", "get the last alignment in the file (default)")
@@ -55,9 +55,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: alignment-find [OPTIONS] < in-file \n";
     cout<<"Find the last (or first) FASTA alignment in a file.\n";
     cout<<"  (Alignments are ended by blank lines.)\n\n";
+    cout<<"Usage: alignment-find [OPTIONS] < in-file \n\n";
     cout<<all<<"\n";
     exit(0);
   }

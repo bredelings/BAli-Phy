@@ -53,7 +53,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     // named options
     options_description all("Allowed options");
     all.add_options()
-	("help", "produce help message")
+	("help,h", "produce help message")
 	("align", value<string>()->default_value("-"),"file with alignment to convert (default STDIN)")
 	("tree",value<string>(),"file with initial tree")
 	("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons")
@@ -76,8 +76,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     notify(args);    
 
     if (args.count("help")) {
-	std::cout<<"Usage: alignment-find conserved <alignment-file> [OPTIONS]\n";
-	std::cout<<"Convert the alignment to FASTA or PHYLIP.\n\n";
+	std::cout<<"Find conserved parts of an alignment.\n\n";
+	std::cout<<"Usage: alignment-find conserved <alignment-file> [OPTIONS]\n\n";
 	std::cout<<all<<"\n";
 	exit(0);
     }

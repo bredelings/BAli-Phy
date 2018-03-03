@@ -89,7 +89,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     // named options
     options_description all("Allowed options");
     all.add_options()
-	("help", "produce help message")
+	("help,h", "produce help message")
 	("align", value<string>(),"file with sequences and initial alignment")
 	("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons")
 	("strip-gaps,S","Remove columns within <arg> columns of a gap")
@@ -113,8 +113,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     notify(args);    
 
     if (args.count("help")) {
-	cout<<"Usage: alignment-smc <alignment-file> [OPTIONS]\n";
-	cout<<"Show useful statistics about the alignment.\n\n";
+	cout<<"Generate input for SMC programs.\n\n";
+	cout<<"Usage: alignment-smc <alignment-file> [OPTIONS]\n\n";
 	cout<<all<<"\n";
 	exit(0);
     }

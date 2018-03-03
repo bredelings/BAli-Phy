@@ -61,8 +61,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: tree-partitions <file> [OPTIONS]\n";
     cout<<"Get partitions from a tree.\n\n";
+    cout<<"Usage: tree-partitions <file> [OPTIONS]\n";
     cout<<all<<"\n";
     exit(0);
   }
