@@ -1,6 +1,6 @@
-option('eigen', type : 'string', value : 'auto', description: 'Which Eigen headers to use? [auto,system,internal].')
-option('boost', type : 'string', value : 'auto', description: 'Which Boost libraries to use? [auto,system,internal].')
-option('json', type : 'string', value : 'auto', description: 'Which nlohmann/json.hpp to use? [auto,system,internal].')
+option('eigen', type : 'combo', value : 'auto', choices: ['auto','system','internal'], description: 'Which Eigen headers to use?.')
+option('boost', type : 'combo', value : 'auto', choices: ['auto','system','internal'],  description: 'Which Boost libraries to use?')
+option('json', type : 'combo', value : 'auto', choices: ['auto','system','internal'],  description: 'Which nlohmann/json.hpp to use?')
 
 option('with-mpi', type : 'boolean', value : false, description: 'Compile with MPI')
 option('static-cpp-libs', type: 'boolean', value: false, description: 'Link in libgcc and libstdc++ statically')
