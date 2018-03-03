@@ -67,29 +67,60 @@ if get_option('with-mpi')
   mpi = dependency('mpi', language='cpp')
 endif
 
-# for boost and eigen, we really want something like yes, no, auto* -- default to auto.
-# if we have 'auto', then build our own boost if we want stl-debug and bounds_checking
-boost_modules = [ 'program_options', 'random', 'system','filesystem', 'chrono']
+boost_modules = [ 'program_options', 'random', 'system', 'filesystem', 'chrono']
 if get_option('with-mpi')
   boost_modules += ['serialization', 'mpi']
 endif
 
-if get_option('with-system-boost')
+# FIXME: configure these things as sub-projects
+
+## Handle auto / system / internal method of finding/building BOOST
+if get_option('boost') == 'auto'
+  boost = dependency('boost', modules : boost_modules, required: false)
+  if not boost.found()
+    message('Building internal BOOST libraries.')
+    subdir('external/boost')
+  endif
+elif get_option('boost') == 'system'
   boost = dependency('boost', modules : boost_modules)
 else
-  subdir('external/boost')
 endif
 
-
-if get_option('with-system-eigen')
+## Handle auto / system / internal method of finding/building EIGEN
+if get_option('eigen') == 'auto'
+  eigen = dependency('eigen3', required: false)
+  if not eigen.found()
+    message('Using internal copy of eigen.')
+    eigen = include_directories('external/eigen3', is_system: true)
+    eigen = declare_dependency(include_directories: eigen)
+  endif
+elif get_option('eigen') == 'system'
   eigen = dependency('eigen3')
-else
+elif
   eigen = include_directories('external/eigen3', is_system: true)
   eigen = declare_dependency(include_directories: eigen)
 endif
 
-json = include_directories('external/nlohmann', is_system: true)
-json = declare_dependency(include_directories: json)
+## Handle auto / system / internal method of finding  <nlohmann/json.hpp>
+if get_option('json') == 'auto'
+  if cpp.has_header('nlohmann/json.hpp')
+    json = []
+  else
+    message('Using internal copy of <nlohman/json.hpp>.')
+    json = include_directories('external/nlohmann', is_system: true)
+    json = declare_dependency(include_directories: json)
+  endif
+elif get_option('json') == 'system'
+  if cpp.has_header('nlohmann/json.hpp')
+    json = []
+  else
+    error('No <nlohmann/json.hpp> header could be found!')
+  endif
+else
+  json = include_directories('external/nlohmann', is_system: true)
+  json = declare_dependency(include_directories: json)
+endif
+
 
 
 subdir('src')
