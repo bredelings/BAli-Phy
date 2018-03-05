@@ -60,13 +60,13 @@ Compute autocorrelations or other functions of tree distances.
 : Show median and confidence interval
 
 **--minmax**
-: Show minumum and maximum distances
+: Show minimum and maximum distances
 
 **--leaves-only**
-: Show minumum and maximum distances
+: Show minimum and maximum distances
 
 **--topology-only**
-: Show minumum and maximum distances
+: Show minimum and maximum distances
 
 **--jitter** _arg_
 : Amount of noise to add to distances

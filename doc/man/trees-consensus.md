@@ -83,7 +83,7 @@ Find consensus trees and supported splits.
 : Depth at which to look for partial splits.
 
 **--rooting** _arg_ (=0.9)
-: Threshhold in search for partial splits.
+: Threshold in search for partial splits.
 
 
 # REPORTING BUGS:
