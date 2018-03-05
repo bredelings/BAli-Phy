@@ -312,7 +312,7 @@ transducer_state_info::transducer_state_info(const indel::PairTransducer& PTM)
 
 string i_parameter_name(int i,int n) {
     if (i>=n)
-	throw myexception()<<"substitution model: refered to parameter "<<i<<" but there are only "<<n<<" parameters.";
+	throw myexception()<<"substitution model: referred to parameter "<<i<<" but there are only "<<n<<" parameters.";
     return string("pI") + convertToString(i);
 }
 

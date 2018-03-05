@@ -78,7 +78,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("CI",value<double>()->default_value(0.95),"Confidence interval size.")
     ("mean", "Show mean and standard deviation")
     ("median", "Show median and confidence interval")
-    ("minmax", "Show minumum and maximum distances")
+    ("minmax", "Show minimum and maximum distances")
     ;
 
   options_description visible("All options");

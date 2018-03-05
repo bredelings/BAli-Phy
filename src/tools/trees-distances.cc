@@ -137,9 +137,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("converged",value<double>()->default_value(0.05,"0.05"),"Comma-separated quantiles of distance required for converged? (smaller is more strict).")
 	("mean", "Show mean and standard deviation")
 	("median", "Show median and confidence interval")
-	("minmax", "Show minumum and maximum distances")
-	("leaves-only", "Show minumum and maximum distances")
-	("topology-only", "Show minumum and maximum distances")
+	("minmax", "Show minimum and maximum distances")
+	("leaves-only", "Show minimum and maximum distances")
+	("topology-only", "Show minimum and maximum distances")
 	("jitter",value<double>(),"Amount of noise to add to distances")
 	;
 

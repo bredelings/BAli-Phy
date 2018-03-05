@@ -408,7 +408,7 @@ int main(int argc,char* argv[])
 	valarray<double> counts = letter_counts(A);
 	valarray<double> frequencies = A.get_alphabet().get_frequencies_from_counts(counts,A.n_sequences()/2);
 
-	cout<<"\nFreqencies:   ";
+	cout<<"\nFrequencies:   ";
 	for(int i=0;i<a.size();i++)
 	    cout<<a.lookup(i)<<"="<<frequencies[i]*100<<"%  ";
 	cout<<"\n";

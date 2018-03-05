@@ -429,7 +429,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     search.add_options()
 	("sub-partitions","Search for partial splits.")
 	("depth",value<int>()->default_value(1),"Depth at which to look for partial splits.")
-	("rooting",value<double>()->default_value(0.9,"0.9"),"Threshhold in search for partial splits.")
+	("rooting",value<double>()->default_value(0.9,"0.9"),"Threshold in search for partial splits.")
 	;
 
     options_description visible("All options");
