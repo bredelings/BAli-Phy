@@ -119,3 +119,8 @@ if get_option('extra-tools')
   all_progs = all_progs + extra_tools
 endif
 
+test('bali-phy version', baliphy, args:['--version'])
+test('bali-phy help', baliphy, args:['--help'])
+test('bali-phy 5d test',baliphy, args:[small_fasta,'--test',packagepath])
+test('bali-phy 5d +A 50',baliphy, args:[small_fasta,'--iter=50',packagepath])
+test('bali-phy 5d -A 200',baliphy, args:[small_fasta,'--iter=50',packagepath,'-Inone'])

@@ -125,15 +125,13 @@ else
   json = declare_dependency(include_directories: json)
 endif
 
-
+small_fasta=files('examples/sequences/5S-rRNA/5d.fasta')
+builtins = join_paths(meson.build_root(),'src/builtins')
+packagepath = '--package-path=@0@:@1@'.format(builtins,meson.source_root())
 
 subdir('src')
 
 subdir('doc')
 
 run_tests = files('scripts/run-tests.sh')
-baliphyexe = join_paths(meson.build_root(),'src/bali-phy')
-builtins = join_paths(meson.build_root(),'src/builtins')
-packagepath = '--package-path=@0@:@1@'.format(builtins,meson.source_root())
-
-check = run_target('check', command: [run_tests, baliphyexe, packagepath])
+check = run_target('check', command: [run_tests, baliphy, packagepath])
