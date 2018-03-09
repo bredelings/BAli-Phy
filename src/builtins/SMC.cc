@@ -49,7 +49,7 @@ vector<double> get_equilibrium(const vector<double>& B, double eta)
     pi[n_bins-1] = 1.0 - cdf(eta, B.back());
 
     // The equilibrium distribution should sum to 1.
-    assert((sum(pi) - 1.0) < 1.0e-9);
+    assert(std::abs(sum(pi) - 1.0) < 1.0e-9);
 
     return pi;
 }
