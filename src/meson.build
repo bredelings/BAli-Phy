@@ -74,7 +74,6 @@ endif
 extra_rpath = ''
 if host_machine.system() == 'linux'
   extra_rpath = '$ORIGIN/../lib/bali-phy/'
-  extra_link_args += ['-rdynamic']
 endif
 
 baliphy = executable('bali-phy',
