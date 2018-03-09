@@ -43,7 +43,7 @@ const Module& Program::get_module(const string& module_name) const
 {
     int index = find_module(module_name);
     if (index == -1)
-	throw myexception()<<"Progam does not contain module '"<<module_name<<"'";
+	throw myexception()<<"Program does not contain module '"<<module_name<<"'";
     return modules()[index];
 }
 
