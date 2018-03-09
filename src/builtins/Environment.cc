@@ -12,8 +12,6 @@ using namespace std;
 
 extern "C" closure builtin_function_getArgs(OperationArgs& Args)
 {
-  assert(not Args.evaluate_changeables());
-
   reg_heap& M = Args.memory();
 
   EVector V;
