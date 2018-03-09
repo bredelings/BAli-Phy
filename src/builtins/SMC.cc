@@ -326,7 +326,7 @@ log_double_t smc(double theta, double rho, const alignment& A)
     const auto emission_probabilities = get_emission_probabilities(bin_times);
 
     // # Compute the likelihoods for the first column
-    auto pi = get_equilibrium(bin_boundaries, 2.0/theta);
+    const auto pi = get_equilibrium(bin_boundaries, 2.0/theta);
     vector<double> L(n_bins);
     vector<double> L2(n_bins);
     int scale = 0;
@@ -335,7 +335,7 @@ log_double_t smc(double theta, double rho, const alignment& A)
 	L[i] = pi[i] * emission_probabilities[i](A(0,0), A(0,1));
 
     // # Iteratively compute likelihoods for remaining columns
-    auto transition = get_transition_probabilities(bin_boundaries, bin_times, theta, rho);
+    const auto transition = get_transition_probabilities(bin_boundaries, bin_times, theta, rho);
 
     for(int l=1; l < A.length(); l++)
     {
