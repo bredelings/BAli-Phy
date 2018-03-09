@@ -319,11 +319,11 @@ log_double_t smc(double theta, double rho, const alignment& A)
     const int n_bins = 100;
 
     // Lower end of each bin. boundaries[0] = 0. The upper end of the last bin is \infty
-    auto bin_boundaries = get_bin_boundaries(n_bins, 2.0/theta);
+    const auto bin_boundaries = get_bin_boundaries(n_bins, 2.0/theta);
 
-    auto bin_times = get_bin_centers(n_bins, 2.0/theta);
+    const auto bin_times = get_bin_centers(n_bins, 2.0/theta);
 
-    auto emission_probabilities = get_emission_probabilities(bin_times);
+    const auto emission_probabilities = get_emission_probabilities(bin_times);
 
     // # Compute the likelihoods for the first column
     auto pi = get_equilibrium(bin_boundaries, 2.0/theta);
