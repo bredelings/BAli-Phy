@@ -342,7 +342,7 @@ log_double_t smc(double theta, double rho, const alignment& A)
 	bool need_scale = true;
 	for(int k=0; k < n_bins; k++)
 	{
-	    double temp = 1;
+	    double temp = 0;
 	    for(int j=0;j<n_bins; j++)
 		temp += L[j] * transition(j,k);
 	    temp *= emission_probabilities[k](A(l,0), A(l,1));
