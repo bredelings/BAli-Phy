@@ -71,11 +71,14 @@ Matrix JC_transition_p(double t)
     return P;
 }
 
+// We need emission probabilities for 2*t, since t is the depth of the tree,
+// but the distance between the tips is 2*t.
+
 vector<Matrix> get_emission_probabilities(const vector<double>& t)
 {
     vector<Matrix> E(t.size());
     for(int i=0;i<E.size();i++)
-	E[i] = JC_transition_p(t[i]);
+	E[i] = JC_transition_p(2.0 * t[i]);
     return E;
 }
 
