@@ -1,5 +1,6 @@
 #include "startup/help.hh"
 
+#include <regex>
 #include <list>
 #include <boost/optional/optional_io.hpp>
 #include <boost/algorithm/string/replace.hpp>
@@ -192,10 +193,15 @@ string indent(int indent, const string& text)
 
 const std::string ansi_plain("\033[0m");
 const std::string ansi_under("\033[4m");
+const std::string ansi_under_off("\033[24m");
 const std::string ansi_bold("\033[1m");
+const std::string ansi_bold_off("\033[1m");
+const std::string ansi_black("\033[1;30m");
 const std::string ansi_red("\033[1;31m");
 const std::string ansi_green("\033[1;32m");
 const std::string ansi_yellow("\033[1;33m");
+const std::string ansi_blue("\033[1;34m");
+const std::string ansi_magenta("\033[1;35m");
 const std::string ansi_cyan("\033[1;36m");
 
 string bold(const string& line)
@@ -205,7 +211,7 @@ string bold(const string& line)
 
 string underline(const string& line)
 {
-    return ansi_under + line + ansi_plain;
+    return ansi_under + line + ansi_under_off;
 }
 
 string header(const string& text)
@@ -421,6 +427,33 @@ string get_help_for_rule(const Rules& rules, const Rule& rule)
     return help.str();
 }
 
+bool startswith(const string& s, const string& prefix)
+{
+    if (s.size() < prefix.size()) return false;
+    return (s.substr(0,prefix.size()) == prefix);
+}
+
+string underline_quotes(const string& line)
+{
+    return std::regex_replace(line,std::regex("`([^`]*)`"),underline("$1").c_str());
+}
+
+string pseudo_markdown(const string& lines)
+{
+    std::ostringstream marked;
+    for(auto& line: split(lines,'\n'))
+    {
+	if (startswith(line,"# "))
+	{
+	    marked<<ansi_bold<<underline_quotes(line.substr(2))<<ansi_plain<<"\n";
+	}
+	else
+	    marked<<underline_quotes(line)<<"\n";
+    }
+
+    return marked.str();
+}
+
 
 void show_help(const string& topic, const vector<fs::path>& package_paths)
 {
@@ -433,7 +466,7 @@ void show_help(const string& topic, const vector<fs::path>& package_paths)
     }
     if (help.count(topic))
     {
-	std::cout<<help[topic];
+	std::cout<<pseudo_markdown(help[topic]);
 	std::cout<<std::endl;
 	return;
     }
