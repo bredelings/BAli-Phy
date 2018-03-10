@@ -290,7 +290,7 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
 
     <section xml:id="tests"><info><title>Test the installed software</title></info>
     <para>In order to determine that the software has been correctly installed, and the <envar>PATH</envar> has been correctly set, run the following commands:
-<screen><prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/sequences/5S-rRNA/5d.fasta --iter=150</userinput>
+<screen><prompt>%</prompt> <userinput>bali-phy &install.path;/share/doc/bali-phy/examples/sequences/5S-rRNA/5d.fasta --iter=150</userinput>
 <prompt>%</prompt> <userinput>bp-analyze 5d-1/</userinput></screen>
     </para>
     <para>Furthermore, the directory <filename>5d-1</filename> should contain a file called <filename>C1.log</filename>.  You should be able to load this file in Tracer, although the chain will not really have converged yet.</para>
@@ -612,7 +612,7 @@ scale = 1,3:</programlisting>
       executables and extracted them in the
       <filename>&install.prefix;</filename> directory, then the
       <filename>examples/sequences/</filename> directory will be found at 
-      <filename>&install.path;/share/bali-phy/examples/sequences/</filename>.
+      <filename>&install.path;/share/doc/bali-phy/examples/sequences/</filename>.
     </para>
 
     <para>Also note that <command>bali-phy</command>
@@ -627,7 +627,7 @@ scale = 1,3:</programlisting>
       
       <para>Here we analyze the EF-Tu 5-taxon data set provided with
 	the software.</para>
-      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/sequences/EF-Tu/5d.fasta</userinput></screen>
+      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/doc/bali-phy/examples/sequences/EF-Tu/5d.fasta</userinput></screen>
     </example>
 
     <example><info><title>Multiple-Rate Substitution Model</title></info>
@@ -637,7 +637,7 @@ scale = 1,3:</programlisting>
 	invariant sites.  The amount of rate variation and the fraction of
 	invariant sites are estimated</para>
       
-      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/sequences/EF-Tu/5d.fasta --smodel LG+Rates.logNormal+INV</userinput></screen></example>
+      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/doc/bali-phy/examples/sequences/EF-Tu/5d.fasta --smodel LG+Rates.logNormal+INV</userinput></screen></example>
 
     <example><info><title>Fixed alignment</title></info>
       
@@ -645,7 +645,7 @@ scale = 1,3:</programlisting>
       the software. The <userinput>-Inone</userinput> option is used, fixing the alignment and making indels non-informative.
       </para> 
 
-      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/sequences/5S-rRNA/25-muscle.fasta -Inone</userinput></screen>
+      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/doc/bali-phy/examples/sequences/5S-rRNA/25-muscle.fasta -Inone</userinput></screen>
 
     </example>
   </section>

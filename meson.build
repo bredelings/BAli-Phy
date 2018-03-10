@@ -61,7 +61,7 @@ install_data(['scripts/compare-runs.R', 'scripts/compare-runs2.R', 'scripts/tree
 install_subdir('modules', install_dir: 'lib/bali-phy')
 install_subdir('functions', install_dir: 'lib/bali-phy')
 install_subdir('help', install_dir: 'lib/bali-phy')
-install_subdir('examples', install_dir: 'share/bali-phy')
+install_subdir('examples', install_dir: join_paths(get_option('datadir'),'doc/bali-phy'))
 
 if get_option('with-mpi')
   mpi = dependency('mpi', language='cpp')

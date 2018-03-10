@@ -142,7 +142,7 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
 	directory, you can find its full name by typing:
 	</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>echo $HOME</code></strong></pre><p>
 	</p></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="tests"></a>2.6. Test the installed software</h3></div></div></div><p>In order to determine that the software has been correctly installed, and the <code class="envar">PATH</code> has been correctly set, run the following commands:
-</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.0/share/bali-phy/examples/sequences/5S-rRNA/5d.fasta --iter=150</code></strong>
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.0/share/doc/bali-phy/examples/sequences/5S-rRNA/5d.fasta --iter=150</code></strong>
 <code class="prompt">%</code> <strong class="userinput"><code>bp-analyze 5d-1/</code></strong></pre><p>
     </p><p>Furthermore, the directory <code class="filename">5d-1</code> should contain a file called <code class="filename">C1.log</code>.  You should be able to load this file in Tracer, although the chain will not really have converged yet.</p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="software_req"></a>2.7. Install programs used for viewing the results</h3></div></div></div><p>
       </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>
@@ -312,7 +312,7 @@ scale = 1,3:</pre><p>
       executables and extracted them in the
       <code class="filename">~/Applications</code> directory, then the
       <code class="filename">examples/sequences/</code> directory will be found at 
-      <code class="filename">~/Applications/bali-phy-3.0/share/bali-phy/examples/sequences/</code>.
+      <code class="filename">~/Applications/bali-phy-3.0/share/doc/bali-phy/examples/sequences/</code>.
     </p><p>Also note that <span class="command"><strong>bali-phy</strong></span>
       does <span class="emphasis"><em>not</em></span> run until it
       is "finished", but continues to gather samples until the user
@@ -320,12 +320,12 @@ scale = 1,3:</pre><p>
       Thus, it is useful to continually examine the output files while
       the program is running. 
     </p><div class="example"><a id="idm623"></a><p class="title"><strong>Example 1. No frills</strong></p><div class="example-contents"><p>Here we analyze the EF-Tu 5-taxon data set provided with
-	the software.</p><pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.0/share/bali-phy/examples/sequences/EF-Tu/5d.fasta</code></strong></pre></div></div><br class="example-break" /><div class="example"><a id="idm630"></a><p class="title"><strong>Example 2. Multiple-Rate Substitution Model</strong></p><div class="example-contents"><p>We now modify the previous example by changing the
+	the software.</p><pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.0/share/doc/bali-phy/examples/sequences/EF-Tu/5d.fasta</code></strong></pre></div></div><br class="example-break" /><div class="example"><a id="idm630"></a><p class="title"><strong>Example 2. Multiple-Rate Substitution Model</strong></p><div class="example-contents"><p>We now modify the previous example by changing the
 	substitution model to allow log-normal-distributed rate variation and
 	invariant sites.  The amount of rate variation and the fraction of
-	invariant sites are estimated</p><pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.0/share/bali-phy/examples/sequences/EF-Tu/5d.fasta --smodel LG+Rates.logNormal+INV</code></strong></pre></div></div><br class="example-break" /><div class="example"><a id="idm637"></a><p class="title"><strong>Example 3. Fixed alignment</strong></p><div class="example-contents"><p>Here we use the 5S rRNA 25-taxon data set provided with
+	invariant sites are estimated</p><pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.0/share/doc/bali-phy/examples/sequences/EF-Tu/5d.fasta --smodel LG+Rates.logNormal+INV</code></strong></pre></div></div><br class="example-break" /><div class="example"><a id="idm637"></a><p class="title"><strong>Example 3. Fixed alignment</strong></p><div class="example-contents"><p>Here we use the 5S rRNA 25-taxon data set provided with
       the software. The <strong class="userinput"><code>-Inone</code></strong> option is used, fixing the alignment and making indels non-informative.
-      </p><pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.0/share/bali-phy/examples/sequences/5S-rRNA/25-muscle.fasta -Inone</code></strong></pre></div></div><br class="example-break" /></div></div><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="input"></a>5. Input</h2></div></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm648"></a>5.1. Sequence formats</h3></div></div></div><p><span class="application">BAli-Phy</span> can read in sequences
+      </p><pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.0/share/doc/bali-phy/examples/sequences/5S-rRNA/25-muscle.fasta -Inone</code></strong></pre></div></div><br class="example-break" /></div></div><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="input"></a>5. Input</h2></div></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm648"></a>5.1. Sequence formats</h3></div></div></div><p><span class="application">BAli-Phy</span> can read in sequences
 	and alignments in both FastA and PHYLIP formats.  Filenames for
 	FastA files should end in <strong class="userinput"><code>.fasta</code></strong>,
 	<strong class="userinput"><code>.mpfa</code></strong>, <strong class="userinput"><code>.fna</code></strong>,
