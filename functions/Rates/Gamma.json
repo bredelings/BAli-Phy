@@ -21,5 +21,14 @@
             "description": "The model being scaled"
         }
     ],
-    "examples": ["GTR+Rates.Gamma[4]+INV"]
+    "examples": ["GTR+Rates.Gamma[4]+INV"],
+    "title": "The discrete-Gamma rate heterogeneity model",
+    "description": "The describes rate-heterogeneity across sites, where the rates for each site follow a Gamma distribution",
+    "citation":{"type": "article",
+		"title": "Maximum likelihood phylogenetic estimation from DNA sequences with variable rates over sites: approximate methods",
+		"year": "1994",
+		"author": [{"name": "Yang, Ziheng"}],
+		"journal": {"name": "Journal of molecular evolution", "volume": "39", "number": "3", "pages": "306--314"},
+		"identifier": [{"type":"doi","id":"10.1007/BF00160154"}]
+	       }
 }
