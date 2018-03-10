@@ -4,20 +4,20 @@ The --iterations command:
 --iterations <number>
 
 BAli-Phy resamples every parameter and every pairwise alignment
-during each iteration, as well as perform an NNI topology
-proposal across each internal branch.  Iteration numbers in
-BAli-Phy may therefore be lower other software which changes
-only one parameter per iteration.
+during each iteration, as well as performing an NNI topology proposal
+across each internal branch.  Iteration numbers in BAli-Phy may
+therefore be lower that other software which changes only one
+parameter per iteration.
 
 BAli-phy doesn't use a stopping rule, so you need to diagnose
 convergence and stop the MCMC yourself.
 
-If you know how many iterations of MCMC you want, then this
-option allows stopping the MCMC after <number> iterations.
+If you know how many iterations of MCMC you want, then this option
+allows stopping the MCMC after <number> iterations.
 
-To avoid forgotten jobs consuming infinite CPU resources
-on a shared computing cluster, MCMC will stop after 200,000
-iterations if the maximum number of iterations is not specified.
+To avoid forgotten jobs consuming infinite CPU resources on a shared
+computing cluster, MCMC will stop after 200,000 iterations if the
+maximum number of iterations is not specified.
 
 Examples:
 

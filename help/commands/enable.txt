@@ -18,3 +18,7 @@ Examples:
 
   # Enable a disabled MCMC move
   bali-phy dna.fasta --enable=sample_tri_branch
+
+See also:
+
+   enable

@@ -2,14 +2,16 @@ The --test command:
 
 --test                                      Analyze initial values and exit
 
-The test command does the following things:
+The test command makes `bali-phy` exit immediately after doing the
+following things:
+
 1. Show the model and priors.
 2. Display parameter values sampled from the prior.
 3. Display the probability, likelihood, and prior.
-4. Exit without running MCMC.
 
-This can be useful to test that you have specified a model correctly.
+The `--test` command can be useful to test that you have specified a
+model correctly.
 
 Example:
-   bali-phy 5d.fasta --smodel=GTR --test
 
+   bali-phy 5d.fasta --smodel=GTR --test

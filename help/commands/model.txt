@@ -6,19 +6,20 @@ The --model and --Model commands:
 -M      <module>                            Load model from <module>
 --Model <module>
 
-Load a hierarchical model written in Haskell and perform MCMC.
-The 'main' function in the module creates the model. If this
-option is given, the standard phylogeny and alignment
-estimation is not performed.
+Load a hierarchical model written in Haskell and perform MCMC. The
+`main` function in the module creates the model. If this option is
+given, the standard phylogeny and alignment estimation is not
+performed.
 
-If using the --model variant of the command, the module is
-loaded from the haskell file <file>.hs .
+If using the --model variant of the command, the module is loaded
+from the haskell file `<file>.hs`.
 
-If using the --Model variant of the command, the module is
-expected to be an installed module.  BAli-Phy searches for
-installed modules in the package path (See help on 'package-path'),
-which includes ~/.local/share/bali-phy/packages by default.
-You can use the bali-phy-pkg command to install packages.
+If using the --Model variant of the command, the module is expected
+to be an installed module.  BAli-Phy searches for installed modules
+in the package path (See help on 'package-path'), which includes
+`~/.local/share/bali-phy/packages` by default.
+
+You can use the `bali-phy-pkg` command to install packages.
 
 See: http://www.bali-phy.org/models.php
 See: https://github.com/bredelings/BayesianEstimatorSelfing

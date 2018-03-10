@@ -7,12 +7,14 @@ Use <number> as a random seed.  BAli-phy uses this random seed
 to initialize the pseudo-random number generator.
 
 If a seed is not provided, bali-phy will randomly generate a
-different seed each run.  This seed will be recorded in C1.out
+different seed each run.  This seed will be recorded in `C1.out`.
 
 Specfying the random seed is usually used to reproduce a given
 MCMC run over again.  This can be useful when trying to track
 down a bug that occured during a specific run.
 
 Examples:
+
   bali-phy dna.fasta --seed=0
+  
   bali-phy dna.fasta --seed=29606871437703881

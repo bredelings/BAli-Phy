@@ -1,24 +1,26 @@
 The --alphabet command:
 
--A         [partitions:]alphabet            The alphabet.
---alphabet [partitions:]alphabet
+-A         [partitions:]<alphabet>          The alphabet.
+--alphabet [partitions:]<alphabet>
 
 The alphabet can be:
-   "DNA", "RNA", "Amino-Acids", "Numeric", "Triplets", or "Codons"
+   DNA, RNA, Amino-Acids, Numeric, Triplets, Codons
 
 If no partitions are specified, then the alphabet is applied to
-every partition.  The Triplets and Codons alphabets take optional
+every partition.  The --alphabet command can be given multiple times,
+but the same partition cannot be referenced twice.
+
+The Triplets and Codons alphabets take optional
 extra arguments specifying the nucleotide alphabet and genetic code:
 
-    "Triplets[DNA]"           "Codons[RNA,standard]"
-
-See help on Triplets and Codons for more information.
-
-The --alphabet command can be given multiple times, but the same
-partition cannot be referenced twice.
+     Triplets[DNA]            Codons[RNA,standard]
 
 Examples:
+
    --alphabet=DNA
    -A RNA
    --alphabet=1,3:DNA --alphabet=2:Codons
 
+See also:
+
+   Triplets, Codons

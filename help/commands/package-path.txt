@@ -3,27 +3,31 @@ The --package-path command:
 -P             <paths>                      Directories to search.
 --package-path <paths>
 
-BAli-Phy looks in a list of directories to find loadable
-objects, haskell modules, model descriptions, and help files.
+BAli-Phy looks in a list of directories to find loadable objects,
+haskell modules, model descriptions, and help files.
 
-If the exectable 'bali-phy is in the directory <exe>, then the
-default list includes the following, in order, if they exist:
+The default list includes the following (in order) if they exist,
+
   $HOME/.local/share/bali-phy/packages/
   <exe>/../lib/bali-phy/
-where $HOME is the users home directory.
 
-You can supply additional directories to search by supply a
-colon-separated list of directories.  They are searched, in
-order, before the default list.
+where $HOME is the user's home directory, and  <exe> is the directory
+containing the `bali-phy` executable:
 
-Non-existant directories are pruned from the package-path.
-The package-path will be displayed if --verbose is given.
+You can supply additional directories to search by supply a colon-
+separated list of directories.  They are searched, in order, before
+the default list.
 
-For a given package directory <dir>, bali-phy looks in
+Non-existant directories are pruned from the package-path. The
+package-path will be displayed if --verbose is given.
+
+For a given package directory <dir>, bali-phy looks in:
+
   <dir>            - for loadable objects     (*.DLL, *.so).
   <dir>/modules    - for haskell modules      (*.hs)
   <dir>/functions  - for models, functions, distributions (.json)
   <dir>/help       - for help files           (*.txt)
 
 Examples:
+
   bali-phy -P ~/Devel/bali-phy/master/:~/my-packages/ dna.fasta --test -V

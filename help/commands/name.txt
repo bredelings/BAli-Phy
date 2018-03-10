@@ -12,11 +12,12 @@ If the run is named <name>, BAli-Phy attempts to create <name>-1,
 If the <name> is not given, the input-file names are concatenated
 to construct a name.
 
-The <name> is allowed to contain directory separators '/'. Thus
-"--name=hi/there" will create the directory "hi/there-1".  The
-directory "hi" will also be created if it does not exist.
+The <name> is allowed to contain directory separators `/`. Thus
+`--name=hi/there` will create the directory `hi/there-1`.  The
+directory `hi` will also be created if it does not exist.
 
 Examples:
+
   bali-phy dna.fasta aa.fasta --name combined
   bali-phy dna.fasta aa.fasta --name project/combined
   bali-phy dna.fasta aa.fasta --name /home/self/project/combined

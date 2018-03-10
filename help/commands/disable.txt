@@ -29,3 +29,7 @@ Examples:
 
   # Disable SPR
   bali-phy dna.fasta --disable=SPR
+
+See also:
+
+   enable
