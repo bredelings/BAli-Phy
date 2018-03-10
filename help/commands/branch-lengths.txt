@@ -1,4 +1,4 @@
-The --branch-lengths command:
+# The --branch-lengths command:
 
 -B               <prior>                    Prior on branch-lengths.
 --branch-lengths <prior>
@@ -10,13 +10,13 @@ be referenced as the variable T.
 
 The default branch-length prior is:
 
-  ~iid[num_branches[T],Gamma[0.5,Div[2,num_branches[T]]]]
+   ~iid[num_branches[T],Gamma[0.5,Div[2,num_branches[T]]]]
 
 Since the expected total tree length is 1 under this prior, the
 expected total tree length for each partition is given by the
 scale factor.
 
-Examples:
+# Examples:
 
    -B ~iid[num_branches[T],Gamma[0.5,Div[2,num_branches[T]]]]
    

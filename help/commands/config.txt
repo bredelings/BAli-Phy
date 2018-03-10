@@ -1,4 +1,4 @@
-The --config command:
+# The `--config` command:
 
 -c       <file>                              Config file to read.
 --config <file>
@@ -9,32 +9,33 @@ recording the options used in an analysis and re-running analyses.
 Any other command line options will be added after the ones read
 from <file>.
 
-Each option "--command=value" is given on its own line using the
-syntax "command = value".  If the option does not take a value then
-write just "command =".
+Each option `--command <value>" is given on its own line using the
+syntax `command = value`.  If the option does not take a value then
+write just `command =`.
 
-Comments begin with '#', and blank lines are allowed.  Sequence
-data is specified using the command "align".
+Comments begin with `#`, and blank lines are allowed.  Sequence
+data is specified using the command `align`.
 
-Example command:
-  bali-phy --config=script --name=ITS
+# Example command:
 
-Example script:
+   bali-phy --config=script --name=ITS
 
- # Compute probability and exit.
- test =
+# Example script:
 
- # Sequence data for the three partitions.
- align = ITS1.fasta
- align = 5.8S.fasta
- align = ITS2.fasta
+   # Compute probability and exit.
+   test =
 
- # Link the first and third partition's smodel.
- smodel = 1,3:TN+DP[n=3]
+   # Sequence data for the three partitions.
+   align = ITS1.fasta
+   align = 5.8S.fasta
+   align = ITS2.fasta
 
- # The second partition has a fixed alignment.
- smodel = 2:TN
- imodel = 2:none
+   # Link the first and third partition's smodel.
+   smodel = 1,3:TN+DP[n=3]
 
- # Link the first and third partition's scale.
- scale = 1,3:
+   # The second partition has a fixed alignment.
+   smodel = 2:TN
+   imodel = 2:none
+
+   # Link the first and third partition's scale.
+   scale = 1,3:

@@ -1,4 +1,4 @@
-The --smodel command:
+# The `--smodel` command:
 
 -S       [partitions:]<model>               Substitution model.
 --smodel [partitions:]<model>
@@ -29,7 +29,7 @@ they share the same parameter values as well as the same model.
 The --smodel command can be given multiple times, but the same
 partition cannot be referenced twice.
 
-Examples:
+# Examples:
 
    -S HKY
    
@@ -41,6 +41,6 @@ Examples:
    
 In the last example, the substitution models of partitions 1 and 3 are linked.
 
-See also:
+# See also:
 
    parameters, priors, HKY, GTR, Rates.Gamma, INV

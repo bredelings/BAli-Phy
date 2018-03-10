@@ -1,4 +1,4 @@
-The --version command:
+# The `--version` command:
 
 -v                                   Print version information.
 --version

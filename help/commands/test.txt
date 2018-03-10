@@ -1,4 +1,4 @@
-The --test command:
+# The `--test` command:
 
 --test                                      Analyze initial values and exit
 
@@ -12,6 +12,6 @@ following things:
 The `--test` command can be useful to test that you have specified a
 model correctly.
 
-Example:
+# Examples:
 
    bali-phy 5d.fasta --smodel=GTR --test

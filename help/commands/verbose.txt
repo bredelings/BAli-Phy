@@ -1,4 +1,4 @@
-The --verbose command:
+# The `--verbose` command:
 
 -V                                          Analyze initial values and exit
 --verbose

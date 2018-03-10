@@ -1,24 +1,26 @@
-The --enable command:
+# The `--enable` command:
 
 --enable <moves>                            Enable MCMC moves.
 
 Enable some MCMC moves, provided as a comma-separated list.
 
 A hierarchy of MCMC moves, along with whether they are enabled
-or disabled, is displayed in the file "C1.out". 
+or disabled, is displayed in the file `C1.out`. 
 These moves can be enabled or disable by name or attribute.
 
 MCMC moves have attributes that be used to enable them:
-  * topology:         changes the topology
-  * lengths:          changes the branch lengths
-  * alignment:        changes the alignment
+
+ * topology:         changes the topology
+ * lengths:          changes the branch lengths
+ * alignment:        changes the alignment
+
 However, enabling moves by attribute is probably a bad idea.
 
-Examples:
+# Examples:
 
-  # Enable a disabled MCMC move
-  bali-phy dna.fasta --enable=sample_tri_branch
+   # Enable a disabled MCMC move
+   bali-phy dna.fasta --enable=sample_tri_branch
 
-See also:
+# See also:
 
    enable

@@ -1,20 +1,28 @@
-The Codons alphabet:
+# The `Codons` alphabet:
 
 Codons[nucleotides,genetic-code]
 
-The Codons alphabet is used for triplets of DNA or RNA data
+The `Codons` alphabet is used for triplets of DNA or RNA data
 where each triplet is mapped to an amino acid.  Stop codons are
 removed from the alphabet.
 
-The nucleotides argument can be "DNA", "RNA", or missing.  If it
+The nucleotides argument can be `DNA`, `RNA`, or missing.  If it
 is missing, DNA or RNA is guessed based on frequency of
 A,T,G,U, and C in the file.
 
-The genetic code defaults to "standard" if not specified.  See
+The genetic code defaults to `standard` if not specified.  See
 help on "genetic-code" for a list of supported genetic codes.
 
-Examples:
+# Examples:
+
    Codons
+   
    Codons[,mt-vert]
+   
    Codons[RNA]
+   
    Codons[DNA,standard]
+
+# See also:
+
+   Triplets, genetic-code

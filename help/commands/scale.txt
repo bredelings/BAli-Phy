@@ -1,4 +1,4 @@
-The --scale command:
+# The `--scale` command:
 
 -R      [partitions:]<prior>                Prior on the Scale.
 --scale [partitions:]<prior>
@@ -13,7 +13,7 @@ for the scale factor is used.
 
 If no partitions are specified, as in
 
-  --scale=~Gamma[0.5,2]
+   --scale=~Gamma[0.5,2]
 
 then every partition gets a separate scale following the same
 distribution.
@@ -30,10 +30,10 @@ the default scale prior.
 If the scale is specified as a constant, such as `--scale=1`,
 then the scale will not be estimated.
 
-The --scale command can be given multiple times, but the same
+The `--scale` command can be given multiple times, but the same
 partition cannot be referenced twice.
 
-Examples:
+# Examples:
 
    -R ~Gamma[0.5,2]
    

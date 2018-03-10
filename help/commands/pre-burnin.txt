@@ -1,4 +1,4 @@
-The --pre-burnin command:
+# The `--pre-burnin` command:
 
 --pre-burnin <number>                       Number of pre-burnin iterations.
 
@@ -21,13 +21,13 @@ iterations are performed, defaulting to 3 if not specified.
 
 Specifying a value of 0 disables pre-burnin.
 
-Examples:
+# Examples:
 
-  # The default.
-  bali-phy dna.fasta --pre-burnin=3
+   # The default.
+   bali-phy dna.fasta --pre-burnin=3
 
-  # Only do one round of SPR.
-  bali-phy dna.fasta --pre-burnin=1
+   # Only do one round of SPR.
+   bali-phy dna.fasta --pre-burnin=1
 
-  # Disable pre-burnin
-  bali-phy dna.fasta --pre-burnin=0
+   # Disable pre-burnin
+   bali-phy dna.fasta --pre-burnin=0

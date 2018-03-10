@@ -1,4 +1,4 @@
-The --Rao-Blackwellize command:
+# The `--Rao-Blackwellize` command:
 
 --Rao-Blackwellize <parameter>              Rao-Blackwellize a parameter
 
@@ -7,13 +7,19 @@ by printing the expected value conditional on the other parameters.
 This only works when the parameters is directly modifiable.
 (See help for "initial-value").
 
-When Rao-Blackwellizing <parameter>, BAli-Phy creates a new
-parameter called RB-<parameter>.  Each iteration, BAli-Phy
+When Rao-Blackwellizing `<parameter>`, BAli-Phy creates a new
+parameter called `RB-<parameter>`.  Each iteration, BAli-Phy
 writes out
+
    log(E/(1-E)),
+
 where E is the expectation of <parameter> conditional on all
 the other parameters.
 
-Examples:
+# Examples:
 
-  bali-phy bglobin.fasta --smodel=M8a_Test[freq_model=MG94] --Rao-Blackwellize=M8a_Test:posSelection
+   bali-phy bglobin.fasta --smodel=M8a_Test[freq_model=MG94] --Rao-Blackwellize=M8a_Test:posSelection
+
+# See also:
+
+   initial-value

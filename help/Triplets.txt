@@ -1,19 +1,26 @@
-The Triplets alphabet:
+# The Triplets alphabet:
 
 Triplets[nucleotides]
 
 The Triplets alphabet is used for triplets of DNA or RNA data.
 It is like the Codons alphabet, with the difference that:
+
  * stop codons not excluded from a Triplets alphabet.
  * the genetic code is not known by a Triplets alphabet.
+
 Therefore, the Triplets alphabet cannot be used in models that
 estimate dN/dS.
 
-The nucleotides argument can be "DNA", "RNA", or missing.  If it
+The nucleotides argument can be `DNA`, `RNA`, or missing.  If it
 is missing, DNA or RNA is guessed based on frequency of
 A,T,G,U, and C in the file.
 
-Examples:
+# Examples:
+
    Triplets
    Triplets[RNA]
    Triplets[DNA]
+
+# See also:
+
+   Codons

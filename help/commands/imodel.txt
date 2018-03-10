@@ -1,4 +1,4 @@
-The --imodel command:
+# The --imodel command:
 
 -I       [partitions:]<model>               Insertion-deletion model.
 --imodel [partitions:]<model>
@@ -25,16 +25,20 @@ That is, they share the same parameter values for the model.
 The --imodel command can be given multiple times, but the same
 partition cannot be referenced twice.
 
-Examples:
+# Examples:
 
    -I RS07
+
    --imodel=RS07
+
    -I none
+
    --imodel=none
+
    -I 1,3:RS07 -I 2:none
 
 In the last example, the indel models of partitions 1 and 3 are linked.
 
-See also:
+# See also:
 
-  RS07, RS05
+   RS07, RS05

@@ -1,4 +1,4 @@
-The --iterations command:
+# The `--iterations` command:
 
 -i           <number>                       Number of MCMC iterations.
 --iterations <number>
@@ -19,10 +19,10 @@ To avoid forgotten jobs consuming infinite CPU resources on a shared
 computing cluster, MCMC will stop after 200,000 iterations if the
 maximum number of iterations is not specified.
 
-Examples:
+# Examples:
 
-  # Stop after 4000 iterations
-  bali-phy dna.fasta -i 4000
+   # Stop after 4000 iterations
+   bali-phy dna.fasta -i 4000
 
-  # Don't stop after 200000 iterations:
-  bali-phy dna.fasta --iter=100000000000
+   # Don't stop after 200000 iterations:
+   bali-phy dna.fasta --iter=100000000000

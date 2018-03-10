@@ -1,4 +1,4 @@
-The --initial-value command:
+# The --initial-value command:
 
 --initial-value <parameter>=<value>         Initialize parameter value.
 
@@ -8,7 +8,7 @@ can specify it as part of the model.  For example,
 
    bali-phy dna.fasta -I RS07[logLambda=-4]
    
-will set logLambda to a constant.  This approach always works,
+will set `logLambda` to a constant.  This approach always works,
 but will not estimate `logLambda` since the value is fixed at -4.0.
 
 In contrast, setting the initial value allows estimation of the
@@ -37,16 +37,16 @@ Likewise, components of Dirichlet distributions are not modifiable,
 so it is not possible to set the initial values of nucleotide
 frequencies constructed from Dirichlet priors.
 
-Examples:
+# Examples:
 
-  # This works.
-  bali-phy dna.fasta --initial-value RS07:logLambda=-4.0
+   # This works.
+   bali-phy dna.fasta --initial-value RS07:logLambda=-4.0
 
-  # This does not work.
-  bali-phy dna.fasta --initial-value RS07:logLambda=-4
+   # This does not work.
+   bali-phy dna.fasta --initial-value RS07:logLambda=-4
 
-  # This does not work.
-  bali-phy dna.fasta --initial-value TN:kappaPur=4.0
+   # This does not work.
+   bali-phy dna.fasta --initial-value TN:kappaPur=4.0
 
 
 
