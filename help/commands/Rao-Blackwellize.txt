@@ -18,7 +18,7 @@ the other parameters.
 
 # Examples:
 
-   bali-phy bglobin.fasta --smodel=M8a_Test[freq_model=MG94] --Rao-Blackwellize=M8a_Test:posSelection
+   bali-phy bglobin.fasta --smodel=M8a\_Test[freq\_model=MG94] --Rao-Blackwellize=M8a_Test:posSelection
 
 # See also:
 

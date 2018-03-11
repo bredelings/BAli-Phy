@@ -19,7 +19,7 @@ However, enabling moves by attribute is probably a bad idea.
 # Examples:
 
    # Enable a disabled MCMC move
-   bali-phy dna.fasta --enable=sample_tri_branch
+   bali-phy dna.fasta --enable=sample\_tri\_branch
 
 # See also:
 

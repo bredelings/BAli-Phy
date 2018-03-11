@@ -192,10 +192,12 @@ string indent(int indent, const string& text)
 }
 
 const std::string ansi_plain("\033[0m");
-const std::string ansi_under("\033[4m");
-const std::string ansi_under_off("\033[24m");
 const std::string ansi_bold("\033[1m");
-const std::string ansi_bold_off("\033[1m");
+const std::string ansi_under("\033[4m");
+const std::string ansi_inverse("\033[7m");
+const std::string ansi_bold_off("\033[21m");
+const std::string ansi_under_off("\033[24m");
+const std::string ansi_inverse_off("\033[27m");
 const std::string ansi_black("\033[1;30m");
 const std::string ansi_red("\033[1;31m");
 const std::string ansi_green("\033[1;32m");
@@ -204,9 +206,21 @@ const std::string ansi_blue("\033[1;34m");
 const std::string ansi_magenta("\033[1;35m");
 const std::string ansi_cyan("\033[1;36m");
 
+const std::string ansi_bg_grey("\033[1;48;2;180;180;180m");
+
 string bold(const string& line)
 {
     return ansi_bold + line + ansi_plain;
+}
+
+string highlight_bg(const string& line)
+{
+    return ansi_bg_grey + line + ansi_plain;
+}
+
+string inverse(const string& line)
+{
+    return ansi_inverse + line + ansi_inverse_off;
 }
 
 string underline(const string& line)
@@ -433,9 +447,26 @@ bool startswith(const string& s, const string& prefix)
     return (s.substr(0,prefix.size()) == prefix);
 }
 
-string underline_quotes(const string& line)
+string do_quotes(const string& line)
 {
-    return std::regex_replace(line,std::regex("`([^`]*)`"),underline("$1").c_str());
+    return std::regex_replace(line,std::regex("([^\\\\]|^)`([^`]*)`"),string("$1")+inverse("$2").c_str());
+}
+
+string do_double_emph(string line)
+{
+    line = std::regex_replace(line,std::regex("([^\\\\]|^)__([^_ ][^_]*)__"),string("$1")+bold("$2").c_str());
+    return std::regex_replace(line,std::regex("([^\\\\]|^)\\*\\*([^* ][^*]*)\\*\\*"),string("$1")+bold("$2").c_str());
+}
+
+string do_single_emph(string line)
+{
+    line = std::regex_replace(line,std::regex("([^\\\\]|^)\\*([^* ][^*]*)\\*"),string("$1")+underline("$2").c_str());
+    return std::regex_replace(line,std::regex("([^\\\\]|^)_([^_ ][^_]*)_"),string("$1")+underline("$2").c_str());
+}
+
+string do_unescape(const string& line)
+{
+    return std::regex_replace(line,std::regex("\\\\([`_*])"),"$1");
 }
 
 string pseudo_markdown(const string& lines)
@@ -443,12 +474,19 @@ string pseudo_markdown(const string& lines)
     std::ostringstream marked;
     for(auto& line: split(lines,'\n'))
     {
+	bool header = false;
 	if (startswith(line,"# "))
 	{
-	    marked<<ansi_bold<<underline_quotes(line.substr(2))<<ansi_plain<<"\n";
+	    header = true;
+	    line = line.substr(2);
 	}
-	else
-	    marked<<underline_quotes(line)<<"\n";
+	line = do_quotes(line);
+	line = do_double_emph(line);
+	line = do_single_emph(line);
+	line = do_unescape(line);
+	if (header)
+	    line = bold(line);
+	marked<<line<<"\n";
     }
 
     return marked.str();

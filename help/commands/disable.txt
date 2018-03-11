@@ -14,7 +14,7 @@ MCMC moves have attributes that be used to disable them:
  * topology:         changes the topology
  * lengths:          changes the branch lengths
  * alignment:        changes the alignment
- * alignment_branch: change the alignment of leaf sequences
+ * alignment\_branch: change the alignment of leaf sequences
 
 This allows one to fix the topology by writing `--disable=topology`.
 
