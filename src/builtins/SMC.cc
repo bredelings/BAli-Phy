@@ -369,9 +369,7 @@ log_double_t smc(double theta, double rho, const alignment& A)
     }
 
     // # Compute the total likelihood
-    log_double_t Pr = 1;
-    for(int i=0; i < n_bins; i++)
-	Pr += L[i];
+    log_double_t Pr (sum(L));
     Pr.log() += log_scale_min * scale;
     return Pr;
 }
