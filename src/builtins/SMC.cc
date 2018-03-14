@@ -11,6 +11,7 @@
 #include <unsupported/Eigen/MatrixFunctions>
 
 using std::vector;
+using std::pair;
 typedef Eigen::MatrixXd EMatrix;
 
 double cdf(double eta, double t)
@@ -311,10 +312,76 @@ Matrix get_transition_probabilities(const vector<double>& B, const vector<double
     return P;
 }
 
+EMatrix get_no_snp_matrix(const Matrix& T, const vector<Matrix>& emission)
+{
+    // This is only valid for Jukes-Cantor
+    int n_bins = T.size1();
+    EMatrix M(n_bins,n_bins);
+    for(int j=0;j<n_bins;j++)
+	for(int k=0; k<n_bins; k++)
+	    M(j,k) = T(j,k) * emission[k](0,0);
+    return M;
+}
+
+EMatrix get_snp_matrix(const Matrix& T, const vector<Matrix>& emission)
+{
+    // This is only valid for Jukes-Cantor
+    int n_bins = T.size1();
+    EMatrix M(n_bins,n_bins);
+    for(int j=0;j<n_bins;j++)
+	for(int k=0; k<n_bins; k++)
+	    M(j,k) = T(j,k) * emission[k](0,1);
+    return M;
+}
+
+EMatrix get_missing_matrix(const Matrix& T, const vector<Matrix>& emission)
+{
+    // This is only valid for Jukes-Cantor
+    int n_bins = T.size1();
+    EMatrix M(n_bins,n_bins);
+    for(int j=0;j<n_bins;j++)
+	for(int k=0; k<n_bins; k++)
+	    M(j,k) = T(j,k);
+    return M;
+}
 
 constexpr double scale_factor = 115792089237316195423570985008687907853269984665640564039457584007913129639936e0;
 constexpr double scale_min = 1.0/scale_factor;
 constexpr double log_scale_min = -177.445678223345999210811423093293201427328034396225345054e0;
+
+
+enum class site_t {unknown=0,poly,mono,missing};
+
+inline site_t classify_site(int x1, int x2)
+{
+    if (x1 < 0 or x2< 0)
+	return site_t::missing;
+    else if (x1 == x2)
+	return site_t::mono;
+    else
+	return site_t::poly;
+}
+
+void rescale(vector<double>& L, int& scale)
+{
+    const int n_bins = L.size();
+
+    // Check if we need to scale the likelihoods
+    bool need_scale = true;
+    for(int k=0; k < n_bins; k++)
+    {
+	need_scale = need_scale and (L[k] < scale_min);
+	assert(0 <= L[k] and L[k] <= 1.0);
+    }
+
+    // Scale likelihoods if necessary
+    if (need_scale)
+    {
+	scale++;
+	for(int k=0; k < n_bins; k++)
+	    L[k] *= scale_factor;
+    }
+}
 
 log_double_t smc(double theta, double rho, const alignment& A)
 {
@@ -344,65 +411,105 @@ log_double_t smc(double theta, double rho, const alignment& A)
     // # Iteratively compute likelihoods for remaining columns
     const auto transition = get_transition_probabilities(bin_boundaries, bin_times, theta, rho);
 
-    for(int l=1; l < A.length(); l++)
-    {
-	int x0 = A(l,0);
-	int x1 = A(l,1);
+    vector<EMatrix> no_snp;
+    no_snp.push_back(get_no_snp_matrix(transition, emission_probabilities));
+    no_snp.push_back(no_snp[0]*no_snp[0]);
+    vector<EMatrix> snp;
+    snp.push_back(get_snp_matrix(transition, emission_probabilities));
 
-	// Missing data here if (x0 < 0 or x1 < 0) {}
-	if (x0 < 0 or x1 < 0)
+    vector<pair<int,site_t>> sites;
+    for(int l=1; l < A.length();)
+    {
+	site_t s = classify_site(A(l,0),A(l,1));
+	int count = 0;
+
+	do
 	{
-	    for(int k=0; k < n_bins; k++)
+	    l++;
+	    count++;
+	}
+	while(l < A.length() and classify_site(A(l,0),A(l,1)) == s);
+
+	sites.push_back({count,s});
+    }
+
+    for(auto& group: sites)
+    {
+	// Missing data here if (x0 < 0 or x1 < 0) {}
+	if (group.second == site_t::missing)
+	{
+	    for(int i=0;i<group.first;i++)
 	    {
-		double temp = 0;
-		for(int j=0;j<n_bins; j++)
-		    temp += L[j] * transition(j,k);
-		L2[k] = temp;
+		for(int k=0; k < n_bins; k++)
+		{
+		    double temp = 0;
+		    for(int j=0;j<n_bins; j++)
+			temp += L[j] * transition(j,k);
+		    L2[k] = temp;
+		}
+		// Scale likelihoods if necessary
+		rescale(L2, scale);
+
+		// Swap current & next likelihoods
+		std::swap(L, L2);
 	    }
 	}
-	// Not a SNP
-	else if (x1 == x0)
+	else if (group.second == site_t::mono)
 	{
-	    for(int k=0; k < n_bins; k++)
+	    for(int i=0;i<group.first;i++)
 	    {
-		double temp = 0;
-		for(int j=0;j<n_bins; j++)
-		    temp += L[j] * transition(j,k);
-		temp *= emission_probabilities[k]( x0, x1 );
-		L2[k] = temp;
+		auto & M = no_snp[0];
+		if (i+1 < group.first)
+		{
+		    EMatrix M2 = no_snp[1];
+		    for(int k=0; k < n_bins; k++)
+		    {
+			double temp = 0;
+			for(int j=0;j<n_bins; j++)
+			    temp += L[j] * M2(j,k);
+			L2[k] = temp;
+		    }
+		    i++;
+		}
+		else
+		{
+		    for(int k=0; k < n_bins; k++)
+		    {
+			double temp = 0;
+			for(int j=0;j<n_bins; j++)
+			    temp += L[j] * M(j,k);
+			L2[k] = temp;
+		    }
+		}
+		// Scale likelihoods if necessary
+		rescale(L2, scale);
+
+		// Swap current & next likelihoods
+		std::swap(L, L2);
 	    }
 	}
 	// A SNP!
-	else
+	else if (group.second == site_t::poly)
 	{
-	    for(int k=0; k < n_bins; k++)
+	    for(int i=0;i<group.first;i++)
 	    {
-		double temp = 0;
-		for(int j=0;j<n_bins; j++)
-		    temp += L[j] * transition(j,k);
-		temp *= emission_probabilities[k]( x0, x1 );
-		L2[k] = temp;
+		auto & M = snp[0];
+		for(int k=0; k < n_bins; k++)
+		{
+		    double temp = 0;
+		    for(int j=0;j<n_bins; j++)
+			temp += L[j] * M(j,k);
+		    L2[k] = temp;
+		}
+		// Scale likelihoods if necessary
+		rescale(L2, scale);
+
+		// Swap current & next likelihoods
+		std::swap(L, L2);
 	    }
 	}
-
-	// Check if we need to scale the likelihoods
-	bool need_scale = true;
-	for(int k=0; k < n_bins; k++)
-	{
-	    need_scale = need_scale and (L2[k] < scale_min);
-	    assert(0 <= L2[k] and L2[k] <= 1.0);
-	}
-
-	// Scale likelihoods if necessary
-	if (need_scale)
-	{
-	    scale++;
-	    for(int k=0; k < n_bins; k++)
-		L2[k] *= scale_factor;
-	}
-
-	// Swap current & next likelihoods
-	std::swap(L, L2);
+	else
+	    std::abort();
     }
 
     // # Compute the total likelihood
