@@ -441,12 +441,6 @@ string get_help_for_rule(const Rules& rules, const Rule& rule)
     return help.str();
 }
 
-bool startswith(const string& s, const string& prefix)
-{
-    if (s.size() < prefix.size()) return false;
-    return (s.substr(0,prefix.size()) == prefix);
-}
-
 string do_quotes(const string& line)
 {
     return std::regex_replace(line,std::regex("([^\\\\]|^)`([^`]*)`"),string("$1")+inverse("$2").c_str());
