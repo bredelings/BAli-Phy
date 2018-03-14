@@ -311,6 +311,7 @@ Matrix get_transition_probabilities(const vector<double>& B, const vector<double
     return P;
 }
 
+
 constexpr double scale_factor = 115792089237316195423570985008687907853269984665640564039457584007913129639936e0;
 constexpr double scale_min = 1.0/scale_factor;
 constexpr double log_scale_min = -177.445678223345999210811423093293201427328034396225345054e0;
@@ -345,29 +346,62 @@ log_double_t smc(double theta, double rho, const alignment& A)
 
     for(int l=1; l < A.length(); l++)
     {
-	bool need_scale = true;
-
 	int x0 = A(l,0);
 	int x1 = A(l,1);
 
+	// Missing data here if (x0 < 0 or x1 < 0) {}
+	if (x0 < 0 or x1 < 0)
+	{
+	    for(int k=0; k < n_bins; k++)
+	    {
+		double temp = 0;
+		for(int j=0;j<n_bins; j++)
+		    temp += L[j] * transition(j,k);
+		L2[k] = temp;
+	    }
+	}
+	// Not a SNP
+	else if (x1 == x0)
+	{
+	    for(int k=0; k < n_bins; k++)
+	    {
+		double temp = 0;
+		for(int j=0;j<n_bins; j++)
+		    temp += L[j] * transition(j,k);
+		temp *= emission_probabilities[k]( x0, x1 );
+		L2[k] = temp;
+	    }
+	}
+	// A SNP!
+	else
+	{
+	    for(int k=0; k < n_bins; k++)
+	    {
+		double temp = 0;
+		for(int j=0;j<n_bins; j++)
+		    temp += L[j] * transition(j,k);
+		temp *= emission_probabilities[k]( x0, x1 );
+		L2[k] = temp;
+	    }
+	}
+
+	// Check if we need to scale the likelihoods
+	bool need_scale = true;
 	for(int k=0; k < n_bins; k++)
 	{
-	    double temp = 0;
-	    for(int j=0;j<n_bins; j++)
-		temp += L[j] * transition(j,k);
-	    temp *= emission_probabilities[k]( x0, x1 );
-	    L2[k] = temp;
-
-	    need_scale = need_scale and (temp < scale_min);
-
+	    need_scale = need_scale and (L2[k] < scale_min);
 	    assert(0 <= L2[k] and L2[k] <= 1.0);
 	}
+
+	// Scale likelihoods if necessary
 	if (need_scale)
 	{
 	    scale++;
 	    for(int k=0; k < n_bins; k++)
 		L2[k] *= scale_factor;
 	}
+
+	// Swap current & next likelihoods
 	std::swap(L, L2);
     }
 
