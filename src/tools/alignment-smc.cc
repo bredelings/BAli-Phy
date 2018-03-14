@@ -33,10 +33,12 @@
 #include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include "util/assert.hh"
+#include "io.H"
 
 using std::vector;
 using std::valarray;
 using std::map;
+using std::pair;
 using std::string;
 using std::endl;
 
@@ -81,6 +83,23 @@ vector<int> find_triplet(const vector<sequence>& sequences,const string& triplet
     return found;
 }
 
+vector<vector<pair<int,int>>> read_intervals_file(const string& filename)
+{
+    vector<string> lines = split(read_file(filename,"mask file"), '\n');
+    vector<vector<pair<int,int>>> masks;
+    for(const auto& line: lines)
+    {
+	if (startswith(line, ">"))
+	    masks.push_back({});
+	else
+	{
+	    auto x = split<int>(line," - ");
+	    assert(x.size() == 2);
+	    masks.back().push_back({x[0],x[1]});
+	}
+    }
+    return masks;
+}
 
 variables_map parse_cmd_line(int argc,char* argv[]) 
 { 
@@ -93,7 +112,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("align", value<string>(),"file with sequences and initial alignment")
 	("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons")
 	("strip-gaps,S","Remove columns within <arg> columns of a gap")
-	("mask-gaps,M",value<int>()->default_value(0),"Remove columns within <arg> columns of a gap")
+	("mask-gaps,G",value<int>()->default_value(0),"Remove columns within <arg> columns of a gap")
+	("mask-file,M",value<vector<string>>()->composing(),"Apply mask-file")
 	("variant",value<int>()->default_value(1),"Is there a SNP at distance <arg> from SNP?")
 	("dical2","Output file for DiCal2")
 	("msmc","Output file for MSMC")
