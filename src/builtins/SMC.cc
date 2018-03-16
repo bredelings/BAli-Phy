@@ -454,6 +454,35 @@ vector<pair<int,site_t>> classify_sites(const alignment& A)
     return sites;
 }
 
+void smc_group(vector<double>& L, vector<double>& L2, int& scale, const vector<EMatrix>& matrices, int length)
+{
+    const int n_bins = L.size();
+
+    for(int i=0;i<length;)
+    {
+	int left = length - i;
+	int x = silly_log_2(left);
+	x = std::min<int>(x, matrices.size()-1);
+	int taking = silly_power_2(x);
+
+	auto& M = matrices[x];
+	for(int k=0; k < n_bins; k++)
+	{
+	    double temp = 0;
+	    for(int j=0;j<n_bins; j++)
+		temp += L[j] * M(j,k);
+	    L2[k] = temp;
+	}
+	i += taking;
+
+	// Scale likelihoods if necessary
+	rescale(L2, scale);
+
+	// Swap current & next likelihoods
+	std::swap(L, L2);
+    }
+}
+
 log_double_t smc(double theta, double rho, const alignment& A)
 {
     assert(rho >= 0);
@@ -472,10 +501,12 @@ log_double_t smc(double theta, double rho, const alignment& A)
 
     // # Compute the likelihoods for the first column
     const auto pi = get_equilibrium(bin_boundaries, 2.0/theta);
+
     vector<double> L(n_bins);
     vector<double> L2(n_bins);
     int scale = 0;
 
+    // FIXME: I think we should be able to start at site -1 with L[i] = pi[i], if pi[i] is the equilibrium of T(j,k)
     for(int i=0;i< n_bins; i++)
 	L[i] = pi[i] * emission_probabilities[i](A(0,0), A(0,1));
 
@@ -490,71 +521,12 @@ log_double_t smc(double theta, double rho, const alignment& A)
 
     for(auto& group: classify_sites(A))
     {
-	// Missing data here if (x0 < 0 or x1 < 0) {}
 	if (group.second == site_t::missing)
-	{
-	    for(int i=0;i<group.first;i++)
-	    {
-		for(int k=0; k < n_bins; k++)
-		{
-		    double temp = 0;
-		    for(int j=0;j<n_bins; j++)
-			temp += L[j] * transition(j,k);
-		    L2[k] = temp;
-		}
-		// Scale likelihoods if necessary
-		rescale(L2, scale);
-
-		// Swap current & next likelihoods
-		std::swap(L, L2);
-	    }
-	}
+	    smc_group(L, L2, scale, missing, group.first);
 	else if (group.second == site_t::mono)
-	{
-	    for(int i=0;i<group.first;)
-	    {
-		int left = group.first - i;
-		int x = silly_log_2(left);
-		x = std::min<int>(x, no_snp.size()-1);
-		int taking = silly_power_2(x);
-
-		auto& M = no_snp[x];
-		for(int k=0; k < n_bins; k++)
-		{
-		    double temp = 0;
-		    for(int j=0;j<n_bins; j++)
-			temp += L[j] * M(j,k);
-		    L2[k] = temp;
-		}
-		i += taking;
-
-		// Scale likelihoods if necessary
-		rescale(L2, scale);
-
-		// Swap current & next likelihoods
-		std::swap(L, L2);
-	    }
-	}
-	// A SNP!
+	    smc_group(L, L2, scale, no_snp, group.first);
 	else if (group.second == site_t::poly)
-	{
-	    for(int i=0;i<group.first;i++)
-	    {
-		auto & M = snp[0];
-		for(int k=0; k < n_bins; k++)
-		{
-		    double temp = 0;
-		    for(int j=0;j<n_bins; j++)
-			temp += L[j] * M(j,k);
-		    L2[k] = temp;
-		}
-		// Scale likelihoods if necessary
-		rescale(L2, scale);
-
-		// Swap current & next likelihoods
-		std::swap(L, L2);
-	    }
-	}
+	    smc_group(L, L2, scale, snp, group.first);
 	else
 	    std::abort();
     }
