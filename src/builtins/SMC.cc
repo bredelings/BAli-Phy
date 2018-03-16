@@ -383,6 +383,57 @@ void rescale(vector<double>& L, int& scale)
     }
 }
 
+bool too_small(const EMatrix& M)
+{
+    for(int j=0;j<M.rows();j++)
+    {
+	double max_k = 0;
+	for(int k=0;k<M.cols();k++)
+	    max_k = std::max(max_k,M(j,k));
+	if (max_k < scale_min)
+	    return true;
+    }
+    return false;
+}
+
+EMatrix square(const EMatrix& M)
+{
+    return M*M;
+}
+
+int silly_log_2(int i)
+{
+    assert(i > 0);
+    int count = 0;
+    while (i>>1)
+    {
+	i>>=1;
+	count++;
+    };
+    return count;
+}
+
+int silly_power_2(int i)
+{
+    return (1<<i);
+}
+
+vector<EMatrix> matrix_binary_power(const EMatrix& M, int L)
+{
+    vector<EMatrix> P {M};
+
+    do {
+	P.push_back(square(P.back()));
+	if (too_small(P.back()))
+	{
+	    P.pop_back();
+	    break;
+	}
+    } while(std::pow(2,P.size()) < L);
+
+    return P;
+}
+
 log_double_t smc(double theta, double rho, const alignment& A)
 {
     assert(rho >= 0);
@@ -411,9 +462,8 @@ log_double_t smc(double theta, double rho, const alignment& A)
     // # Iteratively compute likelihoods for remaining columns
     const auto transition = get_transition_probabilities(bin_boundaries, bin_times, theta, rho);
 
-    vector<EMatrix> no_snp;
-    no_snp.push_back(get_no_snp_matrix(transition, emission_probabilities));
-    no_snp.push_back(no_snp[0]*no_snp[0]);
+    vector<EMatrix> no_snp = matrix_binary_power(get_no_snp_matrix(transition, emission_probabilities), A.length());
+
     vector<EMatrix> snp;
     snp.push_back(get_snp_matrix(transition, emission_probabilities));
 
@@ -456,31 +506,23 @@ log_double_t smc(double theta, double rho, const alignment& A)
 	}
 	else if (group.second == site_t::mono)
 	{
-	    for(int i=0;i<group.first;i++)
+	    for(int i=0;i<group.first;)
 	    {
-		auto & M = no_snp[0];
-		if (i+1 < group.first)
+		int left = group.first - i;
+		int x = silly_log_2(left);
+		x = std::min<int>(x, no_snp.size()-1);
+		int taking = silly_power_2(x);
+
+		auto& M = no_snp[x];
+		for(int k=0; k < n_bins; k++)
 		{
-		    EMatrix M2 = no_snp[1];
-		    for(int k=0; k < n_bins; k++)
-		    {
-			double temp = 0;
-			for(int j=0;j<n_bins; j++)
-			    temp += L[j] * M2(j,k);
-			L2[k] = temp;
-		    }
-		    i++;
+		    double temp = 0;
+		    for(int j=0;j<n_bins; j++)
+			temp += L[j] * M(j,k);
+		    L2[k] = temp;
 		}
-		else
-		{
-		    for(int k=0; k < n_bins; k++)
-		    {
-			double temp = 0;
-			for(int j=0;j<n_bins; j++)
-			    temp += L[j] * M(j,k);
-			L2[k] = temp;
-		    }
-		}
+		i += taking;
+
 		// Scale likelihoods if necessary
 		rescale(L2, scale);
 
