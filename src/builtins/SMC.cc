@@ -434,6 +434,26 @@ vector<EMatrix> matrix_binary_power(const EMatrix& M, int L)
     return P;
 }
 
+vector<pair<int,site_t>> classify_sites(const alignment& A)
+{
+    vector<pair<int,site_t>> sites;
+    for(int l=1; l < A.length();)
+    {
+	site_t s = classify_site(A(l,0),A(l,1));
+	int count = 0;
+
+	do
+	{
+	    l++;
+	    count++;
+	}
+	while(l < A.length() and classify_site(A(l,0),A(l,1)) == s);
+
+	sites.push_back({count,s});
+    }
+    return sites;
+}
+
 log_double_t smc(double theta, double rho, const alignment& A)
 {
     assert(rho >= 0);
@@ -464,26 +484,11 @@ log_double_t smc(double theta, double rho, const alignment& A)
 
     vector<EMatrix> no_snp = matrix_binary_power(get_no_snp_matrix(transition, emission_probabilities), A.length());
 
-    vector<EMatrix> snp;
-    snp.push_back(get_snp_matrix(transition, emission_probabilities));
+    vector<EMatrix> missing = matrix_binary_power(get_missing_matrix(transition), A.length());
 
-    vector<pair<int,site_t>> sites;
-    for(int l=1; l < A.length();)
-    {
-	site_t s = classify_site(A(l,0),A(l,1));
-	int count = 0;
+    vector<EMatrix> snp = matrix_binary_power(get_snp_matrix(transition, emission_probabilities), A.length());
 
-	do
-	{
-	    l++;
-	    count++;
-	}
-	while(l < A.length() and classify_site(A(l,0),A(l,1)) == s);
-
-	sites.push_back({count,s});
-    }
-
-    for(auto& group: sites)
+    for(auto& group: classify_sites(A))
     {
 	// Missing data here if (x0 < 0 or x1 < 0) {}
 	if (group.second == site_t::missing)
