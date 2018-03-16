@@ -89,6 +89,8 @@ vector<vector<pair<int,int>>> read_intervals_file(const string& filename)
     vector<vector<pair<int,int>>> masks;
     for(const auto& line: lines)
     {
+	if (line.empty()) continue;
+
 	if (startswith(line, ">"))
 	    masks.push_back({});
 	else
@@ -112,7 +114,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("align", value<string>(),"file with sequences and initial alignment")
 	("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons")
 	("strip-gaps,S","Remove columns within <arg> columns of a gap")
-	("mask-gaps,G",value<int>()->default_value(0),"Remove columns within <arg> columns of a gap")
+	("mask-gaps,G",value<int>(),"Remove columns within <arg> columns of a gap")
 	("mask-file,M",value<vector<string>>()->composing(),"Apply mask-file")
 	("variant",value<int>()->default_value(1),"Is there a SNP at distance <arg> from SNP?")
 	("dical2","Output file for DiCal2")
@@ -602,6 +604,30 @@ int autoclean(alignment& A)
 }
 
 
+vector<int> expand_intervals(const vector<pair<int,int>>& intervals)
+{
+    vector<int> seq;
+    for(auto& I: intervals)
+	for(int i=I.first;i<=I.second;i++)
+	    seq.push_back(i);
+    return seq;
+}
+
+void mask_columns(alignment& A, const vector<int>& columns)
+{
+    for(int c: columns)
+	mask_column(A,c);
+}
+
+void mask_intervals(const vector<vector<pair<int,int>>>& intervals, alignment& A)
+{
+    for(int i=0;i<intervals.size();i++)
+    {
+	auto& I = intervals[i];
+	mask_columns(A, expand_intervals(I));
+    }
+}
+
 int main(int argc,char* argv[]) 
 { 
     try {
@@ -617,6 +643,16 @@ int main(int argc,char* argv[])
 	auto A = A0;
 	const alphabet& a = A.get_alphabet();
     
+
+	if (args.count("mask-file"))
+	{
+	    for(auto& filename: args["mask-file"].as<vector<string>>())
+	    {
+		auto intervals = read_intervals_file(filename);
+		mask_intervals(intervals, A);
+	    }
+	}
+
 	if (args.count("autoclean"))
 	    autoclean(A);
 
@@ -699,7 +735,8 @@ int main(int argc,char* argv[])
 	else if (args.count("dical2"))
 	    write_dical2(std::cout,A);
 	else
-	    std::cout<<A<<std::endl;
+	    std::cout<<A;
+	std::cout.flush();
 
 	if (A.length() != A0.length())
 	    std::cerr<<"Length changed from "<<A0.length()<<" to "<<A.length()<<"\n";
@@ -716,7 +753,7 @@ int main(int argc,char* argv[])
 	// MASK columns instead of REMOVING them if they are w/in some distance of gap;
     }
     catch (std::exception& e) {
-	cerr<<"alignment-info: Error! "<<e.what()<<endl;
+	cerr<<"alignment-smc: Error! "<<e.what()<<endl;
 	exit(1);
     }
     return 0;
