@@ -334,7 +334,7 @@ EMatrix get_snp_matrix(const Matrix& T, const vector<Matrix>& emission)
     return M;
 }
 
-EMatrix get_missing_matrix(const Matrix& T, const vector<Matrix>& emission)
+EMatrix get_missing_matrix(const Matrix& T)
 {
     // This is only valid for Jukes-Cantor
     int n_bins = T.size1();
