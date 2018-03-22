@@ -192,7 +192,7 @@ string short_description()
 
 string usage()
 {
-    return "Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]";
+    return "Usage: bali-phy <sequence-file1> [<sequence-file2> ...] [OPTIONS]";
 }
 
 variables_map parse_cmd_line(int argc,char* argv[]) 
