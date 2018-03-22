@@ -69,33 +69,47 @@ variables_map parse_cmd_line(int argc,char* argv[])
   using namespace po;
 
   // named options
-  options_description all("Allowed options");
-  all.add_options()
-    ("help,h", "produce help message")
-    ("alignment1", value<string>(),"First alignment")
-    ("alignment2", value<string>(),"Second alignment")
-    ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
+  options_description invisible("Invisible options");
+  invisible.add_options()
+      ("alignment1", value<string>(),"First alignment")
+      ("alignment2", value<string>(),"Second alignment");
+
+  options_description general("General options");
+  general.add_options()
+      ("help,h", "produce help message");
+
+  options_description input("Input options");
+  input.add_options()
+      ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets");
+      
+  options_description output("Output options");
+  output.add_options()
     ("merge","Stack the two alignments into one alignment with duplicate names")
     ("dual","Write out the two aligned alignments separately")
     ("fill",value<string>()->default_value("gap"),"blank columns filled with: gap or unknown")
     ("differences-file,d",value<string>(),"Filename to store differences in AU format")
     ;
 
+  options_description all("All options");
+  all.add(invisible).add(general).add(input).add(output);
+
   // positional options
   positional_options_description p;
   p.add("alignment1", 1);
   p.add("alignment2", 2);
-  
-  variables_map args;     
+
+  variables_map args;
   store(command_line_parser(argc, argv).
 	    options(all).positional(p).run(), args);
   // store(parse_command_line(argc, argv, desc), args);
-  notify(args);    
+  notify(args);
 
   if (args.count("help")) {
     cout<<"Align two alignments for comparison.\n\n";
-    cout<<"Usage: alignment-align alignment-file1 alignment-file2 ... [OPTIONS] < alignments-file\n\n";
-    cout<<all<<"\n";
+    cout<<"Usage: alignments-diff alignment-file1 alignment-file2 [OPTIONS]\n\n";
+    cout<<general<<"\n";
+    cout<<input<<"\n";
+    cout<<output<<"\n";
     exit(0);
   }
 
