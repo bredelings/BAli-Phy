@@ -160,7 +160,15 @@ However, note that this might conflict with R installed from other places, such 
     </section>
 
     <section><info><title>Install on Linux</title></info>
-    <section><info><title>Install BAli-Phy using executables from website</title></info>
+
+    <section><info><title>Install BAli-Phy using <command>apt-get</command> (recommended if using <emphasis>Debian: unstable</emphasis>)</title></info>
+    <screen><prompt>%</prompt> <userinput>sudo apt-get install bali-phy</userinput></screen>
+    Check that the executable runs:
+    <screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
+    If you install with <command>apt-get</command>, you don't need to do anything extra to put bali-phy in your PATH.
+    </section>
+
+    <section><info><title>Install BAli-Phy using executables from website (alternative)</title></info>
 
     <para>First install <command>wget</command>.  If you have Debian or Ubuntu Linux, type:
     <screen><prompt>%</prompt> <userinput>sudo apt-get install wget</userinput></screen>
