@@ -8,7 +8,7 @@ bali-phy -- Bayesian Alignment and Phylogeny estimation using MCMC
 
 # SYNOPSIS
 
-**bali-phy** _sequence-file1_ [_sequence-file2_ ... ] [_OPTIONS_]
+**bali-phy** _sequence-file1_ [_sequence-file2_ ...] [_OPTIONS_]
 
 **bali-phy** help _topic_
 
