@@ -1,32 +1,30 @@
-% alignment-align(1)
+% alignments-diff(1)
 % Benjamin Redelings
 % Feb 2018
 
 # NAME
 
-**alignment-align** -- Align two alignments for comparison.
+**alignments-diff** -- Align two alignments for comparison.
 
 # SYNOPSIS
 
-**alignment-align** alignment-file1 alignment-file2 ... [OPTIONS] < alignments-file
+**alignments-diff** alignment-file1 alignment-file2 [OPTIONS]
 
 # DESCRIPTION
 
 Align two alignments for comparison.
 
-# ALLOWED OPTIONS:
+# GENERAL OPTIONS:
 **-h**, **--help**
 : produce help message
 
-**--alignment1** _arg_
-: First alignment
 
-**--alignment2** _arg_
-: Second alignment
-
+# INPUT OPTIONS:
 **--alphabet** _arg_
 : set to 'Codons' to prefer codon alphabets
 
+
+# OUTPUT OPTIONS:
 **--merge**
 : Stack the two alignments into one alignment with duplicate names
 
