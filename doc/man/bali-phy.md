@@ -17,8 +17,7 @@ bali-phy -- Bayesian Alignment and Phylogeny estimation using MCMC
 **bali-phy** estimates multiple sequence alignments and evolutionary trees
  from DNA, amino acid, or codon sequences.  BAli-Phy uses MCMC and Bayesian
  methods to estimate evolutionary trees, positive selection, and branch
- lengths while averaging over alternative alignments. BAli-Phy can display
- alignment ambiguity graphically in an alignment uncertainty (AU) plot.
+ lengths while averaging over alternative alignments.
 
  BAli-Phy can also estimate phylogenies from a fixed alignment (like MrBayes
  and BEAST) using substitution models like GTR+gamma.  BAli-Phy automatically
