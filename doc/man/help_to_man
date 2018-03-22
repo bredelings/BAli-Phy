@@ -102,6 +102,10 @@ for option_group in help['options']:
             value = value if value else ''
             has_short = (len(option) == 5)
             description = option[-1].replace('[','\[').replace(']','\]')
+
+            # Change <arg> to _arg>
+            description = re.sub(r'<([^\s>][^>]*[^\s>])>',r'_\1_',description)
+
             if has_short:
                 print("**-{}**{}{}, ".format(option[1],arg,value),end="")
             print("**--{}**{}{}\n: {}\n".format(option[0],arg,value,description))
