@@ -8,60 +8,37 @@
 
 # SYNOPSIS
 
-**alignment-thin** _alignment-file_
+**alignment-thin** _alignment-file_ [OPTIONS]
 
 # DESCRIPTION
 
 Remove sequences or columns from an alignment.
 
-# ALLOWED OPTIONS:
+# GENERAL OPTIONS:
 **-h**, **--help**
-: produce help message
-
-**--align** _arg_
-: file with sequences and initial alignment
-
-**--find-dups** _arg_
-: for each other sequence, find the closest sequence
-
-**--cutoff** _arg_
-: only leave taxa with more mismatches than this value
-
-**--longer-than** _arg_
-: only leave taxa w/ sequences longer than this
-
-**--shorter-than** _arg_
-: only leave taxa w/ sequences shorter than this
-
-**--down-to** _arg_
-: number of taxa to keep
-
-**--keep** _arg_
-: comma-separated list of taxon names to keep - remove others
-
-**--min-letters** _arg_
-: Remove columns with fewer letters.
+: Print usage information.
 
 **-v**, **--verbose**
 : Output more log messages on stderr.
 
-**--show-lengths**
-: just print out sequence lengths
 
-**--sort**
-: Sort partially ordered columns to minimize the number of visible indels.
+# SEQUENCE FILTERING OPTIONS:
+**--min-letters** _arg_
+: Remove columns with fewer than _arg_ letters.
 
 **--remove-unique** _arg_
-: Remove insertions in a single sequence if longer than this many letters
+: Remove insertions in a single sequence if longer than _arg_ letters
 
-**--remove-crazy** _arg_
-: Remove sequence that have deleted conserved sites
 
-**--remove** _arg_
-: comma-separated list of taxon names to remove
+# OUTPUT OPTIONS:
+**--sort**
+: Sort partially ordered columns to group similar gaps.
 
-**--conserved-fraction** _arg_ (=0.75)
-: Fraction of sequences that must contain a letter for it to be considered conserved.
+**--show-lengths**
+: Just print out sequence lengths.
+
+**--find-dups** _arg_
+: For each sequence, find the closest other sequence.
 
 
 # REPORTING BUGS:

@@ -52,40 +52,58 @@ variables_map parse_cmd_line(int argc,char* argv[])
     using namespace po;
 
     // named options
-    options_description all("Allowed options");
-    all.add_options()
-	("help,h", "produce help message")
-	("align", value<string>(),"file with sequences and initial alignment")
-	("find-dups", value<string>(),"for each other sequence, find the closest sequence")
-	("cutoff",value<unsigned>(),"only leave taxa with more mismatches than this value")
-	("longer-than",value<unsigned>(),"only leave taxa w/ sequences longer than this")
-	("shorter-than",value<unsigned>(),"only leave taxa w/ sequences shorter than this")
-	("down-to",value<int>(),"number of taxa to keep")
-	("keep",value<string>(),"comma-separated list of taxon names to keep - remove others")
-	("min-letters",value<int>(),"Remove columns with fewer letters.")
-	("verbose,v","Output more log messages on stderr.")
-	("show-lengths","just print out sequence lengths")
-	("sort","Sort partially ordered columns to minimize the number of visible indels.")
-	("remove-unique",value<int>(),"Remove insertions in a single sequence if longer than this many letters")
-	("remove-crazy",value<int>(),"Remove sequence that have deleted conserved sites")
-	("remove",value<string>(),"comma-separated list of taxon names to remove")
-	("conserved-fraction",value<double>()->default_value(0.75),"Fraction of sequences that must contain a letter for it to be considered conserved.")
+    options_description general("General options");
+    general.add_options()
+	("help,h", "Print usage information.")
+	("verbose,v","Output more log messages on stderr.");
+
+    options_description invisible("Invisible options");
+    invisible.add_options()
+	("align", value<string>(),"file with sequences and initial alignment");
+
+    options_description seq_filter("Sequence filtering options");
+    seq_filter.add_options()
+	("cutoff",value<unsigned>(),"Keep only sequence with more mismatches than <arg>.")
+	("longer-than",value<unsigned>(),"Keep only sequences longer than <arg>.")
+	("shorter-than",value<unsigned>(),"Keep only sequence sequences shorter than <arg>.")
+	("keep",value<string>(),"Keep only sequences in comma-separated list <arg>.")
+	("remove",value<string>(),"Remove sequences in comma-separated list <arg>.")
+	("down-to",value<int>(),"Remove similar sequences down to <arg> sequences.")
+	("remove-crazy",value<int>(),"Remove <arg> sequences that are missing too many conserved sites.")
+	("conserved",value<double>()->default_value(0.75),"Fraction of sequences that must contain a letter for it to be considered conserved.")
 	;
+
+    options_description col_filter("Sequence filtering options");
+    col_filter.add_options()
+	("min-letters",value<int>(),"Remove columns with fewer than <arg> letters.")
+	("remove-unique",value<int>(),"Remove insertions in a single sequence if longer than <arg> letters");
+
+    options_description output("Output options");
+    output.add_options()
+	("sort","Sort partially ordered columns to group similar gaps.")
+	("show-lengths","Just print out sequence lengths.")
+	("find-dups", value<string>(),"For each sequence, find the closest other sequence.");
 
     // positional options
     positional_options_description p;
     p.add("align", 1);
   
-    variables_map args;     
+    variables_map args;
+    options_description all("All options");
+    all.add(general).add(invisible).add(seq_filter).add(col_filter).add(output);
+
     store(command_line_parser(argc, argv).
 	  options(all).positional(p).run(), args);
     // store(parse_command_line(argc, argv, desc), args);
-    notify(args);    
+    notify(args);
 
     if (args.count("help")) {
 	cout<<"Remove sequences or columns from an alignment.\n\n";
-	cout<<"Usage: alignment-thin <alignment-file>\n\n";
-	cout<<all<<"\n";
+	cout<<"Usage: alignment-thin <alignment-file> [OPTIONS]\n\n";
+	cout<<general<<"\n";
+	cout<<seq_filter<<"\n";
+	cout<<col_filter<<"\n";
+	cout<<output<<"\n";
 	exit(0);
     }
 
@@ -380,7 +398,7 @@ int main(int argc,char* argv[])
 	if (args.count("remove-crazy"))
 	{
 	    int n_remove = args["remove-crazy"].as<int>();
-	    double conserved_fraction = args["conserved-fraction"].as<double>();
+	    double conserved_fraction = args["conserved"].as<double>();
 
 	    vector<int> conserved(A.n_sequences());
 	    int n_conserved_columns=0;
