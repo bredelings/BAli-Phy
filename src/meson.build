@@ -92,7 +92,8 @@ subdir('builtins')
 
 simple_tools = ['model_P','statreport','stats-select','alignment-gild','alignment-consensus', 'alignment-max','alignment-chop-internal',
 		'alignment-indices','alignment-info','alignment-cat','alignment-translate','alignment-find','trees-consensus',
-		'tree-mean-lengths','mctree-mean-lengths','trees-to-SRQ','pickout','subsample','cut-range','trees-distances', 'alignment-thin'
+		'tree-mean-lengths','mctree-mean-lengths','trees-to-SRQ','pickout','subsample','cut-range','trees-distances', 'alignment-thin',
+		'alignments-diff'
 	       ]
 
 foreach tool: simple_tools
