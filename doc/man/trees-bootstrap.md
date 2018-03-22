@@ -4,7 +4,7 @@
 
 # NAME
 
-**trees-bootstrap** -- Usage: trees-bootstrap <file1> [<file2> ... ] --predicates <predicate file> [OPTIONS]
+**trees-bootstrap** -- Compare support for partitions between different files.
 
 # SYNOPSIS
 
@@ -12,7 +12,7 @@
 
 # DESCRIPTION
 
-Usage: trees-bootstrap <file1> [<file2> ... ] --predicates <predicate file> [OPTIONS]
+Compare support for partitions between different files.
 
 # INPUT OPTIONS:
 **-h**, **--help**
