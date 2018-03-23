@@ -38,7 +38,7 @@ using std::vector;
 using boost::dynamic_bitset;
 using namespace A2;
 
-boost::shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P,int b) 
+boost::shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P, const indel::PairHMM& hmm, int b) 
 {
     assert(P.variable_alignment());
 
@@ -72,8 +72,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P
     state_emit[3] |= 0;
 
     boost::shared_ptr<DPmatrixSimple> 
-	Matrices( new DPmatrixSimple(HMM(state_emit, P.get_branch_HMM(b).start_pi(),
-					 P.get_branch_HMM(b), P.get_beta()),
+	Matrices( new DPmatrixSimple(HMM(state_emit, hmm.start_pi(), hmm, P.get_beta()),
 				     std::move(dists1), std::move(dists2), P.WeightedFrequencyMatrix())
 	    );
 
@@ -95,6 +94,11 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P
     P.set_pairwise_alignment(b, A2::get_pairwise_alignment_from_path(path));
 
     return Matrices;
+}
+
+boost::shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P, int b)
+{
+    return sample_alignment_base(P, P.get_branch_HMM(b), b);
 }
 
 void sample_alignment(Parameters& P,int b)
