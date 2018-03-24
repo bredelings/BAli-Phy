@@ -38,7 +38,7 @@ using std::vector;
 using boost::dynamic_bitset;
 using namespace A2;
 
-boost::shared_ptr<DPmatrixSimple> sample_alignment_forward(mutable_data_partition P, const indel::PairHMM& hmm, int b)
+boost::shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const indel::PairHMM& hmm, int b)
 {
     assert(P.variable_alignment());
 
