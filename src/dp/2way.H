@@ -105,6 +105,8 @@ namespace A2 {
     pairwise_alignment_t get_pairwise_alignment(const matrix<int>& A, int n1, int n2);
 
     pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& path);
+
+    std::vector<int> get_path_from_pairwise_alignment(const pairwise_alignment_t& A);
 }
 
 pairwise_alignment_t get_pairwise_alignment_from_bits(const std::vector<HMM::bitmask_t>& bit_path, int n1, int n2);

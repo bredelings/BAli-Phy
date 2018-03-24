@@ -169,6 +169,20 @@ namespace A2
 	return pi;
     }
 
+    vector<int> get_path_from_pairwise_alignment(const pairwise_alignment_t& A)
+    {
+	vector<int> path;
+	path.reserve(A.size()+1);
+
+	// Add the non-silent states
+	for(int i=0;i<A.size();i++)
+	    path.push_back(A.get_state(i));
+
+	// Add the E at the end of the path.
+	path.push_back(A2::states::E);
+
+	return path;
+    }
 }
 
 class graph_alignment
