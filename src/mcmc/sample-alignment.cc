@@ -92,8 +92,6 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P
 
     vector<int> path = Matrices->sample_path();
 
-    path.erase(path.begin()+path.size()-1);
-
     P.set_pairwise_alignment(b, A2::get_pairwise_alignment_from_path(path));
 
     return Matrices;

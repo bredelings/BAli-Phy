@@ -162,9 +162,14 @@ namespace A2
 
     pairwise_alignment_t get_pairwise_alignment_from_path(const vector<int>& path)
     {
+	// Path should end in an E state.
+	assert(path.size() > 0 and path.back() == A2::states::E);
+
 	pairwise_alignment_t pi;
-	pi.reserve(path.size() );
-	for(int c=0;c<path.size();c++)
+	int L = path.size()-1;
+	assert(L >= 0);
+	pi.reserve(L);
+	for(int c=0;c<L;c++)
 	    pi.push_back(path[c]);
 	return pi;
     }
