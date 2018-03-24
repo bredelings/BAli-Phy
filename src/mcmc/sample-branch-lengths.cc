@@ -47,19 +47,19 @@ bool do_MH_move(owned_ptr<Model>& P,
     return success;
 }
 
-double branch_twiddle(double& T,double sigma) {
+log_double_t branch_twiddle(double& T,double sigma) {
     T += gaussian(0,sigma);
     return 1;
 }
 
-double branch_twiddle_positive(double& T,double sigma) {
-    double ratio = branch_twiddle(T,sigma);
+log_double_t branch_twiddle_positive(double& T,double sigma) {
+    auto ratio = branch_twiddle(T,sigma);
     T = abs(T);
     return ratio;
 }
 
 MCMC::Result change_branch_length_(owned_ptr<Model>& P,int b,double sigma,
-				   double (*twiddle)(double&,double)) 
+				   log_double_t (*twiddle)(double&,double)) 
 {
     MCMC::Result result(3);
   
@@ -67,7 +67,7 @@ MCMC::Result change_branch_length_(owned_ptr<Model>& P,int b,double sigma,
     const double length = P.as<const Parameters>()->t().branch_length(b);
     double newlength = length;
 
-    double ratio = twiddle(newlength,sigma);
+    auto ratio = twiddle(newlength,sigma);
   
     //---------- Construct proposed Tree ----------//
     owned_ptr<Model> P2  = P;
@@ -196,7 +196,7 @@ void change_branch_length_and_T(owned_ptr<Model>& P,MoveStats& Stats,int b)
     //------------- Propose new length --------------//
     const double length = PP.t().branch_length(b);
     double newlength = length;
-    double ratio = branch_twiddle(newlength,PP.branch_mean()*0.6);
+    auto ratio = branch_twiddle(newlength,PP.branch_mean()*0.6);
 
     //----- positive  =>  propose length change -----//
     if (newlength >= 0) 
@@ -254,7 +254,7 @@ void change_branch_length_and_T(owned_ptr<Model>& P,MoveStats& Stats,int b)
     Stats.inc("change_branch_length_and_T",result);
 }
 
-double slide_node_no_expand_branch(vector<double>& lengths,double) 
+log_double_t slide_node_no_expand_branch(vector<double>& lengths,double) 
 {
     double L = lengths[0] + lengths[1];
 
@@ -265,9 +265,9 @@ double slide_node_no_expand_branch(vector<double>& lengths,double)
 }
 
 
-double slide_node_expand_branch(vector<double>& lengths,double sigma) 
+log_double_t slide_node_expand_branch(vector<double>& lengths,double sigma) 
 {
-    double ratio = exp( gaussian(0,sigma) );
+    auto ratio = exp_to<log_double_t>( gaussian(0,sigma) );
 
     double L = (lengths[0] + lengths[1]) * ratio;
 
@@ -279,7 +279,7 @@ double slide_node_expand_branch(vector<double>& lengths,double sigma)
 
 bool slide_node(owned_ptr<Model>& P,
 		const vector<int>& branches,
-		double (*slide)(vector<double>&,double)
+		log_double_t (*slide)(vector<double>&,double)
     ) 
 {
     auto t = P.as<Parameters>()->t();
@@ -293,7 +293,7 @@ bool slide_node(owned_ptr<Model>& P,
     lengths[1] = t.branch_length(branches[1]);
 
     double sigma = P->load_value("slide_node_sigma",0.3);
-    double ratio = slide(lengths,sigma);
+    auto ratio = slide(lengths,sigma);
 
     //---------------- Propose new lengths ---------------//
     owned_ptr<Model> P2 = P;
@@ -462,7 +462,7 @@ void change_3_branch_lengths(owned_ptr<Model>& P,MoveStats& Stats,int n)
 
     //----------- Propose new distances -------------//
     double sigma = P->load_value("log_branch_sigma",0.6)/2.0;
-    double ratio = 1.0;
+    log_double_t ratio = 1.0;
 
     double T1_ = T1;
     double T2_ = T2;
@@ -470,9 +470,9 @@ void change_3_branch_lengths(owned_ptr<Model>& P,MoveStats& Stats,int n)
 
     for(int i=0;i<20;i++) 
     {
-	double R12 = exp(gaussian(0,sigma));
-	double R23 = exp(gaussian(0,sigma));
-	double R31 = exp(gaussian(0,sigma));
+	auto R12 = exp_to<log_double_t>(gaussian(0,sigma));
+	auto R23 = exp_to<log_double_t>(gaussian(0,sigma));
+	auto R31 = exp_to<log_double_t>(gaussian(0,sigma));
 
 	double S12_ = S12 * R12;
 	double S23_ = S23 * R23;

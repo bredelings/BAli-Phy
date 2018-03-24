@@ -23,18 +23,19 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include "object.H"
+#include "math/log-double.H"
 
-double scale_gaussian(double& x,double sigma);
+log_double_t scale_gaussian(double& x,double sigma);
 
 #include "models/parameters.H"
 
 class Proposal: public Object {
 public:
     Proposal* clone() const =0;
-    virtual double operator()(Model& P) const=0;
+    virtual log_double_t operator()(Model& P) const=0;
 };
 
-typedef std::function<double(Model& P)> generic_proposal_t;
+typedef std::function<log_double_t(Model& P)> generic_proposal_t;
 
 class Generic_Proposal: public Proposal
 {
@@ -42,13 +43,13 @@ class Generic_Proposal: public Proposal
   
 public:
     Generic_Proposal* clone() const {return new Generic_Proposal(*this);}
-    double operator()(Model& P) const {return proposal(P);}
+    log_double_t operator()(Model& P) const {return proposal(P);}
     Generic_Proposal(generic_proposal_t gp):proposal(gp) {}
 };
 
 // This type of proposal can't check if arguments are fixed, and therefore must assume that they are
 // all variable.  Therefore, it can't have any fixed arguments.
-typedef double (*proposal_fn)(std::vector< expression_ref >& x,const std::vector<double>& p);
+typedef log_double_t (*proposal_fn)(std::vector< expression_ref >& x,const std::vector<double>& p);
 
 // This wrapper class therefore cannot have any fixed arguments.
 class Proposal_Fn
@@ -57,7 +58,7 @@ class Proposal_Fn
 public:
     virtual Proposal_Fn* clone() const {return new Proposal_Fn(*this);}
 
-    virtual double operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const 
+    virtual log_double_t operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const 
 	{
 	    return proposal(x,p);
 	}
@@ -74,7 +75,7 @@ class less_than: public Proposal_Fn
     owned_ptr<Proposal_Fn> proposal;
 public:
     less_than* clone() const {return new less_than(*this);}
-    double operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
+    log_double_t operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
     less_than(double m,const Proposal_Fn& P);
 };
 
@@ -84,7 +85,7 @@ class more_than: public Proposal_Fn
     owned_ptr<Proposal_Fn> proposal;
 public:
     more_than* clone() const {return new more_than(*this);}
-    double operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
+    log_double_t operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
     more_than(double m,const Proposal_Fn& P);
 };
 
@@ -95,7 +96,7 @@ class Between: public Proposal_Fn
     owned_ptr<Proposal_Fn> proposal;
 public:
     Between* clone() const {return new Between(*this);}
-    double operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
+    log_double_t operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
     Between(double m1,double m2,const Proposal_Fn& P);
 };
 
@@ -105,7 +106,7 @@ class Reflect: public Proposal_Fn
     owned_ptr<Proposal_Fn> proposal;
 public:
     Reflect* clone() const {return new Reflect(*this);}
-    double operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
+    log_double_t operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
     Reflect(const Bounds<double>& b,const Proposal_Fn& P);
 };
 
@@ -114,7 +115,7 @@ class log_scaled: public Proposal_Fn
     owned_ptr<Proposal_Fn> proposal;
 public:
     log_scaled* clone() const {return new log_scaled(*this);}
-    double operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
+    log_double_t operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
     log_scaled(const Proposal_Fn& P);
 };
 
@@ -123,7 +124,7 @@ class LOD_scaled: public Proposal_Fn
     owned_ptr<Proposal_Fn> proposal;
 public:
     LOD_scaled* clone() const {return new LOD_scaled(*this);}
-    double operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
+    log_double_t operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
     LOD_scaled(const Proposal_Fn& P);
 };
 
@@ -132,7 +133,7 @@ class sorted: public Proposal_Fn
     owned_ptr<Proposal_Fn> proposal;
 public:
     sorted* clone() const {return new sorted(*this);}
-    double operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
+    log_double_t operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
     sorted(const Proposal_Fn& P);
 };
 
@@ -145,7 +146,7 @@ class Proposal2: public Proposal
 public:
     const std::vector<int>& get_indices() const {return indices;}
     Proposal2* clone() const {return new Proposal2(*this);}
-    double operator()(Model& P) const;
+    log_double_t operator()(Model& P) const;
     Proposal2(const Proposal_Fn& p,const std::string& s, const std::vector<std::string>& v,
 	      const Model& P);
     Proposal2(const Proposal_Fn& p,const std::vector<std::string>& s, const std::vector<std::string>& v,
@@ -162,34 +163,34 @@ class Proposal2M: public Proposal
 public:
     const std::vector<int>& get_indices() const {return indices;}
     Proposal2M* clone() const {return new Proposal2M(*this);}
-    double operator()(Model& P) const;
+    log_double_t operator()(Model& P) const;
     Proposal2M(const Proposal_Fn& p,int, const std::vector<double>& v);
     Proposal2M(const Proposal_Fn& p,const std::vector<int>&, const std::vector<double>& v);
 };
 
 
-double dirichlet_proposal(std::vector< expression_ref >& x,const std::vector<double>& p);
+log_double_t dirichlet_proposal(std::vector< expression_ref >& x,const std::vector<double>& p);
 
-double scale_gaussian2(std::vector< expression_ref >& x,const std::vector<double>& p);
+log_double_t scale_gaussian2(std::vector< expression_ref >& x,const std::vector<double>& p);
 
-double shift_gaussian(std::vector< expression_ref >& x,const std::vector<double>& p);
+log_double_t shift_gaussian(std::vector< expression_ref >& x,const std::vector<double>& p);
 
-double shift_laplace(std::vector< expression_ref >& x,const std::vector<double>& p);
+log_double_t shift_laplace(std::vector< expression_ref >& x,const std::vector<double>& p);
 
-double shift_cauchy(std::vector< expression_ref >& x,const std::vector<double>& p);
+log_double_t shift_cauchy(std::vector< expression_ref >& x,const std::vector<double>& p);
 
-double shift_delta(std::vector< expression_ref >& x, const std::vector<double>& p);
+log_double_t shift_delta(std::vector< expression_ref >& x, const std::vector<double>& p);
 
-double shift_epsilon(std::vector< expression_ref >& x, const std::vector<double>& p);
+log_double_t shift_epsilon(std::vector< expression_ref >& x, const std::vector<double>& p);
 
-double bit_flip(std::vector< expression_ref >& x, const std::vector<double>& p);
+log_double_t bit_flip(std::vector< expression_ref >& x, const std::vector<double>& p);
 
-double discrete_uniform(std::vector< expression_ref >& x, const std::vector<double>& p);
+log_double_t discrete_uniform(std::vector< expression_ref >& x, const std::vector<double>& p);
 
-double move_scale_branch(Model& P);
+log_double_t move_scale_branch(Model& P);
 
-double move_subst_type_branch(Model& P);
+log_double_t move_subst_type_branch(Model& P);
 
-double realign_and_propose_parameter(Model& P, int param, const Proposal_Fn& proposal, const std::vector<double>& v);
+log_double_t realign_and_propose_parameter(Model& P, int param, const Proposal_Fn& proposal, const std::vector<double>& v);
 
 #endif

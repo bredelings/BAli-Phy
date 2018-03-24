@@ -396,12 +396,12 @@ void two_way_NNI_and_branches_sample(owned_ptr<Model>& P, MoveStats& Stats, int 
     //    return;
 
     //------------- Propose new branch lengths ----------------//
-    double ratio = 1.0;
+    log_double_t ratio = 1.0;
     vector<int> branches = NNI_branches(p[1].t(), b);
 
     for(int i=0;i<branches.size();i++) {
 
-	double factor = exp(gaussian(0,0.05));
+	auto factor = exp_to<log_double_t>(gaussian(0,0.05));
 
 	double L = p[1].t().branch_length( branches[i] ) * factor;
 

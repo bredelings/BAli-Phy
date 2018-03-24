@@ -36,30 +36,30 @@ valarray<double> convert_to_valarray(const vector< expression_ref >& v1)
     return v2;
 }
 
-double dirichlet_fiddle(valarray<double>& p2,double N)
+log_double_t dirichlet_fiddle(valarray<double>& p2,double N)
 {
     valarray<double> p1 = p2;
     p2 = dirichlet(safe_count(p1*N));
     return dirichlet_pdf(p1,safe_count(p2*N))/dirichlet_pdf(p2,safe_count(p1*N));
 }
 
-double dirichlet_fiddle(vector< expression_ref >& p,double N)
+log_double_t dirichlet_fiddle(vector< expression_ref >& p,double N)
 {
     valarray<double> x = convert_to_valarray(p);
-    double ratio = dirichlet_fiddle(x,N);
+    log_double_t ratio = dirichlet_fiddle(x,N);
     for(int i=0; i<x.size(); i++)
 	p[i] = x[i];
     return ratio;
 }
 
-double scale_gaussian(double& x, double sigma)
+log_double_t scale_gaussian(double& x, double sigma)
 {
-    double scale = exp( gaussian(0,sigma) );
+    auto scale = exp_to<log_double_t>( gaussian(0,sigma) );
     x *= scale;
     return scale;
 }
 
-double scale_gaussian2(vector< expression_ref >& x, const vector<double>& p)
+log_double_t scale_gaussian2(vector< expression_ref >& x, const vector<double>& p)
 {
     if (x.size() != 1) 
 	throw myexception()<<"scale_gaussian: expected one dimension, got "<<x.size()<<".";
@@ -68,7 +68,7 @@ double scale_gaussian2(vector< expression_ref >& x, const vector<double>& p)
 
     double x0 = x[0].as_double();
 
-    double ratio = scale_gaussian(x0,p[0]);
+    log_double_t ratio = scale_gaussian(x0,p[0]);
 
     x[0] = x0;
 
@@ -76,7 +76,7 @@ double scale_gaussian2(vector< expression_ref >& x, const vector<double>& p)
 }
 
 
-double shift_gaussian(vector< expression_ref >& x, const vector<double>& p)
+log_double_t shift_gaussian(vector< expression_ref >& x, const vector<double>& p)
 {
     if (x.size() != 1) 
 	throw myexception()<<"shift_gaussian: expected one dimension, got "<<x.size()<<".";
@@ -93,7 +93,7 @@ double shift_gaussian(vector< expression_ref >& x, const vector<double>& p)
     return 1.0;
 }
 
-double shift_laplace(vector< expression_ref >& x, const vector<double>& p)
+log_double_t shift_laplace(vector< expression_ref >& x, const vector<double>& p)
 {
     if (x.size() != 1) 
 	throw myexception()<<"shift_laplace: expected one dimension, got "<<x.size()<<".";
@@ -111,7 +111,7 @@ double shift_laplace(vector< expression_ref >& x, const vector<double>& p)
     return 1.0;
 }
 
-double shift_cauchy(vector< expression_ref >& x, const vector<double>& p)
+log_double_t shift_cauchy(vector< expression_ref >& x, const vector<double>& p)
 {
     if (x.size() != 1) 
 	throw myexception()<<"shift_cauchy: expected one dimension, got "<<x.size()<<".";
@@ -128,7 +128,7 @@ double shift_cauchy(vector< expression_ref >& x, const vector<double>& p)
     return 1.0;
 }
 
-double shift_delta(vector< expression_ref >& x, const vector<double>& p)
+log_double_t shift_delta(vector< expression_ref >& x, const vector<double>& p)
 {
     if (x.size() != 1) 
 	throw myexception()<<"shift_delta: expected one dimension, got "<<x.size()<<".";
@@ -150,7 +150,7 @@ double shift_delta(vector< expression_ref >& x, const vector<double>& p)
     return 1;
 }
 
-double shift_epsilon(vector< expression_ref >& x, const vector<double>& p)
+log_double_t shift_epsilon(vector< expression_ref >& x, const vector<double>& p)
 {
     if (x.size() != 1) 
 	throw myexception()<<"shift_epsilon: expected one dimension, got "<<x.size()<<".";
@@ -170,7 +170,7 @@ double shift_epsilon(vector< expression_ref >& x, const vector<double>& p)
 }
 
 
-double bit_flip(vector< expression_ref >& x, const vector<double>&)
+log_double_t bit_flip(vector< expression_ref >& x, const vector<double>&)
 {
     if (x.size() != 1) 
 	throw myexception()<<"shift_epsilon: expected one dimension, got "<<x.size()<<".";
@@ -190,7 +190,7 @@ double bit_flip(vector< expression_ref >& x, const vector<double>&)
 }
 
 
-double discrete_uniform(vector< expression_ref >& x, const vector<double>& v)
+log_double_t discrete_uniform(vector< expression_ref >& x, const vector<double>& v)
 {
     assert(v.size() == 2);
     int l = (int)v[0];
@@ -209,7 +209,7 @@ double discrete_uniform(vector< expression_ref >& x, const vector<double>& v)
 }
 
 
-double dirichlet_proposal(std::vector< expression_ref >& x,const std::vector<double>& p)
+log_double_t dirichlet_proposal(std::vector< expression_ref >& x,const std::vector<double>& p)
 {
     if (p.size() != 1) 
 	throw myexception()<<"dirichlet_proposal: expected one parameter, got "<<p.size()<<".";
@@ -224,7 +224,7 @@ double dirichlet_proposal(std::vector< expression_ref >& x,const std::vector<dou
     double s = x2.sum();
 
     x2 /= s;
-    double ratio = dirichlet_fiddle(x2, N*x.size());
+    log_double_t ratio = dirichlet_fiddle(x2, N*x.size());
     x2 *= s;
 
     for(int i=0;i<x.size();i++)
@@ -288,7 +288,7 @@ double dirichlet_proposal(std::vector< expression_ref >& x,const std::vector<dou
   int n1 =(int)( uniform()*Alphabet().size());
   int n2 =(int)( uniform()*Alphabet().size());
 
-  double ratio = 1;
+  log_double_t ratio = 1;
 
   for(int l=0;l<Alphabet().size();l++) 
   {
@@ -308,9 +308,9 @@ double dirichlet_proposal(std::vector< expression_ref >& x,const std::vector<dou
 
 */
 
-double less_than::operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const
+log_double_t less_than::operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const
 {
-    double ratio = (*proposal)(x,p);
+    auto ratio = (*proposal)(x,p);
     for(int i=0;i<x.size();i++) 
     {
 	double X = x[i].as_double();
@@ -325,9 +325,9 @@ less_than::less_than(double m, const Proposal_Fn& P)
      proposal(P)
 { }
 
-double more_than::operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const
+log_double_t more_than::operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const
 {
-    double ratio = (*proposal)(x,p);
+    auto ratio = (*proposal)(x,p);
     for(int i=0;i<x.size();i++) 
     {
 	double X = x[i].as_double();
@@ -342,9 +342,9 @@ more_than::more_than(double m, const Proposal_Fn& P)
      proposal(P)
 { }
 
-double Between::operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const
+log_double_t Between::operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const
 {
-    double ratio = (*proposal)(x,p);
+    auto ratio = (*proposal)(x,p);
     for(int i=0;i<x.size();i++)
     {
 	double X = x[i].as_double();
@@ -372,9 +372,9 @@ double reflect(const Bounds<double>& b, double x)
 	return x;
 }
 
-double Reflect::operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const
+log_double_t Reflect::operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const
 {
-    double ratio = (*proposal)(x,p);
+    auto ratio = (*proposal)(x,p);
     for(int i=0;i<x.size();i++)
     {
 	double X = x[i].as_double();
@@ -389,7 +389,7 @@ Reflect::Reflect(const Bounds<double>& b, const Proposal_Fn& P)
 { }
 
 
-double log_scaled::operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const
+log_double_t log_scaled::operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const
 {
     if (x.size() != 1) 
 	throw myexception()<<"log_scaled: expected one dimension, got "<<x.size()<<".";
@@ -405,7 +405,7 @@ double log_scaled::operator()(std::vector< expression_ref >& x,const std::vector
     x[0] = log(x1);
 
     // perform the proposal on the log-scale
-    double r = (*proposal)(x,p);
+    auto r = (*proposal)(x,p);
 
     // inverse-transform
     double x2 = x[0].as_double();
@@ -423,7 +423,7 @@ log_scaled::log_scaled(const Proposal_Fn& P)
 { }
 
 
-double LOD_scaled::operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const
+log_double_t LOD_scaled::operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const
 {
     if (x.size() != 1) 
 	throw myexception()<<"LOD_scaled: expected one dimension, got "<<x.size()<<".";
@@ -439,7 +439,7 @@ double LOD_scaled::operator()(std::vector< expression_ref >& x,const std::vector
     x[0] = log(x1/(1-x1));
 
     // perform the proposal on the LOD-scale
-    double r = (*proposal)(x,p);
+    auto r = (*proposal)(x,p);
 
     // inverse-transform
     double x2 = x[0].as_double();
@@ -456,9 +456,9 @@ LOD_scaled::LOD_scaled(const Proposal_Fn& P)
 { }
 
 
-double sorted::operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const
+log_double_t sorted::operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const
 {
-    double ratio = (*proposal)(x,p);
+    auto ratio = (*proposal)(x,p);
 
     vector<double> x2(x.size());
     for(int i=0;i<x2.size();i++)
@@ -477,7 +477,7 @@ sorted::sorted(const Proposal_Fn& P)
     :proposal(P)
 { }
 
-double Proposal2::operator()(Model& P) const
+log_double_t Proposal2::operator()(Model& P) const
 {
     //  vector< expression_ref > parameters = P.get_parameter_values();
 
@@ -495,7 +495,7 @@ double Proposal2::operator()(Model& P) const
     for(int i=0;i<x.size();i++)
 	x[i] = y[i];
 
-    double ratio = (*proposal)(x,p);
+    auto ratio = (*proposal)(x,p);
 
     for(int i=0;i<y.size();i++)
 	y[i] = x[i];
@@ -530,7 +530,7 @@ Proposal2::Proposal2(const Proposal_Fn& p,const vector<std::string>& s, const st
     }
 }
 
-double Proposal2M::operator()(Model& P) const
+log_double_t Proposal2M::operator()(Model& P) const
 {
     if (not indices.size())
 	throw myexception()<<"Proposal2M::operator() - No modifiables to alter!";
@@ -541,7 +541,7 @@ double Proposal2M::operator()(Model& P) const
     for(int i=0;i<x.size();i++)
 	x[i] = y[i];
 
-    double ratio = (*proposal)(x,parameters);
+    auto ratio = (*proposal)(x,parameters);
 
     for(int i=0;i<y.size();i++)
 	P.set_modifiable_value(indices[i], x[i]);
@@ -560,7 +560,7 @@ Proposal2M::Proposal2M(const Proposal_Fn& p,const vector<int>& s, const vector<d
      parameters(v)
 { }
 
-double move_scale_branch(Model& /*P */)
+log_double_t move_scale_branch(Model& /*P */)
 {
 /*
   Parameters& PP = dynamic_cast<Parameters&>(P);
@@ -597,7 +597,7 @@ double move_scale_branch(Model& /*P */)
     return 1.0;
 }
 
-double move_subst_type_branch(Model& P)
+log_double_t move_subst_type_branch(Model& P)
 {
     Parameters& PP = dynamic_cast<Parameters&>(P);
 
@@ -633,14 +633,14 @@ double move_subst_type_branch(Model& P)
 
 // Can't we just send in any sigma parameters or whatever WITH the proposal?
 
-double realign_and_propose_parameter(Model& P2, int param, const Proposal_Fn& proposal, const vector<double>& v)
+log_double_t realign_and_propose_parameter(Model& P2, int param, const Proposal_Fn& proposal, const vector<double>& v)
 {
     Model& P1 = P2;
 
     // read, alter, and write parameter values
     vector< expression_ref > x = P1.get_parameter_values({param});
 
-    double ratio = proposal(x, v);
+    log_double_t ratio = proposal(x, v);
 
     P2.set_parameter_values({param},x);
 

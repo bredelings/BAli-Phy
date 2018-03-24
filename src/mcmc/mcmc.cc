@@ -335,7 +335,7 @@ namespace MCMC {
 
 	owned_ptr<Model> P2 = P;
 
-	double ratio = 1;
+	log_double_t ratio = 1;
 	try {
 	    ratio = (*proposal)(*P2);
 	}
@@ -933,7 +933,7 @@ namespace MCMC {
 		cerr<<"Proc "<<proc_id<<": L2 = "<<L2<<endl;
       
 		// db * dL = -db*dE   because E = -L = -log(likelihood)
-		double ratio = exp( (b2-b1)*(L1-L2) );
+		log_double_t ratio = exp_to<log_double_t>( (b2-b1)*(L1-L2) );
 		int exchange = 0;
 		if (ratio >= 1 or uniform() < ratio)
 		    exchange = 1;
