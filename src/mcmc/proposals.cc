@@ -643,6 +643,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, con
 log_double_t realign_and_propose_parameter(Model& P, int param, const proposal_fn& proposal, const vector<double>& v)
 {
     Parameters& PP = dynamic_cast<Parameters&>(P);
+    Parameters P0 = PP;
     const Parameters& CPP = dynamic_cast<const Parameters&>(P);
     int B = CPP.t().n_branches();
     int N = CPP.n_data_partitions();
@@ -696,7 +697,16 @@ log_double_t realign_and_propose_parameter(Model& P, int param, const proposal_f
 		    auto matrix_new = sample_alignment_base(PP[j], b);
 		    auto a_new = PP[j].get_pairwise_alignment(b);
 		    vector<int> path_new = A2::get_path_from_pairwise_alignment(a_new);
-		    ratio /= matrix_new->path_P(path_new);
+
+		    if (matrix_new->Pr_sum_all_paths() <= 0.0)
+		    {
+			if (log_verbose)
+			    std::cerr<<"realign_and_propose_parameter: forward matrix has zero probability on branch "<<b<<"\n";
+			P = P0;
+			return 1;
+		    }
+		    else
+			ratio /= matrix_new->path_P(path_new);
 		}
 	    }
 	}
