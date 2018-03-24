@@ -52,7 +52,7 @@ public:
     void resize(int s) {states_.resize(s);};
     void reserve(int s) {states_.reserve(s);};
 
-    void push_back(char state) {states_.push_back(state);};
+    void push_back(char state) { assert(state != A2::states::E); states_.push_back(state);};
     void push_back_match() {states_.push_back(A2::states::M);};
     void push_back_insert() {states_.push_back(A2::states::G1);};
     void push_back_delete() {states_.push_back(A2::states::G2);};
