@@ -1544,12 +1544,12 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     :Parameters(L, A, t, SMs, s_mapping, vector<model_t>{}, vector<optional<int>>{}, scaleMs, scale_mapping, branch_length_model, like_calcs, k)
 { }
 
-bool accept_MH(const Model& P1,const Model& P2,double rho)
+bool accept_MH(const Model& P1,const Model& P2,log_double_t rho)
 {
     log_double_t p1 = P1.heated_probability();
     log_double_t p2 = P2.heated_probability();
 
-    log_double_t ratio = log_double_t(rho)*(p2/p1);
+    log_double_t ratio = rho*(p2/p1);
 
     if (ratio >= 1.0 or uniform() < ratio) 
 	return true;

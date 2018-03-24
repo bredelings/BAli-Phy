@@ -440,7 +440,7 @@ public:
 	       const key_map_t&);
 };
 
-bool accept_MH(const Model& P1,const Model& P2,double rho);
+bool accept_MH(const Model& P1, const Model& P2, log_double_t rho);
 std::string write_newick(const Parameters&, bool=true);
 
 #endif
