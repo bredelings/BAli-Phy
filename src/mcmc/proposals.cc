@@ -23,6 +23,7 @@
 #include "computation/expression/expression.H"
 #include "rng.H"
 #include "util.H"
+#include "dp/dp-matrix.H"
 
 using std::valarray;
 using std::vector;
@@ -631,18 +632,75 @@ log_double_t move_subst_type_branch(Model& P)
     return 1.0;
 }
 
+#include <boost/shared_ptr.hpp>
+#include "mcmc/sample.H"
+
 // Can't we just send in any sigma parameters or whatever WITH the proposal?
+boost::shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P, const indel::PairHMM& hmm, int b);
+boost::shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P, int b);
+boost::shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const indel::PairHMM& hmm, int b);
 
-log_double_t realign_and_propose_parameter(Model& P2, int param, const proposal_fn& proposal, const vector<double>& v)
+log_double_t realign_and_propose_parameter(Model& P, int param, const proposal_fn& proposal, const vector<double>& v)
 {
-    Model& P1 = P2;
+    Parameters& PP = dynamic_cast<Parameters&>(P);
+    const Parameters& CPP = dynamic_cast<const Parameters&>(P);
+    int B = CPP.t().n_branches();
+    int N = CPP.n_data_partitions();
 
-    // read, alter, and write parameter values
-    vector< expression_ref > x = P1.get_parameter_values({param});
+    // 1. Get the old branch HMMs;
+    vector<vector<indel::PairHMM>> old_hmms(N);
+    for(int i=0; i < N; i++)
+    {
+	if (CPP[i].has_IModel())
+	    for(int b=0;b<B;b++)
+		old_hmms[i].push_back(CPP[i].get_branch_HMM(b));
+    }
+
+    // 2. Read, alter, and write parameter values
+    vector< expression_ref > x = P.get_parameter_values({param});
 
     log_double_t ratio = proposal(x, v);
 
-    P2.set_parameter_values({param},x);
+    P.set_parameter_values({param},x);
+
+    // 3. Realign all branches using the new parameter value
+
+    // 3.1 Choose an order to visit the branches
+    auto branches = iota<int>(B);
+    if (uniform() < 0.5)
+	std::reverse(branches);
+
+    for(int b: branches)
+    {
+	PP.select_root(b);
+
+	auto t = PP.t();
+
+	if (t.is_leaf_node(t.target(b)))
+	    b = t.reverse(b);
+
+	for(int j=0;j<PP.n_data_partitions();j++)
+	{
+	    // 3.3 We want to do ratio *= Pr(A' -> A)/Pr(A -> A')
+	    if (PP[j].variable_alignment())
+	    {
+		{
+		    // Calculate the proposal probability for the backward move.
+		    auto matrix_old = sample_alignment_forward(PP[j], old_hmms[j][b], b);
+		    auto a_old = PP[j].get_pairwise_alignment(b);
+		    vector<int> path_old = A2::get_path_from_pairwise_alignment(a_old);
+		    ratio *= matrix_old->path_P(path_old);
+		}
+		{
+		    // Resample the alignment and calculate the proposal probability for the forward more.
+		    auto matrix_new = sample_alignment_base(PP[j], b);
+		    auto a_new = PP[j].get_pairwise_alignment(b);
+		    vector<int> path_new = A2::get_path_from_pairwise_alignment(a_new);
+		    ratio /= matrix_new->path_P(path_new);
+		}
+	    }
+	}
+    }
 
     return ratio;
 }
