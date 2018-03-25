@@ -677,7 +677,7 @@ log_double_t realign_and_propose_parameter(Model& P, int param, const proposal_f
 
 	auto t = PP.t();
 
-	if (t.is_leaf_node(t.target(b)))
+	if (t.is_leaf_node(t.target(b)) and t.n_nodes() > 2)
 	    b = t.reverse(b);
 
 	for(int j=0;j<PP.n_data_partitions();j++)
