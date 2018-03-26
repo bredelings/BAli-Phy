@@ -639,12 +639,14 @@ log_double_t move_subst_type_branch(Model& P)
 boost::shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P, const indel::PairHMM& hmm, int b);
 boost::shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P, int b);
 boost::shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const indel::PairHMM& hmm, int b);
+vector<int> walk_tree_path_toward(const TreeInterface& t, int root);
 
 log_double_t realign_and_propose_parameter(Model& P, int param, const proposal_fn& proposal, const vector<double>& v)
 {
     Parameters& PP = dynamic_cast<Parameters&>(P);
     Parameters P0 = PP;
     const Parameters& CPP = dynamic_cast<const Parameters&>(P);
+    auto t = CPP.t();
     int B = CPP.t().n_branches();
     int N = CPP.n_data_partitions();
 
@@ -653,7 +655,7 @@ log_double_t realign_and_propose_parameter(Model& P, int param, const proposal_f
     for(int i=0; i < N; i++)
     {
 	if (CPP[i].has_IModel())
-	    for(int b=0;b<B;b++)
+	    for(int b=0;b<2*B;b++)
 		old_hmms[i].push_back(CPP[i].get_branch_HMM(b));
     }
 
@@ -667,7 +669,8 @@ log_double_t realign_and_propose_parameter(Model& P, int param, const proposal_f
     // 3. Realign all branches using the new parameter value
 
     // 3.1 Choose an order to visit the branches
-    auto branches = iota<int>(B);
+    int toward_node = uniform(t.n_nodes()>2?t.n_leaves():0, t.n_nodes()-1);
+    vector<int> branches = walk_tree_path_toward_and_away(t, toward_node);
     if (uniform() < 0.5)
 	std::reverse(branches);
 
