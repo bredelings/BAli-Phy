@@ -68,6 +68,7 @@ double uniform()
 
 int uniform(int min, int max)
 {
+    assert(min <= max);
     return std::uniform_int_distribution<unsigned long>(min, max)(standard);
 }
 
@@ -77,6 +78,7 @@ unsigned long myrandom(unsigned long max) {
 } 
 
 long myrandom(long min,long max) {
+    assert(min < max);
     return uniform(min,max-1);
 }
 
@@ -86,11 +88,13 @@ double log_unif() {
 
 double gaussian(double mu,double sigma) 
 {
+    assert(sigma > 0);
     return std::normal_distribution<>(mu, sigma)(standard);
 }
 
 double laplace(double mu,double sigma) 
 {
+    assert(sigma > 0);
     double x = exponential(sigma);
     auto y = standard();
     if (y&1)
@@ -103,21 +107,31 @@ double cauchy(double l,double s) {
     return std::cauchy_distribution<>(l,s)(standard);
 }
 
-double exponential(double mu) {
+double exponential(double mu)
+{
+    assert(mu > 0);
     return std::exponential_distribution<>(1.0/mu)(standard);
 }
 
-double beta(double a, double b) {
+double beta(double a, double b)
+{
+    assert(a > 0);
+    assert(b > 0);
     double x = gamma(a,1);
     double y = gamma(b,1);
     return x/(x+y);
 }
 
-double gamma(double a, double b) {
+double gamma(double a, double b)
+{
+    assert(a > 0);
+    assert(b > 0);
     return std::gamma_distribution<>(a,b)(standard);
 }
 
-unsigned poisson(double mu) {
+unsigned poisson(double mu)
+{
+    assert(mu >= 0);
     if (mu == 0)
 	return 0;
     else
@@ -128,14 +142,19 @@ unsigned poisson(double mu) {
 }
 
 unsigned geometric(double p) {
+    assert(0 <= p and p <= 1);
     return std::geometric_distribution<>(p)(standard);
 }
 
 unsigned binomial(int n, double p) {
+    assert(0 <= p and p <= 1);
     return std::binomial_distribution<>(n,p)(standard);
 }
 
-unsigned bernoulli(double p) {
+unsigned bernoulli(double p)
+{
+    assert(0 <= p and p <= 1);
+
     double u = uniform();
 
     if (u<p)
