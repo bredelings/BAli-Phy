@@ -73,7 +73,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("conserved",value<double>()->default_value(0.75),"Fraction of sequences that must contain a letter for it to be considered conserved.")
 	;
 
-    options_description col_filter("Sequence filtering options");
+    options_description col_filter("Column filtering options");
     col_filter.add_options()
 	("min-letters",value<int>(),"Remove columns with fewer than <arg> letters.")
 	("remove-unique",value<int>(),"Remove insertions in a single sequence if longer than <arg> letters");

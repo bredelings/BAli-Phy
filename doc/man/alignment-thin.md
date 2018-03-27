@@ -23,6 +23,32 @@ Remove sequences or columns from an alignment.
 
 
 # SEQUENCE FILTERING OPTIONS:
+**--cutoff** _arg_
+: Keep only sequence with more mismatches than _arg_.
+
+**--longer-than** _arg_
+: Keep only sequences longer than _arg_.
+
+**--shorter-than** _arg_
+: Keep only sequence sequences shorter than _arg_.
+
+**--keep** _arg_
+: Keep only sequences in comma-separated list _arg_.
+
+**--remove** _arg_
+: Remove sequences in comma-separated list _arg_.
+
+**--down-to** _arg_
+: Remove similar sequences down to _arg_ sequences.
+
+**--remove-crazy** _arg_
+: Remove _arg_ sequences that are missing too many conserved sites.
+
+**--conserved** _arg_ (=0.75)
+: Fraction of sequences that must contain a letter for it to be considered conserved.
+
+
+# COLUMN FILTERING OPTIONS:
 **--min-letters** _arg_
 : Remove columns with fewer than _arg_ letters.
 
