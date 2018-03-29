@@ -510,7 +510,7 @@ model_t get_model(const Rules& R, const string& type, const string& model, const
 	typed_scope.push_back({x.first, parse_type(x.second)});
     auto p = translate_model(R, required_type, model_rep, typed_scope);
 
-    model_rep = p.first;
+    model_rep = extract_value(p.first);
     auto equations = p.second;
     substitute(equations, model_rep);
     substitute(equations, required_type);
@@ -520,6 +520,7 @@ model_t get_model(const Rules& R, const string& type, const string& model, const
 	std::cout<<"type = "<<unparse_type(required_type)<<std::endl;
 	std::cout<<"equations: "<<show(equations)<<std::endl;
 	std::cout<<"structure = "<<show(model_rep)<<std::endl;
+	std::cout<<"annotated structure = "<<show(p.first)<<std::endl;
 	std::cout<<std::endl;
     }
 

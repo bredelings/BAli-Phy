@@ -117,6 +117,22 @@ Rule substitute_in_rule_types(const map<string,term_t>& renaming, Rule rule)
     return rule;
 }
 
+template <typename Substitution>
+void substitute_in_types(const Substitution& renaming, term_t& T)
+{
+    substitute(renaming, T.get_child("type") );
+    for(auto& x: T.get_child("value"))
+	substitute_in_types( renaming, x.second );
+}
+
+term_t extract_value(const term_t& T)
+{
+    term_t value = T.get_child("value");
+    for(auto& x: value)
+	x.second = extract_value(x.second);
+    return value;
+}
+
 Rule substitute_in_rule_types(const equations& renaming, Rule rule)
 {
     substitute(renaming, rule.get_child("result_type") );
@@ -230,14 +246,15 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 		throw myexception()<<"Expression '"<<unparse(var_exp, R)<<"' is not of required type "<<unparse_type(a)<<"!";
 
 	    // Create the new model tree with args in correct order
-	    ptree model2("let");
-	    model2.push_back({var_name, var_exp});
-	    model2.push_back({"", body_exp});
-	    model = model2;
+	    model = ptree("let",{{var_name, var_exp},{"",body_exp}});
 
 	    auto keep = find_variables_in_type(required_type);
 	    add(keep, find_type_variables_from_scope(scope));
-	    E.eliminate_except(keep);
+	    auto S = E.eliminate_except(keep);
+
+	    model = ptree({{"value",model},{"type",required_type}});
+
+	    substitute_in_types(S,model);
 
 	    return E;
 	}
@@ -274,6 +291,9 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	if (not model.empty())
 	    throw myexception()<<"Term '"<<model.value<<"' of type '"<<unparse_type(result_type)
 			       <<"' should not have arguments!";
+
+	model = ptree({{"value",model},{"type",result_type}});
+
 	return E;
     }
 
@@ -325,7 +345,11 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 
     auto keep = find_variables_in_type(required_type);
     add(keep, find_type_variables_from_scope(scope));
-    E.eliminate_except(keep);
+    auto S = E.eliminate_except(keep);
+
+    model = ptree({{"value",model},{"type",result_type}});
+
+    substitute_in_types(S, model);
 
     return E;
 }
