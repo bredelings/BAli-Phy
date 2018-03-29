@@ -20,7 +20,8 @@ struct ptree;
 struct ptree: public std::vector<std::pair<std::string,ptree>>
 {
 public:
-    boost::variant<monostate,std::string,int,double,bool> value;
+    typedef boost::variant<monostate,std::string,int,double,bool> value_t;
+    value_t value;
 
     bool value_is_empty() const;
 
@@ -105,11 +106,14 @@ public:
     std::string show() const;
 
     ptree() {};
-    ptree(int i):value(i) {};
-    ptree(bool b):value(b) {};
-    ptree(double d):value(d) {};
-    ptree(const std::string& s):value(s) {};
+
+    ptree(const value_t& v):value(v) {};
     ptree(const char* s):value(std::string(s)) {};
+
+    ptree(const std::vector<std::pair<std::string,ptree>>& x):std::vector<std::pair<std::string,ptree>>(x) { }
+
+    ptree(const char* s,const std::vector<std::pair<std::string,ptree>>& x):std::vector<std::pair<std::string,ptree>>(x),value(std::string(s)) { }
+    ptree(const value_t& v,const std::vector<std::pair<std::string,ptree>>& x):std::vector<std::pair<std::string,ptree>>(x),value(v) { }
 };
 
 template <>  inline bool ptree::has_value<bool>()   const {return value.which() == 4;}
