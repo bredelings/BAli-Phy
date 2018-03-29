@@ -197,9 +197,11 @@ bool std::less<term_t>::operator()(const term_t& a, const term_t& b) const
     return compare(a,b);
 }
 
-void equations::eliminate_variable(const string& x)
+map<string,term_t> equations::eliminate_variable(const string& x)
 {
-    if (not has_record(x)) return;
+    map<string,term_t>  S;
+
+    if (not has_record(x)) return S;
 
     // 1. find the record
     auto xrec = find_record(x);
@@ -209,7 +211,6 @@ void equations::eliminate_variable(const string& x)
     xrec->first.erase(x);
 
     // 3. Determine the substitution
-    map<string,term_t>  S;
     // substitute the term if there is one
     if (value)
 	S = {{x,*value}};
@@ -246,14 +247,27 @@ void equations::eliminate_variable(const string& x)
     for(auto& eq: values)
 	assert(eq.second or eq.first.size() > 1);
 #endif
+
+    return S;
 }
 
-void equations::eliminate_except(const set<string>& keep)
+map<string,term_t> equations::eliminate_except(const set<string>& keep)
 {
+    map<string,term_t> S;
     set<string> eliminate = referenced_vars();
     remove(eliminate, keep);
     for(auto& x: eliminate)
-	eliminate_variable(x);
+    {
+	auto Sx = eliminate_variable(x);
+	for(auto& y: S)
+	    substitute(Sx,y.second);
+	for(auto& y: Sx)
+	{
+	    assert(S.count(y.first) == 0);
+	    S[y.first] = y.second;
+	}
+    }
+    return S;
 }
 
 set<string> equations::referenced_vars() const

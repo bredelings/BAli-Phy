@@ -48,9 +48,9 @@ public:
 
     void add_constraint(const term_t&);
 
-    void eliminate_variable(const std::string&);
+    std::map<std::string,term_t> eliminate_variable(const std::string&);
 
-    void eliminate_except(const std::set<std::string>&);
+    std::map<std::string,term_t> eliminate_except(const std::set<std::string>&);
 
     std::set<std::string> referenced_vars() const;
 
