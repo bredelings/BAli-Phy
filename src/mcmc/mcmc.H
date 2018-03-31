@@ -517,6 +517,8 @@ namespace MCMC {
 
 	void add_logger(const Logger&);
 
+	void run_loggers(const Model& M, long) const;
+
 	Sampler(const std::string& s)
 	    :MoveAll(s) {}
     };

@@ -1077,8 +1077,8 @@ namespace MCMC {
 	s_out<<"iterations = "<<iterations<<"\n";
 	clog<<"iterations = "<<iterations<<"\n";
 
-	for(int i=0;i<loggers.size();i++)
-	    (loggers[i])(P,iterations);
+	for(auto& logger: loggers)
+	    logger(P,iterations);
 
 	/*
 	  if (iterations%20 == 0 or iterations < 20 or iterations >= max_iter) {
@@ -1099,6 +1099,12 @@ namespace MCMC {
     void Sampler::add_logger(const Logger& L)
     {
 	loggers.push_back(L);
+    }
+
+    void Sampler::run_loggers(const Model& M, long t) const
+    {
+	for(auto& logger: loggers)
+	    logger(M, t);
     }
 
     void Sampler::go(owned_ptr<Model>& P,int subsample,const int max_iter, ostream& s_out)
