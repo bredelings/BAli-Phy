@@ -483,10 +483,20 @@ void smc_group(vector<double>& L, vector<double>& L2, int& scale, const vector<E
     }
 }
 
-log_double_t smc(double theta, double rho, const alignment& A)
+log_double_t smc(double rho_over_theta, vector<double> coalescent_rates, vector<double> level_boundaries, const alignment& A)
 {
-    assert(rho >= 0);
+    assert(level_boundaries.size() >= 2);
+    assert(level_boundaries[0] == 0.0);
+
+    assert(rho_over_theta >= 0);
+
+    assert(coalescent_rates.size() > 0);
+    double theta = 2.0/coalescent_rates[0];
     assert(theta > 0);
+
+    double rho = rho_over_theta * theta;
+
+    assert(rho >= 0);
     assert(A.n_sequences() == 2);
 
     // How many bins
@@ -539,12 +549,24 @@ log_double_t smc(double theta, double rho, const alignment& A)
 
 extern "C" closure builtin_function_smc_density(OperationArgs& Args)
 {
-    double theta = Args.evaluate(0).as_double();
+    double rho_over_theta = Args.evaluate(0).as_double();
 
-    double rho = Args.evaluate(1).as_double();
+    auto coalescent_rates_ = Args.evaluate(1).as_<EVector>();
 
-    auto a = Args.evaluate(2);
+    auto level_boundaries_ = Args.evaluate(2).as_<EVector>();
+
+    vector<double> coalescent_rates;
+    for(auto& r: coalescent_rates_)
+	coalescent_rates.push_back(r.as_double());
+
+    vector<double> level_boundaries;
+    level_boundaries.push_back(0);
+    for(auto& l: level_boundaries_)
+	level_boundaries.push_back(l.as_double());
+    level_boundaries.push_back(100000);
+
+    auto a = Args.evaluate(3);
     auto& A = a.as_<alignment>();
 
-    return { smc(theta, rho, A) };
+    return { smc(rho_over_theta, coalescent_rates, level_boundaries, A) };
 }
