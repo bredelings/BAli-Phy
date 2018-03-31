@@ -10,7 +10,7 @@ class AIS_Sampler
     void sample_from_beta(double beta,owned_ptr<Model>& P, int n, MCMC::Sampler& S0);
 
 public:
-    void go(owned_ptr<Model>& P, std::ostream&, std::vector<double> beta, int n);
+    void go(owned_ptr<Model>& P, std::ostream&, std::vector<double> beta);
 
     AIS_Sampler(const MCMC::Sampler& s): S(s) { }
 };

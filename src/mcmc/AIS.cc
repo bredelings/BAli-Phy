@@ -13,6 +13,11 @@ void AIS_Sampler::sample_from_beta(double beta, owned_ptr<Model>& P, int n, MCMC
     for(int i=0;i<n;i++) {
 	MCMC::MoveStats Stats;
 	S0.iterate(P,Stats);
+	if (log_verbose)
+	{
+	    std::cerr<<"sample_from_beta: "<<i+1<<"/"<<n<<"\n";
+	    show_parameters(std::cerr,*P);
+	}
     }
 }
 
@@ -40,12 +45,15 @@ void show_weights(const vector<vector<log_double_t> >& weights, std::ostream& o)
 }
 
 
-void AIS_Sampler::go(owned_ptr<Model>& P, std::ostream& o, std::vector<double> beta, int n)
+void AIS_Sampler::go(owned_ptr<Model>& P, std::ostream& o, std::vector<double> beta)
 {
     o<<"Starting AIS:\n";
     assert(beta.size());
     assert(beta[0] == 1);
     assert(beta.back() == 0);
+
+    const int reps = P->load_value("AIS:reps", 10);
+    const int n_particles  = P->load_value("AIS:n_particles", 20);
 
     vector<MCMC::Sampler> Samplers(beta.size(), S);
 
@@ -55,29 +63,33 @@ void AIS_Sampler::go(owned_ptr<Model>& P, std::ostream& o, std::vector<double> b
     // Generate our sequences
     vector<vector<log_double_t> > weights(beta.size()-1);
     vector<owned_ptr<Model> > X;
-    for(int i=0;i<1000;i++)
+    for(int iterations=0; iterations<n_particles; iterations++)
     {
-	owned_ptr<Model> P2;
+	owned_ptr<Model> P2 = P;
 	log_double_t weight = 1;
 	for(int level=beta.size()-1; level >=0 ;level--)
 	{
-	    if (level == beta.size() - 1) {
-		sample_from_beta(beta[level], P, 100, Samplers[level]);
-		P2 = P;
-		continue;
+	    sample_from_beta(beta[level], P2, reps, Samplers[level]);
+	    
+	    // Generate a new sample at the hottest level to start the next temperature chain from
+	    if (level == beta.size() - 1)
+	    {
+		P = P2;
 	    }
+	    else
+	    {
+		log_double_t L = P2->likelihood();
 
-	    sample_from_beta(beta[level], P2, n, Samplers[level]);
-      
-	    log_double_t L = P2->likelihood();
-
-	    o<<"i = "<<i<<"  level = "<<level<<"  beta = "<<beta[level]<<" L = "<<L<<" w = "<<weight<<std::endl;
-	    weight *= pow(L,beta[level]-beta[level+1]);
-	    weights[level].push_back(weight);
+		o<<"iter = "<<iterations<<"  level = "<<level<<"  beta = "<<beta[level]<<" L = "<<L<<" w = "<<weight<<std::endl;
+		weight *= pow(L,beta[level]-beta[level+1]);
+		weights[level].push_back(weight);
+	    }
+	    S.run_loggers(*P2, iterations);
 	}
+	// Record the cold temperature particles
 	X.push_back(P2);
 
-	o<<"i = "<<i<<"  w = "<<weight<<std::endl;
+	o<<"i = "<<iterations<<"  w = "<<weight<<std::endl;
 	show_weights(weights,o);
     }
 }

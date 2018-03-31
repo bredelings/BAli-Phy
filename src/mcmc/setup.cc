@@ -964,11 +964,12 @@ void do_sampling(const variables_map& args,
 	// - but then how do we copy stuff over?
 	AIS_Sampler A(sampler);
 	vector<double> beta(1,1);
-	for(int i=0;i<50;i++)
+	int AIS_temp_levels = P->load_value("AIS:levels",50);
+	for(int i=0;i<AIS_temp_levels;i++)
 	    beta.push_back(beta.back()*0.9);
 	beta.push_back(0);
     
-	A.go(P,std::cerr,beta,10);
+	A.go(P,std::cerr,beta);
     }
     else
 	sampler.go(P,subsample,max_iterations,s_out);
