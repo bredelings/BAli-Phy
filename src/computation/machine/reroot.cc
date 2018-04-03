@@ -113,7 +113,7 @@ void reg_heap::reroot_at_context(int c)
 	{
 	    if (tokens[t2].children.empty())
 		release_tip_token(t2);
-	    else if (tokens[t2].children.size() == 1 and t2 != old_root)
+	    else if (tokens[t2].children.size() == 1 and t2 != old_root and tokens[tokens[t2].children[0]].version >= tokens[root_token].version)
 		release_knuckle_token(t2);
 	}
 
