@@ -110,21 +110,41 @@ void reg_heap::reroot_at_context(int c)
     for(int i=int(path.size())-2; i>=0; i--)
 	reroot_at(path[i]);
 
-    // 4. Clean up old root token if it became a tip, and remote intermediate knuckles
     int old_root = path.back();
-    for(int t2 = old_root; t2 != root_token ; )
+
+    // 4. Clean up old root token if it became an unused tip
+    while (path.size() > 1 and not tokens[path.back()].is_referenced() and tokens[path.back()].children.empty())
     {
-	int p = tokens[t2].parent;
+	release_tip_token(path.back());
+	path.pop_back();
+    }
 
-	if (not tokens[t2].is_referenced())
+    assert(not path.empty());
+    assert(path.back() == root_token or tokens[path.back()].is_referenced() or tokens[path.back()].children.size() > 0);
+
+    // 5. Find sequences of knuckles
+
+    // Don't remove old_root if it is a knuckle, because that means we need to scan a Delta that we haven't processed when rerooting.
+    if (path.back() == old_root) path.pop_back();
+
+    vector<vector<int>> knuckle_paths;
+    for(int i=1;i<path.size();)
+    {
+	if (not tokens[path[i]].is_referenced() and tokens[path[i]].children.size() == 1)
 	{
-	    if (tokens[t2].children.empty())
-		release_tip_token(t2);
-	    else if (tokens[t2].children.size() == 1 and t2 != old_root and tokens[tokens[t2].children[0]].version >= tokens[root_token].version)
-		release_knuckle_token(t2);
+	    knuckle_paths.push_back({});
+	    for(;i<path.size() and not tokens[path[i]].is_referenced() and tokens[path[i]].children.size() == 1;i++)
+		knuckle_paths.back().push_back(path[i]);
 	}
+	else
+	    i++;
+    }
 
-	t2 = p;
+    // 6. Actually release the knuckles
+    for(auto& knuckle_path: knuckle_paths)
+    {
+	for(int t2: std::reverse(knuckle_path))
+	    release_knuckle_token(t2);
     }
 }
 
