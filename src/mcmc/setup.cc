@@ -965,8 +965,9 @@ void do_sampling(const variables_map& args,
 	AIS_Sampler A(sampler);
 	vector<double> beta(1,1);
 	int AIS_temp_levels = P->load_value("AIS:levels",50);
+	double AIS_temp_factor = P->load_value("AIS:factor",0.95);
 	for(int i=0;i<AIS_temp_levels;i++)
-	    beta.push_back(beta.back()*0.9);
+	    beta.push_back(beta.back()*AIS_temp_factor);
 	beta.push_back(0);
     
 	A.go(P,std::cerr,beta);
