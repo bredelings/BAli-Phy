@@ -109,6 +109,8 @@ void reg_heap::release_tip_token(int t)
     assert(tokens[t].vm_result.empty());
 }
 
+// Given parent -> t1 -> t2 -> XXX, make t2 a child of parent instead of t1.
+// If t1 was a knuckle, it will now be a leaf node.
 void reg_heap::capture_parent_token(int t2)
 {
     int t1 = parent_token(t2);
@@ -117,18 +119,14 @@ void reg_heap::capture_parent_token(int t2)
     int parent = parent_token(t1);
     assert(parent != -1);
 
-    // make parent point to t2 instead of t1
-    int index = replace_element(tokens[parent].children, t1, t2);
+    // disconnect t2 from t1
+    tokens[t2].parent = -2;
+    int index = remove_element(tokens[t1].children, t2);
     assert(index != -1);
 
-    // connect t2 to the parent and to t1
+    // connect t2 to parent
+    tokens[parent].children.push_back(t2);
     tokens[t2].parent = parent;
-    tokens[t2].children.push_back(t1);
-
-    // token t1 is now a leaf token
-    tokens[t1].parent = t2;
-    index = remove_element(tokens[t1].children, t2);
-    assert(index != -1);
 }
 
 void reg_heap::release_knuckle_token(int t)
