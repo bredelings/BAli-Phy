@@ -90,7 +90,8 @@ void check_match_P(const data_partition& P, log_double_t OS, log_double_t OP, co
 
     int prec = cerr.precision(10);
 
-    cerr<<"GQ(path) = "<<qpGQ<<"   Q(path) = "<<qpQ<<endl<<endl;
+    if (log_verbose)
+	cerr<<"GQ(path) = "<<qpGQ<<"   Q(path) = "<<qpQ<<endl<<endl;
     assert(std::abs(log(qpGQ)-log(qpQ)) < 1.0e-9);
   
     //--- Compare the path transition probabilities (Q) and the alignment prior
@@ -101,11 +102,14 @@ void check_match_P(const data_partition& P, log_double_t OS, log_double_t OP, co
     log_double_t qt = qs * qp * P.prior_no_alignment();
     log_double_t lt = P.heated_probability();
 
-    cerr<<"ls = "<<ls<<"    qs = "<<qs<<endl;
-    cerr<<"lp = "<<lp<<"    qp = "<<qp
-	<<" = "<<Matrices.path_GQ_path(path_g)<<" + "<<Matrices.generalize_P(path)<<" + "<<OP<<endl;
-    cerr<<"lt = "<<lt<<"    qt = "<<qt<<endl;
-    cerr<<endl;
+    if (log_verbose)
+    {
+	cerr<<"ls = "<<ls<<"    qs = "<<qs<<endl;
+	cerr<<"lp = "<<lp<<"    qp = "<<qp
+	    <<" = "<<Matrices.path_GQ_path(path_g)<<" + "<<Matrices.generalize_P(path)<<" + "<<OP<<endl;
+	cerr<<"lt = "<<lt<<"    qt = "<<qt<<endl;
+	cerr<<endl;
+    }
 
     if ( (std::abs(log(qs) - log(ls)) > 1.0e-9) or 
 	 (std::abs(log(qp) - log(lp)) > 1.0e-9) or 
@@ -164,17 +168,21 @@ void check_sampling_probabilities(const vector< vector<log_double_t> >& PR)
     
 	if (P2[0] == 0.0) continue;
 
-	cerr<<"\noption = "<<i<<"     rho"<<i<<" = "<<P2[2]<<endl;
-
-	cerr<<" Pr1 * Rho1  = "<<P1[0]*P1[2]<<"    Pr2 * Rho2  = "<<P2[0]*P2[2]<<
-	    "    Pr2 * Rho2  - Pr1 * Rho1  = "<<P2[0]*P2[2]/(P1[0]*P1[2])<<endl;
-
-	cerr<<" PrS1 = "<<P1[1]<<"    PrS2 = "<<P2[1]<<"    PrS2 - PrS1 = "<<P2[1] / PR.back()[1]<<endl;
-    
 	log_double_t ratio2 = (P2[0]*P2[2]/P2[1]) / P2[3];
 	double diff = log(ratio2/ratio1);
 
-	cerr<<"diff = "<<diff<<endl;
+	if (log_verbose or std::abs(diff) > 1.0e-9)
+	{
+	    cerr<<"\noption = "<<i<<"     rho"<<i<<" = "<<P2[2]<<endl;
+
+	    cerr<<" Pr1 * Rho1  = "<<P1[0]*P1[2]<<"    Pr2 * Rho2  = "<<P2[0]*P2[2]<<
+		"    Pr2 * Rho2  - Pr1 * Rho1  = "<<P2[0]*P2[2]/(P1[0]*P1[2])<<endl;
+
+	    cerr<<" PrS1 = "<<P1[1]<<"    PrS2 = "<<P2[1]<<"    PrS2 - PrS1 = "<<P2[1] / PR.back()[1]<<endl;
+
+	    cerr<<"diff = "<<diff<<endl;
+	}
+    
 	if (std::abs(diff) > 1.0e-9) {
 	    //      cerr<<a.back()<<endl;
 	    //      cerr<<a[i]<<endl;
