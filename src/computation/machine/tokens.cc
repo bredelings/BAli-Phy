@@ -64,6 +64,7 @@ void reg_heap::release_tip_token(int t)
 {
     assert(tokens[t].children.empty());
     assert(not tokens[t].is_referenced());
+    assert(tokens[t].used);
 
     total_destroy_token++;
 
