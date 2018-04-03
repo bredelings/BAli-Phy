@@ -49,10 +49,17 @@ void merge_split_mapping_(mapping& vm1, mapping& vm2, vector<char>& prog_temp)
     }
 }
 
+// This function splits handles the composition of deltas: Delta1 o Delta2
+//   It is only ever used to remove knuckle tokens (see tokens.cc).
 // Given mapping (m1,v1) followed by (m2,v2), compute a combined mapping for (m1,v1)+(m2,v2) -> (m2,v2)
 // and a mapping (m1,v1)-(m2,v2)->(m1,v1) for things that now are unused.
 void reg_heap::merge_split_mapping(int t1, int t2)
 {
+    // The second token need to the a child of the first token
+    assert(tokens[t2].parent == t1);
+    // The child token (t2) needs to be up-to-date with respect to the parent token.
+    assert(tokens[t1].version <= tokens[t2].version);
+
     merge_split_mapping_(tokens[t1].vm_step, tokens[t2].vm_step, prog_temp);
     merge_split_mapping_(tokens[t1].vm_result, tokens[t2].vm_result, prog_temp);
 }
