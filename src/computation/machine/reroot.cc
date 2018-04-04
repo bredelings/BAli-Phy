@@ -82,22 +82,18 @@ void reg_heap::reroot_at_context(int c)
     // Only remove a knuckle if its child was part of the original path: do not consider the last element of the path as a valid knuckle.
     path.pop_back();
 
-    vector<vector<int>> knuckle_paths;
     for(int i=1;i<path.size();)
     {
 	if (not tokens[path[i]].is_referenced() and tokens[path[i]].children.size() == 1)
 	{
-	    knuckle_paths.push_back({});
+	    vector<int> knuckle_path;
 	    for(;i<path.size() and not tokens[path[i]].is_referenced() and tokens[path[i]].children.size() == 1;i++)
-		knuckle_paths.back().push_back(path[i]);
+		knuckle_path.push_back(path[i]);
+	    release_knuckle_tokens(knuckle_path);
 	}
 	else
 	    i++;
     }
-
-    // 6. Actually release the knuckles
-    for(auto& knuckle_path: knuckle_paths)
-	release_knuckle_tokens(knuckle_path);
 }
 
 void reg_heap::reroot_at(int t)
