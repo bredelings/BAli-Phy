@@ -966,6 +966,12 @@ void do_sampling(const variables_map& args,
 	vector<double> beta(1,1);
 	int AIS_temp_levels = P->load_value("AIS:levels",50);
 	double AIS_temp_factor = P->load_value("AIS:factor",0.95);
+
+	if (AIS_temp_factor >= 1)
+	    throw myexception()<<"AIS:factor must be less than 1!";
+	if (AIS_temp_factor <= 0)
+	    throw myexception()<<"AIS:factor must be greater than 0!";
+
 	for(int i=0;i<AIS_temp_levels;i++)
 	    beta.push_back(beta.back()*AIS_temp_factor);
 	beta.push_back(0);
