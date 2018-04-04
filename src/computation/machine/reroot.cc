@@ -141,10 +141,7 @@ void reg_heap::reroot_at_context(int c)
 
     // 6. Actually release the knuckles
     for(auto& knuckle_path: knuckle_paths)
-    {
-	for(int t2: std::reverse(knuckle_path))
-	    release_knuckle_token(t2);
-    }
+	release_knuckle_tokens(knuckle_path);
 }
 
 void reg_heap::reroot_at(int t)

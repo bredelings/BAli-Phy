@@ -130,30 +130,26 @@ void reg_heap::capture_parent_token(int t2)
     tokens[t2].parent = parent;
 }
 
-void reg_heap::release_knuckle_token(int t)
+void reg_heap::release_knuckle_tokens(const vector<int>& knuckle_tokens)
 {
-    assert(token_is_used(t));
-    assert(not tokens[t].is_referenced());
-    assert(tokens[t].children.size() == 1);
-
-    int child_token = tokens[t].children[0];
-
-    if (is_root_token(t))
+    for(int t: std::reverse(knuckle_tokens))
     {
-	reroot_at(child_token);
+	assert(token_is_used(t));
+	assert(not tokens[t].is_referenced());
+	assert(tokens[t].children.size() == 1);
+
+	int child_token = tokens[t].children[0];
+
+	total_release_knuckle++;
+
+	merge_split_mapping(t, child_token);
+
+	capture_parent_token(child_token);
+
+	assert(tokens[t].version <= tokens[child_token].version);
+
 	release_tip_token(t);
-	return;
     }
-
-    total_release_knuckle++;
-  
-    merge_split_mapping(t, child_token);
-
-    capture_parent_token(child_token);
-
-    assert(tokens[t].version <= tokens[child_token].version);
-
-    release_tip_token(t);
 }
 
 void reg_heap::release_tip_token_and_ancestors(int t)
