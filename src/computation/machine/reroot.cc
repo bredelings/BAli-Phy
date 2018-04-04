@@ -110,7 +110,6 @@ void reg_heap::reroot_at_context(int c)
     for(int i=int(path.size())-2; i>=0; i--)
 	reroot_at(path[i]);
 
-    int old_root = path.back();
 
     // 4. Clean up old root token if it became an unused tip
     while (path.size() > 1 and not tokens[path.back()].is_referenced() and tokens[path.back()].children.empty())
@@ -124,8 +123,8 @@ void reg_heap::reroot_at_context(int c)
 
     // 5. Find sequences of knuckles
 
-    // Don't remove old_root if it is a knuckle, because that means we need to scan a Delta that we haven't processed when rerooting.
-    if (path.back() == old_root) path.pop_back();
+    // Only remove a knuckle if its child was part of the original path: do not consider the last element of the path as a valid knuckle.
+    path.pop_back();
 
     vector<vector<int>> knuckle_paths;
     for(int i=1;i<path.size();)
