@@ -244,13 +244,12 @@ int reg_heap::release_knuckle_tokens(int child_token)
     return t;
 }
 
-void reg_heap::release_tip_token_and_ancestors(int t)
+int reg_heap::release_unreferenced_tip(int t)
 {
     assert(token_is_used(t));
     assert(tokens[t].children.empty());
-    assert(not tokens[t].is_referenced());
 
-    while(t != -1 and (not tokens[t].is_referenced()) and tokens[t].children.empty())
+    while(t != -1 and not tokens[t].is_referenced() and tokens[t].children.empty())
     {
 	int parent = parent_token(t);
 
@@ -259,6 +258,8 @@ void reg_heap::release_tip_token_and_ancestors(int t)
 
 	t = parent;
     }
+
+    return t;
 }
 
 bool reg_heap::is_terminal_token(int t) const
@@ -422,8 +423,7 @@ void reg_heap::release_context(int c)
 
     int t = unset_token_for_context(c);
 
-    if ((not tokens[t].is_referenced()) and tokens[t].children.size() == 0)
-	release_tip_token_and_ancestors(t);
+    release_unreferenced_tip(t);
 
     // Mark the context as unused
     token_for_context_[c] = -1;
