@@ -244,7 +244,7 @@ int reg_heap::release_knuckle_tokens(int child_token)
     return t;
 }
 
-int reg_heap::release_unreferenced_tip(int t)
+int reg_heap::release_unreferenced_tips(int t)
 {
     assert(token_is_used(t));
     assert(tokens[t].children.empty());
@@ -423,7 +423,7 @@ void reg_heap::release_context(int c)
 
     int t = unset_token_for_context(c);
 
-    release_unreferenced_tip(t);
+    release_unreferenced_tips(t);
 
     // Mark the context as unused
     token_for_context_[c] = -1;
