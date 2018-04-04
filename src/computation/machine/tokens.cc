@@ -130,13 +130,27 @@ void reg_heap::capture_parent_token(int t2)
     tokens[t2].parent = parent;
 }
 
-void merge_split_mapping_(mapping& vm1, mapping& vm2, vector<char>& prog_temp)
+void load_map(const mapping& vm, vector<char>& prog_temp)
 {
-    for(auto p: vm2.delta())
+    for(auto p: vm.delta())
     {
 	int r = p.first;
 	prog_temp[r] = 1;
     }
+}
+
+void unload_map(const mapping& vm, vector<char>& prog_temp)
+{
+    for(auto p: vm.delta())
+    {
+	int r = p.first;
+	prog_temp[r] = 0;
+    }
+}
+
+void merge_split_mapping_(mapping& vm1, mapping& vm2, vector<char>& prog_temp)
+{
+    load_map(vm2, prog_temp);
 
     for(int i=0;i<vm1.delta().size();)
     {
@@ -152,11 +166,7 @@ void merge_split_mapping_(mapping& vm1, mapping& vm2, vector<char>& prog_temp)
 	    i++;
     }
 
-    for(auto p: vm2.delta())
-    {
-	int r = p.first;
-	prog_temp[r] = 0;
-    }
+    unload_map(vm2, prog_temp);
 }
 
 // This function splits handles the composition of deltas: Delta1 o Delta2
