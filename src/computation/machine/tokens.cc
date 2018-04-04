@@ -176,6 +176,7 @@ void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
 {
     int child_token = tokens[knuckle_tokens.back()].children[0];
 
+    load_map(tokens[child_token].vm_result, prog_temp);
     for(int t: std::reverse(knuckle_tokens))
     {
 	assert(token_is_used(t));
@@ -187,10 +188,11 @@ void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
 	// The child token (t2) needs to be up-to-date with respect to the parent token.
 	assert(tokens[t].version <= tokens[child_token].version);
 
-	load_map(tokens[child_token].vm_result, prog_temp);
 	merge_split_mapping_(tokens[t].vm_result, tokens[child_token].vm_result, prog_temp);
-	unload_map(tokens[child_token].vm_result, prog_temp);
     }
+    unload_map(tokens[child_token].vm_result, prog_temp);
+
+    load_map(tokens[child_token].vm_step, prog_temp);
     for(int t: std::reverse(knuckle_tokens))
     {
 	assert(token_is_used(t));
@@ -202,10 +204,9 @@ void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
 	// The child token (t2) needs to be up-to-date with respect to the parent token.
 	assert(tokens[t].version <= tokens[child_token].version);
 
-	load_map(tokens[child_token].vm_step, prog_temp);
 	merge_split_mapping_(tokens[t].vm_step, tokens[child_token].vm_step, prog_temp);
-	unload_map(tokens[child_token].vm_step, prog_temp);
     }
+    unload_map(tokens[child_token].vm_step, prog_temp);
 }
 
 void reg_heap::release_knuckle_tokens(const vector<int>& knuckle_tokens)
