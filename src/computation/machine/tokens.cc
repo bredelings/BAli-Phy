@@ -150,8 +150,6 @@ void unload_map(const mapping& vm, vector<char>& prog_temp)
 
 void merge_split_mapping_(mapping& vm1, mapping& vm2, vector<char>& prog_temp)
 {
-    load_map(vm2, prog_temp);
-
     for(int i=0;i<vm1.delta().size();)
     {
 	int r = vm1.delta()[i].first;
@@ -165,8 +163,6 @@ void merge_split_mapping_(mapping& vm1, mapping& vm2, vector<char>& prog_temp)
 	else
 	    i++;
     }
-
-    unload_map(vm2, prog_temp);
 }
 
 // This function splits handles the composition of deltas: Delta1 o Delta2
@@ -188,7 +184,9 @@ void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
 	// The child token (t2) needs to be up-to-date with respect to the parent token.
 	assert(tokens[t].version <= tokens[child_token].version);
 
+	load_map(tokens[child_token].vm_result, prog_temp);
 	merge_split_mapping_(tokens[t].vm_result, tokens[child_token].vm_result, prog_temp);
+	unload_map(tokens[child_token].vm_result, prog_temp);
     }
     for(int t: std::reverse(knuckle_tokens))
     {
@@ -201,7 +199,9 @@ void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
 	// The child token (t2) needs to be up-to-date with respect to the parent token.
 	assert(tokens[t].version <= tokens[child_token].version);
 
+	load_map(tokens[child_token].vm_step, prog_temp);
 	merge_split_mapping_(tokens[t].vm_step, tokens[child_token].vm_step, prog_temp);
+	unload_map(tokens[child_token].vm_step, prog_temp);
     }
 }
 
