@@ -135,6 +135,7 @@ void load_map(const mapping& vm, vector<char>& prog_temp)
     for(auto p: vm.delta())
     {
 	int r = p.first;
+	assert(prog_temp[r] == 0);
 	prog_temp[r] = 1;
     }
 }
@@ -144,6 +145,7 @@ void unload_map(const mapping& vm, vector<char>& prog_temp)
     for(auto p: vm.delta())
     {
 	int r = p.first;
+	assert(prog_temp[r] == 1);
 	prog_temp[r] = 0;
     }
 }
