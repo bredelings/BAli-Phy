@@ -362,7 +362,7 @@ public:
     /// Make a child of the current token, and unreference the current token.
     int switch_to_child_token(int);
 
-    void merge_split_mapping(int, int);
+    void merge_split_mappings(const std::vector<int>&);
 
     /*------------- Stuff for context indices -----------*/
     std::vector<int> unused_contexts;

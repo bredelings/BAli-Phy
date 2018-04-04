@@ -130,23 +130,82 @@ void reg_heap::capture_parent_token(int t2)
     tokens[t2].parent = parent;
 }
 
-void reg_heap::release_knuckle_tokens(const vector<int>& knuckle_tokens)
+void merge_split_mapping_(mapping& vm1, mapping& vm2, vector<char>& prog_temp)
 {
+    for(auto p: vm2.delta())
+    {
+	int r = p.first;
+	prog_temp[r] = 1;
+    }
+
+    for(int i=0;i<vm1.delta().size();)
+    {
+	int r = vm1.delta()[i].first;
+	int v = vm1.delta()[i].second;
+
+	if (not prog_temp[r])
+	{
+	    vm2.add_value(r,v);
+	    vm1.erase_value_at(i);
+	}
+	else
+	    i++;
+    }
+
+    for(auto p: vm2.delta())
+    {
+	int r = p.first;
+	prog_temp[r] = 0;
+    }
+}
+
+// This function splits handles the composition of deltas: Delta1 o Delta2
+//   It is only ever used to remove knuckle tokens (see tokens.cc).
+// Given mapping (m1,v1) followed by (m2,v2), compute a combined mapping for (m1,v1)+(m2,v2) -> (m2,v2)
+// and a mapping (m1,v1)-(m2,v2)->(m1,v1) for things that now are unused.
+void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
+{
+    int child_token = tokens[knuckle_tokens.back()].children[0];
+
     for(int t: std::reverse(knuckle_tokens))
     {
 	assert(token_is_used(t));
 	assert(not tokens[t].is_referenced());
 	assert(tokens[t].children.size() == 1);
 
-	int child_token = tokens[t].children[0];
+	assert(tokens[t].version <= tokens[child_token].version);
 
-	total_release_knuckle++;
+	// The child token (t2) needs to be up-to-date with respect to the parent token.
+	assert(tokens[t].version <= tokens[child_token].version);
 
-	merge_split_mapping(t, child_token);
-
-	capture_parent_token(child_token);
+	merge_split_mapping_(tokens[t].vm_result, tokens[child_token].vm_result, prog_temp);
+    }
+    for(int t: std::reverse(knuckle_tokens))
+    {
+	assert(token_is_used(t));
+	assert(not tokens[t].is_referenced());
+	assert(tokens[t].children.size() == 1);
 
 	assert(tokens[t].version <= tokens[child_token].version);
+
+	// The child token (t2) needs to be up-to-date with respect to the parent token.
+	assert(tokens[t].version <= tokens[child_token].version);
+
+	merge_split_mapping_(tokens[t].vm_step, tokens[child_token].vm_step, prog_temp);
+    }
+}
+
+void reg_heap::release_knuckle_tokens(const vector<int>& knuckle_tokens)
+{
+    merge_split_mappings(knuckle_tokens);
+
+    int child_token = tokens[knuckle_tokens.back()].children[0];
+
+    for(int t: std::reverse(knuckle_tokens))
+    {
+	capture_parent_token(child_token);
+
+	total_release_knuckle++;
 
 	release_tip_token(t);
     }

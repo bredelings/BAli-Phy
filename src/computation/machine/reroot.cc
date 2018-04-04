@@ -20,50 +20,6 @@ long total_results_invalidated = 0;
 long total_steps_scanned = 0;
 long total_results_scanned = 0;
 
-void merge_split_mapping_(mapping& vm1, mapping& vm2, vector<char>& prog_temp)
-{
-    for(auto p: vm2.delta())
-    {
-	int r = p.first;
-	prog_temp[r] = 1;
-    }
-
-    for(int i=0;i<vm1.delta().size();)
-    {
-	int r = vm1.delta()[i].first;
-	int v = vm1.delta()[i].second;
-
-	if (not prog_temp[r])
-	{
-	    vm2.add_value(r,v);
-	    vm1.erase_value_at(i);
-	}
-	else
-	    i++;
-    }
-
-    for(auto p: vm2.delta())
-    {
-	int r = p.first;
-	prog_temp[r] = 0;
-    }
-}
-
-// This function splits handles the composition of deltas: Delta1 o Delta2
-//   It is only ever used to remove knuckle tokens (see tokens.cc).
-// Given mapping (m1,v1) followed by (m2,v2), compute a combined mapping for (m1,v1)+(m2,v2) -> (m2,v2)
-// and a mapping (m1,v1)-(m2,v2)->(m1,v1) for things that now are unused.
-void reg_heap::merge_split_mapping(int t1, int t2)
-{
-    // The second token need to the a child of the first token
-    assert(tokens[t2].parent == t1);
-    // The child token (t2) needs to be up-to-date with respect to the parent token.
-    assert(tokens[t1].version <= tokens[t2].version);
-
-    merge_split_mapping_(tokens[t1].vm_step, tokens[t2].vm_step, prog_temp);
-    merge_split_mapping_(tokens[t1].vm_result, tokens[t2].vm_result, prog_temp);
-}
-
 // Given a mapping (m1,v1) at the root followed by the relative mapping (m2,v2), construct a new mapping
 // where (m2,v2) is at the root and (m1,v1) is relative.
 void pivot_mapping(vector<int>& prog1, mapping& vm2)
