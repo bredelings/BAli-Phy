@@ -211,6 +211,7 @@ void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
     unload_map(tokens[child_token].vm_step, prog_temp);
 }
 
+// Release any knuckle tokens that are BEFORE the child token, and then return the parent of the child token.
 int reg_heap::release_knuckle_tokens(int child_token)
 {
     int t = child_token;
@@ -230,18 +231,17 @@ int reg_heap::release_knuckle_tokens(int child_token)
     {
 	merge_split_mappings(knuckle_path);
 
-	for(int t: knuckle_path)
+	for(int t2: knuckle_path)
 	{
 	    capture_parent_token(child_token);
 
 	    total_release_knuckle++;
 
-	    release_tip_token(t);
+	    release_tip_token(t2);
 	}
     }
 
-    assert(tokens[t].used);
-    return t;
+    return tokens[child_token].parent;
 }
 
 int reg_heap::release_unreferenced_tips(int t)
