@@ -176,10 +176,10 @@ void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
 {
     assert(not knuckle_tokens.empty());
 
-    int child_token = tokens[knuckle_tokens.back()].children[0];
+    int child_token = tokens[knuckle_tokens[0]].children[0];
 
     load_map(tokens[child_token].vm_result, prog_temp);
-    for(int t: std::reverse(knuckle_tokens))
+    for(int t: knuckle_tokens)
     {
 	assert(token_is_used(t));
 	assert(not tokens[t].is_referenced());
@@ -195,7 +195,7 @@ void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
     unload_map(tokens[child_token].vm_result, prog_temp);
 
     load_map(tokens[child_token].vm_step, prog_temp);
-    for(int t: std::reverse(knuckle_tokens))
+    for(int t: knuckle_tokens)
     {
 	assert(token_is_used(t));
 	assert(not tokens[t].is_referenced());
@@ -215,9 +215,9 @@ void reg_heap::release_knuckle_tokens(const vector<int>& knuckle_tokens)
 {
     merge_split_mappings(knuckle_tokens);
 
-    int child_token = tokens[knuckle_tokens.back()].children[0];
+    int child_token = tokens[knuckle_tokens[0]].children[0];
 
-    for(int t: std::reverse(knuckle_tokens))
+    for(int t: knuckle_tokens)
     {
 	capture_parent_token(child_token);
 
