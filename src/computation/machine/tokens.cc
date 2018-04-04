@@ -174,6 +174,8 @@ void merge_split_mapping_(mapping& vm1, mapping& vm2, vector<char>& prog_temp)
 // and a mapping (m1,v1)-(m2,v2)->(m1,v1) for things that now are unused.
 void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
 {
+    assert(not knuckle_tokens.empty());
+
     int child_token = tokens[knuckle_tokens.back()].children[0];
 
     load_map(tokens[child_token].vm_result, prog_temp);
