@@ -71,9 +71,7 @@ void reg_heap::reroot_at_context(int c)
     // 4. Clean up old root token if it became an unused tip
     int t2 = release_unreferenced_tip(old_root);
 
-    // 5. Remove sequences of knuckles
-
-    // Only remove a knuckle if its child was part of the original path: do not consider the last element of the path as a valid knuckle.
+    // 5. Remove sequences of knuckles - only remove a knuckle if its child was part of the original path
     for(; t2 != root_token;)
 	t2 = release_knuckle_tokens(t2);
 }
