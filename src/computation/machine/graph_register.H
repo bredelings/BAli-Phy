@@ -342,7 +342,7 @@ public:
     void release_tip_token(int);
 
     /// Merge the knuckle token and release it
-    void release_knuckle_tokens(const std::vector<int>&);
+    int release_knuckle_tokens(int);
 
     void capture_parent_token(int);
 

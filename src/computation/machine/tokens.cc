@@ -211,20 +211,37 @@ void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
     unload_map(tokens[child_token].vm_step, prog_temp);
 }
 
-void reg_heap::release_knuckle_tokens(const vector<int>& knuckle_tokens)
+int reg_heap::release_knuckle_tokens(int child_token)
 {
-    merge_split_mappings(knuckle_tokens);
+    int t = child_token;
 
-    int child_token = tokens[knuckle_tokens[0]].children[0];
+    vector<int> knuckle_path;
 
-    for(int t: knuckle_tokens)
+    while (true)
     {
-	capture_parent_token(child_token);
-
-	total_release_knuckle++;
-
-	release_tip_token(t);
+	t = tokens[t].parent;
+	if (t != root_token and not tokens[t].is_referenced() and tokens[t].children.size() == 1)
+	    knuckle_path.push_back(t);
+	else
+	    break;
     }
+
+    if (knuckle_path.size())
+    {
+	merge_split_mappings(knuckle_path);
+
+	for(int t: knuckle_path)
+	{
+	    capture_parent_token(child_token);
+
+	    total_release_knuckle++;
+
+	    release_tip_token(t);
+	}
+    }
+
+    assert(tokens[t].used);
+    return t;
 }
 
 void reg_heap::release_tip_token_and_ancestors(int t)
