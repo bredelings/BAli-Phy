@@ -44,6 +44,8 @@ void pivot_mapping(vector<int>& prog1, mapping& vm2)
 
 void reg_heap::reroot_at_context(int c)
 {
+    int old_root = root_token;
+
     // 1. Bail if we are already at the root.
     int t = token_for_context(c);
     if (is_root_token(t)) return;
@@ -66,22 +68,14 @@ void reg_heap::reroot_at_context(int c)
     for(int i=int(path.size())-2; i>=0; i--)
 	reroot_at(path[i]);
 
-
     // 4. Clean up old root token if it became an unused tip
-    while (path.size() > 1 and not tokens[path.back()].is_referenced() and tokens[path.back()].children.empty())
-    {
-	release_tip_token(path.back());
-	path.pop_back();
-    }
-
-    assert(not path.empty());
-    assert(path.back() == root_token or tokens[path.back()].is_referenced() or tokens[path.back()].children.size() > 0);
+    int t2 = release_unreferenced_tip(old_root);
 
     // 5. Remove sequences of knuckles
 
     // Only remove a knuckle if its child was part of the original path: do not consider the last element of the path as a valid knuckle.
-    for(int t = path.back(); t != root_token;)
-	t = release_knuckle_tokens(t);
+    for(; t2 != root_token;)
+	t2 = release_knuckle_tokens(t2);
 }
 
 void reg_heap::reroot_at(int t)
