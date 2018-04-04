@@ -357,17 +357,6 @@ namespace MCMC {
 	}
 	Result result(n);
 
-	if (log_verbose >= 3)
-	{
-	    show_parameters(std::cerr,*P);
-	    std::cerr<<P->probability()<<" = "<<P->likelihood()<<" + "<<P->prior()<<endl;
-	    std::cerr<<endl;
-
-	    show_parameters(std::cerr,*P2);
-	    std::cerr<<P2->probability()<<" = "<<P2->likelihood()<<" + "<<P2->prior();
-	    std::cerr<<endl<<endl;
-	}
-
 #ifndef NDEBUG
 	// Check that we have not strayed outside the bounds.
 	for(int i=0;i<P->n_parameters();i++)

@@ -1546,14 +1546,28 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
 bool accept_MH(const Model& P1,const Model& P2,log_double_t rho)
 {
+    if (log_verbose >= 3)
+    {
+	std::cerr<<"accept_MH: rho = "<<rho<<endl;
+
+	show_parameters(std::cerr,P1);
+	std::cerr<<P1.probability()<<" = "<<P1.likelihood()<<" + "<<P1.prior()<<endl;
+	std::cerr<<endl;
+
+	show_parameters(std::cerr,P2);
+	std::cerr<<P2.probability()<<" = "<<P2.likelihood()<<" + "<<P2.prior();
+	std::cerr<<endl<<endl;
+    }
+
     log_double_t p1 = P1.heated_probability();
     log_double_t p2 = P2.heated_probability();
 
     log_double_t ratio = rho*(p2/p1);
 
-    if (ratio >= 1.0 or uniform() < ratio) 
-	return true;
-    else
-	return false;
+    bool accept = (ratio >= 1.0 or uniform() < ratio);
+
+    if (log_verbose >=3) std::cerr<<"accept_MH: accept = "<<accept<<endl;
+
+    return accept;
 }
 
