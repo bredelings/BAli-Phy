@@ -160,6 +160,7 @@ void merge_split_mapping_(mapping& vm1, mapping& vm2, vector<char>& prog_temp)
 	if (not prog_temp[r])
 	{
 	    vm2.add_value(r,v);
+	    prog_temp[r] = 1;
 	    vm1.erase_value_at(i);
 	}
 	else
