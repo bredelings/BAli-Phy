@@ -174,7 +174,7 @@ void merge_split_mapping_(mapping& vm1, mapping& vm2, vector<char>& prog_temp)
 // and a mapping (m1,v1)-(m2,v2)->(m1,v1) for things that now are unused.
 void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
 {
-    assert(not knuckle_tokens.empty());
+    if (knuckle_tokens.empty()) return;
 
     int child_token = tokens[knuckle_tokens[0]].children[0];
 
@@ -227,18 +227,15 @@ int reg_heap::release_knuckle_tokens(int child_token)
 	    break;
     }
 
-    if (knuckle_path.size())
+    merge_split_mappings(knuckle_path);
+
+    for(int t2: knuckle_path)
     {
-	merge_split_mappings(knuckle_path);
+	capture_parent_token(child_token);
 
-	for(int t2: knuckle_path)
-	{
-	    capture_parent_token(child_token);
+	total_release_knuckle++;
 
-	    total_release_knuckle++;
-
-	    release_tip_token(t2);
-	}
+	release_tip_token(t2);
     }
 
     return tokens[child_token].parent;
