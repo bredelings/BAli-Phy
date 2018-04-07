@@ -22,19 +22,19 @@ A builtin is declared via the following syntax:
 builtin haskell_name number_of_arguments "c++ name" "module name";
 ```
 
-For example, the Haskell function `poisson_density` is declared with the following line from `modules/Distributions.hs`:
+For example, the Haskell function `poisson_density` is declared with the following line from [modules/Distributions.hs](modules/Distributions.hs):
 
 ``` Haskell
 builtin poisson_density 2 "poisson_density" "Distribution";
 ```
 
-The first two arguments specify the Haskell name (`poisson_density`) and the number of arguments in Haskell (`2`).  The C++ function name is derived from the third argument (`poisson_density`) by adding `builtin_function_` in front.  So the C++ function will be called `builtin_function_poisson_density`.  The last argument specifies which loadable module contains the C++ function.  Since this function is in the module "Distribution", its source code goes in [](src/builtins/Distribution.cc).
+The first two arguments specify the Haskell name (`poisson_density`) and the number of arguments in Haskell (`2`).  The C++ function name is derived from the third argument (`poisson_density`) by adding `builtin_function_` in front.  So the C++ function will be called `builtin_function_poisson_density`.  The last argument specifies which loadable module contains the C++ function.  Since this function is in the module "Distribution", its source code goes in [src/builtins/Distribution.cc](src/builtins/Distribution.cc).
 
 #### Writing a builtin in C++
 
-The C++ function for a builtin must be defined in one of the C++ files in the `src/builtins/` directory, and the function name must begin with `builtin_function_`.  The function must also be declared `extern "C"` (to avoid name mangling).
+The C++ function for a builtin must be defined in one of the C++ files in the [src/builtins](src/builtins) directory, and the function name must begin with `builtin_function_`.  The function must also be declared `extern "C"` (to avoid name mangling).
 
-For example, the poisson density function is written in `src/builtins/Distribution.cc` as follows:
+For example, the poisson density function is written in [src/builtins/Distirbution.cc](src/builtins/Distribution.cc) as follows:
 
 ``` C++
 extern "C" closure builtin_function_poisson_density(OperationArgs& Args)
