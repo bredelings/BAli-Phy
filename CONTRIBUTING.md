@@ -74,8 +74,10 @@ sample_normal m s = Random (IOAction2 builtin_sample_normal m s);
 normal m s = ProbDensity (normal_density m s) (normal_quantile m s) (sample_normal m s) realLine;
 ```
 
+### Density
 Note that the normal density takes 3 arguments, so that `(normal_density m s)` is a function of the third argument.
 
+### Quantile
 If the function is univariate, you can define
 a quantile function that takes a probability and returns the value of
 x such that the cdf up to x is p.
@@ -84,6 +86,7 @@ dist_quantile args p = x
 ```
 If the function is not univariate, or you don't have a quantile functon, set the quantile function to `(no_quantile "distribution name")`.  This will later change to use polymorphism, where only 1-dimensional functions will have a quantile attribute.
 
+### Sample
 The `(dist_sample parameters)` function returns an object in the Random monad.
 To construct a random sample from a C++ procedure, use
 ``` Haskell
@@ -95,6 +98,7 @@ distributions are interpreted by sampling from them:
 sample_dist args = do { x <- dist2 args; return (f x);}
 ```
 
+### Range
 Finally, the range of a random variable can be something like
 * above x
 * below x
