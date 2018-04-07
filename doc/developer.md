@@ -60,6 +60,44 @@ The way to submit patches is:
 1. We will review the changes.
 1. If accepted, changes will be merged to the master branch.
 
+# Building bali-phy
+
+## Prequisites
+
+You will need a C++ compiler that understands C++14.  
+
+* gcc 5 (or higher) works
+* clang 3.5 (or higher) works
+* XCode 6.0 (or higher) works
+
+You will also need to install
+
+* cairo graphics library (optional, but required to build the `draw-tree` program)
+
+To build the executables, you will need
+
+* meson
+* ninja
+
+To build the documentation, you will need
+
+* pandoc
+
+On Debian and Ubuntu systems you can install all the prequisites with the following command:
+
+``` sh
+sudo apt-get install g++ libcairo2-dev ninja-build meson pandoc
+```
+
+## Compilation
+
+``` sh
+cd BAli-Phy/
+meson build --prefix=$HOME/Applications/bali-phy
+cd build
+ninja install
+```
+
 # Adding functionality to bali-phy
 
 ## Adding a Haskell function
@@ -190,7 +228,63 @@ Ranges for simplices are
 
 where `n` is the number of dimensions, and `sum` is the sum of the values (usually `1.0`).
 
-	 
+## Using a function from the command line
 
-	 
+## Adding a new MCMC move
+
+Moves are actually added to the sampler in [src/mcmc/setup.cc](https://github.com/bredelings/BAli-Phy/blob/master/src/mcmc/setup.cc).
+
+Moves are added as sub-moves to the `MCMC::MoveAll` type:
+
+``` C++
+M.add(weight, MCMC::MH_Move( Proposal2M(proposal, m_index, parameters), name) );
+```
+
+Most moves are currently defined in C++.
+
+Individual moves are added to MCMC moves that work as containers for smaller moves:
+
+### Proposals
+
+Proposals are defined in [src/mcmc/proposals.H](https://github.com/bredelings/BAli-Phy/blob/master/src/mcmc/proposals.H).
+
+Proposals are generally defined as functions the MCMC state and then return a proposal ratio:
+
+``` C++
+class Proposal: public Object {
+public:
+    Proposal* clone() const =0;
+    virtual log_double_t operator()(Model& P) const=0;
+};
+```
+
+Here `Model&` is the current state of the MCMC object.  The type `log_double_t` is a probability (or probability_density) represented on the log scale.
+
+#### Proposal2
+
+The Proposal2 class has constructor:
+
+```
+Proposal2(const Proposal_Fn& p,const std::vector<std::string>& s, const std::vector<std::string>& v, const Model& P);
+```
+
+The names in `s` are names of variables to modify, and the names in `v` are names of keys to look up to find tunable parameters such as jump sizes.
+
+### Proposal_Fn
+
+The `Proposal_Fn` class represents an MCMC move that affects some number of variables `x`, with some number of tunable parameters `p`.
+
+``` C++
+class Proposal_Fn
+{
+public:
+    virtual log_double_t operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
+};
+```
+
+It is possible to compose `Proposal_Fn`s to create complex proposals, such as:
+
+1. ``Reflect(bounds, shift_cauchy)``
+2. ``log_scaled(between(-20, 20, shift_cauchy))``
+3. ``log_scaled(between(-20, 20, shift_gaussian))``
 
