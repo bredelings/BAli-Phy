@@ -59,4 +59,52 @@ Output:
 
 Distributions are defined in [modules/Distributions.hs](modules/Distributions.hs).
 
+For a distribution, you need to add a function that constructs a ProbDensity object.
+
+``` Haskell
+dist_name parameters = ProbDensity (dist_density parameters) (dist_quantile parameters) (dist_sample parameters) (dist_range parameters);
+```
+
+For example, the Normal distribution is defined as:
+``` Haskell
+builtin normal_density 3 "normal_density" "Distribution";
+builtin normal_quantile 3 "normal_quantile" "Distribution";
+builtin builtin_sample_normal 2 "sample_normal" "Distribution";
+sample_normal m s = Random (IOAction2 builtin_sample_normal m s);
+normal m s = ProbDensity (normal_density m s) (normal_quantile m s) (sample_normal m s) realLine;
+```
+
+Note that the normal density takes 3 arguments, so that `(normal_density m s)` is a function of the third argument.
+
+If the function is univariate, you can define
+a quantile function that takes a probability and returns the value of
+x such that the cdf up to x is p.
+``` Haskell
+dist_quantile args p = x
+```
+If the function is not univariate, or you don't have a quantile functon, set the quantile function to something like (error "Distribution <dist> has no quantile").  This will later change to use polymorphism, where only 1d functions will have a quantile attribute.
+
+The dist_sample args function returns an object in the Random monad.
+To construct a random sample from a C++ procedure, use
+``` Haskell
+sample_dist args = Random (IOAction1 builtin_sample_dist args);
+```
+The procedure can also call other actions in the Random monad, where
+distributions are interpreted by sampling from them (?).
+``` Haskell
+sample_dist args = do { x <- dist2 args; return (f x);}
+```
+
+Finally, the range of a random variable can be something like
+* above x
+* below x
+* between x y
+* realLine
+* TrueFalseRange
+* Simplex Int Double
+* IntegerInterval (Maybe Double) (Maybe Double)
+
+	 
+
+	 
 
