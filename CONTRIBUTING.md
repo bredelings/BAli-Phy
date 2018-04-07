@@ -88,9 +88,11 @@ If the function is not univariate, or you don't have a quantile functon, set the
 
 ### Sample
 The `(dist_sample parameters)` function returns an object in the Random monad.
-To construct a random sample from a C++ procedure, use
+To construct a random sample from a C++ procedure, use one of the following patterns, depending on how many arguments your sampling routine takes:
 ``` Haskell
-sample_dist args = Random (IOAction1 builtin_sample_dist args);
+sample_dist arg1 = Random (IOAction1 builtin_sample_dist arg1);
+sample_dist arg1 arg2 = Random (IOAction2 builtin_sample_dist arg1 arg2);
+sample_dist arg1 arg2 arg3 = Random (IOAction3 builtin_sample_dist arg1 arg2 arg3);
 ```
 The procedure can also call other actions in the Random monad, where
 distributions are interpreted by sampling from them:
