@@ -94,8 +94,7 @@ sample_dist arg1 = Random (IOAction1 builtin_sample_dist arg1);
 sample_dist arg1 arg2 = Random (IOAction2 builtin_sample_dist arg1 arg2);
 sample_dist arg1 arg2 arg3 = Random (IOAction3 builtin_sample_dist arg1 arg2 arg3);
 ```
-The procedure can also call other actions in the Random monad, where
-distributions are interpreted by sampling from them:
+The procedure can also call other actions in the Random monad, where executing a distribution has the semantics of sampling from the distribution.  For example, here we sample from the distribution `(dist2 args)` and transform the result.
 ``` Haskell
 sample_dist args = do { x <- dist2 args; return (f x);}
 ```
