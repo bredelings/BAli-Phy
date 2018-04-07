@@ -12,7 +12,7 @@ C++ code should be valid C++14.
 
 ### Adding a builtin
 
-To add a "builtin" C++ operation to bali-phy's Haskell code, you must add the C++ code for the operation to one of the C++ files in the `src/builtins/` directory.  You must then declare the builtin in one of the Haskell files in the `modules/` directory.
+To add a "builtin" C++ operation to bali-phy's Haskell code, you must add the C++ code for the operation to one of the C++ files in the [src/builtins/](src/builtins) directory.  You must then declare the builtin in one of the Haskell files in the [modules/](modules/) directory.
 
 #### Declaring a builtin in Haskell
 
@@ -48,15 +48,15 @@ extern "C" closure builtin_function_poisson_density(OperationArgs& Args)
 
 Input:
 * The function takes a single `OperationArgs& Args` argument.
-* The `n`th argument is fetched by calling `Args.evaluate(n)`, and is of type `expression_ref` (`src/computation/expression/expression_ref.H`)
+* The `n`th argument is fetched by calling `Args.evaluate(n)`, and is of type `expression_ref` ([rc/computation/expression/expression_ref.H](src/computation/expression/expression_ref.H))
 * The `expression_ref` can be converted to `double` or `int` using the methods `.as_double()` and `.as_int()`.
 
 Output:
-* The function returns a `closure` object (`src/computation/closure.H`).
+* The function returns a `closure` object ([src/computation/closure.H](src/computation/closure.H))
 * A closure can be created from a `double` or `int`.  Here an explicit conversion is invoked by surrouding a `double` with curly braces.
 
 ## Adding a distribution
 
-Distributions are defined in `modules/Distributions.hs`.
+Distributions are defined in [modules/Distributions.hs](modules/Distributions.hs).
 
 
