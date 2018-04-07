@@ -28,7 +28,7 @@ For example, the Haskell function `poisson_density` is declared with the followi
 builtin poisson_density 2 "poisson_density" "Distribution";
 ```
 
-The first two arguments specify the Haskell name (`poisson_density`) and the number of arguments in Haskell (`2`).  The C++ function name is derived from the third argument (`poisson_density`) by adding `builtin_function_` in front.  So the C++ function will be called `builtin_function_poisson_density`.  The last argument specifies which loadable module contains the C++ function.  Since this function is in the module "Distribution", its source code goes in `src/builtins/Distribution.cc`.
+The first two arguments specify the Haskell name (`poisson_density`) and the number of arguments in Haskell (`2`).  The C++ function name is derived from the third argument (`poisson_density`) by adding `builtin_function_` in front.  So the C++ function will be called `builtin_function_poisson_density`.  The last argument specifies which loadable module contains the C++ function.  Since this function is in the module "Distribution", its source code goes in [](src/builtins/Distribution.cc).
 
 #### Writing a builtin in C++
 
