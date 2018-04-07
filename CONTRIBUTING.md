@@ -82,15 +82,15 @@ x such that the cdf up to x is p.
 ``` Haskell
 dist_quantile args p = x
 ```
-If the function is not univariate, or you don't have a quantile functon, set the quantile function to something like (error "Distribution <dist> has no quantile").  This will later change to use polymorphism, where only 1d functions will have a quantile attribute.
+If the function is not univariate, or you don't have a quantile functon, set the quantile function to `no_quantile "distribution name"`.  This will later change to use polymorphism, where only 1-dimensional functions will have a quantile attribute.
 
-The dist_sample args function returns an object in the Random monad.
+The `(dist_sample parameters)` function returns an object in the Random monad.
 To construct a random sample from a C++ procedure, use
 ``` Haskell
 sample_dist args = Random (IOAction1 builtin_sample_dist args);
 ```
 The procedure can also call other actions in the Random monad, where
-distributions are interpreted by sampling from them (?).
+distributions are interpreted by sampling from them:
 ``` Haskell
 sample_dist args = do { x <- dist2 args; return (f x);}
 ```
