@@ -62,7 +62,7 @@ Distributions are defined in [modules/Distributions.hs](modules/Distributions.hs
 For a distribution, you need to add a function that constructs a ProbDensity object.
 
 ``` Haskell
-dist_name parameters = ProbDensity (dist_density parameters) (dist_quantile parameters) (dist_sample parameters) (dist_range parameters);
+name parameters = ProbDensity (density parameters) (quantile parameters) (sample parameters) (range parameters);
 ```
 
 For example, the Normal distribution is defined as:
@@ -82,7 +82,7 @@ x such that the cdf up to x is p.
 ``` Haskell
 dist_quantile args p = x
 ```
-If the function is not univariate, or you don't have a quantile functon, set the quantile function to `no_quantile "distribution name"`.  This will later change to use polymorphism, where only 1-dimensional functions will have a quantile attribute.
+If the function is not univariate, or you don't have a quantile functon, set the quantile function to `(no_quantile "distribution name")`.  This will later change to use polymorphism, where only 1-dimensional functions will have a quantile attribute.
 
 The `(dist_sample parameters)` function returns an object in the Random monad.
 To construct a random sample from a C++ procedure, use
