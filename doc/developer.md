@@ -340,7 +340,7 @@ MH_Move(const Proposal& P, const std::string& name, const std::string& attribute
 
 Proposals are defined in [src/mcmc/proposals.H](https://github.com/bredelings/BAli-Phy/blob/master/src/mcmc/proposals.H).
 
-Proposals are generally defined as functions the MCMC state and then return a proposal ratio:
+Proposals are generally defined as functions that alter the MCMC state and then return a proposal ratio:
 
 ``` C++
 class Proposal: public Object {
