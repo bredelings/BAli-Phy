@@ -230,6 +230,52 @@ where `n` is the number of dimensions, and `sum` is the sum of the values (usual
 
 ## Using a function from the command line
 
+To make a Haskell function accessible from the command line, you must add a JSON file to the directory `functions/` that registers the Haskell function.
+
+For example, the file `functions/HKY.json` contains the following description:
+
+``` json
+{
+    "name": "HKY",
+    "title": "The Hasegawa-Kishino-Yano (1985) nucleotide rate matrix",
+    "result_type": "ExchangeModel[a]",
+    "constraints": ["Nucleotides[a]"],
+    "citation":{"type": "article",
+                "title": "Dating of the human-ape splitting by a molecular clock of mitochondrial DNA",
+                "year": "1985",
+                "author": [{"name": "Hasegawa, Masami"}, {"name": "Kishino, Hirohisa"}, {"name": "Yano, Taka-aki"}],
+                "journal": {"name": "Journal of molecular evolution", "volume": "22", 
+                "identifier": [{"type":"doi","id":"10.1007/BF02101694"}]
+               },
+    "call": "SModel.hky[kappa,alphabet]",
+    "args": [
+        {
+            "arg_name": "kappa",
+            "arg_type": "Double",
+            "default_value": "~logNormal[log[2],0.25]",
+            "description": "Transition\/transversion ratio"
+        },
+        {
+            "arg_name": "alphabet",
+            "arg_type": "a",
+            "default_value": "getAlphabet"
+        }
+    ],
+    "description":"Technically, this is just the symmetric matrix from HKY"
+}
+```
+
+* "name" specifies how this function will be invoked on the command line.
+* "call" specifies the Haskell function to call, and the arguments to pass.
+* "result_type" specifies the result type of the function.
+* "args" describes the list of named arguments
+    * "arg_name" gives the name of each argument
+    * "arg_type" gives the type of each argument
+    * "default_value" gives a value for the argument if not specified (optional)
+    * "description" gives a short phrase describing the argument (optional)
+
+This JSON file allows the user to specify (for example) `-S HKY[kappa=2]` as a substitution model.  It connects the parsing of the phrase `HKY[kappa=2]` with the Haskell functions defined in the `modules/` directory.
+
 ## Adding a new MCMC move
 
 Most moves are currently defined in C++.  Moves are actually added to the sampler in [src/mcmc/setup.cc](https://github.com/bredelings/BAli-Phy/blob/master/src/mcmc/setup.cc).
@@ -311,3 +357,20 @@ It is possible to compose `Proposal_Fn`s to create complex proposals, such as:
 2. ``log_scaled(between(-20, 20, shift_cauchy))``
 3. ``log_scaled(between(-20, 20, shift_gaussian))``
 
+# Types
+
+## `log_double_t`
+This is a positive real number represented in terms of its logarithm.  Operators have been defined so that you can multiple, add, subtract, and divide this type.
+
+## `Object`
+All C++ objects that are access via Haskell code inherit from this type.
+
+## `expression_ref`
+An expression ref is basically either an atomic value or an Object followed by a list of `expression_ref`s
+
+See [src/computation/expression/expression_ref.H](https://github.com/bredelings/BAli-Phy/blob/master/src/computation/expression/expression_ref.H)
+
+## `closure`
+A closure is an `expression_ref` with an environment.
+
+See [src/computation/closure.H](https://github.com/bredelings/BAli-Phy/blob/master/src/computation/closure.H)
