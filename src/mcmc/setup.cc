@@ -51,14 +51,14 @@ using std::map;
 using std::shared_ptr;
 
 /// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
-void add_modifiable_MH_move(const string& name, const Proposal_Fn& proposal, int m_index, const vector<double>& parameters,
+void add_modifiable_MH_move(const string& name, const proposal_fn& proposal, int m_index, const vector<double>& parameters,
 			    MCMC::MoveAll& M, double weight=1)
 {
     M.add(weight, MCMC::MH_Move( Proposal2M(proposal, m_index, parameters), name) );
 }
 
 /// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
-void add_MH_move(Model& P, const Proposal_Fn& proposal, const vector<string>& names, 
+void add_MH_move(Model& P, const proposal_fn& proposal, const vector<string>& names,
 		 const vector<string>& pnames, const vector<double>& pvalues,
 		 MCMC::MoveAll& M, double weight=1)
 {
@@ -92,7 +92,7 @@ void add_MH_move(Model& P, const Proposal_Fn& proposal, const vector<string>& na
 /// \param M       The group of moves to which to add the newly-created sub-move
 /// \param weight  How often to run this move.
 ///
-void add_MH_move(Model& P,const Proposal_Fn& proposal, const string& name, const string& pname,double sigma, 
+void add_MH_move(Model& P,const proposal_fn& proposal, const string& name, const string& pname,double sigma,
 		 MCMC::MoveAll& M,double weight=1)
 {
     vector<int> indices = flatten( parameters_with_extension(P,name) );

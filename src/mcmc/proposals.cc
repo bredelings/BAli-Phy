@@ -310,7 +310,7 @@ log_double_t dirichlet_proposal(std::vector< expression_ref >& x,const std::vect
 
 log_double_t less_than::operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const
 {
-    auto ratio = (*proposal)(x,p);
+    auto ratio = proposal(x,p);
     for(int i=0;i<x.size();i++) 
     {
 	double X = x[i].as_double();
@@ -320,14 +320,14 @@ log_double_t less_than::operator()(std::vector< expression_ref >& x,const std::v
     return ratio;
 }
 
-less_than::less_than(double m, const Proposal_Fn& P)
+less_than::less_than(double m, const proposal_fn& P)
     :max(m),
      proposal(P)
 { }
 
 log_double_t more_than::operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const
 {
-    auto ratio = (*proposal)(x,p);
+    auto ratio = proposal(x,p);
     for(int i=0;i<x.size();i++) 
     {
 	double X = x[i].as_double();
@@ -337,14 +337,14 @@ log_double_t more_than::operator()(std::vector< expression_ref >& x,const std::v
     return ratio;
 }
 
-more_than::more_than(double m, const Proposal_Fn& P)
+more_than::more_than(double m, const proposal_fn& P)
     :min(m),
      proposal(P)
 { }
 
 log_double_t Between::operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const
 {
-    auto ratio = (*proposal)(x,p);
+    auto ratio = proposal(x,p);
     for(int i=0;i<x.size();i++)
     {
 	double X = x[i].as_double();
@@ -354,7 +354,7 @@ log_double_t Between::operator()(std::vector< expression_ref >& x,const std::vec
     return ratio;
 }
 
-Between::Between(double m1, double m2, const Proposal_Fn& P)
+Between::Between(double m1, double m2, const proposal_fn& P)
     :min(m1), max(m2),
      proposal(P)
 { }
@@ -374,7 +374,7 @@ double reflect(const Bounds<double>& b, double x)
 
 log_double_t Reflect::operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const
 {
-    auto ratio = (*proposal)(x,p);
+    auto ratio = proposal(x,p);
     for(int i=0;i<x.size();i++)
     {
 	double X = x[i].as_double();
@@ -383,7 +383,7 @@ log_double_t Reflect::operator()(std::vector< expression_ref >& x,const std::vec
     return ratio;
 }
 
-Reflect::Reflect(const Bounds<double>& b, const Proposal_Fn& P)
+Reflect::Reflect(const Bounds<double>& b, const proposal_fn& P)
     :bounds(b),
      proposal(P)
 { }
@@ -405,7 +405,7 @@ log_double_t log_scaled::operator()(std::vector< expression_ref >& x,const std::
     x[0] = log(x1);
 
     // perform the proposal on the log-scale
-    auto r = (*proposal)(x,p);
+    auto r = proposal(x,p);
 
     // inverse-transform
     double x2 = x[0].as_double();
@@ -418,7 +418,7 @@ log_double_t log_scaled::operator()(std::vector< expression_ref >& x,const std::
     return r * x2/x1;
 }
 
-log_scaled::log_scaled(const Proposal_Fn& P)
+log_scaled::log_scaled(const proposal_fn& P)
     :proposal(P)
 { }
 
@@ -439,7 +439,7 @@ log_double_t LOD_scaled::operator()(std::vector< expression_ref >& x,const std::
     x[0] = log(x1/(1-x1));
 
     // perform the proposal on the LOD-scale
-    auto r = (*proposal)(x,p);
+    auto r = proposal(x,p);
 
     // inverse-transform
     double x2 = x[0].as_double();
@@ -451,14 +451,14 @@ log_double_t LOD_scaled::operator()(std::vector< expression_ref >& x,const std::
     return r * x2*(1.0-x2)/(x1*(1.0-x1));
 }
 
-LOD_scaled::LOD_scaled(const Proposal_Fn& P)
+LOD_scaled::LOD_scaled(const proposal_fn& P)
     :proposal(P)
 { }
 
 
 log_double_t sorted::operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const
 {
-    auto ratio = (*proposal)(x,p);
+    auto ratio = proposal(x,p);
 
     vector<double> x2(x.size());
     for(int i=0;i<x2.size();i++)
@@ -473,7 +473,7 @@ log_double_t sorted::operator()(std::vector< expression_ref >& x,const std::vect
     return ratio;
 }
 
-sorted::sorted(const Proposal_Fn& P)
+sorted::sorted(const proposal_fn& P)
     :proposal(P)
 { }
 
@@ -495,7 +495,7 @@ log_double_t Proposal2::operator()(Model& P) const
     for(int i=0;i<x.size();i++)
 	x[i] = y[i];
 
-    auto ratio = (*proposal)(x,p);
+    auto ratio = proposal(x,p);
 
     for(int i=0;i<y.size();i++)
 	y[i] = x[i];
@@ -505,7 +505,7 @@ log_double_t Proposal2::operator()(Model& P) const
     return ratio;
 }
 
-Proposal2::Proposal2(const Proposal_Fn& p,const std::string& s, const std::vector<string>& v,
+Proposal2::Proposal2(const proposal_fn& p,const std::string& s, const std::vector<string>& v,
 		     const Model& P)
     :proposal(p),
      pnames(v)
@@ -517,7 +517,7 @@ Proposal2::Proposal2(const Proposal_Fn& p,const std::string& s, const std::vecto
 }
 
 
-Proposal2::Proposal2(const Proposal_Fn& p,const vector<std::string>& s, const std::vector<string>& v,
+Proposal2::Proposal2(const proposal_fn& p,const vector<std::string>& s, const std::vector<string>& v,
 		     const Model& P)
     :proposal(p),
      pnames(v)
@@ -541,7 +541,7 @@ log_double_t Proposal2M::operator()(Model& P) const
     for(int i=0;i<x.size();i++)
 	x[i] = y[i];
 
-    auto ratio = (*proposal)(x,parameters);
+    auto ratio = proposal(x,parameters);
 
     for(int i=0;i<y.size();i++)
 	P.set_modifiable_value(indices[i], x[i]);
@@ -549,12 +549,12 @@ log_double_t Proposal2M::operator()(Model& P) const
     return ratio;
 }
 
-Proposal2M::Proposal2M(const Proposal_Fn& p,int  s, const vector<double>& v)
+Proposal2M::Proposal2M(const proposal_fn& p,int  s, const vector<double>& v)
     :Proposal2M(p,vector<int>{s},v)
 { }
 
 
-Proposal2M::Proposal2M(const Proposal_Fn& p,const vector<int>& s, const vector<double>& v)
+Proposal2M::Proposal2M(const proposal_fn& p,const vector<int>& s, const vector<double>& v)
     :proposal(p),
      indices(s),
      parameters(v)
@@ -633,7 +633,7 @@ log_double_t move_subst_type_branch(Model& P)
 
 // Can't we just send in any sigma parameters or whatever WITH the proposal?
 
-log_double_t realign_and_propose_parameter(Model& P2, int param, const Proposal_Fn& proposal, const vector<double>& v)
+log_double_t realign_and_propose_parameter(Model& P2, int param, const proposal_fn& proposal, const vector<double>& v)
 {
     Model& P1 = P2;
 

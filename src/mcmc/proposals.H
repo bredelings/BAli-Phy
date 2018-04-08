@@ -49,97 +49,73 @@ public:
 
 // This type of proposal can't check if arguments are fixed, and therefore must assume that they are
 // all variable.  Therefore, it can't have any fixed arguments.
-typedef log_double_t (*proposal_fn)(std::vector< expression_ref >& x,const std::vector<double>& p);
+typedef std::function<log_double_t(std::vector< expression_ref >& x,const std::vector<double>& p)> proposal_fn;
 
-// This wrapper class therefore cannot have any fixed arguments.
-class Proposal_Fn
+class less_than
 {
+    double max;
     proposal_fn proposal;
 public:
-    virtual Proposal_Fn* clone() const {return new Proposal_Fn(*this);}
-
-    virtual log_double_t operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const 
-	{
-	    return proposal(x,p);
-	}
-
-    Proposal_Fn():proposal(NULL) {}
-    Proposal_Fn(const proposal_fn& p):proposal(p) {}
-
-    virtual ~Proposal_Fn() {}
-};
-
-class less_than: public Proposal_Fn
-{
-    double max;
-    owned_ptr<Proposal_Fn> proposal;
-public:
-    less_than* clone() const {return new less_than(*this);}
     log_double_t operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
-    less_than(double m,const Proposal_Fn& P);
+    less_than(double m,const proposal_fn& P);
 };
 
-class more_than: public Proposal_Fn
+class more_than
 {
     double min;
-    owned_ptr<Proposal_Fn> proposal;
+    proposal_fn proposal;
 public:
-    more_than* clone() const {return new more_than(*this);}
     log_double_t operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
-    more_than(double m,const Proposal_Fn& P);
+    more_than(double m,const proposal_fn& P);
 };
 
-class Between: public Proposal_Fn
+class Between
 {
     double min;
     double max;
-    owned_ptr<Proposal_Fn> proposal;
+    proposal_fn proposal;
 public:
     Between* clone() const {return new Between(*this);}
     log_double_t operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
-    Between(double m1,double m2,const Proposal_Fn& P);
+    Between(double m1,double m2,const proposal_fn& P);
 };
 
-class Reflect: public Proposal_Fn
+class Reflect
 {
     Bounds<double> bounds;
-    owned_ptr<Proposal_Fn> proposal;
+    proposal_fn proposal;
 public:
-    Reflect* clone() const {return new Reflect(*this);}
     log_double_t operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
-    Reflect(const Bounds<double>& b,const Proposal_Fn& P);
+    Reflect(const Bounds<double>& b,const proposal_fn& P);
 };
 
-class log_scaled: public Proposal_Fn
+class log_scaled
 {
-    owned_ptr<Proposal_Fn> proposal;
+    proposal_fn proposal;
 public:
-    log_scaled* clone() const {return new log_scaled(*this);}
     log_double_t operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
-    log_scaled(const Proposal_Fn& P);
+    log_scaled(const proposal_fn& P);
 };
 
-class LOD_scaled: public Proposal_Fn
+class LOD_scaled
 {
-    owned_ptr<Proposal_Fn> proposal;
+    proposal_fn proposal;
 public:
-    LOD_scaled* clone() const {return new LOD_scaled(*this);}
     log_double_t operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
-    LOD_scaled(const Proposal_Fn& P);
+    LOD_scaled(const proposal_fn& P);
 };
 
-class sorted: public Proposal_Fn
+class sorted
 {
-    owned_ptr<Proposal_Fn> proposal;
+    proposal_fn proposal;
 public:
-    sorted* clone() const {return new sorted(*this);}
     log_double_t operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
-    sorted(const Proposal_Fn& P);
+    sorted(const proposal_fn& P);
 };
 
 class Proposal2: public Proposal
 {
-    owned_ptr<Proposal_Fn> proposal;
+    proposal_fn proposal;
     std::vector<int> indices;
     std::vector<std::string> pnames;
 
@@ -147,16 +123,16 @@ public:
     const std::vector<int>& get_indices() const {return indices;}
     Proposal2* clone() const {return new Proposal2(*this);}
     log_double_t operator()(Model& P) const;
-    Proposal2(const Proposal_Fn& p,const std::string& s, const std::vector<std::string>& v,
+    Proposal2(const proposal_fn& p,const std::string& s, const std::vector<std::string>& v,
 	      const Model& P);
-    Proposal2(const Proposal_Fn& p,const std::vector<std::string>& s, const std::vector<std::string>& v,
+    Proposal2(const proposal_fn& p,const std::vector<std::string>& s, const std::vector<std::string>& v,
 	      const Model& P);
 };
 
 
 class Proposal2M: public Proposal
 {
-    owned_ptr<Proposal_Fn> proposal;
+    proposal_fn proposal;
     std::vector<int> indices;
     std::vector<double> parameters;
 
@@ -164,8 +140,8 @@ public:
     const std::vector<int>& get_indices() const {return indices;}
     Proposal2M* clone() const {return new Proposal2M(*this);}
     log_double_t operator()(Model& P) const;
-    Proposal2M(const Proposal_Fn& p,int, const std::vector<double>& v);
-    Proposal2M(const Proposal_Fn& p,const std::vector<int>&, const std::vector<double>& v);
+    Proposal2M(const proposal_fn& p,int, const std::vector<double>& v);
+    Proposal2M(const proposal_fn& p,const std::vector<int>&, const std::vector<double>& v);
 };
 
 
@@ -191,6 +167,6 @@ log_double_t move_scale_branch(Model& P);
 
 log_double_t move_subst_type_branch(Model& P);
 
-log_double_t realign_and_propose_parameter(Model& P, int param, const Proposal_Fn& proposal, const std::vector<double>& v);
+log_double_t realign_and_propose_parameter(Model& P, int param, const proposal_fn& proposal, const std::vector<double>& v);
 
 #endif
