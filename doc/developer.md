@@ -4,14 +4,15 @@
 
 ## Fork the repo
 
-Go to the github page for bali-phy here: [https://github.com/BAli-Phy/](https://github.com/BAli-Phy).  Then click in the "Fork" button.  This will create a copy of the repo under your own account.  You should then clone your own version of the repo:
+1. Click the "Fork" button on [https://github.com/bredelings/BAli-Phy/](https://github.com/bredelings/BAli-Phy).  This will create a separate copy of the repo under your own account.
 
+1. Use `git clone` to download your own version of the repo:
 ``` sh
 git clone git@github.com:your-username/BAli-Phy.git
 ```
+The name `origin` in your local repo will then refer to your modified version of BAli-Phy.
 
-The name `origin` in your local repo will then refer to your modified version of BAli-Phy.  To refer to the official upstream version, create a new remote called `upstream`:
-
+1. To refer to the official upstream version, create a new remote called `upstream`:
 ``` sh
 cd BAli-Phy/
 git remote add upstream git@github.com:bredelings/BAli-Phy.git
