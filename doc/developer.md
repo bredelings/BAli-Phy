@@ -232,7 +232,9 @@ where `n` is the number of dimensions, and `sum` is the sum of the values (usual
 
 To make a Haskell function accessible from the command line, you must add a JSON file to the directory `functions/` that registers the Haskell function.
 
-For example, the file `functions/HKY.json` contains the following description:
+For example, the file `functions/HKY.json` allows the user to specify (for example) `-S HKY[kappa=2]` as a substitution model.  It connects the command line phrase `HKY[kapp=2]` with the Haskell function `SModel.hky` defined in the file `modules/SModel.hs`.
+
+The JSON looks like this:
 
 ``` json
 {
@@ -265,16 +267,37 @@ For example, the file `functions/HKY.json` contains the following description:
 }
 ```
 
-* "name" specifies how this function will be invoked on the command line.
-* "call" specifies the Haskell function to call, and the arguments to pass.
-* "result_type" specifies the result type of the function.
-* "args" describes the list of named arguments
-    * "arg_name" gives the name of each argument
-    * "arg_type" gives the type of each argument
-    * "default_value" gives a value for the argument if not specified (optional)
-    * "description" gives a short phrase describing the argument (optional)
+The fields are defined as follows:
 
-This JSON file allows the user to specify (for example) `-S HKY[kappa=2]` as a substitution model.  It connects the parsing of the phrase `HKY[kappa=2]` with the Haskell functions defined in the `modules/` directory.
+`name`
+: specifies how this function will be invoked on the command line.
+
+`call`
+: specifies which Haskell function to call and the order of the arguments to pass.
+
+`result_type`
+: specifies the result type of the function.
+
+`args`
+: describes the list of named arguments
+
+`args.arg_name`
+: gives the name of each argument
+
+`args.arg_type`
+: gives the type of each argument
+
+`args.default_value`
+: gives a value for the argument if not specified (optional).
+
+`args.description`
+: gives a short phrase describing the argument (optional).
+
+`description`
+: gives a longer description of the function (optional).
+
+`title`
+: gives a title for the function (optional).
 
 ## Adding a new MCMC move
 
@@ -374,3 +397,12 @@ See [src/computation/expression/expression_ref.H](https://github.com/bredelings/
 A closure is an `expression_ref` with an environment.
 
 See [src/computation/closure.H](https://github.com/bredelings/BAli-Phy/blob/master/src/computation/closure.H)
+
+# Testing
+
+BAli-Phy currently has two test suites.
+
+## The `tests/` directory
+
+## testiphy
+
