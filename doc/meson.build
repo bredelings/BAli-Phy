@@ -14,7 +14,7 @@ endif
 
 # Install the html for the dev guide
 dev_guide_md =files('developer.md')
-custom_target(dev_guide_html,
+custom_target('developer.html',
 	      command:[pandoc,'-s','-N','--css','doc.css','-t','html','--toc',dev_guide_md],
 	      output:'developer.html',
 	      capture: true,
