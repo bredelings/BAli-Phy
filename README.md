@@ -1,5 +1,6 @@
 [![Build Status](https://www.travis-ci.org/bredelings/BAli-Phy.svg?branch=master
 )](https://www.travis-ci.org/bredelings/BAli-Phy)
+[![Appveyor](https://ci.appveyor.com/api/projects/status/q68hnnoelqqvwsy2?svg=true)](https://ci.appveyor.com/project/bredelings/bali-phy)
 
 Install
 -------
