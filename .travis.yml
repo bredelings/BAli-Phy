@@ -5,6 +5,7 @@ matrix:
   include:
     - os: linux
       dist: trusty
+      compiler: g++
       env: CXX=g++-5
       addons:
         apt:
@@ -12,6 +13,28 @@ matrix:
           - ubuntu-toolchain-r-test
           packages:
           - g++-5
+          - pandoc
+    - os: linux
+      dist: trusty
+      compiler: g++
+      env: CXX=g++-6
+      addons:
+        apt:
+          sources:
+          - ubuntu-toolchain-r-test
+          packages:
+          - g++-6
+          - pandoc
+    - os: linux
+      dist: trusty
+      compiler: g++
+      env: CXX=g++-7
+      addons:
+        apt:
+          sources:
+          - ubuntu-toolchain-r-test
+          packages:
+          - g++-7
           - pandoc
     - os: linux
       dist: trusty
