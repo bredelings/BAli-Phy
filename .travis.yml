@@ -52,9 +52,8 @@ matrix:
           sources:
           - ubuntu-toolchain-r-test
           packages:
+          - g++-7
           - pandoc
-	  # Since clang uses the GCC headers, we need to get some better ones.
-	  - g++-7
     - os: osx
       osx_image: xcode9.2
     - os: osx
