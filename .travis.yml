@@ -28,7 +28,7 @@ matrix:
 language: C++
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update && brew install meson ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update && brew install meson pandoc; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget -O /tmp/ninja-linux.zip $(curl -s https://api.github.com/repos/ninja-build/ninja/releases/latest | grep -oP 'https://github.com/ninja-build/ninja/releases/download/v[0-9\.]+/ninja-linux.zip') && unzip -q /tmp/ninja-linux.zip -d ~/bin && pyenv local 3.6 && pip3 install meson; fi
 #  - export PATH="`pwd`/build:${PATH}"
 
