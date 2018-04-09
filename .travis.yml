@@ -36,6 +36,16 @@ matrix:
           - pandoc
     - os: linux
       dist: trusty
+      env: CXX_COMPILER=g++-8
+      addons:
+        apt:
+          sources:
+          - ubuntu-toolchain-r-test
+          packages:
+          - g++-8
+          - pandoc
+    - os: linux
+      dist: trusty
       compiler: clang++
       addons:
         apt:
