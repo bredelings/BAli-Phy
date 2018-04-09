@@ -5,7 +5,6 @@ matrix:
   include:
     - os: linux
       dist: trusty
-      compiler: g++-5
       env: CXX=g++-5
       addons:
         apt:
