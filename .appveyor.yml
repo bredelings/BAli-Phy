@@ -10,7 +10,7 @@ install:
   - bash -lc "pacman --needed --noconfirm -Sy pacman-mirrors"
   - bash -lc "pacman --noconfirm -Sy"
   - bash -lc "pacman --noconfirm -S mingw-w64-x86_64-ninja"
-  - bash -lc "pacman --noconfirm -S mingw-w64-x86_64-python3"
+  - bash -lc "pacman --noconfirm -S mingw-w64-x86_64-python3-pip"
   # - bash -lc "pacman --noconfirm -S mingw-w64-x86_64-toolchain"
   - bash -lc "pip3 install meson"
 
