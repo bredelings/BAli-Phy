@@ -8,20 +8,21 @@ environment:
     PATH: C:\msys64\usr\bin;C:\msys64\mingw32\bin;C:\Windows\System32;C:\Windows;%PATH%
 
 install:
-  # update mysy2
+  # update msys2
   - C:\msys64\usr\bin\bash -lc "pacman --needed --noconfirm -Sy pacman-mirrors"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Sy"
-  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S autoconf automake bison flex"
+  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S mingw-w64-meson"
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S git"
 
 before_build:
   - bash -lc "cd $APPVEYOR_BUILD_FOLDER && mkdir build"
-  - bash -lc "cd $APPVEYOR_BUILD_FOLDER && ./bootstrap.sh"
 
 build_script:
-  - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && ../configure --prefix=C:/bali-phy"
-  - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && make -j3 install"
-  - bash -lc "cd C:/ && tar -zcf bali-phy.tgz bali-phy/"
+  - bash -lc "cd $APPVEYOR_BUILD_FOLDER/ && meson build --prefix=C:/bali-phy"
+  - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && ninja test"
+  - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && ninja install"
+  - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && ninja check"
+#  - bash -lc "cd C:/ && tar -zcf bali-phy.tgz bali-phy/"
 
 test_script:
   - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && make install"
