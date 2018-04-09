@@ -1,25 +1,20 @@
 sudo: required
 cache: apt
-# addons:
-#  apt:
-#    sources:
-#    - ubuntu-toolchain-r-test
-#    packages:
-#    - g++-5
-#    - g++-6
-#    - g++-7
-# env:
-#   matrix:
-#     - CXX=g++-5
-#     - CXX=g++-6
-#     - CXX=g++-7
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - g++-5
+    - g++-6
+    - g++-7
+    - g++-8
+
 matrix:
   include:
     - os: linux
-      dist: xenial
-      compiler: g++
+      compiler: g++-5
     - os: linux
-      dist: xenial
       compiler: clang++
     - os: osx
       osx_image: xcode9.2
@@ -33,30 +28,19 @@ matrix:
 language: C++
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-      sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test;
-    fi
-
-#      sudo apt-get update -y -qq;
-#      sudo apt-get install -y g++-5;
-#      sudo update-alternatives --install /usr/bin/g++  g++  /usr/bin/g++-5  90;
-#      sudo update-alternatives --install /usr/bin/gcc  gcc  /usr/bin/gcc-5  90;
-
-
-install:
   - export PATH="`pwd`/build:${PATH}"
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew uninstall python; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python@2 python@3; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install ninja; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip && unzip -q ninja-linux.zip -d build; fi
-  - sudo pip3 install meson
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install meson; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget -O /tmp/ninja-linux.zip $(curl -s https://api.github.com/repos/ninja-build/ninja/releases/latest | grep -oP 'https://github.com/ninja-build/ninja/releases/download/v[0-9\.]+/ninja-linux.zip') && unzip -q /tmp/ninja-linux.zip -d ~/bin && pyenv local 3.6 && pip3 install meson; fi
 
 script:
-  - meson builddir --prefix=$HOME/local
-  - ninja -C builddir install
-  - ninja -C builddir check
+  - meson build --prefix=$HOME/local
+  - ninja -C build test
+  - ninja -C build install
+  - ninja -C build check
+
 env:
   global:
   - secure: ZWEqJt9rWuQQ0uJYx1ZDKASbe1lNOq8dLxfGzRq6ItWZ7v42iFik7WQzQNRcHskfkLnpX48+3iGz8+M6QFIY+y9KKk3hgsR+zEW/kZSlBxA+VSIOP2lV3Z5zBlnO3m0WoLTrDABBfHRFGqjU2JcM2tXLc6TyislMV5Y20edJgNWLNajGdei7+7A48UBSPq1hIA0fU2LZAScdy2TxcbpL8x/aAmE5T1IRBewjXK1x4CARmLJYXZfJDeCUpif2VoApEGwCOqXQtTKrBpJbUQ+sYi+JHCGh3oDFoHmuFJeEM7HrUOJBOI8k5A7wRq/+JESGIa2UObdHu1GZDVxj22YRRSSzQTEy9QyTnFTdYbkkcG83wwZ/57EOAhKA1TqwEDj8Hhux/oQAkR/S27iQ2vCvUtx5wlzX4L2KhinHhVVW7EPs6NQLc8FiRHjAzSaEmLph8UXlSxa+2Yx/+wyQXH3SmJi4r470r5F/orVhZBkw2k7CPhg7YfBPFDODkg+QMIk60hiVE6n/ToeTOCTxti0Lfajq6pzl+KFs/pungbnwZqx8neVGkpE0Z5Lhgr1KV/W17/AxKC62+BIGTRSQXpCxignVXbWqvzLCGCgSxiJ7Y+uphS1UV5lz1EAPTqnPkcxe+1MV64vAe8zMvug4Mb2DsV9QjIvjot1X+FlyzHWhMpc=
