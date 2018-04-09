@@ -130,5 +130,14 @@ subdir('src')
 
 subdir('doc')
 
-run_tests = files('scripts/run-tests.sh')
-check = run_target('check', command: [run_tests, baliphy, packagepath])
+test('bali-phy testsuite',
+     find_program('tests/run-tests.py'),
+     timeout: 600,
+     workdir: join_paths(meson.source_root(),'tests'),
+     args:[baliphy.full_path(), packagepath])
+
+test('testiphy (likelihood testsuite)',
+     find_program('testiphy/testiphy'),
+     timeout: 600,
+     workdir: join_paths(meson.source_root(),'testiphy'),
+     args:[baliphy.full_path(), packagepath])
