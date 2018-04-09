@@ -89,6 +89,12 @@ baliphy = executable('bali-phy',
 
 subdir('builtins')
 
+test('bali-phy version', baliphy, args:['--version'])
+test('bali-phy help', baliphy, args:['--help'])
+test('bali-phy 5d test', baliphy, args:[small_fasta,'--test', packagepath])
+test('bali-phy 5d +A 50', baliphy, args:[small_fasta,'--iter=50', packagepath])
+test('bali-phy 5d -A 200', baliphy, args:[small_fasta,'--iter=200', packagepath, '-Inone'])
+
 #--------- Build rules for tools that are always installed ------------#
 
 simple_tools = ['model_P','statreport','stats-select','alignment-gild','alignment-consensus', 'alignment-max','alignment-chop-internal',
@@ -98,7 +104,8 @@ simple_tools = ['model_P','statreport','stats-select','alignment-gild','alignmen
 	       ]
 
 foreach tool: simple_tools
-  executable(tool, ['tools/' + tool + '.cc'], dependencies:boost, link_with: libbaliphy, install: true)
+  tool_exe = executable(tool, ['tools/' + tool + '.cc'], dependencies:boost, link_with: libbaliphy, install: true)
+  test(tool + ' --help', tool_exe, args:['--help'])
 endforeach
 
 executable('alignment-draw',  ['tools/alignment-draw.cc', 'tools/colors.cc'] , dependencies:boost, link_with: libbaliphy, install: true)
@@ -121,8 +128,3 @@ if get_option('extra-tools')
   all_progs = all_progs + extra_tools
 endif
 
-test('bali-phy version', baliphy, args:['--version'])
-test('bali-phy help', baliphy, args:['--help'])
-test('bali-phy 5d test',baliphy, args:[small_fasta,'--test',packagepath])
-test('bali-phy 5d +A 50',baliphy, args:[small_fasta,'--iter=50',packagepath])
-test('bali-phy 5d -A 200',baliphy, args:[small_fasta,'--iter=50',packagepath,'-Inone'])
