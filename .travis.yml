@@ -8,6 +8,7 @@ addons:
     - g++-5
     - g++-6
     - g++-7
+    - pandoc
 
 matrix:
   include:
