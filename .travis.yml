@@ -6,6 +6,7 @@ matrix:
   include:
     - os: linux
       dist: trusty
+      compiler: g++-5
       env: CXX_COMPILER=g++-5
       addons:
         apt:
@@ -16,6 +17,7 @@ matrix:
           - pandoc
     - os: linux
       dist: trusty
+      compiler: g++-6
       env: CXX_COMPILER=g++-6
       addons:
         apt:
