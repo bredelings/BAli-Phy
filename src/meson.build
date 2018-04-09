@@ -1,6 +1,6 @@
 libsums = static_library('libsums','computation/machine/sums.cc', dependencies: boost, cpp_args: '-fno-fast-math', install: false)
 
-vcs_tag(
+git_version_h = vcs_tag(
   input : 'git-version.h.in',
   output: 'git-version.h',
   command: [ 'git', 'log', '-n1', '--date=format:%b %d %Y %k:%M:%S', '--pretty=format:[%D commit %h]  (%cd)' ],
@@ -57,7 +57,8 @@ baliphy_sources = ['parser/parse.cc','dp/dp_hmm.cc','parser/desugar.cc',
    'models/rules.cc','models/parse.cc', 'models/translate.cc','models/unification.cc',
    'computation/optimization/simplifier.cc',
    'startup/paths.cc', 'computation/optimization/occurrence.cc',
-   'computation/optimization/inliner.cc']
+   'computation/optimization/inliner.cc',
+   git_version_h]
 
 
 libdl = []
