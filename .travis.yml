@@ -1,20 +1,18 @@
 sudo: required
 cache: apt
-addons:
-  apt:
-    sources:
-    - ubuntu-toolchain-r-test
-    packages:
-    - g++-5
-    - g++-6
-    - g++-7
-    - pandoc
 
 matrix:
   include:
     - os: linux
       dist: trusty
       compiler: g++-5
+      addons:
+        apt:
+          sources:
+          - ubuntu-toolchain-r-test
+          packages:
+          - g++-5
+          - pandoc
     - os: linux
       dist: trusty
       compiler: clang++
