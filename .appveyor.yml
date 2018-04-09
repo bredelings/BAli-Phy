@@ -15,7 +15,8 @@ install:
 
 build_script:
   - bash -lc "cd $APPVEYOR_BUILD_FOLDER/ && git submodule update --init"
-  - bash -lc "cd $APPVEYOR_BUILD_FOLDER/ && meson.py build"
+  - bash -lc "cd $APPVEYOR_BUILD_FOLDER/ && meson.py build --prefix=../local"
+  - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && ninja install
 #  - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && ninja test"
 
 
