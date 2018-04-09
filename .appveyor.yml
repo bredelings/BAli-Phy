@@ -4,21 +4,21 @@ environment:
   matrix:
   - MSYSTEM: MINGW64
     PATH: C:\msys64\usr\bin;C:\msys64\mingw64\bin;C:\Windows\System32;C:\Windows;%PATH%
-  - MSYSTEM: MINGW32
-    PATH: C:\msys64\usr\bin;C:\msys64\mingw32\bin;C:\Windows\System32;C:\Windows;%PATH%
 
 install:
   # update msys2
-  - C:\msys64\usr\bin\bash -lc "pacman --needed --noconfirm -Sy pacman-mirrors"
-  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Sy"
-  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S mingw-w64-meson"
-  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S git"
+  - bash -lc "pacman --needed --noconfirm -Sy pacman-mirrors"
+  - bash -lc "pacman --noconfirm -Sy"
+  - bash -lc "pacman --noconfirm -S mingw-w64-x86_64-ninja"
+  - bash -lc "pacman --noconfirm -S mingw-w64-x86_64-python3"
+  # - bash -lc "pacman --noconfirm -S mingw-w64-x86_64-toolchain"
+  - bash -lc "pip3 install meson"
 
 before_build:
   - bash -lc "cd $APPVEYOR_BUILD_FOLDER && mkdir build"
 
 build_script:
-  - bash -lc "cd $APPVEYOR_BUILD_FOLDER/ && meson build --prefix=C:/bali-phy"
+  - bash -lc "cd $APPVEYOR_BUILD_FOLDER/ && meson.py build --prefix=C:/bali-phy"
   - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && ninja test"
   - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && ninja install"
   - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && ninja check"
