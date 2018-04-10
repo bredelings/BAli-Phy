@@ -373,7 +373,7 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
 
     <section><info><title>Linux</title></info>
     <para>On Debian and Ubuntu, you can type:
-<screen><prompt>%</prompt> <userinput>sudo apt-get install g++ git libcairo2-dev</userinput></screen>
+<screen><prompt>%</prompt> <userinput>sudo apt-get install g++ git libcairo2-dev pandoc</userinput></screen>
 
     </para>
 If your version of Debian or Ubuntu is recent enough to contain meson version 0.45 or higher, you can install meson with apt-get:
