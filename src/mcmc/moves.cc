@@ -617,6 +617,9 @@ void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats)
       sample_branch_length_(P,Stats,b);
       three_way_topology_sample(P,Stats,b);
   }
+  MCMC::Result result(1);
+  result.totals[0] = 1;
+  Stats.inc("realign_from_tips",result);
 }
 
 void walk_tree_sample_branch_lengths(owned_ptr<Model>& P, MoveStats& Stats) 
