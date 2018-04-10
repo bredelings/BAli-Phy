@@ -1,7 +1,7 @@
 {
     "name": "Gamma",
     "result_type": "Distribution[Double]",
-    "call": "Distributions.gamma[a,b]",
+    "call": "Distributions.shifted_gamma[a,b,shift]",
     "args": [
         {
             "arg_name": "a",
@@ -12,11 +12,18 @@
             "arg_name": "b",
             "arg_type": "Double",
 	    "description": "The scale parameter"
-        }
+        },
+	{
+	    "arg_name": "shift",
+	    "arg_type": "Double",
+	    "default_value": "0.0",
+	    "description": "The shift parameter"
+	}
     ],
     "title" : "The gamma distribution",
     "description": "mean = a * b\nvariance = a*b^2",
-    "examples": ["~Gamma[1.0,mu]                  # An exponential",
+    "examples": ["~Gamma[1.0,mu]                   # An exponential",
+		 "~Gamma[a,b,1.5]                  # A Gamma shifted right by 1.5",
 		 "~iid[10,Gamma[0.5,2]]            # 10 samples",
 		 "quantile[Gamma[0.5,2],0.95]",
 		 "density[Gamma[0.5,2],0.95]"
