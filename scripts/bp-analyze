@@ -814,7 +814,7 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
     $section .= '<table style="width:100%;clear:both"><tr>';
 
     $section .= '<td style="width:40%;vertical-align:top">';
-    $section .= "<h4 style=\"text-align:center\">Projection of RF distances for $title</h4>";
+    $section .= "<h4 style=\"text-align:center\">Projection of RF distances for $title (<a href=\"https://doi.org/10.1080/10635150590946961\">Hillis et al 2005)</h4>";
     $section .= html_svg($MDS_figure,"90%","",[]) if (defined($MDS_figure));
     $section .= "<a href='file:${MDS_figure_3d}.html'>3D</a>";
     $section .= '</td>';
