@@ -282,25 +282,19 @@ MCMC::MoveAll get_parameter_MH_moves(Model& M)
     add_MH_move(M, more_than(0.0, shift_cauchy), model_path({"*","meanIndelLengthMinus1"}),     "epsilon_shift_sigma",   0.1, MH_moves, 10);
 
     // Resample logLambda and alignment
-    if (false)
+    if (auto index = M.maybe_find_parameter(model_path({"I1","RS07:logLambda"})))
     {
-	if (auto index = M.maybe_find_parameter(model_path({"I1","RS07","logLambda"})))
-	{
-	    auto proposal = [index](Model& P){ return realign_and_propose_parameter(P, *index, shift_cauchy, {0.25}) ;};
+	auto proposal = [index](Model& P){ return realign_and_propose_parameter(P, *index, shift_cauchy, {0.25}) ;};
 
-	    MH_moves.add(1.0, MCMC::MH_Move(Generic_Proposal(proposal),"realign_and_sample_logLambda"));
-	}
+	MH_moves.add(1.0, MCMC::MH_Move(Generic_Proposal(proposal),"realign_and_sample_logLambda"), false);
     }
 
-    // Resample meanIndelLengthMinus1 and alignment
-    if (false)
+    // Resample meanIndelLength and alignment
+    if (auto index = M.maybe_find_parameter(model_path({"I1","RS07:meanIndelLength"})))
     {
-	if (auto index = M.maybe_find_parameter(model_path({"I1","RS07","meanIndelLengthMinus1"})))
-	{
-	    auto proposal = [index](Model& P){ return realign_and_propose_parameter(P, *index, more_than(0.0, shift_cauchy), {0.1}) ;};
+	auto proposal = [index](Model& P){ return realign_and_propose_parameter(P, *index, log_scaled(more_than(0.0, shift_laplace)), {0.5}) ;};
 
-	    MH_moves.add(1.0, MCMC::MH_Move(Generic_Proposal(proposal),"realign_and_sample_meanIndelLengthMinus1"));
-	}
+	MH_moves.add(1.0, MCMC::MH_Move(Generic_Proposal(proposal),"realign_and_sample_meanIndelLength"), false);
     }
 
     return MH_moves;
@@ -696,6 +690,18 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	pre_burnin.add(1,SingleMove(walk_tree_sample_branch_lengths, "walk_tree_sample_branch_lengths","lengths") );
 	pre_burnin.add(2,get_parameter_slice_moves(*P));
 	pre_burnin.add(1,SingleMove(realign_from_tips, "realign_from_tips","lengths:alignment:topology") );
+	if (auto index = P->maybe_find_parameter(model_path({"I1","RS07:logLambda"})))
+	{
+	    auto proposal = [index](Model& P){ return realign_and_propose_parameter(P, *index, shift_cauchy, {0.25}) ;};
+
+	    pre_burnin.add(1.0, MCMC::MH_Move(Generic_Proposal(proposal),"realign_and_sample_logLambda"));
+	}
+	if (auto index = P->maybe_find_parameter(model_path({"I1","RS07:meanIndelLength"})))
+	{
+	    auto proposal = [index](Model& P){ return realign_and_propose_parameter(P, *index, log_scaled(more_than(0.0, shift_laplace)), {0.5}) ;};
+
+	    pre_burnin.add(1.0, MCMC::MH_Move(Generic_Proposal(proposal),"realign_and_sample_meanIndelLength"));
+	}
 
 	// enable and disable moves
 	enable_disable_transition_kernels(pre_burnin,args);
@@ -869,15 +875,9 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	// enable and disable moves
 	enable_disable_transition_kernels(pre_burnin,args);
 
-	for(int i=0;i<2*n_pre_burnin;i++) {
-	    out_both<<" SPR+A #"<<i+1<<"   prior = "<<P->prior()<<"   likelihood = "<<P->likelihood();
-	    out_both<<"   |A| = "<<Get_Total_Alignment_Length_Function()(*P,0);
-	    out_both<<"   |T| = "<<Get_Tree_Length_Function()(*P,0);
-	    for(int j=0;j<P.as<Parameters>()->n_branch_scales();j++)
-	    {
-		Parameters& PP = *P.as<Parameters>();
-		out_both<<"     Scale"<<j+1<<" = "<<PP.branch_scale(j)<<endl;
-	    }
+	for(int i=0;i<n_pre_burnin;i++)
+	{
+	    log_preburnin(out_both, *P, "SPR+A (training)", i);
 	    show_parameters(out_log,*P,false);
 	    pre_burnin.iterate(P,Stats);
 	}
@@ -887,6 +887,13 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	    Parameters& PP = *P.as<Parameters>();
 	    PP.set_parameter_value(PP.find_parameter("*IModels.training"), new constructor("Prelude.False",0));
 	}
+	for(int i=0;i<n_pre_burnin;i++)
+	{
+	    log_preburnin(out_both, *P, "SPR+A", i);
+	    show_parameters(out_log,*P,false);
+	    pre_burnin.iterate(P,Stats);
+	}
+
     }
 //    out_both<<endl;
 
