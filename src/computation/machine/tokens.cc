@@ -244,7 +244,6 @@ int reg_heap::release_knuckle_tokens(int child_token)
 int reg_heap::release_unreferenced_tips(int t)
 {
     assert(token_is_used(t));
-    assert(tokens[t].children.empty());
 
     while(t != -1 and not tokens[t].is_referenced() and tokens[t].children.empty())
     {
