@@ -151,12 +151,12 @@ Input:
 
 * The function takes a single `OperationArgs& Args` argument.
 * The `n`th argument is fetched by calling `Args.evaluate(n)`, and is of type `expression_ref` ([src/computation/expression/expression_ref.H](https://github.com/bredelings/BAli-Phy/blob/master/src/computation/expression/expression_ref.H))
-* The `expression_ref` can be converted to `double` or `int` using the methods `.as_double()` and `.as_int()`.
+* The `expression_ref` can be converted to `int', `double`, or `log_double_t` using the methods `.as_int()`, `.as_double()` and `.as_log_double()`.
 
 Output:
 
 * The function returns a `closure` object ([src/computation/closure.H](https://github.com/bredelings/BAli-Phy/blob/master/src/computation/closure.H))
-* A closure can be created from a `double` or `int`.  Here an explicit conversion is invoked by surrouding a `double` with curly braces.
+* A closure can be created from a `double` or `int`.  Here an explicit conversion is invoked by surrouding a `log_double_t` with curly braces.
 
 ## Adding a distribution
 
@@ -178,26 +178,42 @@ normal m s = ProbDensity (normal_density m s) (normal_quantile m s) (sample_norm
 ```
 
 ### Density
-Note that the normal density takes 3 arguments, so that `(normal_density m s)` is a function of the third argument.
+A density function takes an extra argument after the distribution parameters.  For example, the normal density takes 3 arguments, so that `(normal_density m s)` is a function of the third argument.
+
+A density function should return type `log_double_t`.
 
 ### Quantile
-If the function is univariate, you can define
-a quantile function that takes a probability and returns the value of
-x such that the cdf up to x is p.
-``` Haskell
-dist_quantile args p = x
-```
-If the function is not univariate, or you don't have a quantile functon, set the quantile function to `(no_quantile "distribution name")`.  This will later change to use polymorphism, where only 1-dimensional functions will have a quantile attribute.
+A quantile function takes an extra argument after the distribution parameters.  For example, the normal quantile takes 3 arguments, so that `(normal_quantile m s)` is a function of the third argument.  The extra argument should have type `double`, and ranges from 0 to 1.
+
+If the function is not univariate, or does not have a quantile functon, set the quantile function to `(no_quantile "distribution name")`.  This will later change to use polymorphism, where only 1-dimensional functions will have a quantile attribute.
 
 ### Sample
-The `(dist_sample parameters)` function returns an object in the Random monad.
-To construct a random sample from a C++ procedure, use one of the following patterns, depending on how many arguments your sampling routine takes:
+
+
+To construct a random sample from a C++ procedure, access the `n`th parameter via `Args.evaluate_(n)` (with an underscore) instead of `Args.evaluate(n)`.
+For example:
+``` C++
+extern "C" closure builtin_function_sample_normal(OperationArgs& Args)
+{
+    double a1 = Args.evaluate_(0).as_double();
+    double a2 = Args.evaluate_(1).as_double();
+  
+    return { gaussian(a1, a2) };
+}
+```
+Then use one of the following patterns, depending on how many arguments your sampling routine takes:
 ``` Haskell
 sample_dist arg1 = Random (IOAction1 builtin_sample_dist arg1);
 sample_dist arg1 arg2 = Random (IOAction2 builtin_sample_dist arg1 arg2);
 sample_dist arg1 arg2 arg3 = Random (IOAction3 builtin_sample_dist arg1 arg2 arg3);
 ```
-The procedure can also call other actions in the Random monad, where executing a distribution has the semantics of sampling from the distribution.  For example, here we sample from the distribution `(dist2 args)` and transform the result.
+For example:
+``` Haskell
+builtin builtin_sample_normal 2 "sample_normal" "Distribution";
+sample_normal m s = Random (IOAction2 builtin_sample_normal m s);
+```
+
+The `(dist_sample parameters)` function returns an object in the Random monad, where executing a distribution has the semantics of sampling from the distribution.  The sampling procedure can also call other actions in the Random monad. For example, here we sample from the distribution `(dist2 args)` and transform the result.
 ``` Haskell
 sample_dist args = do { x <- dist2 args; return (f x);}
 ```
