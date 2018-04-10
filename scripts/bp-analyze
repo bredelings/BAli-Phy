@@ -820,7 +820,7 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
     $section .= '</td>';
     
     $section .= '<td style="width:40%;vertical-align:top">';
-    $section .= '<h4 style="text-align:center">Variation of split PPs across chains</h4>';
+    $section .= '<h4 style="text-align:center">Variation of split PPs across chains (<a href="https://doi.org/10.1080/10635150600812544">Beiko et al 2006</a>)</h4>';
     if (-e "Results/convergence1-PP.svg")
     {
 	$section .= html_svg("convergence1-PP.svg","90%","",[])
