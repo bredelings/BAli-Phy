@@ -680,13 +680,49 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
     duration_t t1 = total_cpu_time();
     out_both<<"Beginning pre-burnin: "<<n_pre_burnin<<" iterations."<<endl;
 
-    if (P.as<Parameters>()->variable_alignment() and not args.count("tree"))
-	P.as<Parameters>()->variable_alignment(false);
-
     log_preburnin(out_both, *P, "Start", 0);
     out_both<<endl;
 
     MoveStats Stats;
+
+    // 0. Then sample  (a) scale and (b) branch lengths and (c) parameters
+    if (P->contains_key("pre-burnin-A"))
+    {
+	MoveAll pre_burnin("pre-burnin");
+
+	pre_burnin.add(1,get_scale_slice_moves(*P.as<Parameters>()));
+	if (all_scales_modifiable(*P))
+	    pre_burnin.add(1,MCMC::SingleMove(scale_means_only, "scale_means_only","mean"));
+	pre_burnin.add(1,SingleMove(walk_tree_sample_branch_lengths, "walk_tree_sample_branch_lengths","lengths") );
+	pre_burnin.add(2,get_parameter_slice_moves(*P));
+	pre_burnin.add(1,SingleMove(realign_from_tips, "realign_from_tips","lengths:alignment:topology") );
+
+	// enable and disable moves
+	enable_disable_transition_kernels(pre_burnin,args);
+
+	for(int i=0;i<n_pre_burnin;i++) {
+	    // turn training on
+	    {
+		Parameters& PP = *P.as<Parameters>();
+		PP.set_parameter_value(PP.find_parameter("*IModels.training"), new constructor("Prelude.True",0));
+	    }
+
+	    pre_burnin.iterate(P,Stats);
+	    // turn training off
+	    {
+		Parameters& PP = *P.as<Parameters>();
+		PP.set_parameter_value(PP.find_parameter("*IModels.training"), new constructor("Prelude.False",0));
+	    }
+
+	    log_preburnin(out_both, *P, "(S)+(L)+(P)+Alignment", i);
+	    show_parameters(out_log, *P, false);
+	}
+	out_both<<endl;
+    }
+
+    if (P.as<Parameters>()->variable_alignment() and not args.count("tree"))
+	P.as<Parameters>()->variable_alignment(false);
+
     // 1. First sample (a) scale of the tree
     {
 	MoveAll pre_burnin("pre-burnin");
