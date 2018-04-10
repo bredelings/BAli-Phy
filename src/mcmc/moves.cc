@@ -349,7 +349,9 @@ vector<int> walk_tree_path_toward_branch(const TreeInterface& t, int b0)
 	auto x = walk_tree_path_toward_branch(t, b);
 	branches.insert(branches.end(), x.begin(), x.end());
     }
-    branches.push_back(b0);
+    // Put the incoming branches in last and TOGETHER
+    for(auto b: t.branches_before(b0))
+	branches.push_back(b);
     return branches;
 }
 
@@ -361,6 +363,9 @@ vector<int> walk_tree_path_toward(const TreeInterface& t, int root)
 	auto x = walk_tree_path_toward_branch(t, b);
 	branches.insert(branches.end(), x.begin(), x.end());
     }
+    // Put the incoming branches in last and TOGETHER
+    for(auto b: t.branches_in(root))
+	branches.push_back(b);
     return branches;
 }
 
