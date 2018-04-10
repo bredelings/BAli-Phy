@@ -596,7 +596,7 @@ void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats)
 {
   Parameters& PP = *P.as<Parameters>();
   auto t = PP.t();
-  int toward_node = uniform(t.n_leaves(), t.n_nodes()-1);
+  int toward_node = uniform(t.n_nodes()>2?t.n_leaves():0, t.n_nodes()-1);
   vector<int> branches = walk_tree_path_toward_and_away(t, toward_node);
 
   for(int b: branches)
@@ -607,6 +607,8 @@ void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats)
       int node2 = t.target(b);
       if (node2 >= t.n_leaves())
 	  tri_sample_alignment(*P.as<Parameters>(), node2, node1);
+      else
+	  sample_alignment(*P.as<Parameters>(), b);
       sample_branch_length_(P,Stats,b);
       three_way_topology_sample(P,Stats,b);
   }
