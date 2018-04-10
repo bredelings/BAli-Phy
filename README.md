@@ -33,12 +33,9 @@ If you build with meson and ninja, you need
  * python3
  * ninja
 
-If you build with autotools, you need
- * autoconf
- * automake
- * libtool
+You need meson version >= 0.45 to build bali-phy.
 
-Build with meson (fastest)
+Build with meson
 ----------------
 ```bash
 sudo apt-get install g++ libcairo2-dev ninja-build python3
@@ -52,31 +49,10 @@ python3 -m venv meson
 source meson/bin/activate
 pip3 install meson
 
-meson build --prefix=$HOME/Applications/bali-phy  # Two warnings about 'export_dynamic' are OK.
-cd build
-ninja install
+meson build --prefix=$HOME/Applications/bali-phy
+ninja -C install
+ninja -C test
 ```
-
-Build with autotools (slower)
--------------------
-
-```bash
-sudo apt-get install g++ libcairo2-dev autoconf automake libtool
-
-git clone https://github.com/bredelings/BAli-Phy.git
-cd BAli-Phy/
-git submodule update --init
-
-./bootstrap.sh
-mkdir build
-cd build
-../configure --prefix=$HOME/Applications/bali-phy/
-make
-make check
-make install
-```
-
-Additional options to `configure` can be revealed by supplying the `--help` flag.
 
 Adding bali-phy to your `$PATH`
 ------------------------------
