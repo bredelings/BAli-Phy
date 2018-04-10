@@ -20,7 +20,7 @@
         {
             "arg_name": "meanIndelLength",
             "arg_type": "Double",
-            "default_value": "Add[1,~Exponential[10]]",
+            "default_value": "~Exponential[10,1]",
 	    "description": "The mean indel length"
         },
         {
