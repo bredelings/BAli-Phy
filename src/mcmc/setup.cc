@@ -654,10 +654,12 @@ void log_preburnin(ostream& o, const Model& M, const string& name, int iter)
 {
     auto& P = dynamic_cast<const Parameters&>(M);
 
+    double TL = tree_length(P.t());
     o<<" "<<name<<" #"<<iter+1<<"   prior = "<<P.prior()<<"   likelihood = "<<P.likelihood();
-    o<<"   |T| = "<<tree_length(P.t());
+    o<<"   |T| = "<<TL;
+    o<<"   |A| = "<<MCMC::alignment_length(P);
     for(int s=0;s<P.n_branch_scales();s++)
-	o<<"   Scale"<<s+1<<" = "<<P.branch_scale(s);
+	o<<"   Scale"<<s+1<<"*|T| = "<<P.branch_scale(s)*TL;
     o<<std::endl;
 }
 
