@@ -298,10 +298,11 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
 
     <section xml:id="tests"><info><title>Test the installed software</title></info>
     <para>In order to determine that the software has been correctly installed, and the <envar>PATH</envar> has been correctly set, run the following commands:
-<screen><prompt>%</prompt> <userinput>bali-phy &install.path;/share/doc/bali-phy/examples/sequences/5S-rRNA/5d.fasta --iter=150</userinput>
-<prompt>%</prompt> <userinput>bp-analyze 5d-1/</userinput></screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy &install.path;/share/doc/bali-phy/examples/sequences/5S-rRNA/25.fasta --iter=150</userinput>
+<prompt>%</prompt> <userinput>bali-phy &install.path;/share/doc/bali-phy/examples/sequences/5S-rRNA/25.fasta --iter=150</userinput>
+<prompt>%</prompt> <userinput>bp-analyze 25-1 25-2</userinput></screen>
     </para>
-    <para>Furthermore, the directory <filename>5d-1</filename> should contain a file called <filename>C1.log</filename>.  You should be able to load this file in Tracer, although the chain will not really have converged yet.</para>
+    <para>Furthermore, the directories <filename>25-1</filename> and <filename>25-2</filename> should contain a file called <filename>C1.log</filename>.  You should be able to load these files in Tracer, although the chain will not really have converged yet.</para>
     </section>
 
 
