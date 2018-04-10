@@ -386,6 +386,7 @@ MCMC::MoveAll get_alignment_moves(Parameters& P)
     }
     alignment_moves.add(1, alignment_branch_moves, false);
     alignment_moves.add(1, SingleMove(walk_tree_sample_alignments, "walk_tree_sample_alignments","alignment:alignment_branch:nodes") );
+    alignment_moves.add(0.1, SingleMove(realign_from_tips, "realign_from_tips","lengths:alignment:topology") );
 
     //---------- alignment::nodes_master (nodes_moves) ----------//
     MoveEach nodes_moves("nodes_master","alignment:nodes");
