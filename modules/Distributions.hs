@@ -66,11 +66,12 @@ distDefaultValue d = unsafePerformIO' $ sample d;
 no_quantile name = error ("Distribution '"++name++"' has no quantile function");
 
 -- Define some basic distributions
-builtin gamma_density 3 "gamma_density" "Distribution";
-builtin gamma_quantile 3 "gamma_quantile" "Distribution";
-builtin builtin_sample_gamma 2 "sample_gamma" "Distribution";
-sample_gamma a b = Random (IOAction2 builtin_sample_gamma a b);
-gamma a b = ProbDensity (gamma_density a b) (gamma_quantile a b) (sample_gamma a b) (above 0.0);
+builtin shifted_gamma_density 4 "shifted_gamma_density" "Distribution";
+builtin shifted_gamma_quantile 4 "shifted_gamma_quantile" "Distribution";
+builtin builtin_sample_shifted_gamma 3 "sample_shifted_gamma" "Distribution";
+sample_shifted_gamma a b shift = Random (IOAction3 builtin_sample_shifted_gamma a b shift);
+shifted_gamma a b shift = ProbDensity (shifted_gamma_density a b shift) (shifted_gamma_quantile a b shift) (sample_shifted_gamma a b shift) (above shift);
+gamma a b = shifted_gamma a b 0.0;
 
 builtin beta_density 3 "beta_density" "Distribution";
 builtin beta_quantile 3 "beta_quantile" "Distribution";
@@ -150,11 +151,8 @@ bernoulli2 p q = ProbDensity (bernoulli_density2 p q) (no_quantile "bernoulli") 
 bernoulli p = bernoulli2 p (1.0-p);
 rbernoulli q = bernoulli2 (1.0-q) q;
 
-builtin builtin_sample_exponential 1 "sample_exponential" "Distribution";
-builtin exponential_density 2 "exponential_density" "Distribution";
-exponential_quantile mu p = gamma_quantile 1.0 mu p;
-sample_exponential mu = Random (IOAction1 builtin_sample_exponential mu);
-exponential mu = ProbDensity (exponential_density mu) (exponential_quantile mu) (sample_exponential mu) (above 0.0);
+shifted_exponential mu shift = shifted_gamma 1.0 mu shift;
+exponential mu = shifted_exponential mu 0.0;
 
 normalize v = map (/total) v where {total=sum v};
 

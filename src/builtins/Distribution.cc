@@ -16,45 +16,33 @@ using std::vector;
 using std::string;
 using std::valarray;
 
-extern "C" closure builtin_function_exponential_density(OperationArgs& Args)
+extern "C" closure builtin_function_shifted_gamma_density(OperationArgs& Args)
 {
-    double mu = Args.evaluate(0).as_double();
-    double x = Args.evaluate(1).as_double();
+    double a1    = Args.evaluate(0).as_double();
+    double a2    = Args.evaluate(1).as_double();
+    double shift = Args.evaluate(2).as_double();
+    double x     = Args.evaluate(3).as_double();
   
-    return { exponential_pdf(x,mu) };
+    return { gamma_pdf(x-shift, a1, a2) };
 }
 
-extern "C" closure builtin_function_sample_exponential(OperationArgs& Args)
+extern "C" closure builtin_function_sample_shifted_gamma(OperationArgs& Args)
 {
-    double mu = Args.evaluate_(0).as_double();
+    double a1    = Args.evaluate_(0).as_double();
+    double a2    = Args.evaluate_(1).as_double();
+    double shift = Args.evaluate_(2).as_double();
   
-    return { exponential(mu) };
+    return { gamma(a1, a2) + shift };
 }
 
-extern "C" closure builtin_function_gamma_density(OperationArgs& Args)
+extern "C" closure builtin_function_shifted_gamma_quantile(OperationArgs& Args)
 {
-    double a1 = Args.evaluate(0).as_double();
-    double a2 = Args.evaluate(1).as_double();
-    double x = Args.evaluate(2).as_double();
-  
-    return { gamma_pdf(x, a1, a2) };
-}
+    double a1     = Args.evaluate(0).as_double();
+    double a2     = Args.evaluate(1).as_double();
+    double shift  = Args.evaluate(2).as_double();
+    double p      = Args.evaluate(3).as_double();
 
-extern "C" closure builtin_function_sample_gamma(OperationArgs& Args)
-{
-    double a1 = Args.evaluate_(0).as_double();
-    double a2 = Args.evaluate_(1).as_double();
-  
-    return { gamma(a1, a2) };
-}
-
-extern "C" closure builtin_function_gamma_quantile(OperationArgs& Args)
-{
-    double a1 = Args.evaluate(0).as_double();
-    double a2 = Args.evaluate(1).as_double();
-    double p  = Args.evaluate(2).as_double();
-
-    return { gamma_quantile(p, a1, a2) };
+    return { gamma_quantile(p, a1, a2) + shift };
 }
 
 extern "C" closure builtin_function_beta_density(OperationArgs& Args)
