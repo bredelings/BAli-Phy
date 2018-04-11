@@ -167,6 +167,6 @@ log_double_t move_scale_branch(Model& P);
 
 log_double_t move_subst_type_branch(Model& P);
 
-log_double_t realign_and_propose_parameter(Model& P, int param, const proposal_fn& proposal, const std::vector<double>& v);
+log_double_t realign_and_propose_parameter(Model& P, int param, const std::vector<int>&, const proposal_fn& proposal, const std::vector<double>& v);
 
 #endif

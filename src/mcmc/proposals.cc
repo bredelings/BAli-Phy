@@ -641,7 +641,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P
 boost::shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const indel::PairHMM& hmm, int b);
 vector<int> walk_tree_path_toward(const TreeInterface& t, int root);
 
-log_double_t realign_and_propose_parameter(Model& P, int param, const proposal_fn& proposal, const vector<double>& v)
+log_double_t realign_and_propose_parameter(Model& P, int param, const vector<int>& partitions, const proposal_fn& proposal, const vector<double>& v)
 {
     Parameters& PP = dynamic_cast<Parameters&>(P);
     Parameters P0 = PP;
@@ -683,7 +683,7 @@ log_double_t realign_and_propose_parameter(Model& P, int param, const proposal_f
 	if (t.is_leaf_node(t.target(b)) and t.n_nodes() > 2)
 	    b = t.reverse(b);
 
-	for(int j=0;j<PP.n_data_partitions();j++)
+	for(int j : partitions)
 	{
 	    // 3.3 We want to do ratio *= Pr(A' -> A)/Pr(A -> A')
 	    if (PP[j].variable_alignment())

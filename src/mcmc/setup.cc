@@ -234,16 +234,23 @@ void add_alignment_and_parameter_moves(MCMC::MoveAll& moves, Model& M, double we
     for(int i=0; i<n; i++)
     {
 	string prefix = "I"+convertToString(i+1);
-	// Resample logLambda and alignment
-	for(auto& name: {"RS07:logLambda","RS07:meanIndelLength"})
-	{
-	    string pname = model_path({prefix,name});
-	    if (auto index = M.maybe_find_parameter(pname))
-	    {
-		auto proposal = [index](Model& P){ return realign_and_propose_parameter(P, *index, shift_cauchy, {0.25}) ;};
 
-		moves.add(weight, MCMC::MH_Move(Generic_Proposal(proposal),"realign_and_sample_"+pname), enabled);
-	    }
+	vector<int> partitions = dynamic_cast<const Parameters&>(M).partitions_for_imodel(i);
+
+	string pname1 = model_path({prefix,"RS07:logLambda"});
+	if (auto index = M.maybe_find_parameter(pname1))
+	{
+	    auto proposal = [index,partitions](Model& P){ return realign_and_propose_parameter(P, *index, partitions, shift_cauchy, {0.25}) ;};
+
+	    moves.add(weight, MCMC::MH_Move(Generic_Proposal(proposal),"realign_and_sample_"+pname1), enabled);
+	}
+
+	string pname2 = model_path({prefix,"RS07:meanIndelLength"});
+	if (auto index = M.maybe_find_parameter(pname2))
+	{
+	    auto proposal = [index,partitions](Model& P){ return realign_and_propose_parameter(P, *index, partitions, log_scaled(more_than(0.0, shift_laplace)), {0.5}) ;};
+
+	    moves.add(weight, MCMC::MH_Move(Generic_Proposal(proposal),"realign_and_sample_"+pname2), enabled);
 	}
     }
 }
