@@ -343,6 +343,8 @@ public:
 
     boost::optional<int> imodel_index_for_partition(int i) const {return PC->imodel_for_partition[i];}
 
+    std::vector<int> partitions_for_imodel(int i) const;
+
     boost::optional<int> scale_index_for_partition(int i) const {return PC->scale_for_partition[i];}
   
     void set_beta(double b);

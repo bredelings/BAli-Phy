@@ -1340,6 +1340,17 @@ parameters_constants::parameters_constants(const vector<alignment>& A, const Seq
     }
 }
 
+vector<int> Parameters::partitions_for_imodel(int i) const
+{
+    assert(0 <= i and i < n_imodels());
+    vector<int> partitions;
+    for(int p=0;p<n_data_partitions();p++)
+	if (auto index = imodel_index_for_partition(p))
+	    if (*index == i)
+		partitions.push_back(p);
+    return partitions;
+}
+
 Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 		       const vector<alignment>& A, const SequenceTree& tt,
 		       const vector<model_t>& SMs,
