@@ -229,6 +229,8 @@ bool all_scales_modifiable(const Model& M)
 
 void add_alignment_and_parameter_moves(MCMC::MoveAll& moves, Model& M, double weight = 1.0, double enabled = true)
 {
+    if (not dynamic_cast<const Parameters*>(&M)) return;
+
     int n = dynamic_cast<const Parameters&>(M).n_imodels();
 
     for(int i=0; i<n; i++)
