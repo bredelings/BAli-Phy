@@ -399,7 +399,7 @@ vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const
     // Write out the alignments for each (variable) partition to C<>.P<>.fastas
     if (P->t().n_nodes() > 1)
 	for(int i=0;i<P->n_data_partitions();i++)
-	    if ((*P)[i].variable_alignment()) 
+	    if ((*P)[i].variable_alignment() or P->load_value("write_fixed_alignments",false)) 
 	    {
 		string filename = base + ".P" + convertToString(i+1)+".fastas";
 		
