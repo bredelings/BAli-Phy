@@ -1,5 +1,6 @@
 {
-    "name": "M0",
+    "name": "yn94",
+    "synonyms": ["M0"],
     "result_type": "ExchangeModel[Codons[a]]",
     "constraints": ["Nucleotides[a]"],
     "title": "The Goldman & Yang (1994) model of dN\/dS",

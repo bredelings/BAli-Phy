@@ -1,5 +1,6 @@
 {
-    "name": "TN",
+    "name": "tn93",
+    "synonyms": ["TN"],
     "title": "The Tamura-Nei (1993) nucleotide rate matrix",
     "result_type": "ExchangeModel[a]",
     "citation":{"type": "article",

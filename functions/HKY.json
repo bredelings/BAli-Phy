@@ -1,5 +1,6 @@
 {
-    "name": "HKY",
+    "name": "hky85",
+    "synonyms":["HKY"],
     "title": "The Hasegawa-Kishino-Yano (1985) nucleotide rate matrix",
     "result_type": "ExchangeModel[a]",
     "constraints": ["Nucleotides[a]"],
