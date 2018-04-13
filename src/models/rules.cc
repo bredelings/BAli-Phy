@@ -141,6 +141,18 @@ ptree convert_rule(const Rules& R, Rule rule)
 	constraints = parse_constraints(constraints);
     }
 
+    if (auto syn = rule.get_child_optional("synonyms"))
+    {
+	if (not syn->value_is_empty())
+	    throw myexception()<<"In rule for "<<*rule.get_optional<string>("name")<<": \"synonyms\" must be an array";
+    }
+
+    if (auto syn = rule.get_child_optional("deprecated-synonyms"))
+    {
+	if (not syn->value_is_empty())
+	    throw myexception()<<"In rule for "<<*rule.get_optional<string>("name")<<": \"deprecated-synonyms\" must be an array";
+    }
+
     {
 	ptree& call = rule.get_child("call");
 	auto s = call.get_value<string>();
