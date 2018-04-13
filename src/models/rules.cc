@@ -128,7 +128,6 @@ ptree parse_constraints(const ptree& cc)
 
 ptree convert_rule(const Rules& R, Rule rule)
 {
-
     {
 	ptree& result_type = rule.get_child("result_type");
 	result_type = parse_type(result_type.get_value<string>());
@@ -139,18 +138,6 @@ ptree convert_rule(const Rules& R, Rule rule)
 	    rule.push_back({"constraints",ptree()});
 	ptree& constraints = rule.get_child("constraints");
 	constraints = parse_constraints(constraints);
-    }
-
-    if (auto syn = rule.get_child_optional("synonyms"))
-    {
-	if (not syn->value_is_empty())
-	    throw myexception()<<"In rule for "<<*rule.get_optional<string>("name")<<": \"synonyms\" must be an array";
-    }
-
-    if (auto syn = rule.get_child_optional("deprecated-synonyms"))
-    {
-	if (not syn->value_is_empty())
-	    throw myexception()<<"In rule for "<<*rule.get_optional<string>("name")<<": \"deprecated-synonyms\" must be an array";
     }
 
     {
@@ -344,6 +331,18 @@ void Rules::add_rule(const fs::path& path)
 	std::cerr<<"Warning: ignoring additional definition of function '"<<name<<"' from file '"<<path<<"'\n";
     else
 	rules[name] = rule;
+
+    if (auto syn = rule.get_child_optional("synonyms"))
+    {
+	if (not syn->value_is_empty())
+	    throw myexception()<<"In rule for "<<*rule.get_optional<string>("name")<<": \"synonyms\" must be an array";
+    }
+
+    if (auto syn = rule.get_child_optional("deprecated-synonyms"))
+    {
+	if (not syn->value_is_empty())
+	    throw myexception()<<"In rule for "<<*rule.get_optional<string>("name")<<": \"deprecated-synonyms\" must be an array";
+    }
 
     if (auto synonyms = rule.get_child_optional("synonyms"))
     {
