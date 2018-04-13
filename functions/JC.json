@@ -1,5 +1,6 @@
 {
-    "name": "JC",
+    "name": "jc69",
+    "synonyms": ["JC"],
     "result_type": "RevCTMC[a]",
     "call": "SModel.jukes_cantor[A]",
     "args": [

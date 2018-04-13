@@ -1,5 +1,6 @@
 {
-    "name": "logGamma",
+    "name": "log_gamma",
+    "synonyms": ["logGamma"],
     "result_type": "Distribution[Double]",
     "call": "Distributions.logGamma[a,b]",
     "args": [

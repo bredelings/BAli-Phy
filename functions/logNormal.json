@@ -1,7 +1,8 @@
 {
-    "name": "logNormal",
+    "name": "log_normal",
+    "synonyms": [ "logNormal" ],
     "result_type": "Distribution[Double]",
-    "call": "Distributions.logNormal[lmu,lsigma]",
+    "call": "Distributions.log_normal[lmu,lsigma]",
     "args": [
         {
             "arg_name": "lmu",
@@ -15,6 +16,6 @@
         }
     ],
     "title": "The log-normal distribution",
-    "examples": ["~logNormal[0,1]","~iid[10,logNormal[0,1]]"],
+    "examples": ["~log_normal[0,1]","~iid[10,log_normal[0,1]]"],
     "description": "A variable X is log-normal if log[X] is normal."
 }

@@ -335,7 +335,7 @@ gamma_rates_dist alpha = gamma alpha (1.0/alpha);
 
 gamma_rates base alpha n = multi_rate_unif_bins base (gamma_rates_dist alpha) n;
 
-log_normal_rates_dist sigmaOverMu = logNormal lmu lsigma where {x = log(1.0+sigmaOverMu^2);
+log_normal_rates_dist sigmaOverMu = log_normal lmu lsigma where {x = log(1.0+sigmaOverMu^2);
                                                              lmu = -0.5*x;
                                                              lsigma = sqrt x};
 

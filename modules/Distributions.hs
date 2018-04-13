@@ -240,7 +240,7 @@ expTransform (ProbDensity d q s r) = ProbDensity pdf' q' s' r'
   r'   = Range.expTransform r
  };
   
-logNormal mu sigma = expTransform $ normal mu sigma;
+log_normal mu sigma = expTransform $ normal mu sigma;
 logExponential mu = expTransform $  exponential mu;
 logGamma a b = expTransform $ gamma a b;
 logLaplace m s = expTransform $ laplace m s;
