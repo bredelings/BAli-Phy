@@ -188,7 +188,12 @@ optional<Rule> Rules::get_rule_for_func(const string& s) const
     auto it = rules.find(s);
     if (it == rules.end())
 	return boost::none;
-    return it->second;
+    else if (auto syn = it->second.get_optional<string>("synonym"))
+	return get_rule_for_func(*syn);
+    else if (auto syn = it->second.get_optional<string>("deprecated-synonym"))
+	throw myexception()<<"Error: the function '"<<s<<"' is now called '"<<*syn<<"'";
+    else
+	return it->second;
 }
 
 Rule Rules::require_rule_for_func(const string& s) const
@@ -327,6 +332,30 @@ void Rules::add_rule(const fs::path& path)
 	std::cerr<<"Warning: ignoring additional definition of function '"<<name<<"' from file '"<<path<<"'\n";
     else
 	rules[name] = rule;
+
+    if (auto synonyms = rule.get_child_optional("synonyms"))
+    {
+	for(auto& synonym_pair: *synonyms)
+	{
+	    if (not synonym_pair.second.is_a<string>())
+		throw myexception()<<"Synonym for rule '"<<name<<"' is not a string!";
+	    auto synonym = (string)synonym_pair.second;
+	    if (not rules.count(synonym))
+		rules[synonym] = ptree({{"synonym",ptree(name)}});
+	}
+    }
+
+    if (auto synonyms = rule.get_child_optional("deprecated-synonyms"))
+    {
+	for(auto& synonym_pair: *synonyms)
+	{
+	    if (not synonym_pair.second.is_a<string>())
+		throw myexception()<<"Deprecated synonym for rule '"<<name<<"' is not a string!";
+	    auto synonym = (string)synonym_pair.second;
+	    if (not rules.count(synonym))
+		rules[synonym] = ptree({{"deprecated-synonym",ptree(name)}});
+	}
+    }
 }
 
 Rules::Rules(const vector<fs::path>& pl)
@@ -354,5 +383,9 @@ Rules::Rules(const vector<fs::path>& pl)
 
     // 3. Convert the rules - FIXME: should we convert default args in a later step?
     for(auto& rule: rules)
+    {
+	if (rule.second.get_child_optional("synonym")) continue;
+	if (rule.second.get_child_optional("deprecated-synonym")) continue;
 	rule.second = convert_rule(*this, rule.second);
+    }
 }
