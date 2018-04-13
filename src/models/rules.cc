@@ -388,7 +388,7 @@ Rules::Rules(const vector<fs::path>& pl)
 	for(auto& dir_entry: fs::recursive_directory_iterator(path))
 	{
 	    auto abs_path = dir_entry.path();
-	    if (abs_path.extension() == ".json")
+	    if (abs_path.extension() == ".json" and abs_path.filename().string()[0] != '.')
 		add_rule(abs_path);
 	}
     }
