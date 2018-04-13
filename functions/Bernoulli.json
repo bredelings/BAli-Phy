@@ -1,5 +1,6 @@
 {
-    "name": "Bernoulli",
+    "name": "bernoulli",
+    "synonyms": [ "Bernoulli" ],
     "result_type": "Distribution[Int]",
     "call": "Distributions.bernoulli[p]",
     "title": "The Bernoulli distribution",

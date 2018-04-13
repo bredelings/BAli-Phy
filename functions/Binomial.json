@@ -1,5 +1,6 @@
 {
-    "name": "Binomial",
+    "name": "binomial",
+    "synonyms" : [ "Binomial"],
     "result_type": "Distribution[Int]",
     "call": "Distributions.binomial[n,p]",
     "title": "Binomial distribution",

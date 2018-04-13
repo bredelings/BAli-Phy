@@ -1,5 +1,6 @@
 {
-    "name": "Beta",
+    "name": "beta",
+    "synonyms": [ "Beta" ],
     "result_type": "Distribution[Double]",
     "call": "Distributions.beta[a,b]",
     "args": [

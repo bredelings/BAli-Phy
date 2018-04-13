@@ -1,5 +1,6 @@
 {
-    "name": "DNA",
+    "name": "dna",
+    "synonyms": [ "DNA" ],
     "result_type": "DNA",
     "call": "Alphabet.dna",
     "args": []
