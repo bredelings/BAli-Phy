@@ -200,6 +200,8 @@ bool is_loggable_function(const Rules& R, const string& name)
     auto rule = R.get_rule_for_func(name);
     if (name == "let") return true;
 
+    if (name == "function") return true;
+
     if (not rule) return false;
     return not rule->get("no_log",false);
 }
