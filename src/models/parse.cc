@@ -276,6 +276,23 @@ void handle_positional_args(ptree& model, const Rules& R)
 	return;
     }
 
+    if (head == "function")
+    {
+	if (model.size() != 2)
+	    throw myexception()<<"function: got "<<model.size()<<" arguments, 2 arguments required.\n  "<<model.show();
+
+	// Complain about function[var=value,body]
+	if (not model[0].first.empty() or not model[0].second.is_a<string>())
+	    throw myexception()<<"function: first argument must be a variable!\n  "<<model.show();
+	// Move string value to first element of pair.
+	model[0].first = (string)model[0].second;
+	model[0].second = {};
+
+	if (not model[1].first.empty())
+	    throw myexception()<<"function: second argument must not have a variable name!\n  "<<model.show();
+	return;
+    }
+
     auto rule = R.require_rule_for_func(head);
 
     int i=0;
@@ -421,13 +438,19 @@ string unparse(const ptree& p, const Rules& rules)
 	string R = unparse(p.get_child("R"), rules);
 	return Q + "+" + R;
     }
-    if (s == "let")
+    else if (s == "let")
     {
 	string name = p[0].first;
 	return "let["+name+"="+unparse(p[0].second,rules)+","+unparse(p[1].second,rules)+"]";
     }
-    if (s == "sample")
+    else if (s == "function")
+    {
+	string name = p[0].first;
+	return "function["+name+","+unparse(p[1].second,rules)+"]";
+    }
+    else if (s == "sample")
 	return "~" + unparse(p.begin()->second, rules);
+
     if (auto xs = get_list_elements(p))
     {
 	vector<string> ss;

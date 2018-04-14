@@ -20,7 +20,8 @@ void pass1(const Rules& R, ptree& p)
 {
     // 1. Handle children.
     for(auto& child: p)
-	pass1(R, child.second);
+	if (not child.second.is_null()) // For function[x=null,body=E]
+	    pass1(R, child.second);
     
     // 2. Convert e.g. TN+F -> rctmc[TN,F]
     if (unify(R.get_result_type(p),parse_type("FrequencyModel[_]")) and p.count("submodel"))
@@ -122,14 +123,15 @@ void substitute_in_types(const Substitution& renaming, term_t& T)
 {
     substitute(renaming, T.get_child("type") );
     for(auto& x: T.get_child("value"))
-	substitute_in_types( renaming, x.second );
+	if (not x.second.is_null()) //  // For function[x=null,body=E]
+	    substitute_in_types( renaming, x.second );
 }
 
 term_t extract_value(const term_t& T)
 {
     term_t value = T.get_child("value");
     for(auto& x: value)
-	if (not x.second.is_null())
+	if (not x.second.is_null()) //  // For function[x=null,body=E]
 	    x.second = extract_value(x.second);
     return value;
 }
@@ -248,6 +250,42 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 
 	    // Create the new model tree with args in correct order
 	    model = ptree("let",{{var_name, var_exp},{"",body_exp}});
+
+	    auto keep = find_variables_in_type(required_type);
+	    add(keep, find_type_variables_from_scope(scope));
+	    auto S = E.eliminate_except(keep);
+
+	    model = ptree({{"value",model},{"type",required_type}});
+
+	    substitute_in_types(S,model);
+
+	    return E;
+	}
+	else if (name == "function")  //function[x,F]
+	{
+	    // The problem with this is that the order is wrong.
+	    string var_name = model[0].first;
+	    ptree body_exp = model[1].second;
+
+	    auto a = get_fresh_type_var(bound_vars);
+	    bound_vars.insert(a);
+	    auto b = get_fresh_type_var(bound_vars);
+	    bound_vars.insert(b);
+
+	    // 1. Unify required type with (a -> b)
+	    auto ftype = ptree("Function",{ {"",ptree("a")},{"",ptree("b")} });
+	    equations E = unify(ftype, required_type);
+	    if (not E)
+		throw myexception()<<"Supplying a function, but expected '"<<unparse_type(required_type)<<"!";
+
+            // 2. Analyze the body, forcing it to have type (b)
+	    E = E && pass2(R, b, body_exp, bound_vars, extend_scope(scope, var_name, a));
+	    if (not E)
+		throw myexception()<<"Expression '"<<unparse(body_exp, R)<<"' is not of required type "<<unparse_type(required_type)<<"!";
+	    add(bound_vars, E.referenced_vars());
+
+	    // 3. Create the new model tree with args in correct order
+	    model = ptree("function",{{var_name, {}},{"",body_exp}});
 
 	    auto keep = find_variables_in_type(required_type);
 	    add(keep, find_type_variables_from_scope(scope));
