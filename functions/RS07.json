@@ -1,5 +1,6 @@
 {
-    "name": "RS07",
+    "name": "rs07",
+    "synonyms": [ "RS07" ],
     "result_type": "IndelModel",
     "title": "Redelings & Suchard (2007) model of insertions and deletions.",
     "citation":{"type": "article",
@@ -9,18 +10,18 @@
 		"journal": {"name": "BMC Evolutionary Biology", "volume": "7", "number": "1", "pages": "40"},
 		"identifier": [{"type":"doi","id":"10.1186/1471-2148-7-40"}]
 	       },
-    "call": "IModel.rs07[logLambda,meanIndelLength,tree]",
+    "call": "IModel.rs07[log_rate,mean_length,tree]",
     "args": [
         {
-            "arg_name": "logLambda",
+            "arg_name": "log_rate",
             "arg_type": "Double",
-            "default_value": "~Laplace[-4,0.707]",
+            "default_value": "~laplace[-4,0.707]",
             "description": "The log of the insertion-deletion rate"
         },
         {
-            "arg_name": "meanIndelLength",
+            "arg_name": "mean_length",
             "arg_type": "Double",
-            "default_value": "~Exponential[10,1]",
+            "default_value": "~exponential[10,1]",
 	    "description": "The mean indel length"
         },
         {

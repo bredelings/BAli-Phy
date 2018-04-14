@@ -1,5 +1,6 @@
 {
-    "name": "F61",
+    "name": "f61",
+    "synonyms": [ "F61" ],
     "result_type": "FrequencyModel[a]",
     "constraints": "Triplets[a,b]",
     "call": "SModel.plus_f'[A,pi]",

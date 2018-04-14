@@ -1,5 +1,6 @@
 {
-    "name": "F3x4",
+    "name": "f3x4",
+    "synonyms": [ "F3x4" ],
     "result_type": "FrequencyModel[a]",
     "constraints": "Triplets[a,b]",
     "call": "SModel.f3x4'[A,pi1,pi2,pi3]",

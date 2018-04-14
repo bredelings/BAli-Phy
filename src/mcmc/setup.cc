@@ -239,7 +239,7 @@ void add_alignment_and_parameter_moves(MCMC::MoveAll& moves, Model& M, double we
 
 	vector<int> partitions = dynamic_cast<const Parameters&>(M).partitions_for_imodel(i);
 
-	string pname1 = model_path({prefix,"RS07:logLambda"});
+	string pname1 = model_path({prefix,"rs07:log_rate"});
 	if (auto index = M.maybe_find_parameter(pname1))
 	{
 	    auto proposal = [index,partitions](Model& P){ return realign_and_propose_parameter(P, *index, partitions, shift_cauchy, {0.25}) ;};
@@ -247,7 +247,7 @@ void add_alignment_and_parameter_moves(MCMC::MoveAll& moves, Model& M, double we
 	    moves.add(weight, MCMC::MH_Move(Generic_Proposal(proposal),"realign_and_sample_"+pname1), enabled);
 	}
 
-	string pname2 = model_path({prefix,"RS07:meanIndelLength"});
+	string pname2 = model_path({prefix,"rs07:mean_length"});
 	if (auto index = M.maybe_find_parameter(pname2))
 	{
 	    auto proposal = [index,partitions](Model& P){ return realign_and_propose_parameter(P, *index, partitions, log_scaled(more_than(0.0, shift_laplace)), {0.5}) ;};
@@ -308,8 +308,8 @@ MCMC::MoveAll get_parameter_MH_moves(Model& M)
 	MH_moves.add(4,MCMC::SingleMove(scale_means_only, "scale_Scales_only", "scale"));
   
     add_MH_move(M, shift_delta,                  "b*.delta",       "lambda_shift_sigma",     0.35, MH_moves, 10);
-    add_MH_move(M, Between(-20,20,shift_cauchy),  model_path({"*","RS07:logLambda"}),      "lambda_shift_sigma",    0.25, MH_moves, 10);
-    add_MH_move(M, log_scaled(more_than(0.0, shift_laplace)), model_path({"*","RS07:meanIndelLength"}), "length_shift_sigma",   0.5, MH_moves, 10);
+    add_MH_move(M, Between(-20,20,shift_cauchy),  model_path({"*","rs07:log_rate"}),      "lambda_shift_sigma",    0.25, MH_moves, 10);
+    add_MH_move(M, log_scaled(more_than(0.0, shift_laplace)), model_path({"*","rs07:mean_length"}), "length_shift_sigma",   0.5, MH_moves, 10);
 
     // Add these moves disabled
     add_alignment_and_parameter_moves(MH_moves, M, 1.0, false);

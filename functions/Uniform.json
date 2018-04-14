@@ -1,5 +1,6 @@
 {
-    "name": "Uniform",
+    "name": "uniform",
+    "synonyms": ["Uniform"],
     "result_type": "Distribution[Double]",
     "call": "Distributions.uniform[low,high]",
     "args": [

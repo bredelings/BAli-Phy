@@ -400,7 +400,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 
     for(int i=0;i<imodel_names_mapping.n_unique_items();i++)
 	if (imodel_names_mapping.unique(i) == "")
-	    imodel_names_mapping.unique(i) = "RS07";
+	    imodel_names_mapping.unique(i) = "rs07";
 
     //------------- Get smodel names -------------------
     auto smodel_names_mapping = get_mapping(args, "smodel", n_partitions);

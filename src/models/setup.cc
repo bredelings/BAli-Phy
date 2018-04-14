@@ -119,13 +119,13 @@ string show(vector<string> args)
 string default_markov_model(const alphabet& a) 
 {
     if (dynamic_cast<const Nucleotides*>(&a))
-	return "TN";
+	return "tn93";
     else if (dynamic_cast<const AminoAcidsWithStop*>(&a))
 	return "";
     else if (dynamic_cast<const AminoAcids*>(&a))
 	return "LG";
     else if (dynamic_cast<const Codons*>(&a))
-	return "M0";
+	return "yn94";
     else if (dynamic_cast<const Triplets*>(&a))
 	return "x3[TN]";
     else

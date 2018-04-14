@@ -1,5 +1,6 @@
 {
-    "name": "Normal",
+    "name": "normal",
+    "synonyms": ["Normal"],
     "result_type": "Distribution[Double]",
     "call": "Distributions.normal[mean,sigma]",
     "args": [
@@ -15,5 +16,5 @@
         }
     ],
     "title": "The normal distribution",
-    "examples": ["~Normal[0,1]","~iid[10,Normal[0,1]]"]
+    "examples": ["~normal[0,1]","~iid[10,normal[0,1]]"]
 }

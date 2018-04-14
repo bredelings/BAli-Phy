@@ -1,5 +1,6 @@
 {
-    "name": "MG94",
+    "name": "mg94",
+    "synonyms": ["MG94"],
     "result_type": "FrequencyModel[a]",
     "constraints": ["Triplets[a,b]","Nucleotides[b]"],
     "call": "SModel.mg94'[pi,A]",
