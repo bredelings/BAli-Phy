@@ -12,5 +12,8 @@
             "arg_name": "x",
             "arg_type": "Double"
         }
-    ]
+    ],
+    "title":"The Dirichlet distribution",
+    "examples": ["~dirichlet[2,4.0]"],
+    "description": "This is a Dirichlet with identical weight in all categories"
 }

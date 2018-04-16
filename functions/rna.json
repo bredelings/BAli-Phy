@@ -1,0 +1,8 @@
+{
+    "name": "rna",
+    "synonyms": ["RNA"],
+    "result_type": "RNA",
+    "call": "Alphabet.rna",
+    "args": [],
+    "title": "The RNA alphabet"
+}

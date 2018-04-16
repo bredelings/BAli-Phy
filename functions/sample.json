@@ -1,5 +1,5 @@
 {
-    "name": "Sample",
+    "name": "sample",
     "result_type": "a",
     "no_log": true,
     "call": "Distributions.perform_exp[x]",

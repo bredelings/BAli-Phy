@@ -1,5 +1,6 @@
 {
-    "name": "Rates.logNormal",
+    "name": "Rates.log_normal",
+    "synonyms": ["Rates.log_normal"],
     "result_type": "MixtureModel[a]",
     "call": "SModel.log_normal_rates[submodel,lsigma,n]",
     "args": [
@@ -21,5 +22,5 @@
             "description": "The model being scaled"
         }
     ],
-    "examples": ["GTR+Rates.logNormal[4]+INV"]
+    "examples": ["gtr+Rates.log_normal[4]+inv"]
 }

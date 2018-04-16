@@ -13,5 +13,6 @@
             "arg_type": "GeneticCode",
             "default_value": "standard_code"
         }
-    ]
+    ],
+    "title": "The codons alphabet"
 }

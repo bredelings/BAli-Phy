@@ -163,7 +163,7 @@ bool is_random(const ptree& model, const map<string,bool>& scope)
     auto name = model.get_value<string>();
 
     // 1. If this function is random, then yes.
-    if (name == "Sample") return true;
+    if (name == "sample") return true;
 
     // 2. If this is a random variable, then yes.
     if (not model.size() and model.is_a<string>())
@@ -184,7 +184,7 @@ bool is_unlogged_random(const Rules& R, const ptree& model, const map<string,boo
     auto name = model.get_value<string>();
 
     // 1. If this function is random, then yes.
-    if (name == "Sample") return true;
+    if (name == "sample") return true;
 
     // 2. If this is a random variable, then yes.
     if (not model.size() and model.is_a<string>())

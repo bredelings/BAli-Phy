@@ -1,5 +1,6 @@
 {
-    "name": "Empirical",
+    "name": "empirical",
+    "synonyms": ["Empirical"],
     "result_type": "ExchangeModel[a]",
     "call": "SModel.empirical[A,filename]",
     "args": [

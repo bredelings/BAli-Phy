@@ -1,6 +1,0 @@
-{
-    "name": "RNA",
-    "result_type": "RNA",
-    "call": "Alphabet.rna",
-    "args": []
-}

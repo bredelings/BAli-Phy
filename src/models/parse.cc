@@ -123,7 +123,7 @@ ptree parse_type(const string& s)
 
 ptree add_sample(const ptree& p)
 {
-    ptree p2("Sample");
+    ptree p2("sample");
     p2.push_back({"",p});
     return p2;
 }
@@ -289,10 +289,10 @@ void pass_list(ptree& p)
 {
     if (p.has_value<string>() and p.get_value<string>() == "List")
     {
-	ptree l = ptree("Nil");
+	ptree l = ptree("nil");
 	for(auto& child: reverse(p))
 	{
-	    ptree l2 = ptree("Cons");
+	    ptree l2 = ptree("cons");
 	    l2.push_back({"",child.second});
 	    l2.push_back({"",l});
 	    std::swap(l,l2);
@@ -321,9 +321,9 @@ ptree parse(const Rules& R, const string& s)
 optional<list<ptree>> get_list_elements(const ptree& p)
 {
     string s = p.get_value<string>();
-    if (s == "Nil") return list<ptree>();
+    if (s == "nil") return list<ptree>();
 
-    if (s == "Cons")
+    if (s == "cons")
     {
 	ptree h = p.get_child("first");
 	ptree t = p.get_child("second");
@@ -368,7 +368,7 @@ string unparse(const ptree& p, const Rules& rules)
 	string name = p[0].first;
 	return "let["+name+"="+unparse(p[0].second,rules)+","+unparse(p[1].second,rules)+"]";
     }
-    if (s == "Sample")
+    if (s == "sample")
 	return "~" + unparse(p.begin()->second, rules);
     if (auto xs = get_list_elements(p))
     {
@@ -423,7 +423,7 @@ string unparse_type(const ptree& p)
 
 optional<ptree> peel_sample(ptree p)
 {
-    if (p.has_value<string>() and p.get_value<string>() == "Sample")
+    if (p.has_value<string>() and p.get_value<string>() == "sample")
 	return p[0].second;
     else
 	return boost::none;

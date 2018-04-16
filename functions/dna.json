@@ -3,5 +3,6 @@
     "synonyms": [ "DNA" ],
     "result_type": "DNA",
     "call": "Alphabet.dna",
-    "args": []
+    "args": [],
+    "title": "The RNA alphabet"
 }

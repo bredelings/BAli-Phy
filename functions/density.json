@@ -6,11 +6,13 @@
     "args": [
         {
             "arg_name": "dist",
-            "arg_type": "Distribution[a]"
+            "arg_type": "Distribution[a]",
+	    "description": "The distribution to take the density of"
         },
         {
             "arg_name": "x",
-            "arg_type": "a"
+            "arg_type": "a",
+	    "description": "The value at while to evaluate the density"
         }
     ]
 }

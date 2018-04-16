@@ -1,5 +1,6 @@
 {
-    "name": "GTR",
+    "name": "gtr",
+    "synonyms":["GTR"],
     "title":"The General Time-Reversible model",
     "result_type": "ExchangeModel[a]",
     "call": "SModel.gtr'[S,A]",

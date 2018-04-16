@@ -1,5 +1,6 @@
 {
-    "name": "Rates.Gamma",
+    "name": "Rates.gamma",
+    "synonyms": ["Rates.Gamma"],
     "result_type": "MixtureModel[a]",
     "call": "SModel.gamma_rates[submodel,alpha,n]",
     "args": [
@@ -21,7 +22,7 @@
             "description": "The model being scaled"
         }
     ],
-    "examples": ["GTR+Rates.Gamma[4]+INV"],
+    "examples": ["gtr+Rates.gamma[4]+inv"],
     "title": "The discrete-Gamma rate heterogeneity model",
     "description": "The describes rate-heterogeneity across sites, where the rates for each site follow a Gamma distribution",
     "citation":{"type": "article",
