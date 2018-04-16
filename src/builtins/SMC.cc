@@ -16,20 +16,70 @@ typedef Eigen::MatrixXd EMatrix;
 
 double cdf(double eta, double t)
 {
+    assert(eta > 0);
+    assert(t >= 0);
     return 1.0 - exp(-t*eta);
 }
 
 double quantile(double eta, double p)
 {
+    assert(0 <= p and p <= 1);
+    assert(eta > 0);
     return -log1p(-p)/eta;
 }
 
-vector<double> get_bin_boundaries(int n, double eta)
+vector<double> get_bin_boundaries(int n, const vector<double>& coalescent_rates, const vector<double>& level_boundaries)
 {
+    assert(coalescent_rates.size() + 1 == level_boundaries.size());
+    assert(level_boundaries[0] == 0.0);
+
     vector<double> b(n+1);
-    for(int i=0;i<n;i++)
-	b[i] = quantile(eta, double(i)/n);
-    b[n] = 10000;
+    b[0] = 0;
+    int level = 0;
+    for(int i = 1; i < n; i++)
+    {
+        // We have that Pr(X > t1 = q1)
+	double t1 = b[i-1];
+	double p1 = double(i-1)/n;
+	double q1 = 1.0 - p1;
+
+        // We are trying to find the t2 such that Pr(X > t2 = q2)
+	double p2 = double(i)/n;
+	double q2 = 1.0 - p2;
+	double t2 = t1;
+
+	// Pr(X > t2) = Pr(X > t1) * Pr(X > t2 | X > t1)
+	//            = Pr(X > t1) * Pr(X - t2 > t2 - t1)
+	// Pr(X - t2 > t2 - t1) = Pr(X > t2) / Pr(X > t1) = q2 / q1;
+	q2 /= q1;
+	
+	for(;;level++)
+	{
+	    assert(level < level_boundaries.size());
+
+	    double delta_t = quantile(coalescent_rates[level], 1.0 - q2);
+	    if (t2 + delta_t < level_boundaries[level+1])
+	    {
+		b[i] = t2 + delta_t;
+		break;
+	    }
+	    else
+	    {
+		t2 = level_boundaries[level+1];
+		delta_t = level_boundaries[level+1] - level_boundaries[level];
+		assert(delta_t >= 0);
+
+		double q_level = 1 - cdf(coalescent_rates[level], delta_t);
+
+		// 1-p' = (1-p)/(1-p_level)
+		//      = (1-p_level - p + p_level)/(1-p_level)
+		//      = 1 - (p-p_level)/(1-p_level)
+
+		q2 /= q_level;
+	    }
+	}
+    }
+    b[n] = b[n-1] + 1000000;
     return b;
 }
 
@@ -41,13 +91,10 @@ vector<double> get_bin_centers(int n, double eta)
     return t;
 }
 
-vector<double> get_equilibrium(const vector<double>& B, double eta)
+vector<double> get_equilibrium(const vector<double>& B)
 {
     int n_bins = B.size() - 1;
-    vector<double> pi(n_bins);
-    for(int i=0;i<n_bins-1;i++)
-	pi[i] = cdf(eta,B[i+1])-cdf(eta,B[i]);
-    pi[n_bins-1] = 1.0 - cdf(eta, B[n_bins-1]);
+    vector<double> pi(n_bins, 1.0/n_bins);
 
     // The equilibrium distribution should sum to 1.
     assert(std::abs(sum(pi) - 1.0) < 1.0e-9);
@@ -503,14 +550,14 @@ log_double_t smc(double rho_over_theta, vector<double> coalescent_rates, vector<
     const int n_bins = 100;
 
     // Lower end of each bin. boundaries[0] = 0. The upper end of the last bin is \infty
-    const auto bin_boundaries = get_bin_boundaries(n_bins, 2.0/theta);
+    const auto bin_boundaries = get_bin_boundaries(n_bins, coalescent_rates, level_boundaries);
 
     const auto bin_times = get_bin_centers(n_bins, 2.0/theta);
 
     const auto emission_probabilities = get_emission_probabilities(bin_times);
 
     // # Compute the likelihoods for the first column
-    const auto pi = get_equilibrium(bin_boundaries, 2.0/theta);
+    const auto pi = get_equilibrium(bin_boundaries);
 
     vector<double> L(n_bins);
     vector<double> L2(n_bins);
