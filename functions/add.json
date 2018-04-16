@@ -1,5 +1,6 @@
 {
-    "name": "Add",
+    "name": "add",
+    "synonyms": ["Add"],
     "result_type": "a",
     "no_log": true,
     "constraints": ["Num[a]"],
@@ -13,5 +14,6 @@
             "arg_name": "y",
             "arg_type": "a"
         }
-    ]
+    ],
+    "title":"The addition operator"
 }

@@ -1,5 +1,6 @@
 {
-    "name": "Div",
+    "name": "div",
+    "synonyms": ["Div"],
     "result_type": "Double",
     "no_log": true,
     "call": "Prelude.\/[x,y]",

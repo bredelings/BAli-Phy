@@ -618,7 +618,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 	if (args.count("branch-lengths"))
 	    M = args["branch-lengths"].as<string>();
 	else
-	    M = "~iid[num_branches[T],gamma[0.5,Div[2,num_branches[T]]]]";
+	    M = "~iid[num_branches[T],gamma[0.5,div[2,num_branches[T]]]]";
 
 	branch_length_model = get_model(R, "List[Double]", M, {{"T","Tree"}});
 	branch_length_model.expression = lambda_quantify(dummy("arg_T"), branch_length_model.expression);

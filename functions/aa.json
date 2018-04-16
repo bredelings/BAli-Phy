@@ -1,0 +1,8 @@
+{
+    "name": "aa",
+    "synonyms": ["AA"],
+    "result_type": "AA",
+    "call": "Alphabet.aa",
+    "args": [],
+    "title": "The amino-acid alphabet"
+}

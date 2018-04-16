@@ -1,5 +1,6 @@
 {
-    "name": "Codons",
+    "name": "codons",
+    "synonyms": [ "Codons" ],
     "result_type": "Codons[a]",
     "call": "codons[nucleotides,code]",
     "args": [
