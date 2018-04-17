@@ -1,6 +1,6 @@
 {
     "name": "dirichlet",
-    "synonyms": [ "dirichlet"],
+    "synonyms": [ "Dirichlet"],
     "result_type": "Distribution[List[Double]]",
     "call": "Distributions.dirichlet'[n,x]",
     "args": [
@@ -13,7 +13,7 @@
             "arg_type": "Double"
         }
     ],
-    "title":"The dirichlet distribution",
+    "title":"The Dirichlet distribution",
     "examples": ["~dirichlet[2,4.0]"],
-    "description": "This is a dirichlet with identical weight in all categories"
+    "description": "This is a Dirichlet with identical weight in all categories"
 }

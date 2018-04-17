@@ -26,7 +26,7 @@
 	    "description": "The codon alphabet"
         }
     ],
-    "examples": ["yn94","hky+yn94+f61","yn94[omega=2.0,hky]+mg94"],
+    "examples": ["yn94","hky85+yn94+f61","yn94[omega=2.0,hky85]+mg94"],
     "citation": {"type": "article",
 		 "title": "A codon-based model of nucleotide substitution for protein-coding DNA sequences",
 		 "author": [{"name": "Goldman, Nick"},{"name": "Yang, Ziheng"}],
