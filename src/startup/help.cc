@@ -508,9 +508,12 @@ void show_help(const string& topic, const vector<fs::path>& package_paths)
     {
 	for(auto& rule: R.get_rules())
 	{
-	    string name = rule.second.get_child("name").get_value<string>();
-	    string result_type = unparse_type(rule.second.get_child("result_type"));
-	    std::cout<<name<<" :: "<<result_type << std::endl;
+	    if (rule.second.get_child_optional("name"))
+	    {
+		string name = rule.second.get_child("name").get_value<string>();
+		string result_type = unparse_type(rule.second.get_child("result_type"));
+		std::cout<<name<<" :: "<<result_type << std::endl;
+	    }
 	}
 	return;
     }
