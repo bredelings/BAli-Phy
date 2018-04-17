@@ -1,29 +1,30 @@
 {
-    "name": "M1a",
+    "name": "m1a",
+    "synonyms": ["M1a"],
     "result_type": "MixtureModel[Codons[a]]",
     "call": "SModel.m1a[nuc_model,freq_model,omega1,p1,A]",
     "args": [
         {
             "arg_name": "nuc_model",
             "arg_type": "ExchangeModel[a]",
-            "default_value": "HKY",
+            "default_value": "hky85",
             "alphabet": "getNucleotides[A]"
         },
         {
             "arg_name": "freq_model",
             "arg_type": "FrequencyModel[Codons[a]]",
-            "default_value": "F61",
+            "default_value": "f61",
             "alphabet": "A"
         },
         {
             "arg_name": "omega1",
             "arg_type": "Double",
-            "default_value": "~Uniform[0,1]"
+            "default_value": "~uniform[0,1]"
         },
         {
             "arg_name": "p1",
             "arg_type": "Double",
-            "default_value": "~Uniform[0,1]"
+            "default_value": "~uniform[0,1]"
         },
         {
             "arg_name": "A",

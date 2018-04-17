@@ -11,7 +11,7 @@
         {
             "arg_name": "w",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "zip[letters[getAminoAcids[A]],~iid[length[letters[getAminoAcids[A]]],logNormal[0,0.5]]]"
+            "default_value": "zip[letters[getAminoAcids[A]],~iid[length[letters[getAminoAcids[A]]],log_normal[0,0.5]]]"
         },
         {
             "arg_name": "submodel",
