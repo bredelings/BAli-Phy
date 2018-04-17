@@ -392,6 +392,15 @@ string get_help_for_rule(const Rules& rules, const Rule& rule)
     help<<"   "<<bold(name);
     if (args_names_types.size()) help<<"["<<join(args_names_types,", ")<<"]\n\n";
     
+    if (auto synonyms = rule.get_child_optional("synonyms"))
+    {
+	vector<string> syn;
+	for(auto& x: *synonyms)
+	    syn.push_back(x.second);
+	help<<header("Synonyms");
+	help<<indent_and_wrap(3, terminal_width(),join(syn,", "))<<"\n\n";
+    }
+
     help<<header("Arguments");
     for(auto& argpair: args)
     {
