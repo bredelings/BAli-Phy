@@ -9,7 +9,7 @@
         {
             "arg_name": "S",
             "arg_type": "List[Pair[String,Double]]",
-	    "default_value":"~DirichletOn[letter_pairs[A],1]",
+	    "default_value":"~dirichlet_on[letter_pairs[A],1]",
 	    "description":"Symmetric exchangability matrix"
         },
         {

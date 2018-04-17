@@ -1,6 +1,6 @@
 {
     "name": "dirichlet_on",
-    "synonyms": ["DirichletOn"],
+    "synonyms": ["dirichlet_on"],
     "result_type": "Distribution[List[Pair[a,Double]]]",
     "call": "Distributions.dirichlet_on'[items,n]",
     "args": [

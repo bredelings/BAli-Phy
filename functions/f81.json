@@ -1,17 +1,19 @@
 {
-    "name": "F81",
+    "name": "f81",
+    "synonyms": ["F81"],
     "result_type": "RevCTMC[a]",
     "call": "SModel.f81[pi,A]",
     "args": [
         {
             "arg_name": "pi",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "~DirichletOn[letters[A],1.0]"
+            "default_value": "~dirichlet_on[letters[A],1.0]"
         },
         {
             "arg_name": "A",
             "arg_type": "a",
             "default_value": "getAlphabet"
         }
-    ]
+    ],
+    "title": "The Felsenstein (1981) rate matrix"
 }

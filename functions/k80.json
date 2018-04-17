@@ -1,5 +1,6 @@
 {
-    "name": "K80",
+    "name": "k80",
+    "synonyms": ["K80"],
     "result_type": "RevCTMC[a]",
     "constraints": ["Nucleotides[a]"],
     "call": "SModel.k80[kappa,A]",

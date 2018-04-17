@@ -1,5 +1,6 @@
 {
-    "name": "Pair",
+    "name": "pair",
+    "synonyms": ["Pair"],
     "result_type": "Pair[a,b]",
     "call": "(,)[first,second]",
     "args": [

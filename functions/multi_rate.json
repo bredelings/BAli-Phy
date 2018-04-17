@@ -1,5 +1,6 @@
 {
-    "name": "MultiRate",
+    "name": "multi_rate",
+    "synonyms": ["MultiRate"],
     "result_type": "MixtureModel[a]",
     "call": "SModel.multi_rate_unif_bins[submodel,dist,n_bins]",
     "args": [

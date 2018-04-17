@@ -1,5 +1,6 @@
 {
-    "name": "Mul",
+    "name": "mul",
+    "synonyms":["Mul"],
     "result_type": "a",
     "no_log": true,
     "constraints": ["Num[a]"],

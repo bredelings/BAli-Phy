@@ -1,12 +1,13 @@
 {
-    "name": "F",
+    "name": "f",
+    "synonyms": ["F"],
     "result_type": "FrequencyModel[a]",
     "call": "SModel.plus_f'[A,pi]",
     "args": [
         {
             "arg_name": "pi",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "~DirichletOn[letters[A],1]",
+            "default_value": "~dirichlet_on[letters[A],1]",
 	    "description": "Letter frequencies"
         },
         {
@@ -17,5 +18,6 @@
         }
     ],
     "title": "The +F frequency model",
-    "description": "The +F frequency model species the rate matrix Q as:\n  Q(i,j) = S(i,j) * pi[j]."
+    "description": "The +F frequency model species the rate matrix Q as:\n  Q(i,j) = S(i,j) * pi[j].",
+    "examples": ["wag+f"]
 }

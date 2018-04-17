@@ -1,5 +1,6 @@
 {
-    "name": "RS05",
+    "name": "rs05",
+    "synonyms": ["RS05"],
     "result_type": "IndelModel",
     "call": "IModel.rs05[logDelta,meanIndelLengthMinus1,tau,tree]",
     "title": "Redelings & Suchard (2005) model of insertions and deletions",

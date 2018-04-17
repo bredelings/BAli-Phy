@@ -1,5 +1,6 @@
 {
-    "name": "RCTMC",
+    "name": "rctmc",
+    "synonyms": ["RCTMC"],
     "result_type": "RevCTMC[a]",
     "no_log": true,
     "call": "SModel.reversible_markov[S,R]",
@@ -17,5 +18,5 @@
     ],
     "title": "RCTMC: Reversible continuous-time Markov chain",
     "description":"Create a rate matrix Q from a symmetric matrix S and a matrix R:\n   Q(i,j) = S(i,j) * R(i,j)\n\nIt is possible to write S+R as short-hand for RCTMC[S,R].  BAli-Phy will translate this internally into RCTMC[S,R].\n\nIn the traditional '+F' model, R(i,j) = pi(j) so that\n   Q(i,j)=S(i,j)*pi(j).\nHowever other approaches are possible.  For codon models, we might want to use the frequency of individual nucleotides instead of the frequency of the codon, for example.",
-    "examples": ["RCTMC[GTR,F]","GTR+F        // same as above","M0+F3x4","M0+MG94"]
+    "examples": ["rctmc[gtr,f]","gtr+f        // same as above","yn94+F3x4","yn94+mg94"]
 }

@@ -1,5 +1,6 @@
 {
-    "name": "JTT",
+    "name": "jtt",
+    "synonyms": ["JTT"],
     "result_type": "ExchangeModel[AA]",
     "call": "SModel.jtt[A]",
     "args": [

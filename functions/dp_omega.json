@@ -23,7 +23,7 @@
         {
             "arg_name": "omegas",
             "arg_type": "List[Double]",
-            "default_value": "~Dirichlet[n,1]"
+            "default_value": "~dirichlet[n,1]"
         },
         {
             "arg_name": "n",

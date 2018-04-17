@@ -29,7 +29,7 @@
         {
             "arg_name": "fs",
             "arg_type": "List[Double]",
-            "default_value": "~Dirichlet[2,1]",
+            "default_value": "~dirichlet[2,1]",
 	    "description":"Class frequencies in the background model."
         },
         {
@@ -53,7 +53,7 @@
         {
             "arg_name": "posSelection",
             "arg_type": "Int",
-            "default_value": "~Bernoulli[0.5]",
+            "default_value": "~bernoulli[0.5]",
 	    "description": "The model indicator: if 0, the sites only switch to neutrality on the foreground branches.\n If 1 then sites may switch to dN/dS=posW."
         },
         {

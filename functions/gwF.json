@@ -6,7 +6,7 @@
         {
             "arg_name": "pi",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "~DirichletOn[letters[A],1.0]"
+            "default_value": "~dirichlet_on[letters[A],1.0]"
         },
         {
             "arg_name": "f",

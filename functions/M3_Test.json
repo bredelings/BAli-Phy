@@ -18,7 +18,7 @@
         {
             "arg_name": "ps",
             "arg_type": "List[Double]",
-            "default_value": "~Dirichlet[n,2]"
+            "default_value": "~dirichlet[n,2]"
         },
         {
             "arg_name": "omegas",

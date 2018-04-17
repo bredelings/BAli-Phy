@@ -12,5 +12,6 @@
             "arg_name": "s",
             "arg_type": "Double"
         }
-    ]
+    ],
+    "title": "The Laplace distribution"
 }
