@@ -1,5 +1,6 @@
 {
-    "name": "Sub",
+    "name": "sub",
+    "synonyms": ["Sub","-"],
     "result_type": "a",
     "no_log": true,
     "constraints": ["Num[a]"],

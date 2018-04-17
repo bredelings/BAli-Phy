@@ -1,7 +1,8 @@
 {
-    "name": "M8a_Test",
+    "name": "m8",
+    "synonyms": ["M8"],
     "result_type": "MixtureModel[Codons[a]]",
-    "call": "SModel.m8a_test[nuc_model,freq_model,mu,gamma,n,posP,posW,posSelection,A]",
+    "call": "SModel.m8[nuc_model,freq_model,mu,gamma,n,posP,posW,A]",
     "args": [
         {
             "arg_name": "n",
@@ -39,11 +40,6 @@
             "arg_name": "posW",
             "arg_type": "Double",
             "default_value": "~log_gamma[4,0.25]"
-        },
-        {
-            "arg_name": "posSelection",
-            "arg_type": "Int",
-            "default_value": "~bernoulli[0.5]"
         },
         {
             "arg_name": "A",

@@ -1,5 +1,6 @@
 {
-    "name": "LG",
+    "name": "lg08",
+    "synonyms": ["LG"],
     "result_type": "ExchangeModel[AA]",
     "call": "SModel.lg[A]",
     "args": [

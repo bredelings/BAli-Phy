@@ -1,5 +1,6 @@
 {
-    "name": "WAG",
+    "name": "wag",
+    "synonyms": ["WAG"],
     "result_type": "ExchangeModel[AA]",
     "call": "SModel.wag[A]",
     "args": [

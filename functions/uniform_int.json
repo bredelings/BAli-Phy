@@ -1,5 +1,6 @@
 {
-    "name": "UniformInt",
+    "name": "uniform_int",
+    "synonyms": ["UniformInt"],
     "result_type": "Distribution[Int]",
     "call": "Distributions.uniform_int[low,high]",
     "args": [
@@ -11,5 +12,6 @@
             "arg_name": "high",
             "arg_type": "Int"
         }
-    ]
+    ],
+    "title": "Uniform distribution on integers"
 }

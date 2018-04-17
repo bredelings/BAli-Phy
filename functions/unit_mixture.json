@@ -1,5 +1,6 @@
 {
-    "name": "UnitMixture",
+    "name": "unit_mixture",
+    "synonyms": ["UnitMixture"],
     "result_type": "MixtureModel[a]",
     "no_log": true,
     "call": "SModel.unit_mixture[submodel]",

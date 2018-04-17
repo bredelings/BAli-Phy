@@ -379,7 +379,7 @@ string unparse(const ptree& p, const Rules& rules)
     }
     if (s == "intToDouble")
 	return unparse(p.get_child("x"), rules);
-    if (s == "UnitMixture" or s == "MultiMixtureModel")
+    if (s == "unit_mixture" or s == "multiMixtureModel")
 	if (auto child = p.get_child_optional("submodel"))
 	    return unparse(*child, rules);
     vector<string> args;

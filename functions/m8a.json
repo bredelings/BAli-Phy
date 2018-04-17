@@ -1,7 +1,8 @@
 {
-    "name": "M8",
+    "name": "m8a",
+    "synonyms": ["M8a"],
     "result_type": "MixtureModel[Codons[a]]",
-    "call": "SModel.m8[nuc_model,freq_model,mu,gamma,n,posP,posW,A]",
+    "call": "SModel.m8a[nuc_model,freq_model,mu,gamma,n,posP,A]",
     "args": [
         {
             "arg_name": "n",

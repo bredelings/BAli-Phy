@@ -63,7 +63,7 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
 	if (E)
 	{
 	    ptree result;
-	    result.put_value("MultiMixtureModel");
+	    result.put_value("multiMixtureModel");
 	    result.push_back({"submodel",model});
 	    model = result;
 	}
@@ -75,7 +75,7 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
 	if (E)
 	{
 	    ptree result;
-	    result.put_value("UnitMixture");
+	    result.put_value("unit_mixture");
 	    result.push_back({"submodel",model});
 	    model = result;
 	}
@@ -89,7 +89,7 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
 	    ptree result;
 	    result.put_value("RCTMC");
 	    result.push_back({"S",model});
-	    result.push_back({"R",ptree("F")});
+	    result.push_back({"R",ptree("f")});
 	    model = result;
 	}
     }

@@ -1,7 +1,8 @@
 {
-    "name": "M8a",
+    "name": "m7",
+    "synonyms": ["M7"],
     "result_type": "MixtureModel[Codons[a]]",
-    "call": "SModel.m8a[nuc_model,freq_model,mu,gamma,n,posP,A]",
+    "call": "SModel.m7[nuc_model,freq_model,mu,gamma,n,A]",
     "args": [
         {
             "arg_name": "n",
@@ -29,16 +30,6 @@
             "arg_name": "gamma",
             "arg_type": "Double",
             "default_value": "~beta[1,10]"
-        },
-        {
-            "arg_name": "posP",
-            "arg_type": "Double",
-            "default_value": "~beta[1,10]"
-        },
-        {
-            "arg_name": "posW",
-            "arg_type": "Double",
-            "default_value": "~log_gamma[4,0.25]"
         },
         {
             "arg_name": "A",
