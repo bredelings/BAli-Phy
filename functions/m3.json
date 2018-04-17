@@ -1,19 +1,20 @@
 {
-    "name": "M3",
+    "name": "m3",
+    "synonyms": ["M3"],
     "result_type": "MixtureModel[Codons[a]]",
     "call": "SModel.m3[nuc_model,freq_model,ps,omegas,A]",
     "args": [
         {
             "arg_name": "nuc_model",
             "arg_type": "ExchangeModel[a]",
-            "default_value": "HKY",
+            "default_value": "hky85",
             "alphabet": "getNucleotides[A]",
 	    "description": "The nucleotide exchange model"
         },
         {
             "arg_name": "freq_model",
             "arg_type": "FrequencyModel[Codons[a]]",
-            "default_value": "F61",
+            "default_value": "f61",
             "alphabet": "A",
 	    "description": "The codon frequency model"
         },

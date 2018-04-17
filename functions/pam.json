@@ -1,5 +1,6 @@
 {
-    "name": "PAM",
+    "name": "pam",
+    "synonyms": ["PAM"],
     "result_type": "ExchangeModel[AA]",
     "call": "SModel.pam[A]",
     "args": [

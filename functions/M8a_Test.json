@@ -11,13 +11,13 @@
         {
             "arg_name": "nuc_model",
             "arg_type": "ExchangeModel[a]",
-            "default_value": "HKY",
+            "default_value": "hky85",
             "alphabet": "getNucleotides[A]"
         },
         {
             "arg_name": "freq_model",
             "arg_type": "FrequencyModel[Codons[a]]",
-            "default_value": "F61",
+            "default_value": "f61",
             "alphabet": "A"
         },
         {
@@ -38,7 +38,7 @@
         {
             "arg_name": "posW",
             "arg_type": "Double",
-            "default_value": "~logGamma[4,0.25]"
+            "default_value": "~log_gamma[4,0.25]"
         },
         {
             "arg_name": "posSelection",

@@ -1,5 +1,6 @@
 {
-    "name": "MultiMixtureModel",
+    "name": "multiMixtureModel",
+    "synonyms": ["MultiMixtureModel"],
     "result_type": "MultiMixtureModel[a]",
     "no_log": true,
     "call": "SModel.mmm[submodel]",

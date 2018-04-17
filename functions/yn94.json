@@ -15,7 +15,7 @@
         {
             "arg_name": "submodel",
             "arg_type": "ExchangeModel[a]",
-            "default_value": "HKY",
+            "default_value": "hky85",
             "description": "The nucleotide exchange model - HKY in the original paper.",
             "alphabet": "getNucleotides[A]"
         },
