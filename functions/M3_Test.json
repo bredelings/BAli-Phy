@@ -23,12 +23,12 @@
         {
             "arg_name": "omegas",
             "arg_type": "List[Double]",
-            "default_value": "~iid[n,Uniform[0,1]]"
+            "default_value": "~iid[n,uniform[0,1]]"
         },
         {
             "arg_name": "posP",
             "arg_type": "Double",
-            "default_value": "~Beta[1,10]"
+            "default_value": "~beta[1,10]"
         },
         {
             "arg_name": "posW",
@@ -38,7 +38,7 @@
         {
             "arg_name": "posSelection",
             "arg_type": "Int",
-            "default_value": "~Bernoulli[0.5]"
+            "default_value": "~bernoulli[0.5]"
         },
         {
             "arg_name": "n",

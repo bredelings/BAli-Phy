@@ -23,17 +23,17 @@
         {
             "arg_name": "mu",
             "arg_type": "Double",
-            "default_value": "~Uniform[0,1]"
+            "default_value": "~uniform[0,1]"
         },
         {
             "arg_name": "gamma",
             "arg_type": "Double",
-            "default_value": "~Beta[1,10]"
+            "default_value": "~beta[1,10]"
         },
         {
             "arg_name": "posP",
             "arg_type": "Double",
-            "default_value": "~Beta[1,10]"
+            "default_value": "~beta[1,10]"
         },
         {
             "arg_name": "posW",

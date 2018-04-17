@@ -11,7 +11,7 @@
         {
             "arg_name": "f",
             "arg_type": "Double",
-            "default_value": "~Uniform[0,1]"
+            "default_value": "~uniform[0,1]"
         },
         {
             "arg_name": "A",
