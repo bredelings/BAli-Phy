@@ -523,7 +523,9 @@ model_t get_model(const Rules& R, const string& type, const string& model, const
 	std::cout<<"structure = "<<show(model_rep)<<std::endl;
 	std::cout<<"annotated structure = "<<show(p.first)<<std::endl;
 	auto p2 = pretty_model_t(p.first);
-	std::cout<<"pretty  = "<<show(p2.main)<<std::endl;
+	std::cout<<"pretty  = "<<unparse(extract_value(p2.main), R)<<std::endl;
+	for(int i=0;i<p2.terms.size();i++)
+	    std::cout<<p2.term_names[i]<<" = "<<unparse(extract_value(p2.terms[i].main), R)<<std::endl;
 	std::cout<<std::endl;
     }
 
