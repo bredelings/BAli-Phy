@@ -552,10 +552,11 @@ bool do_extract(const ptree& model,const ptree& arg)
 
 vector<pair<string, ptree>> extract_terms(ptree& m)
 {
-    // move value out of the structure
+    // move value's children out of the structure
     ptree old_value;
     ptree& value = m.get_child("value");
     std::swap(value, old_value);
+    value.value = old_value.value;
 
     vector<pair<string,ptree>> extracted;
     for(auto& x: old_value)
