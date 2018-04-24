@@ -92,6 +92,7 @@
 #include "computation/expression/tuple.H"
 #include "computation/expression/list.H"
 #include "computation/operations.H"
+#include "model.H"
 
 using boost::optional;
 using std::string;
@@ -521,6 +522,8 @@ model_t get_model(const Rules& R, const string& type, const string& model, const
 	std::cout<<"equations: "<<show(equations)<<std::endl;
 	std::cout<<"structure = "<<show(model_rep)<<std::endl;
 	std::cout<<"annotated structure = "<<show(p.first)<<std::endl;
+	auto p2 = pretty_model_t(p.first);
+	std::cout<<"pretty  = "<<show(p2.main)<<std::endl;
 	std::cout<<std::endl;
     }
 
@@ -528,4 +531,63 @@ model_t get_model(const Rules& R, const string& type, const string& model, const
     for(auto& x: scope)
 	names_in_scope.insert({x.first,false});
     return get_model(R, required_type, equations.get_constraints(), model_rep, names_in_scope);
+}
+
+bool do_extract(const ptree& model,const ptree& arg)
+{
+    if (is_constant(model)) return false;
+
+    auto name = arg.get_value<string>();
+
+    // 1. If this function is random, then yes.
+    if (name == "sample") return true;
+
+    return false;
+}
+
+// E = {type: T,value:{arg1:E,...argn:E}}
+
+// This only extracts from the top level...
+
+vector<pair<string, ptree>> extract_terms(ptree& m)
+{
+    // move value out of the structure
+    ptree old_value;
+    ptree& value = m.get_child("value");
+    std::swap(value, old_value);
+
+    vector<pair<string,ptree>> extracted;
+    for(auto& x: old_value)
+    {
+	string name = m.get_value<string>() + ":" + x.first;
+
+	if (do_extract(m, x.second))
+	    extracted.push_back({name,x.second});
+	else
+	{
+	    auto e = extract_terms(x.second);
+
+	    // avoid copying?
+	    for(auto& et: e)
+		extracted.push_back({name+"/"+et.first,et.second});
+
+	    // avoid copying?
+	    value.push_back(x);
+	}
+    }
+    return extracted;
+}
+
+pretty_model_t::pretty_model_t(const ptree& m)
+    :main(m)
+{
+    // 1. Extract terms
+    for(auto& x: extract_terms(main))
+    {
+	term_names.push_back(x.first);
+	terms.push_back(x.second);
+    }
+
+    // 2. Fix up names
+    term_names = short_parameter_names(term_names);
 }
