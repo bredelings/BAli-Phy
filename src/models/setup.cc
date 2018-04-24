@@ -535,9 +535,10 @@ model_t get_model(const Rules& R, const string& type, const string& model, const
 
 bool do_extract(const ptree& model,const ptree& arg)
 {
-    if (is_constant(model)) return false;
+    auto arg_value = arg.get_child("value");
+    if (is_constant(arg_value)) return false;
 
-    auto name = arg.get_value<string>();
+    auto name = arg_value.get_value<string>();
 
     // 1. If this function is random, then yes.
     if (name == "sample") return true;
@@ -559,7 +560,7 @@ vector<pair<string, ptree>> extract_terms(ptree& m)
     vector<pair<string,ptree>> extracted;
     for(auto& x: old_value)
     {
-	string name = m.get_value<string>() + ":" + x.first;
+	string name = old_value.get_value<string>() + ":" + x.first;
 
 	if (do_extract(m, x.second))
 	    extracted.push_back({name,x.second});
