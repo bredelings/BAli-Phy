@@ -535,7 +535,7 @@ model_t get_model(const Rules& R, const string& type, const string& model, const
     return get_model(R, required_type, equations.get_constraints(), model_rep, names_in_scope);
 }
 
-bool do_extract(const ptree& model,const ptree& arg)
+bool do_extract(const ptree&,const ptree& arg)
 {
     auto arg_value = arg.get_child("value");
     if (is_constant(arg_value)) return false;
@@ -566,7 +566,10 @@ vector<pair<string, ptree>> extract_terms(ptree& m)
 	string name = old_value.get_value<string>() + ":" + x.first;
 
 	if (do_extract(m, x.second))
+	{
 	    extracted.push_back({name,x.second});
+	    value.push_back({x.first,{}});
+	}
 	else
 	{
 	    auto e = extract_terms(x.second);

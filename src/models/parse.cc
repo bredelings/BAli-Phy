@@ -387,7 +387,12 @@ string unparse(const ptree& p, const Rules& rules)
     for(const auto& pair: p)
     {
 	// Don't print submodel arguments: move out to submodel + <this>
-	if (pair.first == "submodel")
+	if (pair.second.is_null())
+	{
+	    args.push_back("");
+	    continue;
+	}
+	else if (pair.first == "submodel")
 	{
 	    assert(not submodel);
 	    submodel = unparse(pair.second, rules);
@@ -401,12 +406,12 @@ string unparse(const ptree& p, const Rules& rules)
 	else
 	    args.push_back( unparse(pair.second, rules) );
     }
-    if (args.size() and args.back() == "")
+    while (args.size() and args.back() == "")
 	args.pop_back();
     if (not args.empty())
 	s = s + "[" + join(args,',') + "]";
     if (submodel)
-	s = *submodel + " + " + s;
+	s = *submodel + "+" + s;
     return s;
 }
 

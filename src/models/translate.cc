@@ -129,7 +129,8 @@ term_t extract_value(const term_t& T)
 {
     term_t value = T.get_child("value");
     for(auto& x: value)
-	x.second = extract_value(x.second);
+	if (not x.second.is_null())
+	    x.second = extract_value(x.second);
     return value;
 }
 
