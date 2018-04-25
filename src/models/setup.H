@@ -20,16 +20,19 @@ struct model_t
     expression_ref expression;
 };
 
+class Rules;
+
 class pretty_model_t
 {
 public:
     ptree main;
     std::vector<std::string> term_names;
     std::vector<pretty_model_t> terms;
+
+    std::string show(const Rules& R, bool = true) const;
+
     pretty_model_t(const ptree& m);
 };
-
-class Rules;
 
 model_t get_model(const Rules& R, const std::string& type, const std::string& model, const std::vector<std::pair<std::string,std::string>>& = std::vector<std::pair<std::string,std::string>>());
 

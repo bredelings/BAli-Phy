@@ -522,10 +522,7 @@ model_t get_model(const Rules& R, const string& type, const string& model, const
 	std::cout<<"equations: "<<show(equations)<<std::endl;
 	std::cout<<"structure = "<<show(model_rep)<<std::endl;
 	std::cout<<"annotated structure = "<<show(p.first)<<std::endl;
-	auto p2 = pretty_model_t(p.first);
-	std::cout<<"pretty  "<<show_model(extract_value(p2.main), R)<<std::endl;
-	for(int i=0;i<p2.terms.size();i++)
-	    std::cout<<p2.term_names[i]<<" "<<show_model(extract_value(p2.terms[i].main), R)<<std::endl;
+	std::cout<<"pretty:\n"<<pretty_model_t(p.first).show(R)<<std::endl;
 	std::cout<<std::endl;
     }
 
@@ -535,15 +532,24 @@ model_t get_model(const Rules& R, const string& type, const string& model, const
     return get_model(R, required_type, equations.get_constraints(), model_rep, names_in_scope);
 }
 
-bool do_extract(const ptree&,const ptree& arg)
+bool do_extract(const ptree& func, const ptree& arg)
 {
     auto arg_value = arg.get_child("value");
+    auto arg_type = arg.get_child("type");
+
     if (is_constant(arg_value)) return false;
 
-    auto name = arg_value.get_value<string>();
+    auto arg_name = arg_value.get_value<string>();
 
-    // 1. If this function is random, then yes.
-    if (name == "sample") return true;
+    // 1. Don't extract arguments to e.g. log[], add[], sub[], etc.
+    if (not func.get("no_log",false)) return false;
+
+    // 2. Pull out random arguments
+    if (arg_name == "sample") return true;
+
+    // 3. Pull out things that are not data structures.
+//    if (arg_type == "Int" or arg_type == "Double" or arg_type == "LogDouble")
+//	return true;
 
     return false;
 }
@@ -579,6 +585,27 @@ vector<pair<string, ptree>> extract_terms(ptree& m)
     }
     std::move(extracted_top.begin(), extracted_top.end(), std::back_inserter(extracted));
     return extracted;
+}
+
+#include "startup/help.hh"
+
+string pretty_model_t::show(const Rules& R, bool top) const
+{
+    const int indent = 4;
+
+    string output;
+    if (top)
+	output = unparse(extract_value(main), R);
+    else
+	output = show_model(extract_value(main), R);
+
+    for(int i=0; i<terms.size(); i++)
+    {
+	string t = string(indent,' ') + term_names[i] + " ";
+	string value = terms[i].show(R, false);
+	output += "\n" + t + indent_and_wrap(0, t.size() + 2, 10000, value);
+    }
+    return output;
 }
 
 pretty_model_t::pretty_model_t(const ptree& m)

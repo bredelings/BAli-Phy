@@ -351,6 +351,8 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
     model = ptree({{"value",model},{"type",result_type}});
     if (rule->get("no_log",true))
 	model.push_back({"no_log",ptree(true)});
+    if (auto def = rule->get_child_optional("default_value"))
+	model.push_back({"default_value",*def});
 
     substitute_in_types(S, model);
 
