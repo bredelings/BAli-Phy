@@ -555,32 +555,26 @@ bool do_extract(const ptree&,const ptree& arg)
 vector<pair<string, ptree>> extract_terms(ptree& m)
 {
     // move value's children out of the structure
-    ptree old_value;
     ptree& value = m.get_child("value");
-    std::swap(value, old_value);
-    value.value = old_value.value;
 
     vector<pair<string,ptree>> extracted;
     vector<pair<string,ptree>> extracted_top;
-    for(auto& x: old_value)
+    for(auto& x: value)
     {
-	string name = old_value.get_value<string>() + ":" + x.first;
+	string name = value.get_value<string>() + ":" + x.first;
 
 	if (do_extract(m, x.second))
 	{
-	    extracted_top.push_back({name,x.second});
-	    value.push_back({x.first,{}});
+	    ptree extracted_value;
+	    std::swap(x.second, extracted_value);
+	    extracted_top.push_back({name, extracted_value});
 	}
 	else
 	{
 	    auto e = extract_terms(x.second);
 
-	    // avoid copying?
 	    for(auto& et: e)
-		extracted.push_back({name+"/"+et.first,et.second});
-
-	    // avoid copying?
-	    value.push_back(x);
+		extracted.push_back({name+"/"+et.first, std::move(et.second)});
 	}
     }
     std::move(extracted_top.begin(), extracted_top.end(), std::back_inserter(extracted));
