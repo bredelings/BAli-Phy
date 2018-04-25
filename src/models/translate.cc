@@ -349,6 +349,8 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
     auto S = E.eliminate_except(keep);
 
     model = ptree({{"value",model},{"type",result_type}});
+    if (rule->get("no_log",true))
+	model.push_back({"no_log",ptree(true)});
 
     substitute_in_types(S, model);
 
