@@ -561,13 +561,14 @@ vector<pair<string, ptree>> extract_terms(ptree& m)
     value.value = old_value.value;
 
     vector<pair<string,ptree>> extracted;
+    vector<pair<string,ptree>> extracted_top;
     for(auto& x: old_value)
     {
 	string name = old_value.get_value<string>() + ":" + x.first;
 
 	if (do_extract(m, x.second))
 	{
-	    extracted.push_back({name,x.second});
+	    extracted_top.push_back({name,x.second});
 	    value.push_back({x.first,{}});
 	}
 	else
@@ -582,6 +583,7 @@ vector<pair<string, ptree>> extract_terms(ptree& m)
 	    value.push_back(x);
 	}
     }
+    std::move(extracted_top.begin(), extracted_top.end(), std::back_inserter(extracted));
     return extracted;
 }
 
