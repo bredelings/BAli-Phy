@@ -24,6 +24,8 @@ public:
 
     std::string show(const Rules&, bool = true) const;
 
+    std::string show_pretty(const Rules&, bool = true) const;
+
     model_t() = default;
     model_t(const ptree&,const ptree&, const std::set<term_t>&, const expression_ref&);
 };

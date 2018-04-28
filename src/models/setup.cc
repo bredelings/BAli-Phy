@@ -112,6 +112,12 @@ string model_t::show(const Rules& rules, bool top) const
 	return unparse(extract_value(description), rules);
 }
 
+string model_t::show_pretty(const Rules& rules, bool top) const
+{
+    auto p = pretty_model_t(description);
+    return p.show(rules, not top);
+}
+
 model_t::model_t(const ptree& d, const ptree&t, const std::set<term_t>& c, const expression_ref& e)
     :description(d), type(t), constraints(c), expression(e)
 {

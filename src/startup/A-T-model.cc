@@ -8,6 +8,7 @@
 #include "models/parse.H"
 #include "models/rules.H"
 #include "startup/paths.H"
+#include "startup/help.hh"
 #include "computation/expression/lambda.H"
 #include <boost/optional/optional_io.hpp>
 
@@ -216,19 +217,19 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 	//    out_screen<<"#"<<i+1<<": subst ~ "<<P.SModel(s_index).name()<<" ("<<s_index+1<<")    ";
 	out_screen<<"#"<<i+1 <<": alphabet = "<<P.get_data_partition(i).get_alphabet().name<<"\n";
 
-	out_screen<<"#"<<i+1<<": subst "<<SModels[*s_index].show(rules)<<" (S"<<*s_index+1<<")\n";
+	out_screen<<"#"<<i+1<<": subst "<<indent_and_wrap(0,12,1000,SModels[*s_index].show_pretty(rules))<<" (S"<<*s_index+1<<")\n";
 
 	auto i_index = P.imodel_index_for_partition(i);
 	string i_name = "= none";
 	if (i_index)
-	    i_name = IModels[*i_index].show(rules);
+	    i_name = indent_and_wrap(0,12,1000,IModels[*i_index].show_pretty(rules));
 	out_screen<<"#"<<i+1<<": indel "<<i_name;
 	if (i_index and *i_index >= 0)
 	    out_screen<<" (I"<<*i_index+1<<")";
 	out_screen<<endl;
 
 	auto scale_index = P.scale_index_for_partition(i);
-	out_screen<<"#"<<i+1<<": scale "<<ScaleModels[*scale_index].show(rules)<<" (Scale"<<*scale_index+1<<")\n";
+	out_screen<<"#"<<i+1<<": scale "<<indent_and_wrap(0,12,1000,ScaleModels[*scale_index].show(rules))<<" (Scale"<<*scale_index+1<<")\n";
 	out_screen<<endl;
     }
 
