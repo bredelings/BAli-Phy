@@ -321,9 +321,9 @@ ptree parse(const Rules& R, const string& s)
 optional<list<ptree>> get_list_elements(const ptree& p)
 {
     string s = p.get_value<string>();
-    if (s == "nil") return list<ptree>();
+    if (s == "Nil") return list<ptree>();
 
-    if (s == "cons")
+    if (s == "Cons")
     {
 	ptree h = p.get_child("first");
 	ptree t = p.get_child("second");
