@@ -104,6 +104,19 @@ using std::valarray;
 using boost::program_options::variables_map;
 using boost::shared_ptr;
 
+string model_t::show(const Rules& rules, bool top) const
+{
+    if (top)
+	return show_model(description, rules);
+    else
+	return unparse(description, rules);
+}
+
+model_t::model_t(const ptree& d, const ptree&t, const std::set<term_t>& c, const expression_ref& e)
+    :description(d), type(t), constraints(c), expression(e)
+{
+}
+
 string show(vector<string> args)
 {
     string output = args[0];
