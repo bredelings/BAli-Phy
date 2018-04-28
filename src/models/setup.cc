@@ -107,9 +107,9 @@ using boost::shared_ptr;
 string model_t::show(const Rules& rules, bool top) const
 {
     if (top)
-	return show_model(description, rules);
+	return show_model(extract_value(description), rules);
     else
-	return unparse(description, rules);
+	return unparse(extract_value(description), rules);
 }
 
 model_t::model_t(const ptree& d, const ptree&t, const std::set<term_t>& c, const expression_ref& e)
@@ -505,7 +505,7 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
 model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& constraints, const ptree& model_rep, const map<string,bool>& scope)
 {
     // --------- Convert model to MultiMixtureModel ------------//
-    expression_ref full_model = get_model_as(R, model_rep, scope);
+    expression_ref full_model = get_model_as(R, extract_value(model_rep), scope);
 
     if (log_verbose >= 2)
 	std::cout<<"full_model = "<<full_model<<std::endl;
@@ -542,7 +542,7 @@ model_t get_model(const Rules& R, const string& type, const string& model, const
     map<string,bool> names_in_scope;
     for(auto& x: scope)
 	names_in_scope.insert({x.first,false});
-    return get_model(R, required_type, equations.get_constraints(), model_rep, names_in_scope);
+    return get_model(R, required_type, equations.get_constraints(), p.first, names_in_scope);
 }
 
 // Some things, like log, exp, add, sub, etc. don't really have named arguments.

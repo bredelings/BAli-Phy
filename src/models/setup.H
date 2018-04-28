@@ -21,7 +21,9 @@ public:
     ptree type;
     std::set<term_t> constraints;
     expression_ref expression;
+
     std::string show(const Rules&, bool = true) const;
+
     model_t() = default;
     model_t(const ptree&,const ptree&, const std::set<term_t>&, const expression_ref&);
 };
