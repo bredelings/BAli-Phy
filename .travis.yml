@@ -59,8 +59,9 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip && unzip -q ninja-linux.zip -d ~/bin && pyenv local 3.6 && pip3 install meson; fi
 
 script:
-  - meson build
+  - meson build --prefix=$HOME/bali-phy
   - ninja -C build test
+  - ninja -C build install
 
 env:
   global:
