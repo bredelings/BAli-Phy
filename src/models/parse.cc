@@ -338,6 +338,27 @@ optional<list<ptree>> get_list_elements(const ptree& p)
     return boost::none;
 }
 
+optional<list<ptree>> get_ann_list_elements(const ptree& ann)
+{
+    auto& p = ann.get_child("value");
+
+    string s = p.get_value<string>();
+    if (s == "Nil") return list<ptree>();
+
+    if (s == "Cons")
+    {
+	ptree h = p.get_child("first");
+	ptree t = p.get_child("second");
+	auto xs = get_ann_list_elements(t);
+	if (xs)
+	{
+	    (*xs).push_front(h);
+	    return xs;
+	}
+    }
+    return boost::none;
+}
+
 string unparse(const ptree& p, const Rules& rules)
 {
     using namespace std::string_literals;
@@ -455,7 +476,7 @@ string unparse_annotated(const ptree& ann)
     }
     if (s == "sample")
 	return "~" + unparse_annotated(p.begin()->second);
-    if (auto xs = get_list_elements(p))
+    if (auto xs = get_ann_list_elements(ann))
     {
 	vector<string> ss;
 	for(auto& x: *xs)

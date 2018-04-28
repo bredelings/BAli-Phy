@@ -181,21 +181,21 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
     {
 	//    out_cache<<"subst model"<<i+1<<" = "<<P.SModel(i).name()<<endl<<endl;
 	out_cache<<"subst model"<<i+1<<" "<<SModels[i].show(rules)<<endl<<endl;
-	smodels.push_back(SModels[i].show(rules,false));
+	smodels.push_back(SModels[i].pretty_model());
     }
 
     json imodels = json::array();
     for(int i=0;i<P.n_imodels();i++)
     {
 	out_cache<<"indel model"<<i+1<<" "<<IModels[i].show(rules)<<endl<<endl;
-	imodels.push_back(IModels[i].show(rules,false));
+	imodels.push_back(IModels[i].pretty_model());
     }
 
     json scales = json::array();
     for(int i=0;i<P.n_branch_scales();i++)
     {
 	out_cache<<"scale model"<<i+1<<" "<<ScaleModels[i].show(rules)<<endl<<endl;
-	scales.push_back(ScaleModels[i].show(rules, false));
+	scales.push_back(ScaleModels[i].pretty_model());
     }
 
     json tree;

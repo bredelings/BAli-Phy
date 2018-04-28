@@ -125,7 +125,7 @@ model_t::model_t(const ptree& d, const ptree&t, const std::set<term_t>& c, const
 
 void to_json(json& j, const pretty_model_t& m)
 {
-    j["main"] = m.main;
+    j["main"] = unparse_annotated(m.main);
     json extracted = json::array();
     for(int i=0;i<m.terms.size();i++)
     {
