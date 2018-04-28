@@ -329,15 +329,20 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	auto arg_required_type = argument.get_child("arg_type");
 	substitute(E, arg_required_type);
 	ptree arg_value;
+	bool is_default = false;
 	if (model.count(arg_name))
 	    arg_value = model.get_child(arg_name);
 	else if (argument.count("default_value"))
+	{
+	    is_default = true;
 	    arg_value = argument.get_child("default_value");
+	}
 	else
 	    throw myexception()<<"Command '"<<name<<"' missing required argument '"<<arg_name<<"'";
 	E = E && pass2(R, arg_required_type, arg_value, bound_vars, extend_scope(*rule,skip,scope));
 	if (not E)
 	    throw myexception()<<"Expression '"<<unparse(arg_value, R)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
+	arg_value.push_back({"is_default_value",ptree(is_default)});
 	model2.push_back({arg_name, arg_value});
 	add(bound_vars, E.referenced_vars());
     }
@@ -353,8 +358,6 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	model.push_back({"no_log",ptree(true)});
     if (auto extract = rule->get_child_optional("extract"))
 	model.push_back({"extract",*extract});
-    if (auto def = rule->get_child_optional("default_value"))
-	model.push_back({"default_value",*def});
 
     substitute_in_types(S, model);
 
