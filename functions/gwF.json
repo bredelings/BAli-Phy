@@ -18,5 +18,6 @@
             "arg_type": "a",
             "default_value": "getAlphabet"
         }
-    ]
+    ],
+    "extract": "all"
 }

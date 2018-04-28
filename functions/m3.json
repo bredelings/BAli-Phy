@@ -50,5 +50,6 @@
 		 "author": [{"name": "Yang, Ziheng"}, {"name": "Nielsen, Rasmus"}, {"name": "Goldman, Nick"},{"name": "Pederson, Anne-Mette Krabbe"}],
 		 "journal": {"name": "Genetics", "volume": "155", "number": "1", "pages": "431--449"},
 		 "link": [{"url":"http://www.genetics.org/content/155/1/431.full"}]
-		}
+		},
+    "extract": "all"
 }

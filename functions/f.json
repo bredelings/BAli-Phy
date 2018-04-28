@@ -19,5 +19,6 @@
     ],
     "title": "The +F frequency model",
     "description": "The +F frequency model species the rate matrix Q as:\n  Q(i,j) = S(i,j) * pi[j].",
-    "examples": ["wag+f"]
+    "examples": ["wag+f"],
+    "extract": "all"
 }

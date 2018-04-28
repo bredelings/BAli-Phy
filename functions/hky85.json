@@ -25,5 +25,6 @@
 	    "default_value": "getAlphabet"
         }
     ],
-    "description":"Technically, this is just the symmetric matrix from HKY"
+    "description":"Technically, this is just the symmetric matrix from HKY",
+    "extract": "all"
 }

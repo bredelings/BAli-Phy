@@ -15,5 +15,6 @@
             "default_value": "getAlphabet"
         }
     ],
-    "title": "The Felsenstein (1981) rate matrix"
+    "title": "The Felsenstein (1981) rate matrix",
+    "extract": "all"
 }

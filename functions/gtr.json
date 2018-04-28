@@ -18,5 +18,6 @@
             "default_value": "getAlphabet"
         }
     ],
-    "description":"This is actually just the exchange matrix for the GTR.\nGTR+F yields the standard GTR model."
+    "description":"This is actually just the exchange matrix for the GTR.\nGTR+F yields the standard GTR model.",
+    "extract": "all"
 }

@@ -532,24 +532,41 @@ model_t get_model(const Rules& R, const string& type, const string& model, const
     return get_model(R, required_type, equations.get_constraints(), model_rep, names_in_scope);
 }
 
+// Some things, like log, exp, add, sub, etc. don't really have named arguments.
+//    For these things exp[~normal[0,1]] remains exp[~normal[0,1]]
+// Some things, like normal, gamma, etc. have named arguments.
+//    For these things, we pull out random arguments, so that normal[~normal[0,1],1] becomes
+//      normal[mu,1]: normal:mu ~ norma[0,1]
+// Some things like tn, hky, etc. are considered to have named parameters.
+//    For these things, we pull out all arguments that are numbers.
+//    So, tn93[1,~log_normal[0,1]] becomes tn93 ; tn:kappa_pur=1 , tn:kappa_pyr ~ lognormal[0,1]
+
 bool do_extract(const ptree& func, const ptree& arg)
 {
     auto arg_value = arg.get_child("value");
-    auto arg_type = arg.get_child("type");
+    string arg_type = unparse_type(arg.get_child("type"));
 
-    if (is_constant(arg_value)) return false;
-
-    auto arg_name = arg_value.get_value<string>();
 
     // 1. Don't extract arguments to e.g. log[], add[], sub[], etc.
+    //    This is supposed to indicate things who arguments don't really have names?
     if (func.get("no_log",false)) return false;
 
-    // 2. Pull out random arguments
-    if (arg_name == "sample") return true;
+    // 2. Extract non-random things that are not models.
+    if (func.get<string>("extract","none") == "all")
+    {
+	if (arg_type == "Int" or arg_type == "Double" or arg_type == "LogDouble")
+	    return true;
+	if (arg_type == "List[Double]" or arg_type == "List[Pair[String,Double]]")
+	    return true;
+    }
 
-    // 3. Pull out things that are not data structures.
-//    if (arg_type == "Int" or arg_type == "Double" or arg_type == "LogDouble")
-//	return true;
+    if (not is_constant(arg_value))
+    {
+	auto arg_name = arg_value.get_value<string>();
+
+	// 3. Pull out random arguments
+	if (arg_name == "sample") return true;
+    }
 
     return false;
 }

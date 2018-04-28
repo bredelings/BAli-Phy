@@ -24,5 +24,6 @@
 	    "arg_type": "Codons[a]",
 	    "default_value": "getAlphabet"
 	}
-    ]
+    ],
+    "extract": "all"
 }

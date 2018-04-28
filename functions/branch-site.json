@@ -62,5 +62,6 @@
             "default_value": "getAlphabet",
 	    "description": "The Codon alphabet."
         }
-    ]
+    ],
+    "extract": "all"
 }

@@ -31,5 +31,6 @@
 	    "default_value": "getAlphabet",
             "description": "The nucleotide alphabet (DNA or RNA)."
         }
-    ]
+    ],
+    "extract": "all"
 }

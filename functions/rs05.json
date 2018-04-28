@@ -32,5 +32,6 @@
             "arg_type": "tree",
             "no_apply": true
         }
-    ]
+    ],
+    "extract": "all"
 }

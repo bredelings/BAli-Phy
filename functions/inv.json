@@ -17,5 +17,6 @@
     ],
     "title": "Invariable sites model",
     "examples": ["hky85+inv",
-		 "gtr+Rates.gamma+inv"]
+		 "gtr+Rates.gamma+inv"],
+    "extract": "all"
 }
