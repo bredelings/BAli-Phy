@@ -144,3 +144,33 @@ string show(const ptree& pt, int depth)
     return result;
 }
 
+void to_json(json& j, const ptree::value_t& v)
+{
+    if (v.which() == 0)
+	;
+    else if (v.which() == 1)
+	j = boost::get<std::string>(v);
+    else if (v.which() == 2)
+	j = boost::get<int>(v);
+    else if (v.which() == 3)
+	j = boost::get<double>(v);
+    else if (v.which() == 4)
+	j = boost::get<bool>(v);
+    else
+	std::abort();
+}
+
+void to_json(json& j, const ptree& p)
+{
+    json value = p.value;
+
+    json args = json::array();
+    for(auto& arg: p)
+    {
+	json p = json::array();
+	p[0] = arg.first;
+	p[1] = arg.second;
+	args.push_back(p);
+    }
+    j = {{"value",value},{"args",args}};
+}

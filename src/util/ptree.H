@@ -9,6 +9,8 @@
 #include <boost/variant.hpp>
 #include <boost/optional.hpp>
 
+#include <util/json.hh>
+
 struct monostate{};
 std::ostream& operator<<(std::ostream& o,const monostate&);
 inline bool operator<(const monostate&, const monostate&) {return false;}
@@ -122,5 +124,9 @@ template <>  inline bool ptree::has_value<double>() const {return value.which() 
 template <>  inline bool ptree::has_value<std::string>() const {return value.which() == 1;}
 
 std::string show(const ptree& pt, int depth=0);
+
+void to_json(json& j, const ptree::value_t& p);
+void to_json(json& j, const ptree& p);
+
 
 #endif
