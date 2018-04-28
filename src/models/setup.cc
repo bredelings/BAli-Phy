@@ -542,7 +542,7 @@ bool do_extract(const ptree& func, const ptree& arg)
     auto arg_name = arg_value.get_value<string>();
 
     // 1. Don't extract arguments to e.g. log[], add[], sub[], etc.
-    if (not func.get("no_log",false)) return false;
+    if (func.get("no_log",false)) return false;
 
     // 2. Pull out random arguments
     if (arg_name == "sample") return true;
