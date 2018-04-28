@@ -289,10 +289,10 @@ void pass_list(ptree& p)
 {
     if (p.has_value<string>() and p.get_value<string>() == "List")
     {
-	ptree l = ptree("nil");
+	ptree l = ptree("Nil");
 	for(auto& child: reverse(p))
 	{
-	    ptree l2 = ptree("cons");
+	    ptree l2 = ptree("Cons");
 	    l2.push_back({"",child.second});
 	    l2.push_back({"",l});
 	    std::swap(l,l2);

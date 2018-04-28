@@ -1,5 +1,5 @@
 {
-    "name": "nil",
+    "name": "Nil",
     "result_type": "List[a]",
     "call": "[]",
     "args": [ ],
