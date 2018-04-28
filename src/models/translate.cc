@@ -349,7 +349,7 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
     auto S = E.eliminate_except(keep);
 
     model = ptree({{"value",model},{"type",result_type}});
-    if (rule->get("no_log",true))
+    if (rule->get("no_log",false))
 	model.push_back({"no_log",ptree(true)});
     if (auto def = rule->get_child_optional("default_value"))
 	model.push_back({"default_value",*def});
