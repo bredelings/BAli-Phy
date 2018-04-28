@@ -655,5 +655,8 @@ pretty_model_t::pretty_model_t(const ptree& m)
     }
 
     // 2. Fix up names
+    for(auto& name: term_names)
+	name = translate_structures(name);
+
     term_names = short_parameter_names(term_names);
 }

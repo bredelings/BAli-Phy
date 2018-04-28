@@ -2,6 +2,7 @@
 #include <vector>
 #include <list>
 #include "models/parse.H"
+#include "models/model.H"
 #include "myexception.H"
 #include "util.H"
 #include "rules.H"
@@ -478,3 +479,49 @@ bool is_constant(const ptree& model)
 
     return (name.size()>=2 and name[0] == '"' and name.back() == '"');
 }
+
+string translate_structures(const string& name)
+{
+    vector<string> path = model_split_path(name);
+
+    vector<string> path2;
+    optional<int> elem;
+    for(auto& x: path)
+    {
+	if (x == "Cons:second")
+	{
+	    if (elem)
+		elem = 1+*elem;
+	    else
+		elem = 1;
+	}
+	else if (x == "Cons:first")
+	{
+	    if (path2.empty()) path2.push_back("");
+	    if (not elem) elem = 0;
+	    elem = 1+*elem;
+
+	    path2.back() += "[" + convertToString(*elem) + "]";
+	    elem = boost::none;
+	}
+	else
+	{
+	    elem = boost::none;
+	    if (x == "Pair::first")
+	    {
+		if (path2.empty()) path2.push_back("");
+		path2.back() += "[1]";
+	    }
+	    else if (x == "Pair::second")
+	    {
+		if (path2.empty()) path2.push_back("");
+		path2.back() += "[2]";
+	    }
+	    else
+		path2.push_back(x);
+	}
+    }
+    return model_path(path2);
+}
+
+

@@ -8,6 +8,7 @@
 #include "mcmc/mcmc.H"
 #include "mcmc/logger.H"
 #include "substitution/parsimony.H"
+#include "models/parse.H"
 
 using std::vector;
 using std::map;
@@ -180,51 +181,6 @@ void find_sub_loggers(Model& M, int& index, const string& name, vector<int>& log
 	}
     }
 }
-
-string translate_structures(const string& name)
-{
-    vector<string> path = model_split_path(name);
-
-    vector<string> path2;
-    optional<int> elem;
-    for(auto& x: path)
-    {
-	if (x == "Cons:second")
-	{
-	    if (elem)
-		elem = 1+*elem;
-	    else
-		elem = 1;
-	}
-	else if (x == "Cons:first")
-	{
-	    if (path2.empty()) path2.push_back("");
-	    if (not elem) elem = 0;
-	    elem = 1+*elem;
-
-	    path2.back() += "[" + convertToString(*elem) + "]";
-	    elem = boost::none;
-	}
-	else
-	{
-	    elem = boost::none;
-	    if (x == "Pair::first")
-	    {
-		if (path2.empty()) path2.push_back("");
-		path2.back() += "[1]";
-	    }
-	    else if (x == "Pair::second")
-	    {
-		if (path2.empty()) path2.push_back("");
-		path2.back() += "[2]";
-	    }
-	    else
-		path2.push_back(x);
-	}
-    }
-    return model_path(path2);
-}
-
 
 owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>& M, const vector<string>& Rao_Blackwellize)
 {
