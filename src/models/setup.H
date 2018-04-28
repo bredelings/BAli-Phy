@@ -11,24 +11,9 @@
 #include "sequence/alphabet.H"
 #include "computation/expression/expression_ref.H"
 #include "unification.H"
+#include "util/json.hh"
 
 class Rules;
-
-class model_t
-{
-    ptree description;
-public:
-    ptree type;
-    std::set<term_t> constraints;
-    expression_ref expression;
-
-    std::string show(const Rules&, bool = true) const;
-
-    std::string show_pretty(const Rules&, bool = true) const;
-
-    model_t() = default;
-    model_t(const ptree&,const ptree&, const std::set<term_t>&, const expression_ref&);
-};
 
 class pretty_model_t
 {
@@ -41,6 +26,26 @@ public:
 
     pretty_model_t(const ptree& m);
 };
+
+class model_t
+{
+    ptree description;
+public:
+    ptree type;
+    std::set<term_t> constraints;
+    expression_ref expression;
+
+    pretty_model_t pretty_model() const {return {description};};
+
+    std::string show(const Rules&, bool = true) const;
+
+    std::string show_pretty(const Rules&, bool = true) const;
+
+    model_t() = default;
+    model_t(const ptree&,const ptree&, const std::set<term_t>&, const expression_ref&);
+};
+
+void to_json(json& j, const pretty_model_t& m);
 
 model_t get_model(const Rules& R, const std::string& type, const std::string& model, const std::vector<std::pair<std::string,std::string>>& = std::vector<std::pair<std::string,std::string>>());
 

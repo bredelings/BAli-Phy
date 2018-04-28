@@ -123,6 +123,20 @@ model_t::model_t(const ptree& d, const ptree&t, const std::set<term_t>& c, const
 {
 }
 
+void to_json(json& j, const pretty_model_t& m)
+{
+    j["main"] = m.main;
+    json extracted = json::array();
+    for(int i=0;i<m.terms.size();i++)
+    {
+	json p = json::array();
+	p[0] = m.term_names[i];
+	p[1] = m.terms[i];
+	extracted.push_back(p);
+    }
+    j["extracted"] = extracted;
+}
+
 string show(vector<string> args)
 {
     string output = args[0];
