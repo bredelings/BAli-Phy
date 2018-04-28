@@ -418,6 +418,86 @@ string unparse(const ptree& p, const Rules& rules)
     return s;
 }
 
+string unparse_annotated(const ptree& ann)
+{
+    using namespace std::string_literals;
+
+    term_t p = ann.get_child("value");
+
+    if (p.is_null())
+	return "null";
+    if (p.is_a<int>())
+	return convertToString(p.get_value<int>());
+    else if (p.is_a<double>())
+    {
+	auto s = convertToString(p.get_value<double>());
+	if (s.find('.') != std::string::npos)
+	    while(s.size() > 3 and s.back() == '0')
+		s.pop_back();
+	return s;
+    }
+    else if (p.is_a<bool>())
+	return convertToString(p.get_value<bool>());
+    else if (p.is_a<string>() and is_constant(p))
+	return p.get_value<string>();
+
+    string s = p.get_value<string>();
+    if (s == "RCTMC")
+    {
+	string Q = unparse_annotated(p.get_child("S"));
+	string R = unparse_annotated(p.get_child("R"));
+	return Q + "+" + R;
+    }
+    if (s == "let")
+    {
+	string name = p[0].first;
+	return "let["+name+"="+unparse_annotated(p[0].second)+","+unparse_annotated(p[1].second)+"]";
+    }
+    if (s == "sample")
+	return "~" + unparse_annotated(p.begin()->second);
+    if (auto xs = get_list_elements(p))
+    {
+	vector<string> ss;
+	for(auto& x: *xs)
+	    ss.push_back(unparse_annotated(x));
+	return "List[" + join(ss,",") + "]";
+    }
+    if (s == "intToDouble")
+	return unparse_annotated(p.get_child("x"));
+    if (s == "unit_mixture" or s == "multiMixtureModel")
+	if (auto child = p.get_child_optional("submodel"))
+	    return unparse_annotated(*child);
+    vector<string> args;
+    optional<string> submodel;
+    for(const auto& pair: p)
+    {
+	// Don't print submodel arguments: move out to submodel + <this>
+	if (pair.second.is_null())
+	{
+	    args.push_back("");
+	    continue;
+	}
+	else if (pair.first == "submodel")
+	{
+	    assert(not submodel);
+	    submodel = unparse_annotated(pair.second);
+	    args.push_back("");
+	}
+	// Don't print alphabet=getAlphabet (FIXME: change to x=getAlphabet, if this is a default value)
+	else if (pair.second.get_child("value") == "getAlphabet" and pair.second.get_child("is_default_value") == true)
+	    ;
+	else
+	    args.push_back( unparse_annotated(pair.second) );
+    }
+    while (args.size() and args.back() == "")
+	args.pop_back();
+    if (not args.empty())
+	s = s + "[" + join(args,',') + "]";
+    if (submodel)
+	s = *submodel + "+" + s;
+    return s;
+}
+
 string unparse_type(const ptree& p)
 {
     string s = p.get_value<string>();
