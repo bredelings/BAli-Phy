@@ -341,6 +341,8 @@ string unparse(const ptree& p, const Rules& rules)
 {
     using namespace std::string_literals;
 
+    if (p.is_null())
+	return "null";
     if (p.is_a<int>())
 	return convertToString(p.get_value<int>());
     else if (p.is_a<double>())
