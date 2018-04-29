@@ -2235,9 +2235,13 @@ sub get_models_for_file
 
     while (my $line = <FILE>) 
     {
-	if ($line =~ /${name}([0-9]+) (.+)/) 
+	if ($line =~ /${name}([0-9]+) = (.+)/)
 	{
 	    push @models,make_extracted($2);
+	}
+	elsif ($line =~ /${name}([0-9]+) ~ (.+)/)
+	{
+	    push @models,make_extracted("~".$2);
 	}
 	else
 	{
