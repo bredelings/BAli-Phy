@@ -584,6 +584,12 @@ bool do_extract(const ptree& func, const ptree& arg)
     //    This is supposed to indicate things who arguments don't really have names?
     if (func.get("no_log",false)) return false;
 
+    string func_name = func.get_child("value").get_value<string>();
+    // 1b. Don't pull anything out of "let"
+    if (func_name == "let") return false;
+    // 1c. Don't pull anything out of lambdas
+    if (func_name == "function") return false;
+
     // 2. Extract non-random things that are not models.
     if (func.get<string>("extract","none") == "all")
     {
