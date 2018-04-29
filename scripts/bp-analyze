@@ -411,8 +411,8 @@ sub html_header
       .backlit td {background: rgb(220,220,220);}
 
       h1 {font-size: 150%;}
-      h2 {font-size: 130%; margin-bottom: 0.2em;}
-      h3 {font-size: 110%; margin-top: 0.3em ; margin-bottom: 0.2em}
+      h2 {font-size: 130%; margin-top:2em; margin-bottom: 0.2em}
+      h3 {font-size: 110%; margin-bottom: 0.2em}// margin-top: 0.3em}
 
       ul {margin-top: 0.4em;}
 
@@ -444,11 +444,12 @@ sub topbar
    <span id="path">Sections:</span>
    <span id="menu">
     [<a href="#data">Data+Model</a>]
-    [<a href="#analysis">Analysis</a>]
+    [<a href="#parameters">Parameters</a>]
     [<a href="#alignment">Alignment</a>]
     [<a href="#topology">Phylogeny</a>]
     [<a href="#mixing">Mixing</a>]
-    [<a href="#parameters">Parameters</a>]
+    [<a href="#analysis">Analysis</a>]
+    [<a href="#models">Models+Priors</a>]
    </span>
 </p>
 ';
@@ -489,7 +490,7 @@ sub print_models
 {
     my $name = shift;
     my $models = shift;
-    my $section = "<br/><table class=\"models\">\n";
+    my $section = "<table class=\"models\">\n";
     my $i=1;
     foreach my $model (@$models)
     {
@@ -501,7 +502,6 @@ sub print_models
 	$i = $i + 1;
     }
     $section .= "</table>\n";
-    $section .= "<hr/><br/>\n";
     return $section;
 }
 
@@ -592,15 +592,14 @@ sub print_data_and_model
 sub print_model_section
 {
 
-    my $section = "<h2 style=\"clear:both\"><a name=\"model\">Model and priors</h2>\n";
+    my $section = "<h2 style=\"clear:both\"><a name=\"models\">Model and priors</h2>\n";
     
-    $section .= "<br/>\n";
     $section .= "<h3 style=\"clear:both\"><a name=\"tree\">Tree (+priors)</a></h3>\n";
 #    $section .= "<table class=\"backlit2\">\n";
-    $section .= "<br/><table>\n";
+    $section .= "<table>\n";
     $section .= "<tr><td>topology</td><td>$topology_prior</td></tr>" if (defined($topology_prior));
     $section .= "<tr><td>branch lengths</td><td>$branch_prior</td></tr>" if (defined($topology_prior));
-    $section .= "</table><br/><hr/><br/>\n";
+    $section .= "</table>\n";
     
     $section .= "<h3 style=\"clear:both\"><a name=\"smodel\">Substitution model (+priors) </a></h3>\n";
     $section .= print_models("S",\@smodels);
@@ -617,6 +616,7 @@ sub print_model_section
 sub section_analysis
 {
     my $section = "";
+    $section .= "<br/><hr/><br/>\n";
     $section .= "<h2><a name=\"analysis\">Analysis</a></h2>\n";
     $section .= "<p style=\"margin-bottom:0\"><b>command line</b>: $commands[0]</p>\n" if (!$commands_differ);
     $section .= "<p style=\"margin-top:0\"><b>directory</b>: $directories[0]</p>\n" if (!$directories_differ);
@@ -952,9 +952,6 @@ my @tne_array = split(/\n/,$tne_string);
 #my $min_tESS = $tne_array[0];
 my $min_tESS = exec_show("pickout -n 'min Ne' < Results/partitions.bs");
 
-my @sne = sort {$a <=> $b} values(%ESS);
-    $min_ESS = $sne[0];
-
 print "\n";
 print "NOTE: burnin (scalar) <= $burnin_before\n" if defined($burnin_before);
 print "NOTE: min_ESS (scalar)    = $min_ESS\n" if defined($min_ESS);
@@ -1039,12 +1036,19 @@ sub section_scalar_variables
     $section .= "</table>\n";
 
 
+    return $section;
+}
+
+
+sub section_end
+{
+    my $section;
     $section .= "  </div>\n";
     $section .= "  </body>\n";
     $section .= "</html>\n";
-
     return $section;
 }
+
 
 sub print_index_html
 {
@@ -1065,7 +1069,10 @@ sub print_index_html
 
     print $index &print_data_and_model();
 
-    print $index &section_analysis();
+    my @sne = sort {$a <=> $b} values(%ESS);
+    $min_ESS = $sne[0];
+
+    print $index &section_scalar_variables();
 
     print $index &section_phylogeny_distribution();
 
@@ -1073,9 +1080,12 @@ sub print_index_html
 
     print $index &section_mixing();
 
-    print $index &section_scalar_variables();
+    print $index &section_analysis();
 
     print $index &print_model_section();
+
+    print $index &section_end();
+
 }
 
 sub Rexec
