@@ -1240,7 +1240,10 @@ sub determine_input_files
 	    push @out_files, check_file_exists("$directory/C1.out");
 	    push @tree_files, check_file_exists("$directory/C1.trees");
 	    push @parameter_files, check_file_exists("$directory/C1.log");
-	    push @run_files, check_file_exists("$directory/C1.run.json");
+	    if ( -e "$directory/C1.run.json")
+	    {
+		push @run_files, "$directory/C1.run.json";
+	    }
 	}
 	$MAP_file = "$first_dir/1.MAP";
     }
