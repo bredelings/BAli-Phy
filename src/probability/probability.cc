@@ -245,7 +245,15 @@ double normal_quantile(double p, double mu, double sigma)
   assert(p <= 1);
   assert(sigma >= 0);
   if (sigma == 0.0) return mu;
-  return quantile(normal_distribution<>(mu,sigma),p);
+  try
+  {
+      return quantile(normal_distribution<>(mu,sigma),p);
+  }
+  catch(const std::exception& e)
+  {
+      std::cerr<<"Warning: normal_quantile (p="<<p<<", mu="<<mu<<", sigma="<<sigma<<"), "<<e.what()<<std::endl;
+      return 1;
+  }
 }
 
 log_double_t log_normal_pdf(double x, double mu, double sigma)
