@@ -15,14 +15,14 @@ using std::map;
 using std::string;
 using boost::optional;
 
-// Translate pass M+FM -> RCTMC[M,FM]
+// Translate pass M+FM -> rctmc[M,FM]
 void pass1(const Rules& R, ptree& p)
 {
     // 1. Handle children.
     for(auto& child: p)
 	pass1(R, child.second);
     
-    // 2. Convert e.g. TN+F -> RCTMC[TN,F]
+    // 2. Convert e.g. TN+F -> rctmc[TN,F]
     if (unify(R.get_result_type(p),parse_type("FrequencyModel[_]")) and p.count("submodel"))
     {
 	ptree q = p.get_child("submodel");
@@ -30,7 +30,7 @@ void pass1(const Rules& R, ptree& p)
 	r.erase("submodel");
 	
 	ptree result = {};
-	result.put_value("RCTMC");
+	result.put_value("rctmc");
 	result.push_back({"S",q});
 	result.push_back({"R",r});
 	p = result;
@@ -87,7 +87,7 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
 	if (E)
 	{
 	    ptree result;
-	    result.put_value("RCTMC");
+	    result.put_value("rctmc");
 	    result.push_back({"S",model});
 	    result.push_back({"R",ptree("f")});
 	    model = result;
@@ -297,6 +297,9 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 
 	return E;
     }
+
+    // Use the canonical name for the function
+    model.value = rule->get<string>("name");
 
     // 5.1 Update required type and rules with discovered constraints
     rule = substitute_in_rule_types(E, *rule);

@@ -381,7 +381,7 @@ string unparse(const ptree& p, const Rules& rules)
 	return p.get_value<string>();
 
     string s = p.get_value<string>();
-    if (s == "RCTMC")
+    if (s == "rctmc")
     {
 	string Q = unparse(p.get_child("S"), rules);
 	string R = unparse(p.get_child("R"), rules);
@@ -463,7 +463,7 @@ string unparse_annotated(const ptree& ann)
 	return p.get_value<string>();
 
     string s = p.get_value<string>();
-    if (s == "RCTMC")
+    if (s == "rctmc")
     {
 	string Q = unparse_annotated(p.get_child("S"));
 	string R = unparse_annotated(p.get_child("R"));
