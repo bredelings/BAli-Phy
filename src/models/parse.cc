@@ -25,18 +25,21 @@ optional<pair<string,string>> split_keyword(const string& s, char c)
     return boost::none;
 }
 
-/// \brief Turn an expression of the form h1[a]+h2[b] -> h2[h1[a],b].
+/// \brief Turn an expression of the form h1[a]+h2[b] -> {h1[a],h2[b]}
 ///
 /// \param sstack A stack of strings that represent a substitution model.
 /// \param s The model name to match.
 /// \param args The possible argument.
 ///
-pair<optional<string>,string> split_last_plus(const string& s)
+vector<string> split_top_plus(const string& s)
 {
-    // 1. Find last '+' on the top level
-    int split = -1;
+    vector<string> terms;
+
+    // Split on '+' where depth == 0.
+    int pos = 0;
     int depth = 0;
     for(int i=0;i<s.size();i++)
+    {
 	if (s[i] == '[')
 	    depth++;
 	else if (s[i] == ']')
@@ -45,21 +48,24 @@ pair<optional<string>,string> split_last_plus(const string& s)
 	    if (depth < 0) throw myexception()<<"Too many ']' in string '"<<s<<"'";
 	}
 	else if (depth == 0 and s[i] == '+')
-	    split = i;
+	{
+	    terms.push_back(s.substr(pos,i-pos));
+	    pos = i+1;
+	}
+    }
+
     if (depth != 0)
 	throw myexception()<<"Too many '[' in string '"<<s<<"'";
   
-    // 2. If there are no plus expressions then we can take the string as is.
-    if (split == -1)
-	return {boost::none, s};
-    // 3. Otherwise divide the string on the last plus
-    else
-	return {s.substr(0,split), s.substr(split+1)};
+    terms.push_back(s.substr(pos,int(s.size())-pos));
+
+    return terms;
 }
 
 // Turn an expression of the form head[arg1, arg2, ..., argn] -> {head, arg1, arg2, ..., argn}.
 vector<string> split_args(string s)
 {
+    if (s.empty()) throw myexception()<<"Term is empty!";
     vector<string> args;
 
     // 1. Get the head
@@ -69,6 +75,8 @@ vector<string> split_args(string s)
 	args = {s};
 	return args;
     }
+
+    if (pos == 0) throw myexception()<<"Term has no operator!";
 
     args = { s.substr(0,pos) };
     s = s.substr(pos);
@@ -135,7 +143,7 @@ ptree parse(const string& s);
 ptree parse_no_submodel(const string& s)
 {
     if (s.empty())
-	return ptree();
+	throw myexception()<<"term is empty!";
 
     // 0. Handle ~
     if (not s.empty() and s[0] == '~')
@@ -185,7 +193,10 @@ ptree parse_no_submodel(const string& s)
 	else
 	    key_value.second = args[i];
 
-	result.push_back({key_value.first, parse(key_value.second)});
+	if (key_value.first.empty() and key_value.second.empty())
+	    result.push_back({{},{}});
+	else
+	    result.push_back({key_value.first, parse(key_value.second)});
     }
 
     return result;
@@ -194,20 +205,34 @@ ptree parse_no_submodel(const string& s)
 ptree parse(const string& s)
 {
     // 1. Get the last head[args]
-    auto ss = split_last_plus(s);
+    vector<string> terms = split_top_plus(s);
 
-    // 2. Parse the last head[args]
-    auto result = parse_no_submodel(ss.second);
-
-    // 3. Parse the remainder and add it as a "submodel" argument
-    if (ss.first)
+    // 2. Parse the terms and handle submodels;
+    ptree expression;
+    for(auto& term: terms)
     {
-	if (result.count("submodel"))
-	    throw myexception()<<"Trying to specify a submodel with '+' when submodel already specified by keyword!";
-	result.push_back({"submodel",parse(*ss.first)});
+	try
+	{
+	    ptree parsed_term = parse_no_submodel(term);
+	    if (parsed_term.is_null())        throw myexception()<<"Term is empty!";
+
+	    if (not expression.is_null())
+	    {
+		if (parsed_term.count("submodel"))    throw myexception()<<"Trying to specify a submodel with '+' when submodel already specified by keyword!";
+		parsed_term.push_back({"submodel", expression});
+	    }
+	    expression = parsed_term;
+
+	    assert(not expression.is_null());
+	}
+	catch (myexception& e)
+	{
+	    e.prepend("Parsing '"+term+"': ");
+	    throw e;
+	}
     }
 
-    return result;
+    return expression;
 }
 
 void ptree_map(std::function<void(ptree&)> f, ptree& p)
@@ -227,6 +252,9 @@ void ptree_map(std::function<void(ptree&)> f, ptree& p)
 void handle_positional_args(ptree& model, const Rules& R)
 {
     if (model.size() == 0) return;
+
+    assert(not model.is_null());
+    assert(not model.value_is_empty());
 
     auto head = model.get_value<string>();
 
