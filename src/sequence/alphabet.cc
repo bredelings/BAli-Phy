@@ -321,9 +321,9 @@ Nucleotides::Nucleotides(const string& s, char c)
     string t; t += c;
 
     insert("A");
+    insert("C");
     insert("G");
     insert(t);
-    insert("C");
 
     insert_class("Y",t+"C");    // pYrimidine
     insert_class("R","AG");     // puRine

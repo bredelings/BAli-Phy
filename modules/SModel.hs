@@ -50,7 +50,7 @@ data MixtureModels = MixtureModels a;
 
 gtr exchange a = builtin_gtr (list_to_vector exchange) a;
 equ a = gtr (replicate nn 1.0) a where {n=alphabetSize a;nn=n*(n-1)/2};
-tn k1 k2 a = gtr [k1, 1.0, 1.0, 1.0, 1.0, k2] a;
+tn k1 k2 a = gtr [1.0, k1, 1.0, 1.0, k2, 1.0] a;
 hky k a = tn k k a;
 
 scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r);

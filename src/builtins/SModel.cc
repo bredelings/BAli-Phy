@@ -651,11 +651,14 @@ extern "C" closure builtin_function_gtr(OperationArgs& Args)
 
     int k=0;
     for(int i=0;i<n;i++)
-	for(int j=0;j<i;j++)
+    {
+	(*R)(i,i) = 0;
+	for(int j=i+1;j<n;j++)
 	{
 	    double x = S[k++].as_double()/total;
 	    (*R)(i,j) = (*R)(j,i) = x;
 	}
+    }
 
     return {R};
 }
