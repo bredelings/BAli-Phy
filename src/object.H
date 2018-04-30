@@ -111,6 +111,21 @@ inline std::string Box<std::string>::print() const
     return "\""+(*this)+"\"";
 }
 
+#include "matrix.H"
+
+template<> inline std::string Box<Matrix>::print() const
+{
+    std::vector<std::string> rows;
+    for(int i=0;i<size1();i++)
+    {
+	std::vector<double> row;
+	for(int j=0;j<size2();j++)
+	    row.push_back((*this)(i,j));
+	rows.push_back( "[ " + join(row, ", ") + "]" );
+    }
+    return "[ " + join(rows, ", \n") + "]";
+}
+
 template <typename T>
 bool unshare(object_ptr<T>& ptr)
 {
