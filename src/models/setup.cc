@@ -157,7 +157,7 @@ string default_markov_model(const alphabet& a)
     else if (dynamic_cast<const AminoAcidsWithStop*>(&a))
 	return "";
     else if (dynamic_cast<const AminoAcids*>(&a))
-	return "LG";
+	return "lg08";
     else if (dynamic_cast<const Codons*>(&a))
 	return "yn94";
     else if (dynamic_cast<const Triplets*>(&a))
