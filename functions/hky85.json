@@ -1,0 +1,35 @@
+{
+    "name": "hky85",
+    "title": "The Hasegawa-Kishino-Yano (1985) nucleotide rate matrix",
+    "result_type": "RevCTMC[a]",
+    "constraints": ["Nucleotides[a]"],
+    "citation":{"type": "article",
+		"title": "Dating of the human-ape splitting by a molecular clock of mitochondrial DNA",
+		"year": "1985",
+		"author": [{"name": "Hasegawa, Masami"}, {"name": "Kishino, Hirohisa"}, {"name": "Yano, Taka-aki"}],
+		"journal": {"name": "Journal of molecular evolution", "volume": "22", "number": "2", "pages": "160--174"},
+		"identifier": [{"type":"doi","id":"10.1007/BF02101694"}]
+	       },
+    "call": "SModel.hky85'[kappa,pi,a]",
+    "args": [
+        {
+            "arg_name": "kappa",
+            "arg_type": "Double",
+            "default_value": "~log_normal[log[2],0.25]",
+            "description": "Transition\/transversion ratio"
+        },
+        {
+            "arg_name": "pi",
+            "arg_type": "List[Pair[String,Double]]",
+            "default_value": "~dirichlet_on[letters[a],1]",
+	    "description": "Letter frequencies"
+        },
+        {
+            "arg_name": "a",
+            "arg_type": "a",
+	    "default_value": "getAlphabet"
+        }
+    ],
+    "description":"Symmetric exchangability matrix from HKY",
+    "extract": "all"
+}

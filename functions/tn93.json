@@ -1,0 +1,42 @@
+{
+    "name": "tn93",
+    "title": "The Tamura-Nei (1993) nucleotide rate matrix",
+    "result_type": "RevCTMC[a]",
+    "citation":{"type": "article",
+		"title": "Estimation of the number of nucleotide substitutions in the control region of mitochondrial DNA in humans and chimpanzees.",
+		"year": "1993",
+		"author": [{"name": "Tamura, Koichiro"}, {"name": "Nei, Masatoshi"}],
+		"journal": {"name": "Molecular biology and evolution", "volume": "10", "number": "3", "pages": "512--526"},
+		"identifier": [{"type":"doi","id":"10.1093/oxfordjournals.molbev.a040023"}]
+	       },
+    "constraints": ["Nucleotides[a]"],
+    "call": "SModel.tn93'[kappaPur,kappaPyr,pi,a]",
+    "args": [
+        {
+            "arg_name": "kappaPur",
+            "arg_type": "Double",
+            "default_value": "~log_normal[log[2],0.25]",
+            "description": "A<->G Transition\/transversion ratio"
+        },
+        {
+            "arg_name": "kappaPyr",
+            "arg_type": "Double",
+            "default_value": "~log_normal[log[2],0.25]",
+            "description": "C<->T Transition\/transversion ratio"
+        },
+        {
+            "arg_name": "pi",
+            "arg_type": "List[Pair[String,Double]]",
+            "default_value": "~dirichlet_on[letters[a],1]",
+	    "description": "Letter frequencies"
+        },
+        {
+            "arg_name": "a",
+            "arg_type": "a",
+	    "default_value": "getAlphabet",
+            "description": "The nucleotide alphabet (DNA or RNA)."
+        }
+    ],
+    "description":"Symmetric exchangability matrix from Tamura-Nei",
+    "extract": "all"
+}

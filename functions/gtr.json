@@ -1,0 +1,28 @@
+{
+    "name": "gtr",
+    "title":"The GTR exchangability matrix",
+    "result_type": "RevCTMC[a]",
+    "call": "SModel.gtr'[sym,pi,a]",
+    "citation":"Tavare, 1986",
+    "args": [
+        {
+            "arg_name": "sym",
+            "arg_type": "List[Pair[String,Double]]",
+	    "default_value":"~dirichlet_on[letter_pairs[a],1]",
+	    "description":"Symmetric exchangability matrix"
+        },
+        {
+            "arg_name": "pi",
+            "arg_type": "List[Pair[String,Double]]",
+            "default_value": "~dirichlet_on[letters[a],1]",
+	    "description": "Letter frequencies"
+        },
+        {
+            "arg_name": "a",
+            "arg_type": "a",
+            "default_value": "getAlphabet"
+        }
+    ],
+    "description": "Symmetric exchangability matrix from GTR",
+    "extract": "all"
+}
