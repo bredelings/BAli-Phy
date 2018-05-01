@@ -10,7 +10,7 @@
 <article xmlns="http://docbook.org/ns/docbook" version="5.0" 
          xmlns:mml="http://www.w3.org/1998/Math/MathML"
 	 xml:lang="en">
-  <info><title><application>BAli-Phy</application> Tutorial (for version 3.0-beta)</title>
+  <info><title><application>BAli-Phy</application> Tutorial (for version 3.1)</title>
     <author><personname><firstname>Benjamin</firstname><surname>Redelings</surname></personname></author>
   </info>
 
@@ -34,7 +34,7 @@ Extract the compressed archive:
 % tar -zxf examples.tgz
 Take a look inside the <filename>examples</filename> directory:
 % ls examples
-Take a look at an input file:
+Take a look at an input file (you can press 'q' to exit 'less'):
 % less examples/5S-rRNA/5d.fasta
 Get some information about the alignment:
 % alignment-info examples/5S-rRNA/5d.fasta
@@ -59,9 +59,13 @@ You can also show help for advanced options:
 You can get help on the command line options:
 % bali-phy --help=iterations | less
 You can also get help on models, distributions, and functions:
-% bali-phy --help=TN | less
-% bali-phy --help=Normal | less
+% bali-phy --help=tn93 | less
+% bali-phy --help=normal | less
 % bali-phy --help=quantile
+You can also get help on a topic using a less verbose syntax:
+% bali-phy help tn93
+% bali-phy help normal
+% bali-phy help quantile
 </para>
 
 </section>
@@ -100,10 +104,10 @@ The program Tracer graphically displays the posterior probability distribution f
 
 How does the evolutionary process for these genes differ in:
 <orderedlist>
-  <listitem>substitution rate? (Scale&lt;p&gt;)</listitem>
-  <listitem>insertion-deletion rate? (I&lt;p&gt;.logLambda)</listitem>
-  <listitem>nucleotide frequencies? (S&lt;p&gt;.TN.F.pi.{A,T,G,C})</listitem>
-  <listitem>number of indels? (#indels)</listitem>
+  <listitem>substitution rate? (<userinput>Scale[1]</userinput>, <userinput>Scale[2]</userinput>, ...)</listitem>
+  <listitem>insertion-deletion rate? (<userinput>I1/rs07:log_rate</userinput>, <userinput>I2/rs07:log_rate</userinput>, ...)</listitem>
+  <listitem>nucleotide frequencies? (<userinput>S1/tn93:pi[A]</userinput>, <userinput>S1/tn93:pi[C]</userinput>, ... )</listitem>
+  <listitem>number of indels? (<userinput>#indels</userinput>)</listitem>
 </orderedlist>
 </para>
 </section>
@@ -111,8 +115,8 @@ How does the evolutionary process for these genes differ in:
 <section><info><title>Analysis 2: fixed alignment</title></info>
 <para>
 Let's also start a <emphasis>fixed alignment</emphasis> analysis.  This will estimate the tree and evolutionary parameters, but keep the alignment constant, similar to running MrBayes, BEAST, PhyloBayes, or RevBayes.
-% bali-phy ITS1.fasta 5.8S.fasta ITS2.fasta --name ITS-fixed -Inone &#38;
-The <userinput>-Inone</userinput> is a short form of <userinput>--imodel=none</userinput>, where <parameter>imodel</parameter> means the insertion-deletion model.  When there's no model of insertions and deletions, then the alignment must be kept fixed.
+% bali-phy ITS1.fasta 5.8S.fasta ITS2.fasta --name ITS-fixed -I none &#38;
+The <userinput>-I none</userinput> is a short form of <userinput>--imodel=none</userinput>, where <parameter>imodel</parameter> means the insertion-deletion model.  When there's no model of insertions and deletions, then the alignment must be kept fixed.
 </para>
 <para>The <userinput>--name</userinput> option means that output files will be created in the directory <filename>ITS-fixed-1</filename>.
 </para>
@@ -124,69 +128,70 @@ The <userinput>-Inone</userinput> is a short form of <userinput>--imodel=none</u
 <para>When you don't specify values for parameters like <parameter>imodel</parameter>, bali-phy uses sensible defaults.  For example, these two commands are equivalent:
 % cd ~/alignment_files/examples/
 % bali-phy 5S-rRNA/25-muscle.fasta --test
-% bali-phy 5S-rRNA/25-muscle.fasta --test --alphabet=RNA --smodel=TN --imodel=RS07
+% bali-phy 5S-rRNA/25-muscle.fasta --test --alphabet=RNA --smodel=tn93 --imodel=rs07
 You can change the substitution model from the Tamura-Nei model to the General Time-Reversible model:
-% bali-phy 5S-rRNA/25-muscle.fasta --test --smodel=GTR
+% bali-phy 5S-rRNA/25-muscle.fasta --test -S gtr
+Here the <userinput>-S gtr</userinput> is a short form of <userinput>--smodel=gtr</userinput>, where <parameter>smodel</parameter> means the substitution model.
 </para>
 </section>
 <section><info><title>Rate variation</title></info>
 <para>
 You can also allow different sites to evolve at 5 different rates using the gamma[4]+INV model of rate heterogeneity:
-% bali-phy 5S-rRNA/25-muscle.fasta --test --smodel=GTR+Rates.Gamma[4]+INV
+% bali-phy 5S-rRNA/25-muscle.fasta --test -S gtr+Rates.gamma[4]+inv
 You can allow 5 different rates that are all independently estimated:
-% bali-phy 5S-rRNA/25-muscle.fasta --test --smodel=GTR+DP[n=5]
+% bali-phy 5S-rRNA/25-muscle.fasta --test -S gtr+Rates.free[n=5]
 </para>
 </section>
 <section><info><title>Codon models</title></info>
 <para>
-We can also conduct codon-based analyses using the Nielsen and Yang (1998) M0 model of diversifying positive selection (dN/dS):
-% bali-phy Globins/bglobin.fasta --test --smodel=M0
-The M0 model takes a nucleotide exchange model as a parameter. This parameter is optional, and the default is HKY, which you could specify as M0[,HKY]. You can change this to be more flexible: 
-% bali-phy Globins/bglobin.fasta --test --smodel=M0[,GTR]
+We can also conduct codon-based analyses using the Nielsen and Yang (1998) model of diversifying positive selection (dN/dS):
+% bali-phy Globins/bglobin.fasta --test -S yn94+f1x4
+The yn94 model takes a nucleotide exchange model as a parameter. This parameter is optional, and the default is hky85, which you could specify as yn94[,hky85_sym]. You can change this to be more flexible: 
+% bali-phy Globins/bglobin.fasta --test -S yn94[,gtr_sym]+f1x4
 You can make the codon frequencies to be generated from a single set of nucleotide frequencies:
-% bali-phy Globins/bglobin.fasta --test --smodel=M0[,GTR]+MG94
+% bali-phy Globins/bglobin.fasta --test -S yn94[,gtr_sym]+mg94
 The M7 model allows different sites to have different dN/dS values, where the probability of dN/dS values follows a beta distribution:
-% bali-phy Globins/bglobin.fasta --test --smodel=M7
+% bali-phy Globins/bglobin.fasta --test -S m7
 The M7 model has parameters as well. Here are the defaults:
-% bali-phy Globins/bglobin.fasta --test --smodel=M7[4,HKY,F61]
+% bali-phy Globins/bglobin.fasta --test -S m7[4,hky85_sym,f61]
 The M3 model allows different sites to have different dN/dS values, but directly estimates what these values are:
-% bali-phy Globins/bglobin.fasta --test --smodel=M3[n=3]
+% bali-phy Globins/bglobin.fasta --test -S m3[n=3]
 The M8a_Test model allows testing for positive selection in some fraction of the sites:
-% bali-phy Globins/bglobin.fasta --test --smodel=M8a_Test[4,HKY,F3x4]
+% bali-phy Globins/bglobin.fasta --test -S m8a_test[4,hky85_sym,f3x4]
 </para>
 </section>
 
 <section><info><title>Fixing parameter values</title></info>
 <para>
-We can use the TN+Gamma[4]+INV model without specifying parameters:
-% bali-phy Globins/bglobin.fasta --test --smodel=TN+Rates.Gamma+INV
+We can use the TN93+Gamma[4]+INV model without specifying parameters:
+% bali-phy Globins/bglobin.fasta --test -S tn93+Rates.gamma+inv
 However, we can also fix parameter values:
-% bali-phy Globins/bglobin.fasta --test --smodel=TN+Rates.Gamma[n=4,alpha=1]+INV[pInv=0.2]
+% bali-phy Globins/bglobin.fasta --test -S tn93+Rates.gamma[n=4,alpha=1]+inv[p_inv=0.2]
 Here we have set the shape parameter for the Gamma distribution to 1, and the
 fraction of invariant sites to 20%.  Since these parameters are fixed, they will
 not be estimated and their values will not be shown in the log file.
 </para>
 <para>
 You can see the parameters for a model by using the <userinput>help</userinput> command, as in:
-% bali-phy help Rates.Gamma
+% bali-phy help Rates.gamma
 This will show the default value or default prior for each parameter, if there is one.
 </para>
 </section>
 
 <section><info><title>Priors</title></info>
 <para>
-By default the fraction of invariant sites follows a Uniform[0,1] distribution:
-% bali-phy help INV
+By default the fraction of invariant sites follows a uniform[0,1] distribution:
+% bali-phy help inv
 However, we can specify an alternative prior:
-% bali-phy Globins/bglobin.fasta --test -S TN+Rates.Gamma[n=4]+INV[pInv~Uniform[0,0.2]]
+% bali-phy Globins/bglobin.fasta --test -S tn93+Rates.gamma[n=4]+inv[p_inv~uniform[0,0.2]]
 We can also specify parameters as positional arguments instead of using variable names:
-% bali-phy Globins/bglobin.fasta --test -S TN+Rates.Gamma[4]+INV[~Uniform[0,0.2]]
-Here "<userinput>~</userinput>" indicates a sample from the Uniform distribution instead of the distribution
+% bali-phy Globins/bglobin.fasta --test -S tn93+Rates.gamma[4]+inv[~uniform[0,0.2]]
+Here "<userinput>~</userinput>" indicates a sample from the uniform distribution instead of the distribution
 itself.
 </para>
 <para>
 The insertion-deletion model also has parameters.
-% bali-phy help RS07
+% bali-phy help rs07
 Here the default value for meanIndelLength is Add[1,~Exponential[10]].  This indicates
 a random value that is obtained by sampling an Exponential random variable with mean 10
 and then adding 1 to it.
@@ -290,7 +295,7 @@ parameters.  This is described in more detail in section 4.3 of the <link xmlns:
 Now lets specify different substitution models for different partitions.
 
 % cd ~/alignment_files/examples/ITS
-% bali-phy {ITS1,5.8S,ITS2}.fasta --smodel=1:GTR --smodel=2:HKY --smodel=3:TN --test
+% bali-phy {ITS1,5.8S,ITS2}.fasta -S 1:gtr -S 2:hky85 -S 3:tn93 --test
 </para>
 <para>
 </para>
@@ -299,8 +304,8 @@ Now lets specify different substitution models for different partitions.
 <section><info><title>Disabling alignment estimation for some partitions</title></info>
 <para>
 We can also disable alignment estimation for some, but not all, partitions:
-% bali-phy {ITS1,5.8S,ITS2}.fasta --imodel=1:RS07 --imodel=2:none --imodel=3:RS07 --test
-Specifying <userinput>--imodel=none</userinput> removes the insertion-deletion
+% bali-phy {ITS1,5.8S,ITS2}.fasta -I 1:rs07 -I 2:none -I 3:rs07 --test
+Specifying <userinput>-I none</userinput> removes the insertion-deletion
 model and parameters for partition 2 and also disables alignment estimation for that partition.</para>
 <para>Note that there is no longer an I3 indel model.  Partition #3 now has the I2 indel model.
 </para>
@@ -308,7 +313,7 @@ model and parameters for partition 2 and also disables alignment estimation for 
 <section><info><title>Sharing model parameters between partitions</title></info>
 <para>We can also specify that some partitions with the same model also share the
 same parameters for that model:
-% bali-phy {ITS1,5.8S,ITS2}.fasta --smodel=1,3:GTR --imodel=1,3:RS07 --smodel=2:TN --imodel=2:none --test
+% bali-phy {ITS1,5.8S,ITS2}.fasta -S 1,3:gtr -I 1,3:rs07 -S 2:tn93 -I 2:none --test
 This means that the information is <emphasis>pooled</emphasis> between the partitions to better estimate the shared parameters.</para>
 
 <para>Take a look at the model parameters, and the parentheticals after the model descriptions.  You should see that there is no longer an S3 substitution model or an I3 indel model.  Instead, partitions #1 and #3 share the S1 substitution model and the I1 indel model.
@@ -317,7 +322,7 @@ This means that the information is <emphasis>pooled</emphasis> between the parti
 </section>
 <section><info><title>Sharing substitution rates between partitions</title></info>
 <para>We can also specify that some partitions share the same scaling factor for branch lengths:
-% bali-phy {ITS1,5.8S,ITS2}.fasta --smodel=1,3:GTR --imodel=1,3:RS07 --smodel=2:TN --imodel=2:none --scale=1,3: --test
+% bali-phy {ITS1,5.8S,ITS2}.fasta -S 1,3:gtr -I 1,3:rs07 -S 2:tn93 -I 2:none --scale=1,3: --test
 This means that the branch lengths for partitions 1 and 3 are the same, instead of being independently estimated.</para>
 <para>Take a look at the model parameters.  There is no longer a Scale[3] parameter.  Instead, partitions 1 and 3 share Scale[1].</para>
 </section>
@@ -329,8 +334,8 @@ a text file called <filename>analysis1.script</filename>:
 <programlisting>align = ITS1.fasta
 align = 5.8S.fasta
 align = ITS2.fasta
-smodel = 1,3:TN+DP[n=3]
-smodel = 2:TN
+smodel = 1,3:tn93+Rates.free[n=3]
+smodel = 2:tn93
 imodel = 2:none
 scale = 1,3:
 </programlisting>
