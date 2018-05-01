@@ -6,11 +6,16 @@
     "args": [
         {
             "arg_name": "dist",
-            "arg_type": "Distribution[Double]"
+            "arg_type": "Distribution[Double]",
+	    "description": "The distribution parameter"
         },
         {
             "arg_name": "p",
-            "arg_type": "Double"
+            "arg_type": "Double",
+	    "description": "The probability parameter"
         }
-    ]
+    ],
+    "title": "The quantile function",
+    "examples": ["quantile[gamma[1,2],0.5]   // compute the median of gamma[1,2]"],
+    "description": "Find the point x where the Pr(X < x) = p under the distribution."
 }
