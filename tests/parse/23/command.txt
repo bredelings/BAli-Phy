@@ -1,1 +1,1 @@
---test <DATA>/codons-dna.fasta --smodel=M8[,HKY,F61]
+--test <DATA>/codons-dna.fasta --smodel=M8[,hky85_sym,F61]

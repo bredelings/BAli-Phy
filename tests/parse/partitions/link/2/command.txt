@@ -1,1 +1,1 @@
---test <DATA>/dna.fasta <DATA>/dna.fasta --link=1,2 --smodel=1:TN --smodel=2:HKY
+--test <DATA>/dna.fasta <DATA>/dna.fasta --link=1,2 --smodel=1:tn93_sym --smodel=2:hky85_sym

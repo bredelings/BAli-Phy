@@ -1,1 +1,1 @@
---test <DATA>/rna.fasta <DATA>/dna.fasta --smodel=2:TN --smodel=2:TN
+--test <DATA>/rna.fasta <DATA>/dna.fasta --smodel=2:tn93_sym --smodel=2:tn93_sym
