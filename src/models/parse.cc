@@ -209,8 +209,9 @@ ptree parse(const string& s)
 
     // 2. Parse the terms and handle submodels;
     ptree expression;
-    for(auto& term: terms)
+    for(int i=0;i<terms.size();i++)
     {
+	auto& term = terms[i];
 	try
 	{
 	    ptree parsed_term = parse_no_submodel(term);
@@ -227,7 +228,12 @@ ptree parse(const string& s)
 	}
 	catch (myexception& e)
 	{
-	    e.prepend("Parsing '"+term+"': ");
+	    string eterm = term;
+	    if (i-1 >= 0)
+		eterm = "+"+eterm;
+	    if (i+1 < terms.size())
+		eterm = eterm + "+";
+	    e.prepend("Parsing '"+eterm+"': ");
 	    throw e;
 	}
     }
