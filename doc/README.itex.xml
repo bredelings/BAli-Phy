@@ -491,7 +491,7 @@ This can be done simply by starting several instances of the program, and does n
 	indicate which format it is using.</para>
 
       <para>In this simple example, <command>bali-phy</command> automatically detects whether <replaceable>sequence-file</replaceable> contains DNA, RNA, or Amino-Acids and uses default values for several command line options.  Thus, if <replaceable>sequence-file</replaceable> contains DNA, then this is equivalent to the more verbose command line
-	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --alphabet DNA --smodel tn93 --imodel RS07</screen>  Here the substitution model is Tamura-Nei, the insertion/deletion model is RS07.  If <replaceable>sequence-file</replaceable> contains amino acids, then the defaults will be:<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --alphabet Amino-Acids --smodel LG --imodel RS07</screen> 
+	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --alphabet DNA --smodel tn93 --imodel rs07</screen>  Here the substitution model is Tamura-Nei, the insertion/deletion model is rs07.  If <replaceable>sequence-file</replaceable> contains amino acids, then the defaults will be:<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --alphabet Amino-Acids --smodel lg08 --imodel rs07</screen> 
       </para>
     </section>
 
@@ -500,7 +500,7 @@ This can be done simply by starting several instances of the program, and does n
 
       <para>You can specify a more complex substitution model as follows (See <xref linkend="subst_basic"/>):
 
-	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --smodel LG+Rates.Gamma+INV</userinput></screen> </para>
+	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --smodel lg08+Rates.gamma+inv</userinput></screen> </para>
       <para>You may specify an indel model of <userinput>none</userinput>
 	to fix the alignment to its initial value, and ignore information in shared insertions or deletions.
   	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --imodel none</userinput></screen></para>
@@ -518,15 +518,15 @@ This can be done simply by starting several instances of the program, and does n
 
     <section><info><title>Multiple partitions with unlinked models</title></info>
       <para>A substitution model or insertion-deletion model that is specified without qualification will apply to every partition.  However, each partition will recieve its own copy of each model with separate, or "unlinked", parameter values
-<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel tn93 --imodel RS07</userinput></screen>
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel tn93 --imodel rs07</userinput></screen>
 You can select partition-specific values for 4 options: <userinput>--smodel</userinput>, <userinput>--imodel</userinput>, <userinput>--alphabet</userinput>, and <userinput>--scale</userinput>.  For example, to specify different substitution models but the same alphabet:
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:tn93 --smodel 2:gtr --alphabet DNA</userinput></screen>
 You can fix the alignment and ignore insertion/deletion information in one partition, while allowing the alignment to vary and using insertion/deletion information in another partition:
-<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --imodel 1:RS07 --imodel 2:none</userinput></screen></para>
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --imodel 1:rs07 --imodel 2:none</userinput></screen></para>
     </section>
     <section><info><title>Multiple partitions with linked models</title></info>
 <para>You can also specify that two partitions share a single copy of a single substitution model or indel model.  This reduces the number of parameters and also pools information between the partitions:
-<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1,2:tn93 --imodel 1,2:RS07</userinput></screen>
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1,2:tn93 --imodel 1,2:rs07</userinput></screen>
 By default each partition has a separate scale, but you can force groups of partitions to share a scale. If you leave the value of the scale blank, the default distribution on scales will be used:
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:tn93 --smodel 2:gtr --scale 1,2:</userinput></screen>
 Finally, you may specify <userinput>-Inone</userinput> or <userinput>--imodel none</userinput>, which affects all partitions:
@@ -612,7 +612,7 @@ align = 5.8S.fasta
 align = ITS2.fasta
 
 # linked substitution model for 1st and 3rd partition
-smodel = 1,3:tn93+DP[n=3]
+smodel = 1,3:tn93+Rates.free[n=3]
 
 # substitution model for 2nd partition
 smodel = 2:tn93
@@ -625,7 +625,7 @@ scale = 1,3:</programlisting>
           The <userinput>align</userinput> option indicates sequence files, and has no name on the command line.
 	  Lines that begin with # are comments, and blank lines are
 	  ignored.  This is thus equivalent to the rather long command line:
-	  <screen><prompt>%</prompt> <userinput>bali-phy ITS1.fasta 5.8S.fasta ITS2.fasta --smodel=1,3:tn93+DP[n=3] --smodel=2:tn93 --imodel=2:none --scale=1,3:</userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>bali-phy ITS1.fasta 5.8S.fasta ITS2.fasta --smodel=1,3:tn93+Rates.free[n=3] --smodel=2:tn93 --imodel=2:none --scale=1,3:</userinput></screen>
 	</para>
       </section>
 
@@ -675,7 +675,7 @@ scale = 1,3:</programlisting>
 	invariant sites.  The amount of rate variation and the fraction of
 	invariant sites are estimated</para>
       
-      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/doc/bali-phy/examples/sequences/EF-Tu/5d.fasta --smodel LG+Rates.logNormal+INV</userinput></screen></example>
+      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/doc/bali-phy/examples/sequences/EF-Tu/5d.fasta --smodel lg08+Rates.log_normal+inv</userinput></screen></example>
 
     <example><info><title>Fixed alignment</title></info>
       
@@ -1244,14 +1244,14 @@ The majority consensus tree is usually not fully resolved, so we recommend using
   <para>Models and probability distributions are treated as functions in BAli-Phy because all of them have parameters or arguments. Parameters have names in BAli-Phy.  Parameter values are specified using square brackets as follows:
   <programlisting>hky85[kappa=2]            // model
 log[x=2]                  // function
-Normal[mean=0,sigma=1]    // probability distribution</programlisting>
+normal[mean=0,sigma=1]    // probability distribution</programlisting>
 It is possible to specify parameter values by position instead of by name:
   <programlisting>hky85[2]
 log[2]
-Normal[0,1]</programlisting>
+normal[0,1]</programlisting>
 It is even possible to mix positional and named arguments, as long as all the positional arguments come before all the named arguments:
-<programlisting>Normal[0,sigma=1]   // OK
-Normal[mean=0,1]    // not OK</programlisting>
+<programlisting>normal[0,sigma=1]   // OK
+normal[mean=0,1]    // not OK</programlisting>
 
   The order and type of parameters for a function can be found with the <userinput>help</userinput> command.  For example,
 <screen><prompt>%</prompt> <userinput>bali-phy help hky85</userinput></screen>
@@ -1271,33 +1271,33 @@ bali-phy: No match.</screen>
 
   <section xml:id="priors"><info><title>Priors</title></info>
   <section><info><title>Specifying priors</title></info>
-<para>Priors on model parameters are specified by giving a random value. Random values can be obtained from distributions using the function <userinput>Sample</userinput>.  For example, this places a log-normal prior on the parameter <userinput>kappa</userinput> of the <userinput>hky85</userinput> model:
-<programlisting>hky85[kappa=Sample[logNormal[1,1]]]</programlisting>
-You can write <userinput>~Dist</userinput> as a shorthand for <userinput>Sample[Dist]</userinput>:
-<programlisting>hky85[kappa=~logNormal[1,1]]</programlisting>
+<para>Priors on model parameters are specified by giving a random value. Random values can be obtained from distributions using the function <userinput>sample</userinput>.  For example, this places a log-normal prior on the parameter <userinput>kappa</userinput> of the <userinput>hky85</userinput> model:
+<programlisting>hky85[kappa=sample[log_normal[1,1]]]</programlisting>
+You can write <userinput>~Dist</userinput> as a shorthand for <userinput>sample[Dist]</userinput>:
+<programlisting>hky85[kappa=~log_normal[1,1]]</programlisting>
 The <userinput>=~</userinput> can be further shortened to just <userinput>~</userinput>:
-<programlisting>hky85[kappa~logNormal[1,1]]</programlisting>
+<programlisting>hky85[kappa~log_normal[1,1]]</programlisting>
 </para>
 </section>
 
   <section><info><title>Random function arguments</title></info>
 <para>It also is possible to use random values as inputs to other functions.  For example:
-<programlisting>Add[1,~Exponential[10]]</programlisting>
+<programlisting>add[1,~exponential[10]]</programlisting>
 In such cases the parameter value should be specified with <userinput>=</userinput>, as in the following example:
-<programlisting>RS07[meanIndelLength=Add[1,~Exponential[10]]]]</programlisting>
+<programlisting>rs07[mean_length=add[1,~exponential[10]]]]</programlisting>
 </para>
   </section>
 <section><info><title>Distributions are not random values</title></info>
 <para>Random values and distributions have different types.  For example, the
 following is of type <userinput>Distribution[Double]</userinput>:
-<programlisting>Uniform[0,1]</programlisting>
+<programlisting>uniform[0,1]</programlisting>
 In contrast, the following are both of type <userinput>Double</userinput>:
-<programlisting>Sample[Uniform[0,1]]
-~Uniform[0,1]</programlisting>
+<programlisting>sample[uniform[0,1]]
+~uniform[0,1]</programlisting>
 This is important when passing distributions as arguments to other
 distributions and functions.  For example, the distribution <userinput>iid</userinput> is used to generate a specific number of samples from another distribution.  Thus, it needs to receive a distribution as an argument:
-<programlisting>~iid[4,Normal[0,1]]      // OK    : 4 samples from the Normal[0,1] distribution
-~iid[4,~Normal[0,1]]     // not OK: 4 samples from ... a random number?</programlisting>
+<programlisting>~iid[4,normal[0,1]]      // OK    : 4 samples from the normal[0,1] distribution
+~iid[4,~normal[0,1]]     // not OK: 4 samples from ... a random number?</programlisting>
 (See <xref linkend="types"/>.)
 </para>
   </section>
@@ -1305,28 +1305,28 @@ distributions and functions.  For example, the distribution <userinput>iid</user
 
   <section><info><title>Models and '<userinput>+</userinput>' notation</title></info>
   <para>BAli-Phy allows using <userinput>+</userinput> as a short-cut to combine models.  Models expressed this way are rewritten internally to a more precise form:
-<programlisting>WAG+F             // rewritten to RCTMC[WAG,F]
-M0+F3x4           // rewritten to RCTMC[M0,F3x4]
-hky85+Rates.Gamma   // rewritten to Rates.Gamma[submodel=hky85]
-hky85+INV           // rewritten to INV[submodel=hky85]</programlisting>
+<programlisting>wag+f             // rewritten to RCTMC[wag,F]
+yn94+f3x4           // rewritten to RCTMC[yn94,f3x4]
+hky85+Rates.gamma   // rewritten to Rates.gamma[submodel=hky85]
+hky85+inv           // rewritten to inv[submodel=hky85]</programlisting>
 </para>
-<para>These examples illustrate the two rules for rewriting <userinput>+</userinput>-expressions. In the first rule, an expression such as <userinput>M1[args1]+M2[args2]</userinput> is rewritten to <userinput>RCTMC[M1[args1],M2[args2]]</userinput> if <userinput>M1</userinput> has type <userinput>ExchangeModel[a]</userinput> and <userinput>M2</userinput> has type <userinput>FrequencyModel[a]</userinput>.  This allows natural syntax for creating a reversible continuous-time Markov chain (RCTMC) from an exchange model (such as WAG or M0) and a frequency model (such as +F or +F3x4).</para>
+<para>These examples illustrate the two rules for rewriting <userinput>+</userinput>-expressions. In the first rule, an expression such as <userinput>m1[args1]+m2[args2]</userinput> is rewritten to <userinput>RCTMC[m1[args1],m2[args2]]</userinput> if <userinput>m1</userinput> has type <userinput>ExchangeModel[a]</userinput> and <userinput>m2</userinput> has type <userinput>FrequencyModel[a]</userinput>.  This allows natural syntax for creating a reversible continuous-time Markov chain (RCTMC) from an exchange model (such as wag or yn94) and a frequency model (such as +f or +f3x4).</para>
 <para>In the second rule, an expression such as <userinput>model+M[args]</userinput> is rewritten to <userinput>M[args,submodel=model]</userinput> if <userinput>M</userinput> has a <userinput>submodel</userinput> argument.  When <userinput>+</userinput> occurs multiple times, the submodel is assumed to be as large as possible thus:
-<programlisting>hky85_sym+F+Rates.Gamma+INV</programlisting>
+<programlisting>hky85_sym+f+Rates.gamma+inv</programlisting>
 is rewritten to
-<programlisting>INV[submodel=Rates.Gamma[submodel=RCTMC[hky85_sym,F]]]</programlisting>
+<programlisting>inv[submodel=Rates.gamma[submodel=RCTMC[hky85_sym,F]]]</programlisting>
 This allows a simple method for combining models, when one model is an argument to another model.
 </para>
   </section>
 
   <section xml:id="default_values"><info><title>Default values and default priors</title></info>
   <para>
-Some function arguments have default values.  For example, the <userinput>Rates.Gamma</userinput> parameter <userinput>n</userinput> has a default value of 4.  Thus the following are equivalent:
-<programlisting>hky85+Rates.Gamma[n=4]+INV
-hky85+Rates.Gamma+INV</programlisting></para>
+Some function arguments have default values.  For example, the <userinput>Rates.gamma</userinput> parameter <userinput>n</userinput> has a default value of 4.  Thus the following are equivalent:
+<programlisting>hky85+Rates.gamma[n=4]+inv
+hky85+Rates.gamma+inv</programlisting></para>
 
-  <para>When the default value is random, then the argument has a default prior. For example, the <userinput>kappa</userinput> parameter of <userinput>hky85</userinput> has a default value of <userinput>~logNormal[log[2],0.25]</userinput>, so the following are equivalent:
-<programlisting>hky85[kappa~logNormal[log[2],0.25]]
+  <para>When the default value is random, then the argument has a default prior. For example, the <userinput>kappa</userinput> parameter of <userinput>hky85</userinput> has a default value of <userinput>~log_normal[log[2],0.25]</userinput>, so the following are equivalent:
+<programlisting>hky85[kappa~log_normal[log[2],0.25]]
 hky85</programlisting>
 The <userinput>help</userinput> command can be used to determine the default value for a parameter, if there is one.</para>
   </section>
@@ -1334,9 +1334,9 @@ The <userinput>help</userinput> command can be used to determine the default val
   <section xml:id="types"><info><title>Argument and result types</title></info>
   <para>  Every function has a <emphasis>result type</emphasis>, as well as an <emphasis>argument type</emphasis> for each argument.  The argument type specifies what kind of arguments are acceptable, and the result type specifies what kind of result the function produces.  Types include <userinput>Int</userinput> for integers, <userinput>Double</userinput> for double-precision floating point numbers, and <userinput>String</userinput> for text strings.  Integer arguments are implicitly converted to <userinput>Double</userinput> when the argument type is <userinput>Double</userinput>.</para>
 
-  <para>Some types contain parameters.  For example <userinput>List[Int]</userinput> indicates a list of integers and <userinput>List[Double]</userinput> indicates a list of real numbers.  In order to indicate a list of unknown type, we use a <emphasis>type variable</emphasis> <userinput>a</userinput> and write <userinput>List[a]</userinput>.  Type variables always begin with a lower-case letter.  They are able to match any specific type, and their value is found by pattern-matching.  For example, the function <userinput>Add[x,y]</userinput> takes two arguments of type <userinput>a</userinput> and has a result of type <userinput>a</userinput>.  Thus:
-<programlisting>Add[1,2]        // arguments are a=Int, so result is of type Int
-Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programlisting>
+  <para>Some types contain parameters.  For example <userinput>List[Int]</userinput> indicates a list of integers and <userinput>List[Double]</userinput> indicates a list of real numbers.  In order to indicate a list of unknown type, we use a <emphasis>type variable</emphasis> <userinput>a</userinput> and write <userinput>List[a]</userinput>.  Type variables always begin with a lower-case letter.  They are able to match any specific type, and their value is found by pattern-matching.  For example, the function <userinput>add[x,y]</userinput> takes two arguments of type <userinput>a</userinput> and has a result of type <userinput>a</userinput>.  Thus:
+<programlisting>add[1,2]        // arguments are a=Int, so result is of type Int
+add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programlisting>
 <userinput>Pair[a,b]</userinput> is a parameterized type that can be specialized to (for example) <userinput>Pair[String,Double]</userinput> and <userinput>Pair[Int,Int]</userinput>.
   </para>
 
@@ -1350,7 +1350,7 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
     <section xml:id="subst_models"><info><title>Substitution models</title></info>
       
     <para>Substitution models can be specified using notation like:
-    <programlisting>hky85[kappa~logNormal[0,1]]+Rates.Gamma[alpha=0.2]+INV</programlisting>
+    <programlisting>hky85[kappa~log_normal[0,1]]+Rates.gamma[alpha=0.2]+inv</programlisting>
     See section <xref linkend="functions"/> for the general syntax.
     </para>
     
@@ -1359,8 +1359,8 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	<para>If the substitution model is not specified, then the
 	  default model for the alphabet is used.  For DNA or RNA, the
 	  default model is tn93.  For Triplets, the default is tn93_sym+x3. For
-          Codons, the default model is M0.  For Amino-Acids, the
-	  default model is LG. 
+          Codons, the default model is yn94.  For Amino-Acids, the
+	  default model is lg08. 
 	</para>
       </section>
 
@@ -1384,8 +1384,8 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	  independent of their frequencies.
 	</para>
 	
-	<para>The basic CTMC models are EQU, hky85, tn93, gtr, hky85_sym+x3,
-	tn93_sym+x3, gtr_sym+x3, JTT, WAG, LG, and M0.  Each of these models is a
+	<para>The basic CTMC models are equ, hky85, tn93, gtr, hky85_sym+x3,
+	tn93_sym+x3, gtr_sym+x3, jtt, wag, lg08, and yn94.  Each of these models is a
 	way of specifying the exchangeability matrix $S_{ij}$.</para>
 
 	<table frame="none" rowsep="1"><info><title>Substitution Models</title></info>
@@ -1402,7 +1402,7 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 
 	    <tbody>
 	      <row>
-		<entry><userinput>EQU</userinput></entry>
+		<entry><userinput>equ</userinput></entry>
 		<entry>any</entry>
 		<entry>none</entry>
 	      </row>
@@ -1435,7 +1435,7 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 
 	      <row>
 		<entry>
-		  <para><userinput>JTT</userinput></para>
+		  <para><userinput>jtt</userinput></para>
 		  <para>Jones, Taylor, Thornton (1992)</para>
 		</entry>
 		<entry>Amino-Acids</entry>
@@ -1446,7 +1446,7 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 
 	      <row>
 		<entry>
-		  <para><userinput>WAG</userinput></para>
+		  <para><userinput>wag</userinput></para>
 		  <para>Whelan and Goldman (2001)</para>
 		</entry>
 		<entry>Amino-Acids</entry>
@@ -1457,7 +1457,7 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 
 	      <row>
 		<entry>
-		  <para><userinput>LG</userinput></para>
+		  <para><userinput>lg08</userinput></para>
 		  <para>Le and Gascuel (2008)</para>
 		</entry>
 		<entry>Amino-Acids</entry>
@@ -1490,9 +1490,9 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 
 	      <row>
 		<entry>
-		  <para><userinput>M0</userinput></para>
-		  <para><userinput>M0[,hky85_sym]</userinput> (default)</para>
-		  <para><userinput>M0[,gtr_sym]</userinput></para>
+		  <para><userinput>yn94</userinput></para>
+		  <para><userinput>yn94[,hky85_sym]</userinput> (default)</para>
+		  <para><userinput>yn94[,gtr_sym]</userinput></para>
 		  <para>Nielsen and Yang (1998)</para>
 		</entry>
 		<entry>Codons</entry>
@@ -1550,7 +1550,7 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	    </row>
 	    <row>
 	      <entry>
-		<para><userinput>F61</userinput></para>
+		<para><userinput>f61</userinput></para>
 		<para>Synonym of F for codon models</para>
 	      </entry>
 	      <entry>any</entry>
@@ -1571,7 +1571,7 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	    </row>
 	    <row>
 	      <entry>
-		<para><userinput>F1x4</userinput></para>
+		<para><userinput>f1x4</userinput></para>
 		<para>Single nucleotide frequency model</para>
 	      </entry>
 	      <entry>Triplets</entry>
@@ -1582,7 +1582,7 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	    </row>
 	    <row>
 	      <entry>
-		<para><userinput>F3x4</userinput></para>
+		<para><userinput>f3x4</userinput></para>
 		<para>Independent nucleotide frequency model</para>
 	      </entry>
 	      <entry>Triplets</entry>
@@ -1597,7 +1597,7 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	    </row>
 	    <row>
 	      <entry>
-		<para><userinput>MG94</userinput></para>
+		<para><userinput>mg94</userinput></para>
 		<para>Muse and Gaut (1994)</para>
 		<para>Single nucleotide frequency model</para>
 	      </entry>
@@ -1609,7 +1609,7 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	    </row>
 	    <row>
 	      <entry>
-		<para><userinput>MG94w9</userinput></para>
+		<para><userinput>mg94w9</userinput></para>
 		<para>Muse and Gaut (1994)</para>
 		<para>Independent nucleotide frequency model</para>
 	      </entry>
@@ -1679,51 +1679,48 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>model</replaceable> + Rates.Gamma</userinput></para>
-		<para><userinput><replaceable>model</replaceable> + Rates.Gamma[4]</userinput> (default)</para>
+		<para><userinput><replaceable>model</replaceable> + Rates.gamma</userinput></para>
+		<para><userinput><replaceable>model</replaceable> + Rates.gamma[4]</userinput> (default)</para>
 		<para>Yang (1994)</para>
 	      </entry>
 	      <entry><replaceable>model</replaceable> alphabet</entry>
 	      <entry>
 		<variablelist>
-		  <varlistentry> <term>sigmaOverMu</term> <listitem> <para>noise to signal ratio for Gamma(a,b).  Also equal to 1/sqrt(a).</para> </listitem> </varlistentry>
-		  <varlistentry> <term>a</term> <listitem> <para>parameter for Gamma(a,b)</para> </listitem> </varlistentry>
-		  <varlistentry> <term>b</term> <listitem> <para>parameter for Gamma(a,b)</para> </listitem> </varlistentry>
+		  <varlistentry> <term>alpha</term> <listitem> <para>shape parameter for Gamma(a,b)</para> </listitem> </varlistentry>
 		</variablelist>
 	      </entry>
 	    </row>
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>model</replaceable> + Rates.logNormal</userinput></para>
-		<para><userinput><replaceable>model</replaceable> + Rates.logNormal[4]</userinput> (default)</para>
+		<para><userinput><replaceable>model</replaceable> + Rates.log_normal</userinput></para>
+		<para><userinput><replaceable>model</replaceable> + Rates.log_normal[4]</userinput> (default)</para>
 	      </entry>
 	      <entry><replaceable>model</replaceable> alphabet</entry>
 	      <entry>
 		<variablelist>
-		  <varlistentry> <term>sigmaOverMu</term> <listitem> <para>noise to signal ratio for $\log Normal$.</para> </listitem> </varlistentry>
-		  <varlistentry> <term>pInv</term> <listitem> <para>Fraction of invariant sites.</para> </listitem> </varlistentry>
+		  <varlistentry> <term>lsigma</term> <listitem> <para>The standard deviation parameter.</para> </listitem> </varlistentry>
 		</variablelist>
 	      </entry>
 	    </row>
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>model</replaceable> + INV</userinput></para>
+		<para><userinput><replaceable>model</replaceable> + inv</userinput></para>
 	      </entry>
 	      <entry><replaceable>model</replaceable> alphabet</entry>
 	      <entry>
 		<variablelist>
-		  <varlistentry> <term>pInv</term> <listitem> <para>Fraction of invariant sites.</para> </listitem> </varlistentry>
+		  <varlistentry> <term>p_inv</term> <listitem> <para>Fraction of invariant sites.</para> </listitem> </varlistentry>
 		</variablelist>
 	      </entry>
 	    </row>
 
 	    <row>
 	      <entry>
-		<para><userinput>M1a</userinput></para>
-		<para><userinput>M1a[hky85_sym,F61]</userinput> (default)</para>
-		<para><userinput>M1a[gtr_sym,F3x4]</userinput></para>
+		<para><userinput>m1a</userinput></para>
+		<para><userinput>m1a[hky85_sym,f61]</userinput> (default)</para>
+		<para><userinput>m1a[gtr_sym,f3x4]</userinput></para>
 		<para>Wong, et. al. (2004)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1738,9 +1735,9 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 
 	    <row>
 	      <entry>
-		<para><userinput>M2a</userinput></para>
-		<para><userinput>M2a[hky85_sym,F61]</userinput> (default)</para>
-		<para><userinput>M2a[gtr_sym,F3x4]</userinput></para>
+		<para><userinput>m2a</userinput></para>
+		<para><userinput>m2a[hky85_sym,f61]</userinput> (default)</para>
+		<para><userinput>m2a[gtr_sym,f3x4]</userinput></para>
 		<para>Wong, et. al. (2004)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1757,9 +1754,9 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 
 	    <row>
 	      <entry>
-		<para><userinput>M2a_Test</userinput></para>
-		<para><userinput>M2a_Test[hky85_sym,F61]</userinput> (default)</para>
-		<para><userinput>M2a_Test[gtr_sym,F3x4]</userinput></para>
+		<para><userinput>m2a_test</userinput></para>
+		<para><userinput>m2a_test[hky85_sym,f61]</userinput> (default)</para>
+		<para><userinput>m2a_test[gtr_sym,f3x4]</userinput></para>
 		<para>Wong, et. al. (2004)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1777,32 +1774,32 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 
 	    <row>
 	      <entry>
-		<para><userinput>M3</userinput></para>
-		<para><userinput>M3[hky85_sym,F61]</userinput> (default)</para>
-		<para><userinput>M3[gtr_sym,MG94,n=4]</userinput></para>
+		<para><userinput>m3</userinput></para>
+		<para><userinput>m3[hky85_sym,f61]</userinput> (default)</para>
+		<para><userinput>m3[gtr_sym,mg94,n=4]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
 	      <entry>
 		<variablelist>
-		  <varlistentry> <term>M3.omegas[i]</term> <listitem> <para>the conserved dN/dS ratio for category i</para> </listitem> </varlistentry>
-		  <varlistentry> <term>M3.ps[i]</term> <listitem> <para>the fraction of sites in category i</para> </listitem> </varlistentry>
+		  <varlistentry> <term>m3.omegas[i]</term> <listitem> <para>the conserved dN/dS ratio for category i</para> </listitem> </varlistentry>
+		  <varlistentry> <term>m3.ps[i]</term> <listitem> <para>the fraction of sites in category i</para> </listitem> </varlistentry>
 		</variablelist>
 	      </entry>
 	    </row>
 
 	    <row>
 	      <entry>
-		<para><userinput>M3_Test</userinput></para>
-		<para><userinput>M3_Test[hky85_sym,F61]</userinput> (default)</para>
-		<para><userinput>M3_Test[gtr_sym,MG94]</userinput></para>
+		<para><userinput>m3_test</userinput></para>
+		<para><userinput>m3_test[hky85_sym,f61]</userinput> (default)</para>
+		<para><userinput>m3_test[gtr_sym,mg94]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
 	      <entry>
 		<variablelist>
-		  <varlistentry> <term>M3.omegas[i]</term> <listitem> <para>the conserved dN/dS ratio for category i</para> </listitem> </varlistentry>
-		  <varlistentry> <term>M3.ps[i]</term> <listitem> <para>the fraction of sites in category i</para> </listitem> </varlistentry>
+		  <varlistentry> <term>m3.omegas[i]</term> <listitem> <para>the conserved dN/dS ratio for category i</para> </listitem> </varlistentry>
+		  <varlistentry> <term>m3.ps[i]</term> <listitem> <para>the fraction of sites in category i</para> </listitem> </varlistentry>
 
 		  <varlistentry> <term>posW</term> <listitem> <para>the positively selected dN/dS ratio</para> </listitem> </varlistentry>
 		  <varlistentry> <term>posP</term> <listitem> <para>the fraction of positively selected sites.</para> </listitem> </varlistentry>
@@ -1813,9 +1810,9 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 
 	    <row>
 	      <entry>
-		<para><userinput>M7</userinput></para>
-		<para><userinput>M7[4,hky85_sym,F61]</userinput> (default)</para>
-		<para><userinput>M7[6,gtr_sym,F3x4]</userinput></para>
+		<para><userinput>m7</userinput></para>
+		<para><userinput>m7[4,hky85_sym,f61]</userinput> (default)</para>
+		<para><userinput>m7[6,gtr_sym,f3x4]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1830,9 +1827,9 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 
 	    <row>
 	      <entry>
-		<para><userinput>M8a</userinput></para>
-		<para><userinput>M8a[4,hky85_sym,F61]</userinput> (default)</para>
-		<para><userinput>M8a[6,gtr_sym,F3x4]</userinput></para>
+		<para><userinput>m8a</userinput></para>
+		<para><userinput>m8a[4,hky85_sym,f61]</userinput> (default)</para>
+		<para><userinput>m8a[6,gtr_sym,f3x4]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1850,9 +1847,9 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 
 	    <row>
 	      <entry>
-		<para><userinput>M8</userinput></para>
-		<para><userinput>M8[4,hky85_sym,F61]</userinput> (default)</para>
-		<para><userinput>M8[6,gtr_sym,F3x4]</userinput></para>
+		<para><userinput>m8</userinput></para>
+		<para><userinput>m8[4,hky85_sym,f61]</userinput> (default)</para>
+		<para><userinput>m8[6,gtr_sym,f3x4]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1869,9 +1866,9 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 
 	    <row>
 	      <entry>
-		<para><userinput>M8a_Test</userinput></para>
-		<para><userinput>M8a_Test[4,hky85_sym,F61]</userinput> (default)</para>
-		<para><userinput>M8a_Test[6,gtr_sym,F3x4]</userinput></para>
+		<para><userinput>m8a_test</userinput></para>
+		<para><userinput>m8a_test[4,hky85_sym,f61]</userinput> (default)</para>
+		<para><userinput>m8a_test[6,gtr_sym,f3x4]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1891,8 +1888,8 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	      <entry>
 		<variablelist>
 		  <para><userinput>branch-site</userinput></para>
-		<para><userinput>branch-site[hky85_sym,F61]</userinput> (default)</para>
-		<para><userinput>branch-site[gtr_sym,F3x4]</userinput></para>
+		<para><userinput>branch-site[hky85_sym,f61]</userinput> (default)</para>
+		<para><userinput>branch-site[gtr_sym,f3x4]</userinput></para>
 		<para>Zhang, et. al. (2005)</para>
 		</variablelist>
 	      </entry>
@@ -1912,8 +1909,8 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 
 	    <!-- row>
 	      <entry>
-		<para><userinput>M2</userinput></para>
-		<para><userinput><replaceable>sm</replaceable> + M2</userinput></para>
+		<para><userinput>m2</userinput></para>
+		<para><userinput><replaceable>sm</replaceable> + m2</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1925,14 +1922,14 @@ Add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	      <entry>
 		<para>$\Omega=\omega_i$ with probability $p_i$.</para>
 		<para>$\omega_1 = 0$, $\omega_2 = 1$.</para>
-		<para>The default for <replaceable>sm</replaceable> is M0.</para>
+		<para>The default for <replaceable>sm</replaceable> is yn94.</para>
 	      </entry>
 	    </row -->
 
 	    <!-- row>
 	      <entry>
-		<para><userinput>M3[<replaceable>n</replaceable>]</userinput></para>
-		<para><userinput><replaceable>sm</replaceable> + M3[<replaceable>n</replaceable>]</userinput></para>
+		<para><userinput>m3[<replaceable>n</replaceable>]</userinput></para>
+		<para><userinput><replaceable>sm</replaceable> + m3[<replaceable>n</replaceable>]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1970,7 +1967,7 @@ Any branch lengths provided will be used as initial values in the MCMC analysis.
 The NHX attribute must be applied to the branch, not the node.  Therefore it must occur after a colon.  Multiple branches may be marked as foreground branches.
     </para>
     <para>An example command line is as follows:
-<screen><prompt>%</prompt> bali-phy <replaceable>alignment</replaceable>.fasta --smodel branch-site[hky85_sym,F3x4] --disable=topology --tree=<replaceable>tree</replaceable>.tree</screen>
+<screen><prompt>%</prompt> bali-phy <replaceable>alignment</replaceable>.fasta --smodel branch-site[hky85_sym,f3x4] --disable=topology --tree=<replaceable>tree</replaceable>.tree</screen>
 </para>
 <para>The posterior probability of positive selection is the posterior mean of the posSelection parameter.  This may be computed using the statreport program with the <userinput>--mean</userinput> option.
 </para>
@@ -1979,26 +1976,26 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
     </section>
     <section><info><title>Substitution model examples</title></info>
       
-      <para>Example: --smodel WAG+F+Rates.logNormal+INV</para>
-      <para>Example: --smodel WAG+Rates.logNormal+INV (same as above)</para>
-      <para>Example: --smodel LG+gwF+Rates.logNormal+INV</para>
-      <para>Example: --smodel EQU --alphabet Triplets</para>
+      <para>Example: --smodel wag+f+Rates.log_normal+inv</para>
+      <para>Example: --smodel wag+Rates.log_normal+inv (same as above)</para>
+      <para>Example: --smodel lg08+gwF+Rates.log_normal+inv</para>
+      <para>Example: --smodel equ --alphabet Triplets</para>
       <para>Example: --smodel hky85</para>
-      <para>Example: --smodel M0</para>
-      <para>Example: --smodel M0+F1x4</para>
-      <para>Example: --smodel M2a</para>
-      <para>Example: --smodel M2a[hky85_sym] (same as above)</para>
-      <!-- para>Example: smodel M2[tn93_sym,F3x4]</para -->
+      <para>Example: --smodel yn94</para>
+      <para>Example: --smodel yn94+f1x4</para>
+      <para>Example: --smodel m2a</para>
+      <para>Example: --smodel m2a[hky85_sym] (same as above)</para>
+      <!-- para>Example: smodel m2[tn93_sym,f3x4]</para -->
     </section>
     <section xml:id="genetic-codes"><info><title>Genetic Codes</title></info>
       
-      <para>When using a codon-based substitution model like <userinput>M0</userinput>, you may select the genetic code by specifying <userinput>--alphabet Codons[,<replaceable>genetic-code</replaceable>]</userinput>.  Available genetic codes are <userinput>standard</userinput>, <userinput>mt-vert</userinput>, <userinput>mt-invert</userinput>, <userinput>mt-yeast</userinput>, <userinput>mt-protozoan</userinput>.</para>
+      <para>When using a codon-based substitution model like <userinput>yn94</userinput>, you may select the genetic code by specifying <userinput>--alphabet Codons[,<replaceable>genetic-code</replaceable>]</userinput>.  Available genetic codes are <userinput>standard</userinput>, <userinput>mt-vert</userinput>, <userinput>mt-invert</userinput>, <userinput>mt-yeast</userinput>, <userinput>mt-protozoan</userinput>.</para>
 <para>If the genetic code is not specified, then the standard code is used:
-<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons
-<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons[RNA]</screen>
+<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel yn94 --alphabet Codons
+<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel yn94 --alphabet Codons[RNA]</screen>
 	These examples specify the vertebrate mitochondrial code:
-	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons[DNA,mt-vert]
-<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons[,mt-vert]</screen>	
+	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel yn94 --alphabet Codons[DNA,mt-vert]
+<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel yn94 --alphabet Codons[,mt-vert]</screen>	
 </para>
     </section>
 
@@ -2006,9 +2003,9 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
 
     <section xml:id="indel_models"><info><title>Insertion/deletion models</title></info>
       
-    <para>The current models are RS05, RS07, and <userinput>none</userinput>.  Models (except for <userinput>none</userinput>) can be specified using notation like:
-<programlisting>RS07[logLambda~logLaplace[-4,0.707],meanIndelLength=2]</programlisting>
-See section <xref linkend="functions"/> for the general syntax.  RS07 is the  default insertion/deletion model.</para>
+    <para>The current models are rs05, rs07, and <userinput>none</userinput>.  Models (except for <userinput>none</userinput>) can be specified using notation like:
+<programlisting>rs07[log_rate~log_laplace[-4,0.707],mean_length=2]</programlisting>
+See section <xref linkend="functions"/> for the general syntax.  rs07 is the  default insertion/deletion model.</para>
 
     <para>Each of these models is a probability distribution on pairwise alignments.  The probability distribution on multiple sequence alignments $\Pr(A|T,\tau,\Lambda)$ is constructed by factoring the multiple sequence alignment into pairwise alignments along each branch of the tree, as described in Redelings and Suchard (2005).</para>
 
@@ -2026,7 +2023,7 @@ See section <xref linkend="functions"/> for the general syntax.  RS07 is the  de
 	    <tbody>	    
 	      <row>
 		<entry>
-		  <para><userinput>RS05</userinput></para>
+		  <para><userinput>rs05</userinput></para>
 		  <para>Redelings and Suchard (2005)</para>
 		</entry>
 		<entry>
@@ -2041,7 +2038,7 @@ See section <xref linkend="functions"/> for the general syntax.  RS07 is the  de
 	      
 	      <row>
 		<entry>
-		  <para><userinput>RS07</userinput></para>
+		  <para><userinput>rs07</userinput></para>
 		  <para>Redelings and Suchard (2007)</para>
 		</entry>
 		<entry>
@@ -2529,10 +2526,10 @@ The stabilization criterion is the same one described above for numerical values
       
       <qandaset>
 	<qandaentry>
-	  <question><para>I tried to use <userinput>--smodel LG+Rates.Gamma[6]</userinput> and I got an error message "bali-phy: No match."  What gives?</para></question>
+	  <question><para>I tried to use <userinput>--smodel lg08+Rates.gamma[6]</userinput> and I got an error message "bali-phy: No match."  What gives?</para></question>
 	  <answer>
-	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <userinput>LG+Rates.Gamma[6]</userinput> as an array before running the command, and it is not succeeding.  Therefore, it doesn't even run <command>bali-phy</command>.</para>
-	    <para>To avoid this, put quotes around the substitution model, like this: <userinput>--smodel "LG+Rates.Gamma[6]"</userinput>.  This will keep the C-shell from interfering with your command.
+	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <userinput>lg08+Rates.gamma[6]</userinput> as an array before running the command, and it is not succeeding.  Therefore, it doesn't even run <command>bali-phy</command>.</para>
+	    <para>To avoid this, put quotes around the substitution model, like this: <userinput>--smodel "lg08+Rates.gamma[6]"</userinput>.  This will keep the C-shell from interfering with your command.
 	    </para>
 	  </answer>
 	</qandaentry>
