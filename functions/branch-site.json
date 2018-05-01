@@ -15,7 +15,7 @@
         {
             "arg_name": "nuc_model",
             "arg_type": "ExchangeModel[a]",
-            "default_value": "hky85",
+            "default_value": "hky85_sym",
             "alphabet": "getNucleotides[A]",
 	    "description":"The nucleotide exchange model."
         },

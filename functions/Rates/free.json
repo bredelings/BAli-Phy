@@ -30,5 +30,5 @@
     ],
     "title": "Free rates model",
     "description":"Rate heterogeneity model where the rate and frequency of each category can be estimated from the data.",
-    "examples": ["hky+Rates.free[n=3]"]
+    "examples": ["hky85+Rates.free[n=3]"]
 }

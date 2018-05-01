@@ -4,7 +4,7 @@
     "result_type": "ExchangeModel[Codons[a]]",
     "constraints": ["Nucleotides[a]"],
     "title": "The Goldman & Yang (1994) model of dN\/dS",
-    "call": "SModel.m0[A,submodel,omega]",
+    "call": "SModel.m0[a,submodel,omega]",
     "args": [
         {
             "arg_name": "omega",
@@ -15,18 +15,18 @@
         {
             "arg_name": "submodel",
             "arg_type": "ExchangeModel[a]",
-            "default_value": "hky85",
+            "default_value": "hky85_sym_sym_sym",
             "description": "The nucleotide exchange model - HKY in the original paper.",
-            "alphabet": "getNucleotides[A]"
+            "alphabet": "getNucleotides[a]"
         },
         {
-            "arg_name": "A",
+            "arg_name": "a",
             "arg_type": "a",
 	    "default_value": "getAlphabet",
 	    "description": "The codon alphabet"
         }
     ],
-    "examples": ["yn94","hky85+yn94+f61","yn94[omega=2.0,hky85]+mg94"],
+    "examples": ["yn94","hky85_sym_sym+yn94+f61","yn94[omega=2.0,hky85_sym]+mg94"],
     "citation": {"type": "article",
 		 "title": "A codon-based model of nucleotide substitution for protein-coding DNA sequences",
 		 "author": [{"name": "Goldman, Nick"},{"name": "Yang, Ziheng"}],

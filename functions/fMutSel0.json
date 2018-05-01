@@ -16,7 +16,7 @@
         {
             "arg_name": "submodel",
             "arg_type": "RevCTMC[a]",
-            "default_value": "hky85",
+            "default_value": "hky85_sym",
 	    "alphabet": "getNucleotides[A]"
         },
 	{

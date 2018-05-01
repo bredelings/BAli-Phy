@@ -631,7 +631,7 @@ extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
     return pi;
 }
 
-extern "C" closure builtin_function_gtr(OperationArgs& Args)
+extern "C" closure builtin_function_gtr_sym(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto& S = arg0.as_<EVector>();

@@ -445,6 +445,8 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
 	for(int i=0;i<call.size();i++)
 	{
 	    string arg_name = array_index(call,i).get_value<string>();
+	    // check that arg_name is a valid argument
+	    get_arg(*rule, arg_name);
 	    expression_ref arg = get_model_as(R, model_rep.get_child(arg_name), scope);
 	    E = {E,arg};
 	}
@@ -456,6 +458,8 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
     for(int i=0;i<call.size();i++)
     {
 	string call_arg_name = array_index(call,i).get_value<string>();
+	// check that arg_name is a valid argument
+	get_arg(*rule, call_arg_name);
 	E = {E, dummy("arg_" + call_arg_name)};
     }
 

@@ -9,7 +9,7 @@ builtin f3x4_frequencies_builtin 4 "f3x4_frequencies" "SModel";
 builtin muse_gaut_matrix 4 "muse_gaut_matrix" "SModel";
 builtin builtin_plus_gwf 3 "plus_gwF" "SModel";
 builtin builtin_average_frequency 1 "average_frequency" "SModel";
-builtin builtin_gtr 2 "gtr" "SModel";
+builtin builtin_gtr_sym 2 "gtr_sym" "SModel";
 builtin m0 3 "m0" "SModel";
 builtin lExp 3 "lExp" "SModel";
 builtin reversible_rate_matrix 2 "reversible_rate_matrix" "SModel";
@@ -48,10 +48,10 @@ data F81 = F81 a b c d;
 data MixtureModel = MixtureModel a;
 data MixtureModels = MixtureModels a;
 
-gtr exchange a = builtin_gtr (list_to_vector exchange) a;
-equ a = gtr (replicate nn 1.0) a where {n=alphabetSize a;nn=n*(n-1)/2};
-tn k1 k2 a = gtr [1.0, k1, 1.0, 1.0, k2, 1.0] a;
-hky k a = tn k k a;
+gtr_sym exchange a = builtin_gtr_sym (list_to_vector exchange) a;
+equ a = gtr_sym (replicate nn 1.0) a where {n=alphabetSize a;nn=n*(n-1)/2};
+tn93_sym k1 k2 a = gtr_sym [1.0, k1, 1.0, 1.0, k2, 1.0] a;
+hky85_sym k a = tn93_sym k k a;
 
 scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r);
 scaleMM x (MixtureModel dist            ) = MixtureModel [(p, scale x m) | (p, m) <- dist];
@@ -134,9 +134,16 @@ plus_f_equal_frequencies a = plus_f a (replicate n_letters (1.0/intToDouble n_le
 
 jukes_cantor a = reversible_markov (equ a) (plus_f_equal_frequencies a);
 
-k80 kappa nuca = reversible_markov (hky kappa nuca) (plus_f_equal_frequencies nuca);
+k80 kappa nuca = reversible_markov (hky85_sym kappa nuca) (plus_f_equal_frequencies nuca);
 
-f81 pi a = reversible_markov (equ a) (plus_f a pi);
+f81        pi a = reversible_markov (equ            a) (plus_f a pi);
+hky85 k    pi a = reversible_markov (hky85_sym k    a) (plus_f a pi);
+tn93 k1 k2 pi a = reversible_markov (tn93_sym k1 k2 a) (plus_f a pi);
+gtr s      pi a = reversible_markov (gtr_sym s      a) (plus_f a pi);
+
+hky85' k    pi' a = reversible_markov (hky85_sym k    a) (plus_f' a pi');
+tn93' k1 k2 pi' a = reversible_markov (tn93_sym k1 k2 a) (plus_f' a pi');
+gtr' s'     pi' a = reversible_markov (gtr_sym' s'    a) (plus_f' a pi');
 
 m1a_omega_dist f1 w1 = [(f1,w1), (1.0-f1,1.0)];
 
@@ -236,11 +243,11 @@ select_elements []      _ = [];
 get_ordered_elements xs xps plural = if length xs == length xps then select_elements xs xps else error $ "Expected "++show (length xs)++" "++plural
                                      ++" but got "++ show (length xps)++"!";
 
-gtr' es' a = gtr es a where {lpairs = pairs (alphabet_letters a);
-                             es = if length lpairs == length es' then
-                                      [get_element_exchange es' (l1++l2) (l2++l1)| (l1,l2) <- lpairs]
-                                  else
-                                      error "Expected "++show (length lpairs)++" exchangeabilities but got "++ show (length es')++"!"};
+gtr_sym' es' a = gtr_sym es a where {lpairs = pairs (alphabet_letters a);
+                                     es = if length lpairs == length es' then
+                                              [get_element_exchange es' (l1++l2) (l2++l1)| (l1,l2) <- lpairs]
+                                          else
+                                              error "Expected "++show (length lpairs)++" exchangeabilities but got "++ show (length es')++"!"};
 
 plus_f' a pi' = plus_f a pi where {pi= get_ordered_elements (alphabet_letters a) pi' "frequencies"};
 
