@@ -1069,16 +1069,16 @@ distributions and functions.  For example, the distribution <strong class="useri
 
   <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp61"></a>7.3. Models and '<strong class="userinput"><code>+</code></strong>' notation</h3></div></div></div>
   <p>BAli-Phy allows using <strong class="userinput"><code>+</code></strong> as a short-cut to combine models.  Models expressed this way are rewritten internally to a more precise form:
-</p><pre class="programlisting">wag+f             // rewritten to RCTMC[wag,F]
-yn94+f3x4           // rewritten to RCTMC[yn94,f3x4]
+</p><pre class="programlisting">wag+f             // rewritten to rctmc[wag,f]
+yn94+f3x4           // rewritten to rctmc[yn94,f3x4]
 hky85+Rates.gamma   // rewritten to Rates.gamma[submodel=hky85]
 hky85+inv           // rewritten to inv[submodel=hky85]</pre><p>
 </p>
-<p>These examples illustrate the two rules for rewriting <strong class="userinput"><code>+</code></strong>-expressions. In the first rule, an expression such as <strong class="userinput"><code>m1[args1]+m2[args2]</code></strong> is rewritten to <strong class="userinput"><code>RCTMC[m1[args1],m2[args2]]</code></strong> if <strong class="userinput"><code>m1</code></strong> has type <strong class="userinput"><code>ExchangeModel[a]</code></strong> and <strong class="userinput"><code>m2</code></strong> has type <strong class="userinput"><code>FrequencyModel[a]</code></strong>.  This allows natural syntax for creating a reversible continuous-time Markov chain (RCTMC) from an exchange model (such as wag or yn94) and a frequency model (such as +f or +f3x4).</p>
+<p>These examples illustrate the two rules for rewriting <strong class="userinput"><code>+</code></strong>-expressions. In the first rule, an expression such as <strong class="userinput"><code>m1[args1]+m2[args2]</code></strong> is rewritten to <strong class="userinput"><code>rctmc[m1[args1],m2[args2]]</code></strong> if <strong class="userinput"><code>m1</code></strong> has type <strong class="userinput"><code>ExchangeModel[a]</code></strong> and <strong class="userinput"><code>m2</code></strong> has type <strong class="userinput"><code>FrequencyModel[a]</code></strong>.  This allows natural syntax for creating a reversible continuous-time Markov chain (RCTMC) from an exchange model (such as wag or yn94) and a frequency model (such as +f or +f3x4).</p>
 <p>In the second rule, an expression such as <strong class="userinput"><code>model+M[args]</code></strong> is rewritten to <strong class="userinput"><code>M[args,submodel=model]</code></strong> if <strong class="userinput"><code>M</code></strong> has a <strong class="userinput"><code>submodel</code></strong> argument.  When <strong class="userinput"><code>+</code></strong> occurs multiple times, the submodel is assumed to be as large as possible thus:
 </p><pre class="programlisting">hky85_sym+f+Rates.gamma+inv</pre><p>
 is rewritten to
-</p><pre class="programlisting">inv[submodel=Rates.gamma[submodel=RCTMC[hky85_sym,F]]]</pre><p>
+</p><pre class="programlisting">inv[submodel=Rates.gamma[submodel=rctmc[hky85_sym,f]]]</pre><p>
 This allows a simple method for combining models, when one model is an argument to another model.
 </p>
   </div>
@@ -1178,7 +1178,7 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</pre><p>
 		</td><td>Amino-Acids</td><td>
 		  <p>none.</p>
 		  </td></tr><tr><td>
-		  <p><strong class="userinput"><code>Empirical[<em class="replaceable"><code>file</code></em>]</code></strong></p>
+		  <p><strong class="userinput"><code>empirical[<em class="replaceable"><code>file</code></em>]</code></strong></p>
 		</td><td>Amino-Acids</td><td>
 		  <p>none.</p>
 		</td></tr><tr><td>
