@@ -196,7 +196,7 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
 	    if ((*P)[i].variable_alignment())
 		TL->add_field("prior_A"+convertToString(i+1), [i](const Parameters& P) {return convertToString(log(P[i].prior_alignment()));});
     TL->add_field("likelihood", [](const Model& M, long) {return convertToString(log(M.likelihood()));});
-    TL->add_field("logp", [](const Model& M, long) {return convertToString(log(M.probability()));});
+    TL->add_field("posterior", [](const Model& M, long) {return convertToString(log(M.probability()));});
   
     {
 	vector<int> logged_computations;
