@@ -192,7 +192,7 @@ itself.
 <para>
 The insertion-deletion model also has parameters.
 % bali-phy help rs07
-Here the default value for meanIndelLength is Add[1,~Exponential[10]].  This indicates
+Here the default value for rs07:mean_length is exponential[10,1].  This indicates
 a random value that is obtained by sampling an Exponential random variable with mean 10
 and then adding 1 to it.
 </para>
