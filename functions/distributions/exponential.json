@@ -3,6 +3,7 @@
     "synonyms": [ "Exponential" ],
     "result_type": "Distribution[Double]",
     "call": "Distributions.shifted_exponential[mean,shift]",
+    "title": "The Exponential distribution",
     "args": [
         {
             "arg_name": "mean",

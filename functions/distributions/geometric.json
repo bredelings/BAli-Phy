@@ -3,10 +3,13 @@
     "synonyms": [ "Geometric" ],
     "result_type": "Distribution[Int]",
     "call": "Distributions.geometric[p]",
+    "title": "The Geometric distribution",
     "args": [
         {
             "arg_name": "p",
-            "arg_type": "Double"
+            "arg_type": "Double",
+	    "description": "Success probability"
         }
-    ]
+    ],
+    "description":"The geometric distribution gives the number of successes before the first failure, where success has probability p."
 }
