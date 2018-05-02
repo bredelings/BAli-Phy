@@ -30,6 +30,6 @@
             "no_apply": true
         }
     ],
-    "description": "This model allows insertion and deletions (indels) of multiple residues.  Insertions and deletions are symmetric in this model.\nNote that the insertion-deletion rate is normalized to the substitution rate, so that if log_rate=0, then the insertion-deletion rate is the same as the substitution rate.\nNote that the mean indel length must be at least 1.",
+    "description": "This model allows insertion and deletions (indels) of multiple residues.  Indel lengths are geometrically distributed. Insertions and deletions are symmetric in this model.\nNote that the insertion-deletion rate is normalized to the substitution rate, so that if log_rate=0, then the insertion-deletion rate is the same as the substitution rate.\nNote that the mean indel length must be at least 1.",
     "extract": "all"
 }
