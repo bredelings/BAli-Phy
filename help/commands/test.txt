@@ -14,4 +14,4 @@ model correctly.
 
 # Examples:
 
-   bali-phy 5d.fasta --smodel=GTR --test
+   bali-phy 5d.fasta --smodel=gtr --test

@@ -19,12 +19,12 @@ Partitions cannot be linked if the attribute is specified for some
 partitions, but not for others, or if the specified attributes differ.
 Thus both of these commands will trigger an error:
 
-   bali-phy dna.fasta dna.fasta --smodel=1:TN --link=1,2
+   bali-phy dna.fasta dna.fasta --smodel=1:tn93 --link=1,2
 
-   bali-phy dna.fasta dna.fasta --smodel=1:TN --smodel=1:HKY --link=1,2
+   bali-phy dna.fasta dna.fasta --smodel=1:tn93 --smodel=1:hky85 --link=1,2
 
 # Examples:
 
-   bali-phy dna.fasta dna.fasta --smodel=1:TN --smodel=2:TN --link=1,2
+   bali-phy dna.fasta dna.fasta --smodel=1:tn93 --smodel=2:tn93 --link=1,2
 
    bali-phy dna.fasta amino-acids dna.fasta --link=1,3:smodel,scale

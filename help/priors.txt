@@ -2,42 +2,42 @@
 
 Priors on model parameters are specified by giving a random value.
 Random values can be obtained from distributions using the function
-`Sample`.  For example, this places a log-normal prior on kappa:
+`sample`.  For example, this places a log-normal prior on kappa:
 
-   HKY[kappa=Sample[logNormal[1,1]]]
+   hky85[kappa=sample[log_normal[1,1]]]
 
-You can write `~Dist` as a shorthand for `Sample[Dist]1:
+You can write `~Dist` as a shorthand for `sample[Dist]1:
 
-   HKY[kappa=~logNormal[1,1]]
+   hky85[kappa=~log_normal[1,1]]
 
 The `=~` can be further shortened to just `~`:
 
-   HKY[kappa~logNormal[1,1]]
+   hky85[kappa~log_normal[1,1]]
 
 It also is possible to use random values as inputs to other functions:
 
-   Add[1,~Exponential[10]]
+   add[1,~exponential[10]]
 
 In these cases, we use "=" to set the parameter value:
-   RS07[meanIndelLength=Add[1,~Exponential[10]]]
+   rs07[mean_length=add[1,~exponential[10]]]
 
 # Random values vs Distributions
 
 Random values and distributions are of different types.  Thus the
 following is of type `Distribution[Double]`:
 
-   Uniform[0,1]
+   uniform[0,1]
 
 In contrast, the following are both of type `Double`:
 
-   Sample[Uniform[0,1]]
-   ~Uniform[0,1]
+   sample[uniform[0,1]]
+   ~uniform[0,1]
 
 This is important when passing distributions as arguments to other
 distributions and functions.  Thus, this works:
 
-   iid[4,Normal[0,1]]
+   iid[4,normal[0,1]]
 
 But, this is incorrect:
 
-   iid[4,~Normal[0,1]]
+   iid[4,~normal[0,1]]

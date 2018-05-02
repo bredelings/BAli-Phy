@@ -3,15 +3,15 @@
 -I       [partitions:]<model>               Insertion-deletion model.
 --imodel [partitions:]<model>
 
-The insertion deletion model can be `RS07`, `RS05`, or `none`.  The
-default is `RS07`.  A value of `none` means that the alignment is
+The insertion deletion model can be `rs07`, `rs05`, or `none`.  The
+default is `rs07`.  A value of `none` means that the alignment is
 fixed.
 
-RS07 and RS05 have optional parameters.  These parameters have 
+rs07 and rs05 have optional parameters.  These parameters have 
 default priors that come into play if the parameters are not
-specified.  For example, RS07 defaults to:
+specified.  For example, rs07 defaults to:
 
-   RS07[logLambda~Laplace[-4,0.707],meanIndelLength=Add[1.0,~Exponential[10]]]
+   rs07[log_lambda~laplace[-4,0.707],mean_length=~exponential[10,1]]
 
 See help on "parameters" for information on specifying priors or
 values.
@@ -27,18 +27,18 @@ partition cannot be referenced twice.
 
 # Examples:
 
-   -I RS07
+   -I rs07
 
-   --imodel=RS07
+   --imodel=rs07
 
    -I none
 
    --imodel=none
 
-   -I 1,3:RS07 -I 2:none
+   -I 1,3:rs07 -I 2:none
 
 In the last example, the indel models of partitions 1 and 3 are linked.
 
 # See also:
 
-   RS07, RS05
+   rs07, rs05

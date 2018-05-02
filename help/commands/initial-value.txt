@@ -6,31 +6,31 @@ This command should usually not be used, and only works in
 certain cases. If you want to set a parameter to a constant, you
 can specify it as part of the model.  For example,
 
-   bali-phy dna.fasta -I RS07[logLambda=-4]
+   bali-phy dna.fasta -I rs07[log_rate=-4]
    
-will set `logLambda` to a constant.  This approach always works,
-but will not estimate `logLambda` since the value is fixed at -4.0.
+will set `log_rate` to a constant.  This approach always works,
+but will not estimate `log_rate` since the value is fixed at -4.0.
 
 In contrast, setting the initial value allows estimation of the
 parameter and uses the value as a starting point:
 
-   bali-phy dna.fasta -I RS07 --initial-value RS07:logLambda=-4.0
+   bali-phy dna.fasta -I rs07 --initial-value rs07:log_rate=-4.0
    
 When setting the initial value it is necessary to specify the
 decimal point for floating point values.
 
 However, setting initial values only works when the parameter is
-directly modifiable.  For example, for
+directly modifiable.  For example, if you set
 
-   RS07[meanIndelLength=Add[1,~Exponential[10]]]
+   rs07[mean_length=add[1,~exponential[10]]]
    
-the parameter `RS07:meanIndelLength` isn't modifiable.  Instead it is
+the parameter `rs07:mean_length` isn't modifiable.  Instead it is
 a function of an unnamed modifiable variable created by
-`~Exponential[10]`.
+`~exponential[10]`.
 
 Usually a value directly sampled from a distribution is modifiable,
 but there are exceptions.  For example, sampling from the logNormal
-distributions results in `exp[~Normal[lmean,lsigma]]`, which is not
+distributions results in `exp[~normal[lmean,lsigma]]`, which is not
 modifiable.
 
 Likewise, components of Dirichlet distributions are not modifiable,
@@ -40,13 +40,10 @@ frequencies constructed from Dirichlet priors.
 # Examples:
 
    # This works.
-   bali-phy dna.fasta --initial-value RS07:logLambda=-4.0
+   bali-phy dna.fasta --initial-value rs07:log_rate=-4.0
 
    # This does not work.
-   bali-phy dna.fasta --initial-value RS07:logLambda=-4
+   bali-phy dna.fasta --initial-value rs07:log_rate=-4
 
    # This does not work.
-   bali-phy dna.fasta --initial-value TN:kappaPur=4.0
-
-
-
+   bali-phy dna.fasta --initial-value tn93:kappaPur=4.0
