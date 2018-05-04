@@ -190,7 +190,7 @@ optional<Rule> Rules::get_rule_for_func(const string& s) const
     else if (auto syn = it->second.get_optional<string>("synonym"))
 	return get_rule_for_func(*syn);
     else if (auto syn = it->second.get_optional<string>("deprecated-synonym"))
-	throw myexception()<<"Error: the function '"<<s<<"' is now called '"<<*syn<<"'";
+	throw myexception()<<"I don't recognize '"<<s<<"'.  Perhaps you meant '"<<*syn<<"'?";
     else
 	return it->second;
 }
