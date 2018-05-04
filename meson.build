@@ -130,14 +130,23 @@ subdir('src')
 
 subdir('doc')
 
+# Run internal tests
+run_tests = find_program(join_paths(meson.source_root(),'tests/run-tests.py'))
+
 test('bali-phy testsuite',
-     find_program('tests/run-tests.py'),
+     run_tests,
      timeout: 600,
      workdir: join_paths(meson.source_root(),'tests'),
      args:[baliphy.full_path(), packagepath])
 
-test('testiphy (likelihood testsuite)',
-     find_program('testiphy/testiphy'),
-     timeout: 600,
-     workdir: join_paths(meson.source_root(),'testiphy'),
-     args:[baliphy.full_path(), packagepath])
+# Run external likelihood testsuite
+
+testiphy = find_program(join_paths(meson.source_root(),'testiphy/testiphy'))
+
+if testiphy.found()
+  test('testiphy (likelihood testsuite)',
+       testiphy,
+       timeout: 600,
+       workdir: join_paths(meson.source_root(),'testiphy'),
+       args:[baliphy.full_path(), packagepath])
+endif
