@@ -1,6 +1,7 @@
 {
     "name": "hky85",
     "title": "The Hasegawa-Kishino-Yano (1985) nucleotide rate matrix",
+    "deprecated-synonyms": ["HKY","hky","HKY85"],
     "result_type": "RevCTMC[a]",
     "constraints": ["Nucleotides[a]"],
     "citation":{"type": "article",
