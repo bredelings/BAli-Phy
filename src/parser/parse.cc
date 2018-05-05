@@ -754,7 +754,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 
 	    /*------ Section 4 -------*/
 	    module = 
-		-(tok.KW_Module > modid[ push_back(_a,construct<String>(_1)) ] > /*-exports >>*/ tok.KW_Where) > body [ push_back(_a,_1) ] >> eps[ _val = new_<expression>(AST_node("Module"), _a) ];
+		-(tok.KW_Module > modid[ push_back(_a,construct<String>(_1)) ] >> -exports >> tok.KW_Where) > body [ push_back(_a,_1) ] >> eps[ _val = new_<expression>(AST_node("Module"), _a) ];
 
 	    body = 
 		tok.LeftCurly >> impdecls[ push_back(_a,_1) ] >> tok.SemiColon > topdecls[ push_back(_a,_1) ] > tok.RightCurly >> eps[ _val = new_<expression>(AST_node("Body"), _a) ]
@@ -870,15 +870,16 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	    impdecls = impdecl[push_back(_a,_1)] % tok.SemiColon >> eps [ _val = new_<expression>(AST_node("impdecls"), _a)  ];
 	
 	    /*------ Section 5.2 -------*/
-	    /*
-	      exports = tok.LeftParen >> tok.RightParen | tok.LeftParen>> h_export % tok.Comma >> -tok.Comma >> tok.RightParen;
-	      h_export = 
-	      qvar
-	      | qtycon >> -(tok.LeftParen >> tok.DotDot >> tok.RightParen | tok.LeftParen >> tok.RightParen | tok.LeftParen >> cname %tok.Comma >> tok.RightParen)
-	      | qtycls >> -(tok.LeftParen >> tok.DotDot >> tok.RightParen | tok.LeftParen >> tok.RightParen | tok.LeftParen >> var %tok.Comma >> tok.RightParen)
-	      | "module" >> modid
+
+	    exports = tok.LeftParen [clear(_a)] >> tok.RightParen [_val = new_<expression>(AST_node("exports"),_a)]
+		| tok.LeftParen [clear(_a)] >> h_export [push_back(_a,_1)] % tok.Comma >> -tok.Comma >> tok.RightParen ;
+
+	    h_export = 	qvar [_val = construct<AST_node>(std::string("qvar"), construct<String>(_1)) ]
+//		| qtycon >> -(tok.LeftParen >> tok.DotDot >> tok.RightParen | tok.LeftParen >> tok.RightParen | tok.LeftParen >> cname %tok.Comma >> tok.RightParen)
+//		| qtycls >> -(tok.LeftParen >> tok.DotDot >> tok.RightParen | tok.LeftParen >> tok.RightParen | tok.LeftParen >> var %tok.Comma >> tok.RightParen)
+		| tok.KW_Module >> modid [_val = construct<AST_node>(std::string("module"), construct<String>(_1)) ]
 	      ;
-	    */
+
 	    cname = var | con;
 	
 	    /*------ Section 5.3 -------*/
@@ -925,6 +926,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	    add_error_handler(stmt);
 	    add_error_handler(topdecls);
 	    add_error_handler(topdecl);
+	    add_error_handler(exports);
 	    add_error_handler(module);
 	    add_error_handler(body);
 	    add_error_handler(pat);
@@ -960,6 +962,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 
 	    BOOST_SPIRIT_DEBUG_NODE(modid);
 	    BOOST_SPIRIT_DEBUG_NODE(module);
+	    BOOST_SPIRIT_DEBUG_NODE(exports);
 	    BOOST_SPIRIT_DEBUG_NODE(body);
 	    BOOST_SPIRIT_DEBUG_NODE(topdecls);
 	    BOOST_SPIRIT_DEBUG_NODE(topdecl);
@@ -1033,6 +1036,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	    topdecls.name("topdecls");
 	    topdecl.name("topdecl");
 	    impdecls.name("impdecls");
+	    exports.name("exports");
 	    impdecl.name("impdecl");
 	    gendecl.name("gendecl");
 	    ops.name("ops");
@@ -1177,8 +1181,8 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
     qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> impdecls;
 
     /*----- Section 5.2 ------*/
-    qi::rule<Iterator, std::string()> exports;
-    qi::rule<Iterator, std::string()> h_export;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> exports;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> h_export;
     qi::rule<Iterator, std::string()> cname;
 
     /*----- Section 5.3 ------*/
