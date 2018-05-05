@@ -118,6 +118,18 @@ string model_t::show_pretty(const Rules& rules, bool top) const
     return p.show(rules, not top);
 }
 
+string model_t::show_main(const Rules& rules, bool top) const
+{
+    auto p = pretty_model_t(description);
+    return p.show_main(rules, top);
+}
+
+string model_t::show_extracted(const Rules& rules) const
+{
+    auto p = pretty_model_t(description);
+    return p.show_extracted(rules);
+}
+
 model_t::model_t(const ptree& d, const ptree&t, const std::set<term_t>& c, const expression_ref& e)
     :description(d), type(t), constraints(c), expression(e)
 {
@@ -649,15 +661,11 @@ vector<pair<string, ptree>> extract_terms(ptree& m)
 
 #include "startup/help.hh"
 
-string pretty_model_t::show(const Rules& R, bool top) const
+string pretty_model_t::show_extracted(const Rules& R) const
 {
     const int indent = 4;
 
     string output;
-    if (top)
-	output = unparse(extract_value(main), R);
-    else
-	output = show_model(extract_value(main), R);
 
     for(int i=0; i<terms.size(); i++)
     {
@@ -666,6 +674,19 @@ string pretty_model_t::show(const Rules& R, bool top) const
 	output += "\n" + t + indent_and_wrap(0, t.size() + 2, 10000, value);
     }
     return output;
+}
+
+string pretty_model_t::show_main(const Rules& R, bool top) const
+{
+    if (top)
+	return unparse(extract_value(main), R);
+    else
+	return show_model(extract_value(main), R);
+}
+
+string pretty_model_t::show(const Rules& R, bool top) const
+{
+    return show_main(R,top) + show_extracted(R);
 }
 
 pretty_model_t::pretty_model_t(const ptree& m)

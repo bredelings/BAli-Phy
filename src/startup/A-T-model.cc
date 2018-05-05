@@ -142,6 +142,13 @@ json optional_to_json(const boost::optional<T>& o)
 	return *o;
 }
 
+
+// FIXME - maybe we should try to make a single giant model so that we get S1/parameter
+//           exactly when this occurs for the logged parameter names, themselves.
+//
+//           This would also help it we have some variables that are outside of models, because
+//             they are shared between them.
+
 json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 		 const vector<model_t>& IModels, const vector<model_t>& SModels,
 		 const vector<model_t>& ScaleModels,
@@ -150,53 +157,6 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 {
     json info;
     json partitions;
-
-    //-------- Log some stuff -----------//
-    vector<string> filenames = args["align"].as<vector<string> >();
-
-    for(int i=0;i<P.n_data_partitions();i++)
-    {
-	string a_name = P[i].get_alphabet().name;
-
-	out_cache<<"data"<<i+1<<" = "<<filenames[i]<<endl<<endl;
-	out_cache<<"alphabet"<<i+1<<" = "<<a_name<<endl<<endl;
-	out_cache<<"smodel-index"<<i+1<<" = "<<P.smodel_index_for_partition(i)<<endl;
-	out_cache<<"imodel-index"<<i+1<<" = "<<P.imodel_index_for_partition(i)<<endl;
-	out_cache<<"scale-index"<<i+1<<" = "<<P.scale_index_for_partition(i)<<endl;
-
-	json partition;
-
-	partition["smodel"] = optional_to_json( P.smodel_index_for_partition(i) );
-	partition["imodel"] = optional_to_json( P.imodel_index_for_partition(i) );
-	partition["scale"] = optional_to_json( P.scale_index_for_partition(i) );
-	partition["filename"] = filenames[i];
-	partition["alphabet"] = a_name;
-
-	partitions.push_back(partition);
-    }
-    out_cache<<endl;
-
-    json smodels = json::array();
-    for(int i=0;i<P.n_smodels();i++)
-    {
-	//    out_cache<<"subst model"<<i+1<<" = "<<P.SModel(i).name()<<endl<<endl;
-	out_cache<<"subst model"<<i+1<<" "<<SModels[i].show(rules)<<endl<<endl;
-	smodels.push_back(SModels[i].pretty_model());
-    }
-
-    json imodels = json::array();
-    for(int i=0;i<P.n_imodels();i++)
-    {
-	out_cache<<"indel model"<<i+1<<" "<<IModels[i].show(rules)<<endl<<endl;
-	imodels.push_back(IModels[i].pretty_model());
-    }
-
-    json scales = json::array();
-    for(int i=0;i<P.n_branch_scales();i++)
-    {
-	out_cache<<"scale model"<<i+1<<" "<<ScaleModels[i].show(rules)<<endl<<endl;
-	scales.push_back(ScaleModels[i].pretty_model());
-    }
 
     json tree;
     if (P.t().n_branches() > 1)
@@ -211,26 +171,78 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 	tree["lengths"] = branch_length_model.show(rules, false);
     }
 
+    //-------- Log some stuff -----------//
+    vector<string> filenames = args["align"].as<vector<string> >();
+
     for(int i=0;i<P.n_data_partitions();i++)
     {
+	json partition;
+
+	// 1. filename 
+	out_cache<<"data"<<i+1<<" = "<<filenames[i]<<endl;
+	out_screen<<"#"<<i+1<<": file = "<<filenames[i]<<endl;
+	partition["filename"] = filenames[i];
+
+	// 2. alphabet
+	string a_name = P[i].get_alphabet().name;
+	out_screen<<"#"<<i+1 <<": alphabet = "<<a_name<<"\n";
+	out_cache<<"alphabet"<<i+1<<" = "<<a_name<<endl;
+	partition["alphabet"] = a_name;
+
+	// 3. substitution model
 	auto s_index = P.smodel_index_for_partition(i);
-	//    out_screen<<"#"<<i+1<<": subst ~ "<<P.SModel(s_index).name()<<" ("<<s_index+1<<")    ";
-	out_screen<<"#"<<i+1 <<": alphabet = "<<P.get_data_partition(i).get_alphabet().name<<"\n";
+	out_screen<<"#"<<i+1<<": subst "<<indent_and_wrap(0,12,1000,SModels[*s_index].show_main(rules,false))<<" (S"<<*s_index+1<<")\n";
+	out_cache<<"smodel-index"<<i+1<<" = "<<P.smodel_index_for_partition(i)<<endl;
+	partition["smodel"] = optional_to_json( P.smodel_index_for_partition(i) );
 
-	out_screen<<"#"<<i+1<<": subst "<<indent_and_wrap(0,12,1000,SModels[*s_index].show_pretty(rules))<<" (S"<<*s_index+1<<")\n";
+	// 4. indel model
+	if (auto i_index = P.imodel_index_for_partition(i))
+	    out_screen<<"#"<<i+1<<": indel "<<indent_and_wrap(0,12,1000,IModels[*i_index].show_main(rules, false))<<" (I"<<*i_index+1<<")\n";
+	else
+	    out_screen<<"#"<<i+1<<": indel = none\n";
+	out_cache<<"imodel-index"<<i+1<<" = "<<P.imodel_index_for_partition(i)<<endl;
+	partition["imodel"] = optional_to_json( P.imodel_index_for_partition(i) );
 
-	auto i_index = P.imodel_index_for_partition(i);
-	string i_name = "= none";
-	if (i_index)
-	    i_name = indent_and_wrap(0,12,1000,IModels[*i_index].show_pretty(rules));
-	out_screen<<"#"<<i+1<<": indel "<<i_name;
-	if (i_index and *i_index >= 0)
-	    out_screen<<" (I"<<*i_index+1<<")";
-	out_screen<<endl;
-
+	// 5. scale model
 	auto scale_index = P.scale_index_for_partition(i);
-	out_screen<<"#"<<i+1<<": scale "<<indent_and_wrap(0,12,1000,ScaleModels[*scale_index].show(rules))<<" (Scale"<<*scale_index+1<<")\n";
+	out_screen<<"#"<<i+1<<": scale "<<indent_and_wrap(0,12,1000,ScaleModels[*scale_index].show_main(rules,false))<<" (Scale"<<*scale_index+1<<")\n";
+	out_cache<<"scale-index"<<i+1<<" = "<<P.scale_index_for_partition(i)<<endl;
+	partition["scale"] = optional_to_json( P.scale_index_for_partition(i) );
+
 	out_screen<<endl;
+	out_cache<<endl;
+	partitions.push_back(partition);
+    }
+
+    json smodels = json::array();
+    for(int i=0;i<P.n_smodels();i++)
+    {
+	//    out_cache<<"subst model"<<i+1<<" = "<<P.SModel(i).name()<<endl<<endl;
+	out_cache<<"subst model"<<i+1<<" "<<SModels[i].show(rules)<<endl<<endl;
+	smodels.push_back(SModels[i].pretty_model());
+	string e = SModels[i].show_extracted(rules);
+	if (e.size())
+	    out_screen<<"Substitution model (S"<<i+1<<") -- priors:"<<e<<"\n\n";
+    }
+
+    json imodels = json::array();
+    for(int i=0;i<P.n_imodels();i++)
+    {
+	out_cache<<"indel model"<<i+1<<" "<<IModels[i].show(rules)<<endl<<endl;
+	imodels.push_back(IModels[i].pretty_model());
+	string e = IModels[i].show_extracted(rules);
+	if (e.size())
+	    out_screen<<"Insertion/deletion model (I"<<i+1<<") -- priors:"<<e<<"\n\n";
+    }
+
+    json scales = json::array();
+    for(int i=0;i<P.n_branch_scales();i++)
+    {
+	out_cache<<"scale model"<<i+1<<" "<<ScaleModels[i].show(rules)<<endl<<endl;
+	scales.push_back(ScaleModels[i].pretty_model());
+	string e = ScaleModels[i].show_extracted(rules);
+	if (e.size())
+	    out_screen<<"Scale model (Scale"<<i+1<<") -- priors:"<<e<<"\n\n";
     }
 
     info["partitions"] = partitions;
