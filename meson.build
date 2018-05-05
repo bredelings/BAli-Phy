@@ -141,7 +141,7 @@ test('bali-phy testsuite',
 
 # Run external likelihood testsuite
 
-testiphy = find_program(join_paths(meson.source_root(),'testiphy/testiphy'))
+testiphy = find_program(join_paths(meson.source_root(),'testiphy/testiphy'), required: false)
 
 if testiphy.found()
   test('testiphy (likelihood testsuite)',
