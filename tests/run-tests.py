@@ -174,7 +174,8 @@ class Tester:
         if expected is None:
             return True;
         else:
-            return expected == self.read_obtained(test_subdir, name)
+            obtained = self.read_obtained(test_subdir, name)
+            return set(expected.splitlines()).issubset(set(obtained.splitlines()))
 
     def check_likelihood(self, test_subdir):
         import math
