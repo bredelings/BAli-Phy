@@ -1,0 +1,16 @@
+align = exon1.fasta
+align = intron1.fasta
+align = exon2.fasta
+align = intron2.fasta
+align = exon3.fasta
+align = intron3.fasta
+align = exon4.fasta
+
+smodel = 1,3,5,7:gtr+Rates.free[n=4]
+imodel = 1,3,5,7:none
+scale  = 1,3,5,7:
+
+imodel = 2,4,6:rs07
+smodel = 2,4,6:gtr+Rates.free[n=4]
+scale  = 2,4,6:
+
