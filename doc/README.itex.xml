@@ -979,52 +979,41 @@ scale = 1,3:</programlisting>
     <section><info><title>Summarizing the output</title></info>
       
 
-      <para>This section is primarily oriented to extracting estimates from output files.  See <xref linkend="mixing_and_convergence"/> for methods of determine effective sample sizes, and for checking mixing and convergence.</para>
+      <para>This section is primarily about extracting estimates from output files.  See <xref linkend="mixing_and_convergence"/> for methods of determine effective sample sizes, and for checking mixing and convergence.</para>
 
-      <section><info><title>Finding the consensus tree (<filename>C1.trees</filename>)</title></info>
+      <section><info><title>Finding the majority consensus tree</title></info>
 	
 	<para>
 To compute the majority consensus tree, do the following.  (The
 program <link xmlns:xlink="http://www.w3.org/1999/xlink"
 xlink:href="http://tree.bio.ed.ac.uk/software/figtree/">FigTree</link>
 allows you to view the resulting tree file graphically.)
-<screen><prompt>%</prompt> trees-consensus C1.trees &gt; <filename>c50.PP.tree</filename></screen>
-You can (and should) pool results from different MCMC runs by adding
-multiple tree sample files on the command line.  The different MCMC
-runs should have the same input files and parameters.
 <screen><prompt>%</prompt> trees-consensus <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees &gt; <filename>c50.PP.tree</filename></screen>
-By default, the first 10% of tree samples are skipped as burn-in.  You
-can specify the number of samples (e.g. 1000) to skip by adding the
-options <userinput>-s1000</userinput> or
-<userinput>--skip=1000</userinput>.  You may also specify a percentage
-of all samples:
-<screen><prompt>%</prompt> trees-consensus -s20% C1.trees &gt; <filename>c50.PP.tree</filename></screen>
-To discard some samples, keeping (say) every 10th sample, you may add
-the options <userinput>-x10</userinput> or
-<userinput>--subsample=10</userinput>.  This can make the program a
-lot faster, at the possible expense of some loss in accuracy.
-<screen><prompt>%</prompt> trees-consensus -s20% -x10 C1.trees &gt; <filename>c50.PP.tree</filename></screen>
+</para>
+
+<para>By default, the first 10% of tree samples are skipped as burn-in (<userinput>--skip=10%</userinput> or <userinput>-s 10%</userinput>) and every generation is analyzed (<userinput>--subsample=1</userinput> or <userinput>-x 1</userinput>).  To discard the first 1000 tree samples and analyze every 10th sample:
+<screen><prompt>%</prompt> trees-consensus -s 1000 -x 10 <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees &gt; <filename>c50.PP.tree</filename></screen>
 By default, splits are included in the consensus tree if they have a
 PP greater than 0.5.  You can specify a more stringent level
 (e.g. 0.66) by adding the option
 <userinput>--consensus-PP=0.66</userinput> as follows:
-<screen><prompt>%</prompt> trees-consensus -s20% -x10 --consensus-PP=0.66 C1.trees &gt; <filename>c66.PP.tree</filename></screen>
+<screen><prompt>%</prompt> trees-consensus -s20% -x10 --consensus-PP=0.66 <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees &gt; <filename>c66.PP.tree</filename></screen>
 You may also make the program write directly to the output file
 (e.g. <filename>c66.PP.tree</filename>) by using the more general form
 <userinput>--consensus-PP=0.66:c66.PP.tree</userinput>.  Leaving off 
 the "<userinput>:c66.PP.tree</userinput>" part (as we did above) or specifying
 "<userinput>:-</userinput>" sends the output to the standard output
 (e.g. the terminal, if not redirected). 
-<screen><prompt>%</prompt> trees-consensus -s20% -x10 C1.trees --consensus-PP=0.66:<filename>c66.PP.tree</filename></screen>
+<screen><prompt>%</prompt> trees-consensus -s20% -x10 <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees --consensus-PP=0.66:<filename>c66.PP.tree</filename></screen>
 You can supply multiple levels and filenames separated by commas.
 This is faster than running the program multiple times with different
 consensus levels.
-<screen><prompt>%</prompt> trees-consensus -s20% -x10 C1.trees --consensus-PP=0.5:<filename>c50.PP.tree</filename>,0.66:<filename>c66.PP.tree</filename></screen>
+<screen><prompt>%</prompt> trees-consensus -s20% -x10 <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees --consensus-PP=0.5:<filename>c50.PP.tree</filename>,0.66:<filename>c66.PP.tree</filename></screen>
 Finally, you may use the option <userinput>--consensus=</userinput>
 instead of the option <userinput>--consensus-PP=</userinput> if you do
 not wish the resulting tree to contain embedded posterior
 probabilities on branches, as well as branch lengths.
-<screen><prompt>%</prompt> trees-consensus -s20% -x10 C1.trees --consensus=0.5:<filename>c50.PP.tree</filename>,0.66:<filename>c66.PP.tree</filename></screen>
+<screen><prompt>%</prompt> trees-consensus -s20% -x10 <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees --consensus=0.5:<filename>c50.PP.tree</filename>,0.66:<filename>c66.PP.tree</filename></screen>
 Both the <userinput>--consensus=</userinput> and 
 <userinput>--consensus-PP=</userinput> options may be given simultaneously.
 </para>
@@ -1032,20 +1021,30 @@ Both the <userinput>--consensus=</userinput> and
 <para>
   See <userinput>trees-consensus --help</userinput> for a complete list of options.
 </para>
+
       </section>
 
-      <section><info><title>Finding the M.A.P. topology (<filename>C1.trees</filename>)</title></info>
+      <section><info><title>Finding the greedy consensus tree</title></info>
 	
 	<para>
-To compute the <emphasis>maximum a posteriori</emphasis> tree topology do:
-<screen><prompt>%</prompt> trees-consensus --skip=<replaceable>burnin</replaceable> C1.trees --map-tree=<filename>MAP.tree</filename></screen>	
-The MAP topology may be used instead of a consensus tree when a fully resolved (e.g. bifurcating) tree is required.  However, when the topology has many tips, each topology may be sampled only once, leading to low quality estimates of the MAP topology.
+	  The greedy consensus tree may be used instead of a majority-consensus tree when a fully resolved (e.g. bifurcating) tree is required.  When the topology has many tips and each topology may be sampled only once, the greedy consensus should be higher quality than the estimate of the MAP topology.  To obtained a fully resolved tree, the  greedy consensus strategy starts with the majority consensus and then adds the highest-supported split that does not conflict.</para>
+	
+	<para>To compute the <emphasis>greedy consensus</emphasis> tree do:
+<screen><prompt>%</prompt> trees-consensus --skip=<replaceable>burnin</replaceable> <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees --greedy-consensus=<filename>greedy.tree</filename></screen>	
 </para>
-<para>The program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tree.bio.ed.ac.uk/software/figtree/">FigTree</link> allows you to view the consensus tree graphically.
+
+      </section>
+
+      <section><info><title>Finding the M.A.P. tree</title></info>
+	
+	<para>
+To compute the <emphasis>maximum a posteriori</emphasis> tree do:
+<screen><prompt>%</prompt> trees-consensus --skip=<replaceable>burnin</replaceable> <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees --map-tree=<filename>MAP.tree</filename></screen>	
+When the tree has many tips, each topology may be sampled only once, leading to low quality estimates of the MAP topology.  As a result, when you need a bifurcating tree you should probably use the greedy consensus instead.
 </para>
       </section>
 
-      <section><info><title>Checking topology convergence (<filename>C1.trees</filename>)</title></info>
+      <section><info><title>Checking topology convergence</title></info>
 	
 <para>
 <screen><prompt>%</prompt> trees-bootstrap <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees</screen>	
@@ -1055,20 +1054,18 @@ This command computes the effective sample size for the posterior probability of
 </para>  
       </section>
 
-      <section><info><title>Summarizing numerical parameters (<filename>C1.log</filename>)</title></info>
+      <section><info><title>Summarizing numerical parameters</title></info>
 	
 <para>
 This command gives a median and confidence interval, ESS, and a stabilization time:
-<screen><prompt>%</prompt> statreport C1.log &gt; Report </screen>	
-This command compares multiple runs to give PSRF and joint ESS values as well:
 <screen><prompt>%</prompt> statreport <replaceable>dir-1</replaceable>/C1.log <replaceable>dir-2</replaceable>/C1.log &gt; Report </screen>	
-The program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tree.bio.ed.ac.uk/software/tracer/">Tracer</link> allows you to view the same summaries graphically.</para>
+When multiple runs are analyzed, this command gives PSRF and joint ESS values. The program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tree.bio.ed.ac.uk/software/tracer/">Tracer</link> allows you to view the same summaries graphically.</para>
 
 <para>See <xref linkend="mixing_and_convergence"/> for more information.
 </para>
       </section>
 
-      <section><info><title>Computing an alignment using Posterior Decoding (<filename>C1.P<replaceable>p</replaceable>.fastas</filename>)</title></info>
+      <section><info><title>Computing an alignment using Posterior Decoding</title></info>
 	
 <para>
 <screen><prompt>%</prompt> cut-range --skip=<replaceable>burn-in</replaceable> &lt; C1.P<replaceable>p</replaceable>.fastas | alignment-max &gt; P<replaceable>p</replaceable>-max.fasta</screen>
@@ -1076,18 +1073,19 @@ You can use the program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:h
 </para>
       </section>      
 
-      <section><info><title>Find the alignment from the maximum a posterior (MAP) point (<filename>C1.MAP</filename>)</title></info>
+      <!-- section><info><title>Find the alignment from the maximum a posterior (MAP) point (<filename>C1.MAP</filename>)</title></info>
 	
 <screen><prompt>%</prompt> alignment-find &lt; C1.MAP &gt; P1-MAP.fasta</screen>
 
-      </section>      
+      This only works correctly on single-partition analyses.
+      </section -->      
 
-      <section><info><title>Create an Au (Alignment Uncertainty) plot (<filename>C1.P<replaceable>p</replaceable>.fastas</filename>)</title></info>
+      <section><info><title>Create an Au (Alignment Uncertainty) plot</title></info>
 	
 <para>To annotate a specific alignment <replaceable>alignment</replaceable>.fasta, choose a fully resolved tree estimate <replaceable>tree</replaceable>:
 <screen><prompt>%</prompt> cut-range --skip=<replaceable>burn-in</replaceable> &lt; C1.P<replaceable>p</replaceable>.fastas | alignment-gild <replaceable>alignment</replaceable>.fasta <replaceable>tree</replaceable>  &gt; <replaceable>alignment</replaceable>-AU.prob
 <prompt>%</prompt> alignment-draw <replaceable>alignment</replaceable>.fasta --AU <replaceable>alignment</replaceable>-AU.prob &gt; <replaceable>alignment</replaceable>-AU.html</screen>
-The majority consensus tree is usually not fully resolved, so we recommend using the MAP topology instead.
+The majority consensus tree is usually not fully resolved, so we recommend using the greedy consensus instead.
 </para>
       </section>
 
@@ -1160,21 +1158,14 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       </para>
 
       <variablelist>
-	<varlistentry><term>MAP.fasta</term><listitem>
-	    <para>An estimate of the MAP alignment.
-	</para></listitem></varlistentry>
-
 	<varlistentry><term>P<replaceable>p</replaceable>-max.fasta</term><listitem>
 	    <para>An estimate of the alignment for partition
 	    <replaceable>p</replaceable> using maximum posterior decoding.</para>
 	</listitem></varlistentry>
 
-	<varlistentry><term>MAP-AU.html</term><listitem><para>An AU plot of the MAP alignment (AA/DNA color-cheme).
-	</para></listitem></varlistentry>
-	
 	<varlistentry><term>P<replaceable>p</replaceable>-max-AU.html</term><listitem>
 	    <para>An AU plot of the maximum posterior decoding alignment for partition
-	    <replaceable>p</replaceable>  (AA/DNA color-cheme).</para>
+	    <replaceable>p</replaceable>  (AA/DNA color-scheme).</para>
 	</listitem></varlistentry>
 
 	<!-- varlistentry><term>consensus.fasta</term><listitem>
@@ -1305,7 +1296,7 @@ distributions and functions.  For example, the distribution <userinput>iid</user
 
   <section><info><title>Models and '<userinput>+</userinput>' notation</title></info>
   <para>BAli-Phy allows using <userinput>+</userinput> as a short-cut to combine models.  Models expressed this way are rewritten internally to a more precise form:
-<programlisting>wag+f             // rewritten to rctmc[wag,f]
+<programlisting>wag+f               // rewritten to rctmc[wag,f]
 yn94+f3x4           // rewritten to rctmc[yn94,f3x4]
 hky85+Rates.gamma   // rewritten to Rates.gamma[submodel=hky85]
 hky85+inv           // rewritten to inv[submodel=hky85]</programlisting>
@@ -1385,8 +1376,7 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	</para>
 	
 	<para>The basic CTMC models are equ, hky85, tn93, gtr, hky85_sym+x3,
-	tn93_sym+x3, gtr_sym+x3, jtt, wag, lg08, and yn94.  Each of these models is a
-	way of specifying the exchangeability matrix $S_{ij}$.</para>
+	tn93_sym+x3, gtr_sym+x3, jtt, wag, lg08, and yn94.</para>
 
 	<table frame="none" rowsep="1"><info><title>Substitution Models</title></info>
 	  
@@ -1540,7 +1530,7 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	  <tbody>
 	    <row>
 	      <entry>
-		<para><userinput>F</userinput></para>
+		<para><userinput>f</userinput></para>
 		<para>Whelan and Goldman (2001)</para>
 	      </entry>
 	      <entry>any</entry>
@@ -1971,7 +1961,7 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
 </para>
 <para>The posterior probability of positive selection is the posterior mean of the posSelection parameter.  This may be computed using the statreport program with the <userinput>--mean</userinput> option.
 </para>
-<para>In case this probability is extremely close to 1 or 0, you may wish to add the option <userinput>--Rao-Blackwellize BranchSiteTest:posSelection</userinput>.  This will report the log-probability of positive selection each iteration.  The user may exponentiate the reported values and then average them (using R, for example) in order to compute a more accurate estimate of the posterior probability of positive selection.
+<para>In case this probability is extremely close to 1 or 0, you may wish to add the option <userinput>--Rao-Blackwellize branch-site:posSelection</userinput>.  This will report the log-probability of positive selection each iteration.  The user may exponentiate the reported values and then average them (using R, for example) in order to compute a more accurate estimate of the posterior probability of positive selection.
     </para>
     </section>
     <section><info><title>Substitution model examples</title></info>
@@ -2027,12 +2017,12 @@ See section <xref linkend="functions"/> for the general syntax.  rs07 is the  de
 		  <para>Redelings and Suchard (2005)</para>
 		</entry>
 		<entry>
-		  <para>$\delta$: the gap-opening probability</para>
-		  <para>$\epsilon$: the gap-extension probability</para>
+		  <para><userinput>logDelta</userinput>: the gap-opening probability</para>
+		  <para><userinput>mean_length</userinput>: the gap-extension probability</para>
 		</entry>
 		<entry>
-		  <para>Gap lengths are geometrically distributed with extension probability $\epsilon$.</para>
-		  <para>This indel model is independent of the branch length connecting the ancestor and descent sequences.</para>
+		  <para>Gap lengths are geometrically distributed.</para>
+		  <para>Longer branches <emphasis>do not</emphasis> have more indels.</para>
 		</entry>
 	      </row>
 	      
@@ -2042,12 +2032,12 @@ See section <xref linkend="functions"/> for the general syntax.  rs07 is the  de
 		  <para>Redelings and Suchard (2007)</para>
 		</entry>
 		<entry>
-		  <para>$\lambda$: the insertion and deletion rate</para>
-		  <para>$\epsilon$: the gap-extension probability</para>
+		  <para><userinput>log_rate</userinput>: The log of the insertion and deletion rate</para>
+		  <para><userinput>mean_length</userinput>: the mean of the indel length</para>
 		</entry>
 		<entry>
-		  <para>Gap lengths are geometrically distributed with extension probability $\epsilon$.</para>
-		  <para>The probability of an indel event depends on the branch length in this model.</para>
+		  <para>Gap lengths are geometrically distributed.</para>
+		  <para>Longer branches <emphasis>do</emphasis> have more indels.</para>
 		</entry>
 	      </row>
 	      
@@ -2083,7 +2073,7 @@ See section <xref linkend="functions"/> for the general syntax.  rs07 is the  de
       diagnose when more samples must be taken.
     </para>
 
-    <para>Some of the better diagnostics for lack of convergence rely on running at least 4 independent copies of the Markov chain (preferably 10) from different random starting points to see if the sampled posterior distributions for each chain are the same.  Unfortunately, when the distributions all seem to be this same, this doesn't <emphasis>prove</emphasis> that they have all converged to the equilibrium distribution.  However, if the distributions are different then you can reject either convergence or good mixing.</para>
+    <para>Some of the better diagnostics for lack of convergence rely on running at least 2 independent copies of the Markov chain (preferably 4-10) from different random starting points to see if the sampled posterior distributions for each chain are the same.  Unfortunately, when the distributions all seem to be this same, this doesn't <emphasis>prove</emphasis> that they have all converged to the equilibrium distribution.  However, if the distributions are different then you can reject either convergence or good mixing.</para>
 
     <section><info><title>Definition of Convergence</title></info>
       
@@ -2650,7 +2640,7 @@ your <command>bali-phy</command> runs on that computer.
 	<qandaentry>
 	  <question><para>Why does <command>bp-analyze</command> say "Program 'gnuplot' not found.  Trace plots will not be generated"?</para></question>
 	  <answer>
-	    <para>This is because you have not installed <application>gnuplot</application>.  This is not a fatal error message, it just means that pictures of traces, partition support, and SRQ plots will not be generated automatically.  You can still view MCMC traces with <application>Tracer</application>.</para>
+	    <para>This is because you have not installed <application>gnuplot</application>.  This is not a fatal error message, it just means that pictures of partition support, and SRQ plots will not be generated automatically.</para>
 	  </answer>
 	</qandaentry>
 
