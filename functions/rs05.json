@@ -2,7 +2,7 @@
     "name": "rs05",
     "synonyms": ["RS05"],
     "result_type": "IndelModel",
-    "call": "IModel.rs05[logDelta,meanIndelLengthMinus1,tau,tree]",
+    "call": "IModel.rs05[logDelta,mean_length,tau,tree]",
     "title": "Redelings & Suchard (2005) model of insertions and deletions",
     "citation":{"type": "article",
 		"title": "Joint Estimation of Alignment and Phylogeny.",
@@ -18,9 +18,9 @@
             "default_value": "~Laplace[-4,0.707]"
         },
         {
-            "arg_name": "meanIndelLengthMinus1",
+            "arg_name": "mean_length",
             "arg_type": "Double",
-            "default_value": "~Exponential[10]"
+            "default_value": "~Exponential[10,1]"
         },
         {
             "arg_name": "tau",
