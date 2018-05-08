@@ -157,6 +157,51 @@ public:
 	{ }
 };
 
+/// ColorMap which represents uncertainty in terms of Diff colors
+struct Diff_ColorMap: public ColorMap 
+{
+    int n_blocks;
+    bool gaps_different;
+    const double start = 0.2;
+    const double end = 0.50;
+    
+public:
+
+    Diff_ColorMap* clone() const {return new Diff_ColorMap(*this);}
+
+    RGB bg_color(double x,const string& s) const 
+	{
+	    if (x == 0) return white;
+
+	    x = (x-1)/(n_blocks-1);
+
+	    // color gaps differently? (grey-scale?)
+	    if (gaps_different and ((s == "-") or (s == "---")))
+	    {
+		double v_uncertain = 1.0;
+		double v_certain   = 0.6;
+		double value = v_uncertain + 0*(v_certain - v_uncertain);
+
+		return HSV(0,0,value).to_RGB();
+	    }
+	    // otherwise use the rainbow
+	    else {
+		double hue     = start + x*(end - start);
+		double sat     = 1.0 - x*0.5;
+
+		return HSV(hue,sat,0.95).to_RGB();
+	    }
+	}
+
+    RGB fg_color(double,const string&) const {
+	return black;
+    }
+ 
+    Diff_ColorMap(int i,bool g=true)
+	:n_blocks(i),gaps_different(g)
+	{ }
+};
+
 RGB AA_color(char aa) {
     if (strchr("GPST",aa))
 	return orange;
@@ -301,21 +346,21 @@ public:
 };
 
 class ColorScheme: public Object {
-    Scale scale;
+    std::function<double(double)> transform;
     owned_ptr<ColorMap> color_map;
 public:
     virtual ColorScheme* clone() const {return new ColorScheme(*this);}
 
     RGB bg_color(double x,const string& s) const {
-	return color_map->bg_color(scale(x),s);
+	return color_map->bg_color(transform(x),s);
     }
 
     RGB fg_color(double x,const string& s) const {
-	return color_map->fg_color(scale(x),s);
+	return color_map->fg_color(transform(x),s);
     }
 
-    ColorScheme(const ColorMap& CM,const Scale& S)
-	:scale(S),color_map(CM)
+    ColorScheme(const ColorMap& CM,const std::function<double(double)>& S)
+	:transform(S),color_map(CM)
 	{ }
 };
 
@@ -444,16 +489,13 @@ bool match2(vector<string>& sstack,const string& s) {
 }
 
 
-Scale get_scale(const variables_map& args) {
-    Scale scale;
+std::function<double(double)> get_scale(const variables_map& args)
+{
     string scale_name = args["scale"].as<string>();
-    if (scale_name == "identity") {
-	scale.f = identity;
-	scale.min = 0;
-	scale.max = 1;
-	if (args.count("min")) scale.min = args["min"].as<double>();
-	if (args.count("max")) scale.max = args["max"].as<double>();
-    }
+    if (scale_name == "identity") 
+	return [](double x){return x;};
+
+    Scale scale;
     if (scale_name == "invert") {
 	scale.f = invert;
 	scale.min = 0;
@@ -499,6 +541,14 @@ owned_ptr<ColorMap> get_base_color_map(vector<string>& string_stack,bool gaps_di
 	color_map = claim(new Rainbow_ColorMap(0.7,1,gaps_different));
     else if (match(string_stack,"BlueRed",arg))
 	color_map = claim(new Rainbow_ColorMap(1,0.7,gaps_different));
+    else if (match(string_stack,"diff",arg))
+    {
+	color_map = claim(new Plain_ColorMap);
+	vector<int> v = split<int>(arg,',');
+	if (v.size() != 1)
+	    throw myexception()<<"diff: argument should be for the form [int]";
+	color_map = claim(new Diff_ColorMap(v[0], gaps_different));
+    }
     else if (match(string_stack,"Rainbow",arg)) 
     {
 	double start = 0.666;
@@ -577,9 +627,9 @@ owned_ptr<ColorScheme> get_color_scheme(const variables_map& args)
     owned_ptr<ColorMap> color_map = get_color_map(args,gaps_different);
     assert(color_map);
 
-    Scale scale = get_scale(args);
+    auto transform = get_scale(args);
 
-    return ColorScheme(*color_map,scale);
+    return ColorScheme(*color_map,transform);
 }
 
 variables_map parse_cmd_line(int argc,char* argv[]) 

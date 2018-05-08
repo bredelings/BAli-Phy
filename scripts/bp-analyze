@@ -1613,7 +1613,7 @@ sub draw_alignments
 	}
 	
 	if (! more_recent_than("Results/$alignment-diff.html","Results/$alignment-diff.AU")) {
-	    exec_show("alignment-draw Results/$alignment.fasta --scale=invert --AU Results/$alignment-diff.AU --show-ruler --color-scheme=Rainbow+fade[1,0]+contrast > Results/$alignment-diff.html");
+	    exec_show("alignment-draw Results/$alignment.fasta --scale=identity --AU Results/$alignment-diff.AU --show-ruler --color-scheme=diff[3]+contrast > Results/$alignment-diff.html");
 	}
     }
     print "done.\n";

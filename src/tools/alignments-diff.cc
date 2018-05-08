@@ -328,23 +328,40 @@ int main(int argc,char* argv[])
 	else
 	{
 	    // Add 1 column for the ruler
-	    matrix<int> D(A1.length(), A1.n_sequences()+1, 0.0);
+	    auto column_lookup2 = column_lookup(A2);
+
+	    matrix<int> D(A1.length(), A1.n_sequences()+1, 0);
 	    for(int i=0;i<columns1.size();i++)
 	    {
 		int c1 = columns1[i];
 		int c2 = columns2[i];
 
-		if (c1 == -1 or c2 == -1) continue;
+		if (c1 == -1) continue;
 
-		bool any_different = false;
+		bool any_different = (c2 != 1);
 		for(int k=0;k<A1.n_sequences();k++)
 		{
-		    if (M1(c1,k) != M2(c2,k)) any_different = true;
+		    // 0. Skip if there's not a letter at A1(c1,k)
+		    if (M1(c1,k) < 0) continue;
+		    
+		    // 1. color the letter in A1 according to its position in A2
+		    int c12 = column_lookup2[k][M1(c1,k)];
+		    constexpr int blocksize = 20;
+		    constexpr int n_types = 3;
+		    int block = c12 / blocksize;
+		    int type = block % n_types;
+		    D(c1,k) = 1+type;
 
-		    if (M1(c1,k) == M2(c2,k) and M1(c1,k) >=0) 
-			D(c1,k) = 1.0;
+		    // 2. mark the letter as a match if its the same one in A2.
+		    if (c2 != -1)
+		    {
+			if (M1(c1,k) == M2(c2,k))
+			    D(c1,k) = 0;
+			else
+			    any_different = true;
+		    }
 		}
-
+		
 		// Mark the ruler as unchanged if the whole column is unchanged
 		if (not any_different) D(c1, A1.n_sequences()) = 1.0;
 	    }
