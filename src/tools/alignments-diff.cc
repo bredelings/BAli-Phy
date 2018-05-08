@@ -88,6 +88,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("dual","Write out the two aligned alignments separately")
 	("fill",value<string>()->default_value("gap"),"blank columns filled with: gap or unknown")
 	("differences-file,d",value<string>(),"Filename to store differences in AU format")
+	("blocksize",value<int>()->default_value(20),"Width of blocks of same color")
+	("classes",value<int>()->default_value(3),"Number of groups for non-matching characters")
 	;
 
     options_description all("All options");
@@ -329,6 +331,8 @@ int main(int argc,char* argv[])
 	{
 	    // Add 1 column for the ruler
 	    auto column_lookup2 = column_lookup(A2);
+	    const int blocksize = args["blocksize"].as<int>();
+	    const int n_types = args["classes"].as<int>();
 
 	    matrix<int> D(A1.length(), A1.n_sequences()+1, 0);
 	    for(int i=0;i<columns1.size();i++)
@@ -346,8 +350,6 @@ int main(int argc,char* argv[])
 		    
 		    // 1. color the letter in A1 according to its position in A2
 		    int c12 = column_lookup2[k][M1(c1,k)];
-		    constexpr int blocksize = 20;
-		    constexpr int n_types = 3;
 		    int block = c12 / blocksize;
 		    int type = block % n_types;
 		    D(c1,k) = 1+type;

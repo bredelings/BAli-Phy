@@ -161,9 +161,9 @@ public:
 struct Diff_ColorMap: public ColorMap 
 {
     int n_blocks;
+    double start;
+    double end;
     bool gaps_different;
-    const double start = 0.2;
-    const double end = 0.50;
     
 public:
 
@@ -171,10 +171,6 @@ public:
 
     RGB bg_color(double x,const string& s) const 
 	{
-	    if (x == 0) return white;
-
-	    x = (x-1)/(n_blocks-1);
-
 	    // color gaps differently? (grey-scale?)
 	    if (gaps_different and ((s == "-") or (s == "---")))
 	    {
@@ -184,8 +180,13 @@ public:
 
 		return HSV(0,0,value).to_RGB();
 	    }
-	    // otherwise use the rainbow
-	    else {
+	    else
+	    {
+		if (x == 0) return white;
+
+		x = (x-1)/(n_blocks-1);
+
+		// otherwise use the rainbow
 		double hue     = start + x*(end - start);
 		double sat     = 1.0 - x*0.5;
 
@@ -198,7 +199,11 @@ public:
     }
  
     Diff_ColorMap(int i,bool g=true)
-	:n_blocks(i),gaps_different(g)
+	:n_blocks(i),start(0.15),end(0.55),gaps_different(g)
+	{ }
+
+    Diff_ColorMap(int i,double s,double e,bool g=true)
+	:n_blocks(i),start(s),end(e),gaps_different(g)
 	{ }
 };
 
@@ -544,10 +549,13 @@ owned_ptr<ColorMap> get_base_color_map(vector<string>& string_stack,bool gaps_di
     else if (match(string_stack,"diff",arg))
     {
 	color_map = claim(new Plain_ColorMap);
-	vector<int> v = split<int>(arg,',');
-	if (v.size() != 1)
-	    throw myexception()<<"diff: argument should be for the form [int]";
-	color_map = claim(new Diff_ColorMap(v[0], gaps_different));
+	vector<double> v = split<double>(arg,',');
+	if (v.size() == 1)
+	    color_map = claim(new Diff_ColorMap((int)v[0], gaps_different));
+	else if (v.size() == 3)
+	    color_map = claim(new Diff_ColorMap((int)v[0], v[1], v[2], gaps_different));
+	else
+	    throw myexception()<<"diff: argument should be for the form [int] or [int,double,double]";
     }
     else if (match(string_stack,"Rainbow",arg)) 
     {
