@@ -597,8 +597,8 @@ sub print_model_section
     $section .= "<h3 style=\"clear:both\"><a name=\"tree\">Tree (+priors)</a></h3>\n";
 #    $section .= "<table class=\"backlit2\">\n";
     $section .= "<table>\n";
-    $section .= "<tr><td>topology</td><td>$topology_prior</td></tr>" if (defined($topology_prior));
-    $section .= "<tr><td>branch lengths</td><td>$branch_prior</td></tr>" if (defined($topology_prior));
+    $section .= "<tr><td class=\"modelname\">topology</td><td>$topology_prior</td></tr>" if (defined($topology_prior));
+    $section .= "<tr><td class=\"modelname\">branch lengths</td><td>$branch_prior</td></tr>" if (defined($branch_prior));
     $section .= "</table>\n";
     
     $section .= "<h3 style=\"clear:both\"><a name=\"smodel\">Substitution model (+priors) </a></h3>\n";
@@ -624,7 +624,7 @@ sub section_analysis
 
     #$section .= '<table class="backlit2 center" style="width:100%">'."\n";
     $section .= '<table class="backlit2 center">'."\n";
-    $section .= "<tr><th>chain #</th><th>burnin</th><th>subsample</th><th>Iterations (remaining)</th>";
+    $section .= "<tr><th>chain #</th><th>burnin</th><th>subsample</th><th>Iterations (after burnin)</th>";
     $section .= "<th>command line</th>" if ($commands_differ);
     $section .= "<th>subdirectory</th>";
     $section .= "<th>directory</th>" if ($directories_differ);
