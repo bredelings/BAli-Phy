@@ -5,7 +5,12 @@ use strict;
 my $screen = "";
 while(my $line = <>)
 {
-    if ($line =~ s|^\% (.*)$|<prompt>\%</prompt> <userinput>$1</userinput>|)
+    if ($line =~ s|^\% (.*)//(.*)$|<prompt>\%</prompt> <userinput>$1</userinput>//$2|)
+    {
+	$screen = $screen . $line;
+	next;
+    }
+    elsif ($line =~ s|^\% (.*)$|<prompt>\%</prompt> <userinput>$1</userinput>|)
     {
 	$screen = $screen . $line;
 	next;
