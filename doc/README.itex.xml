@@ -1,5 +1,5 @@
 <!DOCTYPE book [
-<!ENTITY  version        "3.1"         >
+<!ENTITY  version        "3.1.4"         >
 
 <!ENTITY  source.file    "bali-phy-&version;.tar.gz"         >
 <!ENTITY  linux64.file   "bali-phy-&version;-linux64.tar.gz"         >
@@ -161,7 +161,8 @@ However, note that this might conflict with R installed from other places, such 
 
     <section><info><title>Install on Linux</title></info>
 
-    <section><info><title>Install BAli-Phy using <command>apt-get</command> (recommended if using <emphasis>Debian: testing or unstable</emphasis>)</title></info>
+    <section><info><title>Install BAli-Phy using <command>apt-get</command></title></info>
+    BAli-Phy is available on Ubuntu <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://launchpad.net/ubuntu/+source/bali-phy/">("Cosmic Cuttlefish" or later)</link>, and Debian (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://packages.debian.org/search?keywords=bali-phy&amp;searchon=names&amp;section=all">testing and unstable</link>).
     <screen><prompt>%</prompt> <userinput>sudo apt-get install bali-phy</userinput></screen>
     Check that the executable runs:
     <screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
