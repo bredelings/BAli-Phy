@@ -1,3 +1,5 @@
+#ifndef ALIGNMENT_CONSTRAINT_H
+#define ALIGNMENT_CONSTRAINT_H
 /*
    Copyright (C) 2004-2007,2009 Benjamin Redelings
 
@@ -48,3 +50,5 @@ std::vector< std::pair<int,int> > get_y_ranges_for_band(int D,
 std::vector< std::pair<int,int> > get_yboundaries_from_pins(int I, int J, const std::vector< std::vector<int> >& pins);
 
 std::vector< std::pair<int,int> > boundaries_intersection(const std::vector< std::pair<int,int> >&,const std::vector< std::pair<int,int> >&);
+
+#endif
