@@ -104,7 +104,12 @@ simple_tools = ['model_P','statreport','stats-select','alignment-gild','alignmen
 	       ]
 
 foreach tool: simple_tools
-  tool_exe = executable(tool, ['tools/' + tool + '.cc'], dependencies:boost, link_with: libbaliphy, install: true)
+  tool_exe = executable(tool,
+			['tools/' + tool + '.cc'],
+			dependencies:boost,
+			link_with: libbaliphy,
+			install_rpath: extra_rpath,
+			install: true)
   test(tool + ' --help', tool_exe, args:['--help'])
 endforeach
 
@@ -123,7 +128,12 @@ if get_option('extra-tools')
 		 'alignment-convert', 'alignment-find-conserved','partitions-supported','draw-graph','trees-pair-distances','tree-partitions','tree-reroot',
 		 'path-graph']
   foreach tool : extra_tools
-    executable( tool, ['tools/' + tool + '.cc'], dependencies: boost, link_with:libbaliphy, install:true)
+    executable( tool,
+		['tools/' + tool + '.cc'],
+		dependencies: boost,
+		link_with:libbaliphy,
+		install_rpath: extra_rpath,
+		install:true)
   endforeach
   all_progs = all_progs + extra_tools
 endif
