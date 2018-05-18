@@ -264,28 +264,7 @@ void DPmatrix::forward_constrained(const vector< vector<int> >& pins)
 
     vector< pair<int,int> > yboundaries = get_yboundaries_from_pins(I, J, pins);
 
-    const vector<int>& x = pins[0];
-    const vector<int>& y = pins[1];
-
     forward_band(yboundaries);
-    return;
-
-    if (x.size() == 0) 
-	forward_square();
-    else 
-    {
-	// Propogate from S to first pin
-	forward_square_first(1,1,x[0],y[0]);
-
-	// Propogate from first pin to other pins (if any)
-	for(int i=0;i<(int)x.size()-1;i++)
-	    forward_square(x[i]+1,y[i]+1,x[i+1],y[i+1]);
-
-	int p = x.size()-1;
-	forward_square(x[p]+1,y[p]+1,I,J);
-    }
-  
-    compute_Pr_sum_all_paths();
 }
 
 log_double_t DPmatrix::path_P(const vector<int>& path) const 
