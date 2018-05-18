@@ -113,34 +113,6 @@ inline void DPmatrix::forward_first_cell(int i2,int j2)
     }
 } 
 
-inline void DPmatrix::forward_square_first(int x1,int y1,int x2,int y2) {
-    assert(0 < x1);
-    assert(0 < y1);
-    assert(x1 <= x2 or y1 <= y2);
-    assert(x2 < size1());
-    assert(y2 < size2());
-
-    // Since we are using M(0,0) instead of S(0,0), we need to run only the silent states at (0,0)
-    // We can only use non-silent states at (0,0) to simulate S
-
-    // clear left border
-    for(int y=y1;y<=y2;y++)
-	clear_cell(x1-1,y);
-
-    // forward first row, with exception for S(0,0)
-    clear_cell(x1,y1-1);
-    forward_first_cell(x1,y1);
-    for(int y=y1+1;y<=y2;y++)
-	forward_cell(x1,y);
-
-    // forward other rows
-    for(int x=x1+1;x<=x2;x++) {
-	clear_cell(x,y1-1);
-	for(int y=y1;y<=y2;y++)
-	    forward_cell(x,y);
-    }
-}
-
 void DPmatrix::forward_band(const vector< pair<int,int> >& yboundaries) 
 {
     // note: (x,y) is located at (x+1,y+1) in the matrix.
@@ -207,27 +179,6 @@ void DPmatrix::forward_band(const vector< pair<int,int> >& yboundaries)
     compute_Pr_sum_all_paths();
 }
 
-inline void DPmatrix::forward_square(int x1,int y1,int x2,int y2) {
-    assert(0 < x1);
-    assert(0 < y1);
-    assert(x1 <= x2 or y1 <= y2);
-    assert(x2 < size1());
-    assert(y2 < size2());
-
-    // Since we are using M(0,0) instead of S(0,0), we need to run only the silent states at (0,0)
-    // We can only use non-silent states at (0,0) to simulate S
-
-    // clear left border
-    for(int y=y1;y<=y2;y++)
-	clear_cell(x1-1,y);
-
-    for(int x=x1;x<=x2;x++) {
-	clear_cell(x,y1-1);
-	for(int y=y1;y<=y2;y++)
-	    forward_cell(x,y);
-    }
-}
-
 void DPmatrix::compute_Pr_sum_all_paths()
 {
     const int I = size1()-1;
@@ -242,16 +193,6 @@ void DPmatrix::compute_Pr_sum_all_paths()
 
     // This really is a probability, so it should be <= 1
     assert(Pr_total <= 1.0);
-}
-
-void DPmatrix::forward_square() 
-{
-    const int I = size1()-1;
-    const int J = size2()-1;
-
-    forward_square_first(1,1,I,J);
-
-    compute_Pr_sum_all_paths();
 }
 
 // FIXME - fix up pins for new matrix coordinates

@@ -120,11 +120,6 @@ public:
     virtual void forward_cell(int,int)=0;
 
     /// Compute the forward probabilities for a square
-    void forward_square_first(int,int,int,int);
-    void forward_square(int,int,int,int);
-    void forward_square();
-
-    /// Compute the forward probabilities for a square
     void forward_band(const std::vector< std::pair<int,int> >& boundaries);
 
     /// compute FP for entire matrix, with some points on path pinned
