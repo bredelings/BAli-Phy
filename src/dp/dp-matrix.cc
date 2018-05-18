@@ -880,37 +880,6 @@ int DPmatrixConstrained::order_of_computation() const {
 }
 
 
-void DPmatrixConstrained::prune() {
-
-    std::abort();
-
-    unsigned order1 = order_of_computation();
-
-    // For column
-    for(int c = 1;c<allowed_states.size();c++) {
-
-	// and for each allowed state in that column
-	for(int s2=allowed_states[c].size()-1;s2 >= 0;s2--) {
-
-	    // FIXME! this assumes that dj(s2) is true.
-
-	    // check to see whether any states in the previous column are connected to it
-	    bool used = false;
-	    for(int s1 = 0;s1<allowed_states[c-1].size() and not used;s1++) {
-		if (connected(allowed_states[c-1][s1],allowed_states[c][s2]))
-		    used = true;
-	    }
-
-	    // if nothing is connected, then remove it
-	    if (not used)
-		allowed_states[c].erase(allowed_states[c].begin()+s2);
-	}
-    }
-
-    unsigned order2 = order_of_computation();
-    std::cerr<<" order1 = "<<order1<<"    order2 = "<<order2<<"  fraction = "<<double(order2)/double(order1)<<endl;
-}
-
 DPmatrixConstrained::DPmatrixConstrained(const HMM& M,
 					 EmissionProbs&& d1,
 					 EmissionProbs&& d2,

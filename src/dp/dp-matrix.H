@@ -233,8 +233,6 @@ public:
     void clear_cell(int,int);
     void forward_cell(int,int);
 
-    void prune();
-
     DPmatrixConstrained(const HMM& M,
 			EmissionProbs&& d1,
 			EmissionProbs&& d2, 
