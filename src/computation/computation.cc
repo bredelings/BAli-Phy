@@ -12,7 +12,12 @@ int OperationArgs::reg_for_slot(int slot) const
 
 int OperationArgs::n_args() const {return current_closure().exp.size();}
 
-const expression_ref& OperationArgs::reference(int slot) const {return current_closure().exp.sub()[slot];}
+const expression_ref& OperationArgs::reference(int slot) const
+{
+    assert(0 <= slot);
+    assert(slot < current_closure().exp.sub().size());
+    return current_closure().exp.sub()[slot];
+}
 
 const closure& OperationArgs::evaluate_slot_to_closure(int slot)
 {
