@@ -179,7 +179,7 @@ public:
 
 
 /// 2D Dynamic Programming matrix with no constraints on states at each cell
-class DPmatrixSimple: public DPmatrixEmit {
+class DPmatrixSimple final: public DPmatrixEmit {
 public:
     void forward_cell(int,int);
 
@@ -191,7 +191,7 @@ public:
 
 
 /// Dynamic Programming matrix with constraints on the states
-class DPmatrixConstrained: public DPmatrixEmit 
+class DPmatrixConstrained final: public DPmatrixEmit 
 {
     int order_of_computation() const;
     std::vector< std::vector<int> > allowed_states;
