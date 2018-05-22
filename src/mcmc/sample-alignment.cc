@@ -71,16 +71,18 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, con
     state_emit[2] |= (1<<0);
     state_emit[3] |= 0;
 
+    int I = P.seqlength(t.source(b)); 
+    int J = P.seqlength(t.source(bb));
+
     boost::shared_ptr<DPmatrixSimple> 
 	Matrices( new DPmatrixSimple(HMM(state_emit, hmm.start_pi(), hmm, P.get_beta()),
 				     std::move(dists1), std::move(dists2), P.WeightedFrequencyMatrix())
 	    );
 
     //------------------ Compute the DP matrix ---------------------//
-    //  vector<vector<int> > pins= get_pins(P.alignment_constraint,A,group1,~group1,seq1,seq2);
-    vector<vector<int> > pins(2);
+    vector<std::pair<int,int>> yboundaries(I+1, std::pair<int,int>(0,J));
 
-    Matrices->forward_constrained(pins);
+    Matrices->forward_band(yboundaries);
 
     return Matrices;
 }
