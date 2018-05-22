@@ -195,19 +195,6 @@ void DPmatrix::compute_Pr_sum_all_paths()
     assert(Pr_total <= 1.0);
 }
 
-// FIXME - fix up pins for new matrix coordinates
-void DPmatrix::forward_constrained(const vector< vector<int> >& pins) 
-{
-    using std::pair;
-
-    const int I = size1()-1;
-    const int J = size2()-1;
-
-    vector< pair<int,int> > yboundaries = get_yboundaries_from_pins(I, J, pins);
-
-    forward_band(yboundaries);
-}
-
 log_double_t DPmatrix::path_P(const vector<int>& path) const 
 {
     const int I = size1()-1;

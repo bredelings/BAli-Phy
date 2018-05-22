@@ -119,11 +119,8 @@ public:
     void forward_first_cell(int,int);
     virtual void forward_cell(int,int)=0;
 
-    /// Compute the forward probabilities for a square
+    /// Compute the forward probabilities between y1(x) and y2(x)
     void forward_band(const std::vector< std::pair<int,int> >& boundaries);
-
-    /// compute FP for entire matrix, with some points on path pinned
-    void forward_constrained(const std::vector<std::vector<int> >&);
 
     /// Sample a path from the HMM
     std::vector<int> sample_path() const;
