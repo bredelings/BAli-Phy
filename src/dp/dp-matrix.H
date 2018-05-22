@@ -133,21 +133,6 @@ public:
 };
 
 
-/// 2D Dynamic Programming Matrix for chains which only emit or don't emit
-class DPmatrixNoEmit: public DPmatrix {
-public:
-    /// Compute the forward probabilities for a cell
-    void forward_cell(int,int);
-
-    log_double_t path_Q_subst(const std::vector<int>&) const {return 1;}
-
-    using DPmatrix::DPmatrix;
-
-    virtual ~DPmatrixNoEmit() {}
-};
-
-
-
 /// 2D Dynamic Programming Matrix for chains which emit different things
 class DPmatrixEmit : public DPmatrix {
 protected:

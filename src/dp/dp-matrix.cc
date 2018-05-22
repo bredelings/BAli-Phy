@@ -322,60 +322,6 @@ DPmatrix::DPmatrix(int i1,
 	(*this)(I,J,state1) = 0;
 }
 
-inline void DPmatrixNoEmit::forward_cell(int i2,int j2) 
-{ 
-    assert(0 < i2 and i2 < size1());
-    assert(0 < j2 and j2 < size2());
-
-    // determine initial scale for this cell
-    scale(i2,j2) = max(scale(i2-1,j2), max( scale(i2-1,j2-1), scale(i2,j2-1) ) );
-
-    double maximum = 0;
-
-    for(int s2=0;s2<n_dp_states();s2++) 
-    {
-	int S2 = dp_order(s2);
-
-	//--- Get (i1,j1) from (i2,j2) and S2
-	int i1 = i2;
-	if (di(S2)) i1--;
-
-	int j1 = j2;
-	if (dj(S2)) j1--;
-
-	//--- compute arrival probability ----
-	int MAX = n_dp_states();
-	if (not di(S2) and not dj(S2)) MAX = s2;
-
-	double temp  = 0;
-	for(int s1=0;s1<MAX;s1++) {
-	    int S1 = dp_order(s1);
-
-	    temp += (*this)(i1,j1,S1) * GQ(S1,S2);
-	}
-
-	// rescale result to scale of this cell
-	if (scale(i1,j1) != scale(i2,j2))
-	    temp *= pow2(scale(i1,j1)-scale(i2,j2));
-
-	// record maximum
-	if (temp > maximum) maximum = temp;
-
-	// store the result
-	(*this)(i2,j2,S2) = temp;
-    }
-
-    //------- if exponent is too high or too low, rescale ------//
-    if (maximum > fp_scale::hi_cutoff or (maximum > 0 and maximum < fp_scale::lo_cutoff))
-    {
-	int logs = -(int)log2(maximum);
-	double scale_ = pow2(logs);
-	for(int S2=0;S2<n_dp_states();S2++) 
-	    (*this)(i2,j2,S2) *= scale_;
-	scale(i2,j2) -= logs;
-    }
-} 
-
 inline double sum(const valarray<double>& v) {
     return v.sum();
 }
