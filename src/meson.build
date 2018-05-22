@@ -92,8 +92,9 @@ subdir('builtins')
 test('bali-phy version', baliphy, args:['--version'])
 test('bali-phy help', baliphy, args:['--help'])
 test('bali-phy 5d test', baliphy, args:[small_fasta,'--test', packagepath])
-test('bali-phy 5d +A 50', baliphy, args:[small_fasta,'--iter=50', packagepath])
-test('bali-phy 5d -A 200', baliphy, args:[small_fasta,'--iter=200', packagepath, '-Inone'])
+# When running on very slow autobuilders these tests could take a long time.
+test('bali-phy 5d +A 50', baliphy, args:[small_fasta,'--iter=50', packagepath], timeout: 180)
+test('bali-phy 5d -A 200', baliphy, args:[small_fasta,'--iter=200', packagepath, '-Inone'], timeout:120)
 
 #--------- Build rules for tools that are always installed ------------#
 
