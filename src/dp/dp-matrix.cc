@@ -343,17 +343,8 @@ log_double_t DPmatrixEmit::path_Q_subst(const vector<int>& path) const
 	if (dj(state2))
 	    j++;
 
-	double sub;
 	if (di(state2) and dj(state2))
-	    sub = emitMM(i,j);
-	else if (di(state2))
-	    sub = emitM_(i,j);
-	else if (dj(state2))
-	    sub = emit_M(i,j);
-	else
-	    sub = emit__(i,j);
-
-	P_sub *= sub;
+	    P_sub *= emitMM(i,j);
     }
     assert(i == size1()-1 and j == size2()-1);
     return P_sub * Pr_extra_subst;
@@ -459,18 +450,8 @@ void DPmatrixSimple::forward_cell(int i2,int j2)
 	    temp += (*this)(i1,j1,S1) * GQ(S1,S2);
 
 	//--- Include Emission Probability----
-	double sub;
 	if (i1 != i2 and j1 != j2)
-	    sub = emitMM(i2,j2);
-	else if (i1 != i2)
-	    sub = emitM_(i2,j2);
-	else if (j1 != j2)
-	    sub = emit_M(i2,j2);
-	else          // silent state - nothing emitted
-
-	    sub = emit__(i2,j2);
-
-	temp *= sub;
+	    temp *= emitMM(i2,j2);
 
 	// rescale result to scale of this cell
 	if (scale(i1,j1) != scale(i2,j2))
@@ -540,17 +521,8 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2)
 	}
 
 	//--- Include Emission Probability----
-	double sub;
 	if (i1 != i2 and j1 != j2)
-	    sub = emitMM(i2,j2);
-	else if (i1 != i2)
-	    sub = emitM_(i2,j2);
-	else if (j1 != j2)
-	    sub = emit_M(i2,j2);
-	else          // silent state - nothing emitted
-	    sub = emit__(i2,j2);
-
-	temp *= sub;
+	    temp *= emitMM(i2,j2);
 
 	// rescale result to scale of this cell
 	if (scale(i1,j1) != scale(i2,j2))
