@@ -384,8 +384,8 @@ sub html_header
 
       th {padding-left: 0.5em; padding-right:0.5em}
       td {padding: 0.1em;}
-      td {padding-left: 0.3em;}
-      td {padding-right: 0.3em;}
+      .backlit2 td {padding-left: 0.5em;}
+      .backlit2 td {padding-right: 1.0em;}
 
 #topbar {
 	background-color: rgb(201,217,233);
