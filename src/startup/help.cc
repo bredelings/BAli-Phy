@@ -308,7 +308,7 @@ optional<string> get_citation(const Rule& rule, bool show_title)
 
 
 
-optional<string> get_citation_doi(const Rule& rule)
+optional<string> get_citation_id(const Rule& rule, const string& idtype)
 {
     // 1. Check if there is a citation field.
     auto citation = rule.get_child_optional("citation");
@@ -320,7 +320,7 @@ optional<string> get_citation_doi(const Rule& rule)
 	for(auto& identifier: *identifiers)
 	{
 	    auto type = identifier.second.get_child_optional("type");
-	    if (not type or type->get_value<string>() != "doi") continue;
+	    if (not type or type->get_value<string>() != idtype) continue;
 
 	    auto id = identifier.second.get_child_optional("id");
 	    if (id)
@@ -353,9 +353,17 @@ optional<string> get_citation_url(const Rule& rule)
 	
     }
 
-    if (auto doi = get_citation_doi(rule))
+    if (auto doi = get_citation_id(rule,"doi"))
     {
 	return "https://doi.org/"+*doi;
+    }
+    else if (auto pmcid = get_citation_id(rule,"pmcid"))
+    {
+	return "https://www.ncbi.nlm.nih.gov/pmc/articles/"+*pmcid;
+    }
+    else if (auto pmid = get_citation_id(rule,"pmid"))
+    {
+	return "https://www.ncbi.nlm.nih.gov/pubmed/"+*pmid;
     }
 
     return boost::none;
