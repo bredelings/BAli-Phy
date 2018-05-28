@@ -30,5 +30,13 @@
     ],
     "title": "Free rates model",
     "description":"Rate heterogeneity model where the rate and frequency of each category can be estimated from the data.",
-    "examples": ["hky85+Rates.free[n=3]"]
+    "examples": ["hky85+Rates.free[n=3]"],
+    "citation":{"type": "article",
+		"title": "A space-time process model for the evolution of DNA sequences.",
+		"year": "1995",
+		"author": [{"name": "Yang, Ziheng"}],
+		"journal": {"name": "Genetics", "volume": "139", "number": "2", "pages": "993--1005"},
+		"identifier": [{"type":"pmid","id":"7713447"},
+			       {"type":"pmcid","id":"PMC1206396"}]
+	       }
 }
