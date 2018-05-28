@@ -130,6 +130,9 @@ frequency_matrix (MixtureModel d) = let {model = MixtureModel d}
 frequency_matrix (MixtureModels (m:ms)) = frequency_matrix m;
 
 --
+uniform_frequencies a = zip letters (repeat $ 1.0/(intToDouble n_letters)) where {letters = alphabet_letters a;
+                                                                                  n_letters = alphabetSize a};
+
 plus_f_equal_frequencies a = plus_f a (replicate n_letters (1.0/intToDouble n_letters)) where {n_letters=alphabetSize a};
 
 jukes_cantor a = reversible_markov (equ a) (plus_f_equal_frequencies a);
