@@ -6,24 +6,35 @@
         {
             "arg_name": "omega",
             "arg_type": "Double",
-            "default_value": "~uniform[0,1]"
+            "default_value": "~uniform[0,1]",
+	    "description": "Excess dN/dS"
         },
         {
             "arg_name": "w",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "zip[letters[A],~iid[length[letters[A]],log_normal[0,0.5]]]"
+            "default_value": "zip[letters[A],~iid[length[letters[A]],log_normal[0,0.5]]]",
+	    "description": "Fitness of codons"
         },
         {
             "arg_name": "submodel",
             "arg_type": "RevCTMC[a]",
-            "default_value": "hky85_sym",
-	    "alphabet": "getNucleotides[A]"
+            "default_value": "hky85",
+	    "alphabet": "getNucleotides[A]",
+	    "description": "Model of neutral nucleotide substitution"
         },
 	{
 	    "arg_name": "A",
 	    "arg_type": "Codons[a]",
-	    "default_value": "getAlphabet"
+	    "default_value": "getAlphabet",
+	    "description": "The alphabet"
 	}
     ],
-    "extract": "all"
+    "extract": "all",
+    "citation":{"type": "article",
+		"title": "Mutation-Selection Models of Codon Substitution and Their Use to Estimate Selective Strengths on Codon Usage",
+		"year": "2008",
+		"author": [{"name": "Yang, Ziheng"},{"name": "Nielsen, Rasmus"}],
+		"journal": {"name": "Molecular Biology and Evolution", "volume": "25", "number": "3", "pages": "568--579"},
+		"identifier": [{"type":"doi","id":"10.1093/molbev/msm284"}]
+	       }
 }
