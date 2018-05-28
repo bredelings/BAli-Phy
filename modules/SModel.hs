@@ -227,13 +227,6 @@ get_element_freqs ((key,value):rest) x = if (key == x) then value else get_eleme
 get_element_exchange []                 x y = error ("No exchangeability specified for '" ++ x ++ "'");
 get_element_exchange ((key,value):rest) x y = if key == x || key == y then value else get_element_exchange rest x y;
 
-constant_frequencies_model freqs a = sequence [get_element_freqs freqs l|l <- alphabet_letters a];
-
-perform_hash [] = return [];
-perform_hash ((x,y):xys) = do {y' <- y; xys' <- perform_hash xys; return ((x,y'):xys')};
-
-constant_frequencies_model2 freqs a = do {freqs' <- freqs; return [get_element_freqs freqs' l|l <- alphabet_letters a]};
-
 select_element x ((key,value):rest) = if x == key then value else select_element x rest;
 select_element x [] = error $ "Can't find element " ++ show x ++ " in dictionary!";
 
