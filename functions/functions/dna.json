@@ -1,8 +1,8 @@
 {
     "name": "dna",
-    "synonyms": [ "DNA" ],
+    "synonyms": ["DNA"],
     "result_type": "DNA",
     "call": "Alphabet.dna",
     "args": [],
-    "title": "The RNA alphabet"
+    "title": "The DNA alphabet"
 }
