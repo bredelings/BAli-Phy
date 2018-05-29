@@ -410,7 +410,8 @@ string get_help_for_rule(const Rules& rules, const Rule& rule)
 	help<<indent_and_wrap(3, terminal_width(),join(syn,", "))<<"\n\n";
     }
 
-    help<<header("Arguments");
+    if (not args.empty())
+	help<<header("Arguments");
     for(auto& argpair: args)
     {
 	auto& arg = argpair.second;
