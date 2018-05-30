@@ -591,6 +591,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
 	    conditional_likelihoods_for_branch[b] = p->add_compute_expression({dummy("Prelude.!"),cls,b});
 
+	// FIXME: broken for fixed alignments of 2 sequences.
 	if (p->t().n_nodes() == 2)
 	{
 	    expression_ref seq1 = {dummy("Prelude.!"), seqs_array, 0};
@@ -618,6 +619,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 
 	object_ptr<Vector<int>> Counts(new Vector<int>(counts));
 
+	// FIXME: broken for fixed alignments of 2 sequences.
 	if (p->t().n_nodes() == 2)
 	{
 	    expression_ref seq1 = {dummy("Prelude.!"), seqs_array, 0};
