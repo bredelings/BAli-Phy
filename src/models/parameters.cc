@@ -542,22 +542,19 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	    transition_p_method_indices[b] = p->add_compute_expression( {dummy("Prelude.!"), transition_ps, b} );
     }
 
-    // Add parameters for observed leaf sequence objects
-    vector<vector<int>> seq_counts = alignment_letters_counts(AA, t.n_leaves(), counts);
-    vector<expression_ref> counts_;
+    // Add expressions for leaf sequences
     for(int i=0; i<leaf_sequence_indices.size(); i++)
-    {
 	leaf_sequence_indices[i] = p->add_compute_expression(Vector<int>(sequences[i]));
-	counts_.push_back( Vector<int>(seq_counts[i]) );
-    }
 
+    // Add array of leaf sequences
     vector<expression_ref> seqs_;
     for(int index: leaf_sequence_indices)
+    {
 	seqs_.push_back( p->get_expression(index) );
+    }
     auto seqs_array = p->get_expression( p->add_compute_expression({dummy("Prelude.listArray'"),get_list(seqs_)}) );
-    auto counts_array = p->get_expression( p->add_compute_expression({dummy("Prelude.listArray'"),get_list(counts_)}) );
-  
-    // Add methods indices for sequence lengths
+
+    // Add array of pairwise alignments
     vector<expression_ref> as_;
     for(int b=0;b<2*B;b++)
     {
@@ -566,6 +563,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     }
     expression_ref as = p->get_expression( p->add_compute_expression({dummy("Prelude.listArray'"),get_list(as_)}) );
 
+    // Precompute sequence lengths
     for(int n=0;n<t.n_nodes();n++)
     {
 	expression_ref L = {dummy("Alignment.seqlength"), as, p->my_tree(), n};
@@ -580,6 +578,12 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     }
     else if (likelihood_calculator == 0)
     {
+	vector<vector<int>> seq_counts = alignment_letters_counts(AA, t.n_leaves(), counts);
+	vector<expression_ref> counts_;
+	for(int i=0; i<leaf_sequence_indices.size(); i++)
+	    counts_.push_back( Vector<int>(seq_counts[i]) );
+	auto counts_array = p->get_expression( p->add_compute_expression({dummy("Prelude.listArray'"),get_list(counts_)}) );
+
 	auto t = p->my_tree();
 	auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
 	cl_index = p->add_compute_expression({dummy("SModel.cached_conditional_likelihoods"),t,seqs_array,counts_array,as,*a,transition_ps,f});  // Create and set conditional likelihoods for each branch
@@ -612,6 +616,8 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
 	    conditional_likelihoods_for_branch[b] = p->add_compute_expression({dummy("Prelude.!"),cls,b});
 
+	object_ptr<Vector<int>> Counts(new Vector<int>(counts));
+
 	if (p->t().n_nodes() == 2)
 	{
 	    expression_ref seq1 = {dummy("Prelude.!"), seqs_array, 0};
@@ -625,7 +631,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	else
 	{
 	    auto root = parameter("*subst_root");
-	    object_ptr<Vector<int>> Counts(new Vector<int>(counts));
 	    likelihood_index = p->add_compute_expression({dummy("SModel.peel_likelihood_SEV"), t, cls, f, root, Counts});
 	}
     }
