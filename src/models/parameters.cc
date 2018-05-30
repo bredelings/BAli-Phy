@@ -625,7 +625,8 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	else
 	{
 	    auto root = parameter("*subst_root");
-	    likelihood_index = p->add_compute_expression({dummy("SModel.peel_likelihood_SEV"), t, cls, f, root});
+	    object_ptr<Vector<int>> Counts(new Vector<int>(counts));
+	    likelihood_index = p->add_compute_expression({dummy("SModel.peel_likelihood_SEV"), t, cls, f, root, Counts});
 	}
     }
 

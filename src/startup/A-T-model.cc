@@ -651,14 +651,14 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 	    int c = likelihood_calculators[i];
 	    if (c != 0 and c != 1)
 		throw myexception()<<"Calculator "<<c<<" not recognized!";
-	    if (c != 0 and imodel_mapping[i] != -1)
+	    if (c != 0 and imodel_mapping[i])
 		throw myexception()<<"Calculator "<<c<<" does not work with a variable alignment!";
 	}
     }
 
     bool unalign = args.count("unalign");
     for(int i=0;i<A.size();i++)
-	if (unalign and imodel_mapping[i] != -1)
+	if (unalign and imodel_mapping[i])
 	    if (likelihood_calculators[i] != 0)
 		throw myexception()<<"Can't unalign with calculator "<<likelihood_calculators[i]<<"!";
     

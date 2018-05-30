@@ -527,7 +527,8 @@ namespace substitution {
     log_double_t calc_root_probability_SEV(const Likelihood_Cache_Branch* LCB1,
 					   const Likelihood_Cache_Branch* LCB2,
 					   const Likelihood_Cache_Branch* LCB3,
-					   const Matrix& F)
+					   const Matrix& F,
+					   const vector<int>& counts)
     {
 	total_calc_root_prob++;
 
@@ -557,6 +558,7 @@ namespace substitution {
 	assert(L > 0);
 	assert(L == bits2.size());
 	assert(L == bits3.size());
+	assert(L == counts.size());
 
 	total_root_clv_length += L;
 
@@ -630,7 +632,7 @@ namespace substitution {
 	    if (non_gap2) i2++;
 	    if (non_gap3) i3++;
 
-	    total.mult_with_count(p_col,1);
+	    total.mult_with_count(p_col,counts[c]);
 	    //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
 	}
 
