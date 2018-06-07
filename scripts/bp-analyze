@@ -738,8 +738,8 @@ sub section_phylogeny_distribution
 
     $section .= html_svg("c50-tree.svg","25%","",["floating_picture"]);
     $section .= '<table>'."\n";
-    $section .= "<tr><td>Partition support: <a href=\"consensus\">Summary</a></td></tr>\n";
-    $section .= "<tr><td><span title=\"How many partitions are supported at each level of Posterior Log Odds (LOD)?\">Partition support graph:</span> <a href=\"c-levels.svg\">SVG</a></td></tr>\n";
+    $section .= "<tr><td>Partition support: <a href=\"consensus\">Summary</a></td><td><a href=\"partitions.bs\">Across chains</a></td></tr>\n";
+#    $section .= "<tr><td><span title=\"How many partitions are supported at each level of Posterior Log Odds (LOD)?\">Partition support graph:</span> <a href=\"c-levels.svg\">SVG</a></td></tr>\n";
     $section .= "</table>\n";
 
     $section .= "<table>\n";
@@ -857,26 +857,21 @@ sub section_mixing
 
     $section .= "<h2><a class=\"anchor\" name=\"mixing\"></a>Mixing</h2>\n";
 
-#$section .= '<object class="r_floating_picture" data="partitions.SRQ.svg" type="image/svg+xml" height="200pt"></object>';
-$section .= '<img src="partitions.SRQ.png" class="r_floating_picture" alt="SRQ plot for support of each partition."/>';
-#$section .= '<object class="r_floating_picture" data="c50.SRQ.svg" type="image/svg+xml" height="200pt"></object>';
-#$section .= '<embed class="r_floating_picture" src="c50.SRQ.svg" type="image/svg+xml" height="200" />';
-#$section .= '<embed class="r_floating_picture" src="partitions.SRQ.svg" type="image/svg+xml" height="200" />';
-$section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for supprt of 50% consensus tree."/>';
-
+    $section .= '<table style="width:100%;clear:both"><tr>';
+    $section .= '<td style="vertical-align:top">';
     
     $section .= "<ol>\n";
-    $section .= "<li><a href=\"partitions.bs\">Partition uncertainty</a></li>\n";
-    for my $srq (@SRQ) {
-	$section .= "<li><a href=\"$srq.SRQ.png\">SRQ plot: $srq</a></li>\n";
-    }
-    $section .= '<li><a href="convergence-PP.pdf">Variation in split frequency estimates</a></li>'."\n" if (-f "Results/convergence-PP.pdf");
+#    for my $srq (@SRQ) {
+#	$section .= "<li><a href=\"$srq.SRQ.png\">SRQ plot: $srq</a></li>\n";
+#    }
+#    $section .= '<li><a href="convergence-PP.pdf">Variation in split frequency estimates</a></li>'."\n" if (-f "Results/convergence-PP.pdf");
     $section .= "</ol>\n";
     
 
-    $section .= "<table>";
-    $section .= "<tr><th>burnin (scalar)</th><th>ESS (scalar)</th><th>ESS (partition)</th><th>ASDSF</th><th>MSDSF</th><th>PSRF-CI80%</th><th>PSRF-RCF</th></tr>";
-    $section .= "<tr>";
+    
+    $section .= "<p><b>Statistics:</b></p>";
+    $section .= "<table class=\"backlit2\">";
+#    $section .= "<tr><th>burnin (scalar)</th><th>ESS (scalar)</th><th>ESS (partition)</th><th>ASDSF</th><th>MSDSF</th><th>PSRF-CI80%</th><th>PSRF-RCF</th></tr>";
 
     my $burnin_before = "NA";
     my $min_NE = "NA";
@@ -887,18 +882,18 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
 	$min_NE = get_value_from_file('Results/Report','Ne  >=');
     }
     
-    $section .= "<td>$burnin_before</td>";
-    $section .= "<td>$min_NE</td>";
+    $section .= "<tr><td><b>scalar burnin</b></td><td>$burnin_before</td></tr>";
+    $section .= "<tr><td><b>scalar ESS</b></td><td>$min_NE</td></tr>";
     my $min_NE_partition = get_value_from_file('Results/partitions.bs','min Ne =');
-    $section .= "<td>$min_NE_partition</td>";
+    $section .= "<tr><td><b title=\"Effective Sample Size for bit-vectors of partition support (smallest)\">topological ESS</b></td><td>$min_NE_partition</td></tr>";
 
     my $asdsf = get_value_from_file('Results/partitions.bs','ASDSF\[min=0.100\] =');
     $asdsf = "NA" if (!defined($asdsf));
-    $section .= "<td>$asdsf</td>";
+    $section .= "<tr><td><b title=\"Average Standard Deviation of Split Frequencies\">ASDSF</b></td><td>$asdsf</td></tr>";
 
     my $msdsf = get_value_from_file('Results/partitions.bs','MSDSF =');
     $msdsf = "NA" if (!defined($msdsf));
-    $section .= "<td>$msdsf</td>";
+    $section .= "<tr><td><b title=\"Maximum Standard Deviation of Split Frequencies\">MSDSF</b></td><td>$msdsf</td></tr>";
 
     my $psrf_80 = "NA";
     my $psrf_rcf = "NA";
@@ -907,10 +902,9 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
         $psrf_80 = get_value_from_file('Results/Report','PSRF-80%CI <=');
 	$psrf_rcf = get_value_from_file('Results/Report','PSRF-RCF <=');
     }
-    $section .= "<td>$psrf_80</td>";
-    $section .= "<td>$psrf_rcf</td>";
+    $section .= "<tr><td><b>PSRF CI80%</b></td><td>$psrf_80</td></tr>";
+    $section .= "<tr><td><b>PSRF RCF</b></td><td>$psrf_rcf</td></tr>";
 
-    $section .= "</tr>";
     $section .= "</table>\n";
 
     ###### What file should we show for MDS?
@@ -935,7 +929,20 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
 	$MDS_figure_3d = "tree-3D1-1.points";
 	$title = "1 chain";
     }
+    $section .= '</td>';
+#$section .= '<object class="r_floating_picture" data="partitions.SRQ.svg" type="image/svg+xml" height="200pt"></object>';
+    $section .= '<td>';
+    $section .= '<img src="partitions.SRQ.png" alt="SRQ plot for support of each partition."/>';
+#    $section .= '</td>';
+#$section .= '<object class="r_floating_picture" data="c50.SRQ.svg" type="image/svg+xml" height="200pt"></object>';
+#$section .= '<embed class="r_floating_picture" src="c50.SRQ.svg" type="image/svg+xml" height="200" />';
+#$section .= '<embed class="r_floating_picture" src="partitions.SRQ.svg" type="image/svg+xml" height="200" />';
+#    $section .= '<td>';
+    $section .= '<img src="c50.SRQ.png" alt="SRQ plot for supprt of 50% consensus tree."/>';
+    $section .= '</td>';
 
+    $section .= '</tr></table>';
+    
     ###### Table of MDS versus 
     $section .= '<table style="width:100%;clear:both"><tr>';
 
@@ -963,6 +970,7 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
     }
     $section .= '</td>';
     
+
     $section .= '</tr></table>';
 
 my $tne_string = exec_show("pickout -n Ne < Results/partitions.bs");
