@@ -629,11 +629,11 @@ sub section_analysis
     my $section = "";
     $section .= "<br/><hr/><br/>\n";
     $section .= "<h2><a class=\"anchor\" name=\"analysis\"></a>Analysis</h2>\n";
-    $section .= "<p>";
+    $section .= "<p>" if (!$commands_differ || !$directories_differ || !$versions_differ);
     $section .= "<b>command line</b>: $commands[0]</br>\n" if (!$commands_differ);
     $section .= "<b>directory</b>: $directories[0]</br>\n" if (!$directories_differ);
     $section .= "<b>version</b>: $versions[0]\n" if (!$versions_differ);
-    $section .= "</p>";
+    $section .= "</p>" if (!$commands_differ || !$directories_differ || !$versions_differ);
     #$section .= '<table style="width:100%">'."\n";
 
     #$section .= '<table class="backlit2 center" style="width:100%">'."\n";
