@@ -126,11 +126,19 @@ for(my $i=1;$i<=$#commands;$i++)
 	print "WARNING: Commands differ!\n  $commands[0]\n  $commands[$i]\n";
     }
 }
+
 @directories = get_header_attributes("directory",@out_files);
 my $directories_differ=0;
 for(my $i=1;$i<=$#directories;$i++)
 {
     $directories_differ=1 if ($directories[$i] ne $directories[0]);
+}
+
+my @versions = get_all_versions();
+my $versions_differ=0;
+for(my $i=1;$i<=$#versions;$i++)
+{
+    $versions_differ=1 if ($versions[$i] ne $versions[0]);
 }
 
 @subdirs    = get_header_attributes("subdirectory",@out_files);
@@ -621,13 +629,18 @@ sub section_analysis
     my $section = "";
     $section .= "<br/><hr/><br/>\n";
     $section .= "<h2><a class=\"anchor\" name=\"analysis\"></a>Analysis</h2>\n";
-    $section .= "<p style=\"margin-bottom:0\"><b>command line</b>: $commands[0]</p>\n" if (!$commands_differ);
-    $section .= "<p style=\"margin-top:0\"><b>directory</b>: $directories[0]</p>\n" if (!$directories_differ);
+    $section .= "<p>";
+    $section .= "<b>command line</b>: $commands[0]</br>\n" if (!$commands_differ);
+    $section .= "<b>directory</b>: $directories[0]</br>\n" if (!$directories_differ);
+    $section .= "<b>version</b>: $versions[0]\n" if (!$versions_differ);
+    $section .= "</p>";
     #$section .= '<table style="width:100%">'."\n";
 
     #$section .= '<table class="backlit2 center" style="width:100%">'."\n";
     $section .= '<table class="backlit2 center">'."\n";
-    $section .= "<tr><th>chain #</th><th>burnin</th><th>subsample</th><th>Iterations (after burnin)</th>";
+    $section .= "<tr><th>chain #</th>";
+    $section .= "<th>version</th>" if ($versions_differ);
+    $section .= "<th>burnin</th><th>subsample</th><th>Iterations (after burnin)</th>";
     $section .= "<th>command line</th>" if ($commands_differ);
     $section .= "<th>subdirectory</th>";
     $section .= "<th>directory</th>" if ($directories_differ);
@@ -637,6 +650,7 @@ sub section_analysis
 $section .= "<tr>\n";
 
 $section .= "  <td>".($i+1)."</td>\n";
+$section .= "  <td>$versions[$i]</td>\n" if ($versions_differ);
 
 $section .= "  <td>$burnin</td>\n";
 $section .= "  <td>$subsample</td>\n";
@@ -647,6 +661,7 @@ $section .= "  <td>$remaining</td>\n";
 $section .= "  <td>$commands[$i]</td>\n" if ($commands_differ);
 $section .= "  <td>$subdirs[$i]</td>\n";
 $section .= "  <td>$directories[$i]</td>\n" if ($directories_differ);
+
 
 $section .= "</tr>\n";
     }
@@ -2255,6 +2270,43 @@ sub get_models_for_file
     close FILE;
 
     return [@models];
+}
+
+sub get_version_for_file
+{
+    my $file = shift;
+    my $version = get_header_attribute("VERSION",[$file]);
+    $version = (split /\s+/,$version)[0];
+    return $version;
+}
+
+sub get_version_for_run_file
+{
+    my $file = shift;
+    my $j = get_json_from_file($file);
+    return ${$j}{'program'}{'version'};
+}
+
+sub get_all_versions
+{
+    return [] if ($#out_files == -1);
+    my @versions;
+
+    if (!@run_files)
+    {
+	foreach my $out_file (@out_files)
+	{
+	    push @versions, get_version_for_file($out_file);
+	}
+    }
+    else
+    {
+	foreach my $run_file (@run_files)
+	{
+	    push @versions, get_version_for_run_file($run_file);
+	}
+    }
+    return @versions;
 }
 
 sub get_models
