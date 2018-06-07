@@ -932,13 +932,13 @@ sub section_mixing
     $section .= '</td>';
 #$section .= '<object class="r_floating_picture" data="partitions.SRQ.svg" type="image/svg+xml" height="200pt"></object>';
     $section .= '<td>';
-    $section .= '<img src="partitions.SRQ.png" alt="SRQ plot for support of each partition."/>';
 #    $section .= '</td>';
 #$section .= '<object class="r_floating_picture" data="c50.SRQ.svg" type="image/svg+xml" height="200pt"></object>';
 #$section .= '<embed class="r_floating_picture" src="c50.SRQ.svg" type="image/svg+xml" height="200" />';
 #$section .= '<embed class="r_floating_picture" src="partitions.SRQ.svg" type="image/svg+xml" height="200" />';
 #    $section .= '<td>';
     $section .= '<img src="c50.SRQ.png" alt="SRQ plot for supprt of 50% consensus tree."/>';
+    $section .= '<img src="partitions.SRQ.png" alt="SRQ plot for support of each partition."/>';
     $section .= '</td>';
 
     $section .= '</tr></table>';
