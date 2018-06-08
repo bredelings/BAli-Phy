@@ -507,7 +507,7 @@ sub print_models
     {
 	my $model_name = $name.$i;
 	my ($assign, $model_html) = print_model($model);
-	$section .= "<tr><td><a name=\"$model_name\" class=\"anchor modelname\"></a>$model_name</td><td>$assign</td><td>\n";
+	$section .= "<tr><td><a name=\"$model_name\" class=\"anchor\"></a><span class=\"modelname\">$model_name</span></td><td>$assign</td><td>\n";
 	$section .= $model_html;
 	$section .= "</td></tr>\n";
 	$i = $i + 1;
