@@ -184,6 +184,8 @@ public:
 	    {
 		if (x == 0) return white;
 
+		if (n_blocks == 1) return HSV(0,1,1);
+		
 		x = (x-1)/(n_blocks-1);
 
 		// otherwise use the rainbow

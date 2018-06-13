@@ -89,7 +89,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("fill",value<string>()->default_value("gap"),"blank columns filled with: gap or unknown")
 	("differences-file,d",value<string>(),"Filename to store differences in AU format")
 	("blocksize",value<int>()->default_value(20),"Width of blocks of same color")
-	("classes",value<int>()->default_value(3),"Number of groups for non-matching characters")
+	("classes",value<int>()->default_value(1),"Number of groups for non-matching characters")
 	;
 
     options_description all("All options");
