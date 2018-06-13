@@ -533,7 +533,7 @@ int main(int argc,char* argv[])
 		info["subdirectory"] = dir_name;
 		files = init_files(proc_id, dir_name, argc, argv);
 		loggers = construct_loggers(M, subsample, Rao_Blackwellize, proc_id, dir_name);
-		write_initial_alignments(*M, proc_id, dir_name);
+		write_initial_alignments(args, proc_id, dir_name);
 	    }
 	    else {
 		files.push_back(shared_ptr<ostream>(new ostream(cout.rdbuf())));

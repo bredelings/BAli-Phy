@@ -11,6 +11,9 @@
 #include "startup/help.hh"
 #include "computation/expression/lambda.H"
 #include <boost/optional/optional_io.hpp>
+#include <boost/filesystem/operations.hpp>
+
+namespace fs = boost::filesystem;
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -711,22 +714,21 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     return P;
 }
 
-void write_initial_alignments(const owned_ptr<Model>& M, int proc_id, string dir_name)
+void write_initial_alignments(variables_map& args, int proc_id, const string& dir_name)
 {
-    const Parameters* P = M.as<const Parameters>();
-    if (not P) return;
+    vector<string> filenames = args["align"].as<vector<string> >();
 
-    if (P->t().n_nodes() < 2) return;
+    fs::path dir(dir_name);
 
-    vector<alignment> A;
-    for(int i=0;i<P->n_data_partitions();i++)
-	A.push_back((*P)[i].A());
+    string base = "C" + convertToString(proc_id+1);
 
-    string base = dir_name + "/" + "C" + convertToString(proc_id+1);
-    for(int i=0;i<A.size();i++)
+    int i=0;
+    for(auto& filename: filenames)
     {
-	checked_ofstream file(base+".P"+convertToString(i+1)+".initial.fasta");
-	file<<A[i]<<endl;
+	auto source = fs::path(filename);
+	auto target = fs::path(base+".P"+convertToString(i+1)+".initial.fasta");
+	fs::copy_file(source,dir/target);
+	i++;
     }
 }
 
