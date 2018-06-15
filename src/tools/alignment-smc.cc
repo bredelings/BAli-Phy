@@ -281,6 +281,7 @@ bool is_masked_column(const alignment& A, int c)
 
 bool is_variant_column(const alignment& A, int c)
 {
+    assert(0 <= c and c < A.length());
     int i=0;
     int l0 = -1;
     for(;i<A.n_sequences() and l0 < 0;i++)
@@ -295,7 +296,7 @@ bool is_variant_column(const alignment& A, int c)
 int count_variant_columns(const alignment& A, int c1, int c2)
 {
     int count = 0;
-    for(int c=c1;c<=c2;c++)
+    for(int c=c1;c<=c2 and c<A.length();c++)
 	if (is_variant_column(A,c))
 	    count++;
     return count;
