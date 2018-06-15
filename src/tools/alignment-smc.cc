@@ -602,23 +602,25 @@ dynamic_bitset<> block_mask(dynamic_bitset<> mask, int blocksize)
 
 int autoclean(alignment& A)
 {
-    constexpr double mean = 2.0;
+    constexpr double mean_snps_per_block = 2.0;
     constexpr double factor = 10.0;
-    int L = A.length();
+    int n_sites = A.length();
     int S = n_snps(A);
     if (S < 100) throw myexception()<<"Refusing to autoclean chromosome with < 100 variant sites.";
 
     int masked = 0;
-    int blocksize = int(L*(mean/S)+0.5);
+    int blocksize = int(n_sites*(mean_snps_per_block/S)+0.5);
     auto counts = snps_in_blocks(A, blocksize);
 
     for(int i=0;i<counts.size();i++)
-	if (counts[i] >= mean*factor)
+    {
+	if (counts[i] >= mean_snps_per_block*factor)
 	{
 	    masked++;
 	    for(int j=i*blocksize;j<A.length() and j<(i+1)*blocksize;j++)
 		mask_column(A, j);
 	}
+    }
     return masked;
 }
 
