@@ -278,6 +278,7 @@ bool is_masked_column(const alignment& A, int c)
 	    return false;
     return true;
 }
+
 bool is_variant_column(const alignment& A, int c)
 {
     int i=0;
@@ -289,6 +290,15 @@ bool is_variant_column(const alignment& A, int c)
 	if (A(c,i) >= 0 and A(c,i) != l0) return true;
 
     return false;
+}
+
+int count_variant_columns(const alignment& A, int c1, int c2)
+{
+    int count = 0;
+    for(int c=c1;c<=c2;c++)
+	if (is_variant_column(A,c))
+	    count++;
+    return count;
 }
 
 void remove_columns(alignment& A, const std::function<bool(int)>& remove)
@@ -575,11 +585,19 @@ void write_histogram(std::ostream& o, int blocksize, const alignment& A)
 }
 
 
-// The counts should be Poisson distributed.  It will be relatively rate to get
+// The counts should be Poisson distributed.  It will be relatively rare to get
 // counts more than 10 times higher than the mean
 
-// FIXME - this does depend on the window boundaries.
-// Change so that we use a sliding window.
+dynamic_bitset<> block_mask(dynamic_bitset<> mask, int blocksize)
+{
+    auto mask2 = mask;
+    for(int i=1; i<blocksize; i++)
+    {
+	mask2 <<= 1;
+	mask |= mask2;
+    }
+    return mask;
+}
 
 int autoclean(alignment& A)
 {
@@ -642,7 +660,9 @@ int main(int argc,char* argv[])
 
 	auto A = A0;
 	const alphabet& a = A.get_alphabet();
-    
+
+	if (args.count("autoclean"))
+	    autoclean(A);
 
 	if (args.count("mask-file"))
 	{
@@ -651,15 +671,6 @@ int main(int argc,char* argv[])
 		auto intervals = read_intervals_file(filename);
 		mask_intervals(intervals, A);
 	    }
-	}
-
-	if (args.count("autoclean"))
-	    autoclean(A);
-
-	if (args.count("histogram"))
-	{
-	    write_histogram(std::cout, args["histogram"].as<int>(), A);
-	    exit(0);
 	}
 
 	if (args.count("mask-gaps"))
@@ -676,6 +687,12 @@ int main(int argc,char* argv[])
 
 	    // 3. Alter the alignment
 	    remove_and_mask_columns(A, [&gaps](int c){return gaps[c];});
+	}
+
+	if (args.count("histogram"))
+	{
+	    write_histogram(std::cout, args["histogram"].as<int>(), A);
+	    exit(0);
 	}
 
 	//----- Count informative/non-constant sites ----//
