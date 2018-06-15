@@ -592,9 +592,9 @@ void write_histogram(std::ostream& o, int blocksize, const alignment& A)
 dynamic_bitset<> block_mask(dynamic_bitset<> mask, int blocksize)
 {
     auto mask2 = mask;
-    for(int i=1; i<blocksize; i++)
+    for(int i=1; i<=blocksize; i++)
     {
-	mask2 <<= 1;
+	mask2 >>= 1;
 	mask |= mask2;
     }
     return mask;
@@ -610,17 +610,36 @@ int autoclean(alignment& A)
 
     int masked = 0;
     int blocksize = int(n_sites*(mean_snps_per_block/S)+0.5);
-    auto counts = snps_in_blocks(A, blocksize);
 
-    for(int i=0;i<counts.size();i++)
+    dynamic_bitset<> mask(n_sites);
+    int count = 0;
+    for(int c2=0; c2<n_sites; c2++)
     {
-	if (counts[i] >= mean_snps_per_block*factor)
+	int c1 = c2 - blocksize;
+
+	if (            is_variant_column(A,c2)) count++;
+	if (c1 >= 0 and is_variant_column(A,c1)) count--;
+
+	assert(count == count_variant_columns(A, std::max(c1+1,0), c2));
+
+	if (count >= mean_snps_per_block*factor)
 	{
+	    mask.set(c2);
 	    masked++;
-	    for(int j=i*blocksize;j<A.length() and j<(i+1)*blocksize;j++)
-		mask_column(A, j);
 	}
     }
+
+    auto mask2 = block_mask(mask, blocksize);
+    for(int i=0;i<n_sites;i++)
+    {
+	if (mask2[i])
+	{
+	    mask_column(A, i);
+	}
+    }
+
+//    std::cerr<<"Masked "<<masked<<" sites\n";
+
     return masked;
 }
 
