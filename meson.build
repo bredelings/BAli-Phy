@@ -135,7 +135,7 @@ run_tests = find_program(join_paths(meson.source_root(),'tests/run-tests.py'))
 
 test('bali-phy testsuite',
      run_tests,
-     timeout: 600,
+     timeout: 3000,
      workdir: join_paths(meson.source_root(),'tests'),
      args:[baliphy.full_path(), packagepath])
 
@@ -146,7 +146,7 @@ testiphy = find_program(join_paths(meson.source_root(),'testiphy/testiphy'), req
 if testiphy.found()
   test('testiphy (likelihood testsuite)',
        testiphy,
-       timeout: 600,
+       timeout: 3000,
        workdir: join_paths(meson.source_root(),'testiphy'),
        args:[baliphy.full_path(), packagepath])
 endif
