@@ -1,4 +1,4 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BAli-Phy User's Guide v3.1</title><link rel="stylesheet" type="text/css" href="docbook.css"><meta name="generator" content="DocBook XSL Stylesheets V1.79.1"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div lang="en" class="article"><div class="titlepage"><div><div><h2 class="title"><a name="idp1"></a><span class="application">BAli-Phy</span> User's Guide v3.1</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Benjamin</span> <span class="surname">Redelings</span></h3></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl class="toc"><dt><span class="section"><a href="#intro">1. Introduction</a></span></dt><dt><span class="section"><a href="#installation">2. Installation</a></span></dt><dd><dl><dt><span class="section"><a href="#pre-requisites">2.1. Hardware requirements</a></span></dt><dt><span class="section"><a href="#idp5">2.2. Install on MS Windows</a></span></dt><dt><span class="section"><a href="#idp10">2.3. Install on Mac OS X</a></span></dt><dt><span class="section"><a href="#idp15">2.4. Install on Linux</a></span></dt><dt><span class="section"><a href="#path">2.5. Add BAli-Phy to your <code class="envar">PATH</code></a></span></dt><dt><span class="section"><a href="#tests">2.6. Test the installed software</a></span></dt><dt><span class="section"><a href="#software_req">2.7. Install programs used for viewing the results</a></span></dt></dl></dd><dt><span class="section"><a href="#compilation">3. Compiling <span class="application">BAli-Phy</span></a></span></dt><dd><dl><dt><span class="section"><a href="#idp25">3.1. Setup</a></span></dt><dt><span class="section"><a href="#quickstart">3.2. Clone, Configure, Compile</a></span></dt><dt><span class="section"><a href="#idp26">3.3. Options: compiler and linker flags</a></span></dt></dl></dd><dt><span class="section"><a href="#running">4. Running the program</a></span></dt><dd><dl><dt><span class="section"><a href="#idp27">4.1. Quick Start</a></span></dt><dt><span class="section"><a href="#idp28">4.2. Command line options</a></span></dt><dt><span class="section"><a href="#idp33">4.3. Multiple genes/partitions, models, and linking</a></span></dt><dt><span class="section"><a href="#cluster">4.4. Running on computing clusters</a></span></dt><dt><span class="section"><a href="#idp37">4.5. Option files (Scripts)</a></span></dt><dt><span class="section"><a href="#examples">4.6. Examples</a></span></dt></dl></dd><dt><span class="section"><a href="#input">5. Input</a></span></dt><dd><dl><dt><span class="section"><a href="#idp38">5.1. Sequence formats</a></span></dt><dt><span class="section"><a href="#idp41">5.2. Is my data set too large?</a></span></dt></dl></dd><dt><span class="section"><a href="#output">6. Output</a></span></dt><dd><dl><dt><span class="section"><a href="#idp42">6.1. Output directory</a></span></dt><dt><span class="section"><a href="#idp46">6.2. Output files</a></span></dt><dt><span class="section"><a href="#idp54">6.3. Summarizing the output</a></span></dt><dt><span class="section"><a href="#analysis">6.4. Summarizing the output - scripted</a></span></dt></dl></dd><dt><span class="section"><a href="#functions">7. Models and Priors</a></span></dt><dd><dl><dt><span class="section"><a href="#idp57">7.1. Models and distributions are functions</a></span></dt><dt><span class="section"><a href="#priors">7.2. Priors</a></span></dt><dt><span class="section"><a href="#idp61">7.3. Models and '<strong class="userinput"><code>+</code></strong>' notation</a></span></dt><dt><span class="section"><a href="#default_values">7.4. Default values and default priors</a></span></dt><dt><span class="section"><a href="#types">7.5. Argument and result types</a></span></dt></dl></dd><dt><span class="section"><a href="#subst_models">8. Substitution models</a></span></dt><dd><dl><dt><span class="section"><a href="#idp62">8.1. Default substitution models</a></span></dt><dt><span class="section"><a href="#subst_basic">8.2. Basic CTMC models</a></span></dt><dt><span class="section"><a href="#subst_freq">8.3. Substitution Frequency models</a></span></dt><dt><span class="section"><a href="#idp63">8.4. Substitution Mixture Models</a></span></dt><dt><span class="section"><a href="#idp64">8.5. The branch-site substitution model</a></span></dt><dt><span class="section"><a href="#idp65">8.6. Substitution model examples</a></span></dt><dt><span class="section"><a href="#genetic-codes">8.7. Genetic Codes</a></span></dt></dl></dd><dt><span class="section"><a href="#indel_models">9. Insertion/deletion models</a></span></dt><dt><span class="section"><a href="#mixing_and_convergence">10. Convergence and Mixing: Is it done yet?</a></span></dt><dd><dl><dt><span class="section"><a href="#idp66">10.1. Definition of Convergence</a></span></dt><dt><span class="section"><a href="#idp67">10.2. Definition of Mixing</a></span></dt><dt><span class="section"><a href="#idp70">10.3. Diagnostics: Variation in split frequencies across runs (ASDSF/MSDSF)</a></span></dt><dt><span class="section"><a href="#idp71">10.4. Diagnostics: Potential Scale Reduction Factors (PSRF)</a></span></dt><dt><span class="section"><a href="#idp74">10.5. Diagnostics: Effective sample sizes (ESS)</a></span></dt><dt><span class="section"><a href="#idp77">10.6. Diagnostics: Stabilization</a></span></dt></dl></dd><dt><span class="section"><a href="#alignment-utilities">11. Alignment utilities</a></span></dt><dd><dl><dt><span class="section"><a href="#idp78">11.1. alignment-info</a></span></dt><dt><span class="section"><a href="#idp79">11.2. alignment-cat</a></span></dt><dt><span class="section"><a href="#idp80">11.3. alignment-thin</a></span></dt><dt><span class="section"><a href="#idp81">11.4. alignment-draw</a></span></dt><dt><span class="section"><a href="#idp82">11.5. alignment-find</a></span></dt><dt><span class="section"><a href="#idp83">11.6. alignment-indices</a></span></dt><dt><span class="section"><a href="#idp84">11.7. alignment-chop-internal</a></span></dt></dl></dd><dt><span class="section"><a href="#tree-utilities">12. Tree utilities</a></span></dt><dd><dl><dt><span class="section"><a href="#idp85">12.1. trees-consensus</a></span></dt><dt><span class="section"><a href="#idp86">12.2. trees-bootstrap</a></span></dt><dt><span class="section"><a href="#idp87">12.3. trees-to-SRQ</a></span></dt></dl></dd><dt><span class="section"><a href="#FAQ">13. Frequently Asked Questions (FAQ)</a></span></dt><dd><dl><dt><span class="section"><a href="#idp88">13.1. Input files</a></span></dt><dt><span class="section"><a href="#idp89">13.2. Running <span class="command"><strong>bali-phy</strong></span>.</a></span></dt><dt><span class="section"><a href="#idp90">13.3. Run-time error messages</a></span></dt><dt><span class="section"><a href="#idp91">13.4. Stopping <span class="command"><strong>bali-phy</strong></span>.</a></span></dt><dt><span class="section"><a href="#idp92">13.5. Running <span class="command"><strong>bp-analyze</strong></span>.</a></span></dt><dt><span class="section"><a href="#idp93">13.6. Interpreting the results.</a></span></dt><dt><span class="section"><a href="#idp94">13.7. How do I...</a></span></dt></dl></dd></dl></div>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BAli-Phy User's Guide v3.2</title><link rel="stylesheet" type="text/css" href="docbook.css"><meta name="generator" content="DocBook XSL Stylesheets V1.79.1"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div lang="en" class="article"><div class="titlepage"><div><div><h2 class="title"><a name="idp1"></a><span class="application">BAli-Phy</span> User's Guide v3.2</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Benjamin</span> <span class="surname">Redelings</span></h3></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl class="toc"><dt><span class="section"><a href="#intro">1. Introduction</a></span></dt><dt><span class="section"><a href="#installation">2. Installation</a></span></dt><dd><dl><dt><span class="section"><a href="#pre-requisites">2.1. Hardware requirements</a></span></dt><dt><span class="section"><a href="#idp5">2.2. Install on MS Windows</a></span></dt><dt><span class="section"><a href="#idp10">2.3. Install on Mac OS X</a></span></dt><dt><span class="section"><a href="#idp15">2.4. Install on Linux</a></span></dt><dt><span class="section"><a href="#path">2.5. Add BAli-Phy to your <code class="envar">PATH</code></a></span></dt><dt><span class="section"><a href="#tests">2.6. Test the installed software</a></span></dt><dt><span class="section"><a href="#software_req">2.7. Install programs used for viewing the results</a></span></dt></dl></dd><dt><span class="section"><a href="#compilation">3. Compiling <span class="application">BAli-Phy</span></a></span></dt><dd><dl><dt><span class="section"><a href="#idp25">3.1. Setup</a></span></dt><dt><span class="section"><a href="#quickstart">3.2. Clone, Configure, Compile</a></span></dt><dt><span class="section"><a href="#idp26">3.3. Options: compiler and linker flags</a></span></dt></dl></dd><dt><span class="section"><a href="#running">4. Running the program</a></span></dt><dd><dl><dt><span class="section"><a href="#idp27">4.1. Quick Start</a></span></dt><dt><span class="section"><a href="#idp28">4.2. Command line options</a></span></dt><dt><span class="section"><a href="#idp33">4.3. Multiple genes/partitions, models, and linking</a></span></dt><dt><span class="section"><a href="#cluster">4.4. Running on computing clusters</a></span></dt><dt><span class="section"><a href="#idp37">4.5. Option files (Scripts)</a></span></dt><dt><span class="section"><a href="#examples">4.6. Examples</a></span></dt></dl></dd><dt><span class="section"><a href="#input">5. Input</a></span></dt><dd><dl><dt><span class="section"><a href="#idp38">5.1. Sequence formats</a></span></dt><dt><span class="section"><a href="#idp41">5.2. Is my data set too large?</a></span></dt></dl></dd><dt><span class="section"><a href="#output">6. Output</a></span></dt><dd><dl><dt><span class="section"><a href="#idp42">6.1. Output directory</a></span></dt><dt><span class="section"><a href="#idp46">6.2. Output files</a></span></dt><dt><span class="section"><a href="#idp54">6.3. Summarizing the output</a></span></dt><dt><span class="section"><a href="#analysis">6.4. Summarizing the output - scripted</a></span></dt></dl></dd><dt><span class="section"><a href="#functions">7. Models and Priors</a></span></dt><dd><dl><dt><span class="section"><a href="#idp57">7.1. Models and distributions are functions</a></span></dt><dt><span class="section"><a href="#priors">7.2. Priors</a></span></dt><dt><span class="section"><a href="#idp61">7.3. Models and '<strong class="userinput"><code>+</code></strong>' notation</a></span></dt><dt><span class="section"><a href="#default_values">7.4. Default values and default priors</a></span></dt><dt><span class="section"><a href="#types">7.5. Argument and result types</a></span></dt></dl></dd><dt><span class="section"><a href="#subst_models">8. Substitution models</a></span></dt><dd><dl><dt><span class="section"><a href="#idp62">8.1. Default substitution models</a></span></dt><dt><span class="section"><a href="#subst_basic">8.2. Basic CTMC models</a></span></dt><dt><span class="section"><a href="#subst_freq">8.3. Substitution Frequency models</a></span></dt><dt><span class="section"><a href="#idp63">8.4. Substitution Mixture Models</a></span></dt><dt><span class="section"><a href="#idp64">8.5. The branch-site substitution model</a></span></dt><dt><span class="section"><a href="#idp65">8.6. Substitution model examples</a></span></dt><dt><span class="section"><a href="#genetic-codes">8.7. Genetic Codes</a></span></dt></dl></dd><dt><span class="section"><a href="#indel_models">9. Insertion/deletion models</a></span></dt><dt><span class="section"><a href="#mixing_and_convergence">10. Convergence and Mixing: Is it done yet?</a></span></dt><dd><dl><dt><span class="section"><a href="#idp66">10.1. Definition of Convergence</a></span></dt><dt><span class="section"><a href="#idp67">10.2. Definition of Mixing</a></span></dt><dt><span class="section"><a href="#idp70">10.3. Diagnostics: Variation in split frequencies across runs (ASDSF/MSDSF)</a></span></dt><dt><span class="section"><a href="#idp71">10.4. Diagnostics: Potential Scale Reduction Factors (PSRF)</a></span></dt><dt><span class="section"><a href="#idp74">10.5. Diagnostics: Effective sample sizes (ESS)</a></span></dt><dt><span class="section"><a href="#idp77">10.6. Diagnostics: Stabilization</a></span></dt></dl></dd><dt><span class="section"><a href="#alignment-utilities">11. Alignment utilities</a></span></dt><dd><dl><dt><span class="section"><a href="#idp78">11.1. alignment-info</a></span></dt><dt><span class="section"><a href="#idp79">11.2. alignment-cat</a></span></dt><dt><span class="section"><a href="#idp80">11.3. alignment-thin</a></span></dt><dt><span class="section"><a href="#idp81">11.4. alignment-draw</a></span></dt><dt><span class="section"><a href="#idp82">11.5. alignment-find</a></span></dt><dt><span class="section"><a href="#idp83">11.6. alignment-indices</a></span></dt><dt><span class="section"><a href="#idp84">11.7. alignment-chop-internal</a></span></dt></dl></dd><dt><span class="section"><a href="#tree-utilities">12. Tree utilities</a></span></dt><dd><dl><dt><span class="section"><a href="#idp85">12.1. trees-consensus</a></span></dt><dt><span class="section"><a href="#idp86">12.2. trees-bootstrap</a></span></dt><dt><span class="section"><a href="#idp87">12.3. trees-to-SRQ</a></span></dt></dl></dd><dt><span class="section"><a href="#FAQ">13. Frequently Asked Questions (FAQ)</a></span></dt><dd><dl><dt><span class="section"><a href="#idp88">13.1. Input files</a></span></dt><dt><span class="section"><a href="#idp89">13.2. Running <span class="command"><strong>bali-phy</strong></span>.</a></span></dt><dt><span class="section"><a href="#idp90">13.3. Run-time error messages</a></span></dt><dt><span class="section"><a href="#idp91">13.4. Stopping <span class="command"><strong>bali-phy</strong></span>.</a></span></dt><dt><span class="section"><a href="#idp92">13.5. Running <span class="command"><strong>bp-analyze</strong></span>.</a></span></dt><dt><span class="section"><a href="#idp93">13.6. Interpreting the results.</a></span></dt><dt><span class="section"><a href="#idp94">13.7. How do I...</a></span></dt></dl></dd></dl></div>
   
 
   <div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="intro"></a>1. Introduction</h2></div></div></div>
@@ -53,10 +53,10 @@
 	First, download and extract the executables:
       </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>mkdir -p ~/Applications</code></strong>
 <code class="prompt">%</code> <strong class="userinput"><code>cd ~/Applications</code></strong>
-<code class="prompt">%</code> <strong class="userinput"><code>wget http://www.bali-phy.org/files/bali-phy-3.1-win64.tar.gz</code></strong>
-<code class="prompt">%</code> <strong class="userinput"><code>tar -zxf bali-phy-3.1-win64.tar.gz</code></strong></pre><p>
+<code class="prompt">%</code> <strong class="userinput"><code>wget http://www.bali-phy.org/files/bali-phy-3.2-win64.tar.gz</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>tar -zxf bali-phy-3.2-win64.tar.gz</code></strong></pre><p>
        Second, check that the <span class="command"><strong>bali-phy</strong></span> executable runs:
-      </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>~/Applications/bali-phy-3.1/bin/bali-phy --version</code></strong></pre><p>
+      </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>~/Applications/bali-phy-3.2/bin/bali-phy --version</code></strong></pre><p>
       You still need to add it to your PATH as described in <a class="xref" href="#path" title="2.5. Add BAli-Phy to your PATH">Section 2.5, &#8220;Add BAli-Phy to your <code class="envar">PATH</code>&#8221;</a>.
     </p>
 </div>
@@ -81,10 +81,10 @@ If you install with homebrew, you don't need to do anything extra to put bali-ph
       First download and extract the executables:
       </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>mkdir -p ~/Applications</code></strong>
 <code class="prompt">%</code> <strong class="userinput"><code>cd ~/Applications</code></strong>
-<code class="prompt">%</code> <strong class="userinput"><code>curl -O http://www.bali-phy.org/files/bali-phy-3.1-mac64.tar.gz</code></strong>
-<code class="prompt">%</code> <strong class="userinput"><code>tar -zxf bali-phy-3.1-mac64.tar.gz</code></strong></pre><p>
+<code class="prompt">%</code> <strong class="userinput"><code>curl -O http://www.bali-phy.org/files/bali-phy-3.2-mac64.tar.gz</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>tar -zxf bali-phy-3.2-mac64.tar.gz</code></strong></pre><p>
       Check that the executable runs:
-      </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>~/Applications/bali-phy-3.1/bin/bali-phy --version</code></strong></pre><p>
+      </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>~/Applications/bali-phy-3.2/bin/bali-phy --version</code></strong></pre><p>
       You still need to add it to your PATH as described in <a class="xref" href="#path" title="2.5. Add BAli-Phy to your PATH">Section 2.5, &#8220;Add BAli-Phy to your <code class="envar">PATH</code>&#8221;</a>.
     </p>
 
@@ -114,7 +114,8 @@ However, note that this might conflict with R installed from other places, such 
 
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp15"></a>2.4. Install on Linux</h3></div></div></div>
 
-    <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp11"></a>2.4.1. Install BAli-Phy using <span class="command"><strong>apt-get</strong></span> (recommended if using <span class="emphasis"><em>Debian: testing or unstable</em></span>)</h4></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp11"></a>2.4.1. Install BAli-Phy using <span class="command"><strong>apt-get</strong></span></h4></div></div></div>
+    BAli-Phy is available on Ubuntu <a class="ulink" href="https://launchpad.net/ubuntu/+source/bali-phy/" target="_top">("Cosmic Cuttlefish" or later)</a>, and Debian (<a class="ulink" href="https://packages.debian.org/search?keywords=bali-phy&amp;searchon=names&amp;section=all" target="_top">testing and unstable</a>).
     <pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>sudo apt-get install bali-phy</code></strong></pre>
     Check that the executable runs:
     <pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy --version</code></strong></pre>
@@ -130,10 +131,10 @@ However, note that this might conflict with R installed from other places, such 
       Then download and extract the executables:
       </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>mkdir -p ~/Applications</code></strong>
 <code class="prompt">%</code> <strong class="userinput"><code>cd ~/Applications</code></strong>
-<code class="prompt">%</code> <strong class="userinput"><code>wget http://www.bali-phy.org/files/bali-phy-3.1-linux64.tar.gz</code></strong>
-<code class="prompt">%</code> <strong class="userinput"><code>tar -zxf bali-phy-3.1-linux64.tar.gz</code></strong></pre><p>
+<code class="prompt">%</code> <strong class="userinput"><code>wget http://www.bali-phy.org/files/bali-phy-3.2-linux64.tar.gz</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>tar -zxf bali-phy-3.2-linux64.tar.gz</code></strong></pre><p>
       Second, check that the executable runs:
-      </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>~/Applications/bali-phy-3.1/bin/bali-phy --version</code></strong></pre><p>
+      </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>~/Applications/bali-phy-3.2/bin/bali-phy --version</code></strong></pre><p>
       You still need to add it to your PATH as described in <a class="xref" href="#path" title="2.5. Add BAli-Phy to your PATH">Section 2.5, &#8220;Add BAli-Phy to your <code class="envar">PATH</code>&#8221;</a>.
     </p>
     </div>
@@ -166,10 +167,10 @@ If bali-phy is not in your PATH, then continue with this section.
     </div>
     <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp17"></a>2.5.2. Quick version</h4></div></div></div>
 <p>Add <span class="command"><strong>bali-phy</strong></span> to your PATH, so that the shell knows where to find it.  This command only affects the terminal in which it is typed, and will not affect new terminals:
-</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>export PATH=~/Applications/bali-phy-3.1/bin:$PATH</code></strong></pre><p>
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>export PATH=~/Applications/bali-phy-3.2/bin:$PATH</code></strong></pre><p>
 To set the PATH automatically for new terminals, type:
-</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>test -r ~/.bash_profile &amp;&amp; echo 'export PATH=~/Applications/bali-phy-3.1/bin:$PATH' &gt;&gt; ~/.bash_profile</code></strong>
-<code class="prompt">%</code> <strong class="userinput"><code>echo 'export PATH=~/Applications/bali-phy-3.1/bin:$PATH' &gt;&gt; ~/.profile</code></strong></pre><p>
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>test -r ~/.bash_profile &amp;&amp; echo 'export PATH=~/Applications/bali-phy-3.2/bin:$PATH' &gt;&gt; ~/.bash_profile</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>echo 'export PATH=~/Applications/bali-phy-3.2/bin:$PATH' &gt;&gt; ~/.profile</code></strong></pre><p>
 This will affect new terminals only after you log out and log back in though.</p>
 <p>
 Now check that the executable runs:
@@ -182,7 +183,7 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
       <p>
 	If you installed <span class="application">BAli-Phy</span> to the directory
 	<code class="filename">~/Applications</code>, then you can run
-	bali-phy by typing <span class="command"><strong>~/Applications/bali-phy-3.1/bin/bali-phy</strong></span>.
+	bali-phy by typing <span class="command"><strong>~/Applications/bali-phy-3.2/bin/bali-phy</strong></span>.
 	However, it would be much nicer to simply type
 	<span class="command"><strong>bali-phy</strong></span> and let the computer find the
 	executable for you.  This can be achieved by putting the directory
@@ -205,9 +206,9 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
 	</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>echo $PATH</code></strong></pre><p>
 	We will assume that you extracted the bali-phy archive in
 	<code class="filename">~/Applications</code> and so you want to add
-	<code class="filename">$HOME/Applications/bali-phy-3.1/bin</code>
+	<code class="filename">$HOME/Applications/bali-phy-3.2/bin</code>
 	to your <code class="envar">PATH</code>.  (If you installed to another directory,
-	replace <code class="filename">$HOME/Applications/bali-phy-3.1/</code> with that directory.)
+	replace <code class="filename">$HOME/Applications/bali-phy-3.2/</code> with that directory.)
       </p>
       </div>
 
@@ -217,10 +218,10 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
 	<span class="command"><strong>echo $SHELL</strong></span> to find out. If your
 	shell is <span class="command"><strong>sh</strong></span> or 
 	<span class="command"><strong>bash</strong></span> then the command looks like this: 
-	</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>PATH=$HOME/Applications/bali-phy-3.1/bin:$PATH</code></strong></pre><p>
+	</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>PATH=$HOME/Applications/bali-phy-3.2/bin:$PATH</code></strong></pre><p>
 	If your shell is <span class="command"><strong>csh</strong></span> or
 	<span class="command"><strong>tcsh</strong></span>, then the command looks like this:
-	</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>setenv PATH $HOME/Applications/bali-phy-3.1/bin:$PATH</code></strong></pre><p>
+	</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>setenv PATH $HOME/Applications/bali-phy-3.2/bin:$PATH</code></strong></pre><p>
 	Note that these commands will only affect the window you are typing
 	in, and will vanish when you reboot.   
       </p>
@@ -251,8 +252,8 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
 
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="tests"></a>2.6. Test the installed software</h3></div></div></div>
     <p>In order to determine that the software has been correctly installed, and the <code class="envar">PATH</code> has been correctly set, run the following commands:
-    </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.1/share/doc/bali-phy/examples/sequences/5S-rRNA/25.fasta --iter=150</code></strong>
-<code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.1/share/doc/bali-phy/examples/sequences/5S-rRNA/25.fasta --iter=150</code></strong>
+    </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.2/share/doc/bali-phy/examples/sequences/5S-rRNA/25.fasta --iter=150</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.2/share/doc/bali-phy/examples/sequences/5S-rRNA/25.fasta --iter=150</code></strong>
 <code class="prompt">%</code> <strong class="userinput"><code>bp-analyze 25-1 25-2</code></strong></pre><p>
     </p>
     <p>Furthermore, the directories <code class="filename">25-1</code> and <code class="filename">25-2</code> should contain a file called <code class="filename">C1.log</code>.  You should be able to load these files in Tracer, although the chain will not really have converged yet.</p>
@@ -360,9 +361,9 @@ Otherwise you can install meson through pip3:
 </p>
 <p>
 Then run meson to configure the build process:
-</p><pre class="screen"><code class="prompt">%</code><strong class="userinput"><code> meson build --prefix=$HOME/Applications/bali-phy-3.1/</code></strong></pre><p>
+</p><pre class="screen"><code class="prompt">%</code><strong class="userinput"><code> meson build --prefix=$HOME/Applications/bali-phy-3.2/</code></strong></pre><p>
 In the MSYS2 environment, the command is called <span class="command"><strong>meson.py</strong></span> instead of <span class="command"><strong>meson</strong></span>:
-</p><pre class="screen"><code class="prompt">%</code><strong class="userinput"><code> meson.py build --prefix=$HOME/Applications/bali-phy-3.1/</code></strong></pre><p>
+</p><pre class="screen"><code class="prompt">%</code><strong class="userinput"><code> meson.py build --prefix=$HOME/Applications/bali-phy-3.2/</code></strong></pre><p>
 </p>
 <p>
 Finally, build and install the software:
@@ -370,21 +371,21 @@ Finally, build and install the software:
 <code class="prompt">%</code><strong class="userinput"><code> ninja -C build test</code></strong>
 <code class="prompt">%</code><strong class="userinput"><code> ninja -C build install</code></strong>
 </pre><p>
-The command <span class="command"><strong>bali-phy</strong></span> and its associated tools should then be located in <code class="filename">~/Applications/bali-phy-3.1/bin/</code>. To install to another directory <em class="replaceable"><code>dir</code></em>, specify --prefix=<em class="replaceable"><code>dir</code></em> to <span class="command"><strong>meson</strong></span>.
+The command <span class="command"><strong>bali-phy</strong></span> and its associated tools should then be located in <code class="filename">~/Applications/bali-phy-3.2/bin/</code>. To install to another directory <em class="replaceable"><code>dir</code></em>, specify --prefix=<em class="replaceable"><code>dir</code></em> to <span class="command"><strong>meson</strong></span>.
       </p>
 
     </div>
       <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp26"></a>3.3. Options: compiler and linker flags</h3></div></div></div>
 	
       <p>You can select the C++ compiler by setting the CXX variable.  A useful example of this is to use <span class="command"><strong>g++-5</strong></span> on systems where <span class="command"><strong>g++</strong></span> invokes a compiler that is too old:
- </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>CXX=g++-5 meson build --prefix=$HOME/Applications/bali-phy-3.1</code></strong></pre><p>
+ </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>CXX=g++-5 meson build --prefix=$HOME/Applications/bali-phy-3.2</code></strong></pre><p>
  You may also set compiler and linker options using the CPPFLAGS, CXXFLAGS, and LDFLAGS variables.  For example, you can instruct the compiler to use all the features of your chip, instead of producing generic code that will run anywhere:
- </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>CXXFLAGS="-mtune=native -march=native" meson --prefix=$HOME/Applications/bali-phy-3.1</code></strong></pre><p>
+ </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>CXXFLAGS="-mtune=native -march=native" meson --prefix=$HOME/Applications/bali-phy-3.2</code></strong></pre><p>
 
  For example, you can set the CPPFLAGS and LDFLAGS variables to instruct the compiler where to look for libraries, such as cairo:
-	  </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" meson build --prefix=$HOME/Applications/bali-phy-3.1</code></strong></pre><p>
+	  </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" meson build --prefix=$HOME/Applications/bali-phy-3.2</code></strong></pre><p>
  Another useful example of this is to produce an OS X executable on that can run on older versions of OS X:
-	  </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>CXXFLAGS="-mmacosx-version-min=10.9" LDFLAGS="-mmacosx-version-min=10.9" meson build --prefix=$HOME/Applications/bali-phy-3.1</code></strong></pre><p>	</p>
+	  </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>CXXFLAGS="-mmacosx-version-min=10.9" LDFLAGS="-mmacosx-version-min=10.9" meson build --prefix=$HOME/Applications/bali-phy-3.2</code></strong></pre><p>	</p>
       </div>
 
     </div>
@@ -572,7 +573,7 @@ scale = 1,3:</pre><p>
       executables and extracted them in the
       <code class="filename">~/Applications</code> directory, then the
       <code class="filename">examples/sequences/</code> directory will be found at 
-      <code class="filename">~/Applications/bali-phy-3.1/share/doc/bali-phy/examples/sequences/</code>.
+      <code class="filename">~/Applications/bali-phy-3.2/share/doc/bali-phy/examples/sequences/</code>.
     </p>
 
     <p>Also note that <span class="command"><strong>bali-phy</strong></span>
@@ -587,7 +588,7 @@ scale = 1,3:</pre><p>
       
       <p>Here we analyze the EF-Tu 5-taxon data set provided with
 	the software.</p>
-      <pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.1/share/doc/bali-phy/examples/sequences/EF-Tu/5d.fasta</code></strong></pre>
+      <pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.2/share/doc/bali-phy/examples/sequences/EF-Tu/5d.fasta</code></strong></pre>
     </div></div><br class="example-break">
 
     <div class="example"><a name="idp779"></a><p class="title"><b>Example 2. Multiple-Rate Substitution Model</b></p><div class="example-contents">
@@ -597,7 +598,7 @@ scale = 1,3:</pre><p>
 	invariant sites.  The amount of rate variation and the fraction of
 	invariant sites are estimated</p>
       
-      <pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.1/share/doc/bali-phy/examples/sequences/EF-Tu/5d.fasta --smodel lg08+Rates.log_normal+inv</code></strong></pre></div></div><br class="example-break">
+      <pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.2/share/doc/bali-phy/examples/sequences/EF-Tu/5d.fasta --smodel lg08+Rates.log_normal+inv</code></strong></pre></div></div><br class="example-break">
 
     <div class="example"><a name="idp787"></a><p class="title"><b>Example 3. Fixed alignment</b></p><div class="example-contents">
       
@@ -605,7 +606,7 @@ scale = 1,3:</pre><p>
       the software. The <strong class="userinput"><code>-Inone</code></strong> option is used, fixing the alignment and making indels non-informative.
       </p> 
 
-      <pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.1/share/doc/bali-phy/examples/sequences/5S-rRNA/25-muscle.fasta -Inone</code></strong></pre>
+      <pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.2/share/doc/bali-phy/examples/sequences/5S-rRNA/25-muscle.fasta -Inone</code></strong></pre>
 
     </div></div><br class="example-break">
   </div>
