@@ -489,8 +489,12 @@ vector<pair<int,site_t>> classify_sites(const alignment& A)
     vector<pair<int,site_t>> sites;
     for(int l=1; l < A.length();)
     {
-	site_t s = classify_site(A(l,0),A(l,1));
-	if (s == site_t::empty) continue;
+	site_t s = classify_site(A(l,0), A(l,1));
+	if (s == site_t::empty)
+	{
+	    l++;
+	    continue;
+	}
 	int count = 0;
 
 	do
