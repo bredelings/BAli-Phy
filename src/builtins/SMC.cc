@@ -518,7 +518,9 @@ void smc_group(vector<double>& L, vector<double>& L2, int& scale, const vector<E
 	    double temp = 0;
 	    for(int j=0;j<n_bins; j++)
 		temp += L[j] * M(j,k);
-	    L2[k] = temp;
+
+	    assert(temp > -1.0e-9);
+	    L2[k] = std::max(temp, 0.0);
 	}
 	i += taking;
 
