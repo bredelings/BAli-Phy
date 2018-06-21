@@ -567,8 +567,13 @@ log_double_t smc(double rho_over_theta, vector<double> coalescent_rates, vector<
     int scale = 0;
 
     // FIXME: I think we should be able to start at site -1 with L[i] = pi[i], if pi[i] is the equilibrium of T(j,k)
+    //        Its not exactly the equilibrium, so this is approximate, I guess.
     for(int i=0;i< n_bins; i++)
-	L[i] = pi[i] * emission_probabilities[i](A(0,0), A(0,1));
+    {
+	L[i] = pi[i];
+//	if (A(0,0) >= 0 and A(0,1) >= 0)
+//	    L[i] *= emission_probabilities[i](A(0,0), A(0,1));
+    }
 
     // # Iteratively compute likelihoods for remaining columns
     const auto transition = get_transition_probabilities(bin_boundaries, bin_times, theta, rho);
