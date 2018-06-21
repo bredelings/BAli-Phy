@@ -30,7 +30,7 @@ double quantile(double eta, double p)
 
 vector<double> get_bin_boundaries(int n, const vector<double>& coalescent_rates, const vector<double>& level_boundaries)
 {
-    assert(coalescent_rates.size() + 1 == level_boundaries.size());
+    assert(coalescent_rates.size() == level_boundaries.size());
     assert(level_boundaries[0] == 0.0);
 
     vector<double> b(n+1);
@@ -58,13 +58,14 @@ vector<double> get_bin_boundaries(int n, const vector<double>& coalescent_rates,
 	    assert(level < level_boundaries.size());
 
 	    double delta_t = quantile(coalescent_rates[level], 1.0 - q2);
-	    if (t2 + delta_t < level_boundaries[level+1])
+	    if (t2 + delta_t < level_boundaries[level] or level == level_boundaries.size()-1)
 	    {
 		b[i] = t2 + delta_t;
 		break;
 	    }
 	    else
 	    {
+		assert(level + 1 < level_boundaries.size());
 		t2 = level_boundaries[level+1];
 		delta_t = level_boundaries[level+1] - level_boundaries[level];
 		assert(delta_t >= 0);
@@ -534,7 +535,7 @@ void smc_group(vector<double>& L, vector<double>& L2, int& scale, const vector<E
 
 log_double_t smc(double rho_over_theta, vector<double> coalescent_rates, vector<double> level_boundaries, const alignment& A)
 {
-    assert(level_boundaries.size() >= 2);
+    assert(level_boundaries.size() >= 1);
     assert(level_boundaries[0] == 0.0);
 
     assert(rho_over_theta >= 0);
@@ -612,7 +613,6 @@ extern "C" closure builtin_function_smc_density(OperationArgs& Args)
     level_boundaries.push_back(0);
     for(auto& l: level_boundaries_)
 	level_boundaries.push_back(l.as_double());
-    level_boundaries.push_back(100000);
 
     auto a = Args.evaluate(3);
     auto& A = a.as_<alignment>();
