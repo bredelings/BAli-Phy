@@ -398,11 +398,13 @@ constexpr double scale_min = 1.0/scale_factor;
 constexpr double log_scale_min = -177.445678223345999210811423093293201427328034396225345054e0;
 
 
-enum class site_t {unknown=0,poly,mono,missing};
+enum class site_t {unknown=0,poly,mono,missing,empty};
 
 inline site_t classify_site(int x1, int x2)
 {
-    if (x1 < 0 or x2< 0)
+    if (x1 == -1 and x2 == -1)
+	return site_t::empty;
+    else if (x1 < 0 or x2< 0)
 	return site_t::missing;
     else if (x1 == x2)
 	return site_t::mono;
@@ -488,6 +490,7 @@ vector<pair<int,site_t>> classify_sites(const alignment& A)
     for(int l=1; l < A.length();)
     {
 	site_t s = classify_site(A(l,0),A(l,1));
+	if (s == site_t::empty) continue;
 	int count = 0;
 
 	do
