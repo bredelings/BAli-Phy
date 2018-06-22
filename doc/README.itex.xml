@@ -848,6 +848,13 @@ scale = 1,3:</programlisting>
 	  </listitem>
 	</varlistentry>
 	
+	<varlistentry>
+	  <term>C1.run.json</term>
+	  <listitem>
+	    <para>JSON file containing information about the command line, models, hostname, start time, etc.</para>
+	  </listitem>
+	</varlistentry>
+
       </variablelist>
       
       <para>For the last two files, each line in these files corresponds to one iteration.</para>
