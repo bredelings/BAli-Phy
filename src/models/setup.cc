@@ -442,7 +442,6 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
     if (not rule->count("call")) throw myexception()<<"No call for '"<<name<<"'";
 	
     // 6a. Extract parts of the rule
-    bool generate_function = rule->get("generate_function",true);
     bool perform_function = rule->get("perform",false);
     ptree call = rule->get_child("call");
     ptree args = rule->get_child("args");
@@ -450,20 +449,6 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
     if (not is_qualified_symbol(call.get_value<string>()) and not is_haskell_builtin_con_name(call.get_value<string>()))
 	throw myexception()<<"For rule '"<<name<<"', function '"<<call.get_value<string>()<<"' must be a qualified symbol or a builtin constructor like '(,)', but it is neither!";
     expression_ref E = dummy(call.get_value<string>());
-
-    // This means (i) don't perform the arguments first and (ii) don't add "return" to the result.
-    if (not generate_function)
-    {
-	for(int i=0;i<call.size();i++)
-	{
-	    string arg_name = array_index(call,i).get_value<string>();
-	    // check that arg_name is a valid argument
-	    get_arg(*rule, arg_name);
-	    expression_ref arg = get_model_as(R, model_rep.get_child(arg_name), scope);
-	    E = {E,arg};
-	}
-	return E;
-    }
 
     // 6b. Apply the arguments listed in the call : 'f call.name1 call.name2 call.name3'
     //    There could be fewer of these than the rule arguments.
