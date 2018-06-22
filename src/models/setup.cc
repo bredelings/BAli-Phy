@@ -287,11 +287,6 @@ expression_ref arg_to_apply(const ptree& expression)
     return E;
 }
 
-expression_ref apply_args(expression_ref action, const ptree& applied_args)
-{
-    return {action, arg_to_apply(applied_args)};
-}
-
 optional<vector<double>> get_frequencies_from_tree(const ptree& model_rep, const alphabet& a)
 {
     vector<double> pi;
@@ -473,11 +468,6 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
 	if (argi.get("no_apply",false)) break;
 	string arg_name = argi.get_child("arg_name").get_value<string>();
 	expression_ref arg = get_model_as(R, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
-
-	// Apply arguments if necessary
-	auto applied_args = argi.get_child_optional("applied_args");
-	if (applied_args)
-	    arg = apply_args(arg, *applied_args);
 
 	auto log_name = name + ":" + arg_name;
 	// Prefix "arg_name" (arg_+arg_name)
