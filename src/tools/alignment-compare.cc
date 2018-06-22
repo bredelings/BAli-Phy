@@ -34,10 +34,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "distance-methods.H"
 #include "rng.H"
 
-#ifdef NDEBUG
-#undef NDEBUG
-#endif
-
 #include <boost/program_options.hpp>
 #include <boost/shared_ptr.hpp>
 #include "io.H"

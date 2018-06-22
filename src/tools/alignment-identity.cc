@@ -56,8 +56,6 @@ void do_setup(const variables_map& args,vector<alignment>& alignments)
 	throw myexception()<<"Alignment sample is empty.";
 }
 
-#undef NDEBUG
-
 unsigned n_with_identity(const alignment& A,int s1,int s2,double I)
 {
     // Get matches
