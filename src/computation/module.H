@@ -116,9 +116,6 @@ public:
     void export_module(const std::string& S);
 
     /// Add a function
-    void add_decl(const std::string& name, const expression_ref& b);
-
-    /// Add a function
     void def_function(const std::string& name);
 
     /// Add a constructor

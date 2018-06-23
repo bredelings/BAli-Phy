@@ -1158,27 +1158,6 @@ set<string> find_bound_vars(const expression_ref& E);
 set<string> find_all_ids(const expression_ref& E);
 
 
-void Module::add_decl(const std::string& fname, const expression_ref& body)
-{
-    expression_ref decl = AST_node("Decl") + dummy(name + "." + fname) + body;
-
-    if (not topdecls)
-    {
-	skip_desugaring = true;
-	vector<expression_ref> decls = {decl};
-	topdecls = expression_ref{AST_node("TopDecls"),decls};
-    }
-    else
-    {
-	// We can't mix C++-synthesized decls with decls loaded from a file.
-	assert(skip_desugaring == true);
-
-	vector<expression_ref> decls = topdecls.sub();
-	decls.push_back(decl);
-	topdecls = expression_ref{AST_node("TopDecls"),decls};
-    }
-}
-
 void Module::def_function(const std::string& fname)
 {
     if (is_qualified_symbol(fname))
