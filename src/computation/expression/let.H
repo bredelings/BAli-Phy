@@ -6,7 +6,7 @@
 #include <boost/optional.hpp>
 #include "object.H"
 #include "expression_ref.H"
-#include "dummy.H"
+#include "var.H"
 
 struct let_obj: public Object
 {
@@ -31,7 +31,7 @@ auto let(const First& first, const Second& second, const Rest&... rest)
     return let_expression(first,second,let(rest...));
 }
 
-typedef std::pair<dummy, expression_ref> CDecl;
+typedef std::pair<var, expression_ref> CDecl;
 typedef std::vector<CDecl> CDecls;
 
 expression_ref let_expression(const CDecls& decls, const expression_ref& T);
@@ -66,8 +66,8 @@ expression_ref multi_let_body(expression_ref E);
 
 std::vector<CDecls> strip_multi_let(expression_ref& E);
 
-boost::optional<dummy> find_first_duplicate_var(const CDecls& decls);
-boost::optional<dummy> find_first_duplicate_var(const expression_ref& decls);
+boost::optional<var> find_first_duplicate_var(const CDecls& decls);
+boost::optional<var> find_first_duplicate_var(const expression_ref& decls);
 void check_duplicate_var(const CDecls& decls);
 void check_duplicate_var(const expression_ref& decls);
 

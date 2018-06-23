@@ -95,7 +95,7 @@ string expression::print() const
 	}
 
 	expression_ref body;
-	vector<pair<dummy, expression_ref>> decls;
+	vector<pair<var, expression_ref>> decls;
 	if (parse_let_expression(*this, decls, body))
 	{
 	    result = "let {";

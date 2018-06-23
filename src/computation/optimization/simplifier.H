@@ -6,7 +6,7 @@
 #include <utility>
 #include "computation/expression/expression_ref.H"
 #include "computation/expression/let.H"
-#include "computation/expression/dummy.H"
+#include "computation/expression/var.H"
 
 struct simplifier_options
 {
@@ -28,7 +28,7 @@ class module_loader;
 
 typedef std::pair<expression_ref,occurrence_info> bound_variable_info;
 
-typedef std::map<dummy, bound_variable_info> in_scope_set;
+typedef std::map<var, bound_variable_info> in_scope_set;
 
 int get_n_lambdas1(const expression_ref& E);
 
@@ -36,6 +36,6 @@ expression_ref peel_n_lambdas1(const expression_ref& E, int n);
 
 bool is_trivial(const expression_ref& E);
 
-std::vector<CDecls> simplify_module(const simplifier_options&, const std::map<dummy, expression_ref>&, const std::set<dummy>&, const std::vector<CDecls>& decl_groups);
+std::vector<CDecls> simplify_module(const simplifier_options&, const std::map<var, expression_ref>&, const std::set<var>&, const std::vector<CDecls>& decl_groups);
 
 #endif

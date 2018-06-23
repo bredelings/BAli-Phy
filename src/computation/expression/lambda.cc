@@ -1,5 +1,5 @@
 #include "lambda.H"
-#include "dummy.H"
+#include "var.H"
 
 using std::string;
 using std::vector;
@@ -22,14 +22,14 @@ bool lambda2::operator==(const Object& o) const
     return dynamic_cast<const lambda2*>(&o);
 }
 
-expression_ref lambda_quantify(const expression_ref& dummy, const expression_ref& R)
+expression_ref lambda_quantify(const expression_ref& var, const expression_ref& R)
 {
-    return new expression(lambda(),{dummy, R});
+    return new expression(lambda(),{var, R});
 }
 
-expression_ref lambda_quantify(int dummy_index, const expression_ref& R)
+expression_ref lambda_quantify(int var_index, const expression_ref& R)
 {
-    return lambda_quantify(dummy(dummy_index), R);
+    return lambda_quantify(var(var_index), R);
 }
 
 expression_ref lambda_expression(const Operator& O)
@@ -44,7 +44,7 @@ expression_ref lambda_expression(const Operator& O)
     {
 	expression* E = new expression(O);
 	for(int i=0;i<n;i++)
-	    E->sub.push_back(expression_ref(dummy(i)));
+	    E->sub.push_back(expression_ref(var(i)));
 	R = expression_ref(E);
     }
   
@@ -55,6 +55,6 @@ expression_ref lambda_expression(const Operator& O)
 }
 
 expression_ref lambda_expression(const Operator& O);
-expression_ref lambda_quantify(int dummy_index, const expression_ref& E);
-expression_ref lambda_quantify(const expression_ref& dummy, const expression_ref& E);
+expression_ref lambda_quantify(int var_index, const expression_ref& E);
+expression_ref lambda_quantify(const expression_ref& var, const expression_ref& E);
 

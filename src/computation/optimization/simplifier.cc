@@ -6,7 +6,7 @@
 #include "computation/expression/expression.H"
 #include "computation/expression/let.H"
 #include "computation/expression/case.H"
-#include "computation/expression/dummy.H"
+#include "computation/expression/var.H"
 #include "computation/expression/apply.H"
 #include "computation/expression/lambda.H"
 #include "computation/expression/trim.H"
@@ -41,7 +41,7 @@ using std::endl;
 
 
 struct substitution_range;
-struct substitution: public map<dummy, substitution_range>
+struct substitution: public map<var, substitution_range>
 {
     using map::map;
 };
@@ -61,7 +61,7 @@ bool is_trivial(const expression_ref& E)
     return is_reglike(E);
 }
 
-void bind_var(in_scope_set& bound_vars, const dummy& x, const expression_ref& E)
+void bind_var(in_scope_set& bound_vars, const var& x, const expression_ref& E)
 {
     assert(not bound_vars.count(x));
     assert(x.work_dup != amount_t::Unknown);
@@ -69,17 +69,17 @@ void bind_var(in_scope_set& bound_vars, const dummy& x, const expression_ref& E)
     bound_vars.insert({x,{E,x}});
 }
 
-void unbind_var(in_scope_set& bound_vars, const dummy& x)
+void unbind_var(in_scope_set& bound_vars, const var& x)
 {
     assert(bound_vars.count(x));
     bound_vars.erase(x);
 }
 
-bound_variable_info rebind_var(in_scope_set& bound_vars, const dummy& x, const expression_ref& E)
+bound_variable_info rebind_var(in_scope_set& bound_vars, const var& x, const expression_ref& E)
 {
     bound_variable_info old_binding = bound_vars.at(x);
     unbind_var(bound_vars,x);
-    dummy x2 = x;
+    var x2 = x;
     static_cast<occurrence_info&>(x2) = old_binding.second;
     bind_var(bound_vars,x2,E);
     return old_binding;
@@ -114,7 +114,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 // Do we have to explicitly skip loop breakers here?
 expression_ref consider_inline(const simplifier_options& options, const expression_ref& E, in_scope_set& bound_vars, const inline_context& context)
 {
-    dummy x = E.as_<dummy>();
+    var x = E.as_<var>();
 
     const auto& binding = bound_vars.at(x);
 
@@ -127,7 +127,7 @@ expression_ref consider_inline(const simplifier_options& options, const expressi
 	return E;
 }
 
-dummy get_new_name(dummy x, const in_scope_set& bound_vars)
+var get_new_name(var x, const in_scope_set& bound_vars)
 {
     auto it = bound_vars.find(x);
 
@@ -143,12 +143,12 @@ dummy get_new_name(dummy x, const in_scope_set& bound_vars)
     return x;
 }
 
-dummy rename_and_bind_var(const expression_ref& var, substitution& S, in_scope_set& bound_vars)
+var rename_and_bind_var(const expression_ref& Evar, substitution& S, in_scope_set& bound_vars)
 {
-    dummy x = var.as_<dummy>();
+    var x = Evar.as_<var>();
     assert(x.code_dup != amount_t::Unknown);
     assert(not is_wildcard(x));
-    dummy x2 = get_new_name(x, bound_vars);
+    var x2 = get_new_name(x, bound_vars);
 
     // 1. If x is NOT in the bound set, then erase x from the substitution (if it's there)
     if (x == x2)
@@ -174,7 +174,7 @@ bool is_identity_case(const expression_ref& object, const vector<expression_ref>
 	{
 	    if (bodies[i] != object) return false;
 	}
-	else if (is_dummy(patterns[i].head()))
+	else if (is_var(patterns[i].head()))
 	{
 	    assert(not patterns[i].size());
 	    if (bodies[i] != patterns[i] and bodies[i] != object) return false;
@@ -186,11 +186,11 @@ bool is_identity_case(const expression_ref& object, const vector<expression_ref>
 }
 
 
-void get_pattern_dummies(const expression_ref& pattern, set<dummy>& vars)
+void get_pattern_dummies(const expression_ref& pattern, set<var>& vars)
 {
-    if (is_dummy(pattern))
+    if (is_var(pattern))
     {
-	auto& x = pattern.as_<dummy>();
+	auto& x = pattern.as_<var>();
 	if (not x.is_wildcard())
 	    vars.insert(x);
     }
@@ -201,21 +201,21 @@ void get_pattern_dummies(const expression_ref& pattern, set<dummy>& vars)
 
 
 // Get a list of patterns.size() names for let-bound variables that don't alias any bound vars  in patterns or patterns2
-vector<dummy> get_body_function_names(in_scope_set& bound_vars, const vector<expression_ref>& patterns, const vector<expression_ref>& patterns2)
+vector<var> get_body_function_names(in_scope_set& bound_vars, const vector<expression_ref>& patterns, const vector<expression_ref>& patterns2)
 {
-    vector<dummy> lifted_names;
+    vector<var> lifted_names;
 
     int orig_size = bound_vars.size();
 
     // 1. Get the list of dummies to avoid
-    set<dummy> avoid;
+    set<var> avoid;
     for(auto& pattern: patterns)
 	get_pattern_dummies(pattern, avoid);
     for(auto& pattern: patterns2)
 	get_pattern_dummies(pattern, avoid);
 
     // 2. Bind the unbound ones into scope
-    set<dummy> added;
+    set<var> added;
     for(auto& x:avoid)
 	if (not bound_vars.count(x))
 	{
@@ -224,7 +224,7 @@ vector<dummy> get_body_function_names(in_scope_set& bound_vars, const vector<exp
 	}
 
     // 3. Make some new names, putting them into scope as we go.
-    dummy z("_cc");
+    var z("_cc");
     z.work_dup = amount_t::Many;
     z.code_dup = amount_t::Many;
     for(int i=0;i<patterns.size();i++)
@@ -240,8 +240,8 @@ vector<dummy> get_body_function_names(in_scope_set& bound_vars, const vector<exp
 	unbind_var(bound_vars, lifted_names[i]);
 
     // 5. Unbind the names from the patterns from scope too.
-    for(auto& var: added)
-	unbind_var(bound_vars, var);
+    for(auto& x: added)
+	unbind_var(bound_vars, x);
 
     // 6. The scope size should now be the same size as when we started.
     assert(bound_vars.size() == orig_size);
@@ -249,27 +249,27 @@ vector<dummy> get_body_function_names(in_scope_set& bound_vars, const vector<exp
     return lifted_names;
 }
 
-bool is_used_var(const dummy& x)
+bool is_used_var(const var& x)
 {
     return (not x.is_wildcard() and x.code_dup != amount_t::None);
 }
 
 bool is_used_var(const expression_ref& x)
 {
-    if (not is_dummy(x)) return false;
-    return is_used_var(x.as_<dummy>());
+    if (not is_var(x)) return false;
+    return is_used_var(x.as_<var>());
 }
 
-vector<dummy> get_used_vars(const expression_ref& pattern)
+vector<var> get_used_vars(const expression_ref& pattern)
 {
-    vector<dummy> used;
+    vector<var> used;
 
     if (is_used_var(pattern))
-	used.push_back(pattern.as_<dummy>());
+	used.push_back(pattern.as_<var>());
     else if (pattern.is_expression())
-	for(auto& var: pattern.sub())
-	    if (is_used_var(var.as_<dummy>()))
-		used.push_back(var.as_<dummy>());
+	for(auto& Evar: pattern.sub())
+	    if (is_used_var(Evar.as_<var>()))
+		used.push_back(Evar.as_<var>());
 
     return used;
 }
@@ -279,8 +279,8 @@ bool has_used_vars(const expression_ref& pattern)
     if (is_used_var(pattern))
 	return true;
     else if (pattern.is_expression())
-	for(auto& var: pattern.sub())
-	    if (is_used_var(var.as_<dummy>()))
+	for(auto& Evar: pattern.sub())
+	    if (is_used_var(Evar.as_<var>()))
 		return true;
 
     return false;
@@ -321,11 +321,11 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 
     // 6. Take a specific branch if the object is a constant
     expression_ref E2;
-    if (is_WHNF(object) and not is_dummy(object))
+    if (is_WHNF(object) and not is_var(object))
     {
 	for(int i=0; i<L and not E2; i++)
 	{
-	    if (is_dummy(patterns[i]))
+	    if (is_var(patterns[i]))
 	    {
 		assert(is_wildcard(patterns[i]));
 		E2 = simplify(options, bodies[i], S, bound_vars, context);
@@ -345,12 +345,12 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 		for(int j=0;j<patterns[i].size();j++)
 		{
 		    auto pat_var = patterns[i].sub()[j];
-		    auto& x = pat_var.as_<dummy>();
+		    auto& x = pat_var.as_<var>();
 		    if (not is_wildcard(pat_var))
 		    {
 			auto obj_var = object.sub()[j];
-			assert(is_dummy(obj_var) and not is_wildcard(obj_var));
-			assert(is_dummy(pat_var) and not is_wildcard(pat_var));
+			assert(is_var(obj_var) and not is_wildcard(obj_var));
+			assert(is_var(pat_var) and not is_wildcard(pat_var));
 			S2.erase(x);
 			S2.insert({x,obj_var});
 		    }
@@ -379,21 +379,21 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 	    object_ptr<expression> pattern2 = patterns[i].as_expression().clone();
 	    for(int j=0; j<pattern2->size(); j++)
 	    {
-		expression_ref& var = pattern2->sub[j];
-		assert(is_dummy(var));
+		expression_ref& Evar = pattern2->sub[j];
+		assert(is_var(Evar));
 
 		// Create an unused variable for wildcards.  This is for if we add a x=pattern binding.
-		if (is_wildcard(var)) {
-		    dummy wild("__",1);
+		if (is_wildcard(Evar)) {
+		    var wild("__",1);
 		    wild.code_dup = amount_t::None;
 		    wild.work_dup = amount_t::None;
 		    wild.is_loop_breaker = false;
 		    wild.context = var_context::unknown;
-		    var = wild;
+		    Evar = wild;
 		}
 
-		dummy x2 = rename_and_bind_var(var, S2, bound_vars);
-		var = x2;
+		var x2 = rename_and_bind_var(Evar, S2, bound_vars);
+		Evar = x2;
 		pat_decls.push_back({x2, {}});
 	    }
 	    patterns[i] = pattern2;
@@ -401,13 +401,13 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 
 	// 3. If we know something extra about the value (or range, theoretically) of the object in this case branch, then record that.
 	bound_variable_info original_binding;
-	if (is_dummy(object)) original_binding = rebind_var(bound_vars, object.as_<dummy>(), patterns[i]);
+	if (is_var(object)) original_binding = rebind_var(bound_vars, object.as_<var>(), patterns[i]);
 
 	// 4. Simplify the alternative body
 	bodies[i] = simplify(options, bodies[i], S2, bound_vars, unknown_context());
 
 	// 5. Restore informatation about an object variable to information outside this case branch.
-	if (is_dummy(object)) rebind_var(bound_vars, object.as_<dummy>(), original_binding.first);
+	if (is_var(object)) rebind_var(bound_vars, object.as_<var>(), original_binding.first);
 
 	unbind_decls(bound_vars, pat_decls);
     }
@@ -425,7 +425,7 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 	parse_case_expression(object, object2, patterns2, bodies2);
 
         // 1. Find names for the lifted case bodies.
-	vector<dummy> lifted_names = get_body_function_names(bound_vars, patterns, patterns2);
+	vector<var> lifted_names = get_body_function_names(bound_vars, patterns, patterns2);
 
 	// 2. Lift case bodies into let-bound functions, and replace the bodies with calls to these functions.
 	CDecls cc_decls;
@@ -434,7 +434,7 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 	    // Don't both factoring out trivial expressions
 	    if (is_trivial(patterns[i])) continue;
 
-	    vector<dummy> used_vars = get_used_vars(patterns[i]);
+	    vector<var> used_vars = get_used_vars(patterns[i]);
 
 	    auto f = lifted_names[i];
 	    expression_ref f_body = bodies[i];
@@ -518,7 +518,7 @@ expression_ref rebuild_apply(const simplifier_options& options, expression_ref E
 	auto argument = E.sub()[1+i];
 	if (i<used_arguments)
 	{
-	    auto x = object.sub()[0].as_<dummy>();
+	    auto x = object.sub()[0].as_<var>();
 	    apply_decls.push_back({x, argument});
 	    object = peel_n_lambdas1(object,1);
 	}
@@ -554,15 +554,15 @@ simplify_decls(const simplifier_options& options, CDecls& orig_decls, const subs
     const int n_decls = orig_decls.size();
 
     CDecls new_decls;
-    vector<dummy> new_names;
+    vector<var> new_names;
 
     // 5.1 Rename and bind all variables.
     //     Binding all variables ensures that we avoid shadowing them, which helps with let-floating.
     //     Renaming them is necessary to correctly simplify the bodies.
     for(int i=0;i<n_decls;i++)
     {
-	dummy x = orig_decls[i].first;
-	dummy x2 = rename_and_bind_var(x, S2, bound_vars);
+	var x = orig_decls[i].first;
+	var x2 = rename_and_bind_var(x, S2, bound_vars);
 	new_names.push_back(x2);
     }
 
@@ -571,10 +571,10 @@ simplify_decls(const simplifier_options& options, CDecls& orig_decls, const subs
     {
 	// If x[i] is not a loop breaker, then x[i] can only BE referenced by LATER E[k] (since loop breakers are later), while
 	//                                     E[i] can only reference EARLIER x[k] and loop breakers.
-	dummy x  = orig_decls[i].first;
+	var x  = orig_decls[i].first;
 	auto F   = orig_decls[i].second;
 
-	dummy x2 = new_names[i];
+	var x2 = new_names[i];
 
 	if (x.is_exported) assert(x == x2);
 
@@ -638,7 +638,7 @@ simplify_decls(const simplifier_options& options, CDecls& orig_decls, const subs
 expression_ref eta_reduce(const expression_ref& E)
 {
     assert(is_lambda(E.head()));
-    auto& x    = E.sub()[0].as_<dummy>();
+    auto& x    = E.sub()[0].as_<var>();
     auto& body = E.sub()[1];
 
     if (x.code_dup == amount_t::Once and
@@ -669,9 +669,9 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     assert(E);
 
     // 1. Var (x)
-    if (is_dummy(E))
+    if (is_var(E))
     {
-	dummy x = E.as_<dummy>();
+	var x = E.as_<var>();
 	// 1.1 If there's a substitution x -> E
 	if (S.count(x))
 	{
@@ -705,9 +705,9 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 
 	auto S2 = S;
 
-	auto var = E.sub()[0];
+	auto Evar = E.sub()[0];
 	// 2.1. Get the new name, possibly adding a substitution
-	dummy x2 = rename_and_bind_var(var, S2, bound_vars);
+	var x2 = rename_and_bind_var(Evar, S2, bound_vars);
 
 	// 2.3 Simplify the body with x added to the bound set.
 	auto new_body = simplify(options, E.sub()[1], S2, bound_vars, unknown_context());
@@ -782,10 +782,10 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 }
 
 
-vector<CDecls> simplify_module(const simplifier_options& options, const map<dummy,expression_ref>& small_decls_in,const set<dummy>& small_decls_in_free_vars,
+vector<CDecls> simplify_module(const simplifier_options& options, const map<var,expression_ref>& small_decls_in,const set<var>& small_decls_in_free_vars,
 			       const vector<CDecls>& decl_groups_in)
 {
-    set<dummy> free_vars;
+    set<var> free_vars;
 
     // Decompose the decls, remove unused decls, and occurrence-analyze the decls.
     auto decl_groups = occurrence_analyze_decl_groups(decl_groups_in, free_vars);
@@ -794,17 +794,17 @@ vector<CDecls> simplify_module(const simplifier_options& options, const map<dumm
 
     for(auto& decl: small_decls_in)
     {
-	dummy x = decl.first;
+	var x = decl.first;
 	x.work_dup = amount_t::Many;
 	x.code_dup = amount_t::Many;
 	bound_vars.insert({x,{decl.second,x}});
     }
 
-    for(auto& var: small_decls_in_free_vars)
-	bound_vars.insert({var,{}});
+    for(auto& x: small_decls_in_free_vars)
+	bound_vars.insert({x,{}});
 
-    for(auto& var: free_vars)
-	bound_vars.insert({var,{}});
+    for(auto& x: free_vars)
+	bound_vars.insert({x,{}});
 
     vector<substitution> S(1);
     for(auto& decls: decl_groups)

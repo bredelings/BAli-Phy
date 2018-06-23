@@ -6,7 +6,7 @@
 #include "computation/expression/expression.H"
 #include "computation/expression/let.H"
 #include "computation/expression/case.H"
-#include "computation/expression/dummy.H"
+#include "computation/expression/var.H"
 #include "computation/expression/apply.H"
 #include "computation/expression/lambda.H"
 #include "computation/expression/trim.H"
@@ -32,7 +32,7 @@ int nodes_size(const expression_ref& E);
 
 int simple_size(const expression_ref& E)
 {
-    if (is_dummy(E))
+    if (is_var(E))
 	return 0;
 
     else if (E.size() == 0)
@@ -41,7 +41,7 @@ int simple_size(const expression_ref& E)
     else if (is_constructor(E.head()))
     {
 	for(auto& x: E.sub())
-	    assert(is_dummy(x));
+	    assert(is_var(x));
 	return 1;
     }
 
@@ -74,7 +74,7 @@ int simple_size(const expression_ref& E)
     else if (is_non_apply_operation(E.head()))
     {
 	for(auto& x: E.sub())
-	    assert(is_dummy(x));
+	    assert(is_var(x));
 	return 1;
     }
 

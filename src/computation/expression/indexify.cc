@@ -1,6 +1,6 @@
 #include "indexify.H"
 #include "expression.H"
-#include "dummy.H"
+#include "var.H"
 #include "lambda.H"
 #include "let.H"
 #include "case.H"
@@ -24,16 +24,16 @@ expression_ref make_indexed_lambda(const expression_ref& R)
     return new expression(lambda2(),{R});
 }
 
-dummy get_named_dummy(int n)
+var get_named_var(int n)
 {
     if (n<26) 
-	return dummy(string{char(97+n)});
+	return var(string{char(97+n)});
     else
-	return dummy(n-26);
+	return var(n-26);
 }
 
 /// Convert to using de Bruijn indices.
-expression_ref indexify(const expression_ref& E, vector<dummy>& variables)
+expression_ref indexify(const expression_ref& E, vector<var>& variables)
 {
     if (not E.size())
     {
@@ -42,9 +42,9 @@ expression_ref indexify(const expression_ref& E, vector<dummy>& variables)
 	    return index_var(E.as_index_var() + variables.size());
 
 	// Variable
-	else if (E.is_a<dummy>())
+	else if (E.is_a<var>())
 	{
-	    auto& D = E.as_<dummy>();
+	    auto& D = E.as_<var>();
 	    assert(not is_wildcard(E));
 
 	    int index = find_index_backward(variables, D);
@@ -61,14 +61,14 @@ expression_ref indexify(const expression_ref& E, vector<dummy>& variables)
     // Lambda expression - /\x.e
     if (E.head().is_a<lambda>())
     {
-	variables.push_back(E.sub()[0].as_<dummy>());
+	variables.push_back(E.sub()[0].as_<var>());
 	auto E2 = make_indexed_lambda( indexify(E.sub()[1], variables) );
 	variables.pop_back();
 	return E2;
     }
 
     // Let expression
-    vector<pair<dummy,expression_ref>> decls;
+    vector<pair<var,expression_ref>> decls;
     vector<expression_ref> bodies;
     expression_ref T;
     if (parse_let_expression(E, decls, T))
@@ -101,12 +101,12 @@ expression_ref indexify(const expression_ref& E, vector<dummy>& variables)
 
 #ifndef NDEBUG
 	    // FIXME - I guess this doesn't handle case a of b -> f(b)?
-	    if (is_dummy(P))
+	    if (is_var(P))
 		assert(is_wildcard(P));
 #endif
 
 	    for(int j=0;j<P.size();j++)
-		variables.push_back(P.sub()[j].as_<dummy>());
+		variables.push_back(P.sub()[j].as_<var>());
 
 	    B = indexify(B, variables);
 
@@ -129,7 +129,7 @@ expression_ref indexify(const expression_ref& E, vector<dummy>& variables)
 
 expression_ref indexify(const expression_ref& E)
 {
-    vector<dummy> variables;
+    vector<var> variables;
     return indexify(E,variables);
 }
 
@@ -156,21 +156,21 @@ expression_ref deindexify(const expression_ref& E, const vector<expression_ref>&
     if (E.head().is_a<lambda2>())
     {
 	vector<expression_ref> variables2 = variables;
-	dummy d = get_named_dummy(variables.size());
+	var d = get_named_var(variables.size());
 	variables2.push_back(d);
 	return lambda_quantify(d,deindexify(E.sub()[0],variables2));
     }
 
     // Let expression
     vector<expression_ref> bodies;
-    vector<pair<dummy,expression_ref>> decls;
+    vector<pair<var,expression_ref>> decls;
     expression_ref body;
     if (parse_indexed_let_expression(E, bodies, body))
     {
 	vector<expression_ref> variables2 = variables;
 	for(int i=0;i<bodies.size();i++)
 	{
-	    dummy d = get_named_dummy(variables2.size());
+	    var d = get_named_var(variables2.size());
 	    decls.push_back({d, bodies[i]});
 	    variables2.push_back( d );
 	}
@@ -207,13 +207,13 @@ expression_ref deindexify(const expression_ref& E, const vector<expression_ref>&
 	    vector<expression_ref> variables2 = variables;
 	    for(int j=0;j<n_args;j++)
 	    {
-		dummy d = get_named_dummy(variables2.size());
+		var d = get_named_var(variables2.size());
 		variables2.push_back( d );
 		P = P + d;
 	    }
 
 #ifndef NDEBUG
-	    if(is_dummy(P))
+	    if(is_var(P))
 		assert(is_wildcard(P));
 #endif
 

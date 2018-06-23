@@ -3,7 +3,7 @@
 #include "expression.H"
 #include "let.H"
 #include "case.H"
-#include "dummy.H"
+#include "var.H"
 #include "lambda.H"
 
 using std::vector;
@@ -11,7 +11,7 @@ using std::string;
 using std::set;
 using std::multiset;
 
-// Return the list of dummy variable indices that are bound at the top level of the expression
+// Return the list of variable indices that are bound at the top level of the expression
 void alpha_rename(object_ptr<expression>& E, const expression_ref& x, const expression_ref& y)
 {
     // assert: x is bound in E
@@ -58,7 +58,7 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
 
     assert(not is_wildcard(D));
 
-    // If this is the relevant dummy, then substitute
+    // If this is the relevant var, then substitute
     if (E1.size() == 0)
     {
 	if (E1 == D)
@@ -66,7 +66,7 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
 	    E1 = E2;
 	    return true;
 	}
-	// If this is any other constant, then it doesn't contain the dummy
+	// If this is any other constant, then it doesn't contain the var
 	else
 	    return false;
     }
@@ -84,7 +84,7 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
 	    for(int i=0;i<patterns.size();i++)
 	    {
 		// 1. don't substitute into subtree where this variable is bound
-		std::set<dummy> bound = get_free_indices(patterns[i]);
+		std::set<var> bound = get_free_indices(patterns[i]);
 
 		bool D_is_bound = false;
 		for(const auto& b: bound)
@@ -94,21 +94,21 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
 		// 2. If some of the free variables in E2 are bound in patterns[i], then do 
 		// alpha-renaming on (patterns[i],bodies[i]), to avoid name capture.
 
-		std::set<dummy> fv2 = get_free_indices(E2);
-		std::set<dummy> overlap = intersection(bound,fv2);
+		std::set<var> fv2 = get_free_indices(E2);
+		std::set<var> overlap = intersection(bound,fv2);
     
 		if (not overlap.empty())
 		{
 		    // Determine the free variables of {patterns[i],bodies[i]} so that we can avoid them in alpha renaming
-		    std::set<dummy> fv1 = get_free_indices(bodies[i]);
+		    std::set<var> fv1 = get_free_indices(bodies[i]);
 		    for(const auto& b: bound)
 			fv1.erase(b);
 	  
 		    // If bodies[i] does not contain D, we won't do any substitution anyway, so avoid alpha renaming.
 		    // Since D is not bound by patterns, we just need to check if D is in fv1 = fv(body)-fv(pattern).
-		    if (D.is_a<dummy>())
+		    if (D.is_a<var>())
 		    {
-			if (fv1.find(D.as_<dummy>()) == fv1.end()) continue;
+			if (fv1.find(D.as_<var>()) == fv1.end()) continue;
 		    }
 	  
 		    // Compute the total set of free variables to avoid clashes with when alpha renaming.
@@ -120,19 +120,19 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
 		    // Do the alpha renaming
 		    for(const auto& o:overlap) 
 		    {
-			patterns[i] = substitute(patterns[i], dummy(o), dummy(new_index));
-			bodies[i] = substitute(bodies[i], dummy(o), dummy(new_index));
+			patterns[i] = substitute(patterns[i], var(o), var(new_index));
+			bodies[i] = substitute(bodies[i], var(o), var(new_index));
 			new_index++;
 		    }
 		    changed = true;
 	  
-		    // We rename a bound variable dummy(i) in patterns[i]/bodies[i] that is free in E2 to a new variable dummy(new_index)
+		    // We rename a bound variable var(i) in patterns[i]/bodies[i] that is free in E2 to a new variable var(new_index)
 		    //   that is not bound or free in the initial version of patterns[i]/bodies[i] and free in E2.
 	  
 		    // The conditions are therefore:
-		    //   dummy(*i) must be bound in patterns[i]
-		    //   dummy(new_index) must be neither bound nor free in E1
-		    //   dummy(new_index) must not be free in E2
+		    //   var(*i) must be bound in patterns[i]
+		    //   var(new_index) must be neither bound nor free in E1
+		    //   var(new_index) must not be free in E2
 		}
 
 		// assert that D contains no free variables that are bound in patterns[i]
@@ -147,7 +147,7 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
     }
 
     // What indices are bound at the top level?
-    std::set<dummy> bound = get_bound_indices(E1);
+    std::set<var> bound = get_bound_indices(E1);
 
     bool changed = false;
     if (not bound.empty())
@@ -156,18 +156,18 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
 	for(const auto& b: bound)
 	    if (D == b) return false;
     
-	std::set<dummy> fv2 = get_free_indices(E2);
-	std::set<dummy> overlap = intersection(bound,fv2);
+	std::set<var> fv2 = get_free_indices(E2);
+	std::set<var> overlap = intersection(bound,fv2);
     
 	// If some of the free variables in E2 are bound in E1, then do alpha-renaming on E1 to avoid name capture.
 	if (not overlap.empty())
 	{
 	    // Determine the free variables of E1 so that we can avoid them in alpha renaming
-	    std::set<dummy> fv1 = get_free_indices(E1);
+	    std::set<var> fv1 = get_free_indices(E1);
 
 	    // If E1 does not contain D, then we won't do any substitution anyway, so avoid alpha renaming.
-	    if (D.is_a<dummy>())
-		if (fv1.find(D.as_<dummy>()) == fv1.end()) return false;
+	    if (D.is_a<var>())
+		if (fv1.find(D.as_<var>()) == fv1.end()) return false;
 
 	    // Compute the total set of free variables to avoid clashes with when alpha renaming.
 	    add(fv2, fv1);
@@ -178,17 +178,17 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
 	    // Do the alpha renaming
 	    object_ptr<expression> E1_ (E1.as_expression().clone());
 	    for(const auto& i:overlap)
-		alpha_rename(E1_, dummy(i), dummy(new_index++));
+		alpha_rename(E1_, var(i), var(new_index++));
 	    E1 = E1_;
 	    changed = true;
 
-	    // We rename a bound variable dummy(i) in E1 that is free in E2 to a new variable dummy(new_index)
+	    // We rename a bound variable var(i) in E1 that is free in E2 to a new variable var(new_index)
 	    //   that is not bound or free in the initial version of E1 and free in E2.
 
 	    // The conditions are therefore:
-	    //   dummy(*i) must be bound in E1
-	    //   dummy(new_index) must be neither bound nor free in E1
-	    //   dummy(new_index) must not be free in E2
+	    //   var(*i) must be bound in E1
+	    //   var(new_index) must be neither bound nor free in E1
+	    //   var(new_index) must not be free in E2
 	}
     }
 
@@ -204,9 +204,9 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
     return changed;
 }
 
-expression_ref substitute(const expression_ref& R1, int dummy_index, const expression_ref& R2)
+expression_ref substitute(const expression_ref& R1, int var_index, const expression_ref& R2)
 {
-    return substitute(R1,dummy(dummy_index),R2);
+    return substitute(R1,var(var_index),R2);
 }
 
 expression_ref substitute(const expression_ref& R1, const expression_ref& D, const expression_ref& R2)

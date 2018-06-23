@@ -13,7 +13,7 @@
 #include "substitute.H"
 #include "let.H"
 #include "case.H"
-#include "dummy.H"
+#include "var.H"
 #include "lambda.H"
 
 using std::vector;
@@ -27,7 +27,7 @@ using boost::dynamic_pointer_cast;
 // 1. factor out: list, tuple
 // Also try to simplify the apply_subst stuff in tuple & list files
 // 2. eliminate substitution.H
-// 3. Eliminate identifier in favor of dummy (==var)?
+// 3. Eliminate identifier in favor of var (==var)?
 // 4. Remove horrible (#symbol)*(#function) substitution in module.C
 
 bool parameter::operator==(const Object& o) const 
@@ -60,7 +60,7 @@ parameter::parameter(const std::string& s)
 ///    For example, apply Lx.y to x, then we would get Lx.x, which is not allowed.
 ///    Instead, we must "alpha-convert" Lx.y to Lz.y, and then apply Lz.y to x, leading to Lz.x .
 
-/// Literally E2 for D in E1. (e.g. don't rename variables in E2).  Throw an exception if D is a lambda-bound dummy variable.
+/// Literally E2 for D in E1. (e.g. don't rename variables in E2).  Throw an exception if D is a lambda-bound variable.
 
 void find_named_parameters(const expression_ref& E, std::set<string>& names)
 {
@@ -126,7 +126,7 @@ expression_ref add_prefix(const string& prefix, const expression_ref& E)
 */
 
 /*
-  x -> dummy[index]
+  x -> var[index]
   Lx.T ->(lambda[index] T)
   (U T) -> (U T)
   (c U[i]) -> (c U[i])
@@ -135,7 +135,7 @@ expression_ref add_prefix(const string& prefix, const expression_ref& E)
 */
 
 /*
- *  Perhaps switch to (lambda dummy E) instead of (lambda[index] E)
+ *  Perhaps switch to (lambda var E) instead of (lambda[index] E)
  */ 
 
 
@@ -201,7 +201,7 @@ bool is_reg_var(const expression_ref& E)
 
 bool is_reglike(const expression_ref& E)
 {
-    return is_dummy(E) or is_parameter(E) or is_modifiable(E) or is_reg_var(E) or E.is_index_var();
+    return is_var(E) or is_parameter(E) or is_modifiable(E) or is_reg_var(E) or E.is_index_var();
 }
 
 expression_ref launchbury_unnormalize(const expression_ref& E)
@@ -253,7 +253,7 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
     // 5. Let 
     if (is_let_expression(E))
     {
-	vector<pair<dummy,expression_ref>> decls;
+	vector<pair<var,expression_ref>> decls;
 	expression_ref body;
 	parse_let_expression(E, decls, body);
 
@@ -268,7 +268,7 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
 	  matrix<int> U(vars.size(), vars.size());
 	  for(int i=0;i<vars.size();i++)
 	  {
-	  std::set<dummy> free = get_free_indices(bodies[i]);
+	  std::set<var> free = get_free_indices(bodies[i]);
 	  for(int j=0;j<vars.size();j++)
 	  if (free.find(vars[j]))
 	  U(i,j) = 0;
@@ -284,7 +284,7 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
 	    for(int i=decls.size()-1; i>=0; i--)
 	    {
 		auto& x = decls[i].first;
-		std::set<dummy> free = get_free_indices(decls[i].second);
+		std::set<var> free = get_free_indices(decls[i].second);
 
 		// if x references itself then don't substitute it.
 		if (free.count(x)) continue;

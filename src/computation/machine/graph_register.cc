@@ -3,7 +3,7 @@
 #include "util.H"
 #include "graph_register.H"
 #include "computation/expression/expression.H"
-#include "computation/expression/dummy.H"
+#include "computation/expression/var.H"
 
 using std::string;
 using std::vector;
@@ -1439,9 +1439,9 @@ int reg_heap::add_transition_kernel(int r)
 
 int reg_heap::add_modifiable_parameter(const string& full_name)
 {
-    expression_ref E = dummy("Parameters.new_modifiable");
-    E = {dummy("Prelude.unsafePerformIO"), E};
-    E = {dummy("Parameters.evaluate"),-1,E};
+    expression_ref E = var("Parameters.new_modifiable");
+    E = {var("Prelude.unsafePerformIO"), E};
+    E = {var("Parameters.evaluate"),-1,E};
 
     return add_parameter(full_name, E);
 }

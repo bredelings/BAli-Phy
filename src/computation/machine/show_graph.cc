@@ -3,7 +3,7 @@
 #include "computation/operations.H"
 #include "computation/expression/expression.H"
 #include "computation/expression/let.H"
-#include "computation/expression/dummy.H"
+#include "computation/expression/var.H"
 #include "computation/expression/case.H"
 
 using std::string;
@@ -279,7 +279,7 @@ expression_ref compact_graph_expression(const reg_heap& C, int R, const map<stri
     {
 	int R = id.second;
 	string name = id.first;
-	names[R] = expression_ref(new dummy(name) );
+	names[R] = expression_ref(new var(name) );
     }
     discover_graph_vars(C, R, names, ids);
 

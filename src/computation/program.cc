@@ -4,7 +4,7 @@
 #include "computation/loader.H"
 #include "models/model.H"
 #include "expression/expression.H"
-#include "expression/dummy.H"
+#include "expression/var.H"
 #include "util/assert.hh"
 
 using std::vector;
@@ -284,12 +284,12 @@ expression_ref map_symbol_names(const expression_ref& E, const std::map<string,s
 {
     if (not E.size())
     {
-	if (is_qualified_dummy(E))
+	if (is_qualified_var(E))
 	{
-	    auto x = E.as_<dummy>();
+	    auto x = E.as_<var>();
 	    auto loc = simplify.find(x.name);
 	    if (loc != simplify.end())
-		return dummy(loc->second);
+		return var(loc->second);
 	}
 	return E;
     }

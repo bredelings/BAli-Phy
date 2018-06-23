@@ -1,4 +1,4 @@
-#include "dummy.H"
+#include "var.H"
 #include "computation/expression/let.H"
 #include "computation/expression/case.H"
 #include "computation/module.H"
@@ -17,21 +17,21 @@ bool occurrence_info::pre_inline() const
     return true;
 }
 
-bool dummy::operator==(const dummy& d) const
+bool var::operator==(const var& d) const
 {
     return index == d.index and name == d.name;
 }
 
-bool dummy::operator==(const Object& o) const 
+bool var::operator==(const Object& o) const 
 {
-    const dummy* D = dynamic_cast<const dummy*>(&o);
+    const var* D = dynamic_cast<const var*>(&o);
     if (not D) 
 	return false;
 
     return (*this) == *D;
 }
 
-string dummy::print() const {
+string var::print() const {
     if (is_wildcard())
 	return "_";
     else if (name == ":" or is_haskell_consym(name))
@@ -45,7 +45,7 @@ string dummy::print() const {
 	return name+string("#")+convertToString(index);
 }
 
-bool dummy::operator<(const dummy& D) const 
+bool var::operator<(const var& D) const 
 {
     if (index < D.index) return true;
     if (index > D.index) return false;
@@ -55,7 +55,7 @@ bool dummy::operator<(const dummy& D) const
     return (cmp < 0);
 }
 
-std::set<dummy> get_free_indices(const expression_ref& E);
+std::set<var> get_free_indices(const expression_ref& E);
 
 /// Return the min of v
 template<typename T>
@@ -68,7 +68,7 @@ T max(const std::set<T>& v)
     return t;
 }
 
-int max_index(const std::set<dummy>& s)
+int max_index(const std::set<var>& s)
 {
     if (s.empty()) return -1;
     return max(s).index;
@@ -85,18 +85,18 @@ T min(const std::set<T>& v)
     return t;
 }
 
-// Return the list of dummy variable indices that are bound at the top level of the expression
-std::set<dummy> get_bound_indices(const expression_ref& E)
+// Return the list of variable indices that are bound at the top level of the expression
+std::set<var> get_bound_indices(const expression_ref& E)
 {
-    std::set<dummy> bound;
+    std::set<var> bound;
 
     if (not E.size()) return bound;
 
     // Make sure we don't try to substitute for lambda-quantified dummies
     if (E.head().type() == lambda_type)
     {
-	if (E.sub()[0].is_a<dummy>())
-	    bound.insert(E.sub()[0].as_<dummy>());
+	if (E.sub()[0].is_a<var>())
+	    bound.insert(E.sub()[0].as_<var>());
     }
     else 
     {
@@ -112,12 +112,12 @@ std::set<dummy> get_bound_indices(const expression_ref& E)
     return bound;
 }
 
-void get_free_indices2(const expression_ref& E, multiset<dummy>& bound, set<dummy>& free)
+void get_free_indices2(const expression_ref& E, multiset<var>& bound, set<var>& free)
 {
     // fv x = { x }
-    if (is_dummy(E))
+    if (is_var(E))
     {
-	dummy d = E.as_<dummy>();
+	var d = E.as_<var>();
 	if (not is_wildcard(E) and (bound.find(d) == bound.end()))
 	    free.insert(d);
 	return;
@@ -138,7 +138,7 @@ void get_free_indices2(const expression_ref& E, multiset<dummy>& bound, set<dumm
 
 	for(int i=0;i<L;i++)
 	{
-	    std::set<dummy> bound_ = get_free_indices(patterns[i]);
+	    std::set<var> bound_ = get_free_indices(patterns[i]);
 	    for(const auto& d: bound_)
 		bound.insert(d);
 	    get_free_indices2(bodies[i], bound, free);
@@ -152,7 +152,7 @@ void get_free_indices2(const expression_ref& E, multiset<dummy>& bound, set<dumm
 	return;
     }
 
-    std::set<dummy> bound_ = get_bound_indices(E);
+    std::set<var> bound_ = get_bound_indices(E);
     for(const auto& d: bound_)
 	bound.insert(d);
     for(int i=0;i<E.size();i++)
@@ -164,56 +164,56 @@ void get_free_indices2(const expression_ref& E, multiset<dummy>& bound, set<dumm
     }
 }
 
-std::set<dummy> get_free_indices(const expression_ref& E)
+std::set<var> get_free_indices(const expression_ref& E)
 {
-    multiset<dummy> bound;
-    set<dummy> free;
+    multiset<var> bound;
+    set<var> free;
     get_free_indices2(E, bound, free);
     return free;
 }
 
 int get_safe_binder_index(const expression_ref& E)
 {
-    std::set<dummy> free = get_free_indices(E);
+    std::set<var> free = get_free_indices(E);
     if (free.empty()) 
 	return 0;
     else
 	return max_index(free)+1;
 }
 
-bool is_dummy(const expression_ref& E)
+bool is_var(const expression_ref& E)
 {
-    return (E.head().type() == dummy_type);
+    return (E.head().type() == var_type);
 }
 
-dummy qualified_dummy(const string& name)
+var qualified_var(const string& name)
 {
     assert(name.size());
     assert(is_qualified_symbol(name));
-    return dummy(name);
+    return var(name);
 }
 
-bool is_qualified_dummy(const expression_ref& E)
+bool is_qualified_var(const expression_ref& E)
 {
-    if (not is_dummy(E)) return false;
-    auto& x = E.as_<dummy>();
+    if (not is_var(E)) return false;
+    auto& x = E.as_<var>();
     if (x.is_wildcard()) return false;
     if (x.name.empty()) return false;
     return is_qualified_symbol(x.name);
 }
 
-bool is_wildcard(const dummy& d)
+bool is_wildcard(const var& d)
 {
     return d.is_wildcard();
 }
 
-// Remove in favor of is_dummy?
+// Remove in favor of is_var?
 bool is_wildcard(const expression_ref& E)
 {
-    if (is_dummy(E))
+    if (is_var(E))
     {
 	assert(not E.size());
-	dummy d = E.as_<dummy>();
+	var d = E.as_<var>();
 	return is_wildcard(d);
     }
     else

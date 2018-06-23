@@ -15,7 +15,7 @@
 #include "computation/expression/tuple.H"
 #include "computation/expression/list.H"
 #include "computation/expression/lambda.H"
-#include "computation/expression/dummy.H"
+#include "computation/expression/var.H"
 #include "desugar.H"
 
 using std::string;
@@ -54,7 +54,7 @@ expression_ref infix_parse_neg(const Module& m, const symbol_info& op1, deque<ex
 
 	E1 = infix_parse_neg(m, symbol_info("-",variable_symbol, 2,6,left_fix), T);
 
-	return infix_parse(m, op1, {dummy("Prelude.negate"),E1}, T);
+	return infix_parse(m, op1, {var("Prelude.negate"),E1}, T);
     }
     // If E1 is not a neg, E1 should be an expression, and the next thing should be an Op.
     else
@@ -68,9 +68,9 @@ expression_ref infix_parse(const Module& m, const symbol_info& op1, const expres
 	return E1;
 
     symbol_info op2;
-    if (T.front().is_a<dummy>())
+    if (T.front().is_a<var>())
     {
-	auto d = T.front().as_<dummy>().name;
+	auto d = T.front().as_<var>().name;
 	if (m.is_declared( d ) )
 	    op2 = m.get_operator( d );
 	else
@@ -96,7 +96,7 @@ expression_ref infix_parse(const Module& m, const symbol_info& op1, const expres
 	T.pop_front();
 	expression_ref E3 = infix_parse_neg(m, op2, T);
 
-	expression_ref E1_op2_E3 = {dummy(op2.name), E1, E3};
+	expression_ref E1_op2_E3 = {var(op2.name), E1, E3};
 
 	if (op2.symbol_type == constructor_symbol)
 	{
@@ -158,9 +158,9 @@ expression_ref infixpat_parse(const Module& m, const symbol_info& op1, const exp
 	return E1;
 
     symbol_info op2;
-    if (is_dummy(T.front()))
+    if (is_var(T.front()))
     {
-	auto d = T.front().as_<dummy>().name;
+	auto d = T.front().as_<var>().name;
 	if (m.is_declared( d ) )
 	    op2 = m.get_operator( d );
 	else
@@ -294,8 +294,8 @@ string get_func_name(const expression_ref& decl)
 
     expression_ref name = lhs.sub()[0];
 
-    if (name.is_a<dummy>())
-	return name.as_<dummy>().name;
+    if (name.is_a<var>())
+	return name.as_<var>().name;
     else if (name.head().is_a<AST_node>())
     {
 	assert(is_AST(name,"id"));
@@ -375,7 +375,7 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
 	}
 
 	// If its not a function binding, accept it as is, and continue.
-	if (v[i].sub()[0].is_a<dummy>())
+	if (v[i].sub()[0].is_a<var>())
 	    decls.push_back(v[i].head() + v[i].sub()[0] + v[i].sub()[1].sub()[0]);
 	else if (is_AST(v[i].sub()[0], "funlhs1"))
 	{
@@ -396,7 +396,7 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
 		if (patterns.back().size() != patterns.front().size())
 		    throw myexception()<<"Function '"<<name<<"' has different numbers of arguments!";
 	    }
-	    decls.push_back(AST_node("Decl") + dummy(name) + def_function(patterns,bodies) );
+	    decls.push_back(AST_node("Decl") + var(name) + def_function(patterns,bodies) );
 
 	    // skip the other bindings for this function
 	    i += (patterns.size()-1);
@@ -530,7 +530,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 		{
 		    if (is_AST(decl,"Decl") and decl.size() == 2)
 		    {
-			auto x = decl.sub()[0].as_<dummy>();
+			auto x = decl.sub()[0].as_<var>();
 			if (not is_qualified_symbol(x.name))
 			    x.name = m.name + "." + x.name;
 			new_decls.push_back(AST_node("Decl") + x + decl.sub()[1]);
@@ -581,23 +581,23 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	}
 	else if (n.type == "apat_var")
 	{
-	    return dummy(n.value);
+	    return var(n.value);
 	}
 	else if (n.type == "WildcardPattern")
 	{
-	    return dummy(-1);
+	    return var(-1);
 	}
 	else if (n.type == "id")
 	{
 	    // Local vars bind id's tighter than global vars.
 	    if (includes(bound,n.value))
-		return dummy(n.value);
+		return var(n.value);
 	    // If the variable is free, then try top-level names.
 	    else if (m.is_declared(n.value))
 	    {
 		const symbol_info& S = m.lookup_symbol(n.value);
 		string qualified_name = S.name;
-		return dummy(qualified_name);
+		return var(qualified_name);
 	    }
 	    else
 		throw myexception()<<"Can't find id '"<<n.value<<"'";
@@ -791,7 +791,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	{
 	    // FIXME... the infixexp needs to parse the same as if it was parenthesized.
 	    // FIXME... probably we need to do a disambiguation on the infix expression. (infixexp op x)
-	    std::set<dummy> free_vars;
+	    std::set<var> free_vars;
 	    for(auto& e: v) {
 		e = desugar(m, e, bound);
 		add(free_vars, get_free_indices(e));
@@ -802,15 +802,15 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	{
 	    // FIXME... probably we need to do a disambiguation on the infix expression. (x op infixexp)
 	    // FIXME... the infixexp needs to parse the same as if it was parenthesized.
-	    std::set<dummy> free_vars;
+	    std::set<var> free_vars;
 	    for(auto& e: v) {
 		e = desugar(m, e, bound);
 		add(free_vars, get_free_indices(e));
 	    }
-	    int safe_dummy_index = 0;
+	    int safe_var_index = 0;
 	    if (not free_vars.empty())
-		safe_dummy_index = max_index(free_vars)+1;
-	    dummy vsafe(safe_dummy_index);
+		safe_var_index = max_index(free_vars)+1;
+	    var vsafe(safe_var_index);
 	    return lambda_quantify(vsafe,apply_expression(apply_expression(v[0],vsafe),v[1]));
 	}
 	else if (n.type == "Let")
@@ -846,7 +846,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	    // parse the decls and bind declared names internally to the decls.
 	    v[0] = desugar(m, v[0], bound);
 
-	    vector<pair<dummy,expression_ref>> decls;
+	    vector<pair<var,expression_ref>> decls;
 
 	    // find the bound var names + construct arguments to let_obj()
 	    set<string> bound2 = bound;
@@ -854,7 +854,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	    {
 		if (is_AST(decl,"EmptyDecl")) continue;
 
-		dummy x = decl.sub()[0].as_<dummy>().name;
+		var x = decl.sub()[0].as_<var>().name;
 		auto E = decl.sub()[1];
 
 		decls.push_back({x,E});
@@ -898,7 +898,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	}
 	else if (n.type == "enumFrom")
 	{
-	    expression_ref E2 = dummy("Prelude.enumFrom");
+	    expression_ref E2 = var("Prelude.enumFrom");
 	    for(auto& e: v) {
 		e = desugar(m, e, bound);
 		E2 = {E2,e};
@@ -907,7 +907,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	}
 	else if (n.type == "enumFromTo")
 	{
-	    expression_ref E2 = dummy("Prelude.enumFromTo");
+	    expression_ref E2 = var("Prelude.enumFromTo");
 	    for(auto& e: v) {
 		e = desugar(m, e, bound);
 		E2 = {E2,e};
@@ -959,5 +959,5 @@ void read_add_model(Model& M, const std::string& filename)
 void add_model(Model& M, const std::string& name)
 {
     M += name;
-    M.perform_expression({dummy("Distributions.gen_model"),dummy(name+".main")});
+    M.perform_expression({var("Distributions.gen_model"),var(name+".main")});
 }

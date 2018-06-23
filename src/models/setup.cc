@@ -87,7 +87,7 @@
 #include "models/translate.H"
 #include "computation/model_expression.H"
 #include "computation/expression/expression.H"
-#include "computation/expression/dummy.H"
+#include "computation/expression/var.H"
 #include "computation/expression/lambda.H"
 #include "computation/expression/tuple.H"
 #include "computation/expression/list.H"
@@ -277,9 +277,9 @@ expression_ref arg_to_apply(const ptree& expression)
     expression_ref E;
     string top = expression.get_value<string>();
     if (top.find('.') == string::npos)
-	E = dummy(string("arg_")+top);
+	E = var(string("arg_")+top);
     else
-	E = dummy(top);
+	E = var(top);
 
     for(auto& arg: expression)
 	E = {E, arg_to_apply(arg.second)};
@@ -324,7 +324,7 @@ expression_ref get_constant_model(const ptree& model_rep)
     if (expression_ref C = parse_constant(model_rep))
     {
 	if (model_rep.size() != 0) throw myexception()<<"An constant cannot have arguments!\n  '"<<model_rep.show()<<"'";
-	return {dummy("Prelude.return"), Tuple(C,List())};
+	return {var("Prelude.return"), Tuple(C,List())};
     }
     else
 	return {};
@@ -336,7 +336,7 @@ expression_ref get_variable_model(const ptree& E, const map<string,bool>& scope)
 
     auto name = E.get_value<string>();
     if (scope.count(name))
-	return {dummy("Prelude.return"),Tuple(dummy(string("arg_") + name),List())};
+	return {var("Prelude.return"),Tuple(var(string("arg_") + name),List())};
     else
 	return {};
 }
@@ -417,14 +417,14 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
 	    // E = Log "var_name" var >> E
 	    if (var_is_random)
 	    {
-		expression_ref log_action = {Log, var_name, dummy("arg_"+var_name)};
-		E = {dummy("Prelude.>>"), log_action, E};
+		expression_ref log_action = {Log, var_name, var("arg_"+var_name)};
+		E = {var("Prelude.>>"), log_action, E};
 	    }
 
 	    // E = 'arg <<= (\pair_var_name -> let {arg_name=fst pair_var_name} in E)
-	    E = lambda_quantify(dummy("pair_arg_"+var_name), let_expression({{dummy("arg_"+var_name),{dummy("Prelude.fst"),dummy("pair_arg_"+var_name)}}},E));
+	    E = lambda_quantify(var("pair_arg_"+var_name), let_expression({{var("arg_"+var_name),{var("Prelude.fst"),var("pair_arg_"+var_name)}}},E));
 
-	    E = {dummy("Prelude.>>="), arg, E};
+	    E = {var("Prelude.>>="), arg, E};
 	}
 
 	// 3. Prefix the whole thing
@@ -445,7 +445,7 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
     
     if (not is_qualified_symbol(call.get_value<string>()) and not is_haskell_builtin_con_name(call.get_value<string>()))
 	throw myexception()<<"For rule '"<<name<<"', function '"<<call.get_value<string>()<<"' must be a qualified symbol or a builtin constructor like '(,)', but it is neither!";
-    expression_ref E = dummy(call.get_value<string>());
+    expression_ref E = var(call.get_value<string>());
 
     // 6b. Apply the arguments listed in the call : 'f call.name1 call.name2 call.name3'
     //    There could be fewer of these than the rule arguments.
@@ -454,14 +454,14 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
 	string call_arg_name = array_index(call,i).get_value<string>();
 	// check that arg_name is a valid argument
 	get_arg(*rule, call_arg_name);
-	E = {E, dummy("arg_" + call_arg_name)};
+	E = {E, var("arg_" + call_arg_name)};
     }
 
     // 6c. Return the function call: 'return (f call.name1 call.name2 call.name3)'
-    expression_ref Return = dummy("Prelude.return");
+    expression_ref Return = var("Prelude.return");
     if (not perform_function)
 	E = {Return,E};
-    E = {dummy("Prelude.>>="), E, lambda_quantify(dummy("result"),{Return,Tuple(dummy("result"),List())})};
+    E = {var("Prelude.>>="), E, lambda_quantify(var("result"),{Return,Tuple(var("result"),List())})};
 
 
     // 6d. Peform the rule arguments 'Prefix "arg_name" (arg_+arg_name) >>= (\arg_name -> (Log "arg_name" arg_name) << E)'
@@ -484,20 +484,20 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
 //	    ptree alphabet_type = get_fresh_type_var(alphabet_scope);
 //	    alphabet_scope.insert(alphabet_type);
 	    auto A = get_model_as(R, *alphabet_expression, alphabet_scope);
-	    arg = {dummy("Distributions.set_alphabet"),A,arg};
+	    arg = {var("Distributions.set_alphabet"),A,arg};
 	}
 
 	// E = Log "arg_name" arg_name >> E
 	if (should_log(R, model_rep, arg_name, scope))
 	{
-	    expression_ref log_action = {Log, log_name, dummy("arg_"+arg_name)};
-	    E = {dummy("Prelude.>>"), log_action, E};
+	    expression_ref log_action = {Log, log_name, var("arg_"+arg_name)};
+	    E = {var("Prelude.>>"), log_action, E};
 	}
 
 	// E = 'arg <<= (\arg_name_pair -> let {arg_name=fst arg_name_pair} in E)
-	E = lambda_quantify(dummy("pair_arg_"+arg_name), let_expression({{dummy("arg_"+arg_name),{dummy("Prelude.fst"),dummy("pair_arg_"+arg_name)}}},E));
+	E = lambda_quantify(var("pair_arg_"+arg_name), let_expression({{var("arg_"+arg_name),{var("Prelude.fst"),var("pair_arg_"+arg_name)}}},E));
 
-	E = {dummy("Prelude.>>="), arg, E};
+	E = {var("Prelude.>>="), arg, E};
     }
 
     return E;
@@ -514,9 +514,9 @@ model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& con
 {
     // --------- Convert model to MultiMixtureModel ------------//
     expression_ref full_model = get_model_as(R, extract_value(model_rep), scope);
-    auto result = dummy("result");
-    auto Return = dummy("Prelude.return");
-    full_model = {dummy("Prelude.>>="), full_model, lambda_quantify(result,{Return,{dummy("Prelude.fst"),result}})};
+    auto result = var("result");
+    auto Return = var("Prelude.return");
+    full_model = {var("Prelude.>>="), full_model, lambda_quantify(result,{Return,{var("Prelude.fst"),result}})};
 
     if (log_verbose >= 2)
 	std::cout<<"full_model = "<<full_model<<std::endl;

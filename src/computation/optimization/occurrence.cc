@@ -5,7 +5,7 @@
 #include "computation/expression/expression.H"
 #include "computation/expression/let.H"
 #include "computation/expression/case.H"
-#include "computation/expression/dummy.H"
+#include "computation/expression/var.H"
 #include "computation/expression/apply.H"
 #include "computation/expression/lambda.H"
 #include "computation/expression/trim.H"
@@ -62,35 +62,35 @@ amount_t max(amount_t a1, amount_t a2)
 }
 
 // Merge_branch should MAX the work done, but ADD the code size.
-void merge_occurrences_into(set<dummy>& free_vars1, const set<dummy>& free_vars2, bool alternate_branches = false)
+void merge_occurrences_into(set<var>& free_vars1, const set<var>& free_vars2, bool alternate_branches = false)
 {
     // Then consider free_vars2
-    for(auto var: free_vars2)
+    for(auto x: free_vars2)
     {
-	auto it = free_vars1.find(var);
+	auto it = free_vars1.find(x);
 
 	// If the var is in both groups, we must modify its occurrence info
 	if (it != free_vars1.end())
 	{
-	    var.is_loop_breaker = var.is_loop_breaker or it->is_loop_breaker;
+	    x.is_loop_breaker = x.is_loop_breaker or it->is_loop_breaker;
 	    if (alternate_branches)
-		var.work_dup = max(var.work_dup, it->work_dup);
+		x.work_dup = max(x.work_dup, it->work_dup);
 	    else
-		var.work_dup = var.work_dup + it->work_dup;
-	    var.code_dup = var.code_dup + it->code_dup;
-	    if (var.context == var_context::argument or it->context == var_context::argument)
-		var.context = var_context::argument;
+		x.work_dup = x.work_dup + it->work_dup;
+	    x.code_dup = x.code_dup + it->code_dup;
+	    if (x.context == var_context::argument or it->context == var_context::argument)
+		x.context = var_context::argument;
 	    else
-		var.context = var_context::unknown;
+		x.context = var_context::unknown;
 
-	    free_vars1.erase(var);
+	    free_vars1.erase(x);
 	}
 
-	free_vars1.insert(var);
+	free_vars1.insert(x);
     }
 }
 
-dummy remove_var_and_set_occurrence_info(dummy x, set<dummy>& free_vars)
+var remove_var_and_set_occurrence_info(var x, set<var>& free_vars)
 {
     assert(not is_wildcard(x));
 
@@ -118,9 +118,9 @@ dummy remove_var_and_set_occurrence_info(dummy x, set<dummy>& free_vars)
     return x;
 }
 
-dummy remove_var_and_set_occurrence_info(const expression_ref& var, set<dummy>& free_vars)
+var remove_var_and_set_occurrence_info(const expression_ref& E, set<var>& free_vars)
 {
-    dummy x = var.as_<dummy>();
+    var x = E.as_<var>();
     return remove_var_and_set_occurrence_info(x, free_vars);
 }
 // occur:: Expression -> (marked free_variables, marked Expression)
@@ -130,7 +130,7 @@ bool is_alive(const occurrence_info& x)
     return (x.is_exported or x.code_dup != amount_t::None);
 }
 
-Graph construct_directed_reference_graph(CDecls& decls, set<dummy>& free_vars)
+Graph construct_directed_reference_graph(CDecls& decls, set<var>& free_vars)
 {
     using namespace boost;
     const int L = decls.size();
@@ -149,7 +149,7 @@ Graph construct_directed_reference_graph(CDecls& decls, set<dummy>& free_vars)
     }
 
     // 3. Discover reachable variables, analyze them, and record references between variables
-    map<dummy,int> index_for_var;
+    map<var,int> index_for_var;
     for(int i=0;i<L;i++)
 	index_for_var.insert({decls[i].first,i});
 
@@ -157,7 +157,7 @@ Graph construct_directed_reference_graph(CDecls& decls, set<dummy>& free_vars)
     {
 	int i = work[k];
 	// 3.1 Analyze the bound statement
-	set<dummy> free_vars_i;
+	set<var> free_vars_i;
 	tie(decls[i].second, free_vars_i) = occurrence_analyzer(decls[i].second);
 
 	// 3.2 Record occurrences
@@ -294,7 +294,7 @@ vector<int> topo_sort(const Graph& graph)
 //
 
 vector<CDecls>
-occurrence_analyze_decl_groups(const vector<CDecls>& decl_groups, set<dummy>& free_vars)
+occurrence_analyze_decl_groups(const vector<CDecls>& decl_groups, set<var>& free_vars)
 {
     vector<vector<CDecls>> output;
     for(const auto& decls: reverse(decl_groups))
@@ -305,7 +305,7 @@ occurrence_analyze_decl_groups(const vector<CDecls>& decl_groups, set<dummy>& fr
 }
 
 vector<CDecls>
-occurrence_analyze_decls(CDecls decls, set<dummy>& free_vars)
+occurrence_analyze_decls(CDecls decls, set<var>& free_vars)
 {
     // 1. Determine which vars are alive or dead..
     // 2. Construct reference graph between (live) vars.
@@ -381,35 +381,35 @@ occurrence_analyze_decls(CDecls decls, set<dummy>& free_vars)
     return decls2;
 }
 
-set<dummy> dup_work(set<dummy>& vars)
+set<var> dup_work(set<var>& vars)
 {
-    set<dummy> vars2;
-    for(auto var: vars)
+    set<var> vars2;
+    for(auto x: vars)
     {
-	if (var.work_dup == amount_t::Once)
-	    var.work_dup = amount_t::Many;
-	vars2.insert(var);
+	if (x.work_dup == amount_t::Once)
+	    x.work_dup = amount_t::Many;
+	vars2.insert(x);
     }
     return vars2;
 }
 
-pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var_context context)
+pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_context context)
 {
-    if (not E) return {E,set<dummy>{}};
+    if (not E) return {E,set<var>{}};
 
     // 1. Var
-    if (is_dummy(E))
+    if (is_var(E))
     {
-	dummy var = E.as_<dummy>();
-	var.work_dup = amount_t::Once;
-	var.code_dup = amount_t::Once;
-	var.is_loop_breaker = false;
-	var.context = context;
-	return {E,{var}};
+	var x = E.as_<var>();
+	x.work_dup = amount_t::Once;
+	x.code_dup = amount_t::Once;
+	x.is_loop_breaker = false;
+	x.context = context;
+	return {E,{x}};
     }
 
     // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-    if (not E.size()) return {E,set<dummy>{}};
+    if (not E.size()) return {E,set<var>{}};
 
     // 2. Lambda (E = \x -> body)
     if (is_lambda(E.head()))
@@ -417,13 +417,13 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	assert(E.size() == 2);
 
 	// 1. Analyze the body and marks its variables
-	set<dummy> free_vars;
+	set<var> free_vars;
 	expression_ref body;
 	tie(body, free_vars) = occurrence_analyzer(E.sub()[1]);
 
 	// 2. Mark bound variable with occurrence info from the body
 	// 3. Remove variable from free variables
-	dummy x = remove_var_and_set_occurrence_info(E.sub()[0], free_vars);
+	var x = remove_var_and_set_occurrence_info(E.sub()[0], free_vars);
 
 	// 4. change Once -> OnceInLam / work=Many, code=Once
 	return {lambda_quantify(x,body), dup_work(free_vars)};
@@ -436,17 +436,17 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
     if (parse_case_expression(E, object, patterns, bodies))
     {
 	// Analyze the object
-	set<dummy> free_vars;
+	set<var> free_vars;
 	tie(object, free_vars) = occurrence_analyzer(object);
 
 	const int L = patterns.size();
 	// Just normalize the bodies
 
-	set<dummy> alts_free_vars;
+	set<var> alts_free_vars;
 	for(int i=0;i<L;i++)
 	{
 	    // Analyze the i-ith branch
-	    set<dummy> alt_i_free_vars;
+	    set<var> alt_i_free_vars;
 	    tie(bodies[i], alt_i_free_vars) = occurrence_analyzer(bodies[i]);
 
 	    // Remove pattern vars from free variables
@@ -458,7 +458,7 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 		{
 		    if (not is_wildcard(pattern2->sub[j]))
 		    {
-			dummy x = remove_var_and_set_occurrence_info(pattern2->sub[j], alt_i_free_vars);
+			var x = remove_var_and_set_occurrence_info(pattern2->sub[j], alt_i_free_vars);
 			pattern2->sub[j] = x; // use temporary to avoid deleting pattern2->sub[j]
 		    }
 		}
@@ -477,11 +477,11 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
     // 4. Constructor, Operation (including Apply)
     if (is_constructor(E.head()) or is_apply(E.head()) or is_non_apply_operation(E.head()))
     {
-	set<dummy> free_vars;
+	set<var> free_vars;
 	object_ptr<expression> F = new expression(E.head());
 	for(int i=0;i<E.size();i++)
 	{
-	    set<dummy> free_vars_i;
+	    set<var> free_vars_i;
 	    expression_ref arg_i;
 	    auto context = (i==0 and is_apply(E.head())) ? var_context::unknown : var_context::argument;
 	    tie(arg_i,free_vars_i) = occurrence_analyzer(E.sub()[i], context);
@@ -499,7 +499,7 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	auto body = let_body(E);
 
 	// 1. Analyze the body
-	set<dummy> free_vars;
+	set<var> free_vars;
 	tie(body, free_vars) = occurrence_analyzer(body);
 
 	auto decls_groups = occurrence_analyze_decls(decls, free_vars);

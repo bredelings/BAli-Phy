@@ -26,44 +26,44 @@ struct occurrence_info
 };
     
 
-// a dummy variable expression
-struct dummy: public Object, public occurrence_info
+// a variable expression
+struct var: public Object, public occurrence_info
 {
     int index;
 
     std::string name;
 
-    bool operator==(const dummy&) const;
+    bool operator==(const var&) const;
     bool operator==(const Object& o) const;
-    dummy* clone() const {return new dummy(*this);}
+    var* clone() const {return new var(*this);}
     std::string print() const;
   
-    bool operator<(const dummy&) const;
+    bool operator<(const var&) const;
 
-    type_constant type() const {return dummy_type;}
+    type_constant type() const {return var_type;}
 
     bool is_wildcard() const {return index < 0 and not name.size();}
 
-    dummy(int i):index(i) {}
-    dummy(const std::string& s):dummy(s,0) {}
-    dummy(const std::string& s,int i):index(i),name(s) {assert(name != "_");}
+    var(int i):index(i) {}
+    var(const std::string& s):var(s,0) {}
+    var(const std::string& s,int i):index(i),name(s) {assert(name != "_");}
 };
 
-dummy qualified_dummy(const std::string&);
+var qualified_var(const std::string&);
 
-bool is_dummy(const expression_ref&);
+bool is_var(const expression_ref&);
 
-bool is_qualified_dummy(const expression_ref&);
+bool is_qualified_var(const expression_ref&);
 
 bool is_wildcard(const expression_ref&);
 
-bool is_wildcard(const dummy& d);
+bool is_wildcard(const var& d);
 
-int max_index(const std::set<dummy>& s);
+int max_index(const std::set<var>& s);
 
-std::set<dummy> get_free_indices(const expression_ref& E);
+std::set<var> get_free_indices(const expression_ref& E);
 
-std::set<dummy> get_bound_indices(const expression_ref& E);
+std::set<var> get_bound_indices(const expression_ref& E);
 
 int get_safe_binder_index(const expression_ref& E);
 

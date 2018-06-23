@@ -10,7 +10,7 @@
 #include "expression/expression.H"
 #include "expression/lambda.H"
 #include "expression/AST_node.H"
-#include "expression/dummy.H"
+#include "expression/var.H"
 
 using std::string;
 using std::vector;
@@ -239,7 +239,7 @@ void context::set_modifiable_value(int R, const expression_ref& E)
     assert(not E.size());
     assert(not E.is_index_var());
     assert(not E.is_a<reg_var>());
-    assert(not E.is_a<dummy>());
+    assert(not E.is_a<var>());
     set_modifiable_value_(R, E);
 }
 
@@ -248,7 +248,7 @@ void context::set_parameter_value(int index, const expression_ref& E)
     assert(not E.size());
     assert(not E.is_index_var());
     assert(not E.is_a<reg_var>());
-    assert(not E.is_a<dummy>());
+    assert(not E.is_a<var>());
     set_parameter_value_(index, E);
 }
 
@@ -503,7 +503,7 @@ context::context(const Program& P)
     if (not P.size())
 	(*this) += "Prelude";
 
-    perform_io_head = add_compute_expression(dummy("Prelude.unsafePerformIO"));
+    perform_io_head = add_compute_expression(var("Prelude.unsafePerformIO"));
 }
 
 context::context(const context& C)

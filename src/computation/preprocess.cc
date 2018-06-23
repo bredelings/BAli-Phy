@@ -5,7 +5,7 @@
 #include "computation/expression/expression.H"
 #include "computation/expression/let.H"
 #include "computation/expression/case.H"
-#include "computation/expression/dummy.H"
+#include "computation/expression/var.H"
 #include "computation/expression/lambda.H"
 #include "computation/expression/trim.H"
 #include "computation/expression/indexify.H"
@@ -60,7 +60,7 @@ expression_ref graph_normalize(const expression_ref& E)
 	else
 	{
 	    int var_index = get_safe_binder_index(E);
-	    auto x = dummy(var_index);
+	    auto x = var(var_index);
 
 	    return let_expression({{x,object}},make_case_expression(x, patterns, bodies));
 	}
@@ -74,14 +74,14 @@ expression_ref graph_normalize(const expression_ref& E)
 	object_ptr<expression> E2 = E.as_expression().clone();
 
 	// Actually we probably just need x[i] not to be free in E.sub()[i]
-	vector<pair<dummy, expression_ref>> decls;
+	vector<pair<var, expression_ref>> decls;
 	for(int i=0;i<E2->size();i++)
 	{
 	    E2->sub[i] = graph_normalize(E.sub()[i]);
 
 	    if (not is_reglike(E2->sub[i]))
 	    {
-		auto x = dummy( var_index++ );
+		auto x = var( var_index++ );
 
 		// 1. Let-bind the argument expression
 		decls.push_back( {x, E2->sub[i]} );
@@ -197,14 +197,14 @@ expression_ref reg_heap::translate_refs(const expression_ref& E, closure::Env_t&
     }
 
     // Replace dummies that are either qualified ids, or builtin constructor names
-    else if (is_qualified_dummy(E))
+    else if (is_qualified_var(E))
     {
-	auto& name = E.as_<dummy>().name;
+	auto& name = E.as_<var>().name;
 	reg = reg_for_id(name);
     }
-    else if (E.is_a<dummy>() and is_haskell_builtin_con_name(E.as_<dummy>().name))
+    else if (E.is_a<var>() and is_haskell_builtin_con_name(E.as_<var>().name))
     {
-	auto& name = E.as_<dummy>().name;
+	auto& name = E.as_<var>().name;
 	reg = reg_for_id(name);
     }
 

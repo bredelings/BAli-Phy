@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 #include "computation/expression/expression_ref.H"
-#include "computation/expression/dummy.H"
+#include "computation/expression/var.H"
 #include <algorithm>
 #include <iostream>
 
@@ -91,13 +91,13 @@ public:
     expression_ref topdecls;
     expression_ref exports;
 
-    std::map<dummy,expression_ref> small_decls_in;
+    std::map<var,expression_ref> small_decls_in;
 
-    std::set<dummy> small_decls_in_free_vars;
+    std::set<var> small_decls_in_free_vars;
 
-    std::map<dummy,expression_ref> small_decls_out;
+    std::map<var,expression_ref> small_decls_out;
 
-    std::set<dummy> small_decls_out_free_vars;
+    std::set<var> small_decls_out_free_vars;
 
     std::string name;
 

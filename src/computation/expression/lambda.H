@@ -24,8 +24,8 @@ struct lambda2: public Object
 };
 
 expression_ref lambda_expression(const Operator& O);
-expression_ref lambda_quantify(int dummy_index, const expression_ref& E);
-expression_ref lambda_quantify(const expression_ref& dummy, const expression_ref& E);
+expression_ref lambda_quantify(int var_index, const expression_ref& E);
+expression_ref lambda_quantify(const expression_ref& var, const expression_ref& E);
 
 inline bool is_lambda(const expression_ref& E)
 {

@@ -6,7 +6,7 @@
 #include <utility>
 #include "computation/expression/expression_ref.H"
 #include "computation/expression/let.H"
-#include "computation/expression/dummy.H"
+#include "computation/expression/var.H"
 
 class inline_context
 {

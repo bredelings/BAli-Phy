@@ -11,7 +11,7 @@
 #include "computation/loader.H"
 #include "expression/AST_node.H"
 #include "expression/expression.H"
-#include "expression/dummy.H"
+#include "expression/var.H"
 #include "expression/lambda.H"
 #include "expression/let.H"
 #include "expression/case.H"
@@ -366,10 +366,7 @@ map<string,expression_ref> Module::code_defs() const
     for(const auto& decl: topdecls.sub())
     {
 	assert(is_AST(decl,"Decl"));
-
-	// get the qualified name for the decl
-	auto& var = decl.sub()[0];
-	auto& x = var.as_<dummy>();
+	auto& x = decl.sub()[0].as_<var>();
 	assert(is_qualified_symbol(x.name));
 
 	if (this->name == get_module_name(x.name))
@@ -396,9 +393,9 @@ void Module::desugar(const Program&)
 
 int nodes_size(const expression_ref& E);
 
-void add_constructor(map<dummy,expression_ref>& decls, const constructor& con)
+void add_constructor(map<var,expression_ref>& decls, const constructor& con)
 {
-    dummy x(con.name());
+    var x(con.name());
     expression_ref body = lambda_expression(con);
     auto res = occurrence_analyzer(body);
     decls.insert({x,res.first});
@@ -439,7 +436,7 @@ void Module::export_small_decls()
     assert(small_decls_out.empty());
     for(auto& decl: topdecls.sub())
     {
-	auto& x = decl.sub()[0].as_<dummy>();
+	auto& x = decl.sub()[0].as_<var>();
 	assert(not x.name.empty());
 
 	auto& body = decl.sub()[1];
@@ -449,7 +446,7 @@ void Module::export_small_decls()
 
     for(auto& decl: small_decls_out)
     {
-	set<dummy> free_vars;
+	set<var> free_vars;
 	tie(decl.second, free_vars) = occurrence_analyzer(decl.second);
 	small_decls_out_free_vars.insert(free_vars.begin(), free_vars.end());
     }
@@ -520,14 +517,14 @@ void erase_one(multiset<T>& mset, const T& elem)
     mset.erase(it);
 }
 
-expression_ref rename(const expression_ref& E, const map<dummy,dummy>& substitution, multiset<dummy>& bound)
+expression_ref rename(const expression_ref& E, const map<var,var>& substitution, multiset<var>& bound)
 {
     if (not E) return E;
 
     // 1. Var (x)
-    if (E.is_a<dummy>())
+    if (E.is_a<var>())
     {
-	auto& x = E.as_<dummy>();
+	auto& x = E.as_<var>();
 	// 1.1 If there's a substitution x -> E
 	if (not bound.count(x) and substitution.count(x))
 	    return substitution.at(x);
@@ -543,7 +540,7 @@ expression_ref rename(const expression_ref& E, const map<dummy,dummy>& substitut
     {
 	assert(E.size() == 2);
 
-	auto x = E.sub()[0].as_<dummy>();
+	auto x = E.sub()[0].as_<var>();
 	auto body = E.sub()[1];
 
 	bound.insert(x);
@@ -565,7 +562,7 @@ expression_ref rename(const expression_ref& E, const map<dummy,dummy>& substitut
 	{
 	    for(int j=0;j<patterns[i].size(); j++)
 	    {
-		auto& x = patterns[i].sub()[j].as_<dummy>();
+		auto& x = patterns[i].sub()[j].as_<var>();
 		if (not x.is_wildcard())
 		    bound.insert(x);
 	    }
@@ -574,7 +571,7 @@ expression_ref rename(const expression_ref& E, const map<dummy,dummy>& substitut
 
 	    for(int j=0;j<patterns[i].size(); j++)
 	    {
-		auto& x = patterns[i].sub()[j].as_<dummy>();
+		auto& x = patterns[i].sub()[j].as_<var>();
 		if (not x.is_wildcard())
 		    erase_one(bound,x);
 	    }
@@ -617,11 +614,11 @@ expression_ref rename(const expression_ref& E, const map<dummy,dummy>& substitut
 }
 
 
-boost::optional<string> get_new_name(const dummy& x, const string& module_name)
+boost::optional<string> get_new_name(const var& x, const string& module_name)
 {
     assert(not is_haskell_builtin_con_name(x.name));
 
-    if (is_qualified_dummy(x))
+    if (is_qualified_var(x))
     {
 	assert(x.index == 0);
 	return boost::none;
@@ -634,9 +631,9 @@ expression_ref rename_top_level(const expression_ref& decls, const string& modul
 {
     assert(is_AST(decls, "TopDecls"));
 
-    map<dummy, dummy> substitution;
+    map<var, var> substitution;
 
-    set<dummy> top_level_vars;
+    set<var> top_level_vars;
 
     CDecls decls2;
 
@@ -646,13 +643,13 @@ expression_ref rename_top_level(const expression_ref& decls, const string& modul
 
     for(int i = 0; i< decls.size(); i++)
     {
-	auto x = decls.sub()[i].sub()[0].as_<dummy>();
-	dummy x2 = x;
+	auto x = decls.sub()[i].sub()[0].as_<var>();
+	var x2 = x;
 	assert(not substitution.count(x));
 
 	if (auto new_name = get_new_name(x, module_name))
 	{
-	    x2 = dummy(*new_name);
+	    x2 = var(*new_name);
 	    assert(not substitution.count(x2.name));
 	    substitution.insert({x,x2});
 	}
@@ -664,7 +661,7 @@ expression_ref rename_top_level(const expression_ref& decls, const string& modul
 	top_level_vars.insert(x2);
     }
 
-    multiset<dummy> bound;
+    multiset<var> bound;
     for(auto& decl: decls2)
     {
 	assert(bound.empty());
@@ -761,7 +758,7 @@ void Module::optimize(const Program& P)
 	    else
 	    {
 		// This won't float things to the top level!
-		auto name = decl.sub()[0].as_<dummy>().name;
+		auto name = decl.sub()[0].as_<var>().name;
 		auto body = decl.sub()[1];
 		body = let_float(body);
 		body = graph_normalize(body);
@@ -825,7 +822,7 @@ void Module::load_builtins(const module_loader& L)
 
 	    function_name = lookup_symbol(function_name).name;
 
-	    new_decls.push_back(AST_node("Decl") + dummy(function_name) + body);
+	    new_decls.push_back(AST_node("Decl") + var(function_name) + body);
 	}
 	else
 	    new_decls.push_back(decl);
@@ -863,7 +860,7 @@ void Module::load_constructors()
 			std::abort();
 		    string qualified_name = name+"."+cname;
 		    expression_ref body = lambda_expression( constructor(qualified_name, arity) );
-		    new_decls.push_back(AST_node("Decl") + dummy(qualified_name) + body);
+		    new_decls.push_back(AST_node("Decl") + var(qualified_name) + body);
 		}
 	    }
             // Strip out the constructor definition here new_decls.push_back(decl);
@@ -952,10 +949,10 @@ void parse_combinator_application(const expression_ref& E, string& name, vector<
 
     assert(E.head().is_a<Apply>());
   
-    // 1. Find the head.  This should be a var or a dummy, not an apply.
-    auto var = E.sub()[0];
-    if (is_dummy(var))
-	name = var.as_<dummy>().name;
+    // 1. Find the head.  This should be a var or a var, not an apply.
+    auto x = E.sub()[0];
+    if (is_var(x))
+	name = x.as_<var>().name;
     else
 	throw myexception()<<"Combinator definition '"<<E<<"' does not start with variable!";
 

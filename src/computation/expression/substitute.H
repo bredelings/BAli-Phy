@@ -5,7 +5,7 @@
 #include "expression_ref.H"
 #include "object.H"
 
-expression_ref substitute(const expression_ref& E1, int dummy, const expression_ref& E2);
+expression_ref substitute(const expression_ref& E1, int var, const expression_ref& E2);
 
 expression_ref substitute(const expression_ref& E1, const expression_ref& D, const expression_ref& E2);
 

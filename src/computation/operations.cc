@@ -5,7 +5,7 @@
 #include "expression/expression.H"
 #include "expression/lambda.H"
 #include "expression/case.H"
-#include "expression/dummy.H"
+#include "expression/var.H"
 #include "expression/apply.H"
 
 using std::vector;
@@ -167,7 +167,7 @@ closure case_op(OperationArgs& Args)
 	const expression_ref& this_body = alts[i].sub()[1];
 
 	// If its _, then match it.
-	if (this_case.head().type() == dummy_type)
+	if (this_case.head().type() == var_type)
 	{
 	    // We standardize to avoid case x of v -> f(v) so that f cannot reference v.
 	    assert(is_wildcard(this_case));
@@ -273,7 +273,7 @@ closure let_op(OperationArgs& Args)
 	for(int i=0;i<n_bodies;i++)
 	    C.Env.push_back( M.push_temp_head() );
       
-	// 2. Substitute the new heap vars for the dummy vars in expression T and in the bodies
+	// 2. Substitute the new heap vars for the var vars in expression T and in the bodies
 	for(int i=0;i<n_bodies;i++)
 	    M.set_C(C.Env[start+i], get_trimmed({args[i+1],C.Env}));
 

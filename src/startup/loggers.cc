@@ -4,7 +4,7 @@
 #include "loggers.H"
 #include "tools/parsimony.H"
 #include "computation/expression/expression.H"
-#include "computation/expression/dummy.H"
+#include "computation/expression/var.H"
 #include "mcmc/mcmc.H"
 #include "mcmc/logger.H"
 #include "substitution/parsimony.H"
@@ -140,10 +140,10 @@ void find_sub_loggers(Model& M, int& index, const string& name, vector<int>& log
 	{
 	    expression_ref L = M.get_expression(index);
 
-	    expression_ref E = {dummy("Prelude.length"),L};
+	    expression_ref E = {var("Prelude.length"),L};
 	    int length = M.evaluate_expression(E).as_int();
 
-	    expression_ref E1 = {dummy("Prelude.head"),L};
+	    expression_ref E1 = {var("Prelude.head"),L};
 	    expression_ref first_elem = M.evaluate_expression(E1);
 
 	    if (first_elem.head().is_a<constructor>() and first_elem.head().as_<constructor>().f_name == "(,)")
@@ -151,10 +151,10 @@ void find_sub_loggers(Model& M, int& index, const string& name, vector<int>& log
 		int index2 = -1;
 		for(int i=0;i<length;i++)
 		{
-		    expression_ref x = {dummy("Prelude.!!"),L,i};
-		    expression_ref x1 = {dummy("Prelude.fst"),x};
-		    expression_ref x2 = {dummy("Prelude.snd"),x};
-		    const String field_name = M.evaluate_expression( {dummy("Prelude.listToString"),x1} ).as_<String>();
+		    expression_ref x = {var("Prelude.!!"),L,i};
+		    expression_ref x1 = {var("Prelude.fst"),x};
+		    expression_ref x2 = {var("Prelude.snd"),x};
+		    const String field_name = M.evaluate_expression( {var("Prelude.listToString"),x1} ).as_<String>();
 
 		    if (index2 == -1)
 			index2 = M.add_compute_expression(x2);
@@ -169,7 +169,7 @@ void find_sub_loggers(Model& M, int& index, const string& name, vector<int>& log
 		int index2 = -1;
 		for(int i=0;i<length;i++)
 		{
-		    expression_ref E2 = {dummy("Prelude.!!"),L,i} ;
+		    expression_ref E2 = {var("Prelude.!!"),L,i} ;
 		    if (index2 == -1)
 			index2 = M.add_compute_expression(E2);
 		    else

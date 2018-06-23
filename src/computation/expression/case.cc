@@ -1,6 +1,6 @@
 #include <set>
 #include "lambda.H"
-#include "dummy.H"
+#include "var.H"
 #include "case.H"
 #include "let.H"
 #include "substitute.H"
@@ -31,7 +31,7 @@ bool parse_case_expression(const expression_ref& E, expression_ref& object, vect
 
 bool is_irrefutable_pattern(const expression_ref& E)
 {
-    return E.is_a<dummy>();
+    return E.is_a<var>();
 }
 
 /// Is this either (a) irrefutable, (b) a constant, or (c) a constructor whose arguments are irrefutable patterns?
@@ -40,7 +40,7 @@ bool is_simple_pattern(const expression_ref& E)
     // (a) Is this irrefutable?
     if (is_irrefutable_pattern(E)) return true;
 
-    // (b) Is this a constant with no arguments? (This can't be an irrefutable pattern, since we've already bailed on dummy variables.)
+    // (b) Is this a constant with no arguments? (This can't be an irrefutable pattern, since we've already bailed on variables.)
     if (not E.size()) return true;
 
     assert(E.head().is_a<constructor>());
@@ -154,7 +154,7 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
     vector<int> irrefutable_rules;
     for(int j=0;j<M;j++)
     {
-	if (is_dummy(p[j][0]))
+	if (is_var(p[j][0]))
 	{
 	    irrefutable_rules.push_back(j);
 	    continue;
@@ -194,13 +194,13 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
 	    b2.push_back(b[r]);
 
 	    if (is_wildcard(p[r][0]))
-		// This is a dummy.
+		// This is a var.
 		; //assert(d->name.size() == 0);
 	    else
 	    {
 		// FIXME! What if x[0] isn't a var?
 		// Then if *d occurs twice, then we should use a let expression, right?
-		b2[i] = substitute(b2[i], p[r][0].as_<dummy>(), x[0]);
+		b2[i] = substitute(b2[i], p[r][0].as_<var>(), x[0]);
 	    }
 	}
       
@@ -222,7 +222,7 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
     }
 
     // Find the first safe var index
-    std::set<dummy> free;
+    std::set<var> free;
 
     for(int i=0;i<x.size();i++)
 	add(free, get_free_indices(x[i]));
@@ -240,7 +240,7 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
 
     // WHEN should we put the otherwise expression into a LET variable?
     expression_ref O;
-    if (otherwise) O = dummy(var_index++);
+    if (otherwise) O = var(var_index++);
 
     // 3. Find the modified bodies for the various constants
     vector<expression_ref> simple_patterns;
@@ -259,7 +259,7 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
 
 	vector<expression_ref> S(arity);
 	for(int j=0;j<arity;j++)
-	    S[j] = dummy(var_index+j);
+	    S[j] = var(var_index+j);
 
 	int r0 = rules[c][0];
 
@@ -333,8 +333,8 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
 	{
 	    if (otherwise)
 	    {
-		p2.push_back(vector<expression_ref>(x2.size(), dummy(-1)));
-		// Since we could backtrack, use the dummy.  It will point to otherwise
+		p2.push_back(vector<expression_ref>(x2.size(), var(-1)));
+		// Since we could backtrack, use the var.  It will point to otherwise
 		b2.push_back(O);
 	    }
 	    simple_bodies.back() = block_case(x2, p2, b2);
@@ -343,8 +343,8 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
 
     if (otherwise)
     {
-	simple_patterns.push_back(dummy(-1));
-	// If we have any backtracking, then use the otherwise dummy, like the bodies.
+	simple_patterns.push_back(var(-1));
+	// If we have any backtracking, then use the otherwise var, like the bodies.
 	if (not all_simple_followed_by_irrefutable)
 	    simple_bodies.push_back(O);
 	else
@@ -355,7 +355,7 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
     expression_ref CE = make_case_expression(x[0], simple_patterns, simple_bodies);
 
     if (otherwise and not all_simple_followed_by_irrefutable)
-	CE = let_expression({{O.as_<dummy>(), otherwise}}, CE);
+	CE = let_expression({{O.as_<var>(), otherwise}}, CE);
 
     return CE;
 }
@@ -374,9 +374,9 @@ expression_ref case_expression(const expression_ref& T, const expression_ref& pa
 {
     vector<expression_ref> patterns = {pattern};
     vector<expression_ref> bodies = {body};
-    if (otherwise and not pattern.is_a<dummy>())
+    if (otherwise and not pattern.is_a<var>())
     {
-	patterns.push_back(dummy(-1));
+	patterns.push_back(var(-1));
 	bodies.push_back(otherwise);
     }
     return case_expression(T,patterns, bodies);
@@ -385,7 +385,7 @@ expression_ref case_expression(const expression_ref& T, const expression_ref& pa
 expression_ref def_function(const vector< vector<expression_ref> >& patterns, const vector<expression_ref>& bodies)
 {
     // Find the first safe var index
-    std::set<dummy> free;
+    std::set<var> free;
 
     for(int i=0;i<patterns.size();i++)
     {
@@ -406,7 +406,7 @@ expression_ref def_function(const vector< vector<expression_ref> >& patterns, co
     // Construct the dummies
     vector<expression_ref> args;
     for(int i=0;i<patterns[0].size();i++)
-	args.push_back(dummy(var_index+i));
+	args.push_back(var(var_index+i));
     
     // Construct the case expression
     expression_ref E = block_case(args, patterns, bodies);

@@ -1,4 +1,4 @@
-#include "dummy.H"
+#include "var.H"
 #include "lambda.H"
 #include "let.H"
 #include "case.H"
@@ -129,12 +129,12 @@ int n_free_occurrences(const expression_ref& E1, const expression_ref& D)
 {
     assert(not is_wildcard(D));
 
-    // If this is the relevant dummy, then substitute
+    // If this is the relevant var, then substitute
     if (E1.size() == 0)
     {
 	if (E1 == D)
 	    return 1;
-	// If this is any other constant, then it doesn't contain the dummy
+	// If this is any other constant, then it doesn't contain the var
 	else
 	    return 0;
     }
@@ -153,7 +153,7 @@ int n_free_occurrences(const expression_ref& E1, const expression_ref& D)
 	    for(int i=0;i<L;i++)
 	    {
 		// don't substitute into subtree where this variable is bound
-		std::set<dummy> bound = get_free_indices(patterns[i]);
+		std::set<var> bound = get_free_indices(patterns[i]);
 
 		bool D_is_bound = false;
 		for(const auto& b: bound)
@@ -168,7 +168,7 @@ int n_free_occurrences(const expression_ref& E1, const expression_ref& D)
     }
 
     // What indices are bound at the top level?
-    std::set<dummy> bound = get_bound_indices(E1);
+    std::set<var> bound = get_bound_indices(E1);
 
     // Don't substitute into local variables
     for(const auto& b: bound)
@@ -284,7 +284,7 @@ void get_decls(const expression_ref& E, CDecls& decls)
     {
 	assert(is_AST(Decls[i],"Decl"));
 	auto& Decl = Decls[i].sub();
-	decls.push_back({Decl[0].as_<dummy>(), Decl[1]});
+	decls.push_back({Decl[0].as_<var>(), Decl[1]});
     }
 }
 
@@ -332,9 +332,9 @@ std::vector<CDecls> strip_multi_let(expression_ref& E)
     return decl_groups;
 }
 
-boost::optional<dummy> find_first_duplicate_var(const CDecls& decls)
+boost::optional<var> find_first_duplicate_var(const CDecls& decls)
 {
-    set<dummy> vars;
+    set<var> vars;
     for(auto& decl: decls)
     {
 	const auto& x = decl.first;
@@ -345,7 +345,7 @@ boost::optional<dummy> find_first_duplicate_var(const CDecls& decls)
     return boost::none;
 }
 
-boost::optional<dummy> find_first_duplicate_var(const expression_ref& decls)
+boost::optional<var> find_first_duplicate_var(const expression_ref& decls)
 {
     return find_first_duplicate_var(parse_decls(decls));
 }
