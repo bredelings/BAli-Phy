@@ -47,7 +47,7 @@ sample' alpha ps l rate (SamplingRate rate2 a) = sample' alpha ps l (rate*rate2)
 sample' alpha _ _ _ GetAlphabet = return alpha;
 sample' alpha ps l rate (SetAlphabet a2 x) = sample' a2 ps l rate x;
 
-set_alphabet a x = do {a' <- a; SetAlphabet a' x};
+set_alphabet a x = do {(a',_) <- a; SetAlphabet a' x};
                                                  
 add_prefix p m = Prefix p m;
 gen_model m = sample' Nothing [] True 1.0 m;
