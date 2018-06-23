@@ -421,8 +421,10 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
 		E = {dummy("Prelude.>>"), log_action, E};
 	    }
 
-	    // E = 'arg <<= (\var -> E)
-	    E = {dummy("Prelude.>>="), arg, lambda_quantify(dummy("arg_"+var_name), E)};
+	    // E = 'arg <<= (\pair_var_name -> let {arg_name=fst pair_var_name} in E)
+	    E = lambda_quantify(dummy("pair_arg_"+var_name), let_expression({{dummy("arg_"+var_name),{dummy("Prelude.fst"),dummy("pair_arg_"+var_name)}}},E));
+
+	    E = {dummy("Prelude.>>="), arg, E};
 	}
 
 	// 3. Prefix the whole thing
@@ -492,7 +494,6 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
 	    E = {dummy("Prelude.>>"), log_action, E};
 	}
 
-	// E = 'arg <<= (\arg_name -> E)
 	// E = 'arg <<= (\arg_name_pair -> let {arg_name=fst arg_name_pair} in E)
 	E = lambda_quantify(dummy("pair_arg_"+arg_name), let_expression({{dummy("arg_"+arg_name),{dummy("Prelude.fst"),dummy("pair_arg_"+arg_name)}}},E));
 
