@@ -641,7 +641,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     if (imodel_index)
     {
 	// D = Params.substitutionBranchLengths!scale_index
-	expression_ref D = {dummy("Prelude.!"),dummy("Params.substitutionBranchLengths"),scale_index};
+	expression_ref D = {dummy("Prelude.!"), p->my_substitution_branch_lengths(), scale_index};
 	expression_ref heat = parameter("Heat.beta");
 	expression_ref training = parameter("*IModels.training");
 	expression_ref model = {{dummy("Prelude.!"),p->my_imodels(), *imodel_index}, heat, training};
@@ -1314,6 +1314,11 @@ expression_ref Parameters::my_imodels() const
     return get_expression(PC->imodels_index);
 }
 
+expression_ref Parameters::my_substitution_branch_lengths() const
+{
+    return get_expression(PC->substitution_branch_lengths_index);
+}
+
 int num_distinct(const vector<optional<int>>& v)
 {
     int m = -1;
@@ -1505,16 +1510,14 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	substitutionBranchLengthsList = get_list(SBLL);
     }
 
-    Module parameter_program("Params");
-    parameter_program.add_decl("substitutionBranchLengths", {dummy("Prelude.listArray'"),{dummy("Prelude.fmap"),dummy("Prelude.listArray'"),substitutionBranchLengthsList}});
-    (*this) += parameter_program;
+    PC->substitution_branch_lengths_index = add_compute_expression({dummy("Prelude.listArray'"),{dummy("Prelude.fmap"),dummy("Prelude.listArray'"),substitutionBranchLengthsList}});
 
     // register the cached transition_p indices
     PC->branch_transition_p_indices.resize(n_branch_scales(), n_smodels());
     for(int s=0;s < n_branch_scales(); s++)
     {
 	// Better yet, make a substitutionBranchLengths!scale!branch that can be referenced elsewhere.
-	expression_ref DL = {dummy("Prelude.!"),dummy("Params.substitutionBranchLengths"),s};
+	expression_ref DL = {dummy("Prelude.!"), my_substitution_branch_lengths(), s};
 
 	// Here, for each (scale,model) pair we're construction a function from branches -> Vector<transition matrix>
 	for(int m=0;m < n_smodels(); m++)

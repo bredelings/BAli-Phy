@@ -266,6 +266,8 @@ struct parameters_constants: public Object
 
     std::vector< std::vector<int> > branch_length_indices;
 
+    int substitution_branch_lengths_index = -1;
+
     matrix<int> branch_transition_p_indices;
 
     /// Do we have an Exponential (0) or Gamma-0.5 (1) prior on branch lengths?
@@ -357,6 +359,7 @@ public:
   
     expression_ref my_tree() const;
     expression_ref my_imodels() const;
+    expression_ref my_substitution_branch_lengths() const;
 
     void reconnect_branch(int s1, int t1, int t2);
     void prune_subtree(const tree_edge& b_subtree);
