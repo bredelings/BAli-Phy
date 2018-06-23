@@ -257,6 +257,7 @@ struct parameters_constants: public Object
     /// The IndelModel
     std::vector<boost::optional<int>> imodel_for_partition;
     int n_imodels;
+    int imodels_index = -1;
 
     // Scale for partition
     std::vector<boost::optional<int>> scale_for_partition;
@@ -355,6 +356,7 @@ public:
     std::vector<std::string> get_labels() const;
   
     expression_ref my_tree() const;
+    expression_ref my_imodels() const;
 
     void reconnect_branch(int s1, int t1, int t2);
     void prune_subtree(const tree_edge& b_subtree);

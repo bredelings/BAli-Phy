@@ -644,7 +644,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	expression_ref D = {dummy("Prelude.!"),dummy("Params.substitutionBranchLengths"),scale_index};
 	expression_ref heat = parameter("Heat.beta");
 	expression_ref training = parameter("*IModels.training");
-	expression_ref model = {{dummy("Prelude.!"),dummy("IModels.models"), *imodel_index}, heat, training};
+	expression_ref model = {{dummy("Prelude.!"),p->my_imodels(), *imodel_index}, heat, training};
 
 	expression_ref hmms = {dummy("Alignment.branch_hmms"), model, D, B};
 	hmms = p->get_expression( p->add_compute_expression(hmms) );
@@ -1309,6 +1309,11 @@ expression_ref Parameters::my_tree() const
     return get_expression(TC->tree_head);
 }
 
+expression_ref Parameters::my_imodels() const
+{
+    return get_expression(PC->imodels_index);
+}
+
 int num_distinct(const vector<optional<int>>& v)
 {
     int m = -1;
@@ -1457,9 +1462,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     add_modifiable_parameter_with_value("*IModels.training", false);
 
-    Module imodels_program("IModels");
-    imodels_program.add_decl("models", {dummy("Prelude.listArray'"), get_list(imodels_)});
-    (*this) += imodels_program;
+    PC->imodels_index = add_compute_expression({dummy("Prelude.listArray'"), get_list(imodels_)});
   
     /*------------------------- Add commands to log all parameters created before this point. ------------------------*/
     // don't constrain any branch lengths
