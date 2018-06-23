@@ -324,7 +324,7 @@ expression_ref get_constant_model(const ptree& model_rep)
     if (expression_ref C = parse_constant(model_rep))
     {
 	if (model_rep.size() != 0) throw myexception()<<"An constant cannot have arguments!\n  '"<<model_rep.show()<<"'";
-	return {dummy("Prelude.return"), C};
+	return {dummy("Prelude.return"), Tuple(C,List())};
     }
     else
 	return {};
@@ -336,7 +336,7 @@ expression_ref get_variable_model(const ptree& E, const map<string,bool>& scope)
 
     auto name = E.get_value<string>();
     if (scope.count(name))
-	return {dummy("Prelude.return"),dummy(string("arg_") + name)};
+	return {dummy("Prelude.return"),Tuple(dummy(string("arg_") + name),List())};
     else
 	return {};
 }
@@ -456,8 +456,11 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
     }
 
     // 6c. Return the function call: 'return (f call.name1 call.name2 call.name3)'
+    expression_ref Return = dummy("Prelude.return");
     if (not perform_function)
-	E = {dummy("Prelude.return"),E};
+	E = {Return,E};
+    E = {dummy("Prelude.>>="), E, lambda_quantify(dummy("result"),{Return,Tuple(dummy("result"),List())})};
+
 
     // 6d. Peform the rule arguments 'Prefix "arg_name" (arg_+arg_name) >>= (\arg_name -> (Log "arg_name" arg_name) << E)'
     int i=0;
@@ -491,7 +494,10 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
 	}
 
 	// E = 'arg <<= (\arg_name -> E)
-	E = {dummy("Prelude.>>="), arg, lambda_quantify(dummy("arg_"+arg_name), E)};
+	// E = 'arg <<= (\arg_name_pair -> let {arg_name=fst arg_name_pair} in E)
+	E = lambda_quantify(dummy("pair_arg_"+arg_name), let_expression({{dummy("arg_"+arg_name),{dummy("Prelude.fst"),dummy("pair_arg_"+arg_name)}}},E));
+
+	E = {dummy("Prelude.>>="), arg, E};
     }
 
     for(;i<args.size();i++)
@@ -517,6 +523,9 @@ model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& con
 {
     // --------- Convert model to MultiMixtureModel ------------//
     expression_ref full_model = get_model_as(R, extract_value(model_rep), scope);
+    auto result = dummy("result");
+    auto Return = dummy("Prelude.return");
+    full_model = {dummy("Prelude.>>="), full_model, lambda_quantify(result,{Return,{dummy("Prelude.fst"),result}})};
 
     if (log_verbose >= 2)
 	std::cout<<"full_model = "<<full_model<<std::endl;
