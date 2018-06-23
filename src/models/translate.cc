@@ -308,11 +308,6 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
     //     (I think that only rules can introduce new variables)
     add(bound_vars, find_rule_type_vars(*rule));
     
-    // 6. Complain if undescribed arguments are supplied
-    for(auto& child: model)
-	if (get_arg(*rule, child.first).get("no_apply",false))
-	    throw myexception()<<"Rule for function '"<<rule->get<string>("name")<<"' doesn't allow specifying a value for '"<<child.first<<"'.";
-
     // Create the new model tree with args in correct order
     auto name = model.get_value<string>();
     ptree model2(name);
@@ -323,9 +318,6 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
     {
 	skip++;
 	const auto& argument = arg.second;
-
-	// Skip no_apply args.
-	if (argument.get("no_apply",false)) continue;
 
 	string arg_name = argument.get<string>("arg_name");
 

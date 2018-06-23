@@ -468,7 +468,6 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
     {
 	auto argi = array_index(args,i);
 
-	if (argi.get("no_apply",false)) break;
 	string arg_name = argi.get_child("arg_name").get_value<string>();
 	expression_ref arg = get_model_as(R, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
 
@@ -498,15 +497,6 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
 	E = lambda_quantify(dummy("pair_arg_"+arg_name), let_expression({{dummy("arg_"+arg_name),{dummy("Prelude.fst"),dummy("pair_arg_"+arg_name)}}},E));
 
 	E = {dummy("Prelude.>>="), arg, E};
-    }
-
-    for(;i<args.size();i++)
-    {
-	// E = (\arg_name -> E)
-	auto argi = array_index(args,i);
-	string arg_name = argi.get_child("arg_name").get_value<string>();
-	E = lambda_quantify(dummy("arg_"+arg_name), E);
-	continue;
     }
 
     return E;

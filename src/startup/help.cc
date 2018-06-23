@@ -390,7 +390,6 @@ string get_help_for_rule(const Rules& rules, const Rule& rule)
     for(auto& argpair: args)
     {
 	auto& arg = argpair.second;
-	if (arg.get_child_optional("no_apply")) continue;
 	string arg_name = arg.get<string>("arg_name");
 	if (auto default_value = arg.get_child_optional("default_value"))
 	    arg_name += " " + show_model_abbrev(*default_value, rules, 15);
@@ -415,7 +414,6 @@ string get_help_for_rule(const Rules& rules, const Rule& rule)
     for(auto& argpair: args)
     {
 	auto& arg = argpair.second;
-	if (arg.get_child_optional("no_apply")) continue;
 
 	// 1. arg: description
 	optional<string> description = arg.get_optional<string>("description");
