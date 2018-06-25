@@ -1,0 +1,30 @@
+* 3.2.0
+  - Fixes
+    - Increase test timeout for internal testsuite and testiphy.
+    - HTML report: don't hide header behind top-bar in Chrome.
+  - alignment-smc improvements.
+* 3.1.5
+  - Fixes
+    - Make all programs use shipped libstdc++
+    - Make MDS plots handle bp-analyze --subsample
+    - Increase test timeouts
+    - Correctly write initial alignment for fixed alignment partitions.
+    - Don't write "file:" for MDS URLs in HTML report
+  - Print citations with pmid and pmcid in help.
+  - Add Frequencies.uniform[] function.
+  - Print help for 0-argument functions like 'dna'
+  - Make SEV handle site-compression.
+  - HTML report: print version number + lots of cosmetic improvements.
+  - Add new tool tree-tool (and map page, etc.)
+  - Change alignments-diff highlight color back to red.
+  - Clean up DP matrix code.
+* 3.1.4
+  - Fix prior on alpha in Rates.gamma
+* 3.1.3
+  - Fix mean_length prior in RS05 model.
+  - Add some more color-schemes for drawing alignments-diff output.
+  - Add ferns exon/intro data set.
+* 3.1.2
+  - Fix a testsuite bug
+* 3.1.1
+  - Print priors on models in their own section.
