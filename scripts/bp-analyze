@@ -419,7 +419,13 @@ sub html_header
 
       .content {margin:1em; margin-top: 3em}
       .backlit td {background: rgb(220,220,220);}
-      .anchor {position: relative; top: -3em}
+
+      :target:before {
+        content:"";
+        display:block;
+        height:2em; /* fixed header height*/
+        margin:-2em 0 0; /* negative fixed header height */
+      }
 
       h1 {font-size: 150%;}
       h2 {font-size: 130%; margin-top:2.5em; margin-bottom: 1em}
