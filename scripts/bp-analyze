@@ -2289,7 +2289,7 @@ sub get_models_for_file
 sub get_version_for_file
 {
     my $file = shift;
-    my $version = get_header_attribute("VERSION",[$file]);
+    my $version = get_header_attributes("VERSION",$file);
     $version = (split /\s+/,$version)[0];
     return $version;
 }
