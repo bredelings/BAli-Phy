@@ -7,7 +7,7 @@ Install
 
 Please visit the [releases page](http://www.bali-phy.org/download.php) to download official binaries.
 
-You can also install via homebrew on a Mac.
+You can also install via homebrew on a Mac, and using `apt-get` on recent version of Debian or Ubuntu.
 
 Documentation
 ------------
@@ -30,25 +30,35 @@ You will need a C++ compiler that understands C++14.
 You will also need to install
  * cairo graphics library (optional, but required to build the `draw-tree` program)
 
-If you build with meson and ninja, you need
+You will also need
  * python3
  * ninja
+ * meson >= 0.45
 
-You need meson version >= 0.45 to build bali-phy.
-
-Build with meson
-----------------
+Install Prerequisites
+---------------------
 ```bash
 sudo apt-get install g++ libcairo2-dev ninja-build python3
+```
+You also need to install meson.  First try:
+```bash
+sudo apt-get install meson
+```
 
-git clone https://github.com/bredelings/BAli-Phy.git
-cd BAli-Phy/
-git submodule update --init
-
-# We need a recent version of meson
+If the version of meson is not at least 0.45, then you need to install
+meson through pip:
+```bash
 python3 -m venv meson
 source meson/bin/activate
 pip3 install meson
+```
+
+Build BAli-Phy
+--------------
+```
+git clone https://github.com/bredelings/BAli-Phy.git
+cd BAli-Phy/
+git submodule update --init   # This is optional, it allows running the testiphy testsuite
 
 meson build --prefix=$HOME/Applications/bali-phy
 ninja -C install
