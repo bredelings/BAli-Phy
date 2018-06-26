@@ -1,4 +1,4 @@
-all: README.html README.xhtml README.pdf Tutorial.html Tutorial.xhtml Tutorial.pdf Tutorial2.html Tutorial2.xhtml Tutorial2.pdf Tutorial3.html Tutorial3.xhtml Tutorial3.pdf Tutorial4.html Tutorial4.xhtml Tutorial4.pdf
+all: README.html README.xhtml README.pdf Tutorial.html Tutorial.xhtml Tutorial.pdf Tutorial2.html Tutorial2.xhtml Tutorial2.pdf Tutorial3.html Tutorial3.xhtml Tutorial3.pdf Tutorial4.html Tutorial4.xhtml Tutorial4.pdf developer.html
 
 clean:
 	-@rm -f *.html *.xhtml REAMDE.xml *.fo *.pdf *~
@@ -12,6 +12,9 @@ clean:
 
 %.html: %.xml docbook-html.xsl
 	xsltproc --nonet --xinclude docbook-html.xsl $*.xml > $@
+
+%.html: %.md
+	pandoc -s $*.md --css doc.css --toc -N > $@
 
 %.xhtml: %.xml docbook-xhtml.xsl
 	xsltproc --nonet --xinclude docbook-xhtml.xsl $*.xml > $@
