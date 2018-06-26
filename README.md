@@ -68,7 +68,7 @@ ninja -C test
 Adding bali-phy to your `$PATH`
 ------------------------------
 
-In order to run the installed software, you should [add bali-phy to your $PATH](http://bali-phy.org/README.xhtml#installation).
+In order to run the installed software, you should [add bali-phy to your $PATH](http://bali-phy.org/README.xhtml#path).
 
 Installed locations
 ------------------
