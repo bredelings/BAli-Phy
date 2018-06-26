@@ -51,7 +51,7 @@ public:
 
 void to_json(json& j, const pretty_model_t& m);
 
-model_t get_model(const Rules& R, const std::string& type, const std::string& model, const std::vector<std::pair<std::string,std::string>>& = std::vector<std::pair<std::string,std::string>>());
+model_t get_model(const Rules& R, const std::string& type, const std::string& model, bool value_only = true, const std::vector<std::pair<std::string,std::string>>& = std::vector<std::pair<std::string,std::string>>());
 
 std::string default_markov_model(const alphabet& a);
 #endif
