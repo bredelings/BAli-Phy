@@ -457,16 +457,28 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
 	E = {E, var("arg_" + call_arg_name)};
     }
 
+    expression_ref loggers = List();
+    for(int i=0;i<args.size();i++)
+    {
+	auto argi = array_index(args,i);
+
+	string arg_name = argi.get_child("arg_name").get_value<string>();
+
+	auto log_name = name + ":" + arg_name;
+
+	bool do_log = should_log(R, model_rep, arg_name, scope);
+	loggers = {var("Distributions.add_logger"),loggers,log_name,var("pair_arg_"+arg_name),do_log};
+    }
+
     // 6c. Return the function call: 'return (f call.name1 call.name2 call.name3)'
     expression_ref Return = var("Prelude.return");
     if (not perform_function)
 	E = {Return,E};
-    E = {var("Prelude.>>="), E, lambda_quantify(var("result"),{Return,Tuple(var("result"),List())})};
+    E = {var("Prelude.>>="), E, lambda_quantify(var("result"),{Return,Tuple(var("result"),loggers)})};
 
 
     // 6d. Peform the rule arguments 'Prefix "arg_name" (arg_+arg_name) >>= (\arg_name -> (Log "arg_name" arg_name) << E)'
-    int i=0;
-    for(;i<args.size();i++)
+    for(int i=0;i<args.size();i++)
     {
 	auto argi = array_index(args,i);
 

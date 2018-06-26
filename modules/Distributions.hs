@@ -55,10 +55,11 @@ gen_model m = sample' Nothing [] True 1.0 m;
 perform_exp dist = Parameters.evaluate (-1) $ unsafePerformIO' $ gen_model dist;
 
 prefix_name ps name = foldl (\a b -> b++"/"++a) name ps;
-add_logger name x = do {Log name x ; return x};
 name ~~ dist = do { x <- dist ; Log name x ; return x};
 name @@ a = Prefix name a;
 
+add_logger old name (value,[]) False = old;
+add_logger old name (value,loggers) do_log = (name,(if do_log then Just value else Nothing, loggers)):old;
 
 -- Define some helper functions
 distDefaultValue d = unsafePerformIO' $ sample d;
