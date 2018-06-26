@@ -151,7 +151,7 @@ Input:
 
 * The function takes a single `OperationArgs& Args` argument.
 * The `n`th argument is fetched by calling `Args.evaluate(n)`, and is of type `expression_ref` ([src/computation/expression/expression_ref.H](https://github.com/bredelings/BAli-Phy/blob/master/src/computation/expression/expression_ref.H))
-* The `expression_ref` can be converted to `int', `double`, or `log_double_t` using the methods `.as_int()`, `.as_double()` and `.as_log_double()`.
+* The `expression_ref` can be converted to `int`, `double`, or `log_double_t` using the methods `.as_int()`, `.as_double()` and `.as_log_double()`.
 
 Output:
 
