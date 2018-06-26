@@ -429,7 +429,7 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
 	{
 	    const symbol_info& S = s.second;
 
-	    if (S.scope != local_scope) continue;
+	    if (get_module_name(S.name) != M.name) continue;
 
 	    if (S.symbol_type == variable_symbol or S.symbol_type == constructor_symbol)
 	    {

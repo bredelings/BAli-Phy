@@ -28,21 +28,21 @@ using std::multiset;
 using std::string;
 using std::vector;
 
-symbol_info::symbol_info(const std::string& s, symbol_type_t st, scope_t sc, int i2)
-    :name(s), symbol_type(st), scope(sc), arity(i2)
+symbol_info::symbol_info(const std::string& s, symbol_type_t st, int a)
+    :name(s), symbol_type(st), arity(a)
 { }
 
-symbol_info::symbol_info(const std::string& s, symbol_type_t st, scope_t sc, int i2, int i3, fixity_t f)
-    :name(s), symbol_type(st), scope(sc), arity(i2), precedence(i3), fixity(f)
+symbol_info::symbol_info(const std::string& s, symbol_type_t st, int a, int p, fixity_t f)
+    :name(s), symbol_type(st), arity(a), precedence(p), fixity(f)
 { }
 
-symbol_info::symbol_info(const std::string& s, symbol_type_t st, scope_t sc, int i2, int i3, fixity_t f, const expression_ref& t)
-    :name(s), symbol_type(st), scope(sc), arity(i2), precedence(i3), fixity(f), type(t)
+symbol_info::symbol_info(const std::string& s, symbol_type_t st, int a, int p, fixity_t f, const expression_ref& t)
+    :name(s), symbol_type(st), arity(a), precedence(p), fixity(f), type(t)
 { }
 
 bool operator==(const symbol_info&S1, const symbol_info& S2)
 {
-    return (S1.name == S2.name) and (S1.symbol_type == S2.symbol_type) and (S1.scope == S2.scope) and
+    return (S1.name == S2.name) and (S1.symbol_type == S2.symbol_type) and 
 	(S1.arity == S2.arity) and (S1.precedence == S2.precedence) and (S1.fixity == S2.fixity) and
 	(S1.type.ptr() == S2.type.ptr());
 }
@@ -71,21 +71,11 @@ void Module::add_symbol(const symbol_info& S)
     if (not is_qualified_symbol(S.name))
 	throw myexception()<<"Symbol '"<<S.name<<"' unqualified, can't be added to symbol table";
 
-    if (S.scope == unknown_scope)
-	throw myexception()<<"Can't add symbol with unknown scope!";
-
     auto loc = symbols.find(S.name);
     if (loc == symbols.end())
 	symbols[S.name] = S;
     else if (loc != symbols.end() and loc->second != S)
 	throw myexception()<<"Trying to add symbol '"<<S.name<<"' twice to module '"<<name<<"' with different body";
-}
-
-void Module::add_symbol(const symbol_info& S, scope_t sc)
-{
-    symbol_info S2 = S;
-    S2.scope = sc;
-    add_symbol(S2);
 }
 
 void Module::add_alias(const string& identifier_name, const string& resolved_name)
@@ -114,7 +104,7 @@ void Module::declare_symbol(const symbol_info& S)
 	throw myexception()<<"Trying to declare '"<<S.name<<"' twice in module '"<<name<<"'";
 
     // Add the symbol first.
-    add_symbol(S2, local_scope);
+    add_symbol(S2);
     // Add the alias for qualified name: S.name -> S2.name;
     add_alias(S2.name, S2.name);
     // Add the alias for unqualified name: S.name -> S2.name;
@@ -132,7 +122,7 @@ void Module::declare_fixity(const std::string& s, int precedence, fixity_t fixit
     string s2 = name + "." + s;
 
     if (not symbol_exists(s2))
-	declare_symbol({s, unknown_symbol, local_scope, -1, -1, unknown_fix, {}});
+	declare_symbol({s, unknown_symbol, -1, -1, unknown_fix, {}});
 
     symbol_info& S = symbols.find(s2)->second;
     if (precedence < 0 or precedence > 9)
@@ -182,7 +172,7 @@ void Module::import_symbol(const symbol_info& S, const string& modid, bool quali
 	throw myexception()<<"Imported symbols must have qualified names.";
 
     // Add the symbol.
-    add_symbol(S, external_scope);
+    add_symbol(S);
     // Add the alias for qualified name.
     add_alias(modid+"."+get_unqualified_name(S.name), S.name);
     // Add the alias for unqualified name.
@@ -200,7 +190,7 @@ void Module::import_module(const Module& M2, const string& modid, bool qualified
     {
 	const symbol_info& S = p.second;
 
-	if (S.scope == local_scope)
+	if (get_module_name(S.name) == M2.name)
 	    import_symbol(S, modid, qualified);
     }
 }
@@ -345,7 +335,6 @@ void Module::update_function_symbols()
 	    {
 		symbol_info si;
 		si.name = x.name;
-		si.scope = local_scope;
 		si.symbol_type = variable_symbol;
 		symbols.insert({x.name, si});
 	    }
@@ -847,27 +836,27 @@ bool Module::is_declared(const std::string& name) const
     return is_haskell_builtin_con_name(name) or (aliases.count(name) > 0);
 }
 
-bool Module::is_declared_local(const std::string& name) const
+bool Module::is_declared_local(const std::string& sname) const
 {
-    auto loc = symbols.find(name);
+    auto loc = symbols.find(sname);
     if (loc == symbols.end()) return false;
 
-    return (loc->second.scope == local_scope);
+    return (get_module_name(loc->second.name) == name);
 }
 
 pair<symbol_info,expression_ref> Module::lookup_builtin_symbol(const std::string& name)
 {
     if (name == "()")
-	return {symbol_info("()", constructor_symbol, global_scope, 0), constructor("()",0)};
+	return {symbol_info("()", constructor_symbol, 0), constructor("()",0)};
     else if (name == "[]")
-	return {symbol_info("[]", constructor_symbol, global_scope, 0), constructor("[]",0)};
+	return {symbol_info("[]", constructor_symbol, 0), constructor("[]",0)};
     else if (name == ":")
-	return {symbol_info(":", constructor_symbol, global_scope, 2, 5, right_fix), lambda_expression( right_assoc_constructor(":",2) )};
+	return {symbol_info(":", constructor_symbol, 2, 5, right_fix), lambda_expression( right_assoc_constructor(":",2) )};
     else if (is_tuple_name(name))
     {
 	int arity = name.size() - 1;
 	expression_ref body = lambda_expression( tuple_head(arity) );
-	return {symbol_info(name, constructor_symbol, global_scope, arity), body};
+	return {symbol_info(name, constructor_symbol, arity), body};
     }
     throw myexception()<<"Symbol 'name' is not a builtin (constructor) symbol.";
 }
@@ -1167,7 +1156,7 @@ void Module::def_function(const std::string& fname)
 	    throw myexception()<<"Can't add function with name '"<<fname<<"': that name is already used!";
     }
     else
-	declare_symbol({fname, variable_symbol, local_scope, -1, -1, unknown_fix, {}});
+	declare_symbol({fname, variable_symbol, -1, -1, unknown_fix, {}});
 }
 
 void Module::def_constructor(const std::string& cname, int arity)
@@ -1189,7 +1178,7 @@ void Module::def_constructor(const std::string& cname, int arity)
 	}
     }
 
-    declare_symbol( {cname, constructor_symbol, local_scope, arity, -1, unknown_fix, {}} );
+    declare_symbol( {cname, constructor_symbol, arity, -1, unknown_fix, {}} );
 }
 
 void Module::add_local_symbols()

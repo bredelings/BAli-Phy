@@ -52,7 +52,7 @@ expression_ref infix_parse_neg(const Module& m, const symbol_info& op1, deque<ex
     {
 	if (op1.precedence >= 6) throw myexception()<<"Cannot parse '"<<op1.name<<"' -";
 
-	E1 = infix_parse_neg(m, symbol_info("-",variable_symbol,unknown_scope, 2,6,left_fix), T);
+	E1 = infix_parse_neg(m, symbol_info("-",variable_symbol, 2,6,left_fix), T);
 
 	return infix_parse(m, op1, {dummy("Prelude.negate"),E1}, T);
     }
@@ -113,7 +113,7 @@ expression_ref desugar_infix(const Module& m, const vector<expression_ref>& T)
     deque<expression_ref> T2;
     T2.insert(T2.begin(), T.begin(), T.end());
 
-    return infix_parse_neg(m, {"",variable_symbol,unknown_scope,2,-1,non_fix}, T2);
+    return infix_parse_neg(m, {"",variable_symbol,2,-1,non_fix}, T2);
 }
 
 expression_ref infixpat_parse(const Module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
@@ -220,7 +220,7 @@ expression_ref desugar_infixpat(const Module& m, const vector<expression_ref>& T
     deque<expression_ref> T2;
     T2.insert(T2.begin(), T.begin(), T.end());
 
-    return infixpat_parse_neg(m, {"",variable_symbol,unknown_scope,2,-1,non_fix}, T2);
+    return infixpat_parse_neg(m, {"",variable_symbol,2,-1,non_fix}, T2);
 }
 
 set<string> find_bound_vars(const expression_ref& E)

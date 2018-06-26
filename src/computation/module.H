@@ -12,22 +12,20 @@
 
 enum fixity_t {unknown_fix=0, non_fix=1, left_fix=2, right_fix=3};
 enum symbol_type_t {variable_symbol = 0, constructor_symbol = 1, type_symbol = 3, unknown_symbol = 4};
-enum scope_t {local_scope, external_scope, global_scope, unknown_scope};
 
 struct symbol_info
 {
     std::string name;
     symbol_type_t symbol_type;
-    scope_t scope = unknown_scope;
     int arity = -1;
     int precedence = -1;
     fixity_t fixity = unknown_fix;
     expression_ref type;
 
     symbol_info() {};
-    symbol_info(const std::string&, symbol_type_t, scope_t, int);
-    symbol_info(const std::string&, symbol_type_t, scope_t, int, int, fixity_t);
-    symbol_info(const std::string&, symbol_type_t, scope_t, int, int, fixity_t, const expression_ref&);
+    symbol_info(const std::string&, symbol_type_t, int);
+    symbol_info(const std::string&, symbol_type_t, int, int, fixity_t);
+    symbol_info(const std::string&, symbol_type_t, int, int, fixity_t, const expression_ref&);
 };
 
 bool operator==(const symbol_info&S1, const symbol_info& S2);
@@ -119,8 +117,6 @@ public:
     void def_constructor(const std::string& name, int arity);
 
     bool symbol_exists(const std::string&) const;
-
-    void add_symbol(const symbol_info&, scope_t);
 
     void add_symbol(const symbol_info&);
 
