@@ -26,6 +26,12 @@ x ^ 0 = 1;
 x ^ 1 = x;
 x ^ n = x*(x^(n-1));
 
+-- not defined
+x ^^ y = error "'^^' not defined";
+x `rem` y = error "'rem' not defined";
+x `div` y = error "'div' not defined";
+x `quot` y = error "'quot' not defined";
+
 data Bool = True | False;
 data Maybe a = Just a | Nothing;
 data IO a = IOAction1 (b->a) a | 
