@@ -33,12 +33,12 @@ vector<double> get_bin_boundaries(int n, const vector<double>& coalescent_rates,
     assert(coalescent_rates.size() == level_boundaries.size());
     assert(level_boundaries[0] == 0.0);
 
-    vector<double> b(n+1);
-    b[0] = 0;
-    int level = 0;
     vector<double> Q(n);
     for(int i=0;i<n;i++)
 	Q[i] = double(i)/n;
+
+    vector<double> b(n);
+    int level = 0;
     double t1 = 0;
     double p1 = 0;
     for(int i = 0; i < Q.size(); i++)
@@ -85,7 +85,7 @@ vector<double> get_bin_boundaries(int n, const vector<double>& coalescent_rates,
 	    }
 	}
     }
-    b[n] = b[n-1] + 1000000;
+    b.push_back(b.back() + 1000000);
     return b;
 }
 
