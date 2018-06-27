@@ -223,25 +223,24 @@ module_import parse_import(const expression_ref& impdecl)
 
 vector<module_import> Module::imports() const
 {
-    vector<module_import> m_imports;
+    std::map<string, module_import> imports_map;
 
-    bool saw_Prelude = false;
     if (impdecls)
 	for(const auto& impdecl:impdecls.sub())
 	{
-	    m_imports.push_back(parse_import(impdecl));
-	    if (m_imports.back().name == "Prelude")
-		saw_Prelude = true;
+	    auto import = parse_import(impdecl);
+	    if (imports_map.count(import.name))
+		throw myexception()<<"Module '"<<name<<"': importing module '"<<import.name<<"' twice!";
+	    imports_map[import.name] = import;
 	}
 
     // Import the Prelude if it wasn't explicitly mentioned in the import list.
-    if (not saw_Prelude and name != "Prelude")
-    {
-	module_import Prelude;
-	Prelude.name = "Prelude";
-	Prelude.as = "Prelude";
-	m_imports.push_back(Prelude);
-    }
+    if (not imports_map.count("Prelude") and name != "Prelude")
+	imports_map["Prelude"] = module_import("Prelude");
+
+    vector<module_import> m_imports;
+    for(auto& i: imports_map)
+	m_imports.push_back(i.second);
 
     return m_imports;
 }

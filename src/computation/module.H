@@ -59,6 +59,8 @@ struct module_import
     std::string as;
     std::vector<std::string> only;
     std::vector<std::string> hiding;
+    module_import() = default;
+    module_import(const std::string& s):name(s),as(s) {}
 };
 
 class module_loader;
