@@ -28,26 +28,22 @@ double quantile(double eta, double p)
     return -log1p(-p)/eta;
 }
 
-vector<double> get_bin_boundaries(int n, const vector<double>& coalescent_rates, const vector<double>& level_boundaries)
+vector<double> get_quantiles(const vector<double>& P, const vector<double>& coalescent_rates, const vector<double>& level_boundaries)
 {
     assert(coalescent_rates.size() == level_boundaries.size());
     assert(level_boundaries[0] == 0.0);
 
-    vector<double> Q(n);
-    for(int i=0;i<n;i++)
-	Q[i] = double(i)/n;
-
-    vector<double> b(n);
+    vector<double> quantiles(P.size());
     int level = 0;
     double t1 = 0;
     double p1 = 0;
-    for(int i = 0; i < Q.size(); i++)
+    for(int i = 0; i < P.size(); i++)
     {
         // We have that Pr(X > t1 = q1)
 	double q1 = 1.0 - p1;
 
         // We are trying to find the t2 such that Pr(X > t2 = q2)
-	double p2 = Q[i];
+	double p2 = P[i];
 	double q2 = 1.0 - p2;
 	double t2 = t1;
 
@@ -63,8 +59,8 @@ vector<double> get_bin_boundaries(int n, const vector<double>& coalescent_rates,
 	    double delta_t = quantile(coalescent_rates[level], 1.0 - q2);
 	    if (t2 + delta_t < level_boundaries[level] or level == level_boundaries.size()-1)
 	    {
-		b[i] = t2 + delta_t;
-		t1 = b[i];
+		quantiles[i] = t2 + delta_t;
+		t1 = quantiles[i];
 		p1 = p2;
 		break;
 	    }
@@ -85,6 +81,21 @@ vector<double> get_bin_boundaries(int n, const vector<double>& coalescent_rates,
 	    }
 	}
     }
+
+    return quantiles;
+}
+
+vector<double> get_bin_boundaries(int n, const vector<double>& coalescent_rates, const vector<double>& level_boundaries)
+{
+    assert(coalescent_rates.size() == level_boundaries.size());
+    assert(level_boundaries[0] == 0.0);
+
+    vector<double> P(n);
+    for(int i=0;i<n;i++)
+	P[i] = double(i)/n;
+
+    vector<double> b = get_quantiles(P, coalescent_rates, level_boundaries);
+
     b.push_back(b.back() + 1000000);
     return b;
 }
