@@ -3,7 +3,7 @@
     "synonyms": ["RCTMC"],
     "result_type": "RevCTMC[a]",
     "no_log": true,
-    "call": "SModel.reversible_markov[S,R]",
+    "call": "SModel.ReversibleMarkov.reversible_markov[S,R]",
     "args": [
         {
             "arg_name": "S",

@@ -1,9 +1,11 @@
-module SModel where 
+module SModel (module SModel, module SModel.ReversibleMarkov) where 
 {
 import Distributions;
 import Alphabet;
 import Tree;
 import Parameters;
+
+import SModel.ReversibleMarkov;
 
 builtin f3x4_frequencies_builtin 4 "f3x4_frequencies" "SModel";
 builtin muse_gaut_matrix 4 "muse_gaut_matrix" "SModel";
@@ -11,10 +13,6 @@ builtin builtin_plus_gwf 3 "plus_gwF" "SModel";
 builtin builtin_average_frequency 1 "average_frequency" "SModel";
 builtin builtin_gtr_sym 2 "gtr_sym" "SModel";
 builtin m0 3 "m0" "SModel";
-builtin lExp 3 "lExp" "SModel";
-builtin reversible_rate_matrix 2 "reversible_rate_matrix" "SModel";
-builtin get_eigensystem 2 "get_eigensystem" "SModel";
-builtin get_equilibrium_rate 4 "get_equilibrium_rate" "SModel";
 builtin singlet_to_triplet_exchange 2 "singlet_to_triplet_exchange" "SModel";
 builtin builtin_empirical 2 "empirical" "SModel";
 builtin pam 1 "pam" "SModel";
@@ -42,8 +40,6 @@ builtin calc_root_probability_SEV 5 "calc_root_probability_SEV" "SModel";
 builtin peel_likelihood_1 3 "peel_likelihood_1" "SModel";
 builtin peel_likelihood_2 6 "peel_likelihood_2" "SModel";
 
-data ReversibleMarkov = ReversibleMarkov a b c d e f g;
-data ReversibleFrequency = ReversibleFrequency a b c d;
 data F81 = F81 a b c d;
 data MixtureModel = MixtureModel a;
 data MixtureModels = MixtureModels a;
@@ -53,7 +49,6 @@ equ a = gtr_sym (replicate nn 1.0) a where {n=alphabetSize a;nn=n*(n-1)/2};
 tn93_sym k1 k2 a = gtr_sym [1.0, k1, 1.0, 1.0, k2, 1.0] a;
 hky85_sym k a = tn93_sym k k a;
 
-scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r);
 scaleMM x (MixtureModel dist            ) = MixtureModel [(p, scale x m) | (p, m) <- dist];
 
 mixMM fs ms = MixtureModel $ mix fs [m | MixtureModel m <- ms];
@@ -76,16 +71,10 @@ multi_rate_unif_bins base dist n_bins = multi_rate base $ uniformDiscretize dist
 rate (ReversibleMarkov a s q pi l t r) = r;
 rate (MixtureModel d) = average (fmap2 rate d);
 
-qExp (ReversibleMarkov a s q pi l t r) = lExp l pi t;
-
 branchTransitionP (MixtureModel l) t = let {r = rate (MixtureModel l)} 
                                                               in map (\x -> qExp (scale (t/r) (snd x))) l;
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
-reversible_markov' a smap q pi = ReversibleMarkov a smap q pi (get_eigensystem q pi) 1.0 (get_equilibrium_rate a smap q pi);
-
-reversible_markov s (ReversibleFrequency a smap pi r) = reversible_markov' a smap (reversible_rate_matrix s r) pi;
-
 nBaseModels (MixtureModel l) = length l;
 nBaseModels (MixtureModels (m:ms)) = nBaseModels m;
 
