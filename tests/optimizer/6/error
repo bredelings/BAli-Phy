@@ -1,5 +1,5 @@
-size = 1   Test.#0 = 10
-size = 1   Test.#2 = Prelude:negate Test.#0
+size = 1   Test.#2 = Prelude:negate Test.#227
+size = 1   Test.#227 = 10
 size = 0   Test.f = \#1 -> Test.#2
-size = 1   Test.g = \#1 #781 -> Prelude.IOAnd #1 #781
-size = 1   Test.h = \#1 #782 -> #1:#782
+size = 1   Test.g = \#1 #933 -> Prelude.IOAnd #1 #933
+size = 1   Test.h = \#1 #934 -> #1:#934
