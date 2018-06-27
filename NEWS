@@ -1,4 +1,7 @@
-* 3.2.0
+* UNRELEASED
+  - Fixes
+    - Make bp-analyze able to parse output files from 3.0-beta.
+* 3.2
   - Fixes
     - Increase test timeout for internal testsuite and testiphy.
     - HTML report: don't hide header behind top-bar in Chrome.
