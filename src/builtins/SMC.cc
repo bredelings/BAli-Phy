@@ -100,12 +100,13 @@ vector<double> get_bin_boundaries(int n, const vector<double>& coalescent_rates,
     return b;
 }
 
-vector<double> get_bin_centers(int n, double eta)
+vector<double> get_bin_centers(int n, const vector<double>& coalescent_rates, const vector<double>& level_boundaries)
 {
-    vector<double> t(n);
+    vector<double> P(n);
     for(int i=0;i<n;i++)
-	t[i] = quantile(eta, (2.0*i+1)/(2*n));
-    return t;
+	P[i] = (2.0*i+1)/(2*n);
+
+    return get_quantiles(P, coalescent_rates, level_boundaries);
 }
 
 vector<double> get_equilibrium(const vector<double>& B)
@@ -578,11 +579,11 @@ log_double_t smc(double rho_over_theta, vector<double> coalescent_rates, vector<
     // Lower end of each bin. boundaries[0] = 0. The upper end of the last bin is \infty
     const auto bin_boundaries = get_bin_boundaries(n_bins, coalescent_rates, level_boundaries);
 
-    const auto bin_times = get_bin_centers(n_bins, 2.0/theta);
+    const auto bin_times = get_bin_centers(n_bins, coalescent_rates, level_boundaries);
 
     const auto emission_probabilities = get_emission_probabilities(bin_times);
 
-    // # Compute the likelihoods for the first column
+    // This assumes equally-spaced bin quantiles.
     const auto pi = get_equilibrium(bin_boundaries);
 
     vector<double> L(n_bins);
