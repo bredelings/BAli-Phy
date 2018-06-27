@@ -189,12 +189,12 @@ categorical ps = ProbDensity (qs!) (no_quantile "categorical") (sample_categoric
                 where {qs = listArray' $ map doubleToLogDouble ps};
 
 -- define the list distribution
-pairs f (x:y:t) = f x y : pairs f t;
-pairs _ t       = t;
+pair_apply f (x:y:t) = f x y : pair_apply f t;
+pair_apply _ t       = t;
 
 foldt f z []  = z;
 foldt f _ [x] = x;
-foldt f z xs  = foldt f z (pairs f xs);
+foldt f z xs  = foldt f z (pair_apply f xs);
 
 balanced_product xs = foldt (*) (doubleToLogDouble 1.0) xs;
 

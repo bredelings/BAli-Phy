@@ -209,9 +209,9 @@ branch_site s r fs ws posP posW codona = MixtureModels [bg_mixture,fg_mixture] w
 branch_site_test s r fs ws posP posW posSelection codona = branch_site s r fs ws posP posW' codona where
     {posW' = if (posSelection == 1) then posW else 1.0};
 
-pairs l = [(x,y) | (x:ys) <- tails l, y <- ys];
+all_pairs l = [(x,y) | (x:ys) <- tails l, y <- ys];
 
-letter_pair_names a = [l1++l2|(l1,l2) <- pairs (alphabet_letters a)];
+letter_pair_names a = [l1++l2|(l1,l2) <- all_pairs (alphabet_letters a)];
 
 get_element_freqs []                 x = error ("No frequency specified for letter '" ++ x ++ "'");
 get_element_freqs ((key,value):rest) x = if (key == x) then value else get_element_freqs rest x;
@@ -228,7 +228,7 @@ select_elements []      _ = [];
 get_ordered_elements xs xps plural = if length xs == length xps then select_elements xs xps else error $ "Expected "++show (length xs)++" "++plural
                                      ++" but got "++ show (length xps)++"!";
 
-gtr_sym' es' a = gtr_sym es a where {lpairs = pairs (alphabet_letters a);
+gtr_sym' es' a = gtr_sym es a where {lpairs = all_pairs (alphabet_letters a);
                                      es = if length lpairs == length es' then
                                               [get_element_exchange es' (l1++l2) (l2++l1)| (l1,l2) <- lpairs]
                                           else
