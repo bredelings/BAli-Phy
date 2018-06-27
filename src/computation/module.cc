@@ -424,19 +424,19 @@ void Module::export_small_decls()
     }
 }
 
-void parse_module(const expression_ref& M, string& name, expression_ref& exports, expression_ref& impdecls, expression_ref& topdecls)
+void parse_module(const expression_ref& M, string& name, expression_ref& exports, expression_ref& body, expression_ref& impdecls, expression_ref& topdecls)
 {
     assert(is_AST(M, "Module"));
-    expression_ref body;
     if (M.size() == 1)
     {
-	name = "";
+	name = "Main";
 	exports = {};
 	body = M.sub()[0];
     }
     else if (M.size() == 2)
     {
 	name = M.sub()[0].as_<String>();
+	exports = {};
 	body = M.sub()[1];
     }
     else if (M.size() == 3)
@@ -1302,25 +1302,7 @@ Module::Module(const expression_ref& E)
     assert(not module);
     module = E;
 
-    // 1. module = [optional name] + body
-    if (module.size() == 1)
-    {
-	name = "Main";
-	body = module.sub()[0];
-    }
-    else
-    {
-	name = module.sub()[0].as_<String>();
-	body = module.sub()[1];
-    }
-    assert(is_AST(body,"Body"));
-
-    // 2. body = impdecls + [optional topdecls]
-    for(const auto& E: body.sub())
-	if (is_AST(E,"TopDecls"))
-	    topdecls = E;
-	else if (is_AST(E,"impdecls"))
-	    impdecls = E;
+    parse_module(module, name, exports, body, impdecls, topdecls);
 
     assert(module);
 }

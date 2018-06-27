@@ -352,7 +352,6 @@ struct HTokens : lex::lexer<Lexer>
 	    KW_Then = "then";
 	    KW_Type = "type";
 	    KW_Where = "where";
-	    KW_Export = "export";
 	    KW_Hiding = "hiding";
 	    KW_Qualified = "qualified";
 	    KW_Safe = "safe";
@@ -424,7 +423,6 @@ struct HTokens : lex::lexer<Lexer>
 		| KW_Then
 		| KW_Type
 		| KW_Where
-		| KW_Export
 		| KW_Hiding
 		| KW_Qualified
 		| KW_Safe
@@ -514,7 +512,6 @@ struct HTokens : lex::lexer<Lexer>
     lex::token_def<> KW_Then;
     lex::token_def<> KW_Type;
     lex::token_def<> KW_Where;
-    lex::token_def<> KW_Export;
     lex::token_def<> KW_Hiding;
     lex::token_def<> KW_Qualified;
     lex::token_def<> KW_Safe;
@@ -754,7 +751,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 
 	    /*------ Section 4 -------*/
 	    module = 
-		-(tok.KW_Module > modid[ push_back(_a,construct<String>(_1)) ] >> -exports >> tok.KW_Where) > body [ push_back(_a,_1) ] >> eps[ _val = new_<expression>(AST_node("Module"), _a) ];
+		-(tok.KW_Module > modid[ push_back(_a,construct<String>(_1)) ] >> -exports [push_back(_a,_1)] >> tok.KW_Where) > body [ push_back(_a,_1) ] >> eps[ _val = new_<expression>(AST_node("Module"), _a) ];
 
 	    body = 
 		tok.LeftCurly >> impdecls[ push_back(_a,_1) ] >> tok.SemiColon > topdecls[ push_back(_a,_1) ] > tok.RightCurly >> eps[ _val = new_<expression>(AST_node("Body"), _a) ]
@@ -871,8 +868,8 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	
 	    /*------ Section 5.2 -------*/
 
-	    exports = tok.LeftParen [clear(_a)] >> tok.RightParen [_val = new_<expression>(AST_node("exports"),_a)]
-		| tok.LeftParen [clear(_a)] >> h_export [push_back(_a,_1)] % tok.Comma >> -tok.Comma >> tok.RightParen ;
+	    exports = tok.LeftParen [clear(_a)] >> tok.RightParen [_val = new_<expression>(AST_node("Exports"),_a)]
+		| tok.LeftParen [clear(_a)] >> h_export [push_back(_a,_1)] % tok.Comma >> -tok.Comma >> tok.RightParen [_val = new_<expression>(AST_node("Exports"),_a)];
 
 	    h_export = 	qvar [_val = construct<AST_node>(std::string("qvar"), construct<String>(_1)) ]
 //		| qtycon >> -(tok.LeftParen >> tok.DotDot >> tok.RightParen | tok.LeftParen >> tok.RightParen | tok.LeftParen >> cname %tok.Comma >> tok.RightParen)
