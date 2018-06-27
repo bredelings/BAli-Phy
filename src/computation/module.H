@@ -150,7 +150,7 @@ public:
 
     void export_small_decls();
 
-    void update_function_symbols();
+    std::map<std::string,expression_ref> code_defs() const;
 
     void get_types(const Program&);
 

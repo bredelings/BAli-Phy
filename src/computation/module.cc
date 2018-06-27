@@ -316,29 +316,32 @@ void Module::perform_imports(const Program& P)
     }
 }
 
-void Module::update_function_symbols()
+map<string,expression_ref> Module::code_defs() const
 {
-    if (not topdecls) return;
+    if (not topdecls) return map<string,expression_ref>();
 
-    // 3. Define the symbols
+    map<string, expression_ref> code;
+
     for(const auto& decl: topdecls.sub())
-	if (is_AST(decl,"Decl"))
+    {
+	assert(is_AST(decl,"Decl"));
+
+	// get the qualified name for the decl
+	auto& var = decl.sub()[0];
+	auto& x = var.as_<dummy>();
+	assert(is_qualified_symbol(x.name));
+
+	if (this->name == get_module_name(x.name))
 	{
-	    auto& var = decl.sub()[0];
-	    auto& x = var.as_<dummy>();
+	    // get the body for the  decl
+	    auto& body = decl.sub()[1];
+	    assert(body);
 
-	    assert(is_qualified_symbol(x.name));
-
-	    if (name != get_module_name(x.name)) continue;
-
-	    if (not symbols.count(x.name))
-	    {
-		symbol_info si;
-		si.name = x.name;
-		si.symbol_type = variable_symbol;
-		symbols.insert({x.name, si});
-	    }
+	    code[x.name] = body;
 	}
+    }
+
+    return code;
 }
 
 void Module::desugar(const Program&)
@@ -746,8 +749,6 @@ void Module::optimize(const Program& P)
 
     if (topdecls)
 	topdecls = rename_top_level(topdecls, name);
-
-    update_function_symbols();
 }
 
 pair<string,expression_ref> parse_builtin(const expression_ref& decl, const module_loader& L)

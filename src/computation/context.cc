@@ -425,20 +425,8 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
     {
 	const Module& M = get_Program().get_module(name);
 
-	for(const auto& s: M.get_symbols())
-	{
-	    const symbol_info& S = s.second;
-
-	    if (get_module_name(S.name) != M.name) continue;
-
-	    if (S.symbol_type == variable_symbol or S.symbol_type == constructor_symbol)
-	    {
-		if (identifiers().count(S.name))
-		    throw myexception()<<"Trying to define symbol '"<<S.name<<"' that is already defined!";
-
-		add_identifier(S.name);
-	    }
-	}
+	for(const auto& def: M.code_defs())
+	    add_identifier(def.first);
     }
       
     // 3. Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
@@ -446,14 +434,9 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
     {
 	const Module& M = get_Program().get_module(name);
 
-	for(const auto& decl: M.topdecls.sub())
+	for(const auto& def: M.code_defs())
 	{
-	    assert(is_AST(decl,"Decl"));
-
-	    // get the qualified name for the decl
-	    auto x = decl.sub()[0].as_<dummy>();
-	    string name = x.name;
-	    assert(is_qualified_symbol(name));
+	    auto& name = def.first;
 
 	    // get the root for each identifier
 	    auto loc = identifiers().find(name);
@@ -461,8 +444,7 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
 	    int R = loc->second;
 
 	    // get the body for the  decl
-	    auto& body = decl.sub()[1];
-	    assert(body);
+	    auto& body = def.second;
 
 #ifdef DEBUG_OPTIMIZE
 	    std::cerr<<name<<" := "<<body<<"\n\n";
