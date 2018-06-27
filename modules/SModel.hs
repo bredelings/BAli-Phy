@@ -334,7 +334,7 @@ log_normal_rates_dist sigmaOverMu = log_normal lmu lsigma where {x = log(1.0+sig
 log_normal_rates base sigmaOverMu n = multi_rate_unif_bins base (log_normal_rates_dist sigmaOverMu) n;
 
 --dp base rates fraction = multi_rate base dist where {dist = zip fraction rates};
-dp base rates fraction = scaled_mixture (replicate (length fraction) base) rates fraction;
+free_rates base rates fraction = scaled_mixture (replicate (length fraction) base) rates fraction;
 
 branch_transition_p t smodel branch_cat_list ds b = list_to_vector $ branchTransitionP (getNthMixture smodel (branch_cat_list!!b)) (ds!b);
 
