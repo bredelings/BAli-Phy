@@ -36,15 +36,18 @@ vector<double> get_bin_boundaries(int n, const vector<double>& coalescent_rates,
     vector<double> b(n+1);
     b[0] = 0;
     int level = 0;
-    for(int i = 1; i < n; i++)
+    vector<double> Q(n);
+    for(int i=0;i<n;i++)
+	Q[i] = double(i)/n;
+    for(int i = 1; i < Q.size(); i++)
     {
         // We have that Pr(X > t1 = q1)
 	double t1 = b[i-1];
-	double p1 = double(i-1)/n;
+	double p1 = Q[i-1];
 	double q1 = 1.0 - p1;
 
         // We are trying to find the t2 such that Pr(X > t2 = q2)
-	double p2 = double(i)/n;
+	double p2 = Q[i];
 	double q2 = 1.0 - p2;
 	double t2 = t1;
 
