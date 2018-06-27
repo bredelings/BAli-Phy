@@ -221,7 +221,7 @@ module_import parse_import(const expression_ref& impdecl)
     return mi;
 }
 
-vector<module_import> Module::imports() const
+map<string,module_import> Module::imports() const
 {
     std::map<string, module_import> imports_map;
 
@@ -238,18 +238,14 @@ vector<module_import> Module::imports() const
     if (not imports_map.count("Prelude") and name != "Prelude")
 	imports_map["Prelude"] = module_import("Prelude");
 
-    vector<module_import> m_imports;
-    for(auto& i: imports_map)
-	m_imports.push_back(i.second);
-
-    return m_imports;
+    return imports_map;
 }
 
 set<string> Module::dependencies() const
 {
     set<string> modules;
     for(auto& mi: imports())
-	modules.insert(mi.name);
+	modules.insert(mi.second.name);
     return modules;
 }
 
@@ -299,18 +295,65 @@ void Module::perform_imports(const Program& P)
 {
     for(auto& i: imports())
     {
-	auto& I = P.get_module(i.name);
-	import_module(I, i.as, i.qualified);
+	auto& I = P.get_module(i.second.name);
+	import_module(I, i.second.as, i.second.qualified);
     }
+}
+
+void Module::export_symbol(const symbol_info& S)
+{
+    assert(is_qualified_symbol(S.name));
+    auto uname = get_unqualified_name(S.name);
+    if (not exported_symbols_.count(uname))
+	exported_symbols_[uname] = S;
+    // FIXME, this doesn't really say how the entities (which are different) were referenced in the export list
+    else if (exported_symbols_[uname].name != S.name)
+	throw myexception()<<"attempting to export both '"<<exported_symbols_[uname].name<<"' and '"<<S.name<<"', which have the same unqualified name!";
+}
+
+void Module::export_module(const string& modid)
+{
+    if (modid != name and not imports().count(modid))
+	throw myexception()<<"module '"<<modid<<"' is exported but not imported";
+
+    for(auto& s: symbols)
+	if (get_module_name(s.second.name) == modid)
+	{
+	    auto& qname = s.second.name;
+	    auto varid = get_unqualified_name(qname);
+	    auto S1 = lookup_symbol(varid);
+	    auto S2 = lookup_symbol(qname);
+	    if (S1.name == S2.name)
+		export_symbol(S1);
+	}
 }
 
 void Module::perform_exports()
 {
     // Currently we just export the local symbols
-    for(auto& s: symbols)
+    if (not exports or exports.sub().size() == 0)
+	export_module(name);
+    else
     {
-	if (get_module_name(s.second.name) == name)
-	    exported_symbols_.insert(s);
+	assert(is_AST(exports,"Exports"));
+	for(auto& ex: exports.sub())
+	{
+	    if (is_AST(ex,"qvar"))
+	    {
+		string qvarid = ex.as_<AST_node>().value;
+		if (aliases.count(qvarid))
+		    export_symbol(lookup_symbol(qvarid));
+		else
+		    throw myexception()<<"trying to export variable '"<<qvarid<<"', which is not in scope.";
+	    }
+	    else if (is_AST(ex,"module"))
+	    {
+		string modid = ex.as_<AST_node>().value;
+		export_module(modid);
+	    }
+	    else
+		throw myexception()<<"I don't understand export '"<<ex<<"'";
+	}
     }
 }
 

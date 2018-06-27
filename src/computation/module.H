@@ -107,9 +107,13 @@ public:
 
     std::set<std::string> dependencies() const;
 
-    std::vector<module_import> imports() const;
+    std::map<std::string,module_import> imports() const;
 
     const std::map<std::string, symbol_info>& exported_symbols() const {return exported_symbols_;}
+
+    void export_symbol(const symbol_info& S);
+
+    void export_module(const std::string& S);
 
     /// Add a function
     void add_decl(const std::string& name, const expression_ref& b);
