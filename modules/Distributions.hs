@@ -238,7 +238,7 @@ expTransform (ProbDensity d q s r) = ProbDensity pdf' q' s' r'
   pdf' x = (d $ log x)/(doubleToLogDouble x);
   q'   = exp . q;
   s'   = do {v <- (ProbDensity d q s r); return $ exp v};
-  r'   = Range.expTransform r
+  r'   = expTransformRange r
  };
   
 log_normal mu sigma = expTransform $ normal mu sigma;

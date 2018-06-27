@@ -85,11 +85,12 @@ void Module::add_alias(const string& identifier_name, const string& resolved_nam
 
     std::pair<string,string> element(identifier_name,resolved_name);
 
-    int count = aliases.count(identifier_name);
-    assert(count == 0 or count == 1);
+    auto range = aliases.equal_range(identifier_name);
+    for(auto it = range.first; it != range.second; it++)
+	if (it->second == resolved_name)
+	    return;
 
-    if (count == 0)
-	aliases.insert( std::pair<string,string>(identifier_name, resolved_name) );
+    aliases.insert( std::pair<string,string>(identifier_name, resolved_name) );
 }
 
 void Module::declare_symbol(const symbol_info& S)
@@ -919,7 +920,7 @@ symbol_info Module::lookup_symbol(const std::string& name) const
     else
     {
 	myexception e;
-	e<<"Identifier '"<<name<<" is ambiguous!";
+	e<<"Identifier '"<<name<<"' is ambiguous!";
 	auto range = aliases.equal_range(name);
 	for(auto i = range.first; i != range.second ;i++)
 	    e<<"\n "<<i->first<<" -> "<<i->second;
