@@ -71,6 +71,8 @@ class Module
 
     std::multimap<std::string, std::string> aliases;
 
+    std::map<std::string, symbol_info> exported_symbols_;
+
     bool resolved = false;
 
     bool optimized = false;
@@ -105,7 +107,7 @@ public:
 
     std::vector<module_import> imports() const;
 
-    const std::map<std::string, symbol_info>& get_symbols() const {return symbols;}
+    const std::map<std::string, symbol_info>& exported_symbols() const {return exported_symbols_;}
 
     /// Add a function
     void add_decl(const std::string& name, const expression_ref& b);
@@ -140,9 +142,11 @@ public:
 
     void compile(const Program&);
 
+    void add_local_symbols();
+
     void perform_imports(const Program&);
 
-    void add_local_symbols();
+    void perform_exports();
 
     void desugar(const Program&);
 
