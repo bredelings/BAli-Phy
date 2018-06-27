@@ -539,7 +539,7 @@ Finally, you may specify <userinput>-Inone</userinput> or <userinput>--imodel no
     <para>It is also possible to link partitions by specifying <userinput>--link=<replaceable>partitions</replaceable>[:<replaceable>attributes</replaceable>]</userinput>.  The link command is provided to allow a user to specify a model for each partition separately, and then afterwards choose which partitions to link.
     <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:tn93 --smodel 2:tn93 --link=1,2 -t</userinput>
 <prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel tn93                   --link=1,2 -t</userinput>   </screen>
-    If the linked partitions are specified as having the same model, BAli-Phy will give an error and refuse to run.
+    If the linked partitions are given different models, BAli-Phy will give an error and refuse to run.
     <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:tn93 --link=1,2 -t</userinput>
 bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing values 'tn93' and ''</screen></para>
     <para>You can also specify which of the 3 attributes "smodel", "imodel", and "scale" are being linked:
@@ -888,9 +888,9 @@ scale = 1,3:</programlisting>
 	</varlistentry>
 
 	<varlistentry>
-	  <term>logp</term>
+	  <term>posterior</term>
 	  <listitem>
-	    <para>The log of the probability.  The probability is the product of the prior and the likelihood.</para>
+	    <para>The log of the posterior probability.  The posterior probability is the product of the prior and the likelihood.</para>
 	  </listitem>
 	</varlistentry>
 
@@ -1698,6 +1698,36 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	      <entry>
 		<variablelist>
 		  <varlistentry> <term>lsigma</term> <listitem> <para>The standard deviation parameter.</para> </listitem> </varlistentry>
+		</variablelist>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry>
+		<para><userinput><replaceable>model</replaceable> + Rates.free</userinput></para>
+		<para><userinput><replaceable>model</replaceable> + Rates.free[n=4]</userinput> (default)</para>
+		<para>Yang (1995)</para>
+	      </entry>
+	      <entry><replaceable>model</replaceable> alphabet</entry>
+	      <entry>
+		<variablelist>
+		  <varlistentry> <term>rates</term> <listitem> <para>Rates for each category.</para> </listitem> </varlistentry>
+		  <varlistentry> <term>frequencies</term> <listitem> <para>Frequencies for each category.</para> </listitem> </varlistentry>
+		  <varlistentry> <term>n</term> <listitem> <para>Number of categories, if rates and frequencies not specified.</para> </listitem> </varlistentry>
+		</variablelist>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry>
+		<para><userinput><replaceable>model</replaceable> + multi_rate[dist,n=4]</userinput></para>
+		<para><userinput><replaceable>model</replaceable> + multi_rate[beta[2,3],n=5]</userinput> (example)</para>
+	      </entry>
+	      <entry><replaceable>model</replaceable> alphabet</entry>
+	      <entry>
+		<variablelist>
+		  <varlistentry> <term>dist</term> <listitem> <para>Distribution of rates across sites.</para> </listitem> </varlistentry>
+		  <varlistentry> <term>n</term> <listitem> <para>Number of bins.</para> </listitem> </varlistentry>
 		</variablelist>
 	      </entry>
 	    </row>
