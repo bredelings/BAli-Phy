@@ -288,18 +288,6 @@ void Module::compile(const Program& P)
     if (topdecls)
 	check_duplicate_var(topdecls);
 
-    // Get exports
-    if (topdecls)
-    {
-	exports = AST_node("Exports");
-	for(auto& decl: topdecls.sub())
-	{
-	    auto x = decl.sub()[0].as_<dummy>();
-	    assert(is_qualified_dummy(x));
-	    exports = exports + x;
-	}
-    }
-
     import_small_decls(P);
 
     optimize(P);
@@ -683,12 +671,13 @@ int nodes_size(const expression_ref& E)
     return total;
 }
 
-void export_decls(CDecls& decls, const expression_ref& exports, const string& name)
+void mark_exported_decls(CDecls& decls, const map<string,symbol_info>& exports, const string& module_name)
 {
     // Record exports
     set<string> exported;
-    for(auto& ex: exports.sub())
-	exported.insert(ex.as_<dummy>().name);
+    for(auto& ex: exports)
+	if (get_module_name(ex.second.name) == module_name)
+	    exported.insert(ex.second.name);
 
     // Mark exported vars as exported
     for(auto& decl: decls)
@@ -706,7 +695,7 @@ void export_decls(CDecls& decls, const expression_ref& exports, const string& na
     if (not exported.empty())
     {
 	myexception e;
-	e<<"Module '"<<name<<"' exports undefined symbols:\n";
+	e<<"Module '"<<module_name<<"' exports undefined symbols:\n";
 	for(auto& name: exported)
 	    e<<"  "<<name;
 	throw e;
@@ -742,7 +731,7 @@ void Module::optimize(const Program& P)
 	if (do_optimize)
 	{
 	    auto decls = parse_decls(topdecls);
-	    export_decls(decls, exports, name);
+	    mark_exported_decls(decls, exported_symbols(), name);
 
 	    vector<CDecls> decl_groups = {decls};
 	    for(int i=0;i<P.get_module_loader()->max_iterations;i++)
