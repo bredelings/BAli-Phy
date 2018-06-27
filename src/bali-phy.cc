@@ -415,10 +415,11 @@ int main(int argc,char* argv[])
 	    Program P(L);
 	    P.add(M);
 	    auto& M2 = P.get_module(M.name);
-	    for(const auto& decl: M2.topdecls.sub())
+	    for(const auto& def: M2.code_defs())
 	    {
-		auto& body = decl.sub()[1];
-		std::cerr<<"size = "<<simple_size(body)<<"   "<<decl.sub()[0]<<" = "<<body<<std::endl;
+		auto& name = def.first;
+		auto& body = def.second;
+		std::cerr<<"size = "<<simple_size(body)<<"   "<<name<<" = "<<body<<std::endl;
 	    }
 	    exit(0);
 	}
