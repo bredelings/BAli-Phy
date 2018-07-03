@@ -1,5 +1,5 @@
 {
-    "name": "yn94",
+    "name": "gy94",
     "synonyms": ["M0"],
     "result_type": "ExchangeModel[Codons[a]]",
     "constraints": ["Nucleotides[a]"],
@@ -26,7 +26,7 @@
 	    "description": "The codon alphabet"
         }
     ],
-    "examples": ["yn94","hky85_sym+yn94+f61","yn94[omega=2.0,hky85_sym]+mg94"],
+    "examples": ["gy94","hky85_sym+gy94+f61","gy94[omega=2.0,hky85_sym]+mg94"],
     "citation": {"type": "article",
 		 "title": "A codon-based model of nucleotide substitution for protein-coding DNA sequences",
 		 "author": [{"name": "Goldman, Nick"},{"name": "Yang, Ziheng"}],

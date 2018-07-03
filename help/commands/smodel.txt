@@ -10,7 +10,7 @@ based on the alphabet for that partition.  The defaults are:
    RNA        -> tn93
    AminoAcids -> lg08
    Triplets   -> tn93+sym+x3
-   Codons     -> yn94
+   Codons     -> gy94
 
 Many substitution models have parameters that can be specified.  For
 example the HKY model has an optional kappa parameter.  Optional

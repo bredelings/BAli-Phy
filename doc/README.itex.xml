@@ -1305,11 +1305,11 @@ distributions and functions.  For example, the distribution <userinput>iid</user
   <section><info><title>Models and '<userinput>+</userinput>' notation</title></info>
   <para>BAli-Phy allows using <userinput>+</userinput> as a short-cut to combine models.  Models expressed this way are rewritten internally to a more precise form:
 <programlisting>wag+f               // rewritten to rctmc[wag,f]
-yn94+f3x4           // rewritten to rctmc[yn94,f3x4]
+gy94+f3x4           // rewritten to rctmc[gy94,f3x4]
 hky85+Rates.gamma   // rewritten to Rates.gamma[submodel=hky85]
 hky85+inv           // rewritten to inv[submodel=hky85]</programlisting>
 </para>
-<para>These examples illustrate the two rules for rewriting <userinput>+</userinput>-expressions. In the first rule, an expression such as <userinput>m1[args1]+m2[args2]</userinput> is rewritten to <userinput>rctmc[m1[args1],m2[args2]]</userinput> if <userinput>m1</userinput> has type <userinput>ExchangeModel[a]</userinput> and <userinput>m2</userinput> has type <userinput>FrequencyModel[a]</userinput>.  This allows natural syntax for creating a reversible continuous-time Markov chain (RCTMC) from an exchange model (such as wag or yn94) and a frequency model (such as +f or +f3x4).</para>
+<para>These examples illustrate the two rules for rewriting <userinput>+</userinput>-expressions. In the first rule, an expression such as <userinput>m1[args1]+m2[args2]</userinput> is rewritten to <userinput>rctmc[m1[args1],m2[args2]]</userinput> if <userinput>m1</userinput> has type <userinput>ExchangeModel[a]</userinput> and <userinput>m2</userinput> has type <userinput>FrequencyModel[a]</userinput>.  This allows natural syntax for creating a reversible continuous-time Markov chain (RCTMC) from an exchange model (such as wag or gy94) and a frequency model (such as +f or +f3x4).</para>
 <para>In the second rule, an expression such as <userinput>model+M[args]</userinput> is rewritten to <userinput>M[args,submodel=model]</userinput> if <userinput>M</userinput> has a <userinput>submodel</userinput> argument.  When <userinput>+</userinput> occurs multiple times, the submodel is assumed to be as large as possible thus:
 <programlisting>hky85_sym+f+Rates.gamma+inv</programlisting>
 is rewritten to
@@ -1358,7 +1358,7 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	<para>If the substitution model is not specified, then the
 	  default model for the alphabet is used.  For DNA or RNA, the
 	  default model is tn93.  For Triplets, the default is tn93_sym+x3. For
-          Codons, the default model is yn94.  For Amino-Acids, the
+          Codons, the default model is gy94.  For Amino-Acids, the
 	  default model is lg08. 
 	</para>
       </section>
@@ -1384,7 +1384,7 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	</para>
 	
 	<para>The basic CTMC models are equ, hky85, tn93, gtr, hky85_sym+x3,
-	tn93_sym+x3, gtr_sym+x3, jtt, wag, lg08, and yn94.</para>
+	tn93_sym+x3, gtr_sym+x3, jtt, wag, lg08, and gy94.</para>
 
 	<table frame="none" rowsep="1"><info><title>Substitution Models</title></info>
 	  
@@ -1488,9 +1488,9 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 
 	      <row>
 		<entry>
-		  <para><userinput>yn94</userinput></para>
-		  <para><userinput>yn94[,hky85_sym]</userinput> (default)</para>
-		  <para><userinput>yn94[,gtr_sym]</userinput></para>
+		  <para><userinput>gy94</userinput></para>
+		  <para><userinput>gy94[,hky85_sym]</userinput> (default)</para>
+		  <para><userinput>gy94[,gtr_sym]</userinput></para>
 		  <para>Nielsen and Yang (1998)</para>
 		</entry>
 		<entry>Codons</entry>
@@ -1950,7 +1950,7 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	      <entry>
 		<para>$\Omega=\omega_i$ with probability $p_i$.</para>
 		<para>$\omega_1 = 0$, $\omega_2 = 1$.</para>
-		<para>The default for <replaceable>sm</replaceable> is yn94.</para>
+		<para>The default for <replaceable>sm</replaceable> is gy94.</para>
 	      </entry>
 	    </row -->
 
@@ -2009,21 +2009,21 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
       <para>Example: --smodel lg08+gwF+Rates.log_normal+inv</para>
       <para>Example: --smodel equ --alphabet Triplets</para>
       <para>Example: --smodel hky85</para>
-      <para>Example: --smodel yn94</para>
-      <para>Example: --smodel yn94+f1x4</para>
+      <para>Example: --smodel gy94</para>
+      <para>Example: --smodel gy94+f1x4</para>
       <para>Example: --smodel m2a</para>
       <para>Example: --smodel m2a[hky85_sym] (same as above)</para>
       <!-- para>Example: smodel m2[tn93_sym,f3x4]</para -->
     </section>
     <section xml:id="genetic-codes"><info><title>Genetic Codes</title></info>
       
-      <para>When using a codon-based substitution model like <userinput>yn94</userinput>, you may select the genetic code by specifying <userinput>--alphabet Codons[,<replaceable>genetic-code</replaceable>]</userinput>.  Available genetic codes are <userinput>standard</userinput>, <userinput>mt-vert</userinput>, <userinput>mt-invert</userinput>, <userinput>mt-yeast</userinput>, <userinput>mt-protozoan</userinput>.</para>
+      <para>When using a codon-based substitution model like <userinput>gy94</userinput>, you may select the genetic code by specifying <userinput>--alphabet Codons[,<replaceable>genetic-code</replaceable>]</userinput>.  Available genetic codes are <userinput>standard</userinput>, <userinput>mt-vert</userinput>, <userinput>mt-invert</userinput>, <userinput>mt-yeast</userinput>, <userinput>mt-protozoan</userinput>.</para>
 <para>If the genetic code is not specified, then the standard code is used:
-<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel yn94 --alphabet Codons
-<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel yn94 --alphabet Codons[RNA]</screen>
+<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel gy94 --alphabet Codons
+<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel gy94 --alphabet Codons[RNA]</screen>
 	These examples specify the vertebrate mitochondrial code:
-	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel yn94 --alphabet Codons[DNA,mt-vert]
-<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel yn94 --alphabet Codons[,mt-vert]</screen>	
+	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel gy94 --alphabet Codons[DNA,mt-vert]
+<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel gy94 --alphabet Codons[,mt-vert]</screen>	
 </para>
     </section>
 

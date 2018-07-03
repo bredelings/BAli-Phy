@@ -145,11 +145,11 @@ You can allow 5 different rates that are all independently estimated:
 <section><info><title>Codon models</title></info>
 <para>
 We can also conduct codon-based analyses using the Nielsen and Yang (1998) model of diversifying positive selection (dN/dS):
-% bali-phy Globins/bglobin.fasta --test -S yn94+f1x4
-The yn94 model takes a nucleotide exchange model as a parameter. This parameter is optional, and the default is hky85, which you could specify as yn94[,hky85_sym]. You can change this to be more flexible: 
-% bali-phy Globins/bglobin.fasta --test -S yn94[,gtr_sym]+f1x4
+% bali-phy Globins/bglobin.fasta --test -S gy94+f1x4
+The gy94 model takes a nucleotide exchange model as a parameter. This parameter is optional, and the default is hky85, which you could specify as gy94[,hky85_sym]. You can change this to be more flexible: 
+% bali-phy Globins/bglobin.fasta --test -S gy94[,gtr_sym]+f1x4
 You can make the codon frequencies to be generated from a single set of nucleotide frequencies:
-% bali-phy Globins/bglobin.fasta --test -S yn94[,gtr_sym]+mg94
+% bali-phy Globins/bglobin.fasta --test -S gy94[,gtr_sym]+mg94
 The M7 model allows different sites to have different dN/dS values, where the probability of dN/dS values follows a beta distribution:
 % bali-phy Globins/bglobin.fasta --test -S m7
 The M7 model has parameters as well. Here are the defaults:

@@ -83,7 +83,7 @@ align = coding.fasta
 smodel = 1,2,3:gtr+Rates.free[n=4]
 imodel = 1,2,3:rs07
 
-smodel = 4:yn94
+smodel = 4:gy94
 #smodel = 4:fMutSel0
 #smodel = 4:m3[gtr_sym,f3x4]
 imodel = 4:none

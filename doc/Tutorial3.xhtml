@@ -7,9 +7,9 @@ Before you start this tutorial, please <a class="link" href="http://www.bali-phy
 </pre><p>Go into the <code class="filename">alignment_files</code> directory:
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>cd alignment_files</code></strong>
 </pre><p>Download the example alignment files:
-</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>wget http://www.bali-phy.org/examples.tgz</code></strong>
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>wget http:</code></strong>//www.bali-phy.org/examples.tgz
 </pre><p>Alternatively, you can use <span class="command"><strong>curl</strong></span>
-</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>curl -O http://www.bali-phy.org/examples.tgz</code></strong>
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>curl -O http:</code></strong>//www.bali-phy.org/examples.tgz
 </pre><p>Extract the compressed archive:
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>tar -zxf examples.tgz</code></strong>
 </pre><p>Take a look inside the <code class="filename">examples</code> directory:
@@ -85,11 +85,11 @@ You can also allow different sites to evolve at 5 different rates using the gamm
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy 5S-rRNA/25-muscle.fasta --test -S gtr+Rates.free[n=5]</code></strong>
 </pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm189"></a>6.3. Codon models</h3></div></div></div><p>
 We can also conduct codon-based analyses using the Nielsen and Yang (1998) model of diversifying positive selection (dN/dS):
-</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy Globins/bglobin.fasta --test -S yn94+f1x4</code></strong>
-</pre><p>The yn94 model takes a nucleotide exchange model as a parameter. This parameter is optional, and the default is hky85, which you could specify as yn94[,hky85_sym]. You can change this to be more flexible: 
-</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy Globins/bglobin.fasta --test -S yn94[,gtr_sym]+f1x4</code></strong>
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy Globins/bglobin.fasta --test -S gy94+f1x4</code></strong>
+</pre><p>The gy94 model takes a nucleotide exchange model as a parameter. This parameter is optional, and the default is hky85, which you could specify as gy94[,hky85_sym]. You can change this to be more flexible: 
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy Globins/bglobin.fasta --test -S gy94[,gtr_sym]+f1x4</code></strong>
 </pre><p>You can make the codon frequencies to be generated from a single set of nucleotide frequencies:
-</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy Globins/bglobin.fasta --test -S yn94[,gtr_sym]+mg94</code></strong>
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy Globins/bglobin.fasta --test -S gy94[,gtr_sym]+mg94</code></strong>
 </pre><p>The M7 model allows different sites to have different dN/dS values, where the probability of dN/dS values follows a beta distribution:
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy Globins/bglobin.fasta --test -S m7</code></strong>
 </pre><p>The M7 model has parameters as well. Here are the defaults:
