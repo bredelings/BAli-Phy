@@ -12,45 +12,42 @@ sampler (ProbDensity _ _ s _) = s;
 distRange (ProbDensity _ _ _ r) = r;
 
 -- This implements the Random monad by transforming it into the IO monad.
-data Random a = Random a | Exchangeable Int Range a | NoLog a | Prefix a b | Log a b | Observe a b | AddMove (Int->a) | Print c | SamplingRate Double a | GetAlphabet | SetAlphabet d a;
+data Random a = Random a | Exchangeable Int Range a | Prefix a b | Log a b | Observe a b | AddMove (Int->a) | Print c | SamplingRate Double a | GetAlphabet | SetAlphabet d a;
 
 sample (IOReturn v) = IOReturn v;
 sample (IOAndPass f g) = IOAndPass (sample f) (\x -> sample $ g x);
 sample (IOAnd f g) = IOAnd (sample f) (sample g);
 sample (ProbDensity p q (Random a) r) = a;
 sample (ProbDensity p q s r) = sample s;
-sample (NoLog a) = sample a;
 sample (Prefix _ a) = sample a;
 sample (Log _ a) = sample a;
 sample (AddMove m) = return ();
 
-sample' alpha ps l rate (IOReturn v) = IOReturn v;
-sample' alpha ps l rate (IOAndPass f g) = IOAndPass (sample' alpha ps l rate f) (\x -> sample' alpha ps l rate $ g x);
-sample' alpha ps l rate (IOAnd f g) = IOAnd (sample' alpha ps l rate f) (sample' alpha ps l rate g);
-sample' alpha ps l rate (ProbDensity p q (Random a) r) = do { let {v = unsafePerformIO' a;};
+sample' alpha ps rate (IOReturn v) = IOReturn v;
+sample' alpha ps rate (IOAndPass f g) = IOAndPass (sample' alpha ps rate f) (\x -> sample' alpha ps rate $ g x);
+sample' alpha ps rate (IOAnd f g) = IOAnd (sample' alpha ps rate f) (sample' alpha ps rate g);
+sample' alpha ps rate (ProbDensity p q (Random a) r) = do { let {v = unsafePerformIO' a;};
                                               m <- new_random_modifiable r v rate;
                                               register_probability (p m);
                                               return m };
-sample' alpha ps l rate (ProbDensity p q (Exchangeable n r' v) r) = do { xs <- sequence $ replicate n (new_random_modifiable r' v rate);
+sample' alpha ps rate (ProbDensity p q (Exchangeable n r' v) r) = do { xs <- sequence $ replicate n (new_random_modifiable r' v rate);
                                                               register_probability (p xs);
                                                               return xs };
-sample' alpha ps l rate (ProbDensity p q s r) = sample' alpha ps l rate s;
+sample' alpha ps rate (ProbDensity p q s r) = sample' alpha ps rate s;
 
-sample' alpha ps l rate (NoLog a) = sample' alpha ps False rate a;
-sample' alpha ps l rate (Prefix p a) = sample' alpha (p:ps) l rate a;
-sample' alpha ps l rate (Observe datum dist) = register_probability (density dist datum);
-sample' alpha ps l rate (AddMove m) = register_transition_kernel m;
-sample' alpha ps l rate (Print s) = putStrLn (show s);
-sample' alpha ps True rate (Log name x) = add_parameter (prefix_name ps name) x;
-sample' alpha ps False rate (Log name x) = return ();
-sample' alpha ps l rate (SamplingRate rate2 a) = sample' alpha ps l (rate*rate2) a;
-sample' alpha _ _ _ GetAlphabet = return alpha;
-sample' alpha ps l rate (SetAlphabet a2 x) = sample' a2 ps l rate x;
+sample' alpha ps rate (Prefix p a) = sample' alpha (p:ps) rate a;
+sample' alpha ps rate (Observe datum dist) = register_probability (density dist datum);
+sample' alpha ps rate (AddMove m) = register_transition_kernel m;
+sample' alpha ps rate (Print s) = putStrLn (show s);
+sample' alpha ps rate (Log name x) = add_parameter (prefix_name ps name) x;
+sample' alpha ps rate (SamplingRate rate2 a) = sample' alpha ps (rate*rate2) a;
+sample' alpha _ _ GetAlphabet = return alpha;
+sample' alpha ps rate (SetAlphabet a2 x) = sample' a2 ps rate x;
 
 set_alphabet a x = do {(a',_) <- a; SetAlphabet a' x};
                                                  
 add_prefix p m = Prefix p m;
-gen_model m = sample' Nothing [] True 1.0 m;
+gen_model m = sample' (error "No default alphabet!") [] 1.0 m;
 
 perform_exp dist = Parameters.evaluate (-1) $ unsafePerformIO' $ gen_model dist;
 

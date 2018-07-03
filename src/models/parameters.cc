@@ -791,7 +791,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
     if (T.n_branches() > 0)
     {
 	expression_ref branch_lengths = {branch_length_model.expression, tree};
-	branch_lengths = {var("Distributions.sample'"), var("Prelude.Nothing"), var("[]"), true, 0.0, branch_lengths};
+	branch_lengths = {var("Distributions.sample'"), var("Prelude.Nothing"), var("[]"), 0.0, branch_lengths};
 	branch_lengths = {var("Prelude.unsafePerformIO'"),branch_lengths};
 	branch_lengths = {var("Parameters.evaluate"),-1,branch_lengths};
 	branch_lengths = {var("Prelude.listArray'"),branch_lengths };
@@ -1449,7 +1449,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
 	expression_ref smodel = SMs[i].expression;
 	smodel = {var("Distributions.add_prefix"),prefix,smodel};
-	smodel = {var("Distributions.sample'"), a, var("[]"), true, 0.0, smodel};
+	smodel = {var("Distributions.sample'"), a, var("[]"), 0.0, smodel};
 	smodel = {var("Prelude.unsafePerformIO'"),smodel};
 	smodel = {var("Parameters.evaluate"),-1,smodel};
 
