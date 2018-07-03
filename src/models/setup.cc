@@ -390,9 +390,6 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
 
     auto name = model_rep.get_value<string>();
 
-    auto Prefix = lambda_expression( constructor("Distributions.Prefix",2) );
-    auto Log = lambda_expression( constructor("Distributions.Log",2) );
-
     // 4. Handle let expressions
     if (name == "let")
     {
@@ -412,23 +409,11 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
 	{
 	    expression_ref arg = get_model_as(R, var_exp, scope);
 
-	    arg = {Prefix, var_name, arg};
-
-	    // E = Log "var_name" var >> E
-	    if (var_is_random)
-	    {
-		expression_ref log_action = {Log, var_name, var("arg_"+var_name)};
-		E = {var("Prelude.>>"), log_action, E};
-	    }
-
 	    // E = 'arg <<= (\pair_var_name -> let {arg_name=fst pair_var_name} in E)
 	    E = lambda_quantify(var("pair_arg_"+var_name), let_expression({{var("arg_"+var_name),{var("Prelude.fst"),var("pair_arg_"+var_name)}}},E));
 
 	    E = {var("Prelude.>>="), arg, E};
 	}
-
-	// 3. Prefix the whole thing
-	E = {Prefix, "let", E};
 
 	return E;
     }
@@ -486,8 +471,6 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
 	expression_ref arg = get_model_as(R, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
 
 	auto log_name = name + ":" + arg_name;
-	// Prefix "arg_name" (arg_+arg_name)
-	arg = {Prefix, log_name, arg};
 
 	// Wrap the argument in its appropriate Alphabet type
 	if (auto alphabet_expression = argi.get_child_optional("alphabet"))
@@ -497,13 +480,6 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
 //	    alphabet_scope.insert(alphabet_type);
 	    auto A = get_model_as(R, *alphabet_expression, alphabet_scope);
 	    arg = {var("Distributions.set_alphabet"),A,arg};
-	}
-
-	// E = Log "arg_name" arg_name >> E
-	if (should_log(R, model_rep, arg_name, scope))
-	{
-	    expression_ref log_action = {Log, log_name, var("arg_"+arg_name)};
-	    E = {var("Prelude.>>"), log_action, E};
 	}
 
 	// E = 'arg <<= (\arg_name_pair -> let {arg_name=fst arg_name_pair} in E)
