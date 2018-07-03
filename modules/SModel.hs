@@ -12,7 +12,6 @@ import SModel.Likelihood;
 
 builtin f3x4_frequencies_builtin 4 "f3x4_frequencies" "SModel";
 builtin muse_gaut_matrix 4 "muse_gaut_matrix" "SModel";
-builtin builtin_plus_gwf 3 "plus_gwF" "SModel";
 builtin builtin_average_frequency 1 "average_frequency" "SModel";
 builtin builtin_gtr_sym 2 "gtr_sym" "SModel";
 builtin m0 3 "m0" "SModel";
@@ -241,8 +240,6 @@ mg94w9' pi1' pi2' pi3' a = mg94w9 pi1 pi2 pi3 a where {nuc_letters = alphabet_le
                                                        pi2 = get_ordered_elements nuc_letters pi2' "frequencies";
                                                        pi3 = get_ordered_elements nuc_letters pi3' "frequencies"};
 
-simple_smap a = iotaUnsigned (alphabetSize a);
-
 fMutSel codon_a codon_w omega (ReversibleMarkov _ _ nuc_q nuc_pi _ _ _) =
    let {nuc_a = getNucleotides codon_a;
         smap = simple_smap codon_a;
@@ -269,16 +266,6 @@ fMutSel0' codon_a amino_ws' omega nuc_model = fMutSel0 codon_a amino_ws omega nu
 
 -- Issue: bad mixing on fMutSel model
 -- Issue: how to make M2/M8/branchsite/etc versions of fMutSel model?
-
--- pi is a vector double here
-plus_f_matrix a pi = plus_gwf_matrix a pi 1.0;
-
--- pi is a vector double here
-plus_gwf_matrix a pi f = builtin_plus_gwf a f pi;
-
--- pi is [Double] here
-plus_gwf a pi f = ReversibleFrequency a (simple_smap a) pi' (plus_gwf_matrix a pi' f) where {pi' = listToVectorDouble pi};
-plus_f a pi = plus_gwf a pi 1.0;
 
 f3x4_frequencies a pi1 pi2 pi3 = let {pi1' = listToVectorDouble pi1;
                                       pi2' = listToVectorDouble pi2;
