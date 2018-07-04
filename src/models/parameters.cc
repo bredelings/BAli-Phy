@@ -37,7 +37,6 @@
 #include "util.H"
 #include "mcmc/proposals.H"
 #include "probability/probability.H"
-#include "computation/model_expression.H"
 #include "computation/expression/expression.H"
 #include "computation/expression/lambda.H"
 #include "computation/expression/tuple.H"
@@ -1422,7 +1421,10 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	    scale_model = and_then(scale_model, result, {Return,{fst,result}});
 	}
 	string prefix = "Scale["+convertToString(i+1)+"]";
-	int scale_index = add_compute_expression( perform_exp(scale_model, prefix) );
+	scale_model = {var("Distributions.sample'"), var("Prelude.Nothing"), var("[]"), 1.0, scale_model};
+	scale_model = {var("Prelude.unsafePerformIO'"),scale_model};
+	scale_model = {var("Parameters.evaluate"),-1,scale_model};
+	int scale_index = add_compute_expression( scale_model );
 	scales.push_back( get_expression(scale_index) );
     }
     int scales_list_index = add_compute_expression( get_list(scales) );
@@ -1502,8 +1504,11 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	    auto Return = var("Prelude.return");
 	    imodel = and_then(imodel, result, {Return,{fst,result}});
 	}
-	imodel = {perform_exp(imodel, prefix), my_tree()};
-	imodels_.push_back(imodel);
+
+	imodel = {var("Distributions.sample'"), var("Prelude.Nothing"), var("[]"), 1.0, imodel};
+	imodel = {var("Prelude.unsafePerformIO'"),imodel};
+	imodel = {var("Parameters.evaluate"),-1,imodel};
+	imodels_.push_back({imodel,my_tree()});
     }
 
     add_modifiable_parameter_with_value("*IModels.training", false);
