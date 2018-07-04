@@ -16,14 +16,12 @@ data Random a = Random a | Exchangeable Int Range a | Observe a b | AddMove (Int
 
 sample (IOReturn v) = IOReturn v;
 sample (IOAndPass f g) = IOAndPass (sample f) (\x -> sample $ g x);
-sample (IOAnd f g) = IOAnd (sample f) (sample g);
 sample (ProbDensity p q (Random a) r) = a;
 sample (ProbDensity p q s r) = sample s;
 sample (AddMove m) = return ();
 
 sample' alpha rate (IOReturn v) = IOReturn v;
 sample' alpha rate (IOAndPass f g) = IOAndPass (sample' alpha rate f) (\x -> sample' alpha rate $ g x);
-sample' alpha rate (IOAnd f g) = IOAnd (sample' alpha rate f) (sample' alpha rate g);
 sample' alpha rate (ProbDensity p q (Random a) r) = do { let {v = unsafePerformIO' a;};
                                               m <- new_random_modifiable r v rate;
                                               register_probability (p m);

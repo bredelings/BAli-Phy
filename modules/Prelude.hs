@@ -39,8 +39,7 @@ data IO a = IOAction1 (b->a) a |
             IOAction3 (b->c->d->a) b c d | 
             IOAction4 (b->c->d->e->a) b c d e |
             IOReturn a |
-            IOAndPass (IO b) (b -> IO a) |
-            IOAnd (IO b) (IO a);
+            IOAndPass (IO b) (b -> IO a);
 
 True  && x = x;
 False && x = False;
@@ -230,6 +229,8 @@ concat xs = foldr (++) [] xs;
 
 concatMap f = concat . map f;
 
+const x y = x;
+
 -- FIXME: how to optimize the list comprehension version appropriately?
 -- filter p xs = [ x | x <- xs, p x];
 filter p [] = [];
@@ -315,12 +316,11 @@ unsafePerformIO' (IOAction3 x y z w) = x y z w;
 unsafePerformIO' (IOAction4 x y z w u) = x y z w u;
 unsafePerformIO' (IOReturn x) = x;
 unsafePerformIO' (IOAndPass f g) = let {x = unsafePerformIO' f} in x `join` (unsafePerformIO' (g x));
-unsafePerformIO' (IOAnd f g) = (unsafePerformIO' f) `join` (unsafePerformIO' g);
 
 unsafePerformIO x = reapply unsafePerformIO' x;
 
-f >> g = IOAnd f g;
 f >>= g = IOAndPass f g;
+f >> g = f >>= (const g);
 return f = IOReturn f;
 fail e = error e;
 
