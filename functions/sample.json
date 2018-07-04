@@ -1,8 +1,9 @@
 {
     "name": "sample",
     "result_type": "a",
+    "perform": true,
     "no_log": true,
-    "call": "Distributions.perform_exp[x]",
+    "call": "Prelude.id[x]",
     "args": [
         {
             "arg_name": "x",
