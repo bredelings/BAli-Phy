@@ -8,6 +8,8 @@ main = do
   y <- normal 0.0 1.0;
   z <- exponential 0.1;
   let {x = if (i==1) then y else z};
-  Log "x" x;
+-- How are we going to log things from stochastic procedures?
+-- One way is to return a pair of (value, loggers).
+  return $ (Nothing,[("x",(Just x,[]))]);
 }
 }

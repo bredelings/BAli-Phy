@@ -959,5 +959,6 @@ void read_add_model(Model& M, const std::string& filename)
 void add_model(Model& M, const std::string& name)
 {
     M += name;
-    M.perform_expression({var("Distributions.gen_model"),var(name+".main")});
+    string prefix = name;
+    M.perform_expression({var("Distributions.do_log"),prefix,{var("Distributions.gen_model"),var(name+".main")}});
 }
