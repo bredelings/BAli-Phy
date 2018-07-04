@@ -79,11 +79,11 @@ const expression_ref& context::evaluate(int index) const
 }
 
 /// Return the value of a particular index, computing it if necessary
-const expression_ref& context::perform(int index) const
+const expression_ref& context::perform(int index, bool ec) const
 {
     int H = heads()[index];
 
-    return perform_expression(reg_var(H));
+    return perform_expression(reg_var(H), ec);
 }
 
 const closure& context::lazy_evaluate_expression_(closure&& C, bool ec) const

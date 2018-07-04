@@ -87,7 +87,7 @@ public:
     const expression_ref& evaluate(int index) const;
 
     /// Return the value of a particular index, computing it if necessary
-    const expression_ref& perform(int index) const;
+    const expression_ref& perform(int index, bool ec = false) const;
 
     /// Return the value of a particular index, computing it if necessary
     const closure& lazy_evaluate_expression_(closure&&,bool=true) const;
