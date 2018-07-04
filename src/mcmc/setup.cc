@@ -51,10 +51,12 @@ using std::map;
 using std::shared_ptr;
 
 /// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
-void add_modifiable_MH_move(const string& name, const proposal_fn& proposal, int m_index, const vector<double>& parameters,
+void add_modifiable_MH_move(const Model& P, const string& name, const proposal_fn& proposal, int r, const vector<double>& parameters,
 			    MCMC::MoveAll& M, double weight=1)
 {
-    M.add(weight, MCMC::MH_Move( Proposal2M(proposal, m_index, parameters), name) );
+    double rate = P.get_rate_for_reg(r);
+    std::cerr<<"rate = "<<rate<<"\n";
+    M.add(rate * weight, MCMC::MH_Move( Proposal2M(proposal, r, parameters), name) );
 }
 
 /// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
@@ -108,68 +110,54 @@ double default_sampling_rate(const Model& /*M*/, const string& /*parameter_name*
     return 1.0;
 }
 
-/// \brief Add a 1-D slice-sampling sub-move for parameter name to M
-///
-/// \param P             The model that contains the parameters.
-/// \param name          The name of the parameter to create a move for.
-/// \param M             The group of moves to which to add the newly-created sub-move
-/// \param weight        How often to run this move.
-///
-bool add_slice_move_with_rate(const Model& P, int r, MCMC::MoveAll& M, double rate)
+bool add_slice_move(const Model& P, int r, MCMC::MoveAll& M, double weight = 1.0)
 {
+    double rate = P.get_rate_for_reg(r);
+    std::cerr<<"rate = "<<rate<<"\n";
     auto range = P.get_range_for_reg(r);
     if (not range.is_a<Bounds<double>>()) return false;
 
     auto& bounds = range.as_<Bounds<double>>();
     string name = "m_real_"+convertToString<int>(r);
-    M.add( rate , MCMC::Modifiable_Slice_Move(name, r, bounds, 1.0) );
+    M.add( rate * weight, MCMC::Modifiable_Slice_Move(name, r, bounds, 1.0) );
     return true;
 }
 
-
-bool add_slice_move(const Model& P, int r, MCMC::MoveAll& M, double weight = 1.0)
-{
-    double rate = P.get_rate_for_reg(r);
-    return add_slice_move_with_rate(P, r, M, rate * weight);
-}
-
-void add_boolean_MH_moves(const Model& P, MCMC::MoveAll& M, double weight)
+void add_boolean_MH_moves(const Model& P, MCMC::MoveAll& M, double weight = 1.0)
 {
     for(int r: P.random_modifiables())
     {
 	auto range = P.get_range_for_reg(r);
-	double rate = P.get_rate_for_reg(r);
 
 	if (not range.head().is_a<constructor>()) continue;
 	if (range.head().as_<constructor>().f_name != "TrueFalseRange") continue;
 
 	string name = "m_bool_flip_"+convertToString<int>(r);
-	add_modifiable_MH_move(name, bit_flip, r, vector<double>{}, M, weight*rate);
+	add_modifiable_MH_move(P,name, bit_flip, r, vector<double>{}, M, weight);
     }
 }
 
 /// Find parameters with distribution name Dist
-void add_real_slice_moves(const Model& P, MCMC::MoveAll& M, double weight)
+void add_real_slice_moves(const Model& P, MCMC::MoveAll& M, double weight = 1.0)
 {
     for(int r: P.random_modifiables())
 	add_slice_move(P, r, M, weight);
 }
 
 /// Find parameters with distribution name Dist
-void add_real_MH_moves(const Model& P, MCMC::MoveAll& M, double weight)
+void add_real_MH_moves(const Model& P, MCMC::MoveAll& M, double weight = 1.0)
 {
     for(int r: P.random_modifiables())
     {
 	auto range = P.get_range_for_reg(r);
-	double rate = P.get_rate_for_reg(r);
 	if (not range.is_a<Bounds<double>>()) continue;
 
 	auto& bounds = range.as_<Bounds<double>>();
 	string name = "m_real_cauchy_"+convertToString<int>(r);
 	if (bounds.has_lower_bound and bounds.lower_bound >= 0.0)
-	    add_modifiable_MH_move(name, Reflect(bounds, log_scaled(Between(-20,20,shift_cauchy))), r, {1.0}, M, weight*rate);
+	    add_modifiable_MH_move(P,name, Reflect(bounds, log_scaled(Between(-20,20,shift_cauchy))), r, {1.0}, M, weight);
 	else
-	    add_modifiable_MH_move(name, Reflect(bounds, shift_cauchy), r, {1.0}, M, weight*rate);
+	    add_modifiable_MH_move(P,name, Reflect(bounds, shift_cauchy), r, {1.0}, M, weight);
     }
 }
 
@@ -179,7 +167,6 @@ void add_integer_uniform_MH_moves(const Model& P, MCMC::MoveAll& M, double weigh
     for(int r: P.random_modifiables())
     {
 	auto range = P.get_range_for_reg(r);
-	double rate = P.get_rate_for_reg(r);
 	if (not range.is_a<Bounds<int>>()) continue;
 
 	auto& bounds = range.as_<Bounds<int>>();
@@ -187,7 +174,7 @@ void add_integer_uniform_MH_moves(const Model& P, MCMC::MoveAll& M, double weigh
 	string name = "m_int_uniform_"+convertToString<int>(r);
 	double l = (int)bounds.lower_bound;
 	double u = (int)bounds.upper_bound;
-	add_modifiable_MH_move(name, discrete_uniform, r, {double(l),double(u)}, M, weight*rate);
+	add_modifiable_MH_move(P,name, discrete_uniform, r, {double(l),double(u)}, M, weight);
     }
 }
 
@@ -197,6 +184,7 @@ void add_integer_slice_moves(const Model& P, MCMC::MoveAll& M, double weight)
     {
 	auto range = P.get_range_for_reg(r);
 	double rate = P.get_rate_for_reg(r);
+	std::cerr<<"rate = "<<rate<<"\n";
 	if (not range.is_a<Bounds<int>>()) continue;
 
 	// FIXME: righteousness.
@@ -206,7 +194,7 @@ void add_integer_slice_moves(const Model& P, MCMC::MoveAll& M, double weight)
 	if (bounds.has_upper_bound and bounds.has_lower_bound) continue;
 
 	string name = "m_int_"+convertToString<int>(r);
-	M.add( 1.0, MCMC::Integer_Modifiable_Slice_Move(name, r, bounds, rate * weight) );
+	M.add( rate * weight, MCMC::Integer_Modifiable_Slice_Move(name, r, bounds) );
     }
 }
 
@@ -275,7 +263,7 @@ MCMC::MoveAll get_parameter_MH_moves(Model& M)
 	    if (auto r = scale_is_modifiable_reg(M, i))
 	    {
 		string name = "scale_scale_"+convertToString<int>(i+1);
-		add_modifiable_MH_move(name, log_scaled(Between(-20,20,shift_cauchy)),    *r, {1.0}, MH_moves);
+		add_modifiable_MH_move(M, name, log_scaled(Between(-20,20,shift_cauchy)),    *r, {1.0}, MH_moves);
 	    }
 
 
@@ -322,7 +310,7 @@ MCMC::MoveAll get_scale_slice_moves(Parameters& P)
     MCMC::MoveAll slice_moves("parameters:scale:MH");
     for(int i=0;i<P.n_branch_scales();i++)
 	if (auto r = scale_is_modifiable_reg(P,i))
-	    add_slice_move_with_rate(P, *r, slice_moves, 1.0);
+	    add_slice_move(P, *r, slice_moves);
 
     return slice_moves;
 }
@@ -340,7 +328,7 @@ MCMC::MoveAll get_parameter_slice_moves(Model& M)
 	// scale parameters - do we need this?
 	for(int i=0;i<P->n_branch_scales();i++)
 	    if (auto r = scale_is_modifiable_reg(M,i))
-		add_slice_move_with_rate(*P, *r, slice_moves, 1.0);
+		add_slice_move(*P, *r, slice_moves);
 
 	if (all_scales_modifiable(M))
 	    slice_moves.add(2,MCMC::Scale_Means_Only_Slice_Move("scale_Scales_only_slice",0.6));
