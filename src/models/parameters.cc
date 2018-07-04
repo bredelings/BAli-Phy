@@ -1369,6 +1369,16 @@ vector<int> Parameters::partitions_for_imodel(int i) const
     return partitions;
 }
 
+expression_ref and_then(const expression_ref& A1, const var& x, const expression_ref& A2)
+{
+    return {var("Prelude.>>="), A1, lambda_quantify(x,A2)};
+}
+
+expression_ref and_then(const expression_ref& A1, const expression_ref& A2)
+{
+    return {var("Prelude.>>"), A1, A2};
+}
+
 Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 		       const vector<alignment>& A, const SequenceTree& tt,
 		       const vector<model_t>& SMs,
@@ -1397,9 +1407,19 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     // Add parameter for each scale
     vector<expression_ref> scales;
     for(int i=0; i<n_branch_scales(); i++)
-	scales.push_back(scaleMs[i].expression);
-    expression_ref scales_list_action = {var("Prelude.sequence"), get_list(scales)};
-    int scales_list_index = add_compute_expression( perform_exp(scales_list_action) );
+    {
+	auto scale_model = scaleMs[i].expression;
+	{
+	    auto fst = var("Prelude.fst");
+	    auto result = var("result");
+	    auto Return = var("Prelude.return");
+	    scale_model = and_then(scale_model, result, {Return,{fst,result}});
+	}
+	string prefix = "Scale["+convertToString(i+1)+"]";
+	int scale_index = add_compute_expression( perform_exp(scale_model, prefix) );
+	scales.push_back( get_expression(scale_index) );
+    }
+    int scales_list_index = add_compute_expression( get_list(scales) );
     expression_ref scales_list = get_expression(scales_list_index);
     add_parameter("Scale", scales_list);
 

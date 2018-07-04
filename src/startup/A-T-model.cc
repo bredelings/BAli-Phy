@@ -624,7 +624,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 	auto scale_model = scale_names_mapping.unique(i);
 	if (scale_model.empty())
 	    scale_model = "~gamma[0.5,2]";
-	full_scale_models[i] = get_model(R, "Double", scale_model);
+	full_scale_models[i] = get_model(R, "Double", scale_model, false);
     }
 
     //-------------- Branch length model --------------------//
