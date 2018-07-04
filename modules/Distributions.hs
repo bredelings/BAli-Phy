@@ -58,6 +58,14 @@ name @@ a = Prefix name a;
 add_logger old name (value,[]) False = old;
 add_logger old name (value,loggers) do_log = (name,(if do_log then Just value else Nothing, loggers)):old;
 
+create_loggers (name, (Just x,  loggers)) = do {
+  add_parameter name x;
+  create_sub_loggers name loggers};
+create_loggers (name, (Nothing, loggers)) = create_sub_loggers name loggers;
+create_loggers_with_prefix prefix (name,y) = create_loggers (prefix++"/"++name, y);
+create_sub_loggers prefix loggers = mapM_ (create_loggers_with_prefix prefix) loggers;
+
+
 -- Define some helper functions
 distDefaultValue d = unsafePerformIO' $ sample d;
 
