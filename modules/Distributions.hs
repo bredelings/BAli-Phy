@@ -21,11 +21,13 @@ sample (ProbDensity p q s r) = sample s;
 sample (AddMove m) = return ();
 
 sample' alpha rate (IOReturn v) = IOReturn v;
-sample' alpha rate (IOAndPass f g) = IOAndPass (sample' alpha rate f) (\x -> sample' alpha rate $ g x);
-sample' alpha rate (ProbDensity p q (Random a) r) = do { let {v = unsafePerformIO a;};
-                                              m <- new_random_modifiable r v rate;
-                                              register_probability (p m);
-                                              return m };
+sample' alpha rate (IOAndPass f g) = IOAndPass (unsafeInterleaveIO (sample' alpha rate f)) (\x -> sample' alpha rate $ g x);
+sample' alpha rate (ProbDensity p q (Random a) r) = do {
+                                                      v <- unsafeInterleaveIO a;
+                                                      m <- new_random_modifiable r v rate;
+                                                      register_probability (p m);
+                                                      return m
+                                                    };
 sample' alpha rate (ProbDensity p q (Exchangeable n r' v) r) = do { xs <- sequence $ replicate n (new_random_modifiable r' v rate);
                                                               register_probability (p xs);
                                                               return xs };
