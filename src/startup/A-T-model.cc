@@ -132,7 +132,7 @@ get_imodels(const Rules& R, const shared_items<string>& imodel_names_mapping, co
 {
     vector<model_t> imodels;
     for(int i=0;i<imodel_names_mapping.n_unique_items();i++) 
-	imodels.push_back( get_model(R, "IndelModel",imodel_names_mapping.unique(i), false) );
+	imodels.push_back( get_model(R, "IndelModel",imodel_names_mapping.unique(i)) );
     return imodels;
 }
 
@@ -427,7 +427,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     // 1. Get smodels for all SPECIFIED smodel names.
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
 	if (not smodel_names_mapping.unique(i).empty())
-	    full_smodels[i] = get_model(R, "MultiMixtureModel[a]",smodel_names_mapping.unique(i), false);
+	    full_smodels[i] = get_model(R, "MultiMixtureModel[a]",smodel_names_mapping.unique(i));
 
     //------------- Get alphabet names -------------------
     shared_items<string> alphabet_names_mapping = get_mapping(args, "alphabet", filenames.size());
@@ -590,7 +590,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 	    if (smodel_names_mapping.unique(i) == "")
 		throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a.name<<"'";
 
-	    full_smodels[i] = get_model(R, "MultiMixtureModel[a]",smodel_names_mapping.unique(i), false);
+	    full_smodels[i] = get_model(R, "MultiMixtureModel[a]",smodel_names_mapping.unique(i));
 	}
     
     // 8. Check that alignment alphabet fits requirements from smodel.
@@ -624,7 +624,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 	auto scale_model = scale_names_mapping.unique(i);
 	if (scale_model.empty())
 	    scale_model = "~gamma[0.5,2]";
-	full_scale_models[i] = get_model(R, "Double", scale_model, false);
+	full_scale_models[i] = get_model(R, "Double", scale_model);
     }
 
     //-------------- Branch length model --------------------//
@@ -636,7 +636,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 	else
 	    M = "~iid[num_branches[T],gamma[0.5,div[2,num_branches[T]]]]";
 
-	branch_length_model = get_model(R, "List[Double]", M, false, {{"T","Tree"}});
+	branch_length_model = get_model(R, "List[Double]", M, {{"T","Tree"}});
 	branch_length_model.expression = lambda_quantify(var("arg_T"), branch_length_model.expression);
     }
 

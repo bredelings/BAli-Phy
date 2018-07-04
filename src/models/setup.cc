@@ -498,17 +498,10 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
 /// \param a The alphabet.
 /// \param frequencies The initial letter frequencies in the model.
 ///
-model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& constraints, const ptree& model_rep, bool value_only, const map<string,bool>& scope)
+model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& constraints, const ptree& model_rep, const map<string,bool>& scope)
 {
     // --------- Convert model to MultiMixtureModel ------------//
     expression_ref full_model = get_model_as(R, extract_value(model_rep), scope);
-
-    if (value_only)
-    {
-	auto result = var("result");
-	auto Return = var("Prelude.return");
-	full_model = {var("Prelude.>>="), full_model, lambda_quantify(result,{Return,{var("Prelude.fst"),result}})};
-    }
 
     if (log_verbose >= 2)
 	std::cout<<"full_model = "<<full_model<<std::endl;
@@ -516,7 +509,7 @@ model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& con
     return {model_rep, type, constraints, full_model};
 }
 
-model_t get_model(const Rules& R, const string& type, const string& model, bool value_only, const vector<pair<string,string>>& scope)
+model_t get_model(const Rules& R, const string& type, const string& model, const vector<pair<string,string>>& scope)
 {
     auto required_type = parse_type(type);
     auto model_rep = parse(R, model);
@@ -545,7 +538,7 @@ model_t get_model(const Rules& R, const string& type, const string& model, bool 
     map<string,bool> names_in_scope;
     for(auto& x: scope)
 	names_in_scope.insert({x.first,false});
-    return get_model(R, required_type, equations.get_constraints(), p.first, value_only, names_in_scope);
+    return get_model(R, required_type, equations.get_constraints(), p.first, names_in_scope);
 }
 
 // Some things, like log, exp, add, sub, etc. don't really have named arguments.

@@ -454,7 +454,7 @@ int main(int argc,char* argv[])
 	    (*M) += { "SModel","Distributions","Range","PopGen","Alignment","IModel" };
 	    const string mstring = args["print"].as<string>();
 	    Rules R(get_package_paths(argv[0], args));
-	    model_t print = get_model(R,"a",mstring, false);
+	    model_t print = get_model(R,"a",mstring);
 
 	    expression_ref print_exp = print.expression;
 	    print_exp = {var("Distributions.sample'"), var("Prelude.Nothing"), var("[]"), 0.0, print_exp};
