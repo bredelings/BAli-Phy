@@ -38,6 +38,7 @@ data IO a = IOAction1 (b->a) a |
             IOAction2 (b->c->a) b c | 
             IOAction3 (b->c->d->a) b c d | 
             IOAction4 (b->c->d->e->a) b c d e |
+            LazyIO a |
             IOReturn a |
             IOAndPass (IO b) (b -> IO a);
 
@@ -314,9 +315,12 @@ unsafePerformIO (IOAction1 x y ) = x y;
 unsafePerformIO (IOAction2 x y z) = x y z;
 unsafePerformIO (IOAction3 x y z w) = x y z w;
 unsafePerformIO (IOAction4 x y z w u) = x y z w u;
+unsafePerformIO (LazyIO f) = unsafePerformIO f;
+unsafePerformIO (IOAndPass (LazyIO f) g) = let {x = unsafePerformIO f} in (unsafePerformIO (g x));
+unsafePerformIO (IOAndPass f g) = let {x = unsafePerformIO f} in x `seq` (unsafePerformIO (g x));
 unsafePerformIO (IOReturn x) = x;
-unsafePerformIO (IOAndPass f g) = let {x = unsafePerformIO f} in x `join` (unsafePerformIO (g x));
 
+unsafeInterleaveIO x = LazyIO x;
 runST x = reapply unsafePerformIO x;
 
 f >>= g = IOAndPass f g;
