@@ -44,11 +44,6 @@ set_alphabet a x = do {(a',_) <- a; SetAlphabet a' x};
                                                  
 gen_model m = sample' (error "No default alphabet!") 1.0 m;
 
--- This is called by sample[]
-perform_exp dist = Parameters.evaluate (-1) $ unsafePerformIO $ gen_model dist;
-
-prefix_name ps name = foldl (\a b -> b++"/"++a) name ps;
-
 add_logger old name (value,[]) False = old;
 add_logger old name (value,loggers) do_log = (name,(if do_log then Just value else Nothing, loggers)):old;
 
