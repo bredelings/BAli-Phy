@@ -156,16 +156,6 @@ using boost::optional;
  *       I compute the probability at the end of Parameters::Parameters( ).
  */
 
-expression_ref and_then(const expression_ref& A1, const var& x, const expression_ref& A2)
-{
-    return {var("Prelude.>>="), A1, lambda_quantify(x,A2)};
-}
-
-expression_ref and_then(const expression_ref& A1, const expression_ref& A2)
-{
-    return {var("Prelude.>>"), A1, A2};
-}
-
 /// Is the alignment allowed to vary?
 bool data_partition::variable_alignment() const
 {
@@ -799,14 +789,19 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
     expression_ref branch_durations;
     if (T.n_branches() > 0)
     {
+	string prefix = "T:lengths";
 	expression_ref branch_lengths = {branch_length_model.expression, tree};
+	branch_lengths = {var("Distributions.sample'"), var("Prelude.Nothing"), var("[]"), 0.0, branch_lengths};
 	{
 	    auto fst = var("Prelude.fst");
+	    auto snd = var("Prelude.snd");
 	    auto result = var("result");
 	    auto Return = var("Prelude.return");
-	    branch_lengths = and_then(branch_lengths, result, {Return,{fst,result}});
+	    expression_ref action = {Return,{fst,result}};
+	    action = {var("Prelude.>>"), {var("Distributions.create_sub_loggers"), prefix, {snd,result}}, action};
+	    branch_lengths = {var("Prelude.>>="), branch_lengths, lambda_quantify(result, action)};
 	}
-	branch_lengths = {var("Distributions.sample'"), var("Prelude.Nothing"), var("[]"), 0.0, branch_lengths};
+
 	branch_lengths = {var("Prelude.unsafePerformIO'"),branch_lengths};
 	branch_lengths = {var("Parameters.evaluate"),-1,branch_lengths};
 	branch_lengths = {var("Prelude.listArray'"),branch_lengths };
@@ -1413,15 +1408,20 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     vector<expression_ref> scales;
     for(int i=0; i<n_branch_scales(); i++)
     {
+	string prefix = "Scale["+convertToString(i+1)+"]";
+
 	auto scale_model = scaleMs[i].expression;
+	scale_model = {var("Distributions.sample'"), var("Prelude.Nothing"), var("[]"), 1.0, scale_model};
 	{
 	    auto fst = var("Prelude.fst");
+	    auto snd = var("Prelude.snd");
 	    auto result = var("result");
 	    auto Return = var("Prelude.return");
-	    scale_model = and_then(scale_model, result, {Return,{fst,result}});
+	    expression_ref action = {Return,{fst,result}};
+	    action = {var("Prelude.>>"), {var("Distributions.create_sub_loggers"), prefix, {snd,result}}, action};
+	    scale_model = {var("Prelude.>>="), scale_model, lambda_quantify(result,action)};
 	}
-	string prefix = "Scale["+convertToString(i+1)+"]";
-	scale_model = {var("Distributions.sample'"), var("Prelude.Nothing"), var("[]"), 1.0, scale_model};
+
 	scale_model = {var("Prelude.unsafePerformIO'"),scale_model};
 	scale_model = {var("Parameters.evaluate"),-1,scale_model};
 	int scale_index = add_compute_expression( scale_model );
