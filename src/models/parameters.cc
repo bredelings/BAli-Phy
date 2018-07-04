@@ -1448,8 +1448,16 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	const alphabet& a = A[*first_index].get_alphabet();
 
 	expression_ref smodel = SMs[i].expression;
-	smodel = {var("Distributions.add_prefix"),prefix,smodel};
 	smodel = {var("Distributions.sample'"), a, var("[]"), 0.0, smodel};
+	{
+	    auto fst = var("Prelude.fst");
+	    auto snd = var("Prelude.snd");
+	    auto result = var("result");
+	    auto Return = var("Prelude.return");
+	    expression_ref action = {Return,{fst,result}};
+	    action = {var("Prelude.>>"), {var("Distributions.create_sub_loggers"), prefix, {snd,result}}, action};
+	    smodel = {var("Prelude.>>="), smodel, lambda_quantify(result,action)};
+	}
 	smodel = {var("Prelude.unsafePerformIO'"),smodel};
 	smodel = {var("Parameters.evaluate"),-1,smodel};
 
