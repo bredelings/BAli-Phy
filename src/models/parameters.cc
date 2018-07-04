@@ -792,16 +792,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
 	string prefix = "T:lengths";
 	expression_ref branch_lengths = {branch_length_model.expression, tree};
 	branch_lengths = {var("Distributions.sample'"), var("Prelude.Nothing"), var("[]"), 0.0, branch_lengths};
-	{
-	    auto fst = var("Prelude.fst");
-	    auto snd = var("Prelude.snd");
-	    auto result = var("result");
-	    auto Return = var("Prelude.return");
-	    expression_ref action = {Return,{fst,result}};
-	    action = {var("Prelude.>>"), {var("Distributions.create_sub_loggers"), prefix, {snd,result}}, action};
-	    branch_lengths = {var("Prelude.>>="), branch_lengths, lambda_quantify(result, action)};
-	}
-
+	branch_lengths = {var("Distributions.do_log"), prefix, branch_lengths};
 	branch_lengths = {var("Prelude.unsafePerformIO'"),branch_lengths};
 	branch_lengths = {var("Parameters.evaluate"),-1,branch_lengths};
 	branch_lengths = {var("Prelude.listArray'"),branch_lengths };
@@ -1412,16 +1403,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
 	auto scale_model = scaleMs[i].expression;
 	scale_model = {var("Distributions.sample'"), var("Prelude.Nothing"), var("[]"), 1.0, scale_model};
-	{
-	    auto fst = var("Prelude.fst");
-	    auto snd = var("Prelude.snd");
-	    auto result = var("result");
-	    auto Return = var("Prelude.return");
-	    expression_ref action = {Return,{fst,result}};
-	    action = {var("Prelude.>>"), {var("Distributions.create_sub_loggers"), prefix, {snd,result}}, action};
-	    scale_model = {var("Prelude.>>="), scale_model, lambda_quantify(result,action)};
-	}
-
+	scale_model = {var("Distributions.do_log"), prefix, scale_model};
 	scale_model = {var("Prelude.unsafePerformIO'"),scale_model};
 	scale_model = {var("Parameters.evaluate"),-1,scale_model};
 	int scale_index = add_compute_expression( scale_model );
@@ -1477,15 +1459,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
 	expression_ref smodel = SMs[i].expression;
 	smodel = {var("Distributions.sample'"), a, var("[]"), 0.0, smodel};
-	{
-	    auto fst = var("Prelude.fst");
-	    auto snd = var("Prelude.snd");
-	    auto result = var("result");
-	    auto Return = var("Prelude.return");
-	    expression_ref action = {Return,{fst,result}};
-	    action = {var("Prelude.>>"), {var("Distributions.create_sub_loggers"), prefix, {snd,result}}, action};
-	    smodel = {var("Prelude.>>="), smodel, lambda_quantify(result,action)};
-	}
+	smodel = {var("Distributions.do_log"), prefix, smodel};
 	smodel = {var("Prelude.unsafePerformIO'"),smodel};
 	smodel = {var("Parameters.evaluate"),-1,smodel};
 
@@ -1499,15 +1473,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	string prefix = "I" + convertToString(i+1);
 	expression_ref imodel = IMs[i].expression;
 	imodel = {var("Distributions.sample'"), var("Prelude.Nothing"), var("[]"), 1.0, imodel};
-	{
-	    auto fst = var("Prelude.fst");
-	    auto snd = var("Prelude.snd");
-	    auto result = var("result");
-	    auto Return = var("Prelude.return");
-	    expression_ref action = {Return,{fst,result}};
-	    action = {var("Prelude.>>"), {var("Distributions.create_sub_loggers"), prefix, {snd,result}}, action};
-	    imodel = {var("Prelude.>>="), imodel, lambda_quantify(result,action)};
-	}
+	imodel = {var("Distributions.do_log"), prefix, imodel};
 	imodel = {var("Prelude.unsafePerformIO'"),imodel};
 	imodel = {var("Parameters.evaluate"),-1,imodel};
 	imodels_.push_back({imodel,my_tree()});

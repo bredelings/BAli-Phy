@@ -65,6 +65,12 @@ create_logger prefix (Nothing, loggers) = create_sub_loggers prefix loggers;
 create_logger_with_prefix prefix (name,y) = create_logger (prefix++"/"++name) y;
 create_sub_loggers prefix loggers = mapM_ (create_logger_with_prefix prefix) loggers;
 
+do_log prefix model = do
+    {
+      result <- model;
+      create_sub_loggers prefix (snd result);
+      return (fst result);
+    };
 
 -- Define some helper functions
 distDefaultValue d = unsafePerformIO' $ sample d;
