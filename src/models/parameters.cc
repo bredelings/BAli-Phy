@@ -1498,14 +1498,16 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     {
 	string prefix = "I" + convertToString(i+1);
 	expression_ref imodel = IMs[i].expression;
+	imodel = {var("Distributions.sample'"), var("Prelude.Nothing"), var("[]"), 1.0, imodel};
 	{
 	    auto fst = var("Prelude.fst");
+	    auto snd = var("Prelude.snd");
 	    auto result = var("result");
 	    auto Return = var("Prelude.return");
-	    imodel = and_then(imodel, result, {Return,{fst,result}});
+	    expression_ref action = {Return,{fst,result}};
+	    action = {var("Prelude.>>"), {var("Distributions.create_sub_loggers"), prefix, {snd,result}}, action};
+	    imodel = {var("Prelude.>>="), imodel, lambda_quantify(result,action)};
 	}
-
-	imodel = {var("Distributions.sample'"), var("Prelude.Nothing"), var("[]"), 1.0, imodel};
 	imodel = {var("Prelude.unsafePerformIO'"),imodel};
 	imodel = {var("Parameters.evaluate"),-1,imodel};
 	imodels_.push_back({imodel,my_tree()});
