@@ -12,15 +12,13 @@ sampler (ProbDensity _ _ s _) = s;
 distRange (ProbDensity _ _ _ r) = r;
 
 -- This implements the Random monad by transforming it into the IO monad.
-data Random a = Random a | Exchangeable Int Range a | Prefix a b | Log a b | Observe a b | AddMove (Int->a) | Print c | SamplingRate Double a | GetAlphabet | SetAlphabet d a;
+data Random a = Random a | Exchangeable Int Range a | Observe a b | AddMove (Int->a) | Print c | SamplingRate Double a | GetAlphabet | SetAlphabet d a;
 
 sample (IOReturn v) = IOReturn v;
 sample (IOAndPass f g) = IOAndPass (sample f) (\x -> sample $ g x);
 sample (IOAnd f g) = IOAnd (sample f) (sample g);
 sample (ProbDensity p q (Random a) r) = a;
 sample (ProbDensity p q s r) = sample s;
-sample (Prefix _ a) = sample a;
-sample (Log _ a) = sample a;
 sample (AddMove m) = return ();
 
 sample' alpha rate (IOReturn v) = IOReturn v;
@@ -35,26 +33,21 @@ sample' alpha rate (ProbDensity p q (Exchangeable n r' v) r) = do { xs <- sequen
                                                               return xs };
 sample' alpha rate (ProbDensity p q s r) = sample' alpha rate s;
 
-sample' alpha rate (Prefix p a) = sample' alpha rate a;
 sample' alpha rate (Observe datum dist) = register_probability (density dist datum);
 sample' alpha rate (AddMove m) = register_transition_kernel m;
 sample' alpha rate (Print s) = putStrLn (show s);
-sample' alpha rate (Log name x) = add_parameter (prefix_name name) x;
 sample' alpha rate (SamplingRate rate2 a) = sample' alpha (rate*rate2) a;
 sample' alpha _    GetAlphabet = return alpha;
 sample' alpha rate (SetAlphabet a2 x) = sample' a2 rate x;
 
 set_alphabet a x = do {(a',_) <- a; SetAlphabet a' x};
                                                  
-add_prefix p m = Prefix p m;
 gen_model m = sample' (error "No default alphabet!") 1.0 m;
 
 -- This is called by sample[]
 perform_exp dist = Parameters.evaluate (-1) $ unsafePerformIO' $ gen_model dist;
 
 prefix_name ps name = foldl (\a b -> b++"/"++a) name ps;
-name ~~ dist = do { x <- dist ; Log name x ; return x};
-name @@ a = Prefix name a;
 
 add_logger old name (value,[]) False = old;
 add_logger old name (value,loggers) do_log = (name,(if do_log then Just value else Nothing, loggers)):old;
@@ -266,7 +259,7 @@ safe_exp x = if (x < (-20.0)) then
              else
                exp x;
 
-dpm n alpha mean_dist noise_dist= Prefix "DPM" $ do 
+dpm n alpha mean_dist noise_dist= do 
 {
   let {delta = 4};
 
@@ -274,8 +267,8 @@ dpm n alpha mean_dist noise_dist= Prefix "DPM" $ do
   sigmaOverMu <- iid (n+delta) noise_dist;
 
   category <- crp alpha n delta;
---  Log "category" category;
-  Log "n_categories" (length (nub category));
+
+--  Log "dpm:n_categories" (length (nub category));
 
   z <- iid n (normal 0.0 1.0);
 
@@ -284,15 +277,14 @@ dpm n alpha mean_dist noise_dist= Prefix "DPM" $ do
   return [ mean!!k * safe_exp (z!!i * sigmaOverMu!!k) | i <- take n [0..], let {k=category!!i}];
 };
 
-dp n alpha mean_dist = Prefix "DP" $ do 
+dp n alpha mean_dist = do 
 {
   let {delta = 4};
 
   mean <- iid (n+delta) mean_dist;
 
   category <- crp alpha n delta;
---  Log "category" category;
-  Log "n_categories" (length (nub category));
+--  Log "dp:n_categories" (length (nub category));
 
   AddMove (\c -> mapM_ (\l-> gibbs_sample_categorical (category!!l) (n+delta) c) [0..n-1]);
 

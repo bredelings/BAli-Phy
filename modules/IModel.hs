@@ -23,7 +23,7 @@ rs07_lengthp e l = doubleToLogDouble (builtin_rs07_lengthp e l);
 
 rs07 logLambda meanIndelLength tree heat training = (\d b ->rs07_branch_HMM epsilon (lambda*d!b) heat training, rs07_lengthp epsilon) 
                                               where {lambda = exp logLambda; epsilon = (meanIndelLength-1.0)/meanIndelLength};
-rs07_relaxed_rates_model tree = Prefix "RelaxedRatesRS07"
+rs07_relaxed_rates_model tree = 
 (do {
    let {n_branches = numBranches tree;
         delta = 4};
@@ -32,7 +32,7 @@ rs07_relaxed_rates_model tree = Prefix "RelaxedRatesRS07"
    sigma <- iid (n_branches + delta) (gamma 1.05 0.05);
   
    alpha <- gamma 2.0 (1.0/6.0);
-   Log "alpha" alpha;
+--   Log "alpha" alpha;
 
    category <- crp alpha n_branches delta;
 
