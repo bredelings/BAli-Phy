@@ -793,7 +793,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
 	expression_ref branch_lengths = {branch_length_model.expression, tree};
 	branch_lengths = {var("Distributions.sample'"), var("Prelude.Nothing"), 0.0, branch_lengths};
 	branch_lengths = {var("Distributions.do_log"), prefix, branch_lengths};
-	branch_lengths = {var("Prelude.unsafePerformIO'"),branch_lengths};
+	branch_lengths = {var("Prelude.unsafePerformIO"),branch_lengths};
 	branch_lengths = {var("Parameters.evaluate"),-1,branch_lengths};
 	branch_lengths = {var("Prelude.listArray'"),branch_lengths };
 	int branch_lengths_index = p->add_compute_expression( branch_lengths );
@@ -1404,7 +1404,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	auto scale_model = scaleMs[i].expression;
 	scale_model = {var("Distributions.sample'"), var("Prelude.Nothing"), 1.0, scale_model};
 	scale_model = {var("Distributions.do_log"), prefix, scale_model};
-	scale_model = {var("Prelude.unsafePerformIO'"),scale_model};
+	scale_model = {var("Prelude.unsafePerformIO"),scale_model};
 	scale_model = {var("Parameters.evaluate"),-1,scale_model};
 	int scale_index = add_compute_expression( scale_model );
 	scales.push_back( get_expression(scale_index) );
@@ -1460,7 +1460,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	expression_ref smodel = SMs[i].expression;
 	smodel = {var("Distributions.sample'"), a, 1.0, smodel};
 	smodel = {var("Distributions.do_log"), prefix, smodel};
-	smodel = {var("Prelude.unsafePerformIO'"),smodel};
+	smodel = {var("Prelude.unsafePerformIO"),smodel};
 	smodel = {var("Parameters.evaluate"),-1,smodel};
 
 	PC->SModels.push_back( smodel_methods( smodel, *this) );
@@ -1474,7 +1474,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	expression_ref imodel = IMs[i].expression;
 	imodel = {var("Distributions.sample'"), var("Prelude.Nothing"), 1.0, imodel};
 	imodel = {var("Distributions.do_log"), prefix, imodel};
-	imodel = {var("Prelude.unsafePerformIO'"),imodel};
+	imodel = {var("Prelude.unsafePerformIO"),imodel};
 	imodel = {var("Parameters.evaluate"),-1,imodel};
 	imodels_.push_back({imodel,my_tree()});
     }

@@ -273,7 +273,7 @@ set_vector_index v i x = IOAction3 builtin_set_vector_index v i x;
 copy_list_to_vector [] v i = return ();
 copy_list_to_vector (h:t) v i = do {set_vector_index v i h; copy_list_to_vector t v (i+1)};
 
-slow_list_to_vector l = unsafePerformIO $ do {v <- new_vector (length l); copy_list_to_vector l v 0; return v};
+slow_list_to_vector l = runST $ do {v <- new_vector (length l); copy_list_to_vector l v 0; return v};
 list_to_vector = builtin_vector_from_list;
 
 newVectorInt s = IOAction1 builtinNewVectorInt s;
@@ -283,7 +283,7 @@ setVectorIndexInt v i x = IOAction3 builtinSetVectorIndexInt v i x;
 copyListToVectorInt [] v i = return ();
 copyListToVectorInt (h:t) v i = do {setVectorIndexInt v i h; copyListToVectorInt t v (i+1)};
 
-listToVectorInt l = unsafePerformIO $ do {v <- newVectorInt (length l); copyListToVectorInt l v 0; return v};
+listToVectorInt l = runST $ do {v <- newVectorInt (length l); copyListToVectorInt l v 0; return v};
 
 newString s = IOAction1 builtinNewString s;
 
@@ -292,32 +292,32 @@ setStringIndexInt v i x = IOAction3 builtinSetStringIndexInt v i x;
 copyListToString [] v i = return ();
 copyListToString (h:t) v i = do {setStringIndexInt v i h ; copyListToString t v (i+1)};
 
-listToString l = unsafePerformIO $ do {v <- newString (length l); copyListToString l v 0; return v};
+listToString l = runST $ do {v <- newString (length l); copyListToString l v 0; return v};
 
 newVectorDouble s = IOAction1 builtinNewVectorDouble s;
 setVectorIndexDouble v i x = IOAction3 builtinSetVectorIndexDouble v i x;
 copyListToVectorDouble [] v i = return ();
 copyListToVectorDouble (h:t) v i = do { setVectorIndexDouble v i h ; copyListToVectorDouble t v (i+1)};
 
-listToVectorDouble l = unsafePerformIO $ do { v <- newVectorDouble (length l); copyListToVectorDouble l v 0; return v};
+listToVectorDouble l = runST $ do { v <- newVectorDouble (length l); copyListToVectorDouble l v 0; return v};
 
 newVectorMatrix s = IOAction1 builtinNewVectorMatrix s;
 setVectorIndexMatrix v i x = IOAction3 builtinSetVectorIndexMatrix v i x;
 copyListToVectorMatrix [] v i = return ();
 copyListToVectorMatrix (h:t) v i = do { setVectorIndexMatrix v i h; copyListToVectorMatrix t v (i+1)};
 
-listToVectorMatrix l = unsafePerformIO $ do { v <- newVectorMatrix (length l); copyListToVectorMatrix l v 0 ; return v};
+listToVectorMatrix l = runST $ do { v <- newVectorMatrix (length l); copyListToVectorMatrix l v 0 ; return v};
 
 error m = builtinError (listToString m);
 
-unsafePerformIO' (IOAction1 x y ) = x y;
-unsafePerformIO' (IOAction2 x y z) = x y z;
-unsafePerformIO' (IOAction3 x y z w) = x y z w;
-unsafePerformIO' (IOAction4 x y z w u) = x y z w u;
-unsafePerformIO' (IOReturn x) = x;
-unsafePerformIO' (IOAndPass f g) = let {x = unsafePerformIO' f} in x `join` (unsafePerformIO' (g x));
+unsafePerformIO (IOAction1 x y ) = x y;
+unsafePerformIO (IOAction2 x y z) = x y z;
+unsafePerformIO (IOAction3 x y z w) = x y z w;
+unsafePerformIO (IOAction4 x y z w u) = x y z w u;
+unsafePerformIO (IOReturn x) = x;
+unsafePerformIO (IOAndPass f g) = let {x = unsafePerformIO f} in x `join` (unsafePerformIO (g x));
 
-unsafePerformIO x = reapply unsafePerformIO' x;
+runST x = reapply unsafePerformIO x;
 
 f >>= g = IOAndPass f g;
 f >> g = f >>= (const g);

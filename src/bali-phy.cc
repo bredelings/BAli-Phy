@@ -458,7 +458,7 @@ int main(int argc,char* argv[])
 
 	    expression_ref print_exp = print.expression;
 	    print_exp = {var("Distributions.sample'"), var("Prelude.Nothing"), 0.0, print_exp};
-	    print_exp = {var("Prelude.unsafePerformIO'"),print_exp};
+	    print_exp = {var("Prelude.unsafePerformIO"),print_exp};
 	    print_exp = {var("Parameters.evaluate"),-1,print_exp};
 	    print_exp = {var("Prelude.show"),print_exp };
 	    print_exp = {var("Prelude.listToString"),print_exp };

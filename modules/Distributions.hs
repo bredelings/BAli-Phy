@@ -22,7 +22,7 @@ sample (AddMove m) = return ();
 
 sample' alpha rate (IOReturn v) = IOReturn v;
 sample' alpha rate (IOAndPass f g) = IOAndPass (sample' alpha rate f) (\x -> sample' alpha rate $ g x);
-sample' alpha rate (ProbDensity p q (Random a) r) = do { let {v = unsafePerformIO' a;};
+sample' alpha rate (ProbDensity p q (Random a) r) = do { let {v = unsafePerformIO a;};
                                               m <- new_random_modifiable r v rate;
                                               register_probability (p m);
                                               return m };
@@ -43,7 +43,7 @@ set_alphabet a x = do {(a',_) <- a; SetAlphabet a' x};
 gen_model m = sample' (error "No default alphabet!") 1.0 m;
 
 -- This is called by sample[]
-perform_exp dist = Parameters.evaluate (-1) $ unsafePerformIO' $ gen_model dist;
+perform_exp dist = Parameters.evaluate (-1) $ unsafePerformIO $ gen_model dist;
 
 prefix_name ps name = foldl (\a b -> b++"/"++a) name ps;
 
@@ -65,8 +65,6 @@ do_log prefix model = do
     };
 
 -- Define some helper functions
-distDefaultValue d = unsafePerformIO' $ sample d;
-
 no_quantile name = error ("Distribution '"++name++"' has no quantile function");
 
 -- Define some basic distributions
