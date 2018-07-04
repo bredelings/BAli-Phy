@@ -157,6 +157,16 @@ using boost::optional;
  *       I compute the probability at the end of Parameters::Parameters( ).
  */
 
+expression_ref and_then(const expression_ref& A1, const var& x, const expression_ref& A2)
+{
+    return {var("Prelude.>>="), A1, lambda_quantify(x,A2)};
+}
+
+expression_ref and_then(const expression_ref& A1, const expression_ref& A2)
+{
+    return {var("Prelude.>>"), A1, A2};
+}
+
 /// Is the alignment allowed to vary?
 bool data_partition::variable_alignment() const
 {
@@ -791,6 +801,12 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
     if (T.n_branches() > 0)
     {
 	expression_ref branch_lengths = {branch_length_model.expression, tree};
+	{
+	    auto fst = var("Prelude.fst");
+	    auto result = var("result");
+	    auto Return = var("Prelude.return");
+	    branch_lengths = and_then(branch_lengths, result, {Return,{fst,result}});
+	}
 	branch_lengths = {var("Distributions.sample'"), var("Prelude.Nothing"), var("[]"), 0.0, branch_lengths};
 	branch_lengths = {var("Prelude.unsafePerformIO'"),branch_lengths};
 	branch_lengths = {var("Parameters.evaluate"),-1,branch_lengths};
@@ -1369,16 +1385,6 @@ vector<int> Parameters::partitions_for_imodel(int i) const
     return partitions;
 }
 
-expression_ref and_then(const expression_ref& A1, const var& x, const expression_ref& A2)
-{
-    return {var("Prelude.>>="), A1, lambda_quantify(x,A2)};
-}
-
-expression_ref and_then(const expression_ref& A1, const expression_ref& A2)
-{
-    return {var("Prelude.>>"), A1, A2};
-}
-
 Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 		       const vector<alignment>& A, const SequenceTree& tt,
 		       const vector<model_t>& SMs,
@@ -1489,7 +1495,14 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     for(int i=0;i<n_imodels();i++) 
     {
 	string prefix = "I" + convertToString(i+1);
-	expression_ref imodel = {perform_exp(IMs[i].expression,prefix), my_tree()};
+	expression_ref imodel = IMs[i].expression;
+	{
+	    auto fst = var("Prelude.fst");
+	    auto result = var("result");
+	    auto Return = var("Prelude.return");
+	    imodel = and_then(imodel, result, {Return,{fst,result}});
+	}
+	imodel = {perform_exp(imodel, prefix), my_tree()};
 	imodels_.push_back(imodel);
     }
 

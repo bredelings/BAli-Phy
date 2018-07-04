@@ -132,7 +132,7 @@ get_imodels(const Rules& R, const shared_items<string>& imodel_names_mapping, co
 {
     vector<model_t> imodels;
     for(int i=0;i<imodel_names_mapping.n_unique_items();i++) 
-	imodels.push_back( get_model(R, "IndelModel",imodel_names_mapping.unique(i)) );
+	imodels.push_back( get_model(R, "IndelModel",imodel_names_mapping.unique(i), false) );
     return imodels;
 }
 
@@ -636,7 +636,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 	else
 	    M = "~iid[num_branches[T],gamma[0.5,div[2,num_branches[T]]]]";
 
-	branch_length_model = get_model(R, "List[Double]", M, true, {{"T","Tree"}});
+	branch_length_model = get_model(R, "List[Double]", M, false, {{"T","Tree"}});
 	branch_length_model.expression = lambda_quantify(var("arg_T"), branch_length_model.expression);
     }
 
