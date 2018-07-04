@@ -347,10 +347,10 @@ namespace MCMC {
     
 	void iterate(owned_ptr<Model>& P,MoveStats&,int);
     
-	Integer_Modifiable_Slice_Move(const std::string& s,int m, const Bounds<int>& b, double W_);
+	Integer_Modifiable_Slice_Move(const std::string& s, int m, const Bounds<int>& b, double W_ = 1.0);
     
 	Integer_Modifiable_Slice_Move(const std::string& s, const std::string& v,int m,
-				      const Bounds<int>& b, double W_);
+				      const Bounds<int>& b, double W_ = 1.0);
     
 	Integer_Modifiable_Slice_Move(const std::string& s,int m,
 				      const Bounds<int>& b, double (*W_)(const Model&));
