@@ -15,7 +15,7 @@ distRange (ProbDensity _ _ _ r) = r;
 data Random a = Random a | Exchangeable Int Range a | Observe a b | AddMove (Int->a) | Print c | SamplingRate Double a | GetAlphabet | SetAlphabet d a;
 
 sample (IOReturn v) = IOReturn v;
-sample (IOAndPass f g) = IOAndPass (sample f) (\x -> sample $ g x);
+sample (IOAndPass f g) = IOAndPass (unsafeInterleaveIO (sample f)) (\x -> sample $ g x);
 sample (ProbDensity p q (Random a) r) = a;
 sample (ProbDensity p q s r) = sample s;
 sample (AddMove m) = return ();
