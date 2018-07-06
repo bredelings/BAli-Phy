@@ -204,7 +204,9 @@ bool is_loggable_function(const Rules& R, const string& name)
     return not rule->get("no_log",false);
 }
 
-typedef map<string,bool> names_in_scope_t;
+enum class var_type_t {unknown=0,constant,random,lambda};
+
+typedef map<string,var_type_t> names_in_scope_t;
 
 bool is_random(const ptree& model, const names_in_scope_t& scope)
 {
@@ -217,7 +219,7 @@ bool is_random(const ptree& model, const names_in_scope_t& scope)
 
     // 2. If this is a random variable, then yes.
     if (not model.size() and model.is_a<string>())
-	if (scope.count(name) and scope.at(name)) return true;
+	if (scope.count(name) and scope.at(name) == var_type_t::random) return true;
 
     // 3. Otherwise check if children are random and unlogged
     for(const auto& p: model)
@@ -238,7 +240,7 @@ bool is_unlogged_random(const Rules& R, const ptree& model, const names_in_scope
 
     // 2. If this is a random variable, then yes.
     if (not model.size() and model.is_a<string>())
-	if (scope.count(name) and scope.at(name)) return true;
+	if (scope.count(name) and scope.at(name) == var_type_t::random) return true;
 
     // 3. If this function is loggable then any random children have already been logged.
     if (is_loggable_function(R, name)) return false;
@@ -346,11 +348,11 @@ expression_ref get_variable_model(const ptree& E, const names_in_scope_t& scope)
 }
 
 
-names_in_scope_t extend_scope(names_in_scope_t scope, const string& var, bool is_random)
+names_in_scope_t extend_scope(names_in_scope_t scope, const string& var, var_type_t t)
 {
     if (scope.count(var))
 	scope.erase(var);
-    scope.insert({var, is_random});
+    scope.insert({var, t});
     return scope;
 }
 
@@ -367,7 +369,7 @@ names_in_scope_t extend_scope(const ptree& rule, int skip, const names_in_scope_
 	string arg_name = argument.get<string>("arg_name");
 
 	scope2.erase(arg_name);
-	scope2.insert({arg_name,false});
+	scope2.insert({arg_name,var_type_t::unknown});
     }
 
     return scope2;
@@ -404,10 +406,10 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const names_
 	ptree var_exp = model_rep[0].second;
 	ptree body_exp = model_rep[1].second;
 
-	bool var_is_random = is_random(var_exp, scope);
+	auto var_type = is_random(var_exp, scope)?var_type_t::random : var_type_t::unknown;
 
 	// 1. Perform the body with var_name in scope
-	expression_ref E = get_model_as(R, body_exp, extend_scope(scope, var_name, var_is_random));
+	expression_ref E = get_model_as(R, body_exp, extend_scope(scope, var_name, var_type));
 
 	// 2. Perform the variable expression
 	{
@@ -541,7 +543,7 @@ model_t get_model(const Rules& R, const string& type, const string& model, const
 
     names_in_scope_t names_in_scope;
     for(auto& x: scope)
-	names_in_scope.insert({x.first,false});
+	names_in_scope.insert({x.first,var_type_t::unknown});
     return get_model(R, required_type, equations.get_constraints(), p.first, names_in_scope);
 }
 
