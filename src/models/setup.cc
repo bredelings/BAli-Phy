@@ -204,7 +204,9 @@ bool is_loggable_function(const Rules& R, const string& name)
     return not rule->get("no_log",false);
 }
 
-bool is_random(const ptree& model, const map<string,bool>& scope)
+typedef map<string,bool> names_in_scope_t;
+
+bool is_random(const ptree& model, const names_in_scope_t& scope)
 {
     if (is_constant(model)) return false;
 
@@ -225,7 +227,7 @@ bool is_random(const ptree& model, const map<string,bool>& scope)
     return false;
 }
 
-bool is_unlogged_random(const Rules& R, const ptree& model, const map<string,bool>& scope)
+bool is_unlogged_random(const Rules& R, const ptree& model, const names_in_scope_t& scope)
 {
     if (is_constant(model)) return false;
 
@@ -249,7 +251,7 @@ bool is_unlogged_random(const Rules& R, const ptree& model, const map<string,boo
     return false;
 }
 
-bool should_log(const Rules& R, const ptree& model, const string& arg_name, const map<string,bool>& scope)
+bool should_log(const Rules& R, const ptree& model, const string& arg_name, const names_in_scope_t& scope)
 {
     auto name = model.get_value<string>();
 
@@ -332,7 +334,7 @@ expression_ref get_constant_model(const ptree& model_rep)
 	return {};
 }
 
-expression_ref get_variable_model(const ptree& E, const map<string,bool>& scope)
+expression_ref get_variable_model(const ptree& E, const names_in_scope_t& scope)
 {
     if (E.size() or not E.is_a<string>()) return {};
 
@@ -344,7 +346,7 @@ expression_ref get_variable_model(const ptree& E, const map<string,bool>& scope)
 }
 
 
-map<string,bool> extend_scope(map<string,bool> scope, const string& var, bool is_random)
+names_in_scope_t extend_scope(names_in_scope_t scope, const string& var, bool is_random)
 {
     if (scope.count(var))
 	scope.erase(var);
@@ -352,7 +354,7 @@ map<string,bool> extend_scope(map<string,bool> scope, const string& var, bool is
     return scope;
 }
 
-map<string,bool> extend_scope(const ptree& rule, int skip, const map<string,bool>& scope)
+names_in_scope_t extend_scope(const ptree& rule, int skip, const names_in_scope_t& scope)
 {
     auto scope2 = scope;
     int i=0;
@@ -371,7 +373,7 @@ map<string,bool> extend_scope(const ptree& rule, int skip, const map<string,bool
     return scope2;
 }
 
-expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<string,bool>& scope)
+expression_ref get_model_as(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
 {
     //  std::cout<<"model = "<<model<<std::endl;
     //  auto result = parse(model);
@@ -500,7 +502,7 @@ expression_ref get_model_as(const Rules& R, const ptree& model_rep, const map<st
 /// \param a The alphabet.
 /// \param frequencies The initial letter frequencies in the model.
 ///
-model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& constraints, const ptree& model_rep, const map<string,bool>& scope)
+model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& constraints, const ptree& model_rep, const names_in_scope_t& scope)
 {
     // --------- Convert model to MultiMixtureModel ------------//
     expression_ref full_model = get_model_as(R, extract_value(model_rep), scope);
@@ -537,7 +539,7 @@ model_t get_model(const Rules& R, const string& type, const string& model, const
 	std::cout<<std::endl;
     }
 
-    map<string,bool> names_in_scope;
+    names_in_scope_t names_in_scope;
     for(auto& x: scope)
 	names_in_scope.insert({x.first,false});
     return get_model(R, required_type, equations.get_constraints(), p.first, names_in_scope);
