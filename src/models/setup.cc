@@ -314,6 +314,47 @@ optional<vector<double>> get_frequencies_from_tree(const ptree& model_rep, const
 	return pi;
 }
 
+names_in_scope_t extend_scope(names_in_scope_t scope, const string& var, var_type_t t)
+{
+    if (scope.count(var))
+	scope.erase(var);
+    scope.insert({var, t});
+    return scope;
+}
+
+names_in_scope_t extend_scope(const ptree& rule, int skip, const names_in_scope_t& scope)
+{
+    auto scope2 = scope;
+    int i=0;
+    for(const auto& arg: rule.get_child("args"))
+    {
+	i++;
+	if (i < skip) continue;
+
+	const auto& argument = arg.second;
+	string arg_name = argument.get<string>("arg_name");
+
+	scope2.erase(arg_name);
+	scope2.insert({arg_name,var_type_t::unknown});
+    }
+
+    return scope2;
+}
+
+int get_index_for_arg_name(const ptree& rule, const string& arg_name)
+{
+    ptree args = rule.get_child("args");
+    for(int i=0; i < args.size(); i++)
+    {
+	auto argi = array_index(args,i);
+	if (arg_name == argi.get_child("arg_name").get_value<string>())
+	    return i;
+    }
+    throw myexception()<<"No arg named '"<<arg_name<<"'";
+}
+
+pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope);
+
 expression_ref parse_constant(const ptree& model)
 {
     if (model.value_is_empty())
@@ -369,44 +410,39 @@ optional<pair<expression_ref,set<string>>> get_variable_model(const ptree& E, co
 }
 
 
-names_in_scope_t extend_scope(names_in_scope_t scope, const string& var, var_type_t t)
+optional<pair<expression_ref,set<string>>> get_model_let(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
 {
-    if (scope.count(var))
-	scope.erase(var);
-    scope.insert({var, t});
-    return scope;
-}
+    auto name = model_rep.get_value<string>();
 
-names_in_scope_t extend_scope(const ptree& rule, int skip, const names_in_scope_t& scope)
-{
-    auto scope2 = scope;
-    int i=0;
-    for(const auto& arg: rule.get_child("args"))
+    // 1. If the phrase is not a let, then we are done.
+    if (name != "let") return boost::none;
+
+    string var_name = model_rep[0].first;
+    ptree var_exp = model_rep[0].second;
+    ptree body_exp = model_rep[1].second;
+
+    auto var_type = is_random(var_exp, scope)?var_type_t::random : var_type_t::unknown;
+
+    // 1. Perform the body with var_name in scope
+    auto p = get_model_as(R, body_exp, extend_scope(scope, var_name, var_type));
+    expression_ref E = p.first;
+
+    // 2. Perform the variable expression
     {
-	i++;
-	if (i < skip) continue;
+	auto arg_p = get_model_as(R, var_exp, scope);
+	expression_ref arg = arg_p.first;
+	if (arg_p.second.size())
+	    throw myexception()<<"You cannot let-bind a variable to an expression with a function-variable";
 
-	const auto& argument = arg.second;
-	string arg_name = argument.get<string>("arg_name");
+	// E = 'arg <<= (\pair_var_name -> let {arg_name=fst pair_var_name} in E)
+	E = lambda_quantify(var("pair_arg_"+var_name), let_expression({{var("arg_"+var_name),{var("Prelude.fst"),var("pair_arg_"+var_name)}}},E));
 
-	scope2.erase(arg_name);
-	scope2.insert({arg_name,var_type_t::unknown});
+	E = {var("Prelude.>>="), arg, E};
     }
 
-    return scope2;
+    return {{E, p.second}};
 }
 
-int get_index_for_arg_name(const ptree& rule, const string& arg_name)
-{
-    ptree args = rule.get_child("args");
-    for(int i=0; i < args.size(); i++)
-    {
-	auto argi = array_index(args,i);
-	if (arg_name == argi.get_child("arg_name").get_value<string>())
-	    return i;
-    }
-    throw myexception()<<"No arg named '"<<arg_name<<"'";
-}
 
 pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
 {
@@ -422,18 +458,28 @@ pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model
 	throw myexception()<<"Can't construct model from from empty description!";
 
     // 2. Handle constant expressions
-    if (auto constant = get_constant_model(model_rep))
+    else if (auto constant = get_constant_model(model_rep))
 	return {constant,{}};
 
     // 3. Handle variables
-    if (auto variable = get_variable_model(model_rep, scope))
+    else if (auto variable = get_variable_model(model_rep, scope))
 	return *variable;
+
+    // 4. Let expressions
+    else if (auto let = get_model_let(R, model_rep, scope))
+	return *let;
 
     auto name = model_rep.get_value<string>();
 
     // 4. Handle let expressions
     if (name == "function")
     {
+	// pair_arg_body <- <arg>
+	// let arg_body = (fst pair_arg_body) l1 l2 l3
+	// E = \z -> arg_body
+	// remove z from lambda_args
+	// E = \l1 -> \l2 -> \l3 -> E
+	// return (E, snd $ pair_arg_body)
 	string var_name = model_rep[0].first;
 	ptree body_exp = model_rep[1].second;
 
