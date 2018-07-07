@@ -443,6 +443,30 @@ optional<pair<expression_ref,set<string>>> get_model_let(const Rules& R, const p
     return {{E, p.second}};
 }
 
+optional<pair<expression_ref,set<string>>> get_model_lambda(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
+{
+    auto name = model_rep.get_value<string>();
+
+    // 1. If the phrase is not a lambda, then we are done.
+    if (name != "function") return boost::none;
+
+    // pair_arg_body <- <arg>
+    // let arg_body = (fst pair_arg_body) l1 l2 l3
+    // E = \z -> arg_body
+    // remove z from lambda_args
+    // E = \l1 -> \l2 -> \l3 -> E
+    // return (E, snd $ pair_arg_body)
+    string var_name = model_rep[0].first;
+    ptree body_exp = model_rep[1].second;
+
+    auto p = get_model_as(R, body_exp, extend_scope(scope, var_name, var_type_t::lambda));
+    expression_ref E = p.first;
+    auto lambda_vars = p.second;
+    if (lambda_vars.count(var_name))
+	lambda_vars.erase(var_name);
+    return {{E, lambda_vars}};
+}
+
 
 pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
 {
@@ -469,57 +493,11 @@ pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model
     else if (auto let = get_model_let(R, model_rep, scope))
 	return *let;
 
+    // 5. Let expressions
+    else if (auto func = get_model_lambda(R, model_rep, scope))
+	return *func;
+
     auto name = model_rep.get_value<string>();
-
-    // 4. Handle let expressions
-    if (name == "function")
-    {
-	// pair_arg_body <- <arg>
-	// let arg_body = (fst pair_arg_body) l1 l2 l3
-	// E = \z -> arg_body
-	// remove z from lambda_args
-	// E = \l1 -> \l2 -> \l3 -> E
-	// return (E, snd $ pair_arg_body)
-	string var_name = model_rep[0].first;
-	ptree body_exp = model_rep[1].second;
-
-	auto p = get_model_as(R, body_exp, extend_scope(scope, var_name, var_type_t::lambda));
-	expression_ref E = p.first;
-	auto lambda_vars = p.second;
-	if (lambda_vars.count(var_name))
-	    lambda_vars.erase(var_name);
-	return {E, lambda_vars};
-    }
-    else if (name == "let")
-    {
-	// Construct the expresion from the inside out.
-
-	// The problem with this is that the order is wrong.
-	string var_name = model_rep[0].first;
-	ptree var_exp = model_rep[0].second;
-	ptree body_exp = model_rep[1].second;
-
-	auto var_type = is_random(var_exp, scope)?var_type_t::random : var_type_t::unknown;
-
-	// 1. Perform the body with var_name in scope
-	auto p = get_model_as(R, body_exp, extend_scope(scope, var_name, var_type));
-	expression_ref E = p.first;
-
-	// 2. Perform the variable expression
-	{
-	    auto arg_p = get_model_as(R, var_exp, scope);
-	    expression_ref arg = arg_p.first;
-	    if (arg_p.second.size())
-		throw myexception()<<"You cannot let-bind a variable to an expression with a function-variable";
-
-	    // E = 'arg <<= (\pair_var_name -> let {arg_name=fst pair_var_name} in E)
-	    E = lambda_quantify(var("pair_arg_"+var_name), let_expression({{var("arg_"+var_name),{var("Prelude.fst"),var("pair_arg_"+var_name)}}},E));
-
-	    E = {var("Prelude.>>="), arg, E};
-	}
-
-	return {E, p.second};
-    }
 
     // 5. Now we have a function -- get the rule
     auto rule = R.get_rule_for_func(name);
