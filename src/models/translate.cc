@@ -271,7 +271,7 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	    bound_vars.insert(b);
 
 	    // 1. Unify required type with (a -> b)
-	    auto ftype = ptree("Function",{ {"",ptree("a")},{"",ptree("b")} });
+	    auto ftype = ptree("Function",{ {"",a},{"",b} });
 	    equations E = unify(ftype, required_type);
 	    if (not E)
 		throw myexception()<<"Supplying a function, but expected '"<<unparse_type(required_type)<<"!";
