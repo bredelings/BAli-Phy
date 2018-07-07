@@ -660,17 +660,20 @@ vector<pair<string, ptree>> extract_terms(ptree& m)
 
     vector<pair<string,ptree>> extracted;
     vector<pair<string,ptree>> extracted_top;
+    // Walk each argument and determine if it should be pulled out
     for(auto& x: value)
     {
 	string name = value.get_value<string>() + ":" + x.first;
 
+	// If we should pull out the argument then do so
 	if (do_extract(m, x.second))
 	{
 	    ptree extracted_value;
 	    std::swap(x.second, extracted_value);
 	    extracted_top.push_back({name, extracted_value});
 	}
-	else
+	// Otherwise look into the argument's value and try to pull things out
+	else if (not x.second.is_null()) // for function[x=null,body=E]
 	{
 	    auto e = extract_terms(x.second);
 
