@@ -228,7 +228,6 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	    result_type = *type;
 	else if (name == "let")  //let[m=E,F]
 	{
-	    // The problem with this is that the order is wrong.
 	    string var_name = model[0].first;
 	    ptree var_exp = model[0].second;
 	    ptree body_exp = model[1].second;
@@ -263,7 +262,6 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	}
 	else if (name == "function")  //function[x,F]
 	{
-	    // The problem with this is that the order is wrong.
 	    string var_name = model[0].first;
 	    ptree body_exp = model[1].second;
 
