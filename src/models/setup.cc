@@ -418,7 +418,19 @@ pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model
     auto name = model_rep.get_value<string>();
 
     // 4. Handle let expressions
-    if (name == "let")
+    if (name == "function")
+    {
+	string var_name = model_rep[0].first;
+	ptree body_exp = model_rep[1].second;
+
+	auto p = get_model_as(R, body_exp, extend_scope(scope, var_name, var_type_t::lambda));
+	expression_ref E = p.first;
+	auto lambda_vars = p.second;
+	if (lambda_vars.count(var_name))
+	    lambda_vars.erase(var_name);
+	return {E, lambda_vars};
+    }
+    else if (name == "let")
     {
 	// Construct the expresion from the inside out.
 
