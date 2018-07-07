@@ -616,10 +616,6 @@ model_t get_model(const Rules& R, const string& type, const string& model, const
 
 bool do_extract(const ptree& func, const ptree& arg)
 {
-    auto arg_value = arg.get_child("value");
-    string arg_type = unparse_type(arg.get_child("type"));
-
-
     // 1. Don't extract arguments to e.g. log[], add[], sub[], etc.
     //    This is supposed to indicate things who arguments don't really have names?
     if (func.get("no_log",false)) return false;
@@ -629,6 +625,9 @@ bool do_extract(const ptree& func, const ptree& arg)
     if (func_name == "let") return false;
     // 1c. Don't pull anything out of lambdas
     if (func_name == "function") return false;
+
+    auto arg_value = arg.get_child("value");
+    string arg_type = unparse_type(arg.get_child("type"));
 
     // 2. Extract non-random things that are not models.
     if (func.get<string>("extract","none") == "all")
