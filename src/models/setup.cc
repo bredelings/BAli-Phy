@@ -343,15 +343,29 @@ optional<pair<expression_ref,set<string>>> get_variable_model(const ptree& E, co
     if (E.size() or not E.is_a<string>()) return {};
 
     auto name = E.get_value<string>();
-    if (scope.count(name))
+
+    // 1. If the name is not in scope then we are done.
+    if (not scope.count(name)) return boost::none;
+
+    auto x = var(string("arg_")+name);
+    expression_ref V;
+    set<string> lambda_vars;
+
+    // 2. If the name is a lambda var, then we need to quantify it, and put it into the list of free lambda vars
+    if (scope.at(name) == var_type_t::lambda)
     {
-	expression_ref E = {var("Prelude.return"),Tuple(var(string("arg_") + name),List())};
-	if (scope.at(name) == var_type_t::lambda)
-	    return {{E,{name}}};
-	else
-	    return {{E,{}}};
+	V = lambda_quantify(x,x);
+	lambda_vars.insert(name);
     }
-    return boost::none;
+    // 3. Otherwise the expression is just the variable itself
+    else
+	V = x;
+
+    // 4. Construct the logging tuple and return it in order to allow this action to be performed.
+    V = {var("Prelude.return"),Tuple(V,List())};
+
+    // 5. We need an extra level of {} to allow constructing the optional.
+    return {{V,lambda_vars}};
 }
 
 
