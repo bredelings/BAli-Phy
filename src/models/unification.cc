@@ -254,13 +254,22 @@ map<string,term_t> equations::eliminate_variable(const string& x)
 map<string,term_t> equations::eliminate_except(const set<string>& keep)
 {
     map<string,term_t> S;
+
+    // Find the vars to eliminate
     set<string> eliminate = referenced_vars();
     remove(eliminate, keep);
+
+    // Eliminate each var
     for(auto& x: eliminate)
     {
+	// Eliminate var x from equations and constraints, and return a substitution from x -> E
 	auto Sx = eliminate_variable(x);
+
+	// Eliminate var x from the cumulative substitution
 	for(auto& y: S)
 	    substitute(Sx,y.second);
+
+	// Add the substitution for x -> E to the cumulative substitution
 	for(auto& y: Sx)
 	{
 	    assert(S.count(y.first) == 0);
