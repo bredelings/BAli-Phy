@@ -148,14 +148,22 @@ bool equations::add_var_condition(const string& x, const string& y)
     {
 	auto xrec = find_record(x);
 	auto yrec = find_record(y);
-	// Add the variables in y's record to x's record.
-	add(xrec->first, yrec->first);
-	// If x doesn't have a value, then just use y's value;
-	if (not xrec->second)
-	    xrec->second = yrec->second;
-	else if (yrec->second)
-	    unify(*xrec->second, *yrec->second);
-	remove_record_for(y);
+
+	// If the two variables are already equal then we are done
+	if (xrec == yrec)
+	    return valid;
+	// Otherwise we need to merge the two records
+	else
+	{
+	    // Add the variables in y's record to x's record.
+	    add(xrec->first, yrec->first);
+	    // If x doesn't have a value, then just use y's value;
+	    if (not xrec->second)
+		xrec->second = yrec->second;
+	    else if (yrec->second)
+		unify(*xrec->second, *yrec->second);
+	    remove_record_for(y);
+	}
     }
 #ifndef NDEBUG
     for(auto& eq: values)
