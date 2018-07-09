@@ -289,9 +289,13 @@ map<string,term_t> equations::eliminate_except(const set<string>& keep)
 
 set<string> equations::referenced_vars() const
 {
-    // NOTE: maybe scan constraints, or make sure that constraints only mention these.
-
     set<string> vars;
+
+    // Get vars referenced by constraints
+    for(auto& constraint: constraints)
+	add(vars, find_variables_in_type(constraint));
+
+    // Get vars referenced in equations
     for(auto& v: values)
     {
 	add(vars, v.first);
