@@ -157,12 +157,18 @@ bool equations::add_var_condition(const string& x, const string& y)
 	{
 	    // Add the variables in y's record to x's record.
 	    add(xrec->first, yrec->first);
+	    // Save the body in the y record.
+	    auto y_body = yrec->second;
+	    // Remove the y record
+	    values.erase(yrec);
+
 	    // If x doesn't have a value, then just use y's value;
 	    if (not xrec->second)
-		xrec->second = yrec->second;
-	    else if (yrec->second)
-		unify(*xrec->second, *yrec->second);
-	    remove_record_for(y);
+		xrec->second = y_body;
+	    // Otherwise unify the two values
+	    else if (y_body)
+		unify(*xrec->second, *y_body);
+
 	}
     }
 #ifndef NDEBUG
