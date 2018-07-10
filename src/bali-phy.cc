@@ -457,7 +457,8 @@ int main(int argc,char* argv[])
 	    model_t print = get_model(R,"a",mstring);
 
 	    expression_ref print_exp = print.expression;
-	    print_exp = {var("Distributions.sample'"), var("Prelude.Nothing"), 0.0, print_exp};
+	    expression_ref a = {var("Prelude.error"),"No alphabet!"};
+	    print_exp = {var("Distributions.sample'"), a, 0.0, print_exp};
 	    print_exp = {var("Prelude.unsafePerformIO"),print_exp};
 	    print_exp = {var("Parameters.evaluate"),-1,print_exp};
 	    print_exp = {var("Prelude.show"),print_exp };
