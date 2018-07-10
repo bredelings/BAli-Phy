@@ -450,20 +450,43 @@ optional<pair<expression_ref,set<string>>> get_model_lambda(const Rules& R, cons
     // 1. If the phrase is not a lambda, then we are done.
     if (name != "function") return boost::none;
 
-    // pair_arg_body <- <arg>
-    // let arg_body = (fst pair_arg_body) l1 l2 l3
-    // E = \z -> arg_body
-    // remove z from lambda_args
-    // E = \l1 -> \l2 -> \l3 -> E
-    // return (E, snd $ pair_arg_body)
+    // 2. Get the variable name and the body from the model
     string var_name = model_rep[0].first;
+    var x("arg_" + var_name);
+    var pair_arg_body("pair_arg_body");
     ptree body_exp = model_rep[1].second;
 
-    auto p = get_model_as(R, body_exp, extend_scope(scope, var_name, var_type_t::lambda));
-    expression_ref E = p.first;
-    auto lambda_vars = p.second;
-    if (lambda_vars.count(var_name))
-	lambda_vars.erase(var_name);
+    // 3. Parse the body with the lambda variable in scope, and find the free variables.
+    auto body_E = get_model_as(R, body_exp, extend_scope(scope, var_name, var_type_t::lambda));
+    expression_ref body = body_E.first;
+    auto lambda_vars = body_E.second;
+
+    // E = E x l1 l2 l3
+    expression_ref E = {var("Prelude.fst"),pair_arg_body};
+    for(auto& vname: lambda_vars)
+	E = {E,var("arg_"+vname)};
+
+    // E = \x -> E
+    E = lambda_quantify(x, E);
+    
+    // Remove x from the lambda vars.
+    if (lambda_vars.count(var_name)) lambda_vars.erase(var_name);
+
+    // E = \l1 l2 l3 -> E
+    for(auto& vname: std::reverse(lambda_vars))
+	E = lambda_quantify(var("arg_"+vname),E);
+
+    // E = return $ (E,snd pair_arg_body)
+    E = {var("Prelude.return"),Tuple(E,{var("Prelude.snd"),var("pair_arg_body")})};
+
+    // E = do {pair_arg_body <- body ; E}
+    E = {var("Prelude.>>="),body,lambda_quantify(pair_arg_body,E)};
+
+
+    // In summary, we have
+    //E = do
+    //      pair_arg_body <- body_action
+    //      return $ (\l1 l2 l3 -> \x -> ((fst pair_air_body) x l1 l2 l3) , snd pair_arg_body)
     return {{E, lambda_vars}};
 }
 
