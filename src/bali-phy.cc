@@ -451,6 +451,8 @@ int main(int argc,char* argv[])
 	//------------- Parse the Hierarchical Model description -----------//
 	if (args.count("print"))
 	{
+	    show_only = true; // Don't print machine stats on error.
+
 	    (*M) += { "SModel","Distributions","Range","PopGen","Alignment","IModel" };
 	    const string mstring = args["print"].as<string>();
 	    Rules R(get_package_paths(argv[0], args));
