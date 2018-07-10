@@ -271,49 +271,6 @@ bool should_log(const Rules& R, const ptree& model, const string& arg_name, cons
 	return false;
 }
 
-expression_ref arg_to_apply(const ptree& expression)
-{
-    if (expression.is_a<int>())
-	return expression.get_value<int>();
-    else if (expression.is_a<double>())
-	return expression.get_value<double>();
-    else if (expression.is_a<bool>())
-	return expression.get_value<bool>();
-    else if (is_constant(expression) and expression.is_a<string>())
-	return expression.get_value<string>();
-	    
-    expression_ref E;
-    string top = expression.get_value<string>();
-    if (top.find('.') == string::npos)
-	E = var(string("arg_")+top);
-    else
-	E = var(top);
-
-    for(auto& arg: expression)
-	E = {E, arg_to_apply(arg.second)};
-
-    return E;
-}
-
-optional<vector<double>> get_frequencies_from_tree(const ptree& model_rep, const alphabet& a)
-{
-    vector<double> pi;
-    for(int i=0;i<a.size();i++)
-	if (model_rep.count(a.letter(i)))
-	    pi.push_back(model_rep.get<double>(a.letter(i)));
-
-    if (pi.size() > 0 and pi.size() < a.size())
-    {
-	string head = model_rep.get_value<string>();
-	throw myexception()<<"For frequency model '"<<head<<"', you must specify all letter frequencies, or none!";
-    }
-
-    if (pi.empty())
-	return boost::none;
-    else
-	return pi;
-}
-
 names_in_scope_t extend_scope(names_in_scope_t scope, const string& var, var_type_t t)
 {
     if (scope.count(var))
