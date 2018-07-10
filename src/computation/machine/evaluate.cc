@@ -3,6 +3,7 @@
 //#endif
 #define COMBINE_STEPS
 #include "graph_register.H"
+#include "error_exception.H"
 #include "computation/expression/expression.H"
 #include "computation/expression/let.H"
 #include "computation/expression/trim.H"
@@ -409,6 +410,10 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		    return {R, value};
 		}
 	    }
+	    catch (error_exception& e)
+	    {
+		throw e;
+	    }
 	    catch (myexception& e)
 	    {
 		throw_reg_exception(*this, root_token, R, e);
@@ -460,6 +465,10 @@ void reg_heap::incremental_evaluate_from_call_(int S)
 	    total_reductions++;
 	    if (changed)
 		total_changeable_reductions++;
+	}
+	catch (error_exception& e)
+	{
+	    throw e;
 	}
 	catch (myexception& e)
 	{
@@ -614,6 +623,10 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
 	    {
 		access(R).type = reg::type_t::changeable;
 		return R;
+	    }
+	    catch (error_exception& e)
+	    {
+		throw e;
 	    }
 	    catch (myexception& e)
 	    {

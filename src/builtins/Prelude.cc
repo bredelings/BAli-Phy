@@ -388,11 +388,13 @@ extern "C" closure builtin_function_show(OperationArgs& Args)
     return v;
 }
 
+#include "computation/machine/error_exception.H"
+
 extern "C" closure builtin_function_builtinError(OperationArgs& Args)
 {
     std::string message = Args.evaluate(0).as_<String>();
   
-    throw myexception()<<message;
+    throw error_exception(message);
 }
 
 extern "C" closure builtin_function_putStrLn(OperationArgs& Args)
