@@ -14,35 +14,35 @@ distRange (ProbDensity _ _ _ r) = r;
 -- This implements the Random monad by transforming it into the IO monad.
 data Random a = Random a | Exchangeable Int Range a | Observe a b | AddMove (Int->a) | Print c | SamplingRate Double a | GetAlphabet | SetAlphabet d a;
 
-sample (IOReturn v) = IOReturn v;
-sample (IOAndPass f g) = IOAndPass (unsafeInterleaveIO (sample f)) (\x -> sample $ g x);
-sample (ProbDensity p q (Random a) r) = a;
-sample (ProbDensity p q s r) = sample s;
-sample (AddMove m) = return ();
+run_random (IOReturn v) = IOReturn v;
+run_random (IOAndPass f g) = IOAndPass (unsafeInterleaveIO (run_random f)) (\x -> run_random $ g x);
+run_random (ProbDensity p q (Random a) r) = a;
+run_random (ProbDensity p q s r) = run_random s;
+run_random (AddMove m) = return ();
 
-sample' alpha rate (IOReturn v) = IOReturn v;
-sample' alpha rate (IOAndPass f g) = IOAndPass (unsafeInterleaveIO (sample' alpha rate f)) (\x -> sample' alpha rate $ g x);
-sample' alpha rate (ProbDensity p q (Random a) r) = do {
+run_random' alpha rate (IOReturn v) = IOReturn v;
+run_random' alpha rate (IOAndPass f g) = IOAndPass (unsafeInterleaveIO (run_random' alpha rate f)) (\x -> run_random' alpha rate $ g x);
+run_random' alpha rate (ProbDensity p q (Random a) r) = do {
                                                       v <- unsafeInterleaveIO a;
                                                       m <- new_random_modifiable r v rate;
                                                       register_probability (p m);
                                                       return m
                                                     };
-sample' alpha rate (ProbDensity p q (Exchangeable n r' v) r) = do { xs <- sequence $ replicate n (new_random_modifiable r' v rate);
+run_random' alpha rate (ProbDensity p q (Exchangeable n r' v) r) = do { xs <- sequence $ replicate n (new_random_modifiable r' v rate);
                                                               register_probability (p xs);
                                                               return xs };
-sample' alpha rate (ProbDensity p q s r) = sample' alpha rate s;
+run_random' alpha rate (ProbDensity p q s r) = run_random' alpha rate s;
 
-sample' alpha rate (Observe datum dist) = register_probability (density dist datum);
-sample' alpha rate (AddMove m) = register_transition_kernel m;
-sample' alpha rate (Print s) = putStrLn (show s);
-sample' alpha rate (SamplingRate rate2 a) = sample' alpha (rate*rate2) a;
-sample' alpha _    GetAlphabet = return alpha;
-sample' alpha rate (SetAlphabet a2 x) = sample' a2 rate x;
+run_random' alpha rate (Observe datum dist) = register_probability (density dist datum);
+run_random' alpha rate (AddMove m) = register_transition_kernel m;
+run_random' alpha rate (Print s) = putStrLn (show s);
+run_random' alpha rate (SamplingRate rate2 a) = run_random' alpha (rate*rate2) a;
+run_random' alpha _    GetAlphabet = return alpha;
+run_random' alpha rate (SetAlphabet a2 x) = run_random' a2 rate x;
 
 set_alphabet a x = do {(a',_) <- a; SetAlphabet a' x};
                                                  
-gen_model m = sample' (error "No default alphabet!") 1.0 m;
+gen_model m = run_random' (error "No default alphabet!") 1.0 m;
 
 add_logger old name (value,[]) False = old;
 add_logger old name (value,loggers) do_log = (name,(if do_log then Just value else Nothing, loggers)):old;
