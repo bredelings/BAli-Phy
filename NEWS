@@ -1,6 +1,7 @@
 * UNRELEASED
   - Fixes
     - Make bp-analyze able to parse output files from 3.0-beta.
+    - Rename Goldman & Yang codon model to gy94 from incorrect yn94.
 * 3.2
   - Fixes
     - Increase test timeout for internal testsuite and testiphy.
