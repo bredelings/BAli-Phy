@@ -3,10 +3,10 @@
     "result_type": "a",
     "perform": true,
     "no_log": true,
-    "call": "Prelude.id[x]",
+    "call": "Distributions.sample[dist]",
     "args": [
         {
-            "arg_name": "x",
+            "arg_name": "dist",
             "arg_type": "Distribution[a]"
         }
     ]

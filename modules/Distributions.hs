@@ -12,26 +12,31 @@ sampler (ProbDensity _ _ s _) = s;
 distRange (ProbDensity _ _ _ r) = r;
 
 -- This implements the Random monad by transforming it into the IO monad.
-data Random a = Random a | Exchangeable Int Range a | Observe a b | AddMove (Int->a) | Print c | SamplingRate Double a | GetAlphabet | SetAlphabet d a;
+data Random a = Random a | Sample ProbDensity | Exchangeable Int Range a | Observe a b | AddMove (Int->a) | Print c | SamplingRate Double a | GetAlphabet | SetAlphabet d a;
 
-run_random (IOReturn v) = IOReturn v;
-run_random (IOAndPass f g) = IOAndPass (unsafeInterleaveIO (run_random f)) (\x -> run_random $ g x);
-run_random (ProbDensity p q (Random a) r) = a;
-run_random (ProbDensity p q s r) = run_random s;
-run_random (AddMove m) = return ();
+run_random alpha (IOReturn v) = IOReturn v;
+run_random alpha (IOAndPass f g) = IOAndPass (unsafeInterleaveIO (run_random alpha f)) (\x -> run_random alpha $ g x);
+run_random alpha (Sample (ProbDensity _ _ (Random a) _)) = a;
+run_random alpha (Sample (ProbDensity _ _ s          _)) = run_random alpha s;
+run_random alpha GetAlphabet = return alpha;
+run_random alpha (SetAlphabet a2 x) = run_random a2 x;
+run_random alpha (AddMove m) = return ();
+run_random alpha (SamplingRate rate model) = run_random alpha model;
+
+sample dist = Sample dist;
 
 run_random' alpha rate (IOReturn v) = IOReturn v;
 run_random' alpha rate (IOAndPass f g) = IOAndPass (unsafeInterleaveIO (run_random' alpha rate f)) (\x -> run_random' alpha rate $ g x);
-run_random' alpha rate (ProbDensity p q (Random a) r) = do {
+run_random' alpha rate (Sample (ProbDensity p _ (Random a) r)) = do {
                                                       v <- unsafeInterleaveIO a;
                                                       m <- new_random_modifiable r v rate;
                                                       register_probability (p m);
                                                       return m
                                                     };
-run_random' alpha rate (ProbDensity p q (Exchangeable n r' v) r) = do { xs <- sequence $ replicate n (new_random_modifiable r' v rate);
+run_random' alpha rate (Sample (ProbDensity p q (Exchangeable n r' v) r)) = do { xs <- sequence $ replicate n (new_random_modifiable r' v rate);
                                                               register_probability (p xs);
                                                               return xs };
-run_random' alpha rate (ProbDensity p q s r) = run_random' alpha rate s;
+run_random' alpha rate (Sample (ProbDensity _ _ s _)) = run_random' alpha rate s;
 
 run_random' alpha rate (Observe datum dist) = register_probability (density dist datum);
 run_random' alpha rate (AddMove m) = register_transition_kernel m;
@@ -106,7 +111,7 @@ uniform_int l u = ProbDensity (uniform_int_density l u) () (sample_uniform_int l
 
 builtin builtin_dirichlet_density 2 "dirichlet_density" "Distribution";
 dirichlet_density ns ps = builtin_dirichlet_density (listToVectorDouble ns) (listToVectorDouble ps);
-sample_dirichlet ns = SamplingRate (1.0/sqrt(intToDouble $ length ns)) $ do { vs <- mapM (\a->gamma a 1.0) ns;
+sample_dirichlet ns = SamplingRate (1.0/sqrt(intToDouble $ length ns)) $ do { vs <- mapM (\a-> sample $ gamma a 1.0) ns;
                            return $ map (/(sum vs)) vs};
 dirichlet ns = ProbDensity (dirichlet_density ns) (no_quantile "dirichlet") (sample_dirichlet ns) (Simplex (length ns) 1.0);
 
@@ -164,7 +169,7 @@ do_crp'' alpha n bins counts = let { inc (c:cs) 0 = (c+1:cs);
                                      f 0 = alpha/(intToDouble nzeros);
                                      f i = intToDouble i}
                                in 
-                               do { c <- categorical (p alpha counts);
+                               do { c <- sample $ categorical (p alpha counts);
                                     cs <- do_crp'' alpha (n-1) bins (inc counts c); 
                                     return (c:cs)};
 
@@ -200,8 +205,8 @@ list_density ds xs = if (length ds == length xs) then pr else (doubleToLogDouble
   where {densities = zipWith density ds xs;
          pr = balanced_product densities};
 
-list dists = ProbDensity (list_density dists) (no_quantile "list") sample (ListRange (map distRange dists))
-             where {sample = SamplingRate (1.0/sqrt (intToDouble $ length dists)) $ sequence dists};
+list dists = ProbDensity (list_density dists) (no_quantile "list") do_sample (ListRange (map distRange dists))
+             where {do_sample = SamplingRate (1.0/sqrt (intToDouble $ length dists)) $ mapM sample dists};
 
 -- define different examples of list distributions
 iid n dist = list (replicate n dist);
@@ -235,7 +240,7 @@ expTransform (ProbDensity d q s r) = ProbDensity pdf' q' s' r'
  where {
   pdf' x = (d $ log x)/(doubleToLogDouble x);
   q'   = exp . q;
-  s'   = do {v <- (ProbDensity d q s r); return $ exp v};
+  s'   = do {v <- sample $ ProbDensity d q s r; return $ exp v};
   r'   = expTransformRange r
  };
   
@@ -256,14 +261,14 @@ dpm n alpha mean_dist noise_dist= do
 {
   let {delta = 4};
 
-  mean <- iid (n+delta) mean_dist;
-  sigmaOverMu <- iid (n+delta) noise_dist;
+  mean <- sample $ iid (n+delta) mean_dist;
+  sigmaOverMu <- sample $ iid (n+delta) noise_dist;
 
-  category <- crp alpha n delta;
+  category <- sample $ crp alpha n delta;
 
 --  Log "dpm:n_categories" (length (nub category));
 
-  z <- iid n (normal 0.0 1.0);
+  z <- sample $ iid n (normal 0.0 1.0);
 
   AddMove (\c -> mapM_ (\l-> gibbs_sample_categorical (category!!l) (n+delta) c) [0..n-1]);
 
@@ -274,7 +279,7 @@ dp n alpha mean_dist = do
 {
   let {delta = 4};
 
-  mean <- iid (n+delta) mean_dist;
+  mean <- sample $ iid (n+delta) mean_dist;
 
   category <- crp alpha n delta;
 --  Log "dp:n_categories" (length (nub category));
