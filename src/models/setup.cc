@@ -279,14 +279,14 @@ names_in_scope_t extend_scope(names_in_scope_t scope, const string& var, var_typ
     return scope;
 }
 
+// When processing arg i, we should only have args i+1 and after in scope.
 names_in_scope_t extend_scope(const ptree& rule, int skip, const names_in_scope_t& scope)
 {
     auto scope2 = scope;
     int i=0;
     for(const auto& arg: rule.get_child("args"))
     {
-	i++;
-	if (i < skip) continue;
+	if (i++ <= skip) continue;
 
 	const auto& argument = arg.second;
 	string arg_name = argument.get<string>("arg_name");
