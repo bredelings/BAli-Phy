@@ -345,19 +345,22 @@ optional<pair<expression_ref,set<string>>> get_variable_model(const ptree& E, co
     // 1. If the name is not in scope then we are done.
     if (not scope.count(name)) return boost::none;
 
-    auto x = var(string("arg_")+name);
     expression_ref V;
     set<string> lambda_vars;
 
     // 2. If the name is a lambda var, then we need to quantify it, and put it into the list of free lambda vars
     if (scope.at(name) == var_type_t::lambda)
     {
+	auto x = var(string("lambda_var_")+name);
 	V = lambda_quantify(x,x);
 	lambda_vars.insert(name);
     }
     // 3. Otherwise the expression is just the variable itself
     else
+    {
+	auto x = var(string("arg_")+name);
 	V = x;
+    }
 
     // 4. Construct the logging tuple and return it in order to allow this action to be performed.
     V = {var("Prelude.return"),Tuple(V,List())};
@@ -409,7 +412,7 @@ optional<pair<expression_ref,set<string>>> get_model_lambda(const Rules& R, cons
 
     // 2. Get the variable name and the body from the model
     string var_name = model_rep[0].first;
-    var x("arg_" + var_name);
+    var x("lambda_var_" + var_name);
     var pair_arg_body("pair_arg_body");
     ptree body_exp = model_rep[1].second;
 
@@ -421,7 +424,7 @@ optional<pair<expression_ref,set<string>>> get_model_lambda(const Rules& R, cons
     // E = E x l1 l2 l3
     expression_ref E = {var("Prelude.fst"),pair_arg_body};
     for(auto& vname: lambda_vars)
-	E = {E,var("arg_"+vname)};
+	E = {E,var("lambda_var_"+vname)};
 
     // E = \x -> E
     E = lambda_quantify(x, E);
@@ -431,7 +434,7 @@ optional<pair<expression_ref,set<string>>> get_model_lambda(const Rules& R, cons
 
     // E = \l1 l2 l3 -> E
     for(auto& vname: std::reverse(lambda_vars))
-	E = lambda_quantify(var("arg_"+vname),E);
+	E = lambda_quantify(var("lambda_var_"+vname),E);
 
     // E = return $ (E,snd pair_arg_body)
     E = {var("Prelude.return"),Tuple(E,{var("Prelude.snd"),var("pair_arg_body")})};
@@ -524,13 +527,13 @@ pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model
 	// Apply the free lambda variables to arg before using it.
 	int index = get_index_for_arg_name(*rule, call_arg_name);
 	for(auto& vname: arg_lambda_vars[index])
-	    arg = {arg, var("arg_"+vname)};
+	    arg = {arg, var("lambda_var_"+vname)};
 
 	E = {E, arg};
     }
     // 8b. Return a lambda function 
     for(auto& vname: std::reverse(lambda_vars))
-	E = lambda_quantify(var("arg_"+vname),E);
+	E = lambda_quantify(var("lambda_var_"+vname),E);
 
     // 9. Compute loggers
     expression_ref loggers = List();
