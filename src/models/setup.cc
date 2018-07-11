@@ -289,7 +289,7 @@ names_in_scope_t extend_scope(const ptree& rule, int skip, const names_in_scope_
 	if (i++ <= skip) continue;
 
 	const auto& argument = arg.second;
-	string arg_name = argument.get<string>("arg_name");
+	string arg_name = "@"+argument.get<string>("arg_name");
 
 	scope2.erase(arg_name);
 	scope2.insert({arg_name,var_type_t::unknown});
@@ -358,8 +358,13 @@ optional<pair<expression_ref,set<string>>> get_variable_model(const ptree& E, co
     // 3. Otherwise the expression is just the variable itself
     else
     {
-	auto x = var(string("arg_")+name);
-	V = x;
+	if (name.size() and name[0] == '@')
+	{
+	    name = name.substr(1);
+	    V = var(string("arg_var_")+name);
+	}
+	else
+	    V = var(string("var_")+name);
     }
 
     // 4. Construct the logging tuple and return it in order to allow this action to be performed.
@@ -395,7 +400,9 @@ optional<pair<expression_ref,set<string>>> get_model_let(const Rules& R, const p
 	    throw myexception()<<"You cannot let-bind a variable to an expression with a function-variable";
 
 	// E = 'arg <<= (\pair_var_name -> let {arg_name=fst pair_var_name} in E)
-	E = lambda_quantify(var("pair_arg_"+var_name), let_expression({{var("arg_"+var_name),{var("Prelude.fst"),var("pair_arg_"+var_name)}}},E));
+	var pair_x("pair_var_"+var_name);
+	var x("var_"+var_name);
+	E = lambda_quantify(pair_x, let_expression({{x,{var("Prelude.fst"),pair_x}}},E));
 
 	E = {var("Prelude.>>="), arg, E};
     }
@@ -522,7 +529,7 @@ pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model
 	string call_arg_name = array_index(call,i).get_value<string>();
 	// check that arg_name is a valid argument
 	get_arg(*rule, call_arg_name);
-	expression_ref arg = var("arg_" + call_arg_name);
+	expression_ref arg = var("arg_var_" + call_arg_name);
 
 	// Apply the free lambda variables to arg before using it.
 	int index = get_index_for_arg_name(*rule, call_arg_name);
@@ -546,7 +553,7 @@ pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model
 	auto log_name = name + ":" + arg_name;
 
 	bool do_log = arg_lambda_vars[i].empty() and should_log(R, model_rep, arg_name, scope);
-	loggers = {var("Distributions.add_logger"),loggers,log_name,var("pair_arg_"+arg_name),do_log};
+	loggers = {var("Distributions.add_logger"),loggers,log_name,var("pair_arg_var_"+arg_name),do_log};
     }
 
     // 10. Return the function call: 'return (f call.name1 call.name2 call.name3)'
@@ -580,7 +587,9 @@ pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model
 	}
 
 	// E = 'arg <<= (\arg_name_pair -> let {arg_name=fst arg_name_pair} in E)
-	E = lambda_quantify(var("pair_arg_"+arg_name), let_expression({{var("arg_"+arg_name),{var("Prelude.fst"),var("pair_arg_"+arg_name)}}},E));
+	var pair_x("pair_arg_var_"+arg_name);
+	var x("arg_var_"+arg_name);
+	E = lambda_quantify(pair_x, let_expression({{x,{var("Prelude.fst"),pair_x}}},E));
 
 	E = {var("Prelude.>>="), arg, E};
     }

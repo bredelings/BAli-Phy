@@ -12,14 +12,14 @@
         {
             "arg_name": "w",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "zip[letters[getAminoAcids[A]],~iid[length[letters[getAminoAcids[A]]],log_normal[0,0.5]]]",
+            "default_value": "zip[letters[getAminoAcids[@A]],~iid[length[letters[getAminoAcids[@A]]],log_normal[0,0.5]]]",
 	    "description": "Fitness of amino acids"
         },
         {
             "arg_name": "submodel",
             "arg_type": "RevCTMC[a]",
             "default_value": "hky85",
-	    "alphabet": "getNucleotides[A]",
+	    "alphabet": "getNucleotides[@A]",
 	    "description": "Model of neutral nucleotide substitution"
         },
 	{

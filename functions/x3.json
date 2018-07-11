@@ -7,7 +7,7 @@
         {
             "arg_name": "submodel",
             "arg_type": "a",
-            "alphabet": "getNucleotides[A]",
+            "alphabet": "getNucleotides[@A]",
 	    "description": "The singlet exchange model"
         },
         {

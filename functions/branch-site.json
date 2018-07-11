@@ -16,14 +16,14 @@
             "arg_name": "nuc_model",
             "arg_type": "ExchangeModel[a]",
             "default_value": "hky85_sym",
-            "alphabet": "getNucleotides[A]",
+            "alphabet": "getNucleotides[@A]",
 	    "description":"The nucleotide exchange model."
         },
         {
             "arg_name": "freq_model",
             "arg_type": "FrequencyModel[Codons[a]]",
             "default_value": "f61",
-            "alphabet": "A",
+            "alphabet": "@A",
 	    "description":"The codon frequency model."
         },
         {

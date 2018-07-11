@@ -195,7 +195,7 @@ vector<pair<string, ptree>> extend_scope(const ptree& rule, int skip, const vect
 	string arg_name = argument.get<string>("arg_name");
 	type_t arg_required_type = get_type_for_arg(rule, arg_name);
 
-	scope2.push_back({arg_name, arg_required_type});
+	scope2.push_back({"@"+arg_name, arg_required_type});
     }
 
     return scope2;
