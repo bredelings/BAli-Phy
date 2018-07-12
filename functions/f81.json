@@ -2,7 +2,7 @@
     "name": "f81",
     "synonyms": ["F81"],
     "result_type": "RevCTMC[a]",
-    "call": "SModel.f81[pi,A]",
+    "call": "SModel.f81'[pi,A]",
     "args": [
         {
             "arg_name": "pi",

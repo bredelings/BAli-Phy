@@ -119,6 +119,7 @@ hky85 k    pi a = reversible_markov (hky85_sym k    a) (plus_f a pi);
 tn93 k1 k2 pi a = reversible_markov (tn93_sym k1 k2 a) (plus_f a pi);
 gtr s      pi a = reversible_markov (gtr_sym s      a) (plus_f a pi);
 
+f81'        pi' a = reversible_markov (equ            a) (plus_f' a pi');
 hky85' k    pi' a = reversible_markov (hky85_sym k    a) (plus_f' a pi');
 tn93' k1 k2 pi' a = reversible_markov (tn93_sym k1 k2 a) (plus_f' a pi');
 gtr' s'     pi' a = reversible_markov (gtr_sym' s'    a) (plus_f' a pi');
