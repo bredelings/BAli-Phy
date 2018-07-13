@@ -4,10 +4,13 @@ import Distributions;
 
 main = do
 {
-  p <- beta 10.0 1.0;
-  Log "p" p;
+  p <- sample $ beta 10.0 1.0;
 
-  n <- geometric p;
-  Log "n" n;
+  n <- sample $ geometric p;
+
+  return (Nothing,[
+           ("p",(Just p,[])),
+           ("n",(Just n,[]))
+          ]);
 }
 }
