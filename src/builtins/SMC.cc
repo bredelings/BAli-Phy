@@ -292,10 +292,9 @@ EMatrix finite_markov_coalescence()
     return C;
 }
 
-EMatrix finite_markov_rates(double theta, double rho)
+EMatrix finite_markov_rates(double rho_over_theta, double coalescence_rate)
 {
-    double recombination_rate = rho/theta;
-    double coalescence_rate = 2/theta;
+    double recombination_rate = rho_over_theta;
     return recombination_rate * finite_markov_recombination() + coalescence_rate * finite_markov_coalescence();
 }
 
@@ -311,15 +310,13 @@ Matrix get_transition_probabilities(const vector<double>& B, const vector<double
     double theta = 2.0/coalescent_rates[0];
     assert(theta > 0);
 
-    double rho = rho_over_theta * theta;
-
-    assert(rho >= 0);
+    assert(rho_over_theta >= 0);
     assert(A.n_sequences() == 2);
 
     const int n = T.size();
     assert(B.size() == n+1);
 
-    auto Omega = finite_markov_rates(theta,rho);
+    auto Omega = finite_markov_rates(rho_over_theta, coalescent_rates[0]);
 
     // exp(Omega*t) for bin boundaries
     vector<EMatrix> Pr_X_at_B(n);
@@ -330,9 +327,6 @@ Matrix get_transition_probabilities(const vector<double>& B, const vector<double
     vector<EMatrix> Pr_X_at_T;
     for(auto t: T)
 	Pr_X_at_T.push_back((Omega*t).exp());
-
-    // Coalescence rate
-    double eta = 2.0/theta;
 
     Matrix P(n,n);
     for(int j=0;j<n; j++)
