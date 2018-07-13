@@ -4,7 +4,7 @@ import Distributions;
 
 main = do
 {
-  p <- sample $ beta 10.0 1.0;
+  p <- sample $ beta 5.0 1.0;
 
   n <- sample $ geometric p;
 
