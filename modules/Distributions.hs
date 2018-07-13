@@ -14,8 +14,11 @@ distRange (ProbDensity _ _ _ r) = r;
 -- This implements the Random monad by transforming it into the IO monad.
 data Random a = Random a | Sample ProbDensity | Exchangeable Int Range a | Observe a b | AddMove (Int->a) | Print c | SamplingRate Double a | GetAlphabet | SetAlphabet d a;
 
-run_random alpha (IOReturn v) = IOReturn v;
-run_random alpha (IOAndPass f g) = IOAndPass (unsafeInterleaveIO (run_random alpha f)) (\x -> run_random alpha $ g x);
+run_random alpha (IOReturn v) = return v;
+run_random alpha (IOAndPass f g) = do {
+                                     x <- unsafeInterleaveIO (run_random alpha f);
+                                     run_random alpha $ g x;
+                                   };
 run_random alpha (Sample (ProbDensity _ _ (Random a) _)) = a;
 run_random alpha (Sample (ProbDensity _ _ s          _)) = run_random alpha s;
 run_random alpha GetAlphabet = return alpha;
@@ -25,8 +28,11 @@ run_random alpha (SamplingRate rate model) = run_random alpha model;
 
 sample dist = Sample dist;
 
-run_random' alpha rate (IOReturn v) = IOReturn v;
-run_random' alpha rate (IOAndPass f g) = IOAndPass (unsafeInterleaveIO (run_random' alpha rate f)) (\x -> run_random' alpha rate $ g x);
+run_random' alpha rate (IOReturn v) = return v;
+run_random' alpha rate (IOAndPass f g) = do {
+                                           x <- unsafeInterleaveIO (run_random' alpha rate f);
+                                           run_random' alpha rate $ g x
+                                         };
 run_random' alpha rate (Sample (ProbDensity p _ (Random a) r)) = do {
                                                       v <- unsafeInterleaveIO a;
                                                       m <- new_random_modifiable r v rate;
