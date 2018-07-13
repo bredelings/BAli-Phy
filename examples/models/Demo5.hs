@@ -13,7 +13,7 @@ main = do
 {
   zs <- random_walk 0.0 10 (\mu -> normal mu 1.0);
 
-  Observe 2.0 (normal (zs!!10) 1.0);
+  Observe 2.0 (normal (zs!!10) 0.1);
   return (Nothing,[("zs",(Just zs,[]))]);
 }
 }
