@@ -299,7 +299,7 @@ EMatrix finite_markov_rates(double theta, double rho)
     return recombination_rate * finite_markov_recombination() + coalescence_rate * finite_markov_coalescence();
 }
 
-Matrix get_transition_probabilities(const vector<double>& B, const vector<double>& T, double theta, double rho)
+Matrix get_transition_probabilities(const vector<double>& B, const vector<double>& T, const vector<double>& beta, const vector<double>& alpha, double theta, double rho)
 {
     const int n = T.size();
     assert(B.size() == n+1);
@@ -329,8 +329,8 @@ Matrix get_transition_probabilities(const vector<double>& B, const vector<double
 	    }
 	    else if (k > j)
 	    {
-		assert(B[k] - T[j] > 0);
-		P(j,k) = (expT[j](0,1) + expT[j](0,2)) * exp(-eta * (B[k] - T[j])) * (1.0 - exp(-eta*(B[k+1] - B[k])));
+		assert(beta[k+1] >= beta[k]);
+		P(j,k) = (expT[j](0,1) + expT[j](0,2)) * (beta[k+1] - beta[k])/(1.0-alpha[j]);
 	    }
 	    else if (k == j)
 	    {
@@ -339,7 +339,7 @@ Matrix get_transition_probabilities(const vector<double>& B, const vector<double
 		// t \in [b_j, t_j)
 		p += (expT[j](0,3) - expB[j](0,3));
 		// t \in (t_j, b_j+1]
-		p += (expT[j](0,1) + expT[j](0,2)) * (1.0 - exp(-eta*(B[j+1] - T[j])));
+		p += (expT[j](0,1) + expT[j](0,2)) * (beta[j+1] - alpha[j])/(1.0-alpha[j]);
 		P(j,k) = p;
 	    }
 	}
@@ -588,7 +588,7 @@ log_double_t smc(double rho_over_theta, vector<double> coalescent_rates, vector<
     }
 
     // # Iteratively compute likelihoods for remaining columns
-    const auto transition = get_transition_probabilities(bin_boundaries, bin_times, theta, rho);
+    const auto transition = get_transition_probabilities(bin_boundaries, bin_times, beta, alpha, theta, rho);
 
     vector<EMatrix> no_snp = matrix_binary_power(get_no_snp_matrix(transition, emission_probabilities), A.length());
 
