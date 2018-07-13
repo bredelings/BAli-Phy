@@ -307,14 +307,14 @@ Matrix get_transition_probabilities(const vector<double>& B, const vector<double
     auto Omega = finite_markov_rates(theta,rho);
 
     // exp(Omega*t) for bin boundaries
-    vector<EMatrix> expB(n);
+    vector<EMatrix> Pr_X_at_B(n);
     for(int i=0;i<n;i++)
-	expB[i] = (Omega*B[i]).exp();
+	Pr_X_at_B[i] = (Omega*B[i]).exp();
 
     // exp(Omega*t) for bin centers
-    vector<EMatrix> expT;
+    vector<EMatrix> Pr_X_at_T;
     for(auto t: T)
-	expT.push_back((Omega*t).exp());
+	Pr_X_at_T.push_back((Omega*t).exp());
 
     // Coalescence rate
     double eta = 2.0/theta;
@@ -325,21 +325,21 @@ Matrix get_transition_probabilities(const vector<double>& B, const vector<double
 	{
 	    if (k < j)
 	    {
-		P(j,k) = expB[k+1](0,3) - expB[k](0,3);
+		P(j,k) = Pr_X_at_B[k+1](0,3) - Pr_X_at_B[k](0,3);
 	    }
 	    else if (k > j)
 	    {
 		assert(beta[k+1] >= beta[k]);
-		P(j,k) = (expT[j](0,1) + expT[j](0,2)) * (beta[k+1] - beta[k])/(1.0-alpha[j]);
+		P(j,k) = (Pr_X_at_T[j](0,1) + Pr_X_at_T[j](0,2)) * (beta[k+1] - beta[k])/(1.0-alpha[j]);
 	    }
 	    else if (k == j)
 	    {
 		// t = t_j
-		double p = expT[j](0,0);
+		double p = Pr_X_at_T[j](0,0);
 		// t \in [b_j, t_j)
-		p += (expT[j](0,3) - expB[j](0,3));
+		p += (Pr_X_at_T[j](0,3) - Pr_X_at_B[j](0,3));
 		// t \in (t_j, b_j+1]
-		p += (expT[j](0,1) + expT[j](0,2)) * (beta[j+1] - alpha[j])/(1.0-alpha[j]);
+		p += (Pr_X_at_T[j](0,1) + Pr_X_at_T[j](0,2)) * (beta[j+1] - alpha[j])/(1.0-alpha[j]);
 		P(j,k) = p;
 	    }
 	}
