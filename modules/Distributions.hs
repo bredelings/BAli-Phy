@@ -16,33 +16,33 @@ data Random a = Random a | Sample ProbDensity | Exchangeable Int Range a | Obser
 
 run_random alpha (IOReturn v) = return v;
 run_random alpha (IOAndPass f g) = do {
-                                     x <- unsafeInterleaveIO (run_random alpha f);
+                                     x <- run_random alpha f;
                                      run_random alpha $ g x;
                                    };
-run_random alpha (Sample (ProbDensity _ _ (Random a) _)) = a;
-run_random alpha (Sample (ProbDensity _ _ s          _)) = run_random alpha s;
+run_random alpha (Sample (ProbDensity _ _ (Random a) _)) = unsafeInterleaveIO $ a;
+run_random alpha (Sample (ProbDensity _ _ s          _)) = unsafeInterleaveIO $ run_random alpha s;
 run_random alpha GetAlphabet = return alpha;
 run_random alpha (SetAlphabet a2 x) = run_random a2 x;
 run_random alpha (AddMove m) = return ();
-run_random alpha (SamplingRate rate model) = run_random alpha model;
+run_random alpha (SamplingRate _ model) = run_random alpha model;
 
 sample dist = Sample dist;
 
 run_random' alpha rate (IOReturn v) = return v;
 run_random' alpha rate (IOAndPass f g) = do {
-                                           x <- unsafeInterleaveIO (run_random' alpha rate f);
+                                           x <- run_random' alpha rate f;
                                            run_random' alpha rate $ g x
                                          };
-run_random' alpha rate (Sample (ProbDensity p _ (Random a) r)) = do {
-                                                      v <- unsafeInterleaveIO a;
+run_random' alpha rate (Sample (ProbDensity p _ (Random a) r)) = unsafeInterleaveIO $ do {
+                                                      v <- a;
                                                       m <- new_random_modifiable r v rate;
                                                       register_probability (p m);
                                                       return m
                                                     };
-run_random' alpha rate (Sample (ProbDensity p q (Exchangeable n r' v) r)) = do { xs <- sequence $ replicate n (new_random_modifiable r' v rate);
+run_random' alpha rate (Sample (ProbDensity p q (Exchangeable n r' v) r)) = unsafeInterleaveIO $ do { xs <- sequence $ replicate n (new_random_modifiable r' v rate);
                                                               register_probability (p xs);
                                                               return xs };
-run_random' alpha rate (Sample (ProbDensity _ _ s _)) = run_random' alpha rate s;
+run_random' alpha rate (Sample (ProbDensity _ _ s _)) = unsafeInterleaveIO $ run_random' alpha rate s;
 
 run_random' alpha rate (Observe datum dist) = register_probability (density dist datum);
 run_random' alpha rate (AddMove m) = register_transition_kernel m;
