@@ -345,8 +345,6 @@ Matrix get_transition_probabilities(const vector<double>& B, const vector<double
     assert(rho_over_theta >= 0);
 
     assert(coalescent_rates.size() > 0);
-    double theta = 2.0/coalescent_rates[0];
-    assert(theta > 0);
 
     assert(rho_over_theta >= 0);
 
@@ -590,12 +588,7 @@ log_double_t smc(double rho_over_theta, vector<double> coalescent_rates, vector<
     assert(rho_over_theta >= 0);
 
     assert(coalescent_rates.size() > 0);
-    double theta = 2.0/coalescent_rates[0];
-    assert(theta > 0);
 
-    double rho = rho_over_theta * theta;
-
-    assert(rho >= 0);
     assert(A.n_sequences() == 2);
 
     // How many bins
