@@ -10,23 +10,25 @@ indices l = indices' 0.0 l;
 
 observe_list ys dists = sequence_ [Observe y dist | (y,dist) <- zip ys dists];
 
-main = Prefix "CoalMine" $ do 
+main = do
 {
-  eta <- gamma 10.0 20.0;
-  Log "eta" eta;
+  eta <- sample $ gamma 10.0 20.0;
 
-  lambda <- gamma 2.0 eta;
-  Log "lambda" lambda;
+  lambda <- sample $ gamma 2.0 eta;
 
-  gamm <- gamma 2.0 eta;
-  Log "gamma" gamm;
+  gamm <- sample $ gamma 2.0 eta;
 
-  theta <- uniform 1852.0 1962.0;
-  Log "theta" theta;
+  theta <- sample $ uniform 1852.0 1962.0;
 
   let {mean year = if (theta > intToDouble year) then lambda else gamm};
 
   observe_list fatalities [poisson (mean year) | year <- years];
+  return (Nothing,[
+           ("eta",(Just eta,[])),
+           ("lambda",(Just lambda,[])),
+           ("gamma",(Just gamma,[])),
+           ("theta",(Just theta,[]))
+          ])
 };
 
 }
