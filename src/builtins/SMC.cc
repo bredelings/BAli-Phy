@@ -85,34 +85,13 @@ vector<double> get_quantiles(const vector<double>& P, const vector<double>& coal
     return quantiles;
 }
 
-vector<double> get_bin_boundaries(int n, const vector<double>& coalescent_rates, const vector<double>& level_boundaries)
+vector<double> get_equilibrium(const vector<double>& beta)
 {
-    assert(coalescent_rates.size() == level_boundaries.size());
-    assert(level_boundaries[0] == 0.0);
+    int n_bins = beta.size() - 1;
+    vector<double> pi(n_bins);
 
-    vector<double> P(n);
-    for(int i=0;i<n;i++)
-	P[i] = double(i)/n;
-
-    vector<double> b = get_quantiles(P, coalescent_rates, level_boundaries);
-
-    b.push_back(b.back() + 1000000);
-    return b;
-}
-
-vector<double> get_bin_centers(int n, const vector<double>& coalescent_rates, const vector<double>& level_boundaries)
-{
-    vector<double> P(n);
-    for(int i=0;i<n;i++)
-	P[i] = (2.0*i+1)/(2*n);
-
-    return get_quantiles(P, coalescent_rates, level_boundaries);
-}
-
-vector<double> get_equilibrium(const vector<double>& B)
-{
-    int n_bins = B.size() - 1;
-    vector<double> pi(n_bins, 1.0/n_bins);
+    for(int i=0; i<pi.size(); i++)
+	pi[i] = beta[i+1] - beta[i];
 
     // The equilibrium distribution should sum to 1.
     assert(std::abs(sum(pi) - 1.0) < 1.0e-9);
@@ -577,14 +556,24 @@ log_double_t smc(double rho_over_theta, vector<double> coalescent_rates, vector<
     const int n_bins = 100;
 
     // Lower end of each bin. boundaries[0] = 0. The upper end of the last bin is \infty
-    const auto bin_boundaries = get_bin_boundaries(n_bins, coalescent_rates, level_boundaries);
+    vector<double> alpha(n_bins);
+    vector<double> beta(n_bins);
+    for(int i=0;i<n_bins;i++)
+    {
+	beta[i] = double(i)/n_bins;
+	alpha[i] = (2.0*i+1)/(2*n_bins);
+    }
 
-    const auto bin_times = get_bin_centers(n_bins, coalescent_rates, level_boundaries);
+    auto bin_boundaries = get_quantiles(beta, coalescent_rates, level_boundaries);
+    bin_boundaries.push_back(bin_boundaries.back() + 1000000 );
+    beta.push_back(1.0);
+
+    const auto bin_times = get_quantiles(alpha, coalescent_rates, level_boundaries);
 
     const auto emission_probabilities = get_emission_probabilities(bin_times);
 
     // This assumes equally-spaced bin quantiles.
-    const auto pi = get_equilibrium(bin_boundaries);
+    const auto pi = get_equilibrium(beta);
 
     vector<double> L(n_bins);
     vector<double> L2(n_bins);
