@@ -73,7 +73,7 @@ vector<double> get_quantiles(const vector<double>& P, const vector<double>& coal
 	    assert(level < level_boundaries.size());
 
 	    double delta_t = quantile(coalescent_rates[level], 1.0 - q2);
-	    if (t2 + delta_t < level_boundaries[level] or level == level_boundaries.size()-1)
+	    if (level+1 >= level_boundaries.size() or t2 + delta_t < level_boundaries[level+1])
 	    {
 		quantiles[i] = t2 + delta_t;
 		t1 = quantiles[i];
