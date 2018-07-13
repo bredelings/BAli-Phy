@@ -28,6 +28,22 @@ double quantile(double eta, double p)
     return -log1p(-p)/eta;
 }
 
+struct demography
+{
+    vector<double> coalescent_rates;
+    vector<double> level_boundaries;
+
+    EMatrix Pr_X_at(double t, double rho_over_theta);
+
+    demography(const vector<double>& c, const vector<double>& l)
+	:coalescent_rates(c),
+	 level_boundaries(l)
+	{
+	    assert(coalescent_rates.size() == level_boundaries.size());
+	}
+};
+
+
 vector<double> get_quantiles(const vector<double>& P, const vector<double>& coalescent_rates, const vector<double>& level_boundaries)
 {
     assert(coalescent_rates.size() == level_boundaries.size());
@@ -298,6 +314,28 @@ EMatrix finite_markov_rates(double rho_over_theta, double coalescence_rate)
     return recombination_rate * finite_markov_recombination() + coalescence_rate * finite_markov_coalescence();
 }
 
+EMatrix demography::Pr_X_at(double t, double rho_over_theta)
+{
+    // Start off with the identity
+    EMatrix Pr_X = (finite_markov_rates(rho_over_theta, coalescent_rates[0])*0.0).exp();
+
+    for(int l=0;l<level_boundaries.size() and level_boundaries[l] <= t;l++)
+    {
+	double t2 = t;
+
+	// Only go to the end of the level with this rate matrix
+	if (l+1 < level_boundaries.size() and level_boundaries[l+1] < t)
+	    t2 = level_boundaries[l+1];
+
+	double dt = t2-level_boundaries[l];
+
+	EMatrix Omega = finite_markov_rates(rho_over_theta, coalescent_rates[l]);
+	Pr_X = (Omega*dt).exp() * Pr_X;
+    }
+
+    return Pr_X;
+}
+
 Matrix get_transition_probabilities(const vector<double>& B, const vector<double>& T, const vector<double>& beta, const vector<double>& alpha,
 				    const vector<double>& coalescent_rates, const vector<double>& level_boundaries, double rho_over_theta)
 {
@@ -315,41 +353,17 @@ Matrix get_transition_probabilities(const vector<double>& B, const vector<double
     const int n = T.size();
     assert(B.size() == n+1);
 
-    vector<EMatrix> Omega;
-    for(auto rate: coalescent_rates)
-	Omega.push_back(  finite_markov_rates(rho_over_theta, rate) );
-
-    assert(Omega.size() == coalescent_rates.size());
-    assert(Omega.size() == level_boundaries.size());
+    demography demo(coalescent_rates, level_boundaries);
 
     // exp(Omega*t) for bin boundaries
     vector<EMatrix> Pr_X_at_B(n);
     for(int i=0;i<n;i++)
-    {
-	auto& Pr_X = Pr_X_at_B[i];
-
-	for(int l=0;l<level_boundaries.size() and (l==0 or level_boundaries[l] <= B[i]);l++)
-	{
-	    double t = B[i];
-
-	    // Only go to the end of the level with this rate matrix
-	    if (l+1 < level_boundaries.size() and level_boundaries[l+1] < B[i])
-		t = level_boundaries[l+1];
-
-	    double dt = t-level_boundaries[l];
-
-	    if (l==0)
-		Pr_X = (Omega[l]*dt).exp();
-	    else
-		Pr_X = (Omega[l]*dt).exp() * Pr_X;
-	}
-//	Pr_X_at_B[i] = (Omega[0] * B[i]).exp();
-    }
+	Pr_X_at_B[i] = demo.Pr_X_at(B[i], rho_over_theta);
 
     // exp(Omega*t) for bin centers
-    vector<EMatrix> Pr_X_at_T;
-    for(auto t: T)
-	Pr_X_at_T.push_back((Omega[0]*t).exp());
+    vector<EMatrix> Pr_X_at_T(n);
+    for(int i=0;i<n;i++)
+	Pr_X_at_T[i] = demo.Pr_X_at(T[i], rho_over_theta);
 
     Matrix P(n,n);
     for(int j=0;j<n; j++)
