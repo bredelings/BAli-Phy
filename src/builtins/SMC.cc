@@ -315,17 +315,41 @@ Matrix get_transition_probabilities(const vector<double>& B, const vector<double
     const int n = T.size();
     assert(B.size() == n+1);
 
-    auto Omega = finite_markov_rates(rho_over_theta, coalescent_rates[0]);
+    vector<EMatrix> Omega;
+    for(auto rate: coalescent_rates)
+	Omega.push_back(  finite_markov_rates(rho_over_theta, rate) );
+
+    assert(Omega.size() == coalescent_rates.size());
+    assert(Omega.size() == level_boundaries.size());
 
     // exp(Omega*t) for bin boundaries
     vector<EMatrix> Pr_X_at_B(n);
     for(int i=0;i<n;i++)
-	Pr_X_at_B[i] = (Omega*B[i]).exp();
+    {
+	auto& Pr_X = Pr_X_at_B[i];
+
+	for(int l=0;l<level_boundaries.size() and (l==0 or level_boundaries[l] <= B[i]);l++)
+	{
+	    double t = B[i];
+
+	    // Only go to the end of the level with this rate matrix
+	    if (l+1 < level_boundaries.size() and level_boundaries[l+1] < B[i])
+		t = level_boundaries[l+1];
+
+	    double dt = t-level_boundaries[l];
+
+	    if (l==0)
+		Pr_X = (Omega[l]*dt).exp();
+	    else
+		Pr_X = (Omega[l]*dt).exp() * Pr_X;
+	}
+//	Pr_X_at_B[i] = (Omega[0] * B[i]).exp();
+    }
 
     // exp(Omega*t) for bin centers
     vector<EMatrix> Pr_X_at_T;
     for(auto t: T)
-	Pr_X_at_T.push_back((Omega*t).exp());
+	Pr_X_at_T.push_back((Omega[0]*t).exp());
 
     Matrix P(n,n);
     for(int j=0;j<n; j++)
