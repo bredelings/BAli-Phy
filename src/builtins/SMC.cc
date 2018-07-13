@@ -311,7 +311,6 @@ Matrix get_transition_probabilities(const vector<double>& B, const vector<double
     assert(theta > 0);
 
     assert(rho_over_theta >= 0);
-    assert(A.n_sequences() == 2);
 
     const int n = T.size();
     assert(B.size() == n+1);
