@@ -555,9 +555,8 @@ log_double_t smc(double rho_over_theta, vector<double> coalescent_rates, vector<
     // How many bins
     const int n_bins = 100;
 
-    // Lower end of each bin. boundaries[0] = 0. The upper end of the last bin is \infty
-    vector<double> alpha(n_bins);
-    vector<double> beta(n_bins);
+    vector<double> alpha(n_bins); /// Pr (T < t[j])
+    vector<double> beta(n_bins);  /// Pr (T < b[k])
     for(int i=0;i<n_bins;i++)
     {
 	beta[i] = double(i)/n_bins;
