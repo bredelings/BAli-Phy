@@ -3,7 +3,7 @@
     "synonyms": [ "F61" ],
     "result_type": "FrequencyModel[a]",
     "constraints": "Triplets[a,b]",
-    "call": "SModel.plus_f'[A,pi]",
+    "call": "SModel.ReversibleFrequency.plus_f'[A,pi]",
     "args": [
         {
             "arg_name": "pi",

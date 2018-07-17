@@ -2,7 +2,7 @@
     "name": "equ",
     "synonyms": ["EQU"],
     "result_type": "ExchangeModel[a]",
-    "call": "SModel.equ[A]",
+    "call": "SModel.ReversibleMarkov.equ[A]",
     "args": [
         {
             "arg_name": "A",

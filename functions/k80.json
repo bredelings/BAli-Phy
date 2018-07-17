@@ -3,7 +3,7 @@
     "synonyms": ["K80"],
     "result_type": "RevCTMC[a]",
     "constraints": ["Nucleotides[a]"],
-    "call": "SModel.k80[kappa,A]",
+    "call": "SModel.Nucleotides.k80[kappa,A]",
     "args": [
         {
             "arg_name": "kappa",

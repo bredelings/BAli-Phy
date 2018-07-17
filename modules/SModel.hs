@@ -8,12 +8,12 @@ import Alphabet;
 import Tree;
 import Parameters;
 
+import SModel.Nucleotides;
 import SModel.Codons;
 import SModel.ReversibleMarkov;
 import SModel.Likelihood;
 
 builtin builtin_average_frequency 1 "average_frequency" "SModel";
-builtin builtin_gtr_sym 2 "gtr_sym" "SModel";
 builtin builtin_empirical 2 "empirical" "SModel";
 builtin pam 1 "pam" "SModel";
 builtin jtt 1 "jtt" "SModel";
@@ -25,11 +25,6 @@ builtin builtin_frequency_matrix 1 "frequency_matrix" "SModel";
 data F81 = F81 a b c d;
 data MixtureModel = MixtureModel a;
 data MixtureModels = MixtureModels a;
-
-gtr_sym exchange a = builtin_gtr_sym (list_to_vector exchange) a;
-equ a = gtr_sym (replicate nn 1.0) a where {n=alphabetSize a;nn=n*(n-1)/2};
-tn93_sym k1 k2 a = gtr_sym [1.0, k1, 1.0, 1.0, k2, 1.0] a;
-hky85_sym k a = tn93_sym k k a;
 
 scaleMM x (MixtureModel dist            ) = MixtureModel [(p, scale x m) | (p, m) <- dist];
 
@@ -101,25 +96,6 @@ frequency_matrix (MixtureModel d) = let {model = MixtureModel d}
 frequency_matrix (MixtureModels (m:ms)) = frequency_matrix m;
 
 --
-uniform_frequencies a = zip letters (repeat $ 1.0/(intToDouble n_letters)) where {letters = alphabet_letters a;
-                                                                                  n_letters = alphabetSize a};
-
-plus_f_equal_frequencies a = plus_f a (replicate n_letters (1.0/intToDouble n_letters)) where {n_letters=alphabetSize a};
-
-jukes_cantor a = reversible_markov (equ a) (plus_f_equal_frequencies a);
-
-k80 kappa nuca = reversible_markov (hky85_sym kappa nuca) (plus_f_equal_frequencies nuca);
-
-f81        pi a = reversible_markov (equ            a) (plus_f a pi);
-hky85 k    pi a = reversible_markov (hky85_sym k    a) (plus_f a pi);
-tn93 k1 k2 pi a = reversible_markov (tn93_sym k1 k2 a) (plus_f a pi);
-gtr s      pi a = reversible_markov (gtr_sym s      a) (plus_f a pi);
-
-f81'        pi' a = reversible_markov (equ            a) (plus_f' a pi');
-hky85' k    pi' a = reversible_markov (hky85_sym k    a) (plus_f' a pi');
-tn93' k1 k2 pi' a = reversible_markov (tn93_sym k1 k2 a) (plus_f' a pi');
-gtr' s'     pi' a = reversible_markov (gtr_sym' s'    a) (plus_f' a pi');
-
 m1a_omega_dist f1 w1 = [(f1,w1), (1.0-f1,1.0)];
 
 m2a_omega_dist f1 w1 posP posW = extendDiscreteDistribution (m1a_omega_dist f1 w1) posP posW;
@@ -192,34 +168,8 @@ branch_site s r fs ws posP posW codona = MixtureModels [bg_mixture,fg_mixture] w
 branch_site_test s r fs ws posP posW posSelection codona = branch_site s r fs ws posP posW' codona where
     {posW' = if (posSelection == 1) then posW else 1.0};
 
-all_pairs l = [(x,y) | (x:ys) <- tails l, y <- ys];
-
-letter_pair_names a = [l1++l2|(l1,l2) <- all_pairs (alphabet_letters a)];
-
 get_element_freqs []                 x = error ("No frequency specified for letter '" ++ x ++ "'");
 get_element_freqs ((key,value):rest) x = if (key == x) then value else get_element_freqs rest x;
-
-get_element_exchange []                 x y = error ("No exchangeability specified for '" ++ x ++ "'");
-get_element_exchange ((key,value):rest) x y = if key == x || key == y then value else get_element_exchange rest x y;
-
-select_element x ((key,value):rest) = if x == key then value else select_element x rest;
-select_element x [] = error $ "Can't find element " ++ show x ++ " in dictionary!";
-
-select_elements (x:xs) pi = select_element x pi:select_elements xs pi;
-select_elements []      _ = [];
-
-get_ordered_elements xs xps plural = if length xs == length xps then select_elements xs xps else error $ "Expected "++show (length xs)++" "++plural
-                                     ++" but got "++ show (length xps)++"!";
-
-gtr_sym' es' a = gtr_sym es a where {lpairs = all_pairs (alphabet_letters a);
-                                     es = if length lpairs == length es' then
-                                              [get_element_exchange es' (l1++l2) (l2++l1)| (l1,l2) <- lpairs]
-                                          else
-                                              error "Expected "++show (length lpairs)++" exchangeabilities but got "++ show (length es')++"!"};
-
-plus_f' a pi' = plus_f a pi where {pi= get_ordered_elements (alphabet_letters a) pi' "frequencies"};
-
-plus_gwf' a pi' f = plus_gwf a pi f where {pi= get_ordered_elements (alphabet_letters a) pi' "frequencies"};
 
 f1x4' a pi' = f1x4 a pi where {nuc_letters = alphabet_letters (getNucleotides a);
                                pi = get_ordered_elements nuc_letters pi' "frequencies"};

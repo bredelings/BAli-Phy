@@ -10,7 +10,7 @@
 		"journal": {"name": "Journal of molecular evolution", "volume": "22", "number": "2", "pages": "160--174"},
 		"identifier": [{"type":"doi","id":"10.1007/BF02101694"}]
 	       },
-    "call": "SModel.hky85_sym[kappa,a]",
+    "call": "SModel.Nucleotides.hky85_sym[kappa,a]",
     "args": [
         {
             "arg_name": "kappa",

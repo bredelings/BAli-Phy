@@ -1,7 +1,7 @@
 {
     "name": "gwF",
     "result_type": "FrequencyModel[a]",
-    "call": "SModel.plus_gwf'[A,pi,f]",
+    "call": "SModel.ReversibleFrequency.plus_gwf'[A,pi,f]",
     "args": [
         {
             "arg_name": "pi",

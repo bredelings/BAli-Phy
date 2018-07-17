@@ -10,7 +10,7 @@
 		"identifier": [{"type":"doi","id":"10.1093/oxfordjournals.molbev.a040023"}]
 	       },
     "constraints": ["Nucleotides[a]"],
-    "call": "SModel.tn93_sym[kappaPur,kappaPyr,a]",
+    "call": "SModel.Nucleotides.tn93_sym[kappaPur,kappaPyr,a]",
     "args": [
         {
             "arg_name": "kappaPur",

@@ -2,7 +2,7 @@
     "name": "f",
     "synonyms": ["F"],
     "result_type": "FrequencyModel[a]",
-    "call": "SModel.plus_f'[A,pi]",
+    "call": "SModel.ReversibleFrequency.plus_f'[A,pi]",
     "args": [
         {
             "arg_name": "pi",
