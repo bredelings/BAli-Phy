@@ -4,7 +4,7 @@
     "result_type": "ExchangeModel[Codons[a]]",
     "constraints": ["Nucleotides[a]"],
     "title": "The Goldman & Yang (1994) model of dN\/dS",
-    "call": "SModel.m0[a,submodel,omega]",
+    "call": "SModel.Codons.m0[a,submodel,omega]",
     "args": [
         {
             "arg_name": "omega",

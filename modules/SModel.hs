@@ -1,4 +1,5 @@
 module SModel (module SModel,
+               module SModel.Codons,
                module SModel.ReversibleMarkov,
                module SModel.Likelihood) where 
 {
@@ -7,22 +8,17 @@ import Alphabet;
 import Tree;
 import Parameters;
 
+import SModel.Codons;
 import SModel.ReversibleMarkov;
 import SModel.Likelihood;
 
-builtin f3x4_frequencies_builtin 4 "f3x4_frequencies" "SModel";
-builtin muse_gaut_matrix 4 "muse_gaut_matrix" "SModel";
 builtin builtin_average_frequency 1 "average_frequency" "SModel";
 builtin builtin_gtr_sym 2 "gtr_sym" "SModel";
-builtin m0 3 "m0" "SModel";
-builtin singlet_to_triplet_exchange 2 "singlet_to_triplet_exchange" "SModel";
 builtin builtin_empirical 2 "empirical" "SModel";
 builtin pam 1 "pam" "SModel";
 builtin jtt 1 "jtt" "SModel";
 builtin wag 1 "wag" "SModel";
 builtin lg 1 "lg" "SModel";
-builtin fMutSel_q 4 "fMutSel_q" "SModel";
-builtin fMutSel_pi 3 "fMutSel_pi" "SModel";
 builtin builtin_weighted_frequency_matrix 2 "weighted_frequency_matrix" "SModel";
 builtin builtin_frequency_matrix 1 "frequency_matrix" "SModel";
 
