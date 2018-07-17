@@ -19,12 +19,12 @@
         {
             "arg_name": "ps",
             "arg_type": "List[Double]",
-            "default_value": "~dirichlet[n,2]"
+            "default_value": "~dirichlet[@n,2]"
         },
         {
             "arg_name": "omegas",
             "arg_type": "List[Double]",
-            "default_value": "~iid[n,uniform[0,1]]"
+            "default_value": "~iid[@n,uniform[0,1]]"
         },
         {
             "arg_name": "posP",
