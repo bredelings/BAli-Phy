@@ -2,7 +2,7 @@
     "name": "x3",
     "result_type": "ExchangeModel[Triplets[a]]",
     "title": "A triplet exchange model that applies a singlet exchange model to all 3 nucleotide positions",
-    "call": "SModel.singlet_to_triplet_exchange[A,submodel]",
+    "call": "SModel.Codons.singlet_to_triplet_exchange[A,submodel]",
     "args": [
         {
             "arg_name": "submodel",
