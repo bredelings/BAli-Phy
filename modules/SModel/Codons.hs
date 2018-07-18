@@ -11,6 +11,6 @@ module SModel.Codons (module SModel.Codons) where
   builtin fMutSel_q 4 "fMutSel_q" "SModel";
   builtin fMutSel_pi 3 "fMutSel_pi" "SModel";
 
-  gy94  k w pi  a = reversible_markov (m0 (hky85_sym k a_nuc) w a) (plus_f  a pi ) where {a_nuc = getNucleotides a};
-  gy94' k w pi' a = reversible_markov (m0 (hky85_sym k a_nuc) w a) (plus_f' a pi') where {a_nuc = getNucleotides a};
+  gy94  k w pi  a = reversible_markov (m0 a (hky85_sym k a_nuc) w) (plus_f  a pi ) where {a_nuc = getNucleotides a};
+  gy94' k w pi' a = reversible_markov (m0 a (hky85_sym k a_nuc) w) (plus_f' a pi') where {a_nuc = getNucleotides a};
 }
