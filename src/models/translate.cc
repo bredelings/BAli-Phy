@@ -354,7 +354,7 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
     {
 	string arg_name = supplied_arg.first;
 	if (not maybe_get_arg(*rule, arg_name))
-	    throw myexception()<<"Function '"<<name<<"' has no argument '"<<arg_name<<"'";
+	    throw myexception()<<"Function '"<<name<<"' has no argument '"<<arg_name<<"' in term:\n"<<model.show();
 	arg_count[arg_name]++;
 	if (arg_count[arg_name] > 1)
 	    throw myexception()<<"Supplied argument '"<<arg_name<<"' more than once in term:\n"<<model.show();
