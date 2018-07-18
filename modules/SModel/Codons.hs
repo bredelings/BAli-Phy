@@ -25,9 +25,9 @@ f3x4'_frequencies a pi1 pi2 pi3 = zip (alphabet_letters a) (f3x4_frequencies a p
            nuc_letters = alphabet_letters a_nuc;
            a_nuc = getNucleotides a};
 
-f1x4_frequencies a pi = f3x4_frequencies a pi pi pi ;
+f1x4_frequencies a pi = f3x4_frequencies a pi pi pi;
 
-f1x4_frequencies_vec a pi = f3x4_frequencies_vec a pi pi pi ;
+f1x4_frequencies_vec a pi = f3x4_frequencies_vec a pi pi pi;
 
 f1x4'_frequencies a pi = f3x4'_frequencies a pi pi pi;
 
