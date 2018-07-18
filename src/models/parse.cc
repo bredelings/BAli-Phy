@@ -304,29 +304,28 @@ void handle_positional_args(ptree& model, const Rules& R)
     {
 	pair<string,ptree> child = x;
 
-	if (child.first.empty())
+	if (not child.first.empty())
+	    seen_keyword = true;
+	else if (seen_keyword)
+	    throw myexception()<<"Positional argument after keyword argument in '"<<unparse(model, R)<<"'!";
+	// Empty positional arguments argument can later have their value specified by keyword, so we ignore them completely
+	else if (child.second.is_null())
 	{
-	    if (seen_keyword)
-		throw myexception()<<"Positional argument after keyword argument in '"<<unparse(model, R)<<"'!";
-
+	    i++;
+	    continue;
+	}
+	else
+	{
 	    auto keyword = get_keyword_for_positional_arg(rule, i);
 
 	    if (model.count(keyword))
 		throw myexception()<<"Trying to set value for "<<head<<"."<<keyword<<" both by position and by keyword: \n"<<unparse(model, R);
 
-	    if (child.second.is_null())
-	    {
-		i++;
-		continue;
-	    }
-	    else
-		child.first = keyword;
+	    child.first = keyword;
 	}
-	else
-	    seen_keyword = true;
 
-	if (child.first.empty())
-	    throw myexception()<<"No keyword in argument for "<<head<<"?";
+	// This shouldn't happen.
+	if (child.first.empty()) throw myexception()<<"No keyword in argument for "<<head<<"?";
 
 	model2.push_back(child);
 
