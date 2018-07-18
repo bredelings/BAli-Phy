@@ -3,7 +3,7 @@
     "title":"The GTR exchangability matrix",
     "deprecated-synonyms": ["GTR"],
     "result_type": "RevCTMC[a]",
-    "call": "SModel.gtr'[sym,pi,a]",
+    "call": "SModel.ReversibleMarkov.gtr'[sym,pi,a]",
     "citation":"Tavare, 1986",
     "args": [
         {
