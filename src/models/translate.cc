@@ -238,14 +238,14 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	    // 1. Analyze the body, forcing it to have the required type
 	    equations E = pass2(R, required_type, body_exp, bound_vars, extend_scope(scope, var_name, a));
 	    if (not E)
-		throw myexception()<<"Expression '"<<unparse(body_exp, R)<<"' is not of required type "<<unparse_type(required_type)<<"!";
+		throw myexception()<<"Expression '"<<unparse_annotated(body_exp)<<"' is not of required type "<<unparse_type(required_type)<<"!";
 	    add(bound_vars, E.referenced_vars());
 
 	    // 2. Analyze the bound expression with type a
 	    substitute(E, a);
 	    E = E && pass2(R, a, var_exp, bound_vars, scope);
 	    if (not E)
-		throw myexception()<<"Expression '"<<unparse(var_exp, R)<<"' is not of required type "<<unparse_type(a)<<"!";
+		throw myexception()<<"Expression '"<<unparse_annotated(var_exp)<<"' is not of required type "<<unparse_type(a)<<"!";
 
 	    // Create the new model tree with args in correct order
 	    model = ptree("let",{{var_name, var_exp},{"",body_exp}});
