@@ -18,14 +18,23 @@ using std::cerr;
 using std::endl;
 using std::abs;
 
+vector<double> from_evec(const EVector& v1)
+{
+    vector<double> v2(v1.size());
+    for(int i=0;i<v2.size();i++)
+	v2[i] = v1[i].as_double();
+    return v2;
+}
+
+
 extern "C" closure builtin_function_lExp(OperationArgs& Args)
 {
     auto L = Args.evaluate(0);
-    auto pi = Args.evaluate(1);
+    auto pi = from_evec( Args.evaluate(1).as_<EVector>() );
     double t = Args.evaluate(2).as_double();
 
     auto M = new Box<Matrix>;
-    *M = exp(L.as_<EigenValues>(), pi.as_<Vector<double>>(), t);
+    *M = exp(L.as_<EigenValues>(), pi, t);
     return M;
 }
 
@@ -70,8 +79,7 @@ extern "C" closure builtin_function_get_eigensystem(OperationArgs& Args)
     auto arg0 = Args.evaluate(0);
     const Matrix& Q = arg0.as_< Box<Matrix> >();
 
-    auto arg1 = Args.evaluate(1);
-    const vector<double>& pi = arg1.as_< Vector<double> >();
+    auto pi = from_evec(Args.evaluate(1).as_<EVector>() );
 
     const unsigned n = Q.size1();
     assert(Q.size2() == Q.size1());
@@ -131,8 +139,7 @@ extern "C" closure builtin_function_get_equilibrium_rate(OperationArgs& Args)
     auto arg2 = Args.evaluate(2);
     const Matrix& Q = arg2.as_< Box<Matrix> >();
 
-    auto arg3 = Args.evaluate(3);
-    const vector<double> pi = arg3.as_< Vector<double> >();
+    auto pi = from_evec (Args.evaluate(3).as_<EVector>() );
 
     assert(Q.size2() == Q.size1());
     const unsigned N = smap.size();
@@ -230,8 +237,11 @@ extern "C" closure builtin_function_muse_gaut_matrix(OperationArgs& Args)
     object_ptr<Box<Matrix>> R( new Box<Matrix>(n,n) );
 
     for(int i=0;i<n;i++)
+    {
+	double sum = 0;
 	for(int j=0;j<n;j++)
 	{
+	    if (i==j) continue;
 	    int nmuts=0;
 	    int from=-1;
 	    int to=-1;
@@ -257,7 +267,10 @@ extern "C" closure builtin_function_muse_gaut_matrix(OperationArgs& Args)
 		    std::abort();
 	    }
 	    (*R)(i,j) = r;
+	    sum += r;
 	}
+	(*R)(i,i) = -sum;
+    }
 
     return R;
 }
@@ -722,15 +735,13 @@ extern "C" closure builtin_function_plus_gwF(OperationArgs& Args)
 
     double f = Args.evaluate(1).as_double();
 
-    auto arg2 = Args.evaluate(2);
-    const vector<double>& pi_ = arg2.as_< Vector<double> >();
+    auto pi = from_evec( Args.evaluate(2).as_<EVector>() );
 
     const int n = a.size();
 
     auto R = new Box<Matrix>(n,n);
 
     // compute frequencies
-    vector<double> pi = pi_;
     normalize(pi);
     assert(a.size() == pi.size());
     
@@ -968,15 +979,15 @@ extern "C" closure builtin_function_weighted_frequency_matrix(OperationArgs& Arg
     assert(D.size() == F.size());
 
     const int n_models = F.size();
-    const int n_states = F[0].as_<Vector<double>>().size();
+    const int n_states = F[0].as_<EVector>().size();
 
     auto *WF = new Box<Matrix>(n_models, n_states);
 
     for(int m=0;m<n_models;m++) {
 	double p = D[m].as_double();
-	const auto& f = F[m].as_<Vector<double>>();
+	const auto& f = F[m].as_<EVector>();
 	for(int s=0;s<n_states;s++) 
-	    (*WF)(m,s) = p*f[s];
+	    (*WF)(m,s) = p*f[s].as_double();
     }
     return WF;
 }

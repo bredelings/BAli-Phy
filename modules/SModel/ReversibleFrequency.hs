@@ -13,7 +13,7 @@ plus_f_matrix a pi = plus_gwf_matrix a pi 1.0;
 plus_gwf_matrix a pi f = builtin_plus_gwf a f pi;
 
 -- pi is [Double] here
-plus_gwf a pi f = ReversibleFrequency a (simple_smap a) pi' (plus_gwf_matrix a pi' f) where {pi' = listToVectorDouble pi};
+plus_gwf a pi f = ReversibleFrequency a (simple_smap a) pi' (plus_gwf_matrix a pi' f) where {pi' = list_to_vector pi};
 plus_f a pi = plus_gwf a pi 1.0;
 
 uniform_frequencies a = zip letters (repeat $ 1.0/(intToDouble n_letters)) where {letters = alphabet_letters a;
