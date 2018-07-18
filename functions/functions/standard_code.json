@@ -1,0 +1,7 @@
+{
+    "name": "standard_code",
+    "result_type": "GeneticCode",
+    "call": "Alphabet.standard_code",
+    "args": [],
+    "title": "The standard genetic code"
+}

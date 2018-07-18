@@ -41,10 +41,15 @@ extern "C" closure builtin_function_triplets(OperationArgs& Args)
 extern "C" closure builtin_function_codons(OperationArgs& Args)
 {
     auto nuc  = Args.evaluate(0);
-    auto aa   = Args.evaluate(1);
+    auto code   = Args.evaluate(1);
 
 //    auto code = Args.evaluate(2).as_<Genetic_Code>();
-    return {Codons(nuc.as_<Nucleotides>(), aa.as_<AminoAcids>(), Standard_Genetic_Code())};
+    return {Codons(nuc.as_<Nucleotides>(), AminoAcids(), code.as_<Genetic_Code>())};
+}
+
+extern "C" closure builtin_function_genetic_code_standard(OperationArgs& Args)
+{
+    return {new Standard_Genetic_Code()};
 }
 
 extern "C" closure builtin_function_dna(OperationArgs&)
@@ -74,3 +79,4 @@ extern "C" closure builtin_function_translate(OperationArgs& Args)
 
   return {C.as_<Codons>().translate(codon)};
 }
+

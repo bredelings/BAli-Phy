@@ -216,6 +216,8 @@ f3x4_frequencies a pi1 pi2 pi3 = let {pi1' = listToVectorDouble pi1;
 f1x4_frequencies a pi = let {pi' = listToVectorDouble pi}
                         in f3x4_frequencies_builtin a pi' pi' pi';
 
+f1x4'_frequencies a pi = zip (alphabet_letters a) (f1x4_frequencies a pi);
+
 f1x4 triplet_a nuc_pi = let {triplet_pi_vec = f1x4_frequencies triplet_a nuc_pi}
                         in  ReversibleFrequency triplet_a (simple_smap triplet_a) triplet_pi_vec (plus_f_matrix triplet_a triplet_pi_vec);
 
