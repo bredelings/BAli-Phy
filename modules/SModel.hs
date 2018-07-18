@@ -165,14 +165,6 @@ branch_site_test model_func fs ws posP posW posSelection = branch_site model_fun
 get_element_freqs []                 x = error ("No frequency specified for letter '" ++ x ++ "'");
 get_element_freqs ((key,value):rest) x = if (key == x) then value else get_element_freqs rest x;
 
-f1x4' a pi' = f1x4 a pi where {nuc_letters = alphabet_letters (getNucleotides a);
-                               pi = get_ordered_elements nuc_letters pi' "frequencies"};
-
-f3x4' a pi1' pi2' pi3' = f3x4 a pi1 pi2 pi3 where {nuc_letters = alphabet_letters (getNucleotides a);
-                                                   pi1 = get_ordered_elements nuc_letters pi1' "frequencies";
-                                                   pi2 = get_ordered_elements nuc_letters pi2' "frequencies";
-                                                   pi3 = get_ordered_elements nuc_letters pi3' "frequencies"};
-
 mg94' pi' a = mg94 pi a  where {nuc_letters = alphabet_letters (getNucleotides a);
                                 pi = get_ordered_elements nuc_letters pi' "frequencies"};
 
@@ -223,12 +215,6 @@ f3x4'_frequencies a pi1 pi2 pi3 = zip (alphabet_letters a) (f3x4_frequencies a p
            a_nuc = getNucleotides a};
 
 f1x4'_frequencies a pi = f3x4'_frequencies a pi pi pi;
-
-f1x4 triplet_a nuc_pi = let {triplet_pi_vec = f1x4_frequencies triplet_a nuc_pi}
-                        in  ReversibleFrequency triplet_a (simple_smap triplet_a) triplet_pi_vec (plus_f_matrix triplet_a triplet_pi_vec);
-
-f3x4 triplet_a nuc_pi1 nuc_pi2 nuc_pi3 = let {triplet_pi_vec = f3x4_frequencies triplet_a nuc_pi1 nuc_pi2 nuc_pi3} in
-                                         ReversibleFrequency triplet_a (simple_smap triplet_a) triplet_pi_vec (plus_f_matrix triplet_a triplet_pi_vec);
 
 mg94 nuc_pi triplet_a = let {nuc_a          = getNucleotides triplet_a;
                              triplet_pi_vec = f1x4_frequencies triplet_a nuc_pi;
