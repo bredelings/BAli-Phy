@@ -348,6 +348,18 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
     auto name = model.get_value<string>();
     ptree model2(name);
 
+    // 6. Check that we didn't supply unreferenced arguments.
+    map<string,int> arg_count;
+    for(const auto& supplied_arg: model)
+    {
+	string arg_name = supplied_arg.first;
+	if (not maybe_get_arg(*rule, arg_name))
+	    throw myexception()<<"Function '"<<name<<"' has no argument '"<<arg_name<<"'";
+	arg_count[arg_name]++;
+	if (arg_count[arg_name] > 1)
+	    throw myexception()<<"Supplied argument '"<<arg_name<<"' more than once in term:\n"<<model.show();
+    }
+
     // 7. Handle arguments in rule order
     int skip=0;
     for(const auto& arg: rule->get_child("args"))

@@ -198,13 +198,22 @@ Rule Rules::require_rule_for_func(const string& s) const
 	throw myexception()<<"No function '"<<s<<"'.";
 }
 
-ptree get_arg(const Rule& rule, const string& arg_name)
+optional<ptree> maybe_get_arg(const Rule& rule, const string& arg_name)
 {
     for(const auto& arg: rule.get_child("args"))
 	if (arg.second.get<string>("arg_name") == arg_name)
 	    return arg.second;
-    throw myexception()<<"Rule for function '"<<rule.get<string>("name")<<"' has no argument '"<<arg_name<<"'";
-    // FIXME give info about function here?
+    return boost::none;
+}
+
+ptree get_arg(const Rule& rule, const string& arg_name)
+{
+    auto arg = maybe_get_arg(rule, arg_name);
+    if (not arg)
+	// FIXME give info about function here?
+	throw myexception()<<"Rule for function '"<<rule.get<string>("name")<<"' has no argument '"<<arg_name<<"'";
+    else
+	return *arg;
 }
 
 string get_keyword_for_positional_arg(const Rule& rule, int i)

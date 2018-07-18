@@ -12,6 +12,7 @@ typedef ptree Rule;
 typedef ptree type_t;
 
 ptree get_arg(const Rule& rule, const std::string& arg_name);
+boost::optional<ptree> maybe_get_arg(const Rule& rule, const std::string& arg_name);
 
 type_t get_type_for_arg(const Rule& rule, const std::string& arg);
 
