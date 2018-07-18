@@ -31,6 +31,6 @@
 	    "default_value": "getAlphabet"
         }
     ],
-    "description":"Symmetric exchangability matrix from HKY",
+    "description":"The HKY85 model",
     "extract": "all"
 }

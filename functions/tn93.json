@@ -38,6 +38,6 @@
             "description": "The nucleotide alphabet (DNA or RNA)."
         }
     ],
-    "description":"Symmetric exchangability matrix from Tamura-Nei",
+    "description":"The Tamura-Nei model.",
     "extract": "all"
 }

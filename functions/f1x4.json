@@ -1,24 +1,26 @@
 {
     "name": "f1x4",
     "synonyms": [ "F1x4" ],
-    "result_type": "FrequencyModel[a]",
+    "result_type": "List[Pair[String,Double]]",
     "constraints": "Triplets[a,b]",
-    "call": "SModel.f1x4'[A,pi]",
+    "call": "SModel.f1x4'_frequencies[a,pi]",
     "args": [
         {
             "arg_name": "pi",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "~dirichlet_on[letters[getNucleotides[@A]],1.0]",
+            "default_value": "~dirichlet_on[letters[getNucleotides[@a]],1.0]",
 	    "description": "Nucleotide frequencies"
         },
         {
-            "arg_name": "A",
+            "arg_name": "a",
             "arg_type": "a",
 	    "default_value": "getAlphabet",
-	    "description": "The alphabet"
+	    "description": "The (codon) alphabet"
         }
     ],
-    "title": "The F1x4 codon frequency model",
-    "description": "The F1x4 model describes codon frequencies in terms of 4 nucleotide frequencies.  Considering a transition from a codon ijk to a codon ilk the F1x4 model considers the frequencies of all nucleotides in the target codon:\n   R(ijk,ilk) = pi[i]*pi[l]*pi[k],\nso that substitution happens at a slower rate at nucleotides that are adjacent to a low-frequency nucleotide.\nThe MG94 mode, on the other hand, considers only the frequency of l (the nucleotide that changed):\n   R(ijk,ilk) = pi[l].\nThus the rate of substitution does not depend on neighboring nucleotides i and k.",
+    "title": "F1x4 codon frequencies",
+    "description": "The F1x4 model describes codon frequencies pi' in terms of nucleotide frequencies pi:\n   pi'[ijk] = pi[i]*pi[l]*pi[k].",
+    "examples": ["gy94[pi=f1x4]","f1x4[a=codons[dna]]"],
+    "see": ["f3x4","gy94"],
     "extract": "all"
 }

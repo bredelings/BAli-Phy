@@ -596,7 +596,7 @@ extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
     // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
 
     auto arg1 = Args.evaluate(1);
-    auto pi1 = arg1.as_<Vector<double>>();
+    auto pi1 = arg1.as_<EVector>();
 
     int nuc_size = T.getNucleotides().size();
 
@@ -604,29 +604,34 @@ extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
 	throw myexception()<<"f3x4_frequencies:site 1:expected "<<nuc_size<<" frequencies, but got "<<pi1.size()<<"!";
 
     auto arg2 = Args.evaluate(2);
-    auto pi2 = arg2.as_<Vector<double>>();
+    auto pi2 = arg2.as_<EVector>();
 
     if (pi2.size() != nuc_size)
 	throw myexception()<<"f3x4_frequencies:site 2:expected "<<nuc_size<<" frequencies, but got "<<pi2.size()<<"!";
 
     auto arg3 = Args.evaluate(3);
-    auto pi3 = arg3.as_<Vector<double>>();
+    auto pi3 = arg3.as_<EVector>();
 
     if (pi3.size() != nuc_size)
 	throw myexception()<<"f3x4_frequencies:site 3:expected "<<nuc_size<<" frequencies, but got "<<pi3.size()<<"!";
 
-    Vector<double> pi;
+    EVector pi;
     pi.resize(T.size());
+    double sum = 0;
     for(int i=0;i<T.size();i++)
-	pi[i] = pi1[T.sub_nuc(i,0)] * pi2[T.sub_nuc(i,1)] * pi3[T.sub_nuc(i,2)];
+    {
+	double x = pi1[T.sub_nuc(i,0)].as_double() * pi2[T.sub_nuc(i,1)].as_double() * pi3[T.sub_nuc(i,2)].as_double();
+	pi[i] = x;
+	sum += x;
+    }
 
     // Some triplets may be missing from the triplet alphabet (e.g. stop codons).  So renormalize.
 
-    double scale = 1.0/sum(pi);
-    for(double& d : pi)
-	d *= scale;
+    double scale = 1.0/sum;
+    for(auto& d : pi)
+	d = d.as_double() * scale;
 
-    assert(std::abs(sum(pi) - 1.0) < 1.0e-9);
+//    assert(std::abs(sum(pi) - 1.0) < 1.0e-9);
 
     return pi;
 }

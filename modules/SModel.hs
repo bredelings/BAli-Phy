@@ -208,15 +208,21 @@ fMutSel0' codon_a amino_ws' omega nuc_model = fMutSel0 codon_a amino_ws omega nu
 -- Issue: bad mixing on fMutSel model
 -- Issue: how to make M2/M8/branchsite/etc versions of fMutSel model?
 
-f3x4_frequencies a pi1 pi2 pi3 = let {pi1' = listToVectorDouble pi1;
-                                      pi2' = listToVectorDouble pi2;
-                                      pi3' = listToVectorDouble pi3} in
-                                 f3x4_frequencies_builtin a pi1' pi2' pi3';
+f3x4_frequencies a pi1 pi2 pi3 = let {pi1' = list_to_vector pi1;
+                                      pi2' = list_to_vector pi2;
+                                      pi3' = list_to_vector pi3} in
+                                 list_from_vector $ f3x4_frequencies_builtin a pi1' pi2' pi3';
 
-f1x4_frequencies a pi = let {pi' = listToVectorDouble pi}
-                        in f3x4_frequencies_builtin a pi' pi' pi';
+f1x4_frequencies a pi = f3x4_frequencies a pi pi pi ;
 
-f1x4'_frequencies a pi = zip (alphabet_letters a) (f1x4_frequencies a pi);
+f3x4'_frequencies a pi1 pi2 pi3 = zip (alphabet_letters a) (f3x4_frequencies a pi1' pi2' pi3')
+    where {pi1' = get_ordered_elements nuc_letters pi1 "frequencies";
+           pi2' = get_ordered_elements nuc_letters pi2 "frequencies";
+           pi3' = get_ordered_elements nuc_letters pi3 "frequencies";
+           nuc_letters = alphabet_letters a_nuc;
+           a_nuc = getNucleotides a};
+
+f1x4'_frequencies a pi = f3x4'_frequencies a pi pi pi;
 
 f1x4 triplet_a nuc_pi = let {triplet_pi_vec = f1x4_frequencies triplet_a nuc_pi}
                         in  ReversibleFrequency triplet_a (simple_smap triplet_a) triplet_pi_vec (plus_f_matrix triplet_a triplet_pi_vec);

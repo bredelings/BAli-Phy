@@ -47,7 +47,7 @@ extern "C" closure builtin_function_codons(OperationArgs& Args)
     return {Codons(nuc.as_<Nucleotides>(), AminoAcids(), code.as_<Genetic_Code>())};
 }
 
-extern "C" closure builtin_function_genetic_code_standard(OperationArgs& Args)
+extern "C" closure builtin_function_genetic_code_standard(OperationArgs&)
 {
     return {new Standard_Genetic_Code()};
 }
