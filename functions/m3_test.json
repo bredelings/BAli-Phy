@@ -2,13 +2,13 @@
     "name": "m3_test",
     "synonyms": ["M3_Test"],
     "result_type": "MixtureModel[Codons[a]]",
-    "call": "SModel.m3_test[nuc_model,freq_model,ps,omegas,posP,posW,posSelection,A]",
+    "call": "SModel.m3_test[submodel,ps,omegas,posP,posW,posSelection]",
     "args": [
         {
-            "arg_name": "nuc_model",
-            "arg_type": "ExchangeModel[a]",
-            "default_value": "hky85_sym",
-            "alphabet": "getNucleotides[@A]"
+            "arg_name": "submodel",
+            "arg_type": "Function[Double,RevCTMC[a]]",
+            "default_value": "function[w,gy94[omega=w]]",
+	    "description": "The model, as a function of dN/dS"
         },
         {
             "arg_name": "freq_model",
@@ -45,11 +45,6 @@
             "arg_name": "n",
             "arg_type": "Int",
             "default_value": "4"
-        },
-        {
-            "arg_name": "A",
-            "arg_type": "Codons[a]",
-            "default_value": "getAlphabet"
         }
     ],
     "extract": "all"

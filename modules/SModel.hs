@@ -34,6 +34,7 @@ scaled_mixture ms rs fs = mixMM fs (scale_MMs rs ms);
 scaled_mixture' a ms rs fs = scaled_mixture (map ($a) ms) rs fs;
 
 multiParameter model_fn values = MixtureModel [ (f*p, m) |(p,x) <- values, let {dist = case model_fn x of {MixtureModel d -> d}}, (f,m) <- dist];
+multiParameter_unit model_fn values = multiParameter (\x -> unit_mixture $ model_fn x) values;
 
 multi_rate m d = multiParameter (\x->scaleMM x m) d;
 
@@ -126,46 +127,39 @@ m8a_omega_dist mu gamma n_bins posP = m8_omega_dist mu gamma n_bins posP 1.0;
 m8a_test_omega_dist mu gamma n_bins posP posW 0 = m8_omega_dist mu gamma n_bins posP 1.0;
 m8a_test_omega_dist mu gamma n_bins posP posW _ = m8_omega_dist mu gamma n_bins posP posW;
 
-dp_omegas mu omegas = map (\w -> min 1.0 (w*scale)) omegas where {scale = mu/sum(omegas)*(intToDouble $ length omegas)};
-
-omega_mixture codona s r dist = multiParameter (\w -> unit_mixture $ reversible_markov (m0 codona s w) r) dist;
-
-dp_omega s r mu omegas codona = omega_mixture codona s r $ zip (repeat p) (dp_omegas mu omegas) where
-    {p = 1.0/(intToDouble $ length omegas)};
-
 --  w1 <- uniform 0.0 1.0;
 --  [f1, f2] <- dirichlet' 2 1.0;
-m1a s r w1 f1 codona = omega_mixture codona s r (m1a_omega_dist f1 w1);
+m1a model_func w1 f1 = multiParameter_unit model_func (m1a_omega_dist f1 w1);
 
-m2a s r w1 f1 posP posW codona = omega_mixture codona s r (m2a_omega_dist f1 w1 posP posW);
+m2a model_func w1 f1 posP posW = multiParameter_unit model_func (m2a_omega_dist f1 w1 posP posW);
 
-m2a_test s r w1 f1 posP posW posSelection codona = omega_mixture codona s r (m2a_test_omega_dist f1 w1 posP posW posSelection);
+m2a_test model_func w1 f1 posP posW posSelection = multiParameter_unit model_func (m2a_test_omega_dist f1 w1 posP posW posSelection);
 
-m3 s r ps omegas codona = omega_mixture codona s r (m3_omega_dist ps omegas);
+m3 model_func ps omegas = multiParameter_unit model_func (m3_omega_dist ps omegas);
 
-m3_test s r ps omegas posP posW posSelection codona = omega_mixture codona s r (m3_test_omega_dist ps omegas posP posW posSelection);
+m3_test model_func ps omegas posP posW posSelection = multiParameter_unit model_func (m3_test_omega_dist ps omegas posP posW posSelection);
 
-m7 s r mu gamma n_bins codona =  omega_mixture codona s r (m7_omega_dist mu gamma n_bins);
+m7 model_func mu gamma n_bins =  multiParameter_unit model_func (m7_omega_dist mu gamma n_bins);
 
-m8 s r mu gamma n_bins posP posW codona = omega_mixture codona s r (m8_omega_dist mu gamma n_bins posP posW);
+m8 model_func mu gamma n_bins posP posW = multiParameter_unit model_func (m8_omega_dist mu gamma n_bins posP posW);
 
-m8a s r mu gamma n_bins posP codona = omega_mixture codona s r (m8a_omega_dist mu gamma n_bins posP);
+m8a model_func mu gamma n_bins posP = multiParameter_unit model_func (m8a_omega_dist mu gamma n_bins posP);
 
-m8a_test s r mu gamma n_bins posP posW posSelection codona = omega_mixture codona s r (m8a_test_omega_dist mu gamma n_bins posP posW posSelection);
+m8a_test model_func mu gamma n_bins posP posW posSelection = multiParameter_unit model_func (m8a_test_omega_dist mu gamma n_bins posP posW posSelection);
 
-branch_site s r fs ws posP posW codona = MixtureModels [bg_mixture,fg_mixture] where
+branch_site model_func fs ws posP posW = MixtureModels [bg_mixture,fg_mixture] where
     {
 -- background omega distribution -- where the last omega is 1.0 (neutral)
       bg_dist = zip fs (ws ++ [1.0]);
 -- accelerated omega distribution -- posW for all categories
       accel_dist = zip fs (repeat posW);
 -- background branches always use the background omega distribution              
-      bg_mixture = omega_mixture codona s r (mix [1.0-posP, posP] [bg_dist, bg_dist]);
+      bg_mixture = multiParameter_unit model_func (mix [1.0-posP, posP] [bg_dist, bg_dist]);
 -- foreground branches use the foreground omega distribution with probability posP
-      fg_mixture = omega_mixture codona s r (mix [1.0-posP, posP] [bg_dist, accel_dist]);
+      fg_mixture = multiParameter_unit model_func (mix [1.0-posP, posP] [bg_dist, accel_dist]);
     };
 
-branch_site_test s r fs ws posP posW posSelection codona = branch_site s r fs ws posP posW' codona where
+branch_site_test model_func fs ws posP posW posSelection = branch_site model_func fs ws posP posW' where
     {posW' = if (posSelection == 1) then posW else 1.0};
 
 get_element_freqs []                 x = error ("No frequency specified for letter '" ++ x ++ "'");

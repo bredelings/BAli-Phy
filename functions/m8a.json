@@ -2,7 +2,7 @@
     "name": "m8a",
     "synonyms": ["M8a"],
     "result_type": "MixtureModel[Codons[a]]",
-    "call": "SModel.m8a[nuc_model,freq_model,mu,gamma,n,posP,A]",
+    "call": "SModel.m8a[submodel,mu,gamma,n,posP]",
     "args": [
         {
             "arg_name": "n",
@@ -10,10 +10,10 @@
             "default_value": "4"
         },
         {
-            "arg_name": "nuc_model",
-            "arg_type": "ExchangeModel[a]",
-            "default_value": "hky85_sym",
-            "alphabet": "getNucleotides[@A]"
+            "arg_name": "submodel",
+            "arg_type": "Function[Double,RevCTMC[a]]",
+            "default_value": "function[w,gy94[omega=w]]",
+	    "description": "The model, as a function of dN/dS"
         },
         {
             "arg_name": "freq_model",

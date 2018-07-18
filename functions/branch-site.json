@@ -10,21 +10,13 @@
 	"journal": { "name": "Molecular biology and evolution", "volume": "22", "number": "12", "pages": "2472--2479"},
 	"identifier": [{"type":"doi","id":"10.1093/molbev/msi237"}]
     },
-    "call": "SModel.branch_site_test[nuc_model,freq_model,fs,omegas,posP,posW,posSelection,A]",
+    "call": "SModel.branch_site_test[submodel,fs,omegas,posP,posW,posSelection]",
     "args": [
         {
-            "arg_name": "nuc_model",
-            "arg_type": "ExchangeModel[a]",
-            "default_value": "hky85_sym",
-            "alphabet": "getNucleotides[@A]",
-	    "description":"The nucleotide exchange model."
-        },
-        {
-            "arg_name": "freq_model",
-            "arg_type": "FrequencyModel[Codons[a]]",
-            "default_value": "f61",
-            "alphabet": "@A",
-	    "description":"The codon frequency model."
+            "arg_name": "submodel",
+            "arg_type": "Function[Double,RevCTMC[a]]",
+            "default_value": "function[w,gy94[omega=w]]",
+	    "description": "The model, as a function of dN/dS"
         },
         {
             "arg_name": "fs",
@@ -55,12 +47,6 @@
             "arg_type": "Int",
             "default_value": "~bernoulli[0.5]",
 	    "description": "The model indicator: if 0, the sites only switch to neutrality on the foreground branches.\n If 1 then sites may switch to dN/dS=posW."
-        },
-        {
-            "arg_name": "A",
-            "arg_type": "Codons[a]",
-            "default_value": "getAlphabet",
-	    "description": "The Codon alphabet."
         }
     ],
     "extract": "all"
