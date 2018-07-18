@@ -162,9 +162,6 @@ branch_site model_func fs ws posP posW = MixtureModels [bg_mixture,fg_mixture] w
 branch_site_test model_func fs ws posP posW posSelection = branch_site model_func fs ws posP posW' where
     {posW' = if (posSelection == 1) then posW else 1.0};
 
-get_element_freqs []                 x = error ("No frequency specified for letter '" ++ x ++ "'");
-get_element_freqs ((key,value):rest) x = if (key == x) then value else get_element_freqs rest x;
-
 fMutSel codon_a codon_w omega (ReversibleMarkov _ _ nuc_q nuc_pi _ _ _) =
    let {nuc_a = getNucleotides codon_a;
         smap = simple_smap codon_a;
@@ -190,7 +187,6 @@ fMutSel0' codon_a amino_ws' omega nuc_model = fMutSel0 codon_a amino_ws omega nu
                                                       amino_a = getAminoAcids codon_a};
 
 -- Issue: bad mixing on fMutSel model
--- Issue: how to make M2/M8/branchsite/etc versions of fMutSel model?
 
 gamma_rates_dist alpha = gamma alpha (1.0/alpha);
 
