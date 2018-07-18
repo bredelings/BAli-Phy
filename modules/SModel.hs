@@ -165,14 +165,6 @@ branch_site_test model_func fs ws posP posW posSelection = branch_site model_fun
 get_element_freqs []                 x = error ("No frequency specified for letter '" ++ x ++ "'");
 get_element_freqs ((key,value):rest) x = if (key == x) then value else get_element_freqs rest x;
 
-mg94' pi' a = mg94 pi a  where {nuc_letters = alphabet_letters (getNucleotides a);
-                                pi = get_ordered_elements nuc_letters pi' "frequencies"};
-
-mg94w9' pi1' pi2' pi3' a = mg94w9 pi1 pi2 pi3 a where {nuc_letters = alphabet_letters (getNucleotides a);
-                                                       pi1 = get_ordered_elements nuc_letters pi1' "frequencies";
-                                                       pi2 = get_ordered_elements nuc_letters pi2' "frequencies";
-                                                       pi3 = get_ordered_elements nuc_letters pi3' "frequencies"};
-
 fMutSel codon_a codon_w omega (ReversibleMarkov _ _ nuc_q nuc_pi _ _ _) =
    let {nuc_a = getNucleotides codon_a;
         smap = simple_smap codon_a;
@@ -199,38 +191,6 @@ fMutSel0' codon_a amino_ws' omega nuc_model = fMutSel0 codon_a amino_ws omega nu
 
 -- Issue: bad mixing on fMutSel model
 -- Issue: how to make M2/M8/branchsite/etc versions of fMutSel model?
-
-f3x4_frequencies a pi1 pi2 pi3 = let {pi1' = list_to_vector pi1;
-                                      pi2' = list_to_vector pi2;
-                                      pi3' = list_to_vector pi3} in
-                                 list_from_vector $ f3x4_frequencies_builtin a pi1' pi2' pi3';
-
-f1x4_frequencies a pi = f3x4_frequencies a pi pi pi ;
-
-f3x4'_frequencies a pi1 pi2 pi3 = zip (alphabet_letters a) (f3x4_frequencies a pi1' pi2' pi3')
-    where {pi1' = get_ordered_elements nuc_letters pi1 "frequencies";
-           pi2' = get_ordered_elements nuc_letters pi2 "frequencies";
-           pi3' = get_ordered_elements nuc_letters pi3 "frequencies";
-           nuc_letters = alphabet_letters a_nuc;
-           a_nuc = getNucleotides a};
-
-f1x4'_frequencies a pi = f3x4'_frequencies a pi pi pi;
-
-mg94 nuc_pi triplet_a = let {nuc_a          = getNucleotides triplet_a;
-                             triplet_pi_vec = f1x4_frequencies triplet_a nuc_pi;
-                             nuc_pi_vec     = listToVectorDouble nuc_pi;
-                             nuc_r          = plus_f_matrix nuc_a nuc_pi_vec} in
-                        ReversibleFrequency triplet_a (simple_smap triplet_a) triplet_pi_vec (muse_gaut_matrix triplet_a nuc_r nuc_r nuc_r);
-
-mg94w9 nuc_pi1 nuc_pi2 nuc_pi3 triplet_a = let {nuc_a          = getNucleotides triplet_a;
-                                                triplet_pi_vec = f3x4_frequencies triplet_a nuc_pi1 nuc_pi2 nuc_pi3;
-                                                nuc_pi_vec1     = listToVectorDouble nuc_pi1;
-                                                nuc_pi_vec2     = listToVectorDouble nuc_pi2;
-                                                nuc_pi_vec3     = listToVectorDouble nuc_pi3;
-                                                nuc_r1         = plus_f_matrix nuc_a nuc_pi_vec1;
-                                                nuc_r2         = plus_f_matrix nuc_a nuc_pi_vec2;
-                                                nuc_r3         = plus_f_matrix nuc_a nuc_pi_vec3} in
-                                           ReversibleFrequency triplet_a (simple_smap triplet_a) triplet_pi_vec (muse_gaut_matrix triplet_a nuc_r1 nuc_r2 nuc_r3);
 
 gamma_rates_dist alpha = gamma alpha (1.0/alpha);
 
