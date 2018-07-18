@@ -1,1 +1,1 @@
---test <DATA>/codons-dna.fasta --smodel=M3[gtr_sym,MG94,n=3]
+--test <DATA>/codons-dna.fasta --smodel=function[w,mg94[omega=w]]+m3[n=3]
