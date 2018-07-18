@@ -1,7 +1,7 @@
 {
     "name": "fMutSel0",
     "result_type": "RevCTMC[Codons[a]]",
-    "call": "SModel.fMutSel0'[A,w,omega,submodel]",
+    "call": "SModel.fMutSel0'[a,w,omega,submodel]",
     "args": [
         {
             "arg_name": "omega",
@@ -12,18 +12,18 @@
         {
             "arg_name": "w",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "zip[letters[getAminoAcids[@A]],~iid[length[letters[getAminoAcids[@A]]],log_normal[0,0.5]]]",
+            "default_value": "zip[letters[getAminoAcids[@a]],~iid[length[letters[getAminoAcids[@a]]],log_normal[0,0.5]]]",
 	    "description": "Fitness of amino acids"
         },
         {
             "arg_name": "submodel",
             "arg_type": "RevCTMC[a]",
             "default_value": "hky85",
-	    "alphabet": "getNucleotides[@A]",
+	    "alphabet": "getNucleotides[@a]",
 	    "description": "Model of neutral nucleotide substitution"
         },
 	{
-	    "arg_name": "A",
+	    "arg_name": "a",
 	    "arg_type": "Codons[a]",
 	    "default_value": "getAlphabet",
 	    "description": "The alphabet"

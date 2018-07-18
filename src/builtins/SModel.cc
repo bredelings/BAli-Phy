@@ -26,6 +26,14 @@ vector<double> from_evec(const EVector& v1)
     return v2;
 }
 
+EVector to_evec(const vector<double>& v1)
+{
+    EVector v2(v1.size());
+    for(int i=0;i<v2.size();i++)
+	v2[i] = v1[i];
+    return v2;
+}
+
 
 extern "C" closure builtin_function_lExp(OperationArgs& Args)
 {
@@ -848,8 +856,7 @@ extern "C" closure builtin_function_fMutSel_pi(OperationArgs& Args)
     const vector<double>& codon_w = arg1.as_< Vector<double> >();
     assert(codon_w.size() == N);
 
-    auto arg2 = Args.evaluate(2);
-    const vector<double>& nuc_pi = arg2.as_< Vector<double> >();
+    auto nuc_pi = from_evec( Args.evaluate(2).as_< EVector >() );
     assert(nuc_pi.size() == C.getNucleotides().size());
 
     // compute frequencies
@@ -859,7 +866,7 @@ extern "C" closure builtin_function_fMutSel_pi(OperationArgs& Args)
 	pi[i] = nuc_pi[C.sub_nuc(i,0)] * nuc_pi[C.sub_nuc(i,1)] * nuc_pi[C.sub_nuc(i,2)] * codon_w[i];
 
     normalize(pi);
-    return pi;
+    return to_evec(pi);
 }
 
 /*
