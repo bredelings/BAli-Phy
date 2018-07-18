@@ -2,7 +2,7 @@
     "name": "jc69",
     "synonyms": ["JC"],
     "result_type": "RevCTMC[a]",
-    "call": "SModel.jukes_cantor[A]",
+    "call": "SModel.ReversibleMarkov.jukes_cantor[A]",
     "args": [
         {
             "arg_name": "A",
