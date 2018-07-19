@@ -1006,14 +1006,14 @@ extern "C" closure builtin_function_frequency_matrix(OperationArgs& Args)
     // cache matrix of frequencies
 
     const int n_models = F.size();
-    const int n_states = F[0].as_<Vector<double>>().size();
+    const int n_states = F[0].as_<EVector>().size();
 
     auto *FF = new Box<Matrix>(n_models, n_states);
 
     for(int m=0;m<n_models;m++) {
-	const auto& f = F[m].as_<Vector<double>>();
+	const auto& f = F[m].as_<EVector>();
 	for(int s=0;s<n_states;s++) 
-	    (*FF)(m,s) = f[s];
+	    (*FF)(m,s) = f[s].as_double();
     }
     return FF;
 }
