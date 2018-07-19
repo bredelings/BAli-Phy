@@ -429,14 +429,15 @@ optional<pair<expression_ref,set<string>>> get_model_lambda(const Rules& R, cons
 
     // 3. Parse the body with the lambda variable in scope, and find the free variables.
     var_info_t var_info(x,false,true);
-    auto body_E = get_model_as(R, body_exp, extend_scope(scope, var_name, var_info));
+    auto body_scope = extend_scope(scope, var_name, var_info);
+    auto body_E = get_model_as(R, body_exp, body_scope);
     expression_ref body = body_E.first;
     auto lambda_vars = body_E.second;
 
     // E = E x l1 l2 l3
     expression_ref E = {var("Prelude.fst"),pair_arg_body};
     for(auto& vname: lambda_vars)
-	E = {E,var("lambda_var_"+vname)};
+	E = {E, body_scope.at(vname).x};
 
     // E = \x -> E
     E = lambda_quantify(x, E);
@@ -446,7 +447,7 @@ optional<pair<expression_ref,set<string>>> get_model_lambda(const Rules& R, cons
 
     // E = \l1 l2 l3 -> E
     for(auto& vname: std::reverse(lambda_vars))
-	E = lambda_quantify(var("lambda_var_"+vname),E);
+	E = lambda_quantify(scope.at(vname).x,E);
 
     // E = return $ (E,snd pair_arg_body)
     E = {var("Prelude.return"),Tuple(E,{var("Prelude.snd"),var("pair_arg_body")})};
@@ -539,13 +540,13 @@ pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model
 	// Apply the free lambda variables to arg before using it.
 	int index = get_index_for_arg_name(*rule, call_arg_name);
 	for(auto& vname: arg_lambda_vars[index])
-	    arg = {arg, var("lambda_var_"+vname)};
+	    arg = {arg, scope.at(vname).x};
 
 	E = {E, arg};
     }
     // 8b. Return a lambda function 
     for(auto& vname: std::reverse(lambda_vars))
-	E = lambda_quantify(var("lambda_var_"+vname),E);
+	E = lambda_quantify(scope.at(vname).x, E);
 
     // 9. Compute loggers
     expression_ref loggers = List();
