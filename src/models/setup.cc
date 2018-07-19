@@ -206,9 +206,17 @@ bool is_loggable_function(const Rules& R, const string& name)
     return not rule->get("no_log",false);
 }
 
-enum class var_type_t {unknown=0,constant,random,lambda};
+struct var_info_t
+{
+    var x;
+    bool is_random = false;
+    bool depends_on_lambda = false;
+    var_info_t(const var& v, bool r=false, bool l=false)
+	:x(v),is_random(r),depends_on_lambda(l)
+    { }
+};
 
-typedef map<string,var_type_t> names_in_scope_t;
+typedef map<string,var_info_t> names_in_scope_t;
 
 bool is_random(const ptree& model, const names_in_scope_t& scope)
 {
@@ -221,7 +229,7 @@ bool is_random(const ptree& model, const names_in_scope_t& scope)
 
     // 2. If this is a random variable, then yes.
     if (not model.size() and model.is_a<string>())
-	if (scope.count(name) and scope.at(name) == var_type_t::random) return true;
+	if (scope.count(name) and scope.at(name).is_random) return true;
 
     // 3. Otherwise check if children are random and unlogged
     for(const auto& p: model)
@@ -242,7 +250,7 @@ bool is_unlogged_random(const Rules& R, const ptree& model, const names_in_scope
 
     // 2. If this is a random variable, then yes.
     if (not model.size() and model.is_a<string>())
-	if (scope.count(name) and scope.at(name) == var_type_t::random) return true;
+	if (scope.count(name) and scope.at(name).is_random) return true;
 
     // 3. If this function is loggable then any random children have already been logged.
     if (is_loggable_function(R, name)) return false;
@@ -271,11 +279,11 @@ bool should_log(const Rules& R, const ptree& model, const string& arg_name, cons
 	return false;
 }
 
-names_in_scope_t extend_scope(names_in_scope_t scope, const string& var, var_type_t t)
+names_in_scope_t extend_scope(names_in_scope_t scope, const string& var, const var_info_t& var_info)
 {
     if (scope.count(var))
 	scope.erase(var);
-    scope.insert({var, t});
+    scope.insert({var, var_info});
     return scope;
 }
 
@@ -292,7 +300,7 @@ names_in_scope_t extend_scope(const ptree& rule, int skip, const names_in_scope_
 	string arg_name = "@"+argument.get<string>("arg_name");
 
 	scope2.erase(arg_name);
-	scope2.insert({arg_name,var_type_t::unknown});
+	scope2.insert({arg_name,{var(""),false,false}});
     }
 
     return scope2;
@@ -349,7 +357,7 @@ optional<pair<expression_ref,set<string>>> get_variable_model(const ptree& E, co
     set<string> lambda_vars;
 
     // 2. If the name is a lambda var, then we need to quantify it, and put it into the list of free lambda vars
-    if (scope.at(name) == var_type_t::lambda)
+    if (scope.at(name).depends_on_lambda)
     {
 	auto x = var(string("lambda_var_")+name);
 	V = lambda_quantify(x,x);
@@ -386,10 +394,10 @@ optional<pair<expression_ref,set<string>>> get_model_let(const Rules& R, const p
     ptree var_exp = model_rep[0].second;
     ptree body_exp = model_rep[1].second;
 
-    auto var_type = is_random(var_exp, scope)?var_type_t::random : var_type_t::unknown;
+    var_info_t var_info(var(""),is_random(var_exp, scope));
 
     // 1. Perform the body with var_name in scope
-    auto p = get_model_as(R, body_exp, extend_scope(scope, var_name, var_type));
+    auto p = get_model_as(R, body_exp, extend_scope(scope, var_name, var_info));
     expression_ref E = p.first;
 
     // 2. Perform the variable expression
@@ -424,7 +432,8 @@ optional<pair<expression_ref,set<string>>> get_model_lambda(const Rules& R, cons
     ptree body_exp = model_rep[1].second;
 
     // 3. Parse the body with the lambda variable in scope, and find the free variables.
-    auto body_E = get_model_as(R, body_exp, extend_scope(scope, var_name, var_type_t::lambda));
+    var_info_t var_info(x,false,true);
+    auto body_E = get_model_as(R, body_exp, extend_scope(scope, var_name, var_info));
     expression_ref body = body_E.first;
     auto lambda_vars = body_E.second;
 
@@ -643,7 +652,7 @@ model_t get_model(const Rules& R, const string& type, const string& model, const
 
     names_in_scope_t names_in_scope;
     for(auto& x: scope)
-	names_in_scope.insert({x.first,var_type_t::unknown});
+	names_in_scope.insert({x.first,var_info_t(var(""))});
     return get_model(R, required_type, equations.get_constraints(), p.first, names_in_scope);
 }
 
