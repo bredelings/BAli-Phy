@@ -218,7 +218,7 @@ extern "C" closure builtin_function_singlet_to_triplet_exchange(OperationArgs& A
     return R;
 }
 
-extern "C" closure builtin_function_muse_gaut_matrix(OperationArgs& Args)
+extern "C" closure builtin_function_singlet_to_triplet_rates(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     const Triplets& T = arg0.as_<Triplets>();
