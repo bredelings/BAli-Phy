@@ -297,10 +297,12 @@ names_in_scope_t extend_scope(const ptree& rule, int skip, const names_in_scope_
 	if (i++ <= skip) continue;
 
 	const auto& argument = arg.second;
-	string arg_name = "@"+argument.get<string>("arg_name");
+	auto arg_name = argument.get<string>("arg_name");
+	auto ref_name = "@"+arg_name;
+	var x("arg_var_"+arg_name);
 
-	scope2.erase(arg_name);
-	scope2.insert({arg_name,{var(""),false,false}});
+	scope2.erase(ref_name);
+	scope2.insert({ref_name,{x,false,false}});
     }
 
     return scope2;
@@ -353,27 +355,20 @@ optional<pair<expression_ref,set<string>>> get_variable_model(const ptree& E, co
     // 1. If the name is not in scope then we are done.
     if (not scope.count(name)) return boost::none;
 
+    var x = scope.at(name).x;
+
     expression_ref V;
     set<string> lambda_vars;
 
     // 2. If the name is a lambda var, then we need to quantify it, and put it into the list of free lambda vars
     if (scope.at(name).depends_on_lambda)
     {
-	auto x = var(string("lambda_var_")+name);
 	V = lambda_quantify(x,x);
 	lambda_vars.insert(name);
     }
     // 3. Otherwise the expression is just the variable itself
     else
-    {
-	if (name.size() and name[0] == '@')
-	{
-	    name = name.substr(1);
-	    V = var(string("arg_var_")+name);
-	}
-	else
-	    V = var(string("var_")+name);
-    }
+	V = x;
 
     // 4. Construct the logging tuple and return it in order to allow this action to be performed.
     V = {var("Prelude.return"),Tuple(V,List())};
@@ -394,7 +389,10 @@ optional<pair<expression_ref,set<string>>> get_model_let(const Rules& R, const p
     ptree var_exp = model_rep[0].second;
     ptree body_exp = model_rep[1].second;
 
-    var_info_t var_info(var(""),is_random(var_exp, scope));
+    var pair_x("pair_var_"+var_name);
+    var x("var_"+var_name);
+
+    var_info_t var_info(x,is_random(var_exp, scope));
 
     // 1. Perform the body with var_name in scope
     auto p = get_model_as(R, body_exp, extend_scope(scope, var_name, var_info));
@@ -408,8 +406,6 @@ optional<pair<expression_ref,set<string>>> get_model_let(const Rules& R, const p
 	    throw myexception()<<"You cannot let-bind a variable to an expression with a function-variable";
 
 	// E = 'arg <<= (\pair_var_name -> let {arg_name=fst pair_var_name} in E)
-	var pair_x("pair_var_"+var_name);
-	var x("var_"+var_name);
 	E = lambda_quantify(pair_x, let_expression({{x,{var("Prelude.fst"),pair_x}}},E));
 
 	E = {var("Prelude.>>="), arg, E};
@@ -652,7 +648,8 @@ model_t get_model(const Rules& R, const string& type, const string& model, const
 
     names_in_scope_t names_in_scope;
     for(auto& x: scope)
-	names_in_scope.insert({x.first,var_info_t(var(""))});
+	names_in_scope.insert({x.first,var_info_t(var("var_"+x.first))});
+
     return get_model(R, required_type, equations.get_constraints(), p.first, names_in_scope);
 }
 
