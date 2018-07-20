@@ -2,6 +2,17 @@
   - Fixes
     - Make bp-analyze able to parse output files from 3.0-beta.
     - Rename Goldman & Yang codon model to gy94 from incorrect yn94.
+  - Models
+    - Add new syntax function[x,...] for specifying models.
+    - new functions map, zip, zipWith.
+    - m1a,m2a,..,m8a_test,branch-site, etc. now take functions as arguments.
+    - gy94 and mg94 now both yield continous-time markov chains.
+    - f1x4, f3x4, and f61 now compute named codon frequencies.
+    - +f and +gwF are now modifiers on exchange models like wag.
+    - Logging now returns an object that can change shape dynamically.
+  - Haskell
+    - modules can now export imported modules.
+    - Refactor module SModel into SModel.Codons, SModel.ReversibleMarkov, etc.
 * 3.2
   - Fixes
     - Increase test timeout for internal testsuite and testiphy.
