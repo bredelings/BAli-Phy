@@ -463,44 +463,16 @@ optional<pair<expression_ref,set<string>>> get_model_lambda(const Rules& R, cons
     return {{E, lambda_vars}};
 }
 
-
-pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
+// NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
+pair<expression_ref,set<string>> get_model_function(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
 {
-    //  std::cout<<"model = "<<model<<std::endl;
-    //  auto result = parse(model);
-    //  std::cout<<result.get_value<string>()<<"\n";
-    //  write_info(std::cout, result);
-    //  std::cout<<std::endl;
-    //  ptree model_rep = parse(model);
-
-    // 1. Complain on empty expressions
-    if (model_rep.empty() and model_rep.value_is_empty())
-	throw myexception()<<"Can't construct model from from empty description!";
-
-    // 2. Handle constant expressions
-    else if (auto constant = get_constant_model(model_rep))
-	return {constant,{}};
-
-    // 3. Handle variables
-    else if (auto variable = get_variable_model(model_rep, scope))
-	return *variable;
-
-    // 4. Let expressions
-    else if (auto let = get_model_let(R, model_rep, scope))
-	return *let;
-
-    // 5. Let expressions
-    else if (auto func = get_model_lambda(R, model_rep, scope))
-	return *func;
-
     auto name = model_rep.get_value<string>();
 
-    // 5. Now we have a function -- get the rule
+    // 1. Get the rule for the function
     auto rule = R.get_rule_for_func(name);
     if (not rule) throw myexception()<<"No rule for '"<<name<<"'";
     if (not rule->count("call")) throw myexception()<<"No call for '"<<name<<"'";
 	
-    // 6. Extract parts of the rule
     bool perform_function = rule->get("perform",false);
     ptree call = rule->get_child("call");
     ptree args = rule->get_child("args");
@@ -510,7 +482,7 @@ pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model
 	throw myexception()<<"For rule '"<<name<<"', function '"<<call.get_value<string>()<<"' must be a qualified symbol or a builtin constructor like '(,)', but it is neither!";
     expression_ref E = var(call.get_value<string>());
 
-    // 7. Apply the arguments listed in the call : 'f call.name1 call.name2 call.name3'
+    // 2. Apply the arguments listed in the call : 'f call.name1 call.name2 call.name3'
     //    There could be fewer of these than the rule arguments.
     //    Also each arg needs to have its own lambda vars applied to it.
     for(int i=0;i<call.size();i++)
@@ -523,8 +495,8 @@ pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model
 	E = {E, arg};
     }
 
-    // 8. Parse models for arguments to figure out which free lambda variables they contain
-    //    ALSO, let-bind arg_var_<name> for any arguments that are (i) not performed and (ii) depend on a lambda variable.
+    // 3a. Parse models for arguments to figure out which free lambda variables they contain
+    // 3b. ALSO, let-bind arg_var_<name> for any arguments that are (i) not performed and (ii) depend on a lambda variable.
     vector<expression_ref> arg_models;
     vector<set<string>> arg_lambda_vars;
     set<string> lambda_vars;
@@ -555,11 +527,11 @@ pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model
 	}
     }
 
-    // 8b. Return a lambda function 
+    // 4. Return a lambda function 
     for(auto& vname: std::reverse(lambda_vars))
 	E = lambda_quantify(scope.at(vname).x, E);
 
-    // 9. Compute loggers
+    // 5. Compute loggers
     expression_ref loggers = List();
     for(int i=0;i<args.size();i++)
     {
@@ -573,14 +545,14 @@ pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model
 	loggers = {var("Distributions.add_logger"),loggers,log_name,var("pair_arg_var_"+arg_name),do_log};
     }
 
-    // 10. Return the function call: 'return (f call.name1 call.name2 call.name3)'
+    // 6. Return the function call: 'return (f call.name1 call.name2 call.name3)'
     expression_ref Return = var("Prelude.return");
     if (not perform_function)
 	E = {Return,E};
 
     E = {var("Prelude.>>="), E, lambda_quantify(var("result"),{Return,Tuple(var("result"),loggers)})};
 
-    // 11. Peform the rule arguments 'Prefix "arg_name" (arg_+arg_name) >>= (\arg_name -> (Log "arg_name" arg_name) << E)'
+    // 7. Peform the rule arguments 'Prefix "arg_name" (arg_+arg_name) >>= (\arg_name -> (Log "arg_name" arg_name) << E)'
     for(int i=0;i<args.size();i++)
     {
 	auto argi = array_index(args,i);
@@ -614,6 +586,39 @@ pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model
     }
 
     return {E, lambda_vars};
+}
+
+pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
+{
+    //  std::cout<<"model = "<<model<<std::endl;
+    //  auto result = parse(model);
+    //  std::cout<<result.get_value<string>()<<"\n";
+    //  write_info(std::cout, result);
+    //  std::cout<<std::endl;
+    //  ptree model_rep = parse(model);
+
+    // 1. Complain on empty expressions
+    if (model_rep.empty() and model_rep.value_is_empty())
+	throw myexception()<<"Can't construct model from from empty description!";
+
+    // 2. Handle constant expressions
+    else if (auto constant = get_constant_model(model_rep))
+	return {constant,{}};
+
+    // 3. Handle variables
+    else if (auto variable = get_variable_model(model_rep, scope))
+	return *variable;
+
+    // 4. Let expressions
+    else if (auto let = get_model_let(R, model_rep, scope))
+	return *let;
+
+    // 5. Let expressions
+    else if (auto func = get_model_lambda(R, model_rep, scope))
+	return *func;
+
+    // 6. Functions
+    return get_model_function(R, model_rep, scope);
 }
 
 
