@@ -15,29 +15,6 @@ using std::map;
 using std::string;
 using boost::optional;
 
-// Translate pass M+FM -> rctmc[M,FM]
-void pass1(const Rules& R, ptree& p)
-{
-    // 1. Handle children.
-    for(auto& child: p)
-	if (not child.second.is_null()) // For function[x=null,body=E]
-	    pass1(R, child.second);
-    
-    // 2. Convert e.g. TN+F -> rctmc[TN,F]
-    if (unify(R.get_result_type(p),parse_type("FrequencyModel[_]")) and p.count("submodel"))
-    {
-	ptree q = p.get_child("submodel");
-	auto& r = p;
-	r.erase("submodel");
-	
-	ptree result = {};
-	result.put_value("rctmc");
-	result.push_back({"S",q});
-	result.push_back({"R",r});
-	p = result;
-    }
-}
-
 /// True if some conversion function can be applied to the expression of type t1, so that it is of type t2
 equations convertible_to(ptree& model, const type_t& t1, type_t t2)
 {
@@ -88,9 +65,8 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
 	if (E)
 	{
 	    ptree result;
-	    result.put_value("rctmc");
-	    result.push_back({"S",model});
-	    result.push_back({"R",ptree("f")});
+	    result.put_value("f");
+	    result.push_back({"submodel",model});
 	    model = result;
 	}
     }
@@ -409,7 +385,6 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 
 std::pair<ptree,equations> translate_model(const Rules& R, const ptree& required_type, ptree model, const vector<pair<string,ptree>>& scope)
 {
-    pass1(R, model);
     auto E = pass2(R, required_type, model, find_variables_in_type(required_type), scope);
     return {model,E};
 }

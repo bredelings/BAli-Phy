@@ -1303,17 +1303,16 @@ distributions and functions.  For example, the distribution <userinput>iid</user
   </section>
 
   <section><info><title>Models and '<userinput>+</userinput>' notation</title></info>
-  <para>BAli-Phy allows using <userinput>+</userinput> as a short-cut to combine models.  Models expressed this way are rewritten internally to a more precise form:
-<programlisting>wag+f               // rewritten to rctmc[wag,f]
-gy94+f3x4           // rewritten to rctmc[gy94,f3x4]
-hky85+Rates.gamma   // rewritten to Rates.gamma[submodel=hky85]
-hky85+inv           // rewritten to inv[submodel=hky85]</programlisting>
+  <para>BAli-Phy allows using <userinput>+</userinput> as a short-cut to combine models when a model takes a single submodel as an argument.  Models expressed this way are rewritten internally to a more precise form:
+<programlisting>hky85+Rates.gamma   // rewritten to Rates.gamma[submodel=hky85]
+hky85+inv           // rewritten to inv[submodel=hky85]
+wag+f               // rewritten to f[submodel=wag]
+</programlisting>
 </para>
-<para>These examples illustrate the two rules for rewriting <userinput>+</userinput>-expressions. In the first rule, an expression such as <userinput>m1[args1]+m2[args2]</userinput> is rewritten to <userinput>rctmc[m1[args1],m2[args2]]</userinput> if <userinput>m1</userinput> has type <userinput>ExchangeModel[a]</userinput> and <userinput>m2</userinput> has type <userinput>FrequencyModel[a]</userinput>.  This allows natural syntax for creating a reversible continuous-time Markov chain (RCTMC) from an exchange model (such as wag or gy94) and a frequency model (such as +f or +f3x4).</para>
-<para>In the second rule, an expression such as <userinput>model+M[args]</userinput> is rewritten to <userinput>M[args,submodel=model]</userinput> if <userinput>M</userinput> has a <userinput>submodel</userinput> argument.  When <userinput>+</userinput> occurs multiple times, the submodel is assumed to be as large as possible thus:
-<programlisting>hky85_sym+f+Rates.gamma+inv</programlisting>
+<para>These examples illustrate the rule for rewriting <userinput>+</userinput>-expressions.  In general, an expression such as <userinput>model+M[args]</userinput> is rewritten to <userinput>M[args,submodel=model]</userinput> if <userinput>M</userinput> has a <userinput>submodel</userinput> argument.  When <userinput>+</userinput> occurs multiple times, the submodel is assumed to be as large as possible thus:
+<programlisting>wag+f+Rates.gamma+inv</programlisting>
 is rewritten to
-<programlisting>inv[submodel=Rates.gamma[submodel=rctmc[hky85_sym,f]]]</programlisting>
+<programlisting>inv[submodel=Rates.gamma[submodel=f[submodel=wag]]]</programlisting>
 This allows a simple method for combining models, when one model is an argument to another model.
 </para>
   </section>

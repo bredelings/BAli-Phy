@@ -1,24 +1,29 @@
 {
     "name": "f",
     "synonyms": ["F"],
-    "result_type": "FrequencyModel[a]",
-    "call": "SModel.ReversibleFrequency.plus_f'[A,pi]",
+    "result_type": "RevCTMC[a]",
+    "call": "SModel.ReversibleMarkov.plus_f''[a,submodel,pi]",
     "args": [
         {
             "arg_name": "pi",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "~dirichlet_on[letters[@A],1]",
+            "default_value": "~dirichlet_on[letters[@a],1]",
 	    "description": "Letter frequencies"
         },
         {
-            "arg_name": "A",
+            "arg_name": "submodel",
+            "arg_type": "ExchangeModel[a]",
+	    "description": "Symmetric (exchangability) matrix"
+        },
+        {
+            "arg_name": "a",
             "arg_type": "a",
 	    "default_value": "getAlphabet",
 	    "description": "The alphabet"
         }
     ],
     "title": "The +F frequency model",
-    "description": "The +F frequency model species the rate matrix Q as:\n  Q(i,j) = S(i,j) * pi[j].",
+    "description": "The +F frequency model species the rate matrix Q as:\n  Q(i,j) = s(i,j) * pi[j].",
     "examples": ["wag+f"],
     "extract": "all"
 }

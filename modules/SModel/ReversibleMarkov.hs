@@ -43,4 +43,7 @@ gtr_sym' es' a = gtr_sym es a where {lpairs = all_pairs (alphabet_letters a);
                                               [get_element_exchange es' (l1++l2) (l2++l1)| (l1,l2) <- lpairs]
                                           else
                                               error "Expected "++show (length lpairs)++" exchangeabilities but got "++ show (length es')++"!"};
+
+plus_f''   a s pi = reversible_markov s (plus_f' a pi);
+plus_gwf'' a s pi f = reversible_markov s (plus_gwf' a pi f);
 }

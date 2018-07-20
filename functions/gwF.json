@@ -1,12 +1,12 @@
 {
     "name": "gwF",
-    "result_type": "FrequencyModel[a]",
-    "call": "SModel.ReversibleFrequency.plus_gwf'[A,pi,f]",
+    "result_type": "RevCTMC[a]",
+    "call": "SModel.ReversibleMarkov.plus_gwf''[a,submodel,pi,f]",
     "args": [
         {
             "arg_name": "pi",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "~dirichlet_on[letters[@A],1.0]"
+            "default_value": "~dirichlet_on[letters[@a],1.0]"
         },
         {
             "arg_name": "f",
@@ -14,7 +14,12 @@
             "default_value": "~uniform[0,1]"
         },
         {
-            "arg_name": "A",
+            "arg_name": "submodel",
+            "arg_type": "ExchangeModel[a]",
+	    "description": "Symmetric (exchangability) matrix"
+        },
+        {
+            "arg_name": "a",
             "arg_type": "a",
             "default_value": "getAlphabet"
         }

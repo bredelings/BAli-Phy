@@ -431,13 +431,7 @@ string unparse(const ptree& p, const Rules& rules)
 	return p.get_value<string>();
 
     string s = p.get_value<string>();
-    if (s == "rctmc")
-    {
-	string Q = unparse(p.get_child("S"), rules);
-	string R = unparse(p.get_child("R"), rules);
-	return Q + "+" + R;
-    }
-    else if (s == "let")
+    if (s == "let")
     {
 	string name = p[0].first;
 	return "let["+name+"="+unparse(p[0].second,rules)+","+unparse(p[1].second,rules)+"]";
@@ -519,12 +513,6 @@ string unparse_annotated(const ptree& ann)
 	return p.get_value<string>();
 
     string s = p.get_value<string>();
-    if (s == "rctmc")
-    {
-	string Q = unparse_annotated(p.get_child("S"));
-	string R = unparse_annotated(p.get_child("R"));
-	return Q + "+" + R;
-    }
     if (s == "let")
     {
 	string name = p[0].first;
