@@ -31,7 +31,7 @@
 	    "description": "The codon alphabet"
         }
     ],
-    "examples": ["gy94","gy94[kappa=2,omega=2]"],
+    "examples": ["gy94[kappa=2,omega=2]","gy94[pi=f1x4]","gy94[pi=f3x4]"],
     "citation": {"type": "article",
 		 "title": "A codon-based model of nucleotide substitution for protein-coding DNA sequences",
 		 "author": [{"name": "Goldman, Nick"},{"name": "Yang, Ziheng"}],
