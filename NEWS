@@ -2,6 +2,7 @@
   - Fixes
     - Make bp-analyze able to parse output files from 3.0-beta.
     - Rename Goldman & Yang codon model to gy94 from incorrect yn94.
+    - Fix run file for f81 model.
   - Models
     - Add new syntax function[x,...] for specifying models.
     - new functions map, zip, zipWith.
