@@ -17,5 +17,5 @@
 	    "description": "The Triplets alphabet"
         }
     ],
-    "examples": ["gtr_sym+x3","tn93_sym+x3+mg94","x3[hky85_sym]"]
+    "examples": ["gtr_sym+x3","tn93_sym+x3","x3[hky85_sym]"]
 }
