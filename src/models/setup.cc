@@ -504,12 +504,27 @@ pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model
     bool perform_function = rule->get("perform",false);
     ptree call = rule->get_child("call");
     ptree args = rule->get_child("args");
+    var fst("Prelude.fst");
     
     if (not is_qualified_symbol(call.get_value<string>()) and not is_haskell_builtin_con_name(call.get_value<string>()))
 	throw myexception()<<"For rule '"<<name<<"', function '"<<call.get_value<string>()<<"' must be a qualified symbol or a builtin constructor like '(,)', but it is neither!";
     expression_ref E = var(call.get_value<string>());
 
-    // 7. Parse models for arguments to figure out which free lambda variables they contain
+    // 7. Apply the arguments listed in the call : 'f call.name1 call.name2 call.name3'
+    //    There could be fewer of these than the rule arguments.
+    //    Also each arg needs to have its own lambda vars applied to it.
+    for(int i=0;i<call.size();i++)
+    {
+	string call_arg_name = array_index(call,i).get_value<string>();
+	// check that arg_name is a valid argument
+	get_arg(*rule, call_arg_name);
+	expression_ref arg = var("arg_var_" + call_arg_name);
+
+	E = {E, arg};
+    }
+
+    // 8. Parse models for arguments to figure out which free lambda variables they contain
+    //    ALSO, let-bind arg_var_<name> for any arguments that are (i) not performed and (ii) depend on a lambda variable.
     vector<expression_ref> arg_models;
     vector<set<string>> arg_lambda_vars;
     set<string> lambda_vars;
@@ -525,25 +540,21 @@ pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model
 	arg_models.push_back(m.first);
 	arg_lambda_vars.push_back(m.second);
 	add(lambda_vars, m.second);
+
+	if (not arg_lambda_vars[i].empty())
+	{
+	    var x("arg_var_"+arg_name);
+	    var pair_x("pair_arg_var_"+arg_name);
+
+	    // Apply the free lambda variables to arg result before using it.
+	    expression_ref F = {fst, pair_x};
+	    for(auto& vname: arg_lambda_vars[i])
+		F = {F, scope.at(vname).x};
+
+	    E = let_expression({{x,F}},E);
+	}
     }
 
-    // 8a. Apply the arguments listed in the call : 'f call.name1 call.name2 call.name3'
-    //    There could be fewer of these than the rule arguments.
-    //    Also each arg needs to have its own lambda vars applied to it.
-    for(int i=0;i<call.size();i++)
-    {
-	string call_arg_name = array_index(call,i).get_value<string>();
-	// check that arg_name is a valid argument
-	get_arg(*rule, call_arg_name);
-	expression_ref arg = var("arg_var_" + call_arg_name);
-
-	// Apply the free lambda variables to arg before using it.
-	int index = get_index_for_arg_name(*rule, call_arg_name);
-	for(auto& vname: arg_lambda_vars[index])
-	    arg = {arg, scope.at(vname).x};
-
-	E = {E, arg};
-    }
     // 8b. Return a lambda function 
     for(auto& vname: std::reverse(lambda_vars))
 	E = lambda_quantify(scope.at(vname).x, E);
@@ -583,8 +594,6 @@ pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model
 	if (auto alphabet_expression = argi.get_child_optional("alphabet"))
 	{
 	    auto alphabet_scope = extend_scope(*rule, i, scope);
-//	    ptree alphabet_type = get_fresh_type_var(alphabet_scope);
-//	    alphabet_scope.insert(alphabet_type);
 	    auto A_pair = get_model_as(R, *alphabet_expression, alphabet_scope);
 	    if (A_pair.second.size())
 		throw myexception()<<"An alphabet cannot depend on a lambda variable!";
@@ -594,8 +603,12 @@ pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model
 
 	// E = 'arg <<= (\arg_name_pair -> let {arg_name=fst arg_name_pair} in E)
 	var pair_x("pair_arg_var_"+arg_name);
-	var x("arg_var_"+arg_name);
-	E = lambda_quantify(pair_x, let_expression({{x,{var("Prelude.fst"),pair_x}}},E));
+	if (arg_lambda_vars[i].empty())
+	{
+	    var x("arg_var_"+arg_name);
+	    E = let_expression({{x,{var("Prelude.fst"),pair_x}}},E);
+	}
+	E = lambda_quantify(pair_x, E);
 
 	E = {var("Prelude.>>="), arg, E};
     }
