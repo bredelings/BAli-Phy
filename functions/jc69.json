@@ -1,14 +1,23 @@
 {
     "name": "jc69",
-    "synonyms": ["JC"],
+    "deprecated-synonyms": ["JC","jc","JC69"],
     "result_type": "RevCTMC[a]",
-    "call": "SModel.ReversibleMarkov.jukes_cantor[A]",
+    "call": "SModel.ReversibleMarkov.jukes_cantor[a]",
     "args": [
         {
-            "arg_name": "A",
+            "arg_name": "a",
             "arg_type": "a",
-            "default_value": "getAlphabet"
+            "default_value": "getAlphabet",
+	    "description": "The alphabet"
         }
     ],
-    "title": "The Jukes-Cantor substitution rate matrix"
+    "title": "The Jukes-Cantor substitution rate matrix",
+    "description": "Rate matrix with equal rates and equal frequencies.",
+    "citation":{"type": "article",
+		"title": "Evolution of Protein Molecules",
+		"year": "1969",
+		"author": [{"name": "Jukes, Thomas H."}, {"name": "Cantor, Charles R."}],
+		"journal": {"name": "Mammalian protein metabolism", "volume": "3", "pages": "21--132"},
+		"identifier": [{"type":"doi","id":"10.1016/B978-1-4832-3211-9.50009-7"}]
+	       }
 }
