@@ -681,6 +681,13 @@ model_t get_model(const Rules& R, const string& type, const string& model, const
 //    For these things, we pull out all arguments that are numbers.
 //    So, tn93[1,~log_normal[0,1]] becomes tn93 ; tn:kappa_pur=1 , tn:kappa_pyr ~ lognormal[0,1]
 
+// However, we would like gy94[pi=f1x4] to NOT pull out the pi, because f1x4 is ALSO a model.
+
+bool annotated_term_is_model(const ptree& term)
+{
+    return term.get<string>("extract","none") == "all";
+}
+
 bool do_extract(const ptree& func, const ptree& arg)
 {
     // 1. Don't extract arguments to e.g. log[], add[], sub[], etc.
@@ -696,9 +703,14 @@ bool do_extract(const ptree& func, const ptree& arg)
     auto arg_value = arg.get_child("value");
     string arg_type = unparse_type(arg.get_child("type"));
 
-    // 2. Extract non-random things that are not models.
-    if (func.get<string>("extract","none") == "all")
+    // 2. If this is a model, then extract non-random things that are not models.
+    if (annotated_term_is_model(func))
     {
+	if (annotated_term_is_model(arg)) return false;
+
+	// FIXME - It would be nice if we could universally return true here.
+	//         But first, we need to handle - not extracting gamma::n
+	//                                      - suppressing gamma::a = getAlphabet
 	if (arg_type == "Int" or arg_type == "Double" or arg_type == "LogDouble")
 	    return true;
 	if (arg_type == "List[Double]" or arg_type == "List[Pair[String,Double]]")
