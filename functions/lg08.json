@@ -1,14 +1,23 @@
 {
     "name": "lg08",
-    "synonyms": ["LG"],
+    "deprecated-synonyms": ["lg,LG,LG08"],
     "result_type": "ExchangeModel[AA]",
-    "call": "SModel.lg[A]",
+    "call": "SModel.lg[a]",
     "args": [
         {
-            "arg_name": "A",
-            "arg_type": "a",
-            "default_value": "getAlphabet"
+            "arg_name": "a",
+            "arg_type": "AA",
+            "default_value": "getAlphabet",
+            "description": "The alphabet."
         }
     ],
-    "citation": "Le and Gascuel (2008)"
+    "description": "Empirically derived exchangability matrix for general proteins",
+    "citation":{"type": "article",
+		"title": "An Improved General Amino Acid Replacement Matrix",
+		"year": "1992",	
+		"author": [{"name": "Le, Si Quang"}, {"name": "Gascuel, Olivier"}],
+		"journal": {"name": "Molecular Biology and Evolution", "volume": "25", "number": "7", "pages": "1307--1320"},
+		"identifier": [{"type":"doi","id":"10.1093/molbev/msn067"}]
+	       },
+    "examples": ["lg08","lg08+f"]
 }

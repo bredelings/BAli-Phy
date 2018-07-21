@@ -1,10 +1,16 @@
 {
     "name": "gtr",
-    "title":"The GTR exchangability matrix",
+    "title":"The General Time-Reversible rate matrix",
     "deprecated-synonyms": ["GTR"],
     "result_type": "RevCTMC[a]",
     "call": "SModel.ReversibleMarkov.gtr'[sym,pi,a]",
-    "citation":"Tavare, 1986",
+    "citation":{"type": "article",
+		"title": "Some Probabilistic and Statistical Problems in the Analysis of DNA Sequences",
+		"year": "1986",
+		"author": [{"name": "Tavare, Simon"}],
+		"journal": {"name": "Lectures on Mathematics in the Life Sciences", "volume": "17", "pages": "57--86"},
+		"link": [{"url":"http://www.damtp.cam.ac.uk/user/st321/CV_&_Publications_files/STpapers-pdf/T86.pdf"}]
+	       },
     "args": [
         {
             "arg_name": "sym",
@@ -21,9 +27,10 @@
         {
             "arg_name": "a",
             "arg_type": "a",
-            "default_value": "getAlphabet"
+            "default_value": "getAlphabet",
+	    "description": "The alphabet"
         }
     ],
-    "description": "Symmetric exchangability matrix from GTR",
+    "description": "The general time-reversible rate matrix:\n  Q(i,j) = sym(i,j) * pi[j]",
     "extract": "all"
 }

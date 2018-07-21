@@ -1,14 +1,23 @@
 {
     "name": "jtt",
-    "synonyms": ["JTT"],
+    "deprecated-synonyms": ["JTT"],
     "result_type": "ExchangeModel[AA]",
-    "call": "SModel.jtt[A]",
+    "call": "SModel.jtt[a]",
     "args": [
         {
-            "arg_name": "A",
+            "arg_name": "a",
             "arg_type": "a",
-            "default_value": "getAlphabet"
+            "default_value": "getAlphabet",
+            "description": "The alphabet."
         }
     ],
-    "citation": "Jones, Taylor, Thornton (1992)"
+    "description": "Empirically derived exchangability matrix for general proteins",
+    "citation":{"type": "article",
+		"title": "The rapid generation of mutation data matrices from protein sequences",
+		"year": "1992",	
+		"author": [{"name": "Jones, David T."}, {"name": "Taylor, William R."}, {"name": "Thornton, Janet M."}],
+		"journal": {"name": "Bioinformatics", "volume": "8", "number": "3", "pages": "275--282"},
+		"identifier": [{"type":"doi","id":"10.1093%2Fbioinformatics%2F8.3.275"}]
+	       },
+    "examples": ["jtt","jtt+f"]
 }

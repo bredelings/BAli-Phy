@@ -1,4 +1,4 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BAli-Phy User's Guide v3.2</title><link rel="stylesheet" type="text/css" href="docbook.css"><meta name="generator" content="DocBook XSL Stylesheets V1.79.1"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div lang="en" class="article"><div class="titlepage"><div><div><h2 class="title"><a name="idp1"></a><span class="application">BAli-Phy</span> User's Guide v3.2</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Benjamin</span> <span class="surname">Redelings</span></h3></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl class="toc"><dt><span class="section"><a href="#intro">1. Introduction</a></span></dt><dt><span class="section"><a href="#installation">2. Installation</a></span></dt><dd><dl><dt><span class="section"><a href="#pre-requisites">2.1. Hardware requirements</a></span></dt><dt><span class="section"><a href="#idp5">2.2. Install on MS Windows</a></span></dt><dt><span class="section"><a href="#idp10">2.3. Install on Mac OS X</a></span></dt><dt><span class="section"><a href="#idp15">2.4. Install on Linux</a></span></dt><dt><span class="section"><a href="#path">2.5. Add BAli-Phy to your <code class="envar">PATH</code></a></span></dt><dt><span class="section"><a href="#tests">2.6. Test the installed software</a></span></dt><dt><span class="section"><a href="#software_req">2.7. Install programs used for viewing the results</a></span></dt></dl></dd><dt><span class="section"><a href="#compilation">3. Compiling <span class="application">BAli-Phy</span></a></span></dt><dd><dl><dt><span class="section"><a href="#idp25">3.1. Setup</a></span></dt><dt><span class="section"><a href="#quickstart">3.2. Clone, Configure, Compile</a></span></dt><dt><span class="section"><a href="#idp26">3.3. Options: compiler and linker flags</a></span></dt></dl></dd><dt><span class="section"><a href="#running">4. Running the program</a></span></dt><dd><dl><dt><span class="section"><a href="#idp27">4.1. Quick Start</a></span></dt><dt><span class="section"><a href="#idp28">4.2. Command line options</a></span></dt><dt><span class="section"><a href="#idp33">4.3. Multiple genes/partitions, models, and linking</a></span></dt><dt><span class="section"><a href="#cluster">4.4. Running on computing clusters</a></span></dt><dt><span class="section"><a href="#idp37">4.5. Option files (Scripts)</a></span></dt><dt><span class="section"><a href="#examples">4.6. Examples</a></span></dt></dl></dd><dt><span class="section"><a href="#input">5. Input</a></span></dt><dd><dl><dt><span class="section"><a href="#idp38">5.1. Sequence formats</a></span></dt><dt><span class="section"><a href="#idp41">5.2. Is my data set too large?</a></span></dt></dl></dd><dt><span class="section"><a href="#output">6. Output</a></span></dt><dd><dl><dt><span class="section"><a href="#idp42">6.1. Output directory</a></span></dt><dt><span class="section"><a href="#idp46">6.2. Output files</a></span></dt><dt><span class="section"><a href="#idp54">6.3. Summarizing the output</a></span></dt><dt><span class="section"><a href="#analysis">6.4. Summarizing the output - scripted</a></span></dt></dl></dd><dt><span class="section"><a href="#functions">7. Models and Priors</a></span></dt><dd><dl><dt><span class="section"><a href="#idp57">7.1. Models and distributions are functions</a></span></dt><dt><span class="section"><a href="#priors">7.2. Priors</a></span></dt><dt><span class="section"><a href="#idp61">7.3. Models and '<strong class="userinput"><code>+</code></strong>' notation</a></span></dt><dt><span class="section"><a href="#default_values">7.4. Default values and default priors</a></span></dt><dt><span class="section"><a href="#types">7.5. Argument and result types</a></span></dt></dl></dd><dt><span class="section"><a href="#subst_models">8. Substitution models</a></span></dt><dd><dl><dt><span class="section"><a href="#idp62">8.1. Default substitution models</a></span></dt><dt><span class="section"><a href="#table_dna_models">8.2. DNA models</a></span></dt><dt><span class="section"><a href="#table_protein_models">8.3. Protein models</a></span></dt><dt><span class="section"><a href="#table_codon_models">8.4. Codon models</a></span></dt><dt><span class="section"><a href="#subst_freq">8.5. Substitution Frequency models</a></span></dt><dt><span class="section"><a href="#idp63">8.6. Substitution Mixture Models</a></span></dt><dt><span class="section"><a href="#idp64">8.7. The branch-site substitution model</a></span></dt><dt><span class="section"><a href="#idp65">8.8. Substitution model examples</a></span></dt><dt><span class="section"><a href="#genetic-codes">8.9. Genetic Codes</a></span></dt></dl></dd><dt><span class="section"><a href="#indel_models">9. Insertion/deletion models</a></span></dt><dt><span class="section"><a href="#mixing_and_convergence">10. Convergence and Mixing: Is it done yet?</a></span></dt><dd><dl><dt><span class="section"><a href="#idp66">10.1. Definition of Convergence</a></span></dt><dt><span class="section"><a href="#idp67">10.2. Definition of Mixing</a></span></dt><dt><span class="section"><a href="#idp70">10.3. Diagnostics: Variation in split frequencies across runs (ASDSF/MSDSF)</a></span></dt><dt><span class="section"><a href="#idp71">10.4. Diagnostics: Potential Scale Reduction Factors (PSRF)</a></span></dt><dt><span class="section"><a href="#idp74">10.5. Diagnostics: Effective sample sizes (ESS)</a></span></dt><dt><span class="section"><a href="#idp77">10.6. Diagnostics: Stabilization</a></span></dt></dl></dd><dt><span class="section"><a href="#alignment-utilities">11. Alignment utilities</a></span></dt><dd><dl><dt><span class="section"><a href="#idp78">11.1. alignment-info</a></span></dt><dt><span class="section"><a href="#idp79">11.2. alignment-cat</a></span></dt><dt><span class="section"><a href="#idp80">11.3. alignment-thin</a></span></dt><dt><span class="section"><a href="#idp81">11.4. alignment-draw</a></span></dt><dt><span class="section"><a href="#idp82">11.5. alignment-find</a></span></dt><dt><span class="section"><a href="#idp83">11.6. alignment-indices</a></span></dt><dt><span class="section"><a href="#idp84">11.7. alignment-chop-internal</a></span></dt></dl></dd><dt><span class="section"><a href="#tree-utilities">12. Tree utilities</a></span></dt><dd><dl><dt><span class="section"><a href="#idp85">12.1. trees-consensus</a></span></dt><dt><span class="section"><a href="#idp86">12.2. trees-bootstrap</a></span></dt><dt><span class="section"><a href="#idp87">12.3. trees-to-SRQ</a></span></dt></dl></dd><dt><span class="section"><a href="#FAQ">13. Frequently Asked Questions (FAQ)</a></span></dt><dd><dl><dt><span class="section"><a href="#idp88">13.1. Input files</a></span></dt><dt><span class="section"><a href="#idp89">13.2. Running <span class="command"><strong>bali-phy</strong></span>.</a></span></dt><dt><span class="section"><a href="#idp90">13.3. Run-time error messages</a></span></dt><dt><span class="section"><a href="#idp91">13.4. Stopping <span class="command"><strong>bali-phy</strong></span>.</a></span></dt><dt><span class="section"><a href="#idp92">13.5. Running <span class="command"><strong>bp-analyze</strong></span>.</a></span></dt><dt><span class="section"><a href="#idp93">13.6. Interpreting the results.</a></span></dt><dt><span class="section"><a href="#idp94">13.7. How do I...</a></span></dt></dl></dd></dl></div>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BAli-Phy User's Guide v3.2</title><link rel="stylesheet" type="text/css" href="docbook.css"><meta name="generator" content="DocBook XSL Stylesheets V1.79.1"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div lang="en" class="article"><div class="titlepage"><div><div><h2 class="title"><a name="idp1"></a><span class="application">BAli-Phy</span> User's Guide v3.2</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Benjamin</span> <span class="surname">Redelings</span></h3></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl class="toc"><dt><span class="section"><a href="#intro">1. Introduction</a></span></dt><dt><span class="section"><a href="#installation">2. Installation</a></span></dt><dd><dl><dt><span class="section"><a href="#pre-requisites">2.1. Hardware requirements</a></span></dt><dt><span class="section"><a href="#idp5">2.2. Install on MS Windows</a></span></dt><dt><span class="section"><a href="#idp10">2.3. Install on Mac OS X</a></span></dt><dt><span class="section"><a href="#idp15">2.4. Install on Linux</a></span></dt><dt><span class="section"><a href="#path">2.5. Add BAli-Phy to your <code class="envar">PATH</code></a></span></dt><dt><span class="section"><a href="#tests">2.6. Test the installed software</a></span></dt><dt><span class="section"><a href="#software_req">2.7. Install programs used for viewing the results</a></span></dt></dl></dd><dt><span class="section"><a href="#compilation">3. Compiling <span class="application">BAli-Phy</span></a></span></dt><dd><dl><dt><span class="section"><a href="#idp25">3.1. Setup</a></span></dt><dt><span class="section"><a href="#quickstart">3.2. Clone, Configure, Compile</a></span></dt><dt><span class="section"><a href="#idp26">3.3. Options: compiler and linker flags</a></span></dt></dl></dd><dt><span class="section"><a href="#running">4. Running the program</a></span></dt><dd><dl><dt><span class="section"><a href="#idp27">4.1. Quick Start</a></span></dt><dt><span class="section"><a href="#idp28">4.2. Command line options</a></span></dt><dt><span class="section"><a href="#idp33">4.3. Multiple genes/partitions, models, and linking</a></span></dt><dt><span class="section"><a href="#cluster">4.4. Running on computing clusters</a></span></dt><dt><span class="section"><a href="#idp37">4.5. Option files (Scripts)</a></span></dt><dt><span class="section"><a href="#examples">4.6. Examples</a></span></dt></dl></dd><dt><span class="section"><a href="#input">5. Input</a></span></dt><dd><dl><dt><span class="section"><a href="#idp38">5.1. Sequence formats</a></span></dt><dt><span class="section"><a href="#idp41">5.2. Is my data set too large?</a></span></dt></dl></dd><dt><span class="section"><a href="#output">6. Output</a></span></dt><dd><dl><dt><span class="section"><a href="#idp42">6.1. Output directory</a></span></dt><dt><span class="section"><a href="#idp46">6.2. Output files</a></span></dt><dt><span class="section"><a href="#idp54">6.3. Summarizing the output</a></span></dt><dt><span class="section"><a href="#analysis">6.4. Summarizing the output - scripted</a></span></dt></dl></dd><dt><span class="section"><a href="#functions">7. Models and Priors</a></span></dt><dd><dl><dt><span class="section"><a href="#idp57">7.1. Models and distributions are functions</a></span></dt><dt><span class="section"><a href="#priors">7.2. Priors</a></span></dt><dt><span class="section"><a href="#idp61">7.3. Models and '<strong class="userinput"><code>+</code></strong>' notation</a></span></dt><dt><span class="section"><a href="#default_values">7.4. Default values and default priors</a></span></dt><dt><span class="section"><a href="#types">7.5. Argument and result types</a></span></dt></dl></dd><dt><span class="section"><a href="#subst_models">8. Substitution models</a></span></dt><dd><dl><dt><span class="section"><a href="#idp62">8.1. Default substitution models</a></span></dt><dt><span class="section"><a href="#table_dna_models">8.2. DNA models</a></span></dt><dt><span class="section"><a href="#table_protein_models">8.3. Protein models</a></span></dt><dt><span class="section"><a href="#table_codon_models">8.4. Codon models</a></span></dt><dt><span class="section"><a href="#idp63">8.5. Substitution Mixture Models</a></span></dt><dt><span class="section"><a href="#idp64">8.6. The branch-site substitution model</a></span></dt></dl></dd><dt><span class="section"><a href="#indel_models">9. Insertion/deletion models</a></span></dt><dt><span class="section"><a href="#mixing_and_convergence">10. Convergence and Mixing: Is it done yet?</a></span></dt><dd><dl><dt><span class="section"><a href="#idp65">10.1. Definition of Convergence</a></span></dt><dt><span class="section"><a href="#idp66">10.2. Definition of Mixing</a></span></dt><dt><span class="section"><a href="#idp69">10.3. Diagnostics: Variation in split frequencies across runs (ASDSF/MSDSF)</a></span></dt><dt><span class="section"><a href="#idp70">10.4. Diagnostics: Potential Scale Reduction Factors (PSRF)</a></span></dt><dt><span class="section"><a href="#idp73">10.5. Diagnostics: Effective sample sizes (ESS)</a></span></dt><dt><span class="section"><a href="#idp76">10.6. Diagnostics: Stabilization</a></span></dt></dl></dd><dt><span class="section"><a href="#alignment-utilities">11. Alignment utilities</a></span></dt><dd><dl><dt><span class="section"><a href="#idp77">11.1. alignment-info</a></span></dt><dt><span class="section"><a href="#idp78">11.2. alignment-cat</a></span></dt><dt><span class="section"><a href="#idp79">11.3. alignment-thin</a></span></dt><dt><span class="section"><a href="#idp80">11.4. alignment-draw</a></span></dt><dt><span class="section"><a href="#idp81">11.5. alignment-find</a></span></dt><dt><span class="section"><a href="#idp82">11.6. alignment-indices</a></span></dt><dt><span class="section"><a href="#idp83">11.7. alignment-chop-internal</a></span></dt></dl></dd><dt><span class="section"><a href="#tree-utilities">12. Tree utilities</a></span></dt><dd><dl><dt><span class="section"><a href="#idp84">12.1. trees-consensus</a></span></dt><dt><span class="section"><a href="#idp85">12.2. trees-bootstrap</a></span></dt><dt><span class="section"><a href="#idp86">12.3. trees-to-SRQ</a></span></dt></dl></dd><dt><span class="section"><a href="#FAQ">13. Frequently Asked Questions (FAQ)</a></span></dt><dd><dl><dt><span class="section"><a href="#idp87">13.1. Input files</a></span></dt><dt><span class="section"><a href="#idp88">13.2. Running <span class="command"><strong>bali-phy</strong></span>.</a></span></dt><dt><span class="section"><a href="#idp89">13.3. Run-time error messages</a></span></dt><dt><span class="section"><a href="#idp90">13.4. Stopping <span class="command"><strong>bali-phy</strong></span>.</a></span></dt><dt><span class="section"><a href="#idp91">13.5. Running <span class="command"><strong>bp-analyze</strong></span>.</a></span></dt><dt><span class="section"><a href="#idp92">13.6. Interpreting the results.</a></span></dt><dt><span class="section"><a href="#idp93">13.7. How do I...</a></span></dt></dl></dd></dl></div>
   
 
   <div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="intro"></a>1. Introduction</h2></div></div></div>
@@ -584,14 +584,14 @@ scale = 1,3:</pre><p>
       the program is running. 
     </p>
 
-    <div class="example"><a name="idp770"></a><p class="title"><b>Example 1. No frills</b></p><div class="example-contents">
+    <div class="example"><a name="idp769"></a><p class="title"><b>Example 1. No frills</b></p><div class="example-contents">
       
       <p>Here we analyze the EF-Tu 5-taxon data set provided with
 	the software.</p>
       <pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.2/share/doc/bali-phy/examples/sequences/EF-Tu/5d.fasta</code></strong></pre>
     </div></div><br class="example-break">
 
-    <div class="example"><a name="idp778"></a><p class="title"><b>Example 2. Multiple-Rate Substitution Model</b></p><div class="example-contents">
+    <div class="example"><a name="idp777"></a><p class="title"><b>Example 2. Multiple-Rate Substitution Model</b></p><div class="example-contents">
       
       <p>We now modify the previous example by changing the
 	substitution model to allow log-normal-distributed rate variation and
@@ -600,7 +600,7 @@ scale = 1,3:</pre><p>
       
       <pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.2/share/doc/bali-phy/examples/sequences/EF-Tu/5d.fasta --smodel lg08+Rates.log_normal+inv</code></strong></pre></div></div><br class="example-break">
 
-    <div class="example"><a name="idp786"></a><p class="title"><b>Example 3. Fixed alignment</b></p><div class="example-contents">
+    <div class="example"><a name="idp785"></a><p class="title"><b>Example 3. Fixed alignment</b></p><div class="example-contents">
       
       <p>Here we use the 5S rRNA 25-taxon data set provided with
       the software. The <strong class="userinput"><code>-Inone</code></strong> option is used, fixing the alignment and making indels non-informative.
@@ -1118,7 +1118,8 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</pre><p>
 
       <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="table_dna_models"></a>8.2. DNA models</h3></div></div></div>
 	
-	<div class="table"><a name="idp1377"></a><p class="title"><b>Table 1. Substitution Models</b></p><div class="table-contents">
+      <p>All the DNA models are special cases of the GTR model.</p>
+      <div class="table"><a name="idp1377"></a><p class="title"><b>Table 1. Substitution Models</b></p><div class="table-contents">
 	  
 	  <table class="table" summary="Substitution Models" border="0"><colgroup><col class="col1"><col class="col2"><col class="col3"></colgroup><thead><tr><th>Model</th><th>  d.f.  </th><th>Summary</th></tr></thead><tbody><tr><td><strong class="userinput"><code>jc69</code></strong></td><td>0</td><td><p>Equal rates and equal frequencies.</p>
 		<a class="ulink" href="https://doi.org/10.1016/B978-1-4832-3211-9.50009-7" target="_top">(Jukes and Cantor, 1969)</a>
@@ -1148,28 +1149,39 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</pre><p>
       <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="table_protein_models"></a>8.3. Protein models</h3></div></div></div>
 	<div class="table"><a name="idp1430"></a><p class="title"><b>Table 2. Substitution Models</b></p><div class="table-contents">
 	  
-	  <table class="table" summary="Substitution Models" border="0"><colgroup><col class="col1"><col class="col2"><col class="col3"></colgroup><thead><tr><th>Model</th><th>  d.f.  </th><th>Summary</th></tr></thead><tbody><tr><td><strong class="userinput"><code>jc69</code></strong></td><td>0</td><td>Equal rates and equal frequencies.
-		<a class="ulink" href="https://doi.org/10.1016/B978-1-4832-3211-9.50009-7" target="_top">(Jukes and Cantor, 1969)</a></td></tr><tr><td><p><strong class="userinput"><code>gtr</code></strong></p><p>General Time-Reversible</p><p>Tavare (1986)</p></td><td>DNA or RNA</td><td>
-		  <p><math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><msub><mi>S</mi> <mrow><mi>i</mi><mo>&#8800;</mo><mi>j</mi></mrow></msub></math></p>
+	  <table class="table" summary="Substitution Models" border="0"><colgroup><col class="col1"><col class="col2"><col class="col3"></colgroup><thead><tr><th>Model</th><th>  d.f.  </th><th>Summary</th></tr></thead><tbody><tr><td><strong class="userinput"><code>jc69</code></strong></td><td>0</td><td><p>Equal rates and equal frequencies.</p>
+		<a class="ulink" href="https://doi.org/10.1016/B978-1-4832-3211-9.50009-7" target="_top">(Jukes and Cantor, 1969)</a></td></tr><tr><td><strong class="userinput"><code>f81</code></strong></td><td>19</td><td><p>Equal exchangabilities, unequal frequencies.</p>
+		  <a class="ulink" href="https://doi.org/10.1007%2FBF01734359" target="_top">
+		    (Felsenstein, 1981)
+		  </a>
 		</td></tr><tr><td>
-		  <p><strong class="userinput"><code>jtt</code></strong></p>
-		  <p>Jones, Taylor, Thornton (1992)</p>
-		</td><td>Amino-Acids</td><td>
-		  <p>none.</p>
+		  <p><strong class="userinput"><code>jtt+f</code></strong></p>
+		</td><td>19</td><td>
+		  <p>Empirical exchange rates, all proteins.</p>
+		  <a class="ulink" href="https://doi.org/10.1007/BF02101694" target="_top">
+		    (Jones, Taylor, Thornton 1992)
+		  </a>
 		</td></tr><tr><td>
-		  <p><strong class="userinput"><code>wag</code></strong></p>
-		  <p>Whelan and Goldman (2001)</p>
-		</td><td>Amino-Acids</td><td>
-		  <p>none.</p>
+		  <p><strong class="userinput"><code>wag+f</code></strong></p>
+		</td><td>19</td><td>
+		  <p>Empirical exchange rates, all proteins.</p>
+		  <a class="ulink" href="https://doi.org/10.1093/oxfordjournals.molbev.a003851" target="_top">
+		    Whelan and Goldman (2001)
+		  </a>
 		</td></tr><tr><td>
-		  <p><strong class="userinput"><code>lg08</code></strong></p>
-		  <p>Le and Gascuel (2008)</p>
-		</td><td>Amino-Acids</td><td>
-		  <p>none.</p>
-		  </td></tr><tr><td>
-		  <p><strong class="userinput"><code>empirical[<em class="replaceable"><code>file</code></em>]</code></strong></p>
-		</td><td>Amino-Acids</td><td>
-		  <p>none.</p>
+		  <p><strong class="userinput"><code>lg08+f</code></strong></p>
+		</td><td>19</td><td>
+		  <p>Empirical exchange rates, all proteins.</p>
+		  <a class="ulink" href="https://doi.org/10.1093/molbev/msn067" target="_top">
+		    <p>Le and Gascuel (2008)</p>
+		  </a>
+		</td></tr><tr><td>
+		  <p><strong class="userinput"><code>empirical[<em class="replaceable"><code>file</code></em>]+f</code></strong></p>
+		</td><td>19</td><td>
+		</td></tr><tr><td><strong class="userinput"><code>gtr</code></strong></td><td>208</td><td><p>Unequal exchangeabilities, unequal frequencies.</p>
+		  <a class="ulink" href="http://www.damtp.cam.ac.uk/user/st321/CV_&amp;_Publications_files/STpapers-pdf/T86.pdf" target="_top">
+		    (Tavare, 1986)
+		  </a>
 		</td></tr></tbody></table>
 	</div></div><br class="table-break">
 
@@ -1177,102 +1189,54 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</pre><p>
 
 
       <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="table_codon_models"></a>8.4. Codon models</h3></div></div></div>
-	<div class="table"><a name="idp1502"></a><p class="title"><b>Table 3. Substitution Models</b></p><div class="table-contents">
+	<div class="table"><a name="idp1501"></a><p class="title"><b>Table 3. Substitution Models</b></p><div class="table-contents">
 	  
 	  <table class="table" summary="Substitution Models" border="0"><colgroup><col class="col1"><col class="col2"><col class="col3"></colgroup><thead><tr><th>Model</th><th>  d.f.  </th><th>Summary</th></tr></thead><tbody><tr><td><strong class="userinput"><code>gy94</code></strong></td><td>62</td><td><p></p>
-		(Goldman  and Yang 1994)
+		<a class="ulink" href="http://www.genetics.org/content/148/3/929.short" target="_top">
+		  (Goldman and Yang, 1994)
+		</a>
 		</td></tr><tr><td><strong class="userinput"><code>gy94[pi=f1x4]</code></strong></td><td>5</td><td><p></p>
-		(Goldman  and Yang 1994)
+		<a class="ulink" href="http://www.genetics.org/content/148/3/929.short" target="_top">
+		  (Goldman and Yang, 1994)
+		</a>
 		</td></tr><tr><td><strong class="userinput"><code>gy94[pi=f3x4]</code></strong></td><td>11</td><td><p></p>
-		(Goldman  and Yang 1994)
+		<a class="ulink" href="http://www.genetics.org/content/148/3/929.short" target="_top">
+		  (Goldman and Yang, 1994)
+		</a>
 		</td></tr><tr><td><strong class="userinput"><code>mg94</code></strong></td><td>5</td><td>
-		  (Muse and Gaut, 1994)
-		</td></tr><tr><td><strong class="userinput"><code>mg94w9</code></strong></td><td>11</td><td>
-		  (Muse and Gaut, 1994)
-		</td></tr><tr><td><strong class="userinput"><code>fMutSel</code></strong></td><td>65</td><td>
-		  (Yang and Nielsen, 2008)
-		</td></tr><tr><td><strong class="userinput"><code>fMutSel0</code></strong></td><td>24</td><td>
-		  (Yang and Nielsen, 2008)
+		  <a class="ulink" href="https://academic.oup.com/mbe/article/11/5/715/1008710" target="_top">
+		    (Muse and Gaut, 1994)
+		  </a>
+		</td></tr><tr><td><strong class="userinput"><code>mg94w9</code></strong></td><td>11</td><td><p>Like the mg94 model, but with different frequencies at each codon position</p>
+		  <a class="ulink" href="https://academic.oup.com/mbe/article/11/5/715/1008710" target="_top">
+		    (Muse and Gaut, 1994)
+		  </a>
+		</td></tr><tr><td><strong class="userinput"><code>fMutSel</code></strong></td><td>65</td><td><p>ts/tv ratio, dN/dS ratio, nucleotide frequencies, fitnesses on each codon.</p>
+		  <a class="ulink" href="https://academic.oup.com/mbe/article/11/5/715/1008710" target="_top">
+		    (Yang and Nielsen, 2008)
+		  </a>
+		</td></tr><tr><td><strong class="userinput"><code>fMutSel0</code></strong></td><td>24</td><td><p>ts/tv ratio, dN/dS ratio, nucleotide frequencies, fitnesses on amino acids.</p>
+		  <a class="ulink" href="https://academic.oup.com/mbe/article/11/5/715/1008710" target="_top">
+		    (Yang and Nielsen, 2008)
+		  </a>
 		</td></tr></tbody></table>
 	</div></div><br class="table-break">
 
-      </div>
-
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="subst_freq"></a>8.5. Substitution Frequency models</h3></div></div></div>
+	<div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="genetic-codes"></a>8.4.1. Genetic Codes</h4></div></div></div>
       
-      <p>The rate matrix <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><msub><mi>Q</mi> <mi>ij</mi></msub></math> can be more generally expressed as
-	<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><msub><mi>Q</mi> <mi>ij</mi></msub><mo>=</mo><msub><mi>S</mi> <mi>ij</mi></msub><mo>×</mo><mfrac><mrow><msubsup><mi>&#960;</mi> <mi>j</mi> <mi>f</mi></msubsup></mrow><mrow><msubsup><mi>&#960;</mi> <mi>i</mi> <mrow><mn>1</mn><mo>&#8722;</mo><mi>f</mi></mrow></msubsup></mrow></mfrac><mo>,</mo></math>
-        where <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>f</mi></math> ranges from <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mn>0</mn></math> to <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mn>1</mn></math>.
-	Here the parameter <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>f</mi></math> specifies the relative importance of
-	unequal conservation (<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>f</mi><mo>=</mo><mn>0</mn></math>) and unequal replacement (<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>f</mi><mo>=</mo><mn>1</mn></math>) in
-	maintaining the equilibrium frequencies <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>&#960;</mi></math>.  
-      </p>
-      <p>
-	In fact, this can be generalized even further to <math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><msub><mi>Q</mi> <mi>ij</mi></msub><mo>=</mo><msub><mi>S</mi> <mi>ij</mi></msub><mo>×</mo><mi>R</mi><mo stretchy="false">(</mo><mi>&#960;</mi><msub><mo stretchy="false">)</mo> <mi>ij</mi></msub></math> where <math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><msub><mi>&#960;</mi> <mi>i</mi></msub><mo>×</mo><msub><mi>R</mi> <mi>ij</mi></msub><mo>=</mo><msub><mi>&#960;</mi> <mi>j</mi></msub><mo>×</mo><msub><mi>R</mi> <mi>ji</mi></msub><mo>.</mo></math>
-      </p>
-      <p>These models can therefore be expressed as a combination
-	of an "exchange model" (for <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>S</mi></math>) and a "frequency model" (for
-	<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>R</mi></math>).
-      </p>
-
-      <div class="table"><a name="idp1643"></a><p class="title"><b>Table 4. Frequency Models</b></p><div class="table-contents">
-	
-	<table class="table" summary="Frequency Models" border="0"><colgroup><col class="col1"><col class="col2"><col class="col3"></colgroup><thead><tr><th>Model</th><th>Alphabet</th><th>Parameters</th></tr></thead><tbody><tr><td>
-		<p><strong class="userinput"><code>f</code></strong></p>
-		<p>Whelan and Goldman (2001)</p>
-	      </td><td>any</td><td>
-		<p>pi[<em class="replaceable"><code>l</code></em>]: frequency of letter <em class="replaceable"><code>l</code></em>.</p>
-	      </td></tr><tr><td>
-		<p><strong class="userinput"><code>f61</code></strong></p>
-		<p>Synonym of F for codon models</p>
-	      </td><td>any</td><td>
-		<p>pi[<em class="replaceable"><code>l</code></em>]: frequency of letter <em class="replaceable"><code>l</code></em>.</p>
-	      </td></tr><tr><td>
-		<p><strong class="userinput"><code>gwF</code></strong></p>
-		<p>Goldman and Whelan (2002)</p>
-	      </td><td>any</td><td>
-		<p>f: determines cause of high-frequency letters.</p>
-		<p>pi[<em class="replaceable"><code>l</code></em>]: frequency of letter <em class="replaceable"><code>l</code></em>.</p>
-	      </td></tr><tr><td>
-		<p><strong class="userinput"><code>f1x4</code></strong></p>
-		<p>Single nucleotide frequency model</p>
-	      </td><td>Triplets</td><td>
-		<p>pi[<em class="replaceable"><code>l</code></em>]: frequency
-		of nucleotide <em class="replaceable"><code>l</code></em>.</p>
-	      </td></tr><tr><td>
-		<p><strong class="userinput"><code>f3x4</code></strong></p>
-		<p>Independent nucleotide frequency model</p>
-	      </td><td>Triplets</td><td>
-		<p>pi1[<em class="replaceable"><code>l</code></em>]: frequency
-		of letter <em class="replaceable"><code>l</code></em> in codon position 1.</p>
-		<p>pi2[<em class="replaceable"><code>l</code></em>]: frequency
-		of letter <em class="replaceable"><code>l</code></em> in codon position 2.</p>
-		<p>pi3[<em class="replaceable"><code>l</code></em>]: frequency
-		of letter <em class="replaceable"><code>l</code></em> in codon position 3.</p>
-	      </td></tr><tr><td>
-		<p><strong class="userinput"><code>mg94</code></strong></p>
-		<p>Muse and Gaut (1994)</p>
-		<p>Single nucleotide frequency model</p>
-	      </td><td>Triplets</td><td>
-		<p>pi[<em class="replaceable"><code>l</code></em>]: frequency
-		of nucleotide <em class="replaceable"><code>l</code></em>.</p>
-	      </td></tr><tr><td>
-		<p><strong class="userinput"><code>mg94w9</code></strong></p>
-		<p>Muse and Gaut (1994)</p>
-		<p>Independent nucleotide frequency model</p>
-	      </td><td>Triplets</td><td>
-		<p>pi[<em class="replaceable"><code>l</code></em>]: frequency
-		of letter <em class="replaceable"><code>l</code></em> in codon position 1.</p>
-		<p>pi[<em class="replaceable"><code>l</code></em>]: frequency
-		of letter <em class="replaceable"><code>l</code></em> in codon position 2.</p>
-		<p>pi[<em class="replaceable"><code>l</code></em>]: frequency
-		of letter <em class="replaceable"><code>l</code></em> in codon position 3.</p>
-	      </td></tr></tbody></table>
-      </div></div><br class="table-break">
+	<p>When using a codon-based substitution model like <strong class="userinput"><code>gy94</code></strong>, you may select the genetic code by specifying <strong class="userinput"><code>--alphabet Codons[,<em class="replaceable"><code>genetic-code</code></em>]</code></strong>.  Available genetic codes are <strong class="userinput"><code>standard</code></strong>, <strong class="userinput"><code>mt-vert</code></strong>, <strong class="userinput"><code>mt-invert</code></strong>, <strong class="userinput"><code>mt-yeast</code></strong>, <strong class="userinput"><code>mt-protozoan</code></strong>.</p>
+	<p>If the genetic code is not specified, then the standard code is used:
+</p><pre class="screen"><code class="prompt">%</code> bali-phy <em class="replaceable"><code>sequence-file</code></em> --smodel gy94 --alphabet Codons
+<code class="prompt">%</code> bali-phy <em class="replaceable"><code>sequence-file</code></em> --smodel gy94 --alphabet Codons[RNA]</pre><p>
+	These examples specify the vertebrate mitochondrial code:
+	</p><pre class="screen"><code class="prompt">%</code> bali-phy <em class="replaceable"><code>sequence-file</code></em> --smodel gy94 --alphabet Codons[DNA,mt-vert]
+<code class="prompt">%</code> bali-phy <em class="replaceable"><code>sequence-file</code></em> --smodel gy94 --alphabet Codons[,mt-vert]</pre><p>	
+</p>
     </div>
 
+      </div>
 
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp63"></a>8.6. Substitution Mixture Models</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp63"></a>8.5. Substitution Mixture Models</h3></div></div></div>
     
     <p>
       Complex substitution models in <span class="application">BAli-Phy</span>
@@ -1280,7 +1244,7 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</pre><p>
       or have different parameters (e.g. an M2a codon model).
     </p>
 
-      <div class="table"><a name="idp1753"></a><p class="title"><b>Table 5. CTMC Mixture Models</b></p><div class="table-contents">
+      <div class="table"><a name="idp1598"></a><p class="title"><b>Table 4. CTMC Mixture Models</b></p><div class="table-contents">
 	
 	<table class="table" summary="CTMC Mixture Models" border="0"><colgroup><col><col><col></colgroup><thead><tr><th>Model</th><th>Alphabet</th><th>Parameters</th></tr></thead><tbody><tr><td>
 		<p><strong class="userinput"><code><em class="replaceable"><code>model</code></em> + Rates.gamma</code></strong></p>
@@ -1310,69 +1274,51 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</pre><p>
 		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">p_inv</span></p></td><td> <p>Fraction of invariant sites.</p> </td></tr></tbody></table></div>
 	      </td></tr><tr><td>
 		<p><strong class="userinput"><code>m1a</code></strong></p>
-		<p><strong class="userinput"><code>m1a[hky85_sym,f61]</code></strong> (default)</p>
-		<p><strong class="userinput"><code>m1a[gtr_sym,f3x4]</code></strong></p>
 		<p>Wong, et. al. (2004)</p>
 	      </td><td>Codons</td><td>
 		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">w1</span></p></td><td> <p>the conserved dN/dS ratio</p> </td></tr><tr><td><p><span class="term">f1</span></p></td><td> <p>the fraction of conserved sites among non-positively selected sites</p> </td></tr><tr><td><p><span class="term">f2</span></p></td><td> <p>the fraction of neutral sites among non-positively selected sites</p> </td></tr></tbody></table></div>
 	      </td></tr><tr><td>
 		<p><strong class="userinput"><code>m2a</code></strong></p>
-		<p><strong class="userinput"><code>m2a[hky85_sym,f61]</code></strong> (default)</p>
-		<p><strong class="userinput"><code>m2a[gtr_sym,f3x4]</code></strong></p>
 		<p>Wong, et. al. (2004)</p>
 	      </td><td>Codons</td><td>
 		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">w1</span></p></td><td> <p>the conserved dN/dS ratio</p> </td></tr><tr><td><p><span class="term">f1</span></p></td><td> <p>the fraction of conserved sites among non-positively selected sites</p> </td></tr><tr><td><p><span class="term">f2</span></p></td><td> <p>the fraction of neutral sites among non-positively selected sites</p> </td></tr><tr><td><p><span class="term">posW</span></p></td><td> <p>the positively selected dN/dS ratio</p> </td></tr><tr><td><p><span class="term">posP</span></p></td><td> <p>the fraction of positively selected sites</p> </td></tr></tbody></table></div>
 	      </td></tr><tr><td>
 		<p><strong class="userinput"><code>m2a_test</code></strong></p>
-		<p><strong class="userinput"><code>m2a_test[hky85_sym,f61]</code></strong> (default)</p>
-		<p><strong class="userinput"><code>m2a_test[gtr_sym,f3x4]</code></strong></p>
 		<p>Wong, et. al. (2004)</p>
 	      </td><td>Codons</td><td>
 		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">w1</span></p></td><td> <p>the conserved dN/dS ratio</p> </td></tr><tr><td><p><span class="term">f1</span></p></td><td> <p>the fraction of conserved sites among non-positively selected sites</p> </td></tr><tr><td><p><span class="term">f2</span></p></td><td> <p>the fraction of neutral sites among non-positively selected sites</p> </td></tr><tr><td><p><span class="term">posW</span></p></td><td> <p>the positively selected dN/dS ratio</p> </td></tr><tr><td><p><span class="term">posP</span></p></td><td> <p>the fraction of positively selected sites.</p> </td></tr><tr><td><p><span class="term">posSelection</span></p></td><td> <p>model selector (1 if positive selection, 0 if not).</p> </td></tr></tbody></table></div>
 	      </td></tr><tr><td>
 		<p><strong class="userinput"><code>m3</code></strong></p>
-		<p><strong class="userinput"><code>m3[hky85_sym,f61]</code></strong> (default)</p>
-		<p><strong class="userinput"><code>m3[gtr_sym,mg94,n=4]</code></strong></p>
 		<p>Yang, et. al. (2000)</p>
 	      </td><td>Codons</td><td>
 		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">m3.omegas[i]</span></p></td><td> <p>the conserved dN/dS ratio for category i</p> </td></tr><tr><td><p><span class="term">m3.ps[i]</span></p></td><td> <p>the fraction of sites in category i</p> </td></tr></tbody></table></div>
 	      </td></tr><tr><td>
 		<p><strong class="userinput"><code>m3_test</code></strong></p>
-		<p><strong class="userinput"><code>m3_test[hky85_sym,f61]</code></strong> (default)</p>
-		<p><strong class="userinput"><code>m3_test[gtr_sym,mg94]</code></strong></p>
 		<p>Yang, et. al. (2000)</p>
 	      </td><td>Codons</td><td>
 		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">m3.omegas[i]</span></p></td><td> <p>the conserved dN/dS ratio for category i</p> </td></tr><tr><td><p><span class="term">m3.ps[i]</span></p></td><td> <p>the fraction of sites in category i</p> </td></tr><tr><td><p><span class="term">posW</span></p></td><td> <p>the positively selected dN/dS ratio</p> </td></tr><tr><td><p><span class="term">posP</span></p></td><td> <p>the fraction of positively selected sites.</p> </td></tr><tr><td><p><span class="term">posSelection</span></p></td><td> <p>model selector (1 if positive selection, 0 if not).</p> </td></tr></tbody></table></div>
 	      </td></tr><tr><td>
 		<p><strong class="userinput"><code>m7</code></strong></p>
-		<p><strong class="userinput"><code>m7[4,hky85_sym,f61]</code></strong> (default)</p>
-		<p><strong class="userinput"><code>m7[6,gtr_sym,f3x4]</code></strong></p>
 		<p>Yang, et. al. (2000)</p>
 	      </td><td>Codons</td><td>
 		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">mu</span></p></td><td> <p>mean of the Beta(a,b) distribution.</p> </td></tr><tr><td><p><span class="term">a</span></p></td><td> <p>parameter of Beta(a,b) distribution</p> </td></tr><tr><td><p><span class="term">b</span></p></td><td> <p>parameter of Beta(a,b) distribution</p> </td></tr></tbody></table></div>
 	      </td></tr><tr><td>
 		<p><strong class="userinput"><code>m8a</code></strong></p>
-		<p><strong class="userinput"><code>m8a[4,hky85_sym,f61]</code></strong> (default)</p>
-		<p><strong class="userinput"><code>m8a[6,gtr_sym,f3x4]</code></strong></p>
 		<p>Yang, et. al. (2000)</p>
 	      </td><td>Codons</td><td>
 		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">mu</span></p></td><td> <p>mean of the Beta(a,b) distribution.</p> </td></tr><tr><td><p><span class="term">a</span></p></td><td> <p>parameter of Beta(a,b) distribution</p> </td></tr><tr><td><p><span class="term">b</span></p></td><td> <p>parameter of Beta(a,b) distribution</p> </td></tr><tr><td><p><span class="term">posW</span></p></td><td> <p>the positively selected dN/dS ratio</p> </td></tr><tr><td><p><span class="term">posP</span></p></td><td> <p>the fraction of neutral sites.</p> </td></tr></tbody></table></div>
 	      </td></tr><tr><td>
 		<p><strong class="userinput"><code>m8</code></strong></p>
-		<p><strong class="userinput"><code>m8[4,hky85_sym,f61]</code></strong> (default)</p>
-		<p><strong class="userinput"><code>m8[6,gtr_sym,f3x4]</code></strong></p>
 		<p>Yang, et. al. (2000)</p>
 	      </td><td>Codons</td><td>
 		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">mu</span></p></td><td> <p>mean of the Beta(a,b) distribution.</p> </td></tr><tr><td><p><span class="term">a</span></p></td><td> <p>parameter of Beta(a,b) distribution</p> </td></tr><tr><td><p><span class="term">b</span></p></td><td> <p>parameter of Beta(a,b) distribution</p> </td></tr><tr><td><p><span class="term">posW</span></p></td><td> <p>the positively selected dN/dS ratio</p> </td></tr><tr><td><p><span class="term">posP</span></p></td><td> <p>the fraction of positively selected sites.</p> </td></tr></tbody></table></div>
 	      </td></tr><tr><td>
 		<p><strong class="userinput"><code>m8a_test</code></strong></p>
-		<p><strong class="userinput"><code>m8a_test[4,hky85_sym,f61]</code></strong> (default)</p>
-		<p><strong class="userinput"><code>m8a_test[6,gtr_sym,f3x4]</code></strong></p>
 		<p>Yang, et. al. (2000)</p>
 	      </td><td>Codons</td><td>
 		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">mu</span></p></td><td> <p>mean of the Beta(a,b) distribution.</p> </td></tr><tr><td><p><span class="term">a</span></p></td><td> <p>parameter of Beta(a,b) distribution</p> </td></tr><tr><td><p><span class="term">b</span></p></td><td> <p>parameter of Beta(a,b) distribution</p> </td></tr><tr><td><p><span class="term">posW</span></p></td><td> <p>the positively selected dN/dS ratio</p> </td></tr><tr><td><p><span class="term">posP</span></p></td><td> <p>the fraction of positively selected sites.</p> </td></tr><tr><td><p><span class="term">posSelection</span></p></td><td> <p>model selector (1 if positive selection, 0 if not).</p> </td></tr></tbody></table></div>
 	      </td></tr><tr><td>
-		<div class="variablelist"><p><strong class="userinput"><code>branch-site</code></strong></p><p><strong class="userinput"><code>branch-site[hky85_sym,f61]</code></strong> (default)</p><p><strong class="userinput"><code>branch-site[gtr_sym,f3x4]</code></strong></p><p>Zhang, et. al. (2005)</p><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody></tbody></table></div>
+		<div class="variablelist"><p><strong class="userinput"><code>branch-site</code></strong></p><p>Zhang, et. al. (2005)</p><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody></tbody></table></div>
 	      </td><td>Codons</td><td>
 		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">fs[1]</span></p></td><td> <p>the fraction of conserved sites on background branches.</p> </td></tr><tr><td><p><span class="term">fs[2]</span></p></td><td> <p>the fraction of neutral sites on background branches.</p> </td></tr><tr><td><p><span class="term">omegas[1]</span></p></td><td> <p>the conserved dN/dS ratio.</p> </td></tr><tr><td><p><span class="term">posW</span></p></td><td> <p>the positively selected dN/dS ratio.</p> </td></tr><tr><td><p><span class="term">posP</span></p></td><td> <p>the fraction of sites (neutral or conserved) that switch to positive selection on
 		  foreground branches.</p> </td></tr><tr><td><p><span class="term">posSelection</span></p></td><td> <p>model selector (1 if positive selection, 0 if not).</p> </td></tr></tbody></table></div>
@@ -1380,15 +1326,15 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</pre><p>
       </div></div><br class="table-break">
     </div>
 
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp64"></a>8.7. The branch-site substitution model</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp64"></a>8.6. The branch-site substitution model</h3></div></div></div>
     <p>In order to use the branch-site substitution model, the user needs to
     </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">Specify an unrooted tree topology in Newick format.</li><li class="listitem">Label foreground branches on the tree using NHX attributes.</li><li class="listitem">Disable topology changes in order to fix the tree topology (branch lengths are estimated).</li></ul></div><p>
     Here is an example tree file:
-</p><div class="example"><a name="idp2168"></a><p class="title"><b>Example 4. An initial tree file with branch lengths</b></p><div class="example-contents">
+</p><div class="example"><a name="idp1973"></a><p class="title"><b>Example 4. An initial tree file with branch lengths</b></p><div class="example-contents">
 (((A1:0.1, B1:0.1):0.1,(C1:0.1, D1:0.1):0.1):0.1,((E1:0.1, F1:0.1):0.1,(G1:0.1, H1:0.1):0.1):0.1,(((A2:0.1, B2:0.1):0.1,(C2:0.1, D2:0.1):0.1):0.1,((E2:0.1, F2:0.1):0.1,(G2:0.1, H2:0.1):0.1):0.1):[&amp;&amp;NHX:foreground=1]0.2);
 </div></div><p><br class="example-break">
 Any branch lengths provided will be used as initial values in the MCMC analysis.  However, it is not necessary to provide them:
-</p><div class="example"><a name="idp2170"></a><p class="title"><b>Example 5. An initial tree file without branch lengths</b></p><div class="example-contents">
+</p><div class="example"><a name="idp1975"></a><p class="title"><b>Example 5. An initial tree file without branch lengths</b></p><div class="example-contents">
 (((A1, B1),(C1, D1)),((E1, F1),(G1, H1)),(((A2, B2),(C2, D2)),((E2, F2),(G2, H2))):[&amp;&amp;NHX:foreground=1]);
 </div></div><p><br class="example-break">
 The NHX attribute must be applied to the branch, not the node.  Therefore it must occur after a colon.  Multiple branches may be marked as foreground branches.
@@ -1401,30 +1347,6 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
 <p>In case this probability is extremely close to 1 or 0, you may wish to add the option <strong class="userinput"><code>--Rao-Blackwellize branch-site:posSelection</code></strong>.  This will report the log-probability of positive selection each iteration.  The user may exponentiate the reported values and then average them (using R, for example) in order to compute a more accurate estimate of the posterior probability of positive selection.
     </p>
     </div>
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp65"></a>8.8. Substitution model examples</h3></div></div></div>
-      
-      <p>Example: --smodel wag+f+Rates.log_normal+inv</p>
-      <p>Example: --smodel wag+Rates.log_normal+inv (same as above)</p>
-      <p>Example: --smodel lg08+gwF+Rates.log_normal+inv</p>
-      <p>Example: --smodel equ --alphabet Triplets</p>
-      <p>Example: --smodel hky85</p>
-      <p>Example: --smodel gy94</p>
-      <p>Example: --smodel gy94+f1x4</p>
-      <p>Example: --smodel m2a</p>
-      <p>Example: --smodel m2a[hky85_sym] (same as above)</p>
-      
-    </div>
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="genetic-codes"></a>8.9. Genetic Codes</h3></div></div></div>
-      
-      <p>When using a codon-based substitution model like <strong class="userinput"><code>gy94</code></strong>, you may select the genetic code by specifying <strong class="userinput"><code>--alphabet Codons[,<em class="replaceable"><code>genetic-code</code></em>]</code></strong>.  Available genetic codes are <strong class="userinput"><code>standard</code></strong>, <strong class="userinput"><code>mt-vert</code></strong>, <strong class="userinput"><code>mt-invert</code></strong>, <strong class="userinput"><code>mt-yeast</code></strong>, <strong class="userinput"><code>mt-protozoan</code></strong>.</p>
-<p>If the genetic code is not specified, then the standard code is used:
-</p><pre class="screen"><code class="prompt">%</code> bali-phy <em class="replaceable"><code>sequence-file</code></em> --smodel gy94 --alphabet Codons
-<code class="prompt">%</code> bali-phy <em class="replaceable"><code>sequence-file</code></em> --smodel gy94 --alphabet Codons[RNA]</pre><p>
-	These examples specify the vertebrate mitochondrial code:
-	</p><pre class="screen"><code class="prompt">%</code> bali-phy <em class="replaceable"><code>sequence-file</code></em> --smodel gy94 --alphabet Codons[DNA,mt-vert]
-<code class="prompt">%</code> bali-phy <em class="replaceable"><code>sequence-file</code></em> --smodel gy94 --alphabet Codons[,mt-vert]</pre><p>	
-</p>
-    </div>
 
   </div>
 
@@ -1436,7 +1358,7 @@ See section <a class="xref" href="#functions" title="7. Models and Priors">Secti
 
     <p>Each of these models is a probability distribution on pairwise alignments.  The probability distribution on multiple sequence alignments <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>Pr</mi><mo stretchy="false">(</mo><mi>A</mi><mo stretchy="false">&#8739;</mo><mi>T</mi><mo>,</mo><mi>&#964;</mi><mo>,</mo><mi>&#923;</mi><mo stretchy="false">)</mo></math> is constructed by factoring the multiple sequence alignment into pairwise alignments along each branch of the tree, as described in Redelings and Suchard (2005).</p>
 
-<div class="table"><a name="idp2238"></a><p class="title"><b>Table 6. Substitution Models</b></p><div class="table-contents">
+<div class="table"><a name="idp2007"></a><p class="title"><b>Table 5. Substitution Models</b></p><div class="table-contents">
 	  
 	  <table class="table" summary="Substitution Models" border="0"><colgroup><col class="col1"><col class="col2"><col class="col3"></colgroup><thead><tr><th>Model</th><th>Parameters</th><th>Description</th></tr></thead><tbody><tr><td>
 		  <p><strong class="userinput"><code>rs05</code></strong></p>
@@ -1483,7 +1405,7 @@ See section <a class="xref" href="#functions" title="7. Models and Priors">Secti
 
     <p>Some of the better diagnostics for lack of convergence rely on running at least 2 independent copies of the Markov chain (preferably 4-10) from different random starting points to see if the sampled posterior distributions for each chain are the same.  Unfortunately, when the distributions all seem to be this same, this doesn't <span class="emphasis"><em>prove</em></span> that they have all converged to the equilibrium distribution.  However, if the distributions are different then you can reject either convergence or good mixing.</p>
 
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp66"></a>10.1. Definition of Convergence</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp65"></a>10.1. Definition of Convergence</h3></div></div></div>
       
 
       <p>Convergence refers to the the tendency of a Markov chain to
@@ -1496,7 +1418,7 @@ See section <a class="xref" href="#functions" title="7. Models and Priors">Secti
       </p>
     </div>
     
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp67"></a>10.2. Definition of Mixing</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp66"></a>10.2. Definition of Mixing</h3></div></div></div>
       
       <p>
 	In MCMC, each sample is not fully independent of previous
@@ -1511,9 +1433,9 @@ See section <a class="xref" href="#functions" title="7. Models and Priors">Secti
     </div>
 
     
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp70"></a>10.3. Diagnostics: Variation in split frequencies across runs (ASDSF/MSDSF)</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp69"></a>10.3. Diagnostics: Variation in split frequencies across runs (ASDSF/MSDSF)</h3></div></div></div>
       
-      <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp68"></a>10.3.1. ASDSF and MSDSF</h4></div></div></div>
+      <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp67"></a>10.3.1. ASDSF and MSDSF</h4></div></div></div>
 	
 <p>
 To calculate the ASDSF and MSDSF run:
@@ -1530,7 +1452,7 @@ acceptable if it is &lt; 0.01.
   the runs for the split with the most variation.
 </p>
       </div>
-      <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp69"></a>10.3.2. Split-frequency comparison plot</h4></div></div></div>
+      <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp68"></a>10.3.2. Split-frequency comparison plot</h4></div></div></div>
 	
 	<p>To generate the split-frequency comparison plot, you must have R installed.  Locate the script <code class="filename">compare-runs.R</code>.  Then run:
 </p><pre class="screen"><code class="prompt">%</code> trees-bootstrap <em class="replaceable"><code>dir-1</code></em>/C1.trees <em class="replaceable"><code>dir-2</code></em>/C1.trees ... <em class="replaceable"><code>dir-n</code></em>/C1.trees --LOD-table=LOD-table &gt; partitions.bs 
@@ -1546,7 +1468,7 @@ acceptable if it is &lt; 0.01.
     </div>
 
 
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp71"></a>10.4. Diagnostics: Potential Scale Reduction Factors (PSRF)</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp70"></a>10.4. Diagnostics: Potential Scale Reduction Factors (PSRF)</h3></div></div></div>
       
 <p>
 Potential Scale Reduction Factors check that different runs have
@@ -1584,9 +1506,9 @@ the Markov chain were trapped in different modes and failed to
 adequately mix between modes.</p>
     </div>
 
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp74"></a>10.5. Diagnostics: Effective sample sizes (ESS)</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp73"></a>10.5. Diagnostics: Effective sample sizes (ESS)</h3></div></div></div>
       
-      <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp72"></a>10.5.1. ESS for numerical values</h4></div></div></div>
+      <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp71"></a>10.5.1. ESS for numerical values</h4></div></div></div>
 	
       <p>To calculate the split ESS values, run:
 </p><pre class="screen"><code class="prompt">%</code> statreport <em class="replaceable"><code>dir-1</code></em>/C1.log <em class="replaceable"><code>dir-2</code></em>/C1.log ... <em class="replaceable"><code>dir-n</code></em>/C1.log &gt; Report </pre><p>
@@ -1600,7 +1522,7 @@ adequately mix between modes.</p>
       also computes ESS values.</p>
       </div>
 
-      <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp73"></a>10.5.2. ESS for split frequencies</h4></div></div></div>
+      <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp72"></a>10.5.2. ESS for split frequencies</h4></div></div></div>
 	
       <p>To calculate the split ESS values, run:
 </p><pre class="screen"><code class="prompt">%</code> trees-bootstrap <em class="replaceable"><code>dir-1</code></em>/C1.trees <em class="replaceable"><code>dir-2</code></em>/C1.trees ... <em class="replaceable"><code>dir-n</code></em>/C1.trees &gt; partitions.bs</pre><p>
@@ -1615,9 +1537,9 @@ adequately mix between modes.</p>
     </div>
 </div>
 
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp77"></a>10.6. Diagnostics: Stabilization</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp76"></a>10.6. Diagnostics: Stabilization</h3></div></div></div>
       
-      <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp75"></a>10.6.1. Stabilization of numerical values</h4></div></div></div>
+      <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp74"></a>10.6.1. Stabilization of numerical values</h4></div></div></div>
 	
 <p>To obtain estimates of the stabilization time for each
 numerical  parameter, you may run:
@@ -1631,7 +1553,7 @@ equilibrium distribution as calculated from the last third of the
 values in the sequence.</p>
       </div>
 
-      <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp76"></a>10.6.2. Stabilization of tree topologies and tree distances</h4></div></div></div>
+      <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp75"></a>10.6.2. Stabilization of tree topologies and tree distances</h4></div></div></div>
 	
 	<p>In addition to examining convergence diagnostics for continuous
 	parameters, it is important to examine convergence diagnostics
@@ -1665,14 +1587,14 @@ The stabilization criterion is the same one described above for numerical values
 
     <p>Most of these tools will describe their options if given the "<strong class="userinput"><code>--help</code></strong>" argument on the command line.</p>
 
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp78"></a>11.1. alignment-info</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp77"></a>11.1. alignment-info</h3></div></div></div>
       
       <p>Show basic information about the alignment:</p>
 <pre class="screen"><code class="prompt">%</code> alignment-info file.fasta
 <code class="prompt">%</code> alignment-info file.fasta file.tree</pre>
     </div>
     
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp79"></a>11.2. alignment-cat</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp78"></a>11.2. alignment-cat</h3></div></div></div>
       
       <p>To select columns from an alignment:</p>
 <pre class="screen"><code class="prompt">%</code> alignment-cat -c1-10,50-100,600- file.fasta &gt; result.fasta
@@ -1683,7 +1605,7 @@ The stabilization criterion is the same one described above for numerical values
 <pre class="screen"><code class="prompt">%</code> alignment-cat file1.fasta file2.fasta &gt; all.fasta</pre>
     </div>
     
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp80"></a>11.3. alignment-thin</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp79"></a>11.3. alignment-thin</h3></div></div></div>
       
       <p>Remove columns without a minimum number of letters:</p> 
 <pre class="screen"><code class="prompt">%</code> alignment-thin --min-letters=5 <em class="replaceable"><code>file</code></em>.fasta &gt; <em class="replaceable"><code>file</code></em>-thinned.fasta</pre>
@@ -1698,21 +1620,21 @@ The stabilization criterion is the same one described above for numerical values
 <pre class="screen"><code class="prompt">%</code> alignment-thin --remove-crazy=10 <em class="replaceable"><code>file</code></em>.fasta &gt; <em class="replaceable"><code>file</code></em>2.fasta</pre>
     </div>
 
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp81"></a>11.4. alignment-draw</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp80"></a>11.4. alignment-draw</h3></div></div></div>
       
       <p>Draw an alignment to HTML, optionally coloring residues by AU.</p>
 <pre class="screen"><code class="prompt">%</code>  alignment-draw <em class="replaceable"><code>file</code></em>.fasta --show-ruler --color-scheme=DNA+contrast &gt; <em class="replaceable"><code>file</code></em>.html
 <code class="prompt">%</code>  alignment-draw <em class="replaceable"><code>file</code></em>.fasta --show-ruler --AU=<em class="replaceable"><code>file</code></em>-AU.prob --color-scheme=DNA+contrast+fade+fade+fade+fade &gt; <em class="replaceable"><code>file</code></em>-AU.html</pre>
     </div>
 
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp82"></a>11.5. alignment-find</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp81"></a>11.5. alignment-find</h3></div></div></div>
       
       <p>Find the last (or first) FastA alignment in a file.</p>
 <pre class="screen"><code class="prompt">%</code> alignment-find --first &lt; <em class="replaceable"><code>file</code></em>.fastas &gt; first.fasta
 <code class="prompt">%</code> alignment-find &lt; <em class="replaceable"><code>file</code></em>.fastas &gt; last.fasta</pre>
     </div>
 
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp83"></a>11.6. alignment-indices</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp82"></a>11.6. alignment-indices</h3></div></div></div>
       
       <p>Turn columns from a template alignment into alignment constraints:</p>
 <pre class="screen"><code class="prompt">%</code> alignment-indices template.fasta &gt; constraints.txt
@@ -1722,7 +1644,7 @@ The stabilization criterion is the same one described above for numerical values
 	alignment column.</p>
     </div>
 
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp84"></a>11.7. alignment-chop-internal</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp83"></a>11.7. alignment-chop-internal</h3></div></div></div>
       
       <p>Remove internal-node ancestral sequences from an alignment.  (This
 	probably only works for alignments output by bali-phy.) </p>
@@ -1732,7 +1654,7 @@ The stabilization criterion is the same one described above for numerical values
   </div>
   <div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="tree-utilities"></a>12. Tree utilities</h2></div></div></div>
     
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp85"></a>12.1. trees-consensus</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp84"></a>12.1. trees-consensus</h3></div></div></div>
       
       <p>This program analyzes the tree sample contained in
 	<em class="replaceable"><code>file</code></em>.  It reports the MAP topology, the
@@ -1741,7 +1663,7 @@ The stabilization criterion is the same one described above for numerical values
       </p> 
     </div>
 
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp86"></a>12.2. trees-bootstrap</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp85"></a>12.2. trees-bootstrap</h3></div></div></div>
       
       <p>Usage: trees-bootstrap <em class="replaceable"><code>file1</code></em>
 	[<em class="replaceable"><code>file2</code></em> ... ] --predicates
@@ -1759,7 +1681,7 @@ The stabilization criterion is the same one described above for numerical values
       </p>
     </div>
 
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp87"></a>12.3. trees-to-SRQ</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp86"></a>12.3. trees-to-SRQ</h3></div></div></div>
       
 
       <p>Usage: trees-to-SRQ <em class="replaceable"><code>predicate-file</code></em> [OPTIONS] <em class="replaceable"><code>trees-file</code></em> </p>
@@ -1786,9 +1708,9 @@ The stabilization criterion is the same one described above for numerical values
 
   <div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="FAQ"></a>13. Frequently Asked Questions (FAQ)</h2></div></div></div>
     
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp88"></a>13.1. Input files</h3></div></div></div>
-      <div class="qandaset"><a name="idp2545"></a><dl><dt>13.1.1. <a href="#idp2546">Does BAli-Phy accept the wildcard characters "N" or "X"?  How does it treat them?</a></dt><dt>13.1.2. <a href="#idp2552">Does BAli-Phy accept "?" characters?</a></dt><dt>13.1.3. <a href="#idp2560">Does BAli-Phy accept the characters "R" and "Y", etc.?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2546"></a><a name="idp2547"></a><p><b>13.1.1.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept the wildcard characters "N" or "X"?  How does it treat them?</p></td></tr>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp87"></a>13.1. Input files</h3></div></div></div>
+      <div class="qandaset"><a name="idp2314"></a><dl><dt>13.1.1. <a href="#idp2315">Does BAli-Phy accept the wildcard characters "N" or "X"?  How does it treat them?</a></dt><dt>13.1.2. <a href="#idp2321">Does BAli-Phy accept "?" characters?</a></dt><dt>13.1.3. <a href="#idp2329">Does BAli-Phy accept the characters "R" and "Y", etc.?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2315"></a><a name="idp2316"></a><p><b>13.1.1.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept the wildcard characters "N" or "X"?  How does it treat them?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes, BAli-Phy accepts the wildcard characters "N"
 	    (for DNA) and "X" (for proteins).  These characters
 	    indicate that some letter is present (as opposed to a
@@ -1796,7 +1718,7 @@ The stabilization criterion is the same one described above for numerical values
 	    letter it is.  
 	    </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2552"></a><a name="idp2553"></a><p><b>13.1.2.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept "?" characters?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2321"></a><a name="idp2322"></a><p><b>13.1.2.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept "?" characters?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
 	      No.  "?" characters are often used to indicate
 	      <span class="emphasis"><em>either</em></span> letter presence (e.g. "N",
@@ -1810,7 +1732,7 @@ The stabilization criterion is the same one described above for numerical values
 	    alternatives are quite different.)
 	    </p></td></tr>
 	
-	<tr class="question"><td align="left" valign="top"><a name="idp2560"></a><a name="idp2561"></a><p><b>13.1.3.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept the characters "R" and "Y", etc.?</p></td></tr>
+	<tr class="question"><td align="left" valign="top"><a name="idp2329"></a><a name="idp2330"></a><p><b>13.1.3.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept the characters "R" and "Y", etc.?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
 	      Yes.  BAli-Phy accepts the characters Y, R, W, S, K, M,
 	      B, D, H, and V for DNA, RNA, and Codon alphabets.
@@ -1834,48 +1756,48 @@ The stabilization criterion is the same one described above for numerical values
 	</tbody></table></div>
     </div>
 
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp89"></a>13.2. Running <span class="command"><strong>bali-phy</strong></span>.</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp88"></a>13.2. Running <span class="command"><strong>bali-phy</strong></span>.</h3></div></div></div>
 
-      <div class="qandaset"><a name="idp2572"></a><dl><dt>13.2.1. <a href="#idp2573">Can I fix the alignment and ignore indel information, like MrBayes, BEAST, PhyloBayes and other MCMC programs?</a></dt><dt>13.2.2. <a href="#idp2580">Can I fix the tree topology, while allowing the alignment to vary?</a></dt><dt>13.2.3. <a href="#idp2587">Can I fix the tree topology and relative branch lengths, while allowing the alignment to vary?</a></dt><dt>13.2.4. <a href="#idp2595">Can I fix the tree topology and absolute branch lengths in all data partitions, while allowing the alignment to vary?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2573"></a><a name="idp2574"></a><p><b>13.2.1.</b></p></td><td align="left" valign="top"><p>Can I fix the alignment and ignore indel information, like MrBayes, BEAST, PhyloBayes and other MCMC programs?</p></td></tr>
+      <div class="qandaset"><a name="idp2341"></a><dl><dt>13.2.1. <a href="#idp2342">Can I fix the alignment and ignore indel information, like MrBayes, BEAST, PhyloBayes and other MCMC programs?</a></dt><dt>13.2.2. <a href="#idp2349">Can I fix the tree topology, while allowing the alignment to vary?</a></dt><dt>13.2.3. <a href="#idp2356">Can I fix the tree topology and relative branch lengths, while allowing the alignment to vary?</a></dt><dt>13.2.4. <a href="#idp2364">Can I fix the tree topology and absolute branch lengths in all data partitions, while allowing the alignment to vary?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2342"></a><a name="idp2343"></a><p><b>13.2.1.</b></p></td><td align="left" valign="top"><p>Can I fix the alignment and ignore indel information, like MrBayes, BEAST, PhyloBayes and other MCMC programs?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes.  Add <strong class="userinput"><code>-Inone</code></strong> or <strong class="userinput"><code>--imodel=none</code></strong> on the command line.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2580"></a><a name="idp2581"></a><p><b>13.2.2.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology, while allowing the alignment to vary?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2349"></a><a name="idp2350"></a><p><b>13.2.2.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology, while allowing the alignment to vary?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes.  Add <strong class="userinput"><code>--disable=topology --tree=<em class="replaceable"><code>treefile</code></em></code></strong> on the command line.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2587"></a><a name="idp2588"></a><p><b>13.2.3.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology and <span class="emphasis"><em>relative</em></span> branch lengths, while allowing the alignment to vary?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2356"></a><a name="idp2357"></a><p><b>13.2.3.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology and <span class="emphasis"><em>relative</em></span> branch lengths, while allowing the alignment to vary?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes.  Add <strong class="userinput"><code>--disable=tree --tree=<em class="replaceable"><code>treefile</code></em></code></strong> on the command line.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2595"></a><a name="idp2596"></a><p><b>13.2.4.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology and <span class="emphasis"><em>absolute</em></span> branch lengths <span class="emphasis"><em>in all data partitions</em></span>, while allowing the alignment to vary?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2364"></a><a name="idp2365"></a><p><b>13.2.4.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology and <span class="emphasis"><em>absolute</em></span> branch lengths <span class="emphasis"><em>in all data partitions</em></span>, while allowing the alignment to vary?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes.  Add <strong class="userinput"><code>--disable=tree --tree=<em class="replaceable"><code>treefile</code></em> --scale=1</code></strong> on the command line.</p></td></tr>
 	</tbody></table></div>
 
     </div>
 
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp90"></a>13.3. Run-time error messages</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp89"></a>13.3. Run-time error messages</h3></div></div></div>
       
       
-      <div class="qandaset"><a name="idp2607"></a><dl><dt>13.3.1. <a href="#idp2608">I tried to use --smodel lg08+Rates.gamma[6] and I got an error message "bali-phy: No match."  What gives?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2608"></a><a name="idp2609"></a><p><b>13.3.1.</b></p></td><td align="left" valign="top"><p>I tried to use <strong class="userinput"><code>--smodel lg08+Rates.gamma[6]</code></strong> and I got an error message "bali-phy: No match."  What gives?</p></td></tr>
+      <div class="qandaset"><a name="idp2376"></a><dl><dt>13.3.1. <a href="#idp2377">I tried to use --smodel lg08+Rates.gamma[6] and I got an error message "bali-phy: No match."  What gives?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2377"></a><a name="idp2378"></a><p><b>13.3.1.</b></p></td><td align="left" valign="top"><p>I tried to use <strong class="userinput"><code>--smodel lg08+Rates.gamma[6]</code></strong> and I got an error message "bali-phy: No match."  What gives?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>You are probably using the C-shell as your command line shell.  It is trying to interpret <strong class="userinput"><code>lg08+Rates.gamma[6]</code></strong> as an array before running the command, and it is not succeeding.  Therefore, it doesn't even run <span class="command"><strong>bali-phy</strong></span>.</p><p>To avoid this, put quotes around the substitution model, like this: <strong class="userinput"><code>--smodel "lg08+Rates.gamma[6]"</code></strong>.  This will keep the C-shell from interfering with your command.
 	    </p></td></tr>
 	</tbody></table></div>
     </div>
 
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp91"></a>13.4. Stopping <span class="command"><strong>bali-phy</strong></span>.</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp90"></a>13.4. Stopping <span class="command"><strong>bali-phy</strong></span>.</h3></div></div></div>
       
 
-      <div class="qandaset"><a name="idp2623"></a><dl><dt>13.4.1. <a href="#idp2624">Why is bali-phy still
-	      running? How long will it take?</a></dt><dt>13.4.2. <a href="#idp2630">How do I stop a bali-phy
-	  run on my personal computer?</a></dt><dt>13.4.3. <a href="#idp2648">How do I stop a bali-phy
-	  run on a computing cluster?</a></dt><dt>13.4.4. <a href="#idp2657">So, how can I know when to stop it?</a></dt><dt>13.4.5. <a href="#idp2662">How can I tell when the chain has converged?</a></dt><dt>13.4.6. <a href="#idp2668">How can I check how many iterations the chain
+      <div class="qandaset"><a name="idp2392"></a><dl><dt>13.4.1. <a href="#idp2393">Why is bali-phy still
+	      running? How long will it take?</a></dt><dt>13.4.2. <a href="#idp2399">How do I stop a bali-phy
+	  run on my personal computer?</a></dt><dt>13.4.3. <a href="#idp2417">How do I stop a bali-phy
+	  run on a computing cluster?</a></dt><dt>13.4.4. <a href="#idp2426">So, how can I know when to stop it?</a></dt><dt>13.4.5. <a href="#idp2431">How can I tell when the chain has converged?</a></dt><dt>13.4.6. <a href="#idp2437">How can I check how many iterations the chain
 	      has finished?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2624"></a><a name="idp2625"></a><p><b>13.4.1.</b></p></td><td align="left" valign="top"><p>Why is <span class="command"><strong>bali-phy</strong></span> still
+	  <tr class="question"><td align="left" valign="top"><a name="idp2393"></a><a name="idp2394"></a><p><b>13.4.1.</b></p></td><td align="left" valign="top"><p>Why is <span class="command"><strong>bali-phy</strong></span> still
 	      running? How long will it take?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>It runs until you stop it.  Stop it when its
 	      done.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2630"></a><a name="idp2631"></a><p><b>13.4.2.</b></p></td><td align="left" valign="top"><p>How do I stop a <span class="command"><strong>bali-phy</strong></span>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2399"></a><a name="idp2400"></a><p><b>13.4.2.</b></p></td><td align="left" valign="top"><p>How do I stop a <span class="command"><strong>bali-phy</strong></span>
 	  run on my personal computer?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Simply kill the process -- there is no special
 	    command to stop <span class="command"><strong>bali-phy</strong></span>. If you are
@@ -1908,7 +1830,7 @@ However, be aware that this will terminate <span class="emphasis"><em>all</em></
 your <span class="command"><strong>bali-phy</strong></span> runs on that computer.
 	    </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2648"></a><a name="idp2649"></a><p><b>13.4.3.</b></p></td><td align="left" valign="top"><p>How do I stop a <span class="command"><strong>bali-phy</strong></span>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2417"></a><a name="idp2418"></a><p><b>13.4.3.</b></p></td><td align="left" valign="top"><p>How do I stop a <span class="command"><strong>bali-phy</strong></span>
 	  run on a computing cluster?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Simply terminate the submitted job.  The specific command
 	    to terminate a job will depend on the queue manager that
@@ -1924,14 +1846,14 @@ your <span class="command"><strong>bali-phy</strong></span> runs on that compute
 	    commands. 
 	    </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2657"></a><a name="idp2658"></a><p><b>13.4.4.</b></p></td><td align="left" valign="top"><p>So, how can I know when to stop it?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2426"></a><a name="idp2427"></a><p><b>13.4.4.</b></p></td><td align="left" valign="top"><p>So, how can I know when to stop it?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>You can stop when it has both converged and also run for long enough to give
 	      you &gt;1000 effectively independent samples.  </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2662"></a><a name="idp2663"></a><p><b>13.4.5.</b></p></td><td align="left" valign="top"><p>How can I tell when the chain has converged?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2431"></a><a name="idp2432"></a><p><b>13.4.5.</b></p></td><td align="left" valign="top"><p>How can I tell when the chain has converged?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>See section <a class="xref" href="#mixing_and_convergence" title="10. Convergence and Mixing: Is it done yet?">Section 10, &#8220;Convergence and Mixing: Is it done yet?&#8221;</a>.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2668"></a><a name="idp2669"></a><p><b>13.4.6.</b></p></td><td align="left" valign="top"><p>How can I check how many iterations the chain
+	  <tr class="question"><td align="left" valign="top"><a name="idp2437"></a><a name="idp2438"></a><p><b>13.4.6.</b></p></td><td align="left" valign="top"><p>How can I check how many iterations the chain
 	      has finished?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Run <span class="command"><strong>wc -l C1.log</strong></span> inside the output
 	      directory, and subtract 2.
@@ -1940,55 +1862,55 @@ your <span class="command"><strong>bali-phy</strong></span> runs on that compute
     </div>
 
 
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp92"></a>13.5. Running <span class="command"><strong>bp-analyze</strong></span>.</h3></div></div></div>
-      <div class="qandaset"><a name="idp2679"></a><dl><dt>13.5.1. <a href="#idp2680">Why does bp-analyze say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</a></dt><dt>13.5.2. <a href="#idp2688">Why does bp-analyze say "Program 'gnuplot' not found.  Trace plots will not be generated"?</a></dt><dt>13.5.3. <a href="#idp2695">Why does bp-analyze say "Program 'R' not found.  Some mixing graphs will not be generated"?</a></dt><dt>13.5.4. <a href="#idp2702">Why is bp-analyze stopping early, or failing to generate some files?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2680"></a><a name="idp2681"></a><p><b>13.5.1.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze</strong></span> say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</p></td></tr>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp91"></a>13.5. Running <span class="command"><strong>bp-analyze</strong></span>.</h3></div></div></div>
+      <div class="qandaset"><a name="idp2448"></a><dl><dt>13.5.1. <a href="#idp2449">Why does bp-analyze say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</a></dt><dt>13.5.2. <a href="#idp2457">Why does bp-analyze say "Program 'gnuplot' not found.  Trace plots will not be generated"?</a></dt><dt>13.5.3. <a href="#idp2464">Why does bp-analyze say "Program 'R' not found.  Some mixing graphs will not be generated"?</a></dt><dt>13.5.4. <a href="#idp2471">Why is bp-analyze stopping early, or failing to generate some files?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2449"></a><a name="idp2450"></a><p><b>13.5.1.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze</strong></span> say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>The program <span class="command"><strong>draw-tree</strong></span> was not distributed on this platform (Windows, Mac).  This is not a fatal error message, it just means that a pretty picture of the tree will not be generated automatically.  You can still view the tree with <span class="application">FigTree</span>, for example.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2688"></a><a name="idp2689"></a><p><b>13.5.2.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze</strong></span> say "Program 'gnuplot' not found.  Trace plots will not be generated"?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2457"></a><a name="idp2458"></a><p><b>13.5.2.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze</strong></span> say "Program 'gnuplot' not found.  Trace plots will not be generated"?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>This is because you have not installed <span class="application">gnuplot</span>.  This is not a fatal error message, it just means that pictures of partition support, and SRQ plots will not be generated automatically.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2695"></a><a name="idp2696"></a><p><b>13.5.3.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze</strong></span> say "Program 'R' not found.  Some mixing graphs will not be generated"?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2464"></a><a name="idp2465"></a><p><b>13.5.3.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze</strong></span> say "Program 'R' not found.  Some mixing graphs will not be generated"?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>This is because you have not installed <span class="application">R</span>.  This is not a fatal error message, it just means that a plot showing differences in clade probabilities between runs will not be generated.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2702"></a><a name="idp2703"></a><p><b>13.5.4.</b></p></td><td align="left" valign="top"><p>Why is <span class="command"><strong>bp-analyze</strong></span> stopping early, or failing to generate some files?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2471"></a><a name="idp2472"></a><p><b>13.5.4.</b></p></td><td align="left" valign="top"><p>Why is <span class="command"><strong>bp-analyze</strong></span> stopping early, or failing to generate some files?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Look in the file <code class="filename">Results/bp-analyze.log</code>.  This should contain the actual commands that were run, along with error message from these commands.  These error message should give you a hint as to what the problem might be.</p></td></tr>
 	</tbody></table></div>
     </div>
 
 
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp93"></a>13.6. Interpreting the results.</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp92"></a>13.6. Interpreting the results.</h3></div></div></div>
       
 
-      <div class="qandaset"><a name="idp2712"></a><dl><dt>13.6.1. <a href="#idp2713">How do I compute the clade support?</a></dt><dt>13.6.2. <a href="#idp2718">How do I compute the split/bi-partition support?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2713"></a><a name="idp2714"></a><p><b>13.6.1.</b></p></td><td align="left" valign="top"><p>How do I compute the clade support?</p></td></tr>
+      <div class="qandaset"><a name="idp2481"></a><dl><dt>13.6.1. <a href="#idp2482">How do I compute the clade support?</a></dt><dt>13.6.2. <a href="#idp2487">How do I compute the split/bi-partition support?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2482"></a><a name="idp2483"></a><p><b>13.6.1.</b></p></td><td align="left" valign="top"><p>How do I compute the clade support?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Actually, BAli-Phy uses unrooted trees, so it only estimates bi-partition support.  A bi-partition is a division of taxa into two groups, but it does not specify which group contains the root. </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2718"></a><a name="idp2719"></a><p><b>13.6.2.</b></p></td><td align="left" valign="top"><p>How do I compute the split/bi-partition support?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2487"></a><a name="idp2488"></a><p><b>13.6.2.</b></p></td><td align="left" valign="top"><p>How do I compute the split/bi-partition support?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>After you analyze the output (<a class="xref" href="#analysis" title="6.4. Summarizing the output - scripted">Section 6.4, &#8220;Summarizing the output - scripted&#8221;</a>), the partition support is indicated in
 	      <code class="filename">Results/consensus</code> and in <code class="filename">Results/c50.PP.tree</code>. </p></td></tr>
 	</tbody></table></div>
     </div>
 
-    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp94"></a>13.7. How do I...</h3></div></div></div>
+    <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp93"></a>13.7. How do I...</h3></div></div></div>
       
-      <div class="qandaset"><a name="idp2729"></a><dl><dt>13.7.1. <a href="#idp2730">How do I concatenate alignments?</a></dt><dt>13.7.2. <a href="#idp2739">How do I select columns from an alignment?</a></dt><dt>13.7.3. <a href="#idp2747">How do I create an alignment-constraint file
+      <div class="qandaset"><a name="idp2498"></a><dl><dt>13.7.1. <a href="#idp2499">How do I concatenate alignments?</a></dt><dt>13.7.2. <a href="#idp2508">How do I select columns from an alignment?</a></dt><dt>13.7.3. <a href="#idp2516">How do I create an alignment-constraint file
 	      from an alignment?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2730"></a><a name="idp2731"></a><p><b>13.7.1.</b></p></td><td align="left" valign="top"><p>How do I concatenate alignments?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2499"></a><a name="idp2500"></a><p><b>13.7.1.</b></p></td><td align="left" valign="top"><p>How do I concatenate alignments?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
  	    </p><pre class="screen"><code class="prompt">%</code> alignment-cat <em class="replaceable"><code>filename1.fasta</code></em> <em class="replaceable"><code>filename2.fasta</code></em> &gt; result.fasta</pre><p>
 	      The alignments must have the same sequence names, but
 	      the names need not be in the same order.
 	    </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2739"></a><a name="idp2740"></a><p><b>13.7.2.</b></p></td><td align="left" valign="top"><p>How do I select columns from an alignment?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2508"></a><a name="idp2509"></a><p><b>13.7.2.</b></p></td><td align="left" valign="top"><p>How do I select columns from an alignment?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
 	    </p><pre class="screen"><code class="prompt">%</code> alignment-cat -c1-10,50-100,600- <em class="replaceable"><code>filename.fasta</code></em> &gt; result.fasta</pre><p>
 	    The resulting alignment will contain the selected columns
 	    in the order you specified.
 	  </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2747"></a><a name="generating_constraint_files"></a><p><b>13.7.3.</b></p></td><td align="left" valign="top"><p>How do I create an alignment-constraint file
+	  <tr class="question"><td align="left" valign="top"><a name="idp2516"></a><a name="generating_constraint_files"></a><p><b>13.7.3.</b></p></td><td align="left" valign="top"><p>How do I create an alignment-constraint file
 	      from an alignment?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>To constrain the alignment to match some alignment
 	      file <em class="replaceable"><code>filename.fasta</code></em> in columns

@@ -1360,7 +1360,8 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 
       <section xml:id="table_dna_models"><info><title>DNA models</title></info>
 	
-	<table frame="none" rowsep="1"><info><title>Substitution Models</title></info>
+      <para>All the DNA models are special cases of the GTR model.</para>
+      <table frame="none" rowsep="1"><info><title>Substitution Models</title></info>
 	  
 	  <tgroup cols="3">
 	    <colspec colnum="1" colname="col1" colwidth="1*"/>
@@ -1446,58 +1447,75 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	      <row>
 		<entry><userinput>jc69</userinput></entry>
 		<entry>0</entry>
-		<entry>Equal rates and equal frequencies.
+		<entry><para>Equal rates and equal frequencies.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1016/B978-1-4832-3211-9.50009-7">(Jukes and Cantor, 1969)</link></entry>
 	      </row>
 
 	      <row>
-		<entry><para><userinput>gtr</userinput></para><para>General Time-Reversible</para><para>Tavare (1986)</para></entry>
-		<entry>DNA or RNA</entry>
-		<entry>
-		  <para>$S_{i \ne j}$</para>
+		<entry><userinput>f81</userinput></entry>
+		<entry>19</entry>
+		<entry><para>Equal exchangabilities, unequal frequencies.</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007%2FBF01734359">
+		    (Felsenstein, 1981)
+		  </link>
 		</entry>
 	      </row>
 
 	      <row>
 		<entry>
-		  <para><userinput>jtt</userinput></para>
-		  <para>Jones, Taylor, Thornton (1992)</para>
+		  <para><userinput>jtt+f</userinput></para>
 		</entry>
-		<entry>Amino-Acids</entry>
+		<entry>19</entry>
 		<entry>
-		  <para>none.</para>
-		</entry>
-	      </row>
-
-	      <row>
-		<entry>
-		  <para><userinput>wag</userinput></para>
-		  <para>Whelan and Goldman (2001)</para>
-		</entry>
-		<entry>Amino-Acids</entry>
-		<entry>
-		  <para>none.</para>
+		  <para>Empirical exchange rates, all proteins.</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007/BF02101694">
+		    (Jones, Taylor, Thornton 1992)
+		  </link>
 		</entry>
 	      </row>
 
 	      <row>
 		<entry>
-		  <para><userinput>lg08</userinput></para>
-		  <para>Le and Gascuel (2008)</para>
+		  <para><userinput>wag+f</userinput></para>
 		</entry>
-		<entry>Amino-Acids</entry>
+		<entry>19</entry>
 		<entry>
-		  <para>none.</para>
-		  </entry>
+		  <para>Empirical exchange rates, all proteins.</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a003851">
+		    Whelan and Goldman (2001)
+		  </link>
+		</entry>
 	      </row>
 
 	      <row>
 		<entry>
-		  <para><userinput>empirical[<replaceable>file</replaceable>]</userinput></para>
+		  <para><userinput>lg08+f</userinput></para>
 		</entry>
-		<entry>Amino-Acids</entry>
+		<entry>19</entry>
 		<entry>
-		  <para>none.</para>
+		  <para>Empirical exchange rates, all proteins.</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msn067">
+		    <para>Le and Gascuel (2008)</para>
+		  </link>
+		</entry>
+	      </row>
+
+	      <row>
+		<entry>
+		  <para><userinput>empirical[<replaceable>file</replaceable>]+f</userinput></para>
+		</entry>
+		<entry>19</entry>
+		<entry>
+		</entry>
+	      </row>
+
+	      <row>
+		<entry><userinput>gtr</userinput></entry>
+		<entry>208</entry>
+		<entry><para>Unequal exchangeabilities, unequal frequencies.</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.damtp.cam.ac.uk/user/st321/CV_&amp;_Publications_files/STpapers-pdf/T86.pdf">
+		    (Tavare, 1986)
+		  </link>
 		</entry>
 	      </row>
 
@@ -1526,7 +1544,9 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 		<entry><userinput>gy94</userinput></entry>
 		<entry>62</entry>
 		<entry><para></para>
-		(Goldman  and Yang 1994)
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/148/3/929.short">
+		  (Goldman and Yang, 1994)
+		</link>
 		</entry>
 	      </row>
 
@@ -1534,7 +1554,9 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 		<entry><userinput>gy94[pi=f1x4]</userinput></entry>
 		<entry>5</entry>
 		<entry><para></para>
-		(Goldman  and Yang 1994)
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/148/3/929.short">
+		  (Goldman and Yang, 1994)
+		</link>
 		</entry>
 	      </row>
 
@@ -1542,7 +1564,9 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 		<entry><userinput>gy94[pi=f3x4]</userinput></entry>
 		<entry>11</entry>
 		<entry><para></para>
-		(Goldman  and Yang 1994)
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/148/3/929.short">
+		  (Goldman and Yang, 1994)
+		</link>
 		</entry>
 	      </row>
 
@@ -1550,31 +1574,39 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 		<entry><userinput>mg94</userinput></entry>
 		<entry>5</entry>
 		<entry>
-		  (Muse and Gaut, 1994)
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/715/1008710">
+		    (Muse and Gaut, 1994)
+		  </link>
 		</entry>
 	      </row>
 
 	      <row>
 		<entry><userinput>mg94w9</userinput></entry>
 		<entry>11</entry>
-		<entry>
-		  (Muse and Gaut, 1994)
+		<entry><para>Like the mg94 model, but with different frequencies at each codon position</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/715/1008710">
+		    (Muse and Gaut, 1994)
+		  </link>
 		</entry>
 	      </row>
 
 	      <row>
 		<entry><userinput>fMutSel</userinput></entry>
 		<entry>65</entry>
-		<entry>
-		  (Yang and Nielsen, 2008)
+		<entry><para>ts/tv ratio, dN/dS ratio, nucleotide frequencies, fitnesses on each codon.</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/715/1008710">
+		    (Yang and Nielsen, 2008)
+		  </link>
 		</entry>
 	      </row>
 
 	      <row>
 		<entry><userinput>fMutSel0</userinput></entry>
 		<entry>24</entry>
-		<entry>
-		  (Yang and Nielsen, 2008)
+		<entry><para>ts/tv ratio, dN/dS ratio, nucleotide frequencies, fitnesses on amino acids.</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/715/1008710">
+		    (Yang and Nielsen, 2008)
+		  </link>
 		</entry>
 	      </row>
 	      
@@ -1582,160 +1614,19 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	  </tgroup>
 	</table>
 
-      </section>
-
-    <section xml:id="subst_freq"><info><title>Substitution Frequency models</title></info>
+	<section xml:id="genetic-codes"><info><title>Genetic Codes</title></info>
       
-      <para>The rate matrix $Q_{ij}$ can be more generally expressed as
-	\[Q_{ij} = S_{ij}\times\frac{\pi_j^f}{\pi_i^{1-f}},\]
-        where $f$ ranges from $0$ to $1$.
-	Here the parameter $f$ specifies the relative importance of
-	unequal conservation ($f=0$) and unequal replacement ($f=1$) in
-	maintaining the equilibrium frequencies $\pi$.  
-      </para>
-      <para>
-	In fact, this can be generalized even further to \[ Q_{ij} =
-	S_{ij}\times R(\pi)_{ij} \] where \[ \pi_i \times R_{ij} =
-	\pi_j \times R_{ji}. \]
-      </para>
-      <para>These models can therefore be expressed as a combination
-	of an "exchange model" (for $S$) and a "frequency model" (for
-	$R$).
-      </para>
-
-      <table frame="none" rowsep="1"><info><title>Frequency Models</title></info>
-	
-	<tgroup cols="3">
-	  <colspec colnum="1" colname="col1" colwidth="1*"/>
-	  <colspec colnum="2" colname="col2" colwidth="1*"/>
-	  <colspec colnum="3" colname="col3" colwidth="1*"/>
-	  <thead><row>
-	      <entry>Model</entry>
-	      <entry>Alphabet</entry>
-	      <entry>Parameters</entry>
-	  </row></thead>
-
-	  <tbody>
-	    <row>
-	      <entry>
-		<para><userinput>f</userinput></para>
-		<para>Whelan and Goldman (2001)</para>
-	      </entry>
-	      <entry>any</entry>
-	      <entry>
-		<para>pi[<replaceable>l</replaceable>]: frequency of letter <replaceable>l</replaceable>.</para>
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		<para><userinput>f61</userinput></para>
-		<para>Synonym of F for codon models</para>
-	      </entry>
-	      <entry>any</entry>
-	      <entry>
-		<para>pi[<replaceable>l</replaceable>]: frequency of letter <replaceable>l</replaceable>.</para>
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		<para><userinput>gwF</userinput></para>
-		<para>Goldman and Whelan (2002)</para>
-	      </entry>
-	      <entry>any</entry>
-	      <entry>
-		<para>f: determines cause of high-frequency letters.</para>
-		<para>pi[<replaceable>l</replaceable>]: frequency of letter <replaceable>l</replaceable>.</para>
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		<para><userinput>f1x4</userinput></para>
-		<para>Single nucleotide frequency model</para>
-	      </entry>
-	      <entry>Triplets</entry>
-	      <entry>
-		<para>pi[<replaceable>l</replaceable>]: frequency
-		of nucleotide <replaceable>l</replaceable>.</para>
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		<para><userinput>f3x4</userinput></para>
-		<para>Independent nucleotide frequency model</para>
-	      </entry>
-	      <entry>Triplets</entry>
-	      <entry>
-		<para>pi1[<replaceable>l</replaceable>]: frequency
-		of letter <replaceable>l</replaceable> in codon position 1.</para>
-		<para>pi2[<replaceable>l</replaceable>]: frequency
-		of letter <replaceable>l</replaceable> in codon position 2.</para>
-		<para>pi3[<replaceable>l</replaceable>]: frequency
-		of letter <replaceable>l</replaceable> in codon position 3.</para>
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		<para><userinput>mg94</userinput></para>
-		<para>Muse and Gaut (1994)</para>
-		<para>Single nucleotide frequency model</para>
-	      </entry>
-	      <entry>Triplets</entry>
-	      <entry>
-		<para>pi[<replaceable>l</replaceable>]: frequency
-		of nucleotide <replaceable>l</replaceable>.</para>
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		<para><userinput>mg94w9</userinput></para>
-		<para>Muse and Gaut (1994)</para>
-		<para>Independent nucleotide frequency model</para>
-	      </entry>
-	      <entry>Triplets</entry>
-	      <entry>
-		<para>pi[<replaceable>l</replaceable>]: frequency
-		of letter <replaceable>l</replaceable> in codon position 1.</para>
-		<para>pi[<replaceable>l</replaceable>]: frequency
-		of letter <replaceable>l</replaceable> in codon position 2.</para>
-		<para>pi[<replaceable>l</replaceable>]: frequency
-		of letter <replaceable>l</replaceable> in codon position 3.</para>
-	      </entry>
-	    </row>
-	    <!-- row>
-	    <entry><userinput>pi=triplets</userinput></entry>
-	    <entry>Triplets</entry>
-	    <entry>
-	      <para>$f$ (1)</para>
-	      <para>$g$ (1)</para>
-	      <para>$\pi$ (4) </para>
-	      <para>$\nu$ ($|\alpha|$) </para>
-	    </entry>
-	    <entry>$R_{\alpha\beta} = \frac{{(\pi_i \pi_j
-	      \pi_l)}^f}{{(\pi_i \pi_j \pi_k)}^{1-f}} \times \frac{\nu_\beta}{\nu_\alpha}$.</entry>
-	    </row>
-	    <row>
-	      <entry>
-		<para><userinput>F=amino-acids</userinput></para>
-		<para>Amino-acid based codon frequencies. (no codon bias)</para>
-	      </entry>
-	      <entry>Codons</entry>
-	      <entry>
-		<para>$f$ (1)</para>
-		<para>$\pi_{AA}$ (20)</para>
-	      </entry>
-	      <entry>$R_{ij} = \frac{\pi_j^f}{\pi_i^{1-f}}$.</entry>
-	    </row>
-	    <row>
-	    <entry><userinput>pi=codons</userinput></entry>
-	    <entry>Codons</entry>
-	    <entry>$f$</entry>
-	    <entry>$R_{ij} = \frac{\pi_j^f}{\pi_i^{1-f}}$.</entry>
-	    </row -->
-	  </tbody>
-	</tgroup>
-      </table>
+	<para>When using a codon-based substitution model like <userinput>gy94</userinput>, you may select the genetic code by specifying <userinput>--alphabet Codons[,<replaceable>genetic-code</replaceable>]</userinput>.  Available genetic codes are <userinput>standard</userinput>, <userinput>mt-vert</userinput>, <userinput>mt-invert</userinput>, <userinput>mt-yeast</userinput>, <userinput>mt-protozoan</userinput>.</para>
+	<para>If the genetic code is not specified, then the standard code is used:
+<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel gy94 --alphabet Codons
+<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel gy94 --alphabet Codons[RNA]</screen>
+	These examples specify the vertebrate mitochondrial code:
+	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel gy94 --alphabet Codons[DNA,mt-vert]
+<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel gy94 --alphabet Codons[,mt-vert]</screen>	
+</para>
     </section>
 
+      </section>
 
     <section><info><title>Substitution Mixture Models</title></info>
     
@@ -1827,8 +1718,6 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	    <row>
 	      <entry>
 		<para><userinput>m1a</userinput></para>
-		<para><userinput>m1a[hky85_sym,f61]</userinput> (default)</para>
-		<para><userinput>m1a[gtr_sym,f3x4]</userinput></para>
 		<para>Wong, et. al. (2004)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1844,8 +1733,6 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	    <row>
 	      <entry>
 		<para><userinput>m2a</userinput></para>
-		<para><userinput>m2a[hky85_sym,f61]</userinput> (default)</para>
-		<para><userinput>m2a[gtr_sym,f3x4]</userinput></para>
 		<para>Wong, et. al. (2004)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1863,8 +1750,6 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	    <row>
 	      <entry>
 		<para><userinput>m2a_test</userinput></para>
-		<para><userinput>m2a_test[hky85_sym,f61]</userinput> (default)</para>
-		<para><userinput>m2a_test[gtr_sym,f3x4]</userinput></para>
 		<para>Wong, et. al. (2004)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1883,8 +1768,6 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	    <row>
 	      <entry>
 		<para><userinput>m3</userinput></para>
-		<para><userinput>m3[hky85_sym,f61]</userinput> (default)</para>
-		<para><userinput>m3[gtr_sym,mg94,n=4]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1899,8 +1782,6 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	    <row>
 	      <entry>
 		<para><userinput>m3_test</userinput></para>
-		<para><userinput>m3_test[hky85_sym,f61]</userinput> (default)</para>
-		<para><userinput>m3_test[gtr_sym,mg94]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1919,8 +1800,6 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	    <row>
 	      <entry>
 		<para><userinput>m7</userinput></para>
-		<para><userinput>m7[4,hky85_sym,f61]</userinput> (default)</para>
-		<para><userinput>m7[6,gtr_sym,f3x4]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1936,8 +1815,6 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	    <row>
 	      <entry>
 		<para><userinput>m8a</userinput></para>
-		<para><userinput>m8a[4,hky85_sym,f61]</userinput> (default)</para>
-		<para><userinput>m8a[6,gtr_sym,f3x4]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1956,8 +1833,6 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	    <row>
 	      <entry>
 		<para><userinput>m8</userinput></para>
-		<para><userinput>m8[4,hky85_sym,f61]</userinput> (default)</para>
-		<para><userinput>m8[6,gtr_sym,f3x4]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1975,8 +1850,6 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	    <row>
 	      <entry>
 		<para><userinput>m8a_test</userinput></para>
-		<para><userinput>m8a_test[4,hky85_sym,f61]</userinput> (default)</para>
-		<para><userinput>m8a_test[6,gtr_sym,f3x4]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1996,8 +1869,6 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	      <entry>
 		<variablelist>
 		  <para><userinput>branch-site</userinput></para>
-		<para><userinput>branch-site[hky85_sym,f61]</userinput> (default)</para>
-		<para><userinput>branch-site[gtr_sym,f3x4]</userinput></para>
 		<para>Zhang, et. al. (2005)</para>
 		</variablelist>
 	      </entry>
@@ -2081,30 +1952,6 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
 </para>
 <para>In case this probability is extremely close to 1 or 0, you may wish to add the option <userinput>--Rao-Blackwellize branch-site:posSelection</userinput>.  This will report the log-probability of positive selection each iteration.  The user may exponentiate the reported values and then average them (using R, for example) in order to compute a more accurate estimate of the posterior probability of positive selection.
     </para>
-    </section>
-    <section><info><title>Substitution model examples</title></info>
-      
-      <para>Example: --smodel wag+f+Rates.log_normal+inv</para>
-      <para>Example: --smodel wag+Rates.log_normal+inv (same as above)</para>
-      <para>Example: --smodel lg08+gwF+Rates.log_normal+inv</para>
-      <para>Example: --smodel equ --alphabet Triplets</para>
-      <para>Example: --smodel hky85</para>
-      <para>Example: --smodel gy94</para>
-      <para>Example: --smodel gy94+f1x4</para>
-      <para>Example: --smodel m2a</para>
-      <para>Example: --smodel m2a[hky85_sym] (same as above)</para>
-      <!-- para>Example: smodel m2[tn93_sym,f3x4]</para -->
-    </section>
-    <section xml:id="genetic-codes"><info><title>Genetic Codes</title></info>
-      
-      <para>When using a codon-based substitution model like <userinput>gy94</userinput>, you may select the genetic code by specifying <userinput>--alphabet Codons[,<replaceable>genetic-code</replaceable>]</userinput>.  Available genetic codes are <userinput>standard</userinput>, <userinput>mt-vert</userinput>, <userinput>mt-invert</userinput>, <userinput>mt-yeast</userinput>, <userinput>mt-protozoan</userinput>.</para>
-<para>If the genetic code is not specified, then the standard code is used:
-<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel gy94 --alphabet Codons
-<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel gy94 --alphabet Codons[RNA]</screen>
-	These examples specify the vertebrate mitochondrial code:
-	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel gy94 --alphabet Codons[DNA,mt-vert]
-<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel gy94 --alphabet Codons[,mt-vert]</screen>	
-</para>
     </section>
 
   </section>

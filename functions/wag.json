@@ -1,14 +1,23 @@
 {
     "name": "wag",
-    "synonyms": ["WAG"],
+    "deprecated-synonyms": ["WAG"],
     "result_type": "ExchangeModel[AA]",
-    "call": "SModel.wag[A]",
+    "call": "SModel.wag[a]",
     "args": [
         {
-            "arg_name": "A",
+            "arg_name": "a",
             "arg_type": "a",
-            "default_value": "getAlphabet"
+            "default_value": "getAlphabet",
+            "description": "The alphabet."
         }
     ],
-    "citation": "Whelan and Goldman (2001)"
+    "description": "Empirically derived exchangability matrix for general proteins",
+    "citation":{"type": "article",
+		"title": "A General Empirical Model of Protein Evolution Derived from Multiple Protein Families Using a Maximum-Likelihood Approach",
+		"year": "2001",	
+		"author": [{"name": "Whelan, Simon"}, {"name": "Goldman, Nick"}],
+		"journal": {"name": "Molecular Biology and Evolution", "volume": "18", "number": "5", "pages": "691--699"},
+		"identifier": [{"type":"doi","id":"10.1093/oxfordjournals.molbev.a003851"}]
+	       },
+    "examples": ["wag","wag+f"]
 }
