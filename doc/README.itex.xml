@@ -499,7 +499,7 @@ This can be done simply by starting several instances of the program, and does n
     <section><info><title>Command line options</title></info>
       
 
-      <para>You can specify a more complex substitution model as follows (See <xref linkend="subst_basic"/>):
+      <para>You can specify a more complex substitution model as follows:
 
 	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --smodel lg08+Rates.gamma+inv</userinput></screen> </para>
       <para>You may specify an indel model of <userinput>none</userinput>
@@ -1347,11 +1347,6 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 
     <section xml:id="subst_models"><info><title>Substitution models</title></info>
       
-    <para>Substitution models can be specified using notation like:
-    <programlisting>hky85[kappa~log_normal[0,1]]+Rates.gamma[alpha=0.2]+inv</programlisting>
-    See section <xref linkend="functions"/> for the general syntax.
-    </para>
-    
       <section><info><title>Default substitution models</title></info>
 	
 	<para>If the substitution model is not specified, then the
@@ -1363,28 +1358,8 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
       </section>
 
 
-      <section xml:id="subst_basic"><info><title>Basic CTMC models</title></info>
+      <section xml:id="table_dna_models"><info><title>DNA models</title></info>
 	
-	<para>The basic substitution models in
-	  <application>BAli-Phy</application> are continuous-time Markov
-	  chains (CTMC). 
-	  CTMC models can be characterized 
-	  by transition rates $Q_{ij}$ from letter $i$ to letter $j$.
-	  After a given time $t$ the probability for transition from state
-	  $i$ to state $j$ is given by \[P(t)_{ij}=e^{Q_{ij} \times t}\]
-	  using a matrix exponential.  Because the CTMC models used in
-	  <application>BAli-Phy</application> are all reversible, the rate
-	  matrix for these reversible models can be decomposed into a
-	  symmetric matrix $S$ and equilibrium frequencies $\pi$ as
-	  follows:  \[Q_{ij} = S_{ij}\times\pi_j\]
-	  The matrix $S$ is called the exchangability matrix, and
-	  represents how exchangeable letters $i$ and $j$ are,
-	  independent of their frequencies.
-	</para>
-	
-	<para>The basic CTMC models are equ, hky85, tn93, gtr, hky85_sym+x3,
-	tn93_sym+x3, gtr_sym+x3, jtt, wag, lg08, and gy94.</para>
-
 	<table frame="none" rowsep="1"><info><title>Substitution Models</title></info>
 	  
 	  <tgroup cols="3">
@@ -1393,33 +1368,86 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	    <colspec colnum="3" colname="col3" colwidth="1*"/>
 	    <thead><row>
 		<entry>Model</entry>
-		<entry>Alphabet</entry>
-		<entry>Parameters</entry>
+		<entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+		<entry>Summary</entry>
 	    </row></thead>
 
 	    <tbody>
 	      <row>
-		<entry><userinput>equ</userinput></entry>
-		<entry>any</entry>
-		<entry>none</entry>
+		<entry><userinput>jc69</userinput></entry>
+		<entry>0</entry>
+		<entry><para>Equal rates and equal frequencies.</para>
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1016/B978-1-4832-3211-9.50009-7">(Jukes and Cantor, 1969)</link>
+		</entry>
 	      </row>
 
 	      <row>
-		<entry>
-		  <para><userinput>hky85</userinput></para>
-		  <para>Hasegawa, Kishino, Yano (1985)</para>
+		<entry><userinput>hky85</userinput></entry>
+		<entry>4</entry>
+		<entry><para>Ts/tv ratio, unequal frequencies</para>
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007/BF02101694">
+		  (Hasegawa, Kishino, and Yano, 1985)
+		</link>
 		</entry>
-		<entry>DNA or RNA</entry>
-		<entry>kappa: the ts/tv ratio.</entry>
 	      </row>
 
 	      <row>
-		<entry><para><userinput>tn93</userinput></para><para>Tamura, Nei (1993)</para></entry>
-		<entry>DNA or RNA</entry>
+		<entry><userinput>tn93</userinput></entry>
+		<entry>5</entry>
 		<entry>
-		  <para>kappaPur: the purine ts/tv ratio.</para>
-		  <para>kappaPyr: the pyrimidine ts/tv ratio.</para>
+		  <para>ts/tv ratio (purines), ts/tv ratio (pyrimadines), unequal frequencies</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040023">
+		    (Tamura and Nei, 1993)
+		  </link>
 		</entry>
+	      </row>
+
+	      <row>
+		<entry><userinput>f81</userinput></entry>
+		<entry>3</entry>
+		<entry><para>Equal exchangabilities, unequal frequencies.</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007%2FBF01734359">
+		    (Felsenstein, 1981)
+		  </link>
+		</entry>
+	      </row>
+
+	      <row>
+		<entry><userinput>gtr</userinput></entry>
+		<entry>8</entry>
+		<entry><para>Unequal exchangeabilities, unequal frequencies.</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.damtp.cam.ac.uk/user/st321/CV_&amp;_Publications_files/STpapers-pdf/T86.pdf">
+		    (Tavare, 1986)
+		  </link>
+		</entry>
+	      </row>
+
+	    </tbody>
+	  </tgroup>
+	</table>
+
+      </section>
+
+
+      <section xml:id="table_protein_models"><info><title>Protein models</title></info>
+	<table frame="none" rowsep="1"><info><title>Substitution Models</title></info>
+	  
+	  <tgroup cols="3">
+	    <colspec colnum="1" colname="col1" colwidth="1*"/>
+	    <colspec colnum="2" colname="col2" colwidth="1*"/>
+	    <colspec colnum="3" colname="col3" colwidth="1*"/>
+	    <thead><row>
+		<entry>Model</entry>
+		<entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+		<entry>Summary</entry>
+	    </row></thead>
+
+	    <tbody>
+	      <row>
+		<entry><userinput>jc69</userinput></entry>
+		<entry>0</entry>
+		<entry>Equal rates and equal frequencies.
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1016/B978-1-4832-3211-9.50009-7">(Jukes and Cantor, 1969)</link></entry>
 	      </row>
 
 	      <row>
@@ -1473,30 +1501,83 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 		</entry>
 	      </row>
 
+	    </tbody>
+	  </tgroup>
+	</table>
+
+      </section>
+
+
+      <section xml:id="table_codon_models"><info><title>Codon models</title></info>
+	<table frame="none" rowsep="1"><info><title>Substitution Models</title></info>
+	  
+	  <tgroup cols="3">
+	    <colspec colnum="1" colname="col1" colwidth="1*"/>
+	    <colspec colnum="2" colname="col2" colwidth="1*"/>
+	    <colspec colnum="3" colname="col3" colwidth="1*"/>
+	    <thead><row>
+		<entry>Model</entry>
+		<entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+		<entry>Summary</entry>
+	    </row></thead>
+
+	    <tbody>
 	      <row>
-		<entry>
-		  <para><userinput>hky85_sym+x3</userinput></para>
-		  <para><userinput>tn93_sym+x3</userinput></para>
-		  <para><userinput>gtr_sym+x3</userinput></para>
-		</entry>
-		<entry>Triplets</entry>
-		<entry>
-		  <para><replaceable>nuc-model</replaceable> parameters.</para>
+		<entry><userinput>gy94</userinput></entry>
+		<entry>62</entry>
+		<entry><para></para>
+		(Goldman  and Yang 1994)
 		</entry>
 	      </row>
 
 	      <row>
-		<entry>
-		  <para><userinput>gy94</userinput></para>
-		  <para><userinput>gy94[,hky85_sym]</userinput> (default)</para>
-		  <para><userinput>gy94[,gtr_sym]</userinput></para>
-		  <para>Nielsen and Yang (1998)</para>
-		</entry>
-		<entry>Codons</entry>
-		<entry>
-		  <para>omega: the dN/dS ratio</para>
+		<entry><userinput>gy94[pi=f1x4]</userinput></entry>
+		<entry>5</entry>
+		<entry><para></para>
+		(Goldman  and Yang 1994)
 		</entry>
 	      </row>
+
+	      <row>
+		<entry><userinput>gy94[pi=f3x4]</userinput></entry>
+		<entry>11</entry>
+		<entry><para></para>
+		(Goldman  and Yang 1994)
+		</entry>
+	      </row>
+
+	      <row>
+		<entry><userinput>mg94</userinput></entry>
+		<entry>5</entry>
+		<entry>
+		  (Muse and Gaut, 1994)
+		</entry>
+	      </row>
+
+	      <row>
+		<entry><userinput>mg94w9</userinput></entry>
+		<entry>11</entry>
+		<entry>
+		  (Muse and Gaut, 1994)
+		</entry>
+	      </row>
+
+	      <row>
+		<entry><userinput>fMutSel</userinput></entry>
+		<entry>65</entry>
+		<entry>
+		  (Yang and Nielsen, 2008)
+		</entry>
+	      </row>
+
+	      <row>
+		<entry><userinput>fMutSel0</userinput></entry>
+		<entry>24</entry>
+		<entry>
+		  (Yang and Nielsen, 2008)
+		</entry>
+	      </row>
+	      
 	    </tbody>
 	  </tgroup>
 	</table>
@@ -1660,7 +1741,7 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
     
     <para>
       Complex substitution models in <application>BAli-Phy</application>
-      are constructed as mixtures of reversible CTMC models (see <xref linkend="subst_basic"/>) that run at different rates (e.g. $\Gamma_4+INV$)
+      are constructed as mixtures of reversible CTMC models that run at different rates (e.g. $\Gamma_4+INV$)
       or have different parameters (e.g. an M2a codon model).
     </para>
 
