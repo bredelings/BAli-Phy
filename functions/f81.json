@@ -2,19 +2,29 @@
     "name": "f81",
     "synonyms": ["F81"],
     "result_type": "RevCTMC[a]",
-    "call": "SModel.f81'[pi,A]",
+    "call": "SModel.f81'[pi,a]",
     "args": [
         {
             "arg_name": "pi",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "~dirichlet_on[letters[@A],1.0]"
+            "default_value": "~dirichlet_on[letters[@a],1.0]",
+	    "description": "Letter frequencies"
         },
         {
-            "arg_name": "A",
+            "arg_name": "a",
             "arg_type": "a",
-            "default_value": "getAlphabet"
+            "default_value": "getAlphabet",
+	    "description": "The alphabet"
         }
     ],
     "title": "The Felsenstein (1981) rate matrix",
+    "description": "Rate matrix with equal exchangabilities, unequal frequencies.",
+    "citation":{"type": "article",
+		"title": "Evolutionary trees from DNA sequences: A maximum likelihood approach",
+		"year": "1993",
+		"author": [{"name": "Felsenstein, Joseph"}],
+		"journal": {"name": "Journal of Molecular Evolution", "volume": "17", "number": "6", "pages": "368--376"},
+		"identifier": [{"type":"doi","id":"10.1007%2FBF01734359"}]
+	       },
     "extract": "all"
 }
