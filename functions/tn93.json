@@ -35,7 +35,7 @@
             "arg_name": "a",
             "arg_type": "a",
 	    "default_value": "getAlphabet",
-            "description": "The nucleotide alphabet (DNA or RNA)."
+            "description": "The alphabet"
         }
     ],
     "description":"The Tamura-Nei model.",
