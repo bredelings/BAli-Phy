@@ -9,5 +9,6 @@
             "default_value": "getAlphabet"
         }
     ],
-    "examples": ["hky85[pi=Frequencies.uniform]"]
+    "examples": ["hky85[pi=Frequencies.uniform]"],
+    "extract": "all"
 }
