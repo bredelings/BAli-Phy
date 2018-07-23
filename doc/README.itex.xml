@@ -1550,77 +1550,50 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	<tgroup cols="3">
 	  <thead><row>
 	      <entry>Model</entry>
-	      <entry>Alphabet</entry>
-	      <entry>Parameters</entry>
+	      <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+	      <entry>Summary</entry>
 	  </row></thead>
 	  <tbody>
 
 	    <row>
-	      <entry>
-		<para><userinput><replaceable>model</replaceable> + Rates.gamma</userinput></para>
-		<para><userinput><replaceable>model</replaceable> + Rates.gamma[4]</userinput> (default)</para>
-		<para>Yang (1994)</para>
-	      </entry>
-	      <entry><replaceable>model</replaceable> alphabet</entry>
-	      <entry>
-		<variablelist>
-		  <varlistentry> <term>alpha</term> <listitem> <para>shape parameter for Gamma(a,b)</para> </listitem> </varlistentry>
-		</variablelist>
+	      <entry><userinput><replaceable>submodel</replaceable> + Rates.gamma</userinput></entry>
+	      <entry>df(<replaceable>submodel</replaceable>)+1</entry>
+	      <entry><para>Site rates follow a discrete approximation to the Gamma distribution</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007/BF00160154">
+		    Yang (1994)
+		  </link>
 	      </entry>
 	    </row>
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>model</replaceable> + Rates.log_normal</userinput></para>
-		<para><userinput><replaceable>model</replaceable> + Rates.log_normal[4]</userinput> (default)</para>
+		<para><userinput><replaceable>submodel</replaceable> + Rates.log_normal</userinput></para>
 	      </entry>
-	      <entry><replaceable>model</replaceable> alphabet</entry>
-	      <entry>
-		<variablelist>
-		  <varlistentry> <term>lsigma</term> <listitem> <para>The standard deviation parameter.</para> </listitem> </varlistentry>
-		</variablelist>
+	      <entry>df(<replaceable>submodel</replaceable>)+1</entry>
+	      <entry><para>Site rates follow a discrete approximation to the logNormal distribution</para>
 	      </entry>
 	    </row>
 
 	    <row>
-	      <entry>
-		<para><userinput><replaceable>model</replaceable> + Rates.free</userinput></para>
-		<para><userinput><replaceable>model</replaceable> + Rates.free[n=4]</userinput> (default)</para>
-		<para>Yang (1995)</para>
-	      </entry>
-	      <entry><replaceable>model</replaceable> alphabet</entry>
-	      <entry>
-		<variablelist>
-		  <varlistentry> <term>rates</term> <listitem> <para>Rates for each category.</para> </listitem> </varlistentry>
-		  <varlistentry> <term>frequencies</term> <listitem> <para>Frequencies for each category.</para> </listitem> </varlistentry>
-		  <varlistentry> <term>n</term> <listitem> <para>Number of categories, if rates and frequencies not specified.</para> </listitem> </varlistentry>
-		</variablelist>
+	      <entry><para><userinput><replaceable>submodel</replaceable> + Rates.free</userinput></para></entry>
+	      <entry>df(<replaceable>submodel</replaceable>)+2(<replaceable>n</replaceable>-1)</entry>
+	      <entry><para>Sites fall in one of <replaceable>n</replaceable> categories. Each category has its own rate.</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1206396">
+		    Yang (1995)
+		  </link>
 	      </entry>
 	    </row>
 
 	    <row>
-	      <entry>
-		<para><userinput><replaceable>model</replaceable> + multi_rate[dist,n=4]</userinput></para>
-		<para><userinput><replaceable>model</replaceable> + multi_rate[beta[2,3],n=5]</userinput> (example)</para>
-	      </entry>
-	      <entry><replaceable>model</replaceable> alphabet</entry>
-	      <entry>
-		<variablelist>
-		  <varlistentry> <term>dist</term> <listitem> <para>Distribution of rates across sites.</para> </listitem> </varlistentry>
-		  <varlistentry> <term>n</term> <listitem> <para>Number of bins.</para> </listitem> </varlistentry>
-		</variablelist>
-	      </entry>
+	      <entry><userinput><replaceable>submodel</replaceable> + multi_rate[<replaceable>dist</replaceable>]</userinput></entry>
+	      <entry>df(<replaceable>submodel</replaceable>)+df(<replaceable>dist</replaceable>)</entry>
+	      <entry><para>Sites rates follow a discrete approximation to the distribution <replaceable>dist</replaceable>.</para></entry>
 	    </row>
 
 	    <row>
-	      <entry>
-		<para><userinput><replaceable>model</replaceable> + inv</userinput></para>
-	      </entry>
-	      <entry><replaceable>model</replaceable> alphabet</entry>
-	      <entry>
-		<variablelist>
-		  <varlistentry> <term>p_inv</term> <listitem> <para>Fraction of invariant sites.</para> </listitem> </varlistentry>
-		</variablelist>
+	      <entry><userinput><replaceable>submodel</replaceable> + inv</userinput></entry>
+	      <entry>df(<replaceable>submodel</replaceable>)+1</entry>
+	      <entry><para>Some fraction inv:p_inv of sites are invariable.</para>
 	      </entry>
 	    </row>
 
