@@ -1,1 +1,1 @@
---test <DATA>/amino.fasta --smodel LG+DP[n=4]
+--test <DATA>/amino.fasta --smodel lg08+Rates.free[n=4]
