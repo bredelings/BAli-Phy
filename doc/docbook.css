@@ -23,7 +23,14 @@
 }
 
 p .userinput { background-color: #F0F0F0;}
-table .userinput {background-color: transparent;}
+table .userinput {
+    background-color: transparent;
+}
+table {
+    margin-left: 5em;
+    margin-right: 5em;
+    width: calc(100% - 10em);
+}
 
 .note {
 	border: solid;

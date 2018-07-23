@@ -1270,7 +1270,7 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
       <section xml:id="table_dna_models"><info><title>DNA models</title></info>
 	
       <para>All the DNA models are special cases of the GTR model.</para>
-      <table frame="none" rowsep="1"><info><title>Substitution Models</title></info>
+      <table><info><title>Substitution Models</title></info>
 	  
 	  <tgroup cols="3">
 	    <colspec colnum="1" colname="col1" colwidth="1*"/>
@@ -1340,7 +1340,7 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 
 
       <section xml:id="table_protein_models"><info><title>Protein models</title></info>
-	<table frame="none" rowsep="1"><info><title>Substitution Models</title></info>
+	<table><info><title>Substitution Models</title></info>
 	  
 	  <tgroup cols="3">
 	    <colspec colnum="1" colname="col1" colwidth="1*"/>
@@ -1436,7 +1436,7 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 
 
       <section xml:id="table_codon_models"><info><title>Codon models</title></info>
-	<table frame="none" rowsep="1"><info><title>Substitution Models</title></info>
+	<table><info><title>Substitution Models</title></info>
 	  
 	  <tgroup cols="3">
 	    <colspec colnum="1" colname="col1" colwidth="1*"/>
@@ -1545,9 +1545,9 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
       or have different parameters (e.g. an M2a codon model).
     </para>
 
-      <table frame="none" rowsep="1" class="abc"><info><title>CTMC Mixture Models</title></info>
-	
-	<tgroup cols="3">
+      <table><info><title>CTMC Mixture Models</title></info>
+
+      <tgroup cols="3">
 	  <thead><row>
 	      <entry>Model</entry>
 	      <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
@@ -1596,6 +1596,18 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	      <entry><para>Some fraction inv:p_inv of sites are invariable.</para>
 	      </entry>
 	    </row>
+	  </tbody>
+	</tgroup>
+      </table>
+
+      <table>
+	<tgroup cols="3">
+	  <thead><row>
+	      <entry>Model</entry>
+	      <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+	      <entry>Summary</entry>
+	  </row></thead>
+	  <tbody>
 
 	    <row>
 	      <entry>
@@ -1846,7 +1858,7 @@ See section <xref linkend="functions"/> for the general syntax.  rs07 is the  de
 
     <para>Each of these models is a probability distribution on pairwise alignments.  The probability distribution on multiple sequence alignments $\Pr(A|T,\tau,\Lambda)$ is constructed by factoring the multiple sequence alignment into pairwise alignments along each branch of the tree, as described in Redelings and Suchard (2005).</para>
 
-<table frame="none" rowsep="1"><info><title>Substitution Models</title></info>
+    <table><info><title>Insertion-Deletion Models</title></info>
 	  
 	  <tgroup cols="3">
 	    <colspec colnum="1" colname="col1" colwidth="1*"/>
