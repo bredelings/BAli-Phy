@@ -607,7 +607,7 @@ object_ptr<const Object> LG_Exchange_Function(const alphabet& a)
 extern "C" closure builtin_function_lg(OperationArgs& Args)
 {
     auto a = Args.evaluate(0);
-    return WAG_Exchange_Function(a.as_<alphabet>());
+    return LG_Exchange_Function(a.as_<alphabet>());
 }
 
 extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
