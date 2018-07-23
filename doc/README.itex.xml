@@ -601,53 +601,6 @@ scale = 1,3:</programlisting>
       </section>
     </section>
 
-  <section xml:id="examples"><info><title>Examples</title></info>
-    
-    <para>Here are some examples which demonstrate how to run
-      <application>BAli-Phy</application>.  In order to run these
-      examples, you must find the <filename>examples/sequences/</filename>
-      directory which contains the example files.  If you downloaded
-      executables and extracted them in the
-      <filename>&install.prefix;</filename> directory, then the
-      <filename>examples/sequences/</filename> directory will be found at 
-      <filename>&install.path;/share/doc/bali-phy/examples/sequences/</filename>.
-    </para>
-
-    <para>Also note that <command>bali-phy</command>
-      does <emphasis>not</emphasis> run until it
-      is "finished", but continues to gather samples until the user
-      determines that enough samples have been gathered, and stops it.
-      Thus, it is useful to continually examine the output files while
-      the program is running. 
-    </para>
-
-    <example><info><title>No frills</title></info>
-      
-      <para>Here we analyze the EF-Tu 5-taxon data set provided with
-	the software.</para>
-      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/doc/bali-phy/examples/sequences/EF-Tu/5d.fasta</userinput></screen>
-    </example>
-
-    <example><info><title>Multiple-Rate Substitution Model</title></info>
-      
-      <para>We now modify the previous example by changing the
-	substitution model to allow log-normal-distributed rate variation and
-	invariant sites.  The amount of rate variation and the fraction of
-	invariant sites are estimated</para>
-      
-      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/doc/bali-phy/examples/sequences/EF-Tu/5d.fasta --smodel lg08+Rates.log_normal+inv</userinput></screen></example>
-
-    <example><info><title>Fixed alignment</title></info>
-      
-      <para>Here we use the 5S rRNA 25-taxon data set provided with
-      the software. The <userinput>-Inone</userinput> option is used, fixing the alignment and making indels non-informative.
-      </para> 
-
-      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/doc/bali-phy/examples/sequences/5S-rRNA/25-muscle.fasta -Inone</userinput></screen>
-
-    </example>
-  </section>
-
   </section>
 
   <section xml:id="input"><info><title>Input</title></info>
