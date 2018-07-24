@@ -1625,49 +1625,35 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	    <row>
 	      <entry>
 		<para><userinput>m2a</userinput></para>
-		<para>Wong, et. al. (2004)</para>
 	      </entry>
-	      <entry>Codons</entry>
+	      <entry>df(<replaceable>submodel</replaceable>)+4</entry>
 	      <entry>
-		<variablelist>
-		  <varlistentry> <term>w1</term> <listitem> <para>the conserved dN/dS ratio</para> </listitem> </varlistentry>
-		  <varlistentry> <term>f1</term> <listitem> <para>the fraction of conserved sites among non-positively selected sites</para> </listitem> </varlistentry>
-		  <varlistentry> <term>f2</term> <listitem> <para>the fraction of neutral sites among non-positively selected sites</para> </listitem> </varlistentry>
-		  <varlistentry> <term>posW</term> <listitem> <para>the positively selected dN/dS ratio</para> </listitem> </varlistentry>
-		  <varlistentry> <term>posP</term> <listitem> <para>the fraction of positively selected sites</para> </listitem> </varlistentry>
-		</variablelist>
+		<para>A mixture of conserved, neutral, and positively-selected sites.</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1534/genetics.104.031153">
+		    (Wong, et. al. 2004)
+		  </link>
 	      </entry>
 	    </row>
 
 	    <row>
+	      <entry><userinput>m2a_test</userinput></entry>
+	      <entry>df(<replaceable>submodel</replaceable>)+4</entry>
 	      <entry>
-		<para><userinput>m2a_test</userinput></para>
-		<para>Wong, et. al. (2004)</para>
-	      </entry>
-	      <entry>Codons</entry>
-	      <entry>
-		<variablelist>
-		  <varlistentry> <term>w1</term> <listitem> <para>the conserved dN/dS ratio</para> </listitem> </varlistentry>
-		  <varlistentry> <term>f1</term> <listitem> <para>the fraction of conserved sites among non-positively selected sites</para> </listitem> </varlistentry>
-		  <varlistentry> <term>f2</term> <listitem> <para>the fraction of neutral sites among non-positively selected sites</para> </listitem> </varlistentry>
-		  <varlistentry> <term>posW</term> <listitem> <para>the positively selected dN/dS ratio</para> </listitem> </varlistentry>
-		  <varlistentry> <term>posP</term> <listitem> <para>the fraction of positively selected sites.</para> </listitem> </varlistentry>
-		  <varlistentry> <term>posSelection</term> <listitem> <para>model selector (1 if positive selection, 0 if not).</para> </listitem> </varlistentry>
-		</variablelist>
+		<para>A Bayesian test for positive selection that compares M2a with M1a.</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1534/genetics.104.031153">
+		    (Wong, et. al. 2004)
+		  </link>
 	      </entry>
 	    </row>
 
 	    <row>
+	      <entry><userinput>m3</userinput></entry>
+	      <entry>df(<replaceable>submodel</replaceable>)+2*<replaceable>n</replaceable>-1</entry>
 	      <entry>
-		<para><userinput>m3</userinput></para>
-		<para>Yang, et. al. (2000)</para>
-	      </entry>
-	      <entry>Codons</entry>
-	      <entry>
-		<variablelist>
-		  <varlistentry> <term>m3.omegas[i]</term> <listitem> <para>the conserved dN/dS ratio for category i</para> </listitem> </varlistentry>
-		  <varlistentry> <term>m3.ps[i]</term> <listitem> <para>the fraction of sites in category i</para> </listitem> </varlistentry>
-		</variablelist>
+		<para>An free mixture of <replaceable>n</replaceable> categories of conserved dN/dS values.</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1534/genetics.104.031153">
+		    (Wong, et. al. 2004)
+		  </link>
 	      </entry>
 	    </row>
 

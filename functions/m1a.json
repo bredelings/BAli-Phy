@@ -40,5 +40,5 @@
 	       },
     "examples": ["function[w,gy94[omega=w,pi=f1x4]]+m1a","function[w,mg94[omega=w]]+m1a","function[w,fMutSel0[omega=w]]+m1a"],
     "extract": "all",
-    "see": ["m2a"]
+    "see": ["m2a","m2a_test"]
 }
