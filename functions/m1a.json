@@ -2,24 +2,43 @@
     "name": "m1a",
     "synonyms": ["M1a"],
     "result_type": "MixtureModel[Codons[a]]",
-    "call": "SModel.m1a[submodel,omega1,p1]",
+    "call": "SModel.m1a[submodel,omega0,p0]",
     "args": [
         {
             "arg_name": "submodel",
             "arg_type": "Function[Double,RevCTMC[a]]",
             "default_value": "function[w,gy94[omega=w]]",
-	    "description": "The model, as a function of dN/dS"
+	    "description": "The model as a function of dN/dS"
         },
         {
-            "arg_name": "omega1",
+            "arg_name": "omega0",
             "arg_type": "Double",
-            "default_value": "~uniform[0,1]"
+            "default_value": "~uniform[0,1]",
+	    "description": "The dN/dS value for conserved sites"
         },
         {
-            "arg_name": "p1",
+            "arg_name": "p0",
             "arg_type": "Double",
-            "default_value": "~uniform[0,1]"
+            "default_value": "~uniform[0,1]",
+	    "description": "The fraction of conserved sites"
         }
     ],
-    "extract": "all"
+    "description":"A mixture of conserved and neutral sites.  The conserved sites have frequency p0 and dN/dS=omega0.\n\nThe M1a model modifies the M1 model to avoid forcing the conserved dN/dS to 0.",
+    "citation":{"type": "article",
+		"title": "Accuracy and Power of Statistical Methods for Detecting Adaptive Evolution in Protein Coding Sequences and for Identifying Positively Selected Sites",
+		"year": "2004",
+		"author": [{"name": "Wong, Wendy S. W."},
+			   {"name": "Yang, Ziheng"},
+			   {"name": "Goldman, Nick"},
+			   {"name": "Nielsen, Rasmus"}],
+		"journal": {"name": "Genetics",
+			    "volume": "168",
+			    "number": "2",
+			    "pages": "1041--1051"},
+		"identifier": [{"type":"doi",
+				"id":"10.1534/genetics.104.031153 "}]
+	       },
+    "examples": ["function[w,gy94[omega=w,pi=f1x4]]+m1a","function[w,mg94[omega=w]]+m1a","function[w,fMutSel0[omega=w]]+m1a"],
+    "extract": "all",
+    "see": ["m2a"]
 }
