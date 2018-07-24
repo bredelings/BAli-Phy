@@ -97,6 +97,7 @@ table td .variablelist table tr td {padding: 0; margin: 0}
 
 table {border-collapse: collapse}
 table.table > tbody > tr:nth-child(odd) > td { background-color: #E0E0E0; margin:0  }
+table.informaltable > tbody > tr:nth-child(odd) > td { background-color: #E0E0E0; margin:0  }
 .qandaset  tr:nth-child(4n+1) > td { background-color: #E0E0E0; margin:0  }
 .qandaset  tr:nth-child(4n+2) > td { background-color: #E0E0E0; margin:0  }
 

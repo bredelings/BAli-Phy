@@ -7,39 +7,43 @@
         {
             "arg_name": "n",
             "arg_type": "Int",
-            "default_value": "4"
+            "default_value": "4",
+	    "description": "The number of bins for discretizing the Beta distribution"
         },
         {
             "arg_name": "submodel",
             "arg_type": "Function[Double,RevCTMC[a]]",
             "default_value": "function[w,gy94[omega=w]]",
-	    "description": "The model, as a function of dN/dS"
+	    "description": "The model as a function of dN/dS"
         },
         {
             "arg_name": "mu",
             "arg_type": "Double",
-            "default_value": "~uniform[0,1]"
+            "default_value": "~uniform[0,1]",
+	    "description": "The mean of the Beta distribution"
         },
         {
             "arg_name": "gamma",
             "arg_type": "Double",
-            "default_value": "~beta[1,10]"
+            "default_value": "~beta[1,10]",
+	    "description": "The fraction of possible Beta variance given mu"
         },
         {
             "arg_name": "posP",
             "arg_type": "Double",
-            "default_value": "~beta[1,10]"
-        },
-        {
-            "arg_name": "posW",
-            "arg_type": "Double",
-            "default_value": "~log_gamma[4,0.25]"
-        },
-        {
-            "arg_name": "A",
-            "arg_type": "Codons[a]",
-            "default_value": "getAlphabet"
+            "default_value": "~beta[1,10]",
+	    "description": "The fraction of neutral sites"
         }
     ],
+    "description": "A site-heterogeneous model with a discrete Beta distribution on dN/dS values, plus a category of neutral sites.  See the m7 model for the definition of mu and gamma.",
+    "citation":{"type": "article",
+		"title": "Pervasive Adaptive Evolution in Mammalian Fertilization Proteins",
+		"year": "2003",
+		"author": [{"name": "Swanson, Willie J."},
+			   {"name": "Nielsen, Rasmus"},
+			   {"name": "Yang, Qiaofeng"}],
+		"journal": {"name": "Molecular Biology and Evolution", "volume": "20", "number": "1", "pages": "18--20"},
+		"identifier": [{"type":"doi","id":"10.1093/oxfordjournals.molbev.a004233"}]
+	       },
     "extract": "all"
 }

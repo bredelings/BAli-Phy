@@ -7,7 +7,8 @@
         {
             "arg_name": "n",
             "arg_type": "Int",
-            "default_value": "4"
+            "default_value": "4",
+	    "description": "The number of bins for discretizing the Beta distribution"
         },
         {
             "arg_name": "submodel",
@@ -18,23 +19,35 @@
         {
             "arg_name": "mu",
             "arg_type": "Double",
-            "default_value": "~uniform[0,1]"
+            "default_value": "~uniform[0,1]",
+	    "description": "The mean of the Beta distribution"
         },
         {
             "arg_name": "gamma",
             "arg_type": "Double",
-            "default_value": "~beta[1,10]"
+            "default_value": "~beta[1,10]",
+	    "description": "The fraction of possible Beta variance given mu"
         },
         {
             "arg_name": "posP",
             "arg_type": "Double",
-            "default_value": "~beta[1,10]"
+            "default_value": "~beta[1,10]",
+	    "description": "The fraction of neutral sites"
         },
         {
             "arg_name": "posW",
             "arg_type": "Double",
-            "default_value": "~log_gamma[4,0.25]"
+            "default_value": "~log_gamma[4,0.25]",
+            "description": "The dN\/dS value for positively selected sites"
         }
     ],
+    "description": "A site-heterogeneous model with a discrete Beta distribution on dN/dS values, plus a category of positively-selected sites.  See the m7 model for the definition of mu and gamma.",
+    "citation": {"type": "article",
+		 "title": "Codon-Substitution Models for Heterogeneous Selection Pressure at Amino Acid Sites",
+		 "year": "2000",
+		 "author": [{"name": "Yang, Ziheng"}, {"name": "Nielsen, Rasmus"}, {"name": "Goldman, Nick"},{"name": "Pederson, Anne-Mette Krabbe"}],
+		 "journal": {"name": "Genetics", "volume": "155", "number": "1", "pages": "431--449"},
+		 "link": [{"url":"http://www.genetics.org/content/155/1/431.full"}]
+		},
     "extract": "all"
 }
