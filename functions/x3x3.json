@@ -1,8 +1,8 @@
 {
-    "name": "q3",
+    "name": "x3x3",
     "result_type": "RevCTMC[Triplets[a]]",
     "title": "Rate matrix constructed from rate matrices on each triplet position",
-    "call": "SModel.Codons.q3[rates1,rates2,rates3,a]",
+    "call": "SModel.Codons.x3x3[rates1,rates2,rates3,a]",
     "args": [
         {
             "arg_name": "rates1",
@@ -29,5 +29,7 @@
 	    "description": "The Triplets alphabet"
         }
     ],
-    "examples": ["let[q=hky85[a=getNucleotides],q3[q,q,q]]"]
+    "description":"A triplet rate matrix constructed from separate rate matrices for the first, second, and third codon position",
+    "examples": ["let[q=hky85[a=getNucleotides],q3[q,q,q]]"],
+    "see": ["x3"]
 }

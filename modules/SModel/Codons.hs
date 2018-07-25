@@ -64,10 +64,12 @@ mg94' k w pi a = reversible_markov (m0 a (hky85_sym k a_nuc) w) (mg94'_freq pi a
 mg94w9  k w pi1 pi2 pi3 a = reversible_markov (m0 a (hky85_sym k a_nuc) w) (mg94w9_freq  pi1 pi2 pi3 a) where {a_nuc = getNucleotides a};
 mg94w9' k w pi1 pi2 pi3 a = reversible_markov (m0 a (hky85_sym k a_nuc) w) (mg94w9'_freq pi1 pi2 pi3 a) where {a_nuc = getNucleotides a};
 
-q3 (ReversibleMarkov _ _ q_1 pi_1 _ _ _) (ReversibleMarkov _ _ q_2 pi_2 _ _ _) (ReversibleMarkov _ _ q_3 pi_3 _ _ _) a =
+x3x3 (ReversibleMarkov _ _ q_1 pi_1 _ _ _) (ReversibleMarkov _ _ q_2 pi_2 _ _ _) (ReversibleMarkov _ _ q_3 pi_3 _ _ _) a =
     let {nuc_a = getNucleotides a;
          smap = simple_smap a;
          q = singlet_to_triplet_rates a q_1 q_2 q_3;
          pi = f3x4_frequencies_builtin a pi_1 pi_2 pi_3}
     in reversible_markov' a smap q pi;
+
+x3 q a = x3x3 q q q a;
 }
