@@ -1,0 +1,21 @@
+{
+    "name": "x3",
+    "result_type": "RevCTMC[Triplets[a]]",
+    "title": "Rate matrix constructed from rate matrices on each triplet position",
+    "call": "SModel.Codons.x3[submodel,a]",
+    "args": [
+        {
+            "arg_name": "submodel",
+            "arg_type": "RevCTMC[a]",
+            "alphabet": "getNucleotides[@a]",
+	    "description": "Nucleotide rates"
+        },
+        {
+            "arg_name": "a",
+            "arg_type": "Triplets[a]",
+            "default_value": "getAlphabet",
+	    "description": "The Triplets alphabet"
+        }
+    ],
+    "examples": ["hky85+x3"]
+}
