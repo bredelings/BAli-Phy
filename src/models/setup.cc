@@ -106,30 +106,30 @@ using std::valarray;
 using boost::program_options::variables_map;
 using boost::shared_ptr;
 
-string model_t::show(const Rules& rules, bool top) const
+string model_t::show(bool top) const
 {
     if (top)
-	return show_model(extract_value(description), rules);
+	return show_model_annotated(description);
     else
-	return unparse(extract_value(description), rules);
+	return unparse_annotated(description);
 }
 
-string model_t::show_pretty(const Rules& rules, bool top) const
+string model_t::show_pretty(bool top) const
 {
     auto p = pretty_model_t(description);
-    return p.show(rules, not top);
+    return p.show(not top);
 }
 
-string model_t::show_main(const Rules& rules, bool top) const
+string model_t::show_main(bool top) const
 {
     auto p = pretty_model_t(description);
-    return p.show_main(rules, top);
+    return p.show_main(top);
 }
 
-string model_t::show_extracted(const Rules& rules) const
+string model_t::show_extracted() const
 {
     auto p = pretty_model_t(description);
-    return p.show_extracted(rules);
+    return p.show_extracted();
 }
 
 model_t::model_t(const ptree& d, const ptree&t, const std::set<term_t>& c, const expression_ref& e)
@@ -656,12 +656,12 @@ model_t get_model(const Rules& R, const string& type, const string& model, const
     substitute(equations, required_type);
     if (log_verbose >= 1)
     {
-	std::cout<<"model = "<<unparse(model_rep, R)<<std::endl;
+	std::cout<<"model = "<<unparse_annotated(p.first)<<std::endl;
 	std::cout<<"type = "<<unparse_type(required_type)<<std::endl;
 	std::cout<<"equations: "<<show(equations)<<std::endl;
 	std::cout<<"structure = "<<show(model_rep)<<std::endl;
 	std::cout<<"annotated structure = "<<show(p.first)<<std::endl;
-	std::cout<<"pretty:\n"<<pretty_model_t(p.first).show(R)<<std::endl;
+	std::cout<<"pretty:\n"<<pretty_model_t(p.first).show()<<std::endl;
 	std::cout<<std::endl;
     }
 
@@ -766,7 +766,7 @@ vector<pair<string, ptree>> extract_terms(ptree& m)
 
 #include "startup/help.hh"
 
-string pretty_model_t::show_extracted(const Rules& R) const
+string pretty_model_t::show_extracted() const
 {
     const int indent = 4;
 
@@ -775,23 +775,23 @@ string pretty_model_t::show_extracted(const Rules& R) const
     for(int i=0; i<terms.size(); i++)
     {
 	string t = string(indent,' ') + term_names[i] + " ";
-	string value = terms[i].show(R, false);
+	string value = terms[i].show(false);
 	output += "\n" + t + indent_and_wrap(0, t.size() + 2, 10000, value);
     }
     return output;
 }
 
-string pretty_model_t::show_main(const Rules& R, bool top) const
+string pretty_model_t::show_main(bool top) const
 {
     if (top)
-	return unparse(extract_value(main), R);
+	return unparse_annotated(main);
     else
-	return show_model(extract_value(main), R);
+	return show_model_annotated(main);
 }
 
-string pretty_model_t::show(const Rules& R, bool top) const
+string pretty_model_t::show(bool top) const
 {
-    return show_main(R,top) + show_extracted(R);
+    return show_main(top) + show_extracted();
 }
 
 pretty_model_t::pretty_model_t(const ptree& m)

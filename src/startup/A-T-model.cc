@@ -156,7 +156,7 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 		 const vector<model_t>& IModels, const vector<model_t>& SModels,
 		 const vector<model_t>& ScaleModels,
 		 const model_t& branch_length_model,
-		 const Parameters& P,const variables_map& args, const Rules& rules)
+		 const Parameters& P,const variables_map& args)
 {
     json info;
     json partitions;
@@ -170,8 +170,8 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 
     if (P.t().n_branches() > 0)
     {
-	out_both<<"T:lengths "<<branch_length_model.show(rules)<<endl<<endl;
-	tree["lengths"] = branch_length_model.show(rules, false);
+	out_both<<"T:lengths "<<branch_length_model.show()<<endl<<endl;
+	tree["lengths"] = branch_length_model.show(false);
     }
 
     //-------- Log some stuff -----------//
@@ -194,13 +194,13 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 
 	// 3. substitution model
 	auto s_index = P.smodel_index_for_partition(i);
-	out_screen<<"#"<<i+1<<": subst "<<indent_and_wrap(0,12,1000,SModels[*s_index].show_main(rules,false))<<" (S"<<*s_index+1<<")\n";
+	out_screen<<"#"<<i+1<<": subst "<<indent_and_wrap(0,12,1000,SModels[*s_index].show_main(false))<<" (S"<<*s_index+1<<")\n";
 	out_cache<<"smodel-index"<<i+1<<" = "<<P.smodel_index_for_partition(i)<<endl;
 	partition["smodel"] = optional_to_json( P.smodel_index_for_partition(i) );
 
 	// 4. indel model
 	if (auto i_index = P.imodel_index_for_partition(i))
-	    out_screen<<"#"<<i+1<<": indel "<<indent_and_wrap(0,12,1000,IModels[*i_index].show_main(rules, false))<<" (I"<<*i_index+1<<")\n";
+	    out_screen<<"#"<<i+1<<": indel "<<indent_and_wrap(0,12,1000,IModels[*i_index].show_main(false))<<" (I"<<*i_index+1<<")\n";
 	else
 	    out_screen<<"#"<<i+1<<": indel = none\n";
 	out_cache<<"imodel-index"<<i+1<<" = "<<P.imodel_index_for_partition(i)<<endl;
@@ -208,7 +208,7 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 
 	// 5. scale model
 	auto scale_index = P.scale_index_for_partition(i);
-	out_screen<<"#"<<i+1<<": scale "<<indent_and_wrap(0,12,1000,ScaleModels[*scale_index].show_main(rules,false))<<" (Scale"<<*scale_index+1<<")\n";
+	out_screen<<"#"<<i+1<<": scale "<<indent_and_wrap(0,12,1000,ScaleModels[*scale_index].show_main(false))<<" (Scale"<<*scale_index+1<<")\n";
 	out_cache<<"scale-index"<<i+1<<" = "<<P.scale_index_for_partition(i)<<endl;
 	partition["scale"] = optional_to_json( P.scale_index_for_partition(i) );
 
@@ -221,9 +221,9 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
     for(int i=0;i<P.n_smodels();i++)
     {
 	//    out_cache<<"subst model"<<i+1<<" = "<<P.SModel(i).name()<<endl<<endl;
-	out_cache<<"subst model"<<i+1<<" "<<SModels[i].show(rules)<<endl<<endl;
+	out_cache<<"subst model"<<i+1<<" "<<SModels[i].show()<<endl<<endl;
 	smodels.push_back(SModels[i].pretty_model());
-	string e = SModels[i].show_extracted(rules);
+	string e = SModels[i].show_extracted();
 	if (e.size())
 	    out_screen<<"Substitution model (S"<<i+1<<") -- priors:"<<e<<"\n\n";
     }
@@ -231,9 +231,9 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
     json imodels = json::array();
     for(int i=0;i<P.n_imodels();i++)
     {
-	out_cache<<"indel model"<<i+1<<" "<<IModels[i].show(rules)<<endl<<endl;
+	out_cache<<"indel model"<<i+1<<" "<<IModels[i].show()<<endl<<endl;
 	imodels.push_back(IModels[i].pretty_model());
-	string e = IModels[i].show_extracted(rules);
+	string e = IModels[i].show_extracted();
 	if (e.size())
 	    out_screen<<"Insertion/deletion model (I"<<i+1<<") -- priors:"<<e<<"\n\n";
     }
@@ -241,9 +241,9 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
     json scales = json::array();
     for(int i=0;i<P.n_branch_scales();i++)
     {
-	out_cache<<"scale model"<<i+1<<" "<<ScaleModels[i].show(rules)<<endl<<endl;
+	out_cache<<"scale model"<<i+1<<" "<<ScaleModels[i].show()<<endl<<endl;
 	scales.push_back(ScaleModels[i].pretty_model());
-	string e = ScaleModels[i].show_extracted(rules);
+	string e = ScaleModels[i].show_extracted();
 	if (e.size())
 	    out_screen<<"Scale model (Scale"<<i+1<<") -- priors:"<<e<<"\n\n";
     }
@@ -683,7 +683,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     write_branch_numbers(out_cache, T);
 
     //-------------------- Log model -------------------------//
-    info = log_summary(out_cache, out_screen, out_both, full_imodels, full_smodels, full_scale_models, branch_length_model, P,args, R);
+    info = log_summary(out_cache, out_screen, out_both, full_imodels, full_smodels, full_scale_models, branch_length_model, P,args);
 
     //----------------- Tree-based constraints ----------------//
     if (args.count("t-constraint"))

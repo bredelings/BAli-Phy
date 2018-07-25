@@ -22,9 +22,9 @@ public:
     std::vector<std::string> term_names;
     std::vector<pretty_model_t> terms;
 
-    std::string show(const Rules& R, bool = true) const;
-    std::string show_main(const Rules&, bool = true) const;
-    std::string show_extracted(const Rules&) const;
+    std::string show(bool = true) const;
+    std::string show_main(bool = true) const;
+    std::string show_extracted() const;
 
     pretty_model_t(const ptree& m);
 };
@@ -39,11 +39,11 @@ public:
 
     pretty_model_t pretty_model() const {return {description};};
 
-    std::string show(const Rules&, bool = true) const;
+    std::string show(bool = true) const;
 
-    std::string show_pretty(const Rules&, bool = true) const;
-    std::string show_main(const Rules&, bool = true) const;
-    std::string show_extracted(const Rules&) const;
+    std::string show_pretty(bool = true) const;
+    std::string show_main(bool = true) const;
+    std::string show_extracted() const;
 
     model_t() = default;
     model_t(const ptree&,const ptree&, const std::set<term_t>&, const expression_ref&);

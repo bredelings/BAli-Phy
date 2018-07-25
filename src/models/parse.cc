@@ -460,12 +460,12 @@ string unparse(const ptree& p, const Rules& rules)
     optional<string> submodel;
     for(const auto& pair: p)
     {
-	// Don't print submodel arguments: move out to submodel + <this>
 	if (pair.second.is_null())
 	{
 	    args.push_back("");
 	    continue;
 	}
+	// Don't print submodel arguments: move out to submodel + <this>
 	else if (pair.first == "submodel")
 	{
 	    assert(not submodel);
@@ -536,12 +536,12 @@ string unparse_annotated(const ptree& ann)
     optional<string> submodel;
     for(const auto& pair: p)
     {
-	// Don't print submodel arguments: move out to submodel + <this>
 	if (pair.second.is_null())
 	{
 	    args.push_back("");
 	    continue;
 	}
+	// Don't print submodel arguments: move out to submodel + <this>
 	else if (pair.first == "submodel")
 	{
 	    assert(not submodel);
@@ -550,7 +550,15 @@ string unparse_annotated(const ptree& ann)
 	}
 	// Don't print alphabet=getAlphabet (FIXME: change to x=getAlphabet, if this is a default value)
 	else if (pair.second.get_child("value") == "getAlphabet" and pair.second.get_child("is_default_value") == true)
-	    ;
+	{
+	    args.push_back("");
+	    continue;
+	}
+	else if (pair.second.get_child_optional("suppress_default") and pair.second.get_child("suppress_default")== true and pair.second.get_child("is_default_value") == true)
+	{
+	    args.push_back("");
+	    continue;
+	}
 	else
 	    args.push_back( unparse_annotated(pair.second) );
     }
@@ -582,6 +590,15 @@ optional<ptree> peel_sample(ptree p)
 	return boost::none;
 }
 
+optional<ptree> peel_sample_annotated(ptree p)
+{
+    auto v = p.get_child("value");
+    if (v.has_value<string>() and v.get_value<string>() == "sample")
+	return v[0].second;
+    else
+	return boost::none;
+}
+
 string unparse_abbrev(ptree p, const Rules& rules, int length)
 {
     string output = unparse(p, rules);
@@ -600,6 +617,15 @@ string show_model(ptree p, const Rules& rules)
 	return "~ " + unparse(*q, rules);
     else
 	return "= " + unparse(p, rules);
+}
+
+
+string show_model_annotated(ptree p)
+{
+    if (auto q = peel_sample_annotated(p))
+	return "~ " + unparse_annotated(*q);
+    else
+	return "= " + unparse_annotated(p);
 }
 
 

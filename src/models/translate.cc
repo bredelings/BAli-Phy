@@ -359,6 +359,8 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	else
 	    throw myexception()<<"Command '"<<name<<"' missing required argument '"<<arg_name<<"'";
 	E = E && pass2(R, arg_required_type, arg_value, bound_vars, extend_scope(*rule,skip,scope));
+	for(auto& x: argument)
+	    arg_value.push_back(x);
 	if (not E)
 	    throw myexception()<<"Expression '"<<unparse(arg_value, R)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
 	arg_value.push_back({"is_default_value",ptree(is_default)});
