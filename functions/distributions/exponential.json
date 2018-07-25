@@ -14,7 +14,8 @@
 	    "arg_name": "shift",
 	    "arg_type": "Double",
 	    "default_value": "0.0",
-	    "description": "The shift parameter"
+	    "description": "The shift parameter",
+	    "suppress_default": true
 	}
     ]
 }
