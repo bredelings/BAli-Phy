@@ -63,8 +63,12 @@ before_install:
 script:
   - meson build --prefix=$HOME/local
   - ninja -C build install
+# Run internal test suite
+  - cd ~BAli-Phy/tests
+  - ./run-tests.py bali-phy
+# Run testiphy test suite
   - git clone https://gitlab.com/testiphy/testiphy.git
-  - cd testiphy
+  - cd ~/testiphy
   - which bali-phy || true
   - ./testiphy bali-phy
 
