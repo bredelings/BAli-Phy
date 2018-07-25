@@ -1,4 +1,0 @@
-[submodule "testiphy"]
-	path = testiphy
-	url = https://gitlab.com/testiphy/testiphy.git
-	ignore = untracked
