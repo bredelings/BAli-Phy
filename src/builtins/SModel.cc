@@ -486,8 +486,10 @@ object_ptr<const Object> Empirical_Frequencies_Function(const alphabet& a, istre
     for(int i=0;i<a.size();i++)
     {
 	double d;
-	ifile>>d;
-	(*F)[i] = d;
+	if (ifile>>d)
+	    (*F)[i] = d;
+	else
+	    throw myexception()<<"Read "<<i<<" empirical frequencies.";
     }
 
     return object_ptr<const Object>(F);
@@ -610,10 +612,7 @@ extern "C" closure builtin_function_wag_frequencies(OperationArgs& Args)
 }
 
 
-object_ptr<const Object> LG_Exchange_Function(const alphabet& a)
-{
-    istringstream file(
-	"0.425093 \
+const char* lg_string =	"0.425093 \
 0.276818 0.751878 \
 0.395144 0.123954 5.076149 \
 2.489084 0.534551 0.528768 0.062556 \
@@ -632,14 +631,21 @@ object_ptr<const Object> LG_Exchange_Function(const alphabet& a)
 0.180717 0.593607 0.045376 0.029890 0.670128 0.236199 0.077852 0.268491 0.597054 0.111660 0.619632 0.049906 0.696175 2.457121 0.095131 0.248862 0.140825 \
 0.218959 0.314440 0.612025 0.135107 1.165532 0.257336 0.120037 0.054679 5.306834 0.232523 0.299648 0.131932 0.481306 7.803902 0.089613 0.400547 0.245841 3.151815 \
 2.547870 0.170887 0.083688 0.037967 1.959291 0.210332 0.245034 0.076701 0.119013 10.649107 1.702745 0.185202 1.898718 0.654683 0.296501 0.098369 2.188158 0.189510 0.249313 \
-");
-    return Empirical_Exchange_Function(a, file);
-}
+0.079066 0.055941 0.041977 0.053052 0.012937 0.040767 0.071586 0.057337 0.022355 0.062157 0.099081 0.064600 0.022951 0.042302 0.044040 0.061197 0.053287 0.012066 0.034155 0.069147\
+";
 
 extern "C" closure builtin_function_lg(OperationArgs& Args)
 {
     auto a = Args.evaluate(0);
-    return LG_Exchange_Function(a.as_<alphabet>());
+    istringstream file(lg_string);
+    return Empirical_Exchange_Function(a.as_<alphabet>(), file);
+}
+
+extern "C" closure builtin_function_lg_frequencies(OperationArgs& Args)
+{
+    auto a = Args.evaluate(0);
+    istringstream file(lg_string);
+    return Empirical_Frequencies_Function(a.as_<alphabet>(), file);
 }
 
 extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
