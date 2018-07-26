@@ -1,8 +1,8 @@
 {
-    "name": "wag",
-    "deprecated-synonyms": ["WAG"],
-    "result_type": "ExchangeModel[AA]",
-    "call": "SModel.wag[a]",
+    "title": "The WAG amino-acid frequencies",
+    "name": "wag_freq",
+    "result_type": "List[Pair[String,Double]]",
+    "call": "SModel.wag_frequencies[a]",
     "args": [
         {
             "arg_name": "a",
@@ -11,13 +11,15 @@
             "description": "The alphabet"
         }
     ],
-    "description": "Empirically derived exchangability matrix for general proteins.\n\nThis command only refers to the symmetric part of the WAG model, not the frequencies.",
+    "description": "A fixed frequency vector from the dataset in the WAG paper.",
     "citation":{"type": "article",
 		"title": "A General Empirical Model of Protein Evolution Derived from Multiple Protein Families Using a Maximum-Likelihood Approach",
-		"year": "2001",	
+		"year": "2001",
 		"author": [{"name": "Whelan, Simon"}, {"name": "Goldman, Nick"}],
 		"journal": {"name": "Molecular Biology and Evolution", "volume": "18", "number": "5", "pages": "691--699"},
 		"identifier": [{"type":"doi","id":"10.1093/oxfordjournals.molbev.a003851"}]
 	       },
-    "examples": ["wag","wag+f","wag+f[wag_freq]"]
+    "examples": ["wag+f[wag_frequencies]"],
+    "see": ["wag"],
+    "extract": "all"
 }

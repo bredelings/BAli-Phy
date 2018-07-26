@@ -469,6 +469,30 @@ object_ptr<const Object> Empirical_Exchange_Function(const alphabet& a, istream&
     return object_ptr<const Object>(R);
 }
 
+object_ptr<const Object> Empirical_Frequencies_Function(const alphabet& a, istream& ifile)
+{
+    int n = a.size();
+
+    // Skip the exchangeabilities
+    for(int i=0;i<n;i++)
+	for(int j=0;j<i;j++) {
+	    double d;
+	    ifile>>d;
+	}
+
+    // Get the frequencies
+    object_ptr<EVector> F(new EVector(a.size()));
+
+    for(int i=0;i<a.size();i++)
+    {
+	double d;
+	ifile>>d;
+	(*F)[i] = d;
+    }
+
+    return object_ptr<const Object>(F);
+}
+
 object_ptr<const Object> Empirical_Exchange_Function(const alphabet& a, const String& filename)
 {
     checked_ifstream ifile(filename, "empirical rate matrix file");
@@ -546,10 +570,8 @@ extern "C" closure builtin_function_jtt(OperationArgs& Args)
     return JTT_Exchange_Function(a.as_<alphabet>());
 }
 
-object_ptr<const Object> WAG_Exchange_Function(const alphabet& a)
-{
-    istringstream file(
-	"0.551571 \
+const char* wag_string =
+"0.551571 \
 0.509848  0.635346 \
 0.738998  0.147304  5.429420 \
 1.027040  0.528191  0.265256  0.0302949 \
@@ -568,15 +590,25 @@ object_ptr<const Object> WAG_Exchange_Function(const alphabet& a)
 0.113133  1.163920  0.0719167 0.129767  0.717070  0.215737  0.156557  0.336983  0.262569  0.212483  0.665309  0.137505  0.515706  1.529640  0.139405  0.523742  0.110864 \
 0.240735  0.381533  1.086000  0.325711  0.543833  0.227710  0.196303  0.103604  3.873440  0.420170  0.398618  0.133264  0.428437  6.454280  0.216046  0.786993  0.291148  2.485390 \
 2.006010  0.251849  0.196246  0.152335  1.002140  0.301281  0.588731  0.187247  0.118358  7.821300  1.800340  0.305434  2.058450  0.649892  0.314887  0.232739  1.388230  0.365369  0.314730 \
-");
-    return Empirical_Exchange_Function(a, file);
-}
+\
+0.0866279 0.043972  0.0390894 0.0570451 0.0193078 0.0367281 0.0580589 0.0832518 0.0244313 0.048466  0.086209  0.0620286 0.0195027 0.0384319 0.0457631 0.0695179 0.0610127 0.0143859 0.0352742 0.0708956\
+";
+
 
 extern "C" closure builtin_function_wag(OperationArgs& Args)
 {
     auto a = Args.evaluate(0);
-    return WAG_Exchange_Function(a.as_<alphabet>());
+    istringstream file(wag_string);
+    return Empirical_Exchange_Function(a.as_<alphabet>(), file);
 }
+
+extern "C" closure builtin_function_wag_frequencies(OperationArgs& Args)
+{
+    auto a = Args.evaluate(0);
+    istringstream file(wag_string);
+    return Empirical_Frequencies_Function(a.as_<alphabet>(), file);
+}
+
 
 object_ptr<const Object> LG_Exchange_Function(const alphabet& a)
 {

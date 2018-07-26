@@ -18,6 +18,7 @@ builtin builtin_empirical 2 "empirical" "SModel";
 builtin pam 1 "pam" "SModel";
 builtin jtt 1 "jtt" "SModel";
 builtin wag 1 "wag" "SModel";
+builtin builtin_wag_frequencies 1 "wag_frequencies" "SModel";
 builtin lg 1 "lg" "SModel";
 builtin builtin_weighted_frequency_matrix 2 "weighted_frequency_matrix" "SModel";
 builtin builtin_frequency_matrix 1 "frequency_matrix" "SModel";
@@ -210,4 +211,6 @@ unit_mixture m = MixtureModel (certainly m);
 mmm m = MixtureModels [m];
 
 empirical a filename = builtin_empirical a (listToString filename);
+
+wag_frequencies a = zip (alphabet_letters a) (list_from_vector $ builtin_wag_frequencies a);
 }
