@@ -460,10 +460,17 @@ object_ptr<const Object> Empirical_Exchange_Function(const alphabet& a, istream&
 
     object_ptr<Box<Matrix>> R(new Box<Matrix>(n,n));
   
+    int k=0;
     for(int i=0;i<n;i++)
-	for(int j=0;j<i;j++) {
-	    ifile>>(*R)(i,j);
-	    (*R)(j,i) = (*R)(i,j);
+	for(int j=0;j<i;j++)
+	{
+	    if (ifile>>(*R)(i,j))
+	    {
+		(*R)(j,i) = (*R)(i,j);
+		k++;
+	    }
+	    else
+		throw myexception()<<"Read "<<k<<" empirical exchangabilities.";
 	}
 
     return object_ptr<const Object>(R);
@@ -474,10 +481,14 @@ object_ptr<const Object> Empirical_Frequencies_Function(const alphabet& a, istre
     int n = a.size();
 
     // Skip the exchangeabilities
+    int k=0;
     for(int i=0;i<n;i++)
 	for(int j=0;j<i;j++) {
 	    double d;
-	    ifile>>d;
+	    if (ifile>>d)
+		k++;
+	    else
+		throw myexception()<<"Read "<<k<<" empirical exchangabilities.";
 	}
 
     // Get the frequencies
