@@ -1,0 +1,23 @@
+{
+    "name": "fe",
+    "deprecated-synonyms": ["FE"],
+    "result_type": "RevCTMC[a]",
+    "call": "SModel.ReversibleMarkov.plus_fe''[a,submodel]",
+    "args": [
+        {
+            "arg_name": "submodel",
+            "arg_type": "ExchangeModel[a]",
+	    "description": "Symmetric (exchangability) matrix"
+        },
+        {
+            "arg_name": "a",
+            "arg_type": "a",
+	    "default_value": "getAlphabet",
+	    "description": "The alphabet"
+        }
+    ],
+    "title": "The +FE frequency model",
+    "description": "This model uses the +F frequency model with uniform frequencies.\n\nIt is equivalent to +F[Frequencies.uniform]",
+    "examples": ["wag+fe"],
+    "extract": "all"
+}
