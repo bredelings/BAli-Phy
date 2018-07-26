@@ -455,6 +455,15 @@ string get_help_for_rule(const Rules& rules, const Rule& rule)
 	help<<std::endl;
     }
     
+    if (auto see_also = rule.get_child_optional("see"))
+    {
+	vector<string> see;
+	for(auto& x: *see_also)
+	    see.push_back(x.second);
+	help<<header("See also");
+	help<<indent_and_wrap(3, terminal_width(),join(see,", "))<<"\n\n";
+    }
+
     return help.str();
 }
 
