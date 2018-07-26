@@ -459,7 +459,7 @@ string get_help_for_rule(const Rules& rules, const Rule& rule)
     {
 	vector<string> see;
 	for(auto& x: *see_also)
-	    see.push_back(x.second);
+	    see.push_back(bold(x.second));
 	help<<header("See also");
 	help<<indent_and_wrap(3, terminal_width(),join(see,", "))<<"\n\n";
     }
