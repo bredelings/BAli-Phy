@@ -1654,24 +1654,15 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
       </section>
 
     <section><info><title>The branch-site substitution model</title></info>
-    <para>In order to use the branch-site substitution model, the user needs to
-    <itemizedlist>
-      <listitem>Specify an unrooted tree topology in Newick format.</listitem>
-      <listitem>Label foreground branches on the tree using NHX attributes.</listitem>
-      <listitem>Disable topology changes in order to fix the tree topology (branch lengths are estimated).</listitem>
-    </itemizedlist>
-    Here is an example tree file:
+    <para>In order to use the branch-site substitution model, the user needs to specify an unrooted tree topology and disable topology changes in order to keep the topology fixed:
+    <screen><prompt>%</prompt> bali-phy <replaceable>alignment</replaceable>.fasta -S branch-site -T <replaceable>tree</replaceable>.tree --disable=topology</screen>
+    The tree file should be in Newick format, with foreground branches labelled using NHX attributes. The NHX attribute must be applied to the branch, not the node, so it must occur after a colon.
+
 <example><title>An tree with a foreground branch</title>
-(((A1, B1),(C1, D1)),((E1, F1),(G1, H1)),(((A2, B2),(C2, D2)),((E2, F2),(G2, H2))):[&amp;&amp;NHX:foreground=1]);
+(((A1, B1),(C1, D1)),((E1:[&amp;&amp;NHX:foreground=1], F1:[&amp;&amp;NHX:foreground=1]),(G1, H1)),(((A2, B2),(C2, D2)),((E2, F2),(G2, H2))));
 </example>
-The NHX attribute must be applied to the branch, not the node.  Therefore it must occur after a colon.  Multiple branches may be marked as foreground branches.
     </para>
-    <para>An example command line is as follows:
-<screen><prompt>%</prompt> bali-phy <replaceable>alignment</replaceable>.fasta --smodel branch-site[hky85_sym,f3x4] --disable=topology --tree=<replaceable>tree</replaceable>.tree</screen>
-</para>
-<para>The posterior probability of positive selection is the posterior mean of the posSelection parameter.  This may be computed using the statreport program with the <userinput>--mean</userinput> option.
-</para>
-<para>In case this probability is extremely close to 1 or 0, you may wish to add the option <userinput>--Rao-Blackwellize branch-site:posSelection</userinput>.  This will report the log-probability of positive selection each iteration.  The user may exponentiate the reported values and then average them (using R, for example) in order to compute a more accurate estimate of the posterior probability of positive selection.
+<para>The posterior probability of positive selection is the posterior mean of the posSelection parameter.  This may be computed using the statreport program with the <userinput>--mean</userinput> option. In case this probability is extremely close to 1 or 0, you may wish to add the option <userinput>--Rao-Blackwellize branch-site:posSelection</userinput>.  This will report the log-probability of positive selection each iteration.  The user may exponentiate the reported values and then average them (using R, for example) in order to compute a more accurate estimate of the posterior probability of positive selection.
     </para>
     </section>
 
@@ -1746,12 +1737,10 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
 
     <section xml:id="indel_models"><info><title>Insertion/deletion models</title></info>
       
-    <para>The current models are rs05, rs07, and <userinput>none</userinput>.  Models (except for <userinput>none</userinput>) can be specified using notation like:
-<programlisting>rs07[log_rate~log_laplace[-4,0.707],mean_length=2]</programlisting>
-See section <xref linkend="functions"/> for the general syntax.  rs07 is the  default insertion/deletion model.</para>
-
     <para>Each of these models is a probability distribution on pairwise alignments.  The probability distribution on multiple sequence alignments $\Pr(A|T,\tau,\Lambda)$ is constructed by factoring the multiple sequence alignment into pairwise alignments along each branch of the tree, as described in Redelings and Suchard (2005).</para>
 
+	<para>The default insertion/deletion model is <userinput>rs07</userinput>.</para>
+	
     <informaltable><info><title>Insertion-Deletion Models</title></info>
 	  
 	  <tgroup cols="3">
@@ -1760,37 +1749,31 @@ See section <xref linkend="functions"/> for the general syntax.  rs07 is the  de
 	    <colspec colnum="3" colname="col3" colwidth="1*"/>
 	    <thead><row>
 		<entry>Model</entry>
-		<entry>Parameters</entry>
-		<entry>Description</entry>
+		<entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+		<entry>Summary</entry>
 	    </row></thead>
 	    <tbody>	    
 	      <row>
+		<entry><userinput>rs05</userinput></entry>
+		<entry>3</entry>
 		<entry>
-		  <para><userinput>rs05</userinput></para>
-		  <para>Redelings and Suchard (2005)</para>
-		</entry>
-		<entry>
-		  <para><userinput>logDelta</userinput>: the gap-opening probability</para>
-		  <para><userinput>mean_length</userinput>: the gap-extension probability</para>
-		</entry>
-		<entry>
-		  <para>Gap lengths are geometrically distributed.</para>
-		  <para>Longer branches <emphasis>do not</emphasis> have more indels.</para>
+		  <para>A symmetric insertion-deletion model with geometrically-distributed indel lengths.</para>
+		  <para>Indels occur on all branches with the same probability, regardless of branch length.</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1080/10635150590947041">
+		    (Redelings and Suchard, 2005)
+		  </link>
 		</entry>
 	      </row>
-	      
+
 	      <row>
+		<entry><userinput>rs07</userinput></entry>
+		<entry>2</entry>
 		<entry>
-		  <para><userinput>rs07</userinput></para>
-		  <para>Redelings and Suchard (2007)</para>
-		</entry>
-		<entry>
-		  <para><userinput>log_rate</userinput>: The log of the insertion and deletion rate</para>
-		  <para><userinput>mean_length</userinput>: the mean of the indel length</para>
-		</entry>
-		<entry>
-		  <para>Gap lengths are geometrically distributed.</para>
-		  <para>Longer branches <emphasis>do</emphasis> have more indels.</para>
+		  <para>A symmetric insertion-deletion model with geometrically-distributed indel lengths.</para>
+		  <para>Longer branches have more indels.</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1186/1471-2148-7-40">
+		    (Redelings and Suchard, 2007)
+		  </link>
 		</entry>
 	      </row>
 	      
@@ -1799,15 +1782,20 @@ See section <xref linkend="functions"/> for the general syntax.  rs07 is the  de
 		  <para><userinput>none</userinput></para>
 		</entry>
 		<entry/>
-		<entry>	Indicates the lack of a model.</entry>
+		<entry>
+		  <para>No indel model for the partition, indels uninformative.</para>
+		  <para>Fixed alignment for the partition.</para>
+		</entry>
 	      </row>
 	      
 	    </tbody>
 	  </tgroup>
 	</informaltable>
 	    
+	<para>The user can specify priors and parameters for indel models (See section <xref linkend="functions"/>):
+<programlisting>rs07[log_rate~log_laplace[-4,0.707],mean_length=2]</programlisting>
+	</para>
 
-      <para>Specifying an indel model of <userinput>none</userinput> for a given partition results in fixing the alignment for that partition to its initial value, and ignoring information in shared insertions or deletions.</para>
     </section>
 
     <section><info><title>Partitioned data sets</title></info>
@@ -2357,16 +2345,15 @@ The stabilization criterion is the same one described above for numerical values
 	    <filename>C1.out</filename>.  For 
 	    example:
 <screen><prompt>%</prompt> less 5d-1/C1.out
-command: bali-phy 5d.fasta
-start time: Wed Aug  9 13:44:39 2017
+command: bali-phy 5d.fasta -I none --iter=10 --seed=0
+start time: Wed Jul  4 17:13:25 2018
 
-VERSION: 3.0-beta2  [type-constraints commit b792c30b+]  (Aug 04 2017 13:40:40)
-BUILD: Aug  7 2017 21:01:44
-ARCH: x86_64-pc-linux-gnu
-COMPILER: GCC 7.1.0
-FLAGS: -isystem &#36;(top_srcdir)/boost/include -isystem $(top_srcdir)/include -ffast-math -DNDEBUG -DNDEBUG_DP -funroll-loops  -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing -pipe -O3 -pedantic -I/usr/include/cairo -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/libpng16 -g -Wmisleading-indentation -Wlogical-op -fno-var-tracking-assignments
+VERSION: 3.3-b1  [HEAD -> logging, origin/logging commit 96a43e550]  (Jul 04 2018 16:25:09)
+BUILD: Jul  4 2018 17:12:29
+ARCH: linux x86_64
+COMPILER: gcc 8.1.0 x86_64
 directory: /home/bredelings/Work
-subdirectory: 5d-257
+subdirectory: 5d-675
 hostname: telomere
 <emphasis>PID: 18838</emphasis>
 ...
