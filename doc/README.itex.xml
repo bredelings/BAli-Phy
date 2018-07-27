@@ -1609,7 +1609,7 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	    <row>
 	      <entry><userinput>m8a</userinput></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+3</entry>
-	      <entry><para>This adds a neutral category to the M7 model.</para>
+	      <entry><para>The M8a model adds a category of <emphasis>neutral</emphasis> sites to the M7 model.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a004233">
 		    (Swanson et. al. 2003)
 		  </link>
@@ -1619,7 +1619,7 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	    <row>
 	      <entry><userinput>m8</userinput></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+4</entry>
-	      <entry><para>The M7 model places a beta distribution on dN/dS.</para>
+	      <entry><para>The M8 model adds a category of <emphasis>positively-selected</emphasis> sites to the M7 model.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/155/1/431.full">
 		    (Yang et. al. 2000)
 		  </link>
