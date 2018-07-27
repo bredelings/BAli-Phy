@@ -126,8 +126,14 @@ p + p { margin-top: 0.8em; }
 
 div.example { 
               border: solid; 
-              border-width: 1px;
+              border-width: 2px;
+	      border-radius: 1.5em;
+	      border-color: #7070BB;
               background-color: #E0F0FF;
-              padding-left: 10px;
-              padding-right: 10px;
+	      margin-left: 3em;
+	      margin-right: 3em;
+	      width: calc(100% - 6em);
+              padding-left: 1em;
+              padding-right: 1em;
+	      padding-bottom:1em
 }
