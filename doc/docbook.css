@@ -59,7 +59,7 @@ pre.programlisting {
 
 	padding: 0.5em;
 	padding-left:1em;
-	width: calc(100% - 10em);
+	width: calc(100% - 8em);
 }
 
 pre.screen {
@@ -133,7 +133,7 @@ div.example {
               background-color: #E0F0FF;
 	      margin-left: 3em;
 	      margin-right: 3em;
-	      width: calc(100% - 6em);
+	      width: calc(100% - 8em);
               padding-left: 1em;
               padding-right: 1em;
 	      padding-bottom:1em
