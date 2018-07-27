@@ -453,6 +453,25 @@ extern "C" closure builtin_function_equ(OperationArgs& Args)
   }
 */
 
+template <typename T>
+T sum(const EVector& v);
+
+template<> double sum<>(const EVector& v)
+{
+    double d=0;
+    for(auto& vv: v)
+	d += vv.as_double();
+    return d;
+}
+
+void normalize(EVector& v)
+{
+    double scale = 1.0/sum<double>(v);
+
+    for(auto& vv: v)
+	vv = vv.as_double()*scale;
+}
+
 
 object_ptr<const Object> Empirical_Exchange_Function(const alphabet& a, istream& ifile)
 {
@@ -502,6 +521,8 @@ object_ptr<const Object> Empirical_Frequencies_Function(const alphabet& a, istre
 	else
 	    throw myexception()<<"Read "<<i<<" empirical frequencies.";
     }
+
+    normalize(*F);
 
     return object_ptr<const Object>(F);
 }
