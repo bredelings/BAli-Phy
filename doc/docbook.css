@@ -127,9 +127,9 @@ p + p { margin-top: 0.8em; }
 
 div.example { 
               border: solid; 
-              border-width: 2px;
+              border-width: 0.15em;
 	      border-radius: 1.5em;
-	      border-color: #7070BB;
+	      border-color: #4040CC;
               background-color: #E0F0FF;
 	      margin-left: 3em;
 	      margin-right: 3em;
