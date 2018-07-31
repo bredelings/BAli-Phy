@@ -32,25 +32,34 @@ bool parse(const string& s)
     auto modid = x3::rule<class modid,string>()
 	= +(conid>>char_("."));
 
-    auto QVarID = x3::rule<class QVarID,string>()
+    auto qvarid = x3::rule<class qvarid,string>()
 	= modid >> varid;
-    string x;
     
-    auto iter = s.begin();
-    bool ok = x3::parse(iter, s.end(), QVarID, x);
-
-
     auto string_literal = x3::rule<class string_literal,string>()
 	= '"' >> x3::lexeme[ *(~char_('"')|char_('\\')>>char_)] >> '"';
 
     auto char_literal = x3::rule<class char_literal,char>()
 	= '\'' >> char_ >> '\'';
 
-    auto literal = int_ | double_ | string_literal | char_literal;
+    auto literal = double_ | int_ | string_literal | char_literal;
+
+    x3::rule<class function_,ptree> function_ = "function";
     
-
     x3::rule<class term, ptree> term = "term";
+    term = literal | function_;
+    
+    ptree::value_t x;
 
+    auto arg = x3::rule<class arg,pair<string,ptree>>()
+	= varid >> "=" >> term;
+
+    auto set_name = [](auto& ctx) {_val(ctx).put_value(_attr(ctx));};
+    auto push_back = [](auto& ctx) {_val(ctx).push_back(_attr(ctx));};
+
+//    function_ = (varid|qvarid) [ set_name ] 
+//	>> "[" >> arg[push_back]%"," >> "]";
+    
+	
     // term = | submodels       (term + term + term)
     //        | function_call   (QVarId[term,term,term])
     //        | double
@@ -63,14 +72,17 @@ bool parse(const string& s)
     //        | let_exp         (let {x = E, y= F,..} in G)
     //        | lambda_exp      ( \varid -> term )
     
+    auto iter = s.begin();
+    bool ok = x3::parse(iter, s.end(), literal, x);
+
     if (ok and iter == s.end())
     {
-	std::cout<<"read: "<<x<<"\n";
+//	std::cout<<"read: "<<x.show()<<"\n";
 	return true;
     }
     else
     {
-	std::cout<<"failure - read: "<<x<<"\n";
+//	std::cout<<"failure - read: "<<x.show()<<"\n";
 	return false;
     }
 }
