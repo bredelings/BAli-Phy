@@ -26,9 +26,9 @@ reversible_markov s (ReversibleFrequency a smap pi r) = reversible_markov' a sma
 gtr_sym exchange a = builtin_gtr_sym (list_to_vector exchange) a;
 equ a = gtr_sym (replicate nn 1.0) a where {n=alphabetSize a;nn=n*(n-1)/2};
 
-jukes_cantor a = reversible_markov (equ a) (plus_f_equal_frequencies a);
-f81        pi  a = reversible_markov (equ            a) (plus_f a pi);
-gtr s      pi  a = reversible_markov (gtr_sym s      a) (plus_f a pi);
+gtr a s pi = reversible_markov s (plus_f a pi);
+f81     pi a = gtr a (equ a) pi;
+jukes_cantor a = gtr a (equ a) (uniform_frequencies a);
 
 gtr' s'    pi' a = reversible_markov (gtr_sym' s'    a) (plus_f' a pi');
 
