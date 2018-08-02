@@ -170,7 +170,7 @@ fMutSel codon_a codon_w omega (ReversibleMarkov _ _ nuc_q nuc_pi _ _ _) =
         codon_w' = listToVectorDouble codon_w;
         q  = fMutSel_q  codon_a codon_w' omega nuc_q;
         pi = fMutSel_pi codon_a codon_w' nuc_pi}
-   in reversible_markov' codon_a smap q pi;
+   in reversible_markov codon_a smap q pi;
 
 fMutSel' codon_a codon_ws' omega nuc_model = fMutSel codon_a codon_ws omega nuc_model
                                                where {codon_ws = get_ordered_elements (alphabet_letters codon_a) codon_ws' "fitnesses"};

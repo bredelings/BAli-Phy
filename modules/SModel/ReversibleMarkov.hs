@@ -19,14 +19,12 @@ get_q (ReversibleMarkov _ _ q _ _ _ _) = q;
 scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r);
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
-reversible_markov' a smap q pi = ReversibleMarkov a smap q2 pi (get_eigensystem q2 pi) 1.0 (get_equilibrium_rate a smap q2 pi) where {q2 = fixup_diagonal_rates q};
-
-reversible_markov s (ReversibleFrequency a smap pi r) = reversible_markov' a smap (s %*% r) pi;
+reversible_markov a smap q pi = ReversibleMarkov a smap q2 pi (get_eigensystem q2 pi) 1.0 (get_equilibrium_rate a smap q2 pi) where {q2 = fixup_diagonal_rates q};
 
 gtr_sym exchange a = builtin_gtr_sym (list_to_vector exchange) a;
 equ a = gtr_sym (replicate nn 1.0) a where {n=alphabetSize a;nn=n*(n-1)/2};
 
-gtr a s pi = reversible_markov' a (simple_smap a) (s %*% (plus_f_matrix a pi')) pi' where {pi' = list_to_vector pi};
+gtr a s pi = reversible_markov a (simple_smap a) (s %*% (plus_f_matrix a pi')) pi' where {pi' = list_to_vector pi};
 
 f81     pi a = gtr a (equ a) pi;
 jukes_cantor a = gtr a (equ a) (uniform_frequencies a);
@@ -49,5 +47,5 @@ gtr_sym' es' a = gtr_sym es a where {lpairs = all_pairs (alphabet_letters a);
 
 plus_f   a s pi   = gtr a s pi;
 plus_fe  a s      = plus_f a s (uniform_frequencies a);
-plus_gwf a s pi f = reversible_markov' a (simple_smap a) (s %*% (plus_gwf_matrix a pi' f)) pi' where {pi' = list_to_vector pi};
+plus_gwf a s pi f = reversible_markov a (simple_smap a) (s %*% (plus_gwf_matrix a pi' f)) pi' where {pi' = list_to_vector pi};
 }

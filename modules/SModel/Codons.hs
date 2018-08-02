@@ -44,10 +44,10 @@ x3x3 (ReversibleMarkov _ _ q_1 pi_1 _ _ _) (ReversibleMarkov _ _ q_2 pi_2 _ _ _)
          smap = simple_smap a;
          q = singlet_to_triplet_rates a q_1 q_2 q_3;
          pi = f3x4_frequencies_builtin a pi_1 pi_2 pi_3}
-    in reversible_markov' a smap q pi;
+    in reversible_markov a smap q pi;
 
 x3 q a = x3x3 q q q a;
 
 -- maybe this should be t*(q %*% dNdS_matrix) in order to avoid losing scaling factors?  Probably this doesn't matter at the moment.
-dNdS (ReversibleMarkov a s q pi l t r) omega = reversible_markov' a s q2 pi where {q2 = q %*% dNdS_matrix a omega};
+dNdS (ReversibleMarkov a s q pi l t r) omega = reversible_markov a s q2 pi where {q2 = q %*% dNdS_matrix a omega};
 }
