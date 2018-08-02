@@ -784,6 +784,47 @@ extern "C" closure builtin_function_fixup_diagonal_rates(OperationArgs& Args)
     return m2;
 }
 
+// Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
+extern "C" closure builtin_function_elementwise_multiply(OperationArgs& Args)
+{
+    auto arg1 = Args.evaluate(0);
+    const Matrix& m1 = arg1.as_<Box<Matrix>>();
+
+    auto arg2 = Args.evaluate(1);
+    const Matrix& m2 = arg2.as_<Box<Matrix>>();
+
+    int n1 = m1.size1();
+    int n2 = m1.size2();
+
+    if (m2.size1() != n1 or m2.size2() != n2)
+	throw myexception()<<"Trying to multiply matrices of unequal sizes ("<<n1<<","<<n2<<") and ("<<m2.size1()<<","<<m2.size2()<<") elementwise";
+
+    auto m3 = new Box<Matrix>(n1,n2);
+    for(int i=0;i<n1;i++)
+	for(int j=0;j<n2;j++)
+	    (*m3)(i,j) = m1(i,j) * m2(i,j);
+
+    return m3;
+}
+
+extern "C" closure builtin_function_dNdS_matrix(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    const Codons& C = arg0.as_checked<Codons>();
+
+    double omega = Args.evaluate(1).as_double();
+
+    int n = C.size();
+
+    auto R = new Box<Matrix>(n,n);
+
+    for(int i=0;i<n;i++)
+	for(int j=0;j<n;j++)
+	    (*R)(i,j) = (C.translate(i) == C.translate(j))?1.0:omega;
+
+    return R;
+}
+
 extern "C" closure builtin_function_m0(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
