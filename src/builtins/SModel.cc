@@ -758,6 +758,32 @@ extern "C" closure builtin_function_gtr_sym(OperationArgs& Args)
     return {R};
 }
 
+// Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
+extern "C" closure builtin_function_fixup_diagonal_rates(OperationArgs& Args)
+{
+    auto arg1 = Args.evaluate(0);
+    const Matrix& m1 = arg1.as_<Box<Matrix>>();
+
+    auto m2 = new Box<Matrix>(m1);
+
+    int n = m2->size1();
+
+    if (m2->size2() != n)
+	throw myexception()<<"Rate matrix should be square, but has size ("<<n<<","<<m2->size2()<<")";
+
+    // Compute diagonals.  This probably indicates that we should be computing the diagonals elsewhere...
+    for(int i=0;i<n;i++)
+    {
+	double sum = 0;
+	for(int j=0;j<n;j++)
+	    if (j != i)
+		sum += (*m2)(i,j);
+	(*m2)(i,i) = -sum;
+    }
+
+    return m2;
+}
+
 extern "C" closure builtin_function_m0(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
