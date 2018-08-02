@@ -129,6 +129,12 @@ public:
 	    return *convert<const T>(ptr().get());
 	}
 
+    template <typename T>
+    const T& as_checked() const
+	{
+	    return *convert_and_check<const T>(ptr().get());
+	}
+
     bool is_int() const
 	{
 	    return type_ == int_type;
