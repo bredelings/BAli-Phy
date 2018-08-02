@@ -480,7 +480,7 @@ expression_ref make_call(const ptree& call)
     auto name = call.get_value<string>();
     expression_ref E;
 
-    if (name.find('.') != string::npos)
+    if (is_qualified_symbol(name) or is_haskell_varsym(name) or is_haskell_consym(name))
 	E = var(name);
     else
 	E = var("arg_var_"+name);
