@@ -463,6 +463,35 @@ optional<pair<expression_ref,set<string>>> get_model_lambda(const Rules& R, cons
     return {{E, lambda_vars}};
 }
 
+expression_ref make_call(const ptree& call)
+{
+    if (call.is_null())
+	throw myexception()<<"Can't construct expression from null value:\n"<<call.show()<<"\n";
+    if (not call.empty() and not call.has_value<string>())
+	throw myexception()<<"Call should not have arguments:\n"<<call.show()<<"\n";
+
+    if (call.is_a<bool>())
+	return {bool(call)};
+    else if (call.is_a<int>())
+	return {int(call)};
+    else if (call.is_a<double>())
+	return {double(call)};
+    assert(call.has_value<string>());
+    auto name = call.get_value<string>();
+    expression_ref E;
+
+    if (name.find('.') != string::npos)
+	E = var(name);
+    else
+	E = var("arg_var_"+name);
+
+    for(auto& pair: call)
+	E = {E,make_call(pair.second)};
+
+    return E;
+}
+
+
 // NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
 pair<expression_ref,set<string>> get_model_function(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
 {
@@ -480,20 +509,9 @@ pair<expression_ref,set<string>> get_model_function(const Rules& R, const ptree&
     
     if (not is_qualified_symbol(call.get_value<string>()) and not is_haskell_builtin_con_name(call.get_value<string>()))
 	throw myexception()<<"For rule '"<<name<<"', function '"<<call.get_value<string>()<<"' must be a qualified symbol or a builtin constructor like '(,)', but it is neither!";
-    expression_ref E = var(call.get_value<string>());
 
-    // 2. Apply the arguments listed in the call : 'f call.name1 call.name2 call.name3'
-    //    There could be fewer of these than the rule arguments.
-    //    Also each arg needs to have its own lambda vars applied to it.
-    for(int i=0;i<call.size();i++)
-    {
-	string call_arg_name = array_index(call,i).get_value<string>();
-	// check that arg_name is a valid argument
-	get_arg(*rule, call_arg_name);
-	expression_ref arg = var("arg_var_" + call_arg_name);
-
-	E = {E, arg};
-    }
+    // 2. Construct the call expression
+    expression_ref E = make_call(call);
 
     // 3a. Parse models for arguments to figure out which free lambda variables they contain
     // 3b. ALSO, let-bind arg_var_<name> for any arguments that are (i) not performed and (ii) depend on a lambda variable.
