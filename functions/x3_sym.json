@@ -1,18 +1,19 @@
 {
     "name": "x3_sym",
-    "result_type": "ExchangeModel[Triplets[a]]",
+    "constraints": [ "Triplets[a,b]" ],
+    "result_type": "ExchangeModel[a]",
     "title": "A triplet exchange model that applies a singlet exchange model to all 3 nucleotide positions",
     "call": "SModel.Codons.singlet_to_triplet_exchange[A,submodel]",
     "args": [
         {
             "arg_name": "submodel",
-            "arg_type": "ExchangeModel[a]",
+            "arg_type": "ExchangeModel[b]",
             "alphabet": "getNucleotides[@A]",
 	    "description": "The singlet exchange model"
         },
         {
             "arg_name": "A",
-            "arg_type": "Triplets[a]",
+            "arg_type": "a",
             "default_value": "getAlphabet",
 	    "description": "The Triplets alphabet"
         }

@@ -1,30 +1,31 @@
 {
     "name": "x3x3",
-    "result_type": "RevCTMC[Triplets[a]]",
+    "constraints": [ "Triplets[a,b]" ],
+    "result_type": "RevCTMC[a]",
     "title": "Rate matrix constructed from rate matrices on each triplet position",
     "call": "SModel.Codons.x3x3[rates1,rates2,rates3,a]",
     "args": [
         {
             "arg_name": "rates1",
-            "arg_type": "RevCTMC[a]",
+            "arg_type": "RevCTMC[b]",
             "alphabet": "getNucleotides[@a]",
 	    "description": "Rates for position 1"
         },
         {
             "arg_name": "rates2",
-            "arg_type": "RevCTMC[a]",
+            "arg_type": "RevCTMC[b]",
             "alphabet": "getNucleotides[@a]",
 	    "description": "Rates for position 2"
         },
         {
             "arg_name": "rates3",
-            "arg_type": "RevCTMC[a]",
+            "arg_type": "RevCTMC[b]",
             "alphabet": "getNucleotides[@a]",
 	    "description": "Rates for position 3"
         },
         {
             "arg_name": "a",
-            "arg_type": "Triplets[a]",
+            "arg_type": "a",
             "default_value": "getAlphabet",
 	    "description": "The Triplets alphabet"
         }
