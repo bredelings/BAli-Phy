@@ -16,7 +16,7 @@ plus_gwf_matrix a pi f = builtin_plus_gwf a f pi;
 plus_gwf a pi f = ReversibleFrequency a (simple_smap a) pi' (plus_gwf_matrix a pi' f) where {pi' = list_to_vector pi};
 plus_f a pi = plus_gwf a pi 1.0;
 
-uniform_frequencies a = zip letters (repeat $ 1.0/(intToDouble n_letters)) where {letters = alphabet_letters a;
+uniform_frequencies_dict a = zip letters (repeat $ 1.0/(intToDouble n_letters)) where {letters = alphabet_letters a;
                                                                                   n_letters = alphabetSize a};
 
 plus_f_equal_frequencies a = plus_f a (replicate n_letters (1.0/intToDouble n_letters)) where {n_letters=alphabetSize a};
