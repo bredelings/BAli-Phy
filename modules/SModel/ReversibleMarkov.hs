@@ -30,7 +30,7 @@ gtr a s pi = reversible_markov s (plus_f a pi);
 f81     pi a = gtr a (equ a) pi;
 jukes_cantor a = gtr a (equ a) (uniform_frequencies a);
 
-gtr' s'    pi' a = reversible_markov (gtr_sym' s'    a) (plus_f' a pi');
+gtr' s'    pi a = reversible_markov (gtr_sym' s'    a) (plus_f a (frequencies_from_dict a pi));
 
 -- es' is a [(String,Double)] here
 all_pairs l = [(x,y) | (x:ys) <- tails l, y <- ys];
@@ -46,7 +46,7 @@ gtr_sym' es' a = gtr_sym es a where {lpairs = all_pairs (alphabet_letters a);
                                           else
                                               error "Expected "++show (length lpairs)++" exchangeabilities but got "++ show (length es')++"!"};
 
-plus_f''   a s pi = reversible_markov s (plus_f' a pi);
+plus_f''   a s pi = reversible_markov s (plus_f a (frequencies_from_dict a pi));
 plus_fe''   a s = reversible_markov s (plus_f a (uniform_frequencies a));
-plus_gwf'' a s pi f = reversible_markov s (plus_gwf' a pi f);
+plus_gwf'' a s pi f = reversible_markov s (plus_gwf a (frequencies_from_dict a pi) f);
 }

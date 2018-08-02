@@ -34,7 +34,4 @@ get_ordered_elements xs xps plural = if length xs == length xps
                                               ++" but got "++ show (length xps)++"!";
 
 frequencies_from_dict a pi = get_ordered_elements (alphabet_letters a) pi "frequencies";
-
-plus_f' a pi = plus_f a pi' where {pi' = frequencies_from_dict a pi};
-plus_gwf' a pi f = plus_gwf a pi' f where {pi' = frequencies_from_dict a pi};
 }
