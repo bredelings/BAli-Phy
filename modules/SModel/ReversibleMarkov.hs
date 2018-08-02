@@ -26,11 +26,12 @@ reversible_markov s (ReversibleFrequency a smap pi r) = reversible_markov' a sma
 gtr_sym exchange a = builtin_gtr_sym (list_to_vector exchange) a;
 equ a = gtr_sym (replicate nn 1.0) a where {n=alphabetSize a;nn=n*(n-1)/2};
 
-gtr a s pi = reversible_markov s (plus_f a pi);
+gtr a s pi = reversible_markov' a (simple_smap a) (s %*% (plus_f_matrix a pi')) pi' where {pi' = list_to_vector pi};
+
 f81     pi a = gtr a (equ a) pi;
 jukes_cantor a = gtr a (equ a) (uniform_frequencies a);
 
-gtr' s'    pi a = reversible_markov (gtr_sym' s'    a) (plus_f a (frequencies_from_dict a pi));
+gtr' s'    pi a = gtr a (gtr_sym' s'    a) (frequencies_from_dict a pi);
 
 -- es' is a [(String,Double)] here
 all_pairs l = [(x,y) | (x:ys) <- tails l, y <- ys];
@@ -48,5 +49,5 @@ gtr_sym' es' a = gtr_sym es a where {lpairs = all_pairs (alphabet_letters a);
 
 plus_f''   a s pi   = gtr a s (frequencies_from_dict a pi);
 plus_fe''  a s      = gtr a s (uniform_frequencies a);
-plus_gwf'' a s pi f = reversible_markov s (plus_gwf a (frequencies_from_dict a pi) f);
+plus_gwf'' a s pi f = reversible_markov' a (simple_smap a) (s %*% (plus_gwf_matrix a pi' f)) pi' where {pi' = list_to_vector $ frequencies_from_dict a pi};
 }
