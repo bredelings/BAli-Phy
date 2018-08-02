@@ -55,8 +55,11 @@ mg94w9'_freq pi1' pi2' pi3' a = mg94w9_freq pi1 pi2 pi3 a where {nuc_letters = a
                                                        pi2 = get_ordered_elements nuc_letters pi2' "frequencies";
                                                        pi3 = get_ordered_elements nuc_letters pi3' "frequencies"};
 
-gy94  k w pi a = reversible_markov (m0 a (hky85_sym k a_nuc) w) (plus_f  a pi) where {a_nuc = getNucleotides a};
-gy94' k w pi a = reversible_markov (m0 a (hky85_sym k a_nuc) w) (plus_f' a pi) where {a_nuc = getNucleotides a};
+gy94_ext  sym w pi a = reversible_markov (m0 a sym w) (plus_f  a pi);
+gy94_ext' sym w pi a = reversible_markov (m0 a sym w) (plus_f' a pi);
+
+gy94  k w pi a = gy94_ext  sym w pi a where {sym = hky85_sym k $ getNucleotides a};
+gy94' k w pi a = gy94_ext' sym w pi a where {sym = hky85_sym k $ getNucleotides a};
 
 mg94  k w pi a = reversible_markov (m0 a (hky85_sym k a_nuc) w) (mg94_freq  pi a) where {a_nuc = getNucleotides a};
 mg94' k w pi a = reversible_markov (m0 a (hky85_sym k a_nuc) w) (mg94'_freq pi a) where {a_nuc = getNucleotides a};

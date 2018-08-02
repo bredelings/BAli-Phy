@@ -1473,6 +1473,17 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	      </row>
 
 	      <row>
+		<entry><userinput>gy94_ext[<replaceable>nuc_model</replaceable>]</userinput></entry>
+		<entry>df(<replaceable>nuc_model</replaceable>)+61</entry>
+		<entry><para></para>
+		The extended gy94 model.
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/148/3/929.short">
+		  (Goldman and Yang, 1994)
+		</link>
+		</entry>
+	      </row>
+
+	      <row>
 		<entry><userinput>mg94</userinput></entry>
 		<entry>5</entry>
 		<entry>
