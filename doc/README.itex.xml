@@ -1427,8 +1427,49 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
       </section>
 
 
+      <section xml:id="table_triplet_models"><info><title>Triplet models</title></info>
+        <para>The triplets alphabet is similar to the codons alphabet, except that stop codons are not removed. Unlike the codons alphabet, The triplets alphabet has no knowledge of the genetic code.</para>
+        <para>The default substitution model for triplets is tn93+x3.</para>
+	<informaltable><info><title>Substitution Models</title></info>
+
+	  <tgroup cols="3">
+	    <colspec colnum="1" colname="col1" colwidth="1*"/>
+	    <colspec colnum="2" colname="col2" colwidth="1*"/>
+	    <colspec colnum="3" colname="col3" colwidth="1*"/>
+	    <thead><row>
+		<entry>Model</entry>
+		<entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+		<entry>Summary</entry>
+	    </row></thead>
+
+	    <tbody>
+	      <row>
+		<entry><userinput><replaceable>submodel</replaceable>+x3_sym+f</userinput></entry>
+		<entry>df(submodel)+size(alphabet)-1</entry>
+		<entry><para>gy94-style rate matrix.</para>
+		</entry>
+	      </row>
+
+	      <row>
+		<entry><userinput><replaceable>submodel</replaceable>+x3</userinput></entry>
+		<entry>df(submodel)</entry>
+		<entry><para>mg94-style rate matrix.</para>
+		</entry>
+	      </row>
+
+	      <row>
+		<entry>x3x3[q1,q2,q3]</entry>
+		<entry>df(q1)+df(q2)+df(q3)</entry>
+		<entry><para></para>
+		</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+      </section>
+
       <section xml:id="table_codon_models"><info><title>Codon models</title></info>
-        <para>The default substitution model for proteins is gy94.</para>
+        <para>The default substitution model for codons is gy94.</para>
 	<informaltable><info><title>Substitution Models</title></info>
 	  
 	  <tgroup cols="3">
@@ -1523,6 +1564,13 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 		</entry>
 	      </row>
 	      
+	      <para> Put the triplets functions here too!</para>
+	      <row>
+		<entry><userinput><replaceable>submodel</replaceable>+dNdS[omega]</userinput></entry>
+		<entry>df(<replaceable>submodel</replaceable>)+1</entry>
+		<entry><para>Scales non-synonymous rates by <replaceable>omega</replaceable>.</para>
+		</entry>
+	      </row>
 	    </tbody>
 	  </tgroup>
 	</informaltable>
