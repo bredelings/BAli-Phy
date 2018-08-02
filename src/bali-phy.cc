@@ -460,6 +460,24 @@ int main(int argc,char* argv[])
 
 	    expression_ref print_exp = print.expression;
 	    expression_ref a = {var("Prelude.error"),"No alphabet!"};
+	    if (args.count("alphabet"))
+	    {
+		auto as = args["alphabet"].as<vector<string>>();
+		if (as.size() > 1)
+		    throw myexception()<<"Only a single alphabet can be used with --print!";
+		auto alpha = as[0];
+		if (as.size() == 1)
+		{
+		    if (alpha == "DNA")
+			a = DNA();
+		    else if (alpha == "RNA")
+			a = RNA();
+		    else if (alpha == "AA")
+			a = AminoAcids();
+		    else if (alpha == "Codons")
+			a = Codons(DNA(),AminoAcids(),Standard_Genetic_Code());
+		}
+	    }
 	    print_exp = {var("Distributions.run_random"), a, print_exp};
 	    print_exp = {var("Prelude.unsafePerformIO"),print_exp};
 	    print_exp = {var("Parameters.evaluate"),-1,print_exp};
