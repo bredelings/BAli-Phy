@@ -10,6 +10,8 @@ builtin singlet_to_triplet_rates 4 "singlet_to_triplet_rates" "SModel";
 builtin singlet_to_triplet_exchange 2 "singlet_to_triplet_exchange" "SModel";
 builtin fMutSel_q 4 "fMutSel_q" "SModel";
 builtin fMutSel_pi 3 "fMutSel_pi" "SModel";
+builtin %*% 2 "elementwise_multiply" "SModel";
+builtin dNdS_matrix 2 "dNdS_matrix" "SModel";
 
 f3x4_frequencies a pi1 pi2 pi3 = let {pi1' = list_to_vector pi1;
                                       pi2' = list_to_vector pi2;
@@ -75,4 +77,7 @@ x3x3 (ReversibleMarkov _ _ q_1 pi_1 _ _ _) (ReversibleMarkov _ _ q_2 pi_2 _ _ _)
     in reversible_markov' a smap q pi;
 
 x3 q a = x3x3 q q q a;
+
+-- maybe this should be t*(q %*% dNdS_matrix) in order to avoid losing scaling factors?  Probably this doesn't matter at the moment.
+dNdS (ReversibleMarkov a s q pi l t r) omega = reversible_markov' a s q2 pi where {q2 = q %*% dNdS_matrix a omega};
 }
