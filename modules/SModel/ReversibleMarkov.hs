@@ -30,7 +30,6 @@ jukes_cantor a = reversible_markov (equ a) (plus_f_equal_frequencies a);
 f81        pi  a = reversible_markov (equ            a) (plus_f a pi);
 gtr s      pi  a = reversible_markov (gtr_sym s      a) (plus_f a pi);
 
-f81'       pi' a = reversible_markov (equ            a) (plus_f' a pi');
 gtr' s'    pi' a = reversible_markov (gtr_sym' s'    a) (plus_f' a pi');
 
 -- es' is a [(String,Double)] here
