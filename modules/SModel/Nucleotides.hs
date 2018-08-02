@@ -8,7 +8,4 @@ module SModel.Nucleotides (module SModel.Nucleotides) where
   k80 kappa nuca = reversible_markov (hky85_sym kappa nuca) (plus_f_equal_frequencies nuca);
   hky85 k    pi a = reversible_markov (hky85_sym k    a) (plus_f a pi);
   tn93 k1 k2 pi a = reversible_markov (tn93_sym k1 k2 a) (plus_f a pi);
-
-  hky85' k    pi' a = reversible_markov (hky85_sym k    a) (plus_f' a pi');
-  tn93' k1 k2 pi' a = reversible_markov (tn93_sym k1 k2 a) (plus_f' a pi');
 }

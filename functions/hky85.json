@@ -11,7 +11,7 @@
 		"journal": {"name": "Journal of molecular evolution", "volume": "22", "number": "2", "pages": "160--174"},
 		"identifier": [{"type":"doi","id":"10.1007/BF02101694"}]
 	       },
-    "call": "SModel.Nucleotides.hky85'[kappa,pi,a]",
+    "call": "SModel.Nucleotides.hky85[kappa,SModel.ReversibleFrequency.frequencies_from_dict[a,pi],a]",
     "args": [
         {
             "arg_name": "kappa",
