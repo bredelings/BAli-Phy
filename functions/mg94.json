@@ -1,9 +1,9 @@
 {
     "name": "mg94",
-    "synonyms": ["MG94"],
+    "deprecated-synonyms": ["MG94"],
     "result_type": "RevCTMC[Codons[a]]",
     "constraints": ["Nucleotides[a]"],
-    "call": "SModel.Codons.mg94'[kappa,omega,pi,a]",
+    "call": "SModel.Codons.mg94[a,kappa,SModel.ReversibleFrequency.frequencies_from_dict[Alphabet.getNucleotides[a],pi],omega]",
     "args": [
         {
             "arg_name": "kappa",
@@ -40,5 +40,6 @@
 	"link": [{"url":"https://academic.oup.com/mbe/article/11/5/715/1008710"}]
     },
     "description": "The MG94 model describes codon frequencies in terms of 4 nucleotide frequencies.  Considering a transition from a codon ijk to a codon ilk the MG94 model considers only the frequency of l (the nucleotide that changed):\n   R(ijk,ilk) = pi[l].\nThus the rate of substitution does not depend on neighboring nucleotides i and k.  For F1x4, on the other hand\n   R(ijk,ilk) = pi[i]*pi[l]*pi[k],\nso that substitution happens at a slower rate at nucleotides that are adjacent to a low-frequency nucleotide.",
+    "see": ["mg94_ext"],
     "extract": "all"
 }

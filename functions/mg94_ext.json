@@ -1,0 +1,39 @@
+{
+    "name": "mg94_ext",
+    "result_type": "RevCTMC[Codons[a]]",
+    "constraints": ["Nucleotides[a]"],
+    "call": "SModel.Codons.mg94_ext[a,nuc_model,omega]",
+    "args": [
+        {
+            "arg_name": "nuc_model",
+            "arg_type": "RevCTMC[a]",
+            "alphabet": "getNucleotides[@a]",
+            "description": "Nucleotide substitution rate matrix"
+        },
+        {
+            "arg_name": "omega",
+            "arg_type": "Double",
+            "default_value": "~uniform[0,1]",
+            "description": "Relative rate of non-synonymous changes relative to synonymous changes"
+        },
+        {
+            "arg_name": "a",
+            "arg_type": "a",
+            "default_value": "getAlphabet",
+	    "description": "The alphabet"
+        }
+    ],
+    "title": "An extended version of the Muse & Gaut (1994) model of codon substitution.",
+    "citation": {
+	"type": "article",
+	"title": "A likelihood approach for comparing synonymous and nonsynonymous nucleotide substitution rates, with application to the chloroplast genome.",
+	"year": "1994",
+	"author": [{"name": "Muse, Spencer V"}, {"name": "Gaut, Brandon S"}],
+	"journal": {"name": "Molecular biology and evolution", "volume": "11", "number": "5", "pages": "715--724"},
+	"link": [{"url":"https://academic.oup.com/mbe/article/11/5/715/1008710"}]
+    },
+    "description": "This is a version of the mg94 model that has been extended to use a user-supplied rate matrix `nuc_model` on nucleotides.  The original mg94 model is equivalent to `mg94_ext[f81]`.",
+    "examples": ["mg94_ext[hky85[kappa=2],omega=2]","mg94_ext[gtr]"],
+    "see": ["mg94"],
+    "extract": "all"
+}

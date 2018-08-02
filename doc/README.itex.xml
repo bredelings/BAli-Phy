@@ -1516,8 +1516,7 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	      <row>
 		<entry><userinput>gy94_ext[<replaceable>nuc_model</replaceable>]</userinput></entry>
 		<entry>df(<replaceable>nuc_model</replaceable>)+61</entry>
-		<entry><para></para>
-		The extended gy94 model.
+		<entry><para>The extended gy94 model.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/148/3/929.short">
 		  (Goldman and Yang, 1994)
 		</link>
@@ -1535,9 +1534,9 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	      </row>
 
 	      <row>
-		<entry><userinput>mg94w9</userinput></entry>
-		<entry>11</entry>
-		<entry><para>Like the mg94 model, but with different frequencies at each codon position</para>
+		<entry><userinput>mg94_ext[<replaceable>nuc_model</replaceable>]</userinput></entry>
+		<entry>df(<replaceable>nuc_model</replaceable>)+1</entry>
+		<entry><para>The extended mg94 model.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/715/1008710">
 		    (Muse and Gaut, 1994)
 		  </link>

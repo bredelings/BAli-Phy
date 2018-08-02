@@ -32,39 +32,12 @@ f1x4_frequencies_vec a pi = f3x4_frequencies_vec a pi pi pi;
 
 f1x4'_frequencies a pi = f3x4'_frequencies a pi pi pi;
 
-mg94_freq nuc_pi triplet_a = let {nuc_a          = getNucleotides triplet_a;
-                             triplet_pi_vec = f1x4_frequencies_vec triplet_a nuc_pi;
-                             nuc_pi_vec     = list_to_vector nuc_pi;
-                             nuc_r          = plus_f_matrix nuc_a nuc_pi_vec} in
-                        ReversibleFrequency triplet_a (simple_smap triplet_a) triplet_pi_vec (singlet_to_triplet_rates triplet_a nuc_r nuc_r nuc_r);
-
-mg94w9_freq nuc_pi1 nuc_pi2 nuc_pi3 triplet_a = let {nuc_a          = getNucleotides triplet_a;
-                                                triplet_pi_vec = f3x4_frequencies_vec triplet_a nuc_pi1 nuc_pi2 nuc_pi3;
-                                                nuc_pi_vec1     = list_to_vector nuc_pi1;
-                                                nuc_pi_vec2     = list_to_vector nuc_pi2;
-                                                nuc_pi_vec3     = list_to_vector nuc_pi3;
-                                                nuc_r1         = plus_f_matrix nuc_a nuc_pi_vec1;
-                                                nuc_r2         = plus_f_matrix nuc_a nuc_pi_vec2;
-                                                nuc_r3         = plus_f_matrix nuc_a nuc_pi_vec3} in
-                                           ReversibleFrequency triplet_a (simple_smap triplet_a) triplet_pi_vec (singlet_to_triplet_rates triplet_a nuc_r1 nuc_r2 nuc_r3);
-
-mg94'_freq pi' a = mg94_freq pi a  where {nuc_letters = alphabet_letters (getNucleotides a);
-                                          pi = get_ordered_elements nuc_letters pi' "frequencies"};
-
-mg94w9'_freq pi1' pi2' pi3' a = mg94w9_freq pi1 pi2 pi3 a where {nuc_letters = alphabet_letters (getNucleotides a);
-                                                       pi1 = get_ordered_elements nuc_letters pi1' "frequencies";
-                                                       pi2 = get_ordered_elements nuc_letters pi2' "frequencies";
-                                                       pi3 = get_ordered_elements nuc_letters pi3' "frequencies"};
-
 gy94_ext  sym w pi a = gtr a (m0 a sym w) pi;
 
 gy94  k w pi a = gy94_ext  sym w pi a where {sym = hky85_sym k $ getNucleotides a};
 
-mg94  k w pi a = reversible_markov (m0 a (hky85_sym k a_nuc) w) (mg94_freq  pi a) where {a_nuc = getNucleotides a};
-mg94' k w pi a = reversible_markov (m0 a (hky85_sym k a_nuc) w) (mg94'_freq pi a) where {a_nuc = getNucleotides a};
-
-mg94w9  k w pi1 pi2 pi3 a = reversible_markov (m0 a (hky85_sym k a_nuc) w) (mg94w9_freq  pi1 pi2 pi3 a) where {a_nuc = getNucleotides a};
-mg94w9' k w pi1 pi2 pi3 a = reversible_markov (m0 a (hky85_sym k a_nuc) w) (mg94w9'_freq pi1 pi2 pi3 a) where {a_nuc = getNucleotides a};
+mg94_ext a q w = dNdS (x3 q a) w;
+mg94  a k pi w  = mg94_ext a (hky85 k pi nuc_a) w where {nuc_a = getNucleotides a};
 
 x3x3 (ReversibleMarkov _ _ q_1 pi_1 _ _ _) (ReversibleMarkov _ _ q_2 pi_2 _ _ _) (ReversibleMarkov _ _ q_3 pi_3 _ _ _) a =
     let {nuc_a = getNucleotides a;

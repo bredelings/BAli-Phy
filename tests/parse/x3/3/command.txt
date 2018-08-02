@@ -1,1 +1,1 @@
---test <DATA>/codons-dna.fasta --smodel=tn93_sym+x3+MG94
+--test <DATA>/codons-dna.fasta --smodel=mg94_ext[tn93]
