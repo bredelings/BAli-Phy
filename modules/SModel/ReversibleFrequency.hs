@@ -23,15 +23,18 @@ uniform_frequencies_dict a = zip (alphabet_letters a) (uniform_frequencies a);
 plus_f_equal_frequencies a = plus_f a (uniform_frequencies a);
 
 -- pi is [(String,Double)] here
-select_element x ((key,value):rest) = if x == key then value else select_element x rest;
-select_element x [] = error $ "Can't find element " ++ show x ++ " in dictionary!";
+select_element key dict = case lookup key dict of {Just value -> value;
+                                                   Nothing    -> error $ "Can't find element " ++ show key ++ " in dictionary!"};
 
-select_elements (x:xs) pi = select_element x pi:select_elements xs pi;
-select_elements []      _ = [];
+select_elements keys dict = map (flip select_element dict) keys;
 
-get_ordered_elements xs xps plural = if length xs == length xps then select_elements xs xps else error $ "Expected "++show (length xs)++" "++plural
-                                     ++" but got "++ show (length xps)++"!";
-plus_f' a pi' = plus_f a pi where {pi= get_ordered_elements (alphabet_letters a) pi' "frequencies"};
-plus_gwf' a pi' f = plus_gwf a pi f where {pi= get_ordered_elements (alphabet_letters a) pi' "frequencies"};
+get_ordered_elements xs xps plural = if length xs == length xps
+                                     then select_elements xs xps
+                                     else error $ "Expected "++show (length xs)++" "++plural
+                                              ++" but got "++ show (length xps)++"!";
 
+frequencies_from_dict a pi = get_ordered_elements (alphabet_letters a) pi "frequencies";
+
+plus_f' a pi = plus_f a pi' where {pi' = frequencies_from_dict a pi};
+plus_gwf' a pi f = plus_gwf a pi' f where {pi' = frequencies_from_dict a pi};
 }
