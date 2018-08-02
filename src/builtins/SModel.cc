@@ -771,7 +771,6 @@ extern "C" closure builtin_function_fixup_diagonal_rates(OperationArgs& Args)
     if (m2->size2() != n)
 	throw myexception()<<"Rate matrix should be square, but has size ("<<n<<","<<m2->size2()<<")";
 
-    // Compute diagonals.  This probably indicates that we should be computing the diagonals elsewhere...
     for(int i=0;i<n;i++)
     {
 	double sum = 0;
