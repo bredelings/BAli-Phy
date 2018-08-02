@@ -13,6 +13,8 @@ data ReversibleMarkov = ReversibleMarkov a b c d e f g;
 
 qExp (ReversibleMarkov a s q pi l t r) = lExp l pi t;
 
+get_q (ReversibleMarkov _ _ q _ _ _ _) = q;
+
 scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r);
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.

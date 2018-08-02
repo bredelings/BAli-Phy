@@ -1,0 +1,11 @@
+{
+    "name": "get_q",
+    "result_type": "Matrix[a]",
+    "call": "SModel.ReversibleMarkov.get_q[q]",
+    "args": [
+        {
+            "arg_name": "q",
+            "arg_type": "RevCTMC[a]"
+        }
+    ]
+}
