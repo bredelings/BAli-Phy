@@ -46,34 +46,6 @@ extern "C" closure builtin_function_lExp(OperationArgs& Args)
     return M;
 }
 
-extern "C" closure builtin_function_reversible_rate_matrix(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate(0);
-    const Matrix& S = arg0.as_<Box<Matrix>>();
-
-    auto arg1 = Args.evaluate(1);
-    const Matrix& R = arg1.as_<Box<Matrix>>();
-    
-    const unsigned N = S.size1();
-    assert(S.size1() == R.size1());
-    assert(S.size1() == R.size2());
-
-    object_ptr<Box<Matrix>> Q_(new Box<Matrix>(N,N));
-    Matrix& Q = *Q_;
-
-    for(int i=0;i<N;i++) {
-	double sum=0;
-	for(int j=0;j<N;j++) {
-	    if (i==j) continue;
-	    Q(i,j) = S(i,j) * R(i,j);
-	    sum += Q(i,j);
-	}
-	Q(i,i) = -sum;
-    }
-
-    return Q_;
-}
-
 /*
  * 1. pi[i]*Q(i,j) = pi[j]*Q(j,i)         - Because Q is reversible
  * 2. Q(i,j)/pi[j] = Q(j,i)/pi[i] = S1(i,j)

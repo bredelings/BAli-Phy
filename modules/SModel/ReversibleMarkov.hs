@@ -5,10 +5,10 @@ import Alphabet;
 
 builtin get_equilibrium_rate 4 "get_equilibrium_rate" "SModel";
 builtin get_eigensystem 2 "get_eigensystem" "SModel";
-builtin reversible_rate_matrix 2 "reversible_rate_matrix" "SModel";
 builtin lExp 3 "lExp" "SModel";
 builtin builtin_gtr_sym 2 "gtr_sym" "SModel";
 builtin fixup_diagonal_rates 1 "fixup_diagonal_rates" "SModel";
+builtin %*% 2 "elementwise_multiply" "SModel";
 
 data ReversibleMarkov = ReversibleMarkov a b c d e f g;
 
@@ -21,7 +21,7 @@ scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 reversible_markov' a smap q pi = ReversibleMarkov a smap q2 pi (get_eigensystem q2 pi) 1.0 (get_equilibrium_rate a smap q2 pi) where {q2 = fixup_diagonal_rates q};
 
-reversible_markov s (ReversibleFrequency a smap pi r) = reversible_markov' a smap (reversible_rate_matrix s r) pi;
+reversible_markov s (ReversibleFrequency a smap pi r) = reversible_markov' a smap (s %*% r) pi;
 
 gtr_sym exchange a = builtin_gtr_sym (list_to_vector exchange) a;
 equ a = gtr_sym (replicate nn 1.0) a where {n=alphabetSize a;nn=n*(n-1)/2};

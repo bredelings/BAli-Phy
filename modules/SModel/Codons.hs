@@ -10,7 +10,6 @@ builtin singlet_to_triplet_rates 4 "singlet_to_triplet_rates" "SModel";
 builtin singlet_to_triplet_exchange 2 "singlet_to_triplet_exchange" "SModel";
 builtin fMutSel_q 4 "fMutSel_q" "SModel";
 builtin fMutSel_pi 3 "fMutSel_pi" "SModel";
-builtin %*% 2 "elementwise_multiply" "SModel";
 builtin dNdS_matrix 2 "dNdS_matrix" "SModel";
 
 f3x4_frequencies a pi1 pi2 pi3 = let {pi1' = list_to_vector pi1;
