@@ -384,5 +384,7 @@ nubBy eq [] = [];
 tails (x:xs) = (x:xs):(tails xs);
 tails []     = [];
 
-performAction x = do { action <- x ; action };
+-- Data.List.lookup
+lookup key [] = Nothing;
+lookup key ((k,v):kvs) = if (key == k) then Just v else lookup key kvs;
 }
