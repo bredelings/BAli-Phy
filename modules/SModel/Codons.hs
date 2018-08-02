@@ -56,7 +56,7 @@ mg94w9'_freq pi1' pi2' pi3' a = mg94w9_freq pi1 pi2 pi3 a where {nuc_letters = a
                                                        pi2 = get_ordered_elements nuc_letters pi2' "frequencies";
                                                        pi3 = get_ordered_elements nuc_letters pi3' "frequencies"};
 
-gy94_ext  sym w pi a = reversible_markov (m0 a sym w) (plus_f  a pi);
+gy94_ext  sym w pi a = gtr a (m0 a sym w) pi;
 
 gy94  k w pi a = gy94_ext  sym w pi a where {sym = hky85_sym k $ getNucleotides a};
 
