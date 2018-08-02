@@ -2,7 +2,7 @@
     "name": "f",
     "synonyms": ["F"],
     "result_type": "RevCTMC[a]",
-    "call": "SModel.ReversibleMarkov.plus_f''[a,submodel,pi]",
+    "call": "SModel.ReversibleMarkov.plus_f[a,submodel,SModel.ReversibleFrequency.frequencies_from_dict[a,pi]]",
     "args": [
         {
             "arg_name": "pi",

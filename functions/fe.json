@@ -1,9 +1,8 @@
 {
     "name": "fe",
-    "deprecated-synonyms": ["fq"],
-    "deprecated-synonyms": ["FE,FQ"],
+    "deprecated-synonyms": ["fq,FE,FQ"],
     "result_type": "RevCTMC[a]",
-    "call": "SModel.ReversibleMarkov.plus_fe''[a,submodel]",
+    "call": "SModel.ReversibleMarkov.plus_fe[a,submodel]",
     "args": [
         {
             "arg_name": "submodel",
@@ -18,7 +17,7 @@
         }
     ],
     "title": "The +FE frequency model",
-    "description": "This model uses the +F frequency model with uniform frequencies.\n\nIt is equivalent to +f[Frequencies.uniform]",
+    "description": "This model uses the +F frequency model with equal frequencies.\n\nIt is equivalent to +f[Frequencies.uniform]",
     "examples": ["wag+fe"],
     "extract": "all",
     "see": ["f","Frequencies.uniform"]
