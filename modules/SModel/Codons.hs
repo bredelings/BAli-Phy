@@ -33,11 +33,11 @@ gy94_ext  sym w pi a = gtr a (m0 a sym w) pi;
 gy94  k w pi a = gy94_ext  sym w pi a where {sym = hky85_sym k $ getNucleotides a};
 
 mg94_ext a q w = dNdS (x3 q a) w;
-mg94  a k pi w  = mg94_ext a (hky85 k pi nuc_a) w where {nuc_a = getNucleotides a};
+mg94k a k pi w  = mg94_ext a (hky85 k pi nuc_a) w where {nuc_a = getNucleotides a};
+mg94  a   pi w  = mg94_ext a (f81     pi nuc_a) w where {nuc_a = getNucleotides a};
 
 x3x3 (ReversibleMarkov _ _ q_1 pi_1 _ _ _) (ReversibleMarkov _ _ q_2 pi_2 _ _ _) (ReversibleMarkov _ _ q_3 pi_3 _ _ _) a =
-    let {nuc_a = getNucleotides a;
-         smap = simple_smap a;
+    let {smap = simple_smap a;
          q = singlet_to_triplet_rates a q_1 q_2 q_3;
          pi = f3x4_frequencies_builtin a pi_1 pi_2 pi_3}
     in reversible_markov a smap q pi;
