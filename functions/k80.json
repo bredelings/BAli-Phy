@@ -1,20 +1,32 @@
 {
     "name": "k80",
-    "synonyms": ["K80"],
+    "title": "The Kimura (1980) rate matrix",
+    "synonyms": ["k2p"],
+    "deprecated-synonyms": ["K80","K2P"],
     "result_type": "RevCTMC[a]",
     "constraints": ["Nucleotides[a]"],
-    "call": "SModel.Nucleotides.k80[kappa,A]",
+    "call": "SModel.Nucleotides.k80[kappa,a]",
     "args": [
         {
             "arg_name": "kappa",
             "arg_type": "Double",
-            "default_value": "~log_normal[log[2],0.25]"
+            "default_value": "~log_normal[log[2],0.25]",
+            "description": "Transition\/transversion ratio"
         },
         {
-            "arg_name": "A",
+            "arg_name": "a",
             "arg_type": "a",
-            "default_value": "getAlphabet"
+            "default_value": "getAlphabet",
+	    "description": "The alphabet"
         }
     ],
+    "description":"Rate matrix with separate transition & transversion rates, equal base frequencies",
+    "citation":{"type": "article",
+		"title": "A simple method for estimating evolutionary rates of base substitutions through comparative studies of nucleotide sequences",
+		"year": "1980",
+		"author": [{"name": "Kimura, Motoo"}],
+		"journal": {"name": "Journal of molecular evolution", "volume": "16", "number": "2", "pages": "111--120"},
+		"identifier": [{"type":"doi","id":"10.1007%2FBF01731581"}]
+	       },
     "extract": "all"
 }
