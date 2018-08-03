@@ -110,8 +110,8 @@ Now lets use the analysis script to run all the summaries and make a report:
 <code class="prompt">%</code> <strong class="userinput"><code>firefox Results/index.html &amp;</code></strong>
 </pre></div></div><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idm189"></a>5. Multi-gene analyses</h2></div></div></div><p>This is described in more detail in section 4.3 of the <a class="link" href="http://www.bali-phy.org/README.html" target="_top">manual</a>.</p><p>
 Download HIV env and pol alignments with the same sequence names:
-</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>wget http://nucleus.biology.duke.edu/~bredelings/alignment_files/env-common.fasta</code></strong>
-<code class="prompt">%</code> <strong class="userinput"><code>wget http://nucleus.biology.duke.edu/~bredelings/alignment_files/pol-common.fasta</code></strong>
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>wget http:</code></strong>//nucleus.biology.duke.edu/~bredelings/alignment_files/env-common.fasta
+<code class="prompt">%</code> <strong class="userinput"><code>wget http:</code></strong>//nucleus.biology.duke.edu/~bredelings/alignment_files/pol-common.fasta
 </pre><p>Try to analyze these genes jointly under a codon model:
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy --test --alphabet Codons env-common.fasta pol-common.fasta --smodel M0</code></strong>
 </pre><p>Take a look at the lengths of these files, to see whether the sequencealignment lengths are multiples of 3:

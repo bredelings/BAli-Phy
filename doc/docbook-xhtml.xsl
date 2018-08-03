@@ -19,5 +19,4 @@
 <xsl:param name="section.autolabel" select="1"/>
 <!-- xsl:param name="admon.graphics" select="1"/ -->
 
-
 </xsl:stylesheet>

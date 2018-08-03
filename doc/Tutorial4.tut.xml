@@ -319,7 +319,7 @@ imodel = 1,2,3:rs07
 
 smodel = 4:gy94
 #smodel = 4:fMutSel0
-#smodel = 4:m3[gtr_sym,f3x4]
+#smodel = 4:function[w,gy94_ext[gtr_sym,pi=f3x4]]+m3
 imodel = 4:none
 </programlisting>
 We can choose any one of the three codon models for the coding sequences in the 4th partition.
@@ -390,19 +390,19 @@ You can allow 5 different rates that are all independently estimated:
 <section><info><title>Codon models</title></info>
 <para>
 We can also conduct codon-based analyses using the Nielsen and Yang (1998) model of diversifying positive selection (dN/dS):
-% bali-phy Globins/bglobin.fasta --test -S gy94+f1x4
+% bali-phy Globins/bglobin.fasta --test -S gy94[pi=f1x4]
 The gy94 model takes a nucleotide exchange model as a parameter. This parameter is optional, and the default is hky85, which you could specify as gy94[,hky85_sym]. You can change this to be more flexible: 
-% bali-phy Globins/bglobin.fasta --test -S gy94[,gtr_sym]+f1x4
+% bali-phy Globins/bglobin.fasta --test -S gy94_ext[gtr_sym,pi=f1x4]
 You can make the codon frequencies to be generated from a single set of nucleotide frequencies:
-% bali-phy Globins/bglobin.fasta --test -S gy94[,gtr_sym]+mg94
+% bali-phy Globins/bglobin.fasta --test -S mg94_ext[gtr]
 The M7 model allows different sites to have different dN/dS values, where the probability of dN/dS values follows a beta distribution:
 % bali-phy Globins/bglobin.fasta --test -S m7
 The M7 model has parameters as well. Here are the defaults:
-% bali-phy Globins/bglobin.fasta --test -S m7[4,hky85_sym,f61]
+% bali-phy Globins/bglobin.fasta --test -S function[w,gy94[omega=w]]+m7
 The M3 model allows different sites to have different dN/dS values, but directly estimates what these values are:
 % bali-phy Globins/bglobin.fasta --test -S m3[n=3]
 The M8a_Test model allows testing for positive selection in some fraction of the sites:
-% bali-phy Globins/bglobin.fasta --test -S m8a_test[4,hky85_sym,f3x4]
+% bali-phy Globins/bglobin.fasta --test -S function[w,gy94[pi=f3x4]]+m8a_test
 </para>
 </section>
 
