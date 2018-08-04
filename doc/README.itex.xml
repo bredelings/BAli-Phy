@@ -1912,23 +1912,12 @@ A value must be given for each parameter, unless the parameter has a default val
   </para>
 	<note>
 	  <para>
-	    If you are using the C-shell command line shell (<command>csh</command> or <command>tcsh</command>) or Z-shell (<command>zsh</command>), then it will try to interpret the square brackets <userinput>[..]</userinput> as an array reference.
-	  </para>
-
-	  <para><command>csh</command> gives a rather confusing error message:
-	    <screen> <prompt>%</prompt> <userinput>bali-phy file.fasta -S hky85[kappa=2]</userinput>
-bali-phy: No match.</screen>
-	  </para>
-
-	  <para><command>zsh</command> gives a somewhat more helpful error message:
-	    <screen> <prompt>%</prompt> <userinput>bali-phy file.fasta -S hky85[kappa=2]</userinput>
-zsh: no matches found: hky85[kappa=2]</screen>
-	  </para>
-
-	  <para>In both cases, you can avoid this problem by putting single quotes around the substitution model:
+	    If you are using the <command>csh</command>, <command>tcsh</command>, or <command>zsh</command> instead of the <command>bash</command> shell, then you need to put single quotes around terms with square brackets on the command-line:
 <screen><prompt>%</prompt> <userinput>bali-phy file.fasta -S 'hky85[kappa=2]'</userinput></screen>
 	  </para>
 
+	  <para>If you do not add quotes, you will get an error message like "<computeroutput>bali-phy: No match.</computeroutput>" (for <command>csh</command>) or "<computeroutput>zsh: no matches found: hky85[kappa=2]</computeroutput>" (for <command>zsh</command>).
+	  </para>
 	</note>
 
   </section>
