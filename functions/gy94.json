@@ -4,7 +4,7 @@
     "result_type": "RevCTMC[Codons[a]]",
     "constraints": ["Nucleotides[a]"],
     "title": "The Goldman & Yang (1994) model of dN\/dS",
-    "call": "SModel.Codons.gy94[kappa,omega,SModel.ReversibleFrequency.frequencies_from_dict[a,pi],a]",
+    "call": "SModel.Codons.gy94[kappa,omega,SModel.Frequency.frequencies_from_dict[a,pi],a]",
     "args": [
         {
             "arg_name": "kappa",

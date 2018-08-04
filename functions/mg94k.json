@@ -3,7 +3,7 @@
     "deprecated-synonyms": ["MG94"],
     "result_type": "RevCTMC[Codons[a]]",
     "constraints": ["Nucleotides[a]"],
-    "call": "SModel.Codons.mg94k[a,kappa,SModel.ReversibleFrequency.frequencies_from_dict[Alphabet.getNucleotides[a],pi],omega]",
+    "call": "SModel.Codons.mg94k[a,kappa,SModel.Frequency.frequencies_from_dict[Alphabet.getNucleotides[a],pi],omega]",
     "args": [
         {
             "arg_name": "kappa",

@@ -1,6 +1,6 @@
-module SModel.ReversibleMarkov (module SModel.ReversibleMarkov, module SModel.ReversibleFrequency) where
+module SModel.ReversibleMarkov (module SModel.ReversibleMarkov, module SModel.Frequency) where
 {
-import SModel.ReversibleFrequency;
+import SModel.Frequency;
 import Alphabet;
 
 builtin get_equilibrium_rate 4 "get_equilibrium_rate" "SModel";
@@ -44,7 +44,6 @@ get_element_exchange ((key,value):rest) x y = if key == x || key == y then value
 -- factor out code to get gtr exch list
 -- maybe put ReversibleFrequency into this file.
 -- clean up f1x4 and f3x4?
--- write docs
 gtr_sym' es' a = gtr_sym es a where {lpairs = all_pairs (alphabet_letters a);
                                      es = if length lpairs == length es' then
                                               [get_element_exchange es' (l1++l2) (l2++l1)| (l1,l2) <- lpairs]

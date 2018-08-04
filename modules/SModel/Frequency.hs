@@ -1,4 +1,4 @@
-module SModel.ReversibleFrequency where
+module SModel.Frequency where
 {
 import Alphabet;
 builtin builtin_plus_gwf 3 "plus_gwF" "SModel";
