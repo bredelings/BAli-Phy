@@ -34,10 +34,18 @@ table.informaltable {
 
 .note {
 	border: solid;
-	border-width: 2px;
-	border-color: green;
-	padding-left: 15px;
-	padding-right: 15px;
+	border-width: 0.15em;
+	border-color: #EE4040;
+	border-radius: 1.5em;
+
+	background-color: #FFEAEA;
+
+	margin-left: 3em;
+	margin-right: 3em;
+	width: calc(100% - 8em);
+        padding-left: 1em;
+        padding-right: 1em;
+	padding-bottom:1em
 }
 
 code { margin: 0; padding: 0}
