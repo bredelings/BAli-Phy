@@ -2,7 +2,7 @@
     "name": "x3",
     "result_type": "RevCTMC[a]",
     "constraints": [ "Triplets[a,b]" ],
-    "title": "Rate matrix constructed from rate matrices on each triplet position",
+    "title": "Rate matrix on triplets/codon constructed from nucleotide rates",
     "call": "SModel.Codons.x3[submodel,a]",
     "args": [
         {
@@ -18,5 +18,7 @@
 	    "description": "The Triplets alphabet"
         }
     ],
-    "examples": ["hky85+x3"]
+    "description":"Rate matrix on triplets or codons constructed from a rate matrix on nucleotides.\n\nThus function can be used to build up triplet and codon models incrementally.",
+    "examples": ["f81+x3+dNdS      // equivalent to mg94","gtr+x3"],
+    "see": ["mg94","mg94_ext"]
 }
