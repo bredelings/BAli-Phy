@@ -1,20 +1,47 @@
 * UNRELEASED
   - Fixes
-    - Make bp-analyze able to parse output files from 3.0-beta.
-    - Rename Goldman & Yang codon model to gy94 from incorrect yn94.
-    - Fix run file for f81 model.
-    - Fix incorrect LG model.
-  - Models
+    - make bp-analyze able to parse output files from 3.0-beta.
+    - rename Goldman & Yang codon model to gy94 from incorrect yn94.
+    - fix run file for f81 model.
+    - fix incorrect LG model.
+    - normalize WAG and LG standard frequencies.
+  - Codon models
+    - gy94 and mg94 now have no submodels and are rate matrices.
+    - f1x4, f3x4, and f61 now compute named codon frequencies.
+    - add gy94_ext and mg94_ext for using any nucleotide rate matrix.
+    - add mg94k for mg94_ext[hky85]
+  - Triplet models
+    - fix up x3, x3_xym, x3x3
+    - add +dNdS function so we can do e.g. hky85+x3+dNdS
+  - Functions in models
     - Add new syntax function[x,...] for specifying models.
     - new functions map, zip, zipWith.
     - m1a,m2a,..,m8a_test,branch-site, etc. now take functions as arguments.
-    - gy94 and mg94 now both yield continous-time markov chains.
-    - f1x4, f3x4, and f61 now compute named codon frequencies.
-    - +f and +gwF are now modifiers on exchange models like wag.
-    - Logging now returns an object that can change shape dynamically.
+    - let-bind names for lambda-dependent arguments, but inside the lambda.
+  - Model framework
+    - +fe as synonym for +f[Frequencies.uniform]
+    - +f and +gwF now take exchange models like wag as a submodel.
+    - logging now returns an object that can change shape dynamically.
+    - function calls can now look like f[g[x],y] instead of just f[x,y]
+    - arguments now referenced with @arg to fix function[x,add[x,x]]
+    - fixes to unification and constraints.
+    - suppress gamma:shift and exponential:shift
   - Haskell
-    - modules can now export imported modules.
-    - Refactor module SModel into SModel.Codons, SModel.ReversibleMarkov, etc.
+    - modules can now re-export imported modules.
+    - refactor module SModel into SModel.Codons, SModel.ReversibleMarkov, etc.
+    - remove hky85', etc now that models can call hky85 directly.
+    - add lazy IO
+    - make sampling in the Random monad lazy
+    - correctly set rates in sample'
+    - do normal 0 1 => do sample $ normal 0 1
+  - Docs
+    - Reorganize docs on substitution models.
+    - Move docs on partitions to new section.
+  - Etc
+    - Allow specifying alphabet for --print.
+    - Allow running gy94 from --print.
+  - Testing
+    - Find out why different package disagree on wag+f[wag_freq]
 * 3.2
   - Fixes
     - Increase test timeout for internal testsuite and testiphy.
