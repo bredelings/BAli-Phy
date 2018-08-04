@@ -18,6 +18,8 @@ get_q (ReversibleMarkov _ _ q _ _ _ _) = q;
 
 scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r);
 
+simple_smap a = iotaUnsigned (alphabetSize a);
+
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 reversible_markov a smap q pi = ReversibleMarkov a smap q2 pi (get_eigensystem q2 pi) 1.0 (get_equilibrium_rate a smap q2 pi) where {q2 = fixup_diagonal_rates q};
 
@@ -39,6 +41,10 @@ letter_pair_names a = [l1++l2|(l1,l2) <- all_pairs (alphabet_letters a)];
 get_element_exchange []                 x y = error ("No exchangeability specified for '" ++ x ++ "'");
 get_element_exchange ((key,value):rest) x y = if key == x || key == y then value else get_element_exchange rest x y;
 
+-- factor out code to get gtr exch list
+-- maybe put ReversibleFrequency into this file.
+-- clean up f1x4 and f3x4?
+-- write docs
 gtr_sym' es' a = gtr_sym es a where {lpairs = all_pairs (alphabet_letters a);
                                      es = if length lpairs == length es' then
                                               [get_element_exchange es' (l1++l2) (l2++l1)| (l1,l2) <- lpairs]

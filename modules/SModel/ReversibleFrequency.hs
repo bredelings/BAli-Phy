@@ -1,10 +1,7 @@
 module SModel.ReversibleFrequency where
 {
 import Alphabet;
-data ReversibleFrequency = ReversibleFrequency a b c d;
 builtin builtin_plus_gwf 3 "plus_gwF" "SModel";
-
-simple_smap a = iotaUnsigned (alphabetSize a);
 
 -- pi is a vector double here
 plus_f_matrix a pi = plus_gwf_matrix a pi 1.0;
