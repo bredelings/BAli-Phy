@@ -1031,122 +1031,6 @@ The majority consensus tree is usually not fully resolved, so we recommend using
   </section>
 
 
-  <section xml:id="functions"><info><title>Models and Priors</title></info>
-
-  <section><info><title>Models and distributions are functions</title></info>
-  <para>Models and probability distributions are treated as functions in BAli-Phy because all of them have parameters or arguments. Parameters have names in BAli-Phy.  Parameter values are specified using square brackets as follows:
-  <programlisting>hky85[kappa=2]            // model
-log[x=2]                  // function
-normal[mean=0,sigma=1]    // probability distribution</programlisting>
-It is possible to specify parameter values by position instead of by name:
-  <programlisting>hky85[2]
-log[2]
-normal[0,1]</programlisting>
-It is even possible to mix positional and named arguments, as long as all the positional arguments come before all the named arguments:
-<programlisting>normal[0,sigma=1]   // OK
-normal[mean=0,1]    // not OK</programlisting>
-
-  The order and type of parameters for a function can be found with the <userinput>help</userinput> command.  For example,
-<screen><prompt>%</prompt> <userinput>bali-phy help hky85</userinput></screen>
-A value must be given for each parameter, unless the parameter has a default value (See <xref linkend="default_values"/>).
-  </para>
-	<note>
-	  <para>
-	    If you are using the C-shell command line shell (<command>csh</command> or <command>tcsh</command>) or Z-shell (<command>zsh</command>), then it will try to interpret the square brackets <userinput>[..]</userinput> as an array reference.
-	  </para>
-
-	  <para><command>csh</command> gives a rather confusing error message:
-	    <screen> <prompt>%</prompt> <userinput>bali-phy file.fasta -S hky85[kappa=2]</userinput>
-bali-phy: No match.</screen>
-	  </para>
-
-	  <para><command>zsh</command> gives a somewhat more helpful error message:
-	    <screen> <prompt>%</prompt> <userinput>bali-phy file.fasta -S hky85[kappa=2]</userinput>
-zsh: no matches found: hky85[kappa=2]</screen>
-	  </para>
-
-	  <para>In both cases, you can avoid this problem by putting single quotes around the substitution model:
-<screen><prompt>%</prompt> <userinput>bali-phy file.fasta -S 'hky85[kappa=2]'</userinput></screen>
-	  </para>
-
-	</note>
-
-  </section>
-
-  <section xml:id="priors"><info><title>Priors</title></info>
-  <section><info><title>Specifying priors</title></info>
-<para>Priors on model parameters are specified by giving a random value. Random values can be obtained from distributions using the function <userinput>sample</userinput>.  For example, this places a log-normal prior on the parameter <userinput>kappa</userinput> of the <userinput>hky85</userinput> model:
-<programlisting>hky85[kappa=sample[log_normal[1,1]]]</programlisting>
-You can write <userinput>~Dist</userinput> as a shorthand for <userinput>sample[Dist]</userinput>:
-<programlisting>hky85[kappa=~log_normal[1,1]]</programlisting>
-The <userinput>=~</userinput> can be further shortened to just <userinput>~</userinput>:
-<programlisting>hky85[kappa~log_normal[1,1]]</programlisting>
-</para>
-</section>
-
-  <section><info><title>Random function arguments</title></info>
-<para>It also is possible to use random values as inputs to other functions.  For example:
-<programlisting>add[1,~exponential[10]]</programlisting>
-In such cases the parameter value should be specified with <userinput>=</userinput>, as in the following example:
-<programlisting>rs07[mean_length=add[1,~exponential[10]]]]</programlisting>
-</para>
-  </section>
-<section><info><title>Distributions are not random values</title></info>
-<para>Random values and distributions have different types.  For example, the
-following is of type <userinput>Distribution[Double]</userinput>:
-<programlisting>uniform[0,1]</programlisting>
-In contrast, the following are both of type <userinput>Double</userinput>:
-<programlisting>sample[uniform[0,1]]
-~uniform[0,1]</programlisting>
-This is important when passing distributions as arguments to other
-distributions and functions.  For example, the distribution <userinput>iid</userinput> is used to generate a specific number of samples from another distribution.  Thus, it needs to receive a distribution as an argument:
-<programlisting>~iid[4,normal[0,1]]      // OK    : 4 samples from the normal[0,1] distribution
-~iid[4,~normal[0,1]]     // not OK: 4 samples from ... a random number?</programlisting>
-(See <xref linkend="types"/>.)
-</para>
-  </section>
-  </section>
-
-  <section><info><title>Models and '<userinput>+</userinput>' notation</title></info>
-  <para>Models in phylogenetics literature are often combined using <userinput>+</userinput>. For example, the model <userinput>WAG+F+G4+I</userinput> starts with the WAG amino-acid model, and places several modifiers, like "+G4" on the right.</para>
-  <para>BAli-Phy follows this convention by treating <userinput>A+B</userinput> as an abbreviation for <userinput>B[submodel=A]</userinput>:
-<programlisting>hky85+Rates.gamma        // rewritten to Rates.gamma[submodel=hky85]
-hky85+inv                // rewritten to inv[submodel=hky85]
-wag+f                    // rewritten to f[submodel=wag]
-wag+f+Rates.gamma+inv    // rewritten to inv[submodel=Rates.gamma[submodel=f[submodel=wag]]]
-</programlisting>
-This allows a simple method for combining models, when one model is an argument to another model.
-</para>
-  </section>
-
-  <section xml:id="default_values"><info><title>Default values and default priors</title></info>
-  <para>
-Some function arguments have default values.  For example, the <userinput>Rates.gamma</userinput> parameter <userinput>n</userinput> has a default value of 4.  Thus the following are equivalent:
-<programlisting>hky85+Rates.gamma[n=4]+inv
-hky85+Rates.gamma+inv</programlisting></para>
-
-  <para>When the default value is random, then the argument has a default prior. For example, the <userinput>kappa</userinput> parameter of <userinput>hky85</userinput> has a default value of <userinput>~log_normal[log[2],0.25]</userinput>, so the following are equivalent:
-<programlisting>hky85[kappa~log_normal[log[2],0.25]]
-hky85</programlisting>
-The <userinput>help</userinput> command can be used to determine the default value for a parameter, if there is one.</para>
-  </section>
-
-  <section xml:id="types"><info><title>Argument and result types</title></info>
-  <para>  Every function has a <emphasis>result type</emphasis>, as well as an <emphasis>argument type</emphasis> for each argument.  The argument type specifies what kind of arguments are acceptable, and the result type specifies what kind of result the function produces.  Types include <userinput>Int</userinput> for integers, <userinput>Double</userinput> for double-precision floating point numbers, and <userinput>String</userinput> for text strings.  Integer arguments are implicitly converted to <userinput>Double</userinput> when the argument type is <userinput>Double</userinput>.</para>
-
-  <para>Some types contain parameters.  For example <userinput>List[Int]</userinput> indicates a list of integers and <userinput>List[Double]</userinput> indicates a list of real numbers.  In order to indicate a list of unknown type, we use a <emphasis>type variable</emphasis> <userinput>a</userinput> and write <userinput>List[a]</userinput>.  Type variables always begin with a lower-case letter.  They are able to match any specific type, and their value is found by pattern-matching.  For example, the function <userinput>add[x,y]</userinput> takes two arguments of type <userinput>a</userinput> and has a result of type <userinput>a</userinput>.  Thus:
-<programlisting>add[1,2]        // arguments are a=Int, so result is of type Int
-add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programlisting>
-<userinput>Pair[a,b]</userinput> is a parameterized type that can be specialized to (for example) <userinput>Pair[String,Double]</userinput> and <userinput>Pair[Int,Int]</userinput>.
-  </para>
-
-  <para>Types for components of substitution models are often parameterized by type of the alphabet.  For example, hky85 has a result type of <userinput>RevCTMC[a]</userinput>, where <userinput>a</userinput> could be <userinput>DNA</userinput> or <userinput>RNA</userinput>.  The use of alphabet types in substitution models prevents combining substitution models with mismatched alphabets.
-  </para>
-
-  </section>
-  </section>
-    
-
   <section xml:id="subst_models">
     <info><title>Substitution models</title></info>
       
@@ -2006,6 +1890,122 @@ mg94[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]
 	</para>
 
     </section>
+
+  <section xml:id="functions"><info><title>Models and Priors</title></info>
+
+  <section><info><title>Models and distributions are functions</title></info>
+  <para>Models, probability distributions, and functions are treated the same in BAli-Phy because all of them have parameters or arguments. Parameters have names in BAli-Phy.  Parameter values are specified using square brackets as follows:
+  <programlisting>hky85[kappa=2]            // model
+log[x=2]                  // function
+normal[mean=0,sigma=1]    // probability distribution</programlisting>
+It is possible to specify parameter values by position instead of by name:
+  <programlisting>hky85[2]
+log[2]
+normal[0,1]</programlisting>
+It is even possible to mix positional and named arguments, as long as all the positional arguments come before all the named arguments:
+<programlisting>normal[0,sigma=1]   // OK
+normal[mean=0,1]    // not OK</programlisting>
+
+  The order and type of parameters for a function can be found with the <userinput>help</userinput> command.  For example,
+<screen><prompt>%</prompt> <userinput>bali-phy help hky85</userinput></screen>
+A value must be given for each parameter, unless the parameter has a default value (See <xref linkend="default_values"/>).
+  </para>
+	<note>
+	  <para>
+	    If you are using the C-shell command line shell (<command>csh</command> or <command>tcsh</command>) or Z-shell (<command>zsh</command>), then it will try to interpret the square brackets <userinput>[..]</userinput> as an array reference.
+	  </para>
+
+	  <para><command>csh</command> gives a rather confusing error message:
+	    <screen> <prompt>%</prompt> <userinput>bali-phy file.fasta -S hky85[kappa=2]</userinput>
+bali-phy: No match.</screen>
+	  </para>
+
+	  <para><command>zsh</command> gives a somewhat more helpful error message:
+	    <screen> <prompt>%</prompt> <userinput>bali-phy file.fasta -S hky85[kappa=2]</userinput>
+zsh: no matches found: hky85[kappa=2]</screen>
+	  </para>
+
+	  <para>In both cases, you can avoid this problem by putting single quotes around the substitution model:
+<screen><prompt>%</prompt> <userinput>bali-phy file.fasta -S 'hky85[kappa=2]'</userinput></screen>
+	  </para>
+
+	</note>
+
+  </section>
+
+  <section><info><title>Models and '<userinput>+</userinput>' notation</title></info>
+  <para>Models in phylogenetics literature are often combined using <userinput>+</userinput>. For example, the model <userinput>WAG+F+G4+I</userinput> starts with the WAG amino-acid model, and places several modifiers, like "+G4" on the right.</para>
+  <para>BAli-Phy follows this convention by treating <userinput>A+B</userinput> as an abbreviation for <userinput>B[submodel=A]</userinput>:
+<programlisting>hky85+Rates.gamma        // rewritten to Rates.gamma[submodel=hky85]
+hky85+inv                // rewritten to inv[submodel=hky85]
+wag+f                    // rewritten to f[submodel=wag]
+wag+f+Rates.gamma+inv    // rewritten to inv[submodel=Rates.gamma[submodel=f[submodel=wag]]]
+</programlisting>
+This allows a simple method for combining models, when one model is an argument to another model.
+</para>
+  </section>
+
+  <section xml:id="priors"><info><title>Priors</title></info>
+  <section><info><title>Specifying priors</title></info>
+<para>Priors on model parameters are specified by giving a random value. Random values can be obtained from distributions using the function <userinput>sample</userinput>.  For example, this places a log-normal prior on the parameter <userinput>kappa</userinput> of the <userinput>hky85</userinput> model:
+<programlisting>hky85[kappa=sample[log_normal[1,1]]]</programlisting>
+You can write <userinput>~Dist</userinput> as a shorthand for <userinput>sample[Dist]</userinput>:
+<programlisting>hky85[kappa=~log_normal[1,1]]</programlisting>
+The <userinput>=~</userinput> can be further shortened to just <userinput>~</userinput>:
+<programlisting>hky85[kappa~log_normal[1,1]]</programlisting>
+</para>
+</section>
+
+  <section><info><title>Random function arguments</title></info>
+<para>It also is possible to use random values as inputs to other functions.  For example:
+<programlisting>add[1,~exponential[10]]</programlisting>
+In such cases the parameter value should be specified with <userinput>=</userinput>, as in the following example:
+<programlisting>rs07[mean_length=add[1,~exponential[10]]]]</programlisting>
+</para>
+  </section>
+<section><info><title>Distributions are not random values</title></info>
+<para>Random values and distributions have different types.  For example, the
+following is of type <userinput>Distribution[Double]</userinput>:
+<programlisting>uniform[0,1]</programlisting>
+In contrast, the following are both of type <userinput>Double</userinput>:
+<programlisting>sample[uniform[0,1]]
+~uniform[0,1]</programlisting>
+This is important when passing distributions as arguments to other
+distributions and functions.  For example, the distribution <userinput>iid</userinput> is used to generate a specific number of samples from another distribution.  Thus, it needs to receive a distribution as an argument:
+<programlisting>~iid[4,normal[0,1]]      // OK    : 4 samples from the normal[0,1] distribution
+~iid[4,~normal[0,1]]     // not OK: 4 samples from ... a random number?</programlisting>
+(See <xref linkend="types"/>.)
+</para>
+  </section>
+  </section>
+
+  <section xml:id="default_values"><info><title>Default values and default priors</title></info>
+  <para>
+Some function arguments have default values.  For example, the <userinput>Rates.gamma</userinput> parameter <userinput>n</userinput> has a default value of 4.  Thus the following are equivalent:
+<programlisting>hky85+Rates.gamma[n=4]+inv
+hky85+Rates.gamma+inv</programlisting></para>
+
+  <para>When the default value is random, then the argument has a default prior. For example, the <userinput>kappa</userinput> parameter of <userinput>hky85</userinput> has a default value of <userinput>~log_normal[log[2],0.25]</userinput>, so the following are equivalent:
+<programlisting>hky85[kappa~log_normal[log[2],0.25]]
+hky85</programlisting>
+The <userinput>help</userinput> command can be used to determine the default value for a parameter, if there is one.</para>
+  </section>
+
+  <section xml:id="types"><info><title>Argument and result types</title></info>
+  <para>  Every function has a <emphasis>result type</emphasis>, as well as an <emphasis>argument type</emphasis> for each argument.  The argument type specifies what kind of arguments are acceptable, and the result type specifies what kind of result the function produces.  Types include <userinput>Int</userinput> for integers, <userinput>Double</userinput> for double-precision floating point numbers, and <userinput>String</userinput> for text strings.  Integer arguments are implicitly converted to <userinput>Double</userinput> when the argument type is <userinput>Double</userinput>.</para>
+
+  <para>Some types contain parameters.  For example <userinput>List[Int]</userinput> indicates a list of integers and <userinput>List[Double]</userinput> indicates a list of real numbers.  In order to indicate a list of unknown type, we use a <emphasis>type variable</emphasis> <userinput>a</userinput> and write <userinput>List[a]</userinput>.  Type variables always begin with a lower-case letter.  They are able to match any specific type, and their value is found by pattern-matching.  For example, the function <userinput>add[x,y]</userinput> takes two arguments of type <userinput>a</userinput> and has a result of type <userinput>a</userinput>.  Thus:
+<programlisting>add[1,2]        // arguments are a=Int, so result is of type Int
+add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programlisting>
+<userinput>Pair[a,b]</userinput> is a parameterized type that can be specialized to (for example) <userinput>Pair[String,Double]</userinput> and <userinput>Pair[Int,Int]</userinput>.
+  </para>
+
+  <para>Types for components of substitution models are often parameterized by type of the alphabet.  For example, hky85 has a result type of <userinput>RevCTMC[a]</userinput>, where <userinput>a</userinput> could be <userinput>DNA</userinput> or <userinput>RNA</userinput>.  The use of alphabet types in substitution models prevents combining substitution models with mismatched alphabets.
+  </para>
+
+  </section>
+  </section>
+    
 
     <section><info><title>Partitioned data sets</title></info>
 
