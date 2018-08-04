@@ -348,124 +348,6 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
     </section>
 
 
-    <section xml:id="compilation"><info><title>Compiling <application>BAli-Phy</application></title></info>
-    
-
-    <para>Compiling <application>BAli-Phy</application> is intended to be a relatively painless process.  However, most people will want to use the pre-compiled binaries as described in the standard installation instructions at <xref linkend="installation"/> instead of compiling BAli-Phy themselves.  You might want to compile BAli-Phy yourself if you want to 
-    <itemizedlist>
-      <listitem>run BAli-Phy on a non-Intel CPU (such as ARM64 or Alpha).</listitem>
-      <listitem>run BAli-Phy on Mac OS X versions older than 10.9</listitem>
-      <listitem>enable the <application>draw-tree</application> program on Windows or Mac (this requires the Cairo graphics library).</listitem>
-      <listitem>modify the source code and submit a patch with new functionality.</listitem>
-      <listitem>change the optimization options used to compile BAli-Phy in the pre-compiled binaries.</listitem>
-      <listitem>compile with debugging options to find the cause of a bug, and maybe fix it.</listitem>
-    </itemizedlist>
-    Otherwise, the pre-compiled binaries will be fine.
-    </para>
-
-    <section><info><title>Setup</title></info>
-      
-
-    <para>In order to compile BAli-Phy, you need
-    <itemizedlist>
-      <listitem>a <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://en.wikipedia.org/wiki/C%2B%2B14">C++14</link> compiler</listitem>
-      <listitem><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://mesonbuild.com">meson</link> (version >= 0.45)</listitem>
-    </itemizedlist>
-    We recommend the GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>) version 5.0 (or higher) or the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link> compiler version 3.5.0 or higher. The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cairographics.org/">Cairo</link> graphics library is optional, but if it is missing, the <command>drawtree</command> tool that is used to draw consensus trees won't be built. See also <xref linkend="software_req"/>. </para>
-
-    <section><info><title>Linux</title></info>
-    <para>On Debian and Ubuntu, you can type:
-<screen><prompt>%</prompt> <userinput>sudo apt-get install g++ git libcairo2-dev pandoc</userinput></screen>
-
-    </para>
-If your version of Debian or Ubuntu is recent enough to contain meson version 0.45 or higher, you can install meson with apt-get:
-<screen><prompt>%</prompt> <userinput>sudo apt-get install meson</userinput>
-<prompt>%</prompt> <userinput>dpkg -s meson | grep Version</userinput>
-Version: 0.45.1-2
-</screen>
-Otherwise you can install meson through pip3:
-<screen><prompt>%</prompt> <userinput>sudo apt-get install python3 python3-pip ninja</userinput>
-<prompt>%</prompt> <userinput>python3 -m venv meson</userinput>
-<prompt>%</prompt> <userinput>source meson/bin/activate</userinput>
-<prompt>%</prompt> <userinput>pip3 install meson</userinput>
-</screen>
-
-    </section>
-
-    <section><info><title>Mac</title></info>
-    <para>On Mac OS X, the simplest way to get a compiler is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> (version 6 or newer) command line tools, which come with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">clang</link>.
- <screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>    To get the other tools, first install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link>, and then type:
-<screen><prompt>%</prompt> <userinput>brew install git meson cairo pandoc</userinput></screen>
-    </para>
-    <!-- para>You can also install BAli-Phy with homebrew.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>. However, this recipe may not install the latest version.</para -->
-
-    </section>
-    
-    <section><info><title>Windows (native)</title></info>
-    <para>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.msys2.org">MSYS2</link> project provides an MINGW64 compiler that can create native windows executables.  MSYS2 itself is actually non-native (it is derived from cygwin), and therefore the MSYS2 shell refers to drives as <filename>/c/</filename> instead of <filename>C:/</filename>.</para>
-    <screen><prompt>%</prompt> <userinput>pacman --needed --noconfirm -Sy pacman-mirrors</userinput>
-<prompt>%</prompt> <userinput>pacman -Sy</userinput>
-<prompt>%</prompt> <userinput>pacman -S mingw-w64-x86_64-ninja</userinput>
-<prompt>%</prompt> <userinput>pacman -S mingw-w64-x86_64-toolchain</userinput>
-<prompt>%</prompt> <userinput>pacman -S mingw-w64-python3-pip</userinput>
-<prompt>%</prompt> <userinput>PATH=/c/msys64/mingw64/bin:&#36;PATH</userinput> # Put the mingw64 executables into your path
-<prompt>%</prompt> <userinput>pip3 install meson</userinput></screen>
-    <para>Keep in mind that MSYS2 keeps its (non-native) executables in <filename>C:/msys64/usr/bin</filename>, while it keeps the (native) MINGW executables in <filename>C:/msys64/mingw64/bin</filename>.  If you want to use the native MINGW executables, you need to make sure that <filename>/c/msys64/mingw64/bin/</filename> is in your PATH.  If you forget to put the MINGW executables in the path, some of the installed MINGW programs (such as pip3 above) will show up as missing when you try to run them.</para>
-    </section>
-
-    <!-- section><info><title>Windows (Cygwin)</title></info>
-    The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/">Cygwin</link> project provides a non-native POSIX environment.
-    </section -->
-    <!-- section><info><title>Windows (non-native)</title></info>
-    <para>BAli-Phy can be compiled as either a <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/">Cygwin</link> executable or a native Windows executable.  The Cygwin executable needs the <filename>cygwin1.dll</filename> to run, and can handle cygwin filenames like <filename>/cygdrive/C/Users/</filename>.  To compile bali-phy for Cygwin, install Cygwin and the Cygwin packages for gcc, git, meson, and cairo.  Then you can build bali-phy within Cygwin using the build instructions below.</para>
-
-    <para>You can also compile native windows executables using the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://mingw-w64.org/doku.php">Mingw-w64</link> version of GCC.  These native windows executables do not need <filename>cygwin1.dll</filename>, and only understand Windows filenames, like <filename>C:\Users\</filename>.  You can build these executables in the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.msys2.org">MSYS2</link> shell, which is a modified version of Cygwin for compiling native windows executables using the Mingw-w64 compiler.</para>
-
-    <para>You can also build Mingw-w64 executables using either Linux or Cygwin as the host environment, if you install a mingw-w64 "cross-compiler".  You can obtain cross compilers for Mingw-w64 on both Linux and Cygwin.  To inform the <filename>configure.sh</filename> script that you wish to use a cross compiler, add the flag <userinput>- -host=x86_64-w64-mingw32</userinput> to build for 64-bit windows, and <userinput>- -host=i686-w64-mingw32</userinput> to build 32-bit executables.</para>
-    </section -->
-
-	  
-    </section>
-
-    <section xml:id="quickstart"><info><title>Clone, Configure, Compile</title></info>
-       
-    <para>First check out the code using git:
-<screen><prompt>%</prompt><userinput> git clone https://github.com/bredelings/BAli-Phy.git</userinput>
-<prompt>%</prompt><userinput> cd BAli-Phy</userinput>
-<prompt>%</prompt><userinput> git submodule update --init</userinput></screen>
-</para>
-<para>
-Then run meson to configure the build process:
-<screen><prompt>%</prompt><userinput> meson build --prefix=&#36;HOME/Applications/bali-phy-&version;/</userinput></screen>
-In the MSYS2 environment, the command is called <command>meson.py</command> instead of <command>meson</command>:
-<screen><prompt>%</prompt><userinput> meson.py build --prefix=&#36;HOME/Applications/bali-phy-&version;/</userinput></screen>
-</para>
-<para>
-Finally, build and install the software:
-<screen><prompt>%</prompt><userinput> ninja -C build</userinput>
-<prompt>%</prompt><userinput> ninja -C build test</userinput>
-<prompt>%</prompt><userinput> ninja -C build install</userinput>
-</screen>
-The command <command>bali-phy</command> and its associated tools should then be located in <filename>&install.path;/bin/</filename>. To install to another directory <replaceable>dir</replaceable>, specify --prefix=<replaceable>dir</replaceable> to <command>meson</command>.
-      </para>
-
-    </section>
-      <section><info><title>Options: compiler and linker flags</title></info>
-	
-      <para>You can select the C++ compiler by setting the CXX variable.  A useful example of this is to use <command>g++-7</command> on systems where <command>g++</command> invokes a compiler that is too old:
- <screen><prompt>%</prompt> <userinput>CXX=g++-7 meson build --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>
- You may also set compiler and linker options using the CPPFLAGS, CXXFLAGS, and LDFLAGS variables.  For example, you can instruct the compiler to use all the features of your chip, instead of producing generic code that will run anywhere:
- <screen><prompt>%</prompt> <userinput>CXXFLAGS="-mtune=native -march=native" meson --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>
-
- For example, you can set the CPPFLAGS and LDFLAGS variables to instruct the compiler where to look for libraries, such as cairo:
-	  <screen><prompt>%</prompt> <userinput>CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" meson build --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>
- Another useful example of this is to produce an OS X executable on that can run on older versions of OS X:
-	  <screen><prompt>%</prompt> <userinput>CXXFLAGS="-mmacosx-version-min=10.9" LDFLAGS="-mmacosx-version-min=10.9" meson build --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>	</para>
-      </section>
-
-    </section>
-
-
   <section xml:id="running"><info><title>Running the program</title></info>
     
 
@@ -1785,7 +1667,8 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 
 
 	<para>BAli-Phy interprets branch lengths for codon models as 1/3 of the number of substitutions per codon.  Thus, they should be comparable to branch lengths under DNA/RNA models.</para>
-	<para>The <userinput>x3</userinput> model and <userinput>x3_sym</userinput> model can be used to build up models piecewise:
+	<para>The <userinput>x3</userinput>, <userinput>x3_sym</userinput>, <userinput>x3x3</userinput>, and <userinput>dNdS</userinput> models
+	can be used to build up codon models piecewise:
 	<itemizedlist>
 	  <listitem><userinput>mg94</userinput> is equivalent to <userinput>f81+x3+dNdS</userinput>.</listitem>
 	  <listitem><userinput>gy94</userinput> is equivalent to <userinput>hky85_sym+x3_sym+f+dNdS</userinput>.</listitem>
@@ -2518,6 +2401,124 @@ The stabilization criterion is the same one described above for numerical values
     </section>
 
   </section>
+
+    <section xml:id="compilation"><info><title>Compiling <application>BAli-Phy</application></title></info>
+    
+
+    <para>Compiling <application>BAli-Phy</application> is intended to be a relatively painless process.  However, most people will want to use the pre-compiled binaries as described in the standard installation instructions at <xref linkend="installation"/> instead of compiling BAli-Phy themselves.  You might want to compile BAli-Phy yourself if you want to 
+    <itemizedlist>
+      <listitem>run BAli-Phy on a non-Intel CPU (such as ARM64 or Alpha).</listitem>
+      <listitem>run BAli-Phy on Mac OS X versions older than 10.9</listitem>
+      <listitem>enable the <application>draw-tree</application> program on Windows or Mac (this requires the Cairo graphics library).</listitem>
+      <listitem>modify the source code and submit a patch with new functionality.</listitem>
+      <listitem>change the optimization options used to compile BAli-Phy in the pre-compiled binaries.</listitem>
+      <listitem>compile with debugging options to find the cause of a bug, and maybe fix it.</listitem>
+    </itemizedlist>
+    Otherwise, the pre-compiled binaries will be fine.
+    </para>
+
+    <section><info><title>Setup</title></info>
+      
+
+    <para>In order to compile BAli-Phy, you need
+    <itemizedlist>
+      <listitem>a <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://en.wikipedia.org/wiki/C%2B%2B14">C++14</link> compiler</listitem>
+      <listitem><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://mesonbuild.com">meson</link> (version >= 0.45)</listitem>
+    </itemizedlist>
+    We recommend the GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>) version 5.0 (or higher) or the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link> compiler version 3.5.0 or higher. The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cairographics.org/">Cairo</link> graphics library is optional, but if it is missing, the <command>drawtree</command> tool that is used to draw consensus trees won't be built. See also <xref linkend="software_req"/>. </para>
+
+    <section><info><title>Linux</title></info>
+    <para>On Debian and Ubuntu, you can type:
+<screen><prompt>%</prompt> <userinput>sudo apt-get install g++ git libcairo2-dev pandoc</userinput></screen>
+
+    </para>
+If your version of Debian or Ubuntu is recent enough to contain meson version 0.45 or higher, you can install meson with apt-get:
+<screen><prompt>%</prompt> <userinput>sudo apt-get install meson</userinput>
+<prompt>%</prompt> <userinput>dpkg -s meson | grep Version</userinput>
+Version: 0.45.1-2
+</screen>
+Otherwise you can install meson through pip3:
+<screen><prompt>%</prompt> <userinput>sudo apt-get install python3 python3-pip ninja</userinput>
+<prompt>%</prompt> <userinput>python3 -m venv meson</userinput>
+<prompt>%</prompt> <userinput>source meson/bin/activate</userinput>
+<prompt>%</prompt> <userinput>pip3 install meson</userinput>
+</screen>
+
+    </section>
+
+    <section><info><title>Mac</title></info>
+    <para>On Mac OS X, the simplest way to get a compiler is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> (version 6 or newer) command line tools, which come with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">clang</link>.
+ <screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>    To get the other tools, first install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link>, and then type:
+<screen><prompt>%</prompt> <userinput>brew install git meson cairo pandoc</userinput></screen>
+    </para>
+    <!-- para>You can also install BAli-Phy with homebrew.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>. However, this recipe may not install the latest version.</para -->
+
+    </section>
+    
+    <section><info><title>Windows (native)</title></info>
+    <para>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.msys2.org">MSYS2</link> project provides an MINGW64 compiler that can create native windows executables.  MSYS2 itself is actually non-native (it is derived from cygwin), and therefore the MSYS2 shell refers to drives as <filename>/c/</filename> instead of <filename>C:/</filename>.</para>
+    <screen><prompt>%</prompt> <userinput>pacman --needed --noconfirm -Sy pacman-mirrors</userinput>
+<prompt>%</prompt> <userinput>pacman -Sy</userinput>
+<prompt>%</prompt> <userinput>pacman -S mingw-w64-x86_64-ninja</userinput>
+<prompt>%</prompt> <userinput>pacman -S mingw-w64-x86_64-toolchain</userinput>
+<prompt>%</prompt> <userinput>pacman -S mingw-w64-python3-pip</userinput>
+<prompt>%</prompt> <userinput>PATH=/c/msys64/mingw64/bin:&#36;PATH</userinput> # Put the mingw64 executables into your path
+<prompt>%</prompt> <userinput>pip3 install meson</userinput></screen>
+    <para>Keep in mind that MSYS2 keeps its (non-native) executables in <filename>C:/msys64/usr/bin</filename>, while it keeps the (native) MINGW executables in <filename>C:/msys64/mingw64/bin</filename>.  If you want to use the native MINGW executables, you need to make sure that <filename>/c/msys64/mingw64/bin/</filename> is in your PATH.  If you forget to put the MINGW executables in the path, some of the installed MINGW programs (such as pip3 above) will show up as missing when you try to run them.</para>
+    </section>
+
+    <!-- section><info><title>Windows (Cygwin)</title></info>
+    The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/">Cygwin</link> project provides a non-native POSIX environment.
+    </section -->
+    <!-- section><info><title>Windows (non-native)</title></info>
+    <para>BAli-Phy can be compiled as either a <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/">Cygwin</link> executable or a native Windows executable.  The Cygwin executable needs the <filename>cygwin1.dll</filename> to run, and can handle cygwin filenames like <filename>/cygdrive/C/Users/</filename>.  To compile bali-phy for Cygwin, install Cygwin and the Cygwin packages for gcc, git, meson, and cairo.  Then you can build bali-phy within Cygwin using the build instructions below.</para>
+
+    <para>You can also compile native windows executables using the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://mingw-w64.org/doku.php">Mingw-w64</link> version of GCC.  These native windows executables do not need <filename>cygwin1.dll</filename>, and only understand Windows filenames, like <filename>C:\Users\</filename>.  You can build these executables in the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.msys2.org">MSYS2</link> shell, which is a modified version of Cygwin for compiling native windows executables using the Mingw-w64 compiler.</para>
+
+    <para>You can also build Mingw-w64 executables using either Linux or Cygwin as the host environment, if you install a mingw-w64 "cross-compiler".  You can obtain cross compilers for Mingw-w64 on both Linux and Cygwin.  To inform the <filename>configure.sh</filename> script that you wish to use a cross compiler, add the flag <userinput>- -host=x86_64-w64-mingw32</userinput> to build for 64-bit windows, and <userinput>- -host=i686-w64-mingw32</userinput> to build 32-bit executables.</para>
+    </section -->
+
+	  
+    </section>
+
+    <section xml:id="quickstart"><info><title>Clone, Configure, Compile</title></info>
+       
+    <para>First check out the code using git:
+<screen><prompt>%</prompt><userinput> git clone https://github.com/bredelings/BAli-Phy.git</userinput>
+<prompt>%</prompt><userinput> cd BAli-Phy</userinput>
+<prompt>%</prompt><userinput> git submodule update --init</userinput></screen>
+</para>
+<para>
+Then run meson to configure the build process:
+<screen><prompt>%</prompt><userinput> meson build --prefix=&#36;HOME/Applications/bali-phy-&version;/</userinput></screen>
+In the MSYS2 environment, the command is called <command>meson.py</command> instead of <command>meson</command>:
+<screen><prompt>%</prompt><userinput> meson.py build --prefix=&#36;HOME/Applications/bali-phy-&version;/</userinput></screen>
+</para>
+<para>
+Finally, build and install the software:
+<screen><prompt>%</prompt><userinput> ninja -C build</userinput>
+<prompt>%</prompt><userinput> ninja -C build test</userinput>
+<prompt>%</prompt><userinput> ninja -C build install</userinput>
+</screen>
+The command <command>bali-phy</command> and its associated tools should then be located in <filename>&install.path;/bin/</filename>. To install to another directory <replaceable>dir</replaceable>, specify --prefix=<replaceable>dir</replaceable> to <command>meson</command>.
+      </para>
+
+    </section>
+      <section><info><title>Options: compiler and linker flags</title></info>
+	
+      <para>You can select the C++ compiler by setting the CXX variable.  A useful example of this is to use <command>g++-7</command> on systems where <command>g++</command> invokes a compiler that is too old:
+ <screen><prompt>%</prompt> <userinput>CXX=g++-7 meson build --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>
+ You may also set compiler and linker options using the CPPFLAGS, CXXFLAGS, and LDFLAGS variables.  For example, you can instruct the compiler to use all the features of your chip, instead of producing generic code that will run anywhere:
+ <screen><prompt>%</prompt> <userinput>CXXFLAGS="-mtune=native -march=native" meson --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>
+
+ For example, you can set the CPPFLAGS and LDFLAGS variables to instruct the compiler where to look for libraries, such as cairo:
+	  <screen><prompt>%</prompt> <userinput>CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" meson build --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>
+ Another useful example of this is to produce an OS X executable on that can run on older versions of OS X:
+	  <screen><prompt>%</prompt> <userinput>CXXFLAGS="-mmacosx-version-min=10.9" LDFLAGS="-mmacosx-version-min=10.9" meson build --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>	</para>
+      </section>
+
+    </section>
+
 
   <section xml:id="FAQ"><info><title>Frequently Asked Questions (FAQ)</title></info>
     
