@@ -514,7 +514,7 @@ scale = 1,3:</programlisting>
         in <xref linkend="alignment-utilities"/> can be used to construct a smaller
         data set.</para> 
 
-      <para>The number of samples that you need depends on whether you
+      <para>The number of MCMC samples that you need depends on whether you
 	are primarily interested in obtaining a point estimate or in
 	obtaining detailed measures of confidence and uncertainty.  For
 	detailed measures of confidence and uncertainty you should
@@ -535,10 +535,10 @@ scale = 1,3:</programlisting>
 	  samples.
 	</para>
 	<para>When designing an MCMC analysis, I recommend performing an initial analysis
-	with a much smaller sample size.  This smaller analysis will run much faster, and
-	allow discovering mistakes much more quickly.  Then, one you are sure that you
+	with a much smaller number of sequences.  This smaller analysis will run much faster, and
+	allow discovering mistakes much more quickly.  Then, after you are sure that you
 	are running the program correctly and have chosen the best model, you can ramp
-	up the sample size towards your desired number.
+	up the number of sequences towards your desired number.
 	</para> 
 
       </section>
