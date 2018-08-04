@@ -42,11 +42,15 @@
     - Allow running gy94 from --print.
   - Testing
     - Find out why different package disagree on wag+f[wag_freq]
+
 * 3.2
   - Fixes
     - Increase test timeout for internal testsuite and testiphy.
     - HTML report: don't hide header behind top-bar in Chrome.
   - alignment-smc improvements.
+  - change alignment-diff back to red
+  - Add NEWS file.
+
 * 3.1.5
   - Fixes
     - Make all programs use shipped libstdc++
@@ -54,21 +58,101 @@
     - Increase test timeouts
     - Correctly write initial alignment for fixed alignment partitions.
     - Don't write "file:" for MDS URLs in HTML report
-  - Print citations with pmid and pmcid in help.
+  - Help
+    - Print citations with pmid and pmcid in help.
+    - Print help for 0-argument functions like 'dna'
+    - Improve help for fMutSel and fMutSel0
   - Add Frequencies.uniform[] function.
-  - Print help for 0-argument functions like 'dna'
   - Make SEV handle site-compression.
   - HTML report: print version number + lots of cosmetic improvements.
   - Add new tool tree-tool (and map page, etc.)
   - Change alignments-diff highlight color back to red.
   - Clean up DP matrix code.
+
 * 3.1.4
   - Fix prior on alpha in Rates.gamma
+
 * 3.1.3
   - Fix mean_length prior in RS05 model.
   - Add some more color-schemes for drawing alignments-diff output.
   - Add ferns exon/intro data set.
+
 * 3.1.2
   - Fix a testsuite bug
+  - Haskell
+    - parse exports list
+
 * 3.1.1
+  - Fixes
+    - Don't require testiphy
   - Print priors on models in their own section.
+
+* 3.1
+  - Fixes
+    - Build alignment-thin and alignments-diff
+  - Show model and priors readably
+  - bali-phy accepted into Debian
+  - Change 'logp' => 'posterior'
+
+* 3.0.2
+  - Docs
+    - man pages for bali-phy and tools
+    - man pages online
+
+* 3.0.1
+  - Fixes
+    - Fix crash in alignment-thin
+
+* 3.0
+  - Models
+    - Mixture models now work.
+    - MultiRate[model,dist,n_bins] also works
+    - let[var=E1,E2] now works
+    - Rename RA[a] to RevCTMC[a]
+    - Stop representing integer, double, and bool as strings.
+  - Report
+    - subsample trees when running trees-distances for MDS plot
+  - Docs
+    - Add help for more functions.
+  - MCMC
+    - Implement SPR+A
+    - Destroy SPR_by_NNI with fire.
+
+* 3.0-beta6
+  - Fixes
+    - Make sorting of DP:rates and M3:omegas work again.
+    - sample branch lengths from prior -- fixes very long initial tree.
+  - specify branch lengths as a List[Double]
+  - Models
+    - Make lists into a collection of Cons[ ] functions.h
+  + Speedup on 25-muscle because we aren't proposing the branch lengths badly
+  - Eliminate compiler warnings.
+  * Print expressions
+  - Allow non-modifiable branch lengths if we aren't doing MCMC.
+  - Improve pre-burnin
+  - read parameter values as json
+  - write out run parameters as json.
+  - Improve help, add help for more functions.
+  * stop finding branch lengths by parameter name
+  * stop finding scales by parameter name
+  * print parameter values that are data structures
+  * meson build infrastructure
+  * Read json using nlohmann::json
+  * Switch to new ptree structure.
+
+3.0-beta5
+  - Fixes
+    - Don't crash on --smodel=GTR+x3
+  - Short parameter names
+  - Add --link option.
+  - Complain if linking non-existant attributes.
+  - Logging
+    * Logging of [(String,a)]
+    * Rationalize logging of frequencies and exchangabilities
+    * DirichletOn prior for frequencies and exchangabilities.
+  * Loading functions from files.
+  - Allow expressing the branch length prior in terms of the tree.
+  - Automatically convert integers to double when needed, and hide the conversions.
+  - Help
+    - Make simple|advanced|expert|(developer) options.
+    - Help for all commands.
