@@ -1272,6 +1272,8 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
       <info><title>DNA and RNA models</title></info>
 	
       <para>The default substitution model for DNA and RNA is tn93.</para>
+      <section>
+	<info><title>Substitution rates</title></info>
       <para>All the DNA models are special cases of the GTR model.  </para>
       <informaltable>
 	<info><title>Substitution Models</title></info>
@@ -1297,9 +1299,19 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 
 	    <row>
 	      <entry><userinput>k80</userinput></entry>
-	      <entry>0</entry>
-	      <entry><para>Unequal Transition &amp; transversion rates, equal base frequencies.</para>
+	      <entry>1</entry>
+	      <entry><para>Unequal transition &amp; transversion rates, equal base frequencies.</para>
 	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007%2FBF01731581">(Kimura, 1980)</link>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry><userinput>f81</userinput></entry>
+	      <entry>3</entry>
+	      <entry><para>Equal exchangabilities, unequal frequencies.</para>
+	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007%2FBF01734359">
+		(Felsenstein, 1981)
+	      </link>
 	      </entry>
 	    </row>
 
@@ -1325,16 +1337,6 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	    </row>
 
 	    <row>
-	      <entry><userinput>f81</userinput></entry>
-	      <entry>3</entry>
-	      <entry><para>Equal exchangabilities, unequal frequencies.</para>
-	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007%2FBF01734359">
-		(Felsenstein, 1981)
-	      </link>
-	      </entry>
-	    </row>
-
-	    <row>
 	      <entry><userinput>gtr</userinput></entry>
 	      <entry>8</entry>
 	      <entry><para>Unequal exchangeabilities, unequal frequencies.</para>
@@ -1347,6 +1349,7 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	  </tbody>
 	</tgroup>
       </informaltable>
+      </section>
     <section xml:id="nucleotide-frequencies">
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Users can fix frequencies by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
@@ -1388,6 +1391,9 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
       <info><title>Protein models</title></info>
 
       <para>The default substitution model for proteins is lg08.</para>
+
+      <section>
+	<info><title>Substitution rates</title></info>
       <informaltable>
 	<info><title>Substitution Models</title></info>
 	  
@@ -1479,6 +1485,7 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	  </tbody>
 	</tgroup>
       </informaltable>
+      </section>
     <section xml:id="amino-acid-frequencies">
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Users can fix frequencies by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
@@ -1522,7 +1529,10 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	</tgroup>
       </informaltable>
 	  
-      <para>The <userinput>+fe</userinput> model is shorthand for <userinput>+f[pi=Frequencies.uniform]</userinput>.</para>
+      <para>The <userinput>+fe</userinput> model is shorthand for <userinput>+f[pi=Frequencies.uniform]</userinput>:</para>
+      <para>
+	<programlisting language="java">wag+fe</programlisting>
+      </para>
     </section>
 
 
@@ -1532,6 +1542,8 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
       <info><title>Triplet models</title></info>
       <para>The triplets alphabet is similar to the codons alphabet, except that stop codons are not removed. Unlike the codons alphabet, the triplets alphabet has no knowledge of the genetic code.</para>
       <para>The default substitution model for triplets is tn93+x3.</para>
+      <section>
+	<info><title>Substitution rates</title></info>
       <informaltable>
 	<info><title>Substitution Models</title></info>
 
@@ -1547,15 +1559,15 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	  
 	  <tbody>
 	    <row>
-	      <entry><userinput><replaceable>submodel</replaceable>+x3_sym+f</userinput></entry>
-	      <entry>df(submodel)+size(alphabet)-1</entry>
+	      <entry><userinput><replaceable>nuc_model</replaceable>+x3_sym+f</userinput></entry>
+	      <entry>df(nuc_model)+63</entry>
 	      <entry><para>GY94-style rate matrix constructed from nucleotide exchangability matrix.</para>
 	      </entry>
 	    </row>
 
 	    <row>
-	      <entry><userinput><replaceable>submodel</replaceable>+x3</userinput></entry>
-	      <entry>df(submodel)</entry>
+	      <entry><userinput><replaceable>nuc_model</replaceable>+x3</userinput></entry>
+	      <entry>df(nuc_model)</entry>
 	      <entry><para>MG94-style rate matrix constructed from nucleotide rate matrix.</para>
 	      </entry>
 	    </row>
@@ -1569,17 +1581,15 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 	  </tbody>
 	</tgroup>
       </informaltable>
-      
+      </section>
     <section xml:id="triplet-frequencies">
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Users can fix frequencies by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
-      <programlisting language="java">hky85_sym+x3_sym+f[pi=List[Pair["AAA",0.01],Pair["C",0.02],...]]
-hky85[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]+x3
-</programlisting>
+      <programlisting language="java">hky85[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]+x3</programlisting>
       <para>Frequencies can also be specified using functions:</para>
       <para>
-	<programlisting language="java">hky85_sym+x3_sym+f[pi=f1x4[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]]</programlisting>
+	<programlisting language="java">hky85_sym+x3_sym+f[pi=f1x4]            // nucleotide frequencies are estimated</programlisting>
       </para>
 
 
@@ -1604,176 +1614,195 @@ hky85[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]+x3
 	    <row>
 	      <entry><userinput>f1x4</userinput></entry>
 	      <entry>3</entry>
-	      <entry>Constructs codon frequencies from independent nucleotide frequencies.</entry>
+	      <entry>Constructs triplet frequencies from independent nucleotide frequencies.</entry>
 	    </row>
 
 	    <row>
 	      <entry><userinput>f3x4</userinput></entry>
 	      <entry>9</entry>
-	      <entry>Constructs codon frequencies from independent nucleotide frequencies for each codon position.</entry>
+	      <entry>Constructs triplet frequencies from independent nucleotide frequencies for each codon position.</entry>
 	    </row>
 	    
 	  </tbody>
 	</tgroup>
       </informaltable>
-	<para>The <userinput>+fe</userinput> model is shorthand for <userinput>+f[pi=Frequencies.uniform]</userinput>.</para>
+	<para>The <userinput>+fe</userinput> model is shorthand for <userinput>+f[pi=Frequencies.uniform]</userinput>:</para>
+	<para>
+	  <programlisting language="java">hky85_sym+x3_sym+fe</programlisting>
+	</para>
     </section>
 
+      <para>BAli-Phy interprets branch lengths for codon models as 1/3 the number of substitution per triplet.  Thus, they should be comparable to branch lengths under DNA/RNA models.</para>
+      
 
     </section>
 
     <section xml:id="table_codon_models">
       <info><title>Codon models</title></info>
+
       <para>The default substitution model for codons is gy94.</para>
-      <informaltable>
-	<info><title>Substitution Models</title></info>
+
+      <section>
+	<info><title>Substitution rates</title></info>
 	
-	<tgroup cols="3">
-	  <colspec colnum="1" colname="col1" colwidth="1*"/>
-	  <colspec colnum="2" colname="col2" colwidth="1*"/>
-	  <colspec colnum="3" colname="col3" colwidth="1*"/>
-	  <thead><row>
-	    <entry>Model</entry>
-	    <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
-	    <entry>Summary</entry>
-	  </row></thead>
+	<informaltable>
+	  <info><title>Substitution Models</title></info>
+	  
+	  <tgroup cols="3">
+	    <colspec colnum="1" colname="col1" colwidth="1*"/>
+	    <colspec colnum="2" colname="col2" colwidth="1*"/>
+	    <colspec colnum="3" colname="col3" colwidth="1*"/>
+	    <thead><row>
+	      <entry>Model</entry>
+	      <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+	      <entry>Summary</entry>
+	    </row></thead>
 
-	  <tbody>
-	    <row>
-	      <entry><userinput>gy94</userinput></entry>
-	      <entry>62</entry>
-	      <entry><para>Model of dN/dS with a separate frequency for each codon.</para>
-	      <para>Rate for changing a nucleotide depends on neighboring nucleotides.</para>
-	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/148/3/929.short">
-		(Goldman and Yang, 1994)
-	      </link>
-	      </entry>
-	    </row>
+	    <tbody>
+	      <row>
+		<entry><userinput>gy94</userinput></entry>
+		<entry>62</entry>
+		<entry><para>Model of dN/dS with a separate frequency for each codon.</para>
+		<para>Rate for changing a nucleotide depends on neighboring nucleotides.</para>
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/148/3/929.short">
+		  (Goldman and Yang, 1994)
+		</link>
+		</entry>
+	      </row>
 
-	    <row>
-	      <entry><userinput>gy94[pi=f1x4]</userinput></entry>
-	      <entry>5</entry>
-	      <entry><para></para>
-	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/148/3/929.short">
-		(Goldman and Yang, 1994)
-	      </link>
-	      </entry>
-	    </row>
+	      <row>
+		<entry><userinput>gy94[pi=f1x4]</userinput></entry>
+		<entry>5</entry>
+		<entry><para>The GY94 model with codon frequencies constructed from nucleotide frequencies.</para>
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/148/3/929.short">
+		  (Goldman and Yang, 1994)
+		</link>
+		</entry>
+	      </row>
 
-	    <row>
-	      <entry><userinput>gy94[pi=f3x4]</userinput></entry>
-	      <entry>11</entry>
-	      <entry><para></para>
-	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/148/3/929.short">
-		(Goldman and Yang, 1994)
-	      </link>
-	      </entry>
-	    </row>
+	      <row>
+		<entry><userinput>gy94[pi=f3x4]</userinput></entry>
+		<entry>11</entry>
+		<entry><para>The GY94 model with codon frequencies constructed from nucleotide frequencies for each codon position.</para>
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/148/3/929.short">
+		  (Goldman and Yang, 1994)
+		</link>
+		</entry>
+	      </row>
 
-	    <row>
-	      <entry><userinput>gy94_ext[<replaceable>nuc_model</replaceable>]</userinput></entry>
-	      <entry>df(<replaceable>nuc_model</replaceable>)+61</entry>
-	      <entry><para>GY94 model extended with generic nucleotide exchangeability matrix.</para>
-	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/148/3/929.short">
-		(Goldman and Yang, 1994)
-	      </link>
-	      </entry>
-	    </row>
+	      <row>
+		<entry><userinput>gy94_ext[<replaceable>nuc_model</replaceable>]</userinput></entry>
+		<entry>df(<replaceable>nuc_model</replaceable>)+61</entry>
+		<entry><para>GY94 model extended with a generic nucleotide exchangeability matrix.</para>
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/148/3/929.short">
+		  (Goldman and Yang, 1994)
+		</link>
+		</entry>
+	      </row>
 
-	    <row>
-	      <entry><userinput>mg94</userinput></entry>
-	      <entry>4</entry>
-	      <entry>
-		<para>Model of dN/dS based on a single nucleotide rate matrix.</para>
-		<para>Rate for changing a nucleotide depends only on that nucleotide.</para>
+	      <row>
+		<entry><userinput>mg94</userinput></entry>
+		<entry>4</entry>
+		<entry>
+		  <para>Model of dN/dS with f81 as the neutral model.</para>
+		  <para>Rate for changing a nucleotide depends only on that nucleotide.</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/715/1008710">
+		    (Muse and Gaut, 1994)
+		  </link>
+		</entry>
+	      </row>
+
+	      <row>
+		<entry><userinput>mg94k</userinput></entry>
+		<entry>5</entry>
+		<entry><para>Model of dN/dS with hky85 as the neutral model.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/715/1008710">
 		  (Muse and Gaut, 1994)
 		</link>
-	      </entry>
-	    </row>
+		</entry>
+	      </row>
 
-	    <row>
-	      <entry><userinput>mg94k</userinput></entry>
-	      <entry>5</entry>
-	      <entry><para>MG94 extended with transition/transversion rate ratio.</para>
-	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/715/1008710">
-		(Muse and Gaut, 1994)
-	      </link>
-	      </entry>
-	    </row>
+	      <row>
+		<entry><userinput>mg94_ext[<replaceable>nuc_model</replaceable>]</userinput></entry>
+		<entry>df(<replaceable>nuc_model</replaceable>)+1</entry>
+		<entry><para>Model of dN/dS with <replaceable>nuc_model</replaceable> as the neutral model.</para>
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/715/1008710">
+		  (Muse and Gaut, 1994)
+		</link>
+		</entry>
+	      </row>
 
-	    <row>
-	      <entry><userinput>mg94_ext[<replaceable>nuc_model</replaceable>]</userinput></entry>
-	      <entry>df(<replaceable>nuc_model</replaceable>)+1</entry>
-	      <entry><para>MG94 extended with generic nucleotide rate matrix.</para>
-	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/715/1008710">
-		(Muse and Gaut, 1994)
-	      </link>
-	      </entry>
-	    </row>
+	      <row>
+		<entry><userinput>fMutSel</userinput></entry>
+		<entry>65</entry>
+		<entry><para>MG94-like model with fitnesses for each codon.</para>
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/715/1008710">
+		  (Yang and Nielsen, 2008)
+		</link>
+		</entry>
+	      </row>
 
-	    <row>
-	      <entry><userinput>fMutSel</userinput></entry>
-	      <entry>65</entry>
-	      <entry><para>MG94-like model with fitnesses for each codon.</para>
-	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/715/1008710">
-		(Yang and Nielsen, 2008)
-	      </link>
-	      </entry>
-	    </row>
+	      <row>
+		<entry><userinput>fMutSel0</userinput></entry>
+		<entry>24</entry>
+		<entry><para>MG94-like model with fitnesses for each amino-acid.</para>
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/715/1008710">
+		  (Yang and Nielsen, 2008)
+		</link>
+		</entry>
+	      </row>
+	      
+	      <row>
+		<entry><userinput><replaceable>nuc_model</replaceable>+x3_sym+f</userinput></entry>
+		<entry>df(nuc_model)+60</entry>
+		<entry><para>GY94-style rate matrix constructed from nucleotide exchangability matrix (dN/dS = 1).</para>
+		</entry>
+	      </row>
 
-	    <row>
-	      <entry><userinput>fMutSel0</userinput></entry>
-	      <entry>24</entry>
-	      <entry><para>MG94-like model with fitnesses for each amino-acid.</para>
-	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/715/1008710">
-		(Yang and Nielsen, 2008)
-	      </link>
-	      </entry>
-	    </row>
-	    
-	    <row>
-	      <entry><userinput><replaceable>nuc_model</replaceable>+x3_sym+f</userinput></entry>
-	      <entry>df(nuc_model)+size(alphabet)-1</entry>
-	      <entry><para>GY94-style rate matrix constructed from nucleotide exchangability matrix (dN/dS = 1).</para>
-	      </entry>
-	    </row>
+	      <row>
+		<entry><userinput><replaceable>nuc_model</replaceable>+x3</userinput></entry>
+		<entry>df(nuc_model)</entry>
+		<entry><para>MG94-style rate matrix constructed from nucleotide rate matrix (dN/dS = 1).</para>
+		</entry>
+	      </row>
 
-	    <row>
-	      <entry><userinput><replaceable>nuc_model</replaceable>+x3</userinput></entry>
-	      <entry>df(nuc_model)</entry>
-	      <entry><para>MG94-style rate matrix constructed from nucleotide rate matrix (dN/dS = 1).</para>
-	      </entry>
-	    </row>
+	      <row>
+		<entry><userinput>x3x3[q1,q2,q3]</userinput></entry>
+		<entry>df(q1)+df(q2)+df(q3)</entry>
+		<entry><para>Triplet rate matrix constructed from a nucleotide rate matrix for each codon position (dN/dS = 1).</para>
+		</entry>
+	      </row>
 
-	    <row>
-	      <entry><userinput>x3x3[q1,q2,q3]</userinput></entry>
-	      <entry>df(q1)+df(q2)+df(q3)</entry>
-	      <entry><para>Triplet rate matrix constructed from a nucleotide rate matrix for each codon position (dN/dS = 1).</para>
-	      </entry>
-	    </row>
-
-	    <row>
-	      <entry><userinput><replaceable>codon_model</replaceable>+dNdS[omega]</userinput></entry>
-	      <entry>df(<replaceable>codon_model</replaceable>)+1</entry>
-	      <entry><para>Scales non-synonymous rates by <replaceable>omega</replaceable>.</para>
-	      </entry>
-	    </row>
-	  </tbody>
-	</tgroup>
-      </informaltable>
+	      <row>
+		<entry><userinput><replaceable>codon_model</replaceable>+dNdS[omega]</userinput></entry>
+		<entry>df(<replaceable>codon_model</replaceable>)+1</entry>
+		<entry><para>Scales non-synonymous rates by <replaceable>omega</replaceable>.</para>
+		</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
 
 
-    <section xml:id="codon-frequencies">
+	<para>BAli-Phy interprets branch lengths for codon models as 1/3 of the number of substitutions per codon.  Thus, they should be comparable to branch lengths under DNA/RNA models.</para>
+	<para>The <userinput>x3</userinput> model and <userinput>x3_sym</userinput> model can be used to build up models piecewise:
+	<itemizedlist>
+	  <listitem><userinput>mg94</userinput> is equivalent to <userinput>f81+x3+dNdS</userinput>.</listitem>
+	  <listitem><userinput>gy94</userinput> is equivalent to <userinput>hky85_sym+x3_sym+f+dNdS</userinput>.</listitem>
+	</itemizedlist>
+	</para>
+      </section>
+
+      <section xml:id="codon-frequencies">
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Users can fix frequencies by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
-      <programlisting language="java">gy94[pi=List[Pair["AAA",0.01],Pair["C",0.02],...]
+      <programlisting language="java">gy94[pi=List[Pair["AAA",0.01],Pair["C",0.02],...]]
 mg94[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]
 </programlisting>
       <para>Frequencies can also be specified using functions:</para>
       <para>
-	<programlisting language="java">gy94[pi=f1x4[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]]</programlisting>
+	<programlisting language="java">gy94[pi=f1x4]              // nucleotide frequencies are estimated</programlisting>
       </para>
 
 
@@ -1810,7 +1839,6 @@ mg94[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]
 	  </tbody>
 	</tgroup>
       </informaltable>
-	<para>The <userinput>+fe</userinput> model is shorthand for <userinput>+f[pi=Frequencies.uniform]</userinput>.</para>
     </section>
 
       <section xml:id="genetic-codes">
