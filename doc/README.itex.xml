@@ -1042,8 +1042,6 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	<info><title>Substitution rates</title></info>
       <para>All the DNA models are special cases of the GTR model.  </para>
       <informaltable>
-	<info><title>Substitution Models</title></info>
-	  
 	<tgroup cols="3">
 	  <colspec colnum="1" colname="col1" colwidth="1*"/>
 	  <colspec colnum="2" colname="col2" colwidth="1*"/>
@@ -1161,7 +1159,6 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       <section>
 	<info><title>Substitution rates</title></info>
       <informaltable>
-	<info><title>Substitution Models</title></info>
 	  
 	<tgroup cols="3">
 	  <colspec colnum="1" colname="col1" colwidth="1*"/>
@@ -1311,7 +1308,6 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       <section>
 	<info><title>Substitution rates</title></info>
       <informaltable>
-	<info><title>Substitution Models</title></info>
 
 	<tgroup cols="3">
 	  <colspec colnum="1" colname="col1" colwidth="1*"/>
@@ -1412,7 +1408,6 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	<info><title>Substitution rates</title></info>
 	
 	<informaltable>
-	  <info><title>Substitution Models</title></info>
 	  
 	  <tgroup cols="3">
 	    <colspec colnum="1" colname="col1" colwidth="1*"/>
@@ -1623,7 +1618,6 @@ mg94[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]
       <section>
 	<info><title>Heterogeneous dN/dS and tests for positive selection</title></info>
 	<informaltable>
-	  <info><title>Heterogeneous dN/dS and tests for positive selection</title></info>
 	  <tgroup cols="3">
 	    <thead><row>
 	      <entry>Model</entry>
@@ -1769,7 +1763,7 @@ mg94[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]
       or have different parameters (e.g. an M2a codon model).
     </para>
 
-      <informaltable><info><title>Heterogeneous Rates across Sites</title></info>
+      <informaltable>
 
       <tgroup cols="3">
 	  <thead><row>
