@@ -75,6 +75,11 @@ pre.screen {
 	padding: 6px;
 }
 
+.computeroutput {
+    background-color: #F0F0F0;
+    font-family: courier, monospace;
+}
+
 .application {font-family: Courier New; font-style: italic;}
 
 tr { margin: 0.2em; padding: 0.2em; }
