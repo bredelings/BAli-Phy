@@ -1,4 +1,8 @@
-* UNRELEASED
+UNRELEASED
+ - Fixes
+ - 
+
+* 3.3 (Aug 6, 2018)
   - Fixes
     - make bp-analyze able to parse output files from 3.0-beta.
     - rename Goldman & Yang codon model to gy94 from incorrect yn94.
