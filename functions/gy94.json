@@ -1,6 +1,7 @@
 {
     "name": "gy94",
-    "synonyms": ["M0"],
+    "synonyms": ["m0"],
+    "deprecated-synonyms": ["M0","GY94"],
     "result_type": "RevCTMC[Codons[a]]",
     "constraints": ["Nucleotides[a]"],
     "title": "The Goldman & Yang (1994) model of dN\/dS",
