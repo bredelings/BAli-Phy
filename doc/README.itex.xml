@@ -113,7 +113,7 @@
     <screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>
 
     Then install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> and use homebrew to compile and install <command>bali-phy</command>:
-<screen><prompt>%</prompt> <userinput>brew tap bredelings/bioinformatics</userinput>
+<screen><prompt>%</prompt> <userinput>brew tap brewsci/bio</userinput>
 <prompt>%</prompt> <userinput>brew install bali-phy</userinput></screen>
 Check that the executable runs:
 <screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
