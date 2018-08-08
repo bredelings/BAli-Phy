@@ -4,7 +4,7 @@
 
 # NAME
 
-**alignment-convert** -- Convert the alignment to FASTA or PHYLIP.
+**alignment-convert** - Convert the alignment to FASTA or PHYLIP.
 
 # SYNOPSIS
 

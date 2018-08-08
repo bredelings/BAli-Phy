@@ -4,7 +4,7 @@
 
 # NAME
 
-**stats-merge** -- Combine columns from different Tracer-format data files.
+**stats-merge** - Combine columns from different Tracer-format data files.
 
 # SYNOPSIS
 

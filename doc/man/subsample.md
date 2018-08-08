@@ -4,7 +4,7 @@
 
 # NAME
 
-**subsample** -- Subsample lines in a file.
+**subsample** - Subsample lines in a file.
 
 # SYNOPSIS
 

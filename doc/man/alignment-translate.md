@@ -4,7 +4,7 @@
 
 # NAME
 
-**alignment-translate** -- Translate a DNA/RNA alignment into amino acids.
+**alignment-translate** - Translate a DNA/RNA alignment into amino acids.
 
 # SYNOPSIS
 

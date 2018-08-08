@@ -4,7 +4,7 @@
 
 # NAME
 
-**alignment-cat** -- Concatenate several alignments (with the same sequence names) end-to-end.
+**alignment-cat** - Concatenate several alignments (with the same sequence names) end-to-end.
 
 # SYNOPSIS
 

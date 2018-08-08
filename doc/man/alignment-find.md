@@ -4,7 +4,7 @@
 
 # NAME
 
-**alignment-find** -- Find the last (or first) FASTA alignment in a file.
+**alignment-find** - Find the last (or first) FASTA alignment in a file.
 
 # SYNOPSIS
 

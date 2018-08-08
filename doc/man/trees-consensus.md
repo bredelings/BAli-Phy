@@ -4,7 +4,7 @@
 
 # NAME
 
-**trees-consensus** -- Find consensus trees and supported splits.
+**trees-consensus** - Find consensus trees and supported splits.
 
 # SYNOPSIS
 

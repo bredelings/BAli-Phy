@@ -4,7 +4,7 @@
 
 # NAME
 
-**model_P** -- Compute marginal likelihoods using stabilized harmonic mean estimator
+**model_P** - Compute marginal likelihoods using stabilized harmonic mean estimator
 
 # SYNOPSIS
 

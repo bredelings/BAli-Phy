@@ -4,7 +4,7 @@
 
 # NAME
 
-**statreport** -- Compute summary statistics for tab-delimited data files.
+**statreport** - Compute summary statistics for tab-delimited data files.
 
 # SYNOPSIS
 

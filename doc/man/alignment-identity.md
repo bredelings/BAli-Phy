@@ -4,7 +4,7 @@
 
 # NAME
 
-**alignment-identity** -- Report statistics on pairwise identity.
+**alignment-identity** - Report statistics on pairwise identity.
 
 # SYNOPSIS
 

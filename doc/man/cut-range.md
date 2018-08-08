@@ -4,7 +4,7 @@
 
 # NAME
 
-**cut-range** -- Select lines between certain values of a key. (e.g. iterations)
+**cut-range** - Select lines between certain values of a key. (e.g. iterations)
 
 # SYNOPSIS
 

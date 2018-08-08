@@ -4,7 +4,7 @@
 
 # NAME
 
-**draw-tree** -- Draw NEWICK (and some other) formatted files.
+**draw-tree** - Draw NEWICK (and some other) formatted files.
 
 # SYNOPSIS
 

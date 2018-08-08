@@ -4,7 +4,7 @@
 
 # NAME
 
-**joint-parsimony** -- Usage: joint-parsimony <alignments file> <trees file> [OPTIONS]
+**joint-parsimony** - Usage: joint-parsimony <alignments file> <trees file> [OPTIONS]
 
 # SYNOPSIS
 

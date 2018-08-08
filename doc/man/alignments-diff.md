@@ -4,7 +4,7 @@
 
 # NAME
 
-**alignments-diff** -- Align two alignments for comparison.
+**alignments-diff** - Align two alignments for comparison.
 
 # SYNOPSIS
 

@@ -4,7 +4,7 @@
 
 # NAME
 
-**tree-to-srq** -- Generate Scaled Regeneration Quantile (SRQ) plot
+**tree-to-srq** - Generate Scaled Regeneration Quantile (SRQ) plot
 
 # SYNOPSIS
 

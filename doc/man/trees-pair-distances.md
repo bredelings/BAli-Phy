@@ -4,7 +4,7 @@
 
 # NAME
 
-**trees-pair-distances** -- Compute the mean (stddev) of all leaf-leaf distances.
+**trees-pair-distances** - Compute the mean (stddev) of all leaf-leaf distances.
 
 # SYNOPSIS
 

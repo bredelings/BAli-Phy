@@ -4,7 +4,7 @@
 
 # NAME
 
-**alignment-info** -- Show useful statistics about the alignment.
+**alignment-info** - Show useful statistics about the alignment.
 
 # SYNOPSIS
 

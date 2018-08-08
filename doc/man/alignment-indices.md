@@ -4,7 +4,7 @@
 
 # NAME
 
-**alignment-indices** -- Show the alignment in terms of the index of each character in its sequence.
+**alignment-indices** - Show the alignment in terms of the index of each character in its sequence.
 
 # SYNOPSIS
 

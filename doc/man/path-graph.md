@@ -4,7 +4,7 @@
 
 # NAME
 
-**path-graph** -- Compute a consensus alignment for the alignments given.
+**path-graph** - Compute a consensus alignment for the alignments given.
 
 # SYNOPSIS
 

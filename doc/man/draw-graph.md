@@ -4,7 +4,7 @@
 
 # NAME
 
-**draw-graph** -- Usage: draw-graph <file1>
+**draw-graph** - Usage: draw-graph <file1>
 
 # SYNOPSIS
 

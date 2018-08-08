@@ -4,7 +4,7 @@
 
 # NAME
 
-**alignment-draw** -- Draw an alignment to HTML, optionally coloring residues by AU.
+**alignment-draw** - Draw an alignment to HTML, optionally coloring residues by AU.
 
 # SYNOPSIS
 

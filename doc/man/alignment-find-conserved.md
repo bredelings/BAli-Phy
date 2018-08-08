@@ -4,7 +4,7 @@
 
 # NAME
 
-**alignment-find** -- Find conserved parts of an alignment.
+**alignment-find** - Find conserved parts of an alignment.
 
 # SYNOPSIS
 

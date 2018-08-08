@@ -4,7 +4,7 @@
 
 # NAME
 
-**alignment-chop-internal** -- Remove ancestral sequences from an alignment.
+**alignment-chop-internal** - Remove ancestral sequences from an alignment.
 
 # SYNOPSIS
 

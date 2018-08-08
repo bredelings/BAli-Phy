@@ -4,7 +4,7 @@
 
 # NAME
 
-**alignment-compare** -- Compare two alignment distributions.
+**alignment-compare** - Compare two alignment distributions.
 
 # SYNOPSIS
 

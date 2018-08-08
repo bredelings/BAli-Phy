@@ -4,7 +4,7 @@
 
 # NAME
 
-**alignment-gild** -- Annotate each residue in the alignment according to the probability that it should align to the hypothetical root character in its column.
+**alignment-gild** - Annotate each residue in the alignment according to the probability that it should align to the hypothetical root character in its column.
 
 # SYNOPSIS
 

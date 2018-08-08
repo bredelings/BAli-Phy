@@ -4,7 +4,7 @@
 
 # NAME
 
-**trees-distances** -- Compute autocorrelations or other functions of tree distances.
+**trees-distances** - Compute autocorrelations or other functions of tree distances.
 
 # SYNOPSIS
 

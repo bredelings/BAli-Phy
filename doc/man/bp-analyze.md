@@ -4,7 +4,7 @@
 
 # NAME
 
-**bp-analyze** -- Generate an HTML report summarizing bali-phy runs
+**bp-analyze** - Generate an HTML report summarizing bali-phy runs
 
 # SYNOPSIS
 

@@ -4,7 +4,7 @@
 
 # NAME
 
-**trees-bootstrap** -- Compare support for partitions between different files.
+**trees-bootstrap** - Compare support for partitions between different files.
 
 # SYNOPSIS
 

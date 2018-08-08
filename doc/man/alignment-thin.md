@@ -4,7 +4,7 @@
 
 # NAME
 
-**alignment-thin** -- Remove sequences or columns from an alignment.
+**alignment-thin** - Remove sequences or columns from an alignment.
 
 # SYNOPSIS
 

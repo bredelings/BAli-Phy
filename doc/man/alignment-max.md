@@ -4,7 +4,7 @@
 
 # NAME
 
-**alignment-max** -- Construct a posterior decoding alignment to summarize an alignment sample.
+**alignment-max** - Construct a posterior decoding alignment to summarize an alignment sample.
 
 # SYNOPSIS
 

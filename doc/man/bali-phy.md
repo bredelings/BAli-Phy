@@ -4,7 +4,7 @@
 
 # NAME
 
-bali-phy -- Bayesian Alignment and Phylogeny estimation using MCMC
+bali-phy - Bayesian Alignment and Phylogeny estimation using MCMC
 
 # SYNOPSIS
 

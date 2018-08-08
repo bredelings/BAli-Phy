@@ -4,7 +4,7 @@
 
 # NAME
 
-**stats-select** -- Select columns from a Tracer-format data file.
+**stats-select** - Select columns from a Tracer-format data file.
 
 # SYNOPSIS
 

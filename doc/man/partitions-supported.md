@@ -4,7 +4,7 @@
 
 # NAME
 
-**trees-bootstrap** -- Select only partitions with support in the specified range.
+**trees-bootstrap** - Select only partitions with support in the specified range.
 
 # SYNOPSIS
 

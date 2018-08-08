@@ -4,7 +4,7 @@
 
 # NAME
 
-**joint-indels** -- Usage: joint-indels <alignments file> <trees file> [OPTIONS]
+**joint-indels** - Usage: joint-indels <alignments file> <trees file> [OPTIONS]
 
 # SYNOPSIS
 

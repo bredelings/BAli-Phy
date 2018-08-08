@@ -4,7 +4,7 @@
 
 # NAME
 
-**stats-cat** -- Append tab-delimited files with the same field names.
+**stats-cat** - Append tab-delimited files with the same field names.
 
 # SYNOPSIS
 

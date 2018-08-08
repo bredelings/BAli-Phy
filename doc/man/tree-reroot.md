@@ -4,7 +4,7 @@
 
 # NAME
 
-**tree-reroot** -- Place the root on the external branch leading to <outgroup>.
+**tree-reroot** - Place the root on the external branch leading to <outgroup>.
 
 # SYNOPSIS
 

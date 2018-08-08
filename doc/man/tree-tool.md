@@ -4,7 +4,7 @@
 
 # NAME
 
-**tree-tool** -- Perform various operations on Newick trees.
+**tree-tool** - Perform various operations on Newick trees.
 
 # SYNOPSIS
 

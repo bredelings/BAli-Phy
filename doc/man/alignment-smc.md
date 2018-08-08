@@ -4,7 +4,7 @@
 
 # NAME
 
-**alignment-smc** -- Generate input for SMC programs.
+**alignment-smc** - Generate input for SMC programs.
 
 # SYNOPSIS
 

@@ -4,7 +4,7 @@
 
 # NAME
 
-**pickout** -- Generate table from key = value lines in file.
+**pickout** - Generate table from key = value lines in file.
 
 # SYNOPSIS
 

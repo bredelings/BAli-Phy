@@ -4,7 +4,7 @@
 
 # NAME
 
-**alignment-median** -- Don't use this program.  It doesn't work.
+**alignment-median** - Don't use this program.  It doesn't work.
 
 # SYNOPSIS
 

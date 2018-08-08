@@ -4,7 +4,7 @@
 
 # NAME
 
-**tree-mean-lengths** -- Compute the mean lengths for branches in the given topology.
+**tree-mean-lengths** - Compute the mean lengths for branches in the given topology.
 
 # SYNOPSIS
 

@@ -4,7 +4,7 @@
 
 # NAME
 
-**tree-partitions** -- Get partitions from a tree.
+**tree-partitions** - Get partitions from a tree.
 
 # SYNOPSIS
 

@@ -4,7 +4,7 @@
 
 # NAME
 
-**alignment-consensus** -- Construct a consensus alignment to summarize an alignment sample.
+**alignment-consensus** - Construct a consensus alignment to summarize an alignment sample.
 
 # SYNOPSIS
 
