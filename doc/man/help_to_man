@@ -82,7 +82,7 @@ print('% {}(1)'.format(help['name']))
 print('% Benjamin Redelings')
 print('% Feb 2018')
 print()
-print('# NAME\n\n**{}** -- {}\n'.format(help['name'],help['description']))
+print('# NAME\n\n**{}** - {}\n'.format(help['name'],help['description']))
 
 synopsis = help['usage']
 synopsis = re.sub(r'^([^\s]+)',r'**\1**',synopsis)
