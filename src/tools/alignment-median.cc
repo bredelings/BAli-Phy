@@ -196,6 +196,8 @@ struct alignment_sample
 
   const alphabet& get_alphabet() const {return alignments[0].get_alphabet();}
 
+  alignment_sample() = default;
+
   alignment_sample(const variables_map& args, const string& filename)
   {
     load(args,filename);
@@ -310,7 +312,14 @@ int main(int argc,char* argv[])
     {
       check_supplied_filenames(1,files,false);
 
-      alignment_sample As(args, files[0]);
+      alignment_sample As;
+
+      for(auto& file: files)
+      {
+	  // FIXME: handline std::cin like trees-distances.
+	  As.load(args,file);
+      }
+
       matrix<double> D = distances(As.Ms, As.column_indices, metric_fn);
 
       for(int i=0;i<D.size1();i++) {
