@@ -1,3 +1,4 @@
+#include <regex>
 #include "computation/loader.H"
 #include "computation/module.H"
 #include "computation/operations.H"
@@ -22,24 +23,6 @@ const string plugin_extension = ".dll";
 const string plugin_extension = ".so";
 #endif
 
-expression_ref module_loader::read_module_from_file(const string& filename) const
-{
-    try
-    {
-	if (not modules.count(filename))
-	{
-	    string file_contents = read_file(filename,"module");
-	    modules[filename] = parse_module_file(file_contents);
-	}
-
-	return modules[filename];
-    }
-    catch (myexception& e)
-    {
-	e.prepend("Loading module from file '"+filename+"':\n  ");
-	throw e;
-    }
-}
 
 bool module_loader::try_add_plugin_path(const string& path)
 {
@@ -80,19 +63,22 @@ string module_loader::find_module(const string& modid) const
 
 Module module_loader::load_module_from_file(const string& filename) const
 {
-    try
+    if (not modules.count(filename))
     {
-	expression_ref module = read_module_from_file(filename);
+	try
+	{
+	    string file_contents = read_file(filename,"module");
 
-	Module M(module);
-    
-	return M;
+	    modules.insert( {filename, Module(parse_module_file(file_contents))} );
+	}
+	catch (myexception& e)
+	{
+	    e.prepend("Loading module from file '"+filename+"':\n  ");
+	    throw e;
+	}
     }
-    catch (myexception& e)
-    {
-	e.prepend("Loading module from file '"+filename+"':\n  ");
-	throw e;
-    }
+
+    return modules.at(filename);
 }
 
 Module module_loader::load_module(const string& module_name) const

@@ -149,8 +149,6 @@ extern "C" closure builtin_function_add_parameter(OperationArgs& Args)
 
 extern "C" closure builtin_function_register_probability(OperationArgs& Args)
 {
-  assert(not Args.evaluate_changeables());
-
   int R = Args.reg_for_slot(0);
 
   auto& M = Args.memory();
