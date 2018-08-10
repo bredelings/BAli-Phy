@@ -23,7 +23,6 @@ const string plugin_extension = ".dll";
 const string plugin_extension = ".so";
 #endif
 
-
 bool module_loader::try_add_plugin_path(const string& path)
 {
     if (fs::exists(path))
@@ -61,6 +60,12 @@ string module_loader::find_module(const string& modid) const
     }
 }
 
+vector<string> language_options(string& mod)
+{
+    vector<string> options;
+    return options;
+}
+
 Module module_loader::load_module_from_file(const string& filename) const
 {
     if (not modules.count(filename))
@@ -69,7 +74,9 @@ Module module_loader::load_module_from_file(const string& filename) const
 	{
 	    string file_contents = read_file(filename,"module");
 
-	    modules.insert( {filename, Module(parse_module_file(file_contents))} );
+	    auto lang_options = language_options(file_contents);
+
+	    modules.insert( {filename, Module(parse_module_file(file_contents), lang_options)} );
 	}
 	catch (myexception& e)
 	{

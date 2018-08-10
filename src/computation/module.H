@@ -75,6 +75,8 @@ class Module
 
     std::map<std::string, symbol_info> exported_symbols_;
 
+    std::vector<std::string> language_options;
+
     bool resolved = false;
 
     bool optimized = false;
@@ -181,7 +183,7 @@ public:
 
     explicit Module(const char*);
 
-    explicit Module(const expression_ref&);
+    explicit Module(const expression_ref&, const std::vector<std::string>& lo);
 };
 
 std::ostream& operator<<(std::ostream&, const Module&);
