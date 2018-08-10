@@ -944,9 +944,7 @@ bool is_all_space(const string& line)
 Module read_model(const string& filename)
 {
     // 1. Read module
-    Module M ( module_loader({}).read_module_from_file(filename) );
-
-    return M;
+    return module_loader({}).load_module_from_file(filename);
 }
 
 void read_add_model(Model& M, const std::string& filename)

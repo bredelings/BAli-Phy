@@ -96,7 +96,7 @@ string run_name(const variables_map& args)
     else if (args.count("model"))
     {
 	string filename = args["model"].as<string>();
-	Module M ( module_loader({}).read_module_from_file(filename) );
+	auto M = module_loader({}).load_module_from_file(filename);
 	name = M.name;
 	name = get_unqualified_name(name);
     }

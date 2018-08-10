@@ -410,7 +410,7 @@ int main(int argc,char* argv[])
 	if (args.count("test-module"))
 	{
 	    string filename = args["test-module"].as<string>();
-	    Module M ( L->read_module_from_file(filename) );
+	    auto M = L->load_module_from_file(filename);
 
 	    Program P(L);
 	    P.add(M);
