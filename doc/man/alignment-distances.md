@@ -1,18 +1,18 @@
-% alignment-median(1)
+% alignment-distances(1)
 % Benjamin Redelings
 % Feb 2018
 
 # NAME
 
-**alignment-median** - Don't use this program.  It doesn't work.
+**alignment-distances** - Compute distances between alignments.
 
 # SYNOPSIS
 
-**alignment-median** [OPTIONS] < in-file
+**alignment-distances** _analysis_ alignments-file1 [alignments-file2 ...]
 
 # DESCRIPTION
 
-Don't use this program.  It doesn't work.
+Compute distances between alignments.
 
 # INPUT OPTIONS:
 **-h**, **--help**
@@ -48,7 +48,7 @@ Don't use this program.  It doesn't work.
 : Show median and confidence interval
 
 **--minmax**
-: Show minumum and maximum distances
+: Show minimum and maximum distances
 
 
 # REPORTING BUGS:
