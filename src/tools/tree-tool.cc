@@ -64,6 +64,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     commands.add_options()
 	("prune",value<string>(),"Comma-separated taxa to remove")
 	("resolve","Comma-separated taxa to remove")
+	("length","Report the total tree length")
 	;
     options_description visible("All options");
     visible.add(general).add(commands);
@@ -141,6 +142,11 @@ int main(int argc,char* argv[])
 	    for(int n: polytomies(T))
 		resolve(T,n);
 	    assert(polytomies(T).empty());
+	}
+	else if (args.count("length"))
+	{
+	    std::cout<<tree_length(T)<<std::endl;
+	    return 0;
 	}
 	std::cout<<T<<std::endl;
     }
