@@ -64,9 +64,9 @@ string module_loader::find_module(const string& modid) const
 //{-# LANGUAGE NoImplicitPrelude #-}
 static std::regex language_option_re("^\\s*\\{-#\\s+LANGUAGE\\s+(.*[^\\s])\\s+#-\\}");
 
-vector<string> language_options(string& mod)
+set<string> language_options(string& mod)
 {
-    vector<string> options;
+    set<string> options;
 
     auto s = mod.c_str();
     int pos = 0;
@@ -82,7 +82,7 @@ vector<string> language_options(string& mod)
 	std::regex sep_re("\\s*,\\s*"); // whitespace
 	std::copy( std::sregex_token_iterator(o.begin(), o.end(), sep_re, -1),
 		   std::sregex_token_iterator(),
-		   std::back_inserter(options));
+		   std::inserter(options, options.end()));
 
 	pos += m.length();
     }

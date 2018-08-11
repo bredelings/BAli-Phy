@@ -1305,7 +1305,7 @@ Module::Module(const char *n)
     :Module(string(n))
 { }
 
-Module::Module(const expression_ref& E, const vector<string>& lo)
+Module::Module(const expression_ref& E, const set<string>& lo)
     :language_options(lo)
 {
     assert(is_AST(E,"Module"));
