@@ -99,9 +99,6 @@ Module module_loader::load_module_from_file(const string& filename) const
 	    string file_contents = read_file(filename,"module");
 
 	    auto lang_options = language_options(file_contents);
-	    for(auto& o: lang_options)
-		std::cout<<"'"<<o<<"' ";
-	    std::cout<<"\n";
 
 	    modules.insert( {filename, Module(parse_module_file(file_contents), lang_options)} );
 	}
