@@ -1,4 +1,5 @@
 #include <regex>
+#include <iterator>
 #include "computation/loader.H"
 #include "computation/module.H"
 #include "computation/operations.H"
@@ -60,9 +61,32 @@ string module_loader::find_module(const string& modid) const
     }
 }
 
+//{-# LANGUAGE NoImplicitPrelude #-}
+static std::regex language_option_re("^\\s*\\{-#\\s+LANGUAGE\\s+(.*[^\\s])\\s+#-\\}");
+
 vector<string> language_options(string& mod)
 {
     vector<string> options;
+
+    auto s = mod.c_str();
+    int pos = 0;
+
+    std::cmatch m;
+    while(std::regex_search(s+pos, m, language_option_re))
+    {
+	// 1. Get the text from the pragma {-# LANGUAGE ___text___ #-}
+	auto o = m[1].str();
+
+	// 2. Split the text on commas and whitespace, and put the items into `options`.
+	// tokenization (non-matched fragments)
+	std::regex sep_re("\\s*,\\s*"); // whitespace
+	std::copy( std::sregex_token_iterator(o.begin(), o.end(), sep_re, -1),
+		   std::sregex_token_iterator(),
+		   std::back_inserter(options));
+
+	pos += m.length();
+    }
+    mod = mod.substr(pos);
     return options;
 }
 
@@ -75,6 +99,9 @@ Module module_loader::load_module_from_file(const string& filename) const
 	    string file_contents = read_file(filename,"module");
 
 	    auto lang_options = language_options(file_contents);
+	    for(auto& o: lang_options)
+		std::cout<<"'"<<o<<"' ";
+	    std::cout<<"\n";
 
 	    modules.insert( {filename, Module(parse_module_file(file_contents), lang_options)} );
 	}
