@@ -236,7 +236,7 @@ map<string,module_import> Module::imports() const
 	}
 
     // Import the Prelude if it wasn't explicitly mentioned in the import list.
-    if (not imports_map.count("Prelude") and name != "Prelude")
+    if (not imports_map.count("Prelude") and name != "Prelude" and not language_options.count("NoImplicitPrelude"))
 	imports_map["Prelude"] = module_import("Prelude");
 
     return imports_map;
