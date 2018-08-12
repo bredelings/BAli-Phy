@@ -57,7 +57,7 @@ baliphy_sources = ['parser/parse.cc','dp/dp_hmm.cc','parser/desugar.cc',
    'models/rules.cc','models/parse.cc', 'models/translate.cc','models/unification.cc',
    'computation/optimization/simplifier.cc',
    'startup/paths.cc', 'computation/optimization/occurrence.cc',
-   'computation/optimization/inliner.cc',
+   'computation/optimization/inliner.cc', 'computation/expression/bool.cc',
    git_version_h]
 
 
