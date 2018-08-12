@@ -4,6 +4,7 @@
 #include "myexception.H"
 #include "computation/machine/graph_register.H"
 #include "computation/expression/expression.H"
+#include "computation/expression/bool.H"
 
 using boost::dynamic_pointer_cast;
 
@@ -63,9 +64,9 @@ extern "C" closure builtin_function_is_changeable(OperationArgs& Args)
 
     const reg_heap& M = Args.memory();
     if (M.reg_is_changeable(R1))
-	return constructor("Prelude.True",0);
+	return bool_true;
     else
-	return constructor("Prelude.False",0);
+	return bool_false;
 }
 
 extern "C" closure builtin_function_is_modifiable(OperationArgs& Args)
@@ -76,9 +77,9 @@ extern "C" closure builtin_function_is_modifiable(OperationArgs& Args)
 
     const reg_heap& M = Args.memory();
     if (M.access(R1).C.exp.head().type() == modifiable_type)
-	return constructor("Prelude.True",0);
+	return bool_true;
     else
-	return constructor("Prelude.False",0);
+	return bool_false;
 }
 
 extern "C" closure builtin_function_get_modifiable_for_index(OperationArgs& Args)

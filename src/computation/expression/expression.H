@@ -11,6 +11,7 @@
 #include "computation/type_constant.H"
 #include "expression_ref.H"
 #include "constructor.H"
+#include "bool.H"
 
 /// a de Bruijn indexed variable 
 struct index_var

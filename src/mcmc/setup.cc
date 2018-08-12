@@ -705,14 +705,14 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	    // turn training on
 	    {
 		Parameters& PP = *P.as<Parameters>();
-		PP.set_parameter_value(PP.find_parameter("*IModels.training"), new constructor("Prelude.True",0));
+		PP.set_parameter_value(PP.find_parameter("*IModels.training"), bool_true);
 	    }
 
 	    pre_burnin.iterate(P,Stats);
 	    // turn training off
 	    {
 		Parameters& PP = *P.as<Parameters>();
-		PP.set_parameter_value(PP.find_parameter("*IModels.training"), new constructor("Prelude.False",0));
+		PP.set_parameter_value(PP.find_parameter("*IModels.training"), bool_false);
 	    }
 
 	    log_preburnin(out_both, *P, "(S)+(L)+(P)+Alignment", i);

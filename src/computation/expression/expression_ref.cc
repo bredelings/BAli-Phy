@@ -9,6 +9,7 @@
 #include "trim.H"
 #include "tuple.H"
 #include "list.H" // for char_list
+#include "bool.H"
 #include "expression.H"
 #include "computation/operations.H"
 #include <set>
@@ -249,7 +250,7 @@ expression::expression(const expression_ref& H, const std::vector< expression_re
 }
 
 expression_ref::expression_ref(const bool& b)
-    :expression_ref(b?new constructor("Prelude.True",0):new constructor("Prelude.False",0))
+    :expression_ref(b?bool_true:bool_false)
 {}
 
 expression_ref::expression_ref(const char* s)

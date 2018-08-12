@@ -180,12 +180,10 @@ log_double_t bit_flip(vector< expression_ref >& x, const vector<double>&)
 
     constructor B = x[0].head().as_<constructor>();
 
-    if (B.f_name == "Prelude.True")
-	B.f_name = "Prelude.False";
+    if (is_bool_true(B))
+	x[0] = bool_false;
     else
-	B.f_name = "Prelude.True";
-
-    x[0] = B;
+	x[0] = bool_true;
 
     return 1;
 }

@@ -164,9 +164,9 @@ namespace MCMC {
 	else if (result.head().is_a<constructor>())
 	{
 	    auto& c = result.head().as_<constructor>();
-	    if (c.f_name == "Prelude.True")
+	    if (is_bool_true(c))
 		return 1;
-	    else if (c.f_name == "Prelude.False")
+	    else if (is_bool_false(c))
 		return 0;
 	    else
 		return -1;
@@ -294,9 +294,9 @@ namespace MCMC {
 	    if (v.head().is_a<constructor>())
 	    {
 		auto& b = v.head().as_<constructor>();
-		if (b.f_name == "Prelude.True")
+		if (is_bool_true(b))
 		    value = 1;
-		else if (b.f_name == "Prelude.False")
+		else if (is_bool_false(b))
 		    value = 0;
 	    }
 	    else if (v.is_int())

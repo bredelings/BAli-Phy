@@ -15,6 +15,7 @@
 #include "case.H"
 #include "var.H"
 #include "lambda.H"
+#include "bool.H"
 
 using std::vector;
 using std::string;
@@ -317,9 +318,9 @@ expression_ref parse_object(const string& s)
     else if (auto bool_value = can_be_converted_to<bool>(s))
     {
 	if (*bool_value)
-	    return constructor("Prelude.True",0);
+	    return bool_true;
 	else
-	    return constructor("Prelude.False",0);
+	    return bool_false;
     }
     else if (s.size() >= 2 and s[0] == '"' and s[s.size()-1] == '"')
 	return String(s.substr(1,s.size()-2));
