@@ -91,7 +91,7 @@ vector<vector<pair<int,int>>> read_intervals_file(const string& filename)
     {
 	if (line.empty()) continue;
 
-	if (startswith(line, ">"))
+	if (starts_with(line, ">"))
 	    masks.push_back({});
 	else
 	{

@@ -524,7 +524,8 @@ bool defined(std::map<std::string,U,T>& m,const std::string& name)
 
 bool contains_char(const std::string& s,char c);
 
-bool startswith(const std::string& s, const std::string& prefix);
+bool starts_with(const std::string& s, const std::string& prefix);
+bool ends_with(const std::string& s, const std::string& prefix);
 
 /// get the next word starting at position i, return true if not done.
 bool get_word(std::string& word, int& i,const std::string& s,

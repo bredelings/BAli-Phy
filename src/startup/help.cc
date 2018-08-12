@@ -495,7 +495,7 @@ string pseudo_markdown(const string& lines)
     for(auto& line: split(lines,'\n'))
     {
 	bool header = false;
-	if (startswith(line,"# "))
+	if (starts_with(line,"# "))
 	{
 	    header = true;
 	    line = line.substr(2);

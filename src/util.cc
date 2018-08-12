@@ -556,9 +556,15 @@ bool in_order(const vector<int>& order)
     return true;
 }
 
-bool startswith(const std::string& s, const std::string& prefix)
+bool starts_with(const std::string& s, const std::string& prefix)
 {
     if (s.size() < prefix.size()) return false;
     return s.substr(0,prefix.size()) == prefix;
+}
+
+bool ends_with(const std::string& s, const std::string& suffix)
+{
+    if (s.size() < suffix.size()) return false;
+    return s.substr(s.size()-suffix.size(), suffix.size()) == suffix;
 }
 
