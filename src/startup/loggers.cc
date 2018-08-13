@@ -125,7 +125,7 @@ void find_sub_loggers(Model& M, int& index, const string& name, vector<int>& log
     if (result.head().is_a<constructor>())
     {
 	auto& c = result.head().as_<constructor>();
-	if (c.f_name == "Prelude.True" or c.f_name == "Prelude.False")
+	if (is_bool_true(c) or is_bool_false(c))
 	{
 	    logged_computations.push_back(index);
 	    logged_names.push_back(name);
