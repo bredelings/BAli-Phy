@@ -1,10 +1,10 @@
 #include "bool.H"
 
-expression_ref bool_true  = constructor("Prelude.True",  0);
-expression_ref bool_false = constructor("Prelude.False", 0);
-
 std::string bool_true_name  = "Prelude.True";
 std::string bool_false_name = "Prelude.False";
+
+expression_ref bool_true  = constructor(bool_true_name,  0);
+expression_ref bool_false = constructor(bool_false_name, 0);
 
 bool is_bool_true(const constructor& c)
 {
