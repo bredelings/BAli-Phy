@@ -54,15 +54,6 @@ bool operator!=(const symbol_info&S1, const symbol_info& S2)
 
 symbol_info lookup_symbol(const string& name, const Program& P);
 
-bool Module::symbol_exists(const string& name) const
-{
-    auto loc = symbols.find(name);
-    if (loc == symbols.end())
-	return false;
-    else
-	return true;
-}
-
 void Module::add_symbol(const symbol_info& S)
 {
     if (is_haskell_builtin_con_name(S.name))
@@ -80,7 +71,7 @@ void Module::add_symbol(const symbol_info& S)
 
 void Module::add_alias(const string& identifier_name, const string& resolved_name)
 {
-    if (not symbol_exists(resolved_name))
+    if (not symbols.count(resolved_name))
 	throw myexception()<<"Can't add alias '"<<identifier_name<<"' -> '"<<resolved_name<<"' in module '"<<name<<"' because '"<<resolved_name<<"' is neither declared nor imported.";
 
     std::pair<string,string> element(identifier_name,resolved_name);
@@ -101,7 +92,7 @@ void Module::declare_symbol(const symbol_info& S)
     symbol_info S2 = S;
     S2.name = name + "." + S.name;
 
-    if (symbol_exists(S2.name))
+    if (symbols.count(S2.name))
 	throw myexception()<<"Trying to declare '"<<S.name<<"' twice in module '"<<name<<"'";
 
     // Add the symbol first.
@@ -122,7 +113,7 @@ void Module::declare_fixity(const std::string& s, int precedence, fixity_t fixit
 
     string s2 = name + "." + s;
 
-    if (not symbol_exists(s2))
+    if (not symbols.count(s2))
 	declare_symbol({s, unknown_symbol, -1, -1, unknown_fix, {}});
 
     symbol_info& S = symbols.find(s2)->second;
@@ -905,7 +896,7 @@ symbol_info Module::lookup_symbol(const std::string& name) const
     else if (count == 1)
     {
 	string symbol_name = aliases.find(name)->second;
-	if (not symbol_exists(symbol_name))
+	if (not symbols.count(symbol_name))
 	    throw myexception()<<"Identifier '"<<name<<"' -> '"<<symbol_name<<"', which does not exist!";
 	return symbols.find(symbol_name)->second;
     }

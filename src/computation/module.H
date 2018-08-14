@@ -123,8 +123,6 @@ public:
     /// Add a constructor
     void def_constructor(const std::string& name, int arity);
 
-    bool symbol_exists(const std::string&) const;
-
     void add_symbol(const symbol_info&);
 
     void add_alias(const std::string&, const std::string&);
