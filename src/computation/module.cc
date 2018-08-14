@@ -111,16 +111,18 @@ void Module::declare_fixity(const std::string& s, int precedence, fixity_t fixit
     if (is_qualified_symbol(s))
 	throw myexception()<<"Trying to declare fixity of qualified symbol '"<<s<<"'.  Use its unqualified name.";
 
+    if (precedence < 0 or precedence > 9)
+	throw myexception()<<"Precedence level "<<precedence<<" not allowed.";
+
+    if (fixity == unknown_fix)
+	throw myexception()<<"Cannot set fixity to unknown!";
+
     string s2 = name + "." + s;
 
     if (not symbols.count(s2))
 	declare_symbol({s, unknown_symbol, -1, -1, unknown_fix, {}});
 
     symbol_info& S = symbols.find(s2)->second;
-    if (precedence < 0 or precedence > 9)
-	throw myexception()<<"Precedence level "<<precedence<<" not allowed.";
-    if (fixity == unknown_fix)
-	throw myexception()<<"Cannot set fixity to unknown!";
 
     S.precedence = precedence;
     S.fixity = fixity;
