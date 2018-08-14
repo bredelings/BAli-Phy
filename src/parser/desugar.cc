@@ -75,6 +75,7 @@ expression_ref infix_parse(const Module& m, const symbol_info& op1, const expres
 	    op2 = m.get_operator( d );
 	else
 	{
+	    op2.name = d;
 	    op2.precedence = 9;
 	    op2.fixity = left_fix;
 	}
