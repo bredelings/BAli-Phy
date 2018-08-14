@@ -61,27 +61,33 @@ expression_ref infix_parse_neg(const Module& m, const symbol_info& op1, deque<ex
 	return infix_parse(m, op1, E1, T);
 }
 
+symbol_info get_op_sym(const Module& m, const expression_ref& O)
+{
+    symbol_info op_sym;
+    if (O.is_a<var>())
+    {
+	auto d = O.as_<var>().name;
+	if (m.is_declared( d ) )
+	    op_sym = m.get_operator( d );
+	else
+	{
+	    op_sym.name = d;
+	    op_sym.precedence = 9;
+	    op_sym.fixity = left_fix;
+	}
+    }
+    else
+	throw myexception()<<"Can't use expression '"<<O.print()<<"' as infix operator.";
+    return op_sym;
+}
+
 /// Expression is of the form ... op1 E1 [op2 ...]. Get right operand of op1.
 expression_ref infix_parse(const Module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T)
 {
     if (T.empty())
 	return E1;
 
-    symbol_info op2;
-    if (T.front().is_a<var>())
-    {
-	auto d = T.front().as_<var>().name;
-	if (m.is_declared( d ) )
-	    op2 = m.get_operator( d );
-	else
-	{
-	    op2.name = d;
-	    op2.precedence = 9;
-	    op2.fixity = left_fix;
-	}
-    }
-    else
-	throw myexception()<<"Can't use expression '"<<T.front().print()<<"' as infix operator.";
+    symbol_info op2 = get_op_sym(m, T.front());
 
     // illegal expressions
     if (op1.precedence == op2.precedence and (op1.fixity != op2.fixity or op1.fixity == non_fix))
@@ -160,16 +166,7 @@ expression_ref infixpat_parse(const Module& m, const symbol_info& op1, const exp
 
     symbol_info op2;
     if (is_var(T.front()))
-    {
-	auto d = T.front().as_<var>().name;
-	if (m.is_declared( d ) )
-	    op2 = m.get_operator( d );
-	else
-	{
-	    op2.precedence = 9;
-	    op2.fixity = left_fix;
-	}
-    }
+	op2 = get_op_sym(m, T.front());
     else if (T.front().head().is_a<AST_node>())
     {
 	auto& n = T.front().head().as_<AST_node>();
