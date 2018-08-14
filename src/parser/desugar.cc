@@ -61,39 +61,27 @@ expression_ref infix_parse_neg(const Module& m, const set<string>& bound, const 
 	return infix_parse(m, bound, op1, E1, T);
 }
 
-symbol_info get_op_sym(const Module& m, const set<string>&, const expression_ref& O)
+symbol_info get_op_sym(const Module& m, const set<string>& bound, const expression_ref& O)
 {
-    if (not O.is_a<var>())
+    if (not is_AST(O, "id"))
 	throw myexception()<<"Can't use expression '"<<O.print()<<"' as infix operator.";
 
     symbol_info op_sym;
-    auto d = O.as_<var>().name;
-    if (m.is_declared( d ) )
-	op_sym = m.get_operator( d );
-    else
+    auto name = O.as_<AST_node>().value;
+
+    if (bound.count(name))
     {
-	op_sym.name = d;
+	// We assume that fixity for operators at non-global scope is unknown.
+	// FIXME: we should record precedence and fixity for locally-bound variables.
+	//        should this be merged with the global scope somehow?
+	op_sym.name = name;
 	op_sym.precedence = 9;
 	op_sym.fixity = left_fix;
     }
-    return op_sym;
-}
-
-symbol_info get_op_sym_from_id(const Module& m, const set<string>&, const expression_ref& O)
-{
-    if (not is_AST(O,"id"))
-	throw myexception()<<"Can't use expression '"<<O.print()<<"' as infix operator.";
-
-    symbol_info op_sym;
-    auto d = O.as_<AST_node>().value;
-    if (m.is_declared( d ) )
-	op_sym = m.get_operator( d );
+    else if (m.is_declared( name ) )
+	op_sym = m.get_operator( name );
     else
-    {
-	op_sym.name = d;
-	op_sym.precedence = 9;
-	op_sym.fixity = left_fix;
-    }
+	throw myexception()<<"Using unknown operator '"<<O.print()<<"' as infix operator.";
 
     return op_sym;
 }
@@ -181,11 +169,7 @@ expression_ref infixpat_parse(const Module& m, const symbol_info& op1, const exp
     if (T.empty())
 	return E1;
 
-    symbol_info op2;
-    if (is_var(T.front()))
-	op2 = get_op_sym(m, {}, T.front());
-    else
-	op2 = get_op_sym_from_id(m, {}, T.front());
+    symbol_info op2 = get_op_sym(m, {}, T.front());
 
     // illegal expressions
     if (op1.precedence == op2.precedence and (op1.fixity != op2.fixity or op1.fixity == non_fix))
@@ -434,9 +418,8 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 		args.pop_back();
 		args.insert(args.end(),E2.sub().begin(),E2.sub().end());
 	    }
-	    for(auto& e: args)
-		e = desugar(m, e, bound);
-	    return desugar_infix(m, bound, args);
+
+	    return desugar(m, desugar_infix(m, bound, args), bound);
 	}
 	else if (n.type == "pat")
 	{
@@ -449,11 +432,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 		args.insert(args.end(), rest.sub().begin(), rest.sub().end());
 	    }
 
-	    // 2. We could probably do this later.
-	    for(auto& arg: args)
-		arg = desugar(m, arg, bound);
-
-	    return desugar_infixpat(m, args);
+	    return desugar(m, desugar_infixpat(m, args), bound);
 	}
 	else if (n.type == "Tuple")
 	{
