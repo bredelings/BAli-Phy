@@ -1,7 +1,7 @@
 #include "bool.H"
 
-std::string bool_true_name  = "Prelude.True";
-std::string bool_false_name = "Prelude.False";
+std::string bool_true_name  = "Data.Bool.True";
+std::string bool_false_name = "Data.Bool.False";
 
 expression_ref bool_true  = constructor(bool_true_name,  0);
 expression_ref bool_false = constructor(bool_false_name, 0);

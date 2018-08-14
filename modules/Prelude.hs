@@ -1,13 +1,12 @@
-module Prelude where
+module Prelude (module Prelude, module Data.Bool) where
 {
+import Data.Bool;
 infixl 9 .;  
 infixl 8 ^, ^^, **;
 infixl 7 *, /, `div`, `mod`, `rem`, `quot`;
 infixl 6 +, -;
 infixr 5 ++;
 infix 4 ==, /=, <, <=, >, >=, `elem`, `notElem`;
-infixr 3 &&;
-infixr 2 ||;
 infixl 1 >>, >>=;
 infixr 0 $, $!, `seq`, `join`;
 
@@ -32,7 +31,6 @@ x `rem` y = error "'rem' not defined";
 x `div` y = error "'div' not defined";
 x `quot` y = error "'quot' not defined";
 
-data Bool = True | False;
 data Maybe a = Just a | Nothing;
 data IO a = IOAction1 (b->a) a | 
             IOAction2 (b->c->a) b c | 
@@ -41,16 +39,6 @@ data IO a = IOAction1 (b->a) a |
             LazyIO a |
             IOReturn a |
             IOAndPass (IO b) (b -> IO a);
-
-True  && x = x;
-False && x = False;
-True  || x  = True;
-False || x = x;
-
-not True         =  False;
-not False        =  True;
-
-otherwise = True;
 
 builtin log 1 "log" "Prelude";
 builtin sqrt 1 "sqrt" "Prelude";
