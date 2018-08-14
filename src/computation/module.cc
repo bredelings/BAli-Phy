@@ -877,14 +877,6 @@ bool Module::is_declared(const std::string& name) const
     return is_haskell_builtin_con_name(name) or (aliases.count(name) > 0);
 }
 
-bool Module::is_declared_local(const std::string& sname) const
-{
-    auto loc = symbols.find(sname);
-    if (loc == symbols.end()) return false;
-
-    return (get_module_name(loc->second.name) == name);
-}
-
 pair<symbol_info,expression_ref> Module::lookup_builtin_symbol(const std::string& name)
 {
     if (name == "()")

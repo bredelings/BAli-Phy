@@ -171,8 +171,6 @@ public:
 
     bool is_declared(const std::string&) const;
 
-    bool is_declared_local(const std::string&) const;
-
     static std::pair<symbol_info,expression_ref> lookup_builtin_symbol(const std::string&);
 
     symbol_info lookup_symbol(const std::string&) const;
