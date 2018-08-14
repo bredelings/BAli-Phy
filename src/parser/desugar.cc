@@ -63,21 +63,38 @@ expression_ref infix_parse_neg(const Module& m, const symbol_info& op1, deque<ex
 
 symbol_info get_op_sym(const Module& m, const expression_ref& O)
 {
-    symbol_info op_sym;
-    if (O.is_a<var>())
-    {
-	auto d = O.as_<var>().name;
-	if (m.is_declared( d ) )
-	    op_sym = m.get_operator( d );
-	else
-	{
-	    op_sym.name = d;
-	    op_sym.precedence = 9;
-	    op_sym.fixity = left_fix;
-	}
-    }
-    else
+    if (not O.is_a<var>())
 	throw myexception()<<"Can't use expression '"<<O.print()<<"' as infix operator.";
+
+    symbol_info op_sym;
+    auto d = O.as_<var>().name;
+    if (m.is_declared( d ) )
+	op_sym = m.get_operator( d );
+    else
+    {
+	op_sym.name = d;
+	op_sym.precedence = 9;
+	op_sym.fixity = left_fix;
+    }
+    return op_sym;
+}
+
+symbol_info get_op_sym_from_id(const Module& m, const expression_ref& O)
+{
+    if (not is_AST(O,"id"))
+	throw myexception()<<"Can't use expression '"<<O.print()<<"' as infix operator.";
+
+    symbol_info op_sym;
+    auto d = O.as_<AST_node>().value;
+    if (m.is_declared( d ) )
+	op_sym = m.get_operator( d );
+    else
+    {
+	op_sym.name = d;
+	op_sym.precedence = 9;
+	op_sym.fixity = left_fix;
+    }
+
     return op_sym;
 }
 
@@ -167,27 +184,8 @@ expression_ref infixpat_parse(const Module& m, const symbol_info& op1, const exp
     symbol_info op2;
     if (is_var(T.front()))
 	op2 = get_op_sym(m, T.front());
-    else if (T.front().head().is_a<AST_node>())
-    {
-	auto& n = T.front().head().as_<AST_node>();
-	// FIXME:correctness - each "Decls"-frame should first add all defined variables to bounds, which should contain symbol_infos.
-	if (n.type == "id")
-	{
-	    string name = n.value;
-	    if (m.is_declared( name ) )
-		op2 = m.get_operator( name );
-	    else
-	    {
-		op2.precedence = 9;
-		op2.fixity = left_fix;
-	    }
-	}
-	else
-	    throw myexception()<<"Can't use expression '"<<T.front().print()<<"' as infix operator.";
-    }
     else
-	throw myexception()<<"Can't use expression '"<<T.front().print()<<"' as infix operator.";
-
+	op2 = get_op_sym_from_id(m, T.front());
 
     // illegal expressions
     if (op1.precedence == op2.precedence and (op1.fixity != op2.fixity or op1.fixity == non_fix))
