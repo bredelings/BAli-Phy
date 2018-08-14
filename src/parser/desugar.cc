@@ -37,10 +37,10 @@ bool is_irrefutable_pat(const expression_ref& E)
 }
 
 
-expression_ref infix_parse(const Module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
+expression_ref infix_parse(const Module& m, const set<string>& bound, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
 
 /// Expression is of the form ... op1 [E1 ...]. Get right operand of op1.
-expression_ref infix_parse_neg(const Module& m, const symbol_info& op1, deque<expression_ref>& T)
+expression_ref infix_parse_neg(const Module& m, const set<string>& bound, const symbol_info& op1, deque<expression_ref>& T)
 {
     assert(not T.empty());
 
@@ -52,16 +52,16 @@ expression_ref infix_parse_neg(const Module& m, const symbol_info& op1, deque<ex
     {
 	if (op1.precedence >= 6) throw myexception()<<"Cannot parse '"<<op1.name<<"' -";
 
-	E1 = infix_parse_neg(m, symbol_info("-",variable_symbol, 2,6,left_fix), T);
+	E1 = infix_parse_neg(m, bound, symbol_info("-",variable_symbol, 2,6,left_fix), T);
 
-	return infix_parse(m, op1, {var("Prelude.negate"),E1}, T);
+	return infix_parse(m, bound, op1, {var("Prelude.negate"),E1}, T);
     }
     // If E1 is not a neg, E1 should be an expression, and the next thing should be an Op.
     else
-	return infix_parse(m, op1, E1, T);
+	return infix_parse(m, bound, op1, E1, T);
 }
 
-symbol_info get_op_sym(const Module& m, const expression_ref& O)
+symbol_info get_op_sym(const Module& m, const set<string>&, const expression_ref& O)
 {
     if (not O.is_a<var>())
 	throw myexception()<<"Can't use expression '"<<O.print()<<"' as infix operator.";
@@ -79,7 +79,7 @@ symbol_info get_op_sym(const Module& m, const expression_ref& O)
     return op_sym;
 }
 
-symbol_info get_op_sym_from_id(const Module& m, const expression_ref& O)
+symbol_info get_op_sym_from_id(const Module& m, const set<string>&, const expression_ref& O)
 {
     if (not is_AST(O,"id"))
 	throw myexception()<<"Can't use expression '"<<O.print()<<"' as infix operator.";
@@ -99,12 +99,12 @@ symbol_info get_op_sym_from_id(const Module& m, const expression_ref& O)
 }
 
 /// Expression is of the form ... op1 E1 [op2 ...]. Get right operand of op1.
-expression_ref infix_parse(const Module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T)
+expression_ref infix_parse(const Module& m, const set<string>& bound, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T)
 {
     if (T.empty())
 	return E1;
 
-    symbol_info op2 = get_op_sym(m, T.front());
+    symbol_info op2 = get_op_sym(m, bound, T.front());
 
     // illegal expressions
     if (op1.precedence == op2.precedence and (op1.fixity != op2.fixity or op1.fixity == non_fix))
@@ -118,7 +118,7 @@ expression_ref infix_parse(const Module& m, const symbol_info& op1, const expres
     else
     {
 	T.pop_front();
-	expression_ref E3 = infix_parse_neg(m, op2, T);
+	expression_ref E3 = infix_parse_neg(m, bound, op2, T);
 
 	expression_ref E1_op2_E3 = {var(op2.name), E1, E3};
 
@@ -128,16 +128,16 @@ expression_ref infix_parse(const Module& m, const symbol_info& op1, const expres
 	    E1_op2_E3 = constructor(op2.name, 2) + E1 + E3;
 	}
 
-	return infix_parse(m, op1, E1_op2_E3, T);
+	return infix_parse(m, bound, op1, E1_op2_E3, T);
     }
 }
 
-expression_ref desugar_infix(const Module& m, const vector<expression_ref>& T)
+expression_ref desugar_infix(const Module& m, const set<string>& bound, const vector<expression_ref>& T)
 {
     deque<expression_ref> T2;
     T2.insert(T2.begin(), T.begin(), T.end());
 
-    return infix_parse_neg(m, {"",variable_symbol,2,-1,non_fix}, T2);
+    return infix_parse_neg(m, bound, {"",variable_symbol,2,-1,non_fix}, T2);
 }
 
 expression_ref infixpat_parse(const Module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
@@ -183,9 +183,9 @@ expression_ref infixpat_parse(const Module& m, const symbol_info& op1, const exp
 
     symbol_info op2;
     if (is_var(T.front()))
-	op2 = get_op_sym(m, T.front());
+	op2 = get_op_sym(m, {}, T.front());
     else
-	op2 = get_op_sym_from_id(m, T.front());
+	op2 = get_op_sym_from_id(m, {}, T.front());
 
     // illegal expressions
     if (op1.precedence == op2.precedence and (op1.fixity != op2.fixity or op1.fixity == non_fix))
@@ -436,7 +436,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	    }
 	    for(auto& e: args)
 		e = desugar(m, e, bound);
-	    return desugar_infix(m, args);
+	    return desugar_infix(m, bound, args);
 	}
 	else if (n.type == "pat")
 	{
