@@ -651,7 +651,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	for(int n=0;n<sequence_length_pr_indices.size();n++)
 	{
 	    expression_ref l = p->get_expression(sequence_length_indices[n]);
-	    expression_ref lengthp = {var("Prelude.snd"),model};
+	    expression_ref lengthp = {var("Data.Tuple.snd"),model};
 	    sequence_length_pr_indices[n] = p->add_compute_expression( {lengthp,l} );
 	}
 

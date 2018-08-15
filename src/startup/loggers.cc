@@ -152,8 +152,8 @@ void find_sub_loggers(Model& M, int& index, const string& name, vector<int>& log
 		for(int i=0;i<length;i++)
 		{
 		    expression_ref x = {var("Prelude.!!"),L,i};
-		    expression_ref x1 = {var("Prelude.fst"),x};
-		    expression_ref x2 = {var("Prelude.snd"),x};
+		    expression_ref x1 = {var("Data.Tuple.fst"),x};
+		    expression_ref x2 = {var("Data.Tuple.snd"),x};
 		    const String field_name = M.evaluate_expression( {var("Prelude.listToString"),x1} ).as_<String>();
 
 		    if (index2 == -1)

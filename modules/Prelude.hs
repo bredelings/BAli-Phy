@@ -1,6 +1,7 @@
-module Prelude (module Prelude, module Data.Bool) where
+module Prelude (module Prelude, module Data.Bool, module Data.Tuple) where
 {
 import Data.Bool;
+import Data.Tuple;
 infixl 9 .;  
 infixl 8 ^, ^^, **;
 infixl 7 *, /, `div`, `mod`, `rem`, `quot`;
@@ -179,15 +180,6 @@ fmap = map;
 
 [] ++ y = y;
 h:t ++ y = h:(t ++ y);
-
-fst (x,y) = x;
-
-snd (x,y) = y;
-
-swap (x,y) = (y,x);
-
-curry f x y = f (x,y);
-uncurry f p = f (fst p) (snd p);
 
 undefined = error "Prelude.undefined";
 

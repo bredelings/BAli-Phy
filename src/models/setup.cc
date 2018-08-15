@@ -106,6 +106,9 @@ using std::valarray;
 using boost::program_options::variables_map;
 using boost::shared_ptr;
 
+expression_ref fst = var("Data.Tuple.fst");
+expression_ref snd = var("Data.Tuple.snd");
+
 string model_t::show(bool top) const
 {
     if (top)
@@ -406,7 +409,7 @@ optional<pair<expression_ref,set<string>>> get_model_let(const Rules& R, const p
 	    throw myexception()<<"You cannot let-bind a variable to an expression with a function-variable";
 
 	// E = 'arg <<= (\pair_var_name -> let {arg_name=fst pair_var_name} in E)
-	E = lambda_quantify(pair_x, let_expression({{x,{var("Prelude.fst"),pair_x}}},E));
+	E = lambda_quantify(pair_x, let_expression({{x,{fst,pair_x}}},E));
 
 	E = {var("Prelude.>>="), arg, E};
     }
@@ -435,7 +438,7 @@ optional<pair<expression_ref,set<string>>> get_model_lambda(const Rules& R, cons
     auto lambda_vars = body_E.second;
 
     // E = E x l1 l2 l3
-    expression_ref E = {var("Prelude.fst"),pair_arg_body};
+    expression_ref E = {fst,pair_arg_body};
     for(auto& vname: lambda_vars)
 	E = {E, body_scope.at(vname).x};
 
@@ -450,7 +453,7 @@ optional<pair<expression_ref,set<string>>> get_model_lambda(const Rules& R, cons
 	E = lambda_quantify(scope.at(vname).x,E);
 
     // E = return $ (E,snd pair_arg_body)
-    E = {var("Prelude.return"),Tuple(E,{var("Prelude.snd"),var("pair_arg_body")})};
+    E = {var("Prelude.return"),Tuple(E,{snd,var("pair_arg_body")})};
 
     // E = do {pair_arg_body <- body ; E}
     E = {var("Prelude.>>="),body,lambda_quantify(pair_arg_body,E)};
@@ -505,7 +508,6 @@ pair<expression_ref,set<string>> get_model_function(const Rules& R, const ptree&
     bool perform_function = rule->get("perform",false);
     ptree call = rule->get_child("call");
     ptree args = rule->get_child("args");
-    var fst("Prelude.fst");
     
     if (not is_qualified_symbol(call.get_value<string>()) and not is_haskell_builtin_con_name(call.get_value<string>()))
 	throw myexception()<<"For rule '"<<name<<"', function '"<<call.get_value<string>()<<"' must be a qualified symbol or a builtin constructor like '(,)', but it is neither!";
@@ -596,7 +598,7 @@ pair<expression_ref,set<string>> get_model_function(const Rules& R, const ptree&
 	if (arg_lambda_vars[i].empty())
 	{
 	    var x("arg_var_"+arg_name);
-	    E = let_expression({{x,{var("Prelude.fst"),pair_x}}},E);
+	    E = let_expression({{x,{fst,pair_x}}},E);
 	}
 	E = lambda_quantify(pair_x, E);
 
