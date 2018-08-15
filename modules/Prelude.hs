@@ -1,8 +1,14 @@
-module Prelude (module Prelude, module Data.Bool, module Data.Tuple, module Data.Maybe) where
+module Prelude (module Prelude,
+                module Data.Bool,
+                module Data.Tuple,
+                module Data.Maybe,
+                module Data.List)
+    where
 {
 import Data.Bool;
 import Data.Tuple;
 import Data.Maybe;
+import Data.List;
 infixl 9 .;  
 infixl 8 ^, ^^, **;
 infixl 7 *, /, `div`, `mod`, `rem`, `quot`;
