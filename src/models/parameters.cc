@@ -1416,7 +1416,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     add_parameter("Scale", scales_list);
 
     for(int i=0; i<n_branch_scales();i++)
-	PC->scale_parameter_indices[i] = add_compute_expression( {var("Prelude.!!"),scales_list,i} );
+	PC->scale_parameter_indices[i] = add_compute_expression( {var("Data.List.!!"),scales_list,i} );
 
     branches_from_affected_node.resize(tt.n_nodes());
 

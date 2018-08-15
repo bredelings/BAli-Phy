@@ -20,9 +20,9 @@ import Data.Ord;
 
 infixl 8 ^, ^^, **;
 infixl 7 `div`, `mod`, `rem`, `quot`;
-infix 4 ==, /=, `elem`, `notElem`;
+infix 4 ==, /=;
 
-infixr 9 !!, !;
+infixr 9 !;
 
 x ^ 0 = 1;
 x ^ 1 = x;
@@ -93,34 +93,17 @@ _      == (_:_)  = False;
 _      == []     = False;
 x      == y      = builtin_equals x y;
 
-elem x           =  any (== x);
-notElem x        =  all (/= x);
-
 fmap = map;
 
 undefined = error "Prelude.undefined";
 
-h:t !! 0 = h;
-h:t !! i = t !! (i-1);
-_   !! _ = error "Out of bounds list index!";
-
 enumFrom x = x:(enumFrom (x+1));
 enumFromTo x y = if (x>y) then [] else x:(enumFromTo (x+1) y);
-
-zipWith z (a:as) (b:bs) =  z a b : zipWith z as bs;
-zipWith _ _ _           =  [];
-
-zip = zipWith (,);
 
 zipWith' z (a:as) (b:bs) =  z a b : zipWith z as bs;
 zipWith' _ [] []           =  [];
 
 zip' = zipWith' (,);
-
--- FIXME: how to optimize the list comprehension version appropriately?
--- filter p xs = [ x | x <- xs, p x];
-filter p [] = [];
-filter p (x:xs) = if (p x) then x:(filter p xs) else (filter p xs);                
 
 listArray n l = mkArray n (\i -> l !! i);
 
@@ -249,17 +232,18 @@ sequence_ (a:as) = do { a;
 mapM f = sequence . map f;
 mapM_ f = sequence_ . map f;
 
-unzip [] = ([],[]);
-unzip [(x,y),l] = ([x:xs],[y:ys]) where {z = unzip l; xs = fst z; ys = snd z};
-
+-- These should be in Data.List, but use ==
 nub = nubBy (==);
+
 nubBy eq (x:xs) = x:nubBy eq (filter (\y -> not (eq x y)) xs);
 nubBy eq [] = [];
 
-tails (x:xs) = (x:xs):(tails xs);
-tails []     = [];
+infix 4 `elem`;
+elem x           =  any (== x);
 
--- Data.List.lookup
+infix 4 `notElem`;
+notElem x        =  all (/= x);
+
 lookup key [] = Nothing;
 lookup key ((k,v):kvs) = if (key == k) then Just v else lookup key kvs;
 }

@@ -5,6 +5,7 @@ import Compiler.Base;
 import Compiler.Num;
 import Data.Bool;
 import Data.Maybe;
+import Data.Tuple;
 import Data.Function;
 import Data.Ord;
 
@@ -91,11 +92,42 @@ maximum = foldl1 (max);
 
 minimum = foldl1 (min);
 
-repeat x = xs where {xs = x:xs};
+--
+
+-- scanl
+
+-- scanl'
+
+-- scanl1
+
+-- scanr
+
+-- scanr1
+
+--
+
+-- mapAccumL
+
+-- mapAccumR
+
+--
 
 iterate f x = x:iterate f (f x);
 
+iterate' f x = let {fx = f x} in fx `seq` x:iterate f fx;
+
+repeat x = xs where {xs = x:xs};
+
 replicate n x = take n (repeat x);
+
+cycle []         =  error "Data.List.cycle: empty list";
+cycle xs         =  let {xs' = xs ++ xs'} in xs';
+
+--
+
+-- unfoldr
+
+--
 
 take 0 x     = [];
 take n []    = [];
@@ -105,10 +137,121 @@ drop 0 xs     =  xs;
 drop _ []     =  [];
 drop n (_:xs) =  drop (n-1) xs;
 
-cycle []         =  error "Data.List.cycle: empty list";
-cycle xs         =  let {xs' = xs ++ xs'} in xs';
-
 splitAt n xs  =  (take n xs, drop n xs);
 
+-- takeWhile
+
+-- dropWhile
+
+-- dropWhileEnd
+
+-- span
+
+-- break
+
+-- stripPrefix
+
+-- group
+
+-- inits
+
+tails (x:xs) = (x:xs):(tails xs);
+tails []     = [];
+
+--
+
+-- isPrefixOf
+
+-- isSuffixOf
+
+-- infix 4 `elem`;
+-- elem x           =  any (== x);
+
+-- infix 4 `notElem`;
+-- notElem x        =  all (/= x);
+
+-- Data.List.lookup
+-- lookup key [] = Nothing;
+-- lookup key ((k,v):kvs) = if (key == k) then Just v else lookup key kvs;
+
+--
+
+-- find
+find _ [] = Nothing;
+find p (x:xs) = if (p x) then x else find p xs;
+
+-- FIXME: how to optimize the list comprehension version appropriately?
+-- filter p xs = [ x | x <- xs, p x];
+filter p [] = [];
+filter p (x:xs) = if (p x) then x:(filter p xs) else (filter p xs);                
+
+-- partition
+
+infixr 9 !!;
+h:t !! 0 = h;
+h:t !! i = t !! (i-1);
+_   !! _ = error "Out of bounds list index!";
+
+-- elemIndex
+
+-- elemIndices
+
+-- findIndex
+
+-- findIndices
+
+--
+
+zipWith z (a:as) (b:bs) =  z a b : zipWith z as bs;
+zipWith _ _ _           =  [];
+
+zip = zipWith (,);
+
+-- many zips ... 3-7
+
+unzip [] = ([],[]);
+unzip [(x,y),l] = ([x:xs],[y:ys]) where {z = unzip l; xs = fst z; ys = snd z};
+
+-- many unzips -- 3-7
+
+-- lines
+
+-- words
+
+-- unlines
+
+-- unwords
+
+-- nub
+
+-- delete
+
+-- (\\)
+
+-- union
+
+-- intersect
+
+-- sort
+
+-- sortOn
+
+-- insert
+
+-- nubBy
+
+-- unionBy
+
+-- intersectBy
+
+-- groupBy
+
+-- sortBy
+
+-- insertBy
+
+-- maximumBy
+
+-- generic*
 
 }
