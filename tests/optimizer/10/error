@@ -6,8 +6,8 @@ size = 1   Test.#5 = Test.#4:Test.#3
 size = 1   Test.#6 = Test.#0:Test.#5
 size = 1   Test.#7 = []
 size = 2   Test.#8 = Prelude.error Test.#6
-size = 1   Test.#967 = 10
-size = 1   Test.#970 = 2
+size = 1   Test.#974 = 10
+size = 1   Test.#977 = 2
 size = 1   Test.f = \#1 -> case #1 of {x:xs -> x,[] -> Test.#8}
-size = 3   Test.g = \#1 -> let {#967 = 10} in let {#968 = case #1 of {x:xs -> x,[] -> Test.#8}} in Prelude:add #967 #968
-size = 1   Test.h = Prelude:add Test.#967 Test.#970
+size = 3   Test.g = \#1 -> let {#974 = 10} in let {#975 = case #1 of {x:xs -> x,[] -> Test.#8}} in Prelude:add #974 #975
+size = 1   Test.h = Prelude:add Test.#974 Test.#977
