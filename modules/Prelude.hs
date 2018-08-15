@@ -3,6 +3,7 @@ module Prelude (module Prelude,
                 module Data.Tuple,
                 module Data.Maybe,
                 module Data.List,
+                module Data.Function,
                 module Compiler.Base,
                 module Compiler.Num)
     where
@@ -13,22 +14,18 @@ import Data.Bool;
 import Data.Tuple;
 import Data.Maybe;
 import Data.List;
+import Data.Function;
 
 infixl 9 .;  
 infixl 8 ^, ^^, **;
 infixl 7 `div`, `mod`, `rem`, `quot`;
 infix 4 ==, /=, <, <=, >, >=, `elem`, `notElem`;
-infixr 0 $, $!, `seq`, `join`;
+infixr 0 $!, `seq`, `join`;
 
 infixr 9 !!, !;
 
 (f . g) x = f (g x);
 
-id x = x;
-
-flip f x y = f y x;
-
-f $ x = f x;
 f $! x = x `seq` f x;
 
 x ^ 0 = 1;

@@ -10,12 +10,10 @@ data IO a = IOAction1 (b->a) a |
             IOReturn a |
             IOAndPass (IO b) (b -> IO a);
 
-const x y = x;
-
 infixl 1 >>, >>=;
 
 f >>= g = IOAndPass f g;
-f >> g = f >>= (const g);
+f >> g = f >>= (\x -> g);
 return f = IOReturn f;
 --fail e = error e;
 }
