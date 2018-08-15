@@ -428,6 +428,10 @@ void Module::export_small_decls()
     if (not topdecls) return;
 
     assert(small_decls_out.empty());
+
+    // Modules that we imported should have their small_decls transitively inherited
+    small_decls_out = small_decls_in;
+
     for(auto& decl: topdecls.sub())
     {
 	auto& x = decl.sub()[0].as_<var>();
@@ -438,11 +442,14 @@ void Module::export_small_decls()
 	    small_decls_out.insert({x, body});
     }
 
+    // Find free vars in the decls that are not bound by *other* decls.
     for(auto& decl: small_decls_out)
     {
 	set<var> free_vars;
 	tie(decl.second, free_vars) = occurrence_analyzer(decl.second);
-	small_decls_out_free_vars.insert(free_vars.begin(), free_vars.end());
+	for(auto& x: free_vars)
+	    if (not small_decls_out.count(x))
+		small_decls_out_free_vars.insert(x);
     }
 }
 
