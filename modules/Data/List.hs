@@ -6,6 +6,7 @@ import Compiler.Num;
 import Data.Bool;
 import Data.Maybe;
 import Data.Function;
+import Data.Ord;
 
 infixr 5 ++;
 [] ++ y = y;
@@ -55,8 +56,40 @@ foldl f z (x:xs) = foldl f (f z x) xs;
 foldl' f z [] = z;
 foldl' f z (x:xs) = let {z' = (f z x)} in seq z' (foldl' f z' xs);
 
+foldl1 f (x:xs)  =  foldl f x xs;
+foldl1 _ []      =  error "Data.List.foldl1: empty list";
+
 foldr f z [] = z;
 foldr f z (x:xs) = (f x (foldr f z xs));
+
+foldr1 f (x:xs) = foldr x xs;
+foldr1 f _      = error "Data.List.foldr1: empty list";
+
+--
+
+concat xs = foldr (++) [] xs;
+
+concatMap f = concat . map f;
+
+and              =  foldr (&&) True;
+
+or               =  foldr (||) False;
+
+any p            =  or . map p;
+
+all p            =  and . map p;
+
+sum     = foldl (+) 0.0;
+
+product = foldl (*) 1.0;
+
+sumi     = foldl (+) 0;
+
+producti = foldl (*) 1;
+
+maximum = foldl1 (max);
+
+minimum = foldl1 (min);
 
 repeat x = xs where {xs = x:xs};
 
@@ -71,9 +104,6 @@ take n (h:t) = h:(take (n-1) t);
 drop 0 xs     =  xs;
 drop _ []     =  [];
 drop n (_:xs) =  drop (n-1) xs;
-
-foldl1 f (x:xs)  =  foldl f x xs;
-foldl1 _ []      =  error "Data.List.foldl1: empty list";
 
 cycle []         =  error "Data.List.cycle: empty list";
 cycle xs         =  let {xs' = xs ++ xs'} in xs';

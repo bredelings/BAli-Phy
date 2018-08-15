@@ -4,6 +4,7 @@ module Prelude (module Prelude,
                 module Data.Maybe,
                 module Data.List,
                 module Data.Function,
+                module Data.Ord,
                 module Compiler.Base,
                 module Compiler.Num)
     where
@@ -15,10 +16,11 @@ import Data.Tuple;
 import Data.Maybe;
 import Data.List;
 import Data.Function;
+import Data.Ord;
 
 infixl 8 ^, ^^, **;
 infixl 7 `div`, `mod`, `rem`, `quot`;
-infix 4 ==, /=, <, <=, >, >=, `elem`, `notElem`;
+infix 4 ==, /=, `elem`, `notElem`;
 
 infixr 9 !!, !;
 
@@ -52,10 +54,6 @@ builtin exp 1 "exp" "Prelude";
 builtin doubleToLogDouble 1 "doubleToLogDouble" "Prelude";
 builtin builtin_equals 2 "equals" "Prelude";
 builtin /= 2 "notequals" "Prelude";
-builtin > 2 "greaterthan" "Prelude";
-builtin >= 2 "greaterthanorequal" "Prelude";
-builtin < 2 "lessthan" "Prelude";
-builtin <= 2 "lessthanorequal" "Prelude";
 builtin iotaUnsigned 1 "iotaUnsigned" "Prelude";
 builtin builtin_putStrLn 1 "putStrLn" "Prelude";
 builtin builtin_set_vector_index 3 "set_vector_index" "Vector";
@@ -87,12 +85,6 @@ builtin builtin_show 1 "show" "Prelude";
 builtin builtin_read_int 1 "read_int" "Prelude";
 builtin builtin_read_double 1 "read_double" "Prelude";
 
-and              =  foldr (&&) True;
-or               =  foldr (||) False;
-
-any p            =  or . map p;
-all p            =  and . map p;
-
 (x:xs) == (y:ys) = (x==y) && (xs == ys);
 (_:_)  == _      = False;
 _      == (_:_)  = False;
@@ -112,12 +104,6 @@ h:t !! 0 = h;
 h:t !! i = t !! (i-1);
 _   !! _ = error "Out of bounds list index!";
 
-sum     = foldl (+) 0.0;
-product = foldl (*) 1.0;
-
-sumi     = foldl (+) 0;
-producti = foldl (*) 1;
-
 enumFrom x = x:(enumFrom (x+1));
 enumFromTo x y = if (x>y) then [] else x:(enumFromTo (x+1) y);
 
@@ -130,10 +116,6 @@ zipWith' z (a:as) (b:bs) =  z a b : zipWith z as bs;
 zipWith' _ [] []           =  [];
 
 zip' = zipWith' (,);
-
-concat xs = foldr (++) [] xs;
-
-concatMap f = concat . map f;
 
 -- FIXME: how to optimize the list comprehension version appropriately?
 -- filter p xs = [ x | x <- xs, p x];
@@ -223,9 +205,6 @@ unsafePerformIO (IOReturn x) = x;
 
 unsafeInterleaveIO x = LazyIO x;
 runST x = reapply unsafePerformIO x;
-
-min x y = if (x <= y) then x else y;
-max x y = if (x >= y) then x else y;
 
 quicksort [] = [];
 quicksort (x:xs) = quicksort small ++ (x : quicksort large)
