@@ -2,9 +2,11 @@ module Prelude (module Prelude,
                 module Data.Bool,
                 module Data.Tuple,
                 module Data.Maybe,
-                module Data.List)
+                module Data.List,
+                module Compiler.Base)
     where
 {
+import Compiler.Base;
 import Data.Bool;
 import Data.Tuple;
 import Data.Maybe;
