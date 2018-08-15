@@ -16,14 +16,11 @@ import Data.Maybe;
 import Data.List;
 import Data.Function;
 
-infixl 9 .;  
 infixl 8 ^, ^^, **;
 infixl 7 `div`, `mod`, `rem`, `quot`;
 infix 4 ==, /=, <, <=, >, >=, `elem`, `notElem`;
 
 infixr 9 !!, !;
-
-(f . g) x = f (g x);
 
 x ^ 0 = 1;
 x ^ 1 = x;
