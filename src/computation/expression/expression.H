@@ -83,5 +83,6 @@ expression_ref parse_object(const std::string& s);
 
 std::vector<double> vec_to_double(const std::vector<expression_ref>& v);
 std::vector<int> vec_to_int(const std::vector<expression_ref>& v);
+std::vector<char> vec_to_char(const std::vector<expression_ref>& v);
 
 #endif

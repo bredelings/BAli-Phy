@@ -2,7 +2,6 @@
 module Data.Maybe where
 {
 import Data.Bool;
-import Data.List;
 
 data Maybe a = Just a | Nothing;
 

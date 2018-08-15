@@ -1,9 +1,11 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "computation/computation.H"
 #include "computation/expression/expression.H"
+#include "vector_from_list.H"
 
 using boost::dynamic_pointer_cast;
 using std::string;
+using std::vector;
 
 extern "C" closure builtin_function_exp(OperationArgs& Args)
 {
@@ -390,16 +392,20 @@ extern "C" closure builtin_function_show(OperationArgs& Args)
 
 #include "computation/machine/error_exception.H"
 
-extern "C" closure builtin_function_builtinError(OperationArgs& Args)
+extern "C" closure builtin_function_error(OperationArgs& Args)
 {
-    std::string message = Args.evaluate(0).as_<String>();
+    vector<char> v = vec_to_char ( get_vector_from_list(Args,0) );
+
+    string message;
+    for(auto ch: v)
+	message += ch;
   
     throw error_exception(message);
 }
 
 extern "C" closure builtin_function_putStrLn(OperationArgs& Args)
 {
-    std::string message = Args.evaluate(0).as_<String>();
+    string message = Args.evaluate(0).as_<String>();
 
     std::cout<<message<<std::endl;
 

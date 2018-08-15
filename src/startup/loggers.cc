@@ -143,7 +143,7 @@ void find_sub_loggers(Model& M, int& index, const string& name, vector<int>& log
 	    expression_ref E = {var("Data.List.length"),L};
 	    int length = M.evaluate_expression(E).as_int();
 
-	    expression_ref E1 = {var("Prelude.head"),L};
+	    expression_ref E1 = {var("Data.List.head"),L};
 	    expression_ref first_elem = M.evaluate_expression(E1);
 
 	    if (first_elem.head().is_a<constructor>() and first_elem.head().as_<constructor>().f_name == "(,)")

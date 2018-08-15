@@ -20,13 +20,10 @@ infixl 9 .;
 infixl 8 ^, ^^, **;
 infixl 7 `div`, `mod`, `rem`, `quot`;
 infix 4 ==, /=, <, <=, >, >=, `elem`, `notElem`;
-infixr 0 $!, `seq`, `join`;
 
 infixr 9 !!, !;
 
 (f . g) x = f (g x);
-
-f $! x = x `seq` f x;
 
 x ^ 0 = 1;
 x ^ 1 = x;
@@ -48,9 +45,6 @@ builtin builtin_vector_from_list 1 "vector_from_list" "Prelude";
 builtin doubleToInt 1 "doubleToInt" "Prelude";
 builtin ** 2 "pow" "Prelude";
 builtin mod 2 "mod" "Prelude";
-builtin builtinError 1 "builtinError" "Prelude";
-builtin seq 2 "seq" "Prelude";
-builtin join 2 "join" "Prelude";
 builtin reapply 2 "reapply" "Prelude";
 builtin arraySize 1 "arraySize" "Array";
 builtin ! 2 "getIndex" "Array";
@@ -95,35 +89,6 @@ builtin c_pair' 2 "c_pair" "Pair";
 builtin builtin_show 1 "show" "Prelude";
 builtin builtin_read_int 1 "read_int" "Prelude";
 builtin builtin_read_double 1 "read_double" "Prelude";
-
-fail e = error e;
-
-foldl1 f (x:xs)  =  foldl f x xs;
-foldl1 _ []      =  error "Prelude.foldl1: empty list";
-
-foldl' f z [] = z;
-foldl' f z (x:xs) = let {z' = (f z x)} in seq z' (foldl' f z' xs);
-
-head (h:_) = h;
-head []    = error "Prelude.head: empty list";
-
-tail (_:t) = t;
-tail []    = error "Prelude.tail: empty list";
-
-last [x]         =  x;
-last (_:xs)      =  last xs;
-last []          =  error "Prelude.last: empty list";
-
-init [x] = [];
-init (x:xs) = x:(init xs);
-init []     = error "Prelude.init: empty list";
-
-cycle []         =  error "Prelude.cycle: empty list";
-cycle xs         =  let {xs' = xs ++ xs'} in xs';
-
-splitAt n xs  =  (take n xs, drop n xs);
-
-reverse          =  foldl (flip (:)) [];
 
 and              =  foldr (&&) True;
 or               =  foldr (||) False;
@@ -249,8 +214,6 @@ copyListToVectorMatrix [] v i = return ();
 copyListToVectorMatrix (h:t) v i = do { setVectorIndexMatrix v i h; copyListToVectorMatrix t v (i+1)};
 
 listToVectorMatrix l = runST $ do { v <- newVectorMatrix (length l); copyListToVectorMatrix l v 0 ; return v};
-
-error m = builtinError (listToString m);
 
 unsafePerformIO (IOAction1 x y ) = x y;
 unsafePerformIO (IOAction2 x y z) = x y z;

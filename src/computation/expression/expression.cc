@@ -343,3 +343,11 @@ vector<int> vec_to_int(const std::vector<expression_ref>& v)
 	vv[i] = v[i].as_int();
     return vv;
 }
+
+vector<char> vec_to_char(const std::vector<expression_ref>& v)
+{
+    vector<char> vv(v.size());
+    for(char i=0;i<v.size();i++)
+	vv[i] = v[i].as_char();
+    return vv;
+}
