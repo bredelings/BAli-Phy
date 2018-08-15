@@ -54,7 +54,7 @@ expression_ref infix_parse_neg(const Module& m, const set<string>& bound, const 
 
 	E1 = infix_parse_neg(m, bound, symbol_info("-",variable_symbol, 2,6,left_fix), T);
 
-	return infix_parse(m, bound, op1, {var("Prelude.negate"),E1}, T);
+	return infix_parse(m, bound, op1, {AST_node("id","negate"),E1}, T);
     }
     // If E1 is not a neg, E1 should be an expression, and the next thing should be an Op.
     else
@@ -81,7 +81,7 @@ symbol_info get_op_sym(const Module& m, const set<string>& bound, const expressi
     else if (m.is_declared( name ) )
 	op_sym = m.get_operator( name );
     else
-	throw myexception()<<"Using unknown operator '"<<O.print()<<"' as infix operator.";
+	throw myexception()<<"Using unknown operator '"<<name<<"' as infix operator.";
 
     return op_sym;
 }
@@ -594,7 +594,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	    // [ e | True   ]  =  [ e ]
 	    // [ e | q      ]  =  [ e | q, True ]
 	    // [ e | b, Q   ]  =  if b then [ e | Q ] else []
-	    // [ e | p<-l, Q]  =  let {ok p = [ e | Q ]; ok _ = []} in Prelude.concatMap ok l
+	    // [ e | p<-l, Q]  =  let {ok p = [ e | Q ]; ok _ = []} in concatMap ok l
 	    // [ e | let decls, Q] = let decls in [ e | Q ]
 
 	    expression_ref True = AST_node("SimpleQual") + bool_true;
@@ -619,7 +619,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 		    if (is_irrefutable_pat(p))
 		    {
 			expression_ref f  = AST_node("Lambda") + p + E2;
-			E2 = AST_node("Apply") + AST_node("id","Prelude.concatMap") + f + l;
+			E2 = AST_node("Apply") + AST_node("id","concatMap") + f + l;
 		    }
 		    else
 		    {
@@ -635,7 +635,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 			expression_ref decl2 = AST_node("Decl") + lhs2 + rhs2;
 
 			expression_ref decls = AST_node("Decls") + decl1 + decl2;
-			expression_ref body = AST_node("Apply") + AST_node("id","Prelude.concatMap") + ok + l;
+			expression_ref body = AST_node("Apply") + AST_node("id","concatMap") + ok + l;
 
 			E2 = AST_node("Let") + decls + body;
 		    }
@@ -702,7 +702,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 		}
 		else
 		{
-		    expression_ref fail = AST_node("Apply") + AST_node("id","Prelude.fail") + "Fail!";
+		    expression_ref fail = AST_node("Apply") + AST_node("id","fail") + "Fail!";
 		    expression_ref ok = get_fresh_id("ok",E);
 	  
 		    expression_ref lhs1 = AST_node("funlhs1") + ok + p;
@@ -873,21 +873,17 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	}
 	else if (n.type == "enumFrom")
 	{
-	    expression_ref E2 = var("Prelude.enumFrom");
-	    for(auto& e: v) {
-		e = desugar(m, e, bound);
-		E2 = {E2,e};
-	    }
-	    return E2;
+	    expression_ref E2 = AST_node("Apply") + AST_node("id","enumFrom");
+	    for(auto& e: v)
+		E2 = E2 + e;
+	    return desugar(m, E2, bound);
 	}
 	else if (n.type == "enumFromTo")
 	{
-	    expression_ref E2 = var("Prelude.enumFromTo");
-	    for(auto& e: v) {
-		e = desugar(m, e, bound);
-		E2 = {E2,e};
-	    }
-	    return E2;
+	    expression_ref E2 = AST_node("Apply") + AST_node("id","enumFromTo");
+	    for(auto& e: v)
+		E2 = E2 + e;
+	    return desugar(m, E2, bound);
 	}
     }
 
