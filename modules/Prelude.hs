@@ -1,7 +1,8 @@
-module Prelude (module Prelude, module Data.Bool, module Data.Tuple) where
+module Prelude (module Prelude, module Data.Bool, module Data.Tuple, module Data.Maybe) where
 {
 import Data.Bool;
 import Data.Tuple;
+import Data.Maybe;
 infixl 9 .;  
 infixl 8 ^, ^^, **;
 infixl 7 *, /, `div`, `mod`, `rem`, `quot`;
@@ -32,7 +33,6 @@ x `rem` y = error "'rem' not defined";
 x `div` y = error "'div' not defined";
 x `quot` y = error "'quot' not defined";
 
-data Maybe a = Just a | Nothing;
 data IO a = IOAction1 (b->a) a | 
             IOAction2 (b->c->a) b c | 
             IOAction3 (b->c->d->a) b c d | 
