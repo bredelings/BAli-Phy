@@ -140,7 +140,7 @@ void find_sub_loggers(Model& M, int& index, const string& name, vector<int>& log
 	{
 	    expression_ref L = M.get_expression(index);
 
-	    expression_ref E = {var("Prelude.length"),L};
+	    expression_ref E = {var("Data.List.length"),L};
 	    int length = M.evaluate_expression(E).as_int();
 
 	    expression_ref E1 = {var("Prelude.head"),L};

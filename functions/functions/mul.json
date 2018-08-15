@@ -4,7 +4,7 @@
     "result_type": "a",
     "no_log": true,
     "constraints": ["Num[a]"],
-    "call": "Prelude.*[x,y]",
+    "call": "Compiler.Num.*[x,y]",
     "args": [
         {
             "arg_name": "x",

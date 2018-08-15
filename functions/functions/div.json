@@ -3,7 +3,7 @@
     "synonyms": ["Div"],
     "result_type": "Double",
     "no_log": true,
-    "call": "Prelude.\/[x,y]",
+    "call": "Compiler.Num.\/[x,y]",
     "args": [
         {
             "arg_name": "x",

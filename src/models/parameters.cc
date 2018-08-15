@@ -1498,7 +1498,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	for(int b=0;b<t().n_branches();b++)
 	{
 	    expression_ref length = get_expression(TC->branch_duration_index[b]);
-	    int index = add_compute_expression( {var("Prelude.*"),scale,length} );
+	    int index = add_compute_expression( {var("Compiler.Num.*"),scale,length} );
 	    PC->branch_length_indices[s].push_back(index);
 	}
     }

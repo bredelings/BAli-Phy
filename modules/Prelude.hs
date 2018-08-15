@@ -3,19 +3,19 @@ module Prelude (module Prelude,
                 module Data.Tuple,
                 module Data.Maybe,
                 module Data.List,
-                module Compiler.Base)
+                module Compiler.Base,
+                module Compiler.Num)
     where
 {
 import Compiler.Base;
+import Compiler.Num;
 import Data.Bool;
 import Data.Tuple;
 import Data.Maybe;
 import Data.List;
 infixl 9 .;  
 infixl 8 ^, ^^, **;
-infixl 7 *, /, `div`, `mod`, `rem`, `quot`;
-infixl 6 +, -;
-infixr 5 ++;
+infixl 7 `div`, `mod`, `rem`, `quot`;
 infix 4 ==, /=, <, <=, >, >=, `elem`, `notElem`;
 infixl 1 >>, >>=;
 infixr 0 $, $!, `seq`, `join`;
@@ -70,10 +70,6 @@ builtin intToDouble 1 "intToDouble" "Prelude";
 builtin negate 1 "negate" "Prelude";
 builtin exp 1 "exp" "Prelude";
 builtin doubleToLogDouble 1 "doubleToLogDouble" "Prelude";
-builtin + 2 "add" "Prelude";
-builtin - 2 "subtract" "Prelude";
-builtin / 2 "divide" "Prelude";
-builtin * 2 "multiply" "Prelude";
 builtin builtin_equals 2 "equals" "Prelude";
 builtin /= 2 "notequals" "Prelude";
 builtin > 2 "greaterthan" "Prelude";
@@ -111,12 +107,6 @@ builtin builtin_show 1 "show" "Prelude";
 builtin builtin_read_int 1 "read_int" "Prelude";
 builtin builtin_read_double 1 "read_double" "Prelude";
 
-foldr f z [] = z;
-foldr f z (x:xs) = (f x (foldr f z xs));
-
-foldl f z [] = z;
-foldl f z (x:xs) = foldl f (f z x) xs;
-
 foldl1 f (x:xs)  =  foldl f x xs;
 foldl1 _ []      =  error "Prelude.foldl1: empty list";
 
@@ -133,32 +123,12 @@ last [x]         =  x;
 last (_:xs)      =  last xs;
 last []          =  error "Prelude.last: empty list";
 
-null []          =  True;
-null (_:_)       =  False;
-
 init [x] = [];
 init (x:xs) = x:(init xs);
 init []     = error "Prelude.init: empty list";
 
-length []        =  0;
-length (_:l)     =  1 + length l;
-
-repeat x = xs where {xs = x:xs};
-
-iterate f x = x:iterate f (f x);
-
-replicate n x = take n (repeat x);
-
 cycle []         =  error "Prelude.cycle: empty list";
 cycle xs         =  let {xs' = xs ++ xs'} in xs';
-
-take 0 x     = [];
-take n []    = [];
-take n (h:t) = h:(take (n-1) t);
-
-drop 0 xs     =  xs;
-drop _ []     =  [];
-drop n (_:xs) =  drop (n-1) xs;
 
 splitAt n xs  =  (take n xs, drop n xs);
 
@@ -181,13 +151,7 @@ x      == y      = builtin_equals x y;
 elem x           =  any (== x);
 notElem x        =  all (/= x);
 
-map f []  = [];
-map f (h:t) = (f h):(map f t);
-  
 fmap = map;
-
-[] ++ y = y;
-h:t ++ y = h:(t ++ y);
 
 undefined = error "Prelude.undefined";
 
