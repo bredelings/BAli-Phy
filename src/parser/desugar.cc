@@ -683,7 +683,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	    if (is_AST(first,"SimpleStmt"))
 	    {
 		expression_ref e = first.sub()[0];
-		expression_ref qop = AST_node("id","Prelude.>>");
+		expression_ref qop = AST_node("id",">>");
 		result = AST_node("infixexp") + e + qop + do_stmts;
 	    }
 
@@ -693,7 +693,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	    {
 		expression_ref p = first.sub()[0];
 		expression_ref e = first.sub()[1];
-		expression_ref qop = AST_node("id","Prelude.>>=");
+		expression_ref qop = AST_node("id",">>=");
 
 		if (is_irrefutable_pat(p))
 		{

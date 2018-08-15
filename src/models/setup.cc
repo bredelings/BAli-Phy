@@ -106,8 +106,10 @@ using std::valarray;
 using boost::program_options::variables_map;
 using boost::shared_ptr;
 
-expression_ref fst = var("Data.Tuple.fst");
-expression_ref snd = var("Data.Tuple.snd");
+expression_ref fst  = var("Data.Tuple.fst");
+expression_ref snd  = var("Data.Tuple.snd");
+expression_ref bind = var("Compiler.Base.>>=");
+expression_ref do_return = var("Compiler.Base.return");
 
 string model_t::show(bool top) const
 {
@@ -343,7 +345,7 @@ expression_ref get_constant_model(const ptree& model_rep)
     if (expression_ref C = parse_constant(model_rep))
     {
 	if (model_rep.size() != 0) throw myexception()<<"An constant cannot have arguments!\n  '"<<model_rep.show()<<"'";
-	return {var("Prelude.return"), Tuple(C,List())};
+	return {do_return, Tuple(C,List())};
     }
     else
 	return {};
@@ -374,7 +376,7 @@ optional<pair<expression_ref,set<string>>> get_variable_model(const ptree& E, co
 	V = x;
 
     // 4. Construct the logging tuple and return it in order to allow this action to be performed.
-    V = {var("Prelude.return"),Tuple(V,List())};
+    V = {do_return, Tuple(V,List())};
 
     // 5. We need an extra level of {} to allow constructing the optional.
     return {{V,lambda_vars}};
@@ -411,7 +413,7 @@ optional<pair<expression_ref,set<string>>> get_model_let(const Rules& R, const p
 	// E = 'arg <<= (\pair_var_name -> let {arg_name=fst pair_var_name} in E)
 	E = lambda_quantify(pair_x, let_expression({{x,{fst,pair_x}}},E));
 
-	E = {var("Prelude.>>="), arg, E};
+	E = {bind, arg, E};
     }
 
     return {{E, p.second}};
@@ -453,10 +455,10 @@ optional<pair<expression_ref,set<string>>> get_model_lambda(const Rules& R, cons
 	E = lambda_quantify(scope.at(vname).x,E);
 
     // E = return $ (E,snd pair_arg_body)
-    E = {var("Prelude.return"),Tuple(E,{snd,var("pair_arg_body")})};
+    E = {do_return, Tuple(E,{snd,var("pair_arg_body")})};
 
     // E = do {pair_arg_body <- body ; E}
-    E = {var("Prelude.>>="),body,lambda_quantify(pair_arg_body,E)};
+    E = {bind,body,lambda_quantify(pair_arg_body,E)};
 
 
     // In summary, we have
@@ -566,11 +568,10 @@ pair<expression_ref,set<string>> get_model_function(const Rules& R, const ptree&
     }
 
     // 6. Return the function call: 'return (f call.name1 call.name2 call.name3)'
-    expression_ref Return = var("Prelude.return");
     if (not perform_function)
-	E = {Return,E};
+	E = {do_return,E};
 
-    E = {var("Prelude.>>="), E, lambda_quantify(var("result"),{Return,Tuple(var("result"),loggers)})};
+    E = {bind, E, lambda_quantify(var("result"),{do_return,Tuple(var("result"),loggers)})};
 
     // 7. Peform the rule arguments 'Prefix "arg_name" (arg_+arg_name) >>= (\arg_name -> (Log "arg_name" arg_name) << E)'
     for(int i=0;i<args.size();i++)
@@ -602,7 +603,7 @@ pair<expression_ref,set<string>> get_model_function(const Rules& R, const ptree&
 	}
 	E = lambda_quantify(pair_x, E);
 
-	E = {var("Prelude.>>="), arg, E};
+	E = {bind, arg, E};
     }
 
     return {E, lambda_vars};

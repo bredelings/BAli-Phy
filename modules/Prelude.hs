@@ -13,11 +13,11 @@ import Data.Bool;
 import Data.Tuple;
 import Data.Maybe;
 import Data.List;
+
 infixl 9 .;  
 infixl 8 ^, ^^, **;
 infixl 7 `div`, `mod`, `rem`, `quot`;
 infix 4 ==, /=, <, <=, >, >=, `elem`, `notElem`;
-infixl 1 >>, >>=;
 infixr 0 $, $!, `seq`, `join`;
 
 infixr 9 !!, !;
@@ -40,14 +40,6 @@ x ^^ y = error "'^^' not defined";
 x `rem` y = error "'rem' not defined";
 x `div` y = error "'div' not defined";
 x `quot` y = error "'quot' not defined";
-
-data IO a = IOAction1 (b->a) a | 
-            IOAction2 (b->c->a) b c | 
-            IOAction3 (b->c->d->a) b c d | 
-            IOAction4 (b->c->d->e->a) b c d e |
-            LazyIO a |
-            IOReturn a |
-            IOAndPass (IO b) (b -> IO a);
 
 builtin log 1 "log" "Prelude";
 builtin sqrt 1 "sqrt" "Prelude";
@@ -106,6 +98,8 @@ builtin c_pair' 2 "c_pair" "Pair";
 builtin builtin_show 1 "show" "Prelude";
 builtin builtin_read_int 1 "read_int" "Prelude";
 builtin builtin_read_double 1 "read_double" "Prelude";
+
+fail e = error e;
 
 foldl1 f (x:xs)  =  foldl f x xs;
 foldl1 _ []      =  error "Prelude.foldl1: empty list";
@@ -181,8 +175,6 @@ zip' = zipWith' (,);
 concat xs = foldr (++) [] xs;
 
 concatMap f = concat . map f;
-
-const x y = x;
 
 -- FIXME: how to optimize the list comprehension version appropriately?
 -- filter p xs = [ x | x <- xs, p x];
@@ -274,11 +266,6 @@ unsafePerformIO (IOReturn x) = x;
 
 unsafeInterleaveIO x = LazyIO x;
 runST x = reapply unsafePerformIO x;
-
-f >>= g = IOAndPass f g;
-f >> g = f >>= (const g);
-return f = IOReturn f;
-fail e = error e;
 
 min x y = if (x <= y) then x else y;
 max x y = if (x >= y) then x else y;
