@@ -1,13 +1,13 @@
 size = 1   Test.#0 = 'y'
+size = 1   Test.#1066 = Test.#0:Test.#5
+size = 1   Test.#1070 = 10
+size = 1   Test.#1073 = 2
 size = 1   Test.#2 = '!'
 size = 1   Test.#3 = Test.#2:Test.#7
 size = 1   Test.#4 = 'o'
 size = 1   Test.#5 = Test.#4:Test.#3
-size = 1   Test.#6 = Test.#0:Test.#5
 size = 1   Test.#7 = []
-size = 2   Test.#8 = Prelude.error Test.#6
-size = 1   Test.#975 = 10
-size = 1   Test.#978 = 2
+size = 1   Test.#8 = Prelude:error Test.#1066
 size = 1   Test.f = \#1 -> case #1 of {x:xs -> x,[] -> Test.#8}
-size = 3   Test.g = \#1 -> let {#975 = 10} in let {#976 = case #1 of {x:xs -> x,[] -> Test.#8}} in Prelude:add #975 #976
-size = 1   Test.h = Prelude:add Test.#975 Test.#978
+size = 3   Test.g = \#1 -> let {#1070 = 10} in let {#1071 = case #1 of {x:xs -> x,[] -> Test.#8}} in Prelude:add #1070 #1071
+size = 1   Test.h = Prelude:add Test.#1070 Test.#1073

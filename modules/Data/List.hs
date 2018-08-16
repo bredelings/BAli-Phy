@@ -43,11 +43,21 @@ map f (h:t) = (f h):(map f t);
   
 reverse          =  foldl (flip (:)) [];
 
---intersperse
---intercalate
+--
+
+intersperse _   []      = [];
+intersperse _   [x]     = [x];
+intersperse sep (x1:x2:xs) = x1:sep:(intersperse sep (x2:xs));
+
+intercalate xs xss = concat (intersperse xs xss);
+
 --transpose
---subsequences
---permutations
+
+subsequences [] = [[]];
+subsequences (x:xs) = let {ys = subsequences xs} in xs ++ (map (x:) xs);
+
+permutations [] = [[]];
+permutations (x:xs) = let {ys = permutations xs} in map (x:) ys ++ map (++[x]) ys;
 
 ---
 

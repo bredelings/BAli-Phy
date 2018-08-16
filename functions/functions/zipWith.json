@@ -2,7 +2,7 @@
     "name": "zipWith",
     "result_type": "List[c]",
     "no_log": true,
-    "call": "Prelude.zipWith[f,x,y]",
+    "call": "Data.List.zipWith[f,x,y]",
     "args": [
         {
             "arg_name": "f",
