@@ -1,3 +1,3 @@
-size = 1   Test.#2 = Prelude:negate Test.#714
-size = 1   Test.#714 = 10
+size = 1   Test.#2 = Prelude:negate Test.#771
+size = 1   Test.#771 = 10
 size = 0   Test.f = \#1 -> Test.#2

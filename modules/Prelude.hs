@@ -5,6 +5,7 @@ module Prelude (module Prelude,
                 module Data.List,
                 module Data.Function,
                 module Data.Ord,
+                module Foreign.Vector,
                 module Control.Monad,
                 module Compiler.Base,
                 module Compiler.Num)
@@ -19,6 +20,7 @@ import Data.List;
 import Data.Function;
 import Data.Ord;
 import Control.Monad;
+import Foreign.Vector;
 
 infixl 8 ^, ^^, **;
 infixl 7 `div`, `mod`, `rem`, `quot`;
@@ -58,27 +60,6 @@ builtin builtin_equals 2 "equals" "Prelude";
 builtin /= 2 "notequals" "Prelude";
 builtin iotaUnsigned 1 "iotaUnsigned" "Prelude";
 builtin builtin_putStrLn 1 "putStrLn" "Prelude";
-builtin builtin_set_vector_index 3 "set_vector_index" "Vector";
-builtin builtin_new_vector 1 "new_vector" "Vector";
-builtin get_vector_index 2 "get_vector_index" "Vector";
-builtin vector_size 1 "vector_size" "Vector";
-builtin sizeOfVectorUnsigned 1 "sizeOfVectorUnsigned" "Vector";
-builtin sizeOfVectorInt 1 "sizeOfVectorInt" "Vector";
-builtin sizeOfVectorVectorInt 1 "sizeOfVectorVectorInt" "Vector";
-builtin sizeOfVectorvectorInt 1 "sizeOfVectorvectorInt" "Vector";
-builtin getVectorIntElement 2 "getVectorIntElement" "Vector";
-builtin getVectorVectorIntElement 2 "getVectorVectorIntElement" "Vector";
-builtin getVectorvectorIntElement 2 "getVectorvectorIntElement" "Vector";
-builtin getStringElement 2 "getStringElement" "Vector";
-builtin sizeOfString 1 "sizeOfString" "Vector";
-builtin builtinNewVectorInt 1 "NewVectorInt" "Vector";
-builtin builtinSetVectorIndexInt 3 "SetVectorIndexInt" "Vector";
-builtin builtinNewString 1 "NewString" "Vector";
-builtin builtinSetStringIndexInt 3 "SetStringIndex" "Vector";
-builtin builtinNewVectorDouble 1 "NewVectorDouble" "Vector";
-builtin builtinSetVectorIndexDouble 3 "SetVectorIndexDouble" "Vector";
-builtin builtinNewVectorMatrix 1 "NewVectorMatrix" "Vector";
-builtin builtinSetVectorIndexMatrix 3 "SetVectorIndexMatrix" "Vector";
 
 builtin c_fst 1 "c_fst" "Pair";
 builtin c_snd 1 "c_snd" "Pair";
@@ -110,26 +91,6 @@ zip' = zipWith' (,);
 listArray n l = mkArray n (\i -> l !! i);
 
 listArray' l = listArray (length l) l;
-
-list_from_vector' v s i = if (i<s) then (get_vector_index v i):list_from_vector' v s (i+1) else [];
-
-list_from_vector v = list_from_vector' v (vector_size v) 0;
-
-listFromVectorInt' v s i = if (i<s) then (getVectorIntElement v i):listFromVectorInt' v s (i+1) else [];
-
-listFromVectorInt v = listFromVectorInt' v (sizeOfVectorInt v) 0;
-
-listFromString' v s i = if (i<s) then (getStringElement v i):listFromString' v s (i+1) else [];
-
-listFromString v = listFromString' v (sizeOfString v) 0;
-
-listFromVectorVectorInt' v s i = if (i<s) then (getVectorVectorIntElement v i):listFromVectorVectorInt' v s (i+1) else [];
-
-listFromVectorVectorInt v = listFromVectorVectorInt' v (sizeOfVectorVectorInt v) 0;
-
-listFromVectorvectorInt' v s i = if (i<s) then (getVectorvectorIntElement v i):listFromVectorvectorInt' v s (i+1) else [];
-
-listFromVectorvectorInt v = listFromVectorvectorInt' v (sizeOfVectorvectorInt v) 0;
 
 c_pair (x,y) = c_pair' x y;
 
