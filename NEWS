@@ -1,6 +1,9 @@
 UNRELEASED
  - Fixes
- - 
+   - "--" should not become a single long dash (en-dash) in man pages.
+ - Haskell
+   - Refactored functions out of Prelude into Data.List, etc.
+   - Implement -X NoImplicitPrelude
 
 * 3.3 (Aug 6, 2018)
   - Fixes
