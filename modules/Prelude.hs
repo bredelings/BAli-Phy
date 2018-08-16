@@ -5,6 +5,7 @@ module Prelude (module Prelude,
                 module Data.List,
                 module Data.Function,
                 module Data.Ord,
+                module Control.Monad,
                 module Compiler.Base,
                 module Compiler.Num)
     where
@@ -17,6 +18,7 @@ import Data.Maybe;
 import Data.List;
 import Data.Function;
 import Data.Ord;
+import Control.Monad;
 
 infixl 8 ^, ^^, **;
 infixl 7 `div`, `mod`, `rem`, `quot`;
@@ -216,21 +218,6 @@ read_int s = builtin_read_int s;
 read_double [] = error "Can't convert empty string to double.";
 read_double (h:t) = builtin_read_double (listToString (h:t));
 read_double s = builtin_read_double s;
-
-sequence [] = return [];
-sequence (a:as) = do { x <- a;
-                       xs <- sequence as;
-                       return (x:xs)
-                     };
-
-sequence_ [] = return ();
-sequence_ (a:as) = do { a;
-                        sequence_ as;
-                        return ()
-                      };
-
-mapM f = sequence . map f;
-mapM_ f = sequence_ . map f;
 
 -- These should be in Data.List, but use ==
 nub = nubBy (==);
