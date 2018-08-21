@@ -3,3 +3,4 @@ doc/html
 doc/latex
 \#*#
 *.orig
+build*/
