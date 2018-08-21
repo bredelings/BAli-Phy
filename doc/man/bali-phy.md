@@ -84,13 +84,13 @@ For each option below, more information is available by specifying the long form
 
 # EXAMPLES
 
-bali-phy dna.fasta --smodel GTR
+bali-phy dna.fasta --smodel gtr
 : Analyze sequences in _dna.fasta_ under the GTR model.
 
-bali-phy dna.fasta --smodel GTR -I none
+bali-phy dna.fasta -S gtr -I none
 : Perform a traditional fixed-alignment analysis with gaps treated as missing data.
 
-bali-phy dna.fasta amino.fasta codons.fasta -S 1:GTR -S 2:LG -S 3:M0
+bali-phy dna.fasta amino.fasta codons.fasta -S 1:gtr -S 2:lg08 -S 3:gy94
 : Perform an analysis of 3 genes where each gene has a different substitution mode. The sequence names in all three files must be the same.
 
 # REPORTING BUGS
