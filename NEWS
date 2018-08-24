@@ -18,7 +18,7 @@ UNRELEASED
     - add gy94_ext and mg94_ext for using any nucleotide rate matrix.
     - add mg94k for mg94_ext[hky85]
   - Triplet models
-    - fix up x3, x3_xym, x3x3
+    - fix up x3, x3_sym, x3x3
     - add +dNdS function so we can do e.g. hky85+x3+dNdS
   - Functions in models
     - Add new syntax function[x,...] for specifying models.
