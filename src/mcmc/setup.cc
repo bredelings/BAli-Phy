@@ -685,7 +685,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
     MoveStats Stats;
 
     // 0. Then sample  (a) scale and (b) branch lengths and (c) parameters
-    if (P->contains_key("pre-burnin-A"))
+    if (P->contains_key("pre-burnin-A") or P->contains_key("pre-burnin-A-pre"))
     {
 	MoveAll pre_burnin("pre-burnin");
 
@@ -852,7 +852,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 
 
     // 4. Then do an initial tree search - SPR - with variable alignment
-    if (P->contains_key("pre-burnin-A"))
+    if (P->contains_key("pre-burnin-A") or P->contains_key("pre-burnin-A-post"))
     {
 	// turn training on
 	{
