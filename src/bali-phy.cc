@@ -474,6 +474,8 @@ int main(int argc,char* argv[])
 			a = RNA();
 		    else if (alpha == "AA")
 			a = AminoAcids();
+		    else if (alpha == "Doublets")
+			a = Doublets(RNA());
 		    else if (alpha == "Triplets")
 			a = Triplets(DNA());
 		    else if (alpha == "Codons")

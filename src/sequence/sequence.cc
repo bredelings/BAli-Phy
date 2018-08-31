@@ -153,6 +153,12 @@ string guess_alphabet(const string& name_, const vector<sequence>& sequences)
 	if (arguments[1].empty()) arguments[1] = "standard";
 	return "Codons[" + arguments[0] + "," + arguments[1] + "]";
     }
+    else if (name == "Doublets")
+    {
+	if (arguments.size() < 1) arguments.resize(1);
+	if (arguments[0].empty()) arguments[0] = guess_nucleotides_for(name_, sequences);
+	return "Doublets[" + arguments[0] + "]";
+    }
     else if (name == "Triplets")
     {
 	if (arguments.size() < 1) arguments.resize(1);

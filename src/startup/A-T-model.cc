@@ -474,6 +474,11 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 		if (a != "Triplets")
 		    throw myexception()<<"Partition "<<a_specified[0]+1<<" has specified alphabet '"<<a<<"' but the substitution model requires a triplet alphabet!";
 	    }
+	    else if (alphabet_type.get_value<string>() == "Doublets")
+	    {
+		if (a != "Doublets")
+		    throw myexception()<<"Partition "<<a_specified[0]+1<<" has specified alphabet '"<<a<<"' but the substitution model requires a doublet alphabet!";
+	    }
 	    else if (alphabet_type.get_value<string>() == "AA")
 	    {
 		if (a != "AA" and a != "Amino-Acids" and a != "Amino-AcidsWithStop")
@@ -489,6 +494,11 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 	{
 	    for(int j: smodel_names_mapping.partitions_for_item[i])
 		alphabet_names[j] = "Triplets";
+	}
+	else if (alphabet_type.get_value<string>() == "Doublets")
+	{
+	    for(int j: smodel_names_mapping.partitions_for_item[i])
+		alphabet_names[j] = "Doublets";
 	}
 	else
 	{
@@ -607,6 +617,9 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 
 	if (alphabet_type.get_value<string>() == "Triplets" and not dynamic_cast<const Triplets*>(&a))
 	    throw myexception()<<"Substitution model S"<<i+1<<" requires a triplet alphabet, but sequences are '"<<a.name<<"'";;
+
+	if (alphabet_type.get_value<string>() == "Doublets" and not dynamic_cast<const Doublets*>(&a))
+	    throw myexception()<<"Substitution model S"<<i+1<<" requires a doublet alphabet, but sequences are '"<<a.name<<"'";;
 
 	if (alphabet_type.get_value<string>() == "AA" and not dynamic_cast<const AminoAcids*>(&a))
 	    throw myexception()<<"Substitution model S"<<i+1<<" requires an amino-acid alphabet, but sequences are '"<<a.name<<"'";;
