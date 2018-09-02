@@ -3,7 +3,7 @@
     "result_type": "RevCTMC[a]",
     "constraints": [ "Doublets[a,b]" ],
     "title": "Rate matrix on doublets constructed from nucleotide rates",
-    "call": "SModel.Codons.x2[submodel,a]",
+    "call": "SModel.Doublets.x2[submodel,a]",
     "args": [
         {
             "arg_name": "submodel",

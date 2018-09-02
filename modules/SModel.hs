@@ -1,4 +1,5 @@
 module SModel (module SModel,
+               module SModel.Doublets,
                module SModel.Codons,
                module SModel.ReversibleMarkov,
                module SModel.Likelihood) where 
@@ -9,6 +10,7 @@ import Tree;
 import Parameters;
 
 import SModel.Nucleotides;
+import SModel.Doublets;
 import SModel.Codons;
 import SModel.ReversibleMarkov;
 import SModel.Likelihood;
