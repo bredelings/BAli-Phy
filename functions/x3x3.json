@@ -31,6 +31,6 @@
         }
     ],
     "description":"A triplet rate matrix constructed from separate nucleotide rate matrices for the first, second, and third codon position",
-    "examples": ["let[q=hky85[a=getNucleotides],q3[q,q,q]]"],
+    "examples": ["let[q=hky85[a=getNucleotides],x3x3[q,q,q]]"],
     "see": ["x3"]
 }
