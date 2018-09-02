@@ -5,7 +5,9 @@ import SModel.ReversibleMarkov;
 import SModel.Nucleotides;
 
 builtin m0 3 "m0" "SModel";
+builtin f2x4_frequencies_builtin 3 "f2x4_frequencies" "SModel";
 builtin f3x4_frequencies_builtin 4 "f3x4_frequencies" "SModel";
+builtin singlet_to_doublet_rates 3 "singlet_to_doublet_rates" "SModel";
 builtin singlet_to_triplet_rates 4 "singlet_to_triplet_rates" "SModel";
 builtin fMutSel_q 4 "fMutSel_q" "SModel";
 builtin fMutSel_pi 3 "fMutSel_pi" "SModel";
@@ -43,6 +45,15 @@ x3x3 (ReversibleMarkov _ _ q_1 pi_1 _ _ _) (ReversibleMarkov _ _ q_2 pi_2 _ _ _)
 
 x3_sym a s = singlet_to_triplet_rates a s s s;
 x3 q a = x3x3 q q q a;
+
+x2x2 (ReversibleMarkov _ _ q_1 pi_1 _ _ _) (ReversibleMarkov _ _ q_2 pi_2 _ _ _) a =
+    let {smap = simple_smap a;
+         q = singlet_to_doublet_rates a q_1 q_2;
+         pi = f2x4_frequencies_builtin a pi_1 pi_2}
+    in reversible_markov a smap q pi;
+
+x2_sym a s = singlet_to_doublet_rates a s s;
+x2 q a = x2x2 q q a;
 
 -- maybe this should be t*(q %*% dNdS_matrix) in order to avoid losing scaling factors?  Probably this doesn't matter at the moment.
 dNdS (ReversibleMarkov a s q pi l t r) omega = reversible_markov a s q2 pi where {q2 = q %*% dNdS_matrix a omega};

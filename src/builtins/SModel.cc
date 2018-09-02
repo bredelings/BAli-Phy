@@ -147,6 +147,66 @@ extern "C" closure builtin_function_get_equilibrium_rate(OperationArgs& Args)
     return {scale/a.width()};
 }
 
+extern "C" closure builtin_function_singlet_to_doublet_rates(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    const Doublets& D = arg0.as_<Doublets>();
+
+    auto arg1 = Args.evaluate(1);
+    const Matrix& R1 = arg1.as_<Box<Matrix>>();
+
+    auto arg2 = Args.evaluate(2);
+    const Matrix& R2 = arg2.as_<Box<Matrix>>();
+
+    // The way alphabet is currently implemented, doublets must be doublets of nucleotides.
+    assert(R1.size1() == 4);
+    assert(R1.size2() == 4);
+    assert(R2.size1() == 4);
+    assert(R2.size2() == 4);
+
+    const int n = D.size();
+
+    object_ptr<Box<Matrix>> R( new Box<Matrix>(n,n) );
+
+    for(int i=0;i<n;i++)
+    {
+	double sum = 0;
+	for(int j=0;j<n;j++)
+	{
+	    if (i==j) continue;
+	    int nmuts=0;
+	    int from=-1;
+	    int to=-1;
+	    int pos=-1;
+	    for(int p=0;p<2;p++)
+		if (D.sub_nuc(i,p) != D.sub_nuc(j,p))
+		{
+		    nmuts++;
+		    pos = p;
+		    from = D.sub_nuc(i,p);
+		    to = D.sub_nuc(j,p);
+		}
+
+	    double r = 0;
+	    if (nmuts == 1)
+	    {
+		if (pos == 0)
+		    r = R1(from,to);
+		else if (pos == 1)
+		    r = R2(from,to);
+		else
+		    std::abort();
+	    }
+	    (*R)(i,j) = r;
+	    sum += r;
+	}
+	(*R)(i,i) = -sum;
+    }
+
+    return R;
+}
+
+
 extern "C" closure builtin_function_singlet_to_triplet_rates(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
@@ -645,6 +705,47 @@ extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
     }
 
     // Some triplets may be missing from the triplet alphabet (e.g. stop codons).  So renormalize.
+
+    double scale = 1.0/sum;
+    for(auto& d : pi)
+	d = d.as_double() * scale;
+
+//    assert(std::abs(sum(pi) - 1.0) < 1.0e-9);
+
+    return pi;
+}
+
+extern "C" closure builtin_function_f2x4_frequencies(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    const Doublets& D = arg0.as_<Doublets>();
+    // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
+
+    auto arg1 = Args.evaluate(1);
+    auto pi1 = arg1.as_<EVector>();
+
+    int nuc_size = D.getNucleotides().size();
+
+    if (pi1.size() != nuc_size)
+	throw myexception()<<"f2x4_frequencies:site 1:expected "<<nuc_size<<" frequencies, but got "<<pi1.size()<<"!";
+
+    auto arg2 = Args.evaluate(2);
+    auto pi2 = arg2.as_<EVector>();
+
+    if (pi2.size() != nuc_size)
+	throw myexception()<<"f2x4_frequencies:site 2:expected "<<nuc_size<<" frequencies, but got "<<pi2.size()<<"!";
+
+    EVector pi;
+    pi.resize(D.size());
+    double sum = 0;
+    for(int i=0;i<D.size();i++)
+    {
+	double x = pi1[D.sub_nuc(i,0)].as_double() * pi2[D.sub_nuc(i,1)].as_double();
+	pi[i] = x;
+	sum += x;
+    }
+
+    // Some triplets may be missing from the doublet alphabet (e.g. mismatches). So renormalize
 
     double scale = 1.0/sum;
     for(auto& d : pi)

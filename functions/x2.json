@@ -1,0 +1,24 @@
+{
+    "name": "x2",
+    "result_type": "RevCTMC[a]",
+    "constraints": [ "Doublets[a,b]" ],
+    "title": "Rate matrix on doublets constructed from nucleotide rates",
+    "call": "SModel.Codons.x2[submodel,a]",
+    "args": [
+        {
+            "arg_name": "submodel",
+            "arg_type": "RevCTMC[b]",
+            "alphabet": "getNucleotides[@a]",
+	    "description": "Nucleotide rates"
+        },
+        {
+            "arg_name": "a",
+            "arg_type": "a",
+            "default_value": "getAlphabet",
+	    "description": "The Triplets alphabet"
+        }
+    ],
+    "description":"Rate matrix on doublets, constructed from a rate matrix on nucleotides.\n\nThus function can be used to build up doublet models incrementally.",
+    "examples": ["f81+x2","gtr+x2"],
+    "see": ["x2_sym"]
+}

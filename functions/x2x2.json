@@ -1,0 +1,30 @@
+{
+    "name": "x2x2",
+    "constraints": [ "Doublets[a,b]" ],
+    "result_type": "RevCTMC[a]",
+    "title": "Rate matrix constructed from rate matrices on each doublet position",
+    "call": "SModel.Codons.x2x2[rates1,rates2,a]",
+    "args": [
+        {
+            "arg_name": "rates1",
+            "arg_type": "RevCTMC[b]",
+            "alphabet": "getNucleotides[@a]",
+	    "description": "Rates for position 1"
+        },
+        {
+            "arg_name": "rates2",
+            "arg_type": "RevCTMC[b]",
+            "alphabet": "getNucleotides[@a]",
+	    "description": "Rates for position 2"
+        },
+        {
+            "arg_name": "a",
+            "arg_type": "a",
+            "default_value": "getAlphabet",
+	    "description": "The Triplets alphabet"
+        }
+    ],
+    "description":"A doublet rate matrix constructed from separate nucleotide rate matrices for the first and second doublet positions",
+    "examples": ["let[q=hky85[a=getNucleotides],x2x2[q,q]]"],
+    "see": ["x2"]
+}
