@@ -510,6 +510,15 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 	    if (triplet_constraint)
 		for(int j: smodel_names_mapping.partitions_for_item[i])
 		    alphabet_names[j] = "Triplets";
+
+	    bool doublet_constraint = false;
+	    for(auto& constraint: constraints)
+		if (constraint.get_value<string>() == "Doublets" and constraint.begin()->second.get_value<string>() == "a")
+		    doublet_constraint = true;
+
+	    if (doublet_constraint)
+		for(int j: smodel_names_mapping.partitions_for_item[i])
+		    alphabet_names[j] = "Doublets";
 	}
 //      Use the auto-detected alphabet right now -- it leaves to better error messages.
 //	else if (alphabet_type.get_value<string>() == "AA")
