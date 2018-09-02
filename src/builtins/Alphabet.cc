@@ -37,7 +37,7 @@ extern "C" closure builtin_function_getNucleotides(OperationArgs& Args)
     if (a.is_a<Doublets>())
 	return Args.evaluate(0).as_<Doublets>().getNucleotides();
     else
-	throw myexception()<<"getNucleotides: object "<<a.print()<<" is not a Triplets alphabet.";
+	throw myexception()<<"getNucleotides: object "<<a.print()<<" is not a Doublets or Triplets alphabet.";
 }
 
 extern "C" closure builtin_function_getAminoAcids(OperationArgs& Args)
