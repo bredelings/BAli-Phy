@@ -34,6 +34,8 @@ extern "C" closure builtin_function_getNucleotides(OperationArgs& Args)
     auto a = Args.evaluate(0);
     if (a.is_a<Triplets>())
 	return Args.evaluate(0).as_<Triplets>().getNucleotides();
+    if (a.is_a<Doublets>())
+	return Args.evaluate(0).as_<Doublets>().getNucleotides();
     else
 	throw myexception()<<"getNucleotides: object "<<a.print()<<" is not a Triplets alphabet.";
 }
