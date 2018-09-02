@@ -147,49 +147,6 @@ extern "C" closure builtin_function_get_equilibrium_rate(OperationArgs& Args)
     return {scale/a.width()};
 }
 
-
-extern "C" closure builtin_function_singlet_to_triplet_exchange(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate(0);
-    const Triplets& T = arg0.as_<Triplets>();
-
-    auto arg1 = Args.evaluate(1);
-    const Matrix& S2 = arg1.as_<Box<Matrix>>();
-
-    int N = T.size();
-
-    object_ptr<Box<Matrix>> R ( new Box<Matrix>(N,N) );
-
-    Matrix& S = *R;
-
-    for(int i=0;i<T.size();i++)
-	for(int j=0;j<i;j++) 
-	{
-	    int nmuts=0;
-	    int pos=-1;
-	    for(int p=0;p<3;p++)
-		if (T.sub_nuc(i,p) != T.sub_nuc(j,p)) {
-		    nmuts++;
-		    pos=p;
-		}
-	    assert(nmuts>0);
-	    assert(pos >= 0 and pos < 3);
-	
-	    S(j,i) = S(i,j) = 0;
-
-	    if (nmuts == 1) {
-
-		int l1 = T.sub_nuc(i,pos);
-		int l2 = T.sub_nuc(j,pos);
-		assert(l1 != l2);
-
-		S(j,i) = S(i,j) = S2(l1,l2);
-	    }
-	}
-
-    return R;
-}
-
 extern "C" closure builtin_function_singlet_to_triplet_rates(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
