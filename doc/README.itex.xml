@@ -1039,7 +1039,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
   <section xml:id="subst_models">
     <info><title>Substitution models</title></info>
       
-    <section xml:id="table_dna_models">
+    <section xml:id="dna_models">
       <info><title>DNA and RNA models</title></info>
 	
       <para>The default substitution model for DNA and RNA is tn93.</para>
@@ -1156,7 +1156,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
     </section>
 
-    <section xml:id="table_protein_models">
+    <section xml:id="protein_models">
       <info><title>Protein models</title></info>
 
       <para>The default substitution model for proteins is lg08.</para>
@@ -1306,7 +1306,114 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
     </section>
       
-    <section xml:id="table_triplet_models">
+    <section xml:id="doublet_models">
+      <info><title>Doublet models (RNA stems)</title></info>
+      <para>The doublets alphabet consists of RNA dinucleotides.  It is used to model RNA stems, where two nucleotides matched in the RNA second structure are highly correlated.</para>
+      <para>The default substitution model for doublets tn93_sym+x2_sym+f.</para>
+      <section>
+	<info><title>Substitution rates</title></info>
+      <informaltable>
+
+	<tgroup cols="3">
+	  <colspec colnum="1" colname="col1" colwidth="1*"/>
+	  <colspec colnum="2" colname="col2" colwidth="1*"/>
+	  <colspec colnum="3" colname="col3" colwidth="1*"/>
+	  <thead><row>
+	    <entry>Model</entry>
+	    <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+	    <entry>Summary</entry>
+	  </row></thead>
+	  
+	  <tbody>
+	    <row>
+	      <entry><userinput><replaceable>nuc_model</replaceable>+x2_sym+f</userinput></entry>
+	      <entry>df(nuc_model)+15</entry>
+	      <entry><para>This model has separate frequencies for each dinucleotide.</para>  <para>Both dinucleotide letters cannot change simultaneously, so double-changes must proceed through a possibly mismatched intermediate.</para>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry><userinput><replaceable>nuc_model</replaceable>+x2</userinput></entry>
+	      <entry>df(nuc_model)</entry>
+	      <entry><para>Dinucleotide frequencies are the product of independent nucleotide frequencies.</para>
+	      <para>This model should give the same likelihood as <replaceable>nuc_model</replaceable>.</para>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry><userinput>x2x2[q1,q2]</userinput></entry>
+	      <entry>df(q1)+df(q2)</entry>
+	      <entry><para>Doublet rate matrix constructed from a nucleotide rate matrix for each doublet position.</para>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry><userinput>gtr</userinput></entry>
+	      <entry>134</entry>
+	      <entry><para>Unequal exchangeabilities, unequal frequencies.</para>
+	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.damtp.cam.ac.uk/user/st321/CV_&amp;_Publications_files/STpapers-pdf/T86.pdf">
+		(Tavare, 1986)
+	      </link>
+	      </entry>
+	    </row>
+
+	  </tbody>
+	</tgroup>
+      </informaltable>
+      </section>
+    <section xml:id="doublet-frequencies">
+      <info><title>Frequencies</title></info>
+      <para>Frequencies are estimated by default.  Users can fix frequencies by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
+      <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
+      <programlisting language="java">hky85[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]+x2
+
+hky85_sym+x2_sym+f[pi=List[Pair["AA",0.01],Pair["AC",0.01],Pair["AG",0.01],Pair["AU",0.22],Pair["CA",0.01],Pair["CC",0.01],Pair["CG",0.22],Pair["CU",0.01],Pair["GA",0.01],Pair["GC",0.22],Pair["GG",0.01],Pair["GU",0.01],Pair["UA",0.22],Pair["UC",0.01],Pair["UG",0.01],Pair["UU",0.01]]]</programlisting>
+      <para>Frequencies can also be specified using functions:</para>
+      <!-- para>
+	<programlisting language="java">hky85_sym+x2_sym+f[pi=f1x4]            // nucleotide frequencies are estimated</programlisting>
+      </para -->
+
+
+      <informaltable>
+	<tgroup cols="3">
+	  <colspec colnum="1" colname="col1" colwidth="1*"/>
+	  <colspec colnum="2" colname="col2" colwidth="1*"/>
+	  <colspec colnum="3" colname="col3" colwidth="1*"/>
+	  <thead><row>
+	    <entry>Model</entry>
+	    <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+	    <entry>Summary</entry>
+	  </row></thead>
+
+	  <tbody>
+	    <row>
+	      <entry><userinput>Frequencies.uniform</userinput></entry>
+	      <entry>0</entry>
+	      <entry>Equal frequencies on dinucleotides</entry>
+	    </row>
+
+	    <!-- row>
+	      <entry><userinput>f1x4</userinput></entry>
+	      <entry>3</entry>
+	      <entry>Constructs triplet frequencies from independent nucleotide frequencies.</entry>
+	    </row -->
+
+	    <row>
+	      <entry><userinput>f2x4</userinput></entry>
+	      <entry>6</entry>
+	      <entry>Constructs triplet frequencies from independent nucleotide frequencies for each codon position.</entry>
+	    </row>
+	    
+	  </tbody>
+	</tgroup>
+      </informaltable>
+    </section>
+
+      <para>BAli-Phy interprets branch lengths for doublet models as 1/2 the number of substitutions per doublet.  Thus, they should be comparable to branch lengths under DNA/RNA nucleotide models.</para>
+      
+
+    </section>
+
+    <section xml:id="triplet_models">
       <info><title>Triplet models</title></info>
       <para>The triplets alphabet is similar to the codons alphabet, except that stop codons are not removed. Unlike the codons alphabet, the triplets alphabet has no knowledge of the genetic code.</para>
       <para>The default substitution model for triplets is tn93+x3.</para>
@@ -1336,6 +1443,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      <entry><userinput><replaceable>nuc_model</replaceable>+x3</userinput></entry>
 	      <entry>df(nuc_model)</entry>
 	      <entry><para>MG94-style rate matrix constructed from nucleotide rate matrix.</para>
+	             <para>This model should give the same likelihood as <replaceable>nuc_model</replaceable> on triplets, but not on codons.</para>
 	      </entry>
 	    </row>
 
@@ -1399,12 +1507,12 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	</para>
     </section>
 
-      <para>BAli-Phy interprets branch lengths for codon models as 1/3 the number of substitution per triplet.  Thus, they should be comparable to branch lengths under DNA/RNA models.</para>
+      <para>BAli-Phy interprets branch lengths for codon models as 1/3 the number of substitutions per triplet.  Thus, they should be comparable to branch lengths under DNA/RNA nucleotide models.</para>
       
 
     </section>
 
-    <section xml:id="table_codon_models">
+    <section xml:id="codon_models">
       <info><title>Codon models</title></info>
 
       <para>The default substitution model for codons is gy94.</para>
@@ -1522,6 +1630,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 		<entry><userinput><replaceable>nuc_model</replaceable>+x3_sym+f</userinput></entry>
 		<entry>df(nuc_model)+60</entry>
 		<entry><para>GY94-style rate matrix constructed from nucleotide exchangability matrix (dN/dS = 1).</para>
+	               <para>This model should give the same likelihood as <replaceable>nuc_model</replaceable> on codons only if the frequency of stop codons is zero.</para>
 		</entry>
 	      </row>
 
