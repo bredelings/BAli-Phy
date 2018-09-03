@@ -27,8 +27,11 @@ builtin builtin_weighted_frequency_matrix 2 "weighted_frequency_matrix" "SModel"
 builtin builtin_frequency_matrix 1 "frequency_matrix" "SModel";
 
 data F81 = F81 a b c d;
-data MixtureModel = MixtureModel a;
-data MixtureModels = MixtureModels a;
+data MixtureModel = MixtureModel [(Double,a)];
+-- Currently we are weirdly duplicating the mixture probabilities for each component.
+-- Probably the actual data-type is something like [(Double,\Int->a)] or [(Double,[a])] where all the [a] should have the same length.
+-- This would be a branch-dependent mixture
+data MixtureModels = MixtureModels [MixtureModel a];
 
 scaleMM x (MixtureModel dist            ) = MixtureModel [(p, scale x m) | (p, m) <- dist];
 
