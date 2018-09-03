@@ -35,7 +35,6 @@ scaleMM x (MixtureModel dist            ) = MixtureModel [(p, scale x m) | (p, m
 mixMM fs ms = MixtureModel $ mix fs [m | MixtureModel m <- ms];
 scale_MMs rs ms = [scaleMM r m | (r,m) <- zip' rs ms];
 scaled_mixture ms rs fs = mixMM fs (scale_MMs rs ms);
-scaled_mixture' a ms rs fs = scaled_mixture (map ($a) ms) rs fs;
 
 multiParameter model_fn values = MixtureModel [ (f*p, m) |(p,x) <- values, let {dist = case model_fn x of {MixtureModel d -> d}}, (f,m) <- dist];
 multiParameter_unit model_fn values = multiParameter (\x -> unit_mixture $ model_fn x) values;
