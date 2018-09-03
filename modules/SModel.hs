@@ -56,7 +56,7 @@ rate (ReversibleMarkov a s q pi l t r) = r;
 rate (MixtureModel d) = average (fmap2 rate d);
 
 branchTransitionP (MixtureModel l) t = let {r = rate (MixtureModel l)} 
-                                                              in map (\x -> qExp (scale (t/r) (snd x))) l;
+                                       in map (\x -> qExp (scale (t/r) (snd x))) l;
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 nBaseModels (MixtureModel l) = length l;
@@ -199,8 +199,8 @@ gamma_rates_dist alpha = gamma alpha (1.0/alpha);
 gamma_rates base alpha n = multi_rate_unif_bins base (gamma_rates_dist alpha) n;
 
 log_normal_rates_dist sigmaOverMu = log_normal lmu lsigma where {x = log(1.0+sigmaOverMu^2);
-                                                             lmu = -0.5*x;
-                                                             lsigma = sqrt x};
+                                                                 lmu = -0.5*x;
+                                                                 lsigma = sqrt x};
 
 log_normal_rates base sigmaOverMu n = multi_rate_unif_bins base (log_normal_rates_dist sigmaOverMu) n;
 
