@@ -330,6 +330,40 @@ int main(int argc,char* argv[])
 
 	    exit(0);
 	}
+	//---------- write out distance matrix --------- //
+	else if (analysis == "sequence") 
+	{
+	    check_supplied_filenames(2,files,false);
+
+	    alignment_sample As1;
+	    As1.load(args,files.front());
+	    files.erase(files.begin());
+
+	    alignment_sample As2;
+	    for(auto& file: files)
+	    {
+		// FIXME: handline std::cin like trees-distances.
+		As2.load(args, As1.sequence_names(), As1.get_alphabet(), file);
+	    }
+
+	    matrix<double> D(As2.size(), As1.size());
+	    for(int i=0; i<D.size1(); i++)
+	    {
+		for(int j=0; j<D.size2(); j++)
+		{
+		    D(i,j) = metric_fn(As2.Ms[i], As2.column_indices[i], As1.Ms[j], As1.column_indices[j]);
+		}
+	    }
+
+	    for(int i=0;i<D.size1();i++) {
+		vector<double> v(D.size2());
+		for(int j=0;j<v.size();j++)
+		    v[j] = D(i,j);
+		cout<<join(v,'\t')<<endl;
+	    }
+
+	    exit(0);
+	}
 	else if (analysis == "accuracy-matrix") 
 	{
 	    check_supplied_filenames(2,files,false);
