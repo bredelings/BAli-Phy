@@ -207,6 +207,26 @@ log_double_t discrete_uniform(vector< expression_ref >& x, const vector<double>&
     return 1;
 }
 
+log_double_t discrete_uniform_avoid(vector< expression_ref >& x, const vector<double>& v)
+{
+    assert(v.size() == 2);
+    int l = (int)v[0];
+    int u = (int)v[1];
+
+    if (x.size() != 1)
+	throw myexception()<<"discrete_uniform: expected one dimension, got "<<x.size()<<".";
+
+    int i1 = x[0].as_int();
+
+    int i2 = l+(u-l)*uniform();
+
+    if (i2 >= i1) i2++;
+
+    x[0] = i2;
+
+    return 1;
+}
+
 
 log_double_t dirichlet_proposal(std::vector< expression_ref >& x,const std::vector<double>& p)
 {
