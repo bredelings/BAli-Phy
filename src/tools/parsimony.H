@@ -29,6 +29,8 @@ matrix<int> unit_cost_matrix(const alphabet&);
 
 matrix<int> nucleotide_cost_matrix(const Triplets& T);
 
+matrix<int> nucleotide_cost_matrix(const Doublets& D);
+
 matrix<int> amino_acid_cost_matrix(const Codons& C);
 
 template <class B>

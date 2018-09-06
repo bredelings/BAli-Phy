@@ -37,6 +37,26 @@ matrix<int> unit_cost_matrix(const alphabet& a)
   return unit_cost_matrix(a.size());
 }
 
+unsigned n_nuc_differences(const Doublets& D,int i,int j)
+{
+  unsigned n=0;
+  for(int pos=0;pos<2;pos++)
+    if (D.sub_nuc(i,pos) != D.sub_nuc(j,pos))
+      n++;
+  return n;
+}
+
+matrix<int> nucleotide_cost_matrix(const Doublets& D)
+{
+  matrix<int> cost(D.size(), D.size());
+
+  for(int i=0;i<cost.size1();i++)
+    for(int j=0;j<cost.size2();j++)
+      cost(i,j) = n_nuc_differences(D,i,j);
+
+  return cost;
+}
+
 unsigned n_nuc_differences(const Triplets& T,int i,int j)
 {
   unsigned n=0;
@@ -45,6 +65,7 @@ unsigned n_nuc_differences(const Triplets& T,int i,int j)
       n++;
   return n;
 }
+
 
 matrix<int> nucleotide_cost_matrix(const Triplets& T)
 {
