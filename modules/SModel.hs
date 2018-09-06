@@ -153,6 +153,7 @@ m8a model_func mu gamma n_bins posP = multiParameter_unit model_func (m8a_omega_
 
 m8a_test model_func mu gamma n_bins posP posW posSelection = multiParameter_unit model_func (m8a_test_omega_dist mu gamma n_bins posP posW posSelection);
 
+-- OK, so if I change this from [Mixture Omega] to Mixture [Omega] or Mixture (\Int -> Omega), how do I apply the function model_func to all the omegas?
 branch_site model_func fs ws posP posW = MixtureModels [bg_mixture,fg_mixture] where
     {
 -- background omega distribution -- where the last omega is 1.0 (neutral)
