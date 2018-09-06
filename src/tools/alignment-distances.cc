@@ -109,7 +109,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     return args;
 }
 
-typedef long int (*distance_fn)(const matrix<int>& ,const vector< vector<int> >&,const matrix<int>& ,const vector< vector<int> >&);
+typedef double (*distance_fn)(const matrix<int>& ,const vector< vector<int> >&,const matrix<int>& ,const vector< vector<int> >&);
+
+typedef double (*pairwise_distance_fn)(int, int, const matrix<int>& ,const vector< vector<int> >&,const matrix<int>& ,const vector< vector<int> >&);
 
 matrix<double> distances(const vector<matrix<int> >& Ms,
 			 const vector< vector< vector<int> > >& column_indices,
@@ -137,9 +139,47 @@ double diameter(const matrix<double>& D)
     return total/N;
 }
 
-/// The number of letters in sequence i that are aligned against different letters in sequence j
-int pairwise_alignment_distance_asymmetric(int i, int j, const matrix<int>& M1 ,const vector< vector<int> >& CI1,const matrix<int>& M2, const vector< vector<int> >& CI2)
+long int pairwise_shared_homologies(int i, int j, const matrix<int>& M1 ,const vector< vector<int> >& CI1,const matrix<int>& M2, const vector< vector<int> >& CI2)
 {
+    int Li = CI1[i].size();
+    assert(Li == CI2[i].size());
+
+    long int num = 0;
+    for(int k=0; k<Li; k++)
+    {
+	int col1 = CI1[i][k];
+
+	// Not a homology in A1
+	if (not alphabet::is_feature(M1(col1,j))) continue;
+
+	// Not a shared homology with A2
+	int col2 = CI2[i][k];
+	if (M1(col1,j) != M2(col2,j)) continue;
+
+	num++;
+    }
+    return num;
+}
+
+
+long int total_homologies(const matrix<int>& M1)
+{
+    long int total = 0;
+    for(int c=0;c<M1.size1();c++)
+    {
+	int n = 0;
+	for(int j=0;j<M1.size2();j++)
+	    if (alphabet::is_feature(M1(c,j)))
+		n++;
+	total += n*(n-1)/2;
+    }
+    return total;
+}
+
+/// The number of letters in sequence i that are aligned against different letters in sequence j
+long int pairwise_alignment_distance_asymmetric(int i, int j, const matrix<int>& M1 ,const vector< vector<int> >& CI1,const matrix<int>& M2, const vector< vector<int> >& CI2)
+{
+    // broken
     int Li = CI1[i].size();
     assert(Li == CI2[i].size());
 
@@ -148,7 +188,7 @@ int pairwise_alignment_distance_asymmetric(int i, int j, const matrix<int>& M1 ,
     {
 	int col1 = CI1[i][k];
 	int col2 = CI2[i][k];
-	if (M1(col1,j) != M2(col2,j))
+	if (M1(j, col1) != M2(j, col2))
 	    diff++;
     }
     return diff;
@@ -174,6 +214,39 @@ Matrix pairwise_alignment_distances(const matrix<int>& M1 ,const vector< vector<
 
     return D;
 }
+
+double fraction_shared_homologies(const matrix<int>& M1 ,const vector< vector<int> >& CI1,const matrix<int>& M2, const vector< vector<int> >& CI2)
+{
+    int N = M1.size2();
+    long int shared = 0;
+    for(int i=0;i<N;i++)
+	for(int j=0;j<i;j++)
+	    shared += pairwise_shared_homologies(i,j,M1,CI1,M2,CI2);
+    long int total = total_homologies(M1);
+    return double(shared)/total;
+}
+
+double homology_recall(const matrix<int>& M1 ,const vector< vector<int> >& CI1,const matrix<int>& M2, const vector< vector<int> >& CI2)
+{
+    return fraction_shared_homologies(M1, CI1, M2, CI2);
+}
+
+double homology_unrecalled(const matrix<int>& M1 ,const vector< vector<int> >& CI1,const matrix<int>& M2, const vector< vector<int> >& CI2)
+{
+    return 1.0 - homology_recall(M1, CI1, M2, CI2);
+}
+
+double homology_accuracy(const matrix<int>& M1 ,const vector< vector<int> >& CI1,const matrix<int>& M2, const vector< vector<int> >& CI2)
+{
+    return fraction_shared_homologies(M2, CI2, M1, CI1);
+}
+
+double homology_inaccuracy(const matrix<int>& M1 ,const vector< vector<int> >& CI1,const matrix<int>& M2, const vector< vector<int> >& CI2)
+{
+    return 1.0 - homology_accuracy(M2, CI2, M1, CI1);
+}
+
+
 
 struct alignment_sample
 {
@@ -300,12 +373,23 @@ int main(int argc,char* argv[])
 	//--------- Determine distance function -------- //
 	distance_fn metric_fn;
 
-	metric_fn = splits_distance;
+	if (metric == "splits")
+	    metric_fn = splits_distance2;
 	if (metric == "splits2")
 	    metric_fn = splits_distance2;
 	else if (metric == "pairwise")
 	    metric_fn = pairs_distance;
-      
+	else if (metric == "recall")
+	    metric_fn = homology_recall;
+	else if (metric == "accuracy")
+	    metric_fn = homology_accuracy;
+	else if (metric == "nonrecall")
+	    metric_fn = homology_unrecalled;
+	else if (metric == "inaccuracy")
+	    metric_fn = homology_inaccuracy;
+	else
+	    throw myexception()<<"I don't recognize alignment metric '"<<metric<<"'";
+
 	//---------- write out distance matrix --------- //
 	if (analysis == "matrix") 
 	{
@@ -320,6 +404,36 @@ int main(int argc,char* argv[])
 	    }
 
 	    matrix<double> D = distances(As.Ms, As.column_indices, metric_fn);
+
+	    for(int i=0;i<D.size1();i++) {
+		vector<double> v(D.size2());
+		for(int j=0;j<v.size();j++)
+		    v[j] = D(i,j);
+		cout<<join(v,'\t')<<endl;
+	    }
+
+	    exit(0);
+	}
+	//---------- write out distance matrix --------- //
+	else if (analysis == "sequence") 
+	{
+	    check_supplied_filenames(2,files,false);
+
+	    alignment_sample As1;
+	    As1.load(args,files.front());
+	    files.erase(files.begin());
+
+	    alignment_sample As2;
+	    for(auto& file: files)
+	    {
+		// FIXME: handline std::cin like trees-distances.
+		As2.load(args, As1.sequence_names(), As1.get_alphabet(), file);
+	    }
+
+	    Matrix D(As2.size(), As1.size());
+	    for(int i=0; i<D.size1(); i++)
+		for(int j=0; j<D.size2(); j++)
+		    D(i,j) = metric_fn(As1.Ms[j], As1.column_indices[j], As2.Ms[i], As2.column_indices[i]);
 
 	    for(int i=0;i<D.size1();i++) {
 		vector<double> v(D.size2());

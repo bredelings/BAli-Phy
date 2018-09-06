@@ -550,7 +550,7 @@ matrix<int> get_SM(const alignment& A,const Tree& T) {
     return SM;
 }
 
-long int asymmetric_pairs_distance(const alignment& A1,const alignment& A2) {
+double asymmetric_pairs_distance(const alignment& A1,const alignment& A2) {
 
     matrix<int> M1 = M(A1);
     matrix<int> M2 = M(A2);
@@ -562,7 +562,7 @@ long int asymmetric_pairs_distance(const alignment& A1,const alignment& A2) {
 }
 
 
-long int asymmetric_pairs_distance(const matrix<int>& M1,const matrix<int>& M2,
+double asymmetric_pairs_distance(const matrix<int>& M1,const matrix<int>& M2,
 				   const vector< vector<int> >& column_indices2)
 {
     int mismatch=0;
@@ -588,7 +588,7 @@ long int asymmetric_pairs_distance(const matrix<int>& M1,const matrix<int>& M2,
     return mismatch;
 }
 
-long int homologies_total(const matrix<int>& M1) 
+double homologies_total(const matrix<int>& M1) 
 {
     long int total=0;
 
@@ -600,7 +600,7 @@ long int homologies_total(const matrix<int>& M1)
     return total;
 }
 
-long int homologies_preserved(const matrix<int>& M1,const matrix<int>& M2,
+double homologies_preserved(const matrix<int>& M1,const matrix<int>& M2,
 			      const vector< vector<int> >& column_indices2)
 {
     long int match=0;
@@ -661,7 +661,7 @@ vector<int> get_splitgroup_columns(const matrix<int>& M1,
     return label;
 }
 
-long int asymmetric_splits_distance(const alignment& A1,const alignment& A2) 
+double asymmetric_splits_distance(const alignment& A1,const alignment& A2) 
 {
 
     matrix<int> M1 = M(A1);
@@ -673,7 +673,7 @@ long int asymmetric_splits_distance(const alignment& A1,const alignment& A2)
     return asymmetric_splits_distance(M1,M2,column_indices2);
 }
 
-long int asymmetric_splits_distance2(const alignment& A1,const alignment& A2) 
+double asymmetric_splits_distance2(const alignment& A1,const alignment& A2) 
 {
 
     matrix<int> M1 = M(A1);
@@ -685,7 +685,7 @@ long int asymmetric_splits_distance2(const alignment& A1,const alignment& A2)
     return asymmetric_splits_distance2(M1,M2,column_indices2);
 }
 
-long int asymmetric_splits_distance(const matrix<int>& M1,const matrix<int>& M2,
+double asymmetric_splits_distance(const matrix<int>& M1,const matrix<int>& M2,
 				    const vector< vector<int> >& column_indices2)
 {
     int distance=0;
@@ -710,7 +710,7 @@ long int asymmetric_splits_distance(const matrix<int>& M1,const matrix<int>& M2,
     return distance;
 }
 
-long int asymmetric_splits_distance2(const matrix<int>& M1,const matrix<int>& M2,
+double asymmetric_splits_distance2(const matrix<int>& M1,const matrix<int>& M2,
 				     const vector< vector<int> >& column_indices2)
 {
     int distance=0;
@@ -735,12 +735,12 @@ long int asymmetric_splits_distance2(const matrix<int>& M1,const matrix<int>& M2
     return distance;
 }
 
-long int pairs_distance(const alignment& A1,const alignment& A2) 
+double pairs_distance(const alignment& A1,const alignment& A2) 
 {
     return asymmetric_pairs_distance(A1,A2) + asymmetric_pairs_distance(A2,A1);
 }
 
-long int pairs_distance(const matrix<int>& M1,const vector< vector<int> >& column_indices1,
+double pairs_distance(const matrix<int>& M1,const vector< vector<int> >& column_indices1,
 			const matrix<int>& M2,const vector< vector<int> >& column_indices2)
 {
     return asymmetric_pairs_distance(M1,M2,column_indices2)
@@ -748,24 +748,24 @@ long int pairs_distance(const matrix<int>& M1,const vector< vector<int> >& colum
 }
 
 
-long int splits_distance(const alignment& A1,const alignment& A2) 
+double splits_distance(const alignment& A1,const alignment& A2) 
 {
     return asymmetric_splits_distance(A1,A2)+asymmetric_splits_distance(A2,A1);
 }
 
-long int splits_distance2(const alignment& A1,const alignment& A2) 
+double splits_distance2(const alignment& A1,const alignment& A2) 
 {
     return asymmetric_splits_distance2(A1,A2)+asymmetric_splits_distance2(A2,A1);
 }
 
-long int splits_distance(const matrix<int>& M1,const vector< vector<int> >& column_indices1,
+double splits_distance(const matrix<int>& M1,const vector< vector<int> >& column_indices1,
 			 const matrix<int>& M2,const vector< vector<int> >& column_indices2)
 {
     return asymmetric_splits_distance(M1,M2,column_indices2)
 	+ asymmetric_splits_distance(M2,M1,column_indices1);
 }
 
-long int splits_distance2(const matrix<int>& M1,const vector< vector<int> >& column_indices1,
+double splits_distance2(const matrix<int>& M1,const vector< vector<int> >& column_indices1,
 			  const matrix<int>& M2,const vector< vector<int> >& column_indices2)
 {
     return asymmetric_splits_distance2(M1,M2,column_indices2)

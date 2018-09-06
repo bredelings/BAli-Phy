@@ -96,37 +96,37 @@ std::vector<int> get_splitgroup_columns(const matrix<int>& M1,
 					const matrix<int>& M2,
 					const std::vector<std::vector<int> >& columns);
 
-long int asymmetric_pairs_distance(const alignment& A1,const alignment& A2);
+double asymmetric_pairs_distance(const alignment& A1,const alignment& A2);
 
-long int asymmetric_pairs_distance(const matrix<int>& M1,const matrix<int>& M2,
+double asymmetric_pairs_distance(const matrix<int>& M1,const matrix<int>& M2,
 				   const std::vector<std::vector<int> >& column_indices2);
 
-long int asymmetric_splits_distance(const alignment& A1,const alignment& A2);
+double asymmetric_splits_distance(const alignment& A1,const alignment& A2);
 
-long int asymmetric_splits_distance(const matrix<int>& M1,const matrix<int>& M2,
+double asymmetric_splits_distance(const matrix<int>& M1,const matrix<int>& M2,
 				    const std::vector<std::vector<int> >& column_indices2);
 
-long int asymmetric_splits_distance2(const alignment& A1,const alignment& A2);
+double asymmetric_splits_distance2(const alignment& A1,const alignment& A2);
 
-long int asymmetric_splits_distance2(const matrix<int>& M1,const matrix<int>& M2,
+double asymmetric_splits_distance2(const matrix<int>& M1,const matrix<int>& M2,
 				    const std::vector<std::vector<int> >& column_indices2);
 
 double homologies_distance(const matrix<int>& M1,const matrix<int>& M2,
 			   const std::vector<std::vector<int> >& column_indices2);
 
-long int pairs_distance(const alignment& A1,const alignment& A2);
+double pairs_distance(const alignment& A1,const alignment& A2);
 
-long int pairs_distance(const matrix<int>& M1,const std::vector<std::vector<int> >& column_indices1,
+double pairs_distance(const matrix<int>& M1,const std::vector<std::vector<int> >& column_indices1,
 			const matrix<int>& M2,const std::vector<std::vector<int> >& column_indices2);
 
-long int splits_distance(const alignment& A1,const alignment& A2);
+double splits_distance(const alignment& A1,const alignment& A2);
 
-long int splits_distance(const matrix<int>& M1,const std::vector<std::vector<int> >& column_indices1,
+double splits_distance(const matrix<int>& M1,const std::vector<std::vector<int> >& column_indices1,
 			 const matrix<int>& M2,const std::vector<std::vector<int> >& column_indices2);
 
-long int splits_distance2(const alignment& A1,const alignment& A2);
+double splits_distance2(const alignment& A1,const alignment& A2);
 
-long int splits_distance2(const matrix<int>& M1,const std::vector<std::vector<int> >& column_indices1,
+double splits_distance2(const matrix<int>& M1,const std::vector<std::vector<int> >& column_indices1,
 			 const matrix<int>& M2,const std::vector<std::vector<int> >& column_indices2);
 
 void check_disconnected(const alignment& A, const Tree& T, const std::vector<int>& disconnected);

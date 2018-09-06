@@ -163,6 +163,8 @@ log_double_t bit_flip(std::vector< expression_ref >& x, const std::vector<double
 
 log_double_t discrete_uniform(std::vector< expression_ref >& x, const std::vector<double>& p);
 
+log_double_t discrete_uniform_avoid(std::vector< expression_ref >& x, const std::vector<double>& p);
+
 log_double_t move_scale_branch(Model& P);
 
 log_double_t move_subst_type_branch(Model& P);

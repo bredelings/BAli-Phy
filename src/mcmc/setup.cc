@@ -174,7 +174,7 @@ void add_integer_uniform_MH_moves(const Model& P, MCMC::MoveAll& M, double weigh
 	string name = "m_int_uniform_"+convertToString<int>(r);
 	double l = (int)bounds.lower_bound;
 	double u = (int)bounds.upper_bound;
-	add_modifiable_MH_move(P,name, discrete_uniform, r, {double(l),double(u)}, M, weight);
+	add_modifiable_MH_move(P,name, discrete_uniform_avoid, r, {double(l),double(u)}, M, weight);
     }
 }
 
@@ -545,7 +545,7 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Model& M)
     // Also, how hard would it be to make a Gibbs flipper?  We could (perhaps) run that once per iteration to avoid periodicity.
 
     add_boolean_MH_moves(M, parameter_moves, 1.5);
-    add_integer_uniform_MH_moves(M, parameter_moves, 0.1);
+    add_integer_uniform_MH_moves(M, parameter_moves, 1.0);
 
     // Actually there ARE slice moves for this, but they don't jump modes!
     add_real_MH_moves(M, parameter_moves, 0.1);
