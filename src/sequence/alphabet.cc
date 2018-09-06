@@ -506,7 +506,7 @@ valarray<double> get_doublet_frequencies_from_independent_nucleotide_frequencies
     valarray<double> fD(D.size());
     for(int i=0;i<fD.size();i++) {
 	fD[i] = 1.0;
-	for(int pos=0;pos<3;pos++)
+	for(int pos=0;pos<2;pos++)
 	    fD[i] *= fN[ D.sub_nuc(i,pos) ];
     }
 
