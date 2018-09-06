@@ -28,6 +28,11 @@ double quantile(double eta, double p)
     return -log1p(-p)/eta;
 }
 
+double reverse_quantile(double eta, double p)
+{
+    return quantile(eta,1.0 - p);
+}
+
 struct demography
 {
     vector<double> coalescent_rates;
@@ -51,51 +56,47 @@ vector<double> get_quantiles(const vector<double>& P, const vector<double>& coal
 
     vector<double> quantiles(P.size());
     int level = 0;
-    double t1 = 0;
-    double p1 = 0;
+    double t = 0;
+    double q1 = 1.0;
     for(int i = 0; i < P.size(); i++)
     {
-        // We have that Pr(X > t1 = q1)
-	double q1 = 1.0 - p1;
+	double q2 = 1.0 - P[i];
 
+        // We have that Pr(X > t = q1)
         // We are trying to find the t2 such that Pr(X > t2 = q2)
-	double p2 = P[i];
-	double q2 = 1.0 - p2;
-	double t2 = t1;
 
-	// Pr(X > t2) = Pr(X > t1) * Pr(X > t2 | X > t1)
-	//            = Pr(X > t1) * Pr(X - t2 > t2 - t1)
-	// Pr(X - t2 > t2 - t1) = Pr(X > t2) / Pr(X > t1) = q2 / q1;
-	q2 /= q1;
+	// Pr(X > t1) = q1
+	// Pr(X > t2) = q2
+	// Pr(X > t2|X>t1) = Pr(X > t2)/Pr(X > t1) = q2/q1
 	
 	for(;;level++)
 	{
 	    assert(level < level_boundaries.size());
 
-	    double delta_t = quantile(coalescent_rates[level], 1.0 - q2);
-	    if (level+1 >= level_boundaries.size() or t2 + delta_t < level_boundaries[level+1])
+	    double t2 = t + reverse_quantile(coalescent_rates[level], q2/q1);
+
+	    // If t+delta_t is within the current level then we are done.
+	    if (level+1 >= level_boundaries.size() or t2 < level_boundaries[level+1])
 	    {
-		quantiles[i] = t2 + delta_t;
-		t1 = quantiles[i];
-		p1 = p2;
+		quantiles[i] = t2;
 		break;
 	    }
+	    // If t+delta_t is not within the current level, then we need to continue to the next level.
 	    else
 	    {
 		assert(level + 1 < level_boundaries.size());
-		t2 = level_boundaries[level+1];
-		delta_t = level_boundaries[level+1] - level_boundaries[level];
-		assert(delta_t >= 0);
+		assert(level_boundaries[level + 1] > t);
 
-		double q_level = 1 - cdf(coalescent_rates[level], delta_t);
+		// Pr(X > t1 + delta) = Pr (X > t) * Pr(X > t1 + delta| X > t1)
 
-		// 1-p' = (1-p)/(1-p_level)
-		//      = (1-p_level - p + p_level)/(1-p_level)
-		//      = 1 - (p-p_level)/(1-p_level)
-
-		q2 /= q_level;
+		q1 *= 1.0 - cdf(coalescent_rates[level], level_boundaries[level+1] - t);
+		t   = level_boundaries[level + 1];
 	    }
 	}
+
+	// Reset (t1,p1) for the next loop iteration
+	t = quantiles[i];
+	q1 = 1.0 - P[i];
     }
 
     return quantiles;
