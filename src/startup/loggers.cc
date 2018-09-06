@@ -263,7 +263,7 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
 	const alphabet& a = (*P)[i].get_alphabet();
 	TL->add_field("#substs"+convertToString(i+1), [i,cost = unit_cost_matrix(a)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
 	if (const Doublets* Do = dynamic_cast<const Doublets*>(&a))
-	    ;
+	    TL->add_field("#substs(nuc)"+convertToString(i+1), [i,cost = nucleotide_cost_matrix(*Do)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
 	if (const Triplets* Tr = dynamic_cast<const Triplets*>(&a))
 	    TL->add_field("#substs(nuc)"+convertToString(i+1), [i,cost = nucleotide_cost_matrix(*Tr)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
 	if (const Codons* C = dynamic_cast<const Codons*>(&a))
