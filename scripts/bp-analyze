@@ -409,6 +409,8 @@ sub html_header
 //	font-size: 90%;
 	display: table-cell;
 	text-align: right; 
+        // Leave space for the menubar
+        padding-right: 0.75em;
 }
 #topbar #path {
 	font-weight: bold;
