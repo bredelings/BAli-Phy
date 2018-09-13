@@ -243,6 +243,22 @@ void add_alignment_and_parameter_moves(MCMC::MoveAll& moves, Model& M, double we
 	    moves.add(weight, MCMC::MH_Move(Generic_Proposal(proposal),"realign_and_sample_"+pname2), enabled);
 	}
     }
+
+    int n_scales = dynamic_cast<const Parameters&>(M).n_branch_scales();
+    for(int s=0; s<n_scales; s++)
+    {
+	string pname = "Scale["+std::to_string(s+1)+"]";
+	vector<int> partitions = dynamic_cast<const Parameters&>(M).partitions_for_scale(s);
+
+	if (auto r = dynamic_cast<const Parameters&>(M).branch_scale_modifiable_reg(s))
+	{
+	    auto proposal = [r,partitions](Model& P){
+		return realign_and_propose_parameter(P, *r, partitions, log_scaled(more_than(0.0, shift_laplace)), {0.25}) ;
+	    };
+
+	    moves.add(weight, MCMC::MH_Move(Generic_Proposal(proposal),"realign_and_sample_"+pname), enabled);
+	}
+    }
 }
 
 //FIXME - how to make a number of variants with certain things fixed, for burn-in?
