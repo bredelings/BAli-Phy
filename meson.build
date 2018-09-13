@@ -139,14 +139,4 @@ test('bali-phy testsuite',
      workdir: join_paths(meson.source_root(),'tests'),
      args:[baliphy.full_path(), packagepath])
 
-# Run external likelihood testsuite
 
-testiphy = find_program(join_paths(meson.source_root(),'testiphy/testiphy'), required: false)
-
-if testiphy.found()
-  test('testiphy (likelihood testsuite)',
-       testiphy,
-       timeout: 3000,
-       workdir: join_paths(meson.source_root(),'testiphy'),
-       args:[baliphy.full_path(), packagepath])
-endif
