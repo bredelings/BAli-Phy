@@ -508,7 +508,8 @@ int main(int argc,char* argv[])
 	{
 	    auto P = M.as<Parameters>();
 	    for(int i=0;i<P->n_branch_scales();i++)
-		P->branch_scale(i, 1.0);
+		if (P->branch_scale_modifiable_reg(i))
+		    P->branch_scale(i, 1.0);
 	}
 
 	set_initial_parameter_values(*M,args);
