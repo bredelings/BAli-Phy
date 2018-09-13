@@ -21,6 +21,7 @@ libbaliphy = static_library('bali-phy', libbaliphy_sources,
 			    link_args: extra_link_args)
 
 baliphy_sources = ['parser/parse.cc','dp/dp_hmm.cc','parser/desugar.cc',
+   'parser/driver.cc', 'parser/lexer.cc', 'parser/parser.cc',
    'substitution/substitution.cc', 'util/ptree.cc',
    'mcmc/moves.cc', 'math/exponential.cc','math/eigenvalue.cc',
    'models/parameters.cc','prior.cc','mcmc/mcmc.cc', 'probability/choose.cc',
