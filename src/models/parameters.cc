@@ -1291,12 +1291,14 @@ int Parameters::branch_scale_index(int i) const
     return PC->scale_parameter_indices[i];
 }
 
+optional<int> Parameters::branch_scale_modifiable_reg(int s) const
+{
+    return compute_expression_is_modifiable_reg(branch_scale_index(s));
+}
 
 void Parameters::branch_scale(int s, double x)
 {
-    auto R = compute_expression_is_modifiable_reg(branch_scale_index(s));
-
-    if (R)
+    if (auto R = branch_scale_modifiable_reg(s))
 	return set_modifiable_value(*R, x);
     else
 	throw myexception()<<"Branch scale "<<s+1<<" is not directly modifiable!";

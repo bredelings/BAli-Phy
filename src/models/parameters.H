@@ -416,6 +416,8 @@ public:
 
     int branch_scale_index(int i) const;
 
+    boost::optional<int> branch_scale_modifiable_reg(int i) const;
+
     double branch_scale(int i) const;
 
     void branch_scale(int i,double); 
