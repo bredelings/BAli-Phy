@@ -4,6 +4,9 @@ UNRELEASED
  - Haskell
    - Refactored functions out of Prelude into Data.List, etc.
    - Implement -X NoImplicitPrelude
+ - Models
+   + Add models x2, x2_sym, x2x2 for RNA stems.
+   - Add doublet alphabet for RNA stems.
 
 * 3.3 (Aug 6, 2018)
   - Fixes
