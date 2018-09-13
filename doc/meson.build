@@ -1,13 +1,20 @@
 install_data(['README.html','README.xhtml','README.pdf'], install_dir: join_paths(get_option('datadir'),'doc/bali-phy'))
 
 pandoc = find_program('pandoc', required: false)
+pandoc_cmd = [pandoc, '-s', '-t', 'man']
+
+# -f markdown-smart is necessary to avoid changing -- to a single en-dash
+# But its only present in version 2 or higher.
+pandoc_version = run_command(pandoc,['--version']).stdout().split('\n')[0].split(' ')[1].split('.')[0]
+if pandoc_version == '2'
+  pandoc_cmd = pandoc_cmd + ['-f', 'markdown-smart']
+endif
 
 if pandoc.found()
   foreach prog : all_progs+['bp-analyze']
     markdown = files('man/'+prog+'.md')
     manpage = prog+'.1'
-    # -f markdown-smart is necessary to avoid changing -- to a single en-dash
-    custom_target(manpage,command:[pandoc, '-s', '-f', 'markdown-smart', '-t', 'man', markdown], output:manpage, capture: true, install: true, install_dir: join_paths(get_option('mandir'),'man1'))
+    custom_target(manpage, command:pandoc_cmd + [markdown], output:manpage, capture: true, install: true, install_dir: join_paths(get_option('mandir'),'man1'))
   endforeach
 
   # Install the html for the dev guide

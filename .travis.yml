@@ -1,7 +1,6 @@
 sudo: required
 cache: apt
 language: cpp
-pandoc_version: 2.2
 
 matrix:
   include:
