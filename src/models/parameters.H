@@ -348,6 +348,8 @@ public:
 
     std::vector<int> partitions_for_imodel(int i) const;
 
+    std::vector<int> partitions_for_scale(int i) const;
+
     boost::optional<int> scale_index_for_partition(int i) const {return PC->scale_for_partition[i];}
   
     void set_beta(double b);
