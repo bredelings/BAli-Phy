@@ -1,16 +1,17 @@
 install_data(['README.html','README.xhtml','README.pdf'], install_dir: join_paths(get_option('datadir'),'doc/bali-phy'))
 
 pandoc = find_program('pandoc', required: false)
-pandoc_cmd = [pandoc, '-s', '-t', 'man']
-
-# -f markdown-smart is necessary to avoid changing -- to a single en-dash
-# But its only present in version 2 or higher.
-pandoc_version = run_command(pandoc,['--version']).stdout().split('\n')[0].split(' ')[1].split('.')[0]
-if pandoc_version == '2'
-  pandoc_cmd = pandoc_cmd + ['-f', 'markdown-smart']
-endif
 
 if pandoc.found()
+  pandoc_cmd = [pandoc, '-s', '-t', 'man']
+
+  # -f markdown-smart is necessary to avoid changing -- to a single en-dash
+  # But its only present in version 2 or higher.
+  pandoc_version = run_command(pandoc,['--version']).stdout().split('\n')[0].split(' ')[1].split('.')[0]
+  if pandoc_version == '2'
+    pandoc_cmd = pandoc_cmd + ['-f', 'markdown-smart']
+  endif
+
   foreach prog : all_progs+['bp-analyze']
     markdown = files('man/'+prog+'.md')
     manpage = prog+'.1'
