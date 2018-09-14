@@ -8,6 +8,9 @@
 
 %code requires {
   # include <string>
+  # include <iostream>
+  # include "computation/expression/expression_ref.H"
+  # include "computation/expression/var.H"
   class driver;
 }
 
@@ -37,31 +40,31 @@
 
 %token <std::string> IDENTIFIER "identifier"
 %token <int> NUMBER "number"
-%type  <int> exp
+%type  <expression_ref> exp
 
 %printer { yyoutput << $$; } <*>;
 
 %%
 %start unit;
-unit: assignments exp  { drv.result = $2; };
+unit: assignments exp  { std::cout<< $2 << std::endl; };
 
 assignments:
   %empty                 {}
 | assignments assignment {};
 
 assignment:
-  "identifier" ":=" exp { drv.variables[$1] = $3; };
+"identifier" ":=" exp { std::cout<< $1 <<" = " << $3 <<std::endl; };
 
 %left "+" "-";
 %left "*" "/";
 exp:
-  exp "+" exp   { $$ = $1 + $3; }
-| exp "-" exp   { $$ = $1 - $3; }
-| exp "*" exp   { $$ = $1 * $3; }
-| exp "/" exp   { $$ = $1 / $3; }
+  exp "+" exp   { $$ = expression_ref{var("+"),$1,$3}; }
+| exp "-" exp   { $$ = expression_ref{var("-"),$1,$3}; }
+| exp "*" exp   { $$ = expression_ref{var("*"),$1,$3}; }
+| exp "/" exp   { $$ = expression_ref{var("/"),$1,$3}; }
 | "(" exp ")"   { std::swap ($$, $2); }
-| "identifier"  { $$ = drv.variables[$1]; }
-| "number"      { std::swap ($$, $1); };
+| "identifier"  { $$ = var($1); }
+| "number"      { $$ = $1; };
 %%
 
 void
