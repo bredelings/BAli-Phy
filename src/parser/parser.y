@@ -55,8 +55,6 @@ assignments:
 assignment:
 "identifier" ":=" exp { std::cout<< $1 <<" = " << $3 <<std::endl; };
 
-%left "+" "-";
-%left "*" "/";
 exp:
   exp "+" exp   { $$ = expression_ref{var("+"),$1,$3}; }
 | exp "-" exp   { $$ = expression_ref{var("-"),$1,$3}; }
