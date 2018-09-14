@@ -319,7 +319,6 @@ namespace yy {
       // "INTEGER"
       // "PRIMINTEGER"
       // "PRIMWORD"
-      // "number"
       char dummy5[sizeof(int)];
 
       // "VARID"
@@ -332,7 +331,6 @@ namespace yy {
       // "QCONSYM"
       // "STRING"
       // "PRIMSTRING"
-      // "identifier"
       char dummy6[sizeof(std::string)];
 };
 
@@ -453,7 +451,7 @@ namespace yy {
         TOK_DOT = 351,
         TOK_TYPEAPP = 352,
         TOK_OCURLY = 353,
-        TOK_CCURCLY = 354,
+        TOK_CCURLY = 354,
         TOK_VOCURLY = 355,
         TOK_VCCURLY = 356,
         TOK_OBRACK = 357,
@@ -467,31 +465,27 @@ namespace yy {
         TOK_OPARENBAR = 365,
         TOK_CPARENBAR = 366,
         TOK_SEMI = 367,
-        TOK_BACKQUOTE = 368,
-        TOK_SIMPLEQUOTE = 369,
-        TOK_ASSIGN = 370,
-        TOK_PLUS = 371,
-        TOK_SLASH = 372,
-        TOK_VARID = 373,
-        TOK_CONID = 374,
-        TOK_VARSYM = 375,
-        TOK_CONSYM = 376,
-        TOK_QVARID = 377,
-        TOK_QCONID = 378,
-        TOK_QVARSYM = 379,
-        TOK_QCONSYM = 380,
-        TOK_CHAR = 381,
-        TOK_STRING = 382,
-        TOK_INTEGER = 383,
-        TOK_RATIONAL = 384,
-        TOK_PRIMCHAR = 385,
-        TOK_PRIMSTRING = 386,
-        TOK_PRIMINTEGER = 387,
-        TOK_PRINTWORD = 388,
-        TOK_PRIMFLOAT = 389,
-        TOK_PRIMDOUBLE = 390,
-        TOK_IDENTIFIER = 391,
-        TOK_NUMBER = 392
+        TOK_COMMA = 368,
+        TOK_BACKQUOTE = 369,
+        TOK_SIMPLEQUOTE = 370,
+        TOK_VARID = 371,
+        TOK_CONID = 372,
+        TOK_VARSYM = 373,
+        TOK_CONSYM = 374,
+        TOK_QVARID = 375,
+        TOK_QCONID = 376,
+        TOK_QVARSYM = 377,
+        TOK_QCONSYM = 378,
+        TOK_CHAR = 379,
+        TOK_STRING = 380,
+        TOK_INTEGER = 381,
+        TOK_RATIONAL = 382,
+        TOK_PRIMCHAR = 383,
+        TOK_PRIMSTRING = 384,
+        TOK_PRIMINTEGER = 385,
+        TOK_PRINTWORD = 386,
+        TOK_PRIMFLOAT = 387,
+        TOK_PRIMDOUBLE = 388
       };
     };
 
@@ -998,7 +992,7 @@ namespace yy {
 
     static inline
     symbol_type
-    make_CCURCLY (const location_type& l);
+    make_CCURLY (const location_type& l);
 
     static inline
     symbol_type
@@ -1054,23 +1048,15 @@ namespace yy {
 
     static inline
     symbol_type
+    make_COMMA (const location_type& l);
+
+    static inline
+    symbol_type
     make_BACKQUOTE (const location_type& l);
 
     static inline
     symbol_type
     make_SIMPLEQUOTE (const location_type& l);
-
-    static inline
-    symbol_type
-    make_ASSIGN (const location_type& l);
-
-    static inline
-    symbol_type
-    make_PLUS (const location_type& l);
-
-    static inline
-    symbol_type
-    make_SLASH (const location_type& l);
 
     static inline
     symbol_type
@@ -1143,14 +1129,6 @@ namespace yy {
     static inline
     symbol_type
     make_PRIMDOUBLE (const double& v, const location_type& l);
-
-    static inline
-    symbol_type
-    make_IDENTIFIER (const std::string& v, const location_type& l);
-
-    static inline
-    symbol_type
-    make_NUMBER (const int& v, const location_type& l);
 
 
     /// Build a parser object.
@@ -1237,7 +1215,7 @@ namespace yy {
   // number is the opposite.  If YYTABLE_NINF, syntax error.
   static const unsigned char yytable_[];
 
-  static const short yycheck_[];
+  static const signed char yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -1359,12 +1337,12 @@ namespace yy {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 35,     ///< Last index in yytable_.
+      yylast_ = 21,     ///< Last index in yytable_.
       yynnts_ = 5,  ///< Number of nonterminal symbols.
       yyfinal_ = 3, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 138  ///< Number of tokens.
+      yyntokens_ = 134  ///< Number of tokens.
     };
 
 
@@ -1419,10 +1397,9 @@ namespace yy {
       95,    96,    97,    98,    99,   100,   101,   102,   103,   104,
      105,   106,   107,   108,   109,   110,   111,   112,   113,   114,
      115,   116,   117,   118,   119,   120,   121,   122,   123,   124,
-     125,   126,   127,   128,   129,   130,   131,   132,   133,   134,
-     135,   136,   137
+     125,   126,   127,   128,   129,   130,   131,   132,   133
     };
-    const unsigned user_token_number_max_ = 392;
+    const unsigned user_token_number_max_ = 388;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int> (t) <= yyeof_)
@@ -1454,42 +1431,40 @@ namespace yy {
   {
     switch (other.type_get ())
     {
-      case 126: // "CHAR"
-      case 130: // "PRIMCHAR"
+      case 124: // "CHAR"
+      case 128: // "PRIMCHAR"
         value.copy< char > (other.value);
         break;
 
-      case 129: // "RATIONAL"
-      case 135: // "PRIMDOUBLE"
+      case 127: // "RATIONAL"
+      case 133: // "PRIMDOUBLE"
         value.copy< double > (other.value);
         break;
 
-      case 142: // exp
+      case 138: // exp
         value.copy< expression_ref > (other.value);
         break;
 
-      case 134: // "PRIMFLOAT"
+      case 132: // "PRIMFLOAT"
         value.copy< float > (other.value);
         break;
 
-      case 128: // "INTEGER"
-      case 132: // "PRIMINTEGER"
-      case 133: // "PRIMWORD"
-      case 137: // "number"
+      case 126: // "INTEGER"
+      case 130: // "PRIMINTEGER"
+      case 131: // "PRIMWORD"
         value.copy< int > (other.value);
         break;
 
-      case 118: // "VARID"
-      case 119: // "CONID"
-      case 120: // "VARSYM"
-      case 121: // "CONSYM"
-      case 122: // "QVARID"
-      case 123: // "QCONID"
-      case 124: // "QVARSYM"
-      case 125: // "QCONSYM"
-      case 127: // "STRING"
-      case 131: // "PRIMSTRING"
-      case 136: // "identifier"
+      case 116: // "VARID"
+      case 117: // "CONID"
+      case 118: // "VARSYM"
+      case 119: // "CONSYM"
+      case 120: // "QVARID"
+      case 121: // "QCONID"
+      case 122: // "QVARSYM"
+      case 123: // "QCONSYM"
+      case 125: // "STRING"
+      case 129: // "PRIMSTRING"
         value.copy< std::string > (other.value);
         break;
 
@@ -1508,42 +1483,40 @@ namespace yy {
     (void) v;
     switch (this->type_get ())
     {
-      case 126: // "CHAR"
-      case 130: // "PRIMCHAR"
+      case 124: // "CHAR"
+      case 128: // "PRIMCHAR"
         value.copy< char > (v);
         break;
 
-      case 129: // "RATIONAL"
-      case 135: // "PRIMDOUBLE"
+      case 127: // "RATIONAL"
+      case 133: // "PRIMDOUBLE"
         value.copy< double > (v);
         break;
 
-      case 142: // exp
+      case 138: // exp
         value.copy< expression_ref > (v);
         break;
 
-      case 134: // "PRIMFLOAT"
+      case 132: // "PRIMFLOAT"
         value.copy< float > (v);
         break;
 
-      case 128: // "INTEGER"
-      case 132: // "PRIMINTEGER"
-      case 133: // "PRIMWORD"
-      case 137: // "number"
+      case 126: // "INTEGER"
+      case 130: // "PRIMINTEGER"
+      case 131: // "PRIMWORD"
         value.copy< int > (v);
         break;
 
-      case 118: // "VARID"
-      case 119: // "CONID"
-      case 120: // "VARSYM"
-      case 121: // "CONSYM"
-      case 122: // "QVARID"
-      case 123: // "QCONID"
-      case 124: // "QVARSYM"
-      case 125: // "QCONSYM"
-      case 127: // "STRING"
-      case 131: // "PRIMSTRING"
-      case 136: // "identifier"
+      case 116: // "VARID"
+      case 117: // "CONID"
+      case 118: // "VARSYM"
+      case 119: // "CONSYM"
+      case 120: // "QVARID"
+      case 121: // "QCONID"
+      case 122: // "QVARSYM"
+      case 123: // "QCONSYM"
+      case 125: // "STRING"
+      case 129: // "PRIMSTRING"
         value.copy< std::string > (v);
         break;
 
@@ -1627,42 +1600,40 @@ namespace yy {
     // Type destructor.
   switch (yytype)
     {
-      case 126: // "CHAR"
-      case 130: // "PRIMCHAR"
+      case 124: // "CHAR"
+      case 128: // "PRIMCHAR"
         value.template destroy< char > ();
         break;
 
-      case 129: // "RATIONAL"
-      case 135: // "PRIMDOUBLE"
+      case 127: // "RATIONAL"
+      case 133: // "PRIMDOUBLE"
         value.template destroy< double > ();
         break;
 
-      case 142: // exp
+      case 138: // exp
         value.template destroy< expression_ref > ();
         break;
 
-      case 134: // "PRIMFLOAT"
+      case 132: // "PRIMFLOAT"
         value.template destroy< float > ();
         break;
 
-      case 128: // "INTEGER"
-      case 132: // "PRIMINTEGER"
-      case 133: // "PRIMWORD"
-      case 137: // "number"
+      case 126: // "INTEGER"
+      case 130: // "PRIMINTEGER"
+      case 131: // "PRIMWORD"
         value.template destroy< int > ();
         break;
 
-      case 118: // "VARID"
-      case 119: // "CONID"
-      case 120: // "VARSYM"
-      case 121: // "CONSYM"
-      case 122: // "QVARID"
-      case 123: // "QCONID"
-      case 124: // "QVARSYM"
-      case 125: // "QCONSYM"
-      case 127: // "STRING"
-      case 131: // "PRIMSTRING"
-      case 136: // "identifier"
+      case 116: // "VARID"
+      case 117: // "CONID"
+      case 118: // "VARSYM"
+      case 119: // "CONSYM"
+      case 120: // "QVARID"
+      case 121: // "QCONID"
+      case 122: // "QVARSYM"
+      case 123: // "QCONSYM"
+      case 125: // "STRING"
+      case 129: // "PRIMSTRING"
         value.template destroy< std::string > ();
         break;
 
@@ -1687,42 +1658,40 @@ namespace yy {
     super_type::move (s);
     switch (this->type_get ())
     {
-      case 126: // "CHAR"
-      case 130: // "PRIMCHAR"
+      case 124: // "CHAR"
+      case 128: // "PRIMCHAR"
         value.move< char > (s.value);
         break;
 
-      case 129: // "RATIONAL"
-      case 135: // "PRIMDOUBLE"
+      case 127: // "RATIONAL"
+      case 133: // "PRIMDOUBLE"
         value.move< double > (s.value);
         break;
 
-      case 142: // exp
+      case 138: // exp
         value.move< expression_ref > (s.value);
         break;
 
-      case 134: // "PRIMFLOAT"
+      case 132: // "PRIMFLOAT"
         value.move< float > (s.value);
         break;
 
-      case 128: // "INTEGER"
-      case 132: // "PRIMINTEGER"
-      case 133: // "PRIMWORD"
-      case 137: // "number"
+      case 126: // "INTEGER"
+      case 130: // "PRIMINTEGER"
+      case 131: // "PRIMWORD"
         value.move< int > (s.value);
         break;
 
-      case 118: // "VARID"
-      case 119: // "CONID"
-      case 120: // "VARSYM"
-      case 121: // "CONSYM"
-      case 122: // "QVARID"
-      case 123: // "QCONID"
-      case 124: // "QVARSYM"
-      case 125: // "QCONSYM"
-      case 127: // "STRING"
-      case 131: // "PRIMSTRING"
-      case 136: // "identifier"
+      case 116: // "VARID"
+      case 117: // "CONID"
+      case 118: // "VARSYM"
+      case 119: // "CONSYM"
+      case 120: // "QVARID"
+      case 121: // "QCONID"
+      case 122: // "QVARSYM"
+      case 123: // "QCONSYM"
+      case 125: // "STRING"
+      case 129: // "PRIMSTRING"
         value.move< std::string > (s.value);
         break;
 
@@ -1794,7 +1763,7 @@ namespace yy {
      355,   356,   357,   358,   359,   360,   361,   362,   363,   364,
      365,   366,   367,   368,   369,   370,   371,   372,   373,   374,
      375,   376,   377,   378,   379,   380,   381,   382,   383,   384,
-     385,   386,   387,   388,   389,   390,   391,   392
+     385,   386,   387,   388
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
@@ -2382,9 +2351,9 @@ namespace yy {
   }
 
   parser::symbol_type
-  parser::make_CCURCLY (const location_type& l)
+  parser::make_CCURLY (const location_type& l)
   {
-    return symbol_type (token::TOK_CCURCLY, l);
+    return symbol_type (token::TOK_CCURLY, l);
   }
 
   parser::symbol_type
@@ -2466,6 +2435,12 @@ namespace yy {
   }
 
   parser::symbol_type
+  parser::make_COMMA (const location_type& l)
+  {
+    return symbol_type (token::TOK_COMMA, l);
+  }
+
+  parser::symbol_type
   parser::make_BACKQUOTE (const location_type& l)
   {
     return symbol_type (token::TOK_BACKQUOTE, l);
@@ -2475,24 +2450,6 @@ namespace yy {
   parser::make_SIMPLEQUOTE (const location_type& l)
   {
     return symbol_type (token::TOK_SIMPLEQUOTE, l);
-  }
-
-  parser::symbol_type
-  parser::make_ASSIGN (const location_type& l)
-  {
-    return symbol_type (token::TOK_ASSIGN, l);
-  }
-
-  parser::symbol_type
-  parser::make_PLUS (const location_type& l)
-  {
-    return symbol_type (token::TOK_PLUS, l);
-  }
-
-  parser::symbol_type
-  parser::make_SLASH (const location_type& l)
-  {
-    return symbol_type (token::TOK_SLASH, l);
   }
 
   parser::symbol_type
@@ -2603,22 +2560,10 @@ namespace yy {
     return symbol_type (token::TOK_PRIMDOUBLE, v, l);
   }
 
-  parser::symbol_type
-  parser::make_IDENTIFIER (const std::string& v, const location_type& l)
-  {
-    return symbol_type (token::TOK_IDENTIFIER, v, l);
-  }
-
-  parser::symbol_type
-  parser::make_NUMBER (const int& v, const location_type& l)
-  {
-    return symbol_type (token::TOK_NUMBER, v, l);
-  }
-
 
 
 } // yy
-#line 2622 "parser.hh" // lalr1.cc:380
+#line 2567 "parser.hh" // lalr1.cc:380
 
 
 

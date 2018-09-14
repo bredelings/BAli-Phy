@@ -130,7 +130,7 @@
   TYPEAPP       "TYPEAPP"
 
   OCURLY        "{"
-  CCURCLY       "}"
+  CCURLY        "}"
   VOCURLY       "vocurly"
   VCCURLY       "vccurly"
   OBRACK        "["
@@ -144,6 +144,7 @@
   OPARENBAR     "(|"
   CPARENBAR     "|)"
   SEMI          ";"
+  COMMA         ","
   BACKQUOTE     "`"
   SIMPLEQUOTE   "'"
 ;

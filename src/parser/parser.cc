@@ -251,42 +251,40 @@ namespace yy {
   {
     switch (that.type_get ())
     {
-      case 126: // "CHAR"
-      case 130: // "PRIMCHAR"
+      case 124: // "CHAR"
+      case 128: // "PRIMCHAR"
         value.copy< char > (that.value);
         break;
 
-      case 129: // "RATIONAL"
-      case 135: // "PRIMDOUBLE"
+      case 127: // "RATIONAL"
+      case 133: // "PRIMDOUBLE"
         value.copy< double > (that.value);
         break;
 
-      case 142: // exp
+      case 138: // exp
         value.copy< expression_ref > (that.value);
         break;
 
-      case 134: // "PRIMFLOAT"
+      case 132: // "PRIMFLOAT"
         value.copy< float > (that.value);
         break;
 
-      case 128: // "INTEGER"
-      case 132: // "PRIMINTEGER"
-      case 133: // "PRIMWORD"
-      case 137: // "number"
+      case 126: // "INTEGER"
+      case 130: // "PRIMINTEGER"
+      case 131: // "PRIMWORD"
         value.copy< int > (that.value);
         break;
 
-      case 118: // "VARID"
-      case 119: // "CONID"
-      case 120: // "VARSYM"
-      case 121: // "CONSYM"
-      case 122: // "QVARID"
-      case 123: // "QCONID"
-      case 124: // "QVARSYM"
-      case 125: // "QCONSYM"
-      case 127: // "STRING"
-      case 131: // "PRIMSTRING"
-      case 136: // "identifier"
+      case 116: // "VARID"
+      case 117: // "CONID"
+      case 118: // "VARSYM"
+      case 119: // "CONSYM"
+      case 120: // "QVARID"
+      case 121: // "QCONID"
+      case 122: // "QVARSYM"
+      case 123: // "QCONSYM"
+      case 125: // "STRING"
+      case 129: // "PRIMSTRING"
         value.copy< std::string > (that.value);
         break;
 
@@ -301,42 +299,40 @@ namespace yy {
   {
     switch (that.type_get ())
     {
-      case 126: // "CHAR"
-      case 130: // "PRIMCHAR"
+      case 124: // "CHAR"
+      case 128: // "PRIMCHAR"
         value.move< char > (that.value);
         break;
 
-      case 129: // "RATIONAL"
-      case 135: // "PRIMDOUBLE"
+      case 127: // "RATIONAL"
+      case 133: // "PRIMDOUBLE"
         value.move< double > (that.value);
         break;
 
-      case 142: // exp
+      case 138: // exp
         value.move< expression_ref > (that.value);
         break;
 
-      case 134: // "PRIMFLOAT"
+      case 132: // "PRIMFLOAT"
         value.move< float > (that.value);
         break;
 
-      case 128: // "INTEGER"
-      case 132: // "PRIMINTEGER"
-      case 133: // "PRIMWORD"
-      case 137: // "number"
+      case 126: // "INTEGER"
+      case 130: // "PRIMINTEGER"
+      case 131: // "PRIMWORD"
         value.move< int > (that.value);
         break;
 
-      case 118: // "VARID"
-      case 119: // "CONID"
-      case 120: // "VARSYM"
-      case 121: // "CONSYM"
-      case 122: // "QVARID"
-      case 123: // "QCONID"
-      case 124: // "QVARSYM"
-      case 125: // "QCONSYM"
-      case 127: // "STRING"
-      case 131: // "PRIMSTRING"
-      case 136: // "identifier"
+      case 116: // "VARID"
+      case 117: // "CONID"
+      case 118: // "VARSYM"
+      case 119: // "CONSYM"
+      case 120: // "QVARID"
+      case 121: // "QCONID"
+      case 122: // "QVARSYM"
+      case 123: // "QCONSYM"
+      case 125: // "STRING"
+      case 129: // "PRIMSTRING"
         value.move< std::string > (that.value);
         break;
 
@@ -354,42 +350,40 @@ namespace yy {
     state = that.state;
     switch (that.type_get ())
     {
-      case 126: // "CHAR"
-      case 130: // "PRIMCHAR"
+      case 124: // "CHAR"
+      case 128: // "PRIMCHAR"
         value.copy< char > (that.value);
         break;
 
-      case 129: // "RATIONAL"
-      case 135: // "PRIMDOUBLE"
+      case 127: // "RATIONAL"
+      case 133: // "PRIMDOUBLE"
         value.copy< double > (that.value);
         break;
 
-      case 142: // exp
+      case 138: // exp
         value.copy< expression_ref > (that.value);
         break;
 
-      case 134: // "PRIMFLOAT"
+      case 132: // "PRIMFLOAT"
         value.copy< float > (that.value);
         break;
 
-      case 128: // "INTEGER"
-      case 132: // "PRIMINTEGER"
-      case 133: // "PRIMWORD"
-      case 137: // "number"
+      case 126: // "INTEGER"
+      case 130: // "PRIMINTEGER"
+      case 131: // "PRIMWORD"
         value.copy< int > (that.value);
         break;
 
-      case 118: // "VARID"
-      case 119: // "CONID"
-      case 120: // "VARSYM"
-      case 121: // "CONSYM"
-      case 122: // "QVARID"
-      case 123: // "QCONID"
-      case 124: // "QVARSYM"
-      case 125: // "QCONSYM"
-      case 127: // "STRING"
-      case 131: // "PRIMSTRING"
-      case 136: // "identifier"
+      case 116: // "VARID"
+      case 117: // "CONID"
+      case 118: // "VARSYM"
+      case 119: // "CONSYM"
+      case 120: // "QVARID"
+      case 121: // "QCONID"
+      case 122: // "QVARSYM"
+      case 123: // "QCONSYM"
+      case 125: // "STRING"
+      case 129: // "PRIMSTRING"
         value.copy< std::string > (that.value);
         break;
 
@@ -428,151 +422,137 @@ namespace yy {
         << yysym.location << ": ";
     switch (yytype)
     {
-            case 118: // "VARID"
+            case 116: // "VARID"
 
-#line 184 "parser.y" // lalr1.cc:644
+#line 179 "parser.y" // lalr1.cc:644
         { yyoutput << yysym.value.template as< std::string > (); }
-#line 436 "parser.cc" // lalr1.cc:644
+#line 430 "parser.cc" // lalr1.cc:644
         break;
 
-      case 119: // "CONID"
+      case 117: // "CONID"
 
-#line 184 "parser.y" // lalr1.cc:644
+#line 179 "parser.y" // lalr1.cc:644
         { yyoutput << yysym.value.template as< std::string > (); }
-#line 443 "parser.cc" // lalr1.cc:644
+#line 437 "parser.cc" // lalr1.cc:644
         break;
 
-      case 120: // "VARSYM"
+      case 118: // "VARSYM"
 
-#line 184 "parser.y" // lalr1.cc:644
+#line 179 "parser.y" // lalr1.cc:644
         { yyoutput << yysym.value.template as< std::string > (); }
-#line 450 "parser.cc" // lalr1.cc:644
+#line 444 "parser.cc" // lalr1.cc:644
         break;
 
-      case 121: // "CONSYM"
+      case 119: // "CONSYM"
 
-#line 184 "parser.y" // lalr1.cc:644
+#line 179 "parser.y" // lalr1.cc:644
         { yyoutput << yysym.value.template as< std::string > (); }
-#line 457 "parser.cc" // lalr1.cc:644
+#line 451 "parser.cc" // lalr1.cc:644
         break;
 
-      case 122: // "QVARID"
+      case 120: // "QVARID"
 
-#line 184 "parser.y" // lalr1.cc:644
+#line 179 "parser.y" // lalr1.cc:644
         { yyoutput << yysym.value.template as< std::string > (); }
-#line 464 "parser.cc" // lalr1.cc:644
+#line 458 "parser.cc" // lalr1.cc:644
         break;
 
-      case 123: // "QCONID"
+      case 121: // "QCONID"
 
-#line 184 "parser.y" // lalr1.cc:644
+#line 179 "parser.y" // lalr1.cc:644
         { yyoutput << yysym.value.template as< std::string > (); }
-#line 471 "parser.cc" // lalr1.cc:644
+#line 465 "parser.cc" // lalr1.cc:644
         break;
 
-      case 124: // "QVARSYM"
+      case 122: // "QVARSYM"
 
-#line 184 "parser.y" // lalr1.cc:644
+#line 179 "parser.y" // lalr1.cc:644
         { yyoutput << yysym.value.template as< std::string > (); }
-#line 478 "parser.cc" // lalr1.cc:644
+#line 472 "parser.cc" // lalr1.cc:644
         break;
 
-      case 125: // "QCONSYM"
+      case 123: // "QCONSYM"
 
-#line 184 "parser.y" // lalr1.cc:644
+#line 179 "parser.y" // lalr1.cc:644
         { yyoutput << yysym.value.template as< std::string > (); }
-#line 485 "parser.cc" // lalr1.cc:644
+#line 479 "parser.cc" // lalr1.cc:644
         break;
 
-      case 126: // "CHAR"
+      case 124: // "CHAR"
 
-#line 184 "parser.y" // lalr1.cc:644
+#line 179 "parser.y" // lalr1.cc:644
         { yyoutput << yysym.value.template as< char > (); }
-#line 492 "parser.cc" // lalr1.cc:644
+#line 486 "parser.cc" // lalr1.cc:644
         break;
 
-      case 127: // "STRING"
+      case 125: // "STRING"
 
-#line 184 "parser.y" // lalr1.cc:644
+#line 179 "parser.y" // lalr1.cc:644
         { yyoutput << yysym.value.template as< std::string > (); }
-#line 499 "parser.cc" // lalr1.cc:644
+#line 493 "parser.cc" // lalr1.cc:644
         break;
 
-      case 128: // "INTEGER"
+      case 126: // "INTEGER"
 
-#line 184 "parser.y" // lalr1.cc:644
+#line 179 "parser.y" // lalr1.cc:644
         { yyoutput << yysym.value.template as< int > (); }
-#line 506 "parser.cc" // lalr1.cc:644
+#line 500 "parser.cc" // lalr1.cc:644
         break;
 
-      case 129: // "RATIONAL"
+      case 127: // "RATIONAL"
 
-#line 184 "parser.y" // lalr1.cc:644
+#line 179 "parser.y" // lalr1.cc:644
         { yyoutput << yysym.value.template as< double > (); }
-#line 513 "parser.cc" // lalr1.cc:644
+#line 507 "parser.cc" // lalr1.cc:644
         break;
 
-      case 130: // "PRIMCHAR"
+      case 128: // "PRIMCHAR"
 
-#line 184 "parser.y" // lalr1.cc:644
+#line 179 "parser.y" // lalr1.cc:644
         { yyoutput << yysym.value.template as< char > (); }
-#line 520 "parser.cc" // lalr1.cc:644
+#line 514 "parser.cc" // lalr1.cc:644
         break;
 
-      case 131: // "PRIMSTRING"
+      case 129: // "PRIMSTRING"
 
-#line 184 "parser.y" // lalr1.cc:644
+#line 179 "parser.y" // lalr1.cc:644
         { yyoutput << yysym.value.template as< std::string > (); }
-#line 527 "parser.cc" // lalr1.cc:644
+#line 521 "parser.cc" // lalr1.cc:644
         break;
 
-      case 132: // "PRIMINTEGER"
+      case 130: // "PRIMINTEGER"
 
-#line 184 "parser.y" // lalr1.cc:644
+#line 179 "parser.y" // lalr1.cc:644
         { yyoutput << yysym.value.template as< int > (); }
-#line 534 "parser.cc" // lalr1.cc:644
+#line 528 "parser.cc" // lalr1.cc:644
         break;
 
-      case 133: // "PRIMWORD"
+      case 131: // "PRIMWORD"
 
-#line 184 "parser.y" // lalr1.cc:644
+#line 179 "parser.y" // lalr1.cc:644
         { yyoutput << yysym.value.template as< int > (); }
-#line 541 "parser.cc" // lalr1.cc:644
+#line 535 "parser.cc" // lalr1.cc:644
         break;
 
-      case 134: // "PRIMFLOAT"
+      case 132: // "PRIMFLOAT"
 
-#line 184 "parser.y" // lalr1.cc:644
+#line 179 "parser.y" // lalr1.cc:644
         { yyoutput << yysym.value.template as< float > (); }
-#line 548 "parser.cc" // lalr1.cc:644
+#line 542 "parser.cc" // lalr1.cc:644
         break;
 
-      case 135: // "PRIMDOUBLE"
+      case 133: // "PRIMDOUBLE"
 
-#line 184 "parser.y" // lalr1.cc:644
+#line 179 "parser.y" // lalr1.cc:644
         { yyoutput << yysym.value.template as< double > (); }
-#line 555 "parser.cc" // lalr1.cc:644
+#line 549 "parser.cc" // lalr1.cc:644
         break;
 
-      case 136: // "identifier"
+      case 138: // exp
 
-#line 184 "parser.y" // lalr1.cc:644
-        { yyoutput << yysym.value.template as< std::string > (); }
-#line 562 "parser.cc" // lalr1.cc:644
-        break;
-
-      case 137: // "number"
-
-#line 184 "parser.y" // lalr1.cc:644
-        { yyoutput << yysym.value.template as< int > (); }
-#line 569 "parser.cc" // lalr1.cc:644
-        break;
-
-      case 142: // exp
-
-#line 184 "parser.y" // lalr1.cc:644
+#line 179 "parser.y" // lalr1.cc:644
         { yyoutput << yysym.value.template as< expression_ref > (); }
-#line 576 "parser.cc" // lalr1.cc:644
+#line 556 "parser.cc" // lalr1.cc:644
         break;
 
 
@@ -772,42 +752,40 @@ namespace yy {
          when using variants.  */
       switch (yyr1_[yyn])
     {
-      case 126: // "CHAR"
-      case 130: // "PRIMCHAR"
+      case 124: // "CHAR"
+      case 128: // "PRIMCHAR"
         yylhs.value.build< char > ();
         break;
 
-      case 129: // "RATIONAL"
-      case 135: // "PRIMDOUBLE"
+      case 127: // "RATIONAL"
+      case 133: // "PRIMDOUBLE"
         yylhs.value.build< double > ();
         break;
 
-      case 142: // exp
+      case 138: // exp
         yylhs.value.build< expression_ref > ();
         break;
 
-      case 134: // "PRIMFLOAT"
+      case 132: // "PRIMFLOAT"
         yylhs.value.build< float > ();
         break;
 
-      case 128: // "INTEGER"
-      case 132: // "PRIMINTEGER"
-      case 133: // "PRIMWORD"
-      case 137: // "number"
+      case 126: // "INTEGER"
+      case 130: // "PRIMINTEGER"
+      case 131: // "PRIMWORD"
         yylhs.value.build< int > ();
         break;
 
-      case 118: // "VARID"
-      case 119: // "CONID"
-      case 120: // "VARSYM"
-      case 121: // "CONSYM"
-      case 122: // "QVARID"
-      case 123: // "QCONID"
-      case 124: // "QVARSYM"
-      case 125: // "QCONSYM"
-      case 127: // "STRING"
-      case 131: // "PRIMSTRING"
-      case 136: // "identifier"
+      case 116: // "VARID"
+      case 117: // "CONID"
+      case 118: // "VARSYM"
+      case 119: // "CONSYM"
+      case 120: // "QVARID"
+      case 121: // "QCONID"
+      case 122: // "QVARSYM"
+      case 123: // "QCONSYM"
+      case 125: // "STRING"
+      case 129: // "PRIMSTRING"
         yylhs.value.build< std::string > ();
         break;
 
@@ -832,73 +810,67 @@ namespace yy {
           switch (yyn)
             {
   case 2:
-#line 188 "parser.y" // lalr1.cc:870
+#line 183 "parser.y" // lalr1.cc:870
     { std::cout<< yystack_[0].value.as< expression_ref > () << std::endl; }
-#line 838 "parser.cc" // lalr1.cc:870
+#line 816 "parser.cc" // lalr1.cc:870
     break;
 
   case 3:
-#line 191 "parser.y" // lalr1.cc:870
+#line 186 "parser.y" // lalr1.cc:870
     {}
-#line 844 "parser.cc" // lalr1.cc:870
+#line 822 "parser.cc" // lalr1.cc:870
     break;
 
   case 4:
-#line 192 "parser.y" // lalr1.cc:870
+#line 187 "parser.y" // lalr1.cc:870
     {}
-#line 850 "parser.cc" // lalr1.cc:870
+#line 828 "parser.cc" // lalr1.cc:870
     break;
 
   case 5:
-#line 195 "parser.y" // lalr1.cc:870
+#line 190 "parser.y" // lalr1.cc:870
     { std::cout<< yystack_[2].value.as< std::string > () <<" = " << yystack_[0].value.as< expression_ref > () <<std::endl; }
-#line 856 "parser.cc" // lalr1.cc:870
+#line 834 "parser.cc" // lalr1.cc:870
     break;
 
   case 6:
-#line 198 "parser.y" // lalr1.cc:870
-    { yylhs.value.as< expression_ref > () = expression_ref{var("+"),yystack_[2].value.as< expression_ref > (),yystack_[0].value.as< expression_ref > ()}; }
-#line 862 "parser.cc" // lalr1.cc:870
+#line 191 "parser.y" // lalr1.cc:870
+    { std::cout<< yystack_[2].value.as< std::string > () <<" = " << yystack_[0].value.as< expression_ref > () <<std::endl; }
+#line 840 "parser.cc" // lalr1.cc:870
     break;
 
   case 7:
-#line 199 "parser.y" // lalr1.cc:870
-    { yylhs.value.as< expression_ref > () = expression_ref{var("-"),yystack_[2].value.as< expression_ref > (),yystack_[0].value.as< expression_ref > ()}; }
-#line 868 "parser.cc" // lalr1.cc:870
+#line 194 "parser.y" // lalr1.cc:870
+    { yylhs.value.as< expression_ref > () = expression_ref{var(yystack_[1].value.as< std::string > ()),yystack_[2].value.as< expression_ref > (),yystack_[0].value.as< expression_ref > ()}; }
+#line 846 "parser.cc" // lalr1.cc:870
     break;
 
   case 8:
-#line 200 "parser.y" // lalr1.cc:870
-    { yylhs.value.as< expression_ref > () = expression_ref{var("*"),yystack_[2].value.as< expression_ref > (),yystack_[0].value.as< expression_ref > ()}; }
-#line 874 "parser.cc" // lalr1.cc:870
+#line 195 "parser.y" // lalr1.cc:870
+    { std::swap (yylhs.value.as< expression_ref > (), yystack_[1].value.as< expression_ref > ()); }
+#line 852 "parser.cc" // lalr1.cc:870
     break;
 
   case 9:
-#line 201 "parser.y" // lalr1.cc:870
-    { yylhs.value.as< expression_ref > () = expression_ref{var("/"),yystack_[2].value.as< expression_ref > (),yystack_[0].value.as< expression_ref > ()}; }
-#line 880 "parser.cc" // lalr1.cc:870
+#line 196 "parser.y" // lalr1.cc:870
+    { yylhs.value.as< expression_ref > () = var(yystack_[0].value.as< std::string > ()); }
+#line 858 "parser.cc" // lalr1.cc:870
     break;
 
   case 10:
-#line 202 "parser.y" // lalr1.cc:870
-    { std::swap (yylhs.value.as< expression_ref > (), yystack_[1].value.as< expression_ref > ()); }
-#line 886 "parser.cc" // lalr1.cc:870
+#line 197 "parser.y" // lalr1.cc:870
+    { yylhs.value.as< expression_ref > () = var(yystack_[0].value.as< std::string > ()); }
+#line 864 "parser.cc" // lalr1.cc:870
     break;
 
   case 11:
-#line 203 "parser.y" // lalr1.cc:870
-    { yylhs.value.as< expression_ref > () = var(yystack_[0].value.as< std::string > ()); }
-#line 892 "parser.cc" // lalr1.cc:870
-    break;
-
-  case 12:
-#line 204 "parser.y" // lalr1.cc:870
+#line 198 "parser.y" // lalr1.cc:870
     { yylhs.value.as< expression_ref > () = yystack_[0].value.as< int > (); }
-#line 898 "parser.cc" // lalr1.cc:870
+#line 870 "parser.cc" // lalr1.cc:870
     break;
 
 
-#line 902 "parser.cc" // lalr1.cc:870
+#line 874 "parser.cc" // lalr1.cc:870
             default:
               break;
             }
@@ -1156,76 +1128,71 @@ namespace yy {
   }
 
 
-  const signed char parser::yypact_ninf_ = -110;
+  const signed char parser::yypact_ninf_ = -114;
 
   const signed char parser::yytable_ninf_ = -1;
 
   const signed char
   parser::yypact_[] =
   {
-    -110,     5,  -106,  -110,  -104,  -109,  -110,  -110,   -82,  -110,
-     -88,  -104,  -104,  -104,  -104,  -104,  -110,   -82,   -82,   -82,
-     -82,   -82
+    -114,     2,  -106,  -114,  -105,   -77,   -76,  -114,  -114,  -113,
+    -114,  -114,   -99,  -105,  -105,  -105,  -114,  -113,  -113,  -113
   };
 
   const unsigned char
   parser::yydefact_[] =
   {
-       3,     0,     0,     1,     0,    11,    12,     4,     2,    11,
-       0,     0,     0,     0,     0,     0,    10,     5,     7,     8,
-       6,     9
+       3,     0,     0,     1,     0,     9,    10,    11,     4,     2,
+       9,    10,     0,     0,     0,     0,     8,     5,     6,     7
   };
 
   const signed char
   parser::yypgoto_[] =
   {
-    -110,  -110,  -110,  -110,     0
+    -114,  -114,  -114,  -114,     3
   };
 
   const signed char
   parser::yydefgoto_[] =
   {
-      -1,     1,     2,     7,     8
+      -1,     1,     2,     8,     9
   };
 
   const unsigned char
   parser::yytable_[] =
   {
-       4,    12,     4,    13,    10,     3,    11,    12,     0,    13,
-       0,    17,    18,    19,    20,    21,     0,     0,     0,    16,
-       0,     0,     0,     0,     0,     0,     0,     0,    14,    15,
-       5,     6,     9,     6,    14,    15
+       4,     4,     3,    13,    14,    15,     0,    12,    16,     0,
+       5,    10,     0,     0,     6,    11,    17,    18,    19,    15,
+       7,     7
   };
 
-  const short
+  const signed char
   parser::yycheck_[] =
   {
-     106,    89,   106,    91,     4,     0,   115,    89,    -1,    91,
-      -1,    11,    12,    13,    14,    15,    -1,    -1,    -1,   107,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,   116,   117,
-     136,   137,   136,   137,   116,   117
+     106,   106,     0,    80,    80,   118,    -1,     4,   107,    -1,
+     116,   116,    -1,    -1,   120,   120,    13,    14,    15,   118,
+     126,   126
   };
 
   const unsigned char
   parser::yystos_[] =
   {
-       0,   139,   140,     0,   106,   136,   137,   141,   142,   136,
-     142,   115,    89,    91,   116,   117,   107,   142,   142,   142,
-     142,   142
+       0,   135,   136,     0,   106,   116,   120,   126,   137,   138,
+     116,   120,   138,    80,    80,   118,   107,   138,   138,   138
   };
 
   const unsigned char
   parser::yyr1_[] =
   {
-       0,   138,   139,   140,   140,   141,   142,   142,   142,   142,
-     142,   142,   142
+       0,   134,   135,   136,   136,   137,   137,   138,   138,   138,
+     138,   138
   };
 
   const unsigned char
   parser::yyr2_[] =
   {
-       0,     2,     2,     0,     2,     3,     3,     3,     3,     3,
-       3,     1,     1
+       0,     2,     2,     0,     2,     3,     3,     3,     3,     1,
+       1,     1
   };
 
 
@@ -1257,12 +1224,11 @@ namespace yy {
   "\"*\"", "\"-<\"", "\">-\"", "\"-<<\"", "\">>-\"", "\".\"",
   "\"TYPEAPP\"", "\"{\"", "\"}\"", "\"vocurly\"", "\"vccurly\"", "\"[\"",
   "\"]\"", "\"[:\"", "\":]\"", "\"(\"", "\")\"", "\"(#\"", "\"#)\"",
-  "\"(|\"", "\"|)\"", "\";\"", "\"`\"", "\"'\"", "\":=\"", "\"+\"",
-  "\"/\"", "\"VARID\"", "\"CONID\"", "\"VARSYM\"", "\"CONSYM\"",
-  "\"QVARID\"", "\"QCONID\"", "\"QVARSYM\"", "\"QCONSYM\"", "\"CHAR\"",
-  "\"STRING\"", "\"INTEGER\"", "\"RATIONAL\"", "\"PRIMCHAR\"",
-  "\"PRIMSTRING\"", "\"PRIMINTEGER\"", "\"PRIMWORD\"", "\"PRIMFLOAT\"",
-  "\"PRIMDOUBLE\"", "\"identifier\"", "\"number\"", "$accept", "unit",
+  "\"(|\"", "\"|)\"", "\";\"", "\",\"", "\"`\"", "\"'\"", "\"VARID\"",
+  "\"CONID\"", "\"VARSYM\"", "\"CONSYM\"", "\"QVARID\"", "\"QCONID\"",
+  "\"QVARSYM\"", "\"QCONSYM\"", "\"CHAR\"", "\"STRING\"", "\"INTEGER\"",
+  "\"RATIONAL\"", "\"PRIMCHAR\"", "\"PRIMSTRING\"", "\"PRIMINTEGER\"",
+  "\"PRIMWORD\"", "\"PRIMFLOAT\"", "\"PRIMDOUBLE\"", "$accept", "unit",
   "assignments", "assignment", "exp", YY_NULLPTR
   };
 
@@ -1270,8 +1236,8 @@ namespace yy {
   const unsigned char
   parser::yyrline_[] =
   {
-       0,   188,   188,   191,   192,   195,   198,   199,   200,   201,
-     202,   203,   204
+       0,   183,   183,   186,   187,   190,   191,   194,   195,   196,
+     197,   198
   };
 
   // Print the state stack on the debug stream.
@@ -1306,8 +1272,8 @@ namespace yy {
 
 
 } // yy
-#line 1310 "parser.cc" // lalr1.cc:1181
-#line 205 "parser.y" // lalr1.cc:1182
+#line 1276 "parser.cc" // lalr1.cc:1181
+#line 199 "parser.y" // lalr1.cc:1182
 
 
 void

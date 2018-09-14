@@ -33,7 +33,7 @@ unidigit     \x03
 decdigit     {ascdigit}
 digit        {ascdigit}|{unidigit}
 
-special      [(),;[\]`{}]
+special      [(),;[\]`\{\}]
 ascsymbol_except_colon    [!#$%&*+./<=>?@\\^|\-~]
 ascsymbol    {ascsymbol_except_colon}|:
 unisymbol    \x05
@@ -106,19 +106,56 @@ signed       {negative}?
 {white_no_nl}+   loc.step ();
 {tab}	         loc.step ();
 
+  /* GHC calls some handwritten code to deal with nested comments */
 "{-[^-\n]*-}"      loc.step();
 
 "--"-*[^!#$%&*+./<=>?@\\^|\-~:\n].*           loc.step();
 "--"-*$           loc.step();
 "-- "$            loc.step();
 
-
+  /* bol state */
 [\n]+      loc.lines (yyleng); loc.step ();
 
-"="     return yy::parser::make_EQUAL (loc);
-{varsym}      return yy::parser::make_VARSYM  (yytext,loc);
+  /* layout, layout_do, layout_if states */
+
+  /* layout_if */
+
+  /* layout */
+  /* layout_do */
+
+  /* layout_left */
+
+  /* lots of stuff */
+
+  /* unboxed tuples: (# and #) */
+
 "("      return yy::parser::make_OPAREN (loc);
 ")"      return yy::parser::make_CPAREN (loc);
+"["      return yy::parser::make_OBRACK (loc);
+"]"      return yy::parser::make_CBRACK (loc);
+","      return yy::parser::make_COMMA  (loc);
+";"      return yy::parser::make_SEMI   (loc);
+"`"      return yy::parser::make_BACKQUOTE (loc);
+
+  /* action: push a "NoLayout" context into the stack */
+"{"      return yy::parser::make_OCURLY (loc);
+  /* action: pop the top context from the stack */
+"}"      return yy::parser::make_CCURLY (loc);
+
+{qvarid}      return yy::parser::make_QVARID (yytext, loc);
+{qconid}      return yy::parser::make_QCONID (yytext, loc);
+  /* Here we check for reserved ids?*/
+{varid}       return yy::parser::make_VARID  (yytext, loc);
+{conid}       return yy::parser::make_CONID  (yytext, loc);
+
+{qvarsym}      return yy::parser::make_QVARSYM  (yytext,loc);
+{qconsym}      return yy::parser::make_QCONSYM  (yytext,loc);
+  /* Here we check for reserved ids?*/
+"="     return yy::parser::make_EQUAL (loc);
+{varsym}      return yy::parser::make_VARSYM  (yytext,loc);
+  /* Here we check for reserved ids?*/
+{consym}      return yy::parser::make_CONSYM  (yytext,loc);
+
 
 {decimal}      {
   errno = 0;
@@ -129,8 +166,6 @@ signed       {negative}?
   return yy::parser::make_INTEGER (n, loc);
 }
 
-{varid}       return yy::parser::make_VARID  (yytext, loc);
-{qvarid}      return yy::parser::make_QVARID (yytext, loc);
 
 .          {
              throw yy::parser::syntax_error
