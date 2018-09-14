@@ -128,7 +128,8 @@ blank [ \t]
   return yy::parser::make_NUMBER (n, loc);
 }
 
-{varid}|{qvarid}       return yy::parser::make_IDENTIFIER (yytext, loc);
+{varid}       return yy::parser::make_VARID  (yytext, loc);
+{qvarid}      return yy::parser::make_QVARID (yytext, loc);
 
 .          {
              throw yy::parser::syntax_error

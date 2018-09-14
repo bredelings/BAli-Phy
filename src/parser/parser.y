@@ -177,7 +177,6 @@
 
  /* Template Haskell: skipped */
 
-%token <std::string> IDENTIFIER "identifier"
 %token <int> NUMBER "number"
 %type  <expression_ref> exp
 
@@ -192,7 +191,8 @@ assignments:
 | assignments assignment {};
 
 assignment:
-"identifier" ":=" exp { std::cout<< $1 <<" = " << $3 <<std::endl; };
+ "VARID" ":=" exp { std::cout<< $1 <<" = " << $3 <<std::endl; };
+| "QVARID" ":=" exp { std::cout<< $1 <<" = " << $3 <<std::endl; };
 
 exp:
   exp "+" exp   { $$ = expression_ref{var("+"),$1,$3}; }
@@ -200,7 +200,8 @@ exp:
 | exp "*" exp   { $$ = expression_ref{var("*"),$1,$3}; }
 | exp "/" exp   { $$ = expression_ref{var("/"),$1,$3}; }
 | "(" exp ")"   { std::swap ($$, $2); }
-| "identifier"  { $$ = var($1); }
+| "VARID"   { $$ = var($1); }
+| "QVARID"  { $$ = var($1); }
 | "number"      { $$ = $1; };
 %%
 
