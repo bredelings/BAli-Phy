@@ -109,12 +109,7 @@ blank [ \t]
 {blank}+   loc.step ();
 [\n]+      loc.lines (yyleng); loc.step ();
 
-
-
-"-"      return yy::parser::make_MINUS  (loc);
-"+"      return yy::parser::make_PLUS   (loc);
-"*"      return yy::parser::make_STAR   (loc);
-"/"      return yy::parser::make_SLASH  (loc);
+{varsym}      return yy::parser::make_VARSYM  (yytext,loc);
 "("      return yy::parser::make_OPAREN (loc);
 ")"      return yy::parser::make_CPAREN (loc);
 ":="     return yy::parser::make_ASSIGN (loc);
@@ -125,7 +120,7 @@ blank [ \t]
   if (! (INT_MIN <= n && n <= INT_MAX && errno != ERANGE))
     throw yy::parser::syntax_error (loc, "integer is out of range: "
                                     + std::string(yytext));
-  return yy::parser::make_NUMBER (n, loc);
+  return yy::parser::make_INTEGER (n, loc);
 }
 
 {varid}       return yy::parser::make_VARID  (yytext, loc);

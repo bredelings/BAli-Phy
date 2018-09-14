@@ -148,8 +148,6 @@
   SIMPLEQUOTE   "'"
 
   ASSIGN  ":="
-  PLUS    "+"
-  SLASH   "/"
 ;
 
 %token <std::string> VARID    "VARID"
@@ -173,11 +171,10 @@
 %token <float>         PRIMFLOAT   "PRIMFLOAT"
 %token <double>        PRIMDOUBLE  "PRIMDOUBLE"
 
- /* DOCNEXT DOCPREV DOCNAMED DOCSECTION: skipped */
+ /* DOCNEXT DOCPREV DOCNAMED DOCSECTION: skipped tokens.*/
 
- /* Template Haskell: skipped */
+ /* Template Haskell: skipped tokens.*/
 
-%token <int> NUMBER "number"
 %type  <expression_ref> exp
 
 %printer { yyoutput << $$; } <*>;
@@ -195,14 +192,11 @@ assignment:
 | "QVARID" ":=" exp { std::cout<< $1 <<" = " << $3 <<std::endl; };
 
 exp:
-  exp "+" exp   { $$ = expression_ref{var("+"),$1,$3}; }
-| exp "-" exp   { $$ = expression_ref{var("-"),$1,$3}; }
-| exp "*" exp   { $$ = expression_ref{var("*"),$1,$3}; }
-| exp "/" exp   { $$ = expression_ref{var("/"),$1,$3}; }
+ exp "VARSYM" exp   { $$ = expression_ref{var($2),$1,$3}; }
 | "(" exp ")"   { std::swap ($$, $2); }
 | "VARID"   { $$ = var($1); }
 | "QVARID"  { $$ = var($1); }
-| "number"      { $$ = $1; };
+| "INTEGER"      { $$ = $1; };
 %%
 
 void
