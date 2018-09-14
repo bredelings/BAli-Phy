@@ -109,10 +109,10 @@ blank [ \t]
 {blank}+   loc.step ();
 [\n]+      loc.lines (yyleng); loc.step ();
 
+"="     return yy::parser::make_EQUAL (loc);
 {varsym}      return yy::parser::make_VARSYM  (yytext,loc);
 "("      return yy::parser::make_OPAREN (loc);
 ")"      return yy::parser::make_CPAREN (loc);
-":="     return yy::parser::make_ASSIGN (loc);
 
 {decimal}      {
   errno = 0;

@@ -146,8 +146,6 @@
   SEMI          ";"
   BACKQUOTE     "`"
   SIMPLEQUOTE   "'"
-
-  ASSIGN  ":="
 ;
 
 %token <std::string> VARID    "VARID"
@@ -188,8 +186,8 @@ assignments:
 | assignments assignment {};
 
 assignment:
- "VARID" ":=" exp { std::cout<< $1 <<" = " << $3 <<std::endl; };
-| "QVARID" ":=" exp { std::cout<< $1 <<" = " << $3 <<std::endl; };
+ "VARID" "=" exp { std::cout<< $1 <<" = " << $3 <<std::endl; };
+| "QVARID" "=" exp { std::cout<< $1 <<" = " << $3 <<std::endl; };
 
 exp:
  exp "VARSYM" exp   { $$ = expression_ref{var($2),$1,$3}; }
