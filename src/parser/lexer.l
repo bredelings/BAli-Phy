@@ -88,9 +88,6 @@ hex_floating_point  {numspc}{hexadecimal}\.{hexadecimal}{exponent}?|{numspc}{hex
 negative     \-
 signed       {negative}?
 
-/* This is the only remaining pattern from 'calc' */
-blank [ \t]
-
 
 %{
   // Code run each time a pattern is matched.
@@ -106,7 +103,16 @@ blank [ \t]
   loc.step ();
 %}
 
-{blank}+   loc.step ();
+{white_no_nl}+   loc.step ();
+{tab}	         loc.step ();
+
+"{-[^-\n]*-}"      loc.step();
+
+"--"-*[^!#$%&*+./<=>?@\\^|\-~:\n].*           loc.step();
+"--"-*$           loc.step();
+"-- "$            loc.step();
+
+
 [\n]+      loc.lines (yyleng); loc.step ();
 
 "="     return yy::parser::make_EQUAL (loc);
