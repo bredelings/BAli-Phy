@@ -18,6 +18,11 @@
 #if defined __GNUC__ && 7 <= __GNUC__
 # pragma GCC diagnostic ignored "-Wnull-dereference"
 #endif
+
+// Forward declarations
+yy::parser::symbol_type varid(const yy::parser::location_type&);
+yy::parser::symbol_type varsym(const yy::parser::location_type&);
+yy::parser::symbol_type consym(const yy::parser::location_type&);
 %}
 
 %option noyywrap nounput batch debug noinput
@@ -144,17 +149,19 @@ signed       {negative}?
 
 {qvarid}      return yy::parser::make_QVARID (yytext, loc);
 {qconid}      return yy::parser::make_QCONID (yytext, loc);
-  /* Here we check for reserved ids?*/
-{varid}       return yy::parser::make_VARID  (yytext, loc);
+{varid}       return varid(loc);
 {conid}       return yy::parser::make_CONID  (yytext, loc);
+
+
+  /* Here we look for {qvarid}#+ ... {conid}#+ if magicHashEnabled */
 
 {qvarsym}      return yy::parser::make_QVARSYM  (yytext,loc);
 {qconsym}      return yy::parser::make_QCONSYM  (yytext,loc);
   /* Here we check for reserved ids?*/
 "="     return yy::parser::make_EQUAL (loc);
-{varsym}      return yy::parser::make_VARSYM  (yytext,loc);
+{varsym}       return varsym(loc);
   /* Here we check for reserved ids?*/
-{consym}      return yy::parser::make_CONSYM  (yytext,loc);
+{consym}       return consym(loc);
 
 
 {decimal}      {
@@ -195,4 +202,118 @@ void
 driver::scan_end ()
 {
   fclose (yyin);
+}
+
+using namespace yy;
+
+std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_words =
+{
+    {"_",{parser::token::TOK_UNDERSCORE,0}},
+    {"as",{parser::token::TOK_AS,0}},
+    {"case",{parser::token::TOK_CASE,0}},
+    {"data",{parser::token::TOK_DATA,0}},
+    {"default",{parser::token::TOK_DEFAULT,0}},
+    {"deriving",{parser::token::TOK_DERIVING,0}},
+    {"do",{parser::token::TOK_DO,0}},
+    {"else",{parser::token::TOK_ELSE,0}},
+    {"hiding",{parser::token::TOK_HIDING,0}},
+    {"if",{parser::token::TOK_IF,0}},
+    {"import",{parser::token::TOK_IMPORT,0}},
+    {"in",{parser::token::TOK_IN,0}},
+    {"infix",{parser::token::TOK_INFIX,0}},
+    {"infixl",{parser::token::TOK_INFIXL,0}},
+    {"infixr",{parser::token::TOK_INFIXR,0}},
+    {"instance",{parser::token::TOK_INSTANCE,0}},
+    {"let",{parser::token::TOK_LET,0}},
+    {"module",{parser::token::TOK_MODULE,0}},
+    {"newtype",{parser::token::TOK_NEWTYPE,0}},
+    {"of",{parser::token::TOK_OF,0}},
+    {"qualified",{parser::token::TOK_QUALIFIED,0}},
+    {"then",{parser::token::TOK_THEN,0}},
+    {"type",{parser::token::TOK_TYPE,0}},
+    {"where",{parser::token::TOK_WHERE,0}}
+};
+/*
+
+         ( "as",             ITas,            0 ),
+         ( "case",           ITcase,          0 ),
+         ( "class",          ITclass,         0 ),
+         ( "data",           ITdata,          0 ),
+         ( "default",        ITdefault,       0 ),
+         ( "deriving",       ITderiving,      0 ),
+         ( "do",             ITdo,            0 ),
+         ( "else",           ITelse,          0 ),
+         ( "hiding",         IThiding,        0 ),
+         ( "if",             ITif,            0 ),
+         ( "import",         ITimport,        0 ),
+         ( "in",             ITin,            0 ),
+         ( "infix",          ITinfix,         0 ),
+         ( "infixl",         ITinfixl,        0 ),
+         ( "infixr",         ITinfixr,        0 ),
+         ( "instance",       ITinstance,      0 ),
+         ( "let",            ITlet,           0 ),
+         ( "module",         ITmodule,        0 ),
+         ( "newtype",        ITnewtype,       0 ),
+         ( "of",             ITof,            0 ),
+         ( "qualified",      ITqualified,     0 ),
+         ( "then",           ITthen,          0 ),
+         ( "type",           ITtype,          0 ),
+         ( "where",          ITwhere,         0 ),
+         ( "forall",         ITforall NormalSyntax,
+                                              xbit ExplicitForallBit .|.
+                                              xbit InRulePragBit),
+         ( "mdo",            ITmdo,           xbit RecursiveDoBit),
+             -- See Note [Lexing type pseudo-keywords]
+         ( "family",         ITfamily,        0 ),
+         ( "role",           ITrole,          0 ),
+         ( "pattern",        ITpattern,       xbit PatternSynonymsBit),
+         ( "static",         ITstatic,        0 ),
+         ( "stock",          ITstock,         0 ),
+         ( "anyclass",       ITanyclass,      0 ),
+         ( "via",            ITvia,           0 ),
+         ( "group",          ITgroup,         xbit TransformComprehensionsBit),
+         ( "by",             ITby,            xbit TransformComprehensionsBit),
+         ( "using",          ITusing,         xbit TransformComprehensionsBit),
+         ( "foreign",        ITforeign,       xbit FfiBit),
+         ( "export",         ITexport,        xbit FfiBit),
+         ( "label",          ITlabel,         xbit FfiBit),
+         ( "dynamic",        ITdynamic,       xbit FfiBit),
+         ( "safe",           ITsafe,          xbit FfiBit .|.
+                                              xbit SafeHaskellBit),
+         ( "interruptible",  ITinterruptible, xbit InterruptibleFfiBit),
+         ( "unsafe",         ITunsafe,        xbit FfiBit),
+         ( "stdcall",        ITstdcallconv,   xbit FfiBit),
+         ( "ccall",          ITccallconv,     xbit FfiBit),
+         ( "capi",           ITcapiconv,      xbit CApiFfiBit),
+         ( "prim",           ITprimcallconv,  xbit FfiBit),
+         ( "javascript",     ITjavascriptcallconv, xbit FfiBit),
+         ( "unit",           ITunit,          0 ),
+         ( "dependency",     ITdependency,       0 ),
+         ( "signature",      ITsignature,     0 ),
+         ( "rec",            ITrec,           xbit ArrowsBit .|.
+                                              xbit RecursiveDoBit),
+         ( "proc",           ITproc,          xbit ArrowsBit)
+     ]
+*/
+
+yy::parser::symbol_type varid(const yy::parser::location_type& loc)
+{
+    auto it = reserved_words.find(yytext);
+    if (it == reserved_words.end())
+	return yy::parser::make_VARID  (yytext, loc);
+    else
+    {
+	auto tok = it->second.first;
+	return yy::parser::symbol_type(tok, loc);
+    }
+}
+
+yy::parser::symbol_type varsym(const yy::parser::location_type& loc)
+{
+    return yy::parser::make_VARSYM  (yytext,loc);
+}
+
+yy::parser::symbol_type consym(const yy::parser::location_type& loc)
+{
+    return yy::parser::make_CONSYM  (yytext,loc);
 }
