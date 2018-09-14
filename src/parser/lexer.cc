@@ -989,12 +989,12 @@ return yy::parser::make_SLASH  (loc);
 case 7:
 YY_RULE_SETUP
 #line 119 "lexer.l"
-return yy::parser::make_LPAREN (loc);
+return yy::parser::make_OPAREN (loc);
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
 #line 120 "lexer.l"
-return yy::parser::make_RPAREN (loc);
+return yy::parser::make_CPAREN (loc);
 	YY_BREAK
 case 9:
 YY_RULE_SETUP

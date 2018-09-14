@@ -43,9 +43,12 @@
 #line 9 "parser.y" // lalr1.cc:380
 
   # include <string>
+  # include <iostream>
+  # include "computation/expression/expression_ref.H"
+  # include "computation/expression/var.H"
   class driver;
 
-#line 49 "parser.hh" // lalr1.cc:380
+#line 52 "parser.hh" // lalr1.cc:380
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -129,7 +132,7 @@
 
 
 namespace yy {
-#line 133 "parser.hh" // lalr1.cc:380
+#line 136 "parser.hh" // lalr1.cc:380
 
 
 
@@ -299,12 +302,38 @@ namespace yy {
     /// An auxiliary type to compute the largest semantic type.
     union union_type
     {
-      // "number"
-      // exp
-      char dummy1[sizeof(int)];
+      // "CHAR"
+      // "PRIMCHAR"
+      char dummy1[sizeof(char)];
 
+      // "RATIONAL"
+      // "PRIMDOUBLE"
+      char dummy2[sizeof(double)];
+
+      // exp
+      char dummy3[sizeof(expression_ref)];
+
+      // "PRIMFLOAT"
+      char dummy4[sizeof(float)];
+
+      // "INTEGER"
+      // "PRIMINTEGER"
+      // "PRIMWORD"
+      // "number"
+      char dummy5[sizeof(int)];
+
+      // "VARID"
+      // "CONID"
+      // "VARSYM"
+      // "CONSYM"
+      // "QVARID"
+      // "QCONID"
+      // "QVARSYM"
+      // "QCONSYM"
+      // "STRING"
+      // "PRIMSTRING"
       // "identifier"
-      char dummy2[sizeof(std::string)];
+      char dummy6[sizeof(std::string)];
 };
 
     /// Symbol semantic values.
@@ -328,15 +357,141 @@ namespace yy {
       enum yytokentype
       {
         TOK_END = 0,
-        TOK_ASSIGN = 258,
-        TOK_MINUS = 259,
-        TOK_PLUS = 260,
-        TOK_STAR = 261,
-        TOK_SLASH = 262,
-        TOK_LPAREN = 263,
-        TOK_RPAREN = 264,
-        TOK_IDENTIFIER = 265,
-        TOK_NUMBER = 266
+        TOK_UNDERSCORE = 258,
+        TOK_AS = 259,
+        TOK_CASE = 260,
+        TOK_DATA = 261,
+        TOK_DEFAULT = 262,
+        TOK_DERIVING = 263,
+        TOK_DO = 264,
+        TOK_ELSE = 265,
+        TOK_HIDING = 266,
+        TOK_IF = 267,
+        TOK_IMPORT = 268,
+        TOK_IN = 269,
+        TOK_INFIX = 270,
+        TOK_INFIXL = 271,
+        TOK_INFIXR = 272,
+        TOK_INSTANCE = 273,
+        TOK_LET = 274,
+        TOK_MODULE = 275,
+        TOK_NEWTYPE = 276,
+        TOK_OF = 277,
+        TOK_QUALIFIED = 278,
+        TOK_THEN = 279,
+        TOK_TYPE = 280,
+        TOK_WHERE = 281,
+        TOK_FORALL = 282,
+        TOK_FOREIGN = 283,
+        TOK_EXPORT = 284,
+        TOK_LABEL = 285,
+        TOK_DYNAMIC = 286,
+        TOK_SAFE = 287,
+        TOK_INTERRUPTIBLE = 288,
+        TOK_UNSAFE = 289,
+        TOK_MDO = 290,
+        TOK_FAMILY = 291,
+        TOK_ROLE = 292,
+        TOK_STDCALL = 293,
+        TOK_CCALL = 294,
+        TOK_CAPI = 295,
+        TOK_PRIM = 296,
+        TOK_JAVASCRIPT = 297,
+        TOK_PROC = 298,
+        TOK_REC = 299,
+        TOK_GROUP = 300,
+        TOK_BY = 301,
+        TOK_USING = 302,
+        TOK_PATTERN = 303,
+        TOK_STATIC = 304,
+        TOK_STOCK = 305,
+        TOK_ANYCLASS = 306,
+        TOK_VIA = 307,
+        TOK_UNIT = 308,
+        TOK_SIGNATURE = 309,
+        TOK_DEPENDENCY = 310,
+        TOK_INLINE_PRAG = 311,
+        TOK_SPECIALIZE_PRAG = 312,
+        TOK_SPECIALIZE_INLINE_PRAG = 313,
+        TOK_SOURCE_PRAG = 314,
+        TOK_RULES_PRAG = 315,
+        TOK_CORE_PRAG = 316,
+        TOK_SCC_PRAG = 317,
+        TOK_GENERATED_PRAG = 318,
+        TOK_DEPRECATED_PRAG = 319,
+        TOK_WARNING_PRAG = 320,
+        TOK_UNPACK_PRAG = 321,
+        TOK_NOUNPACK_PRAG = 322,
+        TOK_ANN_PRAG = 323,
+        TOK_MINIMAL_PRAG = 324,
+        TOK_CTYPE_PRAG = 325,
+        TOK_OVERLAPPING_PRAG = 326,
+        TOK_OVERLAPPABLE_PRAG = 327,
+        TOK_OVERLAPS_PRAG = 328,
+        TOK_INCOHERENT_PRAG = 329,
+        TOK_COMPLETE_PRAG = 330,
+        TOK_CLOSE_PRAG = 331,
+        TOK_DOTDOT = 332,
+        TOK_COLON = 333,
+        TOK_DCOLON = 334,
+        TOK_EQUAL = 335,
+        TOK_LAM = 336,
+        TOK_LCASE = 337,
+        TOK_VBAR = 338,
+        TOK_LARROW = 339,
+        TOK_RARROW = 340,
+        TOK_AT = 341,
+        TOK_TILDE = 342,
+        TOK_DARROW = 343,
+        TOK_MINUS = 344,
+        TOK_BANG = 345,
+        TOK_STAR = 346,
+        TOK_lARROWTAIL = 347,
+        TOK_rARROWTAIL = 348,
+        TOK_LARROWTAIL = 349,
+        TOK_RARROWTAIL = 350,
+        TOK_DOT = 351,
+        TOK_TYPEAPP = 352,
+        TOK_OCURLY = 353,
+        TOK_CCURCLY = 354,
+        TOK_VOCURLY = 355,
+        TOK_VCCURLY = 356,
+        TOK_OBRACK = 357,
+        TOK_CBRACK = 358,
+        TOK_OPABRACK = 359,
+        TOK_CPABRACK = 360,
+        TOK_OPAREN = 361,
+        TOK_CPAREN = 362,
+        TOK_OUBXPAREN = 363,
+        TOK_CUBXPAREN = 364,
+        TOK_OPARENBAR = 365,
+        TOK_CPARENBAR = 366,
+        TOK_SEMI = 367,
+        TOK_BACKQUOTE = 368,
+        TOK_SIMPLEQUOTE = 369,
+        TOK_ASSIGN = 370,
+        TOK_PLUS = 371,
+        TOK_SLASH = 372,
+        TOK_VARID = 373,
+        TOK_CONID = 374,
+        TOK_VARSYM = 375,
+        TOK_CONSYM = 376,
+        TOK_QVARID = 377,
+        TOK_QCONID = 378,
+        TOK_QVARSYM = 379,
+        TOK_QCONSYM = 380,
+        TOK_CHAR = 381,
+        TOK_STRING = 382,
+        TOK_INTEGER = 383,
+        TOK_RATIONAL = 384,
+        TOK_PRIMCHAR = 385,
+        TOK_PRIMSTRING = 386,
+        TOK_PRIMINTEGER = 387,
+        TOK_PRINTWORD = 388,
+        TOK_PRIMFLOAT = 389,
+        TOK_PRIMDOUBLE = 390,
+        TOK_IDENTIFIER = 391,
+        TOK_NUMBER = 392
       };
     };
 
@@ -373,6 +528,14 @@ namespace yy {
       /// Constructor for valueless symbols, and symbols from each type.
 
   basic_symbol (typename Base::kind_type t, const location_type& l);
+
+  basic_symbol (typename Base::kind_type t, const char& v, const location_type& l);
+
+  basic_symbol (typename Base::kind_type t, const double& v, const location_type& l);
+
+  basic_symbol (typename Base::kind_type t, const expression_ref& v, const location_type& l);
+
+  basic_symbol (typename Base::kind_type t, const float& v, const location_type& l);
 
   basic_symbol (typename Base::kind_type t, const int& v, const location_type& l);
 
@@ -451,7 +614,347 @@ namespace yy {
 
     static inline
     symbol_type
-    make_ASSIGN (const location_type& l);
+    make_UNDERSCORE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_AS (const location_type& l);
+
+    static inline
+    symbol_type
+    make_CASE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_DATA (const location_type& l);
+
+    static inline
+    symbol_type
+    make_DEFAULT (const location_type& l);
+
+    static inline
+    symbol_type
+    make_DERIVING (const location_type& l);
+
+    static inline
+    symbol_type
+    make_DO (const location_type& l);
+
+    static inline
+    symbol_type
+    make_ELSE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_HIDING (const location_type& l);
+
+    static inline
+    symbol_type
+    make_IF (const location_type& l);
+
+    static inline
+    symbol_type
+    make_IMPORT (const location_type& l);
+
+    static inline
+    symbol_type
+    make_IN (const location_type& l);
+
+    static inline
+    symbol_type
+    make_INFIX (const location_type& l);
+
+    static inline
+    symbol_type
+    make_INFIXL (const location_type& l);
+
+    static inline
+    symbol_type
+    make_INFIXR (const location_type& l);
+
+    static inline
+    symbol_type
+    make_INSTANCE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_LET (const location_type& l);
+
+    static inline
+    symbol_type
+    make_MODULE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_NEWTYPE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_OF (const location_type& l);
+
+    static inline
+    symbol_type
+    make_QUALIFIED (const location_type& l);
+
+    static inline
+    symbol_type
+    make_THEN (const location_type& l);
+
+    static inline
+    symbol_type
+    make_TYPE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_WHERE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_FORALL (const location_type& l);
+
+    static inline
+    symbol_type
+    make_FOREIGN (const location_type& l);
+
+    static inline
+    symbol_type
+    make_EXPORT (const location_type& l);
+
+    static inline
+    symbol_type
+    make_LABEL (const location_type& l);
+
+    static inline
+    symbol_type
+    make_DYNAMIC (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SAFE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_INTERRUPTIBLE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_UNSAFE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_MDO (const location_type& l);
+
+    static inline
+    symbol_type
+    make_FAMILY (const location_type& l);
+
+    static inline
+    symbol_type
+    make_ROLE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_STDCALL (const location_type& l);
+
+    static inline
+    symbol_type
+    make_CCALL (const location_type& l);
+
+    static inline
+    symbol_type
+    make_CAPI (const location_type& l);
+
+    static inline
+    symbol_type
+    make_PRIM (const location_type& l);
+
+    static inline
+    symbol_type
+    make_JAVASCRIPT (const location_type& l);
+
+    static inline
+    symbol_type
+    make_PROC (const location_type& l);
+
+    static inline
+    symbol_type
+    make_REC (const location_type& l);
+
+    static inline
+    symbol_type
+    make_GROUP (const location_type& l);
+
+    static inline
+    symbol_type
+    make_BY (const location_type& l);
+
+    static inline
+    symbol_type
+    make_USING (const location_type& l);
+
+    static inline
+    symbol_type
+    make_PATTERN (const location_type& l);
+
+    static inline
+    symbol_type
+    make_STATIC (const location_type& l);
+
+    static inline
+    symbol_type
+    make_STOCK (const location_type& l);
+
+    static inline
+    symbol_type
+    make_ANYCLASS (const location_type& l);
+
+    static inline
+    symbol_type
+    make_VIA (const location_type& l);
+
+    static inline
+    symbol_type
+    make_UNIT (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SIGNATURE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_DEPENDENCY (const location_type& l);
+
+    static inline
+    symbol_type
+    make_INLINE_PRAG (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SPECIALIZE_PRAG (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SPECIALIZE_INLINE_PRAG (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SOURCE_PRAG (const location_type& l);
+
+    static inline
+    symbol_type
+    make_RULES_PRAG (const location_type& l);
+
+    static inline
+    symbol_type
+    make_CORE_PRAG (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SCC_PRAG (const location_type& l);
+
+    static inline
+    symbol_type
+    make_GENERATED_PRAG (const location_type& l);
+
+    static inline
+    symbol_type
+    make_DEPRECATED_PRAG (const location_type& l);
+
+    static inline
+    symbol_type
+    make_WARNING_PRAG (const location_type& l);
+
+    static inline
+    symbol_type
+    make_UNPACK_PRAG (const location_type& l);
+
+    static inline
+    symbol_type
+    make_NOUNPACK_PRAG (const location_type& l);
+
+    static inline
+    symbol_type
+    make_ANN_PRAG (const location_type& l);
+
+    static inline
+    symbol_type
+    make_MINIMAL_PRAG (const location_type& l);
+
+    static inline
+    symbol_type
+    make_CTYPE_PRAG (const location_type& l);
+
+    static inline
+    symbol_type
+    make_OVERLAPPING_PRAG (const location_type& l);
+
+    static inline
+    symbol_type
+    make_OVERLAPPABLE_PRAG (const location_type& l);
+
+    static inline
+    symbol_type
+    make_OVERLAPS_PRAG (const location_type& l);
+
+    static inline
+    symbol_type
+    make_INCOHERENT_PRAG (const location_type& l);
+
+    static inline
+    symbol_type
+    make_COMPLETE_PRAG (const location_type& l);
+
+    static inline
+    symbol_type
+    make_CLOSE_PRAG (const location_type& l);
+
+    static inline
+    symbol_type
+    make_DOTDOT (const location_type& l);
+
+    static inline
+    symbol_type
+    make_COLON (const location_type& l);
+
+    static inline
+    symbol_type
+    make_DCOLON (const location_type& l);
+
+    static inline
+    symbol_type
+    make_EQUAL (const location_type& l);
+
+    static inline
+    symbol_type
+    make_LAM (const location_type& l);
+
+    static inline
+    symbol_type
+    make_LCASE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_VBAR (const location_type& l);
+
+    static inline
+    symbol_type
+    make_LARROW (const location_type& l);
+
+    static inline
+    symbol_type
+    make_RARROW (const location_type& l);
+
+    static inline
+    symbol_type
+    make_AT (const location_type& l);
+
+    static inline
+    symbol_type
+    make_TILDE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_DARROW (const location_type& l);
 
     static inline
     symbol_type
@@ -459,7 +962,7 @@ namespace yy {
 
     static inline
     symbol_type
-    make_PLUS (const location_type& l);
+    make_BANG (const location_type& l);
 
     static inline
     symbol_type
@@ -467,15 +970,179 @@ namespace yy {
 
     static inline
     symbol_type
+    make_lARROWTAIL (const location_type& l);
+
+    static inline
+    symbol_type
+    make_rARROWTAIL (const location_type& l);
+
+    static inline
+    symbol_type
+    make_LARROWTAIL (const location_type& l);
+
+    static inline
+    symbol_type
+    make_RARROWTAIL (const location_type& l);
+
+    static inline
+    symbol_type
+    make_DOT (const location_type& l);
+
+    static inline
+    symbol_type
+    make_TYPEAPP (const location_type& l);
+
+    static inline
+    symbol_type
+    make_OCURLY (const location_type& l);
+
+    static inline
+    symbol_type
+    make_CCURCLY (const location_type& l);
+
+    static inline
+    symbol_type
+    make_VOCURLY (const location_type& l);
+
+    static inline
+    symbol_type
+    make_VCCURLY (const location_type& l);
+
+    static inline
+    symbol_type
+    make_OBRACK (const location_type& l);
+
+    static inline
+    symbol_type
+    make_CBRACK (const location_type& l);
+
+    static inline
+    symbol_type
+    make_OPABRACK (const location_type& l);
+
+    static inline
+    symbol_type
+    make_CPABRACK (const location_type& l);
+
+    static inline
+    symbol_type
+    make_OPAREN (const location_type& l);
+
+    static inline
+    symbol_type
+    make_CPAREN (const location_type& l);
+
+    static inline
+    symbol_type
+    make_OUBXPAREN (const location_type& l);
+
+    static inline
+    symbol_type
+    make_CUBXPAREN (const location_type& l);
+
+    static inline
+    symbol_type
+    make_OPARENBAR (const location_type& l);
+
+    static inline
+    symbol_type
+    make_CPARENBAR (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SEMI (const location_type& l);
+
+    static inline
+    symbol_type
+    make_BACKQUOTE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SIMPLEQUOTE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_ASSIGN (const location_type& l);
+
+    static inline
+    symbol_type
+    make_PLUS (const location_type& l);
+
+    static inline
+    symbol_type
     make_SLASH (const location_type& l);
 
     static inline
     symbol_type
-    make_LPAREN (const location_type& l);
+    make_VARID (const std::string& v, const location_type& l);
 
     static inline
     symbol_type
-    make_RPAREN (const location_type& l);
+    make_CONID (const std::string& v, const location_type& l);
+
+    static inline
+    symbol_type
+    make_VARSYM (const std::string& v, const location_type& l);
+
+    static inline
+    symbol_type
+    make_CONSYM (const std::string& v, const location_type& l);
+
+    static inline
+    symbol_type
+    make_QVARID (const std::string& v, const location_type& l);
+
+    static inline
+    symbol_type
+    make_QCONID (const std::string& v, const location_type& l);
+
+    static inline
+    symbol_type
+    make_QVARSYM (const std::string& v, const location_type& l);
+
+    static inline
+    symbol_type
+    make_QCONSYM (const std::string& v, const location_type& l);
+
+    static inline
+    symbol_type
+    make_CHAR (const char& v, const location_type& l);
+
+    static inline
+    symbol_type
+    make_STRING (const std::string& v, const location_type& l);
+
+    static inline
+    symbol_type
+    make_INTEGER (const int& v, const location_type& l);
+
+    static inline
+    symbol_type
+    make_RATIONAL (const double& v, const location_type& l);
+
+    static inline
+    symbol_type
+    make_PRIMCHAR (const char& v, const location_type& l);
+
+    static inline
+    symbol_type
+    make_PRIMSTRING (const std::string& v, const location_type& l);
+
+    static inline
+    symbol_type
+    make_PRIMINTEGER (const int& v, const location_type& l);
+
+    static inline
+    symbol_type
+    make_PRINTWORD (const int& v, const location_type& l);
+
+    static inline
+    symbol_type
+    make_PRIMFLOAT (const float& v, const location_type& l);
+
+    static inline
+    symbol_type
+    make_PRIMDOUBLE (const double& v, const location_type& l);
 
     static inline
     symbol_type
@@ -570,7 +1237,7 @@ namespace yy {
   // number is the opposite.  If YYTABLE_NINF, syntax error.
   static const unsigned char yytable_[];
 
-  static const signed char yycheck_[];
+  static const short yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -692,12 +1359,12 @@ namespace yy {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 26,     ///< Last index in yytable_.
+      yylast_ = 35,     ///< Last index in yytable_.
       yynnts_ = 5,  ///< Number of nonterminal symbols.
       yyfinal_ = 3, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 12  ///< Number of tokens.
+      yyntokens_ = 138  ///< Number of tokens.
     };
 
 
@@ -740,9 +1407,22 @@ namespace yy {
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5,     6,     7,     8,     9,    10,    11
+       5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
+      15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
+      25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
+      35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
+      45,    46,    47,    48,    49,    50,    51,    52,    53,    54,
+      55,    56,    57,    58,    59,    60,    61,    62,    63,    64,
+      65,    66,    67,    68,    69,    70,    71,    72,    73,    74,
+      75,    76,    77,    78,    79,    80,    81,    82,    83,    84,
+      85,    86,    87,    88,    89,    90,    91,    92,    93,    94,
+      95,    96,    97,    98,    99,   100,   101,   102,   103,   104,
+     105,   106,   107,   108,   109,   110,   111,   112,   113,   114,
+     115,   116,   117,   118,   119,   120,   121,   122,   123,   124,
+     125,   126,   127,   128,   129,   130,   131,   132,   133,   134,
+     135,   136,   137
     };
-    const unsigned user_token_number_max_ = 266;
+    const unsigned user_token_number_max_ = 392;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int> (t) <= yyeof_)
@@ -774,12 +1454,42 @@ namespace yy {
   {
     switch (other.type_get ())
     {
-      case 11: // "number"
-      case 16: // exp
+      case 126: // "CHAR"
+      case 130: // "PRIMCHAR"
+        value.copy< char > (other.value);
+        break;
+
+      case 129: // "RATIONAL"
+      case 135: // "PRIMDOUBLE"
+        value.copy< double > (other.value);
+        break;
+
+      case 142: // exp
+        value.copy< expression_ref > (other.value);
+        break;
+
+      case 134: // "PRIMFLOAT"
+        value.copy< float > (other.value);
+        break;
+
+      case 128: // "INTEGER"
+      case 132: // "PRIMINTEGER"
+      case 133: // "PRIMWORD"
+      case 137: // "number"
         value.copy< int > (other.value);
         break;
 
-      case 10: // "identifier"
+      case 118: // "VARID"
+      case 119: // "CONID"
+      case 120: // "VARSYM"
+      case 121: // "CONSYM"
+      case 122: // "QVARID"
+      case 123: // "QCONID"
+      case 124: // "QVARSYM"
+      case 125: // "QCONSYM"
+      case 127: // "STRING"
+      case 131: // "PRIMSTRING"
+      case 136: // "identifier"
         value.copy< std::string > (other.value);
         break;
 
@@ -798,12 +1508,42 @@ namespace yy {
     (void) v;
     switch (this->type_get ())
     {
-      case 11: // "number"
-      case 16: // exp
+      case 126: // "CHAR"
+      case 130: // "PRIMCHAR"
+        value.copy< char > (v);
+        break;
+
+      case 129: // "RATIONAL"
+      case 135: // "PRIMDOUBLE"
+        value.copy< double > (v);
+        break;
+
+      case 142: // exp
+        value.copy< expression_ref > (v);
+        break;
+
+      case 134: // "PRIMFLOAT"
+        value.copy< float > (v);
+        break;
+
+      case 128: // "INTEGER"
+      case 132: // "PRIMINTEGER"
+      case 133: // "PRIMWORD"
+      case 137: // "number"
         value.copy< int > (v);
         break;
 
-      case 10: // "identifier"
+      case 118: // "VARID"
+      case 119: // "CONID"
+      case 120: // "VARSYM"
+      case 121: // "CONSYM"
+      case 122: // "QVARID"
+      case 123: // "QCONID"
+      case 124: // "QVARSYM"
+      case 125: // "QCONSYM"
+      case 127: // "STRING"
+      case 131: // "PRIMSTRING"
+      case 136: // "identifier"
         value.copy< std::string > (v);
         break;
 
@@ -818,6 +1558,34 @@ namespace yy {
   template <typename Base>
   parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const location_type& l)
     : Base (t)
+    , location (l)
+  {}
+
+  template <typename Base>
+  parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const char& v, const location_type& l)
+    : Base (t)
+    , value (v)
+    , location (l)
+  {}
+
+  template <typename Base>
+  parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const double& v, const location_type& l)
+    : Base (t)
+    , value (v)
+    , location (l)
+  {}
+
+  template <typename Base>
+  parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const expression_ref& v, const location_type& l)
+    : Base (t)
+    , value (v)
+    , location (l)
+  {}
+
+  template <typename Base>
+  parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const float& v, const location_type& l)
+    : Base (t)
+    , value (v)
     , location (l)
   {}
 
@@ -859,12 +1627,42 @@ namespace yy {
     // Type destructor.
   switch (yytype)
     {
-      case 11: // "number"
-      case 16: // exp
+      case 126: // "CHAR"
+      case 130: // "PRIMCHAR"
+        value.template destroy< char > ();
+        break;
+
+      case 129: // "RATIONAL"
+      case 135: // "PRIMDOUBLE"
+        value.template destroy< double > ();
+        break;
+
+      case 142: // exp
+        value.template destroy< expression_ref > ();
+        break;
+
+      case 134: // "PRIMFLOAT"
+        value.template destroy< float > ();
+        break;
+
+      case 128: // "INTEGER"
+      case 132: // "PRIMINTEGER"
+      case 133: // "PRIMWORD"
+      case 137: // "number"
         value.template destroy< int > ();
         break;
 
-      case 10: // "identifier"
+      case 118: // "VARID"
+      case 119: // "CONID"
+      case 120: // "VARSYM"
+      case 121: // "CONSYM"
+      case 122: // "QVARID"
+      case 123: // "QCONID"
+      case 124: // "QVARSYM"
+      case 125: // "QCONSYM"
+      case 127: // "STRING"
+      case 131: // "PRIMSTRING"
+      case 136: // "identifier"
         value.template destroy< std::string > ();
         break;
 
@@ -889,12 +1687,42 @@ namespace yy {
     super_type::move (s);
     switch (this->type_get ())
     {
-      case 11: // "number"
-      case 16: // exp
+      case 126: // "CHAR"
+      case 130: // "PRIMCHAR"
+        value.move< char > (s.value);
+        break;
+
+      case 129: // "RATIONAL"
+      case 135: // "PRIMDOUBLE"
+        value.move< double > (s.value);
+        break;
+
+      case 142: // exp
+        value.move< expression_ref > (s.value);
+        break;
+
+      case 134: // "PRIMFLOAT"
+        value.move< float > (s.value);
+        break;
+
+      case 128: // "INTEGER"
+      case 132: // "PRIMINTEGER"
+      case 133: // "PRIMWORD"
+      case 137: // "number"
         value.move< int > (s.value);
         break;
 
-      case 10: // "identifier"
+      case 118: // "VARID"
+      case 119: // "CONID"
+      case 120: // "VARSYM"
+      case 121: // "CONSYM"
+      case 122: // "QVARID"
+      case 123: // "QCONID"
+      case 124: // "QVARSYM"
+      case 125: // "QCONSYM"
+      case 127: // "STRING"
+      case 131: // "PRIMSTRING"
+      case 136: // "identifier"
         value.move< std::string > (s.value);
         break;
 
@@ -954,7 +1782,19 @@ namespace yy {
     yytoken_number_[] =
     {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
-     265,   266
+     265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
+     275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
+     285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
+     295,   296,   297,   298,   299,   300,   301,   302,   303,   304,
+     305,   306,   307,   308,   309,   310,   311,   312,   313,   314,
+     315,   316,   317,   318,   319,   320,   321,   322,   323,   324,
+     325,   326,   327,   328,   329,   330,   331,   332,   333,   334,
+     335,   336,   337,   338,   339,   340,   341,   342,   343,   344,
+     345,   346,   347,   348,   349,   350,   351,   352,   353,   354,
+     355,   356,   357,   358,   359,   360,   361,   362,   363,   364,
+     365,   366,   367,   368,   369,   370,   371,   372,   373,   374,
+     375,   376,   377,   378,   379,   380,   381,   382,   383,   384,
+     385,   386,   387,   388,   389,   390,   391,   392
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
@@ -966,9 +1806,519 @@ namespace yy {
   }
 
   parser::symbol_type
-  parser::make_ASSIGN (const location_type& l)
+  parser::make_UNDERSCORE (const location_type& l)
   {
-    return symbol_type (token::TOK_ASSIGN, l);
+    return symbol_type (token::TOK_UNDERSCORE, l);
+  }
+
+  parser::symbol_type
+  parser::make_AS (const location_type& l)
+  {
+    return symbol_type (token::TOK_AS, l);
+  }
+
+  parser::symbol_type
+  parser::make_CASE (const location_type& l)
+  {
+    return symbol_type (token::TOK_CASE, l);
+  }
+
+  parser::symbol_type
+  parser::make_DATA (const location_type& l)
+  {
+    return symbol_type (token::TOK_DATA, l);
+  }
+
+  parser::symbol_type
+  parser::make_DEFAULT (const location_type& l)
+  {
+    return symbol_type (token::TOK_DEFAULT, l);
+  }
+
+  parser::symbol_type
+  parser::make_DERIVING (const location_type& l)
+  {
+    return symbol_type (token::TOK_DERIVING, l);
+  }
+
+  parser::symbol_type
+  parser::make_DO (const location_type& l)
+  {
+    return symbol_type (token::TOK_DO, l);
+  }
+
+  parser::symbol_type
+  parser::make_ELSE (const location_type& l)
+  {
+    return symbol_type (token::TOK_ELSE, l);
+  }
+
+  parser::symbol_type
+  parser::make_HIDING (const location_type& l)
+  {
+    return symbol_type (token::TOK_HIDING, l);
+  }
+
+  parser::symbol_type
+  parser::make_IF (const location_type& l)
+  {
+    return symbol_type (token::TOK_IF, l);
+  }
+
+  parser::symbol_type
+  parser::make_IMPORT (const location_type& l)
+  {
+    return symbol_type (token::TOK_IMPORT, l);
+  }
+
+  parser::symbol_type
+  parser::make_IN (const location_type& l)
+  {
+    return symbol_type (token::TOK_IN, l);
+  }
+
+  parser::symbol_type
+  parser::make_INFIX (const location_type& l)
+  {
+    return symbol_type (token::TOK_INFIX, l);
+  }
+
+  parser::symbol_type
+  parser::make_INFIXL (const location_type& l)
+  {
+    return symbol_type (token::TOK_INFIXL, l);
+  }
+
+  parser::symbol_type
+  parser::make_INFIXR (const location_type& l)
+  {
+    return symbol_type (token::TOK_INFIXR, l);
+  }
+
+  parser::symbol_type
+  parser::make_INSTANCE (const location_type& l)
+  {
+    return symbol_type (token::TOK_INSTANCE, l);
+  }
+
+  parser::symbol_type
+  parser::make_LET (const location_type& l)
+  {
+    return symbol_type (token::TOK_LET, l);
+  }
+
+  parser::symbol_type
+  parser::make_MODULE (const location_type& l)
+  {
+    return symbol_type (token::TOK_MODULE, l);
+  }
+
+  parser::symbol_type
+  parser::make_NEWTYPE (const location_type& l)
+  {
+    return symbol_type (token::TOK_NEWTYPE, l);
+  }
+
+  parser::symbol_type
+  parser::make_OF (const location_type& l)
+  {
+    return symbol_type (token::TOK_OF, l);
+  }
+
+  parser::symbol_type
+  parser::make_QUALIFIED (const location_type& l)
+  {
+    return symbol_type (token::TOK_QUALIFIED, l);
+  }
+
+  parser::symbol_type
+  parser::make_THEN (const location_type& l)
+  {
+    return symbol_type (token::TOK_THEN, l);
+  }
+
+  parser::symbol_type
+  parser::make_TYPE (const location_type& l)
+  {
+    return symbol_type (token::TOK_TYPE, l);
+  }
+
+  parser::symbol_type
+  parser::make_WHERE (const location_type& l)
+  {
+    return symbol_type (token::TOK_WHERE, l);
+  }
+
+  parser::symbol_type
+  parser::make_FORALL (const location_type& l)
+  {
+    return symbol_type (token::TOK_FORALL, l);
+  }
+
+  parser::symbol_type
+  parser::make_FOREIGN (const location_type& l)
+  {
+    return symbol_type (token::TOK_FOREIGN, l);
+  }
+
+  parser::symbol_type
+  parser::make_EXPORT (const location_type& l)
+  {
+    return symbol_type (token::TOK_EXPORT, l);
+  }
+
+  parser::symbol_type
+  parser::make_LABEL (const location_type& l)
+  {
+    return symbol_type (token::TOK_LABEL, l);
+  }
+
+  parser::symbol_type
+  parser::make_DYNAMIC (const location_type& l)
+  {
+    return symbol_type (token::TOK_DYNAMIC, l);
+  }
+
+  parser::symbol_type
+  parser::make_SAFE (const location_type& l)
+  {
+    return symbol_type (token::TOK_SAFE, l);
+  }
+
+  parser::symbol_type
+  parser::make_INTERRUPTIBLE (const location_type& l)
+  {
+    return symbol_type (token::TOK_INTERRUPTIBLE, l);
+  }
+
+  parser::symbol_type
+  parser::make_UNSAFE (const location_type& l)
+  {
+    return symbol_type (token::TOK_UNSAFE, l);
+  }
+
+  parser::symbol_type
+  parser::make_MDO (const location_type& l)
+  {
+    return symbol_type (token::TOK_MDO, l);
+  }
+
+  parser::symbol_type
+  parser::make_FAMILY (const location_type& l)
+  {
+    return symbol_type (token::TOK_FAMILY, l);
+  }
+
+  parser::symbol_type
+  parser::make_ROLE (const location_type& l)
+  {
+    return symbol_type (token::TOK_ROLE, l);
+  }
+
+  parser::symbol_type
+  parser::make_STDCALL (const location_type& l)
+  {
+    return symbol_type (token::TOK_STDCALL, l);
+  }
+
+  parser::symbol_type
+  parser::make_CCALL (const location_type& l)
+  {
+    return symbol_type (token::TOK_CCALL, l);
+  }
+
+  parser::symbol_type
+  parser::make_CAPI (const location_type& l)
+  {
+    return symbol_type (token::TOK_CAPI, l);
+  }
+
+  parser::symbol_type
+  parser::make_PRIM (const location_type& l)
+  {
+    return symbol_type (token::TOK_PRIM, l);
+  }
+
+  parser::symbol_type
+  parser::make_JAVASCRIPT (const location_type& l)
+  {
+    return symbol_type (token::TOK_JAVASCRIPT, l);
+  }
+
+  parser::symbol_type
+  parser::make_PROC (const location_type& l)
+  {
+    return symbol_type (token::TOK_PROC, l);
+  }
+
+  parser::symbol_type
+  parser::make_REC (const location_type& l)
+  {
+    return symbol_type (token::TOK_REC, l);
+  }
+
+  parser::symbol_type
+  parser::make_GROUP (const location_type& l)
+  {
+    return symbol_type (token::TOK_GROUP, l);
+  }
+
+  parser::symbol_type
+  parser::make_BY (const location_type& l)
+  {
+    return symbol_type (token::TOK_BY, l);
+  }
+
+  parser::symbol_type
+  parser::make_USING (const location_type& l)
+  {
+    return symbol_type (token::TOK_USING, l);
+  }
+
+  parser::symbol_type
+  parser::make_PATTERN (const location_type& l)
+  {
+    return symbol_type (token::TOK_PATTERN, l);
+  }
+
+  parser::symbol_type
+  parser::make_STATIC (const location_type& l)
+  {
+    return symbol_type (token::TOK_STATIC, l);
+  }
+
+  parser::symbol_type
+  parser::make_STOCK (const location_type& l)
+  {
+    return symbol_type (token::TOK_STOCK, l);
+  }
+
+  parser::symbol_type
+  parser::make_ANYCLASS (const location_type& l)
+  {
+    return symbol_type (token::TOK_ANYCLASS, l);
+  }
+
+  parser::symbol_type
+  parser::make_VIA (const location_type& l)
+  {
+    return symbol_type (token::TOK_VIA, l);
+  }
+
+  parser::symbol_type
+  parser::make_UNIT (const location_type& l)
+  {
+    return symbol_type (token::TOK_UNIT, l);
+  }
+
+  parser::symbol_type
+  parser::make_SIGNATURE (const location_type& l)
+  {
+    return symbol_type (token::TOK_SIGNATURE, l);
+  }
+
+  parser::symbol_type
+  parser::make_DEPENDENCY (const location_type& l)
+  {
+    return symbol_type (token::TOK_DEPENDENCY, l);
+  }
+
+  parser::symbol_type
+  parser::make_INLINE_PRAG (const location_type& l)
+  {
+    return symbol_type (token::TOK_INLINE_PRAG, l);
+  }
+
+  parser::symbol_type
+  parser::make_SPECIALIZE_PRAG (const location_type& l)
+  {
+    return symbol_type (token::TOK_SPECIALIZE_PRAG, l);
+  }
+
+  parser::symbol_type
+  parser::make_SPECIALIZE_INLINE_PRAG (const location_type& l)
+  {
+    return symbol_type (token::TOK_SPECIALIZE_INLINE_PRAG, l);
+  }
+
+  parser::symbol_type
+  parser::make_SOURCE_PRAG (const location_type& l)
+  {
+    return symbol_type (token::TOK_SOURCE_PRAG, l);
+  }
+
+  parser::symbol_type
+  parser::make_RULES_PRAG (const location_type& l)
+  {
+    return symbol_type (token::TOK_RULES_PRAG, l);
+  }
+
+  parser::symbol_type
+  parser::make_CORE_PRAG (const location_type& l)
+  {
+    return symbol_type (token::TOK_CORE_PRAG, l);
+  }
+
+  parser::symbol_type
+  parser::make_SCC_PRAG (const location_type& l)
+  {
+    return symbol_type (token::TOK_SCC_PRAG, l);
+  }
+
+  parser::symbol_type
+  parser::make_GENERATED_PRAG (const location_type& l)
+  {
+    return symbol_type (token::TOK_GENERATED_PRAG, l);
+  }
+
+  parser::symbol_type
+  parser::make_DEPRECATED_PRAG (const location_type& l)
+  {
+    return symbol_type (token::TOK_DEPRECATED_PRAG, l);
+  }
+
+  parser::symbol_type
+  parser::make_WARNING_PRAG (const location_type& l)
+  {
+    return symbol_type (token::TOK_WARNING_PRAG, l);
+  }
+
+  parser::symbol_type
+  parser::make_UNPACK_PRAG (const location_type& l)
+  {
+    return symbol_type (token::TOK_UNPACK_PRAG, l);
+  }
+
+  parser::symbol_type
+  parser::make_NOUNPACK_PRAG (const location_type& l)
+  {
+    return symbol_type (token::TOK_NOUNPACK_PRAG, l);
+  }
+
+  parser::symbol_type
+  parser::make_ANN_PRAG (const location_type& l)
+  {
+    return symbol_type (token::TOK_ANN_PRAG, l);
+  }
+
+  parser::symbol_type
+  parser::make_MINIMAL_PRAG (const location_type& l)
+  {
+    return symbol_type (token::TOK_MINIMAL_PRAG, l);
+  }
+
+  parser::symbol_type
+  parser::make_CTYPE_PRAG (const location_type& l)
+  {
+    return symbol_type (token::TOK_CTYPE_PRAG, l);
+  }
+
+  parser::symbol_type
+  parser::make_OVERLAPPING_PRAG (const location_type& l)
+  {
+    return symbol_type (token::TOK_OVERLAPPING_PRAG, l);
+  }
+
+  parser::symbol_type
+  parser::make_OVERLAPPABLE_PRAG (const location_type& l)
+  {
+    return symbol_type (token::TOK_OVERLAPPABLE_PRAG, l);
+  }
+
+  parser::symbol_type
+  parser::make_OVERLAPS_PRAG (const location_type& l)
+  {
+    return symbol_type (token::TOK_OVERLAPS_PRAG, l);
+  }
+
+  parser::symbol_type
+  parser::make_INCOHERENT_PRAG (const location_type& l)
+  {
+    return symbol_type (token::TOK_INCOHERENT_PRAG, l);
+  }
+
+  parser::symbol_type
+  parser::make_COMPLETE_PRAG (const location_type& l)
+  {
+    return symbol_type (token::TOK_COMPLETE_PRAG, l);
+  }
+
+  parser::symbol_type
+  parser::make_CLOSE_PRAG (const location_type& l)
+  {
+    return symbol_type (token::TOK_CLOSE_PRAG, l);
+  }
+
+  parser::symbol_type
+  parser::make_DOTDOT (const location_type& l)
+  {
+    return symbol_type (token::TOK_DOTDOT, l);
+  }
+
+  parser::symbol_type
+  parser::make_COLON (const location_type& l)
+  {
+    return symbol_type (token::TOK_COLON, l);
+  }
+
+  parser::symbol_type
+  parser::make_DCOLON (const location_type& l)
+  {
+    return symbol_type (token::TOK_DCOLON, l);
+  }
+
+  parser::symbol_type
+  parser::make_EQUAL (const location_type& l)
+  {
+    return symbol_type (token::TOK_EQUAL, l);
+  }
+
+  parser::symbol_type
+  parser::make_LAM (const location_type& l)
+  {
+    return symbol_type (token::TOK_LAM, l);
+  }
+
+  parser::symbol_type
+  parser::make_LCASE (const location_type& l)
+  {
+    return symbol_type (token::TOK_LCASE, l);
+  }
+
+  parser::symbol_type
+  parser::make_VBAR (const location_type& l)
+  {
+    return symbol_type (token::TOK_VBAR, l);
+  }
+
+  parser::symbol_type
+  parser::make_LARROW (const location_type& l)
+  {
+    return symbol_type (token::TOK_LARROW, l);
+  }
+
+  parser::symbol_type
+  parser::make_RARROW (const location_type& l)
+  {
+    return symbol_type (token::TOK_RARROW, l);
+  }
+
+  parser::symbol_type
+  parser::make_AT (const location_type& l)
+  {
+    return symbol_type (token::TOK_AT, l);
+  }
+
+  parser::symbol_type
+  parser::make_TILDE (const location_type& l)
+  {
+    return symbol_type (token::TOK_TILDE, l);
+  }
+
+  parser::symbol_type
+  parser::make_DARROW (const location_type& l)
+  {
+    return symbol_type (token::TOK_DARROW, l);
   }
 
   parser::symbol_type
@@ -978,9 +2328,9 @@ namespace yy {
   }
 
   parser::symbol_type
-  parser::make_PLUS (const location_type& l)
+  parser::make_BANG (const location_type& l)
   {
-    return symbol_type (token::TOK_PLUS, l);
+    return symbol_type (token::TOK_BANG, l);
   }
 
   parser::symbol_type
@@ -990,21 +2340,267 @@ namespace yy {
   }
 
   parser::symbol_type
+  parser::make_lARROWTAIL (const location_type& l)
+  {
+    return symbol_type (token::TOK_lARROWTAIL, l);
+  }
+
+  parser::symbol_type
+  parser::make_rARROWTAIL (const location_type& l)
+  {
+    return symbol_type (token::TOK_rARROWTAIL, l);
+  }
+
+  parser::symbol_type
+  parser::make_LARROWTAIL (const location_type& l)
+  {
+    return symbol_type (token::TOK_LARROWTAIL, l);
+  }
+
+  parser::symbol_type
+  parser::make_RARROWTAIL (const location_type& l)
+  {
+    return symbol_type (token::TOK_RARROWTAIL, l);
+  }
+
+  parser::symbol_type
+  parser::make_DOT (const location_type& l)
+  {
+    return symbol_type (token::TOK_DOT, l);
+  }
+
+  parser::symbol_type
+  parser::make_TYPEAPP (const location_type& l)
+  {
+    return symbol_type (token::TOK_TYPEAPP, l);
+  }
+
+  parser::symbol_type
+  parser::make_OCURLY (const location_type& l)
+  {
+    return symbol_type (token::TOK_OCURLY, l);
+  }
+
+  parser::symbol_type
+  parser::make_CCURCLY (const location_type& l)
+  {
+    return symbol_type (token::TOK_CCURCLY, l);
+  }
+
+  parser::symbol_type
+  parser::make_VOCURLY (const location_type& l)
+  {
+    return symbol_type (token::TOK_VOCURLY, l);
+  }
+
+  parser::symbol_type
+  parser::make_VCCURLY (const location_type& l)
+  {
+    return symbol_type (token::TOK_VCCURLY, l);
+  }
+
+  parser::symbol_type
+  parser::make_OBRACK (const location_type& l)
+  {
+    return symbol_type (token::TOK_OBRACK, l);
+  }
+
+  parser::symbol_type
+  parser::make_CBRACK (const location_type& l)
+  {
+    return symbol_type (token::TOK_CBRACK, l);
+  }
+
+  parser::symbol_type
+  parser::make_OPABRACK (const location_type& l)
+  {
+    return symbol_type (token::TOK_OPABRACK, l);
+  }
+
+  parser::symbol_type
+  parser::make_CPABRACK (const location_type& l)
+  {
+    return symbol_type (token::TOK_CPABRACK, l);
+  }
+
+  parser::symbol_type
+  parser::make_OPAREN (const location_type& l)
+  {
+    return symbol_type (token::TOK_OPAREN, l);
+  }
+
+  parser::symbol_type
+  parser::make_CPAREN (const location_type& l)
+  {
+    return symbol_type (token::TOK_CPAREN, l);
+  }
+
+  parser::symbol_type
+  parser::make_OUBXPAREN (const location_type& l)
+  {
+    return symbol_type (token::TOK_OUBXPAREN, l);
+  }
+
+  parser::symbol_type
+  parser::make_CUBXPAREN (const location_type& l)
+  {
+    return symbol_type (token::TOK_CUBXPAREN, l);
+  }
+
+  parser::symbol_type
+  parser::make_OPARENBAR (const location_type& l)
+  {
+    return symbol_type (token::TOK_OPARENBAR, l);
+  }
+
+  parser::symbol_type
+  parser::make_CPARENBAR (const location_type& l)
+  {
+    return symbol_type (token::TOK_CPARENBAR, l);
+  }
+
+  parser::symbol_type
+  parser::make_SEMI (const location_type& l)
+  {
+    return symbol_type (token::TOK_SEMI, l);
+  }
+
+  parser::symbol_type
+  parser::make_BACKQUOTE (const location_type& l)
+  {
+    return symbol_type (token::TOK_BACKQUOTE, l);
+  }
+
+  parser::symbol_type
+  parser::make_SIMPLEQUOTE (const location_type& l)
+  {
+    return symbol_type (token::TOK_SIMPLEQUOTE, l);
+  }
+
+  parser::symbol_type
+  parser::make_ASSIGN (const location_type& l)
+  {
+    return symbol_type (token::TOK_ASSIGN, l);
+  }
+
+  parser::symbol_type
+  parser::make_PLUS (const location_type& l)
+  {
+    return symbol_type (token::TOK_PLUS, l);
+  }
+
+  parser::symbol_type
   parser::make_SLASH (const location_type& l)
   {
     return symbol_type (token::TOK_SLASH, l);
   }
 
   parser::symbol_type
-  parser::make_LPAREN (const location_type& l)
+  parser::make_VARID (const std::string& v, const location_type& l)
   {
-    return symbol_type (token::TOK_LPAREN, l);
+    return symbol_type (token::TOK_VARID, v, l);
   }
 
   parser::symbol_type
-  parser::make_RPAREN (const location_type& l)
+  parser::make_CONID (const std::string& v, const location_type& l)
   {
-    return symbol_type (token::TOK_RPAREN, l);
+    return symbol_type (token::TOK_CONID, v, l);
+  }
+
+  parser::symbol_type
+  parser::make_VARSYM (const std::string& v, const location_type& l)
+  {
+    return symbol_type (token::TOK_VARSYM, v, l);
+  }
+
+  parser::symbol_type
+  parser::make_CONSYM (const std::string& v, const location_type& l)
+  {
+    return symbol_type (token::TOK_CONSYM, v, l);
+  }
+
+  parser::symbol_type
+  parser::make_QVARID (const std::string& v, const location_type& l)
+  {
+    return symbol_type (token::TOK_QVARID, v, l);
+  }
+
+  parser::symbol_type
+  parser::make_QCONID (const std::string& v, const location_type& l)
+  {
+    return symbol_type (token::TOK_QCONID, v, l);
+  }
+
+  parser::symbol_type
+  parser::make_QVARSYM (const std::string& v, const location_type& l)
+  {
+    return symbol_type (token::TOK_QVARSYM, v, l);
+  }
+
+  parser::symbol_type
+  parser::make_QCONSYM (const std::string& v, const location_type& l)
+  {
+    return symbol_type (token::TOK_QCONSYM, v, l);
+  }
+
+  parser::symbol_type
+  parser::make_CHAR (const char& v, const location_type& l)
+  {
+    return symbol_type (token::TOK_CHAR, v, l);
+  }
+
+  parser::symbol_type
+  parser::make_STRING (const std::string& v, const location_type& l)
+  {
+    return symbol_type (token::TOK_STRING, v, l);
+  }
+
+  parser::symbol_type
+  parser::make_INTEGER (const int& v, const location_type& l)
+  {
+    return symbol_type (token::TOK_INTEGER, v, l);
+  }
+
+  parser::symbol_type
+  parser::make_RATIONAL (const double& v, const location_type& l)
+  {
+    return symbol_type (token::TOK_RATIONAL, v, l);
+  }
+
+  parser::symbol_type
+  parser::make_PRIMCHAR (const char& v, const location_type& l)
+  {
+    return symbol_type (token::TOK_PRIMCHAR, v, l);
+  }
+
+  parser::symbol_type
+  parser::make_PRIMSTRING (const std::string& v, const location_type& l)
+  {
+    return symbol_type (token::TOK_PRIMSTRING, v, l);
+  }
+
+  parser::symbol_type
+  parser::make_PRIMINTEGER (const int& v, const location_type& l)
+  {
+    return symbol_type (token::TOK_PRIMINTEGER, v, l);
+  }
+
+  parser::symbol_type
+  parser::make_PRINTWORD (const int& v, const location_type& l)
+  {
+    return symbol_type (token::TOK_PRINTWORD, v, l);
+  }
+
+  parser::symbol_type
+  parser::make_PRIMFLOAT (const float& v, const location_type& l)
+  {
+    return symbol_type (token::TOK_PRIMFLOAT, v, l);
+  }
+
+  parser::symbol_type
+  parser::make_PRIMDOUBLE (const double& v, const location_type& l)
+  {
+    return symbol_type (token::TOK_PRIMDOUBLE, v, l);
   }
 
   parser::symbol_type
@@ -1022,7 +2618,7 @@ namespace yy {
 
 
 } // yy
-#line 1026 "parser.hh" // lalr1.cc:380
+#line 2622 "parser.hh" // lalr1.cc:380
 
 
 

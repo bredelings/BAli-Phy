@@ -115,8 +115,8 @@ blank [ \t]
 "+"      return yy::parser::make_PLUS   (loc);
 "*"      return yy::parser::make_STAR   (loc);
 "/"      return yy::parser::make_SLASH  (loc);
-"("      return yy::parser::make_LPAREN (loc);
-")"      return yy::parser::make_RPAREN (loc);
+"("      return yy::parser::make_OPAREN (loc);
+")"      return yy::parser::make_CPAREN (loc);
 ":="     return yy::parser::make_ASSIGN (loc);
 
 {decimal}      {
