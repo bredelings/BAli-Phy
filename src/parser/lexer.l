@@ -30,6 +30,8 @@ yy::parser::symbol_type make_integer(int radix, bool positive, int shift,
 
 yy::parser::symbol_type make_rational(const yy::parser::location_type& loc);
 
+yy::parser::symbol_type make_char(const yy::parser::location_type& loc);
+yy::parser::symbol_type make_string(const yy::parser::location_type& loc);
 
 %}
 
@@ -63,6 +65,8 @@ small        {ascsmall}|{unismall}|\_
 
 unigraphic   \x06
 graphic      {small}|{large}|{symbol}|{digit}|{special}|{unigraphic}|\"\'
+graphicnonq  {small}|{large}|{symbol}|{digit}|{special}|{unigraphic}|\"
+graphicnonqq {small}|{large}|{symbol}|{digit}|{special}|{unigraphic}|\'
 
 binit        [0-1]
 octit        [0-7]
@@ -88,6 +92,7 @@ octal        {octit}({numspc}{octit})*
 hexadecimal  {hexit}({numspc}{hexit})*
 exponent     {numspc}[eE][\-\+]?{decimal}
 bin_exponent {numspc}[pP][\-\+]?{decimal}
+escape	     \\[abfnrtv\"\']
 
 qual         ({conid}\.)+
 qvarid       {qual}{varid}
@@ -168,13 +173,16 @@ signed       {negative}?
 {varsym}       return varsym(loc);
 {consym}       return consym(loc);
 
-{decimal}                  return make_integer(10,true,0,loc);
+{decimal}                              return make_integer(10,true,0,loc);
   /* 0[bB]{numspc}{binary}      make_integer(2,true,2,loc); */
-0[oO]{numspc}{octal}       return make_integer( 8,true,2,loc);
-0[xX]{numspc}{hexadecimal} return make_integer(16,true,2,loc);
-  /* negative literals depend on an extension */
-{floating_point}           return make_rational(loc);
+0[oO]{numspc}{octal}                   return make_integer( 8,true,2,loc);
+0[xX]{numspc}{hexadecimal}             return make_integer(16,true,2,loc);
 
+  /* negative literals depend on an extension */
+{floating_point}                       return make_rational(loc);
+
+\'({graphicnonq}|" "|{escape})\'         return make_char(loc);
+[\"]({graphicnonqq}|" "|{escape})*[\"]   return make_string(loc);
 
 .          {
              throw yy::parser::syntax_error
@@ -415,4 +423,53 @@ yy::parser::symbol_type make_rational(const yy::parser::location_type& loc)
     std::string s(yytext);
     double d = convertTo<double>(std::string(yytext));
     return yy::parser::make_RATIONAL(d,loc);
+}
+
+char get_char(const char* s, int& i)
+{
+    char c = s[i];
+    if (c == '\\')
+    {
+	i++;
+	c = s[i];
+	if (c == 'a')
+	    c = '\a';
+	else if (c == 'b')
+	    c = '\b';
+	else if (c == 'f')
+	    c = '\f';
+	else if (c == 'n')
+	    c = '\n';
+	else if (c == 'r')
+	    c = '\r';
+	else if (c == 't')
+	    c = '\t';
+	else if (c == 'v')
+	    c = '\v';
+	else if (c == '"')
+	    ;
+	else if (c == '\'')
+	    ;
+	else
+	    std::abort();
+    }
+    return c;
+}
+
+yy::parser::symbol_type make_char(const yy::parser::location_type& loc)
+{
+    int i=1;
+    char c = get_char(yytext, i);
+    return yy::parser::make_CHAR(c,loc);
+}
+
+yy::parser::symbol_type make_string(const yy::parser::location_type& loc)
+{
+    std::string s;
+    s.resize(yyleng);
+    int j=0;
+    for(int i=1;i<yyleng-1;i++)
+	s[j++] = get_char(yytext,i);
+    s.resize(j);
+    return yy::parser::make_STRING(s,loc);
 }
