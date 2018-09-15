@@ -54,6 +54,9 @@
   TYPE          "type"
   WHERE         "where"
 
+ /* BAli-Phy extension keyword */
+  BUILTIN       "builtin"
+
  /* GHC extension keywords */
   FORALL        "forall"
   FOREIGN       "foreign"

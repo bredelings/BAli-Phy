@@ -5,6 +5,7 @@
 # include <string>
 # include "driver.hh"
 # include "parser.hh"
+# include "util.H"
 
 // Work around an incompatibility in flex (at least versions
 // 2.5.31 through 2.5.33): it generates code that does
@@ -23,6 +24,13 @@
 yy::parser::symbol_type varid(const yy::parser::location_type&);
 yy::parser::symbol_type varsym(const yy::parser::location_type&);
 yy::parser::symbol_type consym(const yy::parser::location_type&);
+
+yy::parser::symbol_type make_integer(int radix, bool positive, int shift,
+				     const yy::parser::location_type& loc);
+
+yy::parser::symbol_type make_rational(const yy::parser::location_type& loc);
+
+
 %}
 
 %option noyywrap nounput batch debug noinput
@@ -39,7 +47,7 @@ decdigit     {ascdigit}
 digit        {ascdigit}|{unidigit}
 
 special      [(),;[\]`\{\}]
-ascsymbol_except_colon    [!#$%&*+./<=>?@\\^|\-~]
+ascsymbol_except_colon    [!#$%&\*+./<=>?@\\^|\-~]
 ascsymbol    {ascsymbol_except_colon}|:
 unisymbol    \x05
 symbol_except_colon {ascsymbol_except_colon}
@@ -78,8 +86,8 @@ decimal      {decdigit}({numspc}{decdigit})*
 binary       {binit}({numspc}{binit})*
 octal        {octit}({numspc}{octit})*
 hexadecimal  {hexit}({numspc}{hexit})*
-exponent     {numspc}[eE][\-\+]?{@decimal}
-bin_exponent {numspc}[pP][\-\+]?{@decimal}
+exponent     {numspc}[eE][\-\+]?{decimal}
+bin_exponent {numspc}[pP][\-\+]?{decimal}
 
 qual         ({conid}\.)+
 qvarid       {qual}{varid}
@@ -157,21 +165,15 @@ signed       {negative}?
 
 {qvarsym}      return yy::parser::make_QVARSYM  (yytext,loc);
 {qconsym}      return yy::parser::make_QCONSYM  (yytext,loc);
-  /* Here we check for reserved ids?*/
-"="     return yy::parser::make_EQUAL (loc);
 {varsym}       return varsym(loc);
-  /* Here we check for reserved ids?*/
 {consym}       return consym(loc);
 
-
-{decimal}      {
-  errno = 0;
-  long n = strtol (yytext, NULL, 10);
-  if (! (INT_MIN <= n && n <= INT_MAX && errno != ERANGE))
-    throw yy::parser::syntax_error (loc, "integer is out of range: "
-                                    + std::string(yytext));
-  return yy::parser::make_INTEGER (n, loc);
-}
+{decimal}                  return make_integer(10,true,0,loc);
+  /* 0[bB]{numspc}{binary}      make_integer(2,true,2,loc); */
+0[oO]{numspc}{octal}       return make_integer( 8,true,2,loc);
+0[xX]{numspc}{hexadecimal} return make_integer(16,true,2,loc);
+  /* negative literals depend on an extension */
+{floating_point}           return make_rational(loc);
 
 
 .          {
@@ -231,7 +233,8 @@ std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_words =
     {"qualified",{parser::token::TOK_QUALIFIED,0}},
     {"then",{parser::token::TOK_THEN,0}},
     {"type",{parser::token::TOK_TYPE,0}},
-    {"where",{parser::token::TOK_WHERE,0}}
+    {"where",{parser::token::TOK_WHERE,0}},
+    {"builtin",{parser::token::TOK_BUILTIN,0}}
 };
 /*
 
@@ -308,12 +311,108 @@ yy::parser::symbol_type varid(const yy::parser::location_type& loc)
     }
 }
 
+std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_symbols =
+{
+    {"..",{parser::token::TOK_DOTDOT,0}},
+    {":",{parser::token::TOK_COLON,0}},
+    {"::",{parser::token::TOK_DCOLON,0}},
+    {"=",{parser::token::TOK_EQUAL,0}},
+    {"\\",{parser::token::TOK_LAM,0}},
+    {"|",{parser::token::TOK_VBAR,0}},
+    {"<-",{parser::token::TOK_LARROW,0}},
+    {"->",{parser::token::TOK_RARROW,0}},
+    {"@",{parser::token::TOK_AT,0}},
+    {"~",{parser::token::TOK_TILDE,0}},
+    {"=>",{parser::token::TOK_DARROW,0}},
+    {"-",{parser::token::TOK_MINUS,0}},
+    {"!",{parser::token::TOK_BANG,0}},
+    {"*",{parser::token::TOK_STAR,0}}
+};
+
+/*
+   map (\ (x,y,z) -> (mkFastString x,(y,z)))
+      [ ("..",  ITdotdot,              always)
+        -- (:) is a reserved op, meaning only list cons
+       ,(":",   ITcolon,               always)
+       ,("::",  ITdcolon NormalSyntax, always)
+       ,("=",   ITequal,               always)
+       ,("\\",  ITlam,                 always)
+       ,("|",   ITvbar,                always)
+       ,("<-",  ITlarrow NormalSyntax, always)
+       ,("->",  ITrarrow NormalSyntax, always)
+       ,("@",   ITat,                  always)
+       ,("~",   ITtilde,               always)
+       ,("=>",  ITdarrow NormalSyntax, always)
+       ,("-",   ITminus,               always)
+       ,("!",   ITbang,                always)
+       ,("*", ITstar NormalSyntax, starIsTypeEnabled)
+        -- For 'forall a . t'
+       ,(".", ITdot,  always) -- \i -> explicitForallEnabled i || inRulePrag i)
+       ,("-<",  ITlarrowtail NormalSyntax, arrowsEnabled)
+       ,(">-",  ITrarrowtail NormalSyntax, arrowsEnabled)
+       ,("-<<", ITLarrowtail NormalSyntax, arrowsEnabled)
+       ,(">>-", ITRarrowtail NormalSyntax, arrowsEnabled)
+       ,("∷",   ITdcolon UnicodeSyntax, unicodeSyntaxEnabled)
+       ,("⇒",   ITdarrow UnicodeSyntax, unicodeSyntaxEnabled)
+       ,("∀",   ITforall UnicodeSyntax, unicodeSyntaxEnabled)
+       ,("→",   ITrarrow UnicodeSyntax, unicodeSyntaxEnabled)
+       ,("←",   ITlarrow UnicodeSyntax, unicodeSyntaxEnabled)
+       ,("⤙",   ITlarrowtail UnicodeSyntax,
+                                \i -> unicodeSyntaxEnabled i && arrowsEnabled i)
+       ,("⤚",   ITrarrowtail UnicodeSyntax,
+                                \i -> unicodeSyntaxEnabled i && arrowsEnabled i)
+       ,("⤛",   ITLarrowtail UnicodeSyntax,
+                                \i -> unicodeSyntaxEnabled i && arrowsEnabled i)
+       ,("⤜",   ITRarrowtail UnicodeSyntax,
+                                \i -> unicodeSyntaxEnabled i && arrowsEnabled i)
+       ,("★",   ITstar UnicodeSyntax,
+                  \i -> unicodeSyntaxEnabled i && starIsTypeEnabled i)
+        -- ToDo: ideally, → and ∷ should be "specials", so that they cannot
+        -- form part of a large operator.  This would let us have a better
+        -- syntax for kinds: ɑ∷*→* would be a legal kind signature. (maybe).
+       ]
+
+*/
+
 yy::parser::symbol_type varsym(const yy::parser::location_type& loc)
 {
-    return yy::parser::make_VARSYM  (yytext,loc);
+    auto it = reserved_symbols.find(yytext);
+    if (it == reserved_symbols.end())
+	return yy::parser::make_VARSYM  (yytext, loc);
+    else
+    {
+	auto tok = it->second.first;
+	return yy::parser::symbol_type(tok, loc);
+    }
 }
 
 yy::parser::symbol_type consym(const yy::parser::location_type& loc)
 {
-    return yy::parser::make_CONSYM  (yytext,loc);
+    auto it = reserved_symbols.find(yytext);
+    if (it == reserved_symbols.end())
+	return yy::parser::make_CONSYM  (yytext, loc);
+    else
+    {
+	auto tok = it->second.first;
+	return yy::parser::symbol_type(tok, loc);
+    }
+}
+
+yy::parser::symbol_type make_integer(int radix, bool positive, int shift,
+				     const yy::parser::location_type& loc)
+{
+    errno = 0;
+    auto n = std::stoi(yytext+shift, NULL, radix);
+    if ( not (INT_MIN <= n and n <= INT_MAX and errno != ERANGE))
+	throw yy::parser::syntax_error(loc, "integer is out of range: " + std::string(yytext));
+    if (not positive)
+	n = -n;
+    return yy::parser::make_INTEGER(n, loc);
+}
+
+yy::parser::symbol_type make_rational(const yy::parser::location_type& loc)
+{
+    std::string s(yytext);
+    double d = convertTo<double>(std::string(yytext));
+    return yy::parser::make_RATIONAL(d,loc);
 }
