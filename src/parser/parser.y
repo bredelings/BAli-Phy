@@ -11,7 +11,10 @@
   # include <iostream>
   # include "computation/expression/expression_ref.H"
   # include "computation/expression/var.H"
+  # include "located.H"
   class driver;
+
+  #define LOCATED(obj) {drv.location, obj}
 }
 
 // The parsing context.
@@ -179,6 +182,27 @@
 
 %type  <expression_ref> exp
 
+%type <Located<std::string>> var
+%type <Located<std::string>> qvar
+%type <Located<std::string>> qvarid
+%type <Located<std::string>> varid
+%type <Located<std::string>> qvarsym
+%type <Located<std::string>> qvarsym_no_minus
+%type <Located<std::string>> qvarsym1
+%type <Located<std::string>> varsym
+%type <Located<std::string>> varsym_no_minus
+%type <Located<std::string>> special_id
+%type <Located<std::string>> special_sym
+
+%type <Located<std::string>> qconid
+%type <Located<std::string>> conid
+%type <Located<std::string>> qconsym
+%type <Located<std::string>> consym
+
+%type  <Located<expression_ref>> literal
+%type  <Located<std::string>> modid
+%type  <int> commas
+
 %printer { yyoutput << $$; } <*>;
 
 %%
@@ -190,15 +214,108 @@ assignments:
 | assignments assignment {};
 
 assignment:
- "VARID" "=" exp { std::cout<< $1 <<" = " << $3 <<std::endl; };
-| "QVARID" "=" exp { std::cout<< $1 <<" = " << $3 <<std::endl; };
+ varid "=" exp { std::cout<< $1 <<" = " << $3 <<std::endl; };
+| qvarid "=" exp { std::cout<< $1 <<" = " << $3 <<std::endl; };
 
 exp:
- exp "VARSYM" exp   { $$ = expression_ref{var($2),$1,$3}; }
+ exp varsym exp   { $$ = expression_ref{var($2),$1,$3}; }
 | "(" exp ")"   { std::swap ($$, $2); }
-| "VARID"   { $$ = var($1); }
-| "QVARID"  { $$ = var($1); }
-| "INTEGER"      { $$ = $1; };
+| qvar   { $$ = var($1); }
+| literal      { $$ = $1; };
+
+
+/* ------------- Variables --------------------------------------- */
+var: varid { $$ = $1; }
+| "(" VARSYM ")" {$$ = LOCATED($2); }
+
+qvar: qvarid { $$ = $1; }
+| "(" VARSYM ")" {$$ = LOCATED($2); }
+| "(" qvarsym1 ")" {$$ = $2; }
+
+qvarid: varid { $$ = $1; }
+| QVARID { $$ = LOCATED($1); }
+
+varid: VARID        { $$ = LOCATED($1); }
+| special_id        { $$ = $1; }
+| "unsafe"          { $$ = LOCATED("unsafe"); }
+| "safe"            { $$ = LOCATED("safe"); }
+| "interruptible"   { $$ = LOCATED("interruptible"); }
+| "forall"          { $$ = LOCATED("forall"); }
+| "family"          { $$ = LOCATED("family"); }
+| "role"            { $$ = LOCATED("role"); }
+
+qvarsym: varsym     { $$ = $1; }
+| qvarsym1          { $$ = $1; }
+
+qvarsym_no_minus: varsym_no_minus {$$ = $1;}
+| qvarsym1 {$$ = $1;}
+
+qvarsym1: QVARSYM   { $$ = LOCATED($1);}
+
+varsym: varsym_no_minus  { $$ = $1; }
+|        "-"             { $$ = LOCATED("-"); }
+
+varsym_no_minus: VARSYM {$$ = LOCATED($1);}
+| special_sym {$$ = $1;}
+
+special_id:  "as"         { $$ = LOCATED("as"); }
+|            "qualified"  { $$ = LOCATED("qualified"); }
+|            "hiding"     { $$ = LOCATED("hiding"); }
+|            "export"     { $$ = LOCATED("export"); }
+|            "label"      { $$ = LOCATED("label"); }
+|            "dynamic"    { $$ = LOCATED("dynamic"); }
+|            "stdcall"    { $$ = LOCATED("stdcall"); }
+|            "ccall"      { $$ = LOCATED("ccall"); }
+|            "capi"       { $$ = LOCATED("capi"); }
+|            "prim"       { $$ = LOCATED("prim"); }
+|            "javascript" { $$ = LOCATED("javascript"); }
+|            "group"      { $$ = LOCATED("group"); }
+|            "stock"      { $$ = LOCATED("stock"); }
+|            "anyclass"   { $$ = LOCATED("anyclass"); }
+|            "via"        { $$ = LOCATED("via"); }
+|            "unit"       { $$ = LOCATED("unit"); }
+|            "dependency" { $$ = LOCATED("dependency"); }
+|            "signature"  { $$ = LOCATED("signature"); }
+
+special_sym: "!" { $$ = LOCATED("!"); }
+| "." { $$ = LOCATED("."); }
+| "*" { $$ = LOCATED("*"); }
+
+/* ------------- Data constructors ------------------------------- */
+
+qconid: conid { $$ = $1; }
+| QCONID {$$ = LOCATED($1); }
+
+conid: CONID {$$ = LOCATED($1); }
+
+qconsym: consym {$$ = $1}
+| QCONSYM {$$ = LOCATED($1); }
+
+consym: CONSYM { $$ = LOCATED($1); }
+| ":" { $$ = LOCATED(":"); }
+
+/* ------------- Literal ----------------------------------------- */
+
+literal: CHAR {$$ = LOCATED($1);}
+| STRING {$$ = LOCATED(String($1));}
+| INTEGER {$$ = LOCATED($1);}
+| RATIONAL {$$ = LOCATED($1);}
+
+
+/* ------------- Layout ------------------------------------------ */
+
+close: VCCURLY |
+error
+
+/* ------------- Miscellaneous (mostly renamings) ---------------- */
+
+modid: CONID {$$ = LOCATED($1);}
+| QCONID {$$ = LOCATED($1);}
+
+commas: commas "," {$$ = $1 + 1;}
+    | "," {$$ = 1;}
+
+
 %%
 
 void
