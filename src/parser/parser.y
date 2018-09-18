@@ -232,7 +232,7 @@ assignment:
 | qvarid "=" exp { std::cout<< $1 <<" = " << $3 <<std::endl; };
 
 exp:
-exp op exp   { $$ = {@$,var($2)+$1+$3}; }
+exp op exp   { $$ = {@$,{var($2),$1.copy(),$3.copy()}}; }
 | "(" exp ")"   { $$ = {@$,$2}; }
 | qvar   { $$ = {@$,var($1)}; }
 | literal      { $$ = {@$,$1}; };

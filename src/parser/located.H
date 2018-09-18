@@ -11,7 +11,11 @@ public:
     Located<T>& operator=(const Located<T>& t) = default;
     Located<T>& operator=(Located<T>&& t) = default;
 
-    std::string print() const {return Object::print();}
+    std::string print() const;
+
+    expression_ref copy() const {
+	return object_ptr<Located<T>>(clone());
+    }
 
     Located() = default;
     Located(const Located<T>&) = default;
@@ -20,9 +24,20 @@ public:
 };
 
 template <typename T>
+inline std::string Located<T>::print() const {
+    const T& t = *this;
+    const yy::location& l = *this;
+    return "[" + convertToString(t) + "@" + convertToString(l) + "]";
+}
+
+template <typename T>
 std::ostream& operator<<(std::ostream& o,const Located<T>& lt)
 {
-    const T& t = lt;
-    return (o<<t);
+    return o<<lt.print();
+}
+
+inline yy::location merge_loc(const yy::location& l1, const yy::location& l2)
+{
+    return {l1.begin, l2.end};
 }
 #endif
