@@ -179,7 +179,7 @@
  /* Template Haskell: skipped tokens.*/
 
 
-%type  <expression_ref> exp
+%type  <Located<expression_ref>> exp
 
 %type <Located<std::string>> conop
 %type <Located<std::string>> qconop
@@ -232,10 +232,10 @@ assignment:
 | qvarid "=" exp { std::cout<< $1 <<" = " << $3 <<std::endl; };
 
 exp:
- exp op exp   { $$ = expression_ref{var($2),$1,$3}; }
-| "(" exp ")"   { std::swap ($$, $2); }
-| qvar   { $$ = var($1); }
-| literal      { $$ = $1; };
+exp op exp   { $$ = {@$,var($2)+$1+$3}; }
+| "(" exp ")"   { $$ = {@$,$2}; }
+| qvar   { $$ = {@$,var($1)}; }
+| literal      { $$ = {@$,$1}; };
 
 
 conop: consym { $$ = $1; }
