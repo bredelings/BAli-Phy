@@ -13,8 +13,6 @@
   # include "computation/expression/var.H"
   # include "located.H"
   class driver;
-
-  #define LOCATED(obj) {drv.location, obj}
 }
 
 // The parsing context.
@@ -180,7 +178,23 @@
 
  /* Template Haskell: skipped tokens.*/
 
+
 %type  <expression_ref> exp
+
+%type <Located<std::string>> conop
+%type <Located<std::string>> qconop
+
+%type <Located<std::string>> op
+%type <Located<std::string>> varop
+%type <Located<std::string>> qop
+%type <Located<std::string>> qopm
+%type <Located<std::string>> hole_op
+%type <Located<std::string>> qvarop
+%type <Located<std::string>> qvaropm
+
+%type <Located<std::string>> tyvar
+%type <Located<std::string>> tyvarop
+%type <Located<std::string>> tyvarid
 
 %type <Located<std::string>> var
 %type <Located<std::string>> qvar
@@ -218,88 +232,133 @@ assignment:
 | qvarid "=" exp { std::cout<< $1 <<" = " << $3 <<std::endl; };
 
 exp:
- exp varsym exp   { $$ = expression_ref{var($2),$1,$3}; }
+ exp op exp   { $$ = expression_ref{var($2),$1,$3}; }
 | "(" exp ")"   { std::swap ($$, $2); }
 | qvar   { $$ = var($1); }
 | literal      { $$ = $1; };
 
 
+conop: consym { $$ = $1; }
+|      "`" conid "`" { $$ = $2; }
+
+qconop: qconsym { $$ = $1; }
+|      "`" qconid "`" { $$ = $2; }
+
+/* ------------- Type Constructors ------------------------------- */
+
+
+/* ------------- Operators --------------------------------------- */
+
+op : varop { $$ = $1; }
+|    conop { $$ = $1; }
+
+varop: varsym   { $$ = $1; }
+| "`" varid "`" { $$ = $2; }
+
+qop:  qvarop    { $$ = $1; }
+|     qconop    { $$ = $1; }
+|     hole_op   { $$ = $1; }
+
+qopm: qvaropm   { $$ = $1; }
+|     qconop    { $$ = $1; }
+|     hole_op   { $$ = $1; }
+
+hole_op: "`" "_" "`"  { $$ = {@$, "_"}; }
+
+qvarop: qvarsym  { $$ = $1; }
+|       "`" qvarid "`" { $$ = $2; }
+
+qvaropm: qvarsym_no_minus  { $$ =$1; }
+| "`" qvarid "`" { $$ = $2; }
+
+/* ------------- Type Variables ---------------------------------- */
+
+tyvar: tyvarid            { $$ = $1; }
+
+tyvarop:  "`" tyvarid "`" { $$ = $2; }
+
+tyvarid: VARID            { $$ = {@$, $1}; }
+| special_id              { $$ = $1; }
+| "unsafe"                { $$ = {@$, "unsafe"}; }
+| "safe"                  { $$ = {@$, "safe"}; }
+| "interruptible"         { $$ = {@$, "interruptible"}; }
+
 /* ------------- Variables --------------------------------------- */
 var: varid { $$ = $1; }
-| "(" VARSYM ")" {$$ = LOCATED($2); }
+| "(" VARSYM ")" {$$ = {@$, $2}; }
 
 qvar: qvarid { $$ = $1; }
-| "(" VARSYM ")" {$$ = LOCATED($2); }
+| "(" VARSYM ")" {$$ = {@$, $2}; }
 | "(" qvarsym1 ")" {$$ = $2; }
 
 qvarid: varid { $$ = $1; }
-| QVARID { $$ = LOCATED($1); }
+| QVARID { $$ = {@$, $1}; }
 
-varid: VARID        { $$ = LOCATED($1); }
+varid: VARID        { $$ = {@$, $1}; }
 | special_id        { $$ = $1; }
-| "unsafe"          { $$ = LOCATED("unsafe"); }
-| "safe"            { $$ = LOCATED("safe"); }
-| "interruptible"   { $$ = LOCATED("interruptible"); }
-| "forall"          { $$ = LOCATED("forall"); }
-| "family"          { $$ = LOCATED("family"); }
-| "role"            { $$ = LOCATED("role"); }
+| "unsafe"          { $$ = {@$, "unsafe"}; }
+| "safe"            { $$ = {@$, "safe"}; }
+| "interruptible"   { $$ = {@$, "interruptible"}; }
+| "forall"          { $$ = {@$, "forall"}; }
+| "family"          { $$ = {@$, "family"}; }
+| "role"            { $$ = {@$, "role"}; }
 
 qvarsym: varsym     { $$ = $1; }
 | qvarsym1          { $$ = $1; }
 
 qvarsym_no_minus: varsym_no_minus {$$ = $1;}
-| qvarsym1 {$$ = $1;}
+|                 qvarsym1 {$$ = $1;}
 
-qvarsym1: QVARSYM   { $$ = LOCATED($1);}
+qvarsym1: QVARSYM        { $$ = {@$, $1}; }
 
 varsym: varsym_no_minus  { $$ = $1; }
-|        "-"             { $$ = LOCATED("-"); }
+|        "-"             { $$ = {@$, "-"}; }
 
-varsym_no_minus: VARSYM {$$ = LOCATED($1);}
-| special_sym {$$ = $1;}
+varsym_no_minus: VARSYM      {$$ = {@$, $1}; }
+|                special_sym {$$ = $1; }
 
-special_id:  "as"         { $$ = LOCATED("as"); }
-|            "qualified"  { $$ = LOCATED("qualified"); }
-|            "hiding"     { $$ = LOCATED("hiding"); }
-|            "export"     { $$ = LOCATED("export"); }
-|            "label"      { $$ = LOCATED("label"); }
-|            "dynamic"    { $$ = LOCATED("dynamic"); }
-|            "stdcall"    { $$ = LOCATED("stdcall"); }
-|            "ccall"      { $$ = LOCATED("ccall"); }
-|            "capi"       { $$ = LOCATED("capi"); }
-|            "prim"       { $$ = LOCATED("prim"); }
-|            "javascript" { $$ = LOCATED("javascript"); }
-|            "group"      { $$ = LOCATED("group"); }
-|            "stock"      { $$ = LOCATED("stock"); }
-|            "anyclass"   { $$ = LOCATED("anyclass"); }
-|            "via"        { $$ = LOCATED("via"); }
-|            "unit"       { $$ = LOCATED("unit"); }
-|            "dependency" { $$ = LOCATED("dependency"); }
-|            "signature"  { $$ = LOCATED("signature"); }
+special_id:  "as"         { $$ = {@$, "as"}; }
+|            "qualified"  { $$ = {@$, "qualified"}; }
+|            "hiding"     { $$ = {@$, "hiding"}; }
+|            "export"     { $$ = {@$, "export"}; }
+|            "label"      { $$ = {@$, "label"}; }
+|            "dynamic"    { $$ = {@$, "dynamic"}; }
+|            "stdcall"    { $$ = {@$, "stdcall"}; }
+|            "ccall"      { $$ = {@$, "ccall"}; }
+|            "capi"       { $$ = {@$, "capi"}; }
+|            "prim"       { $$ = {@$, "prim"}; }
+|            "javascript" { $$ = {@$, "javascript"}; }
+|            "group"      { $$ = {@$, "group"}; }
+|            "stock"      { $$ = {@$, "stock"}; }
+|            "anyclass"   { $$ = {@$, "anyclass"}; }
+|            "via"        { $$ = {@$, "via"}; }
+|            "unit"       { $$ = {@$, "unit"}; }
+|            "dependency" { $$ = {@$, "dependency"}; }
+|            "signature"  { $$ = {@$, "signature"}; }
 
-special_sym: "!" { $$ = LOCATED("!"); }
-| "." { $$ = LOCATED("."); }
-| "*" { $$ = LOCATED("*"); }
+special_sym: "!" { $$ = {@$, "!"}; }
+|            "." { $$ = {@$, "."}; }
+|            "*" { $$ = {@$, "*"}; }
 
 /* ------------- Data constructors ------------------------------- */
 
-qconid: conid { $$ = $1; }
-| QCONID {$$ = LOCATED($1); }
+qconid:  conid   { $$ = $1; }
+|        QCONID  { $$ = {@$, $1}; }
 
-conid: CONID {$$ = LOCATED($1); }
+conid:   CONID   { $$ = {@$, $1}; }
 
-qconsym: consym {$$ = $1}
-| QCONSYM {$$ = LOCATED($1); }
+qconsym: consym  { $$ = $1; }
+|        QCONSYM { $$ = {@$, $1}; }
 
-consym: CONSYM { $$ = LOCATED($1); }
-| ":" { $$ = LOCATED(":"); }
+consym:  CONSYM  { $$ = {@$, $1}; }
+|        ":"     { $$ = {@$, ":"}; }
 
 /* ------------- Literal ----------------------------------------- */
 
-literal: CHAR {$$ = LOCATED($1);}
-| STRING {$$ = LOCATED(String($1));}
-| INTEGER {$$ = LOCATED($1);}
-| RATIONAL {$$ = LOCATED($1);}
+literal: CHAR     {$$ = {@$, $1};}
+|        STRING   {$$ = {@$,String($1)};}
+|        INTEGER  {$$ = {@$, $1};}
+|        RATIONAL {$$ = {@$, $1};}
 
 
 /* ------------- Layout ------------------------------------------ */
@@ -309,8 +368,8 @@ error
 
 /* ------------- Miscellaneous (mostly renamings) ---------------- */
 
-modid: CONID {$$ = LOCATED($1);}
-| QCONID {$$ = LOCATED($1);}
+modid: CONID {$$ = {@$, $1};}
+| QCONID {$$ = {@$, $1};}
 
 commas: commas "," {$$ = $1 + 1;}
     | "," {$$ = 1;}
