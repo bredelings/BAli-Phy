@@ -6,14 +6,17 @@ Pass a key-value pair into BAli-Phy.  The <value> is a json value.
 
 # Examples:
 
-   # Work twice at hard at resampling the alignment.
-   bali-phy dna.fasta --set alignment\_sampling\_factor=2.0
+   # Work twice at hard at resampling the alignment (default: 1.0)
+   bali-phy dna.fasta --set alignment-sampling-factor=2.0
 
-   # Write fixed alignments (for ancestral sequence reconstruction)
-   bali-phy dna.fasta -I none --set write\_fixed_alignments=true
+   # Write the alignment every 10th logged iteration (default: 10)
+   bali-phy dna.fasta --set alignment-extra-subsample=10
 
-   # Stop enforcing low gap probabilities after 10 iterations
+   # Write fixed alignments (useful for ancestral sequence reconstruction) (default: false)
+   bali-phy dna.fasta -I none --set write-fixed-alignments=true
+
+   # Stop enforcing low gap probabilities after 10 iterations (default: 10)
    bali-phy dna.fasta --set alignment-burnin=10
 
-   # Disallow site-compression
-   bali-phy dna.fasta -I none --set compression=false
+   # Disallow site-compression (default: true)
+   bali-phy dna.fasta -I none --set site-compression=false

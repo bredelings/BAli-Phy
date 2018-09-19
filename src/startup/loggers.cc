@@ -355,9 +355,11 @@ vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const
 					      Subsample_Function(Mixture_Components_Function(i),subsample) ) );
 
     // Write out the alignments for each (variable) partition to C<>.P<>.fastas
+    int alignment_extra_subsample = P->load_value("alignment-extra-subsample",10);
+    int alignment_subsample = alignment_extra_subsample*subsample;
     if (P->t().n_nodes() > 1)
 	for(int i=0;i<P->n_data_partitions();i++)
-	    if ((*P)[i].variable_alignment() or P->load_value("write_fixed_alignments",false)) 
+	    if ((*P)[i].variable_alignment() or P->load_value("write-fixed-alignments",false)) 
 	    {
 		string filename = base + ".P" + convertToString(i+1)+".fastas";
 		
@@ -367,7 +369,7 @@ vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const
 		F<<Ancestral_Sequences_Function(i);
 //		F<<AlignmentFunction(i);
 		
-		loggers.push_back( FunctionLogger(filename, Subsample_Function(F,10*subsample) ) );
+		loggers.push_back( FunctionLogger(filename, Subsample_Function(F, alignment_subsample) ) );
 	    }
 
     return loggers;

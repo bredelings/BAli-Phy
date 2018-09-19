@@ -961,7 +961,7 @@ void do_sampling(const variables_map& args,
 	//-------------- parameters (parameters_moves) --------------//
 	if (PP->variable_alignment() and PP->t().n_nodes() > 1)
 	{
-	    double factor = P->load_value("alignment_sampling_factor",1.0);
+	    double factor = P->load_value("alignment-sampling-factor",1.0);
 	    std::cerr<<"alignment sampling factor = "<<factor<<"\n";
 	    sampler.add(factor,alignment_moves);
 	}
