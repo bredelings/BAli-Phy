@@ -459,7 +459,7 @@ int main(int argc,char* argv[])
 	    model_t print = get_model(R,"a",mstring);
 
 	    expression_ref print_exp = print.expression;
-	    expression_ref a = {var("Prelude.error"),"No alphabet!"};
+	    expression_ref a = {var("Compiler.Base.error"),"No alphabet!"};
 	    if (args.count("alphabet"))
 	    {
 		auto as = args["alphabet"].as<vector<string>>();
