@@ -64,7 +64,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     commands.add_options()
 	("prune",value<string>(),"Comma-separated taxa to remove")
 	("resolve","Comma-separated taxa to remove")
+	("scale", value<double>(), "Rescale branch-lengths by factor")
 	("length","Report the total tree length")
+	("diameter","Report the total tree length")
 	;
     options_description visible("All options");
     visible.add(general).add(commands);
@@ -111,6 +113,12 @@ void resolve(Tree& T, int node)
     }
 }
 
+void scale(Tree& T, double f)
+{
+    for(int b=0;b<T.n_branches();b++)
+	T.branch(b).set_length(f * T.branch(b).length());
+}
+
 vector<int> polytomies(const Tree& T)
 {
     vector<int> p;
@@ -143,9 +151,20 @@ int main(int argc,char* argv[])
 		resolve(T,n);
 	    assert(polytomies(T).empty());
 	}
-	else if (args.count("length"))
+	if (args.count("scale"))
+	{
+	    double factor = args["scale"].as<double>();
+	    scale(T, factor);
+	}
+
+	if (args.count("length"))
 	{
 	    std::cout<<tree_length(T)<<std::endl;
+	    return 0;
+	}
+	else if (args.count("diameter"))
+	{
+	    std::cout<<tree_diameter(T)<<std::endl;
 	    return 0;
 	}
 	std::cout<<T<<std::endl;

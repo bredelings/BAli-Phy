@@ -552,6 +552,7 @@ public:
     std::vector<int> neighbors(int n) const;
     std::vector<int> all_branches_toward_node(int n) const;
     std::vector<int> branches_before(int b) const;
+    std::vector<int> branches_after(int b) const;
 
     /// Create an empty tree
     Tree();
@@ -691,6 +692,9 @@ boost::dynamic_bitset<> branch_partition(const Tree& T,int b);
 
 /// Sum of the lengths of all branches
 double tree_length(const Tree& T);
+
+/// Sum of the lengths of all branches
+double tree_diameter(const Tree& T);
 
 /// Return the maximum distance from T.branch(b).target() to nodes after b.
 int subtree_height(const Tree& T,int b);

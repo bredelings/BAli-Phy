@@ -2130,6 +2130,15 @@ vector<int> Tree::branches_before(int b) const
     
 }
 
+vector<int> Tree::branches_after(int b) const
+{
+    vector<int> bb;
+    for(auto bv = directed_branch(b).branches_after();bv;bv++)
+	bb.push_back((*bv).name());
+    return bb;
+    
+}
+
 Tree::Tree()
     :caches_valid(false),
      n_leaves_(0),
@@ -2417,11 +2426,54 @@ boost::dynamic_bitset<> branch_partition(const Tree& T,int b)
 }
 
 
-double tree_length(const Tree& T) {
+double tree_length(const Tree& T)
+{
     double total = 0;
     for(int i=0;i<T.n_branches();i++)
 	total += T.branch(i).length();
     return total;
+}
+
+double tree_diameter(const Tree& T)
+{
+    vector<optional<double>> length_behind_inclusive(T.n_branches()*2);
+
+    // Start of handling leaf branches, with nothing behind them.
+    vector<int> branches_to_process;
+    for(int i=0; i<T.n_leafbranches(); i++)
+	branches_to_process.push_back(T.directed_branch(T.leaf_branch(i)));
+
+    for(int i=0; i<branches_to_process.size();i++)
+    {
+	int b = branches_to_process[i];
+
+	double d = 0;
+	for(int b2: T.branches_before(b))
+	    d = std::max(d, *length_behind_inclusive[b2]);
+	length_behind_inclusive[b] = d + T.directed_branch(b).length();
+
+	for(int b2: T.branches_after(b))
+	{
+	    bool ready = true;
+	    for(int b3: T.branches_before(b2))
+		ready = ready and length_behind_inclusive[b3];
+
+	    if (ready)
+		branches_to_process.push_back(b2);
+	}
+    }
+
+    for(int i=0; i<2*T.n_branches();i++)
+	assert(length_behind_inclusive[i]);
+
+    double D = 0;
+    for(int i=0; i<T.n_leafbranches(); i++)
+    {
+	int b = T.directed_branch(T.leaf_branch(i).reverse());
+	D = std::max(D, *length_behind_inclusive[b]);
+    }
+
+    return D;
 }
 
 int subtree_height(const Tree& T,int b) 
