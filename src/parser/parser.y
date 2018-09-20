@@ -181,8 +181,24 @@
 
 %type  <Located<expression_ref>> exp
 
+%type <Located<std::string>> qcon_nowiredlist
+%type <Located<std::string>> qcon
+%type <Located<std::string>> gen_qcon
+%type <Located<std::string>> con
+%type <Located<std::string>> sysdcon_no_list
+%type <Located<std::string>> sysdcon
 %type <Located<std::string>> conop
 %type <Located<std::string>> qconop
+
+%type <Located<std::string>> gtycon
+%type <Located<std::string>> ngtycon
+%type <Located<std::string>> oqtycon
+%type <Located<std::string>> oqtycon_no_varcon
+%type <Located<std::string>> qtyconop
+%type <Located<std::string>> qtycon
+%type <Located<std::string>> tycon
+%type <Located<std::string>> qtyconsym
+%type <Located<std::string>> tyconsym
 
 %type <Located<std::string>> op
 %type <Located<std::string>> varop
@@ -238,6 +254,32 @@ exp op exp   { $$ = {@$,{var($2),$1.copy(),$3.copy()}}; }
 | literal      { $$ = {@$,$1}; };
 
 
+/* ------------- Data Constructors ------------------------------- */
+
+qcon_nowiredlist:  gen_qcon         { $$ = $1; }
+|                  sysdcon_no_list  { $$ = $1; }
+
+qcon: gen_qcon { $$ = $1; }
+|     sysdcon  { $$ = $1; }
+
+gen_qcon: qconid      { $$ = $1; }
+|     "(" qconsym ")" { $$ = $2; }
+
+con: conid          { $$ = $1; }
+|    "(" consym ")" { $$ = $2; }
+|    sysdcon        { $$ = $1; }
+
+/* con_list: con
+   |         con "," con_list   */
+
+sysdcon_no_list:  "(" ")"   { $$ = {@$, "()"}; }
+|                 "(" commas   ")" { $$ = {@$, "("+std::string($2,',')+")"}; }
+|                 "(#" "#)" { $$ = {@$, "(##)"}; }
+|                 "(#" commas "#)" { $$ = {@$, "(#"+std::string($2,',')+"#)"}; }
+
+sysdcon: sysdcon_no_list { $$ = $1; }
+|        "[" "]"         { $$ = {@$, "[]"}; }
+
 conop: consym { $$ = $1; }
 |      "`" conid "`" { $$ = $2; }
 
@@ -245,6 +287,45 @@ qconop: qconsym { $$ = $1; }
 |      "`" qconid "`" { $$ = $2; }
 
 /* ------------- Type Constructors ------------------------------- */
+gtycon:   ngtycon   { $$ = $1; }
+|         "(" ")"   { $$ = {@$, "()"}; }
+|         "(#" "#)" { $$ = {@$, "(##)"}; }
+
+ngtycon: oqtycon          { $$ = $1; }
+|        "(" commas   ")" { $$ = {@$, "("+std::string($2,',')+")"}; }
+|        "(#" commas "#)" { $$ = {@$, "(#"+std::string($2,',')+"#)"}; }
+|        "(" "->" ")"     { $$ = {@$, "->"}; }
+|        "[" "]"          { $$ = {@$, "[]"}; }
+
+oqtycon: qtycon            { $$ = $1; }
+|        "(" qtyconsym ")" { $$ = $2; }
+|        "(" "~" ")"       { $$ = {@$, "~"}; }
+
+oqtycon_no_varcon: qtycon  { $$ = $1; }
+|        "(" QCONSYM ")"   { $$ = {@$, $2}; }
+|        "(" CONSYM  ")"   { $$ = {@$, $2}; }
+|        "(" ":"  ")"      { $$ = {@$, ":"}; }
+|        "(" "~"  ")"      { $$ = {@$, "~"}; }
+
+
+qtyconop: qtyconsym      {$$ = $1; }
+|         "`" qtycon "`" { $$ = $2; }
+
+qtycon:  QCONID { $$ = {@$,$1}; }
+|        tycon  { $$ = $1; }
+
+/* qtycondoc */
+
+tycon:     CONID    { $$ = {@$,$1}; }
+
+qtyconsym: QCONSYM  { $$ = {@$,$1}; }
+|          QVARSYM  { $$ = {@$,$1}; }
+|          tyconsym { $$ = $1; }
+
+tyconsym: CONSYM { $$ = {@$, $1}; }
+|         VARSYM { $$ = {@$, $1}; }
+|         ":"    { $$ = {@$, ":"}; }
+|         "-"    { $$ = {@$, "-"}; }
 
 
 /* ------------- Operators --------------------------------------- */
