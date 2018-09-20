@@ -60,18 +60,24 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("verbose,v","Output more log messages on stderr.")
 	;
 
-    options_description commands("Commands");
+    options_description commands("Modification options");
     commands.add_options()
 	("prune",value<string>(),"Comma-separated taxa to remove")
 	("resolve","Comma-separated taxa to remove")
-	("scale", value<double>(), "Rescale branch-lengths by factor")
+	("remove-root-branch","Remove single branch from root.")
+	("remove-root-branches","Ensure root is not a tip.")
+	("remove-knuckles","Remove degree-2 nodes.");
+
+    options_description output("Output options");
+    output.add_options()
+	("scale", value<double>(), "Scale branch-lengths by factor")
 	("length","Report the total tree length")
 	("diameter","Report the total tree length")
 	;
     options_description visible("All options");
     visible.add(general).add(commands);
     options_description all("All options");
-    all.add(general).add(commands).add(invisible);
+    all.add(general).add(commands).add(output).add(invisible);
 
     // positional options
     positional_options_description p;
@@ -128,6 +134,21 @@ vector<int> polytomies(const Tree& T)
     return p;
 }
 
+bool remove_root_branch(RootedTree& T)
+{
+    if (T.root().degree() == 1)
+    {
+	int old_root = T.root();
+	int new_root = T.neighbors(old_root)[0];
+	T.reroot(new_root);
+	// This ALSO removes degree-2 nodes that are created, which should maybe be separate.
+	T.prune_leaf(old_root);
+	return true;
+    }
+    else
+	return false;
+}
+
 
 int main(int argc,char* argv[]) 
 { 
@@ -145,6 +166,15 @@ int main(int argc,char* argv[])
 	//----------- Read the topology -----------//
 	RootedSequenceTree T = load_T(args);
 
+	if (args.count("remove-root-branch"))
+	{
+	    remove_root_branch(T);
+	}
+	if (args.count("remove-root-branches"))
+	{
+	    while(remove_root_branch(T))
+		;
+	}
 	if (args.count("resolve"))
 	{
 	    for(int n: polytomies(T))
