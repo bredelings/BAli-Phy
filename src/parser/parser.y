@@ -179,8 +179,6 @@
  /* Template Haskell: skipped tokens.*/
 
 
-%type  <Located<expression_ref>> exp
-
 %type <Located<std::string>> qcon_nowiredlist
 %type <Located<std::string>> qcon
 %type <Located<std::string>> gen_qcon
@@ -237,22 +235,214 @@
 
 %%
 %start unit;
-unit: assignments exp  { std::cout<< $2 << std::endl; };
+unit: assignments exp
 
 assignments:
   %empty                 {}
 | assignments assignment {};
 
 assignment:
- varid "=" exp { std::cout<< $1 <<" = " << $3 <<std::endl; };
-| qvarid "=" exp { std::cout<< $1 <<" = " << $3 <<std::endl; };
+ varid "=" exp { std::cout<< $1 <<" = "  <<std::endl; };
+| qvarid "=" exp { std::cout<< $1 <<" = " <<std::endl; };
 
-exp:
-exp op exp   { $$ = {@$,{var($2),$1.copy(),$3.copy()}}; }
-| "(" exp ")"   { $$ = {@$,$2}; }
-| qvar   { $$ = {@$,var($1)}; }
-| literal      { $$ = {@$,$1}; };
+/* ------------- Identifiers ------------------------------------- */
+identifier: qvar
+|           qcon
+|           qvarop
+|           qconop
+|           "(" "->" ")"
+|           "(" "~" ")"
 
+/* ------------- Backpack stuff ---------------------------------- */
+
+/* ------------- Module header ----------------------------------- */
+
+/* ------------- Module declaration and imports only ------------- */
+
+/* ------------- The Export List --------------------------------- */
+
+/* ------------- Import Declarations ----------------------------- */
+
+/* ------------- Fixity Declarations ----------------------------- */
+
+/* ------------- Top-Level Declarations -------------------------- */
+
+/* ------------- Stand-alone deriving ---------------------------- */
+
+/* ------------- Role annotations -------------------------------- */
+
+/* ------------- Role annotations -------------------------------- */
+
+/* ------------- Nexted declarations ----------------------------- */
+
+/* ------------- Transformation Rules ---------------------------- */
+
+/* ------------- Warnings and deprecations ----------------------- */
+
+/* ------------- Annotations ------------------------------------- */
+
+/* ------------- Foreign import and export declarations ---------- */
+
+/* ------------- Type signatures --------------------------------- */
+
+/* ------------- Types ------------------------------------------- */
+
+/* ------------- Kinds ------------------------------------------- */
+
+/* ------------- Datatype declarations --------------------------- */
+
+/* ------------- Value definitions ------------------------------- */
+
+/* ------------- Expressions ------------------------------------- */
+
+exp: infixexp "::" sigtype
+|    infixexp
+
+infixexp: exp10
+|         infixexp qop exp10
+
+infixexp_top: exp10_top
+|             infixexp_top qop exp10_top
+
+exp10_top: "-" fexp
+|          "{-# CORE" STRING "#-}"
+|          fexp
+
+exp10: exp10_top
+|      scc_annot exp
+
+
+optSemi: ";"
+|        %empty
+
+scc_annot: "{-# SCC" STRING "#-}"
+|          "{-# SCC" VARID "#-}"
+
+/* hpc_annot */
+
+fexp: fexp aexp
+/* |     fexp TYPEAPP atype */
+|     "static" aexp
+|     aexp
+
+aexp: qvar "@" aexp
+|     "~" aexp
+|     "\\" apat apats "->" exp
+|     "let" binds "in" exp
+|     "\\" "case" altslist
+|     "if" exp optSemi "then" exp optSemi "else" exp
+|     "case" exp "of" altslist
+|     "do" stmtlist
+|     "mdo" stmtlist
+|     "proc" aexp "->" exp
+|     aexp1
+
+aexp1: aexp1 "{" fbinds "}"
+|      aexp2
+
+aexp2: qvar
+|      qcon
+|      literal
+|      "(" texp ")"
+|      "(" tup_exprs ")"
+|      "(#" text "#)"
+|      "(#" tup_exprs "#)"
+|      "[" list "]"
+|      "_"
+/* Skip Template Haskell Extensions */
+
+/* ------------- Tuple expressions ------------------------------- */
+
+texp: exp
+|     infixexp qop
+|     qopm infixexp
+|     exp "->" texp
+
+/* ------------- List expressions -------------------------------- */
+
+/* ------------- List Comprehensions ----------------------------- */
+
+/* ------------- Guards ------------------------------------------ */
+guardquals: guardquals1
+
+guardquals1: guardquals1 "," qual
+|            qual
+
+/* ------------- Case alternatives ------------------------------- */
+altslist: "{" alts "}"
+|         VOCURLY alts close
+|         "{" "}"
+|         VOCURLY close
+
+alts: alts1
+|     ";" alts
+
+alts1: alts1 ";" alt
+|      alts1 ";"
+|      alt
+
+alt:   pat alt_rhs
+
+alt_rhs: ralt wherebinds
+
+ralt: "->" exp
+|     gdpats
+
+gdpats: gdpats gdpat
+|       gdpat
+
+ifgdpats : "{" gdpats "}"
+|          gdpats close
+
+gdpat: "|" guardquals "->" exp
+
+pat: exp
+|   "!" aexp
+
+bindpat: exp
+|   "!" aexp
+
+apat: aexp
+|    "!" aexp
+
+apats: apat apats
+|     %empty
+
+/* ------------- Statement sequences ----------------------------- */
+stmtlist: "{" stmts "}"
+|         VOCURLY stmts close
+
+stmts: stmts ";" stmt
+|      stmts ";"
+|      stmt
+|      %empty
+
+maybe_stmt:   stmt
+|             %empty
+
+stmt: qual
+|     "rec" stmtlist
+
+qual: bindpat "<-" exp
+|     exp
+|     "let" binds
+
+
+/* ------------- Record Field Update/Construction ---------------- */
+
+fbinds: fbinds1
+|       %empty
+
+fbinds1: fbind "," fbinds1
+|        fbind
+|        ".."
+
+fbind: qvar "=" texp
+|      qvar
+
+/* ------------- Implicit Parameter Bindings --------------------- */
+
+/* ------------- Warnings and deprecations ----------------------- */
 
 /* ------------- Data Constructors ------------------------------- */
 
