@@ -737,6 +737,15 @@ vector<int> Tree::prune_leaf(int n)
     BranchNode* leaf = nodes_[n];
     int L = n_leaves();
 
+    // ensure that nodes_[i!=n] only point to surviving nodes
+    if (leaf->out)
+    {
+	int neighbor = leaf->out->node_attributes->name;
+	if (nodes_[neighbor] == leaf->out)
+	    nodes_[neighbor] = nodes_[neighbor]->next;
+	assert(::is_leaf_node(nodes_[neighbor]) or nodes_[neighbor] != leaf->out);
+    }
+
     // get pointers to the current leaves that we will keep
     vector<BranchNode*> old_nodes = nodes_;
     old_nodes[n] = 0;
@@ -2335,7 +2344,7 @@ vector<int> RootedTree::prune_leaf(int n)
     if (root_ and root_->out and root_->out->node_attributes->name == n)
 	root_ = root_->next;
     if (root_)
-	assert(not root_->out or root_->out->node_attributes->name != n);
+	assert(::is_leaf_node(root_) or not root_->out or root_->out->node_attributes->name != n);
     
     return Tree::prune_leaf(n);
 }
