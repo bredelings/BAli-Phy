@@ -731,6 +731,46 @@ void shift_leaves(BranchNode* start,int first,int n) {
     }
 }
 
+vector<int> Tree::prune_leaf(int n)
+{
+    assert(is_leaf_node(n));
+    BranchNode* leaf = nodes_[n];
+    int L = n_leaves();
+
+    // get pointers to the current leaves that we will keep
+    vector<BranchNode*> old_nodes = nodes_;
+    old_nodes[n] = 0;
+
+    // remove the leaf
+    BranchNode* parent = TreeView::unlink_subtree(leaf->out);
+    TreeView(leaf).destroy();
+
+    // shifter down higher leaf names
+    for(int i=n+1;i<L;i++)
+	name_node(old_nodes[i],i-1);
+
+    // Reconstruct everything from leaf names
+    reanalyze(parent);
+
+    assert(n_leaves() == L-1);
+
+    // Construct the map from new to old node names
+    vector<int> mapping(n_nodes(), -1);
+    for(int i=0;i<old_nodes.size();i++)
+	if (old_nodes[i])
+	    mapping[old_nodes[i]->node_attributes->name] = i;
+
+    // Check that the mapping for each new name is defined, and unique
+    for(int i=0;i<mapping.size();i++)
+    {
+	assert(mapping[i] != -1);
+	for(int j=0;j<i;j++)
+	    assert(mapping[i] != mapping[j]);
+    }
+
+    return mapping;
+}
+
 /// Remove the specified leaves and their dangling ancestors
 vector<int> Tree::prune_leaves(const vector<int>& remove) 
 {
@@ -2287,6 +2327,19 @@ void RootedTree::remove_node_from_branch(int node)
 
     Tree::remove_node_from_branch(node);
 }
+
+vector<int> RootedTree::prune_leaf(int n) 
+{
+    if (root_ and root_->node_attributes->name == n)
+	root_ = NULL;
+    if (root_ and root_->out and root_->out->node_attributes->name == n)
+	root_ = root_->next;
+    if (root_)
+	assert(not root_->out or root_->out->node_attributes->name != n);
+    
+    return Tree::prune_leaf(n);
+}
+
 
 vector<int> RootedTree::prune_leaves(const vector<int>& remove) 
 {

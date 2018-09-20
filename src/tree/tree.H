@@ -522,6 +522,7 @@ public:
     virtual void remove_node_from_branch(int n);
 
     /// remove leaves
+    virtual std::vector<int> prune_leaf(int n);
     virtual std::vector<int> prune_leaves(const std::vector<int>&);
 
     /// merge node 'tn' from subtree 'T' to node 'n'
@@ -604,6 +605,7 @@ public:
     void remove_node_from_branch(int n);
 
     /// remove leaves
+    virtual std::vector<int> prune_leaf(int);
     virtual std::vector<int> prune_leaves(const std::vector<int>&);
 
     void add_first_node();
