@@ -17,15 +17,18 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
+#include <algorithm>
+#include <map>
+#include <sstream>
+
+#include "myexception.H"
 #include "tree/tree.H"
 #include "util.H"
-#include <algorithm>
-#include <sstream>
-#include "myexception.H"
 
 using std::vector;
 using std::string;
 using std::pair;
+using std::map;
 using boost::any;
 using boost::dynamic_bitset;
 using boost::optional;
@@ -1836,25 +1839,27 @@ void add_comments(vector< pair<string,any> >& tags, const vector<string>& commen
 
 #include <iostream>
 
-bool has_label(BranchNode* BN, int node_label_index)
+bool has_label(BranchNode* BN, optional<int> node_label_index)
 {
-    if (node_label_index == -1) return false;
+    if (not node_label_index) return false;
 
-    const auto& label_any = (*BN->node_attributes)[node_label_index];
+    const auto& node_label = (*BN->node_attributes)[*node_label_index];
 
-    if (boost::any_cast<string>(&label_any))
-	return true;
-    else
-	return false;
+    return not node_label.empty();
 }
 
-const string& get_label(BranchNode* BN, int node_label_index)
+string get_label(BranchNode* BN, optional<int> node_label_index)
 {
-    assert(node_label_index != -1);
+    if (not has_label(BN, node_label_index)) return "";
 
-    const auto& label_any = (*BN->node_attributes)[node_label_index];
+    const auto& label_any = (*BN->node_attributes)[*node_label_index];
 
     return boost::any_cast<const string&>(label_any);
+}
+
+bool has_non_empty_label(BranchNode* BN, optional<int> node_label_index)
+{
+    return get_label(BN, node_label_index).size() > 0;
 }
 
 /*
@@ -1868,14 +1873,14 @@ const string& get_label(BranchNode* BN, int node_label_index)
 int Tree::parse_(const string& line, std::function<void(BranchNode*)> assign_names)
 {
     node_attribute_names.clear();
-    if (node_label_index != -1)
-	node_attribute_names.resize(node_label_index+1);
+    if (node_label_index)
+	node_attribute_names.resize(*node_label_index+1);
 
     directed_branch_attribute_names.clear();
 
     undirected_branch_attribute_names.clear();
-    if (branch_length_index != -1)
-	undirected_branch_attribute_names.resize(branch_length_index+1);
+    if (branch_length_index)
+	undirected_branch_attribute_names.resize(*branch_length_index+1);
 
     const string delimiters = "(),:;";
     const string whitespace = "\t\n ";
@@ -1926,6 +1931,8 @@ int Tree::parse_(const string& line, std::function<void(BranchNode*)> assign_nam
 	}
 	else if (word == ",")
 	{
+	    if (tree_stack.size() <= 1)
+		throw myexception()<<"Reading tree: found ',' outside parenthesis!";
 	    if (pos == 0 or pos == 1 or pos == 2)
 		set_attributes(tags, node_attribute_names, *BN->node_attributes);
 	    else if (pos == 3 or pos == 4)
@@ -1952,10 +1959,22 @@ int Tree::parse_(const string& line, std::function<void(BranchNode*)> assign_nam
 	}
 	else if (word == ":")
 	{
-	    set_attributes(tags, node_attribute_names, *BN->node_attributes);
-
 	    if (pos > 2)
 		throw myexception()<<"Cannot have a ':' here! (pos == "<<pos<<")";
+
+	    // Handle (a,b):1.0;
+	    if (tree_stack.size() == 1)
+	    {
+		// There should be only a single node, or we'd be in a situation like a,b:1.0;
+		// If we have a:1.0,b:1.0; the we will complain about the ",", so treating the a this way should be safe;
+		assert(tree_stack.back().size() == 1);
+
+		BN = ::add_leaf_node(BN, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
+		tree_stack.back().back() = BN;
+	    }
+
+	    set_attributes(tags, node_attribute_names, *BN->node_attributes);
+
 	    pos = 3;
 	}
 	else
@@ -1964,8 +1983,8 @@ int Tree::parse_(const string& line, std::function<void(BranchNode*)> assign_nam
 	    {
 		set_attributes(tags, node_attribute_names, *BN->node_attributes);
 
-		if (node_label_index != -1)
-		    (*BN->node_attributes)[node_label_index] = word;
+		if (node_label_index)
+		    (*BN->node_attributes)[*node_label_index] = word;
 
 		pos = 2;
 	    }
@@ -1975,8 +1994,8 @@ int Tree::parse_(const string& line, std::function<void(BranchNode*)> assign_nam
 	    {
 		set_attributes(tags, undirected_branch_attribute_names, *BN->undirected_branch_attributes);
 
-		if (branch_length_index != -1)
-		    (*BN->undirected_branch_attributes)[branch_length_index] = convertTo<double>(word);	
+		if (branch_length_index)
+		    (*BN->undirected_branch_attributes)[*branch_length_index] = convertTo<double>(word);	
 		pos = 4;
 	    }
 	    else if (pos == 4)
@@ -2012,7 +2031,7 @@ int Tree::parse_and_discover_names(const string& line)
 	// First give integer name to leaves with labels.
 	for(BN_iterator BN(root_);BN;BN++)
 	{
-	    if (::is_leaf_node(*BN) and has_label(*BN, node_label_index))
+	    if (::is_leaf_node(*BN) and has_non_empty_label(*BN, node_label_index))
 		(*BN)->node_attributes->name = L++;
 	    else
 		(*BN)->node_attributes->name = -1;
@@ -2021,7 +2040,7 @@ int Tree::parse_and_discover_names(const string& line)
 	// Name other leaves and resize attribute objects
 	for(BN_iterator BN(root_);BN;BN++)
 	{
-	    if (::is_leaf_node(*BN) and not has_label(*BN, node_label_index))
+	    if (::is_leaf_node(*BN) and not has_non_empty_label(*BN, node_label_index))
 		(*BN)->node_attributes->name = L++;
 
 	    (*BN)->node_attributes->resize(n_node_attributes());
@@ -2036,41 +2055,59 @@ int Tree::parse_and_discover_names(const string& line)
     return parse_(line, namer);
 }
 
-int get_leaf_index(const string& word, bool allow_numbers, const vector<string>& names)
+int get_leaf_index(const string& word, bool allow_numbers, const map<string,optional<int>>& name_to_index)
 {
     auto leaf_index = can_be_converted_to<int>(word);
     if (allow_numbers and leaf_index)
     {
 	if (*leaf_index < 1)
 	    throw myexception()<<"Leaf index '"<<word<<"' is negative: not allowed!";
-	if (*leaf_index > names.size())
-	    throw myexception()<<"Leaf index '"<<word<<"' is too high: the taxon set contains only "<<names.size()<<" taxa.";
+	if (*leaf_index > name_to_index.size())
+	    throw myexception()<<"Leaf index '"<<word<<"' is too high: the taxon set contains only "<<name_to_index.size()<<" taxa.";
 	return *leaf_index - 1;
     }
-    else if (names.size() == 0)
-	throw myexception()<<"Leaf name '"<<word<<"' is not an integer!";
+    else if (name_to_index.size() == 0)
+    {
+	if (allow_numbers)
+	    throw myexception()<<"Leaf name '"<<word<<"' is not an integer!";
+	else
+	    throw myexception()<<"Leaf name '"<<word<<"' is an integer, but integers are not allowed!";
+    }
     else 
     {
-	leaf_index = find_index(names,word);
-	if (leaf_index)
+	if (not name_to_index.count(word))
+	    throw myexception()<<"Leaf name '"<<word<<"' is not in the specified taxon set!";
+	else if (auto leaf_index = name_to_index.at(word))
 	    return *leaf_index;
 	else
-	    throw myexception()<<"Leaf name '"<<word<<"' is not in the specified taxon set!";
+	    throw myexception()<<"Leaf name '"<<word<<"' does not uniquely specify a leaf - multiple leaves have this name!";
     }
 }
 
+// This approach assumes that all leaf names are unique??
 int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& names,bool allow_numbers)
 {
     if (names.size() == 0 and not allow_numbers)
 	throw myexception()<<"Tree::parse_with_names_or_numbers( ): must supply leaf names if integers are not allowed.";
 
-    auto namer = [this, allow_numbers, &names](BranchNode* root_)
+    // Make sure that we're not trying to identify nodes by non-unique names
+    map<string,optional<int>> name_to_index;
+    for(int i=0; i<names.size();i++)
+    {
+	auto& name = names[i];
+	if (name_to_index.count(name))
+	    name_to_index[name] = boost::none;
+	else
+	    name_to_index[name] = i;
+    }
+
+    auto namer = [this, allow_numbers, &name_to_index](BranchNode* root_)
     {
 	// Name leaves and resize attribute vectors
 	for(BN_iterator BN(root_);BN;BN++)
 	{
-	    if (::is_leaf_node(*BN) and has_label(*BN, node_label_index))
-		(*BN)->node_attributes->name = get_leaf_index(get_label(*BN, node_label_index), allow_numbers,names);
+	    if (::is_leaf_node(*BN))
+		(*BN)->node_attributes->name = get_leaf_index(get_label(*BN, node_label_index), allow_numbers, name_to_index);
 	    else
 		(*BN)->node_attributes->name = -1;
 
@@ -2145,10 +2182,10 @@ Tree::Tree()
      node_label_index(0),
      branch_length_index(0)
 {
-    if (node_label_index != -1 and node_label_index >= n_node_attributes())
-	set_n_node_attributes(node_label_index+1);
-    if (branch_length_index != -1 and branch_length_index >= n_undirected_branch_attributes())
-	set_n_undirected_branch_attributes(branch_length_index+1);
+    if (node_label_index and *node_label_index >= n_node_attributes())
+	set_n_node_attributes(*node_label_index+1);
+    if (branch_length_index and *branch_length_index >= n_undirected_branch_attributes())
+	set_n_undirected_branch_attributes(*branch_length_index+1);
 }
 
 Tree::Tree(BranchNode* BN) 
@@ -2162,10 +2199,10 @@ Tree::Tree(BranchNode* BN)
     if (BN->directed_branch_attributes)
 	directed_branch_attribute_names.resize( BN->directed_branch_attributes->size() );
 
-    if (node_label_index != -1 and node_label_index >= n_node_attributes())
-	set_n_node_attributes(node_label_index+1);
-    if (branch_length_index != -1 and branch_length_index >= n_undirected_branch_attributes())
-	set_n_undirected_branch_attributes(branch_length_index+1);
+    if (node_label_index  and *node_label_index >= n_node_attributes())
+	set_n_node_attributes(*node_label_index+1);
+    if (branch_length_index and *branch_length_index >= n_undirected_branch_attributes())
+	set_n_undirected_branch_attributes(*branch_length_index+1);
 
     reanalyze(BN);
 }

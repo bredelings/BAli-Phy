@@ -233,8 +233,10 @@ protected:
     /// The number of leaf nodes
     int n_leaves_;
 
-    int node_label_index;
-    int branch_length_index;
+    // Which index into the node attribute table is the node label
+    boost::optional<int> node_label_index;
+    // Which index into the undirected branch attribute table is the branch length
+    boost::optional<int> branch_length_index;
 
 public:
     /// The number of node attributes

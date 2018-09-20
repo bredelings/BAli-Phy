@@ -33,14 +33,14 @@ using boost::dynamic_bitset;
 
 void SequenceTree::set_label(int i, const string& s)
 {
-    assert(node_label_index != -1);
-    (*nodes_[i]->node_attributes)[node_label_index] = s;
+    assert(node_label_index);
+    (*nodes_[i]->node_attributes)[*node_label_index] = s;
 }
 
 const string& SequenceTree::get_label(int i) const 
 {
     // There should be no empty labels!  Only "" is allowed.
-    const boost::any& label = (*nodes_[i]->node_attributes)[node_label_index];
+    const boost::any& label = (*nodes_[i]->node_attributes)[*node_label_index];
     const string* label_p = boost::any_cast<const string>(&label);
     assert(label_p);
     return *label_p;
@@ -122,7 +122,7 @@ int SequenceTree::parse(const string& line)
     int root = Tree::parse_and_discover_names(line);
 
     for(int i=0;i<n_nodes();i++)
-	if (node(i).attribute(node_label_index).empty())
+	if (node(i).attribute(*node_label_index).empty())
 	    set_label(i,"");
 
     return root;
@@ -133,7 +133,7 @@ int SequenceTree::parse_and_discover_names(const std::string& s)
     int root = Tree::parse_and_discover_names(s);
 
     for(int i=0;i<n_nodes();i++)
-	if (node(i).attribute(node_label_index).empty())
+	if (node(i).attribute(*node_label_index).empty())
 	    set_label(i,"");
 
     return root;
@@ -147,7 +147,7 @@ int SequenceTree::parse_with_names_or_numbers(const std::string& s, const std::v
 	set_label(i, names[i]);
 
     for(int i=0;i<n_nodes();i++)
-	if (node(i).attribute(node_label_index).empty())
+	if (node(i).attribute(*node_label_index).empty())
 	    set_label(i,"");
 
     return root;
@@ -377,6 +377,10 @@ std::istream& operator >>(std::istream& i,SequenceTree& T)
 }
 
 std::ostream& operator <<(std::ostream& o,const SequenceTree& T) {
+    return o<<T.write();
+}
+
+std::ostream& operator <<(std::ostream& o,const RootedSequenceTree& T) {
     return o<<T.write();
 }
 

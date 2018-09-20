@@ -134,6 +134,8 @@ std::istream& operator >>(std::istream& i,SequenceTree& T);
 
 std::ostream& operator <<(std::ostream& o,const SequenceTree& T);
 
+std::ostream& operator <<(std::ostream& o,const RootedSequenceTree& T);
+
 bool same_topology(const SequenceTree&,const SequenceTree&);
 
 SequenceTree RandomTree(const std::vector<std::string>&);

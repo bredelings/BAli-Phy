@@ -143,7 +143,7 @@ int main(int argc,char* argv[])
       
 
 	//----------- Read the topology -----------//
-	SequenceTree T = load_T(args);
+	RootedSequenceTree T = load_T(args);
 
 	if (args.count("resolve"))
 	{
