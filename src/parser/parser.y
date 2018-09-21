@@ -194,7 +194,7 @@
 %type <Located<std::string>> qconop
 
 %type <Located<std::string>> gtycon
-%type <Located<std::string>> ngtycon
+%type <Located<std::string>> ntgtycon
 %type <Located<std::string>> oqtycon
 %type <Located<std::string>> oqtycon_no_varcon
 %type <Located<std::string>> qtyconop
@@ -645,7 +645,7 @@ tyapp: atype
 
 atype_docs: atype /* FIX */
 
-atype: ngtycon
+atype: ntgtycon
 |      tyvar
 |      "*"
 |      strict_mark atype
@@ -1006,11 +1006,11 @@ qconop: qconsym { $$ = $1; }
 |      "`" qconid "`" { $$ = $2; }
 
 /* ------------- Type Constructors ------------------------------- */
-gtycon:   ngtycon   { $$ = $1; }
+gtycon:   ntgtycon   { $$ = $1; }
 |         "(" ")"   { $$ = {@$, "()"}; }
 |         "(#" "#)" { $$ = {@$, "(##)"}; }
 
-ngtycon: oqtycon          { $$ = $1; }
+ntgtycon: oqtycon          { $$ = $1; }
 |        "(" commas   ")" { $$ = {@$, "("+std::string($2,',')+")"}; }
 |        "(#" commas "#)" { $$ = {@$, "(#"+std::string($2,',')+"#)"}; }
 |        "(" "->" ")"     { $$ = {@$, "->"}; }
