@@ -184,7 +184,7 @@
 
 %type <Located<expression_ref>> exp
 
-%type <Located<std::string>> qcon_nowiredlist
+ /* %type <Located<std::string>> qcon_nowiredlist */
 %type <Located<std::string>> qcon
 %type <Located<std::string>> gen_qcon
 %type <Located<std::string>> con
@@ -198,6 +198,7 @@
 %type <Located<std::string>> oqtycon
 %type <Located<std::string>> oqtycon_no_varcon
 %type <Located<std::string>> qtyconop
+%type <Located<std::string>> qtycondoc
 %type <Located<std::string>> qtycon
 %type <Located<std::string>> tycon
 %type <Located<std::string>> qtyconsym
@@ -242,33 +243,119 @@
 
 %%
 %start unit;
-unit: assignments exp
+unit: module
 
-assignments:
-  %empty                 {}
-| assignments assignment {};
-
-assignment:
-  varid "=" exp { std::cout<< $1 <<" = "<<$3  <<std::endl; };
-| qvarid "=" exp { std::cout<< $1 <<" = "<<$3 <<std::endl; };
-
-/* ------------- Identifiers ------------------------------------- */
+/* ------------- Identifiers ------------------------------------- /
 identifier: qvar
 |           qcon
 |           qvarop
 |           qconop
 |           "(" "->" ")"
 |           "(" "~" ")"
+*/
 
 /* ------------- Backpack stuff ---------------------------------- */
 
 /* ------------- Module header ----------------------------------- */
 
+/* signature: backpack stuff */
+
+module: "module" modid maybemodwarning maybeexports "where" body
+| body2
+
+missing_module_keyword: %empty
+
+/* BACKPACK: implicit_top: %empty */
+
+maybemodwarning: "{-# DEPRECATED" strings "#-}"
+|                "{-# WARNING" strings "#-}"
+|                %empty
+
+body: "{" top "}"
+|     VOCURLY top close
+
+body2: "{" top "}"
+|     missing_module_keyword top close
+
+
+top: semis top1
+
+top1: importdecls_semi topdecls_semi
+|     importdecls_semi topdecls
+|     importdecls
+
 /* ------------- Module declaration and imports only ------------- */
+
+/* Skip backpack stuff */
 
 /* ------------- The Export List --------------------------------- */
 
+maybeexports: "(" exportlist ")"
+|             %empty
+
+exportlist: exportlist1
+
+exportlist1: export "," exportlist1
+|            export
+
+export: qcname_ext export_subspec
+|       "module" modid
+|       "pattern" qcon
+
+export_subspec: %empty
+|              "(" qcnames ")"
+
+qcnames: %empty
+|        qcnames1
+
+qcnames1 : qcnames1 "," qcname_ext_w_wildcard
+|          qcname_ext_w_wildcard
+
+qcname_ext_w_wildcard: qcname_ext
+| ".."
+
+qcname_ext: qcname
+|           "type" oqtycon
+
+qcname: qvar
+|       oqtycon_no_varcon
+
 /* ------------- Import Declarations ----------------------------- */
+
+semis1: semis1 ";"
+|       ";"
+
+semis: semis ";"
+|      %empty
+
+importdecls: importdecls_semi importdecls
+
+importdecls_semi: importdecls_semi importdecl semis1
+|                 %empty
+
+importdecl: "import" maybe_src maybe_safe optqualified maybe_pkg modid maybeas maybeimpspec
+
+maybe_src: "{-# SOURCE" "#-}"
+|          %empty
+
+maybe_safe: "safe"
+|           %empty
+
+maybe_pkg: STRING
+|          %empty
+
+optqualified: "qualified"
+|             %empty
+
+maybeas:  "as" modid
+|         %empty
+
+maybeimpspec: impspec
+|             %empty
+
+impspec: "(" exportlist ")"
+|        "hiding" "(" exportlist ")"
+
 
 /* ------------- Fixity Declarations ----------------------------- */
 
@@ -284,10 +371,113 @@ ops:   ops "," op
 
 /* ------------- Top-Level Declarations -------------------------- */
 
+topdecls: topdecls_semi topdecl
+
+topdecls_semi: topdecls_semi topdecl semis1
+|              %empty
+
+topdecl: cl_decl
+|        ty_decl
+|        inst_decl
+/*|        stand_alone_deriving
+  |        role_annot*/
+|        "default" "(" comma_types0 ")"
+/*
+|        "foreign" fdecl
+|        "{-# DEPRECATED" deprecations "#-}"
+|        "{-# WARNING" warnings "#-}"
+|        "{-# RULES" rules "#-}"
+|        annotation*/
+|        decl_no_th
+|        infixexp_top
+
+cl_decl: "class" tycl_hdr fds where_cls
+
+ty_decl: "type" type "=" ctypedoc
+/* |        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family */
+|        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings
+|        data_or_newtype capi_ctype tycl_hdr opt_kind_sig
+/* |        "data" "family" type opt_datafam_kind_sig */
+
+inst_decl: "instance" overlap_pragma inst_type where_inst
+/* |          "type" "instance" ty_fam_inst_eqn */
+|          data_or_newtype "instance" capi_ctype tycl_hdr constrs
+|          data_or_newtype "instance" capi_ctype opt_kind_sig
+
+overlap_pragma: "{-# OVERLAPPABLE" "#-}"
+|               "{-# OVERLAPPING" "#-}"
+|               "{-# OVERLAPS" "#-}"
+|               "{-# INCOHERENT" "#-}"
+|               %empty
+   
+deriv_strategy_no_via: "stock"
+|                      "anyclass"
+|                      "newtype"
+
+deriv_strategy_via: "via" type
+
+/*
+deriv_standalone_strategy: "stock"
+|                          "anyclass"
+|                          "newtype"
+|                          %empty
+*/
+
+/* Injective type families 
+
+opt_injective_info: %empty
+|                   "|" injectivity_cond
+
+injectivity_cond: tyvarid "->" inj_varids
+
+inj_varids: inj_varids tyvarid
+|           tyvarid
+*/
+/* Closed type families 
+
+where_type_family: %empty
+|                  "where" ty_fam_inst_eqn_list
+
+ty_fam_inst_eqn_list: "{" ty_fam_inst_eqns "}"
+|                     VOCURLY ty_fam_inst_eqns close
+|                     "{" ".." "}"
+|                     VOCURLY ".." close
+
+ty_fam_inst_eqns: ty_fam_inst_eqns ";" ty_fam_inst_eqn
+|                 ty_fam_inst_eqn ";"
+|                 ty_fam_inst_eqn
+|                 %empty
+
+ty_fam_inst_eqn: type "=" ctype
+
+at_decl_cls: "data" opt_family type opt_datafam_kind_sig
+|            "type" type opt_at_kind_inj_sig
+*/
+
+data_or_newtype: "data"
+|                "newtype"
+
+opt_kind_sig: %empty
+|             "::" kind
+
+/*opt_datafam_kind_sig: %empty
+|                     "::" kind
+
+ opt_tyfam_kind:sigm: %empty */
+
+/* opt_tyfam_at_kind_inj_sig: */
+
+tycl_hdr: context "=>" type
+|         type
+
+capi_ctype: "{-# CTYPE" STRING STRING "#-}"
+|           "{-# CTYPE" STRING "#-}"
+|           %empty
+
 /* ------------- Stand-alone deriving ---------------------------- */
 
 /* ------------- Role annotations -------------------------------- */
-
+/*
 role_annot: "type" "role" oqtycon maybe_roles
 
 maybe_roles: %empty
@@ -298,7 +488,7 @@ roles:       role
 
 role:        VARID
 |            "_"
-
+*/
 pattern_synonym_decl: "pattern" pattern_synonym_lhs "=" pat
 |                     "pattern" pattern_synonym_lhs "<-" pat
 |                     "pattern" pattern_synonym_lhs "<-" pat where_decls
@@ -320,6 +510,33 @@ pattern_synonym_sig: "pattern" con_list "::" sigtypedoc
 
 /* ------------- Nested declarations ----------------------------- */
 
+decl_cls: /*at_decl_cls | */ decl
+|         "default" infixexp "::" sigtypedoc
+
+decls_cls: decls_cls ";" decl_cls
+|          decls_cls ";"
+|          decl_cls
+|          %empty
+
+decllist_cls: "{" decls_cls "}"
+|             VOCURLY decls_cls close
+
+where_cls: "where" decllist_cls
+|          %empty
+
+decl_inst: /* at_decl_inst | */ decl
+
+decls_inst: decls_inst ";" decl_inst
+|           decls_inst ";"
+|           decl_inst
+|           %empty
+
+decllist_inst: "{" decls_inst "}"
+|              VOCURLY decls_inst close
+
+where_inst: "where" decllist_inst
+|           %empty
+
 decls: decls ";" decl
 |      decls ";"
 |      decl
@@ -340,6 +557,13 @@ wherebinds: "where" binds
 /* ------------- Transformation Rules ---------------------------- */
 
 /* ------------- Warnings and deprecations ----------------------- */
+
+strings: STRING
+| "[" stringlist "]"
+
+stringlist: stringlist "," STRING
+|           STRING
+|           %empty
 
 /* ------------- Annotations ------------------------------------- */
 
@@ -470,6 +694,20 @@ kind: ctype
 
 /* ------------- Datatype declarations --------------------------- */
 
+constrs: "=" constrs1
+
+constrs1: constrs1 "|" constr
+|         constr
+
+constr: forall context_no_ops "=>" constr_stuff
+|       forall constr_stuff
+
+forall: "forall" tv_bndrs "."
+|       %empty
+
+constr_stuff: btype_no_ops
+|             btype_no_ops conop btype_no_ops
+
 fielddecls: %empty
 |           fielddecls1
 
@@ -477,6 +715,21 @@ fielddecls1: fielddecl "," fielddecls1
 |            fielddecl
 
 fielddecl: sig_vars "::" ctype
+
+maybe_derivings: %empty
+|                derivings
+
+derivings:       derivings deriving
+|                deriving
+
+deriving: "deriving" deriv_clause_types
+|         "deriving" deriv_strategy_no_via deriv_clause_types
+|         "deriving" deriv_clause_types deriv_strategy_via
+
+deriv_clause_types: qtycondoc
+|                   "(" ")"
+|                   "(" deriv_types ")"
+
 
 /* ------------- Value definitions ------------------------------- */
 
@@ -543,7 +796,7 @@ scc_annot: "{-# SCC" STRING "#-}"
 /* hpc_annot */
 
 fexp: fexp aexp
-/* |     fexp TYPEAPP atype */
+|     fexp TYPEAPP atype
 |     "static" aexp
 |     aexp
 
@@ -553,6 +806,7 @@ aexp: qvar "@" aexp
 |     "let" binds "in" exp
 |     "\\" "case" altslist
 |     "if" exp optSemi "then" exp optSemi "else" exp
+|     "if" ifgdpats
 |     "case" exp "of" altslist
 |     "do" stmtlist
 |     "mdo" stmtlist
@@ -677,8 +931,8 @@ stmts: stmts ";" stmt
 |      stmt
 |      %empty
 
-maybe_stmt:   stmt
-|             %empty
+/*maybe_stmt:   stmt
+|             %empty */
 
 stmt: qual
 |     "rec" stmtlist
@@ -715,8 +969,10 @@ ipvar: IPDUPVARID
 
 /* ------------- Data Constructors ------------------------------- */
 
+/* For Template Haskell
 qcon_nowiredlist:  gen_qcon         { $$ = $1; }
 |                  sysdcon_no_list  { $$ = $1; }
+*/
 
 qcon: gen_qcon { $$ = $1; }
 |     sysdcon  { $$ = $1; }
@@ -769,6 +1025,8 @@ oqtycon_no_varcon: qtycon  { $$ = $1; }
 
 qtyconop: qtyconsym      {$$ = $1; }
 |         "`" qtycon "`" { $$ = $2; }
+
+qtycondoc: qtycon {$$ = $1;}
 
 qtycon:  QCONID { $$ = {@$,$1}; }
 |        tycon  { $$ = $1; }
