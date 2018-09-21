@@ -656,6 +656,7 @@ atype: ntgtycon
 |      "(#" comma_types1 "#)"
 |      "(#" bar_types2   "#)"
 |      "[" ctype "]"
+|      "(" ctype ")"
 |      "(" ctype "::" kind ")"
 /* Template Haskell */
 
@@ -1087,10 +1088,10 @@ tyvarid: VARID            { $$ = {@$, $1}; }
 
 /* ------------- Variables --------------------------------------- */
 var: varid { $$ = $1; }
-| "(" VARSYM ")" {$$ = {@$, $2}; }
+| "(" varsym ")" {$$ = $2; }
 
 qvar: qvarid { $$ = $1; }
-| "(" VARSYM ")" {$$ = {@$, $2}; }
+| "(" varsym ")" {$$ = $2; }
 | "(" qvarsym1 ")" {$$ = $2; }
 
 qvarid: varid { $$ = $1; }
