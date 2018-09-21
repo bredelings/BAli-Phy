@@ -390,6 +390,10 @@ topdecl: cl_decl
 |        annotation*/
 |        decl_no_th
 |        infixexp_top
+|        "builtin" var INTEGER STRING STRING
+|        "builtin" var INTEGER STRING
+|        "builtin" varop INTEGER STRING STRING
+|        "builtin" varop INTEGER STRING
 
 cl_decl: "class" tycl_hdr fds where_cls
 
