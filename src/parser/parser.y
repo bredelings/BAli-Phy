@@ -162,6 +162,9 @@
 %token <std::string> QVARSYM  "QVARSYM"
 %token <std::string> QCONSYM  "QCONSYM"
 
+%token <std::string> IPDUPVARID "IPDUPVARID" /* extension: implicit param ?x */
+%token <std::string> LABELVARID "LABELVARID" /* Overladed label: #x */
+
 %token <char>          CHAR     "CHAR"
 %token <std::string>   STRING   "STRING"
 %token <int>           INTEGER  "INTEGER"
@@ -230,6 +233,8 @@
 %type  <Located<expression_ref>> literal
 %type  <Located<std::string>> modid
 %type  <int> commas
+%type  <int> bars0
+%type  <int> bars
 
 %printer { yyoutput << $$; } <*>;
 
@@ -271,9 +276,24 @@ identifier: qvar
 
 /* ------------- Role annotations -------------------------------- */
 
-/* ------------- Role annotations -------------------------------- */
+/* ------------- Nested declarations ----------------------------- */
 
-/* ------------- Nexted declarations ----------------------------- */
+decls: decls ";" decl
+|      decls ";"
+|      decl
+|      %empty
+
+decllist: "{" decls "}"
+|         VOCURLY decls close
+
+binds: decllist
+|     "{" dbinds "}"
+|     VOCURLY dbinds close
+
+wherebinds: "where" binds
+|           %empty
+
+
 
 /* ------------- Transformation Rules ---------------------------- */
 
@@ -285,13 +305,155 @@ identifier: qvar
 
 /* ------------- Type signatures --------------------------------- */
 
+opt_sig: %empty
+| "::" sigtype
+
+opt_tyconsig: %empty
+| "::" gtycon
+
+sigtype: ctype
+
+sigtypedoc: ctypedoc
+
+sig_vars: sig_vars "," var
+|         var
+
+sigtypes1: sigtype
+|          sigtype "," sigtypes1
+
 /* ------------- Types ------------------------------------------- */
 
+ctype: "forall" tv_bndrs "." ctype
+|      context "=>" ctype
+|      ipvar "::" type
+|      type
+
+ctypedoc: ctype
+
+/*
+ctypedoc:  "forall" tv_bnrds "." ctypedoc
+|      context "=>" ctypedoc
+|      ipvar "::" type
+|      typedoc
+*/
+
+context: btype
+
+context_no_ops: btype_no_ops
+
+type: btype
+|     btype "->" ctype
+
+typedoc: type
+/* typedoc: .... */
+
+btype: tyapps
+
+btype_no_ops: atype_docs
+|             btype_no_ops atype_docs
+
+tyapps: tyapp
+|       tyapps tyapp
+
+tyapp: atype
+|      qtyconop
+|      tyvarop
+/* Template Haskell
+|      SIMPLEQUOTE qconop
+|      SIMPLEQUOTE varop
+*/
+
+atype_docs: atype /* FIX */
+
+atype: ngtycon
+|      tyvar
+|      "*"
+|      strict_mark atype
+|      "{" fielddecls "}"
+|      "(" ")"
+|      "(" ctype "," comma_types1 ")"
+|      "(#" "#)"
+|      "(#" comma_types1 "#)"
+|      "(#" bar_types2   "#)"
+|      "[" ctype "]"
+|      "(" ctype "::" kind ")"
+/* Template Haskell */
+
+inst_type: sigtype
+
+deriv_types: typedoc
+|            typedoc "," deriv_types
+
+comma_types0: comma_types1
+|             %empty
+
+comma_types1: ctype
+|             ctype "," comma_types1
+
+bar_types2: ctype "|" ctype
+|           ctype "|" bar_types2
+
+tv_bndrs:   tv_bndr tvbndrs
+|           %empty
+
+tv_bndr:    tyvar
+|           "(" tyvar "::" kind ")"
+
+fds:        %empty
+|           "|" fds1
+
+fds1:       fds1 "," fd
+|           fd
+
+fd:         varids0 "->" varids0
+
+varids0:    %empty
+|           varids0 tyvar
+
 /* ------------- Kinds ------------------------------------------- */
+
+kind: ctype
+
+
 
 /* ------------- Datatype declarations --------------------------- */
 
 /* ------------- Value definitions ------------------------------- */
+
+decl_no_th: sigdecl
+| "!" aexp rhs
+| infixexp_top opt_sig rhs
+| pattern_synonym_decl
+/* | docdel */
+
+decl: decl_no_th
+/*  | splice_exp */
+
+rhs: "=" exp wherebinds
+|    gdrhs wherebinds
+
+gdrhs: gdrhs gdrh
+|      gdrh
+
+gdrh: "|" guardquals "=" exp
+
+sigdecl: infixexp_top "::" sigtypedoc
+|        var "," sig_vars "::" sigtypedoc
+|        infix prec ops
+|        pattern_synonym_sig
+|        "{-# COMPLETE" con_list op_typeconsig "#-}"
+|        "{-# INLINE" activation qvar "#-}"
+|        "{-# SCC" qvar "#-}"
+|        "{-# SCC" qvar STRING "#-}"
+|        "{-# SPECIALISE" activation qvar "::" sigtypes1 "#-}"
+|        "{-# SPECIALISE_INLINE" activation qvar "::" sigtypes1 "#-}"
+|        "{-# SPECIALISE" "instance" inst_type "#-}"
+
+activation: %empty
+|           explicit_activation
+
+explicit_activation: "[" INTEGER "]"
+|                    "[" "~" INTEGER "]"
 
 /* ------------- Expressions ------------------------------------- */
 
@@ -345,7 +507,7 @@ aexp2: qvar
 |      literal
 |      "(" texp ")"
 |      "(" tup_exprs ")"
-|      "(#" text "#)"
+|      "(#" texp "#)"
 |      "(#" tup_exprs "#)"
 |      "[" list "]"
 |      "_"
@@ -358,9 +520,47 @@ texp: exp
 |     qopm infixexp
 |     exp "->" texp
 
+tup_exprs: texp commas_tup_tail
+|          texp bars
+|          commas tup_tail
+|          bars texp bars0
+
+commas_tup_tail: commas tup_tail
+
+tup_tail: texp commas_tup_tail
+|         texp
+|         %empty
+
 /* ------------- List expressions -------------------------------- */
 
+list: texp
+|     lexps
+|     texp ".."
+|     texp "," exp ".."
+|     texp ".." exp
+|     texp "," exp ".." exp
+|     texp "|" flattenedpquals
+
+lexps: lexps "," texp
+|      texp "," texp
+
+
 /* ------------- List Comprehensions ----------------------------- */
+
+flattenedpquals: pquals
+
+pquals: squals "|" pquals
+|       squals
+
+squals: squals "," transformqual
+|       squals "," qual
+|       transformqual
+|       qual
+
+transformqual: "then" exp
+|              "then" exp "by" exp
+|              "then" "group" "using" exp
+|              "then" "group" "by" exp "using" exp
 
 /* ------------- Guards ------------------------------------------ */
 guardquals: guardquals1
@@ -442,6 +642,15 @@ fbind: qvar "=" texp
 
 /* ------------- Implicit Parameter Bindings --------------------- */
 
+dbinds: dbinds ";" dbind
+|       dbinds ";"
+|       dbind
+|       %empty
+
+dbind:  ipvar "=" exp
+
+ipvar: IPDUPVARID
+
 /* ------------- Warnings and deprecations ----------------------- */
 
 /* ------------- Data Constructors ------------------------------- */
@@ -459,8 +668,8 @@ con: conid          { $$ = $1; }
 |    "(" consym ")" { $$ = $2; }
 |    sysdcon        { $$ = $1; }
 
-/* con_list: con
-   |         con "," con_list   */
+con_list: con
+|         con "," con_list
 
 sysdcon_no_list:  "(" ")"   { $$ = {@$, "()"}; }
 |                 "(" commas   ")" { $$ = {@$, "("+std::string($2,',')+")"}; }
@@ -643,8 +852,13 @@ modid: CONID {$$ = {@$, $1};}
 | QCONID {$$ = {@$, $1};}
 
 commas: commas "," {$$ = $1 + 1;}
-    | "," {$$ = 1;}
+|       ","        {$$ = 1;}
 
+bars0: bars        {$$ = $1 + 1;}
+|     %empty       {$$ = 0;}
+
+bars: bars "|"     {$$ = $1 + 1;}
+|     "|"          {$$ = 1;}
 
 %%
 
