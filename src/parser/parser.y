@@ -182,6 +182,8 @@
  /* Template Haskell: skipped tokens.*/
 
 
+%type <Located<expression_ref>> exp
+
 %type <Located<std::string>> qcon_nowiredlist
 %type <Located<std::string>> qcon
 %type <Located<std::string>> gen_qcon
@@ -247,8 +249,8 @@ assignments:
 | assignments assignment {};
 
 assignment:
- varid "=" exp { std::cout<< $1 <<" = "  <<std::endl; };
-| qvarid "=" exp { std::cout<< $1 <<" = " <<std::endl; };
+  varid "=" exp { std::cout<< $1 <<" = "<<$3  <<std::endl; };
+| qvarid "=" exp { std::cout<< $1 <<" = "<<$3 <<std::endl; };
 
 /* ------------- Identifiers ------------------------------------- */
 identifier: qvar
@@ -270,11 +272,51 @@ identifier: qvar
 
 /* ------------- Fixity Declarations ----------------------------- */
 
+prec: %empty
+|     INTEGER
+
+infix: "infix"
+|      "infixl"
+|      "infixr"
+
+ops:   ops "," op
+|      op
+
 /* ------------- Top-Level Declarations -------------------------- */
 
 /* ------------- Stand-alone deriving ---------------------------- */
 
 /* ------------- Role annotations -------------------------------- */
+
+role_annot: "type" "role" oqtycon maybe_roles
+
+maybe_roles: %empty
+|            roles
+
+roles:       role
+|            roles role
+
+role:        VARID
+|            "_"
+
+pattern_synonym_decl: "pattern" pattern_synonym_lhs "=" pat
+|                     "pattern" pattern_synonym_lhs "<-" pat
+|                     "pattern" pattern_synonym_lhs "<-" pat where_decls
+
+pattern_synonym_lhs: con vars0
+|                    varid conop varid
+|                    con "{" cvars1 "}"
+
+vars0: %empty
+|      varid vars0
+
+cvars1: varid vars0
+
+where_decls: "where" "{" decls "}"
+|            "where" VOCURLY decls close
+
+
+pattern_synonym_sig: "pattern" con_list "::" sigtypedoc
 
 /* ------------- Nested declarations ----------------------------- */
 
@@ -322,6 +364,16 @@ sigtypes1: sigtype
 |          sigtype "," sigtypes1
 
 /* ------------- Types ------------------------------------------- */
+
+strict_mark: strictness
+|            unpackedness
+|            unpackedness strictness
+
+strictness: "!"
+|           "~"
+
+unpackedness: "{-# UNPACK" "#-"
+|             "{-# NOUNPACK" "#-"
 
 ctype: "forall" tv_bndrs "." ctype
 |      context "=>" ctype
@@ -393,7 +445,7 @@ comma_types1: ctype
 bar_types2: ctype "|" ctype
 |           ctype "|" bar_types2
 
-tv_bndrs:   tv_bndr tvbndrs
+tv_bndrs:   tv_bndr tv_bndrs
 |           %empty
 
 tv_bndr:    tyvar
@@ -418,6 +470,14 @@ kind: ctype
 
 /* ------------- Datatype declarations --------------------------- */
 
+fielddecls: %empty
+|           fielddecls1
+
+fielddecls1: fielddecl "," fielddecls1
+|            fielddecl
+
+fielddecl: sig_vars "::" ctype
+
 /* ------------- Value definitions ------------------------------- */
 
 decl_no_th: sigdecl
@@ -441,7 +501,7 @@ sigdecl: infixexp_top "::" sigtypedoc
 |        var "," sig_vars "::" sigtypedoc
 |        infix prec ops
 |        pattern_synonym_sig
-|        "{-# COMPLETE" con_list op_typeconsig "#-}"
+|        "{-# COMPLETE" con_list opt_tyconsig "#-}"
 |        "{-# INLINE" activation qvar "#-}"
 |        "{-# SCC" qvar "#-}"
 |        "{-# SCC" qvar STRING "#-}"
@@ -457,8 +517,8 @@ explicit_activation: "[" INTEGER "]"
 
 /* ------------- Expressions ------------------------------------- */
 
-exp: infixexp "::" sigtype
-|    infixexp
+exp: infixexp "::" sigtype { $$ = {}; }
+|    infixexp              { $$ = {}; }
 
 infixexp: exp10
 |         infixexp qop exp10
