@@ -105,15 +105,20 @@ minimum = foldl1 (min);
 
 --
 
--- scanl
+scanl f z []      = [z];
+scanl f z (x:xs)  = let {zx = z `f` x} in (zx:scanl f zx xs);
 
--- scanl'
+scanl' f z []     = [z];
+scanl' f z (x:xs) = let {zx = z `f` x} in zx `seq` (zx:scanl f zx xs);
 
--- scanl1
+scanl1 f (x:xs)   = scanl f x xs;
 
--- scanr
+scanr  f z []     = [z];
+scanr  f z (x:xs) = let {ys = scanr f z xs} in (x `f` (head ys)):ys;
 
--- scanr1
+scanr1 f [x]    = [x];
+scanr1 f (x:xs) = let {ys = scanr1 f xs} in (x `f` (head ys)):ys;
+scanr1 _ []     = error "Data.List.scanr1: empty list";
 
 --
 
