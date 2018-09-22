@@ -152,7 +152,24 @@ signed       {negative}?
 
 <INITIAL,option_prags>[\n]              loc.lines(1); loc.step ();
 
-  /* lots of stuff */
+  /* known pragmas */
+"{-#"{whitechar}*{pragmachar}+
+
+  /* <line_prag1> single-line line pragmas: # <line> "<file>" <extra-stuff> \n */
+
+  /* <line_prag2> Haskell-style line pragms, of the form
+     {-# LINE <line> "<file>" #-} */
+
+  /* <line_prag2a> */
+
+  /* <column_prag> */
+
+  /* two-word pragmas */
+<INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+{whitechar}+{pragmachar}+  
+  /* one-word pragmas */
+<INITIAL,option_prags>"{-"${whitechar}*{pragmachar}+
+  /* end pragma */
+<INITIAL,option_prags>"#-}"
 
   /* unboxed tuples: (# and #) */
 
