@@ -134,16 +134,23 @@ signed       {negative}?
 "-- "$            loc.step();
 
   /* bol state */
-[\n]+      loc.lines (yyleng); loc.step ();
+<bol>[\n]  loc.lines(1); loc.step();
+<bol>""    drv.do_bol();
 
-  /* layout, layout_do, layout_if states */
+<layout,layout_do,layout_if>"{"/[-]     drv.hopefully_open_brace();
+<layout,layout_do,layout_if>[\n]        loc.lines(1); loc.step();
 
-  /* layout_if */
+<layout_if>"|"/[^!#$%&*+./<=>?@\\^|\-~:\n]  drv.hopefully_open_brace();
+<layout_if>""                           drv.pop();
 
-  /* layout */
-  /* layout_do */
+<layout>""                              drv.new_layout_context(true);
+<layout_do>""                           drv.new_layout_context(false);
 
-  /* layout_left */
+  /* If we've generated a VOCURLY and started a new line to the left, then
+     we need to generate a VCCURLY */
+<layout_left>""                         drv.do_layout_left();
+
+<INITIAL,option_prags>[\n]              loc.lines(1); loc.step ();
 
   /* lots of stuff */
 
