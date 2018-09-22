@@ -137,7 +137,7 @@ signed       {negative}?
 <bol>[\n]  loc.lines(1); loc.step();
 <bol>""/.  drv.do_bol();
 
-<layout,layout_do,layout_if>"{"/[-]     drv.hopefully_open_brace();
+<layout,layout_do,layout_if>"{"/[^-]     drv.hopefully_open_brace();
 <layout,layout_do,layout_if>[\n]        loc.lines(1); loc.step();
 
 <layout_if>"|"/[^!#$%&*+./<=>?@\\^|\-~:\n]  drv.hopefully_open_brace();
