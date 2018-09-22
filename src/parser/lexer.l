@@ -127,7 +127,7 @@ signed       {negative}?
 {tab}	         loc.step ();
 
   /* GHC calls some handwritten code to deal with nested comments */
-"{-[^-\n]*-}"      loc.step();
+"{-"[^\n-#]*"-}"      loc.step();
 
 "--"-*[^!#$%&*+./<=>?@\\^|\-~:\n].*           loc.step();
 "--"-*$           loc.step();
