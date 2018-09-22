@@ -135,22 +135,22 @@ signed       {negative}?
 
   /* bol state */
 <bol>[\n]  loc.lines(1); loc.step();
-<bol>""    drv.do_bol();
+<bol>""/.  drv.do_bol();
 
 <layout,layout_do,layout_if>"{"/[-]     drv.hopefully_open_brace();
 <layout,layout_do,layout_if>[\n]        loc.lines(1); loc.step();
 
 <layout_if>"|"/[^!#$%&*+./<=>?@\\^|\-~:\n]  drv.hopefully_open_brace();
-<layout_if>""                           drv.pop();
+<layout_if>""/.                             drv.pop();
 
-<layout>""                              drv.new_layout_context(true);
-<layout_do>""                           drv.new_layout_context(false);
+<layout>""/.                              drv.new_layout_context(true);
+<layout_do>""/.                           drv.new_layout_context(false);
 
   /* If we've generated a VOCURLY and started a new line to the left, then
      we need to generate a VCCURLY */
-<layout_left>""                         drv.do_layout_left();
+<layout_left>""/.                         drv.do_layout_left();
 
-<INITIAL,option_prags>[\n]              loc.lines(1); loc.step ();
+<INITIAL,option_prags>[\n]              loc.lines(1); loc.step (); yy_push_state(bol);
 
   /* known pragmas */
 "{-#"{whitechar}*{pragmachar}+
@@ -210,7 +210,7 @@ signed       {negative}?
 \'({graphicnonq}|" "|{escape})\'         return make_char(loc);
 [\"]({graphicnonqq}|" "|{escape})*[\"]   return make_string(loc);
 
-.          {
+<*>.          {
              throw yy::parser::syntax_error
                (loc, "invalid character: " + std::string(yytext));
 }
@@ -437,4 +437,9 @@ yy::parser::symbol_type make_string(const yy::parser::location_type& loc)
 	s[j++] = get_char(yytext,i);
     s.resize(j);
     return yy::parser::make_STRING(s,loc);
+}
+
+void driver::do_bol()
+{
+    yy_pop_state();
 }

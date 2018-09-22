@@ -17,7 +17,7 @@ public:
     driver ();
 
     void hopefully_open_brace() {};
-    void do_bol() {};
+    void do_bol();
     void new_layout_context(bool) {};
     void do_layout_left() {};
     void pop() {}
