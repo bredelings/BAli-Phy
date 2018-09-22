@@ -245,68 +245,7 @@ std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_words =
     {"where",{parser::token::TOK_WHERE,0}},
     {"builtin",{parser::token::TOK_BUILTIN,0}}
 };
-/*
 
-         ( "as",             ITas,            0 ),
-         ( "case",           ITcase,          0 ),
-         ( "class",          ITclass,         0 ),
-         ( "data",           ITdata,          0 ),
-         ( "default",        ITdefault,       0 ),
-         ( "deriving",       ITderiving,      0 ),
-         ( "do",             ITdo,            0 ),
-         ( "else",           ITelse,          0 ),
-         ( "hiding",         IThiding,        0 ),
-         ( "if",             ITif,            0 ),
-         ( "import",         ITimport,        0 ),
-         ( "in",             ITin,            0 ),
-         ( "infix",          ITinfix,         0 ),
-         ( "infixl",         ITinfixl,        0 ),
-         ( "infixr",         ITinfixr,        0 ),
-         ( "instance",       ITinstance,      0 ),
-         ( "let",            ITlet,           0 ),
-         ( "module",         ITmodule,        0 ),
-         ( "newtype",        ITnewtype,       0 ),
-         ( "of",             ITof,            0 ),
-         ( "qualified",      ITqualified,     0 ),
-         ( "then",           ITthen,          0 ),
-         ( "type",           ITtype,          0 ),
-         ( "where",          ITwhere,         0 ),
-         ( "forall",         ITforall NormalSyntax,
-                                              xbit ExplicitForallBit .|.
-                                              xbit InRulePragBit),
-         ( "mdo",            ITmdo,           xbit RecursiveDoBit),
-             -- See Note [Lexing type pseudo-keywords]
-         ( "family",         ITfamily,        0 ),
-         ( "role",           ITrole,          0 ),
-         ( "pattern",        ITpattern,       xbit PatternSynonymsBit),
-         ( "static",         ITstatic,        0 ),
-         ( "stock",          ITstock,         0 ),
-         ( "anyclass",       ITanyclass,      0 ),
-         ( "via",            ITvia,           0 ),
-         ( "group",          ITgroup,         xbit TransformComprehensionsBit),
-         ( "by",             ITby,            xbit TransformComprehensionsBit),
-         ( "using",          ITusing,         xbit TransformComprehensionsBit),
-         ( "foreign",        ITforeign,       xbit FfiBit),
-         ( "export",         ITexport,        xbit FfiBit),
-         ( "label",          ITlabel,         xbit FfiBit),
-         ( "dynamic",        ITdynamic,       xbit FfiBit),
-         ( "safe",           ITsafe,          xbit FfiBit .|.
-                                              xbit SafeHaskellBit),
-         ( "interruptible",  ITinterruptible, xbit InterruptibleFfiBit),
-         ( "unsafe",         ITunsafe,        xbit FfiBit),
-         ( "stdcall",        ITstdcallconv,   xbit FfiBit),
-         ( "ccall",          ITccallconv,     xbit FfiBit),
-         ( "capi",           ITcapiconv,      xbit CApiFfiBit),
-         ( "prim",           ITprimcallconv,  xbit FfiBit),
-         ( "javascript",     ITjavascriptcallconv, xbit FfiBit),
-         ( "unit",           ITunit,          0 ),
-         ( "dependency",     ITdependency,       0 ),
-         ( "signature",      ITsignature,     0 ),
-         ( "rec",            ITrec,           xbit ArrowsBit .|.
-                                              xbit RecursiveDoBit),
-         ( "proc",           ITproc,          xbit ArrowsBit)
-     ]
-*/
 
 yy::parser::symbol_type varid(const yy::parser::location_type& loc)
 {
