@@ -35,7 +35,8 @@ yy::parser::symbol_type make_string(const yy::parser::location_type& loc);
 
 %}
 
-%option noyywrap nounput batch debug noinput
+%option noyywrap nounput batch debug noinput stack
+%x layout layout_do layout_if bol
 
 unispace     \x05
 nl           [\n\r\f]
