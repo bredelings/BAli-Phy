@@ -16,10 +16,10 @@ class driver
 public:
     driver ();
 
-    void hopefully_open_brace() {};
-    void do_bol();
-    void new_layout_context(bool) {};
-    void do_layout_left() {};
+    void hopefully_open_brace(const yy::parser::location_type& loc) {};
+    void do_bol(const yy::parser::location_type& loc);
+    void new_layout_context(const yy::parser::location_type& loc, bool);
+    yy::parser::symbol_type do_layout_left(const yy::parser::location_type& loc);
     void pop() {}
 
     std::map<std::string, int> variables;

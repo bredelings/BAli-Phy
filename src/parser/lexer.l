@@ -135,20 +135,20 @@ signed       {negative}?
 
   /* bol state */
 <bol>[\n]  loc.lines(1); loc.step();
-<bol>""/.  drv.do_bol();
+<bol>""/.  drv.do_bol(loc);
 
-<layout,layout_do,layout_if>"{"/[^-]     drv.hopefully_open_brace();
+<layout,layout_do,layout_if>"{"/[^-]    drv.hopefully_open_brace(loc);
 <layout,layout_do,layout_if>[\n]        loc.lines(1); loc.step();
 
-<layout_if>"|"/[^!#$%&*+./<=>?@\\^|\-~:\n]  drv.hopefully_open_brace();
+<layout_if>"|"/[^!#$%&*+./<=>?@\\^|\-~:\n]  drv.hopefully_open_brace(loc);
 <layout_if>""/.                             drv.pop();
 
-<layout>""/.                              drv.new_layout_context(true);
-<layout_do>""/.                           drv.new_layout_context(false);
+<layout>""/.                              drv.new_layout_context(loc, true);
+<layout_do>""/.                           drv.new_layout_context(loc, false);
 
   /* If we've generated a VOCURLY and started a new line to the left, then
      we need to generate a VCCURLY */
-<layout_left>""/.                         drv.do_layout_left();
+<layout_left>""/.                       return drv.do_layout_left(loc);
 
 <INITIAL,option_prags>[\n]              loc.lines(1); loc.step (); yy_push_state(bol);
 
@@ -439,7 +439,30 @@ yy::parser::symbol_type make_string(const yy::parser::location_type& loc)
     return yy::parser::make_STRING(s,loc);
 }
 
-void driver::do_bol()
+void driver::do_bol(const yy::parser::location_type& loc)
+{
+    int delta_pos = 0;
+    bool gen_semic = true;
+    if (delta_pos < 0)
+    {
+    }
+    else if (delta_pos == 0 and gen_semic)
+    {
+	yy_pop_state();
+    }
+    else
+    {
+	yy_pop_state();
+    }
+}
+
+void driver::new_layout_context(const yy::parser::location_type& loc, bool)
+{
+}
+
+yy::parser::symbol_type driver::do_layout_left(const yy::parser::location_type& loc)
 {
     yy_pop_state();
+    yy_push_state(bol);
+    return yy::parser::make_VCCURLY(loc);
 }
