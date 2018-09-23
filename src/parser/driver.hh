@@ -22,10 +22,6 @@ public:
     yy::parser::symbol_type do_layout_left(const yy::parser::location_type& loc);
     void pop() {}
 
-    std::map<std::string, int> variables;
-
-    int result;
-
     // Run the parser on file F.  Return 0 on success.
     int parse (const std::string& f);
     // The name of the file being parsed.
