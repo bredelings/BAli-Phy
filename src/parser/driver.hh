@@ -3,6 +3,7 @@
 # include <string>
 # include <map>
 # include "parser.hh"
+# include <boost/optional.hpp>
 
 // Tell Flex the lexer's prototype ...
 # define YY_DECL \
@@ -10,11 +11,23 @@
 // ... and declare it for the parser's sake.
 YY_DECL;
 
+struct LayoutContext
+{
+    int offset;
+    bool gen_semis;
+};
+
 // Conducting the whole scanning and parsing of Calc++.
 class driver
 {
+    std::vector<boost::optional<LayoutContext>> contexts;
+
 public:
     driver ();
+
+    void pop_context();
+    boost::optional<LayoutContext> get_context();
+    void push_context(const boost::optional<LayoutContext>&);
 
     void hopefully_open_brace(const yy::parser::location_type& loc) {};
     void do_bol(const yy::parser::location_type& loc);
