@@ -28,6 +28,8 @@ public:
     void pop_context();
     boost::optional<LayoutContext> get_context();
     void push_context(const boost::optional<LayoutContext>&);
+    void push_context(const LayoutContext&);
+    void push_context();
 
     void hopefully_open_brace(const yy::parser::location_type& loc) {};
     void do_bol(const yy::parser::location_type& loc);

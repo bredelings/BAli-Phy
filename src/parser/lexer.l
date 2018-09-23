@@ -182,9 +182,9 @@ signed       {negative}?
 "`"      return yy::parser::make_BACKQUOTE (loc);
 
   /* action: push a "NoLayout" context into the stack */
-"{"      return yy::parser::make_OCURLY (loc);
+"{"      drv.push_context(); return yy::parser::make_OCURLY (loc);
   /* action: pop the top context from the stack */
-"}"      return yy::parser::make_CCURLY (loc);
+"}"      drv.pop_context(); return yy::parser::make_CCURLY (loc);
 
 {qvarid}      return yy::parser::make_QVARID (yytext, loc);
 {qconid}      return yy::parser::make_QCONID (yytext, loc);

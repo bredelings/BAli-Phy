@@ -18,8 +18,18 @@ void driver::push_context(const boost::optional<LayoutContext>& lc)
     contexts.push_back(lc);
 }
 
+void driver::push_context(const LayoutContext& lc)
+{
+    contexts.push_back(lc);
+}
+
+void driver::push_context()
+{
+    contexts.push_back({});
+}
+
 driver::driver ()
-  : trace_parsing (false), trace_scanning (false)
+    : trace_parsing (false), trace_scanning (false)
 {
 }
 
