@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2005-2009 Benjamin Redelings
+  Copyright (C) 2005-20013,2017-2018 Benjamin Redelings
 
   This file is part of BAli-Phy.
 
@@ -20,6 +20,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <regex>
 #include "alignment/alignment.H"
 #include "alignment/alignment-util.H"
 #include "util.H"
@@ -36,6 +37,7 @@ using std::ifstream;
 using std::istream;
 using std::vector;
 using std::string;
+using std::pair;
 
 using std::cin;
 using std::cout;
@@ -468,6 +470,36 @@ vector<sequence> align_by_amino_acids(const vector<sequence>& S1, const string& 
     return S2;
 }
 
+
+vector<pair<int,int>> read_pairs(const string& filename, int first = 0)
+{
+    vector<pair<int,int>> pairs;
+
+    /* I should write a parser for this! */
+    checked_ifstream file(filename,"pairs file");
+    string line;
+    while(portable_getline(file,line))
+    {
+	vector<string> pair_strings;
+        // 2. Split the text on commas and whitespace, and put the items into `options`.
+        // tokenization (non-matched fragments)
+        std::regex sep_re("\\s*,\\s*"); // whitespace
+        std::copy( std::sregex_token_iterator(line.begin(), line.end(), sep_re, -1),
+                   std::sregex_token_iterator(),
+                   std::inserter(pair_strings, pair_strings.end()));
+	for(auto& pair_string: pair_strings)
+	{
+	    if (not pair_string.empty())
+	    {
+		auto pieces = split<int>(pair_string,':');
+		if (pieces.size() != 2)
+		    throw myexception()<<"Malformed pair '"<<pair_string<<"'";
+		pairs.push_back({pieces[0] - first,pieces[1] - first});
+	    }
+	}
+    }
+    return pairs;
+}
 
 int main(int argc,char* argv[]) 
 { 
