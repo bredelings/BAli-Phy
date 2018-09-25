@@ -135,9 +135,9 @@ signed       {negative}?
 
   /* bol state */
 <bol>[\n]  loc.lines(1); loc.step();
-<bol>""/.  drv.do_bol(loc);
+<bol>""/.  if (auto tok = drv.do_bol(loc)) return *tok;
 
-<layout,layout_do,layout_if>"{"/[^-]    drv.hopefully_open_brace(loc);
+<layout,layout_do,layout_if>"{"/[^-]    return drv.hopefully_open_brace(loc);
 <layout,layout_do,layout_if>[\n]        loc.lines(1); loc.step();
 
 <layout_if>"|"/[^!#$%&*+./<=>?@\\^|\-~:\n]  drv.hopefully_open_brace(loc);
@@ -173,42 +173,42 @@ signed       {negative}?
 
   /* unboxed tuples: (# and #) */
 
-"("      return yy::parser::make_OPAREN (loc);
-")"      return yy::parser::make_CPAREN (loc);
-"["      return yy::parser::make_OBRACK (loc);
-"]"      return yy::parser::make_CBRACK (loc);
-","      return yy::parser::make_COMMA  (loc);
-";"      return yy::parser::make_SEMI   (loc);
-"`"      return yy::parser::make_BACKQUOTE (loc);
+<INITIAL,option_prags>"("      return yy::parser::make_OPAREN (loc);
+<INITIAL,option_prags>")"      return yy::parser::make_CPAREN (loc);
+<INITIAL,option_prags>"["      return yy::parser::make_OBRACK (loc);
+<INITIAL,option_prags>"]"      return yy::parser::make_CBRACK (loc);
+<INITIAL,option_prags>","      return yy::parser::make_COMMA  (loc);
+<INITIAL,option_prags>";"      return yy::parser::make_SEMI   (loc);
+<INITIAL,option_prags>"`"      return yy::parser::make_BACKQUOTE (loc);
 
   /* action: push a "NoLayout" context into the stack */
 "{"      drv.push_context(); return yy::parser::make_OCURLY (loc);
   /* action: pop the top context from the stack */
 "}"      drv.pop_context(); return yy::parser::make_CCURLY (loc);
 
-{qvarid}      return yy::parser::make_QVARID (yytext, loc);
-{qconid}      return yy::parser::make_QCONID (yytext, loc);
-{varid}       return varid(loc);
-{conid}       return yy::parser::make_CONID  (yytext, loc);
+<INITIAL,option_prags>{qvarid}      return yy::parser::make_QVARID (yytext, loc);
+<INITIAL,option_prags>{qconid}      return yy::parser::make_QCONID (yytext, loc);
+<INITIAL,option_prags>{varid}       return varid(loc);
+<INITIAL,option_prags>{conid}       return yy::parser::make_CONID  (yytext, loc);
 
 
   /* Here we look for {qvarid}#+ ... {conid}#+ if magicHashEnabled */
 
-{qvarsym}      return yy::parser::make_QVARSYM  (yytext,loc);
-{qconsym}      return yy::parser::make_QCONSYM  (yytext,loc);
-{varsym}       return varsym(loc);
-{consym}       return consym(loc);
+<INITIAL>{qvarsym}      return yy::parser::make_QVARSYM  (yytext,loc);
+<INITIAL>{qconsym}      return yy::parser::make_QCONSYM  (yytext,loc);
+<INITIAL>{varsym}       return varsym(loc);
+<INITIAL>{consym}       return consym(loc);
 
-{decimal}                              return make_integer(10,true,0,loc);
+<INITIAL>{decimal}                              return make_integer(10,true,0,loc);
   /* 0[bB]{numspc}{binary}      make_integer(2,true,2,loc); */
-0[oO]{numspc}{octal}                   return make_integer( 8,true,2,loc);
-0[xX]{numspc}{hexadecimal}             return make_integer(16,true,2,loc);
+<INITIAL>0[oO]{numspc}{octal}                   return make_integer( 8,true,2,loc);
+<INITIAL>0[xX]{numspc}{hexadecimal}             return make_integer(16,true,2,loc);
 
   /* negative literals depend on an extension */
-{floating_point}                       return make_rational(loc);
+<INITIAL>{floating_point}                       return make_rational(loc);
 
-\'({graphicnonq}|" "|{escape})\'         return make_char(loc);
-[\"]({graphicnonqq}|" "|{escape})*[\"]   return make_string(loc);
+<INITIAL>\'({graphicnonq}|" "|{escape})\'         return make_char(loc);
+<INITIAL>[\"]({graphicnonqq}|" "|{escape})*[\"]   return make_string(loc);
 
 <*>.          {
              throw yy::parser::syntax_error
@@ -280,6 +280,28 @@ yy::parser::symbol_type varid(const yy::parser::location_type& loc)
     else
     {
 	auto tok = it->second.first;
+	switch(tok)
+	{
+	case parser::token::TOK_DO:
+	case parser::token::TOK_MDO:
+	    std::cerr<<"switch to <layout_do> @ "<<loc<<"\n";
+	    yy_push_state(layout_do);
+	    break;
+	case parser::token::TOK_OF:
+	case parser::token::TOK_LCASE:
+	case parser::token::TOK_LET:
+	case parser::token::TOK_WHERE:
+	case parser::token::TOK_REC:
+	    std::cerr<<"switch to <layout> @ "<<loc<<"\n";
+	    yy_push_state(layout);
+	    break;
+	case parser::token::TOK_IF:
+	    std::cerr<<"switch to <layout_do> @ "<<loc<<"\n";
+	    yy_push_state(layout_if);
+	    break;
+	default:
+	    break;
+	}
 	return yy::parser::symbol_type(tok, loc);
     }
 }
@@ -439,21 +461,28 @@ yy::parser::symbol_type make_string(const yy::parser::location_type& loc)
     return yy::parser::make_STRING(s,loc);
 }
 
-void driver::do_bol(const yy::parser::location_type& loc)
+boost::optional<yy::parser::symbol_type> driver::do_bol(const yy::parser::location_type& loc)
 {
     auto x = get_offside(loc);
-    int delta_pos = x.offset;
+    int delta_offset = x.offset;
     bool gen_semis = x.gen_semis;
-    if (delta_pos < 0)
+    std::cerr<<"do_bol @ "<<loc<<std::endl;
+    if (delta_offset < 0)
     {
+	std::cerr<<"offset = "<<loc.end.column<<", LT, generating '}'"<<std::endl;
+	pop_context();
+	return yy::parser::make_VCCURLY(loc);
     }
-    else if (delta_pos == 0 and gen_semis)
+    else if (delta_offset == 0 and gen_semis)
     {
+	std::cerr<<"offset = "<<loc.end.column<<", EQ, generating ';'"<<std::endl;
 	yy_pop_state();
+	return yy::parser::make_SEMI(loc);
     }
     else
     {
 	yy_pop_state();
+	return boost::none;
     }
 }
 
@@ -484,4 +513,10 @@ yy::parser::symbol_type driver::do_layout_left(const yy::parser::location_type& 
     yy_pop_state();
     yy_push_state(bol);
     return yy::parser::make_VCCURLY(loc);
+}
+
+yy::parser::symbol_type driver::hopefully_open_brace(const yy::parser::location_type& loc)
+{
+    yy_pop_state();
+    return yy::parser::make_OCURLY(loc);
 }

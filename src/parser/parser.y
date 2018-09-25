@@ -1167,7 +1167,7 @@ literal: CHAR     {$$ = {@$, $1};}
 /* ------------- Layout ------------------------------------------ */
 
 close: VCCURLY |
-error
+error { std::cerr<<"popping context via error token\n"; drv.pop_context();}
 
 /* ------------- Miscellaneous (mostly renamings) ---------------- */
 

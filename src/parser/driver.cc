@@ -30,7 +30,11 @@ void driver::push_context()
 
 LayoutContext driver::get_offside(const yy::parser::location_type& loc)
 {
-    return {0,true};
+    int offset = loc.end.column;
+    if (auto layout_context = get_context())
+	return {offset - layout_context->offset, layout_context->gen_semis};
+    else
+	return {1,false};
 }
 
 driver::driver ()
