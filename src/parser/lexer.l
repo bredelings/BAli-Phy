@@ -141,7 +141,7 @@ signed       {negative}?
 <layout,layout_do,layout_if>[\n]        loc.lines(1); loc.step();
 
 <layout_if>"|"/[^!#$%&*+./<=>?@\\^|\-~:\n]  drv.hopefully_open_brace(loc);
-<layout_if>""/.                             drv.pop();
+<layout_if>""/.                             yy_pop_state();
 
 <layout>""/.                              return drv.new_layout_context(loc, true, true, yy::parser::token::TOK_VOCURLY);
 <layout_do>""/.                           return drv.new_layout_context(loc, false, true, yy::parser::token::TOK_VOCURLY);
@@ -517,6 +517,14 @@ yy::parser::symbol_type driver::do_layout_left(const yy::parser::location_type& 
 
 yy::parser::symbol_type driver::hopefully_open_brace(const yy::parser::location_type& loc)
 {
+    if (auto layout_context = get_context())
+    {
+	int offset = loc.end.column;
+	if (layout_context->offset >= offset)
+	    throw yy::parser::syntax_error(loc,"Missing block");
+
+    }
     yy_pop_state();
+    push_context();
     return yy::parser::make_OCURLY(loc);
 }
