@@ -1167,7 +1167,7 @@ literal: CHAR     {$$ = {@$, $1};}
 /* ------------- Layout ------------------------------------------ */
 
 close: VCCURLY |
-error { std::cerr<<"popping context via error token\n"; drv.pop_context();}
+error { drv.pop_error_message(); std::cerr<<"popping context via error token\n"; drv.pop_context();}
 
 /* ------------- Miscellaneous (mostly renamings) ---------------- */
 
@@ -1188,5 +1188,5 @@ bars: bars "|"     {$$ = $1 + 1;}
 void
 yy::parser::error (const location_type& l, const std::string& m)
 {
-  std::cerr << l << ": " << m << '\n';
+    drv.push_error_message({l,m});
 }
