@@ -33,7 +33,7 @@ public:
 
     void hopefully_open_brace(const yy::parser::location_type& loc) {};
     void do_bol(const yy::parser::location_type& loc);
-    void new_layout_context(const yy::parser::location_type& loc, bool);
+    yy::parser::symbol_type new_layout_context(const yy::parser::location_type& loc, bool strict, bool gen_semis, yy::parser::token_type tok);
     yy::parser::symbol_type do_layout_left(const yy::parser::location_type& loc);
     void pop() {}
 

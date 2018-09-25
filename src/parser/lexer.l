@@ -143,8 +143,8 @@ signed       {negative}?
 <layout_if>"|"/[^!#$%&*+./<=>?@\\^|\-~:\n]  drv.hopefully_open_brace(loc);
 <layout_if>""/.                             drv.pop();
 
-<layout>""/.                              drv.new_layout_context(loc, true);
-<layout_do>""/.                           drv.new_layout_context(loc, false);
+<layout>""/.                              return drv.new_layout_context(loc, true, true, yy::parser::token::TOK_VOCURLY);
+<layout_do>""/.                           return drv.new_layout_context(loc, false, true, yy::parser::token::TOK_VOCURLY);
 
   /* If we've generated a VOCURLY and started a new line to the left, then
      we need to generate a VCCURLY */
@@ -456,12 +456,30 @@ void driver::do_bol(const yy::parser::location_type& loc)
     }
 }
 
-void driver::new_layout_context(const yy::parser::location_type& loc, bool)
+yy::parser::symbol_type driver::new_layout_context(const yy::parser::location_type& loc, bool strict, bool gen_semis, yy::parser::token_type tok)
 {
+    yy_pop_state();
+    int offset = loc.end.column;
+    std::cerr<<"Opening new layout context at "<<loc<<std::endl;
+    if (auto layout_context = get_context())
+    {
+	int prev_offset = layout_context->offset;
+	if ((strict and prev_offset > offset) or
+	    ((not strict) and prev_offset >= offset))
+	{
+	    std::cerr<<"   - Going to layout_left"<<std::endl;
+	    yy_push_state(layout_left);
+	    return yy::parser::symbol_type(tok,loc);
+	}
+    }
+
+    push_context({offset,gen_semis});
+    return yy::parser::symbol_type(tok,loc);
 }
 
 yy::parser::symbol_type driver::do_layout_left(const yy::parser::location_type& loc)
 {
+    std::cerr<<"Doing layout_left at "<<loc<<std::endl;
     yy_pop_state();
     yy_push_state(bol);
     return yy::parser::make_VCCURLY(loc);
