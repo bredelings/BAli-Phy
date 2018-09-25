@@ -1167,7 +1167,9 @@ literal: CHAR     {$$ = {@$, $1};}
 /* ------------- Layout ------------------------------------------ */
 
 close: VCCURLY |
-error { drv.pop_error_message(); std::cerr<<"popping context via error token\n"; drv.pop_context();}
+       /* Without the yyerrok, the yyerror seems not to be called at the end of the file, 
+          so that the drv.pop_error_message() causes a SEGFAULT. */
+error { yyerrok; drv.pop_error_message(); drv.pop_context();}
 
 /* ------------- Miscellaneous (mostly renamings) ---------------- */
 
