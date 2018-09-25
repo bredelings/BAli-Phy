@@ -441,12 +441,13 @@ yy::parser::symbol_type make_string(const yy::parser::location_type& loc)
 
 void driver::do_bol(const yy::parser::location_type& loc)
 {
-    int delta_pos = 0;
-    bool gen_semic = true;
+    auto x = get_offside(loc);
+    int delta_pos = x.offset;
+    bool gen_semis = x.gen_semis;
     if (delta_pos < 0)
     {
     }
-    else if (delta_pos == 0 and gen_semic)
+    else if (delta_pos == 0 and gen_semis)
     {
 	yy_pop_state();
     }

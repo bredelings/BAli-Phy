@@ -25,6 +25,8 @@ class driver
 public:
     driver ();
 
+    LayoutContext get_offside(const yy::parser::location_type& loc);
+
     void pop_context();
     boost::optional<LayoutContext> get_context();
     void push_context(const boost::optional<LayoutContext>&);

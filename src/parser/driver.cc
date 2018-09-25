@@ -28,6 +28,11 @@ void driver::push_context()
     contexts.push_back({});
 }
 
+LayoutContext driver::get_offside(const yy::parser::location_type& loc)
+{
+    return {0,true};
+}
+
 driver::driver ()
     : trace_parsing (false), trace_scanning (false)
 {
