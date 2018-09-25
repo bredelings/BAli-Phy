@@ -9,7 +9,7 @@ void driver::pop_context()
 boost::optional<LayoutContext> driver::get_context()
 {
     if (contexts.empty())
-	throw myexception()<<"No layout context to access!";
+	return boost::none;
     return contexts.back();
 }
 
