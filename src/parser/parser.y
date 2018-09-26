@@ -11,7 +11,6 @@
   # include <iostream>
   # include "computation/expression/expression_ref.H"
   # include "computation/expression/var.H"
-  # include "located.H"
   class driver;
 }
 
@@ -181,60 +180,237 @@
 
  /* Template Haskell: skipped tokens.*/
 
+%type <expression_ref> exp
+ /*
+%type <void> module
+%type <void> missing_module_keyword
+%type <void> maybemodwarning
+%type <void> body2
+%type <void> top
+%type <void> top1
 
-%type <Located<expression_ref>> exp
+%type <void> maybeexports
+%type <void> exportlist1
+%type <void> export
+%type <void> export_subspec
+%type <void> qcnames
+%type <void> qcnames1
+%type <void> qcname_ext_w_wildcard
+%type <void> qcname
 
- /* %type <Located<std::string>> qcon_nowiredlist */
-%type <Located<std::string>> qcon
-%type <Located<std::string>> gen_qcon
-%type <Located<std::string>> con
-%type <Located<std::string>> sysdcon_no_list
-%type <Located<std::string>> sysdcon
-%type <Located<std::string>> conop
-%type <Located<std::string>> qconop
+%type <void> importdecls
+%type <void> importdecls_semi
+%type <void> importdecl
+%type <void> maybe_src
+%type <void> maybe_safe
+%type <void> maybe_pkg
+%type <void> optqualified
+%type <void> maybeas
+%type <void> maybeimpspec
+%type <void> impspec
 
-%type <Located<std::string>> gtycon
-%type <Located<std::string>> ntgtycon
-%type <Located<std::string>> oqtycon
-%type <Located<std::string>> oqtycon_no_varcon
-%type <Located<std::string>> qtyconop
-%type <Located<std::string>> qtycondoc
-%type <Located<std::string>> qtycon
-%type <Located<std::string>> tycon
-%type <Located<std::string>> qtyconsym
-%type <Located<std::string>> tyconsym
+%type <void> prec
+%type <void> infix
+%type <void> ops
 
-%type <Located<std::string>> op
-%type <Located<std::string>> varop
-%type <Located<std::string>> qop
-%type <Located<std::string>> qopm
-%type <Located<std::string>> hole_op
-%type <Located<std::string>> qvarop
-%type <Located<std::string>> qvaropm
+%type <void> topdecls
+%type <void> topdecls_semi
+%type <void> topdecl
+%type <void> cl_decl
+%type <void> ty_decl
+%type <void> inst_decl
+%type <void> overlap_pragma
+%type <void> deriv_strategy_no_via
+%type <void> deriv_strategy_via
+%type <void> data_or_newtype
+%type <void> opt_kind_sig
+%type <void> tycl_hdr
+%type <void> capi_ctype
 
-%type <Located<std::string>> tyvar
-%type <Located<std::string>> tyvarop
-%type <Located<std::string>> tyvarid
 
-%type <Located<std::string>> var
-%type <Located<std::string>> qvar
-%type <Located<std::string>> qvarid
-%type <Located<std::string>> varid
-%type <Located<std::string>> qvarsym
-%type <Located<std::string>> qvarsym_no_minus
-%type <Located<std::string>> qvarsym1
-%type <Located<std::string>> varsym
-%type <Located<std::string>> varsym_no_minus
-%type <Located<std::string>> special_id
-%type <Located<std::string>> special_sym
+%type <void> pattern_synonym_decl
+%type <void> pattern_synonym_lhs
+%type <void> vars0
+%type <void> cvars1
+%type <void> where_decls
+%type <void> pattern_synonym_sig
 
-%type <Located<std::string>> qconid
-%type <Located<std::string>> conid
-%type <Located<std::string>> qconsym
-%type <Located<std::string>> consym
+%type <void> decl_cls
+%type <void> decls_cls
+%type <void> declslist_cls
+%type <void> where_cls
 
-%type  <Located<expression_ref>> literal
-%type  <Located<std::string>> modid
+%type <void> decl_inst
+%type <void> decls_inst
+%type <void> decllist_inst
+%type <void> where_inst
+
+%type <void> decls
+%type <void> decllist
+%type <void> binds
+%type <void> wherebinds
+
+%type <void> strings
+%type <void> stringlist
+
+%type <void> opt_sig
+%type <void> opt_tyconsig
+%type <void> sigtype
+%type <void> sigtypedoc
+%type <void> sigvars
+%type <void> sigtypes1
+
+%type <void> strict_mark
+%type <void> strictness
+%type <void> unpackedness
+%type <void> ctype
+%type <void> ctypedoc
+%type <void> context
+%type <void> context_no_ops
+%type <void> type
+%type <void> typedoc
+%type <void> btype
+%type <void> btype_no_ops
+%type <void> tyapps
+%type <void> tyapp
+%type <void> atype_docs
+%type <void> atype
+%type <void> inst_type
+%type <void> deriv_types
+%type <void> comma_types0
+%type <void> comma_types1
+%type <void> bar_types2
+%type <void> tv_bndrs
+%type <void> tv_bndr
+%type <void> fds
+%type <void> fds1
+%type <void> fd
+%type <void> varids0
+
+%type <void> kind
+
+%type <void> constrs
+%type <void> constrs1
+%type <void> constr
+%type <void> forall
+%type <void> constr_stuff
+%type <void> fielddecls
+%type <void> fielddecls1
+%type <void> fielddecl
+%type <void> maybe_derivings
+%type <void> derivings
+%type <void> deriv_clause_types
+
+%type <void> decl_no_th
+%type <void> decl
+%type <void> rhs
+%type <void> gdrhs
+%type <void> gdrh
+%type <void> sigdecl
+%type <void> activation
+%type <void> explicit_activation
+
+%type <expression_ref> exp
+%type <void> infixexp
+%type <void> infixexp_top
+%type <void> exp10_top
+%type <void> exp10
+
+%type <void> fexp
+%type <void> aexp
+%type <void> aexp1
+%type <void> aexp2
+%type <void> texp
+%type <void> tup_exprs
+%type <void> tup_tail
+
+%type <void> list
+%type <void> lexps
+%type <void> flattenedpquals
+%type <void> squals
+%type <void> transformqual
+%type <void> guardquals
+%type <void> guardquals1
+
+%type <void> altslist
+%type <void> alts
+%type <void> alts1
+%type <void> alt
+%type <void> alt_rhs
+%type <void> gdpats
+%type <void> ifgdpats
+%type <void> gdpat
+%type <void> pat
+%type <void> bindpat
+%type <void> apat
+%type <void> apats
+
+%type <void> stmtlist
+%type <void> stmts
+%type <void> stmt
+%type <void> qual
+
+%type <void> fbinds
+%type <void> fbinds1
+%type <void> fbind
+
+%type <void> dbinds
+%type <void> dbind
+*/
+%type <std::string> ipvar
+%type <std::string> overloaded_label
+
+ /* %type <std::string> qcon_nowiredlist */
+%type <std::string> qcon
+%type <std::string> gen_qcon
+%type <std::string> con
+%type <std::string> sysdcon_no_list
+%type <std::string> sysdcon
+%type <std::string> conop
+%type <std::string> qconop
+
+%type <std::string> gtycon
+%type <std::string> ntgtycon
+%type <std::string> oqtycon
+%type <std::string> oqtycon_no_varcon
+%type <std::string> qtyconop
+%type <std::string> qtycondoc
+%type <std::string> qtycon
+%type <std::string> tycon
+%type <std::string> qtyconsym
+%type <std::string> tyconsym
+
+%type <std::string> op
+%type <std::string> varop
+%type <std::string> qop
+%type <std::string> qopm
+%type <std::string> hole_op
+%type <std::string> qvarop
+%type <std::string> qvaropm
+
+%type <std::string> tyvar
+%type <std::string> tyvarop
+%type <std::string> tyvarid
+
+%type <std::string> var
+%type <std::string> qvar
+%type <std::string> qvarid
+%type <std::string> varid
+%type <std::string> qvarsym
+%type <std::string> qvarsym_no_minus
+%type <std::string> qvarsym1
+%type <std::string> varsym
+%type <std::string> varsym_no_minus
+%type <std::string> special_id
+%type <std::string> special_sym
+
+%type <std::string> qconid
+%type <std::string> conid
+%type <std::string> qconsym
+%type <std::string> consym
+
+%type  <expression_ref> literal
+%type  <std::string> modid
 %type  <int> commas
 %type  <int> bars0
 %type  <int> bars
@@ -550,6 +726,7 @@ decllist: "{" decls "}"
 |         VOCURLY decls close
 
 binds: decllist
+/* The dbinds can't occur right now */
 |     "{" dbinds "}"
 |     VOCURLY dbinds close
 
@@ -968,7 +1145,17 @@ dbinds: dbinds ";" dbind
 
 dbind:  ipvar "=" exp
 
-ipvar: IPDUPVARID
+/* GHC Extension: implicit param ?x */
+/* This won't happen because the lexer doesn't recognize these right now */
+ipvar: IPDUPVARID { $$ = $1; }
+
+
+/* ------------- Implicit Parameter Bindings --------------------- */
+
+/* GHC Extension: overloaded labels #x */
+/* This won't happen because the lexer doesn't recognize these right now */
+overloaded_label: LABELVARID { $$ = $1; }
+
 
 /* ------------- Warnings and deprecations ----------------------- */
 
@@ -992,13 +1179,13 @@ con: conid          { $$ = $1; }
 con_list: con
 |         con "," con_list
 
-sysdcon_no_list:  "(" ")"   { $$ = {@$, "()"}; }
-|                 "(" commas   ")" { $$ = {@$, "("+std::string($2,',')+")"}; }
-|                 "(#" "#)" { $$ = {@$, "(##)"}; }
-|                 "(#" commas "#)" { $$ = {@$, "(#"+std::string($2,',')+"#)"}; }
+sysdcon_no_list:  "(" ")"   { $$ =  "()"; }
+|                 "(" commas   ")" { $$ = "("+std::string($2,',')+")"; }
+|                 "(#" "#)" { $$ = "(##)"; }
+|                 "(#" commas "#)" { $$ = "(#"+std::string($2,',')+"#)"; }
 
 sysdcon: sysdcon_no_list { $$ = $1; }
-|        "[" "]"         { $$ = {@$, "[]"}; }
+|        "[" "]"         { $$ = "[]"; }
 
 conop: consym { $$ = $1; }
 |      "`" conid "`" { $$ = $2; }
@@ -1008,24 +1195,24 @@ qconop: qconsym { $$ = $1; }
 
 /* ------------- Type Constructors ------------------------------- */
 gtycon:   ntgtycon   { $$ = $1; }
-|         "(" ")"   { $$ = {@$, "()"}; }
-|         "(#" "#)" { $$ = {@$, "(##)"}; }
+|         "(" ")"   { $$ = "()"; }
+|         "(#" "#)" { $$ = "(##)"; }
 
 ntgtycon: oqtycon          { $$ = $1; }
-|        "(" commas   ")" { $$ = {@$, "("+std::string($2,',')+")"}; }
-|        "(#" commas "#)" { $$ = {@$, "(#"+std::string($2,',')+"#)"}; }
-|        "(" "->" ")"     { $$ = {@$, "->"}; }
-|        "[" "]"          { $$ = {@$, "[]"}; }
+|        "(" commas   ")" { $$ = "("+std::string($2,',')+")"; }
+|        "(#" commas "#)" { $$ = "(#"+std::string($2,',')+"#)"; }
+|        "(" "->" ")"     { $$ = "->"; }
+|        "[" "]"          { $$ = "[]"; }
 
 oqtycon: qtycon            { $$ = $1; }
 |        "(" qtyconsym ")" { $$ = $2; }
-|        "(" "~" ")"       { $$ = {@$, "~"}; }
+|        "(" "~" ")"       { $$ = "~"; }
 
 oqtycon_no_varcon: qtycon  { $$ = $1; }
-|        "(" QCONSYM ")"   { $$ = {@$, $2}; }
-|        "(" CONSYM  ")"   { $$ = {@$, $2}; }
-|        "(" ":"  ")"      { $$ = {@$, ":"}; }
-|        "(" "~"  ")"      { $$ = {@$, "~"}; }
+|        "(" QCONSYM ")"   { $$ = $2; }
+|        "(" CONSYM  ")"   { $$ = $2; }
+|        "(" ":"  ")"      { $$ = ":"; }
+|        "(" "~"  ")"      { $$ = "~"; }
 
 
 qtyconop: qtyconsym      {$$ = $1; }
@@ -1033,21 +1220,21 @@ qtyconop: qtyconsym      {$$ = $1; }
 
 qtycondoc: qtycon {$$ = $1;}
 
-qtycon:  QCONID { $$ = {@$,$1}; }
+qtycon:  QCONID { $$ = $1; }
 |        tycon  { $$ = $1; }
 
 /* qtycondoc */
 
-tycon:     CONID    { $$ = {@$,$1}; }
+tycon:     CONID    { $$ = $1; }
 
-qtyconsym: QCONSYM  { $$ = {@$,$1}; }
-|          QVARSYM  { $$ = {@$,$1}; }
+qtyconsym: QCONSYM  { $$ = $1; }
+|          QVARSYM  { $$ = $1; }
 |          tyconsym { $$ = $1; }
 
-tyconsym: CONSYM { $$ = {@$, $1}; }
-|         VARSYM { $$ = {@$, $1}; }
-|         ":"    { $$ = {@$, ":"}; }
-|         "-"    { $$ = {@$, "-"}; }
+tyconsym: CONSYM { $$ = $1; }
+|         VARSYM { $$ = $1; }
+|         ":"    { $$ = ":"; }
+|         "-"    { $$ = "-"; }
 
 
 /* ------------- Operators --------------------------------------- */
@@ -1066,7 +1253,7 @@ qopm: qvaropm   { $$ = $1; }
 |     qconop    { $$ = $1; }
 |     hole_op   { $$ = $1; }
 
-hole_op: "`" "_" "`"  { $$ = {@$, "_"}; }
+hole_op: "`" "_" "`"  { $$ = "_"; }
 
 qvarop: qvarsym  { $$ = $1; }
 |       "`" qvarid "`" { $$ = $2; }
@@ -1080,11 +1267,11 @@ tyvar: tyvarid            { $$ = $1; }
 
 tyvarop:  "`" tyvarid "`" { $$ = $2; }
 
-tyvarid: VARID            { $$ = {@$, $1}; }
+tyvarid: VARID            { $$ = $1; }
 | special_id              { $$ = $1; }
-| "unsafe"                { $$ = {@$, "unsafe"}; }
-| "safe"                  { $$ = {@$, "safe"}; }
-| "interruptible"         { $$ = {@$, "interruptible"}; }
+| "unsafe"                { $$ = "unsafe"; }
+| "safe"                  { $$ = "safe"; }
+| "interruptible"         { $$ = "interruptible"; }
 
 /* ------------- Variables --------------------------------------- */
 var: varid { $$ = $1; }
@@ -1095,16 +1282,16 @@ qvar: qvarid { $$ = $1; }
 | "(" qvarsym1 ")" {$$ = $2; }
 
 qvarid: varid { $$ = $1; }
-| QVARID { $$ = {@$, $1}; }
+| QVARID { $$ = $1; }
 
-varid: VARID        { $$ = {@$, $1}; }
+varid: VARID        { $$ = $1; }
 | special_id        { $$ = $1; }
-| "unsafe"          { $$ = {@$, "unsafe"}; }
-| "safe"            { $$ = {@$, "safe"}; }
-| "interruptible"   { $$ = {@$, "interruptible"}; }
-| "forall"          { $$ = {@$, "forall"}; }
-| "family"          { $$ = {@$, "family"}; }
-| "role"            { $$ = {@$, "role"}; }
+| "unsafe"          { $$ = "unsafe"; }
+| "safe"            { $$ = "safe"; }
+| "interruptible"   { $$ = "interruptible"; }
+| "forall"          { $$ = "forall"; }
+| "family"          { $$ = "family"; }
+| "role"            { $$ = "role"; }
 
 qvarsym: varsym     { $$ = $1; }
 | qvarsym1          { $$ = $1; }
@@ -1112,56 +1299,56 @@ qvarsym: varsym     { $$ = $1; }
 qvarsym_no_minus: varsym_no_minus {$$ = $1;}
 |                 qvarsym1 {$$ = $1;}
 
-qvarsym1: QVARSYM        { $$ = {@$, $1}; }
+qvarsym1: QVARSYM        { $$ = $1; }
 
 varsym: varsym_no_minus  { $$ = $1; }
-|        "-"             { $$ = {@$, "-"}; }
+|        "-"             { $$ = "-"; }
 
-varsym_no_minus: VARSYM      {$$ = {@$, $1}; }
+varsym_no_minus: VARSYM      {$$ = $1; }
 |                special_sym {$$ = $1; }
 
-special_id:  "as"         { $$ = {@$, "as"}; }
-|            "qualified"  { $$ = {@$, "qualified"}; }
-|            "hiding"     { $$ = {@$, "hiding"}; }
-|            "export"     { $$ = {@$, "export"}; }
-|            "label"      { $$ = {@$, "label"}; }
-|            "dynamic"    { $$ = {@$, "dynamic"}; }
-|            "stdcall"    { $$ = {@$, "stdcall"}; }
-|            "ccall"      { $$ = {@$, "ccall"}; }
-|            "capi"       { $$ = {@$, "capi"}; }
-|            "prim"       { $$ = {@$, "prim"}; }
-|            "javascript" { $$ = {@$, "javascript"}; }
-|            "group"      { $$ = {@$, "group"}; }
-|            "stock"      { $$ = {@$, "stock"}; }
-|            "anyclass"   { $$ = {@$, "anyclass"}; }
-|            "via"        { $$ = {@$, "via"}; }
-|            "unit"       { $$ = {@$, "unit"}; }
-|            "dependency" { $$ = {@$, "dependency"}; }
-|            "signature"  { $$ = {@$, "signature"}; }
+special_id:  "as"         { $$ = "as"; }
+|            "qualified"  { $$ = "qualified"; }
+|            "hiding"     { $$ = "hiding"; }
+|            "export"     { $$ = "export"; }
+|            "label"      { $$ = "label"; }
+|            "dynamic"    { $$ = "dynamic"; }
+|            "stdcall"    { $$ = "stdcall"; }
+|            "ccall"      { $$ = "ccall"; }
+|            "capi"       { $$ = "capi"; }
+|            "prim"       { $$ = "prim"; }
+|            "javascript" { $$ = "javascript"; }
+|            "group"      { $$ = "group"; }
+|            "stock"      { $$ = "stock"; }
+|            "anyclass"   { $$ = "anyclass"; }
+|            "via"        { $$ = "via"; }
+|            "unit"       { $$ = "unit"; }
+|            "dependency" { $$ = "dependency"; }
+|            "signature"  { $$ = "signature"; }
 
-special_sym: "!" { $$ = {@$, "!"}; }
-|            "." { $$ = {@$, "."}; }
-|            "*" { $$ = {@$, "*"}; }
+special_sym: "!" { $$ = "!"; }
+|            "." { $$ = "."; }
+|            "*" { $$ = "*"; }
 
 /* ------------- Data constructors ------------------------------- */
 
 qconid:  conid   { $$ = $1; }
-|        QCONID  { $$ = {@$, $1}; }
+|        QCONID  { $$ = $1; }
 
-conid:   CONID   { $$ = {@$, $1}; }
+conid:   CONID   { $$ = $1; }
 
 qconsym: consym  { $$ = $1; }
-|        QCONSYM { $$ = {@$, $1}; }
+|        QCONSYM { $$ = $1; }
 
-consym:  CONSYM  { $$ = {@$, $1}; }
-|        ":"     { $$ = {@$, ":"}; }
+consym:  CONSYM  { $$ = $1; }
+|        ":"     { $$ = ":"; }
 
 /* ------------- Literal ----------------------------------------- */
 
-literal: CHAR     {$$ = {@$, $1};}
-|        STRING   {$$ = {@$,String($1)};}
-|        INTEGER  {$$ = {@$, $1};}
-|        RATIONAL {$$ = {@$, $1};}
+literal: CHAR     {$$ = $1;}
+|        STRING   {$$ = String($1);}
+|        INTEGER  {$$ = $1;}
+|        RATIONAL {$$ = $1;}
 
 
 /* ------------- Layout ------------------------------------------ */
@@ -1173,8 +1360,8 @@ error { yyerrok; drv.pop_error_message(); drv.pop_context();}
 
 /* ------------- Miscellaneous (mostly renamings) ---------------- */
 
-modid: CONID {$$ = {@$, $1};}
-| QCONID {$$ = {@$, $1};}
+modid: CONID {$$ = $1;}
+| QCONID {$$ = $1;}
 
 commas: commas "," {$$ = $1 + 1;}
 |       ","        {$$ = 1;}
