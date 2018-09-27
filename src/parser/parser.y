@@ -9,8 +9,12 @@
 %code requires {
   # include <string>
   # include <iostream>
+  # include <boost/optional.hpp>
+  # include <boost/optional/optional_io.hpp>
+  # include <vector>
   # include "computation/expression/expression_ref.H"
   # include "computation/expression/var.H"
+  # include "computation/expression/AST_node.H"
   class driver;
 }
 
@@ -197,17 +201,20 @@
 %type <void> qcnames1
 %type <void> qcname_ext_w_wildcard
 %type <void> qcname
+ */
 
-%type <void> importdecls
-%type <void> importdecls_semi
-%type <void> importdecl
-%type <void> maybe_src
-%type <void> maybe_safe
-%type <void> maybe_pkg
-%type <void> optqualified
-%type <void> maybeas
+%type <std::vector<expression_ref>> importdecls
+%type <std::vector<expression_ref>> importdecls_semi
+%type <expression_ref> importdecl
+%type <bool> maybe_src
+%type <bool> maybe_safe
+%type <boost::optional<std::string>> maybe_pkg
+%type <bool> optqualified
+%type <boost::optional<std::string>> maybeas
+/*
 %type <void> maybeimpspec
 %type <void> impspec
+
 
 %type <void> prec
 %type <void> infix
@@ -504,27 +511,32 @@ semis1: semis1 ";"
 semis: semis ";"
 |      %empty
 
-importdecls: importdecls_semi importdecls
+importdecls: importdecls_semi importdecl { std::swap($$,$1), $$.push_back($2); }
 
-importdecls_semi: importdecls_semi importdecl semis1
-|                 %empty
+importdecls_semi: importdecls_semi importdecl semis1 { std::swap($$,$1); $$.push_back($2); }
+|                 %empty { }
 
-importdecl: "import" maybe_src maybe_safe optqualified maybe_pkg modid maybeas maybeimpspec
+importdecl: "import" maybe_src maybe_safe optqualified maybe_pkg modid maybeas maybeimpspec {
+    std::vector<expression_ref> e;
+    if ($4) e.push_back(std::string("qualified"));
+    e.push_back(String($6));
+    $$ = expression_ref(new expression(AST_node("ImpDecl"),std::move(e)));
+}
 
-maybe_src: "{-# SOURCE" "#-}"
-|          %empty
+maybe_src: "{-# SOURCE" "#-}"  { $$ = true; }
+|          %empty              { $$ = false; }
 
-maybe_safe: "safe"
-|           %empty
+maybe_safe: "safe"             { $$ = true; }
+|           %empty             { $$ = false; }
 
-maybe_pkg: STRING
-|          %empty
+maybe_pkg: STRING              { $$ = $1; }
+|          %empty              { }
 
-optqualified: "qualified"
-|             %empty
+optqualified: "qualified"      { $$ = true; }
+|             %empty           { $$ = false; }
 
-maybeas:  "as" modid
-|         %empty
+maybeas:  "as" modid           { $$ = $2; }
+|         %empty               { }
 
 maybeimpspec: impspec
 |             %empty
