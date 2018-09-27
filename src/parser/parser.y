@@ -18,12 +18,27 @@
   class driver;
 
   expression_ref make_importdecls(const std::vector<expression_ref>& impdecls);
-  expression_ref make_toptecls(const std::vector<expression_ref>& topdecls);
+  expression_ref make_topdecls(const std::vector<expression_ref>& topdecls);
   expression_ref make_infix(const std::string& infix, boost::optional<int>& prec, std::vector<std::string>& ops);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
+
+
+  expression_ref make_minus(const expression_ref& exp);
+  expression_ref make_fexp(const std::vector<expression_ref>& args);
+  expression_ref make_as_pattern(const std::string& var, const expression_ref& body);
+  expression_ref make_lazy_pattern(const expression_ref& pat);
+  expression_ref make_lambda(const std::vector<expression_ref>& pats, const expression_ref& body);
+  expression_ref make_let(const expression_ref& binds, const expression_ref& body);
+  expression_ref make_if(const expression_ref& cond, const expression_ref& alt_true, const expression_ref& alt_false);
+  expression_ref make_case(const expression_ref& obj, const expression_ref& alts);
+  expression_ref make_do(const std::vector<expression_ref>& stmts);
+  expression_ref yy_make_tuple(const std::vector<expression_ref>& tup_exprs);
+
+
   expression_ref make_flattenedpquals(const std::vector<expression_ref>& pquals);
   expression_ref make_squals(const std::vector<expression_ref>& squals);
+  expression_ref make_alts(const std::vector<expression_ref>& alts);
   expression_ref yy_make_alt(const expression_ref& pat, const expression_ref& alt_rhs);
   expression_ref make_alt_rhs(const expression_ref& ralt, const expression_ref& wherebinds);
   expression_ref make_gdpats(const std::vector<expression_ref>& gdpats);
@@ -339,18 +354,14 @@
 %type <expression_ref> exp
  */
 %type <expression_ref> infixexp
- /*
-%type <void> infixexp_top
-%type <void> exp10_top
-%type <void> exp10
+%type <expression_ref> infixexp_top
+%type <expression_ref> exp10_top
+%type <expression_ref> exp10
 
-%type <void> fexp
- */
+%type <std::vector<expression_ref>> fexp
 %type <expression_ref> aexp
- /*
-%type <void> aexp1
-%type <void> aexp2
- */
+%type <expression_ref> aexp1
+%type <expression_ref> aexp2
 %type <expression_ref> texp
 %type <std::vector<expression_ref>> tup_exprs
  /*
@@ -379,7 +390,7 @@
 %type <expression_ref> pat
 %type <expression_ref> bindpat
 %type <expression_ref> apat
-%type <std::vector<expression_ref>> apats
+%type <std::vector<expression_ref>> apats1
 
 %type <std::vector<expression_ref>> stmtlist
 %type <std::vector<expression_ref>> stmts
@@ -1004,12 +1015,12 @@ infixexp: exp10
 infixexp_top: exp10_top
 |             infixexp_top qop exp10_top
 
-exp10_top: "-" fexp
+exp10_top: "-" fexp             {$$ = make_minus(make_fexp($2));}
 |          "{-# CORE" STRING "#-}"
-|          fexp
+|          fexp                 {$$ = make_fexp($1);}
 
-exp10: exp10_top
-|      scc_annot exp
+exp10: exp10_top                 {std::swap($$,$1);}
+|      scc_annot exp             {}
 
 
 optSemi: ";"
@@ -1020,36 +1031,36 @@ scc_annot: "{-# SCC" STRING "#-}"
 
 /* hpc_annot */
 
-fexp: fexp aexp
-|     fexp TYPEAPP atype
-|     "static" aexp
-|     aexp
+fexp: fexp aexp                  {std::swap($$,$1); $$.push_back($2);}
+|     fexp TYPEAPP atype         {}
+|     "static" aexp              {}
+|     aexp                       {$$.push_back($1);}
 
-aexp: qvar "@" aexp
-|     "~" aexp
-|     "\\" apat apats "->" exp
-|     "let" binds "in" exp
-|     "\\" "case" altslist
-|     "if" exp optSemi "then" exp optSemi "else" exp
-|     "if" ifgdpats
-|     "case" exp "of" altslist
-|     "do" stmtlist
-|     "mdo" stmtlist
-|     "proc" aexp "->" exp
-|     aexp1
+aexp: qvar "@" aexp              {$$ = make_as_pattern($1,$3);}
+|     "~" aexp                   {$$ = make_lazy_pattern($2);}
+|     "\\" apats1 "->" exp       {$$ = make_lambda($2,$4);}
+|     "let" binds "in" exp       {$$ = make_let($2,$4);}
+|     "\\" "case" altslist       {}
+|     "if" exp optSemi "then" exp optSemi "else" exp   {$$ = make_if($2,$5,$8);}
+|     "if" ifgdpats              {}
+|     "case" exp "of" altslist   {$$ = make_case($2,make_alts($4));}
+|     "do" stmtlist              {$$ = make_do($2);}
+|     "mdo" stmtlist             {}
+|     "proc" aexp "->" exp       {}
+|     aexp1                      {std::swap($$,$1);}
 
-aexp1: aexp1 "{" fbinds "}"
-|      aexp2
+aexp1: aexp1 "{" fbinds "}"   {}
+|      aexp2                  {std::swap($$,$1);}
 
-aexp2: qvar
-|      qcon
-|      literal
-|      "(" texp ")"
-|      "(" tup_exprs ")"
-|      "(#" texp "#)"
-|      "(#" tup_exprs "#)"
-|      "[" list "]"
-|      "_"
+aexp2: qvar                   {$$ = AST_node("id",$1);}
+|      qcon                   {$$ = AST_node("id",$1);}
+|      literal                {std::swap($$,$1);}
+|      "(" texp ")"           {std::swap($$,$2);}
+|      "(" tup_exprs ")"      {$$ = yy_make_tuple($2);}
+|      "(#" texp "#)"         {}
+|      "(#" tup_exprs "#)"    {}
+|      "[" list "]"           {std::swap($$,$2);}
+|      "_"                    {$$ = AST_node("WildcardPattern");}
 /* Skip Template Haskell Extensions */
 
 /* ------------- Tuple expressions ------------------------------- */
@@ -1152,8 +1163,8 @@ bindpat: exp  {$$ = new expression(AST_node("BindPat"),{$1});}
 apat: aexp    {$$ = new expression(AST_node("APat"),{$1});}
 |    "!" aexp {$$ = new expression(AST_node("StrictAPat"),{$2});}
 
-apats: apat apats  {$$.push_back($1);$$.insert($$.end(),$2.begin(),$2.end());}
-|    %empty        {}
+apats1: apats1 apat {std::swap($$,$1); $$.push_back($2);}
+|       apat        {$$.push_back($1);}
 
 /* ------------- Statement sequences ----------------------------- */
 stmtlist: "{" stmts "}"        {std::swap($$,$2);}
@@ -1454,6 +1465,64 @@ expression_ref make_builtin_expr(const string& name, int args, const string& s1)
 {
     return new expression(AST_node("Builtin"),{String(name), args, String(s1)});
 }
+
+expression_ref make_minus(const expression_ref& exp)
+{
+    return new expression(AST_node("neg"),{exp});
+}
+
+expression_ref make_fexp(const vector<expression_ref>& args)
+{
+    if (args.size() == 1)
+	return args[0];
+    else
+	return new expression(AST_node("Apply"), args);
+}
+
+expression_ref make_as_pattern(const string& var, const expression_ref& body)
+{
+    auto x = AST_node("id",var);
+    return new expression(AST_node("AsPattern"), {x,body});
+}
+
+expression_ref make_lazy_pattern(const expression_ref& pat)
+{
+    return new expression(AST_node("LazyPattern"), {pat});
+}
+
+expression_ref make_lambda(const vector<expression_ref>& pats, const expression_ref& body)
+{
+    auto e = pats;
+    e.push_back(body);
+    return new expression(AST_node("Lambda"), e);
+}
+
+expression_ref make_let(const expression_ref& binds, const expression_ref& body)
+{
+    return new expression(AST_node("Let"), {binds, body});
+}
+
+expression_ref make_if(const expression_ref& cond, const expression_ref& alt_true, const expression_ref& alt_false)
+{
+    return new expression(AST_node("If"), {cond, alt_true, alt_false});
+}
+
+expression_ref make_case(const expression_ref& obj, const expression_ref& alts)
+{
+    return new expression(AST_node("Case"), {obj, alts});
+}
+
+expression_ref make_do(const vector<expression_ref>& stmts)
+{
+    return new expression(AST_node("Do"), stmts);
+}
+
+
+expression_ref yy_make_tuple(const vector<expression_ref>& tup_exprs)
+{
+    return new expression(AST_node("Tuple"),tup_exprs);
+}
+
 
 expression_ref make_flattenedpquals(const vector<expression_ref>& pquals)
 {
