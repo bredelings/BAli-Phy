@@ -151,7 +151,7 @@ UNRELEASED
   * Read json using nlohmann::json
   * Switch to new ptree structure.
 
-3.0-beta5 (Dec 6, 2018)
+3.0-beta5 (Dec 6, 2017)
   - Fixes
     - Don't crash on --smodel=GTR+x3
   - Short parameter names
