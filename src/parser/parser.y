@@ -23,6 +23,8 @@
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 
+  expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebinds);
+  expression_ref make_gdrhs(const std::vector<expression_ref>& gdrhs);
 
   expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type);
   expression_ref make_infixexp(const std::vector<expression_ref>& args);
@@ -215,7 +217,6 @@
 
  /* Template Haskell: skipped tokens.*/
 
-%type <expression_ref> exp
  /*
 %type <void> module
 %type <void> missing_module_keyword
@@ -343,20 +344,20 @@
 %type <void> maybe_derivings
 %type <void> derivings
 %type <void> deriv_clause_types
-
-%type <void> decl_no_th
-%type <void> decl
-%type <void> rhs
-%type <void> gdrhs
-%type <void> gdrh
  */
+
+%type <expression_ref> decl_no_th
+%type <expression_ref> decl
+%type <expression_ref> rhs
+%type <std::vector<expression_ref>> gdrhs
+%type <expression_ref> gdrh
 %type <expression_ref> sigdecl
  /*
 %type <void> activation
 %type <void> explicit_activation
+ */
 
 %type <expression_ref> exp
- */
 %type <std::vector<expression_ref>> infixexp
 %type <std::vector<expression_ref>> infixexp_top
 %type <expression_ref> exp10_top
@@ -973,22 +974,23 @@ deriv_clause_types: qtycondoc
 
 /* ------------- Value definitions ------------------------------- */
 
-decl_no_th: sigdecl
-| "!" aexp rhs
-| infixexp_top opt_sig rhs
-| pattern_synonym_decl
+decl_no_th: sigdecl           {std::swap($$,$1);}
+| "!" aexp rhs                {}
+/* what is the opt_sig doing here? */
+| infixexp_top opt_sig rhs    {$$ = new expression(AST_node("Decl"),{make_infixexp($1),$3});}
+| pattern_synonym_decl        {}
 /* | docdel */
 
-decl: decl_no_th
+decl: decl_no_th              {std::swap($$,$1);}
 /*  | splice_exp */
 
-rhs: "=" exp wherebinds
-|    gdrhs wherebinds
+rhs: "=" exp wherebinds       {$$ = make_rhs($2,$3);}
+|    gdrhs wherebinds         {$$ = make_rhs(make_gdrhs($1),$2);}
 
-gdrhs: gdrhs gdrh
-|      gdrh
+gdrhs: gdrhs gdrh             {std::swap($$,$1); $$.push_back($2);}
+|      gdrh                   {$$.push_back($1);}
 
-gdrh: "|" guardquals "=" exp
+gdrh: "|" guardquals "=" exp  {$$ = new expression(AST_node("guardquals"),{make_gdpats($2),$4});}
 
 sigdecl: infixexp_top "::" sigtypedoc  {}
 |        var "," sig_vars "::" sigtypedoc {}
@@ -1473,6 +1475,20 @@ expression_ref make_builtin_expr(const string& name, int args, const string& s1)
 expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type)
 {
     return new expression(AST_node("typed_exp"),{exp,type});
+}
+
+expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebinds)
+{
+    vector<expression_ref> e;
+    e.push_back(exp);
+    if (wherebinds)
+	e.push_back(wherebinds);
+    return new expression(AST_node("rhs"), e);
+}
+
+expression_ref make_gdrhs(const vector<expression_ref>& gdrhs)
+{
+    return new expression(AST_node("gdrhs"), gdrhs);
 }
 
 expression_ref make_infixexp(const vector<expression_ref>& args)
