@@ -20,6 +20,8 @@
   expression_ref make_importdecls(const std::vector<expression_ref>& impdecls);
   expression_ref make_toptecls(const std::vector<expression_ref>& topdecls);
   expression_ref make_infix(const std::string& infix, boost::optional<int>& prec, std::vector<std::string>& ops);
+  expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
+  expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 }
 
 // The parsing context.
@@ -586,10 +588,10 @@ topdecl: cl_decl   {}
 |        annotation*/
 |        decl_no_th {}
 |        infixexp_top {}
-|        "builtin" var INTEGER STRING STRING {}
-|        "builtin" var INTEGER STRING {}
-|        "builtin" varop INTEGER STRING STRING {}
-|        "builtin" varop INTEGER STRING {}
+|        "builtin" var INTEGER STRING STRING { $$ = make_builtin_expr($2,$3,$4,$5);}
+|        "builtin" var INTEGER STRING { $$ = make_builtin_expr($2,$3,$4);}
+|        "builtin" varop INTEGER STRING STRING { $$ = make_builtin_expr($2,$3,$4,$5);}
+|        "builtin" varop INTEGER STRING { $$ = make_builtin_expr($2,$3,$4);}
 
 cl_decl: "class" tycl_hdr fds where_cls
 
@@ -1412,6 +1414,16 @@ expression_ref make_importdecls(const vector<expression_ref>& impdecls)
 expression_ref make_topdecls(const vector<expression_ref>& topdecls)
 {
     return new expression(AST_node("TopDecls"),topdecls);
+}
+
+expression_ref make_builtin_expr(const string& name, int args, const string& s1, const string& s2)
+{
+    return new expression(AST_node("Builtin"),{String(name), args, String(s1), String(s2)});
+}
+
+expression_ref make_builtin_expr(const string& name, int args, const string& s1)
+{
+    return new expression(AST_node("Builtin"),{String(name), args, String(s1)});
 }
 
 expression_ref make_infix(const string& infix, optional<int>& prec, vector<string>& op_names)
