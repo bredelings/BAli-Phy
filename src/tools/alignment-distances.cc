@@ -374,8 +374,8 @@ int main(int argc,char* argv[])
 	distance_fn metric_fn;
 
 	if (metric == "splits")
-	    metric_fn = splits_distance2;
-	if (metric == "splits2")
+	    metric_fn = splits_distance;
+	else if (metric == "splits2")
 	    metric_fn = splits_distance2;
 	else if (metric == "pairwise")
 	    metric_fn = pairs_distance;
