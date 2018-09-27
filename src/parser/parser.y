@@ -17,8 +17,9 @@
   # include "computation/expression/AST_node.H"
   class driver;
 
+  expression_ref make_importdecls(const std::vector<expression_ref>& impdecls);
+  expression_ref make_toptecls(const std::vector<expression_ref>& topdecls);
   expression_ref make_infix(const std::string& infix, boost::optional<int>& prec, std::vector<std::string>& ops);
-  expression_ref make_importdecs(const std::vector<expression_ref>& imports);
 }
 
 // The parsing context.
@@ -223,11 +224,11 @@
 %type <std::string> infix
 %type <std::vector<std::string>> ops
 
- /*
-%type <void> topdecls
-%type <void> topdecls_semi
-%type <void> topdecl
-%type <void> cl_decl
+
+%type <std::vector<expression_ref>> topdecls
+%type <std::vector<expression_ref>> topdecls_semi
+%type <expression_ref> topdecl
+/* %type <void> cl_decl
 %type <void> ty_decl
 %type <void> inst_decl
 %type <void> overlap_pragma
@@ -566,29 +567,29 @@ ops:   ops "," op  { std::swap($$,$1); $$.push_back($3); }
 
 /* ------------- Top-Level Declarations -------------------------- */
 
-topdecls: topdecls_semi topdecl
+topdecls: topdecls_semi topdecl  { std::swap($$,$1); $$.push_back($2); }
 
-topdecls_semi: topdecls_semi topdecl semis1
-|              %empty
+topdecls_semi: topdecls_semi topdecl semis1 { std::swap($$,$1); $$.push_back($2); }
+|              %empty                       { }
 
-topdecl: cl_decl
-|        ty_decl
-|        inst_decl
+topdecl: cl_decl   {}
+|        ty_decl   {}
+|        inst_decl {}
 /*|        stand_alone_deriving
   |        role_annot*/
-|        "default" "(" comma_types0 ")"
+|        "default" "(" comma_types0 ")" {}
 /*
 |        "foreign" fdecl
 |        "{-# DEPRECATED" deprecations "#-}"
 |        "{-# WARNING" warnings "#-}"
 |        "{-# RULES" rules "#-}"
 |        annotation*/
-|        decl_no_th
-|        infixexp_top
-|        "builtin" var INTEGER STRING STRING
-|        "builtin" var INTEGER STRING
-|        "builtin" varop INTEGER STRING STRING
-|        "builtin" varop INTEGER STRING
+|        decl_no_th {}
+|        infixexp_top {}
+|        "builtin" var INTEGER STRING STRING {}
+|        "builtin" var INTEGER STRING {}
+|        "builtin" varop INTEGER STRING STRING {}
+|        "builtin" varop INTEGER STRING {}
 
 cl_decl: "class" tycl_hdr fds where_cls
 
@@ -1403,9 +1404,14 @@ yy::parser::error (const location_type& l, const std::string& m)
     drv.push_error_message({l,m});
 }
 
-expression_ref make_importdecs(const vector<expression_ref>& imports)
+expression_ref make_importdecls(const vector<expression_ref>& impdecls)
 {
-    return new expression(AST_node("impdecls"),imports);
+    return new expression(AST_node("impdecls"),impdecls);
+}
+
+expression_ref make_topdecls(const vector<expression_ref>& topdecls)
+{
+    return new expression(AST_node("TopDecls"),topdecls);
 }
 
 expression_ref make_infix(const string& infix, optional<int>& prec, vector<string>& op_names)
