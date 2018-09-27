@@ -24,6 +24,8 @@
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 
 
+  expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type);
+  expression_ref make_infixexp(const std::vector<expression_ref>& args);
   expression_ref make_minus(const expression_ref& exp);
   expression_ref make_fexp(const std::vector<expression_ref>& args);
   expression_ref make_as_pattern(const std::string& var, const expression_ref& body);
@@ -294,7 +296,9 @@
 
 %type <void> opt_sig
 %type <void> opt_tyconsig
-%type <void> sigtype
+ */
+%type <expression_ref> sigtype
+ /*
 %type <void> sigtypedoc
 %type <void> sigvars
 %type <void> sigtypes1
@@ -353,8 +357,8 @@
 
 %type <expression_ref> exp
  */
-%type <expression_ref> infixexp
-%type <expression_ref> infixexp_top
+%type <std::vector<expression_ref>> infixexp
+%type <std::vector<expression_ref>> infixexp_top
 %type <expression_ref> exp10_top
 %type <expression_ref> exp10
 
@@ -1006,14 +1010,14 @@ explicit_activation: "[" INTEGER "]"
 
 /* ------------- Expressions ------------------------------------- */
 
-exp: infixexp "::" sigtype { $$ = {}; }
-|    infixexp              { $$ = {}; }
+exp: infixexp "::" sigtype { $$ = make_typed_exp(make_infixexp($1),$3); }
+|    infixexp              { $$ = make_infixexp($1); }
 
-infixexp: exp10
-|         infixexp qop exp10
+infixexp: exp10                 {$$.push_back($1);}
+|         infixexp qop exp10    {std::swap($$,$1); $$.push_back($2); $$.push_back($3);}
 
-infixexp_top: exp10_top
-|             infixexp_top qop exp10_top
+infixexp_top: exp10_top         {$$.push_back($1);}
+|             infixexp_top qop exp10_top  {std::swap($$,$1); $$.push_back($2); $$.push_back($3);}
 
 exp10_top: "-" fexp             {$$ = make_minus(make_fexp($2));}
 |          "{-# CORE" STRING "#-}"
@@ -1066,8 +1070,8 @@ aexp2: qvar                   {$$ = AST_node("id",$1);}
 /* ------------- Tuple expressions ------------------------------- */
 
 texp: exp             {std::swap($$,$1);}
-|     infixexp qop    {$$ = new expression(AST_node("LeftSection"),{$1,$2});}
-|     qopm infixexp   {$$ = new expression(AST_node("RightSection"),{$1,$2});}
+|     infixexp qop    {$$ = new expression(AST_node("LeftSection"),{make_infixexp($1),$2});}
+|     qopm infixexp   {$$ = new expression(AST_node("RightSection"),{$1,make_infixexp($2)});}
 /* view patterns 
 |     exp "->" texp
 */
@@ -1465,6 +1469,20 @@ expression_ref make_builtin_expr(const string& name, int args, const string& s1)
 {
     return new expression(AST_node("Builtin"),{String(name), args, String(s1)});
 }
+
+expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type)
+{
+    return new expression(AST_node("typed_exp"),{exp,type});
+}
+
+expression_ref make_infixexp(const vector<expression_ref>& args)
+{
+    if (args.size() == 1)
+	return args[0];
+    else
+	return new expression(AST_node("infixexp"),args);
+}
+
 
 expression_ref make_minus(const expression_ref& exp)
 {
