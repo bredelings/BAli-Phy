@@ -1,1 +1,1 @@
-size = 3   Test.f = \#1 -> let {#1074 = let {#1075 = 2} in Prelude:add #1 #1075} in Prelude:multiply #1074 #1074
+size = 3   Test.f = \#1 -> let {#1135 = let {#1136 = 2} in Prelude:add #1 #1136} in Prelude:multiply #1135 #1135
