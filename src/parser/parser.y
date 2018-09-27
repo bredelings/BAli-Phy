@@ -337,7 +337,9 @@
 %type <void> explicit_activation
 
 %type <expression_ref> exp
-%type <void> infixexp
+ */
+%type <expression_ref> infixexp
+ /*
 %type <void> infixexp_top
 %type <void> exp10_top
 %type <void> exp10
@@ -350,8 +352,8 @@
 %type <void> aexp2
  */
 %type <expression_ref> texp
+%type <std::vector<expression_ref>> tup_exprs
  /*
-%type <void> tup_exprs
 %type <void> tup_tail
  */
 %type <expression_ref> list
@@ -1052,12 +1054,20 @@ aexp2: qvar
 
 /* ------------- Tuple expressions ------------------------------- */
 
-texp: exp
-|     infixexp qop
-|     qopm infixexp
+texp: exp             {std::swap($$,$1);}
+|     infixexp qop    {$$ = new expression(AST_node("LeftSection"),{$1,$2});}
+|     qopm infixexp   {$$ = new expression(AST_node("RightSection"),{$1,$2});}
+/* view patterns 
 |     exp "->" texp
+*/
 
-tup_exprs: texp commas_tup_tail
+tup_exprs: tup_exprs "," texp    {std::swap($$,$1); $$.push_back($3);}
+|          texp "," texp         {$$.push_back($1); $$.push_back($3);}
+
+/*
+See unboxed sums for where the bars are coming from.
+
+tup_exprs: texp commas_tup_tail    {
 |          texp bars
 |          commas tup_tail
 |          bars texp bars0
@@ -1067,7 +1077,7 @@ commas_tup_tail: commas tup_tail
 tup_tail: texp commas_tup_tail
 |         texp
 |         %empty
-
+*/
 /* ------------- List expressions -------------------------------- */
 
 list: texp                       { $$ = new expression(AST_node("List"),{$1}); }
