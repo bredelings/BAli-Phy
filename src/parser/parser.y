@@ -22,6 +22,8 @@
   expression_ref make_infix(const std::string& infix, boost::optional<int>& prec, std::vector<std::string>& ops);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
+  expression_ref make_flattenedpquals(const std::vector<expression_ref>& pquals);
+  expression_ref make_squals(const std::vector<expression_ref>& squals);
   expression_ref yy_make_alt(const expression_ref& pat, const expression_ref& alt_rhs);
   expression_ref make_alt_rhs(const expression_ref& ralt, const expression_ref& wherebinds);
   expression_ref make_gdpats(const std::vector<expression_ref>& gdpats);
@@ -346,16 +348,20 @@
  /*
 %type <void> aexp1
 %type <void> aexp2
-%type <void> texp
+ */
+%type <expression_ref> texp
+ /*
 %type <void> tup_exprs
 %type <void> tup_tail
-
-%type <void> list
-%type <void> lexps
-%type <void> flattenedpquals
-%type <void> squals
-%type <void> transformqual
  */
+%type <expression_ref> list
+%type <std::vector<expression_ref>> lexps
+
+%type <expression_ref> flattenedpquals
+%type <std::vector<expression_ref>> pquals
+%type <std::vector<expression_ref>> squals
+%type <expression_ref> transformqual
+
 %type <std::vector<expression_ref>> guardquals
 %type <std::vector<expression_ref>> guardquals1
 
@@ -1064,34 +1070,34 @@ tup_tail: texp commas_tup_tail
 
 /* ------------- List expressions -------------------------------- */
 
-list: texp
-|     lexps
-|     texp ".."
-|     texp "," exp ".."
-|     texp ".." exp
-|     texp "," exp ".." exp
-|     texp "|" flattenedpquals
+list: texp                       { $$ = new expression(AST_node("List"),{$1}); }
+|     lexps                      { $$ = new expression(AST_node("List"),$1); }
+|     texp ".."                  { $$ = new expression(AST_node("enumFrom"),{$1}); }
+|     texp "," exp ".."          { $$ = new expression(AST_node("enumFromThen"),{$1,$3}); }
+|     texp ".." exp              { $$ = new expression(AST_node("enumFromTo"),{$1,$3}); }
+|     texp "," exp ".." exp      { $$ = new expression(AST_node("enumFromToThen"),{$1,$3,$5}); }
+|     texp "|" flattenedpquals   { $$ = new expression(AST_node("ListComprehension"),{$1,$3}); }
 
-lexps: lexps "," texp
-|      texp "," texp
+lexps: lexps "," texp            { std::swap($$,$1); $$.push_back($3);}
+|      texp "," texp             { $$.push_back($1); $$.push_back($3);}
 
 
 /* ------------- List Comprehensions ----------------------------- */
 
-flattenedpquals: pquals
+flattenedpquals: pquals                   {$$ = make_flattenedpquals($1);}
 
-pquals: squals "|" pquals
-|       squals
+pquals: squals "|" pquals                 {$$.push_back(make_squals($1));$$.insert($$.end(),$3.begin(),$3.end());}
+|       squals                            {$$.push_back(make_squals($1));}
 
-squals: squals "," transformqual
-|       squals "," qual
-|       transformqual
-|       qual
+squals: squals "," transformqual          {std::swap($$,$1); $$.push_back($3);}
+|       squals "," qual                   {std::swap($$,$1); $$.push_back($3);}
+|       transformqual                     {$$.push_back($1);}
+|       qual                              {$$.push_back($1);}
 
-transformqual: "then" exp
-|              "then" exp "by" exp
-|              "then" "group" "using" exp
-|              "then" "group" "by" exp "using" exp
+transformqual: "then" exp                           {}
+|              "then" exp "by" exp                  {}
+|              "then" "group" "using" exp           {}
+|              "then" "group" "by" exp "using" exp  {}
 
 /* ------------- Guards ------------------------------------------ */
 guardquals: guardquals1            {std::swap($$,$1);}
@@ -1437,6 +1443,19 @@ expression_ref make_builtin_expr(const string& name, int args, const string& s1,
 expression_ref make_builtin_expr(const string& name, int args, const string& s1)
 {
     return new expression(AST_node("Builtin"),{String(name), args, String(s1)});
+}
+
+expression_ref make_flattenedpquals(const vector<expression_ref>& pquals)
+{
+    if (pquals.size() == 1)
+	return pquals[0];
+    else
+	return new expression(AST_node("ParQuals"),pquals);
+}
+
+expression_ref make_squals(const vector<expression_ref>& squals)
+{
+    return new expression(AST_node("SQuals"),squals);
 }
 
 expression_ref make_alts(const vector<expression_ref>& alts)
