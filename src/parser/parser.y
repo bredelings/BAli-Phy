@@ -22,6 +22,12 @@
   expression_ref make_infix(const std::string& infix, boost::optional<int>& prec, std::vector<std::string>& ops);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
+  expression_ref yy_make_alt(const expression_ref& pat, const expression_ref& alt_rhs);
+  expression_ref make_alt_rhs(const expression_ref& ralt, const expression_ref& wherebinds);
+  expression_ref make_gdpats(const std::vector<expression_ref>& gdpats);
+  expression_ref make_gdpat(const expression_ref& guardquals, const expression_ref& exp);
+
+  expression_ref make_stmts(const std::vector<expression_ref>& stmts);
 }
 
 // The parsing context.
@@ -263,8 +269,8 @@
 %type <void> decllist
 */
 %type <expression_ref> binds
+%type <expression_ref> wherebinds
  /*
-%type <void> wherebinds
 
 %type <void> strings
 %type <void> stringlist
@@ -335,7 +341,9 @@
 %type <void> exp10
 
 %type <void> fexp
-%type <void> aexp
+ */
+%type <expression_ref> aexp
+ /*
 %type <void> aexp1
 %type <void> aexp2
 %type <void> texp
@@ -347,28 +355,28 @@
 %type <void> flattenedpquals
 %type <void> squals
 %type <void> transformqual
-%type <void> guardquals
-%type <void> guardquals1
-
-%type <void> altslist
-%type <void> alts
-%type <void> alts1
-%type <void> alt
-%type <void> alt_rhs
-%type <void> gdpats
-%type <void> ifgdpats
-%type <void> gdpat
-%type <void> pat
  */
+%type <std::vector<expression_ref>> guardquals
+%type <std::vector<expression_ref>> guardquals1
+
+%type <std::vector<expression_ref>> altslist
+%type <std::vector<expression_ref>> alts
+%type <std::vector<expression_ref>> alts1
+%type <expression_ref> alt
+%type <expression_ref> ralt
+%type <expression_ref> alt_rhs
+%type <std::vector<expression_ref>> gdpats
+%type <expression_ref> ifgdpats
+%type <expression_ref> gdpat
+%type <expression_ref> pat
 %type <expression_ref> bindpat
- /*
-%type <void> apat
-%type <void> apats
+%type <expression_ref> apat
+%type <std::vector<expression_ref>> apats
 
-%type <void> stmtlist
-%type <void> stmts
-%type <void> stmt
- */
+%type <std::vector<expression_ref>> stmtlist
+%type <std::vector<expression_ref>> stmts
+%type <expression_ref> stmt
+
 %type <expression_ref> qual
  /*
 %type <void> fbinds
@@ -1086,65 +1094,65 @@ transformqual: "then" exp
 |              "then" "group" "by" exp "using" exp
 
 /* ------------- Guards ------------------------------------------ */
-guardquals: guardquals1
+guardquals: guardquals1            {std::swap($$,$1);}
 
-guardquals1: guardquals1 "," qual
-|            qual
+guardquals1: guardquals1 "," qual  {std::swap($$,$1);$$.push_back($3);}
+|            qual                  {$$.push_back($1);}
 
 /* ------------- Case alternatives ------------------------------- */
-altslist: "{" alts "}"
-|         VOCURLY alts close
-|         "{" "}"
-|         VOCURLY close
+altslist: "{" alts "}"           {std::swap($$,$2);}
+|         VOCURLY alts close     {std::swap($$,$2);}
+|         "{" "}"                {}
+|         VOCURLY close          {}
 
-alts: alts1
-|     ";" alts
+alts: alts1                      {std::swap($$,$1);}
+|     ";" alts                   {std::swap($$,$2);}
 
-alts1: alts1 ";" alt
-|      alts1 ";"
-|      alt
+alts1: alts1 ";" alt             {std::swap($$,$1); $$.push_back($3);}
+|      alts1 ";"                 {std::swap($$,$1);}
+|      alt                       {$$.push_back($1);}
 
-alt:   pat alt_rhs
+alt:   pat alt_rhs               {$$ = yy_make_alt($1,$2);}
 
-alt_rhs: ralt wherebinds
+alt_rhs: ralt wherebinds         {$$ = make_alt_rhs($1,$2);}
 
-ralt: "->" exp
-|     gdpats
+ralt: "->" exp                   {std::swap($$,$2);}
+|     gdpats                     {$$ = make_gdpats($1);}
 
-gdpats: gdpats gdpat
-|       gdpat
+gdpats: gdpats gdpat             {std::swap($$,$1); $$.push_back($2);}
+|       gdpat                    {$$.push_back($1);}
 
-ifgdpats : "{" gdpats "}"
-|          gdpats close
+ifgdpats : "{" gdpats "}"        {}
+|          gdpats close          {}
 
-gdpat: "|" guardquals "->" exp
+gdpat: "|" guardquals "->" exp   {$$=make_gdpat(make_gdpats($2),$4);}
 
-pat: exp
-|   "!" aexp
+pat: exp      {$$ = new expression(AST_node("Pat"),{$1});}
+|   "!" aexp  {$$ = new expression(AST_node("StrictPat"),{$2});}
 
-bindpat: exp
-|   "!" aexp
+bindpat: exp  {$$ = new expression(AST_node("BindPat"),{$1});}
+|   "!" aexp  {$$ = new expression(AST_node("StrictBindPat"),{$2});}
 
-apat: aexp
-|    "!" aexp
+apat: aexp    {$$ = new expression(AST_node("APat"),{$1});}
+|    "!" aexp {$$ = new expression(AST_node("StrictAPat"),{$2});}
 
-apats: apat apats
-|     %empty
+apats: apat apats  {$$.push_back($1);$$.insert($$.end(),$2.begin(),$2.end());}
+|    %empty        {}
 
 /* ------------- Statement sequences ----------------------------- */
-stmtlist: "{" stmts "}"
-|         VOCURLY stmts close
+stmtlist: "{" stmts "}"        {std::swap($$,$2);}
+|         VOCURLY stmts close  {std::swap($$,$2);}
 
-stmts: stmts ";" stmt
-|      stmts ";"
-|      stmt
-|      %empty
+stmts: stmts ";" stmt  {std::swap($$,$1); $$.push_back($3);}
+|      stmts ";"       {std::swap($$,$1);}
+|      stmt            {$$.push_back($1);}
+|      %empty          {}
 
 /*maybe_stmt:   stmt
 |             %empty */
 
-stmt: qual
-|     "rec" stmtlist
+stmt: qual              {$$ = $1;}
+|     "rec" stmtlist    {}
 
 qual: bindpat "<-" exp  {$$ = new expression(AST_node("PatQual"),{$1,$3});}
 |     exp               {$$ = new expression(AST_node("SimpleQual"),{$1});}
@@ -1429,6 +1437,39 @@ expression_ref make_builtin_expr(const string& name, int args, const string& s1,
 expression_ref make_builtin_expr(const string& name, int args, const string& s1)
 {
     return new expression(AST_node("Builtin"),{String(name), args, String(s1)});
+}
+
+expression_ref make_alts(const vector<expression_ref>& alts)
+{
+    return new expression(AST_node("alts"), alts);
+}
+
+expression_ref yy_make_alt(const expression_ref& pat, const expression_ref& alt_rhs)
+{
+    return new expression(AST_node("alt"), {pat, alt_rhs});
+}
+
+expression_ref make_alt_rhs(const expression_ref& ralt, const expression_ref& wherebinds)
+{
+    expression_ref alt = new expression(AST_node("altrhs"), {ralt});
+    if (wherebinds)
+	alt = alt + wherebinds;
+    return alt;
+}
+
+expression_ref make_gdpats(const vector<expression_ref>& gdpats)
+{
+    return new expression(AST_node("Guards"), gdpats);
+}
+
+expression_ref make_gdpat(const expression_ref& guardquals, const expression_ref& exp)
+{
+    return new expression(AST_node("GdPat"), {guardquals, exp});
+}
+
+expression_ref make_stmts(const vector<expression_ref>& stmts)
+{
+    return new expression(AST_node("Stmts"), stmts);
 }
 
 expression_ref make_infix(const string& infix, optional<int>& prec, vector<string>& op_names)
