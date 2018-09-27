@@ -261,7 +261,9 @@
 
 %type <void> decls
 %type <void> decllist
-%type <void> binds
+*/
+%type <expression_ref> binds
+ /*
 %type <void> wherebinds
 
 %type <void> strings
@@ -357,15 +359,18 @@
 %type <void> ifgdpats
 %type <void> gdpat
 %type <void> pat
-%type <void> bindpat
+ */
+%type <expression_ref> bindpat
+ /*
 %type <void> apat
 %type <void> apats
 
 %type <void> stmtlist
 %type <void> stmts
 %type <void> stmt
-%type <void> qual
-
+ */
+%type <expression_ref> qual
+ /*
 %type <void> fbinds
 %type <void> fbinds1
 %type <void> fbind
@@ -1141,9 +1146,9 @@ stmts: stmts ";" stmt
 stmt: qual
 |     "rec" stmtlist
 
-qual: bindpat "<-" exp
-|     exp
-|     "let" binds
+qual: bindpat "<-" exp  {$$ = new expression(AST_node("PatQual"),{$1,$3});}
+|     exp               {$$ = new expression(AST_node("SimpleQual"),{$1});}
+|     "let" binds       {$$ = new expression(AST_node("LetQual"),{$2});}
 
 
 /* ------------- Record Field Update/Construction ---------------- */
