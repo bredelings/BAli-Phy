@@ -101,11 +101,23 @@ test('bali-phy 5d -A 200', baliphy, args:[small_fasta,'--iter=200', packagepath,
 
 simple_tools = ['model_P','statreport','stats-select','alignment-gild','alignment-consensus', 'alignment-max','alignment-chop-internal',
 		'alignment-indices','alignment-info','alignment-cat','alignment-translate','alignment-find','trees-consensus',
-		'tree-mean-lengths','mctree-mean-lengths','trees-to-SRQ','pickout','subsample','cut-range','trees-distances', 'alignment-thin',
+		'tree-mean-lengths','mctree-mean-lengths','trees-to-SRQ','pickout','cut-range','trees-distances', 'alignment-thin',
 		'alignments-diff','tree-tool','alignment-distances']
+
+simple_tools_prefix = ['subsample']
 
 foreach tool: simple_tools
   tool_exe = executable(tool,
+			['tools/' + tool + '.cc'],
+			dependencies:boost,
+			link_with: libbaliphy,
+			install_rpath: extra_rpath,
+			install: true)
+  test(tool + ' --help', tool_exe, args:['--help'])
+endforeach
+
+foreach tool: simple_tools_prefix
+  tool_exe = executable('bali-'+tool,
 			['tools/' + tool + '.cc'],
 			dependencies:boost,
 			link_with: libbaliphy,
