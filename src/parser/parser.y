@@ -16,6 +16,9 @@
   # include "computation/expression/var.H"
   # include "computation/expression/AST_node.H"
   class driver;
+
+  expression_ref make_infix(const std::string& infix, boost::optional<int>& prec, std::vector<std::string>& ops);
+  expression_ref make_importdecs(const std::vector<expression_ref>& imports);
 }
 
 // The parsing context.
@@ -214,12 +217,13 @@
 /*
 %type <void> maybeimpspec
 %type <void> impspec
+*/
 
+%type <boost::optional<int>> prec
+%type <std::string> infix
+%type <std::vector<std::string>> ops
 
-%type <void> prec
-%type <void> infix
-%type <void> ops
-
+ /*
 %type <void> topdecls
 %type <void> topdecls_semi
 %type <void> topdecl
@@ -313,7 +317,9 @@
 %type <void> rhs
 %type <void> gdrhs
 %type <void> gdrh
-%type <void> sigdecl
+ */
+%type <expression_ref> sigdecl
+ /*
 %type <void> activation
 %type <void> explicit_activation
 
@@ -422,7 +428,8 @@
 %type  <int> bars0
 %type  <int> bars
 
-%printer { yyoutput << $$; } <*>;
+ /* Having vector<> as a type seems to be causing trouble with the printer */
+ /* %printer { yyoutput << $$; } <*>; */
 
 %%
 %start unit;
@@ -547,15 +554,15 @@ impspec: "(" exportlist ")"
 
 /* ------------- Fixity Declarations ----------------------------- */
 
-prec: %empty
-|     INTEGER
+prec: %empty       { }
+|     INTEGER      { $$ = $1; }
 
-infix: "infix"
-|      "infixl"
-|      "infixr"
+infix: "infix"     { $$ = "infix";  }
+|      "infixl"    { $$ = "infixl"; }
+|      "infixr"    { $$ = "infixr"; }
 
-ops:   ops "," op
-|      op
+ops:   ops "," op  { std::swap($$,$1); $$.push_back($3); }
+|      op          { $$ = {$1}; }
 
 /* ------------- Top-Level Declarations -------------------------- */
 
@@ -944,17 +951,17 @@ gdrhs: gdrhs gdrh
 
 gdrh: "|" guardquals "=" exp
 
-sigdecl: infixexp_top "::" sigtypedoc
-|        var "," sig_vars "::" sigtypedoc
-|        infix prec ops
-|        pattern_synonym_sig
-|        "{-# COMPLETE" con_list opt_tyconsig "#-}"
-|        "{-# INLINE" activation qvar "#-}"
-|        "{-# SCC" qvar "#-}"
-|        "{-# SCC" qvar STRING "#-}"
-|        "{-# SPECIALISE" activation qvar "::" sigtypes1 "#-}"
-|        "{-# SPECIALISE_INLINE" activation qvar "::" sigtypes1 "#-}"
-|        "{-# SPECIALISE" "instance" inst_type "#-}"
+sigdecl: infixexp_top "::" sigtypedoc  {}
+|        var "," sig_vars "::" sigtypedoc {}
+|        infix prec ops  { $$ = make_infix($1,$2,$3); }
+|        pattern_synonym_sig {}
+|        "{-# COMPLETE" con_list opt_tyconsig "#-}" {}
+|        "{-# INLINE" activation qvar "#-}" {}
+|        "{-# SCC" qvar "#-}" {}
+|        "{-# SCC" qvar STRING "#-}" {}
+|        "{-# SPECIALISE" activation qvar "::" sigtypes1 "#-}" {}
+|        "{-# SPECIALISE_INLINE" activation qvar "::" sigtypes1 "#-}" {}
+|        "{-# SPECIALISE" "instance" inst_type "#-}" {}
 
 activation: %empty
 |           explicit_activation
@@ -1386,8 +1393,33 @@ bars: bars "|"     {$$ = $1 + 1;}
 
 %%
 
+using boost::optional;
+using std::string;
+using std::vector;
+
 void
 yy::parser::error (const location_type& l, const std::string& m)
 {
     drv.push_error_message({l,m});
+}
+
+expression_ref make_importdecs(const vector<expression_ref>& imports)
+{
+    return new expression(AST_node("impdecls"),imports);
+}
+
+expression_ref make_infix(const string& infix, optional<int>& prec, vector<string>& op_names)
+{
+    vector<expression_ref> o;
+    for(auto& op_name: op_names)
+	o.push_back(String(op_name));
+    expression_ref ops = new expression(AST_node("Ops"),o);
+
+    vector<expression_ref> e;
+    e.push_back(String(infix));
+    if (prec)
+	e.push_back(*prec);
+    e.push_back(ops);
+
+    return new expression(AST_node("FixityDecl"),e);
 }
