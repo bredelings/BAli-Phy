@@ -1035,7 +1035,7 @@ exp: infixexp "::" sigtype { $$ = make_typed_exp(make_infixexp($1),$3); }
 |    infixexp              { $$ = make_infixexp($1); }
 
 infixexp: exp10                 {$$.push_back($1);}
-|         infixexp qop exp10    {std::swap($$,$1); $$.push_back($2); $$.push_back($3);}
+|         infixexp qop exp10    {std::swap($$,$1); $$.push_back(make_id($2)); $$.push_back($3);}
 
 infixexp_top: exp10_top         {$$.push_back($1);}
 |             infixexp_top qop exp10_top  {std::swap($$,$1); $$.push_back($2); $$.push_back($3);}
