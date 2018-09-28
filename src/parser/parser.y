@@ -26,6 +26,7 @@
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 
   expression_ref make_sig_vars(const std::vector<expression_ref>& sig_vars);
+  expression_ref make_data_or_newtype(const std::string& d_or_n, const expression_ref& tycls_hdr, const std::vector<expression_ref>& constrs);
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
   expression_ref make_id(const std::string& id);
@@ -266,16 +267,17 @@
 %type <std::vector<expression_ref>> topdecls
 %type <std::vector<expression_ref>> topdecls_semi
 %type <expression_ref> topdecl
-/* %type <void> cl_decl
-%type <void> ty_decl
-%type <void> inst_decl
+ /* %type <void> cl_decl */
+%type <expression_ref> ty_decl
+ /* %type <void> inst_decl
 %type <void> overlap_pragma
 %type <void> deriv_strategy_no_via
 %type <void> deriv_strategy_via
-%type <void> data_or_newtype
-%type <void> opt_kind_sig
-%type <void> tycl_hdr
-%type <void> capi_ctype
+ */
+%type <std::string> data_or_newtype
+ /* %type <void> opt_kind_sig */
+%type <expression_ref> tycl_hdr
+/* %type <void> capi_ctype 
 
 
 %type <void> pattern_synonym_decl
@@ -322,7 +324,7 @@
 %type <expression_ref> type
 %type <expression_ref> typedoc
 %type <expression_ref> btype
-%type <expression_ref> btype_no_ops
+%type <std::vector<expression_ref>> btype_no_ops
 %type <std::vector<expression_ref>> tyapps
 %type <expression_ref> tyapp
 %type <expression_ref> atype_docs
@@ -630,7 +632,7 @@ topdecls_semi: topdecls_semi topdecl semis1 { std::swap($$,$1); $$.push_back($2)
 |              %empty                       { }
 
 topdecl: cl_decl                               {}
-|        ty_decl                               {}
+|        ty_decl                               {std::swap($$,$1);}
 |        inst_decl                             {}
 /*|        stand_alone_deriving
   |        role_annot*/
@@ -650,10 +652,10 @@ topdecl: cl_decl                               {}
 
 cl_decl: "class" tycl_hdr fds where_cls
 
-ty_decl: "type" type "=" ctypedoc
+ty_decl: "type" type "=" ctypedoc                                          {}
 /* |        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family */
-|        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings
-|        data_or_newtype capi_ctype tycl_hdr opt_kind_sig
+|        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = make_data_or_newtype($1,$3,$4);}
+|        data_or_newtype capi_ctype tycl_hdr opt_kind_sig                  {}
 /* |        "data" "family" type opt_datafam_kind_sig */
 
 inst_decl: "instance" overlap_pragma inst_type where_inst
@@ -711,8 +713,8 @@ at_decl_cls: "data" opt_family type opt_datafam_kind_sig
 |            "type" type opt_at_kind_inj_sig
 */
 
-data_or_newtype: "data"
-|                "newtype"
+data_or_newtype: "data"    {$$="data";}
+|                "newtype" {$$="newtype";}
 
 opt_kind_sig: %empty
 |             "::" kind
@@ -724,8 +726,8 @@ opt_kind_sig: %empty
 
 /* opt_tyfam_at_kind_inj_sig: */
 
-tycl_hdr: context "=>" type
-|         type
+tycl_hdr: context "=>" type  {$$ = new expression(AST_node("context"),{$1,$3});}
+|         type               {std::swap($$,$1);}
 
 capi_ctype: "{-# CTYPE" STRING STRING "#-}"
 |           "{-# CTYPE" STRING "#-}"
@@ -874,7 +876,7 @@ ctypedoc:  "forall" tv_bnrds "." ctypedoc
 
 context: btype                     {std::swap($$,$1);}
 
-context_no_ops: btype_no_ops       {std::swap($$,$1);}
+context_no_ops: btype_no_ops       {$$ = make_tyapps($1);}
 
 type: btype                        {std::swap($$,$1);}
 |     btype "->" ctype             {$$ = make_tyapps({make_type_id("->"),$1,$3});}
@@ -884,8 +886,8 @@ typedoc: type                      {std::swap($$,$1);}
 
 btype: tyapps                      {$$ = make_tyapps($1);}
 
-btype_no_ops: atype_docs               {std::swap($$,$1);}
-|             btype_no_ops atype_docs
+btype_no_ops: atype_docs               {$$.push_back($1);}
+|             btype_no_ops atype_docs  {std::swap($$,$1); $$.push_back($2);}
 
 tyapps: tyapp                      {$$.push_back($1);}
 |       tyapps tyapp               {std::swap($$,$1); $$.push_back($2);}
@@ -959,14 +961,14 @@ constrs: "=" constrs1           {std::swap($$,$2);}
 constrs1: constrs1 "|" constr   {std::swap($$,$1); $$.push_back($3);}
 |         constr                {$$.push_back($1);}
 
-constr: forall context_no_ops "=>" constr_stuff {}
+constr: forall context_no_ops "=>" constr_stuff {$$ = new expression(AST_node("context"),{$2,$4});}
 |       forall constr_stuff                     {std::swap($$,$2);}
 
 forall: "forall" tv_bndrs "."   {if ($2.size()>1) $$ = make_tv_bndrs($2);}
 |       %empty                  {}
 
-constr_stuff: btype_no_ops      {std::swap($$,$1);}
-|             btype_no_ops conop btype_no_ops   {$$ = new expression(AST_node("TypeApply"),{AST_node("type_id",$2),$1,$3});}
+constr_stuff: btype_no_ops                      {$$ = make_tyapps($1);}
+|             btype_no_ops conop btype_no_ops   {$$ = make_tyapps({AST_node("type_id",$2),make_tyapps($1),make_tyapps($3)});}
 
 fielddecls: %empty              {}
 |           fielddecls1         {std::swap($$,$1);}
@@ -1506,6 +1508,13 @@ expression_ref make_builtin_expr(const string& name, int args, const string& s1)
 expression_ref make_sig_vars(const vector<expression_ref>& sig_vars)
 {
     return new expression(AST_node("sig_vars"),sig_vars);
+}
+
+expression_ref make_data_or_newtype(const string& d_or_n, const expression_ref& tycls_hdr, const vector<expression_ref>& constrs)
+{
+    expression_ref c = new expression(AST_node("constrs"),constrs);
+    assert(d_or_n == "data" or d_or_n == "newtype");
+    return new expression(AST_node("Decl:"+d_or_n),{tycls_hdr,c});
 }
 
 expression_ref make_tv_bndrs(const vector<expression_ref>& tv_bndrs)
