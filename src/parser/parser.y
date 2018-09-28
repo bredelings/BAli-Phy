@@ -17,6 +17,8 @@
   # include "computation/expression/AST_node.H"
   class driver;
 
+  expression_ref make_exports(const std::vector<expression_ref>& exports);
+  expression_ref make_sig_vars(const std::vector<expression_ref>& sig_vars);
   expression_ref make_importdecls(const std::vector<expression_ref>& impdecls);
   expression_ref make_topdecls(const std::vector<expression_ref>& topdecls);
   expression_ref make_infix(const std::string& infix, boost::optional<int>& prec, std::vector<std::string>& ops);
@@ -224,16 +226,17 @@
 %type <void> body2
 %type <void> top
 %type <void> top1
-
-%type <void> maybeexports
-%type <void> exportlist1
-%type <void> export
-%type <void> export_subspec
-%type <void> qcnames
-%type <void> qcnames1
-%type <void> qcname_ext_w_wildcard
-%type <void> qcname
  */
+%type <expression_ref> maybeexports
+%type <std::vector<expression_ref>> exportlist
+%type <std::vector<expression_ref>> exportlist1
+%type <expression_ref> export
+ /*%type <expression_ref> export_subspec */
+%type <std::vector<expression_ref>> qcnames
+%type <std::vector<expression_ref>> qcnames1
+%type <expression_ref> qcname_ext_w_wildcard
+%type <expression_ref> qcname_ext
+%type <expression_ref> qcname
 
 %type <std::vector<expression_ref>> importdecls
 %type <std::vector<expression_ref>> importdecls_semi
@@ -294,27 +297,30 @@
 
 %type <void> strings
 %type <void> stringlist
-
-%type <void> opt_sig
-%type <void> opt_tyconsig
  */
+%type <expression_ref> opt_sig
+%type <expression_ref> opt_tyconsig
 %type <expression_ref> sigtype
- /*
-%type <void> sigtypedoc
-%type <void> sigvars
-%type <void> sigtypes1
+%type <expression_ref> sigtypedoc
+%type <std::vector<expression_ref>> sig_vars
+%type <std::vector<expression_ref>> sigtypes1
 
+/*
 %type <void> strict_mark
 %type <void> strictness
 %type <void> unpackedness
-%type <void> ctype
-%type <void> ctypedoc
+*/
+%type <expression_ref> ctype
+%type <expression_ref> ctypedoc
+/*
 %type <void> context
 %type <void> context_no_ops
 %type <void> type
 %type <void> typedoc
 %type <void> btype
-%type <void> btype_no_ops
+ */
+%type <expression_ref> btype_no_ops
+ /*
 %type <void> tyapps
 %type <void> tyapp
 %type <void> atype_docs
@@ -332,15 +338,16 @@
 %type <void> varids0
 
 %type <void> kind
-
-%type <void> constrs
-%type <void> constrs1
-%type <void> constr
-%type <void> forall
-%type <void> constr_stuff
-%type <void> fielddecls
-%type <void> fielddecls1
-%type <void> fielddecl
+ */
+%type <std::vector<expression_ref>> constrs
+%type <std::vector<expression_ref>> constrs1
+%type <expression_ref> constr
+ /* %type <void> forall */
+%type <expression_ref> constr_stuff
+%type <std::vector<expression_ref>> fielddecls
+%type <std::vector<expression_ref>> fielddecls1
+%type <expression_ref> fielddecl
+ /*
 %type <void> maybe_derivings
 %type <void> derivings
 %type <void> deriv_clause_types
@@ -520,35 +527,35 @@ top1: importdecls_semi topdecls_semi
 
 /* ------------- The Export List --------------------------------- */
 
-maybeexports: "(" exportlist ")"
-|             %empty
+maybeexports: "(" exportlist ")"      {$$ = make_exports($2);}
+|             %empty                  {}
 
-exportlist: exportlist1
+exportlist: exportlist1               {std::swap($$,$1);}
 
-exportlist1: export "," exportlist1
-|            export
+exportlist1: exportlist1 "," export   {std::swap($$,$1); $$.push_back($3);}
+|            export                   {$$.push_back($1);}
 
-export: qcname_ext export_subspec
-|       "module" modid
-|       "pattern" qcon
+export: qcname_ext export_subspec     {$$ = new expression(AST_node("qvar"),{});}
+|       "module" modid                {$$ = new expression(AST_node("module"),{String($2)});}
+|       "pattern" qcon                {}
 
 export_subspec: %empty
 |              "(" qcnames ")"
 
-qcnames: %empty
-|        qcnames1
+qcnames: %empty    {}
+|        qcnames1  {std::swap($$,$1);}
 
-qcnames1 : qcnames1 "," qcname_ext_w_wildcard
-|          qcname_ext_w_wildcard
+qcnames1 : qcnames1 "," qcname_ext_w_wildcard "," {std::swap($$,$1); $$.push_back($3);}
+|          qcname_ext_w_wildcard              {$$.push_back($1);}
 
-qcname_ext_w_wildcard: qcname_ext
-| ".."
+qcname_ext_w_wildcard: qcname_ext    {std::swap($$,$1);}
+| ".."                               {}
 
-qcname_ext: qcname
-|           "type" oqtycon
+qcname_ext: qcname                   {std::swap($$,$1);}
+|           "type" oqtycon           {}
 
-qcname: qvar
-|       oqtycon_no_varcon
+qcname: qvar                         {$$ = new expression(AST_node("qvar"),{String($1)});}
+|       oqtycon_no_varcon            {$$ = new expression(AST_node("qvar"),{String($1)});}
 
 /* ------------- Import Declarations ----------------------------- */
 
@@ -811,21 +818,21 @@ stringlist: stringlist "," STRING
 
 /* ------------- Type signatures --------------------------------- */
 
-opt_sig: %empty
-| "::" sigtype
+opt_sig: %empty  {}
+| "::" sigtype   {std::swap($$,$2);}
 
-opt_tyconsig: %empty
-| "::" gtycon
+opt_tyconsig: %empty {}
+| "::" gtycon        {$$ = AST_node("id",$2);}
 
-sigtype: ctype
+sigtype: ctype   {std::swap($$,$1);}
 
-sigtypedoc: ctypedoc
+sigtypedoc: ctypedoc {std::swap($$,$1);}
 
-sig_vars: sig_vars "," var
-|         var
+sig_vars: sig_vars "," var {std::swap($$,$1); $$.push_back($3);}
+|         var              {$$.push_back($1);}
 
-sigtypes1: sigtype
-|          sigtype "," sigtypes1
+sigtypes1: sigtype               {$$.push_back($1);}
+|          sigtypes1 "," sigtype {std::swap($$,$1); $$.push_back($3);}
 
 /* ------------- Types ------------------------------------------- */
 
@@ -935,27 +942,27 @@ kind: ctype
 
 /* ------------- Datatype declarations --------------------------- */
 
-constrs: "=" constrs1
+constrs: "=" constrs1           {std::swap($$,$2);}
 
-constrs1: constrs1 "|" constr
-|         constr
+constrs1: constrs1 "|" constr   {std::swap($$,$1); $$.push_back($3);}
+|         constr                {$$.push_back($1);}
 
-constr: forall context_no_ops "=>" constr_stuff
-|       forall constr_stuff
+constr: forall context_no_ops "=>" constr_stuff {}
+|       forall constr_stuff                     {std::swap($$,$2);}
 
-forall: "forall" tv_bndrs "."
-|       %empty
+forall: "forall" tv_bndrs "."   {}
+|       %empty                  {}
 
-constr_stuff: btype_no_ops
-|             btype_no_ops conop btype_no_ops
+constr_stuff: btype_no_ops      {std::swap($$,$1);}
+|             btype_no_ops conop btype_no_ops   {$$ = new expression(AST_node("TypeApply"),{AST_node("id",$2),$1,$3});}
 
-fielddecls: %empty
-|           fielddecls1
+fielddecls: %empty              {}
+|           fielddecls1         {std::swap($$,$1);}
 
-fielddecls1: fielddecl "," fielddecls1
-|            fielddecl
+fielddecls1: fielddecl "," fielddecls1  {}
+|            fielddecl                  {}
 
-fielddecl: sig_vars "::" ctype
+fielddecl: sig_vars "::" ctype          {$$ = new expression(AST_node("FieldDecl"),{make_sig_vars($1),$3});}
 
 maybe_derivings: %empty
 |                derivings
@@ -1455,6 +1462,16 @@ yy::parser::error (const location_type& l, const std::string& m)
 expression_ref make_importdecls(const vector<expression_ref>& impdecls)
 {
     return new expression(AST_node("impdecls"),impdecls);
+}
+
+expression_ref make_exports(const vector<expression_ref>& exports)
+{
+    return new expression(AST_node("Exports"),exports);
+}
+
+expression_ref make_sig_vars(const vector<expression_ref>& sig_vars)
+{
+    return new expression(AST_node("sig_vars"),sig_vars);
 }
 
 expression_ref make_topdecls(const vector<expression_ref>& topdecls)
