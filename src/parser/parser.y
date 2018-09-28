@@ -18,12 +18,17 @@
   class driver;
 
   expression_ref make_exports(const std::vector<expression_ref>& exports);
-  expression_ref make_sig_vars(const std::vector<expression_ref>& sig_vars);
   expression_ref make_importdecls(const std::vector<expression_ref>& impdecls);
   expression_ref make_topdecls(const std::vector<expression_ref>& topdecls);
   expression_ref make_infix(const std::string& infix, boost::optional<int>& prec, std::vector<std::string>& ops);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
+
+  expression_ref make_sig_vars(const std::vector<expression_ref>& sig_vars);
+  expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
+  expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
+  expression_ref make_id(const std::string& id);
+  expression_ref make_type_id(const std::string& id);
 
   expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebinds);
   expression_ref make_gdrhs(const std::vector<expression_ref>& gdrhs);
@@ -305,44 +310,44 @@
 %type <std::vector<expression_ref>> sig_vars
 %type <std::vector<expression_ref>> sigtypes1
 
-/*
-%type <void> strict_mark
-%type <void> strictness
-%type <void> unpackedness
-*/
+%type <std::string> strict_mark
+%type <std::string> strictness
+ /* %type <void> unpackedness */
 %type <expression_ref> ctype
 %type <expression_ref> ctypedoc
-/*
-%type <void> context
-%type <void> context_no_ops
-%type <void> type
-%type <void> typedoc
-%type <void> btype
- */
+%type <expression_ref> context
+%type <expression_ref> context_no_ops
+%type <expression_ref> type
+%type <expression_ref> typedoc
+%type <expression_ref> btype
 %type <expression_ref> btype_no_ops
+%type <std::vector<expression_ref>> tyapps
+%type <expression_ref> tyapp
+%type <expression_ref> atype_docs
+%type <expression_ref> atype
  /*
-%type <void> tyapps
-%type <void> tyapp
-%type <void> atype_docs
-%type <void> atype
 %type <void> inst_type
 %type <void> deriv_types
-%type <void> comma_types0
-%type <void> comma_types1
+ */
+%type <std::vector<expression_ref>> comma_types0
+%type <std::vector<expression_ref>> comma_types1
+ /*
 %type <void> bar_types2
-%type <void> tv_bndrs
-%type <void> tv_bndr
+ */
+%type <std::vector<expression_ref>> tv_bndrs
+%type <expression_ref> tv_bndr
+ /*
 %type <void> fds
 %type <void> fds1
 %type <void> fd
 %type <void> varids0
-
-%type <void> kind
  */
+%type <expression_ref> kind
+
 %type <std::vector<expression_ref>> constrs
 %type <std::vector<expression_ref>> constrs1
 %type <expression_ref> constr
- /* %type <void> forall */
+%type <expression_ref> forall
 %type <expression_ref> constr_stuff
 %type <std::vector<expression_ref>> fielddecls
 %type <std::vector<expression_ref>> fielddecls1
@@ -822,7 +827,7 @@ opt_sig: %empty  {}
 | "::" sigtype   {std::swap($$,$2);}
 
 opt_tyconsig: %empty {}
-| "::" gtycon        {$$ = AST_node("id",$2);}
+| "::" gtycon        {$$ = make_type_id($2);}
 
 sigtype: ctype   {std::swap($$,$1);}
 
@@ -836,22 +841,22 @@ sigtypes1: sigtype               {$$.push_back($1);}
 
 /* ------------- Types ------------------------------------------- */
 
-strict_mark: strictness
-|            unpackedness
-|            unpackedness strictness
+strict_mark: strictness                     {std::swap($$,$1);}
+|            unpackedness                   {}
+|            unpackedness strictness        {std::swap($$,$2);}
 
-strictness: "!"
-|           "~"
+strictness: "!" {$$ = "!";}
+|           "~" {$$ = "~";}
 
 unpackedness: "{-# UNPACK" "#-"
 |             "{-# NOUNPACK" "#-"
 
-ctype: "forall" tv_bndrs "." ctype
-|      context "=>" ctype
-|      ipvar "::" type
-|      type
+ctype: "forall" tv_bndrs "." ctype {$$ = new expression(AST_node("forall"),{make_tv_bndrs($2),$4});}
+|      context "=>" ctype          {$$ = new expression(AST_node("context"),{$1,$3});}
+|      ipvar "::" type             {}
+|      type                        {std::swap($$,$1);}
 
-ctypedoc: ctype
+ctypedoc: ctype                    {std::swap($$,$1);}
 
 /*
 ctypedoc:  "forall" tv_bnrds "." ctypedoc
@@ -860,47 +865,47 @@ ctypedoc:  "forall" tv_bnrds "." ctypedoc
 |      typedoc
 */
 
-context: btype
+context: btype                     {std::swap($$,$1);}
 
-context_no_ops: btype_no_ops
+context_no_ops: btype_no_ops       {std::swap($$,$1);}
 
-type: btype
-|     btype "->" ctype
+type: btype                        {std::swap($$,$1);}
+|     btype "->" ctype             {$$ = make_tyapps({make_type_id("->"),$1,$3});}
 
-typedoc: type
+typedoc: type                      {std::swap($$,$1);}
 /* typedoc: .... */
 
-btype: tyapps
+btype: tyapps                      {$$ = make_tyapps($1);}
 
-btype_no_ops: atype_docs
+btype_no_ops: atype_docs               {std::swap($$,$1);}
 |             btype_no_ops atype_docs
 
-tyapps: tyapp
-|       tyapps tyapp
+tyapps: tyapp                      {$$.push_back($1);}
+|       tyapps tyapp               {std::swap($$,$1); $$.push_back($2);}
 
-tyapp: atype
-|      qtyconop
-|      tyvarop
+tyapp: atype                       {std::swap($$,$1);}
+|      qtyconop                    {$$ = make_type_id($1);}
+|      tyvarop                     {$$ = make_type_id($1);}
 /* Template Haskell
 |      SIMPLEQUOTE qconop
 |      SIMPLEQUOTE varop
 */
 
-atype_docs: atype /* FIX */
+atype_docs: atype /* FIX */        {std::swap($$,$1);}
 
-atype: ntgtycon
-|      tyvar
-|      "*"
-|      strict_mark atype
-|      "{" fielddecls "}"
-|      "(" ")"
-|      "(" ctype "," comma_types1 ")"
-|      "(#" "#)"
-|      "(#" comma_types1 "#)"
-|      "(#" bar_types2   "#)"
-|      "[" ctype "]"
-|      "(" ctype ")"
-|      "(" ctype "::" kind ")"
+atype: ntgtycon                        {$$ = make_type_id($1);}
+|      tyvar                           {$$ = make_type_id($1);}
+|      "*"                             {$$ = AST_node("kind_star");}
+|      strict_mark atype               {$$ = new expression(AST_node("strictness"),{$1,$2});}
+|      "{" fielddecls "}"              {$$ = new expression(AST_node("FieldDecls"),$2);}
+|      "(" ")"                         {$$ = make_type_id("()");}
+|      "(" comma_types1 "," ctype")"   {auto ts = $2;ts.push_back($4);$$ = new expression(AST_node("TupleType"),ts);}
+|      "(#" "#)"                       {}
+|      "(#" comma_types1 "#)"          {}
+|      "(#" bar_types2   "#)"          {}
+|      "[" ctype "]"                   {$$ = new expression(AST_node("ListType"),{$2});}
+|      "(" ctype ")"                   {std::swap($$,$2);}
+|      "(" ctype "::" kind ")"         {$$ = new expression(AST_node("TypeOfKind"),{$2,$4});}
 /* Template Haskell */
 
 inst_type: sigtype
@@ -908,20 +913,20 @@ inst_type: sigtype
 deriv_types: typedoc
 |            typedoc "," deriv_types
 
-comma_types0: comma_types1
-|             %empty
+comma_types0: comma_types1             {std::swap($$,$1);}
+|             %empty                   {}
 
-comma_types1: ctype
-|             ctype "," comma_types1
+comma_types1: ctype                    {$$.push_back($1);}
+|             comma_types1 "," ctype   {std::swap($$,$1); $$.push_back($3);}
 
 bar_types2: ctype "|" ctype
 |           ctype "|" bar_types2
 
-tv_bndrs:   tv_bndr tv_bndrs
-|           %empty
+tv_bndrs:   tv_bndrs tv_bndr   {std::swap($$,$1); $$.push_back($2);}
+|           %empty             {}
 
-tv_bndr:    tyvar
-|           "(" tyvar "::" kind ")"
+tv_bndr:    tyvar                   {$$ = AST_node("type_id",$1);}
+|           "(" tyvar "::" kind ")" {$$ = new expression(AST_node("type_of_kind"),{AST_node("type_id",$2),$4});}
 
 fds:        %empty
 |           "|" fds1
@@ -936,7 +941,7 @@ varids0:    %empty
 
 /* ------------- Kinds ------------------------------------------- */
 
-kind: ctype
+kind: ctype  {std::swap($$,$1);}
 
 
 
@@ -950,17 +955,17 @@ constrs1: constrs1 "|" constr   {std::swap($$,$1); $$.push_back($3);}
 constr: forall context_no_ops "=>" constr_stuff {}
 |       forall constr_stuff                     {std::swap($$,$2);}
 
-forall: "forall" tv_bndrs "."   {}
+forall: "forall" tv_bndrs "."   {if ($2.size()>1) $$ = make_tv_bndrs($2);}
 |       %empty                  {}
 
 constr_stuff: btype_no_ops      {std::swap($$,$1);}
-|             btype_no_ops conop btype_no_ops   {$$ = new expression(AST_node("TypeApply"),{AST_node("id",$2),$1,$3});}
+|             btype_no_ops conop btype_no_ops   {$$ = new expression(AST_node("TypeApply"),{AST_node("type_id",$2),$1,$3});}
 
 fielddecls: %empty              {}
 |           fielddecls1         {std::swap($$,$1);}
 
-fielddecls1: fielddecl "," fielddecls1  {}
-|            fielddecl                  {}
+fielddecls1: fielddecls1 "," fielddecl  {std::swap($$,$1); $$.push_back($3);}
+|            fielddecl                  {$$.push_back($1);}
 
 fielddecl: sig_vars "::" ctype          {$$ = new expression(AST_node("FieldDecl"),{make_sig_vars($1),$3});}
 
@@ -1065,8 +1070,8 @@ aexp: qvar "@" aexp              {$$ = make_as_pattern($1,$3);}
 aexp1: aexp1 "{" fbinds "}"   {}
 |      aexp2                  {std::swap($$,$1);}
 
-aexp2: qvar                   {$$ = AST_node("id",$1);}
-|      qcon                   {$$ = AST_node("id",$1);}
+aexp2: qvar                   {$$ = make_id($1);}
+|      qcon                   {$$ = make_id($1);}
 |      literal                {std::swap($$,$1);}
 |      "(" texp ")"           {std::swap($$,$2);}
 |      "(" tup_exprs ")"      {$$ = yy_make_tuple($2);}
@@ -1469,11 +1474,6 @@ expression_ref make_exports(const vector<expression_ref>& exports)
     return new expression(AST_node("Exports"),exports);
 }
 
-expression_ref make_sig_vars(const vector<expression_ref>& sig_vars)
-{
-    return new expression(AST_node("sig_vars"),sig_vars);
-}
-
 expression_ref make_topdecls(const vector<expression_ref>& topdecls)
 {
     return new expression(AST_node("TopDecls"),topdecls);
@@ -1487,6 +1487,34 @@ expression_ref make_builtin_expr(const string& name, int args, const string& s1,
 expression_ref make_builtin_expr(const string& name, int args, const string& s1)
 {
     return new expression(AST_node("Builtin"),{String(name), args, String(s1)});
+}
+
+expression_ref make_sig_vars(const vector<expression_ref>& sig_vars)
+{
+    return new expression(AST_node("sig_vars"),sig_vars);
+}
+
+expression_ref make_tv_bndrs(const vector<expression_ref>& tv_bndrs)
+{
+    return new expression(AST_node("tv_bndrs"),tv_bndrs);
+}
+
+expression_ref make_tyapps(const std::vector<expression_ref>& tyapps)
+{
+    if (tyapps.size() == 1)
+	return tyapps[0];
+    else
+	return new expression(AST_node("TypeApply"), tyapps);
+}
+
+expression_ref make_id(const string& id)
+{
+    return AST_node("id",id);
+}
+
+expression_ref make_type_id(const string& id)
+{
+    return AST_node("type_id",id);
 }
 
 expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type)
