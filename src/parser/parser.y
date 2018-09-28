@@ -292,10 +292,10 @@
 %type <void> decls_inst
 %type <void> decllist_inst
 %type <void> where_inst
-
-%type <void> decls
-%type <void> decllist
 */
+
+%type <std::vector<expression_ref>> decls
+%type <std::vector<expression_ref>> decllist
 %type <expression_ref> binds
 %type <expression_ref> wherebinds
  /*
@@ -421,9 +421,9 @@
 
 %type <void> dbinds
 %type <void> dbind
-*/
-%type <std::string> ipvar
+%type <std::string> ipvar 
 %type <std::string> overloaded_label
+*/
 
  /* %type <std::string> qcon_nowiredlist */
 %type <std::string> qcon
@@ -477,8 +477,10 @@
 %type  <expression_ref> literal
 %type  <std::string> modid
 %type  <int> commas
+/*
 %type  <int> bars0
 %type  <int> bars
+*/
 
  /* Having vector<> as a type seems to be causing trouble with the printer */
  /* %printer { yyoutput << $$; } <*>; */
@@ -788,21 +790,22 @@ decllist_inst: "{" decls_inst "}"
 where_inst: "where" decllist_inst
 |           %empty
 
-decls: decls ";" decl
-|      decls ";"
-|      decl
-|      %empty
+decls: decls ";" decl   {std::swap($$,$1); $$.push_back($3);}
+|      decls ";"        {std::swap($$,$1);}
+|      decl             {$$.push_back($1);}
+|      %empty           {}
 
-decllist: "{" decls "}"
-|         VOCURLY decls close
+decllist: "{" decls "}"          {std::swap($$,$2);}
+|         VOCURLY decls close    {std::swap($$,$2);}
 
-binds: decllist
-/* The dbinds can't occur right now */
-|     "{" dbinds "}"
-|     VOCURLY dbinds close
+binds: decllist                  {$$ = new expression(AST_node("Decls"),$1);}
+/* The dbinds can't occur right now
+|     "{" dbinds "}"             {}
+|     VOCURLY dbinds close       {}
+ */
 
-wherebinds: "where" binds
-|           %empty
+wherebinds: "where" binds        {std::swap($$,$2);}
+|           %empty               {}
 
 
 
@@ -853,7 +856,7 @@ unpackedness: "{-# UNPACK" "#-"
 
 ctype: "forall" tv_bndrs "." ctype {$$ = new expression(AST_node("forall"),{make_tv_bndrs($2),$4});}
 |      context "=>" ctype          {$$ = new expression(AST_node("context"),{$1,$3});}
-|      ipvar "::" type             {}
+/* |      ipvar "::" type             {} */
 |      type                        {std::swap($$,$1);}
 
 ctypedoc: ctype                    {std::swap($$,$1);}
@@ -1033,9 +1036,9 @@ infixexp: exp10                 {$$.push_back($1);}
 infixexp_top: exp10_top         {$$.push_back($1);}
 |             infixexp_top qop exp10_top  {std::swap($$,$1); $$.push_back($2); $$.push_back($3);}
 
-exp10_top: "-" fexp             {$$ = make_minus(make_fexp($2));}
-|          "{-# CORE" STRING "#-}"
-|          fexp                 {$$ = make_fexp($1);}
+exp10_top: "-" fexp                {$$ = make_minus(make_fexp($2));}
+|          "{-# CORE" STRING "#-}" {}
+|          fexp                    {$$ = make_fexp($1);}
 
 exp10: exp10_top                 {std::swap($$,$1);}
 |      scc_annot exp             {}
@@ -1217,6 +1220,8 @@ fbind: qvar "=" texp
 |      qvar
 
 /* ------------- Implicit Parameter Bindings --------------------- */
+/* GHC Extension: implicit param ?x */
+/* This won't happen because the lexer doesn't recognize these right now 
 
 dbinds: dbinds ";" dbind
 |       dbinds ";"
@@ -1225,17 +1230,15 @@ dbinds: dbinds ";" dbind
 
 dbind:  ipvar "=" exp
 
-/* GHC Extension: implicit param ?x */
-/* This won't happen because the lexer doesn't recognize these right now */
 ipvar: IPDUPVARID { $$ = $1; }
 
-
+*/
 /* ------------- Implicit Parameter Bindings --------------------- */
 
 /* GHC Extension: overloaded labels #x */
-/* This won't happen because the lexer doesn't recognize these right now */
+/* This won't happen because the lexer doesn't recognize these right now 
 overloaded_label: LABELVARID { $$ = $1; }
-
+*/
 
 /* ------------- Warnings and deprecations ----------------------- */
 
@@ -1446,12 +1449,13 @@ modid: CONID {$$ = $1;}
 commas: commas "," {$$ = $1 + 1;}
 |       ","        {$$ = 1;}
 
+/*
 bars0: bars        {$$ = $1 + 1;}
 |     %empty       {$$ = 0;}
 
 bars: bars "|"     {$$ = $1 + 1;}
 |     "|"          {$$ = 1;}
-
+*/
 %%
 
 using boost::optional;
