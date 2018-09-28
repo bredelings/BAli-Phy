@@ -17,9 +17,10 @@
   # include "computation/expression/AST_node.H"
   class driver;
 
+  expression_ref make_module(const std::string& name, const expression_ref& exports, const expression_ref& body);
+  expression_ref make_body(const std::vector<expression_ref>& imports, const std::vector<expression_ref>& topdecls);
+
   expression_ref make_exports(const std::vector<expression_ref>& exports);
-  expression_ref make_importdecls(const std::vector<expression_ref>& impdecls);
-  expression_ref make_topdecls(const std::vector<expression_ref>& topdecls);
   expression_ref make_infix(const std::string& infix, boost::optional<int>& prec, std::vector<std::string>& ops);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
@@ -224,14 +225,15 @@
 
  /* Template Haskell: skipped tokens.*/
 
- /*
-%type <void> module
-%type <void> missing_module_keyword
-%type <void> maybemodwarning
-%type <void> body2
-%type <void> top
-%type <void> top1
- */
+
+%type <expression_ref> module
+ /* %type <void> missing_module_keyword */
+ /* %type <expression_ref> maybemodwarning */
+%type <expression_ref> body2
+%type <expression_ref> body
+%type <expression_ref> top
+%type <expression_ref> top1
+
 %type <expression_ref> maybeexports
 %type <std::vector<expression_ref>> exportlist
 %type <std::vector<expression_ref>> exportlist1
@@ -505,8 +507,8 @@ identifier: qvar
 
 /* signature: backpack stuff */
 
-module: "module" modid maybemodwarning maybeexports "where" body
-| body2
+module: "module" modid maybemodwarning maybeexports "where" body {$$ = make_module($2,$4,$6);}
+| body2                                                          {$$ = make_module("",{},$1);}
 
 missing_module_keyword: %empty
 
@@ -516,18 +518,18 @@ maybemodwarning: "{-# DEPRECATED" strings "#-}"
 |                "{-# WARNING" strings "#-}"
 |                %empty
 
-body: "{" top "}"
-|     VOCURLY top close
+body: "{" top "}"       {std::swap($$,$2);}
+|     VOCURLY top close {std::swap($$,$2);}
 
-body2: "{" top "}"
-|     missing_module_keyword top close
+body2: "{" top "}"                         {std::swap($$,$2);}
+|     missing_module_keyword top close     {std::swap($$,$2);}
 
 
-top: semis top1
+top: semis top1                            {std::swap($$,$2);}
 
-top1: importdecls_semi topdecls_semi
-|     importdecls_semi topdecls
-|     importdecls
+top1: importdecls_semi topdecls_semi       {$$ = make_body($1,$2);}
+|     importdecls_semi topdecls            {$$ = make_body($1,$2);}
+|     importdecls                          {$$ = make_body($1,{});}
 
 /* ------------- Module declaration and imports only ------------- */
 
@@ -1469,19 +1471,25 @@ yy::parser::error (const location_type& l, const std::string& m)
     drv.push_error_message({l,m});
 }
 
-expression_ref make_importdecls(const vector<expression_ref>& impdecls)
+expression_ref make_module(const string& name, const expression_ref& exports, const expression_ref& body)
 {
-    return new expression(AST_node("impdecls"),impdecls);
+    vector<expression_ref> e = {String(name)};
+    if (exports)
+	e.push_back(exports);
+    e.push_back(body);
+    return new expression(AST_node("Module"),e);
+}
+
+expression_ref make_body(const std::vector<expression_ref>& imports, const std::vector<expression_ref>& topdecls)
+{
+    expression_ref i = new expression(AST_node("imports"),imports);
+    expression_ref t = new expression(AST_node("TopDecls"),topdecls);
+    return new expression_ref(AST_node("Body"),{i,t});
 }
 
 expression_ref make_exports(const vector<expression_ref>& exports)
 {
     return new expression(AST_node("Exports"),exports);
-}
-
-expression_ref make_topdecls(const vector<expression_ref>& topdecls)
-{
-    return new expression(AST_node("TopDecls"),topdecls);
 }
 
 expression_ref make_builtin_expr(const string& name, int args, const string& s1, const string& s2)
@@ -1669,3 +1677,4 @@ expression_ref make_infix(const string& infix, optional<int>& prec, vector<strin
 
     return new expression(AST_node("FixityDecl"),e);
 }
+
