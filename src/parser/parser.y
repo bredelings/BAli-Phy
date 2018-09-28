@@ -482,6 +482,7 @@
 %type  <int> bars
 */
 
+%expect 143
  /* Having vector<> as a type seems to be causing trouble with the printer */
  /* %printer { yyoutput << $$; } <*>; */
 

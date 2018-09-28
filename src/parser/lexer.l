@@ -528,3 +528,7 @@ yy::parser::symbol_type driver::hopefully_open_brace(const yy::parser::location_
     push_context();
     return yy::parser::make_OCURLY(loc);
 }
+
+void use_things() {
+    yy_top_state();
+}
