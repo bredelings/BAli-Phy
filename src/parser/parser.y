@@ -485,12 +485,13 @@
 */
 
 %expect 143
+
  /* Having vector<> as a type seems to be causing trouble with the printer */
  /* %printer { yyoutput << $$; } <*>; */
 
 %%
 %start unit;
-unit: module
+unit: module {drv.result = $1;}
 
 /* ------------- Identifiers ------------------------------------- /
 identifier: qvar
@@ -628,24 +629,24 @@ topdecls: topdecls_semi topdecl  { std::swap($$,$1); $$.push_back($2); }
 topdecls_semi: topdecls_semi topdecl semis1 { std::swap($$,$1); $$.push_back($2); }
 |              %empty                       { }
 
-topdecl: cl_decl   {}
-|        ty_decl   {}
-|        inst_decl {}
+topdecl: cl_decl                               {}
+|        ty_decl                               {}
+|        inst_decl                             {}
 /*|        stand_alone_deriving
   |        role_annot*/
-|        "default" "(" comma_types0 ")" {}
+|        "default" "(" comma_types0 ")"        {}
 /*
 |        "foreign" fdecl
 |        "{-# DEPRECATED" deprecations "#-}"
 |        "{-# WARNING" warnings "#-}"
 |        "{-# RULES" rules "#-}"
 |        annotation*/
-|        decl_no_th {}
-|        infixexp_top {}
-|        "builtin" var INTEGER STRING STRING { $$ = make_builtin_expr($2,$3,$4,$5);}
-|        "builtin" var INTEGER STRING { $$ = make_builtin_expr($2,$3,$4);}
-|        "builtin" varop INTEGER STRING STRING { $$ = make_builtin_expr($2,$3,$4,$5);}
-|        "builtin" varop INTEGER STRING { $$ = make_builtin_expr($2,$3,$4);}
+|        decl_no_th                            {std::swap($$,$1);}
+|        infixexp_top                          {}
+|        "builtin" var INTEGER STRING STRING   {$$ = make_builtin_expr($2,$3,$4,$5);}
+|        "builtin" var INTEGER STRING          {$$ = make_builtin_expr($2,$3,$4);}
+|        "builtin" varop INTEGER STRING STRING {$$ = make_builtin_expr($2,$3,$4,$5);}
+|        "builtin" varop INTEGER STRING        {$$ = make_builtin_expr($2,$3,$4);}
 
 cl_decl: "class" tycl_hdr fds where_cls
 
@@ -1484,7 +1485,7 @@ expression_ref make_body(const std::vector<expression_ref>& imports, const std::
 {
     expression_ref i = new expression(AST_node("imports"),imports);
     expression_ref t = new expression(AST_node("TopDecls"),topdecls);
-    return new expression_ref(AST_node("Body"),{i,t});
+    return new expression(AST_node("Body"),{i,t});
 }
 
 expression_ref make_exports(const vector<expression_ref>& exports)

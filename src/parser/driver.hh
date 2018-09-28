@@ -47,6 +47,8 @@ public:
     void push_error_message(const std::pair<location_type,std::string>&);
     void pop_error_message();
 
+    // Store the result
+    expression_ref result;
     // Run the parser on file F.  Return 0 on success.
     int parse (const std::string& f);
     // The name of the file being parsed.
