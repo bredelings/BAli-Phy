@@ -221,23 +221,17 @@ signed       {negative}?
 
 
 void
-driver::scan_begin ()
+driver::scan_begin (const std::string& content)
 {
   yy_flex_debug = trace_scanning;
-  if (file.empty () || file == "-")
-    yyin = stdin;
-  else if (!(yyin = fopen (file.c_str (), "r")))
-    {
-      std::cerr << "cannot open " << file << ": " << strerror(errno) << '\n';
-      exit (EXIT_FAILURE);
-    }
+  yy_scan_string(content.c_str());
 }
 
 
 void
 driver::scan_end ()
 {
-  fclose (yyin);
+  yy_delete_buffer(YY_CURRENT_BUFFER);
 }
 
 using namespace yy;

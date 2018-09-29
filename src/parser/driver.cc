@@ -1,6 +1,9 @@
 #include "driver.hh"
 #include "parser.hh"
 #include "myexception.H"
+#include "io.H"
+
+using std::string;
 
 void driver::pop_context()
 {
@@ -60,11 +63,12 @@ driver::driver ()
 }
 
 int
-driver::parse (const std::string &f)
+driver::parse (const std::string &filename)
 {
-  file = f;
+  file = filename;
   location.initialize (&file);
-  scan_begin ();
+  string file_contents = read_file(filename,"module");
+  scan_begin (file_contents);
   yy::parser parser (*this);
   parser.set_debug_level (trace_parsing);
   int res = parser.parse ();

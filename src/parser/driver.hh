@@ -57,7 +57,7 @@ public:
     bool trace_parsing;
 
     // Handling the scanner.
-    void scan_begin ();
+    void scan_begin (const std::string& content);
     void scan_end ();
     // Whether to generate scanner debug traces.
     bool trace_scanning;
