@@ -845,20 +845,15 @@ void Module::load_constructors()
 		assert(is_AST(constrs,"constrs"));
 		for(const auto& constr: constrs.sub())
 		{
-		    string cname;
-		    int arity = -1;
-		    if (is_AST(constr,"constr"))
+		    int arity = 0;
+		    expression_ref type = constr;
+		    if (is_AST(type,"TypeApply"))
 		    {
-			cname = constr.sub()[0].as_<String>();
-			arity = constr.size() - 1;
+			arity = type.size()-1;
+			type = type.sub()[0];
 		    }
-		    else if (is_AST(constr,"constr_op"))
-		    {
-			cname = constr.sub()[1].as_<String>();
-			arity = 2;
-		    }
-		    else
-			std::abort();
+		    assert(is_AST(type,"type_id"));
+		    string cname = type.head().as_<AST_node>().value;
 		    string qualified_name = name+"."+cname;
 		    expression_ref body = lambda_expression( constructor(qualified_name, arity) );
 		    new_decls.push_back(AST_node("Decl") + var(qualified_name) + body);
@@ -1263,23 +1258,18 @@ void Module::add_local_symbols()
 	    if (decl.size() >= 2)
 	    {
 		expression_ref constrs = decl.sub()[1];
-		assert(is_AST(constrs,"constrs"));
 		for(const auto& constr: constrs.sub())
 		{
-		    if (is_AST(constr,"constr"))
+		    int arity = 0;
+		    auto type = constr;
+		    if (is_AST(type,"TypeApply"))
 		    {
-			string name = constr.sub()[0].as_<String>();
-			int arity = constr.size() - 1;
-			def_constructor(name,arity);
+			arity = type.size()-1;
+			type = type.sub()[0];
 		    }
-		    else if (is_AST(constr,"constr_op"))
-		    {
-			string name = constr.sub()[1].as_<String>();
-			int arity = 2;
-			def_constructor(name,arity);
-		    }
-		    else
-			std::abort();
+		    assert(is_AST(type,"type_id"));
+		    string cname = type.head().as_<AST_node>().value;
+		    def_constructor(cname,arity);
 		}
 	    }
 	}
