@@ -63,11 +63,17 @@ driver::driver ()
 }
 
 int
-driver::parse (const std::string &filename)
+driver::parse_file (const std::string &filename)
 {
-  file = filename;
-  location.initialize (&file);
   string file_contents = read_file(filename,"module");
+  return parse_string(file_contents, filename);
+}
+
+int
+driver::parse_string (const string& file_contents, const std::string &input_name)
+{
+  file = input_name;
+  location.initialize (&file);
   scan_begin (file_contents);
   yy::parser parser (*this);
   parser.set_debug_level (trace_parsing);
