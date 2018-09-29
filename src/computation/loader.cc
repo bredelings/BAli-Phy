@@ -7,6 +7,7 @@
 #include "expression/expression.H"
 #include "expression/lambda.H"
 #include "startup/paths.H"
+#include "parser/driver.hh"
 
 #include "io.H"
 #include "parser/desugar.H"
@@ -100,7 +101,7 @@ Module module_loader::load_module_from_file(const string& filename) const
 
 	    auto lang_options = language_options(file_contents);
 
-	    modules.insert( {filename, Module(parse_module_file(file_contents), lang_options)} );
+	    modules.insert( {filename, Module(parse_module_file(file_contents, filename), lang_options)} );
 	}
 	catch (myexception& e)
 	{

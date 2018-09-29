@@ -86,3 +86,9 @@ driver::parse_string (const string& file_contents, const std::string &input_name
   return res;
 }
 
+expression_ref parse_module_file(const string& content, const std::string& input_name)
+{
+    driver D;
+    D.parse_string(content, input_name);
+    return D.result;
+}

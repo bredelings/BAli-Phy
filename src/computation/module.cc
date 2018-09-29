@@ -334,7 +334,7 @@ void Module::perform_exports()
 	{
 	    if (is_AST(ex,"qvar"))
 	    {
-		string qvarid = ex.as_<AST_node>().value;
+		string qvarid = ex.sub()[0].as_<String>(); // This ignores export subspec - see grammar.
 		if (aliases.count(qvarid))
 		    export_symbol(lookup_symbol(qvarid));
 		else
@@ -342,7 +342,7 @@ void Module::perform_exports()
 	    }
 	    else if (is_AST(ex,"module"))
 	    {
-		string modid = ex.as_<AST_node>().value;
+		string modid = ex.sub()[0].as_<String>();
 		export_module(modid);
 	    }
 	    else

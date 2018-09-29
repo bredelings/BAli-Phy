@@ -65,5 +65,7 @@ public:
     // The token's location used by the scanner.
     yy::location location;
 };
+
+expression_ref parse_module_file(const std::string& content, const std::string& input_name);
 #endif // ! DRIVER_HH
 

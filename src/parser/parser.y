@@ -27,6 +27,7 @@
 
   expression_ref make_sig_vars(const std::vector<expression_ref>& sig_vars);
   expression_ref make_data_or_newtype(const std::string& d_or_n, const expression_ref& tycls_hdr, const std::vector<expression_ref>& constrs);
+  expression_ref make_context(const expression_ref& context, const expression_ref& type);
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
   expression_ref make_id(const std::string& id);
@@ -548,7 +549,7 @@ exportlist: exportlist1               {std::swap($$,$1);}
 exportlist1: exportlist1 "," export   {std::swap($$,$1); $$.push_back($3);}
 |            export                   {$$.push_back($1);}
 
-export: qcname_ext export_subspec     {$$ = new expression(AST_node("qvar"),{});}
+export: qcname_ext export_subspec     {std::swap($$,$1);} /* This ignores subspec */
 |       "module" modid                {$$ = new expression(AST_node("module"),{String($2)});}
 |       "pattern" qcon                {}
 
@@ -961,8 +962,8 @@ constrs: "=" constrs1           {std::swap($$,$2);}
 constrs1: constrs1 "|" constr   {std::swap($$,$1); $$.push_back($3);}
 |         constr                {$$.push_back($1);}
 
-constr: forall context_no_ops "=>" constr_stuff {$$ = new expression(AST_node("context"),{$2,$4});}
-|       forall constr_stuff                     {std::swap($$,$2);}
+constr: forall context_no_ops "=>" constr_stuff {$$ = new expression(AST_node("constr"),{make_context($2,$4)});}
+|       forall constr_stuff                     {$$ = new expression(AST_node("constr"),{$2});}
 
 forall: "forall" tv_bndrs "."   {if ($2.size()>1) $$ = make_tv_bndrs($2);}
 |       %empty                  {}
@@ -1485,7 +1486,7 @@ expression_ref make_module(const string& name, const expression_ref& exports, co
 
 expression_ref make_body(const std::vector<expression_ref>& imports, const std::vector<expression_ref>& topdecls)
 {
-    expression_ref i = new expression(AST_node("imports"),imports);
+    expression_ref i = new expression(AST_node("impdecls"),imports);
     expression_ref t = new expression(AST_node("TopDecls"),topdecls);
     return new expression(AST_node("Body"),{i,t});
 }
@@ -1515,6 +1516,11 @@ expression_ref make_data_or_newtype(const string& d_or_n, const expression_ref& 
     expression_ref c = new expression(AST_node("constrs"),constrs);
     assert(d_or_n == "data" or d_or_n == "newtype");
     return new expression(AST_node("Decl:"+d_or_n),{tycls_hdr,c});
+}
+
+expression_ref make_context(const expression_ref& context, const expression_ref& type)
+{
+    return new expression(AST_node("context"),{context,type});
 }
 
 expression_ref make_tv_bndrs(const vector<expression_ref>& tv_bndrs)
