@@ -1041,7 +1041,7 @@ infixexp: exp10                 {$$.push_back($1);}
 |         infixexp qop exp10    {std::swap($$,$1); $$.push_back(make_id($2)); $$.push_back($3);}
 
 infixexp_top: exp10_top         {$$.push_back($1);}
-|             infixexp_top qop exp10_top  {std::swap($$,$1); $$.push_back($2); $$.push_back($3);}
+|             infixexp_top qop exp10_top  {std::swap($$,$1); $$.push_back(make_id($2)); $$.push_back($3);}
 
 exp10_top: "-" fexp                {$$ = make_minus(make_fexp($2));}
 |          "{-# CORE" STRING "#-}" {}
