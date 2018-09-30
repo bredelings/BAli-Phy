@@ -376,6 +376,15 @@ map<string,expression_ref> Module::code_defs() const
     return code;
 }
 
+void Module::rename(const Program&)
+{
+    if (topdecls)
+    {
+	assert(is_AST(topdecls,"TopDecls"));
+	topdecls = ::rename(*this,topdecls);
+    }
+}
+
 void Module::desugar(const Program&)
 {
     if (topdecls)

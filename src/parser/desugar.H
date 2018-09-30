@@ -10,6 +10,8 @@ class Module;
 class Model;
 
 expression_ref parse_haskell_line(const Module& P, const std::string& line);
+expression_ref rename(const Module& p, const expression_ref&);
+expression_ref rename(const Module& p, const expression_ref&,const std::set<std::string>&);
 expression_ref desugar(const Module& p, const expression_ref&);
 expression_ref desugar(const Module& p, const expression_ref&,const std::set<std::string>&);
 Module read_model(const std::string& filename);

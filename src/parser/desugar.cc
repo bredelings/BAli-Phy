@@ -400,6 +400,27 @@ expression_ref get_fresh_id(const string& s, const expression_ref& /* E */)
 // What would be involved in moving the renamer to a kind of phase 2?
 // How do we get the exported symbols before we do the desugaring that depends on imports?
 
+expression_ref rename(const Module& m, const expression_ref& E)
+{
+    return rename(m,E,set<string>());
+}
+
+expression_ref rename(const Module& m, const expression_ref& E, const set<string>& bound)
+{
+    if (not E.is_expression()) return E;
+
+    auto v = E.sub();
+
+    for(auto& e: v)
+	e = rename(m, e, bound);
+
+    if (is_AST(E,"infixexp"))
+	return desugar_infix(m, bound, v);
+
+    assert(E.size());
+    return expression_ref{E.head(),v};
+}
+
 expression_ref desugar(const Module& m, const expression_ref& E, const set<string>& bound)
 {
     vector<expression_ref> v;

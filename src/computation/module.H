@@ -151,6 +151,8 @@ public:
 
     void perform_exports();
 
+    void rename(const Program&);
+
     void desugar(const Program&);
 
     void import_small_decls(const Program&);
