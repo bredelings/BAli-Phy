@@ -248,9 +248,14 @@ void Module::compile(const Program& P)
     assert(not resolved);
     resolved = true;
 
-    add_local_symbols();
-
     perform_imports(P);
+
+    declare_fixities();
+
+    if (not skip_desugaring)
+	rename(P);  // fixme - separate renaming from desugaring -- move it after load_builtins.
+
+    add_local_symbols();
 
     perform_exports();
 
@@ -1197,7 +1202,7 @@ void Module::def_constructor(const std::string& cname, int arity)
     declare_symbol( {cname, constructor_symbol, arity, -1, unknown_fix, {}} );
 }
 
-void Module::add_local_symbols()
+void Module::declare_fixities()
 {
     if (not topdecls) return;
 
@@ -1231,7 +1236,17 @@ void Module::add_local_symbols()
 		declare_fixity(name, precedence, fixity);
 	    }
 	}
-	else if (is_AST(decl,"Decl"))
+}
+
+void Module::add_local_symbols()
+{
+    if (not topdecls) return;
+
+    assert(is_AST(topdecls,"TopDecls"));
+
+    // 0. Get names that are being declared.
+    for(const auto& decl: topdecls.sub())
+	if (is_AST(decl,"Decl"))
 	{
 	    expression_ref lhs = decl.sub()[0];
 	    set<string> vars;

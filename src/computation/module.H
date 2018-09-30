@@ -145,6 +145,8 @@ public:
 
     void compile(const Program&);
 
+    void declare_fixities();
+
     void add_local_symbols();
 
     void perform_imports(const Program&);
