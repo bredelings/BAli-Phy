@@ -44,11 +44,58 @@
 
   # include <string>
   # include <iostream>
+  # include <boost/optional.hpp>
+  # include <boost/optional/optional_io.hpp>
+  # include <vector>
   # include "computation/expression/expression_ref.H"
   # include "computation/expression/var.H"
+  # include "computation/expression/AST_node.H"
   class driver;
 
-#line 52 "parser.hh" // lalr1.cc:380
+  expression_ref make_module(const std::string& name, const expression_ref& exports, const expression_ref& body);
+  expression_ref make_body(const std::vector<expression_ref>& imports, const std::vector<expression_ref>& topdecls);
+
+  expression_ref make_exports(const std::vector<expression_ref>& exports);
+  expression_ref make_infix(const std::string& infix, boost::optional<int>& prec, std::vector<std::string>& ops);
+  expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
+  expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
+
+  expression_ref make_sig_vars(const std::vector<expression_ref>& sig_vars);
+  expression_ref make_data_or_newtype(const std::string& d_or_n, const expression_ref& tycls_hdr, const std::vector<expression_ref>& constrs);
+  expression_ref make_context(const expression_ref& context, const expression_ref& type);
+  expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
+  expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
+  expression_ref make_id(const std::string& id);
+  expression_ref make_type_id(const std::string& id);
+
+  expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebinds);
+  expression_ref make_gdrhs(const std::vector<expression_ref>& gdrhs);
+
+  expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type);
+  expression_ref make_infixexp(const std::vector<expression_ref>& args);
+  expression_ref make_minus(const expression_ref& exp);
+  expression_ref make_fexp(const std::vector<expression_ref>& args);
+  expression_ref make_as_pattern(const std::string& var, const expression_ref& body);
+  expression_ref make_lazy_pattern(const expression_ref& pat);
+  expression_ref make_lambda(const std::vector<expression_ref>& pats, const expression_ref& body);
+  expression_ref make_let(const expression_ref& binds, const expression_ref& body);
+  expression_ref make_if(const expression_ref& cond, const expression_ref& alt_true, const expression_ref& alt_false);
+  expression_ref make_case(const expression_ref& obj, const expression_ref& alts);
+  expression_ref make_do(const std::vector<expression_ref>& stmts);
+  expression_ref yy_make_tuple(const std::vector<expression_ref>& tup_exprs);
+
+
+  expression_ref make_flattenedpquals(const std::vector<expression_ref>& pquals);
+  expression_ref make_squals(const std::vector<expression_ref>& squals);
+  expression_ref make_alts(const std::vector<expression_ref>& alts);
+  expression_ref yy_make_alt(const expression_ref& pat, const expression_ref& alt_rhs);
+  expression_ref make_alt_rhs(const expression_ref& ralt, const expression_ref& wherebinds);
+  expression_ref make_gdpats(const std::vector<expression_ref>& gdpats);
+  expression_ref make_gdpat(const expression_ref& guardquals, const expression_ref& exp);
+
+  expression_ref make_stmts(const std::vector<expression_ref>& stmts);
+
+#line 99 "parser.hh" // lalr1.cc:380
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -132,7 +179,7 @@
 
 
 namespace yy {
-#line 136 "parser.hh" // lalr1.cc:380
+#line 183 "parser.hh" // lalr1.cc:380
 
 
 
@@ -302,24 +349,98 @@ namespace yy {
     /// An auxiliary type to compute the largest semantic type.
     union union_type
     {
+      // maybe_src
+      // maybe_safe
+      // optqualified
+      char dummy1[sizeof(bool)];
+
+      // prec
+      char dummy2[sizeof(boost::optional<int>)];
+
+      // maybe_pkg
+      // maybeas
+      char dummy3[sizeof(boost::optional<std::string>)];
+
       // "CHAR"
       // "PRIMCHAR"
-      char dummy1[sizeof(char)];
+      char dummy4[sizeof(char)];
 
       // "RATIONAL"
       // "PRIMDOUBLE"
-      char dummy2[sizeof(double)];
+      char dummy5[sizeof(double)];
 
+      // module
+      // body
+      // body2
+      // top
+      // top1
+      // maybeexports
+      // export
+      // qcname_ext_w_wildcard
+      // qcname_ext
+      // qcname
+      // importdecl
+      // topdecl
+      // ty_decl
+      // tycl_hdr
+      // binds
+      // wherebinds
+      // opt_sig
+      // opt_tyconsig
+      // sigtype
+      // sigtypedoc
+      // ctype
+      // ctypedoc
+      // context
+      // context_no_ops
+      // type
+      // typedoc
+      // btype
+      // tyapp
+      // atype_docs
+      // atype
+      // tv_bndr
+      // kind
+      // constr
+      // forall
+      // constr_stuff
+      // fielddecl
+      // decl_no_th
+      // decl
+      // rhs
+      // gdrh
+      // sigdecl
       // exp
-      char dummy3[sizeof(expression_ref)];
+      // exp10_top
+      // exp10
+      // aexp
+      // aexp1
+      // aexp2
+      // texp
+      // list
+      // flattenedpquals
+      // transformqual
+      // alt
+      // alt_rhs
+      // ralt
+      // ifgdpats
+      // gdpat
+      // pat
+      // bindpat
+      // apat
+      // stmt
+      // qual
+      // literal
+      char dummy6[sizeof(expression_ref)];
 
       // "PRIMFLOAT"
-      char dummy4[sizeof(float)];
+      char dummy7[sizeof(float)];
 
       // "INTEGER"
       // "PRIMINTEGER"
       // "PRIMWORD"
-      char dummy5[sizeof(int)];
+      // commas
+      char dummy8[sizeof(int)];
 
       // "VARID"
       // "CONID"
@@ -329,9 +450,101 @@ namespace yy {
       // "QCONID"
       // "QVARSYM"
       // "QCONSYM"
+      // "IPDUPVARID"
+      // "LABELVARID"
       // "STRING"
       // "PRIMSTRING"
-      char dummy6[sizeof(std::string)];
+      // infix
+      // data_or_newtype
+      // strict_mark
+      // strictness
+      // qcon
+      // gen_qcon
+      // con
+      // sysdcon_no_list
+      // sysdcon
+      // conop
+      // qconop
+      // gtycon
+      // ntgtycon
+      // oqtycon
+      // oqtycon_no_varcon
+      // qtyconop
+      // qtycondoc
+      // qtycon
+      // tycon
+      // qtyconsym
+      // tyconsym
+      // op
+      // varop
+      // qop
+      // qopm
+      // hole_op
+      // qvarop
+      // qvaropm
+      // tyvar
+      // tyvarop
+      // tyvarid
+      // var
+      // qvar
+      // qvarid
+      // varid
+      // qvarsym
+      // qvarsym_no_minus
+      // qvarsym1
+      // varsym
+      // varsym_no_minus
+      // special_id
+      // special_sym
+      // qconid
+      // conid
+      // qconsym
+      // consym
+      // modid
+      char dummy9[sizeof(std::string)];
+
+      // exportlist
+      // exportlist1
+      // qcnames
+      // qcnames1
+      // importdecls
+      // importdecls_semi
+      // topdecls
+      // topdecls_semi
+      // decls
+      // decllist
+      // sig_vars
+      // sigtypes1
+      // btype_no_ops
+      // tyapps
+      // comma_types0
+      // comma_types1
+      // tv_bndrs
+      // constrs
+      // constrs1
+      // fielddecls
+      // fielddecls1
+      // gdrhs
+      // infixexp
+      // infixexp_top
+      // fexp
+      // tup_exprs
+      // lexps
+      // pquals
+      // squals
+      // guardquals
+      // guardquals1
+      // altslist
+      // alts
+      // alts1
+      // gdpats
+      // apats1
+      // stmtlist
+      // stmts
+      char dummy10[sizeof(std::vector<expression_ref>)];
+
+      // ops
+      char dummy11[sizeof(std::vector<std::string>)];
 };
 
     /// Symbol semantic values.
@@ -477,16 +690,18 @@ namespace yy {
         TOK_QCONID = 377,
         TOK_QVARSYM = 378,
         TOK_QCONSYM = 379,
-        TOK_CHAR = 380,
-        TOK_STRING = 381,
-        TOK_INTEGER = 382,
-        TOK_RATIONAL = 383,
-        TOK_PRIMCHAR = 384,
-        TOK_PRIMSTRING = 385,
-        TOK_PRIMINTEGER = 386,
-        TOK_PRINTWORD = 387,
-        TOK_PRIMFLOAT = 388,
-        TOK_PRIMDOUBLE = 389
+        TOK_IPDUPVARID = 380,
+        TOK_LABELVARID = 381,
+        TOK_CHAR = 382,
+        TOK_STRING = 383,
+        TOK_INTEGER = 384,
+        TOK_RATIONAL = 385,
+        TOK_PRIMCHAR = 386,
+        TOK_PRIMSTRING = 387,
+        TOK_PRIMINTEGER = 388,
+        TOK_PRINTWORD = 389,
+        TOK_PRIMFLOAT = 390,
+        TOK_PRIMDOUBLE = 391
       };
     };
 
@@ -524,6 +739,12 @@ namespace yy {
 
   basic_symbol (typename Base::kind_type t, const location_type& l);
 
+  basic_symbol (typename Base::kind_type t, const bool& v, const location_type& l);
+
+  basic_symbol (typename Base::kind_type t, const boost::optional<int>& v, const location_type& l);
+
+  basic_symbol (typename Base::kind_type t, const boost::optional<std::string>& v, const location_type& l);
+
   basic_symbol (typename Base::kind_type t, const char& v, const location_type& l);
 
   basic_symbol (typename Base::kind_type t, const double& v, const location_type& l);
@@ -535,6 +756,10 @@ namespace yy {
   basic_symbol (typename Base::kind_type t, const int& v, const location_type& l);
 
   basic_symbol (typename Base::kind_type t, const std::string& v, const location_type& l);
+
+  basic_symbol (typename Base::kind_type t, const std::vector<expression_ref>& v, const location_type& l);
+
+  basic_symbol (typename Base::kind_type t, const std::vector<std::string>& v, const location_type& l);
 
 
       /// Constructor for symbols with semantic value.
@@ -1097,6 +1322,14 @@ namespace yy {
 
     static inline
     symbol_type
+    make_IPDUPVARID (const std::string& v, const location_type& l);
+
+    static inline
+    symbol_type
+    make_LABELVARID (const std::string& v, const location_type& l);
+
+    static inline
+    symbol_type
     make_CHAR (const char& v, const location_type& l);
 
     static inline
@@ -1193,8 +1426,8 @@ namespace yy {
     /// \param yyvalue   the value to check
     static bool yy_table_value_is_error_ (int yyvalue);
 
-    static const signed char yypact_ninf_;
-    static const signed char yytable_ninf_;
+    static const short yypact_ninf_;
+    static const short yytable_ninf_;
 
     /// Convert a scanner token number \a t to a symbol number.
     static token_number_type yytranslate_ (token_type t);
@@ -1202,32 +1435,32 @@ namespace yy {
     // Tables.
   // YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
   // STATE-NUM.
-  static const signed char yypact_[];
+  static const short yypact_[];
 
   // YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
   // Performed when YYTABLE does not specify something else to do.  Zero
   // means the default is an error.
-  static const unsigned char yydefact_[];
+  static const unsigned short yydefact_[];
 
   // YYPGOTO[NTERM-NUM].
-  static const signed char yypgoto_[];
+  static const short yypgoto_[];
 
   // YYDEFGOTO[NTERM-NUM].
-  static const signed char yydefgoto_[];
+  static const short yydefgoto_[];
 
   // YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
   // positive, shift that token.  If negative, reduce the rule whose
   // number is the opposite.  If YYTABLE_NINF, syntax error.
-  static const unsigned char yytable_[];
+  static const short yytable_[];
 
-  static const signed char yycheck_[];
+  static const short yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
-  static const unsigned char yystos_[];
+  static const unsigned short yystos_[];
 
   // YYR1[YYN] -- Symbol number of symbol that rule YYN derives.
-  static const unsigned char yyr1_[];
+  static const unsigned short yyr1_[];
 
   // YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.
   static const unsigned char yyr2_[];
@@ -1241,7 +1474,7 @@ namespace yy {
     static const char* const yytname_[];
 #if YYDEBUG
   // YYRLINE[YYN] -- Source line where rule number YYN was defined.
-  static const unsigned char yyrline_[];
+  static const unsigned short yyrline_[];
     /// Report on the debug stream that the rule \a r is going to be reduced.
     virtual void yy_reduce_print_ (int r);
     /// Print the state stack on the debug stream.
@@ -1342,12 +1575,12 @@ namespace yy {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 21,     ///< Last index in yytable_.
-      yynnts_ = 5,  ///< Number of nonterminal symbols.
-      yyfinal_ = 3, ///< Termination state number.
+      yylast_ = 5829,     ///< Last index in yytable_.
+      yynnts_ = 208,  ///< Number of nonterminal symbols.
+      yyfinal_ = 12, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 135  ///< Number of tokens.
+      yyntokens_ = 141  ///< Number of tokens.
     };
 
 
@@ -1402,9 +1635,10 @@ namespace yy {
       95,    96,    97,    98,    99,   100,   101,   102,   103,   104,
      105,   106,   107,   108,   109,   110,   111,   112,   113,   114,
      115,   116,   117,   118,   119,   120,   121,   122,   123,   124,
-     125,   126,   127,   128,   129,   130,   131,   132,   133,   134
+     125,   126,   127,   128,   129,   130,   131,   132,   133,   134,
+     135,   136,   137,   138,   139,   140
     };
-    const unsigned user_token_number_max_ = 389;
+    const unsigned user_token_number_max_ = 395;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int> (t) <= yyeof_)
@@ -1436,27 +1670,104 @@ namespace yy {
   {
     switch (other.type_get ())
     {
-      case 125: // "CHAR"
-      case 129: // "PRIMCHAR"
+      case 165: // maybe_src
+      case 166: // maybe_safe
+      case 168: // optqualified
+        value.copy< bool > (other.value);
+        break;
+
+      case 172: // prec
+        value.copy< boost::optional<int> > (other.value);
+        break;
+
+      case 167: // maybe_pkg
+      case 169: // maybeas
+        value.copy< boost::optional<std::string> > (other.value);
+        break;
+
+      case 127: // "CHAR"
+      case 131: // "PRIMCHAR"
         value.copy< char > (other.value);
         break;
 
-      case 128: // "RATIONAL"
-      case 134: // "PRIMDOUBLE"
+      case 130: // "RATIONAL"
+      case 136: // "PRIMDOUBLE"
         value.copy< double > (other.value);
         break;
 
-      case 139: // exp
+      case 143: // module
+      case 146: // body
+      case 147: // body2
+      case 148: // top
+      case 149: // top1
+      case 150: // maybeexports
+      case 153: // export
+      case 157: // qcname_ext_w_wildcard
+      case 158: // qcname_ext
+      case 159: // qcname
+      case 164: // importdecl
+      case 177: // topdecl
+      case 179: // ty_decl
+      case 186: // tycl_hdr
+      case 204: // binds
+      case 205: // wherebinds
+      case 208: // opt_sig
+      case 209: // opt_tyconsig
+      case 210: // sigtype
+      case 211: // sigtypedoc
+      case 217: // ctype
+      case 218: // ctypedoc
+      case 219: // context
+      case 220: // context_no_ops
+      case 221: // type
+      case 222: // typedoc
+      case 223: // btype
+      case 226: // tyapp
+      case 227: // atype_docs
+      case 228: // atype
+      case 235: // tv_bndr
+      case 240: // kind
+      case 243: // constr
+      case 244: // forall
+      case 245: // constr_stuff
+      case 248: // fielddecl
+      case 253: // decl_no_th
+      case 254: // decl
+      case 255: // rhs
+      case 257: // gdrh
+      case 258: // sigdecl
+      case 261: // exp
+      case 264: // exp10_top
+      case 265: // exp10
+      case 269: // aexp
+      case 270: // aexp1
+      case 271: // aexp2
+      case 272: // texp
+      case 274: // list
+      case 276: // flattenedpquals
+      case 279: // transformqual
+      case 285: // alt
+      case 286: // alt_rhs
+      case 287: // ralt
+      case 289: // ifgdpats
+      case 290: // gdpat
+      case 291: // pat
+      case 292: // bindpat
+      case 293: // apat
+      case 297: // stmt
+      case 298: // qual
+      case 345: // literal
         value.copy< expression_ref > (other.value);
         break;
 
-      case 133: // "PRIMFLOAT"
+      case 135: // "PRIMFLOAT"
         value.copy< float > (other.value);
         break;
 
-      case 127: // "INTEGER"
-      case 131: // "PRIMINTEGER"
-      case 132: // "PRIMWORD"
+      case 129: // "INTEGER"
+      case 133: // "PRIMINTEGER"
+      case 134: // "PRIMWORD"
+      case 348: // commas
         value.copy< int > (other.value);
         break;
 
@@ -1468,9 +1779,103 @@ namespace yy {
       case 122: // "QCONID"
       case 123: // "QVARSYM"
       case 124: // "QCONSYM"
-      case 126: // "STRING"
-      case 130: // "PRIMSTRING"
+      case 125: // "IPDUPVARID"
+      case 126: // "LABELVARID"
+      case 128: // "STRING"
+      case 132: // "PRIMSTRING"
+      case 173: // infix
+      case 184: // data_or_newtype
+      case 214: // strict_mark
+      case 215: // strictness
+      case 302: // qcon
+      case 303: // gen_qcon
+      case 304: // con
+      case 306: // sysdcon_no_list
+      case 307: // sysdcon
+      case 308: // conop
+      case 309: // qconop
+      case 310: // gtycon
+      case 311: // ntgtycon
+      case 312: // oqtycon
+      case 313: // oqtycon_no_varcon
+      case 314: // qtyconop
+      case 315: // qtycondoc
+      case 316: // qtycon
+      case 317: // tycon
+      case 318: // qtyconsym
+      case 319: // tyconsym
+      case 320: // op
+      case 321: // varop
+      case 322: // qop
+      case 323: // qopm
+      case 324: // hole_op
+      case 325: // qvarop
+      case 326: // qvaropm
+      case 327: // tyvar
+      case 328: // tyvarop
+      case 329: // tyvarid
+      case 330: // var
+      case 331: // qvar
+      case 332: // qvarid
+      case 333: // varid
+      case 334: // qvarsym
+      case 335: // qvarsym_no_minus
+      case 336: // qvarsym1
+      case 337: // varsym
+      case 338: // varsym_no_minus
+      case 339: // special_id
+      case 340: // special_sym
+      case 341: // qconid
+      case 342: // conid
+      case 343: // qconsym
+      case 344: // consym
+      case 347: // modid
         value.copy< std::string > (other.value);
+        break;
+
+      case 151: // exportlist
+      case 152: // exportlist1
+      case 155: // qcnames
+      case 156: // qcnames1
+      case 162: // importdecls
+      case 163: // importdecls_semi
+      case 175: // topdecls
+      case 176: // topdecls_semi
+      case 202: // decls
+      case 203: // decllist
+      case 212: // sig_vars
+      case 213: // sigtypes1
+      case 224: // btype_no_ops
+      case 225: // tyapps
+      case 231: // comma_types0
+      case 232: // comma_types1
+      case 234: // tv_bndrs
+      case 241: // constrs
+      case 242: // constrs1
+      case 246: // fielddecls
+      case 247: // fielddecls1
+      case 256: // gdrhs
+      case 262: // infixexp
+      case 263: // infixexp_top
+      case 268: // fexp
+      case 273: // tup_exprs
+      case 275: // lexps
+      case 277: // pquals
+      case 278: // squals
+      case 280: // guardquals
+      case 281: // guardquals1
+      case 282: // altslist
+      case 283: // alts
+      case 284: // alts1
+      case 288: // gdpats
+      case 294: // apats1
+      case 295: // stmtlist
+      case 296: // stmts
+        value.copy< std::vector<expression_ref> > (other.value);
+        break;
+
+      case 174: // ops
+        value.copy< std::vector<std::string> > (other.value);
         break;
 
       default:
@@ -1488,27 +1893,104 @@ namespace yy {
     (void) v;
     switch (this->type_get ())
     {
-      case 125: // "CHAR"
-      case 129: // "PRIMCHAR"
+      case 165: // maybe_src
+      case 166: // maybe_safe
+      case 168: // optqualified
+        value.copy< bool > (v);
+        break;
+
+      case 172: // prec
+        value.copy< boost::optional<int> > (v);
+        break;
+
+      case 167: // maybe_pkg
+      case 169: // maybeas
+        value.copy< boost::optional<std::string> > (v);
+        break;
+
+      case 127: // "CHAR"
+      case 131: // "PRIMCHAR"
         value.copy< char > (v);
         break;
 
-      case 128: // "RATIONAL"
-      case 134: // "PRIMDOUBLE"
+      case 130: // "RATIONAL"
+      case 136: // "PRIMDOUBLE"
         value.copy< double > (v);
         break;
 
-      case 139: // exp
+      case 143: // module
+      case 146: // body
+      case 147: // body2
+      case 148: // top
+      case 149: // top1
+      case 150: // maybeexports
+      case 153: // export
+      case 157: // qcname_ext_w_wildcard
+      case 158: // qcname_ext
+      case 159: // qcname
+      case 164: // importdecl
+      case 177: // topdecl
+      case 179: // ty_decl
+      case 186: // tycl_hdr
+      case 204: // binds
+      case 205: // wherebinds
+      case 208: // opt_sig
+      case 209: // opt_tyconsig
+      case 210: // sigtype
+      case 211: // sigtypedoc
+      case 217: // ctype
+      case 218: // ctypedoc
+      case 219: // context
+      case 220: // context_no_ops
+      case 221: // type
+      case 222: // typedoc
+      case 223: // btype
+      case 226: // tyapp
+      case 227: // atype_docs
+      case 228: // atype
+      case 235: // tv_bndr
+      case 240: // kind
+      case 243: // constr
+      case 244: // forall
+      case 245: // constr_stuff
+      case 248: // fielddecl
+      case 253: // decl_no_th
+      case 254: // decl
+      case 255: // rhs
+      case 257: // gdrh
+      case 258: // sigdecl
+      case 261: // exp
+      case 264: // exp10_top
+      case 265: // exp10
+      case 269: // aexp
+      case 270: // aexp1
+      case 271: // aexp2
+      case 272: // texp
+      case 274: // list
+      case 276: // flattenedpquals
+      case 279: // transformqual
+      case 285: // alt
+      case 286: // alt_rhs
+      case 287: // ralt
+      case 289: // ifgdpats
+      case 290: // gdpat
+      case 291: // pat
+      case 292: // bindpat
+      case 293: // apat
+      case 297: // stmt
+      case 298: // qual
+      case 345: // literal
         value.copy< expression_ref > (v);
         break;
 
-      case 133: // "PRIMFLOAT"
+      case 135: // "PRIMFLOAT"
         value.copy< float > (v);
         break;
 
-      case 127: // "INTEGER"
-      case 131: // "PRIMINTEGER"
-      case 132: // "PRIMWORD"
+      case 129: // "INTEGER"
+      case 133: // "PRIMINTEGER"
+      case 134: // "PRIMWORD"
+      case 348: // commas
         value.copy< int > (v);
         break;
 
@@ -1520,9 +2002,103 @@ namespace yy {
       case 122: // "QCONID"
       case 123: // "QVARSYM"
       case 124: // "QCONSYM"
-      case 126: // "STRING"
-      case 130: // "PRIMSTRING"
+      case 125: // "IPDUPVARID"
+      case 126: // "LABELVARID"
+      case 128: // "STRING"
+      case 132: // "PRIMSTRING"
+      case 173: // infix
+      case 184: // data_or_newtype
+      case 214: // strict_mark
+      case 215: // strictness
+      case 302: // qcon
+      case 303: // gen_qcon
+      case 304: // con
+      case 306: // sysdcon_no_list
+      case 307: // sysdcon
+      case 308: // conop
+      case 309: // qconop
+      case 310: // gtycon
+      case 311: // ntgtycon
+      case 312: // oqtycon
+      case 313: // oqtycon_no_varcon
+      case 314: // qtyconop
+      case 315: // qtycondoc
+      case 316: // qtycon
+      case 317: // tycon
+      case 318: // qtyconsym
+      case 319: // tyconsym
+      case 320: // op
+      case 321: // varop
+      case 322: // qop
+      case 323: // qopm
+      case 324: // hole_op
+      case 325: // qvarop
+      case 326: // qvaropm
+      case 327: // tyvar
+      case 328: // tyvarop
+      case 329: // tyvarid
+      case 330: // var
+      case 331: // qvar
+      case 332: // qvarid
+      case 333: // varid
+      case 334: // qvarsym
+      case 335: // qvarsym_no_minus
+      case 336: // qvarsym1
+      case 337: // varsym
+      case 338: // varsym_no_minus
+      case 339: // special_id
+      case 340: // special_sym
+      case 341: // qconid
+      case 342: // conid
+      case 343: // qconsym
+      case 344: // consym
+      case 347: // modid
         value.copy< std::string > (v);
+        break;
+
+      case 151: // exportlist
+      case 152: // exportlist1
+      case 155: // qcnames
+      case 156: // qcnames1
+      case 162: // importdecls
+      case 163: // importdecls_semi
+      case 175: // topdecls
+      case 176: // topdecls_semi
+      case 202: // decls
+      case 203: // decllist
+      case 212: // sig_vars
+      case 213: // sigtypes1
+      case 224: // btype_no_ops
+      case 225: // tyapps
+      case 231: // comma_types0
+      case 232: // comma_types1
+      case 234: // tv_bndrs
+      case 241: // constrs
+      case 242: // constrs1
+      case 246: // fielddecls
+      case 247: // fielddecls1
+      case 256: // gdrhs
+      case 262: // infixexp
+      case 263: // infixexp_top
+      case 268: // fexp
+      case 273: // tup_exprs
+      case 275: // lexps
+      case 277: // pquals
+      case 278: // squals
+      case 280: // guardquals
+      case 281: // guardquals1
+      case 282: // altslist
+      case 283: // alts
+      case 284: // alts1
+      case 288: // gdpats
+      case 294: // apats1
+      case 295: // stmtlist
+      case 296: // stmts
+        value.copy< std::vector<expression_ref> > (v);
+        break;
+
+      case 174: // ops
+        value.copy< std::vector<std::string> > (v);
         break;
 
       default:
@@ -1536,6 +2112,27 @@ namespace yy {
   template <typename Base>
   parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const location_type& l)
     : Base (t)
+    , location (l)
+  {}
+
+  template <typename Base>
+  parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const bool& v, const location_type& l)
+    : Base (t)
+    , value (v)
+    , location (l)
+  {}
+
+  template <typename Base>
+  parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const boost::optional<int>& v, const location_type& l)
+    : Base (t)
+    , value (v)
+    , location (l)
+  {}
+
+  template <typename Base>
+  parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const boost::optional<std::string>& v, const location_type& l)
+    : Base (t)
+    , value (v)
     , location (l)
   {}
 
@@ -1581,6 +2178,20 @@ namespace yy {
     , location (l)
   {}
 
+  template <typename Base>
+  parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::vector<expression_ref>& v, const location_type& l)
+    : Base (t)
+    , value (v)
+    , location (l)
+  {}
+
+  template <typename Base>
+  parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::vector<std::string>& v, const location_type& l)
+    : Base (t)
+    , value (v)
+    , location (l)
+  {}
+
 
   template <typename Base>
   parser::basic_symbol<Base>::~basic_symbol ()
@@ -1605,27 +2216,104 @@ namespace yy {
     // Type destructor.
   switch (yytype)
     {
-      case 125: // "CHAR"
-      case 129: // "PRIMCHAR"
+      case 165: // maybe_src
+      case 166: // maybe_safe
+      case 168: // optqualified
+        value.template destroy< bool > ();
+        break;
+
+      case 172: // prec
+        value.template destroy< boost::optional<int> > ();
+        break;
+
+      case 167: // maybe_pkg
+      case 169: // maybeas
+        value.template destroy< boost::optional<std::string> > ();
+        break;
+
+      case 127: // "CHAR"
+      case 131: // "PRIMCHAR"
         value.template destroy< char > ();
         break;
 
-      case 128: // "RATIONAL"
-      case 134: // "PRIMDOUBLE"
+      case 130: // "RATIONAL"
+      case 136: // "PRIMDOUBLE"
         value.template destroy< double > ();
         break;
 
-      case 139: // exp
+      case 143: // module
+      case 146: // body
+      case 147: // body2
+      case 148: // top
+      case 149: // top1
+      case 150: // maybeexports
+      case 153: // export
+      case 157: // qcname_ext_w_wildcard
+      case 158: // qcname_ext
+      case 159: // qcname
+      case 164: // importdecl
+      case 177: // topdecl
+      case 179: // ty_decl
+      case 186: // tycl_hdr
+      case 204: // binds
+      case 205: // wherebinds
+      case 208: // opt_sig
+      case 209: // opt_tyconsig
+      case 210: // sigtype
+      case 211: // sigtypedoc
+      case 217: // ctype
+      case 218: // ctypedoc
+      case 219: // context
+      case 220: // context_no_ops
+      case 221: // type
+      case 222: // typedoc
+      case 223: // btype
+      case 226: // tyapp
+      case 227: // atype_docs
+      case 228: // atype
+      case 235: // tv_bndr
+      case 240: // kind
+      case 243: // constr
+      case 244: // forall
+      case 245: // constr_stuff
+      case 248: // fielddecl
+      case 253: // decl_no_th
+      case 254: // decl
+      case 255: // rhs
+      case 257: // gdrh
+      case 258: // sigdecl
+      case 261: // exp
+      case 264: // exp10_top
+      case 265: // exp10
+      case 269: // aexp
+      case 270: // aexp1
+      case 271: // aexp2
+      case 272: // texp
+      case 274: // list
+      case 276: // flattenedpquals
+      case 279: // transformqual
+      case 285: // alt
+      case 286: // alt_rhs
+      case 287: // ralt
+      case 289: // ifgdpats
+      case 290: // gdpat
+      case 291: // pat
+      case 292: // bindpat
+      case 293: // apat
+      case 297: // stmt
+      case 298: // qual
+      case 345: // literal
         value.template destroy< expression_ref > ();
         break;
 
-      case 133: // "PRIMFLOAT"
+      case 135: // "PRIMFLOAT"
         value.template destroy< float > ();
         break;
 
-      case 127: // "INTEGER"
-      case 131: // "PRIMINTEGER"
-      case 132: // "PRIMWORD"
+      case 129: // "INTEGER"
+      case 133: // "PRIMINTEGER"
+      case 134: // "PRIMWORD"
+      case 348: // commas
         value.template destroy< int > ();
         break;
 
@@ -1637,9 +2325,103 @@ namespace yy {
       case 122: // "QCONID"
       case 123: // "QVARSYM"
       case 124: // "QCONSYM"
-      case 126: // "STRING"
-      case 130: // "PRIMSTRING"
+      case 125: // "IPDUPVARID"
+      case 126: // "LABELVARID"
+      case 128: // "STRING"
+      case 132: // "PRIMSTRING"
+      case 173: // infix
+      case 184: // data_or_newtype
+      case 214: // strict_mark
+      case 215: // strictness
+      case 302: // qcon
+      case 303: // gen_qcon
+      case 304: // con
+      case 306: // sysdcon_no_list
+      case 307: // sysdcon
+      case 308: // conop
+      case 309: // qconop
+      case 310: // gtycon
+      case 311: // ntgtycon
+      case 312: // oqtycon
+      case 313: // oqtycon_no_varcon
+      case 314: // qtyconop
+      case 315: // qtycondoc
+      case 316: // qtycon
+      case 317: // tycon
+      case 318: // qtyconsym
+      case 319: // tyconsym
+      case 320: // op
+      case 321: // varop
+      case 322: // qop
+      case 323: // qopm
+      case 324: // hole_op
+      case 325: // qvarop
+      case 326: // qvaropm
+      case 327: // tyvar
+      case 328: // tyvarop
+      case 329: // tyvarid
+      case 330: // var
+      case 331: // qvar
+      case 332: // qvarid
+      case 333: // varid
+      case 334: // qvarsym
+      case 335: // qvarsym_no_minus
+      case 336: // qvarsym1
+      case 337: // varsym
+      case 338: // varsym_no_minus
+      case 339: // special_id
+      case 340: // special_sym
+      case 341: // qconid
+      case 342: // conid
+      case 343: // qconsym
+      case 344: // consym
+      case 347: // modid
         value.template destroy< std::string > ();
+        break;
+
+      case 151: // exportlist
+      case 152: // exportlist1
+      case 155: // qcnames
+      case 156: // qcnames1
+      case 162: // importdecls
+      case 163: // importdecls_semi
+      case 175: // topdecls
+      case 176: // topdecls_semi
+      case 202: // decls
+      case 203: // decllist
+      case 212: // sig_vars
+      case 213: // sigtypes1
+      case 224: // btype_no_ops
+      case 225: // tyapps
+      case 231: // comma_types0
+      case 232: // comma_types1
+      case 234: // tv_bndrs
+      case 241: // constrs
+      case 242: // constrs1
+      case 246: // fielddecls
+      case 247: // fielddecls1
+      case 256: // gdrhs
+      case 262: // infixexp
+      case 263: // infixexp_top
+      case 268: // fexp
+      case 273: // tup_exprs
+      case 275: // lexps
+      case 277: // pquals
+      case 278: // squals
+      case 280: // guardquals
+      case 281: // guardquals1
+      case 282: // altslist
+      case 283: // alts
+      case 284: // alts1
+      case 288: // gdpats
+      case 294: // apats1
+      case 295: // stmtlist
+      case 296: // stmts
+        value.template destroy< std::vector<expression_ref> > ();
+        break;
+
+      case 174: // ops
+        value.template destroy< std::vector<std::string> > ();
         break;
 
       default:
@@ -1663,27 +2445,104 @@ namespace yy {
     super_type::move (s);
     switch (this->type_get ())
     {
-      case 125: // "CHAR"
-      case 129: // "PRIMCHAR"
+      case 165: // maybe_src
+      case 166: // maybe_safe
+      case 168: // optqualified
+        value.move< bool > (s.value);
+        break;
+
+      case 172: // prec
+        value.move< boost::optional<int> > (s.value);
+        break;
+
+      case 167: // maybe_pkg
+      case 169: // maybeas
+        value.move< boost::optional<std::string> > (s.value);
+        break;
+
+      case 127: // "CHAR"
+      case 131: // "PRIMCHAR"
         value.move< char > (s.value);
         break;
 
-      case 128: // "RATIONAL"
-      case 134: // "PRIMDOUBLE"
+      case 130: // "RATIONAL"
+      case 136: // "PRIMDOUBLE"
         value.move< double > (s.value);
         break;
 
-      case 139: // exp
+      case 143: // module
+      case 146: // body
+      case 147: // body2
+      case 148: // top
+      case 149: // top1
+      case 150: // maybeexports
+      case 153: // export
+      case 157: // qcname_ext_w_wildcard
+      case 158: // qcname_ext
+      case 159: // qcname
+      case 164: // importdecl
+      case 177: // topdecl
+      case 179: // ty_decl
+      case 186: // tycl_hdr
+      case 204: // binds
+      case 205: // wherebinds
+      case 208: // opt_sig
+      case 209: // opt_tyconsig
+      case 210: // sigtype
+      case 211: // sigtypedoc
+      case 217: // ctype
+      case 218: // ctypedoc
+      case 219: // context
+      case 220: // context_no_ops
+      case 221: // type
+      case 222: // typedoc
+      case 223: // btype
+      case 226: // tyapp
+      case 227: // atype_docs
+      case 228: // atype
+      case 235: // tv_bndr
+      case 240: // kind
+      case 243: // constr
+      case 244: // forall
+      case 245: // constr_stuff
+      case 248: // fielddecl
+      case 253: // decl_no_th
+      case 254: // decl
+      case 255: // rhs
+      case 257: // gdrh
+      case 258: // sigdecl
+      case 261: // exp
+      case 264: // exp10_top
+      case 265: // exp10
+      case 269: // aexp
+      case 270: // aexp1
+      case 271: // aexp2
+      case 272: // texp
+      case 274: // list
+      case 276: // flattenedpquals
+      case 279: // transformqual
+      case 285: // alt
+      case 286: // alt_rhs
+      case 287: // ralt
+      case 289: // ifgdpats
+      case 290: // gdpat
+      case 291: // pat
+      case 292: // bindpat
+      case 293: // apat
+      case 297: // stmt
+      case 298: // qual
+      case 345: // literal
         value.move< expression_ref > (s.value);
         break;
 
-      case 133: // "PRIMFLOAT"
+      case 135: // "PRIMFLOAT"
         value.move< float > (s.value);
         break;
 
-      case 127: // "INTEGER"
-      case 131: // "PRIMINTEGER"
-      case 132: // "PRIMWORD"
+      case 129: // "INTEGER"
+      case 133: // "PRIMINTEGER"
+      case 134: // "PRIMWORD"
+      case 348: // commas
         value.move< int > (s.value);
         break;
 
@@ -1695,9 +2554,103 @@ namespace yy {
       case 122: // "QCONID"
       case 123: // "QVARSYM"
       case 124: // "QCONSYM"
-      case 126: // "STRING"
-      case 130: // "PRIMSTRING"
+      case 125: // "IPDUPVARID"
+      case 126: // "LABELVARID"
+      case 128: // "STRING"
+      case 132: // "PRIMSTRING"
+      case 173: // infix
+      case 184: // data_or_newtype
+      case 214: // strict_mark
+      case 215: // strictness
+      case 302: // qcon
+      case 303: // gen_qcon
+      case 304: // con
+      case 306: // sysdcon_no_list
+      case 307: // sysdcon
+      case 308: // conop
+      case 309: // qconop
+      case 310: // gtycon
+      case 311: // ntgtycon
+      case 312: // oqtycon
+      case 313: // oqtycon_no_varcon
+      case 314: // qtyconop
+      case 315: // qtycondoc
+      case 316: // qtycon
+      case 317: // tycon
+      case 318: // qtyconsym
+      case 319: // tyconsym
+      case 320: // op
+      case 321: // varop
+      case 322: // qop
+      case 323: // qopm
+      case 324: // hole_op
+      case 325: // qvarop
+      case 326: // qvaropm
+      case 327: // tyvar
+      case 328: // tyvarop
+      case 329: // tyvarid
+      case 330: // var
+      case 331: // qvar
+      case 332: // qvarid
+      case 333: // varid
+      case 334: // qvarsym
+      case 335: // qvarsym_no_minus
+      case 336: // qvarsym1
+      case 337: // varsym
+      case 338: // varsym_no_minus
+      case 339: // special_id
+      case 340: // special_sym
+      case 341: // qconid
+      case 342: // conid
+      case 343: // qconsym
+      case 344: // consym
+      case 347: // modid
         value.move< std::string > (s.value);
+        break;
+
+      case 151: // exportlist
+      case 152: // exportlist1
+      case 155: // qcnames
+      case 156: // qcnames1
+      case 162: // importdecls
+      case 163: // importdecls_semi
+      case 175: // topdecls
+      case 176: // topdecls_semi
+      case 202: // decls
+      case 203: // decllist
+      case 212: // sig_vars
+      case 213: // sigtypes1
+      case 224: // btype_no_ops
+      case 225: // tyapps
+      case 231: // comma_types0
+      case 232: // comma_types1
+      case 234: // tv_bndrs
+      case 241: // constrs
+      case 242: // constrs1
+      case 246: // fielddecls
+      case 247: // fielddecls1
+      case 256: // gdrhs
+      case 262: // infixexp
+      case 263: // infixexp_top
+      case 268: // fexp
+      case 273: // tup_exprs
+      case 275: // lexps
+      case 277: // pquals
+      case 278: // squals
+      case 280: // guardquals
+      case 281: // guardquals1
+      case 282: // altslist
+      case 283: // alts
+      case 284: // alts1
+      case 288: // gdpats
+      case 294: // apats1
+      case 295: // stmtlist
+      case 296: // stmts
+        value.move< std::vector<expression_ref> > (s.value);
+        break;
+
+      case 174: // ops
+        value.move< std::vector<std::string> > (s.value);
         break;
 
       default:
@@ -1768,7 +2721,8 @@ namespace yy {
      355,   356,   357,   358,   359,   360,   361,   362,   363,   364,
      365,   366,   367,   368,   369,   370,   371,   372,   373,   374,
      375,   376,   377,   378,   379,   380,   381,   382,   383,   384,
-     385,   386,   387,   388,   389
+     385,   386,   387,   388,   389,   390,   391,   392,   393,   394,
+     395
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
@@ -2512,6 +3466,18 @@ namespace yy {
   }
 
   parser::symbol_type
+  parser::make_IPDUPVARID (const std::string& v, const location_type& l)
+  {
+    return symbol_type (token::TOK_IPDUPVARID, v, l);
+  }
+
+  parser::symbol_type
+  parser::make_LABELVARID (const std::string& v, const location_type& l)
+  {
+    return symbol_type (token::TOK_LABELVARID, v, l);
+  }
+
+  parser::symbol_type
   parser::make_CHAR (const char& v, const location_type& l)
   {
     return symbol_type (token::TOK_CHAR, v, l);
@@ -2574,7 +3540,7 @@ namespace yy {
 
 
 } // yy
-#line 2578 "parser.hh" // lalr1.cc:380
+#line 3544 "parser.hh" // lalr1.cc:380
 
 
 
