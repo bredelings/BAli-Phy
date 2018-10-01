@@ -92,7 +92,8 @@ expression_ref infix_parse(const Module& m, const set<string>& bound, const symb
     if (T.empty())
 	return E1;
 
-    symbol_info op2 = get_op_sym(m, bound, T.front());
+    expression_ref op2_E = T.front();
+    symbol_info op2 = get_op_sym(m, bound, op2_E);
 
     // illegal expressions
     if (op1.precedence == op2.precedence and (op1.fixity != op2.fixity or op1.fixity == non_fix))
@@ -108,7 +109,7 @@ expression_ref infix_parse(const Module& m, const set<string>& bound, const symb
 	T.pop_front();
 	expression_ref E3 = infix_parse_neg(m, bound, op2, T);
 
-	expression_ref E1_op2_E3 = {var(op2.name), E1, E3};
+	expression_ref E1_op2_E3 = {op2_E, E1, E3};
 
 	if (op2.symbol_type == constructor_symbol)
 	{
@@ -203,20 +204,6 @@ expression_ref desugar_infixpat(const Module& m, const vector<expression_ref>& T
     return infixpat_parse_neg(m, {"",variable_symbol,2,-1,non_fix}, T2);
 }
 
-set<string> find_bound_vars(const expression_ref& E)
-{
-    if (is_AST(E, "apat_var"))
-	return {E.as_<AST_node>().value};
-
-    if (not E.size()) return set<string>();
-
-    set<string> bound;
-    for(const auto& e: E.sub())
-	add(bound, find_bound_vars(e));
-
-    return bound;
-}
-
 set<string> find_all_ids(const expression_ref& E)
 {
     if (is_AST(E,"id"))
@@ -231,6 +218,24 @@ set<string> find_all_ids(const expression_ref& E)
     return bound;
 }
 
+set<string> find_bound_vars(const expression_ref& E)
+{
+    if (is_AST(E,"id"))
+    {
+	auto& value = E.as_<AST_node>().value;
+	if (not is_haskell_con_name(value))
+	    return {value};
+    }
+
+    if (E.is_atomic()) return set<string>();
+
+    set<string> bound;
+    for(const auto& e:E.sub())
+	add(bound, find_bound_vars(e));
+
+    return bound;
+}
+
 expression_ref make_apply(const vector<expression_ref>& v)
 {
     assert(not v.empty());
@@ -240,20 +245,32 @@ expression_ref make_apply(const vector<expression_ref>& v)
     return E;
 }
 
-bool is_function_binding(const expression_ref& decl)
+expression_ref get_func_id(const expression_ref& decl)
 {
-    if (not is_AST(decl,"Decl"))
-	return false;
+    assert(is_AST(decl,"Decl"));
+    auto& lhs = decl.sub()[0];
+    if (not lhs.size())
+	return lhs;
 
-    expression_ref lhs = decl.sub()[0];
-    assert(not is_AST(lhs,"funlhs2"));
-    assert(not is_AST(lhs,"funlhs3"));
-    return is_AST(lhs,"funlhs1");
+    assert(is_AST(lhs,"Apply") or is_apply(lhs.head()));
+    return lhs.sub()[0];
+}
+
+string get_func_name(const expression_ref& decl)
+{
+    auto func_id = get_func_id(decl);
+    return func_id.head().as_<AST_node>().value;
 }
 
 bool is_pattern_binding(const expression_ref& decl)
 {
-    return is_AST(decl,"Decl") and not is_function_binding(decl);
+    assert(is_AST(decl,"Decl"));
+    return is_haskell_con_name(get_func_name(decl));
+}
+
+bool is_function_binding(const expression_ref& decl)
+{
+    return not is_pattern_binding(decl);
 }
 
 set<string> get_pattern_bound_vars(const expression_ref& decl)
@@ -263,26 +280,6 @@ set<string> get_pattern_bound_vars(const expression_ref& decl)
     expression_ref lhs = decl.sub()[0];
 
     return find_bound_vars(lhs);
-}
-
-string get_func_name(const expression_ref& decl)
-{
-    assert(is_AST(decl,"Decl"));
-
-    expression_ref lhs = decl.sub()[0];
-    assert(is_AST(lhs,"funlhs1"));
-
-    expression_ref name = lhs.sub()[0];
-
-    if (name.is_a<var>())
-	return name.as_<var>().name;
-    else if (name.head().is_a<AST_node>())
-    {
-	assert(is_AST(name,"id"));
-	return name.head().as_<AST_node>().value;
-    }
-    else
-	std::abort();
 }
 
 vector<expression_ref> get_patterns(const expression_ref& decl)
@@ -477,24 +474,23 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	    {
 		if (not is_AST(e,"Decl")) continue;
 
-		// Translate funlhs2 and funlhs3 declaration forms to funlhs1 form.
-		e = translate_funlhs_decl(e);
+		auto fname = get_func_name(e);
 
-		// Bind the function id to avoid errors on the undeclared id later.
-		if (is_function_binding(e))
+                // Bind the function id to avoid errors on the undeclared id later.
+		if (not is_haskell_con_name(fname)) // variable binding
 		{
-		    string name = get_func_name(e);
 		    if (top)
 		    {
-			assert(not is_qualified_symbol(name));
-			string qualified_name = m.name + "." + name;
+			assert(not is_qualified_symbol(fname));
+			string qualified_name = m.name + "." + fname;
 			bound2.insert(qualified_name);
 		    }
 		    else
-			bound2.insert(name);
+			bound2.insert(fname);
 		}
-		else if (is_pattern_binding(e))
+		else                                // pattern binding
 		{
+		    assert(is_haskell_con_name(fname));
 		    auto vars = get_pattern_bound_vars(e);
 		    set<string> vars2;
 		    if (top)
@@ -541,19 +537,22 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	}
 	else if (n.type == "Decl")
 	{
-	    // Is this a set of function bindings?
-	    if (is_AST(v[0], "funlhs1"))
+	    auto& lhs = v[0];
+
+	    set<string> bound2 = bound;
+	    // The defining variable should be added already, and might be qualified in its name.
+	    // In order to avoid defining the unqualified name, skip i=0.
+	    if (lhs.size())
 	    {
-		set<string> bound2 = bound;
-		for(const auto& e: v[0].sub())
-		    add(bound2, find_bound_vars(e));
-
-		// Replace bound vars in (a) the patterns and (b) the body
-		for(auto& e: v)
-		    e = desugar(m, e, bound2);
-
-		return expression_ref{E.head(),v};
+		for(int i=1;i<lhs.size();i++)
+		    add(bound2, find_bound_vars(lhs.sub()[i]));
 	    }
+
+	    // Replace bound vars in (a) the patterns and (b) the body
+	    for(auto& e: v)
+		e = desugar(m, e, bound2);
+
+	    return expression_ref{E.head(),v};
 
 	    // Is this a set of pattern bindings?
 
