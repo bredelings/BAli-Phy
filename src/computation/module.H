@@ -153,6 +153,8 @@ public:
 
     void perform_exports();
 
+    void rename_infix(const Program&);
+
     void rename(const Program&);
 
     void desugar(const Program&);

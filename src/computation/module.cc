@@ -253,7 +253,7 @@ void Module::compile(const Program& P)
     declare_fixities();
 
     if (not skip_desugaring)
-	rename(P);  // fixme - separate renaming from desugaring -- move it after load_builtins.
+	rename_infix(P);  // fixme - separate renaming from desugaring -- move it after load_builtins.
 
     add_local_symbols();
 
@@ -261,7 +261,10 @@ void Module::compile(const Program& P)
 
     // Currently we do renaming here, including adding prefixes to top-level decls.
     if (not skip_desugaring)
+    {
+	rename(P);
 	desugar(P); // fixme - separate renaming from desugaring -- move it after load_builtins.
+    }
 
     load_builtins(*P.get_module_loader());
 
@@ -379,6 +382,15 @@ map<string,expression_ref> Module::code_defs() const
     }
 
     return code;
+}
+
+void Module::rename_infix(const Program&)
+{
+    if (topdecls)
+    {
+	assert(is_AST(topdecls,"TopDecls"));
+	topdecls = ::rename_infix(*this,topdecls);
+    }
 }
 
 void Module::rename(const Program&)
@@ -1133,30 +1145,6 @@ string get_unqualified_name(const std::string& s)
 // We can't determine function bodies at all, since we can't even handle op definitions
 //   before we know fixities!
 
-string get_function_name(const expression_ref& E)
-{
-    if (is_AST(E,"funlhs1"))
-    {
-	expression_ref f = E.sub()[0];
-	assert(is_AST(f,"id"));
-
-	return f.head().as_<AST_node>().value;
-    }
-    else if (is_AST(E,"funlhs2"))
-    {
-	expression_ref f = E.sub()[1];
-	assert(is_AST(f,"id"));
-	return f.head().as_<AST_node>().value;
-    }
-    else if (is_AST(E,"funlhs3"))
-	return get_function_name(E.sub()[0]);
-    std::abort();
-}
-
-set<string> find_bound_vars(const expression_ref& E);
-set<string> find_all_ids(const expression_ref& E);
-
-
 void Module::def_function(const std::string& fname)
 {
     if (is_qualified_symbol(fname))
@@ -1248,12 +1236,14 @@ void Module::add_local_symbols()
     for(const auto& decl: topdecls.sub())
 	if (is_AST(decl,"Decl"))
 	{
-	    expression_ref lhs = decl.sub()[0];
 	    set<string> vars;
-	    if (is_AST(lhs,"funlhs1") or is_AST(lhs,"funlhs2") or is_AST(lhs,"funlhs3"))
-		vars.insert( get_function_name(lhs) );
+	    if (is_function_binding(decl))
+		vars.insert( get_func_name(decl) );
 	    else
+	    {
+		auto& lhs = decl.sub()[0];
 		vars = find_bound_vars(lhs);
+	    }
 
 	    for(const auto& var_name: vars)
 	    {
