@@ -11,7 +11,7 @@ import Data.Ord;
 
 infixr 5 ++;
 [] ++ y = y;
-h:t ++ y = h:(t ++ y);
+(h:t) ++ y = h:(t ++ y);
 
 head (h:_) = h;
 head []    = error "Data.List.head: empty list";
