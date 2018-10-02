@@ -50,6 +50,10 @@
   # include "computation/expression/expression_ref.H"
   # include "computation/expression/var.H"
   # include "computation/expression/AST_node.H"
+  # include "computation/operations.H"
+  # include "computation/expression/list.H"
+  # include "computation/expression/tuple.H"
+
   class driver;
 
   expression_ref make_module(const std::string& name, const expression_ref& exports, const expression_ref& body);
@@ -85,6 +89,7 @@
   expression_ref yy_make_tuple(const std::vector<expression_ref>& tup_exprs);
 
 
+  expression_ref make_list(const std::vector<expression_ref>& items);
   expression_ref make_flattenedpquals(const std::vector<expression_ref>& pquals);
   expression_ref make_squals(const std::vector<expression_ref>& squals);
   expression_ref make_alts(const std::vector<expression_ref>& alts);
@@ -95,7 +100,7 @@
 
   expression_ref make_stmts(const std::vector<expression_ref>& stmts);
 
-#line 99 "parser.hh" // lalr1.cc:380
+#line 104 "parser.hh" // lalr1.cc:380
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -179,7 +184,7 @@
 
 
 namespace yy {
-#line 183 "parser.hh" // lalr1.cc:380
+#line 188 "parser.hh" // lalr1.cc:380
 
 
 
@@ -3540,7 +3545,7 @@ namespace yy {
 
 
 } // yy
-#line 3544 "parser.hh" // lalr1.cc:380
+#line 3549 "parser.hh" // lalr1.cc:380
 
 
 

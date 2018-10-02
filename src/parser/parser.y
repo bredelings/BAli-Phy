@@ -15,6 +15,10 @@
   # include "computation/expression/expression_ref.H"
   # include "computation/expression/var.H"
   # include "computation/expression/AST_node.H"
+  # include "computation/operations.H"
+  # include "computation/expression/list.H"
+  # include "computation/expression/tuple.H"
+
   class driver;
 
   expression_ref make_module(const std::string& name, const expression_ref& exports, const expression_ref& body);
@@ -50,6 +54,7 @@
   expression_ref yy_make_tuple(const std::vector<expression_ref>& tup_exprs);
 
 
+  expression_ref make_list(const std::vector<expression_ref>& items);
   expression_ref make_flattenedpquals(const std::vector<expression_ref>& pquals);
   expression_ref make_squals(const std::vector<expression_ref>& squals);
   expression_ref make_alts(const std::vector<expression_ref>& alts);
@@ -906,16 +911,16 @@ atype_docs: atype /* FIX */        {std::swap($$,$1);}
 atype: ntgtycon                        {$$ = make_type_id($1);}
 |      tyvar                           {$$ = make_type_id($1);}
 |      "*"                             {$$ = AST_node("kind_star");}
-|      strict_mark atype               {$$ = new expression(AST_node("strictness"),{$1,$2});}
-|      "{" fielddecls "}"              {$$ = new expression(AST_node("FieldDecls"),$2);}
+|      strict_mark atype               {$$ = expression_ref{AST_node("strictness"),{$1,$2}};}
+|      "{" fielddecls "}"              {$$ = expression_ref{AST_node("FieldDecls"),$2};}
 |      "(" ")"                         {$$ = make_type_id("()");}
-|      "(" comma_types1 "," ctype")"   {auto ts = $2;ts.push_back($4);$$ = new expression(AST_node("TupleType"),ts);}
+|      "(" comma_types1 "," ctype")"   {auto ts = $2;ts.push_back($4);$$ = expression_ref{AST_node("TupleType"),ts};}
 |      "(#" "#)"                       {}
 |      "(#" comma_types1 "#)"          {}
 |      "(#" bar_types2   "#)"          {}
-|      "[" ctype "]"                   {$$ = new expression(AST_node("ListType"),{$2});}
+|      "[" ctype "]"                   {$$ = expression_ref{AST_node("ListType"),{$2}};}
 |      "(" ctype ")"                   {std::swap($$,$2);}
-|      "(" ctype "::" kind ")"         {$$ = new expression(AST_node("TypeOfKind"),{$2,$4});}
+|      "(" ctype "::" kind ")"         {$$ = expression_ref{AST_node("TypeOfKind"),{$2,$4}};}
 /* Template Haskell */
 
 inst_type: sigtype
@@ -1119,8 +1124,8 @@ tup_tail: texp commas_tup_tail
 */
 /* ------------- List expressions -------------------------------- */
 
-list: texp                       { $$ = new expression(AST_node("List"),{$1}); }
-|     lexps                      { $$ = new expression(AST_node("List"),$1); }
+list: texp                       { $$ = {AST_node("id",":"),$1,AST_node("id","[]")}; }
+|     lexps                      { $$ = make_list($1); }
 |     texp ".."                  { $$ = new expression(AST_node("enumFrom"),{$1}); }
 |     texp "," exp ".."          { $$ = new expression(AST_node("enumFromThen"),{$1,$3}); }
 |     texp ".." exp              { $$ = new expression(AST_node("enumFromTo"),{$1,$3}); }
@@ -1182,14 +1187,14 @@ ifgdpats : "{" gdpats "}"        {}
 
 gdpat: "|" guardquals "->" exp   {$$=make_gdpat(make_gdpats($2),$4);}
 
-pat: exp      {$$ = new expression(AST_node("Pat"),{$1});}
+pat: exp      {std::swap($$,$1);}
 |   "!" aexp  {$$ = new expression(AST_node("StrictPat"),{$2});}
 
-bindpat: exp  {$$ = new expression(AST_node("BindPat"),{$1});}
-|   "!" aexp  {$$ = new expression(AST_node("StrictBindPat"),{$2});}
+bindpat: exp  {std::swap($$,$1);}
+|   "!" aexp  {$$ = new expression(AST_node("StrictPat"),{$2});}
 
-apat: aexp    {$$ = new expression(AST_node("APat"),{$1});}
-|    "!" aexp {$$ = new expression(AST_node("StrictAPat"),{$2});}
+apat: aexp    {std::swap($$,$1);}
+|    "!" aexp {$$ = new expression(AST_node("StrictPat"),{$2});}
 
 apats1: apats1 apat {std::swap($$,$1); $$.push_back($2);}
 |       apat        {$$.push_back($1);}
@@ -1593,8 +1598,12 @@ expression_ref make_fexp(const vector<expression_ref>& args)
 {
     if (args.size() == 1)
 	return args[0];
-    else
-	return new expression(AST_node("Apply"), args);
+    else {
+	expression_ref f = args[0];
+	for(int i=1;i<args.size();i++)
+	    f = {f,args[i]};
+	return f;
+    }
 }
 
 expression_ref make_as_pattern(const string& var, const expression_ref& body)
@@ -1638,9 +1647,18 @@ expression_ref make_do(const vector<expression_ref>& stmts)
 
 expression_ref yy_make_tuple(const vector<expression_ref>& tup_exprs)
 {
-    return new expression(AST_node("Tuple"),tup_exprs);
+    return new expression(AST_node("id",tuple_head(tup_exprs.size()).name()),tup_exprs);
 }
 
+
+expression_ref make_list(const vector<expression_ref>& pquals)
+{
+    expression_ref L = AST_node("id","[]");
+    expression_ref cons = AST_node("id",":");
+    for(int i=pquals.size()-1;i>=0;i--)
+	L = {cons,pquals[i],L};
+    return L;
+}
 
 expression_ref make_flattenedpquals(const vector<expression_ref>& pquals)
 {
