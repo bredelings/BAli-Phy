@@ -5908,7 +5908,7 @@ expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebi
 {
     vector<expression_ref> e;
     e.push_back(exp);
-    if (wherebinds)
+    if (wherebinds and wherebinds.size())
 	e.push_back(wherebinds);
     return new expression(AST_node("rhs"), e);
 }
@@ -6018,13 +6018,16 @@ expression_ref make_alts(const vector<expression_ref>& alts)
 
 expression_ref yy_make_alt(const expression_ref& pat, const expression_ref& alt_rhs)
 {
-    return new expression(AST_node("alt"), {pat, alt_rhs});
+    expression_ref alt = AST_node("alt") + pat + alt_rhs.sub()[0];
+    if (alt_rhs.size() == 2)
+	alt = alt + alt_rhs.sub()[1];
+    return alt;
 }
 
 expression_ref make_alt_rhs(const expression_ref& ralt, const expression_ref& wherebinds)
 {
-    expression_ref alt = new expression(AST_node("altrhs"), {ralt});
-    if (wherebinds)
+    expression_ref alt = AST_node("altrhs") + ralt;
+    if (wherebinds and wherebinds.size())
 	alt = alt + wherebinds;
     return alt;
 }
