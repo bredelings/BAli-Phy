@@ -111,12 +111,6 @@ expression_ref infix_parse(const Module& m, const set<string>& bound, const symb
 
 	expression_ref E1_op2_E3 = {op2_E, E1, E3};
 
-	if (op2.symbol_type == constructor_symbol)
-	{
-	    assert(op2.arity == 2);
-	    E1_op2_E3 = constructor(op2.name, 2) + E1 + E3;
-	}
-
 	return infix_parse(m, bound, op1, E1_op2_E3, T);
     }
 }
