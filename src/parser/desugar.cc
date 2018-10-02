@@ -31,10 +31,10 @@ using std::pair;
 // See list in computation/loader.C
 //
 
-expression_ref infix_parse(const Module& m, const set<string>& bound, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
+expression_ref infix_parse(const Module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
 
 /// Expression is of the form ... op1 [E1 ...]. Get right operand of op1.
-expression_ref infix_parse_neg(const Module& m, const set<string>& bound, const symbol_info& op1, deque<expression_ref>& T)
+expression_ref infix_parse_neg(const Module& m, const symbol_info& op1, deque<expression_ref>& T)
 {
     assert(not T.empty());
 
@@ -46,16 +46,16 @@ expression_ref infix_parse_neg(const Module& m, const set<string>& bound, const 
     {
 	if (op1.precedence >= 6) throw myexception()<<"Cannot parse '"<<op1.name<<"' -";
 
-	E1 = infix_parse_neg(m, bound, symbol_info("-",variable_symbol, 2,6,left_fix), T);
+	E1 = infix_parse_neg(m, symbol_info("-",variable_symbol, 2,6,left_fix), T);
 
-	return infix_parse(m, bound, op1, {AST_node("id","negate"),E1}, T);
+	return infix_parse(m, op1, {AST_node("id","negate"),E1}, T);
     }
     // If E1 is not a neg, E1 should be an expression, and the next thing should be an Op.
     else
-	return infix_parse(m, bound, op1, E1, T);
+	return infix_parse(m, op1, E1, T);
 }
 
-symbol_info get_op_sym(const Module& m, const set<string>& bound, const expression_ref& O)
+symbol_info get_op_sym(const Module& m, const expression_ref& O)
 {
     if (not is_AST(O, "id"))
 	throw myexception()<<"Can't use expression '"<<O.print()<<"' as infix operator.";
@@ -63,31 +63,31 @@ symbol_info get_op_sym(const Module& m, const set<string>& bound, const expressi
     symbol_info op_sym;
     auto name = O.as_<AST_node>().value;
 
-    if (bound.count(name))
+    if (m.is_declared( name ) )
+	op_sym = m.get_operator( name );
+    else
     {
-	// We assume that fixity for operators at non-global scope is unknown.
-	// FIXME: we should record precedence and fixity for locally-bound variables.
-	//        should this be merged with the global scope somehow?
+	// FIXME: if this name is simply never declared, we should warn here.
 	op_sym.name = name;
 	op_sym.precedence = 9;
 	op_sym.fixity = left_fix;
     }
-    else if (m.is_declared( name ) )
-	op_sym = m.get_operator( name );
-    else
-	throw myexception()<<"Using unknown operator '"<<name<<"' as infix operator.";
 
     return op_sym;
 }
 
+// FIXME: "h:t!!0 = h" gives an error that says that the arity of ":" is wrong.
+// We get ":" "h" "!!" "t" 0 as a pattern...
+//   This seems to be a result of the hack in unapply
+
 /// Expression is of the form ... op1 E1 [op2 ...]. Get right operand of op1.
-expression_ref infix_parse(const Module& m, const set<string>& bound, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T)
+expression_ref infix_parse(const Module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T)
 {
     if (T.empty())
 	return E1;
 
     expression_ref op2_E = T.front();
-    symbol_info op2 = get_op_sym(m, bound, op2_E);
+    symbol_info op2 = get_op_sym(m, op2_E);
 
     // illegal expressions
     if (op1.precedence == op2.precedence and (op1.fixity != op2.fixity or op1.fixity == non_fix))
@@ -101,20 +101,20 @@ expression_ref infix_parse(const Module& m, const set<string>& bound, const symb
     else
     {
 	T.pop_front();
-	expression_ref E3 = infix_parse_neg(m, bound, op2, T);
+	expression_ref E3 = infix_parse_neg(m, op2, T);
 
 	expression_ref E1_op2_E3 = {op2_E, E1, E3};
 
-	return infix_parse(m, bound, op1, E1_op2_E3, T);
+	return infix_parse(m, op1, E1_op2_E3, T);
     }
 }
 
-expression_ref desugar_infix(const Module& m, const set<string>& bound, const vector<expression_ref>& T)
+expression_ref desugar_infix(const Module& m, const vector<expression_ref>& T)
 {
     deque<expression_ref> T2;
     T2.insert(T2.begin(), T.begin(), T.end());
 
-    return infix_parse_neg(m, bound, {"",variable_symbol,2,-1,non_fix}, T2);
+    return infix_parse_neg(m, {"",variable_symbol,2,-1,non_fix}, T2);
 }
 
 set<string> find_all_ids(const expression_ref& E)
@@ -287,23 +287,18 @@ expression_ref shift_list(vector<expression_ref>& v)
     return head;
 }
 
-// The issue here is to rewrite @ f x y -> f x y
+// FIXME: unapply( ): 
+
+// The issue here is to rewrite @ f x y -> f x y and @ (@ f x) y -> f x y
 expression_ref unapply(const expression_ref& E)
 {
     if (not is_apply(E.head())) return E;
 
     auto args = E.sub();
     auto head = shift_list(args);
-    if (head.size())
-    {
-	// The head is an apply expression that's been un-applied!
-	assert(is_AST(head,"id"));
-	for(auto& arg: args)
-	    head = head + arg;
-	return head;
-    }
-    else
-	return expression_ref{head,std::move(args)};
+    assert(not head.size());
+    assert(is_AST(head,"id"));
+    return expression_ref{head,std::move(args)};
 }
 
 /*
@@ -318,6 +313,14 @@ expression_ref unapply(const expression_ref& E)
 // (i) precedence handling for infix expressions
 // (ii) rewrites @ f x y -> f x y for decls
 // (iii) rewrites @ C x y -> C x y for patterns
+
+// Consider h:t !! y.  This can be h:(t!!y) or (h:t)!!y
+
+// We might have @ (infix x op y) z.  Infix handling will rewrite this to
+// @ (@ op x y) z.  We need to change this to (@ op x y z).
+// However, if we have @ (: x y) z, then we don't want to rewrite this to (: x y z).
+// What are the rules for well-formed patterns?
+// Only one op can be a non-constructor (in decl patterns), and that op needs to end up at the top level.
 
 expression_ref rename_infix(const Module& m, const expression_ref& E, bool remove_apply)
 {
@@ -368,7 +371,7 @@ expression_ref rename_infix(const Module& m, const expression_ref& E, bool remov
     // If this is an infix expression, handle precedence.
     if (is_AST(E,"infixexp"))
     {
-	auto E2 = desugar_infix(m, {}, v);
+	auto E2 = desugar_infix(m, v);
 	if (remove_apply)
 	    E2 = unapply(E2);
 	return E2;
