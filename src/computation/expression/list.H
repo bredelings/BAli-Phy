@@ -7,41 +7,23 @@
 
 expression_ref List();
 
-template <typename First>
-auto List(const First& first)
+expression_ref cons(const expression_ref& head,const expression_ref& tail);
+
+inline expression_ref List(const expression_ref& e1)
 {
-    return first&List();
+    return cons(e1,List());
 }
 
-template <typename First, typename T2>
-auto List(const First& first, const T2& t2)
+inline expression_ref List(const expression_ref& e1,const expression_ref& e2)
 {
-    return first&List(t2);
+    return cons(e1,List(e2));
 }
 
-template <typename First, typename T2, typename T3>
-auto List(const First& first, const T2& t2, const T3& t3)
+inline expression_ref List(const expression_ref& e1,
+		    const expression_ref& e2,
+		    const expression_ref& e3)
 {
-    return first&List(t2,t3);
-}
-
-template <typename First, typename T2, typename T3, typename T4>
-auto List(const First& first, const T2& t2, const T3& t3, const T4& t4)
-{
-    return first&List(t2,t3,t4);
-}
-
-template <typename First, typename T2, typename T3, typename T4, typename T5>
-auto List(const First& first, const T2& t2, const T3& t3, const T4& t4, const T5& t5)
-{
-    return first&List(t2,t3,t4,t5);
-}
-
-
-template <typename First, typename T2, typename T3, typename T4, typename T5, typename T6>
-auto List(const First& first, const T2& t2, const T3& t3, const T4& t4, const T5& t5,const T6& t6)
-{
-    return first&List(t2,t3,t4,t5,t6);
+    return cons(e1,List(e2,e3));
 }
 
 template <typename T>
