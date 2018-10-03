@@ -289,14 +289,18 @@ expression_ref shift_list(vector<expression_ref>& v)
 
 // FIXME: unapply( ): 
 
-// The issue here is to rewrite @ f x y -> f x y and @ (@ f x) y -> f x y
+// The issue here is to rewrite @ f x y -> f x y
 expression_ref unapply(const expression_ref& E)
 {
     if (not is_apply(E.head())) return E;
 
     auto args = E.sub();
     auto head = shift_list(args);
+    // We shouldn't have e.g. (@ (@ f x) y) -- this should already be dealt with by rename_infix
+    assert(not is_apply(head.head()));
     assert(not head.size());
+    for(auto& arg: args)
+	arg = unapply(arg);
     assert(is_AST(head,"id"));
     return expression_ref{head,std::move(args)};
 }
@@ -322,67 +326,59 @@ expression_ref unapply(const expression_ref& E)
 // What are the rules for well-formed patterns?
 // Only one op can be a non-constructor (in decl patterns), and that op needs to end up at the top level.
 
-expression_ref rename_infix(const Module& m, const expression_ref& E, bool remove_apply)
+expression_ref rename_infix(const Module& m, const expression_ref& E)
 {
     if (not E.is_expression()) return E;
 
     assert(E.size());
     auto v = E.sub();
 
+    for(auto& e: v)
+	e = rename_infix(m, e);
+
     if (is_AST(E,"Decl"))
     {
-	assert(not remove_apply);
 	/* lhs */
-	v[0] = rename_infix(m, v[0], true);
-	/* rhs */
-	v[1] = rename_infix(m, v[1], false);
+	v[0] = unapply(v[0]);
 	assert(is_AST(v[0],"id"));
     }
     else if (is_AST(E,"alt"))
     {
-	assert(not remove_apply);
 	/* pat */
-	v[0] = rename_infix(m, v[0], true);
-	/* body */
-	v[1] = rename_infix(m, v[1], false);
+	v[0] = unapply(v[0]);
     }
     else if (is_AST(E,"Lambda"))
     {
-	assert(not remove_apply);
-	auto v = E.sub();
 	for(int i=0;i<v.size()-1;i++)
-	    v[i] = rename_infix(m, v[i], true);
-	v.back() = rename_infix(m, v.back(), false);
+	    v[i] = unapply(v[i]);
     }
     else if (is_AST(E,"PatQual"))
     {
-	assert(not remove_apply);
 	/* pat */
-	v[0] = rename_infix(m, v[0], true);
-	/* body */
-	v[1] = rename_infix(m, v[1], false);
+	v[0] = unapply(v[0]);
     }
-    else
+    else if (is_apply(E.head()))
     {
-	for(auto& e: v)
-	    e = rename_infix(m, e, remove_apply);
-    }
-
-    // If this is an infix expression, handle precedence.
-    if (is_AST(E,"infixexp"))
-    {
-	auto E2 = desugar_infix(m, v);
-	if (remove_apply)
-	    E2 = unapply(E2);
+	expression_ref E2;
+	if (is_apply(v[0].head()))
+	{
+	    E2 = v[0];
+	    for(int i=1;i<v.size();i++)
+		E2 = E2 + v[i];
+	}
+	else
+	{
+	    E2 = expression_ref{E.head(),v};
+	}
+	assert(is_apply(E2.head()));
+	assert(not is_apply(E2.sub()[0].head()));
 	return E2;
     }
+    else if (is_AST(E,"infixexp"))
+	return desugar_infix(m, v);
 
     assert(v.size());
-    expression_ref E2{E.head(),v};
-    if (remove_apply)
-	return unapply(E2);
-    else
-	return E2;
+    return expression_ref{E.head(),v};
 }
 
 expression_ref rename(const Module& m, const expression_ref& E)
@@ -409,7 +405,8 @@ std::set<string> rename_pattern(const Module& m, expression_ref& pat, bool top =
 	args = pat.sub();
 
     // 2. Get the identifier name for head
-    assert(is_AST(head,"id"));
+    if (not is_AST(head,"id"))
+	throw myexception()<<"Pattern '"<<pat<<"' doesn't start with an identifier!";
     auto id = pat.head().as_<AST_node>().value;
 
     // 3. Handle if identifier is a variable
@@ -529,18 +526,24 @@ expression_ref rename(const Module& m, const expression_ref& E, const set<string
 		auto& lhs = w[0];
 		auto head = lhs.head();
 		assert(is_AST(head,"id"));
-		auto bound_names = rename_pattern(m, head, top);
+		set<string> bound_names;
 		// For a constructor pattern, rename the whole lhs.
-		if (head.is_a<constructor>())
+		if (is_haskell_con_name(head.as_<AST_node>().value))
 		{
 		    assert(bound_names.empty());
 		    bound_names = rename_pattern(m, lhs, top);
 		}
 		// For a variable pattern, just rename the variable.
 		else if (lhs.size())
+		{
+		    bound_names = rename_pattern(m, head, top);
 		    lhs = expression_ref{head,lhs.sub()};
+		}
 		else
+		{
+		    bound_names = rename_pattern(m, head, top);
 		    lhs = head;
+		}
 		decl = expression_ref{decl.head(),w};
 		add(bound2, bound_names);
 	    }
