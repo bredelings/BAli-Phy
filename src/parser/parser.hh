@@ -90,8 +90,6 @@
 
 
   expression_ref make_list(const std::vector<expression_ref>& items);
-  expression_ref make_flattenedpquals(const std::vector<expression_ref>& pquals);
-  expression_ref make_squals(const std::vector<expression_ref>& squals);
   expression_ref make_alts(const std::vector<expression_ref>& alts);
   expression_ref yy_make_alt(const expression_ref& pat, const expression_ref& alt_rhs);
   expression_ref make_alt_rhs(const expression_ref& ralt, const expression_ref& wherebinds);
@@ -100,7 +98,7 @@
 
   expression_ref make_stmts(const std::vector<expression_ref>& stmts);
 
-#line 104 "parser.hh" // lalr1.cc:380
+#line 102 "parser.hh" // lalr1.cc:380
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -184,7 +182,7 @@
 
 
 namespace yy {
-#line 188 "parser.hh" // lalr1.cc:380
+#line 186 "parser.hh" // lalr1.cc:380
 
 
 
@@ -423,7 +421,6 @@ namespace yy {
       // aexp2
       // texp
       // list
-      // flattenedpquals
       // transformqual
       // alt
       // alt_rhs
@@ -535,7 +532,6 @@ namespace yy {
       // fexp
       // tup_exprs
       // lexps
-      // pquals
       // squals
       // guardquals
       // guardquals1
@@ -1580,8 +1576,8 @@ namespace yy {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 5829,     ///< Last index in yytable_.
-      yynnts_ = 208,  ///< Number of nonterminal symbols.
+      yylast_ = 5825,     ///< Last index in yytable_.
+      yynnts_ = 206,  ///< Number of nonterminal symbols.
       yyfinal_ = 12, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
@@ -1749,19 +1745,18 @@ namespace yy {
       case 271: // aexp2
       case 272: // texp
       case 274: // list
-      case 276: // flattenedpquals
-      case 279: // transformqual
-      case 285: // alt
-      case 286: // alt_rhs
-      case 287: // ralt
-      case 289: // ifgdpats
-      case 290: // gdpat
-      case 291: // pat
-      case 292: // bindpat
-      case 293: // apat
-      case 297: // stmt
-      case 298: // qual
-      case 345: // literal
+      case 277: // transformqual
+      case 283: // alt
+      case 284: // alt_rhs
+      case 285: // ralt
+      case 287: // ifgdpats
+      case 288: // gdpat
+      case 289: // pat
+      case 290: // bindpat
+      case 291: // apat
+      case 295: // stmt
+      case 296: // qual
+      case 343: // literal
         value.copy< expression_ref > (other.value);
         break;
 
@@ -1772,7 +1767,7 @@ namespace yy {
       case 129: // "INTEGER"
       case 133: // "PRIMINTEGER"
       case 134: // "PRIMWORD"
-      case 348: // commas
+      case 346: // commas
         value.copy< int > (other.value);
         break;
 
@@ -1792,49 +1787,49 @@ namespace yy {
       case 184: // data_or_newtype
       case 214: // strict_mark
       case 215: // strictness
-      case 302: // qcon
-      case 303: // gen_qcon
-      case 304: // con
-      case 306: // sysdcon_no_list
-      case 307: // sysdcon
-      case 308: // conop
-      case 309: // qconop
-      case 310: // gtycon
-      case 311: // ntgtycon
-      case 312: // oqtycon
-      case 313: // oqtycon_no_varcon
-      case 314: // qtyconop
-      case 315: // qtycondoc
-      case 316: // qtycon
-      case 317: // tycon
-      case 318: // qtyconsym
-      case 319: // tyconsym
-      case 320: // op
-      case 321: // varop
-      case 322: // qop
-      case 323: // qopm
-      case 324: // hole_op
-      case 325: // qvarop
-      case 326: // qvaropm
-      case 327: // tyvar
-      case 328: // tyvarop
-      case 329: // tyvarid
-      case 330: // var
-      case 331: // qvar
-      case 332: // qvarid
-      case 333: // varid
-      case 334: // qvarsym
-      case 335: // qvarsym_no_minus
-      case 336: // qvarsym1
-      case 337: // varsym
-      case 338: // varsym_no_minus
-      case 339: // special_id
-      case 340: // special_sym
-      case 341: // qconid
-      case 342: // conid
-      case 343: // qconsym
-      case 344: // consym
-      case 347: // modid
+      case 300: // qcon
+      case 301: // gen_qcon
+      case 302: // con
+      case 304: // sysdcon_no_list
+      case 305: // sysdcon
+      case 306: // conop
+      case 307: // qconop
+      case 308: // gtycon
+      case 309: // ntgtycon
+      case 310: // oqtycon
+      case 311: // oqtycon_no_varcon
+      case 312: // qtyconop
+      case 313: // qtycondoc
+      case 314: // qtycon
+      case 315: // tycon
+      case 316: // qtyconsym
+      case 317: // tyconsym
+      case 318: // op
+      case 319: // varop
+      case 320: // qop
+      case 321: // qopm
+      case 322: // hole_op
+      case 323: // qvarop
+      case 324: // qvaropm
+      case 325: // tyvar
+      case 326: // tyvarop
+      case 327: // tyvarid
+      case 328: // var
+      case 329: // qvar
+      case 330: // qvarid
+      case 331: // varid
+      case 332: // qvarsym
+      case 333: // qvarsym_no_minus
+      case 334: // qvarsym1
+      case 335: // varsym
+      case 336: // varsym_no_minus
+      case 337: // special_id
+      case 338: // special_sym
+      case 339: // qconid
+      case 340: // conid
+      case 341: // qconsym
+      case 342: // consym
+      case 345: // modid
         value.copy< std::string > (other.value);
         break;
 
@@ -1865,17 +1860,16 @@ namespace yy {
       case 268: // fexp
       case 273: // tup_exprs
       case 275: // lexps
-      case 277: // pquals
-      case 278: // squals
-      case 280: // guardquals
-      case 281: // guardquals1
-      case 282: // altslist
-      case 283: // alts
-      case 284: // alts1
-      case 288: // gdpats
-      case 294: // apats1
-      case 295: // stmtlist
-      case 296: // stmts
+      case 276: // squals
+      case 278: // guardquals
+      case 279: // guardquals1
+      case 280: // altslist
+      case 281: // alts
+      case 282: // alts1
+      case 286: // gdpats
+      case 292: // apats1
+      case 293: // stmtlist
+      case 294: // stmts
         value.copy< std::vector<expression_ref> > (other.value);
         break;
 
@@ -1972,19 +1966,18 @@ namespace yy {
       case 271: // aexp2
       case 272: // texp
       case 274: // list
-      case 276: // flattenedpquals
-      case 279: // transformqual
-      case 285: // alt
-      case 286: // alt_rhs
-      case 287: // ralt
-      case 289: // ifgdpats
-      case 290: // gdpat
-      case 291: // pat
-      case 292: // bindpat
-      case 293: // apat
-      case 297: // stmt
-      case 298: // qual
-      case 345: // literal
+      case 277: // transformqual
+      case 283: // alt
+      case 284: // alt_rhs
+      case 285: // ralt
+      case 287: // ifgdpats
+      case 288: // gdpat
+      case 289: // pat
+      case 290: // bindpat
+      case 291: // apat
+      case 295: // stmt
+      case 296: // qual
+      case 343: // literal
         value.copy< expression_ref > (v);
         break;
 
@@ -1995,7 +1988,7 @@ namespace yy {
       case 129: // "INTEGER"
       case 133: // "PRIMINTEGER"
       case 134: // "PRIMWORD"
-      case 348: // commas
+      case 346: // commas
         value.copy< int > (v);
         break;
 
@@ -2015,49 +2008,49 @@ namespace yy {
       case 184: // data_or_newtype
       case 214: // strict_mark
       case 215: // strictness
-      case 302: // qcon
-      case 303: // gen_qcon
-      case 304: // con
-      case 306: // sysdcon_no_list
-      case 307: // sysdcon
-      case 308: // conop
-      case 309: // qconop
-      case 310: // gtycon
-      case 311: // ntgtycon
-      case 312: // oqtycon
-      case 313: // oqtycon_no_varcon
-      case 314: // qtyconop
-      case 315: // qtycondoc
-      case 316: // qtycon
-      case 317: // tycon
-      case 318: // qtyconsym
-      case 319: // tyconsym
-      case 320: // op
-      case 321: // varop
-      case 322: // qop
-      case 323: // qopm
-      case 324: // hole_op
-      case 325: // qvarop
-      case 326: // qvaropm
-      case 327: // tyvar
-      case 328: // tyvarop
-      case 329: // tyvarid
-      case 330: // var
-      case 331: // qvar
-      case 332: // qvarid
-      case 333: // varid
-      case 334: // qvarsym
-      case 335: // qvarsym_no_minus
-      case 336: // qvarsym1
-      case 337: // varsym
-      case 338: // varsym_no_minus
-      case 339: // special_id
-      case 340: // special_sym
-      case 341: // qconid
-      case 342: // conid
-      case 343: // qconsym
-      case 344: // consym
-      case 347: // modid
+      case 300: // qcon
+      case 301: // gen_qcon
+      case 302: // con
+      case 304: // sysdcon_no_list
+      case 305: // sysdcon
+      case 306: // conop
+      case 307: // qconop
+      case 308: // gtycon
+      case 309: // ntgtycon
+      case 310: // oqtycon
+      case 311: // oqtycon_no_varcon
+      case 312: // qtyconop
+      case 313: // qtycondoc
+      case 314: // qtycon
+      case 315: // tycon
+      case 316: // qtyconsym
+      case 317: // tyconsym
+      case 318: // op
+      case 319: // varop
+      case 320: // qop
+      case 321: // qopm
+      case 322: // hole_op
+      case 323: // qvarop
+      case 324: // qvaropm
+      case 325: // tyvar
+      case 326: // tyvarop
+      case 327: // tyvarid
+      case 328: // var
+      case 329: // qvar
+      case 330: // qvarid
+      case 331: // varid
+      case 332: // qvarsym
+      case 333: // qvarsym_no_minus
+      case 334: // qvarsym1
+      case 335: // varsym
+      case 336: // varsym_no_minus
+      case 337: // special_id
+      case 338: // special_sym
+      case 339: // qconid
+      case 340: // conid
+      case 341: // qconsym
+      case 342: // consym
+      case 345: // modid
         value.copy< std::string > (v);
         break;
 
@@ -2088,17 +2081,16 @@ namespace yy {
       case 268: // fexp
       case 273: // tup_exprs
       case 275: // lexps
-      case 277: // pquals
-      case 278: // squals
-      case 280: // guardquals
-      case 281: // guardquals1
-      case 282: // altslist
-      case 283: // alts
-      case 284: // alts1
-      case 288: // gdpats
-      case 294: // apats1
-      case 295: // stmtlist
-      case 296: // stmts
+      case 276: // squals
+      case 278: // guardquals
+      case 279: // guardquals1
+      case 280: // altslist
+      case 281: // alts
+      case 282: // alts1
+      case 286: // gdpats
+      case 292: // apats1
+      case 293: // stmtlist
+      case 294: // stmts
         value.copy< std::vector<expression_ref> > (v);
         break;
 
@@ -2295,19 +2287,18 @@ namespace yy {
       case 271: // aexp2
       case 272: // texp
       case 274: // list
-      case 276: // flattenedpquals
-      case 279: // transformqual
-      case 285: // alt
-      case 286: // alt_rhs
-      case 287: // ralt
-      case 289: // ifgdpats
-      case 290: // gdpat
-      case 291: // pat
-      case 292: // bindpat
-      case 293: // apat
-      case 297: // stmt
-      case 298: // qual
-      case 345: // literal
+      case 277: // transformqual
+      case 283: // alt
+      case 284: // alt_rhs
+      case 285: // ralt
+      case 287: // ifgdpats
+      case 288: // gdpat
+      case 289: // pat
+      case 290: // bindpat
+      case 291: // apat
+      case 295: // stmt
+      case 296: // qual
+      case 343: // literal
         value.template destroy< expression_ref > ();
         break;
 
@@ -2318,7 +2309,7 @@ namespace yy {
       case 129: // "INTEGER"
       case 133: // "PRIMINTEGER"
       case 134: // "PRIMWORD"
-      case 348: // commas
+      case 346: // commas
         value.template destroy< int > ();
         break;
 
@@ -2338,49 +2329,49 @@ namespace yy {
       case 184: // data_or_newtype
       case 214: // strict_mark
       case 215: // strictness
-      case 302: // qcon
-      case 303: // gen_qcon
-      case 304: // con
-      case 306: // sysdcon_no_list
-      case 307: // sysdcon
-      case 308: // conop
-      case 309: // qconop
-      case 310: // gtycon
-      case 311: // ntgtycon
-      case 312: // oqtycon
-      case 313: // oqtycon_no_varcon
-      case 314: // qtyconop
-      case 315: // qtycondoc
-      case 316: // qtycon
-      case 317: // tycon
-      case 318: // qtyconsym
-      case 319: // tyconsym
-      case 320: // op
-      case 321: // varop
-      case 322: // qop
-      case 323: // qopm
-      case 324: // hole_op
-      case 325: // qvarop
-      case 326: // qvaropm
-      case 327: // tyvar
-      case 328: // tyvarop
-      case 329: // tyvarid
-      case 330: // var
-      case 331: // qvar
-      case 332: // qvarid
-      case 333: // varid
-      case 334: // qvarsym
-      case 335: // qvarsym_no_minus
-      case 336: // qvarsym1
-      case 337: // varsym
-      case 338: // varsym_no_minus
-      case 339: // special_id
-      case 340: // special_sym
-      case 341: // qconid
-      case 342: // conid
-      case 343: // qconsym
-      case 344: // consym
-      case 347: // modid
+      case 300: // qcon
+      case 301: // gen_qcon
+      case 302: // con
+      case 304: // sysdcon_no_list
+      case 305: // sysdcon
+      case 306: // conop
+      case 307: // qconop
+      case 308: // gtycon
+      case 309: // ntgtycon
+      case 310: // oqtycon
+      case 311: // oqtycon_no_varcon
+      case 312: // qtyconop
+      case 313: // qtycondoc
+      case 314: // qtycon
+      case 315: // tycon
+      case 316: // qtyconsym
+      case 317: // tyconsym
+      case 318: // op
+      case 319: // varop
+      case 320: // qop
+      case 321: // qopm
+      case 322: // hole_op
+      case 323: // qvarop
+      case 324: // qvaropm
+      case 325: // tyvar
+      case 326: // tyvarop
+      case 327: // tyvarid
+      case 328: // var
+      case 329: // qvar
+      case 330: // qvarid
+      case 331: // varid
+      case 332: // qvarsym
+      case 333: // qvarsym_no_minus
+      case 334: // qvarsym1
+      case 335: // varsym
+      case 336: // varsym_no_minus
+      case 337: // special_id
+      case 338: // special_sym
+      case 339: // qconid
+      case 340: // conid
+      case 341: // qconsym
+      case 342: // consym
+      case 345: // modid
         value.template destroy< std::string > ();
         break;
 
@@ -2411,17 +2402,16 @@ namespace yy {
       case 268: // fexp
       case 273: // tup_exprs
       case 275: // lexps
-      case 277: // pquals
-      case 278: // squals
-      case 280: // guardquals
-      case 281: // guardquals1
-      case 282: // altslist
-      case 283: // alts
-      case 284: // alts1
-      case 288: // gdpats
-      case 294: // apats1
-      case 295: // stmtlist
-      case 296: // stmts
+      case 276: // squals
+      case 278: // guardquals
+      case 279: // guardquals1
+      case 280: // altslist
+      case 281: // alts
+      case 282: // alts1
+      case 286: // gdpats
+      case 292: // apats1
+      case 293: // stmtlist
+      case 294: // stmts
         value.template destroy< std::vector<expression_ref> > ();
         break;
 
@@ -2524,19 +2514,18 @@ namespace yy {
       case 271: // aexp2
       case 272: // texp
       case 274: // list
-      case 276: // flattenedpquals
-      case 279: // transformqual
-      case 285: // alt
-      case 286: // alt_rhs
-      case 287: // ralt
-      case 289: // ifgdpats
-      case 290: // gdpat
-      case 291: // pat
-      case 292: // bindpat
-      case 293: // apat
-      case 297: // stmt
-      case 298: // qual
-      case 345: // literal
+      case 277: // transformqual
+      case 283: // alt
+      case 284: // alt_rhs
+      case 285: // ralt
+      case 287: // ifgdpats
+      case 288: // gdpat
+      case 289: // pat
+      case 290: // bindpat
+      case 291: // apat
+      case 295: // stmt
+      case 296: // qual
+      case 343: // literal
         value.move< expression_ref > (s.value);
         break;
 
@@ -2547,7 +2536,7 @@ namespace yy {
       case 129: // "INTEGER"
       case 133: // "PRIMINTEGER"
       case 134: // "PRIMWORD"
-      case 348: // commas
+      case 346: // commas
         value.move< int > (s.value);
         break;
 
@@ -2567,49 +2556,49 @@ namespace yy {
       case 184: // data_or_newtype
       case 214: // strict_mark
       case 215: // strictness
-      case 302: // qcon
-      case 303: // gen_qcon
-      case 304: // con
-      case 306: // sysdcon_no_list
-      case 307: // sysdcon
-      case 308: // conop
-      case 309: // qconop
-      case 310: // gtycon
-      case 311: // ntgtycon
-      case 312: // oqtycon
-      case 313: // oqtycon_no_varcon
-      case 314: // qtyconop
-      case 315: // qtycondoc
-      case 316: // qtycon
-      case 317: // tycon
-      case 318: // qtyconsym
-      case 319: // tyconsym
-      case 320: // op
-      case 321: // varop
-      case 322: // qop
-      case 323: // qopm
-      case 324: // hole_op
-      case 325: // qvarop
-      case 326: // qvaropm
-      case 327: // tyvar
-      case 328: // tyvarop
-      case 329: // tyvarid
-      case 330: // var
-      case 331: // qvar
-      case 332: // qvarid
-      case 333: // varid
-      case 334: // qvarsym
-      case 335: // qvarsym_no_minus
-      case 336: // qvarsym1
-      case 337: // varsym
-      case 338: // varsym_no_minus
-      case 339: // special_id
-      case 340: // special_sym
-      case 341: // qconid
-      case 342: // conid
-      case 343: // qconsym
-      case 344: // consym
-      case 347: // modid
+      case 300: // qcon
+      case 301: // gen_qcon
+      case 302: // con
+      case 304: // sysdcon_no_list
+      case 305: // sysdcon
+      case 306: // conop
+      case 307: // qconop
+      case 308: // gtycon
+      case 309: // ntgtycon
+      case 310: // oqtycon
+      case 311: // oqtycon_no_varcon
+      case 312: // qtyconop
+      case 313: // qtycondoc
+      case 314: // qtycon
+      case 315: // tycon
+      case 316: // qtyconsym
+      case 317: // tyconsym
+      case 318: // op
+      case 319: // varop
+      case 320: // qop
+      case 321: // qopm
+      case 322: // hole_op
+      case 323: // qvarop
+      case 324: // qvaropm
+      case 325: // tyvar
+      case 326: // tyvarop
+      case 327: // tyvarid
+      case 328: // var
+      case 329: // qvar
+      case 330: // qvarid
+      case 331: // varid
+      case 332: // qvarsym
+      case 333: // qvarsym_no_minus
+      case 334: // qvarsym1
+      case 335: // varsym
+      case 336: // varsym_no_minus
+      case 337: // special_id
+      case 338: // special_sym
+      case 339: // qconid
+      case 340: // conid
+      case 341: // qconsym
+      case 342: // consym
+      case 345: // modid
         value.move< std::string > (s.value);
         break;
 
@@ -2640,17 +2629,16 @@ namespace yy {
       case 268: // fexp
       case 273: // tup_exprs
       case 275: // lexps
-      case 277: // pquals
-      case 278: // squals
-      case 280: // guardquals
-      case 281: // guardquals1
-      case 282: // altslist
-      case 283: // alts
-      case 284: // alts1
-      case 288: // gdpats
-      case 294: // apats1
-      case 295: // stmtlist
-      case 296: // stmts
+      case 276: // squals
+      case 278: // guardquals
+      case 279: // guardquals1
+      case 280: // altslist
+      case 281: // alts
+      case 282: // alts1
+      case 286: // gdpats
+      case 292: // apats1
+      case 293: // stmtlist
+      case 294: // stmts
         value.move< std::vector<expression_ref> > (s.value);
         break;
 
@@ -3545,7 +3533,7 @@ namespace yy {
 
 
 } // yy
-#line 3549 "parser.hh" // lalr1.cc:380
+#line 3537 "parser.hh" // lalr1.cc:380
 
 
 
