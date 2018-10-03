@@ -396,6 +396,9 @@ std::set<string> rename_pattern(const Module& m, expression_ref& pat, bool top =
 	return {};
     }
 
+    // 0. Handle literal values
+    if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double()) return {};
+
     // 1. Normalize pattern from (i) @ X y -> X y, (ii) X -> X, and (ii) y -> y
     //    Maybe do this in rename_infix?
     assert(not is_apply(pat.head()));
