@@ -19,6 +19,7 @@
 #include "computation/expression/var.H"
 #include "computation/expression/constructor.H"
 #include "desugar.H"
+#include "util/assert.hh"
 
 using std::string;
 using std::vector;
@@ -117,20 +118,6 @@ expression_ref desugar_infix(const Module& m, const vector<expression_ref>& T)
     return infix_parse_neg(m, {"",variable_symbol,2,-1,non_fix}, T2);
 }
 
-set<string> find_all_ids(const expression_ref& E)
-{
-    if (is_AST(E,"id"))
-	return {E.as_<AST_node>().value};
-
-    if (E.is_atomic()) return set<string>();
-
-    set<string> bound;
-    for(const auto& e:E.sub())
-	add(bound, find_all_ids(e));
-
-    return bound;
-}
-
 set<string> find_bound_vars(const expression_ref& E)
 {
     if (E.is_expression())
@@ -177,103 +164,7 @@ bool is_function_binding(const expression_ref& decl)
 
 bool is_irrefutable_pat(const expression_ref& E)
 {
-    std::abort();
-    return (E.size() == 1) and is_AST(E.sub()[0], "apat_var");
-}
-
-set<string> get_pattern_bound_vars(const expression_ref& decl)
-{
-    std::abort();
-    assert(is_AST(decl,"Decl"));
-
-    auto& lhs = decl.sub()[0];
-
-    return find_bound_vars(lhs);
-}
-
-vector<expression_ref> get_patterns(const expression_ref& decl)
-{
-    assert(is_AST(decl,"Decl"));
-
-    expression_ref lhs = decl.sub()[0];
-    assert(lhs.head().is_a<var>());
-
-    return lhs.sub();
-}
-
-expression_ref get_body(const expression_ref& decl)
-{
-    expression_ref rhs = decl.sub()[1];
-    assert(is_AST(rhs,"rhs"));
-    assert(rhs.size() == 1);
-    return rhs.sub()[0];
-}
-
-vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
-{
-    // Now we go through and translate groups of FunDecls.
-    vector<expression_ref> decls;
-    for(int i=0;i<v.size();i++)
-    {
-	auto& decl = v[i];
-
-	// This is a declaration, but not a type we're handling here.
-	if (not is_AST(decl,"Decl"))
-	{
-	    decls.push_back( decl );
-	    continue;
-	}
-
-	auto& lhs = decl.sub()[0];
-
-	// If its just a variable with no args, don't call def_function because ... its complicated?
-	if (lhs.is_a<var>())
-	{
-	    decls.push_back(decl.head() + lhs + decl.sub()[1].sub()[0]);
-	    continue;
-	}
-
-	auto& f = lhs.head();
-
-	// Skip pattern bindings
-	if (f.is_a<constructor>())
-	{
-	    decls.push_back(decl);
-	    continue;
-	}
-
-	vector<vector<expression_ref> > patterns;
-	vector<expression_ref> bodies;
-	string name = f.as_<var>().name;
-	patterns.push_back( get_patterns(decl) );
-	bodies.push_back( get_body(decl) );
-
-	for(int j=i+1;j<v.size();j++)
-	{
-	    if (not is_AST(v[j],"Decl")) break;
-	    auto& j_lhs = v[j].sub()[0];
-	    auto& j_f   = j_lhs.head();
-	    if (j_f.is_a<constructor>()) break;
-
-	    if (j_f.as_<var>().name != name) break;
-
-	    patterns.push_back( get_patterns(v[j]) );
-	    bodies.push_back( get_body(v[j]) );
-
-	    if (patterns.back().size() != patterns.front().size())
-		throw myexception()<<"Function '"<<name<<"' has different numbers of arguments!";
-	}
-	decls.push_back(AST_node("Decl") + var(name) + def_function(patterns,bodies) );
-
-	// skip the other bindings for this function
-	i += (patterns.size()-1);
-    }
-    return decls;
-}
-
-expression_ref get_fresh_id(const string& s, const expression_ref& /* E */)
-{
-    return AST_node("id",s);
+    return E.head().is_a<var>();
 }
 
 expression_ref shift_list(vector<expression_ref>& v)
@@ -286,8 +177,6 @@ expression_ref shift_list(vector<expression_ref>& v)
     v.pop_back();
     return head;
 }
-
-// FIXME: unapply( ): 
 
 // The issue here is to rewrite @ f x y -> f x y
 expression_ref unapply(const expression_ref& E)
@@ -635,17 +524,11 @@ expression_ref rename(const Module& m, const expression_ref& E, const set<string
 	}
 	else if (n.type == "ListComprehension")
 	{
-	    assert(v.size() == 2);
-	    auto& body = v[0];
-	    auto& stmts = v[1];
-
-	    auto w = stmts.sub();
 	    auto bound2 = bound;
-	    for(auto& stmt: w)
-		add(bound2, rename_stmt(m, stmt, bound2));
-	    stmts = expression_ref{stmts.head(),w};
 
-	    body = rename(m, body, bound2);
+	    for(int i=0;i<v.size()-1;i++)
+		add(bound2, rename_stmt(m, v[i], bound2));
+	    v.back() = rename(m, v.back(), bound2);
 
 	    return expression_ref{E.head(),v};
 	}
@@ -698,6 +581,91 @@ expression_ref rename(const Module& m, const expression_ref& E, const set<string
 	return expression_ref{E.head(),v};
     else
 	return E;
+}
+
+vector<expression_ref> get_patterns(const expression_ref& decl)
+{
+    assert(is_AST(decl,"Decl"));
+
+    expression_ref lhs = decl.sub()[0];
+    assert(lhs.head().is_a<var>());
+
+    return lhs.sub();
+}
+
+expression_ref get_body(const expression_ref& decl)
+{
+    expression_ref rhs = decl.sub()[1];
+    assert(is_AST(rhs,"rhs"));
+    assert(rhs.size() == 1);
+    return rhs.sub()[0];
+}
+
+vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
+{
+    // Now we go through and translate groups of FunDecls.
+    vector<expression_ref> decls;
+    for(int i=0;i<v.size();i++)
+    {
+	auto& decl = v[i];
+
+	// This is a declaration, but not a type we're handling here.
+	if (not is_AST(decl,"Decl"))
+	{
+	    decls.push_back( decl );
+	    continue;
+	}
+
+	auto& lhs = decl.sub()[0];
+
+	// If its just a variable with no args, don't call def_function because ... its complicated?
+	if (lhs.is_a<var>())
+	{
+	    decls.push_back(decl.head() + lhs + decl.sub()[1].sub()[0]);
+	    continue;
+	}
+
+	auto& f = lhs.head();
+
+	// Skip pattern bindings
+	if (f.is_a<constructor>())
+	{
+	    decls.push_back(decl);
+	    continue;
+	}
+
+	vector<vector<expression_ref> > patterns;
+	vector<expression_ref> bodies;
+	string name = f.as_<var>().name;
+	patterns.push_back( get_patterns(decl) );
+	bodies.push_back( get_body(decl) );
+
+	for(int j=i+1;j<v.size();j++)
+	{
+	    if (not is_AST(v[j],"Decl")) break;
+	    auto& j_lhs = v[j].sub()[0];
+	    auto& j_f   = j_lhs.head();
+	    if (j_f.is_a<constructor>()) break;
+
+	    if (j_f.as_<var>().name != name) break;
+
+	    patterns.push_back( get_patterns(v[j]) );
+	    bodies.push_back( get_body(v[j]) );
+
+	    if (patterns.back().size() != patterns.front().size())
+		throw myexception()<<"Function '"<<name<<"' has different numbers of arguments!";
+	}
+	decls.push_back(AST_node("Decl") + var(name) + def_function(patterns,bodies) );
+
+	// skip the other bindings for this function
+	i += (patterns.size()-1);
+    }
+    return decls;
+}
+
+expression_ref get_fresh_id(const string& s, const expression_ref& /* E */)
+{
+    return AST_node("id",s);
 }
 
 expression_ref desugar(const Module& m, const expression_ref& E)
@@ -773,18 +741,19 @@ expression_ref desugar(const Module& m, const expression_ref& E)
 	    expression_ref True = AST_node("SimpleQual") + bool_true;
 
 	    assert(v.size() >= 2);
-	    if (v.size() == 2 and (v[1] == True))
-		E2 = List(v[0]);
+	    if (v.size() == 2 and (v[0] == True))
+		E2 = List(v[1]);
 	    else if (v.size() == 2)
-		E2 = E.head() + v[0] + v[1] + True;
+		E2 = E.head() + v[0] + True + v[1];
 	    else
 	    {
-		expression_ref B = v[1];
-		v.erase(v.begin()+1);
+		// Pop the next qual from the FRONT of the list
+		expression_ref B = v[0];
+		v.erase(v.begin());
 		E2 = expression_ref{E.head(),v};
 
 		if (is_AST(B, "SimpleQual"))
-		    E2 = AST_node("If") + B.sub()[0] + E2 + AST_node("id","[]");
+		    E2 = AST_node("If") + B.sub()[0] + E2 + var("[]");
 		else if (is_AST(B, "PatQual"))
 		{
 		    expression_ref p = B.sub()[0];
@@ -792,29 +761,30 @@ expression_ref desugar(const Module& m, const expression_ref& E)
 		    if (is_irrefutable_pat(p))
 		    {
 			expression_ref f  = AST_node("Lambda") + p + E2;
-			E2 = {AST_node("id","concatMap"),f,l};
+			E2 = {var("Data.List.concatMap"),f,l};
 		    }
 		    else
 		    {
 			// Problem: "ok" needs to be a fresh variable.
 			expression_ref ok = get_fresh_id("ok",E);
-
-			expression_ref lhs1 = AST_node("funlhs1") + ok + p;
+			expression_ref lhs1 = ok + p;
 			expression_ref rhs1 = AST_node("rhs") + E2;
 			expression_ref decl1 = AST_node("Decl") + lhs1 + rhs1;
 
-			expression_ref lhs2 = AST_node("funlhs1") + ok + AST_node("WildcardPattern");
-			expression_ref rhs2 = AST_node("rhs") + AST_node("id","[]");
+			expression_ref lhs2 = ok + var(-1);
+			expression_ref rhs2 = AST_node("rhs") + var("[]");
 			expression_ref decl2 = AST_node("Decl") + lhs2 + rhs2;
 
 			expression_ref decls = AST_node("Decls") + decl1 + decl2;
-			expression_ref body = {AST_node("id","concatMap"),ok,l};
+			expression_ref body = {var("Data.List.concatMap"),ok,l};
 
 			E2 = AST_node("Let") + decls + body;
 		    }
 		}
 		else if (is_AST(B, "LetQual"))
 		    E2 = AST_node("Let") + B.sub()[0] + E2;
+		else
+		    std::abort();
 	    }
 	    return desugar(m,E2);
 	}
@@ -826,77 +796,82 @@ expression_ref desugar(const Module& m, const expression_ref& E)
 	    expression_ref body = v.back();
 	    v.pop_back();
 
-	    // 2. Find bound vars and convert vars to dummies.
-	    for(auto& e: v)
-		e = desugar(m, e);
-
-	    // 3. Desugar the body, binding vars mentioned in the lambda patterns.
+	    // 2. Desugar the body, binding vars mentioned in the lambda patterns.
 	    body = desugar(m, body);
 
 	    return def_function({v},{body}); 
 	}
 	else if (n.type == "Do")
 	{
-	    assert(is_AST(E.sub()[0],"Stmts"));
-	    vector<expression_ref> stmts = E.sub()[0].sub();
+	    auto& stmts = v;
+
+	    if (stmts.empty())
+		throw myexception()<<"Empty do block!";
+
+	    if (not is_AST(stmts.back(), "SimpleQual"))
+		throw myexception()<<"The last statement in a do block must be an expression!";
 
 	    // do { e }  =>  e
-	    if (stmts.size() == 1) 
-		return desugar(m,stmts[0]);
+	    if (stmts.size() == 1) {
+		auto& stmt = stmts.front();
+		assert(is_AST(stmt, "SimpleQual"));
+		return desugar(m,stmt.sub()[0]);
+	    }
 
-	    expression_ref first = stmts[0];
+	    auto first = stmts[0];
 	    stmts.erase(stmts.begin());
-	    expression_ref do_stmts = AST_node("Do") + expression_ref(AST_node("Stmts"),stmts);
+	    expression_ref do_stmts = expression_ref{AST_node("Do"),stmts};
 	    expression_ref result;
       
 	    // do {e ; stmts }  =>  e >> do { stmts }
-	    if (is_AST(first,"SimpleStmt"))
+	    if (is_AST(first,"SimpleQual"))
 	    {
 		expression_ref e = first.sub()[0];
-		expression_ref qop = AST_node("id",">>");
-		result = AST_node("infixexp") + e + qop + do_stmts;
+		result = {var("Compiler.Base.>>"), e, do_stmts};
 	    }
 
 	    // do { p <- e ; stmts} => let {ok p = do {stmts}; ok _ = fail "..."} in e >>= ok
 	    // do { v <- e ; stmts} => e >>= (\v -> do {stmts})
-	    else if (is_AST(first,"PatStmt"))
+	    else if (is_AST(first,"PatQual"))
 	    {
 		expression_ref p = first.sub()[0];
 		expression_ref e = first.sub()[1];
-		expression_ref qop = AST_node("id",">>=");
+		expression_ref qop = var("Compiler.Base.>>=");
 
 		if (is_irrefutable_pat(p))
 		{
 		    expression_ref lambda = AST_node("Lambda") + p + do_stmts;
-		    result = AST_node("infixexp") + e + qop + lambda;
+		    result = {qop,e,lambda};
 		}
 		else
 		{
-		    expression_ref fail = {AST_node("id","fail"),"Fail!"};
 		    expression_ref ok = get_fresh_id("ok",E);
-	  
-		    expression_ref lhs1 = AST_node("funlhs1") + ok + p;
+		    expression_ref lhs1 = ok + p;
 		    expression_ref rhs1 = AST_node("rhs") + do_stmts;
 		    expression_ref decl1 = AST_node("Decl") + lhs1 + rhs1;
 	  
-		    expression_ref lhs2 = AST_node("funlhs1") + ok + AST_node("WildcardPattern");
+		    expression_ref fail = {var("Compiler.Base.fail"),"Fail!"};
+		    expression_ref lhs2 = ok + var(-1);
 		    expression_ref rhs2 = AST_node("rhs") + fail;
 		    expression_ref decl2 = AST_node("Decl") + lhs2 + rhs2;
+
 		    expression_ref decls = AST_node("Decls") + decl1 +  decl2;
 
-		    expression_ref body = AST_node("infixexp") + e + qop + ok;
+		    expression_ref body = {qop,e,ok};
 
 		    result = AST_node("Let") + decls + body;
 		}
 	    }
 	    // do {let decls ; rest} = let decls in do {stmts}
-	    else if (is_AST(first,"LetStmt"))
+	    else if (is_AST(first,"LetQual"))
 	    {
 		expression_ref decls = first.sub()[0];
 		result = AST_node("Let") + decls + do_stmts;
 	    }
 	    else if (is_AST(first,"EmptyStmt"))
 		result = do_stmts;
+	    else
+		std::abort();
 
 	    return desugar(m,result);
 	}
@@ -1014,14 +989,14 @@ expression_ref desugar(const Module& m, const expression_ref& E)
 	}
 	else if (n.type == "enumFrom")
 	{
-	    expression_ref E2 = AST_node("id","enumFrom");
+	    expression_ref E2 = var("Prelude.enumFrom");
 	    for(auto& e: v)
 		E2 = {E2, e};
 	    return desugar(m, E2);
 	}
 	else if (n.type == "enumFromTo")
 	{
-	    expression_ref E2 = AST_node("id","enumFromTo");
+	    expression_ref E2 = var("Prelude.enumFromTo");
 	    for(auto& e: v)
 		E2 = {E2, e};
 	    return desugar(m, E2);
