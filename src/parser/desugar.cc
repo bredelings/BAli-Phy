@@ -501,6 +501,88 @@ expression_ref rename_decl(const Module& m, const expression_ref& decl, const se
 }
 
 
+set<string> rename_decls(const Module& m, expression_ref& decls, const set<string>& bound)
+{
+    assert(is_AST(decls,"TopDecls") or is_AST(decls,"Decls"));
+
+    if (not decls.size()) return {};
+
+    vector<expression_ref> v = decls.sub();
+
+    set<string> bound2 = bound;
+    bool top = is_AST(decls,"TopDecls");
+
+    // Find all the names bound HERE, versus in individual decls.
+
+    // The idea is that we only add unqualified names here, and they shadow
+    // qualified names.
+    set<string> bound_names;
+    for(auto& decl: v)
+    {
+	if (not is_AST(decl,"Decl")) continue;
+
+	auto w = decl.sub();
+	auto& lhs = w[0];
+	auto head = lhs.head();
+	assert(is_AST(head,"id"));
+	// For a constructor pattern, rename the whole lhs.
+	if (is_haskell_con_name(head.as_<AST_node>().value))
+	{
+	    assert(bound_names.empty());
+	    add(bound_names,rename_pattern(m, lhs, top));
+	}
+	// For a variable pattern, just rename the variable.
+	else if (lhs.size())
+	{
+	    add(bound_names,rename_pattern(m, head, top));
+	    lhs = expression_ref{head,lhs.sub()};
+	}
+	else
+	{
+	    add(bound_names,rename_pattern(m, head, top));
+	    lhs = head;
+	}
+	decl = expression_ref{decl.head(),w};
+    }
+
+    // Replace ids with dummies
+    add(bound2, bound_names);
+    for(auto& e: v)
+    {
+	if (is_AST(e,"Decl"))
+	    e = rename_decl(m, e, bound2);
+    }
+
+    decls = expression_ref{decls.head(),v};
+    return bound_names;
+}
+
+set<string> rename_stmt(const Module& m, expression_ref& stmt, const set<string>& bound)
+{
+    if (is_AST(stmt, "SimpleQual"))
+    {
+	stmt = rename(m,stmt,bound);
+	return {};
+    }
+    else if (is_AST(stmt, "PatQual"))
+    {
+	auto v = stmt.sub();
+	auto bound_vars = rename_pattern(m, v[0]);
+	v[1] = rename(m, v[1], bound);
+	stmt = expression_ref{stmt.head(),v};
+	return bound_vars;
+    }
+    else if (is_AST(stmt, "LetQual"))
+    {
+	auto v = stmt.sub();
+	auto bound_vars = rename_decls(m, v[0], bound);
+	stmt = expression_ref{stmt.head(),v};
+	return bound_vars;
+    }
+    else
+	std::abort();
+}
+
 expression_ref rename(const Module& m, const expression_ref& E, const set<string>& bound)
 {
     vector<expression_ref> v;
@@ -514,57 +596,27 @@ expression_ref rename(const Module& m, const expression_ref& E, const set<string
 	    std::abort();
 	else if (n.type == "Decls" or n.type == "TopDecls")
 	{
-	    set<string> bound2 = bound;
-	    bool top = is_AST(E,"TopDecls");
-
-	    // Find all the names bound HERE, versus in individual decls.
-
-	    // The idea is that we only add unqualified names here, and they shadow
-	    // qualified names.
-	    for(auto& decl: v)
-	    {
-		if (not is_AST(decl,"Decl")) continue;
-
-		auto w = decl.sub();
-		auto& lhs = w[0];
-		auto head = lhs.head();
-		assert(is_AST(head,"id"));
-		set<string> bound_names;
-		// For a constructor pattern, rename the whole lhs.
-		if (is_haskell_con_name(head.as_<AST_node>().value))
-		{
-		    assert(bound_names.empty());
-		    bound_names = rename_pattern(m, lhs, top);
-		}
-		// For a variable pattern, just rename the variable.
-		else if (lhs.size())
-		{
-		    bound_names = rename_pattern(m, head, top);
-		    lhs = expression_ref{head,lhs.sub()};
-		}
-		else
-		{
-		    bound_names = rename_pattern(m, head, top);
-		    lhs = head;
-		}
-		decl = expression_ref{decl.head(),w};
-		add(bound2, bound_names);
-	    }
-
-	    // Replace ids with dummies
-	    for(auto& e: v)
-	    {
-		if (is_AST(e,"Decl"))
-		    e = rename_decl(m, e, bound2);
-	    }
-
-	    return new expression(E.head(),v);
+	    expression_ref E2 = E;
+	    rename_decls(m, E2, bound);
+	    return E2;
 	}
 	else if (n.type == "Decl")
 	    std::abort();
 	else if (n.type == "WildcardPattern")
 	{
 	    return var(-1);
+	}
+	else if (n.type == "rhs")
+	{
+	    if (v.size() == 2)
+	    {
+		set<string> bound2 = bound;
+		add(bound2, rename_decls(m,v[1],bound));
+		v[0] = rename(m, v[0], bound2);
+	    }
+	    else
+		v[0] = rename(m, v[0], bound);
+	    return expression_ref{E.head(),v};
 	}
 	else if (n.type == "id")
 	{
@@ -583,262 +635,60 @@ expression_ref rename(const Module& m, const expression_ref& E, const set<string
 	}
 	else if (n.type == "ListComprehension")
 	{
-	    expression_ref E2 = E;
-	    // [ e | True   ]  =  [ e ]
-	    // [ e | q      ]  =  [ e | q, True ]
-	    // [ e | b, Q   ]  =  if b then [ e | Q ] else []
-	    // [ e | p<-l, Q]  =  let {ok p = [ e | Q ]; ok _ = []} in concatMap ok l
-	    // [ e | let decls, Q] = let decls in [ e | Q ]
+	    assert(v.size() == 2);
+	    auto& body = v[0];
+	    auto& stmts = v[1];
 
-	    expression_ref True = AST_node("SimpleQual") + bool_true;
+	    auto w = stmts.sub();
+	    auto bound2 = bound;
+	    for(auto& stmt: w)
+		add(bound2, rename_stmt(m, stmt, bound2));
+	    stmts = expression_ref{stmts.head(),w};
 
-	    assert(v.size() >= 2);
-	    if (v.size() == 2 and (v[1] == True))
-		E2 = AST_node("List") + v[0];
-	    else if (v.size() == 2)
-		E2 = E.head() + v[0] + v[1] + True;
-	    else 
-	    {
-		expression_ref B = v[1];
-		v.erase(v.begin()+1);
-		E2 = expression_ref{E.head(),v};
+	    body = rename(m, body, bound2);
 
-		if (is_AST(B, "SimpleQual"))
-		    E2 = AST_node("If") + B.sub()[0] + E2 + AST_node("id","[]");
-		else if (is_AST(B, "PatQual"))
-		{
-		    expression_ref p = B.sub()[0];
-		    expression_ref l = B.sub()[1];
-		    if (is_irrefutable_pat(p))
-		    {
-			expression_ref f  = AST_node("Lambda") + p + E2;
-			E2 = {AST_node("id","concatMap"),f,l};
-		    }
-		    else
-		    {
-			// Problem: "ok" needs to be a fresh variable.
-			expression_ref ok = get_fresh_id("ok",E);
-
-			expression_ref lhs1 = AST_node("funlhs1") + ok + p;
-			expression_ref rhs1 = AST_node("rhs") + E2;
-			expression_ref decl1 = AST_node("Decl") + lhs1 + rhs1;
-
-			expression_ref lhs2 = AST_node("funlhs1") + ok + AST_node("WildcardPattern");
-			expression_ref rhs2 = AST_node("rhs") + AST_node("id","[]");
-			expression_ref decl2 = AST_node("Decl") + lhs2 + rhs2;
-
-			expression_ref decls = AST_node("Decls") + decl1 + decl2;
-			expression_ref body = {AST_node("id","concatMap"),ok,l};
-
-			E2 = AST_node("Let") + decls + body;
-		    }
-		}
-		else if (is_AST(B, "LetQual"))
-		    E2 = AST_node("Let") + B.sub()[0] + E2;
-	    }
-	    return rename(m,E2,bound);
+	    return expression_ref{E.head(),v};
 	}
 	else if (n.type == "Lambda")
 	{
-	    // FIXME: Try to preserve argument names (in block_case( ), probably) when they are irrefutable apat_var's.
-
-	    // 1. Extract the lambda body
-	    expression_ref body = v.back();
-	    v.pop_back();
-
-	    // 2. Find bound vars and convert vars to dummies.
+	    // 1. Rename patterns for lambda arguments
 	    set<string> bound2 = bound;
-	    for(auto& e: v) {
-		add(bound2, find_bound_vars(e));
-		e = rename(m, e, bound2);
-	    }
+	    for(int i=0; i<v.size()-1; i++)
+		add(bound2, rename_pattern(m, v[i]));
 
-	    // 3. Rename the body, binding vars mentioned in the lambda patterns.
+	    // 2. Rename the body
+	    auto& body = v.back();
 	    body = rename(m, body, bound2);
 
-	    v.push_back(body);
 	    return expression_ref{E.head(),v};
 	}
 	else if (n.type == "Do")
 	{
-	    assert(is_AST(E.sub()[0],"Stmts"));
-	    vector<expression_ref> stmts = E.sub()[0].sub();
-
-	    // do { e }  =>  e
-	    if (stmts.size() == 1)
-		return rename(m,stmts[0],bound);
-
-	    expression_ref first = stmts[0];
-	    stmts.erase(stmts.begin());
-	    expression_ref do_stmts = AST_node("Do") + expression_ref(AST_node("Stmts"),stmts);
-	    expression_ref result;
-
-	    // do {e ; stmts }  =>  e >> do { stmts }
-	    if (is_AST(first,"SimpleStmt"))
-	    {
-		expression_ref e = first.sub()[0];
-		expression_ref qop = AST_node("id",">>");
-		result = AST_node("infixexp") + e + qop + do_stmts;
-	    }
-
-	    // do { p <- e ; stmts} => let {ok p = do {stmts}; ok _ = fail "..."} in e >>= ok
-	    // do { v <- e ; stmts} => e >>= (\v -> do {stmts})
-	    else if (is_AST(first,"PatStmt"))
-	    {
-		expression_ref p = first.sub()[0];
-		expression_ref e = first.sub()[1];
-		expression_ref qop = AST_node("id",">>=");
-
-		if (is_irrefutable_pat(p))
-		{
-		    expression_ref lambda = AST_node("Lambda") + p + do_stmts;
-		    result = AST_node("infixexp") + e + qop + lambda;
-		}
-		else
-		{
-		    expression_ref fail = {AST_node("id","fail"),"Fail!"};
-		    expression_ref ok = get_fresh_id("ok",E);
-
-		    expression_ref lhs1 = AST_node("funlhs1") + ok + p;
-		    expression_ref rhs1 = AST_node("rhs") + do_stmts;
-		    expression_ref decl1 = AST_node("Decl") + lhs1 + rhs1;
-
-		    expression_ref lhs2 = AST_node("funlhs1") + ok + AST_node("WildcardPattern");
-		    expression_ref rhs2 = AST_node("rhs") + fail;
-		    expression_ref decl2 = AST_node("Decl") + lhs2 + rhs2;
-		    expression_ref decls = AST_node("Decls") + decl1 +  decl2;
-
-		    expression_ref body = AST_node("infixexp") + e + qop + ok;
-
-		    result = AST_node("Let") + decls + body;
-		}
-	    }
-	    // do {let decls ; rest} = let decls in do {stmts}
-	    else if (is_AST(first,"LetStmt"))
-	    {
-		expression_ref decls = first.sub()[0];
-		result = AST_node("Let") + decls + do_stmts;
-	    }
-	    else if (is_AST(first,"EmptyStmt"))
-		result = do_stmts;
-
-	    return rename(m,result,bound);
-	}
-	else if (n.type == "If")
-	{
-	    for(auto& e: v)
-		e = rename(m, e, bound);
-
-	    return case_expression(v[0],true,v[1],v[2]);
-	}
-	else if (n.type == "LeftSection")
-	{
-	    // FIXME... the infixexp needs to parse the same as if it was parenthesized.
-	    // FIXME... probably we need to do a disambiguation on the infix expression. (infixexp op x)
-	    std::set<var> free_vars;
-	    for(auto& e: v) {
-		e = rename(m, e, bound);
-		add(free_vars, get_free_indices(e));
-	    }
-	    return apply_expression(v[1],v[0]);
-	}
-	else if (n.type == "RightSection")
-	{
-	    // FIXME... probably we need to do a disambiguation on the infix expression. (x op infixexp)
-	    // FIXME... the infixexp needs to parse the same as if it was parenthesized.
-	    std::set<var> free_vars;
-	    for(auto& e: v) {
-		e = rename(m, e, bound);
-		add(free_vars, get_free_indices(e));
-	    }
-	    int safe_var_index = 0;
-	    if (not free_vars.empty())
-		safe_var_index = max_index(free_vars)+1;
-	    var vsafe(safe_var_index);
-	    return lambda_quantify(vsafe,apply_expression(apply_expression(v[0],vsafe),v[1]));
+	    auto bound2 = bound;
+	    for(auto& stmt: v)
+		add(bound2, rename_stmt(m, stmt, bound2));
+	    return expression_ref{E.head(),v};
 	}
 	else if (n.type == "Let")
 	{
-	    expression_ref decls_ = v[0];
-	    assert(is_AST(decls_,"Decls"));
-	    expression_ref body = v[1];
+	    auto& decls = v[0];
+	    auto& body = v[1];
 
-	    // transform "let (a,b) = E in F" => "case E of (a,b) -> F"
-	    {
-		expression_ref decl = decls_.sub()[0];
-		if (is_AST(decl,"Decl"))
-		{
-		    expression_ref pat = decl.sub()[0];
-		    expression_ref rhs = decl.sub()[1];
-		    // let pat = rhs in body -> case rhs of {pat->body}
-		    if (is_AST(pat,"pat"))
-		    {
-			assert(is_AST(rhs,"rhs"));
-			expression_ref pat0 = pat.sub()[0];
-			if (is_AST(pat0,"Tuple"))
-			{
-			    if (decls_.size() != 1) throw myexception()<<"Can't currently handle pattern let with more than one decl.";
-			    expression_ref alt = AST_node("alt") + pat + body;
-			    expression_ref alts = AST_node("alts") + alt;
-			    expression_ref EE = AST_node("Case") + rhs.sub()[0] + alts;
-			    return rename(m, EE, bound);
-			}
-		    }
-		}
-	    }
-
-	    // parse the decls and bind declared names internally to the decls.
-	    v[0] = rename(m, v[0], bound);
-
-	    vector<pair<var,expression_ref>> decls;
-
-	    // find the bound var names + construct arguments to let_obj()
-	    set<string> bound2 = bound;
-	    for(const auto& decl: v[0].sub())
-	    {
-		if (is_AST(decl,"EmptyDecl")) continue;
-
-		var x = decl.sub()[0].as_<var>().name;
-		auto E = decl.sub()[1];
-
-		decls.push_back({x,E});
-		bound2.insert(x.name);
-	    }
-
-	    // finally rename let-body, now that we know the bound vars.
+	    auto bound2 = bound;
+	    add(bound2, rename_decls(m, decls, bound));
 	    body = rename(m, body, bound2);
 
-	    // construct the new let expression.
-	    return let_expression(decls, body);
+	    return expression_ref{E.head(),v};
 	}
-	else if (n.type == "Case")
+	else if (n.type == "alt")
 	{
-	    expression_ref case_obj = rename(m, v[0], bound);
-	    vector<expression_ref> alts = v[1].sub();
-	    vector<expression_ref> patterns;
-	    vector<expression_ref> bodies;
-	    for(const auto& alt: alts)
-	    {
-		set<string> bound2 = bound;
-		add(bound2, find_bound_vars(alt.sub()[0]));
-		patterns.push_back(rename(m, alt.sub()[0], bound2) );
+	    auto& pat = v[0];
+	    auto& body = v[1];
+	    auto bound2 = bound;
+	    add(bound2, rename_pattern(m, pat));
+	    body = rename(m, body, bound2);
 
-		// Handle where-clause.
-		assert(alt.size() == 2 or alt.size() == 3);
-		expression_ref body = alt.sub()[1];
-
-		if (is_AST(body,"GdPat"))
-		    throw myexception()<<"Guard patterns not yet implemented!";
-
-		if (alt.size() == 3)
-		{
-		    assert(is_AST(alt.sub()[2],"Decls"));
-		    body = AST_node("Let") + alt.sub()[2] + body;
-		}
-
-		bodies.push_back(rename(m, body, bound2) );
-	    }
-	    return case_expression(case_obj, patterns, bodies);
+	    return expression_ref{E.head(),v};
 	}
     }
 
