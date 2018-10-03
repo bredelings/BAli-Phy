@@ -55,8 +55,6 @@
 
 
   expression_ref make_list(const std::vector<expression_ref>& items);
-  expression_ref make_flattenedpquals(const std::vector<expression_ref>& pquals);
-  expression_ref make_squals(const std::vector<expression_ref>& squals);
   expression_ref make_alts(const std::vector<expression_ref>& alts);
   expression_ref yy_make_alt(const expression_ref& pat, const expression_ref& alt_rhs);
   expression_ref make_alt_rhs(const expression_ref& ralt, const expression_ref& wherebinds);
@@ -397,8 +395,10 @@
 %type <expression_ref> list
 %type <std::vector<expression_ref>> lexps
 
-%type <expression_ref> flattenedpquals
+ /* 
+%type <std::vector<expression_ref>> flattenedpquals 
 %type <std::vector<expression_ref>> pquals
+ */
 %type <std::vector<expression_ref>> squals
 %type <expression_ref> transformqual
 
@@ -1126,11 +1126,11 @@ tup_tail: texp commas_tup_tail
 
 list: texp                       { $$ = {AST_node("id",":"),$1,AST_node("id","[]")}; }
 |     lexps                      { $$ = make_list($1); }
-|     texp ".."                  { $$ = new expression(AST_node("enumFrom"),{$1}); }
-|     texp "," exp ".."          { $$ = new expression(AST_node("enumFromThen"),{$1,$3}); }
-|     texp ".." exp              { $$ = new expression(AST_node("enumFromTo"),{$1,$3}); }
-|     texp "," exp ".." exp      { $$ = new expression(AST_node("enumFromToThen"),{$1,$3,$5}); }
-|     texp "|" flattenedpquals   { $$ = new expression(AST_node("ListComprehension"),{$1,$3}); }
+|     texp ".."                  { $$ = expression_ref(AST_node("enumFrom"),{$1}); }
+|     texp "," exp ".."          { $$ = expression_ref(AST_node("enumFromThen"),{$1,$3}); }
+|     texp ".." exp              { $$ = expression_ref(AST_node("enumFromTo"),{$1,$3}); }
+|     texp "," exp ".." exp      { $$ = expression_ref(AST_node("enumFromToThen"),{$1,$3,$5}); }
+|     texp "|" squals            { auto quals = $3; quals.push_back($1); $$ = expression_ref(AST_node("ListComprehension"),quals); }
 
 lexps: lexps "," texp            { std::swap($$,$1); $$.push_back($3);}
 |      texp "," texp             { $$.push_back($1); $$.push_back($3);}
@@ -1138,10 +1138,12 @@ lexps: lexps "," texp            { std::swap($$,$1); $$.push_back($3);}
 
 /* ------------- List Comprehensions ----------------------------- */
 
-flattenedpquals: pquals                   {$$ = make_flattenedpquals($1);}
+/*
+flattenedpquals: pquals                   {std:swap($$,$1);}
 
 pquals: squals "|" pquals                 {$$.push_back(make_squals($1));$$.insert($$.end(),$3.begin(),$3.end());}
 |       squals                            {$$.push_back(make_squals($1));}
+*/
 
 squals: squals "," transformqual          {std::swap($$,$1); $$.push_back($3);}
 |       squals "," qual                   {std::swap($$,$1); $$.push_back($3);}
@@ -1658,19 +1660,6 @@ expression_ref make_list(const vector<expression_ref>& pquals)
     for(int i=pquals.size()-1;i>=0;i--)
 	L = {cons,pquals[i],L};
     return L;
-}
-
-expression_ref make_flattenedpquals(const vector<expression_ref>& pquals)
-{
-    if (pquals.size() == 1)
-	return pquals[0];
-    else
-	return new expression(AST_node("ParQuals"),pquals);
-}
-
-expression_ref make_squals(const vector<expression_ref>& squals)
-{
-    return new expression(AST_node("SQuals"),squals);
 }
 
 expression_ref make_alts(const vector<expression_ref>& alts)
