@@ -204,9 +204,9 @@ filter p (x:xs) = if (p x) then x:(filter p xs) else (filter p xs);
 -- partition
 
 infixr 9 !!;
-h:t !! 0 = h;
-h:t !! i = t !! (i-1);
-_   !! _ = error "Out of bounds list index!";
+(h:t) !! 0 = h;
+(h:t) !! i = t !! (i-1);
+_     !! _ = error "Out of bounds list index!";
 
 -- elemIndex
 
