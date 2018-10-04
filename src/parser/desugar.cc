@@ -748,7 +748,7 @@ expression_ref desugar(const Module& m, const expression_ref& E)
 
 	    assert(v.size() >= 2);
 	    if (v.size() == 2 and (v[0] == True))
-		E2 = List(v[1]);
+		E2 = {var(":"),v[1],var("[]")};
 	    else if (v.size() == 2)
 		E2 = E.head() + v[0] + True + v[1];
 	    else
