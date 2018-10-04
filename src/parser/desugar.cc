@@ -181,13 +181,17 @@ expression_ref shift_list(vector<expression_ref>& v)
 // The issue here is to rewrite @ f x y -> f x y
 expression_ref unapply(const expression_ref& E)
 {
-    if (not is_apply(E.head())) return E;
+    if (not E.size()) return E;
 
+    auto head = E.head();
     auto args = E.sub();
-    auto head = shift_list(args);
+    if (is_apply(E.head()))
+	head = shift_list(args);
+
     // We shouldn't have e.g. (@ (@ f x) y) -- this should already be dealt with by rename_infix
     assert(not is_apply(head.head()));
     assert(not head.size());
+
     for(auto& arg: args)
 	arg = unapply(arg);
     assert(is_AST(head,"id"));
