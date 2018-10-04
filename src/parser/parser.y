@@ -1649,7 +1649,10 @@ expression_ref make_do(const vector<expression_ref>& stmts)
 
 expression_ref yy_make_tuple(const vector<expression_ref>& tup_exprs)
 {
-    return new expression(AST_node("id",tuple_head(tup_exprs.size()).name()),tup_exprs);
+    expression_ref t = AST_node("id", tuple_head(tup_exprs.size()).name());
+    for(auto& e: tup_exprs)
+	t = {t,e};
+    return t;
 }
 
 
