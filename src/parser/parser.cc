@@ -2602,13 +2602,13 @@ namespace yy {
 
   case 310:
 #line 1104 "parser.y" // lalr1.cc:870
-    {yylhs.value.as< expression_ref > () = new expression(AST_node("LeftSection"),{make_infixexp(yystack_[1].value.as< std::vector<expression_ref> > ()),yystack_[0].value.as< std::string > ()});}
+    {yylhs.value.as< expression_ref > () = new expression(AST_node("LeftSection"),{make_infixexp(yystack_[1].value.as< std::vector<expression_ref> > ()),make_id(yystack_[0].value.as< std::string > ())});}
 #line 2607 "parser.cc" // lalr1.cc:870
     break;
 
   case 311:
 #line 1105 "parser.y" // lalr1.cc:870
-    {yylhs.value.as< expression_ref > () = new expression(AST_node("RightSection"),{yystack_[1].value.as< std::string > (),make_infixexp(yystack_[0].value.as< std::vector<expression_ref> > ())});}
+    {yylhs.value.as< expression_ref > () = new expression(AST_node("RightSection"),{make_id(yystack_[1].value.as< std::string > ()),make_infixexp(yystack_[0].value.as< std::vector<expression_ref> > ())});}
 #line 2613 "parser.cc" // lalr1.cc:870
     break;
 

@@ -1101,8 +1101,8 @@ aexp2: qvar                   {$$ = make_id($1);}
 /* ------------- Tuple expressions ------------------------------- */
 
 texp: exp             {std::swap($$,$1);}
-|     infixexp qop    {$$ = new expression(AST_node("LeftSection"),{make_infixexp($1),$2});}
-|     qopm infixexp   {$$ = new expression(AST_node("RightSection"),{$1,make_infixexp($2)});}
+|     infixexp qop    {$$ = new expression(AST_node("LeftSection"),{make_infixexp($1),make_id($2)});}
+|     qopm infixexp   {$$ = new expression(AST_node("RightSection"),{make_id($1),make_infixexp($2)});}
 /* view patterns 
 |     exp "->" texp
 */
