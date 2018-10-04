@@ -582,6 +582,7 @@ expression_ref rename(const Module& m, const expression_ref& E, const set<string
 
     for(auto& e: v)
 	e = rename(m, e, bound);
+
     if (E.size())
 	return expression_ref{E.head(),v};
     else
@@ -927,8 +928,9 @@ expression_ref desugar(const Module& m, const expression_ref& E)
 		    expression_ref pat = decl.sub()[0];
 		    expression_ref rhs = decl.sub()[1];
 		    // let pat = rhs in body -> case rhs of {pat->body}
-		    if (is_AST(pat,"pat"))
+		    if (pat.head().is_a<constructor>())
 		    {
+			std::abort();
 			assert(is_AST(rhs,"rhs"));
 			expression_ref pat0 = pat.sub()[0];
 			if (is_AST(pat0,"Tuple"))
