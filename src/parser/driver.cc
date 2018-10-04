@@ -45,13 +45,13 @@ LayoutContext driver::get_offside(const yy::parser::location_type& loc)
 
 void driver::push_error_message(const std::pair<location_type,std::string>& e)
 {
-    std::cerr<<"Pushing error message '"<<e.second<<"' at "<<e.first<<"\n";
+//    std::cerr<<"Pushing error message '"<<e.second<<"' at "<<e.first<<"\n";
     error_messages.push_back(e);
 }
 
 void driver::pop_error_message()
 {
-    std::cerr<<"Popping error message\n";
+//    std::cerr<<"Popping error message\n";
     if (error_messages.empty())
 	throw myexception()<<"No message to pop!";
     error_messages.pop_back();
