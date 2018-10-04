@@ -15,7 +15,6 @@ std::string get_func_name(const expression_ref& decl);
 bool is_pattern_binding(const expression_ref& decl);
 bool is_function_binding(const expression_ref& decl);
 
-expression_ref parse_haskell_line(const Module& P, const std::string& line);
 expression_ref rename_infix(const Module& p, const expression_ref&);
 expression_ref rename(const Module& p, const expression_ref&);
 expression_ref rename(const Module& p, const expression_ref&,const std::set<std::string>&);

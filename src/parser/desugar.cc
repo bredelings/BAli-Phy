@@ -1018,11 +1018,6 @@ expression_ref desugar(const Module& m, const expression_ref& E)
 	return E;
 }
 
-expression_ref parse_haskell_line(const Module& P, const string& line)
-{
-    return desugar(P, parse_haskell_line(line));
-}
-
 bool is_all_space(const string& line)
 {
     for(int i=0;i<line.size();i++)
