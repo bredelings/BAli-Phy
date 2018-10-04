@@ -669,7 +669,7 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
 
 expression_ref get_fresh_id(const string& s, const expression_ref& /* E */)
 {
-    return AST_node("id",s);
+    return var(s);
 }
 
 expression_ref desugar(const Module& m, const expression_ref& E)
