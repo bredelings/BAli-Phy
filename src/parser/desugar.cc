@@ -513,6 +513,7 @@ expression_ref rename(const Module& m, const expression_ref& E, const set<string
 	}
 	else if (n.type == "id")
 	{
+	    assert(v.empty());
 	    // Local vars bind id's tighter than global vars.
 	    if (includes(bound,n.value))
 		return var(n.value);
