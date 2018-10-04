@@ -98,7 +98,9 @@
 
   expression_ref make_stmts(const std::vector<expression_ref>& stmts);
 
-#line 102 "parser.hh" // lalr1.cc:380
+  expression_ref yy_make_string(const std::string&);
+
+#line 104 "parser.hh" // lalr1.cc:380
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -182,7 +184,7 @@
 
 
 namespace yy {
-#line 186 "parser.hh" // lalr1.cc:380
+#line 188 "parser.hh" // lalr1.cc:380
 
 
 
@@ -3533,7 +3535,7 @@ namespace yy {
 
 
 } // yy
-#line 3537 "parser.hh" // lalr1.cc:380
+#line 3539 "parser.hh" // lalr1.cc:380
 
 
 

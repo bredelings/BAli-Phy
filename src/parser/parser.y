@@ -62,6 +62,8 @@
   expression_ref make_gdpat(const expression_ref& guardquals, const expression_ref& exp);
 
   expression_ref make_stmts(const std::vector<expression_ref>& stmts);
+
+  expression_ref yy_make_string(const std::string&);
 }
 
 // The parsing context.
@@ -1443,7 +1445,7 @@ consym:  CONSYM  { $$ = $1; }
 /* ------------- Literal ----------------------------------------- */
 
 literal: CHAR     {$$ = $1;}
-|        STRING   {$$ = String($1);}
+|        STRING   {$$ = yy_make_string($1);}
 |        INTEGER  {$$ = $1;}
 |        RATIONAL {$$ = $1;}
 
@@ -1717,3 +1719,10 @@ expression_ref make_infix(const string& infix, optional<int>& prec, vector<strin
     return new expression(AST_node("FixityDecl"),e);
 }
 
+expression_ref yy_make_string(const std::string& s)
+{
+    vector<expression_ref> chars;
+    for(char c: s)
+	chars.push_back(c);
+    return make_list(chars);
+}
