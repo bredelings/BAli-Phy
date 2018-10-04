@@ -278,7 +278,7 @@ yy::parser::symbol_type varid(const yy::parser::location_type& loc)
 	{
 	case parser::token::TOK_DO:
 	case parser::token::TOK_MDO:
-	    std::cerr<<"switch to <layout_do> @ "<<loc<<"\n";
+//	    std::cerr<<"switch to <layout_do> @ "<<loc<<"\n";
 	    yy_push_state(layout_do);
 	    break;
 	case parser::token::TOK_OF:
@@ -286,11 +286,11 @@ yy::parser::symbol_type varid(const yy::parser::location_type& loc)
 	case parser::token::TOK_LET:
 	case parser::token::TOK_WHERE:
 	case parser::token::TOK_REC:
-	    std::cerr<<"switch to <layout> @ "<<loc<<"\n";
+//	    std::cerr<<"switch to <layout> @ "<<loc<<"\n";
 	    yy_push_state(layout);
 	    break;
 	case parser::token::TOK_IF:
-	    std::cerr<<"switch to <layout_do> @ "<<loc<<"\n";
+//	    std::cerr<<"switch to <layout_do> @ "<<loc<<"\n";
 	    yy_push_state(layout_if);
 	    break;
 	default:
@@ -460,16 +460,16 @@ boost::optional<yy::parser::symbol_type> driver::do_bol(const yy::parser::locati
     auto x = get_offside(loc);
     int delta_offset = x.offset;
     bool gen_semis = x.gen_semis;
-    std::cerr<<"do_bol @ "<<loc<<std::endl;
+//    std::cerr<<"do_bol @ "<<loc<<std::endl;
     if (delta_offset < 0)
     {
-	std::cerr<<"offset = "<<loc.end.column<<", LT, generating '}'"<<std::endl;
+//	std::cerr<<"offset = "<<loc.end.column<<", LT, generating '}'"<<std::endl;
 	pop_context();
 	return yy::parser::make_VCCURLY(loc);
     }
     else if (delta_offset == 0 and gen_semis)
     {
-	std::cerr<<"offset = "<<loc.end.column<<", EQ, generating ';'"<<std::endl;
+//	std::cerr<<"offset = "<<loc.end.column<<", EQ, generating ';'"<<std::endl;
 	yy_pop_state();
 	return yy::parser::make_SEMI(loc);
     }
@@ -484,14 +484,14 @@ yy::parser::symbol_type driver::new_layout_context(const yy::parser::location_ty
 {
     yy_pop_state();
     int offset = loc.end.column;
-    std::cerr<<"Opening new layout context at "<<loc<<std::endl;
+//    std::cerr<<"Opening new layout context at "<<loc<<std::endl;
     if (auto layout_context = get_context())
     {
 	int prev_offset = layout_context->offset;
 	if ((strict and prev_offset > offset) or
 	    ((not strict) and prev_offset >= offset))
 	{
-	    std::cerr<<"   - Going to layout_left"<<std::endl;
+//	    std::cerr<<"   - Going to layout_left"<<std::endl;
 	    yy_push_state(layout_left);
 	    return yy::parser::symbol_type(tok,loc);
 	}
@@ -503,7 +503,7 @@ yy::parser::symbol_type driver::new_layout_context(const yy::parser::location_ty
 
 yy::parser::symbol_type driver::do_layout_left(const yy::parser::location_type& loc)
 {
-    std::cerr<<"Doing layout_left at "<<loc<<std::endl;
+//    std::cerr<<"Doing layout_left at "<<loc<<std::endl;
     yy_pop_state();
     yy_push_state(bol);
     return yy::parser::make_VCCURLY(loc);
