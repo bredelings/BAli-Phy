@@ -493,9 +493,9 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 		if (constants.count(R2) and not C.reg_is_changeable(R2) and not used) continue;
 
 		if (not used)
-		    o<<name<<":<"<<R2<<">:s -> "<<name2<<":n;\n";
+		    o<<name<<":<"<<R2<<"> -> "<<name2<<";\n";
 		else
-		    o<<name<<":<"<<R2<<">:s -> "<<name2<<":n [color=\"#007777\"];\n";
+		    o<<name<<":<"<<R2<<"> -> "<<name2<<" [color=\"#007777\"];\n";
 	    }
 	}
 	else
@@ -516,15 +516,14 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 		if (constants.count(R2) and not C.reg_is_changeable(R2) and not used) continue;
 
 		if (not used)
-		    o<<name<<":s -> "<<name2<<":n;\n";
+		    o<<name<<" -> "<<name2<<";\n";
 		else
-		    o<<name<<":s -> "<<name2<<":n [color=\"#007777\"];\n";
+		    o<<name<<" -> "<<name2<<" [color=\"#007777\"];\n";
 	    }
 	}
 
 	// call-edges
 	// FIXME:Drawing - how can allow these to go to the right, but not above, if no ref edges?
-	// FIXME:Drawing - doing :w and {rank=same; n -> n} makes the edge drawn over the node icon.
 	if (C.reg_has_call(R))
 	{
 	    int R2 = C.call_for_reg(R);
@@ -536,15 +535,13 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 		    created_call = true;
 
 	    string name2 = "n" + convertToString(R2);
-	    if (created_call) o<<"{rank=same; ";
 	    if (created_call)
 		o<<name<<" -> "<<name2;
 	    else
-		o<<name<<":e -> "<<name2<<":w ";
+		o<<name<<" -> "<<name2<<" ";
 	    o<<"[";
 	    o<<"color=\"#007700\"";
 	    o<<"];";
-	    if (created_call) o<<"}";
 	    o<<"\n";
 	}
 
@@ -559,7 +556,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	    if (is_ref_edge_also) continue;
 
 	    string name2 = "n" + convertToString(R2);
-	    o<<name<<":s -> "<<name2<<":n ";
+	    o<<name<<" -> "<<name2<<" ";
 	    o<<"[";
 	    o<<"color=\"#007777\"";
 	    o<<",style=dashed";
