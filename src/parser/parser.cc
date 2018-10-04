@@ -2662,7 +2662,7 @@ namespace yy {
 
   case 320:
 #line 1133 "parser.y" // lalr1.cc:870
-    { yystack_[0].value.as< std::vector<expression_ref> > ().push_back(yystack_[2].value.as< expression_ref > ()); yylhs.value.as< expression_ref > () = expression_ref(AST_node("ListComprehension"),yystack_[0].value.as< std::vector<expression_ref> > ()); }
+    { auto quals = yystack_[0].value.as< std::vector<expression_ref> > (); quals.push_back(yystack_[2].value.as< expression_ref > ()); yylhs.value.as< expression_ref > () = expression_ref(AST_node("ListComprehension"),quals); }
 #line 2667 "parser.cc" // lalr1.cc:870
     break;
 
@@ -5896,7 +5896,7 @@ expression_ref make_infixexp(const vector<expression_ref>& args)
 
 expression_ref make_minus(const expression_ref& exp)
 {
-    return new expression(AST_node("neg"),{exp});
+    return new expression(AST_node("infixexp"),{AST_node("neg"),exp});
 }
 
 expression_ref make_fexp(const vector<expression_ref>& args)
