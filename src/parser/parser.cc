@@ -2626,7 +2626,7 @@ namespace yy {
 
   case 314:
 #line 1129 "parser.y" // lalr1.cc:870
-    { yylhs.value.as< expression_ref > () = {AST_node("id",":"),yystack_[0].value.as< expression_ref > (),constructor("[]",0)}; }
+    { yylhs.value.as< expression_ref > () = {AST_node("id",":"),yystack_[0].value.as< expression_ref > (),AST_node("id","[]")}; }
 #line 2631 "parser.cc" // lalr1.cc:870
     break;
 
