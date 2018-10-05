@@ -16,15 +16,6 @@ using std::set;
 using std::map;
 using std::deque;
 
-struct renamer_state
-{
-    const Module& m;
-    int var_index;
-    var get_fresh_wildcard() { return var(-var_index++);}
-    var get_fresh_var() { return var(var_index++);}
-    var get_fresh_var(const string& name) {return var(name,var_index++);}
-};
-
 expression_ref infix_parse(const Module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
 
 /// Expression is of the form ... op1 [E1 ...]. Get right operand of op1.
@@ -264,13 +255,33 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 
 typedef set<string> bound_var_info;
 
+struct renamer_state
+{
+    const Module& m;
+
+    int var_index=0;
+
+    var get_fresh_wildcard() { return var(-var_index++);}
+    var get_fresh_var() { return var(var_index++);}
+    var get_fresh_var(const string& name) {return var(name,var_index++);}
+
+    bound_var_info rename_pattern(const Module& m, expression_ref& pat, bool top = false);
+    expression_ref rename_decl(const Module& m, const expression_ref& decl, const bound_var_info& bound);
+    bound_var_info rename_decls(const Module& m, expression_ref& decls, const bound_var_info& bound);
+    bound_var_info rename_stmt(const Module& m, expression_ref& stmt, const bound_var_info& bound);
+    expression_ref rename(const Module& m, const expression_ref& E, const bound_var_info& bound);
+
+    renamer_state(const Module& m_):m(m_) {}
+};
+
 expression_ref rename(const Module& m, const expression_ref& E)
 {
-    return rename(m,E,set<string>());
+    renamer_state Rn(m);
+    return Rn.rename(m,E,set<string>());
 }
 
 
-bound_var_info rename_pattern(const Module& m, expression_ref& pat, bool top = false)
+bound_var_info renamer_state::rename_pattern(const Module& m, expression_ref& pat, bool top)
 {
     // 0. Handle WildCardPattern
     if (is_AST(pat,"WildcardPattern"))
@@ -342,7 +353,7 @@ bound_var_info rename_pattern(const Module& m, expression_ref& pat, bool top = f
 }
 
 // FIXME make a RnM (or Renamer) object for renaming that can store the module, the set of bound vars, etc.
-expression_ref rename_decl(const Module& m, const expression_ref& decl, const bound_var_info& bound)
+expression_ref renamer_state::rename_decl(const Module& m, const expression_ref& decl, const bound_var_info& bound)
 {
     assert(is_AST(decl,"Decl"));
     assert(decl.is_expression());
@@ -384,7 +395,7 @@ expression_ref rename_decl(const Module& m, const expression_ref& decl, const bo
 }
 
 
-bound_var_info rename_decls(const Module& m, expression_ref& decls, const bound_var_info& bound)
+bound_var_info renamer_state::rename_decls(const Module& m, expression_ref& decls, const bound_var_info& bound)
 {
     assert(is_AST(decls,"TopDecls") or is_AST(decls,"Decls"));
 
@@ -440,7 +451,7 @@ bound_var_info rename_decls(const Module& m, expression_ref& decls, const bound_
     return bound_names;
 }
 
-bound_var_info rename_stmt(const Module& m, expression_ref& stmt, const bound_var_info& bound)
+bound_var_info renamer_state::rename_stmt(const Module& m, expression_ref& stmt, const bound_var_info& bound)
 {
     if (is_AST(stmt, "SimpleQual"))
     {
@@ -466,7 +477,7 @@ bound_var_info rename_stmt(const Module& m, expression_ref& stmt, const bound_va
 	std::abort();
 }
 
-expression_ref rename(const Module& m, const expression_ref& E, const bound_var_info& bound)
+expression_ref renamer_state::rename(const Module& m, const expression_ref& E, const bound_var_info& bound)
 {
     vector<expression_ref> v;
     if (E.is_expression())
