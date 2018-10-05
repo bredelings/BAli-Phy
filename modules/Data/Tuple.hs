@@ -1,12 +1,12 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Data.Tuple where
-{
-fst (x,y) = x;
 
-snd (x,y) = y;
+fst (x,y) = x
 
-swap (x,y) = (y,x);
+snd (x,y) = y
 
-curry f x y = f (x,y);
-uncurry f p = f (fst p) (snd p);
-}
+swap (x,y) = (y,x)
+
+curry f x y = f (x,y)
+uncurry f p = f (fst p) (snd p)
+

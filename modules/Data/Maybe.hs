@@ -1,36 +1,36 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Data.Maybe where
-{
-import Data.Bool;
 
-data Maybe a = Just a | Nothing;
+import Data.Bool
 
-maybe n _ Nothing  = n;
-maybe _ f (Just x) = f x;
+data Maybe a = Just a | Nothing
 
-isJust Nothing = False;
-isJust _       = True;
+maybe n _ Nothing  = n
+maybe _ f (Just x) = f x
 
-isNothing Nothing = True;
-isNothing _       = False;
+isJust Nothing = False
+isJust _       = True
 
-fromJust (Just x) = x;
--- fromJust Nothing  = error "Maybe.fromJust: Nothing";
+isNothing Nothing = True
+isNothing _       = False
 
-fromMaybe d x = case x of {Nothing -> d; Just v -> v};
+fromJust (Just x) = x
+-- fromJust Nothing  = error "Maybe.fromJust: Nothing"
 
-maybeToList Nothing = [];
-maybeToList (Just x) = [x];
+fromMaybe d x = case x of Nothing -> d
+                          Just v -> v
 
-listToMaybe [] = Nothing;
-listToMaybe (x:_) = Just x;
--- listToMaybe = foldr (const . Just) Nothing;
+maybeToList Nothing = []
+maybeToList (Just x) = [x]
+
+listToMaybe [] = Nothing
+listToMaybe (x:_) = Just x
+-- listToMaybe = foldr (const . Just) Nothing
 -- GHC uses this to fused via the foldr/build rule.
 
--- catMaybes ls = [ x | Just x <- ls];
+-- catMaybes ls = [ x | Just x <- ls]
 
-mapMaybes _     [] = [];
-mapMaybes f (x:xs) = let {rs = mapMaybes f xs} in
-                     case f x of {Nothing -> rs;
-                                  Just r  -> r:rs};
-}
+mapMaybes _     [] = []
+mapMaybes f (x:xs) = let rs = mapMaybes f xs
+                     in case f x of Nothing -> rs
+                                    Just r  -> r:rs
