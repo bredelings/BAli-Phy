@@ -1,18 +1,18 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Data.Function where
-{
-id x = x;
 
-flip f x y = f y x;
+id x = x
 
-const x y = x;
+flip f x y = f y x
 
-infixl 9 .;  
-(f . g) x = f (g x);
+const x y = x
 
-infixr 0 $;
-f $ x = f x;
+infixl 9 .
+(f . g) x = f (g x)
 
-infixl 1 &;
-x & f = f x;
-}
+infixr 0 $
+f $ x = f x
+
+infixl 1 &
+x & f = f x
+

@@ -1,18 +1,18 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Data.Bool where
-{
-data Bool = True | False;
 
-infixr 3 &&;
-True  && x = x;
-False && x = False;
+data Bool = True | False
 
-infixr 2 ||;
-True  || x  = True;
-False || x = x;
+infixr 3 &&
+True  && x = x
+False && x = False
 
-not True         =  False;
-not False        =  True;
+infixr 2 ||
+True  || x  = True
+False || x = x
 
-otherwise = True;
-}
+not True         =  False
+not False        =  True
+
+otherwise = True
+

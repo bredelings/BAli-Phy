@@ -1,49 +1,55 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Control.Monad where
-{
-import Compiler.Base;
-import Data.List;
-import Data.Function;
 
-mapM f = sequence . map f;
+import Compiler.Base
+import Data.List
+import Data.Function
 
-mapM_ f = sequence_ . map f;
+mapM f = sequence . map f
 
-forM = flip mapM;
+mapM_ f = sequence_ . map f
 
-forM_ = flip mapM_;
+forM = flip mapM
 
-sequence [] = return [];
-sequence (a:as) = do { x <- a;
-                       xs <- sequence as;
-                       return (x:xs)
-                     };
+forM_ = flip mapM_
 
-sequence_ [] = return ();
-sequence_ (a:as) = do { a;
-                        sequence_ as;
-                        return ()
-                      };
+sequence [] = return []
+sequence (a:as) = do x <- a
+                     xs <- sequence as
+                     return (x:xs)
 
-(=<<) = flip (>>=);
+sequence_ [] = return ()
+sequence_ (a:as) = do a
+                      sequence_ as
+                      return ()
 
-f >=> g = \x -> do { y <- f x ; g y };
+(=<<) = flip (>>=)
 
-f <=< g = flip (>=>);
+f >=> g = \x -> do y <- f x
+                   g y
 
-void f = do {x <- f; return ()};
+f <=< g = flip (>=>)
 
+void f = do x <- f
+            return ()
 --
 
-liftM f a = do {x <- a ; return $ f x};
+liftM f a = do x <- a
+               return $ f x
 
-liftM2 f a b = do {x <- a ; y <- b ; return $ f x y};
+liftM2 f a b = do x <- a
+                  y <- b
+                  return $ f x y
 
-liftM3 f a b c = do {x <- a ; y <- b ; z <- c; return $ f x y c};
+liftM3 f a b c = do x <- a
+                    y <- b
+                    z <- c
+                    return $ f x y c
 
 -- LiftM4
 
 -- LiftM5
 
-ap mf mx = do {f <- mf; x <- mx; return $ f x};
-}
+ap mf mx = do f <- mf
+              x <- mx
+              return $ f x
