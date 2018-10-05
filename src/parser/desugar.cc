@@ -583,6 +583,24 @@ expression_ref rename(const Module& m, const expression_ref& E, const set<string
     for(auto& e: v)
 	e = rename(m, e, bound);
 
+    // Apply fully-applied multi-argument constructors during rename.
+    // We don't do this for single-argument constructors. By leaving them as vars, we avoid
+    //   getting many let-allocated copies of (), [], True, False, Nothing, etc.
+    if (is_apply(E.head()) and v[0].is_a<var>() and is_haskell_con_name(v[0].as_<var>().name))
+    {
+	auto& id = v[0].as_<var>().name;
+	const symbol_info& S = m.lookup_symbol(id);
+	assert(S.symbol_type == constructor_symbol);
+	// If the constructor is fully applied, then do the apply now -- this might avoid some rounds of simplification?
+	if (v.size() == 1 + S.arity)
+	{
+	    shift_list(v);
+	    assert(v.size());
+	    auto head  = constructor(S.name, S.arity);
+	    return expression_ref{head,v};
+	}
+    }
+
     if (E.size())
 	return expression_ref{E.head(),v};
     else
