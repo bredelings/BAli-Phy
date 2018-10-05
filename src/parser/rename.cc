@@ -265,11 +265,11 @@ struct renamer_state
     var get_fresh_var() { return var(var_index++);}
     var get_fresh_var(const string& name) {return var(name,var_index++);}
 
-    bound_var_info rename_pattern(const Module& m, expression_ref& pat, bool top = false);
-    expression_ref rename_decl(const Module& m, const expression_ref& decl, const bound_var_info& bound);
-    bound_var_info rename_decls(const Module& m, expression_ref& decls, const bound_var_info& bound);
-    bound_var_info rename_stmt(const Module& m, expression_ref& stmt, const bound_var_info& bound);
-    expression_ref rename(const Module& m, const expression_ref& E, const bound_var_info& bound);
+    bound_var_info rename_pattern(expression_ref& pat, bool top = false);
+    expression_ref rename_decl(const expression_ref& decl, const bound_var_info& bound);
+    bound_var_info rename_decls(expression_ref& decls, const bound_var_info& bound);
+    bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound);
+    expression_ref rename(const expression_ref& E, const bound_var_info& bound);
 
     renamer_state(const Module& m_):m(m_) {}
 };
@@ -277,11 +277,11 @@ struct renamer_state
 expression_ref rename(const Module& m, const expression_ref& E)
 {
     renamer_state Rn(m);
-    return Rn.rename(m,E,set<string>());
+    return Rn.rename(E,set<string>());
 }
 
 
-bound_var_info renamer_state::rename_pattern(const Module& m, expression_ref& pat, bool top)
+bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
 {
     // 0. Handle WildCardPattern
     if (is_AST(pat,"WildcardPattern"))
@@ -337,7 +337,7 @@ bound_var_info renamer_state::rename_pattern(const Module& m, expression_ref& pa
     // Rename the arguments
     for(auto& e: args)
     {
-	auto bound_here =  rename_pattern(m, e, top);
+	auto bound_here =  rename_pattern(e, top);
 	// FIXME - check that we're not using any variables twice
 	add(bound, bound_here);
     }
@@ -353,7 +353,7 @@ bound_var_info renamer_state::rename_pattern(const Module& m, expression_ref& pa
 }
 
 // FIXME make a RnM (or Renamer) object for renaming that can store the module, the set of bound vars, etc.
-expression_ref renamer_state::rename_decl(const Module& m, const expression_ref& decl, const bound_var_info& bound)
+expression_ref renamer_state::rename_decl(const expression_ref& decl, const bound_var_info& bound)
 {
     assert(is_AST(decl,"Decl"));
     assert(decl.is_expression());
@@ -379,7 +379,7 @@ expression_ref renamer_state::rename_decl(const Module& m, const expression_ref&
 	{
 	    auto args = lhs.sub();
 	    for(auto& arg: args)
-		add(bound2, rename_pattern(m, arg));
+		add(bound2, rename_pattern(arg));
 	    assert(args.size());
 	    lhs = expression_ref{f, args};
 	}
@@ -389,13 +389,13 @@ expression_ref renamer_state::rename_decl(const Module& m, const expression_ref&
     }
 
     // 3. Rename the body given variables bound in the lhs
-    rhs = rename(m, rhs, bound2);
+    rhs = rename(rhs, bound2);
 
     return expression_ref{decl.head(),v};
 }
 
 
-bound_var_info renamer_state::rename_decls(const Module& m, expression_ref& decls, const bound_var_info& bound)
+bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_var_info& bound)
 {
     assert(is_AST(decls,"TopDecls") or is_AST(decls,"Decls"));
 
@@ -423,17 +423,17 @@ bound_var_info renamer_state::rename_decls(const Module& m, expression_ref& decl
 	if (is_haskell_con_name(head.as_<AST_node>().value))
 	{
 	    assert(bound_names.empty());
-	    add(bound_names,rename_pattern(m, lhs, top));
+	    add(bound_names,rename_pattern(lhs, top));
 	}
 	// For a variable pattern, just rename the variable.
 	else if (lhs.size())
 	{
-	    add(bound_names,rename_pattern(m, head, top));
+	    add(bound_names,rename_pattern(head, top));
 	    lhs = expression_ref{head,lhs.sub()};
 	}
 	else
 	{
-	    add(bound_names,rename_pattern(m, head, top));
+	    add(bound_names,rename_pattern(head, top));
 	    lhs = head;
 	}
 	decl = expression_ref{decl.head(),w};
@@ -444,32 +444,32 @@ bound_var_info renamer_state::rename_decls(const Module& m, expression_ref& decl
     for(auto& e: v)
     {
 	if (is_AST(e,"Decl"))
-	    e = rename_decl(m, e, bound2);
+	    e = rename_decl(e, bound2);
     }
 
     decls = expression_ref{decls.head(),v};
     return bound_names;
 }
 
-bound_var_info renamer_state::rename_stmt(const Module& m, expression_ref& stmt, const bound_var_info& bound)
+bound_var_info renamer_state::rename_stmt(expression_ref& stmt, const bound_var_info& bound)
 {
     if (is_AST(stmt, "SimpleQual"))
     {
-	stmt = rename(m,stmt,bound);
+	stmt = rename(stmt,bound);
 	return {};
     }
     else if (is_AST(stmt, "PatQual"))
     {
 	auto v = stmt.sub();
-	auto bound_vars = rename_pattern(m, v[0]);
-	v[1] = rename(m, v[1], bound);
+	auto bound_vars = rename_pattern(v[0]);
+	v[1] = rename(v[1], bound);
 	stmt = expression_ref{stmt.head(),v};
 	return bound_vars;
     }
     else if (is_AST(stmt, "LetQual"))
     {
 	auto v = stmt.sub();
-	auto bound_vars = rename_decls(m, v[0], bound);
+	auto bound_vars = rename_decls(v[0], bound);
 	stmt = expression_ref{stmt.head(),v};
 	return bound_vars;
     }
@@ -477,7 +477,7 @@ bound_var_info renamer_state::rename_stmt(const Module& m, expression_ref& stmt,
 	std::abort();
 }
 
-expression_ref renamer_state::rename(const Module& m, const expression_ref& E, const bound_var_info& bound)
+expression_ref renamer_state::rename(const expression_ref& E, const bound_var_info& bound)
 {
     vector<expression_ref> v;
     if (E.is_expression())
@@ -491,7 +491,7 @@ expression_ref renamer_state::rename(const Module& m, const expression_ref& E, c
 	else if (n.type == "Decls" or n.type == "TopDecls")
 	{
 	    expression_ref E2 = E;
-	    rename_decls(m, E2, bound);
+	    rename_decls(E2, bound);
 	    return E2;
 	}
 	else if (n.type == "Decl")
@@ -505,11 +505,11 @@ expression_ref renamer_state::rename(const Module& m, const expression_ref& E, c
 	    if (v.size() == 2)
 	    {
 		auto bound2 = bound;
-		add(bound2, rename_decls(m,v[1],bound));
-		v[0] = rename(m, v[0], bound2);
+		add(bound2, rename_decls(v[1],bound));
+		v[0] = rename(v[0], bound2);
 	    }
 	    else
-		v[0] = rename(m, v[0], bound);
+		v[0] = rename(v[0], bound);
 	    return expression_ref{E.head(),v};
 	}
 	else if (n.type == "id")
@@ -533,8 +533,8 @@ expression_ref renamer_state::rename(const Module& m, const expression_ref& E, c
 	    auto bound2 = bound;
 
 	    for(int i=0;i<v.size()-1;i++)
-		add(bound2, rename_stmt(m, v[i], bound2));
-	    v.back() = rename(m, v.back(), bound2);
+		add(bound2, rename_stmt(v[i], bound2));
+	    v.back() = rename(v.back(), bound2);
 
 	    return expression_ref{E.head(),v};
 	}
@@ -543,11 +543,11 @@ expression_ref renamer_state::rename(const Module& m, const expression_ref& E, c
 	    // 1. Rename patterns for lambda arguments
 	    auto bound2 = bound;
 	    for(int i=0; i<v.size()-1; i++)
-		add(bound2, rename_pattern(m, v[i]));
+		add(bound2, rename_pattern(v[i]));
 
 	    // 2. Rename the body
 	    auto& body = v.back();
-	    body = rename(m, body, bound2);
+	    body = rename(body, bound2);
 
 	    return expression_ref{E.head(),v};
 	}
@@ -555,7 +555,7 @@ expression_ref renamer_state::rename(const Module& m, const expression_ref& E, c
 	{
 	    auto bound2 = bound;
 	    for(auto& stmt: v)
-		add(bound2, rename_stmt(m, stmt, bound2));
+		add(bound2, rename_stmt(stmt, bound2));
 	    return expression_ref{E.head(),v};
 	}
 	else if (n.type == "Let")
@@ -564,8 +564,8 @@ expression_ref renamer_state::rename(const Module& m, const expression_ref& E, c
 	    auto& body = v[1];
 
 	    auto bound2 = bound;
-	    add(bound2, rename_decls(m, decls, bound));
-	    body = rename(m, body, bound2);
+	    add(bound2, rename_decls(decls, bound));
+	    body = rename(body, bound2);
 
 	    return expression_ref{E.head(),v};
 	}
@@ -574,15 +574,15 @@ expression_ref renamer_state::rename(const Module& m, const expression_ref& E, c
 	    auto& pat = v[0];
 	    auto& body = v[1];
 	    auto bound2 = bound;
-	    add(bound2, rename_pattern(m, pat));
-	    body = rename(m, body, bound2);
+	    add(bound2, rename_pattern(pat));
+	    body = rename(body, bound2);
 
 	    return expression_ref{E.head(),v};
 	}
     }
 
     for(auto& e: v)
-	e = rename(m, e, bound);
+	e = rename(e, bound);
 
     // Apply fully-applied multi-argument constructors during rename.
     // We don't do this for single-argument constructors. By leaving them as vars, we avoid
