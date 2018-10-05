@@ -586,10 +586,20 @@ expression_ref rename(const Module& m, const expression_ref& E, const set<string
     // Apply fully-applied multi-argument constructors during rename.
     // We don't do this for single-argument constructors. By leaving them as vars, we avoid
     //   getting many let-allocated copies of (), [], True, False, Nothing, etc.
+    //
+    // If we don't we get the following problem in simplification, so it takes too many rounds:
+    // (:) x y => (\a b -> a:b) x y => let a=x;b=y in a:b => let a=3 in a:y (if a=3 in a containing let).
+    //
+    // We would really just like (:) x y to resolve to x:y.  But since it doesn't, lets do that here.
+    // Could we make a special case for lambdas that are (say) fully apply only to variables?
+    // Perhaps we should handle this in the simplifier instead, in the place where we do application of functions.
+    //
+    // For the meantime, we have this.  And it at least leads to more readable output from rename.
+    // It could conceivably help the type-checker also...
     if (is_apply(E.head()) and v[0].is_a<var>() and is_haskell_con_name(v[0].as_<var>().name))
     {
 	auto& id = v[0].as_<var>().name;
-	const symbol_info& S = m.lookup_symbol(id);
+	const symbol_info& S = m.lookup_resolved_symbol(id);
 	assert(S.symbol_type == constructor_symbol);
 	// If the constructor is fully applied, then do the apply now -- this might avoid some rounds of simplification?
 	if (v.size() == 1 + S.arity)

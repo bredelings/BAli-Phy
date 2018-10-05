@@ -179,6 +179,8 @@ public:
 
     symbol_info lookup_symbol(const std::string&) const;
 
+    symbol_info lookup_resolved_symbol(const std::string&) const;
+
     symbol_info get_operator(const std::string& name) const;
 
     explicit Module(const std::string&);
