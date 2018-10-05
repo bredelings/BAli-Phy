@@ -2,12 +2,15 @@ UNRELEASED
  - Fixes
    - "--" should not become a single long dash (en-dash) in man pages.
    - Don't crash if --scale is set to a constant (e.g. --scale=1).
+   - Rename subsample to bali-subsample (to avoid conflicts with other software).
  - Haskell
-   - Refactored functions out of Prelude into Data.List, etc.
    - Implement -X NoImplicitPrelude
+   - Refactored functions out of Prelude into Data.List, etc.
+   - Implement layout-sensitive parsing.
+   - Fix optimizer bug in floating lets out of lets.
  - Models
    + Add models x2, x2_sym, x2x2 for RNA stems.
-   - Add doublet alphabet for RNA stems.
+   - Add Doublet alphabet for RNA stems.
 
 * 3.3 (Aug 6, 2018)
   - Fixes
