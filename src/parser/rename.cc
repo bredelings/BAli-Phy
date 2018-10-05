@@ -255,6 +255,16 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 
 typedef set<string> bound_var_info;
 
+void disjoint_add(bound_var_info& bv1, const bound_var_info& bv2)
+{
+    for(auto& v: bv2)
+    {
+//	assert(not bv1.count(v));
+	bv1.insert(v);
+    }
+    bv1.insert(bv2.begin(), bv2.end());
+}
+
 struct renamer_state
 {
     const Module& m;
@@ -339,7 +349,7 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
     {
 	auto bound_here =  rename_pattern(e, top);
 	// FIXME - check that we're not using any variables twice
-	add(bound, bound_here);
+	disjoint_add(bound, bound_here);
     }
 
     // 6. Construct the renamed pattern
@@ -379,7 +389,7 @@ expression_ref renamer_state::rename_decl(const expression_ref& decl, const boun
 	{
 	    auto args = lhs.sub();
 	    for(auto& arg: args)
-		add(bound2, rename_pattern(arg));
+		disjoint_add(bound2, rename_pattern(arg));
 	    assert(args.size());
 	    lhs = expression_ref{f, args};
 	}
@@ -423,24 +433,24 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
 	if (is_haskell_con_name(head.as_<AST_node>().value))
 	{
 	    assert(bound_names.empty());
-	    add(bound_names,rename_pattern(lhs, top));
+	    disjoint_add(bound_names,rename_pattern(lhs, top));
 	}
 	// For a variable pattern, just rename the variable.
 	else if (lhs.size())
 	{
-	    add(bound_names,rename_pattern(head, top));
+	    disjoint_add(bound_names,rename_pattern(head, top));
 	    lhs = expression_ref{head,lhs.sub()};
 	}
 	else
 	{
-	    add(bound_names,rename_pattern(head, top));
+	    disjoint_add(bound_names,rename_pattern(head, top));
 	    lhs = head;
 	}
 	decl = expression_ref{decl.head(),w};
     }
 
     // Replace ids with dummies
-    add(bound2, bound_names);
+    disjoint_add(bound2, bound_names);
     for(auto& e: v)
     {
 	if (is_AST(e,"Decl"))
@@ -505,7 +515,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	    if (v.size() == 2)
 	    {
 		auto bound2 = bound;
-		add(bound2, rename_decls(v[1],bound));
+		disjoint_add(bound2, rename_decls(v[1],bound));
 		v[0] = rename(v[0], bound2);
 	    }
 	    else
@@ -533,7 +543,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	    auto bound2 = bound;
 
 	    for(int i=0;i<v.size()-1;i++)
-		add(bound2, rename_stmt(v[i], bound2));
+		disjoint_add(bound2, rename_stmt(v[i], bound2));
 	    v.back() = rename(v.back(), bound2);
 
 	    return expression_ref{E.head(),v};
@@ -543,7 +553,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	    // 1. Rename patterns for lambda arguments
 	    auto bound2 = bound;
 	    for(int i=0; i<v.size()-1; i++)
-		add(bound2, rename_pattern(v[i]));
+		disjoint_add(bound2, rename_pattern(v[i]));
 
 	    // 2. Rename the body
 	    auto& body = v.back();
@@ -555,7 +565,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	{
 	    auto bound2 = bound;
 	    for(auto& stmt: v)
-		add(bound2, rename_stmt(stmt, bound2));
+		disjoint_add(bound2, rename_stmt(stmt, bound2));
 	    return expression_ref{E.head(),v};
 	}
 	else if (n.type == "Let")
@@ -564,7 +574,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	    auto& body = v[1];
 
 	    auto bound2 = bound;
-	    add(bound2, rename_decls(decls, bound));
+	    disjoint_add(bound2, rename_decls(decls, bound));
 	    body = rename(body, bound2);
 
 	    return expression_ref{E.head(),v};
@@ -574,7 +584,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	    auto& pat = v[0];
 	    auto& body = v[1];
 	    auto bound2 = bound;
-	    add(bound2, rename_pattern(pat));
+	    disjoint_add(bound2, rename_pattern(pat));
 	    body = rename(body, bound2);
 
 	    return expression_ref{E.head(),v};
