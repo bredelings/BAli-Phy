@@ -50,9 +50,14 @@ std::string print_operator_expression(const std::vector<std::string>& arguments)
 
 std::string print_infix_expression(const std::vector<std::string>& arguments);
 
-inline bool is_non_apply_operation(const expression_ref& E)
+inline bool is_non_apply_op(const expression_ref& E)
 {
     return E.type() == operation_type;
+}
+
+inline bool is_non_apply_op_exp(const expression_ref& E)
+{
+    return is_non_apply_op(E.head());
 }
 
 #endif

@@ -32,4 +32,15 @@ inline bool is_lambda(const expression_ref& E)
     return E.type() == lambda_type;
 }
 
+inline bool is_lambda_exp(const expression_ref& E)
+{
+    if (is_lambda(E.head()))
+    {
+	assert(E.size() > 0);
+	return true;
+    }
+    else
+	return false;
+}
+
 #endif

@@ -38,17 +38,17 @@ int simple_size(const expression_ref& E)
     else if (E.size() == 0)
 	return 1;
 
-    else if (is_constructor(E.head()))
+    else if (is_constructor_exp(E))
     {
 	for(auto& x: E.sub())
 	    assert(is_var(x));
 	return 1;
     }
 
-    else if (is_apply(E.head()))
+    else if (is_apply_exp(E))
 	return E.size() + simple_size(E.sub()[0]);
 
-    else if (is_lambda(E.head()))
+    else if (is_lambda_exp(E))
 	return simple_size(E.sub()[1]);
 
     else if (is_let_expression(E))
@@ -71,7 +71,7 @@ int simple_size(const expression_ref& E)
 	    alts_size = std::max(alts_size, simple_size(bodies[i]));
 	return 1 + simple_size(object) + alts_size;
     }
-    else if (is_non_apply_operation(E.head()))
+    else if (is_non_apply_op_exp(E))
     {
 	for(auto& x: E.sub())
 	    assert(is_var(x));

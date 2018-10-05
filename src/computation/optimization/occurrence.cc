@@ -250,7 +250,7 @@ int get_score(const CDecl& decl)
 
     if (is_reglike(F))
 	return 4;
-    else if (is_constructor(F.head()) or F.size() == 0)
+    else if (is_constructor_exp(F) or F.size() == 0)
 	return 3;
     else if (x.pre_inline())
 	return 1;
@@ -412,7 +412,7 @@ pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_c
     if (not E.size()) return {E,set<var>{}};
 
     // 2. Lambda (E = \x -> body)
-    if (is_lambda(E.head()))
+    if (is_lambda_exp(E))
     {
 	assert(E.size() == 2);
 
@@ -475,7 +475,7 @@ pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_c
     }
 
     // 4. Constructor, Operation (including Apply)
-    if (is_constructor(E.head()) or is_apply(E.head()) or is_non_apply_operation(E.head()))
+    if (is_constructor_exp(E) or is_apply_exp(E) or is_non_apply_op_exp(E))
     {
 	set<var> free_vars;
 	object_ptr<expression> F = new expression(E.head());
@@ -483,7 +483,7 @@ pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_c
 	{
 	    set<var> free_vars_i;
 	    expression_ref arg_i;
-	    auto context = (i==0 and is_apply(E.head())) ? var_context::unknown : var_context::argument;
+	    auto context = (i==0 and is_apply_exp(E)) ? var_context::unknown : var_context::argument;
 	    tie(arg_i,free_vars_i) = occurrence_analyzer(E.sub()[i], context);
 	    F->sub.push_back(arg_i);
 	    merge_occurrences_into(free_vars, free_vars_i);

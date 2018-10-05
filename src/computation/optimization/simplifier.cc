@@ -659,12 +659,12 @@ simplify_decls(const simplifier_options& options, CDecls& orig_decls, const subs
 //                     \x2 -> (let decls in ($) f x2) ===> let decls in f
 expression_ref eta_reduce(const expression_ref& E)
 {
-    assert(is_lambda(E.head()));
+    assert(is_lambda_exp(E));
     auto& x    = E.sub()[0].as_<var>();
     auto& body = E.sub()[1];
 
     if (x.code_dup == amount_t::Once and
-	body.is_expression() and is_apply(body.head()) and
+	body.is_expression() and is_apply_exp(body) and
 	(body.as_expression().sub.back() == x))
     {
 	// ($) f x  ==> f
@@ -721,7 +721,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     if (not E.size()) return E;
 
     // 2. Lambda (E = \x -> body)
-    if (is_lambda(E.head()))
+    if (is_lambda_exp(E))
     {
 	assert(E.size() == 2);
 
@@ -755,7 +755,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     }
 
     // ?. Apply
-    if (is_apply(E.head()))
+    if (is_apply_exp(E))
     {
 	object_ptr<expression> V2 = E.as_expression().clone();
 	
@@ -773,7 +773,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     }
 
     // 4. Constructor or Operation
-    if (is_constructor(E.head()) or is_non_apply_operation(E.head()))
+    if (is_constructor_exp(E) or is_non_apply_op_exp(E))
     {
 	object_ptr<expression> E2 = E.as_expression().clone();
 	for(int i=0;i<E.size();i++)
