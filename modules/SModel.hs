@@ -3,221 +3,219 @@ module SModel (module SModel,
                module SModel.Codons,
                module SModel.ReversibleMarkov,
                module SModel.Likelihood) where 
-{
-import Distributions;
-import Alphabet;
-import Tree;
-import Parameters;
+import Distributions
+import Alphabet
+import Tree
+import Parameters
 
-import SModel.Nucleotides;
-import SModel.Doublets;
-import SModel.Codons;
-import SModel.ReversibleMarkov;
-import SModel.Likelihood;
+import SModel.Nucleotides
+import SModel.Doublets
+import SModel.Codons
+import SModel.ReversibleMarkov
+import SModel.Likelihood
 
-builtin builtin_average_frequency 1 "average_frequency" "SModel";
-builtin builtin_empirical 2 "empirical" "SModel";
-builtin pam 1 "pam" "SModel";
-builtin jtt 1 "jtt" "SModel";
-builtin wag 1 "wag" "SModel";
-builtin builtin_wag_frequencies 1 "wag_frequencies" "SModel";
-builtin builtin_lg_frequencies 1 "lg_frequencies" "SModel";
-builtin lg 1 "lg" "SModel";
-builtin builtin_weighted_frequency_matrix 2 "weighted_frequency_matrix" "SModel";
-builtin builtin_frequency_matrix 1 "frequency_matrix" "SModel";
+builtin builtin_average_frequency 1 "average_frequency" "SModel"
+builtin builtin_empirical 2 "empirical" "SModel"
+builtin pam 1 "pam" "SModel"
+builtin jtt 1 "jtt" "SModel"
+builtin wag 1 "wag" "SModel"
+builtin builtin_wag_frequencies 1 "wag_frequencies" "SModel"
+builtin builtin_lg_frequencies 1 "lg_frequencies" "SModel"
+builtin lg 1 "lg" "SModel"
+builtin builtin_weighted_frequency_matrix 2 "weighted_frequency_matrix" "SModel"
+builtin builtin_frequency_matrix 1 "frequency_matrix" "SModel"
 
-data F81 = F81 a b c d;
-data MixtureModel = MixtureModel [(Double,a)];
+data F81 = F81 a b c d
+data MixtureModel = MixtureModel [(Double,a)]
 -- Currently we are weirdly duplicating the mixture probabilities for each component.
 -- Probably the actual data-type is something like [(Double,\Int->a)] or [(Double,[a])] where all the [a] should have the same length.
 -- This would be a branch-dependent mixture
-data MixtureModels = MixtureModels [MixtureModel a];
+data MixtureModels = MixtureModels [MixtureModel a]
 
-scaleMM x (MixtureModel dist            ) = MixtureModel [(p, scale x m) | (p, m) <- dist];
+scaleMM x (MixtureModel dist            ) = MixtureModel [(p, scale x m) | (p, m) <- dist]
 
-mixMM fs ms = MixtureModel $ mix fs [m | MixtureModel m <- ms];
-scale_MMs rs ms = [scaleMM r m | (r,m) <- zip' rs ms];
-scaled_mixture ms rs fs = mixMM fs (scale_MMs rs ms);
+mixMM fs ms = MixtureModel $ mix fs [m | MixtureModel m <- ms]
+scale_MMs rs ms = [scaleMM r m | (r,m) <- zip' rs ms]
+scaled_mixture ms rs fs = mixMM fs (scale_MMs rs ms)
 
-multiParameter model_fn values = MixtureModel [ (f*p, m) |(p,x) <- values, let {dist = case model_fn x of {MixtureModel d -> d}}, (f,m) <- dist];
-multiParameter_unit model_fn values = multiParameter (\x -> unit_mixture $ model_fn x) values;
+multiParameter model_fn values = MixtureModel [ (f*p, m) |(p,x) <- values, let dist = case model_fn x of MixtureModel d -> d, (f,m) <- dist]
+multiParameter_unit model_fn values = multiParameter (\x -> unit_mixture $ model_fn x) values
 
-multi_rate m d = multiParameter (\x->scaleMM x m) d;
+multi_rate m d = multiParameter (\x->scaleMM x m) d
 
-average_frequency (MixtureModel ms) = list_from_vector $ builtin_average_frequency $ weighted_frequency_matrix $ MixtureModel ms;
+average_frequency (MixtureModel ms) = list_from_vector $ builtin_average_frequency $ weighted_frequency_matrix $ MixtureModel ms
 
-extend_mixture (MixtureModel ms) (p,x) = MixtureModel $ mix [p, 1.0-p] [certainly x, ms];
+extend_mixture (MixtureModel ms) (p,x) = MixtureModel $ mix [p, 1.0-p] [certainly x, ms]
 
-plus_inv mm p_inv = extend_mixture mm (p_inv, scale 0.0 $ f81 pi a) where {a  = getAlphabet mm; pi = average_frequency mm};
+plus_inv mm p_inv = extend_mixture mm (p_inv, scale 0.0 $ f81 pi a)
+    where a  = getAlphabet mm
+          pi = average_frequency mm
 
-multi_rate_unif_bins base dist n_bins = multi_rate base $ uniformDiscretize dist n_bins;
+multi_rate_unif_bins base dist n_bins = multi_rate base $ uniformDiscretize dist n_bins
 
-rate (ReversibleMarkov a s q pi l t r) = r;
-rate (MixtureModel d) = average (fmap2 rate d);
+rate (ReversibleMarkov a s q pi l t r) = r
+rate (MixtureModel d) = average (fmap2 rate d)
 
-branchTransitionP (MixtureModel l) t = let {r = rate (MixtureModel l)} 
-                                       in map (\x -> qExp (scale (t/r) (snd x))) l;
+branchTransitionP (MixtureModel l) t = let r = rate (MixtureModel l)
+                                       in map (\x -> qExp (scale (t/r) (snd x))) l
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
-nBaseModels (MixtureModel l) = length l;
-nBaseModels (MixtureModels (m:ms)) = nBaseModels m;
+nBaseModels (MixtureModel l) = length l
+nBaseModels (MixtureModels (m:ms)) = nBaseModels m
 
-baseModel (MixtureModel l) i = snd (l !! i);
+baseModel (MixtureModel l) i = snd (l !! i)
 
-stateLetters (ReversibleMarkov _ smap _ _ _ _ _) = smap;
-stateLetters (F81 _ smap _ _ ) = smap;
-stateLetters (MixtureModel l) = stateLetters (baseModel (MixtureModel l) 0);
-stateLetters (MixtureModels (m:ms)) = stateLetters m;
+stateLetters (ReversibleMarkov _ smap _ _ _ _ _) = smap
+stateLetters (F81 _ smap _ _ ) = smap
+stateLetters (MixtureModel l) = stateLetters (baseModel (MixtureModel l) 0)
+stateLetters (MixtureModels (m:ms)) = stateLetters m
 
-nStates m = sizeOfVectorUnsigned (stateLetters m);
+nStates m = sizeOfVectorUnsigned (stateLetters m)
   
-getAlphabet (ReversibleMarkov a _ _ _ _ _ _) = a;
-getAlphabet (F81 a _ _ _) = a;
-getAlphabet (MixtureModel l) = getAlphabet (baseModel (MixtureModel l) 0);
-getAlphabet (MixtureModels (m:ms)) = getAlphabet m;
+getAlphabet (ReversibleMarkov a _ _ _ _ _ _) = a
+getAlphabet (F81 a _ _ _) = a
+getAlphabet (MixtureModel l) = getAlphabet (baseModel (MixtureModel l) 0)
+getAlphabet (MixtureModels (m:ms)) = getAlphabet m
 
-frequencies (ReversibleMarkov _ _ _ pi _ _ _) = pi;
-frequencies (F81 _ _ _ pi) = pi;
+frequencies (ReversibleMarkov _ _ _ pi _ _ _) = pi
+frequencies (F81 _ _ _ pi) = pi
 
-componentFrequencies (MixtureModel d)       i = frequencies (baseModel (MixtureModel d) i);
-componentFrequencies (MixtureModels (m:ms)) i = componentFrequencies m i;
+componentFrequencies (MixtureModel d)       i = frequencies (baseModel (MixtureModel d) i)
+componentFrequencies (MixtureModels (m:ms)) i = componentFrequencies m i
 
-distribution (MixtureModel l) = map fst l;
-distribution (MixtureModels (m:ms))                  = distribution m;
+distribution (MixtureModel l) = map fst l
+distribution (MixtureModels (m:ms))                  = distribution m
 
-getNthMixture (MixtureModels l) i = l !! i;
+getNthMixture (MixtureModels l) i = l !! i
 
-unwrapMM (MixtureModel dd) = dd;
+unwrapMM (MixtureModel dd) = dd
 
-mixMixtureModels l dd = MixtureModel (mix l (map unwrapMM dd));
+mixMixtureModels l dd = MixtureModel (mix l (map unwrapMM dd))
 
-weighted_frequency_matrix (MixtureModel d) = let {model = MixtureModel d;
-                                                  dist = list_to_vector $ distribution model;
-                                                  freqs = list_to_vector $ map (componentFrequencies model) [0..nBaseModels model-1]}
-                                             in builtin_weighted_frequency_matrix dist freqs;
-weighted_frequency_matrix (MixtureModels (m:ms)) = weighted_frequency_matrix m;
+weighted_frequency_matrix (MixtureModel d) = let model = MixtureModel d
+                                                 dist = list_to_vector $ distribution model
+                                                 freqs = list_to_vector $ map (componentFrequencies model) [0..nBaseModels model-1]
+                                             in builtin_weighted_frequency_matrix dist freqs
+weighted_frequency_matrix (MixtureModels (m:ms)) = weighted_frequency_matrix m
 
-frequency_matrix (MixtureModel d) = let {model = MixtureModel d} 
-                                    in  builtin_frequency_matrix $ list_to_vector $ map (componentFrequencies model) [0..nBaseModels model-1];
+frequency_matrix (MixtureModel d) = let model = MixtureModel d
+                                    in  builtin_frequency_matrix $ list_to_vector $ map (componentFrequencies model) [0..nBaseModels model-1]
 
-frequency_matrix (MixtureModels (m:ms)) = frequency_matrix m;
+frequency_matrix (MixtureModels (m:ms)) = frequency_matrix m
 
 --
-m1a_omega_dist f1 w1 = [(f1,w1), (1.0-f1,1.0)];
+m1a_omega_dist f1 w1 = [(f1,w1), (1.0-f1,1.0)]
 
-m2a_omega_dist f1 w1 posP posW = extendDiscreteDistribution (m1a_omega_dist f1 w1) posP posW;
+m2a_omega_dist f1 w1 posP posW = extendDiscreteDistribution (m1a_omega_dist f1 w1) posP posW
 
-m2a_test_omega_dist f1 w1 posP posW 0 = m2a_omega_dist f1 w1 posP 1.0;
-m2a_test_omega_dist f1 w1 posP posW _ = m2a_omega_dist f1 w1 posP posW;
+m2a_test_omega_dist f1 w1 posP posW 0 = m2a_omega_dist f1 w1 posP 1.0
+m2a_test_omega_dist f1 w1 posP posW _ = m2a_omega_dist f1 w1 posP posW
 
-m3_omega_dist ps omegas = zip' ps omegas;
+m3_omega_dist ps omegas = zip' ps omegas
 
-m3p_omega_dist ps omegas posP posW = extendDiscreteDistribution (m3_omega_dist ps omegas) posP posW;
+m3p_omega_dist ps omegas posP posW = extendDiscreteDistribution (m3_omega_dist ps omegas) posP posW
 
-m3_test_omega_dist ps omegas posP posW 0 = m3p_omega_dist ps omegas posP 1.0;
-m3_test_omega_dist ps omegas posP posW _ = m3p_omega_dist ps omegas posP posW;
+m3_test_omega_dist ps omegas posP posW 0 = m3p_omega_dist ps omegas posP 1.0
+m3_test_omega_dist ps omegas posP posW _ = m3p_omega_dist ps omegas posP posW
 
 -- The M7 is just a beta distribution
 -- gamma' = var(x)/(mu*(1-mu)) = 1/(a+b+1) = 1/(n+1)
-m7_omega_dist mu gamma n_bins = uniformDiscretize (beta a b) n_bins where {cap = min (mu/(1.0+mu)) ((1.0-mu)/(2.0-mu));
-                                                                           gamma' = gamma*cap;
-                                                                           n = (1.0/gamma')-1.0;
-                                                                           a = n*mu;
-                                                                           b = n*(1.0 - mu)};
+m7_omega_dist mu gamma n_bins = uniformDiscretize (beta a b) n_bins where cap = min (mu/(1.0+mu)) ((1.0-mu)/(2.0-mu))
+                                                                          gamma' = gamma*cap
+                                                                          n = (1.0/gamma')-1.0
+                                                                          a = n*mu
+                                                                          b = n*(1.0 - mu)
 
 -- The M8 is a beta distribution, where a fraction posP of sites have omega posW
-m8_omega_dist mu gamma n_bins posP posW = extendDiscreteDistribution (m7_omega_dist mu gamma n_bins) posP posW;
+m8_omega_dist mu gamma n_bins posP posW = extendDiscreteDistribution (m7_omega_dist mu gamma n_bins) posP posW
 
-m8a_omega_dist mu gamma n_bins posP = m8_omega_dist mu gamma n_bins posP 1.0;
+m8a_omega_dist mu gamma n_bins posP = m8_omega_dist mu gamma n_bins posP 1.0
 
-m8a_test_omega_dist mu gamma n_bins posP posW 0 = m8_omega_dist mu gamma n_bins posP 1.0;
-m8a_test_omega_dist mu gamma n_bins posP posW _ = m8_omega_dist mu gamma n_bins posP posW;
+m8a_test_omega_dist mu gamma n_bins posP posW 0 = m8_omega_dist mu gamma n_bins posP 1.0
+m8a_test_omega_dist mu gamma n_bins posP posW _ = m8_omega_dist mu gamma n_bins posP posW
 
---  w1 <- uniform 0.0 1.0;
---  [f1, f2] <- dirichlet' 2 1.0;
-m1a model_func w1 f1 = multiParameter_unit model_func (m1a_omega_dist f1 w1);
+--  w1 <- uniform 0.0 1.0
+--  [f1, f2] <- dirichlet' 2 1.0
+m1a model_func w1 f1 = multiParameter_unit model_func (m1a_omega_dist f1 w1)
 
-m2a model_func w1 f1 posP posW = multiParameter_unit model_func (m2a_omega_dist f1 w1 posP posW);
+m2a model_func w1 f1 posP posW = multiParameter_unit model_func (m2a_omega_dist f1 w1 posP posW)
 
-m2a_test model_func w1 f1 posP posW posSelection = multiParameter_unit model_func (m2a_test_omega_dist f1 w1 posP posW posSelection);
+m2a_test model_func w1 f1 posP posW posSelection = multiParameter_unit model_func (m2a_test_omega_dist f1 w1 posP posW posSelection)
 
-m3 model_func ps omegas = multiParameter_unit model_func (m3_omega_dist ps omegas);
+m3 model_func ps omegas = multiParameter_unit model_func (m3_omega_dist ps omegas)
 
-m3_test model_func ps omegas posP posW posSelection = multiParameter_unit model_func (m3_test_omega_dist ps omegas posP posW posSelection);
+m3_test model_func ps omegas posP posW posSelection = multiParameter_unit model_func (m3_test_omega_dist ps omegas posP posW posSelection)
 
-m7 model_func mu gamma n_bins =  multiParameter_unit model_func (m7_omega_dist mu gamma n_bins);
+m7 model_func mu gamma n_bins =  multiParameter_unit model_func (m7_omega_dist mu gamma n_bins)
 
-m8 model_func mu gamma n_bins posP posW = multiParameter_unit model_func (m8_omega_dist mu gamma n_bins posP posW);
+m8 model_func mu gamma n_bins posP posW = multiParameter_unit model_func (m8_omega_dist mu gamma n_bins posP posW)
 
-m8a model_func mu gamma n_bins posP = multiParameter_unit model_func (m8a_omega_dist mu gamma n_bins posP);
+m8a model_func mu gamma n_bins posP = multiParameter_unit model_func (m8a_omega_dist mu gamma n_bins posP)
 
-m8a_test model_func mu gamma n_bins posP posW posSelection = multiParameter_unit model_func (m8a_test_omega_dist mu gamma n_bins posP posW posSelection);
+m8a_test model_func mu gamma n_bins posP posW posSelection = multiParameter_unit model_func (m8a_test_omega_dist mu gamma n_bins posP posW posSelection)
 
 -- OK, so if I change this from [Mixture Omega] to Mixture [Omega] or Mixture (\Int -> Omega), how do I apply the function model_func to all the omegas?
-branch_site model_func fs ws posP posW = MixtureModels [bg_mixture,fg_mixture] where
-    {
+branch_site model_func fs ws posP posW = MixtureModels [bg_mixture,fg_mixture]
 -- background omega distribution -- where the last omega is 1.0 (neutral)
-      bg_dist = zip fs (ws ++ [1.0]);
+    where bg_dist = zip fs (ws ++ [1.0])
 -- accelerated omega distribution -- posW for all categories
-      accel_dist = zip fs (repeat posW);
+          accel_dist = zip fs (repeat posW)
 -- background branches always use the background omega distribution              
-      bg_mixture = multiParameter_unit model_func (mix [1.0-posP, posP] [bg_dist, bg_dist]);
+          bg_mixture = multiParameter_unit model_func (mix [1.0-posP, posP] [bg_dist, bg_dist])
 -- foreground branches use the foreground omega distribution with probability posP
-      fg_mixture = multiParameter_unit model_func (mix [1.0-posP, posP] [bg_dist, accel_dist]);
-    };
+          fg_mixture = multiParameter_unit model_func (mix [1.0-posP, posP] [bg_dist, accel_dist])
 
-branch_site_test model_func fs ws posP posW posSelection = branch_site model_func fs ws posP posW' where
-    {posW' = if (posSelection == 1) then posW else 1.0};
+branch_site_test model_func fs ws posP posW posSelection = branch_site model_func fs ws posP posW'
+    where posW' = if (posSelection == 1) then posW else 1.0
 
 fMutSel codon_a codon_w omega (ReversibleMarkov _ _ nuc_q nuc_pi _ _ _) =
-   let {nuc_a = getNucleotides codon_a;
-        smap = simple_smap codon_a;
-        codon_w' = listToVectorDouble codon_w;
-        q  = fMutSel_q  codon_a codon_w' omega nuc_q;
-        pi = fMutSel_pi codon_a codon_w' nuc_pi}
-   in reversible_markov codon_a smap q pi;
+   let nuc_a = getNucleotides codon_a
+       smap = simple_smap codon_a
+       codon_w' = listToVectorDouble codon_w
+       q  = fMutSel_q  codon_a codon_w' omega nuc_q
+       pi = fMutSel_pi codon_a codon_w' nuc_pi
+   in reversible_markov codon_a smap q pi
 
 fMutSel' codon_a codon_ws' omega nuc_model = fMutSel codon_a codon_ws omega nuc_model
-                                               where {codon_ws = get_ordered_elements (alphabet_letters codon_a) codon_ws' "fitnesses"};
+    where codon_ws = get_ordered_elements (alphabet_letters codon_a) codon_ws' "fitnesses"
 
 -- \#1->let {w' = listAray' #1} in \#2 #3->fMutSel #0 codon_w #2 #3
 -- The whole body of the function is let-floated up in round 2, and w' is eliminated.
 fMutSel0 a w omega nuc_q  = fMutSel a codon_w omega nuc_q
---replicate n_letters (1.0/intToDouble n_letters);
-where {codon_w = [w'!aa| codon <- codons,let {aa = translate a codon}];
-         w' = listArray' w;
-         codons = take n_letters [0..];
-         n_letters = alphabetSize a};
+    where codon_w = [w'!aa| codon <- codons,let aa = translate a codon]
+          w' = listArray' w
+          codons = take n_letters [0..]
+          n_letters = alphabetSize a
+--replicate n_letters (1.0/intToDouble n_letters)
 
 fMutSel0' codon_a amino_ws' omega nuc_model = fMutSel0 codon_a amino_ws omega nuc_model
-                                               where {amino_ws = get_ordered_elements (alphabet_letters amino_a) amino_ws' "fitnesses";
-                                                      amino_a = getAminoAcids codon_a};
+                                               where amino_ws = get_ordered_elements (alphabet_letters amino_a) amino_ws' "fitnesses"
+                                                     amino_a = getAminoAcids codon_a
 
 -- Issue: bad mixing on fMutSel model
 
-gamma_rates_dist alpha = gamma alpha (1.0/alpha);
+gamma_rates_dist alpha = gamma alpha (1.0/alpha)
 
-gamma_rates base alpha n = multi_rate_unif_bins base (gamma_rates_dist alpha) n;
+gamma_rates base alpha n = multi_rate_unif_bins base (gamma_rates_dist alpha) n
 
-log_normal_rates_dist sigmaOverMu = log_normal lmu lsigma where {x = log(1.0+sigmaOverMu^2);
-                                                                 lmu = -0.5*x;
-                                                                 lsigma = sqrt x};
+log_normal_rates_dist sigmaOverMu = log_normal lmu lsigma where x = log(1.0+sigmaOverMu^2)
+                                                                lmu = -0.5*x
+                                                                lsigma = sqrt x
 
-log_normal_rates base sigmaOverMu n = multi_rate_unif_bins base (log_normal_rates_dist sigmaOverMu) n;
+log_normal_rates base sigmaOverMu n = multi_rate_unif_bins base (log_normal_rates_dist sigmaOverMu) n
 
---dp base rates fraction = multi_rate base dist where {dist = zip fraction rates};
-free_rates base rates fraction = scaled_mixture (replicate (length fraction) base) rates fraction;
+--dp base rates fraction = multi_rate base dist where dist = zip fraction rates
+free_rates base rates fraction = scaled_mixture (replicate (length fraction) base) rates fraction
 
-branch_transition_p t smodel branch_cat_list ds b = list_to_vector $ branchTransitionP (getNthMixture smodel (branch_cat_list!!b)) (ds!b);
+branch_transition_p t smodel branch_cat_list ds b = list_to_vector $ branchTransitionP (getNthMixture smodel (branch_cat_list!!b)) (ds!b)
 
-transition_p_index t smodel branch_cat_list ds = mkArray (numBranches t) (branch_transition_p t smodel branch_cat_list ds);
+transition_p_index t smodel branch_cat_list ds = mkArray (numBranches t) (branch_transition_p t smodel branch_cat_list ds)
 
-unit_mixture m = MixtureModel (certainly m);
+unit_mixture m = MixtureModel (certainly m)
 
-mmm m = MixtureModels [m];
+mmm m = MixtureModels [m]
 
-empirical a filename = builtin_empirical a (listToString filename);
+empirical a filename = builtin_empirical a (listToString filename)
 
-wag_frequencies a = zip (alphabet_letters a) (list_from_vector $ builtin_wag_frequencies a);
-lg_frequencies a = zip (alphabet_letters a) (list_from_vector $ builtin_lg_frequencies a);
-}
+wag_frequencies a = zip (alphabet_letters a) (list_from_vector $ builtin_wag_frequencies a)
+lg_frequencies a = zip (alphabet_letters a) (list_from_vector $ builtin_lg_frequencies a)
