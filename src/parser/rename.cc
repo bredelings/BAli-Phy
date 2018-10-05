@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <map>
 #include <deque>
 
 #include "rename.H"
@@ -12,7 +13,17 @@
 using std::string;
 using std::vector;
 using std::set;
+using std::map;
 using std::deque;
+
+struct renamer_state
+{
+    const Module& m;
+    int var_index;
+    var get_fresh_wildcard() { return var(-var_index++);}
+    var get_fresh_var() { return var(var_index++);}
+    var get_fresh_var(const string& name) {return var(name,var_index++);}
+};
 
 expression_ref infix_parse(const Module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
 
@@ -251,13 +262,15 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     return expression_ref{E.head(),v};
 }
 
+typedef set<string> bound_var_info;
+
 expression_ref rename(const Module& m, const expression_ref& E)
 {
     return rename(m,E,set<string>());
 }
 
 
-std::set<string> rename_pattern(const Module& m, expression_ref& pat, bool top = false)
+bound_var_info rename_pattern(const Module& m, expression_ref& pat, bool top = false)
 {
     // 0. Handle WildCardPattern
     if (is_AST(pat,"WildcardPattern"))
@@ -309,7 +322,7 @@ std::set<string> rename_pattern(const Module& m, expression_ref& pat, bool top =
     head = constructor(S.name, S.arity);
 
     // 5. Rename arguments and accumulate bound variables
-    set<string> bound;
+    bound_var_info bound;
     // Rename the arguments
     for(auto& e: args)
     {
@@ -329,7 +342,7 @@ std::set<string> rename_pattern(const Module& m, expression_ref& pat, bool top =
 }
 
 // FIXME make a RnM (or Renamer) object for renaming that can store the module, the set of bound vars, etc.
-expression_ref rename_decl(const Module& m, const expression_ref& decl, const set<string>& bound)
+expression_ref rename_decl(const Module& m, const expression_ref& decl, const bound_var_info& bound)
 {
     assert(is_AST(decl,"Decl"));
     assert(decl.is_expression());
@@ -342,7 +355,7 @@ expression_ref rename_decl(const Module& m, const expression_ref& decl, const se
     auto f = lhs.head();
 
     // 1. Rename the lhs, and get bound variables
-    set<string> bound2 = bound;
+    auto bound2 = bound;
 
     // 2. If this is not a pattern binding, then rename the argument patterns
     bool pattern_bind = f.is_a<constructor>();
@@ -371,7 +384,7 @@ expression_ref rename_decl(const Module& m, const expression_ref& decl, const se
 }
 
 
-set<string> rename_decls(const Module& m, expression_ref& decls, const set<string>& bound)
+bound_var_info rename_decls(const Module& m, expression_ref& decls, const bound_var_info& bound)
 {
     assert(is_AST(decls,"TopDecls") or is_AST(decls,"Decls"));
 
@@ -379,14 +392,14 @@ set<string> rename_decls(const Module& m, expression_ref& decls, const set<strin
 
     vector<expression_ref> v = decls.sub();
 
-    set<string> bound2 = bound;
+    auto bound2 = bound;
     bool top = is_AST(decls,"TopDecls");
 
     // Find all the names bound HERE, versus in individual decls.
 
     // The idea is that we only add unqualified names here, and they shadow
     // qualified names.
-    set<string> bound_names;
+    bound_var_info bound_names;
     for(auto& decl: v)
     {
 	if (not is_AST(decl,"Decl")) continue;
@@ -427,7 +440,7 @@ set<string> rename_decls(const Module& m, expression_ref& decls, const set<strin
     return bound_names;
 }
 
-set<string> rename_stmt(const Module& m, expression_ref& stmt, const set<string>& bound)
+bound_var_info rename_stmt(const Module& m, expression_ref& stmt, const bound_var_info& bound)
 {
     if (is_AST(stmt, "SimpleQual"))
     {
@@ -453,7 +466,7 @@ set<string> rename_stmt(const Module& m, expression_ref& stmt, const set<string>
 	std::abort();
 }
 
-expression_ref rename(const Module& m, const expression_ref& E, const set<string>& bound)
+expression_ref rename(const Module& m, const expression_ref& E, const bound_var_info& bound)
 {
     vector<expression_ref> v;
     if (E.is_expression())
@@ -480,7 +493,7 @@ expression_ref rename(const Module& m, const expression_ref& E, const set<string
 	{
 	    if (v.size() == 2)
 	    {
-		set<string> bound2 = bound;
+		auto bound2 = bound;
 		add(bound2, rename_decls(m,v[1],bound));
 		v[0] = rename(m, v[0], bound2);
 	    }
@@ -517,7 +530,7 @@ expression_ref rename(const Module& m, const expression_ref& E, const set<string
 	else if (n.type == "Lambda")
 	{
 	    // 1. Rename patterns for lambda arguments
-	    set<string> bound2 = bound;
+	    auto bound2 = bound;
 	    for(int i=0; i<v.size()-1; i++)
 		add(bound2, rename_pattern(m, v[i]));
 
