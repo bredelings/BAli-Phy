@@ -596,11 +596,33 @@ simplify_decls(const simplifier_options& options, CDecls& orig_decls, const subs
 	}
 	else
 	{
+	    /* See the paper on inlining for why we should NOT consider if F is trivial until after we have
+                 simplified F.
+
+	       One case that seems kind of problematic is let {x=3,y=4,q=let {z=x,y=w} in (z,w)} in ...
+               If we simplify the bodies of z and w then we get let {x=3,y=4,q=let {z=3,w=4} in (z,w)} in ...
+                 thus (a) duplicating the bodies of x and y, and also making q not look like a constructor.
+               This is kind of problematic since we will never be able to resolve `case q of (a,b) -> a`
+                 unless we can expose that q is in fact a pair tuple.
+
+               However, consider that we might have decided to unconditionally pre-inline x.  In that case,
+                 replacing z with x is bad, since we would then replace z with 3 and get (3,w), which is illegal.
+               This the warning about not replacing z with x until after we simplify F (below) applies to this case.
+
+               In practice, it seems that we get around this problem by floating the let {z=w,y=w} up since (z,w)
+                 is a constructor.  However, if we could somehow avoid substituting x unconditionally in these cases,
+                 then we could indeed replace z with x.  Maybe we could avoid marking x as OnceSafe if its only occurrence
+                 is in the body of a let?  But then we would have to make sure that we never CREATE the situation where x
+                 is the body of a let.  So, maybe we just hope that floating lets out of less is sufficient for now.
+	    */
+
 	    // 5.1.2 Simplify F.
 	    F = simplify(options, F, S2, bound_vars, unknown_context());
 
+	    // Should we also float lambdas in addition to constructors?  We could apply them if so...
+
 	    // Float lets out of decl x = F
-	    if (options.let_float_from_let and (is_constructor(multi_let_body(F)) or is_top_level))
+	    if (options.let_float_from_let and (is_constructor(multi_let_body(F).head()) or is_top_level))
 		for(auto& decls: strip_multi_let(F))
 		    for(auto& decl: decls)
 		    {
