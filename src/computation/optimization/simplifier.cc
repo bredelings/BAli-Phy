@@ -622,7 +622,7 @@ simplify_decls(const simplifier_options& options, CDecls& orig_decls, const subs
 	    // Should we also float lambdas in addition to constructors?  We could apply them if so...
 
 	    // Float lets out of decl x = F
-	    if (options.let_float_from_let and (is_constructor(multi_let_body(F).head()) or is_top_level))
+	    if (options.let_float_from_let and (is_constructor_exp(multi_let_body(F)) or is_lambda_exp(multi_let_body(F)) or is_top_level))
 		for(auto& decls: strip_multi_let(F))
 		    for(auto& decl: decls)
 		    {

@@ -42,4 +42,9 @@ inline bool is_constructor(const expression_ref& E)
     return E.type() == constructor_type;
 }
 
+inline bool is_constructor_exp(const expression_ref& E)
+{
+    return is_constructor(E.head());
+}
+
 #endif

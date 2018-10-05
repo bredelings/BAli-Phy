@@ -20,4 +20,18 @@ inline bool is_apply(const expression_ref& E)
     return E.type() == apply_type;
 }
 
+
+inline bool is_apply_exp(const expression_ref& E)
+{
+    if (is_apply(E.head()))
+    {
+	assert(E.size() > 0);
+	return true;
+    }
+    else
+	return false;
+}
+
+
+
 #endif
