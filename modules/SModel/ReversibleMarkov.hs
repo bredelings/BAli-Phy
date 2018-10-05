@@ -1,56 +1,57 @@
 module SModel.ReversibleMarkov (module SModel.ReversibleMarkov, module SModel.Frequency) where
-{
-import SModel.Frequency;
-import Alphabet;
 
-builtin get_equilibrium_rate 4 "get_equilibrium_rate" "SModel";
-builtin get_eigensystem 2 "get_eigensystem" "SModel";
-builtin lExp 3 "lExp" "SModel";
-builtin builtin_gtr_sym 2 "gtr_sym" "SModel";
-builtin fixup_diagonal_rates 1 "fixup_diagonal_rates" "SModel";
-builtin %*% 2 "elementwise_multiply" "SModel";
+import SModel.Frequency
+import Alphabet
 
-data ReversibleMarkov = ReversibleMarkov a b c d e f g;
+builtin get_equilibrium_rate 4 "get_equilibrium_rate" "SModel"
+builtin get_eigensystem 2 "get_eigensystem" "SModel"
+builtin lExp 3 "lExp" "SModel"
+builtin builtin_gtr_sym 2 "gtr_sym" "SModel"
+builtin fixup_diagonal_rates 1 "fixup_diagonal_rates" "SModel"
+builtin %*% 2 "elementwise_multiply" "SModel"
 
-qExp (ReversibleMarkov a s q pi l t r) = lExp l pi t;
+data ReversibleMarkov = ReversibleMarkov a b c d e f g
 
-get_q (ReversibleMarkov _ _ q _ _ _ _) = q;
+qExp (ReversibleMarkov a s q pi l t r) = lExp l pi t
 
-scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r);
+get_q (ReversibleMarkov _ _ q _ _ _ _) = q
 
-simple_smap a = iotaUnsigned (alphabetSize a);
+scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r)
+
+simple_smap a = iotaUnsigned (alphabetSize a)
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
-reversible_markov a smap q pi = ReversibleMarkov a smap q2 pi (get_eigensystem q2 pi) 1.0 (get_equilibrium_rate a smap q2 pi) where {q2 = fixup_diagonal_rates q};
+reversible_markov a smap q pi = ReversibleMarkov a smap q2 pi (get_eigensystem q2 pi) 1.0 (get_equilibrium_rate a smap q2 pi) where q2 = fixup_diagonal_rates q
 
-gtr_sym exchange a = builtin_gtr_sym (list_to_vector exchange) a;
-equ a = gtr_sym (replicate nn 1.0) a where {n=alphabetSize a;nn=n*(n-1)/2};
+gtr_sym exchange a = builtin_gtr_sym (list_to_vector exchange) a
+equ a = gtr_sym (replicate nn 1.0) a
+    where n=alphabetSize a
+          nn=n*(n-1)/2
 
-gtr a s pi = reversible_markov a (simple_smap a) (s %*% (plus_f_matrix a pi')) pi' where {pi' = list_to_vector pi};
+gtr a s pi = reversible_markov a (simple_smap a) (s %*% (plus_f_matrix a pi')) pi' where pi' = list_to_vector pi
 
-f81     pi a = gtr a (equ a) pi;
-jukes_cantor a = gtr a (equ a) (uniform_frequencies a);
+f81     pi a = gtr a (equ a) pi
+jukes_cantor a = gtr a (equ a) (uniform_frequencies a)
 
-gtr' s'    pi a = gtr a (gtr_sym' s'    a) (frequencies_from_dict a pi);
+gtr' s'    pi a = gtr a (gtr_sym' s'    a) (frequencies_from_dict a pi)
 
 -- es' is a [(String,Double)] here
-all_pairs l = [(x,y) | (x:ys) <- tails l, y <- ys];
+all_pairs l = [(x,y) | (x:ys) <- tails l, y <- ys]
 
-letter_pair_names a = [l1++l2|(l1,l2) <- all_pairs (alphabet_letters a)];
+letter_pair_names a = [l1++l2|(l1,l2) <- all_pairs (alphabet_letters a)]
 
-get_element_exchange []                 x y = error ("No exchangeability specified for '" ++ x ++ "'");
-get_element_exchange ((key,value):rest) x y = if key == x || key == y then value else get_element_exchange rest x y;
+get_element_exchange []                 x y = error ("No exchangeability specified for '" ++ x ++ "'")
+get_element_exchange ((key,value):rest) x y = if key == x || key == y then value else get_element_exchange rest x y
 
 -- factor out code to get gtr exch list
 -- maybe put ReversibleFrequency into this file.
 -- clean up f1x4 and f3x4?
-gtr_sym' es' a = gtr_sym es a where {lpairs = all_pairs (alphabet_letters a);
-                                     es = if length lpairs == length es' then
-                                              [get_element_exchange es' (l1++l2) (l2++l1)| (l1,l2) <- lpairs]
-                                          else
-                                              error "Expected "++show (length lpairs)++" exchangeabilities but got "++ show (length es')++"!"};
+gtr_sym' es' a = gtr_sym es a where lpairs = all_pairs (alphabet_letters a)
+                                    es = if length lpairs == length es' then
+                                             [get_element_exchange es' (l1++l2) (l2++l1)| (l1,l2) <- lpairs]
+                                         else
+                                             error "Expected "++show (length lpairs)++" exchangeabilities but got "++ show (length es')++"!"
 
-plus_f   a s pi   = gtr a s pi;
-plus_fe  a s      = plus_f a s (uniform_frequencies a);
-plus_gwf a s pi f = reversible_markov a (simple_smap a) (s %*% (plus_gwf_matrix a pi' f)) pi' where {pi' = list_to_vector pi};
-}
+plus_f   a s pi   = gtr a s pi
+plus_fe  a s      = plus_f a s (uniform_frequencies a)
+plus_gwf a s pi f = reversible_markov a (simple_smap a) (s %*% (plus_gwf_matrix a pi' f)) pi' where pi' = list_to_vector pi
