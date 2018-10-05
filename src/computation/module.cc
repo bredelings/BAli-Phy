@@ -6,7 +6,6 @@
 #include "operations.H"
 #include "computation/machine/graph_register.H" // for graph_normalize( )
 #include "computation/operations.H"
-#include "parser/parse.H"
 #include "parser/desugar.H"
 #include "computation/loader.H"
 #include "expression/AST_node.H"
