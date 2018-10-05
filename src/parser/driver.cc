@@ -83,6 +83,9 @@ driver::parse_string (const string& file_contents, const std::string &input_name
   {
       std::cerr << e.first << ": " << e.second << '\n';
   }
+  if (error_messages.size())
+      throw myexception()<<"Parsing failed.";
+  assert(result);
   return res;
 }
 
