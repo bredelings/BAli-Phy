@@ -575,6 +575,19 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     sanitize_branch_lengths(T);
 
     //--------- Set up indel model --------//
+
+    //-- Check that we're not estimating the alignment for things that aren't sequences --//
+    for(int i=0;i<imodel_names_mapping.n_unique_items();i++)
+    {
+	for(int j:imodel_names_mapping.partitions_for_item[i])
+	{
+	    auto& a = A[j].get_alphabet();
+	    if (dynamic_cast<const Doublets*>(&a) or dynamic_cast<const Numeric*>(&a))
+	    {
+		throw myexception()<<"Data of type '"<<a.name<<"' requires a constant alignment in partition "<<j+1;
+	    }
+	}
+    }
     auto full_imodels = get_imodels(R, imodel_names_mapping, T);
 
     // 5. ----- Check that all smodel-linked partitions end up with the same alphabet. -----
