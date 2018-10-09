@@ -181,10 +181,10 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	}
 	else if (n.type == "Decl")
 	{
-	    auto& lhs = E.sub()[0];
-
-            // Pattern bindings should be processed before we get here!
             // FIXME: don't desugar a Decl except from Decls
+            // Pattern bindings should be processed before we get here!
+            //
+            // auto& lhs = E.sub()[0];
             // assert(not lhs.head().is_a<constructor>());
 
             // Replace bound vars in (a) the patterns and (b) the body
