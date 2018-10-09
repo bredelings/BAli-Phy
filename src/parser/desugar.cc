@@ -117,7 +117,14 @@ vector<expression_ref> desugar_state::parse_fundecls(const vector<expression_ref
 	// Skip pattern bindings
 	if (f.is_a<constructor>())
 	{
-	    decls.push_back(decl);
+	    auto& pat = lhs;
+	    auto z = get_fresh_var();
+
+	    assert(is_AST(decl.sub()[1],"rhs"));
+	    decls.push_back(decl.head()+z+decl.sub()[1].sub()[0]);
+	    // Probably we shouldn't have desugared the RHS yet.
+	    for(auto& x: get_free_indices(pat))
+		decls.push_back(decl.head()+x+case_expression(z,pat,x,{var("Compiler.base.error"),"Failed pattern match"}));
 	    continue;
 	}
 
@@ -378,31 +385,6 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	    expression_ref decls_ = v[0];
 	    assert(is_AST(decls_,"Decls"));
 	    expression_ref body = v[1];
-
-	    // transform "let (a,b) = E in F" => "case E of (a,b) -> F"
-	    {
-		expression_ref decl = decls_.sub()[0];
-		if (is_AST(decl,"Decl"))
-		{
-		    expression_ref pat = decl.sub()[0];
-		    expression_ref rhs = decl.sub()[1];
-		    // let pat = rhs in body -> case rhs of {pat->body}
-		    if (pat.head().is_a<constructor>())
-		    {
-			std::abort();
-			assert(is_AST(rhs,"rhs"));
-			expression_ref pat0 = pat.sub()[0];
-			if (is_AST(pat0,"Tuple"))
-			{
-			    if (decls_.size() != 1) throw myexception()<<"Can't currently handle pattern let with more than one decl.";
-			    expression_ref alt = AST_node("alt") + pat + body;
-			    expression_ref alts = AST_node("alts") + alt;
-			    expression_ref EE = AST_node("Case") + rhs.sub()[0] + alts;
-			    return desugar(m, EE);
-			}
-		    }
-		}
-	    }
 
 	    // parse the decls and bind declared names internally to the decls.
 	    v[0] = desugar(v[0]);
