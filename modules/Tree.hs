@@ -21,14 +21,15 @@ edgesOutOfNode (Tree nodesArray _ _ _) node = nodesArray ! node
 edgesOutOfNode (RootedTree t _ _) node = edgesOutOfNode t node
 nodesForEdge (Tree _ branchesArray _ _) edgeIndex = branchesArray ! edgeIndex
 nodesForEdge (RootedTree t _ _) edgeIndex = nodesForEdge t edgeIndex
-sourceNode  t b = case (nodesForEdge t b) of (s,_,_,_)->s
-sourceIndex t b = case (nodesForEdge t b) of (_,i,_,_)->i
-targetNode  t b = case (nodesForEdge t b) of (_,_,t,_)->t
-reverseEdge t b = case (nodesForEdge t b) of (_,_,_,r)->r
+sourceNode  t b = let (s,_,_,_) = nodesForEdge t b in s
+sourceIndex t b = let (_,i,_,_) = nodesForEdge t b in i
+targetNode  t b = let (_,_,t,_) = nodesForEdge t b in t
+reverseEdge t b = let (_,_,_,r) = nodesForEdge t b in r
 edgeForNodes t (n1,n2) = head [b | b <- (edgesOutOfNode t n1), (targetNode t b)==n2]
 nodeDegree t n = length (edgesOutOfNode t n)
 neighbors t n = fmap (targetNode t) (edgesOutOfNode t n)
-edgesBeforeEdge t b = case (nodesForEdge t b) of (source,index,_,_) -> map (reverseEdge t) $ remove_element index $ edgesOutOfNode t source
+edgesBeforeEdge t b = let (source,index,_,_) = nodesForEdge t b
+                      in map (reverseEdge t) $ remove_element index $ edgesOutOfNode t source
 
 is_leaf_node t n = (nodeDegree t n == 1)
 is_internal_node t n = not $ is_leaf_node t n
