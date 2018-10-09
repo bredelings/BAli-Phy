@@ -66,7 +66,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("cutoff",value<unsigned>(),"Keep only sequence with more mismatches than <arg>.")
 	("longer-than",value<unsigned>(),"Keep only sequences longer than <arg>.")
 	("shorter-than",value<unsigned>(),"Keep only sequence sequences shorter than <arg>.")
-	("keep",value<string>(),"Keep only sequences in comma-separated list <arg>.")
+	("protect",value<string>(),"Sequences that cannot be removed (comma-separated).")
 	("remove",value<string>(),"Remove sequences in comma-separated list <arg>.")
 	("down-to",value<int>(),"Remove similar sequences down to <arg> sequences.")
 	("remove-crazy",value<int>(),"Remove <arg> sequences that are missing too many conserved sites.")
@@ -340,10 +340,11 @@ int main(int argc,char* argv[])
 	vector<int> keep(A.n_sequences(),1);
 
 	vector<string> protect;
-	if (args.count("keep"))
-	    protect = split(args["keep"].as<string>(),',');
+	if (args.count("protect"))
+	    protect = split(args["protect"].as<string>(),',');
 
-	for(int i=0;i<protect.size();i++) {
+	for(int i=0;i<protect.size();i++)
+	{
 	    if (auto p = find_index(names,protect[i]))
 		keep[*p] = 2;
 	    else
