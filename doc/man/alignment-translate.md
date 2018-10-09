@@ -36,26 +36,21 @@ Translate a DNA/RNA alignment into amino acids.
 
 # EXAMPLES:
  
-
-
-
 Translate DNA or RNA to amino acids in reading frame 1:
-
+```
 % alignment-translate < dna.fasta > aa.fasta
-
-
+```
 
 Give the reverse complement without translation:
-
+```
 % alignment-translate -rc --translate=no < dna.fasta > dna2.fasta
-
-
+```
 
 The following commands are identical:
-
+```
 % alignment-translate --frame=-2 < dna.fasta > aa2.fasta
-
 % alignment-translate -rc --frame=2 < dna.fasta > aa2.fasta
+```
 
 # REPORTING BUGS:
  BAli-Phy online help: <http://www.bali-phy.org/docs.php>.

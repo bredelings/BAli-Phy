@@ -57,22 +57,17 @@ Concatenate several alignments (with the same sequence names) end-to-end.
 
 # EXAMPLES:
  
-
-
-
 To select columns from an alignment:
-
+```
 % alignment-cat -c1-10,50-100,600- filename.fasta > result.fasta
-
 % alignment-cat -c5-250/3 filename.fasta > first_codon_position.fasta
-
 % alignment-cat -c6-250/3 filename.fasta > second_codon_position.fasta
-
-
+```
 
 To concatenate two or more alignments:
-
+```
 % alignment-cat filename1.fasta filename2.fasta > all.fasta
+```
 
 # REPORTING BUGS:
  BAli-Phy online help: <http://www.bali-phy.org/docs.php>.

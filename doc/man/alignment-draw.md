@@ -68,10 +68,7 @@ Draw an alignment to HTML, optionally coloring residues by AU.
 
 
 # EXAMPLES:
- 
-
-Rainbow+contrast+fade
-
+ Rainbow+contrast+fade
 AA+contrast+fade+fade+fade+fade
 
 # REPORTING BUGS:
