@@ -252,19 +252,16 @@ void Module::compile(const Program& P)
 
     declare_fixities();
 
-    if (not skip_desugaring)
-	rename_infix(P);  // fixme - separate renaming from desugaring -- move it after load_builtins.
+    rename_infix(P);  // FIXME - merge with rename() below.
 
     add_local_symbols();
 
     perform_exports();
 
     // Currently we do renaming here, including adding prefixes to top-level decls.
-    if (not skip_desugaring)
-    {
-	rename(P);
-	desugar(P); // fixme - separate renaming from desugaring -- move it after load_builtins.
-    }
+    rename(P);
+
+    desugar(P);
 
     load_builtins(*P.get_module_loader());
 

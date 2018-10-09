@@ -81,8 +81,6 @@ class Module
 
     bool optimized = false;
 
-    bool skip_desugaring = false;
-
 public:
 
     bool do_optimize = true;
