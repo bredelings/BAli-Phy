@@ -2408,7 +2408,7 @@ The stabilization criterion is the same one described above for numerical values
 <screen><prompt>%</prompt> alignment-thin --longer-than=250 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>-long.fasta</screen>
       <para>Remove sequences while preserving sequence diversity:</para> 
 <screen><prompt>%</prompt> alignment-thin --down-to=30 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>-30taxa.fasta
-<prompt>%</prompt> alignment-thin --down-to=30 <replaceable>file</replaceable>.fasta --keep=seq1,seq2 > <replaceable>file</replaceable>-30taxa.fasta</screen>
+<prompt>%</prompt> alignment-thin --down-to=30 <replaceable>file</replaceable>.fasta --protect=seq1,seq2 > <replaceable>file</replaceable>-30taxa.fasta</screen>
       <para>Remove sequences that are missing conserved columns:</para> 
 <screen><prompt>%</prompt> alignment-thin --remove-crazy=10 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>2.fasta</screen>
     </section>
