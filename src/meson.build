@@ -116,7 +116,9 @@ foreach tool: simple_tools
   test(tool + ' --help', tool_exe, args:['--help'])
 endforeach
 
+simple_tools_prefixed = []
 foreach tool: simple_tools_prefix
+  simple_tools_prefixed = simple_tools_prefixed + ['bali-'+tool]
   tool_exe = executable('bali-'+tool,
 			['tools/' + tool + '.cc'],
 			dependencies:boost,
@@ -132,7 +134,7 @@ executable('trees-bootstrap', ['tools/trees-bootstrap.cc', 'tools/bootstrap.cc']
 
 executable('draw-tree', ['tools/draw-tree.cc'], dependencies: [boost, cairo], include_directories: root_inc, link_with: libbaliphy, install:true)
 
-all_progs = ['bali-phy'] + simple_tools + ['alignment-draw','trees-bootstrap','draw-tree']
+all_progs = ['bali-phy'] + simple_tools + simple_tools_prefixed + ['alignment-draw','trees-bootstrap','draw-tree']
 
 #--------- Build rules for tools that are SOMETIMES installed ------------#
 
