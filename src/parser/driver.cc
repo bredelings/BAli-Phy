@@ -29,6 +29,12 @@ void driver::push_context(const LayoutContext& lc)
     contexts.push_back(lc);
 }
 
+void driver::push_module_context()
+{
+//    std::cerr<<"running push_module_context\n";
+    contexts.push_back(LayoutContext{1,true});
+}
+
 void driver::push_context()
 {
     contexts.push_back({});

@@ -36,6 +36,7 @@ public:
     boost::optional<LayoutContext> get_context();
     void push_context(const boost::optional<LayoutContext>&);
     void push_context(const LayoutContext&);
+    void push_module_context();
     void push_context();
 
     symbol_type hopefully_open_brace(const location_type& loc);

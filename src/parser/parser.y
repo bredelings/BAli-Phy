@@ -519,9 +519,9 @@ identifier: qvar
 /* signature: backpack stuff */
 
 module: "module" modid maybemodwarning maybeexports "where" body {$$ = make_module($2,$4,$6);}
-| body2                                                          {$$ = make_module("",{},$1);}
+| body2                                                          {$$ = make_module("Main",{},$1);}
 
-missing_module_keyword: %empty
+missing_module_keyword: %empty                                   {drv.push_module_context();}
 
 /* BACKPACK: implicit_top: %empty */
 
