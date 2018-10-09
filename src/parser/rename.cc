@@ -432,19 +432,18 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
 	// For a constructor pattern, rename the whole lhs.
 	if (is_haskell_con_name(head.as_<AST_node>().value))
 	{
-	    assert(bound_names.empty());
 	    disjoint_add(bound_names,rename_pattern(lhs, top));
 	}
-	// For a variable pattern, just rename the variable.
+	// For a function pattern, just rename the variable being defined
 	else if (lhs.size())
 	{
 	    disjoint_add(bound_names,rename_pattern(head, top));
 	    lhs = expression_ref{head,lhs.sub()};
 	}
+	// For a variable pattern, the variable being defined is the whole lhs
 	else
 	{
-	    disjoint_add(bound_names,rename_pattern(head, top));
-	    lhs = head;
+	    disjoint_add(bound_names,rename_pattern(lhs, top));
 	}
 	decl = expression_ref{decl.head(),w};
     }
