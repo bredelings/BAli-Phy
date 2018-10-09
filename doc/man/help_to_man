@@ -58,13 +58,28 @@ def get_options(lines):
             
 
 def get_examples(lines):
-    examples = None
+    # Remove lines up to 'Examples:'
+    while lines and not lines[0].startswith('Examples:'):
+        lines = lines[1:]
+    if not lines:
+        return None
+    lines = lines[1:]
+
+    out_lines = []
+    in_quote = False
     for line in lines:
-        if examples is not None:
-            examples  = examples + '\n\n' +line
-        if line.startswith('Examples'):
-            examples = ''
-    return examples
+        if (line.startswith('%')):
+            in_quote = True
+            out_lines = out_lines + ['```']
+        elif in_quote:
+            in_quote = False
+            out_lines = out_lines + ['```']
+
+        out_lines = out_lines + [line]
+    if in_quote:
+        out_lines = out_lines + ['```']
+
+    return '\n'.join(out_lines)
           
 
 help = {}

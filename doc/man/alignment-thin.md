@@ -66,28 +66,43 @@ Remove sequences or columns from an alignment.
 **--find-dups** _arg_
 : For each sequence, find the closest other sequence.
 
+
 # EXAMPLES:
+ 
+Remove columns without a minimum number of letters:
+```
+% alignment-thin --min-letters=5 file.fasta > file-thinned.fasta
+```
 
-alignment-thin --min-letters=5 file.fasta > file-thinned.fasta
-: Remove columns without a minimum number of letters
+Remove sequences by name:
+```
+% alignment-thin --remove=seq1,seq2 file.fasta > file2.fasta
+```
 
-alignment-thin --remove=seq1,seq2 file.fasta > file2.fasta
-: Remove sequences by name
+Remove short sequences:
+```
+% alignment-thin --longer-than=250 file.fasta > file-long.fasta
+```
 
-alignment-thin --longer-than=250 file.fasta > file-long.fasta
-: Remove short sequences
+Remove sequences with <= 5 differences from the closest other sequence:
+```
+% alignment-thin --cutoff=5 file.fasta > more-than-5-differences.fasta
+```
 
-alignment-thin --cutoff=5 file.fasta > more-than-5-differences.fasta
-: Remove sequences with <= 5 differences from the closest other sequence
+Like --cutoff, but stop when we have the right number of sequences:
+```
+% alignment-thin --down-to=30 file.fasta > file-30taxa.fasta
+```
 
-alignment-thin --down-to=30 file.fasta > file-30taxa.fasta
-: Like --cutoff, but stop when we have the right number of sequences.
+Remove dissimilar sequences that are missing conserved columns:
+```
+% alignment-thin --remove-crazy=10 file.fasta > file2.fasta
+```
 
-alignment-thin --remove-crazy=10 file.fasta > file2.fasta
-: Remove dissimilar sequences that are missing conserved columns.
-
-alignment-thin --down-to=30 file.fasta --protect=seq1,seq2 > file2.fasta
-: Protect some sequences from being removed:
+Protect some sequences from being removed:
+```
+% alignment-thin --down-to=30 file.fasta --protect=seq1,seq2 > file2.fasta
+```
 
 
 # REPORTING BUGS:

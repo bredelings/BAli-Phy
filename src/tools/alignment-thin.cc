@@ -104,6 +104,22 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	cout<<seq_filter<<"\n";
 	cout<<col_filter<<"\n";
 	cout<<output<<"\n";
+	cout<<"Examples:\n\n";
+	cout<<" Remove columns without a minimum number of letters:\n";
+	cout<<"   % alignment-thin --min-letters=5 file.fasta > file-thinned.fasta\n\n";
+	cout<<" Remove sequences by name:\n";
+	cout<<"   % alignment-thin --remove=seq1,seq2 file.fasta > file2.fasta\n\n";
+	cout<<" Remove short sequences:\n";
+	cout<<"   % alignment-thin --longer-than=250 file.fasta > file-long.fasta\n\n";
+	cout<<" Remove sequences with <= 5 differences from the closest other sequence:\n";
+	cout<<"   % alignment-thin --cutoff=5 file.fasta > more-than-5-differences.fasta\n\n";
+	cout<<" Like --cutoff, but stop when we have the right number of sequences:\n";
+	cout<<"   % alignment-thin --down-to=30 file.fasta > file-30taxa.fasta\n\n";
+	cout<<" Remove dissimilar sequences that are missing conserved columns:\n";
+	cout<<"   % alignment-thin --remove-crazy=10 file.fasta > file2.fasta\n\n";
+	cout<<" Protect some sequences from being removed:\n";
+	cout<<"   % alignment-thin --down-to=30 file.fasta --protect=seq1,seq2 > file2.fasta\n\n";
+
 	exit(0);
     }
 
