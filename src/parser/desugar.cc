@@ -31,6 +31,21 @@ using std::pair;
 // See list in computation/loader.C
 //
 
+int max_index(const expression_ref& x)
+{
+    int index = -1;
+    if (x)
+    {
+	if (x.head().is_a<var>())
+	    index =  std::max(index,x.head().as_<var>().index);
+
+	if (x.size())
+	    for(auto& e: x.sub())
+		index = std::max(max_index(e),index);
+    }
+    return index;
+}
+
 bool is_irrefutable_pat(const expression_ref& E)
 {
     return E.head().is_a<var>();
