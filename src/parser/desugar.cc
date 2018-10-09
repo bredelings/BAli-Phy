@@ -182,16 +182,10 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	else if (n.type == "Decl")
 	{
 	    auto& lhs = E.sub()[0];
-	    auto& f = lhs.head();
-	    if (f.is_a<constructor>())
-	    {
-		// Pattern x y z = E
-		//      to
-		// fresh = E
-		// x = case fresh of Pattern x y z
-		// y = case fresh of Pattern x y z
-		// z = case fresh of Pattern x y z
-	    }
+
+            // Pattern bindings should be processed before we get here!
+            // FIXME: don't desugar a Decl except from Decls
+            // assert(not lhs.head().is_a<constructor>());
 
             // Replace bound vars in (a) the patterns and (b) the body
 	    for(auto& e: v)
