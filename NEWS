@@ -3,6 +3,7 @@ UNRELEASED
    - "--" should not become a single long dash (en-dash) in man pages.
    - Don't crash if --scale is set to a constant (e.g. --scale=1).
    - Rename subsample to bali-subsample (to avoid conflicts with other software).
+   - Don't allow realigning Numeric[k] or Doublets[] alphabets.
  - Haskell
    - Implement -X NoImplicitPrelude
    - Refactored functions out of Prelude into Data.List, etc.
