@@ -225,7 +225,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     variables_map args;     
     store(command_line_parser(argc, argv).
 	  options(all).positional(p).run(), args);
-    notify(args);    
+    notify(args);
 
     bool error = false;
 
