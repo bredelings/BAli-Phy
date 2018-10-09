@@ -63,13 +63,13 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     options_description seq_filter("Sequence filtering options");
     seq_filter.add_options()
-	("cutoff",value<unsigned>(),"Keep only sequence with more mismatches than <arg>.")
-	("longer-than",value<unsigned>(),"Keep only sequences longer than <arg>.")
-	("shorter-than",value<unsigned>(),"Keep only sequence sequences shorter than <arg>.")
 	("protect",value<string>(),"Sequences that cannot be removed (comma-separated).")
 	("remove",value<string>(),"Remove sequences in comma-separated list <arg>.")
+	("longer-than",value<unsigned>(),"Remove sequences not longer than <arg>.")
+	("shorter-than",value<unsigned>(),"Remove sequences not shorter than <arg>.")
+	("cutoff",value<unsigned>(),"Remove similar sequences with #mismatches < cutoff.")
 	("down-to",value<int>(),"Remove similar sequences down to <arg> sequences.")
-	("remove-crazy",value<int>(),"Remove <arg> sequences that are missing too many conserved sites.")
+	("remove-crazy",value<int>(),"Remove <arg> outlier sequences -- defined as sequences that are missing too many conserved sites.")
 	("conserved",value<double>()->default_value(0.75),"Fraction of sequences that must contain a letter for it to be considered conserved.")
 	;
 
