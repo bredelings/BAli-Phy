@@ -51,6 +51,11 @@ public:
 	    std::abort();
 	}
 
+    bool operator !=(const Object& o) const
+	{
+	    return not operator==(o);
+	}
+
     int ref_count() const {return _refs;}
 
     virtual type_constant type() const {return unknown_type;}
