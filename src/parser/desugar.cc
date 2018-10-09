@@ -124,7 +124,7 @@ vector<expression_ref> desugar_state::parse_fundecls(const vector<expression_ref
 	    decls.push_back(decl.head()+z+decl.sub()[1].sub()[0]);
 	    // Probably we shouldn't have desugared the RHS yet.
 	    for(auto& x: get_free_indices(pat))
-		decls.push_back(decl.head()+x+case_expression(z,pat,x,{var("Compiler.base.error"),"Failed pattern match"}));
+		decls.push_back(decl.head()+x+case_expression(z,pat,x,{var("Compiler.Base.error"),"Failed pattern match"}));
 	    continue;
 	}
 
