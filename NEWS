@@ -10,6 +10,7 @@ UNRELEASED
    - Implement layout-sensitive parsing.
    - Implement pattern bindings (i.e. let (x,y) = E1 in E2)
    - Correctly float let out of let if it reveals a constant.
+   - Allow empty modules
  - Models
    + Add models x2, x2_sym, x2x2 for RNA stems.
    - Add Doublet alphabet for RNA stems.
