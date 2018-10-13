@@ -151,6 +151,24 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& xs, const
     return block_case(xs, equations, otherwise);
 }
 
+expression_ref desugar_state::block_case_constant(const vector<expression_ref>& x, const vector<equation_info_t>& equations, expression_ref otherwise)
+{
+    return block_case(x, equations, otherwise);
+}
+
+
+expression_ref desugar_state::block_case_var(const vector<expression_ref>& x, const vector<equation_info_t>& equations, expression_ref otherwise)
+{
+    return block_case(x, equations, otherwise);
+}
+
+
+expression_ref desugar_state::block_case_empty(const vector<expression_ref>& x, const vector<equation_info_t>& equations, expression_ref otherwise)
+{
+    assert(x.size() == 0);
+    // Actually we should combine E0 [] E1 [] ... [] EN [] otherwise
+    return equations[0].rhs;
+}
 
 
 expression_ref desugar_state::block_case(const vector<expression_ref>& x, const vector<equation_info_t>& equations, expression_ref otherwise)
@@ -165,12 +183,34 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
     for(int j=0;j<M;j++)
 	assert(equations[j].patterns.size() == N);
 
-    if (not x.size())
-	return equations[0].rhs;
+    if (not equations.size())
+	return otherwise;
 
+    if (not x.size())
+	return block_case_empty(x, equations, otherwise);
 
     auto partitions = partition(equations);
 
+    // This implements the "mixture rule" from Wadler in SLPJ
+    if (partitions.size() > 1)
+    {
+	expression_ref E = otherwise;
+
+	for(int i=partitions.size()-1; i >= 0; i--)
+	{
+	    vector<equation_info_t> equations_part;
+	    for(int j: partitions[i].second)
+		equations_part.push_back(equations[j]);
+	    // here we are not yet dispatching based on e.first = pattern_type::{constructor,var}
+
+	    assert(partitions[i].first != pattern_type::null);
+	    if (partitions[i].first == pattern_type::var)
+		E = block_case_var(x, equations_part, E);
+	    else
+		E = block_case_constant(x, equations_part, E);
+	}
+//	return E;
+    }
 
     // 1. Categorize each rule according to the type of its top-level pattern
     vector<expression_ref> constants;
@@ -203,8 +243,7 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 	; // otherwise = NULL
     else
     {
-	vector<expression_ref> x2 = x;
-	x2.erase(x2.begin());
+	vector<expression_ref> x2 = remove_first(x);
 
 	vector<equation_info_t> equations2;
 	for(int i=0;i<irrefutable_rules.size();i++)
