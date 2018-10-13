@@ -125,6 +125,7 @@ vector<pair<pattern_type,vector<int>>> partition(const vector<equation_info_t>& 
 	    partitions.back().second.push_back(i);
 	else
 	    partitions.push_back({current_type,{i}});
+	prev_type = current_type;
     }
     return partitions;
 }
