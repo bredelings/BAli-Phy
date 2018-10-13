@@ -73,6 +73,19 @@ bool is_simple_pattern(const expression_ref& E)
 // FIXME: we perform 3 case operations in the case of zip x:xs [] because we create an 'otherwise' let-var that
 //        performs a case on y:ys that has already been done.
 
+
+enum class pattern_type
+{
+    constructor,
+    var
+};
+
+struct equation_info_t
+{
+    vector<expression_ref> patterns;
+    expression_ref rhs;
+};
+
 /*
  * case (x[0],..,x[N-1]) of (p[0...M-1][0...N-1] -> b[0..M-1])
  *
@@ -85,17 +98,21 @@ bool is_simple_pattern(const expression_ref& E)
  */
 expression_ref desugar_state::block_case(const vector<expression_ref>& x, const vector<vector<expression_ref>>& p, const vector<expression_ref>& b)
 {
-    const int N = x.size();
-    const int M = p.size();
-
     assert(p.size() == b.size());
+
+    vector<equation_info_t> equations;
+    for(int i=0;i<p.size();i++)
+	equations.push_back({p[i],b[i]});
+
+    const int N = x.size();
+    const int M = equations.size();
 
     // Each pattern must have N components.
     for(int j=0;j<M;j++)
-	assert(p[j].size() == N);
+	assert(equations[j].patterns.size() == N);
 
     if (not x.size())
-	return b[0];
+	return equations[0].rhs;
 
     // 1. Categorize each rule according to the type of its top-level pattern
     vector<expression_ref> constants;
@@ -103,13 +120,13 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
     vector<int> irrefutable_rules;
     for(int j=0;j<M;j++)
     {
-	if (is_var(p[j][0]))
+	if (is_var(equations[j].patterns[0]))
 	{
 	    irrefutable_rules.push_back(j);
 	    continue;
 	}
 
-	expression_ref C = p[j][0].head();
+	expression_ref C = equations[j].patterns[0].head();
 	int which = find_object(constants, C);
 
 	if (which == -1)
@@ -137,19 +154,19 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 	for(int i=0;i<irrefutable_rules.size();i++)
 	{
 	    int r = irrefutable_rules[i];
-	    p2.push_back(p[r]);
+	    p2.push_back(equations[r].patterns);
 	    p2.back().erase(p2.back().begin());
 
 	    b2.push_back(b[r]);
 
-	    if (is_wildcard(p[r][0]))
+	    if (is_wildcard(equations[r].patterns[0]))
 		// This is a var.
 		; //assert(d->name.size() == 0);
 	    else
 	    {
 		// FIXME! What if x[0] isn't a var?
 		// Then if *d occurs twice, then we should use a let expression, right?
-		b2[i] = substitute(b2[i], p[r][0].as_<var>(), x[0]);
+		b2[i] = substitute(b2[i], equations[r].patterns[0].as_<var>(), x[0]);
 	    }
 	}
       
@@ -216,13 +233,13 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 
 	    // Add the pattern
 	    p2.push_back(vector<expression_ref>{});
-	    assert(p[r][0].size() == arity);
+	    assert(equations[r].patterns[0].size() == arity);
 
 	    // Add sub-patterns of p[r][1]
 	    for(int k=0;k<arity;k++)
-		p2.back().push_back(p[r][0].sub()[k]);
+		p2.back().push_back(equations[r].patterns[0].sub()[k]);
 
-	    p2.back().insert(p2.back().end(), p[r].begin()+1, p[r].end());
+	    p2.back().insert(p2.back().end(), equations[r].patterns.begin()+1, equations[r].patterns.end());
 
 	    // Add the body
 	    b2.push_back(b[r]);
@@ -238,15 +255,15 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 
 	// If x[1] matches a simple pattern in the only alternative, we may as well
 	// not change the variable names for the match slots in this pattern.
-	if (rules[c].size() == 1 and is_simple_pattern(p[r0][0]))
+	if (rules[c].size() == 1 and is_simple_pattern(equations[r0].patterns[0]))
 	{
-	    simple_patterns.back() = p[r0][0];
+	    simple_patterns.back() = equations[r0].patterns[0];
 
 	    // case x[1] of p[r0][1] -> case (x[2],..,x[N]) of (p[r0][2]....p[r0][N]) -> b[r0]
 	    x2 = x;
 	    x2.erase(x2.begin());
 
-	    p2.back() = p[r0];
+	    p2.back() = equations[r0].patterns;
 	    p2.back().erase( p2.back().begin() );
 	}
 
