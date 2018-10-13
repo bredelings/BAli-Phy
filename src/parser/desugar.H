@@ -38,12 +38,12 @@ struct desugar_state: public fresh_vars
     const Module& m;
 
     std::vector<expression_ref> parse_fundecls(const std::vector<expression_ref>& v);
-    expression_ref def_function(const std::vector< std::vector<expression_ref> >& patterns, const std::vector<expression_ref>& bodies);
+    expression_ref def_function(const std::vector< std::vector<expression_ref> >& patterns, const std::vector<expression_ref>& bodies,const expression_ref& otherwise);
 
-    expression_ref case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
-    expression_ref case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise);
-    expression_ref block_case(const std::vector<expression_ref>& x, const std::vector<std::vector<expression_ref>>& p, const std::vector<expression_ref>& b);
-    expression_ref block_case(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations);
+    expression_ref case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies, const expression_ref& otherwise={});
+    expression_ref case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise={});
+    expression_ref block_case(const std::vector<expression_ref>& x, const std::vector<std::vector<expression_ref>>& p, const std::vector<expression_ref>& b, const expression_ref&);
+    expression_ref block_case(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations, expression_ref={});
 
     expression_ref desugar(const expression_ref& E);
 

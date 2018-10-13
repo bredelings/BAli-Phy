@@ -136,7 +136,10 @@ vector<expression_ref> desugar_state::parse_fundecls(const vector<expression_ref
 	    if (patterns.back().size() != patterns.front().size())
 		throw myexception()<<"Function '"<<fvar<<"' has different numbers of arguments!";
 	}
-	decls.push_back(AST_node("Decl") + fvar + def_function(patterns,bodies) );
+	expression_ref msg = fvar.name+": pattern match failure";
+	expression_ref error = var("Compiler.Base.error");
+	auto otherwise = {error,msg};
+	decls.push_back(AST_node("Decl") + fvar + def_function(patterns, bodies, otherwise) );
 
 	// skip the other bindings for this function
 	i += (patterns.size()-1);
@@ -269,7 +272,9 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	    // 2. Desugar the body, binding vars mentioned in the lambda patterns.
 	    body = desugar(body);
 
-	    return def_function({v},{body}); 
+	    expression_ref error = var("Compiler.Base.error");
+	    expression_ref msg = "lambda: pattern match failure";
+	    return def_function({v},{body},{error,msg}); 
 	}
 	else if (n.type == "Do")
 	{

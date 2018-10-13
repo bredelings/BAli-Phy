@@ -139,7 +139,7 @@ vector<pair<pattern_type,vector<int>>> partition(const vector<equation_info_t>& 
  * If the otherwise branch is used twice, then construct a let-expression for it.
  *
  */
-expression_ref desugar_state::block_case(const vector<expression_ref>& xs, const vector<vector<expression_ref>>& p, const vector<expression_ref>& b)
+expression_ref desugar_state::block_case(const vector<expression_ref>& xs, const vector<vector<expression_ref>>& p, const vector<expression_ref>& b, const expression_ref& otherwise)
 {
     assert(p.size() == b.size());
 
@@ -147,12 +147,12 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& xs, const
     for(int i=0;i<p.size();i++)
 	equations.push_back({p[i],b[i]});
 
-    return block_case(xs, equations);
+    return block_case(xs, equations, otherwise);
 }
 
 
 
-expression_ref desugar_state::block_case(const vector<expression_ref>& x, const vector<equation_info_t>& equations)
+expression_ref desugar_state::block_case(const vector<expression_ref>& x, const vector<equation_info_t>& equations, expression_ref otherwise)
 {
     const int N = x.size();
     const int M = equations.size();
@@ -198,7 +198,6 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 
     // 2. Substitute for the irrefutable rules to find the 'otherwise' branch
     // This is substitute(x[1],p[2..m][1], case x2...xN of p[2..M][i] -> b[2..M] )
-    expression_ref otherwise;
     if (irrefutable_rules.empty())
 	; // otherwise = NULL
     else
@@ -368,7 +367,7 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 
 // Create the expression 'case T of {patterns[i] -> bodies[i]}'
 // Create the expression 'case (T) of {(patterns[i]) -> bodies[i]}'
-expression_ref desugar_state::case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
+expression_ref desugar_state::case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies, const expression_ref& otherwise)
 {
     vector<vector<expression_ref>> multi_patterns;
     for(const auto& p:patterns)
@@ -377,7 +376,7 @@ expression_ref desugar_state::case_expression(const expression_ref& T, const vec
     // Maybe only do this if T isn't a var already?
     auto x = get_fresh_var();
     CDecls binds{{x,T}};
-    return let_expression(binds, block_case({x}, multi_patterns, bodies));
+    return let_expression(binds, block_case({x}, multi_patterns, bodies, otherwise));
 }
 
 expression_ref desugar_state::case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise)
@@ -389,10 +388,10 @@ expression_ref desugar_state::case_expression(const expression_ref& T, const exp
 	patterns.push_back(var(-1));
 	bodies.push_back(otherwise);
     }
-    return case_expression(T,patterns, bodies);
+    return case_expression(T,patterns, bodies, otherwise);
 }
 
-expression_ref desugar_state::def_function(const vector< vector<expression_ref> >& patterns, const vector<expression_ref>& bodies)
+expression_ref desugar_state::def_function(const vector< vector<expression_ref> >& patterns, const vector<expression_ref>& bodies, const expression_ref& otherwise)
 {
     // Construct the dummies
     vector<expression_ref> args;
@@ -400,7 +399,8 @@ expression_ref desugar_state::def_function(const vector< vector<expression_ref> 
 	args.push_back(get_fresh_var());
 
     // Construct the case expression
-    expression_ref E = block_case(args, patterns, bodies);
+    
+    expression_ref E = block_case(args, patterns, bodies, otherwise);
 
     // Turn it into a function
     for(int i=args.size()-1;i>=0;i--)
