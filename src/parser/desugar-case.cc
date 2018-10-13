@@ -248,8 +248,6 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 	bool future_patterns_all_irrefutable = true;
 
 	// Construct the various modified bodies and patterns
-	vector<expression_ref> b2;
-	vector<vector<expression_ref> > p2;
 	vector<equation_info_t> equations2;
 	for(int i=0;i<rules[c].size();i++)
 	{
@@ -259,21 +257,17 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 	    equation_info_t eqn;
 	    eqn.rhs = equations[r].rhs;
 
-	    p2.push_back(vector<expression_ref>{});
 	    assert(equations[r].patterns[0].size() == arity);
 
 	    // Add sub-patterns of p[r][1]
 	    for(int k=0;k<arity;k++)
 	    {
-		p2.back().push_back(equations[r].patterns[0].sub()[k]);
 		eqn.patterns.push_back(equations[r].patterns[0].sub()[k]);
 	    }
 
-	    p2.back().insert(p2.back().end(), equations[r].patterns.begin()+1, equations[r].patterns.end());
 	    eqn.patterns.insert(eqn.patterns.end(), equations[r].patterns.begin()+1, equations[r].patterns.end());
 
 	    // Add the body
-	    b2.push_back(equations[r].rhs);
 	    equations2.push_back(std::move(eqn));
 
 	    // Check if p2[i] are all irrefutable
@@ -295,8 +289,6 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 	    x2 = x;
 	    x2.erase(x2.begin());
 
-	    p2.back() = equations[r0].patterns;
-	    p2.back().erase( p2.back().begin() );
 	    equations2.back().patterns = remove_first(equations[r0].patterns);
 	}
 
@@ -315,10 +307,7 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 	{
 	    if (otherwise)
 	    {
-		p2.push_back(vector<expression_ref>(x2.size(), var(-1)));
 		// Since we could backtrack, use the var.  It will point to otherwise
-		b2.push_back(O);
-
 		equations2.push_back({vector<expression_ref>(x2.size(), var(-1)), O});
 	    }
 	    simple_bodies.back() = block_case(x2, equations2);
