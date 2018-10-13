@@ -83,7 +83,7 @@ bool is_simple_pattern(const expression_ref& E)
  * If the otherwise branch is used twice, then construct a let-expression for it.
  *
  */
-expression_ref block_case(const vector<expression_ref>& x, const vector<vector<expression_ref>>& p, const vector<expression_ref>& b)
+expression_ref desugar_state::block_case(const vector<expression_ref>& x, const vector<vector<expression_ref>>& p, const vector<expression_ref>& b)
 {
     const int N = x.size();
     const int M = p.size();
@@ -311,7 +311,7 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
 
 // Create the expression 'case T of {patterns[i] -> bodies[i]}'
 // Create the expression 'case (T) of {(patterns[i]) -> bodies[i]}'
-expression_ref case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
+expression_ref desugar_state::case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
 {
     vector<vector<expression_ref>> multi_patterns;
     for(const auto& p:patterns)
@@ -319,7 +319,7 @@ expression_ref case_expression(const expression_ref& T, const vector<expression_
     return block_case({T}, multi_patterns, bodies);
 }
 
-expression_ref case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise)
+expression_ref desugar_state::case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise)
 {
     vector<expression_ref> patterns = {pattern};
     vector<expression_ref> bodies = {body};
