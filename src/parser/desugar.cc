@@ -48,7 +48,7 @@ int max_index(const expression_ref& x)
 }
 
 desugar_state::desugar_state(const Module& m_)
-    :m(m_),var_index(1+max_index(m.topdecls))
+    :fresh_vars(1+max_index(m_.topdecls)), m(m_)
 {}
 
 bool is_irrefutable_pat(const expression_ref& E)

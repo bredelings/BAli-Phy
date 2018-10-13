@@ -16,15 +16,20 @@ Module read_model(const std::string& filename);
 void read_add_model(Model& M, const std::string& filename);
 void add_model(Model& M, const std::string& filename);
 
-struct desugar_state
+class fresh_vars
 {
-    const Module& m;
-
     int var_index;
-
+public:
     var get_fresh_wildcard() { return var(-var_index++);}
     var get_fresh_var() { return var(var_index++);}
     var get_fresh_var(const std::string& name) {return var(name,var_index++);}
+
+    fresh_vars(int start):var_index(start) {}
+};
+
+struct desugar_state: public fresh_vars
+{
+    const Module& m;
 
     std::vector<expression_ref> parse_fundecls(const std::vector<expression_ref>& v);
     expression_ref def_function(const std::vector< std::vector<expression_ref> >& patterns, const std::vector<expression_ref>& bodies);
