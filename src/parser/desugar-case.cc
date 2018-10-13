@@ -101,8 +101,33 @@ vector<T> remove_first(vector<T>&& v1)
 enum class pattern_type
 {
     constructor,
-    var
+    var,
+    null
 };
+
+pattern_type classify_equation(const equation_info_t& equation)
+{
+    assert(equation.patterns.size());
+    if (is_var(equation.patterns[0]))
+	return pattern_type::var;
+    else
+	return pattern_type::constructor;
+}
+
+vector<pair<pattern_type,vector<int>>> partition(const vector<equation_info_t>& equations)
+{
+    vector<pair<pattern_type,vector<int>>> partitions;
+    auto prev_type = pattern_type::null;
+    for(int i=0;i<equations.size();i++)
+    {
+	auto current_type = classify_equation(equations[i]);
+	if (current_type == prev_type)
+	    partitions.back().second.push_back(i);
+	else
+	    partitions.push_back({current_type,{i}});
+    }
+    return partitions;
+}
 
 /*
  * case (x[0],..,x[N-1]) of (p[0...M-1][0...N-1] -> b[0..M-1])
@@ -124,6 +149,8 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& xs, const
     return block_case(xs, equations);
 }
 
+
+
 expression_ref desugar_state::block_case(const vector<expression_ref>& x, const vector<equation_info_t>& equations)
 {
     const int N = x.size();
@@ -135,6 +162,10 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 
     if (not x.size())
 	return equations[0].rhs;
+
+
+    auto partitions = partition(equations);
+
 
     // 1. Categorize each rule according to the type of its top-level pattern
     vector<expression_ref> constants;
