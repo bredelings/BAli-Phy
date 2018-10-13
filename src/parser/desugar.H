@@ -27,6 +27,8 @@ struct desugar_state
     var get_fresh_var(const std::string& name) {return var(name,var_index++);}
 
     std::vector<expression_ref> parse_fundecls(const std::vector<expression_ref>& v);
+    expression_ref def_function(const std::vector< std::vector<expression_ref> >& patterns, const std::vector<expression_ref>& bodies);
+
     expression_ref desugar(const expression_ref& E);
 
     desugar_state(const Module&);
