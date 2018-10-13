@@ -47,23 +47,9 @@ int max_index(const expression_ref& x)
     return index;
 }
 
-struct desugar_state
-{
-    const Module& m;
-
-    int var_index;
-
-    var get_fresh_wildcard() { return var(-var_index++);}
-    var get_fresh_var() { return var(var_index++);}
-    var get_fresh_var(const string& name) {return var(name,var_index++);}
-
-    vector<expression_ref> parse_fundecls(const vector<expression_ref>& v);
-    expression_ref desugar(const expression_ref& E);
-
-    desugar_state(const Module& m_)
-	:m(m_),var_index(1+max_index(m.topdecls))
-    {}
-};
+desugar_state::desugar_state(const Module& m_)
+    :m(m_),var_index(1+max_index(m.topdecls))
+{}
 
 bool is_irrefutable_pat(const expression_ref& E)
 {
