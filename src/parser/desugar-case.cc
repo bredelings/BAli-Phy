@@ -177,7 +177,7 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 	    int r = irrefutable_rules[i];
 	    equations2.push_back(equations[r]);
 
-	    auto last_patterns = equations.back().patterns;
+	    auto& last_patterns = equations2.back().patterns;
 	    last_patterns.erase(last_patterns.begin());
 
 	    if (is_wildcard(equations[r].patterns[0]))
