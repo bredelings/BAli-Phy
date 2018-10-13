@@ -146,6 +146,7 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& xs, const
     vector<equation_info_t> equations;
     for(int i=0;i<p.size();i++)
 	equations.push_back({p[i],b[i]});
+
     return block_case(xs, equations);
 }
 
@@ -155,6 +156,9 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 {
     const int N = x.size();
     const int M = equations.size();
+
+    for(int j=0;j<N;j++)
+	assert(is_var(x[j]));
 
     // Each pattern must have N components.
     for(int j=0;j<M;j++)
@@ -369,7 +373,11 @@ expression_ref desugar_state::case_expression(const expression_ref& T, const vec
     vector<vector<expression_ref>> multi_patterns;
     for(const auto& p:patterns)
 	multi_patterns.push_back({p});
-    return block_case({T}, multi_patterns, bodies);
+
+    // Maybe only do this if T isn't a var already?
+    auto x = get_fresh_var();
+    CDecls binds{{x,T}};
+    return let_expression(binds, block_case({x}, multi_patterns, bodies));
 }
 
 expression_ref desugar_state::case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise)
