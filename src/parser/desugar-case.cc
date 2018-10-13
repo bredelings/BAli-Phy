@@ -251,23 +251,22 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 	vector<equation_info_t> equations2;
 	for(int i=0;i<rules[c].size();i++)
 	{
+
 	    int r = rules[c][i];
+
+	    assert(equations[r].patterns[0].size() == arity);
 
 	    // Add the pattern
 	    equation_info_t eqn;
 	    eqn.rhs = equations[r].rhs;
 
-	    assert(equations[r].patterns[0].size() == arity);
-
-	    // Add sub-patterns of p[r][1]
-	    for(int k=0;k<arity;k++)
-	    {
-		eqn.patterns.push_back(equations[r].patterns[0].sub()[k]);
-	    }
-
+	    // Add the sub-partitions of the first top-level pattern at the beginning.
+	    if (equations[r].patterns[0].size())
+		eqn.patterns = equations[r].patterns[0].sub();
+	    // Add the remaining top-level patterns (minus the first).
 	    eqn.patterns.insert(eqn.patterns.end(), equations[r].patterns.begin()+1, equations[r].patterns.end());
 
-	    // Add the body
+	    // Add the equation
 	    equations2.push_back(std::move(eqn));
 
 	    // Check if p2[i] are all irrefutable
@@ -286,8 +285,7 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 	    simple_patterns.back() = equations[r0].patterns[0];
 
 	    // case x[1] of p[r0][1] -> case (x[2],..,x[N]) of (p[r0][2]....p[r0][N]) -> b[r0]
-	    x2 = x;
-	    x2.erase(x2.begin());
+	    x2 = remove_first(x);
 
 	    equations2.back().patterns = remove_first(equations[r0].patterns);
 	}
