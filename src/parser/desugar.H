@@ -16,6 +16,12 @@ Module read_model(const std::string& filename);
 void read_add_model(Model& M, const std::string& filename);
 void add_model(Model& M, const std::string& filename);
 
+struct equation_info_t
+{
+    std::vector<expression_ref> patterns;
+    expression_ref rhs;
+};
+
 class fresh_vars
 {
     int var_index;
@@ -37,6 +43,7 @@ struct desugar_state: public fresh_vars
     expression_ref case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
     expression_ref case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise);
     expression_ref block_case(const std::vector<expression_ref>& x, const std::vector<std::vector<expression_ref>>& p, const std::vector<expression_ref>& b);
+    expression_ref block_case(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations);
 
     expression_ref desugar(const expression_ref& E);
 

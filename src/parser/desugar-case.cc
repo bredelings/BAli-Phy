@@ -80,12 +80,6 @@ enum class pattern_type
     var
 };
 
-struct equation_info_t
-{
-    vector<expression_ref> patterns;
-    expression_ref rhs;
-};
-
 /*
  * case (x[0],..,x[N-1]) of (p[0...M-1][0...N-1] -> b[0..M-1])
  *
@@ -96,14 +90,18 @@ struct equation_info_t
  * If the otherwise branch is used twice, then construct a let-expression for it.
  *
  */
-expression_ref desugar_state::block_case(const vector<expression_ref>& x, const vector<vector<expression_ref>>& p, const vector<expression_ref>& b)
+expression_ref desugar_state::block_case(const vector<expression_ref>& xs, const vector<vector<expression_ref>>& p, const vector<expression_ref>& b)
 {
     assert(p.size() == b.size());
 
     vector<equation_info_t> equations;
     for(int i=0;i<p.size();i++)
 	equations.push_back({p[i],b[i]});
+    return block_case(xs, equations);
+}
 
+expression_ref desugar_state::block_case(const vector<expression_ref>& x, const vector<equation_info_t>& equations)
+{
     const int N = x.size();
     const int M = equations.size();
 
@@ -149,15 +147,14 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 	vector<expression_ref> x2 = x;
 	x2.erase(x2.begin());
 
-	vector<vector<expression_ref>> p2;
-	vector<expression_ref> b2;
+	vector<equation_info_t> equations2;
 	for(int i=0;i<irrefutable_rules.size();i++)
 	{
 	    int r = irrefutable_rules[i];
-	    p2.push_back(equations[r].patterns);
-	    p2.back().erase(p2.back().begin());
+	    equations2.push_back(equations[r]);
 
-	    b2.push_back(b[r]);
+	    auto last_patterns = equations.back().patterns;
+	    last_patterns.erase(last_patterns.begin());
 
 	    if (is_wildcard(equations[r].patterns[0]))
 		// This is a var.
@@ -166,7 +163,7 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 	    {
 		// FIXME! What if x[0] isn't a var?
 		// Then if *d occurs twice, then we should use a let expression, right?
-		b2[i] = substitute(b2[i], equations[r].patterns[0].as_<var>(), x[0]);
+		equations2[i].rhs = substitute(equations2[i].rhs, equations[r].patterns[0].as_<var>(), x[0]);
 	    }
 	}
       
@@ -174,10 +171,12 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 	{
 	    // If (b2.size() > 1) then we have duplicate irrefutable rules, but that's OK.
 	    // This can even be generated in the process of simplifying block_case expressions.	
-	    otherwise = b2[0];
+	    otherwise = equations2[0].rhs;
 	}
 	else
-	    otherwise = block_case(x2, p2, b2);
+	{
+	    otherwise = block_case(x2, equations2);
+	}
     }
       
     // If there are no conditions on x[0], then we are done.
@@ -242,7 +241,7 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 	    p2.back().insert(p2.back().end(), equations[r].patterns.begin()+1, equations[r].patterns.end());
 
 	    // Add the body
-	    b2.push_back(b[r]);
+	    b2.push_back(equations[r].rhs);
 
 	    // Check if p2[i] are all irrefutable
 	    for(int i=0;i<p2.back().size();i++)
@@ -276,7 +275,7 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 	    if (x2.size())
 		simple_bodies.back() = block_case(x2, p2, b2);
 	    else
-		simple_bodies.back() = b[r0];
+		simple_bodies.back() = equations[r0].rhs;
 	}
 	else
 	{
