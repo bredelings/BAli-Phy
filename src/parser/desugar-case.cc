@@ -170,26 +170,9 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 	return otherwise;
     }
 
-    // Find the first safe var index
-    std::set<var> free;
-
-    for(int i=0;i<x.size();i++)
-	add(free, get_free_indices(x[i]));
-
-    for(int i=0;i<p.size();i++)
-    {
-	add(free, get_free_indices(b[i]));
-  
-	for(int j=0; j<p[i].size(); j++)
-	    add(free, get_free_indices(p[i][j]));
-    }
-  
-    int var_index = 0;
-    if (not free.empty()) var_index = max_index(free)+1;
-
     // WHEN should we put the otherwise expression into a LET variable?
     expression_ref O;
-    if (otherwise) O = var(var_index++);
+    if (otherwise) O = get_fresh_var();
 
     // 3. Find the modified bodies for the various constants
     vector<expression_ref> simple_patterns;
@@ -208,7 +191,7 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 
 	vector<expression_ref> S(arity);
 	for(int j=0;j<arity;j++)
-	    S[j] = var(var_index+j);
+	    S[j] = get_fresh_var();
 
 	int r0 = rules[c][0];
 
