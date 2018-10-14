@@ -361,7 +361,7 @@ inline expression_ref::expression_ref(expression* e):O(e),type_(expression_type)
 
 inline expression_ref::expression_ref(const expression* e):O(e),type_(expression_type) { }
 
-inline expression_ref::expression_ref(const expression_ref& e, const std::vector<expression_ref>& v):expression_ref(new expression(e,v)) { }
+inline expression_ref::expression_ref(const expression_ref& e, const std::vector<expression_ref>& v):expression_ref(new expression(e,v)) { assert(v.size()); }
 
 inline std::ostream& operator<<(std::ostream& o,const expression_ref& E)
 {
