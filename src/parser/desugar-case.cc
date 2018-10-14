@@ -153,13 +153,141 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& xs, const
 
 expression_ref desugar_state::block_case_constant(const vector<expression_ref>& x, const vector<equation_info_t>& equations, expression_ref otherwise)
 {
-    return block_case(x, equations, otherwise);
+    const int N = x.size();
+    const int M = equations.size();
+
+#ifndef NDEBUG
+    assert(N > 0);
+    assert(M > 0);
+    assert(equations[0].patterns.size());
+    for(auto& eqn:equations)
+	assert(not is_var(eqn.patterns[0]));
+#endif
+
+    // 1. Categorize each rule according to the type of its top-level pattern
+    vector<expression_ref> constants;
+    vector< vector<int> > rules;
+    for(int j=0;j<M;j++)
+    {
+	assert(not is_var(equations[j].patterns[0]));
+
+	expression_ref C = equations[j].patterns[0].head();
+	int which = find_object(constants, C);
+
+	if (which == -1)
+	{
+	    which = constants.size();
+	    constants.push_back(C);
+	    rules.push_back(vector<int>{});
+	}
+
+	rules[which].push_back(j);
+    }
+
+    // 2. Bind the otherwise branch to a let var.
+    CDecls binds;
+    {
+	auto o = get_fresh_var();
+	binds.push_back({o, otherwise});
+	otherwise = o;
+    }
+
+    // 3. Find the alternatives in the simple case expression
+    vector<expression_ref> simple_patterns;
+    vector<expression_ref> simple_bodies;
+
+    for(int c=0;c<constants.size();c++)
+    {
+	expression_ref C = constants[c];
+
+	// 3.1 Find the arity of the constructor
+	int arity = 0;
+	if (C.is_a<constructor>())
+	    arity = C.as_<constructor>().n_args();
+
+	// 3.2 Construct the simple pattern for constant C
+	vector<expression_ref> args(arity);
+	for(int j=0;j<arity;j++)
+	    args[j] = get_fresh_var();
+
+	auto pat = C;
+	if (args.size())
+	    pat = expression_ref{C,args};
+
+	// 3.3 Construct the objects for the sub-case expression: x2[i] = v1...v[arity], x[2]...x[N]
+	vector<expression_ref> x2;
+	for(int j=0;j<arity;j++)
+	    x2.push_back(args[j]);
+	x2.insert(x2.end(), x.begin()+1, x.end());
+
+	// 3.4 Construct the various modified bodies and patterns
+	vector<equation_info_t> equations2;
+	for(int r: rules[c])
+	{
+	    assert(equations[r].patterns[0].size() == arity);
+
+	    equation_info_t eqn;
+	    eqn.rhs = equations[r].rhs;
+
+	    // pattern: Add the sub-partitions of the first top-level pattern at the beginning.
+	    if (equations[r].patterns[0].size())
+		eqn.patterns = equations[r].patterns[0].sub();
+	    // pattern: Add the remaining top-level patterns (minus the first).
+	    eqn.patterns.insert(eqn.patterns.end(), equations[r].patterns.begin()+1, equations[r].patterns.end());
+
+	    // Add the equation
+	    equations2.push_back(std::move(eqn));
+	}
+
+	simple_patterns.push_back( pat );
+	simple_bodies.push_back( block_case(x2, equations2, otherwise) );
+    }
+
+    simple_patterns.push_back(var(-1));
+    simple_bodies.push_back(otherwise);
+
+    // Construct final case expression
+    return let_expression(binds, make_case_expression(x[0], simple_patterns, simple_bodies));
 }
 
 
 expression_ref desugar_state::block_case_var(const vector<expression_ref>& x, const vector<equation_info_t>& equations, expression_ref otherwise)
 {
-    return block_case(x, equations, otherwise);
+    const int N = x.size();
+    const int M = equations.size();
+
+#ifndef NDEBUG
+    assert(N > 0);
+    assert(M > 0);
+    assert(equations[0].patterns.size());
+    for(auto& eqn:equations)
+	assert(is_var(eqn.patterns[0]));
+#endif
+
+    vector<equation_info_t> equations2;
+
+    for(auto& eqn: equations)
+    {
+	equation_info_t eqn2{remove_first(eqn.patterns), eqn.rhs};
+
+	// FIXME - This should really go in tidy().
+	if (not is_wildcard(eqn.patterns[0]))
+	    eqn2.rhs = substitute(eqn2.rhs, eqn.patterns[0].as_<var>(), x[0]);
+
+	equations2.push_back(eqn2);
+    }
+      
+    // Should these binds should be pushed all the way into the rhs?
+    // Maybe not, since earlier branches might need the otherwise var.
+
+    CDecls binds;
+    if (not is_var(otherwise))
+    {
+	auto o = get_fresh_var();
+	binds.push_back({o, otherwise});
+	otherwise = o;
+    }
+    return let_expression(binds, block_case(remove_first(x), equations2, otherwise));
 }
 
 
@@ -167,7 +295,10 @@ expression_ref desugar_state::block_case_empty(const vector<expression_ref>& x, 
 {
     assert(x.size() == 0);
     // Actually we should combine E0 [] E1 [] ... [] EN [] otherwise
-    return equations[0].rhs;
+    if (equations.size())
+	return equations[0].rhs;
+    else
+	return otherwise;
 }
 
 
@@ -192,217 +323,21 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
     auto partitions = partition(equations);
 
     // This implements the "mixture rule" from Wadler in SLPJ
-    if (partitions.size() > 1)
+    expression_ref E = otherwise;
+
+    for(int i=partitions.size()-1; i >= 0; i--)
     {
-	expression_ref E = otherwise;
+	vector<equation_info_t> equations_part;
+	for(int j: partitions[i].second)
+	    equations_part.push_back(equations[j]);
 
-	for(int i=partitions.size()-1; i >= 0; i--)
-	{
-	    vector<equation_info_t> equations_part;
-	    for(int j: partitions[i].second)
-		equations_part.push_back(equations[j]);
-	    // here we are not yet dispatching based on e.first = pattern_type::{constructor,var}
-
-	    assert(partitions[i].first != pattern_type::null);
-	    if (partitions[i].first == pattern_type::var)
-		E = block_case_var(x, equations_part, E);
-	    else
-		E = block_case_constant(x, equations_part, E);
-	}
-//	return E;
-    }
-
-    // 1. Categorize each rule according to the type of its top-level pattern
-    vector<expression_ref> constants;
-    vector< vector<int> > rules;
-    vector<int> irrefutable_rules;
-    for(int j=0;j<M;j++)
-    {
-	if (is_var(equations[j].patterns[0]))
-	{
-	    irrefutable_rules.push_back(j);
-	    continue;
-	}
-
-	expression_ref C = equations[j].patterns[0].head();
-	int which = find_object(constants, C);
-
-	if (which == -1)
-	{
-	    which = constants.size();
-	    constants.push_back(C);
-	    rules.push_back(vector<int>{});
-	}
-
-	rules[which].push_back(j);
-    }
-
-    // 2. Substitute for the irrefutable rules to find the 'otherwise' branch
-    // This is substitute(x[1],p[2..m][1], case x2...xN of p[2..M][i] -> b[2..M] )
-    if (irrefutable_rules.empty())
-	; // otherwise = NULL
-    else
-    {
-	vector<expression_ref> x2 = remove_first(x);
-
-	vector<equation_info_t> equations2;
-	for(int i=0;i<irrefutable_rules.size();i++)
-	{
-	    int r = irrefutable_rules[i];
-	    equations2.push_back(equations[r]);
-
-	    auto& last_patterns = equations2.back().patterns;
-	    last_patterns.erase(last_patterns.begin());
-
-	    if (is_wildcard(equations[r].patterns[0]))
-		// This is a var.
-		; //assert(d->name.size() == 0);
-	    else
-	    {
-		// FIXME! What if x[0] isn't a var?
-		// Then if *d occurs twice, then we should use a let expression, right?
-		equations2[i].rhs = substitute(equations2[i].rhs, equations[r].patterns[0].as_<var>(), x[0]);
-	    }
-	}
-      
-	if (x2.empty())
-	{
-	    // If (b2.size() > 1) then we have duplicate irrefutable rules, but that's OK.
-	    // This can even be generated in the process of simplifying block_case expressions.	
-	    otherwise = equations2[0].rhs;
-	}
+	assert(partitions[i].first != pattern_type::null);
+	if (partitions[i].first == pattern_type::var)
+	    E = block_case_var(x, equations_part, E);
 	else
-	{
-	    otherwise = block_case(x2, equations2);
-	}
+	    E = block_case_constant(x, equations_part, E);
     }
-      
-    // If there are no conditions on x[0], then we are done.
-    if (constants.empty())
-    {
-	assert(otherwise);
-	return otherwise;
-    }
-
-    // WHEN should we put the otherwise expression into a LET variable?
-    expression_ref O;
-    if (otherwise) O = get_fresh_var();
-
-    // 3. Find the modified bodies for the various constants
-    vector<expression_ref> simple_patterns;
-    vector<expression_ref> simple_bodies;
-    bool all_simple_followed_by_irrefutable = true;
-
-    for(int c=0;c<constants.size();c++)
-    {
-	// Find the arity of the constructor
-	int arity = 0;
-	if (constants[c].head().is_a<constructor>())
-	    arity = constants[c].head().as_<constructor>().n_args();
-
-	// Construct the simple pattern for constant C
-	expression_ref H = constants[c];
-
-	vector<expression_ref> S(arity);
-	for(int j=0;j<arity;j++)
-	    S[j] = get_fresh_var();
-
-	int r0 = rules[c][0];
-
-	simple_patterns.push_back(expression_ref{H,S});
-	simple_bodies.push_back({});
-    
-	// Construct the objects for the sub-case expression: x2[i] = v1...v[arity], x[2]...x[N]
-	vector<expression_ref> x2;
-	for(int j=0;j<arity;j++)
-	    x2.push_back(S[j]);
-	x2.insert(x2.end(), x.begin()+1, x.end());
-
-	// Are all refutable patterns on x[1] simple and followed by irrefutable patterns on x[2]...x[N]?
-	bool future_patterns_all_irrefutable = true;
-
-	// Construct the various modified bodies and patterns
-	vector<equation_info_t> equations2;
-	for(int i=0;i<rules[c].size();i++)
-	{
-
-	    int r = rules[c][i];
-
-	    assert(equations[r].patterns[0].size() == arity);
-
-	    // Add the pattern
-	    equation_info_t eqn;
-	    eqn.rhs = equations[r].rhs;
-
-	    // Add the sub-partitions of the first top-level pattern at the beginning.
-	    if (equations[r].patterns[0].size())
-		eqn.patterns = equations[r].patterns[0].sub();
-	    // Add the remaining top-level patterns (minus the first).
-	    eqn.patterns.insert(eqn.patterns.end(), equations[r].patterns.begin()+1, equations[r].patterns.end());
-
-	    // Add the equation
-	    equations2.push_back(std::move(eqn));
-
-	    // Check if p2[i] are all irrefutable
-	    for(int i=0;i<equations2.back().patterns.size();i++)
-		if (not is_irrefutable_pattern(equations2.back().patterns[i]))
-		{
-		    future_patterns_all_irrefutable = false;
-		    all_simple_followed_by_irrefutable = false;
-		}
-	}
-
-	// If x[1] matches a simple pattern in the only alternative, we may as well
-	// not change the variable names for the match slots in this pattern.
-	if (rules[c].size() == 1 and is_simple_pattern(equations[r0].patterns[0]))
-	{
-	    simple_patterns.back() = equations[r0].patterns[0];
-
-	    // case x[1] of p[r0][1] -> case (x[2],..,x[N]) of (p[r0][2]....p[r0][N]) -> b[r0]
-	    x2 = remove_first(x);
-
-	    equations2.back().patterns = remove_first(equations[r0].patterns);
-	}
-
-	// If all future patterns are irrefutable, then we won't need to backtrack to the otherwise case.
-	if (future_patterns_all_irrefutable)
-	{
-	    // There can be only one alternative.
-	    assert(rules[c].size() == 1);
-
-	    if (x2.size())
-		simple_bodies.back() = block_case(x2, equations2);
-	    else
-		simple_bodies.back() = equations[r0].rhs;
-	}
-	else
-	{
-	    if (otherwise)
-	    {
-		// Since we could backtrack, use the var.  It will point to otherwise
-		equations2.push_back({vector<expression_ref>(x2.size(), var(-1)), O});
-	    }
-	    simple_bodies.back() = block_case(x2, equations2);
-	}
-    }
-
-    if (otherwise)
-    {
-	simple_patterns.push_back(var(-1));
-	// If we have any backtracking, then use the otherwise var, like the bodies.
-	if (not all_simple_followed_by_irrefutable)
-	    simple_bodies.push_back(O);
-	else
-	    simple_bodies.push_back(otherwise);
-    }
-
-    // Construct final case expression
-    expression_ref CE = make_case_expression(x[0], simple_patterns, simple_bodies);
-
-    if (otherwise and not all_simple_followed_by_irrefutable)
-	CE = let_expression({{O.as_<var>(), otherwise}}, CE);
-
-    return CE;
+    return E;
 }
 
 // Create the expression 'case T of {patterns[i] -> bodies[i]}'

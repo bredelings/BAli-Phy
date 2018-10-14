@@ -32,6 +32,13 @@ using std::pair;
 // See list in computation/loader.C
 //
 
+expression_ref error(const string& s)
+{
+    expression_ref error = var("Compiler.Base.error");
+    expression_ref msg = s;
+    return {error,msg};
+}
+
 int max_index(const expression_ref& x)
 {
     int index = -1;
@@ -111,7 +118,7 @@ vector<expression_ref> desugar_state::parse_fundecls(const vector<expression_ref
 	    decls.push_back(decl.head()+z+decl.sub()[1].sub()[0]);
 	    // Probably we shouldn't have desugared the RHS yet.
 	    for(auto& x: get_free_indices(pat))
-		decls.push_back(decl.head()+x+case_expression(z,pat,x,{var("Compiler.Base.error"),"Failed pattern match"}));
+		decls.push_back(decl.head()+x+case_expression(z, pat, x, error("pattern binding: failed pattern match")));
 	    continue;
 	}
 
@@ -136,9 +143,7 @@ vector<expression_ref> desugar_state::parse_fundecls(const vector<expression_ref
 	    if (patterns.back().size() != patterns.front().size())
 		throw myexception()<<"Function '"<<fvar<<"' has different numbers of arguments!";
 	}
-	expression_ref msg = fvar.name+": pattern match failure";
-	expression_ref error = var("Compiler.Base.error");
-	auto otherwise = {error,msg};
+	auto otherwise = error(fvar.name+": pattern match failure");
 	decls.push_back(AST_node("Decl") + fvar + def_function(patterns, bodies, otherwise) );
 
 	// skip the other bindings for this function
@@ -272,9 +277,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	    // 2. Desugar the body, binding vars mentioned in the lambda patterns.
 	    body = desugar(body);
 
-	    expression_ref error = var("Compiler.Base.error");
-	    expression_ref msg = "lambda: pattern match failure";
-	    return def_function({v},{body},{error,msg}); 
+	    return def_function({v},{body},error("lambda: pattern match failure"));
 	}
 	else if (n.type == "Do")
 	{
@@ -419,7 +422,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 
 		bodies.push_back(desugar(body) );
 	    }
-	    return case_expression(case_obj, patterns, bodies);
+	    return case_expression(case_obj, patterns, bodies, error("case: failed pattern match"));
 	}
 	else if (n.type == "enumFrom")
 	{
