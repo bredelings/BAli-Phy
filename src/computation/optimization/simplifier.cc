@@ -657,7 +657,7 @@ simplify_decls(const simplifier_options& options, CDecls& orig_decls, const subs
 //                     \x2 ->               ($) f x2  ===>              f
 //                 We don't do this (could perform more allocation):
 //                     \x2 -> (let decls in ($) f x2) ===> let decls in f
-expression_ref eta_reduce(const expression_ref& E)
+expression_ref maybe_eta_reduce(const expression_ref& E)
 {
     assert(is_lambda_exp(E));
     auto& x    = E.sub()[0].as_<var>();
@@ -680,7 +680,7 @@ expression_ref eta_reduce(const expression_ref& E)
 	}
     }
     else
-	return E;
+	return {};
 }
 
 // Q1. Where do we handle beta-reduction (@ constant x1 x2 ... xn)?
@@ -725,10 +725,18 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     {
 	assert(E.size() == 2);
 
+	// 2.1 eta reduction: (\x -> @ f a1 ...... an x) => (@ f a1 ....... an)
+	if (auto E2 = maybe_eta_reduce(E))
+	{
+	    // Simplifying the body in (\x -> let {y=x} in f y y) can result in f x x even if x is originally only used once.
+	    // Since maybe_eta_reduce( ) uses occurrence info to check that x is only used once, we have to do this *before* we simplify E (below).
+	    return simplify(options, E2, S, bound_vars, context);
+	}
+
 	auto S2 = S;
 
 	auto Evar = E.sub()[0];
-	// 2.1. Get the new name, possibly adding a substitution
+	// 2.2. Get the new name, possibly adding a substitution
 	var x2 = rename_and_bind_var(Evar, S2, bound_vars);
 
 	// 2.3 Simplify the body with x added to the bound set.
@@ -738,7 +746,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	unbind_var(bound_vars,x2);
 
 	// 2.5 Return (\x2 -> new_body) after eta-reduction
-	return eta_reduce(lambda_quantify(x2, new_body));
+	return lambda_quantify(x2, new_body);
     }
 
     // 6. Case
