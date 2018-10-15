@@ -18,8 +18,8 @@
 #include "computation/expression/var.H"
 #include "computation/expression/constructor.H"
 #include "desugar.H"
-#include "util/assert.hh"
 #include "desugar-case.H"
+#include "util/assert.hh"
 
 using std::string;
 using std::vector;
@@ -91,8 +91,6 @@ vector<T> remove_first(vector<T>&& v1)
     return v2;
 }
 
-
-#include "computation/expression/substitute.H"
 
 // FIXME: we perform 3 case operations in the case of zip x:xs [] because we create an 'otherwise' let-var that
 //        performs a case on y:ys that has already been done.
@@ -271,8 +269,9 @@ expression_ref desugar_state::block_case_var(const vector<expression_ref>& x, co
 	equation_info_t eqn2{remove_first(eqn.patterns), eqn.rhs};
 
 	// FIXME - This should really go in tidy().
+
 	if (not is_wildcard(eqn.patterns[0]))
-	    eqn2.rhs = substitute(eqn2.rhs, eqn.patterns[0].as_<var>(), x[0]);
+	    eqn2.rhs = let_expression({{eqn.patterns[0].as_<var>(),x[0]}}, eqn2.rhs);
 
 	equations2.push_back(eqn2);
     }
