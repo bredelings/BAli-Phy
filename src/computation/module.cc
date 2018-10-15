@@ -20,6 +20,7 @@
 #include "computation/optimization/simplifier.H"
 #include "computation/optimization/occurrence.H"
 #include "computation/optimization/let-float.H"
+#include "computation/optimization/inliner.H"
 
 using std::pair;
 using std::map;
@@ -408,8 +409,6 @@ void Module::desugar(const Program&)
     }
 }
 
-int nodes_size(const expression_ref& E);
-
 void add_constructor(map<var,expression_ref>& decls, const constructor& con)
 {
     var x(con.name());
@@ -461,8 +460,10 @@ void Module::export_small_decls()
 	assert(not x.name.empty());
 
 	auto& body = decl.sub()[1];
-	if (nodes_size(body) < 15)
+	if (simple_size(body) <= 5)
+	{
 	    small_decls_out.insert({x, body});
+	}
     }
 
     // Find free vars in the decls that are not bound by *other* decls.
@@ -722,17 +723,6 @@ vector<expression_ref> peel_lambdas(expression_ref& E)
 	E = E.sub()[1];
     }
     return args;
-}
-
-int nodes_size(const expression_ref& E)
-{
-    int total = 1;
-
-    if (E.is_expression())
-	for(const auto& e:E.sub())
-	    total += nodes_size(e);
-
-    return total;
 }
 
 void mark_exported_decls(CDecls& decls, const map<string,symbol_info>& exports, const string& module_name)

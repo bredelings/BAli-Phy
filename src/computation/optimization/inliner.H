@@ -38,8 +38,8 @@ inline_context apply_object_context_one_arg(const inline_context& context, const
 inline_context apply_object_context(const expression_ref E, inline_context context);
 inline_context case_object_context(const expression_ref E, const inline_context& context);
 
-
 bool do_inline(const simplifier_options& options, const expression_ref& rhs, const occurrence_info& occur, const inline_context& context);
 
+int simple_size(const expression_ref& E);
 
 #endif

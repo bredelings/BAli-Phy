@@ -28,7 +28,16 @@ using std::cerr;
 using std::endl;
 
 
-int nodes_size(const expression_ref& E);
+int nodes_size(const expression_ref& E)
+{
+    int total = 1;
+
+    if (E.is_expression())
+	for(const auto& e:E.sub())
+	    total += nodes_size(e);
+
+    return total;
+}
 
 int simple_size(const expression_ref& E)
 {
@@ -46,7 +55,11 @@ int simple_size(const expression_ref& E)
     }
 
     else if (is_apply_exp(E))
-	return E.size() + simple_size(E.sub()[0]);
+    {
+	int n_args = (int)E.size()-1;
+	assert(n_args > 0);
+	return simple_size(E.sub()[0]) + n_args;
+    }
 
     else if (is_lambda_exp(E))
 	return simple_size(E.sub()[1]);
