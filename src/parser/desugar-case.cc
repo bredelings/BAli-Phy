@@ -298,17 +298,37 @@ expression_ref desugar_state::block_case_empty(const vector<expression_ref>& x, 
 
 
 // Make this a member function of equation_info_t?
-void tidy1(const expression_ref& x, equation_info_t& eqn)
+void desugar_state::clean_up_pattern(const expression_ref& x, equation_info_t& eqn)
 {
     auto& patterns = eqn.patterns;
+    auto& pat1 = patterns[0];
     auto& rhs = eqn.rhs;
     assert(patterns.size());
 
-    if (is_var(patterns[0]) and not is_wildcard(patterns[0]))
+    // case x of y -> rhs  =>  case x of _ => let {y=x} in rhs
+    if (is_var(pat1) and not is_wildcard(pat1))
     {
-	auto y = patterns[0].as_<var>();
+	auto y = pat1.as_<var>();
 	rhs = let_expression({{y, x}}, rhs);
-	patterns[0] = var(-1);
+	pat1 = var(-1);
+    }
+    // case x of ~pat -> rhs  =>  case x of _ -> let pat=x in rhs
+    else if (is_AST(pat1,"LazyPattern"))
+    {
+	auto& pat2 = pat1.sub()[0];
+	CDecls binds = {};
+	for(auto& y: get_free_indices(pat2))
+	    binds.push_back({y,case_expression(x, pat2, x, error("lazy pattern: failed pattern match"))});
+	rhs = let_expression(binds, rhs);
+	pat1 = var(-1);
+    }
+    // case x of y@pat2 -> rhs  => case x of pat2 => let{y=x} in rhs
+    else if (is_AST(pat1,"AsPattern"))
+    {
+	auto y = pat1.sub()[0].as_<var>();
+	auto pat2 = pat1.sub()[1];
+	rhs = let_expression({{y, x}}, rhs);
+	pat1 = pat2;
     }
 }
 
@@ -336,7 +356,7 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
     auto equations2 = equations;
     for(auto& e: equations2)
     {
-	tidy1(x[0],e);
+	clean_up_pattern(x[0],e);
     }
     
     // 4. Follow the "mixture rule" from Wadler in SLPJ

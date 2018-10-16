@@ -49,6 +49,8 @@ struct desugar_state: public fresh_vars
     expression_ref block_case_var(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations, expression_ref);
     expression_ref block_case_empty(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations, expression_ref);
 
+    void clean_up_pattern(const expression_ref& x, equation_info_t& eqn);
+
     expression_ref desugar(const expression_ref& E);
 
     desugar_state(const Module&);

@@ -164,16 +164,16 @@ expression_ref unapply(const expression_ref& E)
 
     auto head = E.head();
     auto args = E.sub();
-    if (is_apply(E.head()))
+    if (is_apply_exp(E))
 	head = shift_list(args);
 
     // We shouldn't have e.g. (@ (@ f x) y) -- this should already be dealt with by rename_infix
-    assert(not is_apply(head.head()));
+    assert(not is_apply_exp(head));
     assert(not head.size());
 
     for(auto& arg: args)
 	arg = unapply(arg);
-    assert(is_AST(head,"id"));
+
     return expression_ref{head,std::move(args)};
 }
 
@@ -255,13 +255,19 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 
 typedef set<string> bound_var_info;
 
-void disjoint_add(bound_var_info& bv1, const bound_var_info& bv2)
+bool disjoint_add(bound_var_info& bv1, const bound_var_info& bv2)
 {
     for(auto& v: bv2)
-    {
-//	assert(not bv1.count(v));
-	bv1.insert(v);
-    }
+ 	if (not bv1.insert(v).second)
+	    return false;
+    bv1.insert(bv2.begin(), bv2.end());
+    return true;
+}
+
+void add(bound_var_info& bv1, const bound_var_info& bv2)
+{
+    for(auto& v: bv2)
+ 	bv1.insert(v);
     bv1.insert(bv2.begin(), bv2.end());
 }
 
@@ -293,33 +299,53 @@ expression_ref rename(const Module& m, const expression_ref& E)
 
 bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
 {
-    // 0. Handle WildCardPattern
+    assert(not is_apply_exp(pat));
+
+    // 1. Handle _
     if (is_AST(pat,"WildcardPattern"))
     {
 	pat = var(-1);
 	return {};
     }
 
-    // 0. Handle literal values
+    // 2. Handle ~pat
+    if (is_AST(pat,"LazyPattern"))
+    {
+	auto sub_pat = pat.sub()[0];
+	auto bound = rename_pattern(sub_pat, top);
+
+	pat = AST_node("LazyPattern")+sub_pat;
+	return bound;
+    }
+
+    // 3. Handle x@pat
+    if (is_AST(pat,"AsPattern"))
+    {
+	assert(not top);
+
+	auto x = pat.sub()[0];
+	auto sub_pat = pat.sub()[1];
+	auto bound = rename_pattern(x, false);
+	if (not disjoint_add(bound, rename_pattern(sub_pat, false)))
+	    throw myexception()<<"Pattern '"<<pat<<"' uses a variable twice!";
+
+	pat = AST_node("AsPattern")+x+sub_pat;
+	return bound;
+    }
+    
+    // 4. Handle literal values
     if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double()) return {};
 
-    // 1. Normalize pattern from (i) @ X y -> X y, (ii) X -> X, and (ii) y -> y
-    //    Maybe do this in rename_infix?
-    assert(not is_apply(pat.head()));
+    // 5. Get the identifier name for head
     expression_ref head = pat.head();
-    vector<expression_ref> args;
-    if (pat.size())
-	args = pat.sub();
-
-    // 2. Get the identifier name for head
     if (not is_AST(head,"id"))
 	throw myexception()<<"Pattern '"<<pat<<"' doesn't start with an identifier!";
-    auto id = pat.head().as_<AST_node>().value;
+    auto id = head.as_<AST_node>().value;
 
-    // 3. Handle if identifier is a variable
+    // 6. Handle if identifier is a variable
     if (not is_haskell_con_name(id))
     {
-	if (args.size()) throw myexception()<<"Pattern "<<pat<<" doesn't start with a constructor!";
+	if (pat.size()) throw myexception()<<"Pattern "<<pat<<" has arguments, but doesn't start with a constructor!";
 	if (is_qualified_symbol(id)) throw myexception()<<"Binder variable '"<<id<<"' is qualified in pattern '"<<pat<<"'!";
 	// Qualify the id if this is part of a top-level decl
 	if (top)
@@ -329,7 +355,7 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
 	return {id};
     }
     
-    // 4. Find constructor name if identifier is a constructor
+    // 7. Resolve constructor name if identifier is a constructor
     if (not m.is_declared(id))
 	throw myexception()<<"Unknown id '"<<id<<"' used as constructor in pattern '"<<pat<<"'!";
 
@@ -337,28 +363,32 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
     if (S.symbol_type != constructor_symbol)
 	throw myexception()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!";
 
-    if (S.arity != args.size())
+    if (S.arity != pat.size())
 	throw myexception()<<"Constructor '"<<id<<"' arity "<<S.arity<<" doesn't match pattern '"<<pat<<"'!";
 
     head = constructor(S.name, S.arity);
 
-    // 5. Rename arguments and accumulate bound variables
+    // 8. Rename arguments and accumulate bound variables
+    vector<expression_ref> args;
+    if (pat.size())
+	args = pat.sub();
+
     bound_var_info bound;
     // Rename the arguments
     for(auto& e: args)
     {
 	auto bound_here =  rename_pattern(e, top);
-	// FIXME - check that we're not using any variables twice
-	disjoint_add(bound, bound_here);
+	if (not disjoint_add(bound, bound_here))
+	    throw myexception()<<"Pattern '"<<pat<<"' uses a variable twice!";
     }
 
-    // 6. Construct the renamed pattern
+    // 10. Construct the renamed pattern
     if (args.size())
 	pat = expression_ref{head,args};
     else
 	pat = head;
 
-    // 7. Return the variables bound
+    // 11. Return the variables bound
     return bound;
 }
 
@@ -387,11 +417,14 @@ expression_ref renamer_state::rename_decl(const expression_ref& decl, const boun
 
 	if (lhs.size())
 	{
+	    bound_var_info arg_vars;
 	    auto args = lhs.sub();
 	    for(auto& arg: args)
-		disjoint_add(bound2, rename_pattern(arg));
+		if (not disjoint_add(arg_vars, rename_pattern(arg)))
+		    throw myexception()<<"Function declaration '"<<lhs<<"' uses a variable twice!";
 	    assert(args.size());
 	    lhs = expression_ref{f, args};
+	    add(bound2,arg_vars);
 	}
 	else
 	    lhs = f;
@@ -432,24 +465,24 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
 	// For a constructor pattern, rename the whole lhs.
 	if (is_haskell_con_name(head.as_<AST_node>().value))
 	{
-	    disjoint_add(bound_names,rename_pattern(lhs, top));
+	    add(bound_names,rename_pattern(lhs, top));
 	}
 	// For a function pattern, just rename the variable being defined
 	else if (lhs.size())
 	{
-	    disjoint_add(bound_names,rename_pattern(head, top));
+	    add(bound_names,rename_pattern(head, top));
 	    lhs = expression_ref{head,lhs.sub()};
 	}
 	// For a variable pattern, the variable being defined is the whole lhs
 	else
 	{
-	    disjoint_add(bound_names,rename_pattern(lhs, top));
+	    add(bound_names,rename_pattern(lhs, top));
 	}
 	decl = expression_ref{decl.head(),w};
     }
 
     // Replace ids with dummies
-    disjoint_add(bound2, bound_names);
+    add(bound2, bound_names);
     for(auto& e: v)
     {
 	if (is_AST(e,"Decl"))
@@ -514,7 +547,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	    if (v.size() == 2)
 	    {
 		auto bound2 = bound;
-		disjoint_add(bound2, rename_decls(v[1],bound));
+		add(bound2, rename_decls(v[1],bound));
 		v[0] = rename(v[0], bound2);
 	    }
 	    else
@@ -542,7 +575,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	    auto bound2 = bound;
 
 	    for(int i=0;i<v.size()-1;i++)
-		disjoint_add(bound2, rename_stmt(v[i], bound2));
+		add(bound2, rename_stmt(v[i], bound2));
 	    v.back() = rename(v.back(), bound2);
 
 	    return expression_ref{E.head(),v};
@@ -552,7 +585,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	    // 1. Rename patterns for lambda arguments
 	    auto bound2 = bound;
 	    for(int i=0; i<v.size()-1; i++)
-		disjoint_add(bound2, rename_pattern(v[i]));
+		add(bound2, rename_pattern(v[i]));
 
 	    // 2. Rename the body
 	    auto& body = v.back();
@@ -564,7 +597,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	{
 	    auto bound2 = bound;
 	    for(auto& stmt: v)
-		disjoint_add(bound2, rename_stmt(stmt, bound2));
+		add(bound2, rename_stmt(stmt, bound2));
 	    return expression_ref{E.head(),v};
 	}
 	else if (n.type == "Let")
@@ -573,7 +606,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	    auto& body = v[1];
 
 	    auto bound2 = bound;
-	    disjoint_add(bound2, rename_decls(decls, bound));
+	    add(bound2, rename_decls(decls, bound));
 	    body = rename(body, bound2);
 
 	    return expression_ref{E.head(),v};
@@ -583,7 +616,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	    auto& pat = v[0];
 	    auto& body = v[1];
 	    auto bound2 = bound;
-	    disjoint_add(bound2, rename_pattern(pat));
+	    add(bound2, rename_pattern(pat));
 	    body = rename(body, bound2);
 
 	    return expression_ref{E.head(),v};
