@@ -1,9 +1,13 @@
 UNRELEASED
+ - Models
+   + Add models x2, x2_sym, x2x2 for RNA stems.
+   - Add Doublet alphabet for RNA stems.
+ - Misc
+   + Rename subsample to bali-subsample (to avoid conflicts with other software).
+   - Don't allow realigning Numeric[k] or Doublets[] alphabets.
  - Fixes
    - "--" should not become a single long dash (en-dash) in man pages.
    - Don't crash if --scale is set to a constant (e.g. --scale=1).
-   - Rename subsample to bali-subsample (to avoid conflicts with other software).
-   - Don't allow realigning Numeric[k] or Doublets[] alphabets.
  - Haskell
    - Implement -X NoImplicitPrelude
    - Refactored functions out of Prelude into Data.List, etc.
@@ -13,9 +17,7 @@ UNRELEASED
    - Implement lazy patterns (i.e. ~(y,z)  )
    - Allow modules with no "module name where"
    - [FIX] float let out of let if it reveals a constant.
- - Models
-   + Add models x2, x2_sym, x2x2 for RNA stems.
-   - Add Doublet alphabet for RNA stems.
+
 
 * 3.3 (Aug 6, 2018)
   - Fixes
