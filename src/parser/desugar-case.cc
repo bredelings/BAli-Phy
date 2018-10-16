@@ -138,7 +138,7 @@ vector<pair<pattern_type,vector<equation_info_t>>> partition(const vector<equati
  * If the otherwise branch is used twice, then construct a let-expression for it.
  *
  */
-expression_ref desugar_state::block_case(const vector<expression_ref>& xs, const vector<vector<expression_ref>>& p, const vector<expression_ref>& b, const expression_ref& otherwise)
+expression_ref desugar_state::match(const vector<expression_ref>& xs, const vector<vector<expression_ref>>& p, const vector<expression_ref>& b, const expression_ref& otherwise)
 {
     assert(p.size() == b.size());
 
@@ -146,10 +146,10 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& xs, const
     for(int i=0;i<p.size();i++)
 	equations.push_back({p[i],b[i]});
 
-    return block_case(xs, equations, otherwise);
+    return match(xs, equations, otherwise);
 }
 
-expression_ref desugar_state::block_case_constant(const vector<expression_ref>& x, const vector<equation_info_t>& equations, expression_ref otherwise)
+expression_ref desugar_state::match_constant(const vector<expression_ref>& x, const vector<equation_info_t>& equations, expression_ref otherwise)
 {
     const int N = x.size();
     const int M = equations.size();
@@ -238,7 +238,7 @@ expression_ref desugar_state::block_case_constant(const vector<expression_ref>& 
 	}
 
 	simple_patterns.push_back( pat );
-	simple_bodies.push_back( block_case(x2, equations2, otherwise) );
+	simple_bodies.push_back( match(x2, equations2, otherwise) );
     }
 
     simple_patterns.push_back(var(-1));
@@ -249,7 +249,7 @@ expression_ref desugar_state::block_case_constant(const vector<expression_ref>& 
 }
 
 
-expression_ref desugar_state::block_case_var(const vector<expression_ref>& x, const vector<equation_info_t>& equations, expression_ref otherwise)
+expression_ref desugar_state::match_var(const vector<expression_ref>& x, const vector<equation_info_t>& equations, expression_ref otherwise)
 {
     const int N = x.size();
     const int M = equations.size();
@@ -263,17 +263,11 @@ expression_ref desugar_state::block_case_var(const vector<expression_ref>& x, co
 #endif
 
     vector<equation_info_t> equations2;
-
     for(auto& eqn: equations)
-    {
-	equation_info_t eqn2{remove_first(eqn.patterns), eqn.rhs};
-
-
-	equations2.push_back(eqn2);
-    }
+	equations2.push_back({remove_first(eqn.patterns), eqn.rhs});
       
     // Should these binds should be pushed all the way into the rhs?
-    // Maybe not, since earlier branches might need the otherwise var.
+    // Maybe not, since earlier failure branches might need the otherwise var.
 
     CDecls binds;
     if (not is_var(otherwise))
@@ -282,11 +276,11 @@ expression_ref desugar_state::block_case_var(const vector<expression_ref>& x, co
 	binds.push_back({o, otherwise});
 	otherwise = o;
     }
-    return let_expression(binds, block_case(remove_first(x), equations2, otherwise));
+    return let_expression(binds, match(remove_first(x), equations2, otherwise));
 }
 
 
-expression_ref desugar_state::block_case_empty(const vector<expression_ref>& x, const vector<equation_info_t>& equations, expression_ref otherwise)
+expression_ref desugar_state::match_empty(const vector<expression_ref>& x, const vector<equation_info_t>& equations, expression_ref otherwise)
 {
     assert(x.size() == 0);
     // Actually we should combine E0 [] E1 [] ... [] EN [] otherwise
@@ -332,7 +326,7 @@ void desugar_state::clean_up_pattern(const expression_ref& x, equation_info_t& e
     }
 }
 
-expression_ref desugar_state::block_case(const vector<expression_ref>& x, const vector<equation_info_t>& equations, expression_ref otherwise)
+expression_ref desugar_state::match(const vector<expression_ref>& x, const vector<equation_info_t>& equations, expression_ref otherwise)
 {
     const int N = x.size();
     const int M = equations.size();
@@ -350,7 +344,7 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 
     // 2. If there are not xs left, follow the empty case
     if (not x.size())
-	return block_case_empty(x, equations, otherwise);
+	return match_empty(x, equations, otherwise);
 
     // 3. Tidy the equations
     auto equations2 = equations;
@@ -368,9 +362,9 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
     {
 	assert(block.first != pattern_type::null);
 	if (block.first == pattern_type::var)
-	    E = block_case_var(x, block.second, E);
+	    E = match_var(x, block.second, E);
 	else
-	    E = block_case_constant(x, block.second, E);
+	    E = match_constant(x, block.second, E);
     }
     return E;
 }
@@ -386,7 +380,7 @@ expression_ref desugar_state::case_expression(const expression_ref& T, const vec
     // Maybe only do this if T isn't a var already?
     auto x = get_fresh_var();
     CDecls binds{{x,T}};
-    return let_expression(binds, block_case({x}, multi_patterns, bodies, otherwise));
+    return let_expression(binds, match({x}, multi_patterns, bodies, otherwise));
 }
 
 expression_ref desugar_state::case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise)
@@ -410,7 +404,7 @@ expression_ref desugar_state::def_function(const vector< vector<expression_ref> 
 
     // Construct the case expression
     
-    expression_ref E = block_case(args, patterns, bodies, otherwise);
+    expression_ref E = match(args, patterns, bodies, otherwise);
 
     // Turn it into a function
     for(int i=args.size()-1;i>=0;i--)
