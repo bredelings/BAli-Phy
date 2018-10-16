@@ -32,13 +32,6 @@ using std::pair;
 // See list in computation/loader.C
 //
 
-expression_ref error(const string& s)
-{
-    expression_ref error = var("Compiler.Base.error");
-    expression_ref msg = s;
-    return {error,msg};
-}
-
 int max_index(const expression_ref& x)
 {
     int index = -1;

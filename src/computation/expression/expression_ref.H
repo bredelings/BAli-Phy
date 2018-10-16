@@ -403,4 +403,5 @@ inline std::unique_ptr<expression> operator+(std::unique_ptr<expression> E1, con
     return E1;
 }
 
+expression_ref error(const std::string&);
 #endif

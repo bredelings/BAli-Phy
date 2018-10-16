@@ -289,3 +289,10 @@ unique_ptr<expression> operator+(const expression& E1, const expression_ref& E2)
     E3->sub.push_back(E2);
     return unique_ptr<expression>(E3);
 }
+
+expression_ref error(const std::string& s)
+{
+    expression_ref error = var("Compiler.Base.error");
+    expression_ref msg = s;
+    return {error,msg};
+}
