@@ -147,9 +147,7 @@ vector<expression_ref> desugar_state::parse_fundecls(const vector<expression_ref
 
 expression_ref desugar_state::desugar(const expression_ref& E)
 {
-    vector<expression_ref> v;
-    if (E.is_expression())
-	v = E.sub();
+    vector<expression_ref> v = E.copy_sub();
 
     if (E.head().is_a<AST_node>())
     {

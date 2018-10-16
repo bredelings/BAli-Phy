@@ -370,9 +370,7 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
     head = constructor(S.name, S.arity);
 
     // 8. Rename arguments and accumulate bound variables
-    vector<expression_ref> args;
-    if (pat.size())
-	args = pat.sub();
+    vector<expression_ref> args = pat.copy_sub();;
 
     bound_var_info bound;
     // Rename the arguments
@@ -527,9 +525,7 @@ bound_var_info renamer_state::rename_stmt(expression_ref& stmt, const bound_var_
 
 expression_ref renamer_state::rename(const expression_ref& E, const bound_var_info& bound)
 {
-    vector<expression_ref> v;
-    if (E.is_expression())
-	v = E.sub();
+    vector<expression_ref> v = E.copy_sub();;
       
     if (E.head().is_a<AST_node>())
     {
