@@ -258,7 +258,7 @@ expression_ref::expression_ref(const char* s)
 {}
 
 expression_ref::expression_ref(const std::string& s)
-    :expression_ref(char_list(s))
+    :expression_ref(expression_ref{var("Foreign.Vector.listFromString"),String(s)})
 {}
 
 expression_ref::expression_ref(const index_var& iv):i(iv.index),type_(index_var_type) {}
