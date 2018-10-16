@@ -112,17 +112,17 @@ pattern_type classify_equation(const equation_info_t& equation)
 	return pattern_type::constructor;
 }
 
-vector<pair<pattern_type,vector<int>>> partition(const vector<equation_info_t>& equations)
+vector<pair<pattern_type,vector<equation_info_t>>> partition(const vector<equation_info_t>& equations)
 {
-    vector<pair<pattern_type,vector<int>>> partitions;
+    vector<pair<pattern_type,vector<equation_info_t>>> partitions;
     auto prev_type = pattern_type::null;
-    for(int i=0;i<equations.size();i++)
+    for(auto& e: equations)
     {
-	auto current_type = classify_equation(equations[i]);
+	auto current_type = classify_equation(e);
 	if (current_type == prev_type)
-	    partitions.back().second.push_back(i);
+	    partitions.back().second.push_back(e);
 	else
-	    partitions.push_back({current_type,{i}});
+	    partitions.push_back({current_type,{e}});
 	prev_type = current_type;
     }
     return partitions;
@@ -344,17 +344,13 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
 
     expression_ref E = otherwise;
 
-    for(int i=partitions.size()-1; i >= 0; i--)
+    for(auto& block: std::reverse(partitions))
     {
-	vector<equation_info_t> equations_part;
-	for(int j: partitions[i].second)
-	    equations_part.push_back(equations2[j]);
-
-	assert(partitions[i].first != pattern_type::null);
-	if (partitions[i].first == pattern_type::var)
-	    E = block_case_var(x, equations_part, E);
+	assert(block.first != pattern_type::null);
+	if (block.first == pattern_type::var)
+	    E = block_case_var(x, block.second, E);
 	else
-	    E = block_case_constant(x, equations_part, E);
+	    E = block_case_constant(x, block.second, E);
     }
     return E;
 }
