@@ -16,8 +16,8 @@ UNRELEASED
    - Implement @-patterns (i.e. x@(y,z) )
    - Implement lazy patterns (i.e. ~(y,z)  )
    - Allow modules with no "module name where"
+   - Encode strings as (listFromString String)
    - [FIX] float let out of let if it reveals a constant.
-
 
 * 3.3 (Aug 6, 2018)
   - Fixes
