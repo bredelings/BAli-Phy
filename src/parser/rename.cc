@@ -326,10 +326,11 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
 	auto x = pat.sub()[0];
 	auto sub_pat = pat.sub()[1];
 	auto bound = rename_pattern(x, false);
-	if (not disjoint_add(bound, rename_pattern(sub_pat, false)))
-	    throw myexception()<<"Pattern '"<<pat<<"' uses a variable twice!";
+	bool overlap = not disjoint_add(bound, rename_pattern(sub_pat, false));
 
 	pat = AST_node("AsPattern")+x+sub_pat;
+	if (overlap)
+	    throw myexception()<<"Pattern '"<<pat<<"' uses a variable twice!";
 	return bound;
     }
     
@@ -375,11 +376,11 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
 
     bound_var_info bound;
     // Rename the arguments
+    bool overlap = false;
     for(auto& e: args)
     {
 	auto bound_here =  rename_pattern(e, top);
-	if (not disjoint_add(bound, bound_here))
-	    throw myexception()<<"Pattern '"<<pat<<"' uses a variable twice!";
+	overlap = overlap or not disjoint_add(bound, bound_here);
     }
 
     // 10. Construct the renamed pattern
@@ -387,6 +388,9 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
 	pat = expression_ref{head,args};
     else
 	pat = head;
+
+    if (overlap)
+	throw myexception()<<"Pattern '"<<pat<<"' uses a variable twice!";
 
     // 11. Return the variables bound
     return bound;
@@ -419,11 +423,13 @@ expression_ref renamer_state::rename_decl(const expression_ref& decl, const boun
 	{
 	    bound_var_info arg_vars;
 	    auto args = lhs.sub();
+	    bool overlap = false;
 	    for(auto& arg: args)
-		if (not disjoint_add(arg_vars, rename_pattern(arg)))
-		    throw myexception()<<"Function declaration '"<<lhs<<"' uses a variable twice!";
+		overlap = overlap or not disjoint_add(arg_vars, rename_pattern(arg));
 	    assert(args.size());
 	    lhs = expression_ref{f, args};
+	    if (overlap)
+		throw myexception()<<"Function declaration '"<<lhs<<"' uses a variable twice!";
 	    add(bound2,arg_vars);
 	}
 	else
