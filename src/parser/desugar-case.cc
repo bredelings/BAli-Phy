@@ -307,6 +307,7 @@ void desugar_state::clean_up_pattern(const expression_ref& x, equation_info_t& e
 	rhs.add_binding({{y, x}});
 	pat1 = var(-1);
     }
+
     // case x of ~pat -> rhs  =>  case x of _ -> let pat=x in rhs
     else if (is_AST(pat1,"LazyPattern"))
     {
@@ -317,6 +318,7 @@ void desugar_state::clean_up_pattern(const expression_ref& x, equation_info_t& e
 	rhs.add_binding(binds);
 	pat1 = var(-1);
     }
+
     // case x of y@pat2 -> rhs  => case x of pat2 => let{y=x} in rhs
     else if (is_AST(pat1,"AsPattern"))
     {
