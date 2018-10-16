@@ -9,8 +9,10 @@ UNRELEASED
    - Refactored functions out of Prelude into Data.List, etc.
    - Implement layout-sensitive parsing.
    - Implement pattern bindings (i.e. let (x,y) = E1 in E2)
-   - Correctly float let out of let if it reveals a constant.
-   - Allow empty modules
+   - Implement @-patterns (i.e. x@(y,z) )
+   - Implement lazy patterns (i.e. ~(y,z)  )
+   - Allow modules with no "module name where"
+   - [FIX] float let out of let if it reveals a constant.
  - Models
    + Add models x2, x2_sym, x2x2 for RNA stems.
    - Add Doublet alphabet for RNA stems.
