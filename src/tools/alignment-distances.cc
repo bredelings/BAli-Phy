@@ -73,7 +73,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     options_description analysis("Analysis options");
     analysis.add_options()
-	("metric", value<string>()->default_value("splits"),"type of distance: pairs, splits, splits2")
+	("metric", value<string>()->default_value("splits"),"type of distance: pairs, splits, splits2, pairwise, recall, accuracy, nonrecall, inaccuracy")
 	("analysis", value<string>()->default_value("matrix"), "Analysis: matrix, median, diameter")
 	("CI",value<double>()->default_value(0.95),"Confidence interval size.")
 	("mean", "Show mean and standard deviation")
@@ -101,6 +101,32 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	cout<<"Compute distances between alignments.\n\n";
 	cout<<"Usage: alignment-distances <analysis> alignments-file1 [alignments-file2 ...]\n\n";
 	cout<<visible<<"\n";
+
+	cout<<"Metrics:\n";
+	cout<<"  splits, splits2, pairwise, recall, accuracy, nonrecall, inaccuracy\n\n";
+
+	cout<<"Examples:\n\n";
+
+	cout<<" Compute distance matrix between all pairs of alignments in all files:\n";
+	cout<<"   % alignment-distances AxA file1.fasta ... fileN.fasta\n\n";
+
+	cout<<" Compute distances from true.fasta to each in As.fasta:\n";
+	cout<<"   % alignment-distances score true.fasta As.fasta\n\n";
+
+	cout<<" Compute all NxN pairwise alignment accuracies, averaged over As:\n";
+	cout<<"   % alignment-distances NxN true.fasta As.fasta\n\n";
+
+	cout<<" Compare the distances with-in and between the two groups:\n";
+	cout<<"   % alignment-distances compare A-dist1.fasta A-dist2.fasta\n\n";
+
+	cout<<" ???\n";
+	cout<<"   % alignment-distances median As.fasta A.fasta\n\n";
+
+	cout<<" ???\n";
+	cout<<"   % alignment-distances diameter As.fasta A.fasta\n\n";
+
+	cout<<" ???\n";
+	cout<<"   % alignment-distances compression As.fasta A.fasta\n\n";
 	exit(0);
     }
 
