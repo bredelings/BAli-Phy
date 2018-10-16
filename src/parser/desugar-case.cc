@@ -268,10 +268,6 @@ expression_ref desugar_state::block_case_var(const vector<expression_ref>& x, co
     {
 	equation_info_t eqn2{remove_first(eqn.patterns), eqn.rhs};
 
-	// FIXME - This should really go in tidy().
-
-	if (not is_wildcard(eqn.patterns[0]))
-	    eqn2.rhs = let_expression({{eqn.patterns[0].as_<var>(),x[0]}}, eqn2.rhs);
 
 	equations2.push_back(eqn2);
     }
@@ -301,6 +297,21 @@ expression_ref desugar_state::block_case_empty(const vector<expression_ref>& x, 
 }
 
 
+// Make this a member function of equation_info_t?
+void tidy1(const expression_ref& x, equation_info_t& eqn)
+{
+    auto& patterns = eqn.patterns;
+    auto& rhs = eqn.rhs;
+    assert(patterns.size());
+
+    if (is_var(patterns[0]) and not is_wildcard(patterns[0]))
+    {
+	auto y = patterns[0].as_<var>();
+	rhs = let_expression({{y, x}}, rhs);
+	patterns[0] = var(-1);
+    }
+}
+
 expression_ref desugar_state::block_case(const vector<expression_ref>& x, const vector<equation_info_t>& equations, expression_ref otherwise)
 {
     const int N = x.size();
@@ -313,22 +324,31 @@ expression_ref desugar_state::block_case(const vector<expression_ref>& x, const 
     for(int j=0;j<M;j++)
 	assert(equations[j].patterns.size() == N);
 
+    // 1. If there are no equations, return the otherwise expression
     if (not equations.size())
 	return otherwise;
 
+    // 2. If there are not xs left, follow the empty case
     if (not x.size())
 	return block_case_empty(x, equations, otherwise);
 
-    auto partitions = partition(equations);
+    // 3. Tidy the equations
+    auto equations2 = equations;
+    for(auto& e: equations2)
+    {
+	tidy1(x[0],e);
+    }
+    
+    // 4. Follow the "mixture rule" from Wadler in SLPJ
+    auto partitions = partition(equations2);
 
-    // This implements the "mixture rule" from Wadler in SLPJ
     expression_ref E = otherwise;
 
     for(int i=partitions.size()-1; i >= 0; i--)
     {
 	vector<equation_info_t> equations_part;
 	for(int j: partitions[i].second)
-	    equations_part.push_back(equations[j]);
+	    equations_part.push_back(equations2[j]);
 
 	assert(partitions[i].first != pattern_type::null);
 	if (partitions[i].first == pattern_type::var)
