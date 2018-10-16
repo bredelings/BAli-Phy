@@ -63,6 +63,8 @@ bool is_trivial(const expression_ref& E)
 
 void bind_var(in_scope_set& bound_vars, const var& x, const expression_ref& E)
 {
+    assert(x.index >= 0);
+    assert(not is_wildcard(E));
     assert(not bound_vars.count(x));
     assert(x.work_dup != amount_t::Unknown);
     assert(x.code_dup != amount_t::Unknown);
@@ -401,13 +403,24 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 
 	// 3. If we know something extra about the value (or range, theoretically) of the object in this case branch, then record that.
 	bound_variable_info original_binding;
-	if (is_var(object)) original_binding = rebind_var(bound_vars, object.as_<var>(), patterns[i]);
+	if (is_var(object))
+	{
+	    if (is_wildcard(patterns[i]))
+		; // we know that the object does NOT match any of the patterns on the other branches
+	          // we could record a negative range.
+	    else
+		original_binding = rebind_var(bound_vars, object.as_<var>(), patterns[i]);
+	}
 
 	// 4. Simplify the alternative body
 	bodies[i] = simplify(options, bodies[i], S2, bound_vars, unknown_context());
 
 	// 5. Restore informatation about an object variable to information outside this case branch.
-	if (is_var(object)) rebind_var(bound_vars, object.as_<var>(), original_binding.first);
+	if (is_var(object))
+	{
+	    if (not is_wildcard(patterns[i]))
+		rebind_var(bound_vars, object.as_<var>(), original_binding.first);
+	}
 
 	unbind_decls(bound_vars, pat_decls);
     }
