@@ -93,6 +93,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	cout<<"Usage: tree-tool <tree-file> [OPTIONS]\n\n";
 	cout<<general<<"\n";
 	cout<<commands<<"\n";
+	cout<<output<<"\n";
 	exit(0);
     }
 
