@@ -100,6 +100,8 @@ public:
 
     inline const std::vector<expression_ref>& sub() const;
 
+    inline std::vector<expression_ref> copy_sub() const;
+
     inline int size() const 
 	{
 	    if (is_atomic())
@@ -354,8 +356,15 @@ inline bool expression_ref::is_expression() const
     return (type_ == expression_type);
 }
 
+inline std::vector<expression_ref> expression_ref::copy_sub() const
+{
+    if (is_expression())
+	return as_expression().sub;
+    else
+	return {};
+}
+
 inline const std::vector<expression_ref>& expression_ref::sub() const {return as_expression().sub;}
-//        object_ptr<const Object>& sub()       {return E->sub;}
 
 inline expression_ref::expression_ref(expression* e):O(e),type_(expression_type) { }
 
