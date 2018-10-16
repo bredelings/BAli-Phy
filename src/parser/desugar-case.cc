@@ -32,8 +32,6 @@ using std::pair;
 // See list in computation/loader.C
 //
 
-
-
 int find_object(const vector<expression_ref>& v, const expression_ref& E)
 {
     for(int i=0;i<v.size();i++)
@@ -138,7 +136,7 @@ vector<pair<pattern_type,vector<equation_info_t>>> partition(const vector<equati
  * If the otherwise branch is used twice, then construct a let-expression for it.
  *
  */
-expression_ref desugar_state::match(const vector<expression_ref>& xs, const vector<vector<expression_ref>>& p, const vector<expression_ref>& b, const expression_ref& otherwise)
+expression_ref desugar_state::match(const vector<expression_ref>& xs, const vector<vector<expression_ref>>& p, const vector<failable_expression>& b, const expression_ref& otherwise)
 {
     assert(p.size() == b.size());
 
@@ -224,16 +222,13 @@ expression_ref desugar_state::match_constant(const vector<expression_ref>& x, co
 	{
 	    assert(equations[r].patterns[0].size() == arity);
 
-	    equation_info_t eqn;
-	    eqn.rhs = equations[r].rhs;
-
 	    // pattern: Add the sub-partitions of the first top-level pattern at the beginning.
-	    if (equations[r].patterns[0].size())
-		eqn.patterns = equations[r].patterns[0].sub();
+	    auto patterns = equations[r].patterns[0].copy_sub();
 	    // pattern: Add the remaining top-level patterns (minus the first).
-	    eqn.patterns.insert(eqn.patterns.end(), equations[r].patterns.begin()+1, equations[r].patterns.end());
+	    patterns.insert(patterns.end(), equations[r].patterns.begin()+1, equations[r].patterns.end());
 
 	    // Add the equation
+	    auto eqn = equation_info_t{std::move(patterns), equations[r].rhs};
 	    equations2.push_back(std::move(eqn));
 	}
 
@@ -283,11 +278,17 @@ expression_ref desugar_state::match_var(const vector<expression_ref>& x, const v
 expression_ref desugar_state::match_empty(const vector<expression_ref>& x, const vector<equation_info_t>& equations, expression_ref otherwise)
 {
     assert(x.size() == 0);
-    // Actually we should combine E0 [] E1 [] ... [] EN [] otherwise
-    if (equations.size())
-	return equations[0].rhs;
-    else
-	return otherwise;
+
+    auto E = otherwise;
+
+//  can fail is true if we could use the otherwise expression.
+//  bool can_fail = true;
+    for(auto& e: std::reverse(equations))
+    {
+	E = e.rhs.result(E);
+//	can_fail = can_fail and not e.rhs.can_fail;
+    }
+    return E;
 }
 
 
@@ -303,7 +304,7 @@ void desugar_state::clean_up_pattern(const expression_ref& x, equation_info_t& e
     if (is_var(pat1) and not is_wildcard(pat1))
     {
 	auto y = pat1.as_<var>();
-	rhs = let_expression({{y, x}}, rhs);
+	rhs.add_binding({{y, x}});
 	pat1 = var(-1);
     }
     // case x of ~pat -> rhs  =>  case x of _ -> let pat=x in rhs
@@ -312,8 +313,8 @@ void desugar_state::clean_up_pattern(const expression_ref& x, equation_info_t& e
 	auto& pat2 = pat1.sub()[0];
 	CDecls binds = {};
 	for(auto& y: get_free_indices(pat2))
-	    binds.push_back({y,case_expression(x, pat2, x, error("lazy pattern: failed pattern match"))});
-	rhs = let_expression(binds, rhs);
+	    binds.push_back({y,case_expression(x, pat2, failable_expression(x), error("lazy pattern: failed pattern match"))});
+	rhs.add_binding(binds);
 	pat1 = var(-1);
     }
     // case x of y@pat2 -> rhs  => case x of pat2 => let{y=x} in rhs
@@ -321,7 +322,7 @@ void desugar_state::clean_up_pattern(const expression_ref& x, equation_info_t& e
     {
 	auto y = pat1.sub()[0].as_<var>();
 	auto pat2 = pat1.sub()[1];
-	rhs = let_expression({{y, x}}, rhs);
+	rhs.add_binding({{y, x}});
 	pat1 = pat2;
     }
 }
@@ -349,9 +350,7 @@ expression_ref desugar_state::match(const vector<expression_ref>& x, const vecto
     // 3. Tidy the equations
     auto equations2 = equations;
     for(auto& e: equations2)
-    {
 	clean_up_pattern(x[0],e);
-    }
     
     // 4. Follow the "mixture rule" from Wadler in SLPJ
     auto partitions = partition(equations2);
@@ -371,7 +370,7 @@ expression_ref desugar_state::match(const vector<expression_ref>& x, const vecto
 
 // Create the expression 'case T of {patterns[i] -> bodies[i]}'
 // Create the expression 'case (T) of {(patterns[i]) -> bodies[i]}'
-expression_ref desugar_state::case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies, const expression_ref& otherwise)
+expression_ref desugar_state::case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<failable_expression>& bodies, const expression_ref& otherwise)
 {
     vector<vector<expression_ref>> multi_patterns;
     for(const auto& p:patterns)
@@ -383,19 +382,19 @@ expression_ref desugar_state::case_expression(const expression_ref& T, const vec
     return let_expression(binds, match({x}, multi_patterns, bodies, otherwise));
 }
 
-expression_ref desugar_state::case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise)
+expression_ref desugar_state::case_expression(const expression_ref& T, const expression_ref& pattern, const failable_expression& body, const expression_ref& otherwise)
 {
     vector<expression_ref> patterns = {pattern};
-    vector<expression_ref> bodies = {body};
+    vector<failable_expression> bodies = {body};
     if (otherwise and not pattern.is_a<var>())
     {
 	patterns.push_back(var(-1));
-	bodies.push_back(otherwise);
+	bodies.push_back(failable_expression(otherwise));
     }
     return case_expression(T,patterns, bodies, otherwise);
 }
 
-expression_ref desugar_state::def_function(const vector< vector<expression_ref> >& patterns, const vector<expression_ref>& bodies, const expression_ref& otherwise)
+expression_ref desugar_state::def_function(const vector< vector<expression_ref> >& patterns, const vector<failable_expression>& bodies, const expression_ref& otherwise)
 {
     // Construct the dummies
     vector<expression_ref> args;

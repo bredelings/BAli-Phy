@@ -66,12 +66,10 @@ vector<expression_ref> get_patterns(const expression_ref& decl)
     return lhs.sub();
 }
 
-expression_ref get_body(const expression_ref& decl)
+failable_expression get_body(const expression_ref& decl)
 {
-    expression_ref rhs = decl.sub()[1];
-    assert(is_AST(rhs,"rhs"));
-    assert(rhs.size() == 1);
-    return rhs.sub()[0];
+    auto& rhs = decl.sub()[1];
+    return rhs.as_<failable_expression>();
 }
 
 vector<expression_ref> desugar_state::parse_fundecls(const vector<expression_ref>& v)
@@ -90,12 +88,14 @@ vector<expression_ref> desugar_state::parse_fundecls(const vector<expression_ref
 	}
 
 	auto& lhs = decl.sub()[0];
+	auto& rhs = decl.sub()[1];
+	auto& rhs_fail = rhs.as_<failable_expression>();
 
-	// If its just a variable with no args, don't call def_function because ... its complicated?
+        // If its just a variable with no args, don't call def_function because ... its complicated?
 	if (lhs.is_a<var>())
 	{
-	    assert(is_AST(decl.sub()[1],"rhs"));
-	    decls.push_back(decl.head() + lhs + decl.sub()[1].sub()[0]);
+	    assert(not rhs_fail.can_fail);
+	    decls.push_back(decl.head() + lhs + rhs_fail.result(0));
 	    continue;
 	}
 
@@ -107,16 +107,16 @@ vector<expression_ref> desugar_state::parse_fundecls(const vector<expression_ref
 	    auto& pat = lhs;
 	    auto z = get_fresh_var();
 
-	    assert(is_AST(decl.sub()[1],"rhs"));
-	    decls.push_back(decl.head()+z+decl.sub()[1].sub()[0]);
-	    // Probably we shouldn't have desugared the RHS yet.
+	    assert(not rhs_fail.can_fail);
+	    decls.push_back(decl.head()+z+rhs_fail.result(0));
+	    // Probably we shouldn't have desugared the RHS yet. (?)
 	    for(auto& x: get_free_indices(pat))
-		decls.push_back(decl.head()+x+case_expression(z, pat, x, error("pattern binding: failed pattern match")));
+		decls.push_back(decl.head()+x+case_expression(z, pat, failable_expression(x), error("pattern binding: failed pattern match")));
 	    continue;
 	}
 
 	vector<vector<expression_ref> > patterns;
-	vector<expression_ref> bodies;
+	vector<failable_expression> bodies;
 	auto fvar = f.as_<var>();
 	patterns.push_back( get_patterns(decl) );
 	bodies.push_back( get_body(decl) );
@@ -183,16 +183,20 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	}
 	else if (n.type == "rhs")
 	{
-	    if (E.size() == 2) // where decls
+	    auto body = E.sub()[0];
+	    if (E.size() == 2) // where decls -> convert to (rhs (let decls body))
 	    {
 		expression_ref decls = E.sub()[1];
 		assert(is_AST(decls,"Decls"));
-		expression_ref E2 = AST_node("Let") + decls + E.sub()[0];
+		expression_ref E2 = AST_node("Let") + decls + body;
 		E2 = AST_node("rhs") + E2;
 		return desugar(E2);
 	    }
 	    else
-	    { }      // Fall through and let the standard case handle this.
+	    {
+		body = desugar(body);
+		return failable_expression(body);
+	    }      // Fall through and let the standard case handle this.
 	}
 	else if (n.type == "WildcardPattern")
 	{
@@ -270,7 +274,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	    // 2. Desugar the body, binding vars mentioned in the lambda patterns.
 	    body = desugar(body);
 
-	    return def_function({v},{body},error("lambda: pattern match failure"));
+	    return def_function({v},{failable_expression(body)},error("lambda: pattern match failure"));
 	}
 	else if (n.type == "Do")
 	{
@@ -351,7 +355,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	    for(auto& e: v)
 		e = desugar(e);
 
-	    return case_expression(v[0],true,v[1],v[2]);
+	    return case_expression(v[0],true,failable_expression(v[1]),v[2]);
 	}
 	else if (n.type == "LeftSection")
 	{
@@ -395,7 +399,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	    expression_ref case_obj = desugar(v[0]);
 	    vector<expression_ref> alts = v[1].sub();
 	    vector<expression_ref> patterns;
-	    vector<expression_ref> bodies;
+	    vector<failable_expression> bodies;
 	    for(const auto& alt: alts)
 	    {
 		patterns.push_back(desugar(alt.sub()[0]) );
@@ -413,7 +417,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 		    body = AST_node("Let") + alt.sub()[2] + body;
 		}
 
-		bodies.push_back(desugar(body) );
+		bodies.push_back( failable_expression(desugar(body)) );
 	    }
 	    return case_expression(case_obj, patterns, bodies, error("case: failed pattern match"));
 	}

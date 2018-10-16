@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include "computation/expression/expression_ref.H"
+#include "computation/expression/let.H"
 #include "computation/expression/var.H"
 #include "computation/module.H"
 
@@ -16,10 +17,37 @@ Module read_model(const std::string& filename);
 void read_add_model(Model& M, const std::string& filename);
 void add_model(Model& M, const std::string& filename);
 
+struct failable_expression: public Object
+{
+    failable_expression* clone() const {return new failable_expression(*this);}
+
+    bool can_fail;
+
+    std::function<expression_ref(const expression_ref&)> result;
+
+    std::string print() const {return "("+std::to_string(can_fail)+","+convertToString(result(var("FAIL")))+")";}
+
+    void add_binding(const CDecls& binds)
+    {
+	auto result2 = result;
+	result(0);
+	result2(0);
+	result = [result2,binds](const expression_ref& o) {return let_expression(binds,result2(o));};
+    }
+
+    failable_expression() = delete;
+
+    explicit failable_expression(const expression_ref& E)
+    {
+       can_fail = false;
+       result = [E](const expression_ref&){return E;};
+    }
+};
+
 struct equation_info_t
 {
     std::vector<expression_ref> patterns;
-    expression_ref rhs;
+    failable_expression rhs;
 };
 
 class fresh_vars
@@ -38,11 +66,11 @@ struct desugar_state: public fresh_vars
     const Module& m;
 
     std::vector<expression_ref> parse_fundecls(const std::vector<expression_ref>& v);
-    expression_ref def_function(const std::vector< std::vector<expression_ref> >& patterns, const std::vector<expression_ref>& bodies,const expression_ref& otherwise);
+    expression_ref def_function(const std::vector< std::vector<expression_ref> >& patterns, const std::vector<failable_expression>& bodies,const expression_ref& otherwise);
 
-    expression_ref case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies, const expression_ref& otherwise);
-    expression_ref case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise);
-    expression_ref match(const std::vector<expression_ref>& x, const std::vector<std::vector<expression_ref>>& p, const std::vector<expression_ref>& b, const expression_ref&);
+    expression_ref case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<failable_expression>& bodies, const expression_ref& otherwise);
+    expression_ref case_expression(const expression_ref& T, const expression_ref& pattern, const failable_expression& body, const expression_ref& otherwise);
+    expression_ref match(const std::vector<expression_ref>& x, const std::vector<std::vector<expression_ref>>& p, const std::vector<failable_expression>& b, const expression_ref&);
     expression_ref match(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations, expression_ref);
 
     expression_ref match_constant(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations, expression_ref);
