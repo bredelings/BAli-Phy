@@ -1,4 +1,5 @@
 #include "bool.H"
+#include "var.H"
 
 std::string bool_true_name  = "Data.Bool.True";
 std::string bool_false_name = "Data.Bool.False";
