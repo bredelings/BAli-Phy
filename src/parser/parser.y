@@ -39,6 +39,7 @@
 
   expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebinds);
   expression_ref make_gdrhs(const std::vector<expression_ref>& gdrhs, const expression_ref& wherebinds);
+  expression_ref make_gdrh(const std::vector<expression_ref>& gdpats, const expression_ref& wherebinds);
 
   expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type);
   expression_ref make_infixexp(const std::vector<expression_ref>& args);
@@ -59,7 +60,7 @@
   expression_ref yy_make_alt(const expression_ref& pat, const expression_ref& alt_rhs);
   expression_ref make_alt_rhs(const expression_ref& ralt, const expression_ref& wherebinds);
   expression_ref make_gdpats(const std::vector<expression_ref>& gdpats);
-  expression_ref make_gdpat(const expression_ref& guardquals, const expression_ref& exp);
+  expression_ref make_gdpat(const std::vector<expression_ref>& guardquals, const expression_ref& exp);
 
   expression_ref make_stmts(const std::vector<expression_ref>& stmts);
 
@@ -1019,7 +1020,7 @@ rhs: "=" exp wherebinds       {$$ = make_rhs($2,$3);}
 gdrhs: gdrhs gdrh             {std::swap($$,$1); $$.push_back($2);}
 |      gdrh                   {$$.push_back($1);}
 
-gdrh: "|" guardquals "=" exp  {$$ = new expression(AST_node("guardquals"),{make_gdpats($2),$4});}
+gdrh: "|" guardquals "=" exp  {$$ = make_gdrh($2,$4);}
 
 sigdecl: infixexp_top "::" sigtypedoc  {}
 |        var "," sig_vars "::" sigtypedoc {}
@@ -1189,7 +1190,7 @@ gdpats: gdpats gdpat             {std::swap($$,$1); $$.push_back($2);}
 ifgdpats : "{" gdpats "}"        {}
 |          gdpats close          {}
 
-gdpat: "|" guardquals "->" exp   {$$=make_gdpat(make_gdpats($2),$4);}
+gdpat: "|" guardquals "->" exp   {$$=make_gdpat($2,$4);}
 
 pat: exp      {std::swap($$,$1);}
 |   "!" aexp  {$$ = new expression(AST_node("StrictPat"),{$2});}
@@ -1578,14 +1579,6 @@ expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebi
     return expression_ref{AST_node("rhs"), std::move(e)};
 }
 
-expression_ref make_gdrhs(const vector<expression_ref>& guards, const expression_ref& wherebinds)
-{
-    vector<expression_ref> e = {expression_ref{AST_node("guards"),guards}};
-    if (wherebinds and wherebinds.size())
-	e.push_back(wherebinds);
-    return expression_ref{AST_node("gdrhs"),std::move(e)};
-}
-
 expression_ref make_infixexp(const vector<expression_ref>& args)
 {
     if (args.size() == 1)
@@ -1692,12 +1685,25 @@ expression_ref make_alt_rhs(const expression_ref& ralt, const expression_ref& wh
 
 expression_ref make_gdpats(const vector<expression_ref>& gdpats)
 {
-    return new expression(AST_node("Guards"), gdpats);
+    return new expression(AST_node("gdpats"), gdpats);
 }
 
-expression_ref make_gdpat(const expression_ref& guardquals, const expression_ref& exp)
+expression_ref make_gdpat(const vector<expression_ref>& guardquals, const expression_ref& exp)
 {
-    return new expression(AST_node("GdPat"), {guardquals, exp});
+    return expression_ref{AST_node("gdpat"), {expression_ref{AST_node("guards"),guardquals},exp}};
+}
+
+expression_ref make_gdrhs(const vector<expression_ref>& guards, const expression_ref& wherebinds)
+{
+    vector<expression_ref> e = {expression_ref{AST_node("guards"),guards}};
+    if (wherebinds and wherebinds.size())
+	e.push_back(wherebinds);
+    return expression_ref{AST_node("gdrhs"),std::move(e)};
+}
+
+expression_ref make_gdrh(const vector<expression_ref>& guardquals, const expression_ref& exp)
+{
+    return expression_ref(AST_node("gdrh"), {expression_ref{AST_node("guards"),guardquals},exp});
 }
 
 expression_ref make_stmts(const vector<expression_ref>& stmts)
