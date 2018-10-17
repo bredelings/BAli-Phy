@@ -556,6 +556,32 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 		v[0] = rename(v[0], bound);
 	    return expression_ref{E.head(),v};
 	}
+	else if (n.type == "gdrhs")
+	{
+	    if (v.size() == 2)
+	    {
+		auto bound2 = bound;
+		add(bound2, rename_decls(v[1],bound));
+		v[0] = rename(v[0], bound2);
+	    }
+	    else
+		v[0] = rename(v[0], bound);
+	    return expression_ref{E.head(),v};
+	}
+	else if (n.type == "gdrh")
+	{
+	    auto& guards = v[0];
+	    vector<expression_ref> w = guards.sub();
+	    auto bound2 = bound;
+	    for(int i=0;i<w.size();i++)
+		add(bound2, rename_stmt(w[i], bound2));
+	    guards = expression_ref{guards.head(),std::move(w)};
+
+	    auto& rh = v[1];
+	    rh = rename(rh, bound2);
+
+	    return expression_ref{E.head(),std::move(v)};
+	}
 	else if (n.type == "id")
 	{
 	    assert(v.empty());
