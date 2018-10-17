@@ -112,6 +112,10 @@ po::options_description haskell_optimization()
 
     options_description optimization("Haskell optimization options");
     optimization.add_options()
+	("dump-parsed","Show parser output")
+	("dump-rn","Show renamed output")
+	("dump-ds","Show desugared output")
+	("fully-lazy",value<bool>()->default_value(true), "Run fully lazy lambda lifting transformation")
 	("pre-inline",value<bool>()->default_value(true),"Pre-inline unconditionally")
 	("post-inline",value<bool>()->default_value(true),"Post-inline unconditionally")
 	("let-float-from-case",value<bool>()->default_value(true),"Let float from case")

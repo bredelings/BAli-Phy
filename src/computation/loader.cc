@@ -101,7 +101,12 @@ Module module_loader::load_module_from_file(const string& filename) const
 
 	    auto lang_options = language_options(file_contents);
 
-	    modules.insert( {filename, Module(parse_module_file(file_contents, filename), lang_options)} );
+	    auto m = parse_module_file(file_contents, filename);
+
+	    if (dump_parsed)
+		std::cout<<m<<std::endl;
+
+	    modules.insert( {filename, Module(m, lang_options)} );
 	}
 	catch (myexception& e)
 	{

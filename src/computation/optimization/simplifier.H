@@ -22,6 +22,12 @@ struct simplifier_options
     int max_iterations = 4;
     int inline_threshhold = 8;
     double keenness = 1.5;
+
+    bool fully_lazy = true;
+
+    bool dump_parsed = false;
+    bool dump_renamed = false;
+    bool dump_desugared = false;
 };
 
 class module_loader;

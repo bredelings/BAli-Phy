@@ -391,22 +391,26 @@ void Module::rename_infix(const Program&)
     }
 }
 
-void Module::rename(const Program&)
+void Module::rename(const Program& P)
 {
     if (topdecls)
     {
 	assert(is_AST(topdecls,"TopDecls"));
 	topdecls = ::rename(*this,topdecls);
     }
+    if (P.get_module_loader()->dump_renamed)
+	std::cout<<name<<"[renamed]:\n"<<topdecls<<"\n\n";
 }
 
-void Module::desugar(const Program&)
+void Module::desugar(const Program& P)
 {
     if (topdecls)
     {
 	assert(is_AST(topdecls,"TopDecls"));
 	topdecls = ::desugar(*this,topdecls);
     }
+    if (P.get_module_loader()->dump_desugared)
+	std::cout<<name<<"[desugared]:\n"<<topdecls<<"\n\n";
 }
 
 void add_constructor(map<var,expression_ref>& decls, const constructor& con)
@@ -774,7 +778,8 @@ void Module::optimize(const Program& P)
 		// This won't float things to the top level!
 		auto name = decl.sub()[0].as_<var>().name;
 		auto body = decl.sub()[1];
-		body = let_float(body);
+		if (P.get_module_loader()->fully_lazy)
+		    body = let_float(body);
 		body = graph_normalize(body);
 
 		new_decls.push_back(AST_node("Decl") + decl.sub()[0] + body);

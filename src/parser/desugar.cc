@@ -213,6 +213,13 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 		rhs.add_binding(desugar_decls(E.sub()[1]));
 	    return rhs;
 	}
+	else if (n.type == "gdrhs")
+	{
+	    auto rhs = failable_expression(desugar(E.sub()[0]));
+	    if (E.size() == 2)
+		rhs.add_binding(desugar_decls(E.sub()[1]));
+	    return rhs;
+	}
 	else if (n.type == "WildcardPattern")
 	{
 	    return var(-1);

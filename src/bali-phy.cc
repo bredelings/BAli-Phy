@@ -401,6 +401,11 @@ int main(int argc,char* argv[])
 	L->beta_reduction = args["beta-reduction"].as<bool>();
 	L->max_iterations = args["simplifier-max-iterations"].as<int>();
 
+	L->fully_lazy = args["fully-lazy"].as<bool>();
+	L->dump_parsed = args.count("dump-parsed");
+	L->dump_renamed = args.count("dump-rn");
+	L->dump_desugared = args.count("dump-ds");
+
 	//---------- Initialize random seed -----------//
 	unsigned long seed = init_rng_and_get_seed(args);
     
