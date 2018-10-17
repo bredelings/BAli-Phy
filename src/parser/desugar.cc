@@ -157,7 +157,7 @@ vector<expression_ref> desugar_state::parse_fundecls(const vector<expression_ref
 	    decls.push_back(decl.head()+z+rhs_fail.result(0));
 	    // Probably we shouldn't have desugared the RHS yet. (?)
 	    for(auto& x: get_free_indices(pat))
-		decls.push_back(decl.head()+x+case_expression(z, {pat}, {failable_expression(x)}, error("pattern binding: failed pattern match")));
+		decls.push_back(decl.head()+x+case_expression(z, {pat}, {failable_expression(x)}).result(error("pattern binding: failed pattern match")));
 	    continue;
 	}
 
@@ -429,7 +429,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	    for(auto& e: v)
 		e = desugar(e);
 
-	    return case_expression(v[0],{true},{failable_expression(v[1])},v[2]);
+	    return case_expression(v[0],{true},{failable_expression(v[1])}).result(v[2]);
 	}
 	else if (n.type == "LeftSection")
 	{
@@ -479,7 +479,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 
 		bodies.push_back( failable_expression(desugar(body)) );
 	    }
-	    return case_expression(case_obj, patterns, bodies, error("case: failed pattern match"));
+	    return case_expression(case_obj, patterns, bodies).result(error("case: failed pattern match"));
 	}
 	else if (n.type == "enumFrom")
 	{

@@ -72,9 +72,6 @@ struct desugar_state: public fresh_vars
     std::vector<expression_ref> parse_fundecls(const std::vector<expression_ref>& v);
     expression_ref def_function(const std::vector< std::vector<expression_ref> >& patterns, const std::vector<failable_expression>& bodies,const expression_ref& otherwise);
 
-    // REMOVE!
-    expression_ref case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<failable_expression>& bodies, const expression_ref& otherwise);
-
     failable_expression case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<failable_expression>& bodies);
 
     // REMOVE!

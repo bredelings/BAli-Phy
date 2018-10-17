@@ -339,7 +339,7 @@ void desugar_state::clean_up_pattern(const expression_ref& x, equation_info_t& e
 	auto& pat2 = pat1.sub()[0];
 	CDecls binds = {};
 	for(auto& y: get_free_indices(pat2))
-	    binds.push_back({y,case_expression(x, {pat2}, {failable_expression(y)}, error("lazy pattern: failed pattern match"))});
+	    binds.push_back({y,case_expression(x, {pat2}, {failable_expression(y)}).result(error("lazy pattern: failed pattern match"))});
 	rhs.add_binding(binds);
 	pat1 = var(-1);
     }
@@ -403,12 +403,6 @@ failable_expression desugar_state::case_expression(const expression_ref& T, cons
     auto FE = match({x}, equations);
     FE.add_binding({{x,T}});
     return FE;
-}
-
-// For `case T of patterns[i] -> bodies[i]`
-expression_ref desugar_state::case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<failable_expression>& bodies, const expression_ref& otherwise)
-{
-    return case_expression(T, patterns, bodies).result(otherwise);
 }
 
 expression_ref desugar_state::def_function(const vector< vector<expression_ref> >& patterns, const vector<failable_expression>& bodies, const expression_ref& otherwise)
