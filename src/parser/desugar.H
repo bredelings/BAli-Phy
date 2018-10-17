@@ -36,7 +36,7 @@ struct failable_expression: public Object
     }
 
     failable_expression(bool b, std::function<expression_ref(const expression_ref&)> f)
-	:can_fail(true), result(f)
+	:can_fail(b), result(f)
 	{}
 
     explicit failable_expression(const expression_ref& E)
