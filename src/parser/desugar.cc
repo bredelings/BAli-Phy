@@ -145,6 +145,33 @@ vector<expression_ref> desugar_state::parse_fundecls(const vector<expression_ref
     return decls;
 }
 
+CDecls desugar_state::desugar_decls(const expression_ref& E)
+{
+    assert(is_AST(E,"Decls"));
+
+    auto E2 = desugar(E);
+
+    CDecls decls;
+    for(const auto& decl: E2.sub())
+    {
+	assert(is_AST(decl,"Decl"));
+
+	var x = decl.sub()[0].as_<var>();
+	auto F = decl.sub()[1];
+
+	decls.push_back({x,F});
+    }
+
+    return decls;
+}
+
+//TODO: make functions that do e.g.
+//      * desugar_decls -> CDecls
+//      * desugar_decl  -> CDecl
+// I guess this would be AST-izing?
+//
+// One general issue with AST-izing is maybe needing to use object_ptr<T> to avoid copying things.
+
 expression_ref desugar_state::desugar(const expression_ref& E)
 {
     vector<expression_ref> v = E.copy_sub();
@@ -357,37 +384,23 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	}
 	else if (n.type == "LeftSection")
 	{
+	    for(auto& e: v)
+		e = desugar(e);
+
 	    return apply_expression(v[1],v[0]);
 	}
 	else if (n.type == "RightSection")
 	{
+	    for(auto& e: v)
+		e = desugar(e);
+
 	    auto x = get_fresh_var();
 	    return lambda_quantify(x,apply_expression(apply_expression(v[0],x),v[1]));
 	}
 	else if (n.type == "Let")
 	{
-	    expression_ref decls_ = v[0];
-	    assert(is_AST(decls_,"Decls"));
-	    expression_ref body = v[1];
-
-	    // parse the decls and bind declared names internally to the decls.
-	    v[0] = desugar(v[0]);
-
-	    vector<pair<var,expression_ref>> decls;
-
-	    // find the bound vars + construct arguments to let_obj()
-	    for(const auto& decl: v[0].sub())
-	    {
-		if (is_AST(decl,"EmptyDecl")) continue;
-
-		var x = decl.sub()[0].as_<var>();
-		auto E = decl.sub()[1];
-
-		decls.push_back({x,E});
-	    }
-
-	    // finally desugar let-body, now that we know the bound vars.
-	    body = desugar(body);
+	    CDecls decls = desugar_decls(v[0]);
+	    auto body = desugar(v[1]);
 
 	    // construct the new let expression.
 	    return let_expression(decls, body);
