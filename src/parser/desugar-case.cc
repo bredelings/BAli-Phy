@@ -405,18 +405,17 @@ failable_expression desugar_state::case_expression(const expression_ref& T, cons
     return FE;
 }
 
-expression_ref desugar_state::def_function(const vector< vector<expression_ref> >& patterns, const vector<failable_expression>& bodies, const expression_ref& otherwise)
+expression_ref desugar_state::def_function(const vector< equation_info_t >& equations, const expression_ref& otherwise)
 {
-    // Construct the dummies
+    // 1. Get fresh vars for the arguments
     vector<expression_ref> args;
-    for(int i=0;i<patterns[0].size();i++)
+    for(int i=0;i<equations[0].patterns.size();i++)
 	args.push_back(get_fresh_var());
 
-    // Construct the case expression
-    
-    expression_ref E = match(args, patterns, bodies, otherwise);
+    // 2. Construct the case expression
+    expression_ref E = match(args, equations).result(otherwise);
 
-    // Turn it into a function
+    // 3. Turn it into a function
     for(int i=args.size()-1;i>=0;i--)
 	E = lambda_quantify(args[i], E);
 

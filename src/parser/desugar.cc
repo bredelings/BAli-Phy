@@ -161,11 +161,10 @@ vector<expression_ref> desugar_state::parse_fundecls(const vector<expression_ref
 	    continue;
 	}
 
-	vector<vector<expression_ref> > patterns;
-	vector<failable_expression> bodies;
 	auto fvar = f.as_<var>();
-	patterns.push_back( get_patterns(decl) );
-	bodies.push_back( get_body(decl) );
+
+	vector<equation_info_t> equations;
+	equations.push_back({ get_patterns(decl), get_body(decl) });
 
 	for(int j=i+1;j<v.size();j++)
 	{
@@ -176,17 +175,16 @@ vector<expression_ref> desugar_state::parse_fundecls(const vector<expression_ref
 
 	    if (j_f.as_<var>() != fvar) break;
 
-	    patterns.push_back( get_patterns(v[j]) );
-	    bodies.push_back( get_body(v[j]) );
+	    equations.push_back({ get_patterns(v[j]), get_body(v[j])});
 
-	    if (patterns.back().size() != patterns.front().size())
+	    if (equations.back().patterns.size() != equations.front().patterns.size())
 		throw myexception()<<"Function '"<<fvar<<"' has different numbers of arguments!";
 	}
 	auto otherwise = error(fvar.name+": pattern match failure");
-	decls.push_back(AST_node("Decl") + fvar + def_function(patterns, bodies, otherwise) );
+	decls.push_back(AST_node("Decl") + fvar + def_function(equations, otherwise) );
 
 	// skip the other bindings for this function
-	i += (patterns.size()-1);
+	i += (equations.size()-1);
     }
     return decls;
 }
@@ -339,8 +337,6 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	}
 	else if (n.type == "Lambda")
 	{
-	    // FIXME: Try to preserve argument names (in block_case( ), probably) when they are irrefutable apat_var's.
-
 	    // 1. Extract the lambda body
 	    expression_ref body = v.back();
 	    v.pop_back();
@@ -348,7 +344,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	    // 2. Desugar the body, binding vars mentioned in the lambda patterns.
 	    body = desugar(body);
 
-	    return def_function({v},{failable_expression(body)},error("lambda: pattern match failure"));
+	    return def_function({{v,failable_expression(body)}}, error("lambda: pattern match failure"));
 	}
 	else if (n.type == "Do")
 	{
