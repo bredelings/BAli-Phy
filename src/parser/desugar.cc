@@ -208,20 +208,10 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	}
 	else if (n.type == "rhs")
 	{
-	    auto body = E.sub()[0];
-	    if (E.size() == 2) // where decls -> convert to (rhs (let decls body))
-	    {
-		expression_ref decls = E.sub()[1];
-		assert(is_AST(decls,"Decls"));
-		expression_ref E2 = AST_node("Let") + decls + body;
-		E2 = AST_node("rhs") + E2;
-		return desugar(E2);
-	    }
-	    else
-	    {
-		body = desugar(body);
-		return failable_expression(body);
-	    }      // Fall through and let the standard case handle this.
+	    auto rhs = failable_expression(desugar(E.sub()[0]));
+	    if (E.size() == 2)
+		rhs.add_binding(desugar_decls(E.sub()[1]));
+	    return rhs;
 	}
 	else if (n.type == "WildcardPattern")
 	{
