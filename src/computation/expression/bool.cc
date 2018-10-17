@@ -25,3 +25,10 @@ bool is_bool_false(const expression_ref& e)
 {
     return e.is_a<constructor>() and is_bool_false(e.as_<constructor>());
 }
+
+bool is_otherwise(const expression_ref& e)
+{
+    if (not is_var(e)) return false;
+
+    return e.as_<var>().name == "Data.Bool.otherwise";
+}

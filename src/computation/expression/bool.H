@@ -8,3 +8,5 @@ bool is_bool_true(const constructor& c);
 bool is_bool_false(const constructor& c);
 bool is_bool_true(const expression_ref& e);
 bool is_bool_false(const expression_ref& e);
+
+bool is_otherwise(const expression_ref& e);
