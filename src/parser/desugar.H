@@ -35,7 +35,9 @@ struct failable_expression: public Object
 	result = [result2,binds](const expression_ref& o) {return let_expression(binds,result2(o));};
     }
 
-    failable_expression() = delete;
+    failable_expression(bool b, std::function<expression_ref(const expression_ref&)> f)
+	:can_fail(true), result(f)
+	{}
 
     explicit failable_expression(const expression_ref& E)
     {
@@ -43,6 +45,8 @@ struct failable_expression: public Object
        result = [E](const expression_ref&){return E;};
     }
 };
+
+failable_expression fail_identity();
 
 struct equation_info_t
 {
@@ -76,6 +80,10 @@ struct desugar_state: public fresh_vars
     expression_ref match_constant(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations, expression_ref);
     expression_ref match_var(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations, expression_ref);
     expression_ref match_empty(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations, expression_ref);
+
+    failable_expression combine(const failable_expression& E1, const failable_expression& E2);
+    failable_expression fold(const std::vector<failable_expression>& Es);
+    failable_expression desugar_guard(const expression_ref& E);
 
     void clean_up_pattern(const expression_ref& x, equation_info_t& eqn);
 

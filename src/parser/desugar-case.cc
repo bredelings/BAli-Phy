@@ -32,6 +32,41 @@ using std::pair;
 // See list in computation/loader.C
 //
 
+failable_expression fail_identity()
+{
+    return failable_expression{true, [](const expression_ref& o) {return o;}};
+}
+
+failable_expression desugar_state::combine(const failable_expression& E1, const failable_expression& E2)
+{
+    if (not E1.can_fail) return E1;
+
+    std::function<expression_ref(const expression_ref&)> result;
+
+    // result = \o -> let o2 = e2 o in e1 o2
+    auto o2 = get_fresh_var();
+    result = [E1,E2,o2](const expression_ref& o) {
+	return let_expression({{o2,E2.result(o)}},E1.result(o2));
+    };
+
+    return failable_expression{E2.can_fail, result};
+}
+
+failable_expression desugar_state::fold(const vector<failable_expression>& Es)
+{
+    failable_expression E = fail_identity();
+
+    for(auto& e: std::reverse(Es))
+	E = combine(e,E);
+
+    return E;
+}
+
+failable_expression desugar_state::desugar_guard(const expression_ref& E)
+{
+}
+
+
 int find_object(const vector<expression_ref>& v, const expression_ref& E)
 {
     for(int i=0;i<v.size();i++)
@@ -279,16 +314,12 @@ expression_ref desugar_state::match_empty(const vector<expression_ref>& x, const
 {
     assert(x.size() == 0);
 
-    auto E = otherwise;
+    failable_expression E = fail_identity();
 
-//  can fail is true if we could use the otherwise expression.
-//  bool can_fail = true;
     for(auto& e: std::reverse(equations))
-    {
-	E = e.rhs.result(E);
-//	can_fail = can_fail and not e.rhs.can_fail;
-    }
-    return E;
+	E = combine(E, e.rhs);
+
+    return E.result(otherwise);
 }
 
 
