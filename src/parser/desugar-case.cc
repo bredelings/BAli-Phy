@@ -62,11 +62,6 @@ failable_expression desugar_state::fold(const vector<failable_expression>& Es)
     return E;
 }
 
-failable_expression desugar_state::desugar_guard(const expression_ref& E)
-{
-}
-
-
 int find_object(const vector<expression_ref>& v, const expression_ref& E)
 {
     for(int i=0;i<v.size();i++)
@@ -179,10 +174,10 @@ expression_ref desugar_state::match(const vector<expression_ref>& xs, const vect
     for(int i=0;i<p.size();i++)
 	equations.push_back({p[i],b[i]});
 
-    return match(xs, equations, otherwise);
+    return match(xs, equations).result(otherwise);
 }
 
-expression_ref desugar_state::match_constant(const vector<expression_ref>& x, const vector<equation_info_t>& equations, expression_ref otherwise)
+failable_expression desugar_state::match_constant(const vector<expression_ref>& x, const vector<equation_info_t>& equations)
 {
     const int N = x.size();
     const int M = equations.size();
@@ -215,28 +210,20 @@ expression_ref desugar_state::match_constant(const vector<expression_ref>& x, co
 	rules[which].push_back(j);
     }
 
-    // 2. Bind the otherwise branch to a let var.
-    CDecls binds;
-    {
-	auto o = get_fresh_var();
-	binds.push_back({o, otherwise});
-	otherwise = o;
-    }
-
-    // 3. Find the alternatives in the simple case expression
+    // 2. Find the alternatives in the simple case expression
     vector<expression_ref> simple_patterns;
-    vector<expression_ref> simple_bodies;
+    vector<failable_expression> simple_bodies;
 
     for(int c=0;c<constants.size();c++)
     {
 	expression_ref C = constants[c];
 
-	// 3.1 Find the arity of the constructor
+	// 2.1 Find the arity of the constructor
 	int arity = 0;
 	if (C.is_a<constructor>())
 	    arity = C.as_<constructor>().n_args();
 
-	// 3.2 Construct the simple pattern for constant C
+	// 2.2 Construct the simple pattern for constant C
 	vector<expression_ref> args(arity);
 	for(int j=0;j<arity;j++)
 	    args[j] = get_fresh_var();
@@ -245,13 +232,13 @@ expression_ref desugar_state::match_constant(const vector<expression_ref>& x, co
 	if (args.size())
 	    pat = expression_ref{C,args};
 
-	// 3.3 Construct the objects for the sub-case expression: x2[i] = v1...v[arity], x[2]...x[N]
+	// 2.3 Construct the objects for the sub-case expression: x2[i] = v1...v[arity], x[2]...x[N]
 	vector<expression_ref> x2;
 	for(int j=0;j<arity;j++)
 	    x2.push_back(args[j]);
 	x2.insert(x2.end(), x.begin()+1, x.end());
 
-	// 3.4 Construct the various modified bodies and patterns
+	// 2.4 Construct the various modified bodies and patterns
 	vector<equation_info_t> equations2;
 	for(int r: rules[c])
 	{
@@ -268,18 +255,35 @@ expression_ref desugar_state::match_constant(const vector<expression_ref>& x, co
 	}
 
 	simple_patterns.push_back( pat );
-	simple_bodies.push_back( match(x2, equations2, otherwise) );
+	simple_bodies.push_back( match(x2, equations2) );
     }
-
     simple_patterns.push_back(var(-1));
-    simple_bodies.push_back(otherwise);
+    simple_bodies.push_back(fail_identity());
 
-    // Construct final case expression
-    return let_expression(binds, make_case_expression(x[0], simple_patterns, simple_bodies));
+    // 3. Construct a failable_expression.
+    auto x0 = x[0];
+
+    // What if we substitute into the failable_result twice?
+    // Its not clear how that could cause incorrect scoping, but we could have different vars with the same index?
+    auto o = get_fresh_var();
+
+    std::function<expression_ref(const expression_ref&)> result = [o,x0,simple_patterns,simple_bodies](const expression_ref& otherwise)
+    {
+	// Bind the otherwise branch to a let var.
+	CDecls binds = {{o,otherwise}};
+
+	vector<expression_ref> simple_bodies2;
+	for(auto& body: simple_bodies)
+	    simple_bodies2.push_back(body.result(o));
+
+	return let_expression({{o,otherwise}}, make_case_expression(x0, simple_patterns, simple_bodies2));
+    };
+
+    return failable_expression{true, result};
 }
 
 
-expression_ref desugar_state::match_var(const vector<expression_ref>& x, const vector<equation_info_t>& equations, expression_ref otherwise)
+failable_expression desugar_state::match_var(const vector<expression_ref>& x, const vector<equation_info_t>& equations)
 {
     const int N = x.size();
     const int M = equations.size();
@@ -296,21 +300,11 @@ expression_ref desugar_state::match_var(const vector<expression_ref>& x, const v
     for(auto& eqn: equations)
 	equations2.push_back({remove_first(eqn.patterns), eqn.rhs});
       
-    // Should these binds should be pushed all the way into the rhs?
-    // Maybe not, since earlier failure branches might need the otherwise var.
-
-    CDecls binds;
-    if (not is_var(otherwise))
-    {
-	auto o = get_fresh_var();
-	binds.push_back({o, otherwise});
-	otherwise = o;
-    }
-    return let_expression(binds, match(remove_first(x), equations2, otherwise));
+    return match(remove_first(x), equations2);
 }
 
 
-expression_ref desugar_state::match_empty(const vector<expression_ref>& x, const vector<equation_info_t>& equations, expression_ref otherwise)
+failable_expression desugar_state::match_empty(const vector<expression_ref>& x, const vector<equation_info_t>& equations)
 {
     assert(x.size() == 0);
 
@@ -319,7 +313,7 @@ expression_ref desugar_state::match_empty(const vector<expression_ref>& x, const
     for(auto& e: std::reverse(equations))
 	E = combine(E, e.rhs);
 
-    return E.result(otherwise);
+    return E;
 }
 
 
@@ -345,7 +339,7 @@ void desugar_state::clean_up_pattern(const expression_ref& x, equation_info_t& e
 	auto& pat2 = pat1.sub()[0];
 	CDecls binds = {};
 	for(auto& y: get_free_indices(pat2))
-	    binds.push_back({y,case_expression(x, pat2, failable_expression(x), error("lazy pattern: failed pattern match"))});
+	    binds.push_back({y,case_expression(x, {pat2}, {failable_expression(y)}, error("lazy pattern: failed pattern match"))});
 	rhs.add_binding(binds);
 	pat1 = var(-1);
     }
@@ -360,7 +354,7 @@ void desugar_state::clean_up_pattern(const expression_ref& x, equation_info_t& e
     }
 }
 
-expression_ref desugar_state::match(const vector<expression_ref>& x, const vector<equation_info_t>& equations, expression_ref otherwise)
+failable_expression desugar_state::match(const vector<expression_ref>& x, const vector<equation_info_t>& equations)
 {
     const int N = x.size();
     const int M = equations.size();
@@ -372,59 +366,49 @@ expression_ref desugar_state::match(const vector<expression_ref>& x, const vecto
     for(int j=0;j<M;j++)
 	assert(equations[j].patterns.size() == N);
 
-    // 1. If there are no equations, return the otherwise expression
-    if (not equations.size())
-	return otherwise;
-
-    // 2. If there are not xs left, follow the empty case
+    // 1. If there are not xs left, follow the empty case
     if (not x.size())
-	return match_empty(x, equations, otherwise);
+	return match_empty(x, equations);
 
-    // 3. Tidy the equations
+    // 2. Tidy the equations
     auto equations2 = equations;
     for(auto& e: equations2)
 	clean_up_pattern(x[0],e);
     
-    // 4. Follow the "mixture rule" from Wadler in SLPJ
+    // 3. Follow the "mixture rule" from Wadler in SLPJ
     auto partitions = partition(equations2);
 
-    expression_ref E = otherwise;
+    auto E = fail_identity();
 
     for(auto& block: std::reverse(partitions))
     {
 	assert(block.first != pattern_type::null);
 	if (block.first == pattern_type::var)
-	    E = match_var(x, block.second, E);
+	    E = combine(match_var(x, block.second), E);
 	else
-	    E = match_constant(x, block.second, E);
+	    E = combine(match_constant(x, block.second), E);
     }
     return E;
 }
 
-// Create the expression 'case T of {patterns[i] -> bodies[i]}'
-// Create the expression 'case (T) of {(patterns[i]) -> bodies[i]}'
-expression_ref desugar_state::case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<failable_expression>& bodies, const expression_ref& otherwise)
+// For `case T of patterns[i] -> bodies[i]`
+failable_expression desugar_state::case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<failable_expression>& bodies)
 {
-    vector<vector<expression_ref>> multi_patterns;
-    for(const auto& p:patterns)
-	multi_patterns.push_back({p});
+    assert(patterns.size() == bodies.size());
+    vector<equation_info_t> equations;
+    for(int i=0; i<patterns.size(); i++)
+	equations.push_back( { {patterns[i]}, bodies[i]} );
 
-    // Maybe only do this if T isn't a var already?
     auto x = get_fresh_var();
-    CDecls binds{{x,T}};
-    return let_expression(binds, match({x}, multi_patterns, bodies, otherwise));
+    auto FE = match({x}, equations);
+    FE.add_binding({{x,T}});
+    return FE;
 }
 
-expression_ref desugar_state::case_expression(const expression_ref& T, const expression_ref& pattern, const failable_expression& body, const expression_ref& otherwise)
+// For `case T of patterns[i] -> bodies[i]`
+expression_ref desugar_state::case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<failable_expression>& bodies, const expression_ref& otherwise)
 {
-    vector<expression_ref> patterns = {pattern};
-    vector<failable_expression> bodies = {body};
-    if (otherwise and not pattern.is_a<var>())
-    {
-	patterns.push_back(var(-1));
-	bodies.push_back(failable_expression(otherwise));
-    }
-    return case_expression(T,patterns, bodies, otherwise);
+    return case_expression(T, patterns, bodies).result(otherwise);
 }
 
 expression_ref desugar_state::def_function(const vector< vector<expression_ref> >& patterns, const vector<failable_expression>& bodies, const expression_ref& otherwise)

@@ -72,6 +72,52 @@ failable_expression get_body(const expression_ref& decl)
     return rhs.as_<failable_expression>();
 }
 
+
+failable_expression desugar_state::desugar_gdrh(const expression_ref& E)
+{
+    assert(is_AST(E,"gdrh"));
+
+    auto& guards = E.sub()[0];
+    auto& body   = E.sub()[1];
+
+    assert(is_AST(guards,"guards"));
+
+    auto F = failable_expression(desugar(body));
+
+    for(auto& guard: std::reverse(guards.sub()))
+    {
+	if (is_AST(guard,"SimpleQual"))
+	{
+	    auto condition = desugar(guard.sub()[0]);
+	    // F' = case True of True -> F
+	    if (is_bool_true(condition) or is_otherwise(condition))
+		;
+	    // F' = case condition of True -> F
+	    else
+		F = case_expression(condition,{true},{F});
+	}
+	else if (is_AST(guard,"LetQual"))
+	{
+	    auto& decls = guard.sub()[0];
+	    auto binds = desugar_decls(decls);
+
+	    F.add_binding(binds);
+	}
+	else if (is_AST(guard,"PatQual"))
+	{
+	    auto& pat = guard.sub()[0];
+	    auto E = desugar(guard.sub()[1]);
+
+	    F = case_expression(E,{pat},{F});
+	}
+	else
+	    std::abort();
+    }
+
+    return F;
+}
+
+
 vector<expression_ref> desugar_state::parse_fundecls(const vector<expression_ref>& v)
 {
     // Now we go through and translate groups of FunDecls.
@@ -111,7 +157,7 @@ vector<expression_ref> desugar_state::parse_fundecls(const vector<expression_ref
 	    decls.push_back(decl.head()+z+rhs_fail.result(0));
 	    // Probably we shouldn't have desugared the RHS yet. (?)
 	    for(auto& x: get_free_indices(pat))
-		decls.push_back(decl.head()+x+case_expression(z, pat, failable_expression(x), error("pattern binding: failed pattern match")));
+		decls.push_back(decl.head()+x+case_expression(z, {pat}, {failable_expression(x)}, error("pattern binding: failed pattern match")));
 	    continue;
 	}
 
@@ -215,7 +261,13 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	}
 	else if (n.type == "gdrhs")
 	{
-	    auto rhs = failable_expression(desugar(E.sub()[0]));
+	    auto& guards = E.sub()[0];
+	    vector<failable_expression> gdrhs;
+	    for(auto& guard: guards.sub())
+		gdrhs.push_back(desugar_gdrh(guard));
+
+	    auto rhs = fold(gdrhs);
+
 	    if (E.size() == 2)
 		rhs.add_binding(desugar_decls(E.sub()[1]));
 	    return rhs;
@@ -377,7 +429,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	    for(auto& e: v)
 		e = desugar(e);
 
-	    return case_expression(v[0],true,failable_expression(v[1]),v[2]);
+	    return case_expression(v[0],{true},{failable_expression(v[1])},v[2]);
 	}
 	else if (n.type == "LeftSection")
 	{

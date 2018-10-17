@@ -72,18 +72,22 @@ struct desugar_state: public fresh_vars
     std::vector<expression_ref> parse_fundecls(const std::vector<expression_ref>& v);
     expression_ref def_function(const std::vector< std::vector<expression_ref> >& patterns, const std::vector<failable_expression>& bodies,const expression_ref& otherwise);
 
+    // REMOVE!
     expression_ref case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<failable_expression>& bodies, const expression_ref& otherwise);
-    expression_ref case_expression(const expression_ref& T, const expression_ref& pattern, const failable_expression& body, const expression_ref& otherwise);
-    expression_ref match(const std::vector<expression_ref>& x, const std::vector<std::vector<expression_ref>>& p, const std::vector<failable_expression>& b, const expression_ref&);
-    expression_ref match(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations, expression_ref);
 
-    expression_ref match_constant(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations, expression_ref);
-    expression_ref match_var(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations, expression_ref);
-    expression_ref match_empty(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations, expression_ref);
+    failable_expression case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<failable_expression>& bodies);
+
+    // REMOVE!
+    expression_ref match(const std::vector<expression_ref>& x, const std::vector<std::vector<expression_ref>>& p, const std::vector<failable_expression>& b, const expression_ref&);
+    failable_expression match(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations);
+
+    failable_expression match_constant(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations);
+    failable_expression match_var(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations);
+    failable_expression match_empty(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations);
 
     failable_expression combine(const failable_expression& E1, const failable_expression& E2);
     failable_expression fold(const std::vector<failable_expression>& Es);
-    failable_expression desugar_guard(const expression_ref& E);
+    failable_expression desugar_gdrh(const expression_ref& E);
 
     void clean_up_pattern(const expression_ref& x, equation_info_t& eqn);
 
