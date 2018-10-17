@@ -38,7 +38,7 @@
   expression_ref make_type_id(const std::string& id);
 
   expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebinds);
-  expression_ref make_gdrhs(const std::vector<expression_ref>& gdrhs);
+  expression_ref make_gdrhs(const std::vector<expression_ref>& gdrhs, const expression_ref& wherebinds);
 
   expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type);
   expression_ref make_infixexp(const std::vector<expression_ref>& args);
@@ -1014,7 +1014,7 @@ decl: decl_no_th              {std::swap($$,$1);}
 /*  | splice_exp */
 
 rhs: "=" exp wherebinds       {$$ = make_rhs($2,$3);}
-|    gdrhs wherebinds         {$$ = make_rhs(make_gdrhs($1),$2);}
+|    gdrhs wherebinds         {$$ = make_gdrhs($1,$2);}
 
 gdrhs: gdrhs gdrh             {std::swap($$,$1); $$.push_back($2);}
 |      gdrh                   {$$.push_back($1);}
@@ -1572,16 +1572,18 @@ expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& t
 
 expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebinds)
 {
-    vector<expression_ref> e;
-    e.push_back(exp);
+    vector<expression_ref> e = {exp};
     if (wherebinds and wherebinds.size())
 	e.push_back(wherebinds);
-    return new expression(AST_node("rhs"), e);
+    return expression_ref{AST_node("rhs"), std::move(e)};
 }
 
-expression_ref make_gdrhs(const vector<expression_ref>& gdrhs)
+expression_ref make_gdrhs(const vector<expression_ref>& guards, const expression_ref& wherebinds)
 {
-    return new expression(AST_node("gdrhs"), gdrhs);
+    vector<expression_ref> e = {expression_ref{AST_node("guards"),guards}};
+    if (wherebinds and wherebinds.size())
+	e.push_back(wherebinds);
+    return expression_ref{AST_node("gdrhs"),std::move(e)};
 }
 
 expression_ref make_infixexp(const vector<expression_ref>& args)

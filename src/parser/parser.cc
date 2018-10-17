@@ -2284,7 +2284,7 @@ namespace yy {
 
   case 248:
 #line 1017 "parser.y" // lalr1.cc:870
-    {yylhs.value.as< expression_ref > () = make_rhs(make_gdrhs(yystack_[1].value.as< std::vector<expression_ref> > ()),yystack_[0].value.as< expression_ref > ());}
+    {yylhs.value.as< expression_ref > () = make_gdrhs(yystack_[1].value.as< std::vector<expression_ref> > (),yystack_[0].value.as< expression_ref > ());}
 #line 2289 "parser.cc" // lalr1.cc:870
     break;
 
@@ -5879,16 +5879,18 @@ expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& t
 
 expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebinds)
 {
-    vector<expression_ref> e;
-    e.push_back(exp);
+    vector<expression_ref> e = {exp};
     if (wherebinds and wherebinds.size())
 	e.push_back(wherebinds);
-    return new expression(AST_node("rhs"), e);
+    return expression_ref{AST_node("rhs"), std::move(e)};
 }
 
-expression_ref make_gdrhs(const vector<expression_ref>& gdrhs)
+expression_ref make_gdrhs(const vector<expression_ref>& guards, const expression_ref& wherebinds)
 {
-    return new expression(AST_node("gdrhs"), gdrhs);
+    vector<expression_ref> e = {expression_ref{AST_node("guards"),guards}};
+    if (wherebinds and wherebinds.size())
+	e.push_back(wherebinds);
+    return expression_ref{AST_node("gdrhs"),std::move(e)};
 }
 
 expression_ref make_infixexp(const vector<expression_ref>& args)
