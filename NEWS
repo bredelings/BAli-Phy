@@ -23,6 +23,7 @@ UNRELEASED
    - Implement lazy patterns (i.e. ~(y,z)  )
    - Implement guards for functions and case.
    - Allow modules with no "module Name where" clause.
+   - Implement running a module with --run-module
    - Encode strings as (listFromString String)
    - Add flags for dumping parsed, renamed, desugared, etc. code.
    - [FIX] float let out of let if it reveals a constant.
