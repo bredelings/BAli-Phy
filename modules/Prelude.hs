@@ -60,8 +60,9 @@ undefined = error "Prelude.undefined"
 enumFrom x = x:(enumFrom (x+1))
 enumFromTo x y = if (x>y) then [] else x:(enumFromTo (x+1) y)
 
+-- zipWith' enforces equal lengths, unlike zipWith
 zipWith' z (a:as) (b:bs) =  z a b : zipWith z as bs
-zipWith' _ [] []           =  []
+zipWith' _ [] []         =  []
 
 zip' = zipWith' (,)
 
