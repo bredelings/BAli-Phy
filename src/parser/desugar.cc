@@ -507,29 +507,3 @@ expression_ref desugar(const Module& m, const expression_ref& E)
     return ds.desugar(E);
 }
 
-bool is_all_space(const string& line)
-{
-    for(int i=0;i<line.size();i++)
-	if (not ::isspace(line[i])) return false;
-    return true;
-}
-
-Module read_model(const string& filename)
-{
-    // 1. Read module
-    return module_loader({}).load_module_from_file(filename);
-}
-
-void read_add_model(Model& M, const std::string& filename)
-{
-    auto m = read_model(filename);
-    M += m;
-    add_model(M, m.name);
-}
-
-void add_model(Model& M, const std::string& name)
-{
-    M += name;
-    string prefix = name;
-    M.perform_expression({var("Distributions.do_log"),prefix,{var("Distributions.gen_model"),var(name+".main")}});
-}

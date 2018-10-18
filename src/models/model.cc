@@ -29,6 +29,7 @@
 #include "computation/program.H"
 #include "computation/expression/expression.H"
 #include "computation/module.H"
+#include "computation/loader.H"
 #include "parser/desugar.H"
 
 using std::vector;
@@ -503,3 +504,31 @@ Model::key_map_t parse_key_map(const vector<string>& key_value_strings)
     return keys;
 }
 
+Module read_model(const string& filename)
+{
+    // 1. Read module
+    return module_loader({}).load_module_from_file(filename);
+}
+
+void read_add_model(Model& M, const std::string& filename)
+{
+    auto m = read_model(filename);
+    M += m;
+    add_model(M, m.name);
+}
+
+void execute_file(const std::shared_ptr<module_loader>& L, const std::string& filename)
+{
+    Program P(L);
+    context C(P);
+    auto m = read_model(filename);
+    C += m;
+    C.perform_expression(var(m.name+".main"));
+}
+
+void add_model(Model& M, const std::string& name)
+{
+    M += name;
+    string prefix = name;
+    M.perform_expression({var("Distributions.do_log"),prefix,{var("Distributions.gen_model"),var(name+".main")}});
+}

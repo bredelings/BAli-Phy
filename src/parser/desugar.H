@@ -7,15 +7,11 @@
 #include "computation/expression/expression_ref.H"
 #include "computation/expression/let.H"
 #include "computation/expression/var.H"
-#include "computation/module.H"
 
 class Module;
 class Model;
 
 expression_ref desugar(const Module& p, const expression_ref&);
-Module read_model(const std::string& filename);
-void read_add_model(Model& M, const std::string& filename);
-void add_model(Model& M, const std::string& filename);
 
 struct failable_expression: public Object
 {

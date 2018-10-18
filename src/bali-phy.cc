@@ -428,6 +428,12 @@ int main(int argc,char* argv[])
 	    }
 	    exit(0);
 	}
+	if (args.count("run-module"))
+	{
+	    string filename = args["run-module"].as<string>();
+	    execute_file(L, filename);
+	    exit(0);
+	}
 
 	//---------- Create model object -----------//
 	json info;
