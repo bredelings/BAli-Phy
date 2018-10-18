@@ -8,11 +8,13 @@ module Prelude (module Prelude,
                 module Foreign.Vector,
                 module Control.Monad,
                 module Compiler.Base,
-                module Compiler.Num)
+                module Compiler.Num,
+                module Compiler.Real)
     where
 
 import Compiler.Base
 import Compiler.Num
+import Compiler.Real
 import Data.Bool
 import Data.Tuple
 import Data.Maybe
@@ -22,40 +24,15 @@ import Data.Ord
 import Control.Monad
 import Foreign.Vector
 
-infixl 8 ^, ^^, **
-infixl 7 `div`, `mod`, `rem`, `quot`
 infix 4 ==, /=
 
 infixr 9 !
 
-x ^ 0 = 1
-x ^ 1 = x
-x ^ n = x*(x^(n-1))
-
--- not defined
-x ^^ y = error "'^^' not defined"
-x `rem` y = error "'rem' not defined"
-x `div` y = error "'div' not defined"
-x `quot` y = error "'quot' not defined"
-
-builtin log 1 "log" "Prelude"
-builtin sqrt 1 "sqrt" "Prelude"
-builtin truncate 1 "truncate" "Prelude"
-builtin ceiling 1 "ceiling" "Prelude"
-builtin floor 1 "floor" "Prelude"
-builtin round 1 "round" "Prelude"
 builtin builtin_vector_from_list 1 "vector_from_list" "Prelude"
-builtin doubleToInt 1 "doubleToInt" "Prelude"
-builtin ** 2 "pow" "Prelude"
-builtin mod 2 "mod" "Prelude"
 builtin reapply 2 "reapply" "Prelude"
 builtin arraySize 1 "arraySize" "Array"
 builtin ! 2 "getIndex" "Array"
 builtin mkArray 2 "mkArray" "Array"
-builtin intToDouble 1 "intToDouble" "Prelude"
-builtin negate 1 "negate" "Prelude"
-builtin exp 1 "exp" "Prelude"
-builtin doubleToLogDouble 1 "doubleToLogDouble" "Prelude"
 builtin builtin_equals 2 "equals" "Prelude"
 builtin /= 2 "notequals" "Prelude"
 builtin iotaUnsigned 1 "iotaUnsigned" "Prelude"

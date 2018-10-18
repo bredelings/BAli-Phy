@@ -3,7 +3,7 @@
     "name": "intToDouble",
     "result_type": "Double",
     "no_log": true,
-    "call": "Prelude.intToDouble[x]",
+    "call": "Compiler.Real.intToDouble[x]",
     "args": [
         {
             "arg_name": "x",

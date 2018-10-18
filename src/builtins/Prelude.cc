@@ -187,16 +187,85 @@ extern "C" closure builtin_function_divide(OperationArgs& Args)
     if (x.is_double())
 	return {x.as_double() / y.as_double()};
     else if (x.is_int())
-	return {x.as_int() / y.as_int()};
+	return {double(x.as_int()) / double(y.as_int())};
     else if (x.is_log_double())
 	return {x.as_log_double() / y.as_log_double()};
     else if (x.is_char())
-	return {x.as_char() / y.as_char()};
+	return {double(x.as_char()) / double(y.as_char())};
     else
 	throw myexception()<<"Divide: object '"<<x.print()<<"' is not double, int, log_double, or char'";
 }
 
+// Also see function `div_t div(int,int)` in stdlib.h
+
+// mod is always positive
+template <typename T>
+T mod(T x, T y)
+{
+    T z = x % y;
+    if (z < 0)
+	z += y;
+    return z;
+}
+
+// Since div subtracts the mod, it rounds down
+template <typename T>
+T div(T x, T y)
+{
+    return (x - mod(x,y))/y;
+}
+
+// x `quot` y should round towards -infinity
+// Also, supposedly (x `quot` y)*y + (x `mod` y) == x
+// Therefore, (x `quot` y) = (x - (x `mod` y))/y
+extern "C" closure builtin_function_div(OperationArgs& Args)
+{
+    using boost::dynamic_pointer_cast;
+
+    auto x = Args.evaluate(0);
+    auto y = Args.evaluate(1);
+  
+    if (x.is_int())
+	return { div<int>(x.as_int(),y.as_int()) };
+    else if (x.is_char())
+	return { div<char>(x.as_char(),y.as_char())};
+    else
+	throw myexception()<<"div: object '"<<x.print()<<"' is not int, or char'";
+}
+
 extern "C" closure builtin_function_mod(OperationArgs& Args)
+{
+    using boost::dynamic_pointer_cast;
+
+    auto x = Args.evaluate(0);
+    auto y = Args.evaluate(1);
+  
+    if (x.is_int())
+	return {mod(x.as_int(),y.as_int())};
+    else if (x.is_char())
+	return {mod(x.as_char(),y.as_char())};
+    else
+	throw myexception()<<"mod: object '"<<x.print()<<"' is not int, or char'";
+}
+
+// x `quot` y should round towards zero.
+// Therefore we use C integer division, which rounds towards 0.
+extern "C" closure builtin_function_quot(OperationArgs& Args)
+{
+    using boost::dynamic_pointer_cast;
+
+    auto x = Args.evaluate(0);
+    auto y = Args.evaluate(1);
+  
+    if (x.is_int())
+	return { x.as_int() / y.as_int() };
+    else if (x.is_char())
+	return { x.as_char() / y.as_char() };
+    else
+	throw myexception()<<"quot: object '"<<x.print()<<"' is not int, or char'";
+}
+
+extern "C" closure builtin_function_rem(OperationArgs& Args)
 {
     using boost::dynamic_pointer_cast;
 
@@ -208,7 +277,7 @@ extern "C" closure builtin_function_mod(OperationArgs& Args)
     else if (x.is_char())
 	return { x.as_char() % y.as_char() };
     else
-	throw myexception()<<"Mod: object '"<<x.print()<<"' is not int, or char'";
+	throw myexception()<<"rem: object '"<<x.print()<<"' is not int, or char'";
 }
 
 extern "C" closure builtin_function_subtract(OperationArgs& Args)
