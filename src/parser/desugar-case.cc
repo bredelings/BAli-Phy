@@ -18,7 +18,6 @@
 #include "computation/expression/var.H"
 #include "computation/expression/constructor.H"
 #include "desugar.H"
-#include "desugar-case.H"
 #include "util/assert.hh"
 
 using std::string;

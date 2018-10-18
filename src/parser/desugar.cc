@@ -19,7 +19,6 @@
 #include "computation/expression/constructor.H"
 #include "desugar.H"
 #include "util/assert.hh"
-#include "desugar-case.H"
 
 using std::string;
 using std::vector;
