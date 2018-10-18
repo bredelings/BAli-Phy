@@ -26,7 +26,7 @@ reversible_markov a smap q pi = ReversibleMarkov a smap q2 pi (get_eigensystem q
 gtr_sym exchange a = builtin_gtr_sym (list_to_vector exchange) a
 equ a = gtr_sym (replicate nn 1.0) a
     where n=alphabetSize a
-          nn=n*(n-1)/2
+          nn=n*(n-1) `div` 2
 
 gtr a s pi = reversible_markov a (simple_smap a) (s %*% (plus_f_matrix a pi')) pi' where pi' = list_to_vector pi
 
