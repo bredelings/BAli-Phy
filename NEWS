@@ -21,8 +21,10 @@ UNRELEASED
    - Implement pattern bindings (i.e. let (x,y) = E1 in E2)
    - Implement @-patterns (i.e. x@(y,z) )
    - Implement lazy patterns (i.e. ~(y,z)  )
-   - Allow modules with no "module name where"
+   - Implement guards for functions and case.
+   - Allow modules with no "module Name where" clause.
    - Encode strings as (listFromString String)
+   - Add flags for dumping parsed, renamed, desugared, etc. code.
    - [FIX] float let out of let if it reveals a constant.
 
 * 3.3 (Aug 6, 2018)
