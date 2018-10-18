@@ -3,11 +3,12 @@ size = 1   Test.#1 = 2
 size = 1   Test.#2 = (Test.#0, Test.#1)
 size = 1   Test.#3 = 3
 size = 1   Test.#4 = 4
-size = 4   Test.#411 = \#1093 -> case #1093 of {(x, y) -> let {#1097 = Prelude:multiply x x} in let {#1098 = []} in #1097:#1098,_ -> []}
-size = 2   Test.#412 = Data.List.map Test.#411
 size = 1   Test.#5 = (Test.#3, Test.#4)
+size = 4   Test.#510 = \#1180 -> case #1180 of {(#1181, #1182) -> let {#1184 = Prelude:multiply #1181 #1181} in let {#1185 = []} in #1184:#1185,_ -> []}
+size = 1   Test.#514 = Test.#2:Test.#6
+size = 2   Test.#515 = Data.List.map Test.#510 Test.#514
 size = 1   Test.#6 = Test.#5:[]
 size = 1   Test.x = 1
-size = 4   Test.xxs = Data.Function.. Data.List.concat Test.#412 Test.xys
+size = 1   Test.xxs = Data.List.concat Test.#515
 size = 1   Test.xys = Test.#2:Test.#6
 size = 1   Test.y = 2

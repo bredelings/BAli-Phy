@@ -1,2 +1,2 @@
 size = 0   Test.f = Test.g
-size = 4   Test.g = \#1 -> let {#2 = Test.g #1} in Test.f #2
+size = 2   Test.g = \#3 -> let {#1 = Test.g #3} in Test.f #1

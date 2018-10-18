@@ -1,2 +1,2 @@
-size = 0   Test.f = Test.k#0
-size = 0   Test.k#0 = Test.k#0
+size = 0   Test.#2 = Test.#2
+size = 0   Test.f = Test.#2

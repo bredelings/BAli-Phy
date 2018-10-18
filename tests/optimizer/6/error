@@ -1,5 +1,5 @@
-size = 1   Test.#2 = Prelude:negate Test.#806
-size = 1   Test.#806 = 10
+size = 1   Test.#0 = 10
+size = 1   Test.#2 = Prelude:negate Test.#0
 size = 0   Test.f = \#1 -> Test.#2
-size = 1   Test.g = \#1 #1088 -> let {#26 = \#25 -> #1088} in Compiler.Base.IOAndPass #1 #26
-size = 1   Test.h = \#1 #1089 -> #1:#1089
+size = 1   Test.g = \#3 #4 -> let {#1177 = \#1 -> #4} in Compiler.Base.IOAndPass #3 #1177
+size = 1   Test.h = \#6 #7 -> #6:#7
