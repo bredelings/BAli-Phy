@@ -75,7 +75,7 @@ failable_expression get_body(const expression_ref& decl)
 
 failable_expression desugar_state::desugar_gdrh(const expression_ref& E)
 {
-    assert(is_AST(E,"gdrh"));
+    assert(is_AST(E,"gdrh") or is_AST(E,"gdpat"));
 
     auto& guards = E.sub()[0];
     auto& body   = E.sub()[1];
@@ -209,6 +209,37 @@ CDecls desugar_state::desugar_decls(const expression_ref& E)
     return decls;
 }
 
+failable_expression desugar_state::desugar_rhs(const expression_ref& E)
+{
+    // FIXME - the fact that we are duplicating the add_binding( )
+    //         suggests that the binding should be on another level of the AST
+    //         with an optional Decls
+    //       - if we do this we would put back the ralt rule in the parser
+    //         and extract the (ralt: -> exp| gdpats) rule from alt_rhs again.
+
+    if (is_AST(E,"rhs"))
+    {
+	auto rhs = failable_expression(desugar(E.sub()[0]));
+	if (E.size() == 2)
+	    rhs.add_binding(desugar_decls(E.sub()[1]));
+	return rhs;
+    }
+    else if (is_AST(E,"gdrhs"))
+    {
+	auto& guards = E.sub()[0];
+	vector<failable_expression> gdrhs;
+	for(auto& guard: guards.sub())
+	    gdrhs.push_back(desugar_gdrh(guard));
+
+	auto rhs = fold(gdrhs);
+
+	if (E.size() == 2)
+	    rhs.add_binding(desugar_decls(E.sub()[1]));
+	return rhs;
+    }
+    else
+	std::abort();
+}
 //TODO: make functions that do e.g.
 //      * desugar_decls -> CDecls
 //      * desugar_decl  -> CDecl
@@ -238,38 +269,19 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	}
 	else if (n.type == "Decl")
 	{
+	    v[1] = desugar_rhs(v[1]);
             // FIXME: don't desugar a Decl except from Decls
             // Pattern bindings should be processed before we get here!
             //
             // auto& lhs = E.sub()[0];
             // assert(not lhs.head().is_a<constructor>());
 
-            // Replace bound vars in (a) the patterns and (b) the body
-	    for(auto& e: v)
-		e = desugar(e);
-
-	    return expression_ref{E.head(),v};
+	    return expression_ref{E.head(),std::move(v)};
 	}
 	else if (n.type == "rhs")
-	{
-	    auto rhs = failable_expression(desugar(E.sub()[0]));
-	    if (E.size() == 2)
-		rhs.add_binding(desugar_decls(E.sub()[1]));
-	    return rhs;
-	}
+	    std::abort();
 	else if (n.type == "gdrhs")
-	{
-	    auto& guards = E.sub()[0];
-	    vector<failable_expression> gdrhs;
-	    for(auto& guard: guards.sub())
-		gdrhs.push_back(desugar_gdrh(guard));
-
-	    auto rhs = fold(gdrhs);
-
-	    if (E.size() == 2)
-		rhs.add_binding(desugar_decls(E.sub()[1]));
-	    return rhs;
-	}
+	    std::abort();
 	else if (n.type == "WildcardPattern")
 	{
 	    return var(-1);
@@ -413,8 +425,6 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 		expression_ref decls = first.sub()[0];
 		result = AST_node("Let") + decls + do_stmts;
 	    }
-	    else if (is_AST(first,"EmptyStmt"))
-		result = do_stmts;
 	    else
 		std::abort();
 
@@ -452,30 +462,21 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	}
 	else if (n.type == "Case")
 	{
-	    expression_ref case_obj = desugar(v[0]);
+	    expression_ref obj = desugar(v[0]);
+	    assert(is_AST(v[1],"alts"));
 	    vector<expression_ref> alts = v[1].sub();
 	    vector<expression_ref> patterns;
 	    vector<failable_expression> bodies;
 	    for(const auto& alt: alts)
 	    {
-		patterns.push_back(desugar(alt.sub()[0]) );
+		assert(is_AST(alt,"alt"));
+		auto& pat = alt.sub()[0];
+		auto& rhs = alt.sub()[1];
 
-		// Handle where-clause.
-		assert(alt.size() == 2 or alt.size() == 3);
-		expression_ref body = alt.sub()[1];
-
-		if (is_AST(body,"GdPat"))
-		    throw myexception()<<"Guard patterns not yet implemented!";
-
-		if (alt.size() == 3)
-		{
-		    assert(is_AST(alt.sub()[2],"Decls"));
-		    body = AST_node("Let") + alt.sub()[2] + body;
-		}
-
-		bodies.push_back( failable_expression(desugar(body)) );
+		patterns.push_back( pat );
+		bodies.push_back( desugar_rhs(rhs) );
 	    }
-	    return case_expression(case_obj, patterns, bodies).result(error("case: failed pattern match"));
+	    return case_expression(obj, patterns, bodies).result(error("case: failed pattern match"));
 	}
 	else if (n.type == "enumFrom")
 	{

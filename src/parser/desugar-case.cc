@@ -156,27 +156,6 @@ vector<pair<pattern_type,vector<equation_info_t>>> partition(const vector<equati
     return partitions;
 }
 
-/*
- * case (x[0],..,x[N-1]) of (p[0...M-1][0...N-1] -> b[0..M-1])
- *
- * 1. Categorize each rule according to the type of its top-level pattern.
- * 2. Substitute for the irrefutable rules to find the 'otherwise' branch.
- * 3. Find the bodies for what happens after we match the various constants.
- *
- * If the otherwise branch is used twice, then construct a let-expression for it.
- *
- */
-expression_ref desugar_state::match(const vector<expression_ref>& xs, const vector<vector<expression_ref>>& p, const vector<failable_expression>& b, const expression_ref& otherwise)
-{
-    assert(p.size() == b.size());
-
-    vector<equation_info_t> equations;
-    for(int i=0;i<p.size();i++)
-	equations.push_back({p[i],b[i]});
-
-    return match(xs, equations).result(otherwise);
-}
-
 failable_expression desugar_state::match_constant(const vector<expression_ref>& x, const vector<equation_info_t>& equations)
 {
     const int N = x.size();
