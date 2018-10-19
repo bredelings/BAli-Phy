@@ -181,7 +181,7 @@ public:
     void clear_call_for_reg(int R);
     void clear_C(int R);
     void set_C(int R, closure&& C);
-    int create_reg_from_step(int s);
+    int create_reg_from_step_in_token(int s, int t);
     void mark_reg_created_by_step(int r, int s);
 
     void get_roots(std::vector<int>&, bool keep_identifiers=true) const;
