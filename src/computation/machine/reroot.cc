@@ -133,6 +133,37 @@ void reg_heap::reroot_at(int t)
     assert(is_root_token(t));
 }
 
+
+/*
+ * In the current framework, regs may be incorrectly shared, if they are not overridden in the child and should be.
+ * However, if a reg is overridden in the child, then its result must be correct.
+ * Therefore before pivoting a child of the root into the root, we just need to unshare steps and results that should not be shared.
+ *
+ * Consider a child of the root.
+ *
+ * - Some STEPS   in the root may be incorrectly shared into the child.
+ *   This happens if the root STEP    uses a  RESULT that is overridden in the child, but the step   is shared into the child.
+ *
+ * - Some RESULTS in the root may be incorrectly shared into the child.
+ *   This happens if the child RESULT calls a RESULT that is overridden in the child, but the result is shared into the child.
+ *   The result is also incorrectly shared if the corresponding step is incorrectly shared.
+ *
+ * If a step is unshared, then its result must also be unshared.  Therefore, if we want to walk a list of unshared things that
+ * we wish to consider processessing at a later time, we can just want the list of unshared results.
+ *
+ * Now, if we unshare all regs that are created in the root but overridden in the child,
+ * then the child won't inherit any values from the root that it can't access.
+ * This might help to ensure that when we delete a token, we destroy all of the objects that it created.
+ * Currently we can't destroy created regs at the time of token destruction, because their steps might have floated down to the root.
+ *
+ * How do we add to this loop an unsharing of result AND steps for regs that were created by steps?
+ * It seems like we could, in theory walk all the steps that we unshare after each round, and invalidate their steps and results,
+ *  and then restart the inner loop to invalidate downstream steps and results.
+ * result <-- called_by -- result
+ * result <-- used_by  --- (step,result)
+ *                         step <--- created_by --- reg <---located-at-- (step,result)
+ */
+
 void reg_heap::unshare_regs(int t)
 {
     // parent_token(t) should be the root.
@@ -172,46 +203,93 @@ void reg_heap::unshare_regs(int t)
 	assert(prog_temp[r] == 3);
     }
 
-    // Scan regs with different result in t that are used/called by root steps/results
-    for(int i=0;i<delta_result.size();i++)
+    int j = delta_step.size();
+#ifndef NDEBUG
+    for(int k=0; k<delta_step.size(); k++)
     {
-	int r = delta_result[i].first;
+	int s = delta_step[k].second;
+
+	if (s <= 0) continue;
+
+	const auto& Step = steps[s];
+
+	// Any results or steps in the delta should already have their regs unshared.
+	for(int r2: Step.created_regs)
+	{
+	    assert(prog_temp[r2] == 3);
+	}
+    }
+#endif
+    j=0; // FIXME if the existing steps don't share any created regs, then we don't have to scan them.
+         // FIXME: while the overriding steps in the child should have their created regs unshared, the overridden steps in the root need not!
+         //        this means that we need to scan all overridden steps each time :-(
+
+    int i =0; // (FIXME?) We have to rescan all the existing steps and results because there might be new EDGES to them that have been added.
+
+    while(i<delta_result.size() or j < delta_step.size())
+    {
+	// Scan regs with different result in t that are used/called by root steps/results
+	for(;i<delta_result.size();i++)
+	{
+	    int r = delta_result[i].first;
 
 //    int result = result_index_for_reg(r);
 
-	if (not has_result(r)) continue;
+	    if (not has_result(r)) continue;
 
-	const auto& Result = result_for_reg(r);
+	    const auto& Result = result_for_reg(r);
 
-	// Look at results that call the root's result (that is overridden in t)
-	for(int res2: Result.called_by)
-	{
-	    const auto& Result2 = results[res2];
-	    int r2 = Result2.source_reg;
-
-	    // This result is already unshared
-	    if (prog_temp[r2] != 0) continue;
-
-	    // The root program's result at r2 is res2, which calls the root program's result at r
-	    if (prog_results[r2] == res2)
+	    // Look at results that call the root's result (that is overridden in t)
+	    for(int res2: Result.called_by)
 	    {
-		prog_temp[r2] = 1;
-		vm_result.add_value(r2,-1);
+		const auto& Result2 = results[res2];
+		int r2 = Result2.source_reg;
+
+		// This result is already unshared
+		if (prog_temp[r2] != 0) continue;
+
+		// The root program's result at r2 is res2, which calls the root program's result at r
+		if (prog_results[r2] == res2)
+		{
+		    prog_temp[r2] = 1;
+		    vm_result.add_value(r2,-1);
+		}
+	    }
+
+	    // Look at step that use the root's result (that is overridden in t)
+	    for(int s2: Result.used_by)
+	    {
+		auto& S2 = steps[s2];
+		int r2 = S2.source_reg;
+
+		// This step is already unshared
+		if (prog_temp[r2] == 3) continue;
+
+		// The root program's step at r2 is s2, which uses the root program's result at r
+		if (prog_steps[r2] == s2)
+		{
+		    if (prog_temp[r2] == 0)
+			vm_result.add_value(r2,-1);
+
+		    prog_temp[r2] = 3;
+		    vm_step.add_value(r2,-1);
+		}
 	    }
 	}
 
-	// Look at step that use the root's result (that is overridden in t)
-	for(int s2: Result.used_by)
+	// Also unshare any results and steps that are for regs created in the root context.
+	for(;j<delta_step.size();j++)
 	{
-	    auto& S2 = steps[s2];
-	    int r2 = S2.source_reg;
+	    int r = delta_step[j].first;
+	    if (not has_step(r)) continue;
 
-	    // This step is already unshared
-	    if (prog_temp[r2] == 3) continue;
+	    const auto& Step = step_for_reg(r);
 
-	    // The root program's step at r2 is s2, which uses the root program's result at r
-	    if (prog_steps[r2] == s2)
+	    for(int r2: Step.created_regs)
 	    {
+		// The step and result are already unshared
+		if (prog_temp[r2] == 3) continue;
+
 		if (prog_temp[r2] == 0)
 		    vm_result.add_value(r2,-1);
 
