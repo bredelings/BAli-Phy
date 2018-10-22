@@ -294,6 +294,24 @@ Numeric::Numeric(int n)
 {
 }
 
+bool Nucleotides::is_watson_crick(int l1, int l2) const
+{
+    assert(0 <= l1 and l1 < 4);
+    assert(0 <= l2 and l2 < 4);
+
+    return complement(l1) == l2;
+}
+
+bool Nucleotides::is_mismatch(int l1, int l2) const
+{
+    return not is_watson_crick(l1, l2);
+}
+
+bool Nucleotides::is_wobble_pair(int l1, int l2) const
+{
+    return (l1 == G() and l2 == T()) or (l1 == T() and l2 == G());
+}
+
 int Nucleotides::complement(int l) const
 {
     assert(l >= -3);
@@ -301,13 +319,13 @@ int Nucleotides::complement(int l) const
 
     switch (l) {
     case 0: // A
-	return 2;
+	return T();
     case 1: // G
-	return 3;
+	return C();
     case 2: // T or U
-	return 0;
+	return A();
     case 3: // C
-	return 1;
+	return G();
     }
     if (l < 0)
 	return l;
@@ -531,6 +549,36 @@ int Doublets::get_doublet(int n1, int n2) const
 	return alphabet::gap;
     else
 	return alphabet::unknown;
+}
+
+bool Doublets::is_watson_crick(int d) const
+{
+    int d1 = sub_nuc(d,0);
+    int d2 = sub_nuc(d,1);
+    return N->is_watson_crick(d1,d2);
+}
+
+bool Doublets::is_mismatch(int d) const
+{
+    int d1 = sub_nuc(d,0);
+    int d2 = sub_nuc(d,1);
+    return N->is_mismatch(d1,d2);
+}
+
+bool Doublets::is_wobble_pair(int d) const
+{
+    int d1 = sub_nuc(d,0);
+    int d2 = sub_nuc(d,1);
+    return N->is_wobble_pair(d1,d2);
+}
+
+int Doublets::n_changes(int l1, int l2) const
+{
+    int n = 0;
+    for(int pos=0;pos<2;pos++)
+	if (sub_nuc(l1,pos) != sub_nuc(l2,pos))
+	    n++;
+    return n;
 }
 
 valarray<double> Doublets::get_frequencies_from_counts(const valarray<double>& counts,double pseudocount) const {

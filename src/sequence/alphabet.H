@@ -283,6 +283,10 @@ public:
     /// Get the index of C
     int C() const {return 3;}
 
+    bool is_watson_crick(int i, int j) const;
+    bool is_mismatch(int i, int j) const;
+    bool is_wobble_pair(int i, int j) const;
+
     int complement(int l) const;
   
     Nucleotides(const std::string& s,char c);
@@ -356,6 +360,12 @@ public:
 
     /// Find the triplet made of nucleotides n1, n2
     int get_doublet(int n1, int n2) const;
+
+    bool is_watson_crick(int i) const;
+    bool is_mismatch(int i) const;
+    bool is_wobble_pair(int i) const;
+
+    int n_changes(int i, int j) const;
 
     std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=1.0) const;
 
