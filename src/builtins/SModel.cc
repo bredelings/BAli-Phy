@@ -147,6 +147,89 @@ extern "C" closure builtin_function_get_equilibrium_rate(OperationArgs& Args)
     return {scale/a.width()};
 }
 
+extern "C" closure builtin_function_rna_16a_exchange(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    const Doublets& D = arg0.as_<Doublets>();
+
+    // 2 changes: between matches/wobbles (both transitions)
+    double alpha_D = Args.evaluate(2).as_double();
+    // 2 changes: between matches/wobbles (both transversions)
+    double beta = Args.evaluate(3).as_double();
+    // 2 changes: mismatch and anything: ZERO
+
+    // 1 change: between matches (must be transition between match and wobble)
+    double alpha_S = Args.evaluate(1).as_double();
+    // 1 change: between match and mismatch
+    double gamma = Args.evaluate(4).as_double();
+    // 1 change: between mismatch and mismatch
+    double epsilon = Args.evaluate(5).as_double();
+
+    const int n = D.size();
+
+    object_ptr<Box<Matrix>> R( new Box<Matrix>(n,n) );
+
+    for(int i=0;i<n;i++)
+    {
+	(*R)(i,i) = 0;
+	for(int j=i+1;j<n;j++)
+	{
+	    if (i==j) continue;
+
+	    bool m1 = D.is_watson_crick(i) or D.is_wobble_pair(i);
+	    bool m2 = D.is_watson_crick(j) or D.is_wobble_pair(j);
+
+	    double x = 0;
+	    if (D.n_changes(i,j) == 2)
+	    {
+		if (m1 and m2)
+		{
+		    int i0 = D.sub_nuc(i,0);
+		    int i1 = D.sub_nuc(i,1);
+
+		    int j0 = D.sub_nuc(j,0);
+		    int j1 = D.sub_nuc(j,1);
+
+		    auto& N = D.getNucleotides();
+		    if (N.transition(i0,j0))
+		    {
+			// double transition -> alpha_D
+			x = alpha_D;
+			assert(N.transition(i1,j1));
+		    }
+		    else
+		    {
+			// double transversion -> beta
+			x = beta;
+			assert(N.transversion(i1,j1));
+		    }
+		}
+		else {
+		    // double change between mismatch and something
+		    x = 0;
+		}
+	    }
+	    else if (D.n_changes(i,j) == 1)
+	    {
+		int n = (m1?1:0) + (m2?1:0);
+		//    match <->    match = alpha_S
+		if (n == 2)
+		    x = alpha_S;
+		// mismatch <->    match = gamma
+		else if (n==1)
+		    x = gamma;
+		// mismatch <-> mismatch = epsilon
+		else
+		    x = epsilon;
+	    }
+
+	    (*R)(i,j) = (*R)(j,i) = x;
+	}
+    }
+
+    return R;
+}
+
 extern "C" closure builtin_function_singlet_to_doublet_rates(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
