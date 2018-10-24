@@ -383,11 +383,8 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		    }
 		    else
 		    {
-			r2 = allocate();
+			r2 = Args.allocate( std::move(closure_stack.back()) ) ;
 			assert(not has_step(r2));
-			mark_reg_created_by_step(r2,S);
-			total_reg_allocations++;
-			set_C(r2, std::move(closure_stack.back()));
 		    }
 
 		    auto p = incremental_evaluate(r2);
