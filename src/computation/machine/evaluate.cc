@@ -366,6 +366,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		    assert(not reg_has_call(R) );
 		    assert(not reg_has_value(R));
 		    assert(step_for_reg(R).used_inputs.empty());
+		    assert(step_for_reg(R).created_regs.empty());
 		    set_C(R, std::move(value) );
 		}
 		else
