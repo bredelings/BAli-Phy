@@ -271,7 +271,7 @@ closure let_op(OperationArgs& Args)
 
 	// 1. Allocate the new vars on the heap
 	for(int i=0;i<n_bodies;i++)
-	    C.Env.push_back( M.push_temp_head() );
+	    C.Env.push_back( Args.allocate_reg() );
       
 	// 2. Substitute the new heap vars for the var vars in expression T and in the bodies
 	for(int i=0;i<n_bodies;i++)
@@ -283,13 +283,6 @@ closure let_op(OperationArgs& Args)
 	do_trim(C);
     }
     while (C.exp.head().type() == let2_type);
-
-    // FIXME - we are hoping that no allocations occur before the returned result can
-    //         be put on a
-
-    // 3. Remove the new heap vars from the list of temp heads in reverse order.
-    for(int i=0;i<total_allocated_vars; i++)
-	M.pop_temp_head();
 
     return C;
 }
