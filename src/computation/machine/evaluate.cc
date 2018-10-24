@@ -65,6 +65,8 @@ class RegOperationArgs: public OperationArgs
 {
     const int S;
 
+    const int P;
+
     const closure& current_closure() const {return memory().closure_stack.back();}
 
     bool evaluate_changeables() const {return true;}
@@ -86,7 +88,10 @@ class RegOperationArgs: public OperationArgs
 	    // Note that although R2 is newly used, R3 might be already used if it was 
 	    // found from R2 through a non-changeable reg_var chain.
 	    if (M.reg_is_changeable(R3))
+	    {
+		used_changeable = true;
 		M.set_used_input(S, R3);
+	    }
 
 	    return value;
 	}
@@ -105,21 +110,25 @@ class RegOperationArgs: public OperationArgs
 
 public:
 
+    bool used_changeable = false;
+
     // If we unreference regs that evaluate to a variable, then we unreference p->let q=2 in q
     // and point references to q instead of p.  But then it would not be true that a variable can
     // only be referenced if the slot that created it is still referenced.
     
     int allocate_reg()
 	{
+	    int s = used_changeable?S:P;
 	    int r = OperationArgs::allocate_reg();
-	    M.mark_reg_created_by_step(r,S);
+	    if (s>0)
+		M.mark_reg_created_by_step(r,s);
 	    return r;
 	}
   
     RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
-    RegOperationArgs(int s, reg_heap& m)
-	:OperationArgs(m), S(s)
+    RegOperationArgs(int s, int p, reg_heap& m)
+	:OperationArgs(m), S(s), P(p)
 	{ }
 };
 
@@ -336,11 +345,13 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 	    if (not has_step(R))
 		add_shared_step(R);
 	    int S = step_index_for_reg(R);
+	    // FIXME - check that this agrees with our caller!
+	    int P = access(R).created_by.first;
 
 	    try
 	    {
 		closure_stack.push_back (access(R).C );
-		RegOperationArgs Args(S, *this);
+		RegOperationArgs Args(S, P, *this);
 		auto O = access(R).C.exp.head().assert_is_a<Operation>()->op;
 		closure value = (*O)(Args);
 		closure_stack.pop_back();
@@ -349,7 +360,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		    total_changeable_reductions++;
 
 		// If the reduction doesn't depend on modifiable, then replace E with the value.
-		if (steps[S].used_inputs.empty())
+		if (not Args.used_changeable)
 		{
 		    // The old used_input slots are not invalid, which is OK since none of them are changeable.
 		    assert(not reg_has_call(R) );
@@ -455,7 +466,7 @@ void reg_heap::incremental_evaluate_from_call_(int S)
 
 	try
 	{
-	    RegOperationArgs Args(S, *this);
+	    RegOperationArgs Args(S, S, *this);
 	    int n_used_inputs1 = steps[S].used_inputs.size();
 	    auto O = closure_stack.back().exp.head().assert_is_a<Operation>()->op;
 	    closure_stack.back() = (*O)(Args);
