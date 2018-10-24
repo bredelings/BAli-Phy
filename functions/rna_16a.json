@@ -1,0 +1,48 @@
+{
+    "name": "RNA.16a",
+    "constraints": [ "Doublets[a,b]" ],
+    "result_type": "ExchangeModel[a]",
+    "title": "Exchangability matrix on doublets constructed from nucleotide exchange rates",
+    "call": "SModel.Doublets.rna_stem_16a_exchange[a,aS,aD,b,g,e]",
+    "args": [
+        {
+            "arg_name": "aS",
+            "arg_type": "Double",
+            "default_value": "~log_normal[log[2],0.25]",
+	    "description": "Exchange rate: 1 change, match <-> match"
+        },
+        {
+            "arg_name": "aD",
+            "arg_type": "Double",
+            "default_value": "~log_normal[log[2],0.25]",
+	    "description": "Exchange rate: 2 changes, match <-> match, both transitions"
+        },
+        {
+            "arg_name": "b",
+            "arg_type": "Double",
+            "default_value": "~log_normal[log[2],0.25]",
+	    "description": "Exchange rate: 2 changes, match <-> match, both transversions"
+        },
+        {
+            "arg_name": "g",
+            "arg_type": "Double",
+            "default_value": "~log_normal[log[2],0.25]",
+	    "description": "Exchange rate: 1 changes, match <-> mismatch"
+        },
+        {
+            "arg_name": "e",
+            "arg_type": "Double",
+            "default_value": "~log_normal[log[2],0.25]",
+	    "description": "Exchange rate: 1 changes, mismatch <-> mismatch"
+        },
+        {
+            "arg_name": "a",
+            "arg_type": "a",
+            "default_value": "getAlphabet",
+	    "description": "The Doublets alphabet"
+        }
+    ],
+    "description": "Exchangability matrix for rna stems that allows 2 simultaneous changes.\n\nNote the exchange rate for double changes involving a mismatch is 0.",
+    "examples": ["RNA.16a+f"],
+    "see": ["x2_sym"]
+}

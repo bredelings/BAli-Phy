@@ -16,3 +16,4 @@ x2x2 (ReversibleMarkov _ _ q_1 pi_1 _ _ _) (ReversibleMarkov _ _ q_2 pi_2 _ _ _)
 x2_sym a s = singlet_to_doublet_rates a s s
 x2 q a = x2x2 q q a
 
+builtin rna_stem_16a_exchange 6 "rna_16a_exchange" "SModel"
