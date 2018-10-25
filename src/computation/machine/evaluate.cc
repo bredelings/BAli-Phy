@@ -401,11 +401,8 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		    }
 		    else
 		    {
-			int r2 = allocate();
+			int r2 = Args.allocate( std::move(closure_stack.back()) );
 			assert(not has_step(r2));
-			mark_reg_created_by_step(r2,S);
-			total_reg_allocations++;
-			set_C(r2, std::move(closure_stack.back()));
 			access(r2).type = reg::type_t::constant;
 			// assert(is_WHNF(access(r2).C.exp)) ?
 			p = {r2,r2};
