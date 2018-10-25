@@ -24,6 +24,8 @@ run_random alpha GetAlphabet = return alpha
 run_random alpha (SetAlphabet a2 x) = run_random a2 x
 run_random alpha (AddMove m) = return ()
 run_random alpha (SamplingRate _ model) = run_random alpha model
+run_random alpha (MFix f) = MFix ((run_random alpha).f)
+run_random alpha (Print s) = putStrLn (show s)
 
 sample dist = Sample dist
 
@@ -46,6 +48,7 @@ run_random' alpha rate (Sample (ProbDensity _ _ s _)) = unsafeInterleaveIO $ run
 run_random' alpha rate (Observe datum dist) = register_probability (density dist datum)
 run_random' alpha rate (AddMove m) = register_transition_kernel m
 run_random' alpha rate (Print s) = putStrLn (show s)
+run_random' alpha rate (MFix f) = MFix ((run_random' alpha rate).f)
 run_random' alpha rate (SamplingRate rate2 a) = run_random' alpha (rate*rate2) a
 run_random' alpha _    GetAlphabet = return alpha
 run_random' alpha rate (SetAlphabet a2 x) = run_random' a2 rate x

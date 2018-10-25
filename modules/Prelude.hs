@@ -141,9 +141,11 @@ unsafePerformIO (IOAction4 x y z w u) = x y z w u
 unsafePerformIO (LazyIO f) = unsafePerformIO f
 unsafePerformIO (IOAndPass (LazyIO f) g) = let x = unsafePerformIO f in unsafePerformIO (g x)
 unsafePerformIO (IOAndPass f g) = let x = unsafePerformIO f in x `seq` unsafePerformIO (g x)
+unsafePerformIO (MFix f) = let x = unsafePerformIO (f x) in x
 unsafePerformIO (IOReturn x) = x
 
 unsafeInterleaveIO x = LazyIO x
+mfix f = MFix f
 runST x = reapply unsafePerformIO x
 
 quicksort [] = []

@@ -9,6 +9,7 @@ data IO a = IOAction1 (b->a) a |
             IOAction3 (b->c->d->a) b c d |
             IOAction4 (b->c->d->e->a) b c d e |
             LazyIO a |
+            MFix a |
             IOReturn a |
             IOAndPass (IO b) (b -> IO a)
 
