@@ -45,7 +45,7 @@ run_random alpha lazy (IOReturn v) = return v
 run_random alpha lazy (Sample (ProbDensity _ _ (Random a) _)) = unsafeInterleaveIO $ a
 run_random alpha lazy (Sample (ProbDensity _ _ s          _)) = unsafeInterleaveIO $ run_random alpha lazy s
 run_random alpha lazy GetAlphabet = return alpha
-run_random alpha lazy (SetAlphabet a2 x) = run_random a2 x
+run_random alpha lazy (SetAlphabet a2 x) = run_random a2 x lazy
 run_random alpha lazy (AddMove m) = return ()
 run_random alpha lazy (SamplingRate _ model) = run_random alpha lazy model
 run_random alpha lazy (MFix f) = MFix ((run_random alpha).f)
@@ -55,36 +55,42 @@ run_random alpha lazy (Strict r) = run_random alpha False r
 
 sample dist = Sample dist
 
-run_random' alpha rate (IOReturn v) = return v
-run_random' alpha rate (IOAndPass f g) = do x <- run_random' alpha rate f
-                                            run_random' alpha rate $ g x
+run_random' alpha rate True (IOAndPass f g) = do x <- unsafeInterleaveIO $ run_random' alpha rate True f
+                                                 run_random' alpha rate True $ g x
 
-run_random' alpha rate (Sample (ProbDensity p _ (Random a) r)) = unsafeInterleaveIO $ do 
-                                                                   v <- a
-                                                                   m <- new_random_modifiable r v rate
-                                                                   register_probability (p m)
-                                                                   return m
+run_random' alpha rate lazy (IOAndPass f g) = do x <- run_random' alpha rate lazy f
+                                                 run_random' alpha rate lazy $ g x
 
-run_random' alpha rate (Sample (ProbDensity p q (Exchangeable n r' v) r)) = unsafeInterleaveIO $ do
-                                                                              xs <- sequence $ replicate n (new_random_modifiable r' v rate)
-                                                                              register_probability (p xs)
-                                                                              return xs
-run_random' alpha rate (Sample (ProbDensity _ _ s _)) = unsafeInterleaveIO $ run_random' alpha rate s
+run_random' alpha rate lazy (IOReturn v) = return v
 
-run_random' alpha rate (Observe datum dist) = register_probability (density dist datum)
-run_random' alpha rate (AddMove m) = register_transition_kernel m
-run_random' alpha rate (Print s) = putStrLn (show s)
-run_random' alpha rate (MFix f) = MFix ((run_random' alpha rate).f)
-run_random' alpha rate (SamplingRate rate2 a) = run_random' alpha (rate*rate2) a
-run_random' alpha _    GetAlphabet = return alpha
-run_random' alpha rate (SetAlphabet a2 x) = run_random' a2 rate x
-run_random' alpha rate (Lazy r) = run_random' alpha rate r
-run_random' alpha rate (Strict r) = run_random' alpha rate r
+run_random' alpha rate lazy (Sample (ProbDensity p _ (Random a) r)) = unsafeInterleaveIO $ do 
+                                                                        v <- a
+                                                                        m <- new_random_modifiable r v rate
+                                                                        register_probability (p m)
+                                                                        return m
+
+run_random' alpha rate lazy (Sample (ProbDensity p q (Exchangeable n r' v) r)) = unsafeInterleaveIO $ do
+                                                                                   xs <- sequence $ replicate n (new_random_modifiable r' v rate)
+                                                                                   register_probability (p xs)
+                                                                                   return xs
+run_random' alpha rate lazy (Sample (ProbDensity _ _ s _)) = unsafeInterleaveIO $ run_random' alpha rate lazy s
+
+run_random' alpha rate lazy (Observe datum dist) = register_probability (density dist datum)
+run_random' alpha rate lazy (AddMove m) = register_transition_kernel m
+run_random' alpha rate lazy (Print s) = putStrLn (show s)
+run_random' alpha rate lazy (MFix f) = MFix ((run_random' alpha rate lazy).f)
+run_random' alpha rate lazy (SamplingRate rate2 a) = run_random' alpha (rate*rate2) lazy a
+run_random' alpha _    _     GetAlphabet = return alpha
+run_random' alpha rate lazy (SetAlphabet a2 x) = run_random' a2 rate lazy x
+run_random' alpha rate lazy (Lazy r) = run_random' alpha rate True r
+run_random' alpha rate lazy (Strict r) = run_random' alpha rate False r
 
 set_alphabet a x = do (a',_) <- a
                       SetAlphabet a' x
                                                  
-gen_model m = run_random' (error "No default alphabet!") 1.0 m
+gen_model_with_alphabet a m = run_random' a 1.0 False m
+
+gen_model_no_alphabet m = gen_model_with_alphabet (error "No default alphabet!") m
 
 add_logger old name (value,[]) False = old
 add_logger old name (value,loggers) do_log = (name,(if do_log then Just value else Nothing, loggers)):old

@@ -156,8 +156,6 @@ using boost::optional;
  *       I compute the probability at the end of Parameters::Parameters( ).
  */
 
-expression_ref nothing = var("Data.Maybe.Nothing");
-
 /// Is the alignment allowed to vary?
 bool data_partition::variable_alignment() const
 {
@@ -793,7 +791,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
     {
 	string prefix = "T:lengths";
 	expression_ref branch_lengths = {branch_length_model.expression, tree};
-	branch_lengths = {var("Distributions.run_random'"), nothing, 0.0, branch_lengths};
+	branch_lengths = {var("Distributions.gen_model_no_alphabet"), branch_lengths};
 	branch_lengths = {var("Distributions.do_log"), prefix, branch_lengths};
 	branch_lengths = {var("Prelude.unsafePerformIO"),branch_lengths};
 	branch_lengths = {var("Parameters.evaluate"),-1,branch_lengths};
@@ -1417,7 +1415,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	string prefix = "Scale["+convertToString(i+1)+"]";
 
 	auto scale_model = scaleMs[i].expression;
-	scale_model = {var("Distributions.run_random'"), nothing, 1.0, scale_model};
+	scale_model = {var("Distributions.gen_model_no_alphabet"), scale_model};
 	scale_model = {var("Distributions.do_log"), prefix, scale_model};
 	scale_model = {var("Prelude.unsafePerformIO"),scale_model};
 	scale_model = {var("Parameters.evaluate"),-1,scale_model};
@@ -1473,7 +1471,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	const alphabet& a = A[*first_index].get_alphabet();
 
 	expression_ref smodel = SMs[i].expression;
-	smodel = {var("Distributions.run_random'"), a, 1.0, smodel};
+	smodel = {var("Distributions.gen_model_with_alphabet"), a, smodel};
 	smodel = {var("Distributions.do_log"), prefix, smodel};
 	smodel = {var("Prelude.unsafePerformIO"),smodel};
 	smodel = {var("Parameters.evaluate"),-1,smodel};
@@ -1487,7 +1485,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     {
 	string prefix = "I" + convertToString(i+1);
 	expression_ref imodel = IMs[i].expression;
-	imodel = {var("Distributions.run_random'"), nothing, 1.0, imodel};
+	imodel = {var("Distributions.gen_model_no_alphabet"), imodel};
 	imodel = {var("Distributions.do_log"), prefix, imodel};
 	imodel = {var("Prelude.unsafePerformIO"),imodel};
 	imodel = {var("Parameters.evaluate"),-1,imodel};

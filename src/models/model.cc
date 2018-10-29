@@ -530,5 +530,5 @@ void add_model(Model& M, const std::string& name)
 {
     M += name;
     string prefix = name;
-    M.perform_expression({var("Distributions.do_log"),prefix,{var("Distributions.gen_model"),var(name+".main")}});
+    M.perform_expression({var("Distributions.do_log"),prefix,{var("Distributions.gen_model_no_alphabet"),var(name+".main")}});
 }
