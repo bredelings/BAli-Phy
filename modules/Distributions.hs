@@ -5,14 +5,33 @@ import Parameters
 import MCMC
 
 -- Define the ProbDensity type
-data ProbDensity = ProbDensity a b c d
+data ProbDensity a = ProbDensity (a->Double) (Double->a) (IO a) Range
 density (ProbDensity d _ _ _) = d
 quantile (ProbDensity _ q _ _) = q
 sampler (ProbDensity _ _ s _) = s
 distRange (ProbDensity _ _ _ r) = r
 
+-- FIXME: We might need GADTS for
+--   Independant :: (Random a, Random b) -> Random (a,b)
+--   Observe :: b -> (ProbDensity b) -> Random ()
+--   GetAlphabet :: Random b ?
+--   SetAlphabet :: b -> (Random a) -> Random a
+--   AddMove :: b -> Random ()
+
+-- FIXME: the Random constructor here seems a bit weird.
+--        presumably this indicates that its an IO action versus a Random a
+--        but its only used inside ProbDensity...
+
 -- This implements the Random monad by transforming it into the IO monad.
-data Random a = Random a | Sample ProbDensity | Exchangeable Int Range a | Observe a b | AddMove (Int->a) | Print c | SamplingRate Double a | GetAlphabet | SetAlphabet d a
+data Random a = Random (IO a)
+              | Sample (ProbDensity a)
+              | Exchangeable Int Range a
+              | Observe b (ProbDensity b)
+              | AddMove (Int->a)
+              | Print b
+              | SamplingRate Double (Random a)
+              | GetAlphabet
+              | SetAlphabet b (Random a)
 
 run_random alpha (IOReturn v) = return v
 run_random alpha (IOAndPass f g) = do x <- run_random alpha f
