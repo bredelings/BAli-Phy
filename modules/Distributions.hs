@@ -32,19 +32,26 @@ data Random a = Random (IO a)
               | SamplingRate Double (Random a)
               | GetAlphabet
               | SetAlphabet b (Random a)
+              | Lazy (Random a)
+              | Strict (Random a)
 
-run_random alpha (IOReturn v) = return v
-run_random alpha (IOAndPass f g) = do x <- run_random alpha f
-                                      run_random alpha $ g x
 
-run_random alpha (Sample (ProbDensity _ _ (Random a) _)) = unsafeInterleaveIO $ a
-run_random alpha (Sample (ProbDensity _ _ s          _)) = unsafeInterleaveIO $ run_random alpha s
-run_random alpha GetAlphabet = return alpha
-run_random alpha (SetAlphabet a2 x) = run_random a2 x
-run_random alpha (AddMove m) = return ()
-run_random alpha (SamplingRate _ model) = run_random alpha model
-run_random alpha (MFix f) = MFix ((run_random alpha).f)
-run_random alpha (Print s) = putStrLn (show s)
+
+run_random alpha True (IOAndPass f g) = do x <- unsafeInterleaveIO $ run_random alpha True f
+                                           run_random alpha True $ g x
+run_random alpha lazy (IOAndPass f g) = do x <- run_random alpha lazy f
+                                           run_random alpha lazy $ g x
+run_random alpha lazy (IOReturn v) = return v
+run_random alpha lazy (Sample (ProbDensity _ _ (Random a) _)) = unsafeInterleaveIO $ a
+run_random alpha lazy (Sample (ProbDensity _ _ s          _)) = unsafeInterleaveIO $ run_random alpha lazy s
+run_random alpha lazy GetAlphabet = return alpha
+run_random alpha lazy (SetAlphabet a2 x) = run_random a2 x
+run_random alpha lazy (AddMove m) = return ()
+run_random alpha lazy (SamplingRate _ model) = run_random alpha lazy model
+run_random alpha lazy (MFix f) = MFix ((run_random alpha).f)
+run_random alpha lazy (Print s) = putStrLn (show s)
+run_random alpha lazy (Lazy r) = run_random alpha True r
+run_random alpha lazy (Strict r) = run_random alpha False r
 
 sample dist = Sample dist
 
@@ -71,6 +78,8 @@ run_random' alpha rate (MFix f) = MFix ((run_random' alpha rate).f)
 run_random' alpha rate (SamplingRate rate2 a) = run_random' alpha (rate*rate2) a
 run_random' alpha _    GetAlphabet = return alpha
 run_random' alpha rate (SetAlphabet a2 x) = run_random' a2 rate x
+run_random' alpha rate (Lazy r) = run_random' alpha rate r
+run_random' alpha rate (Strict r) = run_random' alpha rate r
 
 set_alphabet a x = do (a',_) <- a
                       SetAlphabet a' x
@@ -230,7 +239,7 @@ list_density ds xs = if (length ds == length xs) then pr else (doubleToLogDouble
         pr = balanced_product densities
 
 list dists = ProbDensity (list_density dists) (no_quantile "list") do_sample (ListRange (map distRange dists))
-             where do_sample = SamplingRate (1.0/sqrt (intToDouble $ length dists)) $ mapM sample dists
+             where do_sample = SamplingRate (1.0/sqrt (intToDouble $ length dists)) $ Lazy $ mapM sample dists
 
 -- define different examples of list distributions
 iid n dist = list (replicate n dist)
