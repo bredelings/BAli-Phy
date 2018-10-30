@@ -665,11 +665,25 @@ void reg_heap::mark_reg_created_by_step(int r, int s)
     access(r).created_by = {s,steps[s].created_regs.begin()};
 }
 
-int reg_heap::create_reg_from_step_in_token(int s, int t)
+int reg_heap::allocate_reg_from_step(int s)
 {
     total_reg_allocations++;
     int r = allocate();
     mark_reg_created_by_step(r,s);
+    assert(not has_step(r));
+    return r;
+}
+
+int reg_heap::allocate_reg_from_step(int s, closure&& C)
+{
+    int r = allocate_reg_from_step(s);
+    set_C(r, std::move(C));
+    return r;
+}
+
+int reg_heap::allocate_reg_from_step_in_token(int s, int t)
+{
+    int r = allocate_reg_from_step(s);
     tokens[t].vm_result.add_value(r,-1);
     tokens[t].vm_step.add_value(r,-1);
     return r;
@@ -734,7 +748,7 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
     // Otherwise, regardless of whether the expression is WHNF or not, create a new reg for the value and call it.
     else
     {
-	int R2 = create_reg_from_step_in_token(s,t);
+	int R2 = allocate_reg_from_step_in_token(s,t);
 
 	// clear 'reg created' edge from s to old call.
 	steps[s].call = R2;
