@@ -36,14 +36,18 @@ data Random a = Random (IO a)
               | Strict (Random a)
 
 
+sample dist = Sample dist
 
-run_random alpha True (IOAndPass f g) = do x <- unsafeInterleaveIO $ run_random alpha True f
-                                           run_random alpha True $ g x
-run_random alpha lazy (IOAndPass f g) = do x <- run_random alpha lazy f
-                                           run_random alpha lazy $ g x
+maybe_lazy lazy x = if lazy then unsafeInterleaveIO x else x
+
+run_random alpha lazy (IOAndPass f g) = do
+  x <- maybe_lazy lazy $ run_random alpha lazy f
+  run_random alpha lazy $ g x
 run_random alpha lazy (IOReturn v) = return v
-run_random alpha lazy (Sample (ProbDensity _ _ (Random a) _)) = unsafeInterleaveIO $ a
-run_random alpha lazy (Sample (ProbDensity _ _ s          _)) = unsafeInterleaveIO $ run_random alpha lazy s
+-- It seems like we wouldn't need laziness for `do {x <- r;return x}`.  Do we need it for `r`?
+run_random alpha lazy (Sample (ProbDensity _ _ (Random a) _)) = maybe_lazy lazy $ a
+-- Should laziness go into the sample here?  Would s every have observations, like a Brownian bridge
+run_random alpha lazy (Sample (ProbDensity _ _ s          _)) = maybe_lazy lazy $ run_random alpha False s
 run_random alpha lazy GetAlphabet = return alpha
 run_random alpha lazy (SetAlphabet a2 x) = run_random a2 x lazy
 run_random alpha lazy (AddMove m) = return ()
@@ -53,28 +57,22 @@ run_random alpha lazy (Print s) = putStrLn (show s)
 run_random alpha lazy (Lazy r) = run_random alpha True r
 run_random alpha lazy (Strict r) = run_random alpha False r
 
-sample dist = Sample dist
-
-run_random' alpha rate True (IOAndPass f g) = do x <- unsafeInterleaveIO $ run_random' alpha rate True f
-                                                 run_random' alpha rate True $ g x
-
-run_random' alpha rate lazy (IOAndPass f g) = do x <- run_random' alpha rate lazy f
-                                                 run_random' alpha rate lazy $ g x
-
+run_random' alpha rate lazy (IOAndPass f g) = do
+  x <- maybe_lazy lazy $ run_random' alpha rate lazy f
+  run_random' alpha rate lazy $ g x
 run_random' alpha rate lazy (IOReturn v) = return v
-
-run_random' alpha rate lazy (Sample (ProbDensity p _ (Random a) r)) = unsafeInterleaveIO $ do 
-                                                                        v <- a
-                                                                        m <- new_random_modifiable r v rate
-                                                                        register_probability (p m)
-                                                                        return m
-
-run_random' alpha rate lazy (Sample (ProbDensity p q (Exchangeable n r' v) r)) = unsafeInterleaveIO $ do
-                                                                                   xs <- sequence $ replicate n (new_random_modifiable r' v rate)
-                                                                                   register_probability (p xs)
-                                                                                   return xs
-run_random' alpha rate lazy (Sample (ProbDensity _ _ s _)) = unsafeInterleaveIO $ run_random' alpha rate lazy s
-
+-- It seems like we wouldn't need laziness for `do {x <- r;return x}`.  Do we need it for `r`?
+run_random' alpha rate lazy (Sample (ProbDensity p _ (Random a) r)) = maybe_lazy lazy $ do
+  v <- a
+  m <- new_random_modifiable r v rate
+  register_probability (p m)
+  return m
+run_random' alpha rate lazy (Sample (ProbDensity p q (Exchangeable n r' v) r)) = maybe_lazy lazy $ do
+  xs <- sequence $ replicate n (new_random_modifiable r' v rate)
+  register_probability (p xs)
+  return xs
+-- Should laziness go into the sample here?  Would s every have observations, like a Brownian bridge
+run_random' alpha rate lazy (Sample (ProbDensity _ _ s _)) = maybe_lazy lazy $ run_random' alpha rate False s
 run_random' alpha rate lazy (Observe datum dist) = register_probability (density dist datum)
 run_random' alpha rate lazy (AddMove m) = register_transition_kernel m
 run_random' alpha rate lazy (Print s) = putStrLn (show s)
