@@ -47,7 +47,9 @@ run_random alpha lazy (IOReturn v) = return v
 -- It seems like we wouldn't need laziness for `do {x <- r;return x}`.  Do we need it for `r`?
 run_random alpha lazy (Sample (ProbDensity _ _ (Random a) _)) = maybe_lazy lazy $ a
 -- Should laziness go into the sample here?  Would s every have observations, like a Brownian bridge
-run_random alpha lazy (Sample (ProbDensity _ _ s          _)) = maybe_lazy lazy $ run_random alpha False s
+-- If we don't do this, though then `Lazy $ sample $ iid $ normal 0 1` doesn't work.
+-- Could we somehow do the list lazily, and the entries of the list lazily, but the actions for sample each of the variables strictly?
+run_random alpha lazy (Sample (ProbDensity _ _ s          _)) = maybe_lazy lazy $ run_random alpha lazy s
 run_random alpha lazy GetAlphabet = return alpha
 run_random alpha lazy (SetAlphabet a2 x) = run_random a2 x lazy
 run_random alpha lazy (AddMove m) = return ()
@@ -72,7 +74,9 @@ run_random' alpha rate lazy (Sample (ProbDensity p q (Exchangeable n r' v) r)) =
   register_probability (p xs)
   return xs
 -- Should laziness go into the sample here?  Would s every have observations, like a Brownian bridge
-run_random' alpha rate lazy (Sample (ProbDensity _ _ s _)) = maybe_lazy lazy $ run_random' alpha rate False s
+-- If we don't do this, though then `Lazy $ sample $ iid $ normal 0 1` doesn't work.
+-- Could we somehow do the list lazily, and the entries of the list lazily, but the actions for sample each of the variables strictly?
+run_random' alpha rate lazy (Sample (ProbDensity _ _ s _)) = maybe_lazy lazy $ run_random' alpha rate lazy s
 run_random' alpha rate lazy (Observe datum dist) = register_probability (density dist datum)
 run_random' alpha rate lazy (AddMove m) = register_transition_kernel m
 run_random' alpha rate lazy (Print s) = putStrLn (show s)
@@ -243,7 +247,7 @@ list_density ds xs = if (length ds == length xs) then pr else (doubleToLogDouble
         pr = balanced_product densities
 
 list dists = ProbDensity (list_density dists) (no_quantile "list") do_sample (ListRange (map distRange dists))
-             where do_sample = SamplingRate (1.0/sqrt (intToDouble $ length dists)) $ Lazy $ mapM sample dists
+             where do_sample = SamplingRate (1.0/sqrt (intToDouble $ length dists)) $ mapM sample dists
 
 -- define different examples of list distributions
 iid n dist = list (replicate n dist)
