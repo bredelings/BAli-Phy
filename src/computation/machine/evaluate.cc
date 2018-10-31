@@ -467,14 +467,11 @@ void reg_heap::incremental_evaluate_from_call_(int S)
 	try
 	{
 	    RegOperationArgs Args(S, S, *this);
-	    int n_used_inputs1 = steps[S].used_inputs.size();
 	    auto O = closure_stack.back().exp.head().assert_is_a<Operation>()->op;
 	    closure_stack.back() = (*O)(Args);
-	    int n_used_inputs2 = steps[S].used_inputs.size();
-	    bool changed = n_used_inputs2 > n_used_inputs1;
 	
 	    total_reductions++;
-	    if (changed)
+	    if (Args.used_changeable)
 		total_changeable_reductions++;
 	}
 	catch (error_exception& e)
