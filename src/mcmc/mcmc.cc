@@ -437,8 +437,9 @@ namespace MCMC {
 	if (log_verbose >= 3)
 	{
 	    show_parameters(std::cerr,P);
-	    std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
+	    std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior()<<std::endl;
 	    std::cerr<<endl<<endl;
+	    std::cerr<<" [Slice] window size = "<<W<<std::endl;
 	}
 
 	return v2;
@@ -524,6 +525,7 @@ namespace MCMC {
 	result.totals[0] = std::abs(v2-v1);
 	result.totals[1] = logp.count;
     
+	if (log_verbose >= 3) std::cerr<<" [modifiable slice] posterior evaluated "<<logp.count<<" times."<<std::endl;
 	Stats.inc(name,result);
     }
 
@@ -567,6 +569,8 @@ namespace MCMC {
 	result.totals[0] = std::abs(x2-x1);
 	result.totals[1] = logp.count;
     
+	if (log_verbose >= 3) std::cerr<<"   - Posterior evaluated "<<logp.count<<" times."<<std::endl;
+
 	Stats.inc(name,result);
     }
 
