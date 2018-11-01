@@ -595,8 +595,10 @@ void reg_heap::set_used_input(int s1, int R2)
 
     int rc2 = result_index_for_reg(R2);
 
-    auto back_edge = results[rc2].used_by.push_back(s1);
-    steps[s1].used_inputs.push_back({rc2,back_edge});
+    int back_index = results[rc2].used_by.size();
+    int forw_index = steps[s1].used_inputs.size();
+    results[rc2].used_by.push_back({s1,forw_index});
+    steps[s1].used_inputs.push_back({rc2,back_index});
 
     assert(result_is_used_by(s1,rc2));
 }
@@ -971,8 +973,8 @@ bool reg_heap::result_is_called_by(int rc1, int rc2) const
 
 bool reg_heap::result_is_used_by(int s1, int rc2) const
 {
-    for(int s: results[rc2].used_by)
-	if (s == s1)
+    for(auto& s: results[rc2].used_by)
+	if (s.first == s1)
 	    return true;
 
     return false;
@@ -1200,7 +1202,7 @@ int reg_heap::add_shared_result(int r, int s)
 void reg_heap::check_back_edges_cleared_for_step(int s)
 {
     for(auto& rcp: steps.access_unused(s).used_inputs)
-	assert(null(rcp.second));
+	assert(rcp.second == 0);
     for(auto& r: steps.access_unused(s).created_regs)
     {
 	auto& created_by = access(r).created_by;
@@ -1230,10 +1232,31 @@ void reg_heap::clear_back_edges_for_reg(int r)
 void reg_heap::clear_back_edges_for_step(int s)
 {
     assert(s > 0);
-    for(auto& rcp: steps[s].used_inputs)
+    auto& forward1 = steps[s].used_inputs;
+    for(int i=0; i<forward1.size(); i++)
     {
-	results[rcp.first].used_by.erase(rcp.second);
-	rcp.second = {};
+	auto& backward = results[forward1[i].first].used_by;
+	assert(0 <= i and i < forward1.size());
+	int j = forward1[i].second;
+	assert(0 <= j and j < backward.size());
+
+	forward1[i] = {0,0};
+
+	if (j+1 < backward.size())
+	{
+	    // erase the backward edge by moving another backward edge on top of it.
+	    backward[j] = backward.back();
+	    // adjust the forward edge for that backward edge
+	    int i2 = backward[j].second;
+	    auto& forward2 = steps[backward[j].first].used_inputs;
+	    assert(0 <= i2 and i2 < forward2.size());
+	    forward2[i2].second = j;
+
+	    assert(steps[backward[j].first].used_inputs[backward[j].second].second == j);
+	    assert(results[forward2[i2].first].used_by[forward2[i2].second].second == i2);
+	}
+
+	backward.pop_back();
     }
     for(auto& r: steps[s].created_regs)
 	access(r).created_by = {0,{}};

@@ -27,7 +27,7 @@ struct Step
     // NOTE: There is a space-time trade-off in the number of used_inputs here.
     //       However, small_vector< ,1> takes little or no extra space, and noticeably saves time.
     /// Which reg's were used to reduce this expression?
-    boost::container::small_vector< std::pair<int,CacheList<int>::iterator>, 2 > used_inputs;
+    boost::container::small_vector< std::pair<int,int>, 2 > used_inputs;
     CacheList<int> created_regs;
 
     std::bitset<8> flags;
@@ -58,7 +58,7 @@ struct Result
     std::pair<int,CacheList<int>::iterator> call_edge;
   
     /// Which pairs (reg,slot) USED the reduction value of C (via an operation)?
-    CacheList<int> used_by;
+    boost::container::small_vector<std::pair<int,int>, 2> used_by;
 
     /// Which reduction values made use of the value of this expression (via call)
     CacheList<int> called_by;

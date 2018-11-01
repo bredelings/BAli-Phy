@@ -257,8 +257,9 @@ void reg_heap::unshare_regs(int t)
 	    }
 
 	    // Look at step that use the root's result (that is overridden in t)
-	    for(int s2: Result.used_by)
+	    for(auto& ub: Result.used_by)
 	    {
+		int s2 = ub.first;
 		auto& S2 = steps[s2];
 		int r2 = S2.source_reg;
 
