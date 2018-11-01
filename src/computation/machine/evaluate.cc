@@ -471,11 +471,7 @@ void reg_heap::incremental_evaluate_from_call_(int S)
 	// then don't merge any children into S.
 	if (not steps[S].created_regs.empty())
 	{
-	    int r2 = allocate();
-	    assert(not has_step(r2));
-	    mark_reg_created_by_step(r2,S);
-	    total_reg_allocations++;
-	    set_C(r2, std::move(closure_stack.back()));
+	    int r2 = allocate_reg_from_step(S,std::move(closure_stack.back()));
 	    closure_stack.back() = closure(index_var(0),{r2});
 	    return;
 	}
