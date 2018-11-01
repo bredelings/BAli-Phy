@@ -446,14 +446,13 @@ void reg_heap::incremental_evaluate_from_call(int S, closure& value)
     incremental_evaluate_from_call_(S);
 }
 
-
-// Maybe the idea here is that if have E1 ---S1--> E2 ---S2--> E3 then
-// * if E2 is NOT a let (or performs no allocation) and is changeable then we combine the changes in S2 with those in S1.
-//   Maybe the idea is more that if we have something like \x y -> case x of x':xs -> case y of y':xs -> f x' y' then just casing shouldn't prevent merging?
-//   Supposing we have something like \x y -> case x -> let x' = fx in case y -> let y' = fx in g x' y' then actually the xs and ys are separate!
-//   So we could write \x y -> let {x'' = case x of x':_ -> f x'; y'' = case y of y':_ -> g y'} in h x'' y''.  This would be best for purposes of invalidation!
-// * if E2 is a let (or if S2 performs allocation?) then we stop merging and make a new reg, charging the allocations to S1
-// Don't we have to know about the allocation BEFORE we perform?
+// The goal here is to merge steps S->S2->S3 => S.  At this point S is known to be changeable.
+//
+// However, S->S2 and S has performed allocations, then we don't want S2 to unshare those
+// if it is unshared.  Therefore once allocations have been performed we don't want to merge
+// with any downstream regs that are changeable.
+//
+// Therefore, if we have any allocations performed in S, create a new reg and delegate to it.
 void reg_heap::incremental_evaluate_from_call_(int S)
 {
     assert(is_completely_dirty(root_token));
@@ -461,13 +460,25 @@ void reg_heap::incremental_evaluate_from_call_(int S)
     assert(S > 0);
 
     while (not closure_stack.back().exp.head().is_index_var() and
-	   closure_stack.back().exp.head().type() != let2_type and
 	   not is_WHNF(closure_stack.back().exp))
     {
 #ifndef NDEBUG
 	assert(not closure_stack.back().exp.head().is_a<Trim>());
 	assert(closure_stack.back().exp.type() != parameter_type);
 #endif
+
+	// If any allocations have been performed by any of the steps merged into S
+	// then don't merge any children into S.
+	if (not steps[S].created_regs.empty())
+	{
+	    int r2 = allocate();
+	    assert(not has_step(r2));
+	    mark_reg_created_by_step(r2,S);
+	    total_reg_allocations++;
+	    set_C(r2, std::move(closure_stack.back()));
+	    closure_stack.back() = closure(index_var(0),{r2});
+	    return;
+	}
 
 	try
 	{
@@ -493,18 +504,6 @@ void reg_heap::incremental_evaluate_from_call_(int S)
 	    e<<ee.what();
 	    throw_reg_exception(*this, root_token, closure_stack.back(), e);
 	}
-    }
-    if (closure_stack.back().exp.head().type() == let2_type)
-    {
-	// Maybe this should be a member function:
-	//   allocate_from_step(int S, closures&& C);
-	//   allocate_from_step(int S);
-	int r2 = allocate();
-	assert(not has_step(r2));
-	mark_reg_created_by_step(r2,S);
-	total_reg_allocations++;
-	set_C(r2, std::move(closure_stack.back()));
-	closure_stack.back() = closure(index_var(0),{r2});
     }
 }
 
