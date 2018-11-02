@@ -454,11 +454,13 @@ double reg_heap::get_rate_for_reg(int r)
 
 int reg_heap::step_index_for_reg(int r) const 
 {
+    assert(prog_steps[r] != 0);
     return prog_steps[r];
 }
 
 int reg_heap::result_index_for_reg(int r) const 
 {
+    assert(prog_results[r] != 0);
     return prog_results[r];
 }
 
@@ -554,7 +556,7 @@ void reg_heap::set_result_value_for_reg(int r1)
     assert(value);
 
     int rc1 = result_index_for_reg(r1);
-    if (rc1 <= 0)
+    if (rc1 < 0)
 	rc1 = add_shared_result(r1, step_index_for_reg(r1));
     assert(rc1 > 0);
     auto& RC1 = results[rc1];
@@ -683,8 +685,8 @@ int reg_heap::allocate_reg_from_step(int s, closure&& C)
 int reg_heap::allocate_reg_from_step_in_token(int s, int t)
 {
     int r = allocate_reg_from_step(s);
-    tokens[t].vm_result.add_value(r,-1);
-    tokens[t].vm_step.add_value(r,-1);
+    tokens[t].vm_result.add_value(r, non_computed_index);
+    tokens[t].vm_step.add_value(r, non_computed_index);
     return r;
 }
 
@@ -724,7 +726,7 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
     tokens[t].vm_step.add_value(R,s);
 
     assert(tokens[t].vm_result.empty());
-    tokens[t].vm_result.add_value(R,-1);
+    tokens[t].vm_result.add_value(R, non_computed_index);
 
     assert(not children_of_token(t).size());
 
@@ -936,8 +938,11 @@ void reg_heap::expand_memory(int s)
     prog_temp.resize(size());
     for(int i=old_size;i<size();i++)
     {
-	assert(prog_steps[i] == 0);
-	assert(prog_results[i] == 0);
+	prog_steps[i] = non_computed_index;
+	prog_results[i] = non_computed_index;
+
+	assert(prog_steps[i] == non_computed_index);
+	assert(prog_results[i] == non_computed_index);
 	assert(prog_temp[i] == 0);
     }
 }
@@ -1017,7 +1022,7 @@ void reg_heap::check_used_regs_in_token(int t) const
 	int r = p.first;
 	assert((prog_temp[r]&1) == 0);
 	prog_temp[r] |= 1;
-	if (is_root_token(t)) assert(p.second != -1);
+
 	// No results for constant regs
 	assert(access(r).type != reg::type_t::constant);
 	int rc = p.second;
@@ -1034,7 +1039,7 @@ void reg_heap::check_used_regs_in_token(int t) const
 	int r = p.first;
 	assert((prog_temp[r]&2) == 0);
 	prog_temp[r] |= 2;
-	if (is_root_token(t)) assert(p.second != -1);
+
 	// If the step is unshared, the result must be unshared as well: this allows us to just walk unshared results.
 	assert(prog_temp[r] == 3);
 	// No steps for constant regs
@@ -1046,7 +1051,7 @@ void reg_heap::check_used_regs_in_token(int t) const
     for(auto p: tokens[t].delta_step())
     {
 	int r_s = p.second;
-	if (r_s <= 0) continue;
+	if (r_s < 0) continue;
 	
 	for(const auto& rcp2: steps[r_s].used_inputs)
 	{
@@ -1072,7 +1077,7 @@ void reg_heap::check_used_regs_in_token(int t) const
     {
 	int r = p.first;
 	int r_r = p.second;
-	if (r_r <= 0) continue;
+	if (r_r < 0) continue;
 
 	int r_s = results[r_r].source_step;
 	int call = steps[r_s].call;
@@ -1150,6 +1155,8 @@ int reg_heap::get_shared_step(int r)
     // 2. Set the source of the computation
     steps[s].source_reg = r;
 
+    assert(s > 0);
+    
     return s;
 }
 
@@ -1164,6 +1171,8 @@ int reg_heap::add_shared_step(int r)
     // Link it in to the mapping
     prog_steps[r] = s;
 
+    assert(s > 0);
+
     return s;
 }
 
@@ -1176,6 +1185,8 @@ int reg_heap::get_shared_result(int r, int s)
     // 2. Set the source of the result
     results[rc].source_step = s;
     results[rc].source_reg = r;
+
+    assert(rc > 0);
 
     return rc;
 }
@@ -1192,6 +1203,8 @@ int reg_heap::add_shared_result(int r, int s)
 
     // Link it in to the mapping
     prog_results[r] = rc;
+
+    assert(rc > 0);
 
     return rc;
 }
@@ -1308,7 +1321,7 @@ void reg_heap::clear_step(int r)
 {
     assert(not has_result(r));
     int s = prog_steps[r];
-    prog_steps[r] = 0;
+    prog_steps[r] = non_computed_index;
   
     if (s > 0)
     {
@@ -1322,7 +1335,7 @@ void reg_heap::clear_step(int r)
 void reg_heap::clear_result(int r)
 {
     int rc = prog_results[r];
-    prog_results[r] = 0;
+    prog_results[r] = non_computed_index;
 
     if (rc > 0)
     {
@@ -1450,10 +1463,10 @@ reg_heap::reg_heap(const std::shared_ptr<module_loader>& L)
      steps(1),
      results(1),
      P(new Program(L)),
-     prog_steps(1),
-     prog_results(1),
+     prog_steps(1,non_existant_index),
+     prog_results(1, non_existant_index),
      prog_temp(1)
-{ 
+{
 }
 
 void reg_heap::release_scratch_list() const

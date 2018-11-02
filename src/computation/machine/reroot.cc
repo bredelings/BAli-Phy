@@ -31,14 +31,12 @@ void pivot_mapping(vector<int>& prog1, mapping& vm2)
 	int& s1 = prog1[r];
 	int& s2 = vm2.delta()[i].second;
 
-	// switch from root/0 => root/-
-	if (s1 == 0) s1 = -1;
+	// Check that neither value is 0
+	assert(s1 != 0);
+	assert(s2 != 0);
 
 	// switch root positions
 	std::swap(s1,s2);
-
-	// switch from root/0 => root/-
-	if (s1 == -1) s1 = 0;
     }
 }
 
@@ -209,7 +207,7 @@ void reg_heap::unshare_regs(int t)
     {
 	int s = delta_step[k].second;
 
-	if (s <= 0) continue;
+	if (s < 0) continue;
 
 	const auto& Step = steps[s];
 
@@ -252,7 +250,7 @@ void reg_heap::unshare_regs(int t)
 		if (prog_results[r2] == res2)
 		{
 		    prog_temp[r2] = 1;
-		    vm_result.add_value(r2,-1);
+		    vm_result.add_value(r2, non_computed_index);
 		}
 	    }
 
@@ -270,10 +268,10 @@ void reg_heap::unshare_regs(int t)
 		if (prog_steps[r2] == s2)
 		{
 		    if (prog_temp[r2] == 0)
-			vm_result.add_value(r2,-1);
+			vm_result.add_value(r2, non_computed_index);
 
 		    prog_temp[r2] = 3;
-		    vm_step.add_value(r2,-1);
+		    vm_step.add_value(r2, non_computed_index);
 		}
 	    }
 	}
@@ -292,10 +290,10 @@ void reg_heap::unshare_regs(int t)
 		if (prog_temp[r2] == 3) continue;
 
 		if (prog_temp[r2] == 0)
-		    vm_result.add_value(r2,-1);
+		    vm_result.add_value(r2, non_computed_index);
 
 		prog_temp[r2] = 3;
-		vm_step.add_value(r2,-1);
+		vm_step.add_value(r2, non_computed_index);
 	    }
 	}
     }

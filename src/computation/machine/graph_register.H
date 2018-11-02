@@ -78,6 +78,10 @@ struct Result
     Result(Result&&) noexcept;
 };
 
+constexpr int non_computed_index = -1;
+
+constexpr int non_existant_index = -2;
+
 class reg
 {
 public:

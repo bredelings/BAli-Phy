@@ -325,13 +325,13 @@ void unmap_unused(mapping& vm, pool<Obj>& Objs, pool<reg>& regs)
         // if there's a step mapped that is going to be destroyed, then remove the mapping.
 	if (not regs.is_marked(reg))
 	{
-	    assert(obj <= 0 or not Objs.is_marked(obj));
+	    assert(obj < 0 or not Objs.is_marked(obj));
 	    vm.erase_value_at(i);
 	}
 	else
 	{
 	    if (obj > 0 and not Objs.is_marked(obj))
-		obj = -1;
+		obj = non_computed_index;
 	    i++;
 	}
     }
@@ -343,13 +343,13 @@ void unmap_unused(vector<int>& prog, pool<Obj>& Objs, pool<reg>& regs)
     for(int r=0; r < prog.size(); r++)
     {
 	int obj = prog[r];
-	assert(obj >= 0);
+	assert(obj != 0);
 	// If there's no step/result mapped here, then there's nothing to do.
-	if (obj == 0) continue;
+	if (obj < 0) continue;
 
 	// if the step/result mapped here is going to be destroyed, then remove the mapping.
 	if (not Objs.is_marked(obj))
-	    prog[r] = 0;
+	    prog[r] = non_computed_index;
 	// if the step/result mapped here is NOT going to be destroyed, then we should know that the reg is used.
 	else
 	    assert(regs.is_marked(r));
