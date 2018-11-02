@@ -55,13 +55,13 @@ struct Result
     int value = 0;
 
     /// Does C reduce to another reg that we need to evaluate to get the true value?
-    std::pair<int,CacheList<int>::iterator> call_edge;
+    std::pair<int,int> call_edge;
   
     /// Which pairs (reg,slot) USED the reduction value of C (via an operation)?
     boost::container::small_vector<std::pair<int,int>, 2> used_by;
 
     /// Which reduction values made use of the value of this expression (via call)
-    CacheList<int> called_by;
+    boost::container::small_vector<int, 5> called_by;
 
     std::bitset<8> flags;
 

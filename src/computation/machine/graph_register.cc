@@ -573,9 +573,9 @@ void reg_heap::set_result_value_for_reg(int r1)
 
     // Add a called-by edge to R2.
     int rc2 = result_index_for_reg(call);
-    auto back_edge = results[rc2].called_by.push_back(rc1);
-    RC1.call_edge.first = rc2;
-    RC1.call_edge.second = back_edge;
+    int back_index = results[rc2].called_by.size();
+    results[rc2].called_by.push_back(rc1);
+    RC1.call_edge = {rc2, back_index};
 }
 
 void reg_heap::set_used_input(int s1, int R2)
@@ -1213,7 +1213,7 @@ void reg_heap::check_back_edges_cleared_for_step(int s)
 
 void reg_heap::check_back_edges_cleared_for_result(int rc)
 {
-    assert(null(results.access_unused(rc).call_edge.second));
+    assert(results.access_unused(rc).call_edge.second == 0);
 }
 
 void reg_heap::clear_back_edges_for_reg(int r)
@@ -1267,14 +1267,29 @@ void reg_heap::clear_back_edges_for_result(int rc)
 {
     assert(rc > 0);
     // FIXME! If there is a value, set, there should be a call_edge
-    // FIXME! Should we unmap all values with no .. value/call_edge?
+    //        Should we unmap all values with no .. value/call_edge?
     int call = results[rc].call_edge.first;
     if (call)
     {
 	assert(results[rc].value);
-	auto back_edge = results[rc].call_edge.second;
-	results[call].called_by.erase(back_edge);
-	results[rc].call_edge = {0,{}};
+
+	auto& backward = results[call].called_by;
+	int j = results[rc].call_edge.second;
+	assert(0 <= j and j < backward.size());
+
+	// Clear the forward edge
+	results[rc].call_edge = {0,0};
+
+	// Moving the last element to the hole, and adjust index of correspond forward edge.
+	if (j+1 < backward.size())
+	{
+	    backward[j] = backward.back();
+	    auto& forward2 = results[backward[j]];
+	    forward2.call_edge.second = j;
+
+	    assert(results[backward[j]].call_edge.second == j);
+	}
+	backward.pop_back();
     }
 }
 
