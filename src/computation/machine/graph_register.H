@@ -14,7 +14,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/container/small_vector.hpp>
 #include <bitset>
-#include "CacheList.H"
 #include "computation/loader.H"
 #include "util/assert.hh"
 
@@ -26,9 +25,10 @@ struct Step
 
     // NOTE: There is a space-time trade-off in the number of used_inputs here.
     //       However, small_vector< ,1> takes little or no extra space, and noticeably saves time.
+
     /// Which reg's were used to reduce this expression?
     boost::container::small_vector< std::pair<int,int>, 2 > used_inputs;
-    CacheList<int> created_regs;
+    boost::container::small_vector< int, 2 > created_regs;
 
     std::bitset<8> flags;
 
@@ -90,7 +90,7 @@ public:
 
     int n_heads = 0;
 
-    std::pair<int, CacheList<int>::iterator> created_by;
+    std::pair<int, int> created_by;
 
     void clear();
 

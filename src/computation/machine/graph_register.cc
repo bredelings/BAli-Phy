@@ -89,11 +89,6 @@ long max_version = 0;
  *    loop until no more regs (and thus computations) are being freed.
  */
 
-bool null(const CacheList<int>::iterator& i)
-{
-    return (i == CacheList<int>::iterator());
-}
-
 void Step::clear()
 {
     source_reg = -1;
@@ -210,7 +205,7 @@ void reg::check_cleared()
     assert(type == type_t::unknown);
     assert(n_heads == 0);
     assert(created_by.first == 0);
-    assert(null(created_by.second));
+    assert(created_by.second == 0);
 }
 
 void mapping::add_value(int r, int v) 
@@ -661,10 +656,12 @@ void reg_heap::mark_reg_created_by_step(int r, int s)
 {
     assert(r > 0);
     assert(s > 0);
-    steps[s].created_regs.push_front(r);
+
+    int index = steps[s].created_regs.size();
+    steps[s].created_regs.push_back(r);
     assert(access(r).created_by.first == 0);
-    assert(null(access(r).created_by.second));
-    access(r).created_by = {s,steps[s].created_regs.begin()};
+    assert(access(r).created_by.second == 0);
+    access(r).created_by = {s,index};
 }
 
 int reg_heap::allocate_reg_from_step(int s)
@@ -840,7 +837,7 @@ void reg_heap::reclaim_used(int r)
 {
     // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
     assert(not access(r).created_by.first);
-    assert(null(access(r).created_by.second));
+    assert(not access(r).created_by.second);
     assert(not has_step(r));
   
     pool<reg>::reclaim_used(r);
@@ -1207,7 +1204,7 @@ void reg_heap::check_back_edges_cleared_for_step(int s)
     {
 	auto& created_by = access(r).created_by;
 	assert(created_by.first == 0);
-	assert(null(created_by.second));
+	assert(created_by.second == 0);
     }
 }
 
@@ -1223,9 +1220,23 @@ void reg_heap::clear_back_edges_for_reg(int r)
     int s = created_by.first;
     if (s > 0)
     {
-	steps[s].created_regs.erase(created_by.second);
-	created_by.first = 0;
-	created_by.second = {};
+	auto& backward = steps[s].created_regs;
+	int j = created_by.second;
+	assert(0 <= j and j < backward.size());
+
+	// Clear the forward edge.
+	created_by = {0, 0};
+
+	// Move the last element to the hole, and adjust index of correspond forward edge.
+	if (j + 1 < backward.size())
+	{
+	    backward[j] = backward.back();
+	    auto& forward2 = access(backward[j]);
+	    forward2.created_by.second = j;
+
+	    assert(access(backward[j]).created_by.second == j);
+	}
+	backward.pop_back();
     }
 }
 
@@ -1277,10 +1288,10 @@ void reg_heap::clear_back_edges_for_result(int rc)
 	int j = results[rc].call_edge.second;
 	assert(0 <= j and j < backward.size());
 
-	// Clear the forward edge
-	results[rc].call_edge = {0,0};
+	// Clear the forward edge.
+	results[rc].call_edge = {0, 0};
 
-	// Moving the last element to the hole, and adjust index of correspond forward edge.
+	// Move the last element to the hole, and adjust index of correspond forward edge.
 	if (j+1 < backward.size())
 	{
 	    backward[j] = backward.back();
