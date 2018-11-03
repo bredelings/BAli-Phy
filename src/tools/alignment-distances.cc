@@ -65,15 +65,15 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description input("Input options");
     input.add_options()
 	("help,h", "Produce help message")
-	("skip,s",value<unsigned>()->default_value(0),"number of alignment samples to skip")
-	("max,m",value<int>()->default_value(1000),"maximum number of alignments to analyze")
+	("skip,s",value<unsigned>()->default_value(0),"Number of alignment samples to skip.")
+	("max,m",value<int>()->default_value(1000),"Maximum number of alignments to analyze.")
 	("verbose,v","Output more log messages on stderr.")
 	("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
 	;
 
     options_description analysis("Analysis options");
     analysis.add_options()
-	("distances", value<string>()->default_value("splits"),"colon-separated list of distances: pairs, splits, splits2, pairwise, recall, accuracy, nonrecall, inaccuracy")
+	("distances", value<string>()->default_value("splits:nonrecall:inaccuracy"),"Colon-separated list of distances.")
 	("analysis", value<string>()->default_value("matrix"), "Analysis: matrix, median, diameter")
 	("CI",value<double>()->default_value(0.95),"Confidence interval size.")
 	("mean", "Show mean and standard deviation")
