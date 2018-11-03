@@ -464,7 +464,7 @@ int main(int argc,char* argv[])
 		As2.load(args, As1.sequence_names(), As1.get_alphabet(), file);
 
 	    // Print out [d(true,a)| a <- As2, d <- distances]
-	    cout<<join(distance_names,"\t")<<endl;
+	    cout<<join(split(distance_names,":"),"\t")<<endl;
 	    for(int i=0; i<As2.size(); i++)
 	    {
 		vector<double> v;
