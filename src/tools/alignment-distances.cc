@@ -269,7 +269,7 @@ double homology_accuracy(const matrix<int>& M1 ,const vector< vector<int> >& CI1
 
 double homology_inaccuracy(const matrix<int>& M1 ,const vector< vector<int> >& CI1,const matrix<int>& M2, const vector< vector<int> >& CI2)
 {
-    return 1.0 - homology_accuracy(M2, CI2, M1, CI1);
+    return 1.0 - homology_accuracy(M1, CI1, M2, CI2);
 }
 
 
