@@ -20,6 +20,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <set>
+#include <vector>
 #include "tree/tree.H"
 #include "tree/tree-util.H"
 #include "alignment/load.H"
@@ -38,6 +40,8 @@ using std::cerr;
 using std::endl;
 
 using std::string;
+using std::vector;
+using std::set;
 
 
 variables_map parse_cmd_line(int argc,char* argv[]) 
@@ -86,21 +90,50 @@ int main(int argc,char* argv[])
 	if (args.count("nleaves") and args.count("tree"))
 	    throw myexception()<<"You can't specify both 'nleaves' and 'tree'!";
 
-	int N = -1;
+	std::function<void(vector<sequence>&)> chop_fn;
+
 	if (args.count("nleaves"))
-	    N = args["nleaves"].as<int>();
+	{
+	    int N = args["nleaves"].as<int>();
+	    chop_fn = [N](vector<sequence>& S)
+	    {
+		if (S.size() < N)
+		    throw myexception()<<"Trying to keep "<<N<<" leaf sequences, but only got "<<S.size()<<"!";
+
+		S.resize(N);
+	    };
+	}
 	else if (args.count("tree"))
-	    N = load_T(args).n_leaves();
+	{
+	    set<string> non_empty_leaf_labels;
+	    for(auto& leaf_label: load_T(args).get_leaf_labels())
+		if (leaf_label.empty())
+		    std::cerr<<"Warning: ignoring empty leaf label!\n";
+		else if (non_empty_leaf_labels.count(leaf_label))
+		    throw myexception()<<"Leaf label '"<<leaf_label<<"' occurs twice!";
+		else
+		    non_empty_leaf_labels.insert(leaf_label);
+
+	    chop_fn = [non_empty_leaf_labels](vector<sequence>& S)
+	    {
+		if (S.size() < non_empty_leaf_labels.size())
+		    throw myexception()<<"Trying to keep "<<non_empty_leaf_labels.size()<<" leaf sequences, but only got "<<S.size()<<"!";
+
+		vector<sequence> S2;
+		for(auto&& s: S)
+		    if (non_empty_leaf_labels.count(s.name))
+			S2.push_back(std::move(s));
+
+		std::swap(S, S2);
+	    };
+	}
 	else
 	    throw myexception()<<"Both 'n_leaves' nor 'tree' unspecified!";
 	
 	//------ Read sequences and chop off non-leaf sequences -----//
 	while (auto sequences = find_load_next_sequences(std::cin))
 	{
-	    if (sequences->size() < N)
-		throw myexception()<<"Trying to keep "<<N<<" leaf sequences, but only got "<<sequences->size()<<"!";
-
-	    sequences->resize(N);
+	    chop_fn(*sequences);
 
 	    sequence_format::write_fasta(std::cout, *sequences);
 	}
