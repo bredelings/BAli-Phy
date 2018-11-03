@@ -465,15 +465,11 @@ int main(int argc,char* argv[])
 		As2.load(args, As1.sequence_names(), As1.get_alphabet(), file);
 	    }
 
-	    Matrix D(As2.size(), distance_fns.size());
-	    for(int i=0; i<D.size1(); i++)
-		for(int j=0; j<D.size2(); j++)
-		    D(i,j) = distance_fns[j](As1.Ms[0], As1.column_indices[0], As2.Ms[i], As2.column_indices[i]);
-
-	    for(int i=0;i<D.size1();i++) {
-		vector<double> v(D.size2());
-		for(int j=0;j<v.size();j++)
-		    v[j] = D(i,j);
+	    for(int i=0; i<As2.size(); i++)
+	    {
+		vector<double> v;
+		for(auto& D: distance_fns)
+		    v.push_back( D(As1.Ms[0], As1.column_indices[0], As2.Ms[i], As2.column_indices[i]) );
 		cout<<join(v,'\t')<<endl;
 	    }
 
