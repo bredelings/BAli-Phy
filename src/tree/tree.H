@@ -650,7 +650,9 @@ std::string write(const Tree& T, const std::vector<std::string>& names, bool pri
 /// Return a Newick string representation of the Rooted tree 'T', where node names are integers.
 std::string write_no_names(const RootedTree& T, bool print_lengths=true); 
 /// Return a Newick string representation of the tree 'T', where node names are integers.
-std::string write_no_names(const Tree& T, bool print_lengths=true); 
+std::string write_no_names(const Tree& T, bool print_lengths=true);
+
+std::string escape_for_newick(const std::string& s);
 
 /// Append branches before all of the branches passed in.
 void get_branches_before(std::vector<const_branchview>& branch_list);

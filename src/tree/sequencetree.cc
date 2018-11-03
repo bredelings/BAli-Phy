@@ -215,7 +215,7 @@ string write_with_bootstrap_fraction(const vector<string>& names, const_branchvi
     }
 
     // Print the name
-    output += names[b.target()];
+    output += escape_for_newick(names[b.target()]);
 
     // print the branch length if requested
     double bfb = bf[b.undirected_name()];
@@ -247,7 +247,7 @@ string write_with_bootstrap_fraction(const RootedTree& T, const vector<string>& 
     output += ")";
 
     // Print the name
-    output += names[T.root()];
+    output += escape_for_newick(names[T.root()]);
 
     // Print the terminator
     output += ";";

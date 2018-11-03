@@ -281,7 +281,7 @@ bool get_word(string& word, int& i, vector<string>& comments,const string& s,
 	    {
 		in_word = true;
 		in_quote = true;
-		start = i+1;
+		start = i;
 		continue;
 	    }
 
@@ -312,9 +312,14 @@ bool get_word(string& word, int& i, vector<string>& comments,const string& s,
 	    {
 		if (c == '\'')
 		{
-		    word += s.substr(start, i-start);
-		    start = i+1;
-		    in_quote = false;
+		    if (i+1 < s.size() and s[i+1] == '\'')
+			i++;
+		    else
+		    {
+			word += s.substr(start, i+1-start);
+			start = i+1;
+			in_quote = false;
+		    }
 		}
 		continue;
 	    }

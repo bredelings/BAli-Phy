@@ -1,3 +1,4 @@
+#include <iostream>
 /*
   Copyright (C) 2004-2009 Benjamin Redelings
 
@@ -466,6 +467,93 @@ string get_attribute_string(const tree_attributes& attributes, const vector<stri
     return output;
 }
 
+int quoting_level_for_newick(const string& s)
+{
+    int level = 0;
+    for(auto c: s)
+    {
+	if (not isgraph(c))
+	{
+	    if (c != ' ') return 2;
+	    level = 1;
+	}
+	// Why no quotes needed for "("?
+	else if (strchr("(){}\"-]/\\,;:=*`+<>", c) != nullptr)
+	    return (s.size() > 1 ? 2 : 1);
+	else if (strchr("\'[_", c) != nullptr)
+	    return 2;
+    }
+    return level;
+}
+
+string quote_for_newick(const string& s)
+{
+    constexpr char squote = '\'';
+    string s2;
+    s2.reserve(s.size()+4);
+    s2.append(1,squote);
+    for(auto& c: s)
+    {
+	s2.append(1, c);
+	if (c == squote)
+	    s2.append(1, squote);
+    }
+    s2.append(1, squote);
+    return s2;
+}
+
+string unquote_for_newick(const string& s)
+{
+    assert(s[0] == '\'');
+    if (s.size() < 2 or s.back() != '\'')
+	throw myexception()<<"Quoted newick label \""<<s<<"\" doesn't end with single quote!";
+
+    string s2;
+    for(int i=1;i<s.size()-1;i++)
+    {
+	char c = s[i];
+	if (c == '\'' and i > 1 and s[i-1] == '\'') continue;
+	s2.append(1,c);
+    }
+    std::cerr<<"unquoted = |"<<s2<<"|\n";
+    return s2;
+}
+
+string blanks_to_underscores(const string& s)
+{
+    string s2 = s;
+    std::replace(begin(s2), end(s2), ' ', '_');
+    return s2;
+}
+
+string underscores_to_blanks(const string& s)
+{
+    string s2 = s;
+    std::replace(begin(s2), end(s2), '_', ' ');
+    return s2;
+}
+
+string escape_for_newick(const string& s)
+{
+    int level = quoting_level_for_newick(s);
+    if (level == 0)
+	return s;
+    else if (level == 1)
+	return blanks_to_underscores(s);
+    else
+	return quote_for_newick(s);
+}
+
+string unescape_from_newick(const string& s)
+{
+    if (s.empty()) return s;
+
+    if (s[0] == '\'')
+	return unquote_for_newick(s);
+    else
+	return underscores_to_blanks(s);
+}
+
 string write(const vector<string>& names, 
 	     const vector<string>& node_attribute_names, const vector<string>& undirected_branch_attribute_names,
 	     const_branchview b, bool print_lengths)
@@ -493,7 +581,7 @@ string write(const vector<string>& names,
 
     // Print the name (it might be empty)
     if (names[n].size())
-	output += "'" + names[n] + "'";
+	output += escape_for_newick(names[n]);
 
     // Print the node attributes, if any
     output += get_attribute_string(n.attributes(), node_attribute_names, "&&NHX:", ":", node_label_index);
@@ -535,7 +623,7 @@ string write(const_nodeview root, const vector<string>& names,
 
     // Print the name (it might be empty)
     if (names[root].size())
-	output += "'" + names[root] + "'";
+	output += escape_for_newick(names[root]);
 
     // Print the node attributes, if any
     output += get_attribute_string(root.attributes(), node_attribute_names, "&&NHX:", ":", node_label_index);
@@ -2033,7 +2121,7 @@ int Tree::parse_(const string& line, std::function<void(BranchNode*)> assign_nam
 		set_attributes(tags, node_attribute_names, *BN->node_attributes);
 
 		if (node_label_index)
-		    (*BN->node_attributes)[*node_label_index] = word;
+		    (*BN->node_attributes)[*node_label_index] = unescape_from_newick(word);
 
 		pos = 2;
 	    }
