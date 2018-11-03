@@ -166,7 +166,7 @@ std::vector<int> compute_mapping(const std::vector<T>& v1,const std::vector<T>& 
 	}
 	catch(bad_mapping<T>& b) {
 	    b.flip();
-	    throw b;
+	    throw;
 	}
 
     return mapping;

@@ -231,7 +231,7 @@ void alignment::load(const vector<sequence>& seqs)
 	catch (myexception& e)
 	{
 	    e.prepend("sequence #"+convertToString(i+1)+" '"+seqs[i].name+"':\n");
-	    throw e;
+	    throw;
 	}
     }
 
@@ -492,13 +492,13 @@ alignment reorder_sequences(const alignment& A, const vector<string>& names)
 	    e<<"Alignment has too few sequences! (Got "<<A.n_sequences()<<", expected "<<names.size()<<")\n";
 
 	if (e.size1 < e.size2)
-	    e<<"Alignmnent has too many sequences! (Got "<<A.n_sequences()<<", expected "<<names.size()<<")\n";
+	    e<<"Alignment has too many sequences! (Got "<<A.n_sequences()<<", expected "<<names.size()<<")\n";
 
 	if (e.from == 0)
-	    e<<"Alignment is missing sequence \""<<e.missing<<"\".";
+	    e<<"  Alignment is missing sequence \""<<e.missing<<"\".";
 	else
-	    e<<"Alignment has extra sequence \""<<e.missing<<"\".";
-	throw e;
+	    e<<"  Alignment has extra sequence \""<<e.missing<<"\".";
+	throw;
     }
 }
 

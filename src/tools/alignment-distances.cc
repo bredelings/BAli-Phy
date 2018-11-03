@@ -73,7 +73,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     options_description analysis("Analysis options");
     analysis.add_options()
-	("metric", value<string>()->default_value("splits"),"type of distance: pairs, splits, splits2, pairwise, recall, accuracy, nonrecall, inaccuracy")
+	("distances", value<string>()->default_value("splits"),"colon-separated list of distances: pairs, splits, splits2, pairwise, recall, accuracy, nonrecall, inaccuracy")
 	("analysis", value<string>()->default_value("matrix"), "Analysis: matrix, median, diameter")
 	("CI",value<double>()->default_value(0.95),"Confidence interval size.")
 	("mean", "Show mean and standard deviation")
@@ -102,7 +102,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	cout<<"Usage: alignment-distances <analysis> alignments-file1 [alignments-file2 ...]\n\n";
 	cout<<visible<<"\n";
 
-	cout<<"Metrics:\n";
+	cout<<"Distances:\n";
 	cout<<"  splits, splits2, pairwise, recall, accuracy, nonrecall, inaccuracy\n\n";
 
 	cout<<"Examples:\n\n";
@@ -380,6 +380,25 @@ matrix<double> distances(const alignment_sample& A, distance_fn distance)
     return distances(A.Ms, A.column_indices, distance);
 }
 
+distance_fn get_distance_function(const string& distance_name)
+{
+    if (distance_name == "splits")
+	return splits_distance;
+    else if (distance_name == "splits2")
+	return splits_distance2;
+    else if (distance_name == "pairwise")
+	return pairs_distance;
+    else if (distance_name == "recall")
+	return homology_recall;
+    else if (distance_name == "accuracy")
+	return homology_accuracy;
+    else if (distance_name == "nonrecall")
+	return homology_unrecalled;
+    else if (distance_name == "inaccuracy")
+	return homology_inaccuracy;
+    else
+	throw myexception()<<"I don't recognize alignment distance '"<<distance_name<<"'";
+}
 
 int main(int argc,char* argv[]) 
 { 
@@ -389,35 +408,23 @@ int main(int argc,char* argv[])
 
 	string analysis = args["analysis"].as<string>();
 
-	string metric = args["metric"].as<string>();
+	string distance_names = args["distances"].as<string>();
 
 	//--------------- filenames ---------------//
 	vector<string> files;
 	if (args.count("files"))
 	    files = args["files"].as<vector<string> >();
 
-	//--------- Determine distance function -------- //
-	distance_fn metric_fn;
+	//--------- Determine distance functions -------- //
+	vector<distance_fn> distance_fns;
+	for(auto& distance_name: split(distance_names,':'))
+	    distance_fns.push_back(get_distance_function(distance_name));
 
-	if (metric == "splits")
-	    metric_fn = splits_distance;
-	else if (metric == "splits2")
-	    metric_fn = splits_distance2;
-	else if (metric == "pairwise")
-	    metric_fn = pairs_distance;
-	else if (metric == "recall")
-	    metric_fn = homology_recall;
-	else if (metric == "accuracy")
-	    metric_fn = homology_accuracy;
-	else if (metric == "nonrecall")
-	    metric_fn = homology_unrecalled;
-	else if (metric == "inaccuracy")
-	    metric_fn = homology_inaccuracy;
-	else
-	    throw myexception()<<"I don't recognize alignment metric '"<<metric<<"'";
+	if (distance_names.empty())
+	    throw myexception()<<"No distance functions provided!";
 
-	//---------- write out distance matrix --------- //
-	if (analysis == "matrix") 
+        //---------- write out distance matrix --------- //
+	if (analysis == "AxA") 
 	{
 	    check_supplied_filenames(1,files,false);
 
@@ -429,7 +436,7 @@ int main(int argc,char* argv[])
 		As.load(args,file);
 	    }
 
-	    matrix<double> D = distances(As.Ms, As.column_indices, metric_fn);
+	    matrix<double> D = distances(As.Ms, As.column_indices, distance_fns[0]);
 
 	    for(int i=0;i<D.size1();i++) {
 		vector<double> v(D.size2());
@@ -441,13 +448,15 @@ int main(int argc,char* argv[])
 	    exit(0);
 	}
 	//---------- write out distance matrix --------- //
-	else if (analysis == "sequence") 
+	else if (analysis == "score") 
 	{
 	    check_supplied_filenames(2,files,false);
 
 	    alignment_sample As1;
 	    As1.load(args,files.front());
 	    files.erase(files.begin());
+
+	    if (As1.size() != 1) throw myexception()<<"The second file should only contain one alignment!";
 
 	    alignment_sample As2;
 	    for(auto& file: files)
@@ -456,10 +465,10 @@ int main(int argc,char* argv[])
 		As2.load(args, As1.sequence_names(), As1.get_alphabet(), file);
 	    }
 
-	    Matrix D(As2.size(), As1.size());
+	    Matrix D(As2.size(), distance_fns.size());
 	    for(int i=0; i<D.size1(); i++)
 		for(int j=0; j<D.size2(); j++)
-		    D(i,j) = metric_fn(As1.Ms[j], As1.column_indices[j], As2.Ms[i], As2.column_indices[i]);
+		    D(i,j) = distance_fns[j](As1.Ms[0], As1.column_indices[0], As2.Ms[i], As2.column_indices[i]);
 
 	    for(int i=0;i<D.size1();i++) {
 		vector<double> v(D.size2());
@@ -470,15 +479,15 @@ int main(int argc,char* argv[])
 
 	    exit(0);
 	}
-	else if (analysis == "accuracy-matrix") 
+	else if (analysis == "NxN") 
 	{
 	    check_supplied_filenames(2,files,false);
 
-	    alignment_sample As(args, files[0]);
+	    alignment_sample A(args, files[0]);
 
-	    alignment_sample A({}, As.sequence_names(), As.get_alphabet(), files[1]);
+	    if (A.size() != 1) throw myexception()<<"The first file should only contain one alignment!";
 
-	    if (A.size() != 1) throw myexception()<<"The second file should only contain one alignment!";
+	    alignment_sample As(args, A.sequence_names(), A.get_alphabet(), files[1]);
 
 	    std::cerr<<"Averaging over "<<As.size()<<" sampled alignments.\n";
 
@@ -488,9 +497,9 @@ int main(int argc,char* argv[])
 	    for(int i=0;i<As.size();i++) 
 	    {
 		if (i == 0)
-		    D = pairwise_alignment_distances(As.Ms[i], As.column_indices[i], A.Ms[0], A.column_indices[0]);
+		    D = pairwise_alignment_distances(A.Ms[0], A.column_indices[0], As.Ms[i], As.column_indices[i]);
 		else
-		    D += pairwise_alignment_distances(As.Ms[i], As.column_indices[i], A.Ms[0], A.column_indices[0]);
+		    D += pairwise_alignment_distances(A.Ms[0], A.column_indices[0], As.Ms[i], As.column_indices[i]);
 	    }
       
 	    D /= As.size();
@@ -514,7 +523,7 @@ int main(int argc,char* argv[])
 	    both.load(args, files[1]);
 	    int N2 = both.size() - N1;
 
-	    matrix<double> D  = distances(both,metric_fn);
+	    matrix<double> D  = distances(both,distance_fns[0]);
 
 	    report_compare(args, D, N1, N2);
 	}
@@ -524,7 +533,7 @@ int main(int argc,char* argv[])
 
 	    alignment_sample As(args, files[0]);
 
-	    matrix<double> D = distances(As, metric_fn);
+	    matrix<double> D = distances(As, distance_fns[0]);
 
 	    //----------- accumulate distances ------------- //
 	    vector<double> ave_distances( As.size() , 0);
@@ -570,7 +579,7 @@ int main(int argc,char* argv[])
 
 	    alignment_sample As(args, files[0]);
 
-	    matrix<double> D = distances(As, metric_fn);
+	    matrix<double> D = distances(As, distance_fns[0]);
 
 	    diameter(D,"1",args);
 	}
@@ -578,7 +587,7 @@ int main(int argc,char* argv[])
 	{
 	    alignment_sample As(args, files[0]);
 
-	    matrix<double> D = distances(As, metric_fn);
+	    matrix<double> D = distances(As, distance_fns[0]);
 
 	    //----------- accumulate distances ------------- //
 	    vector<double> ave_distances( As.size() , 0);

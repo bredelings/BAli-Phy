@@ -264,7 +264,7 @@ void load_more(list<T>& Ts,
     catch (std::exception& e) {
 	thin_down_to(Ts, max);
 
-	throw e;
+	throw;
     }
     thin_down_to(Ts, max);
 }
@@ -279,7 +279,7 @@ void load_more_alignments(list<alignment>& alignments, istream& ifile, const vec
     }
     // If we had a problem reading elements, still do the thinning.
     catch (std::exception& e) {
-	if (alignments.empty()) throw e;
+	if (alignments.empty()) throw;
 
 	cerr<<"Warning: Error loading alignments, Ignoring unread alignments."<<endl;
 	cerr<<"  Exception: "<<e.what()<<endl;
