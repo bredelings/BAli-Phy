@@ -73,7 +73,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     options_description analysis("Analysis options");
     analysis.add_options()
-	("distances", value<string>()->default_value("splits:nonrecall:inaccuracy"),"Colon-separated list of distances.")
+	("distances", value<string>()->default_value("splits:splits2:nonrecall:inaccuracy"),"Colon-separated list of distances.")
 	("analysis", value<string>()->default_value("matrix"), "Analysis: matrix, median, diameter")
 	("CI",value<double>()->default_value(0.95),"Confidence interval size.")
 	("mean", "Show mean and standard deviation")
@@ -452,19 +452,19 @@ int main(int argc,char* argv[])
 	{
 	    check_supplied_filenames(2,files,false);
 
+	    // Load the true alignment to compare against
 	    alignment_sample As1;
 	    As1.load(args,files.front());
 	    files.erase(files.begin());
-
 	    if (As1.size() != 1) throw myexception()<<"The second file should only contain one alignment!";
 
+	    // Load the alignments to score
 	    alignment_sample As2;
 	    for(auto& file: files)
-	    {
-		// FIXME: handline std::cin like trees-distances.
 		As2.load(args, As1.sequence_names(), As1.get_alphabet(), file);
-	    }
 
+	    // Print out [d(true,a)| a <- As2, d <- distances]
+	    cout<<join(distance_names,"\t")<<endl;
 	    for(int i=0; i<As2.size(); i++)
 	    {
 		vector<double> v;
