@@ -234,7 +234,7 @@ ptree parse(const string& s)
 	    if (i+1 < terms.size())
 		eterm = eterm + "+";
 	    e.prepend("Parsing '"+eterm+"': ");
-	    throw e;
+	    throw;
 	}
     }
 

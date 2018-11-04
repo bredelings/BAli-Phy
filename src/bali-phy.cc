@@ -140,7 +140,7 @@ void set_initial_parameter_values(Model& M, const variables_map& args)
 	    std::ostringstream o;
 	    o<<"Setting parameter '"<<name<<"': ";
 	    e.prepend(o.str());
-	    throw e;
+	    throw;
 	}
 
 	auto p_index = M.maybe_find_parameter(name);

@@ -100,7 +100,7 @@ const closure& context::lazy_evaluate_expression_(closure&& C, bool ec) const
     catch (myexception& e)
     {
 	pop_temp_head();
-	throw e;
+	throw;
     }
 }
 

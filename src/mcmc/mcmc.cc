@@ -198,7 +198,7 @@ namespace MCMC {
 	    o<<" move = "<<name<<"\n";
 	    o<<"   submove = "<<moves[order[i]]->name<<"\n";
 	    e.prepend(o.str());
-	    throw e;
+	    throw;
 	}
     }
 
@@ -317,7 +317,7 @@ namespace MCMC {
 	    std::ostringstream o;
 	    o<<" [single] move = "<<name<<"\n";
 	    e.prepend(o.str());
-	    throw e;
+	    throw;
 	}
     }
 
@@ -344,7 +344,7 @@ namespace MCMC {
 	    std::ostringstream o;
 	    o<<" [MH] move = "<<name<<"  (during proposal)\n";
 	    e.prepend(o.str());
-	    throw e;
+	    throw;
 	}
     
 
@@ -838,7 +838,7 @@ namespace MCMC {
 	    std::ostringstream o;
 	    o<<" [single] move = "<<name<<"\n";
 	    e.prepend(o.str());
-	    throw e;
+	    throw;
 	}
     }
     

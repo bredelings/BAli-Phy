@@ -58,7 +58,7 @@ string module_loader::find_module(const string& modid) const
     catch (myexception& e)
     {
 	e.prepend("Loading module '"+modid+"': ");
-	throw e;
+	throw;
     }
 }
 
@@ -111,7 +111,7 @@ Module module_loader::load_module_from_file(const string& filename) const
 	catch (myexception& e)
 	{
 	    e.prepend("Loading module from file '"+filename+"':\n  ");
-	    throw e;
+	    throw;
 	}
     }
 

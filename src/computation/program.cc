@@ -167,7 +167,7 @@ void Program::compile(int i)
 	std::ostringstream o;
 	o<<"In module '"<<M.name<<"': ";
 	e.prepend(o.str());
-	throw e;
+	throw;
     }
 }
 

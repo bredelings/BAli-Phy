@@ -420,7 +420,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 	    }
 	    catch (error_exception& e)
 	    {
-		throw e;
+		throw;
 	    }
 	    catch (myexception& e)
 	    {
@@ -488,7 +488,7 @@ void reg_heap::incremental_evaluate_from_call_(int S)
 	}
 	catch (error_exception& e)
 	{
-	    throw e;
+	    throw;
 	}
 	catch (myexception& e)
 	{
@@ -637,7 +637,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
 	    }
 	    catch (error_exception& e)
 	    {
-		throw e;
+		throw;
 	    }
 	    catch (myexception& e)
 	    {

@@ -37,7 +37,7 @@ alignment load_alignment(const string& filename,const string& alph_name)
     catch (myexception& e)
     {
 	e.prepend("In file '"+filename+"': ");
-	throw e;
+	throw;
     }
   
     int n_empty = remove_empty_columns(A);
