@@ -1,6 +1,6 @@
 # The `--set` command:
 
---set <key>=<value>                         Initialize parameter value.
+--set <key>=<value>                         Set configuration value.
 
 Pass a key-value pair into BAli-Phy.  The <value> is a json value.
 
@@ -20,3 +20,7 @@ Pass a key-value pair into BAli-Phy.  The <value> is a json value.
 
    # Disallow site-compression (default: true)
    bali-phy dna.fasta -I none --set site-compression=false
+
+# See:
+
+   initial-value
