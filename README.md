@@ -61,7 +61,7 @@ cd BAli-Phy/
 git submodule update --init   # This is optional, it allows running the testiphy testsuite
 
 meson build --prefix=$HOME/Applications/bali-phy
-ninja -C install
+ninja -C build
 ninja -C test
 ```
 
