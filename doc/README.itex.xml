@@ -1308,8 +1308,14 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       
     <section xml:id="doublet_models">
       <info><title>Doublet models (RNA stems)</title></info>
-      <para>The doublets alphabet consists of RNA dinucleotides.  It is used to model RNA stems, where two nucleotides matched in the RNA second structure are highly correlated.</para>
-      <para>The default substitution model for doublets tn93_sym+x2_sym+f.</para>
+      <para>The doublets alphabet consists of 16 RNA dinucleotides.  It is used to model RNA stems, where two nucleotides matched in the RNA second structure are highly correlated.</para>
+      <para>The default substitution model for doublets is <userinput>tn93_sym+x2_sym+f</userinput>.</para>
+      <section xml:id="doublet-data">
+	<info><title>Doublet data</title></info>
+	<para>As of version 3.4, BAli-Phy does not yet allow specifying which nucleotides are paired either with a string like <userinput>((.))</userinput> or with a "pairs" file.  Instead you must manually extract the paired nucleotides and put them in their own (for stems), and then manually extract each loop and put it in its own partition.</para>
+	<para>The stems should be arranged so that paired nucleotides are adjacent. For example, suppose the sequence <userinput>AGGCT</userinput> was paired according to <userinput>((.))</userinput>.  Then the input file for the stems should contain a sequence of doublets that looks like <userinput>ATGC</userinput>, where <userinput>AT</userinput> is the first pair, and <userinput>GC</userinput> is the second pair.  Later versions of the software should allow extracting stems and loops from nucleotide sequences using parenthesis notation or a "pairs" file.
+	</para>
+      </section>
       <section>
 	<info><title>Substitution rates</title></info>
       <informaltable>
@@ -1341,6 +1347,18 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
+	      <entry><userinput><replaceable>RNA.m16a</replaceable></userinput></entry>
+	      <entry>19</entry>
+	      <entry>
+		<para>This model has separate frequencies for each dinucleotide, and distinguishes between transitions and transversion between match states (including GU/UG).</para>
+		<para>Simultaneous changes of both letters <emphasis>are</emphasis> are allowed, but only between match states.</para>
+	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.ncbi.nlm.nih.gov/pubmed/11139520">
+		(Savill, N. et al 2001)
+	      </link>
+	      </entry>
+	    </row>
+
+	    <row>
 	      <entry><userinput>x2x2[q1,q2]</userinput></entry>
 	      <entry>df(q1)+df(q2)</entry>
 	      <entry><para>Doublet rate matrix constructed from a nucleotide rate matrix for each doublet position.</para>
@@ -1350,6 +1368,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      <entry><userinput>gtr</userinput></entry>
 	      <entry>134</entry>
 	      <entry><para>Unequal exchangeabilities, unequal frequencies.</para>
+	      <para>It is unlikely that you would want to use this model, since it has so many parameters.</para>
 	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.damtp.cam.ac.uk/user/st321/CV_&amp;_Publications_files/STpapers-pdf/T86.pdf">
 		(Tavare, 1986)
 	      </link>
@@ -1391,27 +1410,30 @@ hky85_sym+x2_sym+f[pi=List[Pair["AA",0.01],Pair["AC",0.01],Pair["AG",0.01],Pair[
 	      <entry>Equal frequencies on dinucleotides</entry>
 	    </row>
 
-	    <!-- row>
+	    <!-- row>  Maybe this should take (i) one set of nuc frequencies, and (ii) one set of fitness parameters?
 	      <entry><userinput>f1x4</userinput></entry>
 	      <entry>3</entry>
-	      <entry>Constructs triplet frequencies from independent nucleotide frequencies.</entry>
+	      <entry>Constructs doublet frequencies from independent nucleotide frequencies.</entry>
 	    </row -->
 
-	    <row>
+	    <!-- row>
 	      <entry><userinput>f2x4</userinput></entry>
 	      <entry>6</entry>
-	      <entry>Constructs triplet frequencies from independent nucleotide frequencies for each codon position.</entry>
-	    </row>
+	      <entry>Constructs doublet frequencies from independent nucleotide frequencies for each doublet position.</entry>
+	    </row -->
 	    
 	  </tbody>
 	</tgroup>
       </informaltable>
     </section>
 
+    <section xml:id="doublet-branch-lengths">
+      <info><title>Branch lengths</title></info>
       <para>BAli-Phy interprets branch lengths for doublet models as 1/2 the number of substitutions per doublet.  Thus, they should be comparable to branch lengths under DNA/RNA nucleotide models.</para>
+    </section>
       
 
-    </section>
+  </section>
 
     <section xml:id="triplet_models">
       <info><title>Triplet models</title></info>

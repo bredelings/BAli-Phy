@@ -17,3 +17,6 @@ x2_sym a s = singlet_to_doublet_rates a s s
 x2 q a = x2x2 q q a
 
 builtin rna_stem_16a_exchange 6 "rna_16a_exchange" "SModel"
+
+rna_stem_16a a aS aD b g e pi = gtr a (rna_stem_16a_exchange a aS aD b g e) pi
+
