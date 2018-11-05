@@ -998,12 +998,13 @@ yy::parser::symbol_type make_string(const yy::parser::location_type& loc);
 
 #line 1000 "lexer.cc"
 #define YY_NO_INPUT 1
+#define YY_NO_UNISTD_H 1
 
 #line 113 "lexer.l"
   // Code run each time a pattern is matched.
   # define YY_USER_ACTION  loc.columns (yyleng);
-#line 1006 "lexer.cc"
 #line 1007 "lexer.cc"
+#line 1008 "lexer.cc"
 
 #define INITIAL 0
 #define layout 1
@@ -1311,7 +1312,7 @@ YY_DECL
   loc.step ();
 
 
-#line 1315 "lexer.cc"
+#line 1316 "lexer.cc"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1682,7 +1683,7 @@ YY_RULE_SETUP
 #line 220 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 1686 "lexer.cc"
+#line 1687 "lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
