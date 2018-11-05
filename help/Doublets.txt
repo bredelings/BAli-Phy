@@ -1,0 +1,21 @@
+# The `Doublets` alphabet:
+
+Doublets[nucleotide]
+
+The `Doublets` alphabet is used for paired RNA stems.  The
+alignment of Doublets partitions cannot be estimated.  It is
+possible to estimate the alignment of loop regions while holding
+the alignment of stems constant.  This makes sense, since RNA
+stems are often more conserved than loops.
+
+The nucleotides argument can be `DNA`, `RNA`, or missing.  If it
+is missing, DNA or RNA is guessed based on frequency of
+A,T,G,U, and C in the file.
+
+# Examples:
+
+   Doublets
+   
+   Doublets[RNA]
+   
+   Doublets[DNA]
