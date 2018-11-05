@@ -1,7 +1,8 @@
 UNRELEASED
  - Models
-   + Add models x2, x2_sym, x2x2 for RNA stems.
    - Add Doublet alphabet for RNA stems.
+   + Add models x2, x2_sym, x2x2 for RNA stems.
+   + Add RNA.m16a model for RNA stems.
  - Fixes
    - "--" should not become a single long dash (en-dash) in man pages.
    - Don't crash if --scale is set to a constant (e.g. --scale=1).
@@ -13,7 +14,8 @@ UNRELEASED
    - Allow writing alignments every iteration.
    - alignment-thin: clean up options and man page.
    - tree-tool: add scaling, pruning, computing diameter, etc.
-   - alignment-distances: new tool, add metrics.
+   - alignment-distances: new tool, add accuracy and recall metrics.
+   - Properly translate newick labels with quotes or _.
  - Haskell
    - Implement -X NoImplicitPrelude
    - Refactored functions out of Prelude into Data.List, etc.
@@ -26,6 +28,7 @@ UNRELEASED
    - Implement running a module with --run-module
    - Encode strings as (listFromString String)
    - Add flags for dumping parsed, renamed, desugared, etc. code.
+   - Implement quot, rem, div, mod.
    - [FIX] float let out of let if it reveals a constant.
 
 * 3.3 (Aug 6, 2018)
