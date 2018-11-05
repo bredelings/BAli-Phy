@@ -62,6 +62,17 @@ class shared_items
     // unique items
     std::vector<T> items;
 
+    void compute_partitions_for_item()
+    {
+	partitions_for_item.clear();
+	partitions_for_item.resize(items.size());
+
+	for(int i=0;i<n_partitions();i++)
+	    if (auto item = item_for_partition[i])
+		partitions_for_item[*item].push_back(i);
+    }
+
+
 public:
 
     // from partition -> item
@@ -80,21 +91,33 @@ public:
     const T& operator[](int i) const {return items[*item_for_partition[i]];}
     T& operator[](int i)       {return items[*item_for_partition[i]];}
 
+    void remove_nth_item(int i)
+    {
+	// Remove the item
+	items.erase(items.begin()+i);
+
+	// Update item indices for each partition
+	for(auto& item: item_for_partition)
+	    if (item)
+	    {
+		if (*item == i)
+		    item = boost::none;
+		else if (*item > i)
+		    (*item)--;
+	    }
+
+	compute_partitions_for_item();
+    }
+
     int n_partitions_for_item(int i) const {return partitions_for_item[i].size();}
 
-    const std::vector<T> get_items() const {return items;}
+    const std::vector<T>& get_items() const {return items;}
 
     shared_items(const std::vector<T>& v1, const std::vector<boost::optional<int>>& v2)
 	:items(v1),
-	 item_for_partition(v2),
-	 partitions_for_item(items.size())
+	 item_for_partition(v2)
 	{
-	    for(int i=0;i<n_partitions();i++)
-	    {
-		auto item = item_for_partition[i];
-		if (item)
-		    partitions_for_item[*item].push_back(i);
-	    }
+	    compute_partitions_for_item();
 	}
 };
 

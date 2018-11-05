@@ -401,6 +401,30 @@ alignment unalign_A(const alignment& A)
     return get_alignment(unaligned_matrix(L),A);
 }
 
+bool needs_constant_alignment(const alphabet& a)
+{
+    if (dynamic_cast<const Doublets*>(&a)) return true;
+    if (dynamic_cast<const Numeric*>(&a))  return true;
+
+    return false;
+}
+
+bool can_share_imodel(const alphabet& a1, const alphabet& a2)
+{
+    if (needs_constant_alignment(a1) != needs_constant_alignment(a2)) return false;
+
+    if (a1.width() != a2.width()) return false;
+
+    if (dynamic_cast<const Nucleotides*>(&a1)) return bool(dynamic_cast<const Nucleotides*>(&a2));
+
+    if (dynamic_cast<const Doublets*>(&a1))    return bool(dynamic_cast<const Doublets*>(&a2));
+
+    if (dynamic_cast<const Triplets*>(&a1))    return bool(dynamic_cast<const Triplets*>(&a2));
+
+    if (dynamic_cast<const AminoAcids*>(&a1))  return bool(dynamic_cast<const AminoAcids*>(&a2));
+
+    return a1.name == a2.name;
+}
 
 owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,
 				      ostream& out_cache, ostream& out_screen, ostream& out_both, json& info,
@@ -409,14 +433,6 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     //------ Determine number of partitions ------//
     vector<string> filenames = args["align"].as<vector<string> >();
     const int n_partitions = filenames.size();
-
-    //-------------Choose an indel model--------------//
-    auto imodel_names_mapping = get_mapping(args, "imodel", n_partitions);
-    auto& imodel_mapping = imodel_names_mapping.item_for_partition;
-
-    for(int i=0;i<imodel_names_mapping.n_unique_items();i++)
-	if (imodel_names_mapping.unique(i) == "")
-	    imodel_names_mapping.unique(i) = "rs07";
 
     //------------- Get smodel names -------------------
     auto smodel_names_mapping = get_mapping(args, "smodel", n_partitions);
@@ -575,17 +591,50 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     sanitize_branch_lengths(T);
 
     //--------- Set up indel model --------//
+    auto imodel_names_mapping = get_mapping(args, "imodel", n_partitions);
+    auto& imodel_mapping = imodel_names_mapping.item_for_partition;
 
     //-- Check that we're not estimating the alignment for things that aren't sequences --//
-    for(int i=0;i<imodel_names_mapping.n_unique_items();i++)
+    for(int i = imodel_names_mapping.n_unique_items() - 1; i >= 0; i--)
     {
-	for(int j:imodel_names_mapping.partitions_for_item[i])
+	auto& value = imodel_names_mapping.unique(i);
+
+	// Maybe complain based on needs_constant_alignment(a)
+
+        // Check that all partitions with the same indel model have compatible alphabets
+
+	bool need_constant_a = false;
+	optional<int> j0;
+	for(int j: imodel_names_mapping.partitions_for_item[i])
 	{
 	    auto& a = A[j].get_alphabet();
-	    if (dynamic_cast<const Doublets*>(&a) or dynamic_cast<const Numeric*>(&a))
+
+	    if (not j0) j0 = j;
+
+	    if (value.empty() and needs_constant_alignment(A[*j0].get_alphabet()) != needs_constant_alignment(a))
+		throw myexception()<<"Can't guess shared indel model for incompatible partitions "<<*j0+1<<" ("<<A[*j0].get_alphabet().name<<") and "<<j+1<<" ("<<a.name<<").\n";
+
+	    if (not can_share_imodel(A[*j0].get_alphabet(), a))
+		std::cerr<<"Warning! Linking indel model '"<<value<<"' for partition "<<*j0+1<<" ("<<A[*j0].get_alphabet().name<<") and partition "<<j+1<<" ("<<a.name<<") -- is this right?\n";
+
+	    if (needs_constant_alignment(a))
 	    {
-		throw myexception()<<"Data of type '"<<a.name<<"' requires a constant alignment in partition "<<j+1;
+		if (not value.empty())
+		    throw myexception()<<"Data of type '"<<a.name<<"' requires a constant alignment in partition "<<j+1<<", but got indel model '"<<value<<"'";
+		need_constant_a = true;
 	    }
+	}
+
+	// Choose default indel model based on needs_constant_alignment(a)
+	if (value == "")
+	{
+	    if (need_constant_a)
+	    {
+		imodel_names_mapping.remove_nth_item(i);
+		break;
+	    }
+	    else
+		value = "rs07";
 	}
     }
     auto full_imodels = get_imodels(R, imodel_names_mapping, T);
