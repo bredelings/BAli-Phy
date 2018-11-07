@@ -454,13 +454,13 @@ double reg_heap::get_rate_for_reg(int r)
 
 int reg_heap::step_index_for_reg(int r) const 
 {
-    assert(prog_steps[r] != 0);
+    assert(prog_steps[r] > 0);
     return prog_steps[r];
 }
 
 int reg_heap::result_index_for_reg(int r) const 
 {
-    assert(prog_results[r] != 0);
+    assert(prog_results[r] > 0);
     return prog_results[r];
 }
 
