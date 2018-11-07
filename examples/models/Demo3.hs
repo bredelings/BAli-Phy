@@ -6,7 +6,6 @@ main = do
 
   i <- sample $ bernoulli 0.5
   y <- sample $ normal 0.0 1.0
-  z <- sample $ exponential 0.1
-  let x = if (i==1) then y else z
-  return (Nothing,[ ("x",(Just x,[])) ])
+  let x = if (i==1) then y else 0.0
+  return (Nothing,[ ("i",(Just i,[])), ("x",(Just x,[])) ])
 
