@@ -57,12 +57,10 @@ Build BAli-Phy
 --------------
 ```
 git clone https://github.com/bredelings/BAli-Phy.git
-cd BAli-Phy/
-git submodule update --init   # This is optional, it allows running the testiphy testsuite
-
+cd BAli-Phy
 meson build --prefix=$HOME/Applications/bali-phy
-ninja -C build
-ninja -C test
+ninja -C build install
+ninja -C build test
 ```
 
 Adding bali-phy to your `$PATH`
