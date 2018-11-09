@@ -1136,6 +1136,11 @@ namespace MCMC {
 		if (iterations == 5)
 		    start_learning(100);
 	    }
+	    else
+	    {
+		if (iterations == 0)
+		    start_learning(100);
+	    }
 
 	    // Stop learning step sizes at iteration 500
 	    if (iterations == 500)
