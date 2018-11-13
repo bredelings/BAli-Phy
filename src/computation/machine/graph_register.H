@@ -421,11 +421,11 @@ public:
     int set_head(int index, closure&& C);
 
     /// Allocate a reg in context t and put it on the top of the head stack.
-    int allocate_head();
+    int allocate_head(closure&& C);
 
     /// Allocate a reg in context t and put it on the top of the temporary-head stack.
     int push_temp_head();
-    int push_temp_head(int r);
+    int push_temp_head(closure&& C);
 
     /// Deallocate the temporary head on the top of the temporary-head stack.
     void pop_temp_head();

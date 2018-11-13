@@ -899,13 +899,17 @@ int reg_heap::set_head(int index, closure&& C)
     set_head(index, R);
 
     set_C(R, std::move(C) );
+
+    return R;
 }
 
-int reg_heap::allocate_head()
+int reg_heap::allocate_head(closure&& C)
 {
     int R = allocate();
 
     heads.push_back(R);
+
+    set_C(R, std::move(C));
 
     return R;
 }
@@ -919,9 +923,11 @@ int reg_heap::push_temp_head()
     return R;
 }
 
-int reg_heap::push_temp_head(int R)
+int reg_heap::push_temp_head(closure&& C)
 {
-    temp.push_back(R);
+    int R = push_temp_head();
+
+    set_C(R, std::move(C));
 
     return R;
 }

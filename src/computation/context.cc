@@ -37,8 +37,6 @@ std::map<std::string, int>& context::identifiers() const {return memory()->get_i
 
 const closure& context::operator[](int i) const {return (*memory())[i];}
 
-void context::set_C(int R, closure&& c) const {memory()->set_C(R,std::move(c));}
-
 closure context::preprocess(const closure& C) const
 {
     return memory()->preprocess(C);
@@ -85,17 +83,16 @@ const expression_ref& context::perform(int index, bool ec) const
 const closure& context::lazy_evaluate_expression_(closure&& C, bool ec) const
 {
     try {
-	int R = push_temp_head();
-	set_C(R, std::move(C) );
+	int R = memory()->push_temp_head( std::move(C) );
 
 	const closure& result = ec?memory()->lazy_evaluate(R, context_index) : memory()->lazy_evaluate_unchangeable(R);
     
-	pop_temp_head();
+	memory()->pop_temp_head();
 	return result;
     }
     catch (myexception& e)
     {
-	pop_temp_head();
+	memory()->pop_temp_head();
 	throw;
     }
 }
@@ -331,9 +328,7 @@ int context::add_compute_expression(const expression_ref& E)
 /// Add an expression that may be replaced by its reduced form
 int context::add_compute_expression_(closure&& C)
 {
-    int R = memory()->allocate_head();
-
-    set_C( R, std::move(C) );
+    memory()->allocate_head(std::move(C));
 
     return heads().size() - 1;
 }
@@ -359,11 +354,6 @@ expression_ref context::get_expression(int i) const
 {
     int H = heads()[i];
     return reg_var(H);
-}
-
-void context::pop_temp_head() const
-{
-    memory()->pop_temp_head();
 }
 
 void context::compile()
@@ -445,7 +435,7 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
 
 	    // load the body into the machine
 	    assert(R != -1);
-	    set_C(R, preprocess(body) );
+	    memory()->set_C(R, preprocess(body) );
 	}
     }
 }
@@ -509,11 +499,6 @@ context::context(const context& C)
 context::~context()
 {
     memory_->release_context(context_index);
-}
-
-int context::push_temp_head() const
-{
-    return memory()->push_temp_head();
 }
 
 int context::get_parameter_reg(int index) const

@@ -36,8 +36,6 @@ class context
     std::map<std::string, int>& identifiers() const;
 
 private:
-    int push_temp_head() const;
-    void pop_temp_head() const;
 
     closure preprocess(const closure& C) const;
 
@@ -192,9 +190,8 @@ public:
     int add_probability_factor(const expression_ref& E);
 
 protected:  
-    void set_C(int R, closure&& c) const;
-
     void collect_garbage() const;
+
 public:
     void show_graph() const;
   
