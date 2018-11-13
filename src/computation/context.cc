@@ -39,8 +39,6 @@ const closure& context::operator[](int i) const {return (*memory())[i];}
 
 void context::set_C(int R, closure&& c) const {memory()->set_C(R,std::move(c));}
 
-int context::allocate() const {return memory()->allocate();}
-
 closure context::preprocess(const closure& C) const
 {
     return memory()->preprocess(C);
@@ -349,11 +347,7 @@ void context::set_compute_expression(int i, const expression_ref& E)
 /// Change the i-th compute expression to e
 void context::set_compute_expression_(int i, closure&& C)
 {
-    int R = allocate();
-
-    memory()->set_head(i, R);
-
-    set_C( R, std::move(C) );
+    memory()->set_head(i,std::move(C));
 }
 
 int context::n_expressions() const

@@ -418,6 +418,7 @@ public:
 
     /// Make heads[index] point to r
     int set_head(int index, int r);
+    int set_head(int index, closure&& C);
 
     /// Allocate a reg in context t and put it on the top of the head stack.
     int allocate_head();

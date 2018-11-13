@@ -892,6 +892,15 @@ int reg_heap::set_head(int index, int R2)
     return R1;
 }
 
+int reg_heap::set_head(int index, closure&& C)
+{
+    int R = allocate();
+
+    set_head(index, R);
+
+    set_C(R, std::move(C) );
+}
+
 int reg_heap::allocate_head()
 {
     int R = allocate();

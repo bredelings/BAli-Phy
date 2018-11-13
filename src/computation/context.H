@@ -193,7 +193,6 @@ public:
 
 protected:  
     void set_C(int R, closure&& c) const;
-    int allocate() const;
 
     void collect_garbage() const;
 public:
