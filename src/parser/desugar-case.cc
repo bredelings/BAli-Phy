@@ -160,9 +160,9 @@ failable_expression desugar_state::match_constant(const vector<expression_ref>& 
     const int N = x.size();
     const int M = equations.size();
 
-#ifndef NDEBUG
     assert(N > 0);
     assert(M > 0);
+#ifndef NDEBUG
     assert(equations[0].patterns.size());
     for(auto& eqn:equations)
 	assert(not is_var(eqn.patterns[0]));
@@ -266,9 +266,9 @@ failable_expression desugar_state::match_var(const vector<expression_ref>& x, co
     const int N = x.size();
     const int M = equations.size();
 
-#ifndef NDEBUG
     assert(N > 0);
     assert(M > 0);
+#ifndef NDEBUG
     assert(equations[0].patterns.size());
     for(auto& eqn:equations)
 	assert(is_var(eqn.patterns[0]));
