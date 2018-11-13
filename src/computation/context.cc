@@ -35,9 +35,7 @@ std::vector<std::pair<std::string,int>>& context::parameters() const {return mem
 
 std::map<std::string, int>& context::identifiers() const {return memory()->get_identifiers();}
 
-reg& context::access(int i) const {return memory()->access(i);}
-
-reg& context::operator[](int i) const {return memory()->access(i);}
+const closure& context::operator[](int i) const {return (*memory())[i];}
 
 void context::set_C(int R, closure&& c) const {memory()->set_C(R,std::move(c));}
 
@@ -540,7 +538,7 @@ int context::get_compute_expression_reg(int index) const
 
 int context::get_modifiable_reg(int r) const
 {
-    assert(is_modifiable(access(r).C.exp));
+    assert(is_modifiable((*memory())[r].exp));
 
     return r;
 }

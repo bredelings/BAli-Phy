@@ -62,26 +62,26 @@ void reg_heap::find_all_regs_in_context_no_check(int, vector<int>& scan, vector<
 	int r = scan[i];
 
 	// This is a hack, but allows drawing graphs when we have edges to missing regs
-	if (is_free(r)) continue;
+	if (regs.is_free(r)) continue;
 
-	assert(is_used(r) or is_marked(r));
-	if (is_marked(r)) continue;
+	assert(regs.is_used(r) or regs.is_marked(r));
+	if (regs.is_marked(r)) continue;
 
-	set_mark(r);
+	regs.set_mark(r);
 	unique.push_back(scan[i]);
     }
 
     for(int i=0;i<unique.size();i++)
     {
 	int r = unique[i];
-	assert(is_marked(r));
+	assert(regs.is_marked(r));
 
-	const reg& R = access(r);
+	const reg& R = regs.access(r);
 	for(int j:R.C.Env)
 	{
-	    if (is_used(j) and not is_marked(j))
+	    if (regs.is_used(j) and not regs.is_marked(j))
 	    {
-		set_mark(j);
+		regs.set_mark(j);
 		unique.push_back(j);
 	    }
 	}
@@ -90,9 +90,9 @@ void reg_heap::find_all_regs_in_context_no_check(int, vector<int>& scan, vector<
 	// have merged steps.
 	for(int j: used_regs_for_reg(r))
 	{
-	    if (is_used(j) and not is_marked(j))
+	    if (regs.is_used(j) and not regs.is_marked(j))
 	    {
-		set_mark(j);
+		regs.set_mark(j);
 		unique.push_back(j);
 	    }
 	}
@@ -101,9 +101,9 @@ void reg_heap::find_all_regs_in_context_no_check(int, vector<int>& scan, vector<
 	if (reg_has_call(r))
 	{
 	    int called_reg = call_for_reg(r);
-	    if (not is_marked(called_reg))
+	    if (not regs.is_marked(called_reg))
 	    {
-		set_mark(called_reg);
+		regs.set_mark(called_reg);
 		unique.push_back(called_reg);
 	    }
 	}
@@ -116,7 +116,7 @@ void reg_heap::find_all_regs_in_context_no_check(int, vector<int>& scan, vector<
 #endif
 
     for(int i=0;i<unique.size();i++)
-	unmark(unique[i]);
+	regs.unmark(unique[i]);
 
     release_scratch_list();
 }
@@ -170,7 +170,7 @@ expression_ref subst_referenced_vars(const expression_ref& E, const closure::Env
 
 void discover_graph_vars(const reg_heap& H, int R, map<int,expression_ref>& names, const map<string, int>& id)
 {
-    const closure& C = H.access(R).C;
+    const closure& C = H[R];
 
     // If there are no references, then we are done.
     if (C.Env.empty()) 
@@ -272,7 +272,7 @@ expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& 
 
 expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, int>& ids)
 {
-    return C[R].C.exp;
+    return C[R].exp;
 
     map< int, expression_ref> names;
     for(const auto& id: ids)
@@ -315,13 +315,13 @@ map<int,string> get_constants(const reg_heap& C, int t)
     {
 	if (reg_names.count(R)) continue;
 
-	if (C.access(R).C.exp.is_index_var()) continue;
+	if (C[R].exp.is_index_var()) continue;
 
-	if (is_modifiable(C.access(R).C.exp)) continue;
+	if (is_modifiable(C[R].exp)) continue;
 
-	if (C.access(R).C.exp.size() == 0)
+	if (C[R].exp.size() == 0)
 	{
-	    string name = C.access(R).C.exp.print();
+	    string name = C[R].exp.print();
 	    if (name.size() < 20)
 		constants[R] = name;
 	}
@@ -380,7 +380,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	o<<name<<" ";
 	o<<"[";
 
-	expression_ref F = C.access(R).C.exp;
+	expression_ref F = C[R].exp;
 
 	bool print_record = false;
 	if (F.head().type() == operation_type or F.head().type() == constructor_type)
@@ -409,7 +409,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 		for(const expression_ref& E: F.sub())
 		{
 		    int index = E.as_index_var();
-		    int R2 = C.access(R).C.lookup_in_env( index );
+		    int R2 = C[R].lookup_in_env( index );
 		    targets.push_back(R2);
 	  
 		    string reg_name = "<" + convertToString(R2) + ">";
@@ -429,7 +429,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	{
 	    int index = F.as_index_var();
 
-	    int R2 = C.access(R).C.lookup_in_env( index );
+	    int R2 = C[R].lookup_in_env( index );
 
 	    string reg_name = "<" + convertToString(R2) + ">";
 	    if (reg_names.count(R2))
@@ -443,14 +443,14 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 		reg_name = constants[R2] + " " + reg_name;
 	    label += reg_name;
 	
-	    //      expression_ref E = unlet(untranslate_vars(deindexify(trim_unnormalize(C.access(R).C)), reg_names));
+	    //      expression_ref E = unlet(untranslate_vars(deindexify(trim_unnormalize(C[R])), reg_names));
 	    //      E = map_symbol_names(E, simplify);
 	    //      label += E.print();
 	    label = escape(wrap(label,40));
 	}
 	else
 	{
-	    expression_ref E = unlet(untranslate_vars(untranslate_vars(deindexify(trim_unnormalize(C.access(R).C)), reg_names),constants));
+	    expression_ref E = unlet(untranslate_vars(untranslate_vars(deindexify(trim_unnormalize(C[R])), reg_names),constants));
 
 	    E = map_symbol_names(E, simplify);
 
@@ -459,16 +459,16 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	}
 
 	o<<"label = \""<<label<<"\"";
-	if (C.access(R).n_heads)
-	    o<<",style=\"dashed,filled\",color=orange";
-	else if (C.reg_is_changeable(R))
+//	if (C.access(R).n_heads)
+//	    o<<",style=\"dashed,filled\",color=orange";
+	if (C.reg_is_changeable(R))
 	    o<<",style=\"dashed,filled\",color=red";
 
 	if (C.reg_is_changeable(R) and C.reg_has_result_value(R))
 	    o<<",fillcolor=\"#007700\",fontcolor=white";
 	else if (C.reg_is_changeable(R))
 	    o<<",fillcolor=\"#770000\",fontcolor=white";
-	else if (C.access(R).C.exp.head().type() == index_var_type)
+	else if (C[R].exp.head().type() == index_var_type)
 	    o<<",fillcolor=\"#77bbbb\"";
 	else if (C.reg_is_constant(R))
 	    o<<",fillcolor=\"#bbbb77\"";
@@ -479,7 +479,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	{
 	    for(int R2: targets)
 	    {
-		if (not C.is_used(R2)) continue;
+		if (not C.reg_is_used(R2)) continue;
 
 		string name2 = "n" + convertToString(R2);
 		bool used = false;
@@ -500,9 +500,9 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	}
 	else
 	{
-	    for(int R2: C.access(R).C.Env)
+	    for(int R2: C[R].Env)
 	    {
-		if (not C.is_used(R2)) continue;
+		if (not C.reg_is_used(R2)) continue;
 
 		string name2 = "n" + convertToString(R2);
 		bool used = false;
@@ -549,7 +549,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	for(int R2: C.used_regs_for_reg(R))
 	{
 	    bool is_ref_edge_also = false;
-	    for(int R3: C.access(R).C.Env)
+	    for(int R3: C[R].Env)
 		if (R2 == R3)
 		    is_ref_edge_also = true;
 

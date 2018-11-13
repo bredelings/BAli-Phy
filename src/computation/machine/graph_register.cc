@@ -242,6 +242,14 @@ bool mapping::empty() const
     return delta_.empty();
 }
 
+size_t reg_heap::size() const
+{
+    assert(regs.size() == prog_steps.size());
+    assert(regs.size() == prog_results.size());
+    assert(regs.size() == prog_temp.size());
+    return regs.size();
+}
+
 void reg_heap::register_probability(int r)
 {
     mark_completely_dirty(root_token);
@@ -249,7 +257,7 @@ void reg_heap::register_probability(int r)
 
     if (reg_is_constant(r))
     {
-	log_double_t pr = access(r).C.exp.as_log_double();
+	log_double_t pr = regs.access(r).C.exp.as_log_double();
 	constant_pr *= pr;
     }
     else
@@ -302,7 +310,7 @@ void reg_heap::dec_probability(int rc)
     assert(rc > 0);
     int r2 = results[rc].value;
     assert(r2 > 0);
-    log_double_t pr = access(r2).C.exp.as_log_double();
+    log_double_t pr = regs.access(r2).C.exp.as_log_double();
 
     variable_pr /= pr;
     results[rc].flags.reset(0);
@@ -425,7 +433,7 @@ bool reg_heap::find_modifiable_reg(int& R)
     // Note: here we always update R
     R = incremental_evaluate_unchangeable(R);
 
-    return is_modifiable(access(R).C.exp);
+    return is_modifiable(regs.access(R).C.exp);
 }
 
 const expression_ref reg_heap::get_parameter_range(int c, int p)
@@ -435,21 +443,21 @@ const expression_ref reg_heap::get_parameter_range(int c, int p)
 
 const expression_ref reg_heap::get_range_for_reg(int c, int r)
 {
-    if (access(r).C.Env.size() < 3)
+    if (regs.access(r).C.Env.size() < 3)
 	return {};
 
-    int r2 = access(r).C.lookup_in_env(2);
+    int r2 = regs.access(r).C.lookup_in_env(2);
     return get_reg_value_in_context(r2,c);
 }
 
 double reg_heap::get_rate_for_reg(int r)
 {
-    if (access(r).C.Env.size() < 3)
+    if (regs.access(r).C.Env.size() < 3)
 	return {};
 
-    int r3 = access(r).C.lookup_in_env(0);
+    int r3 = regs.access(r).C.lookup_in_env(0);
     r3 = incremental_evaluate_unchangeable(r3);
-    return access(r3).C.exp.as_double();
+    return regs.access(r3).C.exp.as_double();
 }
 
 int reg_heap::step_index_for_reg(int r) const 
@@ -492,12 +500,12 @@ const closure& reg_heap::access_value_for_reg(int R1) const
 {
     int R2 = value_for_reg(R1);
     assert(R2);
-    return access(R2).C;
+    return regs.access(R2).C;
 }
 
 bool reg_heap::reg_has_value(int r) const
 {
-    if (access(r).type == reg::type_t::constant)
+    if (regs.access(r).type == reg::type_t::constant)
 	return true;
     else
 	return reg_has_result_value(r);
@@ -530,12 +538,12 @@ bool reg_heap::has_result(int r) const
 
 int reg_heap::value_for_reg(int r) const 
 {
-    assert(not access(r).C.exp.is_index_var());
-    if (access(r).type == reg::type_t::changeable)
+    assert(not regs.access(r).C.exp.is_index_var());
+    if (regs.access(r).type == reg::type_t::changeable)
 	return result_value_for_reg(r);
     else
     {
-	assert(access(r).type == reg::type_t::constant);
+	assert(regs.access(r).type == reg::type_t::constant);
 	return r;
     }
 }
@@ -563,7 +571,7 @@ void reg_heap::set_result_value_for_reg(int r1)
     RC1.value = value;
 
     // If R2 is WHNF then we are done
-    if (access(call).type == reg::type_t::constant) return;
+    if (regs.access(call).type == reg::type_t::constant) return;
 
     // If R2 doesn't have a result, add one to hold the called-by edge.
     assert(has_result(call));
@@ -579,16 +587,16 @@ void reg_heap::set_used_input(int s1, int R2)
 {
     assert(reg_is_changeable(R2));
 
-    assert(is_used(R2));
+    assert(regs.is_used(R2));
 
-    assert(access(R2).C);
+    assert(regs.access(R2).C);
 
     assert(has_result(R2));
     assert(result_value_for_reg(R2));
 
     // An index_var's value only changes if the thing the index-var points to also changes.
     // So, we may as well forbid using an index_var as an input.
-    assert(access(R2).C.exp.head().type() != index_var_type);
+    assert(regs.access(R2).C.exp.head().type() != index_var_type);
 
     int rc2 = result_index_for_reg(R2);
 
@@ -606,10 +614,10 @@ void reg_heap::set_call(int R1, int R2)
     // R2 might be of UNKNOWN changeableness
 
     // Check that R1 is legal
-    assert(is_used(R1));
+    assert(regs.is_used(R1));
 
     // Check that R2 is legal
-    assert(is_used(R2));
+    assert(regs.is_used(R2));
 
     // Only modify the call for the current context;
     assert(has_step(R1));
@@ -642,16 +650,16 @@ void reg_heap::set_C(int R, closure&& C)
     assert(not C.exp.head().is_a<expression>());
     clear_C(R);
 
-    access(R).C = std::move(C);
+    regs.access(R).C = std::move(C);
 #ifndef NDEBUG
-    for(int r: access(R).C.Env)
-	assert(is_valid_address(r));
+    for(int r: regs.access(R).C.Env)
+	assert(regs.is_valid_address(r));
 #endif
 }
 
 void reg_heap::clear_C(int R)
 {
-    truncate(access_unused(R).C);
+    truncate(regs.access_unused(R).C);
 }
 
 void reg_heap::mark_reg_created_by_step(int r, int s)
@@ -661,9 +669,14 @@ void reg_heap::mark_reg_created_by_step(int r, int s)
 
     int index = steps[s].created_regs.size();
     steps[s].created_regs.push_back(r);
-    assert(access(r).created_by.first == 0);
-    assert(access(r).created_by.second == 0);
-    access(r).created_by = {s,index};
+    assert(regs.access(r).created_by.first == 0);
+    assert(regs.access(r).created_by.second == 0);
+    regs.access(r).created_by = {s,index};
+}
+
+int reg_heap::allocate()
+{
+    return regs.allocate();
 }
 
 int reg_heap::allocate_reg_from_step(int s)
@@ -715,7 +728,7 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
     // assert(not is_root_token and tokens[t].version < tokens[parent_token(t)].version) 
 
     // Check that this reg is indeed settable
-    assert(is_modifiable(access(R).C.exp));
+    assert(is_modifiable(regs.access(R).C.exp));
 
     assert(not is_root_token(t));
 
@@ -741,7 +754,7 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
 
 	int Q = value.lookup_in_env( index );
 
-	assert(is_used(Q));
+	assert(regs.is_used(Q));
 
 	// Set the call
 	steps[s].call = Q;
@@ -838,11 +851,11 @@ std::vector<int> reg_heap::used_regs_for_reg(int r) const
 void reg_heap::reclaim_used(int r)
 {
     // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
-    assert(not access(r).created_by.first);
-    assert(not access(r).created_by.second);
+    assert(not regs.access(r).created_by.first);
+    assert(not regs.access(r).created_by.second);
     assert(not has_step(r));
   
-    pool<reg>::reclaim_used(r);
+    regs.reclaim_used(r);
 }
 
 template <typename T>
@@ -914,29 +927,18 @@ void reg_heap::pop_temp_head()
     temp.pop_back();
 }
 
-void reg_heap::get_more_memory()
+void reg_heap::resize(int s)
 {
-    collect_garbage();
-    base_pool_t::get_more_memory();
-}
+    assert(regs.size() == s);
 
-void reg_heap::expand_memory(int s)
-{
-    int old_size = size();
-    for(int t=0;t<tokens.size();t++)
-    {
-	assert(prog_steps.size() == old_size);
-	assert(prog_results.size() == old_size);
-	assert(prog_temp.size() == old_size);
-    }
+    auto old_size = prog_steps.size();
+    // Extend program.  Use regs.size() instead of size()
+    prog_steps.resize(regs.size());
+    prog_results.resize(regs.size());
+    prog_temp.resize(regs.size());
 
-    base_pool_t::expand_memory(s);
-
-    // Extend program
-    prog_steps.resize(size());
-    prog_results.resize(size());
-    prog_temp.resize(size());
-    for(int i=old_size;i<size();i++)
+    // Now we can use size() again.
+    for(auto i=old_size;i<size();i++)
     {
 	prog_steps[i] = non_computed_index;
 	prog_results[i] = non_computed_index;
@@ -947,21 +949,28 @@ void reg_heap::expand_memory(int s)
     }
 }
 
+void reg_heap::get_more_memory()
+{
+    collect_garbage();
+    // This calls the resize( ) callback
+    regs.get_more_memory();
+}
+
 bool reg_heap::reg_is_constant(int r) const
 {
-    return access(r).type == reg::type_t::constant;
+    return regs.access(r).type == reg::type_t::constant;
 }
 
 bool reg_heap::reg_is_changeable(int r) const
 {
-    return access(r).type == reg::type_t::changeable;
+    return regs.access(r).type == reg::type_t::changeable;
 }
 
 void reg_heap::make_reg_changeable(int r)
 {
-    assert( access(r).type == reg::type_t::changeable or access(r).type == reg::type_t::unknown );
+    assert( regs.access(r).type == reg::type_t::changeable or regs.access(r).type == reg::type_t::unknown );
 
-    access(r).type = reg::type_t::changeable;
+    regs.access(r).type = reg::type_t::changeable;
 }
 
 bool reg_heap::result_is_called_by(int rc1, int rc2) const
@@ -1024,7 +1033,7 @@ void reg_heap::check_used_regs_in_token(int t) const
 	prog_temp[r] |= 1;
 
 	// No results for constant regs
-	assert(access(r).type != reg::type_t::constant);
+	assert(regs.access(r).type != reg::type_t::constant);
 	int rc = p.second;
 	if (rc > 0)
 	{
@@ -1043,7 +1052,7 @@ void reg_heap::check_used_regs_in_token(int t) const
 	// If the step is unshared, the result must be unshared as well: this allows us to just walk unshared results.
 	assert(prog_temp[r] == 3);
 	// No steps for constant regs
-	assert(access(r).type != reg::type_t::constant);
+	assert(regs.access(r).type != reg::type_t::constant);
     }
 
     // FIXME - nonlocal. The same result/step are not set in multiple places!
@@ -1066,7 +1075,7 @@ void reg_heap::check_used_regs_in_token(int t) const
 
 	    // The used result should be referenced somewhere more root-ward
 	    // so that this result can be invalidated, and the used result won't be GC-ed.
-            // FIXME - nonlocal.  assert(is_modifiable(access(R2).C.exp) or result_is_referenced(t,rc2));
+            // FIXME - nonlocal.  assert(is_modifiable(regs.access(R2).C.exp) or result_is_referenced(t,rc2));
       
 	    // Used results should have values
 	    assert(results[rc2].value);
@@ -1093,15 +1102,15 @@ void reg_heap::check_used_regs_in_token(int t) const
 	    assert(call);
 
 	if (call and value == call)
-	    assert(access(call).type == reg::type_t::constant);
+	    assert(regs.access(call).type == reg::type_t::constant);
 
-	if (call and value and access(call).type == reg::type_t::constant)
+	if (call and value and regs.access(call).type == reg::type_t::constant)
 	    assert(value == call);
 
 	if (t != root_token) continue;
 
 	// Regs with values should have back-references from their call.
-	if (value and access(call).type != reg::type_t::constant)
+	if (value and regs.access(call).type != reg::type_t::constant)
 	{
 	    assert( has_result(call) );
 	    int rc2 = result_index_for_reg(call);
@@ -1215,7 +1224,7 @@ void reg_heap::check_back_edges_cleared_for_step(int s)
 	assert(rcp.second == 0);
     for(auto& r: steps.access_unused(s).created_regs)
     {
-	auto& created_by = access(r).created_by;
+	auto& created_by = regs.access(r).created_by;
 	assert(created_by.first == 0);
 	assert(created_by.second == 0);
     }
@@ -1229,7 +1238,7 @@ void reg_heap::check_back_edges_cleared_for_result(int rc)
 void reg_heap::clear_back_edges_for_reg(int r)
 {
     assert(r > 0);
-    auto& created_by = access(r).created_by;
+    auto& created_by = regs.access(r).created_by;
     int s = created_by.first;
     if (s > 0)
     {
@@ -1244,10 +1253,10 @@ void reg_heap::clear_back_edges_for_reg(int r)
 	if (j + 1 < backward.size())
 	{
 	    backward[j] = backward.back();
-	    auto& forward2 = access(backward[j]);
+	    auto& forward2 = regs.access(backward[j]);
 	    forward2.created_by.second = j;
 
-	    assert(access(backward[j]).created_by.second == j);
+	    assert(regs.access(backward[j]).created_by.second == j);
 	}
 	backward.pop_back();
     }
@@ -1283,7 +1292,7 @@ void reg_heap::clear_back_edges_for_step(int s)
 	backward.pop_back();
     }
     for(auto& r: steps[s].created_regs)
-	access(r).created_by = {0,{}};
+	regs.access(r).created_by = {0,{}};
     steps[s].created_regs.clear();
 }
 
@@ -1356,7 +1365,7 @@ const expression_ref& reg_heap::get_parameter_value_in_context(int p, int c)
 const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
 {
     total_get_reg_value++;
-    if (access(R).type == reg::type_t::constant) return access(R).C.exp;
+    if (regs.access(R).type == reg::type_t::constant) return regs.access(R).C.exp;
 
     total_get_reg_value_non_const++;
     reroot_at_context(c);
@@ -1365,7 +1374,7 @@ const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
     {
 	total_get_reg_value_non_const_with_result++;
 	int R2 = result_value_for_reg(R);
-	if (R2) return access(R2).C.exp;
+	if (R2) return regs.access(R2).C.exp;
     }
 
     // If the value needs to be computed (e.g. its a call expression) then compute it.
@@ -1373,7 +1382,7 @@ const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
     R = p.first;
     int value = p.second;
 
-    return access(value).C.exp;
+    return regs.access(value).C.exp;
 }
 
 void reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
@@ -1406,7 +1415,7 @@ const closure& reg_heap::lazy_evaluate(int& R)
     auto p = incremental_evaluate(R);
     R = p.first;
     int value = p.second;
-    return access(value).C;
+    return regs.access(value).C;
 }
 
 const closure& reg_heap::lazy_evaluate(int& R, int c)
@@ -1414,7 +1423,7 @@ const closure& reg_heap::lazy_evaluate(int& R, int c)
     auto p = incremental_evaluate_in_context(R,c);
     R = p.first;
     int value = p.second;
-    return access(value).C;
+    return regs.access(value).C;
 }
 
 const closure& reg_heap::lazy_evaluate_head(int index, int c)
@@ -1426,18 +1435,18 @@ const closure& reg_heap::lazy_evaluate_head(int index, int c)
     if (R2 != R1)
 	set_head(index, R2);
 
-    return access(value).C;
+    return regs.access(value).C;
 }
 
 const closure& reg_heap::lazy_evaluate_unchangeable(int& R)
 {
     R = incremental_evaluate_unchangeable(R);
-    return access(R).C;
+    return regs.access(R).C;
 }
 
 int reg_heap::get_modifiable_value_in_context(int R, int c)
 {
-    assert( access(R).C.exp.head().type() == modifiable_type);
+    assert( regs.access(R).C.exp.head().type() == modifiable_type);
     assert( reg_is_changeable(R) );
 
     reroot_at_context(c);
@@ -1459,7 +1468,7 @@ int reg_heap::add_identifier(const string& name)
 }
 
 reg_heap::reg_heap(const std::shared_ptr<module_loader>& L)
-    :base_pool_t(1),
+    :regs(1,[this](int s){resize(s);}),
      steps(1),
      results(1),
      P(new Program(L)),

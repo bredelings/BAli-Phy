@@ -64,11 +64,9 @@ public:
 
     void clear_identifiers();
 
-    reg& access(int i) const;
-
     const closure& access_result_for_reg(int i) const;
 
-    reg& operator[](int i) const;
+    const closure& operator[](int i) const;
 
     context* clone() const {return new context(*this);}
 

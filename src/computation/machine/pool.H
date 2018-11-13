@@ -7,6 +7,7 @@ template <typename T>
 class pool
 {
     int n_null_ = 0;
+    std::function<void(int)> resize_callback;
 public:
     enum States {none=0,free=1,used=2,marked=3};
 
@@ -55,7 +56,7 @@ public:
 	}
 
 public:
-    virtual void expand_memory(int s)
+    void expand_memory(int s)
 	{
 	    assert(memory.size() == n_used() + n_free() + n_null());
     
@@ -63,11 +64,14 @@ public:
 	    memory.resize(memory.size()+s);
 	    for(int i=k;i<memory.size();i++)
 		add_to_free_list(i);
-    
+
 	    assert(memory.size() == n_used() + n_free() + n_null());
+
+	    if (resize_callback)
+		resize_callback(memory.size());
 	}
 
-    virtual int add_to_free_list(int r)
+    int add_to_free_list(int r)
 	{
 	    lookup(r).value.clear();
 	    lookup(r).state = free;
@@ -79,7 +83,7 @@ public:
 	    return r;
 	}
 
-    virtual int get_free_element()
+    int get_free_element()
 	{
 	    if (first_free == -1) return -1;
 
@@ -217,7 +221,7 @@ public:
 		reclaim_used(first_used);
 	}
 
-    virtual void reclaim_used(int r)
+    void reclaim_used(int r)
 	{
 	    // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
 	    remove_from_used_list(r);
@@ -241,7 +245,7 @@ public:
 	    }
 	}
 
-    virtual void get_more_memory()
+    void get_more_memory()
 	{
 	    if (memory.size() < n_used()*2+10 + n_null())
 		expand_memory(memory.size()*2+10);
@@ -293,7 +297,11 @@ public:
 	    memory.resize(n);
 	}
 
-    virtual ~pool() = default;
+    pool(int n, std::function<void(int)> f)
+	:pool(n)
+	{
+	    resize_callback = f;
+	}
 };
 
 #endif

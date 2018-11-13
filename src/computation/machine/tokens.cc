@@ -27,7 +27,7 @@ void reg_heap::destroy_all_computations_in_token(int t)
 		// Truncating access(r) here deallocates RAM used by (for example) cached conditional likelihoods.
 		// Since we now ensure that any steps/result for these regs must be in this token, we can actually
 		//   deallocate the regs here instead of just waiting for GC to eliminate them.
-		access(r).created_by = {0,{}};
+		regs.access(r).created_by = {0,{}};
 		reclaim_used(r);
 	    }
 	    steps[s].created_regs.clear();

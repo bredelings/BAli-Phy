@@ -5,7 +5,7 @@ bool reg_heap::inc_probability(int rc)
   assert(rc > 0);
   int r2 = results[rc].value;
   assert(r2 > 0);
-  log_double_t pr = access(r2).C.exp.as_log_double();
+  log_double_t pr = regs.access(r2).C.exp.as_log_double();
 
   log_double_t new_total;
   double error;

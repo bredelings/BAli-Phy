@@ -143,9 +143,9 @@ public:
 // * well, parameters could be reg's, so that a separate reg must be a separate parameter.
 // * how, then, do we handle reg NAME's, if reg's are not uniquely identified by their names?
 
-class reg_heap: public Object, public pool<reg>
+class reg_heap: public Object
 {
-    typedef pool<reg> base_pool_t;
+    pool<reg> regs;
 
     mutable pool<Step> steps;
 
@@ -156,7 +156,7 @@ class reg_heap: public Object, public pool<reg>
 
     void get_more_memory();
 
-    void expand_memory(int);
+    void resize(int s);
 
     void reclaim_used(int);
 
@@ -165,6 +165,10 @@ class reg_heap: public Object, public pool<reg>
     bool reg_is_used_by(int, int) const;
 
 public:
+    const closure& operator[](int r) const {return regs.access(r).C;}
+    bool reg_is_used(int r) const {return regs.is_used(r);}
+    reg::type_t reg_type(int r) const {return regs.access(r).type;}
+    size_t size() const;
 
     reg_heap* clone() const {std::abort();}
 
@@ -185,6 +189,7 @@ public:
     void clear_call_for_reg(int R);
     void clear_C(int R);
     void set_C(int R, closure&& C);
+    int allocate();
     int allocate_reg_from_step(int s);
     int allocate_reg_from_step(int s, closure&& C);
     int allocate_reg_from_step_in_token(int s, int t);

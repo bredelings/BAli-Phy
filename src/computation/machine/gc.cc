@@ -30,7 +30,7 @@ void reg_heap::collect_garbage()
     std::cerr<<"***********Garbage Collection******************"<<std::endl;
     check_used_regs();
 #endif
-    assert(size() == n_used() + n_free() + n_null());
+    assert(regs.size() == regs.n_used() + regs.n_free() + regs.n_null());
 
     trace_and_reclaim_unreachable();
 
@@ -44,7 +44,7 @@ void do_remap(const reg_heap& M, vector<int>& remap, int r)
 {
     if (remap[r]) return;
 
-    const closure& C = M.access(r).C;
+    const closure& C = M[r];
 
     if (not C.exp or C.exp.head().type() != index_var_type)
     {
@@ -102,7 +102,7 @@ void do_remap(const reg_heap& M, vector<int>& remap, int r)
   set_mark(r);
   do_remap(*this, remap, r);
       
-  reg& R = access(r);
+  reg& R = regs.access(r);
       
   // Count the references from E
   next_scan1.insert(next_scan1.end(), R.C.Env.begin(), R.C.Env.end());
@@ -142,9 +142,9 @@ void reg_heap::trace(vector<int>& remap)
 
     auto mark_reg = [this,&used_regs](int r) {
 	assert(r > 0);
-	if (not is_marked(r))
+	if (not regs.is_marked(r))
 	{
-	    set_mark(r);
+	    regs.set_mark(r);
 	    used_regs.push_back(r);
 	}
     };
@@ -173,13 +173,13 @@ void reg_heap::trace(vector<int>& remap)
 
 #ifndef NDEBUG
     for(auto r: roots)
-	assert(access(r).n_heads == 0);
+	assert(regs.access(r).n_heads == 0);
 #endif
 
     // 3. Mark all of these regs used
     for(int r:roots)
     {
-	access(r).n_heads = 3;
+	regs.access(r).n_heads = 3;
 	mark_reg(r);
     }
 
@@ -210,9 +210,9 @@ void reg_heap::trace(vector<int>& remap)
 	for(auto p: tokens[t].delta_step())
 	{
 	    int r = p.first;
-	    if (access(r).n_heads)
+	    if (regs.access(r).n_heads)
 	    {
-		assert(is_marked(r));
+		assert(regs.is_marked(r));
 		int step = p.second;
 		if (step > 0)
 		    mark_step(step);
@@ -225,9 +225,9 @@ void reg_heap::trace(vector<int>& remap)
 	for(const auto& p: tokens[t].delta_result())
 	{
 	    int r = p.first;
-	    if (access(r).n_heads)
+	    if (regs.access(r).n_heads)
 	    {
-		assert(is_marked(r));
+		assert(regs.is_marked(r));
 		int result = p.second;
 		if (result > 0)
 		    mark_result(result);
@@ -279,7 +279,7 @@ void reg_heap::trace(vector<int>& remap)
 	const auto& result = results[r];
 	assert(steps.is_marked(result.source_step));
 	assert(result.source_reg == steps[result.source_step].source_reg);
-	assert(is_marked(results[r].source_reg));
+	assert(regs.is_marked(results[r].source_reg));
     }
 
     // 8. Mark regs referenced only by regs as used.
@@ -287,21 +287,21 @@ void reg_heap::trace(vector<int>& remap)
     {
 	int r = used_regs[reg_index];
 	do_remap(*this, remap, r);
-	const auto& R = access(r);
+	const auto& R = regs.access(r);
 	for(int r : R.C.Env)
 	    mark_reg(r);
     }
 
 #ifndef NDEBUG
     for(auto r: roots)
-	assert(access(r).n_heads == 3);
+	assert(regs.access(r).n_heads == 3);
 #endif
     for(auto r: roots)
-	access(r).n_heads = 0;
+	regs.access(r).n_heads = 0;
 
 #ifndef NDEBUG
-    for(int i=n_null();i<size();i++)
-	assert(access_unused(i).n_heads == 0);
+    for(int i=regs.n_null();i<regs.size();i++)
+	assert(regs.access_unused(i).n_heads == 0);
 #endif
 
     release_scratch_list();
@@ -381,13 +381,13 @@ void reg_heap::trace_and_reclaim_unreachable()
 	{
 	    if (is_root_token(t))
 	    {
-		unmap_unused(prog_steps, steps, *this);
-		unmap_unused(prog_results, results, *this);
+		unmap_unused(prog_steps, steps, regs);
+		unmap_unused(prog_results, results, regs);
 	    }
 	    else
 	    {
-		unmap_unused(tokens[t].vm_step, steps, *this);
-		unmap_unused(tokens[t].vm_result, results, *this);
+		unmap_unused(tokens[t].vm_step, steps, regs);
+		unmap_unused(tokens[t].vm_result, results, regs);
 	    }
 	}
 
@@ -396,11 +396,11 @@ void reg_heap::trace_and_reclaim_unreachable()
 	if (not steps.is_marked(i.addr()))
 	    clear_back_edges_for_step(i.addr());
 
-    for(auto i = begin();i != end(); i++)
-	if (not is_marked(i.addr()))
+    for(auto i = regs.begin();i != regs.end(); i++)
+	if (not regs.is_marked(i.addr()))
 	    clear_back_edges_for_reg(i.addr());
 
-    reclaim_unmarked();
+    regs. reclaim_unmarked();
 
     steps.reclaim_unmarked();
 
@@ -418,20 +418,20 @@ void reg_heap::trace_and_reclaim_unreachable()
 #endif
 
     // remap closures not to point through index_vars
-    for(reg& R: *this)
+    for(reg& R: regs)
 	for(int& r2: R.C.Env)
 	{
-	    assert(is_used(r2));
+	    assert(regs.is_used(r2));
 	    r2 = remap[r2];
-	    assert(is_used(r2));
+	    assert(regs.is_used(r2));
 	}
 
     for(auto& C: closure_stack)
 	for(int& r2: C.Env)
 	{
-	    assert(is_used(r2));
+	    assert(regs.is_used(r2));
 	    r2 = remap[r2];
-	    assert(is_used(r2));
+	    assert(regs.is_used(r2));
 	}
 
     //  release_scratch_list();

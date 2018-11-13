@@ -50,7 +50,7 @@ void throw_reg_exception(reg_heap& M, int t, int R, myexception& e)
 {
     dot_graph_for_token(M, t);
     string SSS = unlet(untranslate_vars(
-			   untranslate_vars(deindexify(trim_unnormalize(M.access(R).C)), M.get_identifiers()),
+			   untranslate_vars(deindexify(trim_unnormalize(M[R])), M.get_identifiers()),
 			   get_constants(M,t)
 			   )
 	).print();
@@ -99,13 +99,13 @@ class RegOperationArgs: public OperationArgs
     const closure& evaluate_reg_to_closure(int R2)
 	{
 	    int R3 = evaluate_reg_to_reg(R2);
-	    return M.access(R3).C;
+	    return M[R3];
 	}
   
     const closure& evaluate_reg_to_closure_(int R2)
 	{
 	    int R3 = evaluate_reg_no_record(R2);
-	    return M.access(R3).C;
+	    return M[R3];
 	}
 
 public:
@@ -216,8 +216,8 @@ int reg_heap::incremental_evaluate_unchangeable(int R)
 pair<int,int> reg_heap::incremental_evaluate_(int R)
 {
     assert(is_completely_dirty(root_token));
-    assert(is_valid_address(R));
-    assert(is_used(R));
+    assert(regs.is_valid_address(R));
+    assert(regs.is_used(R));
 
 #ifndef NDEBUG
     if (reg_has_value(R))
@@ -227,19 +227,19 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 	assert(not E.head().is_a<expression>());
 	assert(not E.is_index_var());
     }
-    if (access(R).C.exp.is_index_var())
+    if (regs.access(R).C.exp.is_index_var())
 	assert(not reg_has_value(R));
 #endif
 
     while (1)
     {
-	assert(access(R).C.exp);
+	assert(regs.access(R).C.exp);
 
 #ifndef NDEBUG
-	//    std::cerr<<"   statement: "<<R<<":   "<<access(R).E.print()<<std::endl;
+	//    std::cerr<<"   statement: "<<R<<":   "<<regs.access(R).E.print()<<std::endl;
 #endif
 
-	reg::type_t reg_type = access(R).type;
+	reg::type_t reg_type = regs.access(R).type;
 
 	if (reg_type == reg::type_t::constant) return {R,R};
 
@@ -284,15 +284,15 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 	}
 	else if (reg_type == reg::type_t::index_var)
 	{
-	    int index = access(R).C.exp.as_index_var();
-	    int R2 = access(R).C.lookup_in_env( index );
+	    int index = regs.access(R).C.exp.as_index_var();
+	    int R2 = regs.access(R).C.lookup_in_env( index );
 	    return incremental_evaluate(R2);
 	}
 	else
 	    assert(reg_type == reg::type_t::unknown);
 
 	/*---------- Below here, there is no call, and no value. ------------*/
-	if (access(R).C.exp.head().is_index_var())
+	if (regs.access(R).C.exp.head().is_index_var())
 	{
 	    assert( not reg_is_changeable(R) );
 
@@ -300,7 +300,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 
 	    assert( not reg_has_call(R) );
 
-	    access(R).type = reg::type_t::index_var;
+	    regs.access(R).type = reg::type_t::index_var;
 
 	    clear_result(R);
 	    int s = step_index_for_reg(R);
@@ -308,9 +308,9 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		clear_back_edges_for_step(s);
 	    clear_step(R);
 
-	    int index = access(R).C.exp.as_index_var();
+	    int index = regs.access(R).C.exp.as_index_var();
 
-	    int R2 = access(R).C.lookup_in_env( index );
+	    int R2 = regs.access(R).C.lookup_in_env( index );
 
 	    // Return the end of the index_var chain.
 	    // We used to update the index_var to point to the end of the chain.
@@ -319,9 +319,9 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 	}
 
 	// Check for WHNF *OR* heap variables
-	else if (is_WHNF(access(R).C.exp))
+	else if (is_WHNF(regs.access(R).C.exp))
 	{
-	    access(R).type = reg::type_t::constant;
+	    regs.access(R).type = reg::type_t::constant;
 	    clear_result(R);
 	    int s = step_index_for_reg(R);
 	    if (s > 0)
@@ -331,9 +331,9 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 	}
 
 #ifndef NDEBUG
-	else if (access(R).C.exp.head().is_a<Trim>())
+	else if (regs.access(R).C.exp.head().is_a<Trim>())
 	    std::abort();
-	else if (access(R).C.exp.type() == parameter_type)
+	else if (regs.access(R).C.exp.type() == parameter_type)
 	    std::abort();
 #endif
 
@@ -346,13 +346,13 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		add_shared_step(R);
 	    int S = step_index_for_reg(R);
 	    // FIXME - check that this agrees with our caller!
-	    int P = access(R).created_by.first;
+	    int P = regs.access(R).created_by.first;
 
 	    try
 	    {
-		closure_stack.push_back (access(R).C );
+		closure_stack.push_back (regs.access(R).C );
 		RegOperationArgs Args(S, P, *this);
-		auto O = access(R).C.exp.head().assert_is_a<Operation>()->op;
+		auto O = regs.access(R).C.exp.head().assert_is_a<Operation>()->op;
 		closure value = (*O)(Args);
 		closure_stack.pop_back();
 		total_reductions++;
@@ -384,7 +384,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		    else
 		    {
 			r2 = Args.allocate( std::move(closure_stack.back()) ) ;
-			assert(access(r2).created_by.first == S);
+			assert(regs.access(r2).created_by.first == S);
 			assert(not has_step(r2));
 		    }
 
@@ -403,8 +403,8 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		    {
 			int r2 = Args.allocate( std::move(closure_stack.back()) );
 			assert(not has_step(r2));
-			access(r2).type = reg::type_t::constant;
-			// assert(is_WHNF(access(r2).C.exp)) ?
+			regs.access(r2).type = reg::type_t::constant;
+			// assert(is_WHNF(regs.access(r2).C.exp)) ?
 			p = {r2,r2};
 		    }
 #endif
@@ -508,7 +508,7 @@ class RegOperationArgsUnchangeable: public OperationArgs
 {
     const int R;
 
-    const closure& current_closure() const {return memory()[R].C;}
+    const closure& current_closure() const {return memory()[R];}
 
     bool evaluate_changeables() const {return false;}
 
@@ -528,10 +528,10 @@ class RegOperationArgsUnchangeable: public OperationArgs
     const closure& evaluate_reg_to_closure(int R2)
 	{
 	    int R3 = evaluate_reg_to_reg(R2);
-	    if (M.access(R3).type == reg::type_t::changeable)
+	    if (M.reg_type(R3) == reg::type_t::changeable)
 		throw no_context();
-	    assert(M.access(R3).type == reg::type_t::constant);
-	    return M.access(R3).C;
+	    assert(M.reg_type(R3) == reg::type_t::constant);
+	    return M[R3];
 	}
 
     const closure& evaluate_reg_to_closure_(int R2)
@@ -550,40 +550,40 @@ public:
 
 int reg_heap::incremental_evaluate_unchangeable_(int R)
 {
-    assert(is_valid_address(R));
-    assert(is_used(R));
+    assert(regs.is_valid_address(R));
+    assert(regs.is_used(R));
 
 #ifndef NDEBUG
-    assert(not access(R).C.exp.head().is_a<expression>());
+    assert(not regs.access(R).C.exp.head().is_a<expression>());
 #endif
 
     while (1)
     {
-	assert(access(R).C.exp);
+	assert(regs.access(R).C.exp);
 
-	reg::type_t reg_type = access(R).type;
+	reg::type_t reg_type = regs.access(R).type;
 
 	if (reg_type == reg::type_t::constant or reg_type == reg::type_t::changeable)
 	    break;
 
 	else if (reg_type == reg::type_t::index_var)
 	{
-	    int index = access(R).C.exp.as_index_var();
-	    int R2 = access(R).C.lookup_in_env( index );
+	    int index = regs.access(R).C.exp.as_index_var();
+	    int R2 = regs.access(R).C.lookup_in_env( index );
 	    return incremental_evaluate_unchangeable(R2);
 	}
 	else
 	    assert(reg_type == reg::type_t::unknown);
 
 	/*---------- Below here, there is no call, and no value. ------------*/
-	const int type = access(R).C.exp.head().type();
+	const int type = regs.access(R).C.exp.head().type();
 	if (type == index_var_type)
 	{
-	    access(R).type = reg::type_t::index_var;
+	    regs.access(R).type = reg::type_t::index_var;
 
-	    int index = access(R).C.exp.as_index_var();
+	    int index = regs.access(R).C.exp.as_index_var();
 
-	    int R2 = access(R).C.lookup_in_env( index );
+	    int R2 = regs.access(R).C.lookup_in_env( index );
 
 	    int R3 = incremental_evaluate_unchangeable( R2 );
 
@@ -595,20 +595,20 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
 	}
 
 	// Check for WHNF *OR* heap variables
-	else if (is_WHNF(access(R).C.exp))
-	    access(R).type = reg::type_t::constant;
+	else if (is_WHNF(regs.access(R).C.exp))
+	    regs.access(R).type = reg::type_t::constant;
 
 #ifndef NDEBUG
-	else if (access(R).C.exp.head().is_a<Trim>())
+	else if (regs.access(R).C.exp.head().is_a<Trim>())
 	    std::abort();
-	else if (access(R).C.exp.type() == parameter_type)
+	else if (regs.access(R).C.exp.type() == parameter_type)
 	    std::abort();
 #endif
 
 	// 3. Reduction: Operation (includes @, case, +, etc.)
 	else
 	{
-	    auto O = access(R).C.exp.head().assert_is_a<Operation>()->op;
+	    auto O = regs.access(R).C.exp.head().assert_is_a<Operation>()->op;
 
 	    // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable value.
 	    // Therefore, we cannot do "assert(not result_for_reg(t,R).changeable);" here.
@@ -616,7 +616,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
 #ifdef DEBUG_MACHINE
 	    string SS = "";
 	    SS = compact_graph_expression(*this, R, get_identifiers()).print();
-	    string SSS = untranslate_vars(deindexify(trim_unnormalize(access(R).C)),  
+	    string SSS = untranslate_vars(deindexify(trim_unnormalize(regs.access(R).C)),  
 					  get_identifiers()).print();
 	    if (log_verbose >= 3)
 		dot_graph_for_token(*this, root_token);
@@ -632,7 +632,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
 	    }
 	    catch (no_context&)
 	    {
-		access(R).type = reg::type_t::changeable;
+		regs.access(R).type = reg::type_t::changeable;
 		return R;
 	    }
 	    catch (error_exception& e)
