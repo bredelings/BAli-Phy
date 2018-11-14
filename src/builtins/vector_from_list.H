@@ -1,7 +1,7 @@
 #ifndef VECTOR_FROM_LIST_H
 #define VECTOR_FROM_LIST_H
 #include <vector>
-#include "computation/computation.H"
+#include "computation/machine/args.H"
 #include "object.H"
 #include "computation/expression/expression.H"
 

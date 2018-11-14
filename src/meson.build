@@ -46,7 +46,7 @@ baliphy_sources = ['dp/dp_hmm.cc','parser/desugar.cc','parser/desugar-case.cc','
    'computation/expression/case.cc','computation/expression/trim.cc',
    'computation/expression/tuple.cc','computation/expression/list.cc',
    'computation/expression/var.cc','computation/expression/lambda.cc',
-   'computation/computation.cc','computation/machine/tokens.cc',
+   'computation/machine/args.cc','computation/machine/tokens.cc',
    'computation/preprocess.cc', 'computation/machine/graph_register.cc',
    'computation/machine/show_graph.cc','computation/module.cc',
    'computation/machine/evaluate.cc',

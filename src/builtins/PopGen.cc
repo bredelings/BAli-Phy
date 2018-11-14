@@ -3,7 +3,7 @@
 #include <vector>
 #include <map>
 #include <unordered_map>
-#include "computation/computation.H"
+#include "computation/machine/args.H"
 #include "io.H"
 #include "computation/expression/expression.H"
 

@@ -5,7 +5,7 @@
 #include "matrix.H"
 #include "math/log-double.H"
 #include "alignment/alignment.H"
-#include "computation/computation.H"
+#include "computation/machine/args.H"
 
 #include <Eigen/Dense>
 #include <unsupported/Eigen/MatrixFunctions>

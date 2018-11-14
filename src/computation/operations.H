@@ -5,9 +5,9 @@
 #include <string>
 #include "myexception.H"
 #include "operation.H"
-#include "computation.H"
 #include "expression/expression_ref.H"
 
+class OperationArgs;
 
 // In general, these operations simply ask for the value of each input
 // from the OperationArgs object.  They therefore need have no knowledge of

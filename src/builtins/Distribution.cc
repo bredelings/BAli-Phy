@@ -3,7 +3,7 @@
 #include <valarray>
 #include <string>
 #include "computation/operation.H"
-#include "computation/computation.H"
+#include "computation/machine/args.H"
 #include "computation/module.H"
 #include "probability/probability.H"
 #include "bounds.H"

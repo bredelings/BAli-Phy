@@ -7,6 +7,7 @@
 #include "computation/expression/expression.H"
 #include "computation/expression/let.H"
 #include "computation/expression/trim.H"
+#include "computation/operations.H"
 
 using std::string;
 using std::vector;
@@ -14,8 +15,7 @@ using std::map;
 using std::set;
 using std::pair;
 
-#include "computation/operations.H"
-#include "computation/computation.H"
+#include "args.H"
 
 long total_reductions = 0;
 long total_changeable_reductions = 0;

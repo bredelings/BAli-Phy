@@ -1,7 +1,7 @@
 #ifndef IOTA_H
 #define IOTA_H
 
-#include "computation/computation.H"
+#include "computation/machine/args.H"
 
 template <typename T>
 closure iota_function(OperationArgs& Args)

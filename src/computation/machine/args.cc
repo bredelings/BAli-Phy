@@ -1,7 +1,7 @@
-#include "computation.H"
-#include "expression/expression.H"
-#include "computation/machine/graph_register.H"
-#include "expression/lambda.H"
+#include "args.H"
+#include "graph_register.H"
+#include "computation/expression/expression.H"
+#include "computation/expression/lambda.H"
 
 int OperationArgs::reg_for_slot(int slot) const
 {
