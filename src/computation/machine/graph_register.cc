@@ -242,6 +242,38 @@ bool mapping::empty() const
     return delta_.empty();
 }
 
+boost::optional<int> reg_heap::creator_of_reg(int r) const
+{
+    int s = regs[r].created_by.first;
+    assert(s >= 0);
+    if (s == 0)
+	return boost::none;
+    else
+	return s;
+}
+
+bool reg_heap::reg_is_contingent(int r) const
+{
+    return (bool)creator_of_reg(r);
+}
+
+bool reg_heap::step_exists_in_root(int s) const
+{
+    assert(s > 0);
+    int r = steps[s].source_reg;
+    assert(r > 0 and r < size());
+    return prog_steps[r] == s;
+}
+
+bool reg_heap::reg_exists(int r) const
+{
+    auto s = creator_of_reg(r);
+    if (not s)
+	return true;
+    else
+	return step_exists_in_root(*s);
+}
+
 size_t reg_heap::size() const
 {
     assert(regs.size() == prog_steps.size());

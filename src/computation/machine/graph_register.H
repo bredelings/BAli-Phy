@@ -168,6 +168,10 @@ public:
     const closure& operator[](int r) const {return regs.access(r).C;}
     bool reg_is_used(int r) const {return regs.is_used(r);}
     reg::type_t reg_type(int r) const {return regs.access(r).type;}
+    boost::optional<int> creator_of_reg(int r) const;
+    bool reg_is_contingent(int r) const;
+    bool reg_exists(int r) const;
+    bool step_exists_in_root(int s) const;
     size_t size() const;
 
     reg_heap* clone() const {std::abort();}
