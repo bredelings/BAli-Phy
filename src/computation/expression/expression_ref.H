@@ -8,7 +8,7 @@
 #include <string>
 #include <initializer_list>
 #include "object.H"
-#include "computation/operator.H"
+#include "operator.H"
 #include "computation/type_constant.H"
 
 /// An S-expression: An Object, and possibly an array of Objects.

@@ -3,7 +3,7 @@
 
 #include <string>
 #include "object.H"
-#include "computation/operator.H"
+#include "operator.H"
 #include "expression_ref.H"
 
 struct constructor: public Operator

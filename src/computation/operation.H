@@ -8,7 +8,7 @@
 
 class OperationArgs;
 
-#include "operator.H"
+#include "expression/operator.H"
 #include "closure.H"
 #include "type_constant.H"
 
