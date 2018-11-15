@@ -106,10 +106,10 @@ ninja install
 Haskell functions are defined in the Haskell modules under [modules/](https://github.com/bredelings/BAli-Phy/blob/master/modules/).  For example, the function `min` is defined in `Prelude.hs` as follows:
 
 ``` Haskell
-min x y = if (x <= y) then x else y;
+min x y = if (x <= y) then x else y
 ```
 
-To add a Haskell function, you simply need to define a function in one of these modules.  However, be aware that the Haskell parser in bali-phy is not very advanced, and so you will need to specify `{`, `}`, and `;` in places where they are optional in standard Haskell.
+To add a Haskell function, you simply need to define a function in one of these modules.
 
 ## Adding a C++ function
 
@@ -120,13 +120,13 @@ To add a "builtin" C++ operation to bali-phy's Haskell code, you must add the C+
 A builtin is declared via the following syntax:
 
 ``` Haskell
-builtin haskell_name number_of_arguments "c++ name" "module name";
+builtin haskell_name number_of_arguments "c++ name" "module name"
 ```
 
 For example, the Haskell function `poisson_density` is declared with the following line from [modules/Distributions.hs](https://github.com/bredelings/BAli-Phy/blob/master/modules/Distributions.hs):
 
 ``` Haskell
-builtin poisson_density 2 "poisson_density" "Distribution";
+builtin poisson_density 2 "poisson_density" "Distribution"
 ```
 
 The first two arguments specify the Haskell name (`poisson_density`) and the number of arguments in Haskell (`2`).  The C++ function name is derived from the third argument (`poisson_density`) by adding `builtin_function_` in front.  So the C++ function will be called `builtin_function_poisson_density`.  The last argument specifies which loadable module contains the C++ function.  Since this function is in the module "Distribution", its source code goes in [src/builtins/Distribution.cc](https://github.com/bredelings/BAli-Phy/blob/master/src/builtins/Distribution.cc).
@@ -135,7 +135,7 @@ The first two arguments specify the Haskell name (`poisson_density`) and the num
 
 The C++ function for a builtin must be defined in one of the C++ files in the [src/builtins](https://github.com/bredelings/BAli-Phy/blob/master/src/builtins) directory, and the function name must begin with `builtin_function_`.  The function must also be declared `extern "C"` (to avoid name mangling).
 
-For example, the poisson density function is written in [src/builtins/Distirbution.cc](https://github.com/bredelings/BAli-Phy/blob/master/src/builtins/Distribution.cc) as follows:
+For example, the poisson density function is written in [src/builtins/Distribution.cc](https://github.com/bredelings/BAli-Phy/blob/master/src/builtins/Distribution.cc) as follows:
 
 ``` C++
 extern "C" closure builtin_function_poisson_density(OperationArgs& Args)
@@ -165,16 +165,16 @@ Distributions are defined in [modules/Distributions.hs](https://github.com/brede
 For a distribution, you need to add a function that constructs a ProbDensity object.
 
 ``` Haskell
-name parameters = ProbDensity (density parameters) (quantile parameters) (sample parameters) (range parameters);
+name parameters = ProbDensity (density parameters) (quantile parameters) (sample parameters) (range parameters)
 ```
 
 For example, the Normal distribution is defined as:
 ``` Haskell
-builtin normal_density 3 "normal_density" "Distribution";
-builtin normal_quantile 3 "normal_quantile" "Distribution";
-builtin builtin_sample_normal 2 "sample_normal" "Distribution";
-sample_normal m s = Random (IOAction2 builtin_sample_normal m s);
-normal m s = ProbDensity (normal_density m s) (normal_quantile m s) (sample_normal m s) realLine;
+builtin normal_density 3 "normal_density" "Distribution"
+builtin normal_quantile 3 "normal_quantile" "Distribution"
+builtin builtin_sample_normal 2 "sample_normal" "Distribution"
+sample_normal m s = Random (IOAction2 builtin_sample_normal m s)
+normal m s = ProbDensity (normal_density m s) (normal_quantile m s) (sample_normal m s) realLine
 ```
 
 ### Density
@@ -203,19 +203,20 @@ extern "C" closure builtin_function_sample_normal(OperationArgs& Args)
 ```
 Then use one of the following patterns, depending on how many arguments your sampling routine takes:
 ``` Haskell
-sample_dist arg1 = Random (IOAction1 builtin_sample_dist arg1);
-sample_dist arg1 arg2 = Random (IOAction2 builtin_sample_dist arg1 arg2);
-sample_dist arg1 arg2 arg3 = Random (IOAction3 builtin_sample_dist arg1 arg2 arg3);
+sample_dist arg1 = Random (IOAction1 builtin_sample_dist arg1)
+sample_dist arg1 arg2 = Random (IOAction2 builtin_sample_dist arg1 arg2)
+sample_dist arg1 arg2 arg3 = Random (IOAction3 builtin_sample_dist arg1 arg2 arg3)
 ```
 For example:
 ``` Haskell
-builtin builtin_sample_normal 2 "sample_normal" "Distribution";
-sample_normal m s = Random (IOAction2 builtin_sample_normal m s);
+builtin builtin_sample_normal 2 "sample_normal" "Distribution"
+sample_normal m s = Random (IOAction2 builtin_sample_normal m s)
 ```
 
 The `(dist_sample parameters)` function returns an object in the Random monad, where executing a distribution has the semantics of sampling from the distribution.  The sampling procedure can also call other actions in the Random monad. For example, here we sample from the distribution `(dist2 args)` and transform the result.
 ``` Haskell
-sample_dist args = do { x <- dist2 args; return (f x);}
+sample_dist args = do x <- dist2 args
+                      return (f x)
 ```
 
 ### Range
