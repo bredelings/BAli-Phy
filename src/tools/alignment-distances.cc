@@ -74,7 +74,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description analysis("Analysis options");
     analysis.add_options()
 	("distances", value<string>()->default_value("splits:splits2:nonrecall:inaccuracy"),"Colon-separated list of distances.")
-	("analysis", value<string>()->default_value("matrix"), "Analysis: matrix, median, diameter")
+	("analysis", value<string>(), "Analysis: score, AxA, NxN, compare, median, distances")
 	("CI",value<double>()->default_value(0.95),"Confidence interval size.")
 	("mean", "Show mean and standard deviation")
 	("median", "Show median and confidence interval")
@@ -97,7 +97,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	  options(all).positional(p).run(), args);
     notify(args);    
 
-    if (args.count("help")) {
+    if (args.count("help"))
+    {
 	cout<<"Compute distances between alignments.\n\n";
 	cout<<"Usage: alignment-distances <analysis> alignments-file1 [alignments-file2 ...]\n\n";
 	cout<<visible<<"\n";
@@ -107,26 +108,24 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
 	cout<<"Examples:\n\n";
 
-	cout<<" Compute distance matrix between all pairs of alignments in all files:\n";
-	cout<<"   % alignment-distances AxA file1.fasta ... fileN.fasta\n\n";
-
 	cout<<" Compute distances from true.fasta to each in As.fasta:\n";
 	cout<<"   % alignment-distances score true.fasta As.fasta\n\n";
+
+	cout<<" Compute distance matrix between all pairs of alignments in all files:\n";
+	cout<<"   % alignment-distances AxA file1.fasta ... fileN.fasta\n\n";
 
 	cout<<" Compute all NxN pairwise alignment accuracies, averaged over As:\n";
 	cout<<"   % alignment-distances NxN true.fasta As.fasta\n\n";
 
+	cout<<" Find alignment with smallest average distance to other alignments:\n";
+	cout<<"   % alignment-distances median As.fasta A.fasta\n\n";
+
 	cout<<" Compare the distances with-in and between the two groups:\n";
 	cout<<"   % alignment-distances compare A-dist1.fasta A-dist2.fasta\n\n";
 
-	cout<<" ???\n";
-	cout<<"   % alignment-distances median As.fasta A.fasta\n\n";
+	cout<<" Report distribution of average distance to other alignments:\n";
+	cout<<"   % alignment-distances distances As.fasta A.fasta\n\n";
 
-	cout<<" ???\n";
-	cout<<"   % alignment-distances diameter As.fasta A.fasta\n\n";
-
-	cout<<" ???\n";
-	cout<<"   % alignment-distances compression As.fasta A.fasta\n\n";
 	exit(0);
     }
 
@@ -569,7 +568,7 @@ int main(int argc,char* argv[])
 	    cerr<<"diameter = "<<diameter(D)<<endl;
 	    exit(0);  
 	}
-	else if (analysis == "diameter")
+	else if (analysis == "distances")
 	{
 	    check_supplied_filenames(1,files,false);
 
@@ -577,47 +576,12 @@ int main(int argc,char* argv[])
 
 	    matrix<double> D = distances(As, distance_fns[0]);
 
+	    // from tools/distance-report.H
+	    // computes distribution of average distance from A[i] to A[j], averaged over j
+	    // computes distribution of distances from A[i] to A[j]
+
+	    // We probably shouldn't call this a diameter
 	    diameter(D,"1",args);
-	}
-	else if (analysis == "compression")
-	{
-	    alignment_sample As(args, files[0]);
-
-	    matrix<double> D = distances(As, distance_fns[0]);
-
-	    //----------- accumulate distances ------------- //
-	    vector<double> ave_distances( As.size() , 0);
-	    for(int i=0;i<ave_distances.size();i++)
-		for(int j=0;j<i;j++) {
-		    ave_distances[i] += D(i,j);
-		    ave_distances[j] += D(i,j);
-		}
-	    for(int i=0;i<ave_distances.size();i++)
-		ave_distances[i] /= (D.size1()-1);
-
-	    int argmin = ::argmin(ave_distances);
-
-	    // Get a list of alignments in decreasing order of E D(i,A)
-	    vector<int> items = iota<int>(As.size());
-	    sort(items.begin(),items.end(),sequence_order<double>(ave_distances));
-
-	    for(int i=0;i<As.size();i++) 
-	    {
-		int j = items[i];
-		cerr<<"alignment = "<<i<<"   length = "<<As.Ms[j].size1();
-		cerr<<"   E D = "<<ave_distances[j]
-		    <<"   E D1 = "<<ave_distances[argmin];
-		cerr<<endl;
-	    }
-
-
-	    double total=0;
-	    for(int i=1;i<items.size();i++) {
-		for(int j=0;j<i;j++)
-		    total += D(items[i], items[j]);
-	
-		cerr<<"fraction = "<<double(i)/(items.size()-1)<<"     AveD = "<<double(total)/(i*i+i)*2<<endl;
-	    }
 	}
 	else
 	    throw myexception()<<"Analysis '"<<analysis<<"' not recognized.";

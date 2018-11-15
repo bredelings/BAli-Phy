@@ -19,10 +19,10 @@ Compute distances between alignments.
 : Produce help message
 
 **-s** _arg_ (=0), **--skip** _arg_ (=0)
-: number of alignment samples to skip
+: Number of alignment samples to skip.
 
 **-m** _arg_ (=1000), **--max** _arg_ (=1000)
-: maximum number of alignments to analyze
+: Maximum number of alignments to analyze.
 
 **-v**, **--verbose**
 : Output more log messages on stderr.
@@ -32,11 +32,11 @@ Compute distances between alignments.
 
 
 # ANALYSIS OPTIONS:
-**--metric** _arg_ (=splits)
-: type of distance: pairs, splits, splits2
+**--distances** _arg_
+: (=splits:splits2:nonrecall:inaccuracy) Colon-separated list of distances.
 
-**--analysis** _arg_ (=matrix)
-: Analysis: matrix, median, diameter
+**--analysis** _arg_
+: Analysis: score, AxA, NxN, compare, median, distances
 
 **--CI** _arg_ (=0.94999999999999996)
 : Confidence interval size.
@@ -49,6 +49,39 @@ Compute distances between alignments.
 
 **--minmax**
 : Show minimum and maximum distances
+
+
+# EXAMPLES:
+ 
+Compute distances from true.fasta to each in As.fasta:
+```
+% alignment-distances score true.fasta As.fasta
+```
+
+Compute distance matrix between all pairs of alignments in all files:
+```
+% alignment-distances AxA file1.fasta ... fileN.fasta
+```
+
+Compute all NxN pairwise alignment accuracies, averaged over As:
+```
+% alignment-distances NxN true.fasta As.fasta
+```
+
+Find alignment with smallest average distance to other alignments:
+```
+% alignment-distances median As.fasta A.fasta
+```
+
+Compare the distances with-in and between the two groups:
+```
+% alignment-distances compare A-dist1.fasta A-dist2.fasta
+```
+
+Report distribution of average distance to other alignments:
+```
+% alignment-distances distances As.fasta A.fasta
+```
 
 
 # REPORTING BUGS:
