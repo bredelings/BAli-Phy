@@ -6,16 +6,6 @@ matrix:
   include:
     - os: linux
       dist: xenial
-      env: CXX_COMPILER=g++-5
-      addons:
-        apt:
-          sources:
-          - ubuntu-toolchain-r-test
-          packages:
-          - g++-5
-          - pandoc
-    - os: linux
-      dist: xenial
       env: CXX_COMPILER=g++-6
       addons:
         apt:
@@ -33,6 +23,16 @@ matrix:
           - ubuntu-toolchain-r-test
           packages:
           - g++-7
+          - pandoc
+    - os: linux
+      dist: xenial
+      env: CXX_COMPILER=g++-8
+      addons:
+        apt:
+          sources:
+          - ubuntu-toolchain-r-test
+          packages:
+          - g++-8
           - pandoc
     - os: linux
       dist: xenial
