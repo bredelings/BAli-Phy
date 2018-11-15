@@ -4,20 +4,22 @@
 
 ## Fork the repo
 
-1. Click the "Fork" button on [https://github.com/bredelings/BAli-Phy/](https://github.com/bredelings/BAli-Phy).  This will create a separate copy of the repo under your own account.
+This will create a separate copy of the repo under your own account.
+
+1. Click the "Fork" button on [https://github.com/bredelings/BAli-Phy/](https://github.com/bredelings/BAli-Phy).
 
 1. Use `git clone` to download your own version of the repo:
-``` sh
-git clone git@github.com:your-username/BAli-Phy.git
-```
-The name `origin` in your local repo will then refer to your modified version of BAli-Phy.
+   ``` sh
+   git clone git@github.com:your-username/BAli-Phy.git
+   ```
+   The name `origin` in your local repo will then refer to your modified version of BAli-Phy.
 
 1. To refer to the official upstream version, create a new remote called `upstream`:
-``` sh
-cd BAli-Phy/
-git remote add upstream git@github.com:bredelings/BAli-Phy.git
-git remote -v
-```
+   ``` sh
+   cd BAli-Phy/
+   git remote add upstream https://github.com:bredelings/BAli-Phy.git
+   git remote -v
+   ```
 
 ## Repo overview
 
@@ -55,11 +57,12 @@ We are excited to see what you will contribute!
 
 The way to submit patches is:
 
-1. First develop changes in your own repo.
+1. Fork the BAli-Phy repo to create your own repo.
+1. Develop changes on a branch in your own repo.
 1. Send a [pull request](https://help.github.com/articles/about-pull-requests/) through github.
 1. CI tests will run automatically on the on suggested  changes.
 1. We will review the changes.
-1. If accepted, changes will be merged to the master branch.
+1. If accepted, changes will be merged to the master branch of the main repo.
 
 # Building bali-phy
 
@@ -248,15 +251,11 @@ where `n` is the number of dimensions, and `sum` is the sum of the values (usual
 
 ## Using a function from the command line
 
-To make a Haskell function accessible from the command line, you must add a JSON file to the directory `functions/` that registers the Haskell function.
-
-For example, the file `functions/HKY.json` allows the user to specify (for example) `-S HKY[kappa=2]` as a substitution model.  It connects the command line phrase `HKY[kapp=2]` with the Haskell function `SModel.hky` defined in the file `modules/SModel.hs`.
-
-The JSON looks like this:
+To make a Haskell function accessible from the command line, you must add a JSON file to the directory `functions/` that registers the Haskell function.  For example, the file `functions/hky85.json` allows the user to specify (for example) `-S hky85[kappa=2]` as a substitution model.  The JSON looks like this:
 
 ``` json
 {
-    "name": "HKY",
+    "name": "hky85",
     "title": "The Hasegawa-Kishino-Yano (1985) nucleotide rate matrix",
     "result_type": "ExchangeModel[a]",
     "constraints": ["Nucleotides[a]"],
@@ -267,55 +266,64 @@ The JSON looks like this:
                 "journal": {"name": "Journal of molecular evolution", "volume": "22", 
                 "identifier": [{"type":"doi","id":"10.1007/BF02101694"}]
                },
-    "call": "SModel.hky[kappa,alphabet]",
+    "call": "SModel.Nucleotides.hky85[kappa,SModel.Frequency.frequencies_from_dict[a,pi],a]",
     "args": [
         {
             "arg_name": "kappa",
             "arg_type": "Double",
-            "default_value": "~logNormal[log[2],0.25]",
+            "default_value": "~log_normal[log[2],0.25]",
             "description": "Transition\/transversion ratio"
         },
         {
-            "arg_name": "alphabet",
+            "arg_name": "pi",
+            "arg_type": "List[Pair[String,Double]]",
+            "default_value": "~dirichlet_on[letters[@a],1]",
+            "description": "Letter frequencies"
+        },
+        {
+            "arg_name": "a",
             "arg_type": "a",
-            "default_value": "getAlphabet"
+            "default_value": "getAlphabet",
+            "description": "The alphabet"
         }
     ],
-    "description":"Technically, this is just the symmetric matrix from HKY"
+    "description":"The HKY85 model",
+    "extract": "all"
 }
 ```
 
 The fields are defined as follows:
 
 `name`
-: specifies how this function will be invoked on the command line.
+: The name of this function on the command line.
 
 `call`
-: specifies which Haskell function to call and the order of the arguments to pass.
+: The Haskell function to call, and the order of the arguments to pass.
 
 `result_type`
-: specifies the result type of the function.
+: The result type of the function.
 
 `args`
-: describes the list of named arguments
+: The the list of named arguments
 
 `args.arg_name`
-: gives the name of each argument
+: The name of each argument
 
 `args.arg_type`
-: gives the type of each argument
+: The type of each argument
 
 `args.default_value`
-: gives a value for the argument if not specified (optional).
+: A value for the argument if not specified (optional).
 
 `args.description`
-: gives a short phrase describing the argument (optional).
-
-`description`
-: gives a longer description of the function (optional).
+: A short phrase describing the argument (optional).
 
 `title`
-: gives a title for the function (optional).
+: A title for the function (optional).
+
+`description`
+: A longer description of the function (optional).
+
 
 ## Adding a new MCMC move
 
