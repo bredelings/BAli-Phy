@@ -4,10 +4,11 @@ import Distributions
 
 -- Start from x0, sample n additional points.
 -- (f x) is the distribution of the point after x.
-random_walk x0 0 _ = return [x0]
-random_walk x0 n f = do x1 <- sample $ f x0
-                        xs <- random_walk x1 (n-1) f
-                        return (x0:xs)
+random_walk x0 n f | n < 1     = error "Random walk needs at least 1 element"
+                   | n == 1    = return [x0]
+                   | otherwise = do x1 <- sample $ f x0
+                                    xs <- random_walk x1 (n-1) f
+                                    return (x0:xs)
 
 main = do
 
@@ -30,15 +31,12 @@ main = do
 
   -- Brownian-bridge-like
   z <- random_walk 0.0 10 (\mu -> normal mu 1.0)
+  observe 2.0 $ normal (last z) 1.0
 
-  Observe 2.0 (normal (z!!10) 1.0)
-  return (Nothing,[
-           ("p",(Just p,[])),
-           ("n",(Just n,[])),
-           ("q",(Just q,[])),
-           ("x",(Just x,[])),
-           ("w",(Just w,[])),
-           ("y",(Just y,[])),
-           ("z",(Just z,[]))
-           ])
-
+  return $ log_all [ p %% "p",
+                     n %% "n",
+                     q %% "q",
+                     x %% "x",
+                     w %% "w",
+                     y %% "y",
+                     z %% "z" ]
