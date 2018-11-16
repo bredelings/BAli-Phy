@@ -7,15 +7,17 @@ UNRELEASED
    - "--" should not become a single long dash (en-dash) in man pages.
    - Don't crash if --scale is set to a constant (e.g. --scale=1).
    - Allow reading (a,b):1.0 as ((a,b):1.0);
+   - Properly translate newick labels with quotes or _.
+ - Speed
+   - Improved mixing for [0,1] random variables.
+   - Interpreted models (e.g. LinearRegression.hs) are now a lot faster.
  - Misc
    + Rename subsample to bali-subsample (to avoid conflicts with other software).
    - Hold Numeric[k] or Doublets[DNA/RNA] alignments fixed.
-   - Improved mixing for [0,1] random variables.
    - Allow writing alignments every iteration.
-   - alignment-thin: clean up options and man page.
    - tree-tool: add scaling, pruning, computing diameter, etc.
+   - alignment-thin: clean up options and man page.
    - alignment-distances: new tool, add accuracy and recall metrics.
-   - Properly translate newick labels with quotes or _.
  - Haskell
    - Implement -X NoImplicitPrelude
    - Refactored functions out of Prelude into Data.List, etc.
