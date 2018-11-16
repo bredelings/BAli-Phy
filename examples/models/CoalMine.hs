@@ -8,7 +8,7 @@ indices' i [] = []
 indices' i (x:xs) = i:(indices' (i+1.0) xs)
 indices l = indices' 0.0 l
 
-observe_list ys dists = sequence_ [Observe y dist | (y,dist) <- zip ys dists]
+observe_list ys dists = sequence_ [observe y dist | (y,dist) <- zip ys dists]
 
 main = do
 
@@ -23,9 +23,7 @@ main = do
   let mean year = if (theta > intToDouble year) then lambda else gamm
 
   observe_list fatalities [poisson (mean year) | year <- years]
-  return (Nothing,[
-           ("eta",(Just eta,[])),
-           ("lambda",(Just lambda,[])),
-           ("gamma",(Just gamma,[])),
-           ("theta",(Just theta,[]))
-          ])
+  return $ log_all [eta %% "eta",
+                    lambda %% "lambda",
+                    gamma %% "gamma",
+                    theta %% "theta"]

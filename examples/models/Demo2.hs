@@ -8,9 +8,5 @@ main = do
 
   let ys = map (\x -> x*x) xs
 
-  return (Nothing,[
-           ("xs",(Just xs,[])),
-           ("ys",(Just ys,[])),
-           ("sum",(Just $ sum ys,[]))
-           ])
+  return $ log_all [xs %% "xs", ys %% "ys", sum %% "sum"]
 

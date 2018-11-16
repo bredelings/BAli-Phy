@@ -37,6 +37,11 @@ data Random a = Random (IO a)
 
 
 sample dist = Sample dist
+observe = Observe
+
+log_all loggers = (Nothing,loggers)
+
+x %% y = (y,(Just x,[]))
 
 maybe_lazy lazy x = if lazy then unsafeInterleaveIO x else x
 

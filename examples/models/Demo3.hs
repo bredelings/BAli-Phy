@@ -7,5 +7,5 @@ main = do
   i <- sample $ bernoulli 0.5
   y <- sample $ normal 0.0 1.0
   let x = if (i==1) then y else 0.0
-  return (Nothing,[ ("i",(Just i,[])), ("x",(Just x,[])) ])
+  return $ log_all [i %% "i", x %% "x"]
 

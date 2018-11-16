@@ -8,7 +8,4 @@ main = do
 
   n <- sample $ geometric p
 
-  return (Nothing,[
-           ("p",(Just p,[])),
-           ("n",(Just n,[]))
-          ])
+  return $ log_all [ p %% "p", n %% "n"]

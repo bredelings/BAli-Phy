@@ -2,15 +2,16 @@ module Demo5 where
 
 import Distributions
 
-random_walk x0 0 _ = return [x0]
-random_walk x0 n f = do x1 <- sample $ f x0
-                        xs <- random_walk x1 (n-1) f
-                        return (x0:xs)
+random_walk x0 n f | n < 1     = error "Random walk needs at least 1 element"
+                   | n == 1    = return [x0]
+                   | otherwise = do x1 <- sample $ f x0
+                                    xs <- random_walk x1 (n-1) f
+                                    return (x0:xs)
 
+-- 20 element brownian bridge
 main = do
+  zs <- random_walk 0.0 19 (\mu -> normal mu 1.0)
 
-  zs <- random_walk 0.0 10 (\mu -> normal mu 1.0)
+  observe 0.0 $ normal (last zs) 1.0
 
-  Observe 2.0 (normal (zs!!10) 0.1)
-  return (Nothing,[("zs",(Just zs,[]))])
-
+  return $ log_all [ zs %% "zs" ]

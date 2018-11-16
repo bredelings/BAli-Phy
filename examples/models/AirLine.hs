@@ -7,7 +7,7 @@ indices' i [] = []
 indices' i (x:xs) = i:(indices' (i+1.0) xs)
 indices l = indices' 0.0 l
 
-observe_list ys dists = sequence_ [Observe y dist | (y,dist) <- zip ys dists]
+observe_list ys dists = sequence_ [observe y dist | (y,dist) <- zip ys dists]
 
 main = do
 
@@ -16,6 +16,4 @@ main = do
   beta <- sample $ cauchy 0.0 1.0
 
   observe_list fatalities [poisson $ safe_exp(alpha + beta*i) | i <- indices fatalities]
-  return (Nothing,[
-          ("alpha",(Just alpha,[])),
-          ("beta",(Just beta,[]))])
+  return $ log_all [ alpha %% "alpha", beta %% "beta"]
