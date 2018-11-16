@@ -51,16 +51,14 @@ These directories contain documentation and examples:
 [examples/models/](https://github.com/bredelings/BAli-Phy/blob/master/examples/models/)
 : Example files for running graphical models.
 
-## Contributions
+## How to contribute
 
-We are excited to see what you will contribute!
-
-The way to submit patches is:
+We are excited to see what you will contribute!  The way to submit changes is:
 
 1. Fork the BAli-Phy repo to create your own repo.
 1. Develop changes on a branch in your own repo.
 1. Send a [pull request](https://help.github.com/articles/about-pull-requests/) through github.
-1. CI tests will run automatically on the on suggested  changes.
+1. Tests will run automatically on the on suggested changes.
 1. We will review the changes.
 1. If accepted, changes will be merged to the master branch of the main repo.
 
