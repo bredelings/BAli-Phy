@@ -8,5 +8,5 @@ main = do
 
   let ys = map (\x -> x*x) xs
 
-  return $ log_all [xs %% "xs", ys %% "ys", sum %% "sum"]
+  return $ log_all [xs %% "xs", ys %% "squares", sum ys %% "sum"]
 
