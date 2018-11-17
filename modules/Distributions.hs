@@ -326,7 +326,7 @@ dp n alpha mean_dist = do
 
   mean <- sample $ iid (n+delta) mean_dist
 
-  category <- crp alpha n delta
+  category <- sample $ crp alpha n delta
 --  Log "dp:n_categories" (length (nub category))
 
   AddMove (\c -> mapM_ (\l-> gibbs_sample_categorical (category!!l) (n+delta) c) [0..n-1])
