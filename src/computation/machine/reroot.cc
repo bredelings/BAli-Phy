@@ -198,7 +198,7 @@ void reg_heap::unshare_regs(int t)
     {
 	int r = p.first;
 	prog_temp[r] |= 2;
-	assert(prog_temp[r] == 3);
+	assert((prog_temp[r]&3) == 3);
     }
 
     int j = delta_step.size();
@@ -214,7 +214,7 @@ void reg_heap::unshare_regs(int t)
 	// Any results or steps in the delta should already have their regs unshared.
 	for(int r2: Step.created_regs)
 	{
-	    assert(prog_temp[r2] == 3);
+	    assert((prog_temp[r2]&3) == 3);
 	}
     }
 #endif
@@ -244,12 +244,12 @@ void reg_heap::unshare_regs(int t)
 		int r2 = Result2.source_reg;
 
 		// This result is already unshared
-		if (prog_temp[r2] != 0) continue;
+		if ((prog_temp[r2]&3) != 0) continue;
 
 		// The root program's result at r2 is res2, which calls the root program's result at r
 		if (prog_results[r2] == res2)
 		{
-		    prog_temp[r2] = 1;
+		    prog_temp[r2] |= 1;
 		    vm_result.add_value(r2, non_computed_index);
 		}
 	    }
@@ -262,15 +262,15 @@ void reg_heap::unshare_regs(int t)
 		int r2 = S2.source_reg;
 
 		// This step is already unshared
-		if (prog_temp[r2] == 3) continue;
+		if ((prog_temp[r2]&3) == 3) continue;
 
 		// The root program's step at r2 is s2, which uses the root program's result at r
 		if (prog_steps[r2] == s2)
 		{
-		    if (prog_temp[r2] == 0)
+		    if ((prog_temp[r2]&3) == 0)
 			vm_result.add_value(r2, non_computed_index);
 
-		    prog_temp[r2] = 3;
+		    prog_temp[r2] |= 3;
 		    vm_step.add_value(r2, non_computed_index);
 		}
 	    }
@@ -287,12 +287,12 @@ void reg_heap::unshare_regs(int t)
 	    for(int r2: Step.created_regs)
 	    {
 		// The step and result are already unshared
-		if (prog_temp[r2] == 3) continue;
+		if ((prog_temp[r2]&3) == 3) continue;
 
-		if (prog_temp[r2] == 0)
+		if ((prog_temp[r2]&3) == 0)
 		    vm_result.add_value(r2, non_computed_index);
 
-		prog_temp[r2] = 3;
+		prog_temp[r2] |= 3;
 		vm_step.add_value(r2, non_computed_index);
 	    }
 	}
@@ -302,7 +302,7 @@ void reg_heap::unshare_regs(int t)
     for(const auto& p: delta_result)
     {
 	int r = p.first;
-	prog_temp[r] = 0;
+	prog_temp[r] &= ~3;
     }
 
     total_results_invalidated += (delta_result.size() - n_delta_result0);
