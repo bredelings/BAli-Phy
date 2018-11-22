@@ -96,7 +96,7 @@ public:
     virtual log_double_t likelihood() const {return 1.0;}
 
     virtual log_double_t heated_prior() const {return prior();}
-    virtual log_double_t heated_likelihood() const {return likelihood();}
+    virtual log_double_t heated_likelihood() const;
     virtual log_double_t heated_probability() const {return heated_prior() * heated_likelihood();}
 
     bool has_bounds(int i) const;

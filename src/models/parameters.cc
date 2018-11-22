@@ -1220,16 +1220,6 @@ log_double_t Parameters::likelihood() const
     return Pr;
 }
 
-log_double_t Parameters::heated_likelihood() const 
-{
-    log_double_t Pr = 1;
-
-    for(int i=0;i<n_data_partitions();i++) 
-	Pr *= get_data_partition(i).heated_likelihood();
-
-    return Pr;
-}
-
 void Parameters::select_root(int b) const
 {
     if (t().source(b) == subst_root() or t().target(b) == subst_root())

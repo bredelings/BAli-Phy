@@ -141,6 +141,15 @@ log_double_t Model::prior() const
     return get_probability();
 }
 
+log_double_t Model::heated_likelihood() const
+{
+    // Don't waste time calculating likelihood if we're sampling from the prior.
+    if (get_beta() == 0)
+	return 1;
+    else
+	return pow(likelihood(),get_beta());
+}
+
 Model::Model(const std::shared_ptr<module_loader>& L, const key_map_t& k)
     :context(L),keys(new key_map_t(k))
 { }
