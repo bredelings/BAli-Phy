@@ -53,7 +53,7 @@ closure get_trimmed(closure&& C)
 {
     do_trim(C);
 
-    return C;
+    return std::move(C);
 }
 
 expression_ref deindexify(const closure& C)

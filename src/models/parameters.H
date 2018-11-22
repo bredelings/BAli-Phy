@@ -47,7 +47,7 @@
 
 class Parameters;
 class Likelihood_Cache_Branch;
-struct model_t;
+class model_t;
 
 struct data_partition_constants
 {

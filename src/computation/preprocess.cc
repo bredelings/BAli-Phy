@@ -124,25 +124,25 @@ expression_ref graph_normalize(const expression_ref& E)
 closure let_float(closure&& C)
 {
     C.exp = let_float(expression_ref(C.exp));
-    return C;
+    return std::move(C);
 }
 
 closure graph_normalize(closure&& C)
 {
     C.exp = graph_normalize(expression_ref(C.exp));
-    return C;
+    return std::move(C);
 }
 
 closure indexify(closure&& C)
 {
     C.exp = indexify(expression_ref(C.exp));
-    return C;
+    return std::move(C);
 }
 
 closure trim_normalize(closure&& C)
 {
     C.exp = trim_normalize(expression_ref(C.exp));
-    return C;
+    return std::move(C);
 }
 
 closure reg_heap::preprocess(const closure& C)

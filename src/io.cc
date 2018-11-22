@@ -110,7 +110,7 @@ vector<string> load_lines(istream& file,int skip,int subsample, int max)
 
   scan_lines(file,skip,subsample,max,lines);
 
-  return lines;
+  return std::move(lines);
 }
 
 /// \brief Get the basename of a filename (i.e. remove parent directories.)
