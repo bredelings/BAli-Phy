@@ -989,7 +989,7 @@ void reg_heap::resize(int s)
 
 	assert(prog_steps[i] == non_computed_index);
 	assert(prog_results[i] == non_computed_index);
-	assert(prog_temp[i] == 0);
+	assert(prog_temp[i].none());
     }
 }
 
@@ -1073,8 +1073,8 @@ void reg_heap::check_used_regs_in_token(int t) const
     for(auto p: tokens[t].delta_result())
     {
 	int r = p.first;
-	assert((prog_temp[r]&1) == 0);
-	prog_temp[r] |= 1;
+	assert(not prog_temp[r].test(0));
+	prog_temp[r].set(0);
 
 	// No results for constant regs
 	assert(regs.access(r).type != reg::type_t::constant);
@@ -1090,11 +1090,11 @@ void reg_heap::check_used_regs_in_token(int t) const
     for(auto p: tokens[t].delta_step())
     {
 	int r = p.first;
-	assert((prog_temp[r]&2) == 0);
-	prog_temp[r] |= 2;
+	assert(not prog_temp[r].test(1));
+	prog_temp[r].set(1);
 
 	// If the step is unshared, the result must be unshared as well: this allows us to just walk unshared results.
-	assert(prog_temp[r] == 3);
+	assert(prog_temp[r].test(0) and prog_temp[r].test(1));
 	// No steps for constant regs
 	assert(regs.access(r).type != reg::type_t::constant);
     }
@@ -1167,20 +1167,22 @@ void reg_heap::check_used_regs_in_token(int t) const
     }
 
     for(auto p: tokens[t].delta_result())
-	prog_temp[p.first] = 0;
+    {
+	prog_temp[p.first].reset(0);
+	prog_temp[p.first].reset(1);
+    }
 
     for(auto p: tokens[t].delta_step())
-	prog_temp[p.first] = 0;
-
+    {
+	prog_temp[p.first].reset(0);
+	prog_temp[p.first].reset(1);
+    }
 }
 
 void reg_heap::check_used_regs() const
 {
     assert(tokens[root_token].vm_step.empty());
     assert(tokens[root_token].vm_result.empty());
-
-    for(auto c: prog_temp)
-	assert(not c);
 
     for(int t=0; t< tokens.size(); t++)
 	if (token_is_used(t))
@@ -1194,9 +1196,6 @@ void reg_heap::check_used_regs() const
 	if (call > 0)
 	    assert(not results.is_free(call));
     }
-
-    for(auto c: prog_temp)
-	assert(not c);
 }
 
 int reg_heap::get_shared_step(int r)

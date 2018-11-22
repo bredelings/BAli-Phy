@@ -334,7 +334,7 @@ private:
 
     std::vector<int> prog_steps;
     std::vector<int> prog_results;
-    mutable std::vector<char> prog_temp;
+    mutable std::vector<std::bitset<8>> prog_temp;
   
 public:
     /// Is a particular token unused?

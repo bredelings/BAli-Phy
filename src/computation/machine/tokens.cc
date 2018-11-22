@@ -130,37 +130,37 @@ void reg_heap::capture_parent_token(int t2)
     tokens[t2].parent = parent;
 }
 
-void load_map(const mapping& vm, vector<char>& prog_temp)
+void load_map(const mapping& vm, vector<std::bitset<8>>& prog_temp)
 {
     for(auto p: vm.delta())
     {
 	int r = p.first;
-	assert(prog_temp[r] == 0);
-	prog_temp[r] = 1;
+	assert(not prog_temp[r].test(0));
+	prog_temp[r].set(0);
     }
 }
 
-void unload_map(const mapping& vm, vector<char>& prog_temp)
+void unload_map(const mapping& vm, vector<std::bitset<8>>& prog_temp)
 {
     for(auto p: vm.delta())
     {
 	int r = p.first;
-	assert(prog_temp[r] == 1);
-	prog_temp[r] = 0;
+	assert(prog_temp[r].test(0));
+	prog_temp[r].reset(0);
     }
 }
 
-void merge_split_mapping_(mapping& vm1, mapping& vm2, vector<char>& prog_temp)
+void merge_split_mapping_(mapping& vm1, mapping& vm2, vector<std::bitset<8>>& prog_temp)
 {
     for(int i=0;i<vm1.delta().size();)
     {
 	int r = vm1.delta()[i].first;
 	int v = vm1.delta()[i].second;
 
-	if (not prog_temp[r])
+	if (not prog_temp[r].test(0))
 	{
 	    vm2.add_value(r,v);
-	    prog_temp[r] = 1;
+	    prog_temp[r].set(0);
 	    vm1.erase_value_at(i);
 	}
 	else
