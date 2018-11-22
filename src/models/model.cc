@@ -150,6 +150,13 @@ log_double_t Model::heated_likelihood() const
 	return pow(likelihood(),get_beta());
 }
 
+log_double_t Model::heated_probability_ratio(const Model& M1) const
+{
+    auto pr1 = M1.heated_probability();
+    auto pr2 = heated_probability();
+    return (pr2/pr1);
+}
+
 Model::Model(const std::shared_ptr<module_loader>& L, const key_map_t& k)
     :context(L),keys(new key_map_t(k))
 { }

@@ -99,6 +99,8 @@ public:
     virtual log_double_t heated_likelihood() const;
     virtual log_double_t heated_probability() const {return heated_prior() * heated_likelihood();}
 
+    virtual log_double_t heated_probability_ratio(const Model&) const;
+
     bool has_bounds(int i) const;
     const Bounds<double>& get_bounds(int i) const;
 

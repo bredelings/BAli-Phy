@@ -1601,10 +1601,7 @@ bool accept_MH(const Model& P1,const Model& P2,log_double_t rho)
 	std::cerr<<endl<<endl;
     }
 
-    log_double_t p1 = P1.heated_probability();
-    log_double_t p2 = P2.heated_probability();
-
-    log_double_t ratio = rho*(p2/p1);
+    log_double_t ratio = rho*P2.heated_probability_ratio(P1);
 
     bool accept = (ratio >= 1.0 or uniform() < ratio);
 
