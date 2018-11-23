@@ -672,6 +672,8 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	else
 	    alignment_prior_index = p->add_compute_expression( {var("Alignment.alignment_pr"), as, p->my_tree(), hmms, model} );
     }
+
+    p->add_likelihood_factor(p->get_expression(likelihood_index));
 }
 
 //-----------------------------------------------------------------------------//
@@ -1210,14 +1212,6 @@ log_double_t Parameters::prior_alignment() const
 log_double_t Parameters::prior() const 
 {
     return prior_no_alignment() * prior_alignment();
-}
-
-log_double_t Parameters::likelihood() const 
-{
-    log_double_t Pr = 1;
-    for(int i=0;i<n_data_partitions();i++) 
-	Pr *= get_data_partition(i).likelihood();
-    return Pr;
 }
 
 void Parameters::select_root(int b) const

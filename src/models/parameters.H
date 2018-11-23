@@ -389,7 +389,6 @@ public:
     log_double_t prior_alignment() const;
 
     log_double_t prior() const;
-    log_double_t likelihood() const;
 
     /// How many substitution models?
     int n_smodels() const {return PC->SModels.size();}
