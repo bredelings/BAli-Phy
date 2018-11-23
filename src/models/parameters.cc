@@ -1159,6 +1159,7 @@ void Parameters::NNI(int b1, int b2, bool allow_disconnect_subtree)
 	dp.set_pairwise_alignment(t().find_branch(nodes[3],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 3, 5));
 	dp.set_pairwise_alignment(t().find_branch(nodes[4],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 4, 5));
     }
+
 }
 
 void Parameters::show_h_tree() const
@@ -1174,29 +1175,7 @@ void Parameters::show_h_tree() const
 
 log_double_t Parameters::prior_no_alignment() const 
 {
-    log_double_t Pr = Model::prior();
-
-    // prior for each branch being aligned/unaliged
-    if (variable_alignment()) 
-    {
-	const double p_unaligned = load_value("P_aligned",0.0);
-
-	log_double_t pNA = p_unaligned;
-
-	log_double_t pA = (1.0 - p_unaligned);
-
-	for(int b=0;b<t().n_branches();b++)
-	    if (not branch_HMM_type(b))
-		Pr *= pA;
-	    else
-		Pr *= pNA;
-    }
-
-    // prior on parameters in data partitions
-    for(int i=0;i<n_data_partitions();i++)
-	Pr *= get_data_partition(i).prior_no_alignment();
-
-    return Pr;
+    return Model::prior();
 }
 
 log_double_t Parameters::prior_alignment() const 
