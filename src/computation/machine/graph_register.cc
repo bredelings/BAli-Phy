@@ -290,7 +290,7 @@ void reg_heap::register_prior(int r)
     if (reg_is_constant(r))
     {
 	log_double_t pr = regs.access(r).C.exp.as_log_double();
-	constant_pr *= pr;
+	constant_prior *= pr;
     }
     else
     {
@@ -389,7 +389,7 @@ log_double_t reg_heap::probability_for_context_diff(int c)
 	prs_list.resize(j);
     }
 
-    return constant_pr * log_double_t(prior);
+    return constant_prior * log_double_t(prior);
 }
 
 log_double_t reg_heap::probability_for_context(int c)
@@ -397,12 +397,12 @@ log_double_t reg_heap::probability_for_context(int c)
     total_context_pr++;
 
     log_double_t Pr = probability_for_context_diff(c);
-    // std::cerr<<"A:   Pr1 = "<<Pr<<"   error = "<<prior.data.total_error<<"  constant_pr = "<<constant_pr<<"  variable_pr = "<<prior.data.value<<"  unhandled = "<<prior.data.unhandled<<std::endl;
+    // std::cerr<<"A:   Pr1 = "<<Pr<<"   error = "<<prior.data.total_error<<"  constant_pr = "<<constant_prior<<"  variable_pr = "<<prior.data.value<<"  unhandled = "<<prior.data.unhandled<<std::endl;
 
 #ifndef NDEBUG  
     // log_double_t Pr2 = probability_for_context_full(c);
     // double diff = Pr.log() - Pr2.log();
-    // std::cerr<<"B:diff = "<<diff<<"    Pr1 = "<<Pr<<"  Pr2 = "<<Pr2<<"   error = "<<prior.data.total_error<<"  constant_pr = "<<constant_pr<<"  variable_pr = "<<prior.data.value<<"  unhandled = "<<prior.data.unhandled<<std::endl;
+    // std::cerr<<"B:diff = "<<diff<<"    Pr1 = "<<Pr<<"  Pr2 = "<<Pr2<<"   error = "<<prior.data.total_error<<"  constant_pr = "<<constant_prior<<"  variable_pr = "<<prior.data.value<<"  unhandled = "<<prior.data.unhandled<<std::endl;
     //  assert(fabs(diff) < 1.0e-6);
 #endif
 
