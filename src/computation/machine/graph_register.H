@@ -16,6 +16,7 @@
 #include <bitset>
 #include "computation/loader.H"
 #include "util/assert.hh"
+#include "kahan.H"
 
 struct Step
 {
@@ -217,13 +218,7 @@ public:
 
     log_double_t constant_pr = 1.0;
 
-    log_double_t variable_pr = 1.0;
-
-    log_double_t unhandled_pr = 1.0;
-
-    log_double_t error_pr = 1.0;
-
-    double total_error = 0.0;
+    kahan_multiplier prior;
 
     std::vector<int> prs_list;
 

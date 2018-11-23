@@ -343,7 +343,8 @@ void reg_heap::dec_probability(int rc)
     assert(r2 > 0);
     log_double_t pr = regs.access(r2).C.exp.as_log_double();
 
-    variable_pr /= pr;
+    prior.data.value -= pr.log();
+
     results[rc].flags.reset(0);
 
     int r = results[rc].source_reg;
@@ -356,10 +357,10 @@ double id(double x) {return x;}
 log_double_t reg_heap::probability_for_context_diff(int c)
 {
     reroot_at_context(c);
-    unhandled_pr.log() = 0.0;
+    prior.reset_unhandled();
 
     // re-multiply all probabilities
-    if (total_error > 1.0e-9)
+    if (prior.data.total_error > 1.0e-9)
     {
 	for(int r: probability_heads)
 	{
@@ -367,12 +368,10 @@ log_double_t reg_heap::probability_for_context_diff(int c)
 	    if (rc > 0 and results[rc].flags.test(0))
 		dec_probability(rc);
 	}
-	// std::cerr<<"unwinding all prs: total_error = "<<total_error<<" variable_pr = "<<variable_pr<<"  error_pr = "<<error_pr<<"   variable_pr/error_pr = "<<variable_pr/error_pr<<std::endl;
-	assert((variable_pr/error_pr).log() < 1.0e-6);
+	// std::cerr<<"unwinding all prs: total_error = "<<prior.data.total_error<<" variable_pr = "<<prior.data.value<<"  error_pr = "<<prior.data.delta<<"   variable_pr/error_pr = "<<prior.data.value - prior.data.delta<<std::endl;
+	assert(std::abs(prior.data.value - prior.data.delta) < 1.0e-6);
 	assert(prs_list.size() == probability_heads.size());
-	total_error = 0;
-	variable_pr.log() = 0;
-	error_pr.log() = 0;
+	prior.reset();
     }
 
     if (not prs_list.empty())
@@ -389,7 +388,7 @@ log_double_t reg_heap::probability_for_context_diff(int c)
 	prs_list.resize(j);
     }
 
-    return variable_pr * constant_pr * unhandled_pr / error_pr;
+    return constant_pr * log_double_t(prior);
 }
 
 log_double_t reg_heap::probability_for_context(int c)
@@ -397,12 +396,12 @@ log_double_t reg_heap::probability_for_context(int c)
     total_context_pr++;
 
     log_double_t Pr = probability_for_context_diff(c);
-    // std::cerr<<"A:   Pr1 = "<<Pr<<"   error = "<<total_error<<"  constant_pr = "<<constant_pr<<"  variable_pr = "<<variable_pr<<"  unhandled = "<<unhandled_pr<<std::endl;
+    // std::cerr<<"A:   Pr1 = "<<Pr<<"   error = "<<prior.data.total_error<<"  constant_pr = "<<constant_pr<<"  variable_pr = "<<prior.data.value<<"  unhandled = "<<prior.data.unhandled<<std::endl;
 
 #ifndef NDEBUG  
     // log_double_t Pr2 = probability_for_context_full(c);
     // double diff = Pr.log() - Pr2.log();
-    // std::cerr<<"B:diff = "<<diff<<"    Pr1 = "<<Pr<<"  Pr2 = "<<Pr2<<"   error = "<<total_error<<"  constant_pr = "<<constant_pr<<"  variable_pr = "<<variable_pr<<"  unhandled = "<<unhandled_pr<<std::endl;
+    // std::cerr<<"B:diff = "<<diff<<"    Pr1 = "<<Pr<<"  Pr2 = "<<Pr2<<"   error = "<<prior.data.total_error<<"  constant_pr = "<<constant_pr<<"  variable_pr = "<<prior.data.value<<"  unhandled = "<<prior.data.unhandled<<std::endl;
     //  assert(fabs(diff) < 1.0e-6);
 #endif
 

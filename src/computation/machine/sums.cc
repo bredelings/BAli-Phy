@@ -49,14 +49,14 @@ bool reg_heap::inc_probability(int rc)
   assert(r2 > 0);
   log_double_t pr = regs.access(r2).C.exp.as_log_double();
 
-  if (kahan_add(pr.log(), variable_pr.log(), error_pr.log(), total_error))
+  if (kahan_add(pr.log(), prior.data.value, prior.data.delta, prior.data.total_error))
   {
       results[rc].flags = 1;
       return true;
   }
   else
   {
-      unhandled_pr *= pr;
+      prior.data.unhandled += pr.log();
       return false;
   }
 }
