@@ -99,8 +99,8 @@ void check_match_P(const data_partition& P, log_double_t OS, log_double_t OP, co
     log_double_t lp = P.prior_alignment();
 
     //--- Compare the offset path probability and the true heated probability
-    log_double_t qt = qs * qp * P.prior_no_alignment();
-    log_double_t lt = P.heated_probability();
+    log_double_t qt = qs * qp;
+    log_double_t lt = P.heated_likelihood() * P.prior_alignment();
 
     if (log_verbose)
     {
@@ -132,7 +132,7 @@ vector<log_double_t> sample_P(const data_partition& P,
     vector<int> path_g = Matrices.generalize(path);
 
     // Probability
-    PR[0] = P.heated_probability();
+    PR[0] = P.heated_likelihood() * P.prior_alignment();
 
     // Probability of sampling A | i
     PR[1] = Matrices.path_P(path_g) * Matrices.generalize_P(path);

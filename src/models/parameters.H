@@ -169,9 +169,6 @@ public:
 
     log_double_t heated_likelihood() const;
 
-    log_double_t heated_prior() const {return prior();}
-    log_double_t heated_probability() const {return heated_prior() * heated_likelihood();}
-
     data_partition(const Parameters* P, int i);
 };
 
