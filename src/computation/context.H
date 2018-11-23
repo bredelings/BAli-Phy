@@ -187,7 +187,11 @@ public:
 
     virtual log_double_t prior() const;
 
+    virtual log_double_t likelihood() const;
+
     int add_prior_factor(const expression_ref& E);
+
+    int add_likelihood_factor(const expression_ref& E);
 
 protected:  
     void collect_garbage() const;

@@ -159,6 +159,17 @@ extern "C" closure builtin_function_register_prior(OperationArgs& Args)
     return constructor("()",0);
 }
 
+extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
+{
+    int R = Args.reg_for_slot(0);
+
+    auto& M = Args.memory();
+
+    M.register_likelihood(R);
+
+    return constructor("()",0);
+}
+
 extern "C" closure builtin_function_evaluate(OperationArgs& Args)
 {
     auto& M = Args.memory();

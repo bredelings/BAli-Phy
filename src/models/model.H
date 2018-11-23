@@ -92,7 +92,6 @@ public:
 
     /// the prior for the model, on the same scale as proposal densities
     virtual log_double_t probability() const {return prior() * likelihood();}
-    virtual log_double_t likelihood() const {return 1.0;}
 
     virtual log_double_t heated_prior() const {return prior();}
     virtual log_double_t heated_likelihood() const;

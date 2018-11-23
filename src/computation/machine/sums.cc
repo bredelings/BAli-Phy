@@ -51,7 +51,7 @@ bool reg_heap::inc_prior(int rc)
 
   if (kahan_add(pr.log(), prior.data.value, prior.data.delta, prior.data.total_error))
   {
-      results[rc].flags = 1;
+      results[rc].flags.set(0);
       return true;
   }
   else
@@ -74,6 +74,64 @@ log_double_t reg_heap::prior_for_context_full(int c)
   double log_pr = 0.0;
   double C = 0.0;
   for(int r: prior_heads)
+  {
+    const auto& x = get_reg_value_in_context(r, c);
+    log_double_t X = x.as_log_double();
+
+    double t;
+    if (std::abs(X.log()) > std::abs(log_pr))
+    {
+      t = (log_pr - C) + X.log();
+      double a1 = t - X.log();
+      double a2 = a1 - log_pr;
+      C = a2 + C;
+    }
+    else
+    {
+      t = log_pr + (X.log() - C);
+      double a1 = t - log_pr;
+      double a2 = a1 - X.log();
+      C = a2 + C;
+    }
+    log_pr = t;
+  }
+  log_double_t Pr;
+  Pr.log() = log_pr;
+  return Pr;
+}
+
+bool reg_heap::inc_likelihood(int rc)
+{
+  assert(rc > 0);
+  int r2 = results[rc].value;
+  assert(r2 > 0);
+  log_double_t pr = regs.access(r2).C.exp.as_log_double();
+
+  if (kahan_add(pr.log(), likelihood.data.value, likelihood.data.delta, likelihood.data.total_error))
+  {
+      results[rc].flags.set(1);
+      return true;
+  }
+  else
+  {
+      likelihood.data.unhandled += pr.log();
+      return false;
+  }
+}
+
+log_double_t reg_heap::likelihood_for_context_full(int c)
+{
+  /*
+    This version doesn't really change the amount of time in incremental_evaluate.
+    However, it drastically increases the amount of time spent in reg_has_value( 30% ),
+    get_reg_value_in_context( 13% ), and likelihood_for_context( 3% ).
+
+    With those removed, this could be comparable, or even faster.
+  */
+
+  double log_pr = 0.0;
+  double C = 0.0;
+  for(int r: likelihood_heads)
   {
     const auto& x = get_reg_value_in_context(r, c);
     log_double_t X = x.as_log_double();
