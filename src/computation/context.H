@@ -189,6 +189,8 @@ public:
 
     virtual log_double_t likelihood() const;
 
+    virtual log_double_t probability() const {return prior() * likelihood();}
+
     int add_prior_factor(const expression_ref& E);
 
     int add_likelihood_factor(const expression_ref& E);

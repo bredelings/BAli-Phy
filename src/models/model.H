@@ -90,12 +90,8 @@ public:
 
     virtual void set_beta(double) {std::abort();}
 
-    /// the prior for the model, on the same scale as proposal densities
-    virtual log_double_t probability() const {return prior() * likelihood();}
-
-    virtual log_double_t heated_prior() const {return prior();}
     virtual log_double_t heated_likelihood() const;
-    virtual log_double_t heated_probability() const {return heated_prior() * heated_likelihood();}
+    virtual log_double_t heated_probability() const {return prior() * heated_likelihood();}
 
     virtual log_double_t heated_probability_ratio(const Model&) const;
 
