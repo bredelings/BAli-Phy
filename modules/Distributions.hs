@@ -72,17 +72,17 @@ run_random' alpha rate lazy (IOReturn v) = return v
 run_random' alpha rate lazy (Sample (ProbDensity p _ (Random a) r)) = maybe_lazy lazy $ do
   v <- a
   m <- new_random_modifiable r v rate
-  register_probability (p m)
+  register_prior (p m)
   return m
 run_random' alpha rate lazy (Sample (ProbDensity p q (Exchangeable n r' v) r)) = maybe_lazy lazy $ do
   xs <- sequence $ replicate n (new_random_modifiable r' v rate)
-  register_probability (p xs)
+  register_prior (p xs)
   return xs
 -- Should laziness go into the sample here?  Would s every have observations, like a Brownian bridge
 -- If we don't do this, though then `Lazy $ sample $ iid $ normal 0 1` doesn't work.
 -- Could we somehow do the list lazily, and the entries of the list lazily, but the actions for sample each of the variables strictly?
 run_random' alpha rate lazy (Sample (ProbDensity _ _ s _)) = maybe_lazy lazy $ run_random' alpha rate lazy s
-run_random' alpha rate lazy (Observe datum dist) = register_probability (density dist datum)
+run_random' alpha rate lazy (Observe datum dist) = register_prior (density dist datum)
 run_random' alpha rate lazy (AddMove m) = register_transition_kernel m
 run_random' alpha rate lazy (Print s) = putStrLn (show s)
 run_random' alpha rate lazy (MFix f) = MFix ((run_random' alpha rate lazy).f)

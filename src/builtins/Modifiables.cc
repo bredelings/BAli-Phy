@@ -148,13 +148,13 @@ extern "C" closure builtin_function_add_parameter(OperationArgs& Args)
     return constructor("()",0);
 }
 
-extern "C" closure builtin_function_register_probability(OperationArgs& Args)
+extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 {
     int R = Args.reg_for_slot(0);
 
     auto& M = Args.memory();
 
-    M.register_probability(R);
+    M.register_prior(R);
 
     return constructor("()",0);
 }

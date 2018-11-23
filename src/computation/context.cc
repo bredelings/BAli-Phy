@@ -367,7 +367,7 @@ log_double_t context::get_probability() const
 
 int context::add_probability_factor(const expression_ref& E)
 {
-    return memory()->register_probability(preprocess(E));
+    return memory()->register_prior(preprocess(E));
 }
 
 

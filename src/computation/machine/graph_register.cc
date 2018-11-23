@@ -282,7 +282,7 @@ size_t reg_heap::size() const
     return regs.size();
 }
 
-void reg_heap::register_probability(int r)
+void reg_heap::register_prior(int r)
 {
     mark_completely_dirty(root_token);
     r = incremental_evaluate(r).first;
@@ -305,13 +305,13 @@ void reg_heap::register_probability(int r)
     }
 }
 
-int reg_heap::register_probability(closure&& C)
+int reg_heap::register_prior(closure&& C)
 {
     assert(not C.exp.head().is_a<expression>());
 
     int r = allocate();
     set_C(r, std::move(C));
-    register_probability(r);
+    register_prior(r);
     return r;
 }
 

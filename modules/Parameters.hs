@@ -11,11 +11,11 @@ builtin builtin_new_random_modifiable 4 "new_random_modifiable" "Modifiables"
 builtin evaluate 2 "evaluate" "Modifiables"
 builtin get_modifiable_value 2 "get_modifiable_value" "Modifiables"
 builtin builtin_add_parameter 2 "add_parameter" "Modifiables"
-builtin builtin_register_probability 1 "register_probability" "Modifiables"
+builtin builtin_register_prior 1 "register_prior" "Modifiables"
 
 add_parameter name x = IOAction2 builtin_add_parameter (listToString name) x
 
-register_probability pr = IOAction1 builtin_register_probability pr
+register_prior pr = IOAction1 builtin_register_prior pr
 
 new_random_modifiable range value rate = IOAction4 builtin_new_random_modifiable range (c_range range) value rate
 

@@ -222,9 +222,9 @@ public:
 
     std::vector<int> prs_list;
 
-    void register_probability(int r);
+    void register_prior(int r);
 
-    int register_probability(closure&& C);
+    int register_prior(closure&& C);
 
     void dec_probability_for_reg(int r);
 
