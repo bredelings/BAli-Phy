@@ -1,4 +1,46 @@
 #include "graph_register.H"
+#include "kahan.H"
+
+inline bool kahan_add(double x, double& y, double& C, double& total_error)
+{
+    double new_y = 0;
+    double error = 0;
+    if (std::abs(x) > std::abs(y))
+    {
+	new_y = (y - C) + x;
+	double a1 = new_y - x;
+	double a2 = a1 - y;
+	error = a2 + C;
+    }
+    else
+    {
+	new_y = y + (x - C);
+	double a1 = new_y - y;
+	double a2 = a1 - x;
+	error = a2 + C;
+    }
+
+    if (std::abs(error) > 1.0e-9)
+	return false;
+    else
+    {
+	C = error;
+	y = new_y;
+	total_error += std::abs(error);
+	return true;
+    }
+}
+
+bool kahan_adder::operator+=(double x)
+{
+    if (kahan_add(x, value, delta, total_error))
+	return true;
+    else
+    {
+	unhandled += x;
+	return false;
+    }
+}
 
 bool reg_heap::inc_probability(int rc)
 {
@@ -7,34 +49,16 @@ bool reg_heap::inc_probability(int rc)
   assert(r2 > 0);
   log_double_t pr = regs.access(r2).C.exp.as_log_double();
 
-  log_double_t new_total;
-  double error;
-  if (std::abs(pr.log()) > std::abs(variable_pr.log()))
+  if (kahan_add(pr.log(), variable_pr.log(), error_pr.log(), total_error))
   {
-    new_total = (variable_pr / error_pr) * pr;
-    double a1 = new_total.log() - pr.log();
-    double a2 = a1 - variable_pr.log();
-    error = a2 + error_pr.log();
+      results[rc].flags = 1;
+      return true;
   }
   else
   {
-    new_total = variable_pr * (pr / error_pr);
-    double a1 = new_total.log() - variable_pr.log();
-    double a2 = a1 - pr.log();
-    error = a2 + error_pr.log();
+      unhandled_pr *= pr;
+      return false;
   }
-    
-  if (std::abs(error) > 1.0e-9)
-  {
-    unhandled_pr *= pr;
-    return false;
-  }
-
-  total_error += std::abs(error);
-  error_pr.log() = error;
-  variable_pr = new_total;
-  results[rc].flags = 1;
-  return true;
 }
 
 log_double_t reg_heap::probability_for_context_full(int c)
