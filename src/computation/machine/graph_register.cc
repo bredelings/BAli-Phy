@@ -343,6 +343,7 @@ void reg_heap::dec_probability(int rc)
     assert(r2 > 0);
     log_double_t pr = regs.access(r2).C.exp.as_log_double();
 
+    // This value has already by included, so take it out unconditionally.
     prior.data.value -= pr.log();
 
     results[rc].flags.reset(0);
