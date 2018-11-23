@@ -185,9 +185,9 @@ public:
 
     void compile();
 
-    log_double_t get_probability() const;
+    virtual log_double_t prior() const;
 
-    int add_probability_factor(const expression_ref& E);
+    int add_prior_factor(const expression_ref& E);
 
 protected:  
     void collect_garbage() const;
@@ -213,7 +213,7 @@ public:
 
     context(const Program& P);
 
-    ~context();
+    virtual ~context();
 };
 
 std::ostream& operator<<(std::ostream&, const context& C);

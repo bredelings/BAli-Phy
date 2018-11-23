@@ -118,7 +118,7 @@ void reg_heap::reroot_at(int t)
     {
 	int rc = p.second;  
 	if (rc > 0 and results[rc].flags.test(0))
-	    dec_probability(rc);
+	    dec_prior(rc);
     }
 
     total_reroot_one++;

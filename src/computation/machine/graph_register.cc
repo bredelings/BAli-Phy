@@ -299,9 +299,9 @@ void reg_heap::register_prior(int r)
 	int rc = result_index_for_reg(r);
 	assert(rc > 0);
 
-	probability_heads.push_back(r);
+	prior_heads.push_back(r);
 
-	prs_list.push_back(r);
+	priors_list.push_back(r);
     }
 }
 
@@ -315,7 +315,7 @@ int reg_heap::register_prior(closure&& C)
     return r;
 }
 
-bool reg_heap::inc_probability_for_reg(int r)
+bool reg_heap::inc_prior_for_reg(int r)
 {
     assert(reg_is_changeable(r));
     int rc = result_index_for_reg(r);
@@ -325,18 +325,18 @@ bool reg_heap::inc_probability_for_reg(int r)
     incremental_evaluate(r);
     rc = result_index_for_reg(r);
 
-    return inc_probability(rc);
+    return inc_prior(rc);
 }
 
-void reg_heap::dec_probability_for_reg(int r)
+void reg_heap::dec_prior_for_reg(int r)
 {
     int rc = result_index_for_reg(r);
 
     if (rc > 0 and results[rc].flags.test(0))
-	dec_probability(rc);
+	dec_prior(rc);
 }
 
-void reg_heap::dec_probability(int rc)
+void reg_heap::dec_prior(int rc)
 {
     assert(rc > 0);
     int r2 = results[rc].value;
@@ -350,12 +350,12 @@ void reg_heap::dec_probability(int rc)
 
     int r = results[rc].source_reg;
     assert(reg_is_changeable(r));
-    prs_list.push_back(r);
+    priors_list.push_back(r);
 }
 
 double id(double x) {return x;}
 
-log_double_t reg_heap::probability_for_context_diff(int c)
+log_double_t reg_heap::prior_for_context_diff(int c)
 {
     reroot_at_context(c);
     prior.reset_unhandled();
@@ -363,50 +363,55 @@ log_double_t reg_heap::probability_for_context_diff(int c)
     // re-multiply all probabilities
     if (prior.data.total_error > 1.0e-9)
     {
-	for(int r: probability_heads)
+	for(int r: prior_heads)
 	{
 	    int rc = result_index_for_reg(r);
 	    if (rc > 0 and results[rc].flags.test(0))
-		dec_probability(rc);
+		dec_prior(rc);
 	}
 	// std::cerr<<"unwinding all prs: total_error = "<<prior.data.total_error<<" variable_pr = "<<prior.data.value<<"  error_pr = "<<prior.data.delta<<"   variable_pr/error_pr = "<<prior.data.value - prior.data.delta<<std::endl;
 	assert(std::abs(prior.data.value - prior.data.delta) < 1.0e-6);
-	assert(prs_list.size() == probability_heads.size());
+	assert(priors_list.size() == prior_heads.size());
 	prior.reset();
     }
 
-    if (not prs_list.empty())
+    if (not priors_list.empty())
     {
 	mark_completely_dirty(root_token);
 
 	int j=0;
-	for(int i=0;i<prs_list.size();i++)
+	for(int i=0;i<priors_list.size();i++)
 	{
-	    int r = prs_list[i];
-	    if (not inc_probability_for_reg(r))
-		prs_list[j++] = r;
+	    int r = priors_list[i];
+	    if (not inc_prior_for_reg(r))
+		priors_list[j++] = r;
 	}
-	prs_list.resize(j);
+	priors_list.resize(j);
     }
 
     return constant_prior * log_double_t(prior);
 }
 
-log_double_t reg_heap::probability_for_context(int c)
+log_double_t reg_heap::prior_for_context(int c)
 {
     total_context_pr++;
 
-    log_double_t Pr = probability_for_context_diff(c);
+    log_double_t Pr = prior_for_context_diff(c);
     // std::cerr<<"A:   Pr1 = "<<Pr<<"   error = "<<prior.data.total_error<<"  constant_pr = "<<constant_prior<<"  variable_pr = "<<prior.data.value<<"  unhandled = "<<prior.data.unhandled<<std::endl;
 
 #ifndef NDEBUG  
-    // log_double_t Pr2 = probability_for_context_full(c);
+    // log_double_t Pr2 = prior_for_context_full(c);
     // double diff = Pr.log() - Pr2.log();
     // std::cerr<<"B:diff = "<<diff<<"    Pr1 = "<<Pr<<"  Pr2 = "<<Pr2<<"   error = "<<prior.data.total_error<<"  constant_pr = "<<constant_prior<<"  variable_pr = "<<prior.data.value<<"  unhandled = "<<prior.data.unhandled<<std::endl;
     //  assert(fabs(diff) < 1.0e-6);
 #endif
 
     return Pr;
+}
+
+log_double_t reg_heap::probability_for_context(int c)
+{
+    return prior_for_context(c);
 }
 
 const vector<int>& reg_heap::random_modifiables() const
@@ -900,7 +905,7 @@ void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
     insert_at_end(scan, stack); // inc_heads = yes
     insert_at_end(scan, temp); // yes
     insert_at_end(scan, heads); // yes
-    insert_at_end(scan, probability_heads); // yes
+    insert_at_end(scan, prior_heads); // yes
     insert_at_end(scan, random_modifiables_); // yes
     insert_at_end(scan, transition_kernels_); // yes
 

@@ -208,35 +208,37 @@ public:
     // the list of expressions that we are interested in evaluating.
     std::vector<int> heads;
 
-    std::vector<int> probability_heads;
-
     // the list of regs that are currently being evaluated
     std::vector<int> stack;
 
     // a list of closures under evaluation
     std::vector<closure> closure_stack;
 
+    std::vector<int> prior_heads;
+
     log_double_t constant_prior = 1.0;
 
     kahan_multiplier prior;
 
-    std::vector<int> prs_list;
+    std::vector<int> priors_list;
 
     void register_prior(int r);
 
     int register_prior(closure&& C);
 
-    void dec_probability_for_reg(int r);
+    void dec_prior_for_reg(int r);
 
-    bool inc_probability_for_reg(int r);
+    bool inc_prior_for_reg(int r);
 
-    void dec_probability(int rc);
+    void dec_prior(int rc);
 
-    bool inc_probability(int rc);
+    bool inc_prior(int rc);
 
-    log_double_t probability_for_context_full(int c);
+    log_double_t prior_for_context_full(int c);
 
-    log_double_t probability_for_context_diff(int c);
+    log_double_t prior_for_context_diff(int c);
+
+    log_double_t prior_for_context(int c);
 
     log_double_t probability_for_context(int c);
 

@@ -42,7 +42,7 @@ bool kahan_adder::operator+=(double x)
     }
 }
 
-bool reg_heap::inc_probability(int rc)
+bool reg_heap::inc_prior(int rc)
 {
   assert(rc > 0);
   int r2 = results[rc].value;
@@ -61,19 +61,19 @@ bool reg_heap::inc_probability(int rc)
   }
 }
 
-log_double_t reg_heap::probability_for_context_full(int c)
+log_double_t reg_heap::prior_for_context_full(int c)
 {
   /*
     This version doesn't really change the amount of time in incremental_evaluate.
     However, it drastically increases the amount of time spent in reg_has_value( 30% ),
-    get_reg_value_in_context( 13% ), and probability_for_context( 3% ).
+    get_reg_value_in_context( 13% ), and prior_for_context( 3% ).
 
     With those removed, this could be comparable, or even faster.
   */
 
   double log_pr = 0.0;
   double C = 0.0;
-  for(int r: probability_heads)
+  for(int r: prior_heads)
   {
     const auto& x = get_reg_value_in_context(r, c);
     log_double_t X = x.as_log_double();

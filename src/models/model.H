@@ -91,7 +91,6 @@ public:
     virtual void set_beta(double) {std::abort();}
 
     /// the prior for the model, on the same scale as proposal densities
-    virtual log_double_t prior() const;
     virtual log_double_t probability() const {return prior() * likelihood();}
     virtual log_double_t likelihood() const {return 1.0;}
 

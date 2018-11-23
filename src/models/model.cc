@@ -136,11 +136,6 @@ void Model::set_parameter_values(const vector<int>& indices,const vector<express
 	set_parameter_value(indices[i], p[i]);
 }
 
-log_double_t Model::prior() const
-{
-    return get_probability();
-}
-
 log_double_t Model::heated_likelihood() const
 {
     // Don't waste time calculating likelihood if we're sampling from the prior.

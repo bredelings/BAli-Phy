@@ -360,12 +360,12 @@ void context::compile()
 {
 }
 
-log_double_t context::get_probability() const
+log_double_t context::prior() const
 {
-    return memory()->probability_for_context(context_index);
+    return memory()->prior_for_context(context_index);
 }
 
-int context::add_probability_factor(const expression_ref& E)
+int context::add_prior_factor(const expression_ref& E)
 {
     return memory()->register_prior(preprocess(E));
 }
@@ -378,7 +378,7 @@ void context::collect_garbage() const
 
 void context::show_graph() const
 {
-    get_probability();
+    prior();
     collect_garbage();
     int t = memory()->token_for_context(context_index);
     dot_graph_for_token(*memory(), t);
