@@ -342,11 +342,6 @@ const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b) const
     return get_pairwise_alignment_(b).as_<pairwise_alignment_t>();
 }
 
-log_double_t data_partition::prior_no_alignment() const 
-{
-    return 1.0;
-}
-
 // We want to decrease 
 // (a) the number of times get_counts( ) is called
 // (b) the number of times seqlength( ) is called
@@ -360,11 +355,6 @@ log_double_t data_partition::prior_alignment() const
     log_double_t Pr = P->evaluate(DPC().alignment_prior_index).as_log_double();
 
     return Pr;
-}
-
-log_double_t data_partition::prior() const 
-{
-    return prior_alignment() * prior_no_alignment();
 }
 
 const Likelihood_Cache_Branch& data_partition::cache(int b) const

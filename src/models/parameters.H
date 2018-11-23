@@ -161,12 +161,8 @@ public:
     const matrix<int>& alignment_constraint() const;
 
     // The prior, likelihood, and probability
-    log_double_t prior_no_alignment() const;
     log_double_t prior_alignment() const;
-
-    log_double_t prior() const;
     log_double_t likelihood() const;
-
     log_double_t heated_likelihood() const;
 
     data_partition(const Parameters* P, int i);
