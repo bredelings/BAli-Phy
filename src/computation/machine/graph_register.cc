@@ -285,7 +285,7 @@ size_t reg_heap::size() const
 void reg_heap::register_prior(int r)
 {
     mark_completely_dirty(root_token);
-    r = incremental_evaluate(r).first;
+    r = incremental_evaluate_unchangeable(r);
 
     if (reg_is_constant(r))
     {
@@ -295,9 +295,6 @@ void reg_heap::register_prior(int r)
     else
     {
 	assert(reg_is_changeable(r));
-
-	int rc = result_index_for_reg(r);
-	assert(rc > 0);
 
 	prior_heads.push_back(r);
 
