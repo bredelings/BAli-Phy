@@ -817,11 +817,16 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
 	std::cerr<<"Warning!  Some branch lengths not set because they are not directly modifiable.\n\n";
 }
 
-bool Parameters::variable_alignment() const
+bool Parameters::variable_alignment_from_param() const
 {
     auto e = get_parameter_value(variable_alignment_param);
-    assert(is_bool(e));
     return is_bool_true(e);
+}
+
+bool Parameters::variable_alignment() const
+{
+    assert(variable_alignment_from_param() == variable_alignment_);
+    return variable_alignment_;
 }
 
 void Parameters::variable_alignment(bool b)
@@ -832,7 +837,8 @@ void Parameters::variable_alignment(bool b)
     if (not n_imodels())
 	variable_alignment_ = false;
 
-    set_parameter_value(variable_alignment_param, variable_alignment_);
+    if (variable_alignment_from_param() != variable_alignment_)
+	set_parameter_value(variable_alignment_param, variable_alignment_);
 
     // turning ON alignment variation
     if (variable_alignment())
@@ -1371,7 +1377,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     PC->constants.push_back(-1);
 
     add_modifiable_parameter_with_value("Heat.beta", 1.0);
-    variable_alignment_param = add_modifiable_parameter_with_value("*variable_alignment", n_imodels() > 0);
+    variable_alignment_param = add_modifiable_parameter_with_value("*variable_alignment", variable_alignment_);
 
     // Add parameter for each scale
     vector<expression_ref> scales;

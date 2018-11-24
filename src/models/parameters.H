@@ -320,6 +320,8 @@ private:
     std::vector<int> affected_nodes;
     std::vector<std::vector<int>*> branches_from_affected_node;
 
+    bool variable_alignment_from_param() const;
+
 public:
 
     bool variable_alignment() const;
