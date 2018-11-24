@@ -313,6 +313,7 @@ public:
     int subst_root_index;
 
     bool variable_alignment_;
+    int variable_alignment_param;
 
 private:
 

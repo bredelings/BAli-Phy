@@ -1366,6 +1366,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     PC->constants.push_back(-1);
 
     add_modifiable_parameter_with_value("Heat.beta", 1.0);
+    variable_alignment_param = add_modifiable_parameter_with_value("*variable_alignment", n_imodels() > 0);
 
     // Add parameter for each scale
     vector<expression_ref> scales;
