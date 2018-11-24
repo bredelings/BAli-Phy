@@ -39,6 +39,7 @@
 #include "probability/probability.H"
 #include "computation/expression/expression.H"
 #include "computation/expression/lambda.H"
+#include "computation/expression/bool.H"
 #include "computation/expression/tuple.H"
 #include "computation/expression/list.H"
 #include "computation/expression/var.H"
@@ -818,7 +819,9 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
 
 bool Parameters::variable_alignment() const
 {
-    return variable_alignment_;
+    auto e = get_parameter_value(variable_alignment_param);
+    assert(is_bool(e));
+    return is_bool_true(e);
 }
 
 void Parameters::variable_alignment(bool b)
