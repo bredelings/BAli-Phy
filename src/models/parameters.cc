@@ -1165,7 +1165,9 @@ void Parameters::show_h_tree() const
 
 log_double_t Parameters::prior_no_alignment() const 
 {
-    return Model::prior();
+    auto Pr = Model::prior();
+    std::cout<<"prior_no_alignment = "<<Pr<<std::endl;
+    return Pr;
 }
 
 log_double_t Parameters::prior_alignment() const 
@@ -1175,12 +1177,16 @@ log_double_t Parameters::prior_alignment() const
     for(int i=0;i<n_data_partitions();i++) 
 	Pr *= get_data_partition(i).prior_alignment();
 
+    std::cout<<"prior_alignment = "<<Pr<<"  (variable_alignment = "<<variable_alignment()<<")"<<std::endl;
     return Pr;
 }
 
 log_double_t Parameters::prior() const 
 {
-    return prior_no_alignment() * prior_alignment();
+    std::cout<<std::endl;
+    auto Pr = prior_no_alignment() * prior_alignment();
+    std::cout<<"prior = "<<Pr<<std::endl;
+    return Pr;
 }
 
 void Parameters::select_root(int b) const
