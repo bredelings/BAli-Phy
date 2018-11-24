@@ -542,13 +542,78 @@ log_double_t reg_heap::probability_for_context(int c)
 
 prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 {
-    auto prior1 = prior_for_context(c1);
-    auto likelihood1 = likelihood_for_context(c1);
+#if DEBUG_MACHINE >= 2
+    for(auto x : prog_temp)
+	assert(x.none());
+#endif
 
-    auto prior2 = prior_for_context(c2);
-    auto likelihood2 = likelihood_for_context(c2);
+    // 1. reroot to c1 and force the program
+    auto pr1 = probability_for_context(c1);
 
-    return {prior2/prior1, likelihood2/likelihood1, false};
+    // 2. install another reroot handler
+    vector<pair<int,int>> original_pdf_results;
+
+    std::function<void(int)> handler = [&original_pdf_results,this](int old_root)
+    {
+	for(auto& p: tokens[old_root].delta_result())
+	{
+	    int r =  p.first;
+
+	    // We're only interested in cases where both contexts have a result that is > 0.
+	    // But (i) we need to seen the "seen" flag in any case
+	    //    (ii) we need to remember that we have set it so that we can unset it.
+	    if (regs.access(r).flags.any() and not prog_temp[r].test(2))
+	    {
+		prog_temp[r].set(2);
+		original_pdf_results.push_back(p);
+	    }
+	}
+    };
+
+    reroot_handlers.push_back(handler);
+
+    // 3. reroot to c2 and force the program
+    auto pr2 = probability_for_context(c2);
+
+    // 4. compute the ratio only for (i) changed pdfs that (ii) exist in both c1 and c2
+    prob_ratios_t R{1.0, 1.0, false};
+
+    for(auto& p: original_pdf_results)
+    {
+	int pdf_reg = p.first;
+	int rc1 = p.second;
+
+	assert(prog_temp[pdf_reg].test(2));
+
+	prog_temp[pdf_reg].reset(2);
+
+	// Only compute a ratio if the pdf is present and computed in BOTH contexts.
+	if (rc1 > 0 and has_result(pdf_reg))
+	{
+	    int result_reg1 = results[rc1].value;
+	    int result_reg2 = result_value_for_reg(pdf_reg);
+	    log_double_t r = (*this)[result_reg2].exp.as_log_double() / (*this)[result_reg1].exp.as_log_double();
+
+	    assert(regs.access(pdf_reg).flags.test(0) or regs.access(pdf_reg).flags.test(1));
+	    if (regs.access(pdf_reg).flags.test(0))
+		R.prior_ratio *= r;
+	    else 
+		R.likelihood_ratio *= r;
+	}
+    }
+
+#if DEBUG_MACHINE >= 2
+    for(auto x : prog_temp)
+	assert(x.none());
+#endif
+
+    // 5. remove the reroot handler
+    reroot_handlers.pop_back();
+
+    if (pr1 > 0.0 and pr2 > 0.0)
+	assert( std::abs( (pr2/pr1).log() - R.prior_ratio.log() - R.likelihood_ratio.log()) < 1.0e-9 );
+
+    return R;
 }
 
 const vector<int>& reg_heap::random_modifiables() const
