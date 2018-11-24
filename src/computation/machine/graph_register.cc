@@ -324,6 +324,8 @@ bool reg_heap::inc_prior_for_reg(int r)
     assert(reg_is_changeable(r));
     int rc = result_index_for_reg(r);
 
+    if (not reg_exists(r)) return false; // reg does not exist in this context!
+
     if (rc > 0 and results[rc].flags.test(0)) return true; // already included
 
     incremental_evaluate(r);
@@ -447,6 +449,8 @@ bool reg_heap::inc_likelihood_for_reg(int r)
 {
     assert(reg_is_changeable(r));
     int rc = result_index_for_reg(r);
+
+    assert(reg_exists(r)); // reg had better exist in this context!
 
     if (rc > 0 and results[rc].flags.test(1)) return true; // already included
 
