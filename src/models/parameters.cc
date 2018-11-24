@@ -40,6 +40,7 @@
 #include "computation/expression/expression.H"
 #include "computation/expression/lambda.H"
 #include "computation/expression/bool.H"
+#include "computation/expression/case.H"
 #include "computation/expression/tuple.H"
 #include "computation/expression/list.H"
 #include "computation/expression/var.H"
@@ -662,6 +663,10 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	}
 	else
 	    alignment_prior_index = p->add_compute_expression( {var("Alignment.alignment_pr"), as, p->my_tree(), hmms, model} );
+
+	p->add_prior_factor(make_if_expression(parameter("*variable_alignment"),
+					       p->get_expression(alignment_prior_index),
+					       log_double_t(1.0)));
     }
 
     p->add_likelihood_factor(p->get_expression(likelihood_index));
@@ -1176,9 +1181,14 @@ void Parameters::show_h_tree() const
 
 log_double_t Parameters::prior_no_alignment() const 
 {
-    auto Pr = Model::prior();
-    std::cout<<"prior_no_alignment = "<<Pr<<std::endl;
-    return Pr;
+    if (variable_alignment_)
+    {
+	auto P2 = *this;
+	P2.variable_alignment(false);
+	return P2.prior();
+    }
+    else
+	return prior();
 }
 
 log_double_t Parameters::prior_alignment() const 
@@ -1188,15 +1198,12 @@ log_double_t Parameters::prior_alignment() const
     for(int i=0;i<n_data_partitions();i++) 
 	Pr *= get_data_partition(i).prior_alignment();
 
-    std::cout<<"prior_alignment = "<<Pr<<"  (variable_alignment = "<<variable_alignment()<<")"<<std::endl;
     return Pr;
 }
 
 log_double_t Parameters::prior() const 
 {
-    std::cout<<std::endl;
-    auto Pr = prior_no_alignment() * prior_alignment();
-    std::cout<<"prior = "<<Pr<<std::endl;
+    auto Pr = Model::prior();
     return Pr;
 }
 
