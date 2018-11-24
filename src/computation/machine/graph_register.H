@@ -98,6 +98,8 @@ public:
 
     std::pair<int, int> created_by;
 
+    std::bitset<8> flags;
+
     void clear();
 
     void check_cleared();

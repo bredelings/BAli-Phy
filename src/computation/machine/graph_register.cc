@@ -182,14 +182,17 @@ reg& reg::operator=(reg&& R) noexcept
 
     created_by = std::move(R.created_by);
 
+    flags = R.flags;
+
     return *this;
 }
 
 reg::reg(reg&& R) noexcept
 :C( std::move(R.C) ),
-			 type ( R.type ),
-			 n_heads( R.n_heads ),
-			 created_by( std::move(R.created_by) )
+ type ( R.type ),
+ n_heads( R.n_heads ),
+ created_by( std::move(R.created_by) ),
+ flags ( R.flags )
 { }
 
 void reg::clear()
@@ -197,6 +200,7 @@ void reg::clear()
     assert(n_heads == 0);
     C.clear();
     type = type_t::unknown;
+    flags.reset();
 }
 
 void reg::check_cleared()
@@ -206,6 +210,7 @@ void reg::check_cleared()
     assert(n_heads == 0);
     assert(created_by.first == 0);
     assert(created_by.second == 0);
+    assert(flags.none());
 }
 
 void mapping::add_value(int r, int v) 
@@ -294,6 +299,8 @@ void reg_heap::register_prior(int r)
     }
     else
     {
+	regs.access(r).flags.set(0);
+
 	assert(reg_is_changeable(r));
 
 	prior_heads.push_back(r);
@@ -416,6 +423,8 @@ void reg_heap::register_likelihood(int r)
     }
     else
     {
+	regs.access(r).flags.set(1);
+
 	assert(reg_is_changeable(r));
 
 	likelihood_heads.push_back(r);
