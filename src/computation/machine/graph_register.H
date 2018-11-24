@@ -158,6 +158,8 @@ class reg_heap: public Object
     mutable int n_active_scratch_lists = 0;
     mutable std::vector< object_ptr<Vector<int> > > scratch_lists;
 
+    std::vector<std::function<void(int)>> reroot_handlers;
+
     void get_more_memory();
 
     void resize(int s);

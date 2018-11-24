@@ -114,6 +114,9 @@ void reg_heap::reroot_at(int t)
 
     // 5. Remove probabilities for invalidated regs from the current probability
 
+    for(auto& reroot_handler: reroot_handlers)
+	reroot_handler(parent);
+
     for(auto p: tokens[parent].delta_result())
     {
 	int rc = p.second;  
