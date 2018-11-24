@@ -17,6 +17,7 @@
 #include "computation/loader.H"
 #include "util/assert.hh"
 #include "kahan.H"
+#include "mcmc/prob_ratios.H"
 
 struct Step
 {
@@ -267,6 +268,8 @@ public:
     log_double_t likelihood_for_context(int c);
 
     log_double_t probability_for_context(int c);
+
+    prob_ratios_t probability_ratios(int c1, int c2);
 
     // the list of modifiables
     std::vector<int> random_modifiables_;

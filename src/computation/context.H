@@ -4,6 +4,7 @@
 #include "computation/closure.H"
 #include "computation/program.H"
 #include "math/log-double.H"
+#include "mcmc/prob_ratios.H"
 
 class reg;
 
@@ -190,6 +191,8 @@ public:
     virtual log_double_t likelihood() const;
 
     virtual log_double_t probability() const {return prior() * likelihood();}
+
+    prob_ratios_t probability_ratios(const context& C1) const;
 
     int add_prior_factor(const expression_ref& E);
 

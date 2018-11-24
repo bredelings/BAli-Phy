@@ -531,6 +531,17 @@ log_double_t reg_heap::probability_for_context(int c)
     return prior_for_context(c) * likelihood_for_context(c);
 }
 
+prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
+{
+    auto prior1 = prior_for_context(c1);
+    auto likelihood1 = likelihood_for_context(c1);
+
+    auto prior2 = prior_for_context(c2);
+    auto likelihood2 = likelihood_for_context(c2);
+
+    return {prior2/prior1, likelihood2/likelihood1, false};
+}
+
 const vector<int>& reg_heap::random_modifiables() const
 {
     return random_modifiables_;

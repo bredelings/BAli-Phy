@@ -380,6 +380,10 @@ int context::add_likelihood_factor(const expression_ref& E)
     return memory()->register_likelihood(preprocess(E));
 }
 
+prob_ratios_t context::probability_ratios(const context& C1) const
+{
+    return memory()->probability_ratios(C1.context_index, context_index);
+}
 
 void context::collect_garbage() const
 {
