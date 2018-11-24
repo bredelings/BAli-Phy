@@ -17,6 +17,11 @@ bool is_bool_false(const constructor& c)
     return c.f_name == bool_false_name;
 }
 
+bool is_bool(const constructor& c)
+{
+    return (is_bool_true(c) or is_bool_false(c));
+}
+
 bool is_bool_true(const expression_ref& e)
 {
     return e.is_a<constructor>() and is_bool_true(e.as_<constructor>());
@@ -25,6 +30,11 @@ bool is_bool_true(const expression_ref& e)
 bool is_bool_false(const expression_ref& e)
 {
     return e.is_a<constructor>() and is_bool_false(e.as_<constructor>());
+}
+
+bool is_bool(const expression_ref& e)
+{
+    return (is_bool_true(e) or is_bool_false(e));
 }
 
 bool is_otherwise(const expression_ref& e)
