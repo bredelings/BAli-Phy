@@ -988,6 +988,7 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
     int root_node = subtree_edge.node2;
     // Because the attachment node keeps its name, this will stay in effect throughout the likelihood calculations.
     P.set_root(root_node);
+    P.variable_alignment(false);
 
     spr_info I(P.t(), subtree_edge, range);
 
@@ -1005,7 +1006,7 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
 	Pr[I.initial_edge] = pr_sum_out_A_tri(P, A23_constraints(P, nodes_, true), nodes_);
     }
     else
-	Pr[I.initial_edge] = P.heated_likelihood() * P.prior_no_alignment();
+	Pr[I.initial_edge] = P.heated_likelihood() * P.prior();
 #ifdef DEBUG_SPR_ALL
     Pr.LLL[I.initial_edge] = P.heated_likelihood();
 #endif
@@ -1057,7 +1058,7 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
 	if (sum_out_A)
 	    Pr[target_edge] = pr_sum_out_A_tri(p, a23_constraint, nodes_);
 	else
-	    Pr[target_edge] = p.heated_likelihood() * p.prior_no_alignment();
+	    Pr[target_edge] = p.heated_likelihood() * p.prior();
 
 #ifdef DEBUG_SPR_ALL
 	Pr.LLL[target_edge] = p.heated_likelihood();
