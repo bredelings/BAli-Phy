@@ -1201,12 +1201,6 @@ log_double_t Parameters::prior_alignment() const
     return Pr;
 }
 
-log_double_t Parameters::prior() const 
-{
-    auto Pr = Model::prior();
-    return Pr;
-}
-
 void Parameters::select_root(int b) const
 {
     if (t().source(b) == subst_root() or t().target(b) == subst_root())
