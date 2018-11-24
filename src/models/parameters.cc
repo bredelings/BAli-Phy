@@ -829,6 +829,8 @@ void Parameters::variable_alignment(bool b)
     if (not n_imodels())
 	variable_alignment_ = false;
 
+    set_parameter_value(variable_alignment_param, variable_alignment_);
+
     // turning ON alignment variation
     if (variable_alignment())
 	assert(n_imodels() > 0);
