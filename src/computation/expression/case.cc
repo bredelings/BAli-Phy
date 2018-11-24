@@ -69,6 +69,11 @@ expression_ref make_case_expression(const expression_ref& object, const vector<e
     return make_case_expression(object,make_alts(patterns,bodies));
 }
 
+expression_ref make_if_expression(const expression_ref& condition, const expression_ref& true_branch, const expression_ref& false_branch)
+{
+    return make_case_expression(condition,{true,false},{true_branch, false_branch});
+}
+
 bool is_case(const expression_ref& E)
 {
     return E.head().type() == case_type;
