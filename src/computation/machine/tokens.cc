@@ -325,14 +325,21 @@ int reg_heap::make_child_token(int t)
     return t2;
 }
 
+void reg_heap::switch_to_token(int c, int t2)
+{
+    int t1 = unset_token_for_context(c);
+    set_token_for_context(c,t2);
+
+    release_unreferenced_tips(t1);
+}
+
 int reg_heap::switch_to_child_token(int c)
 {
     check_tokens();
 
     int t1 = token_for_context(c);
     int t2 = make_child_token(t1);
-    unset_token_for_context(c);
-    set_token_for_context(c,t2);
+    switch_to_token(c, t2);
 
     check_tokens();
 
