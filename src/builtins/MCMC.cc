@@ -23,6 +23,30 @@ double log1pexp(double x)
 	return x;
 }
 
+log_double_t get_multiplier(reg_heap& M, const vector<int>& I_regs, int c1)
+{
+    // So, why is this sum allowed?
+    log_double_t multiplier(1);
+
+    for(int r : I_regs)
+    {
+	int i = M.get_reg_value_in_context(r, c1).as_int();
+
+	int c2 = M.copy_context(c1);
+	M.set_reg_value_in_context(r, expression_ref(1-i), c2);
+	auto ratio = M.probability_ratios(c1,c2).total_ratio();
+	if (uniform() < ratio/(1.0+ratio))
+	{
+	    M.switch_to_context(c1, c2);
+	    multiplier *= 1.0+(1.0/ratio);
+	}
+	else
+	    multiplier *= 1.0+ratio;
+	M.release_context(c2);
+    }
+    return multiplier;
+}
+
 extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
@@ -30,15 +54,15 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
     reg_heap& M = Args.memory();
 
     //------------- 1a. Get argument X -----------------
-    int R_X = Args.evaluate_slot_to_reg(0);
+    int t_reg = Args.evaluate_slot_to_reg(0);
 
-    int c = Args.evaluate(2).as_int();
+    int c1 = Args.evaluate(2).as_int();
 
     //------------- 1b. Get arguments Y_i  -----------------
-    vector<int> M_Y;
+    vector<int> I_regs;
 
     int next_reg = Args.reg_for_slot(1);
-    const closure* top = &M.lazy_evaluate(next_reg, c);
+    const closure* top = &M.lazy_evaluate(next_reg, c1);
     while(top->exp.size())
     {
 	assert(has_constructor(top->exp,":"));
@@ -54,81 +78,42 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 	element_reg = Args.evaluate_reg_to_reg(element_reg);
 
 	// Add the element to the list.
-	M_Y.push_back( element_reg );
+	I_regs.push_back( element_reg );
 	// Move to the next element or end
-	top = &M.lazy_evaluate(next_reg, c);
+	top = &M.lazy_evaluate(next_reg, c1);
     }
     assert(has_constructor(top->exp,"[]"));
 
-    //------------- 2. Figure out t and the next t ------------//
+    //------------- 2. For t1, sample Is and sum over the Is ------------//
 
-    int x1 = M.lazy_evaluate(R_X, c).exp.as_int();
-    int x2 = x1 + 1;
+    int t1 = M.lazy_evaluate(t_reg, c1).exp.as_int();
+
+    // The sum is this multiplier times the probability of the current Is.
+    auto multiplier1 = get_multiplier(M, I_regs, c1);
+
+    //------------- 3. Figure out the multiplier for summing over all the Is for t2 ------------//
+    int t2 = t1 + 1;
     if (uniform() < 0.5)
     {
-	x2 = x1 - 1;
-	if (x2 < 0)
-	    x2 = 0;
+	t2 = t1 - 1;
+	if (t2 < 0)
+	    t2 = 0;
     }
 
-    //------------- 3. Record base probability and relative probability for x1
-    for(int R: M_Y)
-	M.set_reg_value_in_context(R, expression_ref(0), c);
+    int c2 = M.copy_context(c1);
+    M.set_reg_value_in_context(t_reg, expression_ref(t2), c2);
 
-    log_double_t pr_base_1 = M.probability_for_context(c);
-
-    log_double_t pr_total_1 = pr_base_1;
-    vector<log_double_t> pr_y_1(M_Y.size());
-    for(int i=0;i<M_Y.size();i++)
-    {
-	int R = M_Y[i];
-	M.set_reg_value_in_context(R, expression_ref(1), c);
-	log_double_t pr_offset = M.probability_for_context(c);
-	M.set_reg_value_in_context(R, expression_ref(0), c);
-	double delta = log(pr_offset/pr_base_1);
-	pr_y_1[i] = exp_to<log_double_t>(-log1pexp(delta));
-    
-	pr_total_1 /= pr_y_1[i];
-    }
-
-    //------------- 4. Record base probability and relative probability for x2
-
-    M.set_reg_value_in_context(R_X, expression_ref(x2), c);
-
-    log_double_t pr_base_2 = M.probability_for_context(c);
-
-    log_double_t pr_total_2 = pr_base_2;
-    vector<log_double_t> pr_y_2(M_Y.size());
-    for(int i=0;i<M_Y.size();i++)
-    {
-	int R = M_Y[i];
-	M.set_reg_value_in_context(R, expression_ref(1), c);
-	log_double_t pr_offset = M.probability_for_context(c);
-	M.set_reg_value_in_context(R, expression_ref(0), c);
-	double delta = log(pr_offset/pr_base_2);
-	pr_y_2[i] = exp_to<log_double_t>(-log1pexp(delta));
-    
-	pr_total_2 /= pr_y_2[i];
-    }
+    auto multiplier2 = get_multiplier(M, I_regs, c2);
 
     //------------- 5. Choose to accept or not, depending on the relative probabilities.
-    int choice = choose2(pr_total_1, pr_total_2);
+    auto ratio = M.probability_ratios(c1,c2).total_ratio();
+
+    int choice = choose2(multiplier1, ratio*multiplier2);
 
     //------------- 6. Set x depending on the choice
-    if (choice == 0)
-	M.set_reg_value_in_context(R_X, expression_ref(x1), c);
+    if (choice == 1)
+	M.switch_to_context(c1,c2);
     
-    //------------- 7. Sample the Y[i] depending on the choice.
-    vector<log_double_t> pr_y = choice?pr_y_2:pr_y_1;
-
-    for(int i=0;i<M_Y.size();i++)
-    {
-	int R = M_Y[i];
-	double pr = 1.0 - double(pr_y[i]);
-	if (uniform() < pr)
-	    M.set_reg_value_in_context(R, expression_ref(1), c);
-    }
-
     return constructor("()",0);
 }
 
