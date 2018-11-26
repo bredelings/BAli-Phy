@@ -133,7 +133,7 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
     //------------- 1c. Get context index --------------
     int c1 = Args.evaluate(2).as_int();
 
-    int x1 = M.get_reg_value_in_context(x_reg, 1).as_int();
+    int x1 = M.get_reg_value_in_context(x_reg, c1).as_int();
 
     //------------- 2. Figure out probability of each value of x ------------//
     vector<log_double_t> pr_x(n_values, 1.0);
