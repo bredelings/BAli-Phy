@@ -410,8 +410,8 @@ public:
     /// Acquire a copy of a token
     int make_child_token(int);
 
-    /// Make a child of the current token, and unreference the current token.
-    int switch_to_child_token(int);
+    /// Make a child of the current token, point to the child, and unreference the current token.
+    int switch_to_child_token(int c);
 
     void merge_split_mappings(const std::vector<int>&);
 
