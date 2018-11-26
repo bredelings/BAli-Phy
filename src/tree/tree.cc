@@ -515,7 +515,6 @@ string unquote_for_newick(const string& s)
 	if (c == '\'' and i > 1 and s[i-1] == '\'') continue;
 	s2.append(1,c);
     }
-    std::cerr<<"unquoted = |"<<s2<<"|\n";
     return s2;
 }
 
