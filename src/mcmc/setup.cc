@@ -55,7 +55,6 @@ void add_modifiable_MH_move(const Model& P, const string& name, const proposal_f
 			    MCMC::MoveAll& M, double weight=1)
 {
     double rate = P.get_rate_for_reg(r);
-    std::cerr<<"rate = "<<rate<<"\n";
     M.add(rate * weight, MCMC::MH_Move( Proposal2M(proposal, r, parameters), name) );
 }
 
@@ -113,7 +112,6 @@ double default_sampling_rate(const Model& /*M*/, const string& /*parameter_name*
 bool add_slice_move(const Model& P, int r, MCMC::MoveAll& M, double weight = 1.0)
 {
     double rate = P.get_rate_for_reg(r);
-    std::cerr<<"rate = "<<rate<<"\n";
     auto range = P.get_range_for_reg(r);
     if (not range.is_a<Bounds<double>>()) return false;
 
@@ -184,7 +182,6 @@ void add_integer_slice_moves(const Model& P, MCMC::MoveAll& M, double weight)
     {
 	auto range = P.get_range_for_reg(r);
 	double rate = P.get_rate_for_reg(r);
-	std::cerr<<"rate = "<<rate<<"\n";
 	if (not range.is_a<Bounds<int>>()) continue;
 
 	// FIXME: righteousness.
