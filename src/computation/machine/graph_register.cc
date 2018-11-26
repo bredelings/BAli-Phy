@@ -1205,13 +1205,6 @@ void reg_heap::resize(int s)
     }
 }
 
-void reg_heap::get_more_memory()
-{
-    collect_garbage();
-    // This calls the resize( ) callback
-    regs.get_more_memory();
-}
-
 bool reg_heap::reg_is_constant(int r) const
 {
     return regs.access(r).type == reg::type_t::constant;
@@ -1725,7 +1718,7 @@ int reg_heap::add_identifier(const string& name)
 }
 
 reg_heap::reg_heap(const std::shared_ptr<module_loader>& L)
-    :regs(1,[this](int s){resize(s);}),
+    :regs(1,[this](int s){resize(s);}, [this](){collect_garbage();} ),
      steps(1),
      results(1),
      P(new Program(L)),

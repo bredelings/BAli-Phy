@@ -8,6 +8,7 @@ class pool
 {
     int n_null_ = 0;
     std::function<void(int)> resize_callback;
+    std::function<void()> free_memory_callback;
 public:
     enum States {none=0,free=1,used=2,marked=3};
 
@@ -247,6 +248,9 @@ public:
 
     void get_more_memory()
 	{
+	    if (free_memory_callback)
+		free_memory_callback();
+
 	    if (memory.size() < n_used()*2+10 + n_null())
 		expand_memory(memory.size()*2+10);
 	}
@@ -297,10 +301,11 @@ public:
 	    memory.resize(n);
 	}
 
-    pool(int n, std::function<void(int)> f)
+    pool(int n, std::function<void(int)> rs, std::function<void(void)> fm)
 	:pool(n)
 	{
-	    resize_callback = f;
+	    resize_callback = rs;
+	    free_memory_callback = fm;
 	}
 };
 

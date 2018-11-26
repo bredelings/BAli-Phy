@@ -160,8 +160,6 @@ class reg_heap: public Object
 
     std::vector<std::function<void(int)>> reroot_handlers;
 
-    void get_more_memory();
-
     void resize(int s);
 
     void reclaim_used(int);
