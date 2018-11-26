@@ -478,12 +478,10 @@ context& context::operator+=(const Module& M)
 
 context& context::operator=(const context& C)
 {
-    total_create_context1++;
-    memory_->release_context(context_index);
-  
-    memory_ = C.memory_;
-    context_index = memory_->copy_context(C.context_index);
-    perform_io_head = C.perform_io_head;
+    assert(memory_ == C.memory_);
+    assert(perform_io_head == C.perform_io_head);
+
+    memory_->switch_to_context(context_index, C.context_index);
 
     return *this;
 }

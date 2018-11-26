@@ -404,6 +404,9 @@ public:
     /// Make the context point to a token
     void switch_to_token(int c, int t);
 
+    /// Make the context point to the token of another context
+    void switch_to_context(int c1, int c2);
+
     /// Acquire a copy of a token
     int make_child_token(int);
 

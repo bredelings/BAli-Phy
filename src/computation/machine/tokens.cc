@@ -333,6 +333,15 @@ void reg_heap::switch_to_token(int c, int t2)
     release_unreferenced_tips(t1);
 }
 
+void reg_heap::switch_to_context(int c1, int c2)
+{
+    check_tokens();
+
+    switch_to_token(c1, token_for_context(c2));
+
+    check_tokens();
+}
+
 int reg_heap::switch_to_child_token(int c)
 {
     check_tokens();
