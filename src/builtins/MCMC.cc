@@ -113,6 +113,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
     //------------- 6. Set x depending on the choice
     if (choice == 1)
 	M.switch_to_context(c1,c2);
+    M.release_context(c2);
     
     return constructor("()",0);
 }
