@@ -125,28 +125,36 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
     reg_heap& M = Args.memory();
 
     //------------- 1a. Get argument X -----------------
-    int R_X = Args.evaluate_slot_to_reg(0);
+    int x_reg = Args.evaluate_slot_to_reg(0);
 
     //------------- 1b. Get range [0,n) for X ----------
-    int n = Args.evaluate(1).as_int();
+    int n_values = Args.evaluate(1).as_int();
 
     //------------- 1c. Get context index --------------
-    int c = Args.evaluate(2).as_int();
+    int c1 = Args.evaluate(2).as_int();
+
+    int x1 = M.get_reg_value_in_context(x_reg, 1).as_int();
 
     //------------- 2. Figure out probability of each value of x ------------//
-    vector<log_double_t> pr_x(n);
-    for(int i=0;i<pr_x.size();i++)
-    {
-	M.set_reg_value_in_context(R_X, expression_ref(i), c);
+    vector<log_double_t> pr_x(n_values, 1.0);
 
-	pr_x[i] = M.probability_for_context(c);
-    }
+    for(int i=0; i<n_values; i++)
+	if (i != x1)
+	{
+	    int c2 = M.copy_context(c1);
+	    M.set_reg_value_in_context(x_reg, expression_ref(i), c2);
+
+	    pr_x[i] = M.probability_ratios(c1,c2).total_ratio();
+
+	    M.release_context(c2);
+	}
 
     //------------- 4. Record base probability and relative probability for x2
 
     int x2 = choose(pr_x);
 
-    M.set_reg_value_in_context(R_X, expression_ref(x2), c);
+    if (x2 != x1)
+	M.set_reg_value_in_context(x_reg, expression_ref(x2), c1);
 
     return constructor("()",0);
 }
