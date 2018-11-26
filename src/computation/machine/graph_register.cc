@@ -566,7 +566,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 	    // We're only interested in cases where both contexts have a result that is > 0.
 	    // But (i) we need to seen the "seen" flag in any case
 	    //    (ii) we need to remember that we have set it so that we can unset it.
-	    if (regs.access(r).flags.any() and not prog_temp[r].test(2))
+	    if (regs.is_used(r) and regs.access(r).flags.any() and not prog_temp[r].test(2))
 	    {
 		prog_temp[r].set(2);
 		original_pdf_results.push_back(p);
