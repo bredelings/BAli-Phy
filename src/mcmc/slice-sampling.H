@@ -62,14 +62,20 @@ std::pair<int,double> slice_sample_multi(std::vector<double>& X0, std::vector<sl
 std::pair<int,double> slice_sample_multi(std::vector<slice_function*>& g, double w, int m);
 
 /// A slice_function for slice-sampling a single parameter
-struct modifiable_slice_function:public slice_function
+struct modifiable_slice_function: public slice_function
 {
     int count;
 
-    Model& P;
+    // The original starting point
+    const Model& P0;
+
+    // The proposed point
+    Model P1;
 
     /// The modifiable index.
     int m;
+
+    log_double_t current_fn_value;
 
     double operator()(double);
 
@@ -82,8 +88,8 @@ struct modifiable_slice_function:public slice_function
     // function to go from the value on which the prior is to the stored value.
     double (*inverse)(double);
 
-    modifiable_slice_function(Model&,int,const Bounds<double>&);
-    modifiable_slice_function(Model&,int,const Bounds<double>&,double(*)(double),double(*)(double));
+    modifiable_slice_function(const Model&,int,const Bounds<double>&);
+    modifiable_slice_function(const Model&,int,const Bounds<double>&,double(*)(double),double(*)(double));
 };
 
 
