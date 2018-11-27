@@ -111,21 +111,9 @@ Bounds<double> convert_bounds(const Bounds<int>& int_bounds)
 }
 
 integer_modifiable_slice_function::integer_modifiable_slice_function(Model& P_,int m_, const Bounds<int>& bounds)
-    :integer_modifiable_slice_function(P_, m_, bounds, slice_sampling::identity, slice_sampling::identity)
-{ }
-
-integer_modifiable_slice_function::integer_modifiable_slice_function(Model& P_,int m_, const Bounds<int>& bounds,
-								     double(*f1)(double),
-								     double(*f2)(double))
     :slice_function(convert_bounds(bounds)),
-     count(0),P(P_),m(m_),transform(f1),inverse(f2)
-{
-    if (has_lower_bound)
-	lower_bound = transform(lower_bound);
-    if (has_upper_bound)
-	upper_bound = transform(upper_bound);
-}
-
+     count(0),P(P_),m(m_)
+{ }
 
 double branch_length_slice_function::operator()(double l)
 {

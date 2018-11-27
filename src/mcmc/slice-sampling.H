@@ -105,13 +105,7 @@ struct integer_modifiable_slice_function:public slice_function
 
     double current_value() const;
 
-    // function to go from the stored value to the value on which the prior is.
-    double (*transform)(double);
-    // function to go from the value on which the prior is to the stored value.
-    double (*inverse)(double);
-
     integer_modifiable_slice_function(Model&,int,const Bounds<int>&);
-    integer_modifiable_slice_function(Model&,int,const Bounds<int>&,double(*)(double),double(*)(double));
 };
 
 
