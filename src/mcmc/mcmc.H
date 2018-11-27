@@ -317,22 +317,6 @@ namespace MCMC {
     
 	Modifiable_Slice_Move(const std::string& s, const std::string& v,int m,
 			      const Bounds<double>& b, double W_);
-    
-	Modifiable_Slice_Move(const std::string& s,int m,
-			      const Bounds<double>& b, double (*W_)(const Model&));
-    
-	Modifiable_Slice_Move(const std::string& s, const std::string& v,int m,
-			      const Bounds<double>& b, double (*W_)(const Model&));
-    
-	Modifiable_Slice_Move(const std::string& s,int m,
-			      const Bounds<double>& b, double W_,
-			      double(*f1)(double),
-			      double(*f2)(double));
-    
-	Modifiable_Slice_Move(const std::string& s, const std::string& v,int m,
-			      const Bounds<double>& b, double W_,
-			      double(*f1)(double),
-			      double(*f2)(double));
     };
 
     class Integer_Modifiable_Slice_Move: public Slice_Move

@@ -542,20 +542,6 @@ namespace MCMC {
 	:Slice_Move(s,v,W_), m_index(m), bounds(b)
     {}
 
-    Modifiable_Slice_Move::Modifiable_Slice_Move(const string& s,int m,
-						 const Bounds<double>& b, double W_,
-						 double(*f1)(double),
-						 double(*f2)(double))
-	:Slice_Move(s,"",W_,f1,f2), m_index(m), bounds(b)
-    {}
-
-    Modifiable_Slice_Move::Modifiable_Slice_Move(const string& s, const string& v,int m,
-						 const Bounds<double>& b, double W_,
-						 double(*f1)(double),
-						 double(*f2)(double))
-	:Slice_Move(s,v,W_,f1,f2), m_index(m), bounds(b)
-    {}
-
     void Integer_Modifiable_Slice_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int)
     {
 	if (log_verbose >= 3) clog<<" [integer modifiable slice] move = "<<m_index<<endl;
