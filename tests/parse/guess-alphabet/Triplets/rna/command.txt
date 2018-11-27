@@ -1,1 +1,1 @@
---test <DATA>/codons-rna.fasta --alphabet=Triplets
+--test codons-rna.fasta --alphabet=Triplets

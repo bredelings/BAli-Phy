@@ -1,1 +1,1 @@
---test <DATA>/rna.fasta
+--test rna.fasta

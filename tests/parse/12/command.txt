@@ -1,1 +1,1 @@
---test <DATA>/amino.fasta --smodel wag
+--test amino.fasta --smodel wag

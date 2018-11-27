@@ -1,11 +1,19 @@
 #!/usr/bin/python
 from __future__ import print_function
-import subprocess
+
 import os
+import subprocess
+import re
 
 NUM_TESTS = 0
 FAILED_TESTS = []
 XFAILED_TESTS = []
+
+def indent(n,s):
+    space = ' '*n
+    s = space + s
+    s = re.sub(r'\n', '\n'+space, s)
+    return s
 
 def debug(m):
     sys.stderr.write('DEBUG: ')
@@ -44,72 +52,119 @@ def get_precision(x):
         else:
             exp = 0
         prec = exp - dec
-        return math.pow(10,prec)
+        # we need to account for rounding error here
+        return math.pow(10,prec)*1.1
     else:
         raise ValueError("'{}' is not a number! Cannot get precision.".format(x))
 
 
-class RevBayes:
-    def __init__(self, cmd):
-        self.name = "revbayes"
+class Program(object):
+    def __init__(self,cmd):
         self.cmd = cmd
+        self.name = cmd[0]
+        self.exec_file = False
+        self.likelihood_regex = r".*likelihood[ \t]*=[ \t]*([^ \t]+).*"
+        self.extra_args = []
 
     def prefix(self):
-        return "rb-"
+        return "{}-".format(self.name)
+
+    def control_file(self):
+        return "{}command.txt".format(self.prefix())
+
+    def cmdline(self, tester, test_subdir):
+        test_dir = tester.dir_for_test(test_subdir)
+        args_filename = os.path.join(test_dir,self.control_file())
+        if self.exec_file:
+            return cmd + self.extra_args + [args_filename]
+        else:
+            args = open(args_filename,'r').read()
+            return cmd + args.split() + self.extra_args
+
+    def stdin(self, tester, test_subdir):
+        return ""
+
+    def read_obtained_likelihood_(self, tester, test_subdir, pat, filename='output'):
+        import re
+        obtained_output = tester.read_obtained(test_subdir, filename)
+        for line in obtained_output.splitlines():
+            m = re.match(pat, line)
+            if m:
+                return m.group(1)
+        return None
+
+    def read_obtained_likelihood(self, tester, test_subdir):
+        return self.read_obtained_likelihood_(tester, test_subdir, self.likelihood_regex)
+
+class RevBayes(Program):
+    def __init__(self, cmd):
+        Program.__init__(self,cmd)
+        self.name = "revbayes"
+        self.exec_file = True
+        self.likelihood_regex = r".*likelihood =[ \t]+([^ \t]+)( .*|$)"
+        self.extra_args = ['--setOption','outputPrecision=17']
 
     def control_file(self):
         return "rb-command.Rev"
 
-    def cmdline(self, tester, test_subdir):
-        import re
-        return cmd
+class Paup(Program):
+    def __init__(self, cmd):
+        Program.__init__(self,cmd)
+        self.name = "paup"
+        self.exec_file = True
 
-    def stdin(self, tester, test_subdir):
-        test_dir = tester.dir_for_test(test_subdir)
-        command_file = os.path.join(test_dir, self.control_file())
-        return 'datadir = "{}";source("{}")'.format(tester.data_dir,command_file);
+    def control_file(self):
+        return "paup-command.nex"
 
     def read_obtained_likelihood(self, tester, test_subdir):
-        import re
-        obtained_output = tester.read_obtained(test_subdir, 'output')
-        obtained_likelihood = None
-        for line in obtained_output.splitlines():
-            m = re.match(r".*likelihood =[ \t]+([^ \t]+).*", line)
-            if m:
-                obtained_likelihood = m.group(1)
-        return obtained_likelihood
+        likelihood = Program.read_obtained_likelihood_(self, tester, test_subdir, r"-ln L *([^ \t]+).*")
+        if likelihood is not None:
+            likelihood = "-"+likelihood
+        return likelihood
 
-class BAliPhy:
+class BAliPhy(Program):
     def __init__(self, cmd):
+        Program.__init__(self,cmd)
         self.name = "bali-phy"
-        self.cmd = cmd
+        self.likelihood_regex = r".* likelihood = ([^ ]+) .*"
+        self.extra_args = []
 
     def prefix(self):
         return ""
 
+class IQTREE(Program):
+    def __init__(self, cmd):
+        Program.__init__(self,cmd)
+        self.name = "iqtree"
+        self.likelihood_regex = r"1. Initial log-likelihood: ([^ ]+)$"
+        self.extra_args = ['--show-lh','-redo','-blmin','1.0e-100','-safe']
+
+class raxml_ng(Program):
+    def __init__(self, cmd):
+        Program.__init__(self,cmd)
+        self.name = "raxml-ng"
+        self.likelihood_regex = r".*. initial LogLikelihood: ([^ ]+)$"
+#        self.extra_args = ['--opt-branches','off','--opt-model','off','--threads','1','--evaluate','--nofiles']
+        self.extra_args = ['--loglh','--nofiles','--threads','1','--precision','16']
+
+class PhyML(Program):
+    def __init__(self, cmd):
+        Program.__init__(self,cmd)
+        self.name = "phyml"
+        self.y = r". Log likelihood of the current tree: ([^ ]+)\$."
+        self.likelihood_regex = r". Log likelihood of the current tree: ([^ ]+)\.$"
+        self.extra_args = ['--leave_duplicates','-b','0','-o','n']
+
+class hyphymp(Program):
+    def __init__(self, cmd):
+        Program.__init__(self, cmd)
+        self.name = "hyphymp"
+        self.likelihood_regex = r"Log Likelihood = ([^ ]+);"
+        self.exec_file = True
+
     def control_file(self):
-        return "command.txt"
+        return "hyphymp-command.hbl"
 
-    def cmdline(self, tester, test_subdir):
-        import re
-        test_dir = tester.dir_for_test(test_subdir)
-        args_filename = os.path.join(test_dir,self.control_file())
-        args = open(args_filename,'r').read()
-        args = re.sub('<DATA>',tester.data_dir,args)
-        return cmd + args.split()
-
-    def stdin(self, tester, test_subdir):
-        return ""
-
-    def read_obtained_likelihood(self, tester, test_subdir):
-        import re
-        obtained_output = tester.read_obtained(test_subdir, 'output')
-        obtained_likelihood = None
-        for line in obtained_output.splitlines():
-            m = re.match(r".* likelihood = ([^ ]+) .*", line)
-            if m:
-                obtained_likelihood = m.group(1)
-        return obtained_likelihood
 
 class Tester:
     def __init__(self, top_test_dir, data_dir, method):
@@ -174,8 +229,7 @@ class Tester:
         if expected is None:
             return True;
         else:
-            obtained = self.read_obtained(test_subdir, name)
-            return set(expected.splitlines()).issubset(set(obtained.splitlines()))
+            return expected == self.read_obtained(test_subdir, name)
 
     def check_likelihood(self, test_subdir):
         import math
@@ -194,10 +248,22 @@ class Tester:
             e = float(expected_likelihood);
             o = float(obtained_likelihood);
             diff = o - e
-            if abs(diff) < get_precision(expected_likelihood):
+
+            # expect a relative precision of 1e-14
+            prec = abs(e)*1.0e-14
+            # but if the likelihood isn't specified that precisely, allow a bigger difference.
+            prec = max(prec, get_precision(expected_likelihood))
+
+            if abs(diff) < prec:
                 return None
             else:
-                return "likelihood is off by {}! (Got {} but expected {})".format(diff,obtained_likelihood,expected_likelihood)
+                rel_diff = abs(diff/e)
+                return "likelihood error: absolute={}, relative={} (Got {} but expected {})".format(diff,rel_diff,obtained_likelihood,expected_likelihood)
+
+    def test_xfail(self, test_subdir):
+        if os.path.exists(os.path.join(test_subdir, self.method.name, 'xfail')):
+            return True;
+        return os.path.exists(os.path.join(test_subdir,'xfail'))
 
     def check_test_output(self,test_subdir):
         test_dir = os.path.join(self.top_test_dir, test_subdir)
@@ -219,9 +285,16 @@ class Tester:
         if exit_test_failed:
             expected_exit = self.read_expected(test_subdir, 'exit')
             if expected_exit.rstrip() == "0":
-                message = self.read_obtained(test_subdir, 'error')
+                message = self.read_obtained(test_subdir, 'error').rstrip()
+                if message == "":
+                    message = self.read_obtained(test_subdir, 'output').rstrip()
+                message = "\n".join(message.splitlines()[-6:])
+                message = message.lstrip()
 
-        xfail = os.path.exists(os.path.join(test_dir,'xfail'))
+        if (len(message) > 0):
+            message = indent(5,message)
+
+        xfail = self.test_xfail(test_subdir)
 
         return (failures,xfail,message)
 
@@ -243,7 +316,6 @@ class Tester:
                 expected=""
             print("... FAIL! {} {}".format(failures,expected))
             if message:
-                message = re.sub('^','    ',message)
                 message = message.rstrip('\n')+"\n"
                 print(message)
 
@@ -273,8 +345,18 @@ if __name__ == '__main__':
     prog = prog_name(cmd[0])
     if prog == 'bali-phy':
         method = BAliPhy(cmd)
-    elif prog == 'rb':
+    elif prog == 'rb' or prog.startswith('rb-'):
         method = RevBayes(cmd)
+    elif prog == 'paup':
+        method = Paup(cmd)
+    elif prog == 'phyml':
+        method = PhyML(cmd)
+    elif prog == 'iqtree':
+        method = IQTREE(cmd)
+    elif prog == 'raxml-ng':
+        method = raxml_ng(cmd)
+    elif prog == 'hyphymp':
+        method = hyphymp(cmd)
     else:
         print("I don't recognize program '{}' - cowardly refusing to run tests for it.".format(prog))
         exit(1)

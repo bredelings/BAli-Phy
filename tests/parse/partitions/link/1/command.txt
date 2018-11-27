@@ -1,1 +1,1 @@
---test <DATA>/dna.fasta <DATA>/dna.fasta <DATA>/dna.fasta <DATA>/dna.fasta <DATA>/dna.fasta --link=1,3 --link=2,4
+--test dna.fasta dna.fasta dna.fasta dna.fasta dna.fasta --link=1,3 --link=2,4
