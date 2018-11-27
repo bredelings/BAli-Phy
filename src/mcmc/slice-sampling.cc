@@ -46,9 +46,7 @@ model_slice_function::model_slice_function(const Model& M, const Bounds<double>&
     current_fn_value.log() = 0;
 }
 
-
-
-double modifiable_slice_function::operator()(double x)
+double model_slice_function::operator()(double x)
 {
     count++;
 
@@ -63,7 +61,7 @@ double modifiable_slice_function::operator()(double x)
     return operator()();
 }
 
-double modifiable_slice_function::operator()()
+double model_slice_function::operator()()
 {
     return log(current_fn_value);
 }

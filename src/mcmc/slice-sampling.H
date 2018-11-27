@@ -63,7 +63,6 @@ std::pair<int,double> slice_sample_multi(std::vector<slice_function*>& g, double
 
 class model_slice_function: public slice_function
 {
-protected:
     log_double_t current_fn_value;
 
 public:
@@ -75,6 +74,10 @@ public:
 
     // The proposed point
     Model P1;
+
+    double operator()(double);
+
+    double operator()();
 
     virtual void set_value(double x) = 0;
 
@@ -88,10 +91,6 @@ struct modifiable_slice_function: public model_slice_function
 {
     /// The modifiable index.
     int m;
-
-    double operator()(double);
-
-    double operator()();
 
     void set_value(double x);
 
