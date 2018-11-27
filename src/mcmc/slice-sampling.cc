@@ -47,7 +47,7 @@ double modifiable_slice_function::operator()(double x)
     // We are intentionally only calling Model::operator==( ) here.
     // Maybe we should actually call merely context::operator==( ) though?
     P1 = P0;
-    P1.set_modifiable_value(m, inverse(x));
+    P1.set_modifiable_value(m, x);
 
     // Here is where we return 0 if the number of variables changes.
     // How can we automate this so that it is called only once?
@@ -66,21 +66,10 @@ double modifiable_slice_function::current_value() const
 }
 
 modifiable_slice_function::modifiable_slice_function(const Model& P,int m_, const Bounds<double>& bounds)
-    :modifiable_slice_function(P, m_, bounds, slice_sampling::identity, slice_sampling::identity)
-{ }
-
-modifiable_slice_function::modifiable_slice_function(const Model& P,int m_, const Bounds<double>& bounds,
-						     double(*f1)(double),
-						     double(*f2)(double))
     :slice_function(bounds),
-     count(0),P0(P),P1(P0),m(m_),transform(f1),inverse(f2)
+     count(0),P0(P),P1(P0),m(m_)
 {
     current_fn_value.log() = 0;
-
-    if (has_lower_bound)
-	lower_bound = transform(lower_bound);
-    if (has_upper_bound)
-	upper_bound = transform(upper_bound);
 }
 
 
