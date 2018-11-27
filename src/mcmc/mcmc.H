@@ -271,9 +271,6 @@ namespace MCMC {
     protected:
 	double W;
 
-	double (*transform)(double);
-	double (*inverse)(double);
-
 	int n_learning_iterations;
 	int n_tries;
 	double total_movement;

@@ -420,14 +420,12 @@ namespace MCMC {
 	    std::cerr<<endl<<endl;
 	}
 
-	double transformed_v1 = transform(v1);
-	double transformed_v2 = slice_sample(transformed_v1,slice_levels,W,100);
-	double v2 = inverse(transformed_v2);
+	double v2 = slice_sample(v1,slice_levels,W,100);
 
 	if (n_learning_iterations-- > 0) 
 	{
 	    n_tries++;
-	    total_movement += std::abs(transformed_v2 - transformed_v1);
+	    total_movement += std::abs(v2 - v1);
       
 	    double W_predicted = 4.0*total_movement/n_tries;
 	    if (n_tries > 3)
@@ -461,8 +459,6 @@ namespace MCMC {
     Slice_Move::Slice_Move(const string& s)
 	:Move(s),
 	 W(1),
-	 transform(slice_sampling::identity),
-	 inverse(slice_sampling::identity),
 	 n_learning_iterations(0),
 	 n_tries(0),
 	 total_movement(0)
@@ -471,8 +467,6 @@ namespace MCMC {
     Slice_Move::Slice_Move(const string& s, const string& v)
 	:Move(s,v),
 	 W(1),
-	 transform(slice_sampling::identity),
-	 inverse(slice_sampling::identity),
 	 n_learning_iterations(0),
 	 n_tries(0),
 	 total_movement(0)
@@ -481,8 +475,6 @@ namespace MCMC {
     Slice_Move::Slice_Move(const string& s, const string& v, double W_)
 	:Move(s,v),
 	 W(W_),
-	 transform(slice_sampling::identity),
-	 inverse(slice_sampling::identity),
 	 n_learning_iterations(0),
 	 n_tries(0),
 	 total_movement(0)
@@ -491,8 +483,6 @@ namespace MCMC {
     Slice_Move::Slice_Move(const string& s, double W_)
 	:Move(s),
 	 W(W_),
-	 transform(slice_sampling::identity),
-	 inverse(slice_sampling::identity),
 	 n_learning_iterations(0),
 	 n_tries(0),
 	 total_movement(0)
@@ -504,7 +494,7 @@ namespace MCMC {
 
 	double v1 = P->get_modifiable_value(m_index).as_double();
 
-	modifiable_slice_function logp(*P, m_index, bounds, transform, inverse);
+	modifiable_slice_function logp(*P, m_index, bounds);
 
 	double v2 = sample(*P,logp,v1);
 
@@ -537,7 +527,7 @@ namespace MCMC {
 	int v1 = P->get_modifiable_value(m_index).as_int();
 	double x1 = double(v1)+uniform();
 
-	integer_modifiable_slice_function logp(*P, m_index, bounds, transform, inverse);
+	integer_modifiable_slice_function logp(*P, m_index, bounds);
 
 	double x2 = sample(*P,logp,x1);
 
