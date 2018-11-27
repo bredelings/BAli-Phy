@@ -486,15 +486,17 @@ double search_interval(double x0,double& L, double& R, slice_function& g,double 
 
     double L0 = L, R0 = R;
 
-    // std::cerr<<"**    L0 = "<<L0<<"   x0 = "<<x0<<"   R0 = "<<R0<<std::endl;
+    if (log_verbose >= 4)
+	std::cerr<<"**    L0 = "<<L0<<"   x0 = "<<x0<<"   R0 = "<<R0<<std::endl;
     for(int i=0;i<200;i++)
     {
 	double x1 = L + uniform()*(R-L);
 	double gx1 = g(x1);
-	//   std::cerr<<"    L  = "<<L <<"   x = "<<g.current_value()<<"   R  = "<<R<<std::endl;
-	//   std::cerr<<"    logy  = "<<logy<<"\n"; //  logy_x0 = "<<logy_x0<<" logy_current = "<<g()<<std::endl;
+	if (log_verbose >= 4)
+	    std::cerr<<"    L  = "<<L <<"   x = "<<g.current_value()<<"   x = "<<x1<<"  R  = "<<R<<"     g(x) = "<<gx1<<std::endl;
 
-	if (gx1 >= logy) return x1;
+	if (gx1 >= logy)
+	    return x1;
 
 	if (x1 > x0) 
 	    R = x1;
@@ -505,7 +507,7 @@ double search_interval(double x0,double& L, double& R, slice_function& g,double 
     double logy_x0 = g(x0);  
     std::cerr<<"    L0 = "<<L0<<"   x0 = "<<x0<<"   R0 = "<<R0<<std::endl;
     std::cerr<<"    L  = "<<L <<"   x = "<<g.current_value()<<"   R  = "<<R<<std::endl;
-    std::cerr<<"    logy  = "<<logy<<"  logy_x0 = "<<logy_x0<<"  logy_current = "<<g()<<std::endl;
+    std::cerr<<"    log(f(x0)*U)  = "<<logy<<"  log(f(x0)) = "<<logy_x0<<"  log(f(x_current)) = "<<g()<<std::endl;
 
     std::abort();
 
@@ -517,6 +519,12 @@ double slice_sample(double x0, slice_function& g,double w, int m)
     assert(g.in_range(x0));
 
     double gx0 = g();
+    if (log_verbose >= 4)
+    {
+	std::cerr<<" gx0 = "<<gx0<<std::endl;
+	std::cerr<<" g(x0) = "<<g(x0)<<std::endl;
+    }
+
 #ifndef NDEBUG
     volatile double diff = gx0 - g(x0);
     assert(std::abs(diff) < 1.0e-9);
