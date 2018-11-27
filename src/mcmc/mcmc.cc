@@ -498,18 +498,6 @@ namespace MCMC {
 	 total_movement(0)
     {}
 
-    Slice_Move::Slice_Move(const string& s, const string& v, double W_,
-			   double(*f1)(double),
-			   double(*f2)(double))
-	:Move(s,v),
-	 W(W_),
-	 transform(f1),
-	 inverse(f2),
-	 n_learning_iterations(0),
-	 n_tries(0),
-	 total_movement(0)
-    {}
-
     void Modifiable_Slice_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int)
     {
 	if (log_verbose >= 3) clog<<" [modifiable slice] move = "<<m_index<<endl;

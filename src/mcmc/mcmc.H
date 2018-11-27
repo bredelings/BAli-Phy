@@ -294,11 +294,6 @@ namespace MCMC {
 	Slice_Move(const std::string& s, double W_);
 
 	Slice_Move(const std::string& s, const std::string& v, double W_);
-
-	Slice_Move(const std::string& s, const std::string& v,
-		   double W_,
-		   double(*f1)(double),
-		   double(*f2)(double));
     };
 
     class Modifiable_Slice_Move: public Slice_Move
