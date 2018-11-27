@@ -76,7 +76,7 @@ double modifiable_slice_function::current_value() const
     return P1.get_modifiable_value(m).as_double();
 }
 
-modifiable_slice_function::modifiable_slice_function(const Model& P, int m_, const Bounds<double>& bounds)
+modifiable_slice_function::modifiable_slice_function(const Model& P, const Bounds<double>& bounds, int m_)
     :model_slice_function(P, bounds), m(m_)
 { }
 

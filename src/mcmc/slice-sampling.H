@@ -96,7 +96,7 @@ struct modifiable_slice_function: public model_slice_function
 
     double current_value() const;
 
-    modifiable_slice_function(const Model&,int,const Bounds<double>&);
+    modifiable_slice_function(const Model&, const Bounds<double>&, int);
 };
 
 

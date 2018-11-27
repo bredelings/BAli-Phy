@@ -494,7 +494,7 @@ namespace MCMC {
 
 	double v1 = P->get_modifiable_value(m_index).as_double();
 
-	modifiable_slice_function logp(*P, m_index, bounds);
+	modifiable_slice_function logp(*P, bounds, m_index);
 
 	double v2 = sample(*P,logp,v1);
 
