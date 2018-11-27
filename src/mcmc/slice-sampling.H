@@ -241,7 +241,4 @@ struct constant_sum_modifiable_slice_function:public slice_function
     constant_sum_modifiable_slice_function(Model&,const std::vector<int>&,int);
 };
 
-double transform_epsilon(double);
-double inverse_epsilon(double);
-
 #endif

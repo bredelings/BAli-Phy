@@ -746,18 +746,3 @@ std::pair<int,double> slice_sample_multi(vector<slice_function*>& g, double w, i
     double x0 = g[0]->current_value();
     return slice_sample_multi(x0,g,w,m);
 }
-
-double transform_epsilon(double lambda_E)
-{
-    assert(lambda_E < 0);
-    double E_length = lambda_E - logdiff(0,lambda_E);
-
-    return E_length;
-}
-
-double inverse_epsilon(double E_length)
-{
-    double lambda_E = E_length - logsum(0,E_length);
-
-    return lambda_E;
-}
