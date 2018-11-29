@@ -1,5 +1,5 @@
 * 3.4 (UNRELEASED)
- - Models
+ - Evolutionary models
    - Add Doublet alphabet for RNA stems.
    + Add models x2, x2_sym, x2x2 for RNA stems.
    + Add RNA.m16a model for RNA stems.
@@ -8,12 +8,8 @@
    + Don't crash if --scale is set to a constant (e.g. --scale=1).
    - Allow reading (a,b):1.0 as ((a,b):1.0);
    + Properly translate newick labels with quotes or _.
- - Speed
-   - Improved mixing for [0,1] random variables.
-   - Interpreted models (e.g. LinearRegression.hs) are now a lot faster.
  - Misc
    + Rename subsample to bali-subsample (to avoid conflicts with other software).
-   + Allow recovery from initial -infinity.
    + Install bali-phy-pkg.
    + Make BES package work again.
    - Hold Numeric[k] or Doublets[DNA/RNA] alignments fixed.
@@ -21,6 +17,14 @@
    - tree-tool: add scaling, pruning, computing diameter, etc.
    - alignment-thin: clean up options and man page.
    + alignment-distances: new tool, add accuracy and recall metrics.
+ - MCMC
+   - Only compute probability *ratios*
+     + Allow recovery from initial -infinity.
+   - Improved mixing for [0,1] random variables.
+ - Graphical model framework
+   - Interpreted models now log separate likelihood from prior in logged output.
+   - Interpreted models (e.g. LinearRegression.hs) are now a lot faster.
+   - Simplify constructing loggers
  - Haskell
    - Implement -X NoImplicitPrelude
    - Refactored functions out of Prelude into Data.List, etc.
