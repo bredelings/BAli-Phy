@@ -279,8 +279,9 @@ scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P)
 #endif
 }
 
-double constant_sum_slice_function::operator()(double t)
+void constant_sum_slice_function::set_value(double t)
 {
+    auto& P = static_cast<Parameters&>(M);
     vector<expression_ref> y = P.get_parameter_values(indices);
     vector<double> x = vec_to_double(y);
 
@@ -300,13 +301,12 @@ double constant_sum_slice_function::operator()(double t)
 	y[i] = x[i];
 
     P.set_parameter_values(indices,y);
-    return operator()();
 }
 
 
 double constant_sum_slice_function::operator()()
 {
-    count++;
+    auto& P = static_cast<Parameters&>(M);
 
     vector<double> x = vec_to_double(P.get_parameter_values(indices));
 
@@ -317,20 +317,20 @@ double constant_sum_slice_function::operator()()
     const int N = indices.size();
 
     // return pi * (1-x)^(N-1)
-    return log(P.heated_probability()) + (N-1)*log(total-t);
+    return model_slice_function::operator()() + (N-1)*log(total-t);
 }
 
 double constant_sum_slice_function::current_value() const
 {
+    auto& P = static_cast<Parameters&>(M);
     return P.get_parameter_value(indices[n]).as_double();
 }
 
 
-constant_sum_slice_function::constant_sum_slice_function(Model& P_, const vector<int>& indices_,int n_)
-    :count(0),
+constant_sum_slice_function::constant_sum_slice_function(Model& P, const vector<int>& indices_,int n_)
+    :model_slice_function(P),
      indices(indices_),
-     n(n_),
-     P(P_)
+     n(n_)
 { 
     vector<double> x = vec_to_double(P.get_parameter_values(indices));
     double total = sum(x);
