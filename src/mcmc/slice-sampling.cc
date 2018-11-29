@@ -40,6 +40,10 @@ double slice_function::current_value() const
     std::abort();
 }
 
+model_slice_function::model_slice_function(Model& m)
+    :model_slice_function(m, {})
+{}
+
 model_slice_function::model_slice_function(Model& m, const Bounds<double>& b)
     :slice_function(b), C0(m), M(m)
 {
@@ -122,26 +126,18 @@ integer_modifiable_slice_function::integer_modifiable_slice_function(Model& P_,i
      count(0),P(P_),m(m_)
 { }
 
-double branch_length_slice_function::operator()(double l)
+void branch_length_slice_function::set_value(double l)
 {
-    count++;
-    P.setlength(b,l);
-    return log(P.heated_probability());
-}
-
-double branch_length_slice_function::operator()()
-{
-    count++;
-    return log(P.heated_probability());
+    static_cast<Parameters&>(M).setlength(b,l);
 }
 
 double branch_length_slice_function::current_value() const
 {
-    return P.t().branch_length(b);
+    return static_cast<Parameters&>(M).t().branch_length(b);
 }
 
-branch_length_slice_function::branch_length_slice_function(Parameters& P_,int b_)
-    :count(0),P(P_),b(b_)
+branch_length_slice_function::branch_length_slice_function(Parameters& P,int b_)
+    :model_slice_function(P),b(b_)
 { 
     set_lower_bound(0);
 }

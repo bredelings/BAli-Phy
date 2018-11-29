@@ -83,6 +83,8 @@ public:
 
     virtual double current_value() const = 0;
 
+    model_slice_function(Model&);
+
     model_slice_function(Model&, const Bounds<double>&);
 };
 
@@ -123,17 +125,11 @@ struct integer_modifiable_slice_function:public slice_function
 
 
 /// A slice_function for slice-sampling a single branch length
-struct branch_length_slice_function:public slice_function
+struct branch_length_slice_function: public model_slice_function
 {
-    int count;
-
-    Parameters& P;
-
     int b;
 
-    double operator()(double);
-
-    double operator()();
+    void set_value(double);
 
     double current_value() const;
 
