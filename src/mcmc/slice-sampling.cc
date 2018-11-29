@@ -213,8 +213,10 @@ double set_sum_of_means(Parameters& P, double t)
     return scale;
 }
 
-double scale_means_only_slice_function::operator()(double t)
+void scale_means_only_slice_function::set_value(double t)
 {
+    auto& P = static_cast<Parameters&>(M);
+
     // Set the values of \mu[i]
     double scale = set_sum_of_means(P, initial_sum_of_means * exp(t));
 
@@ -224,31 +226,29 @@ double scale_means_only_slice_function::operator()(double t)
 	const double L = P.t().branch_length(b);
 	P.setlength_unsafe(b, L/scale);
     }
-
-    return operator()();
 }
 
 double scale_means_only_slice_function::operator()()
 {
-    count++;
+    auto& P = static_cast<Parameters&>(M);
 
     const int B = P.t().n_branches();
     const int n = P.n_branch_scales();
 
     // return pi * (\sum_i \mu_i)^(n-B)
-    return log(P.heated_probability()) + log(sum_of_means(P))*(n-B);
+    return model_slice_function::operator()() + log(sum_of_means(P))*(n-B);
 }
 
 double scale_means_only_slice_function::current_value() const
 {
+    auto& P = static_cast<Parameters&>(M);
     double t = log(sum_of_means(P)/initial_sum_of_means);
     return t;
 }
 
-scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P_)
-    :count(0),
-     initial_sum_of_means(sum_of_means(P_)),
-     P(P_)
+scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P)
+    :model_slice_function(P),
+     initial_sum_of_means(sum_of_means(P))
 { 
     Bounds<double>& b = *this;
 

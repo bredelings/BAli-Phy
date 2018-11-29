@@ -77,7 +77,7 @@ public:
 
     double operator()(double);
 
-    double operator()();
+    virtual double operator()();
 
     virtual void set_value(double x) = 0;
 
@@ -161,21 +161,17 @@ struct slide_node_slice_function: public model_slice_function
 ///   n = the number of means,
 ///   B = the number of branch lengths.
 ///
-struct scale_means_only_slice_function: public slice_function
+struct scale_means_only_slice_function: public model_slice_function
 {
-    /// The number of times the function is called.
-    int count;
-
     /// The sum of the branch mean parameters for the initial point.
     double initial_sum_of_means;
 
-    /// The object whose parameters we are sampling
-    Parameters& P;
+    double operator()(double x) {return model_slice_function::operator()(x);}
 
-    /// return the log of (probability() * mu^(B-1)
-    double operator()(double);
-
+    // We need to override the probability_ratio to add a jacobian.
     double operator()();
+
+    void set_value(double);
 
     double current_value() const;
 
