@@ -40,6 +40,7 @@ double slice_function::current_value() const
     std::abort();
 }
 
+// ********************************** modifiable slice function ****************************************** //
 model_slice_function::model_slice_function(Model& m)
     :model_slice_function(m, {})
 {}
@@ -84,30 +85,7 @@ modifiable_slice_function::modifiable_slice_function(Model& M_, const Bounds<dou
     :model_slice_function(M_, bounds), m(m_)
 { }
 
-double integer_modifiable_slice_function::operator()(double x)
-{
-    count++;
-    current_x = x;
-    int x_integer = (int)floor(current_x);
-    P.set_modifiable_value(m, x_integer);
-
-    return log(P.heated_probability());
-}
-
-double integer_modifiable_slice_function::operator()()
-{
-    count++;
-    return log(P.heated_probability());
-}
-
-double integer_modifiable_slice_function::current_value() const
-{
-    int x_integer = P.get_modifiable_value(m).as_int();
-    assert(x_integer == (int)floor(current_x));
-    return current_x;
-}
-
-
+// ******************************* integer modifiable slice function *************************************** //
 Bounds<double> convert_bounds(const Bounds<int>& int_bounds)
 {
     Bounds<double> double_bounds;
@@ -121,10 +99,22 @@ Bounds<double> convert_bounds(const Bounds<int>& int_bounds)
     return double_bounds;
 }
 
-integer_modifiable_slice_function::integer_modifiable_slice_function(Model& P_,int m_, const Bounds<int>& bounds)
-    :slice_function(convert_bounds(bounds)),
-     count(0),P(P_),m(m_)
+void integer_modifiable_slice_function::set_value(double x)
+{
+    int x_integer = (int)floor(x);
+    M.set_modifiable_value(m, x_integer);
+}
+
+double integer_modifiable_slice_function::current_value() const
+{
+    return M.get_modifiable_value(m).as_int();
+}
+
+integer_modifiable_slice_function::integer_modifiable_slice_function(Model& M_, const Bounds<int>& bounds, int m_)
+    :model_slice_function(M_, convert_bounds(bounds)), m(m_)
 { }
+
+// ******************************* branch length slice function *************************************** //
 
 void branch_length_slice_function::set_value(double l)
 {

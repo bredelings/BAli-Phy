@@ -524,7 +524,7 @@ namespace MCMC {
 	int v1 = P->get_modifiable_value(m_index).as_int();
 	double x1 = double(v1)+uniform();
 
-	integer_modifiable_slice_function logp(*P, m_index, bounds);
+	integer_modifiable_slice_function logp(*P, bounds, m_index);
 
 	double x2 = sample(*P,logp,x1);
 

@@ -103,24 +103,16 @@ struct modifiable_slice_function: public model_slice_function
 
 
 /// A slice_function for slice-sampling a single parameter
-struct integer_modifiable_slice_function:public slice_function
+struct integer_modifiable_slice_function:public model_slice_function
 {
-    int count;
-
-    Model& P;
-
     /// The modifiable index.
     int m;
 
-    double current_x = 0.0;
-
-    double operator()(double);
-
-    double operator()();
+    void set_value(double x);
 
     double current_value() const;
 
-    integer_modifiable_slice_function(Model&,int,const Bounds<int>&);
+    integer_modifiable_slice_function(Model&, const Bounds<int>&, int);
 };
 
 
