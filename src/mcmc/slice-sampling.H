@@ -137,18 +137,16 @@ struct branch_length_slice_function: public model_slice_function
 };
 
 /// A slice_function for slice-sampling two adjacent branch lengths which preserving their sum
-struct slide_node_slice_function: public slice_function {
-    int count;
+struct slide_node_slice_function: public model_slice_function
+{
     int b1;
     int b2;
     double x0;
     double y0;
 
-    Parameters& P;
-
-    double operator()(double);
-    double operator()();
+    void set_value(double);
     double current_value() const;
+
     slide_node_slice_function(Parameters&,int);
     slide_node_slice_function(Parameters&,int,int);
 };

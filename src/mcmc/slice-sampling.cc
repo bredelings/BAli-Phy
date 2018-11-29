@@ -142,12 +142,7 @@ branch_length_slice_function::branch_length_slice_function(Parameters& P,int b_)
     set_lower_bound(0);
 }
 
-double slide_node_slice_function::operator()() {
-    count++;
-    return log(P.heated_probability());
-}
-
-double slide_node_slice_function::operator()(double x) 
+void slide_node_slice_function::set_value(double x) 
 {
     /* Problem: If y << x, then we may not be able to recover y = (x+y)-x.
        This occurs, for example, when x = 1 and y = 1.0e-9.
@@ -155,18 +150,17 @@ double slide_node_slice_function::operator()(double x)
        Solution: Store x0 and y0 separately, and compute y = y0 + (x0-x).
     */
     assert(0 <= x and x <= (x0+y0));
-    P.setlength(b1,x);
-    P.setlength(b2,y0+(x0-x));
-    return operator()();
+    static_cast<Parameters&>(M).setlength(b1,x);
+    static_cast<Parameters&>(M).setlength(b2,y0+(x0-x));
 }
 
 double slide_node_slice_function::current_value() const
 {
-    return P.t().branch_length(b1);
+    return static_cast<Parameters&>(M).t().branch_length(b1);
 }
 
-slide_node_slice_function::slide_node_slice_function(Parameters& P_,int b0)
-    :count(0),P(P_)
+slide_node_slice_function::slide_node_slice_function(Parameters& P,int b0)
+    :model_slice_function(P)
 {
     vector<int> b = P.t().branches_after(b0);
 
@@ -183,8 +177,8 @@ slide_node_slice_function::slide_node_slice_function(Parameters& P_,int b0)
     set_upper_bound(x0+y0);
 }
 
-slide_node_slice_function::slide_node_slice_function(Parameters& P_,int i1,int i2)
-    :count(0),b1(i1),b2(i2),P(P_)
+slide_node_slice_function::slide_node_slice_function(Parameters& P,int i1,int i2)
+    :model_slice_function(P), b1(i1), b2(i2)
 {
     x0 = P.t().branch_length(b1);
     y0 = P.t().branch_length(b2);
