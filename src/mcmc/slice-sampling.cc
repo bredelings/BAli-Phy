@@ -339,8 +339,9 @@ constant_sum_slice_function::constant_sum_slice_function(Model& P, const vector<
     set_upper_bound(total);
 }
 
-double constant_sum_modifiable_slice_function::operator()(double t)
+void constant_sum_modifiable_slice_function::set_value(double t)
 {
+    auto& P = static_cast<Parameters&>(M);
     const int N = indices.size();
 
     vector<double> x(N);
@@ -361,15 +362,12 @@ double constant_sum_modifiable_slice_function::operator()(double t)
 
     for(int i=0;i<N;i++)
 	P.set_modifiable_value(indices[i], x[i] );
-
-    return operator()();
 }
 
 
 double constant_sum_modifiable_slice_function::operator()()
 {
-    count++;
-
+    auto& P = static_cast<Parameters&>(M);
     const int N = indices.size();
 
     double total = 0;
@@ -379,22 +377,21 @@ double constant_sum_modifiable_slice_function::operator()()
     double t = current_value();
 
     // return pi * (1-x)^(N-1)
-    return log(P.heated_probability()) + (N-1)*log(total-t);
+    return model_slice_function::operator()() + (N-1)*log(total-t);
 }
 
 double constant_sum_modifiable_slice_function::current_value() const
 {
+    auto& P = static_cast<Parameters&>(M);
     return P.get_modifiable_value(indices[n]).as_double();
 }
 
-
-constant_sum_modifiable_slice_function::constant_sum_modifiable_slice_function(Model& P_, const vector<int>& indices_,int n_)
-    :count(0),
+constant_sum_modifiable_slice_function::constant_sum_modifiable_slice_function(Model& M, const vector<int>& indices_,int n_)
+    :model_slice_function(M),
      indices(indices_),
-     n(n_),
-     P(P_)
+     n(n_)
 { 
-    vector<double> x = vec_to_double(P.get_modifiable_values(indices));
+    vector<double> x = vec_to_double(M.get_modifiable_values(indices));
     double total = sum(x);
 
     set_lower_bound(0);
