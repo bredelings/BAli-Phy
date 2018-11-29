@@ -70,10 +70,10 @@ public:
     int count = 0;
 
     // The original starting point
-    const Model& P0;
+    const context C0;
 
     // The proposed point
-    Model P1;
+    Model& M;
 
     double operator()(double);
 
@@ -83,7 +83,7 @@ public:
 
     virtual double current_value() const = 0;
 
-    model_slice_function(const Model&, const Bounds<double>&);
+    model_slice_function(Model&, const Bounds<double>&);
 };
 
 /// A slice_function for slice-sampling a single parameter
@@ -96,7 +96,7 @@ struct modifiable_slice_function: public model_slice_function
 
     double current_value() const;
 
-    modifiable_slice_function(const Model&, const Bounds<double>&, int);
+    modifiable_slice_function(Model&, const Bounds<double>&, int);
 };
 
 

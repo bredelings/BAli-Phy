@@ -40,8 +40,8 @@ double slice_function::current_value() const
     std::abort();
 }
 
-model_slice_function::model_slice_function(const Model& M, const Bounds<double>& b)
-    :slice_function(b), P0(M), P1(P0)
+model_slice_function::model_slice_function(Model& m, const Bounds<double>& b)
+    :slice_function(b), C0(m), M(m)
 {
     current_fn_value.log() = 0;
 }
@@ -52,12 +52,12 @@ double model_slice_function::operator()(double x)
 
     // We are intentionally only calling Model::operator==( ) here.
     // Maybe we should actually call merely context::operator==( ) though?
-    P1 = P0;
+    reinterpret_cast<context&>(M) = C0;
     set_value(x);
 
     // Here is where we return 0 if the number of variables changes.
     // How can we automate this so that it is called only once?
-    current_fn_value = P1.heated_probability_ratio(P0);
+    current_fn_value = M.heated_probability_ratio(C0);
     return operator()();
 }
 
@@ -68,16 +68,16 @@ double model_slice_function::operator()()
 
 void modifiable_slice_function::set_value(double x)
 {
-    P1.set_modifiable_value(m, x);
+    M.set_modifiable_value(m, x);
 }
 
 double modifiable_slice_function::current_value() const
 {
-    return P1.get_modifiable_value(m).as_double();
+    return M.get_modifiable_value(m).as_double();
 }
 
-modifiable_slice_function::modifiable_slice_function(const Model& P, const Bounds<double>& bounds, int m_)
-    :model_slice_function(P, bounds), m(m_)
+modifiable_slice_function::modifiable_slice_function(Model& M_, const Bounds<double>& bounds, int m_)
+    :model_slice_function(M_, bounds), m(m_)
 { }
 
 double integer_modifiable_slice_function::operator()(double x)

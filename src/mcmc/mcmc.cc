@@ -498,9 +498,6 @@ namespace MCMC {
 
 	double v2 = sample(*P,logp,v1);
 
-	// Actually do the move.
-	*P = logp.P1;
-
         //---------- Record Statistics --------------//
 	Result result(2);
 	result.totals[0] = std::abs(v2-v1);
