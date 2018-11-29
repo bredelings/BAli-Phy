@@ -145,9 +145,9 @@ log_double_t Model::heated_likelihood() const
 	return pow(likelihood(),get_beta());
 }
 
-log_double_t Model::heated_probability_ratio(const Model& M1) const
+log_double_t Model::heated_probability_ratio(const context& C1) const
 {
-    auto ratios = probability_ratios(M1);
+    auto ratios = probability_ratios(C1);
     return ratios.prior_ratio * pow(ratios.likelihood_ratio, get_beta());
 }
 
