@@ -102,7 +102,7 @@ double integer_modifiable_slice_function::operator()()
 
 double integer_modifiable_slice_function::current_value() const
 {
-    int x_integer = (int)(P.get_modifiable_value(m).as_double());
+    int x_integer = P.get_modifiable_value(m).as_int();
     assert(x_integer == (int)floor(current_x));
     return current_x;
 }
