@@ -565,42 +565,54 @@ scale = 1,3:</pre><p>
 
       <div class="section"><div class="titlepage"><div><div><h5 class="title"><a name="idp33"></a>5.2.1.1. Computed parameter names</h5></div></div></div>
       <div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">prior</span></p></td><td>
-	    <p>The log prior probability.  This includes the probability of the alignment, since the alignment is not observed.</p>
-	  </td></tr><tr><td><p><span class="term">prior_A<em class="replaceable"><code>n</code></em></span></p></td><td>
-	    <p>The log of the probability <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>Pr</mi><mo stretchy="false">(</mo><msub><mi>A</mi> <mi>n</mi></msub><mo stretchy="false">&#8739;</mo><mi>&#964;</mi><mo>,</mo><mi>T</mi><mo>,</mo><mi>&#923;</mi><mo stretchy="false">)</mo></math> of the alignment <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><msub><mi>A</mi> <mi>n</mi></msub></math> of the <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>th partition, given the topology <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>&#964;</mi></math>, the branch lengths <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>T</mi></math>, and insertion-deletion process parameters <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>&#923;</mi></math>.  This log probability is the probabilistic equivalent of a gap penalty on the alignment <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><msub><mi>A</mi> <mi>n</mi></msub></math> given the scoring parameters <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>&#923;</mi></math>.</p>
+	    <p>The log prior probability. </p>
 	  </td></tr><tr><td><p><span class="term">likelihood</span></p></td><td>
-	    <p>The log of the likelihood.  Conditional on the alignment, this is determined entirely by the substitution model, and ignores insertions and deletions.  This is the probabilistic equivalent of the mismatch penalty.</p>
+	    <p>The log likelihood.</p>
 	  </td></tr><tr><td><p><span class="term">posterior</span></p></td><td>
-	    <p>The log of the posterior probability.  The posterior probability is the product of the prior and the likelihood.</p>
+	    <p>The log of the posterior probability.</p>
+	    <p>(<span class="emphasis"><em>The posterior probability is the product of the prior and the likelihood</em></span>).</p>
 	  </td></tr><tr><td><p><span class="term">|A|</span></p></td><td>
 	    <p>The total number of alignment columns across all partitions.</p>
-	  </td></tr><tr><td><p><span class="term">#indels<em class="replaceable"><code>n</code></em></span></p></td><td>
-	    <p>The number of indel events in partition <em class="replaceable"><code>n</code></em>, if we group adjacent indels that occur on the same branch.</p>
 	  </td></tr><tr><td><p><span class="term">#indels</span></p></td><td>
-	    <p>The total number of indel events across all partitions, if we group adjacent indels that occur on the same branch.</p>
-	  </td></tr><tr><td><p><span class="term">|indels<em class="replaceable"><code>n</code></em>|</span></p></td><td>
-	    <p>The length of indel events in partition <em class="replaceable"><code>n</code></em>, if we group adjacent indels that occur on the same branch.</p>
+	    <p>The total number of indel events across all partitions.</p>
+	    <p>(<span class="emphasis"><em>Adjacent indels that occur on the same branch are merged</em></span>).</p>
 	  </td></tr><tr><td><p><span class="term">|indels|</span></p></td><td>
-	    <p>The total length of indel events across all partitions, if we group adjacent indels that occur on the same branch.</p>
-	  </td></tr><tr><td><p><span class="term">#substs<em class="replaceable"><code>n</code></em></span></p></td><td>
-	    <p>The unweighted parsimony score for substitutions in partition <em class="replaceable"><code>n</code></em>.</p>
+	    <p>The total length of indel events across all partitions.</p>
+	    <p>(<span class="emphasis"><em>Adjacent indels that occur on the same branch are merged</em></span>).</p>
 	  </td></tr><tr><td><p><span class="term">#substs</span></p></td><td>
 	    <p>The total unweighted parsimony score for substitutions across all partitions.</p>
-	  </td></tr><tr><td><p><span class="term">Scale<em class="replaceable"><code>n</code></em> * |T|</span></p></td><td>
-	    <p>The branch lengths for partition group <em class="replaceable"><code>n</code></em>.</p>
+	  </td></tr><tr><td><p><span class="term">P<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>/likelihood</span></p></td><td>
+	    <p>The substitution log-likelihood for partition <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>. </p>
+	    <p>(<span class="emphasis"><em>Probabilistic analogue to summed mismatch penalties</em></span>).</p>
+	  </td></tr><tr><td><p><span class="term">P<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>/prior_A</span></p></td><td>
+	    <p>The log-probability of the alignment for partition <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>.</p>
+	    <p>(<span class="emphasis"><em>Probabilistic analogue to summed gap penalties</em></span>).</p>
+	  </td></tr><tr><td><p><span class="term">P<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>/|A|</span></p></td><td>
+	    <p>The length of the alignment in the <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>th partition.</p>
+	  </td></tr><tr><td><p><span class="term">P<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>/#indels</span></p></td><td>
+	    <p>The number of indel events in partition <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>, if we group adjacent indels that occur on the same branch.</p>
+	  </td></tr><tr><td><p><span class="term">P<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>/|indels|</span></p></td><td>
+	    <p>The length of indel events in partition <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>, if we group adjacent indels that occur on the same branch.</p>
+	  </td></tr><tr><td><p><span class="term">P<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>/#substs</span></p></td><td>
+	    <p>The unweighted parsimony score for substitutions in partition <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>.</p>
+	  </td></tr><tr><td><p><span class="term">Scale[<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>m</mi></math>] * |T|</span></p></td><td>
+	    <p>The <span class="emphasis"><em>scaled</em></span> branch lengths for partition group <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>m</mi></math>.</p>
+	  </td></tr><tr><td><p><span class="term">|T|</span></p></td><td>
+	    <p>The <span class="emphasis"><em>unscaled</em></span> tree length.  (This will probably be around 1.0).</p>
 	  </td></tr></tbody></table></div>
+      <p>The prior includes the probability of the alignment, since the alignment is not observed. </p>
       </div>
 
       <div class="section"><div class="titlepage"><div><div><h5 class="title"><a name="idp34"></a>5.2.1.2. Model parameter names</h5></div></div></div>
 
-      <p>The prefixes "S<em class="replaceable"><code>n</code></em>/" and "I<em class="replaceable"><code>n</code></em>/" will be dropped if not necessary to disambiguate parameters with the same name in different sub-models.</p>
+      <p>The prefixes "S<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>/" and "I<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>/" will be dropped if not necessary to disambiguate parameters with the same name in different sub-models.</p>
 
-      <div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">Scale[<em class="replaceable"><code>n</code></em>]</span></p></td><td>
-	    <p>The average number of substitutions per branch in scale group <em class="replaceable"><code>n</code></em>.  The <em class="replaceable"><code>n</code></em>th scale group applies to the <em class="replaceable"><code>n</code></em>th partition, unless multiple partitions are forced to have the same branch length scale using <strong class="userinput"><code>--scale</code></strong> or <strong class="userinput"><code>--link</code></strong>.</p>
-	  </td></tr><tr><td><p><span class="term">S<em class="replaceable"><code>n</code></em>/<em class="replaceable"><code>name</code></em></span></p></td><td>
-	    <p>Parameter <em class="replaceable"><code>name</code></em> in the <em class="replaceable"><code>n</code></em>th substitution model.</p>
-	  </td></tr><tr><td><p><span class="term">I<em class="replaceable"><code>n</code></em>/<em class="replaceable"><code>name</code></em></span></p></td><td>
-	    <p>Parameter <em class="replaceable"><code>name</code></em> in the <em class="replaceable"><code>n</code></em>th insertion/deletion model.</p>
+      <div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">Scale[<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>]</span></p></td><td>
+	    <p>The average number of substitutions per branch in scale group <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>.  The <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>th scale group applies to the <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>th partition, unless multiple partitions are forced to have the same branch length scale using <strong class="userinput"><code>--scale</code></strong> or <strong class="userinput"><code>--link</code></strong>.</p>
+	  </td></tr><tr><td><p><span class="term">S<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>/<em class="replaceable"><code>name</code></em></span></p></td><td>
+	    <p>Parameter <em class="replaceable"><code>name</code></em> in the <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>th substitution model.</p>
+	  </td></tr><tr><td><p><span class="term">I<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>/<em class="replaceable"><code>name</code></em></span></p></td><td>
+	    <p>Parameter <em class="replaceable"><code>name</code></em> in the <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>th insertion/deletion model.</p>
 	  </td></tr></tbody></table></div>
       </div>
       </div>
@@ -978,7 +990,7 @@ hky85_sym+x2_sym+f[pi=List[Pair["AA",0.01],Pair["AC",0.01],Pair["AG",0.01],Pair[
 
 
       <div class="informaltable">
-	<table class="informaltable" border="1"><colgroup><col class="col1"><col class="col2"><col class="col3"></colgroup><thead><tr><th>Model</th><th>  d.f.  </th><th>Summary</th></tr></thead><tbody><tr><td><strong class="userinput"><code>Frequencies.uniform</code></strong></td><td>0</td><td>Equal frequencies on dinucleotides</td></tr><tr><td><strong class="userinput"><code>f2x4</code></strong></td><td>6</td><td>Constructs triplet frequencies from independent nucleotide frequencies for each codon position.</td></tr></tbody></table>
+	<table class="informaltable" border="1"><colgroup><col class="col1"><col class="col2"><col class="col3"></colgroup><thead><tr><th>Model</th><th>  d.f.  </th><th>Summary</th></tr></thead><tbody><tr><td><strong class="userinput"><code>Frequencies.uniform</code></strong></td><td>0</td><td>Equal frequencies on dinucleotides</td></tr></tbody></table>
       </div>
     </div>
 
@@ -1147,13 +1159,13 @@ mg94[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]
 		  <a class="ulink" href="https://doi.org/10.1534/genetics.104.031153" target="_top">
 		    (Wong, et. al. 2004)
 		  </a>
-		</td></tr><tr><td><strong class="userinput"><code>m3</code></strong></td><td>df(<em class="replaceable"><code>submodel</code></em>)+2*<em class="replaceable"><code>n</code></em>-1</td><td><p>An free mixture of <em class="replaceable"><code>n</code></em> categories of conserved dN/dS values.</p>
+		</td></tr><tr><td><strong class="userinput"><code>m3</code></strong></td><td>df(<em class="replaceable"><code>submodel</code></em>)+2*<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>-1</td><td><p>An free mixture of <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math> categories of conserved dN/dS values.</p>
 		<a class="ulink" href="http://www.genetics.org/content/155/1/431.full" target="_top">
 		  (Yang et. al. 2000)
 		</a>
 		</td></tr><tr><td>
 		  <p><strong class="userinput"><code>m3_test</code></strong></p>
-		</td><td>df(<em class="replaceable"><code>submodel</code></em>)+2*<em class="replaceable"><code>n</code></em>+1</td><td>
+		</td><td>df(<em class="replaceable"><code>submodel</code></em>)+2*<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>+1</td><td>
 		  <p>A Bayesian test for positive selection based on the M3 model extended with an extra category of either neutral of positively-selected sites.</p>
 		</td></tr><tr><td><p><strong class="userinput"><code>m7</code></strong></p></td><td>df(<em class="replaceable"><code>submodel</code></em>)+2</td><td><p>The M7 model places a beta distribution on dN/dS.</p>
 		<a class="ulink" href="http://www.genetics.org/content/155/1/431.full" target="_top">
@@ -1184,7 +1196,7 @@ mg94[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]
     </p><pre class="screen"><code class="prompt">%</code> bali-phy <em class="replaceable"><code>alignment</code></em>.fasta -S branch_site -T <em class="replaceable"><code>tree</code></em>.tree --disable=topology</pre><p>
     The tree file should be in Newick format, with foreground branches labelled using NHX attributes. The NHX attribute must be applied to the branch, not the node, so it must occur after a colon.
 
-</p><div class="example"><a name="idp1691"></a><p class="title"><b>Example 1. An tree with a foreground branch</b></p><div class="example-contents">
+</p><div class="example"><a name="idp1712"></a><p class="title"><b>Example 1. An tree with a foreground branch</b></p><div class="example-contents">
 (((A1, B1),(C1, D1)),((E1:[&amp;&amp;NHX:foreground=1], F1:[&amp;&amp;NHX:foreground=1]),(G1, H1)),(((A2, B2),(C2, D2)),((E2, F2),(G2, H2))));
 </div></div><p><br class="example-break">
       </p>
@@ -1211,7 +1223,7 @@ mg94[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]
 	      </td></tr><tr><td>
 		<p><strong class="userinput"><code><em class="replaceable"><code>submodel</code></em> + Rates.log_normal</code></strong></p>
 	      </td><td>df(<em class="replaceable"><code>submodel</code></em>)+1</td><td><p>Site rates follow a discrete approximation to the logNormal distribution</p>
-	      </td></tr><tr><td><p><strong class="userinput"><code><em class="replaceable"><code>submodel</code></em> + Rates.free</code></strong></p></td><td>df(<em class="replaceable"><code>submodel</code></em>)+2(<em class="replaceable"><code>n</code></em>-1)</td><td><p>Sites fall in one of <em class="replaceable"><code>n</code></em> categories. Each category has its own rate.</p>
+	      </td></tr><tr><td><p><strong class="userinput"><code><em class="replaceable"><code>submodel</code></em> + Rates.free</code></strong></p></td><td>df(<em class="replaceable"><code>submodel</code></em>)+2(<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math>-1)</td><td><p>Sites fall in one of <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>n</mi></math> categories. Each category has its own rate.</p>
 		  <a class="ulink" href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1206396" target="_top">
 		    (Yang 1995)
 		  </a>
@@ -1836,8 +1848,8 @@ The command <span class="command"><strong>bali-phy</strong></span> and its assoc
   <div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="FAQ"></a>14. Frequently Asked Questions (FAQ)</h2></div></div></div>
     
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp93"></a>14.1. Input files</h3></div></div></div>
-      <div class="qandaset"><a name="idp2441"></a><dl><dt>14.1.1. <a href="#idp2442">Does BAli-Phy accept the wildcard characters "N" or "X"?  How does it treat them?</a></dt><dt>14.1.2. <a href="#idp2448">Does BAli-Phy accept "?" characters?</a></dt><dt>14.1.3. <a href="#idp2456">Does BAli-Phy accept the characters "R" and "Y", etc.?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2442"></a><a name="idp2443"></a><p><b>14.1.1.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept the wildcard characters "N" or "X"?  How does it treat them?</p></td></tr>
+      <div class="qandaset"><a name="idp2464"></a><dl><dt>14.1.1. <a href="#idp2465">Does BAli-Phy accept the wildcard characters "N" or "X"?  How does it treat them?</a></dt><dt>14.1.2. <a href="#idp2471">Does BAli-Phy accept "?" characters?</a></dt><dt>14.1.3. <a href="#idp2479">Does BAli-Phy accept the characters "R" and "Y", etc.?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2465"></a><a name="idp2466"></a><p><b>14.1.1.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept the wildcard characters "N" or "X"?  How does it treat them?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes, BAli-Phy accepts the wildcard characters "N"
 	    (for DNA) and "X" (for proteins).  These characters
 	    indicate that some letter is present (as opposed to a
@@ -1845,7 +1857,7 @@ The command <span class="command"><strong>bali-phy</strong></span> and its assoc
 	    letter it is.  
 	    </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2448"></a><a name="idp2449"></a><p><b>14.1.2.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept "?" characters?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2471"></a><a name="idp2472"></a><p><b>14.1.2.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept "?" characters?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
 	      No.  "?" characters are often used to indicate
 	      <span class="emphasis"><em>either</em></span> letter presence (e.g. "N",
@@ -1859,7 +1871,7 @@ The command <span class="command"><strong>bali-phy</strong></span> and its assoc
 	    alternatives are quite different.)
 	    </p></td></tr>
 	
-	<tr class="question"><td align="left" valign="top"><a name="idp2456"></a><a name="idp2457"></a><p><b>14.1.3.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept the characters "R" and "Y", etc.?</p></td></tr>
+	<tr class="question"><td align="left" valign="top"><a name="idp2479"></a><a name="idp2480"></a><p><b>14.1.3.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept the characters "R" and "Y", etc.?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
 	      Yes.  BAli-Phy accepts the characters Y, R, W, S, K, M,
 	      B, D, H, and V for DNA, RNA, and Codon alphabets.
@@ -1885,17 +1897,17 @@ The command <span class="command"><strong>bali-phy</strong></span> and its assoc
 
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp94"></a>14.2. Running <span class="command"><strong>bali-phy</strong></span>.</h3></div></div></div>
 
-      <div class="qandaset"><a name="idp2468"></a><dl><dt>14.2.1. <a href="#idp2469">Can I fix the alignment and ignore indel information, like MrBayes, BEAST, PhyloBayes and other MCMC programs?</a></dt><dt>14.2.2. <a href="#idp2476">Can I fix the tree topology, while allowing the alignment to vary?</a></dt><dt>14.2.3. <a href="#idp2483">Can I fix the tree topology and relative branch lengths, while allowing the alignment to vary?</a></dt><dt>14.2.4. <a href="#idp2491">Can I fix the tree topology and absolute branch lengths in all data partitions, while allowing the alignment to vary?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2469"></a><a name="idp2470"></a><p><b>14.2.1.</b></p></td><td align="left" valign="top"><p>Can I fix the alignment and ignore indel information, like MrBayes, BEAST, PhyloBayes and other MCMC programs?</p></td></tr>
+      <div class="qandaset"><a name="idp2491"></a><dl><dt>14.2.1. <a href="#idp2492">Can I fix the alignment and ignore indel information, like MrBayes, BEAST, PhyloBayes and other MCMC programs?</a></dt><dt>14.2.2. <a href="#idp2499">Can I fix the tree topology, while allowing the alignment to vary?</a></dt><dt>14.2.3. <a href="#idp2506">Can I fix the tree topology and relative branch lengths, while allowing the alignment to vary?</a></dt><dt>14.2.4. <a href="#idp2514">Can I fix the tree topology and absolute branch lengths in all data partitions, while allowing the alignment to vary?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2492"></a><a name="idp2493"></a><p><b>14.2.1.</b></p></td><td align="left" valign="top"><p>Can I fix the alignment and ignore indel information, like MrBayes, BEAST, PhyloBayes and other MCMC programs?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes.  Add <strong class="userinput"><code>-Inone</code></strong> or <strong class="userinput"><code>--imodel=none</code></strong> on the command line.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2476"></a><a name="idp2477"></a><p><b>14.2.2.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology, while allowing the alignment to vary?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2499"></a><a name="idp2500"></a><p><b>14.2.2.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology, while allowing the alignment to vary?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes.  Add <strong class="userinput"><code>--disable=topology --tree=<em class="replaceable"><code>treefile</code></em></code></strong> on the command line.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2483"></a><a name="idp2484"></a><p><b>14.2.3.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology and <span class="emphasis"><em>relative</em></span> branch lengths, while allowing the alignment to vary?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2506"></a><a name="idp2507"></a><p><b>14.2.3.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology and <span class="emphasis"><em>relative</em></span> branch lengths, while allowing the alignment to vary?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes.  Add <strong class="userinput"><code>--disable=tree --tree=<em class="replaceable"><code>treefile</code></em></code></strong> on the command line.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2491"></a><a name="idp2492"></a><p><b>14.2.4.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology and <span class="emphasis"><em>absolute</em></span> branch lengths <span class="emphasis"><em>in all data partitions</em></span>, while allowing the alignment to vary?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2514"></a><a name="idp2515"></a><p><b>14.2.4.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology and <span class="emphasis"><em>absolute</em></span> branch lengths <span class="emphasis"><em>in all data partitions</em></span>, while allowing the alignment to vary?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes.  Add <strong class="userinput"><code>--disable=tree --tree=<em class="replaceable"><code>treefile</code></em> --scale=1</code></strong> on the command line.</p></td></tr>
 	</tbody></table></div>
 
@@ -1904,8 +1916,8 @@ The command <span class="command"><strong>bali-phy</strong></span> and its assoc
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp95"></a>14.3. Run-time error messages</h3></div></div></div>
       
       
-      <div class="qandaset"><a name="idp2503"></a><dl><dt>14.3.1. <a href="#idp2504">I tried to use --smodel lg08+Rates.gamma[6] and I got an error message "bali-phy: No match."  What gives?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2504"></a><a name="idp2505"></a><p><b>14.3.1.</b></p></td><td align="left" valign="top"><p>I tried to use <strong class="userinput"><code>--smodel lg08+Rates.gamma[6]</code></strong> and I got an error message "bali-phy: No match."  What gives?</p></td></tr>
+      <div class="qandaset"><a name="idp2526"></a><dl><dt>14.3.1. <a href="#idp2527">I tried to use --smodel lg08+Rates.gamma[6] and I got an error message "bali-phy: No match."  What gives?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2527"></a><a name="idp2528"></a><p><b>14.3.1.</b></p></td><td align="left" valign="top"><p>I tried to use <strong class="userinput"><code>--smodel lg08+Rates.gamma[6]</code></strong> and I got an error message "bali-phy: No match."  What gives?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>You are probably using the C-shell as your command line shell.  It is trying to interpret <strong class="userinput"><code>lg08+Rates.gamma[6]</code></strong> as an array before running the command, and it is not succeeding.  Therefore, it doesn't even run <span class="command"><strong>bali-phy</strong></span>.</p><p>To avoid this, put quotes around the substitution model, like this: <strong class="userinput"><code>--smodel "lg08+Rates.gamma[6]"</code></strong>.  This will keep the C-shell from interfering with your command.
 	    </p></td></tr>
 	</tbody></table></div>
@@ -1914,17 +1926,17 @@ The command <span class="command"><strong>bali-phy</strong></span> and its assoc
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp96"></a>14.4. Stopping <span class="command"><strong>bali-phy</strong></span>.</h3></div></div></div>
       
 
-      <div class="qandaset"><a name="idp2519"></a><dl><dt>14.4.1. <a href="#idp2520">Why is bali-phy still
-	      running? How long will it take?</a></dt><dt>14.4.2. <a href="#idp2526">How do I stop a bali-phy
-	  run on my personal computer?</a></dt><dt>14.4.3. <a href="#idp2544">How do I stop a bali-phy
-	  run on a computing cluster?</a></dt><dt>14.4.4. <a href="#idp2553">So, how can I know when to stop it?</a></dt><dt>14.4.5. <a href="#idp2558">How can I tell when the chain has converged?</a></dt><dt>14.4.6. <a href="#idp2564">How can I check how many iterations the chain
+      <div class="qandaset"><a name="idp2542"></a><dl><dt>14.4.1. <a href="#idp2543">Why is bali-phy still
+	      running? How long will it take?</a></dt><dt>14.4.2. <a href="#idp2549">How do I stop a bali-phy
+	  run on my personal computer?</a></dt><dt>14.4.3. <a href="#idp2567">How do I stop a bali-phy
+	  run on a computing cluster?</a></dt><dt>14.4.4. <a href="#idp2576">So, how can I know when to stop it?</a></dt><dt>14.4.5. <a href="#idp2581">How can I tell when the chain has converged?</a></dt><dt>14.4.6. <a href="#idp2587">How can I check how many iterations the chain
 	      has finished?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2520"></a><a name="idp2521"></a><p><b>14.4.1.</b></p></td><td align="left" valign="top"><p>Why is <span class="command"><strong>bali-phy</strong></span> still
+	  <tr class="question"><td align="left" valign="top"><a name="idp2543"></a><a name="idp2544"></a><p><b>14.4.1.</b></p></td><td align="left" valign="top"><p>Why is <span class="command"><strong>bali-phy</strong></span> still
 	      running? How long will it take?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>It runs until you stop it.  Stop it when its
 	      done.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2526"></a><a name="idp2527"></a><p><b>14.4.2.</b></p></td><td align="left" valign="top"><p>How do I stop a <span class="command"><strong>bali-phy</strong></span>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2549"></a><a name="idp2550"></a><p><b>14.4.2.</b></p></td><td align="left" valign="top"><p>How do I stop a <span class="command"><strong>bali-phy</strong></span>
 	  run on my personal computer?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Simply kill the process -- there is no special
 	    command to stop <span class="command"><strong>bali-phy</strong></span>. If you are
@@ -1956,7 +1968,7 @@ However, be aware that this will terminate <span class="emphasis"><em>all</em></
 your <span class="command"><strong>bali-phy</strong></span> runs on that computer.
 	    </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2544"></a><a name="idp2545"></a><p><b>14.4.3.</b></p></td><td align="left" valign="top"><p>How do I stop a <span class="command"><strong>bali-phy</strong></span>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2567"></a><a name="idp2568"></a><p><b>14.4.3.</b></p></td><td align="left" valign="top"><p>How do I stop a <span class="command"><strong>bali-phy</strong></span>
 	  run on a computing cluster?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Simply terminate the submitted job.  The specific command
 	    to terminate a job will depend on the queue manager that
@@ -1972,14 +1984,14 @@ your <span class="command"><strong>bali-phy</strong></span> runs on that compute
 	    commands. 
 	    </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2553"></a><a name="idp2554"></a><p><b>14.4.4.</b></p></td><td align="left" valign="top"><p>So, how can I know when to stop it?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2576"></a><a name="idp2577"></a><p><b>14.4.4.</b></p></td><td align="left" valign="top"><p>So, how can I know when to stop it?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>You can stop when it has both converged and also run for long enough to give
 	      you &gt;1000 effectively independent samples.  </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2558"></a><a name="idp2559"></a><p><b>14.4.5.</b></p></td><td align="left" valign="top"><p>How can I tell when the chain has converged?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2581"></a><a name="idp2582"></a><p><b>14.4.5.</b></p></td><td align="left" valign="top"><p>How can I tell when the chain has converged?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>See section <a class="xref" href="#mixing_and_convergence" title="10. Convergence and Mixing: Is it done yet?">Section 10, &#8220;Convergence and Mixing: Is it done yet?&#8221;</a>.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2564"></a><a name="idp2565"></a><p><b>14.4.6.</b></p></td><td align="left" valign="top"><p>How can I check how many iterations the chain
+	  <tr class="question"><td align="left" valign="top"><a name="idp2587"></a><a name="idp2588"></a><p><b>14.4.6.</b></p></td><td align="left" valign="top"><p>How can I check how many iterations the chain
 	      has finished?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Run <span class="command"><strong>wc -l C1.log</strong></span> inside the output
 	      directory, and subtract 2.
@@ -1989,17 +2001,17 @@ your <span class="command"><strong>bali-phy</strong></span> runs on that compute
 
 
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp97"></a>14.5. Running <span class="command"><strong>bp-analyze</strong></span>.</h3></div></div></div>
-      <div class="qandaset"><a name="idp2575"></a><dl><dt>14.5.1. <a href="#idp2576">Why does bp-analyze say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</a></dt><dt>14.5.2. <a href="#idp2584">Why does bp-analyze say "Program 'gnuplot' not found.  Trace plots will not be generated"?</a></dt><dt>14.5.3. <a href="#idp2591">Why does bp-analyze say "Program 'R' not found.  Some mixing graphs will not be generated"?</a></dt><dt>14.5.4. <a href="#idp2598">Why is bp-analyze stopping early, or failing to generate some files?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2576"></a><a name="idp2577"></a><p><b>14.5.1.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze</strong></span> say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</p></td></tr>
+      <div class="qandaset"><a name="idp2598"></a><dl><dt>14.5.1. <a href="#idp2599">Why does bp-analyze say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</a></dt><dt>14.5.2. <a href="#idp2607">Why does bp-analyze say "Program 'gnuplot' not found.  Trace plots will not be generated"?</a></dt><dt>14.5.3. <a href="#idp2614">Why does bp-analyze say "Program 'R' not found.  Some mixing graphs will not be generated"?</a></dt><dt>14.5.4. <a href="#idp2621">Why is bp-analyze stopping early, or failing to generate some files?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2599"></a><a name="idp2600"></a><p><b>14.5.1.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze</strong></span> say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>The program <span class="command"><strong>draw-tree</strong></span> was not distributed on this platform (Windows, Mac).  This is not a fatal error message, it just means that a pretty picture of the tree will not be generated automatically.  You can still view the tree with <span class="application">FigTree</span>, for example.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2584"></a><a name="idp2585"></a><p><b>14.5.2.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze</strong></span> say "Program 'gnuplot' not found.  Trace plots will not be generated"?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2607"></a><a name="idp2608"></a><p><b>14.5.2.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze</strong></span> say "Program 'gnuplot' not found.  Trace plots will not be generated"?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>This is because you have not installed <span class="application">gnuplot</span>.  This is not a fatal error message, it just means that pictures of partition support, and SRQ plots will not be generated automatically.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2591"></a><a name="idp2592"></a><p><b>14.5.3.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze</strong></span> say "Program 'R' not found.  Some mixing graphs will not be generated"?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2614"></a><a name="idp2615"></a><p><b>14.5.3.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze</strong></span> say "Program 'R' not found.  Some mixing graphs will not be generated"?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>This is because you have not installed <span class="application">R</span>.  This is not a fatal error message, it just means that a plot showing differences in clade probabilities between runs will not be generated.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2598"></a><a name="idp2599"></a><p><b>14.5.4.</b></p></td><td align="left" valign="top"><p>Why is <span class="command"><strong>bp-analyze</strong></span> stopping early, or failing to generate some files?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2621"></a><a name="idp2622"></a><p><b>14.5.4.</b></p></td><td align="left" valign="top"><p>Why is <span class="command"><strong>bp-analyze</strong></span> stopping early, or failing to generate some files?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Look in the file <code class="filename">Results/bp-analyze.log</code>.  This should contain the actual commands that were run, along with error message from these commands.  These error message should give you a hint as to what the problem might be.</p></td></tr>
 	</tbody></table></div>
     </div>
@@ -2008,11 +2020,11 @@ your <span class="command"><strong>bali-phy</strong></span> runs on that compute
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp98"></a>14.6. Interpreting the results.</h3></div></div></div>
       
 
-      <div class="qandaset"><a name="idp2608"></a><dl><dt>14.6.1. <a href="#idp2609">How do I compute the clade support?</a></dt><dt>14.6.2. <a href="#idp2614">How do I compute the split/bi-partition support?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2609"></a><a name="idp2610"></a><p><b>14.6.1.</b></p></td><td align="left" valign="top"><p>How do I compute the clade support?</p></td></tr>
+      <div class="qandaset"><a name="idp2631"></a><dl><dt>14.6.1. <a href="#idp2632">How do I compute the clade support?</a></dt><dt>14.6.2. <a href="#idp2637">How do I compute the split/bi-partition support?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2632"></a><a name="idp2633"></a><p><b>14.6.1.</b></p></td><td align="left" valign="top"><p>How do I compute the clade support?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Actually, BAli-Phy uses unrooted trees, so it only estimates bi-partition support.  A bi-partition is a division of taxa into two groups, but it does not specify which group contains the root. </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2614"></a><a name="idp2615"></a><p><b>14.6.2.</b></p></td><td align="left" valign="top"><p>How do I compute the split/bi-partition support?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2637"></a><a name="idp2638"></a><p><b>14.6.2.</b></p></td><td align="left" valign="top"><p>How do I compute the split/bi-partition support?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>After you analyze the output (<a class="xref" href="#analysis" title="5.4. Summarizing the output - scripted">Section 5.4, &#8220;Summarizing the output - scripted&#8221;</a>), the partition support is indicated in
 	      <code class="filename">Results/consensus</code> and in <code class="filename">Results/c50.PP.tree</code>. </p></td></tr>
 	</tbody></table></div>
@@ -2020,23 +2032,23 @@ your <span class="command"><strong>bali-phy</strong></span> runs on that compute
 
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp99"></a>14.7. How do I...</h3></div></div></div>
       
-      <div class="qandaset"><a name="idp2625"></a><dl><dt>14.7.1. <a href="#idp2626">How do I concatenate alignments?</a></dt><dt>14.7.2. <a href="#idp2635">How do I select columns from an alignment?</a></dt><dt>14.7.3. <a href="#idp2643">How do I create an alignment-constraint file
+      <div class="qandaset"><a name="idp2648"></a><dl><dt>14.7.1. <a href="#idp2649">How do I concatenate alignments?</a></dt><dt>14.7.2. <a href="#idp2658">How do I select columns from an alignment?</a></dt><dt>14.7.3. <a href="#idp2666">How do I create an alignment-constraint file
 	      from an alignment?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2626"></a><a name="idp2627"></a><p><b>14.7.1.</b></p></td><td align="left" valign="top"><p>How do I concatenate alignments?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2649"></a><a name="idp2650"></a><p><b>14.7.1.</b></p></td><td align="left" valign="top"><p>How do I concatenate alignments?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
  	    </p><pre class="screen"><code class="prompt">%</code> alignment-cat <em class="replaceable"><code>filename1.fasta</code></em> <em class="replaceable"><code>filename2.fasta</code></em> &gt; result.fasta</pre><p>
 	      The alignments must have the same sequence names, but
 	      the names need not be in the same order.
 	    </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2635"></a><a name="idp2636"></a><p><b>14.7.2.</b></p></td><td align="left" valign="top"><p>How do I select columns from an alignment?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2658"></a><a name="idp2659"></a><p><b>14.7.2.</b></p></td><td align="left" valign="top"><p>How do I select columns from an alignment?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
 	    </p><pre class="screen"><code class="prompt">%</code> alignment-cat -c1-10,50-100,600- <em class="replaceable"><code>filename.fasta</code></em> &gt; result.fasta</pre><p>
 	    The resulting alignment will contain the selected columns
 	    in the order you specified.
 	  </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2643"></a><a name="generating_constraint_files"></a><p><b>14.7.3.</b></p></td><td align="left" valign="top"><p>How do I create an alignment-constraint file
+	  <tr class="question"><td align="left" valign="top"><a name="idp2666"></a><a name="generating_constraint_files"></a><p><b>14.7.3.</b></p></td><td align="left" valign="top"><p>How do I create an alignment-constraint file
 	      from an alignment?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>To constrain the alignment to match some alignment
 	      file <em class="replaceable"><code>filename.fasta</code></em> in columns
