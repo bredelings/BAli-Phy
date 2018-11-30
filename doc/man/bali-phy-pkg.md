@@ -20,8 +20,11 @@ Package information is kept in `~/.local/share/bali-phy/info/`.
 
 # ALL OPTIONS:
 
-**-h**, **--help**, **help**
+**help**, **-h**, **--help**
 : Produce help message.
+
+**available**
+: List packages available on the web.
 
 **install** _PACKAGE_
 : Install package _PACKAGE_ from the web.
@@ -29,17 +32,14 @@ Package information is kept in `~/.local/share/bali-phy/info/`.
 **install-archive** _ARCHIVE_
 : Install package in local file _ARCHIVE_.
 
-**available**
-: List packages available on the web.
-
 **uninstall** _PACKAGE_
 : Uninstall package _PACKAGE_
 
-**info** _PACKAGE_
-: Show information about the installed version of package _PACKAGE_.
-
 **packages**
 : List installed packages and their version numbers.
+
+**info** _PACKAGE_
+: Show information about the installed version of package _PACKAGE_.
 
 **files** _PACKAGE_
 : List files for installed package _PACKAGE_.
@@ -47,7 +47,7 @@ Package information is kept in `~/.local/share/bali-phy/info/`.
 **installed**
 : List files for all installed packages
 
-**untracked** _PACKAGE_
+**untracked**
 : List files in the package directory that aren't from any installed package.
 
 # REPORTING BUGS:
