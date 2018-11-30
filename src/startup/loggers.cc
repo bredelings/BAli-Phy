@@ -191,17 +191,51 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
   
     TL->add_field("iter", [](const Model&, long t) {return convertToString(t);});
     TL->add_field("prior", [](const Model& M, long) {return convertToString(log(M.prior()));});
-    if (P)
-	for(int i=0;i<P->n_data_partitions();i++)
-	{
-	    if ((*P)[i].variable_alignment())
-		TL->add_field("prior_A"+convertToString(i+1), [i](const Parameters& P) {return convertToString(log(P[i].prior_alignment()));});
-	    if ((*P)[i].variable_alignment())
-		TL->add_field("likelihood"+convertToString(i+1), [i](const Parameters& P) {return convertToString(log(P[i].likelihood()));});
-	}
     TL->add_field("likelihood", [](const Model& M, long) {return convertToString(log(M.likelihood()));});
     TL->add_field("posterior", [](const Model& M, long) {return convertToString(log(M.probability()));});
   
+    if (P and P->t().n_nodes() > 1)
+    {
+	if (P->variable_alignment()) {
+	    TL->add_field("|A|", Get_Total_Alignment_Length_Function() );
+	    TL->add_field("#indels", Get_Total_Num_Indels_Function() );
+	    TL->add_field("|indels|", Get_Total_Total_Length_Indels_Function() );
+	}
+	TL->add_field("#substs", Get_Total_Num_Substitutions_Function() );
+	for(int i=0;i<P->n_data_partitions();i++)
+	{
+	    string prefix = "P"+convertToString(i+1)+"/";
+	    TL->add_field(prefix + "likelihood", [i](const Parameters& P) {return convertToString(log(P[i].likelihood()));});
+	    if ((*P)[i].variable_alignment())
+	    {
+		TL->add_field(prefix+"prior_A", [i](const Parameters& P) {return convertToString(log(P[i].prior_alignment()));});
+		TL->add_field(prefix+"|A|", [i](const Parameters& P){return convertToString(alignment_length(P[i]));});
+		TL->add_field(prefix+"#indels", [i](const Parameters& P){return convertToString(n_indels(P[i]));});
+		TL->add_field(prefix+"|indels|", [i](const Parameters& P){return convertToString(total_length_indels(P[i]));});
+	    }
+	    const alphabet& a = (*P)[i].get_alphabet();
+	    TL->add_field(prefix+"#substs"+convertToString(i+1), [i,cost = unit_cost_matrix(a)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
+	    if (const Doublets* Do = dynamic_cast<const Doublets*>(&a))
+		TL->add_field(prefix+"#substs(nuc)"+convertToString(i+1), [i,cost = nucleotide_cost_matrix(*Do)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
+	    if (const Triplets* Tr = dynamic_cast<const Triplets*>(&a))
+		TL->add_field(prefix+"#substs(nuc)"+convertToString(i+1), [i,cost = nucleotide_cost_matrix(*Tr)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
+	    if (const Codons* C = dynamic_cast<const Codons*>(&a))
+		TL->add_field(prefix+"#substs(aa)"+convertToString(i+1), [i,cost = amino_acid_cost_matrix(*C)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
+	}
+
+	// Add fields Scale<s>*|T|
+	for(int i=0;i<P->n_branch_scales();i++)
+	{
+	    auto name = string("Scale[")+to_string(i+1)+"]*|T|";
+
+	    auto f = [i](const Parameters& P) {return convertToString( P.branch_scale(i)*tree_length(P.t()));};
+
+	    TL->add_field(name, f);
+	}
+
+	TL->add_field("|T|", Get_Tree_Length_Function() );
+    }
+
     {
 	vector<int> logged_computations;
 	vector<string> logged_names;
@@ -253,45 +287,6 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
 	else
 	    throw myexception()<<"No such parameter '"<<p<<"' to Rao-Blackwellize";
     }
-
-    if (not P or P->t().n_nodes() < 2) return TL;
-
-    for(int i=0;i<P->n_data_partitions();i++)
-    {
-	if ((*P)[i].variable_alignment())
-	{
-	    TL->add_field("|A"+convertToString(i+1)+"|", [i](const Parameters& P){return convertToString(alignment_length(P[i]));});
-	    TL->add_field("#indels"+convertToString(i+1), [i](const Parameters& P){return convertToString(n_indels(P[i]));});
-	    TL->add_field("|indels"+convertToString(i+1)+"|", [i](const Parameters& P){return convertToString(total_length_indels(P[i]));});
-	}
-	const alphabet& a = (*P)[i].get_alphabet();
-	TL->add_field("#substs"+convertToString(i+1), [i,cost = unit_cost_matrix(a)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
-	if (const Doublets* Do = dynamic_cast<const Doublets*>(&a))
-	    TL->add_field("#substs(nuc)"+convertToString(i+1), [i,cost = nucleotide_cost_matrix(*Do)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
-	if (const Triplets* Tr = dynamic_cast<const Triplets*>(&a))
-	    TL->add_field("#substs(nuc)"+convertToString(i+1), [i,cost = nucleotide_cost_matrix(*Tr)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
-	if (const Codons* C = dynamic_cast<const Codons*>(&a))
-	    TL->add_field("#substs(aa)"+convertToString(i+1), [i,cost = amino_acid_cost_matrix(*C)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
-    }
-
-    // Add fields Scale<s>*|T|
-    for(int i=0;i<P->n_branch_scales();i++)
-    {
-	auto name = string("Scale")+to_string(i+1)+"*|T|";
-
-	auto f = [i](const Parameters& P) {return convertToString( P.branch_scale(i)*tree_length(P.t()));};
-
-	TL->add_field(name, f);
-    }
-  
-    if (P->variable_alignment()) {
-	TL->add_field("|A|", Get_Total_Alignment_Length_Function() );
-	TL->add_field("#indels", Get_Total_Num_Indels_Function() );
-	TL->add_field("|indels|", Get_Total_Total_Length_Indels_Function() );
-    }
-    TL->add_field("#substs", Get_Total_Num_Substitutions_Function() );
-  
-    TL->add_field("|T|", Get_Tree_Length_Function() );
 
     return TL;
 }
