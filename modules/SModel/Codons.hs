@@ -7,8 +7,6 @@ import SModel.Nucleotides
 builtin m0 3 "m0" "SModel"
 builtin f3x4_frequencies_builtin 4 "f3x4_frequencies" "SModel"
 builtin singlet_to_triplet_rates 4 "singlet_to_triplet_rates" "SModel"
-builtin fMutSel_q 4 "fMutSel_q" "SModel"
-builtin fMutSel_pi 3 "fMutSel_pi" "SModel"
 builtin dNdS_matrix 2 "dNdS_matrix" "SModel"
 
 f3x4_frequencies a pi1 pi2 pi3 = let pi1' = list_to_vector pi1
