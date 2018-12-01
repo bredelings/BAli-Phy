@@ -31,7 +31,7 @@ gy94_ext  sym w pi a = gtr a (m0 a sym w) pi
 
 gy94  k w pi a = gy94_ext  sym w pi a where sym = hky85_sym k $ getNucleotides a
 
-mg94_ext a q w = dNdS (x3 a q) w
+mg94_ext a q w = dNdS w (x3 a q)
 mg94k a k pi w  = mg94_ext a (hky85 k pi nuc_a) w where nuc_a = getNucleotides a
 mg94  a   pi w  = mg94_ext a (f81     pi nuc_a) w where nuc_a = getNucleotides a
 
@@ -45,4 +45,4 @@ x3_sym a s = singlet_to_triplet_rates a s s s
 x3 a q = x3x3 a q q q
 
 -- maybe this should be t*(q %*% dNdS_matrix) in order to avoid losing scaling factors?  Probably this doesn't matter at the moment.
-dNdS (ReversibleMarkov a s q pi l t r) omega = reversible_markov a s q2 pi where q2 = q %*% dNdS_matrix a omega
+dNdS omega (ReversibleMarkov a s q pi l t r) = reversible_markov a s q2 pi where q2 = q %*% dNdS_matrix a omega
