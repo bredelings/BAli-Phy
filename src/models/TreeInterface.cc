@@ -475,10 +475,8 @@ string write(const TreeInterface& T, int root, const vector<string>& names)
 }
 
 /// Return a Newick string representation of the tree 'T' with names 'names', including branch lengths by default.
-std::string write(const TreeInterface& T, const std::vector<double>& L, const std::vector<std::string>& names)
+std::string write(const TreeInterface& T, int root, const std::vector<double>& L, const std::vector<std::string>& names)
 {
-    int root = T.target(0);
-
     vector<int> branches = T.all_branches_from_node(root);
     vector<string> names2 = names;
     for(int b: branches)
@@ -492,13 +490,13 @@ std::string write(const TreeInterface& T, const std::vector<double>& L, const st
 /// Return a Newick string representation of the tree 'T' with names 'names', including branch lengths by default.
 std::string write(const TreeInterface& T, const std::vector<std::string>& names, bool print_lengths)
 {
-    int root = T.target(0);
+    int root = 0; // T.target(0);
     if (print_lengths)
     {
 	vector<double> L;
 	for(int i=0;i<T.n_branches();i++)
 	    L.push_back(T.branch_length(i));
-	return write(T, L, names);
+	return write(T, root, L, names);
     }
     else
 	return write(T, root, names);
