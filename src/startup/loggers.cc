@@ -333,7 +333,8 @@ vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const
     if (not P) return loggers;
 
     // Write out the (scaled) tree each iteration to C<>.trees
-    loggers.push_back( FunctionLogger(base + ".trees", Subsample_Function(TreeFunction()<<"\n", subsample) ) );
+    if (P->t().n_nodes() > 1)
+	loggers.push_back( FunctionLogger(base + ".trees", Subsample_Function(TreeFunction()<<"\n", subsample) ) );
   
     // Write out the MAP point to C<>.MAP - later change to a dump format that could be reloaded?
     {
