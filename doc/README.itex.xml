@@ -613,9 +613,9 @@ scale = 1,3:</programlisting>
 	</varlistentry>
 
 	<varlistentry>
-	  <term>C1.P<replaceable>p</replaceable>.fastas</term>
+	  <term>C1.P$n$.fastas</term>
 	  <listitem>
-	    <para>Sampled alignments for partition <replaceable>p</replaceable> including ancestral sequences.</para>
+	    <para>Sampled alignments for partition $n$ including ancestral sequences.</para>
 	  </listitem>
 	</varlistentry>
 
@@ -688,6 +688,13 @@ scale = 1,3:</programlisting>
 	</varlistentry>
 
 	<varlistentry>
+	  <term>prior_A</term>
+	  <listitem>
+	    <para>The log-probability of the alignments in all partitions.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
 	  <term>|A|</term>
 	  <listitem>
 	    <para>The total number of alignment columns across all partitions.</para>
@@ -721,7 +728,6 @@ scale = 1,3:</programlisting>
 	  <term>P$n$/likelihood</term>
 	  <listitem>
 	    <para>The substitution log-likelihood for partition $n$. </para>
-	    <para>(<emphasis>Probabilistic analogue to summed mismatch penalties</emphasis>).</para>
 	  </listitem>
 	</varlistentry>
 
@@ -729,7 +735,6 @@ scale = 1,3:</programlisting>
 	  <term>P$n$/prior_A</term>
 	  <listitem>
 	    <para>The log-probability of the alignment for partition $n$.</para>
-	    <para>(<emphasis>Probabilistic analogue to summed gap penalties</emphasis>).</para>
 	  </listitem>
 	</varlistentry>
 
@@ -776,7 +781,9 @@ scale = 1,3:</programlisting>
 	</varlistentry>
 
       </variablelist>
-      <para>The prior includes the probability of the alignment, since the alignment is not observed. </para>
+      <para>The "prior" field includes the probability of the alignment, since the alignment is not observed.</para>
+      <para>The likelihood is the probabilistic analogue to summed mismatch penalties.</para>
+      <para>The prior_A is the probabilistic analogue to summed gap penalties.</para>
       </section>
 
       <section><title>Model parameter names</title>
