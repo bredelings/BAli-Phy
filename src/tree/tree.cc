@@ -2098,18 +2098,15 @@ int Tree::parse_(const string& line, std::function<void(BranchNode*)> assign_nam
 	    if (pos > 2)
 		throw myexception()<<"Cannot have a ':' here! (pos == "<<pos<<")";
 
-	    // Handle (a,b):1.0;
-	    if (tree_stack.size() == 1)
+	    // Handle (a,b):1.0; -- we should ignore any attributes for the branch in this case
+	    if (tree_stack.size() > 1)
+		set_attributes(tags, node_attribute_names, *BN->node_attributes);
+	    else
 	    {
 		// There should be only a single node, or we'd be in a situation like a,b:1.0;
 		// If we have a:1.0,b:1.0; the we will complain about the ",", so treating the a this way should be safe;
 		assert(tree_stack.back().size() == 1);
-
-		BN = ::add_leaf_node(BN, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
-		tree_stack.back().back() = BN;
 	    }
-
-	    set_attributes(tags, node_attribute_names, *BN->node_attributes);
 
 	    pos = 3;
 	}
@@ -2128,10 +2125,14 @@ int Tree::parse_(const string& line, std::function<void(BranchNode*)> assign_nam
 		throw myexception()<<"Node name '"<<word<<"' comes directly after '"<<prev<<"'";
 	    else if (pos == 3)
 	    {
-		set_attributes(tags, undirected_branch_attribute_names, *BN->undirected_branch_attributes);
+		// Handle (a,b):1.0; -- we should ignore any attributes for the branch in this case
+		if (tree_stack.size() > 1)
+		{
+		    set_attributes(tags, undirected_branch_attribute_names, *BN->undirected_branch_attributes);
 
-		if (branch_length_index)
-		    (*BN->undirected_branch_attributes)[*branch_length_index] = convertTo<double>(word);	
+		    if (branch_length_index)
+			(*BN->undirected_branch_attributes)[*branch_length_index] = convertTo<double>(word);
+		}
 		pos = 4;
 	    }
 	    else if (pos == 4)
