@@ -1527,7 +1527,9 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     }
 
     // create data partitions
-    bool allow_compression = load_value("site-compression",true);
+
+    // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
+    bool allow_compression = load_value("site-compression", t().n_nodes() > 2);
 
     assert(like_calcs.size() == A.size());
     for(int i=0;i<A.size();i++)
