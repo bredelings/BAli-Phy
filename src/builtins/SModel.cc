@@ -1017,6 +1017,70 @@ extern "C" closure builtin_function_plus_gwF(OperationArgs& Args)
     return R;
 }
 
+// Q0 w
+// Here S[I,J] = F[J] - F[I] = 2Nf[j] - 2NF[i] = 2N*s[i,j]
+extern "C" closure builtin_function_mut_sel_q(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    const Matrix& Q0 = arg0.as_< Box<Matrix> >();
+    assert(Q0.size1() == Q0.size2());
+    int n = Q0.size1();
+
+    auto arg1 = Args.evaluate(1);
+    const Vector<double>& w = arg1.as_< Vector<double> >();
+    assert(w.size() == n);
+
+    auto Q_ = new Box<Matrix>(n,n);
+    Matrix& Q = *Q_;
+
+    for(int i=0;i<n;i++)
+    {
+	double sum = 0;
+	for(int j=0;j<n;j++)
+	{
+	    if (i==j) continue;
+
+	    double rate = Q0(i,j);
+
+	    // x = wj/wi    log(x)/(1-1/x)
+	    // y = wi/wj   -log(y)/(1-y)
+	    // 1+z = y     -log(1+z)/-z = log1p(z)/z   z = y-1 = (wi/wj)-1
+	    double z = (w[i] - w[j])/w[j];
+	    if (std::abs(z) < 0.0001)
+		rate *= ( 1.0 - z/2.0 + (z*z)/3.0 - (z*z*z)/4.0 );
+	    else
+		rate *= log1p(z)/z;
+
+	    Q(i,j) = rate;
+
+	    sum += Q(i,j);
+	}
+	Q(i,i) = -sum;
+    }
+
+    return Q_;
+}
+
+// pi0 w
+extern "C" closure builtin_function_mut_sel_pi(OperationArgs& Args)
+{
+    auto pi0 = from_evec( Args.evaluate(0).as_< EVector >() );
+
+    auto arg1 = Args.evaluate(1);
+    const vector<double>& w = arg1.as_< Vector<double> >();
+
+    assert(pi0.size() == w.size());
+
+    // compute frequencies
+    Vector<double> pi = pi0;
+
+    for(int i=0; i<pi.size(); i++)
+	pi[i] *= w[i];
+
+    normalize(pi);
+    return to_evec(pi);
+}
+
 // codon_a codon_w omega nuc_q
 extern "C" closure builtin_function_fMutSel_q(OperationArgs& Args)
 {

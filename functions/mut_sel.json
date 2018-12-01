@@ -1,0 +1,32 @@
+{
+    "name": "mut_sel",
+    "result_type": "RevCTMC[a]",
+    "call": "SModel.mut_sel'[submodel,w]",
+    "args": [
+        {
+            "arg_name": "submodel",
+            "arg_type": "RevCTMC[a]",
+	    "description": "Model of neutral mutation"
+        },
+        {
+            "arg_name": "w",
+            "arg_type": "List[Pair[String,Double]]",
+            "default_value": "zip[letters[@a],~iid[length[letters[@a]],log_normal[0,0.5]]]",
+	    "description": "Fitness for each letter"
+        },
+	{
+	    "arg_name": "a",
+	    "arg_type": "a",
+	    "default_value": "getAlphabet",
+	    "description": "The alphabet"
+	}
+    ],
+    "extract": "all",
+    "citation":{"type": "article",
+		"title": "Mutation-Selection Models of Codon Substitution and Their Use to Estimate Selective Strengths on Codon Usage",
+		"year": "2008",
+		"author": [{"name": "Yang, Ziheng"},{"name": "Nielsen, Rasmus"}],
+		"journal": {"name": "Molecular Biology and Evolution", "volume": "25", "number": "3", "pages": "568--579"},
+		"identifier": [{"type":"doi","id":"10.1093/molbev/msm284"}]
+	       }
+}

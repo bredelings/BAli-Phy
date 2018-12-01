@@ -24,6 +24,8 @@ builtin builtin_lg_frequencies 1 "lg_frequencies" "SModel"
 builtin lg 1 "lg" "SModel"
 builtin builtin_weighted_frequency_matrix 2 "weighted_frequency_matrix" "SModel"
 builtin builtin_frequency_matrix 1 "frequency_matrix" "SModel"
+builtin mut_sel_q 2 "mut_sel_q" "SModel"
+builtin mut_sel_pi 2 "mut_sel_pi" "SModel"
 
 data F81 = F81 a b c d
 data MixtureModel = MixtureModel [(Double,a)]
@@ -167,6 +169,15 @@ branch_site model_func fs ws posP posW = MixtureModels [bg_mixture,fg_mixture]
 
 branch_site_test model_func fs ws posP posW posSelection = branch_site model_func fs ws posP posW'
     where posW' = if (posSelection == 1) then posW else 1.0
+
+mut_sel (ReversibleMarkov a smap q0 pi0 _ _ _) w' = reversible_markov a smap q pi where
+    w = listToVectorDouble w'
+    q = mut_sel_q q0 w
+    pi = mut_sel_pi pi0 w
+
+mut_sel' q0 w' = mut_sel q0 w where
+    w = get_ordered_elements (alphabet_letters a) w' "fitnesses"
+    a = getAlphabet q0
 
 fMutSel codon_a codon_w omega (ReversibleMarkov _ _ nuc_q nuc_pi _ _ _) =
    let nuc_a = getNucleotides codon_a
