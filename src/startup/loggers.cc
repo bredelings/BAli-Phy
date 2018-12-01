@@ -197,6 +197,7 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
     if (P and P->t().n_nodes() > 1)
     {
 	if (P->variable_alignment()) {
+	    TL->add_field("prior_A", [](const Parameters& P) {return convertToString(log(P.prior_alignment()));});
 	    TL->add_field("|A|", Get_Total_Alignment_Length_Function() );
 	    TL->add_field("#indels", Get_Total_Num_Indels_Function() );
 	    TL->add_field("|indels|", Get_Total_Total_Length_Indels_Function() );
