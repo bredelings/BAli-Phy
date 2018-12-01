@@ -3,7 +3,7 @@
     "constraints": [ "Triplets[a,b]" ],
     "result_type": "RevCTMC[a]",
     "title": "Rate matrix constructed from rate matrices on each triplet position",
-    "call": "SModel.Codons.x3x3[rates1,rates2,rates3,a]",
+    "call": "SModel.Codons.x3x3[a,rates1,rates2,rates3]",
     "args": [
         {
             "arg_name": "rates1",
