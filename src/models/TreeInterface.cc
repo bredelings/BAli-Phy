@@ -247,7 +247,7 @@ bool TreeInterface::is_connected(int n1, int n2) const
 }
 
 bool TreeInterface::is_leaf_node(int n) const {
-    return degree(n) == 1;
+    return degree(n) <= 1;
 }
 
 bool TreeInterface::is_internal_node(int n) const {
