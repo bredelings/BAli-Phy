@@ -170,12 +170,12 @@ branch_site model_func fs ws posP posW = MixtureModels [bg_mixture,fg_mixture]
 branch_site_test model_func fs ws posP posW posSelection = branch_site model_func fs ws posP posW'
     where posW' = if (posSelection == 1) then posW else 1.0
 
-mut_sel (ReversibleMarkov a smap q0 pi0 _ _ _) w' = reversible_markov a smap q pi where
+mut_sel w' (ReversibleMarkov a smap q0 pi0 _ _ _) = reversible_markov a smap q pi where
     w = listToVectorDouble w'
     q = mut_sel_q q0 w
     pi = mut_sel_pi pi0 w
 
-mut_sel' q0 w' = mut_sel q0 w where
+mut_sel' w' q0 = mut_sel w q0 where
     w = get_ordered_elements (alphabet_letters a) w' "fitnesses"
     a = getAlphabet q0
 

@@ -1,7 +1,7 @@
 {
     "name": "mut_sel",
     "result_type": "RevCTMC[a]",
-    "call": "SModel.mut_sel'[submodel,w]",
+    "call": "SModel.mut_sel'[w,submodel]",
     "args": [
         {
             "arg_name": "submodel",
