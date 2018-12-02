@@ -2,7 +2,7 @@
     "name": "log_gamma",
     "synonyms": ["logGamma"],
     "result_type": "Distribution[Double]",
-    "call": "Distributions.logGamma[a,b]",
+    "call": "Distributions.log_gamma[a,b]",
     "args": [
         {
             "arg_name": "a",

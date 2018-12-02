@@ -1,8 +1,8 @@
 {
     "name": "log_laplace",
-    "synonyms": ["log_laplace"],
+    "synonyms": ["logLaplace"],
     "result_type": "Distribution[Double]",
-    "call": "Distributions.logLaplace[lm,ls]",
+    "call": "Distributions.log_laplace[lm,ls]",
     "args": [
         {
             "arg_name": "lm",

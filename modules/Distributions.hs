@@ -291,10 +291,10 @@ expTransform (ProbDensity d q s r) = ProbDensity pdf' q' s' r'
   r'   = expTransformRange r
   
 log_normal mu sigma = expTransform $ normal mu sigma
-logExponential mu = expTransform $  exponential mu
-logGamma a b = expTransform $ gamma a b
-logLaplace m s = expTransform $ laplace m s
-logCauchy m s = expTransform $ cauchy m s
+log_exponential mu = expTransform $  exponential mu
+log_gamma a b = expTransform $ gamma a b
+log_laplace m s = expTransform $ laplace m s
+log_cauchy m s = expTransform $ cauchy m s
 
 safe_exp x = if (x < (-20.0)) then
                exp (-20.0)
