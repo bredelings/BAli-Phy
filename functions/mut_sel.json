@@ -11,7 +11,7 @@
         {
             "arg_name": "w",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "zip[letters[@a],~iid[length[letters[@a]],log_normal[0,0.5]]]",
+            "default_value": "zip[letters[@a],~iid[length[letters[@a]],log_normal[0,1]]]",
 	    "description": "Fitness for each letter"
         },
 	{
