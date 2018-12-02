@@ -181,34 +181,35 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
     {
 	json partition;
 
+	out_screen<<"Partition P"<<i+1<<":\n";
 	// 1. filename 
 	out_cache<<"data"<<i+1<<" = "<<filenames[i]<<endl;
-	out_screen<<"#"<<i+1<<": file = "<<filenames[i]<<endl;
+	out_screen<<"    file = "<<filenames[i]<<endl;
 	partition["filename"] = filenames[i];
 
 	// 2. alphabet
 	string a_name = P[i].get_alphabet().name;
-	out_screen<<"#"<<i+1 <<": alphabet = "<<a_name<<"\n";
+	out_screen<<"    alphabet = "<<a_name<<"\n";
 	out_cache<<"alphabet"<<i+1<<" = "<<a_name<<endl;
 	partition["alphabet"] = a_name;
 
 	// 3. substitution model
 	auto s_index = P.smodel_index_for_partition(i);
-	out_screen<<"#"<<i+1<<": subst "<<indent_and_wrap(0,12,1000,SModels[*s_index].show_main(false))<<" (S"<<*s_index+1<<")\n";
+	out_screen<<"    subst "<<indent_and_wrap(0,12,1000,SModels[*s_index].show_main(false))<<" (S"<<*s_index+1<<")\n";
 	out_cache<<"smodel-index"<<i+1<<" = "<<P.smodel_index_for_partition(i)<<endl;
 	partition["smodel"] = optional_to_json( P.smodel_index_for_partition(i) );
 
 	// 4. indel model
 	if (auto i_index = P.imodel_index_for_partition(i))
-	    out_screen<<"#"<<i+1<<": indel "<<indent_and_wrap(0,12,1000,IModels[*i_index].show_main(false))<<" (I"<<*i_index+1<<")\n";
+	    out_screen<<"    indel "<<indent_and_wrap(0,12,1000,IModels[*i_index].show_main(false))<<" (I"<<*i_index+1<<")\n";
 	else
-	    out_screen<<"#"<<i+1<<": indel = none\n";
+	    out_screen<<"    indel = none\n";
 	out_cache<<"imodel-index"<<i+1<<" = "<<P.imodel_index_for_partition(i)<<endl;
 	partition["imodel"] = optional_to_json( P.imodel_index_for_partition(i) );
 
 	// 5. scale model
 	auto scale_index = P.scale_index_for_partition(i);
-	out_screen<<"#"<<i+1<<": scale "<<indent_and_wrap(0,12,1000,ScaleModels[*scale_index].show_main(false))<<" (Scale"<<*scale_index+1<<")\n";
+	out_screen<<"    scale "<<indent_and_wrap(0,12,1000,ScaleModels[*scale_index].show_main(false))<<" (Scale"<<*scale_index+1<<")\n";
 	out_cache<<"scale-index"<<i+1<<" = "<<P.scale_index_for_partition(i)<<endl;
 	partition["scale"] = optional_to_json( P.scale_index_for_partition(i) );
 
@@ -225,7 +226,7 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 	smodels.push_back(SModels[i].pretty_model());
 	string e = SModels[i].show_extracted();
 	if (e.size())
-	    out_screen<<"Substitution model (S"<<i+1<<") -- priors:"<<e<<"\n\n";
+	    out_screen<<"Substitution model S"<<i+1<<" priors:"<<e<<"\n\n";
     }
 
     json imodels = json::array();
@@ -235,7 +236,7 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 	imodels.push_back(IModels[i].pretty_model());
 	string e = IModels[i].show_extracted();
 	if (e.size())
-	    out_screen<<"Insertion/deletion model (I"<<i+1<<") -- priors:"<<e<<"\n\n";
+	    out_screen<<"Insertion/deletion model I"<<i+1<<" priors:"<<e<<"\n\n";
     }
 
     json scales = json::array();
@@ -245,7 +246,7 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 	scales.push_back(ScaleModels[i].pretty_model());
 	string e = ScaleModels[i].show_extracted();
 	if (e.size())
-	    out_screen<<"Scale model (Scale"<<i+1<<") -- priors:"<<e<<"\n\n";
+	    out_screen<<"Scale model Scale"<<i+1<<" priors:"<<e<<"\n\n";
     }
 
     info["partitions"] = partitions;
