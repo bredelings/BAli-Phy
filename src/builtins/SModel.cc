@@ -1026,8 +1026,7 @@ extern "C" closure builtin_function_mut_sel_q(OperationArgs& Args)
     assert(Q0.size1() == Q0.size2());
     int n = Q0.size1();
 
-    auto arg1 = Args.evaluate(1);
-    const Vector<double>& w = arg1.as_< Vector<double> >();
+    auto w   = from_evec( Args.evaluate(1).as_< EVector >() );
     assert(w.size() == n);
 
     auto Q_ = new Box<Matrix>(n,n);
@@ -1066,8 +1065,7 @@ extern "C" closure builtin_function_mut_sel_pi(OperationArgs& Args)
 {
     auto pi0 = from_evec( Args.evaluate(0).as_< EVector >() );
 
-    auto arg1 = Args.evaluate(1);
-    const vector<double>& w = arg1.as_< Vector<double> >();
+    auto w   = from_evec( Args.evaluate(1).as_< EVector >() );
 
     assert(pi0.size() == w.size());
 

@@ -171,7 +171,7 @@ branch_site_test model_func fs ws posP posW posSelection = branch_site model_fun
     where posW' = if (posSelection == 1) then posW else 1.0
 
 mut_sel w' (ReversibleMarkov a smap q0 pi0 _ _ _) = reversible_markov a smap q pi where
-    w = listToVectorDouble w'
+    w = list_to_vector w'
     q = mut_sel_q q0 w
     pi = mut_sel_pi pi0 w
 
