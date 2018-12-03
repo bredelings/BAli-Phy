@@ -90,18 +90,6 @@ slow_list_to_vector l = runST $ do v <- new_vector (length l)
 
 list_to_vector = builtin_vector_from_list
 
-newVectorInt s = IOAction1 builtinNewVectorInt s
-
-setVectorIndexInt v i x = IOAction3 builtinSetVectorIndexInt v i x
-
-copyListToVectorInt [] v i = return ()
-copyListToVectorInt (h:t) v i = do setVectorIndexInt v i h
-                                   copyListToVectorInt t v (i+1)
-
-listToVectorInt l = runST $ do v <- newVectorInt (length l)
-                               copyListToVectorInt l v 0
-                               return v
-
 newString s = IOAction1 builtinNewString s
 
 setStringIndexInt v i x = IOAction3 builtinSetStringIndexInt v i x
