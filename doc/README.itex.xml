@@ -1509,6 +1509,14 @@ hky85_sym+x2_sym+f[pi=List[Pair["AA",0.01],Pair["AC",0.01],Pair["AG",0.01],Pair[
 	      <entry><para>Triplet rate matrix constructed from a nucleotide rate matrix for each codon position.</para>
 	      </entry>
 	    </row>
+
+	      <row>
+		<entry><userinput><replaceable>triplet_model</replaceable>+mut_sel</userinput></entry>
+		<entry>df(<replaceable>triplet_model</replaceable>)+63</entry>
+		<entry><para>Mutation-selelection model with neutral mutation following <replaceable>triplet_model</replaceable> and scaled selection coefficients 2Ns.</para>
+		</entry>
+	      </row>
+
 	  </tbody>
 	</tgroup>
       </informaltable>
@@ -1710,17 +1718,26 @@ hky85_sym+x2_sym+f[pi=List[Pair["AA",0.01],Pair["AC",0.01],Pair["AG",0.01],Pair[
 		<entry><para>Scales non-synonymous rates by <replaceable>omega</replaceable>.</para>
 		</entry>
 	      </row>
+
+	      <row>
+		<entry><userinput><replaceable>codon_model</replaceable>+mut_sel</userinput></entry>
+		<entry>df(<replaceable>codon_model</replaceable>)+60</entry>
+		<entry><para>Mutation-selelection model with neutral mutation following <replaceable>codon_model</replaceable> and scaled selection coefficients 2Ns.</para>
+		</entry>
+	      </row>
 	    </tbody>
 	  </tgroup>
 	</informaltable>
 
 
 	<para>BAli-Phy interprets branch lengths for codon models as 1/3 of the number of substitutions per codon.  Thus, they should be comparable to branch lengths under DNA/RNA models.</para>
-	<para>The <userinput>x3</userinput>, <userinput>x3_sym</userinput>, <userinput>x3x3</userinput>, and <userinput>dNdS</userinput> models
+	<para>The <userinput>x3</userinput>, <userinput>x3_sym</userinput>, <userinput>x3x3</userinput>, <userinput>dNdS</userinput>, and <userinput>mut_sel</userinput> models
 	can be used to build up codon models piecewise:
 	<itemizedlist>
 	  <listitem><userinput>mg94</userinput> is equivalent to <userinput>f81+x3+dNdS</userinput>.</listitem>
+	  <listitem><userinput>mg94k</userinput> is equivalent to <userinput>hky85+x3+dNdS</userinput>.</listitem>
 	  <listitem><userinput>gy94</userinput> is equivalent to <userinput>hky85_sym+x3_sym+f+dNdS</userinput>.</listitem>
+	  <listitem><userinput>fMutSel</userinput> is equivalent to <userinput>gtr+x3+mut_sel+dNdS</userinput>.</listitem>
 	</itemizedlist>
 	</para>
       </section>
