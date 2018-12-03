@@ -77,7 +77,7 @@ endif
 
 ## Handle auto / system / internal method of finding/building BOOST
 if get_option('boost') == 'auto'
-  boost = dependency('boost', modules : boost_modules, required: false)
+  boost = dependency('boost', modules : boost_modules, version: '>=1.63', required: false)
   if not boost.found()
     message('Building internal BOOST libraries.')
     subdir('external/boost')
