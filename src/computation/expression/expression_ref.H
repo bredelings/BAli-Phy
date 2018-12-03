@@ -380,7 +380,17 @@ inline std::ostream& operator<<(std::ostream& o,const expression_ref& E)
 	return o<<"[NULL]";
 }
 
-typedef Vector<expression_ref> EVector;
+struct EVector: public Vector<expression_ref>
+{
+    using Vector<expression_ref>::Vector;
+
+    explicit EVector(const std::vector<double>& v);
+    explicit EVector(const std::vector<int>& v);
+
+    operator std::vector<double>() const;
+    operator std::vector<int>() const;
+};
+
 typedef std::pair<expression_ref,expression_ref> Epair;
 typedef Pair<expression_ref,expression_ref> EPair;
 

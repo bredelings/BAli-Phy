@@ -18,14 +18,6 @@ using std::cerr;
 using std::endl;
 using std::abs;
 
-vector<double> from_evec(const EVector& v1)
-{
-    vector<double> v2(v1.size());
-    for(int i=0;i<v2.size();i++)
-	v2[i] = v1[i].as_double();
-    return v2;
-}
-
 EVector to_evec(const vector<double>& v1)
 {
     EVector v2(v1.size());
@@ -38,7 +30,7 @@ EVector to_evec(const vector<double>& v1)
 extern "C" closure builtin_function_lExp(OperationArgs& Args)
 {
     auto L = Args.evaluate(0);
-    auto pi = from_evec( Args.evaluate(1).as_<EVector>() );
+    vector<double> pi = Args.evaluate(1).as_<EVector>();
     double t = Args.evaluate(2).as_double();
 
     auto M = new Box<Matrix>;
@@ -59,7 +51,7 @@ extern "C" closure builtin_function_get_eigensystem(OperationArgs& Args)
     auto arg0 = Args.evaluate(0);
     const Matrix& Q = arg0.as_< Box<Matrix> >();
 
-    auto pi = from_evec(Args.evaluate(1).as_<EVector>() );
+    auto pi = vector<double>(Args.evaluate(1).as_<EVector>() );
 
     const unsigned n = Q.size1();
     assert(Q.size2() == Q.size1());
@@ -119,7 +111,7 @@ extern "C" closure builtin_function_get_equilibrium_rate(OperationArgs& Args)
     auto arg2 = Args.evaluate(2);
     const Matrix& Q = arg2.as_< Box<Matrix> >();
 
-    auto pi = from_evec (Args.evaluate(3).as_<EVector>() );
+    auto pi = vector<double> (Args.evaluate(3).as_<EVector>() );
 
     assert(Q.size2() == Q.size1());
     const unsigned N = smap.size();
@@ -991,7 +983,7 @@ extern "C" closure builtin_function_plus_gwF(OperationArgs& Args)
 
     double f = Args.evaluate(1).as_double();
 
-    auto pi = from_evec( Args.evaluate(2).as_<EVector>() );
+    auto pi = vector<double>( Args.evaluate(2).as_<EVector>() );
 
     const int n = a.size();
 
@@ -1026,7 +1018,7 @@ extern "C" closure builtin_function_mut_sel_q(OperationArgs& Args)
     assert(Q0.size1() == Q0.size2());
     int n = Q0.size1();
 
-    auto w   = from_evec( Args.evaluate(1).as_< EVector >() );
+    auto w   = vector<double>( Args.evaluate(1).as_< EVector >() );
     assert(w.size() == n);
 
     auto Q_ = new Box<Matrix>(n,n);
@@ -1063,9 +1055,9 @@ extern "C" closure builtin_function_mut_sel_q(OperationArgs& Args)
 // pi0 w
 extern "C" closure builtin_function_mut_sel_pi(OperationArgs& Args)
 {
-    auto pi0 = from_evec( Args.evaluate(0).as_< EVector >() );
+    auto pi0 = vector<double>( Args.evaluate(0).as_< EVector >() );
 
-    auto w   = from_evec( Args.evaluate(1).as_< EVector >() );
+    auto w   = vector<double>( Args.evaluate(1).as_< EVector >() );
 
     assert(pi0.size() == w.size());
 
