@@ -1155,7 +1155,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       </section>
     <section xml:id="nucleotide-frequencies">
       <info><title>Frequencies</title></info>
-      <para>Frequencies are estimated by default.  Users can fix frequencies by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
+      <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency:</para>
       <programlisting language="java">gtr[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]</programlisting>
       <para>Frequencies can also be specified using functions:</para>
@@ -1290,7 +1290,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       </section>
     <section xml:id="amino-acid-frequencies">
       <info><title>Frequencies</title></info>
-      <para>Frequencies are estimated by default.  Users can fix frequencies by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
+      <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency:</para>
       <programlisting language="java">wag+f[pi=List[Pair["A",0.047],Pair["R",0.19],...]]</programlisting>
       <para>Frequencies can also be specified using functions:</para>
@@ -1366,17 +1366,29 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	  
 	  <tbody>
 	    <row>
-	      <entry><userinput><replaceable>nuc_model</replaceable>+x2_sym+f</userinput></entry>
-	      <entry>df(nuc_model)+15</entry>
-	      <entry><para>This model has separate frequencies for each dinucleotide.</para>  <para>Both dinucleotide letters cannot change simultaneously, so double-changes must proceed through a possibly mismatched intermediate.</para>
+	      <entry><userinput><replaceable>nuc_model</replaceable>+x2</userinput></entry>
+	      <entry>df(nuc_model)</entry>
+	      <entry>
+		<para>The the same as <replaceable>nuc_model</replaceable>, but on dinucleotides instead of nucleotides.</para>
+		<para>Simultaneous changes of both letters are <emphasis>not</emphasis> allowed.</para>
+		<para>Dinucleotide frequencies are the product of independent nucleotide frequencies.</para>
 	      </entry>
 	    </row>
 
 	    <row>
-	      <entry><userinput><replaceable>nuc_model</replaceable>+x2</userinput></entry>
-	      <entry>df(nuc_model)</entry>
-	      <entry><para>Dinucleotide frequencies are the product of independent nucleotide frequencies.</para>
-	      <para>This model should give the same likelihood as <replaceable>nuc_model</replaceable>.</para>
+	      <entry><userinput><replaceable>nuc_model</replaceable>+x2+mut_sel</userinput></entry>
+	      <entry>df(nuc_model)+15</entry>
+	      <entry>
+		<para>Mutation-selection model: neutral mutation follows <replaceable>nuc_model</replaceable> and scaled selection coefficients 2Ns on dinucleotides.</para>
+		<para>Simultaneous changes of both letters are <emphasis>not</emphasis> allowed.</para>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry><userinput><replaceable>nuc_model</replaceable>+x2_sym+f</userinput></entry>
+	      <entry>df(nuc_model)+15</entry>
+	      <entry><para>This model has separate frequencies for each dinucleotide.</para>
+	      <para>Simultaneous changes of both letters are <emphasis>not</emphasis> allowed.</para>
 	      </entry>
 	    </row>
 
@@ -1385,19 +1397,20 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      <entry>19</entry>
 	      <entry>
 		<para>This model has separate frequencies for each dinucleotide, and distinguishes between transitions and transversion between match states (including GU/UG).</para>
-		<para>Simultaneous changes of both letters <emphasis>are</emphasis> are allowed, but only between match states.</para>
+		<para>Simultaneous changes of both letters <emphasis>are</emphasis> allowed, but only between match states.</para>
 	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.ncbi.nlm.nih.gov/pubmed/11139520">
 		(Savill, N. et al 2001)
 	      </link>
 	      </entry>
 	    </row>
 
-	    <row>
+	    <!-- row> This is too advanced
 	      <entry><userinput>x2x2[q1,q2]</userinput></entry>
 	      <entry>df(q1)+df(q2)</entry>
 	      <entry><para>Doublet rate matrix constructed from a nucleotide rate matrix for each doublet position.</para>
 	      </entry>
-	    </row>
+	    </row -->
+
 	    <row>
 	      <entry><userinput>gtr</userinput></entry>
 	      <entry>134</entry>
@@ -1415,11 +1428,12 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       </section>
     <section xml:id="doublet-frequencies">
       <info><title>Frequencies</title></info>
-      <para>Frequencies are estimated by default.  Users can fix frequencies by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
+      <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
       <programlisting language="java">hky85[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]+x2
 
 hky85_sym+x2_sym+f[pi=List[Pair["AA",0.01],Pair["AC",0.01],Pair["AG",0.01],Pair["AU",0.22],Pair["CA",0.01],Pair["CC",0.01],Pair["CG",0.22],Pair["CU",0.01],Pair["GA",0.01],Pair["GC",0.22],Pair["GG",0.01],Pair["GU",0.01],Pair["UA",0.22],Pair["UC",0.01],Pair["UG",0.01],Pair["UU",0.01]]]</programlisting>
+
       <para>Frequencies can also be specified using functions:</para>
       <!-- para>
 	<programlisting language="java">hky85_sym+x2_sym+f[pi=f1x4]            // nucleotide frequencies are estimated</programlisting>
@@ -1490,30 +1504,30 @@ hky85_sym+x2_sym+f[pi=List[Pair["AA",0.01],Pair["AC",0.01],Pair["AG",0.01],Pair[
 	  <tbody>
 	    <row>
 	      <entry><userinput><replaceable>nuc_model</replaceable>+x3_sym+f</userinput></entry>
-	      <entry>df(nuc_model)+63</entry>
+	      <entry>df(<replaceable>nuc_model</replaceable>)+63</entry>
 	      <entry><para>GY94-style rate matrix constructed from nucleotide exchangability matrix.</para>
 	      </entry>
 	    </row>
 
 	    <row>
 	      <entry><userinput><replaceable>nuc_model</replaceable>+x3</userinput></entry>
-	      <entry>df(nuc_model)</entry>
+	      <entry>df(<replaceable>nuc_model</replaceable>)</entry>
 	      <entry><para>MG94-style rate matrix constructed from nucleotide rate matrix.</para>
 	             <para>This model should give the same likelihood as <replaceable>nuc_model</replaceable> on triplets, but not on codons.</para>
 	      </entry>
 	    </row>
 
-	    <row>
+	    <!-- row> This is too advanced
 	      <entry><userinput>x3x3[q1,q2,q3]</userinput></entry>
 	      <entry>df(q1)+df(q2)+df(q3)</entry>
 	      <entry><para>Triplet rate matrix constructed from a nucleotide rate matrix for each codon position.</para>
 	      </entry>
-	    </row>
+	    </row -->
 
 	      <row>
-		<entry><userinput><replaceable>triplet_model</replaceable>+mut_sel</userinput></entry>
-		<entry>df(<replaceable>triplet_model</replaceable>)+63</entry>
-		<entry><para>Mutation-selelection model with neutral mutation following <replaceable>triplet_model</replaceable> and scaled selection coefficients 2Ns.</para>
+		<entry><userinput><replaceable>nuc_model</replaceable>+x3+mut_sel</userinput></entry>
+		<entry>df(<replaceable>nuc_model</replaceable>)+63</entry>
+		<entry><para>Mutation-selelection model with neutral mutation following <replaceable>nuc_model</replaceable> and scaled selection coefficients 2Ns.</para>
 		</entry>
 	      </row>
 
@@ -1523,7 +1537,7 @@ hky85_sym+x2_sym+f[pi=List[Pair["AA",0.01],Pair["AC",0.01],Pair["AG",0.01],Pair[
       </section>
     <section xml:id="triplet-frequencies">
       <info><title>Frequencies</title></info>
-      <para>Frequencies are estimated by default.  Users can fix frequencies by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
+      <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
       <programlisting language="java">hky85[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]+x3</programlisting>
       <para>Frequencies can also be specified using functions:</para>
@@ -1744,7 +1758,7 @@ hky85_sym+x2_sym+f[pi=List[Pair["AA",0.01],Pair["AC",0.01],Pair["AG",0.01],Pair[
 
       <section xml:id="codon-frequencies">
       <info><title>Frequencies</title></info>
-      <para>Frequencies are estimated by default.  Users can fix frequencies by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
+      <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
       <programlisting language="java">gy94[pi=List[Pair["AAA",0.01],Pair["C",0.02],...]]
 mg94[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]
