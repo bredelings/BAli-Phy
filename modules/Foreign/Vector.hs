@@ -10,11 +10,7 @@ builtin get_vector_index 2 "get_vector_index" "Vector"
 builtin vector_size 1 "vector_size" "Vector"
 builtin sizeOfVectorUnsigned 1 "sizeOfVectorUnsigned" "Vector"
 builtin sizeOfVectorInt 1 "sizeOfVectorInt" "Vector"
-builtin sizeOfVectorVectorInt 1 "sizeOfVectorVectorInt" "Vector"
-builtin sizeOfVectorvectorInt 1 "sizeOfVectorvectorInt" "Vector"
 builtin getVectorIntElement 2 "getVectorIntElement" "Vector"
-builtin getVectorVectorIntElement 2 "getVectorVectorIntElement" "Vector"
-builtin getVectorvectorIntElement 2 "getVectorvectorIntElement" "Vector"
 builtin getStringElement 2 "getStringElement" "Vector"
 builtin sizeOfString 1 "sizeOfString" "Vector"
 builtin builtinNewVectorInt 1 "NewVectorInt" "Vector"
@@ -37,10 +33,3 @@ listFromString' v s i = if (i<s) then (getStringElement v i):listFromString' v s
 
 listFromString v = listFromString' v (sizeOfString v) 0
 
-listFromVectorVectorInt' v s i = if (i<s) then (getVectorVectorIntElement v i):listFromVectorVectorInt' v s (i+1) else []
-
-listFromVectorVectorInt v = listFromVectorVectorInt' v (sizeOfVectorVectorInt v) 0
-
-listFromVectorvectorInt' v s i = if (i<s) then (getVectorvectorIntElement v i):listFromVectorvectorInt' v s (i+1) else []
-
-listFromVectorvectorInt v = listFromVectorvectorInt' v (sizeOfVectorvectorInt v) 0
