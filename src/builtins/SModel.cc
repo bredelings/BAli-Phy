@@ -18,15 +18,6 @@ using std::cerr;
 using std::endl;
 using std::abs;
 
-EVector to_evec(const vector<double>& v1)
-{
-    EVector v2(v1.size());
-    for(int i=0;i<v2.size();i++)
-	v2[i] = v1[i];
-    return v2;
-}
-
-
 extern "C" closure builtin_function_lExp(OperationArgs& Args)
 {
     auto L = Args.evaluate(0);
@@ -1062,13 +1053,13 @@ extern "C" closure builtin_function_mut_sel_pi(OperationArgs& Args)
     assert(pi0.size() == w.size());
 
     // compute frequencies
-    Vector<double> pi = pi0;
+    vector<double> pi = pi0;
 
     for(int i=0; i<pi.size(); i++)
 	pi[i] *= w[i];
 
     normalize(pi);
-    return to_evec(pi);
+    return EVector(pi);
 }
 
 /*
