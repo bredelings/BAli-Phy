@@ -76,17 +76,6 @@ pair_from_c p = (c_fst p, c_snd p)
 
 putStrLn line = IOAction1 builtin_putStrLn (listToString line)
 
-new_vector s = IOAction1 builtin_new_vector s
-
-set_vector_index v i x = IOAction3 builtin_set_vector_index v i x
-
-copy_list_to_vector [] v i = return ()
-copy_list_to_vector (h:t) v i = do set_vector_index v i h
-                                   copy_list_to_vector t v (i+1)
-
-slow_list_to_vector l = runST $ do v <- new_vector (length l)
-                                   copy_list_to_vector l v 0
-                                   return v
 
 list_to_vector = builtin_vector_from_list
 
