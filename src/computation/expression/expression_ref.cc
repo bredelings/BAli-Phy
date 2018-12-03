@@ -309,7 +309,7 @@ EVector::operator vector<int>() const
 {
     vector<int> v2(size());
     for(int i=0;i<v2.size();i++)
-	v2[i] = (*this)[i].as_double();
+	v2[i] = (*this)[i].as_int();
     return v2;
 }
 
