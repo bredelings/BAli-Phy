@@ -91,16 +91,6 @@ listToString l = runST $ do v <- newString (length l)
                             copyListToString l v 0
                             return v
 
-newVectorMatrix s = IOAction1 builtinNewVectorMatrix s
-setVectorIndexMatrix v i x = IOAction3 builtinSetVectorIndexMatrix v i x
-copyListToVectorMatrix [] v i = return ()
-copyListToVectorMatrix (h:t) v i = do setVectorIndexMatrix v i h
-                                      copyListToVectorMatrix t v (i+1)
-
-listToVectorMatrix l = runST $ do v <- newVectorMatrix (length l)
-                                  copyListToVectorMatrix l v 0
-                                  return v
-
 unsafePerformIO (IOAction1 x y ) = x y
 unsafePerformIO (IOAction2 x y z) = x y z
 unsafePerformIO (IOAction3 x y z w) = x y z w
