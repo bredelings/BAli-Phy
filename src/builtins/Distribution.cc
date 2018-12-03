@@ -121,7 +121,7 @@ extern "C" closure builtin_function_dirichlet_density(OperationArgs& Args)
     auto n = Args.evaluate(0);
     auto x = Args.evaluate(1);
   
-    return { ::dirichlet_pdf(x.as_<Vector<double>>(), n.as_<Vector<double>>()) };
+    return { ::dirichlet_pdf(x.as_<EVector>(), n.as_<EVector>()) };
 }
 
 extern "C" closure builtin_function_laplace_density(OperationArgs& Args)

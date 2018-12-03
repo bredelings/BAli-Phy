@@ -185,8 +185,8 @@ extern "C" closure builtin_function_ewens_sampling_probability(OperationArgs& Ar
 
 extern "C" closure builtin_function_ewens_sampling_mixture_probability(OperationArgs& Args)
 {
-    const vector<double>& thetas = Args.evaluate(0).as_<Vector<double>>();
-    const vector<double>& ps = Args.evaluate(1).as_<Vector<double>>();
+    vector<double> thetas = Args.evaluate(0).as_<EVector>();
+    vector<double> ps = Args.evaluate(1).as_<EVector>();
     const vector<Vector<int>>& afs = Args.evaluate(2).as_<Vector<Vector<int>>>();
 
 #ifndef NDEBUG

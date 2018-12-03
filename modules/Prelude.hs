@@ -102,16 +102,6 @@ listToString l = runST $ do v <- newString (length l)
                             copyListToString l v 0
                             return v
 
-newVectorDouble s = IOAction1 builtinNewVectorDouble s
-setVectorIndexDouble v i x = IOAction3 builtinSetVectorIndexDouble v i x
-copyListToVectorDouble [] v i = return ()
-copyListToVectorDouble (h:t) v i = do setVectorIndexDouble v i h
-                                      copyListToVectorDouble t v (i+1)
-
-listToVectorDouble l = runST $ do v <- newVectorDouble (length l)
-                                  copyListToVectorDouble l v 0
-                                  return v
-
 newVectorMatrix s = IOAction1 builtinNewVectorMatrix s
 setVectorIndexMatrix v i x = IOAction3 builtinSetVectorIndexMatrix v i x
 copyListToVectorMatrix [] v i = return ()

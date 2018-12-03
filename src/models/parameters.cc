@@ -242,7 +242,7 @@ int data_partition::n_states() const
 vector<double> data_partition::distribution() const
 {
     int s = *P->smodel_index_for_partition(partition_index);
-    return P->evaluate(P->PC->SModels[s].distribution).as_<Vector<double>>();
+    return P->evaluate(P->PC->SModels[s].distribution).as_<EVector>();
 }
 
 Matrix data_partition::WeightedFrequencyMatrix() const
@@ -675,7 +675,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 //-----------------------------------------------------------------------------//
 smodel_methods::smodel_methods(const expression_ref& E, context& C)
 {
-    expression_ref V = var("Prelude.listToVectorDouble");
+    expression_ref V = var("Prelude.list_to_vector");
 
     main = C.add_compute_expression( E );
     expression_ref S = C.get_expression(main);

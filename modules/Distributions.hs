@@ -157,7 +157,7 @@ sample_uniform_int l u = Random (IOAction2 builtin_sample_uniform_int l u)
 uniform_int l u = ProbDensity (uniform_int_density l u) () (sample_uniform_int l u) (integer_between l u)
 
 builtin builtin_dirichlet_density 2 "dirichlet_density" "Distribution"
-dirichlet_density ns ps = builtin_dirichlet_density (listToVectorDouble ns) (listToVectorDouble ps)
+dirichlet_density ns ps = builtin_dirichlet_density (list_to_vector ns) (list_to_vector ps)
 sample_dirichlet ns = SamplingRate (1.0/sqrt(intToDouble $ length ns)) $ do vs <- mapM (\a-> sample $ gamma a 1.0) ns
                                                                             return $ map (/(sum vs)) vs
 dirichlet ns = ProbDensity (dirichlet_density ns) (no_quantile "dirichlet") (sample_dirichlet ns) (Simplex (length ns) 1.0)

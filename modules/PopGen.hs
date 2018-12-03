@@ -13,7 +13,7 @@ builtin builtin_selfing_coalescence_probability 3 "selfing_coalescence_probabili
 
 read_phase_file filename = map list_from_vector $ list_from_vector $ builtin_read_phase_file $ listToString filename
 
-ewens_sampling_mixture_probability thetas ps x = builtin_ewens_sampling_mixture_probability (listToVectorDouble thetas) (listToVectorDouble ps) x
+ewens_sampling_mixture_probability thetas ps x = builtin_ewens_sampling_mixture_probability (list_to_vector thetas) (list_to_vector ps) x
 
 selfing_coalescence_probability n_loci s i = builtin_selfing_coalescence_probability n_loci s (list_to_vector i)
 
