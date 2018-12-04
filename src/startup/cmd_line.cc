@@ -210,11 +210,11 @@ variables_map parse_cmd_line(int argc,char* argv[])
     map<string,string> next_level = {{"basic","advanced"},{"advanced","expert"},{"expert","developer"}};
     map<string,string> prev_level = {{"advanced","basic"},{"expert","advanced"},{"developer","expert"}};
 
-    options_description all("Developer options - use at your own risk!");
+    options_description all("Developer options - " + bold_red("use at your own risk!"));
     all.add(general_options(3)).add(mcmc_options(3)).add(parameters_options(3)).add(model_options(3)).add(haskell_optimization()).add(developer_options());
     help_levels.insert({"developer",all});
     
-    options_description expert("Expert options - some may not work!");
+    options_description expert("Expert options - " + red("some may not work!"));
     expert.add(general_options(2)).add(mcmc_options(2)).add(parameters_options(2)).add(model_options(2));
     help_levels.insert({"expert", expert});
     
