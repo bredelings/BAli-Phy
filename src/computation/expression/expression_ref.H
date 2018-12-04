@@ -382,8 +382,11 @@ inline std::ostream& operator<<(std::ostream& o,const expression_ref& E)
 
 struct EVector: public Vector<expression_ref>
 {
-    using Vector<expression_ref>::Vector;
+    // Workaround for GCC6
+    EVector() = default;
 
+    using Vector<expression_ref>::Vector;
+    
     explicit EVector(const std::vector<double>& v);
     explicit EVector(const std::vector<int>& v);
 
