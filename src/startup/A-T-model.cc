@@ -149,11 +149,43 @@ json optional_to_json(const boost::optional<T>& o)
 }
 
 
+pair<string,string> split_on_last(char sep, const string& s)
+{
+    string s1 = s;
+    string s2;
+    auto pos = s1.rfind(sep);
+    if (pos != string::npos)
+    {
+	s2 = s.substr(pos+1);
+	s1 = s1.substr(0,pos);
+    }
+    return {s1,s2};
+}
+
+vector<pair<string,string>> split_on_last(char sep, const vector<string>& v1)
+{
+    vector<pair<string,string>> v2;
+    for(auto& s: v1)
+	v2.push_back(split_on_last(sep, s));
+    return v2;
+}
+
 // FIXME - maybe we should try to make a single giant model so that we get S1/parameter
 //           exactly when this occurs for the logged parameter names, themselves.
 //
 //           This would also help it we have some variables that are outside of models, because
 //             they are shared between them.
+
+string tag(string s, int i)
+{
+    return s+convertToString(i+1);
+}
+
+string show_model(const model_t& m)
+{
+    string s = indent_and_wrap(0,12,1000,m.show_main(false));
+    return s.substr(0,2) + bold(s.substr(2));
+}
 
 json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 		 const vector<model_t>& IModels, const vector<model_t>& SModels,
@@ -178,33 +210,38 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
     }
 
     //-------- Log some stuff -----------//
-    vector<string> filenames = args["align"].as<vector<string> >();
+    auto filename_ranges = args["align"].as<vector<string> >();
+    auto alignment_files = split_on_last(':',filename_ranges);
 
     for(int i=0;i<P.n_data_partitions();i++)
     {
 	json partition;
 
-	out_screen<<"Partition P"<<i+1<<":\n";
+	out_screen<<"Partition "<<magenta(tag("P",i))<<":\n";
 	// 1. filename 
-	out_cache<<"data"<<i+1<<" = "<<filenames[i]<<endl;
-	out_screen<<"    file = "<<filenames[i]<<endl;
-	partition["filename"] = filenames[i];
+	out_cache<<"data"<<i+1<<" = "<<filename_ranges[i]<<endl;
+	string file = bold(alignment_files[i].first);
+	if (alignment_files[i].second.size())
+	    file += ":"+alignment_files[i].second;
+	out_screen<<"    file = "<<bold(file)<<endl;
+	partition["filename"] = alignment_files[i].first;
+	partition["range"] = alignment_files[i].second;
 
 	// 2. alphabet
 	string a_name = P[i].get_alphabet().name;
-	out_screen<<"    alphabet = "<<a_name<<"\n";
+	out_screen<<"    alphabet = "<<bold(a_name)<<"\n";
 	out_cache<<"alphabet"<<i+1<<" = "<<a_name<<endl;
 	partition["alphabet"] = a_name;
 
 	// 3. substitution model
 	auto s_index = P.smodel_index_for_partition(i);
-	out_screen<<"    subst "<<indent_and_wrap(0,12,1000,SModels[*s_index].show_main(false))<<" (S"<<*s_index+1<<")\n";
+	out_screen<<"    subst "<<show_model(SModels[*s_index])<<" ("<<bold_blue(tag("S",*s_index))<<")\n";
 	out_cache<<"smodel-index"<<i+1<<" = "<<P.smodel_index_for_partition(i)<<endl;
 	partition["smodel"] = optional_to_json( P.smodel_index_for_partition(i) );
 
 	// 4. indel model
 	if (auto i_index = P.imodel_index_for_partition(i))
-	    out_screen<<"    indel "<<indent_and_wrap(0,12,1000,IModels[*i_index].show_main(false))<<" (I"<<*i_index+1<<")\n";
+	    out_screen<<"    indel "<<show_model(IModels[*i_index])<<" ("<<bold_red(tag("I",*i_index))<<")\n";
 	else
 	    out_screen<<"    indel = none\n";
 	out_cache<<"imodel-index"<<i+1<<" = "<<P.imodel_index_for_partition(i)<<endl;
@@ -212,7 +249,7 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 
 	// 5. scale model
 	auto scale_index = P.scale_index_for_partition(i);
-	out_screen<<"    scale "<<indent_and_wrap(0,12,1000,ScaleModels[*scale_index].show_main(false))<<" (Scale"<<*scale_index+1<<")\n";
+	out_screen<<"    scale "<<show_model(ScaleModels[*scale_index])<<" ("<<green(tag("Scale",*scale_index))<<")\n";
 	out_cache<<"scale-index"<<i+1<<" = "<<P.scale_index_for_partition(i)<<endl;
 	partition["scale"] = optional_to_json( P.scale_index_for_partition(i) );
 
@@ -229,7 +266,7 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 	smodels.push_back(SModels[i].pretty_model());
 	string e = SModels[i].show_extracted();
 	if (e.size())
-	    out_screen<<"Substitution model S"<<i+1<<" priors:"<<e<<"\n\n";
+	    out_screen<<"Substitution model "<<bold_blue(tag("S",i))<<" priors:"<<e<<"\n\n";
     }
 
     json imodels = json::array();
@@ -239,7 +276,7 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 	imodels.push_back(IModels[i].pretty_model());
 	string e = IModels[i].show_extracted();
 	if (e.size())
-	    out_screen<<"Insertion/deletion model I"<<i+1<<" priors:"<<e<<"\n\n";
+	    out_screen<<"Insertion/deletion model "<<bold_red(tag("I",i))<<" priors:"<<e<<"\n\n";
     }
 
     json scales = json::array();
@@ -249,7 +286,7 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 	scales.push_back(ScaleModels[i].pretty_model());
 	string e = ScaleModels[i].show_extracted();
 	if (e.size())
-	    out_screen<<"Scale model Scale"<<i+1<<" priors:"<<e<<"\n\n";
+	    out_screen<<"Scale model "<<green(tag("Scale",i))<<" priors:"<<e<<"\n\n";
     }
 
     info["partitions"] = partitions;
@@ -433,27 +470,6 @@ bool can_share_imodel(const alphabet& a1, const alphabet& a2)
     if (dynamic_cast<const AminoAcids*>(&a1))  return bool(dynamic_cast<const AminoAcids*>(&a2));
 
     return a1.name == a2.name;
-}
-
-pair<string,string> split_on_last(char sep, const string& s)
-{
-    string s1 = s;
-    string s2;
-    auto pos = s1.rfind(sep);
-    if (pos != string::npos)
-    {
-	s2 = s.substr(pos+1);
-	s1 = s1.substr(0,pos);
-    }
-    return {s1,s2};
-}
-
-vector<pair<string,string>> split_on_last(char sep, const vector<string>& v1)
-{
-    vector<pair<string,string>> v2;
-    for(auto& s: v1)
-	v2.push_back(split_on_last(sep, s));
-    return v2;
 }
 
 owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,

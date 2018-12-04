@@ -111,10 +111,13 @@ const std::string ansi_bold_off("\033[21m");
 const std::string ansi_under_off("\033[24m");
 const std::string ansi_inverse_off("\033[27m");
 const std::string ansi_black("\033[1;30m");
-const std::string ansi_red("\033[1;31m");
-const std::string ansi_green("\033[1;32m");
+const std::string ansi_red("\033[0;31m");
+const std::string ansi_bold_red("\033[1;31m");
+const std::string ansi_green("\033[0;32m");
+const std::string ansi_bold_green("\033[1;32m");
 const std::string ansi_yellow("\033[1;33m");
-const std::string ansi_blue("\033[1;34m");
+const std::string ansi_blue("\033[0;34m");
+const std::string ansi_bold_blue("\033[1;34m");
 const std::string ansi_magenta("\033[1;35m");
 const std::string ansi_cyan("\033[1;36m");
 
@@ -125,14 +128,39 @@ string red(const string& s)
     return ansi_red + s + ansi_plain;
 }
 
+string bold_red(const string& s)
+{
+    return ansi_bold_red + s + ansi_plain;
+}
+
 string green(const string& s)
 {
     return ansi_green + s + ansi_plain;
 }
 
+string bold_green(const string& s)
+{
+    return ansi_bold_green + s + ansi_plain;
+}
+
 string blue(const string& s)
 {
     return ansi_blue + s + ansi_plain;
+}
+
+string bold_blue(const string& s)
+{
+    return ansi_bold_blue + s + ansi_plain;
+}
+
+string cyan(const string& s)
+{
+    return ansi_cyan + s + ansi_plain;
+}
+
+string magenta(const string& s)
+{
+    return ansi_magenta + s + ansi_plain;
 }
 
 string bold(const string& line)

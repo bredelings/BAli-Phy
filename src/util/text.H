@@ -20,5 +20,11 @@ std::string inverse(const std::string& line);
 std::string underline(const std::string& line);
 
 std::string red(const std::string& s);
+std::string bold_red(const std::string& s);
 std::string blue(const std::string& s);
+std::string bold_blue(const std::string& s);
+std::string green(const std::string& s);
+std::string bold_green(const std::string& s);
+std::string cyan(const std::string& s);
+std::string magenta(const std::string& s);
 #endif
