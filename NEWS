@@ -7,7 +7,7 @@
  - Fixes
    - "--" should not become a single long dash (en-dash) in man pages.
    + Don't crash if --scale is set to a constant (e.g. --scale=1).
-   - Allow reading (a,b):1.0 as ((a,b):1.0);
+   - Allow reading (a,b):1.0; by ignoring the root branch length.
    + Properly translate newick labels with quotes or _.
  - Misc
    + Specify character ranges in a file: sequences.fasta:100-240,300-900
