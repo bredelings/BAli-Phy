@@ -24,9 +24,29 @@ std::string get_alphabet_name(const boost::program_options::variables_map& args)
     return alph_name;
 }
 
-alignment load_alignment(const string& filename,const string& alph_name)
+vector<sequence> load_sequences(const string& filename_range)
 {
+    string filename = filename_range;
+
+    auto colon = filename.rfind(':');
+    if (colon != string::npos)
+	filename = filename.substr(0,colon);
+
     vector<sequence> sequences = sequence_format::load_from_file(filename);
+
+    if (colon != string::npos)
+    {
+	auto range = filename_range.substr(colon+1);
+	if (not range.empty())
+	    sequences = select(sequences, range);
+    }
+
+    return sequences;
+}
+
+alignment load_alignment(const string& filename, const string& alph_name)
+{
+    auto sequences = load_sequences(filename);
 
     alignment A;
 

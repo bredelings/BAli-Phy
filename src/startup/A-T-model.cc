@@ -13,6 +13,7 @@
 #include "computation/expression/lambda.H"
 #include <boost/optional/optional_io.hpp>
 #include <boost/filesystem/operations.hpp>
+#include "sequence/sequence-format.H"
 
 namespace fs = boost::filesystem;
 
@@ -808,12 +809,16 @@ void write_initial_alignments(variables_map& args, int proc_id, const string& di
 
     string base = "C" + convertToString(proc_id+1);
 
-    int i=0;
+    int i=1;
     for(auto& filename: filenames)
     {
-	auto source = fs::path(filename);
-	auto target = fs::path(base+".P"+convertToString(i+1)+".initial.fasta");
-	fs::copy_file(source,dir/target);
+	auto sequences = load_sequences(filename);
+
+	auto target = fs::path(base+".P"+convertToString(i)+".initial.fasta");
+	target = dir/target;
+	checked_ofstream out(target.string(), false);
+	sequence_format::write_fasta(out, sequences);
+
 	i++;
     }
 }
