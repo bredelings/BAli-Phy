@@ -29,6 +29,7 @@ using std::endl;
 using std::ostream;
 using std::string;
 using std::vector;
+using std::pair;
 using boost::optional;
 
 /// Replace negative or zero branch lengths with saner values.
@@ -273,7 +274,7 @@ void check_alignment_names(const alignment& A)
     }
 }
 
-void check_alignment_values(const alignment& A,const string& filename)
+void check_alignment_values(const alignment& A,const pair<string,string>& filename_range)
 {
     const alphabet& a = A.get_alphabet();
 
@@ -283,7 +284,12 @@ void check_alignment_values(const alignment& A,const string& filename)
 
 	for(int j=0;j<A.length();j++) 
 	    if (A.unknown(j,i))
-		throw myexception()<<"Alignment file '"<<filename<<"' has a '"<<a.unknown_letter<<"' in sequence '"<<name<<"'.\n (Please replace with gap character '"<<a.gap_letter<<"' or wildcard '"<<a.wildcard<<"'.)";
+	    {
+		string file = filename_range.first;
+		if (filename_range.second.size())
+		    file = file + ":" + filename_range.second;
+		throw myexception()<<"Alignment file '"<<file<<"' has a '"<<a.unknown_letter<<"' in sequence '"<<name<<"'.\n (Please replace with gap character '"<<a.gap_letter<<"' or wildcard '"<<a.wildcard<<"'.)";
+	    }
     }
 }
 
@@ -429,13 +435,35 @@ bool can_share_imodel(const alphabet& a1, const alphabet& a2)
     return a1.name == a2.name;
 }
 
+pair<string,string> split_on_last(char sep, const string& s)
+{
+    string s1 = s;
+    string s2;
+    auto pos = s1.rfind(sep);
+    if (pos != string::npos)
+    {
+	s2 = s.substr(pos+1);
+	s1 = s1.substr(0,pos);
+    }
+    return {s1,s2};
+}
+
+vector<pair<string,string>> split_on_last(char sep, const vector<string>& v1)
+{
+    vector<pair<string,string>> v2;
+    for(auto& s: v1)
+	v2.push_back(split_on_last(sep, s));
+    return v2;
+}
+
 owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,
 				      ostream& out_cache, ostream& out_screen, ostream& out_both, json& info,
 				      int proc_id)
 {
     //------ Determine number of partitions ------//
-    vector<string> filenames = args["align"].as<vector<string> >();
-    const int n_partitions = filenames.size();
+    auto alignment_files = split_on_last(':', args["align"].as<vector<string> >() );
+
+    const int n_partitions = alignment_files.size();
 
     //------------- Get smodel names -------------------
     auto smodel_names_mapping = get_mapping(args, "smodel", n_partitions);
@@ -449,7 +477,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 	    full_smodels[i] = get_model(R, "MultiMixtureModel[a]",smodel_names_mapping.unique(i));
 
     //------------- Get alphabet names -------------------
-    shared_items<string> alphabet_names_mapping = get_mapping(args, "alphabet", filenames.size());
+    shared_items<string> alphabet_names_mapping = get_mapping(args, "alphabet", alignment_files.size());
     vector<string> alphabet_names;
     for(int i=0;i<alphabet_names_mapping.n_partitions();i++)
 	alphabet_names.push_back(alphabet_names_mapping[i]);
@@ -539,7 +567,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 		for(int j: smodel_names_mapping.partitions_for_item[i])
 		    alphabet_names[j] = "Doublets";
 	}
-//      Use the auto-detected alphabet right now -- it leaves to better error messages.
+//      Use the auto-detected alphabet right now -- it leads to better error messages.
 //	else if (alphabet_type.get_value<string>() == "AA")
 //	{
 //	    for(int j: smodel_names_mapping.partitions_for_item[i])
@@ -548,26 +576,20 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     }
 
     //----------- Load alignments  ---------//
-    vector<alignment> A(filenames.size());
+    vector<alignment> A(alignment_files.size());
 
-    // 3. -- load alignments for SPECIFIED alphabets
-    for(int i=0;i<filenames.size();i++)
-	if (alphabet_names[i].size())
-	    // FIXME - if we are loading codons, FIRST determine the UNDERLYING alphabet, then
-	    // But actually we DO this inside the routine, right?
-	    A[i] = load_alignment(filenames[i], alphabet_names[i]);
-
-    // 4. -- load alignments for UNSPECIFIED alphabets && set alphabet names.
-    for(int i=0;i<filenames.size();i++)
+    // 3. -- load alignments for SPECIFIED and UNSPECIFIED alphabets
+    for(int i=0;i<alignment_files.size();i++)
     {
-	if (not A[i].has_alphabet())
-	    A[i] = load_alignment(filenames[i]);
-	alphabet_names[i] = A[i].get_alphabet().name;
+	A[i] = load_alignment_with_range(alignment_files[i].first, alignment_files[i].second, alphabet_names[i]);
+
+	if (alphabet_names[i].empty())
+	    alphabet_names[i] = A[i].get_alphabet().name;
     }
 
     for(int i=0;i<A.size();i++) {
 	check_alignment_names(A[i]);
-	check_alignment_values(A[i],filenames[i]);
+	check_alignment_values(A[i],alignment_files[i]);
     }
 
     //----------- Load tree and link to alignments ---------//
@@ -803,16 +825,16 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 
 void write_initial_alignments(variables_map& args, int proc_id, const string& dir_name)
 {
-    vector<string> filenames = args["align"].as<vector<string> >();
+    auto alignment_files = split_on_last(':', args["align"].as<vector<string> >() );
 
     fs::path dir(dir_name);
 
     string base = "C" + convertToString(proc_id+1);
 
     int i=1;
-    for(auto& filename: filenames)
+    for(auto& alignment_file: alignment_files)
     {
-	auto sequences = load_sequences(filename);
+	auto sequences = load_sequences_with_range(alignment_file.first, alignment_file.second);
 
 	auto target = fs::path(base+".P"+convertToString(i)+".initial.fasta");
 	target = dir/target;

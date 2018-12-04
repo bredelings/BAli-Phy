@@ -24,29 +24,45 @@ std::string get_alphabet_name(const boost::program_options::variables_map& args)
     return alph_name;
 }
 
-vector<sequence> load_sequences(const string& filename_range)
+vector<sequence> load_sequences_with_range(const string& filename, const string& range)
 {
-    string filename = filename_range;
-
-    auto colon = filename.rfind(':');
-    if (colon != string::npos)
-	filename = filename.substr(0,colon);
-
     vector<sequence> sequences = sequence_format::load_from_file(filename);
 
-    if (colon != string::npos)
-    {
-	auto range = filename_range.substr(colon+1);
-	if (not range.empty())
-	    sequences = select(sequences, range);
-    }
+    if (not range.empty())
+	sequences = select(sequences, range);
 
     return sequences;
 }
 
+alignment load_alignment_with_range(const string& filename, const string& range, const string& alph_name)
+{
+    auto sequences = load_sequences_with_range(filename,range);
+
+    alignment A;
+
+    try
+    {
+	A.load(alph_name, sequences);
+    }
+    catch (myexception& e)
+    {
+	e.prepend("In file '"+filename+"' columns "+range+": ");
+	throw;
+    }
+  
+    int n_empty = remove_empty_columns(A);
+    if (n_empty)
+	if (log_verbose >= 1) cerr<<"Warning: removed "<<n_empty<<" empty columns from alignment '"<<filename<<"'!\n"<<endl;
+  
+    if (A.n_sequences() == 0)
+	throw myexception()<<"Alignment file "<<filename<<" didn't contain any sequences!";
+
+    return A;
+}
+
 alignment load_alignment(const string& filename, const string& alph_name)
 {
-    auto sequences = load_sequences(filename);
+    auto sequences = sequence_format::load_from_file(filename);
 
     alignment A;
 
