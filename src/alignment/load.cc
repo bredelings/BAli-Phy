@@ -46,7 +46,10 @@ alignment load_alignment_with_range(const string& filename, const string& range,
     }
     catch (myexception& e)
     {
-	e.prepend("In file '"+filename+"' columns "+range+": ");
+	if (range.empty())
+	    e.prepend("In file '"+filename+"': ");
+	else
+	    e.prepend("In file '"+filename+"' columns "+range+": ");
 	throw;
     }
   
