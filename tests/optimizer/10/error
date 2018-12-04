@@ -1,15 +1,15 @@
 size = 1   Test.#0 = Foreign.Vector.listFromString Test.#11
 size = 1   Test.#10 = Test.#4:Test.#3
 size = 1   Test.#11 = "case: failed pattern match"
-size = 1   Test.#1180 = Test.#13:Test.#10
-size = 1   Test.#1186 = 10
-size = 1   Test.#1188 = 2
+size = 1   Test.#1128 = Test.#13:Test.#10
+size = 1   Test.#1134 = 10
+size = 1   Test.#1136 = 2
 size = 1   Test.#13 = 'y'
 size = 1   Test.#2 = '!'
 size = 1   Test.#3 = Test.#2:[]
 size = 1   Test.#4 = 'o'
-size = 1   Test.#5 = Prelude:error Test.#1180
+size = 1   Test.#5 = Prelude:error Test.#1128
 size = 1   Test.#6 = Prelude:error Test.#0
-size = 1   Test.f = \#8 -> case #8 of {#1183:#1184 -> #1183,[] -> Test.#5,_ -> Test.#6}
-size = 3   Test.g = \#1184 -> let {#1185 = 10} in let {#1187 = case #1184 of {#1183:#1188 -> #1183,[] -> Test.#5,_ -> Test.#6}} in Prelude:add #1185 #1187
-size = 1   Test.h = Prelude:add Test.#1186 Test.#1188
+size = 1   Test.f = \#8 -> case #8 of {#1131:#1132 -> #1131,[] -> Test.#5,_ -> Test.#6}
+size = 3   Test.g = \#1132 -> let {#1133 = 10} in let {#1135 = case #1132 of {#1131:#1136 -> #1131,[] -> Test.#5,_ -> Test.#6}} in Prelude:add #1133 #1135
+size = 1   Test.h = Prelude:add Test.#1134 Test.#1136
