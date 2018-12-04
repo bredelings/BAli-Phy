@@ -787,7 +787,7 @@ vector<pair<string, ptree>> extract_terms(ptree& m)
     return extracted;
 }
 
-#include "startup/help.hh"
+#include "util/text.H"
 
 string pretty_model_t::show_extracted() const
 {

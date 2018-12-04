@@ -1,0 +1,156 @@
+#include "text.H"
+#include "util.H"
+#include <boost/optional/optional_io.hpp>
+
+using std::string;
+using std::list;
+using boost::optional;
+
+int terminal_width()
+{
+    int width = 80;
+    return width-2;
+}
+
+string pad(const string& s, int n)
+{
+    if (s.size() < n)
+	return s+string(n-s.size(),' ');
+    return s;
+}
+
+
+list<string> get_lines(const string& line)
+{
+    list<string> lines;
+
+    for(int pos=0; pos<line.size();)
+    {
+	int next = line.find('\n', pos);
+	if (next == string::npos)
+	    next = line.size();
+	lines.push_back(line.substr(pos,next-pos));
+	pos = next + 1;
+    }
+    return lines;
+}
+
+
+// Given a line containing no line breaks, return the first wrapped line and the rest of the line.
+optional<list<string>> wrap(string line, int width)
+{
+    if (line.size() < width) return list<string>{line};
+
+    int loc = line.find_last_of(" \t", width-1);
+
+    if (loc != string::npos)
+    {
+	if (loc+1 < line.size())
+	    return list<string>{line.substr(0,loc),line.substr(loc+1)};
+	else
+	    return list<string>{line.substr(0,loc)};
+    }
+
+    return boost::none;
+}
+
+void wrap_and_indent_one_line(int indent, int width, list<string>& lines, list<string>& wrapped_lines)
+{
+    lines.front() = string(indent,' ') + lines.front();
+    if (auto wrap_first = wrap(lines.front(), width))
+    {
+	// Move wrapped first line into wrapped_lines
+	wrapped_lines.push_back(wrap_first->front());
+	wrap_first->pop_front();
+
+	// Move remaining lines into wrapped_lines
+	lines.pop_front();
+	lines.insert(lines.begin(), wrap_first->begin(), wrap_first->end());
+    }
+    else
+    {
+	// Move the unwrapped lines into wrapped_lines
+	wrapped_lines.push_back(lines.front());
+	lines.pop_front();
+    }
+}
+
+string indent_and_wrap(int indent_first_line, int indent_other_lines, int width, const string& text)
+{
+    if (text.empty()) return text;
+
+    list<string> wrapped_lines;
+
+    auto lines = get_lines(text);
+    assert(not lines.empty());
+
+    // 1. Indent and wrap the first line
+    wrap_and_indent_one_line(indent_first_line, width, lines, wrapped_lines);
+
+    while(not lines.empty())
+	wrap_and_indent_one_line(indent_other_lines, width, lines, wrapped_lines);
+
+    return join(wrapped_lines, '\n');
+}
+
+string indent_and_wrap(int indent, int width, const string& text)
+{
+    return indent_and_wrap(indent, indent, width, text);
+}
+
+string indent(int indent, const string& text)
+{
+    return indent_and_wrap(indent, 100000, text);
+}
+
+const std::string ansi_plain("\033[0m");
+const std::string ansi_bold("\033[1m");
+const std::string ansi_under("\033[4m");
+const std::string ansi_inverse("\033[7m");
+const std::string ansi_bold_off("\033[21m");
+const std::string ansi_under_off("\033[24m");
+const std::string ansi_inverse_off("\033[27m");
+const std::string ansi_black("\033[1;30m");
+const std::string ansi_red("\033[1;31m");
+const std::string ansi_green("\033[1;32m");
+const std::string ansi_yellow("\033[1;33m");
+const std::string ansi_blue("\033[1;34m");
+const std::string ansi_magenta("\033[1;35m");
+const std::string ansi_cyan("\033[1;36m");
+
+const std::string ansi_bg_grey("\033[1;48;2;180;180;180m");
+
+string red(const string& s)
+{
+    return ansi_red + s + ansi_plain;
+}
+
+string green(const string& s)
+{
+    return ansi_green + s + ansi_plain;
+}
+
+string blue(const string& s)
+{
+    return ansi_blue + s + ansi_plain;
+}
+
+string bold(const string& line)
+{
+    return ansi_bold + line + ansi_plain;
+}
+
+string highlight_bg(const string& line)
+{
+    return ansi_bg_grey + line + ansi_plain;
+}
+
+string inverse(const string& line)
+{
+    return ansi_inverse + line + ansi_inverse_off;
+}
+
+string underline(const string& line)
+{
+    return ansi_under + line + ansi_under_off;
+}
