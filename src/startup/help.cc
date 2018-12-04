@@ -43,17 +43,18 @@ string get_topic_from_string(const string& s)
     return s2;
 }
 
-void help_on_help(std::ostream& o, const map<string,string>& help)
+void help_topics(std::ostream& o, const map<string,string>& help)
 {
-    o<<"Help topics via --help=arg are available for:\n";
-    o<<"  =simple              Command-line flags and a short description.\n";
-    o<<"  =advanced            Info on advanced command-line flags.\n";
-    o<<"  =expert              Info on expert flags - these might be broken!.\n\n";
-    o<<"  =functions           A list of functions and result type.\n";
-    o<<"  =<function name>     Function type, description, and argument names.\n\n";
-    o<<"  =help                This list of topics.\n\n";
+    o<<"Help topics via `bali-phy help topic` are available for:\n";
+    o<<"  "<<bold("topics")<<"              This list of topics.\n\n";
+    o<<"  "<<bold("basic")<<"               Command-line options and a short description.\n";
+    o<<"  "<<bold("advanced")<<"            Advanced command-line options.\n";
+    o<<"  "<<bold("expert")<<"              Expert command-line options  - these might be broken!\n";
+    o<<"  "<<bold("developer")<<"           Developer command-line options - use at your own risk!\n\n";
+    o<<"  "<<bold("functions")<<"           A list of functions and result type.\n";
+    o<<"  "<<underline("function name")<<"       Function type, description, and argument names.\n\n";
     for(auto& x: help)
-	o<<"  ="<<pad(x.first,18)<<"  "<<get_topic_from_string(x.second)<<"\n";
+	o<<"  "<<bold(pad(x.first,18))<<"  "<<get_topic_from_string(x.second)<<"\n";
     o<<"\n";
 }
 
@@ -384,9 +385,9 @@ void show_help(const string& topic, const vector<fs::path>& package_paths)
 {
     auto help = load_help_files(package_paths);
 	
-    if (topic == "help")
+    if (topic == "topics")
     {
-	help_on_help(std::cout, help);
+	help_topics(std::cout, help);
 	return;
     }
     if (help.count(topic))
@@ -419,7 +420,7 @@ void show_help(const string& topic, const vector<fs::path>& package_paths)
     else
     {
 	cout<<"Help topic '"<<topic<<"' not found.\n\n";
-	help_on_help(cout,help);
+	help_topics(cout,help);
 	return;
     }
 }
