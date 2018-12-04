@@ -48,4 +48,8 @@ bool operator==(const sequence&,const sequence&);
 
 std::string guess_alphabet(const std::vector<sequence>& sequences);
 std::string guess_alphabet(const std::string& name_, const std::vector<sequence>& sequences);
+
+std::vector<sequence> select(const std::vector<sequence>& s,const std::vector<int>& columns);
+std::vector<sequence> select(const std::vector<sequence>& s,const std::string& range);
+
 #endif

@@ -169,3 +169,29 @@ string guess_alphabet(const string& name_, const vector<sequence>& sequences)
 	return name_;
 }
 
+vector<sequence> select(const vector<sequence>& s,const vector<int>& columns)
+{
+    //------- Start with empty sequences --------//
+    vector<sequence> S = s;
+    for(int i=0;i<s.size();i++)
+	S[i].string::operator=("");
+
+    //------- Append columns to sequences -------//
+    for(int j=0;j<s.size();j++)
+	for(int i=0;i<columns.size() and columns[i] < s[j].size();i++)
+	    S[j] += s[j][columns[i]];
+
+    return S;
+}
+
+vector<sequence> select(const vector<sequence>& s,const string& range)
+{
+    auto L = s[0].size();
+    for(int i=0;i<s.size();i++)
+	L = std::max(L, s[i].size());
+
+    vector<int> columns = parse_multi_range(range, L);
+
+    return select(s,columns);
+}
+

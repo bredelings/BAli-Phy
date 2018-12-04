@@ -24,6 +24,7 @@
 #include "alignment/alignment.H"
 #include "alignment/alignment-util.H"
 #include "util.H"
+#include "sequence/sequence.H"
 #include "sequence/sequence-format.H"
 #include <boost/program_options.hpp>
 #include "io.H"
@@ -124,32 +125,6 @@ vector<sequence> concatenate(const vector<sequence>& S1, const vector<sequence>&
     return S;
 }
 
-
-vector<sequence> select(const vector<sequence>& s,const vector<int>& columns)
-{
-    //------- Start with empty sequences --------//
-    vector<sequence> S = s;
-    for(int i=0;i<s.size();i++)
-	S[i].string::operator=("");
-
-    //------- Append columns to sequences -------//
-    for(int j=0;j<s.size();j++)
-	for(int i=0;i<columns.size() and columns[i] < s[j].size();i++)
-	    S[j] += s[j][columns[i]];
-
-    return S;
-}
-
-vector<sequence> select(const vector<sequence>& s,const string& range)
-{
-    auto L = s[0].size();
-    for(int i=0;i<s.size();i++)
-	L = std::max(L, s[i].size());
-
-    vector<int> columns = parse_multi_range(range, L);
-
-    return select(s,columns);
-}
 
 void check_all_same_length(const vector<sequence>& s, const string& reason)
 {
