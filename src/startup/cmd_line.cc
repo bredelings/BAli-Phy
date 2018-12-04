@@ -4,6 +4,7 @@
 #include "startup/cmd_line.H"
 #include "startup/paths.H"
 #include "util.H"
+#include "util/text.H"
 #include "../io.H"
 #include "setup.H"
 #include "version.H"
@@ -204,17 +205,26 @@ variables_map parse_cmd_line(int argc,char* argv[])
 { 
     using namespace po;
 
-    options_description all("Developer options - some may not work!");
+    map<string,options_description> help_levels;
+
+    map<string,string> next_level = {{"basic","advanced"},{"advanced","expert"},{"expert","developer"}};
+    map<string,string> prev_level = {{"advanced","basic"},{"expert","advanced"},{"developer","expert"}};
+
+    options_description all("Developer options - use at your own risk!");
     all.add(general_options(3)).add(mcmc_options(3)).add(parameters_options(3)).add(model_options(3)).add(haskell_optimization()).add(developer_options());
+    help_levels.insert({"developer",all});
     
     options_description expert("Expert options - some may not work!");
     expert.add(general_options(2)).add(mcmc_options(2)).add(parameters_options(2)).add(model_options(2));
+    help_levels.insert({"expert", expert});
     
     options_description advanced("Advanced options");
     advanced.add(general_options(1)).add(mcmc_options(1)).add(parameters_options(1)).add(model_options(1));
+    help_levels.insert({"advanced", advanced});
     
-    options_description simple("Simple options");
-    simple.add(general_options(0)).add(mcmc_options(0)).add(parameters_options(0)).add(model_options(0));
+    options_description basic("Basic options");
+    basic.add(general_options(0)).add(mcmc_options(0)).add(parameters_options(0)).add(model_options(0));
+    help_levels.insert({"basic", basic});
 
     // positional options
     positional_options_description p;
@@ -247,36 +257,34 @@ variables_map parse_cmd_line(int argc,char* argv[])
     if (args.count("help") or command == "help")
     {
 	if (topic.empty())
-	    topic = args.count("help")?args["help"].as<string>():"simple";
+	    topic = args.count("help")?args["help"].as<string>():"basic";
 
 	auto package_paths = get_package_paths(argv[0], args);
-	if (topic == "simple")
+	if (help_levels.count(topic))
 	{
 	    cout<<short_description()<<"\n";
 	    cout<<usage()<<"\n";
-	    cout<<simple<<"\n";
-	    cout<<"Try --help=help for a list of topics to ask for help on.\n\n";
-	}
-	else if (topic == "advanced")
-	{
-	    cout<<short_description()<<"\n";
-	    cout<<usage()<<"\n";
-	    cout<<advanced<<"\n";
-	    cout<<"Try --help=help for a list of topics to ask for help on.\n\n";
-	}
-	else if (topic == "expert")
-	{
-	    cout<<short_description()<<"\n";
-	    cout<<usage()<<"\n";
-	    cout<<expert<<"\n";
-	    cout<<"Try --help=help for a list of topics to ask for help on.\n\n";
-	}
-	else if (topic == "developer")
-	{
-	    cout<<short_description()<<"\n";
-	    cout<<usage()<<"\n";
-	    cout<<all<<"\n";
-	    cout<<"Try --help=help for a list of topics to ask for help on.\n\n";
+	    cout<<help_levels[topic]<<"\n";
+	    if (next_level.count(topic))
+	    {
+		cout<<"Not all options are shown!\n";
+		cout<<"  * See `bali-phy help "<<bold(next_level.at(topic))<<"` to see more options.\n";
+	    }
+	    if (prev_level.count(topic))
+		cout<<"  * See `bali-phy help "<<bold(prev_level.at(topic))<<"` to see fewer options.\n";
+	    cout<<"\n";
+	    cout<<"See `bali-phy help "<<underline("option")<<"` for help on "<<underline("option")<<".  For example,\n";
+	    cout<<"  * `bali-phy help "<<bold("alphabet")<<"` shows help on the "<<bold("--alphabet")<<" command.\n";
+	    cout<<"  * `bali-phy help "<<bold("imodel")<<"` shows help on the "<<bold("--imodel")<<" command.\n\n";
+
+	    cout<<"See `bali-phy help "<<underline("function")<<"` for help on "<<underline("function")<<".  For example,\n";
+	    cout<<"  * `bali-phy help "<<bold("normal")<<"` shows help on the normal distribution.\n";
+	    cout<<"  * `bali-phy help "<<bold("tn93")<<"` shows help on the TN93 model.\n";
+	    cout<<"  * `bali-phy help "<<bold("log")<<"` shows help on the log function.\n";
+	    cout<<"  * `bali-phy help "<<bold("functions")<<"` lists all the functions.\n\n";
+
+	    cout<<"See `bali-phy help "<<bold("help")<<"` shows a list of all help topics.  For example,\n";
+	    cout<<"  * `bali-phy help "<<bold("parameters")<<"` describes how to place priors on parameters.\n\n";
 	}
 	else
 	    show_help(topic, package_paths);
