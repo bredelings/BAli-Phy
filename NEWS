@@ -1,6 +1,7 @@
 * 3.4 (UNRELEASED)
  - Evolutionary models
    - Add Doublet alphabet for RNA stems.
+   - Add generic +mut_sel model modifier.
    + Add models x2, x2_sym, x2x2 for RNA stems.
    + Add RNA.m16a model for RNA stems.
  - Fixes
@@ -9,6 +10,7 @@
    - Allow reading (a,b):1.0 as ((a,b):1.0);
    + Properly translate newick labels with quotes or _.
  - Misc
+   + Specify character ranges in a file: sequences.fasta:100-240,300-900
    + Rename subsample to bali-subsample (to avoid conflicts with other software).
    + Install bali-phy-pkg.
    + Make BES package work again.
@@ -22,9 +24,9 @@
      + Allow recovery from initial -infinity.
    - Improved mixing for [0,1] random variables.
  - Graphical model framework
-   - Interpreted models now log separate likelihood from prior in logged output.
+   - Interpreted models now separate the likelihood from the prior in logged output.
    - Interpreted models (e.g. LinearRegression.hs) are now a lot faster.
-   - Simplify constructing loggers
+   - Simplify constructing loggers.
  - Haskell
    - Implement -X NoImplicitPrelude
    - Refactored functions out of Prelude into Data.List, etc.
