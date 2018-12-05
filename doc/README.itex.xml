@@ -947,17 +947,17 @@ The majority consensus tree is usually not fully resolved, so we recommend using
     </para>
 
   <para>You may run <command>bp-analyze</command> inside the output directory, like this:
-<screen><prompt>%</prompt> bp-analyze --burnin=<replaceable>iterations</replaceable></screen>
+<screen><prompt>%</prompt> bp-analyze --skip=<replaceable>iterations</replaceable></screen>
       You may also run it with one or more output directories as
       arguments, like this:
-<screen><prompt>%</prompt> bp-analyze --burnin=<replaceable>iterations</replaceable> <replaceable>directory</replaceable>-1/ <replaceable>directory</replaceable>-2/</screen>
+<screen><prompt>%</prompt> bp-analyze --skip=<replaceable>iterations</replaceable> <replaceable>directory</replaceable>-1/ <replaceable>directory</replaceable>-2/</screen>
       In this case, output from multiple runs will be used to assess convergence and mixing, as well as to increase the precision of the estimates.
     </para>
 
 <para> All the commands that are executed by <command>bp-analyze</command> will be logged to
       <filename>Results/bp-analyze.log</filename>. You can also see these
       commands as they are executed by supplying the <command>--verbose</command> option:
-<screen><prompt>%</prompt> bp-analyze --burnin=<replaceable>iterations</replaceable> --verbose</screen>
+<screen><prompt>%</prompt> bp-analyze --skip=<replaceable>iterations</replaceable> --verbose</screen>
     </para>
 
     <section><info><title>Meaning of generated files</title></info>
