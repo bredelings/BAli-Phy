@@ -48,22 +48,26 @@ What version of bali-phy are you running?  When was it compiled?  Which compiler
 % bali-phy -v
 % bali-phy --version
 Look at the list of command line options:
-% bali-phy -h | less
+% bali-phy -h     | less
 % bali-phy --help | less
-As you can see, many options have a long form, and a short form which is a single letter.
+% bali-phy help   | less
+By default, not all the options are shown.  To see more options, try:
+% bali-phy help advanced | less
+% bali-phy help expert   | less
 </para>
 
 <para>
-You can also show help for advanced options:
-% bali-phy --help=advanced | less
-% bali-phy --help=expert | less
-There is a shorter syntax for help topics:
-% bali-phy help advanced | less
-You can get help on models, distributions, functions, and command-line options:
+You can get extended help on each command line option:
+% bali-phy help iterations | less        // --iterations=&lt;num&gt; <emphasis>command line option</emphasis>
+% bali-phy help alphabet   | less        // --alphabet=&lt;a&gt; <emphasis>command line option</emphasis>
+You can also get help on models, distributions, functions, and command-line options:
 % bali-phy help tn93       | less        // Tamura-Nei (1993) <emphasis>model</emphasis>
 % bali-phy help normal     | less        // Normal <emphasis>distribution</emphasis>
 % bali-phy help quantile   | less        // quantile <emphasis>function</emphasis>
-% bali-phy help iterations | less        // --iterations=&lt;num&gt; <emphasis>command line option</emphasis>
+There are additional help topics you might want to explore:
+% bali-phy help topics     | less        // to see additional help topics
+% bali-phy help parameters | less        // setting parameters
+% bali-phy help Codons     | less        // Codons alphabets
 </para>
 
 </section>
