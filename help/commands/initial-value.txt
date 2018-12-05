@@ -1,4 +1,4 @@
-# The --initial-value command:
+# The `--initial-value` command:
 
 --initial-value <parameter>=<value>         Initialize parameter value.
 

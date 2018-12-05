@@ -1,4 +1,4 @@
-# The --disable command:
+# The `--disable` command:
 
 --disable <moves>                           Disable MCMC moves.
 

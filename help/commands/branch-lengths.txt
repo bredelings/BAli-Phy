@@ -1,4 +1,4 @@
-# The --branch-lengths command:
+# The `--branch-lengths` command:
 
 -B               <prior>                    Prior on branch-lengths.
 --branch-lengths <prior>
