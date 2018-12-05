@@ -49,8 +49,7 @@ void help_topics(std::ostream& o, const map<string,string>& help)
     o<<"  "<<bold("topics")<<"              This list of topics.\n\n";
     o<<"  "<<bold("basic")<<"               Command-line options and a short description.\n";
     o<<"  "<<bold("advanced")<<"            Advanced command-line options.\n";
-    o<<"  "<<bold("expert")<<"              Expert command-line options  - these might be broken!\n";
-    o<<"  "<<bold("developer")<<"           Developer command-line options - use at your own risk!\n\n";
+    o<<"  "<<bold("expert")<<"              Expert command-line options  - these might be broken!\n\n";
     o<<"  "<<bold("functions")<<"           A list of functions and result type.\n";
     o<<"  "<<underline("function name")<<"       Function type, description, and argument names.\n\n";
     for(auto& x: help)

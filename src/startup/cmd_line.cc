@@ -207,22 +207,22 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     map<string,options_description> help_levels;
 
-    map<string,string> next_level = {{"basic","advanced"},{"advanced","expert"},{"expert","developer"}};
-    map<string,string> prev_level = {{"advanced","basic"},{"expert","advanced"},{"developer","expert"}};
+    map<string,string> next_level = {{"basic","advanced"},{"advanced","expert"}};
+    map<string,string> prev_level = {{"advanced","basic"},{"expert","advanced"}};
 
-    options_description all("Developer options - " + bold_red("use at your own risk!"));
+    options_description all(bold("Developer")+" options - " + bold_red("use at your own risk!"));
     all.add(general_options(3)).add(mcmc_options(3)).add(parameters_options(3)).add(model_options(3)).add(haskell_optimization()).add(developer_options());
     help_levels.insert({"developer",all});
     
-    options_description expert("Expert options - " + red("some may not work!"));
+    options_description expert(bold("Expert")+" options");
     expert.add(general_options(2)).add(mcmc_options(2)).add(parameters_options(2)).add(model_options(2));
     help_levels.insert({"expert", expert});
     
-    options_description advanced("Advanced options");
+    options_description advanced(bold("Advanced")+" options");
     advanced.add(general_options(1)).add(mcmc_options(1)).add(parameters_options(1)).add(model_options(1));
     help_levels.insert({"advanced", advanced});
     
-    options_description basic("Basic options");
+    options_description basic(bold("Basic")+" options");
     basic.add(general_options(0)).add(mcmc_options(0)).add(parameters_options(0)).add(model_options(0));
     help_levels.insert({"basic", basic});
 
@@ -265,13 +265,20 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	    cout<<short_description()<<"\n";
 	    cout<<usage()<<"\n";
 	    cout<<help_levels[topic]<<"\n";
+	    cout<<"Showing "<<bold(topic)<<" command line options.";
 	    if (next_level.count(topic))
-	    {
-		cout<<"Not all options are shown!\n";
+		cout<<"  Not all options are shown!\n";
+	    else
+		cout<<"\n";
+	    if (next_level.count(topic))
 		cout<<"  * See `bali-phy help "<<bold(next_level.at(topic))<<"` to see more options.\n";
-	    }
 	    if (prev_level.count(topic))
-		cout<<"  * See `bali-phy help "<<bold(prev_level.at(topic))<<"` to see fewer options.\n";
+	    {
+		if (prev_level.at(topic) == "basic")
+		    cout<<"  * See `bali-phy help` to see fewer options.\n";
+		else
+		    cout<<"  * See `bali-phy help "<<bold(prev_level.at(topic))<<"` to see fewer options.\n";
+	    }
 	    cout<<"\n";
 	    cout<<"See `bali-phy help "<<underline("option")<<"` for help on "<<underline("option")<<".  For example,\n";
 	    cout<<"  * `bali-phy help "<<bold("alphabet")<<"` shows help on the "<<bold("--alphabet")<<" command.\n";
