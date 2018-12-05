@@ -15,8 +15,17 @@
   </info>
 
   <section xml:id="intro"><info><title>Introduction</title></info>
+  <para>This tutorial offers a quick overview of bali-phy with an emphasis on concrete analysis of real datasets.  Other documentation includes:
+  <itemizedlist>
+    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.xhtml">Users Guide</link> is much more complete.</listitem>
+    <listitem>Run <userinput><replaceable>tool</replaceable> --help</userinput> to see command line options for <replaceable>tool</replaceable>.</listitem>
+    <listitem>Run <userinput>man <replaceable>tool</replaceable></userinput> to see the manual page for <replaceable>tool</replaceable>.</listitem>
+    <listitem>Manual pages for bali-phy and tools are also available <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/docs/#manpages">online</link>.</listitem>
+  </itemizedlist>
+  </para>
+
 <para>
-Before you start this tutorial, please <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/download.php">download</link> and install bali-phy, following the installation instructions in the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.html">manual</link>.</para>
+Before you start this tutorial, please <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/download.php">download</link> and install bali-phy, following the installation instructions in the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.html">User Guide</link>.</para>
   </section>
   <section xml:id="work_directory"><info><title>Setting up the <filename>~/alignment_files</filename> directory</title></info>
 
@@ -55,6 +64,13 @@ By default, not all the options are shown.  To see more options, try:
 % bali-phy help advanced | less
 % bali-phy help expert   | less
 </para>
+<para>All bali-phy tools also take <userinput>--help</userinput>.
+% alignment-thin --help
+% alignment-cat --help
+</para>
+</section>
+
+<section xml:id="help"><info><title>Help</title></info>
 
 <para>
 You can get extended help on each command line option:
@@ -70,6 +86,7 @@ There are additional help topics you might want to explore:
 % bali-phy help Codons     | less        // Codons alphabets
 </para>
 
+  
 </section>
 
 <section ><info><title>Analysis 1: 5S rRNA -- free alignment versus fixed alignment</title></info>
@@ -507,11 +524,17 @@ Later you might want to put them back together again:
 <section><info><title>Shrinking the data set</title></info>
 <para>
 You might want to reduce the number of taxa while attempting to preserve phylogenetic diversity:
-% alignment-thin --down-to=30 ITS-region.fasta > ITS-region-thinned.fasta
+% alignment-thin --cutoff=5 ITS-region.fasta -v --preserve=Csaxicola420 > ITS-region-thinned.fasta
+This removes sequences with 5 or fewer differences to the closest other sequence.
+<itemizedlist>
+  <listitem>The <userinput>-v</userinput> option shows which sequences are removed and the distance to their closest neighbor.</listitem>
+  <listitem>The <userinput>--preserve</userinput> options keeps specific sequences in the data set.</listitem>
+</itemizedlist>
+You can also specify that data sets should be shrunk to a specific number of sequences:
+% alignment-thin --down-to=30 ITS-region.fasta -v > ITS-region-thinned.fasta
 </para>
-<para>
-You can specify that certain sequences should not be removed:
-% alignment-thin --down-to=30 --keep=Csaxicola420 ITS-region.fasta > ITS-region-thinned.fasta
+<para>To see all options, run:
+% alignment-thin --help
 </para>
 </section>
 
