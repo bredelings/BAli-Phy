@@ -387,6 +387,8 @@ struct EVector: public Vector<expression_ref>
 
     using Vector<expression_ref>::Vector;
     
+    EVector* clone() const {return new EVector(*this);};
+
     explicit EVector(const std::vector<double>& v);
     explicit EVector(const std::vector<int>& v);
 
