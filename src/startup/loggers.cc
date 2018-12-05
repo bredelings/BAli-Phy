@@ -367,8 +367,8 @@ vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const
 		ConcatFunction F;
 		auto iterations = [](const Model&, long t) {return convertToString(t);};
 		F<<"iterations = "<<iterations<<"\n\n";
-		F<<Ancestral_Sequences_Function(i);
-//		F<<AlignmentFunction(i);
+		auto infer_ambiguous_observed = P->load_value("infer-ambiguous-observed",false);
+		F<<Ancestral_Sequences_Function(i, infer_ambiguous_observed);
 		
 		loggers.push_back( FunctionLogger(filename, Subsample_Function(F, alignment_subsample) ) );
 	    }

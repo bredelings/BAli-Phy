@@ -12,6 +12,9 @@ Pass a key-value pair into BAli-Phy.  The <value> is a json value.
    # Write the alignment every 10th logged iteration (default: 10)
    bali-phy dna.fasta --set alignment-extra-subsample=10
 
+   # Infer ambiguous characters for leaf sequences (default: false)
+   bali-phy dna.fasta -I none --set infer-ambiguous-observed=true
+
    # Write fixed alignments (useful for ancestral sequence reconstruction) (default: false)
    bali-phy dna.fasta -I none --set write-fixed-alignments=true
 

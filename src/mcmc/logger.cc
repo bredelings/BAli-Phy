@@ -411,14 +411,28 @@ namespace MCMC {
 	{
 	    vector<int> columns = A.get_columns_for_characters(i);
 	    assert(columns.size() == states[i].size());
+
+	    auto& seq = A.seq(i);
+	    // The length of the observed sequence should be equal to the length of the sampled sequence.
+	    assert(seq.size() == 0 or seq.size() == states[i].size());
+
+	    // Technically we could have 0-length observed sequences -- but they would have no letters.
+	    bool observed = seq.size() > 0;
+	    // We normally don't want to overwrite an ambiguous observation with an inferred letter...
+	    bool overwrite = infer_ambiguous_observed or not observed;
+
 	    for(int j=0;j<columns.size();j++)
 	    {
-		int c = columns[j];
-		assert(A.character(c,i));
 		int state = states[i][j].second;
 		int letter = smap[state];
+
+		int c = columns[j];
+		assert(A.character(c,i));
+
 		if (a.is_letter(A(c,i)))
 		    assert( A(c,i) == letter );
+		else if (not overwrite)
+		    assert( a.matches(letter, A(c,i)) );
 		else
 		    A.set_value(c,i, letter);
 	    }
