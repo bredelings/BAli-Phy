@@ -243,7 +243,7 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 	if (auto i_index = P.imodel_index_for_partition(i))
 	    out_screen<<"    indel "<<show_model(IModels[*i_index])<<" ("<<bold_red(tag("I",*i_index))<<")\n";
 	else
-	    out_screen<<"    indel = none\n";
+	    out_screen<<"    indel = "<<bold("none")<<"\n";
 	out_cache<<"imodel-index"<<i+1<<" = "<<P.imodel_index_for_partition(i)<<endl;
 	partition["imodel"] = optional_to_json( P.imodel_index_for_partition(i) );
 
