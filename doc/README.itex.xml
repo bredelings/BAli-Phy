@@ -908,10 +908,12 @@ When multiple runs are analyzed, this command gives PSRF and joint ESS values. T
 
       <section><info><title>Computing an alignment using Posterior Decoding</title></info>
 	
-<para>
-<screen><prompt>%</prompt> cut-range --skip=<replaceable>burn-in</replaceable> &lt; C1.P<replaceable>p</replaceable>.fastas | alignment-max &gt; P<replaceable>p</replaceable>-max.fasta</screen>
-You can use the program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://pbil.univ-lyon1.fr/software/seaview.html">SeaView</link> to view the alignment graphically.
-</para>
+      <screen><prompt>%</prompt> cut-range --skip=<replaceable>burn-in</replaceable> &lt; C1.P<replaceable>p</replaceable>.fastas | alignment-chop-internal --tree <replaceable>treefile</replaceable> | alignment-max &gt; P<replaceable>p</replaceable>-max.fasta</screen>
+
+      <para>We need the <userinput>alignment-chop-internal</userinput> command because the alignments in <filename>C1.P<replaceable>p</replaceable>.fastas</filename> have ancestral sequences that we need to remove before sending them to alignment-max.  The treefile is any tree with the same sequences as the alignment, and is used to specify which sequences are non-ancestral and should be kept.  If you don't have such a tree file on hand, you can use <userinput>-N <replaceable>n</replaceable></userinput> to specify how many (non-ancestral) sequences are in the analysis.</para>
+
+      <para>You can use the program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://pbil.univ-lyon1.fr/software/seaview.html">SeaView</link> to view the alignment graphically.</para>
+
       </section>      
 
       <!-- section><info><title>Find the alignment from the maximum a posterior (MAP) point (<filename>C1.MAP</filename>)</title></info>
