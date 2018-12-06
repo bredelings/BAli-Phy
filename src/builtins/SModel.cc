@@ -1000,6 +1000,13 @@ extern "C" closure builtin_function_plus_gwF(OperationArgs& Args)
     return R;
 }
 
+double bound(double low, double high, double x)
+{
+    if (x < low) return low;
+    if (x > high) return high;
+    return x;
+}
+
 // Q0 w
 // Here S[I,J] = F[J] - F[I] = 2Nf[j] - 2NF[i] = 2N*s[i,j]
 extern "C" closure builtin_function_mut_sel_q(OperationArgs& Args)
@@ -1010,6 +1017,9 @@ extern "C" closure builtin_function_mut_sel_q(OperationArgs& Args)
     int n = Q0.size1();
 
     auto F   = vector<double>( Args.evaluate(1).as_< EVector >() );
+    for(auto& f: F)
+	f = bound(-20,20,f);
+
     assert(F.size() == n);
 
     auto Q_ = new Box<Matrix>(n,n);
@@ -1049,6 +1059,8 @@ extern "C" closure builtin_function_mut_sel_pi(OperationArgs& Args)
     auto pi0 = vector<double>( Args.evaluate(0).as_< EVector >() );
 
     auto F   = vector<double>( Args.evaluate(1).as_< EVector >() );
+    for(auto& f: F)
+	f = bound(-20,20,f);
 
     assert(pi0.size() == F.size());
 
