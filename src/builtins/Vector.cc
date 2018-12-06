@@ -185,7 +185,7 @@ extern "C" closure builtin_function_new_vector(OperationArgs& Args)
 
 extern "C" closure builtin_function_vector_size(OperationArgs& Args)
 {
-    const Vector<expression_ref>& v = Args.evaluate(0).as_<Vector<expression_ref>>();
+    const EVector& v = Args.evaluate(0).as_<EVector>();
 
     return {(int)v.size()};
 }

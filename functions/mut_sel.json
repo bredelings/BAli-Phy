@@ -1,7 +1,7 @@
 {
     "name": "mut_sel",
     "result_type": "RevCTMC[a]",
-    "call": "SModel.mut_sel'[w,submodel]",
+    "call": "SModel.mut_sel'[ss,submodel]",
     "args": [
         {
             "arg_name": "submodel",
@@ -9,10 +9,10 @@
 	    "description": "Model of neutral mutation"
         },
         {
-            "arg_name": "w",
+            "arg_name": "ss",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "zip[letters[@a],~iid[length[letters[@a]],log_normal[0,1]]]",
-	    "description": "Fitness for each letter"
+            "default_value": "zip[letters[@a],~iid[length[letters[@a]],normal[0,1]]]",
+	    "description": "Scaled selection coefficients (2Ns)"
         },
 	{
 	    "arg_name": "a",

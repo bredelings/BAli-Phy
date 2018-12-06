@@ -1,7 +1,7 @@
 {
     "name": "fMutSel0",
     "result_type": "RevCTMC[Codons[a]]",
-    "call": "SModel.fMutSel0'[a,w,omega,submodel]",
+    "call": "SModel.fMutSel0'[a,ss,omega,submodel]",
     "args": [
         {
             "arg_name": "omega",
@@ -10,10 +10,10 @@
 	    "description": "Excess dN/dS"
         },
         {
-            "arg_name": "w",
+            "arg_name": "ss",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "zip[letters[getAminoAcids[@a]],~iid[length[letters[getAminoAcids[@a]]],log_normal[0,0.5]]]",
-	    "description": "Fitness of amino acids"
+            "default_value": "zip[letters[getAminoAcids[@a]],~iid[length[letters[getAminoAcids[@a]]],normal[0,0.5]]]",
+	    "description": "Scaled selection coefficients (2Ns) of amino acids"
         },
         {
             "arg_name": "submodel",

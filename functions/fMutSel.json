@@ -1,7 +1,7 @@
 {
     "name": "fMutSel",
     "result_type": "RevCTMC[Codons[a]]",
-    "call": "SModel.fMutSel'[a,w,omega,submodel]",
+    "call": "SModel.fMutSel'[a,ss,omega,submodel]",
     "args": [
         {
             "arg_name": "omega",
@@ -10,10 +10,10 @@
 	    "description": "Excess dN/dS"
         },
         {
-            "arg_name": "w",
+            "arg_name": "ss",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "zip[letters[@a],~iid[length[letters[@a]],log_normal[0,0.5]]]",
-	    "description": "Fitness of codons"
+            "default_value": "zip[letters[@a],~iid[length[letters[@a]],normal[0,0.5]]]",
+	    "description": "Scaled selection coefficients (2Ns) of codons"
         },
         {
             "arg_name": "submodel",

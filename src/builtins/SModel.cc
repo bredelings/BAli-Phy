@@ -1009,8 +1009,8 @@ extern "C" closure builtin_function_mut_sel_q(OperationArgs& Args)
     assert(Q0.size1() == Q0.size2());
     int n = Q0.size1();
 
-    auto w   = vector<double>( Args.evaluate(1).as_< EVector >() );
-    assert(w.size() == n);
+    auto F   = vector<double>( Args.evaluate(1).as_< EVector >() );
+    assert(F.size() == n);
 
     auto Q_ = new Box<Matrix>(n,n);
     Matrix& Q = *Q_;
@@ -1027,11 +1027,11 @@ extern "C" closure builtin_function_mut_sel_q(OperationArgs& Args)
 	    // x = wj/wi    log(x)/(1-1/x)
 	    // y = wi/wj   -log(y)/(1-y)
 	    // 1+z = y     -log(1+z)/-z = log1p(z)/z   z = y-1 = (wi/wj)-1
-	    double z = (w[i] - w[j])/w[j];
-	    if (std::abs(z) < 0.0001)
-		rate *= ( 1.0 - z/2.0 + (z*z)/3.0 - (z*z*z)/4.0 );
+	    double S = F[j] - F[i];
+	    if (std::abs(S) < 0.0001)
+		rate *= ( 1.0 + S/2 + (S*S)/12 - (S*S*S*S)/720 );
 	    else
-		rate *= log1p(z)/z;
+		rate *= -S/expm1(-S);
 
 	    Q(i,j) = rate;
 
@@ -1048,15 +1048,17 @@ extern "C" closure builtin_function_mut_sel_pi(OperationArgs& Args)
 {
     auto pi0 = vector<double>( Args.evaluate(0).as_< EVector >() );
 
-    auto w   = vector<double>( Args.evaluate(1).as_< EVector >() );
+    auto F   = vector<double>( Args.evaluate(1).as_< EVector >() );
 
-    assert(pi0.size() == w.size());
+    assert(pi0.size() == F.size());
 
     // compute frequencies
     vector<double> pi = pi0;
 
+    double Fmax = max(F);
+
     for(int i=0; i<pi.size(); i++)
-	pi[i] *= w[i];
+	pi[i] *= exp(F[i]-Fmax);
 
     normalize(pi);
     return EVector(pi);
