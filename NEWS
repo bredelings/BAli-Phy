@@ -9,6 +9,7 @@
    + Don't crash if --scale is set to a constant (e.g. --scale=1).
    - Allow reading (a,b):1.0; by ignoring the root branch length.
    + Properly translate newick labels with quotes or _.
+   + Don't replace W with A in observed sequences unless --set infer-ambiguous-observed=true
  - Misc
    + Specify character ranges in a file: sequences.fasta:100-240,300-900
    + Rename subsample to bali-subsample (to avoid conflicts with other software).
