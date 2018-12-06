@@ -199,15 +199,15 @@ return -1;
 	Pr[i] = rho[i] * p[i].prior_no_alignment();
 
 	// sum of substitution and alignment probability over all paths
-	for(int j=0;j<p[i].n_data_partitions();j++) 
+	for(int j=0;j<p[i].n_data_partitions();j++)
+	{
+	    Pr[i] *= pow(OS[i][j], p[i][j].get_beta());
 	    if (p[i][j].variable_alignment())
 	    {
 		Pr[i] *= Matrices[i][j]->Pr_sum_all_paths();
-		Pr[i] *= pow(OS[i][j], p[i][j].get_beta());
 		Pr[i] *= OP[i][j];
 	    }
-	    else
-		Pr[i] *= p[i][j].heated_likelihood();
+	}
     }
 
     // Fail if Pr[0] is 0
