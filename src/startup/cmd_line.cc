@@ -144,7 +144,7 @@ po::options_description parameters_options(int level)
 
     if (level >= 1)
 	parameters.add_options()
-	    ("unalign,U","Unalign sequences if variable-A");
+	    ("unalign,U","Unalign alignments that aren't fixed.");
 
     return parameters;
 }

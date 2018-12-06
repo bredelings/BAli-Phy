@@ -1,0 +1,7 @@
+# The `--unalign` command:
+
+--unalign                                   Set configuration value.
+
+Completely unalign sequences in partitions where the alignment is not
+fixed.  This ensures that the initial alignment is completely forgotten
+and any estimated alignment is estimated from scratch.
