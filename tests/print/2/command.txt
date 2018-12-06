@@ -1,0 +1,1 @@
+--print hky85_sym[2] -A DNA

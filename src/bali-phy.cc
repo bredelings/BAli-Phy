@@ -490,12 +490,13 @@ int main(int argc,char* argv[])
 		    else if (alpha == "Triplets")
 			a = Triplets(DNA());
 		    else if (alpha == "Codons")
-			a = Codons(DNA(),AminoAcids(),Standard_Genetic_Code());
+			a = Codons(DNA(), AminoAcids(), Standard_Genetic_Code());
 		}
 	    }
-	    print_exp = {var("Distributions.run_random"), a, print_exp};
+	    print_exp = {var("Distributions.run_random"), a, false, print_exp};
 	    print_exp = {var("Prelude.unsafePerformIO"),print_exp};
 	    print_exp = {var("Parameters.evaluate"),-1,print_exp};
+	    print_exp = {var("Data.Tuple.fst"),print_exp };
 	    print_exp = {var("Prelude.show"),print_exp };
 	    print_exp = {var("Prelude.listToString"),print_exp };
 	    int print_exp_index = M->add_compute_expression( print_exp );
