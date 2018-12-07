@@ -81,6 +81,16 @@ public:
     ptree& get_child(const std::string& key);
     const ptree& get_child(const std::string& key) const;
 
+    boost::optional<ptree&> get_path_optional(const std::vector<std::string>& path, int i=0);
+    boost::optional<const ptree&> get_path_optional(const std::vector<std::string>& path, int i=0) const;
+
+    ptree& get_path(const std::vector<std::string>& path, int i=0);
+    const ptree& get_path(const std::vector<std::string>& path, int i=0) const;
+
+    int make_index(const std::string& key);
+    ptree& make_child(const std::string& key);
+    ptree& make_path(const std::vector<std::string>& path, int i=0);
+    
     template <typename T>
     T get(const std::string& key, const T& def) const
     {

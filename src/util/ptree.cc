@@ -92,6 +92,76 @@ const ptree& ptree::get_child(const std::string& key) const
 	throw myexception()<<"No child with key '"<<key<<"'";
 }
 
+optional<ptree&> ptree::get_path_optional(const vector<string>& path, int i)
+{
+    assert(i <= path.size());
+
+    // If the path is empty this is a reference to the current object
+    if (i == path.size()) return *this;
+
+    if (auto child = get_child_optional(path[i]))
+	return child->get_path_optional(path, i+1);
+    else
+	return boost::none;
+}
+
+
+optional<const ptree&> ptree::get_path_optional(const vector<string>& path, int i) const
+{
+    assert(i <= path.size());
+
+    // If the path is empty this is a reference to the current object
+    if (i == path.size()) return *this;
+
+    if (auto child = get_child_optional(path[i]))
+	return child->get_path_optional(path, i+1);
+    else
+	return boost::none;
+}
+
+ptree& ptree::get_path(const vector<string>& path, int i)
+{
+    auto c = get_path_optional(path, i);
+    if (c)
+	return *c;
+    else
+	throw myexception()<<"No path '"<<join(path,'/')<<"' in tree";
+}
+
+const ptree& ptree::get_path(const vector<string>& path, int i) const
+{
+    auto c = get_path_optional(path, i);
+    if (c)
+	return *c;
+    else
+	throw myexception()<<"No path '"<<join(path,'/')<<"' in tree";
+}
+
+int ptree::make_index(const string& key)
+{
+    if (auto index = get_child_index(key))
+	return *index;
+    int index = size();
+    push_back({key,{}});
+    return index;
+}
+
+ptree& ptree::make_child(const string& key)
+{
+    int index = make_index(key);
+    return (*this)[index].second;
+}
+
+ptree& ptree::make_path(const vector<string>& path, int i)
+{
+    assert(i <= path.size());
+
+    if (i == path.size()) return *this;
+
+    auto& child = make_child(path[i]);
+    return child.make_path(path, i+1);
+}
+
 ptree::operator bool () const
 {
     if (not is_a<bool>())
