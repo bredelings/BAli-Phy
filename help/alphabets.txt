@@ -1,0 +1,12 @@
+# Alphabets for character data
+
+Characters for discrete data have values in an "alphabet". For example,
+in the `DNA` alphabet, characters take on values `A`, `T`, `C`, or `G`.
+
+BAli-Phy understand the following alphabets:
+
+   `DNA`, `RNA`, `Amino-Acids`, `Numeric`, `Doublets`,
+   `Triplets`, or `Codons`
+
+The Doublets, Triplets, and Codons alphabets can take arguments to
+specify the nucleotide alphabet or the genetic code.

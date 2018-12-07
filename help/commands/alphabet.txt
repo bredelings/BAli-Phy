@@ -5,11 +5,17 @@
 
 The alphabet can be:
 
-   `DNA`, `RNA`, `Amino-Acids`, `Numeric`, `Triplets`, or `Codons`
+   `DNA`, `RNA`, `Amino-Acids`, `Numeric`, `Doublets`,
+   `Triplets`, or `Codons`
 
 If no partitions are specified, then the alphabet is applied to
 every partition.  The `--alphabet` command can be given multiple times,
 but the same partition cannot be referenced twice.
+
+The Doublets alphabet takes an optional extra argument specifying
+the nucleotide alphabet:
+
+     Doublets[DNA]            Doublets[RNA]
 
 The Triplets and Codons alphabets take optional
 extra arguments specifying the nucleotide alphabet and genetic code:
@@ -24,4 +30,4 @@ extra arguments specifying the nucleotide alphabet and genetic code:
 
 # See also:
 
-   Triplets, Codons
+   alphabets, Triplets, Codons, Doublets
