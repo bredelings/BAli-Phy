@@ -72,7 +72,7 @@ ptree load_help_files(const std::vector<fs::path>& package_paths)
 		    string content = boost::trim_copy(read_file(abs_path.string(), "help file"));
 
 		    auto rel_path = fs::relative(dir_entry.path(), path);
-		    help.make_path(get_path(rel_path)) = ptree(content);
+		    help.make_path(get_path(rel_path)).put_value(content);
 		}
 	    }
     }
