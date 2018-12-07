@@ -290,7 +290,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	    cout<<"  * `bali-phy help "<<bold("log")<<"` shows help on the log function.\n";
 	    cout<<"  * `bali-phy help "<<bold("functions")<<"` lists all the functions.\n\n";
 
-	    cout<<"See `bali-phy help "<<bold("topics")<<"` for a list of all help topics.  For example,\n";
+	    cout<<"See `bali-phy help "<<bold("topics")<<"` for an overview of help topics.\n\n";
 	}
 	else
 	    show_help(topic, package_paths);
