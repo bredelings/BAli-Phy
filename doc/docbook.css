@@ -59,15 +59,18 @@ pre {
 }
 
 pre.programlisting {
-    background-color: #F3F3E0;
+    border:solid;
+    background-color: #D0E3FF;
+    border-color:#BBB;
+    border-width:0.1em;
+    border-radius: 0.5em;
 
 //    border: solid green;
-    margin: 0;
-	margin-left: 3em;
+   margin: 0;
+   margin-left: 0.5em;
 
-	padding: 0.5em;
-	padding-left:1em;
-	width: calc(100% - 8em);
+   padding: 1em;
+   width: calc(100% - 4em);
 }
 
 pre.screen {
