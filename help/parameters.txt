@@ -23,7 +23,3 @@ It is also possible to specify parameter values by position only:
 The parameter names, order, type and default values for any function
 can be found by giving that function name to the `help` command.
 For example `bali-phy help tn93` gives information on the tn93 model.
-
-# See also:
-
-   priors

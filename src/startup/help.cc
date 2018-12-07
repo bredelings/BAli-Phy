@@ -44,21 +44,6 @@ string get_topic_from_string(const string& s)
     return s2;
 }
 
-void help_topics(std::ostream& o, const ptree& help)
-{
-    o<<"Help topics via `bali-phy help topic` are available for:\n";
-    o<<"  "<<bold("topics")<<"              This list of topics.\n\n";
-    o<<"  "<<bold("basic")<<"               Command-line options and a short description.\n";
-    o<<"  "<<bold("advanced")<<"            Advanced command-line options.\n";
-    o<<"  "<<bold("expert")<<"              Expert command-line options  - these might be broken!\n\n";
-    o<<"  "<<bold("functions")<<"           A list of functions and result type.\n";
-    o<<"  "<<underline("function name")<<"       Function type, description, and argument names.\n\n";
-    for(auto& x: help)
-//	o<<"  "<<bold(pad(x.first,18))<<"  "<<get_topic_from_string(x.second)<<"\n";
-	o<<"  "<<bold(pad(x.first,18))<<"\n";
-    o<<"\n";
-}
-
 vector<string> get_path(fs::path p)
 {
     vector<string> v;
@@ -406,6 +391,29 @@ optional<const ptree&> find(const string& key, const ptree& p)
     return boost::none;
 }
 
+vector<string> get_subtopics(const ptree& p)
+{
+    vector<string> subtopics;
+    for(auto& x: p)
+    {
+	auto name = x.first;
+//	if (x.second.size()) name += "/";
+	subtopics.push_back(name);
+    }
+    return subtopics;
+}
+
+void help_topics(std::ostream& o, const ptree& help)
+{
+    auto subtopics = get_subtopics(help);
+    subtopics.push_back("functions");
+    
+    o<<"To help on one of the following topics, run `bali-phy help "<<underline("topic")<<"`\n\n";
+    o<<show_options(subtopics);
+    o<<"\n";
+    o<<"\n";
+}
+
 void show_help(const string& topic, const vector<fs::path>& package_paths)
 {
     auto help = load_help_files(package_paths);
@@ -419,16 +427,12 @@ void show_help(const string& topic, const vector<fs::path>& package_paths)
     {
 	if (not found->value_is_empty())
 	    std::cout<<pseudo_markdown(found->get_value<string>())<<"\n";
-	vector<string> subtopics;
-	for(auto& x: *found)
+	auto subtopics = get_subtopics(*found);
+	if (subtopics.size())
 	{
-	    auto name = x.first;
-	    if (x.second.size())
-		name += "/";
-	    subtopics.push_back(name);
+	    std::cout<<bold("Subtopics")<<":\n\n";
+	    std::cout<<show_options(subtopics);
 	}
-	std::cout<<"See additional subtopics of "<<bold(topic)<<":\n\n";
-	std::cout<<show_options(subtopics);
 	std::cout<<std::endl;
 	return;
     }
