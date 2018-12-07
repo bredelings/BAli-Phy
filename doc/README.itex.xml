@@ -2467,7 +2467,7 @@ The stabilization criterion is the same one described above for numerical values
   <section xml:id="alignment-utilities"><info><title>Alignment utilities</title></info>
     
 
-    <para>Most of these tools will describe their options if given the "<userinput>--help</userinput>" argument on the command line.</para>
+    <para>All tools display their options if given the "<userinput>--help</userinput>" argument on the command line.</para>
 
     <section><info><title>alignment-info</title></info>
       
