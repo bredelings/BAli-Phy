@@ -418,9 +418,17 @@ void show_help(const string& topic, const vector<fs::path>& package_paths)
     if (auto found = find(topic, help))
     {
 	if (not found->value_is_empty())
-	    std::cout<<pseudo_markdown(*found);
+	    std::cout<<pseudo_markdown(found->get_value<string>())<<"\n";
+	vector<string> subtopics;
 	for(auto& x: *found)
-	    std::cout<<"  "<<bold(x.first)<<"\n";
+	{
+	    auto name = x.first;
+	    if (x.second.size())
+		name += "/";
+	    subtopics.push_back(name);
+	}
+	std::cout<<"See additional subtopics of "<<bold(topic)<<":\n\n";
+	std::cout<<show_options(subtopics);
 	std::cout<<std::endl;
 	return;
     }

@@ -3,6 +3,7 @@
 #include <boost/optional/optional_io.hpp>
 
 using std::string;
+using std::vector;
 using std::list;
 using boost::optional;
 
@@ -181,4 +182,69 @@ string inverse(const string& line)
 string underline(const string& line)
 {
     return ansi_under + line + ansi_under_off;
+}
+
+
+vector<vector<string>> make_columns(int n, const vector<string>& v)
+{
+    vector<vector<string>> cols;
+    for(int c=0;c<n;c++)
+    {
+	vector<string> col;
+	for(int i=c;i<v.size();i+=n)
+	    col.push_back(v[i]);
+	cols.push_back(col);
+    }
+    return cols;
+}
+
+int column_width(const vector<string>& column)
+{
+    int w = 0;
+    for(auto& s: column)
+	w = std::max<int>(w, s.size());
+    return w;
+}
+
+int total_width(const vector<vector<string>>& columns)
+{
+    int w = 0;
+    for(auto& column: columns)
+	w += column_width(column);
+    return w + 3*(columns.size()+1);
+}
+
+std::string show_options(const std::vector<std::string>& o)
+{
+    if (o.empty()) return "";
+
+    auto options = o;
+    std::sort(options.begin(), options.end());
+
+    vector<vector<string>> columns = {options};
+    for(int i=1;i<=o.size();i++)
+    {
+	vector<vector<string>> maybe_columns = make_columns(i,options);
+	if (total_width(maybe_columns) <= terminal_width())
+	    columns = maybe_columns;
+	else
+	    break;
+    }
+
+    vector<int> col_widths;
+    for(auto& column: columns)
+	col_widths.push_back(column_width(column));
+
+    vector<string> lines;
+    for(int i=0;i<columns[0].size();i++)
+    {
+	string line;
+	for(int c=0;c<columns.size();c++)
+	{
+	    if (i >= columns[c].size()) break;
+	    line += "   "+pad(columns[c][i], col_widths[c]);
+	}
+	lines.push_back(line);
+    }
+    return join(lines,"\n");
 }

@@ -3,8 +3,11 @@
 
 #include <string>
 #include <list>
+#include <vector>
 
 int terminal_width();
+
+std::string show_options(const std::vector<std::string>&);
 
 std::string pad(const std::string& s, int n);
 std::list<std::string> get_lines(const std::string& line);
