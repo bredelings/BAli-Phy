@@ -15,6 +15,7 @@
 #include "models/rules.H"
 #include "models/parse.H"
 #include "util/text.H"
+#include "util/ptree.H"
 
 using std::string;
 using std::list;
@@ -43,7 +44,7 @@ string get_topic_from_string(const string& s)
     return s2;
 }
 
-void help_topics(std::ostream& o, const map<string,string>& help)
+void help_topics(std::ostream& o, const ptree& help)
 {
     o<<"Help topics via `bali-phy help topic` are available for:\n";
     o<<"  "<<bold("topics")<<"              This list of topics.\n\n";
@@ -53,13 +54,25 @@ void help_topics(std::ostream& o, const map<string,string>& help)
     o<<"  "<<bold("functions")<<"           A list of functions and result type.\n";
     o<<"  "<<underline("function name")<<"       Function type, description, and argument names.\n\n";
     for(auto& x: help)
-	o<<"  "<<bold(pad(x.first,18))<<"  "<<get_topic_from_string(x.second)<<"\n";
+//	o<<"  "<<bold(pad(x.first,18))<<"  "<<get_topic_from_string(x.second)<<"\n";
+	o<<"  "<<bold(pad(x.first,18))<<"\n";
     o<<"\n";
 }
 
-std::map<string,string> load_help_files(const std::vector<fs::path>& package_paths)
+vector<string> get_path(fs::path p)
 {
-    map<string,string> help;
+    vector<string> v;
+    assert(p.is_relative());
+    for(auto& pentry: p)
+	v.push_back(pentry.string());
+    if (v.size() and v.back().find('.') != string::npos)
+	v.back() = v.back().substr(0,v.back().rfind('.'));
+    return v;
+}
+
+ptree load_help_files(const std::vector<fs::path>& package_paths)
+{
+    ptree help;
 
     for(auto& package_path: package_paths)
     {
@@ -68,11 +81,14 @@ std::map<string,string> load_help_files(const std::vector<fs::path>& package_pat
 	if (fs::exists(path))
 	    for(auto& dir_entry: fs::recursive_directory_iterator(path))
 	    {
-		auto abs_path = fs::canonical(dir_entry.path() );
-		string topic = abs_path.stem().string();
-		
-		if (abs_path.extension() == ".txt" and not help.count(topic))
-		    help[topic] = boost::trim_copy(read_file(abs_path.string(), "help file"));
+		auto abs_path = fs::canonical(dir_entry.path());
+		if (not fs::is_directory(abs_path) and abs_path.extension() == ".txt")
+		{
+		    string content = boost::trim_copy(read_file(abs_path.string(), "help file"));
+
+		    auto rel_path = fs::relative(dir_entry.path(), path);
+		    help.make_path(get_path(rel_path)) = ptree(content);
+		}
 	    }
     }
 
@@ -379,6 +395,16 @@ string pseudo_markdown(const string& lines)
     return marked.str();
 }
 
+optional<const ptree&> find(const string& key, const ptree& p)
+{
+    for(auto& x: p)
+    {
+	if (x.first == key) return x.second;
+	if (auto found = find(key, x.second))
+	    return *found;
+    }
+    return boost::none;
+}
 
 void show_help(const string& topic, const vector<fs::path>& package_paths)
 {
@@ -389,9 +415,12 @@ void show_help(const string& topic, const vector<fs::path>& package_paths)
 	help_topics(std::cout, help);
 	return;
     }
-    if (help.count(topic))
+    if (auto found = find(topic, help))
     {
-	std::cout<<pseudo_markdown(help[topic]);
+	if (not found->value_is_empty())
+	    std::cout<<pseudo_markdown(*found);
+	for(auto& x: *found)
+	    std::cout<<"  "<<bold(x.first)<<"\n";
 	std::cout<<std::endl;
 	return;
     }
