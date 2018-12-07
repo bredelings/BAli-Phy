@@ -291,7 +291,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	    cout<<"  * `bali-phy help "<<bold("functions")<<"` lists all the functions.\n\n";
 
 	    cout<<"See `bali-phy help "<<bold("topics")<<"` for a list of all help topics.  For example,\n";
-	    cout<<"  * `bali-phy help "<<bold("parameters")<<"` describes how to place priors on parameters.\n\n";
 	}
 	else
 	    show_help(topic, package_paths);
