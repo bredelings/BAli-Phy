@@ -369,29 +369,52 @@ This can be done simply by starting several instances of the program, and does n
     <section><info><title>Quick Start</title></info>
       
       <para>The simplest way to run <command>BAli-Phy</command> is
-	to type all the arguments on the command line:
-
-	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable></userinput></screen>
-
-	Here <replaceable>sequence-file</replaceable> is a FastA or PHYLIP
-	file containing the sequences you wish to analyze.  The filename should end
-	in <userinput>.fasta</userinput> or <userinput>.phy</userinput> to
-	indicate which format it is using.</para>
-
-      <para>In this simple example, <command>bali-phy</command> automatically detects whether <replaceable>sequence-file</replaceable> contains DNA, RNA, or Amino-Acids and uses default values for several command line options.  Thus, if <replaceable>sequence-file</replaceable> contains DNA, then this is equivalent to the more verbose command line
-	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --alphabet DNA --smodel tn93 --imodel rs07</screen>  Here the substitution model is Tamura-Nei, the insertion/deletion model is rs07.  If <replaceable>sequence-file</replaceable> contains amino acids, then the defaults will be:<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --alphabet Amino-Acids --smodel lg08 --imodel rs07</screen> 
+      to type all the arguments on the command line:
+      <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta</userinput></screen>
+      You can run a traditional fixed-alignment Bayesian tree inference by adding <userinput>-I none</userinput>:
+      <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -I none</userinput></screen>
+      You can also specify a range of characters to use in the analysi:
+      <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta:1-30,90-100</userinput></screen>
       </para>
+    </section>
+
+    <section>
+      <info><title>Input</title></info>
+      <para>Sequence files can be in FastA or PHYLIP format.  FASTA format prefixes sequence names with "&gt;":
+    </para>
+      <programlisting>>human       this is a comment and is not part of the sequence name
+CTGACTCCTGAGGAGAAGTCTGCCGTTACTGCCCTGTGGGGCAAGGTGAACGTGGATGAA
+GTTGGTGGTGAGGCCCTGGGCAGGCTGCTGGTGGTCTACCCTTGGACCCAGAGGTTCTTT
+>tarsier     this is also a comment
+CTGACTGCTGAAGAGAAGGCCGCCGTCACTGCCCTGTGGGGCAAGGTAGACGTGGAAGAT
+GTTGGTGGTGAGGCCCTGGGCAGGCTGCTGGTCGTCTACCCATGGACCCAGAGGTTCTTT
+>bushbaby
+CTGACTCCTGATGAGAAGAATGCCGTTTGTGCCCTGTGGGGCAAGGTGAATGTGGAAGAA
+GTTGGTGGTGAGGCCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTT
+>hare
+CTGTCCGGTGAGGAGAAGTCTGCGGTCACTGCCCTGTGGGGCAAGGTGAATGTGGAAGAA
+GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
+</programlisting>
+<para>If the sequence-name line contains a space, BAli-Phy treats everything after the space as a comment.</para>
+<para>The sequences in the file do not need to be aligned unless the alignment is being estimated.</para>
+<para></para>
+
+      
     </section>
 
     <section><info><title>Command line options</title></info>
       
+    <para>Sensible defaults are supplied for command line options that are not specified.  For example, if <filename>sequences.fasta</filename> contains DNA sequences, then
+    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta</userinput></screen>
+    is equivalent to
+    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -A DNA -S tn93 -I rs07</userinput></screen>
+    Default values that are used will always be displayed on the screen and in the output files so that you do not have to guess.  You can specify a more complex substitution model using the <userinput>-S</userinput> option:
 
-      <para>You can specify a more complex substitution model as follows:
+    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -S lg08+Rates.gamma+inv</userinput></screen>
+    To see the most frequently-used command-line options, you can run
+    <screen><prompt>%</prompt> <userinput>bali-phy help</userinput></screen>
+    </para>
 
-	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --smodel lg08+Rates.gamma+inv</userinput></screen> </para>
-      <para>You may specify an indel model of <userinput>none</userinput>
-	to fix the alignment to its initial value, and ignore information in shared insertions or deletions.
-  	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --imodel none</userinput></screen></para>
     </section>
 
     <section xml:id="cluster"><info><title>Running on computing clusters</title></info>
@@ -424,13 +447,14 @@ This can be done simply by starting several instances of the program, and does n
 	options in a file. Using an option file can be more convenient
 	if you are going to run the same analysis many times, or if
 	the number of options is large. Furthermore, the option file
-	may contain comments and blank lines.  Option files are a good
-	to record what options you used in an analysis, and why.
+	may contain comments and blank lines that make it easier to understand.
+	Option files are a good way to record what options you used in an
+	analysis, and why.
       </para>
 
 	<para>
 	  An option file is specified with the command line option <userinput>--config
-	    <replaceable>file</replaceable></userinput> or <userinput>-c<replaceable>file</replaceable></userinput>. If values
+	    <replaceable>file</replaceable></userinput> or <userinput>-c <replaceable>file</replaceable></userinput>. If values
 	    for an option are given both on the command line and
 	    in an option file, then the command line value overrides
 	    the value in the option file. 
@@ -472,7 +496,7 @@ scale = 1,3:</programlisting>
           The <userinput>align</userinput> option indicates sequence files, and has no name on the command line.
 	  Lines that begin with # are comments, and blank lines are
 	  ignored.  This is thus equivalent to the rather long command line:
-	  <screen><prompt>%</prompt> <userinput>bali-phy ITS1.fasta 5.8S.fasta ITS2.fasta --smodel=1,3:tn93+Rates.free[n=3] --smodel=2:tn93 --imodel=2:none --scale=1,3:</userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>bali-phy ITS1.fasta 5.8S.fasta ITS2.fasta -S 1,3:tn93+Rates.free[n=3] -S 2:tn93 -I 2:none --scale 1,3:</userinput></screen>
 	</para>
       </section>
 
@@ -663,7 +687,6 @@ scale = 1,3:</programlisting>
       <para>This section explains the meaning of the various field names in the file <filename>C1.log</filename>.</para>
 
 
-      <section><title>Computed parameter names</title>
       <variablelist>
 	<varlistentry>
 	  <term>prior</term>
@@ -780,21 +803,10 @@ scale = 1,3:</programlisting>
 	  </listitem>
 	</varlistentry>
 
-      </variablelist>
-      <para>The "prior" field includes the probability of the alignment, since the alignment is not observed.</para>
-      <para>The likelihood is the probabilistic analogue to summed mismatch penalties.</para>
-      <para>The prior_A is the probabilistic analogue to summed gap penalties.</para>
-      </section>
-
-      <section><title>Model parameter names</title>
-
-      <para>The prefixes "S$n$/" and "I$n$/" will be dropped if not necessary to disambiguate parameters with the same name in different sub-models.</para>
-
-      <variablelist>
 	<varlistentry>
-	  <term>Scale[$n$]</term>
+	  <term>Scale[$m$]</term>
 	  <listitem>
-	    <para>The average number of substitutions per branch in scale group $n$.  The $n$th scale group applies to the $n$th partition, unless multiple partitions are forced to have the same branch length scale using <userinput>--scale</userinput> or <userinput>--link</userinput>.</para>
+	    <para>The average number of substitutions per site on the entire tree for partitions in the $m$th scale group.</para>
 	  </listitem>
 	</varlistentry>
 
@@ -813,14 +825,18 @@ scale = 1,3:</programlisting>
 	</varlistentry>
 
       </variablelist>
-      </section>
+      <para>The "prior" field includes the probability of the alignment, since the alignment is not observed.</para>
+      <para>The likelihood is the probabilistic analogue to summed mismatch penalties.</para>
+      <para>The prior_A is the probabilistic analogue to summed gap penalties.</para>
+      <para>The prefixes "S$n$/" and "I$n$/" will be dropped if not necessary to disambiguate parameters with the same name in different sub-models.</para>
+
       </section>
     </section>
 
     <section><info><title>Summarizing the output</title></info>
       
 
-      <para>This section is primarily about extracting estimates from output files.  See <xref linkend="mixing_and_convergence"/> for methods of determine effective sample sizes, and for checking mixing and convergence.</para>
+      <para>This section is primarily about extracting estimates from output files.  See <xref linkend="mixing_and_convergence"/> for methods of determining effective sample sizes, and for checking mixing and convergence.</para>
 
       <section><info><title>Finding the majority consensus tree</title></info>
 	
@@ -1344,11 +1360,11 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       
     <section xml:id="doublet_models">
       <info><title>Doublet models (RNA stems)</title></info>
-      <para>The doublets alphabet consists of 16 RNA dinucleotides.  It is used to model RNA stems, where two nucleotides matched in the RNA second structure are highly correlated.</para>
+      <para>The doublets alphabet consists of 16 RNA dinucleotides.  It is used to model RNA stems, where two nucleotides matched in the RNA secondary structure are highly correlated.</para>
       <para>The default substitution model for doublets is <userinput>tn93_sym+x2_sym+f</userinput>.</para>
       <section xml:id="doublet-data">
 	<info><title>Doublet data</title></info>
-	<para>As of version 3.4, BAli-Phy does not yet allow specifying which nucleotides are paired either with a string like <userinput>((.))</userinput> or with a "pairs" file.  Instead you must manually extract the paired nucleotides and put them in their own (for stems), and then manually extract each loop and put it in its own partition.</para>
+	<para>As of version 3.4, BAli-Phy does not yet allow specifying which nucleotides are paired either with a string like <userinput>((.))</userinput> or with a "pairs" file.  Instead you must manually extract the paired nucleotides and put them in their own partition (for stems), and then manually extract each loop and put it in its own partition.</para>
 	<para>The stems should be arranged so that paired nucleotides are adjacent. For example, suppose the sequence <userinput>AGGCT</userinput> was paired according to <userinput>((.))</userinput>.  Then the input file for the stems should contain a sequence of doublets that looks like <userinput>ATGC</userinput>, where <userinput>AT</userinput> is the first pair, and <userinput>GC</userinput> is the second pair.  Later versions of the software should allow extracting stems and loops from nucleotide sequences using parenthesis notation or a "pairs" file.
 	</para>
       </section>
@@ -1487,7 +1503,7 @@ hky85_sym+x2_sym+f[pi=List[Pair["AA",0.01],Pair["AC",0.01],Pair["AG",0.01],Pair[
 
     <section xml:id="triplet_models">
       <info><title>Triplet models</title></info>
-      <para>The triplets alphabet is similar to the codons alphabet, except that stop codons are not removed. Unlike the codons alphabet, the triplets alphabet has no knowledge of the genetic code.</para>
+      <para>The triplets alphabet is similar to the codons alphabet, except that stop codons are included. Unlike the codons alphabet, the triplets alphabet has no knowledge of the genetic code.</para>
       <para>The default substitution model for triplets is tn93+x3.</para>
       <section>
 	<info><title>Substitution rates</title></info>
@@ -1809,13 +1825,13 @@ mg94[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]
       <section xml:id="genetic-codes">
 	<info><title>Genetic Codes</title></info>
       
-	<para>When using a codon-based substitution model like <userinput>gy94</userinput>, you may select the genetic code by specifying <userinput>--alphabet Codons[,<replaceable>genetic-code</replaceable>]</userinput>.  Available genetic codes are <userinput>standard</userinput>, <userinput>mt-vert</userinput>, <userinput>mt-invert</userinput>, <userinput>mt-yeast</userinput>, <userinput>mt-protozoan</userinput>.</para>
+	<para>When using a codon-based substitution model like <userinput>gy94</userinput>, you may select the genetic code by specifying <userinput>-A Codons[,<replaceable>genetic-code</replaceable>]</userinput>.  Available genetic codes are <userinput>standard</userinput>, <userinput>mt-vert</userinput>, <userinput>mt-invert</userinput>, <userinput>mt-yeast</userinput>, <userinput>mt-protozoan</userinput>.</para>
 	<para>If the genetic code is not specified, then the standard code is used:
-<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel gy94 --alphabet Codons
-<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel gy94 --alphabet Codons[RNA]</screen>
+<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A Codons
+<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A Codons[RNA]</screen>
 	These examples specify the vertebrate mitochondrial code:
-	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel gy94 --alphabet Codons[DNA,mt-vert]
-<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel gy94 --alphabet Codons[,mt-vert]</screen>	
+	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A Codons[DNA,mt-vert]
+<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A Codons[,mt-vert]</screen>	
 </para>
       </section>
       <section>
@@ -2200,9 +2216,10 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
 
     <para>Different partitions share the same tree topology and a common set of unscaled branch lengths.  However, branch lengths are scaled by a different factor in each partition, since some genes may evolve faster than others.</para>
 
-    <para>To put different genes in different partitions, you should place the sequences from each partition in a different FASTA or Phylip file:
-    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable></userinput></screen>
-    The sequence names in files for all partitions should be the same. 
+    <para>To put different genes in different partitions, you can place the sequences from each partition in a different FASTA or Phylip file.     The sequence names in files for all partitions should be the same. 
+    <screen><prompt>%</prompt> <userinput>bali-phy gene1.fasta gene2.fasta</userinput></screen>
+    You can also select different sites from a single larger file:
+    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta:3-350 sequences.fasta:351-570</userinput></screen>
     </para>
     </section>
 
@@ -2210,15 +2227,15 @@ add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programl
     <para>By default, each partition will have its own substitution model, insertion/deletion model, and scaled tree length.  For example, even if all partitions are assigned a <userinput>tn93</userinput> substitution model, their base frequencies will all be estimated independently.  When parameters are estimated separately for two partitions, we say that the parameters for those partitions are "unlinked".</para>
 
     <para>A substitution model or insertion-deletion model that is specified without qualification will apply to every partition.  However, each partition will recieve its own copy of each model with unlinked parameter values:
-      <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel tn93 --imodel rs07</userinput></screen></para>
+      <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S tn93 -I rs07</userinput></screen></para>
 
-<para>You can select partition-specific values for 4 options: <userinput>--smodel</userinput>, <userinput>--imodel</userinput>, <userinput>--alphabet</userinput>, and <userinput>--scale</userinput>.  For example, to specify different substitution models but the same alphabet:
-<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:tn93 --smodel 2:gtr --alphabet DNA</userinput></screen></para>
+<para>You can select partition-specific values for 4 options: <userinput>-S</userinput>, <userinput>-I</userinput>, <userinput>-A</userinput>, and <userinput>--scale</userinput>.  For example, to specify different substitution models but the same alphabet:
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1:tn93 -S 2:gtr -A DNA</userinput></screen></para>
     </section>
 
     <section><info><title>Fixing the alignment in some partitions</title></info>
 <para>You can fix the alignment and ignore insertion/deletion information in one partition, while allowing the alignment to vary and using insertion/deletion information in another partition:
-<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --imodel 2:none</userinput></screen>
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -I 2:none</userinput></screen>
 Since alignments are estimated by default, the alignment will be estimated in the first partition, but fixed in the second partition.</para>
 <para>Specifying specify <userinput>-I none</userinput> fixes the alignment in all partitions:
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -I none</userinput></screen>
@@ -2226,7 +2243,7 @@ Since alignments are estimated by default, the alignment will be estimated in th
     </section>
     <section><info><title>Linked models</title></info>
 <para>You can also specify that two partitions share a single copy of a single substitution model or indel model.  For example, if two partitions both have a <userinput>tn93</userinput> model, linking these models would force the partitions to have the same nucleotide frequencies and substitution rates.  Linking partitions reduces the number of parameters that need to be estimated, and also pools information between the partitions:
-<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1,2:tn93 --imodel 1,2:rs07</userinput></screen>
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1,2:tn93 -I 1,2:rs07</userinput></screen>
 By default each partition has a separate scale, but you can force groups of partitions to share a scale as follows:
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --scale 1,2:</userinput></screen>
 </para>
@@ -2234,10 +2251,10 @@ By default each partition has a separate scale, but you can force groups of part
     <section><info><title>Linking models via the <userinput>link</userinput> command</title></info>
 
     <para>The <userinput>--link</userinput> command is provided to allow specifying a model for each partition separately, and then afterwards choose which partitions to link.
-    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:tn93 --smodel 2:tn93 --link=1,2 -t</userinput>
-<prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel tn93                   --link=1,2 -t</userinput>   </screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1:tn93 -S 2:tn93 --link=1,2 -t</userinput>
+<prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S tn93                   --link=1,2 -t</userinput>   </screen>
     If the linked partitions are given different models, BAli-Phy will give an error and refuse to run:
-    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:tn93 --link=1,2 -t</userinput>
+    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1:tn93 --link=1,2 -t</userinput>
 bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing values 'tn93' and ''</screen></para>
     <para>You can also specify which of the 3 attributes "smodel", "imodel", and "scale" are being linked:
     <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --link=1,2:smodel,scale -t</userinput>    // Don't link the indel model</screen>
@@ -2484,7 +2501,7 @@ The stabilization criterion is the same one described above for numerical values
 <prompt>%</prompt> alignment-cat -c6-250/3 file.fasta > second_codon_position.fasta</screen>
 
   <para>To concatenate two or more alignments:</para>
-<screen><prompt>%</prompt> alignment-cat file1.fasta file2.fasta > all.fasta</screen>
+  <screen><prompt>%</prompt> alignment-cat file1.fasta file2.fasta > all.fasta</screen>
     </section>
     
     <section><info><title>alignment-thin</title></info>
@@ -2789,7 +2806,7 @@ The command <command>bali-phy</command> and its associated tools should then be 
 	<qandaentry>
 	  <question><para>Can I fix the alignment and ignore indel information, like MrBayes, BEAST, PhyloBayes and other MCMC programs?</para></question>
 	  <answer>
-	    <para>Yes.  Add <userinput>-Inone</userinput> or <userinput>--imodel=none</userinput> on the command line.</para>
+	    <para>Yes.  Add <userinput>-Inone</userinput> or <userinput>-I none</userinput> on the command line.</para>
 	  </answer>
 	</qandaentry>
 
@@ -2822,10 +2839,10 @@ The command <command>bali-phy</command> and its associated tools should then be 
       
       <qandaset>
 	<qandaentry>
-	  <question><para>I tried to use <userinput>--smodel lg08+Rates.gamma[6]</userinput> and I got an error message "bali-phy: No match."  What gives?</para></question>
+	  <question><para>I tried to use <userinput>-S lg08+Rates.gamma[6]</userinput> and I got an error message "bali-phy: No match."  What gives?</para></question>
 	  <answer>
 	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <userinput>lg08+Rates.gamma[6]</userinput> as an array before running the command, and it is not succeeding.  Therefore, it doesn't even run <command>bali-phy</command>.</para>
-	    <para>To avoid this, put quotes around the substitution model, like this: <userinput>--smodel "lg08+Rates.gamma[6]"</userinput>.  This will keep the C-shell from interfering with your command.
+	    <para>To avoid this, put quotes around the substitution model, like this: <userinput>-S "lg08+Rates.gamma[6]"</userinput>.  This will keep the C-shell from interfering with your command.
 	    </para>
 	  </answer>
 	</qandaentry>
@@ -2840,8 +2857,8 @@ The command <command>bali-phy</command> and its associated tools should then be 
 	  <question><para>Why is <command>bali-phy</command> still
 	      running? How long will it take?</para></question>
 	  <answer>
-	    <para>It runs until you stop it.  Stop it when its
-	      done.</para>
+	    <para>It runs until you stop it.  Stop it when its done.</para>
+	    <para>The longer answer is that is is hard to predict how long MCMC will take to converge, since it depends on each data set in complex ways.  Automatic rules for determining when to stop an MCMC chain can be difficult to get right.  BAli-Phy does not contain an automatic stopping rule yet, so it relies on the user to run convergence diagnostics and determine when to stop the run.</para>
 	  </answer>
 	</qandaentry>
 
@@ -3003,9 +3020,11 @@ your <command>bali-phy</command> runs on that computer.
 	<qandaentry>
 	  <question><para>How do I select columns from an alignment?</para></question>
 	  <answer><para>
+	    You can now select columns in an analysis by specifying a range:
+	    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta:1-200,401-600 sequences.fasta:201-400</userinput></screen>
+	    You can create a new alignment from selected columns using <userinput>alignment-cat</userinput>:
 	    <screen><prompt>%</prompt> alignment-cat -c1-10,50-100,600- <replaceable>filename.fasta</replaceable> &gt; result.fasta</screen>
-	    The resulting alignment will contain the selected columns
-	    in the order you specified.
+	    The resulting alignment will contain the selected columns in the order you specified.
 	  </para>
 	  </answer>
 	</qandaentry>
