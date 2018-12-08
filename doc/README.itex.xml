@@ -373,7 +373,7 @@ This can be done simply by starting several instances of the program, and does n
       <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta</userinput></screen>
       You can run a traditional fixed-alignment Bayesian tree inference by adding <userinput>-I none</userinput>:
       <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -I none</userinput></screen>
-      You can also specify a range of characters to use in the analysi:
+      You can also specify a range of characters to use in the analysis:
       <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta:1-30,90-100</userinput></screen>
       </para>
     </section>
