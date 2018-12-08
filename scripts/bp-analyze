@@ -1552,6 +1552,18 @@ sub compute_probcons_alignment
     }
 }
 
+
+sub get_alignments_for_partition
+{
+    my $i=shift;
+    my @args=();
+    foreach my $a (@partition_samples)
+    {
+	push @args,${$a}[$i];
+    }
+    return @args;
+}
+
 sub compute_wpd_alignments
 {
     if ($personality =~ "bali-phy.*") {
@@ -1562,12 +1574,13 @@ sub compute_wpd_alignments
 	    next if ($imodel_indices[$i] eq "--");
 	
 	    my $p = $i+1;
-	    my $infile = $partition_samples[0][$i];
+	    my @afiles = get_alignments_for_partition($i);
 	    
 	    my $name = "P$p-max";
-	    if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ||
-		! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ) {
-		exec_show("cut-range --skip=$burnin $size_arg < $infile | alignment-chop-internal --tree=Results/MAP.tree | alignment-max> Results/Work/$name-unordered.fasta");
+	    if (! more_recent_than_all_of("Results/Work/$name-unordered.fasta",[@afiles]))
+	    {
+		my $infiles = join(' ',@afiles);
+		exec_show("cut-range $infiles --skip=$burnin $size_arg | alignment-chop-internal --tree=Results/MAP.tree | alignment-max> Results/Work/$name-unordered.fasta");
 	    }
 	    push @alignments,$name;
 	    $alignment_names{$name} = "Best (WPD)";
@@ -1586,15 +1599,17 @@ sub compute_consensus_alignments
 	next if ($imodel_indices[$i] eq "--");
 
 	my $p = $i+1;
-	my $infile = $partition_samples[0][$i];
+	my @afiles = get_alignments_for_partition($i);
 	
 	print " Partition $p: ";
 	for my $cvalue (@alignment_consensus_values) {
 	    my $value = $cvalue*100;
 	    my $name = "P$p-consensus-$value";
 	    print "c$value ";
-	    if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile)) {
-		exec_show("cut-range --skip=$burnin $size_arg < $infile | alignment-chop-internal --tree=Results/MAP.tree | alignment-consensus --cutoff=$cvalue> Results/Work/$name-unordered.fasta");
+	    if (! more_recent_than_all_of("Results/Work/$name-unordered.fasta",[@afiles]))
+	    {
+		my $infiles = join(' ',@afiles);
+		exec_show("cut-range $infiles --skip=$burnin $size_arg | alignment-chop-internal --tree=Results/MAP.tree | alignment-consensus --cutoff=$cvalue> Results/Work/$name-unordered.fasta");
 	    }
 	    push @alignments,$name;
 	    $alignment_names{$name} = "$value% consensus";
@@ -1661,10 +1676,12 @@ sub compute_and_draw_AU_plots
 	if ($alignment =~ /^P([^-]+)-.*/) {
 	    print "Generating AU values for $alignment... ";
 	    my $p = $1;
-	    my $infile = $partition_samples[0][$p-1];
+	    my @afiles = get_alignments_for_partition($p-1);
 	    
-	    if (!more_recent_than("Results/$alignment-AU.prob",$infile)) {
-		exec_show("cut-range --skip=$burnin $size_arg < $infile | alignment-chop-internal --tree=Results/MAP.tree | alignment-gild Results/$alignment.fasta Results/MAP.tree --max-alignments=500 > Results/$alignment-AU.prob");
+	    if (!more_recent_than_all_of("Results/$alignment-AU.prob",[@afiles])) 
+	    {
+		my $infiles = join(' ',@afiles);
+		exec_show("cut-range $infiles --skip=$burnin $size_arg | alignment-chop-internal --tree=Results/MAP.tree | alignment-gild Results/$alignment.fasta Results/MAP.tree --max-alignments=500 > Results/$alignment-AU.prob");
 	    }
 	    print "done.\n";
 	    my $result = exec_result("alignment-draw Results/$alignment.fasta --show-ruler --AU Results/$alignment-AU.prob --color-scheme=DNA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html 2>/dev/null");
