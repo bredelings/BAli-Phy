@@ -408,13 +408,63 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
     <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta</userinput></screen>
     is equivalent to
     <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -A DNA -S tn93 -I rs07</userinput></screen>
-    Default values that are used will always be displayed on the screen and in the output files so that you do not have to guess.  You can specify a more complex substitution model using the <userinput>-S</userinput> option:
+    Default values that are used will always be displayed on the screen and in the output files so that you do not have to guess.  You can specify a more complex substitution model using the <userinput>-S</userinput> option.
 
     <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -S lg08+Rates.gamma+inv</userinput></screen>
+    Every short option like <userinput>-S</userinput> has an equivalent long option like <userinput>--smodel</userinput>.
     To see the most frequently-used command-line options, you can run
     <screen><prompt>%</prompt> <userinput>bali-phy help</userinput></screen>
     </para>
 
+    </section>
+
+   <section><info><title>Option files (Scripts)</title></info>
+      
+      <para>
+	In addition to using the command line, you may also specify
+	options in a file. Option files also use the long form of command line options.
+	Each option is given on its own line using the syntax "<userinput>option =
+	value</userinput>" instead of the syntax "<userinput>--option
+	value</userinput>".  The value can be blank if the option does not take
+	an argument. The <userinput>align</userinput> option indicates sequence files.
+	Lines that begin with # are comments, and blank lines are ignored.
+      </para>
+
+	<para>
+	  For example, consider the following
+	  option file:
+	  <programlisting># sequence data for 3 genes/partitions
+align = ITS1.fasta
+align = 5.8S.fasta
+align = ITS2.fasta
+
+# linked substitution model for 1st and 3rd partition
+smodel = 1,3:tn93+Rates.free[n=3]
+
+# substitution model for 2nd partition
+smodel = 2:tn93
+
+# indel model for second partition
+imodel = 2:none
+
+# linked scale for 1st and 3rd partition
+scale = 1,3:
+
+# choose a name for output directories
+name = ITS-analysis1
+</programlisting>
+Options files are specified with the <userinput>-c <replaceable>option_file</replaceable></userinput> option:
+	<screen><prompt>%</prompt> <userinput>bali-phy -c analysis1.txt</userinput>                           # run the analysis
+<prompt>%</prompt> <userinput>bali-phy -c analysis1.txt --name ITS-analysis1b</userinput>     # override the name</screen>
+        Options given on the command line will override values given in the option file.
+	</para>
+	<!-- para>
+	  The file <filename>~/.bali-phy</filename> is a special
+	  option file called the <emphasis>configuration
+	    file.</emphasis>  If it exists, it is always loaded.
+	  Options given on the command line or an option file 
+	  override values given in <filename>~/.bali-phy</filename>. 
+	</para -->
     </section>
 
     <section xml:id="cluster"><info><title>Running on computing clusters</title></info>
@@ -438,78 +488,6 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
       10 independent chains in parallel, then you may gather samples
       10 times faster that a single chain. 
       </para>
-    </section>
-
-   <section><info><title>Option files (Scripts)</title></info>
-      
-      <para>
-	In addition to using the command line, you may also specify
-	options in a file. Using an option file can be more convenient
-	if you are going to run the same analysis many times, or if
-	the number of options is large. Furthermore, the option file
-	may contain comments and blank lines that make it easier to understand.
-	Option files are a good way to record what options you used in an
-	analysis, and why.
-      </para>
-
-	<para>
-	  An option file is specified with the command line option <userinput>--config
-	    <replaceable>file</replaceable></userinput> or <userinput>-c <replaceable>file</replaceable></userinput>. If values
-	    for an option are given both on the command line and
-	    in an option file, then the command line value overrides
-	    the value in the option file. 
-	</para>
-      <section><info><title>Syntax</title></info>
-	
-
-	<para>Option files use the same option names as the command
-	line.  However, the syntax is different:  each option is given
-	  on its own line using the syntax "<userinput>option =
-	    value</userinput>" instead of the syntax "<userinput>--option
-	    value</userinput>".  If the option has no value then it is
-	  given using the syntax  "<userinput>option =
-	    option</userinput>".  
-	</para>
-      </section>
-
-      <section><info><title>Example</title></info>
-	
-	<para>
-	  For example, consider the following
-	  option file:
-	  <programlisting># sequence data for 3 genes/partitions
-align = ITS1.fasta
-align = 5.8S.fasta
-align = ITS2.fasta
-
-# linked substitution model for 1st and 3rd partition
-smodel = 1,3:tn93+Rates.free[n=3]
-
-# substitution model for 2nd partition
-smodel = 2:tn93
-
-# indel model for second partition
-imodel = 2:none
-
-# linked scale for 1st and 3rd partition
-scale = 1,3:</programlisting>
-          The <userinput>align</userinput> option indicates sequence files, and has no name on the command line.
-	  Lines that begin with # are comments, and blank lines are
-	  ignored.  This is thus equivalent to the rather long command line:
-	  <screen><prompt>%</prompt> <userinput>bali-phy ITS1.fasta 5.8S.fasta ITS2.fasta -S 1,3:tn93+Rates.free[n=3] -S 2:tn93 -I 2:none --scale 1,3:</userinput></screen>
-	</para>
-      </section>
-
-      <section><info><title>The configuration file</title></info>
-	
-	<para>
-	  The file <filename>~/.bali-phy</filename> is a special
-	  option file called the <emphasis>configuration
-	    file.</emphasis>  If it exists, it is always loaded.
-	  Options given on the command line or an option file 
-	  override values given in <filename>~/.bali-phy</filename>. 
-	</para>
-      </section>
     </section>
 
   </section>
@@ -2254,7 +2232,7 @@ By default each partition has a separate scale, but you can force groups of part
 
     <para>The <userinput>--link</userinput> command is provided to allow specifying a model for each partition separately, and then afterwards choose which partitions to link.
     <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1:tn93 -S 2:tn93 --link=1,2 -t</userinput>
-<prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S tn93                   --link=1,2 -t</userinput>   </screen>
+<prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S tn93             --link=1,2 -t</userinput>   </screen>
     If the linked partitions are given different models, BAli-Phy will give an error and refuse to run:
     <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1:tn93 --link=1,2 -t</userinput>
 bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing values 'tn93' and ''</screen></para>
@@ -2711,8 +2689,8 @@ The command <command>bali-phy</command> and its associated tools should then be 
     </section>
       <section><info><title>Options: compiler and linker flags</title></info>
 	
-      <para>You can select the C++ compiler by setting the CXX variable.  A useful example of this is to use <command>g++-7</command> on systems where <command>g++</command> invokes a compiler that is too old:
- <screen><prompt>%</prompt> <userinput>CXX=g++-7 meson build --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>
+      <para>You can select the C++ compiler by setting the CXX variable.  A useful example of this is to use <command>g++-8</command> on systems where <command>g++</command> invokes a compiler that is too old:
+ <screen><prompt>%</prompt> <userinput>CXX=g++-8 meson build --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>
  You may also set compiler and linker options using the CPPFLAGS, CXXFLAGS, and LDFLAGS variables.  For example, you can instruct the compiler to use all the features of your chip, instead of producing generic code that will run anywhere:
  <screen><prompt>%</prompt> <userinput>CXXFLAGS="-mtune=native -march=native" meson --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>
 
