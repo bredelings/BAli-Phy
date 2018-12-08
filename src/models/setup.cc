@@ -385,6 +385,26 @@ optional<pair<expression_ref,set<string>>> get_variable_model(const ptree& E, co
 }
 
 
+/*
+ * Currently we are doing:
+ * do
+ *   pair_var <- var_body
+ *   let var_name = fst pair_var
+ *   let_body
+ *
+ * do
+ *   pair_var <- var_body
+ *   let var_name = fst pair_var
+ *   pair_body <- let_body
+ *   return (fst pair_body, snd pair_body)
+ * I think we want to return
+ *
+ * do
+ *   pair_var <- var_body
+ *   let var_name = fst pair_var
+ *   pair_body <- let_body
+ *   return (fst pair_body, [("let:var",(Nothing,[(var_name,pair_x)])),("let:body"),pair_body])
+ */
 optional<pair<expression_ref,set<string>>> get_model_let(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
 {
     auto name = model_rep.get_value<string>();
@@ -399,11 +419,18 @@ optional<pair<expression_ref,set<string>>> get_model_let(const Rules& R, const p
     var pair_x("pair_var_"+var_name);
     var x("var_"+var_name);
 
+    var pair_body("pair_body");
     var_info_t var_info(x,is_random(var_exp, scope));
 
     // 1. Perform the body with var_name in scope
     auto p = get_model_as(R, body_exp, extend_scope(scope, var_name, var_info));
-    expression_ref E = p.first;
+    expression_ref let_body = p.first;
+
+    // E = return (fst pair_body, snd_pair_body)
+    expression_ref E = {do_return,Tuple({fst,pair_body},{snd,pair_body})};
+
+    // E = do {pair_body <- let_body ; E}
+    E = {bind, let_body, lambda_quantify(pair_body,E)};
 
     // 2. Perform the variable expression
     {
@@ -412,10 +439,11 @@ optional<pair<expression_ref,set<string>>> get_model_let(const Rules& R, const p
 	if (arg_p.second.size())
 	    throw myexception()<<"You cannot let-bind a variable to an expression with a function-variable";
 
-	// E = 'arg <<= (\pair_var_name -> let {arg_name=fst pair_var_name} in E)
-	E = lambda_quantify(pair_x, let_expression({{x,{fst,pair_x}}},E));
+	// E = let arg_name=fst pair_var_name; E
+	E = let_expression({{x,{fst,pair_x}}},E);
 
-	E = {bind, arg, E};
+	// E = do {pair_x <- arg ; E}
+	E = {bind, arg, lambda_quantify(pair_x,E)};
     }
 
     return {{E, p.second}};
