@@ -923,10 +923,12 @@ When multiple runs are analyzed, this command gives PSRF and joint ESS values. T
       </section>
 
       <section><info><title>Computing an alignment using Posterior Decoding</title></info>
-	
-      <screen><prompt>%</prompt> cut-range --skip=<replaceable>burn-in</replaceable> &lt; C1.P<replaceable>p</replaceable>.fastas | alignment-chop-internal --tree <replaceable>treefile</replaceable> | alignment-max &gt; P<replaceable>p</replaceable>-max.fasta</screen>
+      <para>To construct an alignment estimate via posterior decoding, select any tree file <replaceable>tree</replaceable> that corresponds to your alignment.  It does not need to be fully resolved.
+      </para>
+      
+      <screen><prompt>%</prompt> cut-range <replaceable>dir</replaceable>-1/C1.P<replaceable>p</replaceable>.fastas <replaceable>dir</replaceable>-2/C1.P<replaceable>p</replaceable>.fastas --skip=<replaceable>burn-in</replaceable> | alignment-chop-internal --tree <replaceable>tree</replaceable> | alignment-max &gt; P<replaceable>p</replaceable>-max.fasta</screen>
 
-      <para>We need the <userinput>alignment-chop-internal</userinput> command because the alignments in <filename>C1.P<replaceable>p</replaceable>.fastas</filename> have ancestral sequences that we need to remove before sending them to alignment-max.  The treefile is any tree with the same sequences as the alignment, and is used to specify which sequences are non-ancestral and should be kept.  If you don't have such a tree file on hand, you can use <userinput>-N <replaceable>n</replaceable></userinput> to specify how many (non-ancestral) sequences are in the analysis.</para>
+      <para>You can optionally replace <userinput>--tree <replaceable>tree</replaceable></userinput> with <userinput>-N <replaceable>n_sequences</replaceable></userinput>, where <replaceable>n_sequences</replaceable> is the number of non-ancestral sequences in your alignment.</para>
 
       <para>You can use the program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://pbil.univ-lyon1.fr/software/seaview.html">SeaView</link> to view the alignment graphically.</para>
 
@@ -942,7 +944,7 @@ When multiple runs are analyzed, this command gives PSRF and joint ESS values. T
       <section><info><title>Create an Au (Alignment Uncertainty) plot</title></info>
 	
 <para>To annotate a specific alignment <replaceable>alignment</replaceable>.fasta, choose a fully resolved tree estimate <replaceable>tree</replaceable>:
-<screen><prompt>%</prompt> cut-range --skip=<replaceable>burn-in</replaceable> &lt; C1.P<replaceable>p</replaceable>.fastas | alignment-gild <replaceable>alignment</replaceable>.fasta <replaceable>tree</replaceable>  &gt; <replaceable>alignment</replaceable>-AU.prob
+<screen><prompt>%</prompt> cut-range <replaceable>dir</replaceable>-1/C1.P<replaceable>p</replaceable>.fastas <replaceable>dir</replaceable>-2/C1.P<replaceable>p</replaceable>.fastas --skip=<replaceable>burn-in</replaceable> | alignment-chop-internal --tree <replaceable>tree</replaceable>  | alignment-gild <replaceable>alignment</replaceable>.fasta <replaceable>tree</replaceable>  &gt; <replaceable>alignment</replaceable>-AU.prob
 <prompt>%</prompt> alignment-draw <replaceable>alignment</replaceable>.fasta --AU <replaceable>alignment</replaceable>-AU.prob &gt; <replaceable>alignment</replaceable>-AU.html</screen>
 The majority consensus tree is usually not fully resolved, so we recommend using the greedy consensus instead.
 </para>
@@ -1737,12 +1739,12 @@ hky85_sym+x2_sym+f[pi=List[Pair["AA",0.01],Pair["AC",0.01],Pair["AG",0.01],Pair[
 		</entry>
 	      </row>
 
-	      <row>
+	      <!-- row>
 		<entry><userinput>x3x3[q1,q2,q3]</userinput></entry>
 		<entry>df(q1)+df(q2)+df(q3)</entry>
 		<entry><para>Triplet rate matrix constructed from a nucleotide rate matrix for each codon position (dN/dS = 1).</para>
 		</entry>
-	      </row>
+	      </row -->
 
 	      <row>
 		<entry><userinput><replaceable>codon_model</replaceable>+dNdS[omega]</userinput></entry>
