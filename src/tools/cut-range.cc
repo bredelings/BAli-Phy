@@ -43,7 +43,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     // named options
     options_description invisible("Invisible options");
     invisible.add_options()
-	("filenames", value<vector<string>>(),"Filenames to read")
+	("filenames", value<vector<string>>()->composing(),"Filenames to read")
 	;
 
     options_description visible("All options");
@@ -59,8 +59,12 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description all("All options");
     all.add(invisible).add(visible);
 
+    // positional options
+    positional_options_description p;
+    p.add("filenames", -1);
+
     variables_map args;     
-    store(parse_command_line(argc, argv, all), args);
+    store(command_line_parser(argc, argv).options(all).positional(p).run(), args);
     notify(args);    
 
     if (args.count("help")) {
@@ -127,6 +131,12 @@ int main(int argc,char* argv[])
 	//---------- Parse command line  -------//
 	variables_map args = parse_cmd_line(argc,argv);
 
+	vector<string> filenames;
+	if (args.count("filenames"))
+	    filenames = args["filenames"].as<vector<string>>();
+	else
+	    filenames = {"-"};
+
 	auto key = args["key"].as<string>();
 	optional<int> min;
 	if (args.count("skip"))
@@ -148,7 +158,12 @@ int main(int argc,char* argv[])
 	if (min and max and *max < *min)
 	    throw myexception()<<"error: maximum value ("<<*max<<") < minimum value ("<<*min<<")";
 
-	cut_range(std::cin, std::cout, key, min, max);
+	// FIXME: we can only read from stdin one time - the next time it will be empty.
+	for(auto& filename: filenames)
+	{
+	    istream_or_ifstream in(std::cin,"-", filename, "alignments file");
+	    cut_range(in, std::cout, key, min, max);
+	}
     }
     catch (std::exception& e) {
 	std::cerr<<"cut-range: Error! "<<e.what()<<std::endl;
