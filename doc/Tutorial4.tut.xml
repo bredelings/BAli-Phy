@@ -20,7 +20,7 @@
     <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.xhtml">Users Guide</link> is much more complete.</listitem>
     <listitem>Run <userinput><replaceable>tool</replaceable> --help</userinput> to see command line options for <replaceable>tool</replaceable>.</listitem>
     <listitem>Run <userinput>man <replaceable>tool</replaceable></userinput> to see the manual page for <replaceable>tool</replaceable>.</listitem>
-    <listitem>Manual pages for bali-phy and tools are also available <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/docs/#manpages">online</link>.</listitem>
+    <listitem>Manual pages for bali-phy and tools are also available <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/docs.php#manpages">online</link>.</listitem>
   </itemizedlist>
   </para>
 
@@ -65,8 +65,8 @@ By default, not all the options are shown.  To see more options, try:
 % bali-phy help expert   | less
 </para>
 <para>All bali-phy tools also take <userinput>--help</userinput>.
-% alignment-thin --help
-% alignment-cat --help
+% alignment-thin --help | less
+% alignment-cat --help  | less
 </para>
 </section>
 
@@ -510,8 +510,8 @@ This means that the branch lengths for partitions 1 and 3 are the same, instead 
 </section>
 
 <section><info><title>Dataset preparation</title></info>
-<section><info><title>Splitting and Merging Alignments</title></info>
-<para>BAli-Phy generally wants you to split concatenated gene regions in order to analyze them.
+<section><info><title>Splitting and merging Alignments</title></info>
+<para>You might want to split concatenated gene regions:
 % cd ~/alignment_files/examples/ITS-many/
 % alignment-cat -c1-223 ITS-region.fasta > 1.fasta
 % alignment-cat -c224-379 ITS-region.fasta > 2.fasta
@@ -528,7 +528,7 @@ You might want to reduce the number of taxa while attempting to preserve phyloge
 This removes sequences with 5 or fewer differences to the closest other sequence.
 <itemizedlist>
   <listitem>The <userinput>-v</userinput> option shows which sequences are removed and the distance to their closest neighbor.</listitem>
-  <listitem>The <userinput>--preserve</userinput> options keeps specific sequences in the data set.</listitem>
+  <listitem>The <userinput>--preserve</userinput> option keeps specific sequences in the data set.</listitem>
 </itemizedlist>
 You can also specify that data sets should be shrunk to a specific number of sequences:
 % alignment-thin --down-to=30 ITS-region.fasta -v > ITS-region-thinned.fasta
