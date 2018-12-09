@@ -386,24 +386,12 @@ optional<pair<expression_ref,set<string>>> get_variable_model(const ptree& E, co
 
 
 /*
- * Currently we are doing:
- * do
- *   pair_var <- var_body
- *   let var_name = fst pair_var
- *   let_body
  *
  * do
  *   pair_var <- var_body
  *   let var_name = fst pair_var
  *   pair_body <- let_body
- *   return (fst pair_body, snd pair_body)
- * I think we want to return
- *
- * do
- *   pair_var <- var_body
- *   let var_name = fst pair_var
- *   pair_body <- let_body
- *   return (fst pair_body, [("let:var",(Nothing,[(var_name,pair_x)])),("let:body"),pair_body])
+ *   return (fst pair_body, [("let:var",(Nothing,[(var_name,pair_x)])),("let:body",(Nothing,snd pair_body))])
  */
 optional<pair<expression_ref,set<string>>> get_model_let(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
 {
@@ -426,8 +414,17 @@ optional<pair<expression_ref,set<string>>> get_model_let(const Rules& R, const p
     auto p = get_model_as(R, body_exp, extend_scope(scope, var_name, var_info));
     expression_ref let_body = p.first;
 
-    // E = return (fst pair_body, snd_pair_body)
-    expression_ref E = {do_return,Tuple({fst,pair_body},{snd,pair_body})};
+    expression_ref var_loggers = List();
+    bool do_log = is_unlogged_random(R, var_exp, scope);
+    var_loggers = {var("Distributions.add_logger"), var_loggers, var_name, pair_x, do_log};
+
+    expression_ref loggers = List();
+    var Nothing("Data.Maybe.Nothing");
+    loggers = {var("Distributions.add_logger"),loggers,"let:body",Tuple(Nothing,{snd,pair_body}),false};
+    loggers = {var("Distributions.add_logger"),loggers,"let:var",Tuple(Nothing,var_loggers),false};
+
+    // E = return (fst pair_body, loggers)
+    expression_ref E = {do_return,Tuple({fst,pair_body},loggers)};
 
     // E = do {pair_body <- let_body ; E}
     E = {bind, let_body, lambda_quantify(pair_body,E)};
