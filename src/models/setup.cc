@@ -414,8 +414,9 @@ optional<pair<expression_ref,set<string>>> get_model_let(const Rules& R, const p
     auto p = get_model_as(R, body_exp, extend_scope(scope, var_name, var_info));
     expression_ref let_body = p.first;
 
-    expression_ref var_loggers = List();
+    // FIXME: we currently prohibit var_exp from containing any lambda-variables, so we don't need to check if it has them.
     bool do_log = is_unlogged_random(R, var_exp, scope);
+    expression_ref var_loggers = List();
     var_loggers = {var("Distributions.add_logger"), var_loggers, var_name, pair_x, do_log};
 
     expression_ref loggers = List();
