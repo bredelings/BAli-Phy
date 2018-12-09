@@ -62,7 +62,7 @@ po::options_description general_options(int level)
     // named options
     options_description general("General options");
     general.add_options()
-	("help,h", value<string>()->implicit_value("simple"),"Print usage information.")
+	("help,h", value<string>()->implicit_value("basic"),"Print usage information.")
 	("version,v", "Print version information.")
 	("test,t","Analyze the initial values and exit.")
 	;
