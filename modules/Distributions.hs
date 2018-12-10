@@ -114,6 +114,15 @@ do_log prefix model = do
       return (fst result)
 
 
+to_json s@(c:_) | is_char = JSONString s
+to_json []               = JSONArray []
+to_json l@(_:_)          = JSONArray [to_json x | x <- l]
+to_json x | is_double x  = JSONDouble x
+          | is_int    x  = JSONInt x
+to_json True             = JSONBool True
+to_json False            = JSONBool False
+to_json _                = JSONNull
+
 -- Hmm... it doesn't look like we can have a JSON object, just JSON representation, because a JSON object would have to have existential type fields.
 data JSON = JSONArray [JSON] | JSONObject [(String,JSON)] | JSONDouble Double | JSONInt Int | JSONBool Bool | JSONString String | JSONNull
 
