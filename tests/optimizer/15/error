@@ -1,4 +1,4 @@
 size = 1   Test.#0 = Foreign.Vector.listFromString Test.#9
 size = 1   Test.#5 = Prelude:error Test.#0
 size = 1   Test.#9 = "case: failed pattern match"
-size = 2   Test.f = \#7 -> case #7 of {(#1125, #3) -> 2,_ -> Test.#5}
+size = 2   Test.f = \#7 -> case #7 of {(#1128, #3) -> 2,_ -> Test.#5}

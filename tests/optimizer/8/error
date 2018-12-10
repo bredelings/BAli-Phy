@@ -1,6 +1,6 @@
-size = 1   Test.#0 = Prelude:add Test.#1122 Test.#1
+size = 1   Test.#0 = Prelude:add Test.#1125 Test.#1
 size = 1   Test.#1 = 20
-size = 1   Test.#1122 = 10
-size = 1   Test.#1123 = 10
-size = 1   Test.#2 = Prelude:add Test.#0 Test.#1123
-size = 0   Test.f = \#1124 -> Test.#2
+size = 1   Test.#1125 = 10
+size = 1   Test.#1126 = 10
+size = 1   Test.#2 = Prelude:add Test.#0 Test.#1126
+size = 0   Test.f = \#1127 -> Test.#2
