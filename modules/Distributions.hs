@@ -113,6 +113,13 @@ do_log prefix model = do
       create_sub_loggers prefix (snd result)
       return (fst result)
 
+-- Add function to create JSON from logger
+log_to_json_one (name,(Nothing,[])) = []
+log_to_json_one (name,(Just x,[])) = [(name,JSONObject[("value", to_json x)])]
+log_to_json_one (name,(Just x,sub_loggers)) = [(name, JSONObject[("value", to_json x),("children", log_to_json sub_loggers)])]
+log_to_json_one (name,(Nothing,sub_loggers)) = [(name, JSONObject[("children", log_to_json sub_loggers)])]
+
+log_to_json loggers = JSONObject $ concatMap log_to_json_one loggers
 
 to_json s@(c:_) | is_char = JSONString s
 to_json []               = JSONArray []
