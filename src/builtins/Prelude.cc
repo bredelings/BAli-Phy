@@ -7,6 +7,36 @@ using boost::dynamic_pointer_cast;
 using std::string;
 using std::vector;
 
+extern "C" closure builtin_function_is_int(OperationArgs& Args)
+{
+    auto arg = Args.evaluate(0);
+
+    if (arg.is_int())
+	return {bool_true};
+    else
+	return {bool_false};
+}
+
+extern "C" closure builtin_function_is_double(OperationArgs& Args)
+{
+    auto arg = Args.evaluate(0);
+
+    if (arg.is_double())
+	return {bool_true};
+    else
+	return {bool_false};
+}
+
+extern "C" closure builtin_function_is_char(OperationArgs& Args)
+{
+    auto arg = Args.evaluate(0);
+
+    if (arg.is_char())
+	return {bool_true};
+    else
+	return {bool_false};
+}
+
 extern "C" closure builtin_function_exp(OperationArgs& Args)
 {
     double x = Args.evaluate(0).as_double();
