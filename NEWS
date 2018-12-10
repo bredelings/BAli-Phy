@@ -11,15 +11,17 @@
    + Properly translate newick labels with quotes or _.
    + Don't replace W with A in observed sequences unless --set infer-ambiguous-observed=true
  - Misc
-   + Specify character ranges in a file: sequences.fasta:100-240,300-900
+   + Allow selecting character ranges from a file: "sequences.fasta:100-240,300-900"
    + Rename subsample to bali-subsample (to avoid conflicts with other software).
    + Install bali-phy-pkg.
    + Make BES package work again.
+   + Reorganize fields on C1.log
    - Hold Numeric[k] or Doublets[DNA/RNA] alignments fixed.
    - Allow writing alignments every iteration.
    - tree-tool: add scaling, pruning, computing diameter, etc.
+   - cut-range: allow selection samples from more than 1 alignment file
    - alignment-thin: clean up options and man page.
-   + alignment-distances: new tool, add accuracy and recall metrics.
+   - alignment-distances: new tool, add accuracy and recall metrics.
  - MCMC
    - Only compute probability *ratios*
      + Allow recovery from initial -infinity.
