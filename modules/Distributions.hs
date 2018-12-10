@@ -118,7 +118,7 @@ do_log prefix model = do
 data JSON = JSONArray [JSON] | JSONObject [(String,JSON)] | JSONDouble Double | JSONInt Int | JSONBool Bool | JSONString String | JSONNull
 
 json_to_string (JSONArray x) = "["++intercalate "," (map json_to_string x) ++ "]"
-json_to_string (JSONObject x) = "{"++ intercalate "," ["\""++key++"\": "++json_to_string value | (key,value) <- x] ++ "}"
+json_to_string (JSONObject x) = "{"++ intercalate ", " ["\""++key++"\": "++json_to_string value | (key,value) <- x] ++ "}"
 json_to_string (JSONDouble x) = show x
 json_to_string (JSONInt x) = show x
 json_to_string (JSONBool True) = "true"
