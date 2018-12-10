@@ -1,0 +1,30 @@
+function Integer[] cumsum(Integer[] xs) {
+         acc = 0
+         for (ix in 1:3) {
+             acc = acc + xs[ix]
+             ys[ix] = acc
+         }
+         return ys
+}
+
+for (ix in 1:3) {
+    z1[ix] = rpois(1, 1)
+    z2[ix] = ix
+    z3[ix] = 0
+}
+
+print(z1)
+print(z2)
+print(z3)
+
+x = [1,2,3]
+
+acc = 0
+for (ix in 1:3) {
+    acc = acc + x[ix]
+    y1[ix] = acc
+}
+print(y1)
+
+y2 = cumsum(x)
+print(y2)
