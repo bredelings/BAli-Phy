@@ -1,0 +1,34 @@
+
+#
+# Bayesian linear regression example
+#
+# by Will Freyman
+#
+
+
+x_obs <- readDataDelimitedFile(file="x.csv", header=FALSE, delimiter=",")[1]
+y_obs <- readDataDelimitedFile(file="y.csv", header=FALSE, delimiter=",")[1]
+
+beta ~ dnNormal(0, 1)
+alpha ~ dnNormal(0, 1)
+sigma ~ dnExponential(1)
+
+for (i in 1:x_obs.size()) {
+    mu_y[i] := (beta * x_obs[i]) + alpha
+    y[i] ~ dnNormal(mu_y[i], sigma)
+    y[i].clamp(y_obs[i])
+}
+
+mymodel = model(beta)
+
+moves[1] = mvSlide(beta)
+moves[2] = mvSlide(alpha)
+moves[3] = mvSlide(sigma)
+
+monitors[1] = mnModel("linear_regression.log")
+# monitors[1] = mnScreen()
+
+mymcmc = mcmc(mymodel, moves, monitors)
+mymcmc.run(10000)
+
+q()
