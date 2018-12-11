@@ -4,6 +4,8 @@ module Data.JSON where
 data JSON = JSONArray [JSON] | JSONObject [(String,JSON)] | JSONDouble Double | JSONInt Int | JSONBool Bool | JSONString String | JSONNull
 
 json_to_string (JSONArray x) = "["++intercalate "," (map json_to_string x) ++ "]"
+-- we aren't escaping strings here...
+-- if we actually build a C++ json object we could print that
 json_to_string (JSONObject x) = "{"++ intercalate ", " ["\""++key++"\": "++json_to_string value | (key,value) <- x] ++ "}"
 json_to_string (JSONDouble x) = show x
 json_to_string (JSONInt x) = show x
