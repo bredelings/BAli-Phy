@@ -15,6 +15,7 @@ builtin mod 2 "mod" "Prelude"
 builtin quot 2 "quot" "Prelude"
 builtin rem 2 "rem" "Prelude"
 
+pi = 3.14159265358979323846
 builtin exp 1 "exp" "Real"
 builtin sqrt 1 "sqrt" "Real"
 builtin log 1 "log" "Real"
