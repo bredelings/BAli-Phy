@@ -30,7 +30,10 @@
    - Interpreted models now separate the likelihood from the prior in logged output.
    - Interpreted models (e.g. LinearRegression.hs) are now a lot faster.
    - Simplify constructing loggers.
+   - Allow using poisson distribution.
  - Haskell
+   - Add Data.JSON module
+   - Implement quot, rem, div, mod.
    - Implement -X NoImplicitPrelude
    - Refactored functions out of Prelude into Data.List, etc.
    - Implement layout-sensitive parsing.
@@ -42,7 +45,6 @@
    - Implement running a module with --run-module
    - Encode strings as (listFromString String)
    - Add flags for dumping parsed, renamed, desugared, etc. code.
-   - Implement quot, rem, div, mod.
    - [FIX] float let out of let if it reveals a constant.
 
 * 3.3 (Aug 6, 2018)
