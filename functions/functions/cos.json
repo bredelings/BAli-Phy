@@ -1,0 +1,13 @@
+{
+    "name": "cos",
+    "result_type": "Double",
+    "no_log": true,
+    "call": "Compiler.Real.cos[x]",
+    "args": [
+        {
+            "arg_name": "x",
+            "arg_type": "Double"
+        }
+    ],
+    "title": "The cosine function"
+}

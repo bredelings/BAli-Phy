@@ -1,0 +1,13 @@
+{
+    "name": "sqrt",
+    "result_type": "Double",
+    "no_log": true,
+    "call": "Compiler.Real.sqrt[x]",
+    "args": [
+        {
+            "arg_name": "x",
+            "arg_type": "Double"
+        }
+    ],
+    "title": "The square-root function"
+}
