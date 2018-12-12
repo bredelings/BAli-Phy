@@ -5,6 +5,7 @@
 #include "computation/program.H"
 #include "math/log-double.H"
 #include "mcmc/prob_ratios.H"
+#include "util/json.hh"
 
 class reg;
 
@@ -201,7 +202,10 @@ public:
 protected:  
     void collect_garbage() const;
 
+    boost::optional<int> program_result_head;
+
 public:
+
     void show_graph() const;
   
     void allocate_identifiers_for_modules(const std::vector<std::string>& module_names);
@@ -209,6 +213,12 @@ public:
     void perform_transition_kernel(int i);
 
     int n_transition_kernels() const;
+
+    void add_program(const expression_ref&);
+
+    expression_ref evaluate_program() const;
+
+    virtual json get_logged_parameters() const;
 
     context& operator+=(const Module& M);
 
