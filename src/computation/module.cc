@@ -132,8 +132,7 @@ void Module::declare_fixity(const std::string& s, int precedence, fixity_t fixit
 void Module::add_import(bool qualified, const string& modid)
 {
     vector<expression_ref> sub;
-    if (qualified)
-	sub.push_back(String("qualified"));
+    if (qualified) sub.push_back(AST_node("qualified"));
     sub.push_back(String(modid));
   
     add_impdecl(expression_ref{AST_node("impdecl"),sub});
@@ -142,11 +141,9 @@ void Module::add_import(bool qualified, const string& modid)
 void Module::add_import_as(bool qualified, const string& modid, const string& modid2)
 {
     vector<expression_ref> sub;
-    if (qualified)
-	sub.push_back(String("qualified"));
+    if (qualified) sub.push_back(String("qualified"));
     sub.push_back(String(modid));
-    sub.push_back(String("as"));
-    sub.push_back(String(modid2));
+    sub.push_back(AST_node("as",modid2));
   
     add_impdecl(expression_ref{AST_node("impdecl"),sub});
 }
@@ -199,13 +196,13 @@ module_import parse_import(const expression_ref& impdecl)
     module_import mi;
 
     int i=0;
-    mi.qualified = impdecl.sub()[0].as_<String>() == "qualified";
+    mi.qualified = is_AST(impdecl.sub()[0], "qualified");
     if (mi.qualified) i++;
 	    
     mi.name = impdecl.sub()[i++].as_<String>();
 	    
-    if (i < impdecl.size() and impdecl.sub()[i++].as_<String>() == "as")
-	mi.as = impdecl.sub()[i++].as_<String>();
+    if (i < impdecl.size() and is_AST(impdecl.sub()[i],"as"))
+	mi.as = impdecl.sub()[i++].as_<AST_node>().value;
     else
 	mi.as = mi.name;
 

@@ -590,8 +590,9 @@ importdecls_semi: importdecls_semi importdecl semis1 { std::swap($$,$1); $$.push
 
 importdecl: "import" maybe_src maybe_safe optqualified maybe_pkg modid maybeas maybeimpspec {
     std::vector<expression_ref> e;
-    if ($4) e.push_back(std::string("qualified"));
+    if ($4) e.push_back(AST_node("qualified"));
     e.push_back(String($6));
+    if ($7) e.push_back(AST_node("as", *$7));
     $$ = expression_ref(new expression(AST_node("ImpDecl"),std::move(e)));
 }
 
