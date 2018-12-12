@@ -3,7 +3,7 @@ module Distributions where
 import Range
 import Parameters
 import MCMC
-import Data.JSON
+import Data.JSON as J
 
 -- Define the ProbDensity type
 data ProbDensity a = ProbDensity (a->Double) (Double->a) (IO a) Range
@@ -116,11 +116,11 @@ do_log prefix model = do
 
 -- Add function to create JSON from logger
 log_to_json_one (name,(Nothing,[])) = []
-log_to_json_one (name,(Just x,[])) = [(name,JSONObject[("value", to_json x)])]
-log_to_json_one (name,(Just x,sub_loggers)) = [(name, JSONObject[("value", to_json x),("children", log_to_json sub_loggers)])]
-log_to_json_one (name,(Nothing,sub_loggers)) = [(name, JSONObject[("children", log_to_json sub_loggers)])]
+log_to_json_one (name,(Just x,[])) = [(name, J.Object[("value", to_json x)])]
+log_to_json_one (name,(Just x,sub_loggers)) = [(name, J.Object[("value", to_json x),("children", log_to_json sub_loggers)])]
+log_to_json_one (name,(Nothing,sub_loggers)) = [(name, J.Object[("children", log_to_json sub_loggers)])]
 
-log_to_json loggers = JSONObject $ concatMap log_to_json_one loggers
+log_to_json loggers = J.Object $ concatMap log_to_json_one loggers
 
 -- Define some helper functions
 no_quantile name = error ("Distribution '"++name++"' has no quantile function")
