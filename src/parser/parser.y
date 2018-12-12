@@ -258,10 +258,8 @@
 %type <boost::optional<std::string>> maybe_pkg
 %type <bool> optqualified
 %type <boost::optional<std::string>> maybeas
-/*
-%type <void> maybeimpspec
-%type <void> impspec
-*/
+%type <expression_ref> maybeimpspec
+%type <expression_ref> impspec
 
 %type <boost::optional<int>> prec
 %type <std::string> infix
@@ -554,7 +552,7 @@ exportlist1: exportlist1 "," export   {std::swap($$,$1); $$.push_back($3);}
 |            export                   {$$.push_back($1);}
 
 export: qcname_ext export_subspec     {std::swap($$,$1);} /* This ignores subspec */
-|       "module" modid                {$$ = new expression(AST_node("module"),{String($2)});}
+|       "module" modid                {$$ = AST_node("module",$2);}
 |       "pattern" qcon                {}
 
 export_subspec: %empty
@@ -572,8 +570,8 @@ qcname_ext_w_wildcard: qcname_ext    {std::swap($$,$1);}
 qcname_ext: qcname                   {std::swap($$,$1);}
 |           "type" oqtycon           {}
 
-qcname: qvar                         {$$ = new expression(AST_node("qvar"),{String($1)});}
-|       oqtycon_no_varcon            {$$ = new expression(AST_node("qvar"),{String($1)});}
+qcname: qvar                         {$$ = AST_node("qvar",$1); }
+|       oqtycon_no_varcon            {$$ = AST_node("qvar",$1); }
 
 /* ------------- Import Declarations ----------------------------- */
 
@@ -593,6 +591,7 @@ importdecl: "import" maybe_src maybe_safe optqualified maybe_pkg modid maybeas m
     if ($4) e.push_back(AST_node("qualified"));
     e.push_back(String($6));
     if ($7) e.push_back(AST_node("as", *$7));
+    if ($8) e.push_back($8);
     $$ = expression_ref(new expression(AST_node("ImpDecl"),std::move(e)));
 }
 
@@ -611,11 +610,11 @@ optqualified: "qualified"      { $$ = true; }
 maybeas:  "as" modid           { $$ = $2; }
 |         %empty               { }
 
-maybeimpspec: impspec
-|             %empty
+maybeimpspec: impspec          { $$ = $1; }
+|             %empty           { }
 
-impspec: "(" exportlist ")"
-|        "hiding" "(" exportlist ")"
+impspec: "(" exportlist ")"           { $$ = expression_ref{AST_node("only"),$2}; }
+|        "hiding" "(" exportlist ")"  { $$ = expression_ref{AST_node("hiding"),$3}; }
 
 
 /* ------------- Fixity Declarations ----------------------------- */

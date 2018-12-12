@@ -206,6 +206,20 @@ module_import parse_import(const expression_ref& impdecl)
     else
 	mi.as = mi.name;
 
+    if (i < impdecl.size() and is_AST(impdecl.sub()[i], "only"))
+    {
+	auto& only = impdecl.sub()[i++];
+	for(auto& x: only.sub())
+	    mi.only.push_back(x.as_<AST_node>().value);
+    }
+
+    if (i < impdecl.size() and is_AST(impdecl.sub()[i], "hiding"))
+    {
+	auto& hiding = impdecl.sub()[i++];
+	for(auto& x: hiding.sub())
+	    mi.hiding.push_back(x.as_<AST_node>().value);
+    }
+
     // only:   handle import qualified A as B (x, y)
     // hiding:  handle import qualified A as B hiding (x, y)
 
@@ -337,7 +351,7 @@ void Module::perform_exports()
 	{
 	    if (is_AST(ex,"qvar"))
 	    {
-		string qvarid = ex.sub()[0].as_<String>(); // This ignores export subspec - see grammar.
+		string qvarid = ex.as_<AST_node>().value; // This ignores export subspec - see grammar.
 		if (aliases.count(qvarid))
 		    export_symbol(lookup_symbol(qvarid));
 		else
@@ -345,7 +359,7 @@ void Module::perform_exports()
 	    }
 	    else if (is_AST(ex,"module"))
 	    {
-		string modid = ex.sub()[0].as_<String>();
+		string modid = ex.as_<AST_node>().value;
 		export_module(modid);
 	    }
 	    else

@@ -383,6 +383,8 @@ namespace yy {
       // qcname_ext
       // qcname
       // importdecl
+      // maybeimpspec
+      // impspec
       // topdecl
       // ty_decl
       // tycl_hdr
@@ -1706,6 +1708,8 @@ namespace yy {
       case 158: // qcname_ext
       case 159: // qcname
       case 164: // importdecl
+      case 170: // maybeimpspec
+      case 171: // impspec
       case 177: // topdecl
       case 179: // ty_decl
       case 186: // tycl_hdr
@@ -1926,6 +1930,8 @@ namespace yy {
       case 158: // qcname_ext
       case 159: // qcname
       case 164: // importdecl
+      case 170: // maybeimpspec
+      case 171: // impspec
       case 177: // topdecl
       case 179: // ty_decl
       case 186: // tycl_hdr
@@ -2246,6 +2252,8 @@ namespace yy {
       case 158: // qcname_ext
       case 159: // qcname
       case 164: // importdecl
+      case 170: // maybeimpspec
+      case 171: // impspec
       case 177: // topdecl
       case 179: // ty_decl
       case 186: // tycl_hdr
@@ -2472,6 +2480,8 @@ namespace yy {
       case 158: // qcname_ext
       case 159: // qcname
       case 164: // importdecl
+      case 170: // maybeimpspec
+      case 171: // impspec
       case 177: // topdecl
       case 179: // ty_decl
       case 186: // tycl_hdr
@@ -3528,7 +3538,7 @@ namespace yy {
 
 
 } // yy
-#line 3532 "parser.hh" // lalr1.cc:380
+#line 3542 "parser.hh" // lalr1.cc:380
 
 
 
