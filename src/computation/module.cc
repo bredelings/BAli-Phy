@@ -75,14 +75,12 @@ void Module::add_alias(const string& identifier_name, const string& resolved_nam
     if (not symbols.count(resolved_name))
 	throw myexception()<<"Can't add alias '"<<identifier_name<<"' -> '"<<resolved_name<<"' in module '"<<name<<"' because '"<<resolved_name<<"' is neither declared nor imported.";
 
-    std::pair<string,string> element(identifier_name,resolved_name);
-
     auto range = aliases.equal_range(identifier_name);
     for(auto it = range.first; it != range.second; it++)
 	if (it->second == resolved_name)
 	    return;
 
-    aliases.insert( std::pair<string,string>(identifier_name, resolved_name) );
+    aliases.insert( {identifier_name, resolved_name} );
 }
 
 void Module::declare_symbol(const symbol_info& S)
