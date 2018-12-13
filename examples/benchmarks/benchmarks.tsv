@@ -1,0 +1,12 @@
+#Time,s	niter	label	CPU	CXX	CXXFLAGS
+225	50	gcc-8.2.0	Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz	g++-8.2.0	-O3 -march=native -pipe -g
+226	50	repeat	Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz	g++-8.2.0	-O3 -march-native -pipe -g
+226	50	repeat 2	Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz	g++-8.2.0	-O3 -march-native -pipe -g 
+221	50	unroll-loops removed from meson	Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz	g++-8.2.0	-O3 -march-native -pipe -g
+220	50	unroll-loops removed,repeat	Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz	g++-8.2.0	-O3 -march-native -pipe -g
+276	50	no -ffast-math	Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz	g++-8.2.0	-O3 -march-native -pipe -g
+282	50	-O2 but -ffast-math	Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz	g++-8.2.0	-O2 -march=native -pipe -g
+220	50	-O3 with Link Time Optimization	Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz	g++-8.2.0	-O3 -march=native -pipe -g -flto
+204	50	-O3 LTO FDO	Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz	g++-8.2.0	-O3 -march=native -pipe -g -flto
+306	50	clang-7	Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz	clang++-7	-O3 -march=native -pipe -g -Wl,--emit-relocs
+195	50	gcc-8-fdo internal boost/eigen	Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz	g++-8.2.0	-O3 -march=native -pipe -g -flto -fprofile-use
