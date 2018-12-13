@@ -129,34 +129,6 @@ void Module::declare_fixity(const std::string& s, int precedence, fixity_t fixit
     S.fixity = fixity;
 }
 
-void Module::add_import(bool qualified, const string& modid)
-{
-    vector<expression_ref> sub;
-    if (qualified) sub.push_back(AST_node("qualified"));
-    sub.push_back(String(modid));
-  
-    add_impdecl(expression_ref{AST_node("impdecl"),sub});
-}
-
-void Module::add_import_as(bool qualified, const string& modid, const string& modid2)
-{
-    vector<expression_ref> sub;
-    if (qualified) sub.push_back(String("qualified"));
-    sub.push_back(String(modid));
-    sub.push_back(AST_node("as",modid2));
-  
-    add_impdecl(expression_ref{AST_node("impdecl"),sub});
-}
-
-void Module::add_impdecl(const expression_ref& impdecl)
-{
-    vector<expression_ref> sub;
-    if (impdecls)
-	sub = impdecls.sub();
-    sub.push_back(impdecl);
-    impdecls = expression_ref{AST_node("impdecls"),sub};
-}
-
 // Question: what if we import m1.s, which depends on an unimported m2.s?
 void Module::import_symbol(const symbol_info& S, const string& modid, bool qualified)
 {
