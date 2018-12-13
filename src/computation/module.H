@@ -107,7 +107,7 @@ public:
 
     std::set<std::string> dependencies() const;
 
-    std::map<std::string,module_import> imports() const;
+    std::vector<module_import> imports() const;
 
     const std::map<std::string, symbol_info>& exported_symbols() const {return exported_symbols_;}
 

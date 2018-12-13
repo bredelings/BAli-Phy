@@ -197,31 +197,32 @@ module_import parse_import(const expression_ref& impdecl)
     return mi;
 }
 
-map<string,module_import> Module::imports() const
+vector<module_import> Module::imports() const
 {
-    std::map<string, module_import> imports_map;
+    vector<module_import> imports_list;
 
+    bool seen_Prelude = false;
     if (impdecls)
 	for(const auto& impdecl:impdecls.sub())
 	{
 	    auto import = parse_import(impdecl);
-	    if (imports_map.count(import.name))
-		throw myexception()<<"Module '"<<name<<"': importing module '"<<import.name<<"' twice!";
-	    imports_map[import.name] = import;
+	    if (import.name == "Prelude")
+		seen_Prelude = true;
+	    imports_list.push_back(import);
 	}
 
     // Import the Prelude if it wasn't explicitly mentioned in the import list.
-    if (not imports_map.count("Prelude") and name != "Prelude" and not language_options.count("NoImplicitPrelude"))
-	imports_map["Prelude"] = module_import("Prelude");
+    if (not seen_Prelude and name != "Prelude" and not language_options.count("NoImplicitPrelude"))
+	imports_list.push_back( module_import("Prelude") );
 
-    return imports_map;
+    return imports_list;
 }
 
 set<string> Module::dependencies() const
 {
     set<string> modules;
     for(auto& mi: imports())
-	modules.insert(mi.second.name);
+	modules.insert(mi.name);
     return modules;
 }
 
@@ -275,7 +276,7 @@ void Module::compile(const Program& P)
 void Module::perform_imports(const Program& P)
 {
     for(auto& i: imports())
-	import_module(P, i.second);
+	import_module(P, i);
 }
 
 void Module::export_symbol(const symbol_info& S)
@@ -291,7 +292,7 @@ void Module::export_symbol(const symbol_info& S)
 
 void Module::export_module(const string& modid)
 {
-    if (modid != name and not imports().count(modid))
+    if (modid != name and not dependencies().count(modid))
 	throw myexception()<<"module '"<<modid<<"' is exported but not imported";
 
     for(auto& s: symbols)
