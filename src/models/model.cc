@@ -540,5 +540,11 @@ void add_model(Model& M, const std::string& name)
 {
     M += name;
     string prefix = name;
-    M.perform_expression({var("Distributions.do_log"),prefix,{var("Distributions.gen_model_no_alphabet"),var(name+".main")}});
+    expression_ref P = var(name+".main");
+//    M.add_program( P );
+//    auto result = M.evaluate_program();
+//    std::cout<<result<<std::endl;
+//    json j = M.get_logged_parameters();
+//    std::cout<<j<<std::endl;
+    M.perform_expression({var("Distributions.do_log"),prefix,{var("Distributions.gen_model_no_alphabet"), P}});
 }
