@@ -32,6 +32,7 @@
    - Simplify constructing loggers.
    - Allow using poisson distribution.
  - Haskell
+   - Allow "import modid (stuff)" and "import modid hiding (stuff)"
    - Add Data.JSON module
    - Implement quot, rem, div, mod.
    - Implement -X NoImplicitPrelude
