@@ -144,8 +144,11 @@ void Module::import_symbol(const symbol_info& S, const string& modid, bool quali
 	add_alias(get_unqualified_name(S.name), S.name);
 }
 
-void Module::import_module(const Module& M2, const string& modid, bool qualified)
+void Module::import_module(const Program& P, const module_import& I)
 {
+    auto& M2 = P.get_module(I.name);
+    auto& modid = I.as;
+    bool qualified = I.qualified;
     assert(modid != name);
 
     // Right now 'exports' only has functions, not data types or constructors
@@ -156,11 +159,6 @@ void Module::import_module(const Module& M2, const string& modid, bool qualified
 
 	import_symbol(S, modid, qualified);
     }
-}
-
-void Module::import_module(const Module& M2, bool qualified)
-{
-    import_module(M2, M2.name, qualified);
 }
 
 module_import parse_import(const expression_ref& impdecl)
@@ -277,10 +275,7 @@ void Module::compile(const Program& P)
 void Module::perform_imports(const Program& P)
 {
     for(auto& i: imports())
-    {
-	auto& I = P.get_module(i.second.name);
-	import_module(I, i.second.as, i.second.qualified);
-    }
+	import_module(P, i.second);
 }
 
 void Module::export_symbol(const symbol_info& S)
