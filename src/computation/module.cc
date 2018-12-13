@@ -151,12 +151,29 @@ void Module::import_module(const Program& P, const module_import& I)
 
     // Right now 'exports' only has functions, not data types or constructors
 
-    for(const auto& p: M2.exported_symbols())
-    {
-	const symbol_info& S = p.second;
+    auto& m2_exports = M2.exported_symbols();
 
-	import_symbol(S, modid, qualified);
-    }
+    if (I.only)
+	for(const auto& s_name: I.symbols)
+	{
+	    if (not m2_exports.count(s_name))
+		throw myexception()<<"Module '"<<I.name<<"' has no symbol '"<<s_name<<"'";
+
+	    const symbol_info& S = m2_exports.at(s_name);
+
+	    import_symbol(S, modid, qualified);
+	}
+    else
+	for(const auto& p: m2_exports)
+	{
+	    const symbol_info& S = p.second;
+
+	    auto unqualified_name = get_unqualified_name(S.name);
+
+	    if (I.hiding and I.symbols.count(unqualified_name)) continue;
+
+	    import_symbol(S, modid, qualified);
+	}
 }
 
 module_import parse_import(const expression_ref& impdecl)
@@ -174,18 +191,15 @@ module_import parse_import(const expression_ref& impdecl)
     else
 	mi.as = mi.name;
 
-    if (i < impdecl.size() and is_AST(impdecl.sub()[i], "only"))
+    if (i < impdecl.size() and (is_AST(impdecl.sub()[i], "only") or is_AST(impdecl.sub()[i],"hiding")))
     {
-	auto& only = impdecl.sub()[i++];
-	for(auto& x: only.sub())
-	    mi.only.push_back(x.as_<AST_node>().value);
-    }
+	mi.hiding = is_AST(impdecl.sub()[i],"hiding");
+	mi.only = is_AST(impdecl.sub()[i],"only");
+	assert(mi.hiding or mi.only);
 
-    if (i < impdecl.size() and is_AST(impdecl.sub()[i], "hiding"))
-    {
-	auto& hiding = impdecl.sub()[i++];
-	for(auto& x: hiding.sub())
-	    mi.hiding.push_back(x.as_<AST_node>().value);
+	auto& objects = impdecl.sub()[i++].sub();
+	for(auto& x: objects)
+	    mi.symbols.insert(x.as_<AST_node>().value);
     }
 
     // only:   handle import qualified A as B (x, y)

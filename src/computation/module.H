@@ -57,8 +57,9 @@ struct module_import
     std::string name;
     bool qualified = false;
     std::string as;
-    std::vector<std::string> only;
-    std::vector<std::string> hiding;
+    bool only = false;
+    bool hiding = false;
+    std::set<std::string> symbols;
     module_import() = default;
     module_import(const std::string& s):name(s),as(s) {}
 };
