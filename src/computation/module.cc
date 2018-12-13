@@ -45,7 +45,7 @@ bool operator==(const symbol_info&S1, const symbol_info& S2)
 {
     return (S1.name == S2.name) and (S1.symbol_type == S2.symbol_type) and 
 	(S1.arity == S2.arity) and (S1.precedence == S2.precedence) and (S1.fixity == S2.fixity) and
-	(S1.type.ptr() == S2.type.ptr());
+	(S1.type == S2.type);
 }
 
 bool operator!=(const symbol_info&S1, const symbol_info& S2)
