@@ -38,6 +38,9 @@ public:
     
 	    switch(type_)
 	    {
+	    case null_type:
+		return true;
+		break;
 	    case int_type:
 		return (i == E2.as_int());
 		break;
