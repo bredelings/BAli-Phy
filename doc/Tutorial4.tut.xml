@@ -244,49 +244,62 @@ First, lets split the gene into separate FASTA files for each intron and exon:
 % alignment-cat -c 1329-1393 -e cleaned.fasta > exon4.fasta
 Now, let's put the pieces back together in case we need the complete gene in the future:
 % alignment-cat exon1.fasta intron1.fasta exon2.fasta intron2.fasta exon3.fasta intron3.fasta exon4.fasta > combined.fasta
+It is also possible to refer to character sets without creating a file for each one, as mentioned below.
 </section>
 
 <section><info><title>The Rates.free model</title></info>
-Will we use the <userinput>gtr+Rates.free[n=4]</userinput> for the substitution model.
-% bali-phy exon{1,2,3,4}.fasta intron{1,2,3}.fasta -S gtr+Rates.free[n=4] --test
+<para>We will add <userinput>-S gtr+Rates.free[n=4]</userinput> to use the free-rates model of substitution with 4 categories:
+% bali-phy exon1.fasta intron1.fasta exon2.fasta intron2.fasta exon3.fasta intron3.fasta exon4.fasta -S gtr+Rates.free[n=4] --test
 This model is more general than Rates.gamma, since it estimates 4 free rates and the frequencies
 of the 4 rates.  These 8 parameters have 6 degrees of freedom, which is a lot more than the 1
 degree of freedom for the <userinput>Rates.gamma</userinput> model.  Furthermore, each partition
 by default gets a separate copy of the model, which leads to 42 degrees of freedom
 just for the <userinput>Rates.free</userinput> part of the model!
+</para>
 </section>
 
 <section><info><title>Fixing the alignment of some partitions</title></info>
-We would like to disable alignment estimation, but only for the exons:
-% bali-phy exon{1,2,3,4}.fasta intron{1,2,3}.fasta -I 1,2,3,4:none -S gtr+Rates.free[n=4] --test
+<para>
+We will now add <userinput>-I 1,3,5,7:none</userinput> to disable alignment estimation, but only for the exons:
+% bali-phy exon1.fasta intron1.fasta exon2.fasta intron2.fasta exon3.fasta intron3.fasta exon4.fasta -S gtr+Rates.free[n=4] -I 1,3,5,7:none --test
+</para>
 </section>
 
 <section><info><title>Linking parameters between partitions</title></info>
 We can reduce the number of parameters by using one set of parameters for the exons, and one set
 for the introns.  This is called <emphasis>linking</emphasis> the models.
-% bali-phy exon{1,2,3,4}.fasta intron{1,2,3}.fasta -I 1,2,3,4:none -S 1,2,3,4:gtr+Rates.free[n=4] -S 5,6,7:gtr+Rates.free[n=4] --test
+% bali-phy exon1.fasta intron1.fasta exon2.fasta intron2.fasta exon3.fasta intron3.fasta exon4.fasta -I 1,3,5,7:none -S 1,3,5,7:gtr+Rates.free[n=4] -S 2,4,6:gtr+Rates.free[n=4] --test
 We would also like to share the indel model between introns:
-% bali-phy exon{1,2,3,4}.fasta intron{1,2,3}.fasta -I 1,2,3,4:none -S 1,2,3,4:gtr+Rates.free[n=4] -S 5,6,7:gtr+Rates.free[n=4] -I 5,6,7: --test
-However, the command line is getting so long that it is difficult to manage.
+% bali-phy exon1.fasta intron1.fasta exon2.fasta intron2.fasta exon3.fasta intron3.fasta exon4.fasta -I 1,3,5,7:none -S 1,3,5,7:gtr+Rates.free[n=4] -S 2,4,6:gtr+Rates.free[n=4] -I 2,4,6: --test
 </section>
 
+<section><info><title>Character sets</title></info>
+<para>Instead of creating separate files for each intron and exon, we can also refer to
+character sets of the combined file:
+% bali-phy cleaned.fasta:5-8 cleaned.fasta:454-596 cleaned.fasta:865-948 cleaned.fasta:1329-1393 cleaned.fasta:9-453 cleaned.fasta:597-864 cleaned.fasta:949-1328 -I 1,2,3,4:none -S 1,2,3,4:gtr+Rates.free[n=4] -S 5,6,7:gtr+Rates.free[n=4] -I 5,6,7: --test
+However, the command line is getting so long that it is difficult to manage.
+</para>
+</section>
 <section><info><title>Option files</title></info>
-<para>We can put the options into a text file that is easier to manage and edit.
-Let's make a text file called <filename>options1.txt</filename>:</para>
-<programlisting>align = exon1.fasta
-align = exon2.fasta
-align = exon3.fasta
-align = exon4.fasta
-align = intron1.fasta
-align = intron2.fasta
-align = intron3.fasta
+<para>Instead of writing all options on the command line, We can put some of them into a
+text file that is easier to manage and edit. Let's make a text file called <filename>options1.txt</filename>:
+<programlisting>align = cleaned.fasta:5-8       # exon1
+align = cleaned.fasta:9-453     # intron1
+align = cleaned.fasta:454-596   # exon2
+align = cleaned.fasta:597-864   # intron2
+align = cleaned.fasta:865-948   # exon3
+align = cleaned.fasta:949-1328  # intron3
+align = cleaned.fasta:1329-1393 # exon4
 
-smodel = 1,2,3,4:gtr+Rates.free[n=4]
-imodel = 1,2,3,4:none
+# exons
+smodel = 1,3,5,7:gtr+Rates.free[n=4]
+imodel = 1,3,5,7:none
 
-smodel = 5,6,7:gtr+Rates.free[n=4]
-imodel = 5,6,7:
+# introns
+smodel = 2,4,6:gtr+Rates.free[n=4]
+imodel = 2,4,6:
 </programlisting>
+</para>
 We can then run
 % bali-phy -c options1.txt --test
 </section>
@@ -373,17 +386,21 @@ imodel = 4:none
 <section><info><title>Analysis 4: ITS sequences - with a better model</title></info>
 <para>Let's revisit the ITS sequences used in analysis 2.  Now that you've been exposed to different models in different partitions, lets use a more complex substitution model for the ITS partitions (<userinput>--smodel 1,3:tn93+Rates.free[n=3]</userinput>).  Note that this also links the substitution models for the ITS partitions.</para>
 
-<para>We can also fix the alignment for 5.8S partition, since it has almost no indels.</para>
+<para>We can also fix the alignment for 5.8S partition, since it has almost no indels.
 
 <programlisting>align = ITS1.fasta
 align = 5.8S.fasta
 align = ITS2.fasta
+
 smodel = 1,3:tn93+Rates.free[n=3]
 smodel = 2:tn93
+
 imodel = 2:none
+
 scale = 1,3:
 </programlisting>
-This file additionally links the <emphasis>scale</emphasis> for the ITS partitions (<userinput>--scale=1,3:</userinput>). This forces them to share the same evolutionary rate, and allows more precise estimates of the shared scale.  You can run the analysis with unlinked scales by removing this option in order to determine if (i) the scales are similar enough to share and (ii) the scales have a high enough variance that they need to be linked.
+</para>
+<para>This file additionally links the <emphasis>scale</emphasis> for the two ITS partitions (<userinput>--scale=1,3:</userinput>). This forces them to share the same evolutionary rate, and allows more precise estimates of the shared scale.  You can run the analysis with unlinked scales by removing this option in order to determine if (i) the scales are similar enough to share and (ii) the scales have a high enough variance that they need to be linked.</para>
 </section>
 
 <section xml:id="substitution_models"><info><title>Complex substitution models</title></info>
