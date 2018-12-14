@@ -373,7 +373,7 @@ This can be done simply by starting several instances of the program, and does n
       <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta</userinput></screen>
       You can run a traditional fixed-alignment Bayesian tree inference by adding <userinput>-I none</userinput>:
       <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -I none</userinput></screen>
-      You can also specify a range of characters to use in the analysis:
+      You can also specify a character set for analysis:
       <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta:1-30,90-100</userinput></screen>
       </para>
     </section>
@@ -3000,7 +3000,7 @@ your <command>bali-phy</command> runs on that computer.
 	<qandaentry>
 	  <question><para>How do I select columns from an alignment?</para></question>
 	  <answer><para>
-	    You can now select columns in an analysis by specifying a range:
+	    You can now select columns for analysis by specifying a range:
 	    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta:1-200,401-600 sequences.fasta:201-400</userinput></screen>
 	    You can create a new alignment from selected columns using <userinput>alignment-cat</userinput>:
 	    <screen><prompt>%</prompt> alignment-cat -c1-10,50-100,600- <replaceable>filename.fasta</replaceable> &gt; result.fasta</screen>
