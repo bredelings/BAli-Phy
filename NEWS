@@ -1,4 +1,4 @@
-* 3.4 (UNRELEASED)
+* 3.4 (Dec 13, 2018)
  - Evolutionary models
    - Add Doublet alphabet for RNA stems.
    - Add generic +mut_sel model modifier.
@@ -11,6 +11,7 @@
    + Properly translate newick labels with quotes or _.
    + Don't replace W with A in observed sequences unless --set infer-ambiguous-observed=true
  - Misc
+   - Correctly log things inside a let binding.
    + Allow selecting character ranges from a file: "sequences.fasta:100-240,300-900"
    + Rename subsample to bali-subsample (to avoid conflicts with other software).
    + Install bali-phy-pkg.
@@ -32,7 +33,7 @@
    - Simplify constructing loggers.
    - Allow using poisson distribution.
  - Haskell
-   - Allow "import modid (stuff)" and "import modid hiding (stuff)"
+   - Allow "import modid ( .... )" and "import modid hiding ( .... )"
    - Add Data.JSON module
    - Implement quot, rem, div, mod.
    - Implement -X NoImplicitPrelude
