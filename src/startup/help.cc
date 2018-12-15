@@ -408,7 +408,7 @@ void help_topics(std::ostream& o, const ptree& help)
     auto subtopics = get_subtopics(help);
     subtopics.push_back("functions");
     
-    o<<"To help on one of the following topics, run `bali-phy help "<<underline("topic")<<"`\n\n";
+    o<<"To see help on one of the following topics, run `bali-phy help "<<underline("topic")<<"`\n\n";
     o<<show_options(subtopics);
     o<<"\n";
     o<<"\n";
