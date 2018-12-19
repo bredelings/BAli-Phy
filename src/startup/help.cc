@@ -440,15 +440,17 @@ void show_help(const string& topic, const vector<fs::path>& package_paths)
     Rules R(package_paths);
     if (topic == "functions")
     {
+	vector<string> func_names;
+
 	for(auto& rule: R.get_rules())
 	{
 	    if (rule.second.get_child_optional("name"))
 	    {
 		string name = rule.second.get_child("name").get_value<string>();
-		string result_type = unparse_type(rule.second.get_child("result_type"));
-		std::cout<<name<<" :: "<<result_type << std::endl;
+		func_names.push_back(name);
 	    }
 	}
+	std::cout<<show_options(func_names)<<std::endl;
 	return;
     }
 
