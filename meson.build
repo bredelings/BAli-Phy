@@ -4,7 +4,7 @@ project('bali-phy', ['cpp','c'],
 	  'buildtype=release',
 	  'cpp_std=c++14'
 	],
-	meson_version: '>= 0.45',
+	meson_version: '>= 0.49',
 	license: 'GPLv2')
 
 cpp = meson.get_compiler('cpp')
@@ -59,7 +59,7 @@ install_data(['scripts/compare-runs.R', 'scripts/compare-runs2.R', 'scripts/tree
 install_subdir('modules', install_dir: 'lib/bali-phy')
 install_subdir('functions', install_dir: 'lib/bali-phy')
 install_subdir('help', install_dir: 'lib/bali-phy')
-install_subdir('examples', install_dir: join_paths(get_option('datadir'),'doc/bali-phy'))
+install_subdir('examples', install_dir: get_option('datadir')/'doc/bali-phy')
 
 if get_option('with-mpi')
   mpi = dependency('mpi', language='cpp')
@@ -124,7 +124,7 @@ else
 endif
 
 small_fasta=files('examples/sequences/5S-rRNA/5d.fasta')
-builtins = join_paths(meson.build_root(),'src/builtins')
+builtins = meson.build_root()/'src/builtins'
 packagepath = '--package-path=@0@:@1@'.format(builtins,meson.source_root())
 
 subdir('src')
@@ -132,12 +132,12 @@ subdir('src')
 subdir('doc')
 
 # Run internal tests
-run_tests = find_program(join_paths(meson.source_root(),'tests/run-tests.py'))
+run_tests = find_program(meson.source_root()/'tests/run-tests.py')
 
 test('bali-phy testsuite',
      run_tests,
      timeout: 3000,
-     workdir: join_paths(meson.source_root(),'tests'),
+     workdir: meson.source_root()/'tests',
      args:[baliphy.full_path(), packagepath])
 
 
