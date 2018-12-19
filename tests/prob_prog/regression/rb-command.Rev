@@ -29,6 +29,7 @@ monitors[1] = mnModel("linear_regression.log")
 # monitors[1] = mnScreen()
 
 mymcmc = mcmc(mymodel, moves, monitors)
-mymcmc.run(10000)
+mymcmc.burnin(generations=1000,tuningInterval=100)
+mymcmc.run(100000)
 
 q()
