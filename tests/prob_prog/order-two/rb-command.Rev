@@ -1,14 +1,56 @@
-import Distributions
+## Two approaches to set up an order-two Markov model
 
-random_walk n x1 x2 | n < 2     = error("Random walk must have at least 2 points")
-                    | n == 2    = return [x1, x2]
-                    | otherwise = do dx <- sample $ normal 0.0 1.0
-                                     let x3 = dx - x1 + (2.0*x2)
-                                     xs <- random_walk (n-1) x2 x3
-                                     return (x1:xs)
+## Works
 
-main = do 
-  x1 <- sample $ normal 0.0 1.0
-  x2 <- sample $ normal x1 (sqrt $ 1.0/3.0)
-  xs <- random_walk 100 x1 x2
-  return $ log_all [ xs %% "x"]
+x[1] ~ dnNormal(0,1)
+
+delta ~ dnNormal(0,sqrt(1/3))
+
+x[2] := x[1] + delta
+
+for (i in 1:98) {
+
+  x[i+2] ~ dnNormal(2 * x[i+1] - x[i],1)
+
+}
+
+print("Take 1, calculating log-probability of x[1]")
+
+print(x[1].lnProbability())
+
+clear()
+
+## Non-centered parameterization. Doesn't work (Rev will need to be force-closed)
+
+x[1] ~ dnNormal(0,1)
+
+delta ~ dnNormal(0,sqrt(1/3))
+
+x[2] := x[1] + delta
+
+for (i in 1:98) {
+
+  dx[i] ~ dnNormal(0,1)
+
+  x[i+2] := dx[i] - x[i] + 2 * x[i+1]
+
+  # # Use below print statement to watch how time to compute probability slows as model is built
+
+  print(x[1].lnProbability())
+}
+
+print("Take 2, calculating log-probability of x[1]")
+
+print(x[1].lnProbability())
+
+moves[1] = mvSlide(x[1])
+
+mymodel = model(x[1])
+
+monitors[1] = mnScreen()
+
+mymcmc = mcmc(mymodel, moves, monitors)
+
+mymcmc.run(10)
+
+q()
