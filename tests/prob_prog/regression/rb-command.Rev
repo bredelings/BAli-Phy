@@ -25,8 +25,9 @@ moves[1] = mvSlide(beta)
 moves[2] = mvSlide(alpha)
 moves[3] = mvSlide(sigma)
 
-monitors[1] = mnModel("linear_regression.log")
-# monitors[1] = mnScreen()
+monitors[1] = mnFile(alpha,beta,sigma,filename="linear_regression.log",printgen=10)
+# monitors[2] = mnModel("linear_regression.log",printgen=1000)
+# monitors[3] = mnScreen()
 
 mymcmc = mcmc(mymodel, moves, monitors)
 mymcmc.burnin(generations=1000,tuningInterval=100)
