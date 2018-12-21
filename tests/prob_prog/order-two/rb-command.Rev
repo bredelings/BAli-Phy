@@ -47,6 +47,8 @@ moves[1] = mvSlide(x[1])
 
 mymodel = model(x[1])
 
+# mymodel.graph("temp.dot",verbose=true,bg="honeydew2")
+
 monitors[1] = mnScreen()
 
 mymcmc = mcmc(mymodel, moves, monitors)
