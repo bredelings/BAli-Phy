@@ -2233,7 +2233,7 @@ int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& n
     {
 	auto& name = names[i];
 	if (name_to_index.count(name))
-	    name_to_index[name] = boost::none;
+	    name_to_index[name] = {};
 	else
 	    name_to_index[name] = i;
     }

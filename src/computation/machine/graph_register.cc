@@ -252,7 +252,7 @@ boost::optional<int> reg_heap::creator_of_reg(int r) const
     int s = regs[r].created_by.first;
     assert(s >= 0);
     if (s == 0)
-	return boost::none;
+	return {};
     else
 	return s;
 }
@@ -640,7 +640,7 @@ optional<int> reg_heap::parameter_is_modifiable_reg(int index)
     if (find_modifiable_reg(R))
 	return R;
     else
-	return boost::none;
+	return {};
 }
 
 int reg_heap::parameter_as_modifiable_reg(int index)
@@ -659,7 +659,7 @@ optional<int> reg_heap::compute_expression_is_modifiable_reg(int index)
     if (find_modifiable_reg(H))
 	return H;
     else
-	return boost::none;
+	return {};
 }
 
 int reg_heap::compute_expression_as_modifiable_reg(int index)
@@ -1752,7 +1752,7 @@ optional<int> reg_heap::maybe_find_parameter(const string& s) const
 	if (parameters[i].first == s)
 	    return i;
 
-    return boost::none;
+    return {};
 }
 
 int reg_heap::find_parameter(const string& s) const

@@ -342,7 +342,7 @@ boost::optional<var> find_first_duplicate_var(const CDecls& decls)
 	    return x;
 	vars.insert(x);
     }
-    return boost::none;
+    return {};
 }
 
 boost::optional<var> find_first_duplicate_var(const expression_ref& decls)

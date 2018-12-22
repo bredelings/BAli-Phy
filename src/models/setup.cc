@@ -360,7 +360,7 @@ optional<pair<expression_ref,set<string>>> get_variable_model(const ptree& E, co
     auto name = E.get_value<string>();
 
     // 1. If the name is not in scope then we are done.
-    if (not scope.count(name)) return boost::none;
+    if (not scope.count(name)) return {};
 
     var x = scope.at(name).x;
 
@@ -398,7 +398,7 @@ optional<pair<expression_ref,set<string>>> get_model_let(const Rules& R, const p
     auto name = model_rep.get_value<string>();
 
     // 1. If the phrase is not a let, then we are done.
-    if (name != "let") return boost::none;
+    if (name != "let") return {};
 
     string var_name = model_rep[0].first;
     ptree var_exp = model_rep[0].second;
@@ -452,7 +452,7 @@ optional<pair<expression_ref,set<string>>> get_model_lambda(const Rules& R, cons
     auto name = model_rep.get_value<string>();
 
     // 1. If the phrase is not a lambda, then we are done.
-    if (name != "function") return boost::none;
+    if (name != "function") return {};
 
     // 2. Get the variable name and the body from the model
     string var_name = model_rep[0].first;

@@ -84,7 +84,7 @@ optional<pair<unsigned,unsigned>> is_numeric_range(const string& s, unsigned n)
 {
     vector<string> bounds = split(s,':');
 
-    if (bounds.size() != 2) return boost::none;
+    if (bounds.size() != 2) return {};
 
     unsigned start = 1;
     unsigned end = n;
@@ -94,7 +94,7 @@ optional<pair<unsigned,unsigned>> is_numeric_range(const string& s, unsigned n)
 	if (auto s = can_be_converted_to<unsigned>(bounds[0]))
 	    start = *s;
 	else
-	    return boost::none;
+	    return {};
     }
 
     if (bounds[1].size())
@@ -102,7 +102,7 @@ optional<pair<unsigned,unsigned>> is_numeric_range(const string& s, unsigned n)
 	if (auto e = can_be_converted_to<unsigned>(bounds[1]))
 	    end = *e;
 	else
-	    return boost::none;
+	    return {};
     }
 
     start = std::max(1U,start);

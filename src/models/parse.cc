@@ -18,11 +18,11 @@ optional<pair<string,string>> split_keyword(const string& s, char c)
 {
     for(int i=0;i<s.size();i++)
     {
-	if (s[i] == '[' or s[i] == ']') return boost::none;
+	if (s[i] == '[' or s[i] == ']') return {};
 	if (s[i] == c)
 	    return pair<string,string>({s.substr(0,i),s.substr(i+1)});
     }
-    return boost::none;
+    return {};
 }
 
 /// \brief Turn an expression of the form h1[a]+h2[b] -> {h1[a],h2[b]}
@@ -385,7 +385,7 @@ optional<list<ptree>> get_list_elements(const ptree& p)
 	    return xs;
 	}
     }
-    return boost::none;
+    return {};
 }
 
 optional<list<ptree>> get_ann_list_elements(const ptree& ann)
@@ -406,7 +406,7 @@ optional<list<ptree>> get_ann_list_elements(const ptree& ann)
 	    return xs;
 	}
     }
-    return boost::none;
+    return {};
 }
 
 string unparse(const ptree& p, const Rules& rules)
@@ -587,7 +587,7 @@ optional<ptree> peel_sample(ptree p)
     if (p.has_value<string>() and p.get_value<string>() == "sample")
 	return p[0].second;
     else
-	return boost::none;
+	return {};
 }
 
 optional<ptree> peel_sample_annotated(ptree p)
@@ -596,7 +596,7 @@ optional<ptree> peel_sample_annotated(ptree p)
     if (v.has_value<string>() and v.get_value<string>() == "sample")
 	return v[0].second;
     else
-	return boost::none;
+	return {};
 }
 
 string unparse_abbrev(ptree p, const Rules& rules, int length)
@@ -673,11 +673,11 @@ string translate_structures(const string& name)
 	    elem = 1+*elem;
 
 	    path2.back() += "[" + convertToString(*elem) + "]";
-	    elem = boost::none;
+	    elem = {};
 	}
 	else
 	{
-	    elem = boost::none;
+	    elem = {};
 	    if (x == "Pair::first")
 	    {
 		if (path2.empty()) path2.push_back("");

@@ -101,7 +101,7 @@ public:
 	    if (item)
 	    {
 		if (*item == i)
-		    item = boost::none;
+		    item = {};
 		else if (*item > i)
 		    (*item)--;
 	    }

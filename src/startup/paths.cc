@@ -18,7 +18,7 @@ optional<fs::path> check_file_in_path(const vector<string>& paths, const fs::pat
 	if (not fs::exists(filename)) continue;
 	return filename;
     }
-    return boost::none;
+    return {};
 }
 
 fs::path find_file_in_path(const vector<string>& path_list, const fs::path& file_path)

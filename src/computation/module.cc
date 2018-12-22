@@ -641,7 +641,7 @@ boost::optional<string> get_new_name(const var& x, const string& module_name)
     if (is_qualified_var(x))
     {
 	assert(x.index == 0);
-	return boost::none;
+	return {};
     }
 
     return module_name + "." + x.name + "#" + convertToString(x.index);

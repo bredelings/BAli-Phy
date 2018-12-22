@@ -148,7 +148,7 @@ optional<ptree> type_for_var_in_scope(const string& name, const vector<pair<stri
     for(int i=int(in_scope.size())-1;i>=0;i--)
 	if (in_scope[i].first == name)
 	    return in_scope[i].second;
-    return boost::none;
+    return {};
 }
 
 vector<pair<string, ptree>> extend_scope(const vector<pair<string, ptree>>& scope, const string& var, const type_t type)

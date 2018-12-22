@@ -3107,7 +3107,7 @@ boost::optional<yy::parser::symbol_type> driver::do_bol(const yy::parser::locati
     else
     {
 	yy_pop_state();
-	return boost::none;
+	return {};
     }
 }
 

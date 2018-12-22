@@ -449,7 +449,7 @@ vector<optional<T>> compose(const vector<optional<int>>& mapping1, const vector<
 {
     assert(mapping1.size() == mapping2.size());
 
-    vector<optional<T>> mapping3(mapping1.size(), boost::none);
+    vector<optional<T>> mapping3(mapping1.size());
 
     for(int i=0;i<mapping3.size();i++)
     {

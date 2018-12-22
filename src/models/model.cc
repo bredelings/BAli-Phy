@@ -202,11 +202,11 @@ boost::optional<string> pattern_match(const string& s1, const string& s2)
     {
 	int L = s2.size() - 1;
 	if (s1.substr(0,L) != s2.substr(0,L))
-	    return boost::none;
+	    return {};
 	return s1.substr(L);
     }
     else if (s1 != s2)
-	return boost::none;
+	return {};
     else
 	return string("");
 }

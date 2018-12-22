@@ -183,7 +183,7 @@ optional<term_t> equations::value_of_var(const string& x) const
     if (has_record(x))
 	return find_record(x)->second;
     else
-	return boost::none;
+	return {};
 }
 
 bool compare(const ptree& a, const ptree& b)

@@ -99,14 +99,14 @@ public:
     operator std::vector<tree_record>& () {return trees;}
     operator const std::vector<tree_record>& () const {return trees;}
 
-    int load_file(std::istream&,      int skip=0, boost::optional<int> list=boost::none, int subsample = 1, boost::optional<int> max=boost::none, const std::vector<std::string>& prune=std::vector<std::string>());
-    int load_file(const std::string&, int skip=0, boost::optional<int> last=boost::none, int subsample = 1, boost::optional<int> max=boost::none, const std::vector<std::string>& prune=std::vector<std::string>());
+    int load_file(std::istream&,      int skip=0, boost::optional<int> list={}, int subsample = 1, boost::optional<int> max={}, const std::vector<std::string>& prune=std::vector<std::string>());
+    int load_file(const std::string&, int skip=0, boost::optional<int> last={}, int subsample = 1, boost::optional<int> max={}, const std::vector<std::string>& prune=std::vector<std::string>());
     int append_trees(const tree_sample&);
 
     tree_sample() {}
     tree_sample(const std::vector<std::string>&);
-    tree_sample(std::istream&,int skip=0,boost::optional<int> last=boost::none,int subsample=1,boost::optional<int> max=boost::none,const std::vector<std::string>& prune=std::vector<std::string>());
-    tree_sample(const std::string& filename,int skip=0,boost::optional<int> last=boost::none,int subsample=1,boost::optional<int> max=boost::none,const std::vector<std::string>& prune=std::vector<std::string>());
+    tree_sample(std::istream&,int skip=0,boost::optional<int> last={},int subsample=1,boost::optional<int> max={},const std::vector<std::string>& prune=std::vector<std::string>());
+    tree_sample(const std::string& filename,int skip=0,boost::optional<int> last={},int subsample=1,boost::optional<int> max={},const std::vector<std::string>& prune=std::vector<std::string>());
 };
 
 void scan_trees(std::istream&, int skip, boost::optional<int> last, int subsample, accumulator<SequenceTree>& op);

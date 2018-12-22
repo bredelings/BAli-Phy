@@ -15,7 +15,7 @@ void driver::pop_context()
 boost::optional<LayoutContext> driver::get_context()
 {
     if (contexts.empty())
-	return boost::none;
+	return {};
     return contexts.back();
 }
 

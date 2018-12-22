@@ -181,7 +181,7 @@ optional<Rule> Rules::get_rule_for_func(const string& s) const
 {
     auto it = rules.find(s);
     if (it == rules.end())
-	return boost::none;
+	return {};
     else if (auto syn = it->second.get_optional<string>("synonym"))
 	return get_rule_for_func(*syn);
     else if (auto syn = it->second.get_optional<string>("deprecated-synonym"))
@@ -203,7 +203,7 @@ optional<ptree> maybe_get_arg(const Rule& rule, const string& arg_name)
     for(const auto& arg: rule.get_child("args"))
 	if (arg.second.get<string>("arg_name") == arg_name)
 	    return arg.second;
-    return boost::none;
+    return {};
 }
 
 ptree get_arg(const Rule& rule, const string& arg_name)

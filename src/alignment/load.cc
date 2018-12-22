@@ -195,27 +195,27 @@ alignment load_next_alignment(istream& ifile, const alphabet& a, const vector<st
 
 optional<vector<sequence>> find_load_next_sequences(istream& ifile)
 {
-    if (not find_alignment(ifile)) return boost::none;
+    if (not find_alignment(ifile)) return {};
     return load_next_sequences(ifile);
 }
 
 
 optional<alignment> find_load_next_alignment(istream& ifile, const string& alph_name)
 {
-    if (not find_alignment(ifile)) return boost::none;
+    if (not find_alignment(ifile)) return {};
     return load_next_alignment(ifile, alph_name);
 }
 
 
 optional<alignment> find_load_next_alignment(istream& ifile, const alphabet& a)
 {
-    if (not find_alignment(ifile)) return boost::none;
+    if (not find_alignment(ifile)) return {};
     return load_next_alignment(ifile, a);
 }
 
 optional<alignment> find_load_next_alignment(istream& ifile, const alphabet& a, const vector<string>& names)
 {
-    if (not find_alignment(ifile)) return boost::none;
+    if (not find_alignment(ifile)) return {};
     return load_next_alignment(ifile, a, names);
 }
 
