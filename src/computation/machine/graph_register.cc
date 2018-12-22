@@ -1231,8 +1231,8 @@ bool reg_heap::result_is_called_by(int res1, int res2) const
 
 bool reg_heap::result_is_used_by(int s1, int res2) const
 {
-    for(auto& s: results[res2].used_by)
-	if (s.first == s1)
+    for(auto& [s,index]: results[res2].used_by)
+	if (s == s1)
 	    return true;
 
     return false;
@@ -1365,16 +1365,16 @@ void reg_heap::check_used_regs_in_token(int t) const
 	    assert(reg_has_value(call));
     }
 
-    for(auto p: tokens[t].delta_result())
+    for(auto [reg,res]: tokens[t].delta_result())
     {
-	prog_temp[p.first].reset(0);
-	prog_temp[p.first].reset(1);
+	prog_temp[reg].reset(0);
+	prog_temp[reg].reset(1);
     }
 
-    for(auto p: tokens[t].delta_step())
+    for(auto [reg,step]: tokens[t].delta_step())
     {
-	prog_temp[p.first].reset(0);
-	prog_temp[p.first].reset(1);
+	prog_temp[reg].reset(0);
+	prog_temp[reg].reset(1);
     }
 }
 
