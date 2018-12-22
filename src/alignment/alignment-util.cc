@@ -411,7 +411,7 @@ optional<int> check_characters_present(const alignment& A, const vector<dynamic_
 	for(int c = 0; c < A.length(); c++)
 	    if (present[n].test(c) and A.gap(c,n))
 		return c;
-    return boost::none;
+    return {};
 }
 
 /// Check that internal node states are consistent

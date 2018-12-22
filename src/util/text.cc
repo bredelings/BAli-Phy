@@ -52,7 +52,7 @@ optional<list<string>> wrap(string line, int width)
 	    return list<string>{line.substr(0,loc)};
     }
 
-    return boost::none;
+    return {};
 }
 
 void wrap_and_indent_one_line(int indent, int width, list<string>& lines, list<string>& wrapped_lines)

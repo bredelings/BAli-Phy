@@ -106,7 +106,7 @@ public:
 	if (auto c = get_child_optional(key))
 	    return c->get_value<T>();
 	else
-	    return boost::none;
+	    return {};
     }
 
 

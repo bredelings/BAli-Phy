@@ -34,7 +34,7 @@ optional<int> ptree::get_child_index(const std::string& key) const
     for(int i=0;i<size();i++)
 	if ((*this)[i].first == key)
 	    return i;
-    return boost::none;
+    return {};
 }
 
 int ptree::count(const std::string& key) const
@@ -62,7 +62,7 @@ ptree::get_child_optional(const std::string& key)
     if (auto index = get_child_index(key))
 	return (*this)[*index].second;
     else
-	return boost::none;
+	return {};
 }
 
 boost::optional<const ptree&>
@@ -71,7 +71,7 @@ ptree::get_child_optional(const std::string& key) const
     if (auto index = get_child_index(key))
 	return (*this)[*index].second;
     else
-	return boost::none;
+	return {};
 }
 
 ptree& ptree::get_child(const std::string& key)
@@ -102,7 +102,7 @@ optional<ptree&> ptree::get_path_optional(const vector<string>& path, int i)
     if (auto child = get_child_optional(path[i]))
 	return child->get_path_optional(path, i+1);
     else
-	return boost::none;
+	return {};
 }
 
 
@@ -116,7 +116,7 @@ optional<const ptree&> ptree::get_path_optional(const vector<string>& path, int 
     if (auto child = get_child_optional(path[i]))
 	return child->get_path_optional(path, i+1);
     else
-	return boost::none;
+	return {};
 }
 
 ptree& ptree::get_path(const vector<string>& path, int i)
