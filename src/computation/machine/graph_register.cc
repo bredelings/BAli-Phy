@@ -1306,10 +1306,8 @@ void reg_heap::check_used_regs_in_token(int t) const
 	int r_s = p.second;
 	if (r_s < 0) continue;
 	
-	for(const auto& rcp2: steps[r_s].used_inputs)
+	for(const auto& [res2,index2]: steps[r_s].used_inputs)
 	{
-	    int res2 = rcp2.first;
-
 	    // Used regs should have back-references to R
 	    assert( result_is_used_by(r_s, res2) );
 
@@ -1464,8 +1462,8 @@ int reg_heap::add_shared_result(int r, int s)
 
 void reg_heap::check_back_edges_cleared_for_step(int s)
 {
-    for(auto& rcp: steps.access_unused(s).used_inputs)
-	assert(rcp.second == 0);
+    for(auto& [res,index]: steps.access_unused(s).used_inputs)
+	assert(index == 0);
     for(auto& r: steps.access_unused(s).created_regs)
     {
 	auto& created_by = regs.access(r).created_by;
