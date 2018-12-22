@@ -1118,11 +1118,11 @@ void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
 	for(int r: C.Env)
 	    scan.push_back(r);
 
-    for(int j=0;j<parameters.size();j++) // yes
-	scan.push_back(parameters[j].second);
+    for(const auto& [name,reg]: parameters) // yes
+	scan.push_back(reg);
     if (keep_identifiers)
-	for(const auto& i: identifiers) // no
-	    scan.push_back(i.second);
+	for(const auto& [name,reg]: identifiers) // no
+	    scan.push_back(reg);
 }
 
 int reg_heap::set_head(int index, int R2)
@@ -1508,8 +1508,8 @@ void reg_heap::clear_back_edges_for_step(int s)
     assert(s > 0);
     for(auto& forward: steps[s].used_inputs)
     {
-	auto& backward = results[forward.first].used_by;
-	int j = forward.second;
+	auto [res,j] = forward;
+	auto& backward = results[res].used_by;
 	assert(0 <= j and j < backward.size());
 
 	forward = {0,0};
