@@ -1273,26 +1273,23 @@ void reg_heap::check_used_regs_in_token(int t) const
 {
     assert(token_is_used(t));
 
-    for(auto p: tokens[t].delta_result())
+    for(auto [r,res]: tokens[t].delta_result())
     {
-	int r = p.first;
 	assert(not prog_temp[r].test(0));
 	prog_temp[r].set(0);
 
 	// No results for constant regs
 	assert(regs.access(r).type != reg::type_t::constant);
-	int rc = p.second;
-	if (rc > 0)
+	if (res > 0)
 	{
-	    assert(not steps.is_free(results[rc].source_step));
-	    int call = results[rc].call_edge.first;
+	    assert(not steps.is_free(results[res].source_step));
+	    int call = results[res].call_edge.first;
 	    if (call > 0)
 		assert(not results.is_free(call));
 	}
     }
-    for(auto p: tokens[t].delta_step())
+    for(auto [r,step]: tokens[t].delta_step())
     {
-	int r = p.first;
 	assert(not prog_temp[r].test(1));
 	prog_temp[r].set(1);
 
