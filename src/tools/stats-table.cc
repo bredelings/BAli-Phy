@@ -28,7 +28,10 @@
 #include <boost/optional.hpp>
 
 using boost::optional;
-using namespace std;
+
+using std::string;
+using std::vector;
+using std::pair;
 
 using boost::dynamic_bitset;
 
@@ -68,7 +71,7 @@ void write_header(std::ostream& o, const vector<string>& headers)
 {
     for(int i=0;i<headers.size();i++) 
     {
-	cout<<headers[i];
+	std::cout<<headers[i];
       
 	if (i == headers.size()-1)
 	    o<<"\n";
@@ -102,8 +105,8 @@ optional<pair<unsigned,unsigned>> is_numeric_range(const string& s, unsigned n)
 	    return boost::none;
     }
 
-    start = max(1U,start);
-    end = min(n,end);
+    start = std::max(1U,start);
+    end = std::min(n,end);
     return pair<unsigned,unsigned>{start,end};
 }
 
@@ -172,7 +175,7 @@ bool read_entries(const string& line, const vector<int>& indices, char delim, ve
 
 
 template<> 
-void Table<string>::load_file(istream& file,int skip,int subsample, int max,
+void Table<string>::load_file(std::istream& file,int skip,int subsample, int max,
 			      const vector<string>& ignore, const vector<string>& select)
 {
     // Read in headers from file
