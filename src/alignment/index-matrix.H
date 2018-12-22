@@ -35,7 +35,7 @@ struct Edge
 };
 
 struct edge_comp {
-  bool operator()(const Edge& E1, const Edge& E2) {
+  bool operator()(const Edge& E1, const Edge& E2) const {
     return E1.p  > E2.p;
   }
 };
