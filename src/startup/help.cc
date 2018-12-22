@@ -105,7 +105,7 @@ optional<string> get_authors(const Rule& rule)
 {
     auto citation = rule.get_child_optional("citation");
     if (not citation)
-	return boost::none;
+	return {};
 
     vector<string> authors;
     if (auto authors_ = citation->get_child_optional("author"))
@@ -139,7 +139,7 @@ optional<string> get_authors(const Rule& rule)
 	else
 	    return authors[0]+" et al";
     }
-    return boost::none;
+    return {};
 }
 
 
@@ -147,7 +147,7 @@ optional<string> get_citation(const Rule& rule, bool show_title)
 {
     auto citation = rule.get_child_optional("citation");
     if (not citation)
-	return boost::none;
+	return {};
 
     if (citation->is_a<string>())
 	return citation->get_value<string>();
@@ -180,7 +180,7 @@ optional<string> get_citation_id(const Rule& rule, const string& idtype)
 {
     // 1. Check if there is a citation field.
     auto citation = rule.get_child_optional("citation");
-    if (not citation) return boost::none;
+    if (not citation) return {};
 
     // 2. Try to get the DOI
     if (auto identifiers = citation->get_child_optional("identifier"))
@@ -195,14 +195,14 @@ optional<string> get_citation_id(const Rule& rule, const string& idtype)
 		return id->get_value<string>();
 	}
     }
-    return boost::none;
+    return {};
 }
 
 optional<string> get_citation_url(const Rule& rule)
 {
     // 1. Check if there is a citation field.
     auto citation = rule.get_child_optional("citation");
-    if (not citation) return boost::none;
+    if (not citation) return {};
 
     // 2. Try to get the URL from the "link" field.
     if (auto links = citation->get_child_optional("link"))
@@ -234,7 +234,7 @@ optional<string> get_citation_url(const Rule& rule)
 	return "https://www.ncbi.nlm.nih.gov/pubmed/"+*pmid;
     }
 
-    return boost::none;
+    return {};
 }
 
 string get_help_for_rule(const Rules& rules, const Rule& rule)
@@ -388,7 +388,7 @@ optional<const ptree&> find(const string& key, const ptree& p)
 	if (auto found = find(key, x.second))
 	    return *found;
     }
-    return boost::none;
+    return {};
 }
 
 vector<string> get_subtopics(const ptree& p)
