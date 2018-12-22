@@ -40,9 +40,6 @@
 /// Map leaf nodes of T to the leaf sequences of A
 void link(alignment& A,SequenceTree& T,bool internal_sequences=true);
 
-SequenceTree load_constraint_tree(const std::string& filename,const std::vector<std::string>&);
-
-
 /// Count how many times each letter occurs in A
 std::valarray<double> letter_counts(const alignment& A);
 

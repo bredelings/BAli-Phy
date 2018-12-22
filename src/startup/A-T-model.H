@@ -38,5 +38,6 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, boost::program_options::va
 
 void write_initial_alignments(boost::program_options::variables_map& args, int proc_id, const std::string& dir_name);
 
+SequenceTree load_constraint_tree(const std::string& filename,const std::vector<std::string>&);
 
 #endif
