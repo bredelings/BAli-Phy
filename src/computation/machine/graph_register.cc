@@ -1301,15 +1301,14 @@ void reg_heap::check_used_regs_in_token(int t) const
 
     // FIXME - nonlocal. The same result/step are not set in multiple places!
 
-    for(auto p: tokens[t].delta_step())
+    for(auto [r,step]: tokens[t].delta_step())
     {
-	int r_s = p.second;
-	if (r_s < 0) continue;
+	if (step < 0) continue;
 	
-	for(const auto& [res2,index2]: steps[r_s].used_inputs)
+	for(const auto& [res2,index2]: steps[step].used_inputs)
 	{
 	    // Used regs should have back-references to R
-	    assert( result_is_used_by(r_s, res2) );
+	    assert( result_is_used_by(step, res2) );
 
 	    // Used computations should be mapped computation for the current token, if we are at the root
 	    int R2 = results[res2].source_reg;
@@ -1466,9 +1465,9 @@ void reg_heap::check_back_edges_cleared_for_step(int s)
 	assert(index == 0);
     for(auto& r: steps.access_unused(s).created_regs)
     {
-	auto& created_by = regs.access(r).created_by;
-	assert(created_by.first == 0);
-	assert(created_by.second == 0);
+	auto [step, index] = regs.access(r).created_by;
+	assert(step == 0);
+	assert(index == 0);
     }
 }
 
