@@ -40,8 +40,15 @@
 namespace po = boost::program_options;
 using po::variables_map;
 
-using namespace std;
 using namespace statistics;
+
+using std::vector;
+using std::valarray;
+using std::string;
+
+using std::endl;
+using std::cout;
+using std::cerr;
 
 using boost::optional;
 
@@ -739,7 +746,7 @@ int main(int argc,char* argv[])
 	    // set the window size
 	    int max_lag = int( double(trees.size()/10.0 + 1.0 ) );
 	    if (args.count("max-lag"))
-		max_lag = min(max_lag,args["max-lag"].as<int>());
+		max_lag = std::min(max_lag,args["max-lag"].as<int>());
       
 	    // bound the max_lag
 	    if (max_lag >= trees.size()/2)
@@ -875,7 +882,7 @@ int main(int argc,char* argv[])
 	    for(;t<trees1.size() and required_hits;t++) 
 	    {
 		double d = distance(trees1[t],trees2,metric_fn);
-		closest = min(closest,d);
+		closest = std::min(closest,d);
 
 		if (direction == 0 and d < x1) {
 		    if (required_hits ==4)
