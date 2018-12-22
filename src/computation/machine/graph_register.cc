@@ -582,19 +582,16 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     // 4. compute the ratio only for (i) changed pdfs that (ii) exist in both c1 and c2
     prob_ratios_t R{1.0, 1.0, false};
 
-    for(auto& p: original_pdf_results)
+    for(auto [pdf_reg, pdf_res]: original_pdf_results)
     {
-	int pdf_reg = p.first;
-	int rc1 = p.second;
-
 	assert(prog_temp[pdf_reg].test(2));
 
 	prog_temp[pdf_reg].reset(2);
 
 	// Only compute a ratio if the pdf is present and computed in BOTH contexts.
-	if (rc1 > 0 and has_result(pdf_reg))
+	if (pdf_res > 0 and has_result(pdf_reg))
 	{
-	    int result_reg1 = results[rc1].value;
+	    int result_reg1 = results[pdf_res].value;
 	    int result_reg2 = result_value_for_reg(pdf_reg);
 	    log_double_t r = (*this)[result_reg2].exp.as_log_double() / (*this)[result_reg1].exp.as_log_double();
 
