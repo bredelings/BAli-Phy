@@ -1485,11 +1485,10 @@ void reg_heap::clear_back_edges_for_reg(int r)
 {
     assert(r > 0);
     auto& created_by = regs.access(r).created_by;
-    int s = created_by.first;
+    auto [s,j] = created_by;
     if (s > 0)
     {
 	auto& backward = steps[s].created_regs;
-	int j = created_by.second;
 	assert(0 <= j and j < backward.size());
 
 	// Clear the forward edge.
