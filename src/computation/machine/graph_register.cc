@@ -1326,23 +1326,21 @@ void reg_heap::check_used_regs_in_token(int t) const
 	}
     }
 
-    for(auto p: tokens[t].delta_result())
+    for(auto [reg, res]: tokens[t].delta_result())
     {
-	int r = p.first;
-	int r_r = p.second;
-	if (r_r < 0) continue;
+	if (res < 0) continue;
 
-	int r_s = results[r_r].source_step;
-	int call = steps[r_s].call;
+	int step = results[res].source_step;
+	int call = steps[step].call;
 	
-	assert(steps[r_s].source_reg == r);
+	assert(steps[step].source_reg == reg);
 	//FIXME! Check that source_step is in same token, for same reg
-	int value = results[r_r].value;
+	int value = results[res].value;
 
-	if (results[r_r].flags.test(0))
+	if (results[res].flags.test(0))
 	    assert(is_root_token(t));
 
-	if (results[r_r].flags.test(1))
+	if (results[res].flags.test(1))
 	    assert(is_root_token(t));
 
 	if (value)
@@ -1361,7 +1359,7 @@ void reg_heap::check_used_regs_in_token(int t) const
 	{
 	    assert( has_result(call) );
 	    int rc2 = result_index_for_reg(call);
-	    assert( result_is_called_by(r_r, rc2) );
+	    assert( result_is_called_by(res, rc2) );
 	}
 
 	// If we have a value, then our call should have a value
