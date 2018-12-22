@@ -1537,22 +1537,22 @@ void reg_heap::clear_back_edges_for_step(int s)
     steps[s].created_regs.clear();
 }
 
-void reg_heap::clear_back_edges_for_result(int rc)
+void reg_heap::clear_back_edges_for_result(int res)
 {
-    assert(rc > 0);
+    assert(res > 0);
     // FIXME! If there is a value, set, there should be a call_edge
     //        Should we unmap all values with no .. value/call_edge?
-    int call = results[rc].call_edge.first;
+    auto [call,j] = results[res].call_edge;
     if (call)
     {
-	assert(results[rc].value);
+	assert(results[res].value);
 
 	auto& backward = results[call].called_by;
-	int j = results[rc].call_edge.second;
+	int j = results[res].call_edge.second;
 	assert(0 <= j and j < backward.size());
 
 	// Clear the forward edge.
-	results[rc].call_edge = {0, 0};
+	results[res].call_edge = {0, 0};
 
 	// Move the last element to the hole, and adjust index of correspond forward edge.
 	if (j+1 < backward.size())
