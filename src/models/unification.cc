@@ -30,11 +30,11 @@ string show(const equations& E)
     result += join(constraints,",") + " <= ";
 
     vector<string> eqs;
-    for(auto& equation: E.get_values())
+    for(auto& [names,term]: E.get_values())
     {
-	string e = join(equation.first," = ");
-	if (equation.second)
-	    e += " = " + show(*equation.second);
+	string e = join(names," = ");
+	if (term)
+	    e += " = " + show(*term);
 	eqs.push_back(e);
     }
     result += join(eqs,"\n");
@@ -44,8 +44,8 @@ string show(const equations& E)
 
 bool equations::has_record(const std::string& x) const
 {
-    for(auto& v: values)
-	if (v.first.count(x)) return true;
+    for(auto& [names,term]: values)
+	if (names.count(x)) return true;
 
     return false;
 }
@@ -119,8 +119,8 @@ bool equations::add_condition(const string& x, const term_t& T)
 	    unify(*xrec->second, T);
     }
 #ifndef NDEBUG
-    for(auto& eq: values)
-	assert(eq.second or eq.first.size() > 1);
+    for(auto& [names,term]: values)
+	assert(term or names.size() > 1);
 #endif
     return valid;
 }
@@ -172,8 +172,8 @@ bool equations::add_var_condition(const string& x, const string& y)
 	}
     }
 #ifndef NDEBUG
-    for(auto& eq: values)
-	assert(eq.second or eq.first.size() > 1);
+    for(auto& [names,term]: values)
+	assert(term or names.size() > 1);
 #endif
     return valid;
 }
@@ -258,8 +258,8 @@ map<string,term_t> equations::eliminate_variable(const string& x)
 
     // Check invariant that we have either a term or >1 variable (#variables + #term >= 2)
 #ifndef NDEBUG
-    for(auto& eq: values)
-	assert(eq.second or eq.first.size() > 1);
+    for(auto& [names,term]: values)
+	assert(term or names.size() > 1);
 #endif
 
     return S;
@@ -302,11 +302,11 @@ set<string> equations::referenced_vars() const
 	add(vars, find_variables_in_type(constraint));
 
     // Get vars referenced in equations
-    for(auto& v: values)
+    for(auto& [names,term]: values)
     {
-	add(vars, v.first);
-	if (v.second)
-	    add(vars, find_variables_in_type(*v.second));
+	add(vars, names);
+	if (term)
+	    add(vars, find_variables_in_type(*term));
     }
     return vars;
 }
