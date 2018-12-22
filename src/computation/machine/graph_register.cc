@@ -1517,13 +1517,13 @@ void reg_heap::clear_back_edges_for_step(int s)
 	{
 	    // erase the backward edge by moving another backward edge on top of it.
 	    backward[j] = backward.back();
+	    auto [s2,i2] = backward[j];
 	    // adjust the forward edge for that backward edge
-	    int i2 = backward[j].second;
-	    auto& forward2 = steps[backward[j].first].used_inputs;
+	    auto& forward2 = steps[s2].used_inputs;
 	    assert(0 <= i2 and i2 < forward2.size());
 	    forward2[i2].second = j;
 
-	    assert(steps[backward[j].first].used_inputs[backward[j].second].second == j);
+	    assert(steps[s2].used_inputs[i2].second == j);
 	    assert(results[forward2[i2].first].used_by[forward2[i2].second].second == i2);
 	}
 
