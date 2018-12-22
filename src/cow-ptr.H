@@ -32,28 +32,28 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef COW_PTR_H
 #define COW_PTR_H
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
-using boost::const_pointer_cast;
+using std::const_pointer_cast;
 
 template <typename X>
-struct constant_value: public boost::shared_ptr<const X>
+struct constant_value: public std::shared_ptr<const X>
 {
-  explicit constant_value(const boost::shared_ptr<const X>& x):boost::shared_ptr<const X>(x) { }
+  explicit constant_value(const std::shared_ptr<const X>& x):std::shared_ptr<const X>(x) { }
 };
 
 /// A copy-on-write pointer class that stores X objects exactly: NOT objects derived from X
 template <class X> class cow_ptr
 {
 private:
-  boost::shared_ptr<X> data;
+  std::shared_ptr<X> data;
 
   // create a new copy of data = make a direct copy otherwise
   void copy()
   {
     if (not data.unique()) {
       X* data_old = data.get();
-      data = boost::shared_ptr<X>(new X(*data_old));
+      data = std::shared_ptr<X>(new X(*data_old));
     }
   }
 
@@ -70,8 +70,8 @@ public:
     return *this;
   }
 #endif
-  boost::shared_ptr<const X> get_ptr()    const {        return data;}
-  boost::shared_ptr<X>       modify_ptr()       {copy(); return data;}
+  std::shared_ptr<const X> get_ptr()    const {        return data;}
+  std::shared_ptr<X>       modify_ptr()       {copy(); return data;}
 
   const X& operator*()    const noexcept   {assert(data); return *data;}
   const X* operator->()   const noexcept   {assert(data); return data.get();}
@@ -89,7 +89,7 @@ public:
     return (bool)data;
   }
 
-  operator boost::shared_ptr<const X>() const
+  operator std::shared_ptr<const X>() const
   {
     return data;
   }
@@ -111,13 +111,13 @@ public:
     return *this;
   }
 
-  cow_ptr& operator=(const boost::shared_ptr<const X>& r)
+  cow_ptr& operator=(const std::shared_ptr<const X>& r)
   {
     data = const_pointer_cast<X>(r);
     return *this;
   }
 
-  cow_ptr& operator=(const boost::shared_ptr<X>& r)
+  cow_ptr& operator=(const std::shared_ptr<X>& r)
   {
     data = r;
     return *this;
@@ -125,9 +125,9 @@ public:
 
   cow_ptr(const cow_ptr& r) noexcept             : data(r.data) {}
 
-  cow_ptr(const boost::shared_ptr<const X>& p) : data(const_pointer_cast<X>(p)) { }
+  cow_ptr(const std::shared_ptr<const X>& p) : data(const_pointer_cast<X>(p)) { }
 
-  cow_ptr(const boost::shared_ptr<X>& p) : data(p) { }
+  cow_ptr(const std::shared_ptr<X>& p) : data(p) { }
 
   explicit cow_ptr(X* p = 0) noexcept            : data(p) {}
 
@@ -153,14 +153,14 @@ namespace _cow_ptr
 template <class X> class polymorphic_cow_ptr
 {
 private:
-  boost::shared_ptr<X> data;
+  std::shared_ptr<X> data;
 
   // create a new copy of data = make a direct copy otherwise
   void copy()
   {
     if (not data.unique()) {
       X* data_old = data.get();
-      data = boost::shared_ptr<X>(data_old->clone());
+      data = std::shared_ptr<X>(data_old->clone());
     }
   }
 
@@ -178,8 +178,8 @@ public:
   }
 
 #endif
-  boost::shared_ptr<const X> get_ptr()    const {        return data;}
-  boost::shared_ptr<X>       modify_ptr()       {copy(); return data;}
+  std::shared_ptr<const X> get_ptr()    const {        return data;}
+  std::shared_ptr<X>       modify_ptr()       {copy(); return data;}
 
   const X& operator*()    const noexcept   {assert(data); return *data;}
   const X* operator->()   const noexcept   {assert(data); return data.get();}
@@ -197,7 +197,7 @@ public:
     return (bool)data;
   }
 
-  operator boost::shared_ptr<const X>() const
+  operator std::shared_ptr<const X>() const
   {
     return data;
   }
@@ -220,13 +220,13 @@ public:
   }
 
   // Just because r is const, doesn't mean that there isn't a non-const pointer to it.
-  polymorphic_cow_ptr& operator=(const boost::shared_ptr<const X>& r)
+  polymorphic_cow_ptr& operator=(const std::shared_ptr<const X>& r)
   {
     data = const_pointer_cast<X>(r);
     return *this;
   }
 
-  polymorphic_cow_ptr& operator=(const boost::shared_ptr<X>& r)
+  polymorphic_cow_ptr& operator=(const std::shared_ptr<X>& r)
   {
     data = r;
     return *this;
@@ -237,15 +237,15 @@ public:
   polymorphic_cow_ptr(const constant_value<X>& p) : data(const_pointer_cast<X>(p)) { }
 
   // Just because p is const, doesn't mean that there isn't a non-const pointer to it.
-  polymorphic_cow_ptr(const boost::shared_ptr<const X>& p) : data(const_pointer_cast<X>(p)) { }
+  polymorphic_cow_ptr(const std::shared_ptr<const X>& p) : data(const_pointer_cast<X>(p)) { }
 
-  polymorphic_cow_ptr(const boost::shared_ptr<X>&       p) : data(p) { }
+  polymorphic_cow_ptr(const std::shared_ptr<X>&       p) : data(p) { }
 
   template <typename Y> friend class polymorphic_cow_ptr;
 
   template <typename Y>
   polymorphic_cow_ptr(const polymorphic_cow_ptr<Y>& r,const _cow_ptr::dynamic_cast_tag&)
-    :data(boost::dynamic_pointer_cast<X>(r.data)) 
+    :data(std::dynamic_pointer_cast<X>(r.data)) 
   {}
 
   explicit polymorphic_cow_ptr(X* p = 0) noexcept            : data(p) {}
@@ -262,19 +262,19 @@ inline void swap(polymorphic_cow_ptr<X>& p1,polymorphic_cow_ptr<X>& p2)
 }
 
 template <typename Y,typename Z>
-boost::shared_ptr<const Y> dynamic_pointer_cast(const polymorphic_cow_ptr<Z>& p)
+std::shared_ptr<const Y> dynamic_pointer_cast(const polymorphic_cow_ptr<Z>& p)
 {
-  return boost::dynamic_pointer_cast<const Y>(p.get_ptr());
+  return std::dynamic_pointer_cast<const Y>(p.get_ptr());
 }
 
 template <typename Y,typename Z>
-boost::shared_ptr<Y> dynamic_pointer_cast(polymorphic_cow_ptr<Z>& p)
+std::shared_ptr<Y> dynamic_pointer_cast(polymorphic_cow_ptr<Z>& p)
 {
   // Don't call modify_ptr() if 
   if (dynamic_cast<const Y*>(&*p.get()))
-    return boost::dynamic_pointer_cast<Y>(p.modify_ptr());
+    return std::dynamic_pointer_cast<Y>(p.modify_ptr());
   else
-    return boost::shared_ptr<Y>();
+    return std::shared_ptr<Y>();
 }
 
 template <class T, class U> inline bool operator==(const polymorphic_cow_ptr<T>& t, const polymorphic_cow_ptr<U>& u)

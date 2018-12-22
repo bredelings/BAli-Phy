@@ -29,6 +29,7 @@
 
 #include <string>
 #include <valarray>
+#include <memory>
 
 #include "sequence/alphabet.H"
 #include "tree/sequencetree.H"
@@ -77,7 +78,7 @@ struct data_partition_constants
     /// The leaf sequence data of this partition
     std::vector< std::vector<int> > sequences;
 
-    boost::shared_ptr<alphabet> a;
+    std::shared_ptr<alphabet> a;
 
     std::vector<int> branch_HMM_type;
 
