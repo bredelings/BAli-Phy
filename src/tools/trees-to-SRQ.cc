@@ -31,7 +31,6 @@
 #include "tree/tree-util.H"
 #include "statistics.H"
 
-using namespace std;
 #include <boost/program_options.hpp>
 
 namespace po = boost::program_options;
@@ -40,7 +39,10 @@ using po::variables_map;
 using std::cout;
 using std::cerr;
 using std::endl;
+
 using std::string;
+using std::vector;
+using std::valarray;
 
 using boost::optional;
 
