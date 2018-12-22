@@ -40,12 +40,6 @@
 /// Map leaf nodes of T to the leaf sequences of A
 void link(alignment& A,SequenceTree& T,bool internal_sequences=true);
 
-/// Count how many times each letter occurs in A
-std::valarray<double> letter_counts(const alignment& A);
-
-/// Count how many times letter 'l' occurss in A (including *,-,?)
-int letter_count(const alignment& A,int l);
-
 /// Load statements from a config file.
 void load_bali_phy_rc(boost::program_options::variables_map&,
 		      const boost::program_options::options_description&);
