@@ -2,7 +2,6 @@
 
 #include <regex>
 #include <list>
-#include <boost/optional/optional_io.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/algorithm/string.hpp>
@@ -28,6 +27,15 @@ namespace po = boost::program_options;
 using po::variables_map;
 
 namespace fs = boost::filesystem;
+
+template <typename T>
+std::ostream& operator<<(std::ostream& o, const optional<T>& v)
+{
+    if (v)
+	return o<<*v;
+    else
+	return o<<"--";
+}
 
 string get_topic_from_string(const string& s)
 {
