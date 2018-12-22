@@ -81,9 +81,7 @@ class RegOperationArgs: public OperationArgs
     int evaluate_reg_to_reg(int R2)
 	{
 	    // Compute the value, and follow index_var chains (which are not changeable).
-	    auto p = M.incremental_evaluate(R2);
-	    int R3 = p.first;
-	    int value = p.second;
+	    auto [R3, value] = M.incremental_evaluate(R2);
 
 	    // Note that although R2 is newly used, R3 might be already used if it was 
 	    // found from R2 through a non-changeable reg_var chain.
