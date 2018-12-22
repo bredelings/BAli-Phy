@@ -28,7 +28,6 @@
 #include "alignment/alignment-util.H"
 #include "alignment/alignment-util2.H"
 #include "alignment/alignment-constraint.H"
-#include <boost/shared_ptr.hpp>
 #include "dp/dp-cube.H"
 #include "substitution/substitution.H"
 #include "util/assert.hh"
@@ -40,9 +39,10 @@ using std::abs;
 using std::vector;
 using std::pair;
 using std::endl;
+using std::shared_ptr;
 using boost::dynamic_bitset;
 
-boost::shared_ptr<DPcubeSimple> cube_sample_alignment_base(mutable_data_partition P, const data_partition& P0, 
+shared_ptr<DPcubeSimple> cube_sample_alignment_base(mutable_data_partition P, const data_partition& P0, 
 							   const vector<int>& nodes, const vector<int>& nodes0,
 							   int bandwidth)
 {
@@ -129,7 +129,7 @@ boost::shared_ptr<DPcubeSimple> cube_sample_alignment_base(mutable_data_partitio
     for(int i=0;i<3;i++)
 	branches[i] = t.find_branch(nodes[0],nodes[i+1]);
 
-    boost::shared_ptr<DPcubeSimple>
+    shared_ptr<DPcubeSimple>
 	Matrices(new DPcubeSimple(m123, std::move(dists1), std::move(dists2), std::move(dists3), P.WeightedFrequencyMatrix()));
     Matrices->forward_cube();
 
@@ -161,7 +161,7 @@ boost::shared_ptr<DPcubeSimple> cube_sample_alignment_base(mutable_data_partitio
     return Matrices;
 }
 
-boost::shared_ptr<DPengine> sample_cube_multi_calculation::compute_matrix(int i, int j)
+shared_ptr<DPengine> sample_cube_multi_calculation::compute_matrix(int i, int j)
 {
     return cube_sample_alignment_base(p[i][j], p[0][j], nodes[i], nodes[0], bandwidth);
 }

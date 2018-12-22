@@ -28,7 +28,6 @@
 #include <vector>
 
 #include <boost/filesystem/operations.hpp>
-#include <boost/shared_ptr.hpp>
 
 #include "setup.H"
 #include "util.H"
@@ -46,12 +45,12 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
+using std::shared_ptr;
 using std::optional;
 
 namespace fs = boost::filesystem;
 
 using namespace boost::program_options;
-using boost::shared_ptr;
 
 /// Count the number of times the letter with index \a l occurs in \a A.
 int letter_count(const alignment& A,int l) 

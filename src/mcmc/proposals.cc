@@ -28,6 +28,7 @@
 using std::valarray;
 using std::vector;
 using std::string;
+using std::shared_ptr;
 
 valarray<double> convert_to_valarray(const vector< expression_ref >& v1)
 {
@@ -650,13 +651,12 @@ log_double_t move_subst_type_branch(Model& P)
     return 1.0;
 }
 
-#include <boost/shared_ptr.hpp>
 #include "mcmc/sample.H"
 
 // Can't we just send in any sigma parameters or whatever WITH the proposal?
-boost::shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P, const indel::PairHMM& hmm, int b);
-boost::shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P, int b);
-boost::shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const indel::PairHMM& hmm, int b);
+shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P, const indel::PairHMM& hmm, int b);
+shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P, int b);
+shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const indel::PairHMM& hmm, int b);
 vector<int> walk_tree_path_toward(const TreeInterface& t, int root);
 
 log_double_t realign_and_propose_parameter(Model& P, int param, const vector<int>& partitions, const proposal_fn& proposal, const vector<double>& v)

@@ -33,7 +33,6 @@
 #include "dp/alignment-sums.H"
 #include "alignment/alignment-util.H"
 #include "alignment/alignment-constraint.H"
-#include <boost/shared_ptr.hpp>
 #include "dp/dp-array.H"
 
 //TODO - 1. calculate the probability of 
@@ -49,7 +48,7 @@ using std::vector;
 using std::endl;
 
 using boost::dynamic_bitset;
-using boost::shared_ptr;
+using std::shared_ptr;
 
 shared_ptr<DParrayConstrained> sample_node_base(mutable_data_partition P,const vector<int>& nodes)
 {

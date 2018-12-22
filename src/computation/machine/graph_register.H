@@ -10,7 +10,6 @@
 #include "computation/closure.H"
 #include "pool.H"
 #include "computation/program.H"
-#include <boost/shared_ptr.hpp>
 #include <boost/container/small_vector.hpp>
 #include <bitset>
 #include "computation/loader.H"
@@ -291,7 +290,7 @@ public:
     /// Probably this would be non-parameter identifiers
     std::map<std::string, int> identifiers;
   
-    boost::shared_ptr<Program> P;
+    std::shared_ptr<Program> P;
 
     std::vector<std::string> args;
 

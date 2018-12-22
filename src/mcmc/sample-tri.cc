@@ -28,7 +28,6 @@
 #include "alignment/alignment-util.H"
 #include "alignment/alignment-util2.H"
 #include "alignment/alignment-constraint.H"
-#include <boost/shared_ptr.hpp>
 #include "dp/dp-matrix.H"
 #include "substitution/substitution.H"
 #include "util/assert.hh"
@@ -40,10 +39,11 @@ using std::abs;
 using std::vector;
 using std::pair;
 using std::endl;
-using boost::dynamic_bitset;
 using std::optional;
+using std::shared_ptr;
+using boost::dynamic_bitset;
 
-boost::shared_ptr<DPmatrixConstrained>
+shared_ptr<DPmatrixConstrained>
 tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, const vector<HMM::bitmask_t>& a23,
 			  int /* bandwidth */)
 {
@@ -87,7 +87,7 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
     for(int i=0;i<3;i++)
 	branches[i] = t.find_branch(nodes[0],nodes[i+1]);
 
-    boost::shared_ptr<DPmatrixConstrained> 
+    shared_ptr<DPmatrixConstrained> 
 	Matrices(new DPmatrixConstrained(m123, std::move(dists1), std::move(dists23), P.WeightedFrequencyMatrix()));
     Matrices->emit1 = 1;
     Matrices->emit2 = 2|4;
@@ -201,7 +201,7 @@ vector<optional<vector<HMM::bitmask_t>>> A23_constraints(const Parameters& P, co
     return a23;
 }
 
-boost::shared_ptr<DPmatrixConstrained>
+shared_ptr<DPmatrixConstrained>
 tri_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
 			  const vector<int>& nodes, const vector<int>& nodes0,
 			  int bandwidth)
@@ -479,7 +479,7 @@ int sample_A3_multi_calculation::choose(bool correct)
     return C;
 }
 
-boost::shared_ptr<DPengine> sample_tri_multi_calculation::compute_matrix(int i, int j)
+shared_ptr<DPengine> sample_tri_multi_calculation::compute_matrix(int i, int j)
 {
     return tri_sample_alignment_base(p[i][j], p[0][j], nodes[i], nodes[0], bandwidth);
 }
@@ -496,11 +496,11 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 		     const vector<log_double_t>& rho, bool do_OS,bool do_OP) 
 {
     try {
-	boost::shared_ptr<sample_A3_multi_calculation> tri;
+	shared_ptr<sample_A3_multi_calculation> tri;
 	if (uniform() < p[0].load_value("cube_fraction",0.0))
-	    tri = boost::shared_ptr<sample_A3_multi_calculation>(new sample_cube_multi_calculation(p, nodes, do_OS, do_OP));
+	    tri = shared_ptr<sample_A3_multi_calculation>(new sample_cube_multi_calculation(p, nodes, do_OS, do_OP));
 	else
-	    tri = boost::shared_ptr<sample_A3_multi_calculation>(new sample_tri_multi_calculation(p, nodes, do_OS, do_OP));
+	    tri = shared_ptr<sample_A3_multi_calculation>(new sample_tri_multi_calculation(p, nodes, do_OS, do_OP));
 	tri->run_dp();
 
 	// The DP matrix construction didn't work.

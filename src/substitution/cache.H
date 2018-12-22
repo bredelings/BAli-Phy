@@ -21,7 +21,6 @@
 #define SUBSTITUTION_CACHE_H
 
 #include "object.H"
-#include <boost/shared_ptr.hpp>
 #include <vector>
 #include <boost/dynamic_bitset.hpp>
 

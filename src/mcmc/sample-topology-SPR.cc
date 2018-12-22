@@ -47,6 +47,7 @@ using std::map;
 using std::pair;
 using std::tuple;
 using std::optional;
+using std::shared_ptr;
 
 using std::cout;
 using std::cerr;
@@ -1100,11 +1101,11 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
     nodes[1] = nodes_for_branch.at(I.attachment_branch_pairs[C].edge);              // in this formulation.
     bool do_cube = (uniform() < p[0].load_value("cube_fraction",0.0));
 
-    boost::shared_ptr<sample_A3_multi_calculation> tri;
+    shared_ptr<sample_A3_multi_calculation> tri;
     if (do_cube)
-	tri = boost::shared_ptr<sample_A3_multi_calculation>(new sample_cube_multi_calculation(p, nodes, true, true));
+	tri = shared_ptr<sample_A3_multi_calculation>(new sample_cube_multi_calculation(p, nodes, true, true));
     else
-	tri = boost::shared_ptr<sample_A3_multi_calculation>(new sample_tri_multi_calculation(p, nodes, true, true));
+	tri = shared_ptr<sample_A3_multi_calculation>(new sample_tri_multi_calculation(p, nodes, true, true));
     tri->run_dp();
 
     //--------- Compute PrL2: reverse proposal probabilities ---------//

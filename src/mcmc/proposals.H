@@ -21,7 +21,6 @@
 #define PROPOSALS_H
 
 #include <vector>
-#include <boost/shared_ptr.hpp>
 #include "object.H"
 #include "math/log-double.H"
 

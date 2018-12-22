@@ -40,9 +40,9 @@
 using std::vector;
 using std::abs;
 using std::endl;
+using std::shared_ptr;
 
 using boost::dynamic_bitset;
-using boost::shared_ptr;
 
 shared_ptr<DParrayConstrained>
 sample_two_nodes_base(mutable_data_partition P, const data_partition& P0, const A5::hmm_order& order, const A5::hmm_order& order0)

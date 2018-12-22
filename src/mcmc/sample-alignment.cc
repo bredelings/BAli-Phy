@@ -28,17 +28,17 @@
 #include "alignment/alignment-util2.H"
 #include "substitution/substitution.H"
 #include "dp/dp-matrix.H"
-#include <boost/shared_ptr.hpp>
 
 // SYMMETRY: Because we are only sampling from alignments with the same fixed length
 // for both sequences, this process is symmetric
 
 using std::abs;
 using std::vector;
+using std::shared_ptr;
 using boost::dynamic_bitset;
 using namespace A2;
 
-boost::shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const indel::PairHMM& hmm, int b)
+shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const indel::PairHMM& hmm, int b)
 {
     assert(P.variable_alignment());
 
@@ -74,7 +74,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, con
     int I = P.seqlength(t.source(b)); 
     int J = P.seqlength(t.source(bb));
 
-    boost::shared_ptr<DPmatrixSimple> 
+    shared_ptr<DPmatrixSimple> 
 	Matrices( new DPmatrixSimple(HMM(state_emit, hmm.start_pi(), hmm, P.get_beta()),
 				     std::move(dists1), std::move(dists2), P.WeightedFrequencyMatrix())
 	    );
@@ -88,7 +88,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, con
 }
 
 
-boost::shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P, const indel::PairHMM& hmm, int b) 
+shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P, const indel::PairHMM& hmm, int b) 
 {
     auto Matrices = sample_alignment_forward(P, hmm, b);
 
@@ -106,7 +106,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P
     return Matrices;
 }
 
-boost::shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P, int b)
+shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P, int b)
 {
     return sample_alignment_base(P, P.get_branch_HMM(b), b);
 }
@@ -129,7 +129,7 @@ void sample_alignment(Parameters& P,int b)
     vector<Parameters> p;
     p.push_back(P);
 
-    vector< vector< boost::shared_ptr<DPmatrixSimple> > > Matrices(1);
+    vector< vector< shared_ptr<DPmatrixSimple> > > Matrices(1);
     for(int i=0;i<p.size();i++) 
     {
 	for(int j=0;j<p[i].n_data_partitions();j++) 
@@ -142,7 +142,7 @@ void sample_alignment(Parameters& P,int b)
 #endif
 	    }
 	    else
-		Matrices[i].push_back(boost::shared_ptr<DPmatrixSimple>());
+		Matrices[i].push_back(shared_ptr<DPmatrixSimple>());
     }
 
 #ifndef NDEBUG_DP

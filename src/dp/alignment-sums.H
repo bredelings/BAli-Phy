@@ -27,6 +27,7 @@
 #define ALIGNMENTSUMS_H
 
 #include <vector>
+#include <memory>
 
 #include "math/log-double.H"
 #include "dp-engine.H"
@@ -70,7 +71,7 @@ struct sample_A3_multi_calculation
 #endif
     std::vector<std::vector<int> > nodes;
     std::vector<log_double_t> rho;
-    std::vector<std::vector<boost::shared_ptr<DPengine> > > Matrices;
+    std::vector<std::vector<std::shared_ptr<DPengine> > > Matrices;
     bool do_OS;
     bool do_OP;
     std::vector< std::vector<log_double_t> > OS;
@@ -79,7 +80,7 @@ struct sample_A3_multi_calculation
     log_double_t C1;
     int bandwidth;
 
-    virtual boost::shared_ptr<DPengine> compute_matrix(int,int) = 0;
+    virtual std::shared_ptr<DPengine> compute_matrix(int,int) = 0;
 
     void run_dp();
 
@@ -94,7 +95,7 @@ struct sample_A3_multi_calculation
 
 struct sample_tri_multi_calculation: public sample_A3_multi_calculation
 {
-    virtual boost::shared_ptr<DPengine> compute_matrix(int,int);
+    virtual std::shared_ptr<DPengine> compute_matrix(int,int);
 
     sample_tri_multi_calculation(std::vector<Parameters>&,const std::vector< std::vector<int> >& nodes_,
 				 bool do_OS,bool do_OP,int b=-1);
@@ -102,7 +103,7 @@ struct sample_tri_multi_calculation: public sample_A3_multi_calculation
 
 struct sample_cube_multi_calculation: public sample_A3_multi_calculation
 {
-    virtual boost::shared_ptr<DPengine> compute_matrix(int,int);
+    virtual std::shared_ptr<DPengine> compute_matrix(int,int);
 
     sample_cube_multi_calculation(std::vector<Parameters>&,const std::vector< std::vector<int> >& nodes_,
 				  bool do_OS,bool do_OP,int b=-1);

@@ -102,8 +102,8 @@ using std::set;
 using std::map;
 using std::vector;
 using std::valarray;
+using std::shared_ptr;
 using boost::program_options::variables_map;
-using boost::shared_ptr;
 
 expression_ref fst  = var("Data.Tuple.fst");
 expression_ref snd  = var("Data.Tuple.snd");
