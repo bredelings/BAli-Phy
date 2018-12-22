@@ -75,14 +75,14 @@ public:
 	return (*this) == std::string(s);
     }
 
-    boost::optional<ptree&> get_child_optional(const std::string& key);
-    boost::optional<const ptree&> get_child_optional(const std::string& key) const;
+          ptree* get_child_optional(const std::string& key);
+    const ptree* get_child_optional(const std::string& key) const;
 
     ptree& get_child(const std::string& key);
     const ptree& get_child(const std::string& key) const;
 
-    boost::optional<ptree&> get_path_optional(const std::vector<std::string>& path, int i=0);
-    boost::optional<const ptree&> get_path_optional(const std::vector<std::string>& path, int i=0) const;
+          ptree* get_path_optional(const std::vector<std::string>& path, int i=0);
+    const ptree* get_path_optional(const std::vector<std::string>& path, int i=0) const;
 
     ptree& get_path(const std::vector<std::string>& path, int i=0);
     const ptree& get_path(const std::vector<std::string>& path, int i=0) const;

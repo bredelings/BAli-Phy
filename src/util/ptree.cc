@@ -56,20 +56,20 @@ bool ptree::operator!=(const ptree& p2) const
     return not ((*this) == p2);
 }
 
-boost::optional<ptree&>
+ptree*
 ptree::get_child_optional(const std::string& key)
 {
     if (auto index = get_child_index(key))
-	return (*this)[*index].second;
+	return &(*this)[*index].second;
     else
 	return {};
 }
 
-boost::optional<const ptree&>
+const ptree*
 ptree::get_child_optional(const std::string& key) const
 {
     if (auto index = get_child_index(key))
-	return (*this)[*index].second;
+	return &(*this)[*index].second;
     else
 	return {};
 }
@@ -92,12 +92,12 @@ const ptree& ptree::get_child(const std::string& key) const
 	throw myexception()<<"No child with key '"<<key<<"'";
 }
 
-optional<ptree&> ptree::get_path_optional(const vector<string>& path, int i)
+ptree* ptree::get_path_optional(const vector<string>& path, int i)
 {
     assert(i <= path.size());
 
     // If the path is empty this is a reference to the current object
-    if (i == path.size()) return *this;
+    if (i == path.size()) return this;
 
     if (auto child = get_child_optional(path[i]))
 	return child->get_path_optional(path, i+1);
@@ -106,12 +106,12 @@ optional<ptree&> ptree::get_path_optional(const vector<string>& path, int i)
 }
 
 
-optional<const ptree&> ptree::get_path_optional(const vector<string>& path, int i) const
+const ptree* ptree::get_path_optional(const vector<string>& path, int i) const
 {
     assert(i <= path.size());
 
     // If the path is empty this is a reference to the current object
-    if (i == path.size()) return *this;
+    if (i == path.size()) return this;
 
     if (auto child = get_child_optional(path[i]))
 	return child->get_path_optional(path, i+1);
