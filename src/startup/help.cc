@@ -388,13 +388,13 @@ string pseudo_markdown(const string& lines)
     return marked.str();
 }
 
-optional<const ptree&> find(const string& key, const ptree& p)
+const ptree* find(const string& key, const ptree& p)
 {
     for(auto& x: p)
     {
-	if (x.first == key) return x.second;
+	if (x.first == key) return &x.second;
 	if (auto found = find(key, x.second))
-	    return *found;
+	    return found;
     }
     return {};
 }
