@@ -35,7 +35,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "rng.H"
 
 #include <boost/program_options.hpp>
-#include <boost/shared_ptr.hpp>
 #include "io.H"
 #include "util/assert.hh"
 

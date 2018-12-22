@@ -33,12 +33,11 @@
 #include "distance-methods.H"
 
 #include <boost/program_options.hpp>
-#include <boost/shared_ptr.hpp>
 
 namespace po = boost::program_options;
 using po::variables_map;
-using boost::shared_ptr;
 
+using std::shared_ptr;
 using std::string;
 using std::vector;
 using std::endl;

@@ -22,11 +22,8 @@
 
 #include <vector>
 #include <valarray>
-#include <boost/shared_ptr.hpp>
-
 #include <string>
 #include <iostream>
-
 #include <map>
 
 #include "io.H"
@@ -100,7 +97,7 @@ namespace trees_format {
     class wrapped_reader_t: public reader_t
     {
     protected:
-	boost::shared_ptr<reader_t> tfr;
+	std::shared_ptr<reader_t> tfr;
 
 	bool current_tree(Tree&,int&);
     public:

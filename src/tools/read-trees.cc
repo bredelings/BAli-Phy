@@ -32,7 +32,7 @@ using std::cout;
 using std::istream;
 
 using boost::dynamic_bitset;
-using boost::shared_ptr;
+using std::shared_ptr;
 
 // FIXME: current_tree_(T) may invoke virtual functions of T that cause trouble.
 // EXAMPLE: T.prune_leaves( ) messeses with sequence names if not prevented by

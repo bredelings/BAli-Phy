@@ -32,7 +32,7 @@ using std::cout;
 using std::istream;
 
 using boost::dynamic_bitset;
-using boost::shared_ptr;
+using std::shared_ptr;
 using std::optional;
 using boost::program_options::variables_map;
 

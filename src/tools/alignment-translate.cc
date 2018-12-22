@@ -34,8 +34,7 @@ using std::cerr;
 using std::endl;
 using std::vector;
 using std::string;
-
-using boost::shared_ptr;
+using std::shared_ptr;
 
 //FIXME - make this handle un-aligned gaps...
 // diagnose sequences which are not a multiple of 3
