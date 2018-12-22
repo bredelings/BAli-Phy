@@ -3,7 +3,6 @@
 
 #include <vector>
 #include <utility>
-#include <boost/optional.hpp>
 #include "object.H"
 #include "expression_ref.H"
 #include "var.H"

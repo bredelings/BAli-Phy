@@ -41,7 +41,6 @@
 #include "rng.H"
 
 #include <boost/program_options.hpp>
-#include <boost/optional.hpp>
 
 /// FIXME - construct a full tree by extending the moveable
 ///  a) randomly

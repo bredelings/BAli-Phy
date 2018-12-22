@@ -1,5 +1,4 @@
 #include <set>
-#include <boost/optional.hpp>
 
 #include "loggers.H"
 #include "tools/parsimony.H"

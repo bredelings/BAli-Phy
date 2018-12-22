@@ -1,6 +1,5 @@
 #ifndef CONTEXT_H
 
-#include <boost/optional.hpp>
 #include "computation/closure.H"
 #include "computation/program.H"
 #include "math/log-double.H"

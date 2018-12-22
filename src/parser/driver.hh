@@ -3,7 +3,6 @@
 # include <string>
 # include <map>
 # include "parser.hh"
-# include <boost/optional.hpp>
 
 // Tell Flex the lexer's prototype ...
 # define YY_DECL \

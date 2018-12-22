@@ -81,7 +81,6 @@
 #include "models/setup.H"
 #include "util.H"
 #include "myexception.H"
-#include <boost/optional.hpp>
 #include "models/rules.H"
 #include "models/parse.H"
 #include "models/translate.H"

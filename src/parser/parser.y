@@ -9,8 +9,6 @@
 %code requires {
   # include <string>
   # include <iostream>
-  # include <boost/optional.hpp>
-  # include <boost/optional/optional_io.hpp>
   # include <vector>
   # include "computation/expression/expression_ref.H"
   # include "computation/expression/var.H"

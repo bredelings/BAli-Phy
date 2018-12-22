@@ -1,5 +1,4 @@
 #include <set>
-#include <boost/optional.hpp>
 #include "computation/module.H"
 #include "myexception.H"
 #include "program.H"

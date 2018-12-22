@@ -11,7 +11,6 @@
 #include "startup/help.hh"
 #include "util/text.H"
 #include "computation/expression/lambda.H"
-#include <boost/optional/optional_io.hpp>
 #include <boost/filesystem/operations.hpp>
 #include "sequence/sequence-format.H"
 

@@ -34,7 +34,6 @@
 #include <list>
 
 #include <boost/program_options.hpp>
-#include <boost/optional.hpp>
 
 #include "tree/sequencetree.H"
 #include "util.H"

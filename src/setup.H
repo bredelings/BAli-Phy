@@ -34,7 +34,6 @@
 #include "alignment/alignment.H"
 #include "tree/sequencetree.H"
 #include <boost/program_options.hpp>
-#include <boost/optional.hpp>
 
 //----------------- Load trees and alignments ---------------------//
 

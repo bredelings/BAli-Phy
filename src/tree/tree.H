@@ -30,7 +30,6 @@
 #include "util/assert.hh"
 #include <vector>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/optional.hpp>
 #include <list>
 #include "tree-branchnode.H"
 #include "cached_value.H"

@@ -1,6 +1,5 @@
 #include <iostream>
 #include <unordered_map>
-#include <boost/optional.hpp>
 #include "computation/operations.H"
 #include "computation/loader.H"
 #include "computation/expression/expression.H"

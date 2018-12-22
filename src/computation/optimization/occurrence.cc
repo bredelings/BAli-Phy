@@ -19,7 +19,6 @@
 #include <boost/graph/topological_sort.hpp>
 #include <boost/graph/strong_components.hpp>
 
-#include <boost/optional.hpp>
 #include "simplifier.H"
 
 // TODO: split out dependency analysis into own file.

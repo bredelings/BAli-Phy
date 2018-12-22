@@ -44,8 +44,6 @@
 
   # include <string>
   # include <iostream>
-  # include <boost/optional.hpp>
-  # include <boost/optional/optional_io.hpp>
   # include <vector>
   # include "computation/expression/expression_ref.H"
   # include "computation/expression/var.H"
@@ -98,7 +96,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 102 "parser.hh" // lalr1.cc:380
+#line 100 "parser.hh" // lalr1.cc:380
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -182,7 +180,7 @@
 
 
 namespace yy {
-#line 186 "parser.hh" // lalr1.cc:380
+#line 184 "parser.hh" // lalr1.cc:380
 
 
 
@@ -3538,7 +3536,7 @@ namespace yy {
 
 
 } // yy
-#line 3542 "parser.hh" // lalr1.cc:380
+#line 3540 "parser.hh" // lalr1.cc:380
 
 
 

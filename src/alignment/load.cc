@@ -4,7 +4,6 @@
 #include "util.H"
 #include "io.H"
 
-#include <boost/optional.hpp>
 
 using std::istream;
 using std::vector;

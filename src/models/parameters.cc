@@ -25,7 +25,6 @@
 ///
 
 #include <map>
-#include <boost/optional.hpp>
 #include "util/assert.hh"
 
 #include "models/parameters.H"

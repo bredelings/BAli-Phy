@@ -11,7 +11,6 @@
 #include "computation/expression/indexify.H"
 #include "computation/optimization/let-float.H"
 
-#include <boost/optional.hpp>
 
 using std::string;
 using std::vector;

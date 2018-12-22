@@ -1,7 +1,6 @@
 #ifndef UNIFICATION_H
 #define UNIFICATION_H
 
-#include <boost/optional.hpp>
 #include <set>
 #include <list>
 #include <map>

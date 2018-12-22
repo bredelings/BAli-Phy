@@ -23,7 +23,6 @@
 #include <vector>
 #include <valarray>
 #include <boost/shared_ptr.hpp>
-#include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 
 #include <string>

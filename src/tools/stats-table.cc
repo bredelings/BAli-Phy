@@ -25,7 +25,6 @@
 #include "io.H"
 
 #include <boost/dynamic_bitset.hpp>
-#include <boost/optional.hpp>
 
 using std::optional;
 

@@ -6,7 +6,6 @@
 #include <list>
 #include <string>
 #include <boost/program_options.hpp>
-#include <boost/optional.hpp>
 #include "sequence/alphabet.H"
 #include "alignment.H"
 #include "object.H"

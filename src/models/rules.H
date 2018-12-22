@@ -4,7 +4,6 @@
 #include <string>
 #include <map>
 #include "util/ptree.H"
-#include <boost/optional.hpp>
 #include <boost/filesystem/operations.hpp>
 
 typedef ptree Rule;

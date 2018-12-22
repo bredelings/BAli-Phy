@@ -29,7 +29,6 @@
 
 #include <string>
 #include <valarray>
-#include <boost/optional.hpp>
 
 #include "sequence/alphabet.H"
 #include "tree/sequencetree.H"

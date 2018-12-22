@@ -4,7 +4,6 @@
 #include "myexception.H"
 #include "util.H"
 #include "io.H"
-#include <boost/optional.hpp>
 #include "util/json.hh"
 #include "models/setup.H"
 #include "models/parse.H" // for is_constant( )

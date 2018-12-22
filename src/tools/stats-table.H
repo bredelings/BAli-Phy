@@ -24,7 +24,6 @@
 #include <string>
 #include <iostream>
 #include <boost/lexical_cast.hpp>
-#include <boost/optional.hpp>
 #include "util.H"
 #include "io.H"
 

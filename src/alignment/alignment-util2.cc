@@ -23,7 +23,6 @@
 /// \brief This file implements alignment utility functions.
 ///
 
-#include <boost/optional.hpp>
 #include "alignment-util.H"
 #include "alignment-util2.H"
 #include "util.H"

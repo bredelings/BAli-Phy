@@ -26,7 +26,6 @@
 #include <cmath>
 #include "util/assert.hh"
 #include <iostream>
-#include <boost/optional.hpp>
 #include "sample.H"
 #include "rng.H"
 #include "probability/choose.H"
