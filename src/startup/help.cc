@@ -284,7 +284,7 @@ string get_help_for_rule(const Rules& rules, const Rule& rule)
 	auto& arg = argpair.second;
 
 	// 1. arg: description
-	optional<string> description = arg.get_optional<string>("description");
+	auto description = arg.get_optional<string>("description");
 	help<<"   "<<arg.get<string>("arg_name")<<": "<<description<<".\n";
 
 	// 2. type: type
