@@ -33,7 +33,7 @@
 #include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include "util/assert.hh"
-#include "io.H"
+#include "util/io.H"
 
 using std::vector;
 using std::valarray;

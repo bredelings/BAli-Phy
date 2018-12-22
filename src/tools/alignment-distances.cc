@@ -32,7 +32,7 @@
 #include "alignment/load.H"
 #include "distance-methods.H"
 #include "distance-report.H"
-#include "io.H"
+#include "util/io.H"
 
 #include <boost/program_options.hpp>
 

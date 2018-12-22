@@ -34,7 +34,7 @@
 #include "sequence/alphabet.H"
 #include "alignment/alignment-util.H"
 #include "tree/tree-util.H"
-#include "io.H"
+#include "util/io.H"
 
 using std::ifstream;
 using std::string;

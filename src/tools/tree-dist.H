@@ -31,7 +31,7 @@
 #include "tree/tree.H"
 #include "tree/sequencetree.H"
 #include "util.H"
-#include "io.H"
+#include "util/io.H"
 
 /// The information we store about each topology
 struct tree_record 

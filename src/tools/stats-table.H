@@ -25,7 +25,7 @@
 #include <iostream>
 #include <boost/lexical_cast.hpp>
 #include "util.H"
-#include "io.H"
+#include "util/io.H"
 
 template <typename T>
 class Table

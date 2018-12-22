@@ -4,7 +4,7 @@
 #include "math/exponential.H"
 #include "math/eigenvalue.H"
 #include "sequence/alphabet.H"
-#include "io.H"
+#include "util/io.H"
 #include <valarray>
 #include "computation/expression/expression.H"
 #include "dp/2way.H"

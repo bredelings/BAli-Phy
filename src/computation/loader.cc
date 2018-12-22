@@ -9,7 +9,7 @@
 #include "startup/paths.H"
 #include "parser/driver.hh"
 
-#include "io.H"
+#include "util/io.H"
 #include "parser/desugar.H"
 
 namespace fs = boost::filesystem;

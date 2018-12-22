@@ -26,7 +26,7 @@
 #include "alignment/load.H"
 #include "util.H"
 #include "colors.H"
-#include "io.H"
+#include "util/io.H"
 
 #include <boost/program_options.hpp>
 

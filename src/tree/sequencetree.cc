@@ -23,7 +23,7 @@
 #include "tree/sequencetree.H"
 #include "myexception.H"
 #include "util.H"
-#include "io.H"
+#include "util/io.H"
 
 using namespace std;
 

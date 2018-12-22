@@ -30,7 +30,7 @@
 #include "util.H"
 #include "parsimony.H"
 #include "tree-dist.H"
-#include "io.H"
+#include "util/io.H"
 
 #include <boost/program_options.hpp>
 

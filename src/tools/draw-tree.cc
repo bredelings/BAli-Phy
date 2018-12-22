@@ -53,7 +53,7 @@ extern "C" {
 #include "util.H"
 #include "util-random.H"
 #include "rng.H"
-#include "io.H"
+#include "util/io.H"
 
 namespace po = boost::program_options;
 using po::variables_map;

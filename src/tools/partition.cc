@@ -33,7 +33,7 @@
 #include <fstream>
 
 #include "util.H"
-#include "io.H"
+#include "util/io.H"
 
 using std::string;
 using std::vector;

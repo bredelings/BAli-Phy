@@ -23,7 +23,7 @@
 #include "util/assert.hh"
 #include "myexception.H"
 #include "util.H"
-#include "io.H"
+#include "util/io.H"
 
 #include <boost/program_options.hpp>
 

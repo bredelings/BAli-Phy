@@ -21,7 +21,7 @@
 #include "util/assert.hh"
 #include <fstream>
 #include "util.H"
-#include "io.H"
+#include "util/io.H"
 
 using std::vector;
 using std::string;

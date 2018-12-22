@@ -23,7 +23,7 @@
 #include "util.H"
 #include "tree/tree-util.H"
 #include "myexception.H"
-#include "io.H"
+#include "util/io.H"
 #include "tools/read-trees.H" // split out trees_format::reader_t
 
 using boost::program_options::variables_map;

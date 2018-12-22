@@ -30,7 +30,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "alignment/load.H"
 #include "tree/tree-util.H"
-#include "io.H"
+#include "util/io.H"
 
 namespace po = boost::program_options;
 using po::variables_map;

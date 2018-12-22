@@ -22,7 +22,7 @@
 #include "stats-table.H"
 #include "util.H"
 #include "myexception.H"
-#include "io.H"
+#include "util/io.H"
 
 #include <boost/dynamic_bitset.hpp>
 

@@ -5,7 +5,7 @@
 #include "startup/paths.H"
 #include "util.H"
 #include "util/text.H"
-#include "../io.H"
+#include "util/io.H"
 #include "setup.H"
 #include "version.H"
 #include "models/rules.H"

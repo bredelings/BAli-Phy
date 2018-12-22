@@ -26,7 +26,7 @@
 #include <iostream>
 #include <map>
 
-#include "io.H"
+#include "util/io.H"
 #include "tree/tree.H"
 #include "tree/sequencetree.H"
 

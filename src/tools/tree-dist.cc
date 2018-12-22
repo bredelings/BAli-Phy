@@ -19,7 +19,7 @@
 
 #include <fstream>
 #include "tree-dist.H"
-#include "io.H"
+#include "util/io.H"
 #include "read-trees.H"
 
 using std::vector;

@@ -27,7 +27,7 @@
 #include "sequence/sequence.H"
 #include "sequence/sequence-format.H"
 #include <boost/program_options.hpp>
-#include "io.H"
+#include "util/io.H"
 #include "findroot.H"
 
 using namespace sequence_format;

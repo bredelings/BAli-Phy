@@ -3,7 +3,7 @@
 #include "rules.H"
 #include "myexception.H"
 #include "util.H"
-#include "io.H"
+#include "util/io.H"
 #include "util/json.hh"
 #include "models/setup.H"
 #include "models/parse.H" // for is_constant( )

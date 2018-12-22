@@ -2,7 +2,7 @@
 
 #include "alignment-util.H"
 #include "util.H"
-#include "io.H"
+#include "util/io.H"
 
 
 using std::istream;

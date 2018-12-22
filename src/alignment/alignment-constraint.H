@@ -24,7 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <utility>
 #include "alignment/alignment.H"
 #include "tree/sequencetree.H"
-#include "io.H"
+#include "util/io.H"
 
 matrix<int> load_alignment_constraint(const std::string& filename,SequenceTree& T);
 
