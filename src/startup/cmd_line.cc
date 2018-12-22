@@ -17,7 +17,7 @@ using std::string;
 using std::map;
 using std::vector;
 using std::cout;
-using boost::optional;
+using std::optional;
 
 namespace po = boost::program_options;
 using po::variables_map;

@@ -455,7 +455,7 @@ yy::parser::symbol_type make_string(const yy::parser::location_type& loc)
     return yy::parser::make_STRING(s,loc);
 }
 
-boost::optional<yy::parser::symbol_type> driver::do_bol(const yy::parser::location_type& loc)
+std::optional<yy::parser::symbol_type> driver::do_bol(const yy::parser::location_type& loc)
 {
     auto x = get_offside(loc);
     int delta_offset = x.offset;

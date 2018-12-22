@@ -12,7 +12,7 @@ using std::vector;
 using std::list;
 using std::string;
 using std::pair;
-using boost::optional;
+using std::optional;
 
 optional<pair<string,string>> split_keyword(const string& s, char c)
 {

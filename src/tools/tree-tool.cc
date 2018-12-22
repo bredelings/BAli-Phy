@@ -43,7 +43,7 @@ using std::list;
 using std::valarray;
 using std::pair;
 
-using boost::optional;
+using std::optional;
 
 variables_map parse_cmd_line(int argc,char* argv[]) 
 { 

@@ -19,7 +19,7 @@ using std::make_shared;
 
 using std::to_string;
 
-using boost::optional;
+using std::optional;
 
 map<string,set<string>> extract_signature(const map<string,map<string,int>>& extensions)
 {
@@ -44,7 +44,7 @@ vector<vector<vector<int>>> get_un_identifiable_indices(const vector<string>& na
 {
     // groups[prefix][label] = {indices} ; and the number of indices should be patterns.size
     map<string,map<string,vector<int>>> groups;
-    boost::optional<map<string,set<string>>> signature;
+    std::optional<map<string,set<string>>> signature;
     for(int i=0;i<patterns.size();i++)
     {
 	const auto& pattern = patterns[i];

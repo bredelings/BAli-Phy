@@ -32,7 +32,7 @@ using std::pair;
 using std::map;
 using boost::any;
 using boost::dynamic_bitset;
-using boost::optional;
+using std::optional;
 
 void TreeView::destroy_tree(BranchNode* start) {
     assert(start);

@@ -46,7 +46,7 @@ public:
     /// Access the data for the i-th column
     const std::vector<T>& column(int i) const {return data_[i];}
 
-    boost::optional<int> maybe_find_column_index(const std::string& s) const;
+    std::optional<int> maybe_find_column_index(const std::string& s) const;
 
     int find_column_index(const std::string& s) const;
 
@@ -70,7 +70,7 @@ public:
 };
 
 template <typename T>
-boost::optional<int> Table<T>::maybe_find_column_index(const std::string& s) const
+std::optional<int> Table<T>::maybe_find_column_index(const std::string& s) const
 {
     return find_index(names_, s);
 }

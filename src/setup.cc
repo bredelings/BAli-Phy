@@ -46,7 +46,7 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-using boost::optional;
+using std::optional;
 
 namespace fs = boost::filesystem;
 

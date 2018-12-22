@@ -13,7 +13,7 @@ using std::vector;
 using std::set;
 using std::map;
 using std::string;
-using boost::optional;
+using std::optional;
 namespace fs = boost::filesystem;
 
 // TODO: reject HKY+HKY -- reduce constraints.

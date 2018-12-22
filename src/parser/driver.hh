@@ -25,7 +25,7 @@ class driver
     typedef yy::parser::token_type token_type;
 
     std::vector<std::pair<location_type,std::string>> error_messages;
-    std::vector<boost::optional<LayoutContext>> contexts;
+    std::vector<std::optional<LayoutContext>> contexts;
 
 public:
     driver ();
@@ -33,14 +33,14 @@ public:
     LayoutContext get_offside(const location_type& loc);
 
     void pop_context();
-    boost::optional<LayoutContext> get_context();
-    void push_context(const boost::optional<LayoutContext>&);
+    std::optional<LayoutContext> get_context();
+    void push_context(const std::optional<LayoutContext>&);
     void push_context(const LayoutContext&);
     void push_module_context();
     void push_context();
 
     symbol_type hopefully_open_brace(const location_type& loc);
-    boost::optional<symbol_type> do_bol(const location_type& loc);
+    std::optional<symbol_type> do_bol(const location_type& loc);
     symbol_type new_layout_context(const location_type& loc, bool strict, bool gen_semis, token_type tok);
     symbol_type do_layout_left(const location_type& loc);
     void pop() {}

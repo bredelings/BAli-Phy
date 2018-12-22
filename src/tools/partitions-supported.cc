@@ -52,7 +52,7 @@ using std::endl;
 using std::string;
 using std::vector;
 using std::ios;
-using boost::optional;
+using std::optional;
 
 using namespace statistics;
 

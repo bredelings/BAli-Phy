@@ -76,7 +76,7 @@ class shared_items
 public:
 
     // from partition -> item
-    std::vector<boost::optional<int>> item_for_partition;  
+    std::vector<std::optional<int>> item_for_partition;  
 
     // from item -> partition
     std::vector<std::vector<int> > partitions_for_item;
@@ -113,7 +113,7 @@ public:
 
     const std::vector<T>& get_items() const {return items;}
 
-    shared_items(const std::vector<T>& v1, const std::vector<boost::optional<int>>& v2)
+    shared_items(const std::vector<T>& v1, const std::vector<std::optional<int>>& v2)
 	:items(v1),
 	 item_for_partition(v2)
 	{

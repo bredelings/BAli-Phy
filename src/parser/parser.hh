@@ -60,7 +60,7 @@
   expression_ref make_body(const std::vector<expression_ref>& imports, const std::vector<expression_ref>& topdecls);
 
   expression_ref make_exports(const std::vector<expression_ref>& exports);
-  expression_ref make_infix(const std::string& infix, boost::optional<int>& prec, std::vector<std::string>& ops);
+  expression_ref make_infix(const std::string& infix, std::optional<int>& prec, std::vector<std::string>& ops);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 
@@ -357,20 +357,13 @@ namespace yy {
       // optqualified
       char dummy1[sizeof(bool)];
 
-      // prec
-      char dummy2[sizeof(boost::optional<int>)];
-
-      // maybe_pkg
-      // maybeas
-      char dummy3[sizeof(boost::optional<std::string>)];
-
       // "CHAR"
       // "PRIMCHAR"
-      char dummy4[sizeof(char)];
+      char dummy2[sizeof(char)];
 
       // "RATIONAL"
       // "PRIMDOUBLE"
-      char dummy5[sizeof(double)];
+      char dummy3[sizeof(double)];
 
       // module
       // body
@@ -434,16 +427,23 @@ namespace yy {
       // stmt
       // qual
       // literal
-      char dummy6[sizeof(expression_ref)];
+      char dummy4[sizeof(expression_ref)];
 
       // "PRIMFLOAT"
-      char dummy7[sizeof(float)];
+      char dummy5[sizeof(float)];
 
       // "INTEGER"
       // "PRIMINTEGER"
       // "PRIMWORD"
       // commas
-      char dummy8[sizeof(int)];
+      char dummy6[sizeof(int)];
+
+      // prec
+      char dummy7[sizeof(std::optional<int>)];
+
+      // maybe_pkg
+      // maybeas
+      char dummy8[sizeof(std::optional<std::string>)];
 
       // "VARID"
       // "CONID"
@@ -743,10 +743,6 @@ namespace yy {
 
   basic_symbol (typename Base::kind_type t, const bool& v, const location_type& l);
 
-  basic_symbol (typename Base::kind_type t, const boost::optional<int>& v, const location_type& l);
-
-  basic_symbol (typename Base::kind_type t, const boost::optional<std::string>& v, const location_type& l);
-
   basic_symbol (typename Base::kind_type t, const char& v, const location_type& l);
 
   basic_symbol (typename Base::kind_type t, const double& v, const location_type& l);
@@ -756,6 +752,10 @@ namespace yy {
   basic_symbol (typename Base::kind_type t, const float& v, const location_type& l);
 
   basic_symbol (typename Base::kind_type t, const int& v, const location_type& l);
+
+  basic_symbol (typename Base::kind_type t, const std::optional<int>& v, const location_type& l);
+
+  basic_symbol (typename Base::kind_type t, const std::optional<std::string>& v, const location_type& l);
 
   basic_symbol (typename Base::kind_type t, const std::string& v, const location_type& l);
 
@@ -1678,15 +1678,6 @@ namespace yy {
         value.copy< bool > (other.value);
         break;
 
-      case 172: // prec
-        value.copy< boost::optional<int> > (other.value);
-        break;
-
-      case 167: // maybe_pkg
-      case 169: // maybeas
-        value.copy< boost::optional<std::string> > (other.value);
-        break;
-
       case 127: // "CHAR"
       case 131: // "PRIMCHAR"
         value.copy< char > (other.value);
@@ -1771,6 +1762,15 @@ namespace yy {
       case 134: // "PRIMWORD"
       case 345: // commas
         value.copy< int > (other.value);
+        break;
+
+      case 172: // prec
+        value.copy< std::optional<int> > (other.value);
+        break;
+
+      case 167: // maybe_pkg
+      case 169: // maybeas
+        value.copy< std::optional<std::string> > (other.value);
         break;
 
       case 117: // "VARID"
@@ -1900,15 +1900,6 @@ namespace yy {
         value.copy< bool > (v);
         break;
 
-      case 172: // prec
-        value.copy< boost::optional<int> > (v);
-        break;
-
-      case 167: // maybe_pkg
-      case 169: // maybeas
-        value.copy< boost::optional<std::string> > (v);
-        break;
-
       case 127: // "CHAR"
       case 131: // "PRIMCHAR"
         value.copy< char > (v);
@@ -1993,6 +1984,15 @@ namespace yy {
       case 134: // "PRIMWORD"
       case 345: // commas
         value.copy< int > (v);
+        break;
+
+      case 172: // prec
+        value.copy< std::optional<int> > (v);
+        break;
+
+      case 167: // maybe_pkg
+      case 169: // maybeas
+        value.copy< std::optional<std::string> > (v);
         break;
 
       case 117: // "VARID"
@@ -2123,20 +2123,6 @@ namespace yy {
   {}
 
   template <typename Base>
-  parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const boost::optional<int>& v, const location_type& l)
-    : Base (t)
-    , value (v)
-    , location (l)
-  {}
-
-  template <typename Base>
-  parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const boost::optional<std::string>& v, const location_type& l)
-    : Base (t)
-    , value (v)
-    , location (l)
-  {}
-
-  template <typename Base>
   parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const char& v, const location_type& l)
     : Base (t)
     , value (v)
@@ -2166,6 +2152,20 @@ namespace yy {
 
   template <typename Base>
   parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const int& v, const location_type& l)
+    : Base (t)
+    , value (v)
+    , location (l)
+  {}
+
+  template <typename Base>
+  parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::optional<int>& v, const location_type& l)
+    : Base (t)
+    , value (v)
+    , location (l)
+  {}
+
+  template <typename Base>
+  parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::optional<std::string>& v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
@@ -2220,15 +2220,6 @@ namespace yy {
       case 166: // maybe_safe
       case 168: // optqualified
         value.template destroy< bool > ();
-        break;
-
-      case 172: // prec
-        value.template destroy< boost::optional<int> > ();
-        break;
-
-      case 167: // maybe_pkg
-      case 169: // maybeas
-        value.template destroy< boost::optional<std::string> > ();
         break;
 
       case 127: // "CHAR"
@@ -2315,6 +2306,15 @@ namespace yy {
       case 134: // "PRIMWORD"
       case 345: // commas
         value.template destroy< int > ();
+        break;
+
+      case 172: // prec
+        value.template destroy< std::optional<int> > ();
+        break;
+
+      case 167: // maybe_pkg
+      case 169: // maybeas
+        value.template destroy< std::optional<std::string> > ();
         break;
 
       case 117: // "VARID"
@@ -2450,15 +2450,6 @@ namespace yy {
         value.move< bool > (s.value);
         break;
 
-      case 172: // prec
-        value.move< boost::optional<int> > (s.value);
-        break;
-
-      case 167: // maybe_pkg
-      case 169: // maybeas
-        value.move< boost::optional<std::string> > (s.value);
-        break;
-
       case 127: // "CHAR"
       case 131: // "PRIMCHAR"
         value.move< char > (s.value);
@@ -2543,6 +2534,15 @@ namespace yy {
       case 134: // "PRIMWORD"
       case 345: // commas
         value.move< int > (s.value);
+        break;
+
+      case 172: // prec
+        value.move< std::optional<int> > (s.value);
+        break;
+
+      case 167: // maybe_pkg
+      case 169: // maybeas
+        value.move< std::optional<std::string> > (s.value);
         break;
 
       case 117: // "VARID"

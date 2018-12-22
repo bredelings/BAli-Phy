@@ -27,7 +27,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/optional.hpp>
 
-using boost::optional;
+using std::optional;
 
 using std::string;
 using std::vector;

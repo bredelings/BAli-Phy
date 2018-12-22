@@ -33,7 +33,7 @@ using std::istream;
 
 using boost::dynamic_bitset;
 using boost::shared_ptr;
-using boost::optional;
+using std::optional;
 using boost::program_options::variables_map;
 
 int cmp(const tree_record& t1, const tree_record& t2)

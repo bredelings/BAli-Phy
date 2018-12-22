@@ -42,7 +42,7 @@ using std::list;
 using std::valarray;
 using std::pair;
 
-using boost::optional;
+using std::optional;
 
 // mark nodes in T according to what node of Q they map to
 vector<int> get_nodes_map(const SequenceTree& Q,const SequenceTree& T,

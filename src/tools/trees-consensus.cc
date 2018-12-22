@@ -79,7 +79,7 @@ using std::ios;
 using std::ofstream;
 
 using statistics::odds;
-using boost::optional;
+using std::optional;
 
 // What if everything in 'split' is true?
 // What if everything in 'split' is true, but 1 taxa?

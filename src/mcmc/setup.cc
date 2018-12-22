@@ -42,7 +42,7 @@
 
 using boost::program_options::variables_map;
 using boost::dynamic_bitset;
-using boost::optional;
+using std::optional;
 using std::vector;
 using std::endl;
 using std::string;

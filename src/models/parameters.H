@@ -230,7 +230,7 @@ struct tree_constants: public Object
     std::vector<std::tuple<maybe_parameter,maybe_parameter,maybe_parameter>> parameters_for_tree_branch;
 
     std::vector<int> branch_duration_index;
-    std::vector<boost::optional<int>> branch_duration_regs;
+    std::vector<std::optional<int>> branch_duration_regs;
 
     int n_leaves = -1;
 
@@ -245,15 +245,15 @@ struct parameters_constants: public Object
 {
     /// The substitution::Model
     std::vector<smodel_methods> SModels;
-    std::vector<boost::optional<int>> smodel_for_partition;
+    std::vector<std::optional<int>> smodel_for_partition;
 
     /// The IndelModel
-    std::vector<boost::optional<int>> imodel_for_partition;
+    std::vector<std::optional<int>> imodel_for_partition;
     int n_imodels;
     int imodels_index = -1;
 
     // Scale for partition
-    std::vector<boost::optional<int>> scale_for_partition;
+    std::vector<std::optional<int>> scale_for_partition;
     int n_scales;
     std::vector<int> scale_parameter_indices;
 
@@ -293,10 +293,10 @@ struct parameters_constants: public Object
 
     parameters_constants(const std::vector<alignment>& A, const SequenceTree&, 
 			 const std::vector<model_t>&,
-			 const std::vector<boost::optional<int>>&,
+			 const std::vector<std::optional<int>>&,
 			 const std::vector<model_t>&,
-			 const std::vector<boost::optional<int>>&,
-			 const std::vector<boost::optional<int>>&);
+			 const std::vector<std::optional<int>>&,
+			 const std::vector<std::optional<int>>&);
 };
 
 /// A class to contain all the MCMC state except the alignment
@@ -338,15 +338,15 @@ public:
 
     mutable_data_partition operator[](int i)       {return get_data_partition(i);}
 
-    boost::optional<int> smodel_index_for_partition(int i) const {return PC->smodel_for_partition[i];}
+    std::optional<int> smodel_index_for_partition(int i) const {return PC->smodel_for_partition[i];}
 
-    boost::optional<int> imodel_index_for_partition(int i) const {return PC->imodel_for_partition[i];}
+    std::optional<int> imodel_index_for_partition(int i) const {return PC->imodel_for_partition[i];}
 
     std::vector<int> partitions_for_imodel(int i) const;
 
     std::vector<int> partitions_for_scale(int i) const;
 
-    boost::optional<int> scale_index_for_partition(int i) const {return PC->scale_for_partition[i];}
+    std::optional<int> scale_index_for_partition(int i) const {return PC->scale_for_partition[i];}
   
     void set_beta(double b);
     double get_beta() const;
@@ -407,7 +407,7 @@ public:
 
     int branch_scale_index(int i) const;
 
-    boost::optional<int> branch_scale_modifiable_reg(int i) const;
+    std::optional<int> branch_scale_modifiable_reg(int i) const;
 
     double branch_scale(int i) const;
 
@@ -422,9 +422,9 @@ public:
     Parameters(const std::shared_ptr<module_loader>& L,
 	       const std::vector<alignment>& A, const SequenceTree&, 
 	       const std::vector<model_t>&,
-	       const std::vector<boost::optional<int>>&,
+	       const std::vector<std::optional<int>>&,
 	       const std::vector<model_t>&,
-	       const std::vector<boost::optional<int>>&,
+	       const std::vector<std::optional<int>>&,
 	       const model_t&,
 	       const std::vector<int>&,
 	       const key_map_t&);
@@ -432,11 +432,11 @@ public:
     Parameters(const std::shared_ptr<module_loader>& L,
 	       const std::vector<alignment>& A, const SequenceTree&, 
 	       const std::vector<model_t>&,
-	       const std::vector<boost::optional<int>>&,
+	       const std::vector<std::optional<int>>&,
 	       const std::vector<model_t>&,
-	       const std::vector<boost::optional<int>>&,
+	       const std::vector<std::optional<int>>&,
 	       const std::vector<model_t>&,
-	       const std::vector<boost::optional<int>>&,
+	       const std::vector<std::optional<int>>&,
 	       const model_t&,
 	       const std::vector<int>&,
 	       const key_map_t&);

@@ -25,7 +25,7 @@
   expression_ref make_body(const std::vector<expression_ref>& imports, const std::vector<expression_ref>& topdecls);
 
   expression_ref make_exports(const std::vector<expression_ref>& exports);
-  expression_ref make_infix(const std::string& infix, boost::optional<int>& prec, std::vector<std::string>& ops);
+  expression_ref make_infix(const std::string& infix, std::optional<int>& prec, std::vector<std::string>& ops);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 
@@ -255,13 +255,13 @@
 %type <expression_ref> importdecl
 %type <bool> maybe_src
 %type <bool> maybe_safe
-%type <boost::optional<std::string>> maybe_pkg
+%type <std::optional<std::string>> maybe_pkg
 %type <bool> optqualified
-%type <boost::optional<std::string>> maybeas
+%type <std::optional<std::string>> maybeas
 %type <expression_ref> maybeimpspec
 %type <expression_ref> impspec
 
-%type <boost::optional<int>> prec
+%type <std::optional<int>> prec
 %type <std::string> infix
 %type <std::vector<std::string>> ops
 
@@ -1472,7 +1472,7 @@ bars: bars "|"     {$$ = $1 + 1;}
 */
 %%
 
-using boost::optional;
+using std::optional;
 using std::string;
 using std::vector;
 

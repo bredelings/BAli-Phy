@@ -41,7 +41,7 @@ using std::vector;
 using std::pair;
 using std::endl;
 using boost::dynamic_bitset;
-using boost::optional;
+using std::optional;
 
 boost::shared_ptr<DPmatrixConstrained>
 tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, const vector<HMM::bitmask_t>& a23,

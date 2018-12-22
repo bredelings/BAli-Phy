@@ -33,7 +33,7 @@ std::list<alignment> load_alignments(std::istream& ifile, const std::vector<std:
 
 std::vector<alignment> load_alignments(std::istream& ifile, const std::string& names);
 
-boost::optional<std::vector<sequence>> find_load_next_sequences(std::istream& ifile);
+std::optional<std::vector<sequence>> find_load_next_sequences(std::istream& ifile);
 
 alignment find_first_alignment(std::istream& ifile, const std::string& alph_name);
 

@@ -172,7 +172,7 @@ public:
     const closure& operator[](int r) const {return regs.access(r).C;}
     bool reg_is_used(int r) const {return regs.is_used(r);}
     reg::type_t reg_type(int r) const {return regs.access(r).type;}
-    boost::optional<int> creator_of_reg(int r) const;
+    std::optional<int> creator_of_reg(int r) const;
     bool reg_is_contingent(int r) const;
     bool reg_exists(int r) const;
     bool step_exists_in_root(int s) const;
@@ -306,7 +306,7 @@ public:
     closure preprocess(const closure& C);
 
     /// Lookup the index for the named parameter s
-    boost::optional<int> maybe_find_parameter(const std::string& s) const;
+    std::optional<int> maybe_find_parameter(const std::string& s) const;
 
     /// Lookup the index for the named parameter s
     int find_parameter(const std::string& s) const;
@@ -314,11 +314,11 @@ public:
     /*----- Modifiable ranges ----*/
     bool find_modifiable_reg(int& R);
 
-    boost::optional<int> parameter_is_modifiable_reg(int index);
+    std::optional<int> parameter_is_modifiable_reg(int index);
 
     int parameter_as_modifiable_reg(int index);
 
-    boost::optional<int> compute_expression_is_modifiable_reg(int index);
+    std::optional<int> compute_expression_is_modifiable_reg(int index);
 
     int compute_expression_as_modifiable_reg(int index);
 

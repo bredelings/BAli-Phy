@@ -257,15 +257,6 @@ namespace yy {
         value.copy< bool > (that.value);
         break;
 
-      case 172: // prec
-        value.copy< boost::optional<int> > (that.value);
-        break;
-
-      case 167: // maybe_pkg
-      case 169: // maybeas
-        value.copy< boost::optional<std::string> > (that.value);
-        break;
-
       case 127: // "CHAR"
       case 131: // "PRIMCHAR"
         value.copy< char > (that.value);
@@ -350,6 +341,15 @@ namespace yy {
       case 134: // "PRIMWORD"
       case 345: // commas
         value.copy< int > (that.value);
+        break;
+
+      case 172: // prec
+        value.copy< std::optional<int> > (that.value);
+        break;
+
+      case 167: // maybe_pkg
+      case 169: // maybeas
+        value.copy< std::optional<std::string> > (that.value);
         break;
 
       case 117: // "VARID"
@@ -475,15 +475,6 @@ namespace yy {
         value.move< bool > (that.value);
         break;
 
-      case 172: // prec
-        value.move< boost::optional<int> > (that.value);
-        break;
-
-      case 167: // maybe_pkg
-      case 169: // maybeas
-        value.move< boost::optional<std::string> > (that.value);
-        break;
-
       case 127: // "CHAR"
       case 131: // "PRIMCHAR"
         value.move< char > (that.value);
@@ -568,6 +559,15 @@ namespace yy {
       case 134: // "PRIMWORD"
       case 345: // commas
         value.move< int > (that.value);
+        break;
+
+      case 172: // prec
+        value.move< std::optional<int> > (that.value);
+        break;
+
+      case 167: // maybe_pkg
+      case 169: // maybeas
+        value.move< std::optional<std::string> > (that.value);
         break;
 
       case 117: // "VARID"
@@ -696,15 +696,6 @@ namespace yy {
         value.copy< bool > (that.value);
         break;
 
-      case 172: // prec
-        value.copy< boost::optional<int> > (that.value);
-        break;
-
-      case 167: // maybe_pkg
-      case 169: // maybeas
-        value.copy< boost::optional<std::string> > (that.value);
-        break;
-
       case 127: // "CHAR"
       case 131: // "PRIMCHAR"
         value.copy< char > (that.value);
@@ -789,6 +780,15 @@ namespace yy {
       case 134: // "PRIMWORD"
       case 345: // commas
         value.copy< int > (that.value);
+        break;
+
+      case 172: // prec
+        value.copy< std::optional<int> > (that.value);
+        break;
+
+      case 167: // maybe_pkg
+      case 169: // maybeas
+        value.copy< std::optional<std::string> > (that.value);
         break;
 
       case 117: // "VARID"
@@ -1130,15 +1130,6 @@ namespace yy {
         yylhs.value.build< bool > ();
         break;
 
-      case 172: // prec
-        yylhs.value.build< boost::optional<int> > ();
-        break;
-
-      case 167: // maybe_pkg
-      case 169: // maybeas
-        yylhs.value.build< boost::optional<std::string> > ();
-        break;
-
       case 127: // "CHAR"
       case 131: // "PRIMCHAR"
         yylhs.value.build< char > ();
@@ -1223,6 +1214,15 @@ namespace yy {
       case 134: // "PRIMWORD"
       case 345: // commas
         yylhs.value.build< int > ();
+        break;
+
+      case 172: // prec
+        yylhs.value.build< std::optional<int> > ();
+        break;
+
+      case 167: // maybe_pkg
+      case 169: // maybeas
+        yylhs.value.build< std::optional<std::string> > ();
         break;
 
       case 117: // "VARID"
@@ -1555,7 +1555,7 @@ namespace yy {
     std::vector<expression_ref> e;
     if (yystack_[4].value.as< bool > ()) e.push_back(AST_node("qualified"));
     e.push_back(String(yystack_[2].value.as< std::string > ()));
-    if (yystack_[1].value.as< boost::optional<std::string> > ()) e.push_back(AST_node("as", *yystack_[1].value.as< boost::optional<std::string> > ()));
+    if (yystack_[1].value.as< std::optional<std::string> > ()) e.push_back(AST_node("as", *yystack_[1].value.as< std::optional<std::string> > ()));
     if (yystack_[0].value.as< expression_ref > ()) e.push_back(yystack_[0].value.as< expression_ref > ());
     yylhs.value.as< expression_ref > () = expression_ref(new expression(AST_node("ImpDecl"),std::move(e)));
 }
@@ -1588,7 +1588,7 @@ namespace yy {
 
   case 49:
 #line 604 "parser.y" // lalr1.cc:870
-    { yylhs.value.as< boost::optional<std::string> > () = yystack_[0].value.as< std::string > (); }
+    { yylhs.value.as< std::optional<std::string> > () = yystack_[0].value.as< std::string > (); }
 #line 1593 "parser.cc" // lalr1.cc:870
     break;
 
@@ -1612,7 +1612,7 @@ namespace yy {
 
   case 53:
 #line 610 "parser.y" // lalr1.cc:870
-    { yylhs.value.as< boost::optional<std::string> > () = yystack_[0].value.as< std::string > (); }
+    { yylhs.value.as< std::optional<std::string> > () = yystack_[0].value.as< std::string > (); }
 #line 1617 "parser.cc" // lalr1.cc:870
     break;
 
@@ -1654,7 +1654,7 @@ namespace yy {
 
   case 60:
 #line 623 "parser.y" // lalr1.cc:870
-    { yylhs.value.as< boost::optional<int> > () = yystack_[0].value.as< int > (); }
+    { yylhs.value.as< std::optional<int> > () = yystack_[0].value.as< int > (); }
 #line 1659 "parser.cc" // lalr1.cc:870
     break;
 
@@ -2350,7 +2350,7 @@ namespace yy {
 
   case 254:
 #line 1026 "parser.y" // lalr1.cc:870
-    { yylhs.value.as< expression_ref > () = make_infix(yystack_[2].value.as< std::string > (),yystack_[1].value.as< boost::optional<int> > (),yystack_[0].value.as< std::vector<std::string> > ()); }
+    { yylhs.value.as< expression_ref > () = make_infix(yystack_[2].value.as< std::string > (),yystack_[1].value.as< std::optional<int> > (),yystack_[0].value.as< std::vector<std::string> > ()); }
 #line 2355 "parser.cc" // lalr1.cc:870
     break;
 
@@ -5805,7 +5805,7 @@ namespace yy {
 #line 1473 "parser.y" // lalr1.cc:1182
 
 
-using boost::optional;
+using std::optional;
 using std::string;
 using std::vector;
 

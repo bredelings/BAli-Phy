@@ -6,7 +6,7 @@ using std::string;
 using std::vector;
 using std::pair;
 
-using boost::optional;
+using std::optional;
 
 std::ostream& operator<<(std::ostream& o,const monostate&) {o<<"()";return o;}
 

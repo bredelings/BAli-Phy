@@ -234,9 +234,9 @@ protected:
     int n_leaves_;
 
     // Which index into the node attribute table is the node label
-    boost::optional<int> node_label_index;
+    std::optional<int> node_label_index;
     // Which index into the undirected branch attribute table is the branch length
-    boost::optional<int> branch_length_index;
+    std::optional<int> branch_length_index;
 
 public:
     /// The number of node attributes
@@ -357,7 +357,7 @@ public:
 
     void node_attribute_set_name(int i, const std::string& s) {node_attribute_names[i] = s;}
 
-    boost::optional<int> maybe_find_node_attribute_index_by_name(const std::string& s) const;
+    std::optional<int> maybe_find_node_attribute_index_by_name(const std::string& s) const;
 
     int find_node_attribute_index_by_name(const std::string& s) const;
 
@@ -375,7 +375,7 @@ public:
 
     void undirected_branch_attribute_set_name(int i, const std::string& s) {undirected_branch_attribute_names[i] = s;}
 
-    boost::optional<int> maybe_find_undirected_branch_attribute_index_by_name(const std::string& s) const;
+    std::optional<int> maybe_find_undirected_branch_attribute_index_by_name(const std::string& s) const;
 
     int find_undirected_branch_attribute_index_by_name(const std::string& s) const;
 
@@ -390,7 +390,7 @@ public:
 
     void directed_branch_attribute_set_name(int i, const std::string& s) {directed_branch_attribute_names[i] = s;}
 
-    boost::optional<int> maybe_find_directed_branch_attribute_index_by_name(const std::string& s) const;
+    std::optional<int> maybe_find_directed_branch_attribute_index_by_name(const std::string& s) const;
 
     int find_directed_branch_attribute_index_by_name(const std::string& s) const;
 

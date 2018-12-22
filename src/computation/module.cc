@@ -634,7 +634,7 @@ expression_ref rename(const expression_ref& E, const map<var,var>& substitution,
 }
 
 
-boost::optional<string> get_new_name(const var& x, const string& module_name)
+std::optional<string> get_new_name(const var& x, const string& module_name)
 {
     assert(not is_haskell_builtin_con_name(x.name));
 

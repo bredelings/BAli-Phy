@@ -19,7 +19,7 @@ using std::pair;
 using std::set;
 using std::unique_ptr;
 using boost::dynamic_pointer_cast;
-using boost::optional;
+using std::optional;
 
 using std::cerr;
 using std::endl;

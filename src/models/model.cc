@@ -196,7 +196,7 @@ bool has_parameter(const Model& M, const string& name)
 /// \param s1   The string
 /// \param s2   The pattern
 ///
-boost::optional<string> pattern_match(const string& s1, const string& s2)
+std::optional<string> pattern_match(const string& s1, const string& s2)
 {
     if (s2.size() and s2[s2.size()-1] == '*')
     {

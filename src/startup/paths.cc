@@ -7,7 +7,7 @@ using std::string;
 namespace fs = boost::filesystem;
 
 using boost::program_options::variables_map;
-using boost::optional;
+using std::optional;
 
 optional<fs::path> check_file_in_path(const vector<string>& paths, const fs::path& file_path)
 {

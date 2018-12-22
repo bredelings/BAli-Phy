@@ -30,7 +30,7 @@ using std::ostream;
 using std::string;
 using std::vector;
 using std::pair;
-using boost::optional;
+using std::optional;
 
 /// Replace negative or zero branch lengths with saner values.
 void sanitize_branch_lengths(SequenceTree& T)
@@ -140,7 +140,7 @@ get_imodels(const Rules& R, const shared_items<string>& imodel_names_mapping, co
 }
 
 template <typename T>
-json optional_to_json(const boost::optional<T>& o)
+json optional_to_json(const std::optional<T>& o)
 {
     if (not o)
 	return nullptr;

@@ -70,11 +70,11 @@ public:
 
     context* clone() const {return new context(*this);}
 
-    boost::optional<int> parameter_is_modifiable_reg(int p) const;
+    std::optional<int> parameter_is_modifiable_reg(int p) const;
 
     int parameter_as_modifiable_reg(int p) const;
 
-    boost::optional<int> compute_expression_is_modifiable_reg(int p) const;
+    std::optional<int> compute_expression_is_modifiable_reg(int p) const;
 
     int compute_expression_as_modifiable_reg(int p) const;
 
@@ -150,7 +150,7 @@ public:
     int n_parameters() const;
 
     /// Lookup the index for the named parameter s
-    boost::optional<int> maybe_find_parameter(const std::string& s) const;
+    std::optional<int> maybe_find_parameter(const std::string& s) const;
 
     /// Lookup the index for the named parameter s
     int find_parameter(const std::string& s) const;
@@ -202,7 +202,7 @@ public:
 protected:  
     void collect_garbage() const;
 
-    boost::optional<int> program_result_head;
+    std::optional<int> program_result_head;
 
 public:
 

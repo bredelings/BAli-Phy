@@ -29,7 +29,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/optional.hpp>
+#include <optional>
 #include <istream>
 #include <string>
 
@@ -175,5 +175,5 @@ void check_same_sequence_lengths(const std::vector<int>&, const alignment&);
 
 alignment unalign_all(const alignment& A, int);
 
-boost::optional<int> check_characters_present(const alignment& A, const std::vector<boost::dynamic_bitset<>>& present);
+std::optional<int> check_characters_present(const alignment& A, const std::vector<boost::dynamic_bitset<>>& present);
 #endif

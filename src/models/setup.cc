@@ -96,7 +96,7 @@
 #include "computation/operations.H"
 #include "model.H"
 
-using boost::optional;
+using std::optional;
 using std::string;
 using std::pair;
 using std::set;

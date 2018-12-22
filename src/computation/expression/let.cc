@@ -332,7 +332,7 @@ std::vector<CDecls> strip_multi_let(expression_ref& E)
     return decl_groups;
 }
 
-boost::optional<var> find_first_duplicate_var(const CDecls& decls)
+std::optional<var> find_first_duplicate_var(const CDecls& decls)
 {
     set<var> vars;
     for(auto& decl: decls)
@@ -345,7 +345,7 @@ boost::optional<var> find_first_duplicate_var(const CDecls& decls)
     return {};
 }
 
-boost::optional<var> find_first_duplicate_var(const expression_ref& decls)
+std::optional<var> find_first_duplicate_var(const expression_ref& decls)
 {
     return find_first_duplicate_var(parse_decls(decls));
 }

@@ -40,7 +40,7 @@ using std::endl;
 using std::istream;
 
 using boost::dynamic_bitset;
-using boost::optional;
+using std::optional;
 
 using boost::program_options::variables_map;
 

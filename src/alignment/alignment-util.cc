@@ -37,7 +37,7 @@ using std::endl;
 using std::istream;
 
 using boost::dynamic_bitset;
-using boost::optional;
+using std::optional;
 
 using boost::program_options::variables_map;
 
@@ -405,7 +405,7 @@ void connect_leaf_characters(alignment& A,const Tree& t)
     }
 }
 
-optional<int> check_characters_present(const alignment& A, const vector<dynamic_bitset<>>& present)
+std::optional<int> check_characters_present(const alignment& A, const vector<dynamic_bitset<>>& present)
 {
     for(int n=0; n < present.size(); n++)
 	for(int c = 0; c < A.length(); c++)

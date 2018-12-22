@@ -12,7 +12,7 @@ typedef ptree Rule;
 typedef ptree type_t;
 
 ptree get_arg(const Rule& rule, const std::string& arg_name);
-boost::optional<ptree> maybe_get_arg(const Rule& rule, const std::string& arg_name);
+std::optional<ptree> maybe_get_arg(const Rule& rule, const std::string& arg_name);
 
 type_t get_type_for_arg(const Rule& rule, const std::string& arg);
 
@@ -27,7 +27,7 @@ class Rules
     void add_rule(const boost::filesystem::path&);
 
 public:
-    boost::optional<Rule> get_rule_for_func(const std::string& s) const;
+    std::optional<Rule> get_rule_for_func(const std::string& s) const;
 
     const std::map<std::string, Rule>& get_rules() const;
 

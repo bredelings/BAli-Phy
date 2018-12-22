@@ -12,7 +12,7 @@ using std::pair;
 using std::cerr;
 using std::endl;
 
-using boost::optional;
+using std::optional;
 
 long total_reg_allocations = 0;
 long total_step_allocations = 0;
@@ -247,7 +247,7 @@ bool mapping::empty() const
     return delta_.empty();
 }
 
-boost::optional<int> reg_heap::creator_of_reg(int r) const
+std::optional<int> reg_heap::creator_of_reg(int r) const
 {
     int s = regs[r].created_by.first;
     assert(s >= 0);

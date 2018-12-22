@@ -13,7 +13,7 @@ using std::list;
 using std::cerr;
 using std::endl;
 
-using boost::optional;
+using std::optional;
 using boost::program_options::variables_map;
 
 std::string get_alphabet_name(const boost::program_options::variables_map& args)

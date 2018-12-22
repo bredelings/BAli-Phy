@@ -9,7 +9,7 @@ using std::pair;
 using std::map;
 using std::set;
 using std::string;
-using boost::optional;
+using std::optional;
 
 
 bool is_wildcard(const ptree& p)

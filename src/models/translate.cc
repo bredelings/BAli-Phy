@@ -13,7 +13,7 @@ using std::set;
 using std::pair;
 using std::map;
 using std::string;
-using boost::optional;
+using std::optional;
 
 /// True if some conversion function can be applied to the expression of type t1, so that it is of type t2
 equations convertible_to(ptree& model, const type_t& t1, type_t t2)

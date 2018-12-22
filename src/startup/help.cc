@@ -21,21 +21,12 @@ using std::list;
 using std::map;
 using std::vector;
 using std::cout;
-using boost::optional;
+using std::optional;
 
 namespace po = boost::program_options;
 using po::variables_map;
 
 namespace fs = boost::filesystem;
-
-template <typename T>
-std::ostream& operator<<(std::ostream& o, const optional<T>& v)
-{
-    if (v)
-	return o<<*v;
-    else
-	return o<<"--";
-}
 
 string get_topic_from_string(const string& s)
 {

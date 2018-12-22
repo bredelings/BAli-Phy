@@ -44,7 +44,7 @@ using std::string;
 using std::vector;
 using std::valarray;
 
-using boost::optional;
+using std::optional;
 
 string topology(const string& t) {
     SequenceTree T = standardized(t);

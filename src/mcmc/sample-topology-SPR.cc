@@ -47,7 +47,7 @@ using std::string;
 using std::map;
 using std::pair;
 using std::tuple;
-using boost::optional;
+using std::optional;
 
 using std::cout;
 using std::cerr;

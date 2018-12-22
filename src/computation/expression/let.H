@@ -66,8 +66,8 @@ expression_ref multi_let_body(expression_ref E);
 
 std::vector<CDecls> strip_multi_let(expression_ref& E);
 
-boost::optional<var> find_first_duplicate_var(const CDecls& decls);
-boost::optional<var> find_first_duplicate_var(const expression_ref& decls);
+std::optional<var> find_first_duplicate_var(const CDecls& decls);
+std::optional<var> find_first_duplicate_var(const expression_ref& decls);
 void check_duplicate_var(const CDecls& decls);
 void check_duplicate_var(const expression_ref& decls);
 

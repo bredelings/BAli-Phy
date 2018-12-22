@@ -33,7 +33,7 @@
 #include "util/assert.hh"
 #include <algorithm>
 #include "myexception.H"
-#include <boost/optional.hpp>
+#include <optional>
 #include <map>
 #include <set>
 #include <typeinfo>
@@ -48,14 +48,14 @@ std::string demangle(const std::string&);
 #endif
 
 template <class T>
-boost::optional<T> can_be_converted_to(const std::string& s)
+std::optional<T> can_be_converted_to(const std::string& s)
 { 
     std::istringstream i(s);
     T t;
     if (i>>std::boolalpha>>t and i.peek() == std::istream::traits_type::eof())
 	return std::move(t);
     else
-	return boost::none;
+	return {};
 }
 
 template <class T>
@@ -250,11 +250,11 @@ inline T minmax(T x,T min, T max) {
 
 /// Get index of t in v
 template <typename T>
-boost::optional<int> find_index(const std::vector<T>& v,const T& t) 
+std::optional<int> find_index(const std::vector<T>& v,const T& t) 
 {
     typename std::vector<T>::const_iterator loc = std::find(v.begin(),v.end(),t);
     if (loc == v.end())
-	return boost::none;
+	return {};
     else
 	return int(loc - v.begin());
 }
@@ -332,6 +332,15 @@ std::set<T> intersection(const std::set<T>& S1, const std::set<T>& S2)
     return result;
 }
 
+
+template <typename T>
+std::ostream& operator<<(std::ostream& o, const std::optional<T>& v)
+{
+    if (v)
+       return o<<*v;
+    else
+       return o<<"--";
+}
 
 // Print out elements of container v separated by string s
 template<class V,typename S>

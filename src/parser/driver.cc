@@ -12,14 +12,14 @@ void driver::pop_context()
     contexts.pop_back();
 }
 
-boost::optional<LayoutContext> driver::get_context()
+std::optional<LayoutContext> driver::get_context()
 {
     if (contexts.empty())
 	return {};
     return contexts.back();
 }
 
-void driver::push_context(const boost::optional<LayoutContext>& lc)
+void driver::push_context(const std::optional<LayoutContext>& lc)
 {
     contexts.push_back(lc);
 }

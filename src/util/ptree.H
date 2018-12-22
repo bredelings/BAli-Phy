@@ -7,7 +7,7 @@
 #include <vector>
 
 #include <boost/variant.hpp>
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <util/json.hh>
 
@@ -43,7 +43,7 @@ public:
 
     void erase(const std::string& key);
 
-    boost::optional<int> get_child_index(const std::string& key) const;
+    std::optional<int> get_child_index(const std::string& key) const;
 
     int count(const std::string& key) const;
 
@@ -101,7 +101,7 @@ public:
     }
 
     template <typename T>
-    boost::optional<T> get_optional(const std::string& key) const
+    std::optional<T> get_optional(const std::string& key) const
     {
 	if (auto c = get_child_optional(key))
 	    return c->get_value<T>();

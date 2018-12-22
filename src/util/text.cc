@@ -1,11 +1,10 @@
 #include "text.H"
 #include "util.H"
-#include <boost/optional/optional_io.hpp>
 
 using std::string;
 using std::vector;
 using std::list;
-using boost::optional;
+using std::optional;
 
 int terminal_width()
 {

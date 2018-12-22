@@ -67,7 +67,7 @@ using std::valarray;
 using std::ios;
 
 using boost::dynamic_bitset;
-using boost::optional;
+using std::optional;
 
 using namespace statistics;
 

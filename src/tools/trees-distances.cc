@@ -50,7 +50,7 @@ using std::endl;
 using std::cout;
 using std::cerr;
 
-using boost::optional;
+using std::optional;
 
 template <typename T>
 void print_matrix(const matrix<T>& M, char space=' ', char eol='\n')
