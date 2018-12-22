@@ -83,53 +83,6 @@ valarray<double> letter_counts(const alignment& A)
 }
 
 
-/// \brief Estimate the empirical frequencies of different letters from the alignment, with pseudocounts
-///
-/// \param args The command line parameters.
-/// \param A The alignment.
-///
-valarray<double> empirical_frequencies(const variables_map& /*args*/,const alignment& A) 
-{
-    const alphabet& a = A.get_alphabet();
-
-    // Count the occurrence of the different letters
-    valarray<double> counts = letter_counts(A);
-
-    valarray<double> frequencies(a.size());
-
-    // empirical frequencies
-    frequencies = A.get_alphabet().get_frequencies_from_counts(counts,chop_internal(A).n_sequences());
-
-    return frequencies;
-}
-
-/// \brief Estimate the empirical frequencies of different letters from alignments, with pseudocounts
-///
-/// \param args The command line parameters.
-/// \param alignments The alignments.
-///
-valarray<double> empirical_frequencies(const variables_map& args,const vector<alignment>& alignments) 
-{
-    // FIXME - what if the alphabets are different??
-    int total=0;
-    for(int i=0;i<alignments.size();i++)
-	total += alignments[i].length();
-
-    alignment A(alignments[0]);
-    A.changelength(total);
-
-    int L=0;
-    for(int i=0;i<alignments.size();i++) 
-    {
-	for(int c=0;c<alignments[i].length();c++)
-	    for(int s=0;s<alignments[i].n_sequences();s++)
-		A.set_value(c+L,s, alignments[i](c,s) );
-	L += alignments[i].length();
-    }
-
-    return empirical_frequencies(args,A);
-}
-
 /// \brief Re-index the leaves of tree \a T so that the labels have the same ordering as in \a names.
 ///
 /// \param T The leaf-labelled tree.
