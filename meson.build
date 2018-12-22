@@ -2,7 +2,7 @@ project('bali-phy', ['cpp','c'],
 	version: '3.4',
 	default_options : [
 	  'buildtype=release',
-	  'cpp_std=c++14'
+	  'cpp_std=c++17'
 	],
 	meson_version: '>= 0.49',
 	license: 'GPLv2')
