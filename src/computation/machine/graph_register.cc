@@ -1508,15 +1508,13 @@ void reg_heap::clear_back_edges_for_reg(int r)
 void reg_heap::clear_back_edges_for_step(int s)
 {
     assert(s > 0);
-    auto& forward1 = steps[s].used_inputs;
-    for(int i=0; i<forward1.size(); i++)
+    for(auto& forward: steps[s].used_inputs)
     {
-	auto& backward = results[forward1[i].first].used_by;
-	assert(0 <= i and i < forward1.size());
-	int j = forward1[i].second;
+	auto& backward = results[forward.first].used_by;
+	int j = forward.second;
 	assert(0 <= j and j < backward.size());
 
-	forward1[i] = {0,0};
+	forward = {0,0};
 
 	if (j+1 < backward.size())
 	{
