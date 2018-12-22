@@ -322,39 +322,39 @@ int reg_heap::register_prior(closure&& C)
 bool reg_heap::inc_prior_for_reg(int r)
 {
     assert(reg_is_changeable(r));
-    int rc = result_index_for_reg(r);
+    int res = result_index_for_reg(r);
 
     if (not reg_exists(r)) return false; // reg does not exist in this context!
 
-    if (rc > 0 and results[rc].flags.test(0)) return true; // already included
+    if (res > 0 and results[res].flags.test(0)) return true; // already included
 
     incremental_evaluate(r);
-    rc = result_index_for_reg(r);
+    res = result_index_for_reg(r);
 
-    return inc_prior(rc);
+    return inc_prior(res);
 }
 
 void reg_heap::dec_prior_for_reg(int r)
 {
-    int rc = result_index_for_reg(r);
+    int res = result_index_for_reg(r);
 
-    if (rc > 0 and results[rc].flags.test(0))
-	dec_prior(rc);
+    if (res > 0 and results[res].flags.test(0))
+	dec_prior(res);
 }
 
-void reg_heap::dec_prior(int rc)
+void reg_heap::dec_prior(int res)
 {
-    assert(rc > 0);
-    int r2 = results[rc].value;
+    assert(res > 0);
+    int r2 = results[res].value;
     assert(r2 > 0);
     log_double_t pr = regs.access(r2).C.exp.as_log_double();
 
     // This value has already by included, so take it out unconditionally.
     prior.data.value -= pr.log();
 
-    results[rc].flags.reset(0);
+    results[res].flags.reset(0);
 
-    int r = results[rc].source_reg;
+    int r = results[res].source_reg;
     assert(reg_is_changeable(r));
     priors_list.push_back(r);
 }
@@ -369,9 +369,9 @@ log_double_t reg_heap::prior_for_context_diff(int c)
     {
 	for(int r: prior_heads)
 	{
-	    int rc = result_index_for_reg(r);
-	    if (rc > 0 and results[rc].flags.test(0))
-		dec_prior(rc);
+	    int res = result_index_for_reg(r);
+	    if (res > 0 and results[res].flags.test(0))
+		dec_prior(res);
 	}
 	// std::cerr<<"unwinding all prs: total_error = "<<prior.data.total_error<<" variable_pr = "<<prior.data.value<<"  error_pr = "<<prior.data.delta<<"   variable_pr/error_pr = "<<prior.data.value - prior.data.delta<<std::endl;
 	assert(std::abs(prior.data.value - prior.data.delta) < 1.0e-6);
@@ -448,39 +448,39 @@ int reg_heap::register_likelihood(closure&& C)
 bool reg_heap::inc_likelihood_for_reg(int r)
 {
     assert(reg_is_changeable(r));
-    int rc = result_index_for_reg(r);
+    int res = result_index_for_reg(r);
 
     assert(reg_exists(r)); // reg had better exist in this context!
 
-    if (rc > 0 and results[rc].flags.test(1)) return true; // already included
+    if (res > 0 and results[res].flags.test(1)) return true; // already included
 
     incremental_evaluate(r);
-    rc = result_index_for_reg(r);
+    res = result_index_for_reg(r);
 
-    return inc_likelihood(rc);
+    return inc_likelihood(res);
 }
 
 void reg_heap::dec_likelihood_for_reg(int r)
 {
-    int rc = result_index_for_reg(r);
+    int res = result_index_for_reg(r);
 
-    if (rc > 0 and results[rc].flags.test(1))
-	dec_likelihood(rc);
+    if (res > 0 and results[res].flags.test(1))
+	dec_likelihood(res);
 }
 
-void reg_heap::dec_likelihood(int rc)
+void reg_heap::dec_likelihood(int res)
 {
-    assert(rc > 0);
-    int r2 = results[rc].value;
+    assert(res > 0);
+    int r2 = results[res].value;
     assert(r2 > 0);
     log_double_t pr = regs.access(r2).C.exp.as_log_double();
 
     // This value has already by included, so take it out unconditionally.
     likelihood.data.value -= pr.log();
 
-    results[rc].flags.reset(1);
+    results[res].flags.reset(1);
 
-    int r = results[rc].source_reg;
+    int r = results[res].source_reg;
     assert(reg_is_changeable(r));
     likelihoods_list.push_back(r);
 }
@@ -495,9 +495,9 @@ log_double_t reg_heap::likelihood_for_context_diff(int c)
     {
 	for(int r: likelihood_heads)
 	{
-	    int rc = result_index_for_reg(r);
-	    if (rc > 0 and results[rc].flags.test(1))
-		dec_likelihood(rc);
+	    int res = result_index_for_reg(r);
+	    if (res > 0 and results[res].flags.test(1))
+		dec_likelihood(res);
 	}
 	// std::cerr<<"unwinding all prs: total_error = "<<likelihood.data.total_error<<" variable_pr = "<<likelihood.data.value<<"  error_pr = "<<likelihood.data.delta<<"   variable_pr/error_pr = "<<likelihood.data.value - likelihood.data.delta<<std::endl;
 	assert(std::abs(likelihood.data.value - likelihood.data.delta) < 1.0e-6);
@@ -726,14 +726,14 @@ Step& reg_heap::step_for_reg(int r)
 
 const Result& reg_heap::result_for_reg(int r) const 
 { 
-    int rc = result_index_for_reg(r);
-    return results.access_unused(rc);
+    int res = result_index_for_reg(r);
+    return results.access_unused(res);
 }
 
 Result& reg_heap::result_for_reg(int r)
 { 
-    int rc = result_index_for_reg(r);
-    return results.access_unused(rc);
+    int res = result_index_for_reg(r);
+    return results.access_unused(res);
 }
 
 const closure& reg_heap::access_value_for_reg(int R1) const
@@ -803,12 +803,12 @@ void reg_heap::set_result_value_for_reg(int r1)
 
     assert(value);
 
-    int rc1 = result_index_for_reg(r1);
-    if (rc1 < 0)
-	rc1 = add_shared_result(r1, step_index_for_reg(r1));
-    assert(rc1 > 0);
-    auto& RC1 = results[rc1];
-    RC1.value = value;
+    int res1 = result_index_for_reg(r1);
+    if (res1 < 0)
+	res1 = add_shared_result(r1, step_index_for_reg(r1));
+    assert(res1 > 0);
+    auto& RES1 = results[res1];
+    RES1.value = value;
 
     // If R2 is WHNF then we are done
     if (regs.access(call).type == reg::type_t::constant) return;
@@ -817,10 +817,10 @@ void reg_heap::set_result_value_for_reg(int r1)
     assert(has_result(call));
 
     // Add a called-by edge to R2.
-    int rc2 = result_index_for_reg(call);
-    int back_index = results[rc2].called_by.size();
-    results[rc2].called_by.push_back(rc1);
-    RC1.call_edge = {rc2, back_index};
+    int res2 = result_index_for_reg(call);
+    int back_index = results[res2].called_by.size();
+    results[res2].called_by.push_back(res1);
+    RES1.call_edge = {res2, back_index};
 }
 
 void reg_heap::set_used_input(int s1, int R2)
@@ -838,14 +838,14 @@ void reg_heap::set_used_input(int s1, int R2)
     // So, we may as well forbid using an index_var as an input.
     assert(regs.access(R2).C.exp.head().type() != index_var_type);
 
-    int rc2 = result_index_for_reg(R2);
+    int res2 = result_index_for_reg(R2);
 
-    int back_index = results[rc2].used_by.size();
+    int back_index = results[res2].used_by.size();
     int forw_index = steps[s1].used_inputs.size();
-    results[rc2].used_by.push_back({s1,forw_index});
-    steps[s1].used_inputs.push_back({rc2,back_index});
+    results[res2].used_by.push_back({s1,forw_index});
+    steps[s1].used_inputs.push_back({res2,back_index});
 
-    assert(result_is_used_by(s1,rc2));
+    assert(result_is_used_by(s1,res2));
 }
 
 void reg_heap::set_call(int R1, int R2)
@@ -1082,8 +1082,8 @@ std::vector<int> reg_heap::used_regs_for_reg(int r) const
     vector<int> U;
     if (not has_step(r)) return U;
 
-    for(const auto& rcp: step_for_reg(r).used_inputs)
-	U.push_back(results[rcp.first].source_reg);
+    for(const auto& [res,index]: step_for_reg(r).used_inputs)
+	U.push_back(results[res].source_reg);
 
     return U;
 }
@@ -1220,18 +1220,18 @@ void reg_heap::make_reg_changeable(int r)
     regs.access(r).type = reg::type_t::changeable;
 }
 
-bool reg_heap::result_is_called_by(int rc1, int rc2) const
+bool reg_heap::result_is_called_by(int res1, int res2) const
 {
-    for(int rc: results[rc2].called_by)
-	if (rc == rc1)
+    for(int res: results[res2].called_by)
+	if (res == res1)
 	    return true;
 
     return false;
 }
 
-bool reg_heap::result_is_used_by(int s1, int rc2) const
+bool reg_heap::result_is_used_by(int s1, int res2) const
 {
-    for(auto& s: results[rc2].used_by)
+    for(auto& s: results[res2].used_by)
 	if (s.first == s1)
 	    return true;
 
@@ -1241,9 +1241,9 @@ bool reg_heap::result_is_used_by(int s1, int rc2) const
 bool reg_heap::reg_is_used_by(int r1, int r2) const
 {
     int s1 = step_index_for_reg(r1);
-    int rc2 = result_index_for_reg(r2);
+    int res2 = result_index_for_reg(r2);
 
-    return result_is_used_by(s1,rc2);
+    return result_is_used_by(s1,res2);
 }
 
 void reg_heap::check_tokens() const
@@ -1308,21 +1308,21 @@ void reg_heap::check_used_regs_in_token(int t) const
 	
 	for(const auto& rcp2: steps[r_s].used_inputs)
 	{
-	    int rc2 = rcp2.first;
+	    int res2 = rcp2.first;
 
 	    // Used regs should have back-references to R
-	    assert( result_is_used_by(r_s, rc2) );
+	    assert( result_is_used_by(r_s, res2) );
 
 	    // Used computations should be mapped computation for the current token, if we are at the root
-	    int R2 = results[rc2].source_reg;
+	    int R2 = results[res2].source_reg;
 	    assert(reg_is_changeable(R2));
 
 	    // The used result should be referenced somewhere more root-ward
 	    // so that this result can be invalidated, and the used result won't be GC-ed.
-            // FIXME - nonlocal.  assert(is_modifiable(regs.access(R2).C.exp) or result_is_referenced(t,rc2));
+            // FIXME - nonlocal.  assert(is_modifiable(regs.access(R2).C.exp) or result_is_referenced(t,res2));
       
 	    // Used results should have values
-	    assert(results[rc2].value);
+	    assert(results[res2].value);
 	}
     }
 
@@ -1358,8 +1358,8 @@ void reg_heap::check_used_regs_in_token(int t) const
 	if (value and regs.access(call).type != reg::type_t::constant)
 	{
 	    assert( has_result(call) );
-	    int rc2 = result_index_for_reg(call);
-	    assert( result_is_called_by(res, rc2) );
+	    int res2 = result_index_for_reg(call);
+	    assert( result_is_called_by(res, res2) );
 	}
 
 	// If we have a value, then our call should have a value
@@ -1432,16 +1432,16 @@ int reg_heap::add_shared_step(int r)
 int reg_heap::get_shared_result(int r, int s)
 {
     // 1. Get a new result
-    int rc = results.allocate();
+    int res = results.allocate();
     total_comp_allocations++;
   
     // 2. Set the source of the result
-    results[rc].source_step = s;
-    results[rc].source_reg = r;
+    results[res].source_step = s;
+    results[res].source_reg = r;
 
-    assert(rc > 0);
+    assert(res > 0);
 
-    return rc;
+    return res;
 }
 
 /// Add a shared result at (t,r) -- assuming there isn't one already
@@ -1452,14 +1452,14 @@ int reg_heap::add_shared_result(int r, int s)
     assert(has_step(r));
 
     // Get a result
-    int rc = get_shared_result(r,s);
+    int res = get_shared_result(r,s);
 
     // Link it in to the mapping
-    prog_results[r] = rc;
+    prog_results[r] = res;
 
-    assert(rc > 0);
+    assert(res > 0);
 
-    return rc;
+    return res;
 }
 
 void reg_heap::check_back_edges_cleared_for_step(int s)
@@ -1474,9 +1474,9 @@ void reg_heap::check_back_edges_cleared_for_step(int s)
     }
 }
 
-void reg_heap::check_back_edges_cleared_for_result(int rc)
+void reg_heap::check_back_edges_cleared_for_result(int res)
 {
-    assert(results.access_unused(rc).call_edge.second == 0);
+    assert(results.access_unused(res).call_edge.second == 0);
 }
 
 void reg_heap::clear_back_edges_for_reg(int r)
@@ -1584,15 +1584,15 @@ void reg_heap::clear_step(int r)
 
 void reg_heap::clear_result(int r)
 {
-    int rc = prog_results[r];
+    int res = prog_results[r];
     prog_results[r] = non_computed_index;
 
-    if (rc > 0)
+    if (res > 0)
     {
 #ifndef NDEBUG
-	check_back_edges_cleared_for_result(rc);
+	check_back_edges_cleared_for_result(res);
 #endif
-	results.reclaim_used(rc);
+	results.reclaim_used(res);
     }
 }
 
