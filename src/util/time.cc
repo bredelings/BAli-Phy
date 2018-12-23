@@ -21,7 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
  * @file timer_stack.C
  */
 
-#include "timer_stack.H"
+#include "util/time.H"
 #include <sstream>
 #include <iomanip>
 #include "util/assert.hh"

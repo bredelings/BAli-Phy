@@ -27,7 +27,7 @@ extern "C" {
 }
 #endif
 
-#include "timer_stack.H"
+#include "util/time.H"
 
 #ifdef HAVE_MPI
 #include <mpi.h>

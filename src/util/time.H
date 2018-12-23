@@ -18,7 +18,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 /**
- * @file timer_stack.H
+ * @file util/time.H
  */
 
 /*

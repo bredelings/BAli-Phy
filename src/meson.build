@@ -36,7 +36,7 @@ baliphy_sources = ['dp/dp_hmm.cc','parser/desugar.cc','parser/desugar-case.cc','
    'monitor.cc', 'util/myexception.cc','math/pow2.cc',
    'substitution/parsimony.cc', 'mcmc/proposals.cc',
    'tree-align/n_indels2.cc','alignment/alignment-util2.cc',
-   'tools/parsimony2.cc','version.cc','mcmc/slice-sampling.cc','timer_stack.cc',
+   'tools/parsimony2.cc','version.cc','mcmc/slice-sampling.cc','util/time.cc',
    'mcmc/setup.cc','mcmc/logger.cc','mcmc/AIS.cc','computation/expression/operator.cc',
    'computation/expression/expression.cc','computation/expression/constructor.cc',
    'computation/expression/expression_ref.cc','computation/expression/AST_node.cc',
