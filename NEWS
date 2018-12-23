@@ -1,3 +1,7 @@
+* 3.5 (unreleased)
+ - Misc
+   - Switch to c++17
+
 * 3.4 (Dec 13, 2018)
  - Evolutionary models
    - Add Doublet alphabet for RNA stems.
