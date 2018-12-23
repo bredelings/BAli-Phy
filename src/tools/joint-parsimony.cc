@@ -34,7 +34,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "tree/tree-util.H"
 #include "parsimony.H"
 #include "joint-A-T.H"
-#include "n_indels.H"
+#include "tree-align/n_indels.H"
 
 #include "dp/A2_states.H"
 using namespace A2;

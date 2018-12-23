@@ -14,7 +14,7 @@ if get_option('static-cpp-libs')
 endif
 
 # tools/findroot.cc -> tools/optimize.cc
-libbaliphy_sources = ['util/io.cc','util.cc','tree/sequencetree.cc','tree/tree.cc','sequence/alphabet.cc','sequence/sequence.cc','tree/tree-util.cc','tools/read-trees.cc','sequence/sequence-format.cc','alignment/alignment-util.cc','rng.cc','alignment/load.cc','alignment/alignment.cc','tools/statistics.cc','tools/partition.cc','tools/tree-dist.cc','alignment/alignment-random.cc','startup/setup.cc','tree/randomtree.cc','util-random.cc','tools/parsimony.cc','alignment/index-matrix.cc','tools/mctree.cc','tools/stats-table.cc','tools/findroot.cc','tools/optimize.cc','tools/distance-report.cc','n_indels.cc','tools/inverse.cc','tools/joint-A-T.cc','tools/distance-methods.cc','tools/consensus-tree.cc']
+libbaliphy_sources = ['util/io.cc','util.cc','tree/sequencetree.cc','tree/tree.cc','sequence/alphabet.cc','sequence/sequence.cc','tree/tree-util.cc','tools/read-trees.cc','sequence/sequence-format.cc','alignment/alignment-util.cc','rng.cc','alignment/load.cc','alignment/alignment.cc','tools/statistics.cc','tools/partition.cc','tools/tree-dist.cc','alignment/alignment-random.cc','startup/setup.cc','tree/randomtree.cc','util-random.cc','tools/parsimony.cc','alignment/index-matrix.cc','tools/mctree.cc','tools/stats-table.cc','tools/findroot.cc','tools/optimize.cc','tools/distance-report.cc','tree-align/n_indels.cc','tools/inverse.cc','tools/joint-A-T.cc','tools/distance-methods.cc','tools/consensus-tree.cc']
 
 libbaliphy = static_library('bali-phy', libbaliphy_sources, 
 			    dependencies: [boost, eigen],
@@ -35,7 +35,7 @@ baliphy_sources = ['dp/dp_hmm.cc','parser/desugar.cc','parser/desugar-case.cc','
    'probability/probability.cc','models/model.cc', 'alignment/alignment-constraint.cc',
    'monitor.cc', 'myexception.cc','math/pow2.cc',
    'substitution/parsimony.cc', 'mcmc/proposals.cc',
-   'n_indels2.cc','alignment/alignment-util2.cc',
+   'tree-align/n_indels2.cc','alignment/alignment-util2.cc',
    'tools/parsimony2.cc','version.cc','mcmc/slice-sampling.cc','timer_stack.cc',
    'mcmc/setup.cc','mcmc/logger.cc','mcmc/AIS.cc','computation/expression/operator.cc',
    'computation/expression/expression.cc','computation/expression/constructor.cc',

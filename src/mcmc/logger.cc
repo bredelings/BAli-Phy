@@ -37,7 +37,7 @@
 #include "substitution/substitution.H"    // for get_model_probabilitiesby_alignment_column( )
 
 #include "monitor.H"         // for show_smodel( )
-#include "n_indels2.H"
+#include "tree-align/n_indels2.H"
 #include "substitution/parsimony.H"
 #include "alignment/alignment-util.H"
 #include "dp/2way.H"
