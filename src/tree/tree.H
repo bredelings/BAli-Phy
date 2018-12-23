@@ -723,4 +723,6 @@ void remove_sub_branches(Tree& T);
 
 bool same_topology_and_node_and_branch_numbers(const Tree& T1, const Tree& T2);
 
+std::string escape_for_newick(const std::string& s);
+std::string unescape_from_newick(const std::string& s);
 #endif

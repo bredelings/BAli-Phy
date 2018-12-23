@@ -1,3 +1,4 @@
+#include "tree/tree.H"
 #include "TreeInterface.H"
 #include "models/parameters.H"
 
@@ -482,7 +483,7 @@ std::string write(const TreeInterface& T, int root, const std::vector<double>& L
     for(int b: branches)
     {
 	int n = T.target(b);
-	names2[n] = "'" + names2[n] + "':" + std::to_string(L[T.undirected(b)]);
+	names2[n] = names2[n] +":" + std::to_string(L[T.undirected(b)]);
     }
     return write(T, root, names2);
 }
@@ -491,15 +492,18 @@ std::string write(const TreeInterface& T, int root, const std::vector<double>& L
 std::string write(const TreeInterface& T, const std::vector<std::string>& names, bool print_lengths)
 {
     int root = 0; // T.target(0);
+    vector<string> names2;
+    for(auto& name: names)
+	names2.push_back(escape_for_newick(name));
     if (print_lengths)
     {
 	vector<double> L;
 	for(int i=0;i<T.n_branches();i++)
 	    L.push_back(T.branch_length(i));
-	return write(T, root, L, names);
+	return write(T, root, L, names2);
     }
     else
-	return write(T, root, names);
+	return write(T, root, names2);
 }
 
 vector<int> edges_connecting_to_node(const Tree& T, int n);
