@@ -30,7 +30,7 @@
 #include "computation/expression/expression.H"
 #include "computation/module.H"
 #include "computation/loader.H"
-#include "parser/desugar.H"
+#include "computation/parser/desugar.H"
 
 using std::vector;
 using std::string;

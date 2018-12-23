@@ -58,7 +58,7 @@ namespace mpi = boost::mpi;
 #include "version.H"
 #include "mcmc/setup.H"
 #include "util/io.H"
-#include "parser/desugar.H"
+#include "computation/parser/desugar.H"
 #include "computation/module.H"
 #include "computation/program.H"
 

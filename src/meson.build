@@ -20,8 +20,8 @@ libbaliphy = static_library('bali-phy', libbaliphy_sources,
 			    dependencies: [boost, eigen],
 			    link_args: extra_link_args)
 
-baliphy_sources = ['dp/dp_hmm.cc','parser/desugar.cc','parser/desugar-case.cc','parser/rename.cc',
-   'parser/driver.cc', 'parser/lexer.cc', 'parser/parser.cc',
+baliphy_sources = ['dp/dp_hmm.cc','computation/parser/desugar.cc','computation/parser/desugar-case.cc',
+   'computation/parser/rename.cc', 'computation/parser/driver.cc', 'computation/parser/lexer.cc', 'computation/parser/parser.cc',
    'substitution/substitution.cc', 'util/ptree.cc',
    'mcmc/moves.cc', 'math/exponential.cc','math/eigenvalue.cc',
    'models/parameters.cc','mcmc/mcmc.cc', 'probability/choose.cc',
