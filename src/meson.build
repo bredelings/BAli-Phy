@@ -24,7 +24,7 @@ baliphy_sources = ['dp/dp_hmm.cc','parser/desugar.cc','parser/desugar-case.cc','
    'parser/driver.cc', 'parser/lexer.cc', 'parser/parser.cc',
    'substitution/substitution.cc', 'util/ptree.cc',
    'mcmc/moves.cc', 'math/exponential.cc','math/eigenvalue.cc',
-   'models/parameters.cc','prior.cc','mcmc/mcmc.cc', 'probability/choose.cc',
+   'models/parameters.cc','mcmc/mcmc.cc', 'probability/choose.cc',
    'mcmc/sample-branch-lengths.cc', 'bali-phy.cc', 'util/text.cc',
    'models/TreeInterface.cc', 'dp/hmm.cc','dp/dp-engine.cc','dp/dp-array.cc',
    'dp/dp-matrix.cc','dp/3way.cc','dp/2way.cc','mcmc/sample-alignment.cc',

@@ -24,15 +24,69 @@
 ///
 
 #include "alignment-sums.H"
-#include "prior.H"
 #include "substitution/substitution.H"
 #include "util.H"
+#include "dp/2way.H"
 
 using boost::dynamic_bitset;
 using std::vector;
 using std::cerr;
 using std::endl;
 
+matrix<int> get_path_counts(const pairwise_alignment_t& a)
+{
+  using namespace A2;
+
+  matrix<int> counts(5,5,0);
+
+  int prev = A2::states::S;
+  for(int i=0;i<a.size();i++)
+  {
+      counts(prev, a.get_state(i))++;
+      prev = a.get_state(i);
+  }
+  counts(prev, A2::states::E)++;
+
+  return counts;
+}
+
+/// Probability of a pairwise alignment
+log_double_t prior_branch_from_counts(const matrix<int>& counts,const indel::PairHMM& Q)
+{
+  using namespace A2;
+
+  log_double_t P=1;
+
+  // Account for S-? start probability
+  for(int i=0;i<Q.size2();i++)
+    if (counts(states::S,i))
+      P *= Q.start(i);
+
+  // Account for the mass of transitions
+  for(int i=0;i<3;i++)
+    for(int j=0;j<3;j++) {
+      log_double_t Qij = Q(i,j);
+      // FIXME - if we propose really bad indel parameters, we can get log(Q_ij) where Qij == 0
+      if (counts(i,j))
+	P *= pow(Qij,counts(i,j));
+    }
+  
+  // Account for ?-E end probability
+  if (not counts(states::S,states::E))
+    for(int i=0;i<Q.size1();i++)
+      if (counts(i,states::E))
+       P *= Q(i,states::E);
+
+  return P;
+}
+
+/// Probability of a pairwise alignment
+log_double_t prior_branch(const pairwise_alignment_t& a,const indel::PairHMM& Q) 
+{
+  matrix<int> counts = get_path_counts(a);
+
+  return prior_branch_from_counts(counts,Q);
+}
 log_double_t other_subst(const data_partition& P, const vector<int>& nodes) 
 {
     return substitution::other_subst(P,nodes);
