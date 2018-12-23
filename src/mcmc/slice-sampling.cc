@@ -88,13 +88,7 @@ modifiable_slice_function::modifiable_slice_function(Model& M_, const Bounds<dou
 // ******************************* integer modifiable slice function *************************************** //
 Bounds<double> convert_bounds(const Bounds<int>& int_bounds)
 {
-    Bounds<double> double_bounds;
-
-    double_bounds.lower_bound = int_bounds.lower_bound;
-    double_bounds.has_lower_bound = int_bounds.has_lower_bound;
-
-    double_bounds.upper_bound = int_bounds.upper_bound+1;
-    double_bounds.has_upper_bound = int_bounds.has_upper_bound;
+    Bounds<double> double_bounds = int_bounds;
 
     return double_bounds;
 }
@@ -250,16 +244,13 @@ scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P)
     {
 	Bounds<double> b2 = P.get_bounds_for_compute_expression(P.branch_scale_index(i));
 
-	if (b2.has_lower_bound and b2.lower_bound > 0)
-	{
-	    b2.has_lower_bound = true;
-	    b2.lower_bound = log(b2.lower_bound) - log(P.branch_scale(i));
-	}
+	if (b2.lower_bound and *b2.lower_bound > 0)
+	    b2.lower_bound = log(*b2.lower_bound) - log(P.branch_scale(i));
 	else
-	    b2.has_lower_bound = false;
+	    b2.lower_bound = {};
 
-	if (b2.has_upper_bound)
-	    b2.upper_bound = log(b2.upper_bound) - log(P.branch_scale(i));
+	if (b2.upper_bound)
+	    b2.upper_bound = log(*b2.upper_bound) - log(P.branch_scale(i));
 
 	b = b and b2;
     }
@@ -434,8 +425,8 @@ find_slice_boundaries_stepping_out(double x0,slice_function& g,double logy, doub
 
     // Shrink interval to lower and upper bounds.
 
-    if (g.below_lower_bound(L)) L = g.lower_bound;
-    if (g.above_upper_bound(R)) R = g.upper_bound;
+    if (g.below_lower_bound(L)) L = *g.lower_bound;
+    if (g.above_upper_bound(R)) R = *g.upper_bound;
 
     assert(L < R);
 
@@ -525,7 +516,7 @@ inline static void dec(double& x, double w, const slice_function& g, bool& hit_l
 {
     x -= w;
     if (g.below_lower_bound(x)) {
-	x = g.lower_bound;
+	x = *g.lower_bound;
 	hit_lower_bound=true;
     }
 }
@@ -534,7 +525,7 @@ inline static void inc(double& x, double w, const slice_function& g, bool& hit_u
 {
     x += w;
     if (g.above_upper_bound(x)) {
-	x = g.upper_bound;
+	x = *g.upper_bound;
 	hit_upper_bound = true;
     }
 }

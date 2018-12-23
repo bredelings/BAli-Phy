@@ -28,22 +28,20 @@
 
 #include <iostream>
 #include <util.H>
+#include <optional>
 #include "object.H"
 
 template <typename T>
 struct Bounds: public Object
 {
-    /// is there a lower bound on the range?
-    bool has_lower_bound;
     /// the value of the lower bound, if any
-    T lower_bound;
+    std::optional<T> lower_bound;
 
-    /// is there an upper bound on the range?
-    bool has_upper_bound;
     /// the value of the upper bound, if any
-    T upper_bound;
+    std::optional<T> upper_bound;
 
     Bounds<T>* clone() const {return new Bounds<T>(*this);}
+
     bool operator==(const Object& O) const
 	{
 	    if (this == &O) return true;
@@ -51,25 +49,24 @@ struct Bounds: public Object
 	    const Bounds<T>* B = dynamic_cast<const Bounds<T>*>(&O);
 	    if (not B) return false;
 
-	    if (has_lower_bound != B->has_lower_bound) return false;
 	    if (lower_bound != B->lower_bound) return false;
-	    if (has_upper_bound != B->has_upper_bound) return false;
 	    if (upper_bound != B->upper_bound) return false;
+
 	    return true;
 	}
     std::string print() const
 	{
 	    std::string output = "(";
 
-	    if (has_lower_bound)
-		output += convertToString(lower_bound);
+	    if (lower_bound)
+		output += convertToString(*lower_bound);
 	    else
 		output += "Inf";
 
 	    output += ", ";
 
-	    if (has_upper_bound)
-		output += convertToString(upper_bound);
+	    if (upper_bound)
+		output += convertToString(*upper_bound);
 	    else
 		output += "Inf";
 
@@ -79,11 +76,11 @@ struct Bounds: public Object
 	}
 
     /// check if a value is below the lower bound on the range
-    bool below_lower_bound(double x) const { return (has_lower_bound and x<lower_bound); }
+    bool below_lower_bound(double x) const { return lower_bound and x<*lower_bound; }
     /// check if a value is above the upper bound on the range
-    bool above_upper_bound(double x) const { return (has_upper_bound and x>upper_bound); }
+    bool above_upper_bound(double x) const { return upper_bound and x>*upper_bound; }
     /// check if a value is in the range or not
-    bool in_range(double x) const  { return (not below_lower_bound(x) and not above_upper_bound(x));}
+    bool in_range(double x) const  { return not below_lower_bound(x) and not above_upper_bound(x);}
 
     /// set the lower bound on the range
     void set_lower_bound(T);
@@ -93,57 +90,45 @@ struct Bounds: public Object
 
     template <typename U>
     Bounds(const Bounds<U>& b)
-	:has_lower_bound(b.has_lower_bound),
-	 lower_bound(b.lower_bound),
-	 has_upper_bound(b.has_upper_bound),
-	 upper_bound(b.upper_bound)
-	{ }
+    {
+	if (b.lower_bound)
+	    lower_bound = *b.lower_bound;
+	if (b.upper_bound)
+	    upper_bound = *b.upper_bound;
+    }
 
-    Bounds();
-    Bounds(T,T);
-    Bounds(bool,T,bool,T);
+    Bounds() = default;
+    Bounds(const std::optional<T>&, const std::optional<T>&);
 };
 
 
 template <typename T>
 void Bounds<T>::set_lower_bound(T x)
 {
-    has_lower_bound = true;
     lower_bound = x;
 }
 
 template <typename T>
 void Bounds<T>::set_upper_bound(T x)
 {
-    has_upper_bound = true;
     upper_bound = x;
 }
 
 template <typename T>
-Bounds<T>::Bounds()
-    :has_lower_bound(false),lower_bound(0),has_upper_bound(false),upper_bound(0)
-{ }
-
-template <typename T>
-Bounds<T>::Bounds(T l, T u)
-    :has_lower_bound(true),lower_bound(l),has_upper_bound(true),upper_bound(u)
-{ }
-
-template <typename T>
-Bounds<T>::Bounds(bool hl, T l, bool hu, T u)
-    :has_lower_bound(hl),lower_bound(l),has_upper_bound(hu),upper_bound(u)
+Bounds<T>::Bounds(const std::optional<T>& l, const std::optional<T>& u)
+    :lower_bound(l),upper_bound(u)
 { }
 
 template <typename T>
 Bounds<T> lower_bound(T l)
 {
-    return Bounds<T>(true,l,false,0);
+    return Bounds<T>(l,{});
 }
 
 template <typename T>
 Bounds<T> upper_bound(T u)
 {
-    return Bounds<T>(false,0,true,u);
+    return Bounds<T>({},u);
 }
 
 template <typename T>
@@ -155,20 +140,20 @@ Bounds<T> between(T u, T l)
 template <typename T>
 Bounds<T> operator&&(Bounds<T> b1, const Bounds<T>& b2)
 {
-    if (b2.has_lower_bound)
+    if (b2.lower_bound)
     {
-	if (b1.has_lower_bound)
-	    b1.set_lower_bound(std::max(b1.lower_bound, b2.lower_bound));
+	if (b1.lower_bound)
+	    b1.set_lower_bound(std::max(*b1.lower_bound, *b2.lower_bound));
 	else
-	    b1.set_lower_bound(b2.lower_bound);
+	    b1.set_lower_bound(*b2.lower_bound);
     }
 
-    if (b2.has_upper_bound)
+    if (b2.upper_bound)
     {
-	if (b1.has_upper_bound)
-	    b1.set_upper_bound(std::min(b1.upper_bound, b2.upper_bound));
+	if (b1.upper_bound)
+	    b1.set_upper_bound(std::min(*b1.upper_bound, *b2.upper_bound));
 	else
-	    b1.set_upper_bound(b2.upper_bound);
+	    b1.set_upper_bound(*b2.upper_bound);
     }
 
     return b1;
@@ -177,29 +162,29 @@ Bounds<T> operator&&(Bounds<T> b1, const Bounds<T>& b2)
 template <typename T>
 Bounds<T> operator||(Bounds<T> b1, const Bounds<T>& b2)
 {
-    if (b1.has_lower_bound and b2.has_lower_bound)
-	b1.lower_bound = std::min(b1.lower_bound, b2.lower_bound);
+    if (b1.lower_bound and b2.lower_bound)
+	b1.lower_bound = std::min(*b1.lower_bound, *b2.lower_bound);
     else
-	b1.has_lower_bound = false;
+	b1.lower_bound = {};
 
 
-    if (b1.has_upper_bound and b2.has_upper_bound)
-	b1.upper_bound = std::max(b1.upper_bound, b2.upper_bound);
+    if (b1.upper_bound and b2.upper_bound)
+	b1.upper_bound = std::max(*b1.upper_bound, *b2.upper_bound);
     else
-	b1.has_upper_bound = false;
+	b1.upper_bound = {};
 }
 
 template <typename T>
 std::ostream& operator<<(std::ostream& o, const Bounds<T>& b)
 {
     o<<"[";
-    if (b.has_lower_bound)
-	o<<b.lower_bound;
+    if (b.lower_bound)
+	o<<*b.lower_bound;
     else
 	o<<"-Inf";
     o<<", ";
-    if (b.has_upper_bound)
-	o<<b.upper_bound;
+    if (b.upper_bound)
+	o<<*b.upper_bound;
     else
 	o<<"Inf";
     o<<"]";
@@ -209,12 +194,12 @@ std::ostream& operator<<(std::ostream& o, const Bounds<T>& b)
 template <typename T>
 inline T wrap(T x, const Bounds<T>& b)
 {
-    if (b.has_lower_bound and b.has_upper_bound)
-	return wrap<T>(x, b.lower_bound, b.upper_bound);
-    else if (b.has_lower_bound)
-	return reflect_more_than(x, b.lower_bound);
-    else if (b.has_upper_bound)
-	return reflect_less_than(x, b.lower_bound);
+    if (b.lower_bound and b.upper_bound)
+	return wrap<T>(x, *b.lower_bound, *b.upper_bound);
+    else if (b.lower_bound)
+	return reflect_more_than(x, *b.lower_bound);
+    else if (b.upper_bound)
+	return reflect_less_than(x, *b.lower_bound);
     else
 	return x;
 }

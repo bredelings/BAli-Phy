@@ -382,14 +382,7 @@ Between::Between(double m1, double m2, const proposal_fn& P)
 
 double reflect(const Bounds<double>& b, double x)
 {
-    if (b.has_lower_bound and b.has_upper_bound)
-	return wrap<double>(x, b.lower_bound, b.upper_bound);
-    else if (b.has_lower_bound)
-	return reflect_more_than(x, b.lower_bound);
-    else if (b.has_upper_bound)
-	return reflect_less_than(x, b.upper_bound);
-    else
-	return x;
+    return wrap<double>(x,b);
 }
 
 log_double_t Reflect::operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const

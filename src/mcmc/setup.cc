@@ -152,7 +152,7 @@ void add_real_MH_moves(const Model& P, MCMC::MoveAll& M, double weight = 1.0)
 
 	auto& bounds = range.as_<Bounds<double>>();
 	string name = "m_real_cauchy_"+convertToString<int>(r);
-	if (bounds.has_lower_bound and bounds.lower_bound >= 0.0)
+	if (bounds.lower_bound and *bounds.lower_bound >= 0.0)
 	    add_modifiable_MH_move(P,name, Reflect(bounds, log_scaled(Between(-20,20,shift_cauchy))), r, {1.0}, M, weight);
 	else
 	    add_modifiable_MH_move(P,name, Reflect(bounds, shift_cauchy), r, {1.0}, M, weight);
@@ -168,10 +168,10 @@ void add_integer_uniform_MH_moves(const Model& P, MCMC::MoveAll& M, double weigh
 	if (not range.is_a<Bounds<int>>()) continue;
 
 	auto& bounds = range.as_<Bounds<int>>();
-	if (not bounds.has_lower_bound or not bounds.has_upper_bound) continue;
+	if (not bounds.lower_bound or not bounds.upper_bound) continue;
 	string name = "m_int_uniform_"+convertToString<int>(r);
-	double l = (int)bounds.lower_bound;
-	double u = (int)bounds.upper_bound;
+	double l = *bounds.lower_bound;
+	double u = *bounds.upper_bound;
 	add_modifiable_MH_move(P,name, discrete_uniform_avoid, r, {double(l),double(u)}, M, weight);
     }
 }
@@ -188,7 +188,7 @@ void add_integer_slice_moves(const Model& P, MCMC::MoveAll& M, double weight)
 	// We need a more intelligent way of determining when we should do this.
 	// For example, we do not want to do this for categorical-type variables.
 	auto& bounds = range.as_<Bounds<int>>();
-	if (bounds.has_upper_bound and bounds.has_lower_bound) continue;
+	if (bounds.upper_bound and bounds.lower_bound) continue;
 
 	string name = "m_int_"+convertToString<int>(r);
 	M.add( rate * weight, MCMC::Integer_Modifiable_Slice_Move(name, r, bounds) );

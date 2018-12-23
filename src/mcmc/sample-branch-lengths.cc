@@ -381,16 +381,13 @@ void scale_means_only(owned_ptr<Model>& P,MoveStats& Stats)
 	Bounds<double> b2 = PP->get_bounds_for_compute_expression(PP->branch_scale_index(i));
 	double mu = PP->branch_scale(i);
 
-	if (b2.has_lower_bound and b2.lower_bound > 0)
-	{
-	    b2.has_lower_bound = true;
-	    b2.lower_bound = log(b2.lower_bound) - log(mu);
-	}
+	if (b2.lower_bound and *b2.lower_bound > 0)
+	    b2.lower_bound = log(*b2.lower_bound) - log(mu);
 	else
-	    b2.has_lower_bound = false;
+	    b2.lower_bound = {};
 
-	if (b2.has_upper_bound)
-	    b2.upper_bound = log(b2.upper_bound) - log(mu);
+	if (b2.upper_bound)
+	    b2.upper_bound = log(*b2.upper_bound) - log(mu);
 
 	b = b and b2;
     }

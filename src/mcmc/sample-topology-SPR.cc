@@ -144,7 +144,7 @@ int topology_sample_SPR_slice_slide_node(vector<Parameters>& p,int b)
 
     vector<double> X0(2);
     X0[0] = logp1.current_value();
-    X0[1] = uniform()*(logp2.upper_bound);
+    X0[1] = uniform()*(*logp2.upper_bound);
 
     std::pair<int,double> choice = slice_sample_multi(X0,logp,w,-1);
 
