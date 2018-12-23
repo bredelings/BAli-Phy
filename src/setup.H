@@ -40,10 +40,6 @@
 /// Map leaf nodes of T to the leaf sequences of A
 void link(alignment& A,SequenceTree& T,bool internal_sequences=true);
 
-/// Load statements from a config file.
-void load_bali_phy_rc(boost::program_options::variables_map&,
-		      const boost::program_options::options_description&);
-
 //--------------------------- Indel stuff --------------------------//
 
 template <typename T>

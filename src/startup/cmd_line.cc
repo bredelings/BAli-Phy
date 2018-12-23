@@ -17,6 +17,8 @@ using std::string;
 using std::map;
 using std::vector;
 using std::cout;
+using std::cerr;
+using std::endl;
 using std::optional;
 
 namespace po = boost::program_options;
@@ -25,6 +27,38 @@ using po::variables_map;
 const string trailing_args_separator = "---";
 
 namespace fs = boost::filesystem;
+
+/// Parse the file $HOME/.bali-phy and add the options it contains to the command line arguments.
+///
+/// \param args The command line arguments.
+/// \param options The allowed options.
+///
+void load_bali_phy_rc(po::variables_map& args,const po::options_description& options)
+{
+    if (getenv("HOME")) {
+	string home_dir = getenv("HOME");
+	if (not fs::exists(home_dir))
+	    cerr<<"Home directory '"<<home_dir<<"' does not exist!"<<endl;
+	else if (not fs::is_directory(home_dir))
+	    cerr<<"Home directory '"<<home_dir<<"' is not a directory!"<<endl;
+	else {
+	    string filename = home_dir + "/.bali-phy";
+
+	    if (fs::exists(filename)) {
+		if (log_verbose >= 1)
+		    cerr<<"Reading ~/.bali-phy ...";
+		checked_ifstream file(filename, "config file");
+
+		store(parse_config_file(file, options), args);
+		notify(args);
+		if (log_verbose >= 1)
+		    cerr<<" done."<<endl;
+	    }
+	}
+    }
+    else
+	cerr<<"Environment variable HOME not set!"<<endl;
+}
 
 vector<string> drop_trailing_args(int argc, char* argv[], const string& separator)
 {
