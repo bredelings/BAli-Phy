@@ -54,7 +54,6 @@ namespace mpi = boost::mpi;
 #include "mcmc/mcmc.H"
 #include "util.H"
 #include "startup/setup.H"
-#include "monitor.H"
 #include "math/pow2.H"
 #include "version.H"
 #include "mcmc/setup.H"

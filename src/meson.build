@@ -33,7 +33,7 @@ baliphy_sources = ['dp/dp_hmm.cc','parser/desugar.cc','parser/desugar-case.cc','
    'models/setup.cc', 'startup/help.cc',
    'mcmc/sample-topology-SPR.cc', 'dp/alignment-sums.cc',
    'probability/probability.cc','models/model.cc', 'alignment/alignment-constraint.cc',
-   'monitor.cc', 'util/myexception.cc','math/pow2.cc',
+   'util/myexception.cc','math/pow2.cc',
    'substitution/parsimony.cc', 'mcmc/proposals.cc',
    'tree-align/n_indels2.cc','alignment/alignment-util2.cc',
    'tools/parsimony2.cc','version.cc','mcmc/slice-sampling.cc','util/time.cc',

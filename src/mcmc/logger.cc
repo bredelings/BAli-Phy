@@ -36,7 +36,6 @@
 
 #include "substitution/substitution.H"    // for get_model_probabilitiesby_alignment_column( )
 
-#include "monitor.H"         // for show_smodel( )
 #include "tree-align/n_indels2.H"
 #include "substitution/parsimony.H"
 #include "alignment/alignment-util.H"
@@ -45,6 +44,59 @@
 
 using std::endl;
 using std::pair;
+
+void show_frequencies(std::ostream& o,const alphabet& a,const std::valarray<double>& f) {
+    for(int i=0;i<a.size();i++)
+      o<<"f"<<a.lookup(i)<<" = "<<f[i]<<"\n";
+}
+
+void show_frequencies(std::ostream& o,const data_partition& P)
+{
+  const alphabet& a = P.get_alphabet();
+
+  auto F = P.FrequencyMatrix();
+
+  int n_base_models = F.size1();
+  assert(a.size() == F.size2());
+
+  if (n_base_models == 1) {
+    for(int i=0;i<a.size();i++)
+      o<<"f"<<a.lookup(i)<<" = "<<F(0,i)<<"\n";
+  }
+  else {
+    auto WF = P.WeightedFrequencyMatrix();
+    for(int i=0;i<a.size();i++) {
+      double total = 0;
+      for(int m=0;m<n_base_models;m++) {
+	o<<"f"<<a.lookup(i)<<m+1<<" = "<<F(m,i)<<"     ";
+	total += WF(m,i);
+      }
+      o<<"f"<<a.lookup(i)<<" = "<<total<<"\n";
+    }
+  }
+}
+
+void show_smodel(std::ostream& o, const data_partition& P)
+{
+  //  for(int i=0;i<P.n_base_models();i++)
+  //    o<<"    rate"<<i<<" = "<<convert<const substitution::ReversibleAdditiveObject>(P.base_model(i))->rate();
+  //  o<<"\n\n";
+  
+  for(int i=0;i<P.n_base_models();i++)
+    o<<"    fraction"<<i<<" = "<<P.distribution()[i];
+  o<<"\n\n";
+
+  o<<"frequencies = "<<"\n";
+  show_frequencies(o,P);
+}
+
+void show_smodels(std::ostream& o, const Parameters& P)
+{
+  for(int m=0;m<P.n_data_partitions();m++) {
+    o<<"data partition"<<m+1<<endl;
+    show_smodel(o,P[m]);
+  }
+}
 
 namespace MCMC {
     using std::vector;
