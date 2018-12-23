@@ -19,7 +19,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "prior.H"
 #include "substitution/substitution.H"
-#include "setup.H"
 #include "probability/probability.H"
 #include "util.H"
 #include "dp/2way.H"

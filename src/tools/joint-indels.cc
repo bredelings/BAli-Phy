@@ -25,7 +25,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment/alignment.H"
 
 #include "util.H"
-#include "setup.H"
 
 #include "alignment/alignment-util.H"
 #include "distance-methods.H"

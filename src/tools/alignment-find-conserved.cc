@@ -24,7 +24,7 @@
 #include "sequence/sequence-format.H"
 #include "tree/sequencetree.H"
 #include "tree/tree-util.H"
-#include "setup.H"
+#include "startup/setup.H"  // for link( )
 #include "alignment/alignment-util.H"
 #include "alignment/load.H"
 #include "util.H"

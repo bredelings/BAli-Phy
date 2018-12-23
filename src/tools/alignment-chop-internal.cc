@@ -27,7 +27,6 @@
 #include "alignment/load.H"
 #include "sequence/sequence-format.H"
 #include "util.H"
-#include "setup.H"
 #include "findroot.H"
 
 #include <boost/program_options.hpp>

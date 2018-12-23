@@ -38,8 +38,6 @@
 #include "util.H"
 #include "util-random.H"
 
-#include "../setup.H"           // for letter_counts( )
-
 #include "monitor.H"
 #include "proposals.H"
 #include "alignment/alignment-util.H"

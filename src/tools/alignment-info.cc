@@ -27,7 +27,7 @@
 #include "alignment/alignment-util.H"
 #include "alignment/load.H"
 #include "util.H"
-#include "setup.H"
+#include "startup/setup.H"
 #include "findroot.H"
 #include "parsimony.H"
 #include "statistics.H"

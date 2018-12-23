@@ -26,7 +26,6 @@
 #include "alignment-util.H"
 #include "alignment-util2.H"
 #include "util.H"
-#include "setup.H"
 #include "util/io.H"
 #include "util/assert.hh"
 

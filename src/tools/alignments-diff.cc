@@ -27,7 +27,6 @@
 #include "optimize.H"
 #include "findroot.H"
 #include "util.H"
-#include "setup.H"
 #include "alignment/load.H"
 #include "alignment/alignment-util.H"
 #include "distance-methods.H"
