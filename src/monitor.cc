@@ -94,23 +94,3 @@ void show_smodels(std::ostream& o, const Parameters& P)
   }
 }
 
-void report_mem() {
-#if !defined(_MSC_VER) && !defined(__MINGW32__)
-/*
-  struct rusage usage;
-  std::cerr<<getrusage(RUSAGE_SELF,&usage);
-  std::cerr<<"Maximum resident set size: "<<usage.ru_maxrss<<"\n";
-  std::cerr<<"Integral shared memory size: "<<usage.ru_ixrss<<"\n";
-  std::cerr<<"Integral unshared data size: "<<usage.ru_idrss<<"\n";
-  std::cerr<<"Integral unshared stack size: "<<usage.ru_isrss<<"\n";
-  std::cerr<<"Number of swaps: "<<usage.ru_nswap<<"\n";
-  std::cerr.flush();
-*/
-  int pid = getpid();
-  std::ostringstream cmd;
-  cmd<<"cat /proc/"<<pid<<"/status | grep Vm 1>&2";
-  system(cmd.str().c_str());
-  std::cerr.flush();
-#endif
-}
-
