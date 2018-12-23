@@ -3,7 +3,7 @@
 #include <list>
 #include "models/parse.H"
 #include "models/model.H"
-#include "myexception.H"
+#include "util/myexception.H"
 #include "util.H"
 #include "rules.H"
 #include "setup.H"

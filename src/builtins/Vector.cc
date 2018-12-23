@@ -1,7 +1,7 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include <vector>
 #include "computation/machine/args.H"
-#include "myexception.H"
+#include "util/myexception.H"
 #include "matrix.H"
 #include "computation/expression/expression.H"
 

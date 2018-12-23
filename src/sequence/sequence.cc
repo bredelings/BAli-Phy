@@ -19,7 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "util/assert.hh"
 #include "sequence.H"
-#include "myexception.H"
+#include "util/myexception.H"
 #include "util.H"
 
 using namespace std;

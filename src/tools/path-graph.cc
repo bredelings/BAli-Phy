@@ -21,7 +21,7 @@
 #include <string>
 #include <map>
 #include <list>
-#include "myexception.H"
+#include "util/myexception.H"
 #include "alignment/alignment.H"
 #include "alignment/load.H"
 #include "util.H"

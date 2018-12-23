@@ -21,7 +21,7 @@
 
 #include "stats-table.H"
 #include "util.H"
-#include "myexception.H"
+#include "util/myexception.H"
 #include "util/io.H"
 
 #include <boost/dynamic_bitset.hpp>

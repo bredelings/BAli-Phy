@@ -22,7 +22,7 @@
 #include <cmath>
 #include <vector>
 #include <list>
-#include "myexception.H"
+#include "util/myexception.H"
 #include "alignment/alignment.H"
 #include "optimize.H"
 #include "findroot.H"

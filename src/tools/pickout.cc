@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 #include "util/assert.hh"
-#include "myexception.H"
+#include "util/myexception.H"
 #include "util.H"
 #include "util/io.H"
 

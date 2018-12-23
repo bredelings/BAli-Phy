@@ -19,7 +19,7 @@
 
 #include <string>
 #include <valarray>
-#include "myexception.H"
+#include "util/myexception.H"
 #include "alignment/alignment.H"
 #include "sequence/sequence-format.H"
 #include "tree/sequencetree.H"

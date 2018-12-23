@@ -32,7 +32,7 @@
 #include <sstream>
 #include "util/assert.hh"
 #include <algorithm>
-#include "myexception.H"
+#include "util/myexception.H"
 #include <optional>
 #include <map>
 #include <set>

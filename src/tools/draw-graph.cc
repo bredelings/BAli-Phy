@@ -24,7 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <cmath>
 #include <fstream>
 
-#include "myexception.H"
+#include "util/myexception.H"
 #include "tree/sequencetree.H"
 #include "util.H"
 #include "bootstrap.H"

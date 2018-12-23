@@ -24,7 +24,7 @@
 #include "util/ptree.H"
 
 #include "util.H"
-#include "myexception.H"
+#include "util/myexception.H"
 #include "models/model.H"
 #include "computation/program.H"
 #include "computation/expression/expression.H"

@@ -47,7 +47,7 @@ namespace mpi = boost::mpi;
 #include <boost/chrono.hpp>
 
 #include "substitution/substitution.H"
-#include "myexception.H"
+#include "util/myexception.H"
 #include "rng.H"
 #include "models/parameters.H"
 #include "models/rules.H"

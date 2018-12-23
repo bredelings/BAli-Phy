@@ -26,7 +26,7 @@
 #include <cmath>
 #include "imodel/imodel.H"
 #include "rng.H"
-#include "myexception.H"
+#include "util/myexception.H"
 #include "probability/probability.H"
 #include "util.H"
 #include "dp/2way.H"

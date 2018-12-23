@@ -18,7 +18,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include <string>
-#include "myexception.H"
+#include "util/myexception.H"
 #include "alignment/alignment.H"
 #include "sequence/sequence-format.H"
 #include "alignment/load.H"

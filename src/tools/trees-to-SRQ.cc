@@ -25,7 +25,7 @@
 #include <map>
 #include <cmath>
 
-#include "myexception.H"
+#include "util/myexception.H"
 #include "tree/sequencetree.H"
 #include "tree-dist.H"
 #include "tree/tree-util.H"

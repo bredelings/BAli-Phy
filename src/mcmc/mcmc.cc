@@ -33,7 +33,7 @@
 
 #include "mcmc.H"
 #include "sample.H"
-#include "myexception.H"
+#include "util/myexception.H"
 #include "rng.H"
 #include "util.H"
 #include "util-random.H"

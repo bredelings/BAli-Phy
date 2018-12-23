@@ -1,6 +1,6 @@
 #include "driver.hh"
 #include "parser.hh"
-#include "myexception.H"
+#include "util/myexception.H"
 #include "util/io.H"
 
 using std::string;

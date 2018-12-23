@@ -21,7 +21,7 @@
 #include <sstream>
 #include "alignment.H"
 #include "load.H"
-#include "myexception.H"
+#include "util/myexception.H"
 #include "util.H"
 #include "rng.H"
 

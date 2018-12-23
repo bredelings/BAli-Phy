@@ -23,7 +23,7 @@
 #include "tree/sequencetree.H"
 #include "util.H"
 #include "tree/tree-util.H"
-#include "myexception.H"
+#include "util/myexception.H"
 
 #include <boost/program_options.hpp>
 

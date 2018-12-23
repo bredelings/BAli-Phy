@@ -23,7 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include <boost/program_options.hpp>
 
-#include "myexception.H"
+#include "util/myexception.H"
 #include "alignment/alignment.H"
 
 #include "optimize.H"

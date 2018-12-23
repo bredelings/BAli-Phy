@@ -1,6 +1,6 @@
 #include "computation/program.H"
 #include "computation/module.H"
-#include "myexception.H"
+#include "util/myexception.H"
 #include "computation/loader.H"
 #include "models/model.H"
 #include "expression/expression.H"

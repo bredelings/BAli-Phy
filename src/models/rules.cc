@@ -1,7 +1,7 @@
 #include <vector>
 #include <set>
 #include "rules.H"
-#include "myexception.H"
+#include "util/myexception.H"
 #include "util.H"
 #include "util/io.H"
 #include "util/json.hh"

@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <string>
-#include "myexception.H"
+#include "util/myexception.H"
 #include "operation.H"
 #include "expression/expression_ref.H"
 

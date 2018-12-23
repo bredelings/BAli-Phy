@@ -3,7 +3,7 @@
 
 #include "files.H"
 #include "util.H"
-#include "myexception.H"
+#include "util/myexception.H"
 #include "version.H"
 #include "computation/module.H"
 #include "computation/loader.H"

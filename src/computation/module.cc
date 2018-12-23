@@ -1,6 +1,6 @@
 #include <set>
 #include "computation/module.H"
-#include "myexception.H"
+#include "util/myexception.H"
 #include "program.H"
 #include "operations.H"
 #include "computation/machine/graph_register.H" // for graph_normalize( )

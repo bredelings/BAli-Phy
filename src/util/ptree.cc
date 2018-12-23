@@ -1,6 +1,6 @@
 #include "ptree.H"
 #include "util.H"
-#include "myexception.H"
+#include "util/myexception.H"
 
 using std::string;
 using std::vector;

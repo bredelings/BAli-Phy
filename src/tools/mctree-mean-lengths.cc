@@ -24,7 +24,7 @@
 #include "tree/sequencetree.H"
 #include "tree/tree-util.H"
 #include "tree-dist.H"
-#include "myexception.H"
+#include "util/myexception.H"
 #include "mctree.H"
 #include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>

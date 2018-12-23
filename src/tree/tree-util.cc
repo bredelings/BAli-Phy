@@ -22,7 +22,7 @@
 #include <list>
 #include "util.H"
 #include "tree/tree-util.H"
-#include "myexception.H"
+#include "util/myexception.H"
 #include "util/io.H"
 #include "tools/read-trees.H" // split out trees_format::reader_t
 

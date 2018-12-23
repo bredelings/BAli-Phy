@@ -2,7 +2,7 @@
 #include "computation/machine/args.H"
 #include "computation/machine/graph_register.H"
 #include "math/exponential.H"
-#include "myexception.H"
+#include "util/myexception.H"
 #include "expression/expression.H"
 #include "expression/lambda.H"
 #include "expression/case.H"

@@ -23,7 +23,7 @@
 #include <vector>
 #include <list>
 #include <numeric>
-#include "myexception.H"
+#include "util/myexception.H"
 #include "alignment/alignment.H"
 #include "optimize.H"
 #include "findroot.H"

@@ -21,7 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <string>
 #include <cmath>
 #include <vector>
-#include "myexception.H"
+#include "util/myexception.H"
 #include "alignment/alignment.H"
 
 #include "util.H"

@@ -3,7 +3,7 @@
 #include <vector>
 #include <set>
 #include "rules.H"
-#include "myexception.H"
+#include "util/myexception.H"
 #include "util.H"
 #include <iostream>
 #include "setup.H"

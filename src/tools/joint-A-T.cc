@@ -22,7 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <fstream>
 #include <cmath>
 
-#include "myexception.H"
+#include "util/myexception.H"
 #include "alignment/alignment.H"
 
 #include "util.H"

@@ -22,7 +22,7 @@
 #include <map>
 #include <list>
 
-#include "myexception.H"
+#include "util/myexception.H"
 #include "statistics.H"
 #include "util.H"
 

@@ -30,7 +30,7 @@
 #include <string>
 #include "util/assert.hh"
 #include <boost/dynamic_bitset.hpp>
-#include "myexception.H"
+#include "util/myexception.H"
 #include "object.H"
 #include "owned-ptr.H"
 

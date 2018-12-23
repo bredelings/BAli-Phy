@@ -21,7 +21,7 @@
 #include <fstream>
 #include <cmath>
 #include "tree/sequencetree.H"
-#include "myexception.H"
+#include "util/myexception.H"
 #include "util.H"
 #include "util/io.H"
 

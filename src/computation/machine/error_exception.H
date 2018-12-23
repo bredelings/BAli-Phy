@@ -1,6 +1,6 @@
 #ifndef ERROR_EXCEPTION_H
 #define ERROR_EXCEPTION_H
-#include "myexception.H"
+#include "util/myexception.H"
 
 class error_exception: public myexception
 {

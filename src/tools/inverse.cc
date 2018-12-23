@@ -18,7 +18,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "inverse.H"
-#include "myexception.H"
+#include "util/myexception.H"
 #include <iostream>
 
 #include <Eigen/Dense>

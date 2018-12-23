@@ -1,7 +1,7 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "computation/machine/args.H"
 #include "computation/operations.H"
-#include "myexception.H"
+#include "util/myexception.H"
 #include "computation/machine/graph_register.H"
 #include "computation/expression/expression.H"
 #include "computation/expression/bool.H"

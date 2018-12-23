@@ -21,7 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "arguments.H"
 #include "tree/tree.H"
 #include "rng.H"
-#include "myexception.H"
+#include "util/myexception.H"
 
 int main(int argc,char* argv[]) { 
   try {
