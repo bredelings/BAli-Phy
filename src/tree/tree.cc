@@ -703,79 +703,79 @@ const vector<int>& Tree::leaf_nodes() const
 {
     // Require that leaf node ORDER is determined by the node_ order,
     // and in increasing order of node names.
-    if (not leaf_nodes_.is_valid())
+    if (not leaf_nodes_)
     {
-	leaf_nodes_.modify_value().clear();
+	vector<int> temp;
 	for(int i=0;i<nodes_.size();i++)
 	    if (::is_leaf_node(nodes_[i]))
-		leaf_nodes_.modify_value().push_back(i);
-	leaf_nodes_.validate();
+		temp.push_back(i);
+	leaf_nodes_ = std::move(temp);
     }
 
-    assert(n_leaves() == leaf_nodes_.access_value().size());
+    assert(n_leaves() == leaf_nodes_->size());
 
-    return leaf_nodes_;
+    return *leaf_nodes_;
 }
 
 const vector<int>& Tree::internal_nodes() const
 {
     // Require that internal node ORDER is determined by the node_ order,
     // and in increasing order of node names.
-    if (not internal_nodes_.is_valid())
+    if (not internal_nodes_)
     {
-	internal_nodes_.modify_value().clear();
+	vector<int> temp;
 	for(int i=0;i<nodes_.size();i++)
 	    if (is_internal_node(nodes_[i]))
-		internal_nodes_.modify_value().push_back(i);
-	internal_nodes_.validate();
+		temp.push_back(i);
+	internal_nodes_ = std::move(temp);
     }
 
-    assert(n_nodes() - n_leaves() == internal_nodes_.access_value().size());
+    assert(n_nodes() - n_leaves() == internal_nodes_->size());
 
-    return internal_nodes_;
+    return *internal_nodes_;
 }
 
 const vector<tree_edge>& Tree::leaf_branches() const
 {
     // Require that leaf branch ORDER is determined by the branches_ order,
     // and in increasing order of node names.
-    if (not leaf_branches_.is_valid())
+    if (not leaf_branches_)
     {
-	leaf_branches_.modify_value().clear();
 	if (nodes_.size() == 2)
-	    leaf_branches_.modify_value().push_back(nodes_[0]);
+	    leaf_branches_ = {nodes_[0]};
 	else
 	{
+	    vector<tree_edge> temp;
 	    for(int i=0;i<branches_.size();i++)
 		// orient branches away from leaf nodes
 		if (is_branch(branches_[i]) and ::is_leaf_node(branches_[i]))
-		    leaf_branches_.modify_value().push_back( branches_[i] );
+		    temp.push_back( branches_[i] );
+	    leaf_branches_ = temp;
 	}
-	leaf_branches_.validate();
     }
 
-    assert(leaf_branches_.value().size() == n_leafbranches());
+    assert(leaf_branches_->size() == n_leafbranches());
 
-    return leaf_branches_;
+    return *leaf_branches_;
 }
 
 const vector<tree_edge>& Tree::internal_branches() const
 {
     // Require that internal branch ORDER is determined by the branches_ order,
     // and in increasing order of node names.
-    if (not internal_branches_.is_valid())
+    if (not internal_branches_)
     {
-	internal_branches_.modify_value().clear();
+	vector<tree_edge> temp;
 	for(int i=0;i<branches_.size();i++)
 	    // Choose the orientation with the smaller name
 	    if (is_internal_branch(branches_[i]) and branches_[i]->directed_branch_attributes->name < branches_[i]->out->directed_branch_attributes->name)
-		internal_branches_.modify_value().push_back( branches_[i] );
-	internal_branches_.validate();
+		temp.push_back( branches_[i] );
+	internal_branches_ = std::move(temp);
     }
 
-    assert(internal_branches_.value().size() == n_branches() - n_leafbranches());
+    assert(internal_branches_->size() == n_branches() - n_leafbranches());
 
-    return internal_branches_;
+    return *internal_branches_;
 }
 
 vector<int> Tree::standardize() {
@@ -1019,11 +1019,11 @@ void Tree::add_first_node() {
 
     n_leaves_ = 1;
 
-    leaf_nodes_.invalidate();
-    internal_nodes_.invalidate();
+    leaf_nodes_ = {};
+    internal_nodes_ = {};
 
-    leaf_branches_.invalidate();
-    internal_branches_.invalidate();
+    leaf_branches_ = {};
+    internal_branches_ = {};
 }
 
 BranchNode* add_leaf_node(BranchNode* n, int n_n_a, int n_u_a, int n_d_a) 
@@ -1095,11 +1095,11 @@ nodeview Tree::add_leaf_node(int node)
     // Update the nodes_ array
     nodes_.push_back(n_leaf);
 
-    leaf_nodes_.invalidate();
-    internal_nodes_.invalidate();
+    leaf_nodes_ = {};
+    internal_nodes_ = {};
 
-    leaf_branches_.invalidate();
-    internal_branches_.invalidate();
+    leaf_branches_ = {};
+    internal_branches_ = {};
 
     // Update the branches_ array
     branches_.resize(branches_.size()+2);
@@ -1442,8 +1442,8 @@ void Tree::reanalyze(BranchNode* start)
     nodes_.clear();
     branches_.clear();
 
-    leaf_nodes_.invalidate();
-    internal_nodes_.invalidate();
+    leaf_nodes_ = {};
+    internal_nodes_ = {};
 
     //--------------- Count nodes ---------------//
     n_leaves_ = 0;
@@ -1513,11 +1513,11 @@ void Tree::reanalyze(BranchNode* start)
 /// Computes nodes_[] and branch_[] indices, and cached_partitions[]
 void Tree::recompute(BranchNode* start,bool recompute_partitions) 
 {
-    leaf_nodes_.invalidate();
-    internal_nodes_.invalidate();
+    leaf_nodes_ = {};
+    internal_nodes_ = {};
 
-    leaf_branches_.invalidate();
-    internal_branches_.invalidate();
+    leaf_branches_ = {};
+    internal_branches_ = {};
 
     if (not start) return;
 
@@ -1632,8 +1632,8 @@ BranchNode* connect_nodes(BranchNode* n1, BranchNode* n2, int n_u_a, int n_d_a)
 // - leaf branches having low indices
 void Tree::reconnect_branch(int source_index, int target_index, int new_target_index)
 {
-    leaf_nodes_.invalidate();
-    internal_nodes_.invalidate();
+    leaf_nodes_ = {};
+    internal_nodes_ = {};
 
     branchview b = directed_branch(source_index, target_index);
 
@@ -1784,11 +1784,11 @@ Tree& Tree::operator=(const Tree& T)
     nodes_ = std::vector<BranchNode*>(T.nodes_.size(),(BranchNode*)NULL);
     branches_ = std::vector<BranchNode*>(T.branches_.size(),(BranchNode*)NULL);
 
-    leaf_nodes_.invalidate();
-    internal_nodes_.invalidate();
+    leaf_nodes_ = {};
+    internal_nodes_ = {};
   
-    leaf_branches_.invalidate();
-    internal_branches_.invalidate();
+    leaf_branches_ = {};
+    internal_branches_ = {};
 
     // recalculate pointer indices
     BranchNode* start = T.copy();

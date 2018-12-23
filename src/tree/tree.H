@@ -32,7 +32,6 @@
 #include <boost/dynamic_bitset.hpp>
 #include <list>
 #include "tree-branchnode.H"
-#include "cached_value.H"
 
 // TODO.
 // 1. Add node and branch attributes to tree objects.
@@ -254,16 +253,16 @@ protected:
     /// an index to one BranchNode for each node
     std::vector<BranchNode*> nodes_;
 
-    mutable cached_value<std::vector<int> > leaf_nodes_;
+    mutable std::optional<std::vector<int> > leaf_nodes_;
 
-    mutable cached_value<std::vector<int> > internal_nodes_;
+    mutable std::optional<std::vector<int> > internal_nodes_;
 
     /// an index to one BranchNode for each node
     std::vector<BranchNode*> branches_;
 
-    mutable cached_value<std::vector<tree_edge> > leaf_branches_;
+    mutable std::optional<std::vector<tree_edge> > leaf_branches_;
 
-    mutable cached_value<std::vector<tree_edge> > internal_branches_;
+    mutable std::optional<std::vector<tree_edge> > internal_branches_;
 
 
     /// re-compute cached_partitions

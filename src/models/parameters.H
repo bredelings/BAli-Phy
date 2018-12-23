@@ -39,7 +39,6 @@
 
 #include "tools/partition.H"
 #include "cow-ptr.H"
-#include "cached_value.H"
 #include "dp/2way.H"
 #include "TreeInterface.H"
 
