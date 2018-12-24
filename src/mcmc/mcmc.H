@@ -39,7 +39,7 @@
 #include "models/parameters.H"
 #include "util/rng.H"
 #include "proposals.H"
-#include "bounds.H"
+#include "util/bounds.H"
 
 // how to have different models, with different moves
 // and possibly moves between models?

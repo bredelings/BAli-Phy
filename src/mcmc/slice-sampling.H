@@ -27,7 +27,7 @@
 #define SLICE_SAMPLING_H
 
 #include "models/parameters.H"
-#include "bounds.H"
+#include "util/bounds.H"
 
 namespace slice_sampling {
     /// This function returns the value \a x that was passed in.
