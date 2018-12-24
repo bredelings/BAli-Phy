@@ -48,7 +48,7 @@ namespace mpi = boost::mpi;
 
 #include "substitution/substitution.H"
 #include "util/myexception.H"
-#include "rng.H"
+#include "util/rng.H"
 #include "models/parameters.H"
 #include "models/rules.H"
 #include "mcmc/mcmc.H"

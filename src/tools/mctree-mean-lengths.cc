@@ -28,7 +28,7 @@
 #include "mctree.H"
 #include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>
-#include "rng.H"
+#include "util/rng.H"
 
 namespace po = boost::program_options;
 using po::variables_map;

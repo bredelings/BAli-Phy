@@ -19,7 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <vector>
 #include "util/assert.hh"
-#include "rng.H"
+#include "util/rng.H"
 
 template <typename T>
 void random_shuffle(std::vector<T>& v) 

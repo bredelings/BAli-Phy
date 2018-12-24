@@ -23,7 +23,7 @@
 #include "load.H"
 #include "util/myexception.H"
 #include "util.H"
-#include "rng.H"
+#include "util/rng.H"
 
 using std::string;
 using std::vector;

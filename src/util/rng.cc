@@ -24,7 +24,7 @@
 #include <iostream>
 #include <boost/random/random_device.hpp>
 
-#include "rng.H"
+#include "util/rng.H"
 
 using std::valarray;
 

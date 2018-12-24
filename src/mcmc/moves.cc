@@ -19,7 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "sample.H"
 #include "util.H"
-#include "rng.H"
+#include "util/rng.H"
 #include <algorithm>
 #include "mcmc.H"
 #include "dp/3way.H"

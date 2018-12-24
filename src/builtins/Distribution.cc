@@ -7,7 +7,7 @@
 #include "computation/module.H"
 #include "probability/probability.H"
 #include "bounds.H"
-#include "rng.H"
+#include "util/rng.H"
 #include "vector_from_list.H"
 #include "computation/expression/expression.H"
 

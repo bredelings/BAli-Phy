@@ -38,7 +38,7 @@
 #include "tree-dist.H"
 #include "consensus-tree.H"
 #include "mctree.H"
-#include "rng.H"
+#include "util/rng.H"
 
 #include <boost/program_options.hpp>
 

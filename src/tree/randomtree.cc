@@ -18,7 +18,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "tree/sequencetree.H"
-#include "rng.H"
+#include "util/rng.H"
 #include "util/permute.H"
 
 using std::vector;

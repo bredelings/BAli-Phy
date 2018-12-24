@@ -2,7 +2,7 @@
 #include "computation/machine/args.H"
 #include "util/myexception.H"
 #include "computation/machine/graph_register.H"
-#include "rng.H"
+#include "util/rng.H"
 #include "util.H"
 #include "probability/choose.H"
 #include "computation/expression/expression.H"

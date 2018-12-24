@@ -20,7 +20,7 @@
 #include "substitution.H"
 #include "models/parameters.H"
 #include "sequence/alphabet.H"
-#include "rng.H"
+#include "util/rng.H"
 #include <cmath>
 #include <valarray>
 #include <vector>

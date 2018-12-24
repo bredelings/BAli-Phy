@@ -18,7 +18,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "alignment/alignment.H"
-#include "rng.H"
+#include "util/rng.H"
 #include "alignment/alignment-util.H"
 
 using std::vector;

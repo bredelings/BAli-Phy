@@ -32,7 +32,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment/load.H"
 #include "alignment/alignment-util.H"
 #include "distance-methods.H"
-#include "rng.H"
+#include "util/rng.H"
 
 #include <boost/program_options.hpp>
 #include "util/io.H"

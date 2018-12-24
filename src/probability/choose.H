@@ -21,7 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define CHOOSE_H
 
 #include <vector>
-#include "rng.H"
+#include "util/rng.H"
 #include "util/myexception.H"
 #include "util.H"
 #include "math/log-double.H"

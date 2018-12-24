@@ -17,7 +17,7 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include "rng.H"
+#include "util/rng.H"
 #include "sample.H"
 #include "mcmc.H"
 #include "util.H"

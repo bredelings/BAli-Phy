@@ -29,7 +29,7 @@
 #include "util.H"
 #include "alignment/alignment-util.H"
 #include "distance-methods.H"
-#include "rng.H"
+#include "util/rng.H"
 #include "alignment/alignment-util.H"
 #include "alignment/load.H"
 #include "statistics.H"

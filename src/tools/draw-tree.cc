@@ -52,7 +52,7 @@ extern "C" {
 #include "mctree.H"
 #include "util.H"
 #include "util/permute.H"
-#include "rng.H"
+#include "util/rng.H"
 #include "util/io.H"
 
 namespace po = boost::program_options;

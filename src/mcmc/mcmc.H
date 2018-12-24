@@ -37,7 +37,7 @@
 #include <string>
 #include <map>
 #include "models/parameters.H"
-#include "rng.H"
+#include "util/rng.H"
 #include "proposals.H"
 #include "bounds.H"
 

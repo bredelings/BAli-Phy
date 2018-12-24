@@ -32,7 +32,7 @@
 #include "util.H"
 #include "tree/tree-util.H"
 #include "tree-dist.H"
-#include "rng.H"
+#include "util/rng.H"
 
 #include <boost/program_options.hpp>
 #include "distance-report.H"

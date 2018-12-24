@@ -20,7 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment/alignment.H"
 #include "arguments.H"
 #include "tree/tree.H"
-#include "rng.H"
+#include "util/rng.H"
 #include "util/myexception.H"
 
 int main(int argc,char* argv[]) { 

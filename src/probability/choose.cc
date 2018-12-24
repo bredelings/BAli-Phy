@@ -19,7 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "util/assert.hh"
 #include "probability/choose.H"
-#include "rng.H"
+#include "util/rng.H"
 #include "util/myexception.H"
 
 using std::vector;

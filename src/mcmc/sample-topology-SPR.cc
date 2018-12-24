@@ -27,7 +27,7 @@
 #include "util/assert.hh"
 #include <iostream>
 #include "sample.H"
-#include "rng.H"
+#include "util/rng.H"
 #include "probability/choose.H"
 #include "probability/probability.H"
 

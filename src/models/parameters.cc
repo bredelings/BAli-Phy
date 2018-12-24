@@ -28,7 +28,7 @@
 #include "util/assert.hh"
 
 #include "models/parameters.H"
-#include "rng.H"
+#include "util/rng.H"
 #include "substitution/substitution.H"
 #include "alignment/alignment-util.H"
 #include "alignment/alignment-util2.H"

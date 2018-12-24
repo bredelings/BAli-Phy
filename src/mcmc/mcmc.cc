@@ -34,7 +34,7 @@
 #include "mcmc.H"
 #include "sample.H"
 #include "util/myexception.H"
-#include "rng.H"
+#include "util/rng.H"
 #include "util.H"
 #include "util/permute.H"
 

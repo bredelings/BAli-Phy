@@ -21,7 +21,7 @@
 #include "tree/tree.H"
 #include "probability/probability.H"
 #include "computation/expression/expression.H"
-#include "rng.H"
+#include "util/rng.H"
 #include "util.H"
 #include "dp/dp-matrix.H"
 

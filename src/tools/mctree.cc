@@ -18,7 +18,7 @@
   <http://www.gnu.org/licenses/>.  */
 
 #include "mctree.H"
-#include "rng.H"
+#include "util/rng.H"
 
 using std::vector;
 using std::string;
