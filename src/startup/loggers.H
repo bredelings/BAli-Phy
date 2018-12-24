@@ -5,7 +5,7 @@
 #include <string>
 #include <memory>
 #include "models/model.H"
-#include "owned-ptr.H"
+#include "util/owned-ptr.H"
 #include "mcmc/logger.H"
 #include "mcmc/mcmc.H" // for MCMC::Logger
 

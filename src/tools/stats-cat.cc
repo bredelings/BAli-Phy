@@ -7,7 +7,7 @@
 #include "util/io.H"
 #include "stats-table.H"
 #include "util/myexception.H"
-#include "owned-ptr.H"
+#include "util/owned-ptr.H"
 
 using namespace std;
 

@@ -29,7 +29,7 @@
 #include "stats-table.H"
 
 #include <boost/program_options.hpp>
-#include "owned-ptr.H"
+#include "util/owned-ptr.H"
 
 using namespace std;
 

@@ -32,7 +32,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include "util/myexception.H"
 #include "object.H"
-#include "owned-ptr.H"
+#include "util/owned-ptr.H"
 
 /// An exception that is thrown upon reading a letter that is not in the current alphabet.
 struct bad_letter:public myexception 

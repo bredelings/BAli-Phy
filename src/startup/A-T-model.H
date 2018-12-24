@@ -12,7 +12,7 @@
 #include "alignment/alignment.H"
 #include "setup.H"
 #include "models/setup.H"
-#include "owned-ptr.H"
+#include "util/owned-ptr.H"
 #include "util/json.hh"
 
 void setup_heating(int proc_id, const boost::program_options::variables_map& args, Parameters& P);

@@ -38,7 +38,7 @@
 
 #include "models/parameters.H"
 #include "util/io.H"
-#include "owned-ptr.H"
+#include "util/owned-ptr.H"
 #include "object.H"
 
 struct slice_function;

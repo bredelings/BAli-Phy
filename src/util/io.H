@@ -5,7 +5,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include "owned-ptr.H"
+#include "util/owned-ptr.H"
 
 // this should actually be templatized... <class charT,Alloc,Traits>
 std::istream& portable_getline(std::istream&,std::string&);
