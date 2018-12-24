@@ -38,7 +38,6 @@
 #include "alignment/alignment.H"
 
 #include "tools/partition.H"
-#include "cow-ptr.H"
 #include "dp/2way.H"
 #include "TreeInterface.H"
 

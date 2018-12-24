@@ -37,7 +37,7 @@
 #include "object.H"
 #include "computation/operation.H"
 #include "computation/context.H"
-#include "cow-ptr.H"
+#include "util/cow-ptr.H"
 #include "util/json.hh"
 
 class Model;
