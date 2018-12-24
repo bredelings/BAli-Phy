@@ -27,7 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "3way.H"
 #include "bits.H"
 #include "util.H"
-#include "util-random.H"
+#include "util/permute.H"
 #include "rng.H"
 
 using boost::dynamic_bitset;

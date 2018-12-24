@@ -33,7 +33,7 @@
 
 #include "dp/3way.H"
 #include "tree/tree-util.H"
-#include "util-random.H"
+#include "util/permute.H"
 #include "dp/alignment-sums.H"
 #include "alignment/alignment-constraint.H"
 #include "substitution/substitution.H"

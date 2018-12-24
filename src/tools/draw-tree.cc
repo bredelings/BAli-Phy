@@ -51,7 +51,7 @@ extern "C" {
 #include "tree/sequencetree.H"
 #include "mctree.H"
 #include "util.H"
-#include "util-random.H"
+#include "util/permute.H"
 #include "rng.H"
 #include "util/io.H"
 

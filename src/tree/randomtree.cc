@@ -19,7 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "tree/sequencetree.H"
 #include "rng.H"
-#include "util-random.H"
+#include "util/permute.H"
 
 using std::vector;
 using std::string;

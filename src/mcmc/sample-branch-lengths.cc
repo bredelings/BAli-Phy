@@ -21,7 +21,7 @@
 #include "sample.H"
 #include "mcmc.H"
 #include "util.H"
-#include "util-random.H"
+#include "util/permute.H"
 #include "dp/5way.H"
 #include "substitution/substitution.H"
 #include "proposals.H"

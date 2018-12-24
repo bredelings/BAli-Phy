@@ -23,7 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <algorithm>
 #include "mcmc.H"
 #include "dp/3way.H"
-#include "util-random.H"
+#include "util/permute.H"
 #include "alignment/alignment-util.H"
 
 using MCMC::MoveStats;

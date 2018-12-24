@@ -36,7 +36,7 @@
 #include "util/myexception.H"
 #include "rng.H"
 #include "util.H"
-#include "util-random.H"
+#include "util/permute.H"
 
 #include "proposals.H"
 #include "alignment/alignment-util.H"
