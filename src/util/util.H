@@ -40,12 +40,6 @@
 #include <functional>
 #include "string_convert.H"
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
-#define foreach(a,b) for(auto a=(b).begin();a != (b).end();a++)
-#else
-#define foreach(a,b) for(typeof((b).begin()) a=(b).begin();a != (b).end();a++)
-#endif
-
 /// How many of v's bits are true?
 int n_elements(const std::vector<bool>& v);
 
