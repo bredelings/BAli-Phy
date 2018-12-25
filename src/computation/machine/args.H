@@ -1,7 +1,7 @@
 #ifndef COMPUTATION_H
 #define COMPUTATION_H
 
-#include "object.H"
+#include "util/object.H"
 #include "computation/closure.H"
 
 class expression_ref;

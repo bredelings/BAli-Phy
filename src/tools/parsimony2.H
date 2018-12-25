@@ -21,7 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "sequence/alphabet.H"
 #include "alignment/alignment.H"
 #include "models/TreeInterface.H"
-#include "matrix.H"
+#include "util/matrix.H"
 
 template <class B>
 B n_mutations(const alphabet& a, const std::vector<int>& letters, const TreeInterface& T,const matrix<B>& cost);

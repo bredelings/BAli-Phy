@@ -4,7 +4,7 @@
 #include <vector>
 #include <boost/dynamic_bitset.hpp>
 #include "tree/tree.H"
-#include "object.H"
+#include "util/object.H"
 
 class Parameters;
 

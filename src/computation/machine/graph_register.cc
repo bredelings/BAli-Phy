@@ -1,6 +1,6 @@
 #include <iostream>
 #include <algorithm>
-#include "util.H"
+#include "util/util.H"
 #include "graph_register.H"
 #include "computation/expression/expression.H"
 #include "computation/expression/var.H"

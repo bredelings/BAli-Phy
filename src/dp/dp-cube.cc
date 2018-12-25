@@ -29,7 +29,7 @@
 #include "dp-cube.H"
 #include "math/pow2.H"
 #include "probability/choose.H"
-#include "util.H"
+#include "util/util.H"
 #include "alignment/alignment-constraint.H"
 #include "math/logprod.H"
 

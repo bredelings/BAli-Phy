@@ -23,7 +23,7 @@
 #include <regex>
 #include "alignment/alignment.H"
 #include "alignment/alignment-util.H"
-#include "util.H"
+#include "util/util.H"
 #include "sequence/sequence.H"
 #include "sequence/sequence-format.H"
 #include <boost/program_options.hpp>

@@ -20,7 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef PARSIMONY_H
 #define PARSIMONY_H
 
-#include "matrix.H"
+#include "util/matrix.H"
 #include "sequence/alphabet.H"
 #include "models/parameters.H"
 #include "tools/parsimony.H"

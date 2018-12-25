@@ -21,7 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "sequence/alphabet.H"
 #include "alignment/alignment.H"
 #include "tree/sequencetree.H"
-#include "matrix.H"
+#include "util/matrix.H"
 
 matrix<int> unit_cost_matrix(unsigned size);
 

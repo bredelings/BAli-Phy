@@ -22,7 +22,7 @@
 #include "alignment.H"
 #include "load.H"
 #include "util/myexception.H"
-#include "util.H"
+#include "util/util.H"
 #include "util/rng.H"
 
 using std::string;

@@ -27,7 +27,7 @@
 #include <cmath>
 #include "sample.H"
 #include "probability/choose.H"
-#include "util.H"
+#include "util/util.H"
 #include "util/rng.H"
 #include "dp/3way.H"
 #include "dp/alignment-sums.H"

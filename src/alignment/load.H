@@ -8,7 +8,7 @@
 #include <boost/program_options.hpp>
 #include "sequence/alphabet.H"
 #include "alignment.H"
-#include "object.H"
+#include "util/object.H"
 
 std::string get_alphabet_name(const boost::program_options::variables_map& args);
 

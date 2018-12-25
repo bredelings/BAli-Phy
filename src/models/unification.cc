@@ -1,6 +1,6 @@
 #include "unification.H"
 #include <set>
-#include "util.H"
+#include "util/util.H"
 #include "parse.H"
 
 using std::list;

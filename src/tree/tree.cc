@@ -24,7 +24,7 @@
 
 #include "util/myexception.H"
 #include "tree/tree.H"
-#include "util.H"
+#include "util/util.H"
 
 using std::vector;
 using std::string;

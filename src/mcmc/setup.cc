@@ -30,7 +30,7 @@
 
 #include "mcmc/setup.H"
 #include "mcmc/logger.H"
-#include "util.H"
+#include "util/util.H"
 #include "sample.H"
 #include "alignment/alignment-util.H"
 #include "alignment/alignment-util2.H"

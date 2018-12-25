@@ -32,7 +32,7 @@
 #include "substitution/substitution.H"
 #include "alignment/alignment-util.H"
 #include "alignment/alignment-util2.H"
-#include "util.H"
+#include "util/util.H"
 #include "mcmc/proposals.H"
 #include "probability/probability.H"
 #include "computation/expression/expression.H"

@@ -23,7 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <list>
 #include <valarray>
 #include "boost/tuple/tuple.hpp"
-#include "util.H"
+#include "util/util.H"
 #include "inverse.H"
 
 using std::list;

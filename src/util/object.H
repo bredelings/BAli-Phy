@@ -4,7 +4,7 @@
 #include <string>
 #include <boost/intrusive_ptr.hpp>
 #include <iostream>
-#include "util.H"
+#include "util/util.H"
 
 #include "math/log-double.H"
 #include "computation/type_constant.H"
@@ -116,7 +116,7 @@ inline std::string Box<std::string>::print() const
     return "\""+(*this)+"\"";
 }
 
-#include "matrix.H"
+#include "util/matrix.H"
 
 template<> inline std::string Box<Matrix>::print() const
 {

@@ -21,8 +21,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define EIGENVALUE_H
 
 #include <vector>
-#include "matrix.H"
-#include "object.H"
+#include "util/matrix.H"
+#include "util/object.H"
 
 class EigenValues: public Object 
 {

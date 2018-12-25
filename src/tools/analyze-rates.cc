@@ -24,7 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <valarray>
 #include <cmath>
 
-#include "util.H"
+#include "util/util.H"
 #include "statistics.H"
 #include "stats-table.H"
 

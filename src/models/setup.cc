@@ -79,7 +79,7 @@
 #include <vector>
 #include <boost/program_options.hpp>
 #include "models/setup.H"
-#include "util.H"
+#include "util/util.H"
 #include "util/myexception.H"
 #include "models/rules.H"
 #include "models/parse.H"

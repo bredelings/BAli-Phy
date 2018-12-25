@@ -2,7 +2,7 @@
 #include <vector>
 #include "computation/machine/args.H"
 #include "util/myexception.H"
-#include "matrix.H"
+#include "util/matrix.H"
 #include "computation/expression/expression.H"
 
 using boost::dynamic_pointer_cast;

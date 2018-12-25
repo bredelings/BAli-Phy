@@ -30,7 +30,7 @@
 #include <iostream>
 #include <vector>
 #include <boost/dynamic_bitset.hpp>
-#include "matrix.H"
+#include "util/matrix.H"
 
 // TODO - This kind of alignment requires searching every row to find the characters
 //        in that row.

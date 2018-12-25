@@ -27,7 +27,7 @@
 #include <vector>
 #include <cmath>
 
-#include "util.H"
+#include "util/util.H"
 #include "statistics.H"
 #include "stats-table.H"
 #include "math/log-double.H"

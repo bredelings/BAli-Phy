@@ -27,7 +27,7 @@
 #include "tree/tree-util.H"
 #include "optimize.H"
 #include "findroot.H"
-#include "util.H"
+#include "util/util.H"
 #include "startup/setup.H"
 #include "alignment/alignment-util.H"
 #include "alignment/load.H"

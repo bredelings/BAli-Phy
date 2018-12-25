@@ -30,7 +30,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <bitset>
 #include <utility>
 #include "math/log-double.H"
-#include "matrix.H"
+#include "util/matrix.H"
 
 // Can I make Q into a general function, backed by a matrix in some cases?
 

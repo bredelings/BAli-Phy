@@ -27,7 +27,7 @@
 #define SUBSTITUTION_H
 
 #include <vector>
-#include "matrix.H"
+#include "util/matrix.H"
 #include "math/log-double.H"
 #include "substitution/cache.H"
 

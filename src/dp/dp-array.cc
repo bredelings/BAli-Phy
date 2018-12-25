@@ -27,7 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "dp-array.H"
 #include "math/pow2.H"
 #include "probability/choose.H"
-#include "util.H"
+#include "util/util.H"
 
 using std::vector;
 

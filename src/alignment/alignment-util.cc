@@ -24,7 +24,7 @@
 ///
 
 #include "alignment-util.H"
-#include "util.H"
+#include "util/util.H"
 #include "util/io.H"
 
 using std::string;

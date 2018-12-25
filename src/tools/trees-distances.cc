@@ -25,11 +25,11 @@
 #include <map>
 #include <cmath>
 #include <fstream>
-#include "matrix.H"
+#include "util/matrix.H"
 #include "statistics.H"
 
 #include "tree/sequencetree.H"
-#include "util.H"
+#include "util/util.H"
 #include "tree/tree-util.H"
 #include "tree-dist.H"
 #include "util/rng.H"

@@ -968,7 +968,7 @@ char *yytext;
 # include <string>
 # include "driver.hh"
 # include "parser.hh"
-# include "util.H"
+# include "util/util.H"
 
 // Work around an incompatibility in flex (at least versions
 // 2.5.31 through 2.5.33): it generates code that does

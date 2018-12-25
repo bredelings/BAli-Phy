@@ -3,9 +3,9 @@
 
 #include <string>
 #include <vector>
-#include "object.H"
+#include "util/object.H"
 #include "computation/expression/expression_ref.H"
-#include "util.H"
+#include "util/util.H"
 #include <utility>
 #include "computation/closure.H"
 #include "pool.H"

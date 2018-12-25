@@ -23,7 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include "util/rng.H"
 #include "util/myexception.H"
-#include "util.H"
+#include "util/util.H"
 #include "math/log-double.H"
 
 template <typename F>

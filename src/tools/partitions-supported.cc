@@ -36,7 +36,7 @@
 #include <boost/program_options.hpp>
 
 #include "tree/sequencetree.H"
-#include "util.H"
+#include "util/util.H"
 #include "statistics.H"
 #include "tree-dist.H"
 

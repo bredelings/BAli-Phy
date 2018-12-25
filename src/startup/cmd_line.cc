@@ -3,7 +3,7 @@
 #include <boost/algorithm/string.hpp>
 #include "startup/cmd_line.H"
 #include "startup/paths.H"
-#include "util.H"
+#include "util/util.H"
 #include "util/text.H"
 #include "util/io.H"
 #include "setup.H"

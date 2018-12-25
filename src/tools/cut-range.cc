@@ -22,7 +22,7 @@
 #include <string>
 #include <sstream>
 #include <iostream>
-#include "util.H"
+#include "util/util.H"
 #include "util/io.H"
 
 #include <boost/program_options.hpp>

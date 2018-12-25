@@ -22,7 +22,7 @@
 #include "probability/probability.H"
 #include "computation/expression/expression.H"
 #include "util/rng.H"
-#include "util.H"
+#include "util/util.H"
 #include "dp/dp-matrix.H"
 
 using std::valarray;

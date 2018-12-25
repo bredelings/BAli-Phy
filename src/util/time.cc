@@ -25,7 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <sstream>
 #include <iomanip>
 #include "util/assert.hh"
-#include "util.H"
+#include "util/util.H"
 
 using namespace std;
 using namespace boost::chrono;

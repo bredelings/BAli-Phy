@@ -2,7 +2,7 @@
 #define VECTOR_FROM_LIST_H
 #include <vector>
 #include "computation/machine/args.H"
-#include "object.H"
+#include "util/object.H"
 #include "computation/expression/expression.H"
 
 inline std::vector<expression_ref> get_vector_from_list(OperationArgs& Args, int slot)

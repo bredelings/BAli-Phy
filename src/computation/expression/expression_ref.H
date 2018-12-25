@@ -7,7 +7,7 @@
 #include <set>
 #include <string>
 #include <initializer_list>
-#include "object.H"
+#include "util/object.H"
 #include "operator.H"
 #include "computation/type_constant.H"
 

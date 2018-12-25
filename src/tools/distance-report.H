@@ -4,7 +4,7 @@
 #include <boost/program_options.hpp>
 #include <string>
 #include <valarray>
-#include "matrix.H"
+#include "util/matrix.H"
 
 void diameter(const matrix<double>& D,const std::string& name,boost::program_options::variables_map& args);
 void report_distances(const std::valarray<double>& distances, const std::string& name, boost::program_options::variables_map& args);

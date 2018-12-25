@@ -35,7 +35,7 @@
 #include "sample.H"
 #include "util/myexception.H"
 #include "util/rng.H"
-#include "util.H"
+#include "util/util.H"
 #include "util/permute.H"
 
 #include "proposals.H"

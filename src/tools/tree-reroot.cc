@@ -21,7 +21,7 @@
 #include "tree/tree.H"
 #include "tree-dist.H"
 #include "tree/sequencetree.H"
-#include "util.H"
+#include "util/util.H"
 #include "tree/tree-util.H"
 #include "util/myexception.H"
 

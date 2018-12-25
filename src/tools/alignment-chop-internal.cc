@@ -26,7 +26,7 @@
 #include "tree/tree-util.H"
 #include "alignment/load.H"
 #include "sequence/sequence-format.H"
-#include "util.H"
+#include "util/util.H"
 #include "findroot.H"
 
 #include <boost/program_options.hpp>

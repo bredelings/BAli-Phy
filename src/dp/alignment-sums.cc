@@ -25,7 +25,7 @@
 
 #include "alignment-sums.H"
 #include "substitution/substitution.H"
-#include "util.H"
+#include "util/util.H"
 #include "dp/2way.H"
 
 using boost::dynamic_bitset;

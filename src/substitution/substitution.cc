@@ -24,7 +24,7 @@
 #include <cmath>
 #include <valarray>
 #include <vector>
-#include "util.H"
+#include "util/util.H"
 #include "math/logprod.H"
 #include "dp/hmm.H"
 #include <boost/dynamic_bitset.hpp>

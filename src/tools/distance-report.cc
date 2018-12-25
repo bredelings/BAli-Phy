@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <boost/program_options.hpp>
-#include "matrix.H"
+#include "util/matrix.H"
 
 namespace po = boost::program_options;
 using po::variables_map;

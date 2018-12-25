@@ -50,7 +50,7 @@ extern "C" {
 #include "util/myexception.H"
 #include "tree/sequencetree.H"
 #include "mctree.H"
-#include "util.H"
+#include "util/util.H"
 #include "util/permute.H"
 #include "util/rng.H"
 #include "util/io.H"

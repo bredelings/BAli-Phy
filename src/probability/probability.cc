@@ -27,7 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define M_PI 3.14159265358979323846
 #endif
 
-#include "util.H"
+#include "util/util.H"
 
 using std::valarray;
 using std::vector;

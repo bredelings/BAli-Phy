@@ -4,7 +4,7 @@
 #include "models/parse.H"
 #include "models/model.H"
 #include "util/myexception.H"
-#include "util.H"
+#include "util/util.H"
 #include "rules.H"
 #include "setup.H"
 

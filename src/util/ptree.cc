@@ -1,5 +1,5 @@
 #include "ptree.H"
-#include "util.H"
+#include "util/util.H"
 #include "util/myexception.H"
 
 using std::string;

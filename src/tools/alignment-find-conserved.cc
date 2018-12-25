@@ -27,7 +27,7 @@
 #include "startup/setup.H"  // for link( )
 #include "alignment/alignment-util.H"
 #include "alignment/load.H"
-#include "util.H"
+#include "util/util.H"
 #include "parsimony.H"
 #include "tree-dist.H"
 #include "util/io.H"

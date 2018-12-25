@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "matrix.H"
+#include "util/matrix.H"
 #include "math/log-double.H"
 #include "alignment/alignment.H"
 #include "computation/machine/args.H"

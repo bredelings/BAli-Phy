@@ -20,7 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef INVERSE_H
 #define INVERSE_H
 
-#include "matrix.H"
+#include "util/matrix.H"
 
 /// Compute A^-1
 Matrix inverse(const Matrix& A);

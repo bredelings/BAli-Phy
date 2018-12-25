@@ -23,7 +23,7 @@
 #include <vector>
 #include <string>
 #include "tree-dist.H"
-#include "matrix.H"
+#include "util/matrix.H"
 
 bool partition_wanders_over(const partition& p1,const partition& p2);
 

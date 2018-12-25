@@ -25,7 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util/myexception.H"
 #include "alignment/alignment.H"
 
-#include "util.H"
+#include "util/util.H"
 #include "startup/setup.H"
 
 #include "alignment/load.H"

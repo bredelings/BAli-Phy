@@ -45,7 +45,7 @@
 #include <list>
 
 #include "tree/sequencetree.H"
-#include "util.H"
+#include "util/util.H"
 #include "statistics.H"
 #include "bootstrap.H"
 #include "tree-dist.H"

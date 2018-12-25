@@ -30,7 +30,7 @@
 #include <boost/filesystem/operations.hpp>
 
 #include "setup.H"
-#include "util.H"
+#include "util/util.H"
 #include "sequence/alphabet.H"
 #include "alignment/alignment-util.H"
 #include "tree/tree-util.H"

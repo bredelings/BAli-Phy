@@ -677,7 +677,7 @@ void check_supplied_filenames(int n, const std::vector<std::string>& files, bool
 
 extern int log_verbose;
 
-#include "matrix.H"
+#include "util/matrix.H"
 
 template <typename T>
 std::ostream& operator<<(std::ostream& o, const matrix<T>& M)

@@ -20,7 +20,7 @@
 #include <fstream>
 
 #include "stats-table.H"
-#include "util.H"
+#include "util/util.H"
 #include "util/myexception.H"
 #include "util/io.H"
 

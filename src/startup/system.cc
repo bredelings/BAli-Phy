@@ -13,7 +13,7 @@ extern "C" {
 #include <string>
 #include <signal.h>
 
-#include "util.H"
+#include "util/util.H"
 
 using std::cerr;
 using std::cout;

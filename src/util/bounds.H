@@ -27,9 +27,9 @@
 #define BOUNDS_H
 
 #include <iostream>
-#include <util.H>
+#include "util/util.H"
 #include <optional>
-#include "object.H"
+#include "util/object.H"
 
 template <typename T>
 struct Bounds: public Object

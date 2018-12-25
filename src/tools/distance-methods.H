@@ -21,7 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define DISTANCE_METHODS_H
 
 #include "tree/tree.H"
-#include "matrix.H"
+#include "util/matrix.H"
 
 Matrix C(const Matrix& M);
 

@@ -4,7 +4,7 @@
 #include <set>
 #include "rules.H"
 #include "util/myexception.H"
-#include "util.H"
+#include "util/util.H"
 #include <iostream>
 #include "setup.H"
 

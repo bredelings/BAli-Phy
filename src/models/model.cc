@@ -23,7 +23,7 @@
 #include <boost/variant.hpp>
 #include "util/ptree.H"
 
-#include "util.H"
+#include "util/util.H"
 #include "util/myexception.H"
 #include "models/model.H"
 #include "computation/program.H"

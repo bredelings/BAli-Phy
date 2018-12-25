@@ -34,7 +34,7 @@
 #include <map>
 
 #include "util/bounds.H"
-#include "object.H"
+#include "util/object.H"
 #include "computation/operation.H"
 #include "computation/context.H"
 #include "util/cow-ptr.H"

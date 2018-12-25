@@ -1,5 +1,5 @@
 #include "text.H"
-#include "util.H"
+#include "util/util.H"
 
 using std::string;
 using std::vector;

@@ -25,7 +25,7 @@
 #include "alignment/alignment-util.H"
 #include "alignment/load.H"
 #include "tree/tree-util.H"
-#include "util.H"
+#include "util/util.H"
 #include "distance-methods.H"
 #include <utility>
 #include "alignment/index-matrix.H"
