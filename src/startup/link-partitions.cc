@@ -29,7 +29,7 @@
 
 #include <boost/filesystem/operations.hpp>
 
-#include "setup.H"
+#include "link-partitions.H"
 #include "util/util.H"
 #include "sequence/alphabet.H"
 #include "alignment/alignment-util.H"

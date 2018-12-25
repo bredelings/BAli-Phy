@@ -10,7 +10,7 @@
 #include "models/parameters.H"
 #include "computation/module.H"
 #include "alignment/alignment.H"
-#include "setup.H"
+#include "link-partitions.H"
 #include "models/setup.H"
 #include "util/owned-ptr.H"
 #include "util/json.hh"

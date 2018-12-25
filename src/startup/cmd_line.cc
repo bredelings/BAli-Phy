@@ -6,7 +6,6 @@
 #include "util/util.H"
 #include "util/text.H"
 #include "util/io.H"
-#include "setup.H"
 #include "version.H"
 #include "models/rules.H"
 #include "models/parse.H"
