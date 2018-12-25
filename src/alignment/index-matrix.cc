@@ -38,7 +38,7 @@ Edges::Edges(const vector<int>& L)
 
 void Edges::build_index() 
 {
-    foreach(e,*this) 
+    for(auto e = begin(); e != end(); e++)
     {
 	if (e->x1 >= 0)
 	    lookup[e->s1][e->s2][e->x1] = e;
@@ -323,38 +323,38 @@ map<unsigned,pair<unsigned,unsigned> > index_matrix::merge(const Edges& E,double
     map<unsigned,pair<unsigned,unsigned> > graph;
 
     //-------- Merge some columns --------//
-    foreach(e,E) 
+    for(const auto& e:E) 
     {
-	if (e->p < cutoff) break;
+	if (e.p < cutoff) break;
 
-	if (e->x2 == -1) {
-	    int c1 = column(e->s1,e->x1);
+	if (e.x2 == -1) {
+	    int c1 = column(e.s1,e.x1);
 
-	    if (strict and not consistent(c1,e->s2,-1,E,cutoff))
+	    if (strict and not consistent(c1,e.s2,-1,E,cutoff))
 		continue;
 
-	    if (index(c1,e->s2) == -3) {
+	    if (index(c1,e.s2) == -3) {
 		unknowns--;
-		index(c1,e->s2) = -1;
+		index(c1,e.s2) = -1;
 	    }
 	}
-	else if (e->x1 == -1) {
-	    int c2 = column(e->s2,e->x2);
+	else if (e.x1 == -1) {
+	    int c2 = column(e.s2,e.x2);
 
-	    if (strict and not consistent(c2,e->s1,-1,E,cutoff))
+	    if (strict and not consistent(c2,e.s1,-1,E,cutoff))
 		continue;
 
-	    if (index(c2,e->s1) == -3) {
+	    if (index(c2,e.s1) == -3) {
 		unknowns--;
-		index(c2,e->s1) = -1;
+		index(c2,e.s1) = -1;
 	    }
 	}
 	else 
 	{
-	    assert(e->x1 >= 0 and e-> x2>=0);
+	    assert(e.x1 >= 0 and e. x2>=0);
 
-	    int c1 = column(e->s1,e->x1);
-	    int c2 = column(e->s2,e->x2);
+	    int c1 = column(e.s1,e.x1);
+	    int c2 = column(e.s2,e.x2);
 
 	    if (c1 == c2)
 		continue;
@@ -368,7 +368,7 @@ map<unsigned,pair<unsigned,unsigned> > index_matrix::merge(const Edges& E,double
 	    merge_columns(c1,c2);
 	}
 
-	graph[e->count] = pair<unsigned,unsigned>(columns,unknowns);
+	graph[e.count] = pair<unsigned,unsigned>(columns,unknowns);
 	//      if (n_columns() != columns)
 	//	abort();
 	//      if (n_unknown() != unknowns)
@@ -833,41 +833,41 @@ map<unsigned,pair<unsigned,unsigned> > index_matrix::merge2(const Edges& E,doubl
 #endif
 
     //-------- Merge some columns --------//
-    foreach(e,E) 
+    for(const auto& e: E)
     {
-	if (e->p < cutoff) break;
+	if (e.p < cutoff) break;
 
 	// add a gap, if we are able
-	if (e->x2 == -1) {
-	    int c1 = column(e->s1,e->x1);
+	if (e.x2 == -1) {
+	    int c1 = column(e.s1,e.x1);
 
-	    if (strict and not consistent(c1,e->s2,-1,E,cutoff))
+	    if (strict and not consistent(c1,e.s2,-1,E,cutoff))
 		continue;
 
-	    if (index(c1,e->s2) == -3) {
+	    if (index(c1,e.s2) == -3) {
 		unknowns--;
-		index(c1,e->s2) = -1;
+		index(c1,e.s2) = -1;
 	    }
 	}
 	// add a gap, if we are able
-	else if (e->x1 == -1) {
-	    int c2 = column(e->s2,e->x2);
+	else if (e.x1 == -1) {
+	    int c2 = column(e.s2,e.x2);
 
-	    if (strict and not consistent(c2,e->s1,-1,E,cutoff))
+	    if (strict and not consistent(c2,e.s1,-1,E,cutoff))
 		continue;
 
-	    if (index(c2,e->s1) == -3) {
+	    if (index(c2,e.s1) == -3) {
 		unknowns--;
-		index(c2,e->s1) = -1;
+		index(c2,e.s1) = -1;
 	    }
 	}
 	// merge two columns
 	else 
 	{
-	    assert(e->x1 >= 0 and e-> x2>=0);
+	    assert(e.x1 >= 0 and e. x2>=0);
 
-	    int c1 = column(e->s1,e->x1);
-	    int c2 = column(e->s2,e->x2);
+	    int c1 = column(e.s1,e.x1);
+	    int c2 = column(e.s2,e.x2);
 
 	    if (c1 == c2)
 		continue;
@@ -887,7 +887,7 @@ map<unsigned,pair<unsigned,unsigned> > index_matrix::merge2(const Edges& E,doubl
 	    { } // don't do anything
 	}
 
-	plot[e->count] = pair<unsigned,unsigned>(columns,unknowns);
+	plot[e.count] = pair<unsigned,unsigned>(columns,unknowns);
 	//      if (n_columns() != columns)
 	//	abort();
 	//      if (n_unknown() != unknowns)
