@@ -268,9 +268,8 @@ Matrix EdgesDistanceMatrix(const Tree& T)
       int p1 = new_branches[i].target();
 
       // Add distances from i -> leaves
-      foreach(p2,points) {
-	D1(p1,*p2) = D1(*p2,p1) = D1(*p2,dead_point) + 1;
-      }
+      for(const auto& p2: points)
+	D1(p1,p2) = D1(p2,p1) = D1(p2,dead_point) + 1;
 
       // Add distances from i -> active points 
       for(int j=0;j<branches.size();j++)
@@ -291,8 +290,8 @@ Matrix EdgesDistanceMatrix(const Tree& T)
   }
 
   assert(points.size() == T.n_leaves());
-  foreach(p,points)
-    assert(T.node(*p).is_leaf_node());
+  for(const auto& p: points)
+    assert(T.node(p).is_leaf_node());
 
 
   // Create the final matrix from the larger matrix
@@ -353,9 +352,8 @@ Matrix DistanceMatrix(const Tree& T)
       double L = new_branches[i].length();
 
       // Add distances from i -> leaves
-      foreach(p2,points) {
-	D1(p1,*p2) = D1(*p2,p1) = D1(*p2,dead_point) + L;
-      }
+      for(const auto& p2: points)
+	D1(p1,p2) = D1(p2,p1) = D1(p2,dead_point) + L;
 
       // Add distances from i -> active points 
       for(int j=0;j<branches.size();j++)
@@ -376,8 +374,8 @@ Matrix DistanceMatrix(const Tree& T)
   }
 
   assert(points.size() == T.n_leaves());
-  foreach(p,points)
-    assert(T.node(*p).is_leaf_node());
+  for(const auto& p: points)
+    assert(T.node(p).is_leaf_node());
 
 
   // Create the final matrix from the larger matrix
