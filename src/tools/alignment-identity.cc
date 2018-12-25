@@ -161,20 +161,20 @@ Matrix aligned_fraction(const variables_map& args,unsigned N,const vector<int>& 
     }
   
     // count supported matches and gaps at each level
-    foreach(e,E) 
+    for(const auto& edge: E)
     {
 	// supposedly the list is sorted, and decreasing in e->p
-	if (e->p < cutoff) break;
+	if (edge.p < cutoff) break;
     
 	//	cout<<"s1 = "<<e->s1<<" s2 = "<<e->s2<<"  x1 = "<<e->x2<<" x2 = "<<e->x2<<" p = "<<e->p<<endl;
     
-	if (e->x1 >=0 and e->x2 >=0) {
-	    Matches(e->s1, e->s2)++;
-	    Matches(e->s2, e->s1)++;
+	if (edge.x1 >=0 and edge.x2 >=0) {
+	    Matches(edge.s1, edge.s2)++;
+	    Matches(edge.s2, edge.s1)++;
 	}
 	else {
-	    Gaps(e->s1, e->s2)++;
-	    Gaps(e->s2, e->s1)++;
+	    Gaps(edge.s1, edge.s2)++;
+	    Gaps(edge.s2, edge.s1)++;
 	}
     }
   
