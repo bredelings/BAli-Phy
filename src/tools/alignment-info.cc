@@ -387,16 +387,17 @@ int main(int argc,char* argv[])
 	int unique = 0;
 	int n_ins=0;
 	int n_del=0;
-	foreach(i,gaps) {
-	    total_gaps += (*i).second;
-	    gap_lengths.push_back(i->first.length);
-	    if (i->first.type == 1)
+	for(const auto& i: gaps)
+	{
+	    total_gaps += i.second;
+	    gap_lengths.push_back(i.first.length);
+	    if (i.first.type == 1)
 		n_del++;
-	    if (i->first.type == 2)
+	    if (i.first.type == 2)
 		n_ins++;
-	    if ((*i).second == 1)
+	    if (i.second == 1)
 		unique++;
-	    if (i->second > 1 and (A.n_sequences() - i->second > 1))
+	    if (i.second > 1 and (A.n_sequences() - i.second > 1))
 		inf_gaps++;
 	}
 	valarray<double> gap_lengths2(gap_lengths.size());
