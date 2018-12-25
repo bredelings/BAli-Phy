@@ -579,11 +579,11 @@ am_sdsf(const tree_sample_collection& tree_dists, int d, const map<dynamic_bitse
     int N = tree_dists.n_samples(d);
   
     // For each sampled partition
-    foreach(record,counts) 
+    for(const auto& record: counts)
     {
 	// Skip records that have a frequency that is too low
 	bool skip=true;
-	const vector<int>& x = record->second.counts;
+	const vector<int>& x = record.second.counts;
 	for(int i=0;i<N;i++) {
 	    if (x[tree_dists.index(d,i)] > min[i]) {
 		skip = false;
@@ -760,13 +760,13 @@ int main(int argc,char* argv[])
 
 	    // For each sampled partition
 	    int n_splits=0;
-	    foreach(record,counts) 
+	    for(const auto& record: counts)
 	    {
 		n_splits++;
 		// Skip records in which all frequencies are too low
 		bool skip=true;
 		int count = 0;
-		const vector<int>& x = record->second.counts;
+		const vector<int>& x = record.second.counts;
 		for(int i=0;i<x.size();i++) {
 		    count += x[i];
 		    if (x[i] > min[i])
@@ -775,7 +775,7 @@ int main(int argc,char* argv[])
     
 		// Add this standard deviation to the sum
 		if (not skip ) {
-		    splits.push_back(record->first);
+		    splits.push_back(record.first);
 		    counts2.push_back(count);
 		}
 	    }
