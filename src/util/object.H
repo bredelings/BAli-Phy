@@ -4,7 +4,6 @@
 #include <string>
 #include <boost/intrusive_ptr.hpp>
 #include <iostream>
-#include "util/util.H"
 
 #include "math/log-double.H"
 #include "computation/type_constant.H"
@@ -60,7 +59,7 @@ public:
 
     virtual type_constant type() const {return unknown_type;}
 
-    virtual std::string print() const {return std::string("unprintable[")+demangle(typeid(*this).name())+"] "+ convertToString(this);}
+    virtual std::string print() const;
 
     Object& operator=(const Object&) {return *this;}
 
@@ -118,18 +117,7 @@ inline std::string Box<std::string>::print() const
 
 #include "util/matrix.H"
 
-template<> inline std::string Box<Matrix>::print() const
-{
-    std::vector<std::string> rows;
-    for(int i=0;i<size1();i++)
-    {
-	std::vector<double> row;
-	for(int j=0;j<size2();j++)
-	    row.push_back((*this)(i,j));
-	rows.push_back( "[ " + join(row, ", ") + "]" );
-    }
-    return "[ " + join(rows, ", \n") + "]";
-}
+template<> std::string Box<Matrix>::print() const;
 
 template <typename T>
 bool unshare(object_ptr<T>& ptr)
@@ -165,6 +153,9 @@ inline std::ostream& operator<<(std::ostream& o,const Object& R)
 {
     return o<<R.print();
 }
+
+// In util.cc
+std::string demangle(const std::string&);
 
 template <typename T>
 const T* convert_and_check(const Object* o)

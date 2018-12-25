@@ -7,7 +7,7 @@
 
 #include "expression.H"
 #include "computation/module.H"
-#include "util/util.H"
+#include "util/string_convert.H"
 #include "computation/operation.H"
 #include "computation/operations.H"
 #include "substitute.H"

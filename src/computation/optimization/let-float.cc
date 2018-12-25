@@ -7,6 +7,7 @@
 #include "computation/expression/lambda.H"
 #include "computation/expression/let.H"
 #include "computation/expression/case.H"
+#include "util/util.H" // for intersection( ), add( ), includes( )
 
 using std::vector;
 using std::set;

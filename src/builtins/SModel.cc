@@ -8,6 +8,7 @@
 #include <valarray>
 #include "computation/expression/expression.H"
 #include "dp/2way.H"
+#include "util/util.H" // for sum( ) and normalize( )
 
 using std::vector;
 using std::istringstream;

@@ -14,6 +14,7 @@
 #include "let-float.H"
 #include "occurrence.H"
 #include "inliner.H"
+#include "util/util.H" // for reverse( )
 
 #include "simplifier.H"
 #include "util/assert.hh"

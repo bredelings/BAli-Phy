@@ -6,6 +6,7 @@
 #include "expression.H"
 #include "AST_node.H"
 #include "computation/operations.H"
+#include "util/util.H" // for reverse( )
 
 using std::vector;
 using std::set;

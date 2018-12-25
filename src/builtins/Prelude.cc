@@ -2,6 +2,7 @@
 #include "computation/machine/args.H"
 #include "computation/expression/expression.H"
 #include "vector_from_list.H"
+#include "util/string_convert.H"
 
 using boost::dynamic_pointer_cast;
 using std::string;

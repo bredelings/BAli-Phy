@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "util/matrix.H"
+#include "util/util.H" // for sum( )
 #include "math/log-double.H"
 #include "alignment/alignment.H"
 #include "computation/machine/args.H"

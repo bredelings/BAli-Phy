@@ -8,6 +8,7 @@
 #include <string>
 #include <initializer_list>
 #include "util/object.H"
+#include "util/string_convert.H"
 #include "operator.H"
 #include "computation/type_constant.H"
 

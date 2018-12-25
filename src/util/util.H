@@ -38,55 +38,13 @@
 #include <set>
 #include <typeinfo>
 #include <functional>
-
-std::string demangle(const std::string&);
+#include "string_convert.H"
 
 #ifdef __GXX_EXPERIMENTAL_CXX0X__
 #define foreach(a,b) for(auto a=(b).begin();a != (b).end();a++)
 #else
 #define foreach(a,b) for(typeof((b).begin()) a=(b).begin();a != (b).end();a++)
 #endif
-
-template <class T>
-std::optional<T> can_be_converted_to(const std::string& s)
-{ 
-    std::istringstream i(s);
-    T t;
-    if (i>>std::boolalpha>>t and i.peek() == std::istream::traits_type::eof())
-	return std::move(t);
-    else
-	return {};
-}
-
-template <class T>
-T convertTo(const std::string& s) 
-{ 
-    auto t = can_be_converted_to<T>(s);
-    if (not t)
-	throw myexception()<<"String '"<<s<<"' is not of type "<<demangle(typeid(T).name());
-    return *t;
-}
-
-template <class T>
-std::vector<T> convertTo(const std::vector<std::string>& s) { 
-    std::vector<T> v;
-    for(int i=0;i<s.size();i++)
-	v.push_back(convertTo<T>(s[i]));
-
-    return v;
-}
-
-template <class T>
-std::string convertToString(T t)
-{
-    std::ostringstream o;
-    o.precision(15);
-    o<<std::boolalpha;
-    o.flags(o.flags() | std::ios::fixed);
-  
-    o << t;
-    return o.str();
-} 
 
 /// How many of v's bits are true?
 int n_elements(const std::vector<bool>& v);

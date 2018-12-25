@@ -9,6 +9,7 @@
 #include "computation/expression/apply.H"
 #include "computation/expression/constructor.H"
 #include "computation/expression/AST_node.H"
+#include "util/util.H" // for add( )
 
 using std::string;
 using std::vector;
