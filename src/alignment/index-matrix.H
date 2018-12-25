@@ -1,21 +1,21 @@
 /*
-   Copyright (C) 2007-2009 Benjamin Redelings
+  Copyright (C) 2007-2009 Benjamin Redelings
 
-This file is part of BAli-Phy.
+  This file is part of BAli-Phy.
 
-BAli-Phy is free software; you can redistribute it and/or modify it under
-the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 2, or (at your option) any later
-version.
+  BAli-Phy is free software; you can redistribute it and/or modify it under
+  the terms of the GNU General Public License as published by the Free
+  Software Foundation; either version 2, or (at your option) any later
+  version.
 
-BAli-Phy is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-for more details.
+  BAli-Phy is distributed in the hope that it will be useful, but WITHOUT ANY
+  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+  for more details.
 
-You should have received a copy of the GNU General Public License
-along with BAli-Phy; see the file COPYING.  If not see
-<http://www.gnu.org/licenses/>.  */
+  You should have received a copy of the GNU General Public License
+  along with BAli-Phy; see the file COPYING.  If not see
+  <http://www.gnu.org/licenses/>.  */
 
 #include <map>
 #include <set>
@@ -24,33 +24,33 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 struct Edge 
 {
-  int s1;
-  int x1;
+    int s1;
+    int x1;
 
-  int s2;
-  int x2;
+    int s2;
+    int x2;
 
-  unsigned count;
-  double p;
+    unsigned count;
+    double p;
 };
 
 struct edge_comp {
-  bool operator()(const Edge& E1, const Edge& E2) const {
-    return E1.p  > E2.p;
-  }
+    bool operator()(const Edge& E1, const Edge& E2) const {
+	return E1.p  > E2.p;
+    }
 };
 
 class Edges: public std::multiset<Edge,edge_comp>
 {
-  std::vector<std::vector<std::vector<std::multiset<Edge,edge_comp>::iterator> > > lookup;
+    std::vector<std::vector<std::vector<std::multiset<Edge,edge_comp>::iterator> > > lookup;
 
 public:
-  void build_index();
+    void build_index();
 
-  double PP(int s1,int x1,int s2,int x2) const;
-  int index_in_sequence(int s1,int x1,int s2) const;
+    double PP(int s1,int x1,int s2,int x2) const;
+    int index_in_sequence(int s1,int x1,int s2) const;
 
-  Edges(const std::vector<int>& L);
+    Edges(const std::vector<int>& L);
 };
 
 void add_edges(Edges& E, const std::vector< matrix<int> >& Ms,
@@ -58,45 +58,45 @@ void add_edges(Edges& E, const std::vector< matrix<int> >& Ms,
 
 class index_matrix: public matrix<int> 
 {
-  std::vector<std::vector<int> > column_index;
+    std::vector<std::vector<int> > column_index;
 
 public:
 
-  void check_column_indices() const;
+    void check_column_indices() const;
 
-  int columns;
-  int unknowns;
+    int columns;
+    int unknowns;
 
-  int  index(int i,int j) const {return (*this)(i,j);}
-  int& index(int i,int j)       {return (*this)(i,j);}
+    int  index(int i,int j) const {return (*this)(i,j);}
+    int& index(int i,int j)       {return (*this)(i,j);}
 
-  int  column(int i,int j) const {assert(j>=0); return column_index[i][j];}
-  int& column(int i,int j)       {assert(j>=0); return column_index[i][j];}
+    int  column(int i,int j) const {assert(j>=0); return column_index[i][j];}
+    int& column(int i,int j)       {assert(j>=0); return column_index[i][j];}
 
-  int length(int i) const {return column_index[i].size();}
+    int length(int i) const {return column_index[i].size();}
 
-  bool columns_conflict(int c1, int c2) const;
+    bool columns_conflict(int c1, int c2) const;
 
-  bool consistent(int c1, int s,int x, const Edges& E,double cutoff) const;
-  bool consistent(int c1, int c2,const Edges& E, double cutoff) const;
+    bool consistent(int c1, int s,int x, const Edges& E,double cutoff) const;
+    bool consistent(int c1, int c2,const Edges& E, double cutoff) const;
 
-  void merge_columns(int c1,int c2);
-  std::map<unsigned,std::pair<unsigned,unsigned> > merge(const Edges& E,double p,bool strict);
+    void merge_columns(int c1,int c2);
+    std::map<unsigned,std::pair<unsigned,unsigned> > merge(const Edges& E,double p,bool strict);
 
-  std::map<unsigned,std::pair<unsigned,unsigned> > merge2(const Edges& E,double p,bool strict);
+    std::map<unsigned,std::pair<unsigned,unsigned> > merge2(const Edges& E,double p,bool strict);
 
-  unsigned n_unknown() const;
+    unsigned n_unknown() const;
 
-  unsigned n_columns() const;
+    unsigned n_columns() const;
 
-  index_matrix(int C, const std::vector<int>& L)
-    :matrix<int>(C,L.size()),columns(C),unknowns(0)
-  {
-    for(int i=0;i<L.size();i++)
-      column_index.push_back(std::vector<int>(L[i]));
-  }
+    index_matrix(int C, const std::vector<int>& L)
+	:matrix<int>(C,L.size()),columns(C),unknowns(0)
+	{
+	    for(int i=0;i<L.size();i++)
+		column_index.push_back(std::vector<int>(L[i]));
+	}
 
-  index_matrix(const alignment& A);
+    index_matrix(const alignment& A);
 };
 
 index_matrix unaligned_matrix(const std::vector<int>& L);
