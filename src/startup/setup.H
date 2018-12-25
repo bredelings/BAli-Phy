@@ -35,13 +35,6 @@
 #include "tree/sequencetree.H"
 #include <boost/program_options.hpp>
 
-//----------------- Load trees and alignments ---------------------//
-
-/// Map leaf nodes of T to the leaf sequences of A
-void link(alignment& A,SequenceTree& T,bool internal_sequences=true);
-
-//--------------------------- Indel stuff --------------------------//
-
 template <typename T>
 class shared_items
 {

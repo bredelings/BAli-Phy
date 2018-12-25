@@ -24,13 +24,13 @@
 #include <list>
 #include "util/myexception.H"
 #include "alignment/alignment.H"
+#include "alignment/alignment-util.H"
+#include "alignment/load.H"
 #include "tree/tree-util.H"
+#include "tree-align/link.H"
 #include "optimize.H"
 #include "findroot.H"
 #include "util/util.H"
-#include "startup/setup.H"
-#include "alignment/alignment-util.H"
-#include "alignment/load.H"
 #include "distance-methods.H"
 
 #include <boost/program_options.hpp>

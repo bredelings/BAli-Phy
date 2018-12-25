@@ -21,13 +21,15 @@
 #include <fstream>
 #include <map>
 #include <string>
-#include "tree/tree.H"
-#include "tree/tree-util.H"
+
 #include "alignment/alignment.H"
 #include "alignment/alignment-util.H"
 #include "alignment/load.H"
+#include "tree/tree.H"
+#include "tree/tree-util.H"
+#include "tree-align/link.H"
+
 #include "util/util.H"
-#include "startup/setup.H"
 #include "findroot.H"
 #include "parsimony.H"
 #include "statistics.H"

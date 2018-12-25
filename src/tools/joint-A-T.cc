@@ -22,14 +22,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <fstream>
 #include <cmath>
 
-#include "util/myexception.H"
 #include "alignment/alignment.H"
-
-#include "util/util.H"
-#include "startup/setup.H"
-
 #include "alignment/load.H"
+#include "tree-align/link.H"
 #include "tree/tree-util.H"
+
+#include "util/myexception.H"
+#include "util/util.H"
 #include "util/io.H"
 
 namespace po = boost::program_options;

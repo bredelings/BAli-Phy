@@ -13,6 +13,7 @@
 #include "computation/expression/lambda.H"
 #include <boost/filesystem/operations.hpp>
 #include "sequence/sequence-format.H"
+#include "tree-align/link.H"
 
 namespace fs = boost::filesystem;
 
