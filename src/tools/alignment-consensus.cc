@@ -196,10 +196,10 @@ int main(int argc,char* argv[])
       double scale1 = double(N)/total_seq_length;
       double scale2 = 1.0/total_seq_length;
 
-      foreach(i,graph) {
-	double LOD = log10(statistics::odds((*i).first,Ms.size(),1));
-	unsigned columns = (*i).second.first;
-	unsigned unknowns = (*i).second.second;
+      for(const auto& [count,x]: graph)
+      {
+	double LOD = log10(statistics::odds(count,Ms.size(),1));
+	auto& [columns, unknowns] = x;
 	graph_file<<LOD<<" "<<unknowns*scale2<<"  "<<columns*scale1<<endl;
       }
       graph_file.close();
