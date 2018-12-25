@@ -429,9 +429,9 @@ MPD::add_emitted_column(const emitted_column& C)
     // Add edges TO this vertex
     const vector<int>& prev_vertex_indices = after[e_before];
     assert(prev_vertex_indices.size());
-    foreach(x_prev,prev_vertex_indices)
+    for(const auto& x_prev: prev_vertex_indices)
     {
-      Vertex v1 = vertex(*x_prev, g);
+      Vertex v1 = vertex(x_prev, g);
       Vertex v2 = vertex(x_current, g);
       ::add_edge(v1, v2, g);
     }
@@ -439,10 +439,10 @@ MPD::add_emitted_column(const emitted_column& C)
     // Add edges FROM this vertex
     const vector<int>& next_vertex_indices = before[e_after];
     //  assert(next_vertex_indices.size());
-    foreach(x_next, next_vertex_indices)
+    for(const auto& x_next: next_vertex_indices)
     {
       Vertex v1 = vertex(x_current, g);
-      Vertex v2 = vertex(*x_next, g);
+      Vertex v2 = vertex(x_next, g);
       ::add_edge(v1, v2, g);
     }
   }
@@ -476,12 +476,12 @@ vector<double> MPD::get_score(int type) const
 {
   vector<double> score(counts.size());
 
-  foreach(c, columns)
+  for(const auto& c: columns)
   {
-    int n = n_letters(c->first);
+    int n = n_letters(c.first);
     assert(n > 0);
     
-    int i = c->second;
+    int i = c.second;
     
     score[i] = double(counts[i])/n_samples;
     if (type == 1)
@@ -498,7 +498,7 @@ MPD::get_best_path(const vector<double>& score)
 {
   //----------------- construct a map from index -> &(EC,index) ---------------//
   ec_from_x = vector<emitted_column_map::iterator>(n_vertices(), emitted_columns.end());
-  foreach(ec, emitted_columns)
+  for(auto ec = emitted_columns.begin(); ec != emitted_columns.end(); ec++)
     ec_from_x[ec->second] = ec;
   
   if (log_verbose) {
