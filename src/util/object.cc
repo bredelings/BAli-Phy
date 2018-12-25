@@ -5,7 +5,7 @@ std::string Object::print() const {
     return std::string("unprintable[")+demangle(typeid(*this).name())+"] "+ convertToString(this);
 }
 
-template<> inline std::string Box<Matrix>::print() const
+template<> std::string Box<Matrix>::print() const
 {
     std::vector<std::string> rows;
     for(int i=0;i<size1();i++)
