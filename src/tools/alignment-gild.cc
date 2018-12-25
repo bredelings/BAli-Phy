@@ -292,7 +292,7 @@ double get_column_probability(const vector<int>& column,
 {
     unsigned int count=0;
     int i=0;
-    foreach(A,alignments) {
+    for(const auto& A: alignments) {
 	bool found=true;
 
 	// Can we find a common column for all features?
@@ -324,7 +324,7 @@ double get_column_probability(const vector<int>& column,
 		if (column[j] != alphabet::gap) continue;
 	
 		// if the template doesn't have a gap, then this doesn't match
-		if (A->character(c,j))
+		if (A.character(c,j))
 		    found = false;
 	    }
 	}
@@ -527,8 +527,8 @@ int main(int argc,char* argv[]) {
 	list<alignment> alignments;
 	vector<matrix<int> > Ms;
 	do_setup(args,alignments,A,RT);
-	foreach(i,alignments)
-	    Ms.push_back(M(*i));
+	for(const auto& i: alignments)
+	    Ms.push_back(M(i));
 
 	SequenceTree T = RT;
 	remove_sub_branches(T);
@@ -545,8 +545,8 @@ int main(int argc,char* argv[]) {
 
 	//----------- Construct alignment indexes ----------//
 	vector< vector< vector<int> > >  column_indexes;
-	foreach(i,alignments)
-	    column_indexes.push_back( column_lookup(*i,T.n_leaves()) );
+	for(const auto& i: alignments)
+	    column_indexes.push_back( column_lookup(i,T.n_leaves()) );
 
 	//------- Convert template to index form-------//
 	matrix<int> MA = M(A);
