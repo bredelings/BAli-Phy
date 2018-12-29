@@ -70,13 +70,13 @@ run_random' alpha rate lazy (IOAndPass f g) = do
   run_random' alpha rate lazy $ g x
 run_random' alpha rate lazy (IOReturn v) = return v
 -- It seems like we wouldn't need laziness for `do {x <- r;return x}`.  Do we need it for `r`?
-run_random' alpha rate lazy (Sample (ProbDensity p _ (Random a) r)) = maybe_lazy lazy $ do
-  v <- a
-  m <- new_random_modifiable r v rate
-  register_prior (p m)
-  return m
-run_random' alpha rate lazy (Sample (ProbDensity p q (Exchangeable n r' v) r)) = maybe_lazy lazy $ do
-  xs <- sequence $ replicate n (new_random_modifiable r' v rate)
+run_random' alpha rate lazy (Sample (ProbDensity p _ (Random do_sample) range)) = maybe_lazy lazy $ do
+  value <- do_sample
+  x <- new_random_modifiable range value rate
+  register_prior (p x)
+  return x
+run_random' alpha rate lazy (Sample (ProbDensity p q (Exchangeable n range' value) r)) = maybe_lazy lazy $ do
+  xs <- sequence $ replicate n (new_random_modifiable range' value rate)
   register_prior (p xs)
   return xs
 -- Should laziness go into the sample here?  Would s every have observations, like a Brownian bridge
