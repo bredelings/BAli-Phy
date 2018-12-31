@@ -25,6 +25,8 @@ public:
 
     virtual bool evaluate_changeables() const = 0;
 
+    virtual void make_changeable() = 0;
+
     int n_args() const;
 
     const expression_ref& reference(int slot) const;

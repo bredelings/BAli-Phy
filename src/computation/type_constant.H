@@ -11,16 +11,17 @@ enum type_constant {null_type=0,
 		    operation_type=7,
 		    parameter_type=8, 
 		    modifiable_type=9,
-		    var_type=10,
-		    trim_type=11,
-		    let_type=12,
-		    case_type=13,
-		    apply_type=14,
-		    let2_type=15,
-		    constructor_type=16,
-		    lambda_type=17,
-		    lambda2_type=18,
-		    unknown_type =19
+		    random_variable_type=10,
+		    var_type=11,
+		    trim_type=12,
+		    let_type=13,
+		    case_type=14,
+		    apply_type=15,
+		    let2_type=16,
+		    constructor_type=17,
+		    lambda_type=18,
+		    lambda2_type=19,
+		    unknown_type
 };
 
 #endif

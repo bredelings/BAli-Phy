@@ -110,6 +110,11 @@ public:
 
     bool used_changeable = false;
 
+    void make_changeable()
+    {
+	used_changeable = true;
+    }
+
     // If we unreference regs that evaluate to a variable, then we unreference p->let q=2 in q
     // and point references to q instead of p.  But then it would not be true that a variable can
     // only be referenced if the slot that created it is still referenced.
@@ -538,6 +543,11 @@ class RegOperationArgsUnchangeable: public OperationArgs
 	}
 
 public:
+
+    void make_changeable()
+    {
+	throw no_context();
+    }
 
     RegOperationArgsUnchangeable* clone() const {return new RegOperationArgsUnchangeable(*this);}
 
