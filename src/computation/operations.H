@@ -50,17 +50,6 @@ struct Let: public Operation
     Let():Operation(2, let_op, "let") {}
 };
 
-closure random_variable_op(OperationArgs&);
-
-struct random_variable: public Operation
-{
-    random_variable* clone() const {return new random_variable(*this);}
-
-    type_constant type() const {return random_variable_type;}
-
-    random_variable();
-};
-
 closure modifiable_op(OperationArgs&);
 
 struct modifiable: public Operation

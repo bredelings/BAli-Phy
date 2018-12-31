@@ -288,25 +288,6 @@ closure let_op(OperationArgs& Args)
     return C;
 }
 
-random_variable::random_variable()
-    :Operation(2, random_variable_op,"random_variable") {}
-
-closure random_variable_op(OperationArgs& Args)
-{
-    //    reg_heap& M = Args.memory();
-
-    int var_reg = Args.reg_for_slot(0);
-    // pdf
-    // range
-    // rate
-
-    // The random_variable should evaluate to its first argument, but not be replaced by it.
-    Args.make_changeable();
-
-    // Return a reference to the new modifiable.
-    return {index_var(0),{var_reg}};
-}
-
 closure modifiable_op(OperationArgs&)
 {
     // A modifiable has a result that is not computed by reducing an expression.

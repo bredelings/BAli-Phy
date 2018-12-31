@@ -5,6 +5,7 @@
 #include "computation/machine/graph_register.H"
 #include "computation/expression/expression.H"
 #include "computation/expression/bool.H"
+#include "computation/expression/random_variable.H"
 
 using boost::dynamic_pointer_cast;
 
