@@ -48,7 +48,7 @@ public:
 
     int get_compute_expression_reg(int i) const;
 
-    int get_modifiable_reg(int i) const;
+    std::optional<int> get_modifiable_reg(int i) const;
 
     const reg_heap& get_memory() const {return *memory();}
 
@@ -71,15 +71,9 @@ public:
 
     std::optional<int> parameter_is_modifiable_reg(int p) const;
 
-    int parameter_as_modifiable_reg(int p) const;
-
     std::optional<int> compute_expression_is_modifiable_reg(int p) const;
 
-    int compute_expression_as_modifiable_reg(int p) const;
-
     std::optional<int> compute_expression_is_random_variable(int p) const;
-
-    int compute_expression_as_random_variable(int p) const;
 
     /// Return the value of a particular index, computing it if necessary
     const closure& lazy_evaluate(int index) const;
@@ -164,13 +158,9 @@ public:
 
     const expression_ref get_range_for_random_variable(int r) const;
 
-    const expression_ref get_range_for_reg(int r) const;
-
     const expression_ref get_parameter_range(int p) const;
 
     double get_rate_for_random_variable(int r) const;
-
-    double get_rate_for_reg(int r) const;
 
 public:
     /// Create a new modifiable parameter named s with initial value 'value'

@@ -55,8 +55,8 @@ void add_modifiable_MH_move(const Model& P, const string& name, const proposal_f
 			    MCMC::MoveAll& M, double weight=1)
 {
     double rate = P.get_rate_for_random_variable(r);
-    r = P.get_modifiable_reg(r);
-    M.add(rate * weight, MCMC::MH_Move( Proposal2M(proposal, r, parameters), name) );
+    auto r_mod = P.get_modifiable_reg(r);
+    M.add(rate * weight, MCMC::MH_Move( Proposal2M(proposal, *r_mod, parameters), name) );
 }
 
 /// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
@@ -119,8 +119,8 @@ bool add_slice_move(const Model& P, int r, MCMC::MoveAll& M, double weight = 1.0
     auto& bounds = range.as_<Bounds<double>>();
     string name = "m_real_"+convertToString<int>(r);
 
-    r = P.get_modifiable_reg(r);
-    M.add( rate * weight, MCMC::Modifiable_Slice_Move(name, r, bounds, 1.0) );
+    auto r_mod = P.get_modifiable_reg(r);
+    M.add( rate * weight, MCMC::Modifiable_Slice_Move(name, *r_mod, bounds, 1.0) );
     return true;
 }
 
@@ -195,8 +195,8 @@ void add_integer_slice_moves(const Model& P, MCMC::MoveAll& M, double weight)
 
 	string name = "m_int_"+convertToString<int>(r);
 
-	r = P.get_modifiable_reg(r);
-	M.add( rate * weight, MCMC::Integer_Modifiable_Slice_Move(name, r, bounds) );
+	auto r_mod = P.get_modifiable_reg(r);
+	M.add( rate * weight, MCMC::Integer_Modifiable_Slice_Move(name, *r_mod, bounds) );
     }
 }
 

@@ -99,16 +99,17 @@ const Bounds<double>& Model::get_bounds(int i) const
 
 bool Model::compute_expression_has_bounds(int index) const
 {
-    int R = compute_expression_as_modifiable_reg(index);
-    auto e = get_range_for_reg(R);
+    auto R = compute_expression_is_random_variable(index);
+    if (not R) return false;
+    auto e = get_range_for_random_variable(*R);
 
     return (e and e.is_a<Bounds<double>>());
 }
 
 const Bounds<double>& Model::get_bounds_for_compute_expression(int index) const
 {
-    auto R = compute_expression_as_modifiable_reg(index);
-    auto e = get_range_for_reg(R);
+    auto R = compute_expression_is_random_variable(index);
+    auto e = get_range_for_random_variable(*R);
 
     assert(e);
 

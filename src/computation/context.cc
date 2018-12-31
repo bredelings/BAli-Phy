@@ -177,29 +177,14 @@ optional<int> context::parameter_is_modifiable_reg(int index) const
     return memory()->parameter_is_modifiable_reg(index);
 }
 
-int context::parameter_as_modifiable_reg(int index) const
-{
-    return memory()->parameter_as_modifiable_reg(index);
-}
-
 optional<int> context::compute_expression_is_modifiable_reg(int index) const
 {
     return memory()->compute_expression_is_modifiable_reg(index);
 }
 
-int context::compute_expression_as_modifiable_reg(int index) const
-{
-    return memory()->compute_expression_as_modifiable_reg(index);
-}
-
 optional<int> context::compute_expression_is_random_variable(int index) const
 {
     return memory()->compute_expression_is_random_variable(index);
-}
-
-int context::compute_expression_as_random_variable(int index) const
-{
-    return memory()->compute_expression_as_random_variable(index);
 }
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
@@ -211,9 +196,7 @@ const expression_ref& context::get_reg_value(int R) const
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 const expression_ref& context::get_modifiable_value(int R) const
 {
-    R = get_modifiable_reg(R);
-
-    return get_reg_value(R);
+    return get_reg_value(*get_modifiable_reg(R));
 }
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
@@ -232,9 +215,7 @@ const expression_ref& context::get_parameter_value(const std::string& name) cons
 
 void context::set_modifiable_value_(int R, closure&& C)
 {
-    R = get_modifiable_reg(R);
-
-    set_reg_value(R, std::move(C) );
+    set_reg_value(*get_modifiable_reg(R), std::move(C) );
 }
 
 void context::set_modifiable_value(int R, const expression_ref& E)
@@ -259,9 +240,9 @@ void context::set_parameter_value_(int index, closure&& C)
 {
     assert(index >= 0);
 
-    int P = parameter_as_modifiable_reg(index);
+    auto P = parameter_is_modifiable_reg(index);
 
-    set_reg_value(P, std::move(C) );
+    set_reg_value(*P, std::move(C) );
 }
 
 void context::set_reg_value(int P, closure&& C)
@@ -319,19 +300,9 @@ const vector<int>& context::random_variables() const
     return memory()->random_variables();
 }
 
-const expression_ref context::get_range_for_reg(int r) const
-{
-    return memory()->get_range_for_reg(context_index, r);
-}
-
 const expression_ref context::get_range_for_random_variable(int r) const
 {
     return memory()->get_range_for_random_variable(context_index, r);
-}
-
-double context::get_rate_for_reg(int r) const
-{
-    return memory()->get_rate_for_reg(r);
 }
 
 double context::get_rate_for_random_variable(int r) const
@@ -583,11 +554,9 @@ int context::get_compute_expression_reg(int index) const
     return heads()[index];
 }
 
-int context::get_modifiable_reg(int r) const
+optional<int> context::get_modifiable_reg(int r) const
 {
-    bool ok = memory()->find_update_modifiable_reg(r);
-    assert(ok);
-    return r;
+    return memory()->find_modifiable_reg(r);
 }
 
 std::ostream& operator<<(std::ostream& o, const context& C)

@@ -645,93 +645,73 @@ optional<int> reg_heap::parameter_is_modifiable_reg(int index)
 {
     int& R = parameters[index].second;
 
-    if (find_update_modifiable_reg(R))
-	return R;
-    else
-	return {};
-}
-
-int reg_heap::parameter_as_modifiable_reg(int index)
-{
-    auto R = parameter_is_modifiable_reg(index);
-    if (R)
-	return *R;
-    else
-	throw myexception()<<"Parameter '"<<parameters[index].first<<"' is not modifiable!";
+    return find_update_modifiable_reg(R);
 }
 
 optional<int> reg_heap::compute_expression_is_modifiable_reg(int index)
 {
     int& H = heads[index];
 
-    if (find_update_modifiable_reg(H))
-	return H;
-    else
-	return {};
+    return find_update_modifiable_reg(H);
 }
 
-int reg_heap::compute_expression_as_modifiable_reg(int index)
-{
-    auto R = compute_expression_is_modifiable_reg(index);
-    if (R)
-	return *R;
-    else
-	throw myexception()<<"Compute expression '"<<index<<"' is not modifiable!";
-}
-
-bool reg_heap::find_update_modifiable_reg(int& R)
+optional<int> reg_heap::find_update_modifiable_reg(int& R)
 {
     // Note: here we always update R
     R = incremental_evaluate_unchangeable(R);
 
-    if (is_random_variable(regs.access(R).C.exp))
+    if (is_modifiable(regs.access(R).C.exp))
+	return R;
+    else if (is_random_variable(regs.access(R).C.exp))
     {
-	R = regs.access(R).C.lookup_in_env(4);
-	return find_update_modifiable_reg(R);
+	int R2 = regs.access(R).C.lookup_in_env(4);
+	return find_update_modifiable_reg(R2);
     }
+    else
+	return {};
+}
 
-    return is_modifiable(regs.access(R).C.exp);
+optional<int> reg_heap::find_modifiable_reg(int R)
+{
+    return find_update_modifiable_reg(R);
+}
+
+optional<int> reg_heap::parameter_is_random_variable(int index)
+{
+    int& R = parameters[index].second;
+
+    return find_update_random_variable(R);
 }
 
 optional<int> reg_heap::compute_expression_is_random_variable(int index)
 {
     int& H = heads[index];
 
-    if (find_update_random_variable(H))
-	return H;
-    else
-	return {};
+    return find_update_random_variable(H);
 }
 
-int reg_heap::compute_expression_as_random_variable(int index)
-{
-    auto R = compute_expression_is_random_variable(index);
-    if (R)
-	return *R;
-    else
-	throw myexception()<<"Compute expression '"<<index<<"' is not modifiable!";
-}
-
-bool reg_heap::find_update_random_variable(int& R)
+optional<int> reg_heap::find_update_random_variable(int& R)
 {
     // Note: here we always update R
     R = incremental_evaluate_unchangeable(R);
 
-    return is_random_variable(regs.access(R).C.exp);
+    if (is_random_variable(regs.access(R).C.exp))
+	return R;
+    else
+	return {};
+}
+
+optional<int> reg_heap::find_random_variable(int R)
+{
+    return find_update_random_variable(R);
 }
 
 const expression_ref reg_heap::get_parameter_range(int c, int p)
 {
-    return get_range_for_reg(c, parameter_as_modifiable_reg(p));
-}
-
-const expression_ref reg_heap::get_range_for_reg(int c, int r)
-{
-    if (regs.access(r).C.Env.size() < 3)
+    if (auto rv = parameter_is_random_variable(p))
+	return get_range_for_random_variable(c, *rv);
+    else
 	return {};
-
-    int r2 = regs.access(r).C.lookup_in_env(2);
-    return get_reg_value_in_context(r2,c);
 }
 
 const expression_ref reg_heap::get_range_for_random_variable(int c, int r)
@@ -749,16 +729,6 @@ double reg_heap::get_rate_for_random_variable(int r)
     int r_rate = regs.access(r).C.lookup_in_env(0);
     r_rate = incremental_evaluate_unchangeable(r_rate);
     return regs.access(r_rate).C.exp.as_double();
-}
-
-double reg_heap::get_rate_for_reg(int r)
-{
-    if (regs.access(r).C.Env.size() < 3)
-	return {};
-
-    int r3 = regs.access(r).C.lookup_in_env(0);
-    r3 = incremental_evaluate_unchangeable(r3);
-    return regs.access(r3).C.exp.as_double();
 }
 
 int reg_heap::step_index_for_reg(int r) const 

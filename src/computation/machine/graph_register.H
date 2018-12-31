@@ -316,30 +316,29 @@ public:
     /// Lookup the index for the named parameter s
     int find_parameter(const std::string& s) const;
 
-    /*----- Modifiable ranges ----*/
-    bool find_update_modifiable_reg(int& R);
+    /*----- Modifiable regs ----*/
+private:
+    std::optional<int> find_update_modifiable_reg(int& R);
+public:
+    std::optional<int> find_modifiable_reg(int R);
 
     std::optional<int> parameter_is_modifiable_reg(int index);
 
-    int parameter_as_modifiable_reg(int index);
-
     std::optional<int> compute_expression_is_modifiable_reg(int index);
 
-    int compute_expression_as_modifiable_reg(int index);
+    /*----- Random variables ----*/
+private:
+    std::optional<int> find_update_random_variable(int& R);
+public:
+    std::optional<int> find_random_variable(int R);
 
-    bool find_update_random_variable(int& R);
+    std::optional<int> parameter_is_random_variable(int index);
 
     std::optional<int> compute_expression_is_random_variable(int index);
-
-    int compute_expression_as_random_variable(int index);
 
     const expression_ref get_parameter_range(int c, int r);
 
     const expression_ref get_range_for_random_variable(int c, int r);
-
-    const expression_ref get_range_for_reg(int c, int r);
-
-    double get_rate_for_reg(int r);
 
     double get_rate_for_random_variable(int r);
 
