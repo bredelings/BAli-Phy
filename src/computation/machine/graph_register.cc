@@ -4,6 +4,7 @@
 #include "graph_register.H"
 #include "computation/expression/expression.H"
 #include "computation/expression/var.H"
+#include "computation/expression/random_variable.H"
 
 using std::string;
 using std::vector;
@@ -682,6 +683,12 @@ bool reg_heap::find_modifiable_reg(int& R)
 {
     // Note: here we always update R
     R = incremental_evaluate_unchangeable(R);
+
+    if (is_random_variable(regs.access(R).C.exp))
+    {
+	R = regs.access(R).C.lookup_in_env(4);
+	return find_modifiable_reg(R);
+    }
 
     return is_modifiable(regs.access(R).C.exp);
 }
