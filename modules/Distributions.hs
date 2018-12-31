@@ -72,7 +72,7 @@ run_random' alpha rate lazy (IOReturn v) = return v
 -- It seems like we wouldn't need laziness for `do {x <- r;return x}`.  Do we need it for `r`?
 run_random' alpha rate lazy (Sample (ProbDensity p _ (Random do_sample) range)) = maybe_lazy lazy $ do
   value <- do_sample
-  x <- new_random_modifiable range value rate
+  x <- new_random_modifiable value
   let pr = p x
   register_prior pr
   return (random_variable x pr range rate)
