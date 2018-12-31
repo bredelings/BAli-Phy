@@ -76,6 +76,7 @@ run_random' alpha rate lazy (Sample (ProbDensity p _ (Random do_sample) range)) 
   let pr = p x
   register_prior pr
   return (random_variable x pr range rate)
+-- Exchangeable sequences  currently have a single pdf for the whole sequence, but each element is a separate random variable.
 run_random' alpha rate lazy (Sample (ProbDensity p q (Exchangeable n range' value) r)) = maybe_lazy lazy $ do
   xs <- sequence $ replicate n (new_random_modifiable range' value rate)
   register_prior (p xs)
