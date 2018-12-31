@@ -317,7 +317,7 @@ public:
     int find_parameter(const std::string& s) const;
 
     /*----- Modifiable ranges ----*/
-    bool find_modifiable_reg(int& R);
+    bool find_update_modifiable_reg(int& R);
 
     std::optional<int> parameter_is_modifiable_reg(int index);
 

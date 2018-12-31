@@ -645,7 +645,7 @@ optional<int> reg_heap::parameter_is_modifiable_reg(int index)
 {
     int& R = parameters[index].second;
 
-    if (find_modifiable_reg(R))
+    if (find_update_modifiable_reg(R))
 	return R;
     else
 	return {};
@@ -664,7 +664,7 @@ optional<int> reg_heap::compute_expression_is_modifiable_reg(int index)
 {
     int& H = heads[index];
 
-    if (find_modifiable_reg(H))
+    if (find_update_modifiable_reg(H))
 	return H;
     else
 	return {};
@@ -679,7 +679,7 @@ int reg_heap::compute_expression_as_modifiable_reg(int index)
 	throw myexception()<<"Compute expression '"<<index<<"' is not modifiable!";
 }
 
-bool reg_heap::find_modifiable_reg(int& R)
+bool reg_heap::find_update_modifiable_reg(int& R)
 {
     // Note: here we always update R
     R = incremental_evaluate_unchangeable(R);
@@ -687,7 +687,7 @@ bool reg_heap::find_modifiable_reg(int& R)
     if (is_random_variable(regs.access(R).C.exp))
     {
 	R = regs.access(R).C.lookup_in_env(4);
-	return find_modifiable_reg(R);
+	return find_update_modifiable_reg(R);
     }
 
     return is_modifiable(regs.access(R).C.exp);
