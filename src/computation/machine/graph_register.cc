@@ -746,7 +746,7 @@ double reg_heap::get_rate_for_random_variable(int r)
 {
     assert(is_random_variable(regs.access(r).C.exp));
 
-    int r_rate = regs.access(r).C.lookup_in_env(1);
+    int r_rate = regs.access(r).C.lookup_in_env(0);
     r_rate = incremental_evaluate_unchangeable(r_rate);
     return regs.access(r_rate).C.exp.as_double();
 }

@@ -336,7 +336,7 @@ double context::get_rate_for_reg(int r) const
 
 double context::get_rate_for_random_variable(int r) const
 {
-    return memory()->get_rate_for_reg(r);
+    return memory()->get_rate_for_random_variable(r);
 }
 
 const expression_ref context::get_parameter_range(int p) const
