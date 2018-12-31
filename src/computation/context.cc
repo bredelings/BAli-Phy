@@ -192,6 +192,16 @@ int context::compute_expression_as_modifiable_reg(int index) const
     return memory()->compute_expression_as_modifiable_reg(index);
 }
 
+optional<int> context::compute_expression_is_random_variable(int index) const
+{
+    return memory()->compute_expression_is_random_variable(index);
+}
+
+int context::compute_expression_as_random_variable(int index) const
+{
+    return memory()->compute_expression_as_random_variable(index);
+}
+
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 const expression_ref& context::get_reg_value(int R) const
 {
@@ -304,12 +314,27 @@ const vector<int>& context::random_modifiables() const
     return memory()->random_modifiables();
 }
 
+const vector<int>& context::random_variables() const
+{
+    return memory()->random_variables();
+}
+
 const expression_ref context::get_range_for_reg(int r) const
 {
     return memory()->get_range_for_reg(context_index, r);
 }
 
+const expression_ref context::get_range_for_random_variable(int r) const
+{
+    return memory()->get_range_for_random_variable(context_index, r);
+}
+
 double context::get_rate_for_reg(int r) const
+{
+    return memory()->get_rate_for_reg(r);
+}
+
+double context::get_rate_for_random_variable(int r) const
 {
     return memory()->get_rate_for_reg(r);
 }
@@ -560,8 +585,8 @@ int context::get_compute_expression_reg(int index) const
 
 int context::get_modifiable_reg(int r) const
 {
-    assert(is_modifiable((*memory())[r].exp));
-
+    bool ok = memory()->find_update_modifiable_reg(r);
+    assert(ok);
     return r;
 }
 

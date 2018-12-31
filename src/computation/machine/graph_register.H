@@ -327,11 +327,21 @@ public:
 
     int compute_expression_as_modifiable_reg(int index);
 
+    bool find_update_random_variable(int& R);
+
+    std::optional<int> compute_expression_is_random_variable(int index);
+
+    int compute_expression_as_random_variable(int index);
+
     const expression_ref get_parameter_range(int c, int r);
+
+    const expression_ref get_range_for_random_variable(int c, int r);
 
     const expression_ref get_range_for_reg(int c, int r);
 
     double get_rate_for_reg(int r);
+
+    double get_rate_for_random_variable(int r);
 
     /*----- Token manager ------*/
 
