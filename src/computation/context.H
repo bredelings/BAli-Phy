@@ -152,8 +152,6 @@ public:
     /// Lookup the index for the named parameter s
     int find_parameter(const std::string& s) const;
 
-    const std::vector<int>& random_modifiables() const;
-
     const std::vector<int>& random_variables() const;
 
     const expression_ref get_range_for_random_variable(int r) const;

@@ -290,11 +290,6 @@ int context::add_parameter(const string& full_name, const expression_ref& E)
     return p;
 }
 
-const vector<int>& context::random_modifiables() const
-{
-    return memory()->random_modifiables();
-}
-
 const vector<int>& context::random_variables() const
 {
     return memory()->random_variables();

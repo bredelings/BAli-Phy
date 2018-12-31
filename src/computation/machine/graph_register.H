@@ -271,7 +271,7 @@ public:
 
     prob_ratios_t probability_ratios(int c1, int c2);
 
-    // the list of modifiables
+    // the list of random variables
     std::vector<int> random_variables_;
 
     const std::vector<int>& random_variables() const;
@@ -281,17 +281,17 @@ public:
     // the list of modifiables
     std::vector<int> random_modifiables_;
   
-    const std::vector<int>& random_modifiables() const;
 
     int add_random_modifiable(int);
 
+    // the list of transition kernels
     std::vector<int> transition_kernels_;
 
     const std::vector<int>& transition_kernels() const;
 
     int add_transition_kernel(int);
 
-    /// The register indices of the named parameters.
+    /// The registered indices of the named parameters.
     std::vector<std::pair<std::string,int>> parameters;
   
     /// Probably this would be non-parameter identifiers

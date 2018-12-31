@@ -629,11 +629,6 @@ const vector<int>& reg_heap::random_variables() const
     return random_variables_;
 }
 
-const vector<int>& reg_heap::random_modifiables() const
-{
-    return random_modifiables_;
-}
-
 int reg_heap::add_random_modifiable(int r)
 {
     int i = random_modifiables_.size();
