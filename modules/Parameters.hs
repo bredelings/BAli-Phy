@@ -13,6 +13,7 @@ builtin get_modifiable_value 2 "get_modifiable_value" "Modifiables"
 builtin builtin_add_parameter 2 "add_parameter" "Modifiables"
 builtin builtin_register_prior 1 "register_prior" "Modifiables"
 builtin builtin_register_likelihood 1 "register_likelihood" "Modifiables"
+builtin builtin_random_variable 5 "random_variable" "Modifiables"
 
 add_parameter name x = IOAction2 builtin_add_parameter (listToString name) x
 
@@ -53,3 +54,5 @@ set_parameter_value_ token p v = if (is_modifiable p)
 
 get_modifiable_result token m = evaluate token (get_modifiable_value token m)
 
+-- should this be in IO?  It does have the side-effect of registering the random variable
+random_variable x pdf range rate = builtin_random_variable x pdf range (c_range range) rate

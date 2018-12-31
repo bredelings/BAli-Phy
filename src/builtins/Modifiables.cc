@@ -8,6 +8,27 @@
 
 using boost::dynamic_pointer_cast;
 
+extern "C" closure builtin_function_random_variable(OperationArgs& Args)
+{
+    reg_heap& M = Args.memory();
+
+    int r_var     = Args.reg_for_slot(0);
+    int r_pdf     = Args.reg_for_slot(1);
+    int r_range   = Args.reg_for_slot(2);
+    int r_c_range = Args.reg_for_slot(3);
+    int r_rate    = Args.reg_for_slot(4);
+
+    // Allocate a reg so that we get its address, and fill it with a modifiable of the correct index
+    expression_ref E(random_variable(),{index_var(4), index_var(3), index_var(2), index_var(1), index_var(0)});
+    closure C{E,{r_var, r_pdf, r_range, r_c_range, r_rate}};
+    int r_random_var = Args.allocate(std::move(C));
+
+    M.register_random_variable(r_random_var);
+
+    // Return a reference to the new modifiable.
+    return {index_var(0),{r_random_var}};
+}
+
 extern "C" closure builtin_function_new_modifiable(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());

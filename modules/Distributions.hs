@@ -73,8 +73,9 @@ run_random' alpha rate lazy (IOReturn v) = return v
 run_random' alpha rate lazy (Sample (ProbDensity p _ (Random do_sample) range)) = maybe_lazy lazy $ do
   value <- do_sample
   x <- new_random_modifiable range value rate
-  register_prior (p x)
-  return x
+  let pr = p x
+  register_prior pr
+  return (random_variable x pr range rate)
 run_random' alpha rate lazy (Sample (ProbDensity p q (Exchangeable n range' value) r)) = maybe_lazy lazy $ do
   xs <- sequence $ replicate n (new_random_modifiable range' value rate)
   register_prior (p xs)

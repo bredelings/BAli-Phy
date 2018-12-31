@@ -272,6 +272,13 @@ public:
     prob_ratios_t probability_ratios(int c1, int c2);
 
     // the list of modifiables
+    std::vector<int> random_variables_;
+
+    const std::vector<int>& random_variables() const;
+
+    void register_random_variable(int r);
+
+    // the list of modifiables
     std::vector<int> random_modifiables_;
   
     const std::vector<int>& random_modifiables() const;

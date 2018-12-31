@@ -618,6 +618,16 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     return R;
 }
 
+void reg_heap::register_random_variable(int r)
+{
+    random_variables_.push_back(r);
+}
+
+const vector<int>& reg_heap::random_variables() const
+{
+    return random_variables_;
+}
+
 const vector<int>& reg_heap::random_modifiables() const
 {
     return random_modifiables_;
