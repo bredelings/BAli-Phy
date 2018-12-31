@@ -51,7 +51,7 @@ extern "C" closure builtin_function_new_modifiable(OperationArgs& Args)
 // This could also take an initial value -- that value would need to not depend
 // on anything.
 
-extern "C" closure builtin_function_new_random_modifiable(OperationArgs& Args)
+extern "C" closure builtin_function_modifiable(OperationArgs& Args)
 {
     //  assert(not Args.evaluate_changeables());
 
@@ -59,17 +59,9 @@ extern "C" closure builtin_function_new_random_modifiable(OperationArgs& Args)
     int r_value = Args.reg_for_slot(0);
 
     // Allocate a reg, and fill it with a modifiable of the correct index
-    expression_ref E( modifiable(),{index_var(0)} );
-    closure C(E,{r_value});
-    int r_mod = Args.allocate(std::move(C));
+    expression_ref mod_exp( modifiable(),{index_var(0)} );
 
-    M.make_reg_changeable(r_mod);
-    M.set_shared_value(r_mod, r_value);
-
-    M.add_random_modifiable(r_mod);
-
-    // Return a reference to the new modifiable.
-    return {index_var(0),{r_mod}};
+    return {mod_exp, {r_value}};
 }
 
 extern "C" closure builtin_function_is_changeable(OperationArgs& Args)

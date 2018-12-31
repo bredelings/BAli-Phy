@@ -7,20 +7,19 @@ builtin is_changeable 1 "is_changeable" "Modifiables"
 builtin is_modifiable 1 "is_modifiable" "Modifiables"
 builtin get_modifiable_index 1 "get_modifiable_index" "Modifiables"
 builtin builtin_new_modifiable 1 "new_modifiable" "Modifiables"
-builtin builtin_new_random_modifiable 1 "new_random_modifiable" "Modifiables"
 builtin evaluate 2 "evaluate" "Modifiables"
 builtin get_modifiable_value 2 "get_modifiable_value" "Modifiables"
 builtin builtin_add_parameter 2 "add_parameter" "Modifiables"
 builtin builtin_register_prior 1 "register_prior" "Modifiables"
 builtin builtin_register_likelihood 1 "register_likelihood" "Modifiables"
+
 builtin builtin_random_variable 5 "random_variable" "Modifiables"
+builtin modifiable 1 "modifiable" "Modifiables"
 
 add_parameter name x = IOAction2 builtin_add_parameter (listToString name) x
 
 register_prior pr = IOAction1 builtin_register_prior pr
 register_likelihood pr = IOAction1 builtin_register_likelihood pr
-
-new_random_modifiable value = IOAction1 builtin_new_random_modifiable value
 
 c_range (OpenInterval a b) = getBounds (OpenInterval a b)
 c_range (IntegerInterval a b) = getIntegerBounds (IntegerInterval a b)

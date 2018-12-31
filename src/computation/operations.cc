@@ -288,10 +288,20 @@ closure let_op(OperationArgs& Args)
     return C;
 }
 
-closure modifiable_op(OperationArgs&)
+closure modifiable_op(OperationArgs& Args)
 {
-    // A modifiable has a result that is not computed by reducing an expression.
-    //       The result must be set.  Therefore, complain if the result is missing.
+    Args.make_changeable();
+    
+    auto& C = Args.current_closure();
 
-    throw myexception()<<"Evaluating modifiable with no result.";
+    // Use the first argument as an initial value.
+    if (C.exp.size())
+    {
+	// Should we record a force (but no dependence) on this, in order to force the distribution parameters?
+	int r_value = Args.evaluate_slot_no_record(0);
+	return {index_var(0),{r_value}};
+    }
+    // Complain if there is no value at all.
+    else
+	throw myexception()<<"Evaluating modifiable with no result.";
 }
