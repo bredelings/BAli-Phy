@@ -89,30 +89,30 @@ public:
 };
 
 /// A slice_function for slice-sampling a single parameter
-struct modifiable_slice_function: public model_slice_function
+struct random_variable_slice_function: public model_slice_function
 {
-    /// The modifiable index.
-    int m;
+    /// The random_variable index.
+    int r_mod;
 
     void set_value(double x);
 
     double current_value() const;
 
-    modifiable_slice_function(Model&, const Bounds<double>&, int);
+    random_variable_slice_function(Model&, const Bounds<double>&, int);
 };
 
 
 /// A slice_function for slice-sampling a single parameter
-struct integer_modifiable_slice_function:public model_slice_function
+struct integer_random_variable_slice_function:public model_slice_function
 {
-    /// The modifiable index.
-    int m;
+    /// The random_variable index.
+    int r_mod;
 
     void set_value(double x);
 
     double current_value() const;
 
-    integer_modifiable_slice_function(Model&, const Bounds<int>&, int);
+    integer_random_variable_slice_function(Model&, const Bounds<int>&, int);
 };
 
 

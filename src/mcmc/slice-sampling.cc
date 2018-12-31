@@ -71,21 +71,26 @@ double model_slice_function::operator()()
     return log(current_fn_value);
 }
 
-void modifiable_slice_function::set_value(double x)
+void random_variable_slice_function::set_value(double x)
 {
-    M.set_modifiable_value(m, x);
+    M.set_modifiable_value(r_mod, x);
 }
 
-double modifiable_slice_function::current_value() const
+double random_variable_slice_function::current_value() const
 {
-    return M.get_modifiable_value(m).as_double();
+    return M.get_modifiable_value(r_mod).as_double();
 }
 
-modifiable_slice_function::modifiable_slice_function(Model& M_, const Bounds<double>& bounds, int m_)
-    :model_slice_function(M_, bounds), m(m_)
-{ }
+random_variable_slice_function::random_variable_slice_function(Model& M_, const Bounds<double>& bounds, int rv)
+    :model_slice_function(M_, bounds)
+{
+    if (auto m = M.get_modifiable_reg(rv))
+	r_mod = *m;
+    else
+	throw myexception()<<"No modifiable reg for slice function!";
+}
 
-// ******************************* integer modifiable slice function *************************************** //
+// ******************************* integer random_variable slice function *************************************** //
 Bounds<double> convert_bounds(const Bounds<int>& int_bounds)
 {
     Bounds<double> double_bounds = int_bounds;
@@ -93,20 +98,25 @@ Bounds<double> convert_bounds(const Bounds<int>& int_bounds)
     return double_bounds;
 }
 
-void integer_modifiable_slice_function::set_value(double x)
+void integer_random_variable_slice_function::set_value(double x)
 {
     int x_integer = (int)floor(x);
-    M.set_modifiable_value(m, x_integer);
+    M.set_modifiable_value(r_mod, x_integer);
 }
 
-double integer_modifiable_slice_function::current_value() const
+double integer_random_variable_slice_function::current_value() const
 {
-    return M.get_modifiable_value(m).as_int();
+    return M.get_modifiable_value(r_mod).as_int();
 }
 
-integer_modifiable_slice_function::integer_modifiable_slice_function(Model& M_, const Bounds<int>& bounds, int m_)
-    :model_slice_function(M_, convert_bounds(bounds)), m(m_)
-{ }
+integer_random_variable_slice_function::integer_random_variable_slice_function(Model& M_, const Bounds<int>& bounds, int rv)
+    :model_slice_function(M_, convert_bounds(bounds))
+{
+    if (auto m = M.get_modifiable_reg(rv))
+	r_mod = *m;
+    else
+	throw myexception()<<"No modifiable reg for slice function!";
+}
 
 // ******************************* branch length slice function *************************************** //
 

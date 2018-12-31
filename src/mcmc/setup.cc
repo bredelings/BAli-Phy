@@ -51,11 +51,11 @@ using std::map;
 using std::shared_ptr;
 
 /// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
-void add_modifiable_MH_move(const Model& P, const string& name, const proposal_fn& proposal, int r, const vector<double>& parameters,
-			    MCMC::MoveAll& M, double weight=1)
+void add_random_variable_MH_move(const Model& P, const string& name, const proposal_fn& proposal, int rv, const vector<double>& parameters,
+				 MCMC::MoveAll& M, double weight=1)
 {
-    double rate = P.get_rate_for_random_variable(r);
-    auto r_mod = P.get_modifiable_reg(r);
+    double rate = P.get_rate_for_random_variable(rv);
+    auto r_mod = P.get_modifiable_reg(rv);
     M.add(rate * weight, MCMC::MH_Move( Proposal2M(proposal, *r_mod, parameters), name) );
 }
 
@@ -110,81 +110,80 @@ double default_sampling_rate(const Model& /*M*/, const string& /*parameter_name*
     return 1.0;
 }
 
-bool add_slice_move(const Model& P, int r, MCMC::MoveAll& M, double weight = 1.0)
+bool add_slice_move(const Model& P, int rv, MCMC::MoveAll& M, double weight = 1.0)
 {
-    double rate = P.get_rate_for_random_variable(r);
-    auto range = P.get_range_for_random_variable(r);
+    double rate = P.get_rate_for_random_variable(rv);
+    auto range = P.get_range_for_random_variable(rv);
     if (not range.is_a<Bounds<double>>()) return false;
 
     auto& bounds = range.as_<Bounds<double>>();
-    string name = "m_real_"+convertToString<int>(r);
+    string name = "m_real_"+convertToString<int>(rv);
 
-    auto r_mod = P.get_modifiable_reg(r);
-    M.add( rate * weight, MCMC::Modifiable_Slice_Move(name, *r_mod, bounds, 1.0) );
+    M.add( rate * weight, MCMC::Random_Variable_Slice_Move(name, rv, bounds, 1.0) );
     return true;
 }
 
 void add_boolean_MH_moves(const Model& P, MCMC::MoveAll& M, double weight = 1.0)
 {
-    for(int r: P.random_variables())
+    for(int rv: P.random_variables())
     {
-	auto range = P.get_range_for_random_variable(r);
+	auto range = P.get_range_for_random_variable(rv);
 
 	if (not range.head().is_a<constructor>()) continue;
 	if (range.head().as_<constructor>().f_name != "TrueFalseRange") continue;
 
-	string name = "m_bool_flip_"+convertToString<int>(r);
-	add_modifiable_MH_move(P,name, bit_flip, r, vector<double>{}, M, weight);
+	string name = "m_bool_flip_"+convertToString<int>(rv);
+	add_random_variable_MH_move(P,name, bit_flip, rv, vector<double>{}, M, weight);
     }
 }
 
 /// Find parameters with distribution name Dist
 void add_real_slice_moves(const Model& P, MCMC::MoveAll& M, double weight = 1.0)
 {
-    for(int r: P.random_variables())
-	add_slice_move(P, r, M, weight);
+    for(int rv: P.random_variables())
+	add_slice_move(P, rv, M, weight);
 }
 
 /// Find parameters with distribution name Dist
 void add_real_MH_moves(const Model& P, MCMC::MoveAll& M, double weight = 1.0)
 {
-    for(int r: P.random_variables())
+    for(int rv: P.random_variables())
     {
-	auto range = P.get_range_for_random_variable(r);
+	auto range = P.get_range_for_random_variable(rv);
 	if (not range.is_a<Bounds<double>>()) continue;
 
 	auto& bounds = range.as_<Bounds<double>>();
-	string name = "m_real_cauchy_"+convertToString<int>(r);
+	string name = "m_real_cauchy_"+convertToString<int>(rv);
 	if (bounds.lower_bound and *bounds.lower_bound >= 0.0)
-	    add_modifiable_MH_move(P,name, Reflect(bounds, log_scaled(Between(-20,20,shift_cauchy))), r, {1.0}, M, weight);
+	    add_random_variable_MH_move(P,name, Reflect(bounds, log_scaled(Between(-20,20,shift_cauchy))), rv, {1.0}, M, weight);
 	else
-	    add_modifiable_MH_move(P,name, Reflect(bounds, shift_cauchy), r, {1.0}, M, weight);
+	    add_random_variable_MH_move(P,name, Reflect(bounds, shift_cauchy), rv, {1.0}, M, weight);
     }
 }
 
 /// Find parameters with distribution name Dist
 void add_integer_uniform_MH_moves(const Model& P, MCMC::MoveAll& M, double weight)
 {
-    for(int r: P.random_variables())
+    for(int rv: P.random_variables())
     {
-	auto range = P.get_range_for_random_variable(r);
+	auto range = P.get_range_for_random_variable(rv);
 	if (not range.is_a<Bounds<int>>()) continue;
 
 	auto& bounds = range.as_<Bounds<int>>();
 	if (not bounds.lower_bound or not bounds.upper_bound) continue;
-	string name = "m_int_uniform_"+convertToString<int>(r);
+	string name = "m_int_uniform_"+convertToString<int>(rv);
 	double l = *bounds.lower_bound;
 	double u = *bounds.upper_bound;
-	add_modifiable_MH_move(P,name, discrete_uniform_avoid, r, {double(l),double(u)}, M, weight);
+	add_random_variable_MH_move(P,name, discrete_uniform_avoid, rv, {double(l),double(u)}, M, weight);
     }
 }
 
 void add_integer_slice_moves(const Model& P, MCMC::MoveAll& M, double weight)
 {
-    for(int r: P.random_variables())
+    for(int rv: P.random_variables())
     {
-	auto range = P.get_range_for_random_variable(r);
-	double rate = P.get_rate_for_random_variable(r);
+	auto range = P.get_range_for_random_variable(rv);
+	double rate = P.get_rate_for_random_variable(rv);
 	if (not range.is_a<Bounds<int>>()) continue;
 
 	// FIXME: righteousness.
@@ -193,10 +192,9 @@ void add_integer_slice_moves(const Model& P, MCMC::MoveAll& M, double weight)
 	auto& bounds = range.as_<Bounds<int>>();
 	if (bounds.upper_bound and bounds.lower_bound) continue;
 
-	string name = "m_int_"+convertToString<int>(r);
+	string name = "m_int_"+convertToString<int>(rv);
 
-	auto r_mod = P.get_modifiable_reg(r);
-	M.add( rate * weight, MCMC::Integer_Modifiable_Slice_Move(name, *r_mod, bounds) );
+	M.add( rate * weight, MCMC::Integer_Random_Variable_Slice_Move(name, rv, bounds) );
     }
 }
 
@@ -281,7 +279,7 @@ MCMC::MoveAll get_parameter_MH_moves(Model& M)
 	    if (auto r = scale_is_random_variable(M, i))
 	    {
 		string name = "scale_scale_"+convertToString<int>(i+1);
-		add_modifiable_MH_move(M, name, log_scaled(Between(-20,20,shift_cauchy)),    *r, {1.0}, MH_moves);
+		add_random_variable_MH_move(M, name, log_scaled(Between(-20,20,shift_cauchy)),    *r, {1.0}, MH_moves);
 	    }
 
 

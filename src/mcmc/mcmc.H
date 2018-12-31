@@ -293,39 +293,39 @@ namespace MCMC {
 	Slice_Move(const std::string& s, const std::string& v, double W_);
     };
 
-    class Modifiable_Slice_Move: public Slice_Move
+    class Random_Variable_Slice_Move: public Slice_Move
     {
 	int m_index;
 	Bounds<double> bounds;
 
     public:
-	Modifiable_Slice_Move* clone() const {return new Modifiable_Slice_Move(*this);}
+	Random_Variable_Slice_Move* clone() const {return new Random_Variable_Slice_Move(*this);}
     
 	void iterate(owned_ptr<Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
     
 	void iterate(owned_ptr<Model>& P,MoveStats&,int);
     
-	Modifiable_Slice_Move(const std::string& s,int m, const Bounds<double>& b, double W_);
+	Random_Variable_Slice_Move(const std::string& s,int m, const Bounds<double>& b, double W_);
     
-	Modifiable_Slice_Move(const std::string& s, const std::string& v,int m,
+	Random_Variable_Slice_Move(const std::string& s, const std::string& v,int m,
 			      const Bounds<double>& b, double W_);
     };
 
-    class Integer_Modifiable_Slice_Move: public Slice_Move
+    class Integer_Random_Variable_Slice_Move: public Slice_Move
     {
 	int m_index;
 	Bounds<int> bounds;
 
     public:
-	Integer_Modifiable_Slice_Move* clone() const {return new Integer_Modifiable_Slice_Move(*this);}
+	Integer_Random_Variable_Slice_Move* clone() const {return new Integer_Random_Variable_Slice_Move(*this);}
     
 	void iterate(owned_ptr<Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
     
 	void iterate(owned_ptr<Model>& P,MoveStats&,int);
     
-	Integer_Modifiable_Slice_Move(const std::string& s, int m, const Bounds<int>& b, double W_ = 1.0);
+	Integer_Random_Variable_Slice_Move(const std::string& s, int m, const Bounds<int>& b, double W_ = 1.0);
     
-	Integer_Modifiable_Slice_Move(const std::string& s, const std::string& v,int m,
+	Integer_Random_Variable_Slice_Move(const std::string& s, const std::string& v,int m,
 				      const Bounds<int>& b, double W_ = 1.0);
     };
 

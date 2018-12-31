@@ -485,13 +485,13 @@ namespace MCMC {
 	 total_movement(0)
     {}
 
-    void Modifiable_Slice_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int)
+    void Random_Variable_Slice_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int)
     {
 	if (log_verbose >= 3) clog<<" [modifiable slice] move = "<<m_index<<endl;
 
 	double v1 = P->get_modifiable_value(m_index).as_double();
 
-	modifiable_slice_function logp(*P, bounds, m_index);
+	random_variable_slice_function logp(*P, bounds, m_index);
 
 	double v2 = sample(*P,logp,v1);
 
@@ -504,24 +504,24 @@ namespace MCMC {
 	Stats.inc(name,result);
     }
 
-    Modifiable_Slice_Move::Modifiable_Slice_Move(const string& s,int m,
+    Random_Variable_Slice_Move::Random_Variable_Slice_Move(const string& s,int m,
 						 const Bounds<double>& b, double W_)
 	:Slice_Move(s,W_), m_index(m), bounds(b)
     {}
 
-    Modifiable_Slice_Move::Modifiable_Slice_Move(const string& s, const string& v,int m,
+    Random_Variable_Slice_Move::Random_Variable_Slice_Move(const string& s, const string& v,int m,
 						 const Bounds<double>& b, double W_)
 	:Slice_Move(s,v,W_), m_index(m), bounds(b)
     {}
 
-    void Integer_Modifiable_Slice_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int)
+    void Integer_Random_Variable_Slice_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int)
     {
 	if (log_verbose >= 3) clog<<" [integer modifiable slice] move = "<<m_index<<endl;
 
 	int v1 = P->get_modifiable_value(m_index).as_int();
 	double x1 = double(v1)+uniform();
 
-	integer_modifiable_slice_function logp(*P, bounds, m_index);
+	integer_random_variable_slice_function logp(*P, bounds, m_index);
 
 	double x2 = sample(*P,logp,x1);
 
@@ -535,12 +535,12 @@ namespace MCMC {
 	Stats.inc(name,result);
     }
 
-    Integer_Modifiable_Slice_Move::Integer_Modifiable_Slice_Move(const string& s,int m,
+    Integer_Random_Variable_Slice_Move::Integer_Random_Variable_Slice_Move(const string& s,int m,
 								 const Bounds<int>& b, double W_)
 	:Slice_Move(s,W_), m_index(m), bounds(b)
     {}
 
-    Integer_Modifiable_Slice_Move::Integer_Modifiable_Slice_Move(const string& s, const string& v,int m,
+    Integer_Random_Variable_Slice_Move::Integer_Random_Variable_Slice_Move(const string& s, const string& v,int m,
 								 const Bounds<int>& b, double W_)
 	:Slice_Move(s,v,W_), m_index(m), bounds(b)
     {}
