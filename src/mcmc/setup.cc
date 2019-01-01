@@ -38,7 +38,8 @@
 #include "util/time.H"
 #include "util/bounds.H"
 #include "AIS.H"
-#include "computation/expression/expression.H"
+#include "computation/expression/bool.H"
+#include "computation/expression/constructor.H"
 
 using boost::program_options::variables_map;
 using boost::dynamic_bitset;

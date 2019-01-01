@@ -2,7 +2,7 @@
 #include <unordered_map>
 #include "computation/operations.H"
 #include "computation/loader.H"
-#include "computation/expression/expression.H"
+#include "computation/expression/constructor.H"
 #include "computation/expression/let.H"
 #include "computation/expression/case.H"
 #include "computation/expression/var.H"
@@ -11,6 +11,7 @@
 #include "computation/expression/trim.H"
 #include "computation/expression/indexify.H"
 #include "computation/expression/AST_node.H"
+#include "computation/expression/expression.H" // for is_WHNF( )
 #include "let-float.H"
 #include "occurrence.H"
 #include "inliner.H"

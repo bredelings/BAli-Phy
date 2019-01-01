@@ -2,7 +2,9 @@
 
 #include "loggers.H"
 #include "tools/parsimony.H"
-#include "computation/expression/expression.H"
+#include "computation/expression/parameter.H"
+#include "computation/expression/bool.H"
+#include "computation/expression/constructor.H"
 #include "computation/expression/var.H"
 #include "mcmc/mcmc.H"
 #include "mcmc/logger.H"

@@ -2,7 +2,8 @@
 #include "computation/machine/args.H"
 #include "dp/2way.H"
 #include "imodel/imodel.H"
-#include "computation/expression/expression.H"
+#include "computation/expression/bool.H"
+#include "computation/expression/constructor.H"
 #include <boost/dynamic_bitset.hpp>
 #include "alignment/alignment.H"
 

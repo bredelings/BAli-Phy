@@ -42,6 +42,7 @@
 #include "computation/expression/tuple.H"
 #include "computation/expression/list.H"
 #include "computation/expression/var.H"
+#include "computation/expression/parameter.H"
 #include "computation/module.H"
 #include "computation/operations.H" // for VectorFromList<>
 #include "math/exponential.H"

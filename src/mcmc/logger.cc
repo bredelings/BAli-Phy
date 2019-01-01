@@ -40,7 +40,8 @@
 #include "substitution/parsimony.H"
 #include "alignment/alignment-util.H"
 #include "dp/2way.H"
-#include "computation/expression/expression.H"
+#include "computation/expression/bool.H"
+#include "computation/expression/constructor.H"
 
 using std::endl;
 using std::pair;

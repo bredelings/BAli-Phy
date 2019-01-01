@@ -3,7 +3,7 @@
 #include <vector>
 #include "computation/machine/args.H"
 #include "util/object.H"
-#include "computation/expression/expression.H"
+#include "computation/expression/constructor.H"
 
 inline EVector get_vector_from_list(OperationArgs& Args, int slot)
 {

@@ -17,6 +17,8 @@
 #include "lambda.H"
 #include "bool.H"
 #include "modifiable.H"
+#include "parameter.H"
+#include "reg_var.H"
 
 using std::vector;
 using std::string;
@@ -31,20 +33,6 @@ using boost::dynamic_pointer_cast;
 // 2. eliminate substitution.H
 // 3. Eliminate identifier in favor of var (==var)?
 // 4. Remove horrible (#symbol)*(#function) substitution in module.C
-
-bool parameter::operator==(const Object& o) const 
-{
-    const parameter* E = dynamic_cast<const parameter*>(&o);
-    if (not E) 
-	return false;
-
-    return parameter_name == E->parameter_name;
-}
-
-parameter::parameter(const std::string& s)
-    :parameter_name(s)
-{
-}
 
 /// 1. Hey, could we solve the problem of needing to rename dummies by doing capture-avoiding substitution?
 /// I think we could!
@@ -182,16 +170,6 @@ bool is_WHNF(const expression_ref& E)
 	else
 	    return true;
     }
-}
-
-bool is_parameter(const expression_ref& E)
-{
-    return E.is_a<parameter>();
-}
-
-bool is_reg_var(const expression_ref& E)
-{
-    return E.is_a<reg_var>();
 }
 
 bool is_reglike(const expression_ref& E)

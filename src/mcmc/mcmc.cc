@@ -40,7 +40,8 @@
 
 #include "proposals.H"
 #include "alignment/alignment-util.H"
-#include "computation/expression/expression.H"
+#include "computation/expression/bool.H"
+#include "computation/expression/constructor.H"
 
 #include "slice-sampling.H"
 

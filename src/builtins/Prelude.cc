@@ -1,7 +1,8 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "computation/machine/args.H"
-#include "computation/expression/expression.H"
 #include "computation/expression/index_var.H"
+#include "computation/expression/constructor.H"
+#include "computation/expression/bool.H"
 #include "vector_from_list.H"
 #include "util/string_convert.H"
 

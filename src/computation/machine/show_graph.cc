@@ -1,11 +1,13 @@
 #include <fstream>
 #include "graph_register.H"
 #include "computation/operations.H"
-#include "computation/expression/expression.H"
 #include "computation/expression/let.H"
 #include "computation/expression/var.H"
 #include "computation/expression/case.H"
 #include "computation/expression/modifiable.H"
+#include "computation/expression/reg_var.H"
+#include "computation/expression/parameter.H"
+#include "computation/expression/expression.H" // for launchbury_unnormalize( )
 
 using std::string;
 using std::vector;

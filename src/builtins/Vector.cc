@@ -3,7 +3,7 @@
 #include "computation/machine/args.H"
 #include "util/myexception.H"
 #include "util/matrix.H"
-#include "computation/expression/expression.H"
+#include "computation/expression/constructor.H"
 
 using boost::dynamic_pointer_cast;
 using std::vector;

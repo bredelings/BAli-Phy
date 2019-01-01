@@ -9,8 +9,11 @@
 #include "computation/expression/trim.H"
 #include "computation/expression/index_var.H"
 #include "computation/expression/indexify.H"
-#include "computation/optimization/let-float.H"
+#include "computation/expression/constructor.H"
+#include "computation/expression/parameter.H"
+#include "computation/expression/reg_var.H"
 #include "computation/expression/expression.H" // for is_reglike( )
+#include "computation/optimization/let-float.H"
 
 
 using std::string;
