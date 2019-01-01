@@ -50,15 +50,4 @@ struct Let: public Operation
     Let():Operation(2, let_op, "let") {}
 };
 
-closure modifiable_op(OperationArgs&);
-
-struct modifiable: public Operation
-{
-    modifiable* clone() const {return new modifiable(*this);}
-
-    type_constant type() const {return modifiable_type;}
-
-    modifiable():Operation(2, modifiable_op,"modifiable") {}
-};
-
 #endif

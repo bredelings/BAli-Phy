@@ -5,6 +5,7 @@
 #include "computation/expression/expression.H"
 #include "computation/expression/var.H"
 #include "computation/expression/random_variable.H"
+#include "computation/expression/modifiable.H"
 #include "computation/operations.H"
 
 using std::string;

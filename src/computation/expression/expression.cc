@@ -16,6 +16,7 @@
 #include "var.H"
 #include "lambda.H"
 #include "bool.H"
+#include "modifiable.H"
 
 using std::vector;
 using std::string;
@@ -186,13 +187,6 @@ bool is_WHNF(const expression_ref& E)
 bool is_parameter(const expression_ref& E)
 {
     return E.is_a<parameter>();
-}
-
-bool is_modifiable(const expression_ref& E)
-{
-    bool result = E.head().type() == modifiable_type;
-    assert(result == E.head().is_a<modifiable>());
-    return result;
 }
 
 bool is_reg_var(const expression_ref& E)

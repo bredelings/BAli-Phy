@@ -6,6 +6,7 @@
 #include "computation/expression/expression.H"
 #include "computation/expression/bool.H"
 #include "computation/expression/random_variable.H"
+#include "computation/expression/modifiable.H"
 
 using boost::dynamic_pointer_cast;
 
@@ -60,7 +61,8 @@ extern "C" closure builtin_function_is_modifiable(OperationArgs& Args)
     int R1 = Args.evaluate_slot_to_reg(0);
 
     const reg_heap& M = Args.memory();
-    if (M[R1].exp.head().type() == modifiable_type)
+
+    if (is_modifiable(M[R1].exp))
 	return bool_true;
     else
 	return bool_false;

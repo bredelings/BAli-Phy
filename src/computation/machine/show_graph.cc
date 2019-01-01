@@ -5,6 +5,7 @@
 #include "computation/expression/let.H"
 #include "computation/expression/var.H"
 #include "computation/expression/case.H"
+#include "computation/expression/modifiable.H"
 
 using std::string;
 using std::vector;

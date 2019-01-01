@@ -4,6 +4,7 @@
 #include "case.H"
 #include "substitute.H"
 #include "expression.H"
+#include "modifiable.H"
 #include "AST_node.H"
 #include "computation/operations.H"
 #include "util/util.H" // for reverse( )
