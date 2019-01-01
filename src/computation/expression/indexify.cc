@@ -4,6 +4,7 @@
 #include "lambda.H"
 #include "let.H"
 #include "case.H"
+#include "index_var.H"
 
 using std::pair;
 using std::vector;

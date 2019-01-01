@@ -5,6 +5,7 @@
 #include "computation/machine/graph_register.H"
 #include "computation/expression/expression.H"
 #include "computation/expression/bool.H"
+#include "computation/expression/index_var.H"
 #include "computation/expression/random_variable.H"
 #include "computation/expression/modifiable.H"
 

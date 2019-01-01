@@ -1,6 +1,6 @@
 #include "random_variable.H"
-#include "expression.H"
 #include "modifiable.H"
+#include "index_var.H"
 
 closure modifiable_op(OperationArgs& Args)
 {

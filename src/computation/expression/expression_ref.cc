@@ -10,7 +10,7 @@
 #include "tuple.H"
 #include "list.H" // for char_list
 #include "bool.H"
-#include "expression.H"
+#include "index_var.H"
 #include "computation/operations.H"
 #include <set>
 #include <iterator>

@@ -2,7 +2,8 @@
 #include "lambda.H"
 #include "let.H"
 #include "case.H"
-#include "expression.H"
+#include "index_var.H"
+#include "constructor.H"
 
 using std::vector;
 using std::string;

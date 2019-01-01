@@ -13,13 +13,6 @@
 #include "constructor.H"
 #include "bool.H"
 
-/// a de Bruijn indexed variable 
-struct index_var
-{
-    int index;
-    index_var(int i):index(i) {}
-};
-
 struct parameter: public Object
 {
     std::string parameter_name;

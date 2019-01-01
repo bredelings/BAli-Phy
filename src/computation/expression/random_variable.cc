@@ -1,5 +1,5 @@
 #include "random_variable.H"
-#include "expression.H"
+#include "index_var.H"
 
 closure random_variable_op(OperationArgs& Args)
 {
