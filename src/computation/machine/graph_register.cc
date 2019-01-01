@@ -705,19 +705,25 @@ const expression_ref reg_heap::get_parameter_range(int c, int p)
 
 const expression_ref reg_heap::get_range_for_random_variable(int c, int r)
 {
-    assert(is_random_variable(regs.access(r).C.exp));
-
-    int r_range = regs.access(r).C.lookup_in_env(1);
-    return get_reg_value_in_context(r_range, c);
+    if (find_update_random_variable(r))
+    {
+	int r_range = regs.access(r).C.lookup_in_env(1);
+	return get_reg_value_in_context(r_range, c);
+    }
+    else
+	throw myexception()<<"Trying to get range from `"<<regs.access(r).C.exp<<"`, which is not a random_variable!";
 }
 
 double reg_heap::get_rate_for_random_variable(int r)
 {
-    assert(is_random_variable(regs.access(r).C.exp));
-
-    int r_rate = regs.access(r).C.lookup_in_env(0);
-    r_rate = incremental_evaluate_unchangeable(r_rate);
-    return regs.access(r_rate).C.exp.as_double();
+    if (find_update_random_variable(r))
+    {
+	int r_rate = regs.access(r).C.lookup_in_env(0);
+	r_rate = incremental_evaluate_unchangeable(r_rate);
+	return regs.access(r_rate).C.exp.as_double();
+    }
+    else
+	throw myexception()<<"Trying to get rate from `"<<regs.access(r).C.exp<<"`, which is not a random_variable!";
 }
 
 int reg_heap::step_index_for_reg(int r) const 
