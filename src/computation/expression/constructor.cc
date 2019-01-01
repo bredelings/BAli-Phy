@@ -1,6 +1,5 @@
 #include "constructor.H"
 #include "computation/module.H" // for is_haskell_con_name( )
-#include "expression.H" // for lambda_expression( )
 
 using std::string;
 

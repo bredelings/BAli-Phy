@@ -7,7 +7,6 @@
 #include "loader.H"
 #include "module.H"
 #include "parser/desugar.H"
-#include "expression/expression.H"
 #include "expression/lambda.H"
 #include "expression/AST_node.H"
 #include "expression/var.H"

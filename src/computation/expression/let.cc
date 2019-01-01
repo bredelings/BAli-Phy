@@ -3,7 +3,6 @@
 #include "let.H"
 #include "case.H"
 #include "substitute.H"
-#include "expression.H"
 #include "modifiable.H"
 #include "AST_node.H"
 #include "constructor.H"

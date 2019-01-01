@@ -1,6 +1,5 @@
 #include <set>
 #include "substitute.H"
-#include "expression.H"
 #include "let.H"
 #include "case.H"
 #include "var.H"

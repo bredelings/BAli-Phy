@@ -4,7 +4,6 @@
 #include "case.H"
 #include "let.H"
 #include "substitute.H"
-#include "expression.H"
 #include "AST_node.H"
 #include "computation/operations.H"
 

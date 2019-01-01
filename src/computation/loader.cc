@@ -4,7 +4,6 @@
 #include "computation/module.H"
 #include "computation/operations.H"
 #include <boost/filesystem/operations.hpp>
-#include "expression/expression.H"
 #include "expression/lambda.H"
 #include "startup/paths.H"
 #include "parser/driver.hh"

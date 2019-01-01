@@ -1,6 +1,5 @@
 #include "args.H"
 #include "graph_register.H"
-#include "computation/expression/expression.H"
 #include "computation/expression/lambda.H"
 
 int OperationArgs::reg_for_slot(int slot) const
