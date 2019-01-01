@@ -5,6 +5,7 @@
 #include "computation/expression/expression.H"
 #include "computation/expression/var.H"
 #include "computation/expression/random_variable.H"
+#include "computation/operations.H"
 
 using std::string;
 using std::vector;
@@ -1782,11 +1783,7 @@ int reg_heap::add_transition_kernel(int r)
 
 int reg_heap::add_modifiable_parameter(const string& full_name)
 {
-    expression_ref E = var("Parameters.new_modifiable");
-    E = {var("Prelude.unsafePerformIO"), E};
-    E = {var("Parameters.evaluate"),-1,E};
-
-    return add_parameter(full_name, E);
+    return add_parameter(full_name, modifiable());
 }
 
 int reg_heap::add_parameter(const string& full_name, const expression_ref& E)

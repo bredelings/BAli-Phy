@@ -6,7 +6,6 @@ builtin builtin_set_modifiable_value 3 "set_modifiable_value" "Modifiables"
 builtin is_changeable 1 "is_changeable" "Modifiables"
 builtin is_modifiable 1 "is_modifiable" "Modifiables"
 builtin get_modifiable_index 1 "get_modifiable_index" "Modifiables"
-builtin builtin_new_modifiable 1 "new_modifiable" "Modifiables"
 builtin evaluate 2 "evaluate" "Modifiables"
 builtin get_modifiable_value 2 "get_modifiable_value" "Modifiables"
 builtin builtin_add_parameter 2 "add_parameter" "Modifiables"
@@ -24,13 +23,6 @@ register_likelihood pr = IOAction1 builtin_register_likelihood pr
 c_range (OpenInterval a b) = getBounds (OpenInterval a b)
 c_range (IntegerInterval a b) = getIntegerBounds (IntegerInterval a b)
 c_range r = r
-
-new_modifiable = IOAction1 builtin_new_modifiable ()
-
-new_modifiable_list [] = return []
-new_modifiable_list (h:t) = do m <- h
-                               ms <- new_modifiable_list t
-                               return (m:ms) 
 
 set_modifiable_value token m v = IOAction3 builtin_set_modifiable_value token m v
 
