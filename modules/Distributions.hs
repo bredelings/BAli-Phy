@@ -70,21 +70,17 @@ run_random' alpha rate lazy (IOAndPass f g) = do
   run_random' alpha rate lazy $ g x
 run_random' alpha rate lazy (IOReturn v) = return v
 -- It seems like we wouldn't need laziness for `do {x <- r;return x}`.  Do we need it for `r`?
-run_random' alpha rate lazy (Sample (ProbDensity p _ (Random do_sample) range)) = maybe_lazy lazy $ do
+run_random' alpha rate lazy (Sample (ProbDensity pr _ (Random do_sample) range)) = maybe_lazy lazy $ do
   value <- do_sample
   let x = modifiable value
-  let pr = p x
-  register_prior pr
-  return (random_variable x pr range rate)
--- Exchangeable sequences  currently have a single pdf for the whole sequence, but each element is a separate random variable.
-run_random' alpha rate lazy (Sample (ProbDensity p q (Exchangeable n range' value) range)) = maybe_lazy lazy $ do
+  return (random_variable x (pr x) range rate)
+run_random' alpha rate lazy (Sample (ProbDensity pr q (Exchangeable n range' value) range)) = maybe_lazy lazy $ do
+  -- Exchangeable sequences  currently have a single pdf for the whole sequence, but each element is a separate random variable.
+  -- FIXME: Not initialized correctly!
   let xs = replicate n (modifiable value)
-  let pr = p xs
-  register_prior pr
-  return (random_variable xs pr range rate)
--- Should laziness go into the sample here?  Would s every have observations, like a Brownian bridge
--- If we don't do this, though then `Lazy $ sample $ iid $ normal 0 1` doesn't work.
--- Could we somehow do the list lazily, and the entries of the list lazily, but the actions for sample each of the variables strictly?
+  -- FIXME: add mcmc moves for the elements.
+  return (random_variable xs (pr xs) range rate)
+-- Should laziness go into the sample here?
 run_random' alpha rate lazy (Sample (ProbDensity _ _ s _)) = maybe_lazy lazy $ run_random' alpha rate lazy s
 run_random' alpha rate lazy (Observe datum dist) = register_likelihood (density dist datum)
 run_random' alpha rate lazy (AddMove m) = register_transition_kernel m

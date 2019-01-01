@@ -26,6 +26,7 @@ extern "C" closure builtin_function_random_variable(OperationArgs& Args)
     int r_random_var = Args.allocate(std::move(C));
 
     M.register_random_variable(r_random_var);
+    M.register_prior(r_pdf);
 
     // Return a reference to the new modifiable.
     return {index_var(0),{r_random_var}};
