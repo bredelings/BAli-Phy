@@ -5,7 +5,6 @@
 #include "util/rng.H"
 #include "util/util.H"
 #include "probability/choose.H"
-#include "computation/expression/expression.H"
 
 using boost::dynamic_pointer_cast;
 using namespace std;

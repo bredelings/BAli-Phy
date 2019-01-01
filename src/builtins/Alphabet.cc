@@ -1,7 +1,6 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "computation/machine/args.H"
 #include "sequence/alphabet.H"
-#include "computation/expression/expression.H"
 
 extern "C" closure builtin_function_alphabetSize(OperationArgs& Args)
 {

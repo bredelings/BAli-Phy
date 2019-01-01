@@ -6,7 +6,6 @@
 #include "computation/machine/args.H"
 #include "util/io.H"
 #include "util/util.H" // for split
-#include "computation/expression/expression.H"
 
 using std::string;
 using std::vector;

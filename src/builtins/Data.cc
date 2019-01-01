@@ -4,7 +4,6 @@
 #include "computation/machine/args.H"
 #include "util/myexception.H"
 #include "util/io.H"
-#include "computation/expression/expression.H"
 
 using boost::dynamic_pointer_cast;
 using std::vector;

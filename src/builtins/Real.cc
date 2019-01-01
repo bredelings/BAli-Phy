@@ -1,6 +1,5 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "computation/machine/args.H"
-#include "computation/expression/expression.H"
 
 using boost::dynamic_pointer_cast;
 using std::string;

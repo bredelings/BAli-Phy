@@ -3,7 +3,6 @@
 #include "computation/operations.H"
 #include "util/myexception.H"
 #include "computation/machine/graph_register.H"
-#include "computation/expression/expression.H"
 #include "computation/expression/bool.H"
 #include "computation/expression/index_var.H"
 #include "computation/expression/random_variable.H"
