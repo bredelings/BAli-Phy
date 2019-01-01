@@ -278,12 +278,6 @@ public:
 
     void register_random_variable(int r);
 
-    // the list of modifiables
-    std::vector<int> random_modifiables_;
-  
-
-    int add_random_modifiable(int);
-
     // the list of transition kernels
     std::vector<int> transition_kernels_;
 

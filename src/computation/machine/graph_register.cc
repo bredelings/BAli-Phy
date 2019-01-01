@@ -629,13 +629,6 @@ const vector<int>& reg_heap::random_variables() const
     return random_variables_;
 }
 
-int reg_heap::add_random_modifiable(int r)
-{
-    int i = random_modifiables_.size();
-    random_modifiables_.push_back(r);
-    return i;
-}
-
 optional<int> reg_heap::parameter_is_modifiable_reg(int index)
 {
     int& R = parameters[index].second;
@@ -1137,7 +1130,7 @@ void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
     insert_at_end(scan, heads); // yes
     insert_at_end(scan, prior_heads); // yes
     insert_at_end(scan, likelihood_heads); // yes
-    insert_at_end(scan, random_modifiables_); // yes
+    insert_at_end(scan, random_variables_); // yes
     insert_at_end(scan, transition_kernels_); // yes
 
     for(const auto& C: closure_stack)
