@@ -85,7 +85,6 @@
 #include "models/parse.H"
 #include "models/translate.H"
 #include "computation/module.H"
-#include "computation/expression/expression.H"
 #include "computation/expression/expression_ref.H"
 #include "computation/expression/let.H"
 #include "computation/expression/var.H"

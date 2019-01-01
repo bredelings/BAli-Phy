@@ -3,7 +3,6 @@
 #include "util/myexception.H"
 #include "computation/loader.H"
 #include "models/model.H"
-#include "expression/expression.H"
 #include "expression/var.H"
 #include "util/assert.hh"
 

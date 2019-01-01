@@ -9,7 +9,6 @@
 #include "parser/desugar.H"
 #include "computation/loader.H"
 #include "expression/AST_node.H"
-#include "expression/expression.H"
 #include "expression/var.H"
 #include "expression/lambda.H"
 #include "expression/let.H"

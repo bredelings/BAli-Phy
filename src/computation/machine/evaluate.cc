@@ -4,7 +4,7 @@
 #define COMBINE_STEPS
 #include "graph_register.H"
 #include "error_exception.H"
-#include "computation/expression/expression.H"
+#include "computation/expression/expression.H" // is_WHNF( )
 #include "computation/expression/let.H"
 #include "computation/expression/trim.H"
 #include "computation/expression/index_var.H"

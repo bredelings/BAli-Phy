@@ -35,7 +35,6 @@
 #include "util/util.H"
 #include "mcmc/proposals.H"
 #include "probability/probability.H"
-#include "computation/expression/expression.H"
 #include "computation/expression/lambda.H"
 #include "computation/expression/bool.H"
 #include "computation/expression/case.H"

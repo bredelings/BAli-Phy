@@ -2,7 +2,7 @@
 #include <unordered_map>
 #include "computation/operations.H"
 #include "computation/loader.H"
-#include "computation/expression/expression.H"
+#include "computation/expression/expression.H" // is_reglike( ) and is_WHNF( )
 #include "computation/expression/let.H"
 #include "computation/expression/case.H"
 #include "computation/expression/var.H"

@@ -42,7 +42,7 @@ struct Operation: public Operator
 	return true;
     }
 
-    type_constant type() const {return operation_type;} // See expression.H to change this
+    type_constant type() const {return operation_type;}
     Operation(int n, closure (*f)(OperationArgs&), const std::string& s):n_args_(n),name_(s),op(f) { }
 };
 
