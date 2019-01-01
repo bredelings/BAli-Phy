@@ -68,9 +68,9 @@ vector<expression_ref> model_parameter_expressions(const Model& M)
     return sub;
 }
 
-std::vector< expression_ref > Model::get_parameter_values(const std::vector<int>& indices) const
+EVector Model::get_parameter_values(const std::vector<int>& indices) const
 {
-    std::vector< expression_ref > values(indices.size());
+    EVector values(indices.size());
     
     for(int i=0;i<values.size();i++)
 	values[i] = get_parameter_value(indices[i]);
@@ -119,9 +119,9 @@ const Bounds<double>& Model::get_bounds_for_compute_expression(int index) const
     return e.as_<Bounds<double>>();
 }
 
-std::vector< expression_ref > Model::get_modifiable_values(const std::vector<int>& indices) const
+EVector Model::get_modifiable_values(const std::vector<int>& indices) const
 {
-    std::vector< expression_ref > values(indices.size());
+    EVector values(indices.size());
     
     for(int i=0;i<values.size();i++)
 	values[i] = get_modifiable_value(indices[i]);

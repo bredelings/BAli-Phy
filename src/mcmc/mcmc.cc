@@ -556,7 +556,7 @@ namespace MCMC {
 
 	//---------- Record Statistics - -------------//
 	Result result(2);
-	vector<double> x = vec_to_double(P->get_parameter_values(indices));
+	vector<double> x = P->get_parameter_values(indices);
 	double total = sum(x);
 	double factor = (total - v2)/(total-v1);
 	result.totals[0] = std::abs(log(v2/v1)) + (indices.size()-1)*(std::abs(log(factor)));
@@ -580,7 +580,7 @@ namespace MCMC {
 
 	//---------- Record Statistics - -------------//
 	Result result(2);
-	vector<double> x = vec_to_double(P->get_modifiable_values(indices));
+	vector<double> x = P->get_modifiable_values(indices);
 	double total = sum(x);
 	double factor = (total - v2)/(total-v1);
 	result.totals[0] = std::abs(log(v2/v1)) + (indices.size()-1)*(std::abs(log(factor)));

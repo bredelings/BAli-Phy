@@ -273,8 +273,8 @@ scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P)
 void constant_sum_slice_function::set_value(double t)
 {
     auto& P = static_cast<Parameters&>(M);
-    vector<expression_ref> y = P.get_parameter_values(indices);
-    vector<double> x = vec_to_double(y);
+    auto y = P.get_parameter_values(indices);
+    vector<double> x = y;
 
     double total = sum(x);
 
@@ -299,7 +299,7 @@ double constant_sum_slice_function::operator()()
 {
     auto& P = static_cast<Parameters&>(M);
 
-    vector<double> x = vec_to_double(P.get_parameter_values(indices));
+    vector<double> x = P.get_parameter_values(indices);
 
     double total = sum(x);
 
@@ -323,7 +323,7 @@ constant_sum_slice_function::constant_sum_slice_function(Model& P, const vector<
      indices(indices_),
      n(n_)
 { 
-    vector<double> x = vec_to_double(P.get_parameter_values(indices));
+    vector<double> x = P.get_parameter_values(indices);
     double total = sum(x);
 
     set_lower_bound(0);
@@ -382,7 +382,7 @@ constant_sum_modifiable_slice_function::constant_sum_modifiable_slice_function(M
      indices(indices_),
      n(n_)
 { 
-    vector<double> x = vec_to_double(M.get_modifiable_values(indices));
+    vector<double> x = M.get_modifiable_values(indices);
     double total = sum(x);
 
     set_lower_bound(0);

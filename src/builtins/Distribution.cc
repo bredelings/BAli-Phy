@@ -282,7 +282,7 @@ extern "C" closure builtin_function_CRP_density(OperationArgs& Args)
     int D = Args.evaluate(2).as_int();
 
     //------------- 2. Get argument Z -----------------
-    vector<int> z = vec_to_int (get_vector_from_list(Args,3) );
+    vector<int> z = get_vector_from_list(Args,3);
 
     return { ::CRP_pdf(alpha,N,D,z) };
 }
@@ -345,7 +345,7 @@ extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
 extern "C" closure builtin_function_sample_categorical(OperationArgs& Args)
 {
     //------------- 1. Get argument p -----------------
-    vector<double> z = vec_to_double (get_vector_from_list_(Args,0) );
+    vector<double> z = get_vector_from_list_(Args,0);
 
     return { choose_scratch(z) };
 }

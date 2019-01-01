@@ -313,6 +313,14 @@ EVector::operator vector<int>() const
     return v2;
 }
 
+EVector::operator vector<char>() const
+{
+    vector<char> v2(size());
+    for(int i=0;i<v2.size();i++)
+	v2[i] = (*this)[i].as_char();
+    return v2;
+}
+
 EVector::EVector(const vector<double>& v1)
 {
     resize(v1.size());
@@ -321,6 +329,13 @@ EVector::EVector(const vector<double>& v1)
 }
 
 EVector::EVector(const vector<int>& v1)
+{
+    resize(v1.size());
+    for(int i=0;i<v1.size();i++)
+	(*this)[i] = v1[i];
+}
+
+EVector::EVector(const vector<char>& v1)
 {
     resize(v1.size());
     for(int i=0;i<v1.size();i++)

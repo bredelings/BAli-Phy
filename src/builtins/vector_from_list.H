@@ -5,9 +5,9 @@
 #include "util/object.H"
 #include "computation/expression/expression.H"
 
-inline std::vector<expression_ref> get_vector_from_list(OperationArgs& Args, int slot)
+inline EVector get_vector_from_list(OperationArgs& Args, int slot)
 {
-  std::vector<expression_ref> z;
+  EVector z;
   const closure* top = &Args.evaluate_slot_to_closure(slot);
   while(top->exp.size())
   {
@@ -30,9 +30,9 @@ inline std::vector<expression_ref> get_vector_from_list(OperationArgs& Args, int
   return z;
 }
 
-inline std::vector<expression_ref> get_vector_from_list_(OperationArgs& Args, int slot)
+inline EVector get_vector_from_list_(OperationArgs& Args, int slot)
 {
-  std::vector<expression_ref> z;
+  EVector z;
   const closure* top = &Args.evaluate_slot_to_closure_(slot);
   while(top->exp.size())
   {

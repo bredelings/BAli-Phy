@@ -102,10 +102,10 @@ public:
     const Bounds<double>& get_bounds_for_compute_expression(int i) const;
 
     /// Get SOME model modifiable values
-    std::vector<expression_ref> get_modifiable_values(const std::vector<int>&) const;
+    EVector get_modifiable_values(const std::vector<int>&) const;
 
     /// Get SOME model parameter values
-    std::vector<expression_ref> get_parameter_values(const std::vector<int>&) const;
+    EVector get_parameter_values(const std::vector<int>&) const;
 
     /// Set SOME of the model parameter values
     void set_parameter_values(const std::vector<int>& indices,const std::vector<expression_ref>& p);
