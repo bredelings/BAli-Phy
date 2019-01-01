@@ -55,7 +55,6 @@ extern "C" closure builtin_function_modifiable(OperationArgs& Args)
 {
     //  assert(not Args.evaluate_changeables());
 
-    reg_heap& M = Args.memory();
     int r_value = Args.reg_for_slot(0);
 
     // Allocate a reg, and fill it with a modifiable of the correct index
