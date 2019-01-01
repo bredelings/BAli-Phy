@@ -622,6 +622,9 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 
 void reg_heap::register_random_variable(int r)
 {
+    r = incremental_evaluate_unchangeable(r);
+    if (not is_random_variable(regs.access(r).C.exp))
+	throw myexception()<<"Trying to register `"<<regs.access(r).C.exp<<"` as random variable";
     random_variables_.push_back(r);
 }
 
