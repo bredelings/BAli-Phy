@@ -92,8 +92,6 @@ public:
 
     type_t type = type_t::unknown;
 
-    int n_heads = 0;
-
     std::pair<int, int> created_by;
 
     std::bitset<8> flags;

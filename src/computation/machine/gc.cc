@@ -171,11 +171,6 @@ void reg_heap::trace(vector<int>& remap)
     vector<int>& roots = get_scratch_list();
     get_roots(roots);
 
-#ifndef NDEBUG
-    for(auto r: roots)
-	assert(regs.access(r).n_heads == 0);
-#endif
-
     // 3. Mark all of these regs used
     for(int r:roots)
 	mark_reg(r);
@@ -272,16 +267,6 @@ void reg_heap::trace(vector<int>& remap)
 	for(int r : R.C.Env)
 	    mark_reg(r);
     }
-
-#ifndef NDEBUG
-    for(auto r: roots)
-	assert(regs.access(r).n_heads == 3);
-#endif
-
-#ifndef NDEBUG
-    for(int i=regs.n_null();i<regs.size();i++)
-	assert(regs.access_unused(i).n_heads == 0);
-#endif
 
     release_scratch_list();
     release_scratch_list();

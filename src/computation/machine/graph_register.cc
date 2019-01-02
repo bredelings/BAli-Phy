@@ -180,8 +180,6 @@ reg& reg::operator=(reg&& R) noexcept
 
     type = R.type;
 
-    n_heads = R.n_heads;
-
     created_by = std::move(R.created_by);
 
     flags = R.flags;
@@ -192,14 +190,12 @@ reg& reg::operator=(reg&& R) noexcept
 reg::reg(reg&& R) noexcept
 :C( std::move(R.C) ),
  type ( R.type ),
- n_heads( R.n_heads ),
  created_by( std::move(R.created_by) ),
  flags ( R.flags )
 { }
 
 void reg::clear()
 {
-    assert(n_heads == 0);
     C.clear();
     type = type_t::unknown;
     flags.reset();
@@ -209,7 +205,6 @@ void reg::check_cleared()
 {
     assert(not C);
     assert(type == type_t::unknown);
-    assert(n_heads == 0);
     assert(created_by.first == 0);
     assert(created_by.second == 0);
     assert(flags.none());

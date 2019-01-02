@@ -462,7 +462,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	}
 
 	o<<"label = \""<<label<<"\"";
-//	if (C.access(R).n_heads)
+//	if (this is a gc root) // maybe call get_roots, and then make a set<int> of all the roots?
 //	    o<<",style=\"dashed,filled\",color=orange";
 	if (C.reg_is_changeable(R))
 	    o<<",style=\"dashed,filled\",color=red";
