@@ -180,11 +180,9 @@ void reg_heap::trace(vector<int>& remap)
     {
 	for(int reg:roots)
 	{
-	    int step = step_index_for_reg(reg);
-	    if (step > 0)
+	    if (int step = step_index_for_reg(reg); step > 0)
 		mark_step(step);
-	    int result = result_index_for_reg(reg);
-	    if (result > 0)
+	    if (int result = result_index_for_reg(reg); result > 0)
 		mark_result(result);
 	}
     }
