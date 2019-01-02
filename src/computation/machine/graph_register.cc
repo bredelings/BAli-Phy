@@ -1138,6 +1138,13 @@ void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
     insert_at_end(scan, stack); // inc_heads = yes
     insert_at_end(scan, temp); // yes
     insert_at_end(scan, heads); // yes
+
+    // FIXME: We want to remove all of these.
+    // * we should be able to remove random_variables_.  However, walking random_variables_ might find references to old, destroyed, variables then.
+    // * we should be able to remove prior_heads, which should be referenced by the random_variables.
+    //   - we could walk random_variables_ and extract the prior reg.
+    //   - we could remove prior_heads altogether, but steps might be thrown away during GC.  This wouldn't happen OFTEN though, if GC is rare.
+    //   - we could remove prior_heads altogether, but some variables on prs_list might get GC-d then.  We'd need a way to make sure prs_list didn't reference them.
     insert_at_end(scan, prior_heads); // yes
     insert_at_end(scan, likelihood_heads); // yes
     insert_at_end(scan, random_variables_); // yes
