@@ -178,10 +178,7 @@ void reg_heap::trace(vector<int>& remap)
 
     // 3. Mark all of these regs used
     for(int r:roots)
-    {
-	regs.access(r).n_heads = 3;
 	mark_reg(r);
-    }
 
     // 4. Mark all steps/results at heads in the root token.
     if (get_n_tokens())
@@ -196,7 +193,7 @@ void reg_heap::trace(vector<int>& remap)
 		mark_result(result);
 	}
     }
-  
+
     // 5. Mark all steps/results at heads in non-root tokens
     for(int t=0;t<get_n_tokens();t++)
     {
@@ -207,32 +204,16 @@ void reg_heap::trace(vector<int>& remap)
 	// 5.1 Mark all steps at heads in non-root tokens.
 	// FIXME - We can remove this after we maintain references to invalidated computations.
 	//         Then there should always be a result for every step, valid or invalid.
-	for(auto p: tokens[t].delta_step())
-	{
-	    int r = p.first;
-	    if (regs.access(r).n_heads)
-	    {
-		assert(regs.is_marked(r));
-		int step = p.second;
-		if (step > 0)
-		    mark_step(step);
-	    }
-	}
+	for(auto [r,step]: tokens[t].delta_step())
+	    if (regs.is_marked(r) and step > 0)
+		mark_step(step);
 
 	// 5.2 Mark all results at heads in non-root tokens.
 	// NOTE - The corresponding head, whatever it is, must ALSO be marked,
 	//        since we mark all steps at heads.
-	for(const auto& p: tokens[t].delta_result())
-	{
-	    int r = p.first;
-	    if (regs.access(r).n_heads)
-	    {
-		assert(regs.is_marked(r));
-		int result = p.second;
-		if (result > 0)
-		    mark_result(result);
-	    }
-	}
+	for(const auto& [r,result]: tokens[t].delta_result())
+	    if (regs.is_marked(r) and result > 0)
+		mark_result(result);
     }
 
     // 6. Trace unwalked steps and results
@@ -296,8 +277,6 @@ void reg_heap::trace(vector<int>& remap)
     for(auto r: roots)
 	assert(regs.access(r).n_heads == 3);
 #endif
-    for(auto r: roots)
-	regs.access(r).n_heads = 0;
 
 #ifndef NDEBUG
     for(int i=regs.n_null();i<regs.size();i++)
