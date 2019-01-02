@@ -798,7 +798,6 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
     }
 
     // Create the parameters that hold branch lengths
-    bool some_branch_lengths_not_set = false;
     for(int b=0;b<T.n_branches();b++)
     {
 	int index = p->add_compute_expression( {var("Prelude.!"), branch_durations, b} );
@@ -806,18 +805,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
 
 	branch_duration_index.push_back(index);
 	branch_duration_regs.push_back(R);
-
-	const context* c = p;
-	if (T.branch(b).has_length())
-	{
-	    if (R)
-		const_cast<context*>(c)->set_modifiable_value(*R, T.branch(b).length());
-	    else
-		some_branch_lengths_not_set = true;
-	}
     }
-    if (some_branch_lengths_not_set)
-	std::cerr<<"Warning!  Some branch lengths not set because they are not directly modifiable.\n\n";
 }
 
 bool Parameters::variable_alignment_from_param() const
@@ -1554,6 +1542,15 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     // FIXME: We currently need this to make sure all parameters get instantiated before we finish the constructor.
     probability();
+
+    bool some_branch_lengths_not_set = false;
+    for(int b=0;b<tt.n_branches();b++)
+	if (t().can_set_branch_length(b))
+	    t().set_branch_length(b, tt.branch(b).length());
+	else
+	    some_branch_lengths_not_set = true;
+    if (some_branch_lengths_not_set)
+	std::cerr<<"Warning!  Some branch lengths not set because they are not directly modifiable.\n\n";
 }
 
 Parameters::Parameters(const std::shared_ptr<module_loader>& L,
