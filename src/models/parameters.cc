@@ -1545,10 +1545,13 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     bool some_branch_lengths_not_set = false;
     for(int b=0;b<tt.n_branches();b++)
-	if (t().can_set_branch_length(b))
-	    t().set_branch_length(b, tt.branch(b).length());
-	else
-	    some_branch_lengths_not_set = true;
+	if (tt.branch(b).has_length())
+	{
+	    if (t().can_set_branch_length(b))
+		t().set_branch_length(b, tt.branch(b).length());
+	    else
+		some_branch_lengths_not_set = true;
+	}
     if (some_branch_lengths_not_set)
 	std::cerr<<"Warning!  Some branch lengths not set because they are not directly modifiable.\n\n";
 }
