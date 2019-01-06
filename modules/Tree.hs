@@ -1,6 +1,6 @@
 module Tree where
 
-data Tree = Tree (Array Int [Int]) (Array Int (Int,Int,Int)) Int Int
+data Tree = Tree (Array Int [Int]) (Array Int (Int,Int,Int,Int)) Int Int
 -- Polymorphism here really should be handled with a class that has the members below
 -- If we allow adding branches to functions later, we could move polymorphic definitions into files. e.g. for show.
 data RootedTree = RootedTree Tree Int (Array Int Bool)
