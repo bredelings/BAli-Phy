@@ -4,6 +4,7 @@ import Range
 import Parameters
 import MCMC
 import Data.JSON as J
+import Tree
 
 -- Define the ProbDensity type
 data ProbDensity a = ProbDensity (a->Double) (Double->a) (IO a) Range
@@ -245,6 +246,20 @@ sample_categorical ps = Random (IOAction1 builtin_sample_categorical ps)
 categorical ps = ProbDensity (qs!) (no_quantile "categorical") (sample_categorical ps) (integer_between 0 (length ps - 1))
                 where qs = listArray' $ map doubleToLogDouble ps
 
+xrange start end | start < end = start:xrange (start+1) end
+                 | otherwise   = []
+
+
+-- random_tree_edges [l1,l2] []      = [(l1,l2)]
+-- random_tree_edges leaves internal = do (l1,leaves')  <- remove_one leaves
+--                                        (l2,leaves'') <- remove_one leaves'
+--                                        (i,internal') <- remove_one internal
+--                                        return [(l1,i),(l2,i)]++random_tree_edges leaves'' new_internal'
+
+modifiable_tree tree = Tree (listArray nodes) (listArray branches) (numNodes tree) (numBranches tree) where
+    nodes =    [ map modifiable (edgesOutOfNode n) | n <- xrange 0 (numNodes tree) ]
+    branches = [ map modifiable (nodesForEdge b) | b <- xrange 0 (numBranches tree * 2) ]
+
 -- define the list distribution
 pair_apply f (x:y:t) = f x y : pair_apply f t
 pair_apply _ t       = t
@@ -340,5 +355,4 @@ dp n alpha mean_dist = do
   AddMove (\c -> mapM_ (\l-> gibbs_sample_categorical (category!!l) (n+delta) c) [0..n-1])
 
   return [ mean!!k | i <- take n [0..], let k=category!!i]
-
 
