@@ -278,7 +278,7 @@ random_tree n = do let num_nodes = 2*n-2
                        nodesArray = listArray nodes
                        branches = [ (s,i,t,reverse b) | b <- [0..num_branches-1], let Just (s,t) = find_branch edges,
                                                                                   let Just i=elemIndex b (nodesArray!s)]
-                   return $ Tree nodesArray (listArray branches) (2*n-2) (2*n-3)
+                   return $ Tree nodesArray (listArray branches) num_nodes num_branches
 
 modifiable_tree tree = Tree (listArray nodes) (listArray branches) (numNodes tree) (numBranches tree) where
     nodes =    [ map modifiable (edgesOutOfNode n) | n <- xrange 0 (numNodes tree) ]
