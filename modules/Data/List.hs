@@ -193,8 +193,7 @@ tails []     = []
 --
 
 -- find
-find _ [] = Nothing
-find p (x:xs) = if (p x) then x else find p xs
+find p = listToMaybe . filter p
 
 -- FIXME: how to optimize the list comprehension version appropriately?
 -- filter p xs = [ x | x <- xs, p x]
@@ -213,9 +212,10 @@ _     !! _ = error "Out of bounds list index!"
 -- elemIndices
 
 -- findIndex
+findIndex p = listToMaybe . findIndices p
 
 -- findIndices
-
+findIndices p xs = [x | x <- xs, p x]
 --
 
 zipWith z (a:as) (b:bs) =  z a b : zipWith z as bs

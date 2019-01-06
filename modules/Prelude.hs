@@ -152,7 +152,6 @@ notElem x        =  all (/= x)
 lookup key [] = Nothing
 lookup key ((k,v):kvs) = if (key == k) then Just v else lookup key kvs
 
-elemIndex key list = go 0 key list where
-    go key i (h:t) | key == h   = i
-                   | otherwise  = go key (i+1) t
-    go _   _ []    | error "elemIndex: element not found!"
+elemIndices key = findIndices (key==)
+
+elemIndex key  = listToMaybe . elemIndices key
