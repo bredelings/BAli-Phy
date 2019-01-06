@@ -274,15 +274,15 @@ random_tree n = do let num_nodes = 2*n-2
                        edges = forward_edges++backward_edges
                        nodes = [[b | (b,(x,y)) <- edges, x==n] | n <- [0..num_nodes-1]]
                        reverse b = b + num_branches `mod` 2*num_branches
-                       find_branch b = head $ [(s,t) | (b',(s,t)) <- edges, b==b']
+                       find_branch b = listToMaybe [(s,t) | (b',(s,t)) <- edges, b==b']
                        nodesArray = listArray nodes
-                       branches = [ (s,i,t,reverse b) | b <- [0..num_branches-1], let (s,t) = find_branch edges,
-                                                                                  let Just i=elemIndex b nodesArray!s]
+                       branches = [ (s,i,t,reverse b) | b <- [0..num_branches-1], let Just (s,t) = find_branch edges,
+                                                                                  let Just i=elemIndex b (nodesArray!s)]
                    return $ Tree nodesArray (listArray branches) (2*n-2) (2*n-3)
 
 modifiable_tree tree = Tree (listArray nodes) (listArray branches) (numNodes tree) (numBranches tree) where
     nodes =    [ map modifiable (edgesOutOfNode n) | n <- xrange 0 (numNodes tree) ]
-    branches = [ map modifiable (nodesForEdge b) | b <- xrange 0 (numBranches tree * 2) ]
+    branches = [ (modifiable s, modifiable i, modifiable t, modifiable r) | b <- xrange 0 (numBranches tree * 2), let (s,i,t,r) = nodesForEdge tree b]
 
 -- define the list distribution
 pair_apply f (x:y:t) = f x y : pair_apply f t
