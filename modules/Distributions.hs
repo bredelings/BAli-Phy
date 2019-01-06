@@ -249,12 +249,21 @@ categorical ps = ProbDensity (qs!) (no_quantile "categorical") (sample_categoric
 xrange start end | start < end = start:xrange (start+1) end
                  | otherwise   = []
 
+pick_index 0 (h:t) = (h,t)
+pick_index 0 [] = error "Trying to pick from empty list!"
+pick_index i (h:t) = let (x, t2) = pick_index (i-1) t
+                     in (x, h:t2)
 
--- random_tree_edges [l1,l2] []      = [(l1,l2)]
--- random_tree_edges leaves internal = do (l1,leaves')  <- remove_one leaves
---                                        (l2,leaves'') <- remove_one leaves'
---                                        (i,internal') <- remove_one internal
---                                        return [(l1,i),(l2,i)]++random_tree_edges leaves'' new_internal'
+remove_one [] = error "Cannot remove one from empty list"
+remove_one list = do i <- sample $ uniform_int 0 (length list-1)
+                     return $ pick_index i list
+
+random_tree_edges [l1,l2] _      = return [(l1,l2)]
+random_tree_edges leaves internal = do (l1,leaves')  <- remove_one leaves
+                                       (l2,leaves'') <- remove_one leaves'
+                                       (i,internal') <- remove_one internal
+                                       other_edges <- random_tree_edges (i:leaves'') internal'
+                                       return $ [(l1,i),(l2,i)]++other_edges
 
 modifiable_tree tree = Tree (listArray nodes) (listArray branches) (numNodes tree) (numBranches tree) where
     nodes =    [ map modifiable (edgesOutOfNode n) | n <- xrange 0 (numNodes tree) ]
