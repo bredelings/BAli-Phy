@@ -527,9 +527,9 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 		if (constants.count(R2) and not C.reg_is_changeable(R2) and not used) continue;
 
 		if (not used)
-		    o<<name<<":<"<<R2<<"> -> "<<name2<<";\n";
+		    o<<name<<":r"<<R2<<" -> "<<name2<<";\n";
 		else
-		    o<<name<<":<"<<R2<<"> -> "<<name2<<" [color=\"#007777\"];\n";
+		    o<<name<<":r"<<R2<<" -> "<<name2<<" [color=\"#007777\"];\n";
 	    }
 	}
 	else
