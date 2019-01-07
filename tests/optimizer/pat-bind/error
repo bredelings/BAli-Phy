@@ -4,7 +4,7 @@ size = 1   Test.#2 = (Test.#0, Test.#1)
 size = 1   Test.#3 = 3
 size = 1   Test.#4 = 4
 size = 1   Test.#5 = (Test.#3, Test.#4)
-size = 4   Test.#511 = \#1147 -> case #1147 of {(#1148, #1149) -> let {#1151 = Prelude:multiply #1148 #1148} in let {#1152 = []} in #1151:#1152,_ -> []}
+size = 4   Test.#511 = \#1148 -> case #1148 of {(#1149, #1150) -> let {#1152 = Prelude:multiply #1149 #1149} in let {#1153 = []} in #1152:#1153,_ -> []}
 size = 1   Test.#515 = Test.#2:Test.#6
 size = 2   Test.#516 = Data.List.map Test.#511 Test.#515
 size = 1   Test.#6 = Test.#5:[]
