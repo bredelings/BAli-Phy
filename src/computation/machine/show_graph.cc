@@ -429,7 +429,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	string label = convertToString(R);
 	if (reg_names.count(R))
 	    label += "/" + reg_names[R];
-	label += ": ";
+	label += ":";
 
 	vector<int> targets;
 	if (print_record)
