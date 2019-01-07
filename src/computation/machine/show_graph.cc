@@ -434,7 +434,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	vector<int> targets;
 	if (print_record)
 	{
-	    label = "<table><tr><td>"+escape(label) + "</td>";
+	    label = "<table border='0' cellborder='1' cellspacing='0'><tr><td>"+escape(label) + "</td>";
 
 	    label += "<td>"+escape(F.head().print())+"</td>";
 	    if (F.is_expression())
