@@ -465,13 +465,13 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 
 	    int R2 = C[R].lookup_in_env( index );
 
-	    string reg_name = "&lt;" + convertToString(R2) + "&gt;";
+	    string reg_name = "<" + convertToString(R2) + ">";
 	    if (reg_names.count(R2))
 	    {
 		reg_name = reg_names[R2];
 		auto loc = simplify.find(reg_name);
 		if (loc != simplify.end())
-		    reg_name = "&lt;" + loc->second + "&gt;";
+		    reg_name = "<" + loc->second + ">";
 	    }
 	    else if (constants.count(R2))
 		reg_name = constants[R2] + " " + reg_name;
