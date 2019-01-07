@@ -346,7 +346,12 @@ map<int,string> get_constants(const reg_heap& C, int t)
     // Record some regs as being constants worthy of substituting into regs that reference them.
     for(int R: regs)
     {
-	if (reg_names.count(R)) continue;
+	if (reg_names.count(R))
+	{
+	    auto rname = reg_names.at(R);
+	    rname = get_unqualified_name(rname);
+	    if (rname.size() and rname[0] != '#') continue;
+	}
 
 	if (C[R].exp.is_index_var()) continue;
 
@@ -355,6 +360,15 @@ map<int,string> get_constants(const reg_heap& C, int t)
 	if (C[R].exp.size() == 0)
 	{
 	    string name = C[R].exp.print();
+	    if (C[R].exp.is_double())
+	    {
+		if (name.find('.') != string::npos)
+		{
+		    int len = name.find_last_not_of('0');
+		    if (name[len] == '.') len++;
+		    name = name.substr(0,len+1);
+		}
+	    }
 	    if (name.size() < 20)
 		constants[R] = name;
 	}
@@ -445,15 +459,15 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 		    targets.push_back(R2);
 	  
 		    string reg_name = "<" + convertToString(R2) + ">";
-		    if (reg_names.count(R2))
+		    if (constants.count(R2))
+			reg_name = constants[R2] + " " + reg_name;
+		    else if (reg_names.count(R2))
 		    {
 			reg_name = reg_names[R2];
 			auto loc = simplify.find(reg_name);
 			if (loc != simplify.end())
 			    reg_name = loc->second;
 		    }
-		    else if (constants.count(R2))
-			reg_name = constants[R2] + " " + reg_name;
 
 		    label += "<td port=\"r" +convertToString(R2)+"\">" + escape(reg_name) + "</td>";
 		}
