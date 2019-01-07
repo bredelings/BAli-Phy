@@ -203,22 +203,51 @@ void discover_graph_vars(const reg_heap& H, int R, map<int,expression_ref>& name
 string escape(const string& s)
 {
     string s2;
-    s2.resize(s.size()*2);
+    s2.resize(s.size()*5);
     int l=0;
     for(int i=0;i<s.size();i++)
     {
 	if (s[i] == '\n')
 	{
-	    s2[l++] = '\\';
-	    s2[l++] = 'n';
-	    continue;
+	    s2[l++] = '<';
+	    s2[l++] = 'b';
+	    s2[l++] = 'r';
+	    s2[l++] = '/';
+	    s2[l++] = '>';
 	}
-
-	bool escape_next = (s[i] == '\\') or (s[i] == '\n') or (s[i] == '"') or (s[i] == '<') or (s[i] == '>') or (s[i] == '{') or (s[i] == '}');
-
-	if (escape_next)
-	    s2[l++] = '\\';
-	s2[l++] = s[i];
+	else if (s[i] == '<')
+	{
+	    s2[l++] = '&';
+	    s2[l++] = 'l';
+	    s2[l++] = 't';
+	    s2[l++] = ';';
+	}
+	else if (s[i] == '>')
+	{
+	    s2[l++] = '&';
+	    s2[l++] = 'g';
+	    s2[l++] = 't';
+	    s2[l++] = ';';
+	}
+	else if (s[i] == '&')
+	{
+	    s2[l++] = '&';
+	    s2[l++] = 'a';
+	    s2[l++] = 'm';
+	    s2[l++] = 'p';
+	    s2[l++] = ';';
+	}
+	else if (s[i] == '"')
+	{
+	    s2[l++] = '&';
+	    s2[l++] = 'q';
+	    s2[l++] = 'u';
+	    s2[l++] = 'o';
+	    s2[l++] = 't';
+	    s2[l++] = ';';
+	}
+	else
+	    s2[l++] = s[i];
     }
     s2.resize(l);
     return s2;
@@ -391,7 +420,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	    if (not is_case(F) and not F.head().is_a<Apply>())
 	    {
 		print_record = true;
-		o<<"shape = record, ";
+		o<<"shape = plain, ";
 	    }
 	}
 
@@ -404,10 +433,9 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	vector<int> targets;
 	if (print_record)
 	{
-	    label = escape(label);
+	    label = "<table><tr><td>"+escape(label) + "</td>";
 
-	    label += " |";
-	    label += escape(F.head().print());
+	    label += "<td>"+escape(F.head().print())+"</td>";
 	    if (F.is_expression())
 		for(const expression_ref& E: F.sub())
 		{
@@ -425,8 +453,10 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 		    }
 		    else if (constants.count(R2))
 			reg_name = constants[R2] + " " + reg_name;
-		    label += "| <" + convertToString(R2) + "> " + escape(reg_name) + " ";
+
+		    label += "<td port=\"r" +convertToString(R2)+"\">" + escape(reg_name) + "</td>";
 		}
+	    label += "</tr></table>";
 	}
 	else if (F.type() == index_var_type)
 	{
@@ -434,13 +464,13 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 
 	    int R2 = C[R].lookup_in_env( index );
 
-	    string reg_name = "<" + convertToString(R2) + ">";
+	    string reg_name = "&lt;" + convertToString(R2) + "&gt;";
 	    if (reg_names.count(R2))
 	    {
 		reg_name = reg_names[R2];
 		auto loc = simplify.find(reg_name);
 		if (loc != simplify.end())
-		    reg_name = "<" + loc->second + ">";
+		    reg_name = "&lt;" + loc->second + "&gt;";
 	    }
 	    else if (constants.count(R2))
 		reg_name = constants[R2] + " " + reg_name;
@@ -461,7 +491,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	    label = escape(wrap(label,40));
 	}
 
-	o<<"label = \""<<label<<"\"";
+	o<<"label = <"<<label<<">";
 //	if (this is a gc root) // maybe call get_roots, and then make a set<int> of all the roots?
 //	    o<<",style=\"dashed,filled\",color=orange";
 	if (C.reg_is_changeable(R))
@@ -539,9 +569,9 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 
 	    string name2 = "n" + convertToString(R2);
 	    if (created_call)
-		o<<name<<" -> "<<name2;
+		o<<name<<":e -> "<<name2<<":w ";
 	    else
-		o<<name<<" -> "<<name2<<" ";
+		o<<name<<":e -> "<<name2<<" ";
 	    o<<"[";
 	    o<<"color=\"#007700\"";
 	    o<<"];";
