@@ -54,6 +54,7 @@ extern "C" {
 #include "util/permute.H"
 #include "util/rng.H"
 #include "util/io.H"
+#include "util/wrap.H"
 
 namespace po = boost::program_options;
 using po::variables_map;

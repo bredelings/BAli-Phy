@@ -4,6 +4,7 @@
 #include <optional>
 #include <string>
 #include <sstream>
+#include "util/myexception.H"
 
 std::string demangle(const std::string&);
 

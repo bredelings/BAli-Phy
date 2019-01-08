@@ -27,9 +27,10 @@
 #define BOUNDS_H
 
 #include <iostream>
-#include "util/util.H"
+#include "util/string_convert.H"
 #include <optional>
 #include "util/object.H"
+#include "util/wrap.H"
 
 template <typename T>
 struct Bounds: public Object

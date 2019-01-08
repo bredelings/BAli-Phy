@@ -1,11 +1,14 @@
 #include "AIS.H"
 
+extern int log_verbose;
+
 using std::vector;
 
 // AIS samples sequences of points x[n] ... x[0], where x[0] is from the cold chain.
 // * Each sequence then gets a weight.
 // * Its possible to weight subsequences x[n] ... x[i] also.
 // This yields weighted sample w(x[n]...x[i]) at level x[i], including i=0.
+
 
 void AIS_Sampler::sample_from_beta(double beta, owned_ptr<Model>& P, int n, MCMC::Sampler& S0)
 {

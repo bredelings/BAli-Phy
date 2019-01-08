@@ -1,6 +1,7 @@
 #include <set>
 #include "computation/module.H"
 #include "util/myexception.H"
+#include "util/util.H" // for flatten( ), split( ), join( )
 #include "program.H"
 #include "operations.H"
 #include "computation/machine/graph_register.H" // for graph_normalize( )

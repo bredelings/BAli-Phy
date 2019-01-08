@@ -1,5 +1,6 @@
 #include "A-T-model.H"
 #include "util/io.H"
+#include "util/util.H" // for split( ), find_index( ), join( ), bad_mapping
 #include "models/setup.H"
 #include "tree/tree-util.H" //extends
 #include "alignment/alignment-constraint.H"

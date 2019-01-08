@@ -9,6 +9,7 @@
 #include "computation/expression/parameter.H"
 #include "computation/expression/random_variable.H"
 #include "computation/expression/expression.H" // for launchbury_unnormalize( )
+#include "util/util.H" // for includes( )
 
 using std::string;
 using std::vector;

@@ -10,6 +10,9 @@
 #include "mcmc/logger.H"
 #include "substitution/parsimony.H"
 #include "models/parse.H"
+#include "util/util.H" // for find_index( ), join( )
+
+extern int log_verbose;
 
 using std::vector;
 using std::map;

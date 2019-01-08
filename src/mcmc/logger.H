@@ -40,6 +40,7 @@
 #include "util/io.H"
 #include "util/owned-ptr.H"
 #include "util/object.H"
+#include "util/util.H" // for join( )
 
 struct slice_function;
 

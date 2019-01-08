@@ -27,7 +27,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define M_PI 3.14159265358979323846
 #endif
 
-#include "util/util.H"
+#include "util/wrap.H"
+#include "util/util.H" // for sum( )
 
 using std::valarray;
 using std::vector;

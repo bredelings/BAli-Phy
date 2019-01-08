@@ -18,6 +18,7 @@
 #include "computation/expression/constructor.H"
 #include "desugar.H"
 #include "util/assert.hh"
+#include "util/util.H" // for reverse( )
 
 using std::string;
 using std::vector;

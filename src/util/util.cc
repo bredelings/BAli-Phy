@@ -31,6 +31,7 @@ using std::string;
 using std::pair;
 
 #include <iostream>
+#include <regex>
 using std::cerr;
 using std::endl;
 
@@ -573,3 +574,20 @@ bool ends_with(const std::string& s, const std::string& suffix)
     return s.substr(s.size()-suffix.size(), suffix.size()) == suffix;
 }
 
+vector<string>
+resplit(const string& s,const string& rgx_str)
+{
+    vector<string> elems;
+
+    std::regex rgx (rgx_str);
+
+    std::sregex_token_iterator iter(s.begin(), s.end(), rgx, -1);
+    std::sregex_token_iterator end;
+
+    while (iter != end)  {
+	elems.push_back(*iter);
+	++iter;
+    }
+
+    return elems;
+}

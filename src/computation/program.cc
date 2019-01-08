@@ -5,6 +5,7 @@
 #include "models/model.H"
 #include "expression/var.H"
 #include "util/assert.hh"
+#include "util/util.H" // for join( ), find_index( )
 
 using std::vector;
 using std::set;
