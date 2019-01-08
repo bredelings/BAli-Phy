@@ -318,6 +318,13 @@ vector<int> get_taxon_indices(const vector<string>& names,const string& lookup)
     return get_taxon_indices(names,lookup_v);
 }
 
+template<typename T, typename F>
+vector<T> select(vector<T> inVec, const F& predicate)
+{
+    vector<T> result;
+    copy_if(inVec.begin(), inVec.end(), back_inserter(result), std::function<bool(const T&)>(predicate));
+    return result;
+}
 
 int main(int argc,char* argv[])
 {
@@ -356,7 +363,10 @@ int main(int argc,char* argv[])
 
 	vector<string> protect;
 	if (args.count("protect"))
-	    protect = split(args["protect"].as<string>(),',');
+	{
+	    protect = resplit(args["protect"].as<string>(),R"([\n,])");
+	    protect = select(protect, [](auto& x){return not x.empty();});
+	}
 
 	for(int i=0;i<protect.size();i++)
 	{
