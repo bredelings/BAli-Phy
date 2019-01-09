@@ -29,6 +29,7 @@
 #include "util/string/convert.H"
 #include "util/io.H"
 #include "util/range.H"
+#include "util/cmdline.H"
 #include "sequence/sequence.H"
 #include "sequence/sequence-format.H"
 #include <boost/program_options.hpp>
@@ -493,17 +494,17 @@ int main(int argc,char* argv[])
 
 	vector<string> names;
 	if (args.count("taxa"))
-	    names = split(args["taxa"].as<string>(),',');
-	else if (args.count("reorder-by-tree"))
+	    names = get_string_list(args, "taxa");
+	else if (auto tree = get_arg<string>(args,"reorder-by-tree"))
 	{
 	    RootedSequenceTree RT;
-	    RT.read(args["reorder-by-tree"].as<string>());
+	    RT.read(*tree);
 	    bool use_root = args.count("use-root");
 	    names = get_names_from_tree(RT, use_root);
 	}
-	else if (args.count("reorder-by-alignment"))
+	else if (auto align = get_arg<string>(args, "reorder-by-alignment"))
 	{
-	    vector<sequence> sequences = load_file(args["reorder-by-alignment"].as<string>(), false);
+	    vector<sequence> sequences = load_file(*align, false);
 	    for(const auto& s: sequences)
 		names.push_back(s.name);
 	}

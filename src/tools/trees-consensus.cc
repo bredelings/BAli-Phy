@@ -33,6 +33,7 @@
 
 #include "tree/sequencetree.H"
 #include "util/string/split.H"
+#include "util/cmdline.H"
 #include "util/string/convert.H"
 #include "util/set.H"
 #include "util/range.H"
@@ -114,21 +115,16 @@ struct consensus_level_order
 };
 
 // FIXME - if n is small, first level may be ~ 0.57 -- good or bad?
-vector<pair<double, string> > get_consensus_levels(const string& s) 
+vector<pair<double, string> > get_consensus_levels(const vector<string>& levels)
 {
-    // split into comma-separate components
-    vector<string> levels;
-    if (s.size())
-	levels = split(s,',');
-
     vector<pair<double, string> > parsed_levels;
 
     // Split each component level>file into level (a double) and file (a string)
-    for(int i=0;i<levels.size();i++) 
+    for(auto& level: levels)
     {
-	if (not levels[i].size()) continue;
-	vector<string> parts = split(levels[i],':');
-	if (parts.size() > 2) throw myexception()<<"Consensus level '"<<levels[i]<<"' has too many files.";
+	if (not level.size()) continue;
+	vector<string> parts = split(level,':');
+	if (parts.size() > 2) throw myexception()<<"Consensus level '"<<level<<"' has too many files.";
 	if (parts.size() == 1) parts.push_back("-");
 
 	assert(parts.size() == 2);
@@ -483,14 +479,14 @@ struct count_more {
 /// \param N The total number of sampled trees
 void write_support_level_graph(variables_map& args, const vector<pair<partition,unsigned> >& all_partitions, unsigned N)
 {
-    if (!args.count("support-levels")) return;
-    const string filename = args["support-levels"].as<string>();
+    auto filename = get_arg<string>(args, "support-levels");
+    if (not filename) return;
 
     vector<unsigned> levels = get_Ml_levels(all_partitions, N, 0.5);
 
-    ofstream file(filename.c_str());
+    ofstream file(filename->c_str());
     if (!file)
-	throw myexception()<<"Couldn't open file '"<<filename<<"' for writing.";
+	throw myexception()<<"Couldn't open file '"<<*filename<<"' for writing.";
   
     for(int j=0;j<levels.size();j++) 
     {
@@ -981,15 +977,11 @@ int main(int argc,char* argv[])
 	bool show_sub = args.count("sub-partitions") or args.count("extended-consensus") or args.count("extended-consensus-L");
 
 	// consensus levels 
-	string c_levels = args.count("consensus") ? args["consensus"].as<string>() : "";
-	vector<pair<double,string> > consensus_levels = get_consensus_levels(c_levels);
-	string c_levels_pp = args.count("consensus-PP") ? args["consensus-PP"].as<string>() : "";
-	vector<pair<double,string> > consensus_levels_pp = get_consensus_levels(c_levels_pp);
-	string ec_levels = args.count("extended-consensus") ? args["extended-consensus"].as<string>() : "";
-	vector<pair<double,string> > extended_consensus_levels = get_consensus_levels(ec_levels);
-	string ecl_levels = args.count("extended-consensus-L") ? args["extended-consensus-L"].as<string>() : "";
-	vector<pair<double,string> > extended_consensus_L_levels = get_consensus_levels(ecl_levels);
-	string greedy_filename = args.count("greedy-consensus") ? args["greedy-consensus"].as<string>() : "";
+	vector<pair<double,string> > consensus_levels = get_consensus_levels( get_string_list(args, "consensus"));
+	vector<pair<double,string> > consensus_levels_pp = get_consensus_levels( get_string_list(args, "consensus-PP"));
+	vector<pair<double,string> > extended_consensus_levels = get_consensus_levels( get_string_list(args, "extended-consensus"));
+	vector<pair<double,string> > extended_consensus_L_levels = get_consensus_levels( get_string_list(args, "extended-consensus-L"));
+	auto greedy_filename = get_arg<string>(args, "greedy-consensus");
 
 	if (not args.count("consensus") 
 	    and not args.count("consensus-PP") 
@@ -1148,8 +1140,8 @@ int main(int argc,char* argv[])
 
 	write_consensus_trees(tree_dist, full_partitions, consensus_levels,false);
 	write_consensus_trees(tree_dist, full_partitions, consensus_levels_pp,true);
-	if (args.count("greedy-consensus"))
-	    write_greedy_consensus(tree_dist, full_partitions, greedy_filename, true);
+	if (greedy_filename)
+	    write_greedy_consensus(tree_dist, full_partitions, *greedy_filename, true);
 	write_extended_consensus_trees(tree_dist, all_partitions, extended_consensus_levels);
 	write_extended_consensus_trees_with_lengths(tree_dist, all_partitions, full_partitions, extended_consensus_L_levels);
     }

@@ -22,6 +22,7 @@
 #include "tree-dist.H"
 #include "tree/sequencetree.H"
 #include "util/string/split.H"
+#include "util/cmdline.H"
 #include "util/mapping.H"
 #include "tree/tree-util.H"
 #include "util/myexception.H"
@@ -120,9 +121,7 @@ int main(int argc,char* argv[])
 	}
 	else if (args.count("taxa"))
 	{
-	    string taxa = args["taxa"].as<string>();
-
-	    vector<string> taxon = split(taxa,',');
+	    vector<string> taxon = get_string_list(args, "taxa");
       
 	    if (taxon.size() != 3)
 		throw myexception()<<"You must supply exactly 3 taxa, but you supplied "<<taxon.size();

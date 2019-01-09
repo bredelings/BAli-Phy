@@ -135,7 +135,20 @@ vector<string> get_arguments(string& s,char begin, char end)
 
 vector<string> parse_string_list(const std::string& values_str)
 {
+    if (values_str.empty()) return {};
+
     auto values = resplit(values_str, R"([\n,])");
     values = select(values, [](auto& x){return not x.empty();});
     return values;
 }
+
+std::vector<std::string> get_string_list(const boost::program_options::variables_map& args, const std::string& key)
+{
+    if (auto str = get_arg<string>(args,key))
+    {
+	return parse_string_list(*str);
+    }
+    else
+	return {};
+}
+

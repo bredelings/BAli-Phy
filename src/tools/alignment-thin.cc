@@ -25,7 +25,6 @@
 #include "alignment/alignment-util.H"
 #include "alignment/load.H"
 #include "tree/tree-util.H"
-#include "util/string/split.H"
 #include "util/mapping.H"
 #include "util/range.H"
 #include "util/cmdline.H"
@@ -316,13 +315,6 @@ vector<int> get_taxon_indices(const vector<string>& names, const vector<string>&
     return indices;
 }
 
-vector<int> get_taxon_indices(const vector<string>& names,const string& lookup)
-{
-    vector<string> lookup_v = split(lookup,',');
-
-    return get_taxon_indices(names,lookup_v);
-}
-
 int main(int argc,char* argv[])
 {
     try {
@@ -358,9 +350,7 @@ int main(int argc,char* argv[])
 	// By default every sequence has status 1 which means, removeable, but not removed.
 	vector<int> keep(A.n_sequences(),1);
 
-	vector<string> protect;
-	if (args.count("protect"))
-	    protect = parse_string_list(args["protect"].as<string>());
+	vector<string> protect = get_string_list(args, "protect");
 
 	for(int i=0;i<protect.size();i++)
 	{
@@ -392,11 +382,7 @@ int main(int argc,char* argv[])
 
 	//-------------------- remove ------------------------//
 
-	vector<string> remove;
-	if (args.count("remove"))
-	    remove = split(args["remove"].as<string>(),',');
-
-	for(auto& r: remove)
+	for(auto& r: get_string_list(args, "remove"))
 	{
 	    if (auto r_index = find_index(names,r))
 	    {
@@ -475,7 +461,7 @@ int main(int argc,char* argv[])
 	
       
 	    // get the indices for the taxa to compare to
-	    vector<int> compare_to = get_taxon_indices(names, args["find-dups"].as<string>());
+	    vector<int> compare_to = get_taxon_indices(names, parse_string_list(args["find-dups"].as<string>()));
 
 	    // convert the indices to a mask
 	    vector<int> target(names.size(),0);

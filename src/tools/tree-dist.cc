@@ -22,8 +22,8 @@
 #include "util/io.H"
 #include "read-trees.H"
 #include "util/mapping.H"
-#include "util/string/split.H"
 #include "util/string/convert.H"
+#include "util/cmdline.H"
 #include "util/range.H"
 
 extern int log_verbose;
@@ -409,9 +409,7 @@ tree_sample read_trees(variables_map& args, const vector<string>& leaf_labels)
 	max = args["max"].as<int>();
 
     // leaf taxa to ignore
-    vector<string> ignore;
-    if (args.count("ignore") and args["ignore"].as<string>().size() > 0)
-	ignore = split(args["ignore"].as<string>(),',');
+    vector<string> ignore = get_string_list(args, "ignore");
     
     vector<string> files;
     if (args.count("files"))

@@ -25,7 +25,7 @@
 #include "tree/tree-util.H"
 #include "tree-dist.H"
 #include "util/myexception.H"
-#include "util/string/split.H"
+#include "util/cmdline.H"
 
 #include <boost/program_options.hpp>
 
@@ -347,12 +347,7 @@ int main(int argc,char* argv[])
 
 	int subsample = args["subsample"].as<int>();
 
-	vector<string> prune;
-	if (args.count("prune")) {
-	    string p = args["prune"].as<string>();
-	    prune = split(p,',');
-	}
-      
+	vector<string> prune = get_string_list(args, "prune");
 
 	//----------- Read the topology -----------//
 	SequenceTree Q = load_T(args);

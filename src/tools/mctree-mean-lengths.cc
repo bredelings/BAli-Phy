@@ -28,8 +28,8 @@
 #include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include "util/rng.H"
-#include "util/string/split.H"
 #include "util/myexception.H"
+#include "util/cmdline.H"
 
 extern int log_verbose;
 
@@ -330,11 +330,7 @@ int main(int argc,char* argv[])
 
 	int subsample = args["subsample"].as<int>();
 
-	vector<string> prune;
-	if (args.count("prune")) {
-	    string p = args["prune"].as<string>();
-	    prune = split(p,',');
-	}
+	vector<string> prune = get_string_list(args, "prune");
       
 	//----------- Read the topology -----------//
 	MC_tree Q = load_MC_tree(args["tree"].as<string>());

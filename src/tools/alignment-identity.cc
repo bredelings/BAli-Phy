@@ -26,7 +26,7 @@
 #include "util/myexception.H"
 #include "optimize.H"
 #include "findroot.H"
-#include "util/string/split.H"
+#include "util/cmdline.H"
 #include "util/string/join.H"
 #include "util/string/convert.H"
 #include "util/rng.H"
@@ -292,7 +292,7 @@ int main(int argc,char* argv[])
 	E.build_index();
 
 	//--------- Build alignment from list ---------//
-	vector<double> cutoffs = convertTo<double>(split(args["cutoff"].as<string>(),','));
+	vector<double> cutoffs = convertTo<double>(get_string_list(args, "cutoff"));
 	for(int i=0;i<cutoffs.size();i++)
 	    if (cutoffs[i] < 0.5) cutoffs[i] = 0.5;
 	double cutoff=cutoffs[0];

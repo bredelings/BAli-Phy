@@ -27,6 +27,7 @@
 #include "util/myexception.H"
 #include "util/assert.hh"
 #include "util/string/split.H"
+#include "util/cmdline.H"
 
 #include <boost/program_options.hpp>
 
@@ -160,12 +161,7 @@ int main(int argc,char* argv[])
 	//----------- Parse command line  ----------//
 	variables_map args = parse_cmd_line(argc,argv);
 
-	vector<string> prune;
-	if (args.count("prune")) {
-	    string p = args["prune"].as<string>();
-	    prune = split(p,',');
-	}
-      
+	vector<string> prune = get_string_list(args, "prune");
 
 	//----------- Read the topology -----------//
 	RootedSequenceTree T = load_T(args);
