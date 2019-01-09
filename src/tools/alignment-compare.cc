@@ -28,15 +28,19 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment/alignment.H"
 #include "optimize.H"
 #include "findroot.H"
-#include "util/util.H"
 #include "alignment/load.H"
 #include "alignment/alignment-util.H"
 #include "distance-methods.H"
-#include "util/rng.H"
 
 #include <boost/program_options.hpp>
+#include "util/mapping.H"
+#include "util/string/join.H"
+#include "util/rng.H"
 #include "util/io.H"
+#include "util/range.H"
 #include "util/assert.hh"
+
+extern int log_verbose;
 
 namespace po = boost::program_options;
 using po::variables_map;

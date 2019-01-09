@@ -79,7 +79,9 @@
 #include <vector>
 #include <boost/program_options.hpp>
 #include "models/setup.H"
-#include "util/util.H"
+#include "util/string/join.H"
+#include "util/set.H"
+#include "util/range.H"
 #include "util/myexception.H"
 #include "models/rules.H"
 #include "models/parse.H"
@@ -93,6 +95,8 @@
 #include "computation/expression/list.H"
 #include "computation/operations.H"
 #include "model.H"
+
+extern int log_verbose;
 
 using std::optional;
 using std::string;

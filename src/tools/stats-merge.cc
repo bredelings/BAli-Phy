@@ -25,7 +25,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <cmath>
 #include <fstream>
 
-#include "util/util.H"
+#include "util/string/split.H"
+#include "util/string/join.H"
 #include "statistics.H"
 #include "util/io.H"
 

@@ -27,10 +27,13 @@
 #include "tree-align/link.H"
 #include "alignment/alignment-util.H"
 #include "alignment/load.H"
-#include "util/util.H"
+#include "util/string/split.H"
+#include "util/mapping.H"
+#include "util/io.H"
+#include "util/range.H"
+#include "util/string/join.H"
 #include "parsimony.H"
 #include "tree-dist.H"
-#include "util/io.H"
 
 #include <boost/program_options.hpp>
 

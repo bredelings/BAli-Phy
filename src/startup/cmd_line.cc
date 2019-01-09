@@ -3,7 +3,7 @@
 #include <boost/algorithm/string.hpp>
 #include "startup/cmd_line.H"
 #include "startup/paths.H"
-#include "util/util.H"
+#include "util/string/join.H"
 #include "util/text.H"
 #include "util/io.H"
 #include "version.H"
@@ -11,6 +11,7 @@
 #include "models/parse.H"
 #include "help.hh"
 #include "util/ptree.H"
+#include "util/log-level.H"
 
 using std::string;
 using std::map;

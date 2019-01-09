@@ -30,7 +30,6 @@
 #include "partition.H"
 #include "tree/tree.H"
 #include "tree/sequencetree.H"
-#include "util/util.H"
 #include "util/io.H"
 
 /// The information we store about each topology

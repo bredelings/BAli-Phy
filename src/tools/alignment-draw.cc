@@ -24,9 +24,11 @@
 #include "alignment/alignment.H"
 #include "alignment/alignment-util.H"
 #include "alignment/load.H"
-#include "util/util.H"
-#include "colors.H"
+#include "util/string/split.H"
+#include "util/mapping.H"
 #include "util/io.H"
+#include "util/string/convert.H"
+#include "colors.H"
 
 #include <boost/program_options.hpp>
 
@@ -551,7 +553,7 @@ owned_ptr<ColorMap> get_base_color_map(vector<string>& string_stack,bool gaps_di
     else if (match(string_stack,"diff",arg))
     {
 	color_map = claim(new Plain_ColorMap);
-	vector<double> v = split<double>(arg,',');
+	vector<double> v = convertTo<double>(split(arg,','));
 	if (v.size() == 1)
 	    color_map = claim(new Diff_ColorMap((int)v[0], gaps_different));
 	else if (v.size() == 3)
@@ -564,7 +566,7 @@ owned_ptr<ColorMap> get_base_color_map(vector<string>& string_stack,bool gaps_di
 	double start = 0.666;
 	double end = 0;
 	if (arg != "") {
-	    vector<double> v = split<double>(arg,',');
+	    vector<double> v = convertTo<double>(split(arg,','));
 	    if (v.size() != 2)
 		throw myexception()<<"Rainbow: argument should be for the form [start,end]";
 	    start = v[0];
@@ -613,7 +615,7 @@ owned_ptr<ColorMap> get_color_map(const variables_map& args,bool gaps_different)
 	    if (arg == "")
 		color_map = whiten_colors(*color_map,0.2,0.3);
 	    else {
-		vector<double> min = split<double>(arg,',');
+		vector<double> min = convertTo<double>(split(arg,','));
 		if (min.size() == 1)
 		    color_map = whiten_colors(*color_map,0.2,min[0]);
 		else if (min.size() == 2)

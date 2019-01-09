@@ -25,6 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "tree/tree-util.H"
 #include "tree-dist.H"
 #include "util/myexception.H"
+#include "util/string/join.H"
 
 #include <boost/program_options.hpp>
 

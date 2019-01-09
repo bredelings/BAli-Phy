@@ -1,6 +1,5 @@
-#include <iostream>
 /*
-  Copyright (C) 2004-2009 Benjamin Redelings
+  Copyright (C) 2004-2009,2019 Benjamin Redelings
 
   This file is part of BAli-Phy.
 
@@ -18,13 +17,17 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
+#include <iostream>
 #include <algorithm>
 #include <map>
 #include <sstream>
 
 #include "util/myexception.H"
 #include "tree/tree.H"
-#include "util/util.H"
+#include "util/mapping.H"
+#include "util/string/split.H"
+#include "util/string/convert.H"
+#include "newick-tokenizer.H"
 
 using std::vector;
 using std::string;

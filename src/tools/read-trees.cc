@@ -21,6 +21,10 @@
 #include "read-trees.H"
 #include <fstream>
 #include "tree-dist.H"
+#include "util/string/strip.H"
+#include "util/string/pred.H"
+#include "util/set.H"
+#include "util/mapping.H"
 
 using std::vector;
 using std::valarray;

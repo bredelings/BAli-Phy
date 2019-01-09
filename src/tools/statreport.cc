@@ -25,15 +25,22 @@
 #include <string>
 #include "util/assert.hh"
 #include <vector>
+
 #include <cmath>
 
-#include "util/util.H"
+#include "util/string/split.H"
+#include "util/string/join.H"
+#include "util/string/convert.H"
+#include "util/index_value.H"
+
 #include "statistics.H"
 #include "stats-table.H"
 #include "math/log-double.H"
 
 #include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>
+
+extern int log_verbose;
 
 using namespace std;
 
@@ -320,7 +327,7 @@ void show_median(variables_map& args, const string& name, const vector<stats_tab
     using namespace statistics;
 
     // Print out median and confidence interval
-    vector<double> Ps = split<double>(args["confidence"].as<string>(),':');
+    vector<double> Ps = convertTo<double>(split(args["confidence"].as<string>(),':'));
     sort(Ps.begin(), Ps.end());
   
     bool HPD = (args["BCI"].as<string>() == "HPD");

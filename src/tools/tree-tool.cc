@@ -26,8 +26,11 @@
 #include "tree-dist.H"
 #include "util/myexception.H"
 #include "util/assert.hh"
+#include "util/string/split.H"
 
 #include <boost/program_options.hpp>
+
+extern int log_verbose;
 
 using boost::dynamic_bitset;
 

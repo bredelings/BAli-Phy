@@ -32,7 +32,10 @@
 #include <list>
 
 #include "tree/sequencetree.H"
-#include "util/util.H"
+#include "util/string/split.H"
+#include "util/string/convert.H"
+#include "util/set.H"
+#include "util/range.H"
 #include "statistics.H"
 #include "bootstrap.H"
 #include "tree-dist.H"
@@ -41,6 +44,8 @@
 #include "util/rng.H"
 
 #include <boost/program_options.hpp>
+
+extern int log_verbose;
 
 /// FIXME - construct a full tree by extending the moveable
 ///  a) randomly

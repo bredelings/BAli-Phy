@@ -20,7 +20,6 @@
 #include "util/rng.H"
 #include "sample.H"
 #include "mcmc.H"
-#include "util/util.H"
 #include "util/permute.H"
 #include "dp/5way.H"
 #include "substitution/substitution.H"

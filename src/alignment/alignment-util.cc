@@ -24,8 +24,9 @@
 ///
 
 #include "alignment-util.H"
-#include "util/util.H"
+#include "util/set.H"
 #include "util/io.H"
+#include "util/range.H"
 
 using std::string;
 using std::vector;

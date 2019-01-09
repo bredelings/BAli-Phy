@@ -28,7 +28,7 @@
 #include "util/assert.hh"
 #include "sample.H"
 #include "probability/choose.H"
-#include "util/util.H"
+#include "util/mapping.H"
 #include "util/rng.H"
 #include "dp/5way.H"
 #include "dp/alignment-sums.H"

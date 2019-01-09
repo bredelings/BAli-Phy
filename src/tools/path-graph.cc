@@ -24,7 +24,7 @@
 #include "util/myexception.H"
 #include "alignment/alignment.H"
 #include "alignment/load.H"
-#include "util/util.H"
+#include "util/string/split.H"
 #include <boost/program_options.hpp>
 
 namespace po = boost::program_options;

@@ -30,11 +30,14 @@
 #include <boost/filesystem/operations.hpp>
 
 #include "link-partitions.H"
-#include "util/util.H"
+#include "util/mapping.H"
 #include "sequence/alphabet.H"
 #include "alignment/alignment-util.H"
 #include "tree/tree-util.H"
 #include "util/io.H"
+#include "util/set.H"
+#include "util/string/split.H"
+#include "util/string/convert.H"
 
 using std::ifstream;
 using std::string;
@@ -72,13 +75,13 @@ string parse_partitions_and_model(string s, vector<int>& partitions, int n, bool
 	}
 	else
 	{
-	    partitions = split<int>(s,',');
+	    partitions = convertTo<int>(split(s,','));
 	    value = "";
 	}
     }
     else
     {
-	partitions = split<int>(s.substr(0,colon),',');
+	partitions = convertTo<int>(split(s.substr(0,colon),','));
 	value = s.substr(colon+1);
     }
 

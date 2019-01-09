@@ -24,11 +24,14 @@
 #include "tree/sequencetree.H"
 #include "tree/tree-util.H"
 #include "tree-dist.H"
-#include "util/myexception.H"
 #include "mctree.H"
 #include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include "util/rng.H"
+#include "util/string/split.H"
+#include "util/myexception.H"
+
+extern int log_verbose;
 
 namespace po = boost::program_options;
 using po::variables_map;

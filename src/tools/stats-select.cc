@@ -24,9 +24,9 @@
 #include <valarray>
 #include <cmath>
 
-#include "util/util.H"
 #include "statistics.H"
 #include "stats-table.H"
+#include "util/string/split.H"
 
 #include <boost/program_options.hpp>
 #include "util/owned-ptr.H"

@@ -1,6 +1,6 @@
 #include <iostream>
 #include <algorithm>
-#include "util/util.H"
+#include "util/truncate.H"
 #include "graph_register.H"
 #include "computation/expression/var.H"
 #include "computation/expression/random_variable.H"

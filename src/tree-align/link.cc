@@ -4,7 +4,8 @@
 #include <string>
 
 #include "alignment/alignment-util.H"
-#include "util/util.H"
+#include "util/mapping.H"
+#include "util/string/convert.H"
 
 using std::vector;
 using std::string;

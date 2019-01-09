@@ -1,11 +1,12 @@
 #include "computation/program.H"
 #include "computation/module.H"
-#include "util/myexception.H"
 #include "computation/loader.H"
 #include "models/model.H"
 #include "expression/var.H"
+#include "util/myexception.H"
 #include "util/assert.hh"
-#include "util/util.H" // for join( ), find_index( )
+#include "util/string/join.H"
+#include "util/mapping.H"
 
 using std::vector;
 using std::set;

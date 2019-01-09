@@ -23,7 +23,6 @@
 #include <list>
 #include <valarray>
 #include "boost/tuple/tuple.hpp"
-#include "util/util.H"
 #include "inverse.H"
 
 using std::list;

@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include "computation/machine/args.H"
 #include "util/io.H"
-#include "util/util.H" // for split
+#include "util/string/split.H"
 
 using std::string;
 using std::vector;

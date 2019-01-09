@@ -10,7 +10,8 @@
 #include "mcmc/logger.H"
 #include "substitution/parsimony.H"
 #include "models/parse.H"
-#include "util/util.H" // for find_index( ), join( )
+#include "util/mapping.H"
+#include "util/string/join.H"
 
 extern int log_verbose;
 

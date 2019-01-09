@@ -24,7 +24,7 @@
 #include <string>
 #include <iostream>
 #include <boost/lexical_cast.hpp>
-#include "util/util.H"
+#include "util/mapping.H"
 #include "util/io.H"
 
 template <typename T>

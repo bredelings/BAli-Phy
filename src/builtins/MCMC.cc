@@ -3,7 +3,6 @@
 #include "util/myexception.H"
 #include "computation/machine/graph_register.H"
 #include "util/rng.H"
-#include "util/util.H"
 #include "probability/choose.H"
 #include "computation/expression/constructor.H"
 

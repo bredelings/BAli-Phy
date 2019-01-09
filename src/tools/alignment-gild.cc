@@ -30,11 +30,14 @@
 #include "tree-align/link.H"
 #include "optimize.H"
 #include "findroot.H"
-#include "util/util.H"
+#include "util/mapping.H"
+#include "util/range.H"
 #include "distance-methods.H"
 
 #include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>
+
+extern int log_verbose;
 
 namespace po = boost::program_options;
 using std::vector;

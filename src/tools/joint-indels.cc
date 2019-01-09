@@ -24,13 +24,15 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util/myexception.H"
 #include "alignment/alignment.H"
 
-#include "util/util.H"
+#include "util/string/split.H"
 
 #include "alignment/alignment-util.H"
 #include "distance-methods.H"
 #include "joint-A-T.H"
 #include "partition.H"
 #include "dp/A2_states.H"
+
+extern int log_verbose;
 
 using std::cin;
 using std::cout;

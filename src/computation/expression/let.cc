@@ -7,7 +7,7 @@
 #include "AST_node.H"
 #include "constructor.H"
 #include "computation/operations.H"
-#include "util/util.H" // for reverse( )
+#include "util/range.H" // for reverse( )
 
 using std::vector;
 using std::set;

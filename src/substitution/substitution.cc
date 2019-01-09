@@ -21,10 +21,11 @@
 #include "models/parameters.H"
 #include "sequence/alphabet.H"
 #include "util/rng.H"
+#include "util/range.H"
 #include <cmath>
 #include <valarray>
 #include <vector>
-#include "util/util.H"
+#include "util/set.H"
 #include "math/logprod.H"
 #include "dp/hmm.H"
 #include <boost/dynamic_bitset.hpp>

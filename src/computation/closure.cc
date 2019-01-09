@@ -3,7 +3,7 @@
 #include "computation/expression/reg_var.H"
 #include "computation/expression/indexify.H"
 #include "computation/expression/trim.H"
-#include "util/util.H" // for join( )
+#include "util/string/join.H" // for join( )
 
 using std::vector;
 using std::string;

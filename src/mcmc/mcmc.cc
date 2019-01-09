@@ -35,8 +35,9 @@
 #include "sample.H"
 #include "util/myexception.H"
 #include "util/rng.H"
-#include "util/util.H"
+#include "util/range.H"
 #include "util/permute.H"
+#include "util/string/split.H"
 
 #include "proposals.H"
 #include "alignment/alignment-util.H"
@@ -54,6 +55,8 @@
 #include <boost/mpi.hpp>
 namespace mpi = boost::mpi;
 #endif
+
+extern int log_verbose;
 
 using std::endl;
 

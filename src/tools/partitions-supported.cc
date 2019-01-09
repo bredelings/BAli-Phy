@@ -36,10 +36,11 @@
 #include <boost/program_options.hpp>
 
 #include "tree/sequencetree.H"
-#include "util/util.H"
+#include "util/set.H"
 #include "statistics.H"
 #include "tree-dist.H"
 
+extern int log_verbose;
 
 namespace po = boost::program_options;
 using po::variables_map;

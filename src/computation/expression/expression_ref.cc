@@ -1,6 +1,6 @@
 // #define DEBUG_OPTIMIZE
 
-#include "util/util.H"
+#include "util/string/join.H"
 #include "expression_ref.H"
 #include "lambda.H"
 #include "apply.H"

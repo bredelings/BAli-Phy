@@ -30,6 +30,8 @@
 #include "tree-dist.H"
 #include "tree/tree-util.H"
 #include "statistics.H"
+#include "util/string/join.H"
+#include "util/string/convert.H"
 
 #include <boost/program_options.hpp>
 

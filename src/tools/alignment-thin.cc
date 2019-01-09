@@ -25,10 +25,15 @@
 #include "alignment/alignment-util.H"
 #include "alignment/load.H"
 #include "tree/tree-util.H"
-#include "util/util.H"
+#include "util/string/split.H"
+#include "util/mapping.H"
+#include "util/range.H"
+#include "util/cmdline.H"
 #include "distance-methods.H"
 #include <utility>
 #include "alignment/index-matrix.H"
+
+extern int log_verbose;
 
 using std::pair;
 using std::vector;
@@ -318,14 +323,6 @@ vector<int> get_taxon_indices(const vector<string>& names,const string& lookup)
     return get_taxon_indices(names,lookup_v);
 }
 
-template<typename T, typename F>
-vector<T> select(vector<T> inVec, const F& predicate)
-{
-    vector<T> result;
-    copy_if(inVec.begin(), inVec.end(), back_inserter(result), std::function<bool(const T&)>(predicate));
-    return result;
-}
-
 int main(int argc,char* argv[])
 {
     try {
@@ -363,10 +360,7 @@ int main(int argc,char* argv[])
 
 	vector<string> protect;
 	if (args.count("protect"))
-	{
-	    protect = resplit(args["protect"].as<string>(),R"([\n,])");
-	    protect = select(protect, [](auto& x){return not x.empty();});
-	}
+	    protect = parse_string_list(args["protect"].as<string>());
 
 	for(int i=0;i<protect.size();i++)
 	{

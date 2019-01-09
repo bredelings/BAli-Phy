@@ -4,7 +4,8 @@
 #include "models/parse.H"
 #include "models/model.H"
 #include "util/myexception.H"
-#include "util/util.H"
+#include "util/string/join.H"
+#include "util/range.H" // for reverse( )
 #include "rules.H"
 #include "setup.H"
 

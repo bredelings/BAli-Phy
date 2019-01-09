@@ -19,7 +19,8 @@
 
 #include "index-matrix.H"
 #include "alignment/alignment-util.H"
-#include "util/util.H"
+#include "util/mapping.H"
+#include "util/range.H"
 
 using namespace std;
 

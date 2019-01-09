@@ -287,7 +287,6 @@ extern "C" closure builtin_function_CRP_density(OperationArgs& Args)
 }
 
 #include "probability/choose.H"
-#include "util/util.H"
 
 extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
 {

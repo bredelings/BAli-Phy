@@ -45,13 +45,21 @@
 #include <list>
 
 #include "tree/sequencetree.H"
-#include "util/util.H"
+#include "util/string/join.H"
+#include "util/string/convert.H"
+#include "util/set.H"
+#include "util/range.H"
+#include "util/mapping.H"
+#include "util/log-level.H"
+#include "util/index_value.H"
 #include "statistics.H"
 #include "bootstrap.H"
 #include "tree-dist.H"
 #include "consensus-tree.H"
 
 #include <boost/program_options.hpp>
+
+extern int log_Verbose;
 
 namespace po = boost::program_options;
 using po::variables_map;

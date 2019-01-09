@@ -25,13 +25,12 @@
 #include <list>
 #include <numeric>
 #include "util/myexception.H"
+#include "util/log-level.H"
 #include "optimize.H"
 #include "findroot.H"
-#include "util/util.H"
 #include "alignment/alignment-util.H"
 #include "alignment/load.H"
 #include "distance-methods.H"
-#include "util/rng.H"
 #include "statistics.H"
 
 
@@ -71,7 +70,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     all.add_options()
         ("help,h", "produce help message")
         ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
-        ("seed", value<unsigned long>(),"random seed")
         ("skip",value<unsigned>()->default_value(0),"number of tree samples to skip")
         ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
         ("strict",value<double>(),"ignore events below this probability")
@@ -102,17 +100,6 @@ int main(int argc,char* argv[])
         //---------- Parse command line  -------//
         variables_map args = parse_cmd_line(argc,argv);
 
-        //---------- Initialize random seed -----------//
-        unsigned long seed = 0;
-        if (args.count("seed")) {
-            seed = args["seed"].as<unsigned long>();
-            myrand_init(seed);
-        }
-        else
-            seed = myrand_init();
-        if (log_verbose)
-            cerr<<"alignment-consensus: random seed = "<<seed<<endl<<endl;
-    
         //------------ Load alignment and tree ----------//
         vector<alignment> alignments;
         vector<matrix<int> > Ms;

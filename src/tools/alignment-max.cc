@@ -27,12 +27,12 @@
 #include "util/myexception.H"
 #include "optimize.H"
 #include "findroot.H"
-#include "util/util.H"
 #include "alignment/alignment-util.H"
 #include "alignment/load.H"
 #include "distance-methods.H"
 #include "util/rng.H"
 #include "statistics.H"
+#include "util/log-level.H"
 
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>

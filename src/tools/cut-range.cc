@@ -22,8 +22,9 @@
 #include <string>
 #include <sstream>
 #include <iostream>
-#include "util/util.H"
+#include "util/string/convert.H"
 #include "util/io.H"
+#include "util/log-level.H"
 
 #include <boost/program_options.hpp>
 

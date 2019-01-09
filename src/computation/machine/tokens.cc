@@ -1,7 +1,7 @@
 #include <iostream>
 #include "graph_register.H"
 #include "util/assert.hh"
-#include "util/util.H" // for remove_element( )
+#include "util/range.H" // for remove_element( )
 
 using std::vector;
 using std::pair;

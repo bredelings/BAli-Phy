@@ -1,4 +1,5 @@
 #include <iostream>
+#include "util/range.H" // for reverse( )
 #include <unordered_map>
 #include "computation/operations.H"
 #include "computation/loader.H"
@@ -15,7 +16,6 @@
 #include "let-float.H"
 #include "occurrence.H"
 #include "inliner.H"
-#include "util/util.H" // for reverse( )
 
 #include "simplifier.H"
 #include "util/assert.hh"

@@ -1,6 +1,10 @@
 #include "A-T-model.H"
 #include "util/io.H"
-#include "util/util.H" // for split( ), find_index( ), join( ), bad_mapping
+#include "util/string/split.H"
+#include "util/string/join.H"
+#include "util/string/convert.H"
+#include "util/io/optional.H"
+#include "util/mapping.H"
 #include "models/setup.H"
 #include "tree/tree-util.H" //extends
 #include "alignment/alignment-constraint.H"
@@ -15,6 +19,8 @@
 #include <boost/filesystem/operations.hpp>
 #include "sequence/sequence-format.H"
 #include "tree-align/link.H"
+
+extern int log_verbose;
 
 namespace fs = boost::filesystem;
 
@@ -98,7 +104,7 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
 
 	vector<double> beta = get_geometric_heating_levels(beta_s);
 	if (not beta.size())
-	    beta = split<double>(beta_s,',');
+	    beta = convertTo<double>(split(beta_s,','));
 
 	P.PC->all_betas = beta;
 
@@ -115,7 +121,7 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
     if (args.count("dbeta")) {
 	vector<string> deltas = split(args["dbeta"].as<string>(),',');
 	for(int i=0;i<deltas.size();i++) {
-	    vector<double> D = split<double>(deltas[i],'*');
+	    vector<double> D = convertTo<double>(split(deltas[i],'*'));
 	    if (D.size() != 2)
 		throw myexception()<<"Couldn't parse beta increment '"<<deltas[i]<<"'";
 	    int D1 = (int)D[0];
@@ -770,7 +776,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     vector<int> likelihood_calculators(A.size(), 0);
     if (args.count("likelihood-calculators"))
     {
-	likelihood_calculators = split<int>(args["likelihood-calculators"].as<string>(), ",");
+	likelihood_calculators = convertTo<int>(split(args["likelihood-calculators"].as<string>(), ","));
 	if (likelihood_calculators.size() == 1)
 	    likelihood_calculators = vector<int>(A.size(), likelihood_calculators[0]);
 	if (likelihood_calculators.size() != A.size())

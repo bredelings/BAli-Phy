@@ -1,5 +1,8 @@
+#include <optional>
+#include <algorithm>
 #include "text.H"
-#include "util/util.H"
+#include "util/assert.hh"
+#include "util/string/join.H"
 
 using std::string;
 using std::vector;

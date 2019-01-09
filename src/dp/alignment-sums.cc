@@ -25,8 +25,10 @@
 
 #include "alignment-sums.H"
 #include "substitution/substitution.H"
-#include "util/util.H"
+#include "util/set.H"
 #include "dp/2way.H"
+
+extern int log_verbose;
 
 using boost::dynamic_bitset;
 using std::vector;

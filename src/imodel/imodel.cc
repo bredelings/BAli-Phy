@@ -28,7 +28,8 @@
 #include "util/rng.H"
 #include "util/myexception.H"
 #include "probability/probability.H"
-#include "util/util.H"
+#include "util/mapping.H"
+#include "util/range.H"
 #include "dp/2way.H"
 
 using std::vector;

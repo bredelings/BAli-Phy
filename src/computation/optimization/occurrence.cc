@@ -14,7 +14,9 @@
 #include "computation/expression/expression.H" // for is_reglike( )
 #include "let-float.H"
 #include "occurrence.H"
-#include "util/util.H" // for argmin( ), flatten( ), apply_indices( )
+
+#include "util/range.H"
+#include "util/mapping.H"
 
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>

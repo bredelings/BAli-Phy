@@ -27,7 +27,7 @@
 #define BOUNDS_H
 
 #include <iostream>
-#include "util/string_convert.H"
+#include "util/string/convert.H"
 #include <optional>
 #include "util/object.H"
 #include "util/wrap.H"

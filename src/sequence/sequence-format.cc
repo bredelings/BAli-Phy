@@ -19,8 +19,9 @@
 
 #include <fstream>
 #include "sequence-format.H"
-#include "util/util.H"
+#include "util/string/strip.H" // for strip
 #include "util/io.H"
+#include "util/myexception.H"
 
 using namespace std;
 

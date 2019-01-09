@@ -19,6 +19,11 @@
 
 #include "mctree.H"
 #include "util/rng.H"
+#include "util/range.H"
+#include "util/string/join.H" 
+#include "util/string/convert.H"
+
+extern int log_verbose;
 
 using std::vector;
 using std::string;

@@ -26,13 +26,17 @@
 #include "util/myexception.H"
 #include "optimize.H"
 #include "findroot.H"
-#include "util/util.H"
-#include "alignment/alignment-util.H"
-#include "distance-methods.H"
+#include "util/string/split.H"
+#include "util/string/join.H"
+#include "util/string/convert.H"
 #include "util/rng.H"
+#include "util/range.H"
+#include "distance-methods.H"
 #include "alignment/alignment-util.H"
 #include "alignment/load.H"
 #include "statistics.H"
+
+extern int log_verbose;
 
 #include <boost/program_options.hpp>
 
@@ -288,7 +292,7 @@ int main(int argc,char* argv[])
 	E.build_index();
 
 	//--------- Build alignment from list ---------//
-	vector<double> cutoffs = split<double>(args["cutoff"].as<string>(),',');
+	vector<double> cutoffs = convertTo<double>(split(args["cutoff"].as<string>(),','));
 	for(int i=0;i<cutoffs.size();i++)
 	    if (cutoffs[i] < 0.5) cutoffs[i] = 0.5;
 	double cutoff=cutoffs[0];

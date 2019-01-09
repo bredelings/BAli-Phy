@@ -18,7 +18,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "colors.H"
-#include "util/util.H"
+#include "util/assert.hh"
+#include "util/range.H"
+#include "util/string/convert.H"
 #include <iostream>
 
 namespace colors {

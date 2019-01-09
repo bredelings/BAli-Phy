@@ -1,4 +1,6 @@
 #include "startup/system.H"
+#include "util/string/convert.H"
+#include "util/log-level.H"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -13,7 +15,6 @@ extern "C" {
 #include <string>
 #include <signal.h>
 
-#include "util/util.H"
 
 using std::cerr;
 using std::cout;

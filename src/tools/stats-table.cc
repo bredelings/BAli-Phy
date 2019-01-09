@@ -20,9 +20,10 @@
 #include <fstream>
 
 #include "stats-table.H"
-#include "util/util.H"
 #include "util/myexception.H"
 #include "util/io.H"
+#include "util/string/split.H"
+#include "util/string/convert.H"
 
 #include <boost/dynamic_bitset.hpp>
 

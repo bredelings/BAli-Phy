@@ -29,12 +29,13 @@
 #include "tree/tree-util.H"
 #include "tree-align/link.H"
 
-#include "util/util.H"
 #include "findroot.H"
 #include "parsimony.H"
 #include "statistics.H"
 #include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>
+
+#include "util/string/join.H"
 
 using std::vector;
 using std::valarray;

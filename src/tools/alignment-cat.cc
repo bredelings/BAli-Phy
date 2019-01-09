@@ -23,12 +23,18 @@
 #include <regex>
 #include "alignment/alignment.H"
 #include "alignment/alignment-util.H"
-#include "util/util.H"
+#include "util/set.H"
+#include "util/mapping.H"
+#include "util/string/split.H"
+#include "util/string/convert.H"
+#include "util/io.H"
+#include "util/range.H"
 #include "sequence/sequence.H"
 #include "sequence/sequence-format.H"
 #include <boost/program_options.hpp>
-#include "util/io.H"
 #include "findroot.H"
+
+extern int log_verbose;
 
 using namespace sequence_format;
 namespace po = boost::program_options;
@@ -466,7 +472,7 @@ vector<pair<int,int>> read_pairs(const string& filename, int first = 0)
 	{
 	    if (not pair_string.empty())
 	    {
-		auto pieces = split<int>(pair_string,':');
+		auto pieces = convertTo<int>(split(pair_string,':'));
 		if (pieces.size() != 2)
 		    throw myexception()<<"Malformed pair '"<<pair_string<<"'";
 		pairs.push_back({pieces[0] - first,pieces[1] - first});

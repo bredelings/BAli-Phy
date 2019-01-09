@@ -4,7 +4,7 @@
 #include "computation/expression/constructor.H"
 #include "computation/expression/bool.H"
 #include "vector_from_list.H"
-#include "util/string_convert.H"
+#include "util/string/convert.H"
 
 using boost::dynamic_pointer_cast;
 using std::string;

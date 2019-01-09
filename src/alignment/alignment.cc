@@ -22,8 +22,10 @@
 #include "alignment.H"
 #include "load.H"
 #include "util/myexception.H"
-#include "util/util.H"
+#include "util/mapping.H"
 #include "util/rng.H"
+#include "util/range.H"
+#include "util/string/convert.H"
 
 using std::string;
 using std::vector;

@@ -29,13 +29,17 @@
 #include "statistics.H"
 
 #include "tree/sequencetree.H"
-#include "util/util.H"
+#include "util/string/join.H"
+#include "util/string/convert.H"
+#include "util/cmdline.H"
 #include "tree/tree-util.H"
 #include "tree-dist.H"
 #include "util/rng.H"
 
 #include <boost/program_options.hpp>
 #include "distance-report.H"
+
+extern int log_verbose;
 
 namespace po = boost::program_options;
 using po::variables_map;

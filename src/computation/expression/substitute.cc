@@ -4,7 +4,7 @@
 #include "case.H"
 #include "var.H"
 #include "lambda.H"
-#include "util/util.H" // for insersection( ) and add( )
+#include "util/set.H" // for insersection( ) and add( )
 
 using std::vector;
 using std::string;

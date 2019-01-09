@@ -23,8 +23,12 @@
 #include "computation/expression/bool.H"
 #include "computation/expression/constructor.H"
 #include "util/rng.H"
-#include "util/util.H"
+#include "util/mapping.H"
+#include "util/range.H"
+#include "util/set.H"
 #include "dp/dp-matrix.H"
+
+extern int log_verbose;
 
 using std::valarray;
 using std::vector;

@@ -27,14 +27,20 @@
 #include "alignment/alignment.H"
 #include "optimize.H"
 #include "findroot.H"
-#include "util/util.H"
 #include "alignment/alignment-util.H"
 #include "alignment/load.H"
 #include "distance-methods.H"
 #include "distance-report.H"
+
 #include "util/io.H"
+#include "util/string/split.H"
+#include "util/string/join.H"
+#include "util/cmdline.H"
+#include "util/range.H"
 
 #include <boost/program_options.hpp>
+
+extern int log_verbose;
 
 namespace po = boost::program_options;
 using po::variables_map;

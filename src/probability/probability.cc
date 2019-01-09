@@ -28,7 +28,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #endif
 
 #include "util/wrap.H"
-#include "util/util.H" // for sum( )
+#include "util/range.H"
 
 using std::valarray;
 using std::vector;

@@ -20,7 +20,6 @@
 #include <iostream>
 #include <map>
 #include <list>
-#include "util/util.H"
 #include "tree/tree-util.H"
 #include "util/myexception.H"
 #include "util/io.H"

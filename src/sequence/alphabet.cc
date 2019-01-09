@@ -20,8 +20,11 @@
 #include "alphabet.H"
 #include "util/assert.hh"
 #include <fstream>
-#include "util/util.H"
+#include "util/set.H"
 #include "util/io.H"
+#include "util/string/convert.H"
+#include "util/cmdline.H"
+#include "util/string/sanitize.H" // for sanitize_string( )
 
 using std::vector;
 using std::string;

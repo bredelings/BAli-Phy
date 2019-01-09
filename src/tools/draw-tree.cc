@@ -50,11 +50,18 @@ extern "C" {
 #include "util/myexception.H"
 #include "tree/sequencetree.H"
 #include "mctree.H"
-#include "util/util.H"
+#include "util/mapping.H"
+#include "util/string/join.H"
+#include "util/string/convert.H"
+#include "util/string/split.H"
 #include "util/permute.H"
 #include "util/rng.H"
 #include "util/io.H"
+#include "util/set.H"
 #include "util/wrap.H"
+#include "util/range.H"
+
+extern int log_verbose;
 
 namespace po = boost::program_options;
 using po::variables_map;

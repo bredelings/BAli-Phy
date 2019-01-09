@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#include "util/util.H"
+#include "util/range.H"
 #include "parsimony.H"
 #include "substitution/parsimony.H"
 using namespace std;

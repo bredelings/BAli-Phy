@@ -1,9 +1,10 @@
 #include "alignment/load.H"
 
 #include "alignment-util.H"
-#include "util/util.H"
 #include "util/io.H"
+#include "util/mapping.H"
 
+extern int log_verbose;
 
 using std::istream;
 using std::vector;

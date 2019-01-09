@@ -25,7 +25,11 @@
 #include "alignment/alignment-constraint.H"
 #include "alignment/alignment-util.H"
 #include "tree/tree-util.H"
-#include "util/util.H"
+#include "util/string/split.H"
+#include "util/string/convert.H"
+#include "util/mapping.H"
+#include "util/range.H"
+#include "util/set.H"
 #include "util/io.H"
 
 using std::string;

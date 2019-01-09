@@ -1,7 +1,7 @@
 #include "tree/tree.H"
 #include "TreeInterface.H"
 #include "models/parameters.H"
-#include "util/util.H" // for remove_element( )
+#include "util/range.H"
 
 using std::vector;
 using std::string;

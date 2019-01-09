@@ -4,9 +4,9 @@
 #include <set>
 #include "rules.H"
 #include "util/myexception.H"
-#include "util/util.H"
 #include <iostream>
 #include "setup.H"
+#include "util/set.H"
 
 using std::vector;
 using std::set;

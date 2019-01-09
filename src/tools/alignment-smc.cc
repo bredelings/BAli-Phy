@@ -25,7 +25,8 @@
 #include "alignment/alignment.H"
 #include "alignment/load.H"
 #include "alignment/alignment-util.H"
-#include "util/util.H"
+#include "util/string/split.H"
+#include "util/string/join.H"
 #include "findroot.H"
 #include "parsimony.H"
 #include "statistics.H"
@@ -33,6 +34,8 @@
 #include <boost/dynamic_bitset.hpp>
 #include "util/assert.hh"
 #include "util/io.H"
+#include "util/string/convert.H"
+#include "util/string/pred.H"
 
 using std::vector;
 using std::valarray;
@@ -94,7 +97,7 @@ vector<vector<pair<int,int>>> read_intervals_file(const string& filename)
 	    masks.push_back({});
 	else
 	{
-	    auto x = split<int>(line," - ");
+	    auto x = convertTo<int>(split(line," - "));
 	    assert(x.size() == 2);
 	    masks.back().push_back({x[0],x[1]});
 	}

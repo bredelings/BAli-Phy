@@ -32,7 +32,9 @@
 
 #include "mcmc.H"
 #include "logger.H"
-#include "util/util.H"
+#include "util/range.H"
+#include "util/mapping.H"
+#include "util/string/join.H"
 
 #include "substitution/substitution.H"    // for get_model_probabilitiesby_alignment_column( )
 

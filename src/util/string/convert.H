@@ -1,6 +1,7 @@
 #ifndef STRING_CONVERT_H
 #define STRING_CONVERT_H
 
+#include <vector>
 #include <optional>
 #include <string>
 #include <sstream>

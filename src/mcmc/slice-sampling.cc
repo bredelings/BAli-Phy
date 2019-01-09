@@ -28,6 +28,8 @@
 #include "probability/choose.H"
 #include "util/assert.hh"
 
+extern int log_verbose;
+
 using std::vector;
 
 namespace slice_sampling {

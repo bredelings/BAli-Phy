@@ -21,6 +21,12 @@
 #include "tree-dist.H"
 #include "util/io.H"
 #include "read-trees.H"
+#include "util/mapping.H"
+#include "util/string/split.H"
+#include "util/string/convert.H"
+#include "util/range.H"
+
+extern int log_verbose;
 
 using std::vector;
 using std::valarray;

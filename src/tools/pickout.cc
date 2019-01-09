@@ -22,7 +22,7 @@
 #include <vector>
 #include "util/assert.hh"
 #include "util/myexception.H"
-#include "util/util.H"
+#include "util/string/join.H"
 #include "util/io.H"
 
 #include <boost/program_options.hpp>

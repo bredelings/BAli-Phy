@@ -29,10 +29,10 @@
 
 #include "models/parameters.H"
 #include "util/rng.H"
+#include "util/log-level.H"
 #include "substitution/substitution.H"
 #include "alignment/alignment-util.H"
 #include "alignment/alignment-util2.H"
-#include "util/util.H"
 #include "mcmc/proposals.H"
 #include "probability/probability.H"
 #include "computation/expression/lambda.H"
@@ -1568,6 +1568,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     :Parameters(L, A, t, SMs, s_mapping, vector<model_t>{}, vector<optional<int>>{}, scaleMs, scale_mapping, branch_length_model, like_calcs, k)
 { }
 
+// FIXME - move to .. model.cc? mcmc?
 bool accept_MH(const Model& P1,const Model& P2,log_double_t rho)
 {
     if (log_verbose >= 3)

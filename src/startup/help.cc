@@ -7,8 +7,11 @@
 #include <boost/algorithm/string.hpp>
 #include "startup/cmd_line.H"
 #include "startup/paths.H"
-#include "util/util.H"
+#include "util/string/join.H"
+#include "util/string/split.H"
+#include "util/string/pred.H"
 #include "util/io.H"
+#include "util/io/optional.H"
 #include "version.H"
 #include "models/rules.H"
 #include "models/parse.H"

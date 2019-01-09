@@ -7,7 +7,7 @@
 #include "util/io.H"
 #include <valarray>
 #include "dp/2way.H"
-#include "util/util.H" // for sum( ) and normalize( )
+#include "util/range.H"
 
 using std::vector;
 using std::istringstream;

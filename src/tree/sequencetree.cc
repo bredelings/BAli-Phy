@@ -22,7 +22,8 @@
 #include <cmath>
 #include "tree/sequencetree.H"
 #include "util/myexception.H"
-#include "util/util.H"
+#include "util/mapping.H"
+#include "util/string/convert.H" // for convertToString( )
 #include "util/io.H"
 
 using namespace std;
