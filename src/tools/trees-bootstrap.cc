@@ -922,7 +922,7 @@ int main(int argc,char* argv[])
 		if (VS[d][T][p].nchanges_ave > 10)
 		    worst_Ne.check_min(p,VS[d][T][p].Ne);
 	    }
-	    cout<<"min Ne = "<<worst_Ne.value<<"    (partition = "<<worst_Ne.index+1<<")"<<endl;
+	    cout<<"min Ne = "<<worst_Ne.value<<"    (partition = "<<*worst_Ne.index+1<<")"<<endl;
 	}
     }
     catch (std::exception& e) {
