@@ -4,6 +4,12 @@
  - Haskell machine
    - Separate random variables from modifiables.
    - Make modifiables evaluate to an initial value.
+ - Tools
+   + Allow reading from files whereever we take a comma-separated-list
+ - Code
+   + Refactoring
+     - Move utility code under util/
+     - Split util/util.H into several other files.
 
 * 3.4 (Dec 13, 2018)
  - Evolutionary models
