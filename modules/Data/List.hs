@@ -215,7 +215,7 @@ _     !! _ = error "Out of bounds list index!"
 findIndex p = listToMaybe . findIndices p
 
 -- findIndices
-findIndices p xs = [x | x <- xs, p x]
+findIndices p xs = [i | (i,x) <- zip [0..] xs, p x]
 --
 
 zipWith z (a:as) (b:bs) =  z a b : zipWith z as bs
