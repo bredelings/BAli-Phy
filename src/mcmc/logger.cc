@@ -216,6 +216,8 @@ namespace MCMC {
 	    return result;
 	else if (result.is_int())
 	    return result;
+	else if (result.is_a<String>())
+	    return result;
 	else if (result.head().is_a<constructor>())
 	{
 	    auto& c = result.head().as_<constructor>();
