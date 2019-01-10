@@ -268,17 +268,7 @@ random_tree_edges leaves internal = do (l1,leaves')  <- remove_one leaves
 -- If we could stop assuming that leaf branches have names 0..n then this would work
 random_tree n = do let num_nodes = 2*n-2
                    edges <- random_tree_edges [0..n-1] [n..num_nodes-1]
-                   let num_branches = length edges
-                       forward_edges = zip edges [0..]
-                       backward_edges = zip (map swap edges) [num_branches..]
-                       edges = forward_edges++backward_edges
-                       nodes = [[b | (b,(x,y)) <- edges, x==n] | n <- [0..num_nodes-1]]
-                       reverse b = b + num_branches `mod` 2*num_branches
-                       find_branch b = listToMaybe [(s,t) | (b',(s,t)) <- edges, b==b']
-                       nodesArray = listArray nodes
-                       branches = [ (s,i,t,reverse b) | b <- [0..num_branches-1], let Just (s,t) = find_branch edges,
-                                                                                  let Just i=elemIndex b (nodesArray!s)]
-                   return $ Tree nodesArray (listArray branches) num_nodes num_branches
+                   return $ tree_from_edges num_nodes edges
 
 modifiable_tree tree = Tree (listArray nodes) (listArray branches) (numNodes tree) (numBranches tree) where
     nodes =    [ map modifiable (edgesOutOfNode n) | n <- xrange 0 (numNodes tree) ]

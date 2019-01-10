@@ -51,3 +51,22 @@ write_newick root tree = (write_branches_and_node tree (edgesOutOfNode tree root
         text = intercalate "," $ map (write_branch tree) $ branches
 
     write_branch tree branch = write_branches_and_node tree (edgesAfterEdge tree branch) (targetNode tree branch)
+
+tree_from_edges num_nodes edges = Tree nodesArray (listArray' branches) num_nodes num_branches where
+
+    num_branches   = length edges
+
+    branch_edges   = forward_edges++backward_edges where
+        forward_edges  = zip [0..] edges
+        backward_edges = zip [num_branches..] (map swap edges)
+
+    reverse b = (b + num_branches) `mod` (2*num_branches)
+
+    find_branch b = listToMaybe [(s,t) | (b',(s,t)) <- branch_edges, b==b']
+
+    nodesArray = listArray' nodes where
+        nodes = [ [b | (b,(x,y)) <- branch_edges, x==n] | n <- [0..num_nodes-1]]
+
+    branches = [ let Just (s,t) = find_branch b
+                     Just i     = elemIndex b (nodesArray!s)
+                 in (s,i,t,reverse b) | b <- [0..2*num_branches-1] ]
