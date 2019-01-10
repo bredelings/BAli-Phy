@@ -28,7 +28,6 @@ distRange (ProbDensity _ _ _ r) = r
 data Random a = Random (IO a)
               | RandomStructure a (IO a)
               | Sample (ProbDensity a)
-              | Exchangeable Int Range a
               | Observe b (ProbDensity b)
               | AddMove (Int->a)
               | Print b
@@ -48,17 +47,13 @@ x %% y = (y,(Just x,[]))
 
 maybe_lazy lazy x = if lazy then unsafeInterleaveIO x else x
 
+run_random alpha lazy (Random a) = maybe_lazy lazy a
 run_random alpha lazy (IOAndPass f g) = do
   x <- maybe_lazy lazy $ run_random alpha lazy f
   run_random alpha lazy $ g x
 run_random alpha lazy (IOReturn v) = return v
--- It seems like we wouldn't need laziness for `do {x <- r;return x}`.  Do we need it for `r`?
-run_random alpha lazy (Sample (ProbDensity _ _ (Random a) _)) = maybe_lazy lazy $ a
 run_random alpha lazy (Sample (ProbDensity _ _ (RandomStructure _ a) _)) = run_random alpha lazy a
--- Should laziness go into the sample here?  Would s every have observations, like a Brownian bridge
--- If we don't do this, though then `Lazy $ sample $ iid $ normal 0 1` doesn't work.
--- Could we somehow do the list lazily, and the entries of the list lazily, but the actions for sample each of the variables strictly?
-run_random alpha lazy (Sample (ProbDensity _ _ s          _)) = maybe_lazy lazy $ run_random alpha lazy s
+run_random alpha lazy (Sample (ProbDensity _ _ a _)) = run_random alpha lazy a
 run_random alpha lazy GetAlphabet = return alpha
 run_random alpha lazy (SetAlphabet a2 x) = run_random a2 x lazy
 run_random alpha lazy (AddMove m) = return ()
@@ -78,16 +73,10 @@ run_random' alpha rate lazy (Sample (ProbDensity pr _ (Random do_sample) range))
   let x = modifiable value
   return (random_variable x (pr x) range rate)
 run_random' alpha rate lazy (Sample (ProbDensity pr _ (RandomStructure structure do_sample) range)) = maybe_lazy lazy $ do
+  -- we need some mcmc moves here, for crp and for trees
   value <- run_random alpha lazy do_sample
   let x = structure value
   return (random_variable x (pr x) range rate)
-run_random' alpha rate lazy (Sample (ProbDensity pr q (Exchangeable n range' value) range)) = maybe_lazy lazy $ do
-  -- Exchangeable sequences  currently have a single pdf for the whole sequence, but each element is a separate random variable.
-  -- FIXME: Not initialized correctly!
-  let xs = replicate n (modifiable value)
-  -- FIXME: add mcmc moves for the elements.
-  return (random_variable xs (pr xs) range rate)
--- Should laziness go into the sample here?
 run_random' alpha rate lazy (Sample (ProbDensity _ _ s _)) = maybe_lazy lazy $ run_random' alpha rate lazy s
 run_random' alpha rate lazy (Observe datum dist) = register_likelihood (density dist datum)
 run_random' alpha rate lazy (AddMove m) = register_transition_kernel m
@@ -238,7 +227,8 @@ builtin sample_crp_vector 3 "sample_CRP" "Distribution"
 sample_crp alpha n d = Random $ do v <- (IOAction3 sample_crp_vector alpha n d)
                                    return $ list_from_vector v
 --crp alpha n d = ProbDensity (crp_density alpha n d) (no_quantile "crp") (do_crp alpha n d) (ListRange $ replicate n $ integer_between 0 (n+d-1))
-crp alpha n d = ProbDensity (crp_density alpha n d) (no_quantile "crp") (Exchangeable n subrange 0) (ListRange $ replicate n subrange)
+modifiable_list = map modifiable
+crp alpha n d = ProbDensity (crp_density alpha n d) (no_quantile "crp") (RandomStructure modifiable_list $ sample_crp alpha n d) (ListRange $ replicate n subrange)
                   where subrange = integer_between 0 (n+d-1)
 
 mixtureRange ((_,dist1):_) = distRange dist1
