@@ -4,6 +4,9 @@
  - Haskell machine
    - Separate random variables from modifiables.
    - Make modifiables evaluate to an initial value.
+   - Allow specifying modifiable structures, such as a list of modifiables.
+   - Allow sampling a random tree topology.
+   - Allow logging strings.
 
 * 3.4 (Dec 13, 2018)
  - Evolutionary models
