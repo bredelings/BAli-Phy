@@ -513,8 +513,8 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
     if (tables.size() == 1)
 	worst_burnin.value = burnin[0][index];
     else
-	individual_size_worst = tables[worst_burnin.index].column(index).size();
-    cout<<"   burnin = "<<burnin_value(worst_burnin.value,individual_size_worst);
+	individual_size_worst = tables[*worst_burnin.index].column(index).size();
+    cout<<"   burnin = "<<burnin_value(worst_burnin.value, individual_size_worst);
     if (integers) cout<<"   [integer] ";
     cout<<endl;
 
@@ -678,16 +678,16 @@ int main(int argc,char* argv[])
 	}
 
 	if (worst_Ne.index != -1)
-	    cout<<" Ne  >= "<<worst_Ne.value<<"    ("<<field_names[worst_Ne.index]<<")"<<endl;
+	    cout<<" Ne  >= "<<worst_Ne.value<<"    ("<<field_names[*worst_Ne.index]<<")"<<endl;
 	if (worst_burnin.index != -1)
-	    cout<<" min burnin <= "<<burnin_value(worst_burnin.value,tables.back().n_rows())<<"    ("<<field_names[worst_burnin.index]<<")"<<endl;
+	    cout<<" min burnin <= "<<burnin_value(worst_burnin.value,tables.back().n_rows())<<"    ("<<field_names[*worst_burnin.index]<<")"<<endl;
 	if (tables.size() > 1) {
 	    if (worst_RCI.index != -1)
-		cout<<" PSRF-80%CI <= "<<worst_RCI.value<<"    ("<<field_names[worst_RCI.index]<<")"<<endl;
+		cout<<" PSRF-80%CI <= "<<worst_RCI.value<<"    ("<<field_names[*worst_RCI.index]<<")"<<endl;
 	    //if (worst_RNe.index != -1)
 	    //cout<<" PSRF-Ne <= "<<worst_RNe.value<<"    ("<<field_names[worst_RNe.index]<<")"<<endl;
 	    if (worst_RCF.index != -1)
-		cout<<" PSRF-RCF <= "<<worst_RCF.value<<"    ("<<field_names[worst_RCF.index]<<")"<<endl;
+		cout<<" PSRF-RCF <= "<<worst_RCF.value<<"    ("<<field_names[*worst_RCF.index]<<")"<<endl;
 	}
 	if (increasing_names.size())
 	    cout<<"\nIncreasing: "<<join(increasing_names,' ')<<endl;

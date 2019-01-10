@@ -2,7 +2,9 @@
 #include "cmdline.H"
 #include "util/myexception.H"
 #include "util/range.H"
+#include "util/io.H"
 #include "util/string/split.H"
+#include "util/string/pred.H"
 #include "util/string/convert.H"
 
 using std::vector;
@@ -146,6 +148,10 @@ std::vector<std::string> get_string_list(const boost::program_options::variables
 {
     if (auto str = get_arg<string>(args,key))
     {
+	if (starts_with(*str,"@"))
+	    str = read_file(str->substr(1));
+	else if (starts_with(*str,"\\@"))
+	    str = str->substr(2);
 	return parse_string_list(*str);
     }
     else

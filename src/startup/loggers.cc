@@ -169,6 +169,15 @@ void find_sub_loggers(Model& M, int& index, const string& name, vector<int>& log
 		    find_sub_loggers(M, index2, name+"["+field_name+"]", logged_computations, logged_names);
 		}
 	    }
+	    // This is a list of char: a string.
+	    else if (first_elem.is_char())
+	    {
+		auto str = M.get_expression(index);
+		int index2 = M.add_compute_expression({var("Prelude.listToString"),str});
+		logged_computations.push_back(index2);
+		logged_names.push_back(name);
+		index = -1;
+	    }
 	    else
 	    {
 		int index2 = -1;

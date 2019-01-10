@@ -122,6 +122,7 @@ quicksortWith f (x:xs) = quicksortWith f small ++ (x : quicksortWith f large)
 show () = "()"
 show (x,y) = "(" ++ show x ++ "," ++ show y ++ ")"
 show (x,y,z) = "(" ++ show x ++ "," ++ show y ++ "," ++ show z ++ ")"
+show (x,y,z,w) = "(" ++ show x ++ "," ++ show y ++ "," ++ show z ++ "," ++ show w ++ ")"
 show [] = "[]"
 show (x:y) = "["++show x++show' y++"]" where show' [] = ""
                                              show' (x:y) = ","++show x++show' y

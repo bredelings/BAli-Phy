@@ -1,14 +1,18 @@
 #ifndef INDEX_VALUE_H
 #define INDEX_VALUE_H
 
+#include <optional>
+
+/// Track *where* we found the max and min.
+/// Basically used for getting (max,argmax) and (min,argmin) incrementally.
 template <typename T>
 struct index_value
 {
-    int index;
+    std::optional<int> index;
     T value;
     T check_min(int index2, T value2) 
 	{
-	    if (index == -1 or (value2 < value)) {
+	    if (not index or (value2 < value)) {
 		index = index2;
 		value = value2;
 	    }
@@ -16,14 +20,14 @@ struct index_value
 	}
     T check_max(int index2, T value2) 
 	{
-	    if (index == -1 or (value2 > value)) {
+	    if (not index or (value2 > value)) {
 		index = index2;
 		value = value2;
 	    }
 	    return value;
 	}
-    index_value():index(-1),value() {}
-    index_value(const T& t):index(-1),value(t) {}
+    index_value() = default;
+    index_value(const T& t):value(t) {}
 };
 
 #endif

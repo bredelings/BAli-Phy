@@ -4,6 +4,9 @@
  - Haskell machine
    - Separate random variables from modifiables.
    - Make modifiables evaluate to an initial value.
+   - Allow specifying modifiable structures, such as a list of modifiables.
+   - Allow sampling a random tree topology.
+   - Allow logging strings.
  - Tools
    + Allow reading from files whereever we take a comma-separated-list
  - Code
