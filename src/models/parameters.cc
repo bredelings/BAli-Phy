@@ -29,6 +29,7 @@
 
 #include "models/parameters.H"
 #include "util/rng.H"
+#include "util/set.H"
 #include "util/log-level.H"
 #include "substitution/substitution.H"
 #include "alignment/alignment-util.H"

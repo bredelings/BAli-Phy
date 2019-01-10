@@ -2,6 +2,7 @@
 #include "TreeInterface.H"
 #include "models/parameters.H"
 #include "util/range.H"
+#include "util/set.H"
 
 using std::vector;
 using std::string;
