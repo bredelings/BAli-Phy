@@ -266,7 +266,7 @@ random_tree n = do let num_nodes = 2*n-2
                    edges <- random_tree_edges [0..n-1] [n..num_nodes-1]
                    return $ tree_from_edges num_nodes edges
 
-modifiable_tree tree = Tree (listArray nodes) (listArray branches) (numNodes tree) (numBranches tree) where
+modifiable_tree tree = Tree (listArray' nodes) (listArray' branches) (numNodes tree) (numBranches tree) where
     nodes =    [ map modifiable (edgesOutOfNode tree n) | n <- xrange 0 (numNodes tree) ]
     branches = [ (modifiable s, modifiable i, modifiable t, modifiable r) | b <- xrange 0 (numBranches tree * 2), let (s,i,t,r) = nodesForEdge tree b]
 
