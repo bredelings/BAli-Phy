@@ -1,4 +1,4 @@
 size = 1   Test.#0 = 10
-size = 1   Test.#1143 = 3
-size = 1   Test.#4 = Prelude:add Test.#0 Test.#1143
+size = 1   Test.#1156 = 3
+size = 1   Test.#4 = Prelude:add Test.#0 Test.#1156
 size = 0   Test.f = \#3 -> Test.#4
