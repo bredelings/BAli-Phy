@@ -15,7 +15,7 @@ std::optional<T> can_be_converted_to(const std::string& s)
     std::istringstream i(s);
     T t;
     if (i>>std::boolalpha>>t and i.peek() == std::istream::traits_type::eof())
-	return std::move(t);
+	return t;
     else
 	return {};
 }
