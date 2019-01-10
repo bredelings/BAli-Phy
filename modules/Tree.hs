@@ -21,10 +21,10 @@ edgesOutOfNode (Tree nodesArray _ _ _) node = nodesArray ! node
 edgesOutOfNode (RootedTree t _ _) node = edgesOutOfNode t node
 nodesForEdge (Tree _ branchesArray _ _) edgeIndex = branchesArray ! edgeIndex
 nodesForEdge (RootedTree t _ _) edgeIndex = nodesForEdge t edgeIndex
-sourceNode  t b = let (s,_,_,_) = nodesForEdge t b in s
-sourceIndex t b = let (_,i,_,_) = nodesForEdge t b in i
-targetNode  t b = let (_,_,t,_) = nodesForEdge t b in t
-reverseEdge t b = let (_,_,_,r) = nodesForEdge t b in r
+sourceNode  tree b = let (s,_,_,_) = nodesForEdge tree b in s
+sourceIndex tree b = let (_,i,_,_) = nodesForEdge tree b in i
+targetNode  tree b = let (_,_,t,_) = nodesForEdge tree b in t
+reverseEdge tree b = let (_,_,_,r) = nodesForEdge tree b in r
 edgeForNodes t (n1,n2) = head [b | b <- (edgesOutOfNode t n1), (targetNode t b)==n2]
 nodeDegree t n = length (edgesOutOfNode t n)
 neighbors t n = fmap (targetNode t) (edgesOutOfNode t n)
