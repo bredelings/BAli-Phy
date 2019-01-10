@@ -30,6 +30,7 @@ nodeDegree t n = length (edgesOutOfNode t n)
 neighbors t n = fmap (targetNode t) (edgesOutOfNode t n)
 edgesBeforeEdge t b = let (source,index,_,_) = nodesForEdge t b
                       in map (reverseEdge t) $ remove_element index $ edgesOutOfNode t source
+edgesAfterEdge t b  = map (reverseEdge t) $ edgesBeforeEdge t $ reverseEdge t b
 
 is_leaf_node t n = (nodeDegree t n == 1)
 is_internal_node t n = not $ is_leaf_node t n
