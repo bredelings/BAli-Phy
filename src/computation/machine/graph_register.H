@@ -27,6 +27,7 @@ struct Step
 
     /// Which reg's were used to reduce this expression?
     boost::container::small_vector< std::pair<int,int>, 2 > used_inputs;
+    boost::container::small_vector< int, 2 > forced_regs;
     boost::container::small_vector< int, 2 > created_regs;
 
     std::bitset<8> flags;
@@ -185,7 +186,8 @@ public:
     bool reg_is_constant(int r) const;
     void make_reg_changeable(int r);
 
-    void set_used_input(int R1, int R2);
+    void set_used_input(int s1, int R2);
+    void set_forced_reg(int s1, int R2);
     void set_call(int R1, int R2);
     void destroy_all_computations_in_token(int t);
     void clear_call(int s);

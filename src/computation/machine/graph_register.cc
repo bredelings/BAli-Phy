@@ -96,6 +96,7 @@ void Step::clear()
     source_reg = -1;
     call = 0;
     truncate(used_inputs);
+    truncate(forced_regs);
     assert(created_regs.empty());
 
     // This should already be cleared.
@@ -106,6 +107,7 @@ void Step::check_cleared()
 {
     assert(not call);
     assert(used_inputs.empty());
+    assert(forced_regs.empty());
     assert(created_regs.empty());
     assert(flags.none());
 }
@@ -115,6 +117,7 @@ Step& Step::operator=(Step&& S) noexcept
     source_reg = S.source_reg;
     call = S.call;
     used_inputs  = std::move( S.used_inputs );
+    forced_regs  = std::move( S.forced_regs );
     created_regs  = std::move( S.created_regs );
     flags = S.flags;
 
@@ -123,10 +126,11 @@ Step& Step::operator=(Step&& S) noexcept
 
 Step::Step(Step&& S) noexcept
 :source_reg( S.source_reg),
-			 call ( S.call ),
-			 used_inputs ( std::move(S.used_inputs) ),
-			 created_regs ( std::move(S.created_regs) ),
-			 flags ( S.flags )
+ call ( S.call ),
+ used_inputs ( std::move(S.used_inputs) ),
+ forced_regs (std::move(S.forced_regs) ),
+ created_regs ( std::move(S.created_regs) ),
+ flags ( S.flags )
 { }
 
 void Result::clear()
@@ -870,6 +874,24 @@ void reg_heap::set_used_input(int s1, int R2)
     steps[s1].used_inputs.push_back({res2,back_index});
 
     assert(result_is_used_by(s1,res2));
+}
+
+void reg_heap::set_forced_reg(int s1, int R2)
+{
+    assert(reg_is_changeable(R2));
+
+    assert(regs.is_used(R2));
+
+    assert(regs.access(R2).C);
+
+    assert(has_result(R2));
+    assert(result_value_for_reg(R2));
+
+    // An index_var's value only changes if the thing the index-var points to also changes.
+    // So, we may as well forbid using an index_var as an input.
+    assert(regs.access(R2).C.exp.head().type() != index_var_type);
+
+    steps[s1].forced_regs.push_back(R2);
 }
 
 void reg_heap::set_call(int R1, int R2)

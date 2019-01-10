@@ -75,7 +75,15 @@ class RegOperationArgs: public OperationArgs
     /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
     int evaluate_reg_no_record(int R2)
 	{
-	    return memory().incremental_evaluate(R2).second;
+	    auto [R3, value] = memory().incremental_evaluate(R2);
+
+	    if (M.reg_is_changeable(R3))
+	    {
+		used_changeable = true;
+		M.set_forced_reg(S, R3);
+	    }
+
+	    return value;
 	}
 
     /// Evaluate the reg R2, record a dependency on R2, and return the reg following call chains.
