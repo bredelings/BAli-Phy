@@ -107,8 +107,15 @@ public:
 
   RootedSequenceTree& operator=(const RootedSequenceTree&);
 
-  /// create from  \a file
   RootedSequenceTree() {}
+
+  RootedSequenceTree(const RootedSequenceTree&);
+
+  /// Create the tree (T1,T2)
+  RootedSequenceTree(const RootedSequenceTree& T1, const RootedSequenceTree& T2);
+
+  /// Create a RootedSequenceTree from a SequenceTree, naming node \a r as the root
+  RootedSequenceTree(const SequenceTree&,int r);
 
   /// create from  \a file
   explicit RootedSequenceTree(std::istream& file);
@@ -119,11 +126,6 @@ public:
   /// create a copy of \a RT with leaves named according to \a names
   explicit RootedSequenceTree(const RootedTree& RT,const std::vector<std::string>& names);
 
-  /// Create the tree (T1,T2)
-  RootedSequenceTree(const RootedSequenceTree& T1, const RootedSequenceTree& T2);
-
-  /// Create a RootedSequenceTree from a SequenceTree, naming node \a r as the root
-  RootedSequenceTree(const SequenceTree&,int r);
 };
 
 RootedSequenceTree operator+(const RootedSequenceTree& t1,const RootedSequenceTree& t2);

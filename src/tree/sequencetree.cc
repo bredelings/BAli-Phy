@@ -557,6 +557,13 @@ RootedSequenceTree& RootedSequenceTree::operator=(const RootedSequenceTree& T)
     return *this;
 }
 
+RootedSequenceTree::RootedSequenceTree(const RootedSequenceTree& RT)
+    :Tree(),RootedTree(),SequenceTree()
+{
+    operator=(RT);
+}
+
+
 //FIXME - return mapping of leaf nodes?  Of all nodes?
 void standardize(SequenceTree& T) 
 {
