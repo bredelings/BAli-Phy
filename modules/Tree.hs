@@ -43,3 +43,11 @@ remove_element _ []     = []
 remove_element 0 (x:xs) = xs
 remove_element i (x:xs) = x:(remove_element (i-1) xs)
 
+write_newick root tree = (write_branches_and_node tree (edgesOutOfNode tree root) root) ++ ";" where
+    write_branches_and_node tree branches node = write_branches tree branches ++ show node
+
+    write_branches tree [] = ""
+    write_branches tree branches = "(" ++ text ++ ")" where
+        text = intercalate "," $ map (write_branch tree) $ branches
+
+    write_branch tree branch = write_branches_and_node tree (edgesAfterEdge tree branch) (targetNode tree branch)
