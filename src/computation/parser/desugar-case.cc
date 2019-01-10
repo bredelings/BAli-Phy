@@ -289,7 +289,7 @@ failable_expression desugar_state::match_empty(const vector<expression_ref>& x, 
     failable_expression E = fail_identity();
 
     for(auto& e: std::reverse(equations))
-	E = combine(E, e.rhs);
+	E = combine(e.rhs, E);
 
     return E;
 }
