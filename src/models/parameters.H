@@ -204,18 +204,18 @@ struct smodel_methods
 
 class maybe_parameter
 {
-    int param = -1;
-    int value = -1;
+    std::optional<int> param;
+    std::optional<int> value;
 public:
     int get_value(const context* C) const
 	{
 	    if (is_const())
-		return value;
+		return *value;
 	    else
-		return C->get_parameter_value(param).as_int();
+		return C->get_parameter_value(*param).as_int();
 	}
-    void set_value(context* C, int v) { assert(not is_const()); C->set_parameter_value(param,v);}
-    bool is_const() const {return param == -1;}
+    void set_value(context* C, int v) { assert(not is_const()); C->set_parameter_value(*param,v);}
+    bool is_const() const {return not param;}
     maybe_parameter(int p):param(p) {}
     maybe_parameter(int,int v):value(v) {}
 };
