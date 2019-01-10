@@ -26,6 +26,7 @@ distRange (ProbDensity _ _ _ r) = r
 
 -- This implements the Random monad by transforming it into the IO monad.
 data Random a = Random (IO a)
+              | RandomStructure a (IO a)
               | Sample (ProbDensity a)
               | Exchangeable Int Range a
               | Observe b (ProbDensity b)
@@ -53,6 +54,7 @@ run_random alpha lazy (IOAndPass f g) = do
 run_random alpha lazy (IOReturn v) = return v
 -- It seems like we wouldn't need laziness for `do {x <- r;return x}`.  Do we need it for `r`?
 run_random alpha lazy (Sample (ProbDensity _ _ (Random a) _)) = maybe_lazy lazy $ a
+run_random alpha lazy (Sample (ProbDensity _ _ (RandomStructure _ a) _)) = run_random alpha lazy a
 -- Should laziness go into the sample here?  Would s every have observations, like a Brownian bridge
 -- If we don't do this, though then `Lazy $ sample $ iid $ normal 0 1` doesn't work.
 -- Could we somehow do the list lazily, and the entries of the list lazily, but the actions for sample each of the variables strictly?
@@ -74,6 +76,10 @@ run_random' alpha rate lazy (IOReturn v) = return v
 run_random' alpha rate lazy (Sample (ProbDensity pr _ (Random do_sample) range)) = maybe_lazy lazy $ do
   value <- do_sample
   let x = modifiable value
+  return (random_variable x (pr x) range rate)
+run_random' alpha rate lazy (Sample (ProbDensity pr _ (RandomStructure structure do_sample) range)) = maybe_lazy lazy $ do
+  value <- run_random alpha lazy do_sample
+  let x = structure value
   return (random_variable x (pr x) range rate)
 run_random' alpha rate lazy (Sample (ProbDensity pr q (Exchangeable n range' value) range)) = maybe_lazy lazy $ do
   -- Exchangeable sequences  currently have a single pdf for the whole sequence, but each element is a separate random variable.
@@ -271,8 +277,10 @@ random_tree n = do let num_nodes = 2*n-2
                    return $ tree_from_edges num_nodes edges
 
 modifiable_tree tree = Tree (listArray nodes) (listArray branches) (numNodes tree) (numBranches tree) where
-    nodes =    [ map modifiable (edgesOutOfNode n) | n <- xrange 0 (numNodes tree) ]
+    nodes =    [ map modifiable (edgesOutOfNode tree n) | n <- xrange 0 (numNodes tree) ]
     branches = [ (modifiable s, modifiable i, modifiable t, modifiable r) | b <- xrange 0 (numBranches tree * 2), let (s,i,t,r) = nodesForEdge tree b]
+
+uniform_topology n = ProbDensity (const $ doubleToLogDouble 1.0) (no_quantile "uniform_topology") (RandomStructure modifiable_tree $ random_tree n) (TreeRange n)
 
 -- define the list distribution
 pair_apply f (x:y:t) = f x y : pair_apply f t
