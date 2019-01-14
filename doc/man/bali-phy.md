@@ -25,7 +25,7 @@
 
 # GENERAL OPTIONS
 
-For each option below, more information is available by specifying the long form of the option as a help topic.  For example: bali-phy help alphabet
+For each option below, more information is available by specifying the long form of the option as a help topic.  For example: `bali-phy help alphabet`
 
 **-h**, **--help**, **--help**=_topic_
 : Display a friendly help message.  Specify **--help=advanced** or **--help=expert** to display more advanced options.
@@ -36,61 +36,61 @@ For each option below, more information is available by specifying the long form
 **-t**, **--test**
 : Analyze the initial values and exit.
 
--V, --verbose, --verbose _NUM_
+**-V**, **--verbose**, **--verbose** _NUM_
 : Print extra output to aid in trouble-shooting.  If _NUM_ is not specified the default is 1.  Values from 2 to 4 increase the amount of information displayed.
 
--c _filename_, --config _filename_
+**-c** _filename_, **--config** _filename_
 : Read commands from _filename_ before command line.
 
 # MCMC OPTIONS
 
-**-i** _NUM_, --iterations _NUM_
+**-i** _NUM_, **--iterations** _NUM_
 : The number of iterations to run.
 
--n _STRING_, --name _STRING_
+**-n** _STRING_, **--name** _STRING_
 : Name for the output directory to create.
 
--x _NUM_, --subsample _NUM_
+**-x** _NUM_, **--subsample** _NUM_
 : Factor by which to subsample.  This option should usually not be used.
 
--s _NUM_, --seed _NUM_
+**-s** _NUM_, **--seed** _NUM_
 : Random seed.  Useful for replaying specific runs when trouble-shooting.
 
 # PARAMETER OPTIONS
--T _filename_, --tree _filename_
+**-T** _filename_, **--tree** _filename_
 : File with initial tree in Newick format or NEXUS format.
 
--U, --unalign
+**-U**, **--unalign**
 : Unalign all variable-alignment partitions before starting MCMC instead using the supplied alignment as a starting value.
 
 # MODEL OPTIONS
--A _alphabet_, --alphabet _alphabet_
+**-A** _alphabet_, **--alphabet** _alphabet_
 : The alphabet.
 
--S _model_, --smodel _model_
+**-S** _model_, **--smodel** _model_
 : The substitution model.
 
--I _model_, --imodel _model_
+**-I** _model_, **--imodel** _model_
 : The insertion-deletion model.
 
--B _prior_, --branch-lengths _prior_
+**-B** _prior_, **--branch-lengths** _prior_
 : Prior on branch lengths.
 
--R _prior_, --scale _prior_
+**-R** _prior_, **--scale** _prior_
 : Prior on the scale.
 
--L _NUMS_,  --link _NUMS_
-: Link partitions.  Takes a comma-separated list of numbers indicating partitions.  For example **--link 1,2,3**.
+**-L** _NUMS_,  **--link** _NUMS_
+: Link partitions.  Takes a comma-separated list of numbers indicating partitions.  For example `--link 1,2,3`.
 
 # EXAMPLES
 
-bali-phy dna.fasta --smodel gtr
+`bali-phy dna.fasta --smodel gtr`
 : Analyze sequences in _dna.fasta_ under the GTR model.
 
-bali-phy dna.fasta -S gtr -I none
+`bali-phy dna.fasta -S gtr -I none`
 : Perform a traditional fixed-alignment analysis with gaps treated as missing data.
 
-bali-phy dna.fasta amino.fasta codons.fasta -S 1:gtr -S 2:lg08 -S 3:gy94
+`bali-phy dna.fasta amino.fasta codons.fasta -S 1:gtr -S 2:lg08 -S 3:gy94`
 : Perform an analysis of 3 genes where each gene has a different substitution mode. The sequence names in all three files must be the same.
 
 # REPORTING BUGS
