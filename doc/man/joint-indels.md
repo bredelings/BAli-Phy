@@ -22,7 +22,7 @@ Usage: joint-indels <alignments file> <trees file> [OPTIONS]
 : factor by which to sub-sample trees
 
 **--partition** _arg_
-: find indels along internal branch that bi-partitions given taxa (<taxa1>:<taxa2>:...)
+: find indels along internal branch that bi-partitions given taxa (_taxa1_:_taxa2_:...)
 
 **--alphabet** _arg_
 : set to 'Codons' to prefer codon alphabets

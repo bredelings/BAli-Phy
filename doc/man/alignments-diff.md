@@ -37,6 +37,12 @@ Align two alignments for comparison.
 **-d** _arg_, **--differences-file** _arg_
 : Filename to store differences in AU format
 
+**--blocksize** _arg_ (=20)
+: Width of blocks of same color
+
+**--classes** _arg_ (=1)
+: Number of groups for non-matching characters
+
 
 # REPORTING BUGS:
  BAli-Phy online help: <http://www.bali-phy.org/docs.php>.

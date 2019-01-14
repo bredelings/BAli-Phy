@@ -84,12 +84,12 @@ Remove short sequences:
 % alignment-thin --longer-than=250 file.fasta > file-long.fasta
 ```
 
-Remove sequences with <= 5 differences from the closest other sequence:
+Remove similar sequences with <= 5 differences from the closest other sequence:
 ```
 % alignment-thin --cutoff=5 file.fasta > more-than-5-differences.fasta
 ```
 
-Like --cutoff, but stop when we have the right number of sequences:
+Remove similar sequences until we have the right number of sequences:
 ```
 % alignment-thin --down-to=30 file.fasta > file-30taxa.fasta
 ```

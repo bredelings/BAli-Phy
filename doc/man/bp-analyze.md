@@ -4,11 +4,11 @@
 
 # NAME
 
-**bp-analyze** - Generate an HTML report summarizing bali-phy runs
+**bp-analyze** - Generate an HTML report summarizing bali-phy runs.
 
 # SYNOPSIS
 
-**bp-analyze** [OPTIONS] _directory1_ [_directory2_ ... ] 
+**bp-analyze** [OPTIONS] _directory1_ [_directory2_ ... ]
 
 # DESCRIPTION
 
@@ -18,21 +18,21 @@ The report is created at **Reports/index.html**.
 
 A log of all sub-commands is created at **Reports/bp-analyze.log**.
 
-# ALL OPTIONS:
-
+# OPTIONS:
 **-h**, **--help**
-: Produce help message.
+: Print usage information.
 
-**--skip**=_NUM_
-: Suppress the line of field names.
+**--skip=NUM**
+: Skip NUM iterations as burnin
 
-**--subsample**=_NUM_
-: The last value goes to the end of the line.
+**--subsample=NUM**
+: Keep only ever NUM iterations
+
 
 # REPORTING BUGS:
 See **Reports/bp-analyze.log** to check if any sub-commands failed.
 
-BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
+ BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
 
 Please send bug reports to <bali-phy-users@googlegroups.com>.
 

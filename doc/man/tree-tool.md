@@ -21,11 +21,33 @@ Perform various operations on Newick trees.
 **-v**, **--verbose**
 : Output more log messages on stderr.
 
+
+# MODIFICATION OPTIONS:
 **--prune** _arg_
 : Comma-separated taxa to remove
 
 **--resolve**
 : Comma-separated taxa to remove
+
+**--remove-root-branch**
+: Remove single branch from root.
+
+**--remove-root-branches**
+: Ensure root is not a tip.
+
+**--remove-knuckles**
+: Remove degree-2 nodes.
+
+
+# OUTPUT OPTIONS:
+**--scale** _arg_
+: Scale branch-lengths by factor
+
+**--length**
+: Report the total tree length
+
+**--diameter**
+: Report the total tree length
 
 
 # REPORTING BUGS:

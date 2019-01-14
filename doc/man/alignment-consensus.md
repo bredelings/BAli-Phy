@@ -21,9 +21,6 @@ Construct a consensus alignment to summarize an alignment sample.
 **--alphabet** _arg_
 : Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.
 
-**--seed** _arg_
-: random seed
-
 **--skip** _arg_ (=0)
 : number of tree samples to skip
 

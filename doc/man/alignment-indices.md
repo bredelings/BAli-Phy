@@ -28,7 +28,7 @@ Show the alignment in terms of the index of each character in its sequence.
 : Ranges of columns to keep, like: 1-10,30-
 
 **--invariant** _arg_
-: print only sites where this site and <arg> neighbors are invariant.
+: print only sites where this site and _arg_ neighbors are invariant.
 
 **--differences** _arg_
 : how many sequences may differ from the majority?

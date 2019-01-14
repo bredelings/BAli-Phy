@@ -25,13 +25,16 @@ Generate input for SMC programs.
 : specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons
 
 **-S**, **--strip-gaps**
-: Remove columns within <arg> columns of a gap
+: Remove columns within _arg_ columns of a gap
 
-**-M** _arg_ (=0), **--mask-gaps** _arg_ (=0)
-: Remove columns within <arg> columns of a gap
+**-G** _arg_, **--mask-gaps** _arg_
+: Remove columns within _arg_ columns of a gap
+
+**-M** _arg_, **--mask-file** _arg_
+: Apply mask-file
 
 **--variant** _arg_ (=1)
-: Is there a SNP at distance <arg> from SNP?
+: Is there a SNP at distance _arg_ from SNP?
 
 **--dical2**
 : Output file for DiCal2

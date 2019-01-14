@@ -19,16 +19,16 @@ Select lines between certain values of a key. (e.g. iterations)
 : produce help message
 
 **--key** _arg_ (=iterations)
-: cut based on values of <key>=value
+: cut based on values of _key_=value
 
 **--skip** _arg_
 : the number of samples to skip
 
-**--size** _arg_
-: maximum number of samples to use
-
 **--until** _arg_
 : last sample to use
+
+**--size** _arg_
+: maximum number of samples to use
 
 **--verbose**
 : Output more log messages on stderr.

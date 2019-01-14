@@ -36,16 +36,16 @@ Find consensus trees and supported splits.
 
 # REPORTING OPTIONS:
 **--map-trees** _arg_ (=1)
-: Only report the top <arg> trees per file.
+: Only report the top _arg_ trees per file.
 
 **--map-tree** _arg_
-: Write out the map tree to file <arg>.
+: Write out the map tree to file _arg_.
 
 **--min-support** _arg_ (=0.25)
 : Minimum threshold PP for splits.
 
 **--report** _arg_
-: Write supported partitions to file <arg>.
+: Write supported partitions to file _arg_.
 
 **--consensus-PP** _arg_
 : Write out consensus trees+PP.
@@ -63,10 +63,10 @@ Find consensus trees and supported splits.
 : Write out extended consensus trees.
 
 **--support-levels** _arg_
-: Write #branches versus LOD to file <arg>.
+: Write #branches versus LOD to file _arg_.
 
 **--extended-support-levels** _arg_
-: Write #sub-branches versus LOD to file <arg>.
+: Write #sub-branches versus LOD to file _arg_.
 
 **--odds-ratio** _arg_ (=1.5)
 : Report partial-splits only if removing taxa improves the odds by at least this ratio.
