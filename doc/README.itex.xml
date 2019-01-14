@@ -2534,7 +2534,7 @@ The stabilization criterion is the same one described above for numerical values
 
   </section>
 
-  <section xml:id="tree-utilities"><info><title>Tree utilities</title></info>
+  <section xml:id="tree-utilities"><info><title>Tree utilities: brief overview</title></info>
 
   <para>This section gives a brief overview showing <emphasis>some</emphasis> of the things that can be done with the included tree utilities.  It is intended to be helpful, but not exhaustive.  To see the full set of options for each tool, give the argument "<userinput>--help</userinput>" on the command line.</para>
     
