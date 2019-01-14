@@ -2461,10 +2461,10 @@ The stabilization criterion is the same one described above for numerical values
   </section>
 
 
-  <section xml:id="alignment-utilities"><info><title>Alignment utilities</title></info>
+  <section xml:id="alignment-utilities"><info><title>Alignment utilities: brief overview</title></info>
     
 
-    <para>All tools display their options if given the "<userinput>--help</userinput>" argument on the command line.</para>
+  <para>This section gives a brief overview showing <emphasis>some</emphasis> of the things that can be done with the included alignment utilities.  It is intended to be helpful, but not exhaustive.  To see the full set of options for each tool, give the argument "<userinput>--help</userinput>" on the command line.</para>
 
     <section><info><title>alignment-info</title></info>
       
@@ -2485,18 +2485,20 @@ The stabilization criterion is the same one described above for numerical values
     </section>
     
     <section><info><title>alignment-thin</title></info>
-      
       <para>Remove columns without a minimum number of letters:</para> 
-<screen><prompt>%</prompt> alignment-thin --min-letters=5 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>-thinned.fasta</screen>
-      <para>Remove sequences:</para>
-<screen><prompt>%</prompt> alignment-thin --remove=seq1,seq2 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>2.fasta</screen>
+      <screen><prompt>%</prompt> alignment-thin --min-letters=5 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>-thinned.fasta</screen>
+      <para>Remove sequences by name:</para>
+      <screen><prompt>%</prompt> alignment-thin --remove=seq1,seq2 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>2.fasta</screen>
       <para>Remove short sequences:</para>
-<screen><prompt>%</prompt> alignment-thin --longer-than=250 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>-long.fasta</screen>
-      <para>Remove sequences while preserving sequence diversity:</para> 
-<screen><prompt>%</prompt> alignment-thin --down-to=30 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>-30taxa.fasta
-<prompt>%</prompt> alignment-thin --down-to=30 <replaceable>file</replaceable>.fasta --protect=seq1,seq2 > <replaceable>file</replaceable>-30taxa.fasta</screen>
+      <screen><prompt>%</prompt> alignment-thin --longer-than=250 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>-long.fasta</screen>
+      <para>Remove sequences with &lt;= 5 differences from the closest other sequence:</para>
+      <screen><prompt>%</prompt> alignment-thin --cutoff=5 file.fasta > more-than-5-differences.fasta</screen>
+      <para>Like <userinput>--cutoff</userinput>, but stop when we have the right number of sequences:</para>
+      <screen><prompt>%</prompt> alignment-thin --down-to=30 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>-30taxa.fasta</screen>
+      <para>Protect some sequences from being removed:</para>
+      <screen><prompt>%</prompt> alignment-thin --down-to=30 <replaceable>file</replaceable>.fasta --protect=seq1,seq2 > <replaceable>file</replaceable>-30taxa.fasta</screen>
       <para>Remove sequences that are missing conserved columns:</para> 
-<screen><prompt>%</prompt> alignment-thin --remove-crazy=10 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>2.fasta</screen>
+      <screen><prompt>%</prompt> alignment-thin --remove-crazy=10 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>2.fasta</screen>
     </section>
 
     <section><info><title>alignment-draw</title></info>
@@ -2531,7 +2533,10 @@ The stabilization criterion is the same one described above for numerical values
     </section>
 
   </section>
+
   <section xml:id="tree-utilities"><info><title>Tree utilities</title></info>
+
+  <para>This section gives a brief overview showing <emphasis>some</emphasis> of the things that can be done with the included tree utilities.  It is intended to be helpful, but not exhaustive.  To see the full set of options for each tool, give the argument "<userinput>--help</userinput>" on the command line.</para>
     
     <section><info><title>trees-consensus</title></info>
       
@@ -2668,19 +2673,15 @@ Otherwise you can install meson through pip3:
        
     <para>First check out the code using git:
 <screen><prompt>%</prompt><userinput> git clone https://github.com/bredelings/BAli-Phy.git</userinput>
-<prompt>%</prompt><userinput> cd BAli-Phy</userinput>
-<prompt>%</prompt><userinput> git submodule update --init</userinput></screen>
+<prompt>%</prompt><userinput> cd BAli-Phy</userinput></screen>
 </para>
 <para>
 Then run meson to configure the build process:
 <screen><prompt>%</prompt><userinput> meson build --prefix=&#36;HOME/Applications/bali-phy-&version;/</userinput></screen>
-In the MSYS2 environment, the command is called <command>meson.py</command> instead of <command>meson</command>:
-<screen><prompt>%</prompt><userinput> meson.py build --prefix=&#36;HOME/Applications/bali-phy-&version;/</userinput></screen>
 </para>
 <para>
 Finally, build and install the software:
-<screen><prompt>%</prompt><userinput> ninja -C build</userinput>
-<prompt>%</prompt><userinput> ninja -C build test</userinput>
+<screen><prompt>%</prompt><userinput> ninja -C build test</userinput>
 <prompt>%</prompt><userinput> ninja -C build install</userinput>
 </screen>
 The command <command>bali-phy</command> and its associated tools should then be located in <filename>&install.path;/bin/</filename>. To install to another directory <replaceable>dir</replaceable>, specify --prefix=<replaceable>dir</replaceable> to <command>meson</command>.
