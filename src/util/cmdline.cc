@@ -148,10 +148,12 @@ std::vector<std::string> get_string_list(const boost::program_options::variables
 {
     if (auto str = get_arg<string>(args,key))
     {
+	// Discard the '@'
 	if (starts_with(*str,"@"))
 	    str = read_file(str->substr(1));
-	else if (starts_with(*str,"\\@"))
-	    str = str->substr(2);
+	// Keep the '@'
+	else if (starts_with(*str,R"(\@)"))
+	    str = str->substr(1);
 	return parse_string_list(*str);
     }
     else
