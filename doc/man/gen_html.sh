@@ -1,5 +1,5 @@
 #!/bin/sh
 mkdir -p man
 for i in *.md ; do
-    pandoc -s $i --css ../man.css -o man/${i%%.md}.html
+    pandoc -s $i --css ../man.css -o man/${i%%.md}.html -f markdown-smart
 done
