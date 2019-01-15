@@ -7,8 +7,10 @@
    - Allow specifying modifiable structures, such as a list of modifiables.
    - Allow sampling a random tree topology.
    - Allow logging strings.
+   - Record force edges.
+   - Garbage-collection no longer delete steps or results.
  - Tools
-   + Allow reading from files whereever we take a comma-separated-list
+   + Allow reading from files wherever we take a comma-separated-list
  - Code
    + Refactoring
      - Move utility code under util/
