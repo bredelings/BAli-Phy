@@ -137,8 +137,6 @@ void reg_heap::trace(vector<int>& remap)
 {
     // 1. Set up lists for used/marked regs, steps, and results.
     vector<int>& used_regs = get_scratch_list();
-    vector<int>& used_steps = get_scratch_list();
-    vector<int>& used_results = get_scratch_list();
 
     auto mark_reg = [this,&used_regs](int r) {
 	assert(r > 0);
@@ -146,24 +144,6 @@ void reg_heap::trace(vector<int>& remap)
 	{
 	    regs.set_mark(r);
 	    used_regs.push_back(r);
-	}
-    };
-
-    auto mark_step = [this,&used_steps](int s) {
-	assert(s > 0);
-	if (not steps.is_marked(s))
-	{
-	    steps.set_mark(s);
-	    used_steps.push_back(s);
-	}
-    };
-
-    auto mark_result = [this,&used_results](int r) {
-	assert(r > 0);
-	if (not results.is_marked(r))
-	{
-	    results.set_mark(r);
-	    used_results.push_back(r);
 	}
     };
 
@@ -175,88 +155,22 @@ void reg_heap::trace(vector<int>& remap)
     for(int r:roots)
 	mark_reg(r);
 
-    // 4. Mark all steps/results at heads in the root token.
-    if (get_n_tokens())
+    // There shouldn't be any steps if there are no tokens.
+    if (not get_n_tokens()) assert(steps.size() == 0);
+
+    // 4. Mark all regs with steps
+    for(auto& S: steps)
     {
-	for(int reg:roots)
-	{
-	    if (int step = step_index_for_reg(reg); step > 0)
-		mark_step(step);
-	    if (int result = result_index_for_reg(reg); result > 0)
-		mark_result(result);
-	}
+	mark_reg(S.source_reg);
+
+	if (S.call > 0)
+	    mark_reg(S.call);
+	// This might be unnecessary - there should be a step for the forced reg ... unless it got invalidated.
+	for(int r: S.forced_regs)
+	    mark_reg(r);
     }
 
-    // 5. Mark all steps/results at heads in non-root tokens
-    for(int t=0;t<get_n_tokens();t++)
-    {
-	if (not token_is_used(t)) continue;
-
-	if (is_root_token(t)) continue;
-
-	// 5.1 Mark all steps at heads in non-root tokens.
-	// FIXME - We can remove this after we maintain references to invalidated computations.
-	//         Then there should always be a result for every step, valid or invalid.
-	for(auto [r,step]: tokens[t].delta_step())
-	    if (regs.is_marked(r) and step > 0)
-		mark_step(step);
-
-	// 5.2 Mark all results at heads in non-root tokens.
-	// NOTE - The corresponding head, whatever it is, must ALSO be marked,
-	//        since we mark all steps at heads.
-	for(const auto& [r,result]: tokens[t].delta_result())
-	    if (regs.is_marked(r) and result > 0)
-		mark_result(result);
-    }
-
-    // 6. Trace unwalked steps and results
-    int step_index = 0, result_index = 0;
-
-    while(step_index < used_steps.size() or result_index < used_results.size())
-    {
-	// 6.1 Trace unwalked steps
-	for(;step_index < used_steps.size();step_index++)
-	{
-	    const auto& S = steps[used_steps[step_index]];
-	    assert(S.source_reg);
-
-	    // 6.1.1 Visit called reg
-	    if (S.call > 0)
-		mark_reg(S.call);
-
-	    // 6.1.2 Visit used results
-	    for(const auto& rc: S.used_inputs)
-		mark_result(rc.first);
-	}
-
-	// 6.2 Trace unwalked results
-	for(;result_index < used_results.size();result_index++)
-	{
-	    const auto& R = results[used_results[result_index]];
-	    assert(R.source_reg);
-
-	    // 6.2.1 Visit associated step
-	    mark_step(R.source_step);
-
-	    // 6.2.2 Visit called_result
-	    if (R.call_edge.first > 0)
-		mark_result(R.call_edge.first);
-	}
-    }
-
-    // 7. Mark all regs with steps or results as used.
-    for(int s:used_steps)
-	mark_reg(steps[s].source_reg);
-
-    for(int r:used_results)
-    {
-	const auto& result = results[r];
-	assert(steps.is_marked(result.source_step));
-	assert(result.source_reg == steps[result.source_step].source_reg);
-	assert(regs.is_marked(results[r].source_reg));
-    }
-
-    // 8. Mark regs referenced only by regs as used.
+    // 5. Mark regs referenced only by regs as used.
     for(int reg_index = 0;reg_index < used_regs.size();reg_index++)
     {
 	int r = used_regs[reg_index];
@@ -268,54 +182,6 @@ void reg_heap::trace(vector<int>& remap)
 
     release_scratch_list();
     release_scratch_list();
-    release_scratch_list();
-    release_scratch_list();
-}
-
-template <typename Obj>
-void unmap_unused(mapping& vm, pool<Obj>& Objs, pool<reg>& regs)
-{
-    auto& delta = vm.delta();
-    for(int i=0; i < delta.size();)
-    {
-	int reg = delta[i].first;
-	int& obj = delta[i].second;
-	assert(obj != 0);
-
-	// We can't have: obj > 0, Obj marked, reg unmarked.  That would be bad.
-
-        // if there's a step mapped that is going to be destroyed, then remove the mapping.
-	if (not regs.is_marked(reg))
-	{
-	    assert(obj < 0 or not Objs.is_marked(obj));
-	    vm.erase_value_at(i);
-	}
-	else
-	{
-	    if (obj > 0 and not Objs.is_marked(obj))
-		obj = non_computed_index;
-	    i++;
-	}
-    }
-}
-
-template <typename Obj>
-void unmap_unused(vector<int>& prog, pool<Obj>& Objs, pool<reg>& regs)
-{
-    for(int r=0; r < prog.size(); r++)
-    {
-	int obj = prog[r];
-	assert(obj != 0);
-	// If there's no step/result mapped here, then there's nothing to do.
-	if (obj < 0) continue;
-
-	// if the step/result mapped here is going to be destroyed, then remove the mapping.
-	if (not Objs.is_marked(obj))
-	    prog[r] = non_computed_index;
-	// if the step/result mapped here is NOT going to be destroyed, then we should know that the reg is used.
-	else
-	    assert(regs.is_marked(r));
-    }
 }
 
 void reg_heap::trace_and_reclaim_unreachable()
@@ -337,43 +203,7 @@ void reg_heap::trace_and_reclaim_unreachable()
     check_used_regs();
 #endif
 
-    // unmap all the unused results
-    for(int t=0; t < get_n_tokens(); t++)
-	if (token_is_used(t))
-	{
-	    if (is_root_token(t))
-	    {
-		unmap_unused(prog_steps, steps, regs);
-		unmap_unused(prog_results, results, regs);
-	    }
-	    else
-	    {
-		unmap_unused(tokens[t].vm_step, steps, regs);
-		unmap_unused(tokens[t].vm_result, results, regs);
-	    }
-	}
-
-    // remove all back-edges
-    for(auto i = steps.begin();i != steps.end(); i++)
-	if (not steps.is_marked(i.addr()))
-	    clear_back_edges_for_step(i.addr());
-
-    for(auto i = regs.begin();i != regs.end(); i++)
-	if (not regs.is_marked(i.addr()))
-	    clear_back_edges_for_reg(i.addr());
-
     regs. reclaim_unmarked();
-
-    steps.reclaim_unmarked();
-
-    // remove all back-edges
-    for(auto i = results.begin();i != results.end(); i++)
-	if (not results.is_marked(i.addr()))
-	    clear_back_edges_for_result(i.addr());
-
-    // check that no freed computations are mapped?
-  
-    results.reclaim_unmarked();
 
 #ifdef DEBUG_MACHINE
     check_used_regs();
