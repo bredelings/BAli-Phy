@@ -29,7 +29,7 @@ These directories contain code that affects how `bali-phy` runs:
 : Haskell code
 
 [src/](https://github.com/bredelings/BAli-Phy/blob/master/src)
-: C++14 code
+: C++17 code
 
 [functions/](https://github.com/bredelings/BAli-Phy/blob/master/functions)
 : JSON definitions of functions for the command-line interface
@@ -58,7 +58,7 @@ We are excited to see what you will contribute!  The way to submit changes is:
 1. Fork the BAli-Phy repo to create your own repo.
 1. Develop changes on a branch in your own repo.
 1. Send a [pull request](https://help.github.com/articles/about-pull-requests/) through github.
-1. Tests will run automatically on the on suggested changes.
+1. Tests will run automatically on the proposed changes.
 1. We will review the changes.
 1. If accepted, changes will be merged to the master branch of the main repo.
 
@@ -66,7 +66,7 @@ We are excited to see what you will contribute!  The way to submit changes is:
 
 ## Prequisites
 
-You will need a C++ compiler that understands C++14.  
+You will need a C++ compiler that understands C++17.  
 
 * gcc 5 (or higher) works
 * clang 3.5 (or higher) works
@@ -407,10 +407,10 @@ It is possible to compose `Proposal_Fn`s to create complex proposals, such as:
 # Types
 
 ## `log_double_t`
-This is a positive real number represented in terms of its logarithm.  Operators have been defined so that you can multiple, add, subtract, and divide this type.
+This is a positive real number represented in terms of its logarithm.  Operators have been defined so that you can multiply, add, subtract, and divide this type.
 
 ## `Object`
-All C++ objects that are access via Haskell code inherit from this type.
+All C++ objects are accessed from Haskell inherit from this type.
 
 ## `expression_ref`
 An expression ref is basically either an atomic value or an Object followed by a list of `expression_ref`s
