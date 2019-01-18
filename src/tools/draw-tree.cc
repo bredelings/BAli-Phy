@@ -23,6 +23,10 @@
 #include <vector>
 #include <fstream>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 // FIXME - Add a command-line option to turn on clouds.
 //       - Actually draw arrows on type 2 edges.
 //       - Figure out how to use boost's Kamada-Kawai layout.
