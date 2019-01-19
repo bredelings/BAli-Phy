@@ -78,15 +78,17 @@
   expression_ref make_infixexp(const std::vector<expression_ref>& args);
   expression_ref make_minus(const expression_ref& exp);
   expression_ref make_fexp(const std::vector<expression_ref>& args);
+
   expression_ref make_as_pattern(const std::string& var, const expression_ref& body);
   expression_ref make_lazy_pattern(const expression_ref& pat);
+  expression_ref make_strict_pattern(const expression_ref& pat);
+
   expression_ref make_lambda(const std::vector<expression_ref>& pats, const expression_ref& body);
   expression_ref make_let(const expression_ref& binds, const expression_ref& body);
   expression_ref make_if(const expression_ref& cond, const expression_ref& alt_true, const expression_ref& alt_false);
   expression_ref make_case(const expression_ref& obj, const expression_ref& alts);
   expression_ref make_do(const std::vector<expression_ref>& stmts);
   expression_ref yy_make_tuple(const std::vector<expression_ref>& tup_exprs);
-
 
   expression_ref make_list(const std::vector<expression_ref>& items);
   expression_ref make_alts(const std::vector<expression_ref>& alts);
@@ -96,7 +98,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 100 "parser.hh" // lalr1.cc:380
+#line 102 "parser.hh" // lalr1.cc:380
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -180,7 +182,7 @@
 
 
 namespace yy {
-#line 184 "parser.hh" // lalr1.cc:380
+#line 186 "parser.hh" // lalr1.cc:380
 
 
 
@@ -3536,7 +3538,7 @@ namespace yy {
 
 
 } // yy
-#line 3540 "parser.hh" // lalr1.cc:380
+#line 3542 "parser.hh" // lalr1.cc:380
 
 
 

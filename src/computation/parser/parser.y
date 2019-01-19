@@ -43,15 +43,17 @@
   expression_ref make_infixexp(const std::vector<expression_ref>& args);
   expression_ref make_minus(const expression_ref& exp);
   expression_ref make_fexp(const std::vector<expression_ref>& args);
+
   expression_ref make_as_pattern(const std::string& var, const expression_ref& body);
   expression_ref make_lazy_pattern(const expression_ref& pat);
+  expression_ref make_strict_pattern(const expression_ref& pat);
+
   expression_ref make_lambda(const std::vector<expression_ref>& pats, const expression_ref& body);
   expression_ref make_let(const expression_ref& binds, const expression_ref& body);
   expression_ref make_if(const expression_ref& cond, const expression_ref& alt_true, const expression_ref& alt_false);
   expression_ref make_case(const expression_ref& obj, const expression_ref& alts);
   expression_ref make_do(const std::vector<expression_ref>& stmts);
   expression_ref yy_make_tuple(const std::vector<expression_ref>& tup_exprs);
-
 
   expression_ref make_list(const std::vector<expression_ref>& items);
   expression_ref make_alts(const std::vector<expression_ref>& alts);
@@ -999,7 +1001,8 @@ deriv_clause_types: qtycondoc
 /* ------------- Value definitions ------------------------------- */
 
 decl_no_th: sigdecl           {std::swap($$,$1);}
-| "!" aexp rhs                {}
+/* I guess this is a strict let. Code as DeclStrict, rather than StrictPattern, since docs say this is part of the binding, not part of the patter */
+| "!" aexp rhs                {$$ = new expression(AST_node("Decl:Strict"),{($2),$3});}
 /* what is the opt_sig doing here? */
 | infixexp_top opt_sig rhs    {$$ = new expression(AST_node("Decl"),{make_infixexp($1),$3});}
 | pattern_synonym_decl        {}
@@ -1188,13 +1191,13 @@ ifgdpats : "{" gdpats "}"        {}
 gdpat: "|" guardquals "->" exp   {$$=make_gdrh($2,$4);}
 
 pat: exp      {std::swap($$,$1);}
-|   "!" aexp  {$$ = new expression(AST_node("StrictPat"),{$2});}
+|   "!" aexp  {$$ = make_strict_pattern($2);}
 
 bindpat: exp  {std::swap($$,$1);}
-|   "!" aexp  {$$ = new expression(AST_node("StrictPat"),{$2});}
+|   "!" aexp  {$$ = make_strict_pattern($2);}
 
 apat: aexp    {std::swap($$,$1);}
-|    "!" aexp {$$ = new expression(AST_node("StrictPat"),{$2});}
+|    "!" aexp {$$ = make_strict_pattern($2);}
 
 apats1: apats1 apat {std::swap($$,$1); $$.push_back($2);}
 |       apat        {$$.push_back($1);}
@@ -1609,6 +1612,11 @@ expression_ref make_as_pattern(const string& var, const expression_ref& body)
 expression_ref make_lazy_pattern(const expression_ref& pat)
 {
     return new expression(AST_node("LazyPattern"), {pat});
+}
+
+expression_ref make_strict_pattern(const expression_ref& pat)
+{
+    return new expression(AST_node("StrictPattern"), {pat});
 }
 
 expression_ref make_lambda(const vector<expression_ref>& pats, const expression_ref& body)
