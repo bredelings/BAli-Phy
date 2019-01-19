@@ -205,8 +205,8 @@ elsif ($speed == 2) {
 # create a new directory, decide whether or not to reuse existing directory
 &initialize_results_directory();
 
-open LOG, ">>Results/bp-analyze.log";
-print LOG "------------------------------------------------\n";
+open my $LOG, ">>Results/bp-analyze.log";
+print $LOG "------------------------------------------------\n";
 
 &compute_tree_and_parameter_files_for_heated_chains();
 
@@ -330,14 +330,14 @@ my $n_topologies = exec_show("pickout n_topologies -n < Results/consensus");
 
 my $n_topologies_95;
 
-open CONSENSUS, "Results/consensus";
-while(my $line = <CONSENSUS>) {
+open my $CONSENSUS, "Results/consensus";
+while(my $line = portable_readline($CONSENSUS)) {
     if ($line =~ /contains ([^ ]+) topologies/) {
 	$n_topologies_95 = $1;
 	last;
     }
 }
-close CONSENSUS;
+close $CONSENSUS;
 
 # 14. Traceplots for scalar variables
 
@@ -1716,20 +1716,20 @@ sub generate_trace_plots
     
     if ($#parameter_files > -1) 
     {
-	open VARS, $parameter_files[0];
-	my $header = <VARS>;
+	open my $VARS, $parameter_files[0];
+	my $header = portable_readline($VARS);
 	while ($header eq "" or substr($header,0,2) eq "# ") {
-	    $header = <VARS>;
+	    $header = portable_readline($VARS);
 	}
 	chomp $header;
 	@var_names = split(/\t/,$header);
-	close VARS;
+	close $VARS;
 	
 	print "Analyzing scalar variables ... ";
 
-	open REPORT, "Results/Report";
+	open my $REPORT, "Results/Report";
 	
-	while (my $line = <REPORT>) {
+	while (my $line = portable_readline($REPORT)) {
 	    chomp $line;
 	    next if ($line eq "");
 	    
@@ -1740,13 +1740,13 @@ sub generate_trace_plots
 		$CI_low{$var} = $3;
 		$CI_high{$var} = $4;
 
-		$line = <REPORT>;
+		$line = portable_readline($REPORT);
 		$line =~ /t @ (.+)\s+Ne = ([^ ]+)\s+burnin = (Not Converged!|[^ ]+)/;
 		$ACT{$var} = $1;
 		$ESS{$var} = $2;
 		$Burnin{$var} = $3;
 
-		$line = <REPORT>;
+		$line = portable_readline($REPORT);
 		if ($line =~ /PSRF-80%CI = ([^ ]+)\s+PSRF-RCF = ([^ ]+)/)
 		{
 		    $PSRF_CI80{$var} = $1;
@@ -1850,76 +1850,78 @@ sub check_input_file_names()
 {
     return 0 if (! -e "Results/input_files");
 
-    open FILE,"Results/input_files";
+    open my $FILE,"Results/input_files";
 
     my @old_input_file_names;
-    while(my $line = <FILE>)
+    while(my $line = portable_readline($FILE))
     {
 	chomp $line;
 	push @old_input_file_names, $line;
     }
-    close FILE;
+    close $FILE;
 
     return compare_arrays( [@old_input_file_names], [@input_file_names]);
 }
 
 sub write_input_file_names()
 {
-    open FILE,">Results/input_files";
+    open my $FILE,">Results/input_files";
 
-    print FILE join("\n",@input_file_names);
+    print $FILE join("\n",@input_file_names);
 
-    close FILE;
+    close$ FILE;
 }
 
 sub check_out_file_names()
 {
     return 0 if (! -e "Results/out_files");
-    open FILE,"Results/out_files";
+    open my $FILE,"Results/out_files";
 
     my @out_files_old;
-    while(my $line = <FILE>)
+    while(my $line = portable_readline($FILE))
     {
 	chomp $line;
 	push @out_files_old, $line;
     }
-    close FILE;
+    close $FILE;
 
     return compare_arrays( [@out_files_old], [@out_files]);
 }
 
 sub write_out_file_names()
 {
-    open FILE,">Results/out_files";
+    open my $FILE,">Results/out_files";
 
-    print FILE join("\n",@out_files);
+    print $FILE join("\n",@out_files);
 
-    close FILE;
+    close $FILE;
 }
 
 sub check_burnin()
 {
     return 0 if (! -e "Results/burnin");
-    open FILE,"Results/burnin";
+    open my $FILE,"Results/burnin";
 
-    my $line = <FILE>;
+    my $line = portable_readline($FILE);
     chomp $line;
+
+    close $FILE;
 
     return ($burnin == $line);
 }
 
 sub write_burnin()
 {
-    open FILE,">Results/burnin";
+    open my $FILE,">Results/burnin";
 
-    print FILE "$burnin\n";
+    print $ FILE "$burnin\n";
 
-    close FILE;
+    close $ FILE;
 }
 
 sub get_unused_dir_name
 {
-     for(my $i=1;;$i++)
+    for(my $i=1;;$i++)
     {
 	my $unused_name = "Results.".$i;
 	return $unused_name if (! -e $unused_name);
@@ -1996,13 +1998,11 @@ sub get_input_file_names_for_outfile
 
     if ($personality =~ "bali-phy.*")
     {
-	local *FILE;
-
-	open FILE, $file or die "Can't open $file!";
+	open my $FILE, $file or die "Can't open $file!";
 
 	my @input_file_names = ();
 	
-	while (my $line = <FILE>) 
+	while (my $line = portable_readline($FILE))
 	{
 	    if ($line =~ /data(.+) = (.+)/) {
 		my $filename = $2;
@@ -2085,13 +2085,11 @@ sub get_cmdline_attribute
     my $attribute = shift;
     my $value;
 
-    local *FILE;
-
-    open FILE, $out_files[0] or die "Can't open $out_files[0]!";
+    open my $FILE, $out_files[0] or die "Can't open $out_files[0]!";
 
     my @partitions = ();
 
-    my $line = <FILE>;
+    my $line = portable_readline($FILE);
     {
 	if ($line =~ /--$attribute[ =]([^ ]*)$/) {
 	    $value = $1;
@@ -2099,7 +2097,7 @@ sub get_cmdline_attribute
 	}
 	last if ($line =~ /^iterations = 0/);
     }
-    close FILE;
+    close $FILE;
 
     return $value;
 }
@@ -2111,13 +2109,11 @@ sub get_header_attribute
     my $attribute = shift;
     my $value;
 
-    local *FILE;
-
-    open FILE, $filename or die "Can't open $filename!";
+    open my $FILE, $filename or die "Can't open $filename!";
 
     my @partitions = ();
 
-    while (my $line = <FILE>) 
+    while (my $line = portable_readline($FILE))
     {
 	if ($line =~ /$attribute: (.*)$/) {
 	    $value = $1;
@@ -2125,7 +2121,7 @@ sub get_header_attribute
 	}
 	last if ($line =~ /^iterations = 0/);
     }
-    close FILE;
+    close $FILE;
 
     return $value;
 }
@@ -2137,20 +2133,18 @@ sub get_value_from_file
 
     my $value;
 
-    local *FILE;
-
-    open FILE, $filename or die "Can't open $filename!";
+    open my $FILE, $filename or die "Can't open $filename!";
 
     my @partitions = ();
 
-    while (my $line = <FILE>) 
+    while (my $line = portable_readline($FILE))
     {
 	if ($line =~ /$attribute ([^ ]*)($| )/) {
 	    $value = $1;
 	    last;
 	}
     }
-    close FILE;
+    close $FILE;
 
     return $value;
 }
@@ -2165,11 +2159,9 @@ sub get_header_attributes
     foreach my $filename (@filenames)
     {
 
-	local *FILE;
+	open my $FILE, $filename or die "Can't open $filename!";
 
-	open FILE, $filename or die "Can't open $filename!";
-
-	while (my $line = <FILE>) 
+	while (my $line = portable_readline($FILE))
 	{
 	    if ($line =~ /$attribute: (.*)$/) {
 		push @values, $1;
@@ -2177,7 +2169,7 @@ sub get_header_attributes
 	    }
 	    last if ($line =~ /^iterations = 0/);
 	}
-	close FILE;
+	close $FILE;
     }
 
     return @values;
@@ -2191,11 +2183,9 @@ sub get_tree_prior
 
     my $file = $out_files[0];
 
-    local *FILE;
+    open my $FILE, $file or die "Can't open $file!";
 
-    open FILE, $file or die "Can't open $file!";
-
-    while (my $line = <FILE>)
+    while (my $line = portable_readline($FILE))
     {
 	if ($line =~ /^T:topology (.*)$/)
 	{
@@ -2208,7 +2198,7 @@ sub get_tree_prior
 	last if ($line =~ /^iterations/);
     }
 
-    close FILE;
+    close $FILE;
 }
 
 
@@ -2222,6 +2212,7 @@ sub get_json_from_file
 	local $/;
 	<$json_fh>
     };
+    $json_text =~ s/\015?\012/\n/g;
     my $json = JSON::PP->new->ascii->pretty->allow_nonref;
     my $data = $json->decode($json_text);
     return $data;
@@ -2279,13 +2270,11 @@ sub get_models_for_file
 
     return [] if ($personality !~ "bali-phy.*");
 
-    local *FILE;
-
-    open FILE, $file or die "Can't open $file!";
+    open my $FILE, $file or die "Can't open $file!";
 
     my @models = ();
 
-    while (my $line = <FILE>) 
+    while (my $line = portable_readline($FILE))
     {
 	if ($line =~ /${name}([0-9]+) = (.+)/)
 	{
@@ -2300,7 +2289,7 @@ sub get_models_for_file
 	    last if ($line =~ /^iterations = 0/);
 	}
     }
-    close FILE;
+    close $FILE;
 
     return [@models];
 }
@@ -2421,13 +2410,11 @@ sub get_imodels_for_file
 
     return [] if ($personality !~ "bali-phy.*");
 
-    local *FILE;
-
-    open FILE, $file or die "Can't open $file!";
+    open my $FILE, $file or die "Can't open $file!";
 
     my @imodels = ();
 
-    while (my $line = <FILE>) 
+    while (my $line = portable_readline($FILE))
     {
 	if ($line =~ /indel model(.+) = (.+)/) {
 	    push @imodels,$2;
@@ -2438,7 +2425,7 @@ sub get_imodels_for_file
 
 	last if ($line =~ /^iterations = 0/);
     }
-    close FILE;
+    close $FILE;
 
     push @imodels, "none" if ($#imodels == -1);
     return [@imodels];
@@ -2467,20 +2454,18 @@ sub get_smodel_indices
 {
     return [] if ($personality !~ "bali-phy.*");
 
-    local *FILE;
-
-    open FILE, $out_files[0] or die "Can't open $out_files[0]!";
+    open my $FILE, $out_files[0] or die "Can't open $out_files[0]!";
 
     my @smodel_indices = ();
 
-    while (my $line = <FILE>) 
+    while (my $line = portable_readline($FILE))
     {
 	if ($line =~ /smodel-index(.+) = (.+)/) {
 	    push @smodel_indices,$2;
 	}
 	last if ($line =~ /^iterations = 0/);
     }
-    close FILE;
+    close $FILE;
 
     return [@smodel_indices];
 }
@@ -2489,20 +2474,18 @@ sub get_scale_model_indices
 {
     return [] if ($personality !~ "bali-phy.*");
 
-    local *FILE;
-
-    open FILE, $out_files[0] or die "Can't open $out_files[0]!";
+    open my $FILE, $out_files[0] or die "Can't open $out_files[0]!";
 
     my @scale_model_indices = ();
 
-    while (my $line = <FILE>) 
+    while (my $line = portable_readline($FILE))
     {
 	if ($line =~ /scale-index(.+) = (.+)/) {
 	    push @scale_model_indices,$2;
 	}
 	last if ($line =~ /^iterations = 0/);
     }
-    close FILE;
+    close $FILE;
 
     return [@scale_model_indices];
 }
@@ -2511,13 +2494,11 @@ sub get_imodel_indices
 {
     return [] if ($personality !~ "bali-phy.*");
 
-    local *FILE;
-
-    open FILE, $out_files[0] or die "Can't open $out_files[0]!";
+    open my $FILE, $out_files[0] or die "Can't open $out_files[0]!";
 
     my @imodel_indices = ();
 
-    while (my $line = <FILE>) 
+    while (my $line = portable_readline($FILE))
     {
 	if ($line =~ /imodel-index(.+) = (.+)/) {
 	    push @imodel_indices,$2;
@@ -2531,13 +2512,11 @@ sub get_alphabets
 {
     return [] if ($personality !~ "bali-phy.*");
 
-    local *FILE;
-
-    open FILE, $out_files[0] or die "Can't open $out_files[0]!";
+    open my $FILE, $out_files[0] or die "Can't open $out_files[0]!";
 
     my @alphabets = ();
 
-    while (my $line = <FILE>) 
+    while (my $line = portable_readline($FILE))
     {
 	if ($line =~ /alphabet(.+) = (.+)/) {
 	    push @alphabets,$2;
@@ -2557,8 +2536,6 @@ sub get_n_lines
 {
     my $filename = shift;
 
-    local *FILE;
-  
     open FILE, $filename;
 
     my $n_lines = 0;
@@ -3017,12 +2994,12 @@ sub tree_MDS
 sub exec_show
 {
     my $cmd = shift;
-    print LOG "\ncommand:  $cmd\n\n";
+    print $LOG "\ncommand:  $cmd\n\n";
     my ($tmp_fh,$tmp_filename) = tempfile();
 
     my $result = `$cmd 2>$tmp_filename`;
     my $message = `cat $tmp_filename`; 
-    print LOG $message;
+    print $LOG $message;
     if ($? != 0)
     {
 	my $code = $?>>8;
@@ -3045,7 +3022,7 @@ sub exec_show
 sub exec_result
 {
     my $cmd = shift;
-    print LOG "\ncommand:  $cmd\n\n";
+    print $LOG "\ncommand:  $cmd\n\n";
 
     print STDERR "\n\t$cmd\n\n" if ($verbose);
 
@@ -3219,4 +3196,13 @@ sub gen_x3d_of_mds
     ## FIXME - Chrome can't <include /> local files because it treats them as cross-site scripting, which they are not, I think.
 #    $x3d = "<x3d><scene>\n$x3d\n</scene></x3d>\n";
     return $x3d;
+}
+
+sub portable_readline
+{
+    my $fh = shift;
+    my $line = readline($fh);
+    return $line if (!defined($line));
+    $line =~ s/\015?\012/\n/g;
+    return $line;
 }
