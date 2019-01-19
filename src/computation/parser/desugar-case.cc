@@ -127,16 +127,31 @@ enum class pattern_type
 {
     constructor,
     var,
+    bang,
     null
 };
 
 pattern_type classify_equation(const equation_info_t& equation)
 {
     assert(equation.patterns.size());
-    if (is_var(equation.patterns[0]))
+    auto& pat = equation.patterns[0];
+
+    if (is_var(pat))
 	return pattern_type::var;
-    else
+    else if (is_constructor_exp(pat))
 	return pattern_type::constructor;
+    else if (pat.is_int())
+	return pattern_type::constructor;
+    else if (pat.is_char())
+	return pattern_type::constructor;
+    else if (pat.is_double())
+	return pattern_type::constructor;
+    else if (pat.is_log_double())
+	return pattern_type::constructor;
+    else if (is_AST(pat, "StrictPattern"))
+	throw myexception()<<"The BangPattern extension is not implemented!";
+    else
+	throw myexception()<<"I don't understand pattern '"<<pat<<"'";
 }
 
 vector<pair<pattern_type,vector<equation_info_t>>> partition(const vector<equation_info_t>& equations)
