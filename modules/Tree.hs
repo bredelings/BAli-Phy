@@ -6,11 +6,16 @@ data Tree = Tree (Array Int [Int]) (Array Int (Int,Int,Int,Int)) Int Int
 data RootedTree = RootedTree Tree Int (Array Int Bool)
 
 root (RootedTree _ r _) = r
-rooted_tree t r = RootedTree t r (mkArray n check_away_from_root)
-    where check_away_from_root b = sourceNode t b == root t || or $ map (away_from_root t) (edgesBeforeEdge t)
-          n = numBranches t * 2
+remove_root (RootedTree t _ _) = t
+add_root t r = rt
+    where check_away_from_root b = (sourceNode rt b == root rt) || (or $ map (away_from_root rt) (edgesBeforeEdge rt b))
+          nb = numBranches t * 2
+          rt = RootedTree t r (mkArray nb check_away_from_root)
 
 away_from_root (RootedTree t r arr) b = arr!b
+toward_root    rt b = not $ away_from_root rt b
+
+parentNode rooted_tree n = listToMaybe [targetNode rooted_tree b | b <- edgesOutOfNode rooted_tree n, toward_root rooted_tree b]
 
 -- For numNodes, numBranches, edgesOutOfNode, and nodesForEdge I'm currently using fake polymorphism
 numNodes (Tree _ _ n _) = n
