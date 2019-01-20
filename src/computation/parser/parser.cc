@@ -2692,7 +2692,7 @@ namespace yy {
 
   case 319:
 #line 1135 "parser.y" // lalr1.cc:870
-    { yylhs.value.as< expression_ref > () = expression_ref(AST_node("enumFromToThen"),{yystack_[4].value.as< expression_ref > (),yystack_[2].value.as< expression_ref > (),yystack_[0].value.as< expression_ref > ()}); }
+    { yylhs.value.as< expression_ref > () = expression_ref(AST_node("enumFromThenTo"),{yystack_[4].value.as< expression_ref > (),yystack_[2].value.as< expression_ref > (),yystack_[0].value.as< expression_ref > ()}); }
 #line 2697 "parser.cc" // lalr1.cc:870
     break;
 

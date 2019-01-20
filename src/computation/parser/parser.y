@@ -1132,7 +1132,7 @@ list: texp                       { $$ = {AST_node("id",":"),$1,AST_node("id","[]
 |     texp ".."                  { $$ = expression_ref(AST_node("enumFrom"),{$1}); }
 |     texp "," exp ".."          { $$ = expression_ref(AST_node("enumFromThen"),{$1,$3}); }
 |     texp ".." exp              { $$ = expression_ref(AST_node("enumFromTo"),{$1,$3}); }
-|     texp "," exp ".." exp      { $$ = expression_ref(AST_node("enumFromToThen"),{$1,$3,$5}); }
+|     texp "," exp ".." exp      { $$ = expression_ref(AST_node("enumFromThenTo"),{$1,$3,$5}); }
 |     texp "|" squals            { auto quals = $3; quals.push_back($1); $$ = expression_ref(AST_node("ListComprehension"),quals); }
 
 lexps: lexps "," texp            { std::swap($$,$1); $$.push_back($3);}

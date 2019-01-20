@@ -480,14 +480,28 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	}
 	else if (n.type == "enumFrom")
 	{
-	    expression_ref E2 = var("Prelude.enumFrom");
+	    expression_ref E2 = var("Compiler.Enum.enumFrom");
 	    for(auto& e: v)
 		E2 = {E2, e};
 	    return desugar(E2);
 	}
 	else if (n.type == "enumFromTo")
 	{
-	    expression_ref E2 = var("Prelude.enumFromTo");
+	    expression_ref E2 = var("Compiler.Enum.enumFromTo");
+	    for(auto& e: v)
+		E2 = {E2, e};
+	    return desugar(E2);
+	}
+	else if (n.type == "enumFromThen")
+	{
+	    expression_ref E2 = var("Compiler.Enum.enumFromThen");
+	    for(auto& e: v)
+		E2 = {E2, e};
+	    return desugar(E2);
+	}
+	else if (n.type == "enumFromThenTo")
+	{
+	    expression_ref E2 = var("Compiler.Enum.enumFromThenTo");
 	    for(auto& e: v)
 		E2 = {E2, e};
 	    return desugar(E2);

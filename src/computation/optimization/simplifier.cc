@@ -137,6 +137,8 @@ var get_new_name(var x, const in_scope_set& bound_vars)
     // If bound_vars doesn't contain x, then no need to change anything.
     if (it == bound_vars.end()) return x;
 
+    assert(not x.is_exported);
+
     x.index = bound_vars.size();
     while(bound_vars.count(x) and x.index > 0)
 	x.index++;
@@ -164,6 +166,8 @@ var rename_and_bind_var(const expression_ref& Evar, substitution& S, in_scope_se
     }
 
     bind_var(bound_vars, x2, {});
+
+    if (x.is_exported) assert(x == x2);
 
     return x2;
 }

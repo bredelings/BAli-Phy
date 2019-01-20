@@ -9,12 +9,14 @@ module Prelude (module Prelude,
                 module Control.Monad,
                 module Compiler.Base,
                 module Compiler.Num,
-                module Compiler.Real)
+                module Compiler.Real,
+                module Compiler.Enum)
     where
 
 import Compiler.Base
 import Compiler.Num
 import Compiler.Real
+import Compiler.Enum
 import Data.Bool
 import Data.Tuple
 import Data.Maybe
@@ -60,9 +62,6 @@ x      == y      = builtin_equals x y
 fmap = map
 
 undefined = error "Prelude.undefined"
-
-enumFrom x = x:(enumFrom (x+1))
-enumFromTo x y = if (x>y) then [] else x:(enumFromTo (x+1) y)
 
 -- zipWith' enforces equal lengths, unlike zipWith
 zipWith' z (a:as) (b:bs) =  z a b : zipWith z as bs
