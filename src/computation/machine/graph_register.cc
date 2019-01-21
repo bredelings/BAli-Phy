@@ -202,6 +202,7 @@ void reg::clear()
 {
     C.clear();
     type = type_t::unknown;
+    created_by = {0,0};
     flags.reset();
 }
 
