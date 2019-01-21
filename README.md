@@ -22,10 +22,10 @@ The Manual describes [how to install](http://bali-phy.org/README.xhtml#installat
 Compiling
 ---------
 
-You will need a C++ compiler that understands C++14.  
- * gcc 5 (or higher) works
- * clang 3.5 (or higher) works
- * XCode 6.0 (or higher) works
+You will need a C++ compiler that understands C++17.
+ * gcc 7 (or higher) works
+ * clang 7 (or higher) works
+ * XCode 10 (or higher) works
 
 You will also need to install
  * cairo graphics library (optional, but required to build the `draw-tree` program)
@@ -33,7 +33,7 @@ You will also need to install
 You will also need
  * python3
  * ninja
- * meson >= 0.45
+ * meson >= 0.49
 
 Install Prerequisites
 ---------------------
@@ -45,7 +45,7 @@ You also need to install meson.  First try:
 sudo apt-get install meson
 ```
 
-If the version of meson is not at least 0.45, then you need to install
+If the version of meson is not at least 0.49, then you need to install
 meson through pip:
 ```bash
 python3 -m venv meson
