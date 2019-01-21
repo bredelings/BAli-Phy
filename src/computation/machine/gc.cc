@@ -203,7 +203,15 @@ void reg_heap::trace_and_reclaim_unreachable()
     check_used_regs();
 #endif
 
-    regs. reclaim_unmarked();
+    // Would it be faster to register a clearing callback?
+    for(auto i = regs.begin();i != regs.end(); i++)
+	if (not regs.is_marked(i.addr()))
+	{
+	    clear_back_edges_for_reg(i.addr());
+	    regs.access(i.addr()).clear();
+	}
+
+    regs.reclaim_unmarked();
 
 #ifdef DEBUG_MACHINE
     check_used_regs();
