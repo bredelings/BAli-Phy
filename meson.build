@@ -124,6 +124,7 @@ else
 endif
 
 small_fasta=files('examples/sequences/5S-rRNA/5d.fasta')
+big_fasta=files('examples/sequences/5S-rRNA/48-muscle.fasta')
 builtins = meson.build_root()/'src/builtins'
 packagepath = '--package-path=@0@:@1@'.format(builtins,meson.source_root())
 
