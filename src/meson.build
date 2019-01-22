@@ -82,7 +82,7 @@ endif
 baliphy = executable('bali-phy',
 		     baliphy_sources,
 		     include_directories: [root_inc,  extra_includes],
-		     dependencies: [boost, eigen, json, libdl],
+		     dependencies: [boost, eigen, json, libdl, math_dep],
 		     link_args: extra_link_args,
 		     link_with: [libbaliphy, libsums],
 		     install_rpath: extra_rpath,
@@ -111,7 +111,7 @@ simple_tools_prefix = ['subsample']
 foreach tool: simple_tools
   tool_exe = executable(tool,
 			['tools/' + tool + '.cc'],
-			dependencies:boost,
+			dependencies:[boost, math_dep],
 			link_with: libbaliphy,
 			install_rpath: extra_rpath,
 			install: true)
@@ -123,18 +123,18 @@ foreach tool: simple_tools_prefix
   simple_tools_prefixed = simple_tools_prefixed + ['bali-'+tool]
   tool_exe = executable('bali-'+tool,
 			['tools/' + tool + '.cc'],
-			dependencies:boost,
+			dependencies:[boost, math_dep],
 			link_with: libbaliphy,
 			install_rpath: extra_rpath,
 			install: true)
   test(tool + ' --help', tool_exe, args:['--help'])
 endforeach
 
-executable('alignment-draw',  ['tools/alignment-draw.cc', 'tools/colors.cc'] , dependencies:boost, link_with: libbaliphy, install: true)
+executable('alignment-draw',  ['tools/alignment-draw.cc', 'tools/colors.cc'] , dependencies:[boost,math_dep], link_with: libbaliphy, install: true)
 
-executable('trees-bootstrap', ['tools/trees-bootstrap.cc', 'tools/bootstrap.cc'], dependencies:boost, link_with: libbaliphy, install: true)
+executable('trees-bootstrap', ['tools/trees-bootstrap.cc', 'tools/bootstrap.cc'], dependencies:[boost,math_dep], link_with: libbaliphy, install: true)
 
-executable('draw-tree', ['tools/draw-tree.cc'], dependencies: [boost, cairo], include_directories: root_inc, link_with: libbaliphy, install:true)
+executable('draw-tree', ['tools/draw-tree.cc'], dependencies: [boost, cairo, math_dep], include_directories: root_inc, link_with: libbaliphy, install:true)
 
 all_progs = ['bali-phy'] + simple_tools + simple_tools_prefixed + ['alignment-draw','trees-bootstrap','draw-tree']
 
@@ -147,7 +147,7 @@ if get_option('extra-tools')
   foreach tool : extra_tools
     executable( tool,
 		['tools/' + tool + '.cc'],
-		dependencies: boost,
+		dependencies: [boost, math_dep],
 		link_with:libbaliphy,
 		install_rpath: extra_rpath,
 		install:true)

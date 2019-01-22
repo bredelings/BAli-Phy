@@ -123,6 +123,8 @@ else
   json = declare_dependency(include_directories: json)
 endif
 
+math_dep = cpp.find_library('m', required:false)
+
 small_fasta=files('examples/sequences/5S-rRNA/5d.fasta')
 big_fasta=files('examples/sequences/5S-rRNA/48-muscle.fasta')
 builtins = meson.build_root()/'src/builtins'

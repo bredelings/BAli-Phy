@@ -26,6 +26,7 @@
    - Correctly handle FAIL when desugaring case expressions.
    + Make bp-analyze handle windows line endings when run from cygwin/UNIX.
    - Compile without errors in C++17 mode.
+   + Link to math library if available: fix build on kfreebsd
 
 * 3.4.1 (Jan 18, 2019)
  - Help
