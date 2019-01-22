@@ -1,4 +1,6 @@
 * 3.5 (unreleased)
+ - Graphical model framework
+   + Brownian model model on *random* rooted tree.
  - Misc
    - Switch to c++17
  - Haskell machine
@@ -9,12 +11,32 @@
    - Allow logging strings.
    - Record force edges.
    - Garbage-collection no longer delete steps or results.
+ - Help
+   + Display functions more compactly with `help functions`
  - Tools
    + Allow reading from files wherever we take a comma-separated-list
  - Code
    + Refactoring
      - Move utility code under util/
      - Split util/util.H into several other files.
+ - Packaging
+   + Distribute `draw-tree` binary on windows.
+ - Fixes
+   + Correctly escape newick names when writing tree samples.
+   - Correctly handle FAIL when desugaring case expressions.
+   + Make bp-analyze handle windows line endings when run from cygwin/UNIX.
+   - Compile without errors in C++17 mode.
+
+* 3.4.1 (Jan 18, 2019)
+ - Help
+   + Display functions more compactly with `help functions`
+ - Packaging
+   + Distribute `draw-tree` binary on windows.
+ - Fixes
+   + Correctly escape newick names when writing tree samples.
+   - Correctly handle FAIL when desugaring case expressions.
+   + Make bp-analyze handle windows line endings when run from cygwin/UNIX.
+   - Compile without errors in C++17 mode.
 
 * 3.4 (Dec 13, 2018)
  - Evolutionary models
