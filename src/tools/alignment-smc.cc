@@ -21,6 +21,7 @@
 #include <fstream>
 #include <map>
 #include <string>
+#include <regex>
 #include "tree/tree.H"
 #include "alignment/alignment.H"
 #include "alignment/load.H"
@@ -34,6 +35,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include "util/assert.hh"
 #include "util/io.H"
+#include "util/cmdline.H"
 #include "util/string/convert.H"
 #include "util/string/pred.H"
 
@@ -118,6 +120,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("strip-gaps,S","Remove columns within <arg> columns of a gap")
 	("mask-gaps,G",value<int>(),"Remove columns within <arg> columns of a gap")
 	("mask-file,M",value<vector<string>>()->composing(),"Apply mask-file")
+	("translate-mask",value<string>(),"Masks (CSV or @file)")
 	("variant",value<int>()->default_value(1),"Is there a SNP at distance <arg> from SNP?")
 	("dical2","Output file for DiCal2")
 	("msmc","Output file for MSMC")
@@ -687,6 +690,45 @@ int main(int argc,char* argv[])
 
 	if (args.count("autoclean"))
 	    autoclean(A);
+
+	if (args.count("translate-mask"))
+	{
+	    vector<pair<int,int>> map;
+	    int loc2 = -1;
+	    for(int c=0;c<A.length();c++)
+	    {
+		if (A.character(c,1)) loc2++;
+
+		if (A.character(c,0))
+		{
+		    if (A.character(c,1))
+			map.push_back({loc2,loc2});
+		    else
+			map.push_back({loc2,loc2+1});
+		}
+	    }
+
+	    vector<string> ranges = get_string_list(args, "translate-mask");
+
+	    static std::regex rgx ( R"(\s*([0-9]+)\s*-\s*([0-9]+)\s*)" );
+	    for(auto& range_string: ranges)
+	    {
+		std::smatch m;
+		if (std::regex_match(range_string, m, rgx))
+		{
+		    int beg = convertTo<int>(m[1]);
+		    int end = convertTo<int>(m[2]);
+
+		    beg = std::max(1,map[beg-1].first+1);
+		    end = std::min(map[end-1].second+1, loc2+1);
+		    std::cerr<<beg<<" - "<<end<<"\n";
+		}
+		else
+		    throw myexception()<<"Range '"<<range_string<<"' is malformed!";
+	    }
+
+	    exit(0);
+	}
 
 	if (args.count("mask-file"))
 	{
