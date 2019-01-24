@@ -379,6 +379,8 @@ int main(int argc,char* argv[])
 
     bool show_only = false;
 
+    owned_ptr<Model> M; // Declare early so we can reference from catch block.
+
     try {
 
 #if defined(HAVE_FEENABLEEXCEPT) && !defined(NDEBUG)
@@ -457,7 +459,6 @@ int main(int argc,char* argv[])
 
 	//---------- Create model object -----------//
 	json info;
-	owned_ptr<Model> M;
 	if (args.count("align"))
 	{
 	    Rules R(get_package_paths(argv[0], args));
@@ -679,6 +680,9 @@ int main(int argc,char* argv[])
 	    err_both<<"bali-phy: Error! "<<e.what()<<endl;
 
 	retval=1;
+
+	if (log_verbose > 0)
+	    M->show_graph();
     }
 
     show_ending_messages(show_only);
