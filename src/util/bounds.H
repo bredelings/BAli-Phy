@@ -62,7 +62,7 @@ struct Bounds: public Object
 	    if (lower_bound)
 		output += convertToString(*lower_bound);
 	    else
-		output += "Inf";
+		output += "-Inf";
 
 	    output += ", ";
 
