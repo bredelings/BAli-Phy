@@ -15,6 +15,7 @@
    + Display functions more compactly with `help functions`
  - Tools
    + Allow reading from files wherever we take a comma-separated-list
+   + alignment-info: add option to show sequence names and/or lengths.
  - Code
    + Refactoring
      - Move utility code under util/
