@@ -707,24 +707,41 @@ int main(int argc,char* argv[])
 			map.push_back({loc2,loc2+1});
 		}
 	    }
+	    // Map beginning to beginng
+	    map[0] = {0,0};
+	    // Map end to end
+	    map.back() = {loc2,loc2};
 
 	    vector<string> ranges = get_string_list(args, "translate-mask");
 
 	    static std::regex rgx ( R"(\s*([0-9]+)\s*-\s*([0-9]+)\s*)" );
 	    for(auto& range_string: ranges)
 	    {
-		std::smatch m;
-		if (std::regex_match(range_string, m, rgx))
-		{
-		    int beg = convertTo<int>(m[1]);
-		    int end = convertTo<int>(m[2]);
+		try {
+		    std::smatch m;
+		    if (std::regex_match(range_string, m, rgx))
+		    {
+			int beg = convertTo<int>(m[1]);
+			int end = convertTo<int>(m[2]);
+			if (beg < 0)
+			    throw myexception()<<"0-indexed range should not have negative start offset!";
+			if (end >= map.size())
+			    throw myexception()<<"0-indexed range should end before the length of the source chromosome! ("<<map.size()<<")";
+			if (beg > end)
+			    throw myexception()<<"range should not begin before it ends!";
 
-		    beg = std::max(1,map[beg-1].first+1);
-		    end = std::min(map[end-1].second+1, loc2+1);
-		    std::cerr<<beg<<" - "<<end<<"\n";
+			beg = map[beg].first;
+			end = map[end].second;
+			std::cerr<<beg<<" - "<<end<<"\n";
+		    }
+		    else
+			throw myexception()<<"malformed range!";
 		}
-		else
-		    throw myexception()<<"Range '"<<range_string<<"' is malformed!";
+		catch (myexception& e)
+		{
+		    e.prepend("Range '"+range_string+"': ");
+		    throw;
+		}
 	    }
 
 	    exit(0);
