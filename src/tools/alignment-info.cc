@@ -25,6 +25,7 @@
 #include "alignment/alignment.H"
 #include "alignment/alignment-util.H"
 #include "alignment/load.H"
+#include "sequence/sequence-format.H"
 #include "tree/tree.H"
 #include "tree/tree-util.H"
 #include "tree-align/link.H"
@@ -36,6 +37,7 @@
 #include <boost/dynamic_bitset.hpp>
 
 #include "util/string/join.H"
+#include "util/cmdline.H"
 
 using std::vector;
 using std::valarray;
@@ -304,7 +306,28 @@ int main(int argc,char* argv[])
 	variables_map args = parse_cmd_line(argc,argv);
 
 	//----------- Load alignment and tree ---------//
-	alignment A = load_A(args, false);
+	auto filename = get_arg_default<string>(args,"align","-");
+	vector<sequence> sequences = sequence_format::load_from_file(filename);
+	auto a_name = get_arg_default<string>(args,"alphabet", "");
+
+	bool show_lengths = args.count("show-lengths");
+	bool show_names = args.count("show-names");
+	if (show_lengths or show_names)
+	{
+	    for(auto& sequence: sequences)
+	    {
+		if (show_names)
+		    cout<<sequence.name;
+		if (show_names and show_lengths)
+		    cout<<",";
+		if (show_lengths)
+		    cout<<sequence.seq_length();
+		cout<<"\n";
+	    }
+	    exit(0);
+	}
+
+	alignment A = load_alignment(sequences, a_name);
 	SequenceTree T;
 	if (args.count("tree"))
 	{
@@ -314,23 +337,6 @@ int main(int argc,char* argv[])
 	}
 
 	const alphabet& a = A.get_alphabet();
-
-	bool show_lengths = args.count("show-lengths");
-	bool show_names = args.count("show-names");
-	if (show_lengths or show_names)
-	{
-	    for(int i=0;i<A.n_sequences();i++)
-	    {
-		if (show_names)
-		    cout<<A.seq(i).name;
-		if (show_names and show_lengths)
-		    cout<<",";
-		if (show_lengths)
-		    cout<<A.seqlength(i);
-		cout<<"\n";
-	    }
-	    exit(0);
-	}
 
 	//----- Count informative/non-constant sites ----//
 	dynamic_bitset<> informative(A.length());
