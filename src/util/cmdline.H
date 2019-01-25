@@ -26,6 +26,15 @@ std::optional<T> get_arg(const boost::program_options::variables_map& args, cons
 	return {};
 }
 
+template <typename T>
+const T& get_arg_default(const boost::program_options::variables_map& args, const std::string& key, const T& t)
+{
+    if (args.count(key))
+	return args.at(key).as<T>();
+    else
+	return t;
+}
+
 
 std::vector<std::string> get_string_list(const boost::program_options::variables_map& args, const std::string& key);
 
