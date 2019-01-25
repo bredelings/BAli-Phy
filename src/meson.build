@@ -63,13 +63,6 @@ baliphy_sources = ['dp/dp_hmm.cc','computation/parser/desugar.cc','computation/p
    git_version_h]
 
 
-if host_machine.system() == 'windows'
-  # We should have a system of 'cygwin' for cygwin.
-  subdir('dlfcn-win32')
-else
-  libdl = cpp.find_library('dl')
-endif
-
 # maybe we don't need this if we are doing static linking
 extra_rpath = ''
 if host_machine.system() == 'linux'

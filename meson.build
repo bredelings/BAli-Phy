@@ -123,6 +123,13 @@ else
   json = declare_dependency(include_directories: json)
 endif
 
+if host_machine.system() == 'windows'
+  # We should have a system of 'cygwin' for cygwin.
+  subdir('src/dlfcn-win32')
+else
+  libdl = cpp.find_library('dl')
+endif
+
 math_dep = cpp.find_library('m', required:false)
 
 small_fasta=files('examples/sequences/5S-rRNA/5d.fasta')
