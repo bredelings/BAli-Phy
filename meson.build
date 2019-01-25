@@ -125,7 +125,7 @@ endif
 
 if host_machine.system() == 'windows'
   # We should have a system of 'cygwin' for cygwin.
-  subdir('src/dlfcn-win32')
+  subdir('external/dlfcn-win32')
 else
   libdl = cpp.find_library('dl')
 endif
