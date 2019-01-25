@@ -732,7 +732,7 @@ int main(int argc,char* argv[])
 
 			beg = map[beg].first;
 			end = map[end].second;
-			std::cerr<<beg<<" - "<<end<<"\n";
+			std::cout<<beg<<" - "<<end<<"\n";
 		    }
 		    else
 			throw myexception()<<"malformed range!";
