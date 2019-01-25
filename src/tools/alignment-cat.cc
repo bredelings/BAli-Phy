@@ -20,6 +20,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <optional>
 #include <regex>
 #include "alignment/alignment.H"
 #include "alignment/alignment-util.H"
@@ -46,6 +47,7 @@ using std::istream;
 using std::vector;
 using std::string;
 using std::pair;
+using std::optional;
 
 using std::cin;
 using std::cout;
@@ -492,7 +494,7 @@ int main(int argc,char* argv[])
 
 	bool pad = (args.count("pad")>0);
 
-	vector<string> names;
+	optional<vector<string>> names;
 	if (args.count("taxa"))
 	    names = get_string_list(args, "taxa");
 	else if (auto tree = get_arg<string>(args,"reorder-by-tree"))
@@ -506,7 +508,7 @@ int main(int argc,char* argv[])
 	{
 	    vector<sequence> sequences = load_file(*align, false);
 	    for(const auto& s: sequences)
-		names.push_back(s.name);
+		names->push_back(s.name);
 	}
 
 	//------- Determine filenames --------//
@@ -540,8 +542,8 @@ int main(int argc,char* argv[])
 		if (filenames.size() > 1)
 		    check_all_same_length(s, "in order to concatenate two or more alignments.");
 	
-		if (names.size())
-		    s = select_taxa(s,names);
+		if (names)
+		    s = select_taxa(s,*names);
 		S = concatenate(S,s);
 	    }
 	    catch (std::exception& e) {
