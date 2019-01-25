@@ -163,9 +163,6 @@ void reg_heap::trace(vector<int>& remap)
 
 	if (S.call > 0)
 	    mark_reg(S.call);
-	// This might be unnecessary - there should be a step for the forced reg ... unless it got invalidated.
-	for(int r: S.forced_regs)
-	    mark_reg(r);
     }
 
     // 5. Mark regs referenced only by regs as used.
