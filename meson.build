@@ -142,5 +142,3 @@ test('bali-phy testsuite',
      timeout: 3000,
      workdir: meson.source_root()/'tests',
      args:[baliphy.full_path(), packagepath])
-
-

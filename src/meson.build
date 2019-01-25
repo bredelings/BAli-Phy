@@ -63,12 +63,9 @@ baliphy_sources = ['dp/dp_hmm.cc','computation/parser/desugar.cc','computation/p
    git_version_h]
 
 
-libdl = []
-extra_includes = []
 if host_machine.system() == 'windows'
   # We should have a system of 'cygwin' for cygwin.
-  baliphy_sources += [ 'dlfcn-win32/dlfcn.c' ]
-  extra_includes = include_directories('dlfcn-win32/')
+  subdir('dlfcn-win32')
 else
   libdl = cpp.find_library('dl')
 endif
@@ -81,7 +78,7 @@ endif
 
 baliphy = executable('bali-phy',
 		     baliphy_sources,
-		     include_directories: [root_inc,  extra_includes],
+		     include_directories: root_inc,
 		     dependencies: [boost, eigen, json, libdl, math_dep],
 		     link_args: extra_link_args,
 		     link_with: [libbaliphy, libsums],
