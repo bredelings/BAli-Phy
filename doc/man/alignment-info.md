@@ -27,6 +27,12 @@ Show useful statistics about the alignment.
 **--alphabet** _arg_
 : specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons
 
+**-N**, **--show-names**
+: Print the sequence-names and exit
+
+**-L**, **--show-lengths**
+: Print the sequence-lengths and exit
+
 
 # REPORTING BUGS:
  BAli-Phy online help: <http://www.bali-phy.org/docs.php>.

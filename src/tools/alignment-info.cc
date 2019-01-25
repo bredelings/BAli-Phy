@@ -111,6 +111,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("align", value<string>(),"file with sequences and initial alignment")
 	("tree",value<string>(),"file with initial tree")
 	("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons")
+	("show-names,N","Print the sequence-names and exit")
+	("show-lengths,L","Print the sequence-lengths and exit")
 	;
 
     // positional options
@@ -312,7 +314,24 @@ int main(int argc,char* argv[])
 	}
 
 	const alphabet& a = A.get_alphabet();
-    
+
+	bool show_lengths = args.count("show-lengths");
+	bool show_names = args.count("show-names");
+	if (show_lengths or show_names)
+	{
+	    for(int i=0;i<A.n_sequences();i++)
+	    {
+		if (show_names)
+		    cout<<A.seq(i).name;
+		if (show_names and show_lengths)
+		    cout<<",";
+		if (show_lengths)
+		    cout<<A.seqlength(i);
+		cout<<"\n";
+	    }
+	    exit(0);
+	}
+
 	//----- Count informative/non-constant sites ----//
 	dynamic_bitset<> informative(A.length());
 	dynamic_bitset<> informative2(A.length());
