@@ -37,6 +37,8 @@ struct sequence: public std::string, public sequence_info
 {
     void strip_gaps();
 
+    int seq_length() const;
+
     sequence() {}
 
     sequence(const sequence_info&);

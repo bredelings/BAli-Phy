@@ -33,7 +33,18 @@ sequence_info::sequence_info(const string& n,const string& c)
     :name(n),comment(c) 
 {}
 
-void sequence::strip_gaps() {
+int sequence::seq_length() const
+{
+    int total = 0;
+    for(char c: (*this))
+	if (c != '-' and c != '?')
+	    total++;
+
+    return total;
+}
+
+void sequence::strip_gaps()
+{
     string ungapped;
 
     for(int i=0;i<size();i++) {
