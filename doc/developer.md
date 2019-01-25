@@ -68,9 +68,9 @@ We are excited to see what you will contribute!  The way to submit changes is:
 
 You will need a C++ compiler that understands C++17.  
 
-* gcc 5 (or higher) works
-* clang 3.5 (or higher) works
-* XCode 6.0 (or higher) works
+* gcc 7 (or higher) works
+* clang 7 (or higher) works
+* XCode 10.0 (or higher) works
 
 You will also need to install
 
