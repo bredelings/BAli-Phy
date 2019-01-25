@@ -713,7 +713,7 @@ int main(int argc,char* argv[])
 	    map.back() = {loc2,loc2};
 
 	    vector<string> ranges = get_string_list(args, "translate-mask");
-
+	    std::cout<<">"<<A.seq(1).name<<"\n";
 	    static std::regex rgx ( R"(\s*([0-9]+)\s*-\s*([0-9]+)\s*)" );
 	    for(auto& range_string: ranges)
 	    {
