@@ -36,6 +36,7 @@
 #include "util/assert.hh"
 #include "util/io.H"
 #include "util/cmdline.H"
+#include "util/mapping.H"
 #include "util/string/convert.H"
 #include "util/string/pred.H"
 
@@ -125,6 +126,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("translate-mask",value<string>(),"Masks (CSV or @file)")
 	("variant",value<int>()->default_value(1),"Is there a SNP at distance <arg> from SNP?")
 	("dical2","Output file for DiCal2")
+	("clean-to-ref",value<string>(),"Remove columns not in reference sequence arg")
 	("msmc","Output file for MSMC")
 	("psmc","Output file for PSMC")
 	("autoclean","Mask blocks with too many SNPs")
@@ -607,6 +609,21 @@ dynamic_bitset<> block_mask(dynamic_bitset<> mask, int blocksize)
     return mask;
 }
 
+alignment clean_to_ref(alignment& A, const string& ref_name)
+{
+    auto index = find_index(sequence_names(A), ref_name);
+
+    if (not index)
+	throw myexception()<<"Can't find reference name '"<<ref_name<<"' in alignment!";
+
+    vector<int> cols;
+    for(int c=0;c<A.length();c++)
+	if (A.character(c,*index))
+	    cols.push_back(c);
+
+    return select_columns(A,cols);
+}
+
 int autoclean(alignment& A)
 {
     constexpr double mean_snps_per_block = 2.0;
@@ -689,6 +706,9 @@ int main(int argc,char* argv[])
 
 	auto A = A0;
 	const alphabet& a = A.get_alphabet();
+
+	if (auto ref_name = get_arg<string>(args,"clean-to-ref"))
+	    A = clean_to_ref(A, *ref_name);
 
 	if (args.count("autoclean"))
 	    autoclean(A);
