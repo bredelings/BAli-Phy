@@ -100,6 +100,8 @@ vector<vector<pair<int,int>>> read_intervals_file(const string& filename)
 	else
 	{
 	    auto x = convertTo<int>(split(line," - "));
+	    if (masks.empty())
+		throw myexception()<<"Range '"<<line<<"' occurs before first sequence name!";
 	    assert(x.size() == 2);
 	    masks.back().push_back({x[0],x[1]});
 	}
