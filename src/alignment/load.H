@@ -6,6 +6,7 @@
 #include <list>
 #include <string>
 #include <boost/program_options.hpp>
+#include "sequence/sequence.H"
 #include "sequence/alphabet.H"
 #include "alignment.H"
 #include "util/object.H"
@@ -23,6 +24,9 @@ alignment load_alignment_with_range(const std::string& filename, const std::stri
 
 /// Load an alignment from file
 alignment load_alignment(const std::string& filename, const std::string& alph_name = "");
+
+/// Load an alignment from file
+alignment load_alignment(const std::vector<sequence>& sequences, const std::string& alph_name = "");
 
 std::list<alignment> load_alignments(std::istream& ifile, const std::vector<std::string>& names, const alphabet& a, int skip, int maxalignments);
 

@@ -63,30 +63,35 @@ alignment load_alignment_with_range(const string& filename, const string& range,
     return A;
 }
 
-alignment load_alignment(const string& filename, const string& alph_name)
+alignment load_alignment(const vector<sequence>& sequences, const string& alph_name)
 {
-    auto sequences = sequence_format::load_from_file(filename);
-
     alignment A;
 
+    A.load(alph_name, sequences);
+
+    int n_empty = remove_empty_columns(A);
+    if (n_empty)
+	if (log_verbose >= 1) cerr<<"Warning: removed "<<n_empty<<" empty columns from alignment!\n"<<endl;
+
+    if (A.n_sequences() == 0)
+	throw myexception()<<"Alignment doesn't contain any sequences!";
+
+    return A;
+}
+
+alignment load_alignment(const string& filename, const string& alph_name)
+{
     try
     {
-	A.load(alph_name, sequences);
+	auto sequences = sequence_format::load_from_file(filename);
+
+	return load_alignment(sequences, alph_name);
     }
     catch (myexception& e)
     {
-	e.prepend("In file '"+filename+"': ");
+	e.prepend("Reading alignment from file '"+filename+"': ");
 	throw;
     }
-  
-    int n_empty = remove_empty_columns(A);
-    if (n_empty)
-	if (log_verbose >= 1) cerr<<"Warning: removed "<<n_empty<<" empty columns from alignment '"<<filename<<"'!\n"<<endl;
-  
-    if (A.n_sequences() == 0)
-	throw myexception()<<"Alignment file "<<filename<<" didn't contain any sequences!";
-
-    return A;
 }
 
 /// Load an alignment from command line args "--align filename"
