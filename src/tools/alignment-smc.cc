@@ -693,6 +693,9 @@ int main(int argc,char* argv[])
 
 	if (args.count("translate-mask"))
 	{
+	    if (A.n_sequences() != 2)
+		throw myexception()<<"translate-mask: expected exactly 2 sequences, but got "<<A.n_sequences()<<"!";
+
 	    vector<pair<int,int>> map;
 	    int loc2 = -1;
 	    for(int c=0;c<A.length();c++)
