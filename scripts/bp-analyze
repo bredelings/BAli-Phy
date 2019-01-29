@@ -1655,16 +1655,13 @@ sub get_partition_for_alignment
     {
 	$p = $1;
 	$p = $p - 1;
-	return $p;
     }
 
     if ($alignment =~ /^P([0-9]+)-max/)
     {
 	$p = $1;
 	$p = $p - 1;
-	return $p;
     }
-
     return $p;
 }
 
