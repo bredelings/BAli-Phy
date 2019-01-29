@@ -1139,6 +1139,17 @@ std::vector<int> reg_heap::used_regs_for_reg(int r) const
     return U;
 }
 
+std::vector<int> reg_heap::forced_regs_for_reg(int r) const
+{
+    vector<int> U;
+    if (not has_step(r)) return U;
+
+    for(int r: step_for_reg(r).forced_regs)
+	U.push_back(r);
+
+    return U;
+}
+
 void reg_heap::reclaim_used(int r)
 {
     // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.

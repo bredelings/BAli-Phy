@@ -537,6 +537,7 @@ public:
     void set_result_value_for_reg(int r1);
 
     std::vector<int> used_regs_for_reg(int r) const;
+    std::vector<int> forced_regs_for_reg(int r) const;
 
     void reroot_at(int t);
 

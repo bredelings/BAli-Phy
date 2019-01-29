@@ -607,6 +607,24 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	    o<<"];\n";
 	}
 
+	// forced_inputs
+	for(int R2: C.forced_regs_for_reg(R))
+	{
+	    bool is_ref_edge_also = false;
+	    for(int R3: C[R].Env)
+		if (R2 == R3)
+		    is_ref_edge_also = true;
+
+	    if (is_ref_edge_also) continue;
+
+	    string name2 = "n" + convertToString(R2);
+	    o<<name<<" -> "<<name2<<" ";
+	    o<<"[";
+	    o<<"color=\"#770077\"";
+	    o<<",style=dashed";
+	    o<<"];\n";
+	}
+
     }
     o<<"}"<<std::endl;
 }
