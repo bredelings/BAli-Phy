@@ -225,7 +225,7 @@ RGB AA_color(char aa) {
     else if (strchr("-*+X ",aa))
 	return grey;
   
-    throw myexception()<<"Letter '"<<aa<<" does not appear to be an amino acid";
+    throw myexception()<<"Letter '"<<aa<<"' does not appear to be an amino acid";
 }
 
 
@@ -259,10 +259,10 @@ RGB DNA_color(char aa) {
 	return yellow;
     else if (strchr("C",aa))
 	return blue;
-    else if (strchr("-*+NYRWS ",aa))
+    else if (strchr("-*+NYRWSMKBDHV ",aa))
 	return grey;
   
-    throw myexception()<<"Letter '"<<aa<<" does not appear to be an nucleic acid";
+    throw myexception()<<"Letter '"<<aa<<"' does not appear to be an nucleic acid";
 }
 
 

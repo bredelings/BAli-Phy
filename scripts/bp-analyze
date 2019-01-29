@@ -1646,6 +1646,28 @@ sub compute_consensus_alignments
     }
 }
 
+sub get_partition_for_alignment
+{
+    my $alignment = shift;
+
+    my $p;
+    if ($alignment =~ /^C[0-9]+\.P([0-9]+)\./)
+    {
+	$p = $1;
+	$p = $p - 1;
+	return $p;
+    }
+
+    if ($alignment =~ /^P([0-9]+)-max/)
+    {
+	$p = $1;
+	$p = $p - 1;
+	return $p;
+    }
+
+    return $p;
+}
+
 sub draw_alignments
 {
     return if ($#alignments == -1);
@@ -1658,27 +1680,28 @@ sub draw_alignments
 	    exec_show("alignment-cat Results/Work/$alignment-unordered.fasta --reorder-by-tree=Results/c50.tree > Results/$alignment.fasta");
 	}
 	
+	my $color_scheme="DNA+contrast";
+	my $p = get_partition_for_alignment($alignment);
+	if (defined($p))
+	{
+	    $color_scheme="AA+contrast" if ($alphabets[$p] eq "Amino-Acids");
+	}
+	else
+	{
+	    print $LOG "WARNING: Don't know partition for alignment '$alignment'\n";
+	}
+	
 	if (! more_recent_than("Results/$alignment.html","Results/$alignment.fasta")) {
-	    my $result = exec_result("alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=DNA+contrast > Results/$alignment.html 2>/dev/null");
-	    
-	    if ($result) {
-		exec_show("alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=AA+contrast > Results/$alignment.html");
-	    }
+	    exec_show("alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=${color_scheme} > Results/$alignment.html");
 	}
     }
     
     # Generate  alignments-diff
     for my $alignment (@alignments) 
     {
-	my $p;
-	if ($alignment =~ /^C1\.P([^-]+)\./)
-	{
-	    $p=$1;
-	    next if ($imodel_indices[$p-1] eq "--");
-	}
-	else {
-	    next;
-	}
+	my $p = get_partition_for_alignment($alignment);
+	next if (!defined($p));
+	next if ($imodel_indices[$p] eq "--");
 	
 	next if ($alignment eq "P$p-max");
 	next if (! -e "Results/P$p-max.fasta");
