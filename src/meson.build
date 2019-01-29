@@ -98,10 +98,12 @@ simple_tools = ['model_P','statreport','stats-select','alignment-gild','alignmen
 
 simple_tools_prefix = ['subsample']
 
+# FIXME: use a dict to merge all of these loops
+
 foreach tool: simple_tools
   tool_exe = executable(tool,
 			['tools/' + tool + '.cc'],
-			dependencies:[boost, math_dep],
+			dependencies: [boost, math_dep],
 			link_with: libbaliphy,
 			install_rpath: extra_rpath,
 			install: true)
@@ -120,11 +122,24 @@ foreach tool: simple_tools_prefix
   test(tool + ' --help', tool_exe, args:['--help'])
 endforeach
 
-executable('alignment-draw',  ['tools/alignment-draw.cc', 'tools/colors.cc'] , dependencies:[boost,math_dep], link_with: libbaliphy, install: true)
+executable('alignment-draw',  ['tools/alignment-draw.cc', 'tools/colors.cc'] ,
+	   dependencies:[boost,math_dep],
+	   link_with: libbaliphy,
+	   install_rpath: extra_rpath,
+	   install: true)
 
-executable('trees-bootstrap', ['tools/trees-bootstrap.cc', 'tools/bootstrap.cc'], dependencies:[boost,math_dep], link_with: libbaliphy, install: true)
+executable('trees-bootstrap', ['tools/trees-bootstrap.cc', 'tools/bootstrap.cc'],
+	   dependencies:[boost,math_dep],
+	   link_with: libbaliphy,
+	   install_rpath: extra_rpath,
+	   install: true)
 
-executable('draw-tree', ['tools/draw-tree.cc'], dependencies: [boost, cairo, math_dep], include_directories: root_inc, link_with: libbaliphy, install:true)
+executable('draw-tree', ['tools/draw-tree.cc'],
+	   dependencies: [boost, cairo, math_dep],
+	   include_directories: root_inc, # for config.h
+	   link_with: libbaliphy,
+	   install_rpath: extra_rpath,
+	   install:true)
 
 all_progs = ['bali-phy'] + simple_tools + simple_tools_prefixed + ['alignment-draw','trees-bootstrap','draw-tree']
 
