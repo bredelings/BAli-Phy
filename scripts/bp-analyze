@@ -918,24 +918,31 @@ sub section_mixing
     ###### What file should we show for MDS?
     my $MDS_figure;
     my $MDS_figure_3d;
-    my $title;
+    my $MDS_title;
     if (-e "Results/tree-1-2-3.svg")
     {
 	$MDS_figure = "tree-1-2-3.svg";
 	$MDS_figure_3d = "tree-1-2-3.points";
-	$title = "the first 3 chains";
+	$MDS_title = "the first 3 chains";
     }
     elsif (-e "Results/tree-1-2.svg")
     {
 	$MDS_figure = "tree-1-2.svg";
 	$MDS_figure_3d = "tree-1-2.points";
-	$title = "2 chains";
+	$MDS_title = "2 chains";
     }
     elsif (-e "Results/tree1.svg")
     {
 	$MDS_figure = "tree1.svg";
 	$MDS_figure_3d = "tree-3D1-1.points";
-	$title = "1 chain";
+	$MDS_title = "1 chain";
+    }
+    else
+    {
+	$MDS_title = "1 chain" if ($n_chains == 1);
+	$MDS_title = "2 chains" if ($n_chains == 2);
+	$MDS_title = "3 chains" if ($n_chains == 3);
+	$MDS_title = "the first 3 chains" if ($n_chains > 3);
     }
     $section .= '</td>';
 #$section .= '<object class="r_floating_picture" data="partitions.SRQ.svg" type="image/svg+xml" height="200pt"></object>';
@@ -955,9 +962,17 @@ sub section_mixing
     $section .= '<table style="width:100%;clear:both"><tr>';
 
     $section .= '<td style="width:40%;vertical-align:top">';
-    $section .= "<h4 style=\"text-align:center\">Projection of RF distances for $title (<a href=\"https://doi.org/10.1080/10635150590946961\">Hillis et al 2005</a>)</h4>";
-    $section .= html_svg($MDS_figure,"90%","",[]) if (defined($MDS_figure));
-    $section .= "<a href='${MDS_figure_3d}.html'>3D</a>";
+    $section .= "<h4 style=\"text-align:center\">Projection of RF distances for $MDS_title (<a href=\"https://doi.org/10.1080/10635150590946961\">Hillis et al 2005</a>)</h4>";
+    if (defined($MDS_figure))
+    {
+
+	$section .= html_svg($MDS_figure,"90%","",[]);
+	$section .= "<a href='${MDS_figure_3d}.html'>3D</a>";
+    }
+    elsif (!$have_R)
+    {
+	$section .= "<p>Not generated: can't find R.</p>";
+    }
     $section .= '</td>';
     
     $section .= '<td style="width:40%;vertical-align:top">';
@@ -966,16 +981,28 @@ sub section_mixing
     {
 	$section .= html_svg("convergence1-PP.svg","90%","",[])
     }
-
-    $section .= "<br/><br/><br/><br/>";
-    if (-e "Results/convergence2-PP.svg")
-    {
-	$section .= html_svg("convergence2-PP.svg","90%","",[]);
-    }
     else
     {
-	$section .= "<p>Not generated: multiple chains needed.</p>";
+	if (!$have_R)
+	{
+	    $section .= "<p>Not generated: can't find R.</p>";
+	}
+	elsif ($n_chains == 1)
+	{
+	    $section .= "<p>Not generated: multiple chains needed.</p>";
+	}
+	else
+	{
+	    $section .= "<p>Not generated.</p>";
+	}
     }
+
+    if (-e "Results/convergence2-PP.svg")
+    {
+	$section .= "<br/><br/><br/><br/>";
+	$section .= html_svg("convergence2-PP.svg","90%","",[]);
+    }
+
     $section .= '</td>';
     
 
