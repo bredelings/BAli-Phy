@@ -1697,16 +1697,24 @@ sub draw_alignments
     for my $alignment (@alignments) 
     {
 	my $p = get_partition_for_alignment($alignment);
+
 	next if (!defined($p));
 	next if ($imodel_indices[$p] eq "--");
 	
-	next if ($alignment eq "P$p-max");
-	next if (! -e "Results/P$p-max.fasta");
+	# Find alignment to compare to.
+	my $p1 = $p+1;
+	my $compare_name = "P$p1-max";
+	my $compare_fasta = "Results/${compare_name}.fasta";
+
+	next if ($alignment eq $compare_name);
+
+	print ${compare_fasta};
+	next if (! -e ${compare_fasta});
 	
 	if (! more_recent_than("Results/$alignment-diff.fasta","Results/$alignment.fasta") || 
 	    ! more_recent_than("Results/$alignment-diff.AU","Results/$alignment.fasta") )
 	{
-	    exec_show("alignments-diff Results/$alignment.fasta Results/P$p-max.fasta > Results/$alignment-diff.AU");
+	    exec_show("alignments-diff Results/$alignment.fasta ${compare_fasta} > Results/$alignment-diff.AU");
 	}
 	
 	if (! more_recent_than("Results/$alignment-diff.html","Results/$alignment-diff.AU")) {
