@@ -40,3 +40,18 @@ string strip(const string& s,const string& chars) {
 }
 
 
+string rstrip(const string& line,const string& chars)
+{
+    int last = line.find_last_not_of(chars);
+    if (last == string::npos)
+	return {};
+    return line.substr(0,last+1);
+}
+
+string lstrip(const string& line,const string& chars)
+{
+    int first = line.find_first_not_of(chars);
+    if (first == string::npos)
+	return {};
+    return line.substr(first);
+}
