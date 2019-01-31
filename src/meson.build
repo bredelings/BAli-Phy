@@ -89,74 +89,52 @@ test('bali-phy 5d +A 50', baliphy, args:[small_fasta,'--iter=50', packagepath], 
 test('bali-phy 48 +A 3', baliphy, args:[big_fasta,'--iter=3', packagepath], timeout: 360)
 test('bali-phy 5d -A 200', baliphy, args:[small_fasta,'--iter=200', packagepath, '-Inone'], timeout:120)
 
+all_progs = ['bali-phy']
+
 #--------- Build rules for tools that are always installed ------------#
 
-simple_tools = ['model_P','statreport','stats-select','alignment-gild','alignment-consensus', 'alignment-max','alignment-chop-internal',
+tools = ['model_P','statreport','stats-select','alignment-gild','alignment-consensus', 'alignment-max','alignment-chop-internal',
 		'alignment-indices','alignment-info','alignment-cat','alignment-translate','alignment-find','trees-consensus',
 		'tree-mean-lengths','mctree-mean-lengths','trees-to-SRQ','pickout','cut-range','trees-distances', 'alignment-thin',
-		'alignments-diff','tree-tool','alignment-distances']
+		'alignments-diff','tree-tool','alignment-distances','alignment-draw', 'trees-bootstrap', 'draw-tree']
 
-simple_tools_prefix = ['subsample']
-
-# FIXME: use a dict to merge all of these loops
-
-foreach tool: simple_tools
-  tool_exe = executable(tool,
-			['tools/' + tool + '.cc'],
-			dependencies: [boost, math_dep],
-			link_with: libbaliphy,
-			install_rpath: extra_rpath,
-			install: true)
-  test(tool + ' --help', tool_exe, args:['--help'])
-endforeach
-
-simple_tools_prefixed = []
-foreach tool: simple_tools_prefix
-  simple_tools_prefixed = simple_tools_prefixed + ['bali-'+tool]
-  tool_exe = executable('bali-'+tool,
-			['tools/' + tool + '.cc'],
-			dependencies:[boost, math_dep],
-			link_with: libbaliphy,
-			install_rpath: extra_rpath,
-			install: true)
-  test(tool + ' --help', tool_exe, args:['--help'])
-endforeach
-
-executable('alignment-draw',  ['tools/alignment-draw.cc', 'tools/colors.cc'] ,
-	   dependencies:[boost,math_dep],
-	   link_with: libbaliphy,
-	   install_rpath: extra_rpath,
-	   install: true)
-
-executable('trees-bootstrap', ['tools/trees-bootstrap.cc', 'tools/bootstrap.cc'],
-	   dependencies:[boost,math_dep],
-	   link_with: libbaliphy,
-	   install_rpath: extra_rpath,
-	   install: true)
-
-executable('draw-tree', ['tools/draw-tree.cc'],
-	   dependencies: [boost, cairo, math_dep],
-	   include_directories: root_inc, # for config.h
-	   link_with: libbaliphy,
-	   install_rpath: extra_rpath,
-	   install:true)
-
-all_progs = ['bali-phy'] + simple_tools + simple_tools_prefixed + ['alignment-draw','trees-bootstrap','draw-tree']
-
-#--------- Build rules for tools that are SOMETIMES installed ------------#
+extra_tools = ['stats-merge', 'stats-cat', 'alignment-identity', 'alignment-compare', 'joint-indels', 'joint-parsimony', 'alignment-smc',
+		 'alignment-convert', 'alignment-find-conserved', 'partitions-supported', 'draw-graph', 'trees-pair-distances', 'tree-partitions', 'tree-reroot',
+		 'path-graph']
 
 if get_option('extra-tools')
-  extra_tools = ['stats-merge', 'stats-cat', 'alignment-identity', 'alignment-compare', 'joint-indels', 'joint-parsimony', 'alignment-smc',
-		 'alignment-convert', 'alignment-find-conserved','partitions-supported','draw-graph','trees-pair-distances','tree-partitions','tree-reroot',
-		 'path-graph']
-  foreach tool : extra_tools
-    executable( tool,
-		['tools/' + tool + '.cc'],
-		dependencies: [boost, math_dep],
-		link_with:libbaliphy,
-		install_rpath: extra_rpath,
-		install:true)
-  endforeach
-  all_progs = all_progs + extra_tools
+  tools += extra_tools
 endif
 
+tools_prefix = ['subsample']
+
+prefix = 'bali-'
+
+prefixed_tools = ['subsample']
+
+extra_sources = {'alignment-draw': ['tools/colors.cc'], 'trees-bootstrap': ['tools/bootstrap.cc']}
+
+extra_deps = {'draw-tree': [cairo]}
+
+foreach tool: tools
+  sources = ['tools/' + tool + '.cc']
+  if tool in extra_sources
+    sources += extra_sources[tool]
+  endif
+
+  deps = [boost,math_dep]
+  if tool in extra_deps
+    deps += extra_deps[tool]
+  endif
+
+  name = tool
+  if tool in prefixed_tools
+    name = prefix + name
+  endif
+
+  all_progs += name
+
+  tool_exe = executable(name, sources, include_directories: root_inc, dependencies: deps, link_with: libbaliphy, install_rpath: extra_rpath, install: true)
+
+  test(tool + ' --help', tool_exe, args:['--help'])
+endforeach
