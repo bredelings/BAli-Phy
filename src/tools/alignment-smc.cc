@@ -791,6 +791,7 @@ int main(int argc,char* argv[])
 	    map[0] = {0,0};
 	    // Map end to end
 	    map.back() = {loc2,loc2};
+	    map.push_back({loc2,loc2}); // Handle end that is 1 too large?
 
 	    auto mask = read_mask(*filename);
 	    std::cout<<A.seq(1).name<<"\n";
@@ -798,7 +799,7 @@ int main(int argc,char* argv[])
 	    {
 		if (beg < 0)
 		    throw myexception()<<"0-indexed range should not have negative start offset!";
-		if (end >= map.size())
+		if (end > map.size())
 		    throw myexception()<<"0-indexed range should end before the length of the source chromosome! ("<<map.size()<<")";
 		if (beg > end)
 		    throw myexception()<<"range should not begin before it ends!";
