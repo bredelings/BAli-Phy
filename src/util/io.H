@@ -110,4 +110,6 @@ public:
 std::string read_file(const std::string& filename);
 
 std::string read_file(const std::string& filename, const std::string& description);
+
+std::vector<std::string> read_lines(std::istream& file);
 #endif

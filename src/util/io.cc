@@ -316,6 +316,15 @@ null_ostream::null_ostream()
   :ostream(&buf)
 { }
 
+vector<string> read_lines(std::istream& file)
+{
+    vector<string> lines;
+    string line;
+    while(portable_getline(file,line))
+	lines.push_back(line);
+    return lines;
+}
+
 string read_file(const string& filename)
 {
   checked_ifstream file(filename);
