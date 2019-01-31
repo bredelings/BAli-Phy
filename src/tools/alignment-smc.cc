@@ -39,6 +39,8 @@
 #include "util/mapping.H"
 #include "util/string/convert.H"
 #include "util/string/pred.H"
+#include "util/string/strip.H"
+#include "util/range.H"
 
 using std::vector;
 using std::valarray;
@@ -692,6 +694,59 @@ void mask_intervals(const vector<vector<pair<int,int>>>& intervals, alignment& A
     }
 }
 
+struct sequence_mask
+{
+    // Name
+    string region_name;
+    // 0-based regions to mask out.
+    vector<pair<int,int>> ranges;
+};
+
+sequence_mask read_mask(const string& filename)
+{
+    // 1. Read fine lines
+    checked_ifstream file(filename,"mask file");
+
+    auto lines = read_lines(file);
+    lines = select(lines, [](auto& line){return not strip(line," \t").empty();});
+
+    // 2. Parse header
+    if (lines.empty())
+	throw myexception()<<"Mask file '"<<filename<<"' is empty!";
+    auto& header_line = lines[0];
+    if (header_line.empty() or header_line[0] != '>')
+	throw myexception()<<"Mask file missing header. First line is:\n"<<lines[0]<<"\n";
+
+    sequence_mask mask;
+    mask.region_name = rstrip(lines[0].substr(1), " \t");
+
+    // 3. Read ranges
+    static std::regex rgx ( R"(\s*([0-9]+)\s*-\s*([0-9]+)\s*)" );
+    for(int i=1;i<lines.size();i++)
+    {
+	auto& range_string = lines[i];
+
+	try {
+	    std::smatch m;
+	    if (std::regex_match(range_string, m, rgx))
+	    {
+		int beg = convertTo<int>(m[1]);
+		int end = convertTo<int>(m[2]);
+		mask.ranges.push_back({beg,end});
+	    }
+	    else
+		throw myexception()<<"malformed range!";
+	}
+	catch (myexception& e)
+	{
+	    e.prepend("Range '"+range_string+"': ");
+	    throw;
+	}
+    }
+
+    return mask;
+}
+
 int main(int argc,char* argv[]) 
 { 
     try {
@@ -707,13 +762,13 @@ int main(int argc,char* argv[])
 	auto A = A0;
 	const alphabet& a = A.get_alphabet();
 
-	if (auto ref_name = get_arg<string>(args,"clean-to-ref"))
+	if (auto ref_name = get_arg<string>(args, "clean-to-ref"))
 	    A = clean_to_ref(A, *ref_name);
 
 	if (args.count("autoclean"))
 	    autoclean(A);
 
-	if (args.count("translate-mask"))
+	if (auto filename = get_arg<string>(args, "translate-mask"))
 	{
 	    if (A.n_sequences() != 2)
 		throw myexception()<<"translate-mask: expected exactly 2 sequences, but got "<<A.n_sequences()<<"!";
@@ -737,36 +792,20 @@ int main(int argc,char* argv[])
 	    // Map end to end
 	    map.back() = {loc2,loc2};
 
-	    vector<string> ranges = get_string_list(args, "translate-mask");
-	    std::cout<<">"<<A.seq(1).name<<"\n";
-	    static std::regex rgx ( R"(\s*([0-9]+)\s*-\s*([0-9]+)\s*)" );
-	    for(auto& range_string: ranges)
+	    auto mask = read_mask(*filename);
+	    std::cout<<A.seq(1).name<<"\n";
+	    for(auto& [beg,end]: mask.ranges)
 	    {
-		try {
-		    std::smatch m;
-		    if (std::regex_match(range_string, m, rgx))
-		    {
-			int beg = convertTo<int>(m[1]);
-			int end = convertTo<int>(m[2]);
-			if (beg < 0)
-			    throw myexception()<<"0-indexed range should not have negative start offset!";
-			if (end >= map.size())
-			    throw myexception()<<"0-indexed range should end before the length of the source chromosome! ("<<map.size()<<")";
-			if (beg > end)
-			    throw myexception()<<"range should not begin before it ends!";
+		if (beg < 0)
+		    throw myexception()<<"0-indexed range should not have negative start offset!";
+		if (end >= map.size())
+		    throw myexception()<<"0-indexed range should end before the length of the source chromosome! ("<<map.size()<<")";
+		if (beg > end)
+		    throw myexception()<<"range should not begin before it ends!";
 
-			beg = map[beg].first;
-			end = map[end].second;
-			std::cout<<beg<<" - "<<end<<"\n";
-		    }
-		    else
-			throw myexception()<<"malformed range!";
-		}
-		catch (myexception& e)
-		{
-		    e.prepend("Range '"+range_string+"': ");
-		    throw;
-		}
+		beg = map[beg].first;
+		end = map[end].second;
+		std::cout<<beg<<" - "<<end<<"\n";
 	    }
 
 	    exit(0);
