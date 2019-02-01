@@ -476,9 +476,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	}
 	else if (F.type() == index_var_type)
 	{
-	    int index = F.as_index_var();
-
-	    int R2 = C[R].lookup_in_env( index );
+	    int R2 = C[R].reg_for_index_var();
 
 	    string reg_name = "<" + convertToString(R2) + ">";
 	    if (reg_names.count(R2))

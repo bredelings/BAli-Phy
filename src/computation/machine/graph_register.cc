@@ -713,7 +713,7 @@ const expression_ref reg_heap::get_range_for_random_variable(int c, int r)
 {
     if (find_update_random_variable(r))
     {
-	int r_range = regs.access(r).C.lookup_in_env(1);
+	int r_range = regs.access(r).C.reg_for_slot(3);
 	return get_reg_value_in_context(r_range, c);
     }
     else
@@ -724,7 +724,7 @@ double reg_heap::get_rate_for_random_variable(int r)
 {
     if (find_update_random_variable(r))
     {
-	int r_rate = regs.access(r).C.lookup_in_env(0);
+	int r_rate = regs.access(r).C.reg_for_slot(4);
 	r_rate = incremental_evaluate_unchangeable(r_rate);
 	return regs.access(r_rate).C.exp.as_double();
     }
@@ -1040,9 +1040,7 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
     // If the value is a pre-existing reg_var, then call it.
     if (value.exp.head().type() == index_var_type)
     {
-	int index = value.exp.as_index_var();
-
-	int Q = value.lookup_in_env( index );
+	int Q = value.reg_for_index_var();
 
 	assert(regs.is_used(Q));
 

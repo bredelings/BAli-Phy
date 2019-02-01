@@ -196,12 +196,7 @@ closure case_op(OperationArgs& Args)
 		result.exp = this_body;
 	
 		for(int j=0;j<object.exp.size();j++)
-		{
-		    // Don't do a dynamic cast here!
-		    int index = object.exp.sub()[j].as_index_var();
-	  
-		    result.Env.push_back( object.lookup_in_env( index ) );
-		}
+		    result.Env.push_back( object.reg_for_slot(j) );
 	    }
 	}
     }

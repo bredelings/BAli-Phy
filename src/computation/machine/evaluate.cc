@@ -296,8 +296,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 	}
 	else if (reg_type == reg::type_t::index_var)
 	{
-	    int index = regs.access(R).C.exp.as_index_var();
-	    int R2 = regs.access(R).C.lookup_in_env( index );
+	    int R2 = regs.access(R).C.reg_for_index_var();
 	    return incremental_evaluate(R2);
 	}
 	else
@@ -320,9 +319,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		clear_back_edges_for_step(s);
 	    clear_step(R);
 
-	    int index = regs.access(R).C.exp.as_index_var();
-
-	    int R2 = regs.access(R).C.lookup_in_env( index );
+	    int R2 = regs.access(R).C.reg_for_index_var();
 
 	    // Return the end of the index_var chain.
 	    // We used to update the index_var to point to the end of the chain.
@@ -390,8 +387,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		    int r2;
 		    if (closure_stack.back().exp.head().is_index_var())
 		    {
-			int index = closure_stack.back().exp.as_index_var();
-			r2 = closure_stack.back().lookup_in_env( index );
+			r2 = closure_stack.back().reg_for_index_var();
 		    }
 		    else
 		    {
@@ -407,8 +403,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		    pair<int,int> p;
 		    if (closure_stack.back().exp.head().is_index_var())
 		    {
-			int index = closure_stack.back().exp.as_index_var();
-			int r2 = closure_stack.back().lookup_in_env( index );
+			int r2 = closure_stack.back().reg_for_index_var();
 			p = incremental_evaluate(r2);
 		    }
 		    else
@@ -585,8 +580,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
 
 	else if (reg_type == reg::type_t::index_var)
 	{
-	    int index = regs.access(R).C.exp.as_index_var();
-	    int R2 = regs.access(R).C.lookup_in_env( index );
+	    int R2 = regs.access(R).C.reg_for_index_var();
 	    return incremental_evaluate_unchangeable(R2);
 	}
 	else
@@ -598,9 +592,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
 	{
 	    regs.access(R).type = reg::type_t::index_var;
 
-	    int index = regs.access(R).C.exp.as_index_var();
-
-	    int R2 = regs.access(R).C.lookup_in_env( index );
+	    int R2 = regs.access(R).C.reg_for_index_var();
 
 	    int R3 = incremental_evaluate_unchangeable( R2 );
 

@@ -52,9 +52,7 @@ void do_remap(const reg_heap& M, vector<int>& remap, int r)
 	return;
     }
 
-    int index = C.exp.as_index_var();
-
-    int r2 = C.lookup_in_env( index );
+    int r2 = C.reg_for_index_var();
 
     do_remap(M, remap, r2);
 
