@@ -6,14 +6,13 @@
 extern "C" closure builtin_function_mkArray(OperationArgs& Args)
 {
     int n = Args.evaluate(0).as_int();
-    expression_ref f = Args.reference(1);
 
     const closure& C = Args.current_closure();
 
     // We can't do negative-sized arrays
     assert(n >= 0);
     // The function should be represented as a heap variable...
-    int f_reg = C.lookup_in_env(f.as_index_var());
+    int f_reg = C.reg_for_slot(1);
   
     object_ptr<expression> exp = new expression(constructor("Array",n));
     exp->sub.resize(n);

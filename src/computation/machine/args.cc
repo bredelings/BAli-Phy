@@ -4,9 +4,7 @@
 
 int OperationArgs::reg_for_slot(int slot) const
 {
-    int index = reference(slot).as_index_var();
-
-    return current_closure().lookup_in_env(index);
+    return current_closure().reg_for_slot(slot);
 }
 
 int OperationArgs::n_args() const {return current_closure().exp.size();}

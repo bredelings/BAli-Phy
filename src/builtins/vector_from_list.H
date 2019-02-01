@@ -14,11 +14,9 @@ inline EVector get_vector_from_list(OperationArgs& Args, int slot)
     assert(has_constructor(top->exp,":"));
     assert(top->exp.size() == 2);
 
-    int element_index = top->exp.sub()[0].as_index_var();
-    int element_reg = top->lookup_in_env( element_index );
+    int element_reg = top->reg_for_slot(0);
 
-    int next_index = top->exp.sub()[1].as_index_var();
-    int next_reg = top->lookup_in_env( next_index );
+    int next_reg = top->reg_for_slot(1);
 
     // Add the element to the list.
     z.push_back( Args.evaluate_reg_to_object(element_reg) );
@@ -39,11 +37,9 @@ inline EVector get_vector_from_list_(OperationArgs& Args, int slot)
     assert(has_constructor(top->exp,":"));
     assert(top->exp.size() == 2);
 
-    int element_index = top->exp.sub()[0].as_index_var();
-    int element_reg = top->lookup_in_env( element_index );
+    int element_reg = top->reg_for_slot(0);
 
-    int next_index = top->exp.sub()[1].as_index_var();
-    int next_reg = top->lookup_in_env( next_index );
+    int next_reg = top->reg_for_slot(1);
 
     // Add the element to the list.
     z.push_back( Args.evaluate_reg_to_object_(element_reg) );

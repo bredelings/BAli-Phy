@@ -88,11 +88,9 @@ extern "C" closure builtin_function_vector_from_list(OperationArgs& Args)
 	assert(has_constructor(top->exp,":"));
 	assert(top->exp.size() == 2);
 
-	int element_index = top->exp.sub()[0].as_index_var();
-	int element_reg = top->lookup_in_env( element_index );
+	int element_reg = top->reg_for_slot(0);
 
-	int next_index = top->exp.sub()[1].as_index_var();
-	int next_reg = top->lookup_in_env( next_index );
+	int next_reg = top->reg_for_slot(1);
 
 	// Add the element to the list.
 	v->push_back( Args.evaluate_reg_to_object(element_reg) );
@@ -403,8 +401,7 @@ extern "C" closure builtin_function_seq(OperationArgs& Args)
 {
     Args.evaluate_slot_no_record(0);
 
-    int index = Args.reference(1).as_index_var();
-    int R = Args.current_closure().lookup_in_env( index);
+    int R = Args.current_closure().reg_for_slot(1);
 
     return {index_var(0),{R}};
 }
@@ -442,11 +439,9 @@ extern "C" closure builtin_function_putStrLn(OperationArgs& Args)
 
 extern "C" closure builtin_function_reapply(OperationArgs& Args)
 {
-    int index1 = Args.reference(0).as_index_var();
-    int R1 = Args.current_closure().lookup_in_env( index1 );
+    int R1 = Args.current_closure().reg_for_slot(0);
 
-    int index2 = Args.reference(1).as_index_var();
-    int R2 = Args.current_closure().lookup_in_env( index2 );
+    int R2 = Args.current_closure().reg_for_slot(1);
 
     expression_ref apply_E;
     {

@@ -104,7 +104,7 @@ closure apply_op(OperationArgs& Args)
     C.exp = peel_n_lambdas(C.exp, n_args_applied);
     for(int i=0;i<n_args_applied;i++)
     {
-	int arg = Args.current_closure().lookup_in_env( Args.reference(i+1).as_index_var());
+	int arg = Args.current_closure().reg_for_slot(i+1);
 	C.Env.push_back(arg);
     }
 
@@ -120,7 +120,7 @@ closure apply_op(OperationArgs& Args)
 	vector<expression_ref> args;
 	for(int i=n_args_needed;i<n_args_given;i++)
 	{
-	    int arg = Args.current_closure().lookup_in_env( Args.reference(i+1).as_index_var() );
+	    int arg = Args.current_closure().reg_for_slot(i+1);
 	    Env.push_back(arg);
 
 	    args.push_back(index_var(n_args_given - i -1));

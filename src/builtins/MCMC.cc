@@ -67,11 +67,9 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 	assert(has_constructor(top->exp,":"));
 	assert(top->exp.size() == 2);
 
-	int element_index = top->exp.sub()[0].as_index_var();
-	int element_reg = top->lookup_in_env( element_index );
+	int element_reg = top->reg_for_slot(0);
 
-	int next_index = top->exp.sub()[1].as_index_var();
-	next_reg = top->lookup_in_env( next_index );
+	next_reg = top->reg_for_slot(1);
 
 	// evaluate the list element in token 0
 	element_reg = Args.evaluate_reg_to_reg(element_reg);

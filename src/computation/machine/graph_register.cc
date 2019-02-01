@@ -659,7 +659,7 @@ optional<int> reg_heap::find_update_modifiable_reg(int& R)
 	return R;
     else if (is_random_variable(regs.access(R).C.exp))
     {
-	int R2 = regs.access(R).C.lookup_in_env(4);
+	int R2 = (*this)[R].reg_for_slot(0);
 	return find_update_modifiable_reg(R2);
     }
     else
