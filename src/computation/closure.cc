@@ -22,12 +22,6 @@ string closure::print() const
     return result;
 }
 
-int closure::reg_for_slot(int i) const
-{
-    int index = exp.sub()[i].as_index_var();
-    return lookup_in_env(index);
-}
-
 closure get_trimmed(const closure& C)
 {
     closure C2 = C;

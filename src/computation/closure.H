@@ -21,7 +21,17 @@ struct closure
 
     bool operator==(const closure& C2) const {return exp == C2.exp and Env == C2.Env;}
 
-    int reg_for_slot(int i) const;
+    int reg_for_slot(int i) const
+    {
+	int index = exp.sub()[i].as_index_var();
+	return lookup_in_env(index);
+    }
+
+    int reg_for_index_var() const
+    {
+	int index = exp.as_index_var();
+	return lookup_in_env(index);
+    }
 
     int lookup_in_env(int i) const;
 
