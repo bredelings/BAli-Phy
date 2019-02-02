@@ -192,8 +192,6 @@ public:
 
     prob_ratios_t probability_ratios(const context& C1) const;
 
-    int add_prior_factor(const expression_ref& E);
-
     int add_likelihood_factor(const expression_ref& E);
 
 protected:  

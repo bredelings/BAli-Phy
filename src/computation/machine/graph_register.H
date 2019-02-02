@@ -214,8 +214,6 @@ public:
     // a list of closures under evaluation
     std::vector<closure> closure_stack;
 
-    std::vector<int> prior_heads;
-
     log_double_t constant_prior = 1.0;
 
     kahan_multiplier prior;

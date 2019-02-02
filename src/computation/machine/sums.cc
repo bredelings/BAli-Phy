@@ -73,9 +73,11 @@ log_double_t reg_heap::prior_for_context_full(int c)
 
     double log_pr = 0.0;
     double C = 0.0;
-    for(int r: prior_heads)
+    for(int r: random_variables_)
     {
-	const auto& x = get_reg_value_in_context(r, c);
+	int r_pdf = (*this)[r].reg_for_slot(1);
+
+	const auto& x = get_reg_value_in_context(r_pdf, c);
 	log_double_t X = x.as_log_double();
 
 	double t;
