@@ -18,6 +18,6 @@ main = do
 
   let f x = b*x + a
 
-  sequence_ [observe y (normal mu_y s) | (x,y) <- zip xs ys, let mu_y = f x]
+  sequence_ [observe (normal mu_y s) y | (x,y) <- zip xs ys, let mu_y = f x]
 
   return $ log_all [b %% "b", a %% "a", s %% "s"]

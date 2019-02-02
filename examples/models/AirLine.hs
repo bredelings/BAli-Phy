@@ -7,7 +7,7 @@ indices' i [] = []
 indices' i (x:xs) = i:(indices' (i+1.0) xs)
 indices l = indices' 0.0 l
 
-observe_list ys dists = sequence_ [observe y dist | (y,dist) <- zip ys dists]
+observe_list ys dists = sequence_ [observe dist y | (y,dist) <- zip ys dists]
 
 main = do
 

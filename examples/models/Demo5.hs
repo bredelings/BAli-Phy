@@ -12,6 +12,6 @@ random_walk x0 n f | n < 1     = error "Random walk needs at least 1 element"
 main = do
   zs <- random_walk 0.0 19 (\mu -> normal mu 1.0)
 
-  observe 0.0 $ normal (last zs) 1.0
+  observe (normal (last zs) 1.0) 2.0
 
   return $ log_all [ zs %% "zs" ]

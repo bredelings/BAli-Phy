@@ -28,7 +28,7 @@ distRange (ProbDensity _ _ _ r) = r
 data Random a = Random (IO a)
               | RandomStructure a (IO a)
               | Sample (ProbDensity a)
-              | Observe b (ProbDensity b)
+              | Observe (ProbDensity b) b
               | AddMove (Int->a)
               | Print b
               | SamplingRate Double (Random a)
@@ -78,7 +78,7 @@ run_random' alpha rate lazy (Sample (ProbDensity pr _ (RandomStructure structure
   let x = structure value
   return (random_variable x (pr x) range rate)
 run_random' alpha rate lazy (Sample (ProbDensity _ _ s _)) = maybe_lazy lazy $ run_random' alpha rate lazy s
-run_random' alpha rate lazy (Observe datum dist) = register_likelihood (density dist datum)
+run_random' alpha rate lazy (Observe dist datum) = register_likelihood (density dist datum)
 run_random' alpha rate lazy (AddMove m) = register_transition_kernel m
 run_random' alpha rate lazy (Print s) = putStrLn (show s)
 run_random' alpha rate lazy (MFix f) = MFix ((run_random' alpha rate lazy).f)

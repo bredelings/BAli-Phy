@@ -31,7 +31,7 @@ main = do
 
   -- Brownian-bridge-like
   z <- random_walk 0.0 10 (\mu -> normal mu 1.0)
-  observe 2.0 $ normal (last z) 1.0
+  observe (normal (last z) 1.0) 2.0
 
   return $ log_all [ p %% "p",
                      n %% "n",
