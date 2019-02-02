@@ -663,9 +663,13 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	else
 	    alignment_prior_index = p->add_compute_expression( {var("Alignment.alignment_pr"), as, p->my_tree(), hmms, model} );
 
-	p->add_prior_factor(make_if_expression(parameter("*variable_alignment"),
-					       p->get_expression(alignment_prior_index),
-					       log_double_t(1.0)));
+
+	expression_ref alignment_pdf = p->get_expression(alignment_prior_index);
+	alignment_pdf = make_if_expression(parameter("*variable_alignment"), alignment_pdf, log_double_t(1.0));
+
+	expression_ref sample_alignments = {var("Parameters.random_variable"), as, alignment_pdf, 0, 0.0};
+	int alignment_sample_index = p->add_compute_expression( sample_alignments );
+	p->evaluate( alignment_sample_index );
     }
 
     p->add_likelihood_factor(p->get_expression(likelihood_index));
