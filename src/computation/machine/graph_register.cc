@@ -626,6 +626,9 @@ void reg_heap::register_random_variable(int r)
     if (not is_random_variable(regs.access(r).C.exp))
 	throw myexception()<<"Trying to register `"<<regs.access(r).C.exp<<"` as random variable";
     random_variables_.push_back(r);
+
+    int r_pdf = (*this)[r].reg_for_slot(1);
+    register_prior(r_pdf);
 }
 
 const vector<int>& reg_heap::random_variables() const
