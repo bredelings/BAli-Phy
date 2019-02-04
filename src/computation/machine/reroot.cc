@@ -184,6 +184,27 @@ void reg_heap::unshare_regs(int t)
     auto& vm_result = tokens[t].vm_result;
     auto& vm_step = tokens[t].vm_step;
 
+    auto unshare_result = [&](int r)
+			      {
+				  // This result is already unshared
+				  if (not prog_temp[r].test(0))
+				  {
+				      prog_temp[r].set(0);
+				      vm_result.add_value(r, non_computed_index);
+				  }
+			      };
+
+    auto unshare_step = [&](int r)
+			    {
+				// This step is already unshared
+				if (prog_temp[r].test(1)) return;
+
+				unshare_result(r);
+
+				prog_temp[r].set(1);
+				vm_step.add_value(r, non_computed_index);
+			    };
+
     // find all regs in t that are not shared from the root
     const auto& delta_result = vm_result.delta();
     const auto& delta_step = vm_step.delta();
@@ -245,42 +266,20 @@ void reg_heap::unshare_regs(int t)
 	    // Look at results that call the root's result (that is overridden in t)
 	    for(int res2: Result.called_by)
 	    {
-		const auto& Result2 = results[res2];
-		int r2 = Result2.source_reg;
+		int r2 = results[res2].source_reg;
 
-		// This result is already unshared
-		if (prog_temp[r2].test(0)) continue;
-
-		// The root program's result at r2 is res2, which calls the root program's result at r
 		if (prog_results[r2] == res2)
-		{
-		    prog_temp[r2].set(0);
-		    vm_result.add_value(r2, non_computed_index);
-		}
+		    unshare_result(r2);
 	    }
 
 	    // Look at step that use the root's result (that is overridden in t)
-	    for(auto& ub: Result.used_by)
+	    for(auto& [s2,_]: Result.used_by)
 	    {
-		int s2 = ub.first;
-		auto& S2 = steps[s2];
-		int r2 = S2.source_reg;
-
-		// This step is already unshared
-		if (prog_temp[r2].test(1)) continue;
+		int r2 = steps[s2].source_reg;
 
 		// The root program's step at r2 is s2, which uses the root program's result at r
 		if (prog_steps[r2] == s2)
-		{
-		    if (not prog_temp[r2].test(0))
-		    {
-			vm_result.add_value(r2, non_computed_index);
-			prog_temp[r2].set(0);
-		    }
-
-		    prog_temp[r2].set(1);
-		    vm_step.add_value(r2, non_computed_index);
-		}
+		    unshare_step(r2);
 	    }
 	}
 
@@ -290,22 +289,8 @@ void reg_heap::unshare_regs(int t)
 	    int r = delta_step[j].first;
 	    if (not has_step(r)) continue;
 
-	    const auto& Step = step_for_reg(r);
-
-	    for(int r2: Step.created_regs)
-	    {
-		// The step and result are already unshared
-		if (prog_temp[r2].test(1)) continue;
-
-		if (not prog_temp[r2].test(0))
-		{
-		    vm_result.add_value(r2, non_computed_index);
-		    prog_temp[r2].set(0);
-		}
-
-		vm_step.add_value(r2, non_computed_index);
-		prog_temp[r2].set(1);
-	    }
+	    for(int r2: step_for_reg(r).created_regs)
+		unshare_step(r2);
 	}
     }
 
