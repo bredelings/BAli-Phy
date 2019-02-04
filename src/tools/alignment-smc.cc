@@ -60,6 +60,14 @@ using std::endl;
 
 using std::string;
 
+struct sequence_mask
+{
+    // Name
+    string region_name;
+    // 0-based regions to mask out.
+    vector<pair<int,int>> intervals;
+};
+
 template<typename T>
 void add(vector<T>& v1,const vector<T>& v2) 
 {
@@ -88,28 +96,6 @@ vector<int> find_triplet(const vector<sequence>& sequences,const string& triplet
     for(int i=0;i<sequences.size();i++)
 	add(found, find_triplet(sequences[i],triplet) );
     return found;
-}
-
-vector<vector<pair<int,int>>> read_intervals_file(const string& filename)
-{
-    vector<string> lines = split(read_file(filename,"mask file"), '\n');
-    vector<vector<pair<int,int>>> masks;
-    for(const auto& line: lines)
-    {
-	if (line.empty()) continue;
-
-	if (starts_with(line, ">"))
-	    masks.push_back({});
-	else
-	{
-	    auto x = convertTo<int>(split(line," - "));
-	    if (masks.empty())
-		throw myexception()<<"Range '"<<line<<"' occurs before first sequence name!";
-	    assert(x.size() == 2);
-	    masks.back().push_back({x[0],x[1]});
-	}
-    }
-    return masks;
 }
 
 variables_map parse_cmd_line(int argc,char* argv[]) 
@@ -670,6 +656,8 @@ int autoclean(alignment& A)
 }
 
 
+
+
 vector<int> expand_intervals(const vector<pair<int,int>>& intervals)
 {
     vector<int> seq;
@@ -685,24 +673,35 @@ void mask_columns(alignment& A, const vector<int>& columns)
 	mask_column(A,c);
 }
 
-void mask_intervals(const vector<vector<pair<int,int>>>& intervals, alignment& A)
+void mask_interval(alignment& A, int c1, int c2)
 {
-    for(int i=0;i<intervals.size();i++)
-    {
-	auto& I = intervals[i];
-	mask_columns(A, expand_intervals(I));
-    }
+    for(int c = c1; c <= c2; c++)
+	mask_column(A,c);
 }
 
-struct sequence_mask
+void apply_mask(const sequence_mask& mask, alignment& A)
 {
-    // Name
-    string region_name;
-    // 0-based regions to mask out.
-    vector<pair<int,int>> ranges;
-};
+    auto index = find_index(sequence_names(A),mask.region_name);
+    if (not index)
+	throw myexception()<<"Can't apply mask for region '"<<mask.region_name<<"': no such sequence!";
 
-sequence_mask read_mask(const string& filename)
+    vector<int> map;
+    for(int c=0;c<A.length();c++)
+	if (A.character(c,*index))
+	    map.push_back(c);
+    map.push_back(map.back());
+
+    for(auto& [beg,end]: mask.intervals)
+	mask_interval(A, map[beg], map[end]);
+}
+
+void apply_masks(const vector<sequence_mask>& masks, alignment& A)
+{
+    for(auto& mask: masks)
+	apply_mask(mask, A);
+}
+
+vector<sequence_mask> read_masks(const string& filename)
 {
     // 1. Read fine lines
     checked_ifstream file(filename,"mask file");
@@ -710,41 +709,40 @@ sequence_mask read_mask(const string& filename)
     auto lines = read_lines(file);
     lines = select(lines, [](auto& line){return not strip(line," \t").empty();});
 
-    // 2. Parse header
-    if (lines.empty())
-	throw myexception()<<"Mask file '"<<filename<<"' is empty!";
-    auto& header_line = lines[0];
-    if (header_line.empty() or header_line[0] != '>')
-	throw myexception()<<"Mask file missing header. First line is:\n"<<lines[0]<<"\n";
+    // 2. Read ranges
+    vector<sequence_mask> masks;
 
-    sequence_mask mask;
-    mask.region_name = rstrip(lines[0].substr(1), " \t");
-
-    // 3. Read ranges
     static std::regex rgx ( R"(\s*([0-9]+)\s*-\s*([0-9]+)\s*)" );
-    for(int i=1;i<lines.size();i++)
+    for(auto& line: lines)
     {
-	auto& range_string = lines[i];
-
+	if (line.size() > 0 and line[0] == '>')
+	{
+	    masks.push_back({});
+	    masks.back().region_name = rstrip(line.substr(1), " \t");
+	    continue;
+	}
+	else if (masks.empty())
+	    throw myexception()<<"Read line '"<<line<<"' before first header!";
+	
 	try {
 	    std::smatch m;
-	    if (std::regex_match(range_string, m, rgx))
+	    if (std::regex_match(line, m, rgx))
 	    {
 		int beg = convertTo<int>(m[1]);
 		int end = convertTo<int>(m[2]);
-		mask.ranges.push_back({beg,end});
+		masks.back().intervals.push_back({beg,end});
 	    }
 	    else
-		throw myexception()<<"malformed range!";
+		throw myexception()<<"malformed interval!";
 	}
 	catch (myexception& e)
 	{
-	    e.prepend("Range '"+range_string+"': ");
+	    e.prepend("Interval '"+line+"': ");
 	    throw;
 	}
     }
 
-    return mask;
+    return masks;
 }
 
 int main(int argc,char* argv[]) 
@@ -793,16 +791,22 @@ int main(int argc,char* argv[])
 	    map.back() = {loc2,loc2};
 	    map.push_back({loc2,loc2}); // Handle end that is 1 too large?
 
-	    auto mask = read_mask(*filename);
-	    std::cout<<A.seq(1).name<<"\n";
-	    for(auto& [beg,end]: mask.ranges)
+	    auto masks = read_masks(*filename);
+	    if (masks.size() == 0)
+		throw myexception()<<"mask file is empty!";
+	    if (masks.size() > 1)
+		throw myexception()<<"translate-mask: can only take 1 mask!";
+		
+	    auto& mask = masks[0];
+	    std::cout<<">"<<A.seq(1).name<<"\n";
+	    for(auto& [beg,end]: mask.intervals)
 	    {
 		if (beg < 0)
-		    throw myexception()<<"0-indexed range should not have negative start offset!";
+		    throw myexception()<<"0-indexed interval should not have negative start offset!";
 		if (end > map.size())
-		    throw myexception()<<"0-indexed range should end before the length of the source chromosome! ("<<map.size()<<")";
+		    throw myexception()<<"0-indexed interval should end before the length of the source chromosome! ("<<map.size()<<")";
 		if (beg > end)
-		    throw myexception()<<"range should not begin before it ends!";
+		    throw myexception()<<"interval should not begin before it ends!";
 
 		beg = map[beg].first;
 		end = map[end].second;
@@ -816,8 +820,8 @@ int main(int argc,char* argv[])
 	{
 	    for(auto& filename: args["mask-file"].as<vector<string>>())
 	    {
-		auto intervals = read_intervals_file(filename);
-		mask_intervals(intervals, A);
+		auto masks = read_masks(filename);
+		apply_masks(masks, A);
 	    }
 	}
 
