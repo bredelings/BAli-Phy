@@ -883,7 +883,7 @@ void reg_heap::set_used_input(int s1, int R2)
     assert(result_is_used_by(s1,res2));
 }
 
-void reg_heap::set_forced_reg(int s1, int R2)
+void reg_heap::set_forced_input(int s1, int R2)
 {
     assert(reg_is_changeable(R2));
 

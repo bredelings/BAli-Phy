@@ -187,7 +187,7 @@ public:
     void make_reg_changeable(int r);
 
     void set_used_input(int s1, int R2);
-    void set_forced_reg(int s1, int R2);
+    void set_forced_input(int s1, int R2);
     void set_call(int R1, int R2);
     void destroy_all_computations_in_token(int t);
     void clear_call(int s);

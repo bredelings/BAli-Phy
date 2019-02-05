@@ -80,7 +80,7 @@ class RegOperationArgs: public OperationArgs
 	    if (M.reg_is_changeable(R3))
 	    {
 		used_changeable = true;
-		M.set_forced_reg(S, R3);
+		M.set_forced_input(S, R3);
 	    }
 
 	    return value;
