@@ -15,6 +15,7 @@
 #include "util/assert.hh"
 #include "kahan.H"
 #include "mcmc/prob_ratios.H"
+#include "mapping.H"
 
 struct Step
 {
@@ -107,36 +108,6 @@ public:
 
     reg(const reg&) = delete;
     reg(reg&&) noexcept;
-};
-
-class mapping
-{
-    std::vector<std::pair<int,int>> delta_;
-
-public:
-    mapping& operator=(mapping&) = default;
-
-    mapping& operator=(mapping&& vm) noexcept
-	{
-	    delta_ = std::move(vm.delta_);
-	    return *this;
-	}
-
-    void add_value(int r, int v);
-    int erase_value_at(int index);
-    void clear();
-    void resize(int s);
-    bool empty() const;
-
-    const std::vector<std::pair<int,int>>& delta() const {return delta_;}
-    std::vector<std::pair<int,int>>& delta()       {return delta_;}
-  
-    mapping() {}
-    mapping(int s) {resize(s);}
-    mapping(const mapping&) = default;
-    mapping(mapping&& vm) noexcept
-	:delta_(std::move(vm.delta_))
-	{ }
 };
 
 // How do we handle parameters?
@@ -350,8 +321,8 @@ public:
 	const std::vector<std::pair<int,int>>& delta_result() const;
 	const std::vector<std::pair<int,int>>& delta_step() const;
 
-	mapping vm_result;
-	mapping vm_step;
+	mapping<int> vm_result;
+	mapping<int> vm_step;
 
 	bool used = false;
 	long version = 0;

@@ -215,40 +215,6 @@ void reg::check_cleared()
     assert(flags.none());
 }
 
-void mapping::add_value(int r, int v) 
-{
-    assert(v);
-
-    delta_.emplace_back(r,v);
-}
-
-int mapping::erase_value_at(int index)
-{
-    auto back = delta_.back();
-    delta_.pop_back();
-
-    // If we are deleting from the middle, move the last element to the middle
-    if (index < delta_.size())
-	delta_[index] = back;
-
-    return back.second;
-}
-
-void mapping::clear()
-{
-    delta_.clear();
-}
-
-void mapping::resize(int s)
-{
-    delta_.reserve(s);
-}
-
-bool mapping::empty() const
-{
-    return delta_.empty();
-}
-
 std::optional<int> reg_heap::creator_of_reg(int r) const
 {
     int s = regs[r].created_by.first;

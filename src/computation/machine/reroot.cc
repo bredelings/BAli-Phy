@@ -2,6 +2,7 @@
 #include "graph_register.H"
 #include <algorithm>
 #include "util/range.H"
+#include "mapping.H"
 
 using std::string;
 using std::vector;
@@ -19,26 +20,6 @@ long total_steps_invalidated = 0;
 long total_results_invalidated = 0;
 long total_steps_scanned = 0;
 long total_results_scanned = 0;
-
-// Given a mapping (m1,v1) at the root followed by the relative mapping (m2,v2), construct a new mapping
-// where (m2,v2) is at the root and (m1,v1) is relative.
-void pivot_mapping(vector<int>& prog1, mapping& vm2)
-{
-    for(int i=0;i<vm2.delta().size();i++)
-    {
-	int r = vm2.delta()[i].first;
-
-	int& s1 = prog1[r];
-	int& s2 = vm2.delta()[i].second;
-
-	// Check that neither value is 0
-	assert(s1 != 0);
-	assert(s2 != 0);
-
-	// switch root positions
-	std::swap(s1,s2);
-    }
-}
 
 void reg_heap::reroot_at_context(int c)
 {

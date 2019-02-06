@@ -131,7 +131,7 @@ void reg_heap::capture_parent_token(int t2)
     tokens[t2].parent = parent;
 }
 
-void load_map(const mapping& vm, vector<std::bitset<8>>& prog_temp)
+void load_map(const mapping<int>& vm, vector<std::bitset<8>>& prog_temp)
 {
     for(auto p: vm.delta())
     {
@@ -141,7 +141,7 @@ void load_map(const mapping& vm, vector<std::bitset<8>>& prog_temp)
     }
 }
 
-void unload_map(const mapping& vm, vector<std::bitset<8>>& prog_temp)
+void unload_map(const mapping<int>& vm, vector<std::bitset<8>>& prog_temp)
 {
     for(auto p: vm.delta())
     {
@@ -151,12 +151,12 @@ void unload_map(const mapping& vm, vector<std::bitset<8>>& prog_temp)
     }
 }
 
-void merge_split_mapping_(mapping& vm1, mapping& vm2, vector<std::bitset<8>>& prog_temp)
+void merge_split_mapping_(mapping<int>& vm1, mapping<int>& vm2, vector<std::bitset<8>>& prog_temp)
 {
     for(int i=0;i<vm1.delta().size();)
     {
 	int r = vm1.delta()[i].first;
-	int v = vm1.delta()[i].second;
+	auto v = vm1.delta()[i].second;
 
 	if (not prog_temp[r].test(0))
 	{
