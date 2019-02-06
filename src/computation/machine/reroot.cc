@@ -256,7 +256,11 @@ void reg_heap::unshare_regs(int t)
     for(;j<delta_step.size();j++)
 	if (int r = delta_step[j].first; has_step(r))
 	    for(int r2: step_for_reg(r).created_regs)
-		unshare_step(r2);
+	    {
+		auto t = regs.access(r2).type;
+		if (t == reg::type_t::changeable or t == reg::type_t::unknown)
+		    unshare_step(r2);
+	    }
 
     // Erase the marks that we made on prog_temp.
     for(const auto& p: delta_result)
