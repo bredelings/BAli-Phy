@@ -1074,17 +1074,6 @@ bool reg_heap::is_dirty(int t) const
     return false;
 }
 
-const vector<pair<int,int>>& reg_heap::Token::delta_result() const
-{
-    return vm_result.delta();
-}
-
-const vector<pair<int,int>>& reg_heap::Token::delta_step() const
-{
-    return vm_step.delta();
-}
-
-
 // Note that a context can be completely dirty, w/o being dirty :-P
 bool reg_heap::is_completely_dirty(int t) const
 {

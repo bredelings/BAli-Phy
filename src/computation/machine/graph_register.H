@@ -318,8 +318,8 @@ public:
 	bool is_referenced() const {assert(n_context_refs >= 0); return n_context_refs > 0;}
     
 	/// Mapping from closures to steps/results
-	const std::vector<std::pair<int,int>>& delta_result() const;
-	const std::vector<std::pair<int,int>>& delta_step() const;
+	const auto& delta_result() const { return vm_result.delta(); }
+	const auto& delta_step() const {return vm_step.delta(); }
 
 	mapping<int> vm_result;
 	mapping<int> vm_step;
