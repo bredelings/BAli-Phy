@@ -235,44 +235,26 @@ void reg_heap::unshare_regs(int t)
     {
 	// Scan regs with different result in t that are used/called by root steps/results
 	for(;i<delta_result.size();i++)
-	{
-	    int r = delta_result[i].first;
-
-//    int result = result_index_for_reg(r);
-
-	    if (not has_result(r)) continue;
-
-	    const auto& Result = result_for_reg(r);
-
-	    // Look at results that call the root's result (that is overridden in t)
-	    for(int res2: Result.called_by)
+	    if (int r = delta_result[i].first; has_result(r))
 	    {
-		int r2 = results[res2].source_reg;
+		const auto& Result = result_for_reg(r);
 
-		if (prog_results[r2] == res2)
-		    unshare_result(r2);
+		// Look at results that call the root's result (that is overridden in t)
+		for(int res2: Result.called_by)
+		    if (int r2 = results[res2].source_reg; prog_results[r2] == res2)
+			unshare_result(r2);
+
+		// Look at step that use the root's result (that is overridden in t)
+		for(auto& [s2,_]: Result.used_by)
+		    if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
+			unshare_step(r2);
 	    }
-
-	    // Look at step that use the root's result (that is overridden in t)
-	    for(auto& [s2,_]: Result.used_by)
-	    {
-		int r2 = steps[s2].source_reg;
-
-		// The root program's step at r2 is s2, which uses the root program's result at r
-		if (prog_steps[r2] == s2)
-		    unshare_step(r2);
-	    }
-	}
 
 	// Also unshare any results and steps that are for regs created in the root context.
 	for(;j<delta_step.size();j++)
-	{
-	    int r = delta_step[j].first;
-	    if (not has_step(r)) continue;
-
-	    for(int r2: step_for_reg(r).created_regs)
-		unshare_step(r2);
-	}
+	    if (int r = delta_step[j].first; has_step(r))
+		for(int r2: step_for_reg(r).created_regs)
+		    unshare_step(r2);
     }
 
     // Erase the marks that we made on prog_temp.
