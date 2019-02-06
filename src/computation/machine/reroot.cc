@@ -208,7 +208,6 @@ void reg_heap::unshare_regs(int t)
 	assert(prog_temp[r].test(0) and prog_temp[r].test(1));
     }
 
-    int j = delta_step.size();
 #ifndef NDEBUG
     for(int k=0; k<delta_step.size(); k++)
     {
@@ -225,37 +224,39 @@ void reg_heap::unshare_regs(int t)
 	}
     }
 #endif
-    j=0; // FIXME if the existing steps don't share any created regs, then we don't have to scan them.
-         // FIXME: while the overriding steps in the child should have their created regs unshared, the overridden steps in the root need not!
-         //        this means that we need to scan all overridden steps each time :-(
-
     int i =0; // (FIXME?) We have to rescan all the existing steps and results because there might be new EDGES to them that have been added.
 
-    while(i<delta_result.size() or j < delta_step.size())
-    {
-	// Scan regs with different result in t that are used/called by root steps/results
-	for(;i<delta_result.size();i++)
-	    if (int r = delta_result[i].first; has_result(r))
-	    {
-		const auto& Result = result_for_reg(r);
+    // Scan regs with different result in t that are used/called by root steps/results
+    for(;i<delta_result.size();i++)
+	if (int r = delta_result[i].first; has_result(r))
+	{
+	    const auto& Result = result_for_reg(r);
 
-		// Look at results that call the root's result (that is overridden in t)
-		for(int res2: Result.called_by)
-		    if (int r2 = results[res2].source_reg; prog_results[r2] == res2)
-			unshare_result(r2);
+	    // Look at results that call the root's result (that is overridden in t)
+	    for(int res2: Result.called_by)
+		if (int r2 = results[res2].source_reg; prog_results[r2] == res2)
+		    unshare_result(r2);
 
-		// Look at step that use the root's result (that is overridden in t)
-		for(auto& [s2,_]: Result.used_by)
-		    if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
-			unshare_step(r2);
-	    }
-
-	// Also unshare any results and steps that are for regs created in the root context.
-	for(;j<delta_step.size();j++)
-	    if (int r = delta_step[j].first; has_step(r))
-		for(int r2: step_for_reg(r).created_regs)
+	    // Look at step that use the root's result (that is overridden in t)
+	    for(auto& [s2,_]: Result.used_by)
+		if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
 		    unshare_step(r2);
-    }
+	}
+
+//  int j = delta_step.size();
+    int j=0; // FIXME if the existing steps don't share any created regs, then we don't have to scan them.
+             // FIXME: while the overriding steps in the child should have their created regs unshared, the overridden steps in the root need not!
+             //        this means that we need to scan all overridden steps each time :-(
+
+    // Also unshare any results and steps that are for regs created in the root context.
+    // LOGIC: Any reg that uses or call a created reg must either
+    //          (i) be another created reg, or
+    //          (ii) access the created reg through a chain of use or call edges to the step that created the reg.
+    //        In the former case, this loop handles them.  In the later case, they should be invalid.
+    for(;j<delta_step.size();j++)
+	if (int r = delta_step[j].first; has_step(r))
+	    for(int r2: step_for_reg(r).created_regs)
+		unshare_step(r2);
 
     // Erase the marks that we made on prog_temp.
     for(const auto& p: delta_result)
