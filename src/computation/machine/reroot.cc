@@ -161,15 +161,25 @@ void reg_heap::unshare_regs(int t)
 
     total_invalidate++;
   
+    constexpr int result_bit = 0;
+    constexpr int step_bit = 1;
+
     auto& vm_result = tokens[t].vm_result;
     auto& vm_step = tokens[t].vm_step;
+
+    // find all regs in t that are not shared from the root
+    const auto& delta_result = vm_result.delta();
+    const auto& delta_step = vm_step.delta();
+
+    int n_delta_result0 = delta_result.size();
+    int n_delta_step0 = delta_step.size();
 
     auto unshare_result = [&](int r)
                               {
                                   // This result is already unshared
-                                  if (not prog_temp[r].test(0))
+                                  if (not prog_temp[r].test(result_bit))
                                   {
-                                      prog_temp[r].set(0);
+                                      prog_temp[r].set(result_bit);
                                       vm_result.add_value(r, non_computed_index);
                                   }
                               };
@@ -177,30 +187,24 @@ void reg_heap::unshare_regs(int t)
     auto unshare_step = [&](int r)
                             {
                                 // This step is already unshared
-                                if (prog_temp[r].test(1)) return;
+                                if (prog_temp[r].test(step_bit)) return;
 
                                 unshare_result(r);
 
-                                prog_temp[r].set(1);
+                                prog_temp[r].set(step_bit);
                                 vm_step.add_value(r, non_computed_index);
                             };
 
-    // find all regs in t that are not shared from the root
-    const auto& delta_result = vm_result.delta();
-    const auto& delta_step = vm_step.delta();
-  
-    int n_delta_result0 = delta_result.size();
-    int n_delta_step0 = delta_step.size();
-  
     // All the regs with delta_result set have results invalidated in t
     for(auto [r,_]: delta_result)
-        prog_temp[r].set(0);
+        prog_temp[r].set(result_bit);
 
     // All the regs with delta_step set have steps (and results) invalidated in t
     for(auto [r,_]: delta_step)
     {
-        prog_temp[r].set(1);
-        assert(prog_temp[r].test(0) and prog_temp[r].test(1));
+        prog_temp[r].set(step_bit);
+        assert(prog_temp[r].test(result_bit));
+        assert(prog_temp[r].test(step_bit));
     }
 
 #ifndef NDEBUG
@@ -213,7 +217,8 @@ void reg_heap::unshare_regs(int t)
         // Any results or steps in the delta should already have their regs unshared.
         for(int r2: Step.created_regs)
         {
-            assert(prog_temp[r2].test(0) and prog_temp[r2].test(1));
+            assert(prog_temp[r2].test(result_bit));
+            assert(prog_temp[r2].test(step_bit));
         }
     }
 #endif
@@ -258,8 +263,8 @@ void reg_heap::unshare_regs(int t)
     // Erase the marks that we made on prog_temp.
     for(auto [r,_]: delta_result)
     {
-        prog_temp[r].reset(0);
-        prog_temp[r].reset(1);
+        prog_temp[r].reset(result_bit);
+        prog_temp[r].reset(step_bit);
     }
 
     total_results_invalidated += (delta_result.size() - n_delta_result0);
