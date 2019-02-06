@@ -36,23 +36,23 @@ void reg_heap::reroot_at_context(int c)
     path.push_back(token_for_context(c));
     while(true)
     {
-	int parent = tokens[path.back()].parent;
-	if (parent != -1)
-	    path.push_back(parent);
-	else
-	    break;
+        int parent = tokens[path.back()].parent;
+        if (parent != -1)
+            path.push_back(parent);
+        else
+            break;
     }
 
     // 3. Get the tokens on the path to the root.
     for(int i=int(path.size())-2; i>=0; i--)
-	reroot_at(path[i]);
+        reroot_at(path[i]);
 
     // 4. Clean up old root token if it became an unused tip
     int t2 = release_unreferenced_tips(old_root);
 
     // 5. Remove sequences of knuckles - only remove a knuckle if its child was part of the original path
     for(; t2 != root_token;)
-	t2 = release_knuckle_tokens(t2);
+        t2 = release_knuckle_tokens(t2);
 }
 
 void reg_heap::reroot_at(int t)
@@ -65,7 +65,7 @@ void reg_heap::reroot_at(int t)
 
     // 1. If this context isn't a direct child of the root, then make it one
     if (not is_root_token(parent_token(t)))
-	reroot_at(parent_token(t));
+        reroot_at(parent_token(t));
 
     // re-rooting to the parent context shouldn't release its token.
     int parent = parent_token(t);
@@ -96,15 +96,15 @@ void reg_heap::reroot_at(int t)
     // 5. Remove probabilities for invalidated regs from the current probability
 
     for(auto& reroot_handler: reroot_handlers)
-	reroot_handler(parent);
+        reroot_handler(parent);
 
     for(auto p: tokens[parent].delta_result())
     {
-	int rc = p.second;  
-	if (rc > 0 and results[rc].flags.test(0))
-	    dec_prior(rc);
-	if (rc > 0 and results[rc].flags.test(1))
-	    dec_likelihood(rc);
+        int rc = p.second;  
+        if (rc > 0 and results[rc].flags.test(0))
+            dec_prior(rc);
+        if (rc > 0 and results[rc].flags.test(1))
+            dec_likelihood(rc);
     }
 
     total_reroot_one++;
@@ -112,7 +112,7 @@ void reg_heap::reroot_at(int t)
     assert(tokens[parent].version == tokens[t].version);
 
     for(int t2: tokens[t].children)
-	assert(tokens[t2].version <= tokens[t].version);
+        assert(tokens[t2].version <= tokens[t].version);
 
     assert(is_root_token(t));
 }
@@ -166,25 +166,25 @@ void reg_heap::unshare_regs(int t)
     auto& vm_step = tokens[t].vm_step;
 
     auto unshare_result = [&](int r)
-			      {
-				  // This result is already unshared
-				  if (not prog_temp[r].test(0))
-				  {
-				      prog_temp[r].set(0);
-				      vm_result.add_value(r, non_computed_index);
-				  }
-			      };
+                              {
+                                  // This result is already unshared
+                                  if (not prog_temp[r].test(0))
+                                  {
+                                      prog_temp[r].set(0);
+                                      vm_result.add_value(r, non_computed_index);
+                                  }
+                              };
 
     auto unshare_step = [&](int r)
-			    {
-				// This step is already unshared
-				if (prog_temp[r].test(1)) return;
+                            {
+                                // This step is already unshared
+                                if (prog_temp[r].test(1)) return;
 
-				unshare_result(r);
+                                unshare_result(r);
 
-				prog_temp[r].set(1);
-				vm_step.add_value(r, non_computed_index);
-			    };
+                                prog_temp[r].set(1);
+                                vm_step.add_value(r, non_computed_index);
+                            };
 
     // find all regs in t that are not shared from the root
     const auto& delta_result = vm_result.delta();
@@ -196,52 +196,52 @@ void reg_heap::unshare_regs(int t)
     // All the regs with delta_result set have results invalidated in t
     for(const auto& p: delta_result)
     {
-	int r = p.first;
-	prog_temp[r].set(0);
+        int r = p.first;
+        prog_temp[r].set(0);
     }
 
     // All the regs with delta_step set have steps (and results) invalidated in t
     for(const auto& p: delta_step)
     {
-	int r = p.first;
-	prog_temp[r].set(1);
-	assert(prog_temp[r].test(0) and prog_temp[r].test(1));
+        int r = p.first;
+        prog_temp[r].set(1);
+        assert(prog_temp[r].test(0) and prog_temp[r].test(1));
     }
 
 #ifndef NDEBUG
     for(int k=0; k<delta_step.size(); k++)
     {
-	int s = delta_step[k].second;
+        int s = delta_step[k].second;
 
-	if (s < 0) continue;
+        if (s < 0) continue;
 
-	const auto& Step = steps[s];
+        const auto& Step = steps[s];
 
-	// Any results or steps in the delta should already have their regs unshared.
-	for(int r2: Step.created_regs)
-	{
-	    assert(prog_temp[r2].test(0) and prog_temp[r2].test(1));
-	}
+        // Any results or steps in the delta should already have their regs unshared.
+        for(int r2: Step.created_regs)
+        {
+            assert(prog_temp[r2].test(0) and prog_temp[r2].test(1));
+        }
     }
 #endif
     int i =0; // (FIXME?) We have to rescan all the existing steps and results because there might be new EDGES to them that have been added.
 
     // Scan regs with different result in t that are used/called by root steps/results
     for(;i<delta_result.size();i++)
-	if (int r = delta_result[i].first; has_result(r))
-	{
-	    const auto& Result = result_for_reg(r);
+        if (int r = delta_result[i].first; has_result(r))
+        {
+            const auto& Result = result_for_reg(r);
 
-	    // Look at results that call the root's result (that is overridden in t)
-	    for(int res2: Result.called_by)
-		if (int r2 = results[res2].source_reg; prog_results[r2] == res2)
-		    unshare_result(r2);
+            // Look at results that call the root's result (that is overridden in t)
+            for(int res2: Result.called_by)
+                if (int r2 = results[res2].source_reg; prog_results[r2] == res2)
+                    unshare_result(r2);
 
-	    // Look at step that use the root's result (that is overridden in t)
-	    for(auto& [s2,_]: Result.used_by)
-		if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
-		    unshare_step(r2);
-	}
+            // Look at step that use the root's result (that is overridden in t)
+            for(auto& [s2,_]: Result.used_by)
+                if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
+                    unshare_step(r2);
+        }
 
 //  int j = delta_step.size();
     int j=0; // FIXME if the existing steps don't share any created regs, then we don't have to scan them.
@@ -254,20 +254,20 @@ void reg_heap::unshare_regs(int t)
     //          (ii) access the created reg through a chain of use or call edges to the step that created the reg.
     //        In the former case, this loop handles them.  In the later case, they should be invalid.
     for(;j<delta_step.size();j++)
-	if (int r = delta_step[j].first; has_step(r))
-	    for(int r2: step_for_reg(r).created_regs)
-	    {
-		auto t = regs.access(r2).type;
-		if (t == reg::type_t::changeable or t == reg::type_t::unknown)
-		    unshare_step(r2);
-	    }
+        if (int r = delta_step[j].first; has_step(r))
+            for(int r2: step_for_reg(r).created_regs)
+            {
+                auto t = regs.access(r2).type;
+                if (t == reg::type_t::changeable or t == reg::type_t::unknown)
+                    unshare_step(r2);
+            }
 
     // Erase the marks that we made on prog_temp.
     for(const auto& p: delta_result)
     {
-	int r = p.first;
-	prog_temp[r].reset(0);
-	prog_temp[r].reset(1);
+        int r = p.first;
+        prog_temp[r].reset(0);
+        prog_temp[r].reset(1);
     }
 
     total_results_invalidated += (delta_result.size() - n_delta_result0);
