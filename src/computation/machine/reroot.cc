@@ -98,9 +98,8 @@ void reg_heap::reroot_at(int t)
     for(auto& reroot_handler: reroot_handlers)
         reroot_handler(parent);
 
-    for(auto p: tokens[parent].delta_result())
+    for(auto [_,rc]: tokens[parent].delta_result())
     {
-        int rc = p.second;  
         if (rc > 0 and results[rc].flags.test(0))
             dec_prior(rc);
         if (rc > 0 and results[rc].flags.test(1))
@@ -194,25 +193,19 @@ void reg_heap::unshare_regs(int t)
     int n_delta_step0 = delta_step.size();
   
     // All the regs with delta_result set have results invalidated in t
-    for(const auto& p: delta_result)
-    {
-        int r = p.first;
+    for(auto [r,_]: delta_result)
         prog_temp[r].set(0);
-    }
 
     // All the regs with delta_step set have steps (and results) invalidated in t
-    for(const auto& p: delta_step)
+    for(auto [r,_]: delta_step)
     {
-        int r = p.first;
         prog_temp[r].set(1);
         assert(prog_temp[r].test(0) and prog_temp[r].test(1));
     }
 
 #ifndef NDEBUG
-    for(int k=0; k<delta_step.size(); k++)
+    for(auto [_,s]: delta_step)
     {
-        int s = delta_step[k].second;
-
         if (s < 0) continue;
 
         const auto& Step = steps[s];
@@ -228,7 +221,7 @@ void reg_heap::unshare_regs(int t)
 
     // Scan regs with different result in t that are used/called by root steps/results
     for(;i<delta_result.size();i++)
-        if (int r = delta_result[i].first; has_result(r))
+        if (auto [r,_] = delta_result[i]; has_result(r))
         {
             const auto& Result = result_for_reg(r);
 
@@ -254,7 +247,7 @@ void reg_heap::unshare_regs(int t)
     //          (ii) access the created reg through a chain of use or call edges to the step that created the reg.
     //        In the former case, this loop handles them.  In the later case, they should be invalid.
     for(;j<delta_step.size();j++)
-        if (int r = delta_step[j].first; has_step(r))
+        if (auto [r,_] = delta_step[j]; has_step(r))
             for(int r2: step_for_reg(r).created_regs)
             {
                 auto t = regs.access(r2).type;
@@ -263,9 +256,8 @@ void reg_heap::unshare_regs(int t)
             }
 
     // Erase the marks that we made on prog_temp.
-    for(const auto& p: delta_result)
+    for(auto [r,_]: delta_result)
     {
-        int r = p.first;
         prog_temp[r].reset(0);
         prog_temp[r].reset(1);
     }
