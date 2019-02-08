@@ -41,6 +41,8 @@
 #include "util/string/pred.H"
 #include "util/string/strip.H"
 #include "util/range.H"
+#include "util/matrix.H"
+#include "util/io/matrix.H"
 
 using std::vector;
 using std::valarray;
@@ -118,6 +120,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("clean-to-ref",value<string>(),"Remove columns not in reference sequence arg")
 	("msmc","Output file for MSMC")
 	("psmc","Output file for PSMC")
+	("pi","Calculate average hamming distance")
+	("pi-matrix","Calculate average hamming distance")
 	("autoclean","Mask blocks with too many SNPs")
 	("histogram",value<int>(),"Output SNP counts for blocks of arg bases")
 	;
@@ -702,6 +706,49 @@ void apply_masks(const vector<sequence_mask>& masks, alignment& A)
 	apply_mask(mask, A);
 }
 
+matrix<double> pi_matrix(const alignment& A)
+{
+    auto& a = A.get_alphabet();
+    const int n = a.size();
+    matrix<int> total(n,n,0);
+    matrix<int> diff(n,n,0);
+
+    for(int col=0;col<A.length();col++)
+	for(int i=0;i<n;i++)
+	    for(int j=0;j<i;j++)
+	    {
+		auto l_i = A(col, i);
+		auto l_j = A(col, j);
+		if (a.is_letter(l_i) and a.is_letter(l_j))
+		{
+		    total(i,j)++;
+		    if (l_i != l_j)
+			diff(i,j)++;
+		}
+	    }
+    matrix<double> pi(n,n);
+    for(int i=0;i<n;i++)
+    {
+	pi(i,i) = 0;
+	for(int j=0;j<i;j++)
+	    pi(i,j) = pi(j,i) = double(diff(i,j))/total(i,j);
+    }
+    return pi;
+}
+
+double pi(const alignment& A)
+{
+    auto D = pi_matrix(A);
+    double total = 0;
+    const int n = D.size1();
+    for(int i=0;i<n;i++)
+	for(int j=0;j<i;j++)
+	    total += D(i,j);
+    total /= (n*(n-1)/2);
+    return total;
+}
+
+
 vector<sequence_mask> read_masks(const string& filename)
 {
     // 1. Read fine lines
@@ -947,6 +994,16 @@ int main(int argc,char* argv[])
 	    write_psmc(std::cout,A,0,1);
 	else if (args.count("dical2"))
 	    write_dical2(std::cout,A);
+	else if (args.count("pi-matrix"))
+	{
+	    print_matrix(std::cout, pi_matrix(A),'\t');
+	    exit(0);
+	}
+	else if (args.count("pi"))
+	{
+	    std::cout<<"pi = "<<pi(A)<<std::endl;
+	    exit(0);
+	}
 	else
 	    std::cout<<A;
 	std::cout.flush();
