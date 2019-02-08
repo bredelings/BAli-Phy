@@ -26,6 +26,7 @@
 #include <cmath>
 #include <fstream>
 #include "util/matrix.H"
+#include "util/io/matrix.H"
 #include "statistics.H"
 
 #include "tree/sequencetree.H"
@@ -55,17 +56,6 @@ using std::cout;
 using std::cerr;
 
 using std::optional;
-
-template <typename T>
-void print_matrix(const matrix<T>& M, char space=' ', char eol='\n')
-{
-    for(int i=0;i<M.size1();i++) {
-	vector<double> v(M.size2());
-	for(int j=0;j<v.size();j++)
-	    v[j] = M(i,j);
-	cout<<join(v,space)<<eol;
-    }
-}
 
 matrix<double> remove_duplicates(const matrix<double>& D)
 {
@@ -737,7 +727,7 @@ int main(int argc,char* argv[])
 		    for(int j=0;j<D.size2();j++)
 			D(i,j) += gaussian(0,sigma);
 	    }
-	    print_matrix(D,'\t','\n');
+	    print_matrix(std::cout,D,'\t','\n');
 	}
 
 	else if (analysis == "autocorrelation") 
