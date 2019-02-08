@@ -111,6 +111,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("strip-gaps,S","Remove columns within <arg> columns of a gap")
 	("mask-gaps,G",value<int>(),"Remove columns within <arg> columns of a gap")
 	("mask-file,M",value<vector<string>>()->composing(),"Apply mask-file")
+	("minor-allele",value<int>(),"Keep columns with given minor-allele count")
 	("translate-mask",value<string>(),"Masks (CSV or @file)")
 	("variant",value<int>()->default_value(1),"Is there a SNP at distance <arg> from SNP?")
 	("dical2","Output file for DiCal2")
@@ -745,6 +746,40 @@ vector<sequence_mask> read_masks(const string& filename)
     return masks;
 }
 
+vector<int> allele_counts(const alignment& A, int col)
+{
+    auto& a = A.get_alphabet();
+    vector<int> counts(a.size(), 0);
+    for(int i=0;i<A.n_sequences();i++)
+    {
+	auto c = A(col,i);
+	if (a.is_letter(c))
+	    counts[c]++;
+    }
+    return counts;
+}
+
+int largest_minor_allele_count(const alignment& A, int col)
+{
+    auto counts = allele_counts(A, col);
+
+    int m1 = std::max(counts[0],counts[1]);
+    int m2 = std::min(counts[0],counts[1]);
+    for(int i=2;i<counts.size();i++)
+    {
+	int count = counts[i];
+	if (count > m1)
+	{
+	    m2 = m1;
+	    m1 = count;
+	    continue;
+	}
+	else if (count > m2)
+	    m2 = count;
+    }
+    return m2;
+}
+
 int main(int argc,char* argv[]) 
 { 
     try {
@@ -844,6 +879,15 @@ int main(int argc,char* argv[])
 	if (args.count("histogram"))
 	{
 	    write_histogram(std::cout, args["histogram"].as<int>(), A);
+	    exit(0);
+	}
+
+	if (args.count("minor-allele"))
+	{
+	    int count = args["minor-allele"].as<int>();
+
+	    remove_columns(A,[&](int col) {return largest_minor_allele_count(A,col) < count;});
+	    std::cout<<A<<std::endl;
 	    exit(0);
 	}
 
