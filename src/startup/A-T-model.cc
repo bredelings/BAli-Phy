@@ -156,19 +156,6 @@ json optional_to_json(const std::optional<T>& o)
 }
 
 
-pair<string,string> split_on_last(char sep, const string& s)
-{
-    string s1 = s;
-    string s2;
-    auto pos = s1.rfind(sep);
-    if (pos != string::npos)
-    {
-	s2 = s.substr(pos+1);
-	s1 = s1.substr(0,pos);
-    }
-    return {s1,s2};
-}
-
 vector<pair<string,string>> split_on_last(char sep, const vector<string>& v1)
 {
     vector<pair<string,string>> v2;

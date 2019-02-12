@@ -4,6 +4,7 @@
 
 using std::vector;
 using std::string;
+using std::pair;
 
 /// \brief Divide a string \a s into several strings by break it at the character \a c
 ///
@@ -72,4 +73,17 @@ resplit(const string& s,const string& rgx_str)
     }
 
     return elems;
+}
+
+pair<string,string> split_on_last(char sep, const string& s)
+{
+    string s1 = s;
+    string s2;
+    auto pos = s1.rfind(sep);
+    if (pos != string::npos)
+    {
+	s2 = s.substr(pos+1);
+	s1 = s1.substr(0,pos);
+    }
+    return {s1,s2};
 }
