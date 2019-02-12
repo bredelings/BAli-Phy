@@ -1,8 +1,10 @@
 * 3.5 (unreleased)
  - Graphical model framework
-   + Brownian model model on *random* rooted tree.
+   + Brownian model on *random* rooted tree.
  - Misc
    - Switch to c++17
+ - Models
+   - Add +mut_sel_aa model modifier.
  - Haskell machine
    - Separate random variables from modifiables.
    - Make modifiables evaluate to an initial value.
@@ -11,6 +13,9 @@
    - Allow logging strings.
    - Record force edges.
    - Garbage-collection no longer delete steps or results.
+   - SPEED: inline mapping routines
+   - SPEED: unshare_regs: move loop over created_regs out of loop on results
+   - SPEED: unshare_regs: don't unshare constants and index_vars
  - Help
    + Display functions more compactly with `help functions`
  - Tools
