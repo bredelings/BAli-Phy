@@ -2,8 +2,10 @@
 #include <iostream>
 
 #include "util/io.H"
+#include "util/io/vector.H"
 #include "files.H"
 #include "util/string/join.H"
+#include "util/string/split.H"
 #include "util/myexception.H"
 #include "version.H"
 #include "computation/module.H"
@@ -90,8 +92,11 @@ string run_name(const variables_map& args)
     else if (args.count("align"))
     {
 	vector<string> alignment_filenames = args["align"].as<vector<string> >();
-	for(int i=0;i<alignment_filenames.size();i++)
-	    alignment_filenames[i] = remove_extension( fs::path( alignment_filenames[i] ).leaf().string() );
+	for(auto& filename: alignment_filenames)
+	{
+	    auto [name,range] = split_on_last(':',filename);
+	    filename = remove_extension( fs::path( name ).leaf().string() );
+	}
 	name = join(alignment_filenames,'-');
     }
     else if (args.count("model"))
