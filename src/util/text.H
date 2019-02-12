@@ -22,6 +22,7 @@ std::string highlight_bg(const std::string& line);
 std::string inverse(const std::string& line);
 std::string underline(const std::string& line);
 
+std::string black(const std::string& s);
 std::string red(const std::string& s);
 std::string bold_red(const std::string& s);
 std::string blue(const std::string& s);

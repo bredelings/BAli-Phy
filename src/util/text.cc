@@ -125,10 +125,16 @@ const std::string ansi_magenta("\033[1;35m");
 const std::string ansi_cyan("\033[1;36m");
 
 const std::string ansi_bg_grey("\033[1;48;2;180;180;180m");
+const std::string ansi_bg_grey2("\033[47;1m");
 
 string red(const string& s)
 {
     return ansi_red + s + ansi_plain;
+}
+
+string black(const string& s)
+{
+    return ansi_black + s + ansi_plain;
 }
 
 string bold_red(const string& s)
@@ -171,9 +177,11 @@ string bold(const string& line)
     return ansi_bold + line + ansi_plain;
 }
 
+// This works
+// print u"\u001b[44;1m A \u001b[45;1m B \u001b[46;1m C \u001b[47;1m D \u001b[0m"
 string highlight_bg(const string& line)
 {
-    return ansi_bg_grey + line + ansi_plain;
+    return ansi_bg_grey2 + line + ansi_plain;
 }
 
 string inverse(const string& line)
