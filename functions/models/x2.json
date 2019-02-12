@@ -1,7 +1,7 @@
 {
     "name": "x2",
-    "result_type": "RevCTMC[a]",
-    "constraints": [ "Doublets[a,b]" ],
+    "result_type": "RevCTMC[Doublets[a]]",
+    "constraints": [ "Nucleotides[a]" ],
     "title": "Rate matrix on doublets constructed from nucleotide rates",
     "call": "SModel.Doublets.x2[submodel,a]",
     "args": [
@@ -13,7 +13,7 @@
         },
         {
             "arg_name": "a",
-            "arg_type": "a",
+            "arg_type": "Doublets[a]",
             "default_value": "getAlphabet",
 	    "description": "The Triplets alphabet"
         }
