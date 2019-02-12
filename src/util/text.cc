@@ -113,7 +113,8 @@ const std::string ansi_inverse("\033[7m");
 const std::string ansi_bold_off("\033[21m");
 const std::string ansi_under_off("\033[24m");
 const std::string ansi_inverse_off("\033[27m");
-const std::string ansi_black("\033[1;30m");
+const std::string ansi_black("\033[0;30m");
+const std::string ansi_bold_black("\033[1;30m");
 const std::string ansi_red("\033[0;31m");
 const std::string ansi_bold_red("\033[1;31m");
 const std::string ansi_green("\033[0;32m");
@@ -135,6 +136,11 @@ string red(const string& s)
 string black(const string& s)
 {
     return ansi_black + s + ansi_plain;
+}
+
+string bold_black(const string& s)
+{
+    return ansi_bold_black + s + ansi_plain;
 }
 
 string bold_red(const string& s)

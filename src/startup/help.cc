@@ -338,7 +338,7 @@ string get_help_for_rule(const Rules& rules, const Rule& rule)
 
 string do_quotes(const string& line)
 {
-    return std::regex_replace(line,std::regex("([^\\\\]|^)`([^`]*)`"),string("$1")+highlight_bg(black("$2")).c_str());
+    return std::regex_replace(line,std::regex("([^\\\\]|^)`([^`]*)`"),string("$1")+black(highlight_bg("$2")).c_str());
 }
 
 string do_double_emph(string line)
