@@ -16,8 +16,10 @@
    - SPEED: inline mapping routines
    - SPEED: unshare_regs: move loop over created_regs out of loop on results
    - SPEED: unshare_regs: don't unshare constants and index_vars
+   - FIX graphviz description of graph by using HTML records.
  - Help
    + Display functions more compactly with `help functions`
+   - handle `quote` better in terminal output.
  - Tools
    + Allow reading from files wherever we take a comma-separated-list
    + alignment-info: add option to show sequence names and/or lengths.
