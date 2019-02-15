@@ -63,15 +63,18 @@ alignment load_alignment_with_range(const string& filename, const string& range,
     return A;
 }
 
-alignment load_alignment(const vector<sequence>& sequences, const string& alph_name)
+alignment load_alignment(const vector<sequence>& sequences, const string& alph_name, bool remove_empty)
 {
     alignment A;
 
     A.load(alph_name, sequences);
 
-    int n_empty = remove_empty_columns(A);
-    if (n_empty)
-	if (log_verbose >= 1) cerr<<"Warning: removed "<<n_empty<<" empty columns from alignment!\n"<<endl;
+    if (remove_empty)
+    {
+	int n_empty = remove_empty_columns(A);
+	if (n_empty)
+	    if (log_verbose >= 1) cerr<<"Warning: removed "<<n_empty<<" empty columns from alignment!\n"<<endl;
+    }
 
     if (A.n_sequences() == 0)
 	throw myexception()<<"Alignment doesn't contain any sequences!";
@@ -79,13 +82,13 @@ alignment load_alignment(const vector<sequence>& sequences, const string& alph_n
     return A;
 }
 
-alignment load_alignment(const string& filename, const string& alph_name)
+alignment load_alignment(const string& filename, const string& alph_name, bool remove_empty)
 {
     try
     {
 	auto sequences = sequence_format::load_from_file(filename);
 
-	return load_alignment(sequences, alph_name);
+	return load_alignment(sequences, alph_name, remove_empty);
     }
     catch (myexception& e)
     {
@@ -95,14 +98,14 @@ alignment load_alignment(const string& filename, const string& alph_name)
 }
 
 /// Load an alignment from command line args "--align filename"
-alignment load_A(const variables_map& args,bool keep_internal) 
+alignment load_A(const variables_map& args,bool keep_internal, bool remove_empty) 
 {
     // ----- Try to load alignment ------ //
     if (not args.count("align")) 
 	throw myexception("Alignment file not specified! (--align <filename>)");
   
     string filename = args["align"].as<string>();
-    alignment A = load_alignment(filename, get_alphabet_name(args));
+    alignment A = load_alignment(filename, get_alphabet_name(args), remove_empty);
 
     if (not keep_internal)
 	A = chop_internal(A);

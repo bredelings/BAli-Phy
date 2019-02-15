@@ -14,7 +14,7 @@
 std::string get_alphabet_name(const boost::program_options::variables_map& args);
 
 /// Load an alignment from command line args --align=filename
-alignment load_A(const boost::program_options::variables_map& args,bool keep_internal=true);
+alignment load_A(const boost::program_options::variables_map& args,bool keep_internal=true, bool remove_empty_columns=true);
 
 /// Load an alignment from file
 std::vector<sequence> load_sequences_with_range(const std::string& filename, const std::string&_range);
@@ -23,10 +23,10 @@ std::vector<sequence> load_sequences_with_range(const std::string& filename, con
 alignment load_alignment_with_range(const std::string& filename, const std::string&_range, const std::string& alph_name = "");
 
 /// Load an alignment from file
-alignment load_alignment(const std::string& filename, const std::string& alph_name = "");
+alignment load_alignment(const std::string& filename, const std::string& alph_name = "", bool remove_empty_columns = true);
 
 /// Load an alignment from file
-alignment load_alignment(const std::vector<sequence>& sequences, const std::string& alph_name = "");
+alignment load_alignment(const std::vector<sequence>& sequences, const std::string& alph_name = "", bool remove_empty_columns = true);
 
 std::list<alignment> load_alignments(std::istream& ifile, const std::vector<std::string>& names, const alphabet& a, int skip, int maxalignments);
 
