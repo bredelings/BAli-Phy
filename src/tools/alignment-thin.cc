@@ -80,6 +80,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     col_filter.add_options()
 	("min-letters",value<int>(),"Remove columns with fewer than <arg> letters.")
 	("remove-unique",value<int>(),"Remove insertions in a single sequence if longer than <arg> letters");
+	("erase-empty-columns,e","Remove columns with no characters (all gaps).");
 
     options_description output("Output options");
     output.add_options()
@@ -325,7 +326,7 @@ int main(int argc,char* argv[])
 	variables_map args = parse_cmd_line(argc,argv);
 
 	//----------- Load alignment and tree ---------//
-	alignment A = load_A(args,false);
+	alignment A = load_A(args,true,false);
 	const int N = A.n_sequences();
 	const int L = A.length();
 
@@ -644,6 +645,9 @@ int main(int argc,char* argv[])
 	    int m = args["min-letters"].as<int>();
 	    remove_almost_empty_columns(A2,m);
 	}
+
+	if (args.count("erase-empty-columns")) 
+	    remove_empty_columns(A2);
 
 	if (args.count("sort"))
 	    A2 = get_ordered_alignment(A2);
