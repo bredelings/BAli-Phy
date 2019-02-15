@@ -347,19 +347,13 @@ alignment::alignment(const alphabet& a1)
     :a(a1.clone())
 {}
 
-
-alignment::alignment(const alphabet& a1, const vector<sequence>& S) 
-    :array(0,S.size()),sequences(S),a(a1.clone())
-{
-    // Do NOT load the sequences here -- this is used for constructing
-    // new alignment matrices during MCMC for some reason.
-}
-
 alignment::alignment(const alphabet& a1, const vector<sequence>& S, int L) 
     :array(L,S.size()),sequences(S),a(a1.clone())
 {
-    // Do NOT load the sequences here -- this is used for constructing
-    // new alignment matrices during MCMC for some reason.
+    // Do NOT load the sequences here -- this is used for setting the
+    // sequences and matrix size and then filling in the matrix later.
+
+    // This is used in reorder_sequences, among other things...
 }
 
 alignment::alignment(const alphabet& a1,const string& filename) 

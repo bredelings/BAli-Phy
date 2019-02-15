@@ -462,8 +462,7 @@ alignment get_alignment(const alignment& A1, const vector< vector<int>>& sequenc
 
 alignment get_alignment(const alphabet& a, const vector<sequence>& seqs, const vector< vector<int>>& sequences, const matrix<int>& M)
 {
-    alignment A2(a,seqs);
-    A2.changelength(M.size1());
+    alignment A2(a,seqs, M.size1());
 
     // Overwrite the values in A2
     for(int i=0;i<M.size1();i++)
