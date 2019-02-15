@@ -66,27 +66,27 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     options_description seq_filter("Sequence filtering options");
     seq_filter.add_options()
-	("protect",value<string>(),"Sequences that cannot be removed (comma-separated).")
-	("remove",value<string>(),"Remove sequences in comma-separated list <arg>.")
-	("longer-than",value<unsigned>(),"Remove sequences not longer than <arg>.")
-	("shorter-than",value<unsigned>(),"Remove sequences not shorter than <arg>.")
-	("cutoff",value<unsigned>(),"Remove similar sequences with #mismatches < cutoff.")
-	("down-to",value<int>(),"Remove similar sequences down to <arg> sequences.")
+	("protect,p",value<string>(),"Sequences that cannot be removed (comma-separated).")
+	("remove,r",value<string>(),"Remove sequences in comma-separated list <arg>.")
+	("longer-than,l",value<unsigned>(),"Remove sequences not longer than <arg>.")
+	("shorter-than,s",value<unsigned>(),"Remove sequences not shorter than <arg>.")
+	("cutoff,c",value<unsigned>(),"Remove similar sequences with #mismatches < cutoff.")
+	("down-to,d",value<int>(),"Remove similar sequences down to <arg> sequences.")
 	("remove-crazy",value<int>(),"Remove <arg> outlier sequences -- defined as sequences that are missing too many conserved sites.")
 	("conserved",value<double>()->default_value(0.75),"Fraction of sequences that must contain a letter for it to be considered conserved.")
 	;
 
     options_description col_filter("Column filtering options");
     col_filter.add_options()
-	("min-letters",value<int>(),"Remove columns with fewer than <arg> letters.")
-	("remove-unique",value<int>(),"Remove insertions in a single sequence if longer than <arg> letters");
+	("min-letters,m",value<int>(),"Remove columns with fewer than <arg> letters.")
+	("remove-unique,u",value<int>(),"Remove insertions in a single sequence if longer than <arg> letters")
 	("erase-empty-columns,e","Remove columns with no characters (all gaps).");
 
     options_description output("Output options");
     output.add_options()
-	("sort","Sort partially ordered columns to group similar gaps.")
-	("show-lengths","Just print out sequence lengths.")
-	("find-dups", value<string>(),"For each sequence, find the closest other sequence.");
+	("sort,S","Sort partially ordered columns to group similar gaps.")
+	("show-lengths,L","Just print out sequence lengths.")
+	("find-dups,F", value<string>(),"For each sequence, find the closest other sequence.");
 
     // positional options
     positional_options_description p;
