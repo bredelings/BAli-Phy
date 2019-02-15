@@ -166,6 +166,19 @@ public:
 
     /// Construct an alignment from file filename using alphabet a
     explicit alignment(const alphabet& a,const std::string& filename);
+/*
+    Techniques to load alignments include:
+    1. alignment(); A.load(alph_name, sequences)
+    * alignment(a); A.load(           sequences)
+
+    2. alignment(); A.load(alph_name, loader_t, istream)
+    * alignment(a); A.load(           loader_t, istream);
+
+    3. alignment(); A.load(alph_name, filename)
+    * alignment(a); A.load(           filename)
+
+    Also see load_file( ) in alignment-cat
+*/
 };
 
 /// Reorder the sequences of \a A according to the permutation @mapping
