@@ -67,6 +67,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description seq_filter("Sequence filtering options");
     seq_filter.add_options()
 	("protect,p",value<string>(),"Sequences that cannot be removed (comma-separated).")
+	("keep,k",value<string>(),"Remove sequences not in comma-separated list <arg>.")
 	("remove,r",value<string>(),"Remove sequences in comma-separated list <arg>.")
 	("longer-than,l",value<unsigned>(),"Remove sequences not longer than <arg>.")
 	("shorter-than,s",value<unsigned>(),"Remove sequences not shorter than <arg>.")
@@ -86,6 +87,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     output.add_options()
 	("sort,S","Sort partially ordered columns to group similar gaps.")
 	("show-lengths,L","Just print out sequence lengths.")
+	("show-names,N","Just print out sequence lengths.")
 	("find-dups,F", value<string>(),"For each sequence, find the closest other sequence.");
 
     // positional options
@@ -113,6 +115,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	cout<<"   % alignment-thin --min-letters=5 file.fasta > file-thinned.fasta\n\n";
 	cout<<" Remove sequences by name:\n";
 	cout<<"   % alignment-thin --remove=seq1,seq2 file.fasta > file2.fasta\n\n";
+	cout<<"   % alignment-thin --keep=seq1,seq2   file.fasta > file2.fasta\n\n";
 	cout<<" Remove short sequences:\n";
 	cout<<"   % alignment-thin --longer-than=250 file.fasta > file-long.fasta\n\n";
 	cout<<" Remove similar sequences with <= 5 differences from the closest other sequence:\n";
@@ -123,6 +126,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	cout<<"   % alignment-thin --remove-crazy=10 file.fasta > file2.fasta\n\n";
 	cout<<" Protect some sequences from being removed:\n";
 	cout<<"   % alignment-thin --down-to=30 file.fasta --protect=seq1,seq2 > file2.fasta\n\n";
+	cout<<"   % alignment-thin --down-to=30 file.fasta --protect=@filename > file2.fasta\n\n";
 
 	exit(0);
     }
@@ -339,9 +343,19 @@ int main(int argc,char* argv[])
 	for(int i=0;i<N;i++)
 	    AL[i] = A.seqlength(i);
 
-	if (args.count("show-lengths")) {
-	    for(int i=0;i<A.n_sequences();i++) {
-		cout<<AL[i]<<endl;
+	if (args.count("show-lengths") or args.count("show-names"))
+	{
+	    bool show_lengths = args.count("show-lengths");
+	    bool show_names = args.count("show-names");
+	    for(int i=0;i<A.n_sequences();i++)
+	    {
+		if (show_names)
+		    cout<<names[i];
+		if (show_names and show_lengths)
+		    cout<<",";
+		if (show_lengths)
+		    cout<<AL[i];
+		cout<<endl;
 	    }
 	    exit(0);
 	}
@@ -382,6 +396,26 @@ int main(int argc,char* argv[])
 	}
 
 	//-------------------- remove ------------------------//
+
+	if (args.count("keep"))
+	{
+	    if (args.count("remove")) throw myexception()<<"You cannot specify both 'keep' and 'remove'!";
+
+	    // FIXME: Currently we protect these and remove everything else.
+	    //        Should instead do remove-all-except these?
+	    for(auto& r: get_string_list(args, "keep"))
+	    {
+		if (auto r_index = find_index(names,r))
+		{
+		    keep[*r_index] = 2;
+		}
+		else
+		    throw myexception()<<"remove: can't find sequence '"<<r<<"' to remove.";
+	    }
+	    for(auto& k: keep)
+		if (k != 2)
+		    k=0;
+	}
 
 	for(auto& r: get_string_list(args, "remove"))
 	{
