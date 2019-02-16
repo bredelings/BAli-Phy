@@ -36,7 +36,7 @@ if cpp.has_argument('-Wno-maybe-uninitialized')
 endif
 
 if get_option('buildtype') == 'release' or get_option('buildtype') == 'plain'
-  add_project_arguments(['-DNDEBUG','-DNDEBUG_DP','-O3','-funroll-loops','-ffast-math'], language : 'cpp')
+  add_project_arguments(['-DNDEBUG','-DNDEBUG_DP','-O3','-funroll-loops','-fno-math-errno','-fno-signed-zeros'], language : 'cpp')
 endif
 
 if host_machine.system() == 'darwin'
