@@ -45,6 +45,11 @@
 #include "computation/expression/bool.H"
 #include "computation/expression/constructor.H"
 
+#include "range/v3/all.hpp"
+
+namespace view = ranges::view;
+namespace action = ranges::action;
+
 using std::endl;
 using std::pair;
 
@@ -142,22 +147,16 @@ namespace MCMC {
 
 	vector<expression_ref> v_sub = select(v,indices[0]);
 
-	vector<int> O = iota(N);
-	std::sort(O.begin(),O.end(), 
-		  [&v_sub](int i, int j) 
-		  {
-		      double di = v_sub[i].as_double();
-		      double dj = v_sub[j].as_double();
-		      return di < dj;
-		  });
+	vector<int> O = view::ints(0) | view::take(N);
+	ranges::sort(O, {}, [&](int i) { return v_sub[i].as_double();});
 
-	vector<int> O_all = iota<int>(v.size());
-	for(int i=0;i<indices.size();i++) 
+	vector<int> O_all = view::ints(0) | view::take(v.size());
+	for(auto& I: indices)
 	{
-	    assert(indices[i].size() == N);
+	    assert(I.size() == N);
 	    for(int j=0;j<N;j++) {
-		// indices[i][j] -> indices[i][O[j]]
-		O_all[indices[i][j]] = indices[i][O[j]];
+		// I[j] -> I[O[j]]
+		O_all[I[j]] = I[O[j]];
 	    }
 	}
 	vector<expression_ref> v2 = apply_mapping(v,invert(O_all));

@@ -130,6 +130,12 @@ else
   libdl = cpp.find_library('dl')
 endif
 
+if cpp.has_header('range/v3/view/take.hpp')
+  librange = []
+else
+  subdir('external/range-v3/')
+endif
+
 math_dep = cpp.find_library('m', required:false)
 
 small_fasta=files('examples/sequences/5S-rRNA/5d.fasta')

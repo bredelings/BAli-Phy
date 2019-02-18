@@ -15,7 +15,7 @@ endif
 libbaliphy_sources = ['util/string/pred.cc', 'util/string/sanitize.cc', 'util/log-level.cc', 'util/io.cc', 'util/range.cc', 'util/demangle.cc', 'util/mapping.cc', 'util/string/strip.cc', 'util/string/split.cc', 'util/cmdline.cc', 'tree/newick-tokenizer.cc', 'tree/sequencetree.cc','tree/tree.cc','sequence/alphabet.cc','sequence/sequence.cc','tree/tree-util.cc','tools/read-trees.cc','sequence/sequence-format.cc','alignment/alignment-util.cc','util/rng.cc','alignment/load.cc','alignment/alignment.cc','tools/statistics.cc','tools/partition.cc','tools/tree-dist.cc','alignment/alignment-random.cc','startup/link-partitions.cc','tree/randomtree.cc','util/permute.cc','tools/parsimony.cc','alignment/index-matrix.cc','tools/mctree.cc','tools/stats-table.cc','tools/findroot.cc','tools/optimize.cc','tools/distance-report.cc','tree-align/n_indels.cc','tools/inverse.cc','tools/joint-A-T.cc','tools/distance-methods.cc','tools/consensus-tree.cc', 'util/object.cc', 'tree-align/link.cc','computation/machine/sums.cc']
 
 libbaliphy = static_library('bali-phy', libbaliphy_sources, 
-			    dependencies: [boost, eigen],
+			    dependencies: [boost, eigen, librange],
 			    link_args: extra_link_args)
 
 baliphy_sources = ['dp/dp_hmm.cc','computation/parser/desugar.cc','computation/parser/desugar-case.cc',
@@ -70,7 +70,7 @@ endif
 baliphy = executable('bali-phy',
 		     baliphy_sources,
 		     include_directories: root_inc,
-		     dependencies: [boost, eigen, json, libdl, math_dep],
+		     dependencies: [boost, eigen, json, libdl, math_dep, librange],
 		     link_args: extra_link_args,
 		     link_with: [libbaliphy],
 		     install_rpath: extra_rpath,
@@ -120,7 +120,7 @@ foreach tool: tools
     sources += extra_sources[tool]
   endif
 
-  deps = [boost,math_dep]
+  deps = [boost, librange, math_dep]
   if tool in extra_deps
     deps += extra_deps[tool]
   endif
