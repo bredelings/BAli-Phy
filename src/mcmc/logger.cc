@@ -147,10 +147,10 @@ namespace MCMC {
 
 	vector<expression_ref> v_sub = select(v,indices[0]);
 
-	vector<int> O = view::ints(0) | view::take(N);
+	vector<int> O = view::ints(0,N);
 	ranges::sort(O, {}, [&](int i) { return v_sub[i].as_double();});
 
-	vector<int> O_all = view::ints(0) | view::take(v.size());
+	vector<int> O_all = view::ints(0, (int)v.size());
 	for(auto& I: indices)
 	{
 	    assert(I.size() == N);
