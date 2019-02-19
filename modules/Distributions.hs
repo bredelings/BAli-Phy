@@ -8,7 +8,8 @@ import Tree
 
 -- Define the ProbDensity type
 data ProbDensity a = ProbDensity (a->Double) (Double->a) (IO a) Range
-density (ProbDensity d _ _ _) = d
+densities (ProbDensity ds _ _ _) = ds
+density dist x = balanced_product (densities dist x)
 quantile (ProbDensity _ q _ _) = q
 sampler (ProbDensity _ _ s _) = s
 distRange (ProbDensity _ _ _ r) = r
@@ -68,17 +69,17 @@ run_random' alpha rate lazy (IOAndPass f g) = do
   run_random' alpha rate lazy $ g x
 run_random' alpha rate lazy (IOReturn v) = return v
 -- It seems like we wouldn't need laziness for `do {x <- r;return x}`.  Do we need it for `r`?
-run_random' alpha rate lazy (Sample (ProbDensity pr _ (Random do_sample) range)) = maybe_lazy lazy $ do
+run_random' alpha rate lazy (Sample dist@(ProbDensity _  _ (Random do_sample) range)) = maybe_lazy lazy $ do
   value <- do_sample
   let x = modifiable value
-  return (random_variable x (pr x) range rate)
-run_random' alpha rate lazy (Sample (ProbDensity pr _ (RandomStructure structure do_sample) range)) = maybe_lazy lazy $ do
+  return (random_variable x (density dist x) range rate)
+run_random' alpha rate lazy (Sample dist@(ProbDensity _ _ (RandomStructure structure do_sample) range)) = maybe_lazy lazy $ do
   -- we need some mcmc moves here, for crp and for trees
   value <- run_random alpha lazy do_sample
   let x = structure value
-  return (random_variable x (pr x) range rate)
+  return (random_variable x (density dist x) range rate)
 run_random' alpha rate lazy (Sample (ProbDensity _ _ s _)) = maybe_lazy lazy $ run_random' alpha rate lazy s
-run_random' alpha rate lazy (Observe dist datum) = register_likelihood (density dist datum)
+run_random' alpha rate lazy (Observe dist datum) = sequence_ [register_likelihood term | term <- densities dist datum]
 run_random' alpha rate lazy (AddMove m) = register_transition_kernel m
 run_random' alpha rate lazy (Print s) = putStrLn (show s)
 run_random' alpha rate lazy (MFix f) = MFix ((run_random' alpha rate lazy).f)
@@ -119,52 +120,53 @@ log_to_json loggers = J.Object $ concatMap log_to_json_one loggers
 
 -- Define some helper functions
 no_quantile name = error ("Distribution '"++name++"' has no quantile function")
+make_densities density = \x -> [density x]
 
 -- Define some basic distributions
 builtin shifted_gamma_density 4 "shifted_gamma_density" "Distribution"
 builtin shifted_gamma_quantile 4 "shifted_gamma_quantile" "Distribution"
 builtin builtin_sample_shifted_gamma 3 "sample_shifted_gamma" "Distribution"
 sample_shifted_gamma a b shift = Random (IOAction3 builtin_sample_shifted_gamma a b shift)
-shifted_gamma a b shift = ProbDensity (shifted_gamma_density a b shift) (shifted_gamma_quantile a b shift) (sample_shifted_gamma a b shift) (above shift)
+shifted_gamma a b shift = ProbDensity (make_densities $ shifted_gamma_density a b shift) (shifted_gamma_quantile a b shift) (sample_shifted_gamma a b shift) (above shift)
 gamma a b = shifted_gamma a b 0.0
 
 builtin beta_density 3 "beta_density" "Distribution"
 builtin beta_quantile 3 "beta_quantile" "Distribution"
 builtin builtin_sample_beta 2 "sample_beta" "Distribution"
 sample_beta a b = Random (IOAction2 builtin_sample_beta a b)
-beta a b = ProbDensity (beta_density a b) (beta_quantile a b) (sample_beta a b) (between 0.0 1.0)
+beta a b = ProbDensity (make_densities $ beta_density a b) (beta_quantile a b) (sample_beta a b) (between 0.0 1.0)
 
 builtin normal_density 3 "normal_density" "Distribution"
 builtin normal_quantile 3 "normal_quantile" "Distribution"
 builtin builtin_sample_normal 2 "sample_normal" "Distribution"
 sample_normal m s = Random (IOAction2 builtin_sample_normal m s)
-normal m s = ProbDensity (normal_density m s) (normal_quantile m s) (sample_normal m s) realLine
+normal m s = ProbDensity (make_densities $ normal_density m s) (normal_quantile m s) (sample_normal m s) realLine
 
 builtin cauchy_density 3 "cauchy_density" "Distribution"
 builtin builtin_sample_cauchy 2 "sample_cauchy" "Distribution"
 sample_cauchy m s = Random (IOAction2 builtin_sample_cauchy m s)
-cauchy m s = ProbDensity (cauchy_density m s) () (sample_cauchy m s) realLine
+cauchy m s = ProbDensity (make_densities $ cauchy_density m s) () (sample_cauchy m s) realLine
 
 builtin laplace_density 3 "laplace_density" "Distribution"
 builtin builtin_sample_laplace 2 "sample_laplace" "Distribution"
 sample_laplace m s = Random (IOAction2 builtin_sample_laplace m s)
-laplace m s = ProbDensity (laplace_density m s) () (sample_laplace m s) realLine
+laplace m s = ProbDensity (make_densities $ laplace_density m s) () (sample_laplace m s) realLine
 
 builtin uniform_density 3 "uniform_density" "Distribution"
 builtin builtin_sample_uniform 2 "sample_uniform" "Distribution"
 sample_uniform l u = Random (IOAction2 builtin_sample_uniform l u)
-uniform l u = ProbDensity (uniform_density l u) () (sample_uniform l u) (between l u)
+uniform l u = ProbDensity (make_densities $ uniform_density l u) () (sample_uniform l u) (between l u)
 
 builtin uniform_int_density 3 "uniform_int_density" "Distribution"
 builtin builtin_sample_uniform_int 2 "sample_uniform_int" "Distribution"
 sample_uniform_int l u = Random (IOAction2 builtin_sample_uniform_int l u)
-uniform_int l u = ProbDensity (uniform_int_density l u) () (sample_uniform_int l u) (integer_between l u)
+uniform_int l u = ProbDensity (make_densities $ uniform_int_density l u) () (sample_uniform_int l u) (integer_between l u)
 
 builtin builtin_dirichlet_density 2 "dirichlet_density" "Distribution"
 dirichlet_density ns ps = builtin_dirichlet_density (list_to_vector ns) (list_to_vector ps)
 sample_dirichlet ns = SamplingRate (1.0/sqrt(intToDouble $ length ns)) $ do vs <- mapM (\a-> sample $ gamma a 1.0) ns
                                                                             return $ map (/(sum vs)) vs
-dirichlet ns = ProbDensity (dirichlet_density ns) (no_quantile "dirichlet") (sample_dirichlet ns) (Simplex (length ns) 1.0)
+dirichlet ns = ProbDensity (make_densities $ dirichlet_density ns) (no_quantile "dirichlet") (sample_dirichlet ns) (Simplex (length ns) 1.0)
 
 dirichlet' l n = dirichlet (replicate l n)
 
@@ -173,19 +175,19 @@ sample_dirichlet_on xs ns = do ps <- sample_dirichlet ns
 
 dirichlet_on_density ns xps = dirichlet_density ns ps where
     ps = map (\(x,p) -> p) xps
-dirichlet_on xs ns = ProbDensity (dirichlet_on_density ns) (no_quantile "dirichlet_on") (sample_dirichlet_on xs ns) (LabelledSimplex xs 1.0)
+dirichlet_on xs ns = ProbDensity (make_densities $ dirichlet_on_density ns) (no_quantile "dirichlet_on") (sample_dirichlet_on xs ns) (LabelledSimplex xs 1.0)
 dirichlet_on' xs n = dirichlet_on xs (replicate (length xs) n)
 
 builtin binomial_density 3 "binomial_density" "Distribution"
 builtin builtin_sample_binomial 2 "sample_binomial" "Distribution"
 sample_binomial n p = Random (IOAction2 builtin_sample_binomial n p)
-binomial n p = ProbDensity (binomial_density n p) (no_quantile "binomial") (sample_binomial n p) (integer_between 0 n)
+binomial n p = ProbDensity (make_densities $ binomial_density n p) (no_quantile "binomial") (sample_binomial n p) (integer_between 0 n)
 
 -- A geometric distribution on [0,\infty).  How many failures before a success?
 builtin geometric_density 3 "geometric_density" "Distribution"
 builtin builtin_sample_geometric 1 "sample_geometric" "Distribution"
 sample_geometric p_success = Random (IOAction1 builtin_sample_geometric p_success)
-geometric2 p_fail p_success = ProbDensity (geometric_density p_fail p_success) (no_quantile "geometric") (sample_geometric p_success) (integer_above 0)
+geometric2 p_fail p_success = ProbDensity (make_densities $ geometric_density p_fail p_success) (no_quantile "geometric") (sample_geometric p_success) (integer_above 0)
 
 geometric p = geometric2 (1.0-p) p
 rgeometric q = geometric2 q (1.0-q)
@@ -193,13 +195,13 @@ rgeometric q = geometric2 q (1.0-q)
 builtin poisson_density 2 "poisson_density" "Distribution"
 builtin builtin_sample_poisson 1 "sample_poisson" "Distribution"
 sample_poisson mu = Random (IOAction1 builtin_sample_poisson mu)
-poisson mu = ProbDensity (poisson_density mu) (no_quantile "Poisson") (sample_poisson mu) (integer_above 0)
+poisson mu = ProbDensity (make_densities $ poisson_density mu) (no_quantile "Poisson") (sample_poisson mu) (integer_above 0)
 
 builtin builtin_sample_bernoulli 1 "sample_bernoulli" "Distribution"
 sample_bernoulli p = Random (IOAction1 builtin_sample_bernoulli p)
 bernoulli_density2 p q 1 = (doubleToLogDouble p)
 bernoulli_density2 p q 0 = (doubleToLogDouble q)
-bernoulli2 p q = ProbDensity (bernoulli_density2 p q) (no_quantile "bernoulli") (sample_bernoulli p) (integer_between 0 1)
+bernoulli2 p q = ProbDensity (make_densities $ bernoulli_density2 p q) (no_quantile "bernoulli") (sample_bernoulli p) (integer_between 0 1)
 
 bernoulli p = bernoulli2 p (1.0-p)
 rbernoulli q = bernoulli2 (1.0-q) q
@@ -228,18 +230,18 @@ sample_crp alpha n d = Random $ do v <- (IOAction3 sample_crp_vector alpha n d)
                                    return $ list_from_vector v
 --crp alpha n d = ProbDensity (crp_density alpha n d) (no_quantile "crp") (do_crp alpha n d) (ListRange $ replicate n $ integer_between 0 (n+d-1))
 modifiable_list = map modifiable
-crp alpha n d = ProbDensity (crp_density alpha n d) (no_quantile "crp") (RandomStructure modifiable_list $ sample_crp alpha n d) (ListRange $ replicate n subrange)
+crp alpha n d = ProbDensity (make_densities $ crp_density alpha n d) (no_quantile "crp") (RandomStructure modifiable_list $ sample_crp alpha n d) (ListRange $ replicate n subrange)
                   where subrange = integer_between 0 (n+d-1)
 
 mixtureRange ((_,dist1):_) = distRange dist1
 mixture_density ((p1,dist1):l) x = (doubleToLogDouble p1)*(density dist1 x) + (mixture_density l x)
 mixture_density [] _ = (doubleToLogDouble 0.0)
 sample_mixture ((p1,dist1):l) = dist1
-mixture args = ProbDensity (mixture_density args) (no_quantile "mixture") (sample_mixture args) (mixtureRange args)
+mixture args = ProbDensity (make_densities $ mixture_density args) (no_quantile "mixture") (sample_mixture args) (mixtureRange args)
 
 builtin builtin_sample_categorical 1 "sample_categorical" "Distribution"
 sample_categorical ps = Random (IOAction1 builtin_sample_categorical ps)
-categorical ps = ProbDensity (qs!) (no_quantile "categorical") (sample_categorical ps) (integer_between 0 (length ps - 1))
+categorical ps = ProbDensity (make_densities $ qs!) (no_quantile "categorical") (sample_categorical ps) (integer_between 0 (length ps - 1))
                 where qs = listArray' $ map doubleToLogDouble ps
 
 xrange start end | start < end = start:xrange (start+1) end
@@ -270,7 +272,7 @@ modifiable_tree tree = Tree (listArray' nodes) (listArray' branches) (numNodes t
     nodes =    [ map modifiable (edgesOutOfNode tree n) | n <- xrange 0 (numNodes tree) ]
     branches = [ (modifiable s, modifiable i, modifiable t, modifiable r) | b <- xrange 0 (numBranches tree * 2), let (s,i,t,r) = nodesForEdge tree b]
 
-uniform_topology n = ProbDensity (const $ doubleToLogDouble 1.0) (no_quantile "uniform_topology") (RandomStructure modifiable_tree $ random_tree n) (TreeRange n)
+uniform_topology n = ProbDensity (\tree->[]) (no_quantile "uniform_topology") (RandomStructure modifiable_tree $ random_tree n) (TreeRange n)
 
 -- define the list distribution
 pair_apply f (x:y:t) = f x y : pair_apply f t
@@ -282,11 +284,11 @@ foldt f z xs  = foldt f z (pair_apply f xs)
 
 balanced_product xs = foldt (*) (doubleToLogDouble 1.0) xs
 
-list_density ds xs = if (length ds == length xs) then pr else (doubleToLogDouble 0.0)
-  where densities = zipWith density ds xs
-        pr = balanced_product densities
+list_densities (d:ds) (x:xs) = densities d x ++ list_densities ds xs
+list_densities [] []         = []
+list_densities _  _          = [doubleToLogDouble 0.0]
 
-list dists = ProbDensity (list_density dists) (no_quantile "list") do_sample (ListRange (map distRange dists))
+list dists = ProbDensity (list_densities dists) (no_quantile "list") do_sample (ListRange (map distRange dists))
              where do_sample = SamplingRate (1.0/sqrt (intToDouble $ length dists)) $ mapM sample dists
 
 -- define different examples of list distributions
@@ -319,7 +321,7 @@ uniformDiscretize dist n = fmap2 (quantile dist) (uniformGrid n)
 -- This contains exp-transformed functions
 expTransform (ProbDensity d q s r) = ProbDensity pdf' q' s' r' 
  where 
-  pdf' x = (d $ log x)/(doubleToLogDouble x)
+  pdf' x = case (d $ log x) of [pdf] -> pdf/(doubleToLogDouble x)
   q'   = exp . q
   s'   = do v <- sample $ ProbDensity d q s r
             return $ exp v
