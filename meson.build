@@ -29,14 +29,13 @@ configure_file(output : 'config.h', configuration : conf_data)
 root_inc = include_directories('.')
 add_project_arguments('-DHAVE_CONFIG_H', language : 'cpp')
 
-add_project_arguments(['-Wall','-Wextra','-Wno-sign-compare','-Woverloaded-virtual','-Wstrict-aliasing','-Wno-unknown-pragmas'], language : 'cpp')
+warn_flags = ['-Wall','-Wextra','-Wno-sign-compare','-Wno-maybe-uninitialized','-Woverloaded-virtual','-Wstrict-aliasing','-Wno-unknown-pragmas', '-fdiagnostics-show-template-tree']
 
-if cpp.has_argument('-Wno-maybe-uninitialized')
-  add_project_arguments(['-Wno-maybe-uninitialized'], language: 'cpp')
-endif
+add_project_arguments(cpp.get_supported_arguments(warn_flags), language : 'cpp')
 
 if get_option('buildtype') == 'release' or get_option('buildtype') == 'plain'
-  add_project_arguments(['-DNDEBUG','-DNDEBUG_DP','-O3','-funroll-loops','-fno-math-errno','-fno-signed-zeros'], language : 'cpp')
+  opt_flags = ['-O3','-funroll-loops','-fno-math-errno','-fno-signed-zeros']
+  add_project_arguments(['-DNDEBUG','-DNDEBUG_DP']+cpp.get_supported_arguments(opt_flags), language : 'cpp')
 endif
 
 if host_machine.system() == 'darwin'
