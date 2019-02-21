@@ -4,8 +4,10 @@
  - Misc
    - Switch to c++17
  - Models
-   - Add +mut_sel_aa model modifier.
+   - Add +mut_sel_aa for selection on amino-acids in codo models.
  - Haskell machine
+   + Observe lists in an efficient manner.
+   + Allow sampling characters on random trees (recursive, via mfix).
    - Separate random variables from modifiables.
    - Make modifiables evaluate to an initial value.
    - Allow specifying modifiable structures, such as a list of modifiables.
@@ -35,6 +37,7 @@
    + Make bp-analyze handle windows line endings when run from cygwin/UNIX.
    - Compile without errors in C++17 mode.
    + Link to math library if available: fix build on kfreebsd
+   + Avoid crash with NaN on armhf.
 
 * 3.4.1 (Jan 18, 2019)
  - Help
