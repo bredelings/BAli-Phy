@@ -331,7 +331,7 @@ log_double_t reg_heap::prior_for_context_diff(int c)
     prior.reset_unhandled();
 
     // re-multiply all probabilities
-    if (prior.data.total_error > 1.0e-9)
+    if (not (prior.data.total_error < 1.0e-9))
     {
 	// remove any values that are currently factored in.
 	for(int r: random_variables_)
@@ -344,7 +344,7 @@ log_double_t reg_heap::prior_for_context_diff(int c)
 	    if (res > 0 and results[res].flags.test(0))
 		dec_prior(res);
 	}
-	// std::cerr<<"unwinding all prs: total_error = "<<prior.data.total_error<<" variable_pr = "<<prior.data.value<<"  error_pr = "<<prior.data.delta<<"   variable_pr/error_pr = "<<prior.data.value - prior.data.delta<<std::endl;
+	std::cerr<<"unwinding all prior prs: total_error = "<<prior.data.total_error<<" variable_pr = "<<prior.data.value<<"  error_pr = "<<prior.data.delta<<"   variable_pr/error_pr = "<<prior.data.value - prior.data.delta<<std::endl;
 	assert(std::abs(prior.data.value - prior.data.delta) < 1.0e-6);
 	assert(priors_list.size() == random_variables_.size());
 	prior.reset();
@@ -462,7 +462,7 @@ log_double_t reg_heap::likelihood_for_context_diff(int c)
     likelihood.reset_unhandled();
 
     // re-multiply all probabilities
-    if (likelihood.data.total_error > 1.0e-9)
+    if (not (likelihood.data.total_error < 1.0e-9))
     {
 	for(int r: likelihood_heads)
 	{
@@ -470,7 +470,7 @@ log_double_t reg_heap::likelihood_for_context_diff(int c)
 	    if (res > 0 and results[res].flags.test(1))
 		dec_likelihood(res);
 	}
-	// std::cerr<<"unwinding all prs: total_error = "<<likelihood.data.total_error<<" variable_pr = "<<likelihood.data.value<<"  error_pr = "<<likelihood.data.delta<<"   variable_pr/error_pr = "<<likelihood.data.value - likelihood.data.delta<<std::endl;
+	std::cerr<<"unwinding all likelihood prs: total_error = "<<likelihood.data.total_error<<" variable_pr = "<<likelihood.data.value<<"  error_pr = "<<likelihood.data.delta<<"   variable_pr/error_pr = "<<likelihood.data.value - likelihood.data.delta<<std::endl;
 	assert(std::abs(likelihood.data.value - likelihood.data.delta) < 1.0e-6);
 	assert(likelihoods_list.size() == likelihood_heads.size());
 	likelihood.reset();
