@@ -20,15 +20,16 @@ inline bool kahan_add(double x, double& y, double& C, double& total_error)
 	error = a2 + C;
     }
 
-    if (std::abs(error) > 1.0e-9)
-	return false;
-    else
+    // What if error is NaN?
+    if (std::abs(error) < 1.0e-9)
     {
 	C = error;
 	y = new_y;
 	total_error += std::abs(error);
 	return true;
     }
+    else
+	return false;
 }
 
 bool kahan_adder::operator+=(double x)
