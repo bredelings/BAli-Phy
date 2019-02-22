@@ -1,7 +1,5 @@
 % Building and installing bali-phy
 
-# Building and installing bali-phy
-
 ## Prequisites
 
 You will need a C++ compiler that understands C++17.  
@@ -23,10 +21,18 @@ To build the documentation, you will need
 
 * pandoc
 
+### Mac
+On Macs you can install all the prerequisites using homebrew as follows:
+
+```sh
+sudo brew install meson pkg-config pandoc cairo
+```
+
+### Linux
 On Debian and Ubuntu systems you can install all the prequisites with the following command:
 
 ``` sh
-sudo apt-get install g++ libcairo2-dev ninja-build meson pandoc
+sudo apt-get install g++ meson pandoc libcairo2-dev
 ```
 
 ## Compilation

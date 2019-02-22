@@ -2,7 +2,7 @@
 
 We are excited to see what you will contribute!  This document describes how to download the bali-phy sources and contribute changes.
 
-# Get the source code
+## Get the source code
 
 This will create a separate copy of the repo under your own account.
 
@@ -21,7 +21,7 @@ This will create a separate copy of the repo under your own account.
    git remote -v
    ```
 
-# Contribute a change
+## Contribute a change
 
 1. Create a new branch to contain your changes.
    ``` sh
