@@ -14,7 +14,7 @@ clean:
 	xsltproc --nonet --xinclude docbook-html.xsl $*.xml > $@
 
 %.html: %.md
-	pandoc -s $*.md --css doc.css --toc -N > $@
+	pandoc -s $*.md --css pandoc.css --toc > $@
 
 %.xhtml: %.xml docbook-xhtml.xsl
 	xsltproc --nonet --xinclude docbook-xhtml.xsl $*.xml > $@
