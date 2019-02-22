@@ -4,11 +4,9 @@ We are excited to see what you will contribute!  This document describes how to 
 
 ## Get the source code
 
-This will create a separate copy of the repo under your own account.
+1. Click the "Fork" button on [https://github.com/bredelings/BAli-Phy/](https://github.com/bredelings/BAli-Phy) to create a version of the code under your own account.
 
-1. Click the "Fork" button on [https://github.com/bredelings/BAli-Phy/](https://github.com/bredelings/BAli-Phy).
-
-1. Use `git clone` to download your own version of the repo:
+1. Download your version of the code:
    ``` sh
    git clone git@github.com:your-username/BAli-Phy.git
    ```
