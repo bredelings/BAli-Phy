@@ -292,6 +292,16 @@ vector<int> DPmatrix::sample_path() const
 	    std::cerr<<"(i,j) = ("<<i<<","<<j<<")\n";
 	    for(int state1=0;state1<n_dp_states();state1++)
 		std::cerr<<"transition["<<state1<<"] = "<<transition[state1]<<std::endl;
+	    for(int state1=0;state1<n_dp_states();state1++)
+		for(int state2=0;state2<n_dp_states();state2++)
+		{
+		    auto x = GQ(state1, state2);
+		    if (not std::isfinite(x))
+		    {
+			auto y = Q(state1,state2);
+			std::cerr<<"GQ("<<state1<<","<<state2<<") = "<<x<<"      Q("<<state1<<","<<state2<<") = "<<y<<"\n";
+		    }
+		}
 
 	    c.prepend(__PRETTY_FUNCTION__);
 
@@ -682,6 +692,17 @@ vector<int> DPmatrixConstrained::sample_path() const
 	    std::cerr<<"(i,j) = ("<<i<<","<<j<<")\n";
 	    for(int state1=0;state1<n_dp_states();state1++)
 		std::cerr<<"transition["<<state1<<"] = "<<transition[state1]<<std::endl;
+
+	    for(int state1=0;state1<n_dp_states();state1++)
+		for(int state2=0;state2<n_dp_states();state2++)
+		{
+		    auto x = GQ(state1, state2);
+		    if (not std::isfinite(x))
+		    {
+			auto y = Q(state1,state2);
+			std::cerr<<"GQ("<<state1<<","<<state2<<") = "<<x<<"      Q("<<state1<<","<<state2<<") = "<<y<<"\n";
+		    }
+		}
 
 	    c.prepend(__PRETTY_FUNCTION__);
 	    throw c;
