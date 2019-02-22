@@ -253,8 +253,11 @@ log_double_t DPmatrix::path_P(const vector<int>& path) const
 
 vector<int> DPmatrix::sample_path() const 
 {
-    if (Pr_sum_all_paths() <= 0.0)
-	throw myexception()<<"DPmatrix::sample_path( ): trying to sample when total probability is 0.";
+    auto total = Pr_sum_all_paths();
+    if (not std::isfinite(total.log()) and total >= 0.0)
+    {
+	throw myexception()<<"DPmatrix::sample_path( ): trying to sample when total probability is "<<total;
+    }
 
     vector<int> path;
 
@@ -285,7 +288,7 @@ vector<int> DPmatrix::sample_path() const
 	catch (choose_exception<double>& c)
 	{
 	    std::cerr<<"(I,J) = ("<<I<<","<<J<<")\n";
-	    std::cerr<<"(i,i) = ("<<i<<","<<i<<")\n";
+	    std::cerr<<"(i,j) = ("<<i<<","<<j<<")\n";
 	    for(int state1=0;state1<n_dp_states();state1++)
 		std::cerr<<"transition["<<state1<<"] = "<<transition[state1]<<std::endl;
 
@@ -634,8 +637,11 @@ log_double_t DPmatrixConstrained::path_P(const vector<int>& path) const
 
 vector<int> DPmatrixConstrained::sample_path() const 
 {
-    if (Pr_sum_all_paths() <= 0.0)
-	throw myexception()<<"DPmatrixConstrained::sample_path( ): trying to sample when total probability is 0.";
+    auto total = Pr_sum_all_paths();
+    if (not std::isfinite(total.log()) and total >= 0.0)
+    {
+	throw myexception()<<"DPmatrix::sample_path( ): trying to sample when total probability is "<<total;
+    }
 
     vector<int> path;
 
@@ -671,7 +677,7 @@ vector<int> DPmatrixConstrained::sample_path() const
 	catch (choose_exception<double>& c)
 	{
 	    std::cerr<<"(I,J) = ("<<I<<","<<J<<")\n";
-	    std::cerr<<"(i,i) = ("<<i<<","<<i<<")\n";
+	    std::cerr<<"(i,j) = ("<<i<<","<<j<<")\n";
 	    for(int state1=0;state1<n_dp_states();state1++)
 		std::cerr<<"transition["<<state1<<"] = "<<transition[state1]<<std::endl;
 
