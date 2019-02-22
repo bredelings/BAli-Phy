@@ -26,7 +26,7 @@ This will create a separate copy of the repo under your own account.
 1. Create a new branch to contain your changes.
    ``` sh
    git fetch upstream
-   git branch my-new-feature-branch
+   git branch my-new-feature-branch upstream/master
    git checkout my-new-feature-branch
    ```
 
