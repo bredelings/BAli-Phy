@@ -1,0 +1,21 @@
+digraph "Architecture" {
+graph [ranksep=0.25, fontname=Arial,  nodesep=0.25, ranksep=0.5];
+node [fontname=Arial, style="filled,rounded", height=0, width=0, shape=box];
+edge [style="setlinewidth(2)"];
+
+bali_phy [label=<<b>BAli-Phy application</b><br/><i>bali-phy sequences.fasta</i>>]
+
+graphical_models  [label=<<b>Graphical models</b><br/><i>bali-phy -m model.hs</i>>]
+
+graphical_model_language [label=<<b>Graphical model language:</b><br/>syntax: Haskell>, fillcolor="#99ff99"]
+
+cpp_builtins [label=<<b>C++ builtins:</b><br/>syntax: C++<br/>>,fillcolor="#ffee99"]
+
+{rank = same; bali_phy; graphical_models}
+
+bali_phy -> JSON_files
+JSON_files [label=<<b>Mapping files: command line -&gt; Haskell</b><br/>syntax: JSON>,fillcolor="#aaccff"]
+JSON_files -> graphical_model_language
+graphical_models -> graphical_model_language
+graphical_model_language -> cpp_builtins
+}

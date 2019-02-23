@@ -1,5 +1,14 @@
 % Guide to development in BAli-Phy
 
+# BAli-Phy architecture
+
+BAli-Phy has an architecture that is divided into several levels. 
+Adding new functions, models, or distributions primarily involves add new functions to the model language using Haskell syntax _(green)_.
+Sometimes these functions are implemented in C++ and then made visible to the Haskell language _(yellow)_.
+In order to make these functions available in command-line model definitions for the BAli-Phy application, you must additionally write a JSON file that specifies which Haskell function the feature corresponds to.  However, if you wish to use the graphical model framework directly, then you do not need to write a JSON file.
+![Architecture diagram](architecture.png)
+
+
 # Adding functionality to bali-phy
 
 ## Adding a Haskell function
