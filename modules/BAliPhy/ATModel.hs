@@ -3,8 +3,8 @@ module BAliPhy.ATModel where
 data PairwiseAlignment
 data AlignmentOnTree = AlignmentOnTree [PairwiseAlignment]
 data Partition = Partition Tree AlignmentOnTree
-topology  (Partition t _ ) = t
-alignment (Partition _ a ) = a
+topology  (Partition t _) = t
+alignment (Partition _ a) = a
 
 -- Assumptions FIXME: branch lengths -- we could have multiple set of them.
 --                                      what we really need is transition probabilities for each partition.
