@@ -1,4 +1,4 @@
-all:  developer.html git.html building.html code.html architecture.png
+all:  developer.html git.html building.html code.html architecture.png architecture.svg
 
 clean:
 	-@rm -f *.html *.xhtml REAMDE.xml *.fo *.pdf *~
