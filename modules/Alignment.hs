@@ -5,7 +5,9 @@ builtin pairwise_alignment_length1 1 "pairwise_alignment_length1" "Alignment"
 builtin pairwise_alignment_length2 1 "pairwise_alignment_length2" "Alignment"
 builtin transition_counts 1 "transition_counts" "Alignment"
 builtin pairwise_alignment_probability_from_counts 2 "pairwise_alignment_probability_from_counts" "Alignment"
-builtin builtin_load_alignment 1 "load_alignment" "Alignment"
+
+builtin builtin_load_alignment 2 "load_alignment" "Alignment"
+builtin builtin_sequences_from_alignment 1 "sequences_from_alignment" "Alignment"
   
 branch_hmms (model,_) distances n_branches = listArray' $ map (model distances) [0..2*n_branches-1]
   
@@ -19,5 +21,6 @@ alignment_pr_top a tree hmm = product' $ map (alignment_branch_pr a hmm) [0..num
 alignment_pr_bot a tree (_,lengthp) = (product' $ map (lengthp . seqlength a tree) (internal_nodes tree))^2
 alignment_pr a tree hmm model = (alignment_pr_top a tree hmm)/(alignment_pr_bot a tree model)
 alignment_pr1 seq (_,lengthp) = lengthp (sizeOfVectorInt seq)
-load_alignment filename = builtin_load_alignment (listToString filename)
-
+load_alignment alphabet filename = builtin_load_alignment alphabet (listToString filename)
+-- sequence_from_alignment :: AlignmentMatrix -> [ Vector<int> ]
+sequences_from_alignment a = list_from_vector $ builtin_sequences_from_alignment a

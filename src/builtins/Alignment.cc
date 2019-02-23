@@ -293,9 +293,31 @@ extern "C" closure builtin_function_bitmask_from_alignment(OperationArgs& Args)
 
 extern "C" closure builtin_function_load_alignment(OperationArgs& Args)
 {
-    std::string filename = Args.evaluate(0).as_<String>();
+    auto arg0 = Args.evaluate(0);
+    auto& a = arg0.as_checked<alphabet>();
 
-    object_ptr<alignment> A(new alignment(DNA(),filename));
+    std::string filename = Args.evaluate(1).as_checked<String>();
+
+    object_ptr<alignment> A(new alignment(a,filename));
 
     return A;
+}
+
+extern "C" closure builtin_function_sequences_from_alignment(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& A = arg0.as_<alignment>();
+    auto &a = A.get_alphabet();
+
+    EVector sequences;
+    for(int i=0;i<A.n_sequences();i++)
+    {
+	Vector<int> seq;
+	for(int col=0;col<A.length();col++)
+	    if (auto l = A(col,i); a.is_feature(l))
+		seq.push_back(l);
+	sequences.push_back(std::move(seq));
+    }
+
+    return sequences;
 }
