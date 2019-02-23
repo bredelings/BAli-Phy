@@ -1275,7 +1275,8 @@ void Module::add_local_symbols()
 			arity = type.size()-1;
 			type = type.sub()[0];
 		    }
-		    assert(is_AST(type,"type_id"));
+		    if (not is_AST(type,"type_id"))
+			throw myexception()<<"Constructor does not being with type id!\n"<<decl.print();
 		    string cname = type.head().as_<AST_node>().value;
 		    def_constructor(cname,arity);
 		}
