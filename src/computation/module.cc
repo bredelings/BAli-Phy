@@ -1,4 +1,5 @@
 #include <set>
+#include <regex>
 #include "computation/module.H"
 #include "util/myexception.H"
 #include "util/range.H"
@@ -969,17 +970,20 @@ void parse_combinator_application(const expression_ref& E, string& name, vector<
 	patterns.push_back(E.sub()[i]);
 }
 
+const std::regex rgx( R"(^([A-Z][a-zA-Z0-9_']*)\.)" );
+
 vector<string> haskell_name_path(const std::string& s)
 {
-    if (s == ".") return {s};
-    else if (s.size() >= 2 and s.substr(s.size()-2,2) == "..")
+    vector<string> path;
+    string rest = s;
+    std::smatch m;
+    while(std::regex_search(rest, m, rgx))
     {
-	vector<string> path = split(s.substr(0,s.size()-2),'.');
-	path.push_back(".");
-	return path;
+	path.push_back(m[1]);
+	rest = m.suffix().str();
     }
-    else
-	return split(s,'.');
+    path.push_back(rest);
+    return path;
 }
 
 bool is_valid_identifier(const string& s)
