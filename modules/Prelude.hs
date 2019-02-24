@@ -127,6 +127,8 @@ show (x:y) = "["++show x++show' y++"]" where show' [] = ""
                                              show' (x:y) = ","++show x++show' y
 show (Just x) = "Just "++show x
 show Nothing = "Nothing"
+show True = "True"
+show False = "False"
 show x     = listFromString $ builtin_show x
 
 read_int [] = error "Can't convert empty string to int."
