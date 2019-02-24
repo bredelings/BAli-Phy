@@ -77,7 +77,7 @@ baliphy = executable('bali-phy',
 		     install: true,
 		     export_dynamic: true)
 
-subdir('builtins')
+subdir('computation/builtins')
 
 test('bali-phy version', baliphy, args:['--version'])
 test('bali-phy help', baliphy, args:['--help'])

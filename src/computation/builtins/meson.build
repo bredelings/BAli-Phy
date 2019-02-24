@@ -1,4 +1,4 @@
-source_inc = include_directories('..')
+source_inc = include_directories('../..')
 
 builtins = ['Array','Data','Prelude','Alphabet','Pair','Modifiables','Alignment',
 	    'PopGen','Distribution','Range','SModel','MCMC','Vector','Environment',
