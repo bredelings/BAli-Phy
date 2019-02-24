@@ -18,9 +18,112 @@ extern "C" closure builtin_function_empty_bitvector(OperationArgs& Args)
     return { bitvector(n) };
 }
 
-extern "C" closure builtin_function_empty_bitset(OperationArgs& Args)
+extern "C" closure builtin_function_complement(OperationArgs& Args)
 {
-    int n = Args.evaluate(0).as_int();
+    auto& arg0 =Args.evaluate(0);
 
-    return { bitvector(n) };
+    bitvector v2 = ~arg0.as_<bitvector>();
+
+    return { v2 };
 }
+
+
+extern "C" closure builtin_function_bitwise_or(OperationArgs& Args)
+{
+    auto& arg0 =Args.evaluate(0);
+    auto& arg1 =Args.evaluate(1);
+
+    bitvector v2 = arg0.as_<bitvector>() | arg1.as_<bitvector>();
+
+    return { v2 };
+}
+
+
+extern "C" closure builtin_function_bitwise_and(OperationArgs& Args)
+{
+    auto& arg0 =Args.evaluate(0);
+    auto& arg1 =Args.evaluate(1);
+
+    bitvector v2 = arg0.as_<bitvector>() & arg1.as_<bitvector>();
+
+    return { v2 };
+}
+
+extern "C" closure builtin_function_eq(OperationArgs& Args)
+{
+    auto& arg0 =Args.evaluate(0);
+    auto& arg1 =Args.evaluate(1);
+
+    bitvector v2 = arg0.as_<bitvector>() | arg1.as_<bitvector>();
+
+    return { arg0.as_<bitvector>() == arg1.as_<bitvector>() };
+}
+
+
+extern "C" closure builtin_function_neq(OperationArgs& Args)
+{
+    auto& arg0 =Args.evaluate(0);
+    auto& arg1 =Args.evaluate(1);
+
+    return { arg0.as_<bitvector>() != arg1.as_<bitvector>() };
+}
+
+
+extern "C" closure builtin_function_bitwise_xor(OperationArgs& Args)
+{
+    auto& arg0 =Args.evaluate(0);
+    auto& arg1 =Args.evaluate(1);
+
+    bitvector v2 = arg0.as_<bitvector>() ^ arg1.as_<bitvector>();
+
+    return { v2 };
+}
+
+extern "C" closure builtin_function_size(OperationArgs& Args)
+{
+    auto& arg0 =Args.evaluate(0);
+
+    int s = arg0.as_<bitvector>().size();
+
+    return { s };
+}
+
+extern "C" closure builtin_function_popcount(OperationArgs& Args)
+{
+    auto& arg0 =Args.evaluate(0);
+
+    int s = arg0.as_<bitvector>().count();
+
+    return { s };
+}
+
+extern "C" closure builtin_function_test_bit(OperationArgs& Args)
+{
+    auto& arg0 =Args.evaluate(0);
+    int n = Args.evaluate(1).as_int();
+
+    return { arg0.as_<bitvector>().test(n) };
+}
+
+extern "C" closure builtin_function_set_bit(OperationArgs& Args)
+{
+    auto& arg0 =Args.evaluate(0);
+    auto x = arg0.as_<bitvector>();
+
+    int n = Args.evaluate(1).as_int();
+    x.set(n);
+
+    return { x };
+}
+
+extern "C" closure builtin_function_clear_bit(OperationArgs& Args)
+{
+    auto& arg0 =Args.evaluate(0);
+    auto x = arg0.as_<bitvector>();
+
+    int n = Args.evaluate(1).as_int();
+    x.set(n, false);
+
+    return { x };
+}
+
