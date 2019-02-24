@@ -12,7 +12,7 @@ if get_option('static-cpp-libs')
 endif
 
 # tools/findroot.cc -> tools/optimize.cc
-libbaliphy_sources = ['util/string/pred.cc', 'util/string/sanitize.cc', 'util/log-level.cc', 'util/io.cc', 'util/range.cc', 'util/demangle.cc', 'util/mapping.cc', 'util/string/strip.cc', 'util/string/split.cc', 'util/cmdline.cc', 'tree/newick-tokenizer.cc', 'tree/sequencetree.cc','tree/tree.cc','sequence/alphabet.cc','sequence/sequence.cc','tree/tree-util.cc','tools/read-trees.cc','sequence/sequence-format.cc','alignment/alignment-util.cc','util/rng.cc','alignment/load.cc','alignment/alignment.cc','tools/statistics.cc','tools/partition.cc','tools/tree-dist.cc','alignment/alignment-random.cc','startup/link-partitions.cc','tree/randomtree.cc','util/permute.cc','tools/parsimony.cc','alignment/index-matrix.cc','tools/mctree.cc','tools/stats-table.cc','tools/findroot.cc','tools/optimize.cc','tools/distance-report.cc','tree-align/n_indels.cc','tools/inverse.cc','tools/joint-A-T.cc','tools/distance-methods.cc','tools/consensus-tree.cc', 'util/object.cc', 'tree-align/link.cc','computation/machine/sums.cc']
+libbaliphy_sources = ['util/string/pred.cc', 'util/string/sanitize.cc', 'util/log-level.cc', 'util/io.cc', 'util/range.cc', 'util/demangle.cc', 'util/mapping.cc', 'util/string/strip.cc', 'util/string/split.cc', 'util/cmdline.cc', 'tree/newick-tokenizer.cc', 'tree/sequencetree.cc','tree/tree.cc','sequence/alphabet.cc','sequence/sequence.cc','tree/tree-util.cc','tools/read-trees.cc','sequence/sequence-format.cc','alignment/alignment-util.cc','util/rng.cc','alignment/load.cc','alignment/alignment.cc','tools/statistics.cc','tools/partition.cc','tools/tree-dist.cc','alignment/alignment-random.cc','tree/randomtree.cc','util/permute.cc','tools/parsimony.cc','alignment/index-matrix.cc','tools/mctree.cc','tools/stats-table.cc','tools/findroot.cc','tools/optimize.cc','tools/distance-report.cc','tree-align/n_indels.cc','tools/inverse.cc','tools/joint-A-T.cc','tools/distance-methods.cc','tools/consensus-tree.cc', 'util/object.cc', 'tree-align/link.cc']
 
 libbaliphy = static_library('bali-phy', libbaliphy_sources, 
 			    dependencies: [boost, eigen, librange],
@@ -20,8 +20,8 @@ libbaliphy = static_library('bali-phy', libbaliphy_sources,
 
 baliphy_sources = ['dp/dp_hmm.cc','computation/parser/desugar.cc','computation/parser/desugar-case.cc',
    'computation/parser/rename.cc', 'computation/parser/driver.cc', 'computation/parser/lexer.cc', 'computation/parser/parser.cc',
-   'substitution/substitution.cc', 'util/ptree.cc',
-   'mcmc/moves.cc', 'math/exponential.cc','math/eigenvalue.cc',
+   'substitution/substitution.cc', 'util/ptree.cc', 'startup/link-partitions.cc',
+   'mcmc/moves.cc', 'math/exponential.cc','math/eigenvalue.cc', 'computation/machine/sums.cc',
    'models/parameters.cc','mcmc/mcmc.cc', 'probability/choose.cc',
    'mcmc/sample-branch-lengths.cc', 'bali-phy.cc', 'util/text.cc',
    'models/TreeInterface.cc', 'dp/hmm.cc','dp/dp-engine.cc','dp/dp-array.cc',
