@@ -38,4 +38,4 @@ computation_sources = [
 libcomputation = static_library('computation',
 				computation_sources,
 				include_directories: root_inc,
-				dependencies: [boost, eigen, librange])
+				dependencies: [boost, eigen, json, libdl, math_dep, librange])
