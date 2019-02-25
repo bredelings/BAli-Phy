@@ -1,0 +1,41 @@
+
+computation_sources = [
+    'closure.cc',
+    'program.cc',
+    'preprocess.cc',
+    'module.cc',
+    'loader.cc',
+    'context.cc',
+
+    'parser/desugar.cc','parser/desugar-case.cc', 'parser/rename.cc',
+    'parser/driver.cc', 'parser/lexer.cc', 'parser/parser.cc',
+
+    'expression/operator.cc', 'expression/expression.cc','expression/constructor.cc',
+    'expression/expression_ref.cc','expression/AST_node.cc',
+    'expression/apply.cc','expression/substitute.cc',
+    'expression/indexify.cc','expression/let.cc',
+    'expression/case.cc','expression/trim.cc',
+    'expression/tuple.cc','expression/list.cc',
+    'expression/var.cc','expression/lambda.cc',
+    'expression/random_variable.cc', 'expression/modifiable.cc',
+    'expression/reg_var.cc', 'expression/parameter.cc',
+    'expression/bool.cc',
+
+    'machine/args.cc','machine/tokens.cc', 'machine/graph_register.cc',
+    'machine/show_graph.cc',
+    'machine/evaluate.cc', 'machine/sums.cc',
+    'machine/gc.cc','machine/reroot.cc',
+    'operations.cc',
+
+    'optimization/let-float.cc',
+    'optimization/simplifier.cc',
+    'optimization/occurrence.cc',
+    'optimization/inliner.cc',
+]
+
+
+
+libcomputation = static_library('computation',
+				computation_sources,
+				include_directories: root_inc,
+				dependencies: [boost, eigen, librange])

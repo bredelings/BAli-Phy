@@ -6,59 +6,38 @@ git_version_h = vcs_tag(
   fallback: '',
 )
 
-extra_link_args = []
-if get_option('static-cpp-libs')
-  extra_link_args += ['-static-libgcc','-static-libstdc++']
-endif
-
 # tools/findroot.cc -> tools/optimize.cc
-libbaliphy_sources = ['util/string/pred.cc', 'util/string/sanitize.cc', 'util/log-level.cc', 'util/io.cc', 'util/range.cc', 'util/demangle.cc', 'util/mapping.cc', 'util/string/strip.cc', 'util/string/split.cc', 'util/cmdline.cc', 'tree/newick-tokenizer.cc', 'tree/sequencetree.cc','tree/tree.cc','sequence/alphabet.cc','sequence/sequence.cc','tree/tree-util.cc','tools/read-trees.cc','sequence/sequence-format.cc','alignment/alignment-util.cc','util/rng.cc','alignment/load.cc','alignment/alignment.cc','tools/statistics.cc','tools/partition.cc','tools/tree-dist.cc','alignment/alignment-random.cc','tree/randomtree.cc','util/permute.cc','tools/parsimony.cc','alignment/index-matrix.cc','tools/mctree.cc','tools/stats-table.cc','tools/findroot.cc','tools/optimize.cc','tools/distance-report.cc','tree-align/n_indels.cc','tools/inverse.cc','tools/joint-A-T.cc','tools/distance-methods.cc','tools/consensus-tree.cc', 'util/object.cc', 'tree-align/link.cc', 'util/file-paths.cc']
+libbaliphy_sources = ['util/string/pred.cc', 'util/string/sanitize.cc', 'util/log-level.cc', 'util/io.cc', 'util/range.cc', 'util/demangle.cc', 'util/mapping.cc', 'util/string/strip.cc', 'util/string/split.cc', 'util/cmdline.cc', 'tree/newick-tokenizer.cc', 'tree/sequencetree.cc','tree/tree.cc','sequence/alphabet.cc','sequence/sequence.cc','tree/tree-util.cc','tools/read-trees.cc','sequence/sequence-format.cc','alignment/alignment-util.cc','util/rng.cc','alignment/load.cc','alignment/alignment.cc','tools/statistics.cc','tools/partition.cc','tools/tree-dist.cc','alignment/alignment-random.cc','tree/randomtree.cc','util/permute.cc','tools/parsimony.cc','alignment/index-matrix.cc','tools/mctree.cc','tools/stats-table.cc','tools/findroot.cc','tools/optimize.cc','tools/distance-report.cc','tree-align/n_indels.cc','tools/inverse.cc','tools/joint-A-T.cc','tools/distance-methods.cc','tools/consensus-tree.cc', 'util/object.cc', 'tree-align/link.cc', 'util/file-paths.cc', 'util/ptree.cc', 'util/text.cc', 'util/myexception.cc', 'util/time.cc']
 
 libbaliphy = static_library('bali-phy', libbaliphy_sources, 
-			    dependencies: [boost, eigen, librange],
-			    link_args: extra_link_args)
+			    dependencies: [boost, eigen, librange])
 
-baliphy_sources = ['dp/dp_hmm.cc','computation/parser/desugar.cc','computation/parser/desugar-case.cc',
-   'computation/parser/rename.cc', 'computation/parser/driver.cc', 'computation/parser/lexer.cc', 'computation/parser/parser.cc',
-   'substitution/substitution.cc', 'util/ptree.cc', 'bali-phy/link-partitions.cc',
-   'mcmc/moves.cc', 'math/exponential.cc','math/eigenvalue.cc', 'computation/machine/sums.cc',
-   'models/parameters.cc','mcmc/mcmc.cc', 'probability/choose.cc',
-   'mcmc/sample-branch-lengths.cc', 'bali-phy/bali-phy.cc', 'util/text.cc',
-   'models/TreeInterface.cc', 'dp/hmm.cc','dp/dp-engine.cc','dp/dp-array.cc',
-   'dp/dp-matrix.cc','dp/3way.cc','dp/2way.cc','mcmc/sample-alignment.cc',
-   'mcmc/sample-node.cc','imodel/imodel.cc','dp/5way.cc','mcmc/sample-topology-NNI.cc',
-   'mcmc/sample-two-nodes.cc', 'dp/dp-cube.cc', 'mcmc/sample-cube.cc',
-   'models/setup.cc', 'bali-phy/help.cc',
-   'mcmc/sample-topology-SPR.cc', 'dp/alignment-sums.cc',
-   'probability/probability.cc','models/model.cc', 'alignment/alignment-constraint.cc',
-   'util/myexception.cc','math/pow2.cc',
-   'substitution/parsimony.cc', 'mcmc/proposals.cc',
-   'tree-align/n_indels2.cc','alignment/alignment-util2.cc',
-   'tools/parsimony2.cc','version.cc','mcmc/slice-sampling.cc','util/time.cc',
-   'mcmc/setup.cc','mcmc/logger.cc','mcmc/AIS.cc','computation/expression/operator.cc',
-   'computation/expression/expression.cc','computation/expression/constructor.cc',
-   'computation/expression/expression_ref.cc','computation/expression/AST_node.cc',
-   'computation/expression/apply.cc','computation/expression/substitute.cc',
-   'computation/expression/indexify.cc','computation/expression/let.cc',
-   'computation/expression/case.cc','computation/expression/trim.cc',
-   'computation/expression/tuple.cc','computation/expression/list.cc',
-   'computation/expression/var.cc','computation/expression/lambda.cc',
-   'computation/expression/random_variable.cc', 'computation/expression/modifiable.cc',
-   'computation/expression/reg_var.cc', 'computation/expression/parameter.cc',
-   'computation/machine/args.cc','computation/machine/tokens.cc',
-   'computation/preprocess.cc', 'computation/machine/graph_register.cc',
-   'computation/machine/show_graph.cc','computation/module.cc',
-   'computation/machine/evaluate.cc',
-   'computation/machine/gc.cc','computation/machine/reroot.cc',
-   'computation/operations.cc','computation/loader.cc','computation/context.cc',
-   'computation/closure.cc', 'computation/optimization/let-float.cc',
-   'computation/program.cc','mcmc/sample-tri.cc','bali-phy/A-T-model.cc',
-   'bali-phy/files.cc', 'bali-phy/loggers.cc','bali-phy/system.cc','bali-phy/cmd_line.cc',
-   'models/rules.cc','models/parse.cc', 'models/translate.cc','models/unification.cc',
-   'computation/optimization/simplifier.cc',
-   'bali-phy/paths.cc', 'computation/optimization/occurrence.cc',
-   'computation/optimization/inliner.cc', 'computation/expression/bool.cc',
-   git_version_h]
+subdir('computation')
+
+baliphy_sources = [
+  'dp/dp_hmm.cc',
+  'substitution/substitution.cc', 'bali-phy/link-partitions.cc',
+  'mcmc/moves.cc', 'math/exponential.cc','math/eigenvalue.cc',
+  'models/parameters.cc','mcmc/mcmc.cc', 'probability/choose.cc',
+  'mcmc/sample-branch-lengths.cc', 'bali-phy/bali-phy.cc',
+  'models/TreeInterface.cc',
+  'dp/hmm.cc','dp/dp-engine.cc','dp/dp-array.cc',
+  'dp/dp-matrix.cc','dp/3way.cc','dp/2way.cc','mcmc/sample-alignment.cc',
+  'mcmc/sample-node.cc','imodel/imodel.cc','dp/5way.cc','mcmc/sample-topology-NNI.cc',
+  'mcmc/sample-two-nodes.cc', 'dp/dp-cube.cc', 'mcmc/sample-cube.cc',
+  'models/setup.cc', 'bali-phy/help.cc',
+  'mcmc/sample-topology-SPR.cc', 'dp/alignment-sums.cc',
+  'probability/probability.cc','models/model.cc', 'alignment/alignment-constraint.cc',
+  'math/pow2.cc',
+  'substitution/parsimony.cc', 'mcmc/proposals.cc',
+  'tree-align/n_indels2.cc','alignment/alignment-util2.cc',
+  'tools/parsimony2.cc','version.cc','mcmc/slice-sampling.cc',
+  'mcmc/setup.cc','mcmc/logger.cc','mcmc/AIS.cc',
+  'mcmc/sample-tri.cc','bali-phy/A-T-model.cc',
+  'bali-phy/files.cc', 'bali-phy/loggers.cc','bali-phy/system.cc','bali-phy/cmd_line.cc',
+  'models/rules.cc','models/parse.cc', 'models/translate.cc','models/unification.cc',
+  'bali-phy/paths.cc',
+  git_version_h]
 
 
 # maybe we don't need this if we are doing static linking
@@ -71,8 +50,7 @@ baliphy = executable('bali-phy',
 		     baliphy_sources,
 		     include_directories: root_inc,
 		     dependencies: [boost, eigen, json, libdl, math_dep, librange],
-		     link_args: extra_link_args,
-		     link_with: [libbaliphy],
+		     link_with: [libbaliphy, libcomputation],
 		     install_rpath: extra_rpath,
 		     install: true,
 		     export_dynamic: true)

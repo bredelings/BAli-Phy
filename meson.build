@@ -26,7 +26,7 @@ conf_data.set('HAVE_FEENABLEEXCEPT', cpp.has_function('feenableexcept'))
 
 # 2.3. Write config file, get root_inc to include it, and tell the compiler it exists.
 configure_file(output : 'config.h', configuration : conf_data)
-root_inc = include_directories('.')
+root_inc = include_directories('.','src')
 add_project_arguments('-DHAVE_CONFIG_H', language : 'cpp')
 
 warn_flags = ['-Wall','-Wextra','-Wno-sign-compare','-Wno-maybe-uninitialized','-Woverloaded-virtual','-Wstrict-aliasing','-Wno-unknown-pragmas', '-fdiagnostics-show-template-tree']
