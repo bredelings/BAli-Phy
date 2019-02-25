@@ -1,5 +1,3 @@
-install_data(['README.html','README.xhtml','README.pdf'], install_dir: join_paths(get_option('datadir'),'doc/bali-phy'))
-
 pandoc = find_program('pandoc', required: false)
 
 if pandoc.found()
