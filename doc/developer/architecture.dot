@@ -14,7 +14,7 @@ cpp_builtins [label=<<b>C++ builtins:</b><br/>syntax: C++<br/>>,fillcolor="#ffee
 {rank = same; bali_phy; graphical_models}
 
 bali_phy -> JSON_files
-JSON_files [label=<<b>Mapping files: command line -&gt; Haskell</b><br/>syntax: JSON>,fillcolor="#aaccff"]
+JSON_files [label=<<b>bindings: command line -&gt; Haskell</b><br/>syntax: JSON>,fillcolor="#aaccff"]
 JSON_files -> graphical_model_language
 graphical_models -> graphical_model_language
 graphical_model_language -> cpp_builtins

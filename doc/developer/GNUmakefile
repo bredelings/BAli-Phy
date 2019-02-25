@@ -1,4 +1,4 @@
-all:  developer.html git.html building.html code.html architecture.png architecture.svg
+all:  developer.html git.html building.html code.html architecture.png architecture.svg code-layout.png code-layout.svg
 
 clean:
 	-@rm -f *.html *.xhtml REAMDE.xml *.fo *.pdf *~
@@ -16,8 +16,9 @@ clean:
 %.html: %.xml docbook-html.xsl
 	xsltproc --nonet --xinclude docbook-html.xsl $*.xml > $@
 
+# Removed arguments --toc -N 
 %.html: %.md
-	pandoc -s $*.md --css pandoc.css --toc > $@
+	pandoc -s $*.md --css pandoc.css > $@
 
 %.xhtml: %.xml docbook-xhtml.xsl
 	xsltproc --nonet --xinclude docbook-xhtml.xsl $*.xml > $@
