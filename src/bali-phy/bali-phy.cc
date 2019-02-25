@@ -63,13 +63,13 @@ namespace mpi = boost::mpi;
 #include "computation/module.H"
 #include "computation/program.H"
 
-#include "startup/A-T-model.H"
-#include "startup/files.H"
-#include "startup/paths.H"
-#include "startup/loggers.H"
-#include "startup/io.H"
-#include "startup/system.H"
-#include "startup/cmd_line.H"
+#include "A-T-model.H"
+#include "files.H"
+#include "paths.H"
+#include "loggers.H"
+#include "io.H"
+#include "system.H"
+#include "cmd_line.H"
 #include "computation/expression/expression.H" // for parse_object( )
 #include "computation/loader.H"
 

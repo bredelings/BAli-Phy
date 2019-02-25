@@ -5,7 +5,7 @@
 #include "computation/operations.H"
 #include <boost/filesystem/operations.hpp>
 #include "expression/lambda.H"
-#include "startup/paths.H"
+#include "util/file-paths.H"
 #include "parser/driver.hh"
 
 #include "util/io.H"

@@ -1,4 +1,4 @@
-#include "startup/system.H"
+#include "system.H"
 #include "util/string/convert.H"
 #include "util/log-level.H"
 

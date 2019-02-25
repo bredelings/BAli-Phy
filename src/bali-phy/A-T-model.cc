@@ -12,8 +12,8 @@
 #include "alignment/index-matrix.H"
 #include "models/parse.H"
 #include "models/rules.H"
-#include "startup/paths.H"
-#include "startup/help.hh"
+#include "paths.H"
+#include "help.hh"
 #include "util/text.H"
 #include "computation/expression/lambda.H"
 #include <boost/filesystem/operations.hpp>

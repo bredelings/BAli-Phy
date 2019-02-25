@@ -1,8 +1,8 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/algorithm/string.hpp>
-#include "startup/cmd_line.H"
-#include "startup/paths.H"
+#include "cmd_line.H"
+#include "paths.H"
 #include "util/string/join.H"
 #include "util/text.H"
 #include "util/io.H"

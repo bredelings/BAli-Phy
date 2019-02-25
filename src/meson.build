@@ -12,7 +12,7 @@ if get_option('static-cpp-libs')
 endif
 
 # tools/findroot.cc -> tools/optimize.cc
-libbaliphy_sources = ['util/string/pred.cc', 'util/string/sanitize.cc', 'util/log-level.cc', 'util/io.cc', 'util/range.cc', 'util/demangle.cc', 'util/mapping.cc', 'util/string/strip.cc', 'util/string/split.cc', 'util/cmdline.cc', 'tree/newick-tokenizer.cc', 'tree/sequencetree.cc','tree/tree.cc','sequence/alphabet.cc','sequence/sequence.cc','tree/tree-util.cc','tools/read-trees.cc','sequence/sequence-format.cc','alignment/alignment-util.cc','util/rng.cc','alignment/load.cc','alignment/alignment.cc','tools/statistics.cc','tools/partition.cc','tools/tree-dist.cc','alignment/alignment-random.cc','tree/randomtree.cc','util/permute.cc','tools/parsimony.cc','alignment/index-matrix.cc','tools/mctree.cc','tools/stats-table.cc','tools/findroot.cc','tools/optimize.cc','tools/distance-report.cc','tree-align/n_indels.cc','tools/inverse.cc','tools/joint-A-T.cc','tools/distance-methods.cc','tools/consensus-tree.cc', 'util/object.cc', 'tree-align/link.cc']
+libbaliphy_sources = ['util/string/pred.cc', 'util/string/sanitize.cc', 'util/log-level.cc', 'util/io.cc', 'util/range.cc', 'util/demangle.cc', 'util/mapping.cc', 'util/string/strip.cc', 'util/string/split.cc', 'util/cmdline.cc', 'tree/newick-tokenizer.cc', 'tree/sequencetree.cc','tree/tree.cc','sequence/alphabet.cc','sequence/sequence.cc','tree/tree-util.cc','tools/read-trees.cc','sequence/sequence-format.cc','alignment/alignment-util.cc','util/rng.cc','alignment/load.cc','alignment/alignment.cc','tools/statistics.cc','tools/partition.cc','tools/tree-dist.cc','alignment/alignment-random.cc','tree/randomtree.cc','util/permute.cc','tools/parsimony.cc','alignment/index-matrix.cc','tools/mctree.cc','tools/stats-table.cc','tools/findroot.cc','tools/optimize.cc','tools/distance-report.cc','tree-align/n_indels.cc','tools/inverse.cc','tools/joint-A-T.cc','tools/distance-methods.cc','tools/consensus-tree.cc', 'util/object.cc', 'tree-align/link.cc', 'util/file-paths.cc']
 
 libbaliphy = static_library('bali-phy', libbaliphy_sources, 
 			    dependencies: [boost, eigen, librange],
@@ -20,15 +20,15 @@ libbaliphy = static_library('bali-phy', libbaliphy_sources,
 
 baliphy_sources = ['dp/dp_hmm.cc','computation/parser/desugar.cc','computation/parser/desugar-case.cc',
    'computation/parser/rename.cc', 'computation/parser/driver.cc', 'computation/parser/lexer.cc', 'computation/parser/parser.cc',
-   'substitution/substitution.cc', 'util/ptree.cc', 'startup/link-partitions.cc',
+   'substitution/substitution.cc', 'util/ptree.cc', 'bali-phy/link-partitions.cc',
    'mcmc/moves.cc', 'math/exponential.cc','math/eigenvalue.cc', 'computation/machine/sums.cc',
    'models/parameters.cc','mcmc/mcmc.cc', 'probability/choose.cc',
-   'mcmc/sample-branch-lengths.cc', 'bali-phy.cc', 'util/text.cc',
+   'mcmc/sample-branch-lengths.cc', 'bali-phy/bali-phy.cc', 'util/text.cc',
    'models/TreeInterface.cc', 'dp/hmm.cc','dp/dp-engine.cc','dp/dp-array.cc',
    'dp/dp-matrix.cc','dp/3way.cc','dp/2way.cc','mcmc/sample-alignment.cc',
    'mcmc/sample-node.cc','imodel/imodel.cc','dp/5way.cc','mcmc/sample-topology-NNI.cc',
    'mcmc/sample-two-nodes.cc', 'dp/dp-cube.cc', 'mcmc/sample-cube.cc',
-   'models/setup.cc', 'startup/help.cc',
+   'models/setup.cc', 'bali-phy/help.cc',
    'mcmc/sample-topology-SPR.cc', 'dp/alignment-sums.cc',
    'probability/probability.cc','models/model.cc', 'alignment/alignment-constraint.cc',
    'util/myexception.cc','math/pow2.cc',
@@ -52,11 +52,11 @@ baliphy_sources = ['dp/dp_hmm.cc','computation/parser/desugar.cc','computation/p
    'computation/machine/gc.cc','computation/machine/reroot.cc',
    'computation/operations.cc','computation/loader.cc','computation/context.cc',
    'computation/closure.cc', 'computation/optimization/let-float.cc',
-   'computation/program.cc','mcmc/sample-tri.cc','startup/A-T-model.cc',
-   'startup/files.cc', 'startup/loggers.cc','startup/system.cc','startup/cmd_line.cc',
+   'computation/program.cc','mcmc/sample-tri.cc','bali-phy/A-T-model.cc',
+   'bali-phy/files.cc', 'bali-phy/loggers.cc','bali-phy/system.cc','bali-phy/cmd_line.cc',
    'models/rules.cc','models/parse.cc', 'models/translate.cc','models/unification.cc',
    'computation/optimization/simplifier.cc',
-   'startup/paths.cc', 'computation/optimization/occurrence.cc',
+   'bali-phy/paths.cc', 'computation/optimization/occurrence.cc',
    'computation/optimization/inliner.cc', 'computation/expression/bool.cc',
    git_version_h]
 

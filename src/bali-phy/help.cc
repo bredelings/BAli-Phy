@@ -1,12 +1,12 @@
-#include "startup/help.hh"
+#include "help.hh"
 
 #include <regex>
 #include <list>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/algorithm/string.hpp>
-#include "startup/cmd_line.H"
-#include "startup/paths.H"
+#include "cmd_line.H"
+#include "paths.H"
 #include "util/string/join.H"
 #include "util/string/split.H"
 #include "util/string/pred.H"
