@@ -126,3 +126,17 @@ extern "C" closure builtin_function_clear_bit(OperationArgs& Args)
     return { x };
 }
 
+extern "C" closure builtin_function_alignment_row_to_presence_bitvector(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& A = arg0.as_<alignment>();
+    auto &a = A.get_alphabet();
+
+    int row = Args.evaluate(1).as_int();
+
+    bitvector v(A.length());
+    for(int col=0; col<A.length(); col++)
+	v.set(col, a.is_feature(A(col,row)));
+
+    return { v };
+}

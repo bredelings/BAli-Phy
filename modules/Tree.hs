@@ -24,6 +24,7 @@ numBranches (Tree _ _ _ n) = n
 numBranches (RootedTree t _ _) = numBranches t
 edgesOutOfNode (Tree nodesArray _ _ _) node = nodesArray ! node
 edgesOutOfNode (RootedTree t _ _) node = edgesOutOfNode t node
+edgesTowardNode t node = map (reverseEdge t) $ edgesOutOfNode t node
 nodesForEdge (Tree _ branchesArray _ _) edgeIndex = branchesArray ! edgeIndex
 nodesForEdge (RootedTree t _ _) edgeIndex = nodesForEdge t edgeIndex
 sourceNode  tree b = let (s,_,_,_) = nodesForEdge tree b in s
