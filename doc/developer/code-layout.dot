@@ -1,0 +1,44 @@
+digraph "Code Layout" {
+graph [ranksep=0.25, fontname=Arial,  nodesep=0.25, ranksep=0.5];
+node [fontname=Arial, style="filled,rounded", height=0, width=0, shape=box];
+edge [style="setlinewidth(2)"];
+
+subgraph src_dir
+{
+node [fillcolor="#ffee99"]
+src [label=<<b>src/</b><br/><i>language: C++</i>>]
+src -> computation
+computation [label=<<b>computation/</b>>]
+src -> util
+util [label=<<b>util/</b>>]
+computation -> builtins
+builtins [label=<<b>builtins/</b>>]
+}
+
+
+subgraph modules_dir
+{
+node [fillcolor="#99ff99"]
+modules -> SModel
+modules [label=<<b>modules/</b><br/><i>language: Haskell</i>>]
+modules -> Distributions
+}
+
+subgraph modules_dir
+{
+node [fillcolor="#aaccff"]
+bindings [label=<<b>bindings/</b><br/><i>language: JSON</i>>]
+bindings -> functions
+functions [label=<<b>functions/</b>>]
+bindings -> models
+models [label=<<b>model/</b>>]
+bindings -> distributions
+distributions [label=<<b>distributions/</b>>]
+}
+
+top -> src
+top -> modules
+top -> bindings
+
+
+}
