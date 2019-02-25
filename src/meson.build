@@ -27,7 +27,7 @@ libutil_sources = [
   'util/time.cc']
 
 libutil = static_library('util', libutil_sources, 
-			 dependencies: [boost, eigen, librange])
+			 dependencies: [boost, eigen, json, librange])
 
 
 libcommon_sources = [
