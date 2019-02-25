@@ -377,7 +377,7 @@ Rules::Rules(const vector<fs::path>& pl)
     // 1. Only keep paths that have a /functions/ subdir
     for(auto& path: pl)
     {
-	auto fpath = path / "functions";
+	auto fpath = path / "bindings";
 	if (fs::exists(fpath))
 	    path_list.push_back(fpath);
     }

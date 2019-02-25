@@ -56,7 +56,7 @@ install_data(['scripts/compare-runs.R', 'scripts/compare-runs2.R', 'scripts/tree
 
 ## we need to build libdl if we are on windows (cygwin or mingw64, and then find the library
 install_subdir('modules', install_dir: 'lib/bali-phy')
-install_subdir('functions', install_dir: 'lib/bali-phy')
+install_subdir('bindings', install_dir: 'lib/bali-phy')
 install_subdir('help', install_dir: 'lib/bali-phy')
 install_subdir('examples', install_dir: get_option('datadir')/'doc/bali-phy')
 
