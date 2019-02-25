@@ -6,10 +6,69 @@ git_version_h = vcs_tag(
   fallback: '',
 )
 
-# tools/findroot.cc -> tools/optimize.cc
-libbaliphy_sources = ['util/string/pred.cc', 'util/string/sanitize.cc', 'util/log-level.cc', 'util/io.cc', 'util/range.cc', 'util/demangle.cc', 'util/mapping.cc', 'util/string/strip.cc', 'util/string/split.cc', 'util/cmdline.cc', 'tree/newick-tokenizer.cc', 'tree/sequencetree.cc','tree/tree.cc','sequence/alphabet.cc','sequence/sequence.cc','tree/tree-util.cc','tools/read-trees.cc','sequence/sequence-format.cc','alignment/alignment-util.cc','util/rng.cc','alignment/load.cc','alignment/alignment.cc','tools/statistics.cc','tools/partition.cc','tools/tree-dist.cc','alignment/alignment-random.cc','tree/randomtree.cc','util/permute.cc','tools/parsimony.cc','alignment/index-matrix.cc','tools/mctree.cc','tools/stats-table.cc','tools/findroot.cc','tools/optimize.cc','tools/distance-report.cc','tree-align/n_indels.cc','tools/inverse.cc','tools/joint-A-T.cc','tools/distance-methods.cc','tools/consensus-tree.cc', 'util/object.cc', 'tree-align/link.cc', 'util/file-paths.cc', 'util/ptree.cc', 'util/text.cc', 'util/myexception.cc', 'util/time.cc']
+libutil_sources = [
+  'util/string/pred.cc',
+  'util/string/sanitize.cc',
+  'util/log-level.cc',
+  'util/io.cc',
+  'util/range.cc',
+  'util/demangle.cc',
+  'util/mapping.cc',
+  'util/string/strip.cc',
+  'util/string/split.cc',
+  'util/cmdline.cc',
+  'util/rng.cc',
+  'util/permute.cc',
+  'util/object.cc',
+  'util/file-paths.cc',
+  'util/ptree.cc',
+  'util/text.cc',
+  'util/myexception.cc',
+  'util/time.cc']
 
-libbaliphy = static_library('bali-phy', libbaliphy_sources, 
+libutil = static_library('util', libutil_sources, 
+			 dependencies: [boost, eigen, librange])
+
+
+libcommon_sources = [
+  'tree/newick-tokenizer.cc',
+  'tree/sequencetree.cc',
+  'tree/tree.cc',
+  'tree/tree-util.cc',
+  'tree/randomtree.cc',
+  'tree-align/n_indels.cc',
+
+  'sequence/alphabet.cc',
+  'sequence/sequence.cc',
+  'sequence/sequence-format.cc',
+
+  'tools/read-trees.cc',
+
+  'alignment/alignment-util.cc',
+  'alignment/load.cc',
+  'alignment/alignment.cc',
+  'alignment/alignment-random.cc',
+  'alignment/index-matrix.cc',
+
+  'tree-align/link.cc',
+
+  'tools/statistics.cc',
+  'tools/partition.cc',
+  'tools/tree-dist.cc',
+  'tools/parsimony.cc',
+  'tools/mctree.cc',
+  'tools/stats-table.cc',
+  'tools/findroot.cc',
+  'tools/optimize.cc',
+  'tools/distance-report.cc',
+  'tools/inverse.cc',
+  'tools/joint-A-T.cc',
+  'tools/distance-methods.cc',
+  'tools/consensus-tree.cc']
+
+
+
+libcommon = static_library('common', libcommon_sources, 
 			    dependencies: [boost, eigen, librange])
 
 subdir('computation')
@@ -50,7 +109,7 @@ baliphy = executable('bali-phy',
 		     baliphy_sources,
 		     include_directories: root_inc,
 		     dependencies: [boost, eigen, json, libdl, math_dep, librange],
-		     link_with: [libbaliphy, libcomputation],
+		     link_with: [libutil, libcommon, libcomputation],
 		     install_rpath: extra_rpath,
 		     install: true,
 		     export_dynamic: true)
@@ -110,7 +169,7 @@ foreach tool: tools
 
   all_progs += name
 
-  tool_exe = executable(name, sources, include_directories: root_inc, dependencies: deps, link_with: libbaliphy, install_rpath: extra_rpath, install: true)
+  tool_exe = executable(name, sources, include_directories: root_inc, dependencies: deps, link_with: [libutil,libcommon], install_rpath: extra_rpath, install: true)
 
   test(tool + ' --help', tool_exe, args:['--help'])
 endforeach
