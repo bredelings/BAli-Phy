@@ -19,7 +19,7 @@ baliphy = executable('bali-phy',
 		     baliphy_sources,
 		     include_directories: root_inc,
 		     dependencies: [boost, eigen, json, libdl, math_dep, librange],
-		     link_with: [libutil, libcommon, libcomputation, libbaliphy],
+		     link_whole: [libutil, libcommon, libcomputation, libbaliphy],
 		     install_rpath: extra_rpath,
 		     install: true,
 		     export_dynamic: true)
