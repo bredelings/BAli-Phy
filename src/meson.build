@@ -6,29 +6,7 @@ git_version_h = vcs_tag(
   fallback: '',
 )
 
-libutil_sources = [
-  'util/string/pred.cc',
-  'util/string/sanitize.cc',
-  'util/log-level.cc',
-  'util/io.cc',
-  'util/range.cc',
-  'util/demangle.cc',
-  'util/mapping.cc',
-  'util/string/strip.cc',
-  'util/string/split.cc',
-  'util/cmdline.cc',
-  'util/rng.cc',
-  'util/permute.cc',
-  'util/object.cc',
-  'util/file-paths.cc',
-  'util/ptree.cc',
-  'util/text.cc',
-  'util/myexception.cc',
-  'util/time.cc']
-
-libutil = static_library('util', libutil_sources, 
-			 dependencies: [boost, eigen, json, librange])
-
+subdir('util')
 
 libcommon_sources = [
   'tree/newick-tokenizer.cc',
