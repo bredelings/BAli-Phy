@@ -52,6 +52,7 @@ libcommon = static_library('common', libcommon_sources,
 subdir('computation')
 
 libbaliphy_sources = [
+  'dp/dp_hmm.cc',
   'dp/hmm.cc',
   'dp/dp-engine.cc',
   'dp/dp-array.cc',
