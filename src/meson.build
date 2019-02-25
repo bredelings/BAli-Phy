@@ -51,46 +51,67 @@ libcommon = static_library('common', libcommon_sources,
 
 subdir('computation')
 
-baliphy_sources = [
-  'dp/dp_hmm.cc',
-  'substitution/substitution.cc', 'bali-phy/link-partitions.cc',
-  'mcmc/moves.cc', 'math/exponential.cc','math/eigenvalue.cc',
-  'models/parameters.cc','mcmc/mcmc.cc', 'probability/choose.cc',
-  'mcmc/sample-branch-lengths.cc', 'bali-phy/bali-phy.cc',
-  'models/TreeInterface.cc',
-  'dp/hmm.cc','dp/dp-engine.cc','dp/dp-array.cc',
-  'dp/dp-matrix.cc','dp/3way.cc','dp/2way.cc','mcmc/sample-alignment.cc',
-  'mcmc/sample-node.cc','imodel/imodel.cc','dp/5way.cc','mcmc/sample-topology-NNI.cc',
-  'mcmc/sample-two-nodes.cc', 'dp/dp-cube.cc', 'mcmc/sample-cube.cc',
-  'models/setup.cc', 'bali-phy/help.cc',
-  'mcmc/sample-topology-SPR.cc', 'dp/alignment-sums.cc',
-  'probability/probability.cc','models/model.cc', 'alignment/alignment-constraint.cc',
+libbaliphy_sources = [
+  'dp/hmm.cc',
+  'dp/dp-engine.cc',
+  'dp/dp-array.cc',
+  'dp/dp-matrix.cc',
+  'dp/dp-cube.cc',
+  'dp/2way.cc',
+  'dp/3way.cc',
+  'dp/5way.cc',
+  'dp/alignment-sums.cc',
+
+  'mcmc/mcmc.cc',
+  'mcmc/proposals.cc',
+  'mcmc/slice-sampling.cc',
+  'mcmc/AIS.cc',
+  'mcmc/logger.cc',
+  'mcmc/moves.cc',
+  'mcmc/sample-branch-lengths.cc',
+  'mcmc/sample-alignment.cc',
+  'mcmc/sample-topology-SPR.cc',
+  'mcmc/sample-topology-NNI.cc',
+  'mcmc/sample-two-nodes.cc',
+  'mcmc/sample-node.cc',
+  'mcmc/sample-cube.cc',
+  'mcmc/sample-tri.cc',
+  'mcmc/setup.cc',
+
+  'substitution/substitution.cc',
+  'substitution/parsimony.cc',
+
+  'math/exponential.cc',
+  'math/eigenvalue.cc',
   'math/pow2.cc',
-  'substitution/parsimony.cc', 'mcmc/proposals.cc',
-  'tree-align/n_indels2.cc','alignment/alignment-util2.cc',
-  'tools/parsimony2.cc','version.cc','mcmc/slice-sampling.cc',
-  'mcmc/setup.cc','mcmc/logger.cc','mcmc/AIS.cc',
-  'mcmc/sample-tri.cc','bali-phy/A-T-model.cc',
-  'bali-phy/files.cc', 'bali-phy/loggers.cc','bali-phy/system.cc','bali-phy/cmd_line.cc',
-  'models/rules.cc','models/parse.cc', 'models/translate.cc','models/unification.cc',
-  'bali-phy/paths.cc',
+
+  'models/parameters.cc',
+  'models/TreeInterface.cc',
+  'models/setup.cc',
+  'models/rules.cc',
+  'models/parse.cc',
+  'models/translate.cc',
+  'models/unification.cc',
+  'models/model.cc',
+
+  'probability/choose.cc',
+  'probability/probability.cc',
+
+  'imodel/imodel.cc',
+
+  'alignment/alignment-constraint.cc',
+  'alignment/alignment-util2.cc',
+
+  'tree-align/n_indels2.cc',
+  'tools/parsimony2.cc',
+  'version.cc',
   git_version_h]
 
-
-# maybe we don't need this if we are doing static linking
-extra_rpath = ''
-if host_machine.system() == 'linux'
-  extra_rpath = '$ORIGIN/../lib/bali-phy/'
-endif
-
-baliphy = executable('bali-phy',
-		     baliphy_sources,
-		     include_directories: root_inc,
-		     dependencies: [boost, eigen, json, libdl, math_dep, librange],
-		     link_with: [libutil, libcommon, libcomputation],
-		     install_rpath: extra_rpath,
-		     install: true,
-		     export_dynamic: true)
+libbaliphy = static_library('baliphy', libbaliphy_sources, 
+			    include_directories: root_inc,
+			    dependencies: [boost, eigen, json, libdl, math_dep, librange])
+			    
+subdir('bali-phy')
 
 subdir('computation/builtins')
 
