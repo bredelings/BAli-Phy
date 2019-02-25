@@ -1,6 +1,7 @@
 #ifndef UTIL_FILE_PATHS
 #define UTIL_FILE_PATHS
 
+#include <optional>
 #include <string>
 #include <vector>
 #include <boost/filesystem/operations.hpp>
