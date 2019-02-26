@@ -27,8 +27,8 @@ cached_conditional_likelihoods t seqs counts as alpha ps f = let lc    = mkArray
                                                              in lc
 
 peel_likelihood t cl as f root = let likelihoods = mkArray (numNodes t) peel_likelihood'
-                                     peel_likelihood' root = let branches_in = map (reverseEdge t) (edgesOutOfNode t root)in
-                                                              case branches_in of [b1,b2,b3]-> calc_root_probability (cl!b1) (cl!b2) (cl!b3) (as!b1) (as!b2) (as!b3) f
+                                     peel_likelihood' root = let branches_in = edgesTowardNode t root
+                                                             in case branches_in of [b1,b2,b3]-> calc_root_probability (cl!b1) (cl!b2) (cl!b3) (as!b1) (as!b2) (as!b3) f
                                  in likelihoods!root
 
 
