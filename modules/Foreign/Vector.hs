@@ -15,9 +15,9 @@ builtin sizeOfString 1 "sizeOfString" "Vector"
 builtin builtinNewString 1 "NewString" "Vector"
 builtin builtinSetStringIndexInt 3 "SetStringIndex" "Vector"
 
-list_from_vector' v s i = if (i<s) then (get_vector_index v i):list_from_vector' v s (i+1) else []
-
-list_from_vector v = list_from_vector' v (vector_size v) 0
+list_from_vector v = go 0 (vector_size v) where
+    go _ 0 = []
+    go i s = get_vector_index v i:go (i+1) (s-1)
 
 listFromString' v s i = if (i<s) then (getStringElement v i):listFromString' v s (i+1) else []
 
