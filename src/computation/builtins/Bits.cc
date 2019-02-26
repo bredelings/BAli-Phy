@@ -140,3 +140,20 @@ extern "C" closure builtin_function_alignment_row_to_presence_bitvector(Operatio
 
     return { v };
 }
+
+extern "C" closure builtin_function_pairwise_alignment_from_bits(OperationArgs& Args)
+{
+    auto& arg0 =Args.evaluate(0);
+    auto& v1 = arg0.as_checked<bitvector>();
+    auto& arg1 =Args.evaluate(1);
+    auto& v2 = arg1.as_checked<bitvector>();
+
+    pairwise_alignment_t a;
+    if (v1.size() != v2.size())
+	throw myexception()<<"Can't make a pairwise alignment from bitvectors of different length!";
+
+    for(int i=0;i<v1.size();i++)
+	a.push_back(v1.test(i), v2.test(i));
+
+    return { a };
+}
