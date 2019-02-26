@@ -32,10 +32,9 @@ peel_likelihood t cl as f root = let likelihoods = mkArray (numNodes t) peel_lik
                                  in likelihoods!root
 
 
-substitution_likelihood t seqs as alpha ps f = let cl = cached_conditional_likelihoods t seqs counts as alpha ps f
-                                                   root = targetNode t 0
-                                                   counts = mkArray (arraySize seqs) (\n -> list_to_vector $ replicate (vector_size seqs!n) 1)
-                                               in peel_likelihood t cl as f root
+substitution_likelihood t root seqs as alpha ps f = let cl = cached_conditional_likelihoods t seqs counts as alpha ps f
+                                                        counts = mkArray (arraySize seqs) (\n -> list_to_vector $ replicate (vector_size $ seqs!n) 1)
+                                                    in peel_likelihood t cl as f root
 
 cached_conditional_likelihoods_SEV t seqs alpha ps f a =
     let lc    = mkArray (2*numBranches t) lcf
