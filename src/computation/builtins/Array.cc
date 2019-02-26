@@ -47,7 +47,7 @@ extern "C" closure builtin_function_mkArray(OperationArgs& Args)
 
 extern "C" closure builtin_function_arraySize(OperationArgs& Args)
 {
-    int N = Args.evaluate_slot_to_closure(0).exp.size() - 1;
+    int N = Args.evaluate_slot_to_closure(0).exp.size();
 
     return {N};
 }
