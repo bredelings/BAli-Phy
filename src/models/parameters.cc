@@ -1480,7 +1480,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	for(auto b: branch_list)
 	    branch_list_.push_back(b);
 
-	vector<int> b2 = evaluate_expression( {var("Prelude.list_to_vector"),{var("Tree.edgesBeforeEdge"),my_tree(),b}}).as_<EVector>();
+	auto b2 = (vector<int>) evaluate_expression( {var("Prelude.list_to_vector"),{var("Tree.edgesBeforeEdge"),my_tree(),b}}).as_<EVector>();
 	assert(b2.size() == branch_list_.size());
 	for( int i: branch_list_)
 	    assert(includes(b2,i));
