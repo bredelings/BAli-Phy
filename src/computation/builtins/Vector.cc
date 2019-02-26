@@ -130,11 +130,6 @@ extern "C" closure builtin_function_NewVectorDouble(OperationArgs& Args)
     return NewVector<double>(Args);
 }
 
-extern "C" closure builtin_function_NewVectorMatrix(OperationArgs& Args)
-{
-    return NewVector<Matrix>(Args);
-}
-
 extern "C" closure builtin_function_SetVectorIndexInt(OperationArgs& Args)
 {
     object_ptr<const Vector<int>> v = Args.evaluate(0).assert_is_a<Vector<int>>();
@@ -156,19 +151,6 @@ extern "C" closure builtin_function_SetVectorIndexDouble(OperationArgs& Args)
 
     const Vector<double>* vv = &(*v);
     Vector<double>* vvv = const_cast<Vector<double>*>(vv);
-    (*vvv)[i] = x;
-
-    return constructor("()",0);
-}
-
-extern "C" closure builtin_function_SetVectorIndexMatrix(OperationArgs& Args)
-{
-    object_ptr<const Vector<Matrix>> v = Args.evaluate(0).assert_is_a<Vector<Matrix>>();
-    int i = Args.evaluate(1).as_int();
-    Box<Matrix> x = Args.evaluate(2).as_<Box<Matrix>>();
-
-    const Vector<Matrix>* vv = &(*v);
-    Vector<Matrix>* vvv = const_cast<Vector<Matrix>*>(vv);
     (*vvv)[i] = x;
 
     return constructor("()",0);
