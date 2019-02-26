@@ -115,7 +115,7 @@ public:
     /// Cached Transition Probabilities
     const EVector& transition_P(int b) const;
   
-    const std::vector<int>& get_sequence(int i) const;
+    const EVector& get_sequence(int i) const;
 
     int n_base_models() const;
 

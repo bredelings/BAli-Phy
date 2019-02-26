@@ -312,7 +312,7 @@ extern "C" closure builtin_function_sequences_from_alignment(OperationArgs& Args
     EVector sequences;
     for(int i=0;i<A.n_sequences();i++)
     {
-	Vector<int> seq;
+	EVector seq;
 	for(int col=0;col<A.length();col++)
 	    if (auto l = A(col,i); a.is_feature(l))
 		seq.push_back(l);

@@ -529,7 +529,7 @@ namespace substitution {
 					   const Likelihood_Cache_Branch* LCB2,
 					   const Likelihood_Cache_Branch* LCB3,
 					   const Matrix& F,
-					   const vector<int>& counts)
+					   const EVector& counts)
     {
 	total_calc_root_prob++;
 
@@ -633,7 +633,7 @@ namespace substitution {
 	    if (non_gap2) i2++;
 	    if (non_gap3) i3++;
 
-	    total.mult_with_count(p_col,counts[c]);
+	    total.mult_with_count(p_col,counts[c].as_int());
 	    //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
 	}
 
@@ -763,7 +763,7 @@ namespace substitution {
 
 
     Likelihood_Cache_Branch*
-    peel_leaf_branch(const vector<int>& sequence, const vector<int>& counts, const alphabet& a, const EVector& transition_P)
+    peel_leaf_branch(const EVector& sequence, const EVector& counts, const alphabet& a, const EVector& transition_P)
     {
 	total_peel_leaf_branches++;
 
@@ -780,12 +780,12 @@ namespace substitution {
     
 	for(int i=0;i<L0;i++)
 	{
-	    assert(counts[0] >= 1);
-	    LCB->count(i) = counts[i];
+	    assert(counts[0].as_int() >= 1);
+	    LCB->count(i) = counts[i].as_int();
 
 	    double* R = (*LCB)[i];
 	    // compute the distribution at the parent node
-	    int l2 = sequence[i];
+	    int l2 = sequence[i].as_int();
 
 	    if (a.is_letter(l2))
 		for(int m=0;m<n_models;m++) 
@@ -821,7 +821,7 @@ namespace substitution {
     }
 
     Likelihood_Cache_Branch*
-    peel_leaf_branch_SEV(const vector<int>& sequence, const alphabet& a, const EVector& transition_P, const boost::dynamic_bitset<>& mask)
+    peel_leaf_branch_SEV(const EVector& sequence, const alphabet& a, const EVector& transition_P, const boost::dynamic_bitset<>& mask)
     {
 	total_peel_leaf_branches++;
 
@@ -840,7 +840,7 @@ namespace substitution {
 	{
 	    double* R = (*LCB)[i];
 	    // compute the distribution at the parent node
-	    int l2 = sequence[i];
+	    int l2 = sequence[i].as_int();
 
 	    if (a.is_letter(l2))
 		for(int m=0;m<n_models;m++) 
@@ -895,7 +895,7 @@ namespace substitution {
     }
   
     Likelihood_Cache_Branch*
-    peel_leaf_branch_F81(const vector<int>& sequence, const alphabet& a, const vector<double>& exp_a_t, const Matrix& FF)
+    peel_leaf_branch_F81(const EVector& sequence, const alphabet& a, const vector<double>& exp_a_t, const Matrix& FF)
     {
 	total_peel_leaf_branches++;
 
@@ -918,7 +918,7 @@ namespace substitution {
 	    double* R = (*LCB)[i];
 
 	    // compute the distribution at the parent node
-	    int l2 = sequence[i];
+	    int l2 = sequence[i].as_int();
 
 	    if (a.is_letter(l2))
 		for(int m=0;m<n_models;m++) {
@@ -953,7 +953,7 @@ namespace substitution {
     }
 
     Likelihood_Cache_Branch*
-    peel_leaf_branch_modulated(const vector<int>& sequence, const alphabet& a,
+    peel_leaf_branch_modulated(const EVector& sequence, const alphabet& a,
 			       const EVector& transition_P, const vector<unsigned>& smap)
     {
 	total_peel_leaf_branches++;
@@ -974,7 +974,7 @@ namespace substitution {
 	{
 	    double* R = (*LCB)[i];
 	    // compute the distribution at the parent node
-	    int l2 = sequence[i];
+	    int l2 = sequence[i].as_int();
 
 	    if (a.is_letter(l2))
 		for(int m=0;m<n_models;m++) {
@@ -1320,7 +1320,7 @@ namespace substitution {
     }
 
     Likelihood_Cache_Branch
-    get_leaf_seq_likelihoods(const vector<int>& sequence, const alphabet& a, const data_partition& P, int delta);
+    get_leaf_seq_likelihoods(const EVector& sequence, const alphabet& a, const data_partition& P, int delta);
 
 
     /// Construct a likelihood matrix R(m,s) = Pr(observe letter l | model = m, state = 2)
@@ -1370,7 +1370,7 @@ namespace substitution {
 
     /// Get the likelihood matrix for each letter l of sequence 'sequence', where the likelihood matrix R(m,s) = Pr(observe letter l | model = m, state = 2)
     Likelihood_Cache_Branch
-    get_leaf_seq_likelihoods(const vector<int>& sequence, const alphabet& a, const data_partition& P, int delta)
+    get_leaf_seq_likelihoods(const EVector& sequence, const alphabet& a, const data_partition& P, int delta)
     {
 	int L = sequence.size();
 
@@ -1392,7 +1392,7 @@ namespace substitution {
 
 	for(int i=0;i<L;i++)
 	{
-	    int letter = sequence[i];
+	    int letter = sequence[i].as_int();
 	    if (a.is_letter(letter))
 		LCB.set(i+delta, letter_likelihoods[letter]);
 	    else
@@ -1405,7 +1405,7 @@ namespace substitution {
     Likelihood_Cache_Branch
     get_leaf_seq_likelihoods(const data_partition& P, int n, int delta)
     {
-	const vector<int>& sequence = P.get_sequence(n);
+	const auto& sequence = P.get_sequence(n);
 	const alphabet& a = P.get_alphabet();
 	return get_leaf_seq_likelihoods(sequence, a, P, delta);
     }
@@ -1678,7 +1678,7 @@ namespace substitution {
 		{
 		    calc_transition_prob_from_parent(S, ancestral_characters[node][i], transition_P, F);
 
-		    calc_leaf_likelihood(S, sequence[i], P.get_alphabet(), smap);
+		    calc_leaf_likelihood(S, sequence[i].as_int(), P.get_alphabet(), smap);
 
 		    ancestral_characters[node][i] = sample(S);
 		}

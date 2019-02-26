@@ -1231,10 +1231,10 @@ using boost::dynamic_bitset;
 
 namespace substitution {
     Likelihood_Cache_Branch*
-    peel_leaf_branch(const vector<int>& sequence, const vector<int>& counts, const alphabet& a, const EVector& transition_P);
+    peel_leaf_branch(const EVector& sequence, const EVector& counts, const alphabet& a, const EVector& transition_P);
 
     Likelihood_Cache_Branch*
-    peel_leaf_branch_SEV(const vector<int>& sequence, const alphabet& a, const EVector& transition_P, const dynamic_bitset<>& mask);
+    peel_leaf_branch_SEV(const EVector& sequence, const alphabet& a, const EVector& transition_P, const dynamic_bitset<>& mask);
 }
 
 extern "C" closure builtin_function_peel_leaf_branch(OperationArgs& Args)
@@ -1244,7 +1244,7 @@ extern "C" closure builtin_function_peel_leaf_branch(OperationArgs& Args)
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
 
-    return substitution::peel_leaf_branch(arg0.as_<Vector<int>>(), arg1.as_<Vector<int>>(), arg2.as_<alphabet>(), arg3.as_<EVector>());
+    return substitution::peel_leaf_branch(arg0.as_<EVector>(), arg1.as_<EVector>(), arg2.as_<alphabet>(), arg3.as_<EVector>());
 }
 
 
@@ -1255,7 +1255,7 @@ extern "C" closure builtin_function_peel_leaf_branch_SEV(OperationArgs& Args)
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
 
-    return substitution::peel_leaf_branch_SEV(arg0.as_<Vector<int>>(), arg1.as_<alphabet>(), arg2.as_<EVector>(), arg3.as_<Box<dynamic_bitset<>>>());
+    return substitution::peel_leaf_branch_SEV(arg0.as_<EVector>(), arg1.as_<alphabet>(), arg2.as_<EVector>(), arg3.as_<Box<dynamic_bitset<>>>());
 }
 
 
@@ -1341,7 +1341,7 @@ namespace substitution {
 					   const Likelihood_Cache_Branch* LCB2,
 					   const Likelihood_Cache_Branch* LCB3,
 					   const Matrix& F,
-					   const vector<int>& counts);
+					   const EVector& counts);
 }
 
 extern "C" closure builtin_function_calc_root_probability(OperationArgs& Args)
@@ -1376,7 +1376,7 @@ extern "C" closure builtin_function_calc_root_probability_SEV(OperationArgs& Arg
 							      &arg1.as_<Likelihood_Cache_Branch>(),
 							      &arg2.as_<Likelihood_Cache_Branch>(),
 							      arg3.as_<Box<Matrix>>(),
-							      arg4.as_<Vector<int>>());
+							      arg4.as_<EVector>());
     return {Pr};
 }
 
@@ -1406,7 +1406,7 @@ extern "C" closure builtin_function_peel_likelihood_1(OperationArgs& Args)
     auto arg1 = Args.evaluate(1);
     auto arg2 = Args.evaluate(2);
 
-    const auto& seq  = arg0.as_<Vector<int>>();
+    const auto& seq  = arg0.as_<EVector>();
     const auto& a    = arg1.as_<alphabet>();
     const auto& WF   = arg2.as_<Box<Matrix>>();
 
@@ -1423,7 +1423,7 @@ extern "C" closure builtin_function_peel_likelihood_1(OperationArgs& Args)
     log_double_t Pr = 1;
 
     for(auto l: seq)
-	Pr *= letter_frequency(l, a, F, LF);
+	Pr *= letter_frequency(l.as_int(), a, F, LF);
 
     return {Pr};
 }
@@ -1437,8 +1437,8 @@ extern "C" closure builtin_function_peel_likelihood_2(OperationArgs& Args)
     auto arg4 = Args.evaluate(4);
     auto arg5 = Args.evaluate(5);
 
-    const auto& seq1  = arg0.as_<Vector<int>>();
-    const auto& seq2  = arg1.as_<Vector<int>>();
+    const auto& seq1  = arg0.as_<EVector>();
+    const auto& seq2  = arg1.as_<EVector>();
     const auto& alpha = arg2.as_<alphabet>();
     const auto& A     = arg3.as_<pairwise_alignment_t>();
     const auto& P     = arg4.as_<EVector>();
@@ -1465,8 +1465,8 @@ extern "C" closure builtin_function_peel_likelihood_2(OperationArgs& Args)
     {
 	if (A.is_match(x))
 	{
-	    int l1 = seq1[i++];
-	    int l2 = seq2[j++];
+	    int l1 = seq1[i++].as_int();
+	    int l2 = seq2[j++].as_int();
 
 	    if (alpha.is_letter(l1))
 	    {
@@ -1516,12 +1516,12 @@ extern "C" closure builtin_function_peel_likelihood_2(OperationArgs& Args)
 	}
 	else if (A.is_delete(x))
 	{
-	    int l = seq1[i++];
+	    int l = seq1[i++].as_int();
 	    Pr *= letter_frequency(l, alpha, F, LF);
 	}
 	else
 	{
-	    int l = seq2[j++];
+	    int l = seq2[j++].as_int();
 	    Pr *= letter_frequency(l, alpha, F, LF);
 
 	}

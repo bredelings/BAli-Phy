@@ -174,7 +174,7 @@ int accumulate_root_leaf(int b, const data_partition& P, const matrix<int>& cost
 	    continue;
 	}
 
-	int l1 = letters[i1];
+	int l1 = letters[i1].as_int();
 	if (a.is_letter(l1))
 	{
 	    int c = cost(l1,0) + n_muts[i0*n_letters + 0];

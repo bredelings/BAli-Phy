@@ -213,9 +213,9 @@ bool data_partition::has_IModel() const
     return bool(P->imodel_index_for_partition(partition_index));
 }
 
-const std::vector<int>& data_partition::get_sequence(int i) const
+const EVector& data_partition::get_sequence(int i) const
 {
-    return P->evaluate( DPC().leaf_sequence_indices[i] ).as_<Vector<int>>();
+    return P->evaluate( DPC().leaf_sequence_indices[i] ).as_<EVector>();
 }
 
 const EVector& data_partition::transition_P(int b) const
@@ -534,10 +534,10 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 
     // Add expressions for leaf sequences
     for(int i=0; i<leaf_sequence_indices.size(); i++)
-	leaf_sequence_indices[i] = p->add_compute_expression(Vector<int>(sequences[i]));
+	leaf_sequence_indices[i] = p->add_compute_expression(EVector(sequences[i]));
 
     // Add array of leaf sequences
-    vector<expression_ref> seqs_;
+    EVector seqs_;
     for(int index: leaf_sequence_indices)
     {
 	seqs_.push_back( p->get_expression(index) );
@@ -545,7 +545,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     auto seqs_array = p->get_expression( p->add_compute_expression({var("Prelude.listArray'"),get_list(seqs_)}) );
 
     // Add array of pairwise alignments
-    vector<expression_ref> as_;
+    EVector as_;
     for(int b=0;b<2*B;b++)
     {
 	expression_ref a = parameter( p->parameter_name(pairwise_alignment_for_branch[b]) );
@@ -569,9 +569,9 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     else if (likelihood_calculator == 0)
     {
 	vector<vector<int>> seq_counts = alignment_letters_counts(AA, t.n_leaves(), counts);
-	vector<expression_ref> counts_;
+	EVector counts_;
 	for(int i=0; i<leaf_sequence_indices.size(); i++)
-	    counts_.push_back( Vector<int>(seq_counts[i]) );
+	    counts_.push_back( EVector(seq_counts[i]) );
 	auto counts_array = p->get_expression( p->add_compute_expression({var("Prelude.listArray'"),get_list(counts_)}) );
 
 	auto t = p->my_tree();
@@ -607,7 +607,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
 	    conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Prelude.!"),cls,b});
 
-	object_ptr<Vector<int>> Counts(new Vector<int>(counts));
+	object_ptr<EVector> Counts(new EVector(counts));
 
 	// FIXME: broken for fixed alignments of 2 sequences.
 	if (p->t().n_nodes() == 2)
