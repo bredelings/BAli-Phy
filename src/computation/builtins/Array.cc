@@ -61,6 +61,9 @@ extern "C" closure builtin_function_getIndex(OperationArgs& Args)
     // Do this second, so that evaluation of the 1st argument can't call expand_memory afterwards.
     const closure& C = Args.evaluate_slot_to_closure(0);
 
+    if (not is_constructor(C.exp.head()) or C.exp.head().as_<constructor>().f_name != "Array")
+	throw myexception()<<"Trying to index expression that is not an Array:   "<<C.exp;
+
     int N = C.exp.size();
     assert(C.Env.size() == C.exp.size());
 
