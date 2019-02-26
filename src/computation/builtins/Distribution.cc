@@ -117,10 +117,10 @@ extern "C" closure builtin_function_sample_cauchy(OperationArgs& Args)
 // Third convert all the expression_ref's here to "var" and use Distribution_Functions()
 extern "C" closure builtin_function_dirichlet_density(OperationArgs& Args)
 {
-    auto n = Args.evaluate(0);
-    auto x = Args.evaluate(1);
+    auto n = (vector<double>) Args.evaluate(0).as_<EVector>();
+    auto x = (vector<double>) Args.evaluate(1).as_<EVector>();
   
-    return { ::dirichlet_pdf(x.as_<EVector>(), n.as_<EVector>()) };
+    return { ::dirichlet_pdf(x, n) };
 }
 
 extern "C" closure builtin_function_laplace_density(OperationArgs& Args)
@@ -281,7 +281,7 @@ extern "C" closure builtin_function_CRP_density(OperationArgs& Args)
     int D = Args.evaluate(2).as_int();
 
     //------------- 2. Get argument Z -----------------
-    vector<int> z = get_vector_from_list(Args,3);
+    auto z = (vector<int>) get_vector_from_list(Args,3);
 
     return { ::CRP_pdf(alpha,N,D,z) };
 }
@@ -343,7 +343,7 @@ extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
 extern "C" closure builtin_function_sample_categorical(OperationArgs& Args)
 {
     //------------- 1. Get argument p -----------------
-    vector<double> z = get_vector_from_list_(Args,0);
+    auto z = (vector<double>) get_vector_from_list_(Args,0);
 
     return { choose_scratch(z) };
 }

@@ -241,7 +241,7 @@ int data_partition::n_states() const
 vector<double> data_partition::distribution() const
 {
     int s = *P->smodel_index_for_partition(partition_index);
-    return P->evaluate(P->PC->SModels[s].distribution).as_<EVector>();
+    return (vector<double>)P->evaluate(P->PC->SModels[s].distribution).as_<EVector>();
 }
 
 Matrix data_partition::WeightedFrequencyMatrix() const

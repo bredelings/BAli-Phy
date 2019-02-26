@@ -397,9 +397,9 @@ struct EVector: public Vector<expression_ref>
     explicit EVector(const std::vector<int>& v);
     explicit EVector(const std::vector<char>& v);
 
-    operator std::vector<double>() const;
-    operator std::vector<int>() const;
-    operator std::vector<char>() const;
+    explicit operator std::vector<double>() const;
+    explicit operator std::vector<int>() const;
+    explicit operator std::vector<char>() const;
 };
 
 typedef std::pair<expression_ref,expression_ref> Epair;

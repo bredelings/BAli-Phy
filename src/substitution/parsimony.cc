@@ -37,7 +37,7 @@ int* peel_muts_leaf_branch(int b, const data_partition& P, const matrix<int>& co
     int n_letters = a.size();
 
     int source = P.t().source(b);
-    const vector<int>& letters = P.get_sequence(source);
+    auto& letters = P.get_sequence(source);
     int L = P.seqlength(source);
 
     auto n_muts = new int[L * n_letters];
@@ -45,7 +45,7 @@ int* peel_muts_leaf_branch(int b, const data_partition& P, const matrix<int>& co
 
     for(int i=0;i<L;i++)
     {
-	int l1 = letters[i];
+	int l1 = letters[i].as_int();
 	if (a.is_letter_class(L))
 	    for(int l2=0;l2<n_letters;l2++)
 	    {

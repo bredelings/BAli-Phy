@@ -21,7 +21,7 @@ using std::abs;
 extern "C" closure builtin_function_lExp(OperationArgs& Args)
 {
     auto L = Args.evaluate(0);
-    vector<double> pi = Args.evaluate(1).as_<EVector>();
+    auto pi = (vector<double>) Args.evaluate(1).as_<EVector>();
     double t = Args.evaluate(2).as_double();
 
     auto M = new Box<Matrix>;

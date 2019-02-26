@@ -419,11 +419,11 @@ extern "C" closure builtin_function_show(OperationArgs& Args)
 
 extern "C" closure builtin_function_error(OperationArgs& Args)
 {
-    vector<char> v = get_vector_from_list(Args,0);
+    auto v = get_vector_from_list(Args,0);
 
     string message;
     for(auto ch: v)
-	message += ch;
+	message += ch.as_char();
   
     throw error_exception(message);
 }
