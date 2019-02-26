@@ -1,7 +1,7 @@
 #ifndef DUMMY_H
 #define DUMMY_H
 
-#include "util/object.H"
+#include "computation/object.H"
 #include "expression_ref.H"
 
 enum class amount_t {Unknown, None, Once, Many};

@@ -4,7 +4,7 @@
 
 #include "util/matrix.H"
 #include "util/range.H"
-#include "math/log-double.H"
+#include "util/math/log-double.H"
 #include "alignment/alignment.H"
 #include "computation/machine/args.H"
 

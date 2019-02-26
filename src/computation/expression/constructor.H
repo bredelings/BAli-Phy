@@ -2,7 +2,7 @@
 #define CONSTRUCTOR_H
 
 #include <string>
-#include "util/object.H"
+#include "computation/object.H"
 #include "operator.H"
 #include "expression_ref.H"
 

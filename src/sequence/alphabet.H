@@ -31,7 +31,7 @@
 #include "util/assert.hh"
 #include <boost/dynamic_bitset.hpp>
 #include "util/myexception.H"
-#include "util/object.H"
+#include "computation/object.H"
 #include "util/owned-ptr.H"
 
 /// An exception that is thrown upon reading a letter that is not in the current alphabet.

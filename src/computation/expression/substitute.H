@@ -3,7 +3,7 @@
 
 #include <vector>
 #include "expression_ref.H"
-#include "util/object.H"
+#include "computation/object.H"
 
 expression_ref substitute(const expression_ref& E1, int var, const expression_ref& E2);
 

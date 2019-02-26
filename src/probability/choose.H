@@ -24,7 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util/rng.H"
 #include "util/myexception.H"
 #include "util/range.H"
-#include "math/log-double.H"
+#include "util/math/log-double.H"
 
 template <typename F>
 class choose_exception: public myexception {

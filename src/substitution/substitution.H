@@ -28,7 +28,7 @@
 
 #include <vector>
 #include "util/matrix.H"
-#include "math/log-double.H"
+#include "util/math/log-double.H"
 #include "substitution/cache.H"
 
 class data_partition;

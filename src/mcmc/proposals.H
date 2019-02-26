@@ -21,8 +21,8 @@
 #define PROPOSALS_H
 
 #include <vector>
-#include "util/object.H"
-#include "math/log-double.H"
+#include "computation/object.H"
+#include "util/math/log-double.H"
 
 log_double_t scale_gaussian(double& x,double sigma);
 

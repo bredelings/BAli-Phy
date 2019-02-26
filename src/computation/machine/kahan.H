@@ -1,7 +1,7 @@
 #ifndef KAHAN_H
 #define KAHAN_H
 
-#include "math/log-double.H"
+#include "util/math/log-double.H"
 
 struct kahan_adder
 {

@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <string>
-#include "util/object.H"
+#include "computation/object.H"
 
 enum assoc_type {assoc_none=0,assoc_left=1, assoc_right=2};
 

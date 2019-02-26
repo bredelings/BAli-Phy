@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <utility>
-#include "util/object.H"
+#include "computation/object.H"
 #include "expression_ref.H"
 #include "var.H"
 

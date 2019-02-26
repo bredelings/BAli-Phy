@@ -46,8 +46,10 @@ libcommon_sources = [
 
 
 
-libcommon = static_library('common', libcommon_sources, 
-			    dependencies: [boost, eigen, librange])
+libcommon = static_library('common',
+			   libcommon_sources,
+			   include_directories: libutil_inc,
+			   dependencies: [boost, eigen, librange])
 
 subdir('computation')
 
@@ -109,7 +111,7 @@ libbaliphy_sources = [
   git_version_h]
 
 libbaliphy = static_library('baliphy', libbaliphy_sources, 
-			    include_directories: root_inc,
+			    include_directories: [root_inc, libutil_inc],
 			    dependencies: [boost, eigen, json, libdl, math_dep, librange])
 			    
 subdir('bali-phy')
@@ -169,7 +171,14 @@ foreach tool: tools
 
   all_progs += name
 
-  tool_exe = executable(name, sources, include_directories: root_inc, dependencies: deps, link_with: [libutil,libcommon], install_rpath: extra_rpath, install: true)
+  tool_exe = executable(name,
+			sources,
+			include_directories: [root_inc, libutil_inc],
+			dependencies: deps,
+			# libcomputation is just for the Object class!
+			link_with: [libutil,libcommon,libcomputation],
+			install_rpath: extra_rpath,
+			install: true)
 
   test(tool + ' --help', tool_exe, args:['--help'])
 endforeach

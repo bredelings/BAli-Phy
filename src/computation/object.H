@@ -5,7 +5,7 @@
 #include <boost/intrusive_ptr.hpp>
 #include <iostream>
 
-#include "math/log-double.H"
+#include "util/math/log-double.H"
 #include "computation/type_constant.H"
 
 class Object 

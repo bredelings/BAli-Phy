@@ -1,5 +1,5 @@
 #include <iostream>
-#include "cmdline.H"
+#include "util/cmdline.H"
 #include "util/myexception.H"
 #include "util/range.H"
 #include "util/io.H"

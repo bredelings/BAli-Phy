@@ -1,6 +1,6 @@
 #include "util/assert.hh"
 #include <regex>
-#include "split.H"
+#include "util/string/split.H"
 
 using std::vector;
 using std::string;

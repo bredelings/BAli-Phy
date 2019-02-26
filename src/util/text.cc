@@ -1,6 +1,6 @@
 #include <optional>
 #include <algorithm>
-#include "text.H"
+#include "util/text.H"
 #include "util/assert.hh"
 #include "util/string/join.H"
 

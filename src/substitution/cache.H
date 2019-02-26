@@ -20,7 +20,7 @@
 #ifndef SUBSTITUTION_CACHE_H
 #define SUBSTITUTION_CACHE_H
 
-#include "util/object.H"
+#include "computation/object.H"
 #include <vector>
 #include <boost/dynamic_bitset.hpp>
 

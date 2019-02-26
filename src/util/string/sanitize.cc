@@ -1,5 +1,5 @@
-#include "sanitize.H"
-#include "convert.H"
+#include "util/string/sanitize.H"
+#include "util/string/convert.H"
 
 using std::string;
 

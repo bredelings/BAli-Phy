@@ -22,7 +22,7 @@
 
 #include "util/assert.hh"
 #include <iostream>
-#include "math/logsum.H"
+#include "util/math/logsum.H"
 
 /// A class for handling positive real number in terms of their natural log.
 class log_double_t {

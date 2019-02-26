@@ -1,7 +1,7 @@
 #ifndef EXPRESSION_TRIM_H
 #define EXPRESSION_TRIM_H
 
-#include "util/object.H"
+#include "computation/object.H"
 #include "expression_ref.H"
 
 struct Trim: public Object

@@ -1,7 +1,7 @@
 #ifndef AST_NODE_H
 #define AST_NODE_H
 
-#include "util/object.H"
+#include "computation/object.H"
 #include "expression_ref.H"
 #include <string>
 

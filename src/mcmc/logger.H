@@ -39,7 +39,7 @@
 #include "models/parameters.H"
 #include "util/io.H"
 #include "util/owned-ptr.H"
-#include "util/object.H"
+#include "computation/object.H"
 #include "util/string/join.H"
 
 struct slice_function;

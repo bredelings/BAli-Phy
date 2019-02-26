@@ -6,7 +6,7 @@
 #include <set>
 #include <boost/program_options.hpp>
 #include "util/ptree.H"
-#include "util/object.H"
+#include "computation/object.H"
 #include "alignment/alignment.H"
 #include "sequence/alphabet.H"
 #include "computation/expression/expression_ref.H"

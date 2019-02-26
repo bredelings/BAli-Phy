@@ -1,7 +1,7 @@
 #ifndef EXPRESSION_LAMBDA_H
 #define EXPRESSION_LAMBDA_H
 
-#include "util/object.H"
+#include "computation/object.H"
 #include "expression_ref.H"
 
 struct Operator;

@@ -35,7 +35,7 @@
 
 #include "statistics.H"
 #include "stats-table.H"
-#include "math/log-double.H"
+#include "util/math/log-double.H"
 
 #include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>

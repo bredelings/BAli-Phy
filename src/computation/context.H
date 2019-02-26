@@ -2,7 +2,7 @@
 
 #include "computation/closure.H"
 #include "computation/program.H"
-#include "math/log-double.H"
+#include "util/math/log-double.H"
 #include "mcmc/prob_ratios.H"
 #include "util/json.hh"
 

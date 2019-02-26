@@ -1,6 +1,6 @@
-#include "object.H"
-#include "string/join.H"
-#include "string/convert.H"
+#include "computation/object.H"
+#include "util/string/join.H"
+#include "util/string/convert.H"
 
 std::string Object::print() const {
     return std::string("unprintable[")+demangle(typeid(*this).name())+"] "+ convertToString(this);

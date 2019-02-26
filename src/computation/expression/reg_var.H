@@ -2,7 +2,7 @@
 #define REG_VAR_H
 
 #include <string>
-#include "util/object.H"
+#include "computation/object.H"
 #include "computation/type_constant.H"
 #include "computation/expression/expression_ref.H"
 

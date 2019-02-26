@@ -29,7 +29,7 @@
 #include <vector>
 #include <memory>
 
-#include "math/log-double.H"
+#include "util/math/log-double.H"
 #include "dp-engine.H"
 #include "alignment/alignment.H"
 #include "models/parameters.H"

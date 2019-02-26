@@ -1,7 +1,7 @@
 #ifndef PROB_RATIOS_H
 #define PROB_RATIOS_H
 
-#include "math/log-double.H"
+#include "util/math/log-double.H"
 
 struct prob_ratios_t
 {
