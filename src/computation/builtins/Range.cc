@@ -10,7 +10,7 @@ extern "C" closure builtin_function_get_bounds(OperationArgs& Args)
     auto has_lower = L.is_double();
     auto has_upper = U.is_double();
 
-    Bounds<double> b;
+    Box<bounds<double>> b;
 
     if (has_lower)
         b.lower_bound = L.as_double();
@@ -28,7 +28,7 @@ extern "C" closure builtin_function_get_integer_bounds(OperationArgs& Args)
     auto has_lower = L.is_int();
     auto has_upper = U.is_int();
 
-    Bounds<int>b;
+    Box<bounds<int>> b;
 
     if (has_lower)
         b.lower_bound = L.as_int();

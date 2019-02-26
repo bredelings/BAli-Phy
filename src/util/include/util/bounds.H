@@ -29,12 +29,10 @@
 #include <iostream>
 #include "util/string/convert.H"
 #include <optional>
-// FIXME
-#include "../../computation/object.H"
 #include "util/wrap.H"
 
 template <typename T>
-struct Bounds: public Object
+struct bounds
 {
     /// the value of the lower bound, if any
     std::optional<T> lower_bound;
@@ -42,17 +40,10 @@ struct Bounds: public Object
     /// the value of the upper bound, if any
     std::optional<T> upper_bound;
 
-    Bounds<T>* clone() const {return new Bounds<T>(*this);}
-
-    bool operator==(const Object& O) const
+    bool operator==(const bounds<T>& b) const
 	{
-	    if (this == &O) return true;
-
-	    const Bounds<T>* B = dynamic_cast<const Bounds<T>*>(&O);
-	    if (not B) return false;
-
-	    if (lower_bound != B->lower_bound) return false;
-	    if (upper_bound != B->upper_bound) return false;
+	    if (lower_bound != b.lower_bound) return false;
+	    if (upper_bound != b.upper_bound) return false;
 
 	    return true;
 	}
@@ -91,7 +82,7 @@ struct Bounds: public Object
     void set_upper_bound(T);
 
     template <typename U>
-    Bounds(const Bounds<U>& b)
+    bounds(const bounds<U>& b)
     {
 	if (b.lower_bound)
 	    lower_bound = *b.lower_bound;
@@ -99,48 +90,48 @@ struct Bounds: public Object
 	    upper_bound = *b.upper_bound;
     }
 
-    Bounds() = default;
-    Bounds(const std::optional<T>&, const std::optional<T>&);
+    bounds() = default;
+    bounds(const std::optional<T>&, const std::optional<T>&);
 };
 
 
 template <typename T>
-void Bounds<T>::set_lower_bound(T x)
+void bounds<T>::set_lower_bound(T x)
 {
     lower_bound = x;
 }
 
 template <typename T>
-void Bounds<T>::set_upper_bound(T x)
+void bounds<T>::set_upper_bound(T x)
 {
     upper_bound = x;
 }
 
 template <typename T>
-Bounds<T>::Bounds(const std::optional<T>& l, const std::optional<T>& u)
+bounds<T>::bounds(const std::optional<T>& l, const std::optional<T>& u)
     :lower_bound(l),upper_bound(u)
 { }
 
 template <typename T>
-Bounds<T> lower_bound(T l)
+bounds<T> lower_bound(T l)
 {
-    return Bounds<T>(l,{});
+    return bounds<T>(l,{});
 }
 
 template <typename T>
-Bounds<T> upper_bound(T u)
+bounds<T> upper_bound(T u)
 {
-    return Bounds<T>({},u);
+    return bounds<T>({},u);
 }
 
 template <typename T>
-Bounds<T> between(T u, T l)
+bounds<T> between(T u, T l)
 {
-    return Bounds<T>(u,l);
+    return bounds<T>(u,l);
 }
 
 template <typename T>
-Bounds<T> operator&&(Bounds<T> b1, const Bounds<T>& b2)
+bounds<T> operator&&(bounds<T> b1, const bounds<T>& b2)
 {
     if (b2.lower_bound)
     {
@@ -162,7 +153,7 @@ Bounds<T> operator&&(Bounds<T> b1, const Bounds<T>& b2)
 }
 
 template <typename T>
-Bounds<T> operator||(Bounds<T> b1, const Bounds<T>& b2)
+bounds<T> operator||(bounds<T> b1, const bounds<T>& b2)
 {
     if (b1.lower_bound and b2.lower_bound)
 	b1.lower_bound = std::min(*b1.lower_bound, *b2.lower_bound);
@@ -177,7 +168,7 @@ Bounds<T> operator||(Bounds<T> b1, const Bounds<T>& b2)
 }
 
 template <typename T>
-std::ostream& operator<<(std::ostream& o, const Bounds<T>& b)
+std::ostream& operator<<(std::ostream& o, const bounds<T>& b)
 {
     o<<"[";
     if (b.lower_bound)
@@ -194,7 +185,7 @@ std::ostream& operator<<(std::ostream& o, const Bounds<T>& b)
 }
 
 template <typename T>
-inline T wrap(T x, const Bounds<T>& b)
+inline T wrap(T x, const bounds<T>& b)
 {
     if (b.lower_bound and b.upper_bound)
 	return wrap<T>(x, *b.lower_bound, *b.upper_bound);

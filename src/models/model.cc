@@ -43,6 +43,9 @@ using boost::dynamic_pointer_cast;
 
 const string model_separator = "/";
 
+template <typename T>
+using Bounds = Box<bounds<T>>;
+
 string model_extend_path(const string& path,const string& x)
 {
     if (path.empty())
@@ -86,14 +89,14 @@ bool Model::has_bounds(int i) const
     return (e and e.is_a<Bounds<double>>());
 }
 
-const Bounds<double>& Model::get_bounds(int i) const 
+const bounds<double>& Model::get_bounds(int i) const 
 {
     auto e = get_parameter_range(i);
 
     assert(e);
 
     if (not e.is_a<Bounds<double>>())
-	throw myexception()<<"parameter '"<<parameter_name(i)<<"' doesn't have Bounds<double>.";
+	throw myexception()<<"parameter '"<<parameter_name(i)<<"' doesn't have bounds<double>.";
 
     return e.as_<Bounds<double>>();
 }
@@ -107,7 +110,7 @@ bool Model::compute_expression_has_bounds(int index) const
     return (e and e.is_a<Bounds<double>>());
 }
 
-const Bounds<double>& Model::get_bounds_for_compute_expression(int index) const
+const bounds<double>& Model::get_bounds_for_compute_expression(int index) const
 {
     auto R = compute_expression_is_random_variable(index);
     auto e = get_range_for_random_variable(*R);
@@ -115,7 +118,7 @@ const Bounds<double>& Model::get_bounds_for_compute_expression(int index) const
     assert(e);
 
     if (not e.is_a<Bounds<double>>())
-	throw myexception()<<"compute expression "<<index<<" doesn't have Bounds<double>.";
+	throw myexception()<<"compute expression "<<index<<" doesn't have bounds<double>.";
 
     return e.as_<Bounds<double>>();
 }

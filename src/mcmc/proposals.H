@@ -81,11 +81,11 @@ public:
 
 class Reflect
 {
-    Bounds<double> bounds;
+    bounds<double> bounds_;
     proposal_fn proposal;
 public:
     log_double_t operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
-    Reflect(const Bounds<double>& b,const proposal_fn& P);
+    Reflect(const bounds<double>& b,const proposal_fn& P);
 };
 
 class log_scaled

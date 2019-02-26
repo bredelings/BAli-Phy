@@ -368,7 +368,7 @@ namespace MCMC {
 
 	    if (not P->has_bounds(i)) continue;
 	
-	    Bounds<double> range = P->get_bounds(i);
+	    bounds<double> range = P->get_bounds(i);
 	    if (not range.in_range(P->get_parameter_value(i).as_double()))
 		throw myexception()<<"Parameter "<<P->parameter_name(i)<<" = "<<P->get_parameter_value(i).as_double()<<" is NOT in range "<<range;
 	    if (not range.in_range(P2->get_parameter_value(i).as_double()))
@@ -495,7 +495,7 @@ namespace MCMC {
 
 	double v1 = P->get_modifiable_value(m_index).as_double();
 
-	random_variable_slice_function logp(*P, bounds, m_index);
+	random_variable_slice_function logp(*P, bounds_, m_index);
 
 	double v2 = sample(*P,logp,v1);
 
@@ -509,13 +509,13 @@ namespace MCMC {
     }
 
     Random_Variable_Slice_Move::Random_Variable_Slice_Move(const string& s,int m,
-						 const Bounds<double>& b, double W_)
-	:Slice_Move(s,W_), m_index(m), bounds(b)
+						 const bounds<double>& b, double W_)
+	:Slice_Move(s,W_), m_index(m), bounds_(b)
     {}
 
     Random_Variable_Slice_Move::Random_Variable_Slice_Move(const string& s, const string& v,int m,
-						 const Bounds<double>& b, double W_)
-	:Slice_Move(s,v,W_), m_index(m), bounds(b)
+						 const bounds<double>& b, double W_)
+	:Slice_Move(s,v,W_), m_index(m), bounds_(b)
     {}
 
     void Integer_Random_Variable_Slice_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int)
@@ -525,7 +525,7 @@ namespace MCMC {
 	int v1 = P->get_modifiable_value(m_index).as_int();
 	double x1 = double(v1)+uniform();
 
-	integer_random_variable_slice_function logp(*P, bounds, m_index);
+	integer_random_variable_slice_function logp(*P, bounds_, m_index);
 
 	double x2 = sample(*P,logp,x1);
 
@@ -540,13 +540,13 @@ namespace MCMC {
     }
 
     Integer_Random_Variable_Slice_Move::Integer_Random_Variable_Slice_Move(const string& s,int m,
-								 const Bounds<int>& b, double W_)
-	:Slice_Move(s,W_), m_index(m), bounds(b)
+								 const bounds<int>& b, double W_)
+	:Slice_Move(s,W_), m_index(m), bounds_(b)
     {}
 
     Integer_Random_Variable_Slice_Move::Integer_Random_Variable_Slice_Move(const string& s, const string& v,int m,
-								 const Bounds<int>& b, double W_)
-	:Slice_Move(s,v,W_), m_index(m), bounds(b)
+								 const bounds<int>& b, double W_)
+	:Slice_Move(s,v,W_), m_index(m), bounds_(b)
     {}
 
     void Dirichlet_Slice_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int)

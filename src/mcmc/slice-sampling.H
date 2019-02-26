@@ -35,7 +35,7 @@ namespace slice_sampling {
 }
 
 /// A function interface object for use in slice sampling
-struct slice_function: public Bounds<double>
+struct slice_function: public bounds<double>
 {
     /// Compute the value of the function evaluated at x 
     virtual double operator()(double x)=0;
@@ -47,7 +47,7 @@ struct slice_function: public Bounds<double>
     virtual double current_value() const;
 
     slice_function() {}
-    slice_function(const Bounds<double>& b):Bounds<double>(b) {}
+    slice_function(const bounds<double>& b):bounds<double>(b) {}
     virtual ~slice_function() {}
 };
 
@@ -85,7 +85,7 @@ public:
 
     model_slice_function(Model&);
 
-    model_slice_function(Model&, const Bounds<double>&);
+    model_slice_function(Model&, const bounds<double>&);
 };
 
 /// A slice_function for slice-sampling a single parameter
@@ -98,7 +98,7 @@ struct random_variable_slice_function: public model_slice_function
 
     double current_value() const;
 
-    random_variable_slice_function(Model&, const Bounds<double>&, int);
+    random_variable_slice_function(Model&, const bounds<double>&, int);
 };
 
 
@@ -112,7 +112,7 @@ struct integer_random_variable_slice_function:public model_slice_function
 
     double current_value() const;
 
-    integer_random_variable_slice_function(Model&, const Bounds<int>&, int);
+    integer_random_variable_slice_function(Model&, const bounds<int>&, int);
 };
 
 

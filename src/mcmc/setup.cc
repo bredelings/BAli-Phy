@@ -53,6 +53,9 @@ using std::ostream;
 using std::map;
 using std::shared_ptr;
 
+template <typename T>
+using Bounds = Box<bounds<T>>;
+
 /// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
 void add_random_variable_MH_move(const Model& P, const string& name, const proposal_fn& proposal, int rv, const vector<double>& parameters,
 				 MCMC::MoveAll& M, double weight=1)

@@ -46,7 +46,7 @@ model_slice_function::model_slice_function(Model& m)
     :model_slice_function(m, {})
 {}
 
-model_slice_function::model_slice_function(Model& m, const Bounds<double>& b)
+model_slice_function::model_slice_function(Model& m, const bounds<double>& b)
     :slice_function(b), C0(m), M(m)
 {
     current_fn_value.log() = 0;
@@ -82,7 +82,7 @@ double random_variable_slice_function::current_value() const
     return M.get_modifiable_value(r_mod).as_double();
 }
 
-random_variable_slice_function::random_variable_slice_function(Model& M_, const Bounds<double>& bounds, int rv)
+random_variable_slice_function::random_variable_slice_function(Model& M_, const bounds<double>& bounds, int rv)
     :model_slice_function(M_, bounds)
 {
     if (auto m = M.get_modifiable_reg(rv))
@@ -92,9 +92,9 @@ random_variable_slice_function::random_variable_slice_function(Model& M_, const 
 }
 
 // ******************************* integer random_variable slice function *************************************** //
-Bounds<double> convert_bounds(const Bounds<int>& int_bounds)
+bounds<double> convert_bounds(const bounds<int>& int_bounds)
 {
-    Bounds<double> double_bounds = int_bounds;
+    bounds<double> double_bounds = int_bounds;
 
     return double_bounds;
 }
@@ -110,7 +110,7 @@ double integer_random_variable_slice_function::current_value() const
     return M.get_modifiable_value(r_mod).as_int();
 }
 
-integer_random_variable_slice_function::integer_random_variable_slice_function(Model& M_, const Bounds<int>& bounds, int rv)
+integer_random_variable_slice_function::integer_random_variable_slice_function(Model& M_, const bounds<int>& bounds, int rv)
     :model_slice_function(M_, convert_bounds(bounds))
 {
     if (auto m = M.get_modifiable_reg(rv))
@@ -245,15 +245,15 @@ scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P)
     :model_slice_function(P),
      initial_sum_of_means(sum_of_means(P))
 { 
-    Bounds<double>& b = *this;
+    bounds<double>& b = *this;
 
 #ifndef NDEBUG
-    std::clog<<"Bounds on t are "<<b<<std::endl;
+    std::clog<<"bounds on t are "<<b<<std::endl;
 #endif
 
     for(int i=0; i<P.n_branch_scales(); i++)
     {
-	Bounds<double> b2 = P.get_bounds_for_compute_expression(P.branch_scale_index(i));
+	bounds<double> b2 = P.get_bounds_for_compute_expression(P.branch_scale_index(i));
 
 	if (b2.lower_bound and *b2.lower_bound > 0)
 	    b2.lower_bound = log(*b2.lower_bound) - log(P.branch_scale(i));

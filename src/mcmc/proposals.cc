@@ -385,7 +385,7 @@ Between::Between(double m1, double m2, const proposal_fn& P)
 { }
 
 
-double reflect(const Bounds<double>& b, double x)
+double reflect(const bounds<double>& b, double x)
 {
     return wrap<double>(x,b);
 }
@@ -396,13 +396,13 @@ log_double_t Reflect::operator()(std::vector< expression_ref >& x,const std::vec
     for(int i=0;i<x.size();i++)
     {
 	double X = x[i].as_double();
-	x[i] = reflect(bounds, X );
+	x[i] = reflect(bounds_, X );
     }
     return ratio;
 }
 
-Reflect::Reflect(const Bounds<double>& b, const proposal_fn& P)
-    :bounds(b),
+Reflect::Reflect(const bounds<double>& b, const proposal_fn& P)
+    :bounds_(b),
      proposal(P)
 { }
 
