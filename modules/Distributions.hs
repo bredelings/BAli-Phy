@@ -68,6 +68,23 @@ run_random alpha lazy (Print s) = putStrLn (show s)
 run_random alpha lazy (Lazy r) = run_random alpha True r
 run_random alpha lazy (Strict r) = run_random alpha False r
 
+
+-- Question: why do we need to duplicate things over RandomStructure and Random?
+--           why do we have 5 different versions of Sample?
+--           It seems like if we moved Random and RandomStructure up to the top level this would solve some things.  
+--              But what would that mean?
+--
+-- Isn't Sample a special case of SampleWithInitialValue?
+-- Isn't Random (almost) a special case of RandomStructure, with structure = modifiable?
+--
+-- Maybe we need an RandomIO action to just perform IO actions inside the random monad?  What is normal Haskell terminology for this?
+--
+-- Also, shouldn't the modifiable function actually be in the IO monad, to prevent let x=modifiable 0;y=modifiable 0 from merging x and y?
+
+--
+-- Plan: We can implement lazy interpretation by add a (Strict action) constructor to Random, and modifying (IOAndPass f g) to
+--       do unsafeInterleaveIO if f does not match (Strict f')
+
 run_random' alpha rate lazy (IOAndPass f g) = do
   x <- maybe_lazy lazy $ run_random' alpha rate lazy f
   run_random' alpha rate lazy $ g x
