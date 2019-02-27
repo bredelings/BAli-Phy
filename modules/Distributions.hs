@@ -29,6 +29,7 @@ distRange (ProbDensity _ _ _ r) = r
 data Random a = Random (IO a)
               | RandomStructure a (IO a)
               | Sample (ProbDensity a)
+              | SampleWithInitialValue (ProbDensity a) a
               | Observe (ProbDensity b) b
               | AddMove (Int->a)
               | Print b
@@ -40,6 +41,7 @@ data Random a = Random (IO a)
 
 
 sample dist = Sample dist
+sample_with_initial_value dist value = SampleWithInitialValue dist value
 observe = Observe
 
 log_all loggers = (Nothing,loggers)
@@ -55,6 +57,8 @@ run_random alpha lazy (IOAndPass f g) = do
 run_random alpha lazy (IOReturn v) = return v
 run_random alpha lazy (Sample (ProbDensity _ _ (RandomStructure _ a) _)) = run_random alpha lazy a
 run_random alpha lazy (Sample (ProbDensity _ _ a _)) = run_random alpha lazy a
+run_random alpha lazy (SampleWithInitialValue (ProbDensity _ _ (RandomStructure _ a) _) _) = run_random alpha lazy a
+run_random alpha lazy (SampleWithInitialValue (ProbDensity _ _ a _) _) = run_random alpha lazy a
 run_random alpha lazy GetAlphabet = return alpha
 run_random alpha lazy (SetAlphabet a2 x) = run_random a2 x lazy
 run_random alpha lazy (AddMove m) = return ()
