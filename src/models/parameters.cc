@@ -709,6 +709,27 @@ vector<int> edges_connecting_to_node(const Tree& T, int n)
     return branch_list_;
 }
 
+void tree_constants::register_branch_lengths(Parameters* p, const expression_ref& branch_lengths)
+{
+    int B = parameters_for_tree_branch.size()/2;
+    if (B == 0) return;
+
+    int branch_lengths_index = p->add_compute_expression( branch_lengths );
+    p->evaluate(branch_lengths_index);
+    auto branch_durations = p->get_expression(branch_lengths_index);
+
+    // Create the parameters that hold branch lengths
+    for(int b=0;b<B;b++)
+    {
+	int index = p->add_compute_expression( {var("Prelude.!"), branch_durations, b} );
+	auto R = p->compute_expression_is_modifiable_reg(index);
+
+	branch_duration_index.push_back(index);
+	branch_duration_regs.push_back(R);
+    }
+}
+
+
 tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model_t& branch_length_model)
     :n_leaves(T.n_leaves()),
      node_labels(T.get_labels())
@@ -787,7 +808,6 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
     tree_head = p->add_compute_expression( {tree_con, node_branches_array, branch_nodes_array, T.n_nodes(), T.n_branches()});
     auto tree = p->get_expression(tree_head);
   
-    expression_ref branch_durations;
     if (T.n_branches() > 0)
     {
 	string prefix = "T:lengths";
@@ -797,19 +817,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
 	branch_lengths = {var("Prelude.unsafePerformIO"),branch_lengths};
 	branch_lengths = {var("Parameters.evaluate"),-1,branch_lengths};
 	branch_lengths = {var("Prelude.listArray'"),branch_lengths };
-	int branch_lengths_index = p->add_compute_expression( branch_lengths );
-	p->evaluate(branch_lengths_index);
-	branch_durations = p->get_expression(branch_lengths_index);
-    }
-
-    // Create the parameters that hold branch lengths
-    for(int b=0;b<T.n_branches();b++)
-    {
-	int index = p->add_compute_expression( {var("Prelude.!"), branch_durations, b} );
-	auto R = p->compute_expression_is_modifiable_reg(index);
-
-	branch_duration_index.push_back(index);
-	branch_duration_regs.push_back(R);
+	register_branch_lengths(p, branch_lengths);
     }
 }
 
@@ -1495,12 +1503,20 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	scales.push_back( get_expression(scale_index) );
     }
 
-    vector<expression_ref> branch_lengths;
-
-    int atmodel_index = add_compute_expression({var("BAliPhy.ATModel.ATModel"),get_list(smodels),get_list(imodels),get_list(scales),get_list(branch_lengths)});
-
+    string prefix = "T:lengths";
+    expression_ref branch_lengths = {branch_length_model.expression, my_tree()};
+    branch_lengths = {var("Distributions.gen_model_no_alphabet"), branch_lengths};
+    branch_lengths = {var("Distributions.do_log"), prefix, branch_lengths};
+    branch_lengths = {var("Prelude.unsafePerformIO"),branch_lengths};
+    branch_lengths = {var("Parameters.evaluate"),-1,branch_lengths};
+    branch_lengths = {var("Prelude.listArray'"),branch_lengths };
+    
+    int atmodel_index = add_compute_expression({var("BAliPhy.ATModel.ATModel"),get_list(smodels),get_list(imodels),get_list(scales),branch_lengths});
     expression_ref atmodel = get_expression(atmodel_index);
+
     /* --------------------------------------------------------------- */
+
+    TC->register_branch_lengths(this, {var("BAliPhy.ATModel.branch_lengths"),atmodel});
 
     int scales_list_index = add_compute_expression( {var("BAliPhy.ATModel.scales"),atmodel} );
     expression_ref scales_list = get_expression(scales_list_index);

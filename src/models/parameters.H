@@ -234,6 +234,8 @@ struct tree_constants: public Object
 
     std::vector<std::string> node_labels;
   
+    void register_branch_lengths(Parameters*, const expression_ref&);
+
     tree_constants* clone() const {return new tree_constants(*this);}
 
     tree_constants(Parameters*, const SequenceTree&, const model_t&);
