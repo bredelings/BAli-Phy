@@ -1440,6 +1440,27 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     /* --------------------------------------------------------------- */
     vector<expression_ref> smodels;
 
+    // register the substitution models as sub-models
+    for(int i=0;i<SMs.size();i++)
+    {
+	string prefix = "S" + convertToString(i+1);
+
+	optional<int> first_index;
+	for(int j=0;j<s_mapping.size();j++)
+	    if (s_mapping[j] and *s_mapping[j] == i)
+		first_index = j;
+
+	const alphabet& a = A[*first_index].get_alphabet();
+
+	expression_ref smodel = SMs[i].expression;
+	smodel = {var("Distributions.gen_model_with_alphabet"), a, smodel};
+	smodel = {var("Distributions.do_log"), prefix, smodel};
+	smodel = {var("Prelude.unsafePerformIO"),smodel};
+	smodel = {var("Parameters.evaluate"),-1,smodel};
+	smodels.push_back(smodel);
+    }
+
+    // register the indel models as sub-models
     vector<expression_ref> imodels;
 
     // Add parameter for each scale
@@ -1460,6 +1481,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     vector<expression_ref> branch_lengths;
 
     int atmodel_index = add_compute_expression({var("BAliPhy.ATModel.ATModel"),get_list(smodels),get_list(imodels),get_list(scales),get_list(branch_lengths)});
+
     expression_ref atmodel = get_expression(atmodel_index);
     /* --------------------------------------------------------------- */
 
@@ -1502,20 +1524,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     // register the substitution models as sub-models
     for(int i=0;i<SMs.size();i++) 
     {
-	string prefix = "S" + convertToString(i+1);
-
-	optional<int> first_index;
-	for(int j=0;j<s_mapping.size();j++)
-	    if (s_mapping[j] and *s_mapping[j] == i)
-		first_index = j;
-
-	const alphabet& a = A[*first_index].get_alphabet();
-
-	expression_ref smodel = SMs[i].expression;
-	smodel = {var("Distributions.gen_model_with_alphabet"), a, smodel};
-	smodel = {var("Distributions.do_log"), prefix, smodel};
-	smodel = {var("Prelude.unsafePerformIO"),smodel};
-	smodel = {var("Parameters.evaluate"),-1,smodel};
+	expression_ref smodel = {var("Data.List.!!"),{var("BAliPhy.ATModel.smodels"),atmodel},i};
 
 	PC->SModels.push_back( smodel_methods( smodel, *this) );
     }
