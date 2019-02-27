@@ -82,6 +82,13 @@ run_random' alpha rate lazy (Sample dist@(ProbDensity _ _ (RandomStructure struc
   value <- run_random alpha lazy do_sample
   let x = structure value
   return (random_variable x (density dist x) range rate)
+run_random' alpha rate lazy (SampleWithInitialValue dist@(ProbDensity _  _ (Random do_sample) range) initial_value) = maybe_lazy lazy $ do
+  let x = modifiable initial_value
+  return (random_variable x (density dist x) range rate)
+run_random' alpha rate lazy (SampleWithInitialValue dist@(ProbDensity _ _ (RandomStructure structure do_sample) range) initial_value) = maybe_lazy lazy $ do
+  -- we need some mcmc moves here, for crp and for trees
+  let x = structure initial_value
+  return (random_variable x (density dist x) range rate)
 run_random' alpha rate lazy (Sample (ProbDensity _ _ s _)) = maybe_lazy lazy $ run_random' alpha rate lazy s
 run_random' alpha rate lazy (Observe dist datum) = sequence_ [register_likelihood term | term <- densities dist datum]
 run_random' alpha rate lazy (AddMove m) = register_transition_kernel m
