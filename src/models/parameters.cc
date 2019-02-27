@@ -1186,7 +1186,7 @@ log_double_t Parameters::prior_alignment() const
 {
     log_double_t Pr = 1;
 
-    for(int i=0;i<n_data_partitions();i++) 
+    for(int i=0;i<n_data_partitions();i++)
 	Pr *= get_data_partition(i).prior_alignment();
 
     return Pr;
@@ -1437,6 +1437,13 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     add_modifiable_parameter_with_value("Heat.beta", 1.0);
     variable_alignment_param = add_modifiable_parameter_with_value("*variable_alignment", variable_alignment_);
 
+    /* ---------------- Set up the tree ------------------------------ */
+    branches_from_affected_node.resize(tt.n_nodes());
+
+    TC = new tree_constants(this, tt, branch_length_model);
+
+    t().read_tree(tt);
+
     /* --------------------------------------------------------------- */
     vector<expression_ref> smodels;
 
@@ -1462,6 +1469,16 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     // register the indel models as sub-models
     vector<expression_ref> imodels;
+    for(int i=0;i<n_imodels();i++)
+    {
+	string prefix = "I" + convertToString(i+1);
+	expression_ref imodel = IMs[i].expression;
+	imodel = {var("Distributions.gen_model_no_alphabet"), imodel};
+	imodel = {var("Distributions.do_log"), prefix, imodel};
+	imodel = {var("Prelude.unsafePerformIO"),imodel};
+	imodel = {var("Parameters.evaluate"),-1,imodel};
+	imodels.push_back({imodel,my_tree()});
+    }
 
     // Add parameter for each scale
     vector<expression_ref> scales;
@@ -1492,12 +1509,6 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     for(int i=0; i<n_branch_scales();i++)
 	PC->scale_parameter_indices[i] = add_compute_expression( {var("Data.List.!!"),scales_list,i} );
 
-    branches_from_affected_node.resize(tt.n_nodes());
-
-    TC = new tree_constants(this, tt, branch_length_model);
-  
-    t().read_tree(tt);
-
     subst_root_index = add_modifiable_parameter_with_value("*subst_root", t().n_nodes()-1);
 
 #ifndef NDEBUG
@@ -1522,31 +1533,17 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 #endif
 
     // register the substitution models as sub-models
-    for(int i=0;i<SMs.size();i++) 
+    for(int i=0;i<SMs.size();i++)
     {
 	expression_ref smodel = {var("Data.List.!!"),{var("BAliPhy.ATModel.smodels"),atmodel},i};
 
 	PC->SModels.push_back( smodel_methods( smodel, *this) );
     }
 
-    // register the indel models as sub-models
-    vector<expression_ref> imodels_;
-    for(int i=0;i<n_imodels();i++) 
-    {
-	string prefix = "I" + convertToString(i+1);
-	expression_ref imodel = IMs[i].expression;
-	imodel = {var("Distributions.gen_model_no_alphabet"), imodel};
-	imodel = {var("Distributions.do_log"), prefix, imodel};
-	imodel = {var("Prelude.unsafePerformIO"),imodel};
-	imodel = {var("Parameters.evaluate"),-1,imodel};
-	imodels_.push_back({imodel,my_tree()});
-    }
-
+    // Register an array of indel models
     add_modifiable_parameter_with_value("*IModels.training", false);
-
-    PC->imodels_index = add_compute_expression({var("Prelude.listArray'"), get_list(imodels_)});
+    PC->imodels_index = add_compute_expression({var("Prelude.listArray'"), {var("BAliPhy.ATModel.imodels"),atmodel}});
   
-    /*------------------------- Add commands to log all parameters created before this point. ------------------------*/
     // don't constrain any branch lengths
     for(int b=0;b<PC->TC.n_branches();b++)
 	PC->TC.branch(b).set_length(-1);
