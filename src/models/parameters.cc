@@ -1428,7 +1428,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
      updown(-1)
 {
     // \todo FIXME:cleanup|fragile - Don't touch C here directly!
-    *this += { "SModel","Distributions","Range","PopGen","Alignment","IModel" };
+    *this += { "SModel","Distributions","Range","PopGen","Alignment","IModel","BAliPhy.ATModel" };
   
     // Don't call set_parameter_value here, because recalc( ) depends on branch_length_indices, which is not ready.
 
@@ -1436,6 +1436,11 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     add_modifiable_parameter_with_value("Heat.beta", 1.0);
     variable_alignment_param = add_modifiable_parameter_with_value("*variable_alignment", variable_alignment_);
+
+    /* --------------------------------------------------------------- */
+    vector<expression_ref> smodels;
+
+    vector<expression_ref> imodels;
 
     // Add parameter for each scale
     vector<expression_ref> scales;
@@ -1451,7 +1456,14 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	int scale_index = add_compute_expression( scale_model );
 	scales.push_back( get_expression(scale_index) );
     }
-    int scales_list_index = add_compute_expression( get_list(scales) );
+
+    vector<expression_ref> branch_lengths;
+
+    int atmodel_index = add_compute_expression({var("BAliPhy.ATModel.ATModel"),get_list(smodels),get_list(imodels),get_list(scales),get_list(branch_lengths)});
+    expression_ref atmodel = get_expression(atmodel_index);
+    /* --------------------------------------------------------------- */
+
+    int scales_list_index = add_compute_expression( {var("BAliPhy.ATModel.scales"),atmodel} );
     expression_ref scales_list = get_expression(scales_list_index);
     add_parameter("Scale", scales_list);
 

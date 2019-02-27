@@ -982,6 +982,8 @@ vector<string> haskell_name_path(const std::string& s)
 	path.push_back(m[1]);
 	rest = m.suffix().str();
     }
+    // FIXME if the rest looks like (for example) BAli-Phy.name, but not if it looks like (for example) .|.
+    // FIXME move splitting paths into components into the lexer.  That is, split there and store them already split.
     path.push_back(rest);
     return path;
 }
