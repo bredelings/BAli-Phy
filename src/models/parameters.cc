@@ -1446,13 +1446,16 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	scales.push_back( get_expression(scale_index) );
     }
 
-    string prefix = "T:lengths";
+
     expression_ref branch_lengths = {branch_length_model.expression, my_tree()};
-    branch_lengths = {var("Distributions.gen_model_no_alphabet"), branch_lengths};
-    branch_lengths = {var("Distributions.do_log"), prefix, branch_lengths};
-    branch_lengths = {var("Prelude.unsafePerformIO"),branch_lengths};
-    branch_lengths = {var("Parameters.evaluate"),-1,branch_lengths};
-    branch_lengths = {var("Prelude.listArray'"),branch_lengths };
+    {
+	string prefix = "T:lengths";
+
+	branch_lengths = {var("Distributions.gen_model_no_alphabet"), branch_lengths};
+	branch_lengths = {var("Distributions.do_log"), prefix, branch_lengths};
+	branch_lengths = {var("Prelude.unsafePerformIO"),branch_lengths};
+	branch_lengths = {var("Parameters.evaluate"),-1,branch_lengths};
+    }
     
     int atmodel_index = add_compute_expression({var("BAliPhy.ATModel.ATModel"),get_list(smodels),get_list(imodels),get_list(scales),branch_lengths});
     expression_ref atmodel = get_expression(atmodel_index);
@@ -1460,7 +1463,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     /* --------------------------------------------------------------- */
 
     // R1. Register branch lengths
-    TC->register_branch_lengths(this, {var("BAliPhy.ATModel.branch_lengths"),atmodel});
+    TC->register_branch_lengths(this, {var("Prelude.listArray'"),{var("BAliPhy.ATModel.branch_lengths"),atmodel}});
 
     int scales_list_index = add_compute_expression( {var("BAliPhy.ATModel.scales"),atmodel} );
     expression_ref scales_list = get_expression(scales_list_index);
