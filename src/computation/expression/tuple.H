@@ -8,6 +8,9 @@ std::string tuple_name(int n);
 bool is_tuple_name(const std::string&);
 constructor tuple_head(int n);
 
+extern expression_ref fst;
+extern expression_ref snd;
+
 // Create a constructor for n-tuples.
 expression_ref Tuple(int n);
 

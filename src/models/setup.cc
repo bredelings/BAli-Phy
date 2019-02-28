@@ -108,8 +108,6 @@ using std::valarray;
 using std::shared_ptr;
 using boost::program_options::variables_map;
 
-expression_ref fst  = var("Data.Tuple.fst");
-expression_ref snd  = var("Data.Tuple.snd");
 expression_ref bind = var("Compiler.Base.>>=");
 expression_ref do_return = var("Compiler.Base.return");
 
