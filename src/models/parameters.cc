@@ -60,58 +60,7 @@ using std::optional;
 /*
  * DONE:
  *
- * 1. [DONE] Allow defining constructors in files.
- * 2. [DONE] Convert strings to [Char]
- * 3. [DONE] Update probability functions to separate the family from the probability object.
- *    3a. [DONE] Construct the ExpOf transform to make logNormal, logGamma, etc.
- *    3b. [DONE] Choose kernels based on the range, not based on the distribution name.
- * 4. [DONE] Convert Defs to use the machine.
- * 5. [DONE] SYNTAX: replace a ~ b ( c ) with a ~ b
- * 6. [DONE] SYNTAX: external a ~ b [To not declare all parameters]
- *      6a. [DONE] SYNTAX: data a ~ b [Don't treat a as a parameter at all!]
- * 7. [DONE] Allow defs in BUGS files.
- * 8. [DONE] Rationalize C++ operations on expression_ref and formula_expression_ref
- *    - [DONE] Eliminate C++ operators on formula_expression_ref -> use parser instead.
- *    - [DONE] Eliminate C++ operators on expression_ref -> use parser instead.
- *    - [DONE] Make (f,g) only create an apply expression, but NOT substitute.
- *    - [DONE] Make f+g simply append g to f->sub.
- *    - [DONE] Make f*g substitute into f.
- * 9. [DONE] Convert all of distribution-operations.H to the parser.
- * 10. [DONE] Remove arity argument to def_function.
- * 11. [DONE] Process imports
- *     + [DONE] 11a. Process mutually dependent modules.
- *     + [DONE] 11b. Note that clashing declarations are allowed if the symbol is unreferenced!
- * 12. [DONE] Add function to clean up fully resolved symbols to make things look nicer.
- * 13. [DONE] Replace recalc indices with trigers.
- * 14. [DONE] Allow the creation, destruction, initialization, ranges, and MCMC of unnamed parameters.
- * 15. [DONE] Allow printing ints w/o decimal points.
- *
- * 16. [DONE] Make a model-creation monad.
- * 17. [DONE] Eliminate formula_expression_ref.
- * 18. [DONE] Eliminate all notes.
- * 19. [DONE] Add Lexer => allows comments.
- * 20. [DONE] Eliminate module renaming.
- * 21. [DONE] Allow distributions on structures with variable components.
- * 22. [DONE] Name pieces of structures intelligently -- e.g. piA instead of pi!!0
- * 23. [DONE] Allow model files to create models where dimension of parameter depeonds on argument to model.
- * 24. [DONE] Allow creation of parameters in their own namespace.
- * 25. [DONE] Compute the entire probability expression at once, instead of adding pieces incrementally.
- * 26. [DONE] Move the Program from Context to reg_heap.
- * 27. [DONE] Allow adding transition kernels from haskell
- * 28. [DONE] specifying the sampling rate from haskell
- *
- * 29. [DONE] Efficiently recalculate the probability when only a few densities change.
- *            This will allow us to avoid maintaining a Markov blanket.
- * 30. [DONE] Add ability to specify the prior on variables.
- * 31. [DONE] Eliminate the need for re-evaluate in the substitution likelihood.
- * 32. [DONE] Remove sequence data from the alignment!
- * 33. [DONE] Clean up intermediate representations such as let, case, etc..
- * 34. [DONE] Allow generating an alignment (sparse or dense) only when we need it.
- *
- * 
- */
-
-/* \todo: List of things to do to clean up programs.
+ * \todo: List of things to do to clean up programs.
  *
  * See list in models/parameters.C 
  *
@@ -121,14 +70,7 @@ using std::optional;
  *    - Cast to single precision, and then only recompute when that changes.
  * 3. Rewrite multi-case code to take patterns in terms of expression_ref's that might be seen from the parser.
  *     + Allows moving towards 16 incrementally.
- * 4. Handle 'where' clauses (e.g. in "alt")
- * 5. Handle guards clauses (e.g. in gdrhs, and gdpat)
- *     + Guards *can* fail in a way that makes the rule fail and move to the next rule.
- *     5b. Handle as-patterns.
- *        case v of x@pat -> body => case v of pat -> (\x->body) v
- *     5c. Handle irrefutable patterns that use ~.
- *        case v of ~h:t -> body
- *     5d. What does it mean (if its true) that irrefutable bindings are only irrefutable at the top level?
+ *
  * 6. Make Context load an entire program, instead of adding pieces incrementally.
  *
  * 7. Optimizations
@@ -642,7 +584,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	for(int n=0;n<sequence_length_pr_indices.size();n++)
 	{
 	    expression_ref l = p->get_expression(sequence_length_indices[n]);
-	    expression_ref lengthp = {var("Data.Tuple.snd"),model};
+	    expression_ref lengthp = {snd,model};
 	    sequence_length_pr_indices[n] = p->add_compute_expression( {lengthp,l} );
 	}
 
