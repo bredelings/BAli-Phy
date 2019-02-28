@@ -1,5 +1,6 @@
 #include "tuple.H"
 #include "lambda.H"
+#include "var.H"
 
 using std::vector;
 using std::string;
@@ -54,3 +55,5 @@ expression_ref Tuple(int n)
     return lambda_expression( tuple_head(n) );
 }
 
+expression_ref fst  = var("Data.Tuple.fst");
+expression_ref snd  = var("Data.Tuple.snd");
