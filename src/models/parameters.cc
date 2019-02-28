@@ -1516,15 +1516,20 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     /* --------------------------------------------------------------- */
 
+    // R1. Register branch lengths
     TC->register_branch_lengths(this, {var("BAliPhy.ATModel.branch_lengths"),atmodel});
 
     int scales_list_index = add_compute_expression( {var("BAliPhy.ATModel.scales"),atmodel} );
     expression_ref scales_list = get_expression(scales_list_index);
-    add_parameter("Scale", scales_list);
 
+    // L1. Log scales as list Scale
+    add_parameter("Scale", scales_list); // Log the scales as a list.
+
+    // R2. Register individual scales
     for(int i=0; i<n_branch_scales();i++)
 	PC->scale_parameter_indices[i] = add_compute_expression( {var("Data.List.!!"),scales_list,i} );
 
+    // P1. Add substitution root node
     subst_root_index = add_modifiable_parameter_with_value("*subst_root", t().n_nodes()-1);
 
 #ifndef NDEBUG
@@ -1548,7 +1553,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     }
 #endif
 
-    // register the substitution models as sub-models
+    // R3. Register methods for each of the individual substitution models
     for(int i=0;i<SMs.size();i++)
     {
 	expression_ref smodel = {var("Data.List.!!"),{var("BAliPhy.ATModel.smodels"),atmodel},i};
@@ -1556,15 +1561,17 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	PC->SModels.push_back( smodel_methods( smodel, *this) );
     }
 
-    // Register an array of indel models
+    // P2. Add training parameter
     add_modifiable_parameter_with_value("*IModels.training", false);
+
+    // R4. Register an array of indel models
     PC->imodels_index = add_compute_expression({var("Prelude.listArray'"), {var("BAliPhy.ATModel.imodels"),atmodel}});
   
     // don't constrain any branch lengths
     for(int b=0;b<PC->TC.n_branches();b++)
 	PC->TC.branch(b).set_length(-1);
 
-    // Add and initialize variables for branch *lengths*: scale<s>.D<b>
+    // R5. Register D[b,s] = T[b]*scale[s]
     for(int s=0;s<n_branch_scales();s++)
     {
 	expression_ref scale = get_expression(branch_scale_index(s));
@@ -1577,7 +1584,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	}
     }
 
-    // Add and initialize variables for branch *categories*: branch_cat<b>
+    // R6. Register branch categories
     vector<expression_ref> branch_categories;
     for(int b=0;b<t().n_branches();b++)
     {
@@ -1587,6 +1594,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     }
     expression_ref branch_cat_list = get_expression( add_compute_expression( (get_list(branch_categories) ) ) );
 
+    // R7. Register array of arrays to lookup D[s][b]
     expression_ref substitutionBranchLengthsList;
     {
 	vector<expression_ref> SBLL;
@@ -1602,7 +1610,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     PC->substitution_branch_lengths_index = add_compute_expression({var("Prelude.listArray'"),{var("Prelude.fmap"),var("Prelude.listArray'"),substitutionBranchLengthsList}});
 
-    // register the cached transition_p indices
+    // R8. register the cached transition_p indices
     PC->branch_transition_p_indices.resize(n_branch_scales(), n_smodels());
     for(int s=0;s < n_branch_scales(); s++)
     {
