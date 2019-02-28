@@ -1410,7 +1410,8 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	const alphabet& a = A[*first_index].get_alphabet();
 
 	expression_ref smodel = SMs[i].expression;
-	smodel = {var("Distributions.gen_model_with_alphabet"), a, smodel};
+	smodel = {var("Distributions.set_alphabet'"), a, smodel};
+	smodel = {var("Distributions.gen_model_no_alphabet"), smodel};
 	smodel = {var("Distributions.do_log"), prefix, smodel};
 	smodel = {var("Prelude.unsafePerformIO"),smodel};
 	smodel = {var("Parameters.evaluate"),-1,smodel};

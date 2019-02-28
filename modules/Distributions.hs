@@ -119,8 +119,8 @@ run_random' alpha rate lazy (Strict r) = run_random' alpha rate False r
 
 set_alphabet a x = do (a',_) <- a
                       SetAlphabet a' x
-                                                 
-gen_model_with_alphabet a m = run_random' a 1.0 False m
+
+set_alphabet' = SetAlphabet
 
 gen_model_no_alphabet m = gen_model_with_alphabet (error "No default alphabet!") m
 
