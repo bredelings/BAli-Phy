@@ -1480,7 +1480,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     // Therefore, we are constructing a list with values [(prefix1,(Just value1, loggers1)), (prefix1, (Just value1, loggers2))
 
     // register the substitution models as sub-models
-    vector<expression_ref> smodels_list;
+    vector<expression_ref> smodels;
     for(int i=0;i<SMs.size();i++)
     {
 	string prefix = "S" + convertToString(i+1);
@@ -1496,32 +1496,34 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	smodel = {var("Distributions.set_alphabet'"), a, smodel};
 
 	auto smodel_var = program.bind_and_log_model(prefix , smodel, program_loggers);
-	smodels_list.push_back(smodel_var);
+	smodels.push_back(smodel_var);
     }
 
 
     // register the indel models as sub-models
-    vector<expression_ref> imodels_list;
+    vector<expression_ref> imodels;
     for(int i=0;i<n_imodels();i++)
     {
 	string prefix = "I" + convertToString(i+1);
 	expression_ref imodel = IMs[i].expression;
 	auto imodel_var = program.bind_and_log_model(prefix, imodel, program_loggers);
 
-	imodels_list.push_back({imodel_var,my_tree()});
+	imodels.push_back({imodel_var,my_tree()});
     }
 
     // Add parameter for each scale
-    vector<expression_ref> scales_list_;
+    vector<expression_ref> scales;
     for(int i=0; i<n_branch_scales(); i++)
     {
+	// FIXME: Ideally we would actually join these models together using a Cons operation and prefix.
+	//        This would obviate the need to create a Scale1 (etc) prefix here.
 	string prefix = "Scale"+convertToString(i+1);
 
 	auto scale_model = scaleMs[i].expression;
 	auto scale_var = program.bind_and_log_model(prefix , scale_model, program_loggers, false);
-	scales_list_.push_back(scale_var);
+	scales.push_back(scale_var);
     }
-    program_loggers.push_back( logger("Scale", get_list(scales_list_), List()) );
+    program_loggers.push_back( logger("Scale", get_list(scales), List()) );
 
 
     expression_ref branch_lengths_list;
@@ -1535,7 +1537,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     // We haven't done the observe's yet, though.
     expression_ref program_exp = program.finish_return(
 	Tuple(
-	    {var("BAliPhy.ATModel.ATModel"),get_list(smodels_list),get_list(imodels_list),get_list(scales_list_),branch_lengths_list},
+	    {var("BAliPhy.ATModel.ATModel"),get_list(smodels),get_list(imodels),get_list(scales),branch_lengths_list},
 	    get_list(program_loggers))
 	);
     
