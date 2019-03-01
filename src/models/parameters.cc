@@ -442,7 +442,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     string prefix = "P"+convertToString(i+1)+".";
     string invisible_prefix = "*"+prefix;
 
-    // Create pairwise alignment parameters.
+    // P1. Create pairwise alignment parameters.
     for(int b=0;b<pairwise_alignment_for_branch.size();b++)
     {
 	int n1 = t.source(b);
@@ -465,14 +465,12 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     int smodel_index = *p->smodel_index_for_partition(i);
     auto imodel_index = p->imodel_index_for_partition(i);
 
-    // Add method indices for calculating transition matrices.
+    // R1. Add method indices for calculating transition matrices.
     auto transition_ps = p->get_expression(p->PC->branch_transition_p_indices(scale_index, smodel_index));
-    {
-	for(int b=0;b<B;b++)
-	    transition_p_method_indices[b] = p->add_compute_expression( {var("Prelude.!"), transition_ps, b} );
-    }
+    for(int b=0;b<B;b++)
+	transition_p_method_indices[b] = p->add_compute_expression( {var("Prelude.!"), transition_ps, b} );
 
-    // Add expressions for leaf sequences
+    // R2. Register array of leaf sequences
     for(int i=0; i<leaf_sequence_indices.size(); i++)
 	leaf_sequence_indices[i] = p->add_compute_expression(EVector(sequences[i]));
 
@@ -484,7 +482,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     }
     auto seqs_array = p->get_expression( p->add_compute_expression({var("Prelude.listArray'"),get_list(seqs_)}) );
 
-    // Add array of pairwise alignments
+    // R3. Register array of pairwise alignments
     EVector as_;
     for(int b=0;b<2*B;b++)
     {
@@ -493,7 +491,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     }
     expression_ref as = p->get_expression( p->add_compute_expression({var("Prelude.listArray'"),get_list(as_)}) );
 
-    // Precompute sequence lengths
+    // R4. Register sequence length methods
     for(int n=0;n<t.n_nodes();n++)
     {
 	expression_ref L = {var("Alignment.seqlength"), as, p->my_tree(), n};
@@ -508,12 +506,14 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     }
     else if (likelihood_calculator == 0)
     {
+	// R5. Register counts array
 	vector<vector<int>> seq_counts = alignment_letters_counts(AA, t.n_leaves(), counts);
 	EVector counts_;
 	for(int i=0; i<leaf_sequence_indices.size(); i++)
 	    counts_.push_back( EVector(seq_counts[i]) );
 	auto counts_array = p->get_expression( p->add_compute_expression({var("Prelude.listArray'"),get_list(counts_)}) );
 
+	// R6. Register conditional likelihoods
 	auto t = p->my_tree();
 	auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
 	cl_index = p->add_compute_expression({var("SModel.Likelihood.cached_conditional_likelihoods"),t,seqs_array,counts_array,as,*a,transition_ps,f});  // Create and set conditional likelihoods for each branch
