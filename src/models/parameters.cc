@@ -1363,6 +1363,12 @@ The main problems with this approach are:
   + alternatively, we could do a sample_with_initial_value.
  */
 
+expression_ref logger(const string& prefix, const expression_ref& x, const expression_ref& x_loggers, bool do_log = true)
+{
+    auto maybe_x = do_log ? expression_ref({ var("Data.Maybe.Just"), x }) : expression_ref(var("Data.Maybe.Nothing"));
+    return Tuple( prefix, Tuple( maybe_x, x_loggers) );
+}
+
 class do_block
 {
     std::function<expression_ref(const expression_ref&)> code = [](const expression_ref& E) {return E;};
@@ -1425,10 +1431,10 @@ public:
 	return {x,loggers};
     }
 
-    expression_ref bind_and_log_model(const string& prefix, const expression_ref& model, vector<expression_ref>& loggers)
+    expression_ref bind_and_log_model(const string& prefix, const expression_ref& model, vector<expression_ref>& loggers, bool do_log = true)
     {
 	auto [x, x_loggers] = bind_model(prefix,model);
-	loggers.push_back( Tuple( prefix, Tuple( { var("Data.Maybe.Just"), x }, x_loggers) ) );
+	loggers.push_back( logger(prefix, x, x_loggers, do_log) );
 	return x;
     }
 };
@@ -1526,7 +1532,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	string prefix = "Scale"+convertToString(i+1);
 
 	auto scale_model = scaleMs[i].expression;
-	auto scale_var = program.bind_and_log_model(prefix , scale_model, program_loggers);
+	auto scale_var = program.bind_and_log_model(prefix , scale_model, program_loggers, false);
 	scales_list_.push_back(scale_var);
 
 	scale_model = {var("Distributions.gen_model_no_alphabet"), scale_model};
@@ -1536,6 +1542,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	int scale_index = add_compute_expression( scale_model );
 	scales.push_back( get_expression(scale_index) );
     }
+    program_loggers.push_back( logger("Scale", get_list(scales_list_), List()) );
 
 
     expression_ref branch_lengths = {branch_length_model.expression, my_tree()};
@@ -1558,11 +1565,11 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	    get_list(program_loggers))
 	);
     
-    int atmodel_index = add_compute_expression({var("BAliPhy.ATModel.ATModel"),get_list(smodels),get_list(imodels),get_list(scales),branch_lengths});
     program_exp = {var("Distributions.gen_model_no_alphabet"), program_exp};
     program_exp = {var("Distributions.do_log"), "top", program_exp};
     program_exp = {var("Prelude.unsafePerformIO"),program_exp};
     program_exp = {var("Parameters.evaluate"),-1,program_exp};
+    int atmodel_index = add_compute_expression(program_exp);
     expression_ref atmodel = get_expression(atmodel_index);
 
     /* --------------------------------------------------------------- */
@@ -1572,9 +1579,6 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     int scales_list_index = add_compute_expression( {var("BAliPhy.ATModel.scales"),atmodel} );
     expression_ref scales_list = get_expression(scales_list_index);
-
-    // L1. Log scales as list Scale
-    add_parameter("Scale", scales_list); // Log the scales as a list.
 
     // R2. Register individual scales
     for(int i=0; i<n_branch_scales();i++)
