@@ -1509,23 +1509,25 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	string prefix = "I" + convertToString(i+1);
 	expression_ref imodel = IMs[i].expression;
 	auto imodel_var = program.bind_and_log_model(prefix, imodel, program_loggers);
-	imodels_list.push_back(imodel_var);
 
 	imodel = {var("Distributions.gen_model_no_alphabet"), imodel};
 	imodel = {var("Distributions.do_log"), prefix, imodel};
 	imodel = {var("Prelude.unsafePerformIO"),imodel};
 	imodel = {var("Parameters.evaluate"),-1,imodel};
 	imodels.push_back({imodel,my_tree()});
+	imodels_list.push_back({imodel_var,my_tree()});
     }
 
     // Add parameter for each scale
     vector<expression_ref> scales;
+    vector<expression_ref> scales_list_;
     for(int i=0; i<n_branch_scales(); i++)
     {
 	string prefix = "Scale"+convertToString(i+1);
 
 	auto scale_model = scaleMs[i].expression;
-	program.bind_model(prefix , scale_model);
+	auto scale_var = program.bind_and_log_model(prefix , scale_model, program_loggers);
+	scales_list_.push_back(scale_var);
 
 	scale_model = {var("Distributions.gen_model_no_alphabet"), scale_model};
 	scale_model = {var("Distributions.do_log"), prefix, scale_model};
@@ -1537,17 +1539,30 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
 
     expression_ref branch_lengths = {branch_length_model.expression, my_tree()};
+    expression_ref branch_lengths_list;
     {
 	string prefix = "T:lengths";
-	program.bind_model(prefix , branch_lengths);
+	auto [x,loggers] = program.bind_model(prefix , branch_lengths);
+	branch_lengths_list = x;
 
 	branch_lengths = {var("Distributions.gen_model_no_alphabet"), branch_lengths};
 	branch_lengths = {var("Distributions.do_log"), prefix, branch_lengths};
 	branch_lengths = {var("Prelude.unsafePerformIO"),branch_lengths};
 	branch_lengths = {var("Parameters.evaluate"),-1,branch_lengths};
     }
+
+    // We haven't done the observe's yet, though.
+    expression_ref program_exp = program.finish_return(
+	Tuple(
+	    {var("BAliPhy.ATModel.ATModel"),get_list(smodels_list),get_list(imodels_list),get_list(scales_list_),branch_lengths_list},
+	    get_list(program_loggers))
+	);
     
     int atmodel_index = add_compute_expression({var("BAliPhy.ATModel.ATModel"),get_list(smodels),get_list(imodels),get_list(scales),branch_lengths});
+    program_exp = {var("Distributions.gen_model_no_alphabet"), program_exp};
+    program_exp = {var("Distributions.do_log"), "top", program_exp};
+    program_exp = {var("Prelude.unsafePerformIO"),program_exp};
+    program_exp = {var("Parameters.evaluate"),-1,program_exp};
     expression_ref atmodel = get_expression(atmodel_index);
 
     /* --------------------------------------------------------------- */
