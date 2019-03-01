@@ -442,6 +442,11 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     string prefix = "P"+convertToString(i+1)+".";
     string invisible_prefix = "*"+prefix;
 
+    // FIXME: We have to create alignment MODIFIABLES even when the alignment matrix is constant,
+    //        because the alignment depends on the tree!
+    //
+    //        Could we possible make this into a function?  That would simplify things a lot.
+
     // P1. Create pairwise alignment parameters.
     for(int b=0;b<pairwise_alignment_for_branch.size();b++)
     {
