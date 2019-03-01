@@ -460,10 +460,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	pairwise_alignment_for_branch[b] = p->add_modifiable_parameter_with_value(invisible_prefix+"a"+convertToString(b), pi );
     }
 
-    // Create and set conditional likelihoods for each branch
-    for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
-	conditional_likelihoods_for_branch[b] = p->add_modifiable_parameter_with_value(invisible_prefix+"CL"+convertToString(b), 0);
-
     //  const int n_states = state_letters().size();
     int scale_index = *p->scale_index_for_partition(i);
     int smodel_index = *p->smodel_index_for_partition(i);
