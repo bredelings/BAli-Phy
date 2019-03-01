@@ -2,6 +2,7 @@
 //#undef NDEBUG
 //#endif
 #define COMBINE_STEPS
+#include "util/log-level.H"
 #include "graph_register.H"
 #include "error_exception.H"
 #include "computation/expression/expression.H" // is_WHNF( )
@@ -427,7 +428,10 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 	    }
 	    catch (error_exception& e)
 	    {
-		throw;
+		if (log_verbose)
+		    throw_reg_exception(*this, root_token, R, e);
+		else
+		    throw;
 	    }
 	    catch (myexception& e)
 	    {
@@ -495,7 +499,10 @@ void reg_heap::incremental_evaluate_from_call_(int S)
 	}
 	catch (error_exception& e)
 	{
-	    throw;
+	    if (log_verbose)
+		throw_reg_exception(*this, root_token, closure_stack.back(), e);
+	    else
+		throw;
 	}
 	catch (myexception& e)
 	{
