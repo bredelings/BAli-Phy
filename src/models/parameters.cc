@@ -1473,7 +1473,6 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     t().read_tree(tt);
 
     /* --------------------------------------------------------------- */
-    vector<expression_ref> smodels;
     do_block program;
     // ATModel smodels imodels scales branch_lengths
     // Loggers = [(string,(Maybe a,Loggers)]
@@ -1498,17 +1497,10 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
 	auto smodel_var = program.bind_and_log_model(prefix , smodel, program_loggers);
 	smodels_list.push_back(smodel_var);
-
-	smodel = {var("Distributions.gen_model_no_alphabet"), smodel};
-	smodel = {var("Distributions.do_log"), prefix, smodel};
-	smodel = {var("Prelude.unsafePerformIO"),smodel};
-	smodel = {var("Parameters.evaluate"),-1,smodel};
-	smodels.push_back(smodel);
     }
 
 
     // register the indel models as sub-models
-    vector<expression_ref> imodels;
     vector<expression_ref> imodels_list;
     for(int i=0;i<n_imodels();i++)
     {
@@ -1516,16 +1508,10 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	expression_ref imodel = IMs[i].expression;
 	auto imodel_var = program.bind_and_log_model(prefix, imodel, program_loggers);
 
-	imodel = {var("Distributions.gen_model_no_alphabet"), imodel};
-	imodel = {var("Distributions.do_log"), prefix, imodel};
-	imodel = {var("Prelude.unsafePerformIO"),imodel};
-	imodel = {var("Parameters.evaluate"),-1,imodel};
-	imodels.push_back({imodel,my_tree()});
 	imodels_list.push_back({imodel_var,my_tree()});
     }
 
     // Add parameter for each scale
-    vector<expression_ref> scales;
     vector<expression_ref> scales_list_;
     for(int i=0; i<n_branch_scales(); i++)
     {
@@ -1534,28 +1520,16 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	auto scale_model = scaleMs[i].expression;
 	auto scale_var = program.bind_and_log_model(prefix , scale_model, program_loggers, false);
 	scales_list_.push_back(scale_var);
-
-	scale_model = {var("Distributions.gen_model_no_alphabet"), scale_model};
-	scale_model = {var("Distributions.do_log"), prefix, scale_model};
-	scale_model = {var("Prelude.unsafePerformIO"),scale_model};
-	scale_model = {var("Parameters.evaluate"),-1,scale_model};
-	int scale_index = add_compute_expression( scale_model );
-	scales.push_back( get_expression(scale_index) );
     }
     program_loggers.push_back( logger("Scale", get_list(scales_list_), List()) );
 
 
-    expression_ref branch_lengths = {branch_length_model.expression, my_tree()};
     expression_ref branch_lengths_list;
     {
 	string prefix = "T:lengths";
+	expression_ref branch_lengths = {branch_length_model.expression, my_tree()};
 	auto [x,loggers] = program.bind_model(prefix , branch_lengths);
 	branch_lengths_list = x;
-
-	branch_lengths = {var("Distributions.gen_model_no_alphabet"), branch_lengths};
-	branch_lengths = {var("Distributions.do_log"), prefix, branch_lengths};
-	branch_lengths = {var("Prelude.unsafePerformIO"),branch_lengths};
-	branch_lengths = {var("Parameters.evaluate"),-1,branch_lengths};
     }
 
     // We haven't done the observe's yet, though.
