@@ -42,6 +42,7 @@
 #include "computation/expression/tuple.H"
 #include "computation/expression/list.H"
 #include "computation/expression/var.H"
+#include "computation/expression/let.H"
 #include "computation/expression/parameter.H"
 #include "computation/module.H"
 #include "computation/operations.H" // for VectorFromList<>
@@ -50,6 +51,7 @@
 
 using std::vector;
 using std::string;
+using std::pair;
 using std::cerr;
 using std::endl;
 using std::ostream;
@@ -1361,6 +1363,76 @@ The main problems with this approach are:
   + alternatively, we could do a sample_with_initial_value.
  */
 
+class do_block
+{
+    std::function<expression_ref(const expression_ref&)> code = [](const expression_ref& E) {return E;};
+public:
+    expression_ref get_expression() const {return code({});}
+
+    do_block& perform(const expression_ref& E1)
+    {
+	auto new_code = [code=code,E1](const expression_ref& E2) 
+			    {
+				return code({var("Compiler.Base.>>"),E1,E2});
+			    };
+	code = new_code;
+	return *this;
+    }
+
+    do_block& perform(const var& x, const expression_ref& E1)
+    {
+	auto new_code = [code=code,x,E1](const expression_ref& E2) 
+			    {
+				return code({var("Compiler.Base.>>="),E1,lambda_quantify(x,E2)});
+			    };
+	code = new_code;
+	return *this;
+    }
+
+    do_block& let(const CDecls& decls)
+    {
+	auto new_code = [code=code,decls](const expression_ref& E)
+			    {
+				return code(let_expression(decls,E));
+			    };
+	code = new_code;
+	return *this;
+    }
+
+    expression_ref finish(const expression_ref& E1)
+    {
+	auto new_code = [code=code,E1](const expression_ref&)
+			    {
+				return code(E1);
+			    };
+	code = new_code;
+	return get_expression();
+    }
+
+    expression_ref finish_return(const expression_ref& E)
+    {
+	return finish({var("Compiler.Base.return"),E});
+    }
+
+    pair<expression_ref, expression_ref> bind_model(const std::string& prefix, const expression_ref& model)
+    {
+	var pair("pair_arg_" + prefix);
+	var x("arg_" + prefix);
+	var loggers("log_arg_" + prefix);
+	perform(pair,model);               // pair <- smodel
+	let({{x,{fst,pair}},               // let x     = fst pair
+	     {loggers,{snd,pair}}});       //     loggers = snd smodel_pair
+	return {x,loggers};
+    }
+
+    expression_ref bind_and_log_model(const string& prefix, const expression_ref& model, vector<expression_ref>& loggers)
+    {
+	auto [x, x_loggers] = bind_model(prefix,model);
+	loggers.push_back( Tuple( prefix, Tuple( { var("Data.Maybe.Just"), x }, x_loggers) ) );
+	return x;
+    }
+};
+
 Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 		       const vector<alignment>& A, const SequenceTree& tt,
 		       const vector<model_t>& SMs,
@@ -1396,8 +1468,14 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     /* --------------------------------------------------------------- */
     vector<expression_ref> smodels;
+    do_block program;
+    // ATModel smodels imodels scales branch_lengths
+    // Loggers = [(string,(Maybe a,Loggers)]
+    vector<expression_ref> program_loggers;
+    // Therefore, we are constructing a list with values [(prefix1,(Just value1, loggers1)), (prefix1, (Just value1, loggers2))
 
     // register the substitution models as sub-models
+    vector<expression_ref> smodels_list;
     for(int i=0;i<SMs.size();i++)
     {
 	string prefix = "S" + convertToString(i+1);
@@ -1411,6 +1489,10 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
 	expression_ref smodel = SMs[i].expression;
 	smodel = {var("Distributions.set_alphabet'"), a, smodel};
+
+	auto smodel_var = program.bind_and_log_model(prefix , smodel, program_loggers);
+	smodels_list.push_back(smodel_var);
+
 	smodel = {var("Distributions.gen_model_no_alphabet"), smodel};
 	smodel = {var("Distributions.do_log"), prefix, smodel};
 	smodel = {var("Prelude.unsafePerformIO"),smodel};
@@ -1418,12 +1500,17 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	smodels.push_back(smodel);
     }
 
+
     // register the indel models as sub-models
     vector<expression_ref> imodels;
+    vector<expression_ref> imodels_list;
     for(int i=0;i<n_imodels();i++)
     {
 	string prefix = "I" + convertToString(i+1);
 	expression_ref imodel = IMs[i].expression;
+	auto imodel_var = program.bind_and_log_model(prefix, imodel, program_loggers);
+	imodels_list.push_back(imodel_var);
+
 	imodel = {var("Distributions.gen_model_no_alphabet"), imodel};
 	imodel = {var("Distributions.do_log"), prefix, imodel};
 	imodel = {var("Prelude.unsafePerformIO"),imodel};
@@ -1435,9 +1522,11 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     vector<expression_ref> scales;
     for(int i=0; i<n_branch_scales(); i++)
     {
-	string prefix = "Scale["+convertToString(i+1)+"]";
+	string prefix = "Scale"+convertToString(i+1);
 
 	auto scale_model = scaleMs[i].expression;
+	program.bind_model(prefix , scale_model);
+
 	scale_model = {var("Distributions.gen_model_no_alphabet"), scale_model};
 	scale_model = {var("Distributions.do_log"), prefix, scale_model};
 	scale_model = {var("Prelude.unsafePerformIO"),scale_model};
@@ -1450,6 +1539,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     expression_ref branch_lengths = {branch_length_model.expression, my_tree()};
     {
 	string prefix = "T:lengths";
+	program.bind_model(prefix , branch_lengths);
 
 	branch_lengths = {var("Distributions.gen_model_no_alphabet"), branch_lengths};
 	branch_lengths = {var("Distributions.do_log"), prefix, branch_lengths};
