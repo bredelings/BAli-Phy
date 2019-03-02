@@ -384,33 +384,26 @@ void context::show_graph() const
     dot_graph_for_token(*memory(), t);
 }
 
-void context::add_program(const expression_ref& E)
+int context::add_program(const expression_ref& E)
 {
-    if (program_result_head)
-	throw myexception()<<"Trying to set program a second time!";
-
-    auto P = E;
-    P = {var("Distributions.gen_model_no_alphabet"), P};
-    P = {get_expression(perform_io_head), P};
-    P = {var("Distributions.log_to_json"),{var("Data.Tuple.snd"),P}};
-    P = {var("Data.JSON.json_to_string"), P};
-    P = {var("Prelude.listToString"), P};
-
-    program_result_head = add_compute_expression(P);
+    return memory()->add_program(E);
 }
 
 expression_ref context::evaluate_program() const
 {
-    if (not program_result_head)
+    if (not memory()->program_result_head)
 	throw myexception()<<"No program has been set!";
 
-    return recursive_evaluate(*program_result_head);
+    return recursive_evaluate(*memory()->program_result_head);
 }
 
 
 json context::get_logged_parameters() const
 {
-    auto result = evaluate_program().as_<String>();
+    if (not memory()->logging_head)
+	throw myexception()<<"No logging head has been set!";
+
+    auto result = recursive_evaluate(*memory()->logging_head).as_<String>();
 
     return json::parse(result);
 }

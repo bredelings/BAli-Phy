@@ -3,6 +3,8 @@
 #include "util/truncate.H"
 #include "graph_register.H"
 #include "computation/expression/var.H"
+#include "computation/expression/reg_var.H"
+#include "computation/expression/tuple.H"
 #include "computation/expression/random_variable.H"
 #include "computation/expression/modifiable.H"
 #include "computation/operations.H"
@@ -1142,6 +1144,44 @@ void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
     if (keep_identifiers)
 	for(const auto& [name,reg]: identifiers) // no
 	    scan.push_back(reg);
+}
+
+/// Add an expression that may be replaced by its reduced form
+int reg_heap::add_compute_expression(const expression_ref& E)
+{
+    allocate_head(preprocess(E));
+
+    return heads.size() - 1;
+}
+
+// 1. Pass in the program without logging state.
+// 2. Generate the loggers regardless.
+// 3. Return the value, and store it in the program head
+// 4. Register the logging head, but don't return it.
+
+int reg_heap::add_program(const expression_ref& E)
+{
+    if (program_result_head or logging_head)
+	throw myexception()<<"Trying to set program a second time!";
+
+    auto P = E;
+    P = {var("Distributions.gen_model_no_alphabet"), P};
+    P = {var("Distributions.do_log"), P};
+    P = {var("Prelude.unsafePerformIO"), P};
+    P = {var("Parameters.evaluate"), -1, P};
+
+    int program_head = add_compute_expression(P);
+    P = reg_var(heads[program_head]);
+
+    program_result_head = add_compute_expression({fst,P});
+
+    expression_ref L = {var("Distributions.log_to_json"),{snd, P}};
+    L = {var("Data.JSON.json_to_string"), L};
+    L = {var("Prelude.listToString"), L};
+
+    logging_head = add_compute_expression(L);
+
+    return *program_result_head;
 }
 
 int reg_heap::set_head(int index, int R2)

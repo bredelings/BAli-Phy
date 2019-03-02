@@ -197,8 +197,6 @@ public:
 protected:  
     void collect_garbage() const;
 
-    std::optional<int> program_result_head;
-
 public:
 
     void show_graph() const;
@@ -209,7 +207,7 @@ public:
 
     int n_transition_kernels() const;
 
-    void add_program(const expression_ref&);
+    int add_program(const expression_ref&);
 
     expression_ref evaluate_program() const;
 

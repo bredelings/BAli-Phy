@@ -179,6 +179,11 @@ public:
     // the list of expressions that we are interested in evaluating.
     std::vector<int> heads;
 
+    std::optional<int> program_result_head;
+    std::optional<int> logging_head;
+
+    int add_program(const expression_ref& E);
+
     // the list of regs that are currently being evaluated
     std::vector<int> stack;
 
@@ -436,6 +441,7 @@ public:
 
     /// Allocate a reg in context t and put it on the top of the head stack.
     int allocate_head(closure&& C);
+    int add_compute_expression(const expression_ref&);
 
     /// Allocate a reg in context t and put it on the top of the temporary-head stack.
     int push_temp_head();

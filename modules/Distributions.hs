@@ -137,11 +137,6 @@ create_loggers loggers = sequence_ [create_logger name value_and_sub_loggers | (
 do_log model = do
       (value, loggers) <- model
       create_loggers loggers
-      return value
-
-do_log' model = do
-      (value, loggers) <- model
-      create_loggers loggers
       return (value, loggers)
 
 -- Add function to create JSON from logger
