@@ -752,18 +752,6 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
 
     tree_head = p->add_compute_expression( {tree_con, node_branches_array, branch_nodes_array, T.n_nodes(), T.n_branches()});
     auto tree = p->get_expression(tree_head);
-  
-    if (T.n_branches() > 0)
-    {
-        string prefix = "T:lengths";
-        expression_ref branch_lengths = {branch_length_model.expression, tree};
-        branch_lengths = {var("Distributions.gen_model_no_alphabet"), branch_lengths};
-        branch_lengths = {var("Distributions.do_log"), prefix, branch_lengths};
-        branch_lengths = {var("Prelude.unsafePerformIO"),branch_lengths};
-        branch_lengths = {var("Parameters.evaluate"),-1,branch_lengths};
-        branch_lengths = {var("Prelude.listArray'"),branch_lengths };
-        register_branch_lengths(p, branch_lengths);
-    }
 }
 
 bool Parameters::variable_alignment_from_param() const
