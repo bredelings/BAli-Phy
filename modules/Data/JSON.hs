@@ -13,8 +13,11 @@ json_to_string (Bool False) = "false"
 json_to_string (String x) = "\""++x++"\""
 json_to_string (Null) = "null"
 
+is_non_empty_string (c:cs) | is_char c = True
+is_non_empty_string _ = False
 to_json s@(c:_) | is_char c = String s
 to_json []                  = Array []
+to_json o@((key,value):kvs) | is_non_empty_string key = Object [(key,to_json value) | (key, value) <- o]
 to_json l@(_:_)             = Array [to_json x | x <- l]
 to_json x | is_double x     = Number x
           | is_int    x     = Number x
