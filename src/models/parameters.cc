@@ -675,7 +675,7 @@ void tree_constants::register_branch_lengths(Parameters* p, const expression_ref
 }
 
 
-tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model_t& branch_length_model)
+tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
     :n_leaves(T.n_leaves()),
      node_labels(T.get_labels())
 {
@@ -1457,7 +1457,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     /* ---------------- Set up the tree ------------------------------ */
     branches_from_affected_node.resize(tt.n_nodes());
 
-    TC = new tree_constants(this, tt, branch_length_model);
+    TC = new tree_constants(this, tt);
 
     t().read_tree(tt);
 
@@ -1532,7 +1532,8 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     
     int atmodel_index = add_program(program_exp);
     expression_ref atmodel = get_expression(atmodel_index);
-
+    std::cerr<<"result = "<<evaluate_program()<<"\n";
+    std::cerr<<"loggers = "<<get_logged_parameters()<<"\n";
     /* --------------------------------------------------------------- */
 
     // R1. Register branch lengths

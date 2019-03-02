@@ -238,7 +238,7 @@ struct tree_constants: public Object
 
     tree_constants* clone() const {return new tree_constants(*this);}
 
-    tree_constants(Parameters*, const SequenceTree&, const model_t&);
+    tree_constants(Parameters*, const SequenceTree&);
 };
 
 struct parameters_constants: public Object
