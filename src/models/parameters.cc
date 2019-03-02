@@ -1531,7 +1531,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         );
     
     program_exp = {var("Distributions.gen_model_no_alphabet"), program_exp};
-    program_exp = {var("Distributions.do_log"), "top", program_exp};
+    program_exp = {var("Distributions.do_log"), program_exp};
     program_exp = {var("Prelude.unsafePerformIO"),program_exp};
     program_exp = {var("Parameters.evaluate"),-1,program_exp};
     int atmodel_index = add_compute_expression(program_exp);

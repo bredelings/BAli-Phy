@@ -134,10 +134,15 @@ create_logger_with_prefix prefix (name,y) = create_logger (prefix++"/"++name) y
 create_sub_loggers prefix loggers = mapM_ (create_logger_with_prefix prefix) loggers
 create_loggers loggers = sequence_ [create_logger name value_and_sub_loggers | (name, value_and_sub_loggers) <- loggers]
 
-do_log prefix model = do
+do_log model = do
       (value, loggers) <- model
       create_loggers loggers
       return value
+
+do_log' model = do
+      (value, loggers) <- model
+      create_loggers loggers
+      return (value, loggers)
 
 -- Add function to create JSON from logger
 log_to_json_one (name,(Nothing,[])) = []
