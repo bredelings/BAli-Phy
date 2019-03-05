@@ -1,5 +1,5 @@
 <!DOCTYPE book [
-<!ENTITY  version        "3.4"         >
+<!ENTITY  version        "3.4.1"         >
 
 <!ENTITY  source.file    "bali-phy-&version;.tar.gz"         >
 <!ENTITY  linux64.file   "bali-phy-&version;-linux64.tar.gz"         >
@@ -396,7 +396,7 @@ CTGTCCGGTGAGGAGAAGTCTGCGGTCACTGCCCTGTGGGGCAAGGTGAATGTGGAAGAA
 GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
 </programlisting>
 <para>If the sequence-name line contains a space, BAli-Phy treats everything after the space as a comment.</para>
-<para>The sequences in the file do not need to be aligned unless the alignment is being estimated.</para>
+<para>The sequences in the file do not need to be aligned unless you fix the alignment with <userinput>-I none</userinput>.</para>
 <para></para>
 
       
