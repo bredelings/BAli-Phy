@@ -1484,7 +1484,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         expression_ref smodel = SMs[i].expression;
         smodel = {var("Distributions.set_alphabet'"), a, smodel};
 
-        auto smodel_var = program.bind_and_log_model(prefix , smodel, program_loggers);
+        auto smodel_var = program.bind_and_log_model(prefix , smodel, program_loggers, false);
         smodels.push_back(smodel_var);
     }
 
@@ -1495,7 +1495,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     {
         string prefix = "I" + convertToString(i+1);
         expression_ref imodel = IMs[i].expression;
-        auto imodel_var = program.bind_and_log_model(prefix, imodel, program_loggers);
+        auto imodel_var = program.bind_and_log_model(prefix, imodel, program_loggers, false);
 
         imodels.push_back({imodel_var,my_tree()});
     }

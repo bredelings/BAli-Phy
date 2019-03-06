@@ -1,5 +1,7 @@
 module Data.JSON where
 
+builtin c_json 1 "c_json" "Foreign"
+
 -- Hmm... it doesn't look like we can have a JSON object, just JSON representation, because a JSON object would have to have existential type fields.
 data JSON = Array [JSON] | Object [(String,JSON)] | Number a | Bool Bool | String String | Null
 

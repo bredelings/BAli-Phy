@@ -403,9 +403,7 @@ json context::get_logged_parameters() const
     if (not memory()->logging_head)
 	throw myexception()<<"No logging head has been set!";
 
-    auto result = recursive_evaluate(*memory()->logging_head).as_<String>();
-
-    return json::parse(result);
+    return (const json&)recursive_evaluate(*memory()->logging_head).as_<Box<json>>();
 }
 
 context& context::operator+=(const string& module_name)

@@ -1176,8 +1176,7 @@ int reg_heap::add_program(const expression_ref& E)
     program_result_head = add_compute_expression({fst,P});
 
     expression_ref L = {var("Distributions.log_to_json"),{snd, P}};
-    L = {var("Data.JSON.json_to_string"), L};
-    L = {var("Prelude.listToString"), L};
+    L = {var("Data.JSON.c_json"), L};
 
     logging_head = add_compute_expression(L);
 
