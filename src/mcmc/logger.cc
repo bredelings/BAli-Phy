@@ -116,6 +116,18 @@ namespace MCMC {
     using std::ostream;
 
 
+    vector<json> json_to_table_function::operator()(const Model& M, long)
+    {
+	auto values = parameter_values_children( M.get_logged_parameters() );
+
+	// Check the number of fields.
+	if (values.size() != n_fields())
+	    throw myexception()<<"Number of logged fields in "<<values.size()<<" but number of field names is "<<n_fields();
+
+	return values;
+    }
+
+
     vector<string> SortedTableFunction::field_names() const
     {
 	vector<string> names = F->field_names();

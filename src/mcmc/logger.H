@@ -134,6 +134,16 @@ namespace MCMC {
 	virtual ~TableFunction() {};
     };
 
+    class json_to_table_function: public TableFunction<json>
+    {
+	std::vector<std::string> field_names_;
+    public:
+	virtual json_to_table_function* clone() const {return new json_to_table_function(*this);}
+	virtual std::vector<std::string> field_names() const {return field_names_;}
+	virtual std::vector<json> operator()(const Model&,long);
+	json_to_table_function(const std::vector<std::string>& fn):field_names_(fn) {}
+    };
+
     template<typename T>
     class UnitTableFunction: public TableFunction<T>
     {
