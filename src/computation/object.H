@@ -96,6 +96,8 @@ public:
 
     std::string print() const {return Object::print();}
 
+    const T& value() const {return *(const T*)this;}
+
     using T::T;
 
     Box() = default;
