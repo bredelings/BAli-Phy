@@ -115,10 +115,6 @@ namespace MCMC {
     using std::make_shared;
     using std::ostream;
 
-    int SortedTableFunction::n_fields() const
-    {
-	return F->n_fields();
-    }
 
     vector<string> SortedTableFunction::field_names() const
     {

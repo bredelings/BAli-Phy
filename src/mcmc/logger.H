@@ -128,9 +128,9 @@ namespace MCMC {
     {
     public:
 	virtual TableFunction* clone() const =0;
-	virtual int n_fields() const =0;
-	virtual std::vector<T> operator()(const Model&,long)=0;
 	virtual std::vector<std::string> field_names() const =0;
+	virtual int n_fields() const {return field_names().size();}
+	virtual std::vector<T> operator()(const Model&,long)=0;
 	virtual ~TableFunction() {};
     };
 
@@ -164,7 +164,6 @@ namespace MCMC {
     public:
 	SortedTableFunction* clone() const {return new SortedTableFunction(*this);}
 
-	int n_fields() const;
 	std::vector<std::string> field_names() const;
 
 	std::vector<expression_ref> operator()(const Model& M, long t);
@@ -238,8 +237,6 @@ namespace MCMC {
 	owned_ptr<TableFunction<T> > F;
     public:
 	ConvertTableToStringFunction<T>* clone() const {return new ConvertTableToStringFunction<T>(*this);}
-
-	int n_fields() const {return F->n_fields();}
 
 	std::vector<std::string> field_names() const {return F->field_names();}
 
