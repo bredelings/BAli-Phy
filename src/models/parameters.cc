@@ -1532,8 +1532,6 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     
     int atmodel_index = add_program(program_exp);
     expression_ref atmodel = get_expression(atmodel_index);
-    std::cerr<<"result = "<<evaluate_program()<<"\n";
-    std::cerr<<"loggers = "<<get_logged_parameters()<<"\n";
     /* --------------------------------------------------------------- */
 
     // R1. Register branch lengths

@@ -41,6 +41,7 @@
 #include "util/owned-ptr.H"
 #include "computation/object.H"
 #include "util/string/join.H"
+#include "util/json.hh"
 
 struct slice_function;
 
@@ -166,9 +167,9 @@ namespace MCMC {
 	    { }
     };
 
-    class SortedTableFunction: public TableFunction<expression_ref>
+    class SortedTableFunction: public TableFunction<json>
     {
-	owned_ptr<TableFunction<expression_ref> > F;
+	owned_ptr<TableFunction<json> > F;
 	std::vector< std::vector< std::vector< int > > > indices;
 	std::vector<int> sorted_index;
     public:
@@ -176,9 +177,9 @@ namespace MCMC {
 
 	std::vector<std::string> field_names() const;
 
-	std::vector<expression_ref> operator()(const Model& M, long t);
+	std::vector<json> operator()(const Model& M, long t);
 
-	SortedTableFunction(const TableFunction<expression_ref>&, const std::vector< std::vector< std::vector< int> > >& );
+	SortedTableFunction(const TableFunction<json>&, const std::vector< std::vector< std::vector< int> > >& );
     };
 
     template <typename T>
@@ -263,18 +264,6 @@ namespace MCMC {
 
 	ConvertTableToStringFunction(const TableFunction<T>& f):F(f) { }
     };
-
-    template<> 
-    inline std::vector<std::string> ConvertTableToStringFunction<expression_ref>::operator()(const Model& M, long t)
-    {
-	std::vector<expression_ref> values = (*F)(M,t);
-
-	std::vector<std::string> output(values.size());
-	for(int i=0;i<values.size();i++)
-	    output[i] = values[i].print();
-    
-	return output;
-    }
 
     template <typename T>
     class TableLogger

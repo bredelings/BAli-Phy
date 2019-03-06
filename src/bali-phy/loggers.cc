@@ -12,6 +12,7 @@
 #include "models/parse.H"
 #include "util/mapping.H"
 #include "util/string/join.H"
+#include "util/json.hh"
 
 extern int log_verbose;
 
@@ -115,88 +116,93 @@ vector< vector< vector<int> > > get_un_identifiable_indices(const vector<string>
     return indices;
 }
 
-void find_sub_loggers(Model& M, int& index, const string& name, vector<int>& logged_computations, vector<string>& logged_names)
+// We should be able to collapse this to some kind of visitor pattern!
+
+vector<string> parameter_names(const json& children);
+
+vector<string> parameter_names_children(const json& children)
 {
-    assert(index != -1);
-    auto result = M.evaluate(index);
-    if (result.is_double() or result.is_int())
+    vector<string> all_names;
+    for(auto& [key, value]: children.items())
     {
-	logged_computations.push_back(index);
-	logged_names.push_back(name);
-	index = -1;
-	return;
-    }
+	vector<string> names = parameter_names(value);
+	for(auto& name: names)
+	    all_names.push_back(key + "/" + name);
 
-    if (result.head().is_a<constructor>())
-    {
-	auto& c = result.head().as_<constructor>();
-	if (is_bool_true(c) or is_bool_false(c))
+	if (value.find("value") != value.end())
 	{
-	    logged_computations.push_back(index);
-	    logged_names.push_back(name);
-	    index = -1;
-	    return;
-	}
-
-	if (c.f_name == "[]")
-	    return;
-
-	if (c.f_name == ":")
-	{
-	    expression_ref L = M.get_expression(index);
-
-	    expression_ref E = {var("Data.List.length"),L};
-	    int length = M.evaluate_expression(E).as_int();
-
-	    expression_ref E1 = {var("Data.List.head"),L};
-	    expression_ref first_elem = M.evaluate_expression(E1);
-
-	    if (first_elem.head().is_a<constructor>() and first_elem.head().as_<constructor>().f_name == "(,)")
+	    json v = *value.find("value");
+	    if (v.is_array())
 	    {
-		int index2 = -1;
-		for(int i=0;i<length;i++)
-		{
-		    expression_ref x = {var("Data.List.!!"),L,i};
-		    expression_ref x1 = {var("Data.Tuple.fst"),x};
-		    expression_ref x2 = {var("Data.Tuple.snd"),x};
-		    const String field_name = M.evaluate_expression( {var("Prelude.listToString"),x1} ).as_<String>();
-
-		    if (index2 == -1)
-			index2 = M.add_compute_expression(x2);
-		    else
-			M.set_compute_expression(index2, x2);
-
-		    find_sub_loggers(M, index2, name+"["+field_name+"]", logged_computations, logged_names);
-		}
+		// FIXME we are not looking looking into the value for "value" / "children"
+		for(int i=0;i<v.size();i++)
+		    all_names.push_back(key+"["+std::to_string(i+1)+"]");
 	    }
-	    // This is a list of char: a string.
-	    else if (first_elem.is_char())
+	    else if (v.is_object())
 	    {
-		auto str = M.get_expression(index);
-		int index2 = M.add_compute_expression({var("Prelude.listToString"),str});
-		logged_computations.push_back(index2);
-		logged_names.push_back(name);
-		index = -1;
+		// FIXME we are not looking looking into value2 for "value" / "children"
+		for(auto& [key2,value2]: v.items())
+		    all_names.push_back(key+"["+key2+"]");
 	    }
 	    else
-	    {
-		int index2 = -1;
-		for(int i=0;i<length;i++)
-		{
-		    expression_ref E2 = {var("Data.List.!!"),L,i} ;
-		    if (index2 == -1)
-			index2 = M.add_compute_expression(E2);
-		    else
-			M.set_compute_expression(index2, E2);
-
-		    find_sub_loggers(M, index2, name+"["+convertToString(i+1)+"]", logged_computations, logged_names);
-		}
-	    }
+		all_names.push_back(key);
 	}
     }
+    return all_names;
 }
 
-owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>& M, const vector<string>& Rao_Blackwellize)
+vector<string> parameter_names(const json& j)
+{
+    auto children = j.find("children");
+    if (children == j.end())
+	return {};
+    else
+	return parameter_names_children(*children);
+}
+
+vector<json> parameter_values(const json& children);
+
+vector<json> parameter_values_children(const json& children)
+{
+    vector<json> all_values;
+    for(auto& [key, value]: children.items())
+    {
+	vector<json> values = parameter_values(value);
+	for(auto& value: values)
+	    all_values.push_back(std::move(value));
+
+	if (value.find("value") != value.end())
+	{
+	    json v = *value.find("value");
+	    if (v.is_array())
+	    {
+		// FIXME we are not looking looking into the value for "value" / "children"
+		for(int i=0;i<v.size();i++)
+		    all_values.push_back(v[i]);
+	    }
+	    else if (v.is_object())
+	    {
+		// FIXME we are not looking looking into value2 for "value" / "children"
+		for(auto& [key2,value2]: v.items())
+		    all_values.push_back(value2);
+	    }
+	    else
+		all_values.push_back(v);
+	}
+    }
+    return all_values;
+}
+
+vector<json> parameter_values(const json& j)
+{
+    auto children = j.find("children");
+    if (children == j.end())
+	return {};
+    else
+	return parameter_values_children(*children);
+}
+
+owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>& M, const vector<string>&)
 {
     owned_ptr<Parameters> P = M.as<Parameters>();
 
@@ -252,55 +258,17 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
     }
 
     {
-	vector<int> logged_computations;
-	vector<string> logged_names;
-
-	vector<string> names_ = parameter_names(*M);
-	for(auto& name: names_)
+	json log = M->get_logged_parameters();
+	vector<string> names = parameter_names_children(log);
+	for(auto& name: names)
 	    name = translate_structures(name);
-	names_ = short_parameter_names(names_);
-	set<string> names(names_.begin(), names_.end());
+	names = short_parameter_names(names);
 
-	for(int i=0;i<M->n_parameters();i++)
-	{
-	    string name = M->parameter_name(i);
-	    if (name.size() and name[0] == '*' and log_verbose <= 0) continue;
+	json_to_table_function T1(names);
 
-	    int index = M->add_compute_expression(parameter(name));
+	SortedTableFunction T2(T1, get_un_identifiable_indices(names));
 
-	    find_sub_loggers(*M, index, names_[i], logged_computations, logged_names);
-	}
-
-	TableGroupFunction<expression_ref> T1;
-	for(int i=0;i<logged_computations.size();i++)
-	{
-	    int index = logged_computations[i];
-	    string name = logged_names[i];
-	    T1.add_field(name, [index](const Model& M, long) {return get_computation(M,index);} );
-	}
-
-	SortedTableFunction T2(T1, get_un_identifiable_indices(logged_names));
-
-	TL->add_fields( ConvertTableToStringFunction<expression_ref>( T2 ) );
-    }
-
-    vector<string> short_names = short_parameter_names(*M);
-    for(const auto& p: Rao_Blackwellize)
-    {
-	auto p_index = M->maybe_find_parameter(p);
-	if (not p_index)
-	    p_index = find_index(short_names, p);
-
-	if (p_index)
-	{
-	    if (not M->parameter_is_modifiable_reg(*p_index))
-		throw myexception()<<"Can't Rao-Blackwellize parameter '"<<p<<"': not directly modifiable!";
-
-	    vector<expression_ref> values = {0,1};
-	    TL->add_field("RB-"+p, Get_Rao_Blackwellized_Parameter_Function(*p_index, values));
-	}
-	else
-	    throw myexception()<<"No such parameter '"<<p<<"' to Rao-Blackwellize";
+	TL->add_fields( ConvertTableToStringFunction<json>( T2 ) );
     }
 
     return TL;

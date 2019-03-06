@@ -106,6 +106,8 @@ void show_smodels(std::ostream& o, const Parameters& P)
   }
 }
 
+std::vector<json> parameter_values_children(const json& children);
+
 namespace MCMC {
     using std::vector;
     using std::valarray;
@@ -148,15 +150,15 @@ namespace MCMC {
 /// Parameter values indexed by indices[i] are sorted so that the parameter values indexed
 /// by indices[0] are in increasing order.
 ///
-    vector<expression_ref> make_identifiable(const vector<expression_ref>& v,const vector< vector<int> >& indices)
+    vector<json> make_identifiable(const vector<json>& v,const vector< vector<int> >& indices)
     {
 	assert(indices.size());
 	int N = indices[0].size();
 
-	vector<expression_ref> v_sub = select(v,indices[0]);
+	auto v_sub = select(v,indices[0]);
 
 	vector<int> O = view::ints(0,N);
-	ranges::sort(O, {}, [&](int i) { return v_sub[i].as_double();});
+	ranges::sort(O, {}, [&](int i) { return (double)v_sub[i];});
 
 	vector<int> O_all = view::ints(0, (int)v.size());
 	for(auto& I: indices)
@@ -167,14 +169,14 @@ namespace MCMC {
 		O_all[I[j]] = I[O[j]];
 	    }
 	}
-	vector<expression_ref> v2 = apply_mapping(v,invert(O_all));
+	auto v2 = apply_mapping(v,invert(O_all));
 
 	return v2;
     }
 
-    vector<expression_ref> SortedTableFunction::operator()(const Model& M, long t)
+    vector<json> SortedTableFunction::operator()(const Model& M, long t)
     {
-	vector<expression_ref> v = (*F)(M,t);
+	auto v = (*F)(M,t);
 
 	for(int i=0;i<indices.size();i++)
 	    v = make_identifiable(v, indices[i]);
@@ -182,7 +184,7 @@ namespace MCMC {
 	return v;
     }
 
-    SortedTableFunction::SortedTableFunction(const TableFunction<expression_ref>& f, const std::vector< std::vector< std::vector< int> > >& i_)
+    SortedTableFunction::SortedTableFunction(const TableFunction<json>& f, const std::vector< std::vector< std::vector< int> > >& i_)
 	:F(f), indices(i_), sorted_index(f.n_fields(),-1)
     { 
 	for(int i=0;i<indices.size();i++)

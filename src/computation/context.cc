@@ -394,7 +394,7 @@ expression_ref context::evaluate_program() const
     if (not memory()->program_result_head)
 	throw myexception()<<"No program has been set!";
 
-    return recursive_evaluate(*memory()->program_result_head);
+    return evaluate(*memory()->program_result_head);
 }
 
 
@@ -403,7 +403,8 @@ json context::get_logged_parameters() const
     if (not memory()->logging_head)
 	throw myexception()<<"No logging head has been set!";
 
-    return (const json&)recursive_evaluate(*memory()->logging_head).as_<Box<json>>();
+    auto L = evaluate(*memory()->logging_head);
+    return L.as_checked<Box<json>>().value();
 }
 
 context& context::operator+=(const string& module_name)
