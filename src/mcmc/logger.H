@@ -242,7 +242,7 @@ namespace MCMC {
 
 	std::vector<std::string> operator()(const Model& M, long t)
 	    {
-		std::vector<T> values = (*F)(M,t);
+		auto values = (*F)(M,t);
 
 		std::vector<std::string> output(values.size());
 		for(int i=0;i<values.size();i++)
