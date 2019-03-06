@@ -127,18 +127,6 @@ gen_model_no_alphabet m = run_random' (error "No default alphabet!") 1.0 False m
 add_logger old name (value,[]) False = old
 add_logger old name (value,loggers) do_log = (name,(if do_log then Just value else Nothing, loggers)):old
 
-create_logger name (Just x,  loggers) = do add_parameter name x
-                                           create_sub_loggers name loggers
-create_logger prefix (Nothing, loggers) = create_sub_loggers prefix loggers
-create_logger_with_prefix prefix (name,y) = create_logger (prefix++"/"++name) y
-create_sub_loggers prefix loggers = mapM_ (create_logger_with_prefix prefix) loggers
-create_loggers loggers = sequence_ [create_logger name value_and_sub_loggers | (name, value_and_sub_loggers) <- loggers]
-
-do_log model = do
-      (value, loggers) <- model
-      create_loggers loggers
-      return (value, loggers)
-
 -- Add function to create JSON from logger
 log_to_json_one (name,(Nothing,[])) = []
 log_to_json_one (name,(Just x,[])) = [(name, J.Object[("value", to_json x)])]

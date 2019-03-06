@@ -1166,7 +1166,6 @@ int reg_heap::add_program(const expression_ref& E)
 
     auto P = E;
     P = {var("Distributions.gen_model_no_alphabet"), P};
-    P = {var("Distributions.do_log"), P};
     P = {var("Prelude.unsafePerformIO"), P};
     P = {var("Parameters.evaluate"), -1, P};
 
