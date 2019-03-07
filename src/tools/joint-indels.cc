@@ -132,7 +132,9 @@ vector<optional<int>> get_nodes_map(const Tree& Q, const Tree& T)
 void extract_sequence(const variables_map& args, const joint_A_T& J)
 {
     auto Q = load_tree_from_file(args["extract-sequences"].as<string>());
-    remap_T_leaf_indices(Q, J.T[0].get_leaf_labels());
+
+    remap_T_leaf_indices(Q, J.leaf_names());
+
     for(int i=0; i<J.size();i++)
     {
 	auto& A = J.A[i];
@@ -141,6 +143,8 @@ void extract_sequence(const variables_map& args, const joint_A_T& J)
 
 	std::cerr<<Q.write(false)<<"\n";
 	std::cerr<<T.write(false)<<"\n";
+	std::cerr<<write_no_names(Q,false)<<"\n";
+	std::cerr<<write_no_names(T,false)<<"\n";
 	for(int q_node=Q.n_leaves(); q_node < Q.n_nodes(); q_node++)
 	{
 	    auto t_node = Q_to_T_nodes[q_node];

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2005 Benjamin Redelings
+  Copyright (C) 2005,2019 Benjamin Redelings
 
   This file is part of BAli-Phy.
 
@@ -29,10 +29,14 @@
 
 
 //--------------------------- Class joint_A_T ----------------------------//
-struct joint_A_T 
+class joint_A_T
 {
+    std::vector<std::string> leaf_names_;
+
+public:
     int size() const {return A.size();}
 
+    const std::vector<std::string>& leaf_names() const;
     std::vector<alignment> A;
     std::vector<SequenceTree> T;
 

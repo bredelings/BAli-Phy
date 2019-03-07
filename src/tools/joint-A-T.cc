@@ -37,7 +37,10 @@ using std::vector;
 using std::string;
 using std::endl;
 
-//--------------------------- Class joint_A_T ----------------------------//
+const std::vector<std::string>& joint_A_T::leaf_names() const
+{
+    return leaf_names_;
+}
 
 joint_A_T::joint_A_T(const vector<alignment>& A1,const vector<SequenceTree>& T1,bool internal)
   :A(A1),T(T1)
@@ -52,7 +55,13 @@ joint_A_T::joint_A_T(const vector<alignment>& A1,const vector<SequenceTree>& T1,
   A.resize(s);
   T.resize(s);
 
-  for(int i=0;i<size();i++) {
+  if (s == 0) return;
+
+  leaf_names_ = T1[0].get_leaf_labels();
+  
+  for(int i=0;i<size();i++)
+  {
+    remap_T_leaf_indices(T[i], leaf_names_);
     link(A[i],T[i],true);
     link(A[i],T[i],internal);
   }
