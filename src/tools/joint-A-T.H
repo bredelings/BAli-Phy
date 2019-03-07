@@ -31,7 +31,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 //--------------------------- Class joint_A_T ----------------------------//
 struct joint_A_T 
 {
-  int size() {return A.size();}
+  int size() const {return A.size();}
 
   std::vector<alignment> A;
   std::vector<SequenceTree> T;
