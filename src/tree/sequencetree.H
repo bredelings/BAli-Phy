@@ -155,4 +155,5 @@ void standardize(SequenceTree& T);
 
 RootedSequenceTree standardized(const std::string& t);
 
+void remap_T_leaf_indices(SequenceTree& T,const std::vector<std::string>& names);
 #endif

@@ -596,3 +596,28 @@ RootedSequenceTree standardized(const string& t)
     return T;
 }
 
+/// \brief Re-index the leaves of tree \a T so that the labels have the same ordering as in \a names.
+///
+/// \param T The leaf-labelled tree.
+/// \param names The ordered leaf labels.
+///
+void remap_T_leaf_indices(SequenceTree& T,const vector<string>& names)
+{
+    assert(names.size() == T.n_leaves());
+    //----- Remap leaf indices for T onto A's leaf sequence indices -----//
+    try {
+	vector<int> mapping = compute_mapping(T.get_leaf_labels(), names);
+
+	T.standardize(mapping);
+    }
+    catch(const bad_mapping<string>& b)
+    {
+	bad_mapping<string> b2 = b;
+	b2.clear();
+	if (b2.from == 0)
+	    b2<<"Couldn't find leaf sequence \""<<b2.missing<<"\" in names.";
+	else
+	    b2<<"Sequence '"<<b2.missing<<"' not found in the tree.";
+	throw b2;
+    }
+}
