@@ -22,6 +22,7 @@
 #include <cmath>
 #include <vector>
 #include "util/myexception.H"
+#include "util/log-level.H"
 #include "alignment/alignment.H"
 
 #include "util/string/split.H"
@@ -143,10 +144,11 @@ void extract_sequence(const variables_map& args, const joint_A_T& J)
 	auto& T = J.T[i];
 	auto Q_to_T_nodes = get_nodes_map(Q,T);
 
-	std::cerr<<Q.write(false)<<"\n";
-	std::cerr<<T.write(false)<<"\n";
-	std::cerr<<write_no_names(Q,false)<<"\n";
-	std::cerr<<write_no_names(T,false)<<"\n";
+	if (log_verbose > 1)
+	{
+	    std::cerr<<Q.write(false)<<"\n";
+	    std::cerr<<T.write(false)<<"\n";
+	}
 	for(int q_node=Q.n_leaves(); q_node < Q.n_nodes(); q_node++)
 	{
 	    auto t_node = Q_to_T_nodes[q_node];
@@ -158,7 +160,8 @@ void extract_sequence(const variables_map& args, const joint_A_T& J)
 	    node_counts[q_node]++;
 
 	    string t_node_name = T.get_label(*t_node);
-	    std::cerr<<"Mapped "<<q_node_name<<" -> "<<t_node_name<<"\n";
+	    if (log_verbose > 0)
+		std::cerr<<"Mapped "<<q_node_name<<" -> "<<t_node_name<<"\n";
 	    std::cout<<">"<<q_node_name<<"\n";
 	    auto& a = A.get_alphabet();
 	    for(int i=0;i<A.length();i++)
@@ -265,7 +268,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("subsample",value<unsigned>()->default_value(10),"factor by which to sub-sample trees")
 	("partition", value<string>(), "find indels along internal branch that bi-partitions given taxa (<taxa1>:<taxa2>:...)")
 	("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
-	("verbose","Output more log messages on stderr.")
+	("verbose,V",value<int>()->implicit_value(1),"Show more log messages on stderr.")
 	("extract-sequences",value<string>(),"Extract sequences corresponding to tree")
 	;
 
@@ -289,7 +292,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	exit(0);
     }
 
-    if (args.count("verbose")) log_verbose = 1;
+    if (args.count("verbose")) log_verbose = args["verbose"].as<int>();
 
     return args;
 }
