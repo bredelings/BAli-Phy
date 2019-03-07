@@ -28,6 +28,7 @@
 using boost::program_options::variables_map;
 using std::map;
 using std::string;
+using std::string_view;
 using std::vector;
 using std::list;
 using std::istream;
@@ -38,20 +39,25 @@ using std::endl;
 using boost::dynamic_bitset;
 
 /// Load a tree from command line args "--tree filename"
-RootedSequenceTree load_T(const variables_map& args) {
-    if (not args.count("tree"))
-	throw myexception()<<"Tree file not specified! (--tree <filename>)";
-    
-    auto filename = args["tree"].as<string>();
-
+RootedSequenceTree load_tree_from_file(const string_view& filename)
+{
     using namespace trees_format;
 
-    std::shared_ptr<reader_t> trees_in(new Newick_or_NEXUS(filename));
+    std::shared_ptr<reader_t> trees_in(new Newick_or_NEXUS((string)filename));
     RootedSequenceTree RT;
     if (not trees_in->next_tree(RT))
 	throw myexception()<<"No tree in file '"<<filename<<"'";
 
     return RT;
+}
+
+/// Load a tree from command line args "--tree filename"
+RootedSequenceTree load_T(const variables_map& args) {
+    if (not args.count("tree"))
+	throw myexception()<<"Tree file not specified! (--tree <filename>)";
+    
+    auto filename = args["tree"].as<string>();
+    return load_tree_from_file(filename);
 }
 
 vector<SequenceTree> load_trees(const vector<string>& lines) 
