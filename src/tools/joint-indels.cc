@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2005,2008-2009 Benjamin Redelings
+  Copyright (C) 2005,2008-2009,2019 Benjamin Redelings
 
   This file is part of BAli-Phy.
 
@@ -283,7 +283,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     return args;
 }
 
-int main(int argc,char* argv[]) { 
+int main(int argc,char* argv[])
+{ 
     try {
 	variables_map args = parse_cmd_line(argc,argv);
 	//Arguments args;
