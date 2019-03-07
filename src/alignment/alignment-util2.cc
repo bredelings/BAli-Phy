@@ -210,7 +210,7 @@ void check_alignment(const alignment& A,const TreeInterface& t,bool internal_seq
     if (not internal_sequences) return;
 
     // Next check that only N/X and - are found at internal nodes
-    check_internal_sequences_composition(A,t.n_leaves());
+    // check_internal_sequences_composition(A,t.n_leaves());
   
     // Finally check that the internal node states are consistent
     check_internal_nodes_connected(A,t);
