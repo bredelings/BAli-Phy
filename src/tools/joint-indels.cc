@@ -139,6 +139,8 @@ void extract_sequence(const variables_map& args, const joint_A_T& J)
 	auto& T = J.T[i];
 	auto Q_to_T_nodes = get_nodes_map(Q,T);
 
+	std::cerr<<Q.write(false)<<"\n";
+	std::cerr<<T.write(false)<<"\n";
 	for(int q_node=Q.n_leaves(); q_node < Q.n_nodes(); q_node++)
 	{
 	    auto t_node = Q_to_T_nodes[q_node];
