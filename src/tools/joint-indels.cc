@@ -135,6 +135,8 @@ void extract_sequence(const variables_map& args, const joint_A_T& J)
 
     remap_T_leaf_indices(Q, J.leaf_names());
 
+    vector<int> node_counts(Q.n_nodes());
+
     for(int i=0; i<J.size();i++)
     {
 	auto& A = J.A[i];
@@ -153,6 +155,8 @@ void extract_sequence(const variables_map& args, const joint_A_T& J)
 	    string q_node_name = Q.get_label(q_node);
 	    if (q_node_name.empty()) continue;
 
+	    node_counts[q_node]++;
+
 	    string t_node_name = T.get_label(*t_node);
 	    std::cerr<<"Mapped "<<q_node_name<<" -> "<<t_node_name<<"\n";
 	    std::cout<<">"<<q_node_name<<"\n";
@@ -162,6 +166,13 @@ void extract_sequence(const variables_map& args, const joint_A_T& J)
 	    std::cout<<"\n";
 	}
 	std::cout<<"\n\n";
+    }
+    for(int q_node=Q.n_leaves(); q_node<Q.n_nodes(); q_node++)
+    {
+	auto q_node_name = Q.get_label(q_node);
+	if (q_node_name.empty()) continue;
+
+	std::cerr<<"Node '"<<q_node_name<<"': present in "<<node_counts[q_node]<<"/"<<J.size()<<" = "<<double(node_counts[q_node])/J.size()*100<<"% of samples.\n";
     }
 }
 
