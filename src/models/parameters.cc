@@ -447,6 +447,9 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     //
     //        Could we possible make this into a function?  That would simplify things a lot.
 
+    // Suppose we convert the alignment matrix into a vector of vectors of column numbers..
+    // .. we would still have to apply the algorithm to it... I don't know.
+    
     // P1. Create pairwise alignment parameters.
     for(int b=0;b<pairwise_alignment_for_branch.size();b++)
     {
