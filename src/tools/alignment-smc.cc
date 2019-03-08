@@ -50,6 +50,7 @@ using std::map;
 using std::pair;
 using std::string;
 using std::endl;
+using std::ostream;
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -114,10 +115,12 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("mask-gaps,G",value<int>(),"Remove columns within <arg> columns of a gap")
 	("mask-file,M",value<vector<string>>()->composing(),"Apply mask-file")
 	("minor-allele",value<int>(),"Keep columns with given minor-allele count")
+	("one-every",value<int>(),"Keep only 1 column in each interval of size <arg>")
+	("write-bed",value<string>(),"Write selected columns in BED format with chromosome name <arg>")
 	("translate-mask",value<string>(),"Masks (CSV or @file)")
 	("variant",value<int>()->default_value(1),"Is there a SNP at distance <arg> from SNP?")
 	("dical2","Output file for DiCal2")
-	("clean-to-ref",value<string>(),"Remove columns not in reference sequence arg")
+	("clean-to-ref",value<string>(),"Remove columns not in reference sequence <arg>")
 	("msmc","Output file for MSMC")
 	("psmc","Output file for PSMC")
 	("pi","Calculate average hamming distance")
@@ -317,6 +320,60 @@ void remove_columns(alignment& A, const std::function<bool(int)>& remove)
 	    j++;
 	}
     A.changelength(j);
+}
+
+
+vector<int> select_columns(alignment& A, const std::function<bool(int)>& keep)
+{
+    vector<int> columns;
+    for(int column=0; column<A.length(); column++)
+	if (keep(column))
+	    columns.push_back(column);
+    return columns;
+}
+
+void keep_columns(alignment& A, const vector<int>& columns)
+{
+    int j=0;
+    for(int column: columns)
+    {
+	// Copy column column -> column j
+	if (column != j)
+	    for(int k=0;k<A.n_sequences();k++)
+		A.set_value(j,k, A(column,k) );
+	j++;
+    }
+    A.changelength(j);
+}
+
+vector<pair<int,int>> columns_to_regions(const vector<int>& columns)
+{
+    vector<pair<int,int>> regions;
+
+    if (columns.empty()) return regions;
+
+    regions.push_back({columns[0],columns[0]+1});
+    for(int i=1; i<columns.size();i++)
+    {
+	if (regions.back().second == columns[i])
+	    regions.back().second++;
+	else
+	    regions.push_back({columns[i],columns[i]+1});
+    }
+
+    return regions;
+}
+
+ostream& write_bed(ostream& o, const string& chromosome, const vector<pair<int,int>>& columns)
+{
+    for(auto& [start,end]: columns)
+	o<<chromosome<<'\t'<<start<<'\t'<<end<<'\n';
+    return o;
+}
+
+ostream& write_bed(ostream& o, const string& chromosome, const vector<int>& columns)
+{
+    return write_bed(o, chromosome, columns_to_regions(columns));
 }
 
 
@@ -806,6 +863,25 @@ vector<int> allele_counts(const alignment& A, int col)
     return counts;
 }
 
+vector<vector<int>> make_bins(const vector<int>& columns, int width)
+{
+    vector<vector<int>> bins;
+    if (columns.empty()) return bins;
+
+    int end = -1;
+    for(int column: columns)
+    {
+	while (column >= end)
+	{
+	    end += width;
+	    bins.push_back({});
+	}
+	bins.back().push_back(column);
+    }
+
+    return bins;
+}
+
 int largest_minor_allele_count(const alignment& A, int col)
 {
     auto counts = allele_counts(A, col);
@@ -933,8 +1009,29 @@ int main(int argc,char* argv[])
 	{
 	    int count = args["minor-allele"].as<int>();
 
-	    remove_columns(A,[&](int col) {return largest_minor_allele_count(A,col) < count;});
-	    std::cout<<A<<std::endl;
+	    auto columns = select_columns(A, [&](int col) {return largest_minor_allele_count(A,col) >= count;});
+
+	    // Space out the kept columns - keep only 1 every width bases
+	    if (args.count("one-every"))
+	    {
+		int width = args["one-every"].as<int>();
+		auto bins = make_bins(columns, width);
+		columns.clear();
+		for(auto& bin: bins)
+		    if (bin.size())
+			columns.push_back(bin[0]);
+	    }
+
+	    if (args.count("write-bed"))
+	    {
+		auto chromosome = args["write-bed"].as<string>();
+		write_bed(std::cout, chromosome, columns);
+	    }
+	    else
+	    {
+		keep_columns(A, columns);
+		std::cout<<A<<std::endl;
+	    }
 	    exit(0);
 	}
 
