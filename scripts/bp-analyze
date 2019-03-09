@@ -232,14 +232,16 @@ if ($personality =~ "bali-phy.*" || $personality eq "beast" || $personality eq "
 my $min_support_arg = "";
 $min_support_arg = "--min-support=$min_support" if (defined($min_support));
 
-my $consensus_no_pp_arg = "--consensus=". get_consensus_arg("tree",\@tree_consensus_values);
-my $consensus_pp_arg = "--consensus-PP=". get_consensus_arg("PP.tree",\@tree_consensus_values);
+my $maj_consensus_arg = "--consensus=". get_consensus_arg("PP.tree",\@tree_consensus_values);
 my $e_consensus_arg = "";
 $e_consensus_arg = "--extended-consensus=". get_consensus_arg("mtree",\@tree_consensus_values) if ($sub_partitions);
 my $el_consensus_arg = "";
 $el_consensus_arg = "--extended-consensus-L=". get_consensus_arg("mlengths",\@tree_consensus_values) if ($sub_partitions);
-my $consensus_arg = "$consensus_no_pp_arg $consensus_pp_arg $e_consensus_arg $el_consensus_arg";
+my $consensus_arg = "$maj_consensus_arg $e_consensus_arg $el_consensus_arg";
 
+my @tree_names = get_consensus_trees("PP.tree",\@tree_consensus_values);
+@tree_names = ("Results/greedy.PP.tree","Results/MAP.PP.tree",@tree_names);
+    
 my $size_arg = "";
 $size_arg = "--size=$max_iter" if defined($max_iter);
 my $prune_arg = "";
@@ -254,7 +256,13 @@ if (-z "Results/consensus" || ! more_recent_than_all_of("Results/consensus",[@tr
     my $select_trees_arg = "$max_arg $skip $subsample_string $prune_arg";
     my $levels_arg = "--support-levels=Results/c-levels.plot";
     $levels_arg = "$levels_arg --extended-support-levels=Results/extended-c-levels.plot" if ($sub_partitions);
-    exec_show("trees-consensus @tree_files $select_trees_arg $min_support_arg $sub_string $consensus_arg $levels_arg --map-tree=Results/MAP.tree --greedy-consensus=Results/greedy.tree --report=Results/consensus");
+    exec_show("trees-consensus @tree_files $select_trees_arg $min_support_arg $sub_string $consensus_arg $levels_arg --map-tree=Results/MAP.PP.tree --greedy-consensus=Results/greedy.PP.tree --report=Results/consensus");
+    for my $tree (@tree_names)
+    {
+	my $tree2 = $tree;
+	$tree2 =~ s/.PP.tree$/.tree/;
+	exec_show("tree-tool $tree --strip-internal-names > $tree2")
+    }
 }
 print "done.\n";
 
@@ -2724,6 +2732,20 @@ sub get_consensus_arg
 	$level = "$level:$filename";
     }
     return join(',',@pairs);
+}
+
+sub get_consensus_trees
+{
+    my $suffix = shift;
+    my $levels = shift;
+    my @filenames = ();
+    for my $level (@$levels)
+    {
+	my $filename = $level*100;
+	$filename = "Results/c$filename.".$suffix;
+	push @filenames,$filename;
+    }
+    return @filenames;
 }
 
 sub get_file_prefix

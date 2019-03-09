@@ -414,7 +414,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("map-tree",value<string>(),"Write out the map tree to file <arg>.")
 	("min-support",value<double>()->default_value(0.25),"Minimum threshold PP for splits.")
 	("report",value<string>(),"Write supported partitions to file <arg>.")
-	("consensus-PP",value<string>(),"Write out consensus trees+PP.")
 	("consensus",value<string>(),"Write out consensus trees.")
 	("greedy-consensus",value<string>(),"Write out greedy consensus trees.")
 	("extended-consensus-L",value<string>(),"Write out extended consensus trees + lengths.")
@@ -595,15 +594,38 @@ void get_branch_lengths(SequenceTree& T,
     get_branch_lengths_and_PP(T, v, partitions, N);
 }
 
+void write_tree_with_PP(SequenceTree T,
+			const tree_sample& tree_dist,
+			const map<dynamic_bitset<>,count_and_length>& full_partitions,
+			const string& filename,
+			const string& description)
+{
+    int N = (int)tree_dist.size();
+
+    // set branch lengths and PP on the tree
+    vector<double> PP;
+    get_branch_lengths_and_PP(T, PP, full_partitions, N);
+  
+    bool show_branch_lengths = false;
+    for(int b=0;b<T.n_branches();b++)
+	if (T.branch(b).length() >= 0)
+	    show_branch_lengths = true;
+  
+    ostream_or_ofstream output(cout, "-", filename, description);
+
+    // write out the tree
+    output.unsetf(ios::fixed | ios::showpoint);
+    output<<T.write_with_bootstrap_fraction(PP,show_branch_lengths)<<std::endl;
+}
+
 /// \brief Write out standard majority consensus trees of various support levels
 ///
 /// \param tree_dist The sampled trees
 /// \param full_partitions The count and average lengths of each split
 /// \param consensus_levels The support levels and the output file name for each one
-/// \param with_PP Should the output trees contains Posterior Probabilities in addition to branch lengths?
 ///
 void write_consensus_trees(const tree_sample& tree_dist, const map<dynamic_bitset<>,count_and_length>& full_partitions, 
-			   const vector<pair<double, string> >& consensus_levels, bool with_PP)
+			   const vector<pair<double, string> >& consensus_levels)
 {
     unsigned N = tree_dist.size();
 
@@ -614,8 +636,6 @@ void write_consensus_trees(const tree_sample& tree_dist, const map<dynamic_bitse
     for(int k=0;k < consensus_levels.size();k++) 
     {
 	const string& filename = consensus_levels[k].second;
-
-	ostream_or_ofstream output(cout,"-",filename,"consensus tree file");
 
 	container_t partitions = select_splits(c50_partitions, N*consensus_levels[k].first);
 
@@ -629,21 +649,7 @@ void write_consensus_trees(const tree_sample& tree_dist, const map<dynamic_bitse
 	    }
 	}
 
-	// set branch lengths and PP on the consensus tree
-	vector<double> PP;
-	get_branch_lengths_and_PP(consensus, PP, partitions, N);
-
-	bool show_branch_lengths = false;
-	for(int b=0;b<consensus.n_branches();b++)
-	    if (consensus.branch(b).length() >= 0)
-		show_branch_lengths = true;
-
-	// write out the consensus tree
-	output.unsetf(ios::fixed | ios::showpoint);
-	if (with_PP)
-	    output<<consensus.write_with_bootstrap_fraction(PP,show_branch_lengths)<<std::endl;
-	else
-	    output<<consensus.write(show_branch_lengths)<<std::endl;
+	write_tree_with_PP(consensus, tree_dist, full_partitions, filename, "consensus tree file");
     }
 }
 
@@ -841,7 +847,6 @@ void output_mctree_with_lengths(ostream& output, MC_tree Q,
 /// \param tree_dist The sampled trees
 /// \param full_partitions The count and average lengths of each split
 /// \param consensus_levels The support levels and the output file name for each one
-/// \param with_PP Should the output trees contains Posterior Probabilities in addition to branch lengths?
 ///
 void write_extended_consensus_trees_with_lengths(const tree_sample& tree_dist, 
 						 const vector<pair<partition,unsigned> >& all_partitions,
@@ -908,10 +913,8 @@ bool compatible(const std::vector<dynamic_bitset<> >&P1, const dynamic_bitset<>&
 
 void write_greedy_consensus(const tree_sample& tree_dist,
 			    const map<dynamic_bitset<>,count_and_length>& full_partitions,
-			    const string& filename, bool with_PP)
+			    const string& filename)
 {
-    unsigned N = tree_dist.size();
-
     unsigned L = tree_dist.names().size();
   
     multiset< pair<dynamic_bitset<>,count_and_length>, count_more2 > sorted_splits;
@@ -934,22 +937,7 @@ void write_greedy_consensus(const tree_sample& tree_dist,
 	    consensus.induce_partition(S[i]);
 
     // set branch lengths and PP on the consensus tree
-    vector<double> PP;
-    get_branch_lengths_and_PP(consensus, PP, full_partitions, N);
-  
-    bool show_branch_lengths = false;
-    for(int b=0;b<consensus.n_branches();b++)
-	if (consensus.branch(b).length() >= 0)
-	    show_branch_lengths = true;
-  
-    ostream_or_ofstream output(cout,"-",filename,"greedy consensus tree file");
-
-    // write out the consensus tree
-    output.unsetf(ios::fixed | ios::showpoint);
-    if (with_PP)
-	output<<consensus.write_with_bootstrap_fraction(PP,show_branch_lengths)<<std::endl;
-    else
-	output<<consensus.write(show_branch_lengths)<<std::endl;
+    write_tree_with_PP(consensus, tree_dist, full_partitions, filename, "greedy consensus tree file");
 }
 
 int main(int argc,char* argv[]) 
@@ -978,17 +966,16 @@ int main(int argc,char* argv[])
 
 	// consensus levels 
 	vector<pair<double,string> > consensus_levels = get_consensus_levels( get_string_list(args, "consensus"));
-	vector<pair<double,string> > consensus_levels_pp = get_consensus_levels( get_string_list(args, "consensus-PP"));
 	vector<pair<double,string> > extended_consensus_levels = get_consensus_levels( get_string_list(args, "extended-consensus"));
 	vector<pair<double,string> > extended_consensus_L_levels = get_consensus_levels( get_string_list(args, "extended-consensus-L"));
 	auto greedy_filename = get_arg<string>(args, "greedy-consensus");
 
 	if (not args.count("consensus") 
-	    and not args.count("consensus-PP") 
 	    and not args.count("extended-consensus")
+	    and not args.count("map-tree")
 	    and not args.count("extended-consensus-L")
 	    and not args.count("greedy-consensus"))
-	    consensus_levels_pp.push_back(pair<double,string>(0.5,"-"));
+	    consensus_levels.push_back(pair<double,string>(0.5,"-"));
 
 	ostream_or_ofstream report_file;
 
@@ -1027,7 +1014,7 @@ int main(int argc,char* argv[])
 
 	for(int i=0;i<tree_dist.size();i++)
 	{
-	    std::map<tree_record,int>::iterator record = topologies_index.find(tree_dist[i]);
+	    auto record = topologies_index.find(tree_dist[i]);
 	    if (record == topologies_index.end())
 	    {
 		which_topology.push_back(i);
@@ -1075,20 +1062,6 @@ int main(int argc,char* argv[])
 	    report_file<<"\n";
 	}
 
-	// write out the map tree
-	if (args.count("map-tree")) 
-	{
-	    string filename = args["map-tree"].as<string>();
-
-	    ostream_or_ofstream output(cout,"-",filename,"MAP tree file");
-
-	    SequenceTree map_tree = tree_dist.T(which_topology[order[0]]);
-	    get_branch_lengths(map_tree, full_partitions, N);
-
-	    output<<map_tree<<endl;
-	}
-
-    
 	for(int i=0,n=0;i<topology_counts.size();i++) 
 	{
 	    n += topology_counts[i];
@@ -1130,7 +1103,6 @@ int main(int argc,char* argv[])
 	    report_file<<endl<<endl;
 	}
 
-
 	//----------- display M[l] consensus levels ----------//
 	write_support_level_graph(args, all_partitions, N);
 	write_extended_support_level_graph(args, all_partitions, tree_dist, N);
@@ -1138,10 +1110,20 @@ int main(int argc,char* argv[])
 	//----------- display M[l] consensus trees ----------//
 	std::cout.precision(4);
 
-	write_consensus_trees(tree_dist, full_partitions, consensus_levels,false);
-	write_consensus_trees(tree_dist, full_partitions, consensus_levels_pp,true);
+	// write out the map tree
+	if (args.count("map-tree")) 
+	{
+	    string filename = args["map-tree"].as<string>();
+
+	    SequenceTree map_tree = tree_dist.T(which_topology[order[0]]);
+
+	    write_tree_with_PP(map_tree, tree_dist, full_partitions, filename, "MAP tree file");
+	}
+
+    
+	write_consensus_trees(tree_dist, full_partitions, consensus_levels);
 	if (greedy_filename)
-	    write_greedy_consensus(tree_dist, full_partitions, *greedy_filename, true);
+	    write_greedy_consensus(tree_dist, full_partitions, *greedy_filename);
 	write_extended_consensus_trees(tree_dist, all_partitions, extended_consensus_levels);
 	write_extended_consensus_trees_with_lengths(tree_dist, all_partitions, full_partitions, extended_consensus_L_levels);
     }
