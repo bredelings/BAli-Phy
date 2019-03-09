@@ -1411,15 +1411,15 @@ sub draw_trees
 	
     }
 
-    print "greedy ";
     exec_show("cd Results ; draw-tree greedy.tree --layout=equal-daylight") if (-e 'Results/greedy.tree');
     exec_show("cd Results ; draw-tree greedy.tree --layout=equal-daylight --output=svg ") if (-e 'Results/greedy.tree');
+    print "greedy ";
 
-    print "MAP ";
     exec_show("cd Results ; draw-tree MAP.tree --layout=equal-daylight") if (-e 'Results/MAP.tree');
     exec_show("cd Results ; draw-tree MAP.tree --layout=equal-daylight --output=svg ") if (-e 'Results/MAP.tree');
+    print "MAP ";
 
-    print "done.\n";
+    print " ... done.\n";
 }
 
 sub mixing_diagnostics
