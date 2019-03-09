@@ -376,10 +376,9 @@ const ptree* find(const string& key, const ptree& p)
 vector<string> get_subtopics(const ptree& p)
 {
     vector<string> subtopics;
-    for(auto& x: p)
+    for(auto [name,value]: p)
     {
-	auto name = x.first;
-//	if (x.second.size()) name += "/";
+	if (value.size()) name += "/";
 	subtopics.push_back(name);
     }
     return subtopics;
