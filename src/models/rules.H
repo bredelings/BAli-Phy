@@ -23,7 +23,7 @@ class Rules
 
     std::vector<boost::filesystem::path> path_list;
 
-    void add_rule(const boost::filesystem::path&);
+    void add_rule(const boost::filesystem::path&, const boost::filesystem::path&);
 
 public:
     std::optional<Rule> get_rule_for_func(const std::string& s) const;

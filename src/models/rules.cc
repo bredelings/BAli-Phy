@@ -300,8 +300,8 @@ ptree json_to_ptree(const json& j)
 	    p.push_back({"", json_to_ptree(x)});
 	break;
     case json::value_t::object:
-	for(auto it: json::iterator_wrapper(j))
-	    p.push_back({it.key(), json_to_ptree(it.value())});
+	for(auto [key,value]: j.items())
+	    p.push_back({key, json_to_ptree(value)});
 	break;
     default:
 	break;
@@ -309,7 +309,7 @@ ptree json_to_ptree(const json& j)
     return p;
 }
 
-void Rules::add_rule(const fs::path& path)
+void Rules::add_rule(const fs::path& path, const fs::path& rel_path)
 {
     checked_ifstream infile(path.string(),"function file");
 
@@ -317,7 +317,12 @@ void Rules::add_rule(const fs::path& path)
     try {
 	json j;
 	infile>>j;
+	json category;
+	for(const auto& s:rel_path)
+	    category.push_back(s.string());
+	j["category"] = category;
 	rule = json_to_ptree(j);
+	std::cerr<<show(rule)<<"\n";
     }
     catch (const std::exception& e)
     {
@@ -391,7 +396,10 @@ Rules::Rules(const vector<fs::path>& pl)
 	{
 	    auto abs_path = dir_entry.path();
 	    if (abs_path.extension() == ".json" and abs_path.filename().string()[0] != '.')
-		add_rule(abs_path);
+	    {
+		auto rel_path = fs::relative(dir_entry.path(), path);
+		add_rule(abs_path, rel_path.parent_path());
+	    }
 	}
     }
 
