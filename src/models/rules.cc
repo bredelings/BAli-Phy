@@ -322,7 +322,6 @@ void Rules::add_rule(const fs::path& path, const fs::path& rel_path)
 	    category.push_back(s.string());
 	j["category"] = category;
 	rule = json_to_ptree(j);
-	std::cerr<<show(rule)<<"\n";
     }
     catch (const std::exception& e)
     {
