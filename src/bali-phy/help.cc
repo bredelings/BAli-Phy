@@ -56,31 +56,6 @@ vector<string> get_path(fs::path p)
     return v;
 }
 
-ptree load_help_files(const std::vector<fs::path>& package_paths)
-{
-    ptree help;
-
-    for(auto& package_path: package_paths)
-    {
-	auto path = package_path / "help";
-
-	if (fs::exists(path))
-	    for(auto& dir_entry: fs::recursive_directory_iterator(path))
-	    {
-		auto abs_path = fs::canonical(dir_entry.path());
-		if (not fs::is_directory(abs_path) and abs_path.extension() == ".txt")
-		{
-		    string content = boost::trim_copy(read_file(abs_path.string(), "help file"));
-
-		    auto rel_path = fs::relative(dir_entry.path(), path);
-		    help.make_path(get_path(rel_path)).put_value(content);
-		}
-	    }
-    }
-
-    return help;
-}
-
 string indent_and_wrap_citation(int indent, int extra_indent, int width, const string& text)
 {
     if (text.empty()) return text;
@@ -358,10 +333,16 @@ string do_unescape(const string& line)
     return std::regex_replace(line,std::regex("\\\\([`_*])"),"$1");
 }
 
-string pseudo_markdown(const string& lines)
+string pseudo_markdown(const string& text)
 {
     std::ostringstream marked;
-    for(auto& line: split(lines,'\n'))
+    auto lines = split(text,'\n');
+
+    // If the text ends with a '\n', we shouldn't add an extra line.
+    if (lines.size() and lines.back().empty())
+	lines.pop_back();
+
+    for(auto& line: lines)
     {
 	bool header = false;
 	if (starts_with(line,"# "))
@@ -404,60 +385,85 @@ vector<string> get_subtopics(const ptree& p)
     return subtopics;
 }
 
+ptree load_help_files(const std::vector<fs::path>& package_paths)
+{
+    ptree help;
+
+    // 1. Load help from Markdown files in the help/ directory
+    for(auto& package_path: package_paths)
+    {
+	auto path = package_path / "help";
+
+	if (fs::exists(path))
+	    for(auto& dir_entry: fs::recursive_directory_iterator(path))
+	    {
+		auto abs_path = fs::canonical(dir_entry.path());
+		if (not fs::is_directory(abs_path) and abs_path.extension() == ".txt")
+		{
+		    string content = boost::trim_copy(read_file(abs_path.string(), "help file"));
+
+		    auto rel_path = fs::relative(dir_entry.path(), path);
+		    content = pseudo_markdown(content)+"\n";
+		    help.make_path(get_path(rel_path)).put_value(content);
+		}
+	    }
+    }
+
+    // 2. Load help from JSON files in the bindings/ directory
+    Rules R(package_paths);
+    for(auto& [_,rule]: R.get_rules())
+    {
+	if (auto name = rule.get_child_optional("name"))
+	{
+	    vector<string> category;
+	    if (auto cat = rule.get_child_optional("category"))
+		for(auto& [_,s]: *cat)
+		    category.push_back(s);
+	    category.push_back(*name);
+	    string text = get_help_for_rule(R, rule);
+	    help.make_path(category).put_value(text);
+	}
+    }
+
+    return help;
+}
+
 void help_topics(std::ostream& o, const ptree& help)
 {
     auto subtopics = get_subtopics(help);
-    subtopics.push_back("functions");
     
     o<<"To see help on one of the following topics, run `bali-phy help "<<underline("topic")<<"`\n\n";
     o<<show_options(subtopics);
     o<<"\n";
-    o<<"\n";
+}
+
+void help_topics(std::ostream& o, const std::vector<fs::path>& package_paths)
+{
+    help_topics(o, load_help_files(package_paths));
 }
 
 void show_help(const string& topic, const vector<fs::path>& package_paths)
 {
+    // 1. Load help from Markdown files (in help/) and JSON files (in bindings/)
     auto help = load_help_files(package_paths);
 	
+    // 3. Show a top-level overview of categories
     if (topic == "topics")
-    {
 	help_topics(std::cout, help);
-	return;
-    }
-    if (auto found = find(topic, help))
+    else if (auto found = find(topic, help))
     {
-	if (not found->value_is_empty())
-	    std::cout<<pseudo_markdown(found->get_value<string>())<<"\n";
 	auto subtopics = get_subtopics(*found);
+	if (not found->value_is_empty())
+	{
+	    std::cout<<found->get_value<string>();
+	    if (subtopics.size())
+		std::cout<<"\n";
+	}
 	if (subtopics.size())
 	{
 	    std::cout<<bold("Subtopics")<<":\n\n";
 	    std::cout<<show_options(subtopics);
 	}
-	std::cout<<std::endl;
-	return;
-    }
-
-    Rules R(package_paths);
-    if (topic == "functions")
-    {
-	vector<string> func_names;
-
-	for(auto& rule: R.get_rules())
-	{
-	    if (rule.second.get_child_optional("name"))
-	    {
-		string name = rule.second.get_child("name").get_value<string>();
-		func_names.push_back(name);
-	    }
-	}
-	std::cout<<show_options(func_names)<<std::endl;
-	return;
-    }
-
-    if (auto rule = R.get_rule_for_func(topic))
-    {
-	std::cout<<get_help_for_rule(R, *rule);
 	return;
     }
     else

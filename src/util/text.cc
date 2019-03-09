@@ -262,5 +262,5 @@ std::string show_options(const std::vector<std::string>& o)
 	}
 	lines.push_back(line);
     }
-    return join(lines,"\n");
+    return join(lines,"\n")+"\n";
 }
