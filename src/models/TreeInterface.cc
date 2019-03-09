@@ -493,7 +493,10 @@ std::string write(const TreeInterface& T, int root, const std::vector<double>& L
 /// Return a Newick string representation of the tree 'T' with names 'names', including branch lengths by default.
 std::string write(const TreeInterface& T, const std::vector<std::string>& names, bool print_lengths)
 {
-    int root = 0; // T.target(0);
+    int root = 0;
+    if (T.n_nodes() > 2)
+	root = T.target(0);
+
     vector<string> names2;
     for(auto& name: names)
 	names2.push_back(escape_for_newick(name));

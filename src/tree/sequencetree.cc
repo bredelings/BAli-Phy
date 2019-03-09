@@ -106,7 +106,10 @@ void SequenceTree::read(std::istream& file) {
 
 string SequenceTree::write(bool print_lengths) const 
 {
-    RootedSequenceTree RT(*this,0);
+    int root = 0;
+    if (n_nodes() > 2)
+	root = directed_branch(0).target();
+    RootedSequenceTree RT(*this,root);
     return RT.write(print_lengths);
 }
 
