@@ -3,7 +3,7 @@
 Characters for discrete data have values in an "alphabet". For example,
 in the `DNA` alphabet, characters take on values `A`, `T`, `C`, or `G`.
 
-BAli-Phy understand the following alphabets:
+BAli-Phy understands the following alphabets:
 
    `DNA`, `RNA`, `Amino-Acids`, `Numeric`, `Doublets`,
    `Triplets`, or `Codons`
