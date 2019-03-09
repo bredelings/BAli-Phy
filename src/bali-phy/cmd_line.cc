@@ -99,11 +99,11 @@ po::options_description general_options(int level)
 	("help,h", value<string>()->implicit_value("basic"),"Print usage information.")
 	("version,v", "Print version information.")
 	("test,t","Analyze the initial values and exit.")
+	("config,c", value<string>(),"Command file to read.")
 	;
     if (level >= 1)
 	general.add_options()
-	    ("verbose,V",value<int>()->implicit_value(1),"Print extra output in case of error.")
-	    ("config,c", value<string>(),"Config file to read.");
+	    ("verbose,V",value<int>()->implicit_value(1),"Print extra output in case of error.");
     if (level >= 2)
 	general.add_options()
 	    ("package-path,P",value<string>(),"Directories to search for packages.")
