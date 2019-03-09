@@ -18,6 +18,9 @@ Find consensus trees and supported splits.
 **-h**, **--help**
 : Produce help message.
 
+**-v**, **--verbose**
+: Output more log messages on stderr.
+
 **-s** _arg_ (=10%), **--skip** _arg_ (=10%)
 : Number of trees to skip.
 
@@ -30,7 +33,7 @@ Find consensus trees and supported splits.
 **-x** _arg_ (=1), **--subsample** _arg_ (=1)
 : Factor by which to subsample.
 
-**--ignore** _arg_
+**-i** _arg_, **--ignore** _arg_
 : Comma-separated list of taxa to ignore.
 
 
@@ -38,17 +41,14 @@ Find consensus trees and supported splits.
 **--map-trees** _arg_ (=1)
 : Only report the top _arg_ trees per file.
 
-**--map-tree** _arg_
-: Write out the map tree to file _arg_.
-
 **--min-support** _arg_ (=0.25)
 : Minimum threshold PP for splits.
 
 **--report** _arg_
 : Write supported partitions to file _arg_.
 
-**--consensus-PP** _arg_
-: Write out consensus trees+PP.
+**--map-tree** _arg_
+: Write out the map tree to file _arg_.
 
 **--consensus** _arg_
 : Write out consensus trees.
@@ -68,12 +68,6 @@ Find consensus trees and supported splits.
 **--extended-support-levels** _arg_
 : Write #sub-branches versus LOD to file _arg_.
 
-**--odds-ratio** _arg_ (=1.5)
-: Report partial-splits only if removing taxa improves the odds by at least this ratio.
-
-**-v**, **--verbose**
-: Output more log messages on stderr.
-
 
 # SEARCH OPTIONS:
 **--sub-partitions**
@@ -84,6 +78,44 @@ Find consensus trees and supported splits.
 
 **--rooting** _arg_ (=0.9)
 : Threshold in search for partial splits.
+
+**--odds-ratio** _arg_ (=1.5)
+: Report partial-splits only if removing taxa improves the odds by at least this ratio.
+
+
+# EXAMPLES:
+ 
+Compute the majority consensus tree, skipping the first 10% of trees:
+```
+% trees-consensus newick.trees > c50.tree
+% trees-consensus newick.trees --skip=10% > c50.tree
+```
+
+Skip the first 100 trees:
+```
+% trees-consensus newick.trees --skip=100 > c50.tree
+```
+
+Skip the first 20% of trees and take every 10th tree thereafter:
+```
+% trees-consensus newick.trees --skip=20% -x10 > c50.tree
+```
+
+Compute the 50% (majority) and 80% consensus trees:
+```
+% trees-consensus newick.trees --consensus=0.5:c50.tree,0.8:c80.tree
+% trees-consensus newick.trees --consensus=0.5,0.8:c80.tree > c50.tree
+```
+
+Compute the MAP tree and write a summary of supported partitions:
+```
+% trees-consensus --map-tree=MAP.tree --report=partitions.txt
+```
+
+Compute the MAP tree and write it to the standard output:
+```
+% trees-consensus --map-tree=- --report=partitions.txt
+```
 
 
 # REPORTING BUGS:

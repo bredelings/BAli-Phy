@@ -401,27 +401,26 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description input("Input options");
     input.add_options()
 	("help,h", "Produce help message.")
+	("verbose,v","Output more log messages on stderr.")
 	("skip,s",value<string>()->default_value("10%"),"Number of trees to skip.")
 	("until,u",value<int>(),"Read until this number of trees.")
 	("max,m",value<int>(),"Thin tree samples down to this number of trees.")
 	("subsample,x",value<int>()->default_value(1),"Factor by which to subsample.")
-	("ignore", value<string>(),"Comma-separated list of taxa to ignore.")
+	("ignore,i", value<string>(),"Comma-separated list of taxa to ignore.")
 	;
   
     options_description reporting("Reporting options");
     reporting.add_options()
 	("map-trees",value<int>()->default_value(1),"Only report the top <arg> trees per file.")
-	("map-tree",value<string>(),"Write out the map tree to file <arg>.")
 	("min-support",value<double>()->default_value(0.25),"Minimum threshold PP for splits.")
 	("report",value<string>(),"Write supported partitions to file <arg>.")
+	("map-tree",value<string>(),"Write out the map tree to file <arg>.")
 	("consensus",value<string>(),"Write out consensus trees.")
 	("greedy-consensus",value<string>(),"Write out greedy consensus trees.")
 	("extended-consensus-L",value<string>(),"Write out extended consensus trees + lengths.")
 	("extended-consensus",value<string>(),"Write out extended consensus trees.")
 	("support-levels",value<string>(),"Write #branches versus LOD to file <arg>.")
 	("extended-support-levels",value<string>(),"Write #sub-branches versus LOD to file <arg>.")
-	("odds-ratio",value<double>()->default_value(1.5),"Report partial-splits only if removing taxa improves the odds by at least this ratio.")
-	("verbose,v","Output more log messages on stderr.")
 	;
     
     options_description search("Search options");
@@ -429,6 +428,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("sub-partitions","Search for partial splits.")
 	("depth",value<int>()->default_value(1),"Depth at which to look for partial splits.")
 	("rooting",value<double>()->default_value(0.9,"0.9"),"Threshold in search for partial splits.")
+	("odds-ratio",value<double>()->default_value(1.5),"Report partial-splits only if removing taxa improves the odds by at least this ratio.")
 	;
 
     options_description visible("All options");
@@ -451,9 +451,21 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	cout<<input<<"\n";
 	cout<<reporting<<"\n";
 	cout<<search<<"\n";
-	cout<<"Arguments for consensus trees are level1:filename1[,level2:filename2,...]\n\
-  o each level is a minimum PP and should be in the range [0.5, 1.0].\n\
-  o drop \"filename\" or specify \":-\" to write to the terminal.\n";
+	cout<<"Examples:\n\n";
+	cout<<" Compute the majority consensus tree, skipping the first 10% of trees:\n";
+	cout<<"   % trees-consensus newick.trees > c50.tree\n";
+	cout<<"   % trees-consensus newick.trees --skip=10% > c50.tree\n\n";
+	cout<<" Skip the first 100 trees:\n";
+	cout<<"   % trees-consensus newick.trees --skip=100 > c50.tree\n\n";
+	cout<<" Skip the first 20% of trees and take every 10th tree thereafter:\n";
+	cout<<"   % trees-consensus newick.trees --skip=20% -x10 > c50.tree\n\n";
+	cout<<" Compute the 50% (majority) and 80% consensus trees:\n";
+	cout<<"   % trees-consensus newick.trees --consensus=0.5:c50.tree,0.8:c80.tree\n";
+	cout<<"   % trees-consensus newick.trees --consensus=0.5,0.8:c80.tree > c50.tree\n\n";
+	cout<<" Compute the MAP tree and write a summary of supported partitions:\n";
+	cout<<"   % trees-consensus --map-tree=MAP.tree --report=partitions.txt\n\n";
+	cout<<" Compute the MAP tree and write it to the standard output:\n";
+	cout<<"   % trees-consensus --map-tree=- --report=partitions.txt\n\n";
 	exit(0);
     }
 
