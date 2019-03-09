@@ -70,11 +70,13 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("resolve","Comma-separated taxa to remove")
 	("remove-root-branch","Remove single branch from root.")
 	("remove-root-branches","Ensure root is not a tip.")
-	("remove-knuckles","Remove degree-2 nodes.");
+	("remove-knuckles","Remove degree-2 nodes.")
+	("scale", value<double>(), "Scale branch-lengths by factor")
+	("strip-internal-names","Remove internal node names")
+	;
 
     options_description output("Output options");
     output.add_options()
-	("scale", value<double>(), "Scale branch-lengths by factor")
 	("length","Report the total tree length")
 	("diameter","Report the total tree length")
 	;
@@ -185,6 +187,11 @@ int main(int argc,char* argv[])
 	{
 	    double factor = args["scale"].as<double>();
 	    scale(T, factor);
+	}
+	if (args.count("strip-internal-names"))
+	{
+	    for(int n=T.n_leaves(); n<T.n_nodes(); n++)
+		T.set_label(n,"");
 	}
 
 	if (args.count("length"))
