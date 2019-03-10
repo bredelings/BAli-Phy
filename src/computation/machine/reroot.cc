@@ -260,6 +260,22 @@ void reg_heap::unshare_regs(int t)
                     unshare_step(r2);
             }
 
+#ifndef NDEBUG
+    for(auto [_,s]: delta_step)
+    {
+        if (s < 0) continue;
+
+        const auto& Step = steps[s];
+
+        // Any results or steps in the delta should already have their regs unshared.
+        for(int r2: Step.created_regs)
+        {
+            assert(prog_temp[r2].test(result_bit));
+            assert(prog_temp[r2].test(step_bit));
+        }
+    }
+#endif
+
     // Erase the marks that we made on prog_temp.
     for(auto [r,_]: delta_result)
     {
