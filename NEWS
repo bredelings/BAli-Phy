@@ -8,6 +8,9 @@
  - Haskell machine
    + Observe lists in an efficient manner.
    + Allow sampling characters on random trees (recursive, via mfix).
+   - Make a unified program that computes an ATModel object.
+   - Do logging by computing a JSON object.
+   - Observe likelihood of sequences on tree
    - Separate random variables from modifiables.
    - Make modifiables evaluate to an initial value.
    - Allow specifying modifiable structures, such as a list of modifiables.
@@ -19,16 +22,23 @@
    - SPEED: unshare_regs: move loop over created_regs out of loop on results
    - SPEED: unshare_regs: don't unshare constants and index_vars
    - FIX graphviz description of graph by using HTML records.
+ - Docs
+   - Split up developer docs.
  - Help
    + Display functions more compactly with `help functions`
-   - handle `quote` better in terminal output.
+   - Handle `quote` better in terminal output.
+   + Allow getting help on functions, models, and distributions.
  - Tools
    + Allow reading from files wherever we take a comma-separated-list
    + alignment-info: add option to show sequence names and/or lengths.
+   + extract-ancestors: new program to get specific ancestral sequences.
+   - trees-consensus: always write out PP.
+   - tree-tool: add command to remove internal node names.
  - Code
    + Refactoring
      - Move utility code under util/
      - Split util/util.H into several other files.
+     - Make separate libutil and libcomputation
  - Packaging
    + Distribute `draw-tree` binary on windows.
  - Fixes
@@ -38,6 +48,9 @@
    - Compile without errors in C++17 mode.
    + Link to math library if available: fix build on kfreebsd
    + Avoid crash with NaN on armhf.
+   - Don't print out newick trees rooted at a leaf.
+   - Speed up tree drawing in bp-analyze.
+   - Correctly compute PP version of MAP and greedy trees.
 
 * 3.4.1 (Jan 18, 2019)
  - Help
