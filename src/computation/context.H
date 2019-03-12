@@ -1,4 +1,5 @@
 #ifndef CONTEXT_H
+#define CONTEXT_H
 
 #include "computation/closure.H"
 #include "computation/program.H"
