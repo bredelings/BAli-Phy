@@ -3,6 +3,14 @@ module Data.Array (module Data.Array,
                    module Data.Ix)
     where
 
+-- See GHC/Arr.hs for some implementation details
+-- In Data.Array         - Basic non-strict arrays (interface, I think)
+-- See Data.Array.MArray - Mutable arrays   (interface)
+-- See Data.Array.IArray - Immutable arrays (interfaced)
+-- See Data.Array.ST     - Mutable boxed and unboxed array in the ST monad.
+-- See Data.Array.IO     - Mutable boxed and unboxed array in the IO monad.
+-- See Data.Array.Unboxed
+
 import Data.Ix
 
 infixl 9 !
