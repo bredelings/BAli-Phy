@@ -273,6 +273,7 @@ remove_one [] = error "Cannot remove one from empty list"
 remove_one list = do i <- sample $ uniform_int 0 (length list-1)
                      return $ pick_index i list
 
+random_tree_edges [l1] _         = return []
 random_tree_edges [l1,l2] _      = return [(l1,l2)]
 random_tree_edges leaves internal = do (l1,leaves')  <- remove_one leaves
                                        (l2,leaves'') <- remove_one leaves'
