@@ -10,9 +10,9 @@ alignment (Partition _ a) = a
 --                                      what we really need is transition probabilities for each partition.
 
 data IndelModel = IndelModel
-data ATModel = ATModel [MixtureModels] [IndelModel] [Double] [Double]
-smodels        (ATModel ss _ _ _) = ss
-imodels        (ATModel _ is _ _) = is
-scales         (ATModel _ _ rs _) = rs
-branch_lengths (ATModel _ _ _ ls) = ls
-
+data ATModel = ATModel Tree [MixtureModels] [IndelModel] [Double] [Double]
+tree           (ATModel t _  _ _ _) = t
+smodels        (ATModel _ ss _ _ _) = ss
+imodels        (ATModel _ _ is _ _) = is
+scales         (ATModel _ _ _ rs _) = rs
+branch_lengths (ATModel _ _ _ _ ls) = ls
