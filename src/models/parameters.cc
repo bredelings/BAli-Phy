@@ -482,7 +482,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     // R1. Add method indices for calculating transition matrices.
     auto transition_ps = p->get_expression(p->PC->branch_transition_p_indices(scale_index, smodel_index));
     for(int b=0;b<B;b++)
-        transition_p_method_indices[b] = p->add_compute_expression( {var("Prelude.!"), transition_ps, b} );
+        transition_p_method_indices[b] = p->add_compute_expression( {var("Data.Array.!"), transition_ps, b} );
 
     // R2. Register array of leaf sequences
     for(int i=0; i<leaf_sequence_indices.size(); i++)
@@ -503,7 +503,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         as_.push_back(a);
     }
     expression_ref as_list = p->get_expression( p->add_compute_expression(get_list(as_) ) );
-    expression_ref as = p->get_expression( p->add_compute_expression({var("Prelude.listArray'"),as_list}));
+    expression_ref as = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"),as_list}));
 
     // R4. Register sequence length methods
     EVector sequence_lengths_;
@@ -517,14 +517,14 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         sequence_length_indices[n] = p->add_compute_expression( L );
         sequence_lengths_.push_back(p->get_expression(sequence_length_indices[n]));
     }
-    auto seqs_array = p->get_expression( p->add_compute_expression({var("Prelude.listArray'"),get_list(seqs_)}) );
+    auto seqs_array = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"),get_list(seqs_)}) );
 
     expression_ref alignment_on_tree = {var("Alignment.AlignmentOnTree"), p->my_tree(), t.n_nodes(), seqs_array, as};
     alignment_on_tree = p->get_expression( p->add_compute_expression(alignment_on_tree) );
 
     if (p->t().n_nodes() == 1)
     {
-        expression_ref seq = {var("Prelude.!"),seqs_array, 0};
+        expression_ref seq = {var("Data.Array.!"),seqs_array, 0};
         auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
         likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood_1"), seq, *a, f});
     }
@@ -535,7 +535,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         EVector counts_;
         for(int i=0; i<leaf_sequence_indices.size(); i++)
             counts_.push_back( EVector(seq_counts[i]) );
-        auto counts_array = p->get_expression( p->add_compute_expression({var("Prelude.listArray'"),get_list(counts_)}) );
+        auto counts_array = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"),get_list(counts_)}) );
 
         // R6. Register conditional likelihoods
         auto t = p->my_tree();
@@ -543,15 +543,15 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         cl_index = p->add_compute_expression({var("SModel.Likelihood.cached_conditional_likelihoods"),t,seqs_array,counts_array,as,*a,transition_ps,f});  // Create and set conditional likelihoods for each branch
         auto cls = p->get_expression(cl_index);
         for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
-            conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Prelude.!"),cls,b});
+            conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cls,b});
 
         // FIXME: broken for fixed alignments of 2 sequences.
         if (p->t().n_nodes() == 2)
         {
-            expression_ref seq1 = {var("Prelude.!"), seqs_array, 0};
-            expression_ref seq2 = {var("Prelude.!"), seqs_array, 1};
-            expression_ref A = {var("Prelude.!"), as, 0};
-            expression_ref P = {var("Prelude.!"), transition_ps, 0};
+            expression_ref seq1 = {var("Data.Array.!"), seqs_array, 0};
+            expression_ref seq2 = {var("Data.Array.!"), seqs_array, 1};
+            expression_ref A = {var("Data.Array.!"), as, 0};
+            expression_ref P = {var("Data.Array.!"), transition_ps, 0};
             expression_ref f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
 
             likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood_2"), seq1, seq2, *a, A, P, f});
@@ -569,17 +569,17 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         cl_index = p->add_compute_expression({var("SModel.Likelihood.cached_conditional_likelihoods_SEV"),t,seqs_array,*a,transition_ps,f,AA});  // Create and set conditional likelihoods for each branch
         auto cls = p->get_expression(cl_index);
         for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
-            conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Prelude.!"),cls,b});
+            conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cls,b});
 
         object_ptr<EVector> Counts(new EVector(counts));
 
         // FIXME: broken for fixed alignments of 2 sequences.
         if (p->t().n_nodes() == 2)
         {
-            expression_ref seq1 = {var("Prelude.!"), seqs_array, 0};
-            expression_ref seq2 = {var("Prelude.!"), seqs_array, 1};
-            expression_ref A = {var("Prelude.!"), as, 0};
-            expression_ref P = {var("Prelude.!"), transition_ps, 0};
+            expression_ref seq1 = {var("Data.Array.!"), seqs_array, 0};
+            expression_ref seq2 = {var("Data.Array.!"), seqs_array, 1};
+            expression_ref A = {var("Data.Array.!"), as, 0};
+            expression_ref P = {var("Data.Array.!"), transition_ps, 0};
             expression_ref f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
 
             likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood_2"), seq1, seq2, *a, A, P, f});
@@ -595,10 +595,10 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     if (imodel_index)
     {
         // D = Params.substitutionBranchLengths!scale_index
-        expression_ref D = {var("Prelude.!"), p->my_substitution_branch_lengths(), scale_index};
+        expression_ref D = {var("Data.Array.!"), p->my_substitution_branch_lengths(), scale_index};
         expression_ref heat = parameter("Heat.beta");
         expression_ref training = parameter("*IModels.training");
-        expression_ref model = {{var("Prelude.!"),p->my_imodels(), *imodel_index}, heat, training};
+        expression_ref model = {{var("Data.Array.!"),p->my_imodels(), *imodel_index}, heat, training};
 
         expression_ref hmms = {var("Alignment.branch_hmms"), model, D, B};
         hmms = p->get_expression( p->add_compute_expression(hmms) );
@@ -614,7 +614,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         for(int b=0;b<B;b++)
         {
             // (fst IModels.models!imodel_index) D b heat training
-            int index = p->add_compute_expression( {var("Prelude.!"), hmms, b} );
+            int index = p->add_compute_expression( {var("Data.Array.!"), hmms, b} );
             branch_HMM_indices.push_back( index );
         }
 
@@ -678,7 +678,7 @@ void tree_constants::register_branch_lengths(Parameters* p, const expression_ref
     // Create the parameters that hold branch lengths
     for(int b=0;b<B;b++)
     {
-        int index = p->add_compute_expression( {var("Prelude.!"), branch_durations, b} );
+        int index = p->add_compute_expression( {var("Data.Array.!"), branch_durations, b} );
         auto R = p->compute_expression_is_modifiable_reg(index);
 
         branch_duration_index.push_back(index);
@@ -725,7 +725,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
         parameters_for_tree_node.push_back ( p_node );
         node_branches.push_back( get_list(node) );
     }
-    expression_ref node_branches_array = {var("Prelude.listArray'"),get_list(node_branches)};
+    expression_ref node_branches_array = {var("Data.Array.listArray'"),get_list(node_branches)};
 
     vector<expression_ref> branch_nodes;
     for(int b=0; b < 2*T.n_branches(); b++)
@@ -758,7 +758,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
         parameters_for_tree_branch.push_back( std::tuple<maybe_parameter, maybe_parameter, maybe_parameter>{p_source, p_source_index, p_target} );
         branch_nodes.push_back( Tuple(source, source_index, target, reverse_branch) );
     }
-    expression_ref branch_nodes_array = {var("Prelude.listArray'"),get_list(branch_nodes)};
+    expression_ref branch_nodes_array = {var("Data.Array.listArray'"),get_list(branch_nodes)};
 
     expression_ref tree_con = lambda_expression( constructor("Tree.Tree",4) );
 
@@ -1547,7 +1547,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     /* --------------------------------------------------------------- */
 
     // R1. Register branch lengths
-    TC->register_branch_lengths(this, {var("Prelude.listArray'"),{var("BAliPhy.ATModel.branch_lengths"),atmodel}});
+    TC->register_branch_lengths(this, {var("Data.Array.listArray'"),{var("BAliPhy.ATModel.branch_lengths"),atmodel}});
 
     int scales_list_index = add_compute_expression( {var("BAliPhy.ATModel.scales"),atmodel} );
     expression_ref scales_list = get_expression(scales_list_index);
@@ -1592,7 +1592,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     add_modifiable_parameter_with_value("*IModels.training", false);
 
     // R4. Register an array of indel models
-    PC->imodels_index = add_compute_expression({var("Prelude.listArray'"), {var("BAliPhy.ATModel.imodels"),atmodel}});
+    PC->imodels_index = add_compute_expression({var("Data.Array.listArray'"), {var("BAliPhy.ATModel.imodels"),atmodel}});
   
     // don't constrain any branch lengths
     for(int b=0;b<PC->TC.n_branches();b++)
@@ -1635,14 +1635,14 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         substitutionBranchLengthsList = get_list(SBLL);
     }
 
-    PC->substitution_branch_lengths_index = add_compute_expression({var("Prelude.listArray'"),{var("Prelude.fmap"),var("Prelude.listArray'"),substitutionBranchLengthsList}});
+    PC->substitution_branch_lengths_index = add_compute_expression({var("Data.Array.listArray'"),{var("Prelude.fmap"),var("Data.Array.listArray'"),substitutionBranchLengthsList}});
 
     // R8. register the cached transition_p indices
     PC->branch_transition_p_indices.resize(n_branch_scales(), n_smodels());
     for(int s=0;s < n_branch_scales(); s++)
     {
         // Better yet, make a substitutionBranchLengths!scale!branch that can be referenced elsewhere.
-        expression_ref DL = {var("Prelude.!"), my_substitution_branch_lengths(), s};
+        expression_ref DL = {var("Data.Array.!"), my_substitution_branch_lengths(), s};
 
         // Here, for each (scale,model) pair we're construction a function from branches -> Vector<transition matrix>
         for(int m=0;m < n_smodels(); m++)
