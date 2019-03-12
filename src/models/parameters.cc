@@ -502,7 +502,11 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     // R4. Register sequence length methods
     for(int n=0;n<t.n_nodes();n++)
     {
-        expression_ref L = {var("Alignment.seqlength"), as, p->my_tree(), n};
+        expression_ref L;
+	if (n < t.n_leaves())
+	    L = {var("Foreign.Vector.vector_size"), seqs_[n]};
+	else
+	    L = {var("Alignment.seqlength"), as, p->my_tree(), n};
         sequence_length_indices[n] = p->add_compute_expression( L );
     }
 
