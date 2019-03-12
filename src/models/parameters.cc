@@ -450,6 +450,12 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     // Suppose we convert the alignment matrix into a vector of vectors of column numbers..
     // .. we would still have to apply the algorithm to it... I don't know.
     
+    // Suppose we convert the alignment matrix into a graph of partially-ordered columns, where
+    // each column object just records pointers to the next column object for each sequence with
+    // a character in that column.
+    // This would be like what we get when we start with a line graph for each sequence and then begin
+    // merging columns.
+
     // P1. Create pairwise alignment parameters.
     for(int b=0;b<pairwise_alignment_for_branch.size();b++)
     {
