@@ -2,6 +2,8 @@ module Alignment where
 
 import Tree
 import Data.BitVector
+import Parameters
+import Distributions
 
 builtin pairwise_alignment_length1 1 "pairwise_alignment_length1" "Alignment"
 builtin pairwise_alignment_length2 1 "pairwise_alignment_length2" "Alignment"
@@ -48,3 +50,18 @@ pairwise_alignments_from_matrix a tree = [ pairwise_alignment_from_bits bits1 bi
     where bits = minimally_connect_characters a tree
 
 pairwise_alignment_from_bits (BitVector x) (BitVector y) = builtin_pairwise_alignment_from_bits x y
+
+data PairwiseAlignment = PairwiseAlignment
+
+data AlignmentOnTree = AlignmentOnTree Tree Int [Int] [PairwiseAlignment]
+n_sequences (AlignmentOnTree _ n _ _) = n
+
+alignment_pr' (AlignmentOnTree tree n_seqs seqlengths as) hmms model = if n_seqs == 1 then
+                                                                           let [seq] = seqlengths
+                                                                           in alignment_pr1 seq model 
+                                                                       else
+                                                                           alignment_pr as tree hmms model
+
+modifiable_alignment (AlignmentOnTree tree n_seqs seqlengths as) = AlignmentOnTree tree n_seqs (map modifiable seqlengths) (map modifiable as)
+
+random_alignment tree hmms model = ProbDensity (\a -> [alignment_pr' a hmms model]) (no_quantile "random_alignment") (RandomStructure modifiable_alignment ()) ()
