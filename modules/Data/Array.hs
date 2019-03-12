@@ -13,6 +13,8 @@ module Data.Array (module Data.Array,
 
 import Data.Ix
 import Data.List
+import Data.Function
+import Compiler.Num
 
 infixl 9 !
 builtin ! 2 "getIndex" "Array"
@@ -24,5 +26,12 @@ listArray n l = mkArray n (\i -> l !! i)
 
 listArray' l = listArray (length l) l
 
---
+-- array (0,ix2) list = mkArray ix2 (\i -> find_in_assoc_list list i)
 
+bounds arr = (0,numElements arr-1)
+
+indices = range . bounds
+
+elems   arr = [ arr!ix | ix <- indices arr ]
+
+assocs  arr = [ (ix, arr!ix) | ix <- indices arr ]
