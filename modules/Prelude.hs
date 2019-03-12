@@ -3,6 +3,7 @@ module Prelude (module Prelude,
                 module Data.Tuple,
                 module Data.Maybe,
                 module Data.List,
+                module Data.Array,
                 module Data.Function,
                 module Data.Ord,
                 module Foreign.Vector,
@@ -32,9 +33,6 @@ infixr 9 !
 
 builtin builtin_vector_from_list 1 "vector_from_list" "Prelude"
 builtin reapply 2 "reapply" "Prelude"
-builtin arraySize 1 "arraySize" "Array"
-builtin ! 2 "getIndex" "Array"
-builtin mkArray 2 "mkArray" "Array"
 builtin builtin_equals 2 "equals" "Prelude"
 builtin /= 2 "notequals" "Prelude"
 builtin iotaUnsigned 1 "iotaUnsigned" "Prelude"
@@ -68,10 +66,6 @@ zipWith' z (a:as) (b:bs) =  z a b : zipWith z as bs
 zipWith' _ [] []         =  []
 
 zip' = zipWith' (,)
-
-listArray n l = mkArray n (\i -> l !! i)
-
-listArray' l = listArray (length l) l
 
 c_pair (x,y) = c_pair' x y
 
