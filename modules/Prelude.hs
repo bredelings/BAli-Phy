@@ -29,8 +29,6 @@ import Foreign.Vector
 
 infix 4 ==, /=
 
-infixr 9 !
-
 builtin builtin_vector_from_list 1 "vector_from_list" "Prelude"
 builtin reapply 2 "reapply" "Prelude"
 builtin builtin_equals 2 "equals" "Prelude"
