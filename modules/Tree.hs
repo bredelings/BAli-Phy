@@ -5,6 +5,15 @@ data Tree = Tree (Array Int [Int]) (Array Int (Int,Int,Int,Int)) Int Int
 -- If we allow adding branches to functions later, we could move polymorphic definitions into files. e.g. for show.
 data RootedTree = RootedTree Tree Int (Array Int Bool)
 
+edgesOutOfNode (Tree nodesArray _ _ _) node = nodesArray ! node
+edgesOutOfNode (RootedTree t _ _) node = edgesOutOfNode t node
+nodesForEdge (Tree _ branchesArray _ _) edgeIndex = branchesArray ! edgeIndex
+nodesForEdge (RootedTree t _ _) edgeIndex = nodesForEdge t edgeIndex
+numNodes (Tree _ _ n _) = n
+numNodes (RootedTree t _ _) = numNodes t
+numBranches (Tree _ _ _ n) = n
+numBranches (RootedTree t _ _) = numBranches t
+
 root (RootedTree _ r _) = r
 remove_root (RootedTree t _ _) = t
 add_root t r = rt
@@ -18,15 +27,7 @@ toward_root    rt b = not $ away_from_root rt b
 parentNode rooted_tree n = listToMaybe [targetNode rooted_tree b | b <- edgesOutOfNode rooted_tree n, toward_root rooted_tree b]
 
 -- For numNodes, numBranches, edgesOutOfNode, and nodesForEdge I'm currently using fake polymorphism
-numNodes (Tree _ _ n _) = n
-numNodes (RootedTree t _ _) = numNodes t
-numBranches (Tree _ _ _ n) = n
-numBranches (RootedTree t _ _) = numBranches t
-edgesOutOfNode (Tree nodesArray _ _ _) node = nodesArray ! node
-edgesOutOfNode (RootedTree t _ _) node = edgesOutOfNode t node
 edgesTowardNode t node = map (reverseEdge t) $ edgesOutOfNode t node
-nodesForEdge (Tree _ branchesArray _ _) edgeIndex = branchesArray ! edgeIndex
-nodesForEdge (RootedTree t _ _) edgeIndex = nodesForEdge t edgeIndex
 sourceNode  tree b = let (s,_,_,_) = nodesForEdge tree b in s
 sourceIndex tree b = let (_,i,_,_) = nodesForEdge tree b in i
 targetNode  tree b = let (_,_,t,_) = nodesForEdge tree b in t
