@@ -30,7 +30,7 @@ void reg_heap::reroot_at_context(int c)
     if (is_root_token(t)) return;
 
     total_reroot++;
-  
+
     // 2. Get the tokens on the path to the root.
     boost::container::small_vector<int,10> path;
     path.push_back(token_for_context(c));
