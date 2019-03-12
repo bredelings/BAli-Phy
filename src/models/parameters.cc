@@ -709,7 +709,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
             else
             {
                 node.push_back(edges.front());
-                p_node = { {-1,n} };
+                p_node = { expression_ref{n} };
             }
         }
         else
