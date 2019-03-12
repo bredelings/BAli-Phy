@@ -22,6 +22,7 @@ import Data.Bool
 import Data.Tuple
 import Data.Maybe
 import Data.List
+import Data.Array
 import Data.Function
 import Data.Ord
 import Control.Monad

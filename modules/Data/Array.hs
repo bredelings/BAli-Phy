@@ -12,6 +12,7 @@ module Data.Array (module Data.Array,
 -- See Data.Array.Unboxed
 
 import Data.Ix
+import Data.List
 
 infixl 9 !
 builtin ! 2 "getIndex" "Array"
@@ -22,4 +23,6 @@ builtin mkArray 2 "mkArray" "Array"
 listArray n l = mkArray n (\i -> l !! i)
 
 listArray' l = listArray (length l) l
+
+--
 
