@@ -36,6 +36,7 @@
 #include "models/model.H"
 #include "imodel/imodel.H"
 #include "alignment/alignment.H"
+#include "computation/maybe_modifiable.H"
 
 #include "tools/partition.H"
 #include "dp/2way.H"
@@ -202,24 +203,6 @@ struct smodel_methods
     smodel_methods(const expression_ref&, context&);
 };
 
-class maybe_modifiable
-{
-    std::optional<int> modifiable_reg;
-    std::optional<expression_ref> value;
-public:
-    expression_ref get_value(const context* C) const
-    {
-        if (is_const())
-            return *value;
-        else
-            return C->get_modifiable_value(*modifiable_reg);
-    }
-    void set_value(context* C, const expression_ref& v) { assert(not is_const()); C->set_modifiable_value(*modifiable_reg,v);}
-    bool is_const() const {return not modifiable_reg;}
-    maybe_modifiable(int p):modifiable_reg(p) {}
-    maybe_modifiable(const expression_ref& v):value(v) {}
-};
-
 struct tree_constants: public Object
 {
     // The tree
@@ -239,6 +222,7 @@ struct tree_constants: public Object
     tree_constants* clone() const {return new tree_constants(*this);}
 
     tree_constants(Parameters*, const SequenceTree&);
+    tree_constants(Parameters*, const SequenceTree&, int);
 };
 
 struct parameters_constants: public Object
