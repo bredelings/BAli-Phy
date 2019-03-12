@@ -510,12 +510,12 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     for(int n=0;n<t.n_nodes();n++)
     {
         expression_ref L;
-	if (n < t.n_leaves())
-	    L = {var("Foreign.Vector.vector_size"), seqs_[n]};
-	else
-	    L = {var("Alignment.seqlength"), as, p->my_tree(), n};
+        if (n < t.n_leaves())
+            L = {var("Foreign.Vector.vector_size"), seqs_[n]};
+        else
+            L = {var("Alignment.seqlength"), as, p->my_tree(), n};
         sequence_length_indices[n] = p->add_compute_expression( L );
-	sequence_lengths_.push_back(p->get_expression(sequence_length_indices[n]));
+        sequence_lengths_.push_back(p->get_expression(sequence_length_indices[n]));
     }
     auto seqs_array = p->get_expression( p->add_compute_expression({var("Prelude.listArray'"),get_list(seqs_)}) );
 
@@ -619,8 +619,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         }
 
         // Alignment prior
-	alignment_prior_index = p->add_compute_expression( {var("Alignment.alignment_pr'"), alignment_on_tree, hmms, model} );
-
+        alignment_prior_index = p->add_compute_expression( {var("Alignment.alignment_pr'"), alignment_on_tree, hmms, model} );
 
         expression_ref alignment_pdf = p->get_expression(alignment_prior_index);
         alignment_pdf = make_if_expression(parameter("*variable_alignment"), alignment_pdf, log_double_t(1.0));
