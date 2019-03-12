@@ -30,13 +30,11 @@
 #include "hmm.H"
 #include "A2_states.H"
 
-class pairwise_alignment_t: public Object
+class pairwise_alignment_t
 {
     std::vector<char> states_;
 
 public:
-    pairwise_alignment_t* clone()  const {return new pairwise_alignment_t(*this);}
-
     void flip();
     pairwise_alignment_t flipped() const;
 

@@ -1286,7 +1286,7 @@ extern "C" closure builtin_function_alignment_index2(OperationArgs& Args)
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);
 
-    return substitution::alignment_index2(arg0.as_<pairwise_alignment_t>(), arg1.as_<pairwise_alignment_t>());
+    return substitution::alignment_index2(arg0.as_<Box<pairwise_alignment_t>>(), arg1.as_<Box<pairwise_alignment_t>>());
 }
 
 extern "C" closure builtin_function_alignment_index3(OperationArgs& Args)
@@ -1295,7 +1295,7 @@ extern "C" closure builtin_function_alignment_index3(OperationArgs& Args)
     auto arg1 = Args.evaluate(1);
     auto arg2 = Args.evaluate(2);
 
-    return substitution::alignment_index3(arg0.as_<pairwise_alignment_t>(), arg1.as_<pairwise_alignment_t>(),  arg2.as_<pairwise_alignment_t>());
+    return substitution::alignment_index3(arg0.as_<Box<pairwise_alignment_t>>(), arg1.as_<Box<pairwise_alignment_t>>(),  arg2.as_<Box<pairwise_alignment_t>>());
 }
 
 extern "C" closure builtin_function_peel_internal_branch(OperationArgs& Args)
@@ -1309,8 +1309,8 @@ extern "C" closure builtin_function_peel_internal_branch(OperationArgs& Args)
 
     return substitution::peel_internal_branch(&arg0.as_<Likelihood_Cache_Branch>(),
 					      &arg1.as_<Likelihood_Cache_Branch>(),
-					      arg2.as_<pairwise_alignment_t>(),
-					      arg3.as_<pairwise_alignment_t>(),
+					      arg2.as_<Box<pairwise_alignment_t>>(),
+					      arg3.as_<Box<pairwise_alignment_t>>(),
 					      arg4.as_<EVector>(),
 					      arg5.as_<Box<Matrix>>());
 }
@@ -1357,9 +1357,9 @@ extern "C" closure builtin_function_calc_root_probability(OperationArgs& Args)
     log_double_t Pr = substitution::calc_root_probability(&arg0.as_<Likelihood_Cache_Branch>(),
 							  &arg1.as_<Likelihood_Cache_Branch>(),
 							  &arg2.as_<Likelihood_Cache_Branch>(),
-							  arg3.as_<pairwise_alignment_t>(),
-							  arg4.as_<pairwise_alignment_t>(),
-							  arg5.as_<pairwise_alignment_t>(),
+							  arg3.as_<Box<pairwise_alignment_t>>(),
+							  arg4.as_<Box<pairwise_alignment_t>>(),
+							  arg5.as_<Box<pairwise_alignment_t>>(),
 							  arg6.as_<Box<Matrix>>());
     return {Pr};
 }
@@ -1440,7 +1440,7 @@ extern "C" closure builtin_function_peel_likelihood_2(OperationArgs& Args)
     const auto& seq1  = arg0.as_<EVector>();
     const auto& seq2  = arg1.as_<EVector>();
     const auto& alpha = arg2.as_<alphabet>();
-    const auto& A     = arg3.as_<pairwise_alignment_t>();
+    const auto& A     = arg3.as_<Box<pairwise_alignment_t>>();
     const auto& P     = arg4.as_<EVector>();
     const auto& WF    = arg5.as_<Box<Matrix>>();
 

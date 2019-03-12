@@ -148,12 +148,12 @@ extern "C" closure builtin_function_pairwise_alignment_from_bits(OperationArgs& 
     auto& arg1 =Args.evaluate(1);
     auto& v2 = arg1.as_checked<bitvector>();
 
-    pairwise_alignment_t a;
+    object_ptr<Box<pairwise_alignment_t>> a = new Box<pairwise_alignment_t>;
     if (v1.size() != v2.size())
 	throw myexception()<<"Can't make a pairwise alignment from bitvectors of different length!";
 
     for(int i=0;i<v1.size();i++)
-	a.push_back(v1.test(i), v2.test(i));
+	a->push_back(v1.test(i), v2.test(i));
 
-    return { a };
+    return a;
 }

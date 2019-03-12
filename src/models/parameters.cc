@@ -265,8 +265,8 @@ void mutable_data_partition::set_pairwise_alignment(int b, const pairwise_alignm
     int B = t().reverse(b);
     assert(pairwise_alignment_is_unset(b) or (get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped()));
     const context* C = P;
-    const_cast<context*>(C)->set_parameter_value(DPC().pairwise_alignment_for_branch[b], new pairwise_alignment_t(pi));
-    const_cast<context*>(C)->set_parameter_value(DPC().pairwise_alignment_for_branch[B], new pairwise_alignment_t(pi.flipped()));
+    const_cast<context*>(C)->set_parameter_value(DPC().pairwise_alignment_for_branch[b], new Box<pairwise_alignment_t>(pi));
+    const_cast<context*>(C)->set_parameter_value(DPC().pairwise_alignment_for_branch[B], new Box<pairwise_alignment_t>(pi.flipped()));
 
     assert(get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped());
 }
@@ -284,7 +284,7 @@ expression_ref data_partition::get_pairwise_alignment_(int b) const
 
 const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b) const
 {
-    return get_pairwise_alignment_(b).as_<pairwise_alignment_t>();
+    return get_pairwise_alignment_(b).as_<Box<pairwise_alignment_t>>();
 }
 
 // We want to decrease 
@@ -466,7 +466,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         int L1 = t.is_leaf_node(n1) ? sequences[n1].size() : 0;
         int L2 = t.is_leaf_node(n2) ? sequences[n2].size() : 0;
 
-        auto pi = make_unaligned_pairwise_alignment(L1,L2);
+        Box<pairwise_alignment_t> pi = make_unaligned_pairwise_alignment(L1,L2);
         // Ensure that for the 2-sequence case, the two directions agree on the alignment.
         if (b > t.reverse(b))
             pi = make_unaligned_pairwise_alignment(L2,L1).flipped();
