@@ -217,8 +217,12 @@ void reg_heap::unshare_regs(int t)
         // Any results or steps in the delta should already have their regs unshared.
         for(int r2: Step.created_regs)
         {
-            assert(prog_temp[r2].test(result_bit));
-            assert(prog_temp[r2].test(step_bit));
+            auto t = regs.access(r2).type;
+            if (t == reg::type_t::changeable or t == reg::type_t::unknown)
+            {
+                assert(prog_temp[r2].test(result_bit));
+                assert(prog_temp[r2].test(step_bit));
+            }
         }
     }
 #endif
@@ -270,8 +274,12 @@ void reg_heap::unshare_regs(int t)
         // Any results or steps in the delta should already have their regs unshared.
         for(int r2: Step.created_regs)
         {
-            assert(prog_temp[r2].test(result_bit));
-            assert(prog_temp[r2].test(step_bit));
+            auto t = regs.access(r2).type;
+            if (t == reg::type_t::changeable or t == reg::type_t::unknown)
+            {
+                assert(prog_temp[r2].test(result_bit));
+                assert(prog_temp[r2].test(step_bit));
+            }
         }
     }
 #endif
