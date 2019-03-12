@@ -1,5 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-module Data.Array where
+module Data.Array (module Data.Array,
+                   module Data.Ix)
+    where
 
 import Data.Ix
 
