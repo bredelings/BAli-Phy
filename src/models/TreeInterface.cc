@@ -35,7 +35,7 @@ int TreeInterface::branch_out(int n, int i) const {
     if (P->branches_from_affected_node[n])
 	return (*P->branches_from_affected_node[n])[i];
   
-    return P->TC->parameters_for_tree_node[n][i].get_value(P);
+    return P->TC->parameters_for_tree_node[n][i].get_value(P).as_int();
 }
 
 int TreeInterface::branch_in(int n, int i) const {
@@ -229,15 +229,15 @@ bool TreeInterface::subtree_contains_branch(int b1,int b2) const
 
 
 int TreeInterface::source(int b) const {
-    return std::get<0>(P->TC->parameters_for_tree_branch[b]).get_value(P);
+    return std::get<0>(P->TC->parameters_for_tree_branch[b]).get_value(P).as_int();
 }
 
 int TreeInterface::source_index(int b) const {
-    return std::get<1>(P->TC->parameters_for_tree_branch[b]).get_value(P);
+    return std::get<1>(P->TC->parameters_for_tree_branch[b]).get_value(P).as_int();
 }
 
 int TreeInterface::target(int b) const {
-    return std::get<2>(P->TC->parameters_for_tree_branch[b]).get_value(P);
+    return std::get<2>(P->TC->parameters_for_tree_branch[b]).get_value(P).as_int();
 }
   
 int TreeInterface::undirected(int b) const {

@@ -732,9 +732,9 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
     for(int b=0; b < 2*T.n_branches(); b++)
     {
         expression_ref source = T.directed_branch(b).source().name();
-        maybe_parameter p_source = {-1,T.directed_branch(b).source().name()};
+        maybe_parameter p_source = expression_ref{T.directed_branch(b).source().name()};
         expression_ref source_index = 0;
-        maybe_parameter p_source_index = {-1,0};
+        maybe_parameter p_source_index = expression_ref{0};
         if (not T.directed_branch(b).source().is_leaf_node())
         {
             string name_source = "*MyTree.branch"+convertToString(b)+"source"; 
@@ -747,7 +747,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
         }
 
         expression_ref target = T.directed_branch(b).target().name();
-        maybe_parameter p_target = {-1, T.directed_branch(b).target().name()};
+        maybe_parameter p_target = expression_ref{T.directed_branch(b).target().name()};
         if (not T.directed_branch(b).target().is_leaf_node())
         {
             string name_target = "*MyTree.branch"+convertToString(b)+"target"; 

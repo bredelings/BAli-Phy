@@ -205,19 +205,19 @@ struct smodel_methods
 class maybe_parameter
 {
     std::optional<int> param;
-    std::optional<int> value;
+    std::optional<expression_ref> value;
 public:
-    int get_value(const context* C) const
-	{
-	    if (is_const())
-		return *value;
-	    else
-		return C->get_parameter_value(*param).as_int();
-	}
-    void set_value(context* C, int v) { assert(not is_const()); C->set_parameter_value(*param,v);}
+    expression_ref get_value(const context* C) const
+    {
+        if (is_const())
+            return *value;
+        else
+            return C->get_parameter_value(*param);
+    }
+    void set_value(context* C, const expression_ref& v) { assert(not is_const()); C->set_parameter_value(*param,v);}
     bool is_const() const {return not param;}
     maybe_parameter(int p):param(p) {}
-    maybe_parameter(int,int v):value(v) {}
+    maybe_parameter(const expression_ref& v):value(v) {}
 };
 
 struct tree_constants: public Object
