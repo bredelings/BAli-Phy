@@ -87,7 +87,7 @@ namespace MCMC {
     typedef void (*atomic_move_arg)(owned_ptr<Model>&,MoveStats&,int);
 
     //---------------- Move's w/ sub-moves --------------------//
-    class Move: public Object
+    class Move
     {
 	bool enabled_;
 
