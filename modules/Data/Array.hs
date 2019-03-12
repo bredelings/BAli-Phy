@@ -1,7 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Data.Array where
 
-import Data.Bool
+import Data.Ix
 
 builtin arraySize 1 "arraySize" "Array"
 builtin ! 2 "getIndex" "Array"
