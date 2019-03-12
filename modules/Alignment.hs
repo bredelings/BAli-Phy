@@ -55,7 +55,7 @@ data PairwiseAlignment = PairwiseAlignment
 data AlignmentOnTree = AlignmentOnTree Tree Int (Array Int Int) (Array Int PairwiseAlignment)
 n_sequences (AlignmentOnTree _ n _ _) = n
 
-alignment_pr (AlignmentOnTree tree n_seqs lengths as) hmms model = if arraySize lengths == 1 then
+alignment_pr (AlignmentOnTree tree n_seqs lengths as) hmms model = if numElements lengths == 1 then
                                                                        alignment_pr1 (lengths!0) model 
                                                                    else
                                                                        (alignment_pr_top as tree hmms)/(alignment_pr_bot as tree model)

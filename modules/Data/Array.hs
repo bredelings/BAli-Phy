@@ -17,7 +17,7 @@ import Data.List
 infixl 9 !
 builtin ! 2 "getIndex" "Array"
 
-builtin arraySize 1 "arraySize" "Array"
+builtin numElements 1 "arraySize" "Array"
 builtin mkArray 2 "mkArray" "Array"
 
 listArray n l = mkArray n (\i -> l !! i)
