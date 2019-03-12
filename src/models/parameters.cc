@@ -497,9 +497,11 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         expression_ref a = parameter( p->parameter_name(pairwise_alignment_for_branch[b]) );
         as_.push_back(a);
     }
-    expression_ref as = p->get_expression( p->add_compute_expression({var("Prelude.listArray'"),get_list(as_)}) );
+    expression_ref as_list = p->get_expression( p->add_compute_expression(get_list(as_) ) );
+    expression_ref as = p->get_expression( p->add_compute_expression({var("Prelude.listArray'"),as_list}));
 
     // R4. Register sequence length methods
+    EVector sequence_lengths_;
     for(int n=0;n<t.n_nodes();n++)
     {
         expression_ref L;
@@ -508,7 +510,10 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	else
 	    L = {var("Alignment.seqlength"), as, p->my_tree(), n};
         sequence_length_indices[n] = p->add_compute_expression( L );
+	sequence_lengths_.push_back(p->get_expression(sequence_length_indices[n]));
     }
+
+    expression_ref alignment_on_tree = {var("Alignment.AlignmentOnTree"), p->my_tree(), t.n_nodes(), get_list(sequence_lengths_), as_list};
 
     if (p->t().n_nodes() == 1)
     {
