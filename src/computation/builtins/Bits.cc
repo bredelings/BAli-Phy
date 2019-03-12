@@ -129,7 +129,7 @@ extern "C" closure builtin_function_clear_bit(OperationArgs& Args)
 extern "C" closure builtin_function_alignment_row_to_presence_bitvector(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
-    auto& A = arg0.as_<alignment>();
+    auto& A = arg0.as_<Box<alignment>>().value();
     auto &a = A.get_alphabet();
 
     int row = Args.evaluate(1).as_int();

@@ -673,7 +673,7 @@ extern "C" closure builtin_function_smc_density(OperationArgs& Args)
 	level_boundaries.push_back(l.as_double());
 
     auto a = Args.evaluate(3);
-    auto& A = a.as_<alignment>();
+    auto& A = a.as_<Box<alignment>>().value();
 
     return { smc(rho_over_theta, coalescent_rates, level_boundaries, A) };
 }

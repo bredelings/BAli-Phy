@@ -40,7 +40,7 @@
 //        of some column.
 
 /// A multiple sequence alignment
-class alignment: public Object
+class alignment
 {
     /// The homology array - accessed through operator()
     matrix<int> array;
@@ -59,8 +59,6 @@ class alignment: public Object
   
 public:
 
-    alignment* clone() const {return new alignment(*this);}
-  
     /// Unsafe - Make a copy of the alignment without preserving the homology array
     friend alignment blank_copy(const alignment&,int length);
 

@@ -275,7 +275,7 @@ extern "C" closure builtin_function_bitmask_from_alignment(OperationArgs& Args)
     using boost::dynamic_bitset;
 
     auto arg0 = Args.evaluate(0);
-    const auto& A = arg0. as_<alignment>();
+    const auto& A = arg0. as_<Box<alignment>>().value();
 
     int seq = Args.evaluate(1).as_int();
 
@@ -298,7 +298,7 @@ extern "C" closure builtin_function_load_alignment(OperationArgs& Args)
 
     std::string filename = Args.evaluate(1).as_checked<String>();
 
-    object_ptr<alignment> A(new alignment(a,filename));
+    object_ptr<Box<alignment>> A(new Box<alignment>(a,filename));
 
     return A;
 }
@@ -306,7 +306,7 @@ extern "C" closure builtin_function_load_alignment(OperationArgs& Args)
 extern "C" closure builtin_function_sequences_from_alignment(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
-    auto& A = arg0.as_<alignment>();
+    auto& A = arg0.as_<Box<alignment>>().value();
     auto &a = A.get_alphabet();
 
     EVector sequences;
