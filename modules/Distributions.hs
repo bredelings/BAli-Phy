@@ -277,14 +277,15 @@ random_tree_edges [l1] _         = return []
 random_tree_edges [l1,l2] _      = return [(l1,l2)]
 random_tree_edges leaves internal = do (l1,leaves')  <- remove_one leaves
                                        (l2,leaves'') <- remove_one leaves'
-                                       (i,internal') <- remove_one internal
+                                       let (i:internal') = internal
                                        other_edges <- random_tree_edges (i:leaves'') internal'
                                        return $ [(l1,i),(l2,i)]++other_edges
 
 -- If we could stop assuming that leaf branches have names 0..n then this would work
 random_tree n = do let num_nodes = 2*n-2
                    edges <- random_tree_edges [0..n-1] [n..num_nodes-1]
-                   return $ tree_from_edges num_nodes edges
+                   let sorted_edges = quicksortWith (\(leaf,internal) -> leaf) edges
+                   return $ tree_from_edges num_nodes sorted_edges
 
 modifiable_tree tree = Tree (listArray' nodes) (listArray' branches) (numNodes tree) (numBranches tree) where
     nodes =    [ map modifiable (edgesOutOfNode tree n) | n <- xrange 0 (numNodes tree) ]
