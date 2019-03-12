@@ -53,12 +53,11 @@ pairwise_alignment_from_bits (BitVector x) (BitVector y) = builtin_pairwise_alig
 
 data PairwiseAlignment = PairwiseAlignment
 
-data AlignmentOnTree = AlignmentOnTree Tree Int [Int] [PairwiseAlignment]
+data AlignmentOnTree = AlignmentOnTree Tree Int (Array Int Int) (Array Int PairwiseAlignment)
 n_sequences (AlignmentOnTree _ n _ _) = n
 
-alignment_pr' (AlignmentOnTree tree n_seqs seqlengths as) hmms model = if n_seqs == 1 then
-                                                                           let [seq] = seqlengths
-                                                                           in alignment_pr1 seq model 
+alignment_pr' (AlignmentOnTree tree n_seqs lengths as) hmms model = if arraySize lengths == 1 then
+                                                                           alignment_pr1 (lengths!0) model 
                                                                        else
                                                                            alignment_pr as tree hmms model
 

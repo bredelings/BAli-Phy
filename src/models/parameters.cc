@@ -488,7 +488,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     {
         seqs_.push_back( p->get_expression(index) );
     }
-    auto seqs_array = p->get_expression( p->add_compute_expression({var("Prelude.listArray'"),get_list(seqs_)}) );
 
     // R3. Register array of pairwise alignments
     EVector as_;
@@ -512,8 +511,10 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         sequence_length_indices[n] = p->add_compute_expression( L );
 	sequence_lengths_.push_back(p->get_expression(sequence_length_indices[n]));
     }
+    auto seqs_array = p->get_expression( p->add_compute_expression({var("Prelude.listArray'"),get_list(seqs_)}) );
 
-    expression_ref alignment_on_tree = {var("Alignment.AlignmentOnTree"), p->my_tree(), t.n_nodes(), get_list(sequence_lengths_), as_list};
+    expression_ref alignment_on_tree = {var("Alignment.AlignmentOnTree"), p->my_tree(), t.n_nodes(), seqs_array, as};
+    alignment_on_tree = p->get_expression( p->add_compute_expression(alignment_on_tree) );
 
     if (p->t().n_nodes() == 1)
     {
@@ -612,13 +613,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         }
 
         // Alignment prior
-        if (p->t().n_nodes() == 1)
-        {
-            expression_ref seq = {var("Prelude.!"),seqs_array, 0};
-            alignment_prior_index = p->add_compute_expression( {var("Alignment.alignment_pr1"), seq, model} );
-        }
-        else
-            alignment_prior_index = p->add_compute_expression( {var("Alignment.alignment_pr"), as, p->my_tree(), hmms, model} );
+	alignment_prior_index = p->add_compute_expression( {var("Alignment.alignment_pr'"), alignment_on_tree, hmms, model} );
 
 
         expression_ref alignment_pdf = p->get_expression(alignment_prior_index);
