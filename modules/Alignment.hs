@@ -24,9 +24,8 @@ seqlength a tree node = pairwise_alignment_length1 (a!b) where
     b = head $ edgesOutOfNode tree node
 
 product' = foldl' (*) (doubleToLogDouble 1.0)
-alignment_pr_top a tree hmms = product' $ map (alignment_branch_pr a hmms) [0..numBranches tree - 1]
-alignment_pr_bot a tree (_,lengthp) = (product' $ map (lengthp . seqlength a tree) (internal_nodes tree))^2
-alignment_pr a tree hmms model = (alignment_pr_top a tree hmms)/(alignment_pr_bot a tree model)
+alignment_pr_top as tree hmms = product' $ map (alignment_branch_pr as hmms) [0..numBranches tree - 1]
+alignment_pr_bot as tree (_,lengthp) = (product' $ map (lengthp . seqlength as tree) (internal_nodes tree))^2
 alignment_pr1 seq (_,lengthp) = lengthp (sizeOfVectorInt seq)
 load_alignment alphabet filename = builtin_load_alignment alphabet (listToString filename)
 -- sequence_from_alignment :: AlignmentMatrix -> [ Vector<int> ]
@@ -56,11 +55,11 @@ data PairwiseAlignment = PairwiseAlignment
 data AlignmentOnTree = AlignmentOnTree Tree Int (Array Int Int) (Array Int PairwiseAlignment)
 n_sequences (AlignmentOnTree _ n _ _) = n
 
-alignment_pr' (AlignmentOnTree tree n_seqs lengths as) hmms model = if arraySize lengths == 1 then
-                                                                           alignment_pr1 (lengths!0) model 
-                                                                       else
-                                                                           alignment_pr as tree hmms model
+alignment_pr (AlignmentOnTree tree n_seqs lengths as) hmms model = if arraySize lengths == 1 then
+                                                                       alignment_pr1 (lengths!0) model 
+                                                                   else
+                                                                       (alignment_pr_top as tree hmms)/(alignment_pr_bot as tree model)
 
 modifiable_alignment (AlignmentOnTree tree n_seqs seqlengths as) = AlignmentOnTree tree n_seqs (map modifiable seqlengths) (map modifiable as)
 
-random_alignment tree hmms model = ProbDensity (\a -> [alignment_pr' a hmms model]) (no_quantile "random_alignment") (RandomStructure modifiable_alignment ()) ()
+random_alignment tree hmms model = ProbDensity (\a -> [alignment_pr a hmms model]) (no_quantile "random_alignment") (RandomStructure modifiable_alignment ()) ()

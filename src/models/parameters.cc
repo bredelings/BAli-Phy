@@ -619,7 +619,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         }
 
         // Alignment prior
-        alignment_prior_index = p->add_compute_expression( {var("Alignment.alignment_pr'"), alignment_on_tree, hmms, model} );
+        alignment_prior_index = p->add_compute_expression( {var("Alignment.alignment_pr"), alignment_on_tree, hmms, model} );
 
         expression_ref alignment_pdf = p->get_expression(alignment_prior_index);
         alignment_pdf = make_if_expression(parameter("*variable_alignment"), alignment_pdf, log_double_t(1.0));
