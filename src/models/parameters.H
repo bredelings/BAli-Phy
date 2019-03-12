@@ -202,9 +202,9 @@ struct smodel_methods
     smodel_methods(const expression_ref&, context&);
 };
 
-class maybe_parameter
+class maybe_modifiable
 {
-    std::optional<int> param;
+    std::optional<int> modifiable_reg;
     std::optional<expression_ref> value;
 public:
     expression_ref get_value(const context* C) const
@@ -212,20 +212,20 @@ public:
         if (is_const())
             return *value;
         else
-            return C->get_parameter_value(*param);
+            return C->get_modifiable_value(*modifiable_reg);
     }
-    void set_value(context* C, const expression_ref& v) { assert(not is_const()); C->set_parameter_value(*param,v);}
-    bool is_const() const {return not param;}
-    maybe_parameter(int p):param(p) {}
-    maybe_parameter(const expression_ref& v):value(v) {}
+    void set_value(context* C, const expression_ref& v) { assert(not is_const()); C->set_modifiable_value(*modifiable_reg,v);}
+    bool is_const() const {return not modifiable_reg;}
+    maybe_modifiable(int p):modifiable_reg(p) {}
+    maybe_modifiable(const expression_ref& v):value(v) {}
 };
 
 struct tree_constants: public Object
 {
     // The tree
     int tree_head = -1;
-    std::vector<std::vector<maybe_parameter>> parameters_for_tree_node;
-    std::vector<std::tuple<maybe_parameter,maybe_parameter,maybe_parameter>> parameters_for_tree_branch;
+    std::vector<std::vector<maybe_modifiable>> parameters_for_tree_node;
+    std::vector<std::tuple<maybe_modifiable,maybe_modifiable,maybe_modifiable>> parameters_for_tree_branch;
 
     std::vector<int> branch_duration_index;
     std::vector<std::optional<int>> branch_duration_regs;
