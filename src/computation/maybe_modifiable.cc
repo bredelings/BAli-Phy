@@ -2,6 +2,22 @@
 #include "computation/expression/reg_var.H"
 #include "computation/expression/modifiable.H"
 
+expression_ref maybe_modifiable::get_value(const context* C) const
+{
+    if (modifiable_reg)
+        return C->get_modifiable_value(*modifiable_reg);
+    else
+        return *value;
+}
+
+void maybe_modifiable::set_value(context* C, const expression_ref& v)
+{
+    if (modifiable_reg)
+        C->set_modifiable_value(*modifiable_reg,v);
+    else if (v != *value)
+        throw myexception()<<"maybe_modifiable::set_value: trying to set constant '"<<*value<<"' to '"<<v<<"'";
+}
+
 maybe_modifiable get_maybe_modifiable(const expression_ref& E)
 {
     if (is_modifiable(E))
