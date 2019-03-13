@@ -668,23 +668,26 @@ vector<int> edges_connecting_to_node(const Tree& T, int n)
     return branch_list_;
 }
 
-void tree_constants::register_branch_lengths(context* C, const expression_ref& branch_lengths)
+void tree_constants::register_branch_lengths(context* C, const expression_ref& branch_lengths_exp)
 {
     int B = parameters_for_tree_branch.size()/2;
     if (B == 0) return;
 
-    int branch_lengths_index = C->add_compute_expression( branch_lengths );
+    int branch_lengths_index = C->add_compute_expression( branch_lengths_exp );
     C->evaluate(branch_lengths_index);
-    auto branch_durations = C->get_expression(branch_lengths_index);
+    auto branches_structure = C->evaluate_expression({var("Parameters.maybe_modifiable_structure"), C->get_expression(branch_lengths_index)});
+    auto branch_durations_exp = C->get_expression(branch_lengths_index);
+
+    if (log_verbose >= 3)
+        std::cerr<<"branch lengths = "<<branches_structure<<"\n\n";
 
     // Create the parameters that hold branch lengths
     for(int b=0;b<B;b++)
     {
-        int index = C->add_compute_expression( {var("Data.Array.!"), branch_durations, b} );
-        auto R = C->compute_expression_is_modifiable_reg(index);
+        int index = C->add_compute_expression( {var("Data.Array.!"), branch_durations_exp, b} );
 
+        branch_durations.push_back( get_maybe_modifiable(branches_structure.sub()[b]) );
         branch_duration_index.push_back(index);
-        branch_duration_regs.push_back(R);
     }
 }
 
@@ -696,10 +699,16 @@ tree_constants::tree_constants(context* C, const vector<string>& labels, int tre
     //------------------------- Create the tree structure -----------------------//
     auto tree_structure = C->evaluate_expression({var("Parameters.maybe_modifiable_structure"), C->get_expression(tree_head)});
 
+    if (log_verbose >= 3)
+        std::cerr<<"tree = "<<tree_structure<<"\n\n";
+
     auto edges_out_of_node = tree_structure.sub()[0];
     auto nodes_for_edge    = tree_structure.sub()[1];
     int n_nodes            = tree_structure.sub()[2].as_int();
     int n_branches         = tree_structure.sub()[3].as_int();
+
+    if (log_verbose >= 3)
+        std::cerr<<"num_branches = "<<C->evaluate_expression({var("Parameters.maybe_modifiable_structure"), {var("Tree.numBranches"), C->get_expression(tree_head)}})<<"\n\n";;
 
     assert(node_labels.size() == n_nodes);
 

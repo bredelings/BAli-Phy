@@ -211,7 +211,7 @@ struct tree_constants: public Object
     std::vector<std::tuple<maybe_modifiable,maybe_modifiable,maybe_modifiable>> parameters_for_tree_branch;
 
     std::vector<int> branch_duration_index;
-    std::vector<std::optional<int>> branch_duration_regs;
+    std::vector<maybe_modifiable> branch_durations;
 
     int n_leaves;
 

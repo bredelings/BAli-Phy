@@ -318,16 +318,16 @@ double TreeInterface::branch_length(int b) const
 bool TreeInterface::can_set_branch_length(int b)
 {
     b %= n_branches();
-    return bool(P->TC->branch_duration_regs[b]);
+    return bool(P->TC->branch_durations[b].is_modifiable());
 }
 
 void TreeInterface::set_branch_length(int b, double l)
 {
     b %= n_branches();
-    auto& R = P->TC->branch_duration_regs[b];
-    if (not R)
+    auto& R = P->TC->branch_durations[b];
+    if (not R.is_modifiable())
 	throw myexception()<<"Trying to set length for branch "<<b<<" which is not directly modifiable.";
-    const_cast<Parameters*>(P)->set_modifiable_value(*R, l);
+    R.set_value(const_cast<Parameters*>(P), l);
 }
 
 vector<int> branches_from_leaves(const TreeInterface& t) 
