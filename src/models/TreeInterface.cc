@@ -31,7 +31,8 @@ int TreeInterface::degree(int n) const {
 	return P->TC->parameters_for_tree_node[n].size();
 }
 
-int TreeInterface::branch_out(int n, int i) const {
+int TreeInterface::branch_out(int n, int i) const
+{
     if (P->branches_from_affected_node[n])
 	return (*P->branches_from_affected_node[n])[i];
   
@@ -536,15 +537,12 @@ void TreeInterface::read_tree_node(const Tree& T, int n)
 void TreeInterface::read_tree(const Tree& T)
 {
     for(int n=0; n < T.n_nodes(); n++)
-	if (not T.node(n).is_leaf_node())
-	    read_tree_node(T, n);
+        read_tree_node(T, n);
 
     for(int b=0; b < 2*T.n_branches(); b++)
     {
-	if (not T.directed_branch(b).source().is_leaf_node())
-	    std::get<0>(P->TC->parameters_for_tree_branch[b]).set_value(const_cast<Parameters*>(P), (int)T.directed_branch(b).source());
-	if (not T.directed_branch(b).target().is_leaf_node())
-	    std::get<2>(P->TC->parameters_for_tree_branch[b]).set_value(const_cast<Parameters*>(P), (int)T.directed_branch(b).target());
+        std::get<0>(P->TC->parameters_for_tree_branch[b]).set_value(const_cast<Parameters*>(P), (int)T.directed_branch(b).source());
+        std::get<2>(P->TC->parameters_for_tree_branch[b]).set_value(const_cast<Parameters*>(P), (int)T.directed_branch(b).target());
     }
 }
 
