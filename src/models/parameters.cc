@@ -730,46 +730,16 @@ tree_constants::tree_constants(Parameters* p, const vector<string>& labels, int 
     }
 }
 
-tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
-    :n_leaves(T.n_leaves()),
-     node_labels(T.get_labels())
+expression_ref tree_expression(const SequenceTree& T)
 {
     /*------------------------- Create the tree structure -----------------------*/
     vector<expression_ref> node_branches;
     for(int n=0; n < T.n_nodes(); n++)
     {
-        auto edges = edges_connecting_to_node(T,n);
-        vector<maybe_modifiable> m_node;
         vector<expression_ref> node;
+        for(auto& edge: edges_connecting_to_node(T,n))
+            node.push_back( edge );
     
-        if (T.node(n).is_leaf_node())
-        {
-            if (edges.empty())
-            {
-                m_node = { };
-            }
-            else
-            {
-                node.push_back(edges.front());
-                m_node = { expression_ref{n} };
-            }
-        }
-        else
-        {
-            for(int i=0;i<edges.size();i++)
-            {
-                const auto& edge = edges[i];
-                string name = "*MyTree.nodeBranches"+convertToString(n) + "." + convertToString(i);
-                int p_index = p->add_modifiable_parameter_with_value(name,edge);
-                auto p_reg = p->parameter_is_modifiable_reg(p_index);
-                if (not p_reg)
-                    throw myexception()<<"Parameter '"<<name<<"' is not modifiable!";
-                m_node.push_back( *p_reg );
-                node.push_back( reg_var(*p_reg) );
-            }
-        }
-    
-        parameters_for_tree_node.push_back ( m_node );
         node_branches.push_back( get_list(node) );
     }
     expression_ref node_branches_array = {var("Data.Array.listArray'"),get_list(node_branches)};
@@ -778,51 +748,17 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
     for(int b=0; b < 2*T.n_branches(); b++)
     {
         expression_ref source = T.directed_branch(b).source().name();
-        maybe_modifiable m_source = expression_ref{T.directed_branch(b).source().name()};
+        // FIXME: What position in the edges_out_of_node list for the source node is this branch?
         expression_ref source_index = 0;
-        maybe_modifiable m_source_index = expression_ref{0};
-        if (not T.directed_branch(b).source().is_leaf_node())
-        {
-            string name_source = "*MyTree.branch"+convertToString(b)+"source"; 
-            int p_source = p->add_modifiable_parameter_with_value(name_source, source);
-            auto p_source_reg = p->parameter_is_modifiable_reg(p_source);
-            if (not p_source_reg)
-                throw myexception()<<"Parameter '"<<name_source<<"' is not modifiable!";
-            m_source = *p_source_reg;
-            source = reg_var(*p_source_reg);
-
-            string name_source_index = "*MyTree.branch"+convertToString(b)+"source_index"; 
-            int p_source_index = p->add_modifiable_parameter_with_value(name_source_index, source_index);
-            auto p_source_index_reg = p->parameter_is_modifiable_reg(p_source_index);
-            if (not p_source_index_reg)
-                throw myexception()<<"Parameter '"<<name_source_index<<"' is not modifiable!";
-            m_source_index = *p_source_index_reg;
-            source_index = reg_var(*p_source_index_reg);
-        }
-
         expression_ref target = T.directed_branch(b).target().name();
-        maybe_modifiable m_target = expression_ref{T.directed_branch(b).target().name()};
-        if (not T.directed_branch(b).target().is_leaf_node())
-        {
-            string name_target = "*MyTree.branch"+convertToString(b)+"target"; 
-            int p_target = p->add_modifiable_parameter_with_value(name_target,target);
-            auto p_target_reg = p->parameter_is_modifiable_reg(p_target);
-            if (not p_target_reg)
-                throw myexception()<<"Parameter '"<<name_target<<"' is not modifiable!";
-            m_target = *p_target_reg;
-            target = reg_var(*p_target_reg);
-        }
-
         int reverse_branch = T.directed_branch(b).reverse();
-        parameters_for_tree_branch.push_back( std::tuple<maybe_modifiable, maybe_modifiable, maybe_modifiable>{m_source, m_source_index, m_target} );
         branch_nodes.push_back( Tuple(source, source_index, target, reverse_branch) );
     }
     expression_ref branch_nodes_array = {var("Data.Array.listArray'"),get_list(branch_nodes)};
 
-    expression_ref tree_con = lambda_expression( constructor("Tree.Tree",4) );
+    expression_ref tree_con = var("Tree.Tree");
 
-    tree_head = p->add_compute_expression( {tree_con, node_branches_array, branch_nodes_array, T.n_nodes(), T.n_branches()});
-    auto tree = p->get_expression(tree_head);
+    return {tree_con, node_branches_array, branch_nodes_array, T.n_nodes(), T.n_branches()};
 }
 
 bool Parameters::variable_alignment_from_param() const

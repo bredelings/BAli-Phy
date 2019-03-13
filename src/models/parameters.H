@@ -221,7 +221,6 @@ struct tree_constants: public Object
 
     tree_constants* clone() const {return new tree_constants(*this);}
 
-    tree_constants(Parameters*, const SequenceTree&);
     tree_constants(Parameters*, const std::vector<std::string>&, int);
 };
 
