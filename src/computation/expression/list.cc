@@ -3,6 +3,7 @@
 #include "lambda.H"
 
 using std::vector;
+using std::optional;
 using std::string;
 
 expression_ref List() {return constructor("[]",0);}
@@ -30,9 +31,9 @@ expression_ref char_list(const string& s)
     return get_list(letters);
 }
 
-vector<expression_ref> get_ref_vector_from_list(const expression_ref& E)
+optional<EVector> list_to_evector(const expression_ref& E)
 {
-    vector<expression_ref> V;
+    EVector V;
 
     expression_ref E2 = E;
     while(has_constructor(E2,":"))
@@ -41,8 +42,9 @@ vector<expression_ref> get_ref_vector_from_list(const expression_ref& E)
 	V.push_back(E2.sub()[0]);
 	E2 = E2.sub()[1];
     }
-    assert(has_constructor(E2,"[]"));
-
-    return V;
+    if (has_constructor(E2,"[]"))
+        return V;
+    else
+        return {};
 }
 

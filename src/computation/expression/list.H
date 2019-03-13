@@ -61,13 +61,15 @@ std::vector<T> get_vector(const expression_ref& E)
 
 std::vector<expression_ref> get_ref_vector_from_list(const expression_ref& E);
 
+std::optional<EVector> list_to_evector(const expression_ref& E);
+
 template <typename T,typename U>
 std::vector<T> get_vector_from_list(const expression_ref& E)
 {
-    std::vector<expression_ref> v1 = get_ref_vector_from_list(E);
+    auto v1 = list_to_evector(E);
     std::vector<T> v2;
-    for(int i=0;i<v1.size();i++)
-	v2.push_back(v1[i].as_<U>());
+    for(int i=0;i<v1->size();i++)
+	v2.push_back((*v1)[i].as_<U>());
     return v2;
 }
 
