@@ -688,6 +688,47 @@ void tree_constants::register_branch_lengths(Parameters* p, const expression_ref
     }
 }
 
+tree_constants::tree_constants(Parameters* p, const vector<string>& labels, int tree_head_)
+    :tree_head(tree_head_),
+     n_leaves(0),
+     node_labels(labels)
+{
+    //------------------------- Create the tree structure -----------------------//
+    auto tree_structure = p->evaluate_expression({var("Parameters.maybe_modifiable_structure"), p->get_expression(tree_head_)});
+
+    auto edges_out_of_node = tree_structure.sub()[0];
+    auto nodes_for_edge    = tree_structure.sub()[1];
+    int n_nodes            = tree_structure.sub()[2].as_int();
+    int n_branches         = tree_structure.sub()[3].as_int();
+
+    assert(node_labels.size() == n_nodes);
+
+    for(int n=0; n < n_nodes; n++)
+    {
+        auto edges = list_to_evector(edges_out_of_node.sub()[n]);
+        assert(edges);
+
+        vector<maybe_modifiable> m_edges;
+        for(auto& edge: *edges)
+            m_edges.push_back(get_maybe_modifiable(edge));
+
+        parameters_for_tree_node.push_back ( m_edges );
+
+        if (m_edges.size() < 2) n_leaves++;
+    }
+
+    for(int b=0; b < 2*n_branches; b++)
+    {
+        auto nodes = nodes_for_edge.sub()[b];
+
+        assert(has_constructor(nodes,"(,,,)"));
+        maybe_modifiable m_source = get_maybe_modifiable(nodes.sub()[0]);
+        maybe_modifiable m_source_index = get_maybe_modifiable(nodes.sub()[1]);
+        maybe_modifiable m_target = get_maybe_modifiable(nodes.sub()[2]);
+
+        parameters_for_tree_branch.push_back( std::tuple<maybe_modifiable, maybe_modifiable, maybe_modifiable>{m_source, m_source_index, m_target} );
+    }
+}
 
 tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
     :n_leaves(T.n_leaves()),
@@ -1565,6 +1606,11 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     
     int atmodel_index = add_program(program_exp);
     expression_ref atmodel = get_expression(atmodel_index);
+
+    int tree_index = add_compute_expression( {var("BAliPhy.ATModel.tree"), atmodel});
+
+    auto TC2 = new tree_constants(this, tt.get_labels(), tree_index);
+    atmodel = get_expression(atmodel_index);
     /* --------------------------------------------------------------- */
 
     // R1. Register branch lengths

@@ -213,7 +213,7 @@ struct tree_constants: public Object
     std::vector<int> branch_duration_index;
     std::vector<std::optional<int>> branch_duration_regs;
 
-    int n_leaves = -1;
+    int n_leaves;
 
     std::vector<std::string> node_labels;
   
@@ -222,7 +222,7 @@ struct tree_constants: public Object
     tree_constants* clone() const {return new tree_constants(*this);}
 
     tree_constants(Parameters*, const SequenceTree&);
-    tree_constants(Parameters*, const SequenceTree&, int);
+    tree_constants(Parameters*, const std::vector<std::string>&, int);
 };
 
 struct parameters_constants: public Object
