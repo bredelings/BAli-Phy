@@ -5,10 +5,72 @@
 #include "computation/machine/graph_register.H"
 #include "computation/expression/bool.H"
 #include "computation/expression/index_var.H"
+#include "computation/expression/reg_var.H"
 #include "computation/expression/random_variable.H"
 #include "computation/expression/modifiable.H"
+#include "computation/expression/list.H"
+#include "computation/maybe_modifiable.H"
 
 using boost::dynamic_pointer_cast;
+
+using std::optional;
+using std::vector;
+
+// Recursively walk through constant structures:It seems like we want a kind of deep_eval_translate_list, except that
+// (i)   walk through constant structures, translating their fields.
+// (ii)  translate modifiables -> modifiable + reg_var(r)
+// (iii) translate other non-constant fields to reg_var(r)
+
+expression_ref maybe_modifiable_structure(OperationArgs& Args, int r1)
+{
+    // FIXME - we might need to handle random variables when generating here, as we do in reg_head::find_update_modifiable_reg( ).
+
+    // 0. We aren't going to record any uses or forces.  We just want to extract information.
+    reg_heap& M = Args.memory();
+
+    // 1. First evaluate the reg.  This will yield a non-index_var.
+    auto [r2, value] = M.incremental_evaluate(r1);
+
+    // 2. If this is a structure then translate the parts.
+    if (M.reg_is_constant(r2))
+    {
+        auto& C = M[r2];
+
+        // 2a. Atomic constants are already done.
+        if (C.exp.size() == 0)
+            return C.exp;
+
+        // 2b. Constants with fields need their fields translated.
+        vector<expression_ref> sub;
+        for(int i=0; i< C.exp.size(); i++)
+            sub.push_back(maybe_modifiable_structure(Args, C.reg_for_slot(i)));
+
+        return expression_ref(C.exp.head(), sub);
+    }
+
+    // r2 can only be constant or changeable, not unknown or index_var.
+    assert(M.reg_is_changeable(r2));
+
+    // 3. If this is a modifiable, stop there and return that.
+    if (is_modifiable(M[r2].exp))
+    {
+        // We are going to encode the "modifiable" outcome this way.
+        expression_ref m = modifiable();
+        m = m + reg_var(r2);
+        return m;
+    }
+
+    // 4. Handle changeable computations
+    return reg_var(r2);
+}
+
+
+extern "C" closure builtin_function_maybe_modifiable_structure(OperationArgs& Args)
+{
+    int R1 = Args.evaluate_slot_to_reg(0);
+
+    return maybe_modifiable_structure(Args, R1);
+}
 
 extern "C" closure builtin_function_random_variable(OperationArgs& Args)
 {

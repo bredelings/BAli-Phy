@@ -11,6 +11,7 @@ builtin get_modifiable_value 2 "get_modifiable_value" "Modifiables"
 builtin builtin_add_parameter 2 "add_parameter" "Modifiables"
 builtin builtin_register_prior 1 "register_prior" "Modifiables"
 builtin builtin_register_likelihood 1 "register_likelihood" "Modifiables"
+builtin maybe_modifiable_structure 1 "maybe_modifiable_structure" "Modifiables"
 
 builtin builtin_random_variable 5 "random_variable" "Modifiables"
 builtin register_random_variable 1 "register_random_variable" "Modifiables"
