@@ -668,7 +668,7 @@ vector<int> edges_connecting_to_node(const Tree& T, int n)
     return branch_list_;
 }
 
-void tree_constants::register_branch_lengths(Parameters* p, const expression_ref& branch_lengths)
+void tree_constants::register_branch_lengths(context* p, const expression_ref& branch_lengths)
 {
     int B = parameters_for_tree_branch.size()/2;
     if (B == 0) return;
@@ -688,13 +688,13 @@ void tree_constants::register_branch_lengths(Parameters* p, const expression_ref
     }
 }
 
-tree_constants::tree_constants(Parameters* p, const vector<string>& labels, int tree_head_)
+tree_constants::tree_constants(context* C, const vector<string>& labels, int tree_head_)
     :tree_head(tree_head_),
      n_leaves(0),
      node_labels(labels)
 {
     //------------------------- Create the tree structure -----------------------//
-    auto tree_structure = p->evaluate_expression({var("Parameters.maybe_modifiable_structure"), p->get_expression(tree_head_)});
+    auto tree_structure = C->evaluate_expression({var("Parameters.maybe_modifiable_structure"), C->get_expression(tree_head_)});
 
     auto edges_out_of_node = tree_structure.sub()[0];
     auto nodes_for_edge    = tree_structure.sub()[1];
