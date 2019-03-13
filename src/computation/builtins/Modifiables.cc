@@ -34,7 +34,7 @@ expression_ref maybe_modifiable_structure(OperationArgs& Args, int r1)
     // 2. If this is a structure then translate the parts.
     if (M.reg_is_constant(r2))
     {
-        auto& C = M[r2];
+        auto C = M[r2];
 
         // 2a. Atomic constants are already done.
         if (C.exp.size() == 0)
