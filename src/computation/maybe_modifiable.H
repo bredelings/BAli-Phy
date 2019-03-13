@@ -13,6 +13,7 @@ public:
     void set_value(context* C, const expression_ref& v);
 
     std::optional<expression_ref> constant_value() const {return value;}
+    std::optional<int> is_modifiable() const {return modifiable_reg;}
 
     maybe_modifiable(int p):modifiable_reg(p) {}
     maybe_modifiable(const expression_ref& v):value(v) {}
