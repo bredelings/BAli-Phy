@@ -1283,6 +1283,7 @@ double Parameters::get_branch_subst_rate(int p, int /* b */) const
 
 expression_ref Parameters::my_tree() const
 {
+    assert(TC);
     return get_expression(TC->tree_head);
 }
 
@@ -1528,9 +1529,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     /* ---------------- Set up the tree ------------------------------ */
     branches_from_affected_node.resize(tt.n_nodes());
 
-    TC = new tree_constants(this, tt);
-
-    t().read_tree(tt);
+    auto tree_var = var("topology1");
 
     /* --------------------------------------------------------------- */
     do_block program;
@@ -1540,7 +1539,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     // Therefore, we are constructing a list with values [(prefix1,(Just value1, loggers1)), (prefix1, (Just value1, loggers2))
 
     expression_ref topology_model1 = {var("Distributions.sample"), {var("Distributions.uniform_topology"), tt.n_leaves()}};
-    program.perform(var("topology1"), topology_model1);
+    program.perform(tree_var, topology_model1);
 
     // register the substitution models as sub-models
     vector<expression_ref> smodels;
@@ -1571,7 +1570,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         expression_ref imodel = IMs[i].expression;
         auto imodel_var = program.bind_and_log_model(prefix, imodel, program_loggers, false);
 
-        imodels.push_back({imodel_var,my_tree()});
+        imodels.push_back({imodel_var, tree_var});
     }
 
     // Add parameter for each scale
@@ -1592,7 +1591,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     expression_ref branch_lengths_list;
     {
         string prefix = "T:lengths";
-        expression_ref branch_lengths = {branch_length_model.expression, my_tree()};
+        expression_ref branch_lengths = {branch_length_model.expression, tree_var};
         auto [x,loggers] = program.bind_model(prefix , branch_lengths);
         branch_lengths_list = x;
     }
@@ -1609,7 +1608,10 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     int tree_index = add_compute_expression( {var("BAliPhy.ATModel.tree"), atmodel});
 
-    auto TC2 = new tree_constants(this, tt.get_labels(), tree_index);
+    TC = new tree_constants(this, tt.get_labels(), tree_index);
+
+    t().read_tree(tt);
+
     atmodel = get_expression(atmodel_index);
     /* --------------------------------------------------------------- */
 
