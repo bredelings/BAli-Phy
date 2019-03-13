@@ -8,6 +8,7 @@ computation_sources = [
   'loader.cc',
   'context.cc',
   'operations.cc',
+  'maybe_modifiable.cc',
 
   'parser/desugar.cc','parser/desugar-case.cc', 'parser/rename.cc',
   'parser/driver.cc', 'parser/lexer.cc', 'parser/parser.cc',

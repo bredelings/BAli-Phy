@@ -17,10 +17,11 @@ public:
             return C->get_modifiable_value(*modifiable_reg);
     }
     void set_value(context* C, const expression_ref& v) { assert(not is_const()); C->set_modifiable_value(*modifiable_reg,v);}
-    bool is_const() const {return not modifiable_reg;}
+    std::optional<expression_ref> is_const() const {return value;}
     maybe_modifiable(int p):modifiable_reg(p) {}
     maybe_modifiable(const expression_ref& v):value(v) {}
 };
 
+maybe_modifiable get_maybe_modifiable(const expression_ref& E);
 
 #endif
