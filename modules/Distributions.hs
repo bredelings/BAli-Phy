@@ -282,13 +282,15 @@ random_tree_edges [l1,l2] _      = return [(l1,l2)]
 random_tree_edges leaves internal = do (l1,leaves')  <- remove_one leaves
                                        (l2,leaves'') <- remove_one leaves'
                                        let (i:internal') = internal
+                                       -- I think this allows the _next_ round to have a branch (i,leaf) where i is internal.
+                                       -- This probably interferes with making leaf branches come first, even with sorting.
                                        other_edges <- random_tree_edges (i:leaves'') internal'
                                        return $ [(l1,i),(l2,i)]++other_edges
 
--- If we could stop assuming that leaf branches have names 0..n then this would work
 random_tree 1 = return $ Tree (listArray' [[]]) (listArray' []) 1 0
 random_tree n = do let num_nodes = 2*n-2
                    edges <- random_tree_edges [0..n-1] [n..num_nodes-1]
+                   -- This sorting is supposed to deal with the fact that leaf branches should have names 0..n
                    let sorted_edges = quicksortWith (\(leaf,internal) -> leaf) edges
                    return $ tree_from_edges num_nodes sorted_edges
 
