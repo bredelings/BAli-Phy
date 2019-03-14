@@ -1673,9 +1673,8 @@ const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
     }
 
     // If the value needs to be computed (e.g. its a call expression) then compute it.
-    auto p = incremental_evaluate_in_context(R,c);
-    R = p.first;
-    int value = p.second;
+    auto [R2, value] = incremental_evaluate_in_context(R,c);
+    R = R2;
 
     return regs.access(value).C.exp;
 }
@@ -1707,26 +1706,22 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 const closure& reg_heap::lazy_evaluate(int& R)
 {
     mark_completely_dirty(root_token);
-    auto p = incremental_evaluate(R);
-    R = p.first;
-    int value = p.second;
+    auto [R2, value] = incremental_evaluate(R);
+    R = R2;
     return regs.access(value).C;
 }
 
 const closure& reg_heap::lazy_evaluate(int& R, int c)
 {
-    auto p = incremental_evaluate_in_context(R,c);
-    R = p.first;
-    int value = p.second;
+    auto [R2, value] = incremental_evaluate_in_context(R,c);
+    R = R2;
     return regs.access(value).C;
 }
 
 const closure& reg_heap::lazy_evaluate_head(int index, int c)
 {
     int R1 = heads[index];
-    auto p = incremental_evaluate_in_context(R1,c);
-    int R2 = p.first;
-    int value = p.second;
+    auto [R2, value] = incremental_evaluate_in_context(R1,c);
     if (R2 != R1)
 	set_head(index, R2);
 
@@ -1839,8 +1834,8 @@ void reg_heap::add_parameter(const string& full_name, int r)
     assert(full_name.size() != 0);
 
     // 1. Check that we don't already have a parameter with that name
-    for(const auto& parameter: parameters)
-	if (parameter.first == full_name)
+    for(const auto& [p_name, _]: parameters)
+	if (p_name == full_name)
 	    throw myexception()<<"A parameter with name '"<<full_name<<"' already exists - cannot add another one.";
 
     // 2. Allocate space for the parameter
