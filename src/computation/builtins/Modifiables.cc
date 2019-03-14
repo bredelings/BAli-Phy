@@ -34,18 +34,27 @@ expression_ref maybe_modifiable_structure(OperationArgs& Args, int r1)
     // 2. If this is a structure then translate the parts.
     if (M.reg_is_constant(r2))
     {
-        auto C = M[r2];
+        // (i) The closure M[r2] can be moved, so a reference to it may become invalid.
+        // (ii) Fields r can be updated to point through an index_var.
+
+        // Can the r2 location be garbage-collected?
+        // (a) The top-level one can't, because its referenced from
+        //     (maybe_modifiable_structure r1), which is on the stack.
+        //     How I think that r1 could be garbage-collected if it is an index-var.
+        // (b) The r2 values of the children will then be referenced from the
+        //     parent structure.
+        //     Again the r1 values of the children might go away.
 
         // 2a. Atomic constants are already done.
-        if (C.exp.size() == 0)
-            return C.exp;
+        if (M[r2].exp.size() == 0)
+            return M[r2].exp;
 
         // 2b. Constants with fields need their fields translated.
         vector<expression_ref> sub;
-        for(int i=0; i< C.exp.size(); i++)
-            sub.push_back(maybe_modifiable_structure(Args, C.reg_for_slot(i)));
+        for(int i=0; i< M[r2].exp.size(); i++)
+            sub.push_back(maybe_modifiable_structure(Args, M[r2].reg_for_slot(i)));
 
-        return expression_ref(C.exp.head(), sub);
+        return expression_ref(M[r2].exp.head(), sub);
     }
 
     // r2 can only be constant or changeable, not unknown or index_var.
