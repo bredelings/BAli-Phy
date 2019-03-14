@@ -23,7 +23,7 @@ These directories contain code that affects how `bali-phy` runs:
 [src/](https://github.com/bredelings/BAli-Phy/blob/master/src)
 : C++17 code
 
-[functions/](https://github.com/bredelings/BAli-Phy/blob/master/functions)
+[bindings/](https://github.com/bredelings/BAli-Phy/blob/master/bindings)
 : JSON definitions of functions for the command-line interface
 
 ## Documentation and examples
