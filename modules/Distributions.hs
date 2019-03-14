@@ -286,6 +286,7 @@ random_tree_edges leaves internal = do (l1,leaves')  <- remove_one leaves
                                        return $ [(l1,i),(l2,i)]++other_edges
 
 -- If we could stop assuming that leaf branches have names 0..n then this would work
+random_tree 1 = return $ Tree (listArray' [[]]) (listArray' []) 1 0
 random_tree n = do let num_nodes = 2*n-2
                    edges <- random_tree_edges [0..n-1] [n..num_nodes-1]
                    let sorted_edges = quicksortWith (\(leaf,internal) -> leaf) edges
