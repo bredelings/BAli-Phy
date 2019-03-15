@@ -22,7 +22,7 @@ branch_hmms (model,_) distances n_branches = listArray' $ map (model distances) 
   
 alignment_branch_pr a hmms b = pairwise_alignment_probability_from_counts (transition_counts (a!b)) (hmms!b)
   
-seqlength a tree node = pairwise_alignment_length1 (a!b) where
+seqlength as tree node = pairwise_alignment_length1 (as!b) where
     b = head $ edgesOutOfNode tree node
 
 product' = foldl' (*) (doubleToLogDouble 1.0)
@@ -55,7 +55,8 @@ pairwise_alignment_from_bits (BitVector x) (BitVector y) = builtin_pairwise_alig
 data PairwiseAlignment = PairwiseAlignment
 
 data AlignmentOnTree = AlignmentOnTree Tree Int (Array Int Int) (Array Int PairwiseAlignment)
-n_sequences (AlignmentOnTree _ n _ _) = n
+n_sequences      (AlignmentOnTree _ n _  _) = n
+sequence_lengths (AlignmentOnTree _ _ ls _) = ls
 
 alignment_pr (AlignmentOnTree tree n_seqs lengths as) hmms model = if numElements lengths == 1 then
                                                                        alignment_pr1 (lengths!0) model 
@@ -65,3 +66,6 @@ alignment_pr (AlignmentOnTree tree n_seqs lengths as) hmms model = if numElement
 modifiable_alignment (AlignmentOnTree tree n_seqs seqlengths as) = AlignmentOnTree tree n_seqs (map modifiable seqlengths) (map modifiable as)
 
 random_alignment tree hmms model = ProbDensity (\a -> [alignment_pr a hmms model]) (no_quantile "random_alignment") (RandomStructure modifiable_alignment ()) ()
+
+compute_sequence_lengths seqs tree as = [ if node < n_leaves then vector_size (seqs!node) else seqlength as tree node | node <- [0..numNodes tree-1] ]
+    where n_leaves = numElements seqs

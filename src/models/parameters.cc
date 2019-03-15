@@ -517,17 +517,8 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     expression_ref as = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"), p->get_expression( alignments_index )}) );
 
     // R4. Register sequence length methods
-    EVector sequence_lengths_;
-    for(int n=0;n<t.n_nodes();n++)
-    {
-        expression_ref L;
-        if (n < t.n_leaves())
-            L = {var("Foreign.Vector.vector_size"), seqs_[n]};
-        else
-            L = {var("Alignment.seqlength"), as, p->my_tree(), n};
-        sequence_lengths_.push_back(L);
-    }
-    int sequence_lengths_index = p->add_compute_expression( {var("Data.Array.listArray'"),get_list(sequence_lengths_)} );
+    auto sequence_lengths_ = expression_ref{var("Alignment.compute_sequence_lengths"), seqs_array, p->my_tree(), as};
+    int sequence_lengths_index = p->add_compute_expression( {var("Data.Array.listArray'"),sequence_lengths_} );
     auto sequence_lengths_exp = p->get_expression(sequence_lengths_index);
     for(int n=0;n<t.n_nodes();n++)
     {
