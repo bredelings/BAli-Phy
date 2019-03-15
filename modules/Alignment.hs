@@ -55,8 +55,9 @@ pairwise_alignment_from_bits (BitVector x) (BitVector y) = builtin_pairwise_alig
 data PairwiseAlignment = PairwiseAlignment
 
 data AlignmentOnTree = AlignmentOnTree Tree Int (Array Int Int) (Array Int PairwiseAlignment)
-n_sequences      (AlignmentOnTree _ n _  _) = n
-sequence_lengths (AlignmentOnTree _ _ ls _) = ls
+n_sequences         (AlignmentOnTree _ n _  _) = n
+sequence_lengths    (AlignmentOnTree _ _ ls _) = ls
+pairwise_alignments (AlignmentOnTree _ _ _ as) = as
 
 alignment_pr (AlignmentOnTree tree n_seqs lengths as) hmms model = if numElements lengths == 1 then
                                                                        alignment_pr1 (lengths!0) model 
