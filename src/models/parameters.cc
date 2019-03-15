@@ -1470,8 +1470,8 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     PC->constants.push_back(-1);
 
-    add_modifiable_parameter_with_value("Heat.beta", 1.0);
-    variable_alignment_param = add_modifiable_parameter_with_value("*variable_alignment", variable_alignment_);
+    add_modifiable_parameter("Heat.beta", 1.0);
+    variable_alignment_param = add_modifiable_parameter("*variable_alignment", variable_alignment_);
 
     /* ---------------- Set up the tree ------------------------------ */
     branches_from_affected_node.resize(tt.n_nodes());
@@ -1573,7 +1573,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         PC->scale_parameter_indices[i] = add_compute_expression( {var("Data.List.!!"),scales_list,i} );
 
     // P1. Add substitution root node
-    subst_root_index = add_modifiable_parameter_with_value("*subst_root", t().n_nodes()-1);
+    subst_root_index = add_modifiable_parameter("*subst_root", t().n_nodes()-1);
 
 #ifndef NDEBUG
     evaluate_expression( {var("Tree.numNodes"), my_tree()});
@@ -1605,7 +1605,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     }
 
     // P2. Add training parameter
-    add_modifiable_parameter_with_value("*IModels.training", false);
+    add_modifiable_parameter("*IModels.training", false);
 
     // R4. Register an array of indel models
     PC->imodels_index = add_compute_expression({var("Data.Array.listArray'"), {var("BAliPhy.ATModel.imodels"),atmodel}});
@@ -1632,7 +1632,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     for(int b=0;b<t().n_branches();b++)
     {
         string name = "*Main.branchCat" + convertToString(b+1);
-        add_modifiable_parameter_with_value(name, 0);
+        add_modifiable_parameter(name, 0);
         branch_categories.push_back(parameter(name));
     }
     expression_ref branch_cat_list = get_expression( add_compute_expression( (get_list(branch_categories) ) ) );
