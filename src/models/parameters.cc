@@ -424,6 +424,32 @@ mutable_data_partition::mutable_data_partition(const Parameters* p, int i)
     :data_partition(p,i)
 { }
 
+    // P1. Create pairwise alignment parameters.
+vector<Box<pairwise_alignment_t>> unaligned_alignments_on_tree(const TreeInterface& t, const vector<vector<int>>& sequences)
+{
+    int B = t.n_branches();
+    vector<Box<pairwise_alignment_t>> alignments(2*B);
+
+    for(int b=0;b<2*B;b++)
+    {
+        int n1 = t.source(b);
+        int n2 = t.target(b);
+
+        // No evaluation is performed if this is a leaf node.
+        int L1 = t.is_leaf_node(n1) ? sequences[n1].size() : 0;
+        int L2 = t.is_leaf_node(n2) ? sequences[n2].size() : 0;
+
+        Box<pairwise_alignment_t> pi = make_unaligned_pairwise_alignment(L1,L2);
+
+        // Ensure that for the 2-sequence case, the two directions agree on the alignment.
+        if (b > t.reverse(b))
+            pi = make_unaligned_pairwise_alignment(L2,L1).flipped();
+
+        alignments[b] = pi;
+    }
+    return alignments;
+}
+
 data_partition_constants::data_partition_constants(Parameters* p, int i, const alignment& AA, const vector<int>& counts, int like_calc)
     :pairwise_alignment_for_branch(2*p->t().n_branches()),
      conditional_likelihoods_for_branch(2*p->t().n_branches()),
@@ -456,24 +482,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     // This would be like what we get when we start with a line graph for each sequence and then begin
     // merging columns.
 
-    // P1. Create pairwise alignment parameters.
-    vector<Box<pairwise_alignment_t>> initial_alignments(2*B);
-    for(int b=0;b<pairwise_alignment_for_branch.size();b++)
-    {
-        int n1 = t.source(b);
-        int n2 = t.target(b);
-
-        // No evaluation is performed if this is a leaf node.
-        int L1 = t.is_leaf_node(n1) ? sequences[n1].size() : 0;
-        int L2 = t.is_leaf_node(n2) ? sequences[n2].size() : 0;
-
-        Box<pairwise_alignment_t> pi = make_unaligned_pairwise_alignment(L1,L2);
-        // Ensure that for the 2-sequence case, the two directions agree on the alignment.
-        if (b > t.reverse(b))
-            pi = make_unaligned_pairwise_alignment(L2,L1).flipped();
-
-        initial_alignments[b] = pi;
-    }
+    auto initial_alignments = unaligned_alignments_on_tree(t, sequences);
 
     for(int b=0;b<pairwise_alignment_for_branch.size();b++)
     {
