@@ -443,13 +443,12 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     string prefix = "P"+convertToString(i+1)+".";
     string invisible_prefix = "*"+prefix;
 
-    // FIXME: We have to create alignment MODIFIABLES even when the alignment matrix is constant,
-    //        because the alignment depends on the tree!
-    //
-    //        Could we possible make this into a function?  That would simplify things a lot.
+    // Can we compute the pairwise alignment in such a way that recomputing the alignments when
+    // the tree changes has the same cost as modifying the solution and setting the alignment to the
+    // new modified solution?
 
-    // Suppose we convert the alignment matrix into a vector of vectors of column numbers..
-    // .. we would still have to apply the algorithm to it... I don't know.
+    // Until we find a way to do that, we need to find a way to create modifiables for the alignment
+    // even when it is not random.
     
     // Suppose we convert the alignment matrix into a graph of partially-ordered columns, where
     // each column object just records pointers to the next column object for each sequence with
