@@ -511,6 +511,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     {
         seqs_.push_back( p->get_expression(index) );
     }
+    auto seqs_array = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"),get_list(seqs_)}) );
 
     // R3. Register array of pairwise alignments
     expression_ref as = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"), p->get_expression( alignments_index )}) );
@@ -527,8 +528,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         sequence_length_indices[n] = p->add_compute_expression( L );
         sequence_lengths_.push_back(p->get_expression(sequence_length_indices[n]));
     }
-    auto seqs_array = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"),get_list(seqs_)}) );
-
     expression_ref alignment_on_tree = {var("Alignment.AlignmentOnTree"), p->my_tree(), t.n_nodes(), seqs_array, as};
     alignment_on_tree = p->get_expression( p->add_compute_expression(alignment_on_tree) );
 
