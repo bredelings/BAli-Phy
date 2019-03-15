@@ -525,8 +525,13 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
             L = {var("Foreign.Vector.vector_size"), seqs_[n]};
         else
             L = {var("Alignment.seqlength"), as, p->my_tree(), n};
-        sequence_length_indices[n] = p->add_compute_expression( L );
-        sequence_lengths_.push_back(p->get_expression(sequence_length_indices[n]));
+        sequence_lengths_.push_back(L);
+    }
+    int sequence_lengths_index = p->add_compute_expression( {var("Data.Array.listArray'"),get_list(sequence_lengths_)} );
+    auto sequence_lengths_exp = p->get_expression(sequence_lengths_index);
+    for(int n=0;n<t.n_nodes();n++)
+    {
+        sequence_length_indices[n] = p->add_compute_expression( {var("Data.Array.!"), sequence_lengths_exp, n} );
     }
     expression_ref alignment_on_tree = {var("Alignment.AlignmentOnTree"), p->my_tree(), t.n_nodes(), seqs_array, as};
     alignment_on_tree = p->get_expression( p->add_compute_expression(alignment_on_tree) );
