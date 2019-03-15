@@ -466,8 +466,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     const auto& t = p->t();
     int B = t.n_branches();
 
-    string prefix = "P"+convertToString(i+1)+".";
-    string invisible_prefix = "*"+prefix;
 
     // Can we compute the pairwise alignment in such a way that recomputing the alignments when
     // the tree changes has the same cost as modifying the solution and setting the alignment to the
