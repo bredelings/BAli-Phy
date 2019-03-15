@@ -457,6 +457,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     // merging columns.
 
     // P1. Create pairwise alignment parameters.
+    vector<Box<pairwise_alignment_t>> initial_alignments(2*B);
     for(int b=0;b<pairwise_alignment_for_branch.size();b++)
     {
         int n1 = t.source(b);
@@ -471,7 +472,12 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         if (b > t.reverse(b))
             pi = make_unaligned_pairwise_alignment(L2,L1).flipped();
 
-        int aa_param = p->add_modifiable_parameter_with_value(invisible_prefix+"a"+convertToString(b), pi );
+        initial_alignments[b] = pi;
+    }
+
+    for(int b=0;b<pairwise_alignment_for_branch.size();b++)
+    {
+        int aa_param = p->add_modifiable_parameter_with_value(invisible_prefix+"a"+convertToString(b), initial_alignments[b] );
         pairwise_alignment_for_branch[b] = p->parameter_is_modifiable_reg(aa_param).value();
     }
 
