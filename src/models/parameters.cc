@@ -486,6 +486,8 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     int alignments_index = p->add_compute_expression({var("Data.List.map"),var("Parameters.modifiable"),initial_alignments_exp});
 
     expression_ref alignments_structure = p->evaluate_expression({var("Parameters.maybe_modifiable_structure"), p->get_expression(alignments_index)});
+    if (log_verbose >= 3)
+        std::cerr<<"alignments = "<<alignments_structure<<"\n";
     auto alignments_vector = list_to_evector(alignments_structure).value();
     assert(alignments_vector.size() == 2*B);
     for(int b=0;b<2*B;b++)
