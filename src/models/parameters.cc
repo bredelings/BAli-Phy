@@ -254,8 +254,8 @@ void mutable_data_partition::unset_pairwise_alignment(int b)
     assert(pairwise_alignment_is_unset(b) or (get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped()));
 
     const context* C = P;
-    const_cast<context*>(C)->set_parameter_value(DPC().pairwise_alignment_for_branch[b], 0);
-    const_cast<context*>(C)->set_parameter_value(DPC().pairwise_alignment_for_branch[B], 0);
+    const_cast<context*>(C)->set_modifiable_value(DPC().pairwise_alignment_for_branch[b], 0);
+    const_cast<context*>(C)->set_modifiable_value(DPC().pairwise_alignment_for_branch[B], 0);
     assert(pairwise_alignment_is_unset(b));
 }
 
@@ -266,8 +266,8 @@ void mutable_data_partition::set_pairwise_alignment(int b, const pairwise_alignm
     int B = t().reverse(b);
     assert(pairwise_alignment_is_unset(b) or (get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped()));
     const context* C = P;
-    const_cast<context*>(C)->set_parameter_value(DPC().pairwise_alignment_for_branch[b], new Box<pairwise_alignment_t>(pi));
-    const_cast<context*>(C)->set_parameter_value(DPC().pairwise_alignment_for_branch[B], new Box<pairwise_alignment_t>(pi.flipped()));
+    const_cast<context*>(C)->set_modifiable_value(DPC().pairwise_alignment_for_branch[b], new Box<pairwise_alignment_t>(pi));
+    const_cast<context*>(C)->set_modifiable_value(DPC().pairwise_alignment_for_branch[B], new Box<pairwise_alignment_t>(pi.flipped()));
 
     assert(get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped());
 }
@@ -280,7 +280,7 @@ const matrix<int>& data_partition::alignment_constraint() const
 expression_ref data_partition::get_pairwise_alignment_(int b) const
 {
     assert(not has_IModel() or likelihood_calculator() == 0);
-    return P->get_parameter_value(DPC().pairwise_alignment_for_branch[b]);
+    return P->get_modifiable_value(DPC().pairwise_alignment_for_branch[b]);
 }
 
 const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b) const
@@ -472,7 +472,8 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         if (b > t.reverse(b))
             pi = make_unaligned_pairwise_alignment(L2,L1).flipped();
 
-        pairwise_alignment_for_branch[b] = p->add_modifiable_parameter_with_value(invisible_prefix+"a"+convertToString(b), pi );
+        int aa_param = p->add_modifiable_parameter_with_value(invisible_prefix+"a"+convertToString(b), pi );
+        pairwise_alignment_for_branch[b] = p->parameter_is_modifiable_reg(aa_param).value();
     }
 
     //  const int n_states = state_letters().size();
@@ -500,7 +501,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     EVector as_;
     for(int b=0;b<2*B;b++)
     {
-        expression_ref a = parameter( p->parameter_name(pairwise_alignment_for_branch[b]) );
+        expression_ref a = reg_var( pairwise_alignment_for_branch[b] ); 
         as_.push_back(a);
     }
     expression_ref as_list = p->get_expression( p->add_compute_expression(get_list(as_) ) );
