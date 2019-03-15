@@ -517,15 +517,13 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     expression_ref as = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"), p->get_expression( alignments_index )}) );
 
     // R4. Register sequence length methods
-    auto sequence_lengths_ = expression_ref{var("Alignment.compute_sequence_lengths"), seqs_array, p->my_tree(), as};
-    int sequence_lengths_index = p->add_compute_expression( {var("Data.Array.listArray'"),sequence_lengths_} );
-    auto sequence_lengths_exp = p->get_expression(sequence_lengths_index);
-    for(int n=0;n<t.n_nodes();n++)
-    {
-        sequence_length_indices[n] = p->add_compute_expression( {var("Data.Array.!"), sequence_lengths_exp, n} );
-    }
-    expression_ref alignment_on_tree = {var("Alignment.AlignmentOnTree"), p->my_tree(), t.n_nodes(), seqs_array, as};
+    auto seq_lengths = expression_ref{{var("Data.Array.listArray'"),{var("Alignment.compute_sequence_lengths"), seqs_array, p->my_tree(), as}}};
+    expression_ref alignment_on_tree = {var("Alignment.AlignmentOnTree"), p->my_tree(), t.n_nodes(), seq_lengths, as};
     alignment_on_tree = p->get_expression( p->add_compute_expression(alignment_on_tree) );
+
+    seq_lengths = expression_ref{var("Alignment.sequence_lengths"),alignment_on_tree};
+    for(int n=0;n<t.n_nodes();n++)
+        sequence_length_indices[n] = p->add_compute_expression( {var("Data.Array.!"), seq_lengths, n} );
 
     if (p->t().n_nodes() == 1)
     {
