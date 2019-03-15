@@ -425,10 +425,10 @@ mutable_data_partition::mutable_data_partition(const Parameters* p, int i)
 { }
 
     // P1. Create pairwise alignment parameters.
-vector<Box<pairwise_alignment_t>> unaligned_alignments_on_tree(const TreeInterface& t, const vector<vector<int>>& sequences)
+EVector unaligned_alignments_on_tree(const TreeInterface& t, const vector<vector<int>>& sequences)
 {
     int B = t.n_branches();
-    vector<Box<pairwise_alignment_t>> alignments(2*B);
+    EVector alignments;
 
     for(int b=0;b<2*B;b++)
     {
@@ -445,7 +445,7 @@ vector<Box<pairwise_alignment_t>> unaligned_alignments_on_tree(const TreeInterfa
         if (b > t.reverse(b))
             pi = make_unaligned_pairwise_alignment(L2,L1).flipped();
 
-        alignments[b] = pi;
+        alignments.push_back(pi);
     }
     return alignments;
 }
@@ -482,14 +482,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     // This would be like what we get when we start with a line graph for each sequence and then begin
     // merging columns.
 
-    auto initial_alignments = unaligned_alignments_on_tree(t, sequences);
-
-    EVector initial_alignment_exps;
-    for(int b=0;b<pairwise_alignment_for_branch.size();b++)
-        initial_alignment_exps.push_back(initial_alignments[b]);
-
-    expression_ref initial_alignments_exp = get_list(initial_alignment_exps);
-
+    expression_ref initial_alignments_exp = get_list(unaligned_alignments_on_tree(t, sequences));
     int alignments_index = p->add_compute_expression({var("Data.List.map"),var("Parameters.modifiable"),initial_alignments_exp});
 
     expression_ref alignments_structure = p->evaluate_expression({var("Parameters.maybe_modifiable_structure"), p->get_expression(alignments_index)});
