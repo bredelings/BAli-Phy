@@ -484,11 +484,19 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 
     auto initial_alignments = unaligned_alignments_on_tree(t, sequences);
 
+    EVector initial_alignment_exps;
     for(int b=0;b<pairwise_alignment_for_branch.size();b++)
-    {
-        int aa_param = p->add_modifiable_parameter_with_value(invisible_prefix+"a"+convertToString(b), initial_alignments[b] );
-        pairwise_alignment_for_branch[b] = p->parameter_is_modifiable_reg(aa_param).value();
-    }
+        initial_alignment_exps.push_back(initial_alignments[b]);
+
+    expression_ref initial_alignments_exp = get_list(initial_alignment_exps);
+
+    int alignments_index = p->add_compute_expression({var("Data.List.map"),var("Parameters.modifiable"),initial_alignments_exp});
+
+    expression_ref alignments_structure = p->evaluate_expression({var("Parameters.maybe_modifiable_structure"), p->get_expression(alignments_index)});
+    auto alignments_vector = list_to_evector(alignments_structure).value();
+    assert(alignments_vector.size() == 2*B);
+    for(int b=0;b<2*B;b++)
+        pairwise_alignment_for_branch[b] = get_maybe_modifiable(alignments_vector[b]).is_modifiable().value();
 
     //  const int n_states = state_letters().size();
     int scale_index = *p->scale_index_for_partition(i);
