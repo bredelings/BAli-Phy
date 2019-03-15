@@ -10,6 +10,7 @@
 #include "expression/lambda.H"
 #include "expression/AST_node.H"
 #include "expression/var.H"
+#include "expression/modifiable.H"
 #include "expression/reg_var.H"
 
 using std::string;
@@ -275,12 +276,8 @@ int context::find_parameter(const string& s) const
 
 int context::add_modifiable_parameter_with_value(const string& full_name, const expression_ref& value)
 {
-    int p = n_parameters();
-    memory()->add_modifiable_parameter(full_name);
-
-    set_parameter_value_(p, value);
-
-    return p;
+    expression_ref M(modifiable(),{value});
+    return add_parameter(full_name, M);
 }
 
 int context::add_parameter(const string& full_name, const expression_ref& E)
