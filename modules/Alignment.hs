@@ -15,7 +15,9 @@ builtin builtin_sequences_from_alignment 1 "sequences_from_alignment" "Alignment
 
 builtin builtin_alignment_row_to_bitvector 2 "alignment_row_to_presence_bitvector" "Bits"
 builtin builtin_pairwise_alignment_from_bits 2 "pairwise_alignment_from_bits" "Bits"
-  
+builtin unaligned_pairwise_alignment 2 "unaligned_pairwise_alignment" "Alignment"
+builtin flip_alignment 1 "flip_alignment" "Alignment"
+
 branch_hmms (model,_) distances n_branches = listArray' $ map (model distances) [0..2*n_branches-1]
   
 alignment_branch_pr a hmms b = pairwise_alignment_probability_from_counts (transition_counts (a!b)) (hmms!b)

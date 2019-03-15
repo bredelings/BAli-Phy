@@ -6,6 +6,20 @@
 #include "computation/expression/constructor.H"
 #include <boost/dynamic_bitset.hpp>
 #include "alignment/alignment.H"
+#include "dp/2way.H"
+
+extern "C" closure builtin_function_flip_alignment(OperationArgs& Args)
+{
+    return Box<pairwise_alignment_t>(Args.evaluate(0).as_<Box<pairwise_alignment_t>>().flipped());
+}
+
+extern "C" closure builtin_function_unaligned_pairwise_alignment(OperationArgs& Args)
+{
+    int l1 = Args.evaluate(0).as_int();
+    int l2 = Args.evaluate(1).as_int();
+
+    return Box<pairwise_alignment_t>(make_unaligned_pairwise_alignment(l1,l2));
+}
 
 extern "C" closure builtin_function_pairwise_alignment_probability_from_counts(OperationArgs& Args)
 {
