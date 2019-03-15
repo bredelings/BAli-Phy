@@ -8,7 +8,6 @@ builtin is_modifiable 1 "is_modifiable" "Modifiables"
 builtin get_modifiable_index 1 "get_modifiable_index" "Modifiables"
 builtin evaluate 2 "evaluate" "Modifiables"
 builtin get_modifiable_value 2 "get_modifiable_value" "Modifiables"
-builtin builtin_add_parameter 2 "add_parameter" "Modifiables"
 builtin builtin_register_prior 1 "register_prior" "Modifiables"
 builtin builtin_register_likelihood 1 "register_likelihood" "Modifiables"
 builtin maybe_modifiable_structure 1 "maybe_modifiable_structure" "Modifiables"
@@ -16,8 +15,6 @@ builtin maybe_modifiable_structure 1 "maybe_modifiable_structure" "Modifiables"
 builtin builtin_random_variable 5 "random_variable" "Modifiables"
 builtin builtin_register_random_variable 1 "register_random_variable" "Modifiables"
 builtin modifiable 1 "modifiable" "Modifiables"
-
-add_parameter name x = IOAction2 builtin_add_parameter (listToString name) x
 
 register_prior pr = IOAction1 builtin_register_prior pr
 register_likelihood pr = IOAction1 builtin_register_likelihood pr

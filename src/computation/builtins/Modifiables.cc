@@ -195,21 +195,6 @@ extern "C" closure builtin_function_get_modifiable_value(OperationArgs& Args)
     return {index_var(0),{R2}};
 }
 
-extern "C" closure builtin_function_add_parameter(OperationArgs& Args)
-{
-    assert(not Args.evaluate_changeables());
-
-    const std::string name = Args.evaluate(0).as_<String>();
-
-    int R = Args.evaluate_slot_to_reg(1);
-
-    auto& M = Args.memory();
-
-    M.add_parameter(name, R);
-
-    return constructor("()",0);
-}
-
 extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 {
     int R = Args.reg_for_slot(0);
