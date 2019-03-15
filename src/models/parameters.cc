@@ -515,14 +515,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     }
 
     // R3. Register array of pairwise alignments
-    EVector as_;
-    for(int b=0;b<2*B;b++)
-    {
-        expression_ref a = reg_var( pairwise_alignment_for_branch[b] ); 
-        as_.push_back(a);
-    }
-    expression_ref as_list = p->get_expression( p->add_compute_expression(get_list(as_) ) );
-    expression_ref as = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"),as_list}));
+    expression_ref as = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"), p->get_expression( alignments_index )}) );
 
     // R4. Register sequence length methods
     EVector sequence_lengths_;
