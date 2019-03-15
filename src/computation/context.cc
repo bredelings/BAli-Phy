@@ -277,13 +277,8 @@ int context::find_parameter(const string& s) const
 int context::add_modifiable_parameter(const string& full_name, const expression_ref& value)
 {
     expression_ref M(modifiable(),{value});
-    return add_parameter(full_name, M);
-}
-
-int context::add_parameter(const string& full_name, const expression_ref& E)
-{
     int p = n_parameters();
-    memory()->add_parameter(full_name, E);
+    memory()->add_parameter(full_name, M);
     return p;
 }
 
