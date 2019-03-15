@@ -1,7 +1,8 @@
 module BAliPhy.ATModel where
 
+import Alignment
+
 data PairwiseAlignment
-data AlignmentOnTree = AlignmentOnTree [PairwiseAlignment]
 data Partition = Partition Tree AlignmentOnTree
 topology  (Partition t _) = t
 alignment (Partition _ a) = a
