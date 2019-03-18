@@ -20,6 +20,7 @@ enum type_constant {null_type=0,
                     let2_type=16,
                     constructor_type=17,
                     lambda_type=18,
+                    lambda2_type=19,
                     unknown_type
 };
 
