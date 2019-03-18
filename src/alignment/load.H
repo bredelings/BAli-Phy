@@ -9,7 +9,6 @@
 #include "sequence/sequence.H"
 #include "sequence/alphabet.H"
 #include "alignment.H"
-#include "computation/object.H"
 
 std::string get_alphabet_name(const boost::program_options::variables_map& args);
 
