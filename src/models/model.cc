@@ -35,6 +35,7 @@
 
 using std::vector;
 using std::string;
+using std::pair;
 using std::set;
 using std::map;
 using std::multiset;
@@ -161,6 +162,8 @@ Model::Model(const std::shared_ptr<module_loader>& L, const key_map_t& k)
 { }
 
 
+void simplify(json& j);
+
 void show_parameters(std::ostream& o,const Model& M, bool show_hidden) {
     for(int i=0;i<M.n_parameters();i++) {
 	string name = M.parameter_name(i);
@@ -173,6 +176,10 @@ void show_parameters(std::ostream& o,const Model& M, bool show_hidden) {
 	    output = "[multiline]";
 	o<<output;
     }
+    o<<"\n";
+    auto j = M.get_logged_parameters();
+    simplify(j);
+    o<<j.flatten();
     o<<"\n";
 }
 
@@ -260,6 +267,80 @@ void copy_to_vec(const ptree& p, vector<string>& names2, const string& path = ""
 	    copy_to_vec(x.second, names2, model_extend_path(path, x.first));
 }
 
+json* has_children(json& j)
+{
+    if (not j.is_object()) return nullptr;
+
+    auto children = j.find("children");
+    if (children == j.end()) return nullptr;
+    if (not children->is_object()) return nullptr;
+    return &(*children);
+}
+
+void simplify(json& j)
+{
+    assert(j.is_object());
+
+    if (j.empty()) return;
+
+    // 1. First we simplify all the levels below this level.
+    for(auto& [_, obj]: j.items())
+        if (auto children = has_children(obj))
+            simplify(*children);
+
+    // 2. In order to move child-level names up to the top level, we have to avoid
+    //   a. clashing with the same name at the top level
+    //   b. clashing with the same name a sibling.
+    // We therefore count which names at these levels occur twice and avoid them.
+    // NOTE: If we have a situation like {I1/S1, S2/I1} then this approach won't simplify to {S1,I1}.
+    multiset<string> names;
+    for(auto& [name, obj]: j.items())
+    {
+        names.insert(name);
+        if (auto children = has_children(obj))
+            for(auto& [name2, j2]: children->items())
+                names.insert(name2);
+    }
+
+    // 3. Check if we can move the children for each key up to the top level
+    //    names in that entry up to the top level.
+    vector<pair<string,json>> moved;
+    for(auto iter = j.begin(); iter != j.end(); )
+    {
+        auto& obj = iter.value();
+
+        if (auto children = has_children(obj))
+        {
+            bool collision = false;
+            for(auto& [name2, _]: children->items())
+            {
+                if (names.count(name2) > 1)
+                {
+                    collision = true;
+                    break;
+                }
+            }
+
+            if (not collision)
+            {
+                for(auto& [name2, j2]: children->items())
+                {
+                    moved.push_back({name2,std::move(j2)});
+                }
+                obj.erase("children");
+            }
+        }
+
+        if (obj.empty())
+            iter = j.erase(iter);
+        else
+            ++iter;
+    }
+
+    json j2;
+    for(auto& [name,obj]: moved)
+        j[name] = std::move(obj);
+}
 
 // here we aren't handling '*' prefixes...
 void simplify(ptree& p)
@@ -274,7 +355,7 @@ void simplify(ptree& p)
     //   a. clashing with the same name at the top level
     //   b. clashing with the same name a sibling.
     // We therefore count which names at these levels occur twice and avoid them.
-    // NOTE: If we have a situation like {I1::S1, S2::I1} then this approach won't simplify to {S1,I1}.
+    // NOTE: If we have a situation like {I1/S1, S2/I1} then this approach won't simplify to {S1,I1}.
     multiset<string> names;
     for(auto& x: p)
     {
