@@ -176,10 +176,12 @@ void show_parameters(std::ostream& o,const Model& M, bool show_hidden) {
 	    output = "[multiline]";
 	o<<output;
     }
-    o<<"\n";
     auto j = M.get_logged_parameters();
     simplify(j);
-    o<<j.flatten();
+    j = j.flatten();
+    for(auto& [key,j2]: j.items())
+        o<<"   "<<key<<" = "<<j2;
+    o<<"\n";
     o<<"\n";
 }
 
