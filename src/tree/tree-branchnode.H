@@ -144,6 +144,8 @@ inline bool is_internal_branch(const BranchNode* b) {
 
 inline int degree(const BranchNode* b)
 {
+    if (b->out == b) return 0;
+
     int d = 1;
     const BranchNode* b2 = b->next;
     while(b2 != b) {
