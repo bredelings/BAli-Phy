@@ -24,7 +24,6 @@
 #include <bitset>
 #include "alignment/alignment.H"
 #include "tree/tree.H"
-#include "computation/object.H"
 #include "util/matrix.H"
 #include "models/TreeInterface.H"
 #include "hmm.H"
