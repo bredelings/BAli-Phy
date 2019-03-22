@@ -682,7 +682,12 @@ int main(int argc,char* argv[])
 	retval=1;
 
 	if (log_verbose > 0)
-	    M->show_graph();
+        {
+            if (M)
+                M->show_graph();
+            else
+                err_both<<"bali-phy: Note! Could not write graph because the model was destroyed.\n";
+        }
     }
 
     show_ending_messages(show_only);
