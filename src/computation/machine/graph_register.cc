@@ -377,10 +377,10 @@ log_double_t reg_heap::prior_for_context(int c)
     // std::cerr<<"A:   Pr1 = "<<Pr<<"   error = "<<prior.data.total_error<<"  constant_pr = "<<constant_prior<<"  variable_pr = "<<prior.data.value<<"  unhandled = "<<prior.data.unhandled<<std::endl;
 
 #ifndef NDEBUG  
-    // log_double_t Pr2 = prior_for_context_full(c);
-    // double diff = Pr.log() - Pr2.log();
-    // std::cerr<<"B:diff = "<<diff<<"    Pr1 = "<<Pr<<"  Pr2 = "<<Pr2<<"   error = "<<prior.data.total_error<<"  constant_pr = "<<constant_prior<<"  variable_pr = "<<prior.data.value<<"  unhandled = "<<prior.data.unhandled<<std::endl;
-    //  assert(fabs(diff) < 1.0e-6);
+    log_double_t Pr2 = prior_for_context_full(c);
+    double diff = Pr.log() - Pr2.log();
+    std::cerr<<"B:diff = "<<diff<<"    Pr1 = "<<Pr<<"  Pr2 = "<<Pr2<<"   error = "<<prior.data.total_error<<"  constant_pr = "<<constant_prior<<"  variable_pr = "<<prior.data.value<<"  unhandled = "<<prior.data.unhandled<<std::endl;
+    assert(fabs(diff) < 1.0e-6);
 #endif
 
     return Pr;
