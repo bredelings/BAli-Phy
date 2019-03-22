@@ -1535,7 +1535,8 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     program_loggers.push_back( logger("Scale", get_list(scales), List()) );
 
 
-    expression_ref branch_lengths_list;
+    expression_ref branch_lengths_list = List();
+    if (tt.n_branches() > 0)
     {
         string prefix = "T:lengths";
         expression_ref branch_lengths = {branch_length_model.expression, tree_var};
