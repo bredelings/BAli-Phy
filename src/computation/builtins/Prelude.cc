@@ -3,6 +3,7 @@
 #include "computation/expression/index_var.H"
 #include "computation/expression/constructor.H"
 #include "computation/expression/bool.H"
+#include "computation/operations.H"
 #include "vector_from_list.H"
 #include "util/string/convert.H"
 
@@ -389,21 +390,24 @@ extern "C" closure builtin_function_iotaUnsigned(OperationArgs& Args)
     return iota_function<unsigned>(Args);
 }
 
-extern "C" closure builtin_function_join(OperationArgs& Args)
-{
-    Args.evaluate_slot_to_reg(0);
-    int R = Args.evaluate_slot_to_reg(1);
-
-    return {index_var(0),{R}};
-}
-
 extern "C" closure builtin_function_seq(OperationArgs& Args)
 {
-    Args.evaluate_slot_no_record(0);
+    int x = Args.reg_for_slot(0);
+    int y = Args.reg_for_slot(1);
 
-    int R = Args.current_closure().reg_for_slot(1);
+    expression_ref E(Seq(),{index_var(1),index_var(0)});
 
-    return {index_var(0),{R}};
+    return closure{E,{x,y}};
+}
+
+extern "C" closure builtin_function_join(OperationArgs& Args)
+{
+    int x = Args.reg_for_slot(0);
+    int y = Args.reg_for_slot(1);
+
+    expression_ref E(Join(),{index_var(1),index_var(0)});
+
+    return closure{E,{x,y}};
 }
 
 extern "C" closure builtin_function_show(OperationArgs& Args)

@@ -21,6 +21,8 @@ enum type_constant {null_type=0,
                     constructor_type=17,
                     lambda_type=18,
                     lambda2_type=19,
+                    seq_type=20,
+                    join_type=21,
                     unknown_type
 };
 

@@ -283,3 +283,21 @@ closure let_op(OperationArgs& Args)
 
     return C;
 }
+
+closure join_op(OperationArgs& Args)
+{
+    Args.evaluate_slot_to_reg(0);
+    int R = Args.evaluate_slot_to_reg(1);
+
+    return {index_var(0),{R}};
+}
+
+closure seq_op(OperationArgs& Args)
+{
+    Args.evaluate_slot_no_record(0);
+
+    int R = Args.current_closure().reg_for_slot(1);
+
+    return {index_var(0),{R}};
+}
+

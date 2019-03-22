@@ -50,4 +50,26 @@ struct Let: public Operation
     Let():Operation(2, let_op, "let") {}
 };
 
+closure seq_op(OperationArgs&);
+
+struct Seq: public Operation
+{
+    virtual Seq* clone() const {return new Seq(*this);}
+
+    type_constant type() const {return seq_type;}
+
+    Seq():Operation(2, seq_op, "seq") {}
+};
+
+closure join_op(OperationArgs&);
+
+struct Join: public Operation
+{
+    virtual Join* clone() const {return new Join(*this);}
+
+    type_constant type() const {return join_type;}
+
+    Join():Operation(2, join_op, "join") {}
+};
+
 #endif

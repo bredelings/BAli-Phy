@@ -499,7 +499,9 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 
 void reg_heap::register_random_variable(int r)
 {
-    r = incremental_evaluate_unchangeable(r);
+    auto [r2,_] = incremental_evaluate(r);
+    r = r2;
+
     if (not is_random_variable(regs.access(r).C.exp))
 	throw myexception()<<"Trying to register `"<<regs.access(r).C.exp<<"` as random variable";
     random_variables_.push_back(r);
@@ -597,13 +599,12 @@ const expression_ref reg_heap::get_range_for_random_variable(int c, int r)
 	throw myexception()<<"Trying to get range from `"<<regs.access(r).C.exp<<"`, which is not a random_variable!";
 }
 
-double reg_heap::get_rate_for_random_variable(int r)
+double reg_heap::get_rate_for_random_variable(int c, int r)
 {
     if (find_update_random_variable(r))
     {
 	int r_rate = regs.access(r).C.reg_for_slot(4);
-	r_rate = incremental_evaluate_unchangeable(r_rate);
-	return regs.access(r_rate).C.exp.as_double();
+        return get_reg_value_in_context(r_rate, c).as_double();
     }
     else
 	throw myexception()<<"Trying to get rate from `"<<regs.access(r).C.exp<<"`, which is not a random_variable!";

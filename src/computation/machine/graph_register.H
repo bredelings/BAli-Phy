@@ -293,7 +293,7 @@ public:
 
     const expression_ref get_range_for_random_variable(int c, int r);
 
-    double get_rate_for_random_variable(int r);
+    double get_rate_for_random_variable(int c, int r);
 
     /*----- Token manager ------*/
 

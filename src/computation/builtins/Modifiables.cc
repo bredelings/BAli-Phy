@@ -16,6 +16,20 @@ using boost::dynamic_pointer_cast;
 using std::optional;
 using std::vector;
 
+bool is_seq(const expression_ref& E)
+{
+    bool result = E.head().type() == seq_type;
+    assert(result == E.head().is_a<Seq>());
+    return result;
+}
+
+bool is_join(const expression_ref& E)
+{
+    bool result = E.head().type() == join_type;
+    assert(result == E.head().is_a<Join>());
+    return result;
+}
+
 // Recursively walk through constant structures:It seems like we want a kind of deep_eval_translate_list, except that
 // (i)   walk through constant structures, translating their fields.
 // (ii)  translate modifiables -> modifiable + reg_var(r)
@@ -68,7 +82,21 @@ expression_ref maybe_modifiable_structure(OperationArgs& Args, int r1)
         m = m + reg_var(r2);
         return m;
     }
-
+    else if (is_random_variable(M[r2].exp))
+    {
+	int r3 = M[r2].reg_for_slot(0);
+        return maybe_modifiable_structure(Args,r3);
+    }
+    else if (is_seq(M[r2].exp))
+    {
+	int r3 = M[r2].reg_for_slot(1);
+        return maybe_modifiable_structure(Args,r3);
+    }
+    else if (is_join(M[r2].exp))
+    {
+	int r3 = M[r2].reg_for_slot(1);
+        return maybe_modifiable_structure(Args,r3);
+    }
     // 4. Handle changeable computations
     return reg_var(r2);
 }
