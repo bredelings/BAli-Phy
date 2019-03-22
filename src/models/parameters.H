@@ -376,8 +376,6 @@ public:
     /// How many substitution models?
     int n_branch_scales() const {return PC->n_scales;}
 
-    object_ptr<const alphabet> get_alphabet_for_smodel(int i) const;
-
     /// Set branch 'b' to have length 'l', and compute the transition matrices
     void setlength_unsafe(int b, double l);
     void setlength(int b,double l); 

@@ -1011,7 +1011,7 @@ void mutable_data_partition::set_alignment(const alignment& A)
 {
     // 1. Check if the alphabet on the alignment is right.
     if (get_alphabet() != A.get_alphabet())
-        throw myexception()<<"Can't set alignment with alphabet '"<<A.get_alphabet()<<"' in partition with alphabet '"<<get_alphabet()<<"'";
+        throw myexception()<<"Can't set alignment with alphabet '"<<A.get_alphabet()<<"' in partition with alphabet '"<<get_alphabet().name<<"'";
 
     // 2. Connect the leaf characters
     auto T = t();
@@ -1178,11 +1178,6 @@ int Parameters::subst_root() const
 double Parameters::branch_scale(int s) const
 {
     return evaluate(branch_scale_index(s)).as_double();
-}
-
-object_ptr<const alphabet> Parameters::get_alphabet_for_smodel(int s) const
-{
-    return evaluate(PC->SModels[s].get_alphabet).assert_is_a<alphabet>();
 }
 
 void Parameters::setlength_unsafe(int b,double l) 
