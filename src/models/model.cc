@@ -163,6 +163,7 @@ Model::Model(const std::shared_ptr<module_loader>& L, const key_map_t& k)
 
 
 void simplify(json& j);
+json flatten_me(const json& j);
 
 void show_parameters(std::ostream& o,const Model& M, bool show_hidden) {
     for(int i=0;i<M.n_parameters();i++) {
@@ -178,7 +179,7 @@ void show_parameters(std::ostream& o,const Model& M, bool show_hidden) {
     }
     auto j = M.get_logged_parameters();
     simplify(j);
-    j = j.flatten();
+    j = flatten_me(j);
     for(auto& [key,j2]: j.items())
         o<<"   "<<key<<" = "<<j2;
     o<<"\n";
@@ -277,6 +278,56 @@ json* has_children(json& j)
     if (children == j.end()) return nullptr;
     if (not children->is_object()) return nullptr;
     return &(*children);
+}
+
+const json* has_children(const json& j)
+{
+    if (not j.is_object()) return nullptr;
+
+    auto children = j.find("children");
+    if (children == j.end()) return nullptr;
+    if (not children->is_object()) return nullptr;
+    return &(*children);
+}
+
+// This me be a good candidate for the range library.
+vector<pair<string,json>> flatten_value(const string& name, const json& value)
+{
+    vector<pair<string,json>> values;
+    if (value.is_object())
+    {
+        for(auto& [name2,v2]: value.items())
+            for(auto& p: flatten_value(name+"["+name2+"]", v2))
+                values.push_back(std::move(p));
+    }
+    else if (value.is_array())
+    {
+        for(int i=0;i<value.size();i++)
+            for(auto& p: flatten_value(name+"["+std::to_string(i+1)+"]", value[i]))
+                values.push_back(std::move(p));
+    }
+    else
+        values = {{name,value}};
+    return values;
+}
+
+json flatten_me(const json& j)
+{
+    json j2;
+    for(auto& [name, obj]: j.items())
+    {
+        if (auto children = has_children(obj))
+        {
+            json c = flatten_me(*children);
+            for(auto& [name2,j3]: c.items())
+                j2[name+"/"+name2] = std::move(j3);
+        }
+        
+        if (auto value = obj.find("value"); value != obj.end())
+            for(auto& [name2,v2]: flatten_value(name, *value))
+                j2[name2] = std::move(v2);
+    }
+    return j2;
 }
 
 void simplify(json& j)
