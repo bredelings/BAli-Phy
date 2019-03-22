@@ -74,8 +74,13 @@ log_double_t reg_heap::prior_for_context_full(int c)
 
     double log_pr = 0.0;
     double C = 0.0;
-    for(int r: random_variables_)
+    /*
+     * NOTE: random_variables_ can be moved during the loop, because of insertions.
+     *       Therefore, we cannot use a range-for.
+     */
+    for(int i=0; i<random_variables_.size(); i++)
     {
+        int r = random_variables_[i];
 	int r_pdf = (*this)[r].reg_for_slot(1);
 
 	const auto& x = get_reg_value_in_context(r_pdf, c);
