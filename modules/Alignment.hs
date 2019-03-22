@@ -28,7 +28,7 @@ seqlength as tree node = pairwise_alignment_length1 (as!b) where
 product' = foldl' (*) (doubleToLogDouble 1.0)
 alignment_pr_top as tree hmms = product' $ map (alignment_branch_pr as hmms) [0..numBranches tree - 1]
 alignment_pr_bot as tree (_,lengthp) = (product' $ map (lengthp . seqlength as tree) (internal_nodes tree))^2
-alignment_pr1 seq (_,lengthp) = lengthp (sizeOfVectorInt seq)
+alignment_pr1 length (_,lengthp) = lengthp length
 load_alignment alphabet filename = builtin_load_alignment alphabet (listToString filename)
 -- sequence_from_alignment :: AlignmentMatrix -> [ Vector<int> ]
 sequences_from_alignment a = list_from_vector $ builtin_sequences_from_alignment a
