@@ -486,10 +486,10 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     expression_ref alignments_structure = p->evaluate_expression({var("Parameters.maybe_modifiable_structure"), p->get_expression(alignments_index)});
     if (log_verbose >= 3)
         std::cerr<<"alignments = "<<alignments_structure<<"\n";
-    auto alignments_vector = list_to_evector(alignments_structure).value();
+    auto alignments_vector = *list_to_evector(alignments_structure);
     assert(alignments_vector.size() == 2*B);
     for(int b=0;b<2*B;b++)
-        pairwise_alignment_for_branch[b] = get_maybe_modifiable(alignments_vector[b]).is_modifiable().value();
+        pairwise_alignment_for_branch[b] = *get_maybe_modifiable(alignments_vector[b]).is_modifiable();
 
     //  const int n_states = state_letters().size();
     int scale_index = *p->scale_index_for_partition(i);
