@@ -264,16 +264,12 @@ void reg_heap::register_prior(int r)
 
     if (reg_is_constant(r))
     {
-	log_double_t pr = regs.access(r).C.exp.as_log_double();
-	constant_prior *= pr;
     }
     else
     {
 	regs.access(r).flags.set(0);
 
 	assert(reg_is_changeable(r));
-
-	priors_list.push_back(r);
     }
 }
 

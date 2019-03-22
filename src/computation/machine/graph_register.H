@@ -190,11 +190,7 @@ public:
     // a list of closures under evaluation
     std::vector<closure> closure_stack;
 
-    log_double_t constant_prior = 1.0;
-
     kahan_multiplier prior;
-
-    std::vector<int> priors_list;
 
     void register_prior(int r);
 
