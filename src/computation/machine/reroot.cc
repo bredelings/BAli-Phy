@@ -100,8 +100,6 @@ void reg_heap::reroot_at(int t)
 
     for(auto [_,rc]: tokens[parent].delta_result())
     {
-        if (rc > 0 and results[rc].flags.test(0))
-            dec_prior(rc);
         if (rc > 0 and results[rc].flags.test(1))
             dec_likelihood(rc);
     }

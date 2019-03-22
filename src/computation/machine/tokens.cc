@@ -70,13 +70,13 @@ void reg_heap::release_tip_token(int t)
     total_destroy_token++;
 
     // 1. Clear flags of results in the root token before destroying the root token!
-    if (is_root_token(t))
-	for(auto p: tokens[root_token].delta_result())
-	{
-	    int rc = p.second;
-	    if (rc > 0 and results[rc].flags.test(0))
-		dec_prior(rc);
-	}
+    // if (is_root_token(t))
+    //     for(auto p: tokens[root_token].delta_result())
+    //     {
+    //         int rc = p.second;
+    //         if (rc > 0 and results[rc].flags.test(0))
+    //     	dec_prior(rc);
+    //     }
 
     // 2. Destroy computations in the token (this is an optimization)
     destroy_all_computations_in_token(t);

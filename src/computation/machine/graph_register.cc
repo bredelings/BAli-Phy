@@ -287,101 +287,11 @@ int reg_heap::register_prior(closure&& C)
     return r;
 }
 
-bool reg_heap::inc_prior_for_reg(int r)
-{
-    assert(reg_is_changeable(r));
-    int res = result_index_for_reg(r);
-
-    if (not reg_exists(r)) return false; // reg does not exist in this context!
-
-    if (res > 0 and results[res].flags.test(0)) return true; // already included
-
-    incremental_evaluate(r);
-    res = result_index_for_reg(r);
-
-    return inc_prior(res);
-}
-
-void reg_heap::dec_prior_for_reg(int r)
-{
-    int res = result_index_for_reg(r);
-
-    if (res > 0 and results[res].flags.test(0))
-	dec_prior(res);
-}
-
-void reg_heap::dec_prior(int res)
-{
-    assert(res > 0);
-    int r2 = results[res].value;
-    assert(r2 > 0);
-    log_double_t pr = regs.access(r2).C.exp.as_log_double();
-
-    // This value has already by included, so take it out unconditionally.
-    prior.data.value -= pr.log();
-
-    results[res].flags.reset(0);
-
-    int r = results[res].source_reg;
-    assert(reg_is_changeable(r));
-    priors_list.push_back(r);
-}
-
-log_double_t reg_heap::prior_for_context_diff(int c)
-{
-    reroot_at_context(c);
-    prior.reset_unhandled();
-
-    // re-multiply all probabilities
-    if (not (prior.data.total_error < 1.0e-9))
-    {
-	// remove any values that are currently factored in.
-	for(int r: random_variables_)
-	{
-	    int r_pdf = (*this)[r].reg_for_slot(1);
-	    while((*this)[r_pdf].exp.is_index_var())
-		r_pdf = (*this)[r_pdf].reg_for_index_var();
-
-	    int res = result_index_for_reg(r_pdf);
-	    if (res > 0 and results[res].flags.test(0))
-		dec_prior(res);
-	}
-	std::cerr<<"unwinding all prior prs: total_error = "<<prior.data.total_error<<" variable_pr = "<<prior.data.value<<"  error_pr = "<<prior.data.delta<<"   variable_pr/error_pr = "<<prior.data.value - prior.data.delta<<std::endl;
-	assert(std::abs(prior.data.value - prior.data.delta) < 1.0e-6);
-	assert(priors_list.size() == random_variables_.size());
-	prior.reset();
-    }
-
-    if (not priors_list.empty())
-    {
-	mark_completely_dirty(root_token);
-
-	int j=0;
-	for(int i=0;i<priors_list.size();i++)
-	{
-	    int r = priors_list[i];
-	    if (not inc_prior_for_reg(r))
-		priors_list[j++] = r;
-	}
-	priors_list.resize(j);
-    }
-
-    return constant_prior * log_double_t(prior);
-}
-
 log_double_t reg_heap::prior_for_context(int c)
 {
     total_context_pr++;
 
-    log_double_t Pr = prior_for_context_diff(c);
-    // std::cerr<<"A:   Pr1 = "<<Pr<<"   error = "<<prior.data.total_error<<"  constant_pr = "<<constant_prior<<"  variable_pr = "<<prior.data.value<<"  unhandled = "<<prior.data.unhandled<<std::endl;
-
-#ifndef NDEBUG  
-    log_double_t Pr2 = prior_for_context_full(c);
-    double diff = Pr.log() - Pr2.log();
-    std::cerr<<"B:diff = "<<diff<<"    Pr1 = "<<Pr<<"  Pr2 = "<<Pr2<<"   error = "<<prior.data.total_error<<"  constant_pr = "<<constant_prior<<"  variable_pr = "<<prior.data.value<<"  unhandled = "<<prior.data.unhandled<<std::endl;
-    assert(fabs(diff) < 1.0e-6);
-#endif
+    log_double_t Pr = prior_for_context_full(c);
 
     return Pr;
 }

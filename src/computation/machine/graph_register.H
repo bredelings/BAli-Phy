@@ -200,17 +200,7 @@ public:
 
     int register_prior(closure&& C);
 
-    void dec_prior_for_reg(int r);
-
-    bool inc_prior_for_reg(int r);
-
-    void dec_prior(int rc);
-
-    bool inc_prior(int rc);
-
     log_double_t prior_for_context_full(int c);
-
-    log_double_t prior_for_context_diff(int c);
 
     log_double_t prior_for_context(int c);
 

@@ -43,25 +43,6 @@ bool kahan_adder::operator+=(double x)
     }
 }
 
-bool reg_heap::inc_prior(int rc)
-{
-    assert(rc > 0);
-    int r2 = results[rc].value;
-    assert(r2 > 0);
-    log_double_t pr = regs.access(r2).C.exp.as_log_double();
-
-    if (kahan_add(pr.log(), prior.data.value, prior.data.delta, prior.data.total_error))
-    {
-	results[rc].flags.set(0);
-	return true;
-    }
-    else
-    {
-	prior.data.unhandled += pr.log();
-	return false;
-    }
-}
-
 log_double_t reg_heap::prior_for_context_full(int c)
 {
     /*
