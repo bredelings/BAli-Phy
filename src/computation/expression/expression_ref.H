@@ -120,7 +120,7 @@ public:
 	    if (not is_object_type())
 		return false;
 	    else
-		return (bool)boost::dynamic_pointer_cast<const T>(ptr());
+		return (bool)dynamic_cast<const T*>(ptr().get());
 	}
 
     template <typename T>
