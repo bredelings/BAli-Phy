@@ -169,10 +169,8 @@ int main(int argc,char* argv[]) {
 
     joint_A_T J = get_joint_A_T(args,true);
 
-    for(int i=0;i<J.size();i++) {
-      const alignment& A = J.A[i];
-      const SequenceTree& T = J.T[i];
-
+    for(auto& [A,T]: J)
+    {
       cout<<" length = "<<n_mutations(A,T)<<"   ";
       
       cout<<" #indels = "<<n_indels(A,T)<<"   ";

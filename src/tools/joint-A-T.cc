@@ -42,8 +42,7 @@ const std::vector<std::string>& joint_A_T::leaf_names() const
     return leaf_names_;
 }
 
-joint_A_T::joint_A_T(const vector<alignment>& A1,const vector<SequenceTree>& T1,bool internal)
-  :A(A1),T(T1)
+joint_A_T::joint_A_T(const vector<alignment>& A,const vector<SequenceTree>& T,bool internal)
 {
   unsigned s = std::min(A.size(),T.size());
   if (s != A.size())
@@ -52,18 +51,18 @@ joint_A_T::joint_A_T(const vector<alignment>& A1,const vector<SequenceTree>& T1,
   if (s != T.size())
     std::cerr<<"joint-A-T: Warning! only using "<<s<<"/"<<T.size()<<" trees to match number of alignments."<<endl;
 
-  A.resize(s);
-  T.resize(s);
+  for(int i=0;i<s;i++)
+      push_back({A[i],T[i]});
 
   if (s == 0) return;
 
-  leaf_names_ = T1[0].get_leaf_labels();
+  leaf_names_ = T[0].get_leaf_labels();
   
   for(int i=0;i<size();i++)
   {
-    remap_T_leaf_indices(T[i], leaf_names_);
-    link(A[i],T[i],true);
-    link(A[i],T[i],internal);
+    remap_T_leaf_indices((*this)[i].second, leaf_names_);
+    link((*this)[i].first, (*this)[i].second, true);
+    link((*this)[i].first, (*this)[i].second, internal);
   }
 }
 

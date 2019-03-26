@@ -29,16 +29,16 @@
 
 
 //--------------------------- Class joint_A_T ----------------------------//
-class joint_A_T
+class joint_A_T: public std::vector<std::pair<alignment,SequenceTree>>
 {
     std::vector<std::string> leaf_names_;
 
 public:
-    int size() const {return A.size();}
 
     const std::vector<std::string>& leaf_names() const;
-    std::vector<alignment> A;
-    std::vector<SequenceTree> T;
+
+    const alignment& A(int i) {return (*this)[i].first;}
+    const SequenceTree& T(int i) {return (*this)[i].second;}
 
     joint_A_T(const std::vector<alignment>& A1,const std::vector<SequenceTree>& T1,bool internal);
 };

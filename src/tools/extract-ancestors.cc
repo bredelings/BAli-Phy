@@ -240,11 +240,8 @@ void extract_sequence(const variables_map& args, const joint_A_T& J)
 
 
 
-    for(int i=0; i<J.size();i++)
+    for(auto& [A,T]: J)
     {
-	auto& A = J.A[i];
-	auto& T = J.T[i];
-
         map<string,int> internal_nodes;
 
         // Add ancestral nodes from the tree.

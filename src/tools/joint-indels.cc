@@ -138,10 +138,8 @@ void extract_sequence(const variables_map& args, const joint_A_T& J)
 
     vector<int> node_counts(Q.n_nodes());
 
-    for(int i=0; i<J.size();i++)
+    for(auto& [A,T]: J)
     {
-	auto& A = J.A[i];
-	auto& T = J.T[i];
 	auto Q_to_T_nodes = get_nodes_map(Q,T);
 
 	if (log_verbose > 1)
@@ -193,18 +191,14 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
     int numindels = 0;
 
     string line;
-    for(int i=0;i<J.size();i++) {
-
-	const alignment& A = J.A[i];
-	const SequenceTree& T = J.T[i];
-
+    for(auto& [A,T]: J)
+    {
 	Partition part = full_partition_from_names(T.get_leaf_labels(),pnames);
 
 	bool exists = implies(T,part);
 	//cerr << part << "\n";
 	//cerr << "Does tree contain partition: " << exists << "\n";
 
-	std::cout << i+1 << "\t" << exists << "\t";
 	if( exists ) {
 	    consistentsamples++;
 	    int b = which_branch(T,part);
