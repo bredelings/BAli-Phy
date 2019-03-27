@@ -9,6 +9,6 @@ main = do
 
   let mu xs Nothing  = 0.0
       mu xs (Just p) = xs!!p
-  xs <- mfix (\xs -> Lazy $ sample $ list [normal (mu xs p) 1.0  | n <- nodes rtree, let p = parentNode rtree n])
+  xs <- mfix (\xs -> sample $ list [normal (mu xs p) 1.0  | n <- nodes rtree, let p = parentNode rtree n])
 
   return $ log_all [ write_newick rtree %% "tree", xs %% "xs", ps %% "ps" ]

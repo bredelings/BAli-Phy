@@ -8,13 +8,13 @@ xs = read_file_as_double "xs"
 
 ys = read_file_as_double "ys"
 
-main = do
+main = Strict $ do
 
-  b <- sample $ normal 0.0 1.0
+  b <- Lazy $ sample $ normal 0.0 1.0
 
-  a <- sample $ normal 0.0 1.0
+  a <- Lazy $ sample $ normal 0.0 1.0
 
-  s <- sample $ exponential 1.0
+  s <- Lazy $ sample $ exponential 1.0
 
   let f x = b*x + a
 
