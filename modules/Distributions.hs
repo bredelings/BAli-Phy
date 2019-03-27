@@ -39,11 +39,13 @@ data Random a = Random (IO a)
               | SetAlphabet b (Random a)
               | Lazy (Random a)
               | Strict (Random a)
+              | LiftIO (IO a)
 
 
 sample dist = Sample dist
 sample_with_initial_value dist value = SampleWithInitialValue dist value
 observe = Observe
+liftIO = LiftIO
 
 log_all loggers = (Nothing,loggers)
 
@@ -51,6 +53,7 @@ x %% y = (y,(Just x,[]))
 
 maybe_lazy lazy x = if lazy then unsafeInterleaveIO x else x
 
+run_random alpha lazy (LiftIO a) = maybe_lazy lazy a
 run_random alpha lazy (Random a) = maybe_lazy lazy a
 run_random alpha lazy (RandomStructure _ a) = maybe_lazy lazy a
 run_random alpha lazy (RandomStructureAndPDF _ a) = maybe_lazy lazy a
@@ -86,6 +89,7 @@ run_random alpha lazy (Strict r) = run_random alpha False r
 -- Plan: We can implement lazy interpretation by add a (Strict action) constructor to Random, and modifying (IOAndPass f g) to
 --       do unsafeInterleaveIO if f does not match (Strict f')
 
+run_random' alpha rate lazy (LiftIO a) = maybe_lazy lazy a
 run_random' alpha rate lazy (IOAndPass f g) = do
   x <- maybe_lazy lazy $ run_random' alpha rate lazy f
   run_random' alpha rate lazy $ g x
