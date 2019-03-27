@@ -50,23 +50,31 @@ log_all loggers = (Nothing,loggers)
 
 x %% y = (y,(Just x,[]))
 
-run_random alpha (LiftIO a) = a
-run_random alpha (RandomStructure _ a) = run_random alpha a
-run_random alpha (RandomStructureAndPDF _ a) = run_random alpha a
-run_random alpha (IOAndPass f g) = do
-  x <- run_random alpha f
-  run_random alpha $ g x
-run_random alpha (IOReturn v) = return v
-run_random alpha (Sample (ProbDensity _ _ a _)) = run_random alpha a
-run_random alpha (SampleWithInitialValue (ProbDensity _ _ a _) _) = run_random alpha a
-run_random alpha GetAlphabet = return alpha
-run_random alpha (SetAlphabet a2 x) = run_random a2 x
-run_random alpha (AddMove m) = return ()
-run_random alpha (SamplingRate _ model) = run_random alpha model
-run_random alpha (MFix f) = MFix ((run_random alpha).f)
-run_random alpha (Print s) = putStrLn (show s)
-run_random alpha (Lazy r) = run_random alpha r
-run_random alpha (Strict r) = run_random alpha r
+run_strict alpha (IOAndPass f g) = do
+  x <- run_strict alpha f
+  run_strict alpha $ g x
+run_strict alpha (IOReturn v) = return v
+run_strict alpha (LiftIO a) = a
+run_strict alpha GetAlphabet = return alpha
+run_strict alpha (SetAlphabet a2 x) = run_strict a2 x
+run_strict alpha (AddMove m) = return ()
+run_strict alpha (Print s) = putStrLn (show s)
+run_strict alpha (Lazy r) = run_lazy alpha r
+
+run_lazy alpha (RandomStructure _ a) = run_lazy alpha a
+run_lazy alpha (RandomStructureAndPDF _ a) = run_lazy alpha a
+run_lazy alpha (IOAndPass f g) = do
+  x <- unsafeInterleaveIO $ run_lazy alpha f
+  run_lazy alpha $ g x
+run_lazy alpha (IOReturn v) = return v
+run_lazy alpha (LiftIO a) = a
+run_lazy alpha (Sample (ProbDensity _ _ a _)) = run_lazy alpha a
+run_lazy alpha (SampleWithInitialValue (ProbDensity _ _ a _) _) = run_lazy alpha a
+run_lazy alpha GetAlphabet = return alpha
+run_lazy alpha (SetAlphabet a2 x) = run_lazy a2 x
+run_lazy alpha (SamplingRate _ model) = run_lazy alpha model
+run_lazy alpha (MFix f) = MFix ((run_lazy alpha).f)
+run_lazy alpha (Strict r) = run_strict alpha r
 
 
 -- Question: why do we need to duplicate things over RandomStructure and Random?
@@ -93,13 +101,13 @@ run_random' alpha rate (IOReturn v) = return v
 -- It seems like we wouldn't need laziness for `do {x <- r;return x}`.  Do we need it for `r`?
 run_random' alpha rate (Sample dist@(ProbDensity _ _ (RandomStructure structure do_sample) range)) = do
   -- we need some mcmc moves here, for crp and for trees
-  value <- run_random alpha do_sample
+  value <- run_lazy alpha do_sample
   let x = structure value
   register_random_variable x (density dist x) range rate
   return x
 run_random' alpha rate (Sample dist@(ProbDensity _ _ (RandomStructureAndPDF structure_and_pdf do_sample) range)) = do
   -- we need some mcmc moves here, for crp and for trees
-  value <- run_random alpha do_sample
+  value <- run_lazy alpha do_sample
   let (x,pdf) = structure_and_pdf value rv
       rv = random_variable x pdf range rate
   return x
