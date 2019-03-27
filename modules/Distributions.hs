@@ -28,6 +28,7 @@ distRange (ProbDensity _ _ _ r) = r
 -- This implements the Random monad by transforming it into the IO monad.
 data Random a = Random (IO a)
               | RandomStructure a (IO a)
+              | RandomStructureAndPDF a (IO a)
               | Sample (ProbDensity a)
               | SampleWithInitialValue (ProbDensity a) a
               | Observe (ProbDensity b) b
@@ -56,8 +57,10 @@ run_random alpha lazy (IOAndPass f g) = do
   run_random alpha lazy $ g x
 run_random alpha lazy (IOReturn v) = return v
 run_random alpha lazy (Sample (ProbDensity _ _ (RandomStructure _ a) _)) = run_random alpha lazy a
+run_random alpha lazy (Sample (ProbDensity _ _ (RandomStructureAndPDF _ a) _)) = run_random alpha lazy a
 run_random alpha lazy (Sample (ProbDensity _ _ a _)) = run_random alpha lazy a
 run_random alpha lazy (SampleWithInitialValue (ProbDensity _ _ (RandomStructure _ a) _) _) = run_random alpha lazy a
+run_random alpha lazy (SampleWithInitialValue (ProbDensity _ _ (RandomStructureAndPDF _ a) _) _) = run_random alpha lazy a
 run_random alpha lazy (SampleWithInitialValue (ProbDensity _ _ a _) _) = run_random alpha lazy a
 run_random alpha lazy GetAlphabet = return alpha
 run_random alpha lazy (SetAlphabet a2 x) = run_random a2 x lazy
@@ -101,6 +104,12 @@ run_random' alpha rate lazy (Sample dist@(ProbDensity _ _ (RandomStructure struc
   let x = structure value
   register_random_variable x (density dist x) range rate
   return x
+run_random' alpha rate lazy (Sample dist@(ProbDensity _ _ (RandomStructureAndPDF structure_and_pdf do_sample) range)) = maybe_lazy lazy $ do
+  -- we need some mcmc moves here, for crp and for trees
+  value <- run_random alpha lazy do_sample
+  let (x,pdf) = structure_and_pdf value rv
+      rv = random_variable x pdf range rate
+  return x
 run_random' alpha rate lazy (SampleWithInitialValue dist@(ProbDensity _  _ (Random do_sample) range) initial_value) = maybe_lazy lazy $ do
   let x = modifiable initial_value
   register_random_variable x (density dist x) range rate
@@ -109,6 +118,11 @@ run_random' alpha rate lazy (SampleWithInitialValue dist@(ProbDensity _ _ (Rando
   -- we need some mcmc moves here, for crp and for trees
   let x = structure initial_value
   register_random_variable x (density dist x) range rate
+  return x
+run_random' alpha rate lazy (SampleWithInitialValue dist@(ProbDensity _ _ (RandomStructureAndPDF structure_and_pdf do_sample) range) initial_value) = maybe_lazy lazy $ do
+  -- we need some mcmc moves here, for crp and for trees
+  let (x,pdf) = structure_and_pdf initial_value rv
+      rv = random_variable x pdf range rate
   return x
 run_random' alpha rate lazy (Sample (ProbDensity _ _ s _)) = maybe_lazy lazy $ run_random' alpha rate lazy s
 run_random' alpha rate lazy (Observe dist datum) = sequence_ [register_likelihood term | term <- densities dist datum]
@@ -296,11 +310,21 @@ random_tree n = do let num_nodes = 2*n-2
                    let sorted_edges = quicksortWith (\(leaf,internal) -> leaf) $ map maybe_flip edges
                    return $ tree_from_edges num_nodes sorted_edges
 
-modifiable_tree tree = Tree (listArray' nodes) (listArray' branches) (numNodes tree) (numBranches tree) where
-    nodes =    [ map modifiable (edgesOutOfNode tree n) | n <- xrange 0 (numNodes tree) ]
-    branches = [ (modifiable s, modifiable i, modifiable t, modifiable r) | b <- xrange 0 (numBranches tree * 2), let (s,i,t,r) = nodesForEdge tree b]
+modifiable_tree mod tree = Tree (listArray' nodes) (listArray' branches) (numNodes tree) (numBranches tree) where
+    nodes =    [ map mod (edgesOutOfNode tree n) | n <- xrange 0 (numNodes tree) ]
+    branches = [ (mod s, mod i, mod t, mod r) | b <- xrange 0 (numBranches tree * 2), let (s,i,t,r) = nodesForEdge tree b]
 
-uniform_topology n = ProbDensity (\tree->[]) (no_quantile "uniform_topology") (RandomStructure modifiable_tree $ random_tree n) (TreeRange n)
+
+uniform_topology_pr 1 = doubleToLogDouble 1.0
+uniform_topology_pr 2 = doubleToLogDouble 1.0
+uniform_topology_pr n = uniform_topology_pr (n-1) / (doubleToLogDouble $ intToDouble $ 2*n-5)
+
+modifiable_tree_pdf n value rv = let mod v = rv `seq` modifiable v
+                                     tree = modifiable_tree mod value
+                                 in (tree, uniform_topology_pr n)
+
+uniform_topology n = ProbDensity (\tree-> uniform_topology_pr n) (no_quantile "uniform_topology") (RandomStructureAndPDF (modifiable_tree_pdf n) (random_tree n)) (TreeRange n)
+
 
 -- define the list distribution
 pair_apply f (x:y:t) = f x y : pair_apply f t
