@@ -52,15 +52,13 @@ x %% y = (y,(Just x,[]))
 maybe_lazy lazy x = if lazy then unsafeInterleaveIO x else x
 
 run_random alpha lazy (Random a) = maybe_lazy lazy a
+run_random alpha lazy (RandomStructure _ a) = maybe_lazy lazy a
+run_random alpha lazy (RandomStructureAndPDF _ a) = maybe_lazy lazy a
 run_random alpha lazy (IOAndPass f g) = do
   x <- maybe_lazy lazy $ run_random alpha lazy f
   run_random alpha lazy $ g x
 run_random alpha lazy (IOReturn v) = return v
-run_random alpha lazy (Sample (ProbDensity _ _ (RandomStructure _ a) _)) = run_random alpha lazy a
-run_random alpha lazy (Sample (ProbDensity _ _ (RandomStructureAndPDF _ a) _)) = run_random alpha lazy a
 run_random alpha lazy (Sample (ProbDensity _ _ a _)) = run_random alpha lazy a
-run_random alpha lazy (SampleWithInitialValue (ProbDensity _ _ (RandomStructure _ a) _) _) = run_random alpha lazy a
-run_random alpha lazy (SampleWithInitialValue (ProbDensity _ _ (RandomStructureAndPDF _ a) _) _) = run_random alpha lazy a
 run_random alpha lazy (SampleWithInitialValue (ProbDensity _ _ a _) _) = run_random alpha lazy a
 run_random alpha lazy GetAlphabet = return alpha
 run_random alpha lazy (SetAlphabet a2 x) = run_random a2 x lazy
