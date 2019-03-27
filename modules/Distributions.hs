@@ -50,25 +50,23 @@ log_all loggers = (Nothing,loggers)
 
 x %% y = (y,(Just x,[]))
 
-maybe_lazy lazy x = if lazy then unsafeInterleaveIO x else x
-
-run_random alpha lazy (LiftIO a) = maybe_lazy lazy a
-run_random alpha lazy (RandomStructure _ a) = run_random alpha lazy a
-run_random alpha lazy (RandomStructureAndPDF _ a) = run_random alpha lazy a
-run_random alpha lazy (IOAndPass f g) = do
-  x <- maybe_lazy lazy $ run_random alpha lazy f
-  run_random alpha lazy $ g x
-run_random alpha lazy (IOReturn v) = return v
-run_random alpha lazy (Sample (ProbDensity _ _ a _)) = run_random alpha lazy a
-run_random alpha lazy (SampleWithInitialValue (ProbDensity _ _ a _) _) = run_random alpha lazy a
-run_random alpha lazy GetAlphabet = return alpha
-run_random alpha lazy (SetAlphabet a2 x) = run_random a2 x lazy
-run_random alpha lazy (AddMove m) = return ()
-run_random alpha lazy (SamplingRate _ model) = run_random alpha lazy model
-run_random alpha lazy (MFix f) = MFix ((run_random alpha lazy).f)
-run_random alpha lazy (Print s) = putStrLn (show s)
-run_random alpha lazy (Lazy r) = run_random alpha True r
-run_random alpha lazy (Strict r) = run_random alpha False r
+run_random alpha (LiftIO a) = a
+run_random alpha (RandomStructure _ a) = run_random alpha a
+run_random alpha (RandomStructureAndPDF _ a) = run_random alpha a
+run_random alpha (IOAndPass f g) = do
+  x <- run_random alpha f
+  run_random alpha $ g x
+run_random alpha (IOReturn v) = return v
+run_random alpha (Sample (ProbDensity _ _ a _)) = run_random alpha a
+run_random alpha (SampleWithInitialValue (ProbDensity _ _ a _) _) = run_random alpha a
+run_random alpha GetAlphabet = return alpha
+run_random alpha (SetAlphabet a2 x) = run_random a2 x
+run_random alpha (AddMove m) = return ()
+run_random alpha (SamplingRate _ model) = run_random alpha model
+run_random alpha (MFix f) = MFix ((run_random alpha).f)
+run_random alpha (Print s) = putStrLn (show s)
+run_random alpha (Lazy r) = run_random alpha r
+run_random alpha (Strict r) = run_random alpha r
 
 
 -- Question: why do we need to duplicate things over RandomStructure and Random?
@@ -87,53 +85,53 @@ run_random alpha lazy (Strict r) = run_random alpha False r
 -- Plan: We can implement lazy interpretation by add a (Strict action) constructor to Random, and modifying (IOAndPass f g) to
 --       do unsafeInterleaveIO if f does not match (Strict f')
 
-run_random' alpha rate lazy (LiftIO a) = maybe_lazy lazy a
-run_random' alpha rate lazy (IOAndPass f g) = do
-  x <- maybe_lazy lazy $ run_random' alpha rate lazy f
-  run_random' alpha rate lazy $ g x
-run_random' alpha rate lazy (IOReturn v) = return v
+run_random' alpha rate (LiftIO a) = a
+run_random' alpha rate (IOAndPass f g) = do
+  x <- run_random' alpha rate f
+  run_random' alpha rate $ g x
+run_random' alpha rate (IOReturn v) = return v
 -- It seems like we wouldn't need laziness for `do {x <- r;return x}`.  Do we need it for `r`?
-run_random' alpha rate lazy (Sample dist@(ProbDensity _ _ (RandomStructure structure do_sample) range)) = maybe_lazy lazy $ do
+run_random' alpha rate (Sample dist@(ProbDensity _ _ (RandomStructure structure do_sample) range)) = do
   -- we need some mcmc moves here, for crp and for trees
-  value <- run_random alpha lazy do_sample
+  value <- run_random alpha do_sample
   let x = structure value
   register_random_variable x (density dist x) range rate
   return x
-run_random' alpha rate lazy (Sample dist@(ProbDensity _ _ (RandomStructureAndPDF structure_and_pdf do_sample) range)) = maybe_lazy lazy $ do
+run_random' alpha rate (Sample dist@(ProbDensity _ _ (RandomStructureAndPDF structure_and_pdf do_sample) range)) = do
   -- we need some mcmc moves here, for crp and for trees
-  value <- run_random alpha lazy do_sample
+  value <- run_random alpha do_sample
   let (x,pdf) = structure_and_pdf value rv
       rv = random_variable x pdf range rate
   return x
-run_random' alpha rate lazy (SampleWithInitialValue dist@(ProbDensity _ _ (RandomStructure structure do_sample) range) initial_value) = maybe_lazy lazy $ do
+run_random' alpha rate (SampleWithInitialValue dist@(ProbDensity _ _ (RandomStructure structure do_sample) range) initial_value) = do
   -- maybe we need to perform the sample and not use the result, in order to force the parameters of the distribution? 
   -- we need some mcmc moves here, for crp and for trees
   let x = structure initial_value
   register_random_variable x (density dist x) range rate
   return x
-run_random' alpha rate lazy (SampleWithInitialValue dist@(ProbDensity _ _ (RandomStructureAndPDF structure_and_pdf do_sample) range) initial_value) = maybe_lazy lazy $ do
+run_random' alpha rate (SampleWithInitialValue dist@(ProbDensity _ _ (RandomStructureAndPDF structure_and_pdf do_sample) range) initial_value) = do
   -- maybe we need to perform the sample and not use the result, in order to force the parameters of the distribution? 
   -- we need some mcmc moves here, for crp and for trees
   let (x,pdf) = structure_and_pdf initial_value rv
       rv = random_variable x pdf range rate
   return x
-run_random' alpha rate lazy (Sample (ProbDensity _ _ s _)) = maybe_lazy lazy $ run_random' alpha rate lazy s
-run_random' alpha rate lazy (Observe dist datum) = sequence_ [register_likelihood term | term <- densities dist datum]
-run_random' alpha rate lazy (AddMove m) = register_transition_kernel m
-run_random' alpha rate lazy (Print s) = putStrLn (show s)
-run_random' alpha rate lazy (MFix f) = MFix ((run_random' alpha rate lazy).f)
-run_random' alpha rate lazy (SamplingRate rate2 a) = run_random' alpha (rate*rate2) lazy a
-run_random' alpha _    _     GetAlphabet = return alpha
-run_random' alpha rate lazy (SetAlphabet a2 x) = run_random' a2 rate lazy x
-run_random' alpha rate lazy (Lazy r) = run_random' alpha rate True r
-run_random' alpha rate lazy (Strict r) = run_random' alpha rate False r
+run_random' alpha rate (Sample (ProbDensity _ _ s _)) = run_random' alpha rate s
+run_random' alpha rate (Observe dist datum) = sequence_ [register_likelihood term | term <- densities dist datum]
+run_random' alpha rate (AddMove m) = register_transition_kernel m
+run_random' alpha rate (Print s) = putStrLn (show s)
+run_random' alpha rate (MFix f) = MFix ((run_random' alpha rate).f)
+run_random' alpha rate (SamplingRate rate2 a) = run_random' alpha (rate*rate2) a
+run_random' alpha _    GetAlphabet = return alpha
+run_random' alpha rate (SetAlphabet a2 x) = run_random' a2 rate x
+run_random' alpha rate (Lazy r) = run_random' alpha rate r
+run_random' alpha rate (Strict r) = run_random' alpha rate r
 
 set_alphabet a x = do (a',_) <- a
                       SetAlphabet a' x
 
 set_alphabet' = SetAlphabet
 
-gen_model_no_alphabet m = run_random' (error "No default alphabet!") 1.0 False m
+gen_model_no_alphabet m = run_random' (error "No default alphabet!") 1.0 m
 
 add_logger old name (value,[]) False = old
 add_logger old name (value,loggers) do_log = (name,(if do_log then Just value else Nothing, loggers)):old
