@@ -26,9 +26,8 @@ distRange (ProbDensity _ _ _ r) = r
 --        but its only used inside ProbDensity...
 
 -- This implements the Random monad by transforming it into the IO monad.
-data Random a = Random (IO a)
-              | RandomStructure a (IO a)
-              | RandomStructureAndPDF a (IO a)
+data Random a = RandomStructure a (Random a)
+              | RandomStructureAndPDF a (Random a)
               | Sample (ProbDensity a)
               | SampleWithInitialValue (ProbDensity a) a
               | Observe (ProbDensity b) b
@@ -54,7 +53,6 @@ x %% y = (y,(Just x,[]))
 maybe_lazy lazy x = if lazy then unsafeInterleaveIO x else x
 
 run_random alpha lazy (LiftIO a) = maybe_lazy lazy a
-run_random alpha lazy (Random a) = run_random alpha lazy a
 run_random alpha lazy (RandomStructure _ a) = run_random alpha lazy a
 run_random alpha lazy (RandomStructureAndPDF _ a) = run_random alpha lazy a
 run_random alpha lazy (IOAndPass f g) = do
@@ -95,11 +93,6 @@ run_random' alpha rate lazy (IOAndPass f g) = do
   run_random' alpha rate lazy $ g x
 run_random' alpha rate lazy (IOReturn v) = return v
 -- It seems like we wouldn't need laziness for `do {x <- r;return x}`.  Do we need it for `r`?
-run_random' alpha rate lazy (Sample dist@(ProbDensity _  _ (Random do_sample) range)) = maybe_lazy lazy $ do
-  value <- run_random alpha lazy do_sample
-  let x = modifiable value
-  register_random_variable x (density dist x) range rate
-  return x
 run_random' alpha rate lazy (Sample dist@(ProbDensity _ _ (RandomStructure structure do_sample) range)) = maybe_lazy lazy $ do
   -- we need some mcmc moves here, for crp and for trees
   value <- run_random alpha lazy do_sample
@@ -111,11 +104,6 @@ run_random' alpha rate lazy (Sample dist@(ProbDensity _ _ (RandomStructureAndPDF
   value <- run_random alpha lazy do_sample
   let (x,pdf) = structure_and_pdf value rv
       rv = random_variable x pdf range rate
-  return x
-run_random' alpha rate lazy (SampleWithInitialValue dist@(ProbDensity _  _ (Random do_sample) range) initial_value) = maybe_lazy lazy $ do
-  -- maybe we need to perform the sample and not use the result, in order to force the parameters of the distribution? 
-  let x = modifiable initial_value
-  register_random_variable x (density dist x) range rate
   return x
 run_random' alpha rate lazy (SampleWithInitialValue dist@(ProbDensity _ _ (RandomStructure structure do_sample) range) initial_value) = maybe_lazy lazy $ do
   -- maybe we need to perform the sample and not use the result, in order to force the parameters of the distribution? 
