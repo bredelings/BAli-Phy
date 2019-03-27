@@ -166,40 +166,40 @@ make_densities density = \x -> [density x]
 builtin shifted_gamma_density 4 "shifted_gamma_density" "Distribution"
 builtin shifted_gamma_quantile 4 "shifted_gamma_quantile" "Distribution"
 builtin builtin_sample_shifted_gamma 3 "sample_shifted_gamma" "Distribution"
-sample_shifted_gamma a b shift = Random $ liftIO (IOAction3 builtin_sample_shifted_gamma a b shift)
+sample_shifted_gamma a b shift = RandomStructure modifiable $ liftIO (IOAction3 builtin_sample_shifted_gamma a b shift)
 shifted_gamma a b shift = ProbDensity (make_densities $ shifted_gamma_density a b shift) (shifted_gamma_quantile a b shift) (sample_shifted_gamma a b shift) (above shift)
 gamma a b = shifted_gamma a b 0.0
 
 builtin beta_density 3 "beta_density" "Distribution"
 builtin beta_quantile 3 "beta_quantile" "Distribution"
 builtin builtin_sample_beta 2 "sample_beta" "Distribution"
-sample_beta a b = Random $ liftIO (IOAction2 builtin_sample_beta a b)
+sample_beta a b = RandomStructure modifiable $ liftIO (IOAction2 builtin_sample_beta a b)
 beta a b = ProbDensity (make_densities $ beta_density a b) (beta_quantile a b) (sample_beta a b) (between 0.0 1.0)
 
 builtin normal_density 3 "normal_density" "Distribution"
 builtin normal_quantile 3 "normal_quantile" "Distribution"
 builtin builtin_sample_normal 2 "sample_normal" "Distribution"
-sample_normal m s = Random $ liftIO (IOAction2 builtin_sample_normal m s)
+sample_normal m s = RandomStructure modifiable $ liftIO (IOAction2 builtin_sample_normal m s)
 normal m s = ProbDensity (make_densities $ normal_density m s) (normal_quantile m s) (sample_normal m s) realLine
 
 builtin cauchy_density 3 "cauchy_density" "Distribution"
 builtin builtin_sample_cauchy 2 "sample_cauchy" "Distribution"
-sample_cauchy m s = Random $ liftIO (IOAction2 builtin_sample_cauchy m s)
+sample_cauchy m s = RandomStructure modifiable $ liftIO (IOAction2 builtin_sample_cauchy m s)
 cauchy m s = ProbDensity (make_densities $ cauchy_density m s) () (sample_cauchy m s) realLine
 
 builtin laplace_density 3 "laplace_density" "Distribution"
 builtin builtin_sample_laplace 2 "sample_laplace" "Distribution"
-sample_laplace m s = Random $ liftIO (IOAction2 builtin_sample_laplace m s)
+sample_laplace m s = RandomStructure modifiable $ liftIO (IOAction2 builtin_sample_laplace m s)
 laplace m s = ProbDensity (make_densities $ laplace_density m s) () (sample_laplace m s) realLine
 
 builtin uniform_density 3 "uniform_density" "Distribution"
 builtin builtin_sample_uniform 2 "sample_uniform" "Distribution"
-sample_uniform l u = Random $ liftIO (IOAction2 builtin_sample_uniform l u)
+sample_uniform l u = RandomStructure modifiable $ liftIO (IOAction2 builtin_sample_uniform l u)
 uniform l u = ProbDensity (make_densities $ uniform_density l u) () (sample_uniform l u) (between l u)
 
 builtin uniform_int_density 3 "uniform_int_density" "Distribution"
 builtin builtin_sample_uniform_int 2 "sample_uniform_int" "Distribution"
-sample_uniform_int l u = Random $ liftIO (IOAction2 builtin_sample_uniform_int l u)
+sample_uniform_int l u = RandomStructure modifiable $ liftIO (IOAction2 builtin_sample_uniform_int l u)
 uniform_int l u = ProbDensity (make_densities $ uniform_int_density l u) () (sample_uniform_int l u) (integer_between l u)
 
 builtin builtin_dirichlet_density 2 "dirichlet_density" "Distribution"
@@ -220,13 +220,13 @@ dirichlet_on' xs n = dirichlet_on xs (replicate (length xs) n)
 
 builtin binomial_density 3 "binomial_density" "Distribution"
 builtin builtin_sample_binomial 2 "sample_binomial" "Distribution"
-sample_binomial n p = Random $ liftIO (IOAction2 builtin_sample_binomial n p)
+sample_binomial n p = RandomStructure modifiable $ liftIO (IOAction2 builtin_sample_binomial n p)
 binomial n p = ProbDensity (make_densities $ binomial_density n p) (no_quantile "binomial") (sample_binomial n p) (integer_between 0 n)
 
 -- A geometric distribution on [0,\infty).  How many failures before a success?
 builtin geometric_density 3 "geometric_density" "Distribution"
 builtin builtin_sample_geometric 1 "sample_geometric" "Distribution"
-sample_geometric p_success = Random $ liftIO (IOAction1 builtin_sample_geometric p_success)
+sample_geometric p_success = RandomStructure modifiable $ liftIO (IOAction1 builtin_sample_geometric p_success)
 geometric2 p_fail p_success = ProbDensity (make_densities $ geometric_density p_fail p_success) (no_quantile "geometric") (sample_geometric p_success) (integer_above 0)
 
 geometric p = geometric2 (1.0-p) p
@@ -234,11 +234,11 @@ rgeometric q = geometric2 q (1.0-q)
 
 builtin poisson_density 2 "poisson_density" "Distribution"
 builtin builtin_sample_poisson 1 "sample_poisson" "Distribution"
-sample_poisson mu = Random $ liftIO (IOAction1 builtin_sample_poisson mu)
+sample_poisson mu = RandomStructure modifiable $ liftIO (IOAction1 builtin_sample_poisson mu)
 poisson mu = ProbDensity (make_densities $ poisson_density mu) (no_quantile "Poisson") (sample_poisson mu) (integer_above 0)
 
 builtin builtin_sample_bernoulli 1 "sample_bernoulli" "Distribution"
-sample_bernoulli p = Random $ liftIO (IOAction1 builtin_sample_bernoulli p)
+sample_bernoulli p = RandomStructure modifiable $ liftIO (IOAction1 builtin_sample_bernoulli p)
 bernoulli_density2 p q 1 = (doubleToLogDouble p)
 bernoulli_density2 p q 0 = (doubleToLogDouble q)
 bernoulli2 p q = ProbDensity (make_densities $ bernoulli_density2 p q) (no_quantile "bernoulli") (sample_bernoulli p) (integer_between 0 1)
@@ -266,8 +266,8 @@ do_crp'' alpha n bins counts = let inc (c:cs) 0 = (c+1:cs)
 
 builtin crp_density 4 "CRP_density" "Distribution"
 builtin sample_crp_vector 3 "sample_CRP" "Distribution"
-sample_crp alpha n d = Random $ liftIO $ do v <- (IOAction3 sample_crp_vector alpha n d)
-                                            return $ list_from_vector v
+sample_crp alpha n d = RandomStructure modifiable $ liftIO $ do v <- (IOAction3 sample_crp_vector alpha n d)
+                                                                return $ list_from_vector v
 --crp alpha n d = ProbDensity (crp_density alpha n d) (no_quantile "crp") (do_crp alpha n d) (ListRange $ replicate n $ integer_between 0 (n+d-1))
 modifiable_list = map modifiable
 crp alpha n d = ProbDensity (make_densities $ crp_density alpha n d) (no_quantile "crp") (RandomStructure modifiable_list $ sample_crp alpha n d) (ListRange $ replicate n subrange)
@@ -280,7 +280,7 @@ sample_mixture ((p1,dist1):l) = dist1
 mixture args = ProbDensity (make_densities $ mixture_density args) (no_quantile "mixture") (sample_mixture args) (mixtureRange args)
 
 builtin builtin_sample_categorical 1 "sample_categorical" "Distribution"
-sample_categorical ps = Random $ liftIO (IOAction1 builtin_sample_categorical ps)
+sample_categorical ps = RandomStructure modifiable $ liftIO (IOAction1 builtin_sample_categorical ps)
 categorical ps = ProbDensity (make_densities $ qs!) (no_quantile "categorical") (sample_categorical ps) (integer_between 0 (length ps - 1))
                 where qs = listArray' $ map doubleToLogDouble ps
 
