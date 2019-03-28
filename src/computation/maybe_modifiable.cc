@@ -18,6 +18,15 @@ std::optional<int> maybe_modifiable::is_random_variable(const context& C) const
         return {};
 }
 
+std::optional<bounds<double>> maybe_modifiable::has_bounds(const context& C) const
+{
+    if (head and C.compute_expression_has_bounds(*head))
+        return C.get_bounds_for_compute_expression(*head);
+    else
+        return {};
+}
+
+
 expression_ref maybe_modifiable::get_value(const context& C) const
 {
     if (head)
