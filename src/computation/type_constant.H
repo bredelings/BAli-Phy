@@ -1,6 +1,8 @@
 #ifndef TYPE_CONSTANT_H
 #define TYPE_CONSTANT_H
 
+// Note that expression_ref does: `bool is_object_type() const {return type_ > index_var_type;}`
+
 enum type_constant {null_type=0,
                     int_type=1,
                     double_type=2,
@@ -23,6 +25,7 @@ enum type_constant {null_type=0,
                     lambda2_type=19,
                     seq_type=20,
                     join_type=21,
+                    reg_var_type=22,
                     unknown_type
 };
 

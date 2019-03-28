@@ -2,6 +2,8 @@
 
 bool is_reg_var(const expression_ref& E)
 {
-    return E.is_a<reg_var>();
+    bool result = E.head().type() == reg_var_type;
+    assert(result == E.head().is_a<reg_var>());
+    return result;
 }
 
