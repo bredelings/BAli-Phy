@@ -679,7 +679,7 @@ void log_preburnin(ostream& o, const Model& M, const string& name, int iter)
     o<<"   |T| = "<<TL;
     o<<"   |A| = "<<MCMC::alignment_length(P);
     for(int s=0;s<P.n_branch_scales();s++)
-	o<<"   Scale"<<s+1<<"*|T| = "<<P.branch_scale(s)*TL;
+	o<<"   Scale"<<s+1<<"*|T| = "<<P.get_branch_scale(s)*TL;
     o<<std::endl;
 }
 
@@ -923,8 +923,8 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 
     int B = P.as<Parameters>()->t().n_branches();
     for(int i=0; i<P.as<Parameters>()->n_branch_scales(); i++)
-	if (P.as<Parameters>()->branch_scale(i) > 0.5*B)
-	    P.as<Parameters>()->branch_scale(i, 0.5*B);
+	if (P.as<Parameters>()->get_branch_scale(i) > 0.5*B)
+	    P.as<Parameters>()->set_branch_scale(i, 0.5*B);
 }
 
 /// \brief Create transition kernels and start a Markov chain

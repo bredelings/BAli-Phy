@@ -542,7 +542,7 @@ int main(int argc,char* argv[])
 	    auto P = M.as<Parameters>();
 	    for(int i=0;i<P->n_branch_scales();i++)
 		if (P->branch_scale_index(i).is_modifiable(*P))
-		    P->branch_scale(i, 1.0);
+		    P->set_branch_scale(i, 1.0);
 	}
 
 	set_initial_parameter_values(*M,args);

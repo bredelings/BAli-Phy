@@ -378,7 +378,7 @@ void scale_means_only(owned_ptr<Model>& P,MoveStats& Stats)
     for(int i=0; i<PP->n_branch_scales(); i++)
     {
 	bounds<double> b2 = *PP->branch_scale_index(i).has_bounds(*PP);
-	double mu = PP->branch_scale(i);
+	double mu = PP->get_branch_scale(i);
 
 	if (b2.lower_bound and *b2.lower_bound > 0)
 	    b2.lower_bound = log(*b2.lower_bound) - log(mu);
@@ -404,7 +404,7 @@ void scale_means_only(owned_ptr<Model>& P,MoveStats& Stats)
     }
 
     for(int i=0;i<PP->n_branch_scales();i++) 
-	P2->branch_scale(i, P2->branch_scale(i) * scale);
+	P2->set_branch_scale(i, P2->get_branch_scale(i) * scale);
   
     //--------- Compute proposal ratio ---------//
     log_double_t p_ratio = pow(log_double_t(scale),P2->n_data_partitions()-P2->t().n_branches());

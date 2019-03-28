@@ -249,7 +249,7 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
 	{
 	    auto name = string("Scale[")+to_string(i+1)+"]*|T|";
 
-	    auto f = [i](const Parameters& P) {return convertToString( P.branch_scale(i)*tree_length(P.t()));};
+	    auto f = [i](const Parameters& P) {return convertToString( P.get_branch_scale(i)*tree_length(P.t()));};
 
 	    TL->add_field(name, f);
 	}

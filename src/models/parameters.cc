@@ -1175,7 +1175,7 @@ int Parameters::subst_root() const
     return get_parameter_value(subst_root_index).as_int();
 }
 
-double Parameters::branch_scale(int s) const
+double Parameters::get_branch_scale(int s) const
 {
     return branch_scale_index(s).get_value(*this).as_double();
 }
@@ -1205,7 +1205,7 @@ const maybe_modifiable& Parameters::branch_scale_index(int i) const
     return PC->scale_parameter_indices[i];
 }
 
-void Parameters::branch_scale(int s, double x)
+void Parameters::set_branch_scale(int s, double x)
 {
     if (auto R = branch_scale_index(s).is_modifiable(*this))
         return set_modifiable_value(*R, x);
@@ -1215,7 +1215,7 @@ void Parameters::branch_scale(int s, double x)
 
 double Parameters::get_branch_subst_rate(int p, int /* b */) const
 {
-    return branch_scale( *scale_index_for_partition(p) );
+    return get_branch_scale( *scale_index_for_partition(p) );
 }
 
 expression_ref Parameters::my_tree() const

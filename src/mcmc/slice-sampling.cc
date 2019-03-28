@@ -187,7 +187,7 @@ double sum_of_means(const Parameters& P)
 {
     double sum = 0;
     for(int i=0;i<P.n_branch_scales();i++) 
-	sum += P.branch_scale(i);
+	sum += P.get_branch_scale(i);
     return sum;
 }
 
@@ -203,7 +203,7 @@ double set_sum_of_means(Parameters& P, double t)
     double sum = sum_of_means(P);
     double scale = t/sum;
     for(int i=0;i<P.n_branch_scales();i++) 
-	P.branch_scale(i,P.branch_scale(i) * scale);
+	P.set_branch_scale(i,P.get_branch_scale(i) * scale);
 
     return scale;
 }
@@ -256,12 +256,12 @@ scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P)
 	bounds<double> b2 = *P.branch_scale_index(i).has_bounds(P);
 
 	if (b2.lower_bound and *b2.lower_bound > 0)
-	    b2.lower_bound = log(*b2.lower_bound) - log(P.branch_scale(i));
+	    b2.lower_bound = log(*b2.lower_bound) - log(P.get_branch_scale(i));
 	else
 	    b2.lower_bound = {};
 
 	if (b2.upper_bound)
-	    b2.upper_bound = log(*b2.upper_bound) - log(P.branch_scale(i));
+	    b2.upper_bound = log(*b2.upper_bound) - log(P.get_branch_scale(i));
 
 	b = b and b2;
     }

@@ -388,9 +388,9 @@ public:
 
     const maybe_modifiable& branch_scale_index(int i) const;
 
-    double branch_scale(int i) const;
+    double get_branch_scale(int i) const;
 
-    void branch_scale(int i,double); 
+    void set_branch_scale(int i,double);
 
     double get_branch_subst_rate(int p, int b) const;
 
