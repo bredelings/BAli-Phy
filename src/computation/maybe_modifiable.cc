@@ -2,6 +2,14 @@
 #include "computation/expression/reg_var.H"
 #include "computation/expression/modifiable.H"
 
+expression_ref maybe_modifiable::get_expression(const context& C) const
+{
+    if (head)
+        return C.get_expression(*head);
+    else
+        return *value;
+}
+
 std::optional<int> maybe_modifiable::is_modifiable(const context& C) const
 {
     if (head)
