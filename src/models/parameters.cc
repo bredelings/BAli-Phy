@@ -1177,7 +1177,7 @@ int Parameters::subst_root() const
 
 double Parameters::branch_scale(int s) const
 {
-    return evaluate(branch_scale_index(s)).as_double();
+    return branch_scale_index(s).get_value(*this).as_double();
 }
 
 void Parameters::setlength_unsafe(int b,double l) 
@@ -1198,7 +1198,7 @@ double Parameters::branch_mean() const
 }
 
 
-int Parameters::branch_scale_index(int i) const 
+const maybe_modifiable& Parameters::branch_scale_index(int i) const 
 {
     assert(0 <= i and i < n_branch_scales());
 
@@ -1207,7 +1207,7 @@ int Parameters::branch_scale_index(int i) const
 
 optional<int> Parameters::branch_scale_modifiable_reg(int s) const
 {
-    return compute_expression_is_modifiable_reg(branch_scale_index(s));
+    return branch_scale_index(s).is_modifiable(*this);
 }
 
 void Parameters::branch_scale(int s, double x)
@@ -1259,7 +1259,6 @@ parameters_constants::parameters_constants(const vector<alignment>& A, const Seq
      n_imodels(num_distinct(i_mapping)),
      scale_for_partition(scale_mapping),
      n_scales(num_distinct(scale_mapping)),
-     scale_parameter_indices(n_scales),
      TC(star_tree(t.get_leaf_labels())),
      branch_HMM_type(t.n_branches(),0)
 {
@@ -1566,7 +1565,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     // R2. Register individual scales
     for(int i=0; i<n_branch_scales();i++)
-        PC->scale_parameter_indices[i] = add_compute_expression( {var("Data.List.!!"),scales_list,i} );
+        PC->scale_parameter_indices.push_back( add_compute_expression( {var("Data.List.!!"),scales_list,i} ) );
 
     // P1. Add substitution root node
     subst_root_index = add_modifiable_parameter("*subst_root", t().n_nodes()-1);
@@ -1613,7 +1612,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     // R5. Register D[b,s] = T[b]*scale[s]
     for(int s=0;s<n_branch_scales();s++)
     {
-        expression_ref scale = get_expression(branch_scale_index(s));
+        expression_ref scale = branch_scale_index(s).get_expression(*this);
         PC->branch_length_indices.push_back(vector<int>());
         for(int b=0;b<t().n_branches();b++)
         {

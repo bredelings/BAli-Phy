@@ -253,7 +253,7 @@ scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P)
 
     for(int i=0; i<P.n_branch_scales(); i++)
     {
-	bounds<double> b2 = P.get_bounds_for_compute_expression(P.branch_scale_index(i));
+	bounds<double> b2 = *P.branch_scale_index(i).has_bounds(P);
 
 	if (b2.lower_bound and *b2.lower_bound > 0)
 	    b2.lower_bound = log(*b2.lower_bound) - log(P.branch_scale(i));

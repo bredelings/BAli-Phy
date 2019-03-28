@@ -207,7 +207,7 @@ void add_integer_slice_moves(const Model& P, MCMC::MoveAll& M, double weight)
 optional<int> scale_is_random_variable(const Model& M, int s)
 {
     auto& P = dynamic_cast<const Parameters&>(M);
-    return P.compute_expression_is_random_variable(P.branch_scale_index(s));
+    return P.branch_scale_index(s).is_random_variable(M);
 }
 
 bool all_scales_modifiable(const Model& M)
