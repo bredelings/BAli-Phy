@@ -36,7 +36,7 @@ int TreeInterface::branch_out(int n, int i) const
     if (P->branches_from_affected_node[n])
 	return (*P->branches_from_affected_node[n])[i];
   
-    return P->TC->parameters_for_tree_node[n][i].get_value(P).as_int();
+    return P->TC->parameters_for_tree_node[n][i].get_value(*P).as_int();
 }
 
 int TreeInterface::branch_in(int n, int i) const {
@@ -230,15 +230,15 @@ bool TreeInterface::subtree_contains_branch(int b1,int b2) const
 
 
 int TreeInterface::source(int b) const {
-    return std::get<0>(P->TC->parameters_for_tree_branch[b]).get_value(P).as_int();
+    return std::get<0>(P->TC->parameters_for_tree_branch[b]).get_value(*P).as_int();
 }
 
 int TreeInterface::source_index(int b) const {
-    return std::get<1>(P->TC->parameters_for_tree_branch[b]).get_value(P).as_int();
+    return std::get<1>(P->TC->parameters_for_tree_branch[b]).get_value(*P).as_int();
 }
 
 int TreeInterface::target(int b) const {
-    return std::get<2>(P->TC->parameters_for_tree_branch[b]).get_value(P).as_int();
+    return std::get<2>(P->TC->parameters_for_tree_branch[b]).get_value(*P).as_int();
 }
   
 int TreeInterface::undirected(int b) const {
@@ -318,16 +318,14 @@ double TreeInterface::branch_length(int b) const
 bool TreeInterface::can_set_branch_length(int b)
 {
     b %= n_branches();
-    return bool(P->TC->branch_durations[b].is_modifiable());
+    return bool(P->TC->branch_durations[b].is_modifiable(*P));
 }
 
 void TreeInterface::set_branch_length(int b, double l)
 {
     b %= n_branches();
     auto& R = P->TC->branch_durations[b];
-    if (not R.is_modifiable())
-	throw myexception()<<"Trying to set length for branch "<<b<<" which is not directly modifiable.";
-    R.set_value(const_cast<Parameters*>(P), l);
+    R.set_value(*const_cast<Parameters*>(P), l);
 }
 
 vector<int> branches_from_leaves(const TreeInterface& t) 
@@ -529,8 +527,8 @@ void TreeInterface::read_tree_node(const Tree& T, int n)
     for(int i=0;i<edges.size();i++)
     {
 	int b = edges[i];
-	P->TC->parameters_for_tree_node[n][i].set_value(const_cast<Parameters*>(P), b);
-	std::get<1>(P->TC->parameters_for_tree_branch[b]).set_value(const_cast<Parameters*>(P), i);
+	P->TC->parameters_for_tree_node[n][i].set_value(*const_cast<Parameters*>(P), b);
+	std::get<1>(P->TC->parameters_for_tree_branch[b]).set_value(*const_cast<Parameters*>(P), i);
     }
 }
 
@@ -541,8 +539,8 @@ void TreeInterface::read_tree(const Tree& T)
 
     for(int b=0; b < 2*T.n_branches(); b++)
     {
-        std::get<0>(P->TC->parameters_for_tree_branch[b]).set_value(const_cast<Parameters*>(P), (int)T.directed_branch(b).source());
-        std::get<2>(P->TC->parameters_for_tree_branch[b]).set_value(const_cast<Parameters*>(P), (int)T.directed_branch(b).target());
+        std::get<0>(P->TC->parameters_for_tree_branch[b]).set_value(*const_cast<Parameters*>(P), (int)T.directed_branch(b).source());
+        std::get<2>(P->TC->parameters_for_tree_branch[b]).set_value(*const_cast<Parameters*>(P), (int)T.directed_branch(b).target());
     }
 }
 
@@ -577,8 +575,8 @@ void TreeInterface::reconnect_branch(int s1, int t1, int t2)
     branches_from_affected_node[t2]->push_back(b2);
 
     // Update branch source and target nodes
-    std::get<2>(P->TC->parameters_for_tree_branch[b1]).set_value(const_cast<Parameters*>(P), t2);
-    std::get<0>(P->TC->parameters_for_tree_branch[b2]).set_value(const_cast<Parameters*>(P), t2);
+    std::get<2>(P->TC->parameters_for_tree_branch[b1]).set_value(*const_cast<Parameters*>(P), t2);
+    std::get<0>(P->TC->parameters_for_tree_branch[b2]).set_value(*const_cast<Parameters*>(P), t2);
 }
 
 void TreeInterface::begin_modify_topology()
@@ -602,8 +600,8 @@ void TreeInterface::end_modify_node(int n)
     for(int i=0;i<branches.size();i++)
     {
 	int b = branches[i];
-	P->TC->parameters_for_tree_node[n][i].set_value(const_cast<Parameters*>(P), b);
-	std::get<1>(P->TC->parameters_for_tree_branch[b]).set_value(const_cast<Parameters*>(P), i);
+	P->TC->parameters_for_tree_node[n][i].set_value(*const_cast<Parameters*>(P), b);
+	std::get<1>(P->TC->parameters_for_tree_branch[b]).set_value(*const_cast<Parameters*>(P), i);
     }
 
     delete P->branches_from_affected_node[n];

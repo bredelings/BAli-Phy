@@ -489,7 +489,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     auto alignments_vector = *list_to_evector(alignments_structure);
     assert(alignments_vector.size() == 2*B);
     for(int b=0;b<2*B;b++)
-        pairwise_alignment_for_branch[b] = *get_maybe_modifiable(alignments_vector[b]).is_modifiable();
+        pairwise_alignment_for_branch[b] = *get_maybe_modifiable(*p, alignments_vector[b]).is_modifiable(*p);
 
     //  const int n_states = state_letters().size();
     int scale_index = *p->scale_index_for_partition(i);
@@ -688,7 +688,7 @@ void tree_constants::register_branch_lengths(context* C, const expression_ref& b
     {
         int index = C->add_compute_expression( {var("Data.Array.!"), branch_durations_exp, b} );
 
-        branch_durations.push_back( get_maybe_modifiable(branches_structure.sub()[b]) );
+        branch_durations.push_back( get_maybe_modifiable(*C, branches_structure.sub()[b]) );
         branch_duration_index.push_back(index);
     }
 }
@@ -721,7 +721,7 @@ tree_constants::tree_constants(context* C, const vector<string>& labels, int tre
 
         vector<maybe_modifiable> m_edges;
         for(auto& edge: *edges)
-            m_edges.push_back(get_maybe_modifiable(edge));
+            m_edges.push_back(get_maybe_modifiable(*C,edge));
 
         parameters_for_tree_node.push_back ( m_edges );
 
@@ -733,9 +733,9 @@ tree_constants::tree_constants(context* C, const vector<string>& labels, int tre
         auto nodes = nodes_for_edge.sub()[b];
 
         assert(has_constructor(nodes,"(,,,)"));
-        maybe_modifiable m_source = get_maybe_modifiable(nodes.sub()[0]);
-        maybe_modifiable m_source_index = get_maybe_modifiable(nodes.sub()[1]);
-        maybe_modifiable m_target = get_maybe_modifiable(nodes.sub()[2]);
+        maybe_modifiable m_source = get_maybe_modifiable(*C, nodes.sub()[0]);
+        maybe_modifiable m_source_index = get_maybe_modifiable(*C, nodes.sub()[1]);
+        maybe_modifiable m_target = get_maybe_modifiable(*C, nodes.sub()[2]);
 
         parameters_for_tree_branch.push_back( std::tuple<maybe_modifiable, maybe_modifiable, maybe_modifiable>{m_source, m_source_index, m_target} );
     }
@@ -1123,8 +1123,8 @@ void Parameters::show_h_tree() const
     using std::get;
     for(int b=0; b < 2*t().n_branches(); b++)
     {
-        auto source = get<0>(TC->parameters_for_tree_branch[b]).get_value(this);
-        auto target = get<2>(TC->parameters_for_tree_branch[b]).get_value(this);
+        auto source = get<0>(TC->parameters_for_tree_branch[b]).get_value(*this);
+        auto target = get<2>(TC->parameters_for_tree_branch[b]).get_value(*this);
         std::cerr<<"branch "<<b<<": ("<<source<<","<<target<<")     "<<t().branch_length(b)<<"\n";
     }
 }
