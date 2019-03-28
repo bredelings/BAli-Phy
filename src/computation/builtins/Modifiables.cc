@@ -82,10 +82,19 @@ expression_ref maybe_modifiable_structure(OperationArgs& Args, int r1)
         m = m + reg_var(r2);
         return m;
     }
+    // 4. If we see a random_variable guarding a modifiable, we want to claim to be modifiable, but reference the random variable.
     else if (is_random_variable(M[r2].exp))
     {
 	int r3 = M[r2].reg_for_slot(0);
-        return maybe_modifiable_structure(Args,r3);
+        auto E = maybe_modifiable_structure(Args,r3);
+        if (is_modifiable(E))
+        {
+            expression_ref m = modifiable();
+            m = m + reg_var(r2);
+            return m;
+        }
+        else
+            return E;
     }
     else if (is_seq(M[r2].exp))
     {
