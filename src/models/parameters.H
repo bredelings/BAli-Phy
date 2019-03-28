@@ -388,8 +388,6 @@ public:
 
     const maybe_modifiable& branch_scale_index(int i) const;
 
-    std::optional<int> branch_scale_modifiable_reg(int i) const;
-
     double branch_scale(int i) const;
 
     void branch_scale(int i,double); 

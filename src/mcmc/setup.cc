@@ -255,8 +255,7 @@ void add_alignment_and_parameter_moves(MCMC::MoveAll& moves, Model& M, double we
     {
 	string pname = "Scale["+std::to_string(s+1)+"]";
 	vector<int> partitions = dynamic_cast<const Parameters&>(M).partitions_for_scale(s);
-
-	if (auto r = dynamic_cast<const Parameters&>(M).branch_scale_modifiable_reg(s))
+	if (auto r = dynamic_cast<const Parameters&>(M).branch_scale_index(s).is_modifiable(M))
 	{
 	    auto proposal = [r,partitions](Model& P){
 		return realign_and_propose_parameter(P, *r, partitions, log_scaled(more_than(0.0, shift_laplace)), {0.25}) ;

@@ -1205,14 +1205,9 @@ const maybe_modifiable& Parameters::branch_scale_index(int i) const
     return PC->scale_parameter_indices[i];
 }
 
-optional<int> Parameters::branch_scale_modifiable_reg(int s) const
-{
-    return branch_scale_index(s).is_modifiable(*this);
-}
-
 void Parameters::branch_scale(int s, double x)
 {
-    if (auto R = branch_scale_modifiable_reg(s))
+    if (auto R = branch_scale_index(s).is_modifiable(*this))
         return set_modifiable_value(*R, x);
     else
         throw myexception()<<"Branch scale "<<s+1<<" is not directly modifiable!";
