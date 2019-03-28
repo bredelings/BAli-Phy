@@ -1564,8 +1564,10 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     expression_ref scales_list = get_expression(scales_list_index);
 
     // R2. Register individual scales
+    expression_ref scales_structure = evaluate_expression({var("Parameters.maybe_modifiable_structure"), scales_list});
+    auto scales_vector = *list_to_evector(scales_structure);
     for(int i=0; i<n_branch_scales();i++)
-        PC->scale_parameter_indices.push_back( add_compute_expression( {var("Data.List.!!"),scales_list,i} ) );
+        PC->scale_parameter_indices.push_back( get_maybe_modifiable(*this, scales_vector[i] ) );
 
     // P1. Add substitution root node
     subst_root_index = add_modifiable_parameter("*subst_root", t().n_nodes()-1);
