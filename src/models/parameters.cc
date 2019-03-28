@@ -1177,7 +1177,7 @@ int Parameters::subst_root() const
 
 double Parameters::get_branch_scale(int s) const
 {
-    return branch_scale_index(s).get_value(*this).as_double();
+    return branch_scale(s).get_value(*this).as_double();
 }
 
 void Parameters::setlength_unsafe(int b,double l) 
@@ -1198,7 +1198,7 @@ double Parameters::branch_mean() const
 }
 
 
-const maybe_modifiable& Parameters::branch_scale_index(int i) const 
+const maybe_modifiable& Parameters::branch_scale(int i) const
 {
     assert(0 <= i and i < n_branch_scales());
 
@@ -1207,7 +1207,7 @@ const maybe_modifiable& Parameters::branch_scale_index(int i) const
 
 void Parameters::set_branch_scale(int s, double x)
 {
-    if (auto R = branch_scale_index(s).is_modifiable(*this))
+    if (auto R = branch_scale(s).is_modifiable(*this))
         return set_modifiable_value(*R, x);
     else
         throw myexception()<<"Branch scale "<<s+1<<" is not directly modifiable!";
@@ -1609,7 +1609,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     // R5. Register D[b,s] = T[b]*scale[s]
     for(int s=0;s<n_branch_scales();s++)
     {
-        expression_ref scale = branch_scale_index(s).get_expression(*this);
+        expression_ref scale = branch_scale(s).get_expression(*this);
         PC->branch_length_indices.push_back(vector<int>());
         for(int b=0;b<t().n_branches();b++)
         {

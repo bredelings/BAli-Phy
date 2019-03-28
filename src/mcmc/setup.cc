@@ -207,7 +207,7 @@ void add_integer_slice_moves(const Model& P, MCMC::MoveAll& M, double weight)
 optional<int> scale_is_random_variable(const Model& M, int s)
 {
     auto& P = dynamic_cast<const Parameters&>(M);
-    return P.branch_scale_index(s).is_random_variable(M);
+    return P.branch_scale(s).is_random_variable(M);
 }
 
 bool all_scales_modifiable(const Model& M)
@@ -255,7 +255,7 @@ void add_alignment_and_parameter_moves(MCMC::MoveAll& moves, Model& M, double we
     {
 	string pname = "Scale["+std::to_string(s+1)+"]";
 	vector<int> partitions = dynamic_cast<const Parameters&>(M).partitions_for_scale(s);
-	if (auto r = dynamic_cast<const Parameters&>(M).branch_scale_index(s).is_modifiable(M))
+	if (auto r = dynamic_cast<const Parameters&>(M).branch_scale(s).is_modifiable(M))
 	{
 	    auto proposal = [r,partitions](Model& P){
 		return realign_and_propose_parameter(P, *r, partitions, log_scaled(more_than(0.0, shift_laplace)), {0.25}) ;

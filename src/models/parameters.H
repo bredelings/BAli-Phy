@@ -386,7 +386,7 @@ public:
 
     double branch_mean() const;
 
-    const maybe_modifiable& branch_scale_index(int i) const;
+    const maybe_modifiable& branch_scale(int i) const;
 
     double get_branch_scale(int i) const;
 
