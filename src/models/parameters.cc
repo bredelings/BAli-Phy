@@ -1202,7 +1202,7 @@ const maybe_modifiable& Parameters::branch_scale(int i) const
 {
     assert(0 <= i and i < n_branch_scales());
 
-    return PC->scale_parameter_indices[i];
+    return PC->branch_scales_[i];
 }
 
 void Parameters::set_branch_scale(int s, double x)
@@ -1562,7 +1562,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     expression_ref scales_structure = evaluate_expression({var("Parameters.maybe_modifiable_structure"), scales_list});
     auto scales_vector = *list_to_evector(scales_structure);
     for(int i=0; i<n_branch_scales();i++)
-        PC->scale_parameter_indices.push_back( get_maybe_modifiable(*this, scales_vector[i] ) );
+        PC->branch_scales_.push_back( get_maybe_modifiable(*this, scales_vector[i] ) );
 
     // P1. Add substitution root node
     subst_root_index = add_modifiable_parameter("*subst_root", t().n_nodes()-1);

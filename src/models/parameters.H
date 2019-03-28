@@ -238,7 +238,7 @@ struct parameters_constants: public Object
     // Scale for partition
     std::vector<std::optional<int>> scale_for_partition;
     int n_scales;
-    std::vector<maybe_modifiable> scale_parameter_indices;
+    std::vector<maybe_modifiable> branch_scales_;
 
     std::vector< std::vector<int> > branch_length_indices;
 
