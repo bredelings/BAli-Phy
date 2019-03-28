@@ -4,6 +4,7 @@
 #include "computation/closure.H"
 #include "computation/program.H"
 #include "util/math/log-double.H"
+#include "util/bounds.H"
 #include "mcmc/prob_ratios.H"
 #include "util/json.hh"
 
@@ -75,6 +76,9 @@ public:
     std::optional<int> compute_expression_is_modifiable_reg(int p) const;
 
     std::optional<int> compute_expression_is_random_variable(int p) const;
+
+    bool compute_expression_has_bounds(int i) const;
+    bounds<double> get_bounds_for_compute_expression(int i) const;
 
     /// Return the value of a particular index, computing it if necessary
     const closure& lazy_evaluate(int index) const;

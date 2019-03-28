@@ -25,6 +25,9 @@ using std::optional;
 using std::cerr;
 using std::endl;
 
+template <typename T>
+using Bounds = Box<bounds<T>>;
+
 long total_create_context1 = 0;
 long total_create_context2 = 0;
 
@@ -186,6 +189,28 @@ optional<int> context::compute_expression_is_modifiable_reg(int index) const
 optional<int> context::compute_expression_is_random_variable(int index) const
 {
     return memory()->compute_expression_is_random_variable(index);
+}
+
+bool context::compute_expression_has_bounds(int index) const
+{
+    auto R = compute_expression_is_random_variable(index);
+    if (not R) return false;
+    auto e = get_range_for_random_variable(*R);
+
+    return (e and e.is_a<Bounds<double>>());
+}
+
+bounds<double> context::get_bounds_for_compute_expression(int index) const
+{
+    auto R = compute_expression_is_random_variable(index);
+    auto e = get_range_for_random_variable(*R);
+
+    assert(e);
+
+    if (not e.is_a<Bounds<double>>())
+	throw myexception()<<"compute expression "<<index<<" doesn't have bounds<double>.";
+
+    return e.as_<Bounds<double>>();
 }
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?

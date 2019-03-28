@@ -98,9 +98,6 @@ public:
     bool has_bounds(int i) const;
     const bounds<double>& get_bounds(int i) const;
 
-    bool compute_expression_has_bounds(int i) const;
-    const bounds<double>& get_bounds_for_compute_expression(int i) const;
-
     /// Get SOME model modifiable values
     EVector get_modifiable_values(const std::vector<int>&) const;
 
