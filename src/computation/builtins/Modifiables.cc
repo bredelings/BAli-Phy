@@ -9,7 +9,6 @@
 #include "computation/expression/random_variable.H"
 #include "computation/expression/modifiable.H"
 #include "computation/expression/list.H"
-#include "computation/maybe_modifiable.H"
 
 using boost::dynamic_pointer_cast;
 

@@ -36,7 +36,7 @@
 #include "models/model.H"
 #include "imodel/imodel.H"
 #include "alignment/alignment.H"
-#include "computation/maybe_modifiable.H"
+#include "computation/param.H"
 
 #include "tools/partition.H"
 #include "dp/2way.H"
@@ -207,11 +207,11 @@ struct tree_constants: public Object
 {
     // The tree
     int tree_head = -1;
-    std::vector<std::vector<maybe_modifiable>> parameters_for_tree_node;
-    std::vector<std::tuple<maybe_modifiable,maybe_modifiable,maybe_modifiable>> parameters_for_tree_branch;
+    std::vector<std::vector<param>> parameters_for_tree_node;
+    std::vector<std::tuple<param,param,param>> parameters_for_tree_branch;
 
     std::vector<int> branch_duration_index;
-    std::vector<maybe_modifiable> branch_durations;
+    std::vector<param> branch_durations;
 
     int n_leaves;
 
@@ -238,7 +238,7 @@ struct parameters_constants: public Object
     // Scale for partition
     std::vector<std::optional<int>> scale_for_partition;
     int n_scales;
-    std::vector<maybe_modifiable> branch_scales_;
+    std::vector<param> branch_scales_;
 
     std::vector< std::vector<int> > branch_length_indices;
 
@@ -386,7 +386,7 @@ public:
 
     double branch_mean() const;
 
-    const maybe_modifiable& branch_scale(int i) const;
+    const param& branch_scale(int i) const;
 
     double get_branch_scale(int i) const;
 

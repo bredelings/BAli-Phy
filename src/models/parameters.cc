@@ -489,7 +489,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     auto alignments_vector = *list_to_evector(alignments_structure);
     assert(alignments_vector.size() == 2*B);
     for(int b=0;b<2*B;b++)
-        pairwise_alignment_for_branch[b] = *get_maybe_modifiable(*p, alignments_vector[b]).is_modifiable(*p);
+        pairwise_alignment_for_branch[b] = *get_param(*p, alignments_vector[b]).is_modifiable(*p);
 
     //  const int n_states = state_letters().size();
     int scale_index = *p->scale_index_for_partition(i);
@@ -688,7 +688,7 @@ void tree_constants::register_branch_lengths(context* C, const expression_ref& b
     {
         int index = C->add_compute_expression( {var("Data.Array.!"), branch_durations_exp, b} );
 
-        branch_durations.push_back( get_maybe_modifiable(*C, branches_structure.sub()[b]) );
+        branch_durations.push_back( get_param(*C, branches_structure.sub()[b]) );
         branch_duration_index.push_back(index);
     }
 }
@@ -719,9 +719,9 @@ tree_constants::tree_constants(context* C, const vector<string>& labels, int tre
         auto edges = list_to_evector(edges_out_of_node.sub()[n]);
         assert(edges);
 
-        vector<maybe_modifiable> m_edges;
+        vector<param> m_edges;
         for(auto& edge: *edges)
-            m_edges.push_back(get_maybe_modifiable(*C,edge));
+            m_edges.push_back(get_param(*C,edge));
 
         parameters_for_tree_node.push_back ( m_edges );
 
@@ -733,11 +733,11 @@ tree_constants::tree_constants(context* C, const vector<string>& labels, int tre
         auto nodes = nodes_for_edge.sub()[b];
 
         assert(has_constructor(nodes,"(,,,)"));
-        maybe_modifiable m_source = get_maybe_modifiable(*C, nodes.sub()[0]);
-        maybe_modifiable m_source_index = get_maybe_modifiable(*C, nodes.sub()[1]);
-        maybe_modifiable m_target = get_maybe_modifiable(*C, nodes.sub()[2]);
+        param m_source = get_param(*C, nodes.sub()[0]);
+        param m_source_index = get_param(*C, nodes.sub()[1]);
+        param m_target = get_param(*C, nodes.sub()[2]);
 
-        parameters_for_tree_branch.push_back( std::tuple<maybe_modifiable, maybe_modifiable, maybe_modifiable>{m_source, m_source_index, m_target} );
+        parameters_for_tree_branch.push_back( std::tuple<param, param, param>{m_source, m_source_index, m_target} );
     }
 }
 
@@ -1198,7 +1198,7 @@ double Parameters::branch_mean() const
 }
 
 
-const maybe_modifiable& Parameters::branch_scale(int i) const
+const param& Parameters::branch_scale(int i) const
 {
     assert(0 <= i and i < n_branch_scales());
 
@@ -1562,7 +1562,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     expression_ref scales_structure = evaluate_expression({var("Parameters.maybe_modifiable_structure"), scales_list});
     auto scales_vector = *list_to_evector(scales_structure);
     for(int i=0; i<n_branch_scales();i++)
-        PC->branch_scales_.push_back( get_maybe_modifiable(*this, scales_vector[i] ) );
+        PC->branch_scales_.push_back( get_param(*this, scales_vector[i] ) );
 
     // P1. Add substitution root node
     subst_root_index = add_modifiable_parameter("*subst_root", t().n_nodes()-1);
