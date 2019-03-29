@@ -3,7 +3,10 @@ module Probability (module Probability,
                     module Probability.Distribution.Beta,
                     module Probability.Distribution.Gamma,
                     module Probability.Distribution.Normal,
+
                     module Probability.Distribution.Uniform,
+                    module Probability.Distribution.Discrete,
+
                     module Probability.Distribution.List,
                     module Probability.Distribution.Tree
                    )
@@ -19,7 +22,9 @@ import Probability.Random
 import Probability.Distribution.Beta
 import Probability.Distribution.Gamma
 import Probability.Distribution.Normal
+
 import Probability.Distribution.Uniform
+import Probability.Distribution.Discrete
 
 import Probability.Distribution.List
 import Probability.Distribution.Tree
@@ -115,22 +120,6 @@ builtin builtin_sample_categorical 1 "sample_categorical" "Distribution"
 sample_categorical ps = RandomStructure modifiable $ liftIO (IOAction1 builtin_sample_categorical ps)
 categorical ps = Distribution (make_densities $ qs!) (no_quantile "categorical") (sample_categorical ps) (integer_between 0 (length ps - 1))
                 where qs = listArray' $ map doubleToLogDouble ps
-
--- This contains functions for working with DiscreteDistribution
-
-uniformQuantiles q n = map (\i -> q ((2.0*(intToDouble i)+1.0)/(intToDouble n)) ) (take n [1..])
-
-mix fs ds = [(p*f, x) | (f, d) <- zip' fs ds, (p, x) <- d]
-
-certainly x = [(1.0, x)]
-
-extendDiscreteDistribution d p x = mix [p, 1.0-p] [certainly x, d]
-
-average l = foldl' (\x y->(x+(fst y)*(snd y))) 0.0 l
-
-uniformGrid n = [( 1.0/n', (2.0*i'+1.0)/(2.0*n') ) | i <- take n [0..], let n' = intToDouble n, let i'=intToDouble i]
-
-uniformDiscretize dist n = [(p, quantile dist x) | (p,x) <- uniformGrid n]
 
 -- This contains exp-transformed functions
 expTransform (Distribution d q s r) = Distribution pdf' q' s' r' 
