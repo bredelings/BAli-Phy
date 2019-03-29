@@ -56,7 +56,7 @@ plus_inv mm p_inv = extend_mixture mm (p_inv, scale 0.0 $ f81 pi a)
 multi_rate_unif_bins base dist n_bins = multi_rate base $ uniformDiscretize dist n_bins
 
 rate (ReversibleMarkov a s q pi l t r) = r
-rate (MixtureModel d) = average (fmap2 rate d)
+rate (MixtureModel d) = average [(p,rate m) | (p,m) <- d]
 
 branchTransitionP (MixtureModel l) t = let r = rate (MixtureModel l)
                                        in map (\x -> qExp (scale (t/r) (snd x))) l

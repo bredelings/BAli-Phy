@@ -118,12 +118,6 @@ categorical ps = Distribution (make_densities $ qs!) (no_quantile "categorical")
 
 -- This contains functions for working with DiscreteDistribution
 
-fmap1 f [] = []
-fmap1 f ((x,y):l) = (f x,y):(fmap1 f l)
-
-fmap2 f [] = []
-fmap2 f ((x,y):l) = (x,f y):(fmap2 f l)
-
 uniformQuantiles q n = map (\i -> q ((2.0*(intToDouble i)+1.0)/(intToDouble n)) ) (take n [1..])
 
 mix fs ds = [(p*f, x) | (f, d) <- zip' fs ds, (p, x) <- d]
@@ -136,7 +130,7 @@ average l = foldl' (\x y->(x+(fst y)*(snd y))) 0.0 l
 
 uniformGrid n = [( 1.0/n', (2.0*i'+1.0)/(2.0*n') ) | i <- take n [0..], let n' = intToDouble n, let i'=intToDouble i]
 
-uniformDiscretize dist n = fmap2 (quantile dist) (uniformGrid n)
+uniformDiscretize dist n = [(p, quantile dist x) | (p,x) <- uniformGrid n]
 
 -- This contains exp-transformed functions
 expTransform (Distribution d q s r) = Distribution pdf' q' s' r' 
