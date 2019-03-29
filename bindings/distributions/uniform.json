@@ -2,7 +2,7 @@
     "name": "uniform",
     "synonyms": ["Uniform"],
     "result_type": "Distribution[Double]",
-    "call": "Probability.uniform[low,high]",
+    "call": "Probability.Distribution.Uniform.uniform[low,high]",
     "args": [
         {
             "arg_name": "low",

@@ -1474,7 +1474,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     vector<expression_ref> program_loggers;
     // Therefore, we are constructing a list with values [(prefix1,(Just value1, loggers1)), (prefix1, (Just value1, loggers2))
 
-    expression_ref topology_model1 = {var("Probability.Random.sample"), {var("Probability.uniform_topology"), tt.n_leaves()}};
+    expression_ref topology_model1 = {var("Probability.Random.sample"), {var("Probability.Distribution.Tree.uniform_topology"), tt.n_leaves()}};
     program.perform(tree_var, topology_model1);
 
     // register the substitution models as sub-models
