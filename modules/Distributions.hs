@@ -404,13 +404,11 @@ dpm n alpha mean_dist noise_dist= do
   mean <- sample $ iid (n+delta) mean_dist
   sigmaOverMu <- sample $ iid (n+delta) noise_dist
 
-  category <- sample $ crp alpha n delta
-
---  Log "dpm:n_categories" (length (nub category))
-
   z <- sample $ iid n (normal 0.0 1.0)
 
-  AddMove (\c -> mapM_ (\l-> gibbs_sample_categorical (category!!l) (n+delta) c) [0..n-1])
+  category <- Strict $ do category <- Lazy $ sample $ crp alpha n delta
+                          AddMove (\c -> mapM_ (\l-> gibbs_sample_categorical (category!!l) (n+delta) c) [0..n-1])
+                          return category
 
   return [ mean!!k * safe_exp (z!!i * sigmaOverMu!!k) | i <- take n [0..], let k=category!!i]
 
@@ -420,10 +418,9 @@ dp n alpha mean_dist = do
 
   mean <- sample $ iid (n+delta) mean_dist
 
-  category <- sample $ crp alpha n delta
---  Log "dp:n_categories" (length (nub category))
-
-  AddMove (\c -> mapM_ (\l-> gibbs_sample_categorical (category!!l) (n+delta) c) [0..n-1])
+  category <- Strict $ do category <- Lazy $ sample $ crp alpha n delta
+                          AddMove (\c -> mapM_ (\l-> gibbs_sample_categorical (category!!l) (n+delta) c) [0..n-1])
+                          return category
 
   return [ mean!!k | i <- take n [0..], let k=category!!i]
 
