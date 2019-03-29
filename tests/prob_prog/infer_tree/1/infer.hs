@@ -1,6 +1,6 @@
 import Alignment
 import Alphabet
-import Distributions
+import Probability
 import Tree
 import Data.BitVector
 import SModel.Likelihood

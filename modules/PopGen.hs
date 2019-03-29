@@ -1,6 +1,6 @@
 module PopGen where
 
-import Distributions
+import Probability
 import Range
 
 builtin builtin_read_phase_file 1 "read_phase_file" "PopGen"

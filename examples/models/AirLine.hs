@@ -1,5 +1,5 @@
 module AirLine where 
-import Distributions
+import Probability
 
 fatalities = [24,25,31,31,22,21,26,20,16,22]
 

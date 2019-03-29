@@ -1,6 +1,6 @@
 module Demo3 where
 
-import Distributions
+import Probability
 
 main = do
   i <- sample $ bernoulli 0.5

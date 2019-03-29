@@ -2,7 +2,7 @@
     "name": "uniform_discretize",
     "result_type": "List[Double]",
     "title": "Uniformly discretize a continuous distribution",
-    "call": "Distributions.uniformDiscretize[dist,n]",
+    "call": "Probability.uniformDiscretize[dist,n]",
     "args": [
         {
             "arg_name": "dist",

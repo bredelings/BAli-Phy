@@ -1,6 +1,6 @@
 module Demo where
 
-import Distributions
+import Probability
 
 -- Start from x0, sample n additional points.
 -- (f x) is the distribution of the point after x.

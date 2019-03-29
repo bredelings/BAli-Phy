@@ -1,6 +1,6 @@
 module Demo4 where
 
-import Distributions
+import Probability
 
 main = do
 

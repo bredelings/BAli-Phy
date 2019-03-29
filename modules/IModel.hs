@@ -1,6 +1,6 @@
 module IModel where
 
-import Distributions
+import Probability
 import Tree
   
 builtin rs05_branch_HMM 5 "rs05_branch_HMM" "Alignment"

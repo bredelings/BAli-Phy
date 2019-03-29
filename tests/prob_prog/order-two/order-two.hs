@@ -1,4 +1,4 @@
-import Distributions
+import Probability
 
 random_walk n x1 x2 | n < 2     = error("Random walk must have at least 2 points")
                     | n == 2    = return [x1, x2]

@@ -1,7 +1,7 @@
 module Test where
 {
   import PopGen;
-  import Distributions;
+  import Probability;
   get_AFS file = map (allele_frequency_spectrum . remove_2nd_allele) $ list_from_vector $ read_phase_file file;
 
   filename = "/home/bredelings/Reports/Kmar/BP.phase1.infile";

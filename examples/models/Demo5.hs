@@ -1,6 +1,6 @@
 module Demo5 where
 
-import Distributions
+import Probability
 
 random_walk x0 n f | n < 1     = error "Random walk needs at least 1 element"
                    | n == 1    = return [x0]

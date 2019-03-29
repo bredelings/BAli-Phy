@@ -1,4 +1,4 @@
-import Distributions
+import Probability
 
 import Tree
 

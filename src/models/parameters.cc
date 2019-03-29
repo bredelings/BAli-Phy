@@ -1453,7 +1453,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
      updown(-1)
 {
     // \todo FIXME:cleanup|fragile - Don't touch C here directly!
-    *this += { "SModel","Distributions","Range","PopGen","Alignment","IModel","BAliPhy.ATModel" };
+    *this += { "SModel","Probability","Range","PopGen","Alignment","IModel","BAliPhy.ATModel" };
   
     // Don't call set_parameter_value here, because recalc( ) depends on branch_length_indices, which is not ready.
 
@@ -1474,7 +1474,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     vector<expression_ref> program_loggers;
     // Therefore, we are constructing a list with values [(prefix1,(Just value1, loggers1)), (prefix1, (Just value1, loggers2))
 
-    expression_ref topology_model1 = {var("Distributions.sample"), {var("Distributions.uniform_topology"), tt.n_leaves()}};
+    expression_ref topology_model1 = {var("Probability.sample"), {var("Probability.uniform_topology"), tt.n_leaves()}};
     program.perform(tree_var, topology_model1);
 
     // register the substitution models as sub-models
@@ -1491,7 +1491,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         const alphabet& a = A[*first_index].get_alphabet();
 
         expression_ref smodel = SMs[i].expression;
-        smodel = {var("Distributions.set_alphabet'"), a, smodel};
+        smodel = {var("Probability.set_alphabet'"), a, smodel};
 
         auto smodel_var = program.bind_and_log_model(prefix , smodel, program_loggers, false);
         smodels.push_back(smodel_var);

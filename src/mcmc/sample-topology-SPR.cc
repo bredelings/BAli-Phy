@@ -1262,7 +1262,20 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     if (I.n_attachment_branches() == 1) return false;
 
     // 6. Compute the probabilities for attaching on each branch.
-    spr_attachment_probabilities PrB = SPR_search_attachment_points(P, subtree_edge, range, locations, nodes, sum_out_A);
+    spr_attachment_probabilities PrB;
+    try
+    {
+	PrB = SPR_search_attachment_points(P, subtree_edge, range, locations, nodes, sum_out_A);
+    }
+    catch (choose_exception<log_double_t>& c)
+    {
+	// FIXME: what if only SOME of the attachment points have NaN/Inf/Inf?
+	std::cerr<<"sample_SPR_search_one: caught choose_exception:\n";
+	std::cerr<<c.what();
+	std::cerr<<"continuing on with P.probability() = "<<P.probability()<<".\n";
+	return false;
+    }
+
 
     vector<log_double_t> Pr = I.convert_to_vector(PrB);
 #ifdef DEBUG_SPR_ALL

@@ -2,7 +2,7 @@
     "name": "log_laplace",
     "synonyms": ["logLaplace"],
     "result_type": "Distribution[Double]",
-    "call": "Distributions.log_laplace[lm,ls]",
+    "call": "Probability.log_laplace[lm,ls]",
     "args": [
         {
             "arg_name": "lm",

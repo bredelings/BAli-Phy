@@ -1073,7 +1073,7 @@ int reg_heap::add_program(const expression_ref& E)
 	throw myexception()<<"Trying to set program a second time!";
 
     auto P = E;
-    P = {var("Distributions.gen_model_no_alphabet"), P};
+    P = {var("Probability.gen_model_no_alphabet"), P};
     P = {var("Prelude.unsafePerformIO"), P};
 
     int program_head = add_compute_expression(P);
@@ -1081,7 +1081,7 @@ int reg_heap::add_program(const expression_ref& E)
 
     program_result_head = add_compute_expression({fst,P});
 
-    expression_ref L = {var("Distributions.log_to_json"),{snd, P}};
+    expression_ref L = {var("Probability.log_to_json"),{snd, P}};
     L = {var("Data.JSON.c_json"), L};
 
     logging_head = add_compute_expression(L);

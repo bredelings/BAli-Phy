@@ -1,4 +1,4 @@
-import Distributions
+import Probability
 
 model = do
   x <- Lazy $ sample $ normal 0.0 1.0

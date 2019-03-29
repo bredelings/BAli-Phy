@@ -3,7 +3,7 @@ module SModel (module SModel,
                module SModel.Codons,
                module SModel.ReversibleMarkov,
                module SModel.Likelihood) where 
-import Distributions
+import Probability
 import Alphabet
 import Tree
 import Parameters

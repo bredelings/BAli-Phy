@@ -485,7 +485,7 @@ int main(int argc,char* argv[])
 	{
 	    show_only = true; // Don't print machine stats on error.
 
-	    (*M) += { "SModel","Distributions","Range","PopGen","Alignment","IModel" };
+	    (*M) += { "SModel","Probability","Range","PopGen","Alignment","IModel" };
 	    const string mstring = args["print"].as<string>();
 	    Rules R(get_package_paths(argv[0], args));
 	    model_t print = get_model(R,"a",mstring);
@@ -514,7 +514,7 @@ int main(int argc,char* argv[])
 			a = Codons(DNA(), AminoAcids(), Standard_Genetic_Code());
 		}
 	    }
-	    print_exp = {var("Distributions.run_lazy"), a, print_exp};
+	    print_exp = {var("Probability.run_lazy"), a, print_exp};
 	    print_exp = {var("Prelude.unsafePerformIO"),print_exp};
 	    print_exp = {var("Data.Tuple.fst"),print_exp };
 	    print_exp = {var("Prelude.show"),print_exp };

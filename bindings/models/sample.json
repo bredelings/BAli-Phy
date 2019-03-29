@@ -3,7 +3,7 @@
     "result_type": "a",
     "perform": true,
     "no_log": true,
-    "call": "Distributions.sample[dist]",
+    "call": "Probability.sample[dist]",
     "args": [
         {
             "arg_name": "dist",

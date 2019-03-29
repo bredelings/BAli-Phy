@@ -1,6 +1,6 @@
 module SMC where
 
-import Distributions
+import Probability
 builtin builtin_smc_density 4 "smc_density" "SMC"
 smc_density rho_over_theta rates level_boundaries sequences = builtin_smc_density rho_over_theta rates' level_boundaries' sequences
                                                                 where rates' = list_to_vector rates

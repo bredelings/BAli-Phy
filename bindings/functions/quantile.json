@@ -2,7 +2,7 @@
     "name": "quantile",
     "result_type": "Double",
     "no_log": true,
-    "call": "Distributions.quantile[dist,p]",
+    "call": "Probability.quantile[dist,p]",
     "args": [
         {
             "arg_name": "dist",

@@ -2,7 +2,7 @@
     "name": "getAlphabet",
     "result_type": "a",
     "perform": true,
-    "call": "Distributions.GetAlphabet",
+    "call": "Probability.GetAlphabet",
     "args": [],
     "title" : "The current alphabet"
 }

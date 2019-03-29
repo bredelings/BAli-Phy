@@ -1,7 +1,7 @@
 module Line where
 
 import Data.ReadFile
-import Distributions
+import Probability
 import System.Environment
 
 xs = read_file_as_double "xs"

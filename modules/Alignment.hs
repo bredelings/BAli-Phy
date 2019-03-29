@@ -3,7 +3,7 @@ module Alignment where
 import Tree
 import Data.BitVector
 import Parameters
-import Distributions
+import Probability
 
 builtin pairwise_alignment_length1 1 "pairwise_alignment_length1" "Alignment"
 builtin pairwise_alignment_length2 1 "pairwise_alignment_length2" "Alignment"

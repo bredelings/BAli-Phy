@@ -1,4 +1,4 @@
-module Distributions where
+module Probability where
 
 import Range
 import Parameters

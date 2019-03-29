@@ -1,4 +1,4 @@
-import Distributions
+import Probability
 
 cumsum xs = go 0 xs where
     go acc []     = []
