@@ -417,12 +417,12 @@ optional<pair<expression_ref,set<string>>> get_model_let(const Rules& R, const p
     // FIXME: we currently prohibit var_exp from containing any lambda-variables, so we don't need to check if it has them.
     bool do_log = is_unlogged_random(R, var_exp, scope);
     expression_ref var_loggers = List();
-    var_loggers = {var("Probability.add_logger"), var_loggers, var_name, pair_x, do_log};
+    var_loggers = {var("Probability.Random.add_logger"), var_loggers, var_name, pair_x, do_log};
 
     expression_ref loggers = List();
     var Nothing("Data.Maybe.Nothing");
-    loggers = {var("Probability.add_logger"),loggers,"let:body",Tuple(Nothing,{snd,pair_body}),false};
-    loggers = {var("Probability.add_logger"),loggers,"let:var",Tuple(Nothing,var_loggers),false};
+    loggers = {var("Probability.Random.add_logger"),loggers,"let:body",Tuple(Nothing,{snd,pair_body}),false};
+    loggers = {var("Probability.Random.add_logger"),loggers,"let:var",Tuple(Nothing,var_loggers),false};
 
     // E = return (fst pair_body, loggers)
     expression_ref E = {do_return,Tuple({fst,pair_body},loggers)};
@@ -592,7 +592,7 @@ pair<expression_ref,set<string>> get_model_function(const Rules& R, const ptree&
 	auto log_name = name + ":" + arg_name;
 
 	bool do_log = arg_lambda_vars[i].empty() and should_log(R, model_rep, arg_name, scope);
-	loggers = {var("Probability.add_logger"),loggers,log_name,var("pair_arg_var_"+arg_name),do_log};
+	loggers = {var("Probability.Random.add_logger"),loggers,log_name,var("pair_arg_var_"+arg_name),do_log};
     }
 
     // 6. Return the function call: 'return (f call.name1 call.name2 call.name3)'
@@ -619,7 +619,7 @@ pair<expression_ref,set<string>> get_model_function(const Rules& R, const ptree&
 	    if (A_pair.second.size())
 		throw myexception()<<"An alphabet cannot depend on a lambda variable!";
 	    auto& A = A_pair.first;
-	    arg = {var("Probability.set_alphabet"),A,arg};
+	    arg = {var("Probability.Random.set_alphabet"),A,arg};
 	}
 
 	// E = 'arg <<= (\arg_name_pair -> let {arg_name=fst arg_name_pair} in E)

@@ -514,7 +514,7 @@ int main(int argc,char* argv[])
 			a = Codons(DNA(), AminoAcids(), Standard_Genetic_Code());
 		}
 	    }
-	    print_exp = {var("Probability.run_lazy"), a, print_exp};
+	    print_exp = {var("Probability.Random.run_lazy"), a, print_exp};
 	    print_exp = {var("Prelude.unsafePerformIO"),print_exp};
 	    print_exp = {var("Data.Tuple.fst"),print_exp };
 	    print_exp = {var("Prelude.show"),print_exp };
