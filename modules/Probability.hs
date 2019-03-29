@@ -2,7 +2,8 @@ module Probability (module Probability,
                     module Probability.Random,
                     module Probability.Distribution.Beta,
                     module Probability.Distribution.Gamma,
-                    module Probability.Distribution.Normal
+                    module Probability.Distribution.Normal,
+                    module Probability.Distribution.List
                    )
     where
 
@@ -16,6 +17,8 @@ import Probability.Random
 import Probability.Distribution.Beta
 import Probability.Distribution.Gamma
 import Probability.Distribution.Normal
+
+import Probability.Distribution.List
 
 builtin cauchy_density 3 "cauchy_density" "Distribution"
 builtin builtin_sample_cauchy 2 "sample_cauchy" "Distribution"
@@ -166,21 +169,6 @@ modifiable_tree_pdf n value rv = let mod v = rv `seq` modifiable v
 uniform_topology n = Distribution (\tree-> uniform_topology_pr n) (no_quantile "uniform_topology") (RandomStructureAndPDF (modifiable_tree_pdf n) (random_tree n)) (TreeRange n)
 
 
--- define the list distribution
-list_densities (d:ds) (x:xs) = densities d x ++ list_densities ds xs
-list_densities [] []         = []
-list_densities _  _          = [doubleToLogDouble 0.0]
-
-list dists = Distribution (list_densities dists) (no_quantile "list") do_sample (ListRange (map distRange dists))
-             where do_sample = SamplingRate (1.0/sqrt (intToDouble $ length dists)) $ mapM sample dists
-
--- define different examples of list distributions
-iid n dist = Distribution (list_densities (replicate n dist)) (no_quantile "iid") iid_sample (ListRange $ take n $ repeat $ distRange dist) where
-    iid_sample = do xs <- sample $ list (repeat dist)
-                    return $ take n xs
-
-plate n dist_f = list $ map dist_f [0..n-1]
-  
 -- This contains functions for working with DiscreteDistribution
 
 fmap1 f [] = []
