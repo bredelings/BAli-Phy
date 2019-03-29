@@ -6,31 +6,31 @@ import MCMC
 import Data.JSON as J
 import Tree
 
--- Define the ProbDensity type
-data ProbDensity a = ProbDensity (a->Double) (Double->a) (IO a) Range
-densities (ProbDensity ds _ _ _) = ds
+-- Define the Distribution type
+data Distribution a = Distribution (a->Double) (Double->a) (IO a) Range
+densities (Distribution ds _ _ _) = ds
 density dist x = balanced_product (densities dist x)
-quantile (ProbDensity _ q _ _) = q
-sampler (ProbDensity _ _ s _) = s
-distRange (ProbDensity _ _ _ r) = r
+quantile (Distribution _ q _ _) = q
+sampler (Distribution _ _ s _) = s
+distRange (Distribution _ _ _ r) = r
 
 -- FIXME: We might need GADTS for
 --   Independant :: (Random a, Random b) -> Random (a,b)
---   Observe :: b -> (ProbDensity b) -> Random ()
+--   Observe :: b -> (Distribution b) -> Random ()
 --   GetAlphabet :: Random b ?
 --   SetAlphabet :: b -> (Random a) -> Random a
 --   AddMove :: b -> Random ()
 
 -- FIXME: the Random constructor here seems a bit weird.
 --        presumably this indicates that its an IO action versus a Random a
---        but its only used inside ProbDensity...
+--        but its only used inside Distribution...
 
 -- This implements the Random monad by transforming it into the IO monad.
 data Random a = RandomStructure a (Random a)
               | RandomStructureAndPDF a (Random a)
-              | Sample (ProbDensity a)
-              | SampleWithInitialValue (ProbDensity a) a
-              | Observe (ProbDensity b) b
+              | Sample (Distribution a)
+              | SampleWithInitialValue (Distribution a) a
+              | Observe (Distribution b) b
               | AddMove (Int->a)
               | Print b
               | SamplingRate Double (Random a)
@@ -68,8 +68,8 @@ run_lazy alpha (IOAndPass f g) = do
   run_lazy alpha $ g x
 run_lazy alpha (IOReturn v) = return v
 run_lazy alpha (LiftIO a) = a
-run_lazy alpha (Sample (ProbDensity _ _ a _)) = run_lazy alpha a
-run_lazy alpha (SampleWithInitialValue (ProbDensity _ _ a _) _) = run_lazy alpha a
+run_lazy alpha (Sample (Distribution _ _ a _)) = run_lazy alpha a
+run_lazy alpha (SampleWithInitialValue (Distribution _ _ a _) _) = run_lazy alpha a
 run_lazy alpha GetAlphabet = return alpha
 run_lazy alpha (SetAlphabet a2 x) = run_lazy a2 x
 run_lazy alpha (SamplingRate _ model) = run_lazy alpha model
@@ -111,29 +111,29 @@ run_lazy' alpha rate (IOAndPass f g) = do
   run_lazy' alpha rate $ g x
 run_lazy' alpha rate (IOReturn v) = return v
 -- It seems like we wouldn't need laziness for `do {x <- r;return x}`.  Do we need it for `r`?
-run_lazy' alpha rate (Sample dist@(ProbDensity _ _ (RandomStructure structure do_sample) range)) = do
+run_lazy' alpha rate (Sample dist@(Distribution _ _ (RandomStructure structure do_sample) range)) = do
   -- we need some mcmc moves here, for crp and for trees
   value <- run_lazy alpha do_sample
   let x = structure value
   return $ random_variable x (density dist x) range rate
-run_lazy' alpha rate (Sample dist@(ProbDensity _ _ (RandomStructureAndPDF structure_and_pdf do_sample) range)) = do
+run_lazy' alpha rate (Sample dist@(Distribution _ _ (RandomStructureAndPDF structure_and_pdf do_sample) range)) = do
   -- we need some mcmc moves here, for crp and for trees
   value <- run_lazy alpha do_sample
   let (x,pdf) = structure_and_pdf value rv
       rv = random_variable x pdf range rate
   return x
-run_lazy' alpha rate (SampleWithInitialValue dist@(ProbDensity _ _ (RandomStructure structure do_sample) range) initial_value) = do
+run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStructure structure do_sample) range) initial_value) = do
   -- maybe we need to perform the sample and not use the result, in order to force the parameters of the distribution? 
   -- we need some mcmc moves here, for crp and for trees
   let x = structure initial_value
   return $ random_variable x (density dist x) range rate
-run_lazy' alpha rate (SampleWithInitialValue dist@(ProbDensity _ _ (RandomStructureAndPDF structure_and_pdf do_sample) range) initial_value) = do
+run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStructureAndPDF structure_and_pdf do_sample) range) initial_value) = do
   -- maybe we need to perform the sample and not use the result, in order to force the parameters of the distribution? 
   -- we need some mcmc moves here, for crp and for trees
   let (x,pdf) = structure_and_pdf initial_value rv
       rv = random_variable x pdf range rate
   return x
-run_lazy' alpha rate (Sample (ProbDensity _ _ s _)) = run_lazy' alpha rate s
+run_lazy' alpha rate (Sample (Distribution _ _ s _)) = run_lazy' alpha rate s
 run_lazy' alpha rate (MFix f) = MFix ((run_lazy' alpha rate).f)
 run_lazy' alpha rate (SamplingRate rate2 a) = run_lazy' alpha (rate*rate2) a
 run_lazy' alpha _    GetAlphabet = return alpha
@@ -167,46 +167,46 @@ builtin shifted_gamma_density 4 "shifted_gamma_density" "Distribution"
 builtin shifted_gamma_quantile 4 "shifted_gamma_quantile" "Distribution"
 builtin builtin_sample_shifted_gamma 3 "sample_shifted_gamma" "Distribution"
 sample_shifted_gamma a b shift = RandomStructure modifiable $ liftIO (IOAction3 builtin_sample_shifted_gamma a b shift)
-shifted_gamma a b shift = ProbDensity (make_densities $ shifted_gamma_density a b shift) (shifted_gamma_quantile a b shift) (sample_shifted_gamma a b shift) (above shift)
+shifted_gamma a b shift = Distribution (make_densities $ shifted_gamma_density a b shift) (shifted_gamma_quantile a b shift) (sample_shifted_gamma a b shift) (above shift)
 gamma a b = shifted_gamma a b 0.0
 
 builtin beta_density 3 "beta_density" "Distribution"
 builtin beta_quantile 3 "beta_quantile" "Distribution"
 builtin builtin_sample_beta 2 "sample_beta" "Distribution"
 sample_beta a b = RandomStructure modifiable $ liftIO (IOAction2 builtin_sample_beta a b)
-beta a b = ProbDensity (make_densities $ beta_density a b) (beta_quantile a b) (sample_beta a b) (between 0.0 1.0)
+beta a b = Distribution (make_densities $ beta_density a b) (beta_quantile a b) (sample_beta a b) (between 0.0 1.0)
 
 builtin normal_density 3 "normal_density" "Distribution"
 builtin normal_quantile 3 "normal_quantile" "Distribution"
 builtin builtin_sample_normal 2 "sample_normal" "Distribution"
 sample_normal m s = RandomStructure modifiable $ liftIO (IOAction2 builtin_sample_normal m s)
-normal m s = ProbDensity (make_densities $ normal_density m s) (normal_quantile m s) (sample_normal m s) realLine
+normal m s = Distribution (make_densities $ normal_density m s) (normal_quantile m s) (sample_normal m s) realLine
 
 builtin cauchy_density 3 "cauchy_density" "Distribution"
 builtin builtin_sample_cauchy 2 "sample_cauchy" "Distribution"
 sample_cauchy m s = RandomStructure modifiable $ liftIO (IOAction2 builtin_sample_cauchy m s)
-cauchy m s = ProbDensity (make_densities $ cauchy_density m s) () (sample_cauchy m s) realLine
+cauchy m s = Distribution (make_densities $ cauchy_density m s) () (sample_cauchy m s) realLine
 
 builtin laplace_density 3 "laplace_density" "Distribution"
 builtin builtin_sample_laplace 2 "sample_laplace" "Distribution"
 sample_laplace m s = RandomStructure modifiable $ liftIO (IOAction2 builtin_sample_laplace m s)
-laplace m s = ProbDensity (make_densities $ laplace_density m s) () (sample_laplace m s) realLine
+laplace m s = Distribution (make_densities $ laplace_density m s) () (sample_laplace m s) realLine
 
 builtin uniform_density 3 "uniform_density" "Distribution"
 builtin builtin_sample_uniform 2 "sample_uniform" "Distribution"
 sample_uniform l u = RandomStructure modifiable $ liftIO (IOAction2 builtin_sample_uniform l u)
-uniform l u = ProbDensity (make_densities $ uniform_density l u) () (sample_uniform l u) (between l u)
+uniform l u = Distribution (make_densities $ uniform_density l u) () (sample_uniform l u) (between l u)
 
 builtin uniform_int_density 3 "uniform_int_density" "Distribution"
 builtin builtin_sample_uniform_int 2 "sample_uniform_int" "Distribution"
 sample_uniform_int l u = RandomStructure modifiable $ liftIO (IOAction2 builtin_sample_uniform_int l u)
-uniform_int l u = ProbDensity (make_densities $ uniform_int_density l u) () (sample_uniform_int l u) (integer_between l u)
+uniform_int l u = Distribution (make_densities $ uniform_int_density l u) () (sample_uniform_int l u) (integer_between l u)
 
 builtin builtin_dirichlet_density 2 "dirichlet_density" "Distribution"
 dirichlet_density ns ps = builtin_dirichlet_density (list_to_vector ns) (list_to_vector ps)
 sample_dirichlet ns = SamplingRate (1.0/sqrt(intToDouble $ length ns)) $ do vs <- mapM (\a-> sample $ gamma a 1.0) ns
                                                                             return $ map (/(sum vs)) vs
-dirichlet ns = ProbDensity (make_densities $ dirichlet_density ns) (no_quantile "dirichlet") (sample_dirichlet ns) (Simplex (length ns) 1.0)
+dirichlet ns = Distribution (make_densities $ dirichlet_density ns) (no_quantile "dirichlet") (sample_dirichlet ns) (Simplex (length ns) 1.0)
 
 dirichlet' l n = dirichlet (replicate l n)
 
@@ -215,19 +215,19 @@ sample_dirichlet_on xs ns = do ps <- sample_dirichlet ns
 
 dirichlet_on_density ns xps = dirichlet_density ns ps where
     ps = map (\(x,p) -> p) xps
-dirichlet_on xs ns = ProbDensity (make_densities $ dirichlet_on_density ns) (no_quantile "dirichlet_on") (sample_dirichlet_on xs ns) (LabelledSimplex xs 1.0)
+dirichlet_on xs ns = Distribution (make_densities $ dirichlet_on_density ns) (no_quantile "dirichlet_on") (sample_dirichlet_on xs ns) (LabelledSimplex xs 1.0)
 dirichlet_on' xs n = dirichlet_on xs (replicate (length xs) n)
 
 builtin binomial_density 3 "binomial_density" "Distribution"
 builtin builtin_sample_binomial 2 "sample_binomial" "Distribution"
 sample_binomial n p = RandomStructure modifiable $ liftIO (IOAction2 builtin_sample_binomial n p)
-binomial n p = ProbDensity (make_densities $ binomial_density n p) (no_quantile "binomial") (sample_binomial n p) (integer_between 0 n)
+binomial n p = Distribution (make_densities $ binomial_density n p) (no_quantile "binomial") (sample_binomial n p) (integer_between 0 n)
 
 -- A geometric distribution on [0,\infty).  How many failures before a success?
 builtin geometric_density 3 "geometric_density" "Distribution"
 builtin builtin_sample_geometric 1 "sample_geometric" "Distribution"
 sample_geometric p_success = RandomStructure modifiable $ liftIO (IOAction1 builtin_sample_geometric p_success)
-geometric2 p_fail p_success = ProbDensity (make_densities $ geometric_density p_fail p_success) (no_quantile "geometric") (sample_geometric p_success) (integer_above 0)
+geometric2 p_fail p_success = Distribution (make_densities $ geometric_density p_fail p_success) (no_quantile "geometric") (sample_geometric p_success) (integer_above 0)
 
 geometric p = geometric2 (1.0-p) p
 rgeometric q = geometric2 q (1.0-q)
@@ -235,13 +235,13 @@ rgeometric q = geometric2 q (1.0-q)
 builtin poisson_density 2 "poisson_density" "Distribution"
 builtin builtin_sample_poisson 1 "sample_poisson" "Distribution"
 sample_poisson mu = RandomStructure modifiable $ liftIO (IOAction1 builtin_sample_poisson mu)
-poisson mu = ProbDensity (make_densities $ poisson_density mu) (no_quantile "Poisson") (sample_poisson mu) (integer_above 0)
+poisson mu = Distribution (make_densities $ poisson_density mu) (no_quantile "Poisson") (sample_poisson mu) (integer_above 0)
 
 builtin builtin_sample_bernoulli 1 "sample_bernoulli" "Distribution"
 sample_bernoulli p = RandomStructure modifiable $ liftIO (IOAction1 builtin_sample_bernoulli p)
 bernoulli_density2 p q 1 = (doubleToLogDouble p)
 bernoulli_density2 p q 0 = (doubleToLogDouble q)
-bernoulli2 p q = ProbDensity (make_densities $ bernoulli_density2 p q) (no_quantile "bernoulli") (sample_bernoulli p) (integer_between 0 1)
+bernoulli2 p q = Distribution (make_densities $ bernoulli_density2 p q) (no_quantile "bernoulli") (sample_bernoulli p) (integer_between 0 1)
 
 bernoulli p = bernoulli2 p (1.0-p)
 rbernoulli q = bernoulli2 (1.0-q) q
@@ -268,20 +268,20 @@ builtin crp_density 4 "CRP_density" "Distribution"
 builtin sample_crp_vector 3 "sample_CRP" "Distribution"
 sample_crp alpha n d = RandomStructure modifiable $ liftIO $ do v <- (IOAction3 sample_crp_vector alpha n d)
                                                                 return $ list_from_vector v
---crp alpha n d = ProbDensity (crp_density alpha n d) (no_quantile "crp") (do_crp alpha n d) (ListRange $ replicate n $ integer_between 0 (n+d-1))
+--crp alpha n d = Distribution (crp_density alpha n d) (no_quantile "crp") (do_crp alpha n d) (ListRange $ replicate n $ integer_between 0 (n+d-1))
 modifiable_list = map modifiable
-crp alpha n d = ProbDensity (make_densities $ crp_density alpha n d) (no_quantile "crp") (RandomStructure modifiable_list $ sample_crp alpha n d) (ListRange $ replicate n subrange)
+crp alpha n d = Distribution (make_densities $ crp_density alpha n d) (no_quantile "crp") (RandomStructure modifiable_list $ sample_crp alpha n d) (ListRange $ replicate n subrange)
                   where subrange = integer_between 0 (n+d-1)
 
 mixtureRange ((_,dist1):_) = distRange dist1
 mixture_density ((p1,dist1):l) x = (doubleToLogDouble p1)*(density dist1 x) + (mixture_density l x)
 mixture_density [] _ = (doubleToLogDouble 0.0)
 sample_mixture ((p1,dist1):l) = dist1
-mixture args = ProbDensity (make_densities $ mixture_density args) (no_quantile "mixture") (sample_mixture args) (mixtureRange args)
+mixture args = Distribution (make_densities $ mixture_density args) (no_quantile "mixture") (sample_mixture args) (mixtureRange args)
 
 builtin builtin_sample_categorical 1 "sample_categorical" "Distribution"
 sample_categorical ps = RandomStructure modifiable $ liftIO (IOAction1 builtin_sample_categorical ps)
-categorical ps = ProbDensity (make_densities $ qs!) (no_quantile "categorical") (sample_categorical ps) (integer_between 0 (length ps - 1))
+categorical ps = Distribution (make_densities $ qs!) (no_quantile "categorical") (sample_categorical ps) (integer_between 0 (length ps - 1))
                 where qs = listArray' $ map doubleToLogDouble ps
 
 xrange start end | start < end = start:xrange (start+1) end
@@ -328,7 +328,7 @@ modifiable_tree_pdf n value rv = let mod v = rv `seq` modifiable v
                                      tree = modifiable_tree mod value
                                  in (tree, uniform_topology_pr n)
 
-uniform_topology n = ProbDensity (\tree-> uniform_topology_pr n) (no_quantile "uniform_topology") (RandomStructureAndPDF (modifiable_tree_pdf n) (random_tree n)) (TreeRange n)
+uniform_topology n = Distribution (\tree-> uniform_topology_pr n) (no_quantile "uniform_topology") (RandomStructureAndPDF (modifiable_tree_pdf n) (random_tree n)) (TreeRange n)
 
 
 -- define the list distribution
@@ -345,7 +345,7 @@ list_densities (d:ds) (x:xs) = densities d x ++ list_densities ds xs
 list_densities [] []         = []
 list_densities _  _          = [doubleToLogDouble 0.0]
 
-list dists = ProbDensity (list_densities dists) (no_quantile "list") do_sample (ListRange (map distRange dists))
+list dists = Distribution (list_densities dists) (no_quantile "list") do_sample (ListRange (map distRange dists))
              where do_sample = SamplingRate (1.0/sqrt (intToDouble $ length dists)) $ mapM sample dists
 
 -- define different examples of list distributions
@@ -376,11 +376,11 @@ uniformGrid n = [( 1.0/n', (2.0*i'+1.0)/(2.0*n') ) | i <- take n [0..], let n' =
 uniformDiscretize dist n = fmap2 (quantile dist) (uniformGrid n)
 
 -- This contains exp-transformed functions
-expTransform (ProbDensity d q s r) = ProbDensity pdf' q' s' r' 
+expTransform (Distribution d q s r) = Distribution pdf' q' s' r' 
  where 
   pdf' x = case (d $ log x) of [pdf] -> pdf/(doubleToLogDouble x)
   q'   = exp . q
-  s'   = do v <- sample $ ProbDensity d q s r
+  s'   = do v <- sample $ Distribution d q s r
             return $ exp v
   r'   = expTransformRange r
   

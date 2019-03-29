@@ -17,11 +17,11 @@ ewens_sampling_mixture_probability thetas ps x = builtin_ewens_sampling_mixture_
 
 selfing_coalescence_probability n_loci s i = builtin_selfing_coalescence_probability n_loci s (list_to_vector i)
 
-afs args = ProbDensity (ewens_sampling_probability args) (error "afs has no quantile") () ()
+afs args = Distribution (ewens_sampling_probability args) (error "afs has no quantile") () ()
 
-afsGroup args = ProbDensity (ewens_sampling_group_probability args) (error "afsGroup has no quantile") () ()
+afsGroup args = Distribution (ewens_sampling_group_probability args) (error "afsGroup has no quantile") () ()
 
-afsMixture thetas ps = ProbDensity (ewens_sampling_mixture_probability thetas ps) (error "afsMixture has no quantile") () ()
+afsMixture thetas ps = Distribution (ewens_sampling_mixture_probability thetas ps) (error "afsMixture has no quantile") () ()
 
-selfing_coalescence n_loci s = ProbDensity (selfing_coalescence_probability n_loci s) (error "selfing_coalescence has no quantile") (replicate n_loci False) (ListRange (replicate n_loci TrueFalseRange))
+selfing_coalescence n_loci s = Distribution (selfing_coalescence_probability n_loci s) (error "selfing_coalescence has no quantile") (replicate n_loci False) (ListRange (replicate n_loci TrueFalseRange))
 

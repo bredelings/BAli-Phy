@@ -66,7 +66,7 @@ alignment_pr (AlignmentOnTree tree n_seqs lengths as) hmms model = if numElement
 
 modifiable_alignment (AlignmentOnTree tree n_seqs seqlengths as) = AlignmentOnTree tree n_seqs (map modifiable seqlengths) (map modifiable as)
 
-random_alignment tree hmms model = ProbDensity (\a -> [alignment_pr a hmms model]) (no_quantile "random_alignment") (RandomStructure modifiable_alignment ()) ()
+random_alignment tree hmms model = Distribution (\a -> [alignment_pr a hmms model]) (no_quantile "random_alignment") (RandomStructure modifiable_alignment ()) ()
 
 compute_sequence_lengths seqs tree as = [ if node < n_leaves then vector_size (seqs!node) else seqlength as tree node | node <- [0..numNodes tree-1] ]
     where n_leaves = numElements seqs

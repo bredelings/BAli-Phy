@@ -244,4 +244,4 @@ subst_like_on_tree topology root as alphabet smodel ts scale branch_cats seqs = 
           seqs' = listArray' seqs
 
 ctmc_on_tree topology root as alphabet smodel ts scale branch_cats =
-    ProbDensity (\seqs -> [subst_like_on_tree topology root as alphabet smodel ts scale branch_cats seqs]) (no_quantile "ctmc_on_tree") () ()
+    Distribution (\seqs -> [subst_like_on_tree topology root as alphabet smodel ts scale branch_cats seqs]) (no_quantile "ctmc_on_tree") () ()
