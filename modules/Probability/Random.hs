@@ -1,4 +1,7 @@
-module Probability.Random where
+module Probability.Random (module Probability.Random,
+                           module Range,
+                           modifiable)
+    where
 
 import Range
 import Parameters

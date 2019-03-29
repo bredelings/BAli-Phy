@@ -2,7 +2,7 @@
     "name": "gamma",
     "synonyms": ["Gamma"],
     "result_type": "Distribution[Double]",
-    "call": "Probability.shifted_gamma[a,b,shift]",
+    "call": "Probability.Distribution.Gamma.shifted_gamma[a,b,shift]",
     "args": [
         {
             "arg_name": "a",
