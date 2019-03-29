@@ -3,6 +3,7 @@ module Probability (module Probability,
                     module Probability.Distribution.Beta,
                     module Probability.Distribution.Gamma,
                     module Probability.Distribution.Normal,
+                    module Probability.Distribution.Dirichlet,
 
                     module Probability.Distribution.Uniform,
                     module Probability.Distribution.Discrete,
@@ -22,6 +23,7 @@ import Probability.Random
 import Probability.Distribution.Beta
 import Probability.Distribution.Gamma
 import Probability.Distribution.Normal
+import Probability.Distribution.Dirichlet
 
 import Probability.Distribution.Uniform
 import Probability.Distribution.Discrete
@@ -38,22 +40,6 @@ builtin laplace_density 3 "laplace_density" "Distribution"
 builtin builtin_sample_laplace 2 "sample_laplace" "Distribution"
 sample_laplace m s = RandomStructure modifiable $ liftIO (IOAction2 builtin_sample_laplace m s)
 laplace m s = Distribution (make_densities $ laplace_density m s) () (sample_laplace m s) realLine
-
-builtin builtin_dirichlet_density 2 "dirichlet_density" "Distribution"
-dirichlet_density ns ps = builtin_dirichlet_density (list_to_vector ns) (list_to_vector ps)
-sample_dirichlet ns = SamplingRate (1.0/sqrt(intToDouble $ length ns)) $ do vs <- mapM (\a-> sample $ gamma a 1.0) ns
-                                                                            return $ map (/(sum vs)) vs
-dirichlet ns = Distribution (make_densities $ dirichlet_density ns) (no_quantile "dirichlet") (sample_dirichlet ns) (Simplex (length ns) 1.0)
-
-dirichlet' l n = dirichlet (replicate l n)
-
-sample_dirichlet_on xs ns = do ps <- sample_dirichlet ns
-                               return $ zip xs ps
-
-dirichlet_on_density ns xps = dirichlet_density ns ps where
-    ps = map (\(x,p) -> p) xps
-dirichlet_on xs ns = Distribution (make_densities $ dirichlet_on_density ns) (no_quantile "dirichlet_on") (sample_dirichlet_on xs ns) (LabelledSimplex xs 1.0)
-dirichlet_on' xs n = dirichlet_on xs (replicate (length xs) n)
 
 builtin binomial_density 3 "binomial_density" "Distribution"
 builtin builtin_sample_binomial 2 "sample_binomial" "Distribution"
