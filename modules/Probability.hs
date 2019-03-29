@@ -1,7 +1,8 @@
 module Probability (module Probability,
                     module Probability.Random,
                     module Probability.Distribution.Beta,
-                    module Probability.Distribution.Gamma
+                    module Probability.Distribution.Gamma,
+                    module Probability.Distribution.Normal
                    )
     where
 
@@ -14,12 +15,7 @@ import Tree
 import Probability.Random
 import Probability.Distribution.Beta
 import Probability.Distribution.Gamma
-
-builtin normal_density 3 "normal_density" "Distribution"
-builtin normal_quantile 3 "normal_quantile" "Distribution"
-builtin builtin_sample_normal 2 "sample_normal" "Distribution"
-sample_normal m s = RandomStructure modifiable $ liftIO (IOAction2 builtin_sample_normal m s)
-normal m s = Distribution (make_densities $ normal_density m s) (normal_quantile m s) (sample_normal m s) realLine
+import Probability.Distribution.Normal
 
 builtin cauchy_density 3 "cauchy_density" "Distribution"
 builtin builtin_sample_cauchy 2 "sample_cauchy" "Distribution"
