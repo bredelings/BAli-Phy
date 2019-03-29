@@ -2,7 +2,6 @@ module Probability.Distribution.Gamma where
 
 import Probability.Random
 
--- Define some basic distributions
 builtin shifted_gamma_density 4 "shifted_gamma_density" "Distribution"
 builtin shifted_gamma_quantile 4 "shifted_gamma_quantile" "Distribution"
 builtin builtin_sample_shifted_gamma 3 "sample_shifted_gamma" "Distribution"
