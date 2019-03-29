@@ -260,7 +260,8 @@ size_t reg_heap::size() const
 void reg_heap::register_prior(int r)
 {
     mark_completely_dirty(root_token);
-    r = incremental_evaluate_unchangeable(r);
+    auto [r2,v] = incremental_evaluate(r);
+    r = r2;
 
     if (reg_is_constant(r))
     {
@@ -1074,7 +1075,6 @@ int reg_heap::add_program(const expression_ref& E)
     auto P = E;
     P = {var("Distributions.gen_model_no_alphabet"), P};
     P = {var("Prelude.unsafePerformIO"), P};
-    P = {var("Parameters.evaluate"), -1, P};
 
     int program_head = add_compute_expression(P);
     P = reg_var(heads[program_head]);

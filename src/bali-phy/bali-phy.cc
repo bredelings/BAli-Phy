@@ -516,7 +516,6 @@ int main(int argc,char* argv[])
 	    }
 	    print_exp = {var("Distributions.run_lazy"), a, print_exp};
 	    print_exp = {var("Prelude.unsafePerformIO"),print_exp};
-	    print_exp = {var("Parameters.evaluate"),-1,print_exp};
 	    print_exp = {var("Data.Tuple.fst"),print_exp };
 	    print_exp = {var("Prelude.show"),print_exp };
 	    print_exp = {var("Prelude.listToString"),print_exp };
