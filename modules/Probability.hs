@@ -4,6 +4,8 @@ module Probability (module Probability,
 
                     module Probability.Distribution.Beta,
                     module Probability.Distribution.Cauchy,
+                    module Probability.Distribution.Categorical,
+                    module Probability.Distribution.Mixture,
                     module Probability.Distribution.Gamma,
                     module Probability.Distribution.Normal,
                     module Probability.Distribution.Dirichlet,
@@ -32,6 +34,8 @@ import Probability.Random
 
 import Probability.Distribution.Beta
 import Probability.Distribution.Cauchy
+import Probability.Distribution.Categorical
+import Probability.Distribution.Mixture
 import Probability.Distribution.Gamma
 import Probability.Distribution.Normal
 import Probability.Distribution.Dirichlet
@@ -71,17 +75,6 @@ sample_crp alpha n d = RandomStructure modifiable $ liftIO $ do v <- (IOAction3 
 modifiable_list = map modifiable
 crp alpha n d = Distribution (make_densities $ crp_density alpha n d) (no_quantile "crp") (RandomStructure modifiable_list $ sample_crp alpha n d) (ListRange $ replicate n subrange)
                   where subrange = integer_between 0 (n+d-1)
-
-mixtureRange ((_,dist1):_) = distRange dist1
-mixture_density ((p1,dist1):l) x = (doubleToLogDouble p1)*(density dist1 x) + (mixture_density l x)
-mixture_density [] _ = (doubleToLogDouble 0.0)
-sample_mixture ((p1,dist1):l) = dist1
-mixture args = Distribution (make_densities $ mixture_density args) (no_quantile "mixture") (sample_mixture args) (mixtureRange args)
-
-builtin builtin_sample_categorical 1 "sample_categorical" "Distribution"
-sample_categorical ps = RandomStructure modifiable $ liftIO (IOAction1 builtin_sample_categorical ps)
-categorical ps = Distribution (make_densities $ qs!) (no_quantile "categorical") (sample_categorical ps) (integer_between 0 (length ps - 1))
-                where qs = listArray' $ map doubleToLogDouble ps
 
 -- This contains exp-transformed functions
 expTransform (Distribution d q s r) = Distribution pdf' q' s' r' 
