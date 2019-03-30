@@ -1,6 +1,7 @@
 module Probability (module Probability,
                     module Probability.Random,
                     module Probability.Distribution.Beta,
+                    module Probability.Distribution.Cauchy,
                     module Probability.Distribution.Gamma,
                     module Probability.Distribution.Normal,
                     module Probability.Distribution.Dirichlet,
@@ -20,7 +21,9 @@ import Data.JSON as J
 import Tree
 
 import Probability.Random
+
 import Probability.Distribution.Beta
+import Probability.Distribution.Cauchy
 import Probability.Distribution.Gamma
 import Probability.Distribution.Normal
 import Probability.Distribution.Dirichlet
@@ -30,11 +33,6 @@ import Probability.Distribution.Discrete
 
 import Probability.Distribution.List
 import Probability.Distribution.Tree
-
-builtin cauchy_density 3 "cauchy_density" "Distribution"
-builtin builtin_sample_cauchy 2 "sample_cauchy" "Distribution"
-sample_cauchy m s = RandomStructure modifiable $ liftIO (IOAction2 builtin_sample_cauchy m s)
-cauchy m s = Distribution (make_densities $ cauchy_density m s) () (sample_cauchy m s) realLine
 
 builtin laplace_density 3 "laplace_density" "Distribution"
 builtin builtin_sample_laplace 2 "sample_laplace" "Distribution"

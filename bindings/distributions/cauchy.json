@@ -1,0 +1,21 @@
+{
+    "name": "cauchy",
+    "synonyms": ["Cauchy"],
+    "result_type": "Distribution[Double]",
+    "call": "Probability.Distribution.Cauchy.cauchy[m,s]",
+    "args": [
+        {
+            "arg_name": "m",
+            "arg_type": "Double",
+	    "description": "The center parameter"
+        },
+        {
+            "arg_name": "s",
+            "arg_type": "Double",
+	    "description": "The scale parameter"
+        }
+    ],
+    "title": "The Cauchy-Lorentz distribution",
+    "description":"The Cauchy distribution is so widely dispersed that its mean and variance are both undefined.",
+    "examples": ["~cauchy[0,1]","~iid[10,cauchy[0,1]]"]
+}
