@@ -2,7 +2,7 @@
     "name": "log_gamma",
     "synonyms": ["logGamma"],
     "result_type": "Distribution[Double]",
-    "call": "Probability.log_gamma[a,b]",
+    "call": "Probability.Distribution.ExpTransform.log_gamma[a,b]",
     "args": [
         {
             "arg_name": "a",
