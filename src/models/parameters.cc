@@ -254,8 +254,8 @@ void mutable_data_partition::unset_pairwise_alignment(int b)
     assert(pairwise_alignment_is_unset(b) or (get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped()));
 
     const context* C = P;
-    const_cast<context*>(C)->set_modifiable_value(DPC().pairwise_alignment_for_branch[b], 0);
-    const_cast<context*>(C)->set_modifiable_value(DPC().pairwise_alignment_for_branch[B], 0);
+    DPC().pairwise_alignment_for_branch[b].set_value(*const_cast<context*>(C),0);
+    DPC().pairwise_alignment_for_branch[B].set_value(*const_cast<context*>(C),0);
     assert(pairwise_alignment_is_unset(b));
 }
 
@@ -266,9 +266,8 @@ void mutable_data_partition::set_pairwise_alignment(int b, const pairwise_alignm
     int B = t().reverse(b);
     assert(pairwise_alignment_is_unset(b) or (get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped()));
     const context* C = P;
-    const_cast<context*>(C)->set_modifiable_value(DPC().pairwise_alignment_for_branch[b], new Box<pairwise_alignment_t>(pi));
-    const_cast<context*>(C)->set_modifiable_value(DPC().pairwise_alignment_for_branch[B], new Box<pairwise_alignment_t>(pi.flipped()));
-
+    DPC().pairwise_alignment_for_branch[b].set_value(*const_cast<context*>(C), new Box<pairwise_alignment_t>(pi));
+    DPC().pairwise_alignment_for_branch[B].set_value(*const_cast<context*>(C), new Box<pairwise_alignment_t>(pi.flipped()));
     assert(get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped());
 }
 
@@ -280,7 +279,7 @@ const matrix<int>& data_partition::alignment_constraint() const
 expression_ref data_partition::get_pairwise_alignment_(int b) const
 {
     assert(not has_IModel() or likelihood_calculator() == 0);
-    return P->get_modifiable_value(DPC().pairwise_alignment_for_branch[b]);
+    return DPC().pairwise_alignment_for_branch[b].get_value(*P);
 }
 
 const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b) const
@@ -451,8 +450,7 @@ EVector unaligned_alignments_on_tree(const TreeInterface& t, const vector<vector
 }
 
 data_partition_constants::data_partition_constants(Parameters* p, int i, const alignment& AA, const vector<int>& counts, int like_calc)
-    :pairwise_alignment_for_branch(2*p->t().n_branches()),
-     conditional_likelihoods_for_branch(2*p->t().n_branches()),
+    :conditional_likelihoods_for_branch(2*p->t().n_branches()),
      leaf_sequence_indices(p->t().n_leaves(),-1),
      sequence_length_indices(AA.n_sequences(),-1),
      sequence_length_pr_indices(AA.n_sequences(),-1),
@@ -489,7 +487,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     auto alignments_vector = *list_to_evector(alignments_structure);
     assert(alignments_vector.size() == 2*B);
     for(int b=0;b<2*B;b++)
-        pairwise_alignment_for_branch[b] = *get_param(*p, alignments_vector[b]).is_modifiable(*p);
+        pairwise_alignment_for_branch.push_back( get_param(*p, alignments_vector[b]) );
 
     //  const int n_states = state_letters().size();
     int scale_index = *p->scale_index_for_partition(i);
