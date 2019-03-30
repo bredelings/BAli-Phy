@@ -1,7 +1,7 @@
 {
     "name": "poisson",
     "result_type": "Distribution[Int]",
-    "call": "Probability.poisson[mu]",
+    "call": "Probability.Distribution.Poisson.poisson[mu]",
     "args": [
         {
             "arg_name": "mu",

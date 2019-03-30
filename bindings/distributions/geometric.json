@@ -2,7 +2,7 @@
     "name": "geometric",
     "synonyms": [ "Geometric" ],
     "result_type": "Distribution[Int]",
-    "call": "Probability.geometric[p]",
+    "call": "Probability.Distribution.Geometric.geometric[p]",
     "title": "The Geometric distribution",
     "args": [
         {

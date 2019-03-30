@@ -1,10 +1,18 @@
 module Probability (module Probability,
+
                     module Probability.Random,
+
                     module Probability.Distribution.Beta,
                     module Probability.Distribution.Cauchy,
                     module Probability.Distribution.Gamma,
                     module Probability.Distribution.Normal,
                     module Probability.Distribution.Dirichlet,
+                    module Probability.Distribution.Laplace,
+                    module Probability.Distribution.Binomial,
+                    module Probability.Distribution.Geometric,
+                    module Probability.Distribution.Poisson,
+                    module Probability.Distribution.Bernoulli,
+                    module Probability.Distribution.Exponential,
 
                     module Probability.Distribution.Uniform,
                     module Probability.Distribution.Discrete,
@@ -27,48 +35,18 @@ import Probability.Distribution.Cauchy
 import Probability.Distribution.Gamma
 import Probability.Distribution.Normal
 import Probability.Distribution.Dirichlet
+import Probability.Distribution.Laplace
+import Probability.Distribution.Binomial
+import Probability.Distribution.Geometric
+import Probability.Distribution.Poisson
+import Probability.Distribution.Bernoulli
+import Probability.Distribution.Exponential
 
 import Probability.Distribution.Uniform
 import Probability.Distribution.Discrete
 
 import Probability.Distribution.List
 import Probability.Distribution.Tree
-
-builtin laplace_density 3 "laplace_density" "Distribution"
-builtin builtin_sample_laplace 2 "sample_laplace" "Distribution"
-sample_laplace m s = RandomStructure modifiable $ liftIO (IOAction2 builtin_sample_laplace m s)
-laplace m s = Distribution (make_densities $ laplace_density m s) () (sample_laplace m s) realLine
-
-builtin binomial_density 3 "binomial_density" "Distribution"
-builtin builtin_sample_binomial 2 "sample_binomial" "Distribution"
-sample_binomial n p = RandomStructure modifiable $ liftIO (IOAction2 builtin_sample_binomial n p)
-binomial n p = Distribution (make_densities $ binomial_density n p) (no_quantile "binomial") (sample_binomial n p) (integer_between 0 n)
-
--- A geometric distribution on [0,\infty).  How many failures before a success?
-builtin geometric_density 3 "geometric_density" "Distribution"
-builtin builtin_sample_geometric 1 "sample_geometric" "Distribution"
-sample_geometric p_success = RandomStructure modifiable $ liftIO (IOAction1 builtin_sample_geometric p_success)
-geometric2 p_fail p_success = Distribution (make_densities $ geometric_density p_fail p_success) (no_quantile "geometric") (sample_geometric p_success) (integer_above 0)
-
-geometric p = geometric2 (1.0-p) p
-rgeometric q = geometric2 q (1.0-q)
-
-builtin poisson_density 2 "poisson_density" "Distribution"
-builtin builtin_sample_poisson 1 "sample_poisson" "Distribution"
-sample_poisson mu = RandomStructure modifiable $ liftIO (IOAction1 builtin_sample_poisson mu)
-poisson mu = Distribution (make_densities $ poisson_density mu) (no_quantile "Poisson") (sample_poisson mu) (integer_above 0)
-
-builtin builtin_sample_bernoulli 1 "sample_bernoulli" "Distribution"
-sample_bernoulli p = RandomStructure modifiable $ liftIO (IOAction1 builtin_sample_bernoulli p)
-bernoulli_density2 p q 1 = (doubleToLogDouble p)
-bernoulli_density2 p q 0 = (doubleToLogDouble q)
-bernoulli2 p q = Distribution (make_densities $ bernoulli_density2 p q) (no_quantile "bernoulli") (sample_bernoulli p) (integer_between 0 1)
-
-bernoulli p = bernoulli2 p (1.0-p)
-rbernoulli q = bernoulli2 (1.0-q) q
-
-shifted_exponential mu shift = shifted_gamma 1.0 mu shift
-exponential mu = shifted_exponential mu 0.0
 
 normalize v = map (/total) v where total=sum v
 
