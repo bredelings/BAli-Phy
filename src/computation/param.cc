@@ -43,7 +43,7 @@ expression_ref param::get_value(const context& C) const
         return *value;
 }
 
-void param::set_value(context& C, const expression_ref& v)
+void param::set_value(context& C, const expression_ref& v) const
 {
     if (value)
     {

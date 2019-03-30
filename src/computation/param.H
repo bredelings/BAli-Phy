@@ -12,7 +12,7 @@ class param
 public:
     expression_ref get_expression(const context& C) const;
     expression_ref get_value(const context& C) const;
-    void set_value(context& C, const expression_ref& v);
+    void set_value(context& C, const expression_ref& v) const;
 
     std::optional<expression_ref> constant_value() const {return value;}
     std::optional<int> is_modifiable(const context& C) const;
