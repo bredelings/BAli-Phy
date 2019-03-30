@@ -8,6 +8,9 @@
  - Haskell machine
    + Observe lists in an efficient manner.
    + Allow sampling characters on random trees (recursive, via mfix).
+   - Switch the interpreter to a lazy interpreter.
+   - Evaluate the program changeably.
+   - Sample the tree inside the machine.
    - Make a unified program that computes an ATModel object.
    - Do logging by computing a JSON object.
    - Observe likelihood of sequences on tree
