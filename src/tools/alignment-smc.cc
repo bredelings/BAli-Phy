@@ -805,7 +805,43 @@ double pi(const alignment& A)
     return total;
 }
 
+ostream& write_bed(ostream& o, const vector<sequence_mask>& regions)
+{
+    for(auto& [chrom,intervals]: regions)
+        for(auto& interval: intervals)
+            o<<chrom<<'\t'<<interval.first<<'\t'<<interval.second+1<<'\n';
+    return o;
+}
 
+// BED files are 0-indexed.
+vector<sequence_mask> read_bed(const string& filename)
+{
+    // 1. Read fine lines
+    checked_ifstream file(filename,"BED file");
+
+    vector<sequence_mask> masks;
+
+    auto lines = read_lines(file);
+    lines = select(lines, [](auto& line){return not strip(line," \t").empty();});
+
+    for(auto& line: lines)
+    {
+        auto fields = resplit(line, R"([ \t]+))");
+        if (fields.size() < 3)
+            throw myexception()<<"Line does not appear to have 3 fields:\n |"<<line<<"\n";
+        if (masks.empty() or masks.back().region_name != fields[0])
+            masks.push_back({fields[0],{}});
+        int start = convertTo<int>(fields[1]);
+        int end = convertTo<int>(fields[2]);
+        masks.back().intervals.push_back({start,end-1});
+    }
+
+    write_bed(std::cerr, masks);
+
+    return masks;
+}
+
+// This is for dust-masker-style masks.
 vector<sequence_mask> read_masks(const string& filename)
 {
     // 1. Read fine lines
