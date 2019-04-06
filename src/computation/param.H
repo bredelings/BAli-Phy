@@ -22,6 +22,11 @@ public:
     std::optional<int> is_random_variable(const context& C) const;
     std::optional<bounds<double>> has_bounds(const context& C) const;
 
+    param& operator=(const param&) = default;
+
+    explicit operator bool() const {return head or value;}
+
+    param() {}
     param(int h):head(h) {}
     param(const expression_ref& v):value(v) {}
 };
