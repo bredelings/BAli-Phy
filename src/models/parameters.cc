@@ -478,7 +478,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     expression_ref initial_alignments_exp = get_list(unaligned_alignments_on_tree(t, sequences));
     param alignments = p->add_compute_expression({var("Data.List.map"),var("Parameters.modifiable"),initial_alignments_exp});
 
-    expression_ref alignments_structure = p->evaluate_expression({var("Parameters.maybe_modifiable_structure"), alignments.get_expression(*p)});
+    expression_ref alignments_structure = p->evaluate_expression({var("Parameters.maybe_modifiable_structure"), alignments.ref(*p)});
     if (log_verbose >= 3)
         std::cerr<<"alignments = "<<alignments_structure<<"\n";
     auto alignments_vector = *list_to_evector(alignments_structure);
@@ -503,12 +503,12 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     // Add array of leaf sequences
     EVector seqs_;
     for(auto& index: leaf_sequence_indices)
-        seqs_.push_back( index.get_expression(*p) );
+        seqs_.push_back( index.ref(*p) );
 
     auto seqs_array = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"),get_list(seqs_)}) );
 
     // R3. Register array of pairwise alignments
-    expression_ref as = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"), alignments.get_expression(*p)}) );
+    expression_ref as = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"), alignments.ref(*p)}) );
 
     // R4. Register sequence length methods
     auto seq_lengths = expression_ref{{var("Data.Array.listArray'"),{var("Alignment.compute_sequence_lengths"), seqs_array, p->my_tree(), as}}};
@@ -538,7 +538,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         auto t = p->my_tree();
         auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
         cl_index = p->add_compute_expression({var("SModel.Likelihood.cached_conditional_likelihoods"),t,seqs_array,counts_array,as,*a,transition_ps,f});  // Create and set conditional likelihoods for each branch
-        auto cls = cl_index.get_expression(*p);
+        auto cls = cl_index.ref(*p);
         for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
             conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cls,b});
 
@@ -565,7 +565,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
         Box<alignment> AAA = AA;
         cl_index = p->add_compute_expression({var("SModel.Likelihood.cached_conditional_likelihoods_SEV"),t,seqs_array,*a,transition_ps,f,AAA});  // Create and set conditional likelihoods for each branch
-        auto cls = cl_index.get_expression(*p);
+        auto cls = cl_index.ref(*p);
         for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
             conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cls,b});
 
@@ -603,7 +603,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 
         for(int n=0;n<sequence_length_pr_indices.size();n++)
         {
-            expression_ref l = sequence_length_indices[n].get_expression(*p);
+            expression_ref l = sequence_length_indices[n].ref(*p);
             expression_ref lengthp = {snd,model};
             sequence_length_pr_indices[n] = p->add_compute_expression( {lengthp,l} );
         }
@@ -619,7 +619,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         // Alignment prior
         alignment_prior_index = p->add_compute_expression( {var("Alignment.alignment_pr"), alignment_on_tree, hmms, model} );
 
-        expression_ref alignment_pdf = alignment_prior_index.get_expression(*p);
+        expression_ref alignment_pdf = alignment_prior_index.ref(*p);
         alignment_pdf = make_if_expression(parameter("*variable_alignment"), alignment_pdf, log_double_t(1.0));
 
         expression_ref sample_alignments = {var("Parameters.random_variable"), as, alignment_pdf, 0, 0.0};
@@ -627,7 +627,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         p->evaluate( alignment_sample_index );
     }
 
-    p->add_likelihood_factor(likelihood_index.get_expression(*p));
+    p->add_likelihood_factor(likelihood_index.ref(*p));
 }
 
 //-----------------------------------------------------------------------------//
@@ -1532,22 +1532,20 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
             get_list(program_loggers))
         );
     
-    int atmodel_index = add_program(program_exp);
-    expression_ref atmodel = get_expression(atmodel_index);
+    param atmodel = add_program(program_exp);
 
-    int tree_index = add_compute_expression( {var("BAliPhy.ATModel.tree"), atmodel});
+    int tree_index = add_compute_expression( {var("BAliPhy.ATModel.tree"), atmodel.ref(*this)});
 
     TC = new tree_constants(this, tt.get_labels(), tree_index);
 
     t().read_tree(tt);
 
-    atmodel = get_expression(atmodel_index);
     /* --------------------------------------------------------------- */
 
     // R1. Register branch lengths
-    TC->register_branch_lengths(this, {var("Data.Array.listArray'"),{var("BAliPhy.ATModel.branch_lengths"),atmodel}});
+    TC->register_branch_lengths(this, {var("Data.Array.listArray'"),{var("BAliPhy.ATModel.branch_lengths"),atmodel.ref(*this)}});
 
-    int scales_list_index = add_compute_expression( {var("BAliPhy.ATModel.scales"),atmodel} );
+    int scales_list_index = add_compute_expression( {var("BAliPhy.ATModel.scales"),atmodel.ref(*this)} );
     expression_ref scales_list = get_expression(scales_list_index);
 
     // R2. Register individual scales
@@ -1583,7 +1581,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     // R3. Register methods for each of the individual substitution models
     for(int i=0;i<SMs.size();i++)
     {
-        expression_ref smodel = {var("Data.List.!!"),{var("BAliPhy.ATModel.smodels"),atmodel},i};
+        expression_ref smodel = {var("Data.List.!!"),{var("BAliPhy.ATModel.smodels"), atmodel.ref(*this)}, i};
 
         PC->SModels.push_back( smodel_methods( smodel, *this) );
     }
@@ -1592,7 +1590,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     add_modifiable_parameter("*IModels.training", false);
 
     // R4. Register an array of indel models
-    PC->imodels_index = add_compute_expression({var("Data.Array.listArray'"), {var("BAliPhy.ATModel.imodels"),atmodel}});
+    PC->imodels_index = add_compute_expression({var("Data.Array.listArray'"), {var("BAliPhy.ATModel.imodels"), atmodel.ref(*this)}});
   
     // don't constrain any branch lengths
     for(int b=0;b<PC->TC.n_branches();b++)
@@ -1601,7 +1599,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     // R5. Register D[b,s] = T[b]*scale[s]
     for(int s=0;s<n_branch_scales();s++)
     {
-        expression_ref scale = branch_scale(s).get_expression(*this);
+        expression_ref scale = branch_scale(s).ref(*this);
         PC->branch_length_indices.push_back(vector<int>());
         for(int b=0;b<t().n_branches();b++)
         {

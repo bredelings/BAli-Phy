@@ -13,7 +13,8 @@ class param
     std::optional<expression_ref> value;
 
 public:
-    expression_ref get_expression(const context& C) const;
+    expression_ref ref(const context& C) const;
+
     expression_ref get_value(const context& C) const;
     void set_value(context& C, const expression_ref& v) const;
 

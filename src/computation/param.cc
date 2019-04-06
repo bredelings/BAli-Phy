@@ -3,7 +3,7 @@
 #include "computation/expression/modifiable.H"
 #include "computation/context.H"
 
-expression_ref param::get_expression(const context& C) const
+expression_ref param::ref(const context& C) const
 {
     if (head)
         return C.get_expression(*head);
