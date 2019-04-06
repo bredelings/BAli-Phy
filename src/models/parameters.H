@@ -59,17 +59,17 @@ struct data_partition_constants
 
     std::vector<int> conditional_likelihoods_for_branch;
 
-    std::vector<int> leaf_sequence_indices;
+    std::vector<param> leaf_sequence_indices;
 
-    std::vector<int> sequence_length_indices;
+    std::vector<param> sequence_length_indices;
 
-    std::vector<int> sequence_length_pr_indices;
+    std::vector<param> sequence_length_pr_indices;
 
     std::vector<param> transition_p_method_indices;
 
-    std::vector<int> branch_HMM_indices;
+    std::vector<param> branch_HMM_indices;
 
-    int alignment_prior_index = -1;
+    param alignment_prior_index;
 
     /// The names and comments for the sequences
     std::vector< sequence > seqs;

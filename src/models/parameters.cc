@@ -160,7 +160,7 @@ bool data_partition::has_IModel() const
 
 const EVector& data_partition::get_sequence(int i) const
 {
-    return P->evaluate( DPC().leaf_sequence_indices[i] ).as_<EVector>();
+    return DPC().leaf_sequence_indices[i].get_value(*P).as_<EVector>();
 }
 
 const EVector& data_partition::transition_P(int b) const
@@ -213,7 +213,7 @@ const indel::PairHMM& data_partition::get_branch_HMM(int b) const
 
     b = t().undirected(b);
 
-    return P->evaluate( DPC().branch_HMM_indices[b] ).as_<indel::PairHMM>();
+    return DPC().branch_HMM_indices[b].get_value(*P).as_<indel::PairHMM>();
 }
 
 vector<indel::PairHMM> data_partition::get_branch_HMMs(const vector<int>& br) const
@@ -228,7 +228,7 @@ vector<indel::PairHMM> data_partition::get_branch_HMMs(const vector<int>& br) co
 
 double data_partition::sequence_length_pr(int n) const
 {
-    return P->evaluate( DPC().sequence_length_pr_indices[n] ).as_log_double();
+    return DPC().sequence_length_pr_indices[n].get_value(*P).as_log_double();
 }
 
 int data_partition::seqlength(int n) const
@@ -236,7 +236,7 @@ int data_partition::seqlength(int n) const
     if (n < DPC().sequences.size())
         return DPC().sequences[n].size();
 
-    int l = P->evaluate(DPC().sequence_length_indices[n]).as_int();
+    int l = DPC().sequence_length_indices[n].get_value(*P).as_int();
 
     return l;
 }
@@ -297,7 +297,7 @@ log_double_t data_partition::prior_alignment() const
 {
     if (not variable_alignment()) return 1;
 
-    log_double_t Pr = P->evaluate(DPC().alignment_prior_index).as_log_double();
+    log_double_t Pr = DPC().alignment_prior_index.get_value(*P).as_log_double();
 
     return Pr;
 }
@@ -451,9 +451,8 @@ EVector unaligned_alignments_on_tree(const TreeInterface& t, const vector<vector
 
 data_partition_constants::data_partition_constants(Parameters* p, int i, const alignment& AA, const vector<int>& counts, int like_calc)
     :conditional_likelihoods_for_branch(2*p->t().n_branches()),
-     leaf_sequence_indices(p->t().n_leaves(),-1),
-     sequence_length_indices(AA.n_sequences(),-1),
-     sequence_length_pr_indices(AA.n_sequences(),-1),
+     sequence_length_indices(AA.n_sequences()),
+     sequence_length_pr_indices(AA.n_sequences()),
      seqs(AA.seqs()),
      sequences( alignment_letters(AA, p->t().n_leaves()) ),
      a(AA.get_alphabet().clone()),
@@ -498,15 +497,14 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         transition_p_method_indices.push_back( p->add_compute_expression( {var("Data.Array.!"), transition_ps, b} ) );
 
     // R2. Register array of leaf sequences
-    for(int i=0; i<leaf_sequence_indices.size(); i++)
-        leaf_sequence_indices[i] = p->add_compute_expression(EVector(sequences[i]));
+    for(int i=0; i<p->t().n_leaves(); i++)
+        leaf_sequence_indices.push_back ( p->add_compute_expression(EVector(sequences[i])) );
 
     // Add array of leaf sequences
     EVector seqs_;
-    for(int index: leaf_sequence_indices)
-    {
-        seqs_.push_back( p->get_expression(index) );
-    }
+    for(auto& index: leaf_sequence_indices)
+        seqs_.push_back( index.get_expression(*p) );
+
     auto seqs_array = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"),get_list(seqs_)}) );
 
     // R3. Register array of pairwise alignments
@@ -605,7 +603,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 
         for(int n=0;n<sequence_length_pr_indices.size();n++)
         {
-            expression_ref l = p->get_expression(sequence_length_indices[n]);
+            expression_ref l = sequence_length_indices[n].get_expression(*p);
             expression_ref lengthp = {snd,model};
             sequence_length_pr_indices[n] = p->add_compute_expression( {lengthp,l} );
         }
@@ -621,7 +619,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         // Alignment prior
         alignment_prior_index = p->add_compute_expression( {var("Alignment.alignment_pr"), alignment_on_tree, hmms, model} );
 
-        expression_ref alignment_pdf = p->get_expression(alignment_prior_index);
+        expression_ref alignment_pdf = alignment_prior_index.get_expression(*p);
         alignment_pdf = make_if_expression(parameter("*variable_alignment"), alignment_pdf, log_double_t(1.0));
 
         expression_ref sample_alignments = {var("Parameters.random_variable"), as, alignment_pdf, 0, 0.0};
