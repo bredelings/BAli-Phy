@@ -478,14 +478,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     expression_ref initial_alignments_exp = get_list(unaligned_alignments_on_tree(t, sequences));
     param alignments = p->add_compute_expression({var("Data.List.map"),var("Parameters.modifiable"),initial_alignments_exp});
 
-    expression_ref alignments_structure = p->evaluate_expression({var("Parameters.maybe_modifiable_structure"), alignments.ref(*p)});
-    if (log_verbose >= 3)
-        std::cerr<<"alignments = "<<alignments_structure<<"\n";
-    auto alignments_vector = *list_to_evector(alignments_structure);
-    assert(alignments_vector.size() == 2*B);
-    for(int b=0;b<2*B;b++)
-        pairwise_alignment_for_branch.push_back( get_param(*p, alignments_vector[b]) );
-
     //  const int n_states = state_letters().size();
     int scale_index = *p->scale_index_for_partition(i);
     int smodel_index = *p->smodel_index_for_partition(i);
@@ -628,6 +620,15 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     }
 
     p->add_likelihood_factor(likelihood_index.ref(*p));
+
+    /* Initialize params -- from alignments.ref(*p) */
+    expression_ref alignments_structure = p->evaluate_expression({var("Parameters.maybe_modifiable_structure"), alignments.ref(*p)});
+    if (log_verbose >= 3)
+        std::cerr<<"alignments = "<<alignments_structure<<"\n";
+    auto alignments_vector = *list_to_evector(alignments_structure);
+    assert(alignments_vector.size() == 2*B);
+    for(int b=0;b<2*B;b++)
+        pairwise_alignment_for_branch.push_back( get_param(*p, alignments_vector[b]) );
 }
 
 //-----------------------------------------------------------------------------//
