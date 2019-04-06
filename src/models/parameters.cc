@@ -464,7 +464,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     const auto& t = p->t();
     int B = t.n_branches();
 
-
     // Can we compute the pairwise alignment in such a way that recomputing the alignments when
     // the tree changes has the same cost as modifying the solution and setting the alignment to the
     // new modified solution?
@@ -1451,7 +1450,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
      updown(-1)
 {
     // \todo FIXME:cleanup|fragile - Don't touch C here directly!
-    *this += { "SModel","Probability","Range","PopGen","Alignment","IModel","BAliPhy.ATModel" };
+    *this += { "SModel", "Probability", "Range", "PopGen", "Alignment", "IModel", "BAliPhy.ATModel" };
   
     // Don't call set_parameter_value here, because recalc( ) depends on branch_length_indices, which is not ready.
 
@@ -1495,7 +1494,6 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         smodels.push_back(smodel_var);
     }
 
-
     // register the indel models as sub-models
     vector<expression_ref> imodels;
     for(int i=0;i<n_imodels();i++)
@@ -1520,7 +1518,6 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         scales.push_back(scale_var);
     }
     program_loggers.push_back( logger("Scale", get_list(scales), List()) );
-
 
     expression_ref branch_lengths_list = List();
     if (tt.n_branches() > 0)
