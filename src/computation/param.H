@@ -2,13 +2,16 @@
 #define PARAM_H
 
 #include <optional>
-#include "computation/context.H"
+#include "computation/expression/expression_ref.H"
 #include "util/bounds.H"
+
+class context;
 
 class param
 {
     std::optional<int> head;
     std::optional<expression_ref> value;
+
 public:
     expression_ref get_expression(const context& C) const;
     expression_ref get_value(const context& C) const;

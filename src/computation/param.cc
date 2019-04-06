@@ -1,6 +1,7 @@
 #include "computation/param.H"
 #include "computation/expression/reg_var.H"
 #include "computation/expression/modifiable.H"
+#include "computation/context.H"
 
 expression_ref param::get_expression(const context& C) const
 {
