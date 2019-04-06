@@ -176,10 +176,6 @@ public:
     int add_compute_expression(const expression_ref& e);
     /// Add a literal expression that MAY be reduced
     int add_compute_expression_(closure&&);
-    /// Change the i-th compute expression to e
-    void set_compute_expression(int i, const expression_ref& e);
-    /// Change the i-th compute expression to e
-    void set_compute_expression_(int i, closure&& e);
 
     int n_expressions() const;
     expression_ref get_expression(int i) const;

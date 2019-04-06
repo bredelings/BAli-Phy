@@ -341,18 +341,6 @@ int context::add_compute_expression_(closure&& C)
     return heads().size() - 1;
 }
 
-/// Change the i-th compute expression to e
-void context::set_compute_expression(int i, const expression_ref& E)
-{
-    set_compute_expression_( i, preprocess(E) );
-}
-
-/// Change the i-th compute expression to e
-void context::set_compute_expression_(int i, closure&& C)
-{
-    memory()->set_head(i,std::move(C));
-}
-
 int context::n_expressions() const
 {
     return heads().size();
