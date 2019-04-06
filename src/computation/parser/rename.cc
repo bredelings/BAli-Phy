@@ -203,7 +203,6 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 {
     if (not E.is_expression()) return E;
 
-    assert(E.size());
     auto v = E.sub();
 
     for(auto& e: v)
@@ -250,7 +249,6 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     else if (is_AST(E,"infixexp"))
 	return desugar_infix(m, v);
 
-    assert(v.size());
     return expression_ref{E.head(),v};
 }
 
