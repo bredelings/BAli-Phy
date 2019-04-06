@@ -511,6 +511,44 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     for(int n=0;n<t.n_nodes();n++)
         sequence_length_indices[n] = p->add_compute_expression( {var("Data.Array.!"), seq_lengths, n} );
 
+    // Add method indices for calculating branch HMMs and alignment prior
+    if (imodel_index)
+    {
+        // D = Params.substitutionBranchLengths!scale_index
+        expression_ref D = {var("Data.Array.!"), p->my_substitution_branch_lengths(), scale_index};
+        expression_ref heat = parameter("Heat.beta");
+        expression_ref training = parameter("*IModels.training");
+        expression_ref model = {{var("Data.Array.!"),p->my_imodels(), *imodel_index}, heat, training};
+
+        expression_ref hmms = {var("Alignment.branch_hmms"), model, D, B};
+        hmms = p->get_expression( p->add_compute_expression(hmms) );
+
+        for(int n=0;n<sequence_length_pr_indices.size();n++)
+        {
+            expression_ref l = sequence_length_indices[n].ref(*p);
+            expression_ref lengthp = {snd,model};
+            sequence_length_pr_indices[n] = p->add_compute_expression( {lengthp,l} );
+        }
+
+        // branch HMMs
+        for(int b=0;b<B;b++)
+        {
+            // (fst IModels.models!imodel_index) D b heat training
+            int index = p->add_compute_expression( {var("Data.Array.!"), hmms, b} );
+            branch_HMM_indices.push_back( index );
+        }
+
+        // Alignment prior
+        alignment_prior_index = p->add_compute_expression( {var("Alignment.alignment_pr"), alignment_on_tree, hmms, model} );
+
+        expression_ref alignment_pdf = alignment_prior_index.ref(*p);
+        alignment_pdf = make_if_expression(parameter("*variable_alignment"), alignment_pdf, log_double_t(1.0));
+
+        expression_ref sample_alignments = {var("Parameters.random_variable"), as, alignment_pdf, 0, 0.0};
+        int alignment_sample_index = p->add_compute_expression( sample_alignments );
+        p->evaluate( alignment_sample_index );
+    }
+
     if (p->t().n_nodes() == 1)
     {
         expression_ref seq = {var("Data.Array.!"),seqs_array, 0};
@@ -579,44 +617,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
             auto root = parameter("*subst_root");
             likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood_SEV"), t, cls, f, root, Counts});
         }
-    }
-
-    // Add method indices for calculating branch HMMs and alignment prior
-    if (imodel_index)
-    {
-        // D = Params.substitutionBranchLengths!scale_index
-        expression_ref D = {var("Data.Array.!"), p->my_substitution_branch_lengths(), scale_index};
-        expression_ref heat = parameter("Heat.beta");
-        expression_ref training = parameter("*IModels.training");
-        expression_ref model = {{var("Data.Array.!"),p->my_imodels(), *imodel_index}, heat, training};
-
-        expression_ref hmms = {var("Alignment.branch_hmms"), model, D, B};
-        hmms = p->get_expression( p->add_compute_expression(hmms) );
-
-        for(int n=0;n<sequence_length_pr_indices.size();n++)
-        {
-            expression_ref l = sequence_length_indices[n].ref(*p);
-            expression_ref lengthp = {snd,model};
-            sequence_length_pr_indices[n] = p->add_compute_expression( {lengthp,l} );
-        }
-
-        // branch HMMs
-        for(int b=0;b<B;b++)
-        {
-            // (fst IModels.models!imodel_index) D b heat training
-            int index = p->add_compute_expression( {var("Data.Array.!"), hmms, b} );
-            branch_HMM_indices.push_back( index );
-        }
-
-        // Alignment prior
-        alignment_prior_index = p->add_compute_expression( {var("Alignment.alignment_pr"), alignment_on_tree, hmms, model} );
-
-        expression_ref alignment_pdf = alignment_prior_index.ref(*p);
-        alignment_pdf = make_if_expression(parameter("*variable_alignment"), alignment_pdf, log_double_t(1.0));
-
-        expression_ref sample_alignments = {var("Parameters.random_variable"), as, alignment_pdf, 0, 0.0};
-        int alignment_sample_index = p->add_compute_expression( sample_alignments );
-        p->evaluate( alignment_sample_index );
     }
 
     p->add_likelihood_factor(likelihood_index.ref(*p));
