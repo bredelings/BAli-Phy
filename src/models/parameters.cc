@@ -168,7 +168,7 @@ const EVector& data_partition::transition_P(int b) const
     b = t().undirected(b);
     assert(b >= 0 and b < t().n_branches());
 
-    return P->evaluate( DPC().transition_p_method_indices[b] ).as_<EVector>();
+    return DPC().transition_p_method_indices[b].get_value(*P).as_<EVector>();
 }
 
 int data_partition::n_base_models() const
@@ -454,7 +454,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
      leaf_sequence_indices(p->t().n_leaves(),-1),
      sequence_length_indices(AA.n_sequences(),-1),
      sequence_length_pr_indices(AA.n_sequences(),-1),
-     transition_p_method_indices(p->t().n_branches(),-1),
      seqs(AA.seqs()),
      sequences( alignment_letters(AA, p->t().n_leaves()) ),
      a(AA.get_alphabet().clone()),
@@ -478,9 +477,9 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     // merging columns.
 
     expression_ref initial_alignments_exp = get_list(unaligned_alignments_on_tree(t, sequences));
-    int alignments_index = p->add_compute_expression({var("Data.List.map"),var("Parameters.modifiable"),initial_alignments_exp});
+    param alignments = p->add_compute_expression({var("Data.List.map"),var("Parameters.modifiable"),initial_alignments_exp});
 
-    expression_ref alignments_structure = p->evaluate_expression({var("Parameters.maybe_modifiable_structure"), p->get_expression(alignments_index)});
+    expression_ref alignments_structure = p->evaluate_expression({var("Parameters.maybe_modifiable_structure"), alignments.get_expression(*p)});
     if (log_verbose >= 3)
         std::cerr<<"alignments = "<<alignments_structure<<"\n";
     auto alignments_vector = *list_to_evector(alignments_structure);
@@ -496,7 +495,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     // R1. Add method indices for calculating transition matrices.
     auto transition_ps = p->get_expression(p->PC->branch_transition_p_indices(scale_index, smodel_index));
     for(int b=0;b<B;b++)
-        transition_p_method_indices[b] = p->add_compute_expression( {var("Data.Array.!"), transition_ps, b} );
+        transition_p_method_indices.push_back( p->add_compute_expression( {var("Data.Array.!"), transition_ps, b} ) );
 
     // R2. Register array of leaf sequences
     for(int i=0; i<leaf_sequence_indices.size(); i++)
@@ -511,7 +510,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     auto seqs_array = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"),get_list(seqs_)}) );
 
     // R3. Register array of pairwise alignments
-    expression_ref as = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"), p->get_expression( alignments_index )}) );
+    expression_ref as = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"), alignments.get_expression(*p)}) );
 
     // R4. Register sequence length methods
     auto seq_lengths = expression_ref{{var("Data.Array.listArray'"),{var("Alignment.compute_sequence_lengths"), seqs_array, p->my_tree(), as}}};

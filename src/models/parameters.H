@@ -65,7 +65,7 @@ struct data_partition_constants
 
     std::vector<int> sequence_length_pr_indices;
 
-    std::vector<int> transition_p_method_indices;
+    std::vector<param> transition_p_method_indices;
 
     std::vector<int> branch_HMM_indices;
 
