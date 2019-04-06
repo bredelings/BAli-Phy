@@ -53,9 +53,9 @@ struct data_partition_constants
     /// The pairwise alignment for each branch
     std::vector<param> pairwise_alignment_for_branch;
 
-    int likelihood_index;
+    param likelihood_index;
 
-    int cl_index;
+    param cl_index;
 
     std::vector<int> conditional_likelihoods_for_branch;
 

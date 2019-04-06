@@ -310,7 +310,7 @@ const Likelihood_Cache_Branch& data_partition::cache(int b) const
 log_double_t data_partition::likelihood() const 
 {
     substitution::total_likelihood++;
-    return P->evaluate(DPC().likelihood_index).as_log_double();
+    return DPC().likelihood_index.get_value(*P).as_log_double();
 }
 
 log_double_t data_partition::heated_likelihood() const 
@@ -538,7 +538,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         auto t = p->my_tree();
         auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
         cl_index = p->add_compute_expression({var("SModel.Likelihood.cached_conditional_likelihoods"),t,seqs_array,counts_array,as,*a,transition_ps,f});  // Create and set conditional likelihoods for each branch
-        auto cls = p->get_expression(cl_index);
+        auto cls = cl_index.get_expression(*p);
         for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
             conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cls,b});
 
@@ -565,7 +565,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
         Box<alignment> AAA = AA;
         cl_index = p->add_compute_expression({var("SModel.Likelihood.cached_conditional_likelihoods_SEV"),t,seqs_array,*a,transition_ps,f,AAA});  // Create and set conditional likelihoods for each branch
-        auto cls = p->get_expression(cl_index);
+        auto cls = cl_index.get_expression(*p);
         for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
             conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cls,b});
 
@@ -627,7 +627,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         p->evaluate( alignment_sample_index );
     }
 
-    p->add_likelihood_factor(p->get_expression(likelihood_index));
+    p->add_likelihood_factor(likelihood_index.get_expression(*p));
 }
 
 //-----------------------------------------------------------------------------//
