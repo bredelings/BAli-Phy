@@ -1115,6 +1115,8 @@ namespace MCMC {
 	    if (P.as<Parameters>())
 		exchange_adjacent_pairs(iterations,*P.as<Parameters>(),*this);
 #endif
+            if (log_verbose and iterations%100 == 0)
+                s_out<<(const MoveStats&)(*this);
 	}
 
 	s_out<<(const MoveStats&)(*this);
