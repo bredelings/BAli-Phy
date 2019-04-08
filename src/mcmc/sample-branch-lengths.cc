@@ -164,6 +164,41 @@ void slice_sample_branch_length(owned_ptr<Model>& P,MoveStats& Stats,int b)
 	Stats.inc("branch-length (slice) 4",result);
 }
 
+void alignment_slice_sample_branch_length(owned_ptr<Model>& P,MoveStats& Stats,int b)
+{
+    Parameters& PP = *P.as<Parameters>();
+    PP.select_root(b);
+
+    const double L = PP.t().branch_length(b);
+    const double mu = PP.branch_mean();
+
+
+    MCMC::Result result(3);
+
+    //------------- Find new length --------------//
+
+    double sigma = P->load_value("slice_branch_sigma",1.5);
+    // NOTE - it is OK to depend on L below -- IF AND ONLY IF the likelihood is unimodal.
+    double w = sigma*(PP.branch_mean()+L);
+    alignment_branch_length_slice_function logp(PP,b);
+    double L2 = slice_sample(L,logp,w,100);
+
+    //---------- Record Statistics - -------------//
+    result.totals[0] = abs(L2 - L);
+    result.totals[1] = abs(log(L2/L));
+    result.totals[2] = logp.count;
+
+    Stats.inc("alignment-branch-length (slice) *",result);
+    if (L < mu/2.0)
+	Stats.inc("alignment-branch-length (slice) 1",result);
+    else if (L < mu)
+	Stats.inc("alignment-branch-length (slice) 2",result);
+    else if (L < mu*2)
+	Stats.inc("alignment-branch-length (slice) 3",result);
+    else
+	Stats.inc("alignment-branch-length (slice) 4",result);
+}
+
 void change_branch_length(owned_ptr<Model>& P,MoveStats& Stats,int b)
 {
     if (uniform() < 0.5)
