@@ -233,12 +233,15 @@ void sample_tri_branch_type_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
 }
 
 
-void sample_alignments_one(owned_ptr<Model>& P, MoveStats&,int b) 
+void sample_alignments_one(owned_ptr<Model>& P, MoveStats& Stats, int b)
 {
   Parameters* PP = P.as<Parameters>();
   assert(PP->variable_alignment()); 
 
-  sample_alignment(*PP,b);
+  if (uniform() < 0.01)
+      alignment_slice_sample_branch_length(P, Stats, b);
+  else
+      sample_alignment(*PP,b);
 }
 
 void sample_node_move(owned_ptr<Model>& P, MoveStats&,int node) 
