@@ -20,6 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "sample.H"
 #include "util/range.H"
 #include "util/rng.H"
+#include "util/log-level.H"
 #include <algorithm>
 #include "mcmc.H"
 #include "dp/3way.H"
@@ -600,10 +601,13 @@ void walk_tree_sample_alignments(owned_ptr<Model>& P, MoveStats& Stats)
   }
 }
 
+
+// FIXME: Realign from tips basically fails because the distance between sequences is too small!
 void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats) 
 {
   int AL0 = MCMC::alignment_length(*P.as<Parameters>());
 
+  if (log_verbose>=3) std::cerr<<"realign_from_tips: |A0| = "<<AL0<<"\n";
   Parameters& PP = *P.as<Parameters>();
   auto t = PP.t();
   int toward_node = uniform(t.n_nodes()>2?t.n_leaves():0, t.n_nodes()-1);
@@ -615,14 +619,64 @@ void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats)
       auto t = P.as<Parameters>()->t();
       int node1 = t.source(b);
       int node2 = t.target(b);
+      if (log_verbose >=3)
+      {
+          auto length = [&](int node) {return (*P.as<Parameters>())[0].seqlength(node);};
+          vector<int> children = t.branches_after(b);
+
+          std::cerr<<"realign_from_tips:   realigning branch "<<b<<"\n";
+          std::cerr<<"realign_from_tips:   orig branch lengths = "<<t.branch_length(b);
+          if (children.size())
+          {
+              assert(children.size() == 2);
+              std::cerr<<" -> ("<<t.branch_length(children[0])<<","<<t.branch_length(children[1])<<")";
+          }
+          std::cerr<<"\n";
+          std::cerr<<"realign_from_tips:   orig seq lengths = "<<length(node1)<<" -> "<<length(node2);
+          if (children.size())
+          {
+              assert(children.size() == 2);
+              int node3 = t.target(children[0]);
+              int node4 = t.target(children[1]);
+              std::cerr<<" -> ("<<length(node3)<<","<<length(node4)<<")";
+          }
+          std::cerr<<"\n";
+      }
       if (node2 >= t.n_leaves())
+      {
+          if (log_verbose >=3) std::cerr<<"     Performing 3-way alignment\n";
 	  tri_sample_alignment(*P.as<Parameters>(), node2, node1);
+      }
       else
+      {
+          if (log_verbose >=3) std::cerr<<"     Performing 2-way alignment\n";
 	  sample_alignment(*P.as<Parameters>(), b);
+      }
       sample_branch_length_(P,Stats,b);
+
+      if (log_verbose >= 3)
+      {
+          auto t = P.as<Parameters>()->t();
+          int node1 = t.source(b);
+          int node2 = t.target(b);
+
+          auto length = [&](int node) {return (*P.as<Parameters>())[0].seqlength(node);};
+          std::cerr<<"realign_from_tips:   post seq lengths = "<<length(node1)<<" -> "<<length(node2);
+          vector<int> children = t.branches_after(b);
+          if (children.size())
+          {
+              assert(children.size() == 2);
+              int node3 = t.target(children[0]);
+              int node4 = t.target(children[1]);
+              std::cerr<<" -> ("<<length(node3)<<","<<length(node4)<<")";
+          }
+          std::cerr<<"\n\n";
+      }
+
       three_way_topology_sample(P,Stats,b);
   }
   int AL1 = MCMC::alignment_length(*P.as<Parameters>());
+  if (log_verbose>=3) std::cerr<<"realign_from_tips: |A1| = "<<AL1<<"\n";
 
   MCMC::Result result(2);
   result.totals[0] = 1;
