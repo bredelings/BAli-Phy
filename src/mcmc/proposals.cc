@@ -27,11 +27,13 @@
 #include "util/range.H"
 #include "util/set.H"
 #include "dp/dp-matrix.H"
+#include "mcmc/sample-alignment.H"
 
 extern int log_verbose;
 
 using std::valarray;
 using std::vector;
+using std::pair;
 using std::string;
 using std::shared_ptr;
 
@@ -652,9 +654,6 @@ log_double_t move_subst_type_branch(Model& P)
 #include "mcmc/sample.H"
 
 // Can't we just send in any sigma parameters or whatever WITH the proposal?
-shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P, const indel::PairHMM& hmm, int b);
-shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P, int b);
-shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const indel::PairHMM& hmm, int b);
 vector<int> walk_tree_path_toward(const TreeInterface& t, int root);
 
 log_double_t realign_and_propose_parameter(Model& P, int param, const vector<int>& partitions, const proposal_fn& proposal, const vector<double>& v)
@@ -713,7 +712,7 @@ log_double_t realign_and_propose_parameter(Model& P, int param, const vector<int
 		}
 		{
 		    // Resample the alignment and calculate the proposal probability for the forward more.
-		    auto matrix_new = sample_alignment_base(PP[j], b);
+		    auto [matrix_new,_] = sample_alignment_base(PP[j], b);
 		    auto a_new = PP[j].get_pairwise_alignment(b);
 		    vector<int> path_new = A2::get_path_from_pairwise_alignment(a_new);
 

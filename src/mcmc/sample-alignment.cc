@@ -17,6 +17,8 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
+#include "sample-alignment.H"
+
 #include <valarray>
 #include <iostream>
 #include <cmath>
@@ -33,6 +35,7 @@
 // for both sequences, this process is symmetric
 
 using std::abs;
+using std::pair;
 using std::vector;
 using std::shared_ptr;
 using boost::dynamic_bitset;
@@ -88,7 +91,7 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const inde
 }
 
 
-shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P, const indel::PairHMM& hmm, int b) 
+pair<shared_ptr<DPmatrixSimple>,log_double_t> sample_alignment_base(mutable_data_partition P, const indel::PairHMM& hmm, int b) 
 {
     auto Matrices = sample_alignment_forward(P, hmm, b);
 
@@ -96,22 +99,22 @@ shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P, const
     if (Matrices->Pr_sum_all_paths() <= 0.0)
     {
 	std::cerr<<"sample_alignment_base( ): All paths have probability 0!"<<std::endl;
-	return Matrices;
+	return {Matrices,{}};
     }
 
     vector<int> path = Matrices->sample_path();
 
     P.set_pairwise_alignment(b, A2::get_pairwise_alignment_from_path(path));
 
-    return Matrices;
+    return {Matrices, Matrices->Pr_sum_all_paths() / Matrices->path_Q(path)};
 }
 
-shared_ptr<DPmatrixSimple> sample_alignment_base(mutable_data_partition P, int b)
+pair<shared_ptr<DPmatrixSimple>,log_double_t> sample_alignment_base(mutable_data_partition P, int b)
 {
     return sample_alignment_base(P, P.get_branch_HMM(b), b);
 }
 
-void sample_alignment(Parameters& P,int b)
+log_double_t sample_alignment(Parameters& P,int b)
 {
     //  if (any_branches_constrained(vector<int>(1,b), P.t(), P.PC->TC, P.PC->AC))
     //    return;
@@ -130,12 +133,15 @@ void sample_alignment(Parameters& P,int b)
     p.push_back(P);
 
     vector< vector< shared_ptr<DPmatrixSimple> > > Matrices(1);
+    log_double_t total_ratio = 1.0;
     for(int i=0;i<p.size();i++) 
     {
 	for(int j=0;j<p[i].n_data_partitions();j++) 
 	    if (p[i][j].variable_alignment()) 
 	    {
-		Matrices[i].push_back(sample_alignment_base(p[i][j], b));
+                auto [M, ratio] = sample_alignment_base(p[i][j], b);
+                total_ratio *= ratio;
+		Matrices[i].push_back(M);
 		// If Pr_sum_all_paths() == 0, then the alignment for this partition will be unchanged.
 #ifndef NDEBUG
 		p[i][j].likelihood();  // check the likelihood calculation
@@ -235,5 +241,7 @@ void sample_alignment(Parameters& P,int b)
 #endif
 
     P = p[0];
+
+    return total_ratio;
 }
 

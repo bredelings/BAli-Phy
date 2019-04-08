@@ -27,6 +27,7 @@
 #include "util/rng.H"
 #include "probability/choose.H"
 #include "util/assert.hh"
+#include "mcmc/sample-alignment.H"
 
 extern int log_verbose;
 
@@ -135,6 +136,40 @@ branch_length_slice_function::branch_length_slice_function(Parameters& P,int b_)
     :model_slice_function(P),b(b_)
 { 
     set_lower_bound(0);
+}
+
+double alignment_branch_length_slice_function::operator()(double x)
+{
+    count++;
+
+    // We are intentionally only calling Model::operator==( ) here.
+    // Maybe we should actually call merely context::operator==( ) though?
+    reinterpret_cast<context&>(M) = C0;
+    set_value(x);
+    auto alignment_sum_ratio_1 = sample_alignment(static_cast<Parameters&>(M),b);
+
+    // Here is where we return 0 if the number of variables changes.
+    // How can we automate this so that it is called only once?
+    current_fn_value = M.heated_probability_ratio(C0)*alignment_sum_ratio_1/alignment_sum_ratio_0;
+    return operator()();
+}
+
+void alignment_branch_length_slice_function::set_value(double l)
+{
+    static_cast<Parameters&>(M).setlength(b,l);
+}
+
+double alignment_branch_length_slice_function::current_value() const
+{
+    return static_cast<Parameters&>(M).t().branch_length(b);
+}
+
+alignment_branch_length_slice_function::alignment_branch_length_slice_function(Parameters& P,int b_)
+    :model_slice_function(P),b(b_)
+{ 
+    set_lower_bound(0);
+    alignment_sum_ratio_0 = sample_alignment(P, b);
+    C0 = P;
 }
 
 void slide_node_slice_function::set_value(double x) 

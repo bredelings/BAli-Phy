@@ -63,6 +63,7 @@ std::pair<int,double> slice_sample_multi(std::vector<slice_function*>& g, double
 
 class model_slice_function: public slice_function
 {
+protected:
     log_double_t current_fn_value;
 
 public:
@@ -70,7 +71,7 @@ public:
     int count = 0;
 
     // The original starting point
-    const context C0;
+    context C0;
 
     // The proposed point
     Model& M;
@@ -126,6 +127,22 @@ struct branch_length_slice_function: public model_slice_function
     double current_value() const;
 
     branch_length_slice_function(Parameters&,int);
+};
+
+/// A slice_function for slice-sampling a single branch length
+struct alignment_branch_length_slice_function: public model_slice_function
+{
+    log_double_t alignment_sum_ratio_0;
+    int b;
+
+    double operator()() {return model_slice_function::operator()();};
+    double operator()(double x);
+
+    void set_value(double);
+
+    double current_value() const;
+
+    alignment_branch_length_slice_function(Parameters&,int);
 };
 
 /// A slice_function for slice-sampling two adjacent branch lengths which preserving their sum
