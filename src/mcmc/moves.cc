@@ -25,6 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "dp/3way.H"
 #include "util/permute.H"
 #include "alignment/alignment-util.H"
+#include "mcmc/logger.H"
 
 using MCMC::MoveStats;
 
@@ -598,6 +599,8 @@ void walk_tree_sample_alignments(owned_ptr<Model>& P, MoveStats& Stats)
 
 void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats) 
 {
+  int AL0 = MCMC::alignment_length(*P.as<Parameters>());
+
   Parameters& PP = *P.as<Parameters>();
   auto t = PP.t();
   int toward_node = uniform(t.n_nodes()>2?t.n_leaves():0, t.n_nodes()-1);
@@ -616,8 +619,11 @@ void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats)
       sample_branch_length_(P,Stats,b);
       three_way_topology_sample(P,Stats,b);
   }
-  MCMC::Result result(1);
+  int AL1 = MCMC::alignment_length(*P.as<Parameters>());
+
+  MCMC::Result result(2);
   result.totals[0] = 1;
+  result.totals[1] = std::abs(AL1-AL0);
   Stats.inc("realign_from_tips",result);
 }
 
