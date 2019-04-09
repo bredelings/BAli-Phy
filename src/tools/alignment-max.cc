@@ -226,6 +226,20 @@ struct emitted_column_order
 	}
 };
 
+/*
+ * An emitted column specifies the character index (-1 for a gap) and the total number
+   of emitted characters for each sequence.
+
+   A "bare" column includes only the character indices, so it is possible for multiple
+   emitted columns to map to each "bare" column.
+
+   This probably makes sense for columns that consist only of leaf sequences, since those
+   sequences are fixed.
+
+   For ancestral sequences, knowing only the characters that we are aligned too might be...
+   fine?  However, for columns that are ONLY ancestral and have gaps for all leaf characters,
+*/
+
 typedef map<emitted_column,int, emitted_column_order> emitted_column_map;
 typedef map< vector<int>, int, column_order> column_map;
 typedef map< vector<int>, vector<int>, column_order> emitted_map;
