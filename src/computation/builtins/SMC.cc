@@ -637,14 +637,14 @@ log_double_t smc(double rho_over_theta, vector<double> coalescent_rates, vector<
 
     vector<EMatrix> snp = matrix_binary_power(get_snp_matrix(transition, emission_probabilities), A.length());
 
-    for(auto& group: classify_sites(A))
+    for(auto& [count,type]: classify_sites(A))
     {
-	if (group.second == site_t::missing)
-	    smc_group(L, L2, scale, missing, group.first);
-	else if (group.second == site_t::mono)
-	    smc_group(L, L2, scale, no_snp, group.first);
-	else if (group.second == site_t::poly)
-	    smc_group(L, L2, scale, snp, group.first);
+	if (type == site_t::missing)
+	    smc_group(L, L2, scale, missing, count);
+	else if (type == site_t::mono)
+	    smc_group(L, L2, scale, no_snp, count);
+	else if (type == site_t::poly)
+	    smc_group(L, L2, scale, snp, count);
 	else
 	    std::abort();
     }
