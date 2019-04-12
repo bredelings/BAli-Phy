@@ -37,6 +37,7 @@
 #include "util/io.H"
 #include "util/cmdline.H"
 #include "util/mapping.H"
+#include "util/log-level.H"
 #include "util/string/convert.H"
 #include "util/string/pred.H"
 #include "util/string/strip.H"
@@ -1064,6 +1065,9 @@ int main(int argc,char* argv[])
                         std::cerr<<chrom<<'\t'<<pos<<": discarding record because it is missing in '"<<table->target_chrom<<"'\n";
                         continue;
                     }
+                    else if (log_verbose)
+                        std::cerr<<chrom<<'\t'<<pos<<": translating to "<<table->target_chrom<<"\t"<<p1<<"\n";
+
                     fields[0] = table->target_chrom;
                     fields[1] = std::to_string(p1);
                     join(std::cout, fields, '\t');
