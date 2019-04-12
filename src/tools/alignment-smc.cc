@@ -46,6 +46,7 @@
 
 using std::vector;
 using std::valarray;
+using std::set;
 using std::map;
 using std::pair;
 using std::string;
@@ -118,6 +119,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("one-every",value<int>(),"Keep only 1 column in each interval of size <arg>")
 	("write-bed",value<string>(),"Write selected columns in BED format with chromosome name <arg>")
 	("translate-mask",value<string>(),"Masks (CSV or @file)")
+	("translate-vcf",value<string>(),"Masks (CSV or @file)")
 	("variant",value<int>()->default_value(1),"Is there a SNP at distance <arg> from SNP?")
 	("dical2","Output file for DiCal2")
 	("clean-to-ref",value<string>(),"Remove columns not in reference sequence <arg>")
@@ -939,6 +941,67 @@ int largest_minor_allele_count(const alignment& A, int col)
     return m2;
 }
 
+struct translation_table
+{
+    string source_chrom;
+    string target_chrom;
+    vector<pair<int,int>> lookup;
+
+    translation_table(const sequence& s1, const sequence& s2)
+        :source_chrom(s1.name),
+         target_chrom(s2.name)
+    {
+        if (s1.size() != s2.size())
+            throw myexception()<<"Cannot translation '"<<s1.name<<"' -> '"<<s2.name<<"': lengths "<<s1.size()<<" and "<<s2.size()<<" differ.";
+
+        int loc2 = -1;
+        for(int i=0; i<s1.size(); i++)
+        {
+            bool is_char1 = s1[i] != '-';
+            bool is_char2 = s2[i] != '-';
+
+            // -1 + (How many characters of sequence 2 have we seen);
+            if (is_char2) loc2++;
+
+            // This map is indexed by sequence 1, so we only add entries if sequence 1 is present.
+            if (not is_char1) continue;
+
+            if (is_char2)
+                lookup.push_back({loc2,loc2});
+            else
+                lookup.push_back({loc2,loc2+1});
+        }
+
+        // Map beginning to beginng
+        lookup[0] = {0,0};
+        // Map end to end
+        lookup.back() = {loc2,loc2};
+
+        lookup.push_back({loc2,loc2}); // Handle end that is 1 too large?
+    }
+};
+
+map<string,translation_table> get_translation_tables(const string& filename)
+{
+    istream_or_ifstream translation_file(std::cin, "-", filename);
+    auto sequences = sequence_format::read_fasta_entire_file(translation_file);
+
+    map<string,translation_table> tables;
+
+    for(int i=0; i<sequences.size(); i+=2)
+    {
+        if (i+1 >= sequences.size()) throw myexception()<<"Odd number of sequences!";
+
+        auto& s1 = sequences[i];
+        auto& s2 = sequences[i+1];
+
+        if (tables.count(s1.name)) throw myexception()<<"Translation alignment for '"<<s1.name<<"' occurs twice!";
+
+        tables.insert({s1.name, translation_table(s1,s2)});
+    }
+    return tables;
+}
+
 int main(int argc,char* argv[]) 
 { 
     try {
@@ -948,20 +1011,76 @@ int main(int argc,char* argv[])
 	//---------- Parse command line  -------//
 	variables_map args = parse_cmd_line(argc,argv);
 
-	//----------- Load alignment and tree ---------//
-	alignment A0 = load_A(args,false);
+        if (auto vcf_filename = get_arg<string>(args, "translate-vcf"))
+        {
+            auto alignments_filename = get_arg<string>(args,"align");
+            if (not alignments_filename)
+                throw myexception()<<"No filename specified for alignments to translate coordinates";
 
-	auto A = A0;
-	const alphabet& a = A.get_alphabet();
+            auto tables = get_translation_tables(*alignments_filename);
 
-	if (auto ref_name = get_arg<string>(args, "clean-to-ref"))
-	    A = clean_to_ref(A, *ref_name);
+            istream_or_ifstream vcf_file(std::cin, "-", *vcf_filename);
+            string line;
+            while(portable_getline(vcf_file,line) and line.size() and line[0] == '#')
+                std::cout<<line<<"\n";
 
-	if (args.count("autoclean"))
-	    autoclean(A);
+            set<string> unknown;
+            string chrom;
+            const translation_table* table;
+
+            while(portable_getline(vcf_file,line))
+            {
+                auto fields = split(line,'\t');
+                assert(fields.size());
+                if (fields[0] != chrom or chrom.empty())
+                {
+                    chrom = fields[0];
+                    auto it = tables.find(chrom);
+
+                    if (it == tables.end())
+                    {
+                        if(not unknown.count(chrom))
+                        {
+                            unknown.insert(chrom);
+                            std::cerr<<"No translation table for '"<<chrom<<"'\n";
+                        }
+                        table = nullptr;
+                    }
+                    else
+                        table = &(it->second);
+                }
+
+                if (table)
+                {
+                    int pos = convertTo<int>(fields[1]);
+                    if (pos < 0)
+                        throw myexception()<<chrom<<'\t'<<pos<<": should not be negative!";
+                    if (pos >= table->lookup.size())
+                        throw myexception()<<chrom<<'\t'<<pos<<": after end of chromosome of length "<<table->lookup.size();
+
+                    auto& [p1,p2]  = table->lookup[pos];
+                    if (p1 != p2)
+                    {
+                        std::cerr<<chrom<<'\t'<<pos<<": discarding record because it is missing in '"<<table->target_chrom<<"'\n";
+                        continue;
+                    }
+                    fields[0] = table->target_chrom;
+                    fields[1] = std::to_string(p1);
+                    join(std::cout, fields, '\t');
+                    std::cout<<'\n';
+                }
+                else
+                    std::cout<<line<<'\n';
+            }
+
+	    exit(0);
+        }
 
 	if (auto filename = get_arg<string>(args, "translate-mask"))
 	{
+            //----------- Load alignment ---------//
+            alignment A = load_A(args,false);
+
 	    if (A.n_sequences() != 2)
 		throw myexception()<<"translate-mask: expected exactly 2 sequences, but got "<<A.n_sequences()<<"!";
 
@@ -1009,6 +1128,18 @@ int main(int argc,char* argv[])
 
 	    exit(0);
 	}
+
+	//----------- Load alignment ---------//
+	alignment A0 = load_A(args,false);
+
+	auto A = A0;
+	const alphabet& a = A.get_alphabet();
+
+	if (auto ref_name = get_arg<string>(args, "clean-to-ref"))
+	    A = clean_to_ref(A, *ref_name);
+
+	if (args.count("autoclean"))
+	    autoclean(A);
 
 	if (args.count("mask-file"))
 	{
