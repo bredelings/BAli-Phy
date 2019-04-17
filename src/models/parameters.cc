@@ -1529,7 +1529,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     // We haven't done the observe's yet, though.
     expression_ref program_exp = program.finish_return(
         Tuple(
-            {var("BAliPhy.ATModel.ATModel"),var("topology1"),get_list(smodels),get_list(imodels),get_list(scales),branch_lengths_list},
+            {var("BAliPhy.ATModel.ATModel"),var("topology1"),get_list(smodels),get_list(imodels),get_list(scales),branch_lengths_list,0},
             get_list(program_loggers))
         );
     
