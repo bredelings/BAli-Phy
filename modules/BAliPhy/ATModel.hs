@@ -2,9 +2,10 @@ module BAliPhy.ATModel where
 
 import Alignment
 
+data LeafSequence
 data ConditionalLikelihoodVector
 data PairwiseAlignment
-data Partition = Partition (Array Int ConditionalLikelihoodVector) (Array Int PairwiseAlignment)
+data Partition = Partition (Array Int LeafSequence) (Array Int ConditionalLikelihoodVector) (Array Int PairwiseAlignment)
 
 
 -- Assumptions FIXME: branch lengths -- we could have multiple set of them.
