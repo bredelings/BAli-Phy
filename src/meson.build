@@ -89,6 +89,7 @@ libbaliphy_sources = [
   'math/pow2.cc',
 
   'models/parameters.cc',
+  'models/site-compression.cc',
   'models/TreeInterface.cc',
   'models/setup.cc',
   'models/rules.cc',

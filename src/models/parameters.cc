@@ -49,6 +49,7 @@
 #include "computation/operations.H" // for VectorFromList<>
 #include "math/exponential.H"
 #include "models/setup.H"
+#include "site-compression.H"
 
 using std::vector;
 using std::string;
@@ -57,6 +58,7 @@ using std::cerr;
 using std::endl;
 using std::ostream;
 using std::map;
+using std::tuple;
 
 using std::optional;
 
@@ -326,94 +328,6 @@ int data_partition::likelihood_calculator() const
 {
     return DPC().likelihood_calculator;
 }
-
-struct column_map
-{
-    optional<int> value;
-    map<int, column_map> key_first;
-
-    optional<int>& insert(const vector<int>& key, int index=0)
-    {
-        if (index >= key.size()) return value;
-        int x = key[index];
-        return key_first[x].insert(key, index+1);
-    }
-};
-        
-int find_add_column(column_map& M, const vector<int>& column, int next)
-{
-    auto& result = M.insert(column);
-    if (not result)
-        result = next;
-    return *result;
-}
-
-int add_column(column_map& M, const vector<int>& column, vector<vector<int>>& cols, vector<int>& counts)
-{
-    assert(cols.size() == counts.size());
-    int c = find_add_column(M, column, cols.size());
-    if (c == cols.size())
-    {
-        cols.push_back(column);
-        counts.push_back(1);
-    }
-    else
-        counts[c]++;
-    return c;
-}
-
-vector<int> site_pattern(const alignment& A, int n, int c)
-{
-    assert(n <= A.n_sequences());
-
-    vector<int> pattern(n);
-    for(int j=0;j<n;j++)
-    {
-        int x = A(c,j);
-        if (x < 0) x = alphabet::gap;
-        pattern[j] = x;
-    }
-    return pattern;
-}
-
-vector<vector<int>> compress_site_patterns(const alignment& A, int n, vector<int>& counts, vector<int>& mapping)
-{
-    column_map M;
-    vector<vector<int>> columns;
-    mapping.resize(A.length());
-    for(int c=0;c<A.length();c++)
-        mapping[c] = add_column(M, site_pattern(A,n,c), columns, counts);
-
-    assert(counts.size() == columns.size());
-    return columns;
-}
-
-alignment alignment_from_patterns(const alignment& old, const vector<vector<int>>& patterns, const TreeInterface& t)
-{
-    assert(old.n_sequences() <= t.n_nodes());
-    assert(t.n_leaves() == patterns[0].size());
-    assert(old.seqs().size() == t.n_nodes());
-
-    alignment A(old.get_alphabet(), old.seqs(), patterns.size());
-
-    for(int i=0;i<t.n_nodes();i++)
-        if (i < t.n_leaves())
-            for(int c=0;c<A.length();c++)
-                A.set_value(c,i,patterns[c][i]);
-        else
-            for(int c=0;c<A.length();c++)
-                A.set_value(c,i,alphabet::gap);
-
-    minimally_connect_leaf_characters(A,t);
-    return A;
-}
-
-alignment compress_alignment(const alignment& A, const TreeInterface& t, vector<int>& counts, vector<int>& mapping)
-{
-    auto patterns = compress_site_patterns(A, t.n_leaves(), counts, mapping);
-    return alignment_from_patterns(A, patterns, t);
-}
-
 
 data_partition::data_partition(const Parameters* p, int i)
     :P(p),partition_index(i)
@@ -1472,7 +1386,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     expression_ref topology_model1 = {var("Probability.Random.sample"), {var("Probability.Distribution.Tree.uniform_topology"), tt.n_leaves()}};
     program.perform(tree_var, topology_model1);
 
-    // register the substitution models as sub-models
+    // P1. Substitution models
     vector<expression_ref> smodels;
     for(int i=0;i<SMs.size();i++)
     {
@@ -1492,7 +1406,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         smodels.push_back(smodel_var);
     }
 
-    // register the indel models as sub-models
+    // P2. Indel models
     vector<expression_ref> imodels;
     for(int i=0;i<n_imodels();i++)
     {
@@ -1503,7 +1417,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         imodels.push_back({imodel_var, tree_var});
     }
 
-    // Add parameter for each scale
+    // P3. Scales
     vector<expression_ref> scales;
     for(int i=0; i<n_branch_scales(); i++)
     {
@@ -1517,6 +1431,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     }
     program_loggers.push_back( logger("Scale", get_list(scales), List()) );
 
+    // P4. Branch lengths
     expression_ref branch_lengths_list = List();
     if (tt.n_branches() > 0)
     {
@@ -1526,6 +1441,8 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         branch_lengths_list = x;
     }
 
+
+    
     // We haven't done the observe's yet, though.
     expression_ref program_exp = program.finish_return(
         Tuple(
@@ -1662,9 +1579,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         if (not imodel_index_for_partition(i) and allow_compression)
         {
             // construct compressed alignment, counts, and mapping
-            vector<int> counts;
-            vector<int> mapping;
-            auto AA = compress_alignment(A[i], t(), counts, mapping);
+            auto [AA, counts, mapping] = compress_alignment(A[i], t());
             std::cerr<<"Partition #"<<i+1<<": "<<A[i].length()<<" columns -> "<<AA.length()<<" unique patterns.\n";
 
             PC->DPC.emplace_back(this, i, AA, counts, like_calcs[i]);
