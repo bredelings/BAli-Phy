@@ -3,6 +3,7 @@
 #include <optional>
 #include <map>
 #include "alignment/alignment-util2.H"
+#include "alignment/alignment-util.H"
 
 using std::optional;
 using std::map;
@@ -91,8 +92,34 @@ alignment alignment_from_patterns(const alignment& old, const vector<vector<int>
     return A;
 }
 
-tuple<alignment, vector<int>, vector<int>>
-compress_alignment(const alignment& A, const TreeInterface& t)
+compressed_alignment compress_alignment(const alignment& A, const TreeInterface& t)
+{
+    auto [patterns, counts, mapping] = compress_site_patterns(A, t.n_leaves());
+    return {alignment_from_patterns(A, patterns, t), counts, mapping};
+}
+
+
+alignment alignment_from_patterns(const alignment& old, const vector<vector<int>>& patterns, const Tree& t)
+{
+    assert(old.n_sequences() <= t.n_nodes());
+    assert(t.n_leaves() == patterns[0].size());
+    assert(old.seqs().size() == t.n_nodes());
+
+    alignment A(old.get_alphabet(), old.seqs(), patterns.size());
+
+    for(int i=0;i<t.n_nodes();i++)
+        if (i < t.n_leaves())
+            for(int c=0;c<A.length();c++)
+                A.set_value(c,i,patterns[c][i]);
+        else
+            for(int c=0;c<A.length();c++)
+                A.set_value(c,i,alphabet::gap);
+
+    minimally_connect_leaf_characters(A,t);
+    return A;
+}
+
+compressed_alignment compress_alignment(const alignment& A, const Tree& t)
 {
     auto [patterns, counts, mapping] = compress_site_patterns(A, t.n_leaves());
     return {alignment_from_patterns(A, patterns, t), counts, mapping};

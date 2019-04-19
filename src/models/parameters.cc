@@ -1371,6 +1371,25 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     add_modifiable_parameter("Heat.beta", 1.0);
     variable_alignment_param = add_modifiable_parameter("*variable_alignment", variable_alignment_);
 
+    /* ---------------- compress alignments -------------------------- */
+
+    // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
+    bool allow_compression = load_value("site-compression", tt.n_nodes() > 2);
+
+    vector<optional<compressed_alignment>> compressed_alignments(A.size());
+    vector<const alignment*> alignments(A.size());
+    for(int i=0;i<A.size();i++)
+    {
+        if (not imodel_index_for_partition(i) and allow_compression)
+        {
+            compressed_alignments[i] = compress_alignment(A[i], tt);
+            alignments[i] = &compressed_alignments[i]->A;
+            std::cerr<<"Partition #"<<i+1<<": "<<A[i].length()<<" columns -> "<<alignments[i]->length()<<" unique patterns.\n";
+        }
+        else
+            alignments[i] = &A[i];
+    }
+
     /* ---------------- Set up the tree ------------------------------ */
     branches_from_affected_node.resize(tt.n_nodes());
 
@@ -1570,18 +1589,13 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     // create data partitions
 
-    // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
-    bool allow_compression = load_value("site-compression", t().n_nodes() > 2);
-
     assert(like_calcs.size() == A.size());
     for(int i=0;i<A.size();i++)
     {
-        if (not imodel_index_for_partition(i) and allow_compression)
+        if (compressed_alignments[i])
         {
             // construct compressed alignment, counts, and mapping
-            auto [AA, counts, mapping] = compress_alignment(A[i], t());
-            std::cerr<<"Partition #"<<i+1<<": "<<A[i].length()<<" columns -> "<<AA.length()<<" unique patterns.\n";
-
+            auto& [AA, counts, mapping] = *compressed_alignments[i];
             PC->DPC.emplace_back(this, i, AA, counts, like_calcs[i]);
             get_data_partition(i).set_alignment(AA);
         }

@@ -4,10 +4,18 @@
 #include <tuple>
 #include <vector>
 #include "TreeInterface.H"
+#include "tree/tree.H"
 #include "alignment/alignment.H"
 
-std::tuple<alignment, std::vector<int>, std::vector<int>>
-compress_alignment(const alignment& A, const TreeInterface& t);
+struct compressed_alignment
+{
+    alignment A;
+    std::vector<int> counts;
+    std::vector<int> mapping;
+};
+
+compressed_alignment compress_alignment(const alignment& A, const TreeInterface& t);
+compressed_alignment compress_alignment(const alignment& A, const Tree& t);
 
 
 #endif
