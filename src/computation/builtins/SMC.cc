@@ -6,6 +6,7 @@
 #include "util/range.H"
 #include "util/math/log-double.H"
 #include "alignment/alignment.H"
+#include "probability/choose.H"
 #include "computation/machine/args.H"
 
 #include <Eigen/Dense>
@@ -454,6 +455,14 @@ inline site_t classify_site(int x1, int x2)
 	return site_t::poly;
 }
 
+vector<double> get_column(const Matrix& M, int i)
+{
+    vector<double> v(M.size2());
+    for(int j=0;j<v.size();j++)
+        v[i] = M(i,j);
+    return v;
+}
+
 void rescale(vector<double>& L, int& scale)
 {
     const int n_bins = L.size();
@@ -473,6 +482,37 @@ void rescale(vector<double>& L, int& scale)
 	for(int k=0; k < n_bins; k++)
 	    L[k] *= scale_factor;
     }
+}
+
+void rescale(Matrix& M, int i, int& scale)
+{
+    const int n_bins = M.size2();
+
+    // Check if we need to scale the likelihoods
+    bool need_scale = true;
+    for(int k=0; k < n_bins; k++)
+    {
+	need_scale = need_scale and (M(i,k) < scale_min);
+	assert(0 <= M(i,k) and M(i,k) <= 1.0);
+    }
+
+    // Scale likelihoods if necessary
+    if (need_scale)
+    {
+	scale++;
+	for(int k=0; k < n_bins; k++)
+	    M(i,k) *= scale_factor;
+    }
+}
+
+double sum_last(const Matrix& M)
+{
+    const int n_bins = M.size2();
+    const int c = int(M.size1())-1;
+    double sum = 0;
+    for(int k=0; k < n_bins; k++)
+        sum += M(c,k);
+    return sum;
 }
 
 bool too_small(const EMatrix& M)
@@ -580,6 +620,116 @@ void smc_group(vector<double>& L, vector<double>& L2, int& scale, const vector<E
 	// Swap current & next likelihoods
 	std::swap(L, L2);
     }
+}
+
+typedef double smc_tree;
+
+vector<pair<smc_tree,int>> smc_trace(double rho_over_theta, vector<double> coalescent_rates, vector<double> level_boundaries, const alignment& A)
+{
+    assert(level_boundaries.size() >= 1);
+    assert(level_boundaries[0] == 0.0);
+
+    assert(rho_over_theta >= 0);
+
+    assert(coalescent_rates.size() > 0);
+
+    assert(A.n_sequences() == 2);
+
+    // How many bins
+    const int n_bins = 100;
+
+    vector<double> alpha(n_bins); /// Pr (T < t[j])
+    vector<double> beta(n_bins);  /// Pr (T < b[k])
+    for(int i=0;i<n_bins;i++)
+    {
+	beta[i] = double(i)/n_bins;
+	alpha[i] = (2.0*i+1)/(2*n_bins);
+    }
+
+    auto bin_boundaries = get_quantiles(beta, coalescent_rates, level_boundaries);
+    bin_boundaries.push_back(bin_boundaries.back() + 1000000 );
+    beta.push_back(1.0);
+
+    const auto bin_times = get_quantiles(alpha, coalescent_rates, level_boundaries);
+
+    const auto emission_probabilities = get_emission_probabilities(bin_times);
+
+    // This assumes equally-spaced bin quantiles.
+    const auto pi = get_equilibrium(beta);
+
+    const auto transition = get_transition_probabilities(bin_boundaries, bin_times, beta, alpha, coalescent_rates, level_boundaries, rho_over_theta);
+
+    auto no_snp = get_no_snp_matrix(transition, emission_probabilities);
+
+    auto missing = get_missing_matrix(transition);
+
+    auto snp = get_snp_matrix(transition, emission_probabilities);
+
+    Matrix L(A.length()+1, n_bins);
+    for(int i=0;i<n_bins;i++)
+        L(0,i) = pi[i];
+
+    // # Iteratively compute likelihoods for remaining columns
+    int scale = 0;
+    for(int i=0;i<A.length();i++)
+    {
+        auto type = classify_site(A(i,0),A(i,1));
+
+        const EMatrix* M = nullptr;
+        if (type == site_t::missing)
+            M = &missing;
+	else if (type == site_t::mono)
+            M = &no_snp;
+	else if (type == site_t::poly)
+            M = &snp;
+	else
+	    std::abort();
+
+        for(int k=0;k<n_bins;k++)
+        {
+            double temp = 0;
+            for(int j=0;j<n_bins;j++)
+                temp += L(i,j) * (*M)(j,k);
+
+            assert(temp > -1.0e-9);
+            L(i+1,k) = std::max(temp, 0.0);
+        }
+
+        rescale(L, i+1, scale);
+    }
+
+    // # Compute the total likelihood
+    log_double_t Pr (sum_last(L));
+    Pr.log() += log_scale_min * scale;
+
+    vector<int> states;
+    vector<double> pr = get_column(L, L.size1()-1);
+    states.push_back(choose(pr));
+
+    for(int i=A.length()-2;i>=0;i++)
+    {
+        int s2 = states.back();
+        vector<double> pr = get_column(L,i);
+        for(int s1=0;s1<pr.size();s1++)
+            pr[s1] *= transition(s1,s2);
+        states.push_back(choose(pr));
+    }
+
+    std::reverse(states.begin(), states.end());
+
+    int last_state = -1;
+    vector<pair<double,int>> state_regions;
+    for(int i=0;i<states.size();i++)
+    {
+        if (states[i] != last_state)
+        {
+            last_state = states[i];
+            state_regions.push_back({bin_times[i],1});
+        }
+        else
+            state_regions.back().second++;
+    }
+    return state_regions;
 }
 
 log_double_t smc(double rho_over_theta, vector<double> coalescent_rates, vector<double> level_boundaries, const alignment& A)
