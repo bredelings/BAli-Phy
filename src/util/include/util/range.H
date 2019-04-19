@@ -1,4 +1,5 @@
 #ifndef UTIL_RANGE_H
+#define UTIL_RANGE_H
 
 #include <vector>
 #include <functional>
