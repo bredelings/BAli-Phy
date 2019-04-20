@@ -401,9 +401,9 @@ optional<pair<expression_ref,set<string>>> get_model_let(const Rules& R, const p
     // 1. If the phrase is not a let, then we are done.
     if (name != "let") return {};
 
-    string var_name = model_rep[0].first;
-    ptree var_exp = model_rep[0].second;
-    ptree body_exp = model_rep[1].second;
+    auto [var_name , var_exp ] = model_rep[0];
+    auto [body_name, body_exp] = model_rep[1];
+
 
     var pair_x("pair_var_"+var_name);
     var x("var_"+var_name);
@@ -412,8 +412,7 @@ optional<pair<expression_ref,set<string>>> get_model_let(const Rules& R, const p
     var_info_t var_info(x,is_random(var_exp, scope));
 
     // 1. Perform the body with var_name in scope
-    auto p = get_model_as(R, body_exp, extend_scope(scope, var_name, var_info));
-    expression_ref let_body = p.first;
+    auto [let_body, let_body_vars] = get_model_as(R, body_exp, extend_scope(scope, var_name, var_info));
 
     // FIXME: we currently prohibit var_exp from containing any lambda-variables, so we don't need to check if it has them.
     bool do_log = is_unlogged_random(R, var_exp, scope);
@@ -428,9 +427,8 @@ optional<pair<expression_ref,set<string>>> get_model_let(const Rules& R, const p
     do_block code;
 
     // 2. Perform the variable expression
-    auto arg_p = get_model_as(R, var_exp, scope);
-    expression_ref arg = arg_p.first;
-    if (arg_p.second.size())
+    auto [arg, arg_vars] = get_model_as(R, var_exp, scope);
+    if (arg_vars.size())
         throw myexception()<<"You cannot let-bind a variable to an expression with a function-variable";
 
     // pair_var_NAME <- arg
@@ -445,7 +443,7 @@ optional<pair<expression_ref,set<string>>> get_model_let(const Rules& R, const p
     // return (fst pair_body, loggers)
     code.finish_return(Tuple({fst,pair_body},loggers));
 
-    return {{code.get_expression(), p.second}};
+    return {{code.get_expression(), let_body_vars}};
 }
 
 optional<pair<expression_ref,set<string>>> get_model_lambda(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
@@ -557,13 +555,13 @@ pair<expression_ref,set<string>> get_model_function(const Rules& R, const ptree&
 	auto argi = array_index(args,i);
 
 	string arg_name = argi.get_child("arg_name").get_value<string>();
-	auto m = get_model_as(R, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
-	if (perform_function and m.second.size())
+	auto [m, vars] = get_model_as(R, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
+	if (perform_function and vars.size())
 	    throw myexception()<<"Argument '"<<arg_name<<"' of '"<<name<<"' contains a lambda variable: not allowed!";
 
-	arg_models.push_back(m.first);
-	arg_lambda_vars.push_back(m.second);
-	add(lambda_vars, m.second);
+	arg_models.push_back(m);
+	arg_lambda_vars.push_back(vars);
+	add(lambda_vars, vars);
 
 	if (not arg_lambda_vars[i].empty())
 	{
