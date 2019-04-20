@@ -226,6 +226,8 @@ struct tree_constants: public Object
 
 struct parameters_constants: public Object
 {
+    param atmodel;
+
     /// The substitution::Model
     std::vector<smodel_methods> SModels;
     std::vector<std::optional<int>> smodel_for_partition;
@@ -341,6 +343,7 @@ public:
     expression_ref my_tree() const;
     expression_ref my_imodels() const;
     expression_ref my_substitution_branch_lengths() const;
+    expression_ref my_atmodel() const;
 
     void reconnect_branch(int s1, int t1, int t2);
     void prune_subtree(const tree_edge& b_subtree);

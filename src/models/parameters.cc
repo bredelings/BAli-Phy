@@ -1133,6 +1133,12 @@ expression_ref Parameters::my_tree() const
     return get_expression(TC->tree_head);
 }
 
+expression_ref Parameters::my_atmodel() const
+{
+    assert(atmodel);
+    return PC->atmodel.ref(*this);
+}
+
 expression_ref Parameters::my_imodels() const
 {
     return get_expression(PC->imodels_index);
@@ -1489,9 +1495,9 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
             get_list(program_loggers))
         );
     
-    param atmodel = add_program(program_exp);
+    PC->atmodel = add_program(program_exp);
 
-    int tree_index = add_compute_expression( {var("BAliPhy.ATModel.tree"), atmodel.ref(*this)});
+    int tree_index = add_compute_expression( {var("BAliPhy.ATModel.tree"), my_atmodel()} );
 
     TC = new tree_constants(this, tt.get_labels(), tree_index);
 
@@ -1500,9 +1506,9 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     /* --------------------------------------------------------------- */
 
     // R1. Register branch lengths
-    TC->register_branch_lengths(this, {var("Data.Array.listArray'"),{var("BAliPhy.ATModel.branch_lengths"),atmodel.ref(*this)}});
+    TC->register_branch_lengths(this, {var("Data.Array.listArray'"),{var("BAliPhy.ATModel.branch_lengths"),my_atmodel()}});
 
-    int scales_list_index = add_compute_expression( {var("BAliPhy.ATModel.scales"),atmodel.ref(*this)} );
+    int scales_list_index = add_compute_expression( {var("BAliPhy.ATModel.scales"),my_atmodel()} );
     expression_ref scales_list = get_expression(scales_list_index);
 
     // R2. Register individual scales
@@ -1538,7 +1544,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     // R3. Register methods for each of the individual substitution models
     for(int i=0;i<SMs.size();i++)
     {
-        expression_ref smodel = {var("Data.List.!!"),{var("BAliPhy.ATModel.smodels"), atmodel.ref(*this)}, i};
+        expression_ref smodel = {var("Data.List.!!"),{var("BAliPhy.ATModel.smodels"), my_atmodel()}, i};
 
         PC->SModels.push_back( smodel_methods( smodel, *this) );
     }
@@ -1547,7 +1553,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     add_modifiable_parameter("*IModels.training", false);
 
     // R4. Register an array of indel models
-    PC->imodels_index = add_compute_expression({var("Data.Array.listArray'"), {var("BAliPhy.ATModel.imodels"), atmodel.ref(*this)}});
+    PC->imodels_index = add_compute_expression({var("Data.Array.listArray'"), {var("BAliPhy.ATModel.imodels"), my_atmodel()}});
   
     // don't constrain any branch lengths
     for(int b=0;b<PC->TC.n_branches();b++)
