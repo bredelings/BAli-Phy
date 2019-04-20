@@ -1316,8 +1316,6 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     // \todo FIXME:cleanup|fragile - Don't touch C here directly!
     *this += { "SModel", "Probability", "Range", "PopGen", "Alignment", "IModel", "BAliPhy.ATModel" };
   
-    // Don't call set_parameter_value here, because recalc( ) depends on branch_length_indices, which is not ready.
-
     PC->constants.push_back(-1);
 
     add_modifiable_parameter("Heat.beta", 1.0);
