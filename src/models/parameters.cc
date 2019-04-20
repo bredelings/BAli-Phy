@@ -363,6 +363,32 @@ EVector unaligned_alignments_on_tree(const TreeInterface& t, const vector<vector
     return alignments;
 }
 
+    // P1. Create pairwise alignment parameters.
+EVector unaligned_alignments_on_tree(const Tree& t, const vector<vector<int>>& sequences)
+{
+    int B = t.n_branches();
+    EVector alignments;
+
+    for(int b=0;b<2*B;b++)
+    {
+        int n1 = t.source(b);
+        int n2 = t.target(b);
+
+        // No evaluation is performed if this is a leaf node.
+        int L1 = t.is_leaf_node(n1) ? sequences[n1].size() : 0;
+        int L2 = t.is_leaf_node(n2) ? sequences[n2].size() : 0;
+
+        Box<pairwise_alignment_t> pi = make_unaligned_pairwise_alignment(L1,L2);
+
+        // Ensure that for the 2-sequence case, the two directions agree on the alignment.
+        if (b > t.reverse(b))
+            pi = make_unaligned_pairwise_alignment(L2,L1).flipped();
+
+        alignments.push_back(pi);
+    }
+    return alignments;
+}
+
 data_partition_constants::data_partition_constants(Parameters* p, int i, const alignment& AA, const vector<int>& counts, int like_calc)
     :conditional_likelihoods_for_branch(2*p->t().n_branches()),
      sequence_length_indices(AA.n_sequences()),
@@ -389,8 +415,9 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     // This would be like what we get when we start with a line graph for each sequence and then begin
     // merging columns.
 
-    expression_ref initial_alignments_exp = get_list(unaligned_alignments_on_tree(t, sequences));
-    param alignments = p->add_compute_expression({var("Data.List.map"),var("Parameters.modifiable"),initial_alignments_exp});
+    expression_ref partition = {var("Data.List.!!"), {var("BAliPhy.ATModel.partitions"),p->my_atmodel()}, i};
+
+    param alignments = p->add_compute_expression({var("BAliPhy.ATModel.DataPartition.pairwise_alignments"), partition});
 
     //  const int n_states = state_letters().size();
     int scale_index = *p->scale_index_for_partition(i);
@@ -406,7 +433,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     for(int i=0; i<p->t().n_leaves(); i++)
         leaf_sequence_indices.push_back ( p->add_compute_expression(EVector(sequences[i])) );
 
-    expression_ref partition = {var("Data.List.!!"), {var("BAliPhy.ATModel.partitions"),p->my_atmodel()}, i};
     expression_ref seqs_array = {var("BAliPhy.ATModel.DataPartition.leaf_sequences"),partition};
 
     seqs_array = p->get_expression( p->add_compute_expression(seqs_array));
@@ -1485,7 +1511,12 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
         param seqs_array = add_compute_expression({var("Data.Array.listArray'"),get_list(seqs_)});
 
-        partitions.push_back({var("BAliPhy.ATModel.DataPartition.Partition"), tree_var, seqs_array.ref(*this), 0, 0});
+        // P5.II Create modifiables for pairwise alignments
+        expression_ref initial_alignments_exp = get_list(unaligned_alignments_on_tree(tt, sequences));
+
+        expression_ref alignments = {var("Data.List.map"),var("Parameters.modifiable"),initial_alignments_exp};
+
+        partitions.push_back({var("BAliPhy.ATModel.DataPartition.Partition"), tree_var, seqs_array.ref(*this), alignments, 0});
     }
 
 
