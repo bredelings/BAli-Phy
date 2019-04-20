@@ -483,18 +483,19 @@ optional<pair<expression_ref,set<string>>> get_model_lambda(const Rules& R, cons
     for(auto& vname: std::reverse(lambda_vars))
 	E = lambda_quantify(scope.at(vname).x,E);
 
-    // E = return $ (E,snd pair_arg_body)
-    E = {do_return, Tuple(E,{snd,var("pair_arg_body")})};
+    do_block code;
 
-    // E = do {pair_arg_body <- body ; E}
-    E = {bind,body,lambda_quantify(pair_arg_body,E)};
+    // pair_arg_body <- body
+    code.perform(pair_arg_body, body);
 
+    // return $ (E,snd pair_arg_body)
+    code.finish_return( Tuple(E, {snd,pair_arg_body}) );
 
     // In summary, we have
     //E = do
     //      pair_arg_body <- body_action
-    //      return $ (\l1 l2 l3 -> \x -> ((fst pair_air_body) x l1 l2 l3) , snd pair_arg_body)
-    return {{E, lambda_vars}};
+    //      return $ (\l1 l2 l3 -> \x -> ((fst pair_arg_body) x l1 l2 l3) , snd pair_arg_body)
+    return {{code.get_expression(), lambda_vars}};
 }
 
 expression_ref make_call(const ptree& call)
