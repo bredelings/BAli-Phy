@@ -1484,7 +1484,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
         param seqs_array = add_compute_expression({var("Data.Array.listArray'"),get_list(seqs_)});
 
-        partitions.push_back({var("BAliPhy.ATModel.Partition"), seqs_array.ref(*this), 0, 0});
+        partitions.push_back({var("BAliPhy.ATModel.Partition"), tree_var, seqs_array.ref(*this), 0, 0});
     }
 
 
