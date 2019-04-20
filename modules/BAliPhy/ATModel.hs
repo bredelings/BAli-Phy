@@ -6,6 +6,7 @@ data LeafSequence
 data ConditionalLikelihoodVector
 data PairwiseAlignment
 data Partition = Partition Tree (Array Int LeafSequence) (Array Int ConditionalLikelihoodVector) (Array Int PairwiseAlignment)
+leaf_sequences (Partition _ ls _ _ ) = ls
 
 -- Assumptions FIXME: branch lengths -- we could have multiple set of them.
 --                                      what we really need is transition probabilities for each partition.

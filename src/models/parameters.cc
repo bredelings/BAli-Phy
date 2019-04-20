@@ -406,12 +406,10 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     for(int i=0; i<p->t().n_leaves(); i++)
         leaf_sequence_indices.push_back ( p->add_compute_expression(EVector(sequences[i])) );
 
-    // Add array of leaf sequences
-    EVector seqs_;
-    for(auto& index: leaf_sequence_indices)
-        seqs_.push_back( index.ref(*p) );
+    expression_ref partition = {var("Data.List.!!"), {var("BAliPhy.ATModel.partitions"),p->my_atmodel()}, i};
+    expression_ref seqs_array = {var("BAliPhy.ATModel.leaf_sequences"),partition};
 
-    auto seqs_array = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"),get_list(seqs_)}) );
+    seqs_array = p->get_expression( p->add_compute_expression(seqs_array));
 
     // R3. Register array of pairwise alignments
     expression_ref as = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"), alignments.ref(*p)}) );
@@ -1431,6 +1429,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         smodels.push_back(smodel_var);
     }
 
+
     // P2. Indel models
     vector<expression_ref> imodels;
     for(int i=0;i<n_imodels();i++)
@@ -1441,6 +1440,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
         imodels.push_back({imodel_var, tree_var});
     }
+
 
     // P3. Scales
     vector<expression_ref> scales;
@@ -1455,6 +1455,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         scales.push_back(scale_var);
     }
     program_loggers.push_back( logger("Scale", get_list(scales), List()) );
+
 
     // P4. Branch lengths
     expression_ref branch_lengths_list = List();
