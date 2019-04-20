@@ -790,24 +790,22 @@ vector<pair<string, ptree>> extract_terms(ptree& m)
     vector<pair<string,ptree>> extracted;
     vector<pair<string,ptree>> extracted_top;
     // Walk each argument and determine if it should be pulled out
-    for(auto& x: value)
+    for(auto& [arg_name,arg_value]: value)
     {
-	string name = value.get_value<string>() + ":" + x.first;
+	string name = value.get_value<string>() + ":" + arg_name;
 
 	// If we should pull out the argument then do so
-	if (do_extract(m, x.second))
+	if (do_extract(m, arg_value))
 	{
 	    ptree extracted_value;
-	    std::swap(x.second, extracted_value);
+	    std::swap(arg_value, extracted_value);
 	    extracted_top.push_back({name, extracted_value});
 	}
 	// Otherwise look into the argument's value and try to pull things out
-	else if (not x.second.is_null()) // for function[x=null,body=E]
+	else if (not arg_value.is_null()) // for function[x=null,body=E]
 	{
-	    auto e = extract_terms(x.second);
-
-	    for(auto& et: e)
-		extracted.push_back({name+"/"+et.first, std::move(et.second)});
+            for(auto& [sub_name,sub_term]: extract_terms(arg_value))
+		extracted.push_back({name+"/"+sub_name, std::move(sub_term)});
 	}
     }
     std::move(extracted_top.begin(), extracted_top.end(), std::back_inserter(extracted));
@@ -848,10 +846,10 @@ pretty_model_t::pretty_model_t(const ptree& m)
     :main(m)
 {
     // 1. Extract terms
-    for(auto& x: extract_terms(main))
+    for(auto& [name,term]: extract_terms(main))
     {
-	term_names.push_back(x.first);
-	terms.push_back(x.second);
+	term_names.push_back(name);
+	terms.push_back(term);
     }
 
     // 2. Fix up names
