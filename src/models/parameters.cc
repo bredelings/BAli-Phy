@@ -1461,11 +1461,31 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     }
 
 
+    // P5. Create objects for data partitions
+    vector<expression_ref> partitions;
+    for(int i=0; i < A.size(); i++)
+    {
+        // P5.I Register array of leaf sequences
+        auto sequences = alignment_letters(*alignments[i], tt.n_leaves());
+
+        // Add array of leaf sequences
+        EVector seqs_;
+        for(int j=0; j<tt.n_leaves(); j++)
+        {
+            param leaf_seq_j = add_compute_expression(EVector(sequences[j]));
+            seqs_.push_back( leaf_seq_j.ref(*this) );
+        }
+
+        param seqs_array = add_compute_expression({var("Data.Array.listArray'"),get_list(seqs_)});
+
+        partitions.push_back({var("BAliPhy.ATModel.Partition"), seqs_array.ref(*this), 0, 0});
+    }
+
     
     // We haven't done the observe's yet, though.
     expression_ref program_exp = program.finish_return(
         Tuple(
-            {var("BAliPhy.ATModel.ATModel"),var("topology1"),get_list(smodels),get_list(imodels),get_list(scales),branch_lengths_list,0},
+            {var("BAliPhy.ATModel.ATModel"),var("topology1"),get_list(smodels),get_list(imodels),get_list(scales),branch_lengths_list,get_list(partitions)},
             get_list(program_loggers))
         );
     
