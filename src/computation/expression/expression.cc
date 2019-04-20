@@ -256,21 +256,20 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
 
 	    for(int i=decls.size()-1; i>=0; i--)
 	    {
-		auto& x = decls[i].first;
-		std::set<var> free = get_free_indices(decls[i].second);
+		auto [x,E] = decls[i];
+		std::set<var> free = get_free_indices(E);
 
 		// if x references itself then don't substitute it.
 		if (free.count(x)) continue;
 	
 		changed = true;
 	
-		auto decl = decls[i];
 		decls.erase(decls.begin() + i);
 	
 		// substitute for the value of this variable in T and in the remaining bodies;
-		for(int j=0;j<decls.size();j++)
-		    decls[j].second = substitute(decls[j].second, decl.first, decl.second);
-		body = substitute(body, decl.first, decl.second);
+		for(auto& [x2,E2]: decls)
+		    E2 = substitute(E2, x, E);
+		body = substitute(body, x, E);
 	    }
 	}
 
