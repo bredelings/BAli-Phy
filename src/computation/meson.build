@@ -23,6 +23,7 @@ computation_sources = [
   'expression/random_variable.cc', 'expression/modifiable.cc',
   'expression/reg_var.cc', 'expression/parameter.cc',
   'expression/bool.cc',
+  'expression/do_block.cc',
 
   'machine/args.cc','machine/tokens.cc', 'machine/graph_register.cc',
   'machine/show_graph.cc',
