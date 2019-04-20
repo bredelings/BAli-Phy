@@ -462,9 +462,7 @@ optional<pair<expression_ref,set<string>>> get_model_lambda(const Rules& R, cons
     // 3. Parse the body with the lambda variable in scope, and find the free variables.
     var_info_t var_info(x,false,true);
     auto body_scope = extend_scope(scope, var_name, var_info);
-    auto body_E = get_model_as(R, body_exp, body_scope);
-    expression_ref body = body_E.first;
-    auto lambda_vars = body_E.second;
+    auto [body, lambda_vars] = get_model_as(R, body_exp, body_scope);
 
     // E = E x l1 l2 l3
     expression_ref E = {fst,pair_arg_body};
@@ -683,7 +681,7 @@ pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model
 model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& constraints, const ptree& model_rep, const names_in_scope_t& scope)
 {
     // --------- Convert model to MultiMixtureModel ------------//
-    expression_ref full_model = get_model_as(R, extract_value(model_rep), scope).first;
+    auto [full_model, _] = get_model_as(R, extract_value(model_rep), scope);
 
     if (log_verbose >= 2)
 	std::cout<<"full_model = "<<full_model<<std::endl;
@@ -691,37 +689,37 @@ model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& con
     return {model_rep, type, constraints, full_model};
 }
 
-model_t get_model(const Rules& R, const string& type, const string& model, const vector<pair<string,string>>& scope)
+model_t get_model(const Rules& R, const string& type, const string& model_string, const vector<pair<string,string>>& scope)
 {
     auto required_type = parse_type(type);
-    auto model_rep = parse(R, model);
+    auto model_rep = parse(R, model_string);
 //    std::cout<<"model1 = "<<show(model_rep)<<std::endl;
 
     vector<pair<string,ptree>> typed_scope;
-    for(auto& x: scope)
-	typed_scope.push_back({x.first, parse_type(x.second)});
-    auto p = translate_model(R, required_type, model_rep, typed_scope);
+    for(auto& [name,type]: scope)
+	typed_scope.push_back({name, parse_type(type)});
+    auto [model, equations] = translate_model(R, required_type, model_rep, typed_scope);
 
-    model_rep = extract_value(p.first);
-    auto equations = p.second;
+    model_rep = extract_value(model);
+
     substitute(equations, model_rep);
     substitute(equations, required_type);
     if (log_verbose >= 1)
     {
-	std::cout<<"model = "<<unparse_annotated(p.first)<<std::endl;
+	std::cout<<"model = "<<unparse_annotated(model)<<std::endl;
 	std::cout<<"type = "<<unparse_type(required_type)<<std::endl;
 	std::cout<<"equations: "<<show(equations)<<std::endl;
 	std::cout<<"structure = "<<show(model_rep)<<std::endl;
-	std::cout<<"annotated structure = "<<show(p.first)<<std::endl;
-	std::cout<<"pretty:\n"<<pretty_model_t(p.first).show()<<std::endl;
+	std::cout<<"annotated structure = "<<show(model)<<std::endl;
+	std::cout<<"pretty:\n"<<pretty_model_t(model).show()<<std::endl;
 	std::cout<<std::endl;
     }
 
     names_in_scope_t names_in_scope;
-    for(auto& x: scope)
-	names_in_scope.insert({x.first,var_info_t(var("var_"+x.first))});
+    for(auto& [name,type]: scope)
+	names_in_scope.insert({name, var_info_t(var("var_"+name))});
 
-    return get_model(R, required_type, equations.get_constraints(), p.first, names_in_scope);
+    return get_model(R, required_type, equations.get_constraints(), model, names_in_scope);
 }
 
 // Some things, like log, exp, add, sub, etc. don't really have named arguments.
