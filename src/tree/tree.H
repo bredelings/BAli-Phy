@@ -550,6 +550,7 @@ public:
     bool is_leaf_node(int n) const;
     int source(int b) const;
     int target(int b) const;
+    int reverse(int b) const;
     std::vector<int> neighbors(int n) const;
     std::vector<int> all_branches_toward_node(int n) const;
     std::vector<int> branches_before(int b) const;

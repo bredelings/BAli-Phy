@@ -2282,6 +2282,11 @@ int Tree::target(int b) const
     return directed_branch(b).target().name();
 }
 
+int Tree::reverse(int b) const
+{
+    return directed_branch(b).reverse().name();
+}
+
 vector<int> Tree::neighbors(int n) const
 {
     vector<int> nn;
