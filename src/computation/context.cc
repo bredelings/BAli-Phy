@@ -435,26 +435,21 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
     {
 	const Module& M = get_Program().get_module(name);
 
-	for(const auto& def: M.code_defs())
-	    add_identifier(def.first);
+	for(const auto& [name,_]: M.code_defs())
+	    add_identifier(name);
     }
       
     // 3. Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
-    for(const auto& name: module_names)
+    for(const auto& module_name: module_names)
     {
-	const Module& M = get_Program().get_module(name);
+	const Module& M = get_Program().get_module(module_name);
 
-	for(const auto& def: M.code_defs())
+	for(const auto& [name,body]: M.code_defs())
 	{
-	    auto& name = def.first;
-
 	    // get the root for each identifier
 	    auto loc = identifiers().find(name);
 	    assert(loc != identifiers().end());
 	    int R = loc->second;
-
-	    // get the body for the  decl
-	    auto& body = def.second;
 
 #ifdef DEBUG_OPTIMIZE
 	    std::cerr<<name<<" := "<<body<<"\n\n";

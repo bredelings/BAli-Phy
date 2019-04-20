@@ -442,10 +442,8 @@ int main(int argc,char* argv[])
 	    Program P(L);
 	    P.add(M);
 	    auto& M2 = P.get_module(M.name);
-	    for(const auto& def: M2.code_defs())
+	    for(const auto& [name, body]: M2.code_defs())
 	    {
-		auto& name = def.first;
-		auto& body = def.second;
 		std::cerr<<"size = "<<simple_size(body)<<"   "<<name<<" = "<<body<<std::endl;
 	    }
 	    exit(0);

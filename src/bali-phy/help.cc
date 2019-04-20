@@ -362,12 +362,12 @@ string pseudo_markdown(const string& text)
     return marked.str();
 }
 
-const ptree* find(const string& key, const ptree& p)
+const ptree* find(const string& key0, const ptree& p)
 {
-    for(auto& x: p)
+    for(auto& [key,value]: p)
     {
-	if (x.first == key) return &x.second;
-	if (auto found = find(key, x.second))
+	if (key == key0) return &value;
+	if (auto found = find(key0, value))
 	    return found;
     }
     return {};
