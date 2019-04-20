@@ -93,6 +93,7 @@
 #include "computation/expression/lambda.H"
 #include "computation/expression/tuple.H"
 #include "computation/expression/list.H"
+#include "computation/expression/do_block.H"
 #include "computation/operations.H"
 #include "model.H"
 
@@ -424,27 +425,27 @@ optional<pair<expression_ref,set<string>>> get_model_let(const Rules& R, const p
     loggers = {var("Probability.Random.add_logger"),loggers,"let:body",Tuple(Nothing,{snd,pair_body}),false};
     loggers = {var("Probability.Random.add_logger"),loggers,"let:var",Tuple(Nothing,var_loggers),false};
 
-    // E = return (fst pair_body, loggers)
-    expression_ref E = {do_return,Tuple({fst,pair_body},loggers)};
-
-    // E = do {pair_body <- let_body ; E}
-    E = {bind, let_body, lambda_quantify(pair_body,E)};
+    do_block code;
 
     // 2. Perform the variable expression
-    {
-	auto arg_p = get_model_as(R, var_exp, scope);
-	expression_ref arg = arg_p.first;
-	if (arg_p.second.size())
-	    throw myexception()<<"You cannot let-bind a variable to an expression with a function-variable";
+    auto arg_p = get_model_as(R, var_exp, scope);
+    expression_ref arg = arg_p.first;
+    if (arg_p.second.size())
+        throw myexception()<<"You cannot let-bind a variable to an expression with a function-variable";
 
-	// E = let arg_name=fst pair_var_name; E
-	E = let_expression({{x,{fst,pair_x}}},E);
+    // pair_var_NAME <- arg
+    code.perform(pair_x, arg);
 
-	// E = do {pair_x <- arg ; E}
-	E = {bind, arg, lambda_quantify(pair_x,E)};
-    }
+    // let var_NAME = fst pair_var_NAME
+    code.let( { {x, {fst, pair_x } } } );
 
-    return {{E, p.second}};
+    // pair_body <- let_body
+    code.perform(pair_body, let_body);
+
+    // return (fst pair_body, loggers)
+    code.finish_return(Tuple({fst,pair_body},loggers));
+
+    return {{code.get_expression(), p.second}};
 }
 
 optional<pair<expression_ref,set<string>>> get_model_lambda(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
