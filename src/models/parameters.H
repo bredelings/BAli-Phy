@@ -293,10 +293,10 @@ public:
 
     int beta_index;
 
-    int subst_root_index;
+    param subst_root_param;
 
     bool variable_alignment_;
-    int variable_alignment_param;
+    param variable_alignment_param;
 
 private:
 

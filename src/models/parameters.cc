@@ -705,7 +705,7 @@ expression_ref tree_expression(const SequenceTree& T)
 
 bool Parameters::variable_alignment_from_param() const
 {
-    auto e = get_parameter_value(variable_alignment_param);
+    auto e = variable_alignment_param.get_value(*this);
     return is_bool_true(e);
 }
 
@@ -724,7 +724,7 @@ void Parameters::variable_alignment(bool b)
         variable_alignment_ = false;
 
     if (variable_alignment_from_param() != variable_alignment_)
-        set_parameter_value(variable_alignment_param, variable_alignment_);
+        variable_alignment_param.set_value(*this, variable_alignment_);
 
     // turning ON alignment variation
     if (variable_alignment())
@@ -1098,12 +1098,12 @@ void Parameters::set_root(int node) const
 {
     assert(not t().is_leaf_node(node));
     const context* C = this;
-    const_cast<context*>(C)->set_parameter_value(subst_root_index, node);
+    subst_root_param.set_value(*const_cast<context*>(C), node);
 }
 
 int Parameters::subst_root() const
 {
-    return get_parameter_value(subst_root_index).as_int();
+    return subst_root_param.get_value(*this).as_int();
 }
 
 double Parameters::get_branch_scale(int s) const
@@ -1320,6 +1320,8 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     add_modifiable_parameter("Heat.beta", 1.0);
     variable_alignment_param = add_modifiable_parameter("*variable_alignment", variable_alignment_);
+    subst_root_param = add_modifiable_parameter("*subst_root", tt.n_nodes()-1);
+
 
     /* ---------------- compress alignments -------------------------- */
 
@@ -1469,9 +1471,6 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     for(int i=0; i<n_branch_scales();i++)
         PC->branch_scales_.push_back( get_param(*this, scales_vector[i] ) );
 
-    // P1. Add substitution root node
-    subst_root_index = add_modifiable_parameter("*subst_root", t().n_nodes()-1);
-
 #ifndef NDEBUG
     evaluate_expression( {var("Tree.numNodes"), my_tree()});
     evaluate_expression( {var("Tree.numBranches"), my_tree()});
@@ -1512,18 +1511,24 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         PC->TC.branch(b).set_length(-1);
 
     // R5. Register D[b,s] = T[b]*scale[s]
-    vector<vector<param>> branch_length_params;
+    // R7. Register array of arrays to lookup D[s][b]
+    expression_ref substitutionBranchLengthsList;
+    vector<expression_ref> SBLL;
     for(int s=0;s<n_branch_scales();s++)
     {
         expression_ref scale = branch_scale(s).ref(*this);
-        branch_length_params.push_back({});
+        vector<expression_ref> D;
         for(int b=0;b<t().n_branches();b++)
         {
             expression_ref length = get_expression(TC->branch_duration_index[b]);
             param distance = add_compute_expression( {var("Compiler.Num.*"),scale,length} );
-            branch_length_params[s].push_back(distance.ref(*this));
+            D.push_back( distance.ref(*this));
         }
+        SBLL.push_back(get_list(D));
     }
+    substitutionBranchLengthsList = get_list(SBLL);
+
+    PC->substitution_branch_lengths_index = add_compute_expression({var("Data.Array.listArray'"),{var("Prelude.fmap"),var("Data.Array.listArray'"),substitutionBranchLengthsList}});
 
     // R6. Register branch categories
     vector<expression_ref> branch_categories;
@@ -1534,22 +1539,6 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         branch_categories.push_back(parameter(name));
     }
     expression_ref branch_cat_list = get_expression( add_compute_expression( (get_list(branch_categories) ) ) );
-
-    // R7. Register array of arrays to lookup D[s][b]
-    expression_ref substitutionBranchLengthsList;
-    {
-        vector<expression_ref> SBLL;
-        for(int s=0;s < n_branch_scales(); s++)
-        {
-            vector<expression_ref> D;
-            for(int b=0;b<t().n_branches();b++)
-                D.push_back( branch_length_params[s][b].ref(*this) );
-            SBLL.push_back(get_list(D));
-        }
-        substitutionBranchLengthsList = get_list(SBLL);
-    }
-
-    PC->substitution_branch_lengths_index = add_compute_expression({var("Data.Array.listArray'"),{var("Prelude.fmap"),var("Data.Array.listArray'"),substitutionBranchLengthsList}});
 
     // R8. register the cached transition_p indices
     PC->branch_transition_p_indices.resize(n_branch_scales(), n_smodels());
