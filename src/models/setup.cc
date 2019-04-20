@@ -109,7 +109,6 @@ using std::valarray;
 using std::shared_ptr;
 using boost::program_options::variables_map;
 
-expression_ref bind = var("Compiler.Base.>>=");
 expression_ref do_return = var("Compiler.Base.return");
 
 string model_t::show(bool top) const
