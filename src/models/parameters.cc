@@ -407,7 +407,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         leaf_sequence_indices.push_back ( p->add_compute_expression(EVector(sequences[i])) );
 
     expression_ref partition = {var("Data.List.!!"), {var("BAliPhy.ATModel.partitions"),p->my_atmodel()}, i};
-    expression_ref seqs_array = {var("BAliPhy.ATModel.leaf_sequences"),partition};
+    expression_ref seqs_array = {var("BAliPhy.ATModel.DataPartition.leaf_sequences"),partition};
 
     seqs_array = p->get_expression( p->add_compute_expression(seqs_array));
 
@@ -1485,7 +1485,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
         param seqs_array = add_compute_expression({var("Data.Array.listArray'"),get_list(seqs_)});
 
-        partitions.push_back({var("BAliPhy.ATModel.Partition"), tree_var, seqs_array.ref(*this), 0, 0});
+        partitions.push_back({var("BAliPhy.ATModel.DataPartition.Partition"), tree_var, seqs_array.ref(*this), 0, 0});
     }
 
 

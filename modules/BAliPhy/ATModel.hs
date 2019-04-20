@@ -1,12 +1,7 @@
 module BAliPhy.ATModel where
 
-import Alignment
-
-data LeafSequence
-data ConditionalLikelihoodVector
-data PairwiseAlignment
-data Partition = Partition Tree (Array Int LeafSequence) (Array Int ConditionalLikelihoodVector) (Array Int PairwiseAlignment)
-leaf_sequences (Partition _ ls _ _ ) = ls
+import BAliPhy.ATModel.DataPartition
+import BAliPhy.ATModel.DataPartition as DP
 
 -- Assumptions FIXME: branch lengths -- we could have multiple set of them.
 --                                      what we really need is transition probabilities for each partition.
