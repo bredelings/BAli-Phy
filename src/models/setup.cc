@@ -601,42 +601,45 @@ pair<expression_ref,set<string>> get_model_function(const Rules& R, const ptree&
     if (not perform_function)
 	E = {do_return,E};
 
-    E = {bind, E, lambda_quantify(var("result"),{do_return,Tuple(var("result"),loggers)})};
+    do_block code;
 
-    // 7. Peform the rule arguments 'Prefix "arg_name" (arg_+arg_name) >>= (\arg_name -> (Log "arg_name" arg_name) << E)'
-    for(int i=0;i<args.size();i++)
+    // 7. Peform the rule arguments in reverse order
+    for(int i=args.size()-1; i>=0 ;i--)
     {
 	auto argi = array_index(args,i);
 
 	string arg_name = argi.get_child("arg_name").get_value<string>();
 	expression_ref arg = arg_models[i];
 
-	auto log_name = name + ":" + arg_name;
-
 	// Wrap the argument in its appropriate Alphabet type
 	if (auto alphabet_expression = argi.get_child_optional("alphabet"))
 	{
 	    auto alphabet_scope = extend_scope(*rule, i, scope);
-	    auto A_pair = get_model_as(R, *alphabet_expression, alphabet_scope);
-	    if (A_pair.second.size())
+	    auto [A,vars] = get_model_as(R, *alphabet_expression, alphabet_scope);
+	    if (vars.size())
 		throw myexception()<<"An alphabet cannot depend on a lambda variable!";
-	    auto& A = A_pair.first;
 	    arg = {var("Probability.Random.set_alphabet"),A,arg};
 	}
 
-	// E = 'arg <<= (\arg_name_pair -> let {arg_name=fst arg_name_pair} in E)
 	var pair_x("pair_arg_var_"+arg_name);
-	if (arg_lambda_vars[i].empty())
-	{
-	    var x("arg_var_"+arg_name);
-	    E = let_expression({{x,{fst,pair_x}}},E);
-	}
-	E = lambda_quantify(pair_x, E);
+        var x("arg_var_"+arg_name);
 
-	E = {bind, arg, E};
+        // pair_x <- arg
+        code.perform(pair_x, arg);
+
+	if (not arg_lambda_vars[i].empty()) continue;
+
+        // let x = fst pair_x
+        code.let({{x,{fst,pair_x}}});
     }
 
-    return {E, lambda_vars};
+
+    // result <- E
+    code.perform( var("result"), E );
+    // return (result, loggers)
+    code.finish_return( Tuple(var("result"),loggers) );
+
+    return {code.get_expression(), lambda_vars};
 }
 
 pair<expression_ref,set<string>> get_model_as(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
