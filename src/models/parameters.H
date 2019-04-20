@@ -242,8 +242,6 @@ struct parameters_constants: public Object
     int n_scales;
     std::vector<param> branch_scales_;
 
-    std::vector< std::vector<int> > branch_length_indices;
-
     int substitution_branch_lengths_index = -1;
 
     matrix<int> branch_transition_p_indices;

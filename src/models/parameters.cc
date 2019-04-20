@@ -1512,15 +1512,16 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         PC->TC.branch(b).set_length(-1);
 
     // R5. Register D[b,s] = T[b]*scale[s]
+    vector<vector<param>> branch_length_params;
     for(int s=0;s<n_branch_scales();s++)
     {
         expression_ref scale = branch_scale(s).ref(*this);
-        PC->branch_length_indices.push_back(vector<int>());
+        branch_length_params.push_back({});
         for(int b=0;b<t().n_branches();b++)
         {
             expression_ref length = get_expression(TC->branch_duration_index[b]);
-            int index = add_compute_expression( {var("Compiler.Num.*"),scale,length} );
-            PC->branch_length_indices[s].push_back(index);
+            param distance = add_compute_expression( {var("Compiler.Num.*"),scale,length} );
+            branch_length_params[s].push_back(distance.ref(*this));
         }
     }
 
@@ -1542,7 +1543,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         {
             vector<expression_ref> D;
             for(int b=0;b<t().n_branches();b++)
-                D.push_back( get_expression(PC->branch_length_indices[s][b]) );
+                D.push_back( branch_length_params[s][b].ref(*this) );
             SBLL.push_back(get_list(D));
         }
         substitutionBranchLengthsList = get_list(SBLL);
