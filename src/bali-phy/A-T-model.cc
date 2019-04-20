@@ -213,13 +213,14 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 
 	out_screen<<"Partition "<<magenta(tag("P",i))<<":\n";
 	// 1. filename 
-	out_cache<<"data"<<i+1<<" = "<<filename_ranges[i]<<endl;
-	string file = bold(alignment_files[i].first);
-	if (alignment_files[i].second.size())
-	    file += ":"+alignment_files[i].second;
+        out_cache<<"data"<<i+1<<" = "<<filename_ranges[i]<<endl;
+        auto [filename,range] = alignment_files[i];
+        string file = bold(filename);
+	if (range.size())
+	    file += ":"+range;
 	out_screen<<"    file = "<<bold(file)<<endl;
-	partition["filename"] = alignment_files[i].first;
-	partition["range"] = alignment_files[i].second;
+	partition["filename"] = filename;
+	partition["range"] = range;
 
 	// 2. alphabet
 	string a_name = P[i].get_alphabet().name;
@@ -316,10 +317,10 @@ void check_alignment_values(const alignment& A,const pair<string,string>& filena
 	for(int j=0;j<A.length();j++) 
 	    if (A.unknown(j,i))
 	    {
-		string file = filename_range.first;
-		if (filename_range.second.size())
-		    file = file + ":" + filename_range.second;
-		throw myexception()<<"Alignment file '"<<file<<"' has a '"<<a.unknown_letter<<"' in sequence '"<<name<<"'.\n (Please replace with gap character '"<<a.gap_letter<<"' or wildcard '"<<a.wildcard<<"'.)";
+		auto [filename, range] = filename_range;
+		if (range.size())
+		    filename = filename + ":" + range;
+		throw myexception()<<"Alignment file '"<<filename<<"' has a '"<<a.unknown_letter<<"' in sequence '"<<name<<"'.\n (Please replace with gap character '"<<a.gap_letter<<"' or wildcard '"<<a.wildcard<<"'.)";
 	    }
     }
 }
@@ -591,7 +592,8 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     // 3. -- load alignments for SPECIFIED and UNSPECIFIED alphabets
     for(int i=0;i<alignment_files.size();i++)
     {
-	A[i] = load_alignment_with_range(alignment_files[i].first, alignment_files[i].second, alphabet_names[i]);
+        auto [filename, range] = alignment_files[i];
+	A[i] = load_alignment_with_range(filename, range, alphabet_names[i]);
 
 	if (alphabet_names[i].empty())
 	    alphabet_names[i] = A[i].get_alphabet().name;
@@ -842,9 +844,9 @@ void write_initial_alignments(variables_map& args, int proc_id, const string& di
     string base = "C" + convertToString(proc_id+1);
 
     int i=1;
-    for(auto& alignment_file: alignment_files)
+    for(auto& [filename, range]: alignment_files)
     {
-	auto sequences = load_sequences_with_range(alignment_file.first, alignment_file.second);
+	auto sequences = load_sequences_with_range(filename, range);
 
 	auto target = fs::path(base+".P"+convertToString(i)+".initial.fasta");
 	target = dir/target;
