@@ -1163,12 +1163,12 @@ expression_ref Parameters::my_atmodel() const
 
 expression_ref Parameters::my_imodels() const
 {
-    return get_expression(PC->imodels_index);
+    return PC->imodels_param.ref(*this);
 }
 
 expression_ref Parameters::my_substitution_branch_lengths() const
 {
-    return get_expression(PC->substitution_branch_lengths_index);
+    return PC->substitution_branch_lengths_param.ref(*this);
 }
 
 int num_distinct(const vector<optional<int>>& v)
@@ -1504,7 +1504,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     add_modifiable_parameter("*IModels.training", false);
 
     // R4. Register an array of indel models
-    PC->imodels_index = add_compute_expression({var("Data.Array.listArray'"), {var("BAliPhy.ATModel.imodels"), my_atmodel()}});
+    PC->imodels_param = add_compute_expression({var("Data.Array.listArray'"), {var("BAliPhy.ATModel.imodels"), my_atmodel()}});
   
     // don't constrain any branch lengths
     for(int b=0;b<PC->TC.n_branches();b++)
@@ -1528,7 +1528,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     }
     substitutionBranchLengthsList = get_list(SBLL);
 
-    PC->substitution_branch_lengths_index = add_compute_expression({var("Data.Array.listArray'"),{var("Prelude.fmap"),var("Data.Array.listArray'"),substitutionBranchLengthsList}});
+    PC->substitution_branch_lengths_param = add_compute_expression({var("Data.Array.listArray'"),{var("Prelude.fmap"),var("Data.Array.listArray'"),substitutionBranchLengthsList}});
 
     // R6. Register branch categories
     vector<expression_ref> branch_categories;

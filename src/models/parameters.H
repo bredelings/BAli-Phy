@@ -235,14 +235,14 @@ struct parameters_constants: public Object
     /// The IndelModel
     std::vector<std::optional<int>> imodel_for_partition;
     int n_imodels;
-    int imodels_index = -1;
+    param imodels_param;
 
     // Scale for partition
     std::vector<std::optional<int>> scale_for_partition;
     int n_scales;
     std::vector<param> branch_scales_;
 
-    int substitution_branch_lengths_index = -1;
+    param substitution_branch_lengths_param;
 
     matrix<int> branch_transition_p_indices;
 
