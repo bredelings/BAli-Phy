@@ -67,7 +67,7 @@ struct data_partition_constants
 
     std::vector<param> transition_p_method_indices;
 
-    std::vector<param> branch_HMM_indices;
+    std::vector<param> branch_HMMs;
 
     param alignment_prior_index;
 

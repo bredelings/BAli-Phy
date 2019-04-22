@@ -217,7 +217,7 @@ const indel::PairHMM& data_partition::get_branch_HMM(int b) const
 
     b = t().undirected(b);
 
-    return DPC().branch_HMM_indices[b].get_value(*P).as_<indel::PairHMM>();
+    return DPC().branch_HMMs[b].get_value(*P).as_<indel::PairHMM>();
 }
 
 vector<indel::PairHMM> data_partition::get_branch_HMMs(const vector<int>& br) const
@@ -453,31 +453,23 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     if (imodel_index)
     {
         // D = Params.substitutionBranchLengths!scale_index
-        expression_ref D = {var("Data.Array.!"), p->my_substitution_branch_lengths(), scale_index};
-        expression_ref heat = p->heat_exp();
-        expression_ref training = p->imodel_training_exp();
-        expression_ref model = {{var("Data.Array.!"),p->my_imodels(), *imodel_index}, heat, training};
 
-        expression_ref hmms = {fromJust,{var("BAliPhy.ATModel.DataPartition.hmms"),partition}};
-        hmms = p->get_expression( p->add_compute_expression(hmms) );
-
+        // R5. Register probabilities of each sequence length
+        expression_ref model = {fromJust,{var("BAliPhy.ATModel.DataPartition.imodel"),partition}};
+        expression_ref lengthp = {snd,model};
         for(int n=0;n<sequence_length_pr_indices.size();n++)
         {
             expression_ref l = sequence_length_indices[n].ref(*p);
-            expression_ref lengthp = {snd,model};
             sequence_length_pr_indices[n] = p->add_compute_expression( {lengthp,l} );
         }
 
-        // branch HMMs
+        // R6. Register branch HMMs
+        param hmms = p->add_compute_expression({fromJust,{var("BAliPhy.ATModel.DataPartition.hmms"),partition}});
         for(int b=0;b<B;b++)
-        {
-            // (fst IModels.models!imodel_index) D b heat training
-            int index = p->add_compute_expression( {var("Data.Array.!"), hmms, b} );
-            branch_HMM_indices.push_back( index );
-        }
+            branch_HMMs.push_back( p->add_compute_expression( {var("Data.Array.!"), hmms.ref(*p), b} ) );
 
         // Alignment prior
-        alignment_prior_index = p->add_compute_expression( {var("Alignment.alignment_pr"), alignment_on_tree, hmms, model} );
+        alignment_prior_index = p->add_compute_expression( {var("Alignment.alignment_pr"), alignment_on_tree, hmms.ref(*p), model} );
 
         expression_ref alignment_pdf = alignment_prior_index.ref(*p);
         alignment_pdf = make_if_expression(p->my_variable_alignment(), alignment_pdf, log_double_t(1.0));
@@ -495,14 +487,14 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     }
     else if (likelihood_calculator == 0)
     {
-        // R5. Register counts array
+        // R7. Register counts array
         vector<vector<int>> seq_counts = alignment_letters_counts(AA, t.n_leaves(), counts);
         EVector counts_;
         for(int i=0; i<leaf_sequence_indices.size(); i++)
             counts_.push_back( EVector(seq_counts[i]) );
         auto counts_array = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"),get_list(counts_)}) );
 
-        // R6. Register conditional likelihoods
+        // R8. Register conditional likelihoods
         auto t = p->my_tree();
         auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
         cl_index = p->add_compute_expression({var("SModel.Likelihood.cached_conditional_likelihoods"),t,seqs_array,counts_array,as.ref(*p),*a,transition_ps,f});  // Create and set conditional likelihoods for each branch
