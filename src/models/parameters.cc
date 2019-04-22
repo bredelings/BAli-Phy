@@ -1157,17 +1157,19 @@ expression_ref Parameters::my_tree() const
 
 expression_ref Parameters::my_atmodel() const
 {
-    assert(atmodel);
+    assert(PC);
     return PC->atmodel.ref(*this);
 }
 
 expression_ref Parameters::my_imodels() const
 {
+    assert(PC);
     return PC->imodels_param.ref(*this);
 }
 
 expression_ref Parameters::my_substitution_branch_lengths() const
 {
+    assert(PC);
     return PC->substitution_branch_lengths_param.ref(*this);
 }
 
