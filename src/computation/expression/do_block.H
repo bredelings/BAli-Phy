@@ -20,6 +20,8 @@ public:
 
     do_block& let(const CDecls& decls);
 
+    do_block& let(const var&x, const expression_ref& body);
+
     expression_ref finish(const expression_ref& E1);
 
     expression_ref finish_return(const expression_ref& E);

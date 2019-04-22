@@ -41,6 +41,11 @@ do_block& do_block::let(const CDecls& decls)
     return *this;
 }
 
+do_block& do_block::let(const var& x, const expression_ref& body)
+{
+    return let({{x,body}});
+}
+
 expression_ref do_block::finish(const expression_ref& E1)
 {
     auto new_code = [code=code,E1](const expression_ref&)
