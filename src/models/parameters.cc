@@ -479,7 +479,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         alignment_prior_index = p->add_compute_expression( {var("Alignment.alignment_pr"), alignment_on_tree, hmms, model} );
 
         expression_ref alignment_pdf = alignment_prior_index.ref(*p);
-        alignment_pdf = make_if_expression(parameter("*variable_alignment"), alignment_pdf, log_double_t(1.0));
+        alignment_pdf = make_if_expression(p->my_variable_alignment(), alignment_pdf, log_double_t(1.0));
 
         expression_ref sample_alignments = {var("Parameters.random_variable"), as.ref(*p), alignment_pdf, 0, 0.0};
         int alignment_sample_index = p->add_compute_expression( sample_alignments );
@@ -522,8 +522,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         }
         else
         {
-            auto root = parameter("*subst_root");
-            likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood"), t, cls, as.ref(*p), f, root});
+            likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood"), t, cls, as.ref(*p), f, p->my_subst_root()});
         }
     }
     else if (likelihood_calculator == 1)
@@ -551,8 +550,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         }
         else
         {
-            auto root = parameter("*subst_root");
-            likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood_SEV"), t, cls, f, root, Counts});
+            likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood_SEV"), t, cls, f, p->my_subst_root(), Counts});
         }
     }
 
