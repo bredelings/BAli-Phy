@@ -705,7 +705,8 @@ expression_ref tree_expression(const SequenceTree& T)
 
 bool Parameters::variable_alignment_from_param() const
 {
-    auto e = variable_alignment_param.get_value(*this);
+    assert(PC);
+    auto e = PC->variable_alignment.get_value(*this);
     return is_bool_true(e);
 }
 
@@ -724,7 +725,7 @@ void Parameters::variable_alignment(bool b)
         variable_alignment_ = false;
 
     if (variable_alignment_from_param() != variable_alignment_)
-        variable_alignment_param.set_value(*this, variable_alignment_);
+        PC->variable_alignment.set_value(*this, variable_alignment_);
 
     // turning ON alignment variation
     if (variable_alignment())
@@ -1098,12 +1099,12 @@ void Parameters::set_root(int node) const
 {
     assert(not t().is_leaf_node(node));
     const context* C = this;
-    subst_root_param.set_value(*const_cast<context*>(C), node);
+    PC->subst_root.set_value(*const_cast<context*>(C), node);
 }
 
 int Parameters::subst_root() const
 {
-    return subst_root_param.get_value(*this).as_int();
+    return PC->subst_root.get_value(*this).as_int();
 }
 
 double Parameters::get_branch_scale(int s) const
@@ -1159,6 +1160,18 @@ expression_ref Parameters::my_atmodel() const
 {
     assert(PC);
     return PC->atmodel.ref(*this);
+}
+
+expression_ref Parameters::my_subst_root() const
+{
+    assert(PC);
+    return PC->subst_root.ref(*this);
+}
+
+expression_ref Parameters::my_variable_alignment() const
+{
+    assert(PC);
+    return PC->variable_alignment.ref(*this);
 }
 
 expression_ref Parameters::my_imodels() const
@@ -1321,8 +1334,13 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     PC->constants.push_back(-1);
 
     add_modifiable_parameter("Heat.beta", 1.0);
-    variable_alignment_param = add_modifiable_parameter("*variable_alignment", variable_alignment_);
-    subst_root_param = add_modifiable_parameter("*subst_root", tt.n_nodes()-1);
+    add_modifiable_parameter("*variable_alignment", variable_alignment_);
+
+    PC->variable_alignment = add_compute_expression(parameter("*variable_alignment"));
+
+    add_modifiable_parameter("*subst_root", tt.n_nodes()-1);
+
+    PC->subst_root = add_compute_expression(parameter("*subst_root"));
 
 
     /* ---------------- compress alignments -------------------------- */

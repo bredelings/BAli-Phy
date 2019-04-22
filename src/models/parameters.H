@@ -226,6 +226,8 @@ struct tree_constants: public Object
 
 struct parameters_constants: public Object
 {
+    param variable_alignment;
+    param subst_root;
     param atmodel;
 
     /// The substitution::Model
@@ -293,10 +295,7 @@ public:
 
     int beta_index;
 
-    param subst_root_param;
-
     bool variable_alignment_;
-    param variable_alignment_param;
 
 private:
 
@@ -342,6 +341,8 @@ public:
     expression_ref my_imodels() const;
     expression_ref my_substitution_branch_lengths() const;
     expression_ref my_atmodel() const;
+    expression_ref my_subst_root() const;
+    expression_ref my_variable_alignment() const;
 
     void reconnect_branch(int s1, int t1, int t2);
     void prune_subtree(const tree_edge& b_subtree);
