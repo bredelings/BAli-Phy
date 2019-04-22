@@ -2,6 +2,7 @@
 #define CONTEXT_H
 
 #include "computation/closure.H"
+#include "computation/param.H"
 #include "computation/program.H"
 #include "util/math/log-double.H"
 #include "util/bounds.H"
@@ -166,6 +167,8 @@ public:
     double get_rate_for_random_variable(int r) const;
 
 public:
+    /// Create a new modifiable head with initial value 'value'
+    param new_modifiable(const expression_ref& value);
     /// Create a new modifiable parameter named s with initial value 'value'
     int add_modifiable_parameter(const std::string& s, const expression_ref& value);
 

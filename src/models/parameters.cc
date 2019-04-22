@@ -1332,13 +1332,9 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     PC->constants.push_back(-1);
 
     add_modifiable_parameter("Heat.beta", 1.0);
-    add_modifiable_parameter("*variable_alignment", variable_alignment_);
 
-    PC->variable_alignment = add_compute_expression(parameter("*variable_alignment"));
-
-    add_modifiable_parameter("*subst_root", tt.n_nodes()-1);
-
-    PC->subst_root = add_compute_expression(parameter("*subst_root"));
+    PC->variable_alignment = new_modifiable(variable_alignment_ );
+    PC->subst_root         = new_modifiable(tt.n_nodes()-1      );
 
 
     /* ---------------- compress alignments -------------------------- */
