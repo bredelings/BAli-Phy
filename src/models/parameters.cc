@@ -740,16 +740,6 @@ mutable_data_partition Parameters::get_data_partition(int i)
     return mutable_data_partition(this,i);
 }
 
-void Parameters::set_beta(double b)
-{
-    set_parameter_value(0,b);
-}
-
-double Parameters::get_beta() const
-{
-    return get_parameter_value(0).as_double();
-}
-
 TreeInterface Parameters::t() const
 {
     return {this};
@@ -1114,6 +1104,16 @@ void Parameters::set_imodel_training(bool t) const
 int Parameters::subst_root() const
 {
     return PC->subst_root.get_value(*this).as_int();
+}
+
+void Parameters::set_beta(double b)
+{
+    PC->heat.set_value(*this, b);
+}
+
+double Parameters::get_beta() const
+{
+    return PC->heat.get_value(*this).as_double();
 }
 
 int Parameters::get_branch_category(int b) const
