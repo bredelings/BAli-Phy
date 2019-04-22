@@ -231,6 +231,7 @@ struct parameters_constants: public Object
     param subst_root;
     param atmodel;
     param imodel_training;
+    std::vector<param> branch_categories;
 
     /// The substitution::Model
     std::vector<smodel_methods> SModels;
@@ -389,6 +390,9 @@ public:
     void select_root(int b) const;
     void set_root(int n) const;
     int subst_root() const;
+
+    int  get_branch_category(int b) const;
+    void set_branch_category(int b, int cat);
 
     double branch_mean() const;
 

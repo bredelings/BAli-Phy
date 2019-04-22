@@ -1105,6 +1105,16 @@ int Parameters::subst_root() const
     return PC->subst_root.get_value(*this).as_int();
 }
 
+int Parameters::get_branch_category(int b) const
+{
+    return PC->branch_categories[b].get_value(*this).as_int();
+}
+
+void Parameters::set_branch_category(int b, int c)
+{
+    PC->branch_categories[b].set_value(*this,c);
+}
+
 double Parameters::get_branch_scale(int s) const
 {
     return branch_scale(s).get_value(*this).as_double();
@@ -1557,9 +1567,9 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     vector<expression_ref> branch_categories;
     for(int b=0;b<t().n_branches();b++)
     {
-        string name = "*Main.branchCat" + convertToString(b+1);
-        add_modifiable_parameter(name, 0);
-        branch_categories.push_back(parameter(name));
+        auto c = new_modifiable(0);
+        PC->branch_categories.push_back(c);
+        branch_categories.push_back(c.ref(*this));
     }
     expression_ref branch_cat_list = get_expression( add_compute_expression( (get_list(branch_categories) ) ) );
 
