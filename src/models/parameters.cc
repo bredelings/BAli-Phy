@@ -1164,11 +1164,6 @@ void Parameters::set_branch_scale(int s, double x)
         throw myexception()<<"Branch scale "<<s+1<<" is not directly modifiable!";
 }
 
-double Parameters::get_branch_subst_rate(int p, int /* b */) const
-{
-    return get_branch_scale( *scale_index_for_partition(p) );
-}
-
 expression_ref Parameters::my_tree() const
 {
     assert(TC);

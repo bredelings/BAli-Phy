@@ -410,8 +410,6 @@ public:
     double get_branch_scale(int i) const;
     void set_branch_scale(int i,double);
 
-    double get_branch_subst_rate(int p, int b) const;
-
     double branch_mean() const;
 
     Parameters* clone() const {return new Parameters(*this);}
