@@ -38,6 +38,7 @@
 #include "probability/probability.H"
 #include "computation/expression/lambda.H"
 #include "computation/expression/bool.H"
+#include "computation/expression/maybe.H"
 #include "computation/expression/case.H"
 #include "computation/expression/tuple.H"
 #include "computation/expression/list.H"
@@ -104,9 +105,6 @@ using std::optional;
  *     - To force all names to be generated before the layout for C1.p is constructed,
  *       I compute the probability at the end of Parameters::Parameters( ).
  */
-
-var Nothing("Data.Maybe.Nothing");
-var Just("Data.Maybe.Just");
 
 /// Is the alignment allowed to vary?
 bool data_partition::variable_alignment() const
