@@ -226,9 +226,11 @@ struct tree_constants: public Object
 
 struct parameters_constants: public Object
 {
+    param heat;
     param variable_alignment;
     param subst_root;
     param atmodel;
+    param imodel_training;
 
     /// The substitution::Model
     std::vector<smodel_methods> SModels;
@@ -343,6 +345,8 @@ public:
     expression_ref my_atmodel() const;
     expression_ref my_subst_root() const;
     expression_ref my_variable_alignment() const;
+    expression_ref heat_exp() const;
+    expression_ref imodel_training_exp() const;
 
     void reconnect_branch(int s1, int t1, int t2);
     void prune_subtree(const tree_edge& b_subtree);

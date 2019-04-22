@@ -453,8 +453,8 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     {
         // D = Params.substitutionBranchLengths!scale_index
         expression_ref D = {var("Data.Array.!"), p->my_substitution_branch_lengths(), scale_index};
-        expression_ref heat = parameter("Heat.beta");
-        expression_ref training = parameter("*IModels.training");
+        expression_ref heat = p->heat_exp();
+        expression_ref training = p->imodel_training_exp();
         expression_ref model = {{var("Data.Array.!"),p->my_imodels(), *imodel_index}, heat, training};
 
         expression_ref hmms = {var("Alignment.branch_hmms"), model, D, B};
@@ -1184,6 +1184,18 @@ expression_ref Parameters::my_substitution_branch_lengths() const
     return PC->substitution_branch_lengths_param.ref(*this);
 }
 
+expression_ref Parameters::heat_exp() const
+{
+    assert(PC);
+    return PC->heat.ref(*this);
+}
+
+expression_ref Parameters::imodel_training_exp() const
+{
+    assert(PC);
+    return PC->imodel_training.ref(*this);
+}
+
 int num_distinct(const vector<optional<int>>& v)
 {
     int m = -1;
@@ -1331,10 +1343,10 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
   
     PC->constants.push_back(-1);
 
-    add_modifiable_parameter("Heat.beta", 1.0);
-
-    PC->variable_alignment = new_modifiable(variable_alignment_ );
-    PC->subst_root         = new_modifiable(tt.n_nodes()-1      );
+    PC->imodel_training    = new_modifiable( false               );
+    PC->heat               = new_modifiable( 1.0                 );
+    PC->variable_alignment = new_modifiable( variable_alignment_ );
+    PC->subst_root         = new_modifiable( tt.n_nodes()-1      );
 
 
     /* ---------------- compress alignments -------------------------- */
@@ -1513,9 +1525,6 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
         PC->SModels.push_back( smodel_methods( smodel, *this) );
     }
-
-    // P2. Add training parameter
-    add_modifiable_parameter("*IModels.training", false);
 
     // R4. Register an array of indel models
     PC->imodels_param = add_compute_expression({var("Data.Array.listArray'"), {var("BAliPhy.ATModel.imodels"), my_atmodel()}});
