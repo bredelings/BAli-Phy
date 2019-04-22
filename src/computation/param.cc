@@ -3,6 +3,8 @@
 #include "computation/expression/modifiable.H"
 #include "computation/context.H"
 
+using std::optional;
+
 expression_ref param::ref(const context& C) const
 {
     if (head)
@@ -11,7 +13,7 @@ expression_ref param::ref(const context& C) const
         return *value;
 }
 
-std::optional<int> param::is_modifiable(const context& C) const
+optional<int> param::is_modifiable(const context& C) const
 {
     if (head)
         return C.compute_expression_is_modifiable_reg(*head);
@@ -19,7 +21,7 @@ std::optional<int> param::is_modifiable(const context& C) const
         return {};
 }
 
-std::optional<int> param::is_random_variable(const context& C) const
+optional<int> param::is_random_variable(const context& C) const
 {
     if (head)
         return C.compute_expression_is_random_variable(*head);
@@ -27,7 +29,7 @@ std::optional<int> param::is_random_variable(const context& C) const
         return {};
 }
 
-std::optional<bounds<double>> param::has_bounds(const context& C) const
+optional<bounds<double>> param::has_bounds(const context& C) const
 {
     if (head and C.compute_expression_has_bounds(*head))
         return C.get_bounds_for_compute_expression(*head);
@@ -57,6 +59,8 @@ void param::set_value(context& C, const expression_ref& v) const
         throw myexception()<<"param::set_value: can't set non-modifiable head to '"<<v<<"'";
 }
 
+// for use with maybe_modifiable_structure
+
 param get_param(context& C, const expression_ref& E)
 {
     if (is_modifiable(E))
@@ -78,3 +82,91 @@ param get_param(context& C, const expression_ref& E)
 }
 
 
+expression_ref ConstParam::ref() const
+{
+    return x.ref(*C);
+}
+
+expression_ref ConstParam::get_value() const
+{
+    return x.get_value(*C);
+}
+
+optional<expression_ref> ConstParam::constant_value() const
+{
+    return x.constant_value();
+}
+
+optional<int> ConstParam::is_modifiable() const
+{
+    return x.is_modifiable(*C);
+}
+
+optional<int> ConstParam::is_random_variable() const
+{
+    return x.is_random_variable(*C);
+}
+
+optional<bounds<double>> ConstParam::has_bounds() const
+{
+    return x.has_bounds(*C);
+}
+
+ConstParam::operator bool()
+{
+    return (bool)x;
+}
+
+ConstParam::ConstParam()
+{}
+
+ConstParam::ConstParam(param x_, const context* C_)
+    :x(x_),C(C_)
+{}
+
+expression_ref Param::ref() const
+{
+    return x.ref(*C);
+}
+
+expression_ref Param::get_value() const
+{
+    return x.get_value(*C);
+}
+
+void Param::set_value(const expression_ref& v) const
+{
+    x.set_value(*C, v);
+}
+
+optional<expression_ref> Param::constant_value() const
+{
+    return x.constant_value();
+}
+
+optional<int> Param::is_modifiable() const
+{
+    return x.is_modifiable(*C);
+}
+
+optional<int> Param::is_random_variable() const
+{
+    return x.is_random_variable(*C);
+}
+
+optional<bounds<double>> Param::has_bounds() const
+{
+    return x.has_bounds(*C);
+}
+
+Param::operator bool()
+{
+    return (bool)x;
+}
+
+Param::Param()
+{}
+
+Param::Param(param x_, context* C_)
+    :x(x_),C(C_)
+{}
