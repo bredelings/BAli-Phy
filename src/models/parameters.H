@@ -394,6 +394,9 @@ public:
     int  get_branch_category(int b) const;
     void set_branch_category(int b, int cat);
 
+    bool get_imodel_training() const;
+    void set_imodel_training(bool) const;
+
     double branch_mean() const;
 
     const param& branch_scale(int i) const;

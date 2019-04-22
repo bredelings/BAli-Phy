@@ -1100,6 +1100,17 @@ void Parameters::set_root(int node) const
     PC->subst_root.set_value(*const_cast<context*>(C), node);
 }
 
+bool Parameters::get_imodel_training() const
+{
+    return is_bool_true( PC->imodel_training.get_value(*this) );
+}
+
+void Parameters::set_imodel_training(bool t) const
+{
+    const context* C = this;
+    PC->imodel_training.set_value(*const_cast<context*>(C), t);
+}
+
 int Parameters::subst_root() const
 {
     return PC->subst_root.get_value(*this).as_int();

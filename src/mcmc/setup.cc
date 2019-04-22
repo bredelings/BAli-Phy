@@ -726,14 +726,14 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	    // turn training on
 	    {
 		Parameters& PP = *P.as<Parameters>();
-		PP.set_parameter_value(PP.find_parameter("*IModels.training"), bool_true);
+		PP.set_imodel_training(true);
 	    }
 
 	    pre_burnin.iterate(P,Stats);
 	    // turn training off
 	    {
 		Parameters& PP = *P.as<Parameters>();
-		PP.set_parameter_value(PP.find_parameter("*IModels.training"), bool_false);
+		PP.set_imodel_training(false);
 	    }
 
 	    log_preburnin(out_both, *P, "(S)+(L)+(P)+Alignment", i);
@@ -878,7 +878,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	// turn training on
 	{
 	    Parameters& PP = *P.as<Parameters>();
-	    PP.set_parameter_value(PP.find_parameter("*IModels.training"), bool_true);
+	    PP.set_imodel_training(true);
 	}
 
 	MoveAll pre_burnin("pre-burnin+A");
@@ -904,7 +904,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	// turn training back off
 	{
 	    Parameters& PP = *P.as<Parameters>();
-	    PP.set_parameter_value(PP.find_parameter("*IModels.training"), bool_false);
+	    PP.set_imodel_training(false);
 	}
 	for(int i=0;i<n_pre_burnin;i++)
 	{

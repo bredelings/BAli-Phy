@@ -1067,7 +1067,7 @@ namespace MCMC {
 	    if (subsample <= 0) subsample = 2*int(log(t.n_leaves()))+1;
 
 	    if (alignment_burnin_iterations > 0)
-		PP->set_parameter_value(PP->find_parameter("*IModels.training"), bool_true);
+		PP->set_imodel_training(true);
 	}
 
 	//---------------- Run the MCMC chain -------------------//
@@ -1077,7 +1077,7 @@ namespace MCMC {
 	    {
 		// Free temporarily fixed parameters at iteration 5
 		if (iterations == alignment_burnin_iterations)
-		    PP->set_parameter_value(PP->find_parameter("*IModels.training"), bool_false);
+		    PP->set_imodel_training(false);
 
 		// Change the temperature according to the pattern suggested
 		if (iterations < PP->PC->beta_series.size())
