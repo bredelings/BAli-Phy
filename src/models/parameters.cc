@@ -105,6 +105,9 @@ using std::optional;
  *       I compute the probability at the end of Parameters::Parameters( ).
  */
 
+var Nothing("Data.Maybe.Nothing");
+var Just("Data.Maybe.Just");
+
 /// Is the alignment allowed to vary?
 bool data_partition::variable_alignment() const
 {
@@ -1365,6 +1368,8 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     PC->subst_root         = new_modifiable( tt.n_nodes()-1      );
 
 
+    int B = tt.n_branches();
+
     /* ---------------- compress alignments -------------------------- */
 
     // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
@@ -1448,13 +1453,13 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
 
     // P4. Branch lengths
-    expression_ref branch_lengths_list = List();
+    expression_ref branch_lengths = List();
     if (tt.n_branches() > 0)
     {
         string prefix = "T:lengths";
-        expression_ref branch_lengths = {branch_length_model.expression, tree_var};
-        auto [x,loggers] = program.bind_model(prefix , branch_lengths);
-        branch_lengths_list = x;
+        expression_ref branch_lengths_model = {branch_length_model.expression, tree_var};
+        auto [x,loggers] = program.bind_model(prefix , branch_lengths_model);
+        branch_lengths = x;
     }
 
 
@@ -1462,32 +1467,62 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     vector<expression_ref> partitions;
     for(int i=0; i < A.size(); i++)
     {
+        string part = std::to_string(i+1);
+        int scale_index = *scale_index_for_partition(i);
+        int smodel_index = *smodel_index_for_partition(i);
+        auto imodel_index = imodel_index_for_partition(i);
+
+        // L1. scale_P ...
+        var scale("scale_"+part);
+        program.let(scale, scales[scale_index]);
+
+        // L2. distances_P = map (*scale_P) branch_lengths
+        var distances("distances_"+part);
+        {
+            var x("x");
+            program.let(distances, {var("Data.Array.listArray'"),{var("Data.List.map"), lambda_quantify(x,{var("Compiler.Num.*"),scale,x}), branch_lengths}});
+        }
+
+        // L3. let smodel_P = ...
+        var smodel("smodel_"+part);
+        program.let(smodel, smodels[smodel_index]);
+
+        // L4. let imodel_P = Nothing | Just
+        expression_ref maybe_imodel = Nothing;
+        if (imodel_index)
+        {
+            auto imodel = var("imodel_"+part);
+            program.let(imodel, {imodels[*imodel_index], heat_exp(), imodel_training_exp()});
+            expression_ref hmms =  {var("Data.Array.listArray'"),{var("Alignment.branch_hmms"), imodel, distances, B}};
+            maybe_imodel = {Just, imodel};
+        }
+
         // P5.I Register array of leaf sequences
         auto leaf_sequences = alignment_letters(*alignments[i], tt.n_leaves());
 
         // Add array of leaf sequences
-        EVector seqs_;
+        EVector leaf_seqs_;
         for(int j=0; j<tt.n_leaves(); j++)
         {
             param leaf_seq_j = add_compute_expression(EVector(leaf_sequences[j]));
-            seqs_.push_back( leaf_seq_j.ref(*this) );
+            leaf_seqs_.push_back( leaf_seq_j.ref(*this) );
         }
 
-        param seqs_array = add_compute_expression({var("Data.Array.listArray'"),get_list(seqs_)});
+        param leaf_seqs_array = add_compute_expression({var("Data.Array.listArray'"),get_list(leaf_seqs_)});
 
         // P5.II Create modifiables for pairwise alignments
         expression_ref initial_alignments_exp = get_list(unaligned_alignments_on_tree(tt, leaf_sequences));
 
         expression_ref alignments = {var("Data.Array.listArray'"), {var("Data.List.map"),var("Parameters.modifiable"),initial_alignments_exp}};
 
-        partitions.push_back({var("BAliPhy.ATModel.DataPartition.Partition"), tree_var, seqs_array.ref(*this), alignments, 0});
+        partitions.push_back({var("BAliPhy.ATModel.DataPartition.Partition"), smodel, maybe_imodel, scale, tree_var, leaf_seqs_array.ref(*this), alignments, 0});
     }
 
 
     // We haven't done the observe's yet, though.
     expression_ref program_exp = program.finish_return(
         Tuple(
-            {var("BAliPhy.ATModel.ATModel"), tree_var, get_list(smodels), get_list(imodels), get_list(scales), branch_lengths_list, get_list(partitions)},
+            {var("BAliPhy.ATModel.ATModel"), tree_var, get_list(smodels), get_list(imodels), get_list(scales), branch_lengths, get_list(partitions)},
             get_list(program_loggers))
         );
     
