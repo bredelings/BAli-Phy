@@ -458,7 +458,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         expression_ref training = p->imodel_training_exp();
         expression_ref model = {{var("Data.Array.!"),p->my_imodels(), *imodel_index}, heat, training};
 
-        expression_ref hmms = {var("Alignment.branch_hmms"), model, D, B};
+        expression_ref hmms = {fromJust,{var("BAliPhy.ATModel.DataPartition.hmms"),partition}};
         hmms = p->get_expression( p->add_compute_expression(hmms) );
 
         for(int n=0;n<sequence_length_pr_indices.size();n++)
@@ -1487,12 +1487,14 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
         // L4. let imodel_P = Nothing | Just
         expression_ref maybe_imodel = Nothing;
+        expression_ref maybe_hmms   = Nothing;
         if (imodel_index)
         {
             auto imodel = var("imodel_"+part);
             program.let(imodel, {imodels[*imodel_index], heat_exp(), imodel_training_exp()});
-            expression_ref hmms =  {var("Data.Array.listArray'"),{var("Alignment.branch_hmms"), imodel, distances, B}};
+            expression_ref hmms =  {var("Alignment.branch_hmms"), imodel, distances, B};
             maybe_imodel = {Just, imodel};
+            maybe_hmms   = {Just, hmms};
         }
 
         // P5.I Register array of leaf sequences
@@ -1513,7 +1515,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
         expression_ref alignments = {var("Data.Array.listArray'"), {var("Data.List.map"),var("Parameters.modifiable"),initial_alignments_exp}};
 
-        partitions.push_back({var("BAliPhy.ATModel.DataPartition.Partition"), smodel, maybe_imodel, scale, tree_var, leaf_seqs_array.ref(*this), alignments, 0});
+        partitions.push_back({var("BAliPhy.ATModel.DataPartition.Partition"), smodel, maybe_imodel, scale, tree_var, leaf_seqs_array.ref(*this), alignments, maybe_hmms, 0});
     }
 
 
