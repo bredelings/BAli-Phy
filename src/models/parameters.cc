@@ -1463,20 +1463,20 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     for(int i=0; i < A.size(); i++)
     {
         // P5.I Register array of leaf sequences
-        auto sequences = alignment_letters(*alignments[i], tt.n_leaves());
+        auto leaf_sequences = alignment_letters(*alignments[i], tt.n_leaves());
 
         // Add array of leaf sequences
         EVector seqs_;
         for(int j=0; j<tt.n_leaves(); j++)
         {
-            param leaf_seq_j = add_compute_expression(EVector(sequences[j]));
+            param leaf_seq_j = add_compute_expression(EVector(leaf_sequences[j]));
             seqs_.push_back( leaf_seq_j.ref(*this) );
         }
 
         param seqs_array = add_compute_expression({var("Data.Array.listArray'"),get_list(seqs_)});
 
         // P5.II Create modifiables for pairwise alignments
-        expression_ref initial_alignments_exp = get_list(unaligned_alignments_on_tree(tt, sequences));
+        expression_ref initial_alignments_exp = get_list(unaligned_alignments_on_tree(tt, leaf_sequences));
 
         expression_ref alignments = {var("Data.Array.listArray'"), {var("Data.List.map"),var("Parameters.modifiable"),initial_alignments_exp}};
 
