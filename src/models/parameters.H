@@ -309,10 +309,6 @@ private:
 
 public:
 
-    bool variable_alignment() const;
-
-    void variable_alignment(bool b);
-
             data_partition get_data_partition(int i) const;
 
     mutable_data_partition get_data_partition(int i);
@@ -333,22 +329,10 @@ public:
 
     std::optional<int> scale_index_for_partition(int i) const {return PC->scale_for_partition[i];}
   
-    void set_beta(double b);
-    double get_beta() const;
-
     TreeInterface t() const;
 
     std::vector<std::string> get_labels() const;
   
-    expression_ref my_tree() const;
-    expression_ref my_imodels() const;
-    expression_ref my_substitution_branch_lengths() const;
-    expression_ref my_atmodel() const;
-    expression_ref my_subst_root() const;
-    expression_ref my_variable_alignment() const;
-    expression_ref heat_exp() const;
-    expression_ref imodel_training_exp() const;
-
     void reconnect_branch(int s1, int t1, int t2);
     void prune_subtree(const tree_edge& b_subtree);
     void regraft_subtree(const tree_edge& b_subtree, const tree_edge& b_target);
@@ -387,25 +371,48 @@ public:
     void setlength_unsafe(int b, double l);
     void setlength(int b,double l); 
   
+    // void
+    expression_ref my_tree() const;
+    // void
+    expression_ref my_imodels() const;
+    // void
+    expression_ref my_substitution_branch_lengths() const;
+    // void
+    expression_ref my_atmodel() const;
+
+    // bool
+    expression_ref my_variable_alignment() const;
+    bool variable_alignment() const;
+    void variable_alignment(bool b);
+
+    // int
+    expression_ref my_subst_root() const;
     void select_root(int b) const;
     void set_root(int n) const;
     int subst_root() const;
 
+    // int
     int  get_branch_category(int b) const;
     void set_branch_category(int b, int cat);
 
+    // double
+    expression_ref heat_exp() const;
+    void set_beta(double b);
+    double get_beta() const;
+
+    // bool
+    expression_ref imodel_training_exp() const;
     bool get_imodel_training() const;
     void set_imodel_training(bool) const;
 
-    double branch_mean() const;
-
+    // double
     const param& branch_scale(int i) const;
-
     double get_branch_scale(int i) const;
-
     void set_branch_scale(int i,double);
 
     double get_branch_subst_rate(int p, int b) const;
+
+    double branch_mean() const;
 
     Parameters* clone() const {return new Parameters(*this);}
 
