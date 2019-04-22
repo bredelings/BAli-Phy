@@ -433,15 +433,13 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     for(int i=0; i<p->t().n_leaves(); i++)
         leaf_sequence_indices.push_back ( p->add_compute_expression(EVector(sequences[i])) );
 
-    expression_ref seqs_array = {var("BAliPhy.ATModel.DataPartition.leaf_sequences"),partition};
-
-    seqs_array = p->get_expression( p->add_compute_expression(seqs_array));
+    param leaf_sequences = p->add_compute_expression({var("BAliPhy.ATModel.DataPartition.leaf_sequences"),partition});
 
     // R3. Register array of pairwise alignments
     param as = p->add_compute_expression({var("BAliPhy.ATModel.DataPartition.pairwise_alignments"), partition});
 
     // R4. Register sequence length methods
-    auto seq_lengths = expression_ref{{var("Data.Array.listArray'"),{var("Alignment.compute_sequence_lengths"), seqs_array, p->my_tree(), as.ref(*p)}}};
+    auto seq_lengths = expression_ref{{var("Data.Array.listArray'"),{var("Alignment.compute_sequence_lengths"), leaf_sequences.ref(*p), p->my_tree(), as.ref(*p)}}};
     expression_ref alignment_on_tree = {var("Alignment.AlignmentOnTree"), p->my_tree(), t.n_nodes(), seq_lengths, as.ref(*p)};
     alignment_on_tree = p->get_expression( p->add_compute_expression(alignment_on_tree) );
 
@@ -481,7 +479,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 
     if (p->t().n_nodes() == 1)
     {
-        expression_ref seq = {var("Data.Array.!"),seqs_array, 0};
+        expression_ref seq = {var("Data.Array.!"),leaf_sequences.ref(*p), 0};
         auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
         likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood_1"), seq, *a, f});
     }
@@ -497,7 +495,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         // R8. Register conditional likelihoods
         auto t = p->my_tree();
         auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
-        cl_index = p->add_compute_expression({var("SModel.Likelihood.cached_conditional_likelihoods"),t,seqs_array,counts_array,as.ref(*p),*a,transition_ps,f});  // Create and set conditional likelihoods for each branch
+        cl_index = p->add_compute_expression({var("SModel.Likelihood.cached_conditional_likelihoods"),t,leaf_sequences.ref(*p),counts_array,as.ref(*p),*a,transition_ps,f});  // Create and set conditional likelihoods for each branch
         auto cls = cl_index.ref(*p);
         for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
             conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cls,b});
@@ -505,8 +503,8 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         // FIXME: broken for fixed alignments of 2 sequences.
         if (p->t().n_nodes() == 2)
         {
-            expression_ref seq1 = {var("Data.Array.!"), seqs_array, 0};
-            expression_ref seq2 = {var("Data.Array.!"), seqs_array, 1};
+            expression_ref seq1 = {var("Data.Array.!"), leaf_sequences.ref(*p), 0};
+            expression_ref seq2 = {var("Data.Array.!"), leaf_sequences.ref(*p), 1};
             expression_ref A = {var("Data.Array.!"), as.ref(*p), 0};
             expression_ref P = {var("Data.Array.!"), transition_ps, 0};
             expression_ref f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
@@ -523,7 +521,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         auto t = p->my_tree();
         auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
         Box<alignment> AAA = AA;
-        cl_index = p->add_compute_expression({var("SModel.Likelihood.cached_conditional_likelihoods_SEV"),t,seqs_array,*a,transition_ps,f,AAA});  // Create and set conditional likelihoods for each branch
+        cl_index = p->add_compute_expression({var("SModel.Likelihood.cached_conditional_likelihoods_SEV"),t,leaf_sequences.ref(*p),*a,transition_ps,f,AAA});  // Create and set conditional likelihoods for each branch
         auto cls = cl_index.ref(*p);
         for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
             conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cls,b});
@@ -533,8 +531,8 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         // FIXME: broken for fixed alignments of 2 sequences.
         if (p->t().n_nodes() == 2)
         {
-            expression_ref seq1 = {var("Data.Array.!"), seqs_array, 0};
-            expression_ref seq2 = {var("Data.Array.!"), seqs_array, 1};
+            expression_ref seq1 = {var("Data.Array.!"), leaf_sequences.ref(*p), 0};
+            expression_ref seq2 = {var("Data.Array.!"), leaf_sequences.ref(*p), 1};
             expression_ref A = {var("Data.Array.!"), as.ref(*p), 0};
             expression_ref P = {var("Data.Array.!"), transition_ps, 0};
             expression_ref f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
