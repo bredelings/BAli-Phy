@@ -417,15 +417,15 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     // This would be like what we get when we start with a line graph for each sequence and then begin
     // merging columns.
 
-    expression_ref partition = {var("Data.List.!!"), {var("BAliPhy.ATModel.partitions"),p->my_atmodel()}, i};
+    expression_ref partition = {var("Data.List.!!"), {var("BAliPhy.ATModel.partitions"), p->my_atmodel()}, i};
 
     //  const int n_states = state_letters().size();
-    int scale_index = *p->scale_index_for_partition(i);
     int smodel_index = *p->smodel_index_for_partition(i);
     auto imodel_index = p->imodel_index_for_partition(i);
 
     // R1. Add method indices for calculating transition matrices.
-    auto transition_ps = p->get_expression(p->PC->branch_transition_p_indices(scale_index, smodel_index));
+    expression_ref transition_ps = {var("BAliPhy.ATModel.DataPartition.transition_ps"), partition};
+
     for(int b=0;b<B;b++)
         transition_p_method_indices.push_back( p->add_compute_expression( {var("Data.Array.!"), transition_ps, b} ) );
 
@@ -1500,6 +1500,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
             maybe_hmms   = {Just, hmms};
         }
 
+        // transition_ps
         expression_ref transition_ps = {var("SModel.transition_p_index"), tree_var, smodel, branch_categories, distances};
 
         // P5.I Register array of leaf sequences
