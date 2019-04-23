@@ -1179,12 +1179,6 @@ expression_ref Parameters::my_variable_alignment() const
     return PC->variable_alignment.ref(*this);
 }
 
-expression_ref Parameters::my_imodels() const
-{
-    assert(PC);
-    return PC->imodels_param.ref(*this);
-}
-
 expression_ref Parameters::heat_exp() const
 {
     assert(PC);
@@ -1578,9 +1572,6 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         PC->SModels.push_back( smodel_methods( smodel, *this) );
     }
 
-    // R4. Register an array of indel models
-    PC->imodels_param = add_compute_expression({var("Data.Array.listArray'"), {var("BAliPhy.ATModel.imodels"), my_atmodel()}});
-  
     // don't constrain any branch lengths
     for(int b=0;b<PC->TC.n_branches();b++)
         PC->TC.branch(b).set_length(-1);

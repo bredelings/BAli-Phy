@@ -370,8 +370,6 @@ public:
     // void
     expression_ref my_tree() const;
     // void
-    expression_ref my_imodels() const;
-    // void
     expression_ref my_atmodel() const;
 
     // bool
