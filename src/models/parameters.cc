@@ -1456,7 +1456,8 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
 
     // P5. Branch categories
-    expression_ref branch_categories = { var("Data.List.map"), var("Parameters.modifiable"), {var("Data.List.replicate"), B, 0} };
+    var branch_categories("branch_categories");
+    program.let(branch_categories, { var("Data.List.map"), var("Parameters.modifiable"), {var("Data.List.replicate"), B, 0} });
 
     // P6. Create objects for data partitions
     vector<expression_ref> partitions;
@@ -1585,8 +1586,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         PC->TC.branch(b).set_length(-1);
 
     // R5. Register branch categories
-    branch_categories = {var("BAliPhy.ATModel.branch_categories"), my_atmodel()};
-    PC->branch_categories = get_params_from_list(this, branch_categories);
+    PC->branch_categories = get_params_from_list(this, {var("BAliPhy.ATModel.branch_categories"), my_atmodel()});
     assert(PC->branch_categories.size() == B);
 
     // create data partitions
