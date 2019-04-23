@@ -1329,6 +1329,16 @@ The main problems with this approach are:
   + alternatively, we could do a sample_with_initial_value.
  */
 
+vector<param> get_params_from_list(context* C, const expression_ref& list)
+{
+    vector<param> params;
+    expression_ref structure = C->evaluate_expression({var("Parameters.maybe_modifiable_structure"), list});
+    auto vec = *list_to_evector(structure);
+    for(auto& e: vec)
+        params.push_back( get_param(*C, e) );
+    return params;
+}
+
 Parameters::Parameters(const std::shared_ptr<module_loader>& L,
                        const vector<alignment>& A, const SequenceTree& tt,
                        const vector<model_t>& SMs,
@@ -1451,7 +1461,10 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     }
 
 
-    // P5. Create objects for data partitions
+    // P5. Branch categories
+    expression_ref branch_categories = { var("Data.List.map"), var("Parameters.modifiable"), {var("Data.List.replicate"), B, 0} };
+
+    // P6. Create objects for data partitions
     vector<expression_ref> partitions;
     for(int i=0; i < A.size(); i++)
     {
@@ -1487,6 +1500,8 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
             maybe_hmms   = {Just, hmms};
         }
 
+        expression_ref transition_ps = {var("SModel.transition_p_index"), tree_var, smodel, branch_categories, distances};
+
         // P5.I Register array of leaf sequences
         auto leaf_sequences = alignment_letters(*alignments[i], tt.n_leaves());
 
@@ -1505,14 +1520,14 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
         expression_ref alignments = {var("Data.Array.listArray'"), {var("Data.List.map"),var("Parameters.modifiable"),initial_alignments_exp}};
 
-        partitions.push_back({var("BAliPhy.ATModel.DataPartition.Partition"), smodel, maybe_imodel, scale, tree_var, leaf_seqs_array.ref(*this), alignments, maybe_hmms, 0});
+        partitions.push_back({var("BAliPhy.ATModel.DataPartition.Partition"), smodel, maybe_imodel, scale, tree_var, leaf_seqs_array.ref(*this), alignments, maybe_hmms, transition_ps, 0});
     }
 
 
     // We haven't done the observe's yet, though.
     expression_ref program_exp = program.finish_return(
         Tuple(
-            {var("BAliPhy.ATModel.ATModel"), tree_var, get_list(smodels), get_list(imodels), get_list(scales), branch_lengths, get_list(partitions)},
+            {var("BAliPhy.ATModel.ATModel"), tree_var, get_list(smodels), get_list(imodels), get_list(scales), branch_lengths, branch_categories, get_list(partitions)},
             get_list(program_loggers))
         );
     
@@ -1574,7 +1589,12 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     for(int b=0;b<PC->TC.n_branches();b++)
         PC->TC.branch(b).set_length(-1);
 
-    // R5. Register D[b,s] = T[b]*scale[s]
+    // R5. Register branch categories
+    branch_categories = {var("BAliPhy.ATModel.branch_categories"), my_atmodel()};
+    PC->branch_categories = get_params_from_list(this, branch_categories);
+    assert(PC->branch_categories.size() == B);
+
+    // R6. Register D[b,s] = T[b]*scale[s]
     // R7. Register array of arrays to lookup D[s][b]
     expression_ref substitutionBranchLengthsList;
     vector<expression_ref> SBLL;
@@ -1594,16 +1614,6 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     PC->substitution_branch_lengths_param = add_compute_expression({var("Data.Array.listArray'"),{var("Prelude.fmap"),var("Data.Array.listArray'"),substitutionBranchLengthsList}});
 
-    // R6. Register branch categories
-    vector<expression_ref> branch_categories;
-    for(int b=0;b<t().n_branches();b++)
-    {
-        auto c = new_modifiable(0);
-        PC->branch_categories.push_back(c);
-        branch_categories.push_back(c.ref(*this));
-    }
-    expression_ref branch_cat_list = get_expression( add_compute_expression( (get_list(branch_categories) ) ) );
-
     // R8. register the cached transition_p indices
     PC->branch_transition_p_indices.resize(n_branch_scales(), n_smodels());
     for(int s=0;s < n_branch_scales(); s++)
@@ -1615,7 +1625,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         for(int m=0;m < n_smodels(); m++)
         {
             expression_ref S = get_expression(PC->SModels[m].main);
-            PC->branch_transition_p_indices(s,m) = add_compute_expression({var("SModel.transition_p_index"), my_tree(), S, branch_cat_list, DL});
+            PC->branch_transition_p_indices(s,m) = add_compute_expression({var("SModel.transition_p_index"), my_tree(), S, branch_categories, DL});
         }
     }
 
