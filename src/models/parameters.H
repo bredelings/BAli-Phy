@@ -247,10 +247,6 @@ struct parameters_constants: public Object
     int n_scales;
     std::vector<param> branch_scales_;
 
-    param substitution_branch_lengths_param;
-
-    matrix<int> branch_transition_p_indices;
-
     /// Do we have an Exponential (0) or Gamma-0.5 (1) prior on branch lengths?
     int branch_prior_type = 0;
 
@@ -375,8 +371,6 @@ public:
     expression_ref my_tree() const;
     // void
     expression_ref my_imodels() const;
-    // void
-    expression_ref my_substitution_branch_lengths() const;
     // void
     expression_ref my_atmodel() const;
 

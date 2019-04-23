@@ -1185,12 +1185,6 @@ expression_ref Parameters::my_imodels() const
     return PC->imodels_param.ref(*this);
 }
 
-expression_ref Parameters::my_substitution_branch_lengths() const
-{
-    assert(PC);
-    return PC->substitution_branch_lengths_param.ref(*this);
-}
-
 expression_ref Parameters::heat_exp() const
 {
     assert(PC);
@@ -1594,41 +1588,6 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     branch_categories = {var("BAliPhy.ATModel.branch_categories"), my_atmodel()};
     PC->branch_categories = get_params_from_list(this, branch_categories);
     assert(PC->branch_categories.size() == B);
-
-    // R6. Register D[b,s] = T[b]*scale[s]
-    // R7. Register array of arrays to lookup D[s][b]
-    expression_ref substitutionBranchLengthsList;
-    vector<expression_ref> SBLL;
-    for(int s=0;s<n_branch_scales();s++)
-    {
-        expression_ref scale = branch_scale(s).ref(*this);
-        vector<expression_ref> D;
-        for(int b=0;b<t().n_branches();b++)
-        {
-            expression_ref length = get_expression(TC->branch_duration_index[b]);
-            param distance = add_compute_expression( {var("Compiler.Num.*"),scale,length} );
-            D.push_back( distance.ref(*this));
-        }
-        SBLL.push_back(get_list(D));
-    }
-    substitutionBranchLengthsList = get_list(SBLL);
-
-    PC->substitution_branch_lengths_param = add_compute_expression({var("Data.Array.listArray'"),{var("Prelude.fmap"),var("Data.Array.listArray'"),substitutionBranchLengthsList}});
-
-    // R8. register the cached transition_p indices
-    PC->branch_transition_p_indices.resize(n_branch_scales(), n_smodels());
-    for(int s=0;s < n_branch_scales(); s++)
-    {
-        // Better yet, make a substitutionBranchLengths!scale!branch that can be referenced elsewhere.
-        expression_ref DL = {var("Data.Array.!"), my_substitution_branch_lengths(), s};
-
-        // Here, for each (scale,model) pair we're construction a function from branches -> Vector<transition matrix>
-        for(int m=0;m < n_smodels(); m++)
-        {
-            expression_ref S = get_expression(PC->SModels[m].main);
-            PC->branch_transition_p_indices(s,m) = add_compute_expression({var("SModel.transition_p_index"), my_tree(), S, branch_categories, DL});
-        }
-    }
 
     // create data partitions
 
