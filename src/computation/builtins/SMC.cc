@@ -622,6 +622,25 @@ void smc_group(vector<double>& L, vector<double>& L2, int& scale, const vector<E
     }
 }
 
+vector<pair<double,int>> compress_states(const vector<int>& states, const vector<double>&t)
+{
+    assert(states.size() == t.size());
+
+    int last_state = -1;
+    vector<pair<double,int>> state_regions;
+    for(int i=0;i<states.size();i++)
+    {
+        if (states[i] != last_state)
+        {
+            last_state = states[i];
+            state_regions.push_back({t[i],1});
+        }
+        else
+            state_regions.back().second++;
+    }
+    return state_regions;
+}
+
 typedef double smc_tree;
 
 vector<pair<smc_tree,int>> smc_trace(double rho_over_theta, vector<double> coalescent_rates, vector<double> level_boundaries, const alignment& A)
@@ -717,19 +736,7 @@ vector<pair<smc_tree,int>> smc_trace(double rho_over_theta, vector<double> coale
 
     std::reverse(states.begin(), states.end());
 
-    int last_state = -1;
-    vector<pair<double,int>> state_regions;
-    for(int i=0;i<states.size();i++)
-    {
-        if (states[i] != last_state)
-        {
-            last_state = states[i];
-            state_regions.push_back({bin_times[i],1});
-        }
-        else
-            state_regions.back().second++;
-    }
-    return state_regions;
+    return compress_states(states, bin_times);
 }
 
 log_double_t smc(double rho_over_theta, vector<double> coalescent_rates, vector<double> level_boundaries, const alignment& A)
