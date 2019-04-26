@@ -1,5 +1,6 @@
 module Prelude (module Prelude,
                 module Data.Bool,
+                module Data.Eq,
                 module Data.Tuple,
                 module Data.Maybe,
                 module Data.List,
@@ -19,6 +20,7 @@ import Compiler.Num
 import Compiler.Real
 import Compiler.Enum
 import Data.Bool
+import Data.Eq
 import Data.Tuple
 import Data.Maybe
 import Data.List
@@ -28,10 +30,7 @@ import Data.Ord
 import Control.Monad
 import Foreign.Vector
 
-infix 4 ==, /=
-
 builtin reapply 2 "reapply" "Prelude"
-builtin builtin_equals 2 "recursive_equals" "Prelude"
 builtin iotaUnsigned 1 "iotaUnsigned" "Prelude"
 builtin builtin_putStrLn 1 "putStrLn" "Prelude"
 
@@ -45,16 +44,6 @@ builtin c_pair' 2 "c_pair" "Pair"
 builtin builtin_show 1 "show" "Prelude"
 builtin builtin_read_int 1 "read_int" "Prelude"
 builtin builtin_read_double 1 "read_double" "Prelude"
-
-(x:xs) == (y:ys) = (x==y) && (xs == ys)
-(_:_)  == _      = False
-_      == (_:_)  = False
-[]     == []     = True
-[]     == _      = False
-_      == []     = False
-x      == y      = builtin_equals x y
-
-x /= y = not (x == y)
 
 fmap = map
 
