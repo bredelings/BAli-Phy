@@ -31,8 +31,7 @@ import Foreign.Vector
 infix 4 ==, /=
 
 builtin reapply 2 "reapply" "Prelude"
-builtin builtin_equals 2 "equals" "Prelude"
-builtin /= 2 "notequals" "Prelude"
+builtin builtin_equals 2 "recursive_equals" "Prelude"
 builtin iotaUnsigned 1 "iotaUnsigned" "Prelude"
 builtin builtin_putStrLn 1 "putStrLn" "Prelude"
 
@@ -54,6 +53,8 @@ _      == (_:_)  = False
 []     == _      = False
 _      == []     = False
 x      == y      = builtin_equals x y
+
+x /= y = not (x == y)
 
 fmap = map
 

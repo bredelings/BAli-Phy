@@ -6,6 +6,7 @@
 #include "computation/operations.H"
 #include "vector_from_list.H"
 #include "util/string/convert.H"
+#include "computation/machine/graph_register.H"
 
 using boost::dynamic_pointer_cast;
 using std::string;
@@ -245,38 +246,46 @@ extern "C" closure builtin_function_negate(OperationArgs& Args)
 	throw myexception()<<"Negate: object '"<<x.print()<<"' is not double, int, or char'";
 }
 
-extern "C" closure builtin_function_equals(OperationArgs& Args)
+expression_ref recursive_equals(OperationArgs& Args, int r1, int r2)
 {
-    auto x = Args.evaluate(0);
-    auto y = Args.evaluate(1);
-  
-    if (x.is_double())
-	return {x.as_double() == y.as_double()};
-    else if (x.is_int())
-	return {x.as_int() == y.as_int()};
-    else if (x.is_log_double())
-	return {x.as_log_double() == y.as_log_double()};
-    else if (x.is_char())
-	return {x.as_char() == y.as_char()};
-    else
-	throw myexception()<<"==: object '"<<x.print()<<"' is not double, int, log_double, or char'";
+    Args.stack_push(r1);
+    Args.stack_push(r2);
+
+    auto do_return = [&](bool b){
+                         Args.stack_pop(r2);
+                         Args.stack_pop(r1);
+                         return b;
+                     };
+
+    // 0. We aren't going to record any uses or forces.  We just want to extract information.
+    reg_heap& M = Args.memory();
+
+    // 1. First evaluate the regs.  This will yield not any index_vars.
+    auto [r1e, value1] = M.incremental_evaluate(r1);
+    auto [r2e, value2] = M.incremental_evaluate(r2);
+
+    // 2. Then check if the two expressions have a different head.
+    if (M[value1].exp.head() != M[value2].exp.head()) return do_return(false);
+    assert(is_constructor_exp(M[value1].exp.size() == M[value2].exp.size()));
+
+    for(int i=0;i<M[value1].exp.size();i++)
+    {
+        assert(i >0 or is_constructor_exp(M[value1].exp));
+
+        int arg1 = M[value1].reg_for_slot(i);
+        int arg2 = M[value2].reg_for_slot(i);
+        if (not recursive_equals(Args, arg1, arg2)) return do_return(false);
+    }
+
+    return do_return(true);
 }
 
-extern "C" closure builtin_function_notequals(OperationArgs& Args)
+extern "C" closure builtin_function_recursive_equals(OperationArgs& Args)
 {
-    auto x = Args.evaluate(0);
-    auto y = Args.evaluate(1);
-  
-    if (x.is_double())
-	return {x.as_double() != y.as_double()};
-    else if (x.is_int())
-	return {x.as_int() != y.as_int()};
-    else if (x.is_log_double())
-	return {x.as_log_double() != y.as_log_double()};
-    else if (x.is_char())
-	return {x.as_char() != y.as_char()};
-    else
-	throw myexception()<<"/=: object '"<<x.print()<<"' is not double, int, log_double, or char'";
+    auto r1 = Args.evaluate_slot_to_reg(0);
+    auto r2 = Args.evaluate_slot_to_reg(1);
+
+    return recursive_equals(Args, r1, r2);
 }
 
 extern "C" closure builtin_function_greaterthan(OperationArgs& Args)
