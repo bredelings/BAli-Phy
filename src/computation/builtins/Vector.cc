@@ -193,3 +193,27 @@ extern "C" closure builtin_function_get_vector_index(OperationArgs& Args)
     return v[i];
 }
 
+extern "C" closure builtin_function_list_to_vector(OperationArgs& Args)
+{
+    object_ptr<EVector> v (new EVector);
+
+    const closure* top = &Args.evaluate_slot_to_closure(0);
+    while(top->exp.size())
+    {
+	assert(has_constructor(top->exp,":"));
+	assert(top->exp.size() == 2);
+
+	int element_reg = top->reg_for_slot(0);
+
+	int next_reg = top->reg_for_slot(1);
+
+	// Add the element to the list.
+	v->push_back( Args.evaluate_reg_to_object(element_reg) );
+	// Move to the next element or end
+	top = &Args.evaluate_reg_to_closure(next_reg);
+    }
+    assert(has_constructor(top->exp,"[]"));
+
+    return v;
+}
+

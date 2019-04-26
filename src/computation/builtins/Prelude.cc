@@ -79,30 +79,6 @@ extern "C" closure builtin_function_doubleToInt(OperationArgs& Args)
     return {xi};
 }
 
-extern "C" closure builtin_function_vector_from_list(OperationArgs& Args)
-{
-    object_ptr<EVector> v (new EVector);
-
-    const closure* top = &Args.evaluate_slot_to_closure(0);
-    while(top->exp.size())
-    {
-	assert(has_constructor(top->exp,":"));
-	assert(top->exp.size() == 2);
-
-	int element_reg = top->reg_for_slot(0);
-
-	int next_reg = top->reg_for_slot(1);
-
-	// Add the element to the list.
-	v->push_back( Args.evaluate_reg_to_object(element_reg) );
-	// Move to the next element or end
-	top = &Args.evaluate_reg_to_closure(next_reg);
-    }
-    assert(has_constructor(top->exp,"[]"));
-
-    return v;
-}
-
 extern "C" closure builtin_function_add(OperationArgs& Args)
 {
     auto x = Args.evaluate(0);

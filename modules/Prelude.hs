@@ -30,7 +30,6 @@ import Foreign.Vector
 
 infix 4 ==, /=
 
-builtin builtin_vector_from_list 1 "vector_from_list" "Prelude"
 builtin reapply 2 "reapply" "Prelude"
 builtin builtin_equals 2 "equals" "Prelude"
 builtin /= 2 "notequals" "Prelude"
@@ -72,8 +71,6 @@ pair_from_c p = (c_fst p, c_snd p)
 
 putStrLn line = IOAction1 builtin_putStrLn (listToString line)
 
-
-list_to_vector = builtin_vector_from_list
 
 newString s = IOAction1 builtinNewString s
 
