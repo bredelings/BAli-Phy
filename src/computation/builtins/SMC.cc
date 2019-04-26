@@ -768,7 +768,7 @@ vector<pair<smc_tree,int>> smc_trace(double rho_over_theta, vector<double> coale
     vector<double> pr = get_column(L, L.size1()-1);
     states.push_back(choose(pr));
 
-    for(int i=A.length()-2;i>=0;i++)
+    for(int i=A.length()-2;i>=0;i--)
     {
         int s2 = states.back();
         vector<double> pr = get_column(L,i);
