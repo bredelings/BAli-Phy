@@ -877,3 +877,48 @@ extern "C" closure builtin_function_smc_density(OperationArgs& Args)
 
     return { smc(rho_over_theta, coalescent_rates, level_boundaries, A) };
 }
+
+extern "C" closure builtin_function_smc_trace(OperationArgs& Args)
+{
+    double rho_over_theta = Args.evaluate(0).as_double();
+
+    auto coalescent_rates_ = Args.evaluate(1).as_<EVector>();
+
+    auto level_boundaries_ = Args.evaluate(2).as_<EVector>();
+
+    vector<double> coalescent_rates;
+    for(auto& r: coalescent_rates_)
+	coalescent_rates.push_back(r.as_double());
+
+    vector<double> level_boundaries;
+    level_boundaries.push_back(0);
+    for(auto& l: level_boundaries_)
+	level_boundaries.push_back(l.as_double());
+
+    auto a = Args.evaluate(3);
+    auto& A = a.as_<Box<alignment>>().value();
+
+    auto compressed_states = smc_trace(rho_over_theta, coalescent_rates, level_boundaries, A);
+
+    EVector ecs;
+    for(auto& [h,l]: compressed_states)
+        ecs.push_back(EPair(h,l));
+
+    return { ecs };
+}
+
+extern "C" closure builtin_function_trace_to_trees(OperationArgs& Args)
+{
+    auto trace = Args.evaluate(0).as_<EVector>();
+
+    std::ostringstream s;
+
+    for(auto& epair: trace)
+    {
+        auto height =  epair.as_<EPair>().first.as_double();
+        auto length =  epair.as_<EPair>().second.as_int();
+        s<<"["<<length<<"](1:"<<height<<",2:"<<height<<");";
+    }
+
+    return { String(s.str()) };
+}
