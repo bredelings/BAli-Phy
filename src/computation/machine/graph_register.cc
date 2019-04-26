@@ -1089,6 +1089,27 @@ int reg_heap::add_program(const expression_ref& E)
     return *program_result_head;
 }
 
+void reg_heap::stack_push(int r)
+{
+    stack.push_back(r);
+}
+
+void reg_heap::stack_pop(int r)
+{
+    int r2 = stack_pop();
+    if (r != r2)
+        throw myexception()<<"Trying to pop reg "<<r<<" but got reg "<<r2<<"!";
+}
+
+int reg_heap::stack_pop()
+{
+    if (stack.empty())
+        throw myexception()<<"Trying to pop an empty stack!";
+    int r = stack.back();
+    stack.pop_back();
+    return r;
+}
+
 int reg_heap::set_head(int index, int R2)
 {
     int R1 = heads[index];

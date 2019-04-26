@@ -187,6 +187,10 @@ public:
     // the list of regs that are currently being evaluated
     std::vector<int> stack;
 
+    void stack_push(int r);
+    void stack_pop(int r);
+    int stack_pop();
+
     // a list of closures under evaluation
     std::vector<closure> closure_stack;
 
