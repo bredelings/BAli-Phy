@@ -76,6 +76,21 @@ const expression_ref& OperationArgs::evaluate_(int slot)
     return evaluate_slot_to_object_(slot);
 }
 
+void OperationArgs::stack_push(int r)
+{
+    M.stack_push(r);
+}
+
+void OperationArgs::stack_pop(int r)
+{
+    M.stack_pop(r);
+}
+
+void OperationArgs::stack_pop()
+{
+    M.stack_pop();
+}
+
 int OperationArgs::allocate(closure&& C)
 {
     int r = allocate_reg();

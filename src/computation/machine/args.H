@@ -61,6 +61,12 @@ public:
 
     const expression_ref& evaluate_(int);
 
+    void stack_push(int);
+
+    void stack_pop(int);
+
+    void stack_pop();
+
     int allocate(closure&&);
 
     virtual int allocate_reg();
