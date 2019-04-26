@@ -459,7 +459,7 @@ vector<double> get_column(const Matrix& M, int i)
 {
     vector<double> v(M.size2());
     for(int j=0;j<v.size();j++)
-        v[i] = M(i,j);
+        v[j] = M(i,j);
     return v;
 }
 
