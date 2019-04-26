@@ -559,7 +559,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 //-----------------------------------------------------------------------------//
 smodel_methods::smodel_methods(const expression_ref& E, context& C)
 {
-    expression_ref V = var("Prelude.list_to_vector");
+    expression_ref V = var("Foreign.Vector.list_to_vector");
 
     main = C.add_compute_expression( E );
     expression_ref S = C.get_expression(main);
@@ -1553,7 +1553,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         for(auto b: branch_list)
             branch_list_.push_back(b);
 
-        auto b2 = (vector<int>) evaluate_expression( {var("Prelude.list_to_vector"),{var("Tree.edgesBeforeEdge"),my_tree(),b}}).as_<EVector>();
+        auto b2 = (vector<int>) evaluate_expression( {var("Foreign.Vector.list_to_vector"),{var("Tree.edgesBeforeEdge"),my_tree(),b}}).as_<EVector>();
         assert(b2.size() == branch_list_.size());
         for( int i: branch_list_)
             assert(includes(b2,i));
