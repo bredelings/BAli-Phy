@@ -1,5 +1,7 @@
 module Data.JSON where
 
+import Data.Text as T
+
 builtin c_json 1 "c_json" "Foreign"
 
 -- Hmm... it doesn't look like we can have a JSON object, just JSON representation, because a JSON object would have to have existential type fields.
@@ -12,6 +14,7 @@ json_to_string (Object x) = "{"++ intercalate ", " ["\""++key++"\": "++json_to_s
 json_to_string (Number x) = show x
 json_to_string (Bool True) = "true"
 json_to_string (Bool False) = "false"
+json_to_string (String (Text s)) = "\""++unpack s++"\""
 json_to_string (String x) = "\""++x++"\""
 json_to_string (Null) = "null"
 
