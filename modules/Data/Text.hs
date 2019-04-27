@@ -8,7 +8,7 @@ data Text = Text CppString
 
 builtin builtin_pack 1 "pack" "Text"
 
-pack = builtin_pack . list_to_vector
+pack = Text . builtin_pack . list_to_vector
 
 unpack (Text s) = unpack_cpp_string s
 
