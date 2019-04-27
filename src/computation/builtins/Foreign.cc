@@ -90,11 +90,7 @@ json to_c_json(const expression_ref& E)
 	    return false;
     }
     else if (name == "String")
-    {
-	auto& s = E.sub()[0];
-
-	return to_c_string(s.as_<EVector>());
-    }
+        return E.sub()[0].as_<String>();
     else if (name == "Array")
     {
 	auto& a = E.sub()[0];

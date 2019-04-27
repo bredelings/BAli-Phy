@@ -1,11 +1,12 @@
 module Data.JSON where
 
 import Data.Text as T
+import Foreign.String
 
 builtin c_json 1 "c_json" "Foreign"
 
 -- Hmm... it doesn't look like we can have a JSON object, just JSON representation, because a JSON object would have to have existential type fields.
-data JSON = Array [JSON] | Object [(String,JSON)] | Number a | Bool Bool | String String | Null
+data JSON = Array [JSON] | Object [(String,JSON)] | Number a | Bool Bool | String CppString | Null
 
 json_to_string (Array x) = "["++intercalate "," (map json_to_string x) ++ "]"
 -- we aren't escaping strings here...
@@ -14,13 +15,13 @@ json_to_string (Object x) = "{"++ intercalate ", " ["\""++key++"\": "++json_to_s
 json_to_string (Number x) = show x
 json_to_string (Bool True) = "true"
 json_to_string (Bool False) = "false"
-json_to_string (String (Text s)) = "\""++unpack s++"\""
-json_to_string (String x) = "\""++x++"\""
+json_to_string (String s) = "\""++unpack_cpp_string s++"\""
 json_to_string (Null) = "null"
 
 is_non_empty_string (c:cs) | is_char c = True
 is_non_empty_string _ = False
-to_json s@(c:_) | is_char c = String s
+to_json s@(c:_) | is_char c = String (pack_cpp_string s)
+to_json (Text s)            = String s
 to_json []                  = Array []
 to_json o@((key,value):kvs) | is_non_empty_string key = Object [(key,to_json value) | (key, value) <- o]
 to_json l@(_:_)             = Array [to_json x | x <- l]
