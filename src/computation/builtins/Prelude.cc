@@ -246,7 +246,7 @@ extern "C" closure builtin_function_negate(OperationArgs& Args)
 	throw myexception()<<"Negate: object '"<<x.print()<<"' is not double, int, or char'";
 }
 
-expression_ref recursive_equals(OperationArgs& Args, int r1, int r2)
+bool recursive_equals(OperationArgs& Args, int r1, int r2)
 {
     Args.stack_push(r1);
     Args.stack_push(r2);
@@ -285,7 +285,9 @@ extern "C" closure builtin_function_recursive_equals(OperationArgs& Args)
     auto r1 = Args.evaluate_slot_to_reg(0);
     auto r2 = Args.evaluate_slot_to_reg(1);
 
-    return recursive_equals(Args, r1, r2);
+    bool result = recursive_equals(Args, r1, r2);
+
+    return {expression_ref(result)};
 }
 
 extern "C" closure builtin_function_greaterthan(OperationArgs& Args)
