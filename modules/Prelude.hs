@@ -121,21 +121,3 @@ read_double [] = error "Can't convert empty string to double."
 read_double (h:t) = builtin_read_double (listToString (h:t))
 read_double s = builtin_read_double s
 
--- These should be in Data.List, but use ==
-nub = nubBy (==)
-
-nubBy eq (x:xs) = x:nubBy eq (filter (\y -> not (eq x y)) xs)
-nubBy eq [] = []
-
-infix 4 `elem`
-elem x           =  any (== x)
-
-infix 4 `notElem`
-notElem x        =  all (/= x)
-
-lookup key [] = Nothing
-lookup key ((k,v):kvs) = if (key == k) then Just v else lookup key kvs
-
-elemIndices key = findIndices (key==)
-
-elemIndex key  = listToMaybe . elemIndices key

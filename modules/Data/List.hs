@@ -4,6 +4,7 @@ module Data.List where
 import Compiler.Base
 import Compiler.Num
 import Data.Bool
+import Data.Eq
 import Data.Maybe
 import Data.Tuple
 import Data.Function
@@ -180,15 +181,14 @@ tails []     = []
 
 -- isSuffixOf
 
--- infix 4 `elem`
--- elem x           =  any (== x)
+infix 4 `elem`
+elem x           =  any (== x)
 
--- infix 4 `notElem`
--- notElem x        =  all (/= x)
+infix 4 `notElem`
+notElem x        =  all (/= x)
 
--- Data.List.lookup
--- lookup key [] = Nothing
--- lookup key ((k,v):kvs) = if (key == k) then Just v else lookup key kvs
+lookup key [] = Nothing
+lookup key ((k,v):kvs) = if (key == k) then Just v else lookup key kvs
 
 --
 
@@ -208,8 +208,10 @@ infixr 9 !!
 _     !! _ = error "Out of bounds list index!"
 
 -- elemIndex
+elemIndex key  = listToMaybe . elemIndices key
 
 -- elemIndices
+elemIndices key = findIndices (key==)
 
 -- findIndex
 findIndex p = listToMaybe . findIndices p
@@ -241,6 +243,7 @@ unzip [(x,y),l] = ([x:xs],[y:ys]) where z = unzip l
 -- unwords
 
 -- nub
+nub = nubBy (==)
 
 -- delete
 
@@ -256,7 +259,10 @@ unzip [(x,y),l] = ([x:xs],[y:ys]) where z = unzip l
 
 -- insert
 
--- nubBy
+--nubBy
+nubBy eq (x:xs) = x:nubBy eq (filter (\y -> not (eq x y)) xs)
+nubBy eq [] = []
+
 
 -- unionBy
 
