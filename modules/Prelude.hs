@@ -8,6 +8,7 @@ module Prelude (module Prelude,
                 module Data.Function,
                 module Data.Ord,
                 module Foreign.Vector,
+                module Foreign.String,
                 module Control.Monad,
                 module Compiler.Base,
                 module Compiler.Num,
@@ -29,6 +30,7 @@ import Data.Function
 import Data.Ord
 import Control.Monad
 import Foreign.Vector
+import Foreign.String
 
 builtin reapply 2 "reapply" "Prelude"
 builtin iotaUnsigned 1 "iotaUnsigned" "Prelude"
