@@ -1,5 +1,9 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-module Data.Ord where
+module Data.Ord (module Data.Ord,
+                 module Data.Eq)
+where
+
+import Data.Eq
 
 builtin > 2 "greaterthan" "Prelude"
 builtin >= 2 "greaterthanorequal" "Prelude"
