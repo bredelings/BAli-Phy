@@ -246,6 +246,25 @@ extern "C" closure builtin_function_negate(OperationArgs& Args)
 	throw myexception()<<"Negate: object '"<<x.print()<<"' is not double, int, or char'";
 }
 
+expression_ref recursive_eval(OperationArgs& Args, int r1)
+{
+    // 0. We aren't going to record any uses or forces.  We just want to extract information.
+    reg_heap& M = Args.memory();
+
+    // 1. First evaluate the regs.  This will yield not any index_vars.
+    auto [r2, value] = M.incremental_evaluate(r1);
+
+    if (M[value].exp.size() == 0) return M[value].exp;
+
+    // 2. Then check if the two expressions have a different head.
+
+    vector<expression_ref> sub;
+    for(int i=0;i<M[value].exp.size();i++)
+        sub.push_back(recursive_eval(Args, M[value].reg_for_slot(i)));
+
+    return expression_ref(M[value].exp.head(), sub);
+}
+
 bool recursive_equals(OperationArgs& Args, int r1, int r2)
 {
     Args.stack_push(r1);
