@@ -1,9 +1,13 @@
 module SMC where
 
+import Data.Text
+
 import Probability
 builtin builtin_smc_density 4 "smc_density"    "SMC"
 builtin builtin_smc_trace   4 "smc_trace"      "SMC"
-builtin trace_to_trees      1 "trace_to_trees" "SMC"
+builtin builtin_trace_to_trees      1 "trace_to_trees" "SMC"
+
+trace_to_trees = Text . builtin_trace_to_trees
 
 smc_density rho_over_theta rates level_boundaries sequences = builtin_smc_density rho_over_theta rates' level_boundaries' sequences
                                                                 where rates' = list_to_vector rates
