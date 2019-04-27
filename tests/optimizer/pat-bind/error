@@ -1,6 +1,6 @@
 size = 1   Test.#0 = 1
 size = 1   Test.#1 = 2
-size = 4   Test.#133 = \#1201 -> case #1201 of {(#1202, #1203) -> let {#1205 = Prelude:multiply #1202 #1202} in let {#1206 = []} in #1205:#1206,_ -> []}
+size = 4   Test.#133 = \#1200 -> case #1200 of {(#1201, #1202) -> let {#1204 = Prelude:multiply #1201 #1201} in let {#1205 = []} in #1204:#1205,_ -> []}
 size = 1   Test.#2 = (Test.#0, Test.#1)
 size = 1   Test.#3 = 3
 size = 1   Test.#4 = 4
