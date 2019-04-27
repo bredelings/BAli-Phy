@@ -1534,14 +1534,10 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     // R1. Register branch lengths
     TC->register_branch_lengths(this, {var("Data.Array.listArray'"),{var("BAliPhy.ATModel.branch_lengths"),my_atmodel()}});
 
-    int scales_list_index = add_compute_expression( {var("BAliPhy.ATModel.scales"),my_atmodel()} );
-    expression_ref scales_list = get_expression(scales_list_index);
+    param scales_list = add_compute_expression( {var("BAliPhy.ATModel.scales"),my_atmodel()} );
 
     // R2. Register individual scales
-    expression_ref scales_structure = evaluate_expression({var("Parameters.maybe_modifiable_structure"), scales_list});
-    auto scales_vector = *list_to_evector(scales_structure);
-    for(int i=0; i<n_branch_scales();i++)
-        PC->branch_scales_.push_back( get_param(*this, scales_vector[i] ) );
+    PC->branch_scales_ = get_params_from_list(this, scales_list.ref(*this));
 
 #ifndef NDEBUG
     evaluate_expression( {var("Tree.numNodes"), my_tree()});
