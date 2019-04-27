@@ -76,6 +76,8 @@ listToString l = runST $ do v <- newString (length l)
                             copyListToString l v 0
                             return v
 
+pack_cpp_string = listToString
+
 unsafePerformIO (IOAction1 x y ) = x y
 unsafePerformIO (IOAction2 x y z) = x y z
 unsafePerformIO (IOAction3 x y z w) = x y z w
