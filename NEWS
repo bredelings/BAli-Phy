@@ -5,26 +5,38 @@
    - Switch to c++17
  - Models
    - Add +mut_sel_aa for selection on amino-acids in codo models.
- - Haskell machine
-   + Observe lists in an efficient manner.
+ - MCMC
+   - Add move to slice sample a branch length while integrating out the alignment.
+ - Graphical models
    + Allow sampling characters on random trees (recursive, via mfix).
-   - Switch the interpreter to a lazy interpreter.
-   - Evaluate the program changeably.
-   - Sample the tree inside the machine.
-   - Make a unified program that computes an ATModel object.
-   - Do logging by computing a JSON object.
-   - Observe likelihood of sequences on tree
-   - Separate random variables from modifiables.
-   - Make modifiables evaluate to an initial value.
-   - Allow specifying modifiable structures, such as a list of modifiables.
-   - Allow sampling a random tree topology.
-   - Allow logging strings.
-   - Record force edges.
-   - Garbage-collection no longer delete steps or results.
-   - SPEED: inline mapping routines
-   - SPEED: unshare_regs: move loop over created_regs out of loop on results
-   - SPEED: unshare_regs: don't unshare constants and index_vars
-   - FIX graphviz description of graph by using HTML records.
+   - Interpreter
+     - Evaluate the program changeably.
+     - Switch the interpreter to a lazy interpreter.
+     - Separate random variables from modifiables.
+       - Make modifiables evaluate to an initial value.
+       - Allow specifying modifiable *structures*, such as a list of modifiables.
+     - Allow sampling a random tree topology.
+     - Observe likelihood of sequences on tree.
+     - Sample the tree inside the machine.
+     + Observe lists in an efficient manner.
+   - bali-phy program
+     - Make a unified program that computes an ATModel object.
+     0 Use param objects to record compute expressions.
+     0 New c++ class do_block to generate Haskell code.
+   - Logging
+     - Do logging by computing a JSON object.
+     - Allow logging strings.
+   - Virtual machine
+     - Record force edges.
+     - Garbage-collection no longer deletes steps or results.
+     - SPEED: inline mapping routines
+     - SPEED: unshare_regs: move loop over created_regs out of loop on results
+     - SPEED: unshare_regs: don't unshare constants and index_vars
+     - FIX graphviz description of graph by using HTML records.
+   - Haskell modules
+     - New Data.Eq module.
+     - New Data.Text module.
+     0 Move Distributions to Probability.Distribution.name modules.
  - Docs
    - Split up developer docs.
  - Help
