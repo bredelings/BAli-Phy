@@ -211,7 +211,7 @@ extern "C" closure builtin_function_ewens_sampling_mixture_probability(Operation
     return {Pr};
 }
 
-// The probability should be theta/(theta+total) is its new, and n/(theta+total) otherwise.
+// The probability should be theta/(theta+total) if it is new, and n/(theta+total) otherwise.
 // Here the total and the count do not include the current allele;
 double process_allele(int& count, int& total, int& n_theta_pow, double theta)
 {
