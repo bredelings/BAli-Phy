@@ -4,6 +4,7 @@ import Probability
 import Range
 
 builtin builtin_read_phase_file 1 "read_phase_file" "PopGen"
+builtin builtin_read_phase2_file 1 "read_phase2_file" "PopGen"
 builtin remove_2nd_allele 1 "remove_2nd_allele" "PopGen"
 builtin allele_frequency_spectrum 1 "allele_frequency_spectrum" "PopGen"
 builtin ewens_sampling_group_probability 2 "ewens_sampling_group_probability" "PopGen"
@@ -12,6 +13,8 @@ builtin builtin_ewens_sampling_mixture_probability 3 "ewens_sampling_mixture_pro
 builtin builtin_selfing_coalescence_probability 3 "selfing_coalescence_probability" "PopGen"
 
 read_phase_file filename = map list_from_vector $ list_from_vector $ builtin_read_phase_file $ listToString filename
+
+read_phase2_file filename = map list_from_vector $ list_from_vector $ builtin_read_phase2_file $ listToString filename
 
 ewens_sampling_mixture_probability thetas ps x = builtin_ewens_sampling_mixture_probability (list_to_vector thetas) (list_to_vector ps) x
 
