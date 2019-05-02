@@ -48,6 +48,7 @@ sample_with_initial_value dist value = SampleWithInitialValue dist value
 observe = Observe
 liftIO = LiftIO
 random = Lazy
+block  = Strict
 
 log_all loggers = (Nothing,loggers)
 
