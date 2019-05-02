@@ -562,7 +562,7 @@ sub is_new_version
     return 1 if (!is_package_installed($name));
 
     my $installed_version = get_package_version($name);
-    return (version->parse($version) > version->parse($installed_version));
+    return (version->declare("v".$version) > version->declare("v".$installed_version));
 }
 
 
