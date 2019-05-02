@@ -6,17 +6,46 @@
 #include "computation/machine/args.H"
 #include "util/io.H"
 #include "util/string/split.H"
+#include "util/string/strip.H"
 
 using std::string;
 using std::vector;
 using std::map;
 
-template <typename T> 
-T get_line_of(std::istream& i)
+// Remove anything after '#' (inclusive), but don't remove a '#' in column 0.
+string phase_remove_comment(const string& line)
+{
+    if (line.size() == 0) return line;
+
+    if (auto pos = line.find('#',1); pos != string::npos)
+        return line.substr(0,pos);
+
+    return line;
+}
+
+string get_phase_line(std::istream& i)
 {
     string line;
     portable_getline(i, line);
-    return convertTo<T>(line);
+
+    // If the read operation failed, throw an exception.
+    // -> It would be nice to mention the line number and filename.
+    if (not i)
+        throw myexception()<<"Failure reading line of Phase file";
+
+    // Remove comments
+    line = phase_remove_comment(line);
+
+    // Remove terminal whitespace
+    line = rstrip(line," \t");
+
+    return line;
+}
+
+template <typename T> 
+T get_line_of(std::istream& i)
+{
+    return convertTo<T>( get_phase_line( i ) );
 }
 
 // I think this is the format for PHASE version 1.
@@ -33,8 +62,7 @@ extern "C" closure builtin_function_read_phase_file(OperationArgs& Args)
     int n_loci = get_line_of<int>(phase_file);
 
     // Line 3
-    string line;
-    portable_getline(phase_file, line);
+    string line = get_phase_line(phase_file);
 
     if (line.size() != n_loci)  throw myexception()<<"Loci description has "<<line.size()<<" loci, but header says there are "<<n_loci<<".";
 
@@ -47,7 +75,7 @@ extern "C" closure builtin_function_read_phase_file(OperationArgs& Args)
     vector<vector<int>> matrix;
     for(int i=0;i<n_individuals;i++)
     {
-	portable_getline(phase_file, line);
+	line = get_phase_line(phase_file);
 	vector<string> words = split(line, '\t');
 	string individual_name = words[0];
 	words.erase(words.begin());
