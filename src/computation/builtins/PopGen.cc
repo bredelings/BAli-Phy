@@ -19,11 +19,130 @@ T get_line_of(std::istream& i)
     return convertTo<T>(line);
 }
 
+// I think this is the format for PHASE version 1.
 extern "C" closure builtin_function_read_phase_file(OperationArgs& Args)
 {
     const string& filename = Args.evaluate(0).as_<String>();
 
-    checked_ifstream phase_file(filename,"PHASE Input file");
+    checked_ifstream phase_file(filename,"PHASE v1 Input file");
+
+    // Line 1
+    int n_individuals = get_line_of<int>(phase_file);
+
+    // Line 2
+    int n_loci = get_line_of<int>(phase_file);
+
+    // Line 3
+    string line;
+    portable_getline(phase_file, line);
+
+    if (line.size() != n_loci)  throw myexception()<<"Loci description has "<<line.size()<<" loci, but header says there are "<<n_loci<<".";
+
+    for(int i=0;i<line.size();i++)
+	if (line[i] != 'M')
+	    throw myexception()<<"Locus "<<i+1<<" is not a microsatellite locus!";
+
+    // Lines 4- for each individual.
+    // Indexed by matrix[k][l]
+    vector<vector<int>> matrix;
+    for(int i=0;i<n_individuals;i++)
+    {
+	portable_getline(phase_file, line);
+	vector<string> words = split(line, '\t');
+	string individual_name = words[0];
+	words.erase(words.begin());
+	vector<int> loci;
+	for(const auto& word: words)
+	{
+	    if (word == "NA")
+	    {
+		loci.push_back(-1);
+		continue;
+	    }
+
+	    int allele = convertTo<int>(word);
+	    if (allele <= 0)
+		throw myexception()<<"read_phase_file: Allele values must be > 0, but read allele '"<<allele<<"'!\n  Use \"NA\" to indicate missing data.";
+
+	    loci.push_back(allele);
+	}
+	if (loci.size() != 2*n_loci)
+	    throw myexception()<<"Reading file '"<<filename<<"': expecting "<<2*n_loci<<" alleles for individual '"<<individual_name<<"', but actually got "<<loci.size()<<".";
+	matrix.push_back(loci);
+    }
+
+    assert(matrix[0].size() == 2*n_loci);
+
+    EVector result;
+    for(int l=0;l<n_loci;l++)
+    {
+	EVector locus;
+	for(int i=0;i<n_individuals;i++) {
+	    locus.push_back(matrix[i][2*l]);
+	    locus.push_back(matrix[i][2*l+1]);
+	}
+	result.push_back(locus);
+    }
+
+    return result;
+}
+
+/* Sample fastPhase 1.4
+// http://scheet.org/code/fastphase_doc_1.4.pdf
+
+no.individuals
+no.SNPsites
+P pos(1) pos(2) ... pos(no.SNPsites) <optional line>
+SSS...SSS <optional line>
+ID (1)
+genotypes(1-a)
+genotypes(1-b)
+ID (2)
+genotypes(2-a)
+genotypes(2-b)
+...
+ID (no.individuals)
+genotypes(no.individuals-a)
+genotypes(no.individuals-b)
+
+
+3
+4
+# id 1
+1a11
+0t01
+# id 2
+1t11
+0a00
+# id 3
+?a01
+?t10
+*/
+
+/* Sample Phase v2.1 format
+// http://stephenslab.uchicago.edu/assets/software/phase/instruct2.1.pdf
+
+3
+5
+P 300 1313 1500 2023 5635
+MSSSM
+#1
+12 1 0 1 3
+11 0 1 0 3
+#2
+12 1 1 1 2
+12 0 0 0 3
+#3
+-1 ? 0 0 2
+-1 ? 1 1 13
+*/
+
+// For Phase v2, I'm only going to implement SNP sites for now.
+extern "C" closure builtin_function_read_phase2_file(OperationArgs& Args)
+{
+    const string& filename = Args.evaluate(0).as_<String>();
+
+    checked_ifstream phase_file(filename,"PHASE v2 Input file");
 
     // Line 1
     int n_individuals = get_line_of<int>(phase_file);
