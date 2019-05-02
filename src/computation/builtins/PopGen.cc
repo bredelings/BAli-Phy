@@ -276,7 +276,7 @@ extern "C" closure builtin_function_read_phase2_file(OperationArgs& Args)
     if (log_verbose) std::cerr<<"read_phase2_file: "<<n_loci<<" loci\n";
 
     // POSITIONS (line 3 - optional)
-    string line = get_phase_line(phase_file);
+    string line;
     if (int c = phase_file.peek(); c == 'P')
     {
         line = get_phase_line(phase_file);
