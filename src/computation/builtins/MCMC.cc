@@ -159,7 +159,7 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
 
 extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Args)
 {
-    assert(not Args.evaluate_changeables());
+//    assert(not Args.evaluate_changeables());
 
     int R = Args.reg_for_slot(0);
 
