@@ -48,4 +48,4 @@ modifiable_tree_pdf n value rv = let mod v = rv `seq` modifiable v
                                      tree = modifiable_tree mod value
                                  in (tree, uniform_topology_pr n)
 
-uniform_topology n = Distribution (\tree-> uniform_topology_pr n) (no_quantile "uniform_topology") (RandomStructureAndPDF (modifiable_tree_pdf n) (random_tree n)) (TreeRange n)
+uniform_topology n = Distribution (\tree-> [uniform_topology_pr n]) (no_quantile "uniform_topology") (RandomStructureAndPDF (modifiable_tree_pdf n) (random_tree n)) (TreeRange n)
