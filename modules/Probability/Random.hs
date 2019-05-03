@@ -164,7 +164,7 @@ log_to_json loggers = J.Object $ concatMap log_to_json_one loggers
 
 -- Define some helper functions
 no_quantile name = error ("Distribution '"++name++"' has no quantile function")
-make_densities density = \x -> [density x]
+make_densities density x = [density x]
 
 pair_apply f (x:y:t) = f x y : pair_apply f t
 pair_apply _ t       = t
