@@ -49,6 +49,7 @@ observe = Observe
 liftIO = LiftIO
 random = Lazy
 block  = Strict
+add_move = AddMove
 
 log_all loggers = (Nothing,loggers)
 
