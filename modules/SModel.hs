@@ -181,7 +181,7 @@ mut_sel' w' q0 = mut_sel w q0 where
 
 mut_sel_aa ws q@(ReversibleMarkov codon_a _ _ _ _ _ _) = mut_sel (aa_to_codon codon_a ws) q
 
-mut_sel_aa' ws' q0 = mut_sel ws q0 where
+mut_sel_aa' ws' q0 = mut_sel_aa ws q0 where
     ws = get_ordered_elements (alphabet_letters amino_alphabet) ws' "fitnesses"
     codon_alphabet = getAlphabet q0
     amino_alphabet = getAminoAcids codon_alphabet
