@@ -28,8 +28,7 @@ vector<sequence> load_sequences_with_range(const string& filename, const string&
 {
     vector<sequence> sequences = sequence_format::load_from_file(filename);
 
-    if (not range.empty())
-	sequences = select(sequences, range);
+    sequences = select(sequences, range);
 
     return sequences;
 }
