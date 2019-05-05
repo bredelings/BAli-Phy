@@ -38,6 +38,7 @@ using std::string;
 using std::vector;
 using std::pair;
 using std::optional;
+using std::map;
 
 /// Replace negative or zero branch lengths with saner values.
 void sanitize_branch_lengths(SequenceTree& T)
@@ -590,13 +591,31 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     vector<alignment> A(alignment_files.size());
 
     // 3. -- load alignments for SPECIFIED and UNSPECIFIED alphabets
-    for(int i=0;i<alignment_files.size();i++)
     {
-        auto [filename, range] = alignment_files[i];
-        A[i] = load_alignment_with_range(filename, range, alphabet_names[i]);
+        map<string,vector<sequence>> sequences_for_filename;
+        for(auto& [filename, range]: alignment_files)
+            if (not sequences_for_filename.count(filename))
+                sequences_for_filename[filename] = sequence_format::load_from_file(filename);
 
-        if (alphabet_names[i].empty())
-            alphabet_names[i] = A[i].get_alphabet().name;
+        for(int i=0;i<alignment_files.size();i++)
+        {
+            auto [filename, range] = alignment_files[i];
+            try
+            {
+                A[i] = load_alignment(select(sequences_for_filename[filename], range), alphabet_names[i]);
+            }
+            catch (myexception& e)
+            {
+                if (range.empty())
+                    e.prepend("In file '"+filename+"': ");
+                else
+                    e.prepend("In file '"+filename+"' columns "+range+": ");
+                throw;
+            }
+
+            if (alphabet_names[i].empty())
+                alphabet_names[i] = A[i].get_alphabet().name;
+        }
     }
 
     for(int i=0;i<A.size();i++) {
