@@ -1053,10 +1053,11 @@ int main(int argc,char* argv[])
 
                 if (table)
                 {
-                    int pos = convertTo<int>(fields[1]);
+                    // Get zero-based coordinate from vcf 1-based coordinate
+                    int pos = convertTo<int>(fields[1])-1;
                     if (pos < 0)
                         throw myexception()<<chrom<<'\t'<<pos<<": should not be negative!";
-                    if (pos >= table->lookup.size())
+                    if (pos > table->lookup.size())
                         throw myexception()<<chrom<<'\t'<<pos<<": after end of chromosome of length "<<table->lookup.size();
 
                     auto& [p1,p2]  = table->lookup[pos];
@@ -1069,7 +1070,8 @@ int main(int argc,char* argv[])
                         std::cerr<<chrom<<'\t'<<pos<<": translating to "<<table->target_chrom<<"\t"<<p1<<"\n";
 
                     fields[0] = table->target_chrom;
-                    fields[1] = std::to_string(p1);
+                    // Get 1-based coordinate from 0-based coordinate
+                    fields[1] = std::to_string(p1+1);
                     join(std::cout, fields, '\t');
                     std::cout<<'\n';
                 }
