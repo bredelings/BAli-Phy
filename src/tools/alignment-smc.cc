@@ -146,6 +146,12 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	cout<<"Generate input for SMC programs.\n\n";
 	cout<<"Usage: alignment-smc <alignment-file> [OPTIONS]\n\n";
 	cout<<all<<"\n";
+        cout<<"Examples:\n\n";
+        cout<<"  To calculate some statistics:\n";
+        cout<<"    % alignment-smc sequence.fasta > /dev/null\n";
+        cout<<"\n";
+        cout<<"  To write out SNPS with minor-allele count >=2 in BED format:\n";
+        cout<<"    % alignment-smc sequences.fasta --minor-allele=2 --write-bed=chrom > snps.bed\n";
 	exit(0);
     }
 

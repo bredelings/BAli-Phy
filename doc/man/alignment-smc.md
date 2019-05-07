@@ -33,11 +33,29 @@ Generate input for SMC programs.
 **-M** _arg_, **--mask-file** _arg_
 : Apply mask-file
 
+**--minor-allele** _arg_
+: Keep columns with given minor-allele count
+
+**--one-every** _arg_
+: Keep only 1 column in each interval of size _arg_
+
+**--write-bed** _arg_
+: Write selected columns in BED format with chromosome name _arg_
+
+**--translate-mask** _arg_
+: Masks (CSV or @file)
+
+**--translate-vcf** _arg_
+: Masks (CSV or @file)
+
 **--variant** _arg_ (=1)
 : Is there a SNP at distance _arg_ from SNP?
 
 **--dical2**
 : Output file for DiCal2
+
+**--clean-to-ref** _arg_
+: Remove columns not in reference sequence _arg_
 
 **--msmc**
 : Output file for MSMC
@@ -45,12 +63,30 @@ Generate input for SMC programs.
 **--psmc**
 : Output file for PSMC
 
+**--pi**
+: Calculate average hamming distance
+
+**--pi-matrix**
+: Calculate average hamming distance
+
 **--autoclean**
 : Mask blocks with too many SNPs
 
 **--histogram** _arg_
 : Output SNP counts for blocks of arg bases
 
+
+# EXAMPLES:
+ 
+To calculate some statistics:
+```
+% alignment-smc sequence.fasta > /dev/null
+```
+
+To write out SNPS with minor-allele count >=2 in BED format:
+```
+% alignment-smc sequences.fasta --minor-allele=2 --write-bed=chrom > snps.bed
+```
 
 # REPORTING BUGS:
  BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
