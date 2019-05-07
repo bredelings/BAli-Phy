@@ -367,19 +367,6 @@ vector<pair<int,int>> columns_to_regions(const vector<int>& columns)
     return regions;
 }
 
-ostream& write_bed(ostream& o, const string& chromosome, const vector<pair<int,int>>& columns)
-{
-    for(auto& [start,end]: columns)
-	o<<chromosome<<'\t'<<start<<'\t'<<end<<'\n';
-    return o;
-}
-
-ostream& write_bed(ostream& o, const string& chromosome, const vector<int>& columns)
-{
-    return write_bed(o, chromosome, columns_to_regions(columns));
-}
-
-
 void mask_column(alignment& A, int column)
 {
     for(int k=0;k<A.n_sequences();k++)
@@ -942,6 +929,55 @@ int largest_minor_allele_count(const alignment& A, int col)
     return m2;
 }
 
+vector<pair<int,int>> get_allele_counts2(const alignment& A, int col)
+{
+    auto counts = allele_counts(A, col);
+
+    vector<pair<int,int>> allele_count;
+    for(int i=0; i < counts.size(); i++)
+        allele_count.push_back({i,counts[i]});
+
+    // Sort so that greatest count is at the beginning.
+    std::sort(allele_count.begin(), allele_count.end(), [](auto x, auto y) {return x.second > y.second;});
+
+    return allele_count;
+}
+
+pair<string,string> get_ref_alt(const alignment& A, int col)
+{
+    auto alleles = get_allele_counts2(A, col);
+
+    if (alleles.size() < 2)
+        throw myexception()<<"Column "<<col<<" isn't variable!";
+
+    auto& a = A.get_alphabet();
+    return {a.lookup(alleles[0].first), a.lookup(alleles[1].first)};
+}
+
+ostream& write_bed(ostream& o, const string& chromosome, const vector<pair<int,int>>& columns)
+{
+    for(auto& [start,end]: columns)
+	o<<chromosome<<'\t'<<start<<'\t'<<end<<'\n';
+    return o;
+}
+
+ostream& write_snp_bed(ostream& o, const string& chromosome, const vector<int>& columns, const alignment& A)
+{
+    o<<"#CHROM\tPOS\tID\tREF\tALT\n";
+    for(int column: columns)
+    {
+        auto [ref,alt] = get_ref_alt(A, column);
+	o<<chromosome<<'\t'<<column<<"\t.\t"<<ref<<'\t'<<alt<<'\n';
+    }
+    return o;
+}
+
+ostream& write_bed(ostream& o, const string& chromosome, const vector<int>& columns)
+{
+    return write_bed(o, chromosome, columns_to_regions(columns));
+}
+
+
 struct translation_table
 {
     string source_chrom;
@@ -1196,7 +1232,7 @@ int main(int argc,char* argv[])
 	    if (args.count("write-bed"))
 	    {
 		auto chromosome = args["write-bed"].as<string>();
-		write_bed(std::cout, chromosome, columns);
+		write_snp_bed(std::cout, chromosome, columns, A);
 	    }
 	    else
 	    {
