@@ -633,7 +633,8 @@ vector<pair<double,int>> compress_states(const vector<int>& states, const vector
         if (states[i] != last_state)
         {
             last_state = states[i];
-            state_regions.push_back({t[i],1});
+            assert(0 <= last_state and last_state < t.size());
+            state_regions.push_back({t[last_state],1});
         }
         else
             state_regions.back().second++;
