@@ -92,16 +92,6 @@ unsafeInterleaveIO x = LazyIO x
 mfix f = MFix f
 runST x = reapply unsafePerformIO x
 
-quicksort [] = []
-quicksort (x:xs) = quicksort small ++ (x : quicksort large)
-   where small = [y | y <- xs, y <= x ]
-         large = [y | y <- xs, y  > x ]
-
-quicksortWith f [] = []
-quicksortWith f (x:xs) = quicksortWith f small ++ (x : quicksortWith f large)
-   where small = [y | y <- xs, (f y) <= (f x)]
-         large = [y | y <- xs, (f y)  > (f x)]
-  
 show () = "()"
 show (x,y) = "(" ++ show x ++ "," ++ show y ++ ")"
 show (x,y,z) = "(" ++ show x ++ "," ++ show y ++ "," ++ show z ++ ")"

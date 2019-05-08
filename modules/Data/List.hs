@@ -254,8 +254,13 @@ nub = nubBy (==)
 -- intersect
 
 -- sort
+sort  = sortOn id
 
 -- sortOn
+sortOn f [] = []
+sortOn f (x:xs) = sortOn f small ++ (x : sortOn f large)
+   where small = [y | y <- xs, (f y) <= (f x)]
+         large = [y | y <- xs, (f y)  > (f x)]
 
 -- insert
 

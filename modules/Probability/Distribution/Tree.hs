@@ -32,7 +32,7 @@ random_tree n = do let num_nodes = 2*n-2
                                         | otherwise = (x,y)
                    -- Then the sorting is supposed order edges like (0,_), (1,_), (2,_)
                    -- in order to assign leaf branches the names 0..n-1
-                   let sorted_edges = quicksortWith (\(leaf,internal) -> leaf) $ map maybe_flip edges
+                   let sorted_edges = sortOn fst $ map maybe_flip edges
                    return $ tree_from_edges num_nodes sorted_edges
 
 modifiable_tree mod tree = Tree (listArray' nodes) (listArray' branches) (numNodes tree) (numBranches tree) where
