@@ -31,8 +31,26 @@ using namespace std;
 
 namespace po = boost::program_options;
 using po::variables_map;
+using std::optional;
 
-string getvalue(const string& line,int pos1) {
+string get_value_quoted(const string& line, int pos1)
+{
+    // FIXME: handle quotes here.  Should these be \" or ""?
+    assert(pos1 < line.size() and line[pos1] == '"');
+
+    pos1++;
+    for(int pos2 = pos1; pos2 < line.size(); pos2++)
+        if (line[pos2] == '"')
+            return line.substr(pos1,pos2-pos1);
+    throw myexception()<<"Unterminated quoted field in line:\n  |"<<line<<"\n";
+}
+
+string getvalue(const string& line,int pos1)
+{
+    if (pos1 >= line.size()) return "";
+
+    if (line[pos1] == '"') return get_value_quoted(line,pos1);
+
     int pos2 = pos1;
     int depth = 0;
 
