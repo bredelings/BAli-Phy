@@ -38,10 +38,9 @@ string get_value_quoted(const string& line, int pos1)
     // FIXME: handle quotes here.  Should these be \" or ""?
     assert(pos1 < line.size() and line[pos1] == '"');
 
-    pos1++;
-    for(int pos2 = pos1; pos2 < line.size(); pos2++)
+    for(int pos2 = pos1+1; pos2 < line.size(); pos2++)
         if (line[pos2] == '"')
-            return line.substr(pos1,pos2-pos1);
+            return line.substr(pos1,pos2-pos1+1);
     throw myexception()<<"Unterminated quoted field in line:\n  |"<<line<<"\n";
 }
 
