@@ -53,6 +53,7 @@ add_move = AddMove
 
 log_all loggers = (Nothing,loggers)
 
+infix 1 %%
 x %% y = (y,(Just x,[]))
 
 run_strict alpha (IOAndPass f g) = do
