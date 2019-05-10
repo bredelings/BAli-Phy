@@ -862,15 +862,11 @@ extern "C" closure builtin_function_smc_density(OperationArgs& Args)
 
     auto coalescent_rates_ = Args.evaluate(1).as_<EVector>();
 
-    auto level_boundaries_ = Args.evaluate(2).as_<EVector>();
+    auto level_boundaries = (vector<double>)Args.evaluate(2).as_<EVector>();
 
     vector<double> coalescent_rates;
     for(auto& r: coalescent_rates_)
 	coalescent_rates.push_back(r.as_double());
-
-    vector<double> level_boundaries;
-    for(auto& l: level_boundaries_)
-	level_boundaries.push_back(l.as_double());
 
     auto a = Args.evaluate(3);
     auto& A = a.as_<Box<alignment>>().value();
@@ -884,15 +880,11 @@ extern "C" closure builtin_function_smc_trace(OperationArgs& Args)
 
     auto coalescent_rates_ = Args.evaluate(1).as_<EVector>();
 
-    auto level_boundaries_ = Args.evaluate(2).as_<EVector>();
+    auto level_boundaries = (vector<double>)Args.evaluate(2).as_<EVector>();
 
     vector<double> coalescent_rates;
     for(auto& r: coalescent_rates_)
 	coalescent_rates.push_back(r.as_double());
-
-    vector<double> level_boundaries;
-    for(auto& l: level_boundaries_)
-	level_boundaries.push_back(l.as_double());
 
     auto a = Args.evaluate(3);
     auto& A = a.as_<Box<alignment>>().value();
