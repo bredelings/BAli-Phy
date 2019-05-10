@@ -869,7 +869,6 @@ extern "C" closure builtin_function_smc_density(OperationArgs& Args)
 	coalescent_rates.push_back(r.as_double());
 
     vector<double> level_boundaries;
-    level_boundaries.push_back(0);
     for(auto& l: level_boundaries_)
 	level_boundaries.push_back(l.as_double());
 
@@ -892,7 +891,6 @@ extern "C" closure builtin_function_smc_trace(OperationArgs& Args)
 	coalescent_rates.push_back(r.as_double());
 
     vector<double> level_boundaries;
-    level_boundaries.push_back(0);
     for(auto& l: level_boundaries_)
 	level_boundaries.push_back(l.as_double());
 
