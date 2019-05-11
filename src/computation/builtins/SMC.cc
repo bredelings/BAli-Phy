@@ -624,8 +624,6 @@ void smc_group(vector<double>& L, vector<double>& L2, int& scale, const vector<E
 
 vector<pair<double,int>> compress_states(const vector<int>& states, const vector<double>&t)
 {
-    assert(states.size() == t.size());
-
     int last_state = -1;
     vector<pair<double,int>> state_regions;
     for(int i=0;i<states.size();i++)
