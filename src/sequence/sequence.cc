@@ -197,6 +197,8 @@ vector<sequence> select(const vector<sequence>& s,const vector<int>& columns)
 
 vector<sequence> select(const vector<sequence>& s,const string& range)
 {
+    if (range.empty()) return s;
+
     auto L = s[0].size();
     for(int i=0;i<s.size();i++)
 	L = std::max(L, s[i].size());

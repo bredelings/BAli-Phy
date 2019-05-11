@@ -91,11 +91,18 @@ string run_name(const variables_map& args)
 	name = args["name"].as<string>();
     else if (args.count("align"))
     {
-	vector<string> alignment_filenames = args["align"].as<vector<string> >();
-	for(auto& filename: alignment_filenames)
+        std::set<fs::path> seen;
+	vector<string> alignment_filenames;
+	for(auto& filename_range: args["align"].as<vector<string> >())
 	{
-	    auto [name,range] = split_on_last(':',filename);
-	    filename = remove_extension( fs::path( name ).leaf().string() );
+	    auto [name,range] = split_on_last(':',filename_range);
+            auto p = fs::absolute( fs::path( name ) );
+            auto filename = remove_extension( fs::path( name ).leaf().string() );
+            if (not seen.count(p))
+            {
+                seen.insert(p);
+                alignment_filenames.push_back(filename);
+            }
 	}
 	name = join(alignment_filenames,'-');
     }
