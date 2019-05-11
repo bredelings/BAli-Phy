@@ -346,13 +346,21 @@ namespace MCMC {
 	TableViewerFunction(const TableFunction<std::string>&);
     };
 
+    template <typename F>
     class FunctionLogger
     {
 	std::shared_ptr<std::ostream> log_file;
-	logger_function<std::string> function;
+	F function;
     public:
-	void operator()(const Model& M, long t);
-	FunctionLogger(const std::string& filename, const logger_function<std::string>& L);
+	void operator()(const Model& M, long t)
+        {
+            (*log_file)<<function(M,t)<<'\n';
+            log_file->flush();
+        }
+
+	FunctionLogger(const std::string& filename, const F& f)
+            :log_file(new checked_ofstream(filename,false)), function(f)
+            {}
     };
 
     class ConcatFunction

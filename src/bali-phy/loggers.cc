@@ -286,7 +286,6 @@ string table_logger_line(MCMC::TableFunction<string>& TF, const Model& M, long t
 	if (log_verbose <= 0 and name.size() > 1 and name[0] == '*') continue;
 	o<<"    "<<name<<" = "<<values[i];
     }
-    o<<"\n";
     return o.str();
 }
 
@@ -312,6 +311,10 @@ vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const
     // Write out scalar numerical variables (and functions of them) to C<>.p
     loggers.push_back( s );
   
+    Logger j = FunctionLogger(base + ".log.json", [](const Model& M, long){return M.get_logged_parameters();});
+
+    loggers.push_back( j );
+
     if (not P) return loggers;
 
     // Write out the (scaled) tree each iteration to C<>.trees
