@@ -49,7 +49,7 @@ libcommon_sources = [
 libcommon = static_library('common',
 			   libcommon_sources,
 			   include_directories: libutil_inc,
-			   dependencies: [boost, eigen, librange])
+			   dependencies: [boost, eigen, librange, json])
 
 subdir('computation')
 
@@ -160,7 +160,7 @@ foreach tool: tools
     sources += extra_sources[tool]
   endif
 
-  deps = [boost, librange, math_dep]
+  deps = [boost, librange, math_dep, json]
   if tool in extra_deps
     deps += extra_deps[tool]
   endif

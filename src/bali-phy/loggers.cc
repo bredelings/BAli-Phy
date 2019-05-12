@@ -2,6 +2,7 @@
 
 #include "loggers.H"
 #include "tools/parsimony.H"
+#include "tools/stats-table.H"
 #include "computation/expression/parameter.H"
 #include "computation/expression/bool.H"
 #include "computation/expression/constructor.H"
@@ -116,93 +117,6 @@ vector< vector< vector<int> > > get_un_identifiable_indices(const vector<string>
 
     return indices;
 }
-
-// We should be able to collapse this to some kind of visitor pattern!
-
-vector<string> parameter_names(const json& children);
-
-vector<string> parameter_names_children(const json& children)
-{
-    vector<string> all_names;
-    for(auto& [key, value]: children.items())
-    {
-	vector<string> names = parameter_names(value);
-	for(auto& name: names)
-	    all_names.push_back(key + "/" + name);
-
-	if (value.find("value") != value.end())
-	{
-	    json v = *value.find("value");
-	    if (v.is_array())
-	    {
-		// FIXME we are not looking looking into the value for "value" / "children"
-		for(int i=0;i<v.size();i++)
-		    all_names.push_back(key+"["+std::to_string(i+1)+"]");
-	    }
-	    else if (v.is_object())
-	    {
-		// FIXME we are not looking looking into value2 for "value" / "children"
-		for(auto& [key2,value2]: v.items())
-		    all_names.push_back(key+"["+key2+"]");
-	    }
-	    else
-		all_names.push_back(key);
-	}
-    }
-    return all_names;
-}
-
-vector<string> parameter_names(const json& j)
-{
-    auto children = j.find("children");
-    if (children == j.end())
-	return {};
-    else
-	return parameter_names_children(*children);
-}
-
-vector<json> parameter_values(const json& children);
-
-vector<json> parameter_values_children(const json& children)
-{
-    vector<json> all_values;
-    for(auto& [key, value]: children.items())
-    {
-	vector<json> values = parameter_values(value);
-	for(auto& value: values)
-	    all_values.push_back(std::move(value));
-
-	if (value.find("value") != value.end())
-	{
-	    json v = *value.find("value");
-	    if (v.is_array())
-	    {
-		// FIXME we are not looking looking into the value for "value" / "children"
-		for(int i=0;i<v.size();i++)
-		    all_values.push_back(v[i]);
-	    }
-	    else if (v.is_object())
-	    {
-		// FIXME we are not looking looking into value2 for "value" / "children"
-		for(auto& [key2,value2]: v.items())
-		    all_values.push_back(value2);
-	    }
-	    else
-		all_values.push_back(v);
-	}
-    }
-    return all_values;
-}
-
-vector<json> parameter_values(const json& j)
-{
-    auto children = j.find("children");
-    if (children == j.end())
-	return {};
-    else
-	return parameter_values_children(*children);
-}
-
 
 json logged_params_and_some_computed_stuff(const Model& M, long t)
 {

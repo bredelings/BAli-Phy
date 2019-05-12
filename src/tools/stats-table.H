@@ -26,6 +26,7 @@
 #include <boost/lexical_cast.hpp>
 #include "util/mapping.H"
 #include "util/io.H"
+#include "util/json.hh"
 
 template <typename T>
 class Table
@@ -150,4 +151,7 @@ std::vector<std::string> read_header(std::istream&);
 
 void write_header(std::ostream&,const std::vector<std::string>&);
 
+std::vector<std::string> parameter_names(const json& children);
+
+std::vector<std::string> parameter_names_children(const json& children);
 #endif

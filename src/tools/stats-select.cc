@@ -141,6 +141,8 @@ int main(int argc,char* argv[])
 	if (not args.count("columns") or args.count("remove"))
 	    std::swap(remove,keep);
 
+        // FIXME: hhis requires reading the whole table before writing anything.
+        //        But we only want to read the whole table at once when we are computing statistics on it.
 	Table<string> table(std::cin,0,1,-1,remove,keep);
 
 
