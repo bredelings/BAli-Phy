@@ -589,7 +589,7 @@ int main(int argc,char* argv[])
 #endif
 		info["subdirectory"] = dir_name;
 		files = init_files(proc_id, dir_name, argc, argv);
-		loggers = construct_loggers(M, subsample, Rao_Blackwellize, proc_id, dir_name);
+		loggers = construct_loggers(args, M, subsample, Rao_Blackwellize, proc_id, dir_name);
 
 		if (args.count("align")) write_initial_alignments(args, proc_id, dir_name);
 	    }
@@ -640,10 +640,15 @@ int main(int argc,char* argv[])
 		out_screen<<"   - Sampled alignments logged to '"<<dir_name<<"/C1.P<partition>.fastas'"<<endl;
 		out_screen<<"   - Run info written to '"<<dir_name<<"/C1.run.json'"<<endl;
 	    }
-	    out_screen<<"   - Sampled numerical parameters logged to '"<<dir_name<<"/C1.log'"<<endl;
-	    out_screen<<endl;
-	    out_screen<<"You can examine 'C1.log' using BAli-Phy tool statreport (command-line) or the BEAST program Tracer (graphical).\n"<<endl;
-	    out_screen<<"See the manual at http://www.bali-phy.org/README.xhtml for further information."<<endl;
+            auto log_formats = get_log_formats(args,(bool)M.as<Parameters>());
+            if (log_formats.count("json"))
+                out_screen<<"   - Sampled numerical parameters logged to '"<<dir_name<<"/C1.log.json' as JSON\n";
+            if (log_formats.count("tsv"))
+                out_screen<<"   - Sampled numerical parameters logged to '"<<dir_name<<"/C1.log' as TSV\n";
+            out_screen<<"\n";
+            if (log_formats.count("tsv"))
+                out_screen<<"You can examine 'C1.log' using BAli-Phy tool statreport (command-line) or the BEAST program Tracer (graphical).\n";
+	    out_screen<<"See the manual at http://www.bali-phy.org/README.xhtml for further information.\n";
 
 	    //-------- Start the MCMC  -----------//
 	    do_sampling(args, M, max_iterations, *files[0], loggers);

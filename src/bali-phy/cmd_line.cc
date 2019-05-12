@@ -125,6 +125,7 @@ po::options_description mcmc_options(int level)
 	mcmc.add_options()
 	    ("subsample,x",value<int>()->default_value(1),"Factor by which to subsample.")
 	    ("seed,s", value<unsigned long>(),"Random seed.")
+            ("log-format,l", value<string>(),"Log-format: `tsv` or `json` or `tsv,json`")
 	    ("pre-burnin",value<int>()->default_value(3),"Iterations to refine initial tree.");
 
     if (level >= 2)
@@ -140,6 +141,7 @@ po::options_description mcmc_options(int level)
 
     return mcmc;
 }
+
 
 po::options_description haskell_optimization()
 {

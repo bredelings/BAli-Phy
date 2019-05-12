@@ -12,6 +12,7 @@
 #include "models/parse.H"
 #include "util/mapping.H"
 #include "util/string/join.H"
+#include "util/string/split.H"
 #include "util/json.hh"
 
 extern int log_verbose;
@@ -289,7 +290,23 @@ string table_logger_line(MCMC::TableFunction<string>& TF, const Model& M, long t
     return o.str();
 }
 
-vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const vector<string>& Rao_Blackwellize, int proc_id, const string& dir_name)
+set<string> get_log_formats(const boost::program_options::variables_map& args, bool is_A_T_model)
+{
+    string log_format = is_A_T_model ? "tsv" : "json";
+    if (args.count("log-format"))
+        log_format = args["log-format"].as<string>();
+    auto log_formats_vec = split(log_format,',');
+    set<string> log_formats;
+    for(auto& format: log_formats_vec)
+        log_formats.insert(format);
+    return log_formats;
+}
+
+vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_map& args,
+                                       owned_ptr<Model>& M, int subsample,
+                                       const vector<string>& Rao_Blackwellize,
+                                       int proc_id,
+                                       const string& dir_name)
 {
     // FIXME - avoid the need to manually SubSampleFunction to every logger?
 
@@ -304,10 +321,15 @@ vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const
 
     auto TF3 = [TL](const Model& M, long t) mutable { return table_logger_line(*TL,M,t); };
 
+    auto log_formats = get_log_formats(args, (bool)P);
+
     // Write out scalar numerical variables (and functions of them) to C<>.log
-    loggers.push_back( append_line_to_file(base +".log", Subsample_Function(TableLogger<string>(*TL), subsample)) );
+    if (log_formats.count("tsv"))
+        loggers.push_back( append_line_to_file(base +".log", Subsample_Function(TableLogger<string>(*TL), subsample)) );
   
-    loggers.push_back( append_line_to_file(base + ".log.json", [](const Model& M, long){return M.get_logged_parameters();}) );
+    // FIXME: output all the extra stuff from construction_table_function( ).
+    if (log_formats.count("json"))
+        loggers.push_back( append_line_to_file(base + ".log.json", [](const Model& M, long){return M.get_logged_parameters();}) );
 
     if (not P) return loggers;
 
