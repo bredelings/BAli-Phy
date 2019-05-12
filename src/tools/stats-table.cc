@@ -24,6 +24,7 @@
 #include "util/io.H"
 #include "util/string/split.H"
 #include "util/string/convert.H"
+#include "models/path.H"
 
 #include <boost/dynamic_bitset.hpp>
 
@@ -220,6 +221,9 @@ void Table<string>::load_file(std::istream& file,int skip,int subsample, int max
                     if (line_number == 0)
                     {
                         names_ = parameter_names_children(j);
+                        for(auto& name: names_)
+                            name = translate_structures(name);
+                        names_ = short_parameter_names(names_);
                         indices = get_indices_for_names(names_, ignore, select);
                         names_ = apply_indices(names_, indices);
                         data_.resize(names_.size());
@@ -383,3 +387,4 @@ vector<json> parameter_values(const json& j)
     else
 	return parameter_values_children(*children);
 }
+
