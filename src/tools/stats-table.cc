@@ -174,23 +174,86 @@ bool read_entries(const string& line, const vector<int>& indices, char delim, ve
 }
 
 
+vector<int> get_indices_for_names(const vector<string>& names, const vector<string>& ignore, const vector<string>& select)
+{
+    // Construct mask of names to remove
+    dynamic_bitset<> mask(names.size());
+    mask.flip();
+    if (ignore.size())
+	mask &= ~get_mask(ignore, names);
+
+    if (select.size())
+	mask &=  get_mask(select, names);
+
+    return get_indices_from_mask(mask);
+}
+
 template<> 
 void Table<string>::load_file(std::istream& file,int skip,int subsample, int max,
 			      const vector<string>& ignore, const vector<string>& select)
 {
+    bool is_json = (file.peek() == '{');
+
+    if (is_json)
+    {
+        vector<string> v;
+        vector<int> indices;
+        string line;
+        int n_lines = 0;
+        for(int line_number=0;portable_getline(file,line);line_number++)
+        {
+            // don't start if we haven't skipped enough trees
+            if (line_number < skip) continue;
+
+            // skip trees unless they are a multiple of 'subsample'
+            if ((line_number-skip) % subsample != 0) continue;
+
+            // quit if we've read in 'max' trees
+            if (max >= 0 and n_lines == max) break;
+
+            // This is the 'op'
+            {
+                // should this be protected by a try { } catch(...) {} block?
+                try
+                {
+                    auto j = json::parse(line);
+                    if (line_number == 0)
+                    {
+                        names_ = parameter_names_children(j);
+                        indices = get_indices_for_names(names_, ignore, select);
+                        names_ = apply_indices(names_, indices);
+                        data_.resize(names_.size());
+                    }
+
+                    auto values = parameter_values_children(j);
+                    v.resize(indices.size());
+                    for(int i=0;i<indices.size();i++)
+                        v[i] = values[indices[i]].dump();
+                }
+                catch (...)
+                {
+                    // +2 = +1 (start indexing at 1) +1 (count the header line)
+                    std::cerr<<"Error: bad data on line "<<line_number+2<<", giving up.\n Line = '"<<line<<"'";
+                    break;
+                }
+
+                if (v.size() != n_columns())
+                    throw myexception()<<"Found "<<v.size()<<"/"<<n_columns()<<" values on line "<<line_number<<".";
+
+                add_row(v);
+            }
+
+            n_lines++;
+        }
+
+        return;
+    }
+
     // Read in headers from file
     names_ = read_header(file);
 
-    // Construct mask of names to remove
-    dynamic_bitset<> mask(names_.size());
-    mask.flip();
-    if (ignore.size())
-	mask &= ~get_mask(ignore, names_);
-
-    if (select.size())
-	mask &=  get_mask(select, names_);
-
-    vector<int> indices = get_indices_from_mask(mask);
+    // Construct mask of indices of names to keep
+    vector<int> indices = get_indices_for_names(names_, ignore, select);
 
     names_ = apply_indices(names_, indices);
 
