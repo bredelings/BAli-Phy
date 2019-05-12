@@ -1,2 +1,2 @@
-size = 2   Test.f = \#7 -> let {#1 = case #7 of {#170:#171 -> #170,[] -> Data.List.#55,_ -> Data.List.#29}} in \#8 #9 -> case #1 of {Data.Bool.True -> #8,_ -> #9}
-size = 2   Test.g = \#10 #11 #12 -> case #12 of {#170:#171 -> case #170 of {Data.Bool.True -> #10,_ -> #11},[] -> case Data.List.#55 of {Data.Bool.True -> #10,_ -> #11},_ -> case Data.List.#29 of {Data.Bool.True -> #10,_ -> #11}}
+size = 2   Test.f = \#7 -> let {#1 = case #7 of {#176:#177 -> #176,[] -> Data.List.#55,_ -> Data.List.#37}} in \#8 #9 -> case #1 of {Data.Bool.True -> #8,_ -> #9}
+size = 2   Test.g = \#10 #11 #12 -> case #12 of {#176:#177 -> case #176 of {Data.Bool.True -> #10,_ -> #11},[] -> case Data.List.#55 of {Data.Bool.True -> #10,_ -> #11},_ -> case Data.List.#37 of {Data.Bool.True -> #10,_ -> #11}}
