@@ -64,9 +64,6 @@ public:
 
     /// Load the Table from a file
     Table(std::istream&,int,int,int,const std::vector<std::string>&,const std::vector<std::string>&);
-
-    /// Load the Table from a file by name
-    Table(const std::string&,int,int,int,const std::vector<std::string>&,const std::vector<std::string>&);
 };
 
 template <typename T>
@@ -131,14 +128,6 @@ template<> void Table<std::string>::load_file(std::istream&,int,int,int,const st
 template <typename T>
 Table<T>::Table(std::istream& file, int skip, int subsample, int max, const std::vector<std::string>& ignore, const std::vector<std::string>& select)
 {
-    load_file(file,skip,subsample,max,ignore,select);
-}
-
-template <typename T>
-Table<T>::Table(const std::string& filename, int skip, int subsample, int max, const std::vector<std::string>& ignore, const std::vector<std::string>& select)
-{
-    checked_ifstream file(filename,"statistics file");
-
     load_file(file,skip,subsample,max,ignore,select);
 }
 

@@ -587,13 +587,14 @@ int main(int argc,char* argv[])
 	    throw myexception()<<"No filenames specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
 
 	filenames = args["filenames"].as< vector<string> >();
-	for(int i=0;i<filenames.size();i++) {
-	    if (filenames[i] == "-")
-		tables.push_back(stats_table(std::cin,0,subsample,last,ignore,select));
-	    else
-		tables.push_back(stats_table(filenames[i],0,subsample,last,ignore,select));
+	for(auto& filename: filenames)
+        {
+            istream_or_ifstream f(std::cin, "-", filename, "statistics_file");
+
+            tables.push_back(stats_table(f,0,subsample,last,ignore,select));
+
 	    if (not tables.back().n_rows())
-		throw myexception()<<"File '"<<filenames[i]<<"' has no samples left after removal of burn-in!";
+		throw myexception()<<"File '"<<filename<<"' has no samples left after removal of burn-in!";
 	}
 
 	if (tables.size() < 1)
