@@ -62,22 +62,26 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description visible("All options");
     visible.add_options()
 	("help,h", "Produce help message.")
-	("ignore", value<vector<string> >()->composing(),"Do not analyze these fields.")
-	("select", value<vector<string> >()->composing(),"Analyze only these fields.")
-	("individual,i","Show results for individual files separately also.")
+	("verbose,v","Output more log messages on stderr.")
+
 	("skip,s",value<string>()->default_value("10%"),"Number of initial lines to skip.")
 	("subsample,x",value<int>()->default_value(1),"Factor by which to sub-sample.")
+	("until,u",value<int>(),"Read up to this iteration.")
+	("ignore,I", value<vector<string> >()->composing(),"Do not analyze these fields.")
+	("select,S", value<vector<string> >()->composing(),"Analyze only these fields.")
+
+	("individual,i","Show results for individual files separately also.")
 	("truth",value<double>(),"True value")
+
 	("min",value<int>(),"Required minimum number of lines to read.")
-	("until,u",value<int>(),"Read until this number of trees.")
 	("mean", "Show mean and standard deviation.")
 	("mode", "Show mode (with precision)")
 	("log-mean", "Show log mean of X given log X.")
 	("median", "Show median and confidence level.")
+
 	("confidence",value<string>()->default_value("0.95"),"Confidence interval levels (colon-separated).")
 	("BCI", value<string>()->default_value("HPD"),"Type of Bayesian Credible Interval (BCI): HPD or central")
 	("precision,p", value<unsigned>()->default_value(4),"Number of significant figures.")
-	("verbose,v","Output more log messages on stderr.")
 	;
 
     options_description all("All options");

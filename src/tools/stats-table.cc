@@ -239,8 +239,8 @@ std::optional<string> TableReader::getline()
         // skip trees unless they are a multiple of 'subsample'
         if ((cur_line-skip) % subsample != 0) continue;
 
-        // quit if we've read in 'max' line
-        if (max > 0 and (n_lines == max)) return {};
+        // quit if we've read in 'last' line
+        if (last > 0 and cur_line >= last) return {};
 
         n_lines++;
 
@@ -284,8 +284,8 @@ optional<vector<string>> TableReader::get_row()
         return {};
 }
 
-TableReader::TableReader(std::istream& f, int sk, int sub, int mx, const vector<string>& ignore, const vector<string>& select)
-    :file(f), skip(sk), subsample(sub), max(mx)
+TableReader::TableReader(std::istream& f, int sk, int sub, int lst, const vector<string>& ignore, const vector<string>& select)
+    :file(f), skip(sk), subsample(sub), last(lst)
 {
     // 1. Check if this is a JSON file.
     is_json = (file.peek() == '{');
@@ -313,10 +313,10 @@ TableReader::TableReader(std::istream& f, int sk, int sub, int mx, const vector<
 
 
 template<> 
-void Table<string>::load_file(std::istream& file,int skip,int subsample, int max,
+void Table<string>::load_file(std::istream& file,int skip,int subsample, int last,
 			      const vector<string>& ignore, const vector<string>& select)
 {
-    TableReader reader(file, skip, subsample, max, ignore, select);
+    TableReader reader(file, skip, subsample, last, ignore, select);
     names_ = reader.names();
     data_.resize(names_.size());
 

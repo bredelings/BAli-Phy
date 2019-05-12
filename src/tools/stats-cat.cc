@@ -28,9 +28,14 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description visible("All options");
     visible.add_options()
         ("help,h", "Produce help message.")
+	("verbose,v","Output more log messages on stderr.")
+
         ("skip,s",value<int>(),"Number of initial lines to skip.")
         ("subsample,x",value<int>()->default_value(1),"Factor by which to sub-sample.")
-        ("until,u",value<int>(),"Read until this number of samples.");
+	("until,u",value<int>(),"Read up to this iteration.")
+
+	("ignore,I", value<vector<string> >()->composing(),"Do not analyze these fields.")
+	("select,S", value<vector<string> >()->composing(),"Analyze only these fields.");
 
     options_description all("All options");
     all.add(invisible).add(visible);
@@ -68,6 +73,22 @@ int main(int argc,char* argv[])
         if (args.count("skip"))
             skip = args["skip"].as<int>();
 
+        int subsample = 1;
+        if (args.count("subsample"))
+            subsample = args["subsample"].as<int>();
+
+        int last = -1;
+        if (args.count("until"))
+            last = args["until"].as<int>();
+
+	vector<string> ignore;
+	if (args.count("ignore"))
+	    ignore = args["ignore"].as<vector<string> >();
+
+	vector<string> select;
+	if (args.count("select"))
+	    select = args["select"].as<vector<string> >();
+
         if (not args.count("filenames"))
             throw myexception()<<"No filenames specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
 
@@ -84,7 +105,7 @@ int main(int argc,char* argv[])
             if (not *files[i])
                 throw myexception()<<"Can't open file '"<<filenames[i]<<"'";
 
-            readers.push_back( TableReader(*files[i], skip, 1, -1, {}, {}) );
+            readers.push_back( TableReader(*files[i], skip, subsample, last, ignore, select) );
 
             if (readers[0].names() != readers[i].names())
                 throw myexception()<<filenames[i]<<": Column names differ from names in '"<<filenames[0]<<"'";

@@ -52,7 +52,7 @@ class TableReader: virtual public TableBase
 
     int subsample;
 
-    int max;
+    int last;
 
     std::vector<int> indices;
 
@@ -126,10 +126,10 @@ void Table<T>::chop_first_rows(int n)
 }
 
 template <typename T>
-void Table<T>::load_file(std::istream& file, int skip, int subsample, int max,
+void Table<T>::load_file(std::istream& file, int skip, int subsample, int last,
 			 const std::vector<std::string>& ignore,const std::vector<std::string>& select)
 {
-    Table<std::string> t(file, skip, subsample, max, ignore, select);
+    Table<std::string> t(file, skip, subsample, last, ignore, select);
     names_ = t.names();
 
     // Create space for the results
@@ -154,9 +154,9 @@ void Table<T>::load_file(std::istream& file, int skip, int subsample, int max,
 template<> void Table<std::string>::load_file(std::istream&,int,int,int,const std::vector<std::string>&,const std::vector<std::string>&);
 
 template <typename T>
-Table<T>::Table(std::istream& file, int skip, int subsample, int max, const std::vector<std::string>& ignore, const std::vector<std::string>& select)
+Table<T>::Table(std::istream& file, int skip, int subsample, int last, const std::vector<std::string>& ignore, const std::vector<std::string>& select)
 {
-    load_file(file,skip,subsample,max,ignore,select);
+    load_file(file,skip,subsample,last,ignore,select);
 }
 
 /// Load and store a table of doubles with named columns
