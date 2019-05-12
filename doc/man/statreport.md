@@ -18,14 +18,8 @@ Compute summary statistics for tab-delimited data files.
 **-h**, **--help**
 : Produce help message.
 
-**--ignore** _arg_
-: Do not analyze these fields.
-
-**--select** _arg_
-: Analyze only these fields.
-
-**-i**, **--individual**
-: Show results for individual files separately also.
+**-v**, **--verbose**
+: Output more log messages on stderr.
 
 **-s** _arg_ (=10%), **--skip** _arg_ (=10%)
 : Number of initial lines to skip.
@@ -33,14 +27,23 @@ Compute summary statistics for tab-delimited data files.
 **-x** _arg_ (=1), **--subsample** _arg_ (=1)
 : Factor by which to sub-sample.
 
+**-u** _arg_, **--until** _arg_
+: Read up to this iteration.
+
+**-I** _arg_, **--ignore** _arg_
+: Do not analyze these fields.
+
+**-S** _arg_, **--select** _arg_
+: Analyze only these fields.
+
+**-i**, **--individual**
+: Show results for individual files separately also.
+
 **--truth** _arg_
 : True value
 
 **--min** _arg_
 : Required minimum number of lines to read.
-
-**-u** _arg_, **--until** _arg_
-: Read until this number of trees.
 
 **--mean**
 : Show mean and standard deviation.
@@ -62,9 +65,6 @@ Compute summary statistics for tab-delimited data files.
 
 **-p** _arg_ (=4), **--precision** _arg_ (=4)
 : Number of significant figures.
-
-**-v**, **--verbose**
-: Output more log messages on stderr.
 
 
 # REPORTING BUGS:

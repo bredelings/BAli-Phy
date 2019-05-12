@@ -18,8 +18,23 @@ Append tab-delimited files with the same field names.
 **-h**, **--help**
 : Produce help message.
 
+**-v**, **--verbose**
+: Output more log messages on stderr.
+
 **-s** _arg_, **--skip** _arg_
 : Number of initial lines to skip.
+
+**-x** _arg_ (=1), **--subsample** _arg_ (=1)
+: Factor by which to sub-sample.
+
+**-u** _arg_, **--until** _arg_
+: Read up to this iteration.
+
+**-I** _arg_, **--ignore** _arg_
+: Do not analyze these fields.
+
+**-S** _arg_, **--select** _arg_
+: Analyze only these fields.
 
 
 # REPORTING BUGS:

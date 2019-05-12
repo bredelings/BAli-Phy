@@ -49,7 +49,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     options_description visible("All options");
     visible.add_options()
-	("help", "Produce help message")
+	("help,h", "Produce help message")
 	("no-header","Suppress the line of column names.")
 	("select,s",value<vector<string> >()->composing(),"Select on key=value pairs")
 	("remove,r","Remove selected columns, instead of keeping them.")
