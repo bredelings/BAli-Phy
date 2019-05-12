@@ -118,53 +118,65 @@ vector< vector< vector<int> > > get_un_identifiable_indices(const vector<string>
     return indices;
 }
 
+template <typename K>
+void add_value(json& j, const K& key, const json& value)
+{
+    j[key] = {{"value",value}};
+}
+
+template <typename K>
+void add_children(json& j, const K& key, const json& value)
+{
+    j[key] = {{"children",value}};
+}
+
 json logged_params_and_some_computed_stuff(const Model& M, long t)
 {
     using namespace MCMC;
 
     json j;
 
-    j["iter"] = t;
-    j["prior"] = log(M.prior());
-    j["likelihood"] = log(M.likelihood());
-    j["posterior"] = log(M.probability());
+    add_value(j, "iter", t);
+    add_value(j, "prior", log(M.prior()) );
+    add_value(j, "likelihood", log(M.likelihood()));
+    add_value(j, "posterior", log(M.probability()));
 
     if (auto P = dynamic_cast<const Parameters*>(&M); P and P->t().n_nodes() > 1)
     {
 	if (P->variable_alignment())
         {
-	    j["prior_A"] = log(P->prior_alignment());
-            j["|A|"] = alignment_length(*P);
-	    j["#indels"] = n_indels(*P);
-	    j["|indels|"] = n_indels(*P);
+	    add_value(j, "prior_A", log(P->prior_alignment()));
+            add_value(j, "|A|", alignment_length(*P));
+	    add_value(j, "#indels", n_indels(*P));
+	    add_value(j, "|indels|", n_indels(*P));
 	}
-	j["#substs"] = n_substs(*P);
+	add_value(j, "#substs", n_substs(*P));
 
 	for(int i=0;i<P->n_data_partitions();i++)
 	{
             auto part = (*P)[i];
             json partition_j;
 
-	    partition_j["likelihood"] = log(part.likelihood());
+	    add_value(partition_j, "likelihood", log(part.likelihood()));
 	    if ((*P)[i].variable_alignment())
 	    {
-		partition_j["prior_A"] = log(part.prior_alignment());
-		partition_j["|A|"] = alignment_length(part);
-		partition_j["#indels"] = n_indels(part);
-		partition_j["|indels|"] = total_length_indels(part);
+		add_value(partition_j, "prior_A", log(part.prior_alignment()));
+		add_value(partition_j, "|A|", alignment_length(part));
+		add_value(partition_j, "#indels", n_indels(part));
+		add_value(partition_j, "|indels|", total_length_indels(part));
 	    }
 
 	    const alphabet& a = (*P)[i].get_alphabet();
-	    partition_j["#substs"] = n_mutations(part, unit_cost_matrix(a));
+	    add_value(partition_j, "#substs", n_mutations(part, unit_cost_matrix(a)));
 
 	    if (const Doublets* Do = dynamic_cast<const Doublets*>(&a))
-		partition_j["#substs(nuc)"] = n_mutations(part, nucleotide_cost_matrix(*Do));
+		add_value(partition_j, "#substs(nuc)", n_mutations(part, nucleotide_cost_matrix(*Do)));
 	    if (const Triplets* Tr = dynamic_cast<const Triplets*>(&a))
-		partition_j["#substs(nuc)"] = n_mutations(part, nucleotide_cost_matrix(*Tr));
+		add_value(partition_j, "#substs(nuc)", n_mutations(part, nucleotide_cost_matrix(*Tr)));
 	    if (const Codons* C = dynamic_cast<const Codons*>(&a))
-		partition_j["#substs(aa)"] = n_mutations(part, amino_acid_cost_matrix(*C));
+		add_value(partition_j, "#substs(aa)", n_mutations(part, amino_acid_cost_matrix(*C)));
 
-            j["P"+convertToString(i+1)] = partition_j;
+            add_children(j, "P"+convertToString(i+1), partition_j);
 	}
 
 	// Add fields Scale<s>*|T|
@@ -172,13 +184,13 @@ json logged_params_and_some_computed_stuff(const Model& M, long t)
 	{
 	    auto name = string("Scale[")+to_string(i+1)+"]*|T|";
 
-            j[name] = P->get_branch_scale(i)*tree_length(P->t());
+            add_value(j, name, P->get_branch_scale(i)*tree_length(P->t()));
 	}
 
-	j["|T|"] = tree_length(P->t());
+	add_value(j, "|T|", tree_length(P->t()));
     }
 
-    j["data"] = M.get_logged_parameters();
+    add_children(j, "parameters", M.get_logged_parameters());
 
     return j;
 }
