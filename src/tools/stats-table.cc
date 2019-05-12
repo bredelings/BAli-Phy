@@ -225,7 +225,7 @@ optional<string> TableReader::getline_()
         return {};
 }
 
-std::optional<string> TableReader::getline()
+optional<string> TableReader::getline()
 {
     while(auto line = getline_())
     {
