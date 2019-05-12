@@ -20,6 +20,7 @@
 #include <iostream>
 #include <string>
 #include "util/assert.hh"
+#include "util/string/join.H"
 #include <vector>
 #include <valarray>
 #include <cmath>
@@ -83,7 +84,7 @@ struct table_row_function
 {
     virtual table_row_function* clone() const =0;
 
-    virtual T operator()(const Table<string>&, int row) const =0;
+    virtual T operator()(const TableBase&, const vector<string>& row) const =0;
 
     string name;
 
@@ -101,19 +102,19 @@ struct key_value_condition: public table_row_function<bool>
 
     key_value_condition* clone() const {return new key_value_condition(*this);}
 
-    bool operator()(const Table<string>&,int row) const;
+    bool operator()(const TableBase&, const vector<string>& row) const;
 
-    key_value_condition(const Table<string>&, const string&);
+    key_value_condition(const TableBase&, const string&);
 
     virtual ~key_value_condition() {};
 };
 
-bool key_value_condition::operator()(const Table<string>& t,int row) const
+bool key_value_condition::operator()(const TableBase&, const vector<string>& row) const
 {
-    return (t.column(key_index)[row] == value);
+    return row[key_index] ==  value;
 }
 
-key_value_condition::key_value_condition(const Table<string>& t, const string& condition)
+key_value_condition::key_value_condition(const TableBase& t, const string& condition)
     :table_row_function<bool>(condition)
 {
     vector<string> parse = split(condition,'=');
@@ -143,7 +144,7 @@ int main(int argc,char* argv[])
 
         // FIXME: hhis requires reading the whole table before writing anything.
         //        But we only want to read the whole table at once when we are computing statistics on it.
-	Table<string> table(std::cin,0,1,-1,remove,keep);
+	TableReader table(std::cin,0,1,-1,remove,keep);
 
 
 	//----------- Parse conditions ------------//
@@ -168,24 +169,16 @@ int main(int argc,char* argv[])
 	}
 
 	//------------ Write new table ---------------//
-	for(int r=0; r<table.n_rows(); r++)
+	while(auto row = table.get_row())
 	{
 	    // skip rows that we are not selecting
 	    bool ok = true;
 	    for(int i=0; i<conditions.size() and ok; i++)
-		if (not (*conditions[i])(table,r))
+		if (not (*conditions[i])(table,*row))
 		    ok = false;
 	    if (not ok) continue;
 
-	    vector<string> values;
-	    for(int i=0; i<table.n_columns(); i++)
-	    {
-		std::cout<<table.column(i)[r];
-		if (i+1 == table.n_columns())
-		    std::cout<<"\n";
-		else
-		    std::cout<<"\t";
-	    }
+            join(std::cout, *row,'\t')<<"\n";
 	}
     }
     catch (std::exception& e) {
