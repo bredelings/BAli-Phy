@@ -553,8 +553,11 @@ int main(int argc,char* argv[])
 	{
 	    auto TL = construct_table_function(M, Rao_Blackwellize);
 
-	    std::cout<<table_logger_line(*TL, *M, 0);
-
+            auto log_formats = get_log_formats(args,(bool)M.as<Parameters>());
+            if (log_formats.count("tsv"))
+                std::cout<<table_logger_line(*TL, *M, 0)<<"\n";
+            if (log_formats.count("json"))
+                std::cout<<logged_params_and_some_computed_stuff(*M, 0)<<"\n";
 	    M->show_graph();
 	}
 	else 
