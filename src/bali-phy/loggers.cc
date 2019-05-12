@@ -203,6 +203,73 @@ vector<json> parameter_values(const json& j)
 	return parameter_values_children(*children);
 }
 
+
+json logged_params_and_some_computed_stuff(const Model& M, long t)
+{
+    using namespace MCMC;
+
+    json j;
+
+    j["iter"] = t;
+    j["prior"] = log(M.prior());
+    j["likelihood"] = log(M.likelihood());
+    j["posterior"] = log(M.probability());
+
+    if (auto P = dynamic_cast<const Parameters*>(&M); P and P->t().n_nodes() > 1)
+    {
+	if (P->variable_alignment())
+        {
+	    j["prior_A"] = log(P->prior_alignment());
+            j["|A|"] = Get_Total_Alignment_Length_Function()(M,t);
+	    j["#indels"] = Get_Total_Num_Indels_Function()(M,t);
+	    j["|indels|"] = Get_Total_Total_Length_Indels_Function()(M,t);
+	}
+	j["#substs"] = Get_Total_Num_Substitutions_Function()(M,t);
+
+	for(int i=0;i<P->n_data_partitions();i++)
+	{
+            auto part = (*P)[i];
+            json partition_j;
+
+	    partition_j["likelihood"] = log(part.likelihood());
+	    if ((*P)[i].variable_alignment())
+	    {
+		partition_j["prior_A"] = log(part.prior_alignment());
+		partition_j["|A|"] = alignment_length(part);
+		partition_j["#indels"] = n_indels(part);
+		partition_j["|indels|"] = total_length_indels(part);
+	    }
+
+	    const alphabet& a = (*P)[i].get_alphabet();
+	    partition_j["#substs"] = n_mutations(part, unit_cost_matrix(a));
+
+	    if (const Doublets* Do = dynamic_cast<const Doublets*>(&a))
+		partition_j["#substs(nuc)"] = n_mutations(part, nucleotide_cost_matrix(*Do));
+	    if (const Triplets* Tr = dynamic_cast<const Triplets*>(&a))
+		partition_j["#substs(nuc)"] = n_mutations(part, nucleotide_cost_matrix(*Tr));
+	    if (const Codons* C = dynamic_cast<const Codons*>(&a))
+		partition_j["#substs(aa)"] = n_mutations(part, amino_acid_cost_matrix(*C));
+
+            j["P"+convertToString(i+1)] = partition_j;
+	}
+
+	// Add fields Scale<s>*|T|
+	for(int i=0;i<P->n_branch_scales();i++)
+	{
+	    auto name = string("Scale[")+to_string(i+1)+"]*|T|";
+
+            j[name] = P->get_branch_scale(i)*tree_length(P->t());
+	}
+
+	j["|T|"] = Get_Tree_Length_Function()(M,t);
+    }
+
+    j["data"] = M.get_logged_parameters();
+
+    return j;
+}
+
+
 owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>& M, const vector<string>&)
 {
     owned_ptr<Parameters> P = M.as<Parameters>();
@@ -329,7 +396,7 @@ vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_m
   
     // FIXME: output all the extra stuff from construction_table_function( ).
     if (log_formats.count("json"))
-        loggers.push_back( append_line_to_file(base + ".log.json", [](const Model& M, long){return M.get_logged_parameters();}) );
+        loggers.push_back( append_line_to_file(base + ".log.json", &logged_params_and_some_computed_stuff) );
 
     if (not P) return loggers;
 
