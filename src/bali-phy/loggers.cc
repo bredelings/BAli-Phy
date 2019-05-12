@@ -302,24 +302,18 @@ vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const
 
     auto TL = construct_table_function(M, Rao_Blackwellize);
 
-    auto TF = TableLogger<string>(*TL);
-
     auto TF3 = [TL](const Model& M, long t) mutable { return table_logger_line(*TL,M,t); };
 
-    Logger s = FunctionLogger(base +".log", Subsample_Function(TF, subsample));
+    // Write out scalar numerical variables (and functions of them) to C<>.log
+    loggers.push_back( append_line_to_file(base +".log", Subsample_Function(TableLogger<string>(*TL), subsample)) );
   
-    // Write out scalar numerical variables (and functions of them) to C<>.p
-    loggers.push_back( s );
-  
-    Logger j = FunctionLogger(base + ".log.json", [](const Model& M, long){return M.get_logged_parameters();});
-
-    loggers.push_back( j );
+    loggers.push_back( append_line_to_file(base + ".log.json", [](const Model& M, long){return M.get_logged_parameters();}) );
 
     if (not P) return loggers;
 
     // Write out the (scaled) tree each iteration to C<>.trees
     if (P->t().n_nodes() > 1)
-	loggers.push_back( FunctionLogger(base + ".trees", Subsample_Function(TreeFunction()<<"\n", subsample) ) );
+	loggers.push_back( append_line_to_file(base + ".trees", Subsample_Function(TreeFunction(), subsample) ) );
   
     // Write out the MAP point to C<>.MAP - later change to a dump format that could be reloaded?
     {
@@ -331,14 +325,14 @@ vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const
 		if ((*P)[i].variable_alignment())
 		    F<<AlignmentFunction(i)<<"\n\n";
 	F<<TreeFunction()<<"\n\n";
-	loggers.push_back( FunctionLogger(base + ".MAP", MAP_Function(F)) );
+	loggers.push_back( append_to_file(base + ".MAP", MAP_Function(F)) );
     }
 
     // Write out the probability that each column is in a particular substitution component to C<>.P<>.CAT
     if (P->contains_key("log-categories"))
 	for(int i=0;i<P->n_data_partitions();i++)
-	    loggers.push_back( FunctionLogger(base + ".P" + convertToString(i+1)+".CAT", 
-					      Subsample_Function(Mixture_Components_Function(i),subsample) ) );
+	    loggers.push_back( append_to_file(base + ".P" + convertToString(i+1)+".CAT", 
+                                              Subsample_Function(Mixture_Components_Function(i),subsample) ) );
 
     // Write out the alignments for each (variable) partition to C<>.P<>.fastas
     int alignment_extra_subsample = P->load_value("alignment-extra-subsample",10);
@@ -355,7 +349,7 @@ vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const
 		auto infer_ambiguous_observed = P->load_value("infer-ambiguous-observed",false);
 		F<<Ancestral_Sequences_Function(i, infer_ambiguous_observed);
 		
-		loggers.push_back( FunctionLogger(filename, Subsample_Function(F, alignment_subsample) ) );
+		loggers.push_back( append_to_file(filename, Subsample_Function(F, alignment_subsample) ) );
 	    }
 
     return loggers;

@@ -283,7 +283,7 @@ namespace MCMC {
 		    output<<join(TF->field_names(),'\t')<<endl;
       
 		vector<T> values = (*TF)(M,t);
-		output<<join(values,separator)<<endl;
+		output<<join(values,separator);
 		return output.str();
 	    }
 
@@ -347,7 +347,7 @@ namespace MCMC {
     };
 
     template <typename F>
-    class FunctionLogger
+    class append_line_to_file
     {
 	std::shared_ptr<std::ostream> log_file;
 	F function;
@@ -358,7 +358,24 @@ namespace MCMC {
             log_file->flush();
         }
 
-	FunctionLogger(const std::string& filename, const F& f)
+	append_line_to_file(const std::string& filename, const F& f)
+            :log_file(new checked_ofstream(filename,false)), function(f)
+            {}
+    };
+
+    template <typename F>
+    class append_to_file
+    {
+	std::shared_ptr<std::ostream> log_file;
+	F function;
+    public:
+	void operator()(const Model& M, long t)
+        {
+            (*log_file)<<function(M,t);
+            log_file->flush();
+        }
+
+	append_to_file(const std::string& filename, const F& f)
             :log_file(new checked_ofstream(filename,false)), function(f)
             {}
     };
