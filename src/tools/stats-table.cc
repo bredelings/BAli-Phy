@@ -189,117 +189,139 @@ vector<int> get_indices_for_names(const vector<string>& names, const vector<stri
     return get_indices_from_mask(mask);
 }
 
+std::optional<int> TableBase::maybe_find_column_index(const std::string& s) const
+{
+    return find_index(names(), s);
+}
+
+int TableBase::find_column_index(const std::string& s) const
+{
+    if (auto index = maybe_find_column_index(s))
+	return *index;
+    else
+	throw myexception()<<"Can't find column '"<<s<<"' in table!";
+}
+
+int TableBase::n_columns() const
+{
+    return names().size();
+}
+
+// Return a line if (a) we don't already have a saved one and (b) the operation succeeds.
+optional<string> TableReader::getline_()
+{
+    if (saved_line)
+    {
+        optional<string> line;
+        std::swap(saved_line,line);
+        return line;
+    }
+
+    string line;
+    portable_getline(file, line);
+    if (file)
+        return line;
+    else
+        return {};
+}
+
+std::optional<string> TableReader::getline()
+{
+    while(auto line = getline_())
+    {
+        int cur_line = line_number;
+
+        line_number++;
+
+        // don't start if we haven't skipped enough trees
+        if (skip and cur_line < skip) continue;
+
+        // skip trees unless they are a multiple of 'subsample'
+        if ((cur_line-skip) % subsample != 0) continue;
+
+        // quit if we've read in 'max' line
+        if (max > 0 and (n_lines == max)) return {};
+
+        n_lines++;
+
+        return line;
+    }
+
+    return {};
+}
+
+optional<vector<string>> TableReader::get_row()
+{
+    if (auto line = getline())
+    {
+        vector<string> v(indices.size());
+
+        try
+        {
+            if (is_json)
+            {
+                json j = json::parse(*line);
+                auto values = parameter_values_children(j);
+                for(int i=0;i<indices.size();i++)
+                    v[i] = values[indices[i]].dump();
+            }
+            else
+                read_entries(*line, indices, '\t', v);
+        }
+        catch (...)
+        {
+            // +2 = +1 (start indexing at 1) +1 (count the header line)
+            std::cerr<<"Error: bad data on line "<<line_number+2<<", giving up.\n Line = '"<<*line<<"'";
+            return {};
+        }
+
+        if (v.size() != n_columns())
+            throw myexception()<<"Found "<<v.size()<<"/"<<n_columns()<<" values on line "<<line_number<<".";
+
+        return v;
+    }
+    else
+        return {};
+}
+
+TableReader::TableReader(std::istream& f, int sk, int sub, int mx, const vector<string>& ignore, const vector<string>& select)
+    :file(f), skip(sk), subsample(sub), max(mx)
+{
+    // 1. Check if this is a JSON file.
+    is_json = (file.peek() == '{');
+
+    // 2. Read in headers from file
+    if (is_json)
+    {
+        string line;
+        portable_getline(file,line);
+        names_ = parameter_names_children(json::parse(line));
+        saved_line = line;
+    }
+    else
+        names_ = read_header(file);
+
+    // 3. Select fields and determine header names.
+    for(auto& name: names_)
+        name = translate_structures(name);
+    names_ = short_parameter_names(names_);
+    indices = get_indices_for_names(names_, ignore, select);
+    names_ = apply_indices(names_, indices);
+}
+
+
+
+
 template<> 
 void Table<string>::load_file(std::istream& file,int skip,int subsample, int max,
 			      const vector<string>& ignore, const vector<string>& select)
 {
-    bool is_json = (file.peek() == '{');
-
-    if (is_json)
-    {
-        vector<string> v;
-        vector<int> indices;
-        string line;
-        int n_lines = 0;
-        for(int line_number=0;portable_getline(file,line);line_number++)
-        {
-            // don't start if we haven't skipped enough trees
-            if (line_number < skip) continue;
-
-            // skip trees unless they are a multiple of 'subsample'
-            if ((line_number-skip) % subsample != 0) continue;
-
-            // quit if we've read in 'max' trees
-            if (max >= 0 and n_lines == max) break;
-
-            // This is the 'op'
-            {
-                // should this be protected by a try { } catch(...) {} block?
-                try
-                {
-                    auto j = json::parse(line);
-                    if (line_number == 0)
-                    {
-                        names_ = parameter_names_children(j);
-                        for(auto& name: names_)
-                            name = translate_structures(name);
-                        names_ = short_parameter_names(names_);
-                        indices = get_indices_for_names(names_, ignore, select);
-                        names_ = apply_indices(names_, indices);
-                        data_.resize(names_.size());
-                    }
-
-                    auto values = parameter_values_children(j);
-                    v.resize(indices.size());
-                    for(int i=0;i<indices.size();i++)
-                        v[i] = values[indices[i]].dump();
-                }
-                catch (...)
-                {
-                    // +2 = +1 (start indexing at 1) +1 (count the header line)
-                    std::cerr<<"Error: bad data on line "<<line_number+2<<", giving up.\n Line = '"<<line<<"'";
-                    break;
-                }
-
-                if (v.size() != n_columns())
-                    throw myexception()<<"Found "<<v.size()<<"/"<<n_columns()<<" values on line "<<line_number<<".";
-
-                add_row(v);
-            }
-
-            n_lines++;
-        }
-
-        return;
-    }
-
-    // Read in headers from file
-    names_ = read_header(file);
-
-    // Construct mask of indices of names to keep
-    vector<int> indices = get_indices_for_names(names_, ignore, select);
-
-    names_ = apply_indices(names_, indices);
-
+    TableReader reader(file, skip, subsample, max, ignore, select);
+    names_ = reader.names();
     data_.resize(names_.size());
 
-    // Read in data
-    int n_lines=0;
-    string line;
-    vector<string> v(names_.size());
-    for(int line_number=0;portable_getline(file,line);line_number++) 
-    {
-	// don't start if we haven't skipped enough trees
-	if (line_number < skip) continue;
-
-	// skip trees unless they are a multiple of 'subsample'
-	if ((line_number-skip) % subsample != 0) continue;
-
-	// quit if we've read in 'max' trees
-	if (max >= 0 and n_lines == max) break;
-
-	// This is the 'op'
-	{
-	    // should this be protected by a try { } catch(...) {} block?
-	    try
-	    {
-		read_entries(line,indices,'\t',v);
-	    }
-	    catch (...)
-	    {
-		// +2 = +1 (start indexing at 1) +1 (count the header line)
-		std::cerr<<"Error: bad data on line "<<line_number+2<<", giving up.\n Line = '"<<line<<"'";
-		break;
-	    }
-
-	    if (v.size() != n_columns())
-		throw myexception()<<"Found "<<v.size()<<"/"<<n_columns()<<" values on line "<<line_number<<".";
-    
-	    add_row(v);
-	}
-
-	n_lines++;
-    }
+    while(auto row = reader.get_row())
+        add_row(*row);
 }
 
 // We should be able to collapse this to some kind of visitor pattern!

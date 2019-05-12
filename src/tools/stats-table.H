@@ -28,10 +28,60 @@
 #include "util/io.H"
 #include "util/json.hh"
 
-template <typename T>
-class Table
+class TableBase
 {
-    /// The list of column names
+public:
+    virtual const std::vector<std::string>& names() const = 0;
+
+    std::optional<int> maybe_find_column_index(const std::string& s) const;
+
+    int find_column_index(const std::string& s) const;
+
+    int n_columns() const;
+
+    virtual ~TableBase() = default;
+};
+
+class TableReader: virtual public TableBase
+{
+    std::vector<std::string> names_;
+
+    std::istream& file;
+
+    int skip;
+
+    int subsample;
+
+    int max;
+
+    std::vector<int> indices;
+
+    std::optional<std::string> saved_line;
+
+    bool is_json;
+
+    int line_number = 0;
+
+    int n_lines = 0;
+
+    std::optional<std::string> getline_();
+
+    std::optional<std::string> getline();
+
+public:
+
+    /// Access the column names
+    const std::vector<std::string>& names() const {return names_;}
+
+    std::optional<std::vector<std::string>> get_row();
+
+    TableReader(std::istream&, int, int, int, const std::vector<std::string>&,const std::vector<std::string>&);
+};
+
+
+template <typename T>
+class Table: virtual public TableBase
+{
     std::vector<std::string> names_;
 
     /// List of data for each column
@@ -46,18 +96,11 @@ public:
     /// Access the data for the i-th column
     const std::vector<T>& column(int i) const {return data_[i];}
 
-    std::optional<int> maybe_find_column_index(const std::string& s) const;
-
-    int find_column_index(const std::string& s) const;
-
     /// Add a row of data
     void add_row(const std::vector<T>& row);
 
     /// How many rows does the Table contain?
     int n_rows() const {return data_[0].size();}
-
-    /// How many columns does the Table contain?
-    int n_columns() const {return names_.size();}
 
     /// Remove burnin samples
     void chop_first_rows(int n);
@@ -65,21 +108,6 @@ public:
     /// Load the Table from a file
     Table(std::istream&,int,int,int,const std::vector<std::string>&,const std::vector<std::string>&);
 };
-
-template <typename T>
-std::optional<int> Table<T>::maybe_find_column_index(const std::string& s) const
-{
-    return find_index(names_, s);
-}
-
-template <typename T>
-int Table<T>::find_column_index(const std::string& s) const
-{
-    if (auto index = maybe_find_column_index(s))
-	return *index;
-    else
-	throw myexception()<<"Can't find column '"<<s<<"' in table!";
-}
 
 template <typename T>
 void Table<T>::add_row(const std::vector<T>& row)
