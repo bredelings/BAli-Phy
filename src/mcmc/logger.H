@@ -37,6 +37,7 @@
 #include <string>
 
 #include "models/parameters.H"
+#include "tools/stats-table.H"
 #include "util/io.H"
 #include "util/owned-ptr.H"
 #include "computation/object.H"

@@ -106,8 +106,6 @@ void show_smodels(std::ostream& o, const Parameters& P)
   }
 }
 
-std::vector<json> parameter_values_children(const json& children);
-
 namespace MCMC {
     using std::vector;
     using std::valarray;

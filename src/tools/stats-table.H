@@ -154,4 +154,10 @@ void write_header(std::ostream&,const std::vector<std::string>&);
 std::vector<std::string> parameter_names(const json& children);
 
 std::vector<std::string> parameter_names_children(const json& children);
+
+std::vector<json> parameter(const json& children);
+
+std::vector<json> parameter_values_children(const json& children);
+
+
 #endif
