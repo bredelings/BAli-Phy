@@ -28,6 +28,7 @@
 /// \author Benjamin Redelings
 /// 
 
+#include "models/path.H"
 #include "mcmc/setup.H"
 #include "mcmc/logger.H"
 #include "util/string/split.H"

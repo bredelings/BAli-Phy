@@ -137,10 +137,6 @@ std::string show_probability_expression(const expression_ref&);
 
 std::vector< std::string > show_probability_expressions(const context& C);
 
-std::string model_extend_path(const std::string&,const std::string&);
-std::string model_path(const std::vector<std::string>&);
-std::vector<std::string> model_split_path(const std::string&);
-
 Module read_model(const std::string& filename);
 void read_add_model(Model& M, const std::string& filename);
 void execute_file(const std::shared_ptr<module_loader>& L, const std::string& filename);

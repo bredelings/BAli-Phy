@@ -30,6 +30,8 @@ libcommon_sources = [
 
   'tree-align/link.cc',
 
+  'models/path.cc',
+
   'tools/statistics.cc',
   'tools/partition.cc',
   'tools/tree-dist.cc',

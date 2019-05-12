@@ -12,6 +12,7 @@
 #include "computation/expression/expression_ref.H"
 #include "unification.H"
 #include "util/json.hh"
+#include "models/path.H"
 
 class Rules;
 
