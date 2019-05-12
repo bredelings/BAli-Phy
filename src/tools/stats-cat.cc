@@ -8,6 +8,7 @@
 #include "stats-table.H"
 #include "util/myexception.H"
 #include "util/owned-ptr.H"
+#include "util/string/join.H"
 
 using namespace std;
 
@@ -27,7 +28,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description visible("All options");
     visible.add_options()
         ("help,h", "Produce help message.")
-        ("skip,s",value<int>(),"Number of initial lines to skip.");
+        ("skip,s",value<int>(),"Number of initial lines to skip.")
+        ("subsample,x",value<int>()->default_value(1),"Factor by which to sub-sample.")
+        ("until,u",value<int>(),"Read until this number of samples.");
 
     options_description all("All options");
     all.add(invisible).add(visible);
@@ -72,30 +75,26 @@ int main(int argc,char* argv[])
         // Check that all files have the same field names
         vector<string> field_names;
         vector<shared_ptr<istream> > files(filenames.size());
+        vector<TableReader> readers;
+
         for(int i=0;i<filenames.size();i++)
         {
-            files[i] = shared_ptr<istream>(new checked_ifstream(filenames[i],"statistics file"));
+            files[i] = shared_ptr<istream>(new istream_or_ifstream(std::cin, "-", filenames[i], "statistics file"));
 
             if (not *files[i])
                 throw myexception()<<"Can't open file '"<<filenames[i]<<"'";
 
-            vector<string> field_names2 = read_header(*files[i]);
+            readers.push_back( TableReader(*files[i], skip, 1, -1, {}, {}) );
 
-            if (i == 0)
-                field_names = field_names2;
-            else if (field_names != field_names2)
+            if (readers[0].names() != readers[i].names())
                 throw myexception()<<filenames[i]<<": Column names differ from names in '"<<filenames[0]<<"'";
         }
 
         // Write all the files to cout, in the specified order, but with only one header
-        write_header(std::cout,field_names);
-        for(int i=0;i<files.size();i++)
-        {
-            string line;
-            for(int line_number=0;portable_getline(*files[i],line);line_number++)
-                if (line_number >= skip)
-                    std::cout<<line<<"\n";
-        }
+        write_header(std::cout,readers[0].names());
+        for(auto reader: readers)
+            while(auto row = reader.get_row())
+                join(std::cout, *row,'\t')<<"\n";
     }
     catch (std::exception& e) {
         std::cerr<<"stats-cat: Error! "<<e.what()<<endl;
