@@ -287,24 +287,32 @@ namespace MCMC {
 	return convertToString(alignment_length(P));
     }
 
-    string Get_Total_Num_Substitutions_Function::operator()(const Model& M, long)
+    int n_substs(const Parameters& P)
     {
-	const Parameters& P = dynamic_cast<const Parameters&>(M);
-
 	int total = 0;
 	for(int p=0;p<P.n_data_partitions();p++)
 	    total += n_mutations(P[p]);
-	return convertToString(total);
+        return total;
     }
 
-    string Get_Total_Num_Indels_Function::operator()(const Model& M, long)
+    string Get_Total_Num_Substitutions_Function::operator()(const Model& M, long)
     {
 	const Parameters& P = dynamic_cast<const Parameters&>(M);
+        return convertToString(n_substs(P));
+    }
 
+    int n_indels(const Parameters& P)
+    {
 	int total = 0;
 	for(int p=0;p<P.n_data_partitions();p++)
 	    total += n_indels(P[p]);
-	return convertToString(total);
+        return total;
+    }
+        
+    string Get_Total_Num_Indels_Function::operator()(const Model& M, long)
+    {
+	const Parameters& P = dynamic_cast<const Parameters&>(M);
+	return convertToString(n_indels(P));
     }
 
     string Get_Total_Total_Length_Indels_Function::operator()(const Model& M, long)

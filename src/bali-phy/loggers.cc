@@ -220,11 +220,11 @@ json logged_params_and_some_computed_stuff(const Model& M, long t)
 	if (P->variable_alignment())
         {
 	    j["prior_A"] = log(P->prior_alignment());
-            j["|A|"] = Get_Total_Alignment_Length_Function()(M,t);
-	    j["#indels"] = Get_Total_Num_Indels_Function()(M,t);
-	    j["|indels|"] = Get_Total_Total_Length_Indels_Function()(M,t);
+            j["|A|"] = alignment_length(*P);
+	    j["#indels"] = n_indels(*P);
+	    j["|indels|"] = n_indels(*P);
 	}
-	j["#substs"] = Get_Total_Num_Substitutions_Function()(M,t);
+	j["#substs"] = n_substs(*P);
 
 	for(int i=0;i<P->n_data_partitions();i++)
 	{
@@ -261,7 +261,7 @@ json logged_params_and_some_computed_stuff(const Model& M, long t)
             j[name] = P->get_branch_scale(i)*tree_length(P->t());
 	}
 
-	j["|T|"] = Get_Tree_Length_Function()(M,t);
+	j["|T|"] = tree_length(P->t());
     }
 
     j["data"] = M.get_logged_parameters();

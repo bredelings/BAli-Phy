@@ -58,7 +58,13 @@ namespace MCMC {
 
     int n_indels(const data_partition& P);
 
+    int n_indels(const Parameters& P);
+
+    int n_substs(const Parameters& P);
+
     int total_length_indels(const data_partition& P);
+
+    int total_length_indels(const Parameters& P);
 
     struct Get_Total_Alignment_Length_Function
     {
