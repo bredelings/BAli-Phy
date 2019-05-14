@@ -10,6 +10,11 @@ while(my $line = <>)
 	$screen = $screen . $line;
 	next;
     }
+    elsif ($line =~ s|^\%\%(.*)$|$1|)
+    {
+	$screen = $screen . $line;
+	next;
+    }
     elsif ($line =~ s|^\% (.*)$|<prompt>\%</prompt> <userinput>$1</userinput>|)
     {
 	$screen = $screen . $line;
