@@ -507,6 +507,7 @@ int main(int argc,char* argv[])
 	else if (auto align = get_arg<string>(args, "reorder-by-alignment"))
 	{
 	    vector<sequence> sequences = load_file(*align, false);
+            names = vector<string>();
 	    for(const auto& s: sequences)
 		names->push_back(s.name);
 	}
