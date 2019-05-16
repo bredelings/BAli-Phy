@@ -352,8 +352,9 @@ smodel = 1,2,3:gtr+Rates.free[n=4]
 imodel = 1,2,3:rs07
 
 smodel = 4:gy94
-#smodel = 4:fMutSel0
-#smodel = 4:function[w,gy94_ext[gtr_sym,omega=w,pi=f3x4]]+m3
+#smodel = 4:gy94_ext[gtr_sym]     # A GTR-based version of GY94 a.k.a. M0.
+#smodel = 4:gtr+fMutSel0
+#smodel = 4:function[w,fMutSel0[omega=w]]]+m3
 imodel = 4:none
 </programlisting>
 We can choose any one of the three codon models for the coding sequences in the 4th partition.
