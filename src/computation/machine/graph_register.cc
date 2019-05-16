@@ -274,16 +274,6 @@ void reg_heap::register_prior(int r)
     }
 }
 
-int reg_heap::register_prior(closure&& C)
-{
-    assert(not C.exp.head().is_a<expression>());
-
-    int r = allocate();
-    set_C(r, std::move(C));
-    register_prior(r);
-    return r;
-}
-
 log_double_t reg_heap::prior_for_context(int c)
 {
     total_context_pr++;

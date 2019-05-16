@@ -198,8 +198,6 @@ public:
 
     void register_prior(int r);
 
-    int register_prior(closure&& C);
-
     log_double_t prior_for_context_full(int c);
 
     log_double_t prior_for_context(int c);
