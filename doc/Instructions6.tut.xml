@@ -64,7 +64,7 @@
 </section>
 </section>
 
-<section><info><title>Exercise (Iterative refinement, Probcons, FSA, PRANK)</title></info>
+<section><info><title>Exercise (Iterative refinement, FSA, PRANK)</title></info>
 
 <section><info><title>Refinement in MAFFT</title></info>
 Look at the time to perform different numbers of iterations with MAFFT:
@@ -106,6 +106,16 @@ How long is the PRANK alignment?  How is the shape different from the other alig
 
 <section><info><title>BAli-Phy</title></info>
 
+  <para>This exercise offers a quick overview of bali-phy with an emphasis on concrete analysis of real datasets.  Other documentation includes:
+  <itemizedlist>
+    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.xhtml">Users Guide</link> is much more complete.</listitem>
+    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/Tutorial4.xhtml">Tutorial</link> is similar to this exercise, but covers more functionality.</listitem>
+    <listitem>You can run <userinput><replaceable>tool</replaceable> --help</userinput> to see command line options for <replaceable>tool</replaceable>.</listitem>
+    <listitem>You can run <userinput>man <replaceable>tool</replaceable></userinput> to see the manual page for <replaceable>tool</replaceable>.</listitem>
+    <listitem>Manual pages for bali-phy and tools are also available <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/docs.php#manpages">online</link>.</listitem>
+  </itemizedlist>
+  </para>
+
 <section><info><title>Creating a script file</title></info>
 <para>First, go to the <filename>~/alignment_files/examples</filename> directory and create
 a text file called ferns-intron-exon.txt that looks like this:</para>
@@ -132,7 +142,7 @@ name = ferns-intron-exon      # determines name for output directory
 <section><info><title>Command line options</title></info>
 <para>A script file can be turned into a command-line by replacing commands like <userinput>command = value</userinput> with <userinput>--command value</userinput>.  The exception is that for <userinput>align=file</userinput> commands, you can just write the filename by itself:
 % bali-phy ferns.fasta:{5-8,9-453,454-596,597-864,865-948,949-1328,1329-1393} --smodel gtr+Rates.gamma+inv --name=ferns-intron-exon --test
-However, with partitioned analyses the command-line can become kind of long.  This is more feasible with a simple unpartitioned analysis:
+However, with partitioned analyses the command-line can become kind of long.  Raw command lines are more useful with a simple unpartitioned analysis:
 % bali-phy ferns.fasta --test
 </para>
 
@@ -164,6 +174,20 @@ You can monitor an analysis in two ways.  One way is to use the program <userinp
 We would like to see that the likelihood and posterior probability have stabilized.  Another method of monitoring is just to
 generate the summary report.
 </section>
+
+<section><info><title>Interpreting parameter names</title></info>
+The parameter estimates have names that look like context1/value or context1/model:parameter.  For example S1/gtr:pi[A] indicates
+<variablelist>
+  <varlistentry><term>S1</term><listitem>The 1st substitution model</listitem></varlistentry>
+  <varlistentry><term>gtr</term><listitem>The GTR (general, time-reversible) nucleotide substitution model.</listitem></varlistentry>
+  <varlistentry><term>pi</term><listitem>The nucleotide frequencies</listitem></varlistentry>
+  <varlistentry><term>[A]</term><listitem>The frequency for A (adenine).</listitem></varlistentry>
+</variablelist>
+We can get information on what a parameter means by running <command>bali-phy help <replaceable>model</replaceable></command>:
+% bali-phy help gtr
+For more information on parameter names, see <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.xhtml#output">the section on Output / Field names</link> in the Users Guide.
+</section>
+
 <section><info><title>Summarizing the results of a run</title></info>
 % bp-analyze ferns-intron-exon-1 ferns-intron-exon-2
 % firefox Results/index.html
