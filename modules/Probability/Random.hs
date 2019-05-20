@@ -28,8 +28,8 @@ distRange (Distribution _ _ _ r) = r
 --        but its only used inside Distribution...
 
 -- This implements the Random monad by transforming it into the IO monad.
-data Random a = RandomStructure a (Random a)
-              | RandomStructureAndPDF a (Random a)
+data Random a = RandomStructure b a (Random a)
+              | RandomStructureAndPDF b a (Random a)
               | Sample (Distribution a)
               | SampleWithInitialValue (Distribution a) a
               | Observe (Distribution b) b
@@ -67,8 +67,8 @@ run_strict alpha (AddMove m) = return ()
 run_strict alpha (Print s) = putStrLn (show s)
 run_strict alpha (Lazy r) = run_lazy alpha r
 
-run_lazy alpha (RandomStructure _ a) = run_lazy alpha a
-run_lazy alpha (RandomStructureAndPDF _ a) = run_lazy alpha a
+run_lazy alpha (RandomStructure _ _ a) = run_lazy alpha a
+run_lazy alpha (RandomStructureAndPDF _ _ a) = run_lazy alpha a
 run_lazy alpha (IOAndPass f g) = do
   x <- unsafeInterleaveIO $ run_lazy alpha f
   run_lazy alpha $ g x
@@ -108,27 +108,38 @@ run_strict' alpha rate (AddMove m) = register_transition_kernel m
 run_strict' alpha rate (Print s) = putStrLn (show s)
 run_strict' alpha rate (Lazy r) = run_lazy' alpha rate r
 
+-- 1. If we add transition kernel INSIDE the SampleWithInitialValue move, then maybe
+--    we could STOP annotation each random variable with `range` and `rate`.
+
+-- 2. Could we somehow implement slice sampling windows for non-contingent variables?
+
+do_nothing x pdf range rate = return ()
+
+
 run_lazy' alpha rate (LiftIO a) = a
 run_lazy' alpha rate (IOAndPass f g) = do
   x <- unsafeInterleaveIO $ run_lazy' alpha rate f
   run_lazy' alpha rate $ g x
 run_lazy' alpha rate (IOReturn v) = return v
-run_lazy' alpha rate (Sample dist@(Distribution _ _ (RandomStructure structure do_sample) range)) = do
+run_lazy' alpha rate (Sample dist@(Distribution _ _ (RandomStructure _ _ do_sample) range)) = do
   value <- run_lazy alpha do_sample
   run_lazy' alpha rate $ SampleWithInitialValue dist value
-run_lazy' alpha rate (Sample dist@(Distribution _ _ (RandomStructureAndPDF structure_and_pdf do_sample) range)) = do
+run_lazy' alpha rate (Sample dist@(Distribution _ _ (RandomStructureAndPDF _ _ do_sample) range)) = do
   value <- run_lazy alpha do_sample
   run_lazy' alpha rate $ SampleWithInitialValue dist value
-run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStructure structure do_sample) range) initial_value) = do
+run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStructure effect structure do_sample) range) initial_value) = do
   -- maybe we need to perform the sample and not use the result, in order to force the parameters of the distribution? 
   -- we need some mcmc moves here, for crp and for trees
   let x = structure initial_value
-  return $ random_variable x (density dist x) range rate
-run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStructureAndPDF structure_and_pdf do_sample) range) initial_value) = do
+      pdf = density dist x
+  effect x pdf range rate
+  return $ random_variable x pdf range rate
+run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStructureAndPDF effect structure_and_pdf do_sample) range) initial_value) = do
   -- maybe we need to perform the sample and not use the result, in order to force the parameters of the distribution? 
   -- we need some mcmc moves here, for crp and for trees
   let (x,pdf) = structure_and_pdf initial_value rv
       rv = random_variable x pdf range rate
+  effect x pdf range rate
   return x
 run_lazy' alpha rate (Sample (Distribution _ _ s _)) = run_lazy' alpha rate s
 run_lazy' alpha rate (MFix f) = MFix ((run_lazy' alpha rate).f)
