@@ -113,7 +113,7 @@ run_strict' alpha rate (Lazy r) = run_lazy' alpha rate r
 
 -- 2. Could we somehow implement slice sampling windows for non-contingent variables?
 
-do_nothing x pdf range rate = return ()
+do_nothing x pdf rate = return ()
 
 
 run_lazy' alpha rate (LiftIO a) = a
@@ -132,14 +132,14 @@ run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStruc
   -- we need some mcmc moves here, for crp and for trees
   let x = structure initial_value
       pdf = density dist x
-  effect x pdf range rate
+  effect x pdf rate
   return $ random_variable x pdf range rate
 run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStructureAndPDF effect structure_and_pdf do_sample) range) initial_value) = do
   -- maybe we need to perform the sample and not use the result, in order to force the parameters of the distribution? 
   -- we need some mcmc moves here, for crp and for trees
   let (x,pdf) = structure_and_pdf initial_value rv
       rv = random_variable x pdf range rate
-  effect x pdf range rate
+  effect x pdf rate
   return x
 run_lazy' alpha rate (Sample (Distribution _ _ s _)) = run_lazy' alpha rate s
 run_lazy' alpha rate (MFix f) = MFix ((run_lazy' alpha rate).f)
