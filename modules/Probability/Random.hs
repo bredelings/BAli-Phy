@@ -83,12 +83,9 @@ run_lazy alpha (MFix f) = MFix ((run_lazy alpha).f)
 run_lazy alpha (Strict r) = run_strict alpha r
 
 
--- Question: why do we need to duplicate things over RandomStructure and Random?
---           why do we have 5 different versions of Sample?
---           It seems like if we moved Random and RandomStructure up to the top level this would solve some things.  
---              But what would that mean?
---
--- Isn't Sample a special case of SampleWithInitialValue?
+-- Q: Isn't Sample a special case of SampleWithInitialValue?
+-- A: No... we need to run the do_sample routine in the plain interpreter.
+
 -- Isn't Random (almost) a special case of RandomStructure, with structure = modifiable?
 --
 -- Maybe we need an RandomIO action to just perform IO actions inside the random monad?  What is normal Haskell terminology for this?
@@ -116,18 +113,12 @@ run_lazy' alpha rate (IOAndPass f g) = do
   x <- unsafeInterleaveIO $ run_lazy' alpha rate f
   run_lazy' alpha rate $ g x
 run_lazy' alpha rate (IOReturn v) = return v
--- It seems like we wouldn't need laziness for `do {x <- r;return x}`.  Do we need it for `r`?
 run_lazy' alpha rate (Sample dist@(Distribution _ _ (RandomStructure structure do_sample) range)) = do
-  -- we need some mcmc moves here, for crp and for trees
   value <- run_lazy alpha do_sample
-  let x = structure value
-  return $ random_variable x (density dist x) range rate
+  run_lazy' alpha rate $ SampleWithInitialValue dist value
 run_lazy' alpha rate (Sample dist@(Distribution _ _ (RandomStructureAndPDF structure_and_pdf do_sample) range)) = do
-  -- we need some mcmc moves here, for crp and for trees
   value <- run_lazy alpha do_sample
-  let (x,pdf) = structure_and_pdf value rv
-      rv = random_variable x pdf range rate
-  return x
+  run_lazy' alpha rate $ SampleWithInitialValue dist value
 run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStructure structure do_sample) range) initial_value) = do
   -- maybe we need to perform the sample and not use the result, in order to force the parameters of the distribution? 
   -- we need some mcmc moves here, for crp and for trees
