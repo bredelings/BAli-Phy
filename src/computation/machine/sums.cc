@@ -64,6 +64,14 @@ log_double_t reg_heap::prior_for_context_full(int c)
         int r = random_variables_[i];
 	int r_pdf = (*this)[r].reg_for_slot(1);
 
+        /* For now, let's require priors to exist in all contexts.
+
+           We could skip priors for contexts that don't have them, but we have
+           no way of eliminating random variables registered by contexts that
+           no longer exist.
+        */
+        assert(reg_exists(r_pdf));
+
 	const auto& x = get_reg_value_in_context(r_pdf, c);
 	log_double_t X = x.as_log_double();
 
