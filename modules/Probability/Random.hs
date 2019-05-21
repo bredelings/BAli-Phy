@@ -115,6 +115,15 @@ run_strict' alpha rate (Lazy r) = run_lazy' alpha rate r
 
 do_nothing x pdf rate = return ()
 
+infixl 2 `with_effect`
+
+with_effect (Distribution pdf quantile (RandomStructureAndPDF effect1 structure_and_pdf sample_action) range) effect2 =
+    let effect1_and_2 x pdf rate = effect1 x pdf rate >> effect2 x pdf rate
+    in Distribution pdf quantile (RandomStructureAndPDF effect1_and_2 structure_and_pdf sample_action) range
+
+with_effect (Distribution pdf quantile (RandomStructure effect1 structure sample_action) range) effect2 =
+    let effect1_and_2 x pdf rate = effect1 x pdf rate >> effect2 x pdf rate
+    in Distribution pdf quantile (RandomStructure effect1_and_2 structure sample_action) range
 
 run_lazy' alpha rate (LiftIO a) = a
 run_lazy' alpha rate (IOAndPass f g) = do
