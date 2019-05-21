@@ -63,9 +63,28 @@ run_strict alpha (IOReturn v) = return v
 run_strict alpha (LiftIO a) = a
 run_strict alpha GetAlphabet = return alpha
 run_strict alpha (SetAlphabet a2 x) = run_strict a2 x
-run_strict alpha (AddMove m) = return ()
 run_strict alpha (Print s) = putStrLn (show s)
 run_strict alpha (Lazy r) = run_lazy alpha r
+
+
+-- The machine should have certain side-effects that can be registered
+-- and unregistered, such as registering random_variables, and adding
+-- transition kernels.  (LiftIO and Print are here only for debugging
+-- purposes.)
+--
+-- Moving such effects out of the "strict" monad leaves that monad as
+-- containing just random sampling and observations.
+--
+run_effects alpha rate (IOAndPass f g) = do
+  x <- run_effects alpha rate f
+  run_effects alpha rate $ g x
+run_effects alpha rate (IOReturn v) = return v
+-- LiftIO and Print are only here for debugging purposes
+run_effects alpha rate (LiftIO a) = a
+run_effects alpha rate (Print s) = putStrLn (show s)
+-- FIXME: We don't use the rate here, but we should!
+run_effects alpha rate (AddMove m) = register_transition_kernel m
+run_effects alpha rate (SamplingRate rate2 a) = run_effects alpha (rate*rate2) a
 
 run_lazy alpha (RandomStructure _ _ a) = run_lazy alpha a
 run_lazy alpha (RandomStructureAndPDF _ _ a) = run_lazy alpha a
@@ -104,7 +123,6 @@ run_strict' alpha rate (LiftIO a) = a
 run_strict' alpha _    GetAlphabet = return alpha
 run_strict' alpha rate (SetAlphabet a2 x) = run_strict' a2 rate x
 run_strict' alpha rate (Observe dist datum) = sequence_ [register_likelihood term | term <- densities dist datum]
-run_strict' alpha rate (AddMove m) = register_transition_kernel m
 run_strict' alpha rate (Print s) = putStrLn (show s)
 run_strict' alpha rate (Lazy r) = run_lazy' alpha rate r
 
@@ -141,14 +159,14 @@ run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStruc
   -- we need some mcmc moves here, for crp and for trees
   let x = structure initial_value
       pdf = density dist x
-  run_strict' alpha rate $ effect x pdf rate
+  run_effects alpha rate $ effect x pdf rate
   return $ random_variable x pdf range rate
 run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStructureAndPDF effect structure_and_pdf do_sample) range) initial_value) = unsafeInterleaveIO $ do
   -- maybe we need to perform the sample and not use the result, in order to force the parameters of the distribution? 
   -- we need some mcmc moves here, for crp and for trees
   let (x,pdf) = structure_and_pdf initial_value rv
       rv = random_variable x pdf range rate
-  run_strict' alpha rate $ effect x pdf rate
+  run_effects alpha rate $ effect x pdf rate
   return x
 run_lazy' alpha rate (Sample (Distribution _ _ s _)) = run_lazy' alpha rate s
 run_lazy' alpha rate (MFix f) = MFix ((run_lazy' alpha rate).f)
