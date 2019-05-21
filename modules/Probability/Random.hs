@@ -74,8 +74,8 @@ run_lazy alpha (IOAndPass f g) = do
   run_lazy alpha $ g x
 run_lazy alpha (IOReturn v) = return v
 run_lazy alpha (LiftIO a) = a
-run_lazy alpha (Sample (Distribution _ _ a _)) = run_lazy alpha a
-run_lazy alpha (SampleWithInitialValue (Distribution _ _ a _) _) = run_lazy alpha a
+run_lazy alpha (Sample (Distribution _ _ a _)) = unsafeInterleaveIO $ run_lazy alpha a
+run_lazy alpha (SampleWithInitialValue (Distribution _ _ a _) _) = unsafeInterleaveIO $ run_lazy alpha a
 run_lazy alpha GetAlphabet = return alpha
 run_lazy alpha (SetAlphabet a2 x) = run_lazy a2 x
 run_lazy alpha (SamplingRate _ model) = run_lazy alpha model
@@ -136,14 +136,14 @@ run_lazy' alpha rate (Sample dist@(Distribution _ _ (RandomStructure _ _ do_samp
 run_lazy' alpha rate (Sample dist@(Distribution _ _ (RandomStructureAndPDF _ _ do_sample) range)) = do
   value <- run_lazy alpha do_sample
   run_lazy' alpha rate $ SampleWithInitialValue dist value
-run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStructure effect structure do_sample) range) initial_value) = do
+run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStructure effect structure do_sample) range) initial_value) = unsafeInterleaveIO $ do
   -- maybe we need to perform the sample and not use the result, in order to force the parameters of the distribution? 
   -- we need some mcmc moves here, for crp and for trees
   let x = structure initial_value
       pdf = density dist x
   run_strict' alpha rate $ effect x pdf rate
   return $ random_variable x pdf range rate
-run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStructureAndPDF effect structure_and_pdf do_sample) range) initial_value) = do
+run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStructureAndPDF effect structure_and_pdf do_sample) range) initial_value) = unsafeInterleaveIO $ do
   -- maybe we need to perform the sample and not use the result, in order to force the parameters of the distribution? 
   -- we need some mcmc moves here, for crp and for trees
   let (x,pdf) = structure_and_pdf initial_value rv
