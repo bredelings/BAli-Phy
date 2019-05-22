@@ -301,3 +301,16 @@ closure seq_op(OperationArgs& Args)
     return {index_var(0),{R}};
 }
 
+bool is_seq(const expression_ref& E)
+{
+    bool result = E.head().type() == seq_type;
+    assert(result == E.head().is_a<Seq>());
+    return result;
+}
+
+bool is_join(const expression_ref& E)
+{
+    bool result = E.head().type() == join_type;
+    assert(result == E.head().is_a<Join>());
+    return result;
+}

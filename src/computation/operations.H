@@ -61,6 +61,8 @@ struct Seq: public Operation
     Seq():Operation(2, seq_op, "seq") {}
 };
 
+bool is_seq(const expression_ref& E);
+
 closure join_op(OperationArgs&);
 
 struct Join: public Operation
@@ -72,4 +74,6 @@ struct Join: public Operation
     Join():Operation(2, join_op, "join") {}
 };
 
+
+bool is_join(const expression_ref& E);
 #endif
