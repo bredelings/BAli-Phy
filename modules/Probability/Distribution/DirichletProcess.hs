@@ -32,7 +32,9 @@ modifiable_list_and_pdf density value rv = let raw_list = map modifiable value
                                                trigger_list = map (rv `seq`) raw_list
                                            in (trigger_list, density raw_list)
 
-crp alpha n d = Distribution (make_densities $ density) (no_quantile "crp") (RandomStructureAndPDF do_nothing (modifiable_list_and_pdf density) (sample_crp alpha n d)) (ListRange $ replicate n subrange)
+crp_effect n d = (\x pdf rate -> add_move (\c -> mapM_ (\l-> gibbs_sample_categorical (x!!l) (n+d) c) [0..n-1]))
+
+crp alpha n d = Distribution (make_densities $ density) (no_quantile "crp") (RandomStructureAndPDF (crp_effect n d) (modifiable_list_and_pdf density) (sample_crp alpha n d)) (ListRange $ replicate n subrange)
                   where subrange = integer_between 0 (n+d-1)
                         density = crp_density alpha n d
 
@@ -52,9 +54,7 @@ dpm n alpha mean_dist noise_dist= do
 
   z <- sample $ iid n (normal 0.0 1.0)
 
-  category <- block $ do category <- random $ sample $ crp alpha n delta
-                         add_move (\c -> mapM_ (\l-> gibbs_sample_categorical (category!!l) (n+delta) c) [0..n-1])
-                         return category
+  category <- sample $ crp alpha n delta
 
   return [ mean!!k * safe_exp (z!!i * sigmaOverMu!!k) | i <- take n [0..], let k=category!!i]
 
@@ -64,8 +64,6 @@ dp n alpha mean_dist = do
 
   mean <- sample $ iid (n+delta) mean_dist
 
-  category <- block $ do category <- random $ sample $ crp alpha n delta
-                         add_move (\c -> mapM_ (\l-> gibbs_sample_categorical (category!!l) (n+delta) c) [0..n-1])
-                         return category
+  category <- sample $ crp alpha n delta
 
   return [ mean!!k | i <- take n [0..], let k=category!!i]
