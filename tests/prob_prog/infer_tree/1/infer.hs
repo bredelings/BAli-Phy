@@ -11,7 +11,7 @@ import SModel.Frequency -- for frequencies_from_dict
 -- issues: 1. likelihood seems wrong - -1300 vs -700.
 --         2. no topology moves included.
 
-main = Strict $ do
+main = do
           let alphabet = dna
               a = load_alignment alphabet "5d-muscle.fasta"
               n_tips = (length $ sequences_from_alignment a)
@@ -20,15 +20,15 @@ main = Strict $ do
           let n_branches = 2*n_tips - 3
 
 
-          topology <- Lazy $ sample $ uniform_topology n_tips
-          ts <- Lazy $ sample $ iid n_branches (gamma 0.5 (2.0/(intToDouble n_branches)))
-          scale <- Lazy $ sample $ gamma 0.5 2.0
+          topology <- random $ sample $ uniform_topology n_tips
+          ts <- random $ sample $ iid n_branches (gamma 0.5 (2.0/(intToDouble n_branches)))
+          scale <- random $ sample $ gamma 0.5 2.0
 
-          pi <- Lazy $ sample $ dirichlet_on ["A","C","G","T"] [1.0, 1.0, 1.0, 1.0]
+          pi <- random $ sample $ dirichlet_on ["A","C","G","T"] [1.0, 1.0, 1.0, 1.0]
           let pi' = frequencies_from_dict dna pi
 
-          kappa1 <- Lazy $ sample $ log_normal 0.0 1.0
-          kappa2 <- Lazy $ sample $ log_normal 0.0 1.0
+          kappa1 <- random $ sample $ log_normal 0.0 1.0
+          kappa2 <- random $ sample $ log_normal 0.0 1.0
           let smodel = mmm $ unit_mixture $ tn93 kappa1 kappa2 pi' dna
           
           let root = targetNode topology 0

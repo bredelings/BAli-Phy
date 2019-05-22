@@ -1520,6 +1520,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
             {var("BAliPhy.ATModel.ATModel"), tree_var, get_list(smodels), get_list(imodels), get_list(scales), branch_lengths, branch_categories, get_list(partitions)},
             get_list(program_loggers))
         );
+    program_exp = {var("Probability.Random.random"), program_exp};
     
     PC->atmodel = add_program(program_exp);
 

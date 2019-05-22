@@ -1,7 +1,7 @@
 import Probability
 import Tree
 
-main = do
+main = random $ do
   tree <- sample $ uniform_topology 5
   let rtree = add_root tree 0
 

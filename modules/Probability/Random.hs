@@ -39,7 +39,6 @@ data Random a = RandomStructure b a (Random a)
               | GetAlphabet
               | SetAlphabet b (Random a)
               | Lazy (Random a)
-              | Strict (Random a)
               | LiftIO (IO a)
 
 
@@ -48,7 +47,6 @@ sample_with_initial_value dist value = SampleWithInitialValue dist value
 observe = Observe
 liftIO = LiftIO
 random = Lazy
-block  = Strict
 add_move = AddMove
 
 log_all loggers = (Nothing,loggers)
@@ -99,21 +97,8 @@ run_lazy alpha GetAlphabet = return alpha
 run_lazy alpha (SetAlphabet a2 x) = run_lazy a2 x
 run_lazy alpha (SamplingRate _ model) = run_lazy alpha model
 run_lazy alpha (MFix f) = MFix ((run_lazy alpha).f)
-run_lazy alpha (Strict r) = run_strict alpha r
 
-
--- Q: Isn't Sample a special case of SampleWithInitialValue?
--- A: No... we need to run the do_sample routine in the plain interpreter.
-
--- Isn't Random (almost) a special case of RandomStructure, with structure = modifiable?
---
--- Maybe we need an RandomIO action to just perform IO actions inside the random monad?  What is normal Haskell terminology for this?
---
--- Also, shouldn't the modifiable function actually be in the IO monad, to prevent let x=modifiable 0;y=modifiable 0 from merging x and y?
-
---
--- Plan: We can implement lazy interpretation by add a (Strict action) constructor to Random, and modifying (IOAndPass f g) to
---       do unsafeInterleaveIO if f does not match (Strict f')
+-- Also, shouldn't the modifiable function actually be some kind of monad, to prevent let x=modifiable 0;y=modifiable 0 from merging x and y?
 
 run_strict' alpha rate (IOAndPass f g) = do
   x <- run_strict' alpha rate f
@@ -155,15 +140,13 @@ run_lazy' alpha rate (Sample dist@(Distribution _ _ (RandomStructureAndPDF _ _ d
   value <- run_lazy alpha do_sample
   run_lazy' alpha rate $ SampleWithInitialValue dist value
 run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStructure effect structure do_sample) range) initial_value) = unsafeInterleaveIO $ do
-  -- maybe we need to perform the sample and not use the result, in order to force the parameters of the distribution? 
-  -- we need some mcmc moves here, for crp and for trees
+  -- do we need to perform the sample and discard the result, in order to force the parameters of the distribution? 
   let x = structure initial_value
       pdf = density dist x
   run_effects alpha rate $ effect x pdf rate
   return $ random_variable x pdf range rate
 run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStructureAndPDF effect structure_and_pdf do_sample) range) initial_value) = unsafeInterleaveIO $ do
-  -- maybe we need to perform the sample and not use the result, in order to force the parameters of the distribution? 
-  -- we need some mcmc moves here, for crp and for trees
+  -- do we need to perform the sample and discard the result, in order to force the parameters of the distribution? 
   let (x,pdf) = structure_and_pdf initial_value rv
       rv = random_variable x pdf range rate
   run_effects alpha rate $ effect x pdf rate
@@ -173,14 +156,13 @@ run_lazy' alpha rate (MFix f) = MFix ((run_lazy' alpha rate).f)
 run_lazy' alpha rate (SamplingRate rate2 a) = run_lazy' alpha (rate*rate2) a
 run_lazy' alpha _    GetAlphabet = return alpha
 run_lazy' alpha rate (SetAlphabet a2 x) = run_lazy' a2 rate x
-run_lazy' alpha rate (Strict r) = run_strict' alpha rate r
 
 set_alphabet a x = do (a',_) <- a
                       SetAlphabet a' x
 
 set_alphabet' = SetAlphabet
 
-gen_model_no_alphabet m = run_lazy' (error "No default alphabet!") 1.0 m
+gen_model_no_alphabet m = run_strict' (error "No default alphabet!") 1.0 m
 
 add_logger old name (value,[]) False = old
 add_logger old name (value,loggers) do_log = (name,(if do_log then Just value else Nothing, loggers)):old
