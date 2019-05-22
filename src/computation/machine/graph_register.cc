@@ -525,12 +525,24 @@ optional<int> reg_heap::find_update_modifiable_reg(int& R)
     // Note: here we always update R
     R = incremental_evaluate_unchangeable(R);
 
-    if (is_modifiable(regs.access(R).C.exp))
+    auto& C = (*this)[R];
+
+    if (is_modifiable(C.exp))
 	return R;
-    else if (is_random_variable(regs.access(R).C.exp))
+    else if (is_random_variable(C.exp))
     {
-	int R2 = (*this)[R].reg_for_slot(0);
+	int R2 = C.reg_for_slot(0);
 	return find_update_modifiable_reg(R2);
+    }
+    else if (is_seq(C.exp))
+    {
+        int R2 = C.reg_for_slot(1);
+        return find_update_modifiable_reg(R2);
+    }
+    else if (is_join(C.exp))
+    {
+        int R2 = C.reg_for_slot(1);
+        return find_update_modifiable_reg(R2);
     }
     else
 	return {};
