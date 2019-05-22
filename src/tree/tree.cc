@@ -26,6 +26,7 @@
 #include "tree/tree.H"
 #include "util/mapping.H"
 #include "util/string/split.H"
+#include "util/string/pred.H"
 #include "util/string/convert.H"
 #include "newick-tokenizer.H"
 
@@ -1939,14 +1940,13 @@ void set_attributes(const vector<pair<string,any> >& tags, vector<string>& attri
 
 void add_comments(vector< pair<string,any> >& tags, const vector<string>& comments, const string& prefix, const string& delim)
 {
-    for(int j=0;j<comments.size();j++)
+    for(auto comment: comments)
     {
 	// skip this comment if it doesn't have the prefix
-	if (comments[j].size() < prefix.size()) continue;
-	if (comments[j].substr(0, prefix.size()) != prefix) continue;
+	if (not starts_with(comment, prefix)) continue;
     
 	// remove the prefix;
-	string comment = comments[j].substr(prefix.size(), comments[j].size() - prefix.size());
+	comment = comment.substr(prefix.size(), comment.size() - prefix.size());
     
 	// split the comment on ','
 	vector<string> pieces = split(comment, delim);
@@ -1972,6 +1972,38 @@ void add_comments(vector< pair<string,any> >& tags, const vector<string>& commen
 	    }
       
 	    tags.push_back(pair<string,any>(attribute, value) );
+	}
+    }
+}
+
+void add_ampersand_comments(vector< pair<string,any> >& tags, const vector<string>& comments)
+{
+    for(auto& comment: comments)
+    {
+        // skip this comment if it doesn't start with '&'
+        if (not starts_with(comment,"&")) continue;
+
+        // Skip NHX comments.
+        if (starts_with(comment, "&&")) continue;
+        if (starts_with(comment, "&!")) continue;
+
+	// split the comment on ','
+	vector<string> fragments = split(comment, ',');
+
+	for(auto& fragment: fragments)
+	{
+            // SKIP fragment that don't start with &
+            if (fragment.empty() or fragment[0] != '&') continue;
+
+	    int sep = fragment.find('=',1);
+            if (sep == string::npos) continue;
+
+            int L = fragment.size();
+
+            auto attribute = fragment.substr(1,sep-1);
+            auto value     = fragment.substr(sep+1,L-sep-1);
+
+	    tags.push_back( {attribute, value} );
 	}
     }
 }
@@ -2041,6 +2073,7 @@ int Tree::parse_(const string& line, std::function<void(BranchNode*)> assign_nam
 	vector< pair<string, any> > tags;
 	add_comments(tags, comments, "&&NHX:", ":");
 	add_comments(tags, comments, "&!", ",!");
+        add_ampersand_comments(tags, comments); // [&key1=value1,&key2=value2]
 
 	//std::cerr<<"word = '"<<word<<"'    depth = "<<tree_stack.size()<<"   stack size = "<<tree_stack.back().size()<<std::endl;
 
