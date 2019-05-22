@@ -140,7 +140,10 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
 	if (i != x1)
 	{
 	    int c2 = M.copy_context(c1);
-	    M.set_reg_value_in_context(x_reg, expression_ref(i), c2);
+            auto x_mod_reg = M.find_modifiable_reg(x_reg);
+            if (not x_mod_reg)
+                throw myexception()<<"gibbs_sample_categorical: reg "<<x_reg<<" not modifiable!";
+	    M.set_reg_value_in_context(*x_mod_reg, expression_ref(i), c2);
 
 	    pr_x[i] = M.probability_ratios(c1,c2).total_ratio();
 
@@ -152,7 +155,10 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
     int x2 = choose(pr_x);
 
     if (x2 != x1)
-	M.set_reg_value_in_context(x_reg, expression_ref(x2), c1);
+    {
+        auto x_mod_reg = M.find_modifiable_reg(x_reg);
+	M.set_reg_value_in_context(*x_mod_reg, expression_ref(x2), c1);
+    }
 
     return constructor("()",0);
 }
