@@ -899,7 +899,8 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
     // assert(not is_root_token and tokens[t].version < tokens[parent_token(t)].version) 
 
     // Check that this reg is indeed settable
-    assert(is_modifiable(regs.access(R).C.exp));
+    if (not is_modifiable(regs.access(R).C.exp))
+        throw myexception()<<"set_reg_value: reg "<<R<<" is not modifiable!";
 
     assert(not is_root_token(t));
 
