@@ -3,6 +3,7 @@
    + Brownian model on *random* rooted tree.
  - Misc
    - Switch to c++17
+   - Read tree properties that look like [&key=value,&key=value]
  - Models
    - Add +mut_sel_aa for selection on amino-acids in codo models.
  - MCMC
@@ -69,6 +70,7 @@
    - Don't print out newick trees rooted at a leaf.
    - Speed up tree drawing in bp-analyze.
    - Correctly compute PP version of MAP and greedy trees.
+   + Fix crp / dirichlet process prior.
 
 * 3.4.1 (Jan 18, 2019)
  - Help
