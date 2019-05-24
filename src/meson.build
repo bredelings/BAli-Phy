@@ -146,8 +146,6 @@ if get_option('extra-tools')
   tools += extra_tools
 endif
 
-tools_prefix = ['subsample']
-
 prefix = 'bali-'
 
 prefixed_tools = ['subsample']
