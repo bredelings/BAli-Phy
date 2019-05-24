@@ -45,7 +45,7 @@ matrix:
           - g++-8
           - pandoc
     - os: osx
-      osx_image: xcode10.2.1
+      osx_image: xcode10.2
 
 before_install:
   # We need to re-export CC and CXX here, because travis exports CXX=g++ or clang++ AFTER we set CXX.
