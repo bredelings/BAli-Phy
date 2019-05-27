@@ -32,7 +32,7 @@ modifiable_list_and_pdf density value rv = let raw_list = map modifiable value
                                                trigger_list = map (rv `seq`) raw_list
                                            in (trigger_list, density raw_list)
 
-crp_effect n d = (\x pdf rate -> add_move (\c -> mapM_ (\l-> gibbs_sample_categorical (x!!l) (n+d) c) [0..n-1]))
+crp_effect n d x = add_move (\c -> mapM_ (\l-> gibbs_sample_categorical (x!!l) (n+d) c) [0..n-1])
 
 crp alpha n d = Distribution (make_densities $ density) (no_quantile "crp") (RandomStructureAndPDF (crp_effect n d) (modifiable_list_and_pdf density) (sample_crp alpha n d)) (ListRange $ replicate n subrange)
                   where subrange = integer_between 0 (n+d-1)

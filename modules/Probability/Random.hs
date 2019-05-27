@@ -39,15 +39,21 @@ data Random a = RandomStructure b a (Random a)
               | GetAlphabet
               | SetAlphabet b (Random a)
               | Lazy (Random a)
+              | WithEffect (Random a) (Random a)
               | LiftIO (IO a)
 
-
 sample dist = Sample dist
+-- I feel sample_with_initial_value actually needs to run the sampler... and make the result come out of that.
+-- Maybe this needs to be equivalent to running the regular sample and then setting the value... 
 sample_with_initial_value dist value = SampleWithInitialValue dist value
 observe = Observe
 liftIO = LiftIO
 random = Lazy
 add_move = AddMove
+infixl 2 `with_effect`
+with_effect = WithEffect
+
+do_nothing _ = return ()
 
 log_all loggers = (Nothing,loggers)
 
@@ -97,6 +103,7 @@ run_lazy alpha GetAlphabet = return alpha
 run_lazy alpha (SetAlphabet a2 x) = run_lazy a2 x
 run_lazy alpha (SamplingRate _ model) = run_lazy alpha model
 run_lazy alpha (MFix f) = MFix ((run_lazy alpha).f)
+run_lazy alpha (WithEffect action _) = run_lazy alpha action
 
 -- Also, shouldn't the modifiable function actually be some kind of monad, to prevent let x=modifiable 0;y=modifiable 0 from merging x and y?
 
@@ -116,18 +123,6 @@ run_strict' alpha rate (Lazy r) = run_lazy' alpha rate r
 
 -- 2. Could we somehow implement slice sampling windows for non-contingent variables?
 
-do_nothing x pdf rate = return ()
-
-infixl 2 `with_effect`
-
-with_effect (Distribution pdf quantile (RandomStructureAndPDF effect1 structure_and_pdf sample_action) range) effect2 =
-    let effect1_and_2 x pdf rate = effect1 x pdf rate >> effect2 x pdf rate
-    in Distribution pdf quantile (RandomStructureAndPDF effect1_and_2 structure_and_pdf sample_action) range
-
-with_effect (Distribution pdf quantile (RandomStructure effect1 structure sample_action) range) effect2 =
-    let effect1_and_2 x pdf rate = effect1 x pdf rate >> effect2 x pdf rate
-    in Distribution pdf quantile (RandomStructure effect1_and_2 structure sample_action) range
-
 run_lazy' alpha rate (LiftIO a) = a
 run_lazy' alpha rate (IOAndPass f g) = do
   x <- unsafeInterleaveIO $ run_lazy' alpha rate f
@@ -143,19 +138,23 @@ run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStruc
   -- do we need to perform the sample and discard the result, in order to force the parameters of the distribution? 
   let x = structure initial_value
       pdf = density dist x
-  run_effects alpha rate $ effect x pdf rate
+  run_effects alpha rate $ effect x
   return $ random_variable x pdf range rate
 run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStructureAndPDF effect structure_and_pdf do_sample) range) initial_value) = unsafeInterleaveIO $ do
   -- do we need to perform the sample and discard the result, in order to force the parameters of the distribution? 
   let (x,pdf) = structure_and_pdf initial_value rv
       rv = random_variable x pdf range rate
-  run_effects alpha rate $ effect x pdf rate
+  run_effects alpha rate $ effect x
   return x
 run_lazy' alpha rate (Sample (Distribution _ _ s _)) = run_lazy' alpha rate s
 run_lazy' alpha rate (MFix f) = MFix ((run_lazy' alpha rate).f)
 run_lazy' alpha rate (SamplingRate rate2 a) = run_lazy' alpha (rate*rate2) a
 run_lazy' alpha _    GetAlphabet = return alpha
 run_lazy' alpha rate (SetAlphabet a2 x) = run_lazy' a2 rate x
+run_lazy' alpha rate (WithEffect action effect) = unsafeInterleaveIO $ do
+  result <- run_lazy' alpha rate action
+  run_effects alpha rate $ effect result
+  return result
 
 set_alphabet a x = do (a',_) <- a
                       SetAlphabet a' x
