@@ -28,7 +28,7 @@
      - Do logging by computing a JSON object.
      - Allow logging strings.
      - Allow logging all fields JSON format as well as TSV format.
-     - Allow reading tabls from JSON formatted output of constant shape.
+     - Allow reading tables from JSON formatted output of constant shape.
      - Add TableReader class that uses only one line at a time.
    - Virtual machine
      - Record force edges.
