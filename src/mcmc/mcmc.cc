@@ -1103,6 +1103,7 @@ namespace MCMC {
 	    //------------------- move to new position -----------------//
 	    iterate(P,*this);
 
+            P->run_transition_kernels();
 
 #ifdef HAVE_MPI
 	    //------------------ Exchange Temperatures -----------------//
