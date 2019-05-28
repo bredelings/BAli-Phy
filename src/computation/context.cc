@@ -12,6 +12,8 @@
 #include "expression/var.H"
 #include "expression/modifiable.H"
 #include "expression/reg_var.H"
+#include "util/rng.H"
+#include "util/permute.H"
 
 using std::string;
 using std::vector;
@@ -162,6 +164,36 @@ expression_ref context::recursive_evaluate_parameter(int i) const
 expression_ref context::recursive_evaluate(int i) const
 {
     return recursive_evaluate_reg(get_compute_expression_reg(i));
+}
+
+vector<double> context::get_mcmc_move_weights() const
+{
+    return vector<double>(n_transition_kernels(), 1.0);
+}
+
+int get_reps(double x)
+{
+    int xx = (int)x;
+    x -= xx;
+    return x + poisson(xx);
+}
+
+void context::run_transition_kernels()
+{
+    auto weights = get_mcmc_move_weights();
+    vector<int> order;
+
+    for(int i=0;i<n_transition_kernels();i++)
+    {
+        int n = get_reps(weights[i]);
+        for(int j=0;j<n;j++)
+            order.push_back(i);
+    }
+
+    random_shuffle(order);
+
+    for(int move: order)
+        perform_transition_kernel(move);
 }
 
 void context::perform_transition_kernel(int i)

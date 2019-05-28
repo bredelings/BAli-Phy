@@ -195,6 +195,8 @@ public:
 
     int add_likelihood_factor(const expression_ref& E);
 
+    std::vector<double> get_mcmc_move_weights() const;
+
 protected:  
     void collect_garbage() const;
 
@@ -203,6 +205,8 @@ public:
     void show_graph() const;
   
     void allocate_identifiers_for_modules(const std::vector<std::string>& module_names);
+
+    void run_transition_kernels();
 
     void perform_transition_kernel(int i);
 
