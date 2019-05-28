@@ -286,7 +286,8 @@ log_double_t reg_heap::prior_for_context(int c)
 void reg_heap::register_likelihood(int r)
 {
     mark_completely_dirty(root_token);
-    r = incremental_evaluate_unchangeable(r);
+    auto [r2,v] = incremental_evaluate(r);
+    r = r2;
 
     if (reg_is_constant(r))
     {
