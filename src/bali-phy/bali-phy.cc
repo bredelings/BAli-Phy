@@ -652,6 +652,7 @@ int main(int argc,char* argv[])
             if (log_formats.count("tsv"))
                 out_screen<<"You can examine 'C1.log' using BAli-Phy tool statreport (command-line) or the BEAST program Tracer (graphical).\n";
 	    out_screen<<"See the manual at http://www.bali-phy.org/README.xhtml for further information.\n";
+            out_screen.flush();
 
 	    //-------- Start the MCMC  -----------//
 	    do_sampling(args, M, max_iterations, *files[0], loggers);
