@@ -429,18 +429,6 @@ MCMC::MoveAll get_alignment_moves(Parameters& P)
     return alignment_moves;
 }
 
-MCMC::MoveAll get_h_moves(Model& M)
-{
-    using namespace MCMC;
-
-    MoveAll h_moves("haskell_moves");
-
-    for(int i=0;i<M.n_transition_kernels();i++)
-	h_moves.add(1,IOMove(i));
-
-    return h_moves;
-}
-
 /// \brief Construct moves to sample the tree
 ///
 /// \param P   The model and state.
@@ -993,9 +981,6 @@ void do_sampling(const variables_map& args,
     // Add slice moves.
     if (P->load_value("slice_sampling", true))
 	sampler.add(1,slice_moves);
-
-    //------------------- Add moves defined via notes ---------------------------//
-    sampler.add(1, get_h_moves(*P));
 
     for(int i=0;i<loggers.size();i++)
 	sampler.add_logger(loggers[i]);

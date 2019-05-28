@@ -663,22 +663,6 @@ namespace MCMC {
     }
 
 
-    void IOMove::iterate(owned_ptr<Model>& P, MoveStats& M)
-    {
-	iterate(P,M,0);
-    }
-
-    void IOMove::iterate(owned_ptr<Model>& P, MoveStats& /* M */, int)
-    {
-	if (log_verbose >= 3) clog<<" [IO Move] move = "<<head<<endl;
-
-	P->perform_transition_kernel(head);
-    }
-
-    IOMove::IOMove(int h)
-	:Move("IOMove"+convertToString(h)),head(h) 
-    { }
-  
     void MoveEach::add(double l,const MoveArg& m,bool enabled) {
 	MoveGroupBase::add(l,m,enabled);
 

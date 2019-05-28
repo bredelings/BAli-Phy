@@ -397,19 +397,6 @@ namespace MCMC {
 	virtual ~MoveArg() {}
     };
 
-    class IOMove: public Move
-    {
-	int head;
-    public:
-	IOMove* clone() const {return new IOMove(*this);}
-
-	void iterate(owned_ptr<Model>&,MoveStats&);
-	void iterate(owned_ptr<Model>&,MoveStats&,int);
-
-	IOMove(int h);
-    };
-
-
     /// Apply this move to Each arg
 
     /// Apply this move to Each arg, choosing for each arg from
