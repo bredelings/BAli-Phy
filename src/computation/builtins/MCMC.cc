@@ -54,6 +54,10 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 
     //------------- 1a. Get argument X -----------------
     int t_reg = Args.evaluate_slot_to_reg(0);
+    if (auto t_mod_reg = M.find_modifiable_reg(t_reg))
+        t_reg = *t_mod_reg;
+    else
+        throw myexception()<<"sum_out_coals: time variable is not modifiable!";
 
     int c1 = Args.evaluate(2).as_int();
 
@@ -73,6 +77,10 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 
 	// evaluate the list element in token 0
 	element_reg = Args.evaluate_reg_to_reg(element_reg);
+        if (auto element_mod_reg = M.find_modifiable_reg(element_reg))
+            element_reg = *element_mod_reg;
+        else
+            throw myexception()<<"sum_out_coals: indicator variable is not modifiable!";
 
 	// Add the element to the list.
 	I_regs.push_back( element_reg );
