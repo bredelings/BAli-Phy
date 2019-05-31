@@ -53,6 +53,7 @@ using std::pair;
 using std::string;
 using std::endl;
 using std::ostream;
+using std::optional;
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -737,9 +738,20 @@ void mask_interval(alignment& A, int c1, int c2)
 	mask_column(A,c);
 }
 
+optional<int> find_mask_target(const vector<string>& seq_names, string mask_name)
+{
+    string suffix = "-"+mask_name;
+    for(int i=0; i<seq_names.size(); i++)
+    {
+        if (seq_names[i] == mask_name) return i;
+        if (ends_with(seq_names[i], suffix)) return i;
+    }
+    return {};
+}
+
 void apply_mask(const sequence_mask& mask, alignment& A)
 {
-    auto index = find_index(sequence_names(A),mask.region_name);
+    auto index = find_mask_target(sequence_names(A), mask.region_name);
     if (not index)
 	throw myexception()<<"Can't apply mask for region '"<<mask.region_name<<"': no such sequence!";
 
