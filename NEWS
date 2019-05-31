@@ -24,6 +24,8 @@
      - Make a unified program that computes an ATModel object.
      0 Use param objects to record compute expressions.
      0 New c++ class do_block to generate Haskell code.
+   - MCMC
+     - Run all dynamically registered transition kernels - we don't need detailed balance!
    - Logging
      - Do logging by computing a JSON object.
      - Allow logging strings.
