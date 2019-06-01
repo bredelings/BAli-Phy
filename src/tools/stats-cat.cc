@@ -35,7 +35,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("until,u",value<int>(),"Read up to this iteration.")
 
 	("ignore,I", value<vector<string> >()->composing(),"Do not analyze these fields.")
-	("select,S", value<vector<string> >()->composing(),"Analyze only these fields.");
+	("select,S", value<vector<string> >()->composing(),"Analyze only these fields.")
+        ("output,O", value<string>(), "Output format: json, tsv")
+	("unnest", "Unnest JSON file.");
 
     options_description all("All options");
     all.add(invisible).add(visible);
@@ -92,6 +94,58 @@ int main(int argc,char* argv[])
         if (not args.count("filenames"))
             throw myexception()<<"No filenames specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
 
+        string out_format = "tsv";
+        if (args.count("output"))
+        {
+            out_format = args["output"].as<string>();
+            for(auto& c: out_format)
+                c = std::tolower(c);
+            if (out_format != "tsv" and out_format != "json")
+                throw myexception()<<"I don't understand output format '"<<out_format<<"'";
+        }
+        else
+        {
+            if (args.count("unnest"))
+                out_format = "json";
+        }
+
+        if (out_format == "json")
+        {
+            if (not filenames.size())
+                throw myexception()<<"--unnest: at least one file required.";
+            auto file = shared_ptr<istream>(new istream_or_ifstream(std::cin, "-", filenames[0], "statistics file"));
+
+            auto is_json = (file->peek() == '{');
+            if (not is_json)
+                throw myexception()<<"--unnest: file must be in JSON format";
+
+            bool do_unnest = args.count("unnest");
+            string line;
+            while(portable_getline(*file,line))
+            {
+                auto j = json::parse(line);
+                if (do_unnest)
+                {
+                    auto j2 = unnest_json(std::move(j));
+                    std::swap(j, j2);
+                }
+                for(auto& field: ignore)
+                    j.erase(field);
+                if (select.size())
+                {
+                    json j2;
+                    for(auto& field: select)
+                    {
+                        auto it = j.find(field);
+                        if (it != j.end())
+                            j2[field] = *it;
+                    }
+                    std::swap(j,j2);
+                }
+                std::cout<<j.dump()<<"\n";
+            }
+            exit(0);
+        }
 
         // Check that all files have the same field names
         vector<string> field_names;

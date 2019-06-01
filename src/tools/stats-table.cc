@@ -410,3 +410,40 @@ vector<json> parameter_values(const json& j)
 	return parameter_values_children(*children);
 }
 
+
+void unnest_json(const string & path, const json& indirection_json, json& out)
+{
+    if (auto value = indirection_json.find("value"); value != indirection_json.end())
+        out[path] = *value;
+
+    if (auto children = indirection_json.find("children"); children != indirection_json.end())
+        for(auto& [key, value]: children->items())
+            unnest_json(path+"/"+key, value, out);
+}
+
+json unnest_json(const json& j)
+{
+    json out;
+    for(auto& [key, value]: j.items())
+        unnest_json(key, value, out);
+    return out;
+}
+
+void unnest_json(const string & path, const json&& indirection_json, json& out)
+{
+    if (auto value = indirection_json.find("value"); value != indirection_json.end())
+        out[path] = std::move(*value);
+
+    if (auto children = indirection_json.find("children"); children != indirection_json.end())
+        for(auto& [key, value]: children->items())
+            unnest_json(path+"/"+key, std::move(value), out);
+}
+
+json unnest_json(const json&& j)
+{
+    json out;
+    for(auto& [key, value]: j.items())
+        unnest_json(key, std::move(value), out);
+    return out;
+}
+
