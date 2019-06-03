@@ -120,6 +120,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("minor-allele",value<int>(),"Keep columns with given minor-allele count")
 	("one-every",value<int>(),"Keep only 1 column in each interval of size <arg>")
 	("write-bed",value<string>(),"Write selected columns in BED format with chromosome name <arg>")
+        ("show-freq", "Show allele frequencies")
 	("translate-mask",value<string>(),"Masks (CSV or @file)")
 	("translate-vcf",value<string>(),"Masks (CSV or @file)")
 	("variant",value<int>()->default_value(1),"Is there a SNP at distance <arg> from SNP?")
@@ -961,15 +962,22 @@ vector<pair<int,int>> get_allele_counts2(const alignment& A, int col)
     return allele_count;
 }
 
-pair<string,string> get_ref_alt(const alignment& A, int col)
+pair<int,int> get_ref_alt_index(const alignment& A, int col)
 {
     auto alleles = get_allele_counts2(A, col);
 
     if (alleles.size() < 2)
         throw myexception()<<"Column "<<col<<" isn't variable!";
 
+    return {alleles[0].first, alleles[1].first};
+}
+
+pair<string,string> get_ref_alt(const alignment& A, int col)
+{
+    auto [ref,alt] = get_ref_alt_index(A, col);
+
     auto& a = A.get_alphabet();
-    return {a.lookup(alleles[0].first), a.lookup(alleles[1].first)};
+    return {a.lookup(ref), a.lookup(alt)};
 }
 
 ostream& write_bed(ostream& o, const string& chromosome, const vector<pair<int,int>>& columns)
@@ -986,6 +994,65 @@ ostream& write_snp_bed(ostream& o, const string& chromosome, const vector<int>& 
     {
         auto [ref,alt] = get_ref_alt(A, column);
 	o<<chromosome<<'\t'<<column<<"\t.\t"<<ref<<'\t'<<alt<<'\n';
+    }
+    return o;
+}
+
+set<string> get_populations(const alignment& A)
+{
+    set<string> pops;
+    auto names = sequence_names(A);
+    for(auto& name: names)
+    {
+        auto l = name.find(':');
+        if (l != string::npos)
+            pops.insert(name.substr(0,l));
+    }
+    return pops;
+}
+
+vector<int> get_indices_for_population(const string& name, const alignment& A)
+{
+    auto names = sequence_names(A);
+    vector<int> indices;
+    string prefix = name + ":";
+    for(int i=0; i<names.size(); i++)
+        if (starts_with(names[i], prefix))
+            indices.push_back(i);
+    return indices;
+}
+
+int get_frequency(const alignment& A, int allele, int column, const vector<int>& indices)
+{
+    int count = 0;
+    for(int i: indices)
+        if (A(column,i) == allele)
+            count++;
+    double p = 100*count/indices.size();
+    return (int)p;
+}
+
+ostream& write_snp_bed_with_frequencies(ostream& o, const string& chromosome, const vector<int>& columns, const alignment& A)
+{
+    vector<string> fields = {"#CHROM","POS","ID","REF","ALT"};
+    auto populations = get_populations(A);
+    fields.push_back("FREQ");
+    for(auto& pop: populations)
+        fields.push_back("FREQ_"+pop);
+    join(o, fields, '\t')<<"\n";
+    vector<vector<int>> indices;
+    indices.push_back( iota<int>(A.n_sequences()) );
+    for(auto& pop: populations)
+        indices.push_back( get_indices_for_population(pop, A));
+    
+    for(int column: columns)
+    {
+        auto [ref,alt] = get_ref_alt_index(A, column);
+        auto& a = A.get_alphabet();
+	o<<chromosome<<'\t'<<column<<"\t.\t"<<a.lookup(ref)<<'\t'<<a.lookup(alt);
+        for(auto& v: indices)
+            o<<'\t'<<get_frequency(A, alt, column, v);
+        o<<'\n';
     }
     return o;
 }
@@ -1252,7 +1319,10 @@ int main(int argc,char* argv[])
 	    if (args.count("write-bed"))
 	    {
 		auto chromosome = args["write-bed"].as<string>();
-		write_snp_bed(std::cout, chromosome, columns, A);
+                if (args.count("show-freq"))
+                    write_snp_bed_with_frequencies(std::cout, chromosome, columns, A);
+                else
+                    write_snp_bed(std::cout, chromosome, columns, A);
 	    }
 	    else
 	    {
