@@ -1022,7 +1022,7 @@ vector<int> get_indices_for_population(const string& name, const alignment& A)
     return indices;
 }
 
-int get_frequency(const alignment& A, int allele, int column, const vector<int>& indices)
+optional<int> get_frequency(const alignment& A, int allele, int column, const vector<int>& indices)
 {
     int count = 0;
     int total = 0;
@@ -1035,7 +1035,7 @@ int get_frequency(const alignment& A, int allele, int column, const vector<int>&
             count++;
     }
     if (total == 0)
-        return 0;
+        return {};
     else
     {
         double p = 100*count/total;
@@ -1062,7 +1062,14 @@ ostream& write_snp_bed_with_frequencies(ostream& o, const string& chromosome, co
         auto& a = A.get_alphabet();
 	o<<chromosome<<'\t'<<column<<"\t.\t"<<a.lookup(ref)<<'\t'<<a.lookup(alt);
         for(auto& v: indices)
-            o<<'\t'<<get_frequency(A, alt, column, v);
+        {
+            o<<'\t';
+            auto freq = get_frequency(A, alt, column, v);
+            if (freq)
+                o<<*freq;
+            else
+                o<<"NA";
+        }
         o<<'\n';
     }
     return o;
