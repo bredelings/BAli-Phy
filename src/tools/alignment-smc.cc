@@ -993,7 +993,7 @@ ostream& write_snp_bed(ostream& o, const string& chromosome, const vector<int>& 
     for(int column: columns)
     {
         auto [ref,alt] = get_ref_alt(A, column);
-	o<<chromosome<<'\t'<<column<<"\t.\t"<<ref<<'\t'<<alt<<'\n';
+	o<<chromosome<<'\t'<<column<<'\t'<<column+1<<'\t'<<ref<<'\t'<<alt<<'\n';
     }
     return o;
 }
@@ -1060,7 +1060,7 @@ ostream& write_snp_bed_with_frequencies(ostream& o, const string& chromosome, co
     {
         auto [ref,alt] = get_ref_alt_index(A, column);
         auto& a = A.get_alphabet();
-	o<<chromosome<<'\t'<<column<<"\t.\t"<<a.lookup(ref)<<'\t'<<a.lookup(alt);
+	o<<chromosome<<'\t'<<column<<'\t'<<column+1<<'\t'<<a.lookup(ref)<<'\t'<<a.lookup(alt);
         for(auto& v: indices)
         {
             o<<'\t';
