@@ -1025,11 +1025,22 @@ vector<int> get_indices_for_population(const string& name, const alignment& A)
 int get_frequency(const alignment& A, int allele, int column, const vector<int>& indices)
 {
     int count = 0;
+    int total = 0;
     for(int i: indices)
+    {
+        if (A(column,i) == alphabet::not_gap) continue;
+
+        total++;
         if (A(column,i) == allele)
             count++;
-    double p = 100*count/indices.size();
-    return (int)p;
+    }
+    if (total == 0)
+        return 0;
+    else
+    {
+        double p = 100*count/total;
+        return (int)p;
+    }
 }
 
 ostream& write_snp_bed_with_frequencies(ostream& o, const string& chromosome, const vector<int>& columns, const alignment& A)
