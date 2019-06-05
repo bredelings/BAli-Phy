@@ -1508,13 +1508,29 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         // P5.II Create modifiables for pairwise alignments
         expression_ref initial_alignments_exp = get_list(unaligned_alignments_on_tree(tt, leaf_sequences));
 
+        // FIXME - If the alignment is random, then sample these.
+        //         Currently we are creating alignment_prior_index in data_partition_constants()
+        //         We are also creating an AlignmentOnTree object there.
         expression_ref alignments = {var("Data.Array.listArray'"), {var("Data.List.map"),var("Parameters.modifiable"),initial_alignments_exp}};
 
+        // FIXME - to make an AT *model* we probably need to remove the data from here.
         partitions.push_back({var("BAliPhy.ATModel.DataPartition.Partition"), smodel, maybe_imodel, scale, tree_var, leaf_seqs_array.ref(*this), alignments, maybe_hmms, transition_ps, 0});
     }
 
+    // FIXME - we need to observe the likelihoods for each partition here.
+    //       - Current we are creating data_partition_constants::likelihood_index in data_partition_constants()
 
-    // We haven't done the observe's yet, though.
+    //       - In tests/prob_prog/infer_tree/1/infer.hs, we are doing this:
+    //  subst_like_on_tree topology root as alphabet smodel ts scale branch_cats seqs = substitution_likelihood topology root seqs' as' alphabet ps f
+    //      where f = weighted_frequency_matrix smodel
+    //      ps = transition_p_index topology smodel branch_cats ds
+    //      ds = listArray' $ map (scale*) ts
+    //      as' = listArray' as
+    //      seqs' = listArray' seqs
+    // observe (ctmc_on_tree topology root as alphabet smodel ts scale branch_cats) seqs
+
+
+
     expression_ref program_exp = program.finish_return(
         Tuple(
             {var("BAliPhy.ATModel.ATModel"), tree_var, get_list(smodels), get_list(imodels), get_list(scales), branch_lengths, branch_categories, get_list(partitions)},
