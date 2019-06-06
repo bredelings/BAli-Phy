@@ -1474,18 +1474,6 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         var smodel("smodel_"+part);
         program.let(smodel, smodels[smodel_index]);
 
-        // L4. let imodel_P = Nothing | Just
-        expression_ref maybe_imodel = Nothing;
-        expression_ref maybe_hmms   = Nothing;
-        if (imodel_index)
-        {
-            auto imodel = var("imodel_"+part);
-            program.let(imodel, {imodels[*imodel_index], heat_exp(), imodel_training_exp()});
-            expression_ref hmms =  {var("Alignment.branch_hmms"), imodel, distances, B};
-            maybe_imodel = {Just, imodel};
-            maybe_hmms   = {Just, hmms};
-        }
-
         // transition_ps
         expression_ref transition_ps = {var("SModel.transition_p_index"), tree_var, smodel, branch_categories, distances};
 
@@ -1502,10 +1490,20 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
         param leaf_seqs_array = add_compute_expression({var("Data.Array.listArray'"),get_list(leaf_seqs_)});
 
+        // L4. let imodel_P = Nothing | Just
+        expression_ref maybe_imodel = Nothing;
+        expression_ref maybe_hmms   = Nothing;
+
         // Sample the alignment
         var alignment_on_tree("alignment_on_tree_"+part);
         if (imodel_index)
         {
+            auto imodel = var("imodel_"+part);
+            program.let(imodel, {imodels[*imodel_index], heat_exp(), imodel_training_exp()});
+            expression_ref hmms =  {var("Alignment.branch_hmms"), imodel, distances, B};
+            maybe_imodel = {Just, imodel};
+            maybe_hmms   = {Just, hmms};
+
             // P5.II Create modifiables for pairwise alignments
             expression_ref initial_alignments_exp = get_list(unaligned_alignments_on_tree(tt, leaf_sequences));
 
@@ -1527,10 +1525,10 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
             // R4. Register sequence length methods
             auto seq_lengths = expression_ref{{var("Data.Array.listArray'"),{var("Alignment.compute_sequence_lengths"), leaf_seqs_array.ref(*this), tree_var, pairwise_as}}};
-            
+
             program.let(alignment_on_tree, {var("Alignment.AlignmentOnTree"), tree_var, tt.n_nodes(), seq_lengths, pairwise_as});
         }
-            
+
 
         // FIXME - to make an AT *model* we probably need to remove the data from here.
         partitions.push_back({var("BAliPhy.ATModel.DataPartition.Partition"), smodel, maybe_imodel, scale, tree_var, leaf_seqs_array.ref(*this), alignment_on_tree, maybe_hmms, transition_ps, 0});
