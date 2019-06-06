@@ -1503,21 +1503,34 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         param leaf_seqs_array = add_compute_expression({var("Data.Array.listArray'"),get_list(leaf_seqs_)});
 
         // Sample the alignment
-        expression_ref alignment_on_tree;
+        var alignment_on_tree("alignment_on_tree_"+part);
+        if (imodel_index)
         {
             // P5.II Create modifiables for pairwise alignments
             expression_ref initial_alignments_exp = get_list(unaligned_alignments_on_tree(tt, leaf_sequences));
 
-            // FIXME - If the alignment is random, then sample these.
-            //         Currently we are creating alignment_prior_index in data_partition_constants()
-            //         We are also creating an AlignmentOnTree object there.
             var pairwise_as("pairwise_as_"+part);
             program.let(pairwise_as,  {var("Data.Array.listArray'"), {var("Data.List.map"),var("Parameters.modifiable"),initial_alignments_exp}});
 
             // R4. Register sequence length methods
             auto seq_lengths = expression_ref{{var("Data.Array.listArray'"),{var("Alignment.compute_sequence_lengths"), leaf_seqs_array.ref(*this), tree_var, pairwise_as}}};
-            alignment_on_tree = {var("Alignment.AlignmentOnTree"), tree_var, tt.n_nodes(), seq_lengths, pairwise_as};
+
+            program.let(alignment_on_tree, {var("Alignment.AlignmentOnTree"), tree_var, tt.n_nodes(), seq_lengths, pairwise_as});
         }
+        else
+        {
+            // P5.II Create modifiables for pairwise alignments
+            expression_ref initial_alignments_exp = get_list(unaligned_alignments_on_tree(tt, leaf_sequences));
+
+            var pairwise_as("pairwise_as_"+part);
+            program.let(pairwise_as,  {var("Data.Array.listArray'"), {var("Data.List.map"),var("Parameters.modifiable"),initial_alignments_exp}});
+
+            // R4. Register sequence length methods
+            auto seq_lengths = expression_ref{{var("Data.Array.listArray'"),{var("Alignment.compute_sequence_lengths"), leaf_seqs_array.ref(*this), tree_var, pairwise_as}}};
+            
+            program.let(alignment_on_tree, {var("Alignment.AlignmentOnTree"), tree_var, tt.n_nodes(), seq_lengths, pairwise_as});
+        }
+            
 
         // FIXME - to make an AT *model* we probably need to remove the data from here.
         partitions.push_back({var("BAliPhy.ATModel.DataPartition.Partition"), smodel, maybe_imodel, scale, tree_var, leaf_seqs_array.ref(*this), alignment_on_tree, maybe_hmms, transition_ps, 0});
