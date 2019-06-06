@@ -435,15 +435,12 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 
     param leaf_sequences = p->add_compute_expression({var("BAliPhy.ATModel.DataPartition.leaf_sequences"),partition});
 
-    // R3. Register array of pairwise alignments
-    param as = p->add_compute_expression({var("BAliPhy.ATModel.DataPartition.pairwise_alignments"), partition});
-
-    // R4. Register sequence length methods
-    auto seq_lengths = expression_ref{{var("Data.Array.listArray'"),{var("Alignment.compute_sequence_lengths"), leaf_sequences.ref(*p), p->my_tree(), as.ref(*p)}}};
-    expression_ref alignment_on_tree = {var("Alignment.AlignmentOnTree"), p->my_tree(), t.n_nodes(), seq_lengths, as.ref(*p)};
+    // Extract alignment from data partition
+    auto alignment_on_tree = expression_ref{var("BAliPhy.ATModel.DataPartition.get_alignment"), partition};
     alignment_on_tree = p->get_expression( p->add_compute_expression(alignment_on_tree) );
+    auto as = expression_ref{var("Alignment.pairwise_alignments"), alignment_on_tree};
+    auto seq_lengths = expression_ref{var("Alignment.sequence_lengths"),alignment_on_tree};
 
-    seq_lengths = expression_ref{var("Alignment.sequence_lengths"),alignment_on_tree};
     for(int n=0;n<t.n_nodes();n++)
         sequence_length_indices[n] = p->add_compute_expression( {var("Data.Array.!"), seq_lengths, n} );
 
@@ -472,7 +469,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         expression_ref alignment_pdf = alignment_prior_index.ref(*p);
         alignment_pdf = make_if_expression(p->my_variable_alignment(), alignment_pdf, log_double_t(1.0));
 
-        expression_ref sample_alignments = {var("Parameters.random_variable"), as.ref(*p), alignment_pdf, 0, 0.0};
+        expression_ref sample_alignments = {var("Parameters.random_variable"), as, alignment_pdf, 0, 0.0};
         int alignment_sample_index = p->add_compute_expression( sample_alignments );
         p->evaluate( alignment_sample_index );
     }
@@ -495,7 +492,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         // R8. Register conditional likelihoods
         auto t = p->my_tree();
         auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
-        cl_index = p->add_compute_expression({var("SModel.Likelihood.cached_conditional_likelihoods"),t,leaf_sequences.ref(*p),counts_array,as.ref(*p),*a,transition_ps,f});  // Create and set conditional likelihoods for each branch
+        cl_index = p->add_compute_expression({var("SModel.Likelihood.cached_conditional_likelihoods"),t,leaf_sequences.ref(*p),counts_array, as,*a,transition_ps,f});  // Create and set conditional likelihoods for each branch
         auto cls = cl_index.ref(*p);
         for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
             conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cls,b});
@@ -505,7 +502,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         {
             expression_ref seq1 = {var("Data.Array.!"), leaf_sequences.ref(*p), 0};
             expression_ref seq2 = {var("Data.Array.!"), leaf_sequences.ref(*p), 1};
-            expression_ref A = {var("Data.Array.!"), as.ref(*p), 0};
+            expression_ref A = {var("Data.Array.!"), as, 0};
             expression_ref P = {var("Data.Array.!"), transition_ps, 0};
             expression_ref f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
 
@@ -513,7 +510,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         }
         else
         {
-            likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood"), t, cls, as.ref(*p), f, p->my_subst_root()});
+            likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood"), t, cls, as, f, p->my_subst_root()});
         }
     }
     else if (likelihood_calculator == 1)
@@ -533,7 +530,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         {
             expression_ref seq1 = {var("Data.Array.!"), leaf_sequences.ref(*p), 0};
             expression_ref seq2 = {var("Data.Array.!"), leaf_sequences.ref(*p), 1};
-            expression_ref A = {var("Data.Array.!"), as.ref(*p), 0};
+            expression_ref A = {var("Data.Array.!"), as, 0};
             expression_ref P = {var("Data.Array.!"), transition_ps, 0};
             expression_ref f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
 
@@ -548,7 +545,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     p->add_likelihood_factor(likelihood_index.ref(*p));
 
     /* Initialize params -- from alignments.ref(*p) */
-    expression_ref alignments_structure = p->evaluate_expression({var("Parameters.maybe_modifiable_structure"), as.ref(*p)});
+    expression_ref alignments_structure = p->evaluate_expression({var("Parameters.maybe_modifiable_structure"), as});
     if (log_verbose >= 3)
         std::cerr<<"alignments = "<<alignments_structure<<"\n";
     assert(alignments_structure.size() == 2*B);
@@ -1511,10 +1508,17 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         // FIXME - If the alignment is random, then sample these.
         //         Currently we are creating alignment_prior_index in data_partition_constants()
         //         We are also creating an AlignmentOnTree object there.
-        expression_ref alignments = {var("Data.Array.listArray'"), {var("Data.List.map"),var("Parameters.modifiable"),initial_alignments_exp}};
+        var pairwise_as("pairwise_as_"+part);
+        program.let(pairwise_as,  {var("Data.Array.listArray'"), {var("Data.List.map"),var("Parameters.modifiable"),initial_alignments_exp}});
+
+        // R4. Register sequence length methods
+        auto seq_lengths = expression_ref{{var("Data.Array.listArray'"),{var("Alignment.compute_sequence_lengths"), leaf_seqs_array.ref(*this), tree_var, pairwise_as}}};
+        expression_ref alignment_on_tree = {var("Alignment.AlignmentOnTree"), tree_var, tt.n_nodes(), seq_lengths, pairwise_as};
+        // alignment_on_tree = p->get_expression( p->add_compute_expression(alignment_on_tree) );
+
 
         // FIXME - to make an AT *model* we probably need to remove the data from here.
-        partitions.push_back({var("BAliPhy.ATModel.DataPartition.Partition"), smodel, maybe_imodel, scale, tree_var, leaf_seqs_array.ref(*this), alignments, maybe_hmms, transition_ps, 0});
+        partitions.push_back({var("BAliPhy.ATModel.DataPartition.Partition"), smodel, maybe_imodel, scale, tree_var, leaf_seqs_array.ref(*this), alignment_on_tree, maybe_hmms, transition_ps, 0});
     }
 
     // FIXME - we need to observe the likelihoods for each partition here.
