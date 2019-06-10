@@ -89,8 +89,8 @@ unaligned_alignments_on_tree t ls = [ make_a' b | b <- [0..2*numBranches t-1]]
                      in unaligned_pairwise_alignment l1 l2
 
 deepseq_array array obj = go (numElements array-1) array obj
-    where go 0 array obj = (array!0) `seq` obj
-          go i array obj = (array!i) `seq` (go (i-1) array obj)
+    where go i array obj | i == -1   = obj
+                         | otherwise = (array!i) `seq` (go (i-1) array obj)
 
 -- Here we want to (i) force the tree, (ii) force the hmms, and (iii) match parameters.cc:unaligned_alignments_on_tree 
 sample_alignment tree hmms tip_lengths = return (hmms `deepseq_array` (AlignmentOnTree tree n_nodes ls as))
