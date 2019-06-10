@@ -18,7 +18,7 @@ builtin builtin_pairwise_alignment_from_bits 2 "pairwise_alignment_from_bits" "B
 builtin unaligned_pairwise_alignment 2 "unaligned_pairwise_alignment" "Alignment"
 builtin flip_alignment 1 "flip_alignment" "Alignment"
 
-branch_hmms (model,_) distances n_branches = listArray' $ map (model distances) [0..2*n_branches-1]
+branch_hmms (model,_) distances n_branches = listArray' $ map (model distances) [0..n_branches-1]
   
 alignment_branch_pr a hmms b = pairwise_alignment_probability_from_counts (transition_counts (a!b)) (hmms!b)
   
@@ -59,14 +59,51 @@ n_sequences         (AlignmentOnTree _ n _  _) = n
 sequence_lengths    (AlignmentOnTree _ _ ls _) = ls
 pairwise_alignments (AlignmentOnTree _ _ _ as) = as
 
-alignment_pr (AlignmentOnTree tree n_seqs lengths as) hmms model = if numElements lengths == 1 then
-                                                                       alignment_pr1 (lengths!0) model 
-                                                                   else
-                                                                       (alignment_pr_top as tree hmms)/(alignment_pr_bot as tree model)
+alignment_pr (AlignmentOnTree tree n_seqs ls as) hmms model = if numElements ls == 1 then
+                                                                  alignment_pr1 (ls!0) model
+                                                              else
+                                                                  (alignment_pr_top as tree hmms)/(alignment_pr_bot as tree model)
 
-modifiable_alignment (AlignmentOnTree tree n_seqs seqlengths as) = AlignmentOnTree tree n_seqs (map modifiable seqlengths) (map modifiable as)
+alignment_pr' alignment hmms model var_a = if var_a then
+                                               alignment_pr alignment hmms model
+                                           else
+                                               doubleToLogDouble 1.0
 
-random_alignment tree hmms model = Distribution (\a -> [alignment_pr a hmms model]) (no_quantile "random_alignment") (RandomStructure do_nothing modifiable_alignment ()) ()
+-- We should compute the seqlengths from the as, unless the number of nodes is 1
+-- OK, so we can't use map on something that is an array.  So maybe I should make the entries here be lists.
+modifiable_alignment (AlignmentOnTree tree n_seqs seqlengths as0) = AlignmentOnTree tree n_seqs ls as
+    where as = mkArray (numElements as0) (\i -> modifiable $ (as0!i))
+          ls = listArray' [ seqlength as tree node | node <- [0..numNodes tree - 1]]
 
+-- Compare to unaligned_alignments_on_tree in parameters.cc
+unaligned_alignments_on_tree t ls = [ make_a' b | b <- [0..2*numBranches t-1]]
+    where make_a' b = let b' = reverseEdge t b in
+                      if (b > b') then
+                          flip_alignment $ make_a b'
+                      else
+                          make_a b
+          make_a b = let n1 = sourceNode t b
+                         n2 = targetNode t b
+                         l1 = if n1 < numElements ls then ls!n1 else 0
+                         l2 = if n2 < numElements ls then ls!n2 else 0
+                     in unaligned_pairwise_alignment l1 l2
+
+deepseq_array array obj = go (numElements array-1) array obj
+    where go 0 array obj = (array!0) `seq` obj
+          go i array obj = (array!i) `seq` (go (i-1) array obj)
+
+-- Here we want to (i) force the tree, (ii) force the hmms, and (iii) match parameters.cc:unaligned_alignments_on_tree 
+sample_alignment tree hmms tip_lengths = return (hmms `deepseq_array` (AlignmentOnTree tree n_nodes ls as))
+    where n_leaves = numElements tip_lengths
+          ls  = listArray' $ [ if node < n_leaves then tip_lengths!node else seqlength as tree node | node <- [0..n_nodes-1] ]
+          as  = listArray' $ unaligned_alignments_on_tree tree tip_lengths
+          n_nodes = numNodes tree
+
+get_sequence_lengths leaf_seqs_array = mkArray (numElements leaf_seqs_array) (\node -> vector_size (leaf_seqs_array!node))
+
+random_alignment tree hmms model tip_lengths var_a = Distribution (\a -> [alignment_pr' a hmms model var_a]) (no_quantile "random_alignment") (RandomStructure do_nothing modifiable_alignment do_sample) ()
+    where do_sample = sample_alignment tree hmms tip_lengths
+
+-- This function handles the case where we have only 1 sequence.
 compute_sequence_lengths seqs tree as = [ if node < n_leaves then vector_size (seqs!node) else seqlength as tree node | node <- [0..numNodes tree-1] ]
     where n_leaves = numElements seqs

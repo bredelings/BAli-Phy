@@ -466,12 +466,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         // Alignment prior
         alignment_prior_index = p->add_compute_expression( {var("Alignment.alignment_pr"), alignment_on_tree, hmms.ref(*p), model} );
 
-        expression_ref alignment_pdf = alignment_prior_index.ref(*p);
-        alignment_pdf = make_if_expression(p->my_variable_alignment(), alignment_pdf, log_double_t(1.0));
-
-        expression_ref sample_alignments = {var("Parameters.random_variable"), as, alignment_pdf, 0, 0.0};
-        int alignment_sample_index = p->add_compute_expression( sample_alignments );
-        p->evaluate( alignment_sample_index );
     }
 
     if (p->t().n_nodes() == 1)
@@ -1513,7 +1507,10 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
             // R4. Register sequence length methods
             auto seq_lengths = expression_ref{{var("Data.Array.listArray'"),{var("Alignment.compute_sequence_lengths"), leaf_seqs_array.ref(*this), tree_var, pairwise_as}}};
 
-            program.let(alignment_on_tree, {var("Alignment.AlignmentOnTree"), tree_var, tt.n_nodes(), seq_lengths, pairwise_as});
+            expression_ref tip_lengths = {var("Alignment.get_sequence_lengths"),leaf_seqs_array.ref(*this)};
+
+            // alignment_on_tree <- sample $ random_alignment tree hmms model leaf_seqs_array p->my_variable_alignment()
+            program.perform(alignment_on_tree, {var("Probability.Random.sample"),{var("Alignment.random_alignment"), tree_var, hmms, imodel, tip_lengths, my_variable_alignment()}});
         }
         else
         {
