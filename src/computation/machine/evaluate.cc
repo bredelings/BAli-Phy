@@ -48,7 +48,7 @@ void throw_reg_exception(reg_heap& M, int t, const closure& C, myexception& e)
     throw e;
 }
 
-void throw_reg_exception(reg_heap& M, int t, int R, myexception& e)
+void throw_reg_exception(reg_heap& M, int t, int R, myexception& e, bool changeable)
 {
     dot_graph_for_token(M, t);
     string SSS = unlet(untranslate_vars(
@@ -57,7 +57,10 @@ void throw_reg_exception(reg_heap& M, int t, int R, myexception& e)
 			   )
 	).print();
     std::ostringstream o;
-    o<<"evaluating reg # "<<R<<" (unchangeable): "<<SSS<<"\n\n";
+    o<<"evaluating reg # "<<R;
+    if (not changeable)
+        o<<" (unchangeable)";
+    o<<": "<<SSS<<"\n\n";
     e.prepend(o.str());
     throw e;
 }
@@ -429,19 +432,19 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 	    catch (error_exception& e)
 	    {
 		if (log_verbose)
-		    throw_reg_exception(*this, root_token, R, e);
+		    throw_reg_exception(*this, root_token, R, e, true);
 		else
 		    throw;
 	    }
 	    catch (myexception& e)
 	    {
-		throw_reg_exception(*this, root_token, R, e);
+		throw_reg_exception(*this, root_token, R, e, true);
 	    }
 	    catch (const std::exception& ee)
 	    {
 		myexception e;
 		e<<ee.what();
-		throw_reg_exception(*this, root_token, R, e);
+		throw_reg_exception(*this, root_token, R, e, true);
 	    }
 	}
     }
@@ -657,13 +660,13 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
 	    }
 	    catch (myexception& e)
 	    {
-		throw_reg_exception(*this, root_token, R, e);
+		throw_reg_exception(*this, root_token, R, e, false);
 	    }
 	    catch (const std::exception& ee)
 	    {
 		myexception e;
 		e<<ee.what();
-		throw_reg_exception(*this, root_token, R, e);
+		throw_reg_exception(*this, root_token, R, e, false);
 	    }
 
 #ifdef DEBUG_MACHINE
