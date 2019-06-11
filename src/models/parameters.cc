@@ -486,30 +486,28 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         auto counts_array = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"),get_list(counts_)}) );
 
         // R8. Register conditional likelihoods
-        cl_index = p->add_compute_expression({var("SModel.Likelihood.cached_conditional_likelihoods"),tree_var,leaf_sequences.ref(*p),counts_array, as,*a,transition_ps,f});  // Create and set conditional likelihoods for each branch
-        auto cls = cl_index.ref(*p);
-        for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
-            conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cls,b});
+        // Create and set conditional likelihoods for each branch
+        cl_index = p->add_compute_expression({var("SModel.Likelihood.cached_conditional_likelihoods"),tree_var,leaf_sequences.ref(*p),counts_array, as,*a,transition_ps,f});  
 
         // FIXME: broken for fixed alignments of 2 sequences.
         if (p->t().n_nodes() > 2)
-            likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood"), tree_var, cls, as, f, p->my_subst_root()});
+            likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood"), tree_var, cl_index.ref(*p), as, f, p->my_subst_root()});
     }
     else if (likelihood_calculator == 1)
     {
         Box<alignment> AAA = AA;
-        cl_index = p->add_compute_expression({var("SModel.Likelihood.cached_conditional_likelihoods_SEV"),tree_var,leaf_sequences.ref(*p),*a,transition_ps,f,AAA});  // Create and set conditional likelihoods for each branch
-
-        auto cls = cl_index.ref(*p);
-        for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
-            conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cls,b});
-
         object_ptr<EVector> Counts(new EVector(counts));
+
+        // Create and set conditional likelihoods for each branch
+        cl_index = p->add_compute_expression({var("SModel.Likelihood.cached_conditional_likelihoods_SEV"),tree_var,leaf_sequences.ref(*p),*a,transition_ps,f,AAA});  
 
         // FIXME: broken for fixed alignments of 2 sequences.
         if (p->t().n_nodes() > 2)
-            likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood_SEV"), tree_var, cls, f, p->my_subst_root(), Counts});
+            likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood_SEV"), tree_var, cl_index.ref(*p), f, p->my_subst_root(), Counts});
     }
+
+    for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
+        conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cl_index.ref(*p),b});
 
     if (p->t().n_nodes() == 2)
     {
