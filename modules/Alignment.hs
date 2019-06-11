@@ -59,21 +59,19 @@ n_sequences         (AlignmentOnTree _ n _  _) = n
 sequence_lengths    (AlignmentOnTree _ _ ls _) = ls
 pairwise_alignments (AlignmentOnTree _ _ _ as) = as
 
-alignment_pr (AlignmentOnTree tree n_seqs ls as) hmms model = if numElements ls == 1 then
-                                                                  alignment_pr1 (ls!0) model
-                                                              else
-                                                                  (alignment_pr_top as tree hmms)/(alignment_pr_bot as tree model)
+alignment_pr (AlignmentOnTree tree n_seqs ls as) hmms model | numNodes tree < 1  = error "Tree only has "++numNodes++" nodes."
+                                                            | numNodes tree == 1 = alignment_pr1 (ls!0) model
+                                                            | otherwise          = (alignment_pr_top as tree hmms)/(alignment_pr_bot as tree model)
 
 alignment_pr' alignment hmms model var_a = if var_a then
                                                alignment_pr alignment hmms model
                                            else
                                                doubleToLogDouble 1.0
 
--- We should compute the seqlengths from the as, unless the number of nodes is 1
--- OK, so we can't use map on something that is an array.  So maybe I should make the entries here be lists.
-modifiable_alignment (AlignmentOnTree tree n_seqs seqlengths as0) = AlignmentOnTree tree n_seqs ls as
-    where as = mkArray (numElements as0) (\i -> modifiable $ (as0!i))
-          ls = listArray' [ seqlength as tree node | node <- [0..numNodes tree - 1]]
+modifiable_alignment a@(AlignmentOnTree tree n_seqs ls as) | numNodes tree < 2 = a
+modifiable_alignment   (AlignmentOnTree tree n_seqs ls as) | otherwise         = AlignmentOnTree tree n_seqs ls' as'
+    where as' = mkArray (numElements as) (\i -> modifiable $ (as!i))
+          ls' = listArray' [ seqlength as' tree node | node <- [0..numNodes tree - 1]]
 
 -- Compare to unaligned_alignments_on_tree in parameters.cc
 unaligned_alignments_on_tree t ls = [ make_a' b | b <- [0..2*numBranches t-1]]
