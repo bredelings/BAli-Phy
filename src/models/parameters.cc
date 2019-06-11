@@ -468,10 +468,12 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 
     }
 
+    auto tree_var = p->my_tree();
+    auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
+
     if (p->t().n_nodes() == 1)
     {
         expression_ref seq = {var("Data.Array.!"),leaf_sequences.ref(*p), 0};
-        auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
         likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood_1"), seq, *a, f});
     }
     else if (likelihood_calculator == 0)
@@ -484,35 +486,20 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         auto counts_array = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"),get_list(counts_)}) );
 
         // R8. Register conditional likelihoods
-        auto t = p->my_tree();
-        auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
-        cl_index = p->add_compute_expression({var("SModel.Likelihood.cached_conditional_likelihoods"),t,leaf_sequences.ref(*p),counts_array, as,*a,transition_ps,f});  // Create and set conditional likelihoods for each branch
+        cl_index = p->add_compute_expression({var("SModel.Likelihood.cached_conditional_likelihoods"),tree_var,leaf_sequences.ref(*p),counts_array, as,*a,transition_ps,f});  // Create and set conditional likelihoods for each branch
         auto cls = cl_index.ref(*p);
         for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
             conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cls,b});
 
         // FIXME: broken for fixed alignments of 2 sequences.
-        if (p->t().n_nodes() == 2)
-        {
-            expression_ref seq1 = {var("Data.Array.!"), leaf_sequences.ref(*p), 0};
-            expression_ref seq2 = {var("Data.Array.!"), leaf_sequences.ref(*p), 1};
-            expression_ref A = {var("Data.Array.!"), as, 0};
-            expression_ref P = {var("Data.Array.!"), transition_ps, 0};
-            expression_ref f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
-
-            likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood_2"), seq1, seq2, *a, A, P, f});
-        }
-        else
-        {
-            likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood"), t, cls, as, f, p->my_subst_root()});
-        }
+        if (p->t().n_nodes() > 2)
+            likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood"), tree_var, cls, as, f, p->my_subst_root()});
     }
     else if (likelihood_calculator == 1)
     {
-        auto t = p->my_tree();
-        auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
         Box<alignment> AAA = AA;
-        cl_index = p->add_compute_expression({var("SModel.Likelihood.cached_conditional_likelihoods_SEV"),t,leaf_sequences.ref(*p),*a,transition_ps,f,AAA});  // Create and set conditional likelihoods for each branch
+        cl_index = p->add_compute_expression({var("SModel.Likelihood.cached_conditional_likelihoods_SEV"),tree_var,leaf_sequences.ref(*p),*a,transition_ps,f,AAA});  // Create and set conditional likelihoods for each branch
+
         auto cls = cl_index.ref(*p);
         for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
             conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cls,b});
@@ -520,20 +507,18 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         object_ptr<EVector> Counts(new EVector(counts));
 
         // FIXME: broken for fixed alignments of 2 sequences.
-        if (p->t().n_nodes() == 2)
-        {
-            expression_ref seq1 = {var("Data.Array.!"), leaf_sequences.ref(*p), 0};
-            expression_ref seq2 = {var("Data.Array.!"), leaf_sequences.ref(*p), 1};
-            expression_ref A = {var("Data.Array.!"), as, 0};
-            expression_ref P = {var("Data.Array.!"), transition_ps, 0};
-            expression_ref f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
+        if (p->t().n_nodes() > 2)
+            likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood_SEV"), tree_var, cls, f, p->my_subst_root(), Counts});
+    }
 
-            likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood_2"), seq1, seq2, *a, A, P, f});
-        }
-        else
-        {
-            likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood_SEV"), t, cls, f, p->my_subst_root(), Counts});
-        }
+    if (p->t().n_nodes() == 2)
+    {
+        expression_ref seq1 = {var("Data.Array.!"), leaf_sequences.ref(*p), 0};
+        expression_ref seq2 = {var("Data.Array.!"), leaf_sequences.ref(*p), 1};
+        expression_ref A = {var("Data.Array.!"), as, 0};
+        expression_ref P = {var("Data.Array.!"), transition_ps, 0};
+
+        likelihood_index = p->add_compute_expression({var("SModel.Likelihood.peel_likelihood_2"), seq1, seq2, *a, A, P, f});
     }
 
     p->add_likelihood_factor(likelihood_index.ref(*p));
