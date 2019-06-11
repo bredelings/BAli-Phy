@@ -98,12 +98,6 @@ void reg_heap::reroot_at(int t)
     for(auto& reroot_handler: reroot_handlers)
         reroot_handler(parent);
 
-    for(auto [_,rc]: tokens[parent].delta_result())
-    {
-        if (rc > 0 and results[rc].flags.test(1))
-            dec_likelihood(rc);
-    }
-
     total_reroot_one++;
   
     assert(tokens[parent].version == tokens[t].version);

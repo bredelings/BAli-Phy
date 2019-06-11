@@ -274,15 +274,6 @@ void reg_heap::register_prior(int r)
     }
 }
 
-log_double_t reg_heap::prior_for_context(int c)
-{
-    total_context_pr++;
-
-    log_double_t Pr = prior_for_context_full(c);
-
-    return Pr;
-}
-
 void reg_heap::register_likelihood(int r)
 {
     mark_completely_dirty(root_token);
@@ -291,8 +282,6 @@ void reg_heap::register_likelihood(int r)
 
     if (reg_is_constant(r))
     {
-	log_double_t pr = regs.access(r).C.exp.as_log_double();
-	constant_likelihood *= pr;
     }
     else
     {
@@ -301,8 +290,6 @@ void reg_heap::register_likelihood(int r)
 	assert(reg_is_changeable(r));
 
 	likelihood_heads.push_back(r);
-
-	likelihoods_list.push_back(r);
     }
 }
 
@@ -316,102 +303,10 @@ int reg_heap::register_likelihood(closure&& C)
     return r;
 }
 
-bool reg_heap::inc_likelihood_for_reg(int r)
-{
-    assert(reg_is_changeable(r));
-    int res = result_index_for_reg(r);
-
-    assert(reg_exists(r)); // reg had better exist in this context!
-
-    if (res > 0 and results[res].flags.test(1)) return true; // already included
-
-    incremental_evaluate(r);
-    res = result_index_for_reg(r);
-
-    return inc_likelihood(res);
-}
-
-void reg_heap::dec_likelihood_for_reg(int r)
-{
-    int res = result_index_for_reg(r);
-
-    if (res > 0 and results[res].flags.test(1))
-	dec_likelihood(res);
-}
-
-void reg_heap::dec_likelihood(int res)
-{
-    assert(res > 0);
-    int r2 = results[res].value;
-    assert(r2 > 0);
-    log_double_t pr = regs.access(r2).C.exp.as_log_double();
-
-    // This value has already by included, so take it out unconditionally.
-    likelihood.data.value -= pr.log();
-
-    results[res].flags.reset(1);
-
-    int r = results[res].source_reg;
-    assert(reg_is_changeable(r));
-    likelihoods_list.push_back(r);
-}
-
-log_double_t reg_heap::likelihood_for_context_diff(int c)
-{
-    reroot_at_context(c);
-    likelihood.reset_unhandled();
-
-    // re-multiply all probabilities
-    if (not (likelihood.data.total_error < 1.0e-9))
-    {
-	for(int r: likelihood_heads)
-	{
-	    int res = result_index_for_reg(r);
-	    if (res > 0 and results[res].flags.test(1))
-		dec_likelihood(res);
-	}
-	std::cerr<<"unwinding all likelihood prs: total_error = "<<likelihood.data.total_error<<" variable_pr = "<<likelihood.data.value<<"  error_pr = "<<likelihood.data.delta<<"   variable_pr/error_pr = "<<likelihood.data.value - likelihood.data.delta<<std::endl;
-	assert(std::abs(likelihood.data.value - likelihood.data.delta) < 1.0e-6);
-	assert(likelihoods_list.size() == likelihood_heads.size());
-	likelihood.reset();
-    }
-
-    if (not likelihoods_list.empty())
-    {
-	mark_completely_dirty(root_token);
-
-	int j=0;
-	for(int i=0;i<likelihoods_list.size();i++)
-	{
-	    int r = likelihoods_list[i];
-	    if (not inc_likelihood_for_reg(r))
-		likelihoods_list[j++] = r;
-	}
-	likelihoods_list.resize(j);
-    }
-
-    return constant_likelihood * log_double_t(likelihood);
-}
-
-log_double_t reg_heap::likelihood_for_context(int c)
+log_double_t reg_heap::probability_for_context(int c)
 {
     total_context_pr++;
 
-    log_double_t Pr = likelihood_for_context_diff(c);
-    // std::cerr<<"A:   Pr1 = "<<Pr<<"   error = "<<likelihood.data.total_error<<"  constant_pr = "<<constant_likelihood<<"  variable_pr = "<<likelihood.data.value<<"  unhandled = "<<likelihood.data.unhandled<<std::endl;
-
-#ifndef NDEBUG  
-    // log_double_t Pr2 = likelihood_for_context_full(c);
-    // double diff = Pr.log() - Pr2.log();
-    // std::cerr<<"B:diff = "<<diff<<"    Pr1 = "<<Pr<<"  Pr2 = "<<Pr2<<"   error = "<<likelihood.data.total_error<<"  constant_pr = "<<constant_likelihood<<"  variable_pr = "<<likelihood.data.value<<"  unhandled = "<<likelihood.data.unhandled<<std::endl;
-    //  assert(fabs(diff) < 1.0e-6);
-#endif
-
-    return Pr;
-}
-
-log_double_t reg_heap::probability_for_context(int c)
-{
     return prior_for_context(c) * likelihood_for_context(c);
 }
 

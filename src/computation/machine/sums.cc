@@ -43,7 +43,7 @@ bool kahan_adder::operator+=(double x)
     }
 }
 
-log_double_t reg_heap::prior_for_context_full(int c)
+log_double_t reg_heap::prior_for_context(int c)
 {
     /*
       This version doesn't really change the amount of time in incremental_evaluate.
@@ -97,26 +97,7 @@ log_double_t reg_heap::prior_for_context_full(int c)
     return Pr;
 }
 
-bool reg_heap::inc_likelihood(int rc)
-{
-    assert(rc > 0);
-    int r2 = results[rc].value;
-    assert(r2 > 0);
-    log_double_t pr = regs.access(r2).C.exp.as_log_double();
-
-    if (kahan_add(pr.log(), likelihood.data.value, likelihood.data.delta, likelihood.data.total_error))
-    {
-	results[rc].flags.set(1);
-	return true;
-    }
-    else
-    {
-	likelihood.data.unhandled += pr.log();
-	return false;
-    }
-}
-
-log_double_t reg_heap::likelihood_for_context_full(int c)
+log_double_t reg_heap::likelihood_for_context(int c)
 {
     /*
       This version doesn't really change the amount of time in incremental_evaluate.

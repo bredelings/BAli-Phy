@@ -194,8 +194,6 @@ public:
     // a list of closures under evaluation
     std::vector<closure> closure_stack;
 
-    kahan_multiplier prior;
-
     void register_prior(int r);
 
     log_double_t prior_for_context_full(int c);
@@ -204,27 +202,11 @@ public:
 
     std::vector<int> likelihood_heads;
 
-    log_double_t constant_likelihood = 1.0;
-
-    kahan_multiplier likelihood;
-
-    std::vector<int> likelihoods_list;
-
     void register_likelihood(int r);
 
     int register_likelihood(closure&& C);
 
-    void dec_likelihood_for_reg(int r);
-
-    bool inc_likelihood_for_reg(int r);
-
-    void dec_likelihood(int rc);
-
-    bool inc_likelihood(int rc);
-
     log_double_t likelihood_for_context_full(int c);
-
-    log_double_t likelihood_for_context_diff(int c);
 
     log_double_t likelihood_for_context(int c);
 
