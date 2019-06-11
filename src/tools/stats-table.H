@@ -176,5 +176,7 @@ std::vector<json> parameter(const json& children);
 
 std::vector<json> parameter_values_children(const json& children);
 
+json unnest_json(const json& j);
+json unnest_json(const json&& j);
 
 #endif
