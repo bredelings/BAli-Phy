@@ -263,8 +263,12 @@ void reg_heap::register_prior(int r)
     auto [r2,v] = incremental_evaluate(r);
     r = r2;
 
+    // We can only put the bit on a changeable reg, not on (say) an index_var.
+    // Therefore, we must evaluate r -> r2 here.
+
     if (reg_is_constant(r))
     {
+        // Also avoid putting a bit on constant regs?
     }
     else
     {
@@ -280,8 +284,12 @@ void reg_heap::register_likelihood(int r)
     auto [r2,v] = incremental_evaluate(r);
     r = r2;
 
+    // We can only put the bit on a changeable reg, not on (say) an index_var.
+    // Therefore, we must evaluate r -> r2 here.
+
     if (reg_is_constant(r))
     {
+        // Also avoid putting a bit on constant regs?
     }
     else
     {
