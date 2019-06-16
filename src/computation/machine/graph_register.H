@@ -207,8 +207,6 @@ public:
 
     void register_prior(int r);
 
-    log_double_t prior_for_context_full(int c);
-
     log_double_t prior_for_context(int c);
 
     std::vector<int> likelihood_heads;
@@ -216,8 +214,6 @@ public:
     void register_likelihood(int r);
 
     int register_likelihood(closure&& C);
-
-    log_double_t likelihood_for_context_full(int c);
 
     log_double_t likelihood_for_context(int c);
 
