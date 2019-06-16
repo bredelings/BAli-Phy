@@ -189,7 +189,7 @@ public:
 
     virtual log_double_t likelihood() const;
 
-    virtual log_double_t probability() const {return prior() * likelihood();}
+    virtual log_double_t probability() const;
 
     prob_ratios_t probability_ratios(const context& C1) const;
 
