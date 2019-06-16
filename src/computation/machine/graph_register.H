@@ -461,6 +461,7 @@ public:
     bool has_step(int r) const;
     bool has_result(int r) const;
     bool reg_has_value(int r) const;
+    int follow_index_var(int r) const;
     bool reg_has_result_value(int r) const;
     int result_value_for_reg(int r) const;
     bool reg_has_call(int r) const;

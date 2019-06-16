@@ -318,6 +318,12 @@ log_double_t reg_heap::probability_for_context(int c)
     return prior_for_context(c) * likelihood_for_context(c);
 }
 
+int reg_heap::follow_index_var(int r) const
+{
+    while((*this)[r].exp.is_index_var())
+        r = (*this)[r].reg_for_index_var();
+    return r;
+}
 
 expression_ref reg_heap::evaluate_program(int c)
 {
