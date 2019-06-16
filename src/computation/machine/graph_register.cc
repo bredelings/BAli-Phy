@@ -332,6 +332,29 @@ expression_ref reg_heap::evaluate_program(int c)
 
     auto result = lazy_evaluate(*program_result_head, c).exp;
 
+    // Force the computation of priors and likelihoods
+    likelihood_for_context(c);
+    prior_for_context(c);
+
+    // Check that all the priors and likelihoods are forced.
+#ifndef NDEBUG
+    for(int r_likelihood: likelihood_heads)
+    {
+        assert(reg_exists(r_likelihood));
+        assert(reg_has_value(follow_index_var(r_likelihood)));
+    }
+
+    for(int r_rv: random_variables_)
+    {
+        assert(reg_exists(r_rv));
+
+        int r_pdf = (*this)[r_rv].reg_for_slot(1);
+        assert(reg_exists(r_pdf));
+
+        assert(reg_has_value(follow_index_var(r_pdf)));
+    }
+#endif
+
     return result;
 }
 
@@ -343,7 +366,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 #endif
 
     // 1. reroot to c1 and force the program
-    /* auto pr1 = */ probability_for_context(c1);
+    evaluate_program(c1);
 
     // 2. install another reroot handler
     vector<pair<int,int>> original_pdf_results;
@@ -368,7 +391,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     reroot_handlers.push_back(handler);
 
     // 3. reroot to c2 and force the program
-    /* auto pr2 = */ probability_for_context(c2);
+    evaluate_program(c2);
 
     // 4. compute the ratio only for (i) changed pdfs that (ii) exist in both c1 and c2
     prob_ratios_t R{1.0, 1.0, false};
