@@ -1,6 +1,9 @@
 #include "graph_register.H"
 #include "kahan.H"
 
+long total_context_prior = 0;
+long total_context_like = 0;
+
 inline bool kahan_add(double x, double& y, double& C, double& total_error)
 {
     double new_y = 0;
@@ -45,6 +48,8 @@ bool kahan_adder::operator+=(double x)
 
 log_double_t reg_heap::prior_for_context(int c)
 {
+    total_context_prior++;
+
     /*
       This version doesn't really change the amount of time in incremental_evaluate.
       However, it drastically increases the amount of time spent in reg_has_value( 30% ),
@@ -99,6 +104,8 @@ log_double_t reg_heap::prior_for_context(int c)
 
 log_double_t reg_heap::likelihood_for_context(int c)
 {
+    total_context_like++;
+
     /*
       This version doesn't really change the amount of time in incremental_evaluate.
       However, it drastically increases the amount of time spent in reg_has_value( 30% ),
