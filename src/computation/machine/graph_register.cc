@@ -318,6 +318,17 @@ log_double_t reg_heap::probability_for_context(int c)
     return prior_for_context(c) * likelihood_for_context(c);
 }
 
+
+expression_ref reg_heap::evaluate_program(int c)
+{
+    if (not program_result_head)
+	throw myexception()<<"No program has been set!";
+
+    auto result = lazy_evaluate(*program_result_head, c).exp;
+
+    return result;
+}
+
 prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 {
 #if DEBUG_MACHINE >= 2

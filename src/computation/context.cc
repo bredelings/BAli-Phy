@@ -439,10 +439,7 @@ int context::add_program(const expression_ref& E)
 
 expression_ref context::evaluate_program() const
 {
-    if (not memory()->program_result_head)
-	throw myexception()<<"No program has been set!";
-
-    return evaluate(*memory()->program_result_head);
+    return memory()->evaluate_program(context_index);
 }
 
 

@@ -199,6 +199,12 @@ public:
     // a list of closures under evaluation
     std::vector<closure> closure_stack;
 
+    /* ---- */
+
+    expression_ref evaluate_program(int c);
+
+    /* ---- */
+
     void register_prior(int r);
 
     log_double_t prior_for_context_full(int c);
