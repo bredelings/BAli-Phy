@@ -612,7 +612,7 @@ bool reg_heap::has_result(int r) const
 
 int reg_heap::value_for_reg(int r) const 
 {
-    assert(not regs.access(r).C.exp.is_index_var());
+    assert(not (*this)[r].exp.is_index_var());
     if (regs.access(r).type == reg::type_t::changeable)
 	return result_value_for_reg(r);
     else
