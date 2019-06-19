@@ -276,12 +276,12 @@ public:
 
     /// Get the index of A
     int A() const {return 0;}
-    /// Get the index of G
-    int G() const {return 1;}
-    /// Get the index of T (or U)
-    int T() const {return 2;}
     /// Get the index of C
-    int C() const {return 3;}
+    int C() const {return 1;}
+    /// Get the index of G
+    int G() const {return 2;}
+    /// Get the index of T (or U)
+    int T() const {return 3;}
 
     bool is_watson_crick(int i, int j) const;
     bool is_mismatch(int i, int j) const;

@@ -323,12 +323,12 @@ int Nucleotides::complement(int l) const
     switch (l) {
     case 0: // A
 	return T();
-    case 1: // G
-	return C();
-    case 2: // T or U
-	return A();
-    case 3: // C
+    case 1: // C
 	return G();
+    case 2: // G
+	return C();
+    case 3: // T or U
+	return A();
     }
     if (l < 0)
 	return l;
