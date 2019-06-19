@@ -330,7 +330,7 @@ expression_ref reg_heap::evaluate_program(int c)
     if (not program_result_head)
 	throw myexception()<<"No program has been set!";
 
-    auto result = lazy_evaluate(*program_result_head, c).exp;
+    auto result = lazy_evaluate(heads[*program_result_head], c).exp;
 
     // Force the computation of priors and likelihoods
     likelihood_for_context(c);
