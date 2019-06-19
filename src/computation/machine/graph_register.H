@@ -179,6 +179,11 @@ public:
     // the list of expressions that we are interested in evaluating.
     std::vector<int> heads;
 
+    std::map<std::string,int> named_heads;
+
+    int add_named_head(const std::string&, int);
+    std::optional<int> lookup_named_head(const std::string&);
+
     std::optional<int> program_result_head;
     std::optional<int> logging_head;
 

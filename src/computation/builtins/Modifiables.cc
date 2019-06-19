@@ -263,3 +263,16 @@ extern "C" closure builtin_function_evaluate(OperationArgs& Args)
 
     return {index_var(0),{R2}};
 }
+
+extern "C" closure builtin_function_add_named_head(OperationArgs& Args)
+{
+    auto& M = Args.memory();
+
+    std::string name = Args.evaluate(0).as_checked<String>();
+
+    int r = Args.reg_for_slot(1);
+
+    M.add_named_head(name, r);
+
+    return constructor("()",0);
+}

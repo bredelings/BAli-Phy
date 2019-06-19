@@ -969,6 +969,24 @@ int reg_heap::add_compute_expression(const expression_ref& E)
     return heads.size() - 1;
 }
 
+int reg_heap::add_named_head(const string& name, int r)
+{
+    int h = heads.size();
+    heads.push_back(r);
+    assert(not named_heads.count(name));
+    named_heads[name] = h;
+    return h;
+}
+
+optional<int> reg_heap::lookup_named_head(const string& name)
+{
+    auto it = named_heads.find(name);
+    if (it == named_heads.end())
+        return {};
+    else
+        return it->second;
+}
+
 // 1. Pass in the program without logging state.
 // 2. Generate the loggers regardless.
 // 3. Return the value, and store it in the program head
