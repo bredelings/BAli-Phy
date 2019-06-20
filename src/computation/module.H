@@ -7,7 +7,7 @@
 #include <vector>
 #include "computation/expression/expression_ref.H"
 #include "computation/expression/var.H"
-#include <algorithm>
+#include <utility>                                  // for pair
 #include <iostream>
 
 enum fixity_t {unknown_fix=0, non_fix=1, left_fix=2, right_fix=3};
