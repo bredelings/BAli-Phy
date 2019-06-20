@@ -26,16 +26,15 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef ALIGNMENT_UTIL_H
 #define ALIGNMENT_UTIL_H
 
-#include <vector>
-#include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <optional>
-#include <istream>
 #include <string>
+#include <vector>
 
 #include "alignment.H"
-#include "sequence/alphabet.H"
-#include "tree/sequencetree.H"
+class Tree;
+class SequenceTree;
+
 
 // Remove sequences to \a A corresponding to internal nodes in \a T
 alignment chop_internal(alignment A,bool keep_empty_columns=false);

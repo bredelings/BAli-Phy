@@ -1,6 +1,8 @@
 #ifndef DUMMY_H
 #define DUMMY_H
 
+#include <set>
+#include <string>
 #include "computation/object.H"
 #include "expression_ref.H"
 

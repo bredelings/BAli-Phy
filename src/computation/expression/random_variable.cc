@@ -1,5 +1,6 @@
 #include "random_variable.H"
 #include "index_var.H"
+#include "computation/machine/args.H"
 
 closure random_variable_op(OperationArgs& Args)
 {

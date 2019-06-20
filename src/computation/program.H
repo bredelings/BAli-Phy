@@ -1,6 +1,7 @@
 #ifndef PROGRAM_H
 #define PROGRAM_H
 
+#include <set>
 #include <vector>
 #include <string>
 #include <map>

@@ -24,9 +24,13 @@
 ///
 
 #include "alignment-util.H"
+
+#include <boost/program_options.hpp>
 #include "util/set.H"
 #include "util/io.H"
 #include "util/range.H"
+#include "tree/tree.H"
+#include "tree/sequencetree.H"
 
 using std::string;
 using std::vector;

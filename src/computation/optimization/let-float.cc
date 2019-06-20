@@ -7,6 +7,7 @@
 #include "computation/expression/lambda.H"
 #include "computation/expression/let.H"
 #include "computation/expression/case.H"
+#include "computation/expression/operator.H"
 #include "util/set.H"
 
 using std::vector;

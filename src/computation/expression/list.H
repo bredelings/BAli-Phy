@@ -2,8 +2,9 @@
 #define EXPRESSION_LIST_H
 
 #include <vector>
+#include <optional>
+#include <string>
 #include "expression_ref.H"
-#include "constructor.H"
 
 expression_ref List();
 

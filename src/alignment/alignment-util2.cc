@@ -27,6 +27,7 @@
 #include "alignment-util2.H"
 #include "util/io.H"
 #include "util/assert.hh"
+#include <boost/program_options.hpp>
 
 using std::string;
 using std::vector;

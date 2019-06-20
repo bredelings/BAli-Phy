@@ -21,14 +21,11 @@
 #define READ_TREES_H
 
 #include <vector>
-#include <valarray>
 #include <string>
-#include <iostream>
-#include <map>
+#include <istream>
 
 #include "util/io.H"
 #include "tree/tree.H"
-#include "tree/sequencetree.H"
 
 namespace trees_format {
 

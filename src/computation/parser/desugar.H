@@ -1,7 +1,6 @@
 #ifndef DESUGAR_H
 #define DESUGAR_H
 
-#include <set>
 #include <string>
 #include <vector>
 #include "computation/expression/expression_ref.H"
@@ -9,7 +8,6 @@
 #include "computation/expression/var.H"
 
 class Module;
-class Model;
 
 expression_ref desugar(const Module& p, const expression_ref&);
 

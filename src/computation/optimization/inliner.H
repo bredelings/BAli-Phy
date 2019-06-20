@@ -1,12 +1,10 @@
 #ifndef INLINER_H
 #define INLINER_H
 
-#include <set>
-#include <map>
-#include <utility>
+#include <vector>
+#include <string>
+#include "expression/AST_node.H"
 #include "computation/expression/expression_ref.H"
-#include "computation/expression/let.H"
-#include "computation/expression/var.H"
 
 class inline_context
 {

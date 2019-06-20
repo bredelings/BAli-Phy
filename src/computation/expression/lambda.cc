@@ -1,5 +1,6 @@
 #include "lambda.H"
 #include "var.H"
+#include "operator.H"
 
 using std::string;
 using std::vector;

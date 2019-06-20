@@ -28,6 +28,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "bits.H"
 #include "util/permute.H"
 #include "util/rng.H"
+#include "models/parameters.H"
 
 using boost::dynamic_bitset;
 using std::vector;

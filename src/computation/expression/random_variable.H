@@ -4,7 +4,8 @@
 #include "computation/closure.H"
 #include "computation/type_constant.H"
 #include "computation/operation.H"
-#include "computation/machine/args.H"
+#include "computation/expression/expression_ref.H"
+class OperationArgs;
 
 closure random_variable_op(OperationArgs&);
 

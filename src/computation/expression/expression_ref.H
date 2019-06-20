@@ -3,13 +3,10 @@
 
 #include <vector>
 #include <memory>
-#include <valarray>
-#include <set>
 #include <string>
 #include <initializer_list>
 #include "computation/object.H"
 #include "util/string/convert.H"
-#include "operator.H"
 #include "computation/type_constant.H"
 
 /// An S-expression: An Object, and possibly an array of Objects.
