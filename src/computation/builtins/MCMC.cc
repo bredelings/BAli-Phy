@@ -1,5 +1,6 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "computation/machine/args.H"
+#include "computation/context.H"
 #include "util/myexception.H"
 #include "computation/machine/graph_register.H"
 #include "util/rng.H"
@@ -128,8 +129,6 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
 {
     assert(not Args.evaluate_changeables());
 
-    reg_heap& M = Args.memory();
-
     //------------- 1a. Get argument X -----------------
     int x_reg = Args.evaluate_slot_to_reg(0);
 
@@ -139,34 +138,35 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
     //------------- 1c. Get context index --------------
     int c1 = Args.evaluate(2).as_int();
 
-    int x1 = M.get_reg_value_in_context(x_reg, c1).as_int();
+    //------------- 2. Find the location of the variable -------------//
+    auto& M = Args.memory();
+    auto x_mod_reg = M.find_modifiable_reg(x_reg);
+    if (not x_mod_reg)
+        throw myexception()<<"gibbs_sample_categorical: reg "<<x_reg<<" not modifiable!";
 
-    //------------- 2. Figure out probability of each value of x ------------//
+    //------------- 3. Get initial value x1 for variable -------------//
+    context_ref C1(M, c1);
+
+    int x1 = C1.get_reg_value(*x_mod_reg).as_int();
+
+    //------------- 4. Figure out probability of each value ----------//
     vector<log_double_t> pr_x(n_values, 1.0);
-
     for(int i=0; i<n_values; i++)
+        // For i == x1 we already know that the ratio is 1.0
 	if (i != x1)
 	{
-	    int c2 = M.copy_context(c1);
-            auto x_mod_reg = M.find_modifiable_reg(x_reg);
-            if (not x_mod_reg)
-                throw myexception()<<"gibbs_sample_categorical: reg "<<x_reg<<" not modifiable!";
-	    M.set_reg_value_in_context(*x_mod_reg, expression_ref(i), c2);
+            context C2 = C1;
 
-	    pr_x[i] = M.probability_ratios(c1,c2).total_ratio();
+	    C2.set_reg_value(*x_mod_reg, expression_ref(i));
 
-	    M.release_context(c2);
+	    pr_x[i] = C2.probability_ratios(C1).total_ratio();
 	}
 
-    //------------- 4. Record base probability and relative probability for x2
-
+    //------------- 5. Get new value x2 for variable -----------------//
     int x2 = choose(pr_x);
 
     if (x2 != x1)
-    {
-        auto x_mod_reg = M.find_modifiable_reg(x_reg);
-	M.set_reg_value_in_context(*x_mod_reg, expression_ref(x2), c1);
-    }
+	C1.set_reg_value(*x_mod_reg, expression_ref(x2));
 
     return constructor("()",0);
 }
