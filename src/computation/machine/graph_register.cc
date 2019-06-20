@@ -1027,6 +1027,12 @@ optional<int> reg_heap::lookup_named_head(const string& name)
         return it->second;
 }
 
+int reg_heap::add_perform_io_head()
+{
+    perform_io_head = add_compute_expression(var("Prelude.unsafePerformIO"));
+    return *perform_io_head;
+}
+
 // 1. Pass in the program without logging state.
 // 2. Generate the loggers regardless.
 // 3. Return the value, and store it in the program head

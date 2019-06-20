@@ -31,8 +31,6 @@ class context
 
     int context_index;
 
-    int perform_io_head = -1;
-
     const std::vector<int>& heads() const;
 
     std::vector<std::pair<std::string,int>>& parameters() const;
@@ -229,6 +227,8 @@ public:
     context(const context&);
 
     context(const Program& P);
+
+    context(reg_heap& M, int c);
 
     virtual ~context();
 };

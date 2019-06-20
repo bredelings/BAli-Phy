@@ -184,9 +184,11 @@ public:
     int add_named_head(const std::string&, int);
     std::optional<int> lookup_named_head(const std::string&);
 
+    std::optional<int> perform_io_head;
     std::optional<int> program_result_head;
     std::optional<int> logging_head;
 
+    int add_perform_io_head();
     int add_program(const expression_ref& E);
 
     // the list of regs that are currently being evaluated

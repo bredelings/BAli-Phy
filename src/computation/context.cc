@@ -125,7 +125,8 @@ const expression_ref& context::evaluate_expression(const expression_ref& E,bool 
 
 const expression_ref& context::perform_expression(const expression_ref& E,bool ec) const
 {
-    expression_ref E2 = {get_expression(perform_io_head),E};
+    expression_ref perform_io = get_expression(*(memory()->perform_io_head));
+    expression_ref E2 = {perform_io, E};
     return evaluate_expression_( preprocess(E2), ec);
 }
 
@@ -528,11 +529,16 @@ context& context::operator+=(const Module& M)
 context& context::operator=(const context& C)
 {
     assert(memory_ == C.memory_);
-    assert(perform_io_head == C.perform_io_head);
 
     memory_->switch_to_context(context_index, C.context_index);
 
     return *this;
+}
+
+context::context(reg_heap& M, int c)
+    :memory_(&M),
+     context_index(c)
+{
 }
 
 context::context(const Program& P)
@@ -546,13 +552,12 @@ context::context(const Program& P)
     if (not P.size())
 	(*this) += "Prelude";
 
-    perform_io_head = add_compute_expression(var("Prelude.unsafePerformIO"));
+    memory_->add_perform_io_head();
 }
 
 context::context(const context& C)
     :memory_(C.memory_),
-     context_index(memory_->copy_context(C.context_index)),
-     perform_io_head(C.perform_io_head)
+     context_index(memory_->copy_context(C.context_index))
 {
     total_create_context2++;
 }
