@@ -20,6 +20,7 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
+#include <set>
 #include "tree/sequencetree.H"
 #include "util/myexception.H"
 #include "util/mapping.H"
