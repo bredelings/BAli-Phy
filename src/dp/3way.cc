@@ -25,6 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <algorithm>
 #include "3way.H"
+#include "2way.H"
 #include "bits.H"
 #include "util/permute.H"
 #include "util/rng.H"

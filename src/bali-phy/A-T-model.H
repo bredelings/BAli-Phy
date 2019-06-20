@@ -6,14 +6,16 @@
 #include <string>
 
 #include <boost/program_options.hpp>
-
-#include "models/parameters.H"
-#include "computation/module.H"
-#include "alignment/alignment.H"
 #include "link-partitions.H"
+#include "models/rules.H"                           // for Rules
 #include "models/setup.H"
 #include "util/owned-ptr.H"
 #include "util/json.hh"
+#include "tree/sequencetree.H"                      // for SequenceTree
+class Parameters;
+class Model;
+class alignment;
+class module_loader;
 
 void setup_heating(int proc_id, const boost::program_options::variables_map& args, Parameters& P);
 

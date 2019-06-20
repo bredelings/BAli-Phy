@@ -30,6 +30,7 @@
 #include "probability/choose.H"
 #include "util/mapping.H"
 #include "util/rng.H"
+#include "dp/2way.H"
 #include "dp/5way.H"
 #include "dp/alignment-sums.H"
 #include "alignment/alignment-util.H"

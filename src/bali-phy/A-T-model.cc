@@ -1,24 +1,44 @@
 #include "A-T-model.H"
-#include "util/io.H"
-#include "util/string/split.H"
-#include "util/string/join.H"
-#include "util/string/convert.H"
-#include "util/io/optional.H"
-#include "util/mapping.H"
-#include "models/setup.H"
-#include "tree/tree-util.H" //extends
-#include "alignment/alignment-constraint.H"
-#include "alignment/load.H"
-#include "alignment/index-matrix.H"
-#include "models/parse.H"
-#include "models/rules.H"
-#include "paths.H"
-#include "help.hh"
-#include "util/text.H"
-#include "computation/expression/lambda.H"
-#include <boost/filesystem/operations.hpp>
-#include "sequence/sequence-format.H"
-#include "tree-align/link.H"
+#include <algorithm>                                // for max, find, min
+#include <boost/dynamic_bitset.hpp>                 // for dynamic_bitset
+#include <boost/filesystem/path.hpp>                // for path, operator/
+#include <boost/program_options.hpp>                // for program_options
+#include <map>                                      // for map, map<>::mappe...
+#include <optional>                                 // for optional
+#include <set>                                      // for set
+#include <utility>                                  // for tuple_element<>::...
+#include "alignment/alignment-constraint.H"         // for load_alignment_co...
+#include "alignment/alignment.H"                    // for alignment, sequen...
+#include "alignment/index-matrix.H"                 // for get_alignment
+#include "alignment/load.H"                         // for load_alignment
+#include "computation/expression/expression_ref.H"  // for expression_ref
+#include "computation/expression/lambda.H"          // for lambda_quantify
+#include "computation/expression/var.H"             // for var
+#include "computation/object.H"                     // for intrusive_ptr_rel...
+#include "link-partitions.H"                        // for shared_items, get...
+#include "models/TreeInterface.H"                   // for TreeInterface
+#include "models/parameters.H"                      // for Parameters, param...
+#include "models/rules.H"                           // for Rules
+#include "models/setup.H"                           // for model_t, get_model
+#include "sequence/alphabet.H"                      // for alphabet, Doublets
+#include "sequence/sequence-format.H"               // for load_from_file
+#include "sequence/sequence.H"                      // for sequence, select
+#include "tree-align/link.H"                        // for link
+#include "tree/tree-branchnode.H"                   // for branchview, const...
+#include "tree/tree-util.H"                         // for extends, load_T
+#include "tree/tree.H"                              // for RandomTree, branc...
+#include "util/io.H"                                // for portable_getline
+#include "util/io/optional.H"                       // for operator<<
+#include "util/mapping.H"                           // for bad_mapping, find...
+#include "util/matrix.H"                            // for matrix
+#include "util/myexception.H"                       // for myexception
+#include "util/ptree.H"                             // for ptree
+#include "util/string/convert.H"                    // for convertTo, conver...
+#include "util/string/join.H"                       // for join
+#include "util/string/split.H"                      // for split, split_on_last
+#include "util/text.H"                              // for bold, bold_blue
+class module_loader;
+
 
 extern int log_verbose;
 

@@ -26,12 +26,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef ALIGNMENT_UTIL2_H
 #define ALIGNMENT_UTIL2_H
 
-#include <vector>
-#include <boost/dynamic_bitset.hpp>
-
-#include "alignment.H"
-#include "sequence/alphabet.H"
-#include "models/TreeInterface.H"
+#include <vector>                  // for vector
+#include "models/TreeInterface.H"  // for TreeInterface
+class alignment;
 
 void minimally_connect_leaf_characters(alignment& A,const TreeInterface& t);
 

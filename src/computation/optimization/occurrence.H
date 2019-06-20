@@ -2,7 +2,6 @@
 #define OCCURRENCE_H
 
 #include <set>
-#include <map>
 #include <utility>
 #include "computation/expression/expression_ref.H"
 #include "computation/expression/let.H"

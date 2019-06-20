@@ -31,6 +31,11 @@
 #include "util/range.H"
 #include "util/set.H"
 #include "util/io.H"
+#include <optional>                            // for optional
+#include "sequence/alphabet.H"                 // for alphabet, alphabet::gap
+#include "tree/sequencetree.H"                 // for SequenceTree
+#include "util/assert.hh"                      // for assert
+#include "util/myexception.H"                  // for myexception
 
 using std::string;
 using std::set;

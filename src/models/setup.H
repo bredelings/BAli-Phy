@@ -1,19 +1,14 @@
 #ifndef SMODEL_SETUP_H
 #define SMODEL_SETUP_H
-#include <vector>
-#include <valarray>
-#include <string>
-#include <set>
-#include <boost/program_options.hpp>
-#include "util/ptree.H"
-#include "computation/object.H"
-#include "alignment/alignment.H"
-#include "sequence/alphabet.H"
-#include "computation/expression/expression_ref.H"
-#include "unification.H"
-#include "util/json.hh"
-#include "models/path.H"
-
+#include <set>                                      // for set
+#include <string>                                   // for string
+#include <utility>                                  // for pair
+#include <vector>                                   // for vector
+#include "computation/expression/expression_ref.H"  // for expression_ref
+#include "sequence/alphabet.H"                      // for alphabet
+#include "unification.H"                            // for term_t, less
+#include "util/json.hh"                             // for json
+#include "util/ptree.H"                             // for ptree
 class Rules;
 
 class pretty_model_t

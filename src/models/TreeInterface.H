@@ -1,11 +1,10 @@
 #ifndef TREE_INTERFACE_H
 #define TREE_INTERFACE_H
 
-#include <vector>
-#include <boost/dynamic_bitset.hpp>
-#include "tree/tree.H"
-#include "computation/object.H"
-
+#include <boost/dynamic_bitset/dynamic_bitset.hpp>  // for dynamic_bitset
+#include <string>                                   // for string
+#include <vector>                                   // for vector
+#include "tree/tree.H"                              // for tree_edge, Tree (...
 class Parameters;
 
 class TreeInterface

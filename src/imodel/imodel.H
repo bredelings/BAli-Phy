@@ -28,7 +28,6 @@
 
 #include "models/model.H"
 #include "computation/object.H"
-#include "computation/operation.H"
 
 /******************************* InDel Models ***********************************/
 

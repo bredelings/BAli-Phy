@@ -23,6 +23,7 @@
 /// \brief Contains functions for subtree-prune-and-regraft (SPR) transition kernels.
 ///
 
+#include "dp/2way.H"
 #include <cmath>
 #include "util/assert.hh"
 #include <iostream>

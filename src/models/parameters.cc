@@ -28,6 +28,7 @@
 #include "util/assert.hh"
 
 #include "models/parameters.H"
+#include "dp/2way.H"
 #include "util/rng.H"
 #include "util/set.H"
 #include "util/log-level.H"

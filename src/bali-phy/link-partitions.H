@@ -28,11 +28,9 @@
 #ifndef SETUP_H
 #define SETUP_H
 
+#include <optional>
 #include <vector>
 #include <string>
-#include <valarray>
-#include "alignment/alignment.H"
-#include "tree/sequencetree.H"
 #include <boost/program_options.hpp>
 
 template <typename T>

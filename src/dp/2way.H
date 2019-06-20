@@ -20,14 +20,17 @@
 #ifndef TWOWAY_H
 #define TWOWAY_H
 
-#include <vector>
-#include <bitset>
-#include "alignment/alignment.H"
-#include "tree/tree.H"
-#include "util/matrix.H"
-#include "models/TreeInterface.H"
-#include "hmm.H"
-#include "A2_states.H"
+#include "util/assert.hh"          // for assert
+#include <algorithm>               // for max
+#include <bitset>                  // for bitset
+#include <vector>                  // for vector
+#include "A2_states.H"             // for G1, G2, M, E
+#include "alignment/alignment.H"   // for alignment
+#include "hmm.H"                   // for HMM, HMM::bitmask_t
+#include "models/TreeInterface.H"  // for TreeInterface
+#include "sequence/alphabet.H"     // for alphabet
+#include "util/matrix.H"           // for matrix
+struct sequence;
 
 class pairwise_alignment_t
 {

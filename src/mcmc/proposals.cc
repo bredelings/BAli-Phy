@@ -27,6 +27,7 @@
 #include "util/range.H"
 #include "util/set.H"
 #include "dp/dp-matrix.H"
+#include "dp/2way.H"
 #include "mcmc/sample-alignment.H"
 
 extern int log_verbose;

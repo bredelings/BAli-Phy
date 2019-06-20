@@ -19,12 +19,13 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#include <boost/program_options.hpp>
-#include <boost/dynamic_bitset.hpp>
-#include <utility>
-#include "alignment/alignment.H"
-#include "tree/sequencetree.H"
-#include "util/io.H"
+#include <boost/dynamic_bitset/dynamic_bitset.hpp>  // for dynamic_bitset
+#include <string>                                   // for string
+#include <utility>                                  // for pair
+#include <vector>                                   // for vector
+#include "util/matrix.H"                            // for matrix
+class SequenceTree;
+class alignment;
 
 matrix<int> load_alignment_constraint(const std::string& filename,SequenceTree& T);
 

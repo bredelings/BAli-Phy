@@ -1,5 +1,6 @@
 #include "substitution/parsimony.H"
 #include "dp/hmm.H"
+#include "dp/2way.H"
 
 using std::vector;
 

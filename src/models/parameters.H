@@ -27,26 +27,36 @@
 #ifndef PARAMETERS_H
 #define PARAMETERS_H
 
-#include <string>
-#include <valarray>
-#include <memory>
-
-#include "sequence/alphabet.H"
-#include "tree/sequencetree.H"
-#include "models/model.H"
+#include <algorithm>                                // for copy
+#include <boost/smart_ptr/intrusive_ptr.hpp>        // for intrusive_ptr
+#include <memory>                                   // for shared_ptr, alloc...
+#include <optional>                                 // for optional
+#include <string>                                   // for string
+#include <tuple>                                    // for tuple
+#include <vector>                                   // for vector
+#include "TreeInterface.H"                          // for TreeInterface
+#include "alignment/alignment.H"                    // for alignment
+#include "computation/expression/expression_ref.H"  // for expression_ref
+#include "computation/object.H"                     // for Object, intrusive...
+#include "computation/param.H"                      // for param
+#include "models/model.H"                           // for Model::key_map_t
+#include "sequence/sequence.H"                      // for sequence
+#include "tools/partition.H"                        // for Partition
+#include "tree/sequencetree.H"                      // for SequenceTree
+#include "tree/tree.H"                              // for tree_edge
+#include "util/assert.hh"                           // for assert
+#include "util/math/log-double.H"                   // for log_double_t
+#include "util/matrix.H"                            // for Matrix, matrix
 #include "imodel/imodel.H"
-#include "alignment/alignment.H"
-#include "computation/param.H"
-
-#include "tools/partition.H"
-#include "dp/2way.H"
-#include "TreeInterface.H"
+class Likelihood_Cache_Branch;
+class Parameters;
+class alphabet;
+class context;
+class model_t;
+class module_loader;
+class pairwise_alignment_t;
 
 //------------------------------- parameter-containing class --------------------------//
-
-class Parameters;
-class Likelihood_Cache_Branch;
-class model_t;
 
 struct data_partition_constants
 {

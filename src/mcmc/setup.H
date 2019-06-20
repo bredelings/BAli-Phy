@@ -31,16 +31,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef SETUP_MCMC_H
 #define SETUP_MCMC_H
 
-#include <boost/program_options.hpp>
-#include <boost/dynamic_bitset.hpp>
-#include <vector>
-#include <iostream>
-#include <string>
+#include <boost/program_options/variables_map.hpp>  // for variables_map
+#include <iostream>                                 // for ostream
+#include <vector>                                   // for vector
+#include "mcmc.H"                                   // for Logger
+#include "util/owned-ptr.H"
 
-#include "models/parameters.H"
-#include "mcmc.H"
-#include "slice-sampling.H"
-#include "proposals.H"
+class Model;
 
 
 void avoid_zero_likelihood(owned_ptr<Model>& P,std::ostream&, std::ostream&);

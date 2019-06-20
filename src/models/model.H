@@ -27,20 +27,19 @@
 #ifndef MODEL_H
 #define MODEL_H
 
-#include <vector>
-#include <string>
-#include <iostream>
-#include <utility>
-#include <map>
-
+#include <iostream>                                 // for ostream
+#include <map>                                      // for map, _Rb_tree_con...
+#include <string>                                   // for string
+#include <utility>                                  // for pair
+#include <vector>                                   // for vector
+#include "computation/context.H"                    // for context
+#include "computation/expression/expression_ref.H"  // for EVector, expressi...
+#include "computation/module.H"                     // for Module
+#include "util/cow-ptr.H"                           // for cow_ptr
+#include "util/json.hh"                             // for json
+#include "util/math/log-double.H"                   // for log_double_t, ope...
 #include "util/bounds.H"
-#include "computation/object.H"
-#include "computation/operation.H"
-#include "computation/context.H"
-#include "util/cow-ptr.H"
-#include "util/json.hh"
-
-class Model;
+class module_loader;
 
 // Variable State: (i) Dirichlet Process or (ii) Augmenting and unaugmenting
 //

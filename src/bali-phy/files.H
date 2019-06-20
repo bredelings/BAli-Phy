@@ -4,7 +4,6 @@
 #include <vector>
 #include <string>
 #include <fstream>
-#include <iostream>
 
 #include <boost/program_options.hpp>
 #include "util/json.hh"
