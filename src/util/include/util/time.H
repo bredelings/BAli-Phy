@@ -38,8 +38,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define TIME_STACK_H
 
 #include <string>
-#include <map>
-#include <vector>
 #include <boost/chrono.hpp>
 
 typedef boost::chrono::nanoseconds duration_t;

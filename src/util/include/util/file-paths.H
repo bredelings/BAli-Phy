@@ -4,7 +4,7 @@
 #include <optional>
 #include <string>
 #include <vector>
-#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
 
 std::optional<boost::filesystem::path> check_file_in_path(const std::vector<std::string>& paths, const boost::filesystem::path& file_path);
 boost::filesystem::path find_file_in_path(const std::vector<std::string>& paths, const boost::filesystem::path& file_path);

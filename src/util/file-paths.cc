@@ -4,6 +4,8 @@
 #include "util/string/join.H"
 #include <vector>
 
+#include <boost/filesystem/operations.hpp>
+
 using std::vector;
 using std::string;
 namespace fs = boost::filesystem;
