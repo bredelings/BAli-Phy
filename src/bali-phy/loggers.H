@@ -4,11 +4,11 @@
 #include <vector>
 #include <set>
 #include <string>
-#include <memory>
-#include "models/model.H"
-#include "util/owned-ptr.H"
-#include "mcmc/logger.H"
-#include "mcmc/mcmc.H" // for MCMC::Logger
+#include "mcmc/mcmc.H"                              // for MCMC::Logger
+#include "util/json.hh"                             // for json
+#include "util/owned-ptr.H"                         // for owned_ptr
+class Model;
+namespace MCMC { template <typename T> class TableFunction; }
 
 #include <boost/program_options.hpp>
 

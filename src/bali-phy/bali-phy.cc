@@ -57,6 +57,7 @@ namespace mpi = boost::mpi;
 #include "models/rules.H"
 #include "models/setup.H"
 #include "mcmc/mcmc.H"
+#include "mcmc/logger.H"
 #include "math/pow2.H"
 #include "version.H"
 #include "mcmc/setup.H"
