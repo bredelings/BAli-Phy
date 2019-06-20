@@ -33,60 +33,52 @@ using Bounds = Box<bounds<T>>;
 long total_create_context1 = 0;
 long total_create_context2 = 0;
 
-object_ptr<reg_heap>& context::memory() const {return memory_;}
+object_ptr<reg_heap>& context_ref::memory() const {return memory_;}
 
-const std::vector<int>& context::heads() const {return memory()->get_heads();}
+const std::vector<int>& context_ref::heads() const {return memory()->get_heads();}
 
-std::vector<std::pair<std::string,int>>& context::parameters() const {return memory()->get_parameters();}
+std::vector<std::pair<std::string,int>>& context_ref::parameters() const {return memory()->get_parameters();}
 
-std::map<std::string, int>& context::identifiers() const {return memory()->get_identifiers();}
+std::map<std::string, int>& context_ref::identifiers() const {return memory()->get_identifiers();}
 
-const closure& context::operator[](int i) const {return (*memory())[i];}
+const closure& context_ref::operator[](int i) const {return (*memory())[i];}
 
-closure context::preprocess(const closure& C) const
+closure context_ref::preprocess(const closure& C) const
 {
     return memory()->preprocess(C);
 }
 
-string context::parameter_name(int i) const
+string context_ref::parameter_name(int i) const
 {
     return parameters()[i].first;
 }
 
-int context::add_identifier(const string& name) const
-{
-    if (maybe_find_parameter(name))
-	throw myexception()<<"Cannot add identifier '"<<name<<"': there is already a parameter with that name.";
-
-    return memory()->add_identifier(name);
-}
-
-void context::rename_parameter(int i, const string& new_name)
+void context_ref::rename_parameter(int i, const string& new_name)
 {
     parameters()[i].first = new_name;
 }
 
 /// Return the value of a particular index, computing it if necessary
-const closure& context::lazy_evaluate(int index) const
+const closure& context_ref::lazy_evaluate(int index) const
 {
     return memory()->lazy_evaluate_head(index, context_index);
 }
 
 /// Return the value of a particular index, computing it if necessary
-const expression_ref& context::evaluate(int index) const
+const expression_ref& context_ref::evaluate(int index) const
 {
     return lazy_evaluate(index).exp;
 }
 
 /// Return the value of a particular index, computing it if necessary
-const expression_ref& context::perform(int index, bool ec) const
+const expression_ref& context_ref::perform(int index, bool ec) const
 {
     int H = heads()[index];
 
     return perform_expression(reg_var(H), ec);
 }
 
-const closure& context::lazy_evaluate_expression_(closure&& C, bool ec) const
+const closure& context_ref::lazy_evaluate_expression_(closure&& C, bool ec) const
 {
     try {
 	int R = memory()->push_temp_head( std::move(C) );
@@ -103,7 +95,7 @@ const closure& context::lazy_evaluate_expression_(closure&& C, bool ec) const
     }
 }
 
-const expression_ref& context::evaluate_expression_(closure&& C,bool ec) const
+const expression_ref& context_ref::evaluate_expression_(closure&& C,bool ec) const
 {
     const expression_ref& result = lazy_evaluate_expression_(std::move(C),ec).exp;
 #ifndef NDEBUG
@@ -113,24 +105,24 @@ const expression_ref& context::evaluate_expression_(closure&& C,bool ec) const
     return result;
 }
 
-const closure& context::lazy_evaluate_expression(const expression_ref& E, bool ec) const
+const closure& context_ref::lazy_evaluate_expression(const expression_ref& E, bool ec) const
 {
     return lazy_evaluate_expression_( preprocess(E), ec);
 }
 
-const expression_ref& context::evaluate_expression(const expression_ref& E,bool ec) const
+const expression_ref& context_ref::evaluate_expression(const expression_ref& E,bool ec) const
 {
     return evaluate_expression_( preprocess(E), ec);
 }
 
-const expression_ref& context::perform_expression(const expression_ref& E,bool ec) const
+const expression_ref& context_ref::perform_expression(const expression_ref& E,bool ec) const
 {
     expression_ref perform_io = get_expression(*(memory()->perform_io_head));
     expression_ref E2 = {perform_io, E};
     return evaluate_expression_( preprocess(E2), ec);
 }
 
-expression_ref context::recursive_evaluate_reg(int r) const
+expression_ref context_ref::recursive_evaluate_reg(int r) const
 {
     closure C1 = memory()->lazy_evaluate(r, context_index);
     expression_ref E1 = deindexify(trim_unnormalize(C1));
@@ -157,17 +149,17 @@ expression_ref context::recursive_evaluate_reg(int r) const
     return expression_ref(std::move(E));
 }
 
-expression_ref context::recursive_evaluate_parameter(int i) const
+expression_ref context_ref::recursive_evaluate_parameter(int i) const
 {
     return recursive_evaluate_reg(get_parameter_reg(i));
 }
 
-expression_ref context::recursive_evaluate(int i) const
+expression_ref context_ref::recursive_evaluate(int i) const
 {
     return recursive_evaluate_reg(get_compute_expression_reg(i));
 }
 
-vector<double> context::get_mcmc_move_weights() const
+vector<double> context_ref::get_mcmc_move_weights() const
 {
     return vector<double>(n_transition_kernels(), 1.0);
 }
@@ -179,7 +171,7 @@ int get_reps(double x)
     return x + poisson(xx);
 }
 
-void context::run_transition_kernels()
+void context_ref::run_transition_kernels()
 {
     auto weights = get_mcmc_move_weights();
     vector<int> order;
@@ -197,34 +189,34 @@ void context::run_transition_kernels()
         perform_transition_kernel(move);
 }
 
-void context::perform_transition_kernel(int i)
+void context_ref::perform_transition_kernel(int i)
 {
     int r = memory()->transition_kernels()[i];
     expression_ref E = {reg_var(r), get_context_index()};
     perform_expression(E);
 }
 
-int context::n_transition_kernels() const
+int context_ref::n_transition_kernels() const
 {
     return memory()->transition_kernels().size();
 }
 
-optional<int> context::parameter_is_modifiable_reg(int index) const
+optional<int> context_ref::parameter_is_modifiable_reg(int index) const
 {
     return memory()->parameter_is_modifiable_reg(index);
 }
 
-optional<int> context::compute_expression_is_modifiable_reg(int index) const
+optional<int> context_ref::compute_expression_is_modifiable_reg(int index) const
 {
     return memory()->compute_expression_is_modifiable_reg(index);
 }
 
-optional<int> context::compute_expression_is_random_variable(int index) const
+optional<int> context_ref::compute_expression_is_random_variable(int index) const
 {
     return memory()->compute_expression_is_random_variable(index);
 }
 
-bool context::compute_expression_has_bounds(int index) const
+bool context_ref::compute_expression_has_bounds(int index) const
 {
     auto R = compute_expression_is_random_variable(index);
     if (not R) return false;
@@ -233,7 +225,7 @@ bool context::compute_expression_has_bounds(int index) const
     return (e and e.is_a<Bounds<double>>());
 }
 
-bounds<double> context::get_bounds_for_compute_expression(int index) const
+bounds<double> context_ref::get_bounds_for_compute_expression(int index) const
 {
     auto R = compute_expression_is_random_variable(index);
     auto e = get_range_for_random_variable(*R);
@@ -247,37 +239,37 @@ bounds<double> context::get_bounds_for_compute_expression(int index) const
 }
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
-const expression_ref& context::get_reg_value(int R) const
+const expression_ref& context_ref::get_reg_value(int R) const
 {
     return memory()->get_reg_value_in_context(R, context_index);
 }
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
-const expression_ref& context::get_modifiable_value(int R) const
+const expression_ref& context_ref::get_modifiable_value(int R) const
 {
     return get_reg_value(*get_modifiable_reg(R));
 }
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
-const expression_ref& context::get_parameter_value(int index) const
+const expression_ref& context_ref::get_parameter_value(int index) const
 {
     return memory()->get_parameter_value_in_context(index, context_index);
 }
 
 /// Get the value of a non-constant, non-computed index
-const expression_ref& context::get_parameter_value(const std::string& name) const
+const expression_ref& context_ref::get_parameter_value(const std::string& name) const
 {
     auto index = find_parameter(name);
 
     return get_parameter_value(index);
 }
 
-void context::set_modifiable_value_(int R, closure&& C)
+void context_ref::set_modifiable_value_(int R, closure&& C)
 {
     set_reg_value(*get_modifiable_reg(R), std::move(C) );
 }
 
-void context::set_modifiable_value(int R, const expression_ref& E)
+void context_ref::set_modifiable_value(int R, const expression_ref& E)
 {
     assert(not E.size());
     assert(not E.is_index_var());
@@ -286,7 +278,7 @@ void context::set_modifiable_value(int R, const expression_ref& E)
     set_modifiable_value_(R, E);
 }
 
-void context::set_parameter_value(int index, const expression_ref& E)
+void context_ref::set_parameter_value(int index, const expression_ref& E)
 {
     assert(not E.size());
     assert(not E.is_index_var());
@@ -295,7 +287,7 @@ void context::set_parameter_value(int index, const expression_ref& E)
     set_parameter_value_(index, E);
 }
 
-void context::set_parameter_value_(int index, closure&& C)
+void context_ref::set_parameter_value_(int index, closure&& C)
 {
     assert(index >= 0);
 
@@ -304,41 +296,41 @@ void context::set_parameter_value_(int index, closure&& C)
     set_reg_value(*P, std::move(C) );
 }
 
-void context::set_reg_value(int P, closure&& C)
+void context_ref::set_reg_value(int P, closure&& C)
 {
     memory()->set_reg_value_in_context(P, std::move(C), context_index);
 }
 
 /// Update the value of a non-constant, non-computed index
-void context::set_parameter_value(const std::string& var, const expression_ref& O)
+void context_ref::set_parameter_value(const std::string& var, const expression_ref& O)
 {
     int i = find_parameter(var);
     
     set_parameter_value(i, O);
 }
 
-int context::n_parameters() const
+int context_ref::n_parameters() const
 {
     return parameters().size();
 }
 
-optional<int> context::maybe_find_parameter(const string& s) const
+optional<int> context_ref::maybe_find_parameter(const string& s) const
 {
     return memory()->maybe_find_parameter(s);
 }
 
-int context::find_parameter(const string& s) const
+int context_ref::find_parameter(const string& s) const
 {
     return memory()->find_parameter(s);
 }
 
-param context::new_modifiable(const expression_ref& value)
+param context_ref::new_modifiable(const expression_ref& value)
 {
     expression_ref M{var("Parameters.modifiable"), value};
     return add_compute_expression(M);
 }
 
-int context::add_modifiable_parameter(const string& full_name, const expression_ref& value)
+int context_ref::add_modifiable_parameter(const string& full_name, const expression_ref& value)
 {
     expression_ref M(modifiable(),{value});
     int p = n_parameters();
@@ -346,86 +338,86 @@ int context::add_modifiable_parameter(const string& full_name, const expression_
     return p;
 }
 
-const vector<int>& context::random_variables() const
+const vector<int>& context_ref::random_variables() const
 {
     return memory()->random_variables();
 }
 
-const expression_ref context::get_range_for_random_variable(int r) const
+const expression_ref context_ref::get_range_for_random_variable(int r) const
 {
     return memory()->get_range_for_random_variable(context_index, r);
 }
 
-double context::get_rate_for_random_variable(int r) const
+double context_ref::get_rate_for_random_variable(int r) const
 {
     return memory()->get_rate_for_random_variable(context_index, r);
 }
 
-const expression_ref context::get_parameter_range(int p) const
+const expression_ref context_ref::get_parameter_range(int p) const
 {
     return memory()->get_parameter_range(context_index, p);
 }
 
 /// Add an expression that may be replaced by its reduced form
-int context::add_compute_expression(const expression_ref& E)
+int context_ref::add_compute_expression(const expression_ref& E)
 {
     return add_compute_expression_( preprocess(E) );
 }
 
 /// Add an expression that may be replaced by its reduced form
-int context::add_compute_expression_(closure&& C)
+int context_ref::add_compute_expression_(closure&& C)
 {
     memory()->allocate_head(std::move(C));
 
     return heads().size() - 1;
 }
 
-int context::n_expressions() const
+int context_ref::n_expressions() const
 {
     return heads().size();
 }
 
-expression_ref context::get_expression(int i) const
+expression_ref context_ref::get_expression(int i) const
 {
     int H = heads()[i];
     return reg_var(H);
 }
 
-void context::compile()
+void context_ref::compile()
 {
 }
 
-log_double_t context::prior() const
+log_double_t context_ref::prior() const
 {
     return memory()->prior_for_context(context_index);
 }
 
-log_double_t context::likelihood() const
+log_double_t context_ref::likelihood() const
 {
     return memory()->likelihood_for_context(context_index);
 }
 
-log_double_t context::probability() const
+log_double_t context_ref::probability() const
 {
     return memory()->probability_for_context(context_index);
 }
 
-int context::add_likelihood_factor(const expression_ref& E)
+int context_ref::add_likelihood_factor(const expression_ref& E)
 {
     return memory()->register_likelihood(preprocess(E));
 }
 
-prob_ratios_t context::probability_ratios(const context& C1) const
+prob_ratios_t context_ref::probability_ratios(const context_ref& C1) const
 {
     return memory()->probability_ratios(C1.context_index, context_index);
 }
 
-void context::collect_garbage() const
+void context_ref::collect_garbage() const
 {
     memory()->collect_garbage();
 }
 
-void context::show_graph() const
+void context_ref::show_graph() const
 {
     prior();
     collect_garbage();
@@ -433,18 +425,13 @@ void context::show_graph() const
     dot_graph_for_token(*memory(), t);
 }
 
-int context::add_program(const expression_ref& E)
-{
-    return memory()->add_program(E);
-}
-
-expression_ref context::evaluate_program() const
+expression_ref context_ref::evaluate_program() const
 {
     return memory()->evaluate_program(context_index);
 }
 
 
-json context::get_logged_parameters() const
+json context_ref::get_logged_parameters() const
 {
     if (not memory()->logging_head)
 	throw myexception()<<"No logging head has been set!";
@@ -453,20 +440,115 @@ json context::get_logged_parameters() const
     return L.as_checked<Box<json>>().value();
 }
 
-context& context::operator+=(const string& module_name)
+int context_ref::get_parameter_reg(int index) const
 {
-    if (not get_Program().contains_module(module_name))
-	(*this) += get_Program().get_module_loader()->load_module(module_name);
+    assert(index >= 0 and index < n_parameters());
+
+    return parameters()[index].second;
+}
+
+int context_ref::get_compute_expression_reg(int index) const
+{
+    assert(index >= 0 and index < heads().size());
+
+    return heads()[index];
+}
+
+optional<int> context_ref::get_modifiable_reg(int r) const
+{
+    return memory()->find_modifiable_reg(r);
+}
+
+std::ostream& operator<<(std::ostream& o, const context_ref& C)
+{
+    for(int index = 0;index < C.n_expressions(); index++)
+    {
+	o<<index<<" "<<C.get_expression(index);
+	o<<"\n";
+    }
+    return o;
+}
+
+Program& context_ref::get_Program()
+{
+    if (not memory()->P)
+	throw myexception()<<"Program used after being cleared!";
+
+    return *(memory()->P);
+}
+
+const Program& context_ref::get_Program() const
+{
+    if (not memory()->P)
+	throw myexception()<<"Program used after being cleared!";
+
+    return *(memory()->P);
+}
+
+void context_ref::clear_program()
+{
+    memory()->P.reset();
+}
+
+void context_ref::clear_identifiers()
+{
+    memory()->identifiers.clear();
+}
+
+const vector<string>& context_ref::get_args() const
+{
+    return memory()->args;
+}
+
+void context_ref::set_args(const vector<string>& a)
+{
+    memory()->args = a;
+}
+
+
+/*
+// Make the context point to the same token as the other context
+context_ref& context_ref::operator=(const context_ref& C)
+{
+    assert(memory_ == C.memory_);
+
+    context_index = C.get_context_index();
 
     return *this;
 }
 
-context& context::operator+=(const vector<string>& module_names)
+context_ref::context(const context_ref& C)
+    :memory_(C.memory_),
+     context_index(C.get_context_index())
 {
-    for(const auto& name: module_names)
-	(*this) += name;
+    total_create_context2++;
+}
+*/
 
-    return *this;
+context_ref::context_ref(reg_heap& M)
+    :context_ref(M,-1)
+{
+}
+
+context_ref::context_ref(reg_heap& M, int c)
+    :memory_(&M),
+     context_index(c)
+{
+}
+
+/*----------------------*/
+
+int context::add_program(const expression_ref& E)
+{
+    return memory()->add_program(E);
+}
+
+int context::add_identifier(const string& name) const
+{
+    if (maybe_find_parameter(name))
+	throw myexception()<<"Cannot add identifier '"<<name<<"': there is already a parameter with that name.";
+
+    return memory()->add_identifier(name);
 }
 
 void context::allocate_identifiers_for_modules(const vector<string>& module_names)
@@ -504,6 +586,22 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
     }
 }
 
+context& context::operator+=(const string& module_name)
+{
+    if (not get_Program().contains_module(module_name))
+	(*this) += get_Program().get_module_loader()->load_module(module_name);
+
+    return *this;
+}
+
+context& context::operator+=(const vector<string>& module_names)
+{
+    for(const auto& name: module_names)
+	(*this) += name;
+
+    return *this;
+}
+
 // \todo FIXME:cleanup If we can make this only happen once, we can assume old_module_names is empty.
 context& context::operator+=(const Module& M)
 {
@@ -526,25 +624,44 @@ context& context::operator+=(const Module& M)
     return *this;
 }
 
-context& context::operator=(const context& C)
+// Make the context point to the same token as the other context
+context& context::operator=(const context_ref& C)
 {
-    assert(memory_ == C.memory_);
+    assert(&get_memory() == &C.get_memory());
 
-    memory_->switch_to_context(context_index, C.context_index);
+    memory_->switch_to_context(context_index, C.get_context_index());
 
     return *this;
 }
 
-context::context(reg_heap& M, int c)
-    :memory_(&M),
-     context_index(c)
+context& context::operator=(const context& C)
 {
+    assert(&get_memory() == &C.get_memory());
+
+    memory_->switch_to_context(context_index, C.get_context_index());
+
+    return *this;
+}
+
+context::context(const context_ref& C)
+    :context_ref(*C.memory_,
+                 C.memory_->copy_context(C.get_context_index()))
+{
+    total_create_context2++;
+}
+
+context::context(const context& C)
+    :context_ref(*C.memory_)
+{
+    context_index = memory_->copy_context(C.get_context_index());
+    total_create_context2++;
 }
 
 context::context(const Program& P)
-    :memory_(new reg_heap(P.get_module_loader())),
-     context_index(memory_->get_unused_context())
+    :context_ref(*new reg_heap(P.get_module_loader()))
 {
+    context_index = memory_->get_unused_context();
+
     for(auto& M: P.modules())
 	(*this) += M;
 
@@ -555,79 +672,8 @@ context::context(const Program& P)
     memory_->add_perform_io_head();
 }
 
-context::context(const context& C)
-    :memory_(C.memory_),
-     context_index(memory_->copy_context(C.context_index))
-{
-    total_create_context2++;
-}
-
 context::~context()
 {
     memory_->release_context(context_index);
 }
 
-int context::get_parameter_reg(int index) const
-{
-    assert(index >= 0 and index < n_parameters());
-
-    return parameters()[index].second;
-}
-
-int context::get_compute_expression_reg(int index) const
-{
-    assert(index >= 0 and index < heads().size());
-
-    return heads()[index];
-}
-
-optional<int> context::get_modifiable_reg(int r) const
-{
-    return memory()->find_modifiable_reg(r);
-}
-
-std::ostream& operator<<(std::ostream& o, const context& C)
-{
-    for(int index = 0;index < C.n_expressions(); index++)
-    {
-	o<<index<<" "<<C.get_expression(index);
-	o<<"\n";
-    }
-    return o;
-}
-
-Program& context::get_Program()
-{
-    if (not memory()->P)
-	throw myexception()<<"Program used after being cleared!";
-
-    return *(memory()->P);
-}
-
-const Program& context::get_Program() const
-{
-    if (not memory()->P)
-	throw myexception()<<"Program used after being cleared!";
-
-    return *(memory()->P);
-}
-
-void context::clear_program()
-{
-    memory()->P.reset();
-}
-
-void context::clear_identifiers()
-{
-    memory()->identifiers.clear();
-}
-
-const vector<string>& context::get_args() const
-{
-    return memory()->args;
-}
-
-void context::set_args(const vector<string>& a)
-{
-    memory()->args = a;
-}

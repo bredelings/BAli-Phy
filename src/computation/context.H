@@ -9,15 +9,16 @@
 #include "mcmc/prob_ratios.H"
 #include "util/json.hh"
 
-class reg;
-
 class reg_heap;
 
-class Module;
+class context;
 
 /// This class contains only compute expressions, parameters, and names for the compute expressions
-class context
+class context_ref
 {
+    friend class context;
+
+protected:
     // FIXME - disallow operator=() as long as there are any regs on the stack?
     //         (that is, which we are in the middle of modifying the context)?
 
@@ -29,15 +30,13 @@ class context
     // FIXME:speed - This is going to be really slow to copy around all the time!
     // FIXME:speed - Instead, wrap in cow_ptr< >.
 
-    int context_index;
+    int context_index = -1;
 
     const std::vector<int>& heads() const;
 
     std::vector<std::pair<std::string,int>>& parameters() const;
 
     std::map<std::string, int>& identifiers() const;
-
-private:
 
     closure preprocess(const closure& C) const;
 
@@ -67,8 +66,6 @@ public:
     const closure& access_result_for_reg(int i) const;
 
     const closure& operator[](int i) const;
-
-    context* clone() const {return new context(*this);}
 
     std::optional<int> parameter_is_modifiable_reg(int p) const;
 
@@ -170,15 +167,15 @@ public:
     /// Create a new modifiable parameter named s with initial value 'value'
     int add_modifiable_parameter(const std::string& s, const expression_ref& value);
 
-    /// Reserve an identifier with name s
-    int add_identifier(const std::string& s) const;
-
     /// Add a literal expression that MAY be reduced
     int add_compute_expression(const expression_ref& e);
     /// Add a literal expression that MAY be reduced
     int add_compute_expression_(closure&&);
 
+    int add_likelihood_factor(const expression_ref& E);
+
     int n_expressions() const;
+
     expression_ref get_expression(int i) const;
 
     void compile();
@@ -189,9 +186,7 @@ public:
 
     virtual log_double_t probability() const;
 
-    prob_ratios_t probability_ratios(const context& C1) const;
-
-    int add_likelihood_factor(const expression_ref& E);
+    prob_ratios_t probability_ratios(const context_ref& C1) const;
 
     std::vector<double> get_mcmc_move_weights() const;
 
@@ -202,19 +197,41 @@ public:
 
     void show_graph() const;
   
-    void allocate_identifiers_for_modules(const std::vector<std::string>& module_names);
-
     void run_transition_kernels();
 
     void perform_transition_kernel(int i);
 
     int n_transition_kernels() const;
 
-    int add_program(const expression_ref&);
-
     expression_ref evaluate_program() const;
 
     virtual json get_logged_parameters() const;
+
+    context_ref& operator=(const context_ref& c) = delete;
+
+    context_ref(const context_ref&) = delete;
+
+    context_ref(reg_heap& M);
+
+    context_ref(reg_heap& M, int c);
+
+    virtual ~context_ref() = default;
+};
+
+class Module;
+
+class context: public context_ref
+{
+
+public:
+//    context* clone() const {return new context(*this);}
+
+    int add_program(const expression_ref&);
+
+    /// Reserve an identifier with name s
+    int add_identifier(const std::string& s) const;
+
+    void allocate_identifiers_for_modules(const std::vector<std::string>& module_names);
 
     context& operator+=(const Module& M);
 
@@ -222,16 +239,18 @@ public:
 
     context& operator+=(const std::vector<std::string>& module_names);
 
+    context& operator=(const context_ref& c);
+
     context& operator=(const context& c);
+
+    context(const context_ref&);
 
     context(const context&);
 
     context(const Program& P);
 
-    context(reg_heap& M, int c);
-
     virtual ~context();
 };
 
-std::ostream& operator<<(std::ostream&, const context& C);
+std::ostream& operator<<(std::ostream&, const context_ref& C);
 #endif
