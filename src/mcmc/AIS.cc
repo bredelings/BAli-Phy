@@ -1,4 +1,12 @@
 #include "AIS.H"
+#include <algorithm>                                 // for max
+#include <iostream>                                  // for operator<<, basi...
+#include <memory>                                    // for allocator, alloc...
+#include "mcmc/mcmc.H"                               // for Sampler, MoveStats
+#include "models/model.H"                            // for Model, show_para...
+#include "util/assert.hh"                            // for assert
+#include "util/math/log-double.H"                    // for log_double_t
+#include "util/owned-ptr.H"                          // for owned_ptr
 
 extern int log_verbose;
 

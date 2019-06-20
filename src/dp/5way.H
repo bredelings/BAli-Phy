@@ -26,11 +26,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef FIVEWAY_H
 #define FIVEWAY_H
 
-#include <vector>
-#include "models/parameters.H"
-#include "A2_states.H"
-#include "hmm.H"
-
+#include <vector>                  // for vector
+#include "A2_states.H"             // for states
+#include "hmm.H"                   // for HMM, HMM::bitmask_t
+#include "models/TreeInterface.H"  // for TreeInterface
+#include "util/math/log-double.H"  // for log_double_t
+class Parameters;
+class data_partition;
 
 // Returns the state, with the validity of sub-alignments 1,2,3 marked in bits 6,7,8
 namespace A5 {

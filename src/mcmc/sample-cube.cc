@@ -17,19 +17,27 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include <iostream>
-#include <cmath>
-
-#include "probability/choose.H"
-#include "util/rng.H"
-#include "dp/3way.H"
-#include "dp/alignment-sums.H"
-#include "alignment/alignment-util.H"
-#include "alignment/alignment-util2.H"
-#include "alignment/alignment-constraint.H"
-#include "dp/dp-cube.H"
-#include "substitution/substitution.H"
-#include "util/assert.hh"
+#include <algorithm>                                // for sort
+#include <boost/dynamic_bitset/dynamic_bitset.hpp>  // for dynamic_bitset
+#include <iostream>                                 // for operator<<, endl
+#include <memory>                                   // for shared_ptr, __sha...
+#include <new>                                      // for bad_alloc
+#include <utility>                                  // for move, pair
+#include <vector>                                   // for vector
+#include "computation/object.H"                     // for intrusive_ptr_rel...
+#include "dp/2way.H"                                // for convert_to_bits
+#include "dp/3way.H"                                // for get_nodes_branch_...
+#include "dp/alignment-sums.H"                      // for sample_cube_multi...
+#include "dp/dp-cube.H"                             // for DPcubeSimple
+#include "dp/hmm.H"                                 // for HMM, HMM::bitmask_t
+#include "models/TreeInterface.H"                   // for TreeInterface
+#include "models/parameters.H"                      // for Parameters, mutab...
+#include "probability/choose.H"                     // for choose_MH_P
+#include "substitution/substitution.H"              // for get_column_likeli...
+#include "util/assert.hh"                           // for assert
+#include "util/math/log-double.H"                   // for log_double_t, ope...
+#include "util/rng.H"                               // for uniform
+class DPengine;
 
 //Assumptions:
 //  a) we assume that the internal node is the parent sequence in each of the sub-alignments

@@ -17,19 +17,33 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include <iostream>
-#include <cmath>
-
-#include "probability/choose.H"
-#include "util/rng.H"
-#include "dp/3way.H"
-#include "dp/alignment-sums.H"
-#include "alignment/alignment-util.H"
-#include "alignment/alignment-util2.H"
-#include "alignment/alignment-constraint.H"
-#include "dp/dp-matrix.H"
-#include "substitution/substitution.H"
-#include "util/assert.hh"
+#include <algorithm>                                // for sort, max
+#include <bitset>                                   // for operator&, bitset
+#include <boost/dynamic_bitset/dynamic_bitset.hpp>  // for dynamic_bitset
+#include <iostream>                                 // for operator<<, endl
+#include <memory>                                   // for shared_ptr, __sha...
+#include <new>                                      // for bad_alloc
+#include <optional>                                 // for optional
+#include <string>                                   // for operator+, string
+#include <utility>                                  // for pair, move
+#include <vector>                                   // for vector, vector::s...
+#include "alignment/alignment-constraint.H"         // for boundaries_inters...
+#include "computation/object.H"                     // for intrusive_ptr_rel...
+#include "dp/2way.H"                                // for convert_to_bits
+#include "dp/3way.H"                                // for get_nodes_branch_...
+#include "dp/alignment-sums.H"                      // for sample_A3_multi_c...
+#include "dp/dp-engine.H"                           // for DPengine
+#include "dp/dp-matrix.H"                           // for DPmatrixConstrained
+#include "dp/hmm.H"                                 // for HMM::bitmask_t, HMM
+#include "models/TreeInterface.H"                   // for TreeInterface
+#include "models/model.H"                           // for show_parameters
+#include "models/parameters.H"                      // for Parameters, mutab...
+#include "probability/choose.H"                     // for choose_MH_P, choo...
+#include "substitution/substitution.H"              // for get_column_likeli...
+#include "util/assert.hh"                           // for assert
+#include "util/math/log-double.H"                   // for log_double_t, ope...
+#include "util/myexception.H"                       // for myexception
+#include "util/rng.H"                               // for uniform
 
 //Assumptions:
 //  a) we assume that the internal node is the parent sequence in each of the sub-alignments

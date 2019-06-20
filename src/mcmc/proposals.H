@@ -20,13 +20,16 @@
 #ifndef PROPOSALS_H
 #define PROPOSALS_H
 
-#include <vector>
-#include "computation/object.H"
-#include "util/math/log-double.H"
+#include <functional>              // for function
+#include <string>                  // for string
+#include <vector>                  // for vector
+#include "computation/object.H"    // for Object
+#include "util/bounds.H"           // for bounds
+#include "util/math/log-double.H"  // for log_double_t
+class Model;
+class expression_ref;
 
 log_double_t scale_gaussian(double& x,double sigma);
-
-#include "models/parameters.H"
 
 class Proposal: public Object {
 public:

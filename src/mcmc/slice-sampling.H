@@ -26,8 +26,13 @@
 #ifndef SLICE_SAMPLING_H
 #define SLICE_SAMPLING_H
 
-#include "models/parameters.H"
-#include "util/bounds.H"
+#include <utility>                 // for pair
+#include <vector>                  // for vector
+#include "computation/context.H"   // for context
+#include "util/bounds.H"           // for bounds
+#include "util/math/log-double.H"  // for log_double_t
+class Model;
+class Parameters;
 
 namespace slice_sampling {
     /// This function returns the value \a x that was passed in.

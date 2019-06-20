@@ -23,11 +23,16 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// \brief Defines the HMM for pairwise alignments on 5 branches in an NNI configuration.
 ///
 
-#include <algorithm>
 #include "5way.H"
-#include "bits.H"
-#include "util/rng.H"
-#include "alignment/alignment-util.H"
+#include <assert.h>                                 // for assert
+#include <math.h>                                   // for pow
+#include <stdlib.h>                                 // for abort
+#include <boost/dynamic_bitset/dynamic_bitset.hpp>  // for dynamic_bitset
+#include <utility>                                  // for swap, pair
+#include "dp/2way.H"                                // for convert_to_bits
+#include "dp/hmm.H"                                 // for HMM, Glue, Glue_A
+#include "models/parameters.H"                      // for data_partition
+#include "util/rng.H"                               // for uniform
 
 using boost::dynamic_bitset;
 using std::vector;

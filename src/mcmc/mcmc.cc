@@ -28,23 +28,29 @@
 /// \author Benjamin Redelings
 /// 
 
-#include <iostream>
-#include <algorithm>
-
 #include "mcmc.H"
-#include "sample.H"
-#include "util/myexception.H"
-#include "util/rng.H"
-#include "util/range.H"
-#include "util/permute.H"
-#include "util/string/split.H"
-
-#include "proposals.H"
-#include "alignment/alignment-util.H"
-#include "computation/expression/bool.H"
-#include "computation/expression/constructor.H"
-
-#include "slice-sampling.H"
+#include "util/assert.hh"                           // for assert
+#include <math.h>                                   // for log
+#include <stdlib.h>                                 // for abs, abort
+#include <algorithm>                                // for copy, max, fill
+#include <boost/smart_ptr/intrusive_ptr.hpp>        // for intrusive_ptr
+#include <iostream>                                 // for operator<<, ostream
+#include <iterator>                                 // for valarray
+#include <memory>                                   // for allocator_traits<...
+#include <utility>                                  // for pair
+#include "computation/expression/expression_ref.H"  // for expression_ref
+#include "computation/object.H"                     // for intrusive_ptr_rel...
+#include "models/TreeInterface.H"                   // for TreeInterface
+#include "models/model.H"                           // for Model, show_param...
+#include "models/parameters.H"                      // for Parameters, accep...
+#include "proposals.H"                              // for Proposal2, Proposal
+#include "slice-sampling.H"                         // for integer_random_va...
+#include "util/math/log-double.H"                   // for operator<<, log_d...
+#include "util/myexception.H"                       // for myexception
+#include "util/permute.H"                           // for randomize
+#include "util/range.H"                             // for sum
+#include "util/rng.H"                               // for poisson, uniform
+#include "util/string/split.H"                      // for split
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

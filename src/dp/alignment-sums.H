@@ -29,14 +29,13 @@
 #include <vector>
 #include <memory>
 
-#include "util/math/log-double.H"
-#include "dp-engine.H"
-#include "alignment/alignment.H"
-#include "models/parameters.H"
-#include "dp-matrix.H"
-#include "dp-cube.H"
-#include <boost/dynamic_bitset.hpp>
-#include "dp/5way.H"
+#include <memory>                  // for shared_ptr
+#include <vector>                  // for vector
+#include "dp-engine.H"             // for DPengine
+#include "util/math/log-double.H"  // for log_double_t
+class Parameters;
+class data_partition;
+namespace A5 { struct hmm_order; }
 
 /// Sum of likelihoods for columns which don't contain any characters in sequences mentioned in 'nodes'
 log_double_t other_subst(const data_partition& P, const std::vector<int>& nodes);
