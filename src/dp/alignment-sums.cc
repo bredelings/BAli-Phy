@@ -24,7 +24,6 @@
 ///
 
 #include "alignment-sums.H"
-#include <ext/alloc_traits.h>                       // for __alloc_traits<>:...
 #include <math.h>                                   // for pow
 #include <stdlib.h>                                 // for abort
 #include <algorithm>                                // for find
