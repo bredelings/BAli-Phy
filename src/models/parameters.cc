@@ -409,7 +409,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     expression_ref partition = {var("Data.List.!!"), {var("BAliPhy.ATModel.partitions"), p->my_atmodel()}, i};
 
     //  const int n_states = state_letters().size();
-    int smodel_index = *p->smodel_index_for_partition(i);
     auto imodel_index = p->imodel_index_for_partition(i);
 
     // R1. Add method indices for calculating transition matrices.
