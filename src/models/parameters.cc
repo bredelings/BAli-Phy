@@ -194,12 +194,6 @@ Matrix data_partition::WeightedFrequencyMatrix() const
     return P->evaluate(P->PC->SModels[s].weighted_frequency_matrix).as_<Box<Matrix>>();
 }
 
-Matrix data_partition::FrequencyMatrix() const
-{
-    int s = *P->smodel_index_for_partition(partition_index);
-    return P->evaluate(P->PC->SModels[s].frequency_matrix).as_<Box<Matrix>>();
-}
-
 vector<unsigned> data_partition::state_letters() const
 {
     int s = *P->smodel_index_for_partition(partition_index);
