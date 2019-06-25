@@ -334,7 +334,6 @@ vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_m
     {
 	ConcatFunction F; 
 	F<<TF3<<"\n";
-	F<<Show_SModels_Function()<<"\n";
 	if (P->t().n_nodes() > 1)
 	    for(int i=0;i<P->n_data_partitions();i++)
 		if ((*P)[i].variable_alignment())

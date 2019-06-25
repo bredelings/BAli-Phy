@@ -299,12 +299,6 @@ namespace MCMC {
 	    { }
     };
 
-    class Show_SModels_Function
-    {
-    public:
-	std::string operator()(const Model& M, long t);
-    };
-
     class Subsample_Function
     {
 	std::shared_ptr<logger_function<std::string> > function;
