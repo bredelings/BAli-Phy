@@ -136,8 +136,6 @@ public:
     // Perhaps this should also be per-mixture-component.
     std::vector<unsigned> state_letters() const;
   
-    std::vector<double> distribution() const;
-
     Matrix WeightedFrequencyMatrix() const;
 
     Matrix FrequencyMatrix() const;
@@ -196,7 +194,6 @@ struct smodel_methods
     int n_base_models;
     int n_states;
     int state_letters;
-    int distribution;
     int weighted_frequency_matrix;
     int frequency_matrix;
     int get_alphabet;

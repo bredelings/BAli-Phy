@@ -188,12 +188,6 @@ int data_partition::n_states() const
     return P->evaluate(P->PC->SModels[s].n_states).as_int();
 }
 
-vector<double> data_partition::distribution() const
-{
-    int s = *P->smodel_index_for_partition(partition_index);
-    return (vector<double>)P->evaluate(P->PC->SModels[s].distribution).as_<EVector>();
-}
-
 Matrix data_partition::WeightedFrequencyMatrix() const
 {
     int s = *P->smodel_index_for_partition(partition_index);
@@ -541,7 +535,6 @@ smodel_methods::smodel_methods(const expression_ref& E, context& C)
 
     n_base_models = C.add_compute_expression({var("SModel.nBaseModels"), S});
     n_states =  C.add_compute_expression({var("SModel.nStates"), S});
-    distribution =  C.add_compute_expression({V,{var("SModel.distribution"), S}});
     weighted_frequency_matrix = C.add_compute_expression({var("SModel.weighted_frequency_matrix"), S});
     frequency_matrix = C.add_compute_expression({var("SModel.frequency_matrix"), S});
     get_alphabet = C.add_compute_expression({var("SModel.getAlphabet"), S});
