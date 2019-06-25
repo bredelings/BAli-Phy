@@ -138,8 +138,6 @@ public:
   
     Matrix WeightedFrequencyMatrix() const;
 
-    Matrix FrequencyMatrix() const;
-
     const Likelihood_Cache_Branch& cache(int b) const;
 
     int subst_root() const;
@@ -195,7 +193,6 @@ struct smodel_methods
     int n_states;
     int state_letters;
     int weighted_frequency_matrix;
-    int frequency_matrix;
     int get_alphabet;
     int rate;
 

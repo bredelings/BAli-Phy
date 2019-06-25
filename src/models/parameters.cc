@@ -536,7 +536,6 @@ smodel_methods::smodel_methods(const expression_ref& E, context& C)
     n_base_models = C.add_compute_expression({var("SModel.nBaseModels"), S});
     n_states =  C.add_compute_expression({var("SModel.nStates"), S});
     weighted_frequency_matrix = C.add_compute_expression({var("SModel.weighted_frequency_matrix"), S});
-    frequency_matrix = C.add_compute_expression({var("SModel.frequency_matrix"), S});
     get_alphabet = C.add_compute_expression({var("SModel.getAlphabet"), S});
     state_letters = C.add_compute_expression({var("SModel.stateLetters"), S});
     n_states = C.add_compute_expression({var("SModel.nStates"), S});
