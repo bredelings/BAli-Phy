@@ -1496,9 +1496,82 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
             program.let(alignment_on_tree, {var("Alignment.AlignmentOnTree"), tree_var, tt.n_nodes(), seq_lengths, pairwise_as});
         }
 
+        //---------------------------------------------------------------------------
+        alignment AA;
+        vector<int> counts;
+        if (compressed_alignments[i])
+        {
+            auto [AA_, counts_, _] = *compressed_alignments[i];
+            AA = AA_;
+            counts = counts_;
+        }
+        else
+        {
+            AA = A[i];
+            counts = vector<int>(AA.length(), 1);
+        }
+
+        auto as = expression_ref{var("Alignment.pairwise_alignments"), alignment_on_tree};
+        //---------------------------------------------------------------------------
+        auto& a = A[i].get_alphabet();
+
+        expression_ref f = {var("SModel.weighted_frequency_matrix"), smodel};
+        var cls_var("cls_"+part);
+        var likelihood_var("likelihood_"+part);
+        int likelihood_calculator = like_calcs[i];
+
+        if (tt.n_nodes() == 1)
+        {
+            expression_ref seq = {var("Data.Array.!"),leaf_seqs_array.ref(*this), 0};
+            program.let(cls_var, 0);
+            program.let(likelihood_var, {var("SModel.Likelihood.peel_likelihood_1"), seq, a, f});
+        }
+        else if (likelihood_calculator == 0)
+        {
+            // R7. Register counts array
+            vector<vector<int>> seq_counts = alignment_letters_counts(AA, tt.n_leaves(), counts);
+            EVector counts_;
+            for(int i=0; i<tt.n_leaves(); i++)
+                counts_.push_back( EVector(seq_counts[i]) );
+            auto counts_array = get_expression( add_compute_expression({var("Data.Array.listArray'"),get_list(counts_)}) );
+
+            // R8. Register conditional likelihoods
+            // Create and set conditional likelihoods for each branch
+            program.let(cls_var, {var("SModel.Likelihood.cached_conditional_likelihoods"),tree_var,leaf_seqs_array.ref(*this),counts_array, as, a,transition_ps,f});
+
+            // FIXME: broken for fixed alignments of 2 sequences.
+            if (tt.n_nodes() > 2)
+                program.let(likelihood_var, {var("SModel.Likelihood.peel_likelihood"), tree_var, cls_var, as, f, my_subst_root()});
+        }
+        else if (likelihood_calculator == 1)
+        {
+            Box<alignment> AAA = AA;
+            object_ptr<EVector> Counts(new EVector(counts));
+
+            // Create and set conditional likelihoods for each branch
+            program.let(cls_var,{var("SModel.Likelihood.cached_conditional_likelihoods_SEV"),tree_var,leaf_seqs_array.ref(*this), a,transition_ps,f,AAA});  
+
+            // FIXME: broken for fixed alignments of 2 sequences.
+            if (tt.n_nodes() > 2)
+                program.let(likelihood_var,{var("SModel.Likelihood.peel_likelihood_SEV"), tree_var, cls_var, f, my_subst_root(), Counts});
+        }
+
+        if (tt.n_nodes() == 2)
+        {
+            // We probably want the cls?
+            expression_ref seq1 = {var("Data.Array.!"), leaf_seqs_array.ref(*this), 0};
+            expression_ref seq2 = {var("Data.Array.!"), leaf_seqs_array.ref(*this), 1};
+            expression_ref A = {var("Data.Array.!"), as, 0};
+            expression_ref P = {var("Data.Array.!"), transition_ps, 0};
+
+            program.let(likelihood_var,{var("SModel.Likelihood.peel_likelihood_2"), seq1, seq2, a, A, P, f});
+        }
+
+        //--------------------------------------------------------------------------
+
 
         // FIXME - to make an AT *model* we probably need to remove the data from here.
-        partitions.push_back({var("BAliPhy.ATModel.DataPartition.Partition"), smodel, maybe_imodel, scale, tree_var, leaf_seqs_array.ref(*this), alignment_on_tree, maybe_hmms, transition_ps, 0});
+        partitions.push_back({var("BAliPhy.ATModel.DataPartition.Partition"), smodel, maybe_imodel, scale, tree_var, leaf_seqs_array.ref(*this), alignment_on_tree, maybe_hmms, transition_ps, cls_var, likelihood_var});
     }
 
     // FIXME - we need to observe the likelihoods for each partition here.
