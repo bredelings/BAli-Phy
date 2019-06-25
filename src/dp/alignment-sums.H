@@ -33,6 +33,9 @@
 #include <vector>                  // for vector
 #include "dp-engine.H"             // for DPengine
 #include "util/math/log-double.H"  // for log_double_t
+#ifndef NDEBUG
+#include "models/parameters.H"
+#endif
 class Parameters;
 class data_partition;
 namespace A5 { struct hmm_order; }
