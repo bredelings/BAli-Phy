@@ -1450,18 +1450,20 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         }
 
         //---------------------------------------------------------------------------
-        alignment AA;
-        vector<int> counts;
+        const alignment* AA;
+        vector<int> counts_;
+        const vector<int>* counts;
         if (compressed_alignments[i])
         {
-            auto [AA_, counts_, _] = *compressed_alignments[i];
-            AA = AA_;
-            counts = counts_;
+            auto& [AAA, counts_, _] = *compressed_alignments[i];
+            AA = &AAA;
+            counts = &counts_;
         }
         else
         {
-            AA = A[i];
-            counts = vector<int>(AA.length(), 1);
+            AA = &A[i];
+            counts_ = vector<int>(AA->length(), 1);
+            counts = &counts_;
         }
 
         auto as = expression_ref{var("Alignment.pairwise_alignments"), alignment_on_tree};
@@ -1482,7 +1484,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         else if (likelihood_calculator == 0)
         {
             // R7. Register counts array
-            vector<vector<int>> seq_counts = alignment_letters_counts(AA, tt.n_leaves(), counts);
+            vector<vector<int>> seq_counts = alignment_letters_counts(*AA, tt.n_leaves(), *counts);
             EVector counts_;
             for(int i=0; i<tt.n_leaves(); i++)
                 counts_.push_back( EVector(seq_counts[i]) );
@@ -1498,8 +1500,8 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         }
         else if (likelihood_calculator == 1)
         {
-            Box<alignment> AAA = AA;
-            object_ptr<EVector> Counts(new EVector(counts));
+            Box<alignment> AAA = *AA;
+            object_ptr<EVector> Counts(new EVector(*counts));
 
             // Create and set conditional likelihoods for each branch
             program.let(cls_var,{var("SModel.Likelihood.cached_conditional_likelihoods_SEV"),tree_var,leaf_seqs_array.ref(*this), a,transition_ps,f,AAA});  
