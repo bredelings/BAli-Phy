@@ -437,8 +437,8 @@ void reg_heap::register_random_variable(int r)
     auto [r2,_] = incremental_evaluate(r);
     r = r2;
 
-    if (not is_random_variable(regs.access(r).C.exp))
-	throw myexception()<<"Trying to register `"<<regs.access(r).C.exp<<"` as random variable";
+    if (not is_random_variable(expression_at(r)))
+	throw myexception()<<"Trying to register `"<<expression_at(r)<<"` as random variable";
     random_variables_.push_back(r);
 
     int r_pdf = (*this)[r].reg_for_slot(1);
@@ -539,11 +539,11 @@ const expression_ref reg_heap::get_range_for_random_variable(int c, int r)
 {
     if (find_update_random_variable(r))
     {
-	int r_range = regs.access(r).C.reg_for_slot(3);
+	int r_range = closure_at(r).reg_for_slot(3);
 	return get_reg_value_in_context(r_range, c);
     }
     else
-	throw myexception()<<"Trying to get range from `"<<regs.access(r).C.exp<<"`, which is not a random_variable!";
+	throw myexception()<<"Trying to get range from `"<<closure_at(r).print()<<"`, which is not a random_variable!";
 }
 
 double reg_heap::get_rate_for_random_variable(int c, int r)

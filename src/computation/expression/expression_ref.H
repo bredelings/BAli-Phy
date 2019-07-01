@@ -375,10 +375,7 @@ inline expression_ref::expression_ref(const expression_ref& e, const std::vector
 
 inline std::ostream& operator<<(std::ostream& o,const expression_ref& E)
 {
-    if (E)
-	return o<<E.print();
-    else
-	return o<<"[NULL]";
+    return o<<E.print();
 }
 
 struct EVector: public Vector<expression_ref>

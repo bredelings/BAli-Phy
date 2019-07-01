@@ -136,7 +136,10 @@ class reg_heap: public Object
     bool reg_is_used_by(int, int) const;
 
 public:
+    const closure& closure_at(int r) const {assert(r); return regs.access(r).C;}
+    const expression_ref& expression_at(int r) const {return closure_at(r).exp;}
     const closure& operator[](int r) const {return regs.access(r).C;}
+
     bool reg_is_used(int r) const {return regs.is_used(r);}
     reg::type_t reg_type(int r) const {return regs.access(r).type;}
     std::optional<int> creator_of_reg(int r) const;
