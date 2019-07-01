@@ -363,7 +363,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 
 	    try
 	    {
-		closure_stack.push_back (regs.access(R).C );
+		closure_stack.push_back (closure_at(R) );
 		RegOperationArgs Args(S, P, *this);
 		auto O = expression_at(R).head().assert_is_a<Operation>()->op;
 		closure value = (*O)(Args);
@@ -614,20 +614,20 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
 	}
 
 	// Check for WHNF *OR* heap variables
-	else if (is_WHNF(regs.access(R).C.exp))
+	else if (is_WHNF(expression_at(R)))
 	    regs.access(R).type = reg::type_t::constant;
 
 #ifndef NDEBUG
-	else if (regs.access(R).C.exp.head().is_a<Trim>())
+	else if (expression_at(R).head().is_a<Trim>())
 	    std::abort();
-	else if (regs.access(R).C.exp.type() == parameter_type)
+	else if (expression_at(R).type() == parameter_type)
 	    std::abort();
 #endif
 
 	// 3. Reduction: Operation (includes @, case, +, etc.)
 	else
 	{
-	    auto O = regs.access(R).C.exp.head().assert_is_a<Operation>()->op;
+	    auto O = expression_at(R).head().assert_is_a<Operation>()->op;
 
 	    // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable value.
 	    // Therefore, we cannot do "assert(not result_for_reg(t,R).changeable);" here.
@@ -635,7 +635,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
 #ifdef DEBUG_MACHINE
 	    string SS = "";
 	    SS = compact_graph_expression(*this, R, get_identifiers()).print();
-	    string SSS = untranslate_vars(deindexify(trim_unnormalize(regs.access(R).C)),  
+	    string SSS = untranslate_vars(deindexify(trim_unnormalize(closure_at(R))),  
 					  get_identifiers()).print();
 	    if (log_verbose >= 3)
 		dot_graph_for_token(*this, root_token);
