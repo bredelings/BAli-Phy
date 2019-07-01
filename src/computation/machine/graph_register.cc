@@ -766,7 +766,7 @@ void reg_heap::set_C(int R, closure&& C)
 
     regs.access(R).C = std::move(C);
 #ifndef NDEBUG
-    for(int r: regs.access(R).C.Env)
+    for(int r: closure_at(R).Env)
 	assert(regs.is_valid_address(r));
 #endif
 }
@@ -1271,7 +1271,7 @@ void reg_heap::check_used_regs_in_token(int t) const
 
 	    // The used result should be referenced somewhere more root-ward
 	    // so that this result can be invalidated, and the used result won't be GC-ed.
-            // FIXME - nonlocal.  assert(is_modifiable(regs.access(R2).C.exp) or result_is_referenced(t,res2));
+            // FIXME - nonlocal.  assert(is_modifiable(expression_at(R2)) or result_is_referenced(t,res2));
       
 	    // Used results should have values
 	    assert(results[res2].value);
@@ -1558,7 +1558,7 @@ const expression_ref& reg_heap::get_parameter_value_in_context(int p, int c)
 const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
 {
     total_get_reg_value++;
-    if (regs.access(R).type == reg::type_t::constant) return regs.access(R).C.exp;
+    if (regs.access(R).type == reg::type_t::constant) return expression_at(R);
 
     total_get_reg_value_non_const++;
     reroot_at_context(c);
@@ -1567,14 +1567,14 @@ const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
     {
 	total_get_reg_value_non_const_with_result++;
 	int R2 = result_value_for_reg(R);
-	if (R2) return regs.access(R2).C.exp;
+	if (R2) return expression_at(R2);
     }
 
     // If the value needs to be computed (e.g. its a call expression) then compute it.
     auto [R2, value] = incremental_evaluate_in_context(R,c);
     R = R2;
 
-    return regs.access(value).C.exp;
+    return expression_at(value);
 }
 
 void reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
@@ -1606,14 +1606,14 @@ const closure& reg_heap::lazy_evaluate(int& R)
     mark_completely_dirty(root_token);
     auto [R2, value] = incremental_evaluate(R);
     R = R2;
-    return regs.access(value).C;
+    return closure_at(value);
 }
 
 const closure& reg_heap::lazy_evaluate(int& R, int c)
 {
     auto [R2, value] = incremental_evaluate_in_context(R,c);
     R = R2;
-    return regs.access(value).C;
+    return closure_at(value);
 }
 
 const closure& reg_heap::lazy_evaluate_head(int index, int c)
@@ -1623,18 +1623,18 @@ const closure& reg_heap::lazy_evaluate_head(int index, int c)
     if (R2 != R1)
 	set_head(index, R2);
 
-    return regs.access(value).C;
+    return closure_at(value);
 }
 
 const closure& reg_heap::lazy_evaluate_unchangeable(int& R)
 {
     R = incremental_evaluate_unchangeable(R);
-    return regs.access(R).C;
+    return closure_at(R);
 }
 
 int reg_heap::get_modifiable_value_in_context(int R, int c)
 {
-    assert( regs.access(R).C.exp.head().type() == modifiable_type);
+    assert( is_modifiable(expression_at(R)) );
     assert( reg_is_changeable(R) );
 
     reroot_at_context(c);
