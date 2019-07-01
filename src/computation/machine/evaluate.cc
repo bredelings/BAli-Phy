@@ -243,13 +243,13 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 	assert(not E.head().is_a<expression>());
 	assert(not E.is_index_var());
     }
-    if (regs.access(R).C.exp.is_index_var())
+    if (expression_at(R).is_index_var())
 	assert(not reg_has_value(R));
 #endif
 
     while (1)
     {
-	assert(regs.access(R).C.exp);
+	assert(expression_at(R));
 
 #ifndef NDEBUG
 	//    std::cerr<<"   statement: "<<R<<":   "<<regs.access(R).E.print()<<std::endl;
@@ -300,14 +300,14 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 	}
 	else if (reg_type == reg::type_t::index_var)
 	{
-	    int R2 = regs.access(R).C.reg_for_index_var();
+	    int R2 = closure_at(R).reg_for_index_var();
 	    return incremental_evaluate(R2);
 	}
 	else
 	    assert(reg_type == reg::type_t::unknown);
 
 	/*---------- Below here, there is no call, and no value. ------------*/
-	if (regs.access(R).C.exp.head().is_index_var())
+	if (expression_at(R).is_index_var())
 	{
 	    assert( not reg_is_changeable(R) );
 
@@ -323,7 +323,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		clear_back_edges_for_step(s);
 	    clear_step(R);
 
-	    int R2 = regs.access(R).C.reg_for_index_var();
+	    int R2 = closure_at(R).reg_for_index_var();
 
 	    // Return the end of the index_var chain.
 	    // We used to update the index_var to point to the end of the chain.
@@ -332,7 +332,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 	}
 
 	// Check for WHNF *OR* heap variables
-	else if (is_WHNF(regs.access(R).C.exp))
+	else if (is_WHNF(expression_at(R)))
 	{
 	    regs.access(R).type = reg::type_t::constant;
 	    clear_result(R);
@@ -344,9 +344,9 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 	}
 
 #ifndef NDEBUG
-	else if (regs.access(R).C.exp.head().is_a<Trim>())
+	else if (expression_at(R).head().is_a<Trim>())
 	    std::abort();
-	else if (regs.access(R).C.exp.type() == parameter_type)
+	else if (expression_at(R).type() == parameter_type)
 	    std::abort();
 #endif
 
@@ -365,7 +365,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 	    {
 		closure_stack.push_back (regs.access(R).C );
 		RegOperationArgs Args(S, P, *this);
-		auto O = regs.access(R).C.exp.head().assert_is_a<Operation>()->op;
+		auto O = expression_at(R).head().assert_is_a<Operation>()->op;
 		closure value = (*O)(Args);
 		closure_stack.pop_back();
 		total_reductions++;
@@ -415,7 +415,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 			int r2 = Args.allocate( std::move(closure_stack.back()) );
 			assert(not has_step(r2));
 			regs.access(r2).type = reg::type_t::constant;
-			// assert(is_WHNF(regs.access(r2).C.exp)) ?
+			// assert(is_WHNF(expression_at(r2))) ?
 			p = {r2,r2};
 		    }
 #endif
@@ -576,12 +576,12 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
     assert(regs.is_used(R));
 
 #ifndef NDEBUG
-    assert(not regs.access(R).C.exp.head().is_a<expression>());
+    assert(not expression_at(R).head().is_a<expression>());
 #endif
 
     while (1)
     {
-	assert(regs.access(R).C.exp);
+	assert(expression_at(R));
 
 	reg::type_t reg_type = regs.access(R).type;
 
@@ -590,19 +590,19 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
 
 	else if (reg_type == reg::type_t::index_var)
 	{
-	    int R2 = regs.access(R).C.reg_for_index_var();
+	    int R2 = closure_at(R).reg_for_index_var();
 	    return incremental_evaluate_unchangeable(R2);
 	}
 	else
 	    assert(reg_type == reg::type_t::unknown);
 
 	/*---------- Below here, there is no call, and no value. ------------*/
-	const int type = regs.access(R).C.exp.head().type();
+	const int type = expression_at(R).head().type();
 	if (type == index_var_type)
 	{
 	    regs.access(R).type = reg::type_t::index_var;
 
-	    int R2 = regs.access(R).C.reg_for_index_var();
+	    int R2 = closure_at(R).reg_for_index_var();
 
 	    int R3 = incremental_evaluate_unchangeable( R2 );
 
