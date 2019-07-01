@@ -516,7 +516,7 @@ optional<int> reg_heap::find_update_random_variable(int& R)
     // Note: here we always update R
     R = incremental_evaluate_unchangeable(R);
 
-    if (is_random_variable(regs.access(R).C.exp))
+    if (is_random_variable(expression_at(R)))
 	return R;
     else
 	return {};
@@ -550,11 +550,11 @@ double reg_heap::get_rate_for_random_variable(int c, int r)
 {
     if (find_update_random_variable(r))
     {
-	int r_rate = regs.access(r).C.reg_for_slot(4);
+	int r_rate = closure_at(r).reg_for_slot(4);
         return get_reg_value_in_context(r_rate, c).as_double();
     }
     else
-	throw myexception()<<"Trying to get rate from `"<<regs.access(r).C.exp<<"`, which is not a random_variable!";
+	throw myexception()<<"Trying to get rate from `"<<closure_at(r).print()<<"`, which is not a random_variable!";
 }
 
 int reg_heap::step_index_for_reg(int r) const 
@@ -596,8 +596,7 @@ Result& reg_heap::result_for_reg(int r)
 const closure& reg_heap::access_value_for_reg(int R1) const
 {
     int R2 = value_for_reg(R1);
-    assert(R2);
-    return regs.access(R2).C;
+    return closure_at(R2);
 }
 
 bool reg_heap::reg_has_value(int r) const
@@ -686,14 +685,14 @@ void reg_heap::set_used_input(int s1, int R2)
 
     assert(regs.is_used(R2));
 
-    assert(regs.access(R2).C);
+    assert(closure_at(R2));
 
     assert(has_result(R2));
     assert(result_value_for_reg(R2));
 
     // An index_var's value only changes if the thing the index-var points to also changes.
     // So, we may as well forbid using an index_var as an input.
-    assert(regs.access(R2).C.exp.head().type() != index_var_type);
+    assert(not expression_at(R2).is_index_var());
 
     int res2 = result_index_for_reg(R2);
 
@@ -711,14 +710,14 @@ void reg_heap::set_forced_input(int s1, int R2)
 
     assert(regs.is_used(R2));
 
-    assert(regs.access(R2).C);
+    assert(closure_at(R2));
 
     assert(has_result(R2));
     assert(result_value_for_reg(R2));
 
     // An index_var's value only changes if the thing the index-var points to also changes.
     // So, we may as well forbid using an index_var as an input.
-    assert(regs.access(R2).C.exp.head().type() != index_var_type);
+    assert(not expression_at(R2).is_index_var());
 
     steps[s1].forced_regs.push_back(R2);
 }
@@ -843,7 +842,7 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
     // assert(not is_root_token and tokens[t].version < tokens[parent_token(t)].version) 
 
     // Check that this reg is indeed settable
-    if (not is_modifiable(regs.access(R).C.exp))
+    if (not is_modifiable(expression_at(R)))
         throw myexception()<<"set_reg_value: reg "<<R<<" is not modifiable!";
 
     assert(not is_root_token(t));
