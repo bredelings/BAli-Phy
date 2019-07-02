@@ -7,12 +7,14 @@
 #include "rename.H"
 #include "computation/module.H"
 #include "computation/expression/apply.H"
+#include "computation/expression/tuple.H"
 #include "computation/expression/constructor.H"
 #include "computation/expression/AST_node.H"
 #include "util/set.H"
 
 using std::string;
 using std::vector;
+using std::pair;
 using std::set;
 using std::map;
 using std::deque;
@@ -290,9 +292,14 @@ struct renamer_state
 //    var get_fresh_var() { return var(var_index++);}
 //    var get_fresh_var(const string& name) {return var(name,var_index++);}
 
+
+    bound_var_info find_vars_in_pattern(const expression_ref& pat, bool top = false);
+    bound_var_info find_bound_vars_in_stmt(const expression_ref& stmt);
+    bound_var_info find_bound_vars_in_decls(const expression_ref& stmt);
     bound_var_info rename_pattern(expression_ref& pat, bool top = false);
     expression_ref rename_decl(const expression_ref& decl, const bound_var_info& bound);
     bound_var_info rename_decls(expression_ref& decls, const bound_var_info& bound);
+    bound_var_info rename_rec_stmt(expression_ref& stmt, const bound_var_info& bound);
     bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound);
     expression_ref rename(const expression_ref& E, const bound_var_info& bound);
 
@@ -306,6 +313,89 @@ expression_ref rename(const Module& m, const expression_ref& E)
 }
 
 // Convert ids to vars in pattern, and return a set of all names for vars (excluding wildcards, of course)
+// A single variable is a valid "pattern" for the purposes of this function.
+bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bool top)
+{
+    assert(not is_apply_exp(pat));
+
+    // 1. Handle _
+    if (is_AST(pat,"WildcardPattern"))
+	return {};
+
+    // 2. Handle ~pat
+    if (is_AST(pat,"LazyPattern"))
+    {
+	auto sub_pat = pat.sub()[0];
+	return rename_pattern(sub_pat, top);
+    }
+
+    // 3. Handle x@pat
+    if (is_AST(pat,"AsPattern"))
+    {
+	assert(not top);
+
+	auto x = pat.sub()[0];
+	auto sub_pat = pat.sub()[1];
+	auto bound = find_vars_in_pattern(x, false);
+	bool overlap = not disjoint_add(bound, rename_pattern(sub_pat, false));
+
+	if (overlap)
+	    throw myexception()<<"Pattern '"<<pat<<"' uses a variable twice!";
+	return bound;
+    }
+
+    // 4. Handle literal values
+    if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double()) return {};
+
+    // 5. Get the identifier name for head
+    expression_ref head = pat.head();
+    if (not is_AST(head,"id"))
+	throw myexception()<<"Pattern '"<<pat<<"' doesn't start with an identifier!";
+    auto id = head.as_<AST_node>().value;
+
+    // 6. Handle if identifier is a variable
+    if (not is_haskell_con_name(id))
+    {
+	if (pat.size()) throw myexception()<<"Pattern "<<pat<<" has arguments, but doesn't start with a constructor!";
+	if (is_qualified_symbol(id)) throw myexception()<<"Binder variable '"<<id<<"' is qualified in pattern '"<<pat<<"'!";
+	// Qualify the id if this is part of a top-level decl
+	if (top)
+	    id = m.name + "." + id;
+	return {id};
+    }
+
+    // 7. Resolve constructor name if identifier is a constructor
+    if (not m.is_declared(id))
+	throw myexception()<<"Unknown id '"<<id<<"' used as constructor in pattern '"<<pat<<"'!";
+
+    const symbol_info& S = m.lookup_symbol(id);
+    if (S.symbol_type != constructor_symbol)
+	throw myexception()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!";
+
+    if (S.arity != pat.size())
+	throw myexception()<<"Constructor '"<<id<<"' arity "<<S.arity<<" doesn't match pattern '"<<pat<<"'!";
+
+    head = constructor(S.name, S.arity);
+
+    bound_var_info bound;
+    // Rename the arguments
+    bool overlap = false;
+    if (pat.size())
+        for(auto& e: pat.sub())
+        {
+            auto bound_here =  find_vars_in_pattern(e, top);
+            overlap = overlap or not disjoint_add(bound, bound_here);
+        }
+
+    if (overlap)
+	throw myexception()<<"Pattern '"<<pat<<"' uses a variable twice!";
+
+    // 11. Return the variables bound
+    return bound;
+}
+
+// Convert ids to vars in pattern, and return a set of all names for vars (excluding wildcards, of course)
+// A single variable is a valid "pattern" for the purposes of this function.
 bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
 {
     assert(not is_apply_exp(pat));
@@ -456,6 +546,44 @@ expression_ref renamer_state::rename_decl(const expression_ref& decl, const boun
     return expression_ref{decl.head(),v};
 }
 
+bound_var_info renamer_state::find_bound_vars_in_decls(const expression_ref& decls)
+{
+    assert(is_AST(decls,"TopDecls") or is_AST(decls,"Decls"));
+
+    if (not decls.size()) return {};
+
+    vector<expression_ref> v = decls.sub();
+
+    // The idea is that we only add unqualified names here, and they shadow
+    // qualified names.
+    bound_var_info bound_names;
+    for(auto& decl: v)
+    {
+	if (not is_AST(decl,"Decl")) continue;
+
+	auto w = decl.sub();
+	auto& lhs = w[0];
+	auto head = lhs.head();
+	assert(is_AST(head,"id"));
+	// For a constructor pattern, rename the whole lhs.
+	if (is_haskell_con_name(head.as_<AST_node>().value))
+	{
+	    add(bound_names,find_vars_in_pattern(lhs));
+	}
+	// For a function pattern, just rename the variable being defined
+	else if (lhs.size())
+	{
+	    add(bound_names, find_vars_in_pattern(head));
+	    lhs = expression_ref{head,lhs.sub()};
+	}
+	// For a variable pattern, the variable being defined is the whole lhs
+	else
+	{
+	    add(bound_names, find_vars_in_pattern(lhs));
+	}
+    }
+    return bound_names;
+}
 
 bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_var_info& bound)
 {
@@ -512,6 +640,75 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
     return bound_names;
 }
 
+bound_var_info renamer_state::find_bound_vars_in_stmt(const expression_ref& stmt)
+{
+    if (is_AST(stmt, "SimpleQual"))
+	return {};
+    else if (is_AST(stmt, "PatQual"))
+	return find_vars_in_pattern(stmt.sub()[0]);
+    else if (is_AST(stmt, "LetQual"))
+        return find_bound_vars_in_decls(stmt.sub()[0]);
+    else if (is_AST(stmt, "Rec"))
+        throw myexception()<<"find_bound_vars_in_stmt: should not have a rec stmt inside a rec stmt!";
+    else
+	std::abort();
+}
+
+        /*
+         * See "Recursive binding groups" in https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#the-recursive-do-notation
+         *
+         * As an example:           ===>
+         *   rec { b <- f a c              (b,c) <- mfix (\ ~(b,c) -> do { b <- f a c
+         *       ; c <- f b a }                                          ; c <- f b a
+         *                                                               ; return (b,c) } )
+         *
+         * See ghc/compiler/rename/RnExpr.hs
+         */
+
+// Here we want to find all the variables bound by the list of stmts, and make sure that they don't overlap.
+// Getting the list of variables bound by a "rec" should return all the variables bound by the statements inside the rec.
+bound_var_info renamer_state::rename_rec_stmt(expression_ref& rec_stmt, const bound_var_info& bound)
+{
+    bound_var_info rec_bound;
+    for(auto& stmt: rec_stmt.sub())
+    {
+        bool overlap = not disjoint_add(rec_bound, find_bound_vars_in_stmt(stmt));
+	if (overlap)
+	    throw myexception()<<"rec command '"<<rec_stmt<<"' uses a variable twice!";
+    }
+    // 2. Construct the tuple
+    vector<expression_ref> vars;
+    for(auto& var_name: rec_bound)
+        vars.push_back(AST_node("id",var_name));
+    expression_ref rec_tuple;
+    if (vars.size() == 1)
+        rec_tuple = vars[0];
+    else
+    {
+        rec_tuple = AST_node("id",tuple_head(vars.size()).name());
+        for(auto var: vars)
+            rec_tuple = {rec_tuple, var};
+    }
+
+    // 3. Construct the do stmt
+    auto stmts = rec_stmt.sub();
+    expression_ref rec_return = AST_node("id","return");
+    expression_ref rec_return_stmt = {rec_return, rec_tuple};
+    stmts.push_back(AST_node("SimpleQual")+rec_return_stmt);
+    auto rec_do = expression_ref{AST_node{"Do"},stmts};
+
+    // 4. Construct the lambda function
+    expression_ref rec_tuple_pattern = unapply(rec_tuple); // This makes the tuple expression into a pattern by translating `@ (@ ((,) x))` into `(,) x y`
+    expression_ref rec_lambda = AST_node("Lambda") + (AST_node("LazyPattern")+rec_tuple_pattern) + rec_do;      // \ ~(b,c) -> do { ... }
+
+    // 5. Construct rec_tuple_pattern <- mfix rec_lambda
+    expression_ref mfix = AST_node("id","mfix");
+    rec_stmt = AST_node("PatQual")+rec_tuple_pattern + expression_ref{mfix, rec_lambda};
+
+    // Combine the set of bound variables and rename our rewritten statement;
+    return rename_stmt(rec_stmt, bound);
+}
+
 bound_var_info renamer_state::rename_stmt(expression_ref& stmt, const bound_var_info& bound)
 {
     if (is_AST(stmt, "SimpleQual"))
@@ -536,6 +733,7 @@ bound_var_info renamer_state::rename_stmt(expression_ref& stmt, const bound_var_
     }
     else if (is_AST(stmt, "Rec"))
     {
+        return rename_rec_stmt(stmt, bound);
     }
     else
 	std::abort();
@@ -543,7 +741,7 @@ bound_var_info renamer_state::rename_stmt(expression_ref& stmt, const bound_var_
 
 expression_ref renamer_state::rename(const expression_ref& E, const bound_var_info& bound)
 {
-    vector<expression_ref> v = E.copy_sub();;
+    vector<expression_ref> v = E.copy_sub();
       
     if (E.head().is_a<AST_node>())
     {
@@ -648,6 +846,23 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	}
 	else if (n.type == "MDo")
         {
+            /*
+             * See "The mdo notation" in https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#the-mdo-notation
+             *
+             * See ghc/compiler/rename/RnExpr.hs: Note [Segmenting mdo]
+             * What does rec {a;c  mean here?
+             *                b;d}
+             * I think it means rec {a;c;b;d}, but emphasizes that we have
+             * to issue all the stmts from the first recursive group a;c, before
+             * we issue any of the stmts from the second group b;d}.
+             */
+
+            // Hmm... as a dumb segmentation, we could take all the stmts except the last one and put them in a giant rec...
+            // FIXME: implement segmentation, and insert recs.
+	    auto bound2 = bound;
+	    for(auto& stmt: v)
+		add(bound2, rename_stmt(stmt, bound2));
+	    return expression_ref{E.head(),v};
         }
 	else if (n.type == "Let")
 	{
