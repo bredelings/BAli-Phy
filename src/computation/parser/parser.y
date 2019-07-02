@@ -4,6 +4,8 @@
 %defines
 %define api.token.constructor
 %define api.value.type variant
+// This could offer a speedup, but doesn't work with `if ($7) e.push_back($7)`.
+// %define api.value.automove
 %define parse.assert
 
 %code requires {
