@@ -2892,7 +2892,9 @@ std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_words =
     {"then",{parser::token::TOK_THEN,0}},
     {"type",{parser::token::TOK_TYPE,0}},
     {"where",{parser::token::TOK_WHERE,0}},
-    {"builtin",{parser::token::TOK_BUILTIN,0}}
+    {"builtin",{parser::token::TOK_BUILTIN,0}},
+    {"mdo", {parser::token::TOK_MDO,0}},
+    {"rec", {parser::token::TOK_REC,0}}
 };
 
 
