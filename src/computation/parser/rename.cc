@@ -427,16 +427,19 @@ expression_ref renamer_state::rename_decl(const expression_ref& decl, const boun
 
 	if (lhs.size())
 	{
-	    bound_var_info arg_vars;
 	    auto args = lhs.sub();
-	    bool overlap = false;
-	    for(auto& arg: args)
-		overlap = overlap or not disjoint_add(arg_vars, rename_pattern(arg));
 	    assert(args.size());
+
+            bool overlap = false;
+	    bound_var_info arg_vars;
+            for(auto& arg: args)
+		overlap = overlap or not disjoint_add(arg_vars, rename_pattern(arg));
 	    lhs = expression_ref{f, args};
 	    if (overlap)
 		throw myexception()<<"Function declaration '"<<lhs<<"' uses a variable twice!";
-	    add(bound2,arg_vars);
+
+            // The args should be in scope when we process the rhs
+            add(bound2,arg_vars);
 	}
 	else
 	    lhs = f;
