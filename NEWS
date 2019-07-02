@@ -10,6 +10,7 @@
    - Add move to slice sample a branch length while integrating out the alignment.
  - Graphical models
    + Allow sampling characters on random trees (recursive, via mfix).
+     - Implement syntactic sugar 'rec' for mfix.
    - Interpreter
      - Evaluate the program changeably.
      - Switch the interpreter to a lazy interpreter.
