@@ -524,14 +524,14 @@ maybemodwarning: "{-# DEPRECATED" strings "#-}"
 |                "{-# WARNING" strings "#-}"
 |                %empty
 
-body: "{" top "}"       {std::swap($$,$2);}
-|     VOCURLY top close {std::swap($$,$2);}
+body: "{" top "}"       {$$ = $2;}
+|     VOCURLY top close {$$ = $2;}
 
-body2: "{" top "}"                         {std::swap($$,$2);}
-|     missing_module_keyword top close     {std::swap($$,$2);}
+body2: "{" top "}"                         {$$ = $2;}
+|     missing_module_keyword top close     {$$ = $2;}
 
 
-top: semis top1                            {std::swap($$,$2);}
+top: semis top1                            {$$ = $2;}
 
 top1: importdecls_semi topdecls_semi       {$$ = make_body($1,$2);}
 |     importdecls_semi topdecls            {$$ = make_body($1,$2);}
@@ -546,12 +546,12 @@ top1: importdecls_semi topdecls_semi       {$$ = make_body($1,$2);}
 maybeexports: "(" exportlist ")"      {$$ = make_exports($2);}
 |             %empty                  {}
 
-exportlist: exportlist1               {std::swap($$,$1);}
+exportlist: exportlist1               {$$ = $1;}
 
-exportlist1: exportlist1 "," export   {std::swap($$,$1); $$.push_back($3);}
+exportlist1: exportlist1 "," export   {$$ = $1; $$.push_back($3);}
 |            export                   {$$.push_back($1);}
 
-export: qcname_ext export_subspec     {std::swap($$,$1);} /* This ignores subspec */
+export: qcname_ext export_subspec     {$$ = $1;} /* This ignores subspec */
 |       "module" modid                {$$ = AST_node("module",$2);}
 |       "pattern" qcon                {}
 
@@ -559,15 +559,15 @@ export_subspec: %empty
 |              "(" qcnames ")"
 
 qcnames: %empty    {}
-|        qcnames1  {std::swap($$,$1);}
+|        qcnames1  {$$ = $1;}
 
-qcnames1 : qcnames1 "," qcname_ext_w_wildcard "," {std::swap($$,$1); $$.push_back($3);}
+qcnames1 : qcnames1 "," qcname_ext_w_wildcard "," {$$ = $1; $$.push_back($3);}
 |          qcname_ext_w_wildcard              {$$.push_back($1);}
 
-qcname_ext_w_wildcard: qcname_ext    {std::swap($$,$1);}
+qcname_ext_w_wildcard: qcname_ext    {$$ = $1;}
 | ".."                               {}
 
-qcname_ext: qcname                   {std::swap($$,$1);}
+qcname_ext: qcname                   {$$ = $1;}
 |           "type" oqtycon           {}
 
 qcname: qvar                         {$$ = AST_node("qvar",$1); }
@@ -581,9 +581,9 @@ semis1: semis1 ";"
 semis: semis ";"
 |      %empty
 
-importdecls: importdecls_semi importdecl { std::swap($$,$1), $$.push_back($2); }
+importdecls: importdecls_semi importdecl { $$ = $1, $$.push_back($2); }
 
-importdecls_semi: importdecls_semi importdecl semis1 { std::swap($$,$1); $$.push_back($2); }
+importdecls_semi: importdecls_semi importdecl semis1 { $$ = $1; $$.push_back($2); }
 |                 %empty { }
 
 importdecl: "import" maybe_src maybe_safe optqualified maybe_pkg modid maybeas maybeimpspec {
@@ -626,18 +626,18 @@ infix: "infix"     { $$ = "infix";  }
 |      "infixl"    { $$ = "infixl"; }
 |      "infixr"    { $$ = "infixr"; }
 
-ops:   ops "," op  { std::swap($$,$1); $$.push_back($3); }
+ops:   ops "," op  { $$ = $1; $$.push_back($3); }
 |      op          { $$ = {$1}; }
 
 /* ------------- Top-Level Declarations -------------------------- */
 
-topdecls: topdecls_semi topdecl  { std::swap($$,$1); $$.push_back($2); }
+topdecls: topdecls_semi topdecl  { $$ = $1; $$.push_back($2); }
 
-topdecls_semi: topdecls_semi topdecl semis1 { std::swap($$,$1); $$.push_back($2); }
+topdecls_semi: topdecls_semi topdecl semis1 { $$ = $1; $$.push_back($2); }
 |              %empty                       { }
 
 topdecl: cl_decl                               {}
-|        ty_decl                               {std::swap($$,$1);}
+|        ty_decl                               {$$ = $1;}
 |        inst_decl                             {}
 /*|        stand_alone_deriving
   |        role_annot*/
@@ -648,7 +648,7 @@ topdecl: cl_decl                               {}
 |        "{-# WARNING" warnings "#-}"
 |        "{-# RULES" rules "#-}"
 |        annotation*/
-|        decl_no_th                            {std::swap($$,$1);}
+|        decl_no_th                            {$$ = $1;}
 |        infixexp_top                          {}
 |        "builtin" var INTEGER STRING STRING   {$$ = make_builtin_expr($2,$3,$4,$5);}
 |        "builtin" var INTEGER STRING          {$$ = make_builtin_expr($2,$3,$4);}
@@ -732,7 +732,7 @@ opt_kind_sig: %empty
 /* opt_tyfam_at_kind_inj_sig: */
 
 tycl_hdr: context "=>" type  {$$ = new expression(AST_node("context"),{$1,$3});}
-|         type               {std::swap($$,$1);}
+|         type               {$$ = $1;}
 
 capi_ctype: "{-# CTYPE" STRING STRING "#-}"
 |           "{-# CTYPE" STRING "#-}"
@@ -801,13 +801,13 @@ decllist_inst: "{" decls_inst "}"
 where_inst: "where" decllist_inst
 |           %empty
 
-decls: decls ";" decl   {std::swap($$,$1); $$.push_back($3);}
-|      decls ";"        {std::swap($$,$1);}
+decls: decls ";" decl   {$$ = $1; $$.push_back($3);}
+|      decls ";"        {$$ = $1;}
 |      decl             {$$.push_back($1);}
 |      %empty           {}
 
-decllist: "{" decls "}"          {std::swap($$,$2);}
-|         VOCURLY decls close    {std::swap($$,$2);}
+decllist: "{" decls "}"          {$$ = $2;}
+|         VOCURLY decls close    {$$ = $2;}
 
 binds: decllist                  {$$ = new expression(AST_node("Decls"),$1);}
 /* The dbinds can't occur right now
@@ -815,7 +815,7 @@ binds: decllist                  {$$ = new expression(AST_node("Decls"),$1);}
 |     VOCURLY dbinds close       {}
  */
 
-wherebinds: "where" binds        {std::swap($$,$2);}
+wherebinds: "where" binds        {$$ = $2;}
 |           %empty               {}
 
 
@@ -838,26 +838,26 @@ stringlist: stringlist "," STRING
 /* ------------- Type signatures --------------------------------- */
 
 opt_sig: %empty  {}
-| "::" sigtype   {std::swap($$,$2);}
+| "::" sigtype   {$$ = $2;}
 
 opt_tyconsig: %empty {}
 | "::" gtycon        {$$ = make_type_id($2);}
 
-sigtype: ctype   {std::swap($$,$1);}
+sigtype: ctype   {$$ = $1;}
 
-sigtypedoc: ctypedoc {std::swap($$,$1);}
+sigtypedoc: ctypedoc {$$ = $1;}
 
-sig_vars: sig_vars "," var {std::swap($$,$1); $$.push_back($3);}
+sig_vars: sig_vars "," var {$$ = $1; $$.push_back($3);}
 |         var              {$$.push_back($1);}
 
 sigtypes1: sigtype               {$$.push_back($1);}
-|          sigtypes1 "," sigtype {std::swap($$,$1); $$.push_back($3);}
+|          sigtypes1 "," sigtype {$$ = $1; $$.push_back($3);}
 
 /* ------------- Types ------------------------------------------- */
 
-strict_mark: strictness                     {std::swap($$,$1);}
+strict_mark: strictness                     {$$ = $1;}
 |            unpackedness                   {}
-|            unpackedness strictness        {std::swap($$,$2);}
+|            unpackedness strictness        {$$ = $2;}
 
 strictness: "!" {$$ = "!";}
 |           "~" {$$ = "~";}
@@ -868,9 +868,9 @@ unpackedness: "{-# UNPACK" "#-"
 ctype: "forall" tv_bndrs "." ctype {$$ = new expression(AST_node("forall"),{make_tv_bndrs($2),$4});}
 |      context "=>" ctype          {$$ = new expression(AST_node("context"),{$1,$3});}
 /* |      ipvar "::" type             {} */
-|      type                        {std::swap($$,$1);}
+|      type                        {$$ = $1;}
 
-ctypedoc: ctype                    {std::swap($$,$1);}
+ctypedoc: ctype                    {$$ = $1;}
 
 /*
 ctypedoc:  "forall" tv_bnrds "." ctypedoc
@@ -879,25 +879,25 @@ ctypedoc:  "forall" tv_bnrds "." ctypedoc
 |      typedoc
 */
 
-context: btype                     {std::swap($$,$1);}
+context: btype                     {$$ = $1;}
 
 context_no_ops: btype_no_ops       {$$ = make_tyapps($1);}
 
-type: btype                        {std::swap($$,$1);}
+type: btype                        {$$ = $1;}
 |     btype "->" ctype             {$$ = make_tyapps({make_type_id("->"),$1,$3});}
 
-typedoc: type                      {std::swap($$,$1);}
+typedoc: type                      {$$ = $1;}
 /* typedoc: .... */
 
 btype: tyapps                      {$$ = make_tyapps($1);}
 
 btype_no_ops: atype_docs               {$$.push_back($1);}
-|             btype_no_ops atype_docs  {std::swap($$,$1); $$.push_back($2);}
+|             btype_no_ops atype_docs  {$$ = $1; $$.push_back($2);}
 
 tyapps: tyapp                      {$$.push_back($1);}
-|       tyapps tyapp               {std::swap($$,$1); $$.push_back($2);}
+|       tyapps tyapp               {$$ = $1; $$.push_back($2);}
 
-tyapp: atype                       {std::swap($$,$1);}
+tyapp: atype                       {$$ = $1;}
 |      qtyconop                    {$$ = make_type_id($1);}
 |      tyvarop                     {$$ = make_type_id($1);}
 /* Template Haskell
@@ -905,7 +905,7 @@ tyapp: atype                       {std::swap($$,$1);}
 |      SIMPLEQUOTE varop
 */
 
-atype_docs: atype /* FIX */        {std::swap($$,$1);}
+atype_docs: atype /* FIX */        {$$ = $1;}
 
 atype: ntgtycon                        {$$ = make_type_id($1);}
 |      tyvar                           {$$ = make_type_id($1);}
@@ -918,7 +918,7 @@ atype: ntgtycon                        {$$ = make_type_id($1);}
 |      "(#" comma_types1 "#)"          {}
 |      "(#" bar_types2   "#)"          {}
 |      "[" ctype "]"                   {$$ = expression_ref{AST_node("ListType"),{$2}};}
-|      "(" ctype ")"                   {std::swap($$,$2);}
+|      "(" ctype ")"                   {$$ = $2;}
 |      "(" ctype "::" kind ")"         {$$ = expression_ref{AST_node("TypeOfKind"),{$2,$4}};}
 /* Template Haskell */
 
@@ -927,16 +927,16 @@ inst_type: sigtype
 deriv_types: typedoc
 |            typedoc "," deriv_types
 
-comma_types0: comma_types1             {std::swap($$,$1);}
+comma_types0: comma_types1             {$$ = $1;}
 |             %empty                   {}
 
 comma_types1: ctype                    {$$.push_back($1);}
-|             comma_types1 "," ctype   {std::swap($$,$1); $$.push_back($3);}
+|             comma_types1 "," ctype   {$$ = $1; $$.push_back($3);}
 
 bar_types2: ctype "|" ctype
 |           ctype "|" bar_types2
 
-tv_bndrs:   tv_bndrs tv_bndr   {std::swap($$,$1); $$.push_back($2);}
+tv_bndrs:   tv_bndrs tv_bndr   {$$ = $1; $$.push_back($2);}
 |           %empty             {}
 
 tv_bndr:    tyvar                   {$$ = AST_node("type_id",$1);}
@@ -955,19 +955,19 @@ varids0:    %empty
 
 /* ------------- Kinds ------------------------------------------- */
 
-kind: ctype  {std::swap($$,$1);}
+kind: ctype  {$$ = $1;}
 
 
 
 /* ------------- Datatype declarations --------------------------- */
 
-constrs: "=" constrs1           {std::swap($$,$2);}
+constrs: "=" constrs1           {$$ = $2;}
 
-constrs1: constrs1 "|" constr   {std::swap($$,$1); $$.push_back($3);}
+constrs1: constrs1 "|" constr   {$$ = $1; $$.push_back($3);}
 |         constr                {$$.push_back($1);}
 
 constr: forall context_no_ops "=>" constr_stuff {$$ = make_context($2,$4);}
-|       forall constr_stuff                     {std::swap($$,$2);}
+|       forall constr_stuff                     {$$ = $2;}
 
 forall: "forall" tv_bndrs "."   {if ($2.size()>1) $$ = make_tv_bndrs($2);}
 |       %empty                  {}
@@ -976,9 +976,9 @@ constr_stuff: btype_no_ops                      {$$ = make_tyapps($1);}
 |             btype_no_ops conop btype_no_ops   {$$ = make_tyapps({AST_node("type_id",$2),make_tyapps($1),make_tyapps($3)});}
 
 fielddecls: %empty              {}
-|           fielddecls1         {std::swap($$,$1);}
+|           fielddecls1         {$$ = $1;}
 
-fielddecls1: fielddecls1 "," fielddecl  {std::swap($$,$1); $$.push_back($3);}
+fielddecls1: fielddecls1 "," fielddecl  {$$ = $1; $$.push_back($3);}
 |            fielddecl                  {$$.push_back($1);}
 
 fielddecl: sig_vars "::" ctype          {$$ = new expression(AST_node("FieldDecl"),{make_sig_vars($1),$3});}
@@ -1000,7 +1000,7 @@ deriv_clause_types: qtycondoc
 
 /* ------------- Value definitions ------------------------------- */
 
-decl_no_th: sigdecl           {std::swap($$,$1);}
+decl_no_th: sigdecl           {$$ = $1;}
 /* I guess this is a strict let. Code as DeclStrict, rather than StrictPattern, since docs say this is part of the binding, not part of the patter */
 | "!" aexp rhs                {$$ = new expression(AST_node("Decl:Strict"),{($2),$3});}
 /* what is the opt_sig doing here? */
@@ -1008,14 +1008,14 @@ decl_no_th: sigdecl           {std::swap($$,$1);}
 | pattern_synonym_decl        {}
 /* | docdel */
 
-decl: decl_no_th              {std::swap($$,$1);}
+decl: decl_no_th              {$$ = $1;}
 /*  | splice_exp */
 
 // rhs is like altrhs but with = instead of ->
 rhs: "=" exp wherebinds       {$$ = make_rhs($2,$3);}
 |    gdrhs wherebinds         {$$ = make_gdrhs($1,$2);}
 
-gdrhs: gdrhs gdrh             {std::swap($$,$1); $$.push_back($2);}
+gdrhs: gdrhs gdrh             {$$ = $1; $$.push_back($2);}
 |      gdrh                   {$$.push_back($1);}
 
 
@@ -1046,16 +1046,16 @@ exp: infixexp "::" sigtype { $$ = make_typed_exp(make_infixexp($1),$3); }
 |    infixexp              { $$ = make_infixexp($1); }
 
 infixexp: exp10                 {$$.push_back($1);}
-|         infixexp qop exp10    {std::swap($$,$1); $$.push_back(make_id($2)); $$.push_back($3);}
+|         infixexp qop exp10    {$$ = $1; $$.push_back(make_id($2)); $$.push_back($3);}
 
 infixexp_top: exp10_top         {$$.push_back($1);}
-|             infixexp_top qop exp10_top  {std::swap($$,$1); $$.push_back(make_id($2)); $$.push_back($3);}
+|             infixexp_top qop exp10_top  {$$ = $1; $$.push_back(make_id($2)); $$.push_back($3);}
 
 exp10_top: "-" fexp                {$$ = make_minus(make_fexp($2));}
 |          "{-# CORE" STRING "#-}" {}
 |          fexp                    {$$ = make_fexp($1);}
 
-exp10: exp10_top                 {std::swap($$,$1);}
+exp10: exp10_top                 {$$ = $1;}
 |      scc_annot exp             {}
 
 
@@ -1067,7 +1067,7 @@ scc_annot: "{-# SCC" STRING "#-}"
 
 /* hpc_annot */
 
-fexp: fexp aexp                  {std::swap($$,$1); $$.push_back($2);}
+fexp: fexp aexp                  {$$ = $1; $$.push_back($2);}
 |     fexp TYPEAPP atype         {}
 |     "static" aexp              {}
 |     aexp                       {$$.push_back($1);}
@@ -1083,32 +1083,32 @@ aexp: qvar "@" aexp              {$$ = make_as_pattern($1,$3);}
 |     "do" stmtlist              {$$ = make_do($2);}
 |     "mdo" stmtlist             {}
 |     "proc" aexp "->" exp       {}
-|     aexp1                      {std::swap($$,$1);}
+|     aexp1                      {$$ = $1;}
 
 aexp1: aexp1 "{" fbinds "}"   {}
-|      aexp2                  {std::swap($$,$1);}
+|      aexp2                  {$$ = $1;}
 
 aexp2: qvar                   {$$ = make_id($1);}
 |      qcon                   {$$ = make_id($1);}
-|      literal                {std::swap($$,$1);}
-|      "(" texp ")"           {std::swap($$,$2);}
+|      literal                {$$ = $1;}
+|      "(" texp ")"           {$$ = $2;}
 |      "(" tup_exprs ")"      {$$ = yy_make_tuple($2);}
 |      "(#" texp "#)"         {}
 |      "(#" tup_exprs "#)"    {}
-|      "[" list "]"           {std::swap($$,$2);}
+|      "[" list "]"           {$$ = $2;}
 |      "_"                    {$$ = AST_node("WildcardPattern");}
 /* Skip Template Haskell Extensions */
 
 /* ------------- Tuple expressions ------------------------------- */
 
-texp: exp             {std::swap($$,$1);}
+texp: exp             {$$ = $1;}
 |     infixexp qop    {$$ = new expression(AST_node("LeftSection"),{make_infixexp($1),make_id($2)});}
 |     qopm infixexp   {$$ = new expression(AST_node("RightSection"),{make_id($1),make_infixexp($2)});}
 /* view patterns 
 |     exp "->" texp
 */
 
-tup_exprs: tup_exprs "," texp    {std::swap($$,$1); $$.push_back($3);}
+tup_exprs: tup_exprs "," texp    {$$ = $1; $$.push_back($3);}
 |          texp "," texp         {$$.push_back($1); $$.push_back($3);}
 
 /*
@@ -1135,21 +1135,21 @@ list: texp                       { $$ = {AST_node("id",":"),$1,AST_node("id","[]
 |     texp "," exp ".." exp      { $$ = expression_ref(AST_node("enumFromThenTo"),{$1,$3,$5}); }
 |     texp "|" squals            { auto quals = $3; quals.push_back($1); $$ = expression_ref(AST_node("ListComprehension"),quals); }
 
-lexps: lexps "," texp            { std::swap($$,$1); $$.push_back($3);}
+lexps: lexps "," texp            { $$ = $1; $$.push_back($3);}
 |      texp "," texp             { $$.push_back($1); $$.push_back($3);}
 
 
 /* ------------- List Comprehensions ----------------------------- */
 
 /*
-flattenedpquals: pquals                   {std:swap($$,$1);}
+flattenedpquals: pquals                   {$$ = $1;}
 
 pquals: squals "|" pquals                 {$$.push_back(make_squals($1));$$.insert($$.end(),$3.begin(),$3.end());}
 |       squals                            {$$.push_back(make_squals($1));}
 */
 
-squals: squals "," transformqual          {std::swap($$,$1); $$.push_back($3);}
-|       squals "," qual                   {std::swap($$,$1); $$.push_back($3);}
+squals: squals "," transformqual          {$$ = $1; $$.push_back($3);}
+|       squals "," qual                   {$$ = $1; $$.push_back($3);}
 |       transformqual                     {$$.push_back($1);}
 |       qual                              {$$.push_back($1);}
 
@@ -1159,22 +1159,22 @@ transformqual: "then" exp                           {}
 |              "then" "group" "by" exp "using" exp  {}
 
 /* ------------- Guards ------------------------------------------ */
-guardquals: guardquals1            {std::swap($$,$1);}
+guardquals: guardquals1            {$$ = $1;}
 
-guardquals1: guardquals1 "," qual  {std::swap($$,$1);$$.push_back($3);}
+guardquals1: guardquals1 "," qual  {$$ = $1;$$.push_back($3);}
 |            qual                  {$$.push_back($1);}
 
 /* ------------- Case alternatives ------------------------------- */
-altslist: "{" alts "}"           {std::swap($$,$2);}
-|         VOCURLY alts close     {std::swap($$,$2);}
+altslist: "{" alts "}"           {$$ = $2;}
+|         VOCURLY alts close     {$$ = $2;}
 |         "{" "}"                {}
 |         VOCURLY close          {}
 
-alts: alts1                      {std::swap($$,$1);}
-|     ";" alts                   {std::swap($$,$2);}
+alts: alts1                      {$$ = $1;}
+|     ";" alts                   {$$ = $2;}
 
-alts1: alts1 ";" alt             {std::swap($$,$1); $$.push_back($3);}
-|      alts1 ";"                 {std::swap($$,$1);}
+alts1: alts1 ";" alt             {$$ = $1; $$.push_back($3);}
+|      alts1 ";"                 {$$ = $1;}
 |      alt                       {$$.push_back($1);}
 
 alt:   pat alt_rhs               {$$ = yy_make_alt($1,$2);}
@@ -1182,7 +1182,7 @@ alt:   pat alt_rhs               {$$ = yy_make_alt($1,$2);}
 alt_rhs: "->" exp wherebinds     {$$ = make_rhs($2,$3);}
 |        gdpats   wherebinds     {$$ = make_gdrhs($1,$2);}
 
-gdpats: gdpats gdpat             {std::swap($$,$1); $$.push_back($2);}
+gdpats: gdpats gdpat             {$$ = $1; $$.push_back($2);}
 |       gdpat                    {$$.push_back($1);}
 
 ifgdpats : "{" gdpats "}"        {}
@@ -1190,24 +1190,24 @@ ifgdpats : "{" gdpats "}"        {}
 
 gdpat: "|" guardquals "->" exp   {$$=make_gdrh($2,$4);}
 
-pat: exp      {std::swap($$,$1);}
+pat: exp      {$$ = $1;}
 |   "!" aexp  {$$ = make_strict_pattern($2);}
 
-bindpat: exp  {std::swap($$,$1);}
+bindpat: exp  {$$ = $1;}
 |   "!" aexp  {$$ = make_strict_pattern($2);}
 
-apat: aexp    {std::swap($$,$1);}
+apat: aexp    {$$ = $1;}
 |    "!" aexp {$$ = make_strict_pattern($2);}
 
-apats1: apats1 apat {std::swap($$,$1); $$.push_back($2);}
+apats1: apats1 apat {$$ = $1; $$.push_back($2);}
 |       apat        {$$.push_back($1);}
 
 /* ------------- Statement sequences ----------------------------- */
-stmtlist: "{" stmts "}"        {std::swap($$,$2);}
-|         VOCURLY stmts close  {std::swap($$,$2);}
+stmtlist: "{" stmts "}"        {$$ = $2;}
+|         VOCURLY stmts close  {$$ = $2;}
 
-stmts: stmts ";" stmt  {std::swap($$,$1); $$.push_back($3);}
-|      stmts ";"       {std::swap($$,$1);}
+stmts: stmts ";" stmt  {$$ = $1; $$.push_back($3);}
+|      stmts ";"       {$$ = $1;}
 |      stmt            {$$.push_back($1);}
 |      %empty          {}
 
