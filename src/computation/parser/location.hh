@@ -1,8 +1,8 @@
-// A Bison parser, made by GNU Bison 3.1.
+// A Bison parser, made by GNU Bison 3.4.1.
 
 // Locations for Bison parsers in C++
 
-// Copyright (C) 2002-2015, 2018 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015, 2018-2019 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -38,12 +38,145 @@
 #ifndef YY_YY_LOCATION_HH_INCLUDED
 # define YY_YY_LOCATION_HH_INCLUDED
 
-# include "position.hh"
+# include <algorithm> // std::max
+# include <iostream>
+# include <string>
 
+# ifndef YY_NULLPTR
+#  if defined __cplusplus
+#   if 201103L <= __cplusplus
+#    define YY_NULLPTR nullptr
+#   else
+#    define YY_NULLPTR 0
+#   endif
+#  else
+#   define YY_NULLPTR ((void*)0)
+#  endif
+# endif
 
 namespace yy {
-#line 46 "location.hh" // location.cc:290
-  /// Abstract a location.
+#line 59 "location.hh"
+
+  /// A point in a source file.
+  class position
+  {
+  public:
+    /// Construct a position.
+    explicit position (std::string* f = YY_NULLPTR,
+                       unsigned l = 1u,
+                       unsigned c = 1u)
+      : filename (f)
+      , line (l)
+      , column (c)
+    {}
+
+
+    /// Initialization.
+    void initialize (std::string* fn = YY_NULLPTR,
+                     unsigned l = 1u,
+                     unsigned c = 1u)
+    {
+      filename = fn;
+      line = l;
+      column = c;
+    }
+
+    /** \name Line and Column related manipulators
+     ** \{ */
+    /// (line related) Advance to the COUNT next lines.
+    void lines (int count = 1)
+    {
+      if (count)
+        {
+          column = 1u;
+          line = add_ (line, count, 1);
+        }
+    }
+
+    /// (column related) Advance to the COUNT next columns.
+    void columns (int count = 1)
+    {
+      column = add_ (column, count, 1);
+    }
+    /** \} */
+
+    /// File name to which this position refers.
+    std::string* filename;
+    /// Current line number.
+    unsigned line;
+    /// Current column number.
+    unsigned column;
+
+  private:
+    /// Compute max (min, lhs+rhs).
+    static unsigned add_ (unsigned lhs, int rhs, int min)
+    {
+      return static_cast<unsigned> (std::max (min,
+                                              static_cast<int> (lhs) + rhs));
+    }
+  };
+
+  /// Add \a width columns, in place.
+  inline position&
+  operator+= (position& res, int width)
+  {
+    res.columns (width);
+    return res;
+  }
+
+  /// Add \a width columns.
+  inline position
+  operator+ (position res, int width)
+  {
+    return res += width;
+  }
+
+  /// Subtract \a width columns, in place.
+  inline position&
+  operator-= (position& res, int width)
+  {
+    return res += -width;
+  }
+
+  /// Subtract \a width columns.
+  inline position
+  operator- (position res, int width)
+  {
+    return res -= width;
+  }
+
+  /// Compare two position objects.
+  inline bool
+  operator== (const position& pos1, const position& pos2)
+  {
+    return (pos1.line == pos2.line
+            && pos1.column == pos2.column
+            && (pos1.filename == pos2.filename
+                || (pos1.filename && pos2.filename
+                    && *pos1.filename == *pos2.filename)));
+  }
+
+  /// Compare two position objects.
+  inline bool
+  operator!= (const position& pos1, const position& pos2)
+  {
+    return !(pos1 == pos2);
+  }
+
+  /** \brief Intercept output stream redirection.
+   ** \param ostr the destination output stream
+   ** \param pos a reference to the position to redirect
+   */
+  template <typename YYChar>
+  std::basic_ostream<YYChar>&
+  operator<< (std::basic_ostream<YYChar>& ostr, const position& pos)
+  {
+    if (pos.filename)
+      ostr << *pos.filename << ':';
+    return ostr << pos.line << '.' << pos.column;
+  }
+
+  /// Two points in a source file.
   class location
   {
   public:
@@ -183,7 +316,7 @@ namespace yy {
     return ostr;
   }
 
-
 } // yy
-#line 189 "location.hh" // location.cc:290
+#line 321 "location.hh"
+
 #endif // !YY_YY_LOCATION_HH_INCLUDED
