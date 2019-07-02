@@ -527,6 +527,9 @@ bound_var_info renamer_state::rename_stmt(expression_ref& stmt, const bound_var_
 	stmt = expression_ref{stmt.head(),v};
 	return bound_vars;
     }
+    else if (is_AST(stmt, "Rec"))
+    {
+    }
     else
 	std::abort();
 }
@@ -636,6 +639,9 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 		add(bound2, rename_stmt(stmt, bound2));
 	    return expression_ref{E.head(),v};
 	}
+	else if (n.type == "MDo")
+        {
+        }
 	else if (n.type == "Let")
 	{
 	    auto& decls = v[0];
