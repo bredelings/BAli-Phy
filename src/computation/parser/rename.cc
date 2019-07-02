@@ -260,6 +260,10 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 // We keep track of locally bound variables only so that we know when to avoid looking for a qualified symbol.
 typedef set<string> bound_var_info;
 
+// Currently we interleave discovering bound variables and modifying them.  For example, when we
+// analyze a `let decls body` statement, we rename the variables in the decls at the same time that
+// we accumulate the bound variables.  We then use the combined list of bound variables to rename the body.
+
 bool disjoint_add(bound_var_info& bv1, const bound_var_info& bv2)
 {
     for(auto& v: bv2)
