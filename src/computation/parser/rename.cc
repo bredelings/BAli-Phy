@@ -280,11 +280,11 @@ struct renamer_state
 {
     const Module& m;
 
-    int var_index=0;
-
-    var get_fresh_wildcard() { return var(-var_index++);}
-    var get_fresh_var() { return var(var_index++);}
-    var get_fresh_var(const string& name) {return var(name,var_index++);}
+//    int var_index=0;
+//
+//    var get_fresh_wildcard() { return var(-var_index++);}
+//    var get_fresh_var() { return var(var_index++);}
+//    var get_fresh_var(const string& name) {return var(name,var_index++);}
 
     bound_var_info rename_pattern(expression_ref& pat, bool top = false);
     expression_ref rename_decl(const expression_ref& decl, const bound_var_info& bound);
