@@ -55,6 +55,7 @@
   expression_ref make_if(const expression_ref& cond, const expression_ref& alt_true, const expression_ref& alt_false);
   expression_ref make_case(const expression_ref& obj, const expression_ref& alts);
   expression_ref make_do(const std::vector<expression_ref>& stmts);
+  expression_ref make_mdo(const std::vector<expression_ref>& stmts);
   expression_ref yy_make_tuple(const std::vector<expression_ref>& tup_exprs);
 
   expression_ref make_list(const std::vector<expression_ref>& items);
@@ -1083,7 +1084,7 @@ aexp: qvar "@" aexp              {$$ = make_as_pattern($1,$3);}
 |     "if" ifgdpats              {}
 |     "case" exp "of" altslist   {$$ = make_case($2,make_alts($4));}
 |     "do" stmtlist              {$$ = make_do($2);}
-|     "mdo" stmtlist             {}
+|     "mdo" stmtlist             {$$ = make_mdo($2);}
 |     "proc" aexp "->" exp       {}
 |     aexp1                      {$$ = $1;}
 
@@ -1217,7 +1218,7 @@ stmts: stmts ";" stmt  {$$ = $1; $$.push_back($3);}
 |             %empty */
 
 stmt: qual              {$$ = $1;}
-|     "rec" stmtlist    {}
+|     "rec" stmtlist    {$$ = new expression(AST_node("Rec"),{$2});}
 
 qual: bindpat "<-" exp  {$$ = new expression(AST_node("PatQual"),{$1,$3});}
 |     exp               {$$ = new expression(AST_node("SimpleQual"),{$1});}
@@ -1648,6 +1649,10 @@ expression_ref make_do(const vector<expression_ref>& stmts)
     return new expression(AST_node("Do"), stmts);
 }
 
+expression_ref make_mdo(const vector<expression_ref>& stmts)
+{
+    return new expression(AST_node("MDo"), stmts);
+}
 
 expression_ref yy_make_tuple(const vector<expression_ref>& tup_exprs)
 {

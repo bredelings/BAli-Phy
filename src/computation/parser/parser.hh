@@ -92,6 +92,7 @@
   expression_ref make_if(const expression_ref& cond, const expression_ref& alt_true, const expression_ref& alt_false);
   expression_ref make_case(const expression_ref& obj, const expression_ref& alts);
   expression_ref make_do(const std::vector<expression_ref>& stmts);
+  expression_ref make_mdo(const std::vector<expression_ref>& stmts);
   expression_ref yy_make_tuple(const std::vector<expression_ref>& tup_exprs);
 
   expression_ref make_list(const std::vector<expression_ref>& items);
@@ -102,7 +103,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 106 "parser.hh"
+#line 107 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -217,7 +218,7 @@
 #endif
 
 namespace yy {
-#line 221 "parser.hh"
+#line 222 "parser.hh"
 
 
 
@@ -4572,7 +4573,7 @@ switch (yytype)
   }
 
 } // yy
-#line 4576 "parser.hh"
+#line 4577 "parser.hh"
 
 
 
