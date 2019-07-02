@@ -159,6 +159,7 @@ expression_ref shift_list(vector<expression_ref>& v)
 }
 
 // The issue here is to rewrite @ f x y -> f x y
+// so that f is actually the head.
 expression_ref unapply(const expression_ref& E)
 {
     if (not E.size()) return E;
@@ -252,6 +253,11 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     return expression_ref{E.head(),v};
 }
 
+// 1. The primary purpose of the rename pass is to convert identifiers to (possibly qualified) vars.
+
+// 2. Additionally, we also try and translate rec expressions to mfix expressions here.
+
+// We keep track of locally bound variables only so that we know when to avoid looking for a qualified symbol.
 typedef set<string> bound_var_info;
 
 bool disjoint_add(bound_var_info& bv1, const bound_var_info& bv2)
@@ -295,7 +301,7 @@ expression_ref rename(const Module& m, const expression_ref& E)
     return Rn.rename(E,set<string>());
 }
 
-
+// Convert ids to vars in pattern, and return a set of all names for vars (excluding wildcards, of course)
 bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
 {
     assert(not is_apply_exp(pat));
@@ -406,10 +412,13 @@ expression_ref renamer_state::rename_decl(const expression_ref& decl, const boun
 
     auto f = lhs.head();
 
-    // 1. Rename the lhs, and get bound variables
+    // 1. We discover bound variables for the decls group in rename_decls( ), before we call this.
     auto bound2 = bound;
 
-    // 2. If this is not a pattern binding, then rename the argument patterns
+    // 2. If this is not a pattern binding, then rename the argument patterns x y z in `f x y z = ... `.
+    //
+    //    We deal with these here, since they are only in scope for this decl, whereas e.g. f is in scope
+    //      for all decls in the decls group.
     bool pattern_bind = f.is_a<constructor>();
     if (not pattern_bind)
     {
