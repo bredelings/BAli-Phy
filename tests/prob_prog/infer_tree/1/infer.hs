@@ -35,8 +35,9 @@ sample_smodel = do
   return (smodel, smodel_loggers)
 
 do_sample_alignment topology ts imodel scale tip_seq_lengths = do
-  let ds = listArray' $ map (*scale) ts
-      hmms = branch_hmms imodel ds (numBranches topology)
+  let n_branches = numBranches topology
+      ds = listArray' $ map (*scale) ts
+      hmms = branch_hmms imodel ds n_branches
   alignment_on_tree <- sample $ random_alignment topology hmms imodel tip_seq_lengths True
   return $ Alignment.pairwise_alignments alignment_on_tree
 
@@ -46,7 +47,9 @@ model alphabet n_tips seqs = random $ do
 
           topology <- sample $ uniform_topology n_tips
 
-          ts <- sample $ iid b (gamma 0.5 (2.0/b)) where b = numBranches topology
+          let b = numBranches topology
+
+          ts <- sample $ iid b (gamma 0.5 (2.0/intToDouble b))
 
           scale <- sample $ gamma 0.5 2.0
 
@@ -57,7 +60,7 @@ model alphabet n_tips seqs = random $ do
           as <- do_sample_alignment topology ts imodel scale tip_seq_lengths
 
           let root = targetNode topology 0
-              branch_cats = replicate n_branches 0
+              branch_cats = replicate b 0
 
           let loggers = log_all [write_newick topology %% "topology",
                                  ts %% "T",
