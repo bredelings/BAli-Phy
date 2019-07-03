@@ -11,6 +11,14 @@ import IModel
 
 -- issues: 1. likelihood seems wrong - -1300 vs -700.
 --         2. no topology moves included.
+sample_imodel topology = do
+  logLambda <- sample $ log_laplace (-4.0) 0.707
+  mean_length <- do l <- sample $ exponential 10.0
+                    return (l+1.0)
+  let imodel = rs07 logLambda mean_length topology 1.0 False
+      loggers = [logLambda %% "logLambda",
+                 mean_length %% "mean_length"]
+  return (imodel, loggers)
 
 sample_smodel = do
   pi <- sample $ dirichlet_on ["A","C","G","T"] [1.0, 1.0, 1.0, 1.0]
@@ -26,25 +34,27 @@ sample_smodel = do
 
   return (smodel, smodel_loggers)
 
+do_sample_alignment topology ts imodel scale tip_seq_lengths = do
+  let ds = listArray' $ map (*scale) ts
+      hmms = branch_hmms imodel ds (numBranches topology)
+  alignment_on_tree <- sample $ random_alignment topology hmms imodel tip_seq_lengths True
+  return $ Alignment.pairwise_alignments alignment_on_tree
+
 model alphabet n_tips seqs = random $ do
-          -- If n_branches is random, then iid n_branches aborts adding parameters.
-          let n_branches = 2*n_tips - 3
+
+          let tip_seq_lengths = get_sequence_lengths $ listArray' seqs
 
           topology <- sample $ uniform_topology n_tips
-          ts <- sample $ iid n_branches (gamma 0.5 (2.0/(intToDouble n_branches)))
+
+          ts <- sample $ iid b (gamma 0.5 (2.0/b)) where b = numBranches topology
+
           scale <- sample $ gamma 0.5 2.0
-          let ds = listArray' $ map (*scale) ts
 
           (smodel, smodel_loggers) <- sample_smodel
 
-          logLambda <- sample $ log_laplace (-4.0) 0.707
-          mean_length <- do l <- sample $ exponential 10.0
-                            return (l+1.0)
-          let imodel = rs07 logLambda mean_length topology 1.0 False
-              hmms = branch_hmms imodel ds n_branches
-              tip_seq_lengths = get_sequence_lengths $ listArray' seqs
-          alignment_on_tree <- sample $ random_alignment topology hmms imodel tip_seq_lengths True
-          let as = Alignment.pairwise_alignments alignment_on_tree
+          (imodel, imodel_loggers) <- sample_imodel topology
+
+          as <- do_sample_alignment topology ts imodel scale tip_seq_lengths
 
           let root = targetNode topology 0
               branch_cats = replicate n_branches 0
@@ -52,9 +62,8 @@ model alphabet n_tips seqs = random $ do
           let loggers = log_all [write_newick topology %% "topology",
                                  ts %% "T",
                                  scale %% "scale",
-                                 logLambda %% "rs07/logLambda",
-                                 mean_length %% "rs07/mean_length",
-                                 ("tn93",(Nothing,smodel_loggers))
+                                 ("tn93",(Nothing,smodel_loggers)),
+                                 ("rs07",(Nothing,imodel_loggers))
                                 ]
 
           return (ctmc_on_tree topology root as alphabet smodel ts scale branch_cats, loggers)
