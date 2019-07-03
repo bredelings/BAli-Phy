@@ -12,6 +12,20 @@ import IModel
 -- issues: 1. likelihood seems wrong - -1300 vs -700.
 --         2. no topology moves included.
 
+sample_smodel = do
+  pi <- sample $ dirichlet_on ["A","C","G","T"] [1.0, 1.0, 1.0, 1.0]
+  kappa1 <- sample $ log_normal 0.0 1.0
+  kappa2 <- sample $ log_normal 0.0 1.0
+
+  -- If we generalize e.g. transition_ps, we wouldn't need to write (mmm $ unit_mixture $ ) in from of tn93
+  let pi' = frequencies_from_dict dna pi
+      smodel = mmm $ unit_mixture $ tn93 kappa1 kappa2 pi' dna
+      smodel_loggers = [kappa1 %% "kappa1",
+                        kappa2 %% "kappa2",
+                        pi %% "pi"]
+
+  return (smodel, smodel_loggers)
+
 model alphabet n_tips seqs = random $ do
           -- If n_branches is random, then iid n_branches aborts adding parameters.
           let n_branches = 2*n_tips - 3
@@ -21,13 +35,8 @@ model alphabet n_tips seqs = random $ do
           scale <- sample $ gamma 0.5 2.0
           let ds = listArray' $ map (*scale) ts
 
-          pi <- sample $ dirichlet_on ["A","C","G","T"] [1.0, 1.0, 1.0, 1.0]
-          let pi' = frequencies_from_dict dna pi
+          (smodel, smodel_loggers) <- sample_smodel
 
-          kappa1 <- sample $ log_normal 0.0 1.0
-          kappa2 <- sample $ log_normal 0.0 1.0
-          let smodel = mmm $ unit_mixture $ tn93 kappa1 kappa2 pi' dna
-          
           logLambda <- sample $ log_laplace (-4.0) 0.707
           mean_length <- do l <- sample $ exponential 10.0
                             return (l+1.0)
@@ -41,13 +50,12 @@ model alphabet n_tips seqs = random $ do
               branch_cats = replicate n_branches 0
 
           let loggers = log_all [write_newick topology %% "topology",
-                            ts %% "T",
-                            scale %% "scale",
-                            kappa1 %% "tn93/kappa1",
-                            kappa2 %% "tn93/kappa2",
-                            logLambda %% "rs7/logLambda",
-                            mean_length %% "rs07/mean_length",
-                            pi %% "tn93/pi"]
+                                 ts %% "T",
+                                 scale %% "scale",
+                                 logLambda %% "rs07/logLambda",
+                                 mean_length %% "rs07/mean_length",
+                                 ("tn93",(Nothing,smodel_loggers))
+                                ]
 
           return (ctmc_on_tree topology root as alphabet smodel ts scale branch_cats, loggers)
 
