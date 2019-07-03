@@ -1,4 +1,4 @@
-import Alignment
+import Alignment hiding (sample_alignment)
 import Alphabet
 import Probability
 import Tree
@@ -34,7 +34,7 @@ sample_smodel = do
 
   return (smodel, smodel_loggers)
 
-do_sample_alignment topology ts imodel scale tip_seq_lengths = do
+sample_alignment topology ts imodel scale tip_seq_lengths = do
   let n_branches = numBranches topology
       ds = listArray' $ map (*scale) ts
       hmms = branch_hmms imodel ds n_branches
@@ -57,7 +57,7 @@ model alphabet n_tips seqs = random $ do
 
           (imodel, imodel_loggers) <- sample_imodel topology
 
-          as <- do_sample_alignment topology ts imodel scale tip_seq_lengths
+          as <- Main.sample_alignment topology ts imodel scale tip_seq_lengths
 
           let root = targetNode topology 0
               branch_cats = replicate b 0
