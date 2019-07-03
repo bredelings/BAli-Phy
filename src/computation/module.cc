@@ -314,10 +314,17 @@ void Module::export_module(const string& modid)
 	{
 	    auto& qname = s.second.name;
 	    auto varid = get_unqualified_name(qname);
-	    auto S1 = lookup_symbol(varid);
-	    auto S2 = lookup_symbol(qname);
-	    if (S1.name == S2.name)
-		export_symbol(S1);
+            try {
+                auto S1 = lookup_symbol(varid);
+                auto S2 = lookup_symbol(qname);
+                if (S1.name == S2.name)
+                    export_symbol(S1);
+            }
+            catch (myexception& e)
+            {
+                e.prepend("exporting module '"+modid+"': ");
+                throw;
+            }
 	}
 }
 
