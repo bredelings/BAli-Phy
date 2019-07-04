@@ -16,6 +16,8 @@ public:
 
     std::string print() const;
 
+    const std::vector<std::string>& get_stmts() const { return stmts; }
+
     expression_ref get_expression() const;
 
     do_block& perform(const expression_ref& E1);
@@ -25,6 +27,8 @@ public:
     do_block& let(const CDecls& decls);
 
     do_block& let(const var&x, const expression_ref& body);
+
+    do_block& rec(const do_block& rec_block);
 
     expression_ref finish(const expression_ref& E1);
 

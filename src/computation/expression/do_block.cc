@@ -39,6 +39,12 @@ do_block& do_block::let(const var& x, const expression_ref& body)
     return let({{x,body}});
 }
 
+do_block& do_block::rec(const do_block& rec_block)
+{
+    stmts.push_back("rec {" + join(rec_block.get_stmts(),';') + "}");
+    return *this;
+}
+
 expression_ref do_block::finish(const expression_ref& E)
 {
     stmts.push_back(E.print());
