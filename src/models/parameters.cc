@@ -1421,15 +1421,6 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
             maybe_imodel = {Just, imodel};
             maybe_hmms   = {Just, hmms};
 
-            // P5.II Create modifiables for pairwise alignments
-            expression_ref initial_alignments_exp = get_list(unaligned_alignments_on_tree(tt, leaf_sequences));
-
-            var pairwise_as("pairwise_as_"+part);
-            program.let(pairwise_as,  {var("Data.Array.listArray'"), {var("Data.List.map"),var("Parameters.modifiable"),initial_alignments_exp}});
-
-            // R4. Register sequence length methods
-            auto seq_lengths = expression_ref{{var("Data.Array.listArray'"),{var("Alignment.compute_sequence_lengths"), leaf_seqs_array.ref(*this), tree_var, pairwise_as}}};
-
             expression_ref tip_lengths = {var("Alignment.get_sequence_lengths"),leaf_seqs_array.ref(*this)};
 
             // alignment_on_tree <- sample $ random_alignment tree hmms model leaf_seqs_array p->my_variable_alignment()
