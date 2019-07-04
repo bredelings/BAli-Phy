@@ -103,7 +103,7 @@ string expression::print() const
 	    vector<string> parts;
 	    for(int i=0;i<decls.size();i++)
 		parts.push_back(decls[i].first.print() + " = " + decls[i].second.print());
-	    result += join(parts,", ");
+	    result += join(parts,"; ");
 	    result += "} in " + body.print();
 	    return result;
 	}
@@ -111,7 +111,7 @@ string expression::print() const
 	if (parse_indexed_let_expression(*this, bodies, T))
 	{
 	    result = "let {";
-	    result += join(bodies,", ");
+	    result += join(bodies,"; ");
 	    result += "} in " + T.print();
 	    return result;
 	}
@@ -130,7 +130,7 @@ string expression::print() const
 	    vector<string> parts;
 	    for(int i=0;i<vars.size();i++)
 		parts.push_back( vars[i].print() + " -> " + bodies[i].print() );
-	    result += join(parts,',');
+	    result += join(parts,"; ");
 	    result += "}";
 	    return result;
 	}
