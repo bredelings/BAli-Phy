@@ -1262,12 +1262,6 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
   
     PC->constants.push_back(-1);
 
-    PC->imodel_training    = new_modifiable( false               );
-    PC->heat               = new_modifiable( 1.0                 );
-    PC->variable_alignment = new_modifiable( variable_alignment_ );
-    PC->subst_root         = new_modifiable( tt.n_nodes()-1      );
-
-
     int B = tt.n_branches();
 
     /* ---------------- compress alignments -------------------------- */
@@ -1292,16 +1286,28 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     /* ---------------- Set up the tree ------------------------------ */
     branches_from_affected_node.resize(tt.n_nodes());
 
-    auto tree_var = var("topology1");
-
     /* --------------------------------------------------------------- */
     do_block program;
+    var imodel_training_var("imodel_training");
+    var heat_var("heat");
+    var variable_alignment_var("variable_alignment");
+    var subst_root_var("subst_root");
+    var modifiable("Parameters.modifiable");
+
+    program.let({
+            {imodel_training_var, {modifiable, false}},
+            {heat_var           , {modifiable, 1.0}},
+            {variable_alignment_var, {modifiable, variable_alignment_}},
+            {subst_root_var,         {modifiable, tt.n_nodes()-1}}
+        });
+
     // ATModel smodels imodels scales branch_lengths
     // Loggers = [(string,(Maybe a,Loggers)]
     vector<expression_ref> program_loggers;
     // Therefore, we are constructing a list with values [(prefix1,(Just value1, loggers1)), (prefix1, (Just value1, loggers2))
 
     expression_ref topology_model1 = {var("Probability.Random.sample"), {var("Probability.Distribution.Tree.uniform_topology"), tt.n_leaves()}};
+    auto tree_var = var("topology1");
     program.perform(tree_var, topology_model1);
 
     // P1. Substitution models
@@ -1416,7 +1422,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         if (imodel_index)
         {
             auto imodel = var("imodel_"+part);
-            program.let(imodel, {imodels[*imodel_index], heat_exp(), imodel_training_exp()});
+            program.let(imodel, {imodels[*imodel_index], heat_var, imodel_training_var});
             expression_ref hmms =  {var("Alignment.branch_hmms"), imodel, distances, B};
             maybe_imodel = {Just, imodel};
             maybe_hmms   = {Just, hmms};
@@ -1424,7 +1430,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
             expression_ref tip_lengths = {var("Alignment.get_sequence_lengths"),leaf_seqs_array.ref(*this)};
 
             // alignment_on_tree <- sample $ random_alignment tree hmms model leaf_seqs_array p->my_variable_alignment()
-            program.perform(alignment_on_tree, {var("Probability.Random.sample"),{var("Alignment.random_alignment"), tree_var, hmms, imodel, tip_lengths, my_variable_alignment()}});
+            program.perform(alignment_on_tree, {var("Probability.Random.sample"),{var("Alignment.random_alignment"), tree_var, hmms, imodel, tip_lengths, variable_alignment_var}});
         }
         else
         {
@@ -1487,7 +1493,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
             // FIXME: broken for fixed alignments of 2 sequences.
             if (tt.n_nodes() > 2)
-                program.let(likelihood_var, {var("SModel.Likelihood.peel_likelihood"), tree_var, cls_var, as, f, my_subst_root()});
+                program.let(likelihood_var, {var("SModel.Likelihood.peel_likelihood"), tree_var, cls_var, as, f, subst_root_var});
         }
         else if (likelihood_calculator == 1)
         {
@@ -1533,10 +1539,10 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     // observe (ctmc_on_tree topology root as alphabet smodel ts scale branch_cats) seqs
 
 
-
     expression_ref program_exp = program.finish_return(
         Tuple(
-            {var("BAliPhy.ATModel.ATModel"), tree_var, get_list(smodels), get_list(imodels), get_list(scales), branch_lengths, branch_categories, get_list(partitions)},
+            {var("BAliPhy.ATModel.ATModel"), tree_var, get_list(smodels), get_list(imodels), get_list(scales), branch_lengths, branch_categories, get_list(partitions),
+             imodel_training_var, heat_var, variable_alignment_var, subst_root_var},
             get_list(program_loggers))
         );
     program_exp = {var("Probability.Random.random"), program_exp};
@@ -1548,6 +1554,11 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     TC = new tree_constants(this, tt.get_labels(), tree_index);
 
     t().read_tree(tt);
+
+    PC->imodel_training    = add_compute_expression({var("BAliPhy.ATModel.imodel_training"), my_atmodel()});
+    PC->heat               = add_compute_expression({var("BAliPhy.ATModel.heat"), my_atmodel()});
+    PC->variable_alignment = add_compute_expression({var("BAliPhy.ATModel.variable_alignment"), my_atmodel()});
+    PC->subst_root         = add_compute_expression({var("BAliPhy.ATModel.subst_root"), my_atmodel()});
 
     /* --------------------------------------------------------------- */
 
