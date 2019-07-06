@@ -166,6 +166,8 @@ alignment reverse_complement(const alignment& A);
 
 std::vector<int> alignment_row_letters(const alignment& A, int i);
 
+std::vector<int> alignment_row_counts(const alignment& A, int i, const std::vector<int>& counts);
+
 std::vector< std::vector<int> > alignment_letters(const alignment& A, int n);
 
 std::vector< std::vector<int> > alignment_letters_counts(const alignment& A, int n, const std::vector<int>& counts);
