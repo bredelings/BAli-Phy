@@ -1242,7 +1242,9 @@ vector<param> get_params_from_list(context* C, const expression_ref& list)
 }
 
 Parameters::Parameters(const std::shared_ptr<module_loader>& L,
-                       const vector<alignment>& A, const SequenceTree& tt,
+                       const vector<alignment>& A,
+                       const vector<pair<string,string>>& filename_ranges,
+                       const SequenceTree& tt,
                        const vector<model_t>& SMs,
                        const vector<optional<int>>& s_mapping,
                        const vector<model_t>& IMs,
@@ -1547,6 +1549,9 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         );
     program_exp = {var("Probability.Random.random"), program_exp};
     
+    if (log_verbose >= 4)
+        std::cout<<program_exp.print()<<std::endl;
+
     PC->atmodel = add_program(program_exp);
 
     int tree_index = add_compute_expression( {var("BAliPhy.ATModel.tree"), my_atmodel()} );
@@ -1645,7 +1650,9 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 }
 
 Parameters::Parameters(const std::shared_ptr<module_loader>& L,
-                       const vector<alignment>& A, const SequenceTree& t,
+                       const vector<alignment>& A,
+                       const vector<pair<string,string>>& filename_ranges,
+                       const SequenceTree& t,
                        const vector<model_t>& SMs,
                        const vector<optional<int>>& s_mapping,
                        const vector<model_t>& scaleMs,
@@ -1653,7 +1660,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
                        const model_t& branch_length_model,
                        const std::vector<int>& like_calcs,
                        const key_map_t& k)
-    :Parameters(L, A, t, SMs, s_mapping, vector<model_t>{}, vector<optional<int>>{}, scaleMs, scale_mapping, branch_length_model, like_calcs, k)
+:Parameters(L, A, filename_ranges, t, SMs, s_mapping, vector<model_t>{}, vector<optional<int>>{}, scaleMs, scale_mapping, branch_length_model, like_calcs, k)
 { }
 
 // FIXME - move to .. model.cc? mcmc?

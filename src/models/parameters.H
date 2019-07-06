@@ -413,7 +413,9 @@ public:
     std::string name() const {return "Full Model";}
 
     Parameters(const std::shared_ptr<module_loader>& L,
-	       const std::vector<alignment>& A, const SequenceTree&, 
+	       const std::vector<alignment>& A,
+	       const std::vector<std::pair<std::string,std::string>>& filename_ranges,
+               const SequenceTree&,
 	       const std::vector<model_t>&,
 	       const std::vector<std::optional<int>>&,
 	       const std::vector<model_t>&,
@@ -423,7 +425,9 @@ public:
 	       const key_map_t&);
 
     Parameters(const std::shared_ptr<module_loader>& L,
-	       const std::vector<alignment>& A, const SequenceTree&, 
+	       const std::vector<alignment>& A,
+	       const std::vector<std::pair<std::string,std::string>>& filename_ranges,
+               const SequenceTree&,
 	       const std::vector<model_t>&,
 	       const std::vector<std::optional<int>>&,
 	       const std::vector<model_t>&,

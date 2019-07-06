@@ -829,7 +829,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     Model::key_map_t keys;
     if (args.count("set"))
         keys = parse_key_map(args["set"].as<vector<string> >());
-    Parameters P(L, A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, full_scale_models, scale_mapping, branch_length_model, likelihood_calculators, keys);
+    Parameters P(L, A, alignment_files, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, full_scale_models, scale_mapping, branch_length_model, likelihood_calculators, keys);
 
     //-------- Set the alignments for variable partitions ---------//
     for(int i=0;i<P.n_data_partitions();i++)
