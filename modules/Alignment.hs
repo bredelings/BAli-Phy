@@ -7,6 +7,7 @@ import Probability
 
 builtin pairwise_alignment_length1 1 "pairwise_alignment_length1" "Alignment"
 builtin pairwise_alignment_length2 1 "pairwise_alignment_length2" "Alignment"
+builtin alignment_length 1 "alignment_length" "Alignment"
 builtin transition_counts 1 "transition_counts" "Alignment"
 builtin pairwise_alignment_probability_from_counts 2 "pairwise_alignment_probability_from_counts" "Alignment"
 

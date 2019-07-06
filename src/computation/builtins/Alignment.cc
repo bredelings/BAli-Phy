@@ -63,6 +63,11 @@ extern "C" closure builtin_function_pairwise_alignment_length2(OperationArgs& Ar
     return {Args.evaluate(0).as_<Box<pairwise_alignment_t>>().length2()};
 }
 
+extern "C" closure builtin_function_alignment_length(OperationArgs& Args)
+{
+    return {Args.evaluate(0).as_<Box<alignment>>().length()};
+}
+
 extern "C" closure builtin_function_transition_counts(OperationArgs& Args)
 {
     const auto& A = Args.evaluate(0).as_<Box<pairwise_alignment_t>>().value();
