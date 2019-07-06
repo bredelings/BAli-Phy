@@ -1253,6 +1253,18 @@ vector<param> get_params_from_list(context* C, const expression_ref& list)
     return params;
 }
 
+expression_ref get_alphabet_expression(const alphabet& a)
+{
+    if (a.name == "DNA")
+        return  var("Alphabet.dna");
+    else if (a.name == "RNA")
+        return var("alphabet.rna");
+    else
+    {
+        throw myexception()<<"Can't translate alphabet "<<a.name;
+    }
+}
+
 Parameters::Parameters(const std::shared_ptr<module_loader>& L,
                        const vector<alignment>& A,
                        const vector<pair<string,string>>& filename_ranges,
@@ -1335,7 +1347,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
             if (s_mapping[j] and *s_mapping[j] == i)
                 first_index = j;
 
-        const alphabet& a = A[*first_index].get_alphabet();
+        expression_ref a = get_alphabet_expression(A[*first_index].get_alphabet());
 
         expression_ref smodel = SMs[i].expression;
         smodel = {var("Probability.Random.set_alphabet'"), a, smodel};
@@ -1396,6 +1408,12 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         int smodel_index = *smodel_index_for_partition(i);
         auto imodel_index = imodel_index_for_partition(i);
 
+        // L0. scale_P ...
+        var alphabet_var("alphabet_"+part);
+        program.let(alphabet_var, get_alphabet_expression(A[i].get_alphabet()));
+        var alignment_var("alignment_"+part);
+        program.let(alignment_var, {var("Alignment.load_alignment"), alphabet_var, filename_ranges[i].first});
+
         // L1. scale_P ...
         var scale("scale_"+part);
         program.let(scale, scales[scale_index]);
@@ -1414,7 +1432,29 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         // transition_ps
         expression_ref transition_ps = {var("SModel.transition_p_index"), tree_var, smodel, branch_categories, distances};
 
-        // P5.I Register array of leaf sequences
+        //---------------------------------------------------------------------------
+        var compressed_alignment_var("compressed_alignment_var_"+part);
+        var counts_var("counts_"+part);
+        if (compressed_alignments[i])
+        {
+            var compressed_alignment_tuple("compressed_alignment_tuple_"+part);
+            program.let(compressed_alignment_tuple, {var("Alignment.compress_alignment"), alignment_var, tt.n_leaves()});
+            program.let(compressed_alignment_var,   {var("Data.Tuple.fst3"), compressed_alignment_tuple});
+            program.let(counts_var,                 {var("Data.Tuple.snd3"), compressed_alignment_tuple});
+        }
+        else
+        {
+            program.let(compressed_alignment_var, alignment_var);
+            program.let(counts_var, {var("Foreign.Vector.list_to_vector"),{ var("Data.List.replicate"), {var("Alignment.alignment_length"),alignment_var}, 1} });
+        }
+        //---------------------------------------------------------------------------//
+
+        var sequences_var("sequences_"+part);
+        program.let(sequences_var, {var("Alignment.sequences_from_alignment"),compressed_alignment_var});
+        var leaf_sequences_var("leaf_seuqences_"+part);
+        program.let(leaf_sequences_var, {var("Data.Array.listArray'"),{var("Data.List.take"),tt.n_leaves(),sequences_var}});
+
+        /*
         auto leaf_sequences = alignment_letters(*alignments[i], tt.n_leaves());
 
         // Add array of leaf sequences
@@ -1426,6 +1466,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         }
 
         param leaf_seqs_array = add_compute_expression({var("Data.Array.listArray'"),get_list(leaf_seqs_)});
+        */
 
         // L4. let imodel_P = Nothing | Just
         expression_ref maybe_imodel = Nothing;
@@ -1441,7 +1482,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
             maybe_imodel = {Just, imodel};
             maybe_hmms   = {Just, hmms};
 
-            expression_ref tip_lengths = {var("Alignment.get_sequence_lengths"),leaf_seqs_array.ref(*this)};
+            expression_ref tip_lengths = {var("Alignment.get_sequence_lengths"),leaf_sequences_var};
 
             // alignment_on_tree <- sample $ random_alignment tree hmms model leaf_seqs_array p->my_variable_alignment()
             program.perform(alignment_on_tree, {var("Probability.Random.sample"),{var("Alignment.random_alignment"), tree_var, hmms, imodel, tip_lengths, variable_alignment_var}});
@@ -1449,37 +1490,19 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         else
         {
             // P5.II Create modifiables for pairwise alignments
-            expression_ref initial_alignments_exp = get_list(unaligned_alignments_on_tree(tt, leaf_sequences));
+            expression_ref initial_alignments_exp = {var("Alignment.pairwise_alignments_from_matrix"), compressed_alignment_var, tree_var};
 
             var pairwise_as("pairwise_as_"+part);
             program.let(pairwise_as,  {var("Data.Array.listArray'"), {var("Data.List.map"),var("Parameters.modifiable"),initial_alignments_exp}});
 
             // R4. Register sequence length methods
-            auto seq_lengths = expression_ref{{var("Data.Array.listArray'"),{var("Alignment.compute_sequence_lengths"), leaf_seqs_array.ref(*this), tree_var, pairwise_as}}};
+            auto seq_lengths = expression_ref{{var("Data.Array.listArray'"),{var("Alignment.compute_sequence_lengths"), leaf_sequences_var, tree_var, pairwise_as}}};
 
             program.let(alignment_on_tree, {var("Alignment.AlignmentOnTree"), tree_var, tt.n_nodes(), seq_lengths, pairwise_as});
         }
 
-        //---------------------------------------------------------------------------
-        const alignment* AA;
-        vector<int> counts_;
-        const vector<int>* counts;
-        if (compressed_alignments[i])
-        {
-            auto& [AAA, counts_, _] = *compressed_alignments[i];
-            AA = &AAA;
-            counts = &counts_;
-        }
-        else
-        {
-            AA = &A[i];
-            counts_ = vector<int>(AA->length(), 1);
-            counts = &counts_;
-        }
-
         auto as = expression_ref{var("Alignment.pairwise_alignments"), alignment_on_tree};
         //---------------------------------------------------------------------------
-        auto& a = A[i].get_alphabet();
 
         expression_ref f = {var("SModel.weighted_frequency_matrix"), smodel};
         var cls_var("cls_"+part);
@@ -1488,22 +1511,26 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
         if (tt.n_nodes() == 1)
         {
-            expression_ref seq = {var("Data.Array.!"),leaf_seqs_array.ref(*this), 0};
+            expression_ref seq = {var("Data.Array.!"),leaf_sequences_var, 0};
             program.let(cls_var, 0);
-            program.let(likelihood_var, {var("SModel.Likelihood.peel_likelihood_1"), seq, a, f});
+            program.let(likelihood_var, {var("SModel.Likelihood.peel_likelihood_1"), seq, alphabet_var, f});
         }
         else if (likelihood_calculator == 0)
         {
+            var leaf_seq_counts("leaf_sequence_counts");
+            program.let(leaf_seq_counts, {var("Data.Array.listArray'"),{var("Alignment.leaf_sequence_counts"), compressed_alignment_var, tt.n_leaves(), counts_var}});
+/*
             // R7. Register counts array
             vector<vector<int>> seq_counts = alignment_letters_counts(*AA, tt.n_leaves(), *counts);
             EVector counts_;
             for(int i=0; i<tt.n_leaves(); i++)
                 counts_.push_back( EVector(seq_counts[i]) );
             auto counts_array = get_expression( add_compute_expression({var("Data.Array.listArray'"),get_list(counts_)}) );
+*/
 
             // R8. Register conditional likelihoods
             // Create and set conditional likelihoods for each branch
-            program.let(cls_var, {var("SModel.Likelihood.cached_conditional_likelihoods"),tree_var,leaf_seqs_array.ref(*this),counts_array, as, a,transition_ps,f});
+            program.let(cls_var, {var("SModel.Likelihood.cached_conditional_likelihoods"), tree_var, leaf_sequences_var, leaf_seq_counts, as, alphabet_var, transition_ps,f});
 
             // FIXME: broken for fixed alignments of 2 sequences.
             if (tt.n_nodes() > 2)
@@ -1511,33 +1538,30 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         }
         else if (likelihood_calculator == 1)
         {
-            Box<alignment> AAA = *AA;
-            object_ptr<EVector> Counts(new EVector(*counts));
-
             // Create and set conditional likelihoods for each branch
-            program.let(cls_var,{var("SModel.Likelihood.cached_conditional_likelihoods_SEV"),tree_var,leaf_seqs_array.ref(*this), a,transition_ps,f,AAA});  
+            program.let(cls_var,{var("SModel.Likelihood.cached_conditional_likelihoods_SEV"),tree_var,leaf_sequences_var, alphabet_var ,transition_ps,f, compressed_alignment_var});  
 
             // FIXME: broken for fixed alignments of 2 sequences.
             if (tt.n_nodes() > 2)
-                program.let(likelihood_var,{var("SModel.Likelihood.peel_likelihood_SEV"), tree_var, cls_var, f, my_subst_root(), Counts});
+                program.let(likelihood_var,{var("SModel.Likelihood.peel_likelihood_SEV"), tree_var, cls_var, f, my_subst_root(), counts_var});
         }
 
         if (tt.n_nodes() == 2)
         {
             // We probably want the cls?
-            expression_ref seq1 = {var("Data.Array.!"), leaf_seqs_array.ref(*this), 0};
-            expression_ref seq2 = {var("Data.Array.!"), leaf_seqs_array.ref(*this), 1};
+            expression_ref seq1 = {var("Data.Array.!"), leaf_sequences_var, 0};
+            expression_ref seq2 = {var("Data.Array.!"), leaf_sequences_var, 1};
             expression_ref A = {var("Data.Array.!"), as, 0};
             expression_ref P = {var("Data.Array.!"), transition_ps, 0};
 
-            program.let(likelihood_var,{var("SModel.Likelihood.peel_likelihood_2"), seq1, seq2, a, A, P, f});
+            program.let(likelihood_var,{var("SModel.Likelihood.peel_likelihood_2"), seq1, seq2, alphabet_var, A, P, f});
         }
 
         //--------------------------------------------------------------------------
 
 
         // FIXME - to make an AT *model* we probably need to remove the data from here.
-        partitions.push_back({var("BAliPhy.ATModel.DataPartition.Partition"), smodel, maybe_imodel, scale, tree_var, leaf_seqs_array.ref(*this), alignment_on_tree, maybe_hmms, transition_ps, cls_var, likelihood_var});
+        partitions.push_back({var("BAliPhy.ATModel.DataPartition.Partition"), smodel, maybe_imodel, scale, tree_var, leaf_sequences_var, alignment_on_tree, maybe_hmms, transition_ps, cls_var, likelihood_var});
     }
 
     // FIXME - we need to observe the likelihoods for each partition here.
