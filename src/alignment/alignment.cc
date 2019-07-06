@@ -356,6 +356,15 @@ alignment::alignment(const alphabet& a1, const vector<sequence>& S, int L)
     // This is used in reorder_sequences, among other things...
 }
 
+alignment::alignment(const alphabet& a1, int n, int L) 
+    :array(L,n),sequences(n),a(a1.clone())
+{
+    // Do NOT load the sequences here -- this is used for setting the
+    // sequences and matrix size and then filling in the matrix later.
+
+    // This is used in compressing alignments (site-compression.{H,cc}, among other things...
+}
+
 alignment::alignment(const alphabet& a1,const string& filename) 
     :a(a1.clone())
 { 
