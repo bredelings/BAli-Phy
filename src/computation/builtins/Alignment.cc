@@ -7,6 +7,11 @@
 #include <boost/dynamic_bitset.hpp>
 #include "alignment/alignment.H"
 #include "dp/2way.H"
+#include "models/site-compression.H"
+
+// #include "alignment/alignment-util.H"
+std::vector<int> alignment_row_counts(const alignment& A, int i, const std::vector<int>& counts);
+
 
 extern "C" closure builtin_function_flip_alignment(OperationArgs& Args)
 {
@@ -328,6 +333,24 @@ extern "C" closure builtin_function_compress_alignment(OperationArgs& Args)
 
     return result;
 }
+
+extern "C" closure builtin_function_leaf_sequence_counts(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& A = arg0.as_checked<alignment>();
+
+    int n = Args.evaluate(1).as_int();
+
+    auto arg2 = Args.evaluate(2);
+    auto counts = (vector<int>)arg2.as_checked<EVector>();
+
+    EVector all_counts;
+    for(int i=0; i < n; i++)
+        all_counts.push_back(EVector(alignment_row_counts(A,i,counts)));
+
+    return all_counts;
+}
+
 extern "C" closure builtin_function_load_alignment(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);

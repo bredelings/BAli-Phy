@@ -13,6 +13,9 @@ builtin transition_counts 1 "transition_counts" "Alignment"
 builtin pairwise_alignment_probability_from_counts 2 "pairwise_alignment_probability_from_counts" "Alignment"
 
 builtin builtin_compress_alignment 2 "compress_alignment" "Alignment"
+-- Alignment -> Int -> EVector Int-> EVector (EVector Int)
+builtin builtin_leaf_sequence_counts 3 "leaf_sequence_counts" "Alignment"
+
 builtin builtin_load_alignment 2 "load_alignment" "Alignment"
 builtin builtin_sequences_from_alignment 1 "sequences_from_alignment" "Alignment"
 
@@ -114,3 +117,6 @@ compress_alignment a n = (a', counts, mapping) where ca = builtin_compress_align
                                                      a' = get_vector_index 0
                                                      counts = get_vector_index 1
                                                      mapping = get_vector_index 2
+
+-- Alignment -> Int -> EVector Int -> [EVector Int]
+leaf_sequence_counts a n counts = list_from_vector $ builtin_leaf_sequence_counts a n counts
