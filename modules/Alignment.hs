@@ -114,9 +114,9 @@ compute_sequence_lengths seqs tree as = [ if node < n_leaves then vector_size (s
 
 -- Current a' is an alignment, but counts and mapping are EVector
 compress_alignment a n = (a', counts, mapping) where ca = builtin_compress_alignment a n
-                                                     a' = get_vector_index 0
-                                                     counts = get_vector_index 1
-                                                     mapping = get_vector_index 2
+                                                     a' = get_vector_index ca 0
+                                                     counts = get_vector_index ca 1
+                                                     mapping = get_vector_index ca 2
 
 -- Alignment -> Int -> EVector Int -> [EVector Int]
 leaf_sequence_counts a n counts = list_from_vector $ builtin_leaf_sequence_counts a n counts
