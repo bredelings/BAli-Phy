@@ -4,6 +4,7 @@ import Tree
 import Data.BitVector
 import Parameters
 import Probability
+import Foreign.Vector
 
 builtin pairwise_alignment_length1 1 "pairwise_alignment_length1" "Alignment"
 builtin pairwise_alignment_length2 1 "pairwise_alignment_length2" "Alignment"
@@ -11,6 +12,7 @@ builtin alignment_length 1 "alignment_length" "Alignment"
 builtin transition_counts 1 "transition_counts" "Alignment"
 builtin pairwise_alignment_probability_from_counts 2 "pairwise_alignment_probability_from_counts" "Alignment"
 
+builtin builtin_compress_alignment 2 "compress_alignment" "Alignment"
 builtin builtin_load_alignment 2 "load_alignment" "Alignment"
 builtin builtin_sequences_from_alignment 1 "sequences_from_alignment" "Alignment"
 
@@ -106,3 +108,9 @@ random_alignment tree hmms model tip_lengths var_a = Distribution (\a -> [alignm
 -- This function handles the case where we have only 1 sequence.
 compute_sequence_lengths seqs tree as = [ if node < n_leaves then vector_size (seqs!node) else seqlength as tree node | node <- [0..numNodes tree-1] ]
     where n_leaves = numElements seqs
+
+-- Current a' is an alignment, but counts and mapping are EVector
+compress_alignment a n = (a', counts, mapping) where ca = builtin_compress_alignment a n
+                                                     a' = get_vector_index 0
+                                                     counts = get_vector_index 1
+                                                     mapping = get_vector_index 2

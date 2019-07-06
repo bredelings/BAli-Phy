@@ -310,6 +310,24 @@ extern "C" closure builtin_function_bitmask_from_alignment(OperationArgs& Args)
     return mask_;
 }
 
+
+extern "C" closure builtin_function_compress_alignment(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& A1 = arg0.as_checked<alignment>();
+
+    int n = Args.evaluate(1).as_int();
+
+    auto [A,counts,mapping] = compress_alignment(A1,n);
+
+    object_ptr<EVector> result(new EVector);
+    result->resize(3);
+    (*result)[0] = Box<alignment>(A);
+    (*result)[1] = EVector(counts);
+    (*result)[2] = EVector(mapping);
+
+    return result;
+}
 extern "C" closure builtin_function_load_alignment(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
