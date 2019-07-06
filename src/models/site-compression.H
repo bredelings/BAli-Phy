@@ -3,7 +3,6 @@
 
 #include <tuple>
 #include <vector>
-#include "TreeInterface.H"
 #include "tree/tree.H"
 #include "alignment/alignment.H"
 
@@ -14,8 +13,7 @@ struct compressed_alignment
     std::vector<int> mapping;
 };
 
-compressed_alignment compress_alignment(const alignment& A, const TreeInterface& t);
 compressed_alignment compress_alignment(const alignment& A, const Tree& t);
-
+compressed_alignment compress_alignment(const alignment& A, int n);
 
 #endif

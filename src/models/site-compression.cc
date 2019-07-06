@@ -92,12 +92,18 @@ alignment alignment_from_patterns(const alignment& old, const vector<vector<int>
     return A;
 }
 
-compressed_alignment compress_alignment(const alignment& A, const TreeInterface& t)
+alignment alignment_from_patterns(const alphabet& a, const vector<vector<int>>& patterns)
 {
-    auto [patterns, counts, mapping] = compress_site_patterns(A, t.n_leaves());
-    return {alignment_from_patterns(A, patterns, t), counts, mapping};
-}
+    int n = patterns[0].size();
 
+    alignment A(a, n, patterns.size());
+
+    for(int i=0;i<n;i++)
+        for(int c=0;c<A.length();c++)
+            A.set_value(c,i,patterns[c][i]);
+
+    return A;
+}
 
 alignment alignment_from_patterns(const alignment& old, const vector<vector<int>>& patterns, const Tree& t)
 {
@@ -119,6 +125,18 @@ alignment alignment_from_patterns(const alignment& old, const vector<vector<int>
     return A;
 }
 
+// This version only returns an alignment with only n sequences (i.e. n is the number of leaf sequence).
+compressed_alignment compress_alignment(const alignment& A, int n)
+{
+    if (A.length() == 0)
+        return {A,{},{}};
+
+    auto [patterns, counts, mapping] = compress_site_patterns(A, n);
+    return {alignment_from_patterns(A.get_alphabet(), patterns), counts, mapping};
+}
+
+
+// This version returns an alignment with t.n_nodes() sequences
 compressed_alignment compress_alignment(const alignment& A, const Tree& t)
 {
     auto [patterns, counts, mapping] = compress_site_patterns(A, t.n_leaves());
