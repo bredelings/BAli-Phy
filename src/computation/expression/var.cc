@@ -34,7 +34,7 @@ bool var::operator==(const Object& o) const
 string var::print() const {
     if (is_wildcard())
 	return "_";
-    else if (name == ":" or is_haskell_consym(name))
+    else if (is_haskell_qsym(name)) // (:) or QVARSYM or QCONSYM
     {
 	assert(index == 0);
 	return string("(") + name + ")";
