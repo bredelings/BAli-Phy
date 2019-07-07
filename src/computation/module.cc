@@ -1057,7 +1057,7 @@ bool is_haskell_conid(const std::string& s)
     return true;
 }
 
-bool is_haskell_varsym(const string& s)
+bool is_haskell_sym(const string& s)
 {
     static const string symbols = "!#$%&*+./<=>?@\\^|-~:";
 
@@ -1067,20 +1067,19 @@ bool is_haskell_varsym(const string& s)
 	if (symbols.find(s[i]) == -1)
 	    return false;
 
-    if (s[0] == ':') return false;
-
     return true;
+}
+
+bool is_haskell_varsym(const string& s)
+{
+    if (not is_haskell_sym(s)) return false;
+
+    return (s[0] != ':');
 }
 
 bool is_haskell_consym(const string& s)
 {
-    static const string symbols = "!#$%&*+./<=>?@\\%|-~:";
-
-    if (not s.size()) return false;
-
-    for(int i=0;i<s.size();i++)
-	if (symbols.find(s[i]) == -1)
-	    return false;
+    if (not is_haskell_sym(s)) return false;
 
     if (s[0] != ':') return false;
     if (s == ":") return false;
@@ -1106,13 +1105,25 @@ bool is_haskell_builtin_con_name(const std::string& s)
 	return false;
 }
 
+bool valid_path_prefix(const vector<string>& path)
+{
+    if (path.empty()) return false;
+    for(int i=0;i<path.size()-1;i++)
+	if (not is_haskell_conid(path[i])) return false;
+    return true;
+}
+
+bool is_haskell_qsym(const std::string& s)
+{
+    vector<string> path = haskell_name_path(s);
+    return valid_path_prefix(path) and is_haskell_sym(path.back());
+}
+
 bool is_haskell_normal_con_name(const std::string& s)
 {
     vector<string> path = haskell_name_path(s);
-    if (path.empty()) return false;
+    if (not valid_path_prefix(path)) return false;
     if (not is_haskell_conid(path.back()) and not is_haskell_consym(path.back())) return false;
-    for(int i=0;i<path.size()-1;i++)
-	if (not is_haskell_conid(path[i])) return false;
     return true;
 }
 
