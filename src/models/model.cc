@@ -470,11 +470,11 @@ Module read_model(const string& filename)
     return module_loader({}).load_module_from_file(filename);
 }
 
-void read_add_model(Model& M, const std::string& filename)
+int read_add_model(Model& M, const std::string& filename)
 {
     auto m = read_model(filename);
     M += m;
-    add_model(M, m.name);
+    return add_model(M, m.name);
 }
 
 void execute_file(const std::shared_ptr<module_loader>& L, const std::string& filename)
@@ -486,10 +486,10 @@ void execute_file(const std::shared_ptr<module_loader>& L, const std::string& fi
     C.perform_expression(var(m.name+".main"));
 }
 
-void add_model(Model& M, const std::string& name)
+int add_model(Model& M, const std::string& name)
 {
     M += name;
     string prefix = name;
     expression_ref P = var(name+".main");
-    M.add_program( P );
+    return M.add_program( P );
 }
