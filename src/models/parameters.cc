@@ -1364,7 +1364,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     expression_ref branch_lengths = List();
     if (tt.n_branches() > 0)
     {
-        string prefix = "T:lengths";
+        string prefix = "T_lengths";
         expression_ref branch_lengths_model = {branch_length_model.expression, tree_var};
         auto [x,loggers] = program.bind_model(prefix , branch_lengths_model);
         branch_lengths = x;
