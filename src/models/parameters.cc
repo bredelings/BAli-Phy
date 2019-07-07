@@ -380,7 +380,7 @@ EVector unaligned_alignments_on_tree(const Tree& t, const vector<vector<int>>& s
     return alignments;
 }
 
-data_partition_constants::data_partition_constants(Parameters* p, int i, const alignment& AA, const vector<int>& counts, int like_calc)
+data_partition_constants::data_partition_constants(Parameters* p, int i, const alignment& AA, int like_calc)
     :conditional_likelihoods_for_branch(2*p->t().n_branches()),
      sequence_length_indices(AA.n_sequences()),
      sequence_length_pr_indices(AA.n_sequences()),
@@ -1621,13 +1621,13 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         {
             // construct compressed alignment, counts, and mapping
             auto& [AA, counts, mapping] = *compressed_alignments[i];
-            PC->DPC.emplace_back(this, i, AA, counts, like_calcs[i]);
+            PC->DPC.emplace_back(this, i, AA, like_calcs[i]);
             get_data_partition(i).set_alignment(AA);
         }
         else
         {
             auto counts = vector<int>(A[i].length(), 1);
-            PC->DPC.emplace_back(this, i, A[i], counts, like_calcs[i]);
+            PC->DPC.emplace_back(this, i, A[i], like_calcs[i]);
             if (not imodel_index_for_partition(i))
                 get_data_partition(i).set_alignment(A[i]);
         }
