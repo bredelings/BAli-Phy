@@ -1477,20 +1477,6 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         var leaf_sequences_var("leaf_seuqences_"+part);
         program.let(leaf_sequences_var, {var("listArray'"),{var("take"),tt.n_leaves(),sequences_var}});
 
-        /*
-        auto leaf_sequences = alignment_letters(*alignments[i], tt.n_leaves());
-
-        // Add array of leaf sequences
-        EVector leaf_seqs_;
-        for(int j=0; j<tt.n_leaves(); j++)
-        {
-            param leaf_seq_j = add_compute_expression(EVector(leaf_sequences[j]));
-            leaf_seqs_.push_back( leaf_seq_j.ref(*this) );
-        }
-
-        param leaf_seqs_array = add_compute_expression({var("Data.Array.listArray'"),get_list(leaf_seqs_)});
-        */
-
         // L4. let imodel_P = Nothing | Just
         expression_ref maybe_imodel = var("Nothing");
         expression_ref maybe_hmms   = var("Nothing");
@@ -1542,16 +1528,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         {
             var leaf_seq_counts("leaf_sequence_counts");
             program.let(leaf_seq_counts, {var("listArray'"),{var("Alignment.leaf_sequence_counts"), compressed_alignment_var, tt.n_leaves(), counts_var}});
-/*
-            // R7. Register counts array
-            vector<vector<int>> seq_counts = alignment_letters_counts(*AA, tt.n_leaves(), *counts);
-            EVector counts_;
-            for(int i=0; i<tt.n_leaves(); i++)
-                counts_.push_back( EVector(seq_counts[i]) );
-            auto counts_array = get_expression( add_compute_expression({var("Data.Array.listArray'"),get_list(counts_)}) );
-*/
 
-            // R8. Register conditional likelihoods
             // Create and set conditional likelihoods for each branch
             program.let(cls_var, {var("cached_conditional_likelihoods"), tree_var, leaf_sequences_var, leaf_seq_counts, as, alphabet_var, transition_ps,f});
 
