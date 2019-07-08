@@ -1626,6 +1626,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         program_file<<";import Data.Maybe";
 
 
+        program_file<<";import SModel.ReversibleMarkov";
         program_file<<";import Probability.Random";
         program_file<<";import Compiler.Real";
         program_file<<";import Data.Tuple";
