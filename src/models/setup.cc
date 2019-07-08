@@ -540,11 +540,7 @@ pair<expression_ref,set<string>> get_model_function(const Rules& R, const ptree&
     if (not is_qualified_symbol(call.get_value<string>()) and not is_haskell_builtin_con_name(call.get_value<string>()))
 	throw myexception()<<"For rule '"<<name<<"', function '"<<call.get_value<string>()<<"' must be a qualified symbol or a builtin constructor like '(,)', but it is neither!";
 
-    // 2. Construct the call expression
-    expression_ref E = make_call(call);
-
-    // 3a. Parse models for arguments to figure out which free lambda variables they contain
-    // 3b. ALSO, let-bind arg_var_<name> for any arguments that are (i) not performed and (ii) depend on a lambda variable.
+    // 2. Parse models for arguments to figure out which free lambda variables they contain
     vector<expression_ref> arg_models;
     vector<set<string>> arg_lambda_vars;
     set<string> lambda_vars;
@@ -560,46 +556,11 @@ pair<expression_ref,set<string>> get_model_function(const Rules& R, const ptree&
 	arg_models.push_back(m);
 	arg_lambda_vars.push_back(vars);
 	add(lambda_vars, vars);
-
-	if (not arg_lambda_vars[i].empty())
-	{
-	    var x("arg_var_"+arg_name);
-	    var pair_x("pair_arg_var_"+arg_name);
-
-	    // Apply the free lambda variables to arg result before using it.
-	    expression_ref F = {fst, pair_x};
-	    for(auto& vname: arg_lambda_vars[i])
-		F = {F, scope.at(vname).x};
-
-	    E = let_expression({{x,F}},E);
-	}
     }
-
-    // 4. Return a lambda function 
-    for(auto& vname: std::reverse(lambda_vars))
-	E = lambda_quantify(scope.at(vname).x, E);
-
-    // 5. Compute loggers
-    expression_ref loggers = List();
-    for(int i=0;i<args.size();i++)
-    {
-	auto argi = array_index(args,i);
-
-	string arg_name = argi.get_child("arg_name").get_value<string>();
-
-	auto log_name = name + ":" + arg_name;
-
-	bool do_log = arg_lambda_vars[i].empty() and should_log(R, model_rep, arg_name, scope);
-	loggers = {var("add_logger"),loggers,String(log_name),var("pair_arg_var_"+arg_name),do_log};
-    }
-
-    // 6. Return the function call: 'return (f call.name1 call.name2 call.name3)'
-    if (not perform_function)
-	E = {do_return,E};
 
     do_block code;
 
-    // 7. Peform the rule arguments in reverse order
+    // 3. Peform the rule arguments in reverse order
     for(int i=args.size()-1; i>=0 ;i--)
     {
 	auto argi = array_index(args,i);
@@ -614,21 +575,74 @@ pair<expression_ref,set<string>> get_model_function(const Rules& R, const ptree&
 	    auto [A,vars] = get_model_as(R, *alphabet_expression, alphabet_scope);
 	    if (vars.size())
 		throw myexception()<<"An alphabet cannot depend on a lambda variable!";
-	    arg = {var("set_alphabet"),A,arg};
+	     arg = {var("set_alphabet"),A,arg};
 	}
 
-	var pair_x("pair_arg_var_"+arg_name);
-        var x("arg_var_"+arg_name);
+	if (arg_lambda_vars[i].empty())
+        {
+            var pair_x("pair_arg_var_"+arg_name);
+            var x("arg_var_"+arg_name);
 
-        // pair_x <- arg
-        code.perform(pair_x, arg);
+            // pair_x <- arg
+            code.perform(pair_x, arg);
 
-	if (not arg_lambda_vars[i].empty()) continue;
+            // let x = fst pair_x
+            code.let({{x,{fst,pair_x}}});
+        }
+        else
+        {
+            var pair_x("pair_arg_var_"+arg_name);
+            var x("arg_var_"+arg_name);
 
-        // let x = fst pair_x
-        code.let({{x,{fst,pair_x}}});
+            // pair_x <- arg
+            code.perform(pair_x, arg);
+        }
     }
 
+    // 4. Construct the call expression
+    expression_ref E = make_call(call);
+
+    // 5. let-bind arg_var_<name> for any arguments that are (i) not performed and (ii) depend on a lambda variable.
+    for(int i=0;i<args.size();i++)
+    {
+	auto argi = array_index(args,i);
+	string arg_name = argi.get_child("arg_name").get_value<string>();
+
+        if (not arg_lambda_vars[i].empty())
+	{
+	    var x("arg_var_"+arg_name);
+	    var pair_x("pair_arg_var_"+arg_name);
+
+	    // Apply the free lambda variables to arg result before using it.
+	    expression_ref F = {fst, pair_x};
+	    for(auto& vname: arg_lambda_vars[i])
+		F = {F, scope.at(vname).x};
+
+	    E = let_expression({{x,F}},E);
+	}
+    }
+
+    // 6. Return a lambda function
+    for(auto& vname: std::reverse(lambda_vars))
+	E = lambda_quantify(scope.at(vname).x, E);
+
+    // 7. Compute loggers
+    expression_ref loggers = List();
+    for(int i=0;i<args.size();i++)
+    {
+	auto argi = array_index(args,i);
+
+	string arg_name = argi.get_child("arg_name").get_value<string>();
+
+	auto log_name = name + ":" + arg_name;
+
+	bool do_log = arg_lambda_vars[i].empty() and should_log(R, model_rep, arg_name, scope);
+	loggers = {var("add_logger"),loggers,String(log_name),var("pair_arg_var_"+arg_name),do_log};
+    }
+
+    // 8. Return the function call: 'return (f call.name1 call.name2 call.name3)'
+    if (not perform_function)
+	E = {do_return,E};
 
     // result <- E
     code.perform( var("result"), E );
