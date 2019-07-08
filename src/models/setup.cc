@@ -537,8 +537,10 @@ pair<expression_ref,set<string>> get_model_function(const Rules& R, const ptree&
     ptree call = rule->get_child("call");
     ptree args = rule->get_child("args");
     
-    if (not is_qualified_symbol(call.get_value<string>()) and not is_haskell_builtin_con_name(call.get_value<string>()))
-	throw myexception()<<"For rule '"<<name<<"', function '"<<call.get_value<string>()<<"' must be a qualified symbol or a builtin constructor like '(,)', but it is neither!";
+    if (not is_haskell_qid(call.get_value<string>()) and
+        not is_haskell_qsym(call.get_value<string>()) and
+        not is_haskell_builtin_con_name(call.get_value<string>()))
+	throw myexception()<<"For rule '"<<name<<"', function '"<<call.get_value<string>()<<"' doesn't seem to be a valid haskell id.";
 
     // 2. Parse models for arguments to figure out which free lambda variables they contain
     vector<expression_ref> arg_models;
