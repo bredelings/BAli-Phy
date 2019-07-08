@@ -1433,7 +1433,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         var alphabet_var("alphabet_"+part);
         program.let(alphabet_var, get_alphabet_expression(A[i].get_alphabet()));
         var alignment_var("alignment_"+part);
-        program.let(alignment_var, {var("load_alignment"), alphabet_var, filename_ranges[i].first});
+        program.let(alignment_var, {var("load_alignment"), alphabet_var, String(filename_ranges[i].first)});
 
         // L1. scale_P ...
         var scale("scale_"+part);

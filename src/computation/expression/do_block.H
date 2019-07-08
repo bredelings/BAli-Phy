@@ -8,10 +8,14 @@
 #include <functional>
 #include <utility>
 
-class do_block
+class do_block: public Object
 {
-    std::function<expression_ref(const expression_ref&)> code = [](const expression_ref& E) {return E;};
+    std::vector<std::string> stmts;
 public:
+    do_block* clone() const {return new do_block(*this);}
+
+    std::string print() const;
+
     expression_ref get_expression() const;
 
     do_block& perform(const expression_ref& E1);

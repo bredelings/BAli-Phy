@@ -1,4 +1,5 @@
 #include "do_block.H"
+#include "util/string/join.H"
 #include "computation/expression/lambda.H"
 #include "computation/expression/let.H"
 #include "computation/expression/tuple.H"
@@ -7,37 +8,29 @@ using std::pair;
 using std::vector;
 using std::string;
 
-expression_ref do_block::get_expression() const {
-    return code({});
+expression_ref do_block::get_expression() const
+{
+    return (*this);
 }
 
 do_block& do_block::perform(const expression_ref& E1)
 {
-    auto new_code = [code=code,E1](const expression_ref& E2) 
-                        {
-                            return code({var(">>"),E1,E2});
-                        };
-    code = new_code;
+    stmts.push_back(E1.print());
     return *this;
 }
 
-do_block& do_block::perform(const var& x, const expression_ref& E1)
+do_block& do_block::perform(const var& x, const expression_ref& E)
 {
-    auto new_code = [code=code,x,E1](const expression_ref& E2)
-                        {
-                            return code({var(">>="),E1,lambda_quantify(x,E2)});
-                        };
-    code = new_code;
+    stmts.push_back(x.print() + " <- " + E.print());
     return *this;
 }
 
 do_block& do_block::let(const CDecls& decls)
 {
-    auto new_code = [code=code,decls](const expression_ref& E)
-                        {
-                            return code(let_expression(decls,E));
-                        };
-    code = new_code;
+    vector<string> print_decls;
+    for(auto& [x,e]: decls)
+        print_decls.push_back(x.print() + " = " + e.print());
+    stmts.push_back("let {" + join(print_decls,';') + "}");
     return *this;
 }
 
@@ -46,19 +39,16 @@ do_block& do_block::let(const var& x, const expression_ref& body)
     return let({{x,body}});
 }
 
-expression_ref do_block::finish(const expression_ref& E1)
+expression_ref do_block::finish(const expression_ref& E)
 {
-    auto new_code = [code=code,E1](const expression_ref&)
-                        {
-                            return code(E1);
-                        };
-    code = new_code;
+    stmts.push_back(E.print());
     return get_expression();
 }
 
 expression_ref do_block::finish_return(const expression_ref& E)
 {
-    return finish({var("return"),E});
+    stmts.push_back("return " + E.print());
+    return get_expression();
 }
 
 pair<expression_ref, expression_ref> do_block::bind_model(const std::string& prefix, const expression_ref& model)
@@ -75,7 +65,7 @@ pair<expression_ref, expression_ref> do_block::bind_model(const std::string& pre
 expression_ref logger(const string& prefix, const expression_ref& x, const expression_ref& x_loggers, bool do_log)
 {
     auto maybe_x = do_log ? expression_ref({ var("Just"), x }) : expression_ref(var("Nothing"));
-    return Tuple( prefix, Tuple( maybe_x, x_loggers) );
+    return Tuple( String(prefix), Tuple( maybe_x, x_loggers) );
 }
 
 expression_ref do_block::bind_and_log_model(const string& prefix, const expression_ref& model, vector<expression_ref>& loggers, bool do_log)
@@ -83,4 +73,9 @@ expression_ref do_block::bind_and_log_model(const string& prefix, const expressi
     auto [x, x_loggers] = bind_model(prefix,model);
     loggers.push_back( logger(prefix, x, x_loggers, do_log) );
     return x;
+}
+
+string do_block::print() const
+{
+    return "do {" + join(stmts,';') + "}";
 }

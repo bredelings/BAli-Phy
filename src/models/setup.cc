@@ -421,8 +421,8 @@ optional<pair<expression_ref,set<string>>> get_model_let(const Rules& R, const p
 
     expression_ref loggers = List();
     var Nothing("Nothing");
-    loggers = {var("add_logger"),loggers,"let:body",Tuple(Nothing,{snd,pair_body}),false};
-    loggers = {var("add_logger"),loggers,"let:var",Tuple(Nothing,var_loggers),false};
+    loggers = {var("add_logger"),loggers,String("let:body"),Tuple(Nothing,{snd,pair_body}),false};
+    loggers = {var("add_logger"),loggers,String("let:var"),Tuple(Nothing,var_loggers),false};
 
     do_block code;
 
@@ -590,7 +590,7 @@ pair<expression_ref,set<string>> get_model_function(const Rules& R, const ptree&
 	auto log_name = name + ":" + arg_name;
 
 	bool do_log = arg_lambda_vars[i].empty() and should_log(R, model_rep, arg_name, scope);
-	loggers = {var("add_logger"),loggers,log_name,var("pair_arg_var_"+arg_name),do_log};
+	loggers = {var("add_logger"),loggers,String(log_name),var("pair_arg_var_"+arg_name),do_log};
     }
 
     // 6. Return the function call: 'return (f call.name1 call.name2 call.name3)'
