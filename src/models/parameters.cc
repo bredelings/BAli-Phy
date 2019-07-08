@@ -1279,7 +1279,9 @@ expression_ref get_alphabet_expression(const alphabet& a)
     if (a.name == "DNA")
         return  var("Alphabet.dna");
     else if (a.name == "RNA")
-        return var("alphabet.rna");
+        return var("Alphabet.rna");
+    else if (a.name == "Amino-Acids")
+        return var("Alphabet.aa");
     else
     {
         throw myexception()<<"Can't translate alphabet "<<a.name;
