@@ -503,7 +503,7 @@ optional<tuple<expression_ref,set<string>,set<string>,bool>> get_model_lambda(co
     return {{code.get_expression(), lambda_vars, free_vars, true}};
 }
 
-expression_ref make_call(const ptree& call)
+expression_ref make_call(const ptree& call, const map<string,expression_ref>& simple_args)
 {
     if (call.is_null())
 	throw myexception()<<"Can't construct expression from null value:\n"<<call.show()<<"\n";
@@ -520,13 +520,16 @@ expression_ref make_call(const ptree& call)
     auto name = call.get_value<string>();
     expression_ref E;
 
+    // FIXME! Here is where we are assuming that unqualified ids are arg_var_NAME variables.
     if (is_qualified_symbol(name) or is_haskell_varsym(name) or is_haskell_consym(name) or is_haskell_builtin_con_name(name))
 	E = var(name);
+    else if (simple_args.count(name))
+        E = simple_args.at(name);            // substitute the value in for the argument.  FIXME: don't do this if var occurs twice!
     else
 	E = var("arg_var_"+name);
 
     for(auto& pair: call)
-	E = {E,make_call(pair.second)};
+	E = {E,make_call(pair.second, simple_args)};
 
     return E;
 }
@@ -639,11 +642,18 @@ tuple<expression_ref, set<string>, set<string>, bool> get_model_function(const R
         // If there are no lambda vars used, then we can just place the result into scope directly, without applying anything to it.
 	if (arg_lambda_vars[i].empty())
         {
-            var x("arg_var_"+arg_name);
-            var logger("arg_logger_"+arg_name);
+            if (simple_value[i] and not arg_referenced[i])
+            {
+                assert(not arg_loggers[i]);
+            }
+            else
+            {
+                var x("arg_var_"+arg_name);
+                var logger("arg_logger_"+arg_name);
 
-            // (arg_var_NAME, arg_logger_NAME) <- arg
-            code.perform(Tuple(x,logger), arg);
+                // (arg_var_NAME, arg_logger_NAME) <- arg
+                code.perform(Tuple(x,logger), arg);
+            }
         }
         else
         {
@@ -655,7 +665,15 @@ tuple<expression_ref, set<string>, set<string>, bool> get_model_function(const R
     }
 
     // 4. Construct the call expression
-    expression_ref E = make_call(call);
+    map<string,expression_ref> simple_args;
+    for(int i=0;i<args.size();i++)
+    {
+	auto argi = array_index(args,i);
+	string arg_name = argi.get_child("arg_name").get_value<string>();
+        if (simple_value[i] and not arg_referenced[i])
+            simple_args[arg_name] = simple_value[i];
+    }
+    expression_ref E = make_call(call, simple_args);
 
     // 5. let-bind arg_var_<name> for any arguments that are (i) not performed and (ii) depend on a lambda variable.
     for(int i=0;i<args.size();i++)
@@ -693,12 +711,19 @@ tuple<expression_ref, set<string>, set<string>, bool> get_model_function(const R
 
         if (arg_lambda_vars[i].empty())
         {
-            var x("arg_var_"+arg_name);
-            var logger("arg_logger_"+arg_name);
             bool do_log = should_log(R, model_rep, arg_name, scope);
-            any_loggers = any_loggers or do_log;
-            if (arg_loggers[i] or do_log)
-                loggers = {var("add_logger"),loggers,String(log_name),Tuple(x, logger),do_log};
+            if (simple_value[i] and not arg_referenced[i])
+            {
+                assert(not do_log);
+            }
+            else
+            {
+                var x("arg_var_"+arg_name);
+                var logger("arg_logger_"+arg_name);
+                any_loggers = any_loggers or do_log;
+                if (arg_loggers[i] or do_log)
+                    loggers = {var("add_logger"),loggers,String(log_name),Tuple(x, logger),do_log};
+            }
         }
         else
         {
