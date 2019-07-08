@@ -1304,57 +1304,57 @@ std::string generate_atmodel_program(const vector<alignment>& A,
                                      const vector<optional<compressed_alignment>>& compressed_alignments)
 {
     std::ostringstream program_file;
-    program_file<<"module Main where {";
-    program_file<<"\n;import SModel";
-    program_file<<"\n;import IModel";
-    program_file<<"\n;import Probability";
-    program_file<<"\n;import Parameters";
-    program_file<<"\n;import Range";
-    program_file<<"\n;import PopGen";
-    program_file<<"\n;import Alignment";
-    program_file<<"\n;import BAliPhy.ATModel";
-    program_file<<"\n;import BAliPhy.ATModel.DataPartition";
-    program_file<<"\n;import Alphabet";
-    program_file<<"\n;import Tree";
-    program_file<<"\n;import Data.Maybe";
+    program_file<<"module Main where";
+    program_file<<"\nimport SModel";
+    program_file<<"\nimport IModel";
+    program_file<<"\nimport Probability";
+    program_file<<"\nimport Parameters";
+    program_file<<"\nimport Range";
+    program_file<<"\nimport PopGen";
+    program_file<<"\nimport Alignment";
+    program_file<<"\nimport BAliPhy.ATModel";
+    program_file<<"\nimport BAliPhy.ATModel.DataPartition";
+    program_file<<"\nimport Alphabet";
+    program_file<<"\nimport Tree";
+    program_file<<"\nimport Data.Maybe";
 
 
-    program_file<<"\n;import SModel.ReversibleMarkov";
-    program_file<<"\n;import Probability.Random";
-    program_file<<"\n;import Compiler.Real";
-    program_file<<"\n;import Data.Tuple";
-    program_file<<"\n;import Data.List";
-    program_file<<"\n;import Foreign.Vector";
-    program_file<<"\n;import Foreign.String";
-    program_file<<"\n;import SModel.Nucleotides";
-    program_file<<"\n;import SModel.Frequency";
-    program_file<<"\n;import Probability.Distribution.Tree";
-    program_file<<"\n;import Probability.Distribution.Laplace";
-    program_file<<"\n;import Probability.Distribution.Exponential";
-    program_file<<"\n;import Probability.Distribution.ExpTransform";
-    program_file<<"\n;import Probability.Distribution.Dirichlet";
-    program_file<<"\n;import Probability.Distribution.Gamma";
-    program_file<<"\n;import Probability.Distribution.List";
-    program_file<<"\n;import Data.Bool";
-    program_file<<"\n;import Compiler.Base";
+    program_file<<"\nimport SModel.ReversibleMarkov";
+    program_file<<"\nimport Probability.Random";
+    program_file<<"\nimport Compiler.Real";
+    program_file<<"\nimport Data.Tuple";
+    program_file<<"\nimport Data.List";
+    program_file<<"\nimport Foreign.Vector";
+    program_file<<"\nimport Foreign.String";
+    program_file<<"\nimport SModel.Nucleotides";
+    program_file<<"\nimport SModel.Frequency";
+    program_file<<"\nimport Probability.Distribution.Tree";
+    program_file<<"\nimport Probability.Distribution.Laplace";
+    program_file<<"\nimport Probability.Distribution.Exponential";
+    program_file<<"\nimport Probability.Distribution.ExpTransform";
+    program_file<<"\nimport Probability.Distribution.Dirichlet";
+    program_file<<"\nimport Probability.Distribution.Gamma";
+    program_file<<"\nimport Probability.Distribution.List";
+    program_file<<"\nimport Data.Bool";
+    program_file<<"\nimport Compiler.Base";
 
     // F1. Substitution models
     for(int i=0;i<SMs.size();i++)
-        program_file<<"\n\n;smodel"<<i+1<<" = "<<SMs[i].expression.print();
+        program_file<<"\n\nsmodel"<<i+1<<" = "<<SMs[i].expression.print();
 
     // F2. Indel models
     for(int i=0;i<IMs.size();i++)
-        program_file<<"\n\n;imodel"<<i+1<<" = "<<IMs[i].expression.print();
+        program_file<<"\n\nimodel"<<i+1<<" = "<<IMs[i].expression.print();
 
     // F3. Scale models
     for(int i=0; i<scaleMs.size(); i++)
-        program_file<<"\n\n;scale_model"<<i+1<<" = "<<scaleMs[i].expression.print();
+        program_file<<"\n\nscale_model"<<i+1<<" = "<<scaleMs[i].expression.print();
 
     // F4. Branch lengths
-    program_file<<"\n\n;branch_lengths_model1 = "<<branch_length_model.expression.print();
+    program_file<<"\n\nbranch_lengths_model1 = "<<branch_length_model.expression.print();
 
     // F5. Topology
-    program_file<<"\n\n;topology_model1 = sample $ uniform_topology "<<tt.n_leaves();
+    program_file<<"\n\ntopology_model1 = sample $ uniform_topology "<<tt.n_leaves();
 
     /* --------------------------------------------------------------- */
     do_block program;
@@ -1609,8 +1609,7 @@ std::string generate_atmodel_program(const vector<alignment>& A,
         std::cout<<program_exp.print()<<std::endl;
 
 
-    program_file<<"\n\n;main = "<<fix_strings(program_exp).print();
-    program_file<<"}";
+    program_file<<"\n\nmain = "<<fix_strings(program_exp).print();
 
     return program_file.str();
 }
