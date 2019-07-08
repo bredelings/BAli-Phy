@@ -62,9 +62,7 @@ pair<expression_ref, expression_ref> do_block::bind_model(const std::string& pre
     var pair("pair_arg_" + prefix);
     var x("arg_" + prefix);
     var loggers("log_arg_" + prefix);
-    perform(pair,model);               // pair <- smodel
-    let({{x,{fst,pair}},               // let x     = fst pair
-         {loggers,{snd,pair}}});       //     loggers = snd smodel_pair
+    perform(Tuple(x,loggers),model);        // (x,loggers) <- model
     return {x,loggers};
 }
 
