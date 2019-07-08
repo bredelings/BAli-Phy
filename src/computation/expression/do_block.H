@@ -11,6 +11,8 @@
 class do_block: public Object
 {
     std::vector<std::string> stmts;
+    expression_ref simple_return;
+
 public:
     do_block* clone() const {return new do_block(*this);}
 

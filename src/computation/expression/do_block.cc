@@ -10,7 +10,10 @@ using std::string;
 
 expression_ref do_block::get_expression() const
 {
-    return (*this);
+    if (simple_return)
+        return simple_return;
+    else
+        return (*this);
 }
 
 do_block& do_block::perform(const expression_ref& E1)
@@ -48,23 +51,27 @@ do_block& do_block::rec(const do_block& rec_block)
 expression_ref do_block::finish(const expression_ref& E)
 {
     if (stmts.empty())
-        return E;
+    {
+        simple_return = E;
+    }
     else
     {
         stmts.push_back(E.print());
-        return get_expression();
     }
+    return get_expression();
 }
 
 expression_ref do_block::finish_return(const expression_ref& E)
 {
     if (stmts.empty())
-        return {var("return"),E};
+    {
+        simple_return = {var("return"),E};
+    }
     else
     {
         stmts.push_back("return " + E.print());
-        return get_expression();
     }
+    return get_expression();
 }
 
 pair<expression_ref, expression_ref> do_block::bind_model(const std::string& prefix, const expression_ref& model)
@@ -91,5 +98,8 @@ expression_ref do_block::bind_and_log_model(const string& prefix, const expressi
 
 string do_block::print() const
 {
-    return "do {" + join(stmts,';') + "}";
+    if (simple_return)
+        return simple_return.print();
+    else
+        return "do {" + join(stmts,';') + "}";
 }
