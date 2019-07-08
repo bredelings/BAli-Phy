@@ -221,7 +221,7 @@ public:
                 return (i<0)?"("+convertToString(i)+")":convertToString(i);
 		break;
 	    case double_type:
-		return convertToString(d);
+                return (d<0)?"("+convertToString(d)+")":convertToString(d);
 		break;
 	    case log_double_type:
 		return "LD"+convertToString(ld);
