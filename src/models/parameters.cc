@@ -1275,6 +1275,14 @@ vector<param> get_params_from_list(context* C, const expression_ref& list)
     return params;
 }
 
+expression_ref get_genetic_code_expression(const Genetic_Code& code)
+{
+    if (code.name() == "standard")
+        return var("standard_code");
+    else
+        throw myexception()<<"Need to add a Haskell function for genetic code '"<<code.name()<<"'";
+}
+
 expression_ref get_alphabet_expression(const alphabet& a)
 {
     if (a.name == "DNA")
@@ -1283,6 +1291,22 @@ expression_ref get_alphabet_expression(const alphabet& a)
         return var("Alphabet.rna");
     else if (a.name == "Amino-Acids")
         return var("Alphabet.aa");
+    else if (auto codons = dynamic_cast<const Codons*>(&a))
+    {
+        auto nucs = get_alphabet_expression(codons->getNucleotides());
+        auto code = get_genetic_code_expression(codons->getGenetic_Code());
+        return {var("codons"), nucs, code};
+    }
+    else if (auto triplets = dynamic_cast<const Codons*>(&a))
+    {
+        auto nucs = get_alphabet_expression(triplets->getNucleotides());
+        return {var("triplets"),nucs};
+    }
+    else if (auto doublets = dynamic_cast<const Doublets*>(&a))
+    {
+        auto nucs = get_alphabet_expression(doublets->getNucleotides());
+        return {var("doublets"),nucs};
+    }
     else
     {
         throw myexception()<<"Can't translate alphabet "<<a.name;
@@ -1320,6 +1344,7 @@ std::string generate_atmodel_program(const vector<alignment>& A,
 
 
     program_file<<"\nimport SModel.ReversibleMarkov";
+    program_file<<"\nimport SModel.Codons";
     program_file<<"\nimport Probability.Random";
     program_file<<"\nimport Compiler.Real";
     program_file<<"\nimport Data.Tuple";
@@ -1335,6 +1360,7 @@ std::string generate_atmodel_program(const vector<alignment>& A,
     program_file<<"\nimport Probability.Distribution.Dirichlet";
     program_file<<"\nimport Probability.Distribution.Gamma";
     program_file<<"\nimport Probability.Distribution.List";
+    program_file<<"\nimport Probability.Distribution.Uniform";
     program_file<<"\nimport Data.Bool";
     program_file<<"\nimport Compiler.Base";
 

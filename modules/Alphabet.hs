@@ -11,6 +11,8 @@ alphabet_letters a = map listFromString (list_from_vector (builtin_alphabet_lett
 
 builtin translate 2 "translate" "Alphabet"
 
+builtin doublets 1 "doublets" "Alphabet"
+
 builtin triplets 1 "triplets" "Alphabet"
 
 builtin codons 2 "codons" "Alphabet"

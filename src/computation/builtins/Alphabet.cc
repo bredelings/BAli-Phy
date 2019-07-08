@@ -48,6 +48,16 @@ extern "C" closure builtin_function_getAminoAcids(OperationArgs& Args)
 	throw myexception()<<"getAminoAcids: object "<<a.print()<<" is not a Codons alphabet.";
 }
 
+extern "C" closure builtin_function_doublets(OperationArgs& Args)
+{
+    auto nuc  = Args.evaluate(0);
+
+    if (nuc.is_a<Nucleotides>())
+	return {Doublets(nuc.as_<Nucleotides>())};
+    else
+	throw myexception()<<"doublets: object "<<nuc.print()<<" is not a Nucleotides alphabet.";
+}
+
 extern "C" closure builtin_function_triplets(OperationArgs& Args)
 {
     auto nuc  = Args.evaluate(0);
