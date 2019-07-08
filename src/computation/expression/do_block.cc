@@ -47,14 +47,24 @@ do_block& do_block::rec(const do_block& rec_block)
 
 expression_ref do_block::finish(const expression_ref& E)
 {
-    stmts.push_back(E.print());
-    return get_expression();
+    if (stmts.empty())
+        return E;
+    else
+    {
+        stmts.push_back(E.print());
+        return get_expression();
+    }
 }
 
 expression_ref do_block::finish_return(const expression_ref& E)
 {
-    stmts.push_back("return " + E.print());
-    return get_expression();
+    if (stmts.empty())
+        return {var("return"),E};
+    else
+    {
+        stmts.push_back("return " + E.print());
+        return get_expression();
+    }
 }
 
 pair<expression_ref, expression_ref> do_block::bind_model(const std::string& prefix, const expression_ref& model)
