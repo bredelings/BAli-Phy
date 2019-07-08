@@ -329,7 +329,7 @@ int get_index_for_arg_name(const ptree& rule, const string& arg_name)
     throw myexception()<<"No arg named '"<<arg_name<<"'";
 }
 
-tuple<expression_ref,set<string>,bool> get_model_as(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope);
+tuple<expression_ref,set<string>,set<string>,bool> get_model_as(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope);
 
 expression_ref parse_constant(const ptree& model)
 {
@@ -355,7 +355,7 @@ expression_ref get_constant_model(const ptree& model_rep)
 	return {};
 }
 
-optional<tuple<expression_ref,set<string>,bool>> get_variable_model(const ptree& E, const names_in_scope_t& scope)
+optional<tuple<expression_ref,set<string>,set<string>,bool>> get_variable_model(const ptree& E, const names_in_scope_t& scope)
 {
     if (E.size() or not E.is_a<string>()) return {};
 
@@ -368,6 +368,9 @@ optional<tuple<expression_ref,set<string>,bool>> get_variable_model(const ptree&
 
     expression_ref V;
     set<string> lambda_vars;
+    set<string> free_vars;
+
+    free_vars.insert(name);
 
     // 2. If the name is a lambda var, then we need to quantify it, and put it into the list of free lambda vars
     if (scope.at(name).depends_on_lambda)
@@ -383,7 +386,7 @@ optional<tuple<expression_ref,set<string>,bool>> get_variable_model(const ptree&
     V = {do_return, Tuple(V,List())};
 
     // 5. We need an extra level of {} to allow constructing the optional.
-    return {{V,lambda_vars,false}};
+    return {{V,lambda_vars,free_vars,false}};
 }
 
 
@@ -395,7 +398,7 @@ optional<tuple<expression_ref,set<string>,bool>> get_variable_model(const ptree&
  *   pair_body <- let_body
  *   return (fst pair_body, [("let:var",(Nothing,[(var_name,pair_x)])),("let:body",(Nothing,snd pair_body))])
  */
-optional<tuple<expression_ref,set<string>,bool>> get_model_let(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
+optional<tuple<expression_ref,set<string>,set<string>,bool>> get_model_let(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
 {
     auto name = model_rep.get_value<string>();
 
@@ -412,7 +415,9 @@ optional<tuple<expression_ref,set<string>,bool>> get_model_let(const Rules& R, c
     var_info_t var_info(x,is_random(var_exp, scope));
 
     // 1. Perform the body with var_name in scope
-    auto [let_body, let_body_vars, any_body_loggers] = get_model_as(R, body_exp, extend_scope(scope, var_name, var_info));
+    auto [let_body, let_body_vars, let_body_free_vars, any_body_loggers] = get_model_as(R, body_exp, extend_scope(scope, var_name, var_info));
+    set<string> free_vars = let_body_free_vars;
+    free_vars.erase(var_name);
 
     // FIXME: we currently prohibit var_exp from containing any lambda-variables, so we don't need to check if it has them.
     bool do_log = is_unlogged_random(R, var_exp, scope);
@@ -427,9 +432,10 @@ optional<tuple<expression_ref,set<string>,bool>> get_model_let(const Rules& R, c
     do_block code;
 
     // 2. Perform the variable expression
-    auto [arg, arg_vars, any_arg_loggers] = get_model_as(R, var_exp, scope);
+    auto [arg, arg_vars, arg_free_vars, any_arg_loggers] = get_model_as(R, var_exp, scope);
     if (arg_vars.size())
         throw myexception()<<"You cannot let-bind a variable to an expression with a function-variable";
+    free_vars.insert(arg_free_vars.begin(), arg_free_vars.end());
 
     // pair_var_NAME <- arg
     code.perform(pair_x, arg);
@@ -443,10 +449,10 @@ optional<tuple<expression_ref,set<string>,bool>> get_model_let(const Rules& R, c
     // return (fst pair_body, loggers)
     code.finish_return(Tuple({fst,pair_body},loggers));
 
-    return {{code.get_expression(), let_body_vars, any_body_loggers or any_arg_loggers}};
+    return {{code.get_expression(), let_body_vars, free_vars, any_body_loggers or any_arg_loggers}};
 }
 
-optional<tuple<expression_ref,set<string>,bool>> get_model_lambda(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
+optional<tuple<expression_ref,set<string>,set<string>,bool>> get_model_lambda(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
 {
     auto name = model_rep.get_value<string>();
 
@@ -462,7 +468,8 @@ optional<tuple<expression_ref,set<string>,bool>> get_model_lambda(const Rules& R
     // 3. Parse the body with the lambda variable in scope, and find the free variables.
     var_info_t var_info(x,false,true);
     auto body_scope = extend_scope(scope, var_name, var_info);
-    auto [body, lambda_vars, any_loggers] = get_model_as(R, body_exp, body_scope);
+    auto [body, lambda_vars, lambda_free_vars, any_loggers] = get_model_as(R, body_exp, body_scope);
+    auto free_vars = lambda_free_vars;
 
     // E = E x l1 l2 l3
     expression_ref E = {fst,pair_arg_body};
@@ -474,6 +481,7 @@ optional<tuple<expression_ref,set<string>,bool>> get_model_lambda(const Rules& R
     
     // Remove x from the lambda vars.
     if (lambda_vars.count(var_name)) lambda_vars.erase(var_name);
+    if (free_vars.count(var_name)) free_vars.erase(var_name);
 
     // E = \l1 l2 l3 -> E
     for(auto& vname: std::reverse(lambda_vars))
@@ -491,7 +499,7 @@ optional<tuple<expression_ref,set<string>,bool>> get_model_lambda(const Rules& R
     //E = do
     //      pair_arg_body <- body_action
     //      return $ (\l1 l2 l3 -> \x -> ((fst pair_arg_body) x l1 l2 l3) , snd pair_arg_body)
-    return {{code.get_expression(), lambda_vars, true}};
+    return {{code.get_expression(), lambda_vars, free_vars, true}};
 }
 
 expression_ref make_call(const ptree& call)
@@ -524,7 +532,7 @@ expression_ref make_call(const ptree& call)
 
 
 // NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
-tuple<expression_ref,set<string>, bool> get_model_function(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
+tuple<expression_ref, set<string>, set<string>, bool> get_model_function(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
 {
     auto name = model_rep.get_value<string>();
 
@@ -545,15 +553,31 @@ tuple<expression_ref,set<string>, bool> get_model_function(const Rules& R, const
     // 2. Parse models for arguments to figure out which free lambda variables they contain
     vector<expression_ref> arg_models;
     vector<set<string>> arg_lambda_vars;
+    vector<set<string>> arg_free_vars;
     set<string> lambda_vars;
+    set<string> free_vars;
     vector<bool> arg_loggers;
+    vector<bool> arg_referenced(args.size(), false);
     bool any_loggers = false;
     for(int i=0;i<args.size();i++)
     {
 	auto argi = array_index(args,i);
 
 	string arg_name = argi.get_child("arg_name").get_value<string>();
-	auto [m, vars, any_arg_loggers] = get_model_as(R, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
+	auto [m, vars, free_vars, any_arg_loggers] = get_model_as(R, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
+        for(int j=i+1;j<args.size();j++)
+        {
+            auto argj = array_index(args,j);
+
+            string arg_name_j = "@"+argj.get_child("arg_name").get_value<string>();
+            if (free_vars.count(arg_name_j))
+            {
+                free_vars.erase(arg_name_j);
+                arg_referenced[j] = true;
+                std::cerr<<"Arg "<<name<<":"<<arg_name<<" referenced by "<<name<<":"<<arg_name_j<<"\n";
+            }
+        }
+
 	if (perform_function and vars.size())
 	    throw myexception()<<"Argument '"<<arg_name<<"' of '"<<name<<"' contains a lambda variable: not allowed!";
 
@@ -561,7 +585,20 @@ tuple<expression_ref,set<string>, bool> get_model_function(const Rules& R, const
         any_loggers = any_loggers or any_arg_loggers;
 	arg_models.push_back(m);
 	arg_lambda_vars.push_back(vars);
+        arg_free_vars.push_back(free_vars);
 	add(lambda_vars, vars);
+
+	// Wrap the argument in its appropriate Alphabet type
+	if (auto alphabet_expression = argi.get_child_optional("alphabet"))
+	{
+	    auto alphabet_scope = extend_scope(*rule, i, scope);
+	    auto [A, vars, free_vars, any_alphabet_loggers] = get_model_as(R, *alphabet_expression, alphabet_scope);
+	    if (vars.size())
+		throw myexception()<<"An alphabet cannot depend on a lambda variable!";
+            add(arg_free_vars.back(), free_vars);
+            arg_models.back() = {var("set_alphabet"),A,arg_models.back()};
+            any_loggers = any_loggers or any_alphabet_loggers;
+	}
     }
 
     do_block code;
@@ -573,17 +610,6 @@ tuple<expression_ref,set<string>, bool> get_model_function(const Rules& R, const
 
 	string arg_name = argi.get_child("arg_name").get_value<string>();
 	expression_ref arg = arg_models[i];
-
-	// Wrap the argument in its appropriate Alphabet type
-	if (auto alphabet_expression = argi.get_child_optional("alphabet"))
-	{
-	    auto alphabet_scope = extend_scope(*rule, i, scope);
-	    auto [A,vars,any_alphabet_loggers] = get_model_as(R, *alphabet_expression, alphabet_scope);
-	    if (vars.size())
-		throw myexception()<<"An alphabet cannot depend on a lambda variable!";
-	     arg = {var("set_alphabet"),A,arg};
-             any_loggers = any_loggers or any_alphabet_loggers;
-	}
 
         // If there are no lambda vars used, then we can just place the result into scope directly, without applying anything to it.
 	if (arg_lambda_vars[i].empty())
@@ -669,10 +695,10 @@ tuple<expression_ref,set<string>, bool> get_model_function(const Rules& R, const
         code.finish_return( Tuple(var("result"),loggers) );
     }
 
-    return {code.get_expression(), lambda_vars, any_loggers};
+    return {code.get_expression(), lambda_vars, free_vars, any_loggers};
 }
 
-tuple<expression_ref,set<string>, bool> get_model_as(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
+tuple<expression_ref,set<string>, set<string>, bool> get_model_as(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
 {
     //  std::cout<<"model = "<<model<<std::endl;
     //  auto result = parse(model);
@@ -687,7 +713,7 @@ tuple<expression_ref,set<string>, bool> get_model_as(const Rules& R, const ptree
 
     // 2. Handle constant expressions
     else if (auto constant = get_constant_model(model_rep))
-	return {constant, {}, false};
+	return {constant, {}, {}, false};
 
     // 3. Handle variables
     else if (auto variable = get_variable_model(model_rep, scope))
@@ -715,7 +741,7 @@ tuple<expression_ref,set<string>, bool> get_model_as(const Rules& R, const ptree
 model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& constraints, const ptree& model_rep, const names_in_scope_t& scope)
 {
     // --------- Convert model to MultiMixtureModel ------------//
-    auto [full_model, _1, _2] = get_model_as(R, extract_value(model_rep), scope);
+    auto [full_model, _1, _2, _3] = get_model_as(R, extract_value(model_rep), scope);
 
     if (log_verbose >= 2)
 	std::cout<<"full_model = "<<full_model<<std::endl;
