@@ -1355,6 +1355,8 @@ std::string generate_atmodel_program(const vector<alignment>& A,
     program_file<<"\nimport SModel.Frequency";
     program_file<<"\nimport Probability.Distribution.Tree";
     program_file<<"\nimport Probability.Distribution.Laplace";
+    program_file<<"\nimport Probability.Distribution.Normal";
+    program_file<<"\nimport Probability.Distribution.Beta";
     program_file<<"\nimport Probability.Distribution.Exponential";
     program_file<<"\nimport Probability.Distribution.ExpTransform";
     program_file<<"\nimport Probability.Distribution.Dirichlet";
