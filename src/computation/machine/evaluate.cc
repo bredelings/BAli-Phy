@@ -204,17 +204,37 @@ public:
 
 pair<int,int> reg_heap::incremental_evaluate(int R)
 {
+#ifndef NDEBUG
+    if (regs.access(R).flags.test(3))
+        throw myexception()<<"Evaluating reg "<<R<<" that is already on the stack!";
+    else
+        regs.access(R).flags.set(3);
+#endif
     stack.push_back(R);
     auto result = incremental_evaluate_(R);
     stack.pop_back();
+#ifndef NDEBUG
+    assert(regs.access(R).flags.test(3));
+    regs.access(R).flags.flip(3);
+#endif
     return result;
 }
 
 int reg_heap::incremental_evaluate_unchangeable(int R)
 {
+#ifndef NDEBUG
+    if (regs.access(R).flags.test(3))
+        throw myexception()<<"Evaluating reg "<<R<<" that is already on the stack!";
+    else
+        regs.access(R).flags.set(3);
+#endif
     stack.push_back(R);
     auto result = incremental_evaluate_unchangeable_(R);
     stack.pop_back();
+#ifndef NDEBUG
+    assert(regs.access(R).flags.test(3));
+    regs.access(R).flags.flip(3);
+#endif
     return result;
 }
 
