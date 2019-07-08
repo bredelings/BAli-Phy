@@ -1350,6 +1350,12 @@ std::string generate_atmodel_program(const vector<alignment>& A,
     for(int i=0; i<scaleMs.size(); i++)
         program_file<<"\n\n;scale_model"<<i+1<<" = "<<scaleMs[i].expression.print();
 
+    // F4. Branch lengths
+    program_file<<"\n\n;branch_lengths_model1 = "<<branch_length_model.expression.print();
+
+    // F5. Topology
+    program_file<<"\n\n;topology_model1 = sample $ uniform_topology "<<tt.n_leaves();
+
     /* --------------------------------------------------------------- */
     do_block program;
     var imodel_training_var("imodel_training");
@@ -1370,9 +1376,8 @@ std::string generate_atmodel_program(const vector<alignment>& A,
     vector<expression_ref> program_loggers;
     // Therefore, we are constructing a list with values [(prefix1,(Just value1, loggers1)), (prefix1, (Just value1, loggers2))
 
-    expression_ref topology_model1 = {var("sample"), {var("uniform_topology"), tt.n_leaves()}};
     auto tree_var = var("topology1");
-    program.perform(tree_var, topology_model1);
+    program.perform(tree_var, var("topology_model1"));
 
     // P1. Substitution models
     vector<expression_ref> smodels;
@@ -1427,7 +1432,7 @@ std::string generate_atmodel_program(const vector<alignment>& A,
     if (tt.n_branches() > 0)
     {
         string prefix = "T_lengths";
-        expression_ref branch_lengths_model = {branch_length_model.expression, tree_var};
+        expression_ref branch_lengths_model = {var("branch_lengths_model1"), tree_var};
         auto [x,loggers] = program.bind_model(prefix , branch_lengths_model);
         branch_lengths = x;
     }
