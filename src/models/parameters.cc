@@ -25,6 +25,7 @@
 ///
 
 #include <map>
+#include <sstream>
 #include "util/assert.hh"
 
 #include "models/parameters.H"
@@ -1288,53 +1289,20 @@ expression_ref get_alphabet_expression(const alphabet& a)
     }
 }
 
-Parameters::Parameters(const std::shared_ptr<module_loader>& L,
-                       const vector<alignment>& A,
-                       const vector<pair<string,string>>& filename_ranges,
-                       const SequenceTree& tt,
-                       const vector<model_t>& SMs,
-                       const vector<optional<int>>& s_mapping,
-                       const vector<model_t>& IMs,
-                       const vector<optional<int>>& i_mapping,
-                       const vector<model_t>& scaleMs,
-                       const vector<optional<int>>& scale_mapping,
-                       const model_t& branch_length_model,
-                       const std::vector<int>& like_calcs,
-                       const key_map_t& k)
-    :Model(L,k),
-     PC(new parameters_constants(A,tt,SMs,s_mapping,IMs,i_mapping,scale_mapping)),
-     variable_alignment_( n_imodels() > 0 ),
-     updown(-1)
+std::string generate_atmodel_program(const vector<alignment>& A,
+                                     const vector<pair<string,string>>& filename_ranges,
+                                     const SequenceTree& tt,
+                                     const vector<model_t>& SMs,
+                                     const vector<optional<int>>& s_mapping,
+                                     const vector<model_t>& IMs,
+                                     const vector<optional<int>>& i_mapping,
+                                     const vector<model_t>& scaleMs,
+                                     const vector<optional<int>>& scale_mapping,
+                                     const model_t& branch_length_model,
+                                     const std::vector<int>& like_calcs,
+                                     bool variable_alignment_,
+                                     const vector<optional<compressed_alignment>>& compressed_alignments)
 {
-    // \todo FIXME:cleanup|fragile - Don't touch C here directly!
-    *this += { "SModel", "Probability", "Range", "PopGen", "Alignment", "IModel", "BAliPhy.ATModel" };
-  
-    PC->constants.push_back(-1);
-
-    int B = tt.n_branches();
-
-    /* ---------------- compress alignments -------------------------- */
-
-    // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
-    bool allow_compression = load_value("site-compression", tt.n_nodes() > 2);
-
-    vector<optional<compressed_alignment>> compressed_alignments(A.size());
-    vector<const alignment*> alignments(A.size());
-    for(int i=0;i<A.size();i++)
-    {
-        if (not imodel_index_for_partition(i) and allow_compression)
-        {
-            compressed_alignments[i] = compress_alignment(A[i], tt);
-            alignments[i] = &compressed_alignments[i]->A;
-            std::cerr<<"Partition #"<<i+1<<": "<<A[i].length()<<" columns -> "<<alignments[i]->length()<<" unique patterns.\n";
-        }
-        else
-            alignments[i] = &A[i];
-    }
-
-    /* ---------------- Set up the tree ------------------------------ */
-    branches_from_affected_node.resize(tt.n_nodes());
-
     /* --------------------------------------------------------------- */
     do_block program;
     var imodel_training_var("imodel_training");
@@ -1382,7 +1350,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     // P2. Indel models
     vector<expression_ref> imodels;
-    for(int i=0;i<n_imodels();i++)
+    for(int i=0;i<IMs.size();i++)
     {
         string prefix = "I" + convertToString(i+1);
         expression_ref imodel = IMs[i].expression;
@@ -1394,7 +1362,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     // P3. Scales
     vector<expression_ref> scales;
-    for(int i=0; i<n_branch_scales(); i++)
+    for(int i=0; i<scaleMs.size(); i++)
     {
         // FIXME: Ideally we would actually join these models together using a Cons operation and prefix.
         //        This would obviate the need to create a Scale1 (etc) prefix here.
@@ -1420,16 +1388,16 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     // P5. Branch categories
     var branch_categories("branch_categories");
-    program.let(branch_categories, { var("map"), var("modifiable"), {var("replicate"), B, 0} });
+    program.let(branch_categories, { var("map"), var("modifiable"), {var("replicate"), tt.n_branches(), 0} });
 
     // P6. Create objects for data partitions
     vector<expression_ref> partitions;
     for(int i=0; i < A.size(); i++)
     {
         string part = std::to_string(i+1);
-        int scale_index = *scale_index_for_partition(i);
-        int smodel_index = *smodel_index_for_partition(i);
-        auto imodel_index = imodel_index_for_partition(i);
+        int scale_index = *scale_mapping[i];
+        int smodel_index = *s_mapping[i];
+        auto imodel_index = i_mapping[i];
 
         // L0. scale_P ...
         var alphabet_var("alphabet_"+part);
@@ -1487,7 +1455,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         {
             auto imodel = var("imodel_"+part);
             program.let(imodel, {imodels[*imodel_index], heat_var, imodel_training_var});
-            expression_ref hmms =  {var("branch_hmms"), imodel, distances, B};
+            expression_ref hmms =  {var("branch_hmms"), imodel, distances, tt.n_branches()};
             maybe_imodel = {var("Just"), imodel};
             maybe_hmms   = {var("Just"), hmms};
 
@@ -1543,7 +1511,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
             // FIXME: broken for fixed alignments of 2 sequences.
             if (tt.n_nodes() > 2)
-                program.let(likelihood_var,{var("peel_likelihood_SEV"), tree_var, cls_var, f, my_subst_root(), counts_var});
+                program.let(likelihood_var,{var("peel_likelihood_SEV"), tree_var, cls_var, f, subst_root_var, counts_var});
         }
 
         if (tt.n_nodes() == 2)
@@ -1588,44 +1556,98 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     if (log_verbose >= 4)
         std::cout<<program_exp.print()<<std::endl;
 
+
+    std::ostringstream program_file("Main.hs");
+    program_file<<"module Main where {";
+    program_file<<";import SModel";
+    program_file<<";import IModel";
+    program_file<<";import Probability";
+    program_file<<";import Parameters";
+    program_file<<";import Range";
+    program_file<<";import PopGen";
+    program_file<<";import Alignment";
+    program_file<<";import BAliPhy.ATModel";
+    program_file<<";import BAliPhy.ATModel.DataPartition";
+    program_file<<";import Alphabet";
+    program_file<<";import Tree";
+    program_file<<";import Data.Maybe";
+
+
+    program_file<<";import SModel.ReversibleMarkov";
+    program_file<<";import Probability.Random";
+    program_file<<";import Compiler.Real";
+    program_file<<";import Data.Tuple";
+    program_file<<";import Data.List";
+    program_file<<";import Foreign.Vector";
+    program_file<<";import Foreign.String";
+    program_file<<";import SModel.Nucleotides";
+    program_file<<";import SModel.Frequency";
+    program_file<<";import Probability.Distribution.Tree";
+    program_file<<";import Probability.Distribution.Laplace";
+    program_file<<";import Probability.Distribution.Exponential";
+    program_file<<";import Probability.Distribution.ExpTransform";
+    program_file<<";import Probability.Distribution.Dirichlet";
+    program_file<<";import Probability.Distribution.Gamma";
+    program_file<<";import Probability.Distribution.List";
+    program_file<<";import Data.Bool";
+    program_file<<";import Compiler.Base";
+
+    program_file<<";main = "<<fix_strings(program_exp).print();
+    program_file<<"}";
+
+    return program_file.str();
+}
+
+Parameters::Parameters(const std::shared_ptr<module_loader>& L,
+                       const vector<alignment>& A,
+                       const vector<pair<string,string>>& filename_ranges,
+                       const SequenceTree& tt,
+                       const vector<model_t>& SMs,
+                       const vector<optional<int>>& s_mapping,
+                       const vector<model_t>& IMs,
+                       const vector<optional<int>>& i_mapping,
+                       const vector<model_t>& scaleMs,
+                       const vector<optional<int>>& scale_mapping,
+                       const model_t& branch_length_model,
+                       const std::vector<int>& like_calcs,
+                       const key_map_t& k)
+    :Model(L,k),
+     PC(new parameters_constants(A,tt,SMs,s_mapping,IMs,i_mapping,scale_mapping)),
+     variable_alignment_( n_imodels() > 0 ),
+     updown(-1)
+{
+    // \todo FIXME:cleanup|fragile - Don't touch C here directly!
+    *this += { "SModel", "Probability", "Range", "PopGen", "Alignment", "IModel", "BAliPhy.ATModel" };
+  
+    PC->constants.push_back(-1);
+
+    int B = tt.n_branches();
+
+    /* ---------------- compress alignments -------------------------- */
+
+    // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
+    bool allow_compression = load_value("site-compression", tt.n_nodes() > 2);
+
+    vector<optional<compressed_alignment>> compressed_alignments(A.size());
+    vector<const alignment*> alignments(A.size());
+    for(int i=0;i<A.size();i++)
+    {
+        if (not imodel_index_for_partition(i) and allow_compression)
+        {
+            compressed_alignments[i] = compress_alignment(A[i], tt);
+            alignments[i] = &compressed_alignments[i]->A;
+            std::cerr<<"Partition #"<<i+1<<": "<<A[i].length()<<" columns -> "<<alignments[i]->length()<<" unique patterns.\n";
+        }
+        else
+            alignments[i] = &A[i];
+    }
+
+    /* ---------------- Set up the tree ------------------------------ */
+    branches_from_affected_node.resize(tt.n_nodes());
+
     {
         checked_ofstream program_file("Main.hs");
-        program_file<<"module Main where {";
-        program_file<<";import SModel";
-        program_file<<";import IModel";
-        program_file<<";import Probability";
-        program_file<<";import Parameters";
-        program_file<<";import Range";
-        program_file<<";import PopGen";
-        program_file<<";import Alignment";
-        program_file<<";import BAliPhy.ATModel";
-        program_file<<";import BAliPhy.ATModel.DataPartition";
-        program_file<<";import Alphabet";
-        program_file<<";import Tree";
-        program_file<<";import Data.Maybe";
-
-
-        program_file<<";import SModel.ReversibleMarkov";
-        program_file<<";import Probability.Random";
-        program_file<<";import Compiler.Real";
-        program_file<<";import Data.Tuple";
-        program_file<<";import Data.List";
-        program_file<<";import Foreign.Vector";
-        program_file<<";import Foreign.String";
-        program_file<<";import SModel.Nucleotides";
-        program_file<<";import SModel.Frequency";
-        program_file<<";import Probability.Distribution.Tree";
-        program_file<<";import Probability.Distribution.Laplace";
-        program_file<<";import Probability.Distribution.Exponential";
-        program_file<<";import Probability.Distribution.ExpTransform";
-        program_file<<";import Probability.Distribution.Dirichlet";
-        program_file<<";import Probability.Distribution.Gamma";
-        program_file<<";import Probability.Distribution.List";
-        program_file<<";import Data.Bool";
-        program_file<<";import Compiler.Base";
-
-        program_file<<";main = "<<fix_strings(program_exp).print();
-        program_file<<"}";
+        program_file<<generate_atmodel_program(A, filename_ranges, tt, SMs, s_mapping, IMs, i_mapping, scaleMs, scale_mapping, branch_length_model, like_calcs, variable_alignment_, compressed_alignments);
     }
 
     PC->atmodel = read_add_model(*this, "Main.hs");
