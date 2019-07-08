@@ -218,7 +218,7 @@ public:
 	    case null_type:
 		return "[NULL]";
 	    case int_type:
-		return convertToString(i);
+                return (i<0)?"("+convertToString(i)+")":convertToString(i);
 		break;
 	    case double_type:
 		return convertToString(d);
