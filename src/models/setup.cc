@@ -339,7 +339,7 @@ expression_ref parse_constant(const ptree& model)
     if (model.is_a<double>()) return (double)model;
     if (model.is_a<bool>()) return (bool)model;
     string name = model.get_value<string>();
-    if (name.size() > 2 and name[0] == '"' and name.back() =='"') return name.substr(1,name.size()-2);
+    if (name.size() > 2 and name[0] == '"' and name.back() =='"') return String(name.substr(1,name.size()-2));
     return {};
 }
 
