@@ -1303,6 +1303,53 @@ std::string generate_atmodel_program(const vector<alignment>& A,
                                      bool variable_alignment_,
                                      const vector<optional<compressed_alignment>>& compressed_alignments)
 {
+    std::ostringstream program_file;
+    program_file<<"module Main where {";
+    program_file<<"\n;import SModel";
+    program_file<<"\n;import IModel";
+    program_file<<"\n;import Probability";
+    program_file<<"\n;import Parameters";
+    program_file<<"\n;import Range";
+    program_file<<"\n;import PopGen";
+    program_file<<"\n;import Alignment";
+    program_file<<"\n;import BAliPhy.ATModel";
+    program_file<<"\n;import BAliPhy.ATModel.DataPartition";
+    program_file<<"\n;import Alphabet";
+    program_file<<"\n;import Tree";
+    program_file<<"\n;import Data.Maybe";
+
+
+    program_file<<"\n;import SModel.ReversibleMarkov";
+    program_file<<"\n;import Probability.Random";
+    program_file<<"\n;import Compiler.Real";
+    program_file<<"\n;import Data.Tuple";
+    program_file<<"\n;import Data.List";
+    program_file<<"\n;import Foreign.Vector";
+    program_file<<"\n;import Foreign.String";
+    program_file<<"\n;import SModel.Nucleotides";
+    program_file<<"\n;import SModel.Frequency";
+    program_file<<"\n;import Probability.Distribution.Tree";
+    program_file<<"\n;import Probability.Distribution.Laplace";
+    program_file<<"\n;import Probability.Distribution.Exponential";
+    program_file<<"\n;import Probability.Distribution.ExpTransform";
+    program_file<<"\n;import Probability.Distribution.Dirichlet";
+    program_file<<"\n;import Probability.Distribution.Gamma";
+    program_file<<"\n;import Probability.Distribution.List";
+    program_file<<"\n;import Data.Bool";
+    program_file<<"\n;import Compiler.Base";
+
+    // F1. Substitution models
+    for(int i=0;i<SMs.size();i++)
+        program_file<<"\n\n;smodel"<<i+1<<" = "<<SMs[i].expression.print();
+
+    // F2. Indel models
+    for(int i=0;i<IMs.size();i++)
+        program_file<<"\n\n;imodel"<<i+1<<" = "<<IMs[i].expression.print();
+
+    // F3. Scale models
+    for(int i=0; i<scaleMs.size(); i++)
+        program_file<<"\n\n;scale_model"<<i+1<<" = "<<scaleMs[i].expression.print();
+
     /* --------------------------------------------------------------- */
     do_block program;
     var imodel_training_var("imodel_training");
@@ -1340,7 +1387,7 @@ std::string generate_atmodel_program(const vector<alignment>& A,
 
         expression_ref a = get_alphabet_expression(A[*first_index].get_alphabet());
 
-        expression_ref smodel = SMs[i].expression;
+        expression_ref smodel = var("smodel"+std::to_string(i+1));
         smodel = {var("set_alphabet'"), a, smodel};
 
         auto smodel_var = program.bind_and_log_model(prefix , smodel, program_loggers, false);
@@ -1353,7 +1400,7 @@ std::string generate_atmodel_program(const vector<alignment>& A,
     for(int i=0;i<IMs.size();i++)
     {
         string prefix = "I" + convertToString(i+1);
-        expression_ref imodel = IMs[i].expression;
+        expression_ref imodel = var("imodel"+std::to_string(i+1));
         auto imodel_var = program.bind_and_log_model(prefix, imodel, program_loggers, false);
 
         imodels.push_back({imodel_var, tree_var});
@@ -1368,7 +1415,7 @@ std::string generate_atmodel_program(const vector<alignment>& A,
         //        This would obviate the need to create a Scale1 (etc) prefix here.
         string prefix = "Scale"+convertToString(i+1);
 
-        auto scale_model = scaleMs[i].expression;
+        auto scale_model = var("scale_model"+std::to_string(i+1));
         auto scale_var = program.bind_and_log_model(prefix , scale_model, program_loggers, false);
         scales.push_back(scale_var);
     }
@@ -1557,42 +1604,7 @@ std::string generate_atmodel_program(const vector<alignment>& A,
         std::cout<<program_exp.print()<<std::endl;
 
 
-    std::ostringstream program_file("Main.hs");
-    program_file<<"module Main where {";
-    program_file<<";import SModel";
-    program_file<<";import IModel";
-    program_file<<";import Probability";
-    program_file<<";import Parameters";
-    program_file<<";import Range";
-    program_file<<";import PopGen";
-    program_file<<";import Alignment";
-    program_file<<";import BAliPhy.ATModel";
-    program_file<<";import BAliPhy.ATModel.DataPartition";
-    program_file<<";import Alphabet";
-    program_file<<";import Tree";
-    program_file<<";import Data.Maybe";
-
-
-    program_file<<";import SModel.ReversibleMarkov";
-    program_file<<";import Probability.Random";
-    program_file<<";import Compiler.Real";
-    program_file<<";import Data.Tuple";
-    program_file<<";import Data.List";
-    program_file<<";import Foreign.Vector";
-    program_file<<";import Foreign.String";
-    program_file<<";import SModel.Nucleotides";
-    program_file<<";import SModel.Frequency";
-    program_file<<";import Probability.Distribution.Tree";
-    program_file<<";import Probability.Distribution.Laplace";
-    program_file<<";import Probability.Distribution.Exponential";
-    program_file<<";import Probability.Distribution.ExpTransform";
-    program_file<<";import Probability.Distribution.Dirichlet";
-    program_file<<";import Probability.Distribution.Gamma";
-    program_file<<";import Probability.Distribution.List";
-    program_file<<";import Data.Bool";
-    program_file<<";import Compiler.Base";
-
-    program_file<<";main = "<<fix_strings(program_exp).print();
+    program_file<<"\n\n;main = "<<fix_strings(program_exp).print();
     program_file<<"}";
 
     return program_file.str();
