@@ -1297,7 +1297,7 @@ expression_ref get_alphabet_expression(const alphabet& a)
         auto code = get_genetic_code_expression(codons->getGenetic_Code());
         return {var("codons"), nucs, code};
     }
-    else if (auto triplets = dynamic_cast<const Codons*>(&a))
+    else if (auto triplets = dynamic_cast<const Triplets*>(&a))
     {
         auto nucs = get_alphabet_expression(triplets->getNucleotides());
         return {var("triplets"),nucs};
