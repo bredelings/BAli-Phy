@@ -578,23 +578,20 @@ pair<expression_ref,set<string>> get_model_function(const Rules& R, const ptree&
 	     arg = {var("set_alphabet"),A,arg};
 	}
 
+        // If there are no lambda vars used, then we can just place the result into scope directly, without applying anything to it.
 	if (arg_lambda_vars[i].empty())
         {
-            var pair_x("pair_arg_var_"+arg_name);
             var x("arg_var_"+arg_name);
+            var logger("arg_logger_"+arg_name);
 
-            // pair_x <- arg
-            code.perform(pair_x, arg);
-
-            // let x = fst pair_x
-            code.let({{x,{fst,pair_x}}});
+            // (arg_var_NAME, arg_logger_NAME) <- arg
+            code.perform(Tuple(x,logger), arg);
         }
         else
         {
             var pair_x("pair_arg_var_"+arg_name);
-            var x("arg_var_"+arg_name);
 
-            // pair_x <- arg
+            // pair_arg_var_NAME <- arg
             code.perform(pair_x, arg);
         }
     }
@@ -636,8 +633,18 @@ pair<expression_ref,set<string>> get_model_function(const Rules& R, const ptree&
 
 	auto log_name = name + ":" + arg_name;
 
-	bool do_log = arg_lambda_vars[i].empty() and should_log(R, model_rep, arg_name, scope);
-	loggers = {var("add_logger"),loggers,String(log_name),var("pair_arg_var_"+arg_name),do_log};
+        if (arg_lambda_vars[i].empty())
+        {
+            var x("arg_var_"+arg_name);
+            var logger("arg_logger_"+arg_name);
+            bool do_log = should_log(R, model_rep, arg_name, scope);
+            loggers = {var("add_logger"),loggers,String(log_name),Tuple(x, logger),do_log};
+        }
+        else
+        {
+            bool do_log = false;
+            loggers = {var("add_logger"),loggers,String(log_name),var("pair_arg_var_"+arg_name),do_log};
+        }
     }
 
     // 8. Return the function call: 'return (f call.name1 call.name2 call.name3)'
