@@ -19,9 +19,9 @@ do_block& do_block::perform(const expression_ref& E1)
     return *this;
 }
 
-do_block& do_block::perform(const var& x, const expression_ref& E)
+do_block& do_block::perform(const expression_ref& pattern, const expression_ref& E)
 {
-    stmts.push_back(x.print() + " <- " + E.print());
+    stmts.push_back(pattern.print() + " <- " + E.print());
     return *this;
 }
 

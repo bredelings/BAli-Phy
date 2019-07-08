@@ -22,7 +22,7 @@ public:
 
     do_block& perform(const expression_ref& E1);
 
-    do_block& perform(const var& x, const expression_ref& E1);
+    do_block& perform(const expression_ref& pattern, const expression_ref& E1);
 
     do_block& let(const CDecls& decls);
 
