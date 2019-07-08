@@ -33,11 +33,13 @@ bool operator!=(const symbol_info&S1, const symbol_info& S2);
 
 bool is_haskell_varid(const std::string& s);
 bool is_haskell_conid(const std::string& s);
+bool is_haskell_id(const std::string& s);
 bool is_haskell_varsym(const std::string& s);
 bool is_haskell_consym(const std::string& s);
 bool is_haskell_normal_con_name(const std::string& s);
 bool is_haskell_builtin_con_name(const std::string& s);
 bool is_haskell_qsym(const std::string& s);
+bool is_haskell_qid(const std::string& s);
 
 bool is_haskell_var_name(const std::string& s);
 bool is_haskell_con_name(const std::string& s);

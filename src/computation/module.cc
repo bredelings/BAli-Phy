@@ -1029,11 +1029,12 @@ bool haskell_is_lower(char c)
     return (islower(c) or c=='_');
 }
 
-bool is_haskell_varid(const std::string& s)
+bool is_haskell_id(const std::string& s)
 {
     if (s.empty()) return false;
 
-    if (not haskell_is_lower(s[0])) return false;
+    if (not (haskell_is_lower(s[0]) or isupper(s[0]))) return false;
+
     for(int i=1;i<s.size();i++)
     {
 	char c = s[i];
@@ -1043,18 +1044,18 @@ bool is_haskell_varid(const std::string& s)
     return true;
 }
 
+bool is_haskell_varid(const std::string& s)
+{
+    if (not is_haskell_id(s)) return false;
+
+    return haskell_is_lower(s[0]);
+}
+
 bool is_haskell_conid(const std::string& s)
 {
-    if (s.empty()) return false;
+    if (not is_haskell_id(s)) return false;
 
-    if (not isupper(s[0])) return false;
-    for(int i=1;i<s.size();i++)
-    {
-	char c = s[i];
-	if (not (isupper(c) or haskell_is_lower(c) or isdigit(c) or c=='\''))
-	    return false;
-    }
-    return true;
+    return isupper(s[0]);
 }
 
 bool is_haskell_sym(const string& s)
@@ -1117,6 +1118,12 @@ bool is_haskell_qsym(const std::string& s)
 {
     vector<string> path = haskell_name_path(s);
     return valid_path_prefix(path) and is_haskell_sym(path.back());
+}
+
+bool is_haskell_qid(const std::string& s)
+{
+    vector<string> path = haskell_name_path(s);
+    return valid_path_prefix(path) and is_haskell_id(path.back());
 }
 
 bool is_haskell_normal_con_name(const std::string& s)
