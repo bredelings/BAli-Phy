@@ -682,6 +682,9 @@ tuple<expression_ref, set<string>, set<string>, bool> get_model_function(const R
         }
     }
 
+    if (not any_loggers)
+        loggers = List();
+
     // 8. Return the function call: 'return (f call.name1 call.name2 call.name3)'
     if (not perform_function)
     {
