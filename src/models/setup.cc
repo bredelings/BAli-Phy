@@ -651,12 +651,16 @@ pair<expression_ref,set<string>> get_model_function(const Rules& R, const ptree&
 
     // 8. Return the function call: 'return (f call.name1 call.name2 call.name3)'
     if (not perform_function)
-	E = {do_return,E};
-
-    // result <- E
-    code.perform( var("result"), E );
-    // return (result, loggers)
-    code.finish_return( Tuple(var("result"),loggers) );
+    {
+        code.finish_return( Tuple(E,loggers) );
+    }
+    else
+    {
+        // result <- E
+        code.perform( var("result"), E );
+        // return (result, loggers)
+        code.finish_return( Tuple(var("result"),loggers) );
+    }
 
     return {code.get_expression(), lambda_vars};
 }
