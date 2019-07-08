@@ -90,6 +90,7 @@
 #include "computation/module.H"
 #include "computation/expression/expression_ref.H"
 #include "computation/expression/let.H"
+#include "computation/expression/apply.H"
 #include "computation/expression/var.H"
 #include "computation/expression/lambda.H"
 #include "computation/expression/tuple.H"
@@ -530,6 +531,28 @@ expression_ref make_call(const ptree& call)
     return E;
 }
 
+expression_ref is_simple_return(const expression_ref& E)
+{
+    if (E.size() != 2) return {};
+
+    if (not is_apply_exp(E)) return {};
+
+    if (is_var(E.sub()[0]) and E.sub()[0].as_<var>().name == "return")
+    {
+        auto arg = E.sub()[1];
+
+        if (arg.size() != 2) return {};
+
+        if (not has_constructor(arg,tuple_head(2).name())) return {};
+
+        auto logger = arg.sub()[1];
+
+        if (logger == List())
+            return arg.sub()[0];
+    }
+    return {};
+}
+
 
 // NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
 tuple<expression_ref, set<string>, set<string>, bool> get_model_function(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
@@ -554,6 +577,7 @@ tuple<expression_ref, set<string>, set<string>, bool> get_model_function(const R
     vector<expression_ref> arg_models;
     vector<set<string>> arg_lambda_vars;
     vector<set<string>> arg_free_vars;
+    vector<expression_ref> simple_value;
     set<string> lambda_vars;
     set<string> free_vars;
     vector<bool> arg_loggers;
@@ -599,6 +623,7 @@ tuple<expression_ref, set<string>, set<string>, bool> get_model_function(const R
             arg_models.back() = {var("set_alphabet"),A,arg_models.back()};
             any_loggers = any_loggers or any_alphabet_loggers;
 	}
+        simple_value.push_back(is_simple_return(arg_models.back()));
     }
 
     do_block code;
