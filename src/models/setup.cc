@@ -579,7 +579,7 @@ tuple<expression_ref, set<string>, set<string>, bool> get_model_function(const R
     // 2. Parse models for arguments to figure out which free lambda variables they contain
     vector<expression_ref> arg_models;
     vector<set<string>> arg_lambda_vars;
-    vector<set<string>> arg_free_vars;
+    vector<set<string>> arg_free_vars(args.size());
     vector<expression_ref> simple_value;
     set<string> lambda_vars;
     set<string> free_vars;
@@ -591,17 +591,19 @@ tuple<expression_ref, set<string>, set<string>, bool> get_model_function(const R
 	auto argi = array_index(args,i);
 
 	string arg_name = argi.get_child("arg_name").get_value<string>();
-	auto [m, vars, free_vars, any_arg_loggers] = get_model_as(R, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
+	auto [m, vars, arg_free_vars_, any_arg_loggers] = get_model_as(R, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
+        arg_free_vars[i] = arg_free_vars_;
+
         for(int j=i+1;j<args.size();j++)
         {
             auto argj = array_index(args,j);
 
             string arg_name_j = "@"+argj.get_child("arg_name").get_value<string>();
-            if (free_vars.count(arg_name_j))
+            if (arg_free_vars[i].count(arg_name_j))
             {
-                free_vars.erase(arg_name_j);
+                arg_free_vars[i].erase(arg_name_j);
                 arg_referenced[j] = true;
-                std::cerr<<"Arg "<<name<<":"<<arg_name<<" referenced by "<<name<<":"<<arg_name_j<<"\n";
+                std::cerr<<"Arg "<<name<<":"<<arg_name<<" references "<<name<<":"<<arg_name_j<<"\n";
             }
         }
 
@@ -612,20 +614,22 @@ tuple<expression_ref, set<string>, set<string>, bool> get_model_function(const R
         any_loggers = any_loggers or any_arg_loggers;
 	arg_models.push_back(m);
 	arg_lambda_vars.push_back(vars);
-        arg_free_vars.push_back(free_vars);
-	add(lambda_vars, vars);
 
 	// Wrap the argument in its appropriate Alphabet type
 	if (auto alphabet_expression = argi.get_child_optional("alphabet"))
 	{
 	    auto alphabet_scope = extend_scope(*rule, i, scope);
-	    auto [A, vars, free_vars, any_alphabet_loggers] = get_model_as(R, *alphabet_expression, alphabet_scope);
+	    auto [A, vars, alphabet_free_vars, any_alphabet_loggers] = get_model_as(R, *alphabet_expression, alphabet_scope);
 	    if (vars.size())
 		throw myexception()<<"An alphabet cannot depend on a lambda variable!";
-            add(arg_free_vars.back(), free_vars);
+            add(arg_free_vars[i], alphabet_free_vars);
             arg_models.back() = {var("set_alphabet"),A,arg_models.back()};
             any_loggers = any_loggers or any_alphabet_loggers;
 	}
+
+	add(lambda_vars, vars);
+        add(free_vars, arg_free_vars[i]);
+
         simple_value.push_back(is_simple_return(arg_models.back()));
     }
 
