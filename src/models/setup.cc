@@ -423,7 +423,7 @@ optional<tuple<expression_ref,set<string>,set<string>,bool>> get_model_let(const
     // FIXME: we currently prohibit var_exp from containing any lambda-variables, so we don't need to check if it has them.
     bool do_log = is_unlogged_random(R, var_exp, scope);
     expression_ref var_loggers = List();
-    var_loggers = {var("add_logger"), var_loggers, var_name, pair_x, do_log};
+    var_loggers = {var("add_logger"), var_loggers, String(var_name), pair_x, do_log};
 
     expression_ref loggers = List();
     var Nothing("Nothing");
