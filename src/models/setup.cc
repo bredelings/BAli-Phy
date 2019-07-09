@@ -678,7 +678,7 @@ tuple<expression_ref, set<string>, set<string>, bool> get_model_function(const R
     {
 	auto argi = array_index(args,i);
 	string arg_name = argi.get_child("arg_name").get_value<string>();
-        if (simple_value[i] and not arg_referenced[i])
+        if (simple_value[i] and not arg_referenced[i] and arg_lambda_vars[i].empty())
             simple_args[arg_name] = simple_value[i];
     }
     expression_ref E = make_call(call, simple_args);
