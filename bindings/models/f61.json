@@ -3,7 +3,7 @@
     "synonyms": [ "F61" ],
     "result_type": "List[Pair[String,Double]]",
     "constraints": "Triplets[a,b]",
-    "call": "Data.Function.id[pi]",
+    "call": "id[@pi]",
     "args": [
         {
             "arg_name": "pi",

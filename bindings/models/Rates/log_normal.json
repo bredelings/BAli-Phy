@@ -2,7 +2,8 @@
     "name": "Rates.log_normal",
     "synonyms": ["Rates.log_normal"],
     "result_type": "MixtureModel[a]",
-    "call": "SModel.log_normal_rates[submodel,lsigma,n]",
+    "call": "SModel.log_normal_rates[@submodel,@lsigma,@n]",
+    "import": ["SModel"],
     "args": [
         {
             "arg_name": "n",

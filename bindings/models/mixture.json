@@ -2,7 +2,8 @@
     "name": "mixture",
     "synonyms":["Mixture"],
     "result_type": "MixtureModel[a]",
-    "call": "SModel.scaled_mixture[models,rates,frequencies]",
+    "call": "SModel.scaled_mixture[@models,@rates,@frequencies]",
+    "import": ["SModel"],
     "args": [
         {
             "arg_name": "rates",

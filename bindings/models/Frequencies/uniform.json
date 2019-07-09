@@ -1,7 +1,8 @@
 {
     "name": "Frequencies.uniform",
     "result_type": "List[Pair[String,Double]]",
-    "call": "SModel.ReversibleFrequency.uniform_frequencies_dict[a]",
+    "call": "SModel.uniform_frequencies_dict[@a]",
+    "import": ["SModel"],
     "args": [
         {
             "arg_name": "a",

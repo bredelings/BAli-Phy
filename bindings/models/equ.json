@@ -2,10 +2,11 @@
     "name": "equ",
     "synonyms": ["EQU"],
     "result_type": "ExchangeModel[a]",
-    "call": "SModel.ReversibleMarkov.equ[A]",
+    "call": "SModel.equ[@a]",
+    "import": ["SModel"],
     "args": [
         {
-            "arg_name": "A",
+            "arg_name": "a",
             "arg_type": "a",
             "default_value": "getAlphabet"
         }

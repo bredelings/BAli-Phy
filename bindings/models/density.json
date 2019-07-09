@@ -2,7 +2,8 @@
     "name": "density",
     "result_type": "LogDouble",
     "no_log": true,
-    "call": "Probability.Random.density[dist,x]",
+    "call": "density[@dist,@x]",
+    "import": ["Probability"],
     "args": [
         {
             "arg_name": "dist",

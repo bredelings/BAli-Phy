@@ -1,7 +1,8 @@
 {
     "name": "standard_code",
     "result_type": "GeneticCode",
-    "call": "Alphabet.standard_code",
+    "call": "standard_code",
+    "import": ["Alphabet"],
     "args": [],
     "title": "The standard genetic code"
 }

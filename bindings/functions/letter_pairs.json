@@ -1,10 +1,10 @@
 {
     "name": "letter_pairs",
     "result_type": "List[String]",
-    "call": "SModel.ReversibleMarkov.letter_pair_names[A]",
+    "call": "SModel.ReversibleMarkov.letter_pair_names[@a]",
     "args": [
         {
-            "arg_name": "A",
+            "arg_name": "a",
             "arg_type": "a"
         }
     ]

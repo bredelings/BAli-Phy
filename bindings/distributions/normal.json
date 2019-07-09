@@ -2,7 +2,8 @@
     "name": "normal",
     "synonyms": ["Normal"],
     "result_type": "Distribution[Double]",
-    "call": "Probability.normal[mean,sigma]",
+    "call": "normal[@mean,@sigma]",
+    "import": ["Probability"],
     "args": [
         {
             "arg_name": "mean",

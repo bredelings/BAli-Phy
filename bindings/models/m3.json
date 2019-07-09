@@ -2,7 +2,8 @@
     "name": "m3",
     "synonyms": ["M3"],
     "result_type": "MixtureModel[Codons[a]]",
-    "call": "SModel.m3[submodel,ps,omegas]",
+    "call": "SModel.m3[@submodel,@ps,@omegas]",
+    "import": ["SModel"],
     "args": [
         {
             "arg_name": "submodel",

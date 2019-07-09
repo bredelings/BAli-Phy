@@ -2,7 +2,8 @@
     "name": "quantile",
     "result_type": "Double",
     "no_log": true,
-    "call": "Probability.Random.quantile[dist,p]",
+    "call": "quantile[@dist,@p]",
+    "import": ["Probability"],
     "args": [
         {
             "arg_name": "dist",

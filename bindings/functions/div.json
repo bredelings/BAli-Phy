@@ -3,7 +3,7 @@
     "synonyms": ["Div"],
     "result_type": "Double",
     "no_log": true,
-    "call": "\/[x,y]",
+    "call": "\/[@x,@y]",
     "args": [
         {
             "arg_name": "x",

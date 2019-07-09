@@ -521,12 +521,16 @@ expression_ref make_call(const ptree& call, const map<string,expression_ref>& si
     expression_ref E;
 
     // FIXME! Here is where we are assuming that unqualified ids are arg_var_NAME variables.
-    if (is_qualified_symbol(name) or is_haskell_varsym(name) or is_haskell_consym(name) or is_haskell_builtin_con_name(name))
-	E = var(name);
-    else if (simple_args.count(name))
-        E = simple_args.at(name);            // substitute the value in for the argument.  FIXME: don't do this if var occurs twice!
+    if (name[0] == '@')
+    {
+        name = name.substr(1);
+        if (simple_args.count(name))
+            E = simple_args.at(name);
+        else
+            E = var("arg_var_"+name);
+    }
     else
-	E = var("arg_var_"+name);
+	E = var(name);
 
     for(auto& pair: call)
 	E = {E,make_call(pair.second, simple_args)};

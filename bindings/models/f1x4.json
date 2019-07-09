@@ -3,7 +3,8 @@
     "synonyms": [ "F1x4" ],
     "result_type": "List[Pair[String,Double]]",
     "constraints": "Triplets[a,b]",
-    "call": "SModel.Codons.f1x4'_frequencies[a,pi]",
+    "call": "f1x4'_frequencies[@a,@pi]",
+    "import": ["SModel"],
     "args": [
         {
             "arg_name": "pi",

@@ -2,7 +2,8 @@
     "name": "jtt",
     "deprecated-synonyms": ["JTT"],
     "result_type": "ExchangeModel[AA]",
-    "call": "SModel.jtt[a]",
+    "call": "jtt[@a]",
+    "import": ["SModel"],
     "args": [
         {
             "arg_name": "a",

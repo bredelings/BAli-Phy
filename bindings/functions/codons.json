@@ -2,7 +2,8 @@
     "name": "codons",
     "synonyms": [ "Codons" ],
     "result_type": "Codons[a]",
-    "call": "Alphabet.codons[nucleotides,code]",
+    "call": "Alphabet.codons[@nucleotides,@code]",
+    "import": ["Alphabet"],
     "args": [
         {
             "arg_name": "nucleotides",

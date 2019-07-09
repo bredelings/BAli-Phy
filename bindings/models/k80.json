@@ -5,7 +5,8 @@
     "deprecated-synonyms": ["K80","K2P"],
     "result_type": "RevCTMC[a]",
     "constraints": ["Nucleotides[a]"],
-    "call": "SModel.Nucleotides.k80[kappa,a]",
+    "call": "k80[@kappa,@a]",
+    "import": ["SModel"],
     "args": [
         {
             "arg_name": "kappa",

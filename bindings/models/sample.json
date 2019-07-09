@@ -3,7 +3,8 @@
     "result_type": "a",
     "perform": true,
     "no_log": true,
-    "call": "Probability.sample[dist]",
+    "call": "sample[@dist]",
+    "import": ["Probability"],
     "args": [
         {
             "arg_name": "dist",

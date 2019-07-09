@@ -4,7 +4,8 @@
     "result_type": "RevCTMC[Codons[a]]",
     "constraints": ["Nucleotides[a]"],
     "title": "The Muse & Gaut (1994) model of dN/dS.",
-    "call": "SModel.Codons.mg94[a,SModel.Frequency.frequencies_from_dict[Alphabet.getNucleotides[a],pi],omega]",
+    "call": "mg94[@a,frequencies_from_dict[getNucleotides[@a],@pi],@omega]",
+    "import": ["SModel","Alphabet"],
     "args": [
         {
             "arg_name": "omega",

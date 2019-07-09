@@ -3,7 +3,8 @@
     "synonyms": ["UnitMixture"],
     "result_type": "MixtureModel[a]",
     "no_log": true,
-    "call": "SModel.unit_mixture[submodel]",
+    "call": "unit_mixture[@submodel]",
+    "import": ["SModel"],
     "args": [
         {
             "arg_name": "submodel",

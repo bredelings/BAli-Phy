@@ -2,7 +2,8 @@
     "name": "log_gamma",
     "synonyms": ["logGamma"],
     "result_type": "Distribution[Double]",
-    "call": "Probability.log_gamma[a,b]",
+    "call": "log_gamma[@a,@b]",
+    "import": ["Probability"],
     "args": [
         {
             "arg_name": "a",

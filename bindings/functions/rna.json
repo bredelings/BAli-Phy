@@ -2,7 +2,8 @@
     "name": "rna",
     "synonyms": ["RNA"],
     "result_type": "RNA",
-    "call": "Alphabet.rna",
+    "call": "rna",
+    "import": ["Alphabet"],
     "args": [],
     "title": "The RNA alphabet"
 }

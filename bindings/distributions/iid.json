@@ -1,7 +1,8 @@
 {
     "name": "iid",
     "result_type": "Distribution[List[a]]",
-    "call": "Probability.iid[n,dist]",
+    "call": "iid[@n,@dist]",
+    "import": ["Probability"],
     "args": [
         {
             "arg_name": "n",

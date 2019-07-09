@@ -1,10 +1,11 @@
 {
     "name": "letters",
     "result_type": "List[String]",
-    "call": "Alphabet.alphabet_letters[A]",
+    "call": "alphabet_letters[@a]",
+    "import": ["Alphabet"],
     "args": [
         {
-            "arg_name": "A",
+            "arg_name": "a",
             "arg_type": "a"
         }
     ]

@@ -1,7 +1,8 @@
 {
     "name": "get_q",
     "result_type": "Matrix[a]",
-    "call": "SModel.ReversibleMarkov.get_q[q]",
+    "call": "get_q[@q]",
+    "import": ["SModel"],
     "args": [
         {
             "arg_name": "q",

@@ -2,7 +2,8 @@
     "name": "getAlphabet",
     "result_type": "a",
     "perform": true,
-    "call": "Probability.Random.GetAlphabet",
+    "call": "GetAlphabet",
+    "import": ["Probability"],
     "args": [],
     "title" : "The current alphabet"
 }

@@ -2,7 +2,8 @@
     "name": "num_branches",
     "result_type": "Int",
     "no_log": true,
-    "call": "Tree.numBranches[t]",
+    "call": "numBranches[@t]",
+    "import": ["Tree"],
     "args": [
         {
             "arg_name": "t",

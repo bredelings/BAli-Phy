@@ -4,7 +4,8 @@
     "synonyms": ["mut_sel0"],
     "constraints": ["Nucleotides[a]"],
     "title": "Mutation-selection model with fitness values for amino-acids",
-    "call": "SModel.mut_sel_aa'[ss,submodel]",
+    "call": "mut_sel_aa'[@ss,@submodel]",
+    "import": ["SModel"],
     "args": [
         {
             "arg_name": "submodel",

@@ -2,7 +2,8 @@
     "name": "f81",
     "synonyms": ["F81"],
     "result_type": "RevCTMC[a]",
-    "call": "SModel.ReversibleMarkov.f81[SModel.Frequency.frequencies_from_dict[a,pi],a]",
+    "call": "f81[frequencies_from_dict[@a,@pi],@a]",
+    "import": ["SModel"],
     "args": [
         {
             "arg_name": "pi",

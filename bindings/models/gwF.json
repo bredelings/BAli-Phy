@@ -1,7 +1,8 @@
 {
     "name": "gwF",
     "result_type": "RevCTMC[a]",
-    "call": "SModel.ReversibleMarkov.plus_gwf[a,submodel,SModel.Frequency.frequencies_from_dict[a,pi],f]",
+    "call": "plus_gwf[@a,@submodel,frequencies_from_dict[@a,@pi],@f]",
+    "import": ["SModel"],
     "args": [
         {
             "arg_name": "pi",

@@ -2,7 +2,8 @@
     "name": "inv",
     "synonyms": ["INV"],
     "result_type": "MixtureModel[a]",
-    "call": "SModel.plus_inv[submodel,p_inv]",
+    "call": "plus_inv[@submodel,@p_inv]",
+    "import": ["SModel"],
     "args": [
         {
             "arg_name": "p_inv",

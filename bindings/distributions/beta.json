@@ -2,7 +2,8 @@
     "name": "beta",
     "synonyms": [ "Beta" ],
     "result_type": "Distribution[Double]",
-    "call": "Probability.beta[a,b]",
+    "call": "Probability.beta[@a,@b]",
+    "import": ["Probability"],
     "args": [
         {
             "arg_name": "a",

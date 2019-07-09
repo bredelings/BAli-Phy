@@ -2,7 +2,8 @@
     "name": "dirichlet_on",
     "synonyms": ["DirichletOn"],
     "result_type": "Distribution[List[Pair[a,Double]]]",
-    "call": "Probability.dirichlet_on'[items,n]",
+    "call": "dirichlet_on'[@items,@n]",
+    "import": ["Probability"],
     "args": [
         {
             "arg_name": "items",

@@ -2,7 +2,8 @@
     "name": "log_normal",
     "synonyms": [ "logNormal" ],
     "result_type": "Distribution[Double]",
-    "call": "Probability.log_normal[lmu,lsigma]",
+    "call": "log_normal[@lmu,@lsigma]",
+    "import": ["Probability"],
     "args": [
         {
             "arg_name": "lmu",

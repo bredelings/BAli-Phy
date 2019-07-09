@@ -10,7 +10,8 @@
 		"journal": {"name": "BMC Evolutionary Biology", "volume": "7", "number": "1", "pages": "40"},
 		"identifier": [{"type":"doi","id":"10.1186/1471-2148-7-40"}]
 	       },
-    "call": "IModel.rs07[log_rate,mean_length]",
+    "call": "IModel.rs07[@log_rate,@mean_length]",
+    "import": ["IModel"],
     "args": [
         {
             "arg_name": "log_rate",

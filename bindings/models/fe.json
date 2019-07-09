@@ -2,7 +2,8 @@
     "name": "fe",
     "deprecated-synonyms": ["fq,FE,FQ"],
     "result_type": "RevCTMC[a]",
-    "call": "SModel.ReversibleMarkov.plus_fe[a,submodel]",
+    "call": "plus_fe[@a,@submodel]",
+    "import": ["SModel"],
     "args": [
         {
             "arg_name": "submodel",

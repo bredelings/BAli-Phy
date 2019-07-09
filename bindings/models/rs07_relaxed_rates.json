@@ -2,6 +2,7 @@
     "name": "rs07_relaxed_rates",
     "result_type": "IndelModel",
     "call": "IModel.rs07_relaxed_rates_model",
+    "import": ["IModel"],
     "args": "",
     "extract": "all"
 }

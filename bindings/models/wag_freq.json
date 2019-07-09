@@ -2,7 +2,8 @@
     "title": "The WAG amino-acid frequencies",
     "name": "wag_freq",
     "result_type": "List[Pair[String,Double]]",
-    "call": "SModel.wag_frequencies[a]",
+    "call": "wag_frequencies[@a]",
+    "import": ["SModel"],
     "args": [
         {
             "arg_name": "a",
