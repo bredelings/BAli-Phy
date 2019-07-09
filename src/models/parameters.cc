@@ -1568,7 +1568,7 @@ std::string generate_atmodel_program(const vector<alignment>& A,
 
         if (tt.n_nodes() == 1)
         {
-            expression_ref seq = {var("Array.!"),leaf_sequences_var, 0};
+            expression_ref seq = {var("!"),leaf_sequences_var, 0};
             program.let(cls_var, 0);
             program.let(likelihood_var, {var("peel_likelihood_1"), seq, alphabet_var, f});
         }
