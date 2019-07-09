@@ -254,7 +254,7 @@ extern "C" closure builtin_function_unpack_cpp_string(OperationArgs& Args)
 
     int i = Args.evaluate(1).as_int();
     int r_string = Args.evaluate_slot_to_reg(0);
-    auto& s = M[r_string].exp.as_<String>();
+    auto& s = M[r_string].exp.as_checked<String>();
 
     if (i >= s.size())
         return constructor("[]",0);
