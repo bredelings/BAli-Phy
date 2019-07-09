@@ -647,13 +647,16 @@ tuple<expression_ref, set<string>, set<string>, bool> get_model_function(const R
         // If there are no lambda vars used, then we can just place the result into scope directly, without applying anything to it.
 	if (arg_lambda_vars[i].empty())
         {
-            if (simple_value[i] and not arg_referenced[i])
+            var x("arg_var_"+arg_name);
+            if (simple_value[i])
             {
-                assert(not arg_loggers[i]);
+                if (not arg_referenced[i])
+                    assert(not arg_loggers[i]);
+                else
+                    code.let(x,simple_value[i]);
             }
             else
             {
-                var x("arg_var_"+arg_name);
                 var logger("arg_logger_"+arg_name);
 
                 // (arg_var_NAME, arg_logger_NAME) <- arg
