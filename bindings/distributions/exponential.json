@@ -2,7 +2,7 @@
     "name": "exponential",
     "synonyms": [ "Exponential" ],
     "result_type": "Distribution[Double]",
-    "call": "Probability.Distribution.Exponential.shifted_exponential[mean,shift]",
+    "call": "Probability.shifted_exponential[mean,shift]",
     "title": "The Exponential distribution",
     "args": [
         {

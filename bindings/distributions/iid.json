@@ -1,7 +1,7 @@
 {
     "name": "iid",
     "result_type": "Distribution[List[a]]",
-    "call": "Probability.Distribution.List.iid[n,dist]",
+    "call": "Probability.iid[n,dist]",
     "args": [
         {
             "arg_name": "n",

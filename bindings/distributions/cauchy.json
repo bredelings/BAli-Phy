@@ -2,7 +2,7 @@
     "name": "cauchy",
     "synonyms": ["Cauchy"],
     "result_type": "Distribution[Double]",
-    "call": "Probability.Distribution.Cauchy.cauchy[m,s]",
+    "call": "Probability.cauchy[m,s]",
     "args": [
         {
             "arg_name": "m",
