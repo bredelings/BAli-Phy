@@ -342,6 +342,54 @@ std::shared_ptr<module_loader> setup_module_loader(variables_map& args, const st
     return std::shared_ptr<module_loader>(new module_loader(L));
 }
 
+std::string generate_print_program(const model_t& print, const expression_ref& a)
+{
+    std::ostringstream program_file;
+    program_file<<"\nimport SModel";
+    program_file<<"\nimport IModel";
+    program_file<<"\nimport Probability";
+    program_file<<"\nimport Parameters";
+    program_file<<"\nimport Range";
+    program_file<<"\nimport PopGen";
+    program_file<<"\nimport Alignment";
+    program_file<<"\nimport BAliPhy.ATModel";
+    program_file<<"\nimport BAliPhy.ATModel.DataPartition";
+    program_file<<"\nimport Alphabet";
+    program_file<<"\nimport Tree";
+    program_file<<"\nimport Data.Maybe";
+
+
+    program_file<<"\nimport SModel.ReversibleMarkov";
+    program_file<<"\nimport SModel.Codons";
+    program_file<<"\nimport Probability.Random";
+    program_file<<"\nimport Compiler.Real";
+    program_file<<"\nimport Data.Tuple";
+    program_file<<"\nimport Data.List";
+    program_file<<"\nimport Foreign.Vector";
+    program_file<<"\nimport Foreign.String";
+    program_file<<"\nimport SModel.Nucleotides";
+    program_file<<"\nimport SModel.Frequency";
+    program_file<<"\nimport Probability.Distribution.Tree";
+    program_file<<"\nimport Probability.Distribution.Laplace";
+    program_file<<"\nimport Probability.Distribution.Normal";
+    program_file<<"\nimport Probability.Distribution.Beta";
+    program_file<<"\nimport Probability.Distribution.Exponential";
+    program_file<<"\nimport Probability.Distribution.ExpTransform";
+    program_file<<"\nimport Probability.Distribution.Dirichlet";
+    program_file<<"\nimport Probability.Distribution.Gamma";
+    program_file<<"\nimport Probability.Distribution.List";
+    program_file<<"\nimport Probability.Distribution.Uniform";
+    program_file<<"\nimport Data.Bool";
+    program_file<<"\nimport Compiler.Base";
+
+    program_file<<"\n\nprint_model = "<<print.expression.print();
+    program_file<<"\n\nalphabet = "<<a.print();
+    program_file<<"\n\nmain = putStrLn $ show $ fst $ unsafePerformIO $ run_lazy alphabet print_model";
+    program_file<<"\n";
+
+    return program_file.str();
+}
+
 int simple_size(const expression_ref& E);
 
 int main(int argc,char* argv[])
@@ -474,8 +522,6 @@ int main(int argc,char* argv[])
         run_info(info, proc_id, argc, argv);
         M->set_args(trailing_args(argc, argv, trailing_args_separator));
 
-        L.reset();
-
         //------------ Avoid printing seed during unrelated error messages ---//
 
         if (log_verbose < 1) out_cache<<"random seed = "<<seed<<endl<<endl;
@@ -485,13 +531,11 @@ int main(int argc,char* argv[])
         {
             show_only = true; // Don't print machine stats on error.
 
-            (*M) += { "SModel","Probability","Range","PopGen","Alignment","IModel" };
             const string mstring = args["print"].as<string>();
             Rules R(get_package_paths(argv[0], args));
             model_t print = get_model(R,"a",mstring);
 
-            expression_ref print_exp = print.expression;
-            expression_ref a = error("No alphabet!");
+            expression_ref a = {var("error"),String("No alphabet!")};
             if (args.count("alphabet"))
             {
                 auto as = args["alphabet"].as<vector<string>>();
@@ -501,28 +545,24 @@ int main(int argc,char* argv[])
                 if (as.size() == 1)
                 {
                     if (alpha == "DNA")
-                        a = DNA();
+                        a = var("dna");
                     else if (alpha == "RNA")
-                        a = RNA();
+                        a = var("rna");
                     else if (alpha == "AA")
-                        a = AminoAcids();
+                        a = var("amino_acids");
                     else if (alpha == "Doublets")
-                        a = Doublets(RNA());
+                        a = {var("doublets"),var("rna")};
                     else if (alpha == "Triplets")
-                        a = Triplets(DNA());
+                        a = {var("triplets"),var("dna")};
                     else if (alpha == "Codons")
-                        a = Codons(DNA(), AminoAcids(), Standard_Genetic_Code());
+                        a = {var("codons"),var("dna"),var("standard_code")};
                 }
             }
-            print_exp = {var("Probability.Random.run_lazy"), a, print_exp};
-            print_exp = {var("Prelude.unsafePerformIO"),print_exp};
-            print_exp = {var("Data.Tuple.fst"),print_exp };
-            print_exp = {var("Prelude.show"),print_exp };
-            print_exp = {var("Prelude.listToString"),print_exp };
-            int print_exp_index = M->add_compute_expression( print_exp );
-            auto print_result = M->evaluate(print_exp_index);
-            std::cout<<(string)print_result.as_<String>()<<"\n";
-
+            {
+                checked_ofstream program_file("Print.hs");
+                program_file<<generate_print_program(print, a);
+            }
+            execute_file(L, "Print.hs");
             exit(0);
         }
         else if (args.count("model"))
@@ -543,6 +583,8 @@ int main(int argc,char* argv[])
                 if (P->branch_scale(i).is_modifiable(*P))
                     P->set_branch_scale(i, 1.0);
         }
+
+        L.reset();
 
         set_initial_parameter_values(*M,args);
 
