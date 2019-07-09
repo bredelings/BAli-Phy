@@ -603,7 +603,8 @@ tuple<expression_ref, set<string>, set<string>, bool> get_model_function(const R
             {
                 arg_free_vars[i].erase(arg_name_j);
                 arg_referenced[j] = true;
-                std::cerr<<"Arg "<<name<<":"<<arg_name<<" references "<<name<<":"<<arg_name_j<<"\n";
+                if (log_verbose > 1)
+                    std::cerr<<"Arg "<<name<<":"<<arg_name<<" references "<<name<<":"<<arg_name_j<<"\n";
             }
         }
 
