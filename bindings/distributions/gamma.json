@@ -2,7 +2,7 @@
     "name": "gamma",
     "synonyms": ["Gamma"],
     "result_type": "Distribution[Double]",
-    "call": "Probability.shifted_gamma[a,b,shift]",
+    "call": "Probability.gamma[a,b]",
     "args": [
         {
             "arg_name": "a",
@@ -13,22 +13,14 @@
             "arg_name": "b",
             "arg_type": "Double",
 	    "description": "The scale parameter"
-        },
-	{
-	    "arg_name": "shift",
-	    "arg_type": "Double",
-	    "default_value": "0.0",
-	    "description": "The shift parameter",
-	    "suppress_default": true
-	}
+        }
     ],
     "title" : "The gamma distribution",
     "description": "mean = a * b\nvariance = a*b^2",
     "examples": ["~gamma[1.0,mu]                   # An exponential",
-		 "~gamma[a,b,1.5]                  # A Gamma shifted right by 1.5",
 		 "~iid[10,gamma[0.5,2]]            # 10 samples",
 		 "quantile[gamma[0.5,2],0.95]",
 		 "density[gamma[0.5,2],0.95]"
-		]
-
+		],
+    "see": ["shifted_gamma","log_gamma"]
 }

@@ -1,15 +1,19 @@
 {
-    "name": "exponential",
-    "synonyms": [ "Exponential" ],
+    "name": "shifted_exponential",
     "result_type": "Distribution[Double]",
-    "call": "Probability.exponential[mean]",
+    "call": "Probability.shifted_exponential[mean,shift]",
     "title": "The Exponential distribution",
     "args": [
         {
             "arg_name": "mean",
             "arg_type": "Double",
 	    "description": "The mean parameter"
-        }
+        },
+	{
+	    "arg_name": "shift",
+	    "arg_type": "Double",
+	    "description": "The shift parameter"
+	}
     ],
     "see": ["shifted_exponential"]
 }

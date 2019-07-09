@@ -1,6 +1,5 @@
 {
     "name": "rs05",
-    "synonyms": ["RS05"],
     "result_type": "IndelModel",
     "call": "IModel.rs05[log_prob,mean_length,tau]",
     "title": "Redelings & Suchard (2005) model of insertions and deletions",
@@ -15,12 +14,12 @@
         {
             "arg_name": "log_prob",
             "arg_type": "Double",
-            "default_value": "~Laplace[-4,0.707]"
+            "default_value": "~laplace[-4,0.707]"
         },
         {
             "arg_name": "mean_length",
             "arg_type": "Double",
-            "default_value": "~Exponential[10,1]"
+            "default_value": "~shifted_exponential[10,1]"
         },
         {
             "arg_name": "tau",

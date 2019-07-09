@@ -21,7 +21,7 @@
         {
             "arg_name": "mean_length",
             "arg_type": "Double",
-            "default_value": "~exponential[10,1]",
+            "default_value": "~shifted_exponential[10,1]",
 	    "description": "The mean indel length"
         }
     ],
