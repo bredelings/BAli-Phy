@@ -25,9 +25,11 @@ rna = builtin_rna ()
         
 builtin builtin_aa  1 "aa" "Alphabet"
 aa  = builtin_aa  ()
+amino_acids = builtin_aa
 
 builtin builtin_aaWithStop 1 "aaWithStop" "Alphabet"
 aaWithStop = builtin_aaWithStop ()
+amino_acids_with_stop = builtin_aaWithStop ()
 
 builtin builtin_standard_code 1 "genetic_code_standard" "Alphabet"
 standard_code = builtin_standard_code ()
