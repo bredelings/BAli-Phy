@@ -1470,6 +1470,13 @@ std::string generate_atmodel_program(const vector<alignment>& A,
     var branch_categories("branch_categories");
     program.let(branch_categories, { var("map"), var("modifiable"), {var("replicate"), tt.n_branches(), 0} });
 
+    // FIXME: We can't load the alignments to read their names until we know the alphabets!
+    // FIXME: Can we load the alignments as SEQUENCES first?
+
+    // FIXME: We aren't using the ranges to select columns!
+
+    // FIXME: We are loading files multiple times!
+
     // P6. Create objects for data partitions
     vector<expression_ref> partitions;
     for(int i=0; i < A.size(); i++)
