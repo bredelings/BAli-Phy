@@ -30,6 +30,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "models/TreeInterface.H"  // for TreeInterface
 class alignment;
 
+void connect_leaf_characters(alignment& A,const TreeInterface& T);
 void minimally_connect_leaf_characters(alignment& A,const TreeInterface& t);
 
 bool check_leaf_characters_minimally_connected(const alignment& A,const TreeInterface& t);
@@ -38,4 +39,8 @@ bool check_leaf_characters_minimally_connected(const alignment& A,const TreeInte
 void check_internal_nodes_connected(const alignment& A,const TreeInterface& t,const std::vector<int>& ignore = std::vector<int>());
 
 void check_alignment(const alignment& A,const TreeInterface& t,bool internal_sequences);
+
+// Add sequences to A corresponding to internal nodes in T
+alignment add_internal(alignment A, const std::vector<std::string>& labels, const TreeInterface& T);
+
 #endif

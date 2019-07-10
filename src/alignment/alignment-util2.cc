@@ -167,6 +167,27 @@ void minimally_connect_leaf_characters(alignment& A,const TreeInterface& t)
     remove_empty_columns(A);
 }    
 
+void connect_leaf_characters(alignment& A,const TreeInterface& t)
+{
+    assert(A.n_sequences() == t.n_nodes());
+
+    auto between_characters = get_connected_states(get_states_for_leaf_characters(A, t), t);
+
+    for(int n = 0; n < t.n_nodes(); n++)
+    {
+	auto& present = between_characters[n];
+
+	if (t.is_leaf_node(n)) continue;
+
+	for(int column=0;column<A.length();column++)
+	{
+	    // put present characters into the alignment.
+	    if (present[column] and A.gap(column,n))
+		A.set_value(column, n, alphabet::not_gap );
+	}
+    }
+}
+
 /// Check that internal node states are consistent
 void check_internal_nodes_connected(const alignment& A,const TreeInterface& t,const vector<int>&)
 {
@@ -216,3 +237,31 @@ void check_alignment(const alignment& A,const TreeInterface& t,bool internal_seq
     // Finally check that the internal node states are consistent
     check_internal_nodes_connected(A,t);
 }
+
+// Add sequences to A corresponding to internal nodes in T
+alignment add_internal(alignment A, const std::vector<std::string>& labels, const TreeInterface& T)
+{
+    // Complain if A and T don't correspond
+    if (A.n_sequences() != T.n_leaves())
+	throw myexception()<<"Number of sequence in alignment doesn't match number of leaves in tree"
+			   <<"- can't add internal sequences";
+
+    // Add empty sequences
+    vector<sequence> S;
+    for(int i=T.n_leaves();i<T.n_nodes();i++) 
+    {
+	sequence s;
+
+	if (labels[i] == "")
+	    throw myexception()<<"Adding internal sequences: Tree has missing internal node name!";
+
+	s.name = labels[i];
+
+	S.push_back(s);
+    }
+
+    A.add_sequences(S);
+
+    return A;
+}
+
