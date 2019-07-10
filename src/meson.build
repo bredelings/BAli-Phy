@@ -100,6 +100,8 @@ libbaliphy_sources = [
   'models/unification.cc',
   'models/model.cc',
 
+  'tree-align/link2.cc',
+
   'probability/choose.cc',
   'probability/probability.cc',
 
