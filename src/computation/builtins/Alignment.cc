@@ -381,3 +381,15 @@ extern "C" closure builtin_function_sequences_from_alignment(OperationArgs& Args
 
     return sequences;
 }
+
+extern "C" closure builtin_function_sequence_names(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& A = arg0.as_<Box<alignment>>().value();
+
+    EVector sequence_names;
+    for(int i=0;i<A.n_sequences();i++)
+	sequence_names.push_back(String(A.seq(i).name));
+
+    return sequence_names;
+}

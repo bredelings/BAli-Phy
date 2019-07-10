@@ -12,12 +12,10 @@ builtin alignment_length 1 "alignment_length" "Alignment"
 builtin transition_counts 1 "transition_counts" "Alignment"
 builtin pairwise_alignment_probability_from_counts 2 "pairwise_alignment_probability_from_counts" "Alignment"
 
-builtin builtin_compress_alignment 2 "compress_alignment" "Alignment"
 -- Alignment -> Int -> EVector Int-> EVector (EVector Int)
 builtin builtin_leaf_sequence_counts 3 "leaf_sequence_counts" "Alignment"
 
 builtin builtin_load_alignment 2 "load_alignment" "Alignment"
-builtin builtin_sequences_from_alignment 1 "sequences_from_alignment" "Alignment"
 
 builtin builtin_alignment_row_to_bitvector 2 "alignment_row_to_presence_bitvector" "Bits"
 builtin builtin_pairwise_alignment_from_bits 2 "pairwise_alignment_from_bits" "Bits"
@@ -27,7 +25,7 @@ builtin flip_alignment 1 "flip_alignment" "Alignment"
 branch_hmms (model,_) distances n_branches = listArray' $ map (model distances) [0..n_branches-1]
   
 alignment_branch_pr a hmms b = pairwise_alignment_probability_from_counts (transition_counts (a!b)) (hmms!b)
-  
+
 seqlength as tree node = pairwise_alignment_length1 (as!b) where
     b = head $ edgesOutOfNode tree node
 
@@ -35,8 +33,14 @@ product' = foldl' (*) (doubleToLogDouble 1.0)
 alignment_pr_top as tree hmms = product' $ map (alignment_branch_pr as hmms) [0..numBranches tree - 1]
 alignment_pr_bot as tree (_,lengthp) = (product' $ map (lengthp . seqlength as tree) (internal_nodes tree))^2
 alignment_pr1 length (_,lengthp) = lengthp length
+
+builtin builtin_sequence_names 1 "sequence_names" "Alignment"
+sequence_names a = map unpack_cpp_string $ list_from_vector $ builtin_sequence_names a
+
 load_alignment alphabet filename = builtin_load_alignment alphabet (listToString filename)
+
 -- sequence_from_alignment :: AlignmentMatrix -> [ Vector<int> ]
+builtin builtin_sequences_from_alignment 1 "sequences_from_alignment" "Alignment"
 sequences_from_alignment a = list_from_vector $ builtin_sequences_from_alignment a
 
 alignment_row_to_bitvector a row = BitVector $ builtin_alignment_row_to_bitvector a row
@@ -113,6 +117,7 @@ compute_sequence_lengths seqs tree as = [ if node < n_leaves then vector_size (s
     where n_leaves = numElements seqs
 
 -- Current a' is an alignment, but counts and mapping are EVector
+builtin builtin_compress_alignment 2 "compress_alignment" "Alignment"
 compress_alignment a n = (a', counts, mapping) where ca = builtin_compress_alignment a n
                                                      a' = get_vector_index ca 0
                                                      counts = get_vector_index ca 1
