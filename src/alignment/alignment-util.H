@@ -48,8 +48,6 @@ alignment chop_internal(alignment A, int n_leaves);
 // Add sequences to A corresponding to internal nodes in T
 alignment add_internal(alignment A,const SequenceTree& T);
 
-alignment reorder_sequences(const alignment& A, const std::vector<std::string>& names);
-
 /// Construct a mapping of letters to columns for each leaf sequence
 std::vector< std::vector<int> > column_lookup(const alignment& A,int nleaves = -1);
 
