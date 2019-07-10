@@ -25,5 +25,6 @@
 
 /// Map leaf nodes of T to the leaf sequences of A
 void link(alignment& A,SequenceTree& T,bool internal_sequences=true);
+void link_A(alignment& A,const SequenceTree& T,bool internal_sequences=true);
 
 #endif

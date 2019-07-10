@@ -38,22 +38,7 @@ alignment remap_A_indices(alignment& A, const SequenceTree& T)
 
     assert(A.n_sequences() == labels.size());
 
-    //----- Remap leaf indices for T onto A's leaf sequence indices -----//
-    try {
-	vector<int> mapping = compute_mapping(labels, sequence_names(A));
-
-	return reorder_sequences(A,mapping);
-    }
-    catch(const bad_mapping<string>& b)
-    {
-	bad_mapping<string> b2 = b;
-	b2.clear();
-	if (b.from == 0)
-	    b2<<"Couldn't find sequence \""<<b2.missing<<"\" in alignment.";
-	else
-	    b2<<"Alignment sequence '"<<b2.missing<<"' not found in the tree.";
-	throw b2;
-    }
+    return reorder_sequences(A, labels);
 }
 
 void add_internal_labels(SequenceTree& T)
@@ -85,6 +70,14 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences)
 	throw myexception()<<"Cannot link a multifurcating tree to an alignment with internal sequences.";
     }
 
+    if (internal_sequences)
+        add_internal_labels(T);
+
+    link_A(A, T, internal_sequences);
+}
+
+void link_A(alignment& A,const SequenceTree& T,bool internal_sequences)
+{
     //------ IF sequences < leaf nodes THEN complain ---------//
     if (A.n_sequences() < T.n_leaves())
 	throw myexception()<<"Tree has "<<T.n_leaves()<<" leaves but Alignment only has "
@@ -97,7 +90,6 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences)
 
 	if (internal_sequences)
 	{
-	    add_internal_labels(T);
 	    A = add_internal(A,T);
 	    connect_leaf_characters(A,T);
 	}
@@ -128,4 +120,3 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences)
     //---- Check to see that internal nodes satisfy constraints ----//
     check_alignment(A,T,internal_sequences);
 }
-
