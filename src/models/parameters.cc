@@ -382,8 +382,8 @@ EVector unaligned_alignments_on_tree(const Tree& t, const vector<vector<int>>& s
 
 data_partition_constants::data_partition_constants(Parameters* p, int i, const alignment& AA, int like_calc)
     :conditional_likelihoods_for_branch(2*p->t().n_branches()),
-     sequence_length_indices(AA.n_sequences()),
-     sequence_length_pr_indices(AA.n_sequences()),
+     sequence_length_indices(p->t().n_nodes()),
+     sequence_length_pr_indices(p->t().n_nodes()),
      seqs(AA.seqs()),
      sequences( alignment_letters(AA, p->t().n_leaves()) ),
      a(AA.get_alphabet().clone()),
