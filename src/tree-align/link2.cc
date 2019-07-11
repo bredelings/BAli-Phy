@@ -41,7 +41,7 @@ alignment remap_A_indices(alignment& A, vector<string> labels, TreeInterface T)
     return reorder_sequences(A, labels);
 }
 
-void link_A(alignment& A, const vector<string>& labels, TreeInterface T, bool internal_sequences)
+alignment link_A(alignment A, const vector<string>& labels, TreeInterface T, bool internal_sequences)
 {
     //------ IF sequences < leaf nodes THEN complain ---------//
     if (A.n_sequences() < T.n_leaves())
@@ -84,4 +84,6 @@ void link_A(alignment& A, const vector<string>& labels, TreeInterface T, bool in
 
     //---- Check to see that internal nodes satisfy constraints ----//
     check_alignment(A,T,internal_sequences);
+
+    return A;
 }
