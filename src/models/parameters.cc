@@ -455,7 +455,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 
         // Alignment prior
         alignment_prior_index = p->add_compute_expression( {var("Alignment.alignment_pr"), alignment_on_tree, hmms.ref(*p), model} );
-
     }
 
     cl_index = p->add_compute_expression({var("BAliPhy.ATModel.DataPartition.cond_likes"), partition});
