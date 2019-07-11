@@ -393,3 +393,20 @@ extern "C" closure builtin_function_sequence_names(OperationArgs& Args)
 
     return sequence_names;
 }
+
+extern "C" closure builtin_function_reorder_alignment(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& names = arg0.as_<EVector>();
+
+    auto arg1 = Args.evaluate(1);
+    auto& A1 = arg1.as_<Box<alignment>>().value();
+
+    vector<std::string> sequence_names;
+    for(auto& name: names)
+        sequence_names.push_back(name.as_<String>());
+
+    object_ptr<Box<alignment>> A2(new Box<alignment>(reorder_sequences(A1, sequence_names)));
+
+    return A2;
+}

@@ -36,6 +36,8 @@ alignment_pr1 length (_,lengthp) = lengthp length
 
 builtin builtin_sequence_names 1 "sequence_names" "Alignment"
 sequence_names a = map unpack_cpp_string $ list_from_vector $ builtin_sequence_names a
+builtin builtin_reorder_alignment 2 "reorder_alignment" "Alignment"
+reorder_alignment names a = builtin_reorder_alignment names' a where names' = list_to_vector $ map pack_cpp_string names
 
 load_alignment alphabet filename = builtin_load_alignment alphabet (listToString filename)
 
