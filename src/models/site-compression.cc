@@ -78,7 +78,11 @@ alignment alignment_from_patterns(const alignment& old, const vector<vector<int>
     assert(t.n_leaves() == patterns[0].size());
     assert(old.seqs().size() == t.n_nodes());
 
-    alignment A(old.get_alphabet(), old.seqs(), patterns.size());
+    vector<sequence> seqs;
+    for(auto seq: old.seqs())
+        seqs.push_back(sequence(seq.name));
+
+    alignment A(old.get_alphabet(), seqs, patterns.size());
 
     for(int i=0;i<t.n_nodes();i++)
         if (i < t.n_leaves())
@@ -111,7 +115,11 @@ alignment alignment_from_patterns(const alignment& old, const vector<vector<int>
     assert(t.n_leaves() == patterns[0].size());
     assert(old.seqs().size() == t.n_nodes());
 
-    alignment A(old.get_alphabet(), old.seqs(), patterns.size());
+    vector<sequence> seqs;
+    for(auto seq: old.seqs())
+        seqs.push_back(sequence(seq.name));
+
+    alignment A(old.get_alphabet(), seqs, patterns.size());
 
     for(int i=0;i<t.n_nodes();i++)
         if (i < t.n_leaves())
