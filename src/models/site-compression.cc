@@ -72,37 +72,17 @@ tuple<vector<vector<int>>,vector<int>,vector<int>> compress_site_patterns(const 
     return {columns, counts, mapping};
 }
 
-alignment alignment_from_patterns(const alignment& old, const vector<vector<int>>& patterns, const TreeInterface& t)
+alignment alignment_from_patterns(const alignment& old, const vector<vector<int>>& patterns, int n_leaves)
 {
-    assert(old.n_sequences() <= t.n_nodes());
-    assert(t.n_leaves() == patterns[0].size());
-    assert(old.seqs().size() == t.n_nodes());
+    assert(n_leaves == patterns[0].size());
 
     vector<sequence> seqs;
-    for(auto seq: old.seqs())
-        seqs.push_back(sequence(seq.name));
+    for(int i=0;i<n_leaves;i++)
+        seqs.push_back(sequence(old.seqs()[i].name));
 
     alignment A(old.get_alphabet(), seqs, patterns.size());
 
-    for(int i=0;i<t.n_nodes();i++)
-        if (i < t.n_leaves())
-            for(int c=0;c<A.length();c++)
-                A.set_value(c,i,patterns[c][i]);
-        else
-            for(int c=0;c<A.length();c++)
-                A.set_value(c,i,alphabet::gap);
-
-    minimally_connect_leaf_characters(A,t);
-    return A;
-}
-
-alignment alignment_from_patterns(const alphabet& a, const vector<vector<int>>& patterns)
-{
-    int n = patterns[0].size();
-
-    alignment A(a, n, patterns.size());
-
-    for(int i=0;i<n;i++)
+    for(int i=0;i<n_leaves;i++)
         for(int c=0;c<A.length();c++)
             A.set_value(c,i,patterns[c][i]);
 
@@ -112,25 +92,7 @@ alignment alignment_from_patterns(const alphabet& a, const vector<vector<int>>& 
 alignment alignment_from_patterns(const alignment& old, const vector<vector<int>>& patterns, const Tree& t)
 {
     assert(old.n_sequences() <= t.n_nodes());
-    assert(t.n_leaves() == patterns[0].size());
-    assert(old.seqs().size() == t.n_nodes());
-
-    vector<sequence> seqs;
-    for(auto seq: old.seqs())
-        seqs.push_back(sequence(seq.name));
-
-    alignment A(old.get_alphabet(), seqs, patterns.size());
-
-    for(int i=0;i<t.n_nodes();i++)
-        if (i < t.n_leaves())
-            for(int c=0;c<A.length();c++)
-                A.set_value(c,i,patterns[c][i]);
-        else
-            for(int c=0;c<A.length();c++)
-                A.set_value(c,i,alphabet::gap);
-
-    minimally_connect_leaf_characters(A,t);
-    return A;
+    return alignment_from_patterns(old, patterns, t.n_leaves());
 }
 
 // This version only returns an alignment with only n sequences (i.e. n is the number of leaf sequence).
@@ -140,7 +102,7 @@ compressed_alignment compress_alignment(const alignment& A, int n)
         return {A,{},{}};
 
     auto [patterns, counts, mapping] = compress_site_patterns(A, n);
-    return {alignment_from_patterns(A.get_alphabet(), patterns), counts, mapping};
+    return {alignment_from_patterns(A, patterns, n), counts, mapping};
 }
 
 
