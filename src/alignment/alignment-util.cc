@@ -472,7 +472,10 @@ void check_leaf_sequences(const alignment& A,int n_leaves) {
 
     for(int i=0;i<n_leaves;i++) {
 
-	sequences[i].strip_gaps();
+        // FIXME - how to distinquish between NO sequence (for site-compression) and an empty sequence?
+        if (A.seq(i).size() == 0) continue;
+
+        sequences[i].strip_gaps();
 	if (not (a(sequences[i]) == a(A.seq(i)))) {
 	    cerr<<"leaf sequence "<<i<<" corrupted!\n";
 
