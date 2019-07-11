@@ -1725,7 +1725,14 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     int tree_index = add_compute_expression( {var("BAliPhy.ATModel.tree"), my_atmodel()} );
 
-    TC = new tree_constants(this, tt.get_labels(), tree_index);
+    auto sequence_names = PC->sequence_names.get_value(*this).as_<EVector>();
+    vector<string> labels;
+    for(auto& name: sequence_names)
+        labels.push_back(name.as_<String>());
+    for(int i=sequence_names.size();i<2*sequence_names.size()-2;i++)
+        labels.push_back("A"+std::to_string(i));
+
+    TC = new tree_constants(this, labels, tree_index);
 
     t().read_tree(tt);
 
