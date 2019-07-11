@@ -385,7 +385,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
      sequence_length_indices(p->t().n_nodes()),
      sequence_length_pr_indices(p->t().n_nodes()),
      seqs(AA.seqs()),
-     sequences( alignment_letters(AA, p->t().n_leaves()) ),
+     sequences( p->t().n_leaves() ),
      a(AA.get_alphabet().clone()),
      branch_HMM_type(p->t().n_branches(),0),
      likelihood_calculator(like_calc)
@@ -422,6 +422,8 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     for(int i=0; i<p->t().n_leaves(); i++)
         leaf_sequence_indices.push_back( p->add_compute_expression({var("Data.Array.!"),leaf_sequences,i}) );
 
+    for(int i=0; i<p->t().n_leaves(); i++)
+        sequences[i] = (vector<int>)(leaf_sequence_indices[i].get_value(*p).as_<EVector>());
 
     // Extract alignment from data partition
     auto alignment_on_tree = expression_ref{var("BAliPhy.ATModel.DataPartition.get_alignment"), partition};
