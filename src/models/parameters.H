@@ -96,7 +96,7 @@ struct data_partition_constants
 
     int likelihood_calculator;
 
-    data_partition_constants(Parameters* P, int i, const alignment&, int like_calc);
+    data_partition_constants(Parameters* P, int i, const alphabet&, int like_calc);
 };
 
 /// Each data_partition is a model with one parameter: mu (the branch mean)
@@ -281,10 +281,9 @@ struct parameters_constants: public Object
 
     parameters_constants* clone() const {return new parameters_constants(*this);}
 
-    parameters_constants(const std::vector<alignment>& A, const SequenceTree&, 
-			 const std::vector<model_t>&,
+    parameters_constants(int n_partitions, const SequenceTree&, 
+                         int n_smodels,
 			 const std::vector<std::optional<int>>&,
-			 const std::vector<model_t>&,
 			 const std::vector<std::optional<int>>&,
 			 const std::vector<std::optional<int>>&);
 };

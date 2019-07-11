@@ -403,13 +403,13 @@ expression_ref fix_strings(const expression_ref& E)
 }
 
 
-data_partition_constants::data_partition_constants(Parameters* p, int i, const alignment& AA, int like_calc)
+data_partition_constants::data_partition_constants(Parameters* p, int i, const alphabet& a_, int like_calc)
     :conditional_likelihoods_for_branch(2*p->t().n_branches()),
      sequence_length_indices(p->t().n_nodes()),
      sequence_length_pr_indices(p->t().n_nodes()),
      seqs( p->t().n_nodes() ),
      sequences( p->t().n_leaves() ),
-     a(AA.get_alphabet().clone()),
+     a(a_.clone()),
      branch_HMM_type(p->t().n_branches(),0),
      likelihood_calculator(like_calc)
 {
@@ -1152,10 +1152,9 @@ int num_distinct(const vector<optional<int>>& v)
     return m+1;
 }
 
-parameters_constants::parameters_constants(const vector<alignment>& A, const SequenceTree& t,
-                                           const vector<model_t>& SMs,
+parameters_constants::parameters_constants(int n_partitions, const SequenceTree& t,
+                                           int n_smodels,
                                            const vector<optional<int>>& s_mapping,
-                                           const vector<model_t>& /* IMs */,
                                            const vector<optional<int>>& i_mapping,
                                            const vector<optional<int>>& scale_mapping)
     :smodel_for_partition(s_mapping),
@@ -1167,17 +1166,17 @@ parameters_constants::parameters_constants(const vector<alignment>& A, const Seq
      branch_HMM_type(t.n_branches(),0)
 {
     // check that smodel mapping has correct size.
-    if (smodel_for_partition.size() != A.size())
-        throw myexception()<<"There are "<<A.size()
+    if (smodel_for_partition.size() != n_partitions)
+        throw myexception()<<"There are "<<n_partitions
                            <<" data partitions, but you mapped smodels onto "
                            <<smodel_for_partition.size();
 
     // check that we only map existing smodels to data partitions
     for(int i=0;i<smodel_for_partition.size();i++) {
         int m = *smodel_for_partition[i];
-        if (m >= SMs.size())
+        if (m >= n_smodels)
             throw myexception()<<"You can't use smodel "<<m+1<<" for data partition "<<i+1
-                               <<" because there are only "<<SMs.size()<<" smodels.";
+                               <<" because there are only "<<n_smodels<<" smodels.";
     }
 }
 
@@ -1683,7 +1682,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
                        const std::vector<int>& like_calcs,
                        const key_map_t& k)
     :Model(L,k),
-     PC(new parameters_constants(A,ttt,SMs,s_mapping,IMs,i_mapping,scale_mapping)),
+     PC(new parameters_constants(filename_ranges.size(), ttt, SMs.size(), s_mapping, i_mapping, scale_mapping)),
      variable_alignment_( n_imodels() > 0 ),
      updown(-1)
 {
@@ -1803,13 +1802,13 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         {
             // construct compressed alignment, counts, and mapping
             auto& [AA, counts, mapping] = *compressed_alignments[i];
-            PC->DPC.emplace_back(this, i, AA, like_calcs[i]);
+            PC->DPC.emplace_back(this, i, AA.get_alphabet(), like_calcs[i]);
             get_data_partition(i).set_alignment(AA);
         }
         else
         {
             auto counts = vector<int>(A[i].length(), 1);
-            PC->DPC.emplace_back(this, i, A[i], like_calcs[i]);
+            PC->DPC.emplace_back(this, i, A[i].get_alphabet(), like_calcs[i]);
             if (not imodel_index_for_partition(i))
                 get_data_partition(i).set_alignment(A[i]);
         }
