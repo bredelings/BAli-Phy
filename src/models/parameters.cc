@@ -1507,9 +1507,16 @@ std::string generate_atmodel_program(const vector<alignment>& A,
         var alphabet_var("alphabet_"+part);
         program.let(alphabet_var, get_alphabet_expression(A[i].get_alphabet()));
         var alignment_var("alignment_"+part);
-        program.let(alignment_var, {var("load_alignment"), alphabet_var, String(filename_ranges[i].first)});
         if (i==0)
+        {
+            program.let(alignment_var, {var("load_alignment"), alphabet_var, String(filename_ranges[i].first)});
             program.let(sequence_names_var, {var("Alignment.builtin_sequence_names"),alignment_var});
+        }
+        else
+        {
+            // This is using EVector String instead of [[Char]] for the sequence names!
+            program.let(alignment_var, {var("builtin_reorder_alignment"),sequence_names_var,{var("load_alignment"), alphabet_var, String(filename_ranges[i].first)}});
+        }
 
         // L1. scale_P ...
         var scale("scale_"+part);
