@@ -418,10 +418,10 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         transition_p_method_indices.push_back( p->add_compute_expression( {var("Data.Array.!"), transition_ps, b} ) );
 
     // R2. Register array of leaf sequences
+    expression_ref leaf_sequences = {var("BAliPhy.ATModel.DataPartition.leaf_sequences"),partition};
     for(int i=0; i<p->t().n_leaves(); i++)
-        leaf_sequence_indices.push_back ( p->add_compute_expression(EVector(sequences[i])) );
+        leaf_sequence_indices.push_back( p->add_compute_expression({var("Data.Array.!"),leaf_sequences,i}) );
 
-    param leaf_sequences = p->add_compute_expression({var("BAliPhy.ATModel.DataPartition.leaf_sequences"),partition});
 
     // Extract alignment from data partition
     auto alignment_on_tree = expression_ref{var("BAliPhy.ATModel.DataPartition.get_alignment"), partition};
