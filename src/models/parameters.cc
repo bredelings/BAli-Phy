@@ -358,7 +358,7 @@ EVector unaligned_alignments_on_tree(const TreeInterface& t, const vector<vector
     return alignments;
 }
 
-    // P1. Create pairwise alignment parameters.
+// P1. Create pairwise alignment parameters.
 EVector unaligned_alignments_on_tree(const Tree& t, const vector<vector<int>>& sequences)
 {
     int B = t.n_branches();
@@ -407,7 +407,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     :conditional_likelihoods_for_branch(2*p->t().n_branches()),
      sequence_length_indices(p->t().n_nodes()),
      sequence_length_pr_indices(p->t().n_nodes()),
-     seqs(AA.seqs()),
+     seqs(p->t().n_nodes()),
      sequences( p->t().n_leaves() ),
      a(AA.get_alphabet().clone()),
      branch_HMM_type(p->t().n_branches(),0),
@@ -415,6 +415,10 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 {
     const auto& t = p->t();
     int B = t.n_branches();
+
+    auto labels = p->get_labels();
+    for(int i=0;i<t.n_nodes();i++)
+        seqs[i].name = labels[i];
 
     // Can we compute the pairwise alignment in such a way that recomputing the alignments when
     // the tree changes has the same cost as modifying the solution and setting the alignment to the
