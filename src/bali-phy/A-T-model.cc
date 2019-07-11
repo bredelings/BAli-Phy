@@ -831,10 +831,12 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
         keys = parse_key_map(args["set"].as<vector<string> >());
     Parameters P(L, A, alignment_files, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, full_scale_models, scale_mapping, branch_length_model, likelihood_calculators, keys);
 
+    P.probability();
     //-------- Set the alignments for variable partitions ---------//
     for(int i=0;i<P.n_data_partitions();i++)
         if (not unalign and P.get_data_partition(i).has_IModel())
             P.get_data_partition(i).set_alignment(A[i]);
+    P.probability();
 
     // If the tree has any foreground branch attributes, then set the corresponding branch to foreground, here.
     set_foreground_branches(P, T);

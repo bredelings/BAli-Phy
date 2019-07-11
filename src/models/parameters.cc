@@ -1485,6 +1485,7 @@ std::string generate_atmodel_program(const vector<alignment>& A,
 
     // FIXME: We can't load the alignments to read their names until we know the alphabets!
     // FIXME: Can we load the alignments as SEQUENCES first?
+    var sequence_names_var("sequence_names");
 
     // FIXME: We aren't using the ranges to select columns!
 
@@ -1504,6 +1505,8 @@ std::string generate_atmodel_program(const vector<alignment>& A,
         program.let(alphabet_var, get_alphabet_expression(A[i].get_alphabet()));
         var alignment_var("alignment_"+part);
         program.let(alignment_var, {var("load_alignment"), alphabet_var, String(filename_ranges[i].first)});
+        if (i==0)
+            program.let(sequence_names_var, {var("Alignment.builtin_sequence_names"),alignment_var});
 
         // L1. scale_P ...
         var scale("scale_"+part);
@@ -1648,7 +1651,7 @@ std::string generate_atmodel_program(const vector<alignment>& A,
     expression_ref program_exp = program.finish_return(
         Tuple(
             {var("ATModel"), tree_var, get_list(smodels), get_list(imodels), get_list(scales), branch_lengths, branch_categories, get_list(partitions),
-             imodel_training_var, heat_var, variable_alignment_var, subst_root_var},
+             imodel_training_var, heat_var, variable_alignment_var, subst_root_var, sequence_names_var},
             get_list(program_loggers))
         );
     program_exp = {var("random"), program_exp};
@@ -1713,6 +1716,8 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     }
 
     PC->atmodel = read_add_model(*this, "Main.hs");
+
+    PC->sequence_names     = add_compute_expression({var("BAliPhy.ATModel.sequence_names"), my_atmodel()});
 
     int tree_index = add_compute_expression( {var("BAliPhy.ATModel.tree"), my_atmodel()} );
 
