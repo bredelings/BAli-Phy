@@ -235,6 +235,8 @@ struct parameters_constants: public Object
     param subst_root;
     param atmodel;
     param imodel_training;
+    param sequence_names;
+
     std::vector<param> branch_categories;
 
     /// The substitution::Model
