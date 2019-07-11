@@ -53,6 +53,7 @@
 #include "math/exponential.H"
 #include "models/setup.H"
 #include "site-compression.H"
+#include "tree-align/link2.H"
 
 using std::vector;
 using std::string;
@@ -839,12 +840,22 @@ void mutable_data_partition::set_alignment(const alignment& A)
     if (get_alphabet() != A.get_alphabet())
         throw myexception()<<"Can't set alignment with alphabet '"<<A.get_alphabet()<<"' in partition with alphabet '"<<get_alphabet().name<<"'";
 
-    // 2. Connect the leaf characters
     auto T = t();
-    auto AA = A;
-    minimally_connect_leaf_characters(AA, T);
 
-    // 3. Set pairwise alignment parameters.
+    auto labels = P->get_labels();
+
+    // 2. Reorder and maybe extend the alignment
+    auto AA = link_A(A, labels, T);
+
+    // 3. Check that the alignment doesn't disagree with existing leaf sequences lengths!
+    for(int i=0;i<T.n_leaves();i++)
+    {
+        assert(A.seq(i).name == labels[i]);
+        if (A.seqlength(i) != seqlength(i))
+            throw myexception()<<"partition "<<partition_index+1<<", sequence "<<A.seq(i).name<<": alignment sequence length "<<A.seqlength(i)<<" does not match required sequence length "<<seqlength(i);
+    }
+
+    // 4. Set pairwise alignment parameters.
     for(int b=0;b<T.n_branches();b++)
     {
         int n1 = T.source(b);
