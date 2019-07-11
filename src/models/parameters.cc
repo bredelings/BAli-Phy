@@ -1672,7 +1672,7 @@ std::string generate_atmodel_program(const vector<alignment>& A,
 Parameters::Parameters(const std::shared_ptr<module_loader>& L,
                        const vector<alignment>& A,
                        const vector<pair<string,string>>& filename_ranges,
-                       const SequenceTree& tt,
+                       const SequenceTree& ttt,
                        const vector<model_t>& SMs,
                        const vector<optional<int>>& s_mapping,
                        const vector<model_t>& IMs,
@@ -1683,7 +1683,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
                        const std::vector<int>& like_calcs,
                        const key_map_t& k)
     :Model(L,k),
-     PC(new parameters_constants(A,tt,SMs,s_mapping,IMs,i_mapping,scale_mapping)),
+     PC(new parameters_constants(A,ttt,SMs,s_mapping,IMs,i_mapping,scale_mapping)),
      variable_alignment_( n_imodels() > 0 ),
      updown(-1)
 {
@@ -1695,7 +1695,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     /* ---------------- compress alignments -------------------------- */
 
     // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
-    bool allow_compression = load_value("site-compression", tt.n_nodes() > 2);
+    bool allow_compression = load_value("site-compression", ttt.n_nodes() > 2);
 
     vector<optional<compressed_alignment>> compressed_alignments(A.size());
     vector<const alignment*> alignments(A.size());
@@ -1703,7 +1703,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     {
         if (not imodel_index_for_partition(i) and allow_compression)
         {
-            compressed_alignments[i] = compress_alignment(A[i], tt);
+            compressed_alignments[i] = compress_alignment(A[i], ttt);
             alignments[i] = &compressed_alignments[i]->A;
             std::cerr<<"Partition #"<<i+1<<": "<<A[i].length()<<" columns -> "<<alignments[i]->length()<<" unique patterns.\n";
         }
@@ -1712,11 +1712,11 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     }
 
     /* ---------------- Set up the tree ------------------------------ */
-    branches_from_affected_node.resize(tt.n_nodes());
+    branches_from_affected_node.resize(ttt.n_nodes());
 
     {
         checked_ofstream program_file("Main.hs");
-        program_file<<generate_atmodel_program(A, filename_ranges, tt, SMs, s_mapping, IMs, i_mapping, scaleMs, scale_mapping, branch_length_model, like_calcs, variable_alignment_, compressed_alignments);
+        program_file<<generate_atmodel_program(A, filename_ranges, ttt, SMs, s_mapping, IMs, i_mapping, scaleMs, scale_mapping, branch_length_model, like_calcs, variable_alignment_, compressed_alignments);
     }
 
     PC->atmodel = read_add_model(*this, "Main.hs");
@@ -1729,6 +1729,12 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     vector<string> labels;
     for(auto& name: sequence_names)
         labels.push_back(name.as_<String>());
+    auto tt = ttt;
+    remap_T_leaf_indices(tt, labels);
+
+    for(int i=0;i<tt.n_leaves();i++)
+        assert(tt.get_label(i) == labels[i]);
+
     for(int i=sequence_names.size();i<2*sequence_names.size()-2;i++)
         labels.push_back("A"+std::to_string(i));
 
