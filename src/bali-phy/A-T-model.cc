@@ -660,9 +660,6 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
         RandomTree(T);
     }
 
-    for(auto& a: A)
-        link(a,T,true);
-
     //--------- Handle branch lengths <= 0 and very short branch lengths --------//
     sanitize_branch_lengths(T);
 
