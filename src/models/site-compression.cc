@@ -112,5 +112,3 @@ compressed_alignment compress_alignment(const alignment& A, const Tree& t)
     auto [patterns, counts, mapping] = compress_site_patterns(A, t.n_leaves());
     return {alignment_from_patterns(A, patterns, t), counts, mapping};
 }
-
-
