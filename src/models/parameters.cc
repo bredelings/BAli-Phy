@@ -407,7 +407,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     :conditional_likelihoods_for_branch(2*p->t().n_branches()),
      sequence_length_indices(p->t().n_nodes()),
      sequence_length_pr_indices(p->t().n_nodes()),
-     seqs(p->t().n_nodes()),
+     seqs( p->t().n_nodes() ),
      sequences( p->t().n_leaves() ),
      a(AA.get_alphabet().clone()),
      branch_HMM_type(p->t().n_branches(),0),
