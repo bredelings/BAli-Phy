@@ -51,15 +51,8 @@ void add_internal_labels(SequenceTree& T)
 	}
 }
 
-/// \brief  Remap the leaf indices of tree \a T to match the alignment \a A: check the result
-///
-/// \param A The alignment.
-/// \param T The tree.
-/// \param internal_sequences Should the resulting alignment have sequences for internal nodes on the tree?
-///
-void link(alignment& A,SequenceTree& T,bool internal_sequences) 
+void clean_T(SequenceTree& T, bool internal_sequences)
 {
-    check_names_unique(A);
 
     // Later, might we WANT sub-branches???
     if (has_sub_branches(T))
@@ -72,12 +65,25 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences)
 
     if (internal_sequences)
         add_internal_labels(T);
+}
+
+/// \brief  Remap the leaf indices of tree \a T to match the alignment \a A: check the result
+///
+/// \param A The alignment.
+/// \param T The tree.
+/// \param internal_sequences Should the resulting alignment have sequences for internal nodes on the tree?
+///
+void link(alignment& A,SequenceTree& T,bool internal_sequences) 
+{
+    clean_T(T, internal_sequences);
 
     link_A(A, T, internal_sequences);
 }
 
 void link_A(alignment& A,const SequenceTree& T,bool internal_sequences)
 {
+    check_names_unique(A);
+
     //------ IF sequences < leaf nodes THEN complain ---------//
     if (A.n_sequences() < T.n_leaves())
 	throw myexception()<<"Tree has "<<T.n_leaves()<<" leaves but Alignment only has "
