@@ -1685,8 +1685,6 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
   
     PC->constants.push_back(-1);
 
-    int B = tt.n_branches();
-
     /* ---------------- compress alignments -------------------------- */
 
     // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
@@ -1772,7 +1770,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     // R5. Register branch categories
     PC->branch_categories = get_params_from_list(this, {var("BAliPhy.ATModel.branch_categories"), my_atmodel()});
-    assert(PC->branch_categories.size() == B);
+    assert(PC->branch_categories.size() == tt.n_branches());
 
     // create data partitions
 
