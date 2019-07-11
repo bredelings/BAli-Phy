@@ -1313,6 +1313,19 @@ expression_ref get_alphabet_expression(const alphabet& a)
     }
 }
 
+// FIXME.... so I really don't want to be passing tt, or even A in here...
+// ... but maybe passing in alphabet expressions.
+
+// FIXME: add a set<string> imports to model_t.
+
+// FIXME: make do_block represent internal statements not a strings, so we can handle do {result <- X ; return (X,[]);}
+
+// FIXME: remove (this) += { "SModel", ... } from parameters
+
+// FIXME: move this routine to A-T-Model
+
+// FIXME: write the file inside the run directory.
+
 std::string generate_atmodel_program(const vector<alignment>& A,
                                      const vector<pair<string,string>>& filename_ranges,
                                      const SequenceTree& tt,
