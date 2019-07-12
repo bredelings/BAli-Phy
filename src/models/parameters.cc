@@ -1727,25 +1727,37 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     PC->atmodel = read_add_model(*this, "Main.hs");
 
+    // 1. Get the leaf labels out of the machine.  These should be based on the leaf sequences alignment for partition 1.
+    // FIXME, if partition 1 has ancestral sequences, we will do the wrong thing here, even if we pass in a tree.
+
     PC->sequence_names     = add_compute_expression({var("BAliPhy.ATModel.sequence_names"), my_atmodel()});
 
-    int tree_index = add_compute_expression( {var("BAliPhy.ATModel.tree"), my_atmodel()} );
-
+    // FIXME: make the program represent these as [String], and translate it to an EVector just for export purposes?
     auto sequence_names = PC->sequence_names.get_value(*this).as_<EVector>();
     vector<string> labels;
     for(auto& name: sequence_names)
         labels.push_back(name.as_<String>());
-    auto tt = ttt;
-    remap_T_leaf_indices(tt, labels);
+    auto leaf_labels = labels;
 
-    for(int i=0;i<tt.n_leaves();i++)
-        assert(tt.get_label(i) == labels[i]);
-
+    // FIXME: maybe do this inside the program?
     for(int i=sequence_names.size();i<2*sequence_names.size()-2;i++)
         labels.push_back("A"+std::to_string(i));
 
+    // 2. Set up the TreeInterface mapping to the tree inside the machine
+
+    int tree_index = add_compute_expression( {var("BAliPhy.ATModel.tree"), my_atmodel()} );
     TC = new tree_constants(this, labels, tree_index);
 
+    // 3. Remap the input tree to have the same label_string <-> node-number mapping FOR LEAVES.
+    // FIXME: We need ALL the nodes to have the right label_string <-> node-number mapping in
+    //           order to handle alignments with internal-node sequences.
+    auto tt = ttt;
+    assert(tt.n_leaves() == leaf_labels.size());
+    remap_T_leaf_indices(tt, leaf_labels);
+    for(int i=0;i<tt.n_leaves();i++)
+        assert(tt.get_label(i) == labels[i]);
+
+    // 4. Load the specified tree TOPOLOGY into the machine. (branch lengths are loaded later).
     t().read_tree(tt);
 
     PC->imodel_training    = add_compute_expression({var("BAliPhy.ATModel.imodel_training"), my_atmodel()});
@@ -1824,6 +1836,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     // FIXME: We currently need this to make sure all parameters get instantiated before we finish the constructor.
     probability();
 
+    // Load the specified tree BRANCH LENGTHS into the machine.
     bool some_branch_lengths_not_set = false;
     for(int b=0;b<tt.n_branches();b++)
         if (tt.branch(b).has_length())
