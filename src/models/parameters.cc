@@ -1330,9 +1330,11 @@ expression_ref get_alphabet_expression(const alphabet& a)
 // FIXME: write the file inside the run directory.
 
 std::string generate_atmodel_program(int n_partitions,
+                                     int n_leaves,
+                                     int n_nodes,
+                                     int n_branches,
                                      const vector<expression_ref>& alphabet_exps,
                                      const vector<pair<string,string>>& filename_ranges,
-                                     const SequenceTree& tt,
                                      const vector<model_t>& SMs,
                                      const vector<optional<int>>& s_mapping,
                                      const vector<model_t>& IMs,
@@ -1399,7 +1401,7 @@ std::string generate_atmodel_program(int n_partitions,
     program_file<<"\n\nbranch_lengths_model1 = "<<branch_length_model.expression.print();
 
     // F5. Topology
-    program_file<<"\n\ntopology_model1 = sample $ uniform_topology "<<tt.n_leaves();
+    program_file<<"\n\ntopology_model1 = sample $ uniform_topology "<<n_leaves;
 
     /* --------------------------------------------------------------- */
     do_block program;
@@ -1413,7 +1415,7 @@ std::string generate_atmodel_program(int n_partitions,
             {imodel_training_var, {modifiable, false}},
             {heat_var           , {modifiable, 1.0}},
             {variable_alignment_var, {modifiable, variable_alignment_}},
-            {subst_root_var,         {modifiable, tt.n_nodes()-1}}
+            {subst_root_var,         {modifiable, n_nodes-1}}
         });
 
     // ATModel smodels imodels scales branch_lengths
@@ -1472,7 +1474,7 @@ std::string generate_atmodel_program(int n_partitions,
 
     // P4. Branch lengths
     expression_ref branch_lengths = List();
-    if (tt.n_branches() > 0)
+    if (n_branches > 0)
     {
         string prefix = "T_lengths";
         expression_ref branch_lengths_model = {var("branch_lengths_model1"), tree_var};
@@ -1483,7 +1485,7 @@ std::string generate_atmodel_program(int n_partitions,
 
     // P5. Branch categories
     var branch_categories("branch_categories");
-    program.let(branch_categories, { var("map"), var("modifiable"), {var("replicate"), tt.n_branches(), 0} });
+    program.let(branch_categories, { var("map"), var("modifiable"), {var("replicate"), n_branches, 0} });
 
     // FIXME: We can't load the alignments to read their names until we know the alphabets!
     // FIXME: Can we load the alignments as SEQUENCES first?
@@ -1541,7 +1543,7 @@ std::string generate_atmodel_program(int n_partitions,
         if (allow_compression and (not i_mapping[i]))
         {
             var compressed_alignment_tuple("compressed_alignment_tuple_"+part);
-            program.let(compressed_alignment_tuple, {var("compress_alignment"), alignment_var, tt.n_leaves()});
+            program.let(compressed_alignment_tuple, {var("compress_alignment"), alignment_var, n_leaves});
             program.let(compressed_alignment_var,   {var("fst3"), compressed_alignment_tuple});
             program.let(counts_var,                 {var("snd3"), compressed_alignment_tuple});
         }
@@ -1555,7 +1557,7 @@ std::string generate_atmodel_program(int n_partitions,
         var sequences_var("sequences_"+part);
         program.let(sequences_var, {var("sequences_from_alignment"),compressed_alignment_var});
         var leaf_sequences_var("leaf_seuqences_"+part);
-        program.let(leaf_sequences_var, {var("listArray'"),{var("take"),tt.n_leaves(),sequences_var}});
+        program.let(leaf_sequences_var, {var("listArray'"),{var("take"),n_leaves,sequences_var}});
 
         // L4. let imodel_P = Nothing | Just
         expression_ref maybe_imodel = var("Nothing");
@@ -1567,7 +1569,7 @@ std::string generate_atmodel_program(int n_partitions,
         {
             auto imodel = var("imodel_"+part);
             program.let(imodel, {imodels[*imodel_index], heat_var, imodel_training_var});
-            expression_ref hmms =  {var("branch_hmms"), imodel, distances, tt.n_branches()};
+            expression_ref hmms =  {var("branch_hmms"), imodel, distances, n_branches};
             maybe_imodel = {var("Just"), imodel};
             maybe_hmms   = {var("Just"), hmms};
 
@@ -1587,7 +1589,7 @@ std::string generate_atmodel_program(int n_partitions,
             // R4. Register sequence length methods
             auto seq_lengths = expression_ref{{var("listArray'"),{var("compute_sequence_lengths"), leaf_sequences_var, tree_var, pairwise_as}}};
 
-            program.let(alignment_on_tree, {var("AlignmentOnTree"), tree_var, tt.n_nodes(), seq_lengths, pairwise_as});
+            program.let(alignment_on_tree, {var("AlignmentOnTree"), tree_var, n_nodes, seq_lengths, pairwise_as});
         }
 
         auto as = expression_ref{var("pairwise_alignments"), alignment_on_tree};
@@ -1598,7 +1600,7 @@ std::string generate_atmodel_program(int n_partitions,
         var likelihood_var("likelihood_"+part);
         int likelihood_calculator = like_calcs[i];
 
-        if (tt.n_nodes() == 1)
+        if (n_nodes == 1)
         {
             expression_ref seq = {var("!"),leaf_sequences_var, 0};
             program.let(cls_var, 0);
@@ -1607,13 +1609,13 @@ std::string generate_atmodel_program(int n_partitions,
         else if (likelihood_calculator == 0)
         {
             var leaf_seq_counts("leaf_sequence_counts");
-            program.let(leaf_seq_counts, {var("listArray'"),{var("Alignment.leaf_sequence_counts"), compressed_alignment_var, tt.n_leaves(), counts_var}});
+            program.let(leaf_seq_counts, {var("listArray'"),{var("Alignment.leaf_sequence_counts"), compressed_alignment_var, n_leaves, counts_var}});
 
             // Create and set conditional likelihoods for each branch
             program.let(cls_var, {var("cached_conditional_likelihoods"), tree_var, leaf_sequences_var, leaf_seq_counts, as, alphabet_var, transition_ps,f});
 
             // FIXME: broken for fixed alignments of 2 sequences.
-            if (tt.n_nodes() > 2)
+            if (n_nodes > 2)
                 program.let(likelihood_var, {var("peel_likelihood"), tree_var, cls_var, as, f, subst_root_var});
         }
         else if (likelihood_calculator == 1)
@@ -1622,11 +1624,11 @@ std::string generate_atmodel_program(int n_partitions,
             program.let(cls_var,{var("cached_conditional_likelihoods_SEV"),tree_var,leaf_sequences_var, alphabet_var ,transition_ps,f, compressed_alignment_var});  
 
             // FIXME: broken for fixed alignments of 2 sequences.
-            if (tt.n_nodes() > 2)
+            if (n_nodes > 2)
                 program.let(likelihood_var,{var("peel_likelihood_SEV"), tree_var, cls_var, f, subst_root_var, counts_var});
         }
 
-        if (tt.n_nodes() == 2)
+        if (n_nodes == 2)
         {
             // We probably want the cls?
             expression_ref seq1 = {var("!"), leaf_sequences_var, 0};
@@ -1724,7 +1726,8 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         vector<expression_ref> alphabet_exps;
         for(int i=0;i<n_partitions;i++)
             alphabet_exps.push_back(get_alphabet_expression(A[i].get_alphabet()));
-        program_file<<generate_atmodel_program(n_partitions, alphabet_exps, filename_ranges, ttt, SMs, s_mapping, IMs, i_mapping, scaleMs, scale_mapping, branch_length_model, like_calcs, variable_alignment_, allow_compression);
+        program_file<<generate_atmodel_program(n_partitions, ttt.n_leaves(), ttt.n_nodes(), ttt.n_branches(),
+                                               alphabet_exps, filename_ranges, SMs, s_mapping, IMs, i_mapping, scaleMs, scale_mapping, branch_length_model, like_calcs, variable_alignment_, allow_compression);
     }
 
     PC->atmodel = read_add_model(*this, "Main.hs");
