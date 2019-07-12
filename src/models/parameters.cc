@@ -1692,9 +1692,6 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
      variable_alignment_( n_imodels() > 0 ),
      updown(-1)
 {
-    // \todo FIXME:cleanup|fragile - Don't touch C here directly!
-    *this += { "SModel", "Probability", "Range", "PopGen", "Alignment", "IModel", "BAliPhy.ATModel" };
-  
     PC->constants.push_back(-1);
 
 
