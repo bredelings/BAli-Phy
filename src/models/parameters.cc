@@ -1329,7 +1329,8 @@ expression_ref get_alphabet_expression(const alphabet& a)
 
 // FIXME: write the file inside the run directory.
 
-std::string generate_atmodel_program(const vector<alignment>& A,
+std::string generate_atmodel_program(int n_partitions,
+                                     const vector<expression_ref>& alphabet_exps,
                                      const vector<pair<string,string>>& filename_ranges,
                                      const SequenceTree& tt,
                                      const vector<model_t>& SMs,
@@ -1341,7 +1342,7 @@ std::string generate_atmodel_program(const vector<alignment>& A,
                                      const model_t& branch_length_model,
                                      const std::vector<int>& like_calcs,
                                      bool variable_alignment_,
-                                     const vector<optional<compressed_alignment>>& compressed_alignments)
+                                     bool allow_compression)
 {
     std::ostringstream program_file;
     program_file<<"module Main where";
@@ -1429,15 +1430,13 @@ std::string generate_atmodel_program(const vector<alignment>& A,
     {
         string prefix = "S" + convertToString(i+1);
 
-        optional<int> first_index;
+        optional<int> first_partition;
         for(int j=0;j<s_mapping.size();j++)
             if (s_mapping[j] and *s_mapping[j] == i)
-                first_index = j;
-
-        expression_ref a = get_alphabet_expression(A[*first_index].get_alphabet());
+                first_partition = j;
 
         expression_ref smodel = var("smodel"+std::to_string(i+1));
-        smodel = {var("set_alphabet'"), a, smodel};
+        smodel = {var("set_alphabet'"), alphabet_exps[*first_partition], smodel};
 
         auto smodel_var = program.bind_and_log_model(prefix , smodel, program_loggers, false);
         smodels.push_back(smodel_var);
@@ -1496,7 +1495,7 @@ std::string generate_atmodel_program(const vector<alignment>& A,
 
     // P6. Create objects for data partitions
     vector<expression_ref> partitions;
-    for(int i=0; i < A.size(); i++)
+    for(int i=0; i < n_partitions; i++)
     {
         string part = std::to_string(i+1);
         int scale_index = *scale_mapping[i];
@@ -1505,7 +1504,7 @@ std::string generate_atmodel_program(const vector<alignment>& A,
 
         // L0. scale_P ...
         var alphabet_var("alphabet_"+part);
-        program.let(alphabet_var, get_alphabet_expression(A[i].get_alphabet()));
+        program.let(alphabet_var, alphabet_exps[i]);
         var alignment_var("alignment_"+part);
         if (i==0)
         {
@@ -1539,7 +1538,7 @@ std::string generate_atmodel_program(const vector<alignment>& A,
         //---------------------------------------------------------------------------
         var compressed_alignment_var("compressed_alignment_var_"+part);
         var counts_var("counts_"+part);
-        if (compressed_alignments[i])
+        if (allow_compression and (not i_mapping[i]))
         {
             var compressed_alignment_tuple("compressed_alignment_tuple_"+part);
             program.let(compressed_alignment_tuple, {var("compress_alignment"), alignment_var, tt.n_leaves()});
@@ -1698,14 +1697,17 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
   
     PC->constants.push_back(-1);
 
+
+    const int n_partitions = filename_ranges.size();
+
     /* ---------------- compress alignments -------------------------- */
 
     // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
     bool allow_compression = load_value("site-compression", ttt.n_nodes() > 2);
 
-    vector<optional<compressed_alignment>> compressed_alignments(A.size());
-    vector<const alignment*> alignments(A.size());
-    for(int i=0;i<A.size();i++)
+    vector<optional<compressed_alignment>> compressed_alignments(n_partitions);
+    vector<const alignment*> alignments(n_partitions);
+    for(int i=0;i<n_partitions;i++)
     {
         if (not imodel_index_for_partition(i) and allow_compression)
         {
@@ -1722,7 +1724,10 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     {
         checked_ofstream program_file("Main.hs");
-        program_file<<generate_atmodel_program(A, filename_ranges, ttt, SMs, s_mapping, IMs, i_mapping, scaleMs, scale_mapping, branch_length_model, like_calcs, variable_alignment_, compressed_alignments);
+        vector<expression_ref> alphabet_exps;
+        for(int i=0;i<n_partitions;i++)
+            alphabet_exps.push_back(get_alphabet_expression(A[i].get_alphabet()));
+        program_file<<generate_atmodel_program(n_partitions, alphabet_exps, filename_ranges, ttt, SMs, s_mapping, IMs, i_mapping, scaleMs, scale_mapping, branch_length_model, like_calcs, variable_alignment_, allow_compression);
     }
 
     PC->atmodel = read_add_model(*this, "Main.hs");
@@ -1814,8 +1819,8 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     // create data partitions
 
-    assert(like_calcs.size() == A.size());
-    for(int i=0;i<A.size();i++)
+    assert(like_calcs.size() == n_partitions);
+    for(int i=0;i<n_partitions;i++)
     {
         if (compressed_alignments[i])
         {
