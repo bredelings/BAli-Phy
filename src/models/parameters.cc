@@ -1330,9 +1330,7 @@ expression_ref get_alphabet_expression(const alphabet& a)
 // FIXME: write the file inside the run directory.
 
 std::string generate_atmodel_program(int n_partitions,
-                                     int n_leaves,
-                                     int n_nodes,
-                                     int n_branches,
+                                     int n_sequences,
                                      const vector<expression_ref>& alphabet_exps,
                                      const vector<pair<string,string>>& filename_ranges,
                                      const vector<model_t>& SMs,
@@ -1346,6 +1344,10 @@ std::string generate_atmodel_program(int n_partitions,
                                      bool variable_alignment_,
                                      bool allow_compression)
 {
+    int n_leaves   = n_sequences;
+    int n_nodes    = 2*n_leaves - 2;
+    int n_branches = 2*n_leaves - 3;
+
     std::ostringstream program_file;
     program_file<<"module Main where";
     program_file<<"\nimport SModel";
@@ -1726,7 +1728,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         vector<expression_ref> alphabet_exps;
         for(int i=0;i<n_partitions;i++)
             alphabet_exps.push_back(get_alphabet_expression(A[i].get_alphabet()));
-        program_file<<generate_atmodel_program(n_partitions, ttt.n_leaves(), ttt.n_nodes(), ttt.n_branches(),
+        program_file<<generate_atmodel_program(n_partitions, ttt.n_leaves(),
                                                alphabet_exps, filename_ranges, SMs, s_mapping, IMs, i_mapping, scaleMs, scale_mapping, branch_length_model, like_calcs, variable_alignment_, allow_compression);
     }
 
