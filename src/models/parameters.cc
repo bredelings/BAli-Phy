@@ -1345,8 +1345,8 @@ std::string generate_atmodel_program(int n_partitions,
                                      bool allow_compression)
 {
     int n_leaves   = n_sequences;
-    int n_nodes    = 2*n_leaves - 2;
-    int n_branches = 2*n_leaves - 3;
+    int n_nodes    = (n_leaves==1)?1:2*n_leaves - 2;
+    int n_branches = (n_leaves==1)?0:2*n_leaves - 3;
 
     std::ostringstream program_file;
     program_file<<"module Main where";
