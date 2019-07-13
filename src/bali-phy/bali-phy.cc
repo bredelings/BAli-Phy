@@ -520,6 +520,7 @@ int main(int argc,char* argv[])
             M = Model(L, keys);
         }
         run_info(info, proc_id, argc, argv);
+        info["seed"] = seed;
         M->set_args(trailing_args(argc, argv, trailing_args_separator));
 
         //------------ Avoid printing seed during unrelated error messages ---//
