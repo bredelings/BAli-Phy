@@ -26,6 +26,7 @@
 
 #include <map>
 #include <sstream>
+#include <boost/filesystem.hpp>
 #include "util/assert.hh"
 
 #include "models/parameters.H"
@@ -68,6 +69,7 @@ using std::map;
 using std::tuple;
 
 using std::optional;
+namespace fs = boost::filesystem;
 
 /*
  * DONE:
@@ -1690,14 +1692,14 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
                        const vector<optional<int>>& scale_mapping,
                        const model_t& branch_length_model,
                        const std::vector<int>& like_calcs,
-                       const key_map_t& k)
+                       const key_map_t& k,
+                       const string& dir)
     :Model(L,k),
      PC(new parameters_constants(filename_ranges.size(), ttt, SMs.size(), s_mapping, i_mapping, scale_mapping)),
      variable_alignment_( n_imodels() > 0 ),
      updown(-1)
 {
     PC->constants.push_back(-1);
-
 
     const int n_partitions = filename_ranges.size();
 
@@ -1722,9 +1724,10 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     /* ---------------- Set up the tree ------------------------------ */
     branches_from_affected_node.resize(ttt.n_nodes());
+    fs::path program_filename = fs::path(dir) / "Main.hs";
 
     {
-        checked_ofstream program_file("Main.hs");
+        checked_ofstream program_file(program_filename.string());
         vector<expression_ref> alphabet_exps;
         for(int i=0;i<n_partitions;i++)
             alphabet_exps.push_back(get_alphabet_expression(A[i].get_alphabet()));
@@ -1732,7 +1735,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
                                                alphabet_exps, filename_ranges, SMs, s_mapping, IMs, i_mapping, scaleMs, scale_mapping, branch_length_model, like_calcs, variable_alignment_, allow_compression);
     }
 
-    PC->atmodel = read_add_model(*this, "Main.hs");
+    PC->atmodel = read_add_model(*this, program_filename.string() );
 
     // 1. Get the leaf labels out of the machine.  These should be based on the leaf sequences alignment for partition 1.
     // FIXME, if partition 1 has ancestral sequences, we will do the wrong thing here, even if we pass in a tree.
@@ -1867,8 +1870,9 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
                        const vector<optional<int>>& scale_mapping,
                        const model_t& branch_length_model,
                        const std::vector<int>& like_calcs,
-                       const key_map_t& k)
-:Parameters(L, A, filename_ranges, t, SMs, s_mapping, vector<model_t>{}, vector<optional<int>>{}, scaleMs, scale_mapping, branch_length_model, like_calcs, k)
+                       const key_map_t& k,
+                       const string& dir)
+:Parameters(L, A, filename_ranges, t, SMs, s_mapping, vector<model_t>{}, vector<optional<int>>{}, scaleMs, scale_mapping, branch_length_model, like_calcs, k, dir)
 { }
 
 // FIXME - move to .. model.cc? mcmc?

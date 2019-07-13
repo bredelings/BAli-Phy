@@ -423,7 +423,8 @@ public:
 	       const std::vector<std::optional<int>>&,
 	       const model_t&,
 	       const std::vector<int>&,
-	       const key_map_t&);
+	       const key_map_t&,
+               const std::string&);
 
     Parameters(const std::shared_ptr<module_loader>& L,
 	       const std::vector<alignment>& A,
@@ -437,7 +438,8 @@ public:
 	       const std::vector<std::optional<int>>&,
 	       const model_t&,
 	       const std::vector<int>&,
-	       const key_map_t&);
+	       const key_map_t&,
+               const std::string&);
 };
 
 bool accept_MH(const Model& P1, const Model& P2, log_double_t rho);

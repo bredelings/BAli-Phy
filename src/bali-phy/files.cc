@@ -64,7 +64,7 @@ vector<shared_ptr<ofstream>> open_files(int proc_id, const string& name, vector<
     return files;
 }
 
-string open_dir(const string& dirbase)
+fs::path open_dir(const string& dirbase)
 {
     // FIXME. Maybe the ability to create arbitrary files should not be allowed?
 
@@ -123,13 +123,13 @@ string run_name(const variables_map& args)
 }
 
 /// Create the directory for output files and return the name
-string init_dir(const variables_map& args)
+fs::path init_dir(const variables_map& args)
 {
     string name = run_name(args);
     
-    string dirname = open_dir(name);
-    cerr<<"Created directory '"<<dirname<<"/' for output files."<<endl;
-    return dirname;
+    fs::path dir = open_dir(name);
+    cerr<<"Created directory '"<<dir.string()<<"/' for output files."<<endl;
+    return dir.string();
 }
 
 #if defined _MSC_VER || defined __MINGW32__

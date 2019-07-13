@@ -490,7 +490,7 @@ bool can_share_imodel(const alphabet& a1, const alphabet& a2)
 
 owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,
                                       ostream& out_cache, ostream& out_screen, ostream& out_both, json& info,
-                                      int proc_id)
+                                      int proc_id, const string& dir)
 {
     //------ Determine number of partitions ------//
     auto alignment_files = split_on_last(':', args["align"].as<vector<string> >() );
@@ -828,7 +828,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     Model::key_map_t keys;
     if (args.count("set"))
         keys = parse_key_map(args["set"].as<vector<string> >());
-    Parameters P(L, A, alignment_files, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, full_scale_models, scale_mapping, branch_length_model, likelihood_calculators, keys);
+    Parameters P(L, A, alignment_files, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, full_scale_models, scale_mapping, branch_length_model, likelihood_calculators, keys, dir);
 
     P.probability();
     //-------- Set the alignments for variable partitions ---------//
