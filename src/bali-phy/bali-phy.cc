@@ -557,6 +557,8 @@ int main(int argc,char* argv[])
         fs::path output_dir = fs::current_path();
         if (not args.count("test")) {
 #ifdef HAVE_MPI
+            // FIXME: Can we just use `broadcast(world, output_dir, 0)`?
+            //        This might require a serializer for fs::path.
             if (not proc_id) {
                 output_dir = init_dir(args);
 
