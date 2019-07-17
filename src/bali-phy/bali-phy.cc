@@ -409,6 +409,48 @@ std::string generate_print_program(const model_t& print, const expression_ref& a
     return program_file.str();
 }
 
+expression_ref get_alphabet_expression_from_args(const variables_map& args)
+{
+    expression_ref a = {var("error"),String("No alphabet!")};
+    if (args.count("alphabet"))
+    {
+        auto as = args["alphabet"].as<vector<string>>();
+        if (as.size() > 1)
+            throw myexception()<<"Only a single alphabet can be used with --print!";
+        auto alpha = as[0];
+        if (as.size() == 1)
+        {
+            if (alpha == "DNA")
+                a = var("dna");
+            else if (alpha == "RNA")
+                a = var("rna");
+            else if (alpha == "AA")
+                a = var("amino_acids");
+            else if (alpha == "Doublets")
+                a = {var("doublets"),var("rna")};
+            else if (alpha == "Triplets")
+                a = {var("triplets"),var("dna")};
+            else if (alpha == "Codons")
+                a = {var("codons"),var("dna"),var("standard_code")};
+        }
+    }
+    return a;
+}
+
+void run_print_expression(const string& argv0, variables_map& args, const shared_ptr<module_loader>& L)
+{
+    const string mstring = args["print"].as<string>();
+    Rules R(get_package_paths(argv0, args));
+    model_t print = get_model(R,"a",mstring);
+
+    expression_ref a = get_alphabet_expression_from_args(args);
+    {
+        checked_ofstream program_file("Print.hs");
+        program_file<<generate_print_program(print, a);
+    }
+    execute_file(L, "Print.hs");
+}
+
 int simple_size(const expression_ref& E);
 
 int main(int argc,char* argv[])
@@ -467,14 +509,13 @@ int main(int argc,char* argv[])
         show_only = args.count("test");
 
         //------ Increase precision for (cout,cerr) if we are testing ------//
-        if (show_only)
+        if (args.count("test"))
         {
             cerr.precision(15);
             cout.precision(15);
         }
-
+        else
         //------ Capture copy of 'cerr' output in 'err_cache' ------//
-        if (not show_only)
             cerr.rdbuf(err_both.rdbuf());
 
         //------------- Setup module loader -------------//
@@ -500,16 +541,21 @@ int main(int argc,char* argv[])
             }
             exit(0);
         }
-        if (args.count("run-module"))
+        else if (args.count("run-module"))
         {
             string filename = args["run-module"].as<string>();
             execute_file(L, filename);
             exit(0);
         }
+        else if (args.count("print"))
+        {
+            run_print_expression(argv[0], args, L);
+            exit(0);
+        }
 
         //----------- Create output dir --------------//
         fs::path output_dir = fs::current_path();
-        if (not args.count("test") and not args.count("print")) {
+        if (not args.count("test")) {
 #ifdef HAVE_MPI
             if (not proc_id) {
                 output_dir = init_dir(args);
@@ -532,10 +578,21 @@ int main(int argc,char* argv[])
 
         //---------- Create model object -----------//
         json info;
+        run_info(info, proc_id, argc, argv);
+        info["seed"] = seed;
+
         if (args.count("align"))
         {
             Rules R(get_package_paths(argv[0], args));
             M = create_A_and_T_model(R, args, L, out_cache, out_screen, out_both, info, proc_id, output_dir.string());
+
+            if (args.count("tree") and M.as<Parameters>())
+            {
+                auto P = M.as<Parameters>();
+                for(int i=0;i<P->n_branch_scales();i++)
+                    if (P->branch_scale(i).is_modifiable(*P))
+                        P->set_branch_scale(i, 1.0);
+            }
         }
         else
         {
@@ -543,83 +600,31 @@ int main(int argc,char* argv[])
             if (args.count("set"))
                 keys = parse_key_map(args["set"].as<vector<string> >());
             M = Model(L, keys);
+
+            if (args.count("model"))
+            {
+                const string filename = args["model"].as<string>();
+                read_add_model(*M,filename);
+            }
+            else if (args.count("Model"))
+            {
+                const string filename = args["Model"].as<string>();
+                add_model(*M,filename);
+            }
         }
-        run_info(info, proc_id, argc, argv);
-        info["seed"] = seed;
         M->set_args(trailing_args(argc, argv, trailing_args_separator));
-
-        //------------ Avoid printing seed during unrelated error messages ---//
-
-        if (log_verbose < 1) out_cache<<"random seed = "<<seed<<endl<<endl;
-
-        //------------- Parse the Hierarchical Model description -----------//
-        if (args.count("print"))
-        {
-            show_only = true; // Don't print machine stats on error.
-
-            const string mstring = args["print"].as<string>();
-            Rules R(get_package_paths(argv[0], args));
-            model_t print = get_model(R,"a",mstring);
-
-            expression_ref a = {var("error"),String("No alphabet!")};
-            if (args.count("alphabet"))
-            {
-                auto as = args["alphabet"].as<vector<string>>();
-                if (as.size() > 1)
-                    throw myexception()<<"Only a single alphabet can be used with --print!";
-                auto alpha = as[0];
-                if (as.size() == 1)
-                {
-                    if (alpha == "DNA")
-                        a = var("dna");
-                    else if (alpha == "RNA")
-                        a = var("rna");
-                    else if (alpha == "AA")
-                        a = var("amino_acids");
-                    else if (alpha == "Doublets")
-                        a = {var("doublets"),var("rna")};
-                    else if (alpha == "Triplets")
-                        a = {var("triplets"),var("dna")};
-                    else if (alpha == "Codons")
-                        a = {var("codons"),var("dna"),var("standard_code")};
-                }
-            }
-            {
-                checked_ofstream program_file("Print.hs");
-                program_file<<generate_print_program(print, a);
-            }
-            execute_file(L, "Print.hs");
-            exit(0);
-        }
-        else if (args.count("model"))
-        {
-            const string filename = args["model"].as<string>();
-            read_add_model(*M,filename);
-        }
-        else if (args.count("Model"))
-        {
-            const string filename = args["Model"].as<string>();
-            add_model(*M,filename);
-        }
-
-        if (args.count("tree") and M.as<Parameters>())
-        {
-            auto P = M.as<Parameters>();
-            for(int i=0;i<P->n_branch_scales();i++)
-                if (P->branch_scale(i).is_modifiable(*P))
-                    P->set_branch_scale(i, 1.0);
-        }
-
+        set_initial_parameter_values(*M,args);
         L.reset();
 
-        set_initial_parameter_values(*M,args);
+        //------------ Avoid printing seed during unrelated error messages ---//
+        if (log_verbose < 1) out_cache<<"random seed = "<<seed<<endl<<endl;
 
         //---------------Do something------------------//
         vector<string> Rao_Blackwellize;
         if (args.count("Rao-Blackwellize"))
             Rao_Blackwellize = split(args["Rao-Blackwellize"].as<string>(),',');
 
-        if (show_only)
+        if (args.count("test"))
         {
             auto TL = construct_table_function(M, Rao_Blackwellize);
 
