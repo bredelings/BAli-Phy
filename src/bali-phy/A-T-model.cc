@@ -844,7 +844,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     write_branch_numbers(out_cache, T);
 
     //-------------------- Log model -------------------------//
-    info = log_summary(out_cache, out_screen, out_both, full_imodels, full_smodels, full_scale_models, branch_length_model, P,args);
+    info.update( log_summary(out_cache, out_screen, out_both, full_imodels, full_smodels, full_scale_models, branch_length_model, P,args) );
 
     //----------------- Tree-based constraints ----------------//
     if (args.count("t-constraint"))
