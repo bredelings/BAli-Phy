@@ -305,25 +305,25 @@ void show_ending_messages(bool show_only)
 
 std::shared_ptr<module_loader> setup_module_loader(variables_map& args, const string& argv0)
 {
-    module_loader L( get_package_paths(argv0, args) );
+    std::shared_ptr<module_loader> L (new module_loader(get_package_paths(argv0, args) ));
 
     // 4. Write out paths to C1.err
     if (log_verbose >= 1)
     {
         std::cout<<"\nPackage path = \n";
-        for(const auto& path: L.plugins_path)
+        for(const auto& path: L->plugins_path)
             cout<<"  "<<path<<"\n";
         cout<<std::endl;
     }
 
     // 5a. Check for empty paths
-    if (L.plugins_path.empty())
+    if (L->plugins_path.empty())
         throw myexception()<<"No plugin paths are specified!.  Use --package-path=<path> to specify the directory containing 'Prelude"<<plugin_extension<<"'.";
 
     // 5b. Check for Prelude.so
     try
     {
-        L.find_plugin("Prelude");
+        L->find_plugin("Prelude");
     }
     catch (...)
     {
@@ -333,14 +333,32 @@ std::shared_ptr<module_loader> setup_module_loader(variables_map& args, const st
     // 5c. Check for Prelude.hs
     try
     {
-        L.find_module("Prelude");
+        L->find_module("Prelude");
     }
     catch (...)
     {
         throw myexception()<<"Can't find Prelude in module path.  Use --package-path=<path> to specify the directory containing 'modules/Prelude.hs'.";
     }
 
-    return std::shared_ptr<module_loader>(new module_loader(L));
+    L->pre_inline_unconditionally = args["pre-inline"].as<bool>();
+    L->post_inline_unconditionally = args["post-inline"].as<bool>();
+    L->let_float_from_case = args["let-float-from-case"].as<bool>();
+    L->let_float_from_apply = args["let-float-from-apply"].as<bool>();
+    L->let_float_from_let = args["let-float-from-let"].as<bool>();
+    L->case_of_constant = args["case-of-constant"].as<bool>();
+    L->case_of_variable = args["case-of-variable"].as<bool>();
+    L->case_of_case = args["case-of-case"].as<bool>();
+    L->inline_threshhold = args["inline-threshold"].as<int>();
+    L->keenness = args["keenness"].as<double>();
+    L->beta_reduction = args["beta-reduction"].as<bool>();
+    L->max_iterations = args["simplifier-max-iterations"].as<int>();
+
+    L->fully_lazy = args["fully-lazy"].as<bool>();
+    L->dump_parsed = args.count("dump-parsed");
+    L->dump_renamed = args.count("dump-rn");
+    L->dump_desugared = args.count("dump-ds");
+
+    return L;
 }
 
 std::string generate_print_program(const model_t& print, const expression_ref& a)
@@ -461,23 +479,6 @@ int main(int argc,char* argv[])
 
         //------------- Setup module loader -------------//
         auto L = setup_module_loader(args, argv[0]);
-        L->pre_inline_unconditionally = args["pre-inline"].as<bool>();
-        L->post_inline_unconditionally = args["post-inline"].as<bool>();
-        L->let_float_from_case = args["let-float-from-case"].as<bool>();
-        L->let_float_from_apply = args["let-float-from-apply"].as<bool>();
-        L->let_float_from_let = args["let-float-from-let"].as<bool>();
-        L->case_of_constant = args["case-of-constant"].as<bool>();
-        L->case_of_variable = args["case-of-variable"].as<bool>();
-        L->case_of_case = args["case-of-case"].as<bool>();
-        L->inline_threshhold = args["inline-threshold"].as<int>();
-        L->keenness = args["keenness"].as<double>();
-        L->beta_reduction = args["beta-reduction"].as<bool>();
-        L->max_iterations = args["simplifier-max-iterations"].as<int>();
-
-        L->fully_lazy = args["fully-lazy"].as<bool>();
-        L->dump_parsed = args.count("dump-parsed");
-        L->dump_renamed = args.count("dump-rn");
-        L->dump_desugared = args.count("dump-ds");
 
         //---------- Initialize random seed -----------//
         unsigned long seed = init_rng_and_get_seed(args);
