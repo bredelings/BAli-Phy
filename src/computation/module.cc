@@ -319,23 +319,23 @@ void Module::export_module(const string& modid)
     if (modid != name and not dependencies().count(modid))
 	throw myexception()<<"module '"<<modid<<"' is exported but not imported";
 
-    for(auto& s: symbols)
-	if (get_module_name(s.second.name) == modid)
-	{
-	    auto& qname = s.second.name;
-	    auto varid = get_unqualified_name(qname);
-            try {
-                auto S1 = lookup_symbol(varid);
-                auto S2 = lookup_symbol(qname);
-                if (S1.name == S2.name)
-                    export_symbol(S1);
+    // Find all the symbols that are in scope as both `modid.e` and `e`
+    for(auto& [id_name, symbol_name]: aliases)
+	if (is_qualified_symbol(id_name) and
+            get_module_name(id_name) == modid and
+            symbol_in_scope_with_name(symbol_name, get_unqualified_name(id_name)))
+        {
+            try
+            {
+                auto S = lookup_symbol(id_name);
+                export_symbol(S);
             }
             catch (myexception& e)
             {
                 e.prepend("exporting module '"+modid+"': ");
                 throw;
             }
-	}
+        }
 }
 
 void Module::perform_exports()
