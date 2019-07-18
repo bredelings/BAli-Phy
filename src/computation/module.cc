@@ -77,10 +77,8 @@ void Module::add_alias(const string& identifier_name, const string& resolved_nam
     if (not symbols.count(resolved_name))
 	throw myexception()<<"Can't add alias '"<<identifier_name<<"' -> '"<<resolved_name<<"' in module '"<<name<<"' because '"<<resolved_name<<"' is neither declared nor imported.";
 
-    auto range = aliases.equal_range(identifier_name);
-    for(auto it = range.first; it != range.second; it++)
-	if (it->second == resolved_name)
-	    return;
+    // Don't add duplicate aliases.
+    if (symbol_in_scope_with_name(resolved_name, identifier_name)) return;
 
     aliases.insert( {identifier_name, resolved_name} );
 }
@@ -304,6 +302,18 @@ void Module::export_symbol(const symbol_info& S)
 	throw myexception()<<"attempting to export both '"<<exported_symbols_[uname].name<<"' and '"<<S.name<<"', which have the same unqualified name!";
 }
 
+bool Module::symbol_in_scope_with_name(const string& symbol_name, const string& id_name) const
+{
+    auto range = aliases.equal_range(id_name);
+    for(auto it = range.first; it != range.second; it++)
+        if (it->second == symbol_name)
+            return true;
+    return false;
+}
+
+// From the Haskell 2010 report:
+//    The form “module M” names the set of all entities that are in scope with both an unqualified name
+//    “e” and a qualified name “M.e”. This set may be empty.
 void Module::export_module(const string& modid)
 {
     if (modid != name and not dependencies().count(modid))
