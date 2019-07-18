@@ -90,6 +90,7 @@
 #include "computation/module.H"
 #include "computation/expression/expression_ref.H"
 #include "computation/expression/let.H"
+#include "computation/expression/bool.H"
 #include "computation/expression/apply.H"
 #include "computation/expression/var.H"
 #include "computation/expression/lambda.H"
@@ -423,12 +424,12 @@ optional<tuple<expression_ref,set<string>,set<string>,bool>> get_model_let(const
     // FIXME: we currently prohibit var_exp from containing any lambda-variables, so we don't need to check if it has them.
     bool do_log = is_unlogged_random(R, var_exp, scope);
     expression_ref var_loggers = List();
-    var_loggers = {var("add_logger"), var_loggers, String(var_name), pair_x, do_log};
+    var_loggers = {var("add_logger"), var_loggers, String(var_name), pair_x, make_Bool(do_log)};
 
     expression_ref loggers = List();
     var Nothing("Nothing");
-    loggers = {var("add_logger"),loggers,String("let:body"),Tuple(Nothing,{snd,pair_body}),false};
-    loggers = {var("add_logger"),loggers,String("let:var"),Tuple(Nothing,var_loggers),false};
+    loggers = {var("add_logger"),loggers,String("let:body"),Tuple(Nothing,{var("snd"),pair_body}), make_Bool(false)};
+    loggers = {var("add_logger"),loggers,String("let:var"),Tuple(Nothing,var_loggers), make_Bool(false)};
 
     do_block code;
 
@@ -734,14 +735,11 @@ tuple<expression_ref, set<string>, set<string>, bool> get_model_function(const R
                 var logger("arg_logger_"+arg_name);
                 any_loggers = any_loggers or do_log;
                 if (arg_loggers[i] or do_log)
-                    loggers = {var("add_logger"),loggers,String(log_name),Tuple(x, logger),do_log};
+                    loggers = {var("add_logger"),loggers,String(log_name),Tuple(x, logger),make_Bool(do_log)};
             }
         }
         else
-        {
-            bool do_log = false;
-            loggers = {var("add_logger"),loggers,String(log_name),var("pair_arg_var_"+arg_name),do_log};
-        }
+            loggers = {var("add_logger"),loggers,String(log_name),var("pair_arg_var_"+arg_name),make_Bool(false)};
     }
 
     if (not any_loggers)

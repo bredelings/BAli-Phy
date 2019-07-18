@@ -1416,9 +1416,9 @@ std::string generate_atmodel_program(int n_partitions,
     var modifiable("Parameters.modifiable");
 
     program.let({
-            {imodel_training_var, {modifiable, false}},
+            {imodel_training_var, {modifiable, make_Bool(false)}},
             {heat_var           , {modifiable, 1.0}},
-            {variable_alignment_var, {modifiable, variable_alignment_}},
+            {variable_alignment_var, {modifiable, make_Bool(variable_alignment_)}},
             {subst_root_var,         {modifiable, n_nodes-1}}
         });
 
