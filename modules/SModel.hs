@@ -1,4 +1,5 @@
 module SModel (module SModel,
+               module SModel.Nucleotides,
                module SModel.Doublets,
                module SModel.Codons,
                module SModel.ReversibleMarkov,
