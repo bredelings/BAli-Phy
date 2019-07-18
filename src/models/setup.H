@@ -29,6 +29,7 @@ class model_t
 {
     ptree description;
 public:
+    std::set<std::string> imports;
     ptree type;
     std::set<term_t> constraints;
     expression_ref expression;
@@ -42,7 +43,7 @@ public:
     std::string show_extracted() const;
 
     model_t() = default;
-    model_t(const ptree&,const ptree&, const std::set<term_t>&, const expression_ref&);
+    model_t(const ptree&,const std::set<std::string>&, const ptree&, const std::set<term_t>&, const expression_ref&);
 };
 
 void to_json(json& j, const pretty_model_t& m);
