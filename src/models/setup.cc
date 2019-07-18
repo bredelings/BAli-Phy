@@ -443,13 +443,13 @@ optional<tuple<expression_ref,set<string>,set<string>,bool>> get_model_let(const
     code.perform(pair_x, arg);
 
     // let var_NAME = fst pair_var_NAME
-    code.let( { {x, {fst, pair_x } } } );
+    code.let( { {x, {var("fst"), pair_x } } } );
 
     // pair_body <- let_body
     code.perform(pair_body, let_body);
 
     // return (fst pair_body, loggers)
-    code.finish_return(Tuple({fst,pair_body},loggers));
+    code.finish_return(Tuple({var("fst"),pair_body},loggers));
 
     return {{code.get_expression(), let_body_vars, free_vars, any_body_loggers or any_arg_loggers}};
 }
@@ -474,7 +474,7 @@ optional<tuple<expression_ref,set<string>,set<string>,bool>> get_model_lambda(co
     auto free_vars = lambda_free_vars;
 
     // E = E x l1 l2 l3
-    expression_ref E = {fst,pair_arg_body};
+    expression_ref E = {var("fst"),pair_arg_body};
     for(auto& vname: lambda_vars)
 	E = {E, body_scope.at(vname).x};
 
@@ -495,7 +495,7 @@ optional<tuple<expression_ref,set<string>,set<string>,bool>> get_model_lambda(co
     code.perform(pair_arg_body, body);
 
     // return $ (E,snd pair_arg_body)
-    code.finish_return( Tuple(E, {snd,pair_arg_body}) );
+    code.finish_return( Tuple(E, {var("snd"),pair_arg_body}) );
 
     // In summary, we have
     //E = do
@@ -700,7 +700,7 @@ tuple<expression_ref, set<string>, set<string>, bool> get_model_function(const R
 	    var pair_x("pair_arg_var_"+arg_name);
 
 	    // Apply the free lambda variables to arg result before using it.
-	    expression_ref F = {fst, pair_x};
+	    expression_ref F = {var("fst"), pair_x};
 	    for(auto& vname: arg_lambda_vars[i])
 		F = {F, scope.at(vname).x};
 
