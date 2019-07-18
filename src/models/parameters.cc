@@ -62,6 +62,7 @@
 using std::vector;
 using std::string;
 using std::pair;
+using std::set;
 using std::cerr;
 using std::endl;
 using std::ostream;
@@ -1350,44 +1351,24 @@ std::string generate_atmodel_program(int n_partitions,
     int n_nodes    = (n_leaves==1)?1:2*n_leaves - 2;
     int n_branches = (n_leaves==1)?0:2*n_leaves - 3;
 
+    set<string> imports;
+    imports.insert("Parameters");                        // for Parameters.modifiable
+    imports.insert("Alignment");                         // for Alignment.load_alignment
+    imports.insert("Alphabet");                          // for Alphabet.dna, etc.
+    imports.insert("BAliPhy.ATModel");                   // for ATModel
+    imports.insert("BAliPhy.ATModel.DataPartition");     // for Partition
+    for(auto& m: SMs)
+        add(imports, m.imports);
+    for(auto& m: IMs)
+        add(imports, m.imports);
+    for(auto& m: scaleMs)
+        add(imports, m.imports);
+    add(imports, branch_length_model.imports);
+
     std::ostringstream program_file;
     program_file<<"module Main where";
-    program_file<<"\nimport SModel";
-    program_file<<"\nimport IModel";
-    program_file<<"\nimport Probability";
-    program_file<<"\nimport Parameters";
-    program_file<<"\nimport Range";
-    program_file<<"\nimport PopGen";
-    program_file<<"\nimport Alignment";
-    program_file<<"\nimport BAliPhy.ATModel";
-    program_file<<"\nimport BAliPhy.ATModel.DataPartition";
-    program_file<<"\nimport Alphabet";
-    program_file<<"\nimport Tree";
-    program_file<<"\nimport Data.Maybe";
-
-
-    program_file<<"\nimport SModel.ReversibleMarkov";
-    program_file<<"\nimport SModel.Codons";
-    program_file<<"\nimport Probability.Random";
-    program_file<<"\nimport Compiler.Real";
-    program_file<<"\nimport Data.Tuple";
-    program_file<<"\nimport Data.List";
-    program_file<<"\nimport Foreign.Vector";
-    program_file<<"\nimport Foreign.String";
-    program_file<<"\nimport SModel.Nucleotides";
-    program_file<<"\nimport SModel.Frequency";
-    program_file<<"\nimport Probability.Distribution.Tree";
-    program_file<<"\nimport Probability.Distribution.Laplace";
-    program_file<<"\nimport Probability.Distribution.Normal";
-    program_file<<"\nimport Probability.Distribution.Beta";
-    program_file<<"\nimport Probability.Distribution.Exponential";
-    program_file<<"\nimport Probability.Distribution.ExpTransform";
-    program_file<<"\nimport Probability.Distribution.Dirichlet";
-    program_file<<"\nimport Probability.Distribution.Gamma";
-    program_file<<"\nimport Probability.Distribution.List";
-    program_file<<"\nimport Probability.Distribution.Uniform";
-    program_file<<"\nimport Data.Bool";
-    program_file<<"\nimport Compiler.Base";
+    for(auto& mod: imports)
+        program_file<<"\nimport "<<mod;
 
     // F1. Substitution models
     for(int i=0;i<SMs.size();i++)
