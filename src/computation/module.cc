@@ -1068,7 +1068,7 @@ bool is_haskell_conid(const std::string& s)
     return isupper(s[0]);
 }
 
-bool is_haskell_sym(const string& s)
+bool is_haskell_uqsym(const string& s)
 {
     static const string symbols = "!#$%&*+./<=>?@\\^|-~:";
 
@@ -1083,14 +1083,14 @@ bool is_haskell_sym(const string& s)
 
 bool is_haskell_varsym(const string& s)
 {
-    if (not is_haskell_sym(s)) return false;
+    if (not is_haskell_uqsym(s)) return false;
 
     return (s[0] != ':');
 }
 
 bool is_haskell_consym(const string& s)
 {
-    if (not is_haskell_sym(s)) return false;
+    if (not is_haskell_uqsym(s)) return false;
 
     if (s[0] != ':') return false;
     if (s == ":") return false;
@@ -1127,7 +1127,12 @@ bool valid_path_prefix(const vector<string>& path)
 bool is_haskell_qsym(const std::string& s)
 {
     vector<string> path = haskell_name_path(s);
-    return valid_path_prefix(path) and is_haskell_sym(path.back());
+    return valid_path_prefix(path) and is_haskell_uqsym(path.back());
+}
+
+bool is_haskell_sym(const std::string& s)
+{
+    return is_haskell_uqsym(s) or is_haskell_qsym(s);
 }
 
 bool is_haskell_qid(const std::string& s)
