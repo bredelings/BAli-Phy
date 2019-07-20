@@ -411,50 +411,52 @@ optional<tuple<expression_ref,set<string>,set<string>,set<string>,bool>> get_mod
     auto [var_name , var_exp ] = model_rep[0];
     auto [body_name, body_exp] = model_rep[1];
 
-    var pair_x("pair_var_"+var_name);
     var x("var_"+var_name);
+    var arg_loggers("loggers_"+var_name);
 
-    var pair_body("pair_body");
+    var body_var("let_body_var");
+    var body_loggers("let_body_loggers");
     var_info_t var_info(x,is_random(var_exp, scope));
 
-    // 1. Perform the body with var_name in scope
-    auto [let_body, let_body_imports, let_body_vars, let_body_free_vars, any_body_loggers] = get_model_as(R, body_exp, extend_scope(scope, var_name, var_info));
+    set<string> free_vars;
+
+    do_block code;
+
+    // 1. Perform the variable expression
+    auto [arg, arg_imports, arg_vars, arg_free_vars, any_arg_loggers] = get_model_as(R, var_exp, scope);
+    add(imports, arg_imports);
+    add(free_vars, arg_free_vars);
+
+    if (arg_vars.size())
+        throw myexception()<<"You cannot let-bind a variable to an expression with a function-variable";
+
+    // (var_NAME, loggers_NAME) <- arg
+    code.perform(Tuple(x,arg_loggers), arg);
+
+    // 2. Perform the body with var_name in scope
+    auto [let_body, let_body_imports, let_body_lambda_vars, let_body_free_vars, any_body_loggers] = get_model_as(R, body_exp, extend_scope(scope, var_name, var_info));
     add(imports, let_body_imports);
-    set<string> free_vars = let_body_free_vars;
+    add(free_vars, let_body_free_vars);
+
     free_vars.erase(var_name);
+
+    // (let_body_var, let_body_logers) <- let_body
+    code.perform(Tuple(body_var, body_loggers), let_body);
 
     // FIXME: we currently prohibit var_exp from containing any lambda-variables, so we don't need to check if it has them.
     bool do_log = is_unlogged_random(R, var_exp, scope);
     expression_ref var_loggers = List();
-    var_loggers = {var("add_logger"), var_loggers, String(var_name), pair_x, make_Bool(do_log)};
+    var_loggers = {var("add_logger"), var_loggers, String(var_name), Tuple(x,arg_loggers), make_Bool(do_log)};
 
     expression_ref loggers = List();
     var Nothing("Nothing");
-    loggers = {var("add_logger"),loggers,String("let:body"),Tuple(Nothing,{var("snd"),pair_body}), make_Bool(false)};
+    loggers = {var("add_logger"),loggers,String("let:body"),Tuple(Nothing,body_loggers), make_Bool(false)};
     loggers = {var("add_logger"),loggers,String("let:var"),Tuple(Nothing,var_loggers), make_Bool(false)};
 
-    do_block code;
+    // return (let_body_var, loggers)
+    code.finish_return(Tuple(body_var,loggers));
 
-    // 2. Perform the variable expression
-    auto [arg, arg_imports, arg_vars, arg_free_vars, any_arg_loggers] = get_model_as(R, var_exp, scope);
-    add(imports, arg_imports);
-    if (arg_vars.size())
-        throw myexception()<<"You cannot let-bind a variable to an expression with a function-variable";
-    free_vars.insert(arg_free_vars.begin(), arg_free_vars.end());
-
-    // pair_var_NAME <- arg
-    code.perform(pair_x, arg);
-
-    // let var_NAME = fst pair_var_NAME
-    code.let( { {x, {var("fst"), pair_x } } } );
-
-    // pair_body <- let_body
-    code.perform(pair_body, let_body);
-
-    // return (fst pair_body, loggers)
-    code.finish_return(Tuple({var("fst"),pair_body},loggers));
-
-    return {{code.get_expression(), imports, let_body_vars, free_vars, any_body_loggers or any_arg_loggers}};
+    return {{code.get_expression(), imports, let_body_lambda_vars, free_vars, any_body_loggers or any_arg_loggers}};
 }
 
 optional<tuple<expression_ref,set<string>, set<string>,set<string>,bool>> get_model_lambda(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
