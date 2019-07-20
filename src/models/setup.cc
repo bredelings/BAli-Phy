@@ -794,6 +794,15 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
         bool do_log = arg_lambda_vars[i].empty() ? should_log(R, model_rep, arg_name, scope) : false;
         any_loggers = any_loggers or do_log;
 
+        if (arg_lambda_vars[i].empty() and simple_value[i] and not arg_referenced[i])
+        {
+            // Since these vars don't perform any actions, they shouldn't be random.
+            assert(not do_log);
+            // FIXME: Currently the assert fails for let-bound vars that are random!
+            //        Probably this is related to let-bound vars sometimes not getting logged.
+            continue;
+        }
+
         // If there are no sub-loggers, and we are not logging this value, then don't emit a logger at all;
         if (not arg_loggers[i] and not do_log) continue;
 
