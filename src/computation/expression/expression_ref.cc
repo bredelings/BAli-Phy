@@ -5,6 +5,7 @@
 #include "lambda.H"
 #include "apply.H"
 #include "let.H"
+#include "var.H"
 #include "case.H"
 #include "trim.H"
 #include "tuple.H"
@@ -12,6 +13,7 @@
 #include "bool.H"
 #include "index_var.H"
 #include "computation/operations.H"
+#include "computation/module.H"
 #include <set>
 #include <iterator>
 #include <map>
@@ -145,6 +147,7 @@ string expression::print() const
     vector<string> pargs = args;
     for(int i=1;i<pargs.size();i++)
     {
+        // This avoid parenthesizing do blocks, which is probably wrong.
 	if (not sub[i-1].size()) continue;
 
 	if (sub[i-1].head().is_a<Operator>())
@@ -168,9 +171,18 @@ string expression::print() const
 	string O_name = O.name();
 	if (head.is_a<Apply>())
 	{
-#ifndef DEBUG_OPTIMIZE
+            // Don't print @ f x y, just print f x y
 	    pargs.erase(pargs.begin());
-#endif
+
+            if (size() == 3 and sub[0].is_a<var>())
+            {
+                if (auto id = sub[0].as_<var>().name; is_haskell_sym(id))
+                {
+                    pargs[0] = id; // otherwise it would be (id)
+                    std::swap(pargs[0],pargs[1]);
+                }
+            }
+
 	    return O.print_expression( pargs );
 	}
 	else if (O.name() == ":" and size() == 2)
