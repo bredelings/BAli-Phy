@@ -546,7 +546,8 @@ expression_ref make_call(const ptree& call, const map<string,expression_ref>& si
     return E;
 }
 
-expression_ref is_simple_return(const expression_ref& E)
+// @ return (X,[])
+expression_ref is_simple_return_stmt(const expression_ref& E)
 {
     if (E.size() != 2) return {};
 
@@ -568,6 +569,22 @@ expression_ref is_simple_return(const expression_ref& E)
     return {};
 }
 
+// do { return (X,[]) }
+expression_ref is_simple_return(const expression_ref& E)
+{
+    if (auto x = is_simple_return_stmt(E))
+        return x;
+
+    if (not E.is_a<do_block>()) return {};
+
+    auto& stmts = E.as_<do_block>().get_stmts();
+
+    if (stmts.size() != 1) return {};
+
+    if (not stmts[0].is_a<SimpleQual>()) return {};
+
+    return is_simple_return_stmt(stmts[0].as_<SimpleQual>().exp);
+}
 
 // NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
 tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_function(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
