@@ -788,29 +788,17 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
 
 	auto log_name = name + ":" + arg_name;
 
-        var x("arg_var_"+arg_name);
-        var x_func("arg_var_"+arg_name+"_func");
-        var logger("arg_logger_"+arg_name);
-        if (arg_lambda_vars[i].empty())
-        {
-            bool do_log = should_log(R, model_rep, arg_name, scope);
-            if (simple_value[i] and not arg_referenced[i])
-            {
-                assert(not do_log);
-            }
-            else
-            {
-                any_loggers = any_loggers or do_log;
-                if (arg_loggers[i] or do_log)
-                    loggers = {var("add_logger"),loggers,String(log_name),Tuple(x, logger),make_Bool(do_log)};
-            }
-        }
-        else
-            loggers = {var("add_logger"),loggers,String(log_name),Tuple(x_func, logger),make_Bool(false)};
-    }
+        expression_ref x_ret = (arg_lambda_vars[i].empty()) ? var("arg_var_"+arg_name) : var("arg_var_"+arg_name+"_func");
+        expression_ref logger = (arg_loggers[i])?var("arg_logger_"+arg_name):List();
 
-    if (not any_loggers)
-        loggers = List();
+        bool do_log = arg_lambda_vars[i].empty() ? should_log(R, model_rep, arg_name, scope) : false;
+        any_loggers = any_loggers or do_log;
+
+        // If there are no sub-loggers, and we are not logging this value, then don't emit a logger at all;
+        if (not arg_loggers[i] and not do_log) continue;
+
+        loggers = {var("add_logger"), loggers, String(log_name), Tuple(x_ret, logger), make_Bool(do_log)};
+    }
 
     // 8. Return the function call: 'return (f call.name1 call.name2 call.name3)'
     if (not perform_function)
