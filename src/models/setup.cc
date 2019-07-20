@@ -612,6 +612,21 @@ expression_ref is_simple_action_return(const expression_ref& E)
         return {};
 }
 
+expression_ref simplify_intToDouble(const expression_ref& E)
+{
+    if (is_apply_exp(E) and E.size() == 2)
+    {
+        if (E.sub()[0].is_a<var>() and E.sub()[0].as_<var>().name == "intToDouble" and E.sub()[1].is_int())
+        {
+            int i = E.sub()[1].as_int();
+            return double(i);
+        }
+    }
+
+    return E;
+}
+
+
 // NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
 tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_function(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
 {
@@ -695,7 +710,7 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
 	add(lambda_vars, vars);
         add(free_vars, arg_free_vars[i]);
 
-        simple_value.push_back(is_simple_return(arg_models.back()));
+        simple_value.push_back(simplify_intToDouble(is_simple_return(arg_models.back())));
         simple_action.push_back(is_simple_action_return(arg_models.back()));
     }
 
