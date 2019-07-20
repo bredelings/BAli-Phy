@@ -467,7 +467,9 @@ optional<tuple<expression_ref,set<string>, set<string>,set<string>,bool>> get_mo
     // 2. Get the variable name and the body from the model
     string var_name = model_rep[0].first;
     var x("lambda_var_" + var_name);
-    var pair_arg_body("pair_arg_body");
+
+    var body_var("arg_var_lambda_body");
+    var body_loggers("arg_loggers_lambda_body");
     ptree body_exp = model_rep[1].second;
 
     // 3. Parse the body with the lambda variable in scope, and find the free variables.
@@ -477,7 +479,7 @@ optional<tuple<expression_ref,set<string>, set<string>,set<string>,bool>> get_mo
     auto free_vars = lambda_free_vars;
 
     // E = E x l1 l2 l3
-    expression_ref E = {var("fst"),pair_arg_body};
+    expression_ref E = body_var;
     for(auto& vname: lambda_vars)
 	E = {E, body_scope.at(vname).x};
 
@@ -495,15 +497,15 @@ optional<tuple<expression_ref,set<string>, set<string>,set<string>,bool>> get_mo
     do_block code;
 
     // pair_arg_body <- body
-    code.perform(pair_arg_body, body);
+    code.perform(Tuple(body_var,body_loggers), body);
 
     // return $ (E,snd pair_arg_body)
-    code.finish_return( Tuple(E, {var("snd"),pair_arg_body}) );
+    code.finish_return( Tuple(E, body_loggers) );
 
     // In summary, we have
     //E = do
-    //      pair_arg_body <- body_action
-    //      return $ (\l1 l2 l3 -> \x -> ((fst pair_arg_body) x l1 l2 l3) , snd pair_arg_body)
+    //      (body_var,body_loggers) <- body_action
+    //      return $ (\l1 l2 l3 -> \x -> (body_var x l1 l2 l3) , body_loggers)
     return {{code.get_expression(), body_imports, lambda_vars, free_vars, true}};
 }
 
