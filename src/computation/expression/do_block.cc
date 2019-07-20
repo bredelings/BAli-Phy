@@ -8,32 +8,78 @@ using std::pair;
 using std::vector;
 using std::string;
 
+std::string Decl::print() const
+{
+    return bindpat.print() + " = " + rhs.print();
+}
+
+std::string Binds::print() const
+{
+    vector<string> bind_string;
+    for(auto& decl: *this)
+        bind_string.push_back(decl.print());
+    return "{"+join(bind_string,";")+"}";
+}
+
+std::string PatQual::print() const
+{
+    return bindpat.print() + " <- " + exp.print();
+}
+
+std::string SimpleQual::print() const
+{
+    return exp.print();
+}
+
+std::string LetQual::print() const
+{
+    return "let " + binds.print();
+}
+
+std::string Stmts::print() const
+{
+    vector<string> stmt_string;
+    for(auto& stmt: *this)
+        stmt_string.push_back(stmt.print());
+    return "{"+join(stmt_string,";")+"}";
+}
+
+string Rec::print() const
+{
+    return "rec " + stmts.print();
+}
+
+string do_block::print() const
+{
+    if (stmts.size() == 1)
+        return get_stmts()[0].print();
+    else
+        return "do " + stmts.print();
+}
+
 expression_ref do_block::get_expression() const
 {
-    if (simple_return)
-        return simple_return;
-    else
-        return (*this);
+    return (*this);
 }
 
 do_block& do_block::perform(const expression_ref& E1)
 {
-    stmts.push_back(E1.print());
+    stmts.push_back(SimpleQual(E1));
     return *this;
 }
 
 do_block& do_block::perform(const expression_ref& pattern, const expression_ref& E)
 {
-    stmts.push_back(pattern.print() + " <- " + E.print());
+    stmts.push_back(PatQual(pattern,E));
     return *this;
 }
 
 do_block& do_block::let(const CDecls& decls)
 {
-    vector<string> print_decls;
+    Binds binds;
     for(auto& [x,e]: decls)
-        print_decls.push_back(x.print() + " = " + e.print());
-    stmts.push_back("let {" + join(print_decls,';') + "}");
+        binds.push_back({x,e});
+    stmts.push_back(LetQual(binds));
     return *this;
 }
 
@@ -44,39 +90,33 @@ do_block& do_block::let(const var& x, const expression_ref& body)
 
 do_block& do_block::rec(const do_block& rec_block)
 {
-    stmts.push_back("rec {" + join(rec_block.get_stmts(),';') + "}");
+    stmts.push_back(Rec(rec_block.stmts));
     return *this;
 }
 
 expression_ref do_block::finish(const expression_ref& E)
 {
-    if (stmts.empty())
-    {
-        simple_return = E;
-    }
-    else
-    {
-        stmts.push_back(E.print());
-    }
+    perform(E);
     return get_expression();
 }
 
 expression_ref do_block::finish_return(const expression_ref& E)
 {
-    if (stmts.empty())
-    {
-        simple_return = {var("return"),E};
-    }
-    else
-    {
-        stmts.push_back("return " + E.print());
-    }
-    return get_expression();
+    return finish({var("return"),E});
 }
+
+Decl::Decl(const expression_ref& b, const expression_ref& r):bindpat(b),rhs(r) {}
+
+SimpleQual::SimpleQual(const expression_ref& e):exp(e) {}
+
+PatQual::PatQual(const expression_ref& b, const expression_ref& e):bindpat(b),exp(e) {}
+
+LetQual::LetQual(const Binds& b):binds(b) {}
+
+Rec::Rec(const Stmts& s):stmts(s) {}
 
 pair<expression_ref, expression_ref> do_block::bind_model(const std::string& prefix, const expression_ref& model)
 {
-    var pair("pair_arg_" + prefix);
     var x("arg_" + prefix);
     var loggers("log_arg_" + prefix);
     perform(Tuple(x,loggers),model);        // (x,loggers) <- model
@@ -94,12 +134,4 @@ expression_ref do_block::bind_and_log_model(const string& prefix, const expressi
     auto [x, x_loggers] = bind_model(prefix,model);
     loggers.push_back( logger(prefix, x, x_loggers, do_log) );
     return x;
-}
-
-string do_block::print() const
-{
-    if (simple_return)
-        return simple_return.print();
-    else
-        return "do {" + join(stmts,';') + "}";
 }

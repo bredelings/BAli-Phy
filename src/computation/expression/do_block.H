@@ -8,17 +8,89 @@
 #include <functional>
 #include <utility>
 
+struct Stmt: public Object
+{
+    Stmt* clone() const {return new Stmt(*this);}
+};
+
+struct Decl: public Object
+{
+    expression_ref bindpat;
+    expression_ref rhs;
+
+    Decl* clone() const {return new Decl(*this);}
+    std::string print() const;
+    Decl(const expression_ref& b, const expression_ref& r);
+};
+
+struct Binds: public Box<std::vector<Decl>>
+{
+    Binds* clone() const {return new Binds(*this);}
+    std::string print() const;
+};
+
+
+struct PatQual: public Object
+{
+    expression_ref bindpat;
+    expression_ref exp;
+
+    PatQual* clone() const {return new PatQual(*this);}
+    std::string print() const;
+    PatQual(const expression_ref& b, const expression_ref& e);
+};
+
+
+struct SimpleQual: public Stmt
+{
+    expression_ref exp;
+
+    SimpleQual* clone() const {return new SimpleQual(*this);}
+    std::string print() const;
+
+    SimpleQual(const expression_ref& e);
+};
+
+struct LetQual: public Stmt
+{
+    Binds binds;
+
+    LetQual* clone() const {return new LetQual(*this);}
+    std::string print() const;
+
+    LetQual(const Binds& b);
+};
+
+struct Stmts: public Box<std::vector<expression_ref>>
+{
+    Stmts* clone() const {return new Stmts(*this);}
+
+    std::string print() const;
+};
+
+struct Rec: public Stmt
+{
+    Stmts stmts;
+
+    Rec* clone() const {return new Rec(*this);}
+
+    std::string print() const;
+
+    Rec(const Stmts&);
+};
+
 class do_block: public Object
 {
-    std::vector<std::string> stmts;
-    expression_ref simple_return;
+    Stmts stmts;
 
 public:
     do_block* clone() const {return new do_block(*this);}
 
     std::string print() const;
 
-    const std::vector<std::string>& get_stmts() const { return stmts; }
+    int size() const {return stmts.size();}
+
+    const Stmts& get_stmts() const { return stmts; }
 
     expression_ref get_expression() const;
 
