@@ -51,10 +51,7 @@ string Rec::print() const
 
 string do_block::print() const
 {
-    if (stmts.size() == 1)
-        return get_stmts()[0].print();
-    else
-        return "do " + stmts.print();
+    return "do " + stmts.print();
 }
 
 expression_ref do_block::get_expression() const
