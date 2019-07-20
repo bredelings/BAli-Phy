@@ -779,7 +779,7 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
 	E = lambda_quantify(scope.at(vname).x, E);
 
     // 7. Compute loggers
-    expression_ref loggers = List();
+    vector<expression_ref> logger_bits;
     for(int i=0;i<args.size();i++)
     {
 	auto argi = array_index(args,i);
@@ -806,8 +806,11 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
         // If there are no sub-loggers, and we are not logging this value, then don't emit a logger at all;
         if (not arg_loggers[i] and not do_log) continue;
 
-        loggers = {var("add_logger"), loggers, String(log_name), Tuple(x_ret, logger), make_Bool(do_log)};
+        expression_ref l1 = do_log ? expression_ref{var("Just"),x_ret} : var("Nothing");
+        expression_ref l2 = arg_loggers[i] ? logger : List();
+        logger_bits.push_back(Tuple(String(log_name),Tuple(l1,l2)));
     }
+    expression_ref loggers = get_list(logger_bits);
 
     // 8. Return the function call: 'return (f call.name1 call.name2 call.name3)'
     if (not perform_function)
