@@ -23,6 +23,7 @@
      + Observe lists in an efficient manner.
    - bali-phy program
      - Make a unified program that computes an ATModel object.
+     - Generate a Haskell program that is moderately readable.
      0 Use param objects to record compute expressions.
      0 New c++ class do_block to generate Haskell code.
    - MCMC
@@ -43,7 +44,7 @@
    - Haskell modules
      - New Data.Eq module.
      - New Data.Text module.
-     0 Move Distributions to Probability.Distribution.name modules.
+     - Move distributions to Probability.Distribution.NAME modules.
  - Docs
    - Split up developer docs.
  - Help
@@ -74,6 +75,7 @@
    - Speed up tree drawing in bp-analyze.
    - Correctly compute PP version of MAP and greedy trees.
    + Fix crp / dirichlet process prior.
+   - Fix export of entities imported from another module.
 
 * 3.4.1 (Jan 18, 2019)
  - Help
