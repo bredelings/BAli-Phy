@@ -586,6 +586,32 @@ expression_ref is_simple_return(const expression_ref& E)
     return is_simple_return_stmt(stmts[0].as_<SimpleQual>().exp);
 }
 
+//do { PAT <- X ; return (PAT,[]) }
+expression_ref is_simple_action_return(const expression_ref& E)
+{
+    if (not E.is_a<do_block>()) return {};
+
+    auto& stmts = E.as_<do_block>().get_stmts();
+
+    if (stmts.size() != 2) return {};
+
+    if (not stmts[0].is_a<PatQual>()) return {};
+
+    auto& pattern = stmts[0].as_<PatQual>().bindpat;
+    auto& action  = stmts[0].as_<PatQual>().exp;
+
+    if (not stmts[1].is_a<SimpleQual>()) return {};
+
+    auto return_pat = is_simple_return_stmt(stmts[1].as_<SimpleQual>().exp);
+
+    if (not return_pat) return {};
+
+    if (return_pat == pattern)
+        return action;
+    else
+        return {};
+}
+
 // NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
 tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_function(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
 {
@@ -616,6 +642,7 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
     vector<set<string>> arg_lambda_vars;
     vector<set<string>> arg_free_vars(args.size());
     vector<expression_ref> simple_value;
+    vector<expression_ref> simple_action;
     set<string> lambda_vars;
     set<string> free_vars;
     vector<bool> arg_loggers;
@@ -669,6 +696,7 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
         add(free_vars, arg_free_vars[i]);
 
         simple_value.push_back(is_simple_return(arg_models.back()));
+        simple_action.push_back(is_simple_action_return(arg_models.back()));
     }
 
     do_block code;
@@ -688,10 +716,18 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
         {
             if (simple_value[i])
             {
+                // (arg_var_NAME, arg_logger_NAME) <- return (X,[])
                 if (not arg_referenced[i])
                     assert(not arg_loggers[i]);
                 else
                     code.let(x,simple_value[i]);
+            }
+            else if (simple_action[i])
+            {
+                // (arg_var_NAME, arg_logger_NAME) <- do {PAT <- action; return (PAT,[]}
+                // => arg_var_NAME <- action
+                assert(not arg_loggers[i]);
+                code.perform(x, simple_action[i]);
             }
             else
             {
