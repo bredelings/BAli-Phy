@@ -77,9 +77,10 @@ vector<string> split_args(string s)
 	return args;
     }
 
-    if (pos == 0) throw myexception()<<"Term has no operator!";
-
-    args = { s.substr(0,pos) };
+    if (pos == 0)
+        args = {"List"};
+    else
+        args = { s.substr(0,pos) };
     s = s.substr(pos);
 
     //2. Get the arguments from '[arg1, arg2, ... , argn]'.
