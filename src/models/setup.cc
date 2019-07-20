@@ -496,10 +496,10 @@ optional<tuple<expression_ref,set<string>, set<string>,set<string>,bool>> get_mo
 
     do_block code;
 
-    // pair_arg_body <- body
+    // (body_var, body_loggers) <- body
     code.perform(Tuple(body_var,body_loggers), body);
 
-    // return $ (E,snd pair_arg_body)
+    // return $ (E,body_loggers)
     code.finish_return( Tuple(E, body_loggers) );
 
     // In summary, we have
@@ -663,9 +663,10 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
 	expression_ref arg = arg_models[i];
 
         // If there are no lambda vars used, then we can just place the result into scope directly, without applying anything to it.
+        var x("arg_var_"+arg_name);
+        var logger("arg_logger_"+arg_name);
 	if (arg_lambda_vars[i].empty())
         {
-            var x("arg_var_"+arg_name);
             if (simple_value[i])
             {
                 if (not arg_referenced[i])
@@ -675,18 +676,15 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
             }
             else
             {
-                var logger("arg_logger_"+arg_name);
-
                 // (arg_var_NAME, arg_logger_NAME) <- arg
                 code.perform(Tuple(x,logger), arg);
             }
         }
         else
         {
-            var pair_x("pair_arg_var_"+arg_name);
-
-            // pair_arg_var_NAME <- arg
-            code.perform(pair_x, arg);
+            // (arg_var_NAME, arg_logger_NAME) <- arg
+            var x_func("arg_var_"+arg_name+"_func");
+            code.perform(Tuple(x_func,logger), arg);
         }
     }
 
@@ -709,11 +707,11 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
 
         if (not arg_lambda_vars[i].empty())
 	{
+	    var x_func("arg_var_"+arg_name+"_func");
 	    var x("arg_var_"+arg_name);
-	    var pair_x("pair_arg_var_"+arg_name);
 
 	    // Apply the free lambda variables to arg result before using it.
-	    expression_ref F = {var("fst"), pair_x};
+	    expression_ref F = x_func;
 	    for(auto& vname: arg_lambda_vars[i])
 		F = {F, scope.at(vname).x};
 
@@ -735,6 +733,9 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
 
 	auto log_name = name + ":" + arg_name;
 
+        var x("arg_var_"+arg_name);
+        var x_func("arg_var_"+arg_name+"_func");
+        var logger("arg_logger_"+arg_name);
         if (arg_lambda_vars[i].empty())
         {
             bool do_log = should_log(R, model_rep, arg_name, scope);
@@ -744,15 +745,13 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
             }
             else
             {
-                var x("arg_var_"+arg_name);
-                var logger("arg_logger_"+arg_name);
                 any_loggers = any_loggers or do_log;
                 if (arg_loggers[i] or do_log)
                     loggers = {var("add_logger"),loggers,String(log_name),Tuple(x, logger),make_Bool(do_log)};
             }
         }
         else
-            loggers = {var("add_logger"),loggers,String(log_name),var("pair_arg_var_"+arg_name),make_Bool(false)};
+            loggers = {var("add_logger"),loggers,String(log_name),Tuple(x_func, logger),make_Bool(false)};
     }
 
     if (not any_loggers)
