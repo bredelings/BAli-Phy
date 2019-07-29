@@ -48,19 +48,19 @@ model alphabet n_tips seqs = random $ do
           topology <- sample $ uniform_topology n_tips
 
           let b = numBranches topology
+              root = targetNode topology 0
+              branch_cats = replicate b 0
 
           ts <- sample $ iid b (gamma 0.5 (2.0/intToDouble b))
 
           scale <- sample $ gamma 0.5 2.0
 
-          (smodel, smodel_loggers) <- sample_smodel
+          (smodel', smodel_loggers) <- sample_smodel
+          let smodel = smodel' branch_cats
 
           (imodel, imodel_loggers) <- sample_imodel topology
 
           as <- Main.sample_alignment topology ts imodel scale tip_seq_lengths
-
-          let root = targetNode topology 0
-              branch_cats = replicate b 0
 
           let loggers = log_all [write_newick topology %% "topology",
                                  ts %% "T",
@@ -69,7 +69,7 @@ model alphabet n_tips seqs = random $ do
                                  ("rs07",(Nothing,imodel_loggers))
                                 ]
 
-          return (ctmc_on_tree topology root as alphabet smodel ts scale branch_cats, loggers)
+          return (ctmc_on_tree topology root as alphabet smodel ts scale, loggers)
 
 main = do
           let alphabet = dna

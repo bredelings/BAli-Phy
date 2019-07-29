@@ -246,11 +246,11 @@ lg_frequencies a = zip (alphabet_letters a) (list_from_vector $ builtin_lg_frequ
 -- FIXME: need polymorphism.
 --        This needs to be after weighted_frequency_matrix.
 --        Because we have no polymorphism, wfm needs to be after MixtureModel and MixtureModels.
-subst_like_on_tree topology root as alphabet smodel ts scale branch_cats seqs = substitution_likelihood topology root seqs' as alphabet ps f
+subst_like_on_tree topology root as alphabet smodel ts scale seqs = substitution_likelihood topology root seqs' as alphabet ps f
     where f = weighted_frequency_matrix smodel
-          ps = transition_p_index topology smodel branch_cats ds
+          ps = transition_p_index topology smodel ds
           ds = listArray' $ map (scale*) ts
           seqs' = listArray' seqs
 
-ctmc_on_tree topology root as alphabet smodel ts scale branch_cats =
-    Distribution (\seqs -> [subst_like_on_tree topology root as alphabet smodel ts scale branch_cats seqs]) (no_quantile "ctmc_on_tree") () ()
+ctmc_on_tree topology root as alphabet smodel ts scale =
+    Distribution (\seqs -> [subst_like_on_tree topology root as alphabet smodel ts scale seqs]) (no_quantile "ctmc_on_tree") () ()
