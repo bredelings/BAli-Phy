@@ -5,6 +5,7 @@
 #include "computation/expression/let.H"
 #include "computation/expression/case.H"
 #include "computation/expression/var.H"
+#include "computation/expression/resolved_symbol.H"
 #include "computation/expression/lambda.H"
 #include "computation/expression/trim.H"
 #include "computation/expression/index_var.H"
@@ -16,6 +17,7 @@
 #include "computation/optimization/let-float.H"
 
 
+using std::optional;
 using std::string;
 using std::vector;
 using std::pair;
@@ -184,7 +186,7 @@ int reg_heap::reg_for_id(const string& name)
 
 expression_ref reg_heap::translate_refs(const expression_ref& E, closure::Env_t& Env)
 {
-    int reg = -1;
+    optional<int> reg;
 
     // Replace parameters with the appropriate reg_var: of value parameter( )
     if (E.is_a<parameter>())
@@ -199,6 +201,11 @@ expression_ref reg_heap::translate_refs(const expression_ref& E, closure::Env_t&
 	reg = parameters[param_index].second;
     }
 
+    else if (is_resolved_symbol(E))
+    {
+        auto& name = E.as_<resolved_symbol>().name;
+	reg = reg_for_id(name);
+    }
     // Replace dummies that are either qualified ids, or builtin constructor names
     else if (is_qualified_var(E))
     {
@@ -215,10 +222,10 @@ expression_ref reg_heap::translate_refs(const expression_ref& E, closure::Env_t&
     else if (E.is_a<reg_var>())
 	reg = E.as_<reg_var>().target;
 
-    if (reg != -1)
+    if (reg)
     {
 	int index = Env.size();
-	Env.insert(Env.begin(), reg);
+	Env.insert(Env.begin(), *reg);
 
 	return index_var(index);
     }
