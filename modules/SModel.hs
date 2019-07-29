@@ -29,11 +29,19 @@ builtin mut_sel_q 2 "mut_sel_q" "SModel"
 builtin mut_sel_pi 2 "mut_sel_pi" "SModel"
 
 data F81 = F81 a b c d
-data MixtureModel = MixtureModel [(Double,a)]
+data MixtureModel a = MixtureModel [(Double,a)]
 -- Currently we are weirdly duplicating the mixture probabilities for each component.
 -- Probably the actual data-type is something like [(Double,\Int->a)] or [(Double,[a])] where all the [a] should have the same length.
 -- This would be a branch-dependent mixture
-data MixtureModels = MixtureModels [MixtureModel a]
+data MixtureModels a = MixtureModels [Int] [MixtureModel a]
+
+branch_categories (MixtureModels categories _) = categories
+
+-- We need to combine branch lengths and rate matrices to get transition probability matrices.
+-- We need to combine mixtures of rate matrices.
+-- We need to combine mixtures of transition probability matrices.
+-- Should we combine mixture only at one of the levels?
+-- Should we select branch-specific models at the level of rate matrices, or the level of transition probability matrices, or both?
 
 scaleMM x (MixtureModel dist            ) = MixtureModel [(p, scale x m) | (p, m) <- dist]
 
@@ -64,32 +72,32 @@ branchTransitionP (MixtureModel l) t = let r = rate (MixtureModel l)
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 nBaseModels (MixtureModel l) = length l
-nBaseModels (MixtureModels (m:ms)) = nBaseModels m
+nBaseModels (MixtureModels _ (m:ms)) = nBaseModels m
 
 baseModel (MixtureModel l) i = snd (l !! i)
 
 stateLetters (ReversibleMarkov _ smap _ _ _ _ _) = smap
 stateLetters (F81 _ smap _ _ ) = smap
 stateLetters (MixtureModel l) = stateLetters (baseModel (MixtureModel l) 0)
-stateLetters (MixtureModels (m:ms)) = stateLetters m
+stateLetters (MixtureModels _ (m:ms)) = stateLetters m
 
 nStates m = sizeOfVectorUnsigned (stateLetters m)
   
 getAlphabet (ReversibleMarkov a _ _ _ _ _ _) = a
 getAlphabet (F81 a _ _ _) = a
 getAlphabet (MixtureModel l) = getAlphabet (baseModel (MixtureModel l) 0)
-getAlphabet (MixtureModels (m:ms)) = getAlphabet m
+getAlphabet (MixtureModels _ (m:ms)) = getAlphabet m
 
 frequencies (ReversibleMarkov _ _ _ pi _ _ _) = pi
 frequencies (F81 _ _ _ pi) = pi
 
 componentFrequencies (MixtureModel d)       i = frequencies (baseModel (MixtureModel d) i)
-componentFrequencies (MixtureModels (m:ms)) i = componentFrequencies m i
+componentFrequencies (MixtureModels _ (m:ms)) i = componentFrequencies m i
 
 distribution (MixtureModel l) = map fst l
-distribution (MixtureModels (m:ms))                  = distribution m
+distribution (MixtureModels _ (m:ms))                  = distribution m
 
-getNthMixture (MixtureModels l) i = l !! i
+getNthMixture (MixtureModels _ l) i = l !! i
 
 unwrapMM (MixtureModel dd) = dd
 
@@ -99,12 +107,12 @@ weighted_frequency_matrix (MixtureModel d) = let model = MixtureModel d
                                                  dist = list_to_vector $ distribution model
                                                  freqs = list_to_vector $ map (componentFrequencies model) [0..nBaseModels model-1]
                                              in builtin_weighted_frequency_matrix dist freqs
-weighted_frequency_matrix (MixtureModels (m:ms)) = weighted_frequency_matrix m
+weighted_frequency_matrix (MixtureModels _ (m:ms)) = weighted_frequency_matrix m
 
 frequency_matrix (MixtureModel d) = let model = MixtureModel d
                                     in  builtin_frequency_matrix $ list_to_vector $ map (componentFrequencies model) [0..nBaseModels model-1]
 
-frequency_matrix (MixtureModels (m:ms)) = frequency_matrix m
+frequency_matrix (MixtureModels _ (m:ms)) = frequency_matrix m
 
 --
 m1a_omega_dist f1 w1 = [(f1,w1), (1.0-f1,1.0)]
@@ -227,7 +235,7 @@ transition_p_index t smodel branch_cat_list ds = mkArray (numBranches t) (branch
 
 unit_mixture m = MixtureModel (certainly m)
 
-mmm m = MixtureModels [m]
+mmm m = MixtureModels Nothing [m]
 
 empirical a filename = builtin_empirical a (listToString filename)
 
