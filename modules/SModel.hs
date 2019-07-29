@@ -166,7 +166,7 @@ m8a model_func mu gamma n_bins posP = multiParameter_unit model_func (m8a_omega_
 m8a_test model_func mu gamma n_bins posP posW posSelection = multiParameter_unit model_func (m8a_test_omega_dist mu gamma n_bins posP posW posSelection)
 
 -- OK, so if I change this from [Mixture Omega] to Mixture [Omega] or Mixture (\Int -> Omega), how do I apply the function model_func to all the omegas?
-branch_site model_func fs ws posP posW = MixtureModels [bg_mixture,fg_mixture]
+branch_site model_func fs ws posP posW branch_cats = MixtureModels branch_cats [bg_mixture,fg_mixture]
 -- background omega distribution -- where the last omega is 1.0 (neutral)
     where bg_dist = zip fs (ws ++ [1.0])
 -- accelerated omega distribution -- posW for all categories
@@ -229,13 +229,14 @@ log_normal_rates base sigmaOverMu n = multi_rate_unif_bins base (log_normal_rate
 --dp base rates fraction = multi_rate base dist where dist = zip fraction rates
 free_rates base rates fraction = scaled_mixture (replicate (length fraction) base) rates fraction
 
-branch_transition_p t smodel branch_cat_list ds b = list_to_vector $ branchTransitionP (getNthMixture smodel (branch_cat_list!!b)) (ds!b)
+branch_transition_p tree smodel ds b = list_to_vector $ branchTransitionP (getNthMixture smodel (branch_cat_list!!b)) (ds!b)
+    where branch_cat_list = branch_categories smodel
 
-transition_p_index t smodel branch_cat_list ds = mkArray (numBranches t) (branch_transition_p t smodel branch_cat_list ds)
+transition_p_index tree smodel ds = mkArray (numBranches tree) (branch_transition_p tree smodel ds)
 
 unit_mixture m = MixtureModel (certainly m)
 
-mmm m = MixtureModels Nothing [m]
+mmm m branch_cats = MixtureModels branch_cats [m]
 
 empirical a filename = builtin_empirical a (listToString filename)
 

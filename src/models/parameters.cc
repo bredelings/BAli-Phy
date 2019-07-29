@@ -1400,6 +1400,10 @@ std::string generate_atmodel_program(int n_partitions,
     auto tree_var = var("topology1");
     program.perform(tree_var, var("topology_model1"));
 
+    // P5. Branch categories
+    var branch_categories("branch_categories");
+    program.let(branch_categories, { var("map"), var("modifiable"), {var("replicate"), n_branches, 0} });
+
     // P1. Substitution models
     vector<expression_ref> smodels;
     for(int i=0;i<SMs.size();i++)
@@ -1415,7 +1419,9 @@ std::string generate_atmodel_program(int n_partitions,
         smodel = {var("set_alphabet'"), alphabet_exps[*first_partition], smodel};
 
         auto smodel_var = program.bind_and_log_model(prefix , smodel, program_loggers, false);
-        smodels.push_back(smodel_var);
+        auto smodel_var2 = var("smodel"+std::to_string(i+1)+"'");
+        program.let(smodel_var2, {smodel_var, branch_categories});
+        smodels.push_back(smodel_var2);
     }
 
 
@@ -1456,10 +1462,6 @@ std::string generate_atmodel_program(int n_partitions,
         branch_lengths = x;
     }
 
-
-    // P5. Branch categories
-    var branch_categories("branch_categories");
-    program.let(branch_categories, { var("map"), var("modifiable"), {var("replicate"), n_branches, 0} });
 
     // FIXME: We can't load the alignments to read their names until we know the alphabets!
     // FIXME: Can we load the alignments as SEQUENCES first?
@@ -1509,7 +1511,7 @@ std::string generate_atmodel_program(int n_partitions,
         program.let(smodel, smodels[smodel_index]);
 
         // transition_ps
-        expression_ref transition_ps = {var("transition_p_index"), tree_var, smodel, branch_categories, distances};
+        expression_ref transition_ps = {var("transition_p_index"), tree_var, smodel, distances};
 
         //---------------------------------------------------------------------------
         var compressed_alignment_var("compressed_alignment_var_part"+part);
