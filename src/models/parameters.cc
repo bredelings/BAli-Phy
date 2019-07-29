@@ -1479,9 +1479,9 @@ std::string generate_atmodel_program(int n_partitions,
         auto imodel_index = i_mapping[i];
 
         // L0. scale_P ...
-        var alphabet_var("alphabet_"+part);
+        var alphabet_var("alphabet_part"+part);
         program.let(alphabet_var, alphabet_exps[i]);
-        var alignment_var("alignment_"+part);
+        var alignment_var("alignment_part"+part);
         if (i==0)
         {
             program.let(alignment_var, {var("load_alignment"), alphabet_var, String(filename_ranges[i].first)});
@@ -1494,29 +1494,29 @@ std::string generate_atmodel_program(int n_partitions,
         }
 
         // L1. scale_P ...
-        var scale("scale_"+part);
+        var scale("scale_part"+part);
         program.let(scale, scales[scale_index]);
 
         // L2. distances_P = map (*scale_P) branch_lengths
-        var distances("distances_"+part);
+        var distances("distances_part"+part);
         {
             var x("x");
             program.let(distances, {var("listArray'"),{var("map"), lambda_quantify(x,{var("*"),scale,x}), branch_lengths}});
         }
 
         // L3. let smodel_P = ...
-        var smodel("smodel_"+part);
+        var smodel("smodel_part"+part);
         program.let(smodel, smodels[smodel_index]);
 
         // transition_ps
         expression_ref transition_ps = {var("transition_p_index"), tree_var, smodel, branch_categories, distances};
 
         //---------------------------------------------------------------------------
-        var compressed_alignment_var("compressed_alignment_var_"+part);
-        var counts_var("counts_"+part);
+        var compressed_alignment_var("compressed_alignment_var_part"+part);
+        var counts_var("counts_part"+part);
         if (allow_compression and (not i_mapping[i]))
         {
-            var compressed_alignment_tuple("compressed_alignment_tuple_"+part);
+            var compressed_alignment_tuple("compressed_alignment_tuple_part"+part);
             program.let(compressed_alignment_tuple, {var("compress_alignment"), alignment_var, n_leaves});
             program.let(compressed_alignment_var,   {var("fst3"), compressed_alignment_tuple});
             program.let(counts_var,                 {var("snd3"), compressed_alignment_tuple});
@@ -1528,9 +1528,9 @@ std::string generate_atmodel_program(int n_partitions,
         }
         //---------------------------------------------------------------------------//
 
-        var sequences_var("sequences_"+part);
+        var sequences_var("sequences_part"+part);
         program.let(sequences_var, {var("sequences_from_alignment"),compressed_alignment_var});
-        var leaf_sequences_var("leaf_seuqences_"+part);
+        var leaf_sequences_var("leaf_sequences_part"+part);
         program.let(leaf_sequences_var, {var("listArray'"),{var("take"),n_leaves,sequences_var}});
 
         // L4. let imodel_P = Nothing | Just
@@ -1538,10 +1538,10 @@ std::string generate_atmodel_program(int n_partitions,
         expression_ref maybe_hmms   = var("Nothing");
 
         // Sample the alignment
-        var alignment_on_tree("alignment_on_tree_"+part);
+        var alignment_on_tree("alignment_on_tree_part"+part);
         if (imodel_index)
         {
-            auto imodel = var("imodel_"+part);
+            auto imodel = var("imodel_part"+part);
             program.let(imodel, {imodels[*imodel_index], heat_var, imodel_training_var});
             expression_ref hmms =  {var("branch_hmms"), imodel, distances, n_branches};
             maybe_imodel = {var("Just"), imodel};
@@ -1557,7 +1557,7 @@ std::string generate_atmodel_program(int n_partitions,
             // P5.II Create modifiables for pairwise alignments
             expression_ref initial_alignments_exp = {var("pairwise_alignments_from_matrix"), compressed_alignment_var, tree_var};
 
-            var pairwise_as("pairwise_as_"+part);
+            var pairwise_as("pairwise_as_part"+part);
             program.let(pairwise_as,  {var("listArray'"), {var("map"),var("modifiable"),initial_alignments_exp}});
 
             // R4. Register sequence length methods
@@ -1570,8 +1570,8 @@ std::string generate_atmodel_program(int n_partitions,
         //---------------------------------------------------------------------------
 
         expression_ref f = {var("weighted_frequency_matrix"), smodel};
-        var cls_var("cls_"+part);
-        var likelihood_var("likelihood_"+part);
+        var cls_var("cls_part"+part);
+        var likelihood_var("likelihood_part"+part);
         int likelihood_calculator = like_calcs[i];
 
         if (n_nodes == 1)
@@ -1582,7 +1582,7 @@ std::string generate_atmodel_program(int n_partitions,
         }
         else if (likelihood_calculator == 0)
         {
-            var leaf_seq_counts("leaf_sequence_counts");
+            var leaf_seq_counts("leaf_sequence_counts_part"+part);
             program.let(leaf_seq_counts, {var("listArray'"),{var("Alignment.leaf_sequence_counts"), compressed_alignment_var, n_leaves, counts_var}});
 
             // Create and set conditional likelihoods for each branch
