@@ -20,7 +20,8 @@ builtin sizeOfVectorInt 1 "sizeOfVectorInt" "Vector"
 -- list_to_vector:: [a] -> EVector
 builtin list_to_vector 1 "list_to_vector" "Vector"
 
-list_from_vector v = go 0 (vector_size v) where
+list_from_vector_of_size v n = go 0 n where
     go _ 0 = []
     go i s = get_vector_index v i:go (i+1) (s-1)
 
+list_from_vector v = list_from_vector_of_size v (vector_size v)
