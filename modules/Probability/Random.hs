@@ -121,6 +121,10 @@ run_strict' alpha rate (Lazy r) = run_lazy' alpha rate r
 
 -- 2. Could we somehow implement slice sampling windows for non-contingent variables?
 
+-- NOTE: In order for (run_lazy') to actually be lazy, we need to avoid returning
+--       SOMETHING `seq` result.  And this means that we need to frequently
+--       intersperse unsafeInterleaveIO to avoid `seq`-ing on previous statements.
+
 run_lazy' alpha rate (LiftIO a) = a
 run_lazy' alpha rate (IOAndPass f g) = do
   x <- unsafeInterleaveIO $ run_lazy' alpha rate f
