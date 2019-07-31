@@ -387,25 +387,6 @@ EVector unaligned_alignments_on_tree(const Tree& t, const vector<vector<int>>& s
     return alignments;
 }
 
-expression_ref fix_strings(const expression_ref& E)
-{
-    if (E.size() == 0) return E;
-
-    vector<expression_ref> vs = E.sub();
-
-    if (vs.size() == 2 and is_apply_exp(E))
-    {
-        if (vs[0].is_a<var>() and vs[0].as_<var>().name == "Foreign.String.unpack_cpp_string")
-            return vs[1];
-    }
-
-    for(auto& v: vs)
-        v = fix_strings(v);
-
-    return expression_ref{E.head(), vs};
-}
-
-
 data_partition_constants::data_partition_constants(Parameters* p, int i, const alphabet& a_, int like_calc)
     :conditional_likelihoods_for_branch(2*p->t().n_branches()),
      sequence_length_indices(p->t().n_nodes()),
@@ -1647,7 +1628,7 @@ std::string generate_atmodel_program(int n_partitions,
         std::cout<<program_exp.print()<<std::endl;
 
 
-    program_file<<"\n\nmain = "<<fix_strings(program_exp).print();
+    program_file<<"\n\nmain = "<<program_exp.print();
 
     return program_file.str();
 }
