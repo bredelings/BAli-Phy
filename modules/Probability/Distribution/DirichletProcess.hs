@@ -28,13 +28,13 @@ builtin sample_crp_vector 3 "sample_CRP" "Distribution"
 sample_crp alpha n d = RandomStructure do_nothing modifiable $ liftIO $ do v <- (IOAction3 sample_crp_vector alpha n d)
                                                                            return $ list_from_vector_of_size v n
 --crp alpha n d = Distribution (crp_density alpha n d) (no_quantile "crp") (do_crp alpha n d) (ListRange $ replicate n $ integer_between 0 (n+d-1))
-modifiable_list_and_pdf density value rv = let raw_list = map modifiable value
-                                               trigger_list = map (rv `seq`) raw_list
-                                           in (trigger_list, density raw_list)
+modifiable_list_and_triggered_list value rand_var = let raw_list = map modifiable value
+                                                        trigger_list = map (rand_var `seq`) raw_list
+                                                    in (raw_list, trigger_list)
 
 crp_effect n d x = add_move (\c -> mapM_ (\l-> gibbs_sample_categorical (x!!l) (n+d) c) [0..n-1])
 
-crp alpha n d = Distribution (make_densities $ density) (no_quantile "crp") (RandomStructureAndPDF (crp_effect n d) (modifiable_list_and_pdf density) (sample_crp alpha n d)) (ListRange $ replicate n subrange)
+crp alpha n d = Distribution (make_densities $ density) (no_quantile "crp") (RandomStructure2 (crp_effect n d) (modifiable_list_and_triggered_list) (sample_crp alpha n d)) (ListRange $ replicate n subrange)
                   where subrange = integer_between 0 (n+d-1)
                         density = crp_density alpha n d
 

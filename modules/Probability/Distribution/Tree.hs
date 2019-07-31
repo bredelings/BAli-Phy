@@ -39,13 +39,12 @@ modifiable_tree mod tree = Tree (listArray' nodes) (listArray' branches) (numNod
     nodes =    [ map mod (edgesOutOfNode tree n) | n <- xrange 0 (numNodes tree) ]
     branches = [ (mod s, mod i, mod t, mod r) | b <- xrange 0 (numBranches tree * 2), let (s,i,t,r) = nodesForEdge tree b]
 
-
 uniform_topology_pr 1 = doubleToLogDouble 1.0
 uniform_topology_pr 2 = doubleToLogDouble 1.0
 uniform_topology_pr n = uniform_topology_pr (n-1) / (doubleToLogDouble $ intToDouble $ 2*n-5)
 
-modifiable_tree_pdf n value rv = let mod v = rv `seq` modifiable v
-                                     tree = modifiable_tree mod value
-                                 in (tree, uniform_topology_pr n)
+triggered_modifiable_tree value rand_var = let tree = modifiable_tree modifiable value
+                                               triggered_tree = modifiable_tree (rand_var `seq`) tree
+                                           in (tree, triggered_tree)
 
-uniform_topology n = Distribution (\tree-> [uniform_topology_pr n]) (no_quantile "uniform_topology") (RandomStructureAndPDF do_nothing (modifiable_tree_pdf n) (random_tree n)) (TreeRange n)
+uniform_topology n = Distribution (\tree-> [uniform_topology_pr n]) (no_quantile "uniform_topology") (RandomStructure2 do_nothing triggered_modifiable_tree (random_tree n)) (TreeRange n)
