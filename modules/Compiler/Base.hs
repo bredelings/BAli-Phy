@@ -19,6 +19,7 @@ f >>= g = IOAndPass f g
 f >> g = f >>= (\x -> g)
 return f = IOReturn f
 fail e = error e
+mfix f = MFix f
 
 infixr 0 $!, `seq`, `join`
 f $! x = x `seq` f x

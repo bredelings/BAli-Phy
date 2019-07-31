@@ -1028,7 +1028,7 @@ optional<int> reg_heap::lookup_named_head(const string& name)
 
 int reg_heap::add_perform_io_head()
 {
-    perform_io_head = add_compute_expression(var("Prelude.unsafePerformIO"));
+    perform_io_head = add_compute_expression(var("Compiler.IO.unsafePerformIO"));
     return *perform_io_head;
 }
 
@@ -1044,7 +1044,7 @@ int reg_heap::add_program(const expression_ref& E)
 
     auto P = E;
     P = {var("Probability.Random.gen_model_no_alphabet"), P};
-    P = {var("Prelude.unsafePerformIO"), P};
+    P = {var("Compiler.IO.unsafePerformIO"), P};
 
     int program_head = add_compute_expression(P);
     P = reg_var(heads[program_head]);

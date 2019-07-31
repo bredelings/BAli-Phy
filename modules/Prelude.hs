@@ -11,12 +11,16 @@ module Prelude (module Prelude,
                 module Foreign.String,
                 module Control.Monad,
                 module Compiler.Base,
+                module Compiler.IO,
+                module Compiler.ST,
                 module Compiler.Num,
                 module Compiler.Real,
                 module Compiler.Enum)
     where
 
 import Compiler.Base
+import Compiler.IO
+import Compiler.ST
 import Compiler.Num
 import Compiler.Real
 import Compiler.Enum
@@ -77,20 +81,6 @@ listToString l = runST $ do v <- newString (length l)
                             return v
 
 pack_cpp_string = listToString
-
-unsafePerformIO (IOAction1 x y ) = x y
-unsafePerformIO (IOAction2 x y z) = x y z
-unsafePerformIO (IOAction3 x y z w) = x y z w
-unsafePerformIO (IOAction4 x y z w u) = x y z w u
-unsafePerformIO (LazyIO f) = unsafePerformIO f
-unsafePerformIO (IOAndPass (LazyIO f) g) = let x = unsafePerformIO f in unsafePerformIO (g x)
-unsafePerformIO (IOAndPass f g) = let x = unsafePerformIO f in x `join` unsafePerformIO (g x)
-unsafePerformIO (MFix f) = let x = unsafePerformIO (f x) in x
-unsafePerformIO (IOReturn x) = x
-
-unsafeInterleaveIO x = LazyIO x
-mfix f = MFix f
-runST x = reapply unsafePerformIO x
 
 show () = "()"
 show (x,y) = "(" ++ show x ++ "," ++ show y ++ ")"
