@@ -131,10 +131,10 @@ run_lazy' alpha rate (IOAndPass f g) = do
   run_lazy' alpha rate $ g x
 run_lazy' alpha rate (IOReturn v) = return v
 run_lazy' alpha rate (Sample dist@(Distribution _ _ (RandomStructure _ _ do_sample) range)) = do
-  value <- run_lazy alpha do_sample
+  value <- unsafeInterleaveIO $ run_lazy alpha do_sample
   run_lazy' alpha rate $ SampleWithInitialValue dist value
 run_lazy' alpha rate (Sample dist@(Distribution _ _ (RandomStructure2 _ _ do_sample) range)) = do
-  value <- run_lazy alpha do_sample
+  value <- unsafeInterleaveIO $ run_lazy alpha do_sample
   run_lazy' alpha rate $ SampleWithInitialValue dist value
 run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStructure effect structure do_sample) range) initial_value) = unsafeInterleaveIO $ do
   -- do we need to perform the sample and discard the result, in order to force the parameters of the distribution? 
