@@ -520,6 +520,10 @@ vector<param> get_params_from_list(context* C, const expression_ref& list)
 {
     vector<param> params;
     expression_ref structure = C->evaluate_expression({var("Parameters.maybe_modifiable_structure"), list});
+
+    if (log_verbose >= 3)
+        std::cerr<<"structure = "<<structure<<"\n\n";
+
     auto vec = *list_to_evector(structure);
     for(auto& e: vec)
         params.push_back( get_param(*C, e) );
@@ -532,18 +536,16 @@ void tree_constants::register_branch_lengths(context* C, const expression_ref& b
     if (B == 0) return;
 
     int branch_lengths_index = C->add_compute_expression( branch_lengths_exp );
+    auto branch_lengths_exp = C->get_expression(branch_lengths_index);
     C->evaluate(branch_lengths_index);
-    auto branches_structure = C->evaluate_expression({var("Parameters.maybe_modifiable_structure"), C->get_expression(branch_lengths_index)});
-    auto branch_durations_exp = C->get_expression(branch_lengths_index);
-    auto branch_durations = get_params_from_list(C, branch_durations_exp);
 
-    if (log_verbose >= 3)
-        std::cerr<<"branch lengths = "<<branches_structure<<"\n\n";
+    branch_durations = get_params_from_list(C, branch_lengths_exp);
+    assert(branch_durations.size() == B);
 
     // Create the parameters that hold branch lengths
     for(int b=0;b<B;b++)
     {
-        int index = C->add_compute_expression( {var("Data.List.!!"), branch_durations_exp, b} );
+        int index = C->add_compute_expression( {var("Data.List.!!"), branch_lengths_exp, b} );
 
         branch_duration_index.push_back(index);
     }
