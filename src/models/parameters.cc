@@ -1465,17 +1465,17 @@ std::string generate_atmodel_program(int n_partitions,
 
         // L0. scale_P ...
         var alphabet_var("alphabet_part"+part);
-        program.let(alphabet_var, alphabet_exps[i]);
+        program2.let(alphabet_var, alphabet_exps[i]);
         var alignment_var("alignment_part"+part);
         if (i==0)
         {
-            program.let(alignment_var, {var("load_alignment"), alphabet_var, String(filename_ranges[i].first)});
-            program.let(sequence_names_var, {var("Alignment.builtin_sequence_names"),alignment_var});
+            program2.let(alignment_var, {var("load_alignment"), alphabet_var, String(filename_ranges[i].first)});
+            program2.let(sequence_names_var, {var("Alignment.builtin_sequence_names"),alignment_var});
         }
         else
         {
             // This is using EVector String instead of [[Char]] for the sequence names!
-            program.let(alignment_var, {var("builtin_reorder_alignment"),sequence_names_var,{var("load_alignment"), alphabet_var, String(filename_ranges[i].first)}});
+            program2.let(alignment_var, {var("builtin_reorder_alignment"),sequence_names_var,{var("load_alignment"), alphabet_var, String(filename_ranges[i].first)}});
         }
 
         // L1. scale_P ...
