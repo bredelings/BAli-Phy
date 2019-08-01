@@ -22,7 +22,9 @@ module Probability (module Probability,
                     module Probability.Distribution.ExpTransform,
 
                     module Probability.Distribution.List,
-                    module Probability.Distribution.Tree
+                    module Probability.Distribution.Tree,
+                    module Probability.Distribution.RandomAlignment,
+                    module Probability.Distribution.ATModelDist
                    )
     where
 
@@ -55,4 +57,5 @@ import Probability.Distribution.ExpTransform
 
 import Probability.Distribution.List
 import Probability.Distribution.Tree
-
+import Probability.Distribution.RandomAlignment
+import Probability.Distribution.ATModelDist

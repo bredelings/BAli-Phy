@@ -465,7 +465,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
             branch_HMMs.push_back( p->add_compute_expression( {var("Data.Array.!"), hmms.ref(*p), b} ) );
 
         // Alignment prior
-        alignment_prior_index = p->add_compute_expression( {var("Alignment.alignment_pr"), alignment_on_tree, hmms.ref(*p), model} );
+        alignment_prior_index = p->add_compute_expression( {var("Probability.Distribution.RandomAlignment.alignment_pr"), alignment_on_tree, hmms.ref(*p), model} );
     }
 
     cl_index = p->add_compute_expression({var("BAliPhy.ATModel.DataPartition.cond_likes"), partition});
