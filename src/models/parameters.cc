@@ -516,6 +516,16 @@ vector<int> edges_connecting_to_node(const Tree& T, int n)
     return branch_list_;
 }
 
+vector<param> get_params_from_list(context* C, const expression_ref& list)
+{
+    vector<param> params;
+    expression_ref structure = C->evaluate_expression({var("Parameters.maybe_modifiable_structure"), list});
+    auto vec = *list_to_evector(structure);
+    for(auto& e: vec)
+        params.push_back( get_param(*C, e) );
+    return params;
+}
+
 void tree_constants::register_branch_lengths(context* C, const expression_ref& branch_lengths_exp)
 {
     int B = parameters_for_tree_branch.size()/2;
@@ -525,6 +535,7 @@ void tree_constants::register_branch_lengths(context* C, const expression_ref& b
     C->evaluate(branch_lengths_index);
     auto branches_structure = C->evaluate_expression({var("Parameters.maybe_modifiable_structure"), C->get_expression(branch_lengths_index)});
     auto branch_durations_exp = C->get_expression(branch_lengths_index);
+    auto branch_durations = get_params_from_list(C, branch_durations_exp);
 
     if (log_verbose >= 3)
         std::cerr<<"branch lengths = "<<branches_structure<<"\n\n";
@@ -532,9 +543,8 @@ void tree_constants::register_branch_lengths(context* C, const expression_ref& b
     // Create the parameters that hold branch lengths
     for(int b=0;b<B;b++)
     {
-        int index = C->add_compute_expression( {var("Data.Array.!"), branch_durations_exp, b} );
+        int index = C->add_compute_expression( {var("Data.List.!!"), branch_durations_exp, b} );
 
-        branch_durations.push_back( get_param(*C, branches_structure.sub()[b]) );
         branch_duration_index.push_back(index);
     }
 }
@@ -1252,16 +1262,6 @@ The main problems with this approach are:
   + alternatively, we could do a sample_with_initial_value.
  */
 
-vector<param> get_params_from_list(context* C, const expression_ref& list)
-{
-    vector<param> params;
-    expression_ref structure = C->evaluate_expression({var("Parameters.maybe_modifiable_structure"), list});
-    auto vec = *list_to_evector(structure);
-    for(auto& e: vec)
-        params.push_back( get_param(*C, e) );
-    return params;
-}
-
 expression_ref get_genetic_code_expression(const Genetic_Code& code)
 {
     if (code.name() == "standard")
@@ -1737,7 +1737,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     /* --------------------------------------------------------------- */
 
     // R1. Register branch lengths
-    TC->register_branch_lengths(this, {var("Data.Array.listArray'"),{var("BAliPhy.ATModel.branch_lengths"),my_atmodel()}});
+    TC->register_branch_lengths(this, {var("BAliPhy.ATModel.branch_lengths"),my_atmodel()});
 
     param scales_list = add_compute_expression( {var("BAliPhy.ATModel.scales"),my_atmodel()} );
 
