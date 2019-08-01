@@ -238,7 +238,7 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
     auto likelihood = M[result_reg].exp;
     assert(likelihood.is_log_double());
 
-    M.register_likelihood(R);
+    M.register_likelihood_(R);
 
     return constructor("()",0);
 }
