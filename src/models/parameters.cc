@@ -536,16 +536,16 @@ void tree_constants::register_branch_lengths(context* C, const expression_ref& b
     if (B == 0) return;
 
     int branch_lengths_index = C->add_compute_expression( branch_lengths_exp );
-    auto branch_lengths_exp = C->get_expression(branch_lengths_index);
+    auto branch_lengths = C->get_expression(branch_lengths_index);
     C->evaluate(branch_lengths_index);
 
-    branch_durations = get_params_from_list(C, branch_lengths_exp);
+    branch_durations = get_params_from_list(C, branch_lengths);
     assert(branch_durations.size() == B);
 
     // Create the parameters that hold branch lengths
     for(int b=0;b<B;b++)
     {
-        int index = C->add_compute_expression( {var("Data.List.!!"), branch_lengths_exp, b} );
+        int index = C->add_compute_expression( {var("Data.List.!!"), branch_lengths, b} );
 
         branch_duration_index.push_back(index);
     }
