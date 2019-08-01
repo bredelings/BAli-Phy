@@ -1342,21 +1342,21 @@ std::string generate_atmodel_program(int n_partitions,
 
     // F1. Substitution models
     for(int i=0;i<SMs.size();i++)
-        program_file<<"\n\nsmodel"<<i+1<<" = "<<SMs[i].expression.print();
+        program_file<<"\n\nsample_smodel_"<<i+1<<" = "<<SMs[i].expression.print();
 
     // F2. Indel models
     for(int i=0;i<IMs.size();i++)
-        program_file<<"\n\nimodel"<<i+1<<" = "<<IMs[i].expression.print();
+        program_file<<"\n\nsample_imodel_"<<i+1<<" = "<<IMs[i].expression.print();
 
     // F3. Scale models
     for(int i=0; i<scaleMs.size(); i++)
-        program_file<<"\n\nscale_model"<<i+1<<" = "<<scaleMs[i].expression.print();
+        program_file<<"\n\nsample_scale_"<<i+1<<" = "<<scaleMs[i].expression.print();
 
     // F4. Branch lengths
-    program_file<<"\n\nbranch_lengths_model1 = "<<branch_length_model.expression.print();
+    program_file<<"\n\nsample_branch_lengths_1 = "<<branch_length_model.expression.print();
 
     // F5. Topology
-    program_file<<"\n\ntopology_model1 = sample $ uniform_topology "<<n_leaves;
+    program_file<<"\n\nsample_topology_1 = sample $ uniform_topology "<<n_leaves;
 
     /* --------------------------------------------------------------- */
     do_block program2;
@@ -1381,7 +1381,7 @@ std::string generate_atmodel_program(int n_partitions,
     // Therefore, we are constructing a list with values [(prefix1,(Just value1, loggers1)), (prefix1, (Just value1, loggers2))
 
     auto tree_var = var("topology1");
-    program.perform(tree_var, var("topology_model1"));
+    program.perform(tree_var, var("sample_topology_1"));
 
     // P5. Branch categories
     var branch_categories("branch_categories");
@@ -1398,11 +1398,11 @@ std::string generate_atmodel_program(int n_partitions,
             if (s_mapping[j] and *s_mapping[j] == i)
                 first_partition = j;
 
-        expression_ref smodel = var("smodel"+std::to_string(i+1));
+        expression_ref smodel = var("sample_smodel_"+std::to_string(i+1));
         smodel = {var("set_alphabet'"), alphabet_exps[*first_partition], smodel};
 
         auto smodel_var = program.bind_and_log_model(prefix , smodel, program_loggers, false);
-        auto smodel_var2 = var("smodel"+std::to_string(i+1)+"'");
+        auto smodel_var2 = var("smodel_"+std::to_string(i+1));
         program.let(smodel_var2, {smodel_var, branch_categories});
         smodels.push_back(smodel_var2);
     }
@@ -1413,7 +1413,7 @@ std::string generate_atmodel_program(int n_partitions,
     for(int i=0;i<IMs.size();i++)
     {
         string prefix = "I" + convertToString(i+1);
-        expression_ref imodel = var("imodel"+std::to_string(i+1));
+        expression_ref imodel = var("sample_imodel_"+std::to_string(i+1));
         auto imodel_var = program.bind_and_log_model(prefix, imodel, program_loggers, false);
 
         imodels.push_back({imodel_var, tree_var});
@@ -1428,7 +1428,7 @@ std::string generate_atmodel_program(int n_partitions,
         //        This would obviate the need to create a Scale1 (etc) prefix here.
         string prefix = "Scale"+convertToString(i+1);
 
-        auto scale_model = var("scale_model"+std::to_string(i+1));
+        auto scale_model = var("sample_scale_"+std::to_string(i+1));
         auto scale_var = program.bind_and_log_model(prefix , scale_model, program_loggers, false);
         scales.push_back(scale_var);
     }
@@ -1439,8 +1439,8 @@ std::string generate_atmodel_program(int n_partitions,
     expression_ref branch_lengths = List();
     if (n_branches > 0)
     {
-        string prefix = "T_lengths";
-        expression_ref branch_lengths_model = {var("branch_lengths_model1"), tree_var};
+        string prefix = "branch_lengths";
+        expression_ref branch_lengths_model = {var("sample_branch_lengths_1"), tree_var};
         auto [x,loggers] = program.bind_model(prefix , branch_lengths_model);
         branch_lengths = x;
     }
