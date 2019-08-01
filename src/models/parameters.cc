@@ -1494,7 +1494,8 @@ std::string generate_atmodel_program(int n_partitions,
         program.let(smodel, smodels[smodel_index]);
 
         // transition_ps
-        expression_ref transition_ps = {var("transition_p_index"), tree_var, smodel, distances};
+        var transition_ps("transition_ps_part"+part);
+        program.let(transition_ps, {var("transition_p_index"), tree_var, smodel, distances});
 
         //---------------------------------------------------------------------------
         var compressed_alignment_var("compressed_alignment_var_part"+part);
