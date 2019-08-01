@@ -1359,6 +1359,8 @@ std::string generate_atmodel_program(int n_partitions,
     program_file<<"\n\ntopology_model1 = sample $ uniform_topology "<<n_leaves;
 
     /* --------------------------------------------------------------- */
+    do_block program2;
+
     do_block program;
     var imodel_training_var("imodel_training");
     var heat_var("heat");
@@ -1366,7 +1368,7 @@ std::string generate_atmodel_program(int n_partitions,
     var subst_root_var("subst_root");
     var modifiable("Parameters.modifiable");
 
-    program.let({
+    program2.let({
             {imodel_training_var, {modifiable, make_Bool(false)}},
             {heat_var           , {modifiable, 1.0}},
             {variable_alignment_var, {modifiable, make_Bool(variable_alignment_)}},
@@ -1628,7 +1630,10 @@ std::string generate_atmodel_program(int n_partitions,
         std::cout<<program_exp.print()<<std::endl;
 
 
-    program_file<<"\n\nmain = "<<program_exp.print();
+    program2.perform(Tuple(var("atmodel"),var("loggers")), program_exp);
+    program2.finish_return(Tuple(var("atmodel"),var("loggers")));
+
+    program_file<<"\n\nmain = "<<program2.get_expression().print();
 
     return program_file.str();
 }
