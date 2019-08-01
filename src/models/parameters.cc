@@ -860,9 +860,9 @@ void mutable_data_partition::set_alignment(const alignment& A)
     // 3. Check that the alignment doesn't disagree with existing leaf sequences lengths!
     for(int i=0;i<T.n_leaves();i++)
     {
-        assert(A.seq(i).name == labels[i]);
-        if (A.seqlength(i) != seqlength(i))
-            throw myexception()<<"partition "<<partition_index+1<<", sequence "<<A.seq(i).name<<": alignment sequence length "<<A.seqlength(i)<<" does not match required sequence length "<<seqlength(i);
+        assert(AA.seq(i).name == labels[i]);
+        if (AA.seqlength(i) != seqlength(i))
+            throw myexception()<<"partition "<<partition_index+1<<", sequence "<<AA.seq(i).name<<": alignment sequence length "<<AA.seqlength(i)<<" does not match required sequence length "<<seqlength(i);
     }
 
     // 4. Set pairwise alignment parameters.
