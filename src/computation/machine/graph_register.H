@@ -216,6 +216,8 @@ public:
 
     std::vector<int> likelihood_heads;
 
+    void register_likelihood_(int r);
+
     void register_likelihood(int r);
 
     int register_likelihood(closure&& C);

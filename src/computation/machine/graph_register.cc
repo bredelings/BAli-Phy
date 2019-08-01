@@ -278,11 +278,15 @@ void reg_heap::register_prior(int r)
     }
 }
 
-void reg_heap::register_likelihood(int r)
+void reg_heap::register_likelihood_(int r)
 {
-    mark_completely_dirty(root_token);
-    auto [r2,v] = incremental_evaluate(r);
-    r = r2;
+    r = follow_index_var(r);
+
+    if (not reg_has_value(r))
+        throw myexception()<<"Can't register a likelihood reg that is unevaluated!";
+
+    if (regs.access(r).flags.test(1))
+        throw myexception()<<"Can't register a likelihood reg that is already registered!";
 
     // We can only put the bit on a changeable reg, not on (say) an index_var.
     // Therefore, we must evaluate r -> r2 here.
@@ -299,6 +303,14 @@ void reg_heap::register_likelihood(int r)
 
 	likelihood_heads.push_back(r);
     }
+}
+
+void reg_heap::register_likelihood(int r)
+{
+    mark_completely_dirty(root_token);
+    auto [r2,v] = incremental_evaluate(r);
+
+    register_likelihood_(r2);
 }
 
 int reg_heap::register_likelihood(closure&& C)
