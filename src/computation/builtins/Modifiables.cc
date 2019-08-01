@@ -232,7 +232,11 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
 {
     int R = Args.reg_for_slot(0);
 
+    auto result_reg = Args.evaluate_slot_no_record(0);
+
     auto& M = Args.memory();
+    auto likelihood = M[result_reg].exp;
+    assert(likelihood.is_log_double());
 
     M.register_likelihood(R);
 
