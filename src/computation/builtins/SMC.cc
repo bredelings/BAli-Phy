@@ -120,9 +120,9 @@ vector<double> get_equilibrium(const vector<double>& beta)
 
 // initially assume JC model?
 
-Matrix JC_transition_p(double t)
+EMatrix JC_transition_p(double t)
 {
-    Matrix P(4,4);
+    EMatrix P(4,4);
     double a = (1-exp(-4*t/3))/4;
 
     for(int i=0;i<4;i++)
@@ -135,18 +135,33 @@ Matrix JC_transition_p(double t)
     return P;
 }
 
+EMatrix error_matrix(double error_rate)
+{
+    EMatrix E(4,4);
+    for(int i=0;i<4;i++)
+        for(int j=0;j<4;j++)
+            if (i==j)
+                E(i,j) = 1.0 - error_rate;
+            else
+                E(i,j) = error_rate/3.0;
+    return E;
+}
+
 // We need emission probabilities for 2*t, since t is the depth of the tree,
 // but the distance between the tips is 2*t.
 
 // So... this should be 0.25*JC_transition_p( ), but maybe leaving out the
 // 0.25 doesn't hurt, since its a constant factor.
 
-vector<Matrix> get_emission_probabilities(const vector<double>& t)
+vector<EMatrix> get_emission_probabilities(const vector<double>& t, double error_rate)
 {
-    vector<Matrix> E(t.size());
-    for(int i=0;i<E.size();i++)
-	E[i] = JC_transition_p(2.0 * t[i]);
-    return E;
+    vector<EMatrix> emission(t.size(),EMatrix(4,4));
+    auto error = error_matrix(error_rate);
+    for(int i=0;i<t.size();i++)
+    {
+        emission[i] = error.transpose() * JC_transition_p(2.0 * t[i]) * error;
+    }
+    return emission;
 }
 
 // SMC model.
@@ -403,7 +418,7 @@ Matrix get_transition_probabilities(const vector<double>& B, const vector<double
     return P;
 }
 
-EMatrix get_no_snp_matrix(const Matrix& T, const vector<Matrix>& emission)
+EMatrix get_no_snp_matrix(const Matrix& T, const vector<EMatrix>& emission)
 {
     // This is only valid for Jukes-Cantor
     int n_bins = T.size1();
@@ -414,7 +429,7 @@ EMatrix get_no_snp_matrix(const Matrix& T, const vector<Matrix>& emission)
     return M;
 }
 
-EMatrix get_snp_matrix(const Matrix& T, const vector<Matrix>& emission)
+EMatrix get_snp_matrix(const Matrix& T, const vector<EMatrix>& emission)
 {
     // This is only valid for Jukes-Cantor
     int n_bins = T.size1();
@@ -685,7 +700,7 @@ vector<pair<double,int>> compress_states(const vector<int>& states, const vector
 
 typedef double smc_tree;
 
-vector<pair<smc_tree,int>> smc_trace(double rho_over_theta, vector<double> coalescent_rates, vector<double> level_boundaries, const alignment& A)
+vector<pair<smc_tree,int>> smc_trace(double rho_over_theta, vector<double> coalescent_rates, vector<double> level_boundaries, double error_rate, const alignment& A)
 {
     assert(level_boundaries.size() >= 1);
     assert(level_boundaries[0] == 0.0);
@@ -713,7 +728,7 @@ vector<pair<smc_tree,int>> smc_trace(double rho_over_theta, vector<double> coale
 
     const auto bin_times = get_quantiles(alpha, coalescent_rates, level_boundaries);
 
-    const auto emission_probabilities = get_emission_probabilities(bin_times);
+    const auto emission_probabilities = get_emission_probabilities(bin_times, error_rate);
 
     // This assumes equally-spaced bin quantiles.
     const auto pi = get_equilibrium(beta);
@@ -781,7 +796,7 @@ vector<pair<smc_tree,int>> smc_trace(double rho_over_theta, vector<double> coale
     return compress_states(states, bin_times);
 }
 
-log_double_t smc(double rho_over_theta, vector<double> coalescent_rates, vector<double> level_boundaries, const alignment& A)
+log_double_t smc(double rho_over_theta, vector<double> coalescent_rates, vector<double> level_boundaries, double error_rate, const alignment& A)
 {
     assert(level_boundaries.size() >= 1);
     assert(level_boundaries[0] == 0.0);
@@ -809,7 +824,7 @@ log_double_t smc(double rho_over_theta, vector<double> coalescent_rates, vector<
 
     const auto bin_times = get_quantiles(alpha, coalescent_rates, level_boundaries);
 
-    const auto emission_probabilities = get_emission_probabilities(bin_times);
+    const auto emission_probabilities = get_emission_probabilities(bin_times, error_rate);
 
     // This assumes equally-spaced bin quantiles.
     const auto pi = get_equilibrium(beta);
@@ -862,14 +877,17 @@ extern "C" closure builtin_function_smc_density(OperationArgs& Args)
 
     auto level_boundaries = (vector<double>)Args.evaluate(2).as_<EVector>();
 
+    // Perhaps we should make this different, depending on whether a sequence matches the reference.
+    double error_rate = Args.evaluate(3).as_double();
+
     vector<double> coalescent_rates;
     for(auto theta: thetas)
 	coalescent_rates.push_back(2.0/theta);
 
-    auto a = Args.evaluate(3);
+    auto a = Args.evaluate(4);
     auto& A = a.as_<Box<alignment>>().value();
 
-    return { smc(rho_over_theta, coalescent_rates, level_boundaries, A) };
+    return { smc(rho_over_theta, coalescent_rates, level_boundaries, error_rate, A) };
 }
 
 extern "C" closure builtin_function_smc_trace(OperationArgs& Args)
@@ -880,14 +898,17 @@ extern "C" closure builtin_function_smc_trace(OperationArgs& Args)
 
     auto level_boundaries = (vector<double>)Args.evaluate(2).as_<EVector>();
 
+    // Perhaps we should make this different, depending on whether a sequence matches the reference.
+    double error_rate = Args.evaluate(3).as_double();
+
     vector<double> coalescent_rates;
     for(auto theta: thetas)
 	coalescent_rates.push_back(2.0/theta);
 
-    auto a = Args.evaluate(3);
+    auto a = Args.evaluate(4);
     auto& A = a.as_<Box<alignment>>().value();
 
-    auto compressed_states = smc_trace(rho_over_theta, coalescent_rates, level_boundaries, A);
+    auto compressed_states = smc_trace(rho_over_theta, coalescent_rates, level_boundaries, error_rate, A);
 
     EVector ecs;
     for(auto& [h,l]: compressed_states)
