@@ -1514,10 +1514,6 @@ std::string generate_atmodel_program(int n_partitions,
         var smodel("smodel_part"+part);
         program.let(smodel, smodels[smodel_index]);
 
-        // transition_ps
-        var transition_ps("transition_ps_part"+part);
-        program.let(transition_ps, {var("transition_p_index"), tree_var, smodel, distances});
-
         //---------------------------------------------------------------------------
         var compressed_alignment_var("compressed_alignment_part"+part);
         var counts_var("counts_part"+part);
@@ -1576,58 +1572,8 @@ std::string generate_atmodel_program(int n_partitions,
             program.let(alignment_on_tree, {var("AlignmentOnTree"), tree_var, n_nodes, seq_lengths, pairwise_as});
         }
 
-        auto as = expression_ref{var("pairwise_alignments"), alignment_on_tree};
-        //---------------------------------------------------------------------------
-
-        expression_ref f = {var("weighted_frequency_matrix"), smodel};
-        var cls_var("cls_part"+part);
-        var likelihood_var("likelihood_part"+part);
-        int likelihood_calculator = like_calcs[i];
-
-        if (n_nodes == 1)
-        {
-            expression_ref seq = {var("!"),leaf_sequences_var, 0};
-            program.let(cls_var, 0);
-            program.let(likelihood_var, {var("peel_likelihood_1"), seq, alphabet_var, f});
-        }
-        else if (likelihood_calculator == 0)
-        {
-            var leaf_seq_counts("leaf_sequence_counts_part"+part);
-            program.let(leaf_seq_counts, {var("listArray'"),{var("Alignment.leaf_sequence_counts"), compressed_alignment_var, n_leaves, counts_var}});
-
-            // Create and set conditional likelihoods for each branch
-            program.let(cls_var, {var("cached_conditional_likelihoods"), tree_var, leaf_sequences_var, leaf_seq_counts, as, alphabet_var, transition_ps,f});
-
-            // FIXME: broken for fixed alignments of 2 sequences.
-            if (n_nodes > 2)
-                program.let(likelihood_var, {var("peel_likelihood"), tree_var, cls_var, as, f, subst_root_var});
-        }
-        else if (likelihood_calculator == 1)
-        {
-            // Create and set conditional likelihoods for each branch
-            program.let(cls_var,{var("cached_conditional_likelihoods_SEV"),tree_var,leaf_sequences_var, alphabet_var ,transition_ps,f, compressed_alignment_var});  
-
-            // FIXME: broken for fixed alignments of 2 sequences.
-            if (n_nodes > 2)
-                program.let(likelihood_var,{var("peel_likelihood_SEV"), tree_var, cls_var, f, subst_root_var, counts_var});
-        }
-
-        if (n_nodes == 2)
-        {
-            // We probably want the cls?
-            expression_ref seq1 = {var("!"), leaf_sequences_var, 0};
-            expression_ref seq2 = {var("!"), leaf_sequences_var, 1};
-            expression_ref A = {var("!"), as, 0};
-            expression_ref P = {var("!"), transition_ps, 0};
-
-            program.let(likelihood_var,{var("peel_likelihood_2"), seq1, seq2, alphabet_var, A, P, f});
-        }
-
-        //--------------------------------------------------------------------------
-
-
         // FIXME - to make an AT *model* we probably need to remove the data from here.
-        partitions.push_back({var("Partition"), smodel, maybe_imodel, scale, tree_var, leaf_sequences_var, alignment_on_tree, maybe_hmms, transition_ps, cls_var, likelihood_var});
+        partitions.push_back({var("Partition"), smodel, maybe_imodel, scale, tree_var, leaf_sequences_var, alignment_on_tree, maybe_hmms});
     }
 
     // FIXME - we need to observe the likelihoods for each partition here.
