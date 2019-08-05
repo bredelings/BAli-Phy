@@ -1531,15 +1531,17 @@ std::string generate_atmodel_program(int n_partitions,
         {
             auto imodel = var("imodel_part"+part);
             program.let(imodel, {imodels[*imodel_index], heat_var, imodel_training_var});
-            expression_ref hmms =  {var("branch_hmms"), imodel, distances, n_branches};
+
+            var branch_hmms("branch_hmms_part"+part);
+            program.let(branch_hmms, {var("branch_hmms"), imodel, distances, n_branches});
             maybe_imodel = {var("Just"), imodel};
-            maybe_hmms   = {var("Just"), hmms};
+            maybe_hmms   = {var("Just"), branch_hmms};
 
             var leaf_sequence_lengths("leaf_sequence_lengths_part"+part);
             program2.let(leaf_sequence_lengths, {var("get_sequence_lengths"),leaf_sequences_var});
 
             // alignment_on_tree <- sample $ random_alignment tree hmms model leaf_seqs_array p->my_variable_alignment()
-            program.perform(alignment_on_tree, {var("sample"),{var("random_alignment"), tree_var, hmms, imodel, leaf_sequence_lengths, variable_alignment_var}});
+            program.perform(alignment_on_tree, {var("sample"),{var("random_alignment"), tree_var, branch_hmms, imodel, leaf_sequence_lengths, variable_alignment_var}});
         }
         else
         {
