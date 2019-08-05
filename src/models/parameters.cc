@@ -1656,9 +1656,87 @@ std::string generate_atmodel_program(int n_partitions,
 
 
     program2.perform(Tuple(var("atmodel"),var("loggers")), program_exp);
-    program2.let(var("likelihoods"),{var("map"),var("BAliPhy.ATModel.DataPartition.likelihood"),{var("partitions"),var("atmodel")}});
-    program2.let(var("cond_likes"),{var("map"),var("BAliPhy.ATModel.DataPartition.cond_likes"),{var("partitions"),var("atmodel")}});
+    var branch_lengths1("branch_lengths_1");
+    program2.let(branch_lengths1,{var("BAliPhy.ATModel.branch_lengths"),var("atmodel")});
+    for(int i=0; i < n_partitions; i++)
+    {
+        string part = std::to_string(i+1);
+        int likelihood_calculator = like_calcs[i];
+
+        // L0. scale_P ...
+        var alphabet_var("alphabet_part"+part);
+        var cls_var("cls_part"+part);
+        var leaf_sequences_var("leaf_sequences_part"+part);
+        var compressed_alignment_var("compressed_alignment_part"+part);
+        var counts_var("counts_part"+part);
+
+        var partition("part"+part);
+        program2.let(partition,{var("!!"),{var("partitions"),var("atmodel")},i});
+
+        var scale("scale_part"+part);
+        program2.let(scale,{var("BAliPhy.ATModel.DataPartition.scale"),partition});
+        var smodel("smodel_part"+part);
+        program2.let(smodel,{var("BAliPhy.ATModel.DataPartition.smodel"),partition});
+
+        var distances("distances_part"+part);
+        {
+            var x("x");
+            program2.let(distances, {var("listArray'"),{var("map"), lambda_quantify(x,{var("*"),scale,x}), branch_lengths1}});
+        }
+
+        auto alignment_on_tree = expression_ref{var("BAliPhy.ATModel.DataPartition.get_alignment"),partition};
+        auto as = expression_ref{var("pairwise_alignments"), alignment_on_tree};
+        auto f = expression_ref{var("weighted_frequency_matrix"), smodel};
+        auto tree_var = expression_ref{var("BAliPhy.ATModel.DataPartition.get_tree"),partition};
+
+        var transition_ps("transition_ps_part"+part);
+        program2.let(transition_ps, {var("transition_p_index"), tree_var, smodel, distances});
+
+        var likelihood_var("likelihood_part"+part);
+        if (n_nodes == 1)
+        {
+            expression_ref seq = {var("!"),leaf_sequences_var, 0};
+            program2.let(cls_var, 0);
+            program2.let(likelihood_var, {var("peel_likelihood_1"), seq, alphabet_var, f});
+        }
+        else if (likelihood_calculator == 0)
+        {
+            var leaf_seq_counts("leaf_sequence_counts_part"+part);
+            program2.let(leaf_seq_counts, {var("listArray'"),{var("Alignment.leaf_sequence_counts"), compressed_alignment_var, n_leaves, counts_var}});
+
+            // Create and set conditional likelihoods for each branch
+            program2.let(cls_var, {var("cached_conditional_likelihoods"), tree_var, leaf_sequences_var, leaf_seq_counts, as, alphabet_var, transition_ps, f});
+
+            // FIXME: broken for fixed alignments of 2 sequences.
+            if (n_nodes > 2)
+                program2.let(likelihood_var, {var("peel_likelihood"), tree_var, cls_var, as, f, subst_root_var});
+        }
+        else if (likelihood_calculator == 1)
+        {
+            // Create and set conditional likelihoods for each branch
+            program2.let(cls_var,{var("cached_conditional_likelihoods_SEV"),tree_var,leaf_sequences_var, alphabet_var ,transition_ps,f, compressed_alignment_var});  
+
+            // FIXME: broken for fixed alignments of 2 sequences.
+            if (n_nodes > 2)
+                program2.let(likelihood_var,{var("peel_likelihood_SEV"), tree_var, cls_var, f, subst_root_var, counts_var});
+        }
+
+        if (n_nodes == 2)
+        {
+            // We probably want the cls?
+            expression_ref seq1 = {var("!"), leaf_sequences_var, 0};
+            expression_ref seq2 = {var("!"), leaf_sequences_var, 1};
+            expression_ref A = {var("!"), as, 0};
+            expression_ref P = {var("!"), transition_ps, 0};
+
+            program2.let(likelihood_var,{var("peel_likelihood_2"), seq1, seq2, alphabet_var, A, P, f});
+        }
+
+    }
+
     program2.let(var("transition_ps"),{var("map"),var("BAliPhy.ATModel.DataPartition.transition_ps"),{var("partitions"),var("atmodel")}});
+    program2.let(var("cond_likes"),{var("map"),var("BAliPhy.ATModel.DataPartition.cond_likes"),{var("partitions"),var("atmodel")}});
+    program2.let(var("likelihoods"),{var("map"),var("BAliPhy.ATModel.DataPartition.likelihood"),{var("partitions"),var("atmodel")}});
     program2.finish_return(Tuple(Tuple(var("atmodel"),Tuple(var("transition_ps"),var("cond_likes"),var("likelihoods"))),var("loggers")));
 
     program_file<<"\n\nmain = "<<program2.get_expression().print();
