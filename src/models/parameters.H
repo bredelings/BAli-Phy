@@ -234,6 +234,9 @@ struct parameters_constants: public Object
     param variable_alignment;
     param subst_root;
     param atmodel;
+    param partition_likelihoods;
+    param partition_cond_likes;
+    param partition_transition_ps;
     param imodel_training;
     param sequence_names;
 
@@ -376,6 +379,10 @@ public:
     expression_ref my_tree() const;
     // void
     expression_ref my_atmodel() const;
+
+    expression_ref my_partition_likelihoods() const;
+    expression_ref my_partition_cond_likes() const;
+    expression_ref my_partition_transition_ps() const;
 
     // bool
     expression_ref my_variable_alignment() const;

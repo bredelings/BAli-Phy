@@ -469,7 +469,9 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     }
 
     cl_index = p->add_compute_expression({var("BAliPhy.ATModel.DataPartition.cond_likes"), partition});
-    likelihood_index = p->add_compute_expression({var("BAliPhy.ATModel.DataPartition.likelihood"), partition});
+
+    likelihood_index = p->add_compute_expression({var("Data.List.!!"),p->my_partition_likelihoods(),i});
+
     for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
         conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cl_index.ref(*p),b});
 
@@ -1115,6 +1117,24 @@ expression_ref Parameters::my_atmodel() const
     return PC->atmodel.ref(*this);
 }
 
+expression_ref Parameters::my_partition_likelihoods() const
+{
+    assert(PC);
+    return PC->partition_likelihoods.ref(*this);
+}
+
+expression_ref Parameters::my_partition_cond_likes() const
+{
+    assert(PC);
+    return PC->partition_cond_likes.ref(*this);
+}
+
+expression_ref Parameters::my_partition_transition_ps() const
+{
+    assert(PC);
+    return PC->partition_transition_ps.ref(*this);
+}
+
 expression_ref Parameters::my_subst_root() const
 {
     assert(PC);
@@ -1637,7 +1657,10 @@ std::string generate_atmodel_program(int n_partitions,
 
 
     program2.perform(Tuple(var("atmodel"),var("loggers")), program_exp);
-    program2.finish_return(Tuple(var("atmodel"),var("loggers")));
+    program2.let(var("likelihoods"),{var("map"),var("BAliPhy.ATModel.DataPartition.likelihood"),{var("partitions"),var("atmodel")}});
+    program2.let(var("cond_likes"),{var("map"),var("BAliPhy.ATModel.DataPartition.cond_likes"),{var("partitions"),var("atmodel")}});
+    program2.let(var("transition_ps"),{var("map"),var("BAliPhy.ATModel.DataPartition.transition_ps"),{var("partitions"),var("atmodel")}});
+    program2.finish_return(Tuple(Tuple(var("atmodel"),Tuple(var("transition_ps"),var("cond_likes"),var("likelihoods"))),var("loggers")));
 
     program_file<<"\n\nmain = "<<program2.get_expression().print();
 
@@ -1699,7 +1722,11 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
                                                alphabet_exps, filename_ranges, SMs, s_mapping, IMs, i_mapping, scaleMs, scale_mapping, branch_length_model, like_calcs, variable_alignment_, allow_compression);
     }
 
-    PC->atmodel = read_add_model(*this, program_filename.string() );
+    param program_result = PC->atmodel = read_add_model(*this, program_filename.string() );
+    PC->atmodel = add_compute_expression({var("Data.Tuple.fst"),program_result.ref(*this)});
+    PC->partition_likelihoods = add_compute_expression({var("Data.Tuple.thd3"),{var("Data.Tuple.snd"),program_result.ref(*this)}});
+    PC->partition_cond_likes = add_compute_expression({var("Data.Tuple.snd3"),{var("Data.Tuple.snd"),program_result.ref(*this)}});
+    PC->partition_transition_ps = add_compute_expression({var("Data.Tuple.fst3"),{var("Data.Tuple.snd"),program_result.ref(*this)}});
 
     // 1. Get the leaf labels out of the machine.  These should be based on the leaf sequences alignment for partition 1.
     // FIXME, if partition 1 has ancestral sequences, we will do the wrong thing here, even if we pass in a tree.
