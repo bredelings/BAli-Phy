@@ -1734,9 +1734,20 @@ std::string generate_atmodel_program(int n_partitions,
 
     }
 
-    program2.let(var("transition_ps"),{var("map"),var("BAliPhy.ATModel.DataPartition.transition_ps"),{var("partitions"),var("atmodel")}});
-    program2.let(var("cond_likes"),{var("map"),var("BAliPhy.ATModel.DataPartition.cond_likes"),{var("partitions"),var("atmodel")}});
-    program2.let(var("likelihoods"),{var("map"),var("BAliPhy.ATModel.DataPartition.likelihood"),{var("partitions"),var("atmodel")}});
+    vector<expression_ref> transition_ps;
+    vector<expression_ref> cond_likes;
+    vector<expression_ref> likelihoods;
+    for(int i=0; i < n_partitions; i++)
+    {
+        string part = std::to_string(i+1);
+        transition_ps.push_back(var("transition_ps_part"+part));
+        cond_likes.push_back(var("cls_part"+part));
+        likelihoods.push_back(var("likelihood_part"+part));
+    }
+
+    program2.let(var("transition_ps"),get_list(transition_ps));
+    program2.let(var("cond_likes"),get_list(cond_likes));
+    program2.let(var("likelihoods"),get_list(likelihoods));
     program2.finish_return(Tuple(Tuple(var("atmodel"),Tuple(var("transition_ps"),var("cond_likes"),var("likelihoods"))),var("loggers")));
 
     program_file<<"\n\nmain = "<<program2.get_expression().print();
