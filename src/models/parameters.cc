@@ -1500,7 +1500,7 @@ std::string generate_atmodel_program(int n_partitions,
         program.let(transition_ps, {var("transition_p_index"), tree_var, smodel, distances});
 
         //---------------------------------------------------------------------------
-        var compressed_alignment_var("compressed_alignment_var_part"+part);
+        var compressed_alignment_var("compressed_alignment_part"+part);
         var counts_var("counts_part"+part);
         if (allow_compression and (not i_mapping[i]))
         {
