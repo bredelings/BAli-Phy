@@ -1,6 +1,7 @@
 % Using a function from the command line
 
-## To make a Haskell function accessible from the command line, you must add a JSON file to the directory `bindings/` that registers the Haskell function.
+To make a Haskell function accessible from the command line, you must add a JSON file to the directory `bindings/` that registers the Haskell function.
+
 For example, the file `bindings/models/hky85.json` allows the user to specify (for example) `-S hky85[kappa=2]` as a substitution model.
 The JSON looks like this:
 
@@ -8,16 +9,18 @@ The JSON looks like this:
 {
     "name": "hky85",
     "title": "The Hasegawa-Kishino-Yano (1985) nucleotide rate matrix",
-    "result_type": "ExchangeModel[a]",
+    "deprecated-synonyms": ["HKY","hky","HKY85"],
+    "result_type": "RevCTMC[a]",
     "constraints": ["Nucleotides[a]"],
     "citation":{"type": "article",
                 "title": "Dating of the human-ape splitting by a molecular clock of mitochondrial DNA",
                 "year": "1985",
                 "author": [{"name": "Hasegawa, Masami"}, {"name": "Kishino, Hirohisa"}, {"name": "Yano, Taka-aki"}],
-                "journal": {"name": "Journal of molecular evolution", "volume": "22", 
+                "journal": {"name": "Journal of molecular evolution", "volume": "22", "number": "2", "pages": "160--174"},
                 "identifier": [{"type":"doi","id":"10.1007/BF02101694"}]
                },
-    "call": "SModel.Nucleotides.hky85[kappa,SModel.Frequency.frequencies_from_dict[a,pi],a]",
+    "call": "hky85[@kappa,frequencies_from_dict[@a,@pi],@a]",
+    "import": ["SModel"],
     "args": [
         {
             "arg_name": "kappa",
@@ -51,23 +54,26 @@ The fields are defined as follows:
 `call`
 : The Haskell function to call, and the order of the arguments to pass.
 
+`import`
+: The Haskell modules to import so that the function `hky85` is in scope.
+
 `result_type`
 : The result type of the function.
 
-`args`
-: The the list of named arguments
+`args` 
+:   The list of named arguments
 
-`args.arg_name`
-: The name of each argument
+    `arg_name`
+    : The name of each argument
 
-`args.arg_type`
-: The type of each argument
+    `arg_type`
+    : The type of each argument
 
-`args.default_value`
-: A value for the argument if not specified (optional).
+    `default_value`
+    : A value for the argument if not specified (optional).
 
-`args.description`
-: A short phrase describing the argument (optional).
+    `description`
+    : A short phrase describing the argument (optional).
 
 `title`
 : A title for the function (optional).
