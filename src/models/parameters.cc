@@ -1505,21 +1505,21 @@ std::string generate_atmodel_program(int n_partitions,
         if (allow_compression and (not i_mapping[i]))
         {
             var compressed_alignment_tuple("compressed_alignment_tuple_part"+part);
-            program.let(compressed_alignment_tuple, {var("compress_alignment"), alignment_var, n_leaves});
-            program.let(compressed_alignment_var,   {var("fst3"), compressed_alignment_tuple});
-            program.let(counts_var,                 {var("snd3"), compressed_alignment_tuple});
+            program2.let(compressed_alignment_tuple, {var("compress_alignment"), alignment_var, n_leaves});
+            program2.let(compressed_alignment_var,   {var("fst3"), compressed_alignment_tuple});
+            program2.let(counts_var,                 {var("snd3"), compressed_alignment_tuple});
         }
         else
         {
-            program.let(compressed_alignment_var, alignment_var);
-            program.let(counts_var, {var("list_to_vector"),{ var("replicate"), {var("alignment_length"),alignment_var}, 1} });
+            program2.let(compressed_alignment_var, alignment_var);
+            program2.let(counts_var, {var("list_to_vector"),{ var("replicate"), {var("alignment_length"),alignment_var}, 1} });
         }
         //---------------------------------------------------------------------------//
 
         var sequences_var("sequences_part"+part);
-        program.let(sequences_var, {var("sequences_from_alignment"),compressed_alignment_var});
+        program2.let(sequences_var, {var("sequences_from_alignment"),compressed_alignment_var});
         var leaf_sequences_var("leaf_sequences_part"+part);
-        program.let(leaf_sequences_var, {var("listArray'"),{var("take"),n_leaves,sequences_var}});
+        program2.let(leaf_sequences_var, {var("listArray'"),{var("take"),n_leaves,sequences_var}});
 
         // L4. let imodel_P = Nothing | Just
         expression_ref maybe_imodel = var("Nothing");
@@ -1535,10 +1535,11 @@ std::string generate_atmodel_program(int n_partitions,
             maybe_imodel = {var("Just"), imodel};
             maybe_hmms   = {var("Just"), hmms};
 
-            expression_ref tip_lengths = {var("get_sequence_lengths"),leaf_sequences_var};
+            var leaf_sequence_lengths("leaf_sequence_lengths_part"+part);
+            program2.let(leaf_sequence_lengths, {var("get_sequence_lengths"),leaf_sequences_var});
 
             // alignment_on_tree <- sample $ random_alignment tree hmms model leaf_seqs_array p->my_variable_alignment()
-            program.perform(alignment_on_tree, {var("sample"),{var("random_alignment"), tree_var, hmms, imodel, tip_lengths, variable_alignment_var}});
+            program.perform(alignment_on_tree, {var("sample"),{var("random_alignment"), tree_var, hmms, imodel, leaf_sequence_lengths, variable_alignment_var}});
         }
         else
         {
