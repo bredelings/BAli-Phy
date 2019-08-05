@@ -423,8 +423,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     auto imodel_index = p->imodel_index_for_partition(i);
 
     // R1. Add method indices for calculating transition matrices.
-    expression_ref transition_ps = {var("BAliPhy.ATModel.DataPartition.transition_ps"), partition};
-
+    expression_ref transition_ps = {var("Data.List.!!"),p->my_partition_transition_ps(),i};
     for(int b=0;b<B;b++)
         transition_p_method_indices.push_back( p->add_compute_expression( {var("Data.Array.!"), transition_ps, b} ) );
 
@@ -468,7 +467,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         alignment_prior_index = p->add_compute_expression( {var("Probability.Distribution.RandomAlignment.alignment_pr"), alignment_on_tree, hmms.ref(*p), model} );
     }
 
-    cl_index = p->add_compute_expression({var("BAliPhy.ATModel.DataPartition.cond_likes"), partition});
+    cl_index = p->add_compute_expression({var("Data.List.!!"),p->my_partition_cond_likes(),i});
 
     likelihood_index = p->add_compute_expression({var("Data.List.!!"),p->my_partition_likelihoods(),i});
 
