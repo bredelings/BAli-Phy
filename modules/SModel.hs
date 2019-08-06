@@ -88,8 +88,9 @@ getAlphabet (MixtureModels _ (m:ms)) = getAlphabet m
 frequencies (ReversibleMarkov _ _ _ pi _ _ _) = pi
 frequencies (F81 _ _ _ pi) = pi
 
-componentFrequencies (MixtureModel d)       i = frequencies (baseModel (MixtureModel d) i)
-componentFrequencies (MixtureModels _ (m:ms)) i = componentFrequencies m i
+componentFrequencies smodel@(ReversibleMarkov _ _ _ _ _ _ _) i = [frequencies smodel]!!i
+componentFrequencies        (MixtureModel d)                 i = frequencies (baseModel (MixtureModel d) i)
+componentFrequencies        (MixtureModels _ (m:ms))         i = componentFrequencies m i
 
 distribution (MixtureModel l) = map fst l
 distribution (MixtureModels _ (m:ms))                  = distribution m
