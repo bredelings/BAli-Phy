@@ -67,9 +67,6 @@ multi_rate_unif_bins base dist n_bins = multi_rate base $ uniformDiscretize dist
 rate (ReversibleMarkov a s q pi l t r) = r
 rate (MixtureModel d) = average [(p,rate m) | (p,m) <- d]
 
-branchTransitionP (MixtureModel l) t = let r = rate (MixtureModel l)
-                                       in map (\x -> qExp (scale (t/r) (snd x))) l
-
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 nBaseModels (MixtureModel l) = length l
 nBaseModels (MixtureModels _ (m:ms)) = nBaseModels m
@@ -229,8 +226,9 @@ log_normal_rates base sigmaOverMu n = multi_rate_unif_bins base (log_normal_rate
 --dp base rates fraction = multi_rate base dist where dist = zip fraction rates
 free_rates base rates fraction = scaled_mixture (replicate (length fraction) base) rates fraction
 
-branch_transition_p tree smodel ds b = list_to_vector $ branchTransitionP (getNthMixture smodel (branch_cat_list!!b)) (ds!b)
+branch_transition_p tree smodel@(MixtureModels _ _) ds b = branch_transition_p tree (getNthMixture smodel (branch_cat_list!!b)) ds b
     where branch_cat_list = branch_categories smodel
+branch_transition_p tree smodel@(MixtureModel l) ds b = list_to_vector [qExp $ scale (ds!b/r) component | (_,component) <- l] where r = rate smodel
 
 transition_p_index tree smodel ds = mkArray (numBranches tree) (branch_transition_p tree smodel ds)
 
