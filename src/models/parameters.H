@@ -195,9 +195,6 @@ struct smodel_methods
     int weighted_frequency_matrix;
     int get_alphabet;
     int rate;
-
-    // but these ones take an argument!
-    int frequencies; // int 
   
     // also:
     // Q1: can we use evaluate_expression( ) to pass in arguments?  what are the pitfalls?

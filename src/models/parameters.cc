@@ -500,8 +500,6 @@ smodel_methods::smodel_methods(const expression_ref& E, context& C)
     state_letters = C.add_compute_expression({var("SModel.stateLetters"), S});
     n_states = C.add_compute_expression({var("SModel.nStates"), S});
     rate = C.add_compute_expression({var("SModel.rate"), S});
-
-    frequencies = C.add_compute_expression({var("SModel.componentFrequencies"), S});
 }
 
 vector<int> edges_connecting_to_node(const Tree& T, int n)
