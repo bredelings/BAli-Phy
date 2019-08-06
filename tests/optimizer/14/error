@@ -1,21 +1,21 @@
 size = 1   Main.#0 = Main.#25:[]
 size = 1   Main.#1 = "case: failed pattern match"
-size = 1   Main.#1220 = Vector:unpack_cpp_string Main.#1 Main.#21
-size = 1   Main.#1222 = Vector:unpack_cpp_string Main.#1224 Main.#1225
-size = 1   Main.#1224 = "case: failed pattern match"
-size = 1   Main.#1225 = 0
-size = 1   Main.#1226 = Main.#1228:[]
-size = 1   Main.#1228 = 'f'
-size = 1   Main.#1229 = Vector:unpack_cpp_string Main.#1233 Main.#1234
-size = 1   Main.#1233 = "Main.f3: pattern match failure"
-size = 1   Main.#1234 = 0
+size = 1   Main.#1217 = Vector:unpack_cpp_string Main.#1 Main.#21
+size = 1   Main.#1219 = Vector:unpack_cpp_string Main.#1221 Main.#1222
+size = 1   Main.#1221 = "case: failed pattern match"
+size = 1   Main.#1222 = 0
+size = 1   Main.#1223 = Main.#1225:[]
+size = 1   Main.#1225 = 'f'
+size = 1   Main.#1226 = Vector:unpack_cpp_string Main.#1230 Main.#1231
+size = 1   Main.#1230 = "Main.f3: pattern match failure"
+size = 1   Main.#1231 = 0
 size = 1   Main.#21 = 0
 size = 1   Main.#25 = 'f'
-size = 1   Main.#33 = Prelude:error Main.#1226
-size = 1   Main.#4 = Prelude:error Main.#1222
-size = 1   Main.#45 = Prelude:error Main.#1229
-size = 1   Main.#9 = Prelude:error Main.#1220
-size = 7   Main.f = \#1228 #22 -> let {fail1 = case #1228 of {[] -> Main.fail2#0; #7:#8 -> case #22 of {[] -> #7:[]; #1231:#3 -> Main.fail2#0; _ -> Main.#4}; _ -> Main.#9}} in case #1228 of {#17:#18 -> case #22 of {#1231:#1232 -> #18 Data.List.++ #1232; _ -> fail1}; _ -> fail1}
-size = 4   Main.f2 = \#1230 #1231 -> case #1230 of {#1232:#26 -> case #1231 of {#27:#28 -> #26 Data.List.++ #28; [] -> #1232:[]; _ -> Main.#33}; _ -> Main.#33}
+size = 1   Main.#33 = Prelude:error Main.#1223
+size = 1   Main.#4 = Prelude:error Main.#1219
+size = 1   Main.#45 = Prelude:error Main.#1226
+size = 1   Main.#9 = Prelude:error Main.#1217
+size = 7   Main.f = \#1225 #22 -> let {fail1 = case #1225 of {[] -> Main.fail2#0; #7:#8 -> case #22 of {[] -> #7:[]; #1228:#3 -> Main.fail2#0; _ -> Main.#4}; _ -> Main.#9}} in case #1225 of {#17:#18 -> case #22 of {#1228:#1229 -> #18 Data.List.++ #1229; _ -> fail1}; _ -> fail1}
+size = 4   Main.f2 = \#1227 #1228 -> case #1227 of {#1229:#26 -> case #1228 of {#27:#28 -> #26 Data.List.++ #28; [] -> #1229:[]; _ -> Main.#33}; _ -> Main.#33}
 size = 4   Main.f3 = \#35 #36 -> case #35 of {#37:#38 -> case #36 of {#39:#40 -> #38 Data.List.++ #40; [] -> #37:[]; _ -> Main.#45}; _ -> Main.#45}
 size = 1   Main.fail2#0 = Prelude:error Main.#0
