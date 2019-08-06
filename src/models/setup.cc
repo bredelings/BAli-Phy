@@ -310,7 +310,7 @@ names_in_scope_t extend_scope(const ptree& rule, int skip, const names_in_scope_
 	const auto& argument = arg.second;
 	auto arg_name = argument.get<string>("arg_name");
 	auto ref_name = "@"+arg_name;
-	var x("arg_var_"+arg_name);
+	var x("arg_"+arg_name);
 
 	scope2.erase(ref_name);
 	scope2.insert({ref_name,{x,false,false}});
@@ -470,8 +470,8 @@ optional<tuple<expression_ref,set<string>, set<string>,set<string>,bool>> get_mo
     string var_name = model_rep[0].first;
     var x("lambda_var_" + var_name);
 
-    var body_var("arg_var_lambda_body");
-    var body_loggers("arg_loggers_lambda_body");
+    var body_var("arg_lambda_body");
+    var body_loggers("log_lambda_body");
     ptree body_exp = model_rep[1].second;
 
     // 3. Parse the body with the lambda variable in scope, and find the free variables.
@@ -535,7 +535,7 @@ expression_ref make_call(const ptree& call, const map<string,expression_ref>& si
         if (simple_args.count(name))
             E = simple_args.at(name);
         else
-            E = var("arg_var_"+name);
+            E = var("arg_"+name);
     }
     else
 	E = var(name);
@@ -725,8 +725,8 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
 	expression_ref arg = arg_models[i];
 
         // If there are no lambda vars used, then we can just place the result into scope directly, without applying anything to it.
-        var x("arg_var_"+arg_name);
-        var logger("arg_logger_"+arg_name);
+        var x("arg_"+arg_name);
+        var logger("log_"+arg_name);
 	if (arg_lambda_vars[i].empty())
         {
             if (simple_value[i])
@@ -753,7 +753,7 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
         else
         {
             // (arg_var_NAME, arg_logger_NAME) <- arg
-            var x_func("arg_var_"+arg_name+"_func");
+            var x_func("arg_"+arg_name+"_func");
             code.perform(Tuple(x_func,logger), arg);
         }
     }
@@ -777,8 +777,8 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
 
         if (not arg_lambda_vars[i].empty())
 	{
-	    var x_func("arg_var_"+arg_name+"_func");
-	    var x("arg_var_"+arg_name);
+	    var x_func("arg_"+arg_name+"_func");
+	    var x("arg_"+arg_name);
 
 	    // Apply the free lambda variables to arg result before using it.
 	    expression_ref F = x_func;
@@ -803,8 +803,8 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
 
 	auto log_name = name + ":" + arg_name;
 
-        expression_ref x_ret = (arg_lambda_vars[i].empty()) ? var("arg_var_"+arg_name) : var("arg_var_"+arg_name+"_func");
-        expression_ref logger = (arg_loggers[i])?var("arg_logger_"+arg_name):List();
+        expression_ref x_ret = (arg_lambda_vars[i].empty()) ? var("arg_"+arg_name) : var("arg_"+arg_name+"_func");
+        expression_ref logger = (arg_loggers[i])?var("log_"+arg_name):List();
 
         bool do_log = arg_lambda_vars[i].empty() ? should_log(R, model_rep, arg_name, scope) : false;
         any_loggers = any_loggers or do_log;
