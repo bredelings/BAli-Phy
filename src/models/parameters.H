@@ -197,7 +197,6 @@ struct smodel_methods
     int rate;
 
     // but these ones take an argument!
-    int transition_p; // int branch
     int frequencies; // int 
   
     // also:

@@ -502,7 +502,6 @@ smodel_methods::smodel_methods(const expression_ref& E, context& C)
     rate = C.add_compute_expression({var("SModel.rate"), S});
 
     frequencies = C.add_compute_expression({var("SModel.componentFrequencies"), S});
-    transition_p = C.add_compute_expression({var("SModel.branchTransitionP"), S});
 }
 
 vector<int> edges_connecting_to_node(const Tree& T, int n)
