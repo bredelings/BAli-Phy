@@ -8,9 +8,7 @@ data IModel
 data SModel
 data HMM
 data LeafSequence
-data ConditionalLikelihoodVector
 data PairwiseAlignment
-data Matrix
 data Partition = Partition SModel (Maybe IModel) Double Tree (Array Int LeafSequence) AlignmentOnTree (Maybe (Array Int HMM))
 
 smodel              (Partition s _ _ _  _  _  _ ) = s

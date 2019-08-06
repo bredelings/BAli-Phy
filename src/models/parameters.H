@@ -233,6 +233,7 @@ struct parameters_constants: public Object
     param heat;
     param variable_alignment;
     param subst_root;
+    param atmodel_export;
     param atmodel;
     param partition_likelihoods;
     param partition_cond_likes;
@@ -379,6 +380,7 @@ public:
     expression_ref my_tree() const;
     // void
     expression_ref my_atmodel() const;
+    expression_ref my_atmodel_export() const;
 
     expression_ref my_partition_likelihoods() const;
     expression_ref my_partition_cond_likes() const;

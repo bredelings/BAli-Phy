@@ -1116,6 +1116,12 @@ expression_ref Parameters::my_atmodel() const
     return PC->atmodel.ref(*this);
 }
 
+expression_ref Parameters::my_atmodel_export() const
+{
+    assert(PC);
+    return PC->atmodel_export.ref(*this);
+}
+
 expression_ref Parameters::my_partition_likelihoods() const
 {
     assert(PC);
@@ -1404,6 +1410,17 @@ std::string generate_atmodel_program(int n_partitions,
     auto tree_var = var("topology1");
     program.perform(tree_var, var("sample_topology_1"));
 
+    // P4. Branch lengths
+    expression_ref branch_lengths = List();
+    if (n_branches > 0)
+    {
+        string prefix = "branch_lengths";
+        expression_ref branch_lengths_model = {var("sample_branch_lengths_1"), tree_var};
+        auto [x,loggers] = program.bind_model(prefix , branch_lengths_model);
+        branch_lengths = x;
+    }
+
+
     // P5. Branch categories
     var branch_categories("branch_categories");
     program.let(branch_categories, { var("map"), var("modifiable"), {var("replicate"), n_branches, 0} });
@@ -1437,7 +1454,9 @@ std::string generate_atmodel_program(int n_partitions,
         expression_ref imodel = var("sample_imodel_"+std::to_string(i+1));
         auto imodel_var = program.bind_and_log_model(prefix, imodel, program_loggers, false);
 
-        imodels.push_back({imodel_var, tree_var});
+        var imodel_var2("imodel_"+std::to_string(i+1));
+        program.let(imodel_var2, {imodel_var, tree_var, heat_var, imodel_training_var});
+        imodels.push_back(imodel_var2);
     }
 
 
@@ -1454,17 +1473,6 @@ std::string generate_atmodel_program(int n_partitions,
         scales.push_back(scale_var);
     }
     program_loggers.push_back( logger("Scale", get_list(scales), List()) );
-
-
-    // P4. Branch lengths
-    expression_ref branch_lengths = List();
-    if (n_branches > 0)
-    {
-        string prefix = "branch_lengths";
-        expression_ref branch_lengths_model = {var("sample_branch_lengths_1"), tree_var};
-        auto [x,loggers] = program.bind_model(prefix , branch_lengths_model);
-        branch_lengths = x;
-    }
 
 
     // FIXME: We can't load the alignments to read their names until we know the alphabets!
@@ -1545,7 +1553,7 @@ std::string generate_atmodel_program(int n_partitions,
         if (imodel_index)
         {
             auto imodel = var("imodel_part"+part);
-            program.let(imodel, {imodels[*imodel_index], heat_var, imodel_training_var});
+            program.let(imodel, imodels[*imodel_index]);
 
             var branch_hmms("branch_hmms_part"+part);
             program.let(branch_hmms, {var("branch_hmms"), imodel, distances, n_branches});
@@ -1591,8 +1599,7 @@ std::string generate_atmodel_program(int n_partitions,
 
     expression_ref program_exp = program.finish_return(
         Tuple(
-            {var("ATModel"), tree_var, get_list(smodels), get_list(imodels), get_list(scales), branch_lengths, branch_categories, get_list(partitions),
-             imodel_training_var, heat_var, variable_alignment_var, subst_root_var, sequence_names_var},
+            {var("ATModel"), tree_var, get_list(smodels), get_list(imodels), get_list(scales), branch_lengths, branch_categories, get_list(partitions)},
             get_list(program_loggers))
         );
     program_exp = {var("random"), program_exp};
@@ -1619,6 +1626,13 @@ std::string generate_atmodel_program(int n_partitions,
         var partition("part"+part);
         program2.let(partition,{var("!!"),{var("partitions"),var("atmodel")},i});
 
+        var tree_var("tree_part"+part);
+        program2.let(tree_var, {var("BAliPhy.ATModel.DataPartition.get_tree"),partition});
+
+        auto alignment_on_tree = expression_ref{var("BAliPhy.ATModel.DataPartition.get_alignment"),partition};
+        var as("as_part"+part);
+        program2.let(as, {var("pairwise_alignments"), alignment_on_tree});
+
         var scale("scale_part"+part);
         program2.let(scale,{var("BAliPhy.ATModel.DataPartition.scale"),partition});
         var smodel("smodel_part"+part);
@@ -1630,10 +1644,7 @@ std::string generate_atmodel_program(int n_partitions,
             program2.let(distances, {var("listArray'"),{var("map"), lambda_quantify(x,{var("*"),scale,x}), branch_lengths1}});
         }
 
-        auto alignment_on_tree = expression_ref{var("BAliPhy.ATModel.DataPartition.get_alignment"),partition};
-        auto as = expression_ref{var("pairwise_alignments"), alignment_on_tree};
         auto f = expression_ref{var("weighted_frequency_matrix"), smodel};
-        auto tree_var = expression_ref{var("BAliPhy.ATModel.DataPartition.get_tree"),partition};
 
         var transition_ps("transition_ps_part"+part);
         program2.let(transition_ps, {var("transition_p_index"), tree_var, smodel, distances});
@@ -1694,8 +1705,18 @@ std::string generate_atmodel_program(int n_partitions,
     program2.let(var("transition_ps"),get_list(transition_ps));
     program2.let(var("cond_likes"),get_list(cond_likes));
     program2.let(var("likelihoods"),get_list(likelihoods));
-    program2.finish_return(Tuple(Tuple(var("atmodel"),Tuple(var("transition_ps"),var("cond_likes"),var("likelihoods"))),var("loggers")));
+    program2.finish_return(Tuple({var("ATModelExport"),
+                                  var("atmodel"),
+                                  var("transition_ps"),
+                                  var("cond_likes"),
+                                  var("likelihoods"),
+                                  imodel_training_var,
+                                  heat_var,
+                                  variable_alignment_var,
+                                  subst_root_var,
+                                  sequence_names_var},
 
+                           var("loggers")));
     program_file<<"\n\nmain = "<<program2.get_expression().print();
 
     return program_file.str();
@@ -1756,16 +1777,16 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
                                                alphabet_exps, filename_ranges, SMs, s_mapping, IMs, i_mapping, scaleMs, scale_mapping, branch_length_model, like_calcs, variable_alignment_, allow_compression);
     }
 
-    param program_result = PC->atmodel = read_add_model(*this, program_filename.string() );
-    PC->atmodel = add_compute_expression({var("Data.Tuple.fst"),program_result.ref(*this)});
-    PC->partition_likelihoods = add_compute_expression({var("Data.Tuple.thd3"),{var("Data.Tuple.snd"),program_result.ref(*this)}});
-    PC->partition_cond_likes = add_compute_expression({var("Data.Tuple.snd3"),{var("Data.Tuple.snd"),program_result.ref(*this)}});
-    PC->partition_transition_ps = add_compute_expression({var("Data.Tuple.fst3"),{var("Data.Tuple.snd"),program_result.ref(*this)}});
+    PC->atmodel_export = read_add_model(*this, program_filename.string() );
+    PC->atmodel = add_compute_expression({var("BAliPhy.ATModel.get_atmodel"), my_atmodel_export()});
+
+    PC->partition_transition_ps = add_compute_expression({var("BAliPhy.ATModel.get_all_transition_ps"),my_atmodel_export()});
+    PC->partition_cond_likes = add_compute_expression({var("BAliPhy.ATModel.get_all_cond_likes"),my_atmodel_export()});
+    PC->partition_likelihoods = add_compute_expression({var("BAliPhy.ATModel.get_all_likelihoods"),my_atmodel_export()});
 
     // 1. Get the leaf labels out of the machine.  These should be based on the leaf sequences alignment for partition 1.
     // FIXME, if partition 1 has ancestral sequences, we will do the wrong thing here, even if we pass in a tree.
-
-    PC->sequence_names     = add_compute_expression({var("BAliPhy.ATModel.sequence_names"), my_atmodel()});
+    PC->sequence_names     = add_compute_expression({var("BAliPhy.ATModel.sequence_names"), my_atmodel_export()});
 
     // FIXME: make the program represent these as [String], and translate it to an EVector just for export purposes?
     auto sequence_names = PC->sequence_names.get_value(*this).as_<EVector>();
@@ -1795,10 +1816,10 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     // 4. Load the specified tree TOPOLOGY into the machine. (branch lengths are loaded later).
     t().read_tree(tt);
 
-    PC->imodel_training    = add_compute_expression({var("BAliPhy.ATModel.imodel_training"), my_atmodel()});
-    PC->heat               = add_compute_expression({var("BAliPhy.ATModel.heat"), my_atmodel()});
-    PC->variable_alignment = add_compute_expression({var("BAliPhy.ATModel.variable_alignment"), my_atmodel()});
-    PC->subst_root         = add_compute_expression({var("BAliPhy.ATModel.subst_root"), my_atmodel()});
+    PC->imodel_training    = add_compute_expression({var("BAliPhy.ATModel.imodel_training"), my_atmodel_export()});
+    PC->heat               = add_compute_expression({var("BAliPhy.ATModel.heat"), my_atmodel_export()});
+    PC->variable_alignment = add_compute_expression({var("BAliPhy.ATModel.variable_alignment"), my_atmodel_export()});
+    PC->subst_root         = add_compute_expression({var("BAliPhy.ATModel.subst_root"), my_atmodel_export()});
 
     /* --------------------------------------------------------------- */
 
