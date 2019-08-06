@@ -224,6 +224,18 @@ log_normal_rates base sigmaOverMu n = multi_rate_unif_bins base (log_normal_rate
 --dp base rates fraction = multi_rate base dist where dist = zip fraction rates
 free_rates base rates fraction = scaled_mixture (replicate (length fraction) base) rates fraction
 
+-- class SModelOnTree a where
+--   branch_transition_p       :: a -> Int -> Matrix
+--   distibution               :: a -> EVector
+--   weighted_frequency_matrix :: a -> Matrix
+--   weighted_matrix           :: a -> Matrix
+--   nBaseModels               :: a -> Int
+--   stateLetters              :: a -> EVector
+--   getAlphabet               :: a -> b
+--   componentFrequencies      :: a -> Int -> EVector
+--   get_tree                  :: a -> Tree
+-- So, how are we going to handle rate scaling?  That should be part of the model!
+
 branch_transition_p tree smodel@(MixtureModels branch_cat_list mms) ds b = branch_transition_p tree mx ds b                        where mx = mms!!(branch_cat_list!!b)
 branch_transition_p tree smodel@(MixtureModel cs                  ) ds b = [qExp $ scale (ds!b/r) component | (_,component) <- cs] where r = rate smodel
 branch_transition_p tree smodel@(ReversibleMarkov _ _ _ _ _ _ _   ) ds b = [qExp $ scale (ds!b/r) smodel]                          where r = rate smodel
