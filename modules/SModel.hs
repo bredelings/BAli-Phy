@@ -196,8 +196,21 @@ free_rates base rates fraction = scaled_mixture (replicate (length fraction) bas
 
 transition_p_index tree smodel ds = mkArray (numBranches tree) (\b -> list_to_vector $ branch_transition_p tree smodel ds b)
 
+-- OK... so a mixture of rate matrices is NOT the same as a mixture of exponentiated matrices, because the rate matrices are scale with respect to each other.
+-- So, we can have
+--   ReversibleMarkov                          -- rate matrix
+--   MixtureModel ReversibleMarkov             -- mixture of rate matrices
+--   MixtureModels branch_cats MixtureModel    -- per-branch mixture of rate matrices, where component i always has the same frequencies.
+
+-- We can construct mixtures of these things with e.g. gamma rate models.
+--   Gamma rate models SHOULD be able to construct unit_mixtures WITHOUT the use of mmm or unit_mixture now.
+--   We should also be able to constructing mixtures of mixtures of rate matrices -> mixtures of rate matrices.  This sounds like the join operation.
+
+-- Then we have MBR models.  We should be able to get them by mixing together SmodelOnTrees for SingleBranchModels
+--   This suggests an instance of SModelOnTree
+
 -- class SModelOnTree a where
---   branch_transition_p       :: Tree -> a -> Array Int Double -> Int -> EVector<Matrix>
+--   branch_transition_p       :: (SingleBranchLengthModel a) Int -> EVector<Matrix>
 --   distribution              :: a -> [Double]
 --   weighted_frequency_matrix :: a -> Matrix
 --   weighted_matrix           :: a -> Matrix
@@ -205,6 +218,14 @@ transition_p_index tree smodel ds = mkArray (numBranches tree) (\b -> list_to_ve
 --   stateLetters              :: a -> EVector
 --   getAlphabet               :: a -> b
 --   componentFrequencies      :: a -> Int -> EVector
+
+-- Instances:
+--   * ReversibleMarkovModel
+--   * MixtureModel
+--   * MixtureModels
+--   * SModelOnTree a => SModelOnTreeMixture [(Double,a)]
+
+-- So, the question is, can we avoid distribution on things like mixtures of Rates.
 
 -- So, how are we going to handle rate scaling?  That should be part of the model!
 
