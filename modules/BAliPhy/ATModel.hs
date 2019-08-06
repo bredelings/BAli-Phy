@@ -19,14 +19,16 @@ partitions         (ATModel _ _ _ _ _  _ ps ) = ps
 
 data ConditionalLikelihoodVector
 data Matrix
-data ATModelExport = ATModelExport ATModel [Array Int Matrix] [Array Int ConditionalLikelihoodVector] [Double] Bool Double Bool Int EVector
+data LeafSequence
+data ATModelExport = ATModelExport ATModel [Array Int Matrix] [Array Int ConditionalLikelihoodVector] [Double] [Array Int LeafSequence] Bool Double Bool Int EVector
 
-get_atmodel           (ATModelExport at _  _  _  _ _ _ _ _ ) = at
-get_all_transition_ps (ATModelExport _  ps _  _  _ _ _ _ _ ) = ps
-get_all_cond_likes    (ATModelExport _  _  cl _  _ _ _ _ _ ) = cl
-get_all_likelihoods   (ATModelExport _  _  _  ls _ _ _ _ _ ) = ls
-imodel_training       (ATModelExport _  _  _  _  t _ _ _ _ ) = t
-heat                  (ATModelExport _  _  _  _  _ h _ _ _ ) = h
-variable_alignment    (ATModelExport _  _  _  _  _ _ v _ _ ) = v
-subst_root            (ATModelExport _  _  _  _  _ _ _ r _ ) = r
-sequence_names        (ATModelExport _  _  _  _  _ _ _ _ ns) = ns
+get_atmodel           (ATModelExport at _  _  _  _  _ _ _ _ _ ) = at
+get_all_transition_ps (ATModelExport _  ps _  _  _  _ _ _ _ _ ) = ps
+get_all_cond_likes    (ATModelExport _  _  cl _  _  _ _ _ _ _ ) = cl
+get_all_likelihoods   (ATModelExport _  _  _  ls _  _ _ _ _ _ ) = ls
+leaf_sequences        (ATModelExport _  _  _  _  ls _ _ _ _ _ ) = ls
+imodel_training       (ATModelExport _  _  _  _  _  t _ _ _ _ ) = t
+heat                  (ATModelExport _  _  _  _  _  _ h _ _ _ ) = h
+variable_alignment    (ATModelExport _  _  _  _  _  _ _ v _ _ ) = v
+subst_root            (ATModelExport _  _  _  _  _  _ _ _ r _ ) = r
+sequence_names        (ATModelExport _  _  _  _  _  _ _ _ _ ns) = ns

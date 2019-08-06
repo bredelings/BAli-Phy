@@ -428,7 +428,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         transition_p_method_indices.push_back( p->add_compute_expression( {var("Data.Array.!"), transition_ps, b} ) );
 
     // R2. Register array of leaf sequences
-    expression_ref leaf_sequences = {var("BAliPhy.ATModel.DataPartition.leaf_sequences"),partition};
+    expression_ref leaf_sequences = {var("Data.List.!!"),{var("BAliPhy.ATModel.leaf_sequences"),p->my_atmodel_export()},i};
     for(int i=0; i<p->t().n_leaves(); i++)
         leaf_sequence_indices.push_back( p->add_compute_expression({var("Data.Array.!"),leaf_sequences,i}) );
 
@@ -1485,6 +1485,7 @@ std::string generate_atmodel_program(int n_partitions,
 
     // P6. Create objects for data partitions
     vector<expression_ref> partitions;
+    vector<expression_ref> leaf_sequences;
     for(int i=0; i < n_partitions; i++)
     {
         string part = std::to_string(i+1);
@@ -1543,6 +1544,7 @@ std::string generate_atmodel_program(int n_partitions,
         program.let(sequences_var, {var("sequences_from_alignment"),compressed_alignment_var});
         var leaf_sequences_var("leaf_sequences_part"+part);
         program.let(leaf_sequences_var, {var("listArray'"),{var("take"),n_leaves,sequences_var}});
+        leaf_sequences.push_back(leaf_sequences_var);
 
         // L4. let imodel_P = Nothing | Just
         expression_ref maybe_imodel = var("Nothing");
@@ -1581,7 +1583,7 @@ std::string generate_atmodel_program(int n_partitions,
         }
 
         // FIXME - to make an AT *model* we probably need to remove the data from here.
-        partitions.push_back({var("Partition"), smodel, maybe_imodel, scale, tree_var, leaf_sequences_var, alignment_on_tree, maybe_hmms});
+        partitions.push_back({var("Partition"), smodel, maybe_imodel, scale, tree_var, alignment_on_tree, maybe_hmms});
     }
 
     // FIXME - we need to observe the likelihoods for each partition here.
@@ -1606,7 +1608,7 @@ std::string generate_atmodel_program(int n_partitions,
     if (log_verbose >= 4)
         std::cout<<sample_atmodel.get_expression()<<std::endl;
 
-
+    program.let(var("leaf_sequences"),get_list(leaf_sequences));
     program.perform(Tuple(var("atmodel"),var("loggers")), {var("$"),var("random"),sample_atmodel.get_expression()});
     var branch_lengths1("branch_lengths_1");
     program.let(branch_lengths1,{var("BAliPhy.ATModel.branch_lengths"),var("atmodel")});
@@ -1708,6 +1710,7 @@ std::string generate_atmodel_program(int n_partitions,
                                   var("transition_ps"),
                                   var("cond_likes"),
                                   var("likelihoods"),
+                                  var("leaf_sequences"),
                                   imodel_training_var,
                                   heat_var,
                                   variable_alignment_var,
