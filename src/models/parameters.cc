@@ -1386,7 +1386,7 @@ std::string generate_atmodel_program(int n_partitions,
     program_file<<"\n\nsample_topology_1 = sample $ uniform_topology "<<n_leaves;
 
     /* --------------------------------------------------------------- */
-    do_block program2;
+    do_block program;
 
     do_block sample_atmodel;
     var imodel_training_var("imodel_training");
@@ -1395,7 +1395,7 @@ std::string generate_atmodel_program(int n_partitions,
     var subst_root_var("subst_root");
     var modifiable("Parameters.modifiable");
 
-    program2.let({
+    program.let({
             {imodel_training_var, {modifiable, make_Bool(false)}},
             {heat_var           , {modifiable, 1.0}},
             {variable_alignment_var, {modifiable, make_Bool(variable_alignment_)}},
@@ -1494,17 +1494,17 @@ std::string generate_atmodel_program(int n_partitions,
 
         // L0. scale_P ...
         var alphabet_var("alphabet_part"+part);
-        program2.let(alphabet_var, alphabet_exps[i]);
+        program.let(alphabet_var, alphabet_exps[i]);
         var alignment_var("alignment_part"+part);
         if (i==0)
         {
-            program2.let(alignment_var, {var("load_alignment"), alphabet_var, String(filename_ranges[i].first)});
-            program2.let(sequence_names_var, {var("Alignment.builtin_sequence_names"),alignment_var});
+            program.let(alignment_var, {var("load_alignment"), alphabet_var, String(filename_ranges[i].first)});
+            program.let(sequence_names_var, {var("Alignment.builtin_sequence_names"),alignment_var});
         }
         else
         {
             // This is using EVector String instead of [[Char]] for the sequence names!
-            program2.let(alignment_var, {var("builtin_reorder_alignment"),sequence_names_var,{var("load_alignment"), alphabet_var, String(filename_ranges[i].first)}});
+            program.let(alignment_var, {var("builtin_reorder_alignment"),sequence_names_var,{var("load_alignment"), alphabet_var, String(filename_ranges[i].first)}});
         }
 
         // L1. scale_P ...
@@ -1528,21 +1528,21 @@ std::string generate_atmodel_program(int n_partitions,
         if (allow_compression and (not i_mapping[i]))
         {
             var compressed_alignment_tuple("compressed_alignment_tuple_part"+part);
-            program2.let(compressed_alignment_tuple, {var("compress_alignment"), alignment_var, n_leaves});
-            program2.let(compressed_alignment_var,   {var("fst3"), compressed_alignment_tuple});
-            program2.let(counts_var,                 {var("snd3"), compressed_alignment_tuple});
+            program.let(compressed_alignment_tuple, {var("compress_alignment"), alignment_var, n_leaves});
+            program.let(compressed_alignment_var,   {var("fst3"), compressed_alignment_tuple});
+            program.let(counts_var,                 {var("snd3"), compressed_alignment_tuple});
         }
         else
         {
-            program2.let(compressed_alignment_var, alignment_var);
-            program2.let(counts_var, {var("list_to_vector"),{ var("replicate"), {var("alignment_length"),alignment_var}, 1} });
+            program.let(compressed_alignment_var, alignment_var);
+            program.let(counts_var, {var("list_to_vector"),{ var("replicate"), {var("alignment_length"),alignment_var}, 1} });
         }
         //---------------------------------------------------------------------------//
 
         var sequences_var("sequences_part"+part);
-        program2.let(sequences_var, {var("sequences_from_alignment"),compressed_alignment_var});
+        program.let(sequences_var, {var("sequences_from_alignment"),compressed_alignment_var});
         var leaf_sequences_var("leaf_sequences_part"+part);
-        program2.let(leaf_sequences_var, {var("listArray'"),{var("take"),n_leaves,sequences_var}});
+        program.let(leaf_sequences_var, {var("listArray'"),{var("take"),n_leaves,sequences_var}});
 
         // L4. let imodel_P = Nothing | Just
         expression_ref maybe_imodel = var("Nothing");
@@ -1561,7 +1561,7 @@ std::string generate_atmodel_program(int n_partitions,
             maybe_hmms   = {var("Just"), branch_hmms};
 
             var leaf_sequence_lengths("leaf_sequence_lengths_part"+part);
-            program2.let(leaf_sequence_lengths, {var("get_sequence_lengths"),leaf_sequences_var});
+            program.let(leaf_sequence_lengths, {var("get_sequence_lengths"),leaf_sequences_var});
 
             // alignment_on_tree <- sample $ random_alignment tree hmms model leaf_seqs_array p->my_variable_alignment()
             sample_atmodel.perform(alignment_on_tree, {var("sample"),{var("random_alignment"), tree_var, branch_hmms, imodel, leaf_sequence_lengths, variable_alignment_var}});
@@ -1607,9 +1607,9 @@ std::string generate_atmodel_program(int n_partitions,
         std::cout<<sample_atmodel.get_expression()<<std::endl;
 
 
-    program2.perform(Tuple(var("atmodel"),var("loggers")), {var("$"),var("random"),sample_atmodel.get_expression()});
+    program.perform(Tuple(var("atmodel"),var("loggers")), {var("$"),var("random"),sample_atmodel.get_expression()});
     var branch_lengths1("branch_lengths_1");
-    program2.let(branch_lengths1,{var("BAliPhy.ATModel.branch_lengths"),var("atmodel")});
+    program.let(branch_lengths1,{var("BAliPhy.ATModel.branch_lengths"),var("atmodel")});
     for(int i=0; i < n_partitions; i++)
     {
         string part = std::to_string(i+1);
@@ -1623,58 +1623,58 @@ std::string generate_atmodel_program(int n_partitions,
         var counts_var("counts_part"+part);
 
         var partition("part"+part);
-        program2.let(partition,{var("!!"),{var("partitions"),var("atmodel")},i});
+        program.let(partition,{var("!!"),{var("partitions"),var("atmodel")},i});
 
         var tree_var("tree_part"+part);
-        program2.let(tree_var, {var("BAliPhy.ATModel.DataPartition.get_tree"),partition});
+        program.let(tree_var, {var("BAliPhy.ATModel.DataPartition.get_tree"),partition});
 
         auto alignment_on_tree = expression_ref{var("BAliPhy.ATModel.DataPartition.get_alignment"),partition};
         var as("as_part"+part);
-        program2.let(as, {var("pairwise_alignments"), alignment_on_tree});
+        program.let(as, {var("pairwise_alignments"), alignment_on_tree});
 
         var scale("scale_part"+part);
-        program2.let(scale,{var("BAliPhy.ATModel.DataPartition.scale"),partition});
+        program.let(scale,{var("BAliPhy.ATModel.DataPartition.scale"),partition});
         var smodel("smodel_part"+part);
-        program2.let(smodel,{var("BAliPhy.ATModel.DataPartition.smodel"),partition});
+        program.let(smodel,{var("BAliPhy.ATModel.DataPartition.smodel"),partition});
 
         var distances("distances_part"+part);
         {
             var x("x");
-            program2.let(distances, {var("listArray'"),{var("map"), lambda_quantify(x,{var("*"),scale,x}), branch_lengths1}});
+            program.let(distances, {var("listArray'"),{var("map"), lambda_quantify(x,{var("*"),scale,x}), branch_lengths1}});
         }
 
         auto f = expression_ref{var("weighted_frequency_matrix"), smodel};
 
         var transition_ps("transition_ps_part"+part);
-        program2.let(transition_ps, {var("transition_p_index"), tree_var, smodel, distances});
+        program.let(transition_ps, {var("transition_p_index"), tree_var, smodel, distances});
 
         var likelihood_var("likelihood_part"+part);
         if (n_nodes == 1)
         {
             expression_ref seq = {var("!"),leaf_sequences_var, 0};
-            program2.let(cls_var, 0);
-            program2.let(likelihood_var, {var("peel_likelihood_1"), seq, alphabet_var, f});
+            program.let(cls_var, 0);
+            program.let(likelihood_var, {var("peel_likelihood_1"), seq, alphabet_var, f});
         }
         else if (likelihood_calculator == 0)
         {
             var leaf_seq_counts("leaf_sequence_counts_part"+part);
-            program2.let(leaf_seq_counts, {var("listArray'"),{var("Alignment.leaf_sequence_counts"), compressed_alignment_var, n_leaves, counts_var}});
+            program.let(leaf_seq_counts, {var("listArray'"),{var("Alignment.leaf_sequence_counts"), compressed_alignment_var, n_leaves, counts_var}});
 
             // Create and set conditional likelihoods for each branch
-            program2.let(cls_var, {var("cached_conditional_likelihoods"), tree_var, leaf_sequences_var, leaf_seq_counts, as, alphabet_var, transition_ps, f});
+            program.let(cls_var, {var("cached_conditional_likelihoods"), tree_var, leaf_sequences_var, leaf_seq_counts, as, alphabet_var, transition_ps, f});
 
             // FIXME: broken for fixed alignments of 2 sequences.
             if (n_nodes > 2)
-                program2.let(likelihood_var, {var("peel_likelihood"), tree_var, cls_var, as, f, subst_root_var});
+                program.let(likelihood_var, {var("peel_likelihood"), tree_var, cls_var, as, f, subst_root_var});
         }
         else if (likelihood_calculator == 1)
         {
             // Create and set conditional likelihoods for each branch
-            program2.let(cls_var,{var("cached_conditional_likelihoods_SEV"),tree_var,leaf_sequences_var, alphabet_var ,transition_ps,f, compressed_alignment_var});  
+            program.let(cls_var,{var("cached_conditional_likelihoods_SEV"),tree_var,leaf_sequences_var, alphabet_var ,transition_ps,f, compressed_alignment_var});  
 
             // FIXME: broken for fixed alignments of 2 sequences.
             if (n_nodes > 2)
-                program2.let(likelihood_var,{var("peel_likelihood_SEV"), tree_var, cls_var, f, subst_root_var, counts_var});
+                program.let(likelihood_var,{var("peel_likelihood_SEV"), tree_var, cls_var, f, subst_root_var, counts_var});
         }
 
         if (n_nodes == 2)
@@ -1685,7 +1685,7 @@ std::string generate_atmodel_program(int n_partitions,
             expression_ref A = {var("!"), as, 0};
             expression_ref P = {var("!"), transition_ps, 0};
 
-            program2.let(likelihood_var,{var("peel_likelihood_2"), seq1, seq2, alphabet_var, A, P, f});
+            program.let(likelihood_var,{var("peel_likelihood_2"), seq1, seq2, alphabet_var, A, P, f});
         }
     }
 
@@ -1700,10 +1700,10 @@ std::string generate_atmodel_program(int n_partitions,
         likelihoods.push_back(var("likelihood_part"+part));
     }
 
-    program2.let(var("transition_ps"),get_list(transition_ps));
-    program2.let(var("cond_likes"),get_list(cond_likes));
-    program2.let(var("likelihoods"),get_list(likelihoods));
-    program2.finish_return(Tuple({var("ATModelExport"),
+    program.let(var("transition_ps"),get_list(transition_ps));
+    program.let(var("cond_likes"),get_list(cond_likes));
+    program.let(var("likelihoods"),get_list(likelihoods));
+    program.finish_return(Tuple({var("ATModelExport"),
                                   var("atmodel"),
                                   var("transition_ps"),
                                   var("cond_likes"),
@@ -1715,7 +1715,7 @@ std::string generate_atmodel_program(int n_partitions,
                                   sequence_names_var},
 
                            var("loggers")));
-    program_file<<"\n\nmain = "<<program2.get_expression().print();
+    program_file<<"\n\nmain = "<<program.get_expression().print();
 
     return program_file.str();
 }
