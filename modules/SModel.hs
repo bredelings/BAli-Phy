@@ -227,10 +227,10 @@ log_normal_rates base sigmaOverMu n = multi_rate_unif_bins base (log_normal_rate
 free_rates base rates fraction = scaled_mixture (replicate (length fraction) base) rates fraction
 
 branch_transition_p tree smodel@(MixtureModels branch_cat_list _) ds b = branch_transition_p tree (getNthMixture smodel (branch_cat_list!!b)) ds b
-branch_transition_p tree smodel@(MixtureModel cs                ) ds b = list_to_vector [qExp $ scale (ds!b/r) component | (_,component) <- cs] where r = rate smodel
-branch_transition_p tree smodel@(ReversibleMarkov _ _ _ _ _ _ _ ) ds b = list_to_vector [qExp $ scale (ds!b/r) smodel] where r = rate smodel
+branch_transition_p tree smodel@(MixtureModel cs                ) ds b = [qExp $ scale (ds!b/r) component | (_,component) <- cs] where r = rate smodel
+branch_transition_p tree smodel@(ReversibleMarkov _ _ _ _ _ _ _ ) ds b = [qExp $ scale (ds!b/r) smodel] where r = rate smodel
 
-transition_p_index tree smodel ds = mkArray (numBranches tree) (branch_transition_p tree smodel ds)
+transition_p_index tree smodel ds = mkArray (numBranches tree) (\b -> list_to_vector $ branch_transition_p tree smodel ds b)
 
 unit_mixture m = MixtureModel (certainly m)
 
