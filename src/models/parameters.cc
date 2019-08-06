@@ -1388,7 +1388,7 @@ std::string generate_atmodel_program(int n_partitions,
     /* --------------------------------------------------------------- */
     do_block program2;
 
-    do_block program;
+    do_block sample_atmodel;
     var imodel_training_var("imodel_training");
     var heat_var("heat");
     var variable_alignment_var("variable_alignment");
@@ -1408,7 +1408,7 @@ std::string generate_atmodel_program(int n_partitions,
     // Therefore, we are constructing a list with values [(prefix1,(Just value1, loggers1)), (prefix1, (Just value1, loggers2))
 
     auto tree_var = var("topology1");
-    program.perform(tree_var, var("sample_topology_1"));
+    sample_atmodel.perform(tree_var, var("sample_topology_1"));
 
     // P4. Branch lengths
     expression_ref branch_lengths = List();
@@ -1416,14 +1416,14 @@ std::string generate_atmodel_program(int n_partitions,
     {
         string prefix = "branch_lengths";
         expression_ref branch_lengths_model = {var("sample_branch_lengths_1"), tree_var};
-        auto [x,loggers] = program.bind_model(prefix , branch_lengths_model);
+        auto [x,loggers] = sample_atmodel.bind_model(prefix , branch_lengths_model);
         branch_lengths = x;
     }
 
 
     // P5. Branch categories
     var branch_categories("branch_categories");
-    program.let(branch_categories, { var("map"), var("modifiable"), {var("replicate"), n_branches, 0} });
+    sample_atmodel.let(branch_categories, { var("map"), var("modifiable"), {var("replicate"), n_branches, 0} });
 
     // P1. Substitution models
     vector<expression_ref> smodels;
@@ -1439,9 +1439,9 @@ std::string generate_atmodel_program(int n_partitions,
         expression_ref smodel = var("sample_smodel_"+std::to_string(i+1));
         smodel = {var("set_alphabet'"), alphabet_exps[*first_partition], smodel};
 
-        auto smodel_var = program.bind_and_log_model(prefix , smodel, program_loggers, false);
+        auto smodel_var = sample_atmodel.bind_and_log_model(prefix , smodel, program_loggers, false);
         auto smodel_var2 = var("smodel_"+std::to_string(i+1));
-        program.let(smodel_var2, {smodel_var, branch_categories});
+        sample_atmodel.let(smodel_var2, {smodel_var, branch_categories});
         smodels.push_back(smodel_var2);
     }
 
@@ -1452,10 +1452,10 @@ std::string generate_atmodel_program(int n_partitions,
     {
         string prefix = "I" + convertToString(i+1);
         expression_ref imodel = var("sample_imodel_"+std::to_string(i+1));
-        auto imodel_var = program.bind_and_log_model(prefix, imodel, program_loggers, false);
+        auto imodel_var = sample_atmodel.bind_and_log_model(prefix, imodel, program_loggers, false);
 
         var imodel_var2("imodel_"+std::to_string(i+1));
-        program.let(imodel_var2, {imodel_var, tree_var, heat_var, imodel_training_var});
+        sample_atmodel.let(imodel_var2, {imodel_var, tree_var, heat_var, imodel_training_var});
         imodels.push_back(imodel_var2);
     }
 
@@ -1469,7 +1469,7 @@ std::string generate_atmodel_program(int n_partitions,
         string prefix = "Scale"+convertToString(i+1);
 
         auto scale_model = var("sample_scale_"+std::to_string(i+1));
-        auto scale_var = program.bind_and_log_model(prefix , scale_model, program_loggers, false);
+        auto scale_var = sample_atmodel.bind_and_log_model(prefix , scale_model, program_loggers, false);
         scales.push_back(scale_var);
     }
     program_loggers.push_back( logger("Scale", get_list(scales), List()) );
@@ -1509,18 +1509,18 @@ std::string generate_atmodel_program(int n_partitions,
 
         // L1. scale_P ...
         var scale("scale_part"+part);
-        program.let(scale, scales[scale_index]);
+        sample_atmodel.let(scale, scales[scale_index]);
 
         // L2. distances_P = map (*scale_P) branch_lengths
         var distances("distances_part"+part);
         {
             var x("x");
-            program.let(distances, {var("listArray'"),{var("map"), lambda_quantify(x,{var("*"),scale,x}), branch_lengths}});
+            sample_atmodel.let(distances, {var("listArray'"),{var("map"), lambda_quantify(x,{var("*"),scale,x}), branch_lengths}});
         }
 
         // L3. let smodel_P = ...
         var smodel("smodel_part"+part);
-        program.let(smodel, smodels[smodel_index]);
+        sample_atmodel.let(smodel, smodels[smodel_index]);
 
         //---------------------------------------------------------------------------
         var compressed_alignment_var("compressed_alignment_part"+part);
@@ -1553,10 +1553,10 @@ std::string generate_atmodel_program(int n_partitions,
         if (imodel_index)
         {
             auto imodel = var("imodel_part"+part);
-            program.let(imodel, imodels[*imodel_index]);
+            sample_atmodel.let(imodel, imodels[*imodel_index]);
 
             var branch_hmms("branch_hmms_part"+part);
-            program.let(branch_hmms, {var("branch_hmms"), imodel, distances, n_branches});
+            sample_atmodel.let(branch_hmms, {var("branch_hmms"), imodel, distances, n_branches});
             maybe_imodel = {var("Just"), imodel};
             maybe_hmms   = {var("Just"), branch_hmms};
 
@@ -1564,7 +1564,7 @@ std::string generate_atmodel_program(int n_partitions,
             program2.let(leaf_sequence_lengths, {var("get_sequence_lengths"),leaf_sequences_var});
 
             // alignment_on_tree <- sample $ random_alignment tree hmms model leaf_seqs_array p->my_variable_alignment()
-            program.perform(alignment_on_tree, {var("sample"),{var("random_alignment"), tree_var, branch_hmms, imodel, leaf_sequence_lengths, variable_alignment_var}});
+            sample_atmodel.perform(alignment_on_tree, {var("sample"),{var("random_alignment"), tree_var, branch_hmms, imodel, leaf_sequence_lengths, variable_alignment_var}});
         }
         else
         {
@@ -1572,12 +1572,12 @@ std::string generate_atmodel_program(int n_partitions,
             expression_ref initial_alignments_exp = {var("pairwise_alignments_from_matrix"), compressed_alignment_var, tree_var};
 
             var pairwise_as("pairwise_as_part"+part);
-            program.let(pairwise_as,  {var("listArray'"), {var("map"),var("modifiable"),initial_alignments_exp}});
+            sample_atmodel.let(pairwise_as,  {var("listArray'"), {var("map"),var("modifiable"),initial_alignments_exp}});
 
             // R4. Register sequence length methods
             auto seq_lengths = expression_ref{{var("listArray'"),{var("compute_sequence_lengths"), leaf_sequences_var, tree_var, pairwise_as}}};
 
-            program.let(alignment_on_tree, {var("AlignmentOnTree"), tree_var, n_nodes, seq_lengths, pairwise_as});
+            sample_atmodel.let(alignment_on_tree, {var("AlignmentOnTree"), tree_var, n_nodes, seq_lengths, pairwise_as});
         }
 
         // FIXME - to make an AT *model* we probably need to remove the data from here.
@@ -1597,18 +1597,17 @@ std::string generate_atmodel_program(int n_partitions,
     // observe (ctmc_on_tree topology root as alphabet smodel ts scale branch_cats) seqs
 
 
-    expression_ref program_exp = program.finish_return(
+    sample_atmodel.finish_return(
         Tuple(
             {var("ATModel"), tree_var, get_list(smodels), get_list(imodels), get_list(scales), branch_lengths, branch_categories, get_list(partitions)},
             get_list(program_loggers))
         );
-    program_exp = {var("random"), program_exp};
     
     if (log_verbose >= 4)
-        std::cout<<program_exp.print()<<std::endl;
+        std::cout<<sample_atmodel.get_expression()<<std::endl;
 
 
-    program2.perform(Tuple(var("atmodel"),var("loggers")), program_exp);
+    program2.perform(Tuple(var("atmodel"),var("loggers")), {var("$"),var("random"),sample_atmodel.get_expression()});
     var branch_lengths1("branch_lengths_1");
     program2.let(branch_lengths1,{var("BAliPhy.ATModel.branch_lengths"),var("atmodel")});
     for(int i=0; i < n_partitions; i++)
@@ -1688,7 +1687,6 @@ std::string generate_atmodel_program(int n_partitions,
 
             program2.let(likelihood_var,{var("peel_likelihood_2"), seq1, seq2, alphabet_var, A, P, f});
         }
-
     }
 
     vector<expression_ref> transition_ps;
