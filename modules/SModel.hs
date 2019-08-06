@@ -68,47 +68,16 @@ rate (ReversibleMarkov a s q pi l t r) = r
 rate (MixtureModel d) = average [(p,rate m) | (p,m) <- d]
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
-nBaseModels (MixtureModel l) = length l
-nBaseModels (MixtureModels _ (m:ms)) = nBaseModels m
-
 baseModel (MixtureModel l) i = snd (l !! i)
-
-stateLetters (ReversibleMarkov _ smap _ _ _ _ _) = smap
-stateLetters (F81 _ smap _ _ ) = smap
-stateLetters (MixtureModel l) = stateLetters (baseModel (MixtureModel l) 0)
-stateLetters (MixtureModels _ (m:ms)) = stateLetters m
 
 nStates m = vector_size (stateLetters m)
   
-getAlphabet (ReversibleMarkov a _ _ _ _ _ _) = a
-getAlphabet (F81 a _ _ _) = a
-getAlphabet (MixtureModel l) = getAlphabet (baseModel (MixtureModel l) 0)
-getAlphabet (MixtureModels _ (m:ms)) = getAlphabet m
-
 frequencies (ReversibleMarkov _ _ _ pi _ _ _) = pi
 frequencies (F81 _ _ _ pi) = pi
-
-componentFrequencies smodel@(ReversibleMarkov _ _ _ _ _ _ _) i = [frequencies smodel]!!i
-componentFrequencies        (MixtureModel d)                 i = frequencies (baseModel (MixtureModel d) i)
-componentFrequencies        (MixtureModels _ (m:ms))         i = componentFrequencies m i
-
-distribution (MixtureModel l) = map fst l
-distribution (MixtureModels _ (m:ms))                  = distribution m
 
 unwrapMM (MixtureModel dd) = dd
 
 mixMixtureModels l dd = MixtureModel (mix l (map unwrapMM dd))
-
-weighted_frequency_matrix (MixtureModel d) = let model = MixtureModel d
-                                                 dist = list_to_vector $ distribution model
-                                                 freqs = list_to_vector $ map (componentFrequencies model) [0..nBaseModels model-1]
-                                             in builtin_weighted_frequency_matrix dist freqs
-weighted_frequency_matrix (MixtureModels _ (m:ms)) = weighted_frequency_matrix m
-
-frequency_matrix (MixtureModel d) = let model = MixtureModel d
-                                    in  builtin_frequency_matrix $ list_to_vector $ map (componentFrequencies model) [0..nBaseModels model-1]
-
-frequency_matrix (MixtureModels _ (m:ms)) = frequency_matrix m
 
 --
 m1a_omega_dist f1 w1 = [(f1,w1), (1.0-f1,1.0)]
@@ -225,23 +194,67 @@ log_normal_rates base sigmaOverMu n = multi_rate_unif_bins base (log_normal_rate
 --dp base rates fraction = multi_rate base dist where dist = zip fraction rates
 free_rates base rates fraction = scaled_mixture (replicate (length fraction) base) rates fraction
 
+transition_p_index tree smodel ds = mkArray (numBranches tree) (\b -> list_to_vector $ branch_transition_p tree smodel ds b)
+
 -- class SModelOnTree a where
---   branch_transition_p       :: a -> Int -> Matrix
---   distibution               :: a -> EVector
+--   branch_transition_p       :: Tree -> a -> Array Int Double -> Int -> EVector<Matrix>
+--   distribution              :: a -> [Double]
 --   weighted_frequency_matrix :: a -> Matrix
 --   weighted_matrix           :: a -> Matrix
 --   nBaseModels               :: a -> Int
 --   stateLetters              :: a -> EVector
 --   getAlphabet               :: a -> b
 --   componentFrequencies      :: a -> Int -> EVector
---   get_tree                  :: a -> Tree
+
 -- So, how are we going to handle rate scaling?  That should be part of the model!
 
+-- branch_transition_p :: Tree -> a -> Array Int Double -> Int -> EVector
 branch_transition_p tree smodel@(MixtureModels branch_cat_list mms) ds b = branch_transition_p tree mx ds b                        where mx = mms!!(branch_cat_list!!b)
 branch_transition_p tree smodel@(MixtureModel cs                  ) ds b = [qExp $ scale (ds!b/r) component | (_,component) <- cs] where r = rate smodel
 branch_transition_p tree smodel@(ReversibleMarkov _ _ _ _ _ _ _   ) ds b = [qExp $ scale (ds!b/r) smodel]                          where r = rate smodel
 
-transition_p_index tree smodel ds = mkArray (numBranches tree) (\b -> list_to_vector $ branch_transition_p tree smodel ds b)
+-- distribution :: a -> [Double]
+distribution (MixtureModel l) = map fst l
+distribution (MixtureModels _ (m:ms))                  = distribution m
+distribution (ReversibleMarkov _ _ _ _ _ _ _) = [1.0]
+
+-- weighted_frequency_matrix :: a -> Matrix
+weighted_frequency_matrix (MixtureModels _ (m:ms)) = weighted_frequency_matrix m
+weighted_frequency_matrix (MixtureModel d) = let model = MixtureModel d
+                                                 dist = list_to_vector $ distribution model
+                                                 freqs = list_to_vector $ map (componentFrequencies model) [0..nBaseModels model-1]
+                                             in builtin_weighted_frequency_matrix dist freqs
+weighted_frequency_matrix smodel@(ReversibleMarkov _ _ _ pi _ _ _) = builtin_weighted_frequency_matrix (list_to_vector [1.0]) pi
+
+-- frequency_matrix :: a -> Matrix
+frequency_matrix (MixtureModels _ (m:ms)) = frequency_matrix m
+frequency_matrix (MixtureModel d) = let model = MixtureModel d
+                                    in  builtin_frequency_matrix $ list_to_vector $ map (componentFrequencies model) [0..nBaseModels model-1]
+frequency_matrix smodel@(ReversibleMarkov _ _ _ pi _ _ _) = builtin_frequency_matrix (list_to_vector [pi])
+
+-- nBaseModels :: a -> Int
+nBaseModels (MixtureModel l) = length l
+nBaseModels (MixtureModels _ (m:ms)) = nBaseModels m
+nBaseModels (ReversibleMarkov _ _ _ _ _ _ _) = 1
+
+-- stateLetters :: a -> EVector
+stateLetters (ReversibleMarkov _ smap _ _ _ _ _) = smap
+stateLetters (F81 _ smap _ _ ) = smap
+stateLetters (MixtureModel l) = stateLetters (baseModel (MixtureModel l) 0)
+stateLetters (MixtureModels _ (m:ms)) = stateLetters m
+
+-- getAlphabet :: a -> Alphabet
+getAlphabet (ReversibleMarkov a _ _ _ _ _ _) = a
+getAlphabet (F81 a _ _ _) = a
+getAlphabet (MixtureModel l) = getAlphabet (baseModel (MixtureModel l) 0)
+getAlphabet (MixtureModels _ (m:ms)) = getAlphabet m
+
+-- componentFrequencies :: a -> Int -> EVector
+componentFrequencies smodel@(ReversibleMarkov _ _ _ _ _ _ _) i = [frequencies smodel]!!i
+componentFrequencies        (MixtureModel d)                 i = frequencies (baseModel (MixtureModel d) i)
+componentFrequencies        (MixtureModels _ (m:ms))         i = componentFrequencies m i
+
+---
 
 unit_mixture m = MixtureModel (certainly m)
 
