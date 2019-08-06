@@ -413,7 +413,7 @@ namespace MCMC {
 	    return output.str();
 	}
 
-	const vector<unsigned> smap = P[p].state_letters();
+	auto smap = P[p].state_letters();
 
 	vector<vector<pair<int,int> > > states = substitution::sample_ancestral_states(P[p]);
     

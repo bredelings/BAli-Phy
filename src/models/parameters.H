@@ -134,7 +134,7 @@ public:
     int n_states() const;
 
     // Perhaps this should also be per-mixture-component.
-    std::vector<unsigned> state_letters() const;
+    std::vector<int> state_letters() const;
   
     Matrix WeightedFrequencyMatrix() const;
 

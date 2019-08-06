@@ -78,7 +78,7 @@ stateLetters (F81 _ smap _ _ ) = smap
 stateLetters (MixtureModel l) = stateLetters (baseModel (MixtureModel l) 0)
 stateLetters (MixtureModels _ (m:ms)) = stateLetters m
 
-nStates m = sizeOfVectorUnsigned (stateLetters m)
+nStates m = vector_size (stateLetters m)
   
 getAlphabet (ReversibleMarkov a _ _ _ _ _ _) = a
 getAlphabet (F81 a _ _ _) = a

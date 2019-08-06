@@ -12,11 +12,6 @@ builtin builtin_new_vector 1 "new_vector" "Vector"
 builtin get_vector_index 2 "get_vector_index" "Vector"
 builtin vector_size 1 "vector_size" "Vector"
 
--- Eliminate: replace with EVector
-builtin sizeOfVectorUnsigned 1 "sizeOfVectorUnsigned" "Vector"
--- Eliminate: unused
-builtin sizeOfVectorInt 1 "sizeOfVectorInt" "Vector"
-
 -- list_to_vector:: [a] -> EVector
 builtin list_to_vector 1 "list_to_vector" "Vector"
 

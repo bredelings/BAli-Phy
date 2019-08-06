@@ -37,7 +37,6 @@ import Foreign.Vector
 import Foreign.String
 
 builtin reapply 2 "reapply" "Prelude"
-builtin iotaUnsigned 1 "iotaUnsigned" "Prelude"
 builtin builtin_putStrLn 1 "putStrLn" "Prelude"
 
 builtin is_char 1 "is_char" "Prelude"

@@ -18,7 +18,7 @@ get_q (ReversibleMarkov _ _ q _ _ _ _) = q
 
 scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r)
 
-simple_smap a = iotaUnsigned (alphabetSize a)
+simple_smap a = list_to_vector [0..(alphabetSize a)-1]
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 reversible_markov a smap q pi = ReversibleMarkov a smap q2 pi (get_eigensystem q2 pi) 1.0 (get_equilibrium_rate a smap q2 pi) where q2 = fixup_diagonal_rates q

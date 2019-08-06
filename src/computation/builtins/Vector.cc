@@ -30,50 +30,6 @@ closure GetVectorElement(OperationArgs& Args)
     return {t};
 }
 
-extern "C" closure builtin_function_sizeOfVectorUnsigned(OperationArgs& Args)
-{
-    return VectorSize<unsigned>(Args);
-}
-
-extern "C" closure builtin_function_sizeOfVectorInt(OperationArgs& Args)
-{
-    return VectorSize<int>(Args);
-}
-
-extern "C" closure builtin_function_sizeOfVectorVectorInt(OperationArgs& Args)
-{
-    return VectorSize<Vector<int>>(Args);
-}
-
-extern "C" closure builtin_function_sizeOfVectorvectorInt(OperationArgs& Args)
-{
-    return VectorSize<vector<int>>(Args);
-}
-
-extern "C" closure builtin_function_getVectorIntElement(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate(0);
-    int i = Args.evaluate(1).as_int();
-
-    return {arg0.as_<Vector<int>>()[i]};
-}
-
-extern "C" closure builtin_function_getVectorVectorIntElement(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate(0);
-    int i = Args.evaluate(1).as_int();
-
-    return {arg0.as_<Vector<Vector<int>>>()[i]};
-}
-
-extern "C" closure builtin_function_getVectorvectorIntElement(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate(0);
-    int i = Args.evaluate(1).as_int();
-
-    return {Vector<int>(arg0.as_<Vector<vector<int>>>()[i])};
-}
-
 extern "C" closure builtin_function_sizeOfString(OperationArgs& Args)
 {
     const std::string& s = Args.evaluate(0).as_<String>();

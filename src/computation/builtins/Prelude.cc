@@ -389,13 +389,6 @@ extern "C" closure builtin_function_intToDouble(OperationArgs& Args)
     return {double(i)};
 }
 
-#include "iota.H"
-
-extern "C" closure builtin_function_iotaUnsigned(OperationArgs& Args)
-{
-    return iota_function<unsigned>(Args);
-}
-
 extern "C" closure builtin_function_seq(OperationArgs& Args)
 {
     int x = Args.reg_for_slot(0);

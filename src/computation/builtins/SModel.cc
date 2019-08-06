@@ -97,7 +97,7 @@ extern "C" closure builtin_function_get_equilibrium_rate(OperationArgs& Args)
     const alphabet& a = arg0.as_<alphabet>();
 
     auto arg1 = Args.evaluate(1);
-    const vector<unsigned>& smap = arg1.as_< Vector<unsigned> >();
+    auto& smap = arg1.as_< EVector >();
 
     auto arg2 = Args.evaluate(2);
     const Matrix& Q = arg2.as_< Box<Matrix> >();
@@ -120,7 +120,7 @@ extern "C" closure builtin_function_get_equilibrium_rate(OperationArgs& Args)
 	{
 	    double temp = 0;
 	    for(int s2=0;s2<N;s2++)
-		if (smap[s1] != smap[s2])
+		if (smap[s1].as_int() != smap[s2].as_int())
 		    temp += Q(s1,s2);
 
 	    scale += temp*pi[s1];

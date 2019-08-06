@@ -1259,7 +1259,7 @@ namespace substitution {
 
 	element_assign(R,0.0);
 
-	const vector<unsigned>& smap = P.state_letters();
+	auto smap = P.state_letters();
 
 	if (a.is_letter(l))
 	{
@@ -1462,7 +1462,7 @@ namespace substitution {
 	}
     }
 
-    void calc_leaf_likelihood(Matrix& S, int l, const alphabet& a, const vector<unsigned>& smap)
+    void calc_leaf_likelihood(Matrix& S, int l, const alphabet& a, const vector<int>& smap)
     {
 	int n_models = S.size1();
 	int n_states = S.size2();
@@ -1493,7 +1493,7 @@ namespace substitution {
     vector<vector<pair<int,int>>> 
     sample_subst_history(const data_partition& P, const TreeInterface& t)
     {
-	const vector<unsigned>& smap = P.state_letters();
+	auto smap = P.state_letters();
 
 	const int n_models = P.n_base_models();
 	const int n_states = P.n_states();
