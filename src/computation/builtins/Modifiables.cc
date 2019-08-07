@@ -28,7 +28,7 @@ expression_ref maybe_modifiable_structure(OperationArgs& Args, int r1)
     reg_heap& M = Args.memory();
 
     // 1. First evaluate the reg.  This will yield a non-index_var.
-    auto [r2, value] = M.incremental_evaluate(r1);
+    int r2 = M.incremental_evaluate_unchangeable(r1);
 
     // 2. If this is a structure then translate the parts.
     if (M.reg_is_constant(r2))
