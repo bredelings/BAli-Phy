@@ -156,7 +156,9 @@ expression_ref add_prefix(const string& prefix, const expression_ref& E)
 bool is_WHNF(const expression_ref& E)
 {
     int type = E.head().type();
-    if (E.size())
+    if (not E)
+        return false;
+    else if (E.size())
     {
 	if (type == lambda_type or type == lambda2_type or type == constructor_type) 
 	    return true;
