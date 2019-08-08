@@ -1,6 +1,7 @@
 module Prelude (module Prelude,
                 module Data.Bool,
                 module Data.Eq,
+                module Data.Either,
                 module Data.Tuple,
                 module Data.Maybe,
                 module Data.List,
@@ -25,6 +26,7 @@ import Compiler.Num
 import Compiler.Real
 import Compiler.Enum
 import Data.Bool
+import Data.Either
 import Data.Eq
 import Data.Tuple
 import Data.Maybe
