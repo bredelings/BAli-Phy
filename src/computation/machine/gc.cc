@@ -35,7 +35,7 @@ void reg_heap::collect_garbage()
     trace_and_reclaim_unreachable();
 
 #ifdef DEBUG_MACHINE
-    std::cerr<<"Regs: "<<n_used()<<"/"<<size()<<std::endl;
+    std::cerr<<"Regs: "<<regs.n_used()<<"/"<<regs.size()<<std::endl;
     check_used_regs();
 #endif
 }
