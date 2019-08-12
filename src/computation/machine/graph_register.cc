@@ -1353,6 +1353,12 @@ void reg_heap::check_used_regs() const
 	if (token_is_used(t))
 	    check_used_regs_in_token(t);
 
+    for(auto& S:steps)
+    {
+        if (S.call > 0)
+            assert(not regs.is_free(S.call));
+    }
+
     // Check results that are not mapped
     for(const auto& result: results)
     {
