@@ -11,13 +11,15 @@ closure modifiable_op(OperationArgs& Args)
     // Use the first argument as an initial value.
     if (C.exp.size())
     {
-	// Should we record a force (but no dependence) on this, in order to force the distribution parameters?
-	int r_value = Args.evaluate_slot_no_record(0);
-	return {index_var(0),{r_value}};
+        // We must call the reg instead of just calling its value. This records
+        // the dependence on the reg, which maybe changeable, so that if the changeable
+        // step is destroyed, we don't end up calling a non-existant reg.
+        int r_call = Args.reg_for_slot(0);
+        return {index_var(0),{r_call}};
     }
     // Complain if there is no value at all.
     else
-	throw myexception()<<"Evaluating modifiable with no result.";
+        throw myexception()<<"Evaluating modifiable with no result.";
 }
 
 modifiable::modifiable():
