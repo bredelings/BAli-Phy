@@ -1811,10 +1811,10 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     // 4. Load the specified tree TOPOLOGY into the machine. (branch lengths are loaded later).
     t().read_tree(tt);
 
-    PC->imodel_training    = add_compute_expression({var("BAliPhy.ATModel.imodel_training"), my_atmodel_export()});
-    PC->heat               = add_compute_expression({var("BAliPhy.ATModel.heat"), my_atmodel_export()});
-    PC->variable_alignment = add_compute_expression({var("BAliPhy.ATModel.variable_alignment"), my_atmodel_export()});
-    PC->subst_root         = add_compute_expression({var("BAliPhy.ATModel.subst_root"), my_atmodel_export()});
+    PC->imodel_training    = get_param(*this, evaluate_expression({var("Parameters.maybe_modifiable_structure"),{var("BAliPhy.ATModel.imodel_training"), my_atmodel_export()}}));
+    PC->heat               = get_param(*this, evaluate_expression({var("Parameters.maybe_modifiable_structure"),{var("BAliPhy.ATModel.heat"), my_atmodel_export()}}));
+    PC->variable_alignment = get_param(*this, evaluate_expression({var("Parameters.maybe_modifiable_structure"),{var("BAliPhy.ATModel.variable_alignment"), my_atmodel_export()}}));
+    PC->subst_root         = get_param(*this, evaluate_expression({var("Parameters.maybe_modifiable_structure"),{var("BAliPhy.ATModel.subst_root"), my_atmodel_export()}}));
 
     /* --------------------------------------------------------------- */
 
