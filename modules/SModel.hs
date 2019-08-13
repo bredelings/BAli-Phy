@@ -50,6 +50,7 @@ scaleMM x (MixtureModel dist            ) = MixtureModel [(p, scale x m) | (p, m
 
 mixMM fs ms = MixtureModel $ mix fs [m | MixtureModel m <- ms]
 scale_MMs rs ms = [scaleMM r m | (r,m) <- zip' rs ms]
+-- For mixtures like mixture([hky85,tn93,gtr]), we probably need to mix on the Matrix level, to avoid shared scaling.
 scaled_mixture ms rs fs = mixMM fs (scale_MMs rs ms)
 
 multiParameter model_fn values = MixtureModel [ (f*p, m) |(p,x) <- values, let dist = case model_fn x of MixtureModel d -> d, (f,m) <- dist]
