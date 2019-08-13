@@ -75,18 +75,16 @@ do_block& do_block::perform(const expression_ref& pattern, const expression_ref&
     return *this;
 }
 
-do_block& do_block::let(const CDecls& decls)
+do_block& do_block::let(const Binds& binds)
 {
-    Binds binds;
-    for(auto& [x,e]: decls)
-        binds.push_back({x,e});
     stmts.push_back(LetQual(binds));
     return *this;
 }
 
-do_block& do_block::let(const var& x, const expression_ref& body)
+do_block& do_block::let(const expression_ref& pattern, const expression_ref& E)
 {
-    return let({{x,body}});
+    Decl decl{pattern,E};
+    return let(Binds({decl}));
 }
 
 do_block& do_block::rec(const do_block& rec_block)

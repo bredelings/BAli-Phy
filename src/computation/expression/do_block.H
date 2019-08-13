@@ -100,9 +100,9 @@ public:
 
     do_block& perform(const expression_ref& pattern, const expression_ref& E1);
 
-    do_block& let(const CDecls& decls);
+    do_block& let(const Binds&);
 
-    do_block& let(const var&x, const expression_ref& body);
+    do_block& let(const expression_ref& pattern, const expression_ref& E);
 
     do_block& rec(const do_block& rec_block);
 
