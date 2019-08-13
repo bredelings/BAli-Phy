@@ -1,4 +1,5 @@
 #include "computation/param.H"
+#include "computation/expression/constructor.H"
 #include "computation/expression/reg_var.H"
 #include "computation/expression/modifiable.H"
 #include "computation/context.H"
@@ -63,7 +64,7 @@ void param::set_value(context& C, const expression_ref& v) const
 
 param get_param(context& C, const expression_ref& E)
 {
-    if (is_modifiable(E))
+    if (E.head() == constructor("Modifiable",1))
     {
         auto reg = E.sub()[0];
         if (not is_reg_var(reg))

@@ -63,7 +63,7 @@ expression_ref maybe_modifiable_structure(OperationArgs& Args, int r1)
     if (is_modifiable(M[r2].exp))
     {
         // We are going to encode the "modifiable" outcome this way.
-        expression_ref m = modifiable();
+        expression_ref m = constructor("Modifiable",1);
         m = m + reg_var(r2);
         return m;
     }
@@ -74,7 +74,7 @@ expression_ref maybe_modifiable_structure(OperationArgs& Args, int r1)
         auto E = maybe_modifiable_structure(Args,r3);
         if (is_modifiable(E))
         {
-            expression_ref m = modifiable();
+            expression_ref m = constructor("Modifiable",1);
             m = m + reg_var(r2);
             return m;
         }
