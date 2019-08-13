@@ -21,6 +21,10 @@ std::string Binds::print() const
     return "{"+join(bind_string,";")+"}";
 }
 
+Binds::Binds(const std::initializer_list<Decl>& decls)
+    :Box<vector<Decl>>(decls)
+{ }
+
 std::string PatQual::print() const
 {
     return bindpat.print() + " <- " + exp.print();

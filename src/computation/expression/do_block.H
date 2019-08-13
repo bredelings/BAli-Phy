@@ -27,6 +27,8 @@ struct Binds: public Box<std::vector<Decl>>
 {
     Binds* clone() const {return new Binds(*this);}
     std::string print() const;
+    Binds() = default;
+    Binds(const std::initializer_list<Decl>& decls);
 };
 
 
