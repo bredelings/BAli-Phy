@@ -43,6 +43,9 @@ branch_categories (MixtureModels categories _) = categories
 -- Should we combine mixture only at one of the levels?
 -- Should we select branch-specific models at the level of rate matrices, or the level of transition probability matrices, or both?
 
+
+-- Probably we should define `scale` to work on (ReversibleMarkov, MixtureModel, MixtureModels)
+-- Probably we should also define some kind of generic mixture thing, instead just mixMM.
 scaleMM x (MixtureModel dist            ) = MixtureModel [(p, scale x m) | (p, m) <- dist]
 
 mixMM fs ms = MixtureModel $ mix fs [m | MixtureModel m <- ms]
@@ -226,6 +229,10 @@ transition_p_index tree smodel ds = mkArray (numBranches tree) (list_to_vector .
 --   stateLetters              :: a -> EVector
 --   getAlphabet               :: a -> b
 --   componentFrequencies      :: a -> Int -> EVector
+
+-- How about
+-- scale :: a -> a ?
+-- qExp  :: a -> Matrix?
 
 -- Instances:
 --   * ReversibleMarkovModel
