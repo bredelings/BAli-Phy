@@ -206,6 +206,8 @@ transition_p_index tree smodel ds = mkArray (numBranches tree) (list_to_vector .
 --   Probably the latter one would be fine.
 
 -- * The model from Sergei Kosakovsky-Pond is a SModelOnTreeMixture, since it is a mixture at the matrix level.
+-- * The MBR models are also SModelOnTree Mixtures, since they are also mixtures at the matrix level.
+--   + We should be able to get them by combining SingleBranchLengthModels.
 
 -- OK... so a mixture of rate matrices is NOT the same as a mixture of exponentiated matrices, because the rate matrices are scale with respect to each other.
 -- So, we can have
@@ -216,9 +218,6 @@ transition_p_index tree smodel ds = mkArray (numBranches tree) (list_to_vector .
 -- We can construct mixtures of these things with e.g. gamma rate models.
 --   Gamma rate models SHOULD be able to construct unit_mixtures WITHOUT the use of mmm or unit_mixture now.
 --   We should also be able to constructing mixtures of mixtures of rate matrices -> mixtures of rate matrices.  This sounds like the join operation.
-
--- Then we have MBR models.  We should be able to get them by mixing together SmodelOnTrees for SingleBranchModels
---   This suggests an instance of SModelOnTree
 
 -- class SModelOnTree a where
 --   branch_transition_p       :: (SingleBranchLengthModel a) Int -> EVector<Matrix>
@@ -231,8 +230,11 @@ transition_p_index tree smodel ds = mkArray (numBranches tree) (list_to_vector .
 --   componentFrequencies      :: a -> Int -> EVector
 
 -- How about
--- scale :: a -> a ?
--- qExp  :: a -> Matrix?
+--   scale :: a -> a ?
+--   qExp  :: a -> Matrix?
+-- What kind of things can be scaled?  Things built on rate matrices, I guess?
+
+-- If a mixture of mixture can be flattened, Mixture (Mixture) -> Mixture, isn't that like the monadic operation "join"?
 
 -- Instances:
 --   * ReversibleMarkovModel
