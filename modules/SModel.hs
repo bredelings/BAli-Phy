@@ -194,7 +194,7 @@ log_normal_rates base sigmaOverMu n = multi_rate_unif_bins base (log_normal_rate
 --dp base rates fraction = multi_rate base dist where dist = zip fraction rates
 free_rates base rates fraction = scaled_mixture (replicate (length fraction) base) rates fraction
 
-transition_p_index tree smodel ds = mkArray (numBranches tree) (\b -> list_to_vector $ branch_transition_p tree smodel ds b)
+transition_p_index tree smodel ds = mkArray (numBranches tree) (list_to_vector . branch_transition_p tree smodel ds)
 -- * OK... so a mixture of rate matrices is NOT the same as a mixture of exponentiated matrices, because the rate matrices are scaled relative to each other.
 --   ** Hmm... THAT might explain why the mixtures aren't working well!  We need to scale each of THOSE components separately.
 
