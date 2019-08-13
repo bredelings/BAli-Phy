@@ -195,6 +195,14 @@ log_normal_rates base sigmaOverMu n = multi_rate_unif_bins base (log_normal_rate
 free_rates base rates fraction = scaled_mixture (replicate (length fraction) base) rates fraction
 
 transition_p_index tree smodel ds = mkArray (numBranches tree) (\b -> list_to_vector $ branch_transition_p tree smodel ds b)
+-- * OK... so a mixture of rate matrices is NOT the same as a mixture of exponentiated matrices, because the rate matrices are scaled relative to each other.
+--   ** Hmm... THAT might explain why the mixtures aren't working well!  We need to scale each of THOSE components separately.
+
+-- * In theory, we should allow each mixture component to have a different number of states.  This would require
+--   that we either split the condition likelihoods into per-component objects, or reserve sum(i,smap(i)) spots per cell.
+--   Probably the latter one would be fine.
+
+-- * The model from Sergei Kosakovsky-Pond is a SModelOnTreeMixture, since it is a mixture at the matrix level.
 
 -- OK... so a mixture of rate matrices is NOT the same as a mixture of exponentiated matrices, because the rate matrices are scale with respect to each other.
 -- So, we can have
