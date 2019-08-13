@@ -91,7 +91,13 @@ expression_ref maybe_modifiable_structure(OperationArgs& Args, int r1)
 	int r3 = M[r2].reg_for_slot(1);
         return maybe_modifiable_structure(Args,r3);
     }
-    // 4. Handle changeable computations
+    else if (M.reg_has_call(r2))
+    {
+        int r3 = M.call_for_reg(r2);
+        return maybe_modifiable_structure(Args,r3);
+    }
+
+    // 4. Handle changeable computations with no call
     return reg_var(r2);
 }
 

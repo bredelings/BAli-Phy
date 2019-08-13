@@ -474,8 +474,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
         conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cl_index.ref(*p),b});
 
-    p->add_likelihood_factor(likelihood_index.ref(*p));
-
     /* Initialize params -- from alignments.ref(*p) */
     expression_ref alignments_structure = p->evaluate_expression({var("Parameters.maybe_modifiable_structure"), as});
     if (log_verbose >= 3)
@@ -1700,6 +1698,7 @@ std::string generate_atmodel_program(int n_partitions,
     program.let(var("transition_ps"),get_list(transition_ps));
     program.let(var("cond_likes"),get_list(cond_likes));
     program.let(var("likelihoods"),get_list(likelihoods));
+    program.perform({var("observe"),{var("fake_dist"),var("likelihoods")},var("leaf_sequences")});
     program.finish_return(Tuple({var("ATModelExport"),
                                   var("atmodel"),
                                   var("transition_ps"),
