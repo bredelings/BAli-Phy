@@ -1638,10 +1638,13 @@ std::string generate_atmodel_program(int n_partitions,
             program.let(distances, {var("listArray'"),{var("map"), lambda_quantify(x,{var("*"),scale,x}), branch_lengths1}});
         }
 
+        var smodel_on_tree("smodel_on_tree_part"+part);
+        program.let(smodel_on_tree,{var("SModel.SingleBranchLengthModel"), tree_var, distances, smodel});
+
         auto f = expression_ref{var("weighted_frequency_matrix"), smodel};
 
         var transition_ps("transition_ps_part"+part);
-        program.let(transition_ps, {var("transition_p_index"), tree_var, smodel, distances});
+        program.let(transition_ps, {var("transition_p_index"), smodel_on_tree});
 
         var likelihood_var("likelihood_part"+part);
         if (n_nodes == 1)

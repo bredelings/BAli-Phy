@@ -198,7 +198,9 @@ log_normal_rates base sigmaOverMu n = multi_rate_unif_bins base (log_normal_rate
 --dp base rates fraction = multi_rate base dist where dist = zip fraction rates
 free_rates base rates fraction = scaled_mixture (replicate (length fraction) base) rates fraction
 
-transition_p_index tree smodel ds = mkArray (numBranches tree) (list_to_vector . branch_transition_p tree smodel ds)
+transition_p_index smodel_on_tree = mkArray n_branches (list_to_vector . branch_transition_p smodel_on_tree) where tree = get_tree smodel_on_tree
+                                                                                                                   n_branches = numBranches tree
+
 -- * OK... so a mixture of rate matrices is NOT the same as a mixture of exponentiated matrices, because the rate matrices are scaled relative to each other.
 --   ** Hmm... THAT might explain why the mixtures aren't working well!  We need to scale each of THOSE components separately.
 
@@ -247,10 +249,13 @@ transition_p_index tree smodel ds = mkArray (numBranches tree) (list_to_vector .
 
 -- So, how are we going to handle rate scaling?  That should be part of the model!
 
+data SingleBranchLengthModel a = SingleBranchLengthModel Tree (Array Int Double) a
+get_tree (SingleBranchLengthModel t _ _) = t
+
 -- branch_transition_p :: Tree -> a -> Array Int Double -> Int -> EVector
-branch_transition_p tree smodel@(MixtureModels branch_cat_list mms) ds b = branch_transition_p tree mx ds b                        where mx = mms!!(branch_cat_list!!b)
-branch_transition_p tree smodel@(MixtureModel cs                  ) ds b = [qExp $ scale (ds!b/r) component | (_,component) <- cs] where r = rate smodel
-branch_transition_p tree smodel@(ReversibleMarkov _ _ _ _ _ _ _   ) ds b = [qExp $ scale (ds!b/r) smodel]                          where r = rate smodel
+branch_transition_p (SingleBranchLengthModel tree ds smodel@(MixtureModels branch_cat_list mms)) b = branch_transition_p (SingleBranchLengthModel tree ds mx) b  where mx = mms!!(branch_cat_list!!b)
+branch_transition_p (SingleBranchLengthModel tree ds smodel@(MixtureModel cs                  )) b = [qExp $ scale (ds!b/r) component | (_,component) <- cs]     where r = rate smodel
+branch_transition_p (SingleBranchLengthModel tree ds smodel@(ReversibleMarkov _ _ _ _ _ _ _   )) b = [qExp $ scale (ds!b/r) smodel]                              where r = rate smodel
 
 -- distribution :: a -> [Double]
 distribution (MixtureModel l) = map fst l

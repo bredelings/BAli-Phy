@@ -112,33 +112,32 @@ protected:
 
     const data_partition_constants& DPC() const;
 
+    int likelihood_calculator() const;
+
 public:
 
     /// Is the alignment allowed to vary?
     bool variable_alignment() const;
-  
-    int likelihood_calculator() const;
 
-    alignment A() const;
+    alignment A() const;                        // used in dp-alignment-sums.cc (debug), mcmc/logger.cc (log), sample-alignment.cc (debug), sample-node.cc (debug), mcmc/setup.cc [fraction_non_gap]
 
     TreeInterface t() const;
 
     /// Cached Transition Probabilities
-    const EVector& transition_P(int b) const;
+    const EVector& transition_P(int b) const;   // used only in sample_subst_history( ) in substitution.cc
   
-    const EVector& get_sequence(int i) const;
+    const EVector& get_sequence(int i) const;   // used in substitution.cc [get_leaf_seq_likelihoods, sample_subst_history], parsimony.cc [peel_muts_leaf_branch, accumulate_root_leaf]
 
-    int n_base_models() const;
+    int n_base_models() const;                  // used in substitution.CC for get_letter_likelihoods, get_leaf_seq_likelihoods, get_column_likelihoods, sample_subst_history
 
-    // Perhaps this should really be per-mixture-component.
-    int n_states() const;
+    int n_states() const;                       // used in substitution.CC for get_letter_likelihoods, get_leaf_seq_likelihoods, get_column_likelihoods, sample_subst_history
 
     // Perhaps this should also be per-mixture-component.
     std::vector<int> state_letters() const;
   
-    Matrix WeightedFrequencyMatrix() const;
+    Matrix WeightedFrequencyMatrix() const;     // used in sample-alignment.cc, sample-cube.cc, sample-tri.cc, substitution.cc[sample_subst_history]
 
-    const Likelihood_Cache_Branch& cache(int b) const;
+    const Likelihood_Cache_Branch& cache(int b) const;  // used in get_column_likelihoods( ), other_subst( ), sample_subst_history( )
 
     int subst_root() const;
 
@@ -146,7 +145,7 @@ public:
     const indel::PairHMM& get_branch_HMM(int b) const;
     std::vector<indel::PairHMM> get_branch_HMMs(const std::vector<int>&) const;
 
-    double sequence_length_pr(int i) const;
+    double sequence_length_pr(int i) const;     // used in dp/3way.cc, dp/5way.cc, dp/alignment-sums.cc
 
     double get_beta() const;
 
