@@ -15,22 +15,20 @@ using std::string;
 /// \param T The leaf-labelled tree.
 /// \param A A multiple sequence alignment.
 ///
-alignment remap_A_indices(alignment& A, const SequenceTree& T)
+alignment remap_A_indices(alignment& A, vector<string> labels, int n_leaves, int n_nodes)
 {
-    vector<string> labels = T.get_labels();
-
-    if (A.n_sequences() == T.n_leaves())
+    if (A.n_sequences() == n_leaves)
     {
-	labels.resize(T.n_leaves());
+	labels.resize(n_leaves);
 
     }
-    else if (A.n_sequences() != T.n_nodes())
-	throw myexception()<<"Cannot map alignment onto tree:\n  Alignment has "<<A.n_sequences()<<" sequences.\n  Tree has "<<T.n_leaves()<<" leaves and "<<T.n_nodes()<<" nodes.";
+    else if (A.n_sequences() != n_nodes)
+	throw myexception()<<"Cannot map alignment onto tree:\n  Alignment has "<<A.n_sequences()<<" sequences.\n  Tree has "<<n_leaves<<" leaves and "<<n_nodes<<" nodes.";
 
     for(int i=0;i<labels.size();i++)
 	if (labels[i] == "")
 	{
-	    if (i<T.n_leaves())
+	    if (i<n_leaves)
 		throw myexception()<<"Tree has empty label for a leaf node: not allowed!";
 	    else
 		throw myexception()<<"Alignment has internal node information, but tree has empty label for an internal node: not allowed!";
@@ -39,6 +37,11 @@ alignment remap_A_indices(alignment& A, const SequenceTree& T)
     assert(A.n_sequences() == labels.size());
 
     return reorder_sequences(A, labels);
+}
+
+alignment remap_A_indices(alignment& A, const SequenceTree& T)
+{
+    return remap_A_indices(A, T.get_labels(), T.n_leaves(), T.n_nodes());
 }
 
 void add_internal_labels(SequenceTree& T)
