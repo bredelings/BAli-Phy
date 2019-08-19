@@ -73,6 +73,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("remove-knuckles","Remove degree-2 nodes.")
 	("scale", value<double>(), "Scale branch-lengths by factor")
 	("strip-internal-names","Remove internal node names")
+        ("name-all-nodes","Add node names")
 	;
 
     options_description output("Output options");
@@ -193,6 +194,15 @@ int main(int argc,char* argv[])
 	    for(int n=T.n_leaves(); n<T.n_nodes(); n++)
 		T.set_label(n,"");
 	}
+        if (args.count("name-all-nodes"))
+        {
+            // FIXME - avoid using existing names!
+	    for(int n=0; n<T.n_nodes(); n++)
+            {
+		if (T.get_label(n).empty())
+                    T.set_label(n,"node_"+std::to_string(n+1));
+            }
+        }
 
 	if (args.count("length"))
 	{
