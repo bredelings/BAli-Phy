@@ -253,33 +253,33 @@ string alphabet::print () const {
 
 
 alphabet::alphabet(const string& s)
-    :name(s),gap_letter("-"),wildcard("+"),unknown_letter("?")
+    :name(s),gap_letter("-"),wildcard("+"),unknown_letter("=")
 {
 }
 
 alphabet::alphabet(const string& s,const string& letters)
-    :name(s),gap_letter("-"),wildcard("+"),unknown_letter("?")
+    :name(s),gap_letter("-"),wildcard("+"),unknown_letter("=")
 {
     for(int i=0;i<letters.length();i++)
 	insert(string(1U,s[i]));
 }
 
 alphabet::alphabet(const string& s,const string& letters,const string& m)
-    :name(s),gap_letter("-"),wildcard(m),unknown_letter("?")
+    :name(s),gap_letter("-"),wildcard(m),unknown_letter("=")
 {
     for(int i=0;i<letters.length();i++)
 	insert(string(1U,letters[i]));
 }
 
 alphabet::alphabet(const string& s,const vector<string>& letters)
-    :name(s),gap_letter("-"),wildcard("+"),unknown_letter("?")
+    :name(s),gap_letter("-"),wildcard("+"),unknown_letter("=")
 {
     for(int i=0;i<letters.size();i++)
 	insert(letters[i]);
 }
 
 alphabet::alphabet(const string& s,const vector<string>& letters,const string& m) 
-    :name(s),gap_letter("-"),wildcard(m),unknown_letter("?")
+    :name(s),gap_letter("-"),wildcard(m),unknown_letter("=")
 {
     for(int i=0;i<letters.size();i++)
 	insert(letters[i]);
