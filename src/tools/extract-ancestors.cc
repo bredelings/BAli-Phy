@@ -287,7 +287,6 @@ vector<int> get_index_column(const matrix<int>& m, int c)
 vector<pair<int,int>> map_columns(const alignment& template_A, const alignment& sample_A)
 {
     int n_leaves = template_A.n_sequences();
-    int n_nodes = sample_A.n_sequences();
 
     // 1. Construct map of indices -> template alignment column
     map<vector<int>,int> indices_to_col;
