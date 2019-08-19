@@ -252,7 +252,7 @@ int profile::max_for_position(int pos) const
 {
     map<int,int> counts;
     if (observations[pos].size() < 1)
-        return alphabet::not_gap;
+        return alphabet::unknown;
 
     for(int letter: observations[pos])
     {
