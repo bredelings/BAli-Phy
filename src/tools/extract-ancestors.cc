@@ -26,8 +26,11 @@
 #include "util/string/strip.H"
 #include "util/string/split.H"
 #include "util/io.H"
+#include "util/cmdline.H"
 #include "alignment/alignment.H"
 #include "partition.H"
+#include "tree-align/link.H"
+#include "alignment/load.H"
 
 #include "util/string/split.H"
 #include "tree/tree-util.H"
@@ -215,53 +218,179 @@ map<int,int> find_and_name_nodes(const SequenceTree& T,const SequenceTree& Q)
     return node_map;
 }
 
-void extract_sequence(const variables_map& args, const joint_A_T& J)
+
+struct profile
+{
+    const alignment& template_A;
+    vector<vector<int>> observations; // observations[site][i]
+
+    void count_alignment(const alignment& A, int row, const vector<pair<int,int>>& corresponding_columns);
+    int max_for_position(int i) const;
+    profile(const alignment& A): template_A(A), observations(A.length()) {}
+};
+
+
+int argmax(const map<int,int>& counts)
+{
+    auto max_x = counts.begin()->first;
+    auto max_count = counts.begin()->second;
+
+    for(auto& [x,count]: counts)
+    {
+        if (count > max_count)
+        {
+            max_x = x;
+            max_count = count;
+        }
+    }
+
+    return max_x;
+}
+
+
+int profile::max_for_position(int pos) const
+{
+    map<int,int> counts;
+    if (observations[pos].size() < 1)
+        return alphabet::not_gap;
+
+    for(int letter: observations[pos])
+    {
+        if (counts.count(letter))
+            counts.at(letter)++;
+        else
+            counts[letter] = 1;
+    }
+
+    return argmax(counts);
+}
+
+void profile::count_alignment(const alignment& A, int row, const vector<pair<int,int>>& corresponding_columns)
+{
+    for(auto [template_c, sample_c]: corresponding_columns)
+    {
+        observations[template_c].push_back( A(sample_c,row) );
+    }
+}
+
+
+vector<int> get_index_column(const matrix<int>& m, int c)
+{
+    int n_taxa = m.size2();
+    vector<int> column(n_taxa);
+    for(int i=0;i<n_taxa;i++)
+        column[i] = m(c,i);
+    return column;
+}
+   
+
+vector<pair<int,int>> map_columns(const alignment& template_A, const alignment& sample_A)
+{
+    int n_leaves = template_A.n_sequences();
+    int n_nodes = sample_A.n_sequences();
+
+    // 1. Construct map of indices -> template alignment column
+    map<vector<int>,int> indices_to_col;
+
+    auto template_m = M(template_A);
+    for(int c=0; c<template_A.length(); c++)
+    {
+        auto col = get_index_column(template_m, c);
+        indices_to_col.insert({col, c});
+    }
+
+    // 2. Construct list of (template column, sample column)
+    vector<pair<int,int>> columns;
+    auto sample_m = M(sample_A);
+    for(int c=0; c<sample_A.length(); c++)
+    {
+        auto sample_col = get_index_column(sample_m, c);
+        sample_col.resize(n_leaves);
+        if (indices_to_col.count(sample_col))
+        {
+            int template_c = indices_to_col.at(sample_col);
+            columns.push_back({template_c,c});
+        }
+    }
+
+    return columns;
+}
+
+
+optional<SequenceTree> get_node_queries(const variables_map& args, const joint_A_T& J)
+{
+    optional<SequenceTree> Q;
+    if (args.count("nodes"))
+    {
+        Q = load_tree_from_file(args["nodes"].as<string>());
+        remap_T_leaf_indices(*Q, J.leaf_names());
+    }
+    return Q;
+}
+
+
+optional<vector<pair<string,dynamic_bitset<>>>> get_branch_queries(const variables_map& args, const joint_A_T& J)
+{
+    optional<vector<pair<string,dynamic_bitset<>>>> groups;
+    if (args.count("groups"))
+        groups = load_groups_from_file(args["groups"].as<string>(), J.leaf_names());
+    return groups;
+}
+
+pair<vector<profile>,vector<profile>> extract_sequence(const variables_map& args,
+                                                       const joint_A_T& J, const alignment& template_A,
+                                                       const optional<SequenceTree>& node_queries,
+                                                       const optional<vector<pair<string,dynamic_bitset<>>>> branch_queries)
 {
     bool show_leaves = args["show-leaves"].as<bool>();
 
     bool require_all_nodes = args["all-nodes"].as<bool>();
 
     vector<int> node_counts;
-    optional<SequenceTree> Q;
-    if (args.count("nodes"))
+    vector<profile> node_profiles;
+    if (node_queries)
     {
-        Q = load_tree_from_file(args["nodes"].as<string>());
-        remap_T_leaf_indices(*Q, J.leaf_names());
-        node_counts.resize(Q->n_nodes());
+        node_counts.resize(node_queries->n_nodes());
+        node_profiles = vector<profile>(node_queries->n_nodes(), profile(template_A));
     }
 
+    vector<profile> group_profiles;
     vector<int> group_counts;
-    optional<vector<pair<string,dynamic_bitset<>>>> groups;
-    if (args.count("groups"))
+    if (branch_queries)
     {
-        groups = load_groups_from_file(args["groups"].as<string>(), J.leaf_names());
-        group_counts.resize(groups->size());
+        group_counts.resize(branch_queries->size());
+        group_profiles = vector<profile>(branch_queries->size(), profile(template_A));
     }
-
-
 
     for(auto& [A,T]: J)
     {
+        // This should return a collection of columns (template_column, A_column)
+        auto corresponding_columns = map_columns(template_A, A);
+
         map<string,int> internal_nodes;
 
         // Add ancestral nodes from the tree.
-        if (Q)
+        if (node_queries)
         {
-            for(auto& [q_node,t_node]: find_and_name_nodes(T, *Q))
+            for(auto& [q_node,t_node]: find_and_name_nodes(T, *node_queries))
             {
                 node_counts[q_node]++;
-                auto name = Q->get_labels()[q_node];
+                node_profiles[q_node].count_alignment(A, t_node, corresponding_columns);
+
+                auto name = node_queries->get_labels()[q_node];
                 internal_nodes.insert({name, t_node});
             }
         }
 
         // Add ancestral nodes from groups
-        if (groups)
+        if (branch_queries)
         {
-            for(auto& [g,t_node]: find_and_name_nodes(T,*groups))
+            for(auto& [g,t_node]: find_and_name_nodes(T,*branch_queries))
             {
                 group_counts[g]++;
-                auto& [name,_] = (*groups)[g];
+                group_profiles[g].count_alignment(A, t_node, corresponding_columns);
+
+                auto& [name,_] = (*branch_queries)[g];
                 internal_nodes.insert({name, t_node});
             }
         }
@@ -286,25 +415,27 @@ void extract_sequence(const variables_map& args, const joint_A_T& J)
         std::cout<<"\n\n";
     }
 
-    if (Q)
+    if (node_queries)
     {
-        for(int q_node=Q->n_leaves(); q_node<Q->n_nodes(); q_node++)
+        for(int q_node=node_queries->n_leaves(); q_node<node_queries->n_nodes(); q_node++)
         {
-            auto q_node_name = Q->get_label(q_node);
+            auto q_node_name = node_queries->get_label(q_node);
             if (q_node_name.empty()) continue;
 
             std::cerr<<"Node '"<<q_node_name<<"': present in "<<node_counts[q_node]<<"/"<<J.size()<<" = "<<double(node_counts[q_node])/J.size()*100<<"% of samples.\n";
         }
     }
-    if (groups)
+    if (branch_queries)
     {
-        for(int i=0;i<groups->size();i++)
+        for(int i=0;i<branch_queries->size();i++)
         {
-            auto& [name,_] = (*groups)[i];
+            auto& [name,_] = (*branch_queries)[i];
 
             std::cerr<<"Group '"<<name<<"': present in "<<group_counts[i]<<"/"<<J.size()<<" = "<<double(group_counts[i])/J.size()*100<<"% of samples.\n";
         }
     }
+
+    return {node_profiles,group_profiles};
 }
 
 variables_map parse_cmd_line(int argc,char* argv[]) 
@@ -316,6 +447,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     invisible.add_options()
 	("alignments", value<string>(),"File of alignment samples")
 	("trees", value<string>(), "File of corresponding tree samples")
+        ("align", value<string>(), "File with template alignment")
 	;
 
     // named options
@@ -338,6 +470,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     positional_options_description p;
     p.add("alignments", 1);
     p.add("trees", 1);
+    p.add("align", 1);
   
     variables_map args;     
     store(command_line_parser(argc, argv).
@@ -347,11 +480,11 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     if (args.count("help")) {
 	cout<<"Construct alignments with internal sequences for labeled nodes in query tree.\n\n";
-	cout<<"Usage: extract-ancestors <alignments file> <trees file> [--nodes=<query tree>] [--groups=<groups file>] [OPTIONS]\n";
+	cout<<"Usage: extract-ancestors <alignments file> <trees file> <alignment file> [--nodes=<query tree>] [--groups=<groups file>] [OPTIONS]\n";
 	cout<<visible<<"\n";
 	cout<<"Examples:\n\n";
-	cout<<"   % extract-ancestors C1.P1.fastas C1.trees --nodes=query.tree\n\n";
-	cout<<"   % extract-ancestors C1.P1.fastas C1.trees --groups=groups.txt\n\n";
+	cout<<"   % extract-ancestors C1.P1.fastas C1.trees P1-max.fasta --nodes=query.tree\n\n";
+	cout<<"   % extract-ancestors C1.P1.fastas C1.trees P1-max.fasta --groups=groups.txt\n\n";
 	exit(0);
     }
 
@@ -368,15 +501,39 @@ int main(int argc,char* argv[])
 	//args.read(argc,argv);
 	//args.print(cerr);
 
+        // 1. Load alignment and tree samples
 	if (log_verbose) cerr<<"extract-ancestors: Loading alignments and trees...\n";
-	joint_A_T J = get_joint_A_T(args,true);
+        joint_A_T J = get_joint_A_T(args,true);
 
-	if (J.size() == 0)
+        if (J.size() == 0)
 	    throw myexception()<<"No (A,T) read in!";
 	else
-	    if (log_verbose) cerr<<"extract-ancestors: Loaded "<<J.size()<<" (A,T) pairs.\n\n";
+	    if (log_verbose) cerr<<"read "<<J.size()<<" (A,T) pairs.\n\n";
 
-	extract_sequence(args,J);
+        // 2. Load template alignment
+        if (log_verbose) cerr<<"extract-ancestors: Loading template alignment...\n";
+        auto filename = get_arg_default<string>(args,"align","-");
+        vector<sequence> sequences = sequence_format::load_from_file(filename);
+        auto a_name = get_arg_default<string>(args,"alphabet", "");
+        alignment A = load_alignment(sequences, a_name);
+
+        A = remap_A_indices(A, J.leaf_names(), J.T(0).n_leaves(), J.T(0).n_nodes());
+
+        if (log_verbose) cerr<<"done.\n";
+
+        auto node_queries = get_node_queries(args, J);
+        auto branch_queries = get_branch_queries(args, J);
+
+	auto [node_profiles, branch_profiles] = extract_sequence(args, J, A, node_queries, branch_queries);
+        auto& a = A.get_alphabet();
+        for(int i=0;i < branch_queries->size(); i++)
+        {
+            auto& [name,_] = (*branch_queries)[i];
+            std::cout<<">"<<name<<"\n";
+            for(int col=0; col<A.length(); col++)
+                std::cout<<a.lookup(branch_profiles[i].max_for_position(col));
+            std::cout<<"\n";
+        }
     }
     catch (std::exception& e) {
 	cerr<<"joint-indels: Error! "<<e.what()<<endl;
