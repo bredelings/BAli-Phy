@@ -18,28 +18,6 @@ using std::string;
 /// \param T The leaf-labelled tree.
 /// \param A A multiple sequence alignment.
 ///
-alignment remap_A_indices(alignment& A, vector<string> labels, TreeInterface T)
-{
-    if (A.n_sequences() == T.n_leaves())
-    {
-	labels.resize(T.n_leaves());
-    }
-    else if (A.n_sequences() != T.n_nodes())
-	throw myexception()<<"Cannot map alignment onto tree:\n  Alignment has "<<A.n_sequences()<<" sequences.\n  Tree has "<<T.n_leaves()<<" leaves and "<<T.n_nodes()<<" nodes.";
-
-    for(int i=0;i<labels.size();i++)
-	if (labels[i] == "")
-	{
-	    if (i<T.n_leaves())
-		throw myexception()<<"Tree has empty label for a leaf node: not allowed!";
-	    else
-		throw myexception()<<"Alignment has internal node information, but tree has empty label for an internal node: not allowed!";
-	}
-
-    assert(A.n_sequences() == labels.size());
-
-    return reorder_sequences(A, labels);
-}
 
 alignment link_A(alignment A, const vector<string>& labels, TreeInterface T, bool internal_sequences)
 {
@@ -51,7 +29,7 @@ alignment link_A(alignment A, const vector<string>& labels, TreeInterface T, boo
     //----- IF sequences = leaf nodes THEN maybe add internal sequences.
     else if (A.n_sequences() == T.n_leaves()) 
     {
-	A = remap_A_indices(A, labels, T);
+	A = remap_A_indices(A, labels, T.n_leaves(), T.n_nodes());
 
 	if (internal_sequences)
 	{
@@ -66,7 +44,7 @@ alignment link_A(alignment A, const vector<string>& labels, TreeInterface T, boo
 	throw myexception()<<"Fewer alignment sequences ("<<A.n_sequences()<<") than tree nodes ("<<T.n_nodes()<<")!";
     else
     {
-	A = remap_A_indices(A, labels, T);
+	A = remap_A_indices(A, labels, T.n_leaves(), T.n_nodes());
   
 	if (not internal_sequences) 
 	    A = chop_internal(A);
