@@ -1,4 +1,5 @@
 * 3.5 (unreleased)
+ + Reconstruct ancestral sequences by default.
  - Graphical model framework
    + Brownian model on *random* rooted tree.
  - Misc
