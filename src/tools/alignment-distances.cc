@@ -35,6 +35,7 @@
 #include "util/io.H"
 #include "util/string/split.H"
 #include "util/string/join.H"
+#include "util/string/convert.H"
 #include "util/cmdline.H"
 #include "util/range.H"
 
@@ -285,11 +286,11 @@ struct alignment_sample
     vector<matrix<int> > Ms;
     vector< vector< vector<int> > >  column_indices;
 
-    void load(list<alignment>& As);
+    int load(list<alignment>& As);
 
-    void load(const variables_map& args, const string& filename);
+    int load(const variables_map& args, const string& filename);
 
-    void load(const variables_map& args, const vector<string>& seq_names, const alphabet& a, const string& filename);
+    int load(const variables_map& args, const vector<string>& seq_names, const alphabet& a, const string& filename);
 
     unsigned size() const {return alignments.size();}
 
@@ -318,7 +319,7 @@ struct alignment_sample
 	}
 };
 
-void alignment_sample::load(list<alignment>& As)
+int alignment_sample::load(list<alignment>& As)
 {
     for(auto& a: As)
     {
@@ -328,9 +329,11 @@ void alignment_sample::load(list<alignment>& As)
 	column_indices.push_back( column_lookup(a) );
     }
     alignments.insert(alignments.end(),As.begin(),As.end());
+
+    return As.size();
 }
 
-void alignment_sample::load(const variables_map& args, const string& filename)
+int alignment_sample::load(const variables_map& args, const string& filename)
 {
     //------------ Try to load alignments -----------//
     int maxalignments = -1;
@@ -341,7 +344,7 @@ void alignment_sample::load(const variables_map& args, const string& filename)
     if (args.count("skip"))
 	skip = args["skip"].as<unsigned>();
 
-    if (log_verbose) cerr<<"alignment-median: Loading alignments...";
+    if (log_verbose) cerr<<"alignment-distances: Loading alignments...";
 
     istream_or_ifstream input(cin,"-",filename,"alignment file");
 
@@ -351,11 +354,12 @@ void alignment_sample::load(const variables_map& args, const string& filename)
     else
 	As = load_alignments(input, sequence_names(), get_alphabet(), skip,maxalignments);
 
-    if (log_verbose) cerr<<"done. ("<<alignments.size()<<" alignments)"<<endl;
-    load(As);
+    if (log_verbose) cerr<<"done. ("<<As.size()<<" alignments)"<<endl;
+
+    return load(As);
 }
 
-void alignment_sample::load(const variables_map& args, const vector<string>& seq_names, const alphabet& a, const string& filename)
+int alignment_sample::load(const variables_map& args, const vector<string>& seq_names, const alphabet& a, const string& filename)
 {
     //------------ Try to load alignments -----------//
     int maxalignments = -1;
@@ -366,18 +370,16 @@ void alignment_sample::load(const variables_map& args, const vector<string>& seq
     if (args.count("skip"))
 	skip = args["skip"].as<unsigned>();
 
-    if (log_verbose) cerr<<"alignment-median: Loading alignments...";
+    if (log_verbose) cerr<<"alignment-distances: Loading alignments...";
 
     istream_or_ifstream input(cin,"-",filename,"alignment file");
-
-    assert(not alignments.size());
 
     list<alignment> As;
     As = load_alignments(input, seq_names, a, skip, maxalignments);
 
-    if (log_verbose) cerr<<"done. ("<<alignments.size()<<" alignments)"<<endl;
+    if (log_verbose) cerr<<"done. ("<<As.size()<<" alignments)"<<endl;
 
-    load(As);
+    return load(As);
 }
 
 matrix<double> distances(const alignment_sample& A, distance_fn distance)
@@ -463,21 +465,30 @@ int main(int argc,char* argv[])
 	    files.erase(files.begin());
 	    if (As1.size() != 1) throw myexception()<<"The second file should only contain one alignment!";
 
+            vector<string> names;
+
 	    // Load the alignments to score
 	    alignment_sample As2;
 	    for(auto& file: files)
-		As2.load(args, As1.sequence_names(), As1.get_alphabet(), file);
+            {
+		int delta = As2.load(args, As1.sequence_names(), As1.get_alphabet(), file);
+                if (delta == 0) std::cerr<<"WARNING: file '"<<file<<"' contained 0 alignments.\n";
+                for(int i=0;i<delta;i++)
+                    names.push_back(file);
+            }
 
 	    // Print out [d(true,a)| a <- As2, d <- distances]
-	    cout<<join(split(distance_names,":"),"\t")<<endl;
+            auto field_names = split(distance_names,":");
+            field_names.insert(field_names.begin(),("file"));
+	    cout<<join(field_names,"\t")<<endl;
 	    for(int i=0; i<As2.size(); i++)
 	    {
-		vector<double> v;
+		vector<string> v;
+                v.push_back(names[i]);
 		for(auto& D: distance_fns)
-		    v.push_back( D(As1.Ms[0], As1.column_indices[0], As2.Ms[i], As2.column_indices[i]) );
+		    v.push_back( convertToString( D(As1.Ms[0], As1.column_indices[0], As2.Ms[i], As2.column_indices[i]) ));
 		cout<<join(v,'\t')<<endl;
 	    }
-
 	    exit(0);
 	}
 	else if (analysis == "NxN") 
