@@ -314,7 +314,7 @@ lg_frequencies a = zip (alphabet_letters a) (list_from_vector $ builtin_lg_frequ
 --        Because we have no polymorphism, wfm needs to be after MixtureModel and MixtureModels.
 subst_like_on_tree topology root as alphabet smodel ts scale seqs = substitution_likelihood topology root seqs' as alphabet ps f
     where f = weighted_frequency_matrix smodel
-          ps = transition_p_index topology smodel ds
+          ps = transition_p_index (SingleBranchLengthModel topology ds smodel)
           ds = listArray' $ map (scale*) ts
           seqs' = listArray' seqs
 
