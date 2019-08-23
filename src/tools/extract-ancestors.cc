@@ -376,7 +376,18 @@ optional<vector<pair<string,dynamic_bitset<>>>> get_branch_from_tree_queries(con
         return {};
 }
 
-pair<vector<profile>,vector<profile>> extract_sequence(const joint_A_T& samples, const alignment& template_A,
+std::ostream& write_alignment_row(std::ostream& o, const string& name, const alignment& A, int row)
+{
+    o<<">"<<name<<"\n";
+    auto& a = A.get_alphabet();
+    for(int i=0;i<A.length();i++)
+        o<<a.lookup(A(i,row));
+    o<<"\n";
+    return o;
+}
+
+pair<vector<profile>,vector<profile>> extract_sequence(const joint_A_T& samples, const optional<alignment>& template_A,
+                                                       bool show_ancestors,
                                                        const optional<SequenceTree>& node_queries,
                                                        const optional<vector<pair<string,dynamic_bitset<>>>> branch_queries)
 {
@@ -385,7 +396,8 @@ pair<vector<profile>,vector<profile>> extract_sequence(const joint_A_T& samples,
     if (node_queries)
     {
         node_counts.resize(node_queries->n_nodes());
-        node_profiles = vector<profile>(node_queries->n_nodes(), profile(template_A));
+        if (template_A)
+            node_profiles = vector<profile>(node_queries->n_nodes(), profile(*template_A));
     }
 
     vector<profile> group_profiles;
@@ -393,64 +405,70 @@ pair<vector<profile>,vector<profile>> extract_sequence(const joint_A_T& samples,
     if (branch_queries)
     {
         group_counts.resize(branch_queries->size());
-        group_profiles = vector<profile>(branch_queries->size(), profile(template_A));
+        if (template_A)
+            group_profiles = vector<profile>(branch_queries->size(), profile(*template_A));
     }
 
     for(auto& [A,T]: samples)
     {
-        // This should return a collection of columns (template_column, A_column)
-        auto corresponding_columns = map_columns(template_A, A);
+        // 1. Find out which columns of the alignment template are in the alignment sample
+        optional<vector<pair<int,int>>> corresponding_columns;
+        if (template_A)
+            corresponding_columns = map_columns(*template_A, A);
 
         map<string,int> internal_nodes;
-
-        // Add ancestral nodes from the tree.
+        
+        // 2. Find ancestors from node queries
         if (node_queries)
         {
-            for(auto& [q_node,t_node]: find_and_name_nodes(T, *node_queries))
+            for(auto& [q_node, t_node]: find_and_name_nodes(T, *node_queries))
             {
                 node_counts[q_node]++;
-                node_profiles[q_node].count_alignment(A, t_node, corresponding_columns);
+
+                if (corresponding_columns)
+                    node_profiles[q_node].count_alignment(A, t_node, *corresponding_columns);
 
                 auto name = node_queries->get_labels()[q_node];
                 internal_nodes.insert({name, t_node});
             }
         }
 
-        // Add ancestral nodes from groups
+        // 3. Find ancestors from branch queries.
         if (branch_queries)
         {
-            for(auto& [g,t_node]: find_and_name_nodes(T,*branch_queries))
+            for(auto& [g, t_node]: find_and_name_nodes(T,*branch_queries))
             {
                 group_counts[g]++;
-                group_profiles[g].count_alignment(A, t_node, corresponding_columns);
+
+                if (corresponding_columns)
+                    group_profiles[g].count_alignment(A, t_node, *corresponding_columns);
 
                 auto& [name,_] = (*branch_queries)[g];
                 internal_nodes.insert({name, t_node});
             }
         }
 
-        if (log_verbose)
+        if (log_verbose or (show_ancestors and not internal_nodes.empty()))
         {
+            // 4. Write leaf sequences 
             for(int node=0;node<samples.leaf_names().size();node++)
-            {
-                std::cerr<<">"<<samples.leaf_names()[node]<<"\n";
-                auto& a = A.get_alphabet();
-                for(int i=0;i<A.length();i++)
-                    std::cerr<<a.lookup(A(i,node));
-                std::cerr<<"\n";
-            }
-            for(auto& [name,node]: internal_nodes)
-            {
-                std::cerr<<">"<<name<<"\n";
-                auto& a = A.get_alphabet();
-                for(int i=0;i<A.length();i++)
-                    std::cerr<<a.lookup(A(i,node));
-                std::cerr<<"\n";
-            }
-            std::cerr<<"\n\n";
+                write_alignment_row(std::cout, samples.leaf_names()[node], A, node);
+
+            // 5. Write internal node sequences for debugging purposes
+            if (log_verbose)
+                for(auto& [name,node]: internal_nodes)
+                    write_alignment_row(std::cout, name, A, node);
+
+            // 6. Write named ancestors sequences corresponding to node and branch queries
+            for (auto& [name, node]: internal_nodes)
+                write_alignment_row(std::cout, name, A, node);
+            std::cout<<"\n\n";
         }
+
+
     }
 
+    // Report statistics on the frequency of queried nodes
     if (node_queries)
     {
         for(int q_node=node_queries->n_leaves(); q_node<node_queries->n_nodes(); q_node++)
@@ -461,6 +479,8 @@ pair<vector<profile>,vector<profile>> extract_sequence(const joint_A_T& samples,
             std::cerr<<"Node '"<<q_node_name<<"': present in "<<node_counts[q_node]<<"/"<<samples.size()<<" = "<<double(node_counts[q_node])/samples.size()*100<<"% of samples.\n";
         }
     }
+
+    // Report statistics on the frequency of queried branches
     if (branch_queries)
     {
         for(int i=0;i<branch_queries->size();i++)
@@ -483,22 +503,36 @@ variables_map parse_cmd_line(int argc,char* argv[])
     invisible.add_options()
 	("alignments", value<string>(),"File of alignment samples")
 	("trees", value<string>(), "File of corresponding tree samples")
-        ("align", value<string>(), "File with template alignment")
 	;
 
     // named options
-    options_description visible("Allowed options");
-    visible.add_options()
+    options_description general("General options");
+    general.add_options()
 	("help,h", "produces help message")
 	("verbose,V",value<int>()->implicit_value(1),"Show more log messages on stderr.")
-	("alphabet,a",value<string>(),"set to 'Codons' to prefer codon alphabets")
+        ;
+
+    options_description input("Allowed options");
+    input.add_options()
+        ("alphabet,a",value<string>(),"set to 'Codons' to prefer codon alphabets")
 	("subsample,x",value<unsigned>()->default_value(10),"factor by which to sub-sample trees")
-	("show-leaves,L",value<bool>()->default_value(true),"Include leaf sequences in filtered alignments")
-	("all-nodes,A",value<bool>()->default_value(false),"Only show alignments with ALL the labeled internal nodes")
-	("nodes",value<string>(),"Newick tree with labelled ancestors")
-	("groups",value<string>(),"File with named groups")
-        ("groups-from-tree",value<string>(),"Newick tree with labelled ancestors")
+        ;
+
+    options_description ancestors("Ancestor options");
+    ancestors.add_options()
+        ("nodes,n",value<string>(),"Newick tree with labelled ancestors")
+	("groups,g",value<string>(),"File with named groups")
+        ("groups-from-tree,t",value<string>(),"Newick tree with labelled ancestors")
 	;
+
+    options_description output("Output options");
+    output.add_options()
+        ("template-alignment,T", value<string>(), "File with template alignment")
+	("show-ancestors,A",value<bool>()->default_value(false),"Write alignments with labelled ancestors")
+        ;
+
+    options_description visible("All options");
+    visible.add(general).add(input).add(ancestors).add(output);
 
     options_description all("All options");
     all.add(visible).add(invisible);
@@ -507,7 +541,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     positional_options_description p;
     p.add("alignments", 1);
     p.add("trees", 1);
-    p.add("align", 1);
   
     variables_map args;     
     store(command_line_parser(argc, argv).
@@ -548,16 +581,25 @@ int main(int argc,char* argv[])
 	    if (log_verbose) cerr<<"read "<<samples.size()<<" (A,T) pairs.\n\n";
 
         // 2. Load template alignment
-        if (log_verbose) cerr<<"extract-ancestors: Loading template alignment...\n";
-        auto filename = get_arg_default<string>(args,"align","-");
-        vector<sequence> sequences = sequence_format::load_from_file(filename);
-        auto a_name = get_arg_default<string>(args,"alphabet", "");
-        alignment A = load_alignment(sequences, a_name);
+        optional<alignment> A;
+        if (auto filename = get_arg<string>(args,"template-alignment"))
+        {
+            if (log_verbose) cerr<<"extract-ancestors: Loading template alignment...\n";
 
-        A = remap_A_indices(A, samples.leaf_names(), samples.T(0).n_leaves(), samples.T(0).n_nodes());
+            vector<sequence> sequences = sequence_format::load_from_file(*filename);
+            auto a_name = get_arg_default<string>(args,"alphabet", "");
+            A = load_alignment(sequences, a_name);
 
-        if (log_verbose) cerr<<"done.\n";
+            A = remap_A_indices(*A, samples.leaf_names(), samples.T(0).n_leaves(), samples.T(0).n_nodes());
 
+            if (log_verbose) cerr<<"done.\n";
+        }
+
+        bool show_ancestors = get_arg_default<bool>(args,"show-ancestors",false);
+        if (not show_ancestors and not args.count("template-alignment"))
+            throw myexception()<<"Neither --show-ancestors not --template-align=<FASTA file> is set!";
+        
+        // 3. Load queries to find ancestor nodes on the tree
         auto node_queries = get_node_queries(args, samples);
         auto branch_queries = get_branch_queries(args, samples);
         auto branch_from_tree_queries = get_branch_from_tree_queries(args, samples);
@@ -566,15 +608,28 @@ int main(int argc,char* argv[])
         else if (branch_from_tree_queries)
             branch_queries->insert(branch_queries->end(), branch_from_tree_queries->begin(), branch_from_tree_queries->end());
 
-	auto [node_profiles, branch_profiles] = extract_sequence(samples, A, node_queries, branch_queries);
-        auto& a = A.get_alphabet();
-        for(int i=0;i < branch_queries->size(); i++)
+        if (not node_queries and not branch_queries)
+            std::cerr<<"WARNING: no ancestors defined!\n";
+        
+        // 4. Extract profiles
+	auto [node_profiles, branch_profiles] = extract_sequence(samples, A, show_ancestors, node_queries, branch_queries);
+
+        // 5. Write profiles for template alignments
+        if (A)
         {
-            auto& [name,_] = (*branch_queries)[i];
-            std::cout<<">"<<name<<"\n";
-            for(int col=0; col<A.length(); col++)
-                std::cout<<a.lookup(branch_profiles[i].max_for_position(col));
-            std::cout<<"\n";
+            auto& a = A->get_alphabet();
+
+            for(int node=0;node<samples.leaf_names().size();node++)
+                write_alignment_row(std::cout, samples.leaf_names()[node], *A, node);
+
+            for(int i=0;i < branch_queries->size(); i++)
+            {
+                auto& [name,_] = (*branch_queries)[i];
+                std::cout<<">"<<name<<"\n";
+                for(int col=0; col<A->length(); col++)
+                    std::cout<<a.lookup(branch_profiles[i].max_for_position(col));
+                std::cout<<"\n";
+            }
         }
     }
     catch (std::exception& e) {
