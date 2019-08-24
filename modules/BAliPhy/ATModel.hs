@@ -3,6 +3,8 @@ module BAliPhy.ATModel where
 import BAliPhy.ATModel.DataPartition
 import BAliPhy.ATModel.DataPartition as DP
 import Foreign.Vector
+import Alignment
+import SModel
 
 -- Assumptions FIXME: branch lengths -- we could have multiple set of them.
 --                                      what we really need is transition probabilities for each partition.
@@ -32,3 +34,22 @@ heat                  (ATModelExport _  _  _  _  _  _ h _ _ _ ) = h
 variable_alignment    (ATModelExport _  _  _  _  _  _ _ v _ _ ) = v
 subst_root            (ATModelExport _  _  _  _  _  _ _ _ r _ ) = r
 sequence_names        (ATModelExport _  _  _  _  _  _ _ _ _ ns) = ns
+
+observe_partition_type_0 partition compressed_alignment leaf_sequences column_counts alphabet branch_lengths subst_root = (transition_ps, cls, likelihood)
+    where tree = DP.get_tree partition
+          as = pairwise_alignments (DP.get_alignment partition)
+          scale = DP.scale partition
+          smodel = DP.smodel partition
+          distances = listArray' (map (scale *) branch_lengths)
+          smodel_on_tree = SModel.SingleBranchLengthModel tree distances smodel
+          transition_ps = transition_p_index smodel_on_tree
+          leaf_sequence_counts = listArray' (Alignment.leaf_sequence_counts compressed_alignment 25 column_counts)
+          cls = cached_conditional_likelihoods
+                  tree
+                  leaf_sequences
+                  leaf_sequence_counts
+                  as
+                  alphabet
+                  transition_ps
+                  (weighted_frequency_matrix smodel)
+          likelihood = peel_likelihood tree cls as (weighted_frequency_matrix smodel) subst_root

@@ -1612,13 +1612,22 @@ std::string generate_atmodel_program(int n_partitions,
 
         // L0. scale_P ...
         var alphabet_var("alphabet_part"+part);
+        var transition_ps("transition_ps_part"+part);
         var cls_var("cls_part"+part);
+        var likelihood_var("likelihood_part"+part);
         var leaf_sequences_var("leaf_sequences_part"+part);
         var compressed_alignment_var("compressed_alignment_part"+part);
         var counts_var("counts_part"+part);
 
         var partition("part"+part);
         program.let(partition,{var("!!"),{var("partitions"),var("atmodel")},i});
+
+        if (n_nodes > 2 and likelihood_calculator == 0)
+        {
+            program.let(Tuple(transition_ps, cls_var, likelihood_var),
+                        {var("observe_partition_type_0"),partition,compressed_alignment_var,leaf_sequences_var,counts_var,alphabet_var,branch_lengths1,subst_root_var});
+            continue;
+        }
 
         var tree_var("tree_part"+part);
         program.let(tree_var, {var("BAliPhy.ATModel.DataPartition.get_tree"),partition});
@@ -1643,10 +1652,8 @@ std::string generate_atmodel_program(int n_partitions,
 
         auto f = expression_ref{var("weighted_frequency_matrix"), smodel};
 
-        var transition_ps("transition_ps_part"+part);
         program.let(transition_ps, {var("transition_p_index"), smodel_on_tree});
 
-        var likelihood_var("likelihood_part"+part);
         if (n_nodes == 1)
         {
             expression_ref seq = {var("!"),leaf_sequences_var, 0};
