@@ -128,8 +128,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("clean-to-ref",value<string>(),"Remove columns not in reference sequence <arg>")
 	("msmc","Output file for MSMC")
 	("psmc","Output file for PSMC")
-	("pi","Calculate average hamming distance")
-	("pi-matrix","Calculate average hamming distance")
+	("pi-matrix","Calculate pi for each pair of sequences")
 	("autoclean","Mask blocks with too many SNPs")
 	("histogram",value<int>(),"Output SNP counts for blocks of arg bases")
 	;
@@ -161,6 +160,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 }
 
 
+// Number of alphbat letters with count > level
 int n_letters(const valarray<int>& count,int level) {
     int n = 0;
     for(int l=0;l<count.size();l++)
@@ -775,7 +775,7 @@ void apply_masks(const vector<sequence_mask>& masks, alignment& A)
 matrix<double> pi_matrix(const alignment& A)
 {
     auto& a = A.get_alphabet();
-    const int n = a.size();
+    const int n = A.n_sequences();
     matrix<int> total(n,n,0);
     matrix<int> diff(n,n,0);
 
@@ -804,14 +804,30 @@ matrix<double> pi_matrix(const alignment& A)
 
 double pi(const alignment& A)
 {
-    auto D = pi_matrix(A);
-    double total = 0;
-    const int n = D.size1();
-    for(int i=0;i<n;i++)
-	for(int j=0;j<i;j++)
-	    total += D(i,j);
-    total /= (n*(n-1)/2);
-    return total;
+    auto& a = A.get_alphabet();
+    valarray<int> count(a.size());
+
+    long int pi_count = 0;
+    long int pi_total = 0;
+    for(int c=0;c<A.length();c++)
+    {
+        count = 0;
+        for(int i=0;i<A.n_sequences();i++)
+        {
+            int l = A(c,i);
+            if (a.is_letter(l))
+                count[l]++;
+        }
+
+        int total_letters = count.sum();
+        pi_total += total_letters*(total_letters-1)/2;
+
+        for(int l1=0;l1<a.size();l1++)
+            for(int l2=0;l2<l1;l2++)
+                pi_count += count[l1]*count[l2];
+    }
+
+    return double(pi_count)/pi_total;
 }
 
 ostream& write_bed(ostream& o, const vector<sequence_mask>& regions)
@@ -1355,6 +1371,7 @@ int main(int argc,char* argv[])
 	dynamic_bitset<> informative2(A.length());
 	dynamic_bitset<> different(A.length());
 	dynamic_bitset<> different2(A.length());
+        dynamic_bitset<> could_be_different(A.length());
 	dynamic_bitset<> contains_a_gap(A.length());
 
 	dynamic_bitset<> alleles2(A.length());
@@ -1363,6 +1380,10 @@ int main(int argc,char* argv[])
 	
 	valarray<int> count(a.size());
 	valarray<int> count2(2);
+
+        int pi_count = 0;
+        int pi_total = 0;
+
 	for(int c=0;c<A.length();c++) {
 	    count = 0;
 	    count2 = 0;
@@ -1377,6 +1398,13 @@ int main(int argc,char* argv[])
 		    count2[1]++;
 	    }
 
+            int total_letters = count.sum();
+            pi_total += total_letters*(total_letters-1)/2;
+
+            for(int l1=0;l1<a.size();l1++)
+                for(int l2=0;l2<l1;l2++)
+                    pi_count += count[l1]*count[l2];
+
 	    different[c]  =   is_informative(count ,0);
 	    informative[c]  = is_informative(count ,1);
 
@@ -1388,7 +1416,7 @@ int main(int argc,char* argv[])
 	    alleles3[c] = n_letters(count,0) == 3;
 	    is_masked[c] = is_masked_column(A,c);
 	}
-    
+
 	int n_different  = different.count();
 //	int n_same = A.length() - n_different;
 	int n_informative  = informative.count();
@@ -1411,11 +1439,6 @@ int main(int argc,char* argv[])
 	    print_matrix(std::cout, pi_matrix(A),'\t');
 	    exit(0);
 	}
-	else if (args.count("pi"))
-	{
-	    std::cout<<"pi = "<<pi(A)<<std::endl;
-	    exit(0);
-	}
 	else
 	    std::cout<<A;
 	std::cout.flush();
@@ -1423,9 +1446,14 @@ int main(int argc,char* argv[])
 	if (A.length() != A0.length())
 	    std::cerr<<"Length changed from "<<A0.length()<<" to "<<A.length()<<"\n";
 	int variant_dist = args["variant"].as<int>();
-	std::cerr<<"Masked "<<is_masked.count()<<" sites.\n";
+	std::cerr<<"Masked "<<is_masked.count()<<" sites.  "<<A.length()-is_masked.count()<<" sites remain.\n";
 	std::cerr<<"Sites with 2 alleles: "<<alleles2.count()<<" ("<<double(alleles2.count())/non_masked_columns<<")  ";
 	std::cerr<<"Sites with 3 alleles: "<<alleles3.count()<<" ("<<double(alleles3.count())/non_masked_columns<<")  \n";
+        {
+            double pi_stat = pi(A);
+            double theta = pi_stat/(1.0-pi_stat);
+            std::cerr<<"pi = "<<pi_stat<<"    theta = "<<theta<<"\n";
+        }
 	std::cerr<<"Variant sites: "<<n_different<<" ("<<double(n_different)/non_masked_columns<<")  ";
 	std::cerr<<"Variant sites at distance "<<variant_dist<<" before variant: "<<variant_column_at_distance(A,variant_dist).count()<<"\n";
 	std::cerr<<"Informative sites: "<<n_informative<<" ("<<double(n_informative)/non_masked_columns<<")  \n";
