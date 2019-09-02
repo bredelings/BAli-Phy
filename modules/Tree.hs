@@ -13,6 +13,8 @@ numNodes (Tree _ _ n _) = n
 numNodes (RootedTree t _ _) = numNodes t
 numBranches (Tree _ _ _ n) = n
 numBranches (RootedTree t _ _) = numBranches t
+-- Given that this is a tree, would numNodes t - numBranches t + 2 work for n_leaves >=3?
+numLeaves t = length $ leaf_nodes t
 
 root (RootedTree _ r _) = r
 remove_root (RootedTree t _ _) = t
