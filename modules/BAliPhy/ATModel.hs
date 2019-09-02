@@ -4,6 +4,7 @@ import BAliPhy.ATModel.DataPartition
 import BAliPhy.ATModel.DataPartition as DP
 import Foreign.Vector
 import Alignment
+import Tree
 import SModel
 
 -- Assumptions FIXME: branch lengths -- we could have multiple set of them.
@@ -43,7 +44,8 @@ observe_partition_type_0 partition compressed_alignment leaf_sequences column_co
           distances = listArray' (map (scale *) branch_lengths)
           smodel_on_tree = SModel.SingleBranchLengthModel tree distances smodel
           transition_ps = transition_p_index smodel_on_tree
-          leaf_sequence_counts = listArray' (Alignment.leaf_sequence_counts compressed_alignment 25 column_counts)
+          n_leaves = numLeaves tree
+          leaf_sequence_counts = listArray' (Alignment.leaf_sequence_counts compressed_alignment n_leaves column_counts)
           cls = cached_conditional_likelihoods
                   tree
                   leaf_sequences
