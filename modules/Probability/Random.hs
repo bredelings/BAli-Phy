@@ -41,6 +41,7 @@ data Random a = RandomStructure (a->Effects) (a->a) (Random a)
               | GetAlphabet
               | SetAlphabet b (Random a)
               | Lazy (Random a)
+              | WithEffect (Random a) (Random a)
               | LiftIO (IO a)
 
 sample dist = Sample dist
@@ -51,6 +52,8 @@ observe = Observe
 liftIO = LiftIO
 random = Lazy
 add_move = AddMove
+infixl 2 `with_effect`
+with_effect = WithEffect
 
 do_nothing _ = return ()
 
@@ -102,6 +105,7 @@ run_lazy alpha GetAlphabet = return alpha
 run_lazy alpha (SetAlphabet a2 x) = run_lazy a2 x
 run_lazy alpha (SamplingRate _ model) = run_lazy alpha model
 run_lazy alpha (MFix f) = MFix ((run_lazy alpha).f)
+run_lazy alpha (WithEffect action _) = run_lazy alpha action
 
 -- Also, shouldn't the modifiable function actually be some kind of monad, to prevent let x=modifiable 0;y=modifiable 0 from merging x and y?
 
@@ -155,6 +159,10 @@ run_lazy' alpha rate (MFix f) = MFix ((run_lazy' alpha rate).f)
 run_lazy' alpha rate (SamplingRate rate2 a) = run_lazy' alpha (rate*rate2) a
 run_lazy' alpha _    GetAlphabet = return alpha
 run_lazy' alpha rate (SetAlphabet a2 x) = run_lazy' a2 rate x
+run_lazy' alpha rate (WithEffect action effect) = unsafeInterleaveIO $ do
+  result <- run_lazy' alpha rate action
+  run_effects alpha rate $ effect result
+  return result
 
 set_alphabet a x = do (a',_) <- a
                       SetAlphabet a' x
