@@ -209,7 +209,6 @@ struct tree_constants: public Object
     std::vector<std::vector<param>> parameters_for_tree_node;
     std::vector<std::tuple<param,param,param>> parameters_for_tree_branch;
 
-    std::vector<int> branch_duration_index;
     std::vector<param> branch_durations;
 
     int n_leaves;

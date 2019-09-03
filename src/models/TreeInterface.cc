@@ -312,7 +312,7 @@ tree_edge TreeInterface::edge(int n1, int n2) const
 double TreeInterface::branch_length(int b) const
 {
     b %= n_branches();
-    return P->evaluate(P->TC->branch_duration_index[b]).as_double();
+    return P->TC->branch_durations[b].get_value(*P).as_double();
 }
 
 bool TreeInterface::can_set_branch_length(int b)

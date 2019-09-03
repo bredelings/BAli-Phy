@@ -537,14 +537,6 @@ void tree_constants::register_branch_lengths(context* C, const expression_ref& b
 
     branch_durations = get_params_from_list(C, branch_lengths);
     assert(branch_durations.size() == B);
-
-    // Create the parameters that hold branch lengths
-    for(int b=0;b<B;b++)
-    {
-        int index = C->add_compute_expression( {var("Data.List.!!"), branch_lengths, b} );
-
-        branch_duration_index.push_back(index);
-    }
 }
 
 tree_constants::tree_constants(context* C, const vector<string>& labels, int tree_head_)
