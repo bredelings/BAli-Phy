@@ -510,12 +510,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cl_index.ref(*p),b});
 
     /* Initialize params -- from alignments.ref(*p) */
-    expression_ref alignments_structure = p->evaluate_expression({var("Parameters.maybe_modifiable_structure"), as});
-    if (log_verbose >= 3)
-        std::cerr<<"alignments = "<<alignments_structure<<"\n";
-    assert(alignments_structure.size() == 2*B);
-    for(int b=0;b<2*B;b++)
-        pairwise_alignment_for_branch.push_back( get_param(*p, alignments_structure.sub()[b]) );
+    pairwise_alignment_for_branch = get_params_from_array(p, as, 2*B);
 }
 
 //-----------------------------------------------------------------------------//
