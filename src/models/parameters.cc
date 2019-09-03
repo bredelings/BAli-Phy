@@ -387,6 +387,24 @@ EVector unaligned_alignments_on_tree(const Tree& t, const vector<vector<int>>& s
     return alignments;
 }
 
+vector<param> get_params_from_list(context* C, const expression_ref& list, std::optional<int> check_size = {})
+{
+    vector<param> params;
+    expression_ref structure = C->evaluate_expression({var("Parameters.maybe_modifiable_structure"), list});
+
+    if (log_verbose >= 3)
+        std::cerr<<"structure = "<<structure<<"\n\n";
+
+    auto vec = *list_to_evector(structure);
+    for(auto& e: vec)
+        params.push_back( get_param(*C, e) );
+
+    if (check_size and (params.size() != *check_size))
+        throw myexception()<<"Expected a list of length "<<*check_size<<", but got one of length "<<params.size()<<"!";
+
+    return params;
+}
+
 data_partition_constants::data_partition_constants(Parameters* p, int i, const alphabet& a_, int like_calc)
     :conditional_likelihoods_for_branch(2*p->t().n_branches()),
      sequence_length_indices(p->t().n_nodes()),
@@ -512,20 +530,6 @@ vector<int> edges_connecting_to_node(const Tree& T, int n)
     return branch_list_;
 }
 
-vector<param> get_params_from_list(context* C, const expression_ref& list)
-{
-    vector<param> params;
-    expression_ref structure = C->evaluate_expression({var("Parameters.maybe_modifiable_structure"), list});
-
-    if (log_verbose >= 3)
-        std::cerr<<"structure = "<<structure<<"\n\n";
-
-    auto vec = *list_to_evector(structure);
-    for(auto& e: vec)
-        params.push_back( get_param(*C, e) );
-    return params;
-}
-
 void tree_constants::register_branch_lengths(context* C, const expression_ref& branch_lengths_exp)
 {
     int B = parameters_for_tree_branch.size()/2;
@@ -535,8 +539,7 @@ void tree_constants::register_branch_lengths(context* C, const expression_ref& b
     auto branch_lengths = C->get_expression(branch_lengths_index);
     C->evaluate(branch_lengths_index);
 
-    branch_durations = get_params_from_list(C, branch_lengths);
-    assert(branch_durations.size() == B);
+    branch_durations = get_params_from_list(C, branch_lengths, B);
 }
 
 tree_constants::tree_constants(context* C, const vector<string>& labels, int tree_head_)
@@ -1862,8 +1865,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         PC->TC.branch(b).set_length(-1);
 
     // R5. Register branch categories
-    PC->branch_categories = get_params_from_list(this, {var("BAliPhy.ATModel.branch_categories"), my_atmodel()});
-    assert(PC->branch_categories.size() == tt.n_branches());
+    PC->branch_categories = get_params_from_list(this, {var("BAliPhy.ATModel.branch_categories"), my_atmodel()}, tt.n_branches());
 
     // create data partitions
 
