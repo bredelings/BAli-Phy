@@ -1653,7 +1653,11 @@ sub compute_ancestral_states
 
             die "wrong number of alignment and tree files for partition $i" if ((scalar @afiles) != (scalar @tree_files));
 
-            my $cmd = "extract-ancestors -a Results/P${p}-max.fasta -n Results/c66.tree -g Results/c66.tree";
+            my $template = "Results/P${p}-max.fasta";
+            $template = "Results/C1.P${p}.initial.fasta" if ($imodel_indices[$i] eq "--");
+            my $tree = "Results/c66.tree";
+
+            my $cmd = "extract-ancestors -a ${template} -n ${tree} -g ${tree}";
 
             foreach my $directory (@subdirectories)
             {
