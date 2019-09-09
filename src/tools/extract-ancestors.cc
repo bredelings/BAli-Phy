@@ -139,6 +139,40 @@ vector<optional<int>> get_nodes_map(const Tree& Q, const Tree& T)
     return Q_to_T_nodes;
 }
 
+vector<pair<string,dynamic_bitset<>>> get_branch_queries_from_tree(SequenceTree Q, const vector<string>& leaf_names)
+{
+    // 1. Read tree from file
+    remap_T_leaf_indices(Q, leaf_names);
+
+    // 2. Check that all nodes are labelled.
+    for(auto& label: Q.get_labels())
+        if (label.empty())
+            throw myexception()<<"groups-from-tree: tree contains unlabelled node!";
+
+    // 3. Construct groups from branches
+    vector<pair<string,dynamic_bitset<>>> groups;
+    for(int b=0;b<2*Q.n_branches();b++)
+    {
+        int source = Q.directed_branch(b).source();
+        int target = Q.directed_branch(b).target();
+
+        if (Q.node(target).is_leaf_node()) continue;
+
+        string name = Q.get_labels()[source] + "=>" + Q.get_labels()[target];
+
+        auto split = branch_partition(Q,b);
+        groups.push_back({name, split});
+        std::cerr<<name<<" = ";
+        for(int i=0;i<split.size();i++)
+        {
+            if (split[i])
+                std::cerr<<Q.get_label(i)<<" ";
+        }
+        std::cerr<<"\n";
+    }
+    return groups;
+}
+
 vector<pair<string,dynamic_bitset<>>> load_groups_from_file(const string& filename, const vector<string>& leaf_names)
 {
     namespace view = ranges::view;
@@ -148,20 +182,34 @@ vector<pair<string,dynamic_bitset<>>> load_groups_from_file(const string& filena
 
     for(auto& line_: read_lines(groups_file))
     {
+        // Remove leading and ending whitespace
         auto line = lstrip(rstrip(line_," \t")," \t");
         if (not line.size()) continue;
+
+        // Skip comments
         if (line[0] == '#') continue;
 
-        auto words = resplit(line,R"([ \t]+)");
-        if (words.size() < 3 or words[1] != "=")
+        // Treat this line as a tree
+        if (line[0] == '(')
         {
-            throw myexception()<<"In groups file '"<<filename<<"':\n  Badly formed line:\n    |"<<line_;
+            SequenceTree Q;
+            Q.parse(line);
+            auto queries = get_branch_queries_from_tree(Q, leaf_names);
+            groups.insert(groups.end(), queries.begin(), queries.end());
         }
+        // Treat this line as a directed split
+        else
+        {
+            auto words = resplit(line,R"([ \t]+)");
 
-        auto name = words[0];
-        auto taxon_names = words | view::drop(2);
-        dynamic_bitset<> group = group_from_names(leaf_names, taxon_names);
-        groups.push_back({name,group});
+            if (words.size() < 3 or words[1] != "=")
+                throw myexception()<<"In groups file '"<<filename<<"':\n  Badly formed line:\n    |"<<line_;
+
+            auto name = words[0];
+            auto taxon_names = words | view::drop(2);
+            dynamic_bitset<> group = group_from_names(leaf_names, taxon_names);
+            groups.push_back({name,group});
+        }
     }
 
     return groups;
@@ -247,6 +295,8 @@ int argmax(const map<int,int>& counts)
     return max_x;
 }
 
+//TODO: add flag to affect gap_must_be_half.
+//TODO: sort rows, including internal nodes, by tree... how?
 
 
 // NOTE: `gap_must_be_half` means that we first consider "-" versus "N",
@@ -353,46 +403,6 @@ optional<vector<pair<string,dynamic_bitset<>>>> get_branch_queries(const variabl
     if (args.count("groups"))
         groups = load_groups_from_file(args["groups"].as<string>(), samples.leaf_names());
     return groups;
-}
-
-optional<vector<pair<string,dynamic_bitset<>>>> get_branch_from_tree_queries(const variables_map& args, const joint_A_T& samples)
-{
-    if (args.count("groups-from-tree"))
-    {
-        // 1. Read tree from file
-        auto Q = load_tree_from_file(args["groups-from-tree"].as<string>());
-        remap_T_leaf_indices(Q, samples.leaf_names());
-
-        // 2. Check that all nodes are labelled.
-        for(auto& label: Q.get_labels())
-            if (label.empty())
-                throw myexception()<<"groups-from-tree: tree contains unlabelled node!";
-
-        // 3. Construct groups from branches
-        vector<pair<string,dynamic_bitset<>>> groups;
-        for(int b=0;b<2*Q.n_branches();b++)
-        {
-            int source = Q.directed_branch(b).source();
-            int target = Q.directed_branch(b).target();
-
-            if (Q.node(target).is_leaf_node()) continue;
-
-            string name = Q.get_labels()[source] + "=>" + Q.get_labels()[target];
-
-            auto split = branch_partition(Q,b);
-            groups.push_back({name, split});
-            std::cerr<<name<<" = ";
-            for(int i=0;i<split.size();i++)
-            {
-                if (split[i])
-                    std::cerr<<Q.get_label(i)<<" ";
-            }
-            std::cerr<<"\n";
-        }
-        return groups;
-    }
-    else
-        return {};
 }
 
 std::ostream& write_alignment_row(std::ostream& o, const string& name, const alignment& A, int row)
@@ -536,13 +546,13 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ancestors.add_options()
         ("nodes,n",value<string>(),"Newick tree with labelled ancestors")
         ("groups,g",value<string>(),"File with named groups")
-        ("groups-from-tree,t",value<string>(),"Newick tree with labelled ancestors")
         ;
 
     options_description output("Output options");
     output.add_options()
         ("template-alignment,a", value<string>(), "File with template alignment")
-        ("show-ancestors,s",value<bool>()->default_value(false),"Write alignments with labelled ancestors")
+        // FIXME, Add option to use a template alignment, but print only ancestors.
+        ("show-ancestors",value<bool>()->default_value(false),"Write input alignments augmented with ancestor sequences.")
         ;
 
     options_description all("All options");
@@ -555,12 +565,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     if (args.count("help")) {
         cout<<"Construct alignments with internal sequences for labeled nodes in query tree.\n\n";
-        cout<<"Usage: extract-ancestors <alignments file> <trees file> <alignment file> [--nodes=<query tree>] [--groups=<groups file>] [OPTIONS]\n";
+        cout<<"Usage: extract-ancestors <alignments file> <trees file> <alignment file> [OPTIONS]\n";
         cout<<all<<"\n";
         cout<<"Examples:\n\n";
-        cout<<"   % extract-ancestors -A C1.P1.fastas -T C1.trees -a P1-max.fasta -n query.tree\n\n";
-        cout<<"   % extract-ancestors -A C1.P1.fastas -T C1.trees -a P1-max.fasta -g groups.txt\n\n";
-        cout<<"   % extract-ancestors -A C1.P1.fastas -T C1.trees -a P1-max.fasta -t named-tree.tree\n\n";
+        cout<<"   % extract-ancestors -A C1.P1.fastas -T C1.trees -a P1-max.fasta --nodes query.tree --groups query.tree\n\n";
         exit(0);
     }
 
@@ -608,12 +616,6 @@ int main(int argc,char* argv[])
         // 3. Load queries to find ancestor nodes on the tree
         auto node_queries = get_node_queries(args, samples);
         auto branch_queries = get_branch_queries(args, samples);
-        auto branch_from_tree_queries = get_branch_from_tree_queries(args, samples);
-        if (not branch_queries)
-            branch_queries = branch_from_tree_queries;
-        else if (branch_from_tree_queries)
-            branch_queries->insert(branch_queries->end(), branch_from_tree_queries->begin(), branch_from_tree_queries->end());
-
         if (not node_queries and not branch_queries)
             std::cerr<<"WARNING: no ancestors defined!\n";
         
