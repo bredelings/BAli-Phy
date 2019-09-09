@@ -476,6 +476,7 @@ sub topbar
     [<a href="#parameters">Parameters</a>]
     [<a href="#topology">Phylogeny</a>]
     [<a href="#alignment">Alignment</a>]
+    [<a href="#ancestors">Ancestors</a>]
     [<a href="#mixing">Mixing</a>]
     [<a href="#analysis">Analysis</a>]
     [<a href="#models">Models+Priors</a>]
@@ -867,7 +868,25 @@ sub section_alignment_distribution
 }
 
 
+sub section_ancestral_sequences
+{
+    return "" if ($n_partitions == 0);
 
+    my $section .= "<h2 class=\"clear\"><a class=\"anchor\" name=\"ancestors\"></a>Ancestral sequence estimates</h2>\n";
+
+    $section .= "<ul>\n";
+    for(my $i=0;$i<$n_partitions;$i++)
+    {
+        my $p = $i+1;
+        my $ancestors = "P${p}.ancestors.fasta";
+        next if (! -e "Results/$ancestors");
+
+        $section .= "    <li><a href=\"${ancestors}\">Partition ${p}</li>\n";
+    }
+    $section .= "</ul>\n";
+
+    return $section;
+}
 
 sub section_mixing
 {
@@ -1149,6 +1168,8 @@ sub print_index_html
     print $index &section_phylogeny_distribution();
 
     print $index &section_alignment_distribution();
+
+    print $index &section_ancestral_sequences();
 
     print $index &section_mixing();
 
