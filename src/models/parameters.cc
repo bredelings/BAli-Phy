@@ -1760,7 +1760,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     /* ---------------- compress alignments -------------------------- */
 
     // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
-    bool allow_compression = load_value("site-compression", ttt.n_nodes() > 2);
+    bool allow_compression = load_value("site-compression", ttt.n_nodes() > 2) and not load_value("write-fixed-alignments",false);
 
     vector<optional<compressed_alignment>> compressed_alignments(n_partitions);
     vector<const alignment*> alignments(n_partitions);
