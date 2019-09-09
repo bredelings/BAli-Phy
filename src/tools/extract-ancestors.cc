@@ -225,7 +225,7 @@ struct profile
     vector<vector<int>> observations; // observations[site][i]
 
     void count_alignment(const alignment& A, int row, const vector<pair<int,int>>& corresponding_columns);
-    int max_for_position(int i) const;
+    int max_for_position(int i, bool gap_must_be_half=true) const;
     profile(const alignment& A): template_A(A), observations(A.length()) {}
 };
 
@@ -248,20 +248,39 @@ int argmax(const map<int,int>& counts)
 }
 
 
-int profile::max_for_position(int pos) const
+
+// NOTE: `gap_must_be_half` means that we first consider "-" versus "N",
+// and then secondly consider which letter the N will be.
+//
+// For example, if we have {"-":0.45, "A":35, "T":"0.2"} then we would
+// first reject "-" because "N" is more probable, and then choose "A"
+// as the most likely letter value.
+
+int profile::max_for_position(int pos, bool gap_must_be_half) const
 {
     map<int,int> counts;
     if (observations[pos].size() < 1)
         return alphabet::unknown;
 
+    // 1. Find the counts - and each letter.
+    int total = 0;
+    int total_gap = 0;
     for(int letter: observations[pos])
     {
-        if (counts.count(letter))
+        total++;
+        if (letter == alphabet::gap and gap_must_be_half)
+            total_gap++;
+        else if (counts.count(letter))
             counts.at(letter)++;
         else
             counts[letter] = 1;
     }
 
+    // 2. Return gap only if its a 50% probability or higher
+    if (total_gap*2 >= total and gap_must_be_half)
+        return alphabet::gap;
+
+    // 3. Otherwise return the most frequent letter.
     return argmax(counts);
 }
 
