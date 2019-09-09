@@ -39,10 +39,10 @@ using std::endl;
 
 const std::vector<std::string>& joint_A_T::leaf_names() const
 {
-    return leaf_names_;
+    return *leaf_names_;
 }
 
-joint_A_T::joint_A_T(const vector<alignment>& A,const vector<SequenceTree>& T,bool internal)
+joint_A_T& joint_A_T::load(const vector<alignment>& A,const vector<SequenceTree>& T,bool internal)
 {
     unsigned s = std::min(A.size(),T.size());
     if (s != A.size())
@@ -54,16 +54,24 @@ joint_A_T::joint_A_T(const vector<alignment>& A,const vector<SequenceTree>& T,bo
     for(int i=0;i<s;i++)
         push_back({A[i],T[i]});
 
-    if (s == 0) return;
+    if (s == 0) return *this;
 
-    leaf_names_ = T[0].get_leaf_labels();
+    if (not leaf_names_)
+        leaf_names_ = T[0].get_leaf_labels();
   
     for(int i=0;i<size();i++)
     {
-        remap_T_leaf_indices((*this)[i].second, leaf_names_);
+        remap_T_leaf_indices((*this)[i].second, *leaf_names_);
         link((*this)[i].first, (*this)[i].second, true);
         link((*this)[i].first, (*this)[i].second, internal);
     }
+
+    return *this;
+}
+
+joint_A_T::joint_A_T(const vector<alignment>& A,const vector<SequenceTree>& T,bool internal)
+{
+    load(A,T,internal);
 }
 
 
