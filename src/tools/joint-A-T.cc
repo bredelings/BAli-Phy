@@ -88,3 +88,29 @@ joint_A_T get_joint_A_T(const variables_map& args,bool internal)
 
     return joint_A_T(A,T,internal);
 }
+
+joint_A_T get_multiple_joint_A_T(const variables_map& args,bool internal)
+{
+    auto a_files = args["alignments"].as<vector<string>>();
+    auto t_files = args["trees"].as<vector<string>>();
+
+    // This is just for the trees, I think.
+    unsigned subsample = args["subsample"].as<unsigned>();
+
+    if (a_files.size() != t_files.size())
+        throw myexception()<<"The number of alignments files ("<<a_files.size()<<") and the number of trees files ("<<t_files.size()<<") don't match!";
+
+    joint_A_T J;
+    for(int i=0;i<a_files.size();i++)
+    {
+        checked_ifstream a_file(a_files[i], "alignment samples file");
+        checked_ifstream t_file(t_files[i], "tree samples file");
+
+        vector<alignment> A = load_alignments(a_file, get_alphabet_name(args));
+        vector<SequenceTree> T = load_trees(t_file, 0, subsample);
+
+        J.load(A,T,internal);
+    }
+
+    return J;
+}

@@ -47,5 +47,6 @@ public:
 
 joint_A_T get_joint_A_T(const boost::program_options::variables_map& args,bool internal);
 
+joint_A_T get_multiple_joint_A_T(const boost::program_options::variables_map& args,bool internal);
 
 #endif
