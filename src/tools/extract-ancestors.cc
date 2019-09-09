@@ -78,10 +78,10 @@ map<dynamic_bitset<>,int> get_splits(const Tree& T)
 
     for(int b=0;b<2*T.n_branches();b++)
     {
-	auto s = branch_partition(T,b);
-	split_to_branch.insert({s,b});
-	int b2 = T.directed_branch(b).reverse();
-	split_to_branch.insert({~s,b2});
+        auto s = branch_partition(T,b);
+        split_to_branch.insert({s,b});
+        int b2 = T.directed_branch(b).reverse();
+        split_to_branch.insert({~s,b2});
     }
     return split_to_branch;
 }
@@ -96,9 +96,9 @@ vector<optional<int>> get_partial_branches_map(const Tree& Q, const Tree& T)
 
     for(int b=0;b<Q_to_T_branches.size();b++)
     {
-	auto qs = branch_partition(Q,b);
-	if (T_splits.count(qs))
-	    Q_to_T_branches[b] = T_splits[qs];
+        auto qs = branch_partition(Q,b);
+        if (T_splits.count(qs))
+            Q_to_T_branches[b] = T_splits[qs];
     }
     return Q_to_T_branches;
 }
@@ -111,14 +111,14 @@ optional<int> get_corresponding_node(int q_node, const Tree& Q, const Tree& T, c
     optional<int> t_node;
     for(auto q_branch=Q.node(q_node).branches_out(); q_branch; q_branch++)
     {
-	auto t_branch = Q_to_T_branches[*q_branch];
-	if (not t_branch) return {};
+        auto t_branch = Q_to_T_branches[*q_branch];
+        if (not t_branch) return {};
 
-	int t_node2 = (int)T.directed_branch(*t_branch).source();
-	if (not t_node)
-	    t_node = t_node2;
-	else if (t_node2 != *t_node)
-	    return {};
+        int t_node2 = (int)T.directed_branch(*t_branch).source();
+        if (not t_node)
+            t_node = t_node2;
+        else if (t_node2 != *t_node)
+            return {};
     }
     return *t_node;
 }
@@ -134,7 +134,7 @@ vector<optional<int>> get_nodes_map(const Tree& Q, const Tree& T)
     auto Q_to_T_branches = get_partial_branches_map(Q,T);
 
     for(int q_node=0; q_node<Q.n_nodes(); q_node++)
-	Q_to_T_nodes[q_node] = get_corresponding_node(q_node, Q, T, Q_to_T_branches);
+        Q_to_T_nodes[q_node] = get_corresponding_node(q_node, Q, T, Q_to_T_branches);
 
     return Q_to_T_nodes;
 }
@@ -501,34 +501,34 @@ variables_map parse_cmd_line(int argc,char* argv[])
     // named options
     options_description invisible("Invisible options");
     invisible.add_options()
-	("alignments", value<string>(),"File of alignment samples")
-	("trees", value<string>(), "File of corresponding tree samples")
-	;
+        ("alignments", value<string>(),"File of alignment samples")
+        ("trees", value<string>(), "File of corresponding tree samples")
+        ;
 
     // named options
     options_description general("General options");
     general.add_options()
-	("help,h", "produces help message")
-	("verbose,V",value<int>()->implicit_value(1),"Show more log messages on stderr.")
+        ("help,h", "produces help message")
+        ("verbose,V",value<int>()->implicit_value(1),"Show more log messages on stderr.")
         ;
 
     options_description input("Allowed options");
     input.add_options()
         ("alphabet,a",value<string>(),"set to 'Codons' to prefer codon alphabets")
-	("subsample,x",value<unsigned>()->default_value(10),"factor by which to sub-sample trees")
+        ("subsample,x",value<unsigned>()->default_value(10),"factor by which to sub-sample trees")
         ;
 
     options_description ancestors("Ancestor options");
     ancestors.add_options()
         ("nodes,n",value<string>(),"Newick tree with labelled ancestors")
-	("groups,g",value<string>(),"File with named groups")
+        ("groups,g",value<string>(),"File with named groups")
         ("groups-from-tree,t",value<string>(),"Newick tree with labelled ancestors")
-	;
+        ;
 
     options_description output("Output options");
     output.add_options()
         ("template-alignment,T", value<string>(), "File with template alignment")
-	("show-ancestors,A",value<bool>()->default_value(false),"Write alignments with labelled ancestors")
+        ("show-ancestors,A",value<bool>()->default_value(false),"Write alignments with labelled ancestors")
         ;
 
     options_description visible("All options");
@@ -544,18 +544,18 @@ variables_map parse_cmd_line(int argc,char* argv[])
   
     variables_map args;     
     store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
+          options(all).positional(p).run(), args);
     // store(parse_command_line(argc, argv, desc), args);
     notify(args);    
 
     if (args.count("help")) {
-	cout<<"Construct alignments with internal sequences for labeled nodes in query tree.\n\n";
-	cout<<"Usage: extract-ancestors <alignments file> <trees file> <alignment file> [--nodes=<query tree>] [--groups=<groups file>] [OPTIONS]\n";
-	cout<<visible<<"\n";
-	cout<<"Examples:\n\n";
-	cout<<"   % extract-ancestors C1.P1.fastas C1.trees P1-max.fasta --nodes=query.tree\n\n";
-	cout<<"   % extract-ancestors C1.P1.fastas C1.trees P1-max.fasta --groups=groups.txt\n\n";
-	exit(0);
+        cout<<"Construct alignments with internal sequences for labeled nodes in query tree.\n\n";
+        cout<<"Usage: extract-ancestors <alignments file> <trees file> <alignment file> [--nodes=<query tree>] [--groups=<groups file>] [OPTIONS]\n";
+        cout<<visible<<"\n";
+        cout<<"Examples:\n\n";
+        cout<<"   % extract-ancestors C1.P1.fastas C1.trees P1-max.fasta --nodes=query.tree\n\n";
+        cout<<"   % extract-ancestors C1.P1.fastas C1.trees P1-max.fasta --groups=groups.txt\n\n";
+        exit(0);
     }
 
     if (args.count("verbose")) log_verbose = args["verbose"].as<int>();
@@ -566,19 +566,19 @@ variables_map parse_cmd_line(int argc,char* argv[])
 int main(int argc,char* argv[])
 { 
     try {
-	variables_map args = parse_cmd_line(argc,argv);
-	//Arguments args;
-	//args.read(argc,argv);
-	//args.print(cerr);
+        variables_map args = parse_cmd_line(argc,argv);
+        //Arguments args;
+        //args.read(argc,argv);
+        //args.print(cerr);
 
         // 1. Load alignment and tree samples
-	if (log_verbose) cerr<<"extract-ancestors: Loading alignments and trees...\n";
+        if (log_verbose) cerr<<"extract-ancestors: Loading alignments and trees...\n";
         joint_A_T samples = get_joint_A_T(args,true);
 
         if (samples.size() == 0)
-	    throw myexception()<<"No (A,T) read in!";
-	else
-	    if (log_verbose) cerr<<"read "<<samples.size()<<" (A,T) pairs.\n\n";
+            throw myexception()<<"No (A,T) read in!";
+        else
+            if (log_verbose) cerr<<"read "<<samples.size()<<" (A,T) pairs.\n\n";
 
         // 2. Load template alignment
         optional<alignment> A;
@@ -612,7 +612,7 @@ int main(int argc,char* argv[])
             std::cerr<<"WARNING: no ancestors defined!\n";
         
         // 4. Extract profiles
-	auto [node_profiles, branch_profiles] = extract_sequence(samples, A, show_ancestors, node_queries, branch_queries);
+        auto [node_profiles, branch_profiles] = extract_sequence(samples, A, show_ancestors, node_queries, branch_queries);
 
         // 5. Write profiles for template alignments
         if (A)
@@ -633,8 +633,8 @@ int main(int argc,char* argv[])
         }
     }
     catch (std::exception& e) {
-	cerr<<"joint-indels: Error! "<<e.what()<<endl;
-	exit(1);
+        cerr<<"joint-indels: Error! "<<e.what()<<endl;
+        exit(1);
     }
     return 0;
 }
