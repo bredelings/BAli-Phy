@@ -636,6 +636,14 @@ int main(int argc,char* argv[])
                     std::cout<<a.lookup(branch_profiles[i].max_for_position(col));
                 std::cout<<"\n";
             }
+            for(int node=node_queries->n_leaves();node<node_queries->n_nodes();node++)
+            {
+                auto name = node_queries->get_label(node);
+                std::cout<<">"<<name<<"\n";
+                for(int col=0; col<A->length(); col++)
+                    std::cout<<a.lookup(node_profiles[node].max_for_position(col));
+                std::cout<<"\n";
+            }
         }
     }
     catch (std::exception& e) {
