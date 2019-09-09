@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include <list>
+#include <set>
 #include <utility>
 #include "tree/tree.H"
 #include "tree/sequencetree.H"
@@ -44,6 +45,7 @@ using std::endl;
 using std::string;
 using std::vector;
 using std::list;
+using std::set;
 using std::valarray;
 using std::pair;
 
@@ -197,10 +199,26 @@ int main(int argc,char* argv[])
         if (args.count("name-all-nodes"))
         {
             // FIXME - avoid using existing names!
+            set<string> all_names;
+            for(int n=0; n<T.n_nodes(); n++)
+                if (not T.get_label(n).empty())
+                    all_names.insert(T.get_label(n));
+
+            int index = 0;
             for(int n=0; n<T.n_nodes(); n++)
             {
                 if (T.get_label(n).empty())
-                    T.set_label(n,"node_"+std::to_string(n+1));
+                {
+                    string label;
+                    do
+                    {
+                        index++;
+                        label = "node_"+std::to_string(index);
+                    }
+                    while(all_names.count(label));
+                    T.set_label(n,label);
+                    all_names.insert(label);
+                }
             }
         }
 
