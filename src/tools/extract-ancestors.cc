@@ -63,11 +63,13 @@ namespace po = boost::program_options;
 using po::variables_map;
 using namespace A2;
 
-// OK, what does a complete conflict analysis look like?
-// For summaries, we want to map branches in the sampled tree
-//  to either branches or nodes of the consensus tree.
-// A branch can then map to a branch (aligned), a node (extends), or
-//  nothing (conflict)
+//TODO: add flag to affect gap_must_be_half.
+
+//TODO: sort rows, including internal nodes, by tree... how?
+//      -- see alignment-cat --reorder-by-tree
+//      We could sort the leaf and internal nodes I think.
+//      We could also sort tree branches, like node1,node1=>node2,node2=>node1,node2
+//      Group queries not directly derived from the tree would be more complicated to sort.
 
 // For extracting sequences corresponding to a node, we want to
 // map nodes on the query tree to nodes in the sampled tree.
@@ -294,10 +296,6 @@ int argmax(const map<int,int>& counts)
 
     return max_x;
 }
-
-//TODO: add flag to affect gap_must_be_half.
-//TODO: sort rows, including internal nodes, by tree... how?
-
 
 // NOTE: `gap_must_be_half` means that we first consider "-" versus "N",
 // and then secondly consider which letter the N will be.
