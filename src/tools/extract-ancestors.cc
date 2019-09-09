@@ -518,22 +518,17 @@ variables_map parse_cmd_line(int argc,char* argv[])
     using namespace po;
 
     // named options
-    options_description invisible("Invisible options");
-    invisible.add_options()
-        ("alignments", value<string>(),"File of alignment samples")
-        ("trees", value<string>(), "File of corresponding tree samples")
-        ;
-
-    // named options
     options_description general("General options");
     general.add_options()
         ("help,h", "produces help message")
-        ("verbose,V",value<int>()->implicit_value(1),"Show more log messages on stderr.")
+        ("verbose,v",value<int>()->implicit_value(1),"Show more log messages on stderr.")
         ;
 
     options_description input("Allowed options");
     input.add_options()
-        ("alphabet,a",value<string>(),"set to 'Codons' to prefer codon alphabets")
+        ("alignments,A", value<vector<string>>()->composing(),"File of alignment samples")
+        ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
+        ("trees,T", value<vector<string>>()->composing(), "File of corresponding tree samples")
         ("subsample,x",value<unsigned>()->default_value(10),"factor by which to sub-sample trees")
         ;
 
@@ -546,34 +541,26 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     options_description output("Output options");
     output.add_options()
-        ("template-alignment,T", value<string>(), "File with template alignment")
-        ("show-ancestors,A",value<bool>()->default_value(false),"Write alignments with labelled ancestors")
+        ("template-alignment,a", value<string>(), "File with template alignment")
+        ("show-ancestors,s",value<bool>()->default_value(false),"Write alignments with labelled ancestors")
         ;
 
-    options_description visible("All options");
-    visible.add(general).add(input).add(ancestors).add(output);
-
     options_description all("All options");
-    all.add(visible).add(invisible);
+    all.add(general).add(input).add(ancestors).add(output);
 
-    // positional options
-    positional_options_description p;
-    p.add("alignments", 1);
-    p.add("trees", 1);
-  
     variables_map args;     
-    store(command_line_parser(argc, argv).
-          options(all).positional(p).run(), args);
+    store(command_line_parser(argc, argv).options(all).run(), args);
     // store(parse_command_line(argc, argv, desc), args);
     notify(args);    
 
     if (args.count("help")) {
         cout<<"Construct alignments with internal sequences for labeled nodes in query tree.\n\n";
         cout<<"Usage: extract-ancestors <alignments file> <trees file> <alignment file> [--nodes=<query tree>] [--groups=<groups file>] [OPTIONS]\n";
-        cout<<visible<<"\n";
+        cout<<all<<"\n";
         cout<<"Examples:\n\n";
-        cout<<"   % extract-ancestors C1.P1.fastas C1.trees P1-max.fasta --nodes=query.tree\n\n";
-        cout<<"   % extract-ancestors C1.P1.fastas C1.trees P1-max.fasta --groups=groups.txt\n\n";
+        cout<<"   % extract-ancestors -A C1.P1.fastas -T C1.trees -a P1-max.fasta -n query.tree\n\n";
+        cout<<"   % extract-ancestors -A C1.P1.fastas -T C1.trees -a P1-max.fasta -g groups.txt\n\n";
+        cout<<"   % extract-ancestors -A C1.P1.fastas -T C1.trees -a P1-max.fasta -t named-tree.tree\n\n";
         exit(0);
     }
 
@@ -592,7 +579,7 @@ int main(int argc,char* argv[])
 
         // 1. Load alignment and tree samples
         if (log_verbose) cerr<<"extract-ancestors: Loading alignments and trees...\n";
-        joint_A_T samples = get_joint_A_T(args,true);
+        joint_A_T samples = get_multiple_joint_A_T(args,true);
 
         if (samples.size() == 0)
             throw myexception()<<"No (A,T) read in!";
