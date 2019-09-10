@@ -8,36 +8,54 @@
 
 # SYNOPSIS
 
-**extract-ancestors** _alignments file_ _trees file_ _query tree_[OPTIONS]
+**extract-ancestors** _alignments file_ _trees file_ _alignment file_ [OPTIONS]
 
 # DESCRIPTION
 
 Construct alignments with internal sequences for labeled nodes in query tree.
 
-# ALLOWED OPTIONS:
+# GENERAL OPTIONS:
 **-h**, **--help**
 : produces help message
 
-**-V**, **--verbose**
-: \[=arg(=1)\]   Show more log messages on stderr.
+**-v**, **--verbose**
+: \[=arg(=1)\]      Show more log messages on stderr.
 
-**-a** _arg_, **--alphabet** _arg_
+
+# ALLOWED OPTIONS:
+**-A** _arg_, **--alignments** _arg_
+: File of alignment samples
+
+**--alphabet** _arg_
 : set to 'Codons' to prefer codon alphabets
+
+**-T** _arg_, **--trees** _arg_
+: File of corresponding tree samples
 
 **-x** _arg_ (=10), **--subsample** _arg_ (=10)
 : factor by which to sub-sample trees
 
-**-L** _arg_ (=1), **--show-leaves** _arg_ (=1)
-: Include leaf sequences in filtered alignments
 
-**-A** _arg_ (=0), **--all-nodes** _arg_ (=0)
-: Only show alignments with ALL the labeled internal nodes
+# ANCESTOR OPTIONS:
+**-n** _arg_, **--nodes** _arg_
+: Newick tree with labelled ancestors
+
+**-g** _arg_, **--groups** _arg_
+: File with named groups
+
+
+# OUTPUT OPTIONS:
+**-a** _arg_, **--template-alignment** _arg_
+: File with template alignment
+
+**--show-ancestors** _arg_ (=0)
+: Write input alignments augmented with ancestor sequences.
 
 
 # EXAMPLES:
  
 ```
-% extract-ancestors C1.P1.fastas C1.trees query.tree
+% extract-ancestors -A C1.P1.fastas -T C1.trees -a P1-max.fasta --nodes query.tree --groups query.tree
 ```
 
 
