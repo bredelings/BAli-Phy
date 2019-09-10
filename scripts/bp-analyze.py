@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 import shutil
-
-
+import argparse
+from os import path
 #
 #
 #use strict;
@@ -24,25 +24,47 @@ import shutil
 
 verbose = 0
 
+class Analysis(object):
+
+    def find_exe(self,name,message=None):
+        exe = shutil.which(name)
+        if exe is None:
+            if message is not None:
+                print("Program '{}' not found: {}".format(name,message))
+            else:
+                print("Program '{}' not found.".format(name))
+        return exe
+
+    def __init__(self,directories):
+        self.subdirectories = directories
+        for subdir in self.subdirectories:
+            if not path.exists(subdir):
+                print("Analysis directory '{}' does not exist!".format(subdir))
+                exit(1)
+
+        self.trees_consensus_exe = self.find_exe('trees-consensus', message="See the main for adding the bali-phy programs to your PATH.")
+        if self.trees_consensus_exe is None:
+            exit(1)
+
+        self.draw_tree_exe = self.find_exe('draw-tree', message="Tree pictures will not be generated.\n")
+        # FIXME - maybe switch to R?
+        self.gnuplot_exe = self.find_exe('gnuplot', message='Some graphs will not be generated.\n')
+        self.R_exe = self.find_exe('R', message='Some mixing graphs will not be generated.\n')
+        self.subdirectories = directories
+        print(self.subdirectories)
+
+
 #----------------------------- SETUP 1 --------------------------#
-trees_consensus_exe = shutil.which('trees-consensus')
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Generate an HTML report summarizing MCMC runs for BAli-Phy and other software.",
+                                     epilog= "Example: bp-analyze analysis-dir-1 analysis-dir-2")
 
-if trees_consensus_exe is None:
-    print("I can't find the program 'trees-consensus' in your PATH!");
-    print("See the manual for adding the bali-phy programs to your PATH\n");
-    exit(1)
+    parser.add_argument("subdirectories", default=['.'], help="Subdirectories with MCMC runs",nargs='*')
+    parser.add_argument("--skip", help="Skip NUM iterations as burnin")
+    parser.add_argument("--subsample", help="Keep only every NUM iterations")
+    args = parser.parse_args()
 
-draw_tree_exe = shutil.which('draw-tree')
-if draw_tree_exe is None:
-    print("Program 'draw-tree' not found.  Tree pictures will not be generated.\n");
-
-gnuplot_exe = shutil.which('gnuplot')
-if gnuplot_exe is None:
-    print("Program 'gnuplot' not found.  Trace plots will not be generated.\n");
-
-R_exe = shutil.which('R')
-if R_exe is None:
-    print("Program 'R' not found.  Some mixing graphs will not be generated.\n")
+    analysis = Analysis(args.subdirectories)
 
 
 ## These things can be different between runs of the MCMC chain
