@@ -60,8 +60,18 @@ if __name__ == '__main__':
                                      epilog= "Example: bp-analyze analysis-dir-1 analysis-dir-2")
 
     parser.add_argument("subdirectories", default=['.'], help="Subdirectories with MCMC runs",nargs='*')
+    parser.add_argument("--clean", help="Delete generated files")
+    parser.add_argument("--verbose", help="Be verbose")
     parser.add_argument("--skip", help="Skip NUM iterations as burnin")
     parser.add_argument("--subsample", help="Keep only every NUM iterations")
+    parser.add_argument("--prune", help="Taxa to remove")
+    parser.add_argument("--muscle")
+    parser.add_argument("--probcons")
+    parser.add_argument("--mafft")
+    parser.add_argument("--max")
+    parser.add_argument("--mc-tree")
+    # FIXME: change subdirs to check if we've got a list of tree files instead
+    parser.add_argument("--tree-file",nargs='*')
     args = parser.parse_args()
 
     analysis = Analysis(args.subdirectories)
