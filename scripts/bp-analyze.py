@@ -4,6 +4,7 @@ import shutil
 import argparse
 import re
 from os import path
+import json
 #
 #
 #use strict;
@@ -27,10 +28,157 @@ verbose = 0
 
 # maybe use derived classes for different personalities??
 
+def check_out_file_names(out_files):
+    if not path.exists("Results/out_files"):
+        return True
+
+    old_out_files = []
+    with open("Results/out_files",'r',encoding='utf-8') as out:
+        for line in out:
+            old_out_files.append(line.strip())
+
+    return out_files == old_out_files
+
+def write_input_file_names(input_file_names):
+    with open("Results/input_files",w,encoding='utf-8') as out:
+        print(input_file_names.join('\n'),file=out)
+
+def initialize_results_directory():
+    reuse = check_out_file_names()
+
+    reuse = reuse and check_input_file_names()
+
+    reuse = reuse and check_burnin()
+
+    if not reuse and path.exists("Results"):
+        new_dir_name = get_unused_dir_name()
+        if path.exists("Results"):
+            print("Renaming 'Results/' to '{}'\n".format(new_dir_name))
+            os.rename("Results",new_dir_name)
+
+    if not path.exists("Results"):
+        print("Creating new directory Results/ for summary files.")
+        os.mkdir("Results")
+        os.mkdir("Results/Work")
+
+    write_input_file_names()
+    write_out_file_names()
+    write_burnin()
+
+def get_value_from_file(filename,attribute):
+    with open(filename,'r',encoding='utf-8') as file:
+        for line in file:
+            m = re.match(line, '{} ([^ ]*)($| )'.format(attribute))
+            if m:
+                return m.group(1)
+    return None
+
+#sub exec_show
+#{
+#    my $cmd = shift;
+#    print $LOG "\ncommand:  $cmd\n\n";
+#    my ($tmp_fh,$tmp_filename) = tempfile();
+#
+#    my $result = `$cmd 2>$tmp_filename`;
+#    my $message = `cat $tmp_filename`; 
+#    print $LOG $message;
+#    if ($? != 0)
+#    {
+#	my $code = $?>>8;
+#	print STDERR "Subcommand failed! (code $code)\n";
+#	print $LOG    "Subcommand failed! (code $code)\n";
+#
+#	print STDERR "\n  command:  $cmd\n";
+#
+#	print STDERR "\n  message:  $message\n";
+#	exit($code);
+#    }
+#    elsif ($verbose)
+#    {
+#	print STDERR "\n\t$cmd\n\n";
+#    }
+#    close $tmp_fh;
+#    return $result;
+#}
+#
+#sub exec_result
+#{
+#    my $cmd = shift;
+#    print $LOG "\ncommand:  $cmd\n\n";
+#
+#    print STDERR "\n\t$cmd\n\n" if ($verbose);
+#
+#    my $result = `$cmd`;
+#    return $?;
+#}
+#
+#
+
+def check_file_exists(filename):
+    if not path.exists(filename):
+        print("Error: I cannot find file '{}'".format(filename))
+        exit(1)
+    return filename
+
+def get_alignment_info(filename):
+    pass
+#
+#    my $filename = shift;
+#    open INFO,"alignment-info $filename |";
+#
+#    my %features = ();
+#
+#    my $indels = 0;
+#    while(my $line=<INFO>) {
+#	if ($line =~ /Alphabet: (.*)$/) {
+#	    $features{"alphabet"} = $1;
+#	}
+#	if ($line =~ /Alignment: (.+) columns of (.+) sequences/) 
+#	{
+#	    $features{"length"} = $1;
+#	    $features{"n_sequences"} = $2;
+#	}
+#	if ($line =~ /sequence lengths: ([^ ]+)-([^ ]+)/) {
+#	    $features{"min_length"} = $1;
+#	    $features{"max_length"} = $2;
+#	}
+#	if ($line =~ m|w/  indels|) {
+#	    $indels = 1;
+#	}
+#	next if ($indels == 0);
+#
+#	if ($line =~ / const.: ([^ ]+) \(([^ ]+)\%\)/) {
+#	    $features{"n_const"} = $1;
+#	    $features{"p_const"} = $2;
+#	}
+#	if ($line =~ /non-const.: ([^ ]+) \(([^ ]+)\%\)/) {
+#	    $features{"n_non-const"} = $1;
+#	    $features{"p_non-const"} = $2;
+#	}
+#	if ($line =~ /inform.: ([^ ]+) \(([^ ]+)\%\)/) {
+#	    $features{"n_inform"} = $1;
+#	    $features{"p_inform"} = $2;
+#	}
+#	if ($line =~ / ([^ ]+)% minimum sequence identity/){
+#	    $features{"min_p_identity"} = $1;
+#	}
+#    }
+#    return {%features};
+#}
+
+
+def get_value_from_file(filename, attribute):
+    with open(filename,'r',encoding='utf-8') as file:
+        for line in file:
+            m = re.match(line,"{} ([^ ]*)($\ )".format(attribute))
+            if m:
+                return m.group(1)
+    return None
+
+
 class MCMCRun(object):
     def __init__(self, mcmc_output):
         self.mcmc_output = mcmc_output
-        self.dir = None
         self.trees_file = None
         self.log_file = None
         self.alignments_files = None
@@ -39,12 +187,18 @@ class MCMCRun(object):
 
         if path.isdir(mcmc_output):
             self.dir = mcmc_output
+            self.prefix = None
         else:
             self.dir = path.dirname(mcmc_output)
+            self.prefix = path.basename(mcmc_output)
 
+    # A log file might then be in "{}/{}.log".format(self.dir,self.prefix)
     def get_dir(self):
         return self.dir
 
+    def get_prefix(self):
+        return self.prefix
+    
     def get_trees_file(self):
         return self.trees_file
 
@@ -66,7 +220,14 @@ class MCMCRun(object):
     def n_partitions(self):
         return 1
 
+    def get_n_sequences(self):
+        return None
+
 class BAliPhyRun(MCMCRun):
+
+    def get_n_sequences(self):
+        features = get_alignment_info("Results/C1.P1.initial.fasta")
+        return features["n_sequences"]
 
     def get_input_file_names_for_outfile(self,outfile):
         input_filenames = []
@@ -87,39 +248,71 @@ class BAliPhyRun(MCMCRun):
             filenames.append(filename)
         return filenames
 
+    def get_header_attribute(self, filename, attribute):
+        with open(filename,'r',encoding='utf-8') as file:
+            for line in file:
+                m = re.match(line,'{}: (.*)$'.format(attribute))
+                if m:
+                    return m.group(1)
+        return None
+
     def n_partitions(self):
         return len(self.get_input_files())
 
     def __init__(self,mcmc_output):
         super().__init__(mcmc_output)
-        self.out_file = path.join(self.get_dir(),'C1.out')
+        self.prefix = 'C1'
+        self.out_file = check_file_exists(path.join(self.get_dir(),'C1.out'))
         self.input_files = self.get_input_file_names_for_outfile(self.out_file)
-        self.trees_file = path.join(self.get_dir(),'C1.trees')
+        self.trees_file = check_file_exists(path.join(self.get_dir(),'C1.trees'))
         self.alignments_files = self.get_alignment_files()
-        self.MAP_file = path.join(self.get_dir(),'C1.MAP')
+        self.MAP_file = check_file_exists(path.join(self.get_dir(),'C1.MAP'))
         print(self.get_input_files())
 
 class BAliPhy2_1Run(BAliPhyRun):
     def __init__(self,mcmc_output):
         super().__init__(mcmc_output)
-        self.log_file = path.join(self.get_dir(),'C1.p')
+        self.log_file = check_file_exists(path.join(self.get_dir(),'C1.p'))
 
 class BAliPhy3Run(BAliPhyRun):
     def __init__(self,mcmc_output):
         super().__init__(mcmc_output)
-        self.log_file = path.join(self.get_dir(),'C1.log')
+        self.log_file = check_file_exists(path.join(self.get_dir(),'C1.log'))
+        self.run_file = path.join(self.get_dir(),'C1.run.json')
+        if not path.exists(self.run_file):
+            self.run_file = None
 
 class TreeFileRun(MCMCRun):
     def __init__(self,mcmc_output):
         super().__init__(mcmc_output)
 
+class LogFileRun(MCMCRun):
+    def __init__(self,mcmc_output):
+        super().__init__(mcmc_output)
+
+# Since PhyloBayes doesn't make new run files for each dir, maybe we need to file the different prefixes, and pass them to PhyloBayes?
+# A prefix could be like dir/prefix (e.g. dir/prefix.trace) or prefix (e.g. prefix.trace)
 class PhyloBayesRun(MCMCRun):
     def __init__(self,mcmc_output):
         super().__init__(mcmc_output)
+        for treelist in glob.glob(path.join(self.get_dir(),'*.treelist')):
+            self.prefix = get_file_prefix(treelist)
+            self.log_file = check_file_exists("{}.trace".format(prefix))
+            self.out_file = check_file_exists("{}.log".format(prefix))
+    
+    def get_input_file_names_for_outfile(self,outfile):
+        return get_value_from_file(outfile,"data file :")
+
+    def get_n_sequences(self):
+        return get_value_from_file(self.out_file, "number of taxa:")
 
 class BEASTRun(MCMCRun):
     def __init__(self,mcmc_output):
         super().__init__(mcmc_output)
+        for tree_file in glob.glob(path.join(self.get_dir(),'*,trees')):
+            check_file_exists(tree_file)
+            self.prefix = get_file_prefix(tree_file)
+            self.log_file = check_file_exists("{}.log".format(prefix))
 
 def ConstructRun(mcmc_output):
     if not path.exists(mcmc_output):
@@ -459,22 +652,6 @@ if __name__ == '__main__':
 #
 ##---------------------------------------- end execution ---------------------------
 #
-#sub get_n_sequences
-#{
-#    if ($personality =~ "bali-phy.*")
-#    {
-#	my $p1_features = get_alignment_info("Results/C1.P1.initial.fasta");
-#
-#	return ${$p1_features}{"n_sequences"};
-#    }
-#    elsif ($personality eq "phylobayes")
-#    {
-#	return get_value_from_file($out_files[0],"number of taxa :");
-#    }
-#    else {
-#	return undef;
-#    }
-#}
 #
 #sub html_header
 #{
@@ -1292,182 +1469,7 @@ if __name__ == '__main__':
 #    print "  --subsample=NUM           Keep only ever NUM iterations\n\n";
 #}
 #
-#sub parse_command_line
-#{
-#    while ($#ARGV > -1) 
-#    {
-#	my $arg = shift @ARGV;
-#	if ($arg eq "clean" || $arg eq "--clean") {
-#	    do_cleanup();
-#	    exit;
-#	}
-#	elsif ($arg eq "-h" || $arg eq "--help")
-#	{
-#	    show_help();
-#	    exit;
-#	}
-#	elsif ($arg =~ /--skip=(.*)/) {
-#	    $burnin = $1;
-#	    die "Empty argument to --skip=<arg>!" if (!defined($burnin) || $burnin eq "");
-#	}
-#	elsif ($arg =~ /--verbose/) {
-#	    $verbose = 1;
-#	}
-#	elsif ($arg =~ /--fast/) {
-#	    $speed = 2;
-#	}
-#	elsif ($arg =~ /--slow/) {
-#	    $speed = 0;
-#	}
-#	elsif ($arg =~ /--subsample=(.+)/) {
-#	    $subsample = $1;
-#	}
-#	elsif ($arg =~ /--prune=(.+)/) {
-#	    $prune = $1;
-#	}
-#	elsif ($arg =~ /--max=(.+)/) {
-#	    $max_iter = $1;
-#	}
-#	elsif ($arg =~ /--min-support=(.+)/) {
-#	    $min_support = $1;
-#	}
-#	elsif ($arg =~ /--muscle/) {
-#	    $muscle = 1;
-#	}
-#	elsif ($arg =~ /--probcons/) {
-#	    $probcons = 1;
-#	}
-#	elsif ($arg =~ /--mc-tree/) {
-#	    $sub_partitions=1;
-#	}
-#	elsif ($arg =~ /--trace-plots/) {
-#	    $do_trace_plots=1;
-#	}
-#	elsif ($arg =~ /--alignment-consensus/) {
-#	    $do_consensus_alignments=1;
-#	}
-#	elsif ($arg =~ /--treefile=(.+)/) {
-#	    $personality = "treefile";
-#	    my @arg_tree_files = split(/,/,$1);
-#	    foreach my $tree_file (@arg_tree_files)
-#	    {
-#		check_file_exists($tree_file)
-#	    }
-#	    @tree_files = (@tree_files,@arg_tree_files);
-#	}    
-#	elsif ($arg =~ /^-.*/) {
-#	    print "Error: I don't recognize option '$arg'\n";
-#	    exit(1);
-#	}
-#	else
-#	{
-#	    $arg = translate_cygwin($arg);
-#	    push @subdirectories, $arg;
-#	}
-#    }
-#    push @subdirectories,"." if ($#subdirectories == -1);
-#}
 #
-#
-##----------------------------- SETUP 2 --------------------------#
-#sub determine_personality
-#{
-#    # quit if personality is already determined
-#    return if ($personality ne "");
-#
-#    my $first_dir = $subdirectories[0];
-#    
-#    if (-e "$first_dir/C1.out")
-#    {
-#	$personality = "bali-phy-2.1" if (-e "$first_dir/C1.p");
-#	$personality = "bali-phy-3"   if (-e "$first_dir/C1.log");
-#	$n_chains = get_header_attribute("$first_dir/C1.out","MPI_SIZE");
-#	$n_chains=1 if (!defined($n_chains));
-#	$personality = "${personality}-heated" if ($n_chains > 1);
-#    }
-#    else {
-#	my @treelists = glob("$first_dir/*.treelist");
-#	my @beast_trees = glob("$first_dir/*.trees");
-#	if ($#treelists >= 0) 
-#	{
-#	    $personality = "phylobayes";
-#	}
-#	elsif ($#beast_trees >= 0) {
-#	    $personality = "beast";
-#	}
-#	else {
-#	    print "Error: No BAli-Phy, phylobayes, or BEAST files in directory '$first_dir'.\n";
-#	    exit(1);
-#	}
-#    }
-#}
-#
-#sub check_file_exists
-#{
-#    my $filename = shift;
-#    if (! -e "$filename") {
-#	print "Error: I can't find file '$filename'\n";
-#	exit(1);
-#    }
-#    return $filename;
-#}
-#
-#sub determine_input_files
-#{
-#    my $first_dir = $subdirectories[0];
-#
-#    if ($personality =~ "bali-phy-3.*")
-#    {
-#	foreach my $directory (@subdirectories)
-#	{
-#	    push @out_files, check_file_exists("$directory/C1.out");
-#	    push @tree_files, check_file_exists("$directory/C1.trees");
-#	    push @parameter_files, check_file_exists("$directory/C1.log");
-#	    if ( -e "$directory/C1.run.json")
-#	    {
-#		push @run_files, "$directory/C1.run.json";
-#	    }
-#	}
-#	$MAP_file = "$first_dir/1.MAP";
-#    }
-#    elsif ($personality eq "bali-phy-2.1")
-#    {
-#	foreach my $directory (@subdirectories)
-#	{
-#	    push @out_files, check_file_exists("$directory/C1.out");
-#	    push @tree_files, check_file_exists("$directory/C1.trees");
-#	    push @parameter_files, check_file_exists("$directory/C1.p");
-#	}
-#	$MAP_file = "$first_dir/1.MAP";
-#    }
-#    elsif ($personality =~ "bali-phy.*-heated")
-#    {
-#	$n_chains = get_header_attribute("MPI_SIZE");
-#	for(my $i=0;$i<$n_chains;$i++) {
-#	    push @out_files,"C$i.out" if (-e "C$i.out");
-#	    push @tree_files,"C$i.trees" if (-e "C$i.trees");
-#	}
-#    }
-#    elsif ($personality eq "treefile")
-#    { }
-#    elsif ($personality eq "phylobayes")
-#    {
-#	print "Summarizing output files from phylobayes:\n";
-#
-#	foreach my $directory (@subdirectories)
-#	{
-#	    my @treelists = glob("$directory/*.treelist");
-#
-#	    for my $treelist (@treelists)
-#	    {
-#		push @tree_files, check_file_exists($treelist);
-#
-#		my $prefix = get_file_prefix($treelist);
-#		push @parameter_files, check_file_exists($prefix.".trace");
-#		push @out_files, check_file_exists($prefix.".log");
-#	    }
-#	}
-#    }
 #    elsif ($personality eq "beast")
 #    {
 #	print "Summarizing output files from BEAST:\n";
@@ -2090,31 +2092,7 @@ if __name__ == '__main__':
 #    return compare_arrays( [@old_input_file_names], [@input_file_names]);
 #}
 #
-#sub write_input_file_names()
-#{
-#    open my $FILE,">Results/input_files";
-#
-#    print $FILE join("\n",@input_file_names);
-#
-#    close$ FILE;
-#}
-#
-#sub check_out_file_names()
-#{
-#    return 0 if (! -e "Results/out_files");
-#    open my $FILE,"Results/out_files";
-#
-#    my @out_files_old;
-#    while(my $line = portable_readline($FILE))
-#    {
-#	chomp $line;
-#	push @out_files_old, $line;
-#    }
-#    close $FILE;
-#
-#    return compare_arrays( [@out_files_old], [@out_files]);
-#}
-#
+
 #sub write_out_file_names()
 #{
 #    open my $FILE,">Results/out_files";
@@ -2155,38 +2133,6 @@ if __name__ == '__main__':
 #    }
 #}
 #
-#sub initialize_results_directory
-#{
-#    my $reuse = 1;
-#
-#    # check that this is an analysis of the same MCMC chains as last time
-#    $reuse = check_out_file_names() if ($reuse);
-#
-#    # check that the input alignment files are the same as last time
-#    $reuse = check_input_file_names() if ($reuse);
-#
-#    # check that the input alignment files are the same as last time
-#    $reuse = check_burnin() if ($reuse);
-#
-#    if (!$reuse && -e "Results")
-#    {
-#	my $new_dir_name = get_unused_dir_name();
-#	print "Renaming 'Results/' to '$new_dir_name/'.\n\n" if (-e "Results/");
-#	rename "Results/", $new_dir_name;
-#    }
-#
-#    if (! -e "Results")
-#    {
-#	print "Creating new directory Results/ for summary files.\n";
-#	mkdir "Results";
-#	mkdir "Results/Work";
-#    }
-#
-#    write_input_file_names();
-#    write_out_file_names();
-#    write_burnin();
-#}
-#
 #sub do_cleanup
 #{
 #    rmdir_recursive("Results") if (-e "Results");
@@ -2218,45 +2164,7 @@ if __name__ == '__main__':
 #    return 1;
 #}  
 #
-#sub get_input_file_names_for_outfile
-#{
-#    my $file = shift;
-#    die "Which file should I get the partitions for?" if (!defined($file));
-#
-#    if ($personality =~ "bali-phy.*")
-#    {
-#	open my $FILE, $file or die "Can't open $file!";
-#
-#	my @input_file_names = ();
-#	
-#	while (my $line = portable_readline($FILE))
-#	{
-#	    if ($line =~ /data(.+) = (.+)/) {
-#		my $filename = $2;
-#		$filename =~ s/$home/~/;
-#		push @input_file_names,$filename;
-#	    }
-#	    if ($line =~ /data = (.+)/) {
-#		my $filename = $1;
-#		$filename =~ s/$home/~/;
-#		push @input_file_names,$filename;
-#	    }
-#	    last if ($line =~ /^iterations = 0/);
-#	}
-#	return [@input_file_names];
-#    }
-#    elsif ($personality eq "phylobayes")
-#    {
-#	my $filename = get_value_from_file($file,"data file :");
-#	$filename =~ s/$home/~/;
-#	return [$filename];
-#    }
-#    else
-#    {
-#	return [];
-#    }
-#}
-#
+
 #sub show_array
 #{
 #    my $spacer = shift;
@@ -2323,53 +2231,6 @@ if __name__ == '__main__':
 #	    last;
 #	}
 #	last if ($line =~ /^iterations = 0/);
-#    }
-#    close $FILE;
-#
-#    return $value;
-#}
-#
-#sub get_header_attribute
-#{
-#    return "unknown" if ($personality !~ "bali-phy.*");
-#    my $filename = shift;
-#    my $attribute = shift;
-#    my $value;
-#
-#    open my $FILE, $filename or die "Can't open $filename!";
-#
-#    my @partitions = ();
-#
-#    while (my $line = portable_readline($FILE))
-#    {
-#	if ($line =~ /$attribute: (.*)$/) {
-#	    $value = $1;
-#	    last;
-#	}
-#	last if ($line =~ /^iterations = 0/);
-#    }
-#    close $FILE;
-#
-#    return $value;
-#}
-#
-#sub get_value_from_file
-#{
-#    my $filename = shift;
-#    my $attribute = shift;
-#
-#    my $value;
-#
-#    open my $FILE, $filename or die "Can't open $filename!";
-#
-#    my @partitions = ();
-#
-#    while (my $line = portable_readline($FILE))
-#    {
-#	if ($line =~ /$attribute ([^ ]*)($| )/) {
-#	    $value = $1;
-#	    last;
-#	}
 #    }
 #    close $FILE;
 #
@@ -2831,53 +2692,7 @@ if __name__ == '__main__':
 #    close BURN;
 #}
 #
-#sub get_alignment_info 
-#{
-#    return {} if ($personality !~ "bali-phy.*");
-#
-#    my $filename = shift;
-#    open INFO,"alignment-info $filename |";
-#
-#    my %features = ();
-#
-#    my $indels = 0;
-#    while(my $line=<INFO>) {
-#	if ($line =~ /Alphabet: (.*)$/) {
-#	    $features{"alphabet"} = $1;
-#	}
-#	if ($line =~ /Alignment: (.+) columns of (.+) sequences/) 
-#	{
-#	    $features{"length"} = $1;
-#	    $features{"n_sequences"} = $2;
-#	}
-#	if ($line =~ /sequence lengths: ([^ ]+)-([^ ]+)/) {
-#	    $features{"min_length"} = $1;
-#	    $features{"max_length"} = $2;
-#	}
-#	if ($line =~ m|w/  indels|) {
-#	    $indels = 1;
-#	}
-#	next if ($indels == 0);
-#
-#	if ($line =~ / const.: ([^ ]+) \(([^ ]+)\%\)/) {
-#	    $features{"n_const"} = $1;
-#	    $features{"p_const"} = $2;
-#	}
-#	if ($line =~ /non-const.: ([^ ]+) \(([^ ]+)\%\)/) {
-#	    $features{"n_non-const"} = $1;
-#	    $features{"p_non-const"} = $2;
-#	}
-#	if ($line =~ /inform.: ([^ ]+) \(([^ ]+)\%\)/) {
-#	    $features{"n_inform"} = $1;
-#	    $features{"p_inform"} = $2;
-#	}
-#	if ($line =~ / ([^ ]+)% minimum sequence identity/){
-#	    $features{"min_p_identity"} = $1;
-#	}
-#    }
-#    return {%features};
-#}
-#
+
 #sub tooltip
 #{
 #    my $text = shift;
@@ -3231,46 +3046,6 @@ if __name__ == '__main__':
 #    }
 #
 #}
-#
-#sub exec_show
-#{
-#    my $cmd = shift;
-#    print $LOG "\ncommand:  $cmd\n\n";
-#    my ($tmp_fh,$tmp_filename) = tempfile();
-#
-#    my $result = `$cmd 2>$tmp_filename`;
-#    my $message = `cat $tmp_filename`; 
-#    print $LOG $message;
-#    if ($? != 0)
-#    {
-#	my $code = $?>>8;
-#	print STDERR "Subcommand failed! (code $code)\n";
-#	print $LOG    "Subcommand failed! (code $code)\n";
-#
-#	print STDERR "\n  command:  $cmd\n";
-#
-#	print STDERR "\n  message:  $message\n";
-#	exit($code);
-#    }
-#    elsif ($verbose)
-#    {
-#	print STDERR "\n\t$cmd\n\n";
-#    }
-#    close $tmp_fh;
-#    return $result;
-#}
-#
-#sub exec_result
-#{
-#    my $cmd = shift;
-#    print $LOG "\ncommand:  $cmd\n\n";
-#
-#    print STDERR "\n\t$cmd\n\n" if ($verbose);
-#
-#    my $result = `$cmd`;
-#    return $?;
-#}
-#
 #
 #sub write_x3d_file
 #{
