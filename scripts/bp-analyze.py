@@ -40,7 +40,7 @@ def get_unused_dir_name():
 def get_value_from_file(filename,attribute):
     with open(filename,'r',encoding='utf-8') as file:
         for line in file:
-            m = re.match(line, '{} ([^ ]*)($| )'.format(attribute))
+            m = re.match('{} ([^ ]*)($| )'.format(attribute), line)
             if m:
                 return m.group(1)
     return None
@@ -98,15 +98,6 @@ def get_alignment_info(filename):
 #}
 
 
-def get_value_from_file(filename, attribute):
-    with open(filename,'r',encoding='utf-8') as file:
-        for line in file:
-            m = re.match(line,"{} ([^ ]*)($\ )".format(attribute))
-            if m:
-                return m.group(1)
-    return None
-
-
 class MCMCRun(object):
     def __init__(self, mcmc_output):
         self.mcmc_output = mcmc_output
@@ -142,7 +133,7 @@ class MCMCRun(object):
     def get_log_file(self):
         return self.log_file
 
-    def cmd(self):
+    def get_cmd(self):
         return self.cmd
 
     def input_files(self):
@@ -179,10 +170,11 @@ class BAliPhyRun(MCMCRun):
             filenames.append(filename)
         return filenames
 
-    def get_header_attribute(self, filename, attribute):
-        with open(filename,'r',encoding='utf-8') as file:
+    def get_header_attribute(self, attribute):
+        with open(self.out_file,'r',encoding='utf-8') as file:
+            reg = attribute + ': (.*)$'
             for line in file:
-                m = re.match(line,'{}: (.*)$'.format(attribute))
+                m = re.match(reg,line)
                 if m:
                     return m.group(1)
         return None
@@ -198,7 +190,10 @@ class BAliPhyRun(MCMCRun):
         self.trees_file = check_file_exists(path.join(self.get_dir(),'C1.trees'))
         self.alignments_files = self.get_alignment_files()
         self.MAP_file = check_file_exists(path.join(self.get_dir(),'C1.MAP'))
+        self.cmd = self.get_header_attribute("command")
+        print(self.get_cmd())
         print(self.get_input_files())
+        print(self.get_alignments_files())
 
 class BAliPhy2_1Run(BAliPhyRun):
     def __init__(self,mcmc_output):
@@ -412,13 +407,6 @@ if __name__ == '__main__':
     analysis = Analysis(args,args.mcmc_outputs)
 
 
-#&parse_command_line();
-#
-#&determine_personality();
-#
-## determine @out_files, @tree_files, @parameter_files
-#&determine_input_files();
-#
 #@commands = get_header_attributes("command",@out_files);
 #my $commands_differ=0;
 #for(my $i=1;$i<=$#commands;$i++)
