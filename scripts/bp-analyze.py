@@ -8,6 +8,14 @@ from os import path
 import json
 import itertools
 
+
+def get_n_lines(filename):
+    count = 0
+    with open(filename) as ifile:
+        for line in ifile:
+            count += 1
+    return count
+
 def get_json_from_file(filename):
     with open(filename, encoding='utf-8') as json_file:
         return json.load(json_file)
@@ -53,6 +61,27 @@ def check_file_exists(filename):
 
 def get_alignment_info(filename):
     pass
+
+def arg_max(xs):
+    arg = None
+    val = None
+    for i in range(len(xs)):
+        x = xs[i]
+        if val is None or x > val:
+            arg = i
+            val = x
+    return arg
+
+def arg_min(xs):
+    arg = None
+    val = None
+    for i in range(len(xs)):
+        x = xs[i]
+        if val is None or x < val:
+            arg = i
+            val = x
+    return arg
+
 #
 #    my $filename = shift;
 #    open INFO,"alignment-info $filename |";
@@ -145,13 +174,55 @@ class MCMCRun(object):
     def get_n_sequences(self):
         return None
 
+    def get_alphabets(self):
+        return None
+
+    def n_iterations(self):
+        return None
+
 class BAliPhyRun(MCMCRun):
+
+    def __init__(self,mcmc_output):
+        super().__init__(mcmc_output)
+        self.prefix = 'C1'
+        self.out_file = check_file_exists(path.join(self.get_dir(),'C1.out'))
+        self.input_files = self.find_input_file_names_for_outfile(self.out_file)
+        self.trees_file = check_file_exists(path.join(self.get_dir(),'C1.trees'))
+        self.alignments_files = self.get_alignment_files()
+        self.MAP_file = check_file_exists(path.join(self.get_dir(),'C1.MAP'))
+        self.cmd = self.find_header_attribute("command")
+        self.find_tree_prior()
+        self.smodel_indices = self.find_smodel_indices()
+        self.imodel_indices = self.find_imodel_indices()
+        self.scale_model_indices = self.find_scale_model_indices()
+        self.alphabets = self.find_alphabets()
+
+    def get_alphabets(self):
+        return self.alphabets
+
+    def get_smodels(self):
+        return self.smodels
+
+    def get_smodel_indices(self):
+        return self.smodel_indices
+
+    def get_imodels(self):
+        return self.imodels
+
+    def get_imodel_indices(self):
+        return self.imodel_indices
+
+    def get_scale_models(self):
+        return self.scale_models
+
+    def get_scale_imodel_indices(self):
+        return self.scale_model_indices
 
     def get_n_sequences(self):
         features = get_alignment_info("Results/C1.P1.initial.fasta")
         return features["n_sequences"]
 
-    def get_input_file_names_for_outfile(self,outfile):
+    def find_input_file_names_for_outfile(self,outfile):
         input_filenames = []
         with open(outfile,'r',encoding='utf-8') as outf:
             for line in outf:
@@ -170,7 +241,7 @@ class BAliPhyRun(MCMCRun):
             filenames.append(filename)
         return filenames
 
-    def get_header_attribute(self, attribute):
+    def find_header_attribute(self, attribute):
         with open(self.out_file,'r',encoding='utf-8') as file:
             reg = attribute + ': (.*)$'
             for line in file:
@@ -185,23 +256,83 @@ class BAliPhyRun(MCMCRun):
     def run(self,p):
         return self.mcmc_runs[p]
 
-    def __init__(self,mcmc_output):
-        super().__init__(mcmc_output)
-        self.prefix = 'C1'
-        self.out_file = check_file_exists(path.join(self.get_dir(),'C1.out'))
-        self.input_files = self.get_input_file_names_for_outfile(self.out_file)
-        self.trees_file = check_file_exists(path.join(self.get_dir(),'C1.trees'))
-        self.alignments_files = self.get_alignment_files()
-        self.MAP_file = check_file_exists(path.join(self.get_dir(),'C1.MAP'))
-        self.cmd = self.get_header_attribute("command")
-        print(self.get_cmd())
-        print(self.get_input_files())
-        print(self.get_alignments_files())
+    def find_tree_prior(self):
+        with open(self.out_file, encoding='utf-8') as file:
+            for line in file:
+                m = re.match('^T:topology (.*)$', line)
+                if m:
+                    self.topology_prior = m.group(1)
+                m = re.match('^T:lengths (.*)$', line)
+                if m:
+                    self.branch_prior = m.group(1)
+                if line.startswith("iterations"):
+                    break
+
+    def find_smodel_indices(self):
+        smodel_indices = []
+        with open(self.out_file,encoding='utf-8') as file:
+            for line in file:
+                m = re.match("smodel-index(.+) = (.+)", line)
+                if m:
+                    smodel_indices.append(int(m.group(2)))
+                if line.startswith("iterations"):
+                    break
+        return smodel_indices
+
+    def find_imodel_indices(self):
+        imodel_indices = []
+        with open(self.out_file,encoding='utf-8') as file:
+            for line in file:
+                m = re.match("imodel-index(.+) = (.+)", line)
+                if m:
+                    index = m.group(2)
+                    if index == "--":
+                        index = None
+                    else:
+                        index = int(index)
+                    imodel_indices.append(index)
+                if line.startswith("iterations"):
+                    break
+        return imodel_indices
+
+    def find_scale_model_indices(self):
+        scale_model_indices = []
+        with open(self.out_file,encoding='utf-8') as file:
+            for line in file:
+                m = re.match("scale-index(.+) = (.+)", line)
+                if m:
+                    scale_model_indices.append(int(m.group(2)))
+                if line.startswith("iterations"):
+                    break
+        return scale_model_indices
+
+    def find_alphabets(self):
+        alphabets = []
+        with open(self.out_file,encoding='utf-8') as file:
+            for line in file:
+                m = re.match("alphabet.* = (.+)", line)
+                if m:
+                    alphabets.append(m.group(1))
+                if line.startswith("iterations"):
+                    break
+        return alphabets
+
+    def n_iterations(self):
+        n = get_n_lines(self.get_trees_file())-1
+        if n <= 0:
+            print("Error: Tree file '{}' has no samples!".format(self.get_tree_file()))
+            exit(1)
+        return n
 
 class BAliPhy2_1Run(BAliPhyRun):
     def __init__(self,mcmc_output):
         super().__init__(mcmc_output)
         self.log_file = check_file_exists(path.join(self.get_dir(),'C1.p'))
+        self.version = self.get_header_attributes("VERSION").split('\s+')
+
+        self.smodels = self.get_models("subst models", "smodels")
+        self.imodels = self.get_models("indel models", "imodels")
+        self.scale_models = self.get_models("scale model", "scales")
 
     def get_models(self, name1, name2):
         models = []
@@ -224,13 +355,22 @@ class BAliPhy3Run(BAliPhyRun):
         self.run_file = path.join(self.get_dir(),'C1.run.json')
         if not path.exists(self.run_file):
             self.run_file = None
-
-    def get_json_from_run_file(self):
-        return get_json_from_file(self.run_file)
+        self.run_json = get_json_from_file(self.run_file)
+        self.version = self.run_json["program"]["version"]
+        self.smodels = self.get_models("subst models", "smodels")
+        self.imodels = self.get_models("indel models", "imodels")
+        self.scale_models = self.get_models("scale model", "scales")
+        print(self.get_cmd())
+        print(self.get_smodels())
+        print(self.get_smodel_indices())
+        print(self.get_imodels())
+        print(self.get_imodel_indices())
+        print(self.get_input_files())
+        print(self.get_alignments_files())
+        print(self.get_alphabets())
 
     def get_models(self, name1, name2):
-        j = self.get_json_from_run_file()
-        return [make_extracted(model) for model in j[name2]]
+        return [make_extracted(model) for model in self.run_json[name2]]
 
 class TreeFileRun(MCMCRun):
     def __init__(self,mcmc_output):
@@ -320,14 +460,20 @@ class Analysis(object):
         for mcmc_run in self.mcmc_runs:
             print(mcmc_run.get_dir())
 
-        self.initialize_results_directory()
-        self.log_shell_cmds = open("Results/commands.log",'w',encoding='utf-8')
-
         for i in range(len(self.mcmc_runs)):
             if self.mcmc_runs[i].get_cmd() != self.mcmc_runs[0].get_cmd():
                 print("WARNING: Commands differ!\n   {}\n   {}\n".format(self.mcmc_runs[0].get_cmd(),
                                                                          self.mcmc_runs[i].get_cmd()))
         self.get_input_files()
+
+        self.tree_consensus_values = [0.5,0.66,0.8,0.9,0.95,0.99,1.0]
+        self.alignment_consensus_values = [0.1,0.25,0.5,0.75]
+
+        self.determine_burnin()
+        self.initialize_results_directory()
+        self.log_shell_cmds = open("Results/commands.log",'w',encoding='utf-8')
+
+
 
     def get_input_files(self):
         result = self.mcmc_runs[0].get_input_files()
@@ -419,6 +565,33 @@ class Analysis(object):
         self.write_analysis_property("input_files", self.get_input_files())
         self.write_analysis_property("alignment_file_names", self.get_alignments_files())
 
+    def determine_burnin(self):
+        if self.burnin is not None:
+            for run in self.mcmc_runs:
+                if self.burnin > run.n_iterations():
+                    print("MCMC run {} has only {} iterations.".format(run.mcmc_output, run.n_iterations()))
+                    print("Error!  The burnin (specified as {}) cannot be higher than this.".format(self.burnin))
+                    exit(1)
+            return
+
+        iterations = [run.n_iterations() for run in self.mcmc_runs]
+
+        max_iterations = max(iterations)
+        max_i = arg_max(iterations)
+
+        min_iterations = min(iterations)
+        min_i = arg_min(iterations)
+
+        if max_iterations > 3*min_iterations:
+            print("The variation in run length between MCMC chains is too great.\n")
+            print("  Chain #{} has {} iterations.".format(max_iterations))
+            print("  Chain #{} has {} iterations.".format(min_iterations))
+            print("Not going to guess a burnin: please specify one.")
+            exit(1)
+
+        self.burnin = int(0.1*min_iterations)
+
+
 #----------------------------- SETUP 1 --------------------------#
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate an HTML report summarizing MCMC runs for BAli-Phy and other software.",
@@ -444,51 +617,9 @@ if __name__ == '__main__':
     smodels = analysis.get_models("subst model", "smodels")
     imodels = analysis.get_models("indel model", "imodels")
     scale_models = analysis.get_models("scale model", "scales")
+
     print(smodels)
 
-#my $topology_prior;
-#my $branch_prior;
-#&get_tree_prior();
-#
-#my @smodel_indices = @{ get_smodel_indices() };
-#push @smodel_indices,0 if ($#smodel_indices == -1);
-#
-#my @imodel_indices = @{ get_imodel_indices() };
-#if ($#imodel_indices == -1)
-#{
-#    if ($#imodels == -1 || $imodels[0] eq "none") {
-#	push @imodel_indices,-1;
-#    }
-#    else {
-#	push @imodel_indices,0;
-#    }
-#}
-#
-#my @scale_model_indices = @{ get_scale_model_indices() };
-#push @scale_model_indices,0 if ($#scale_model_indices == -1);
-#
-#my @alphabets = get_alphabets();
-#
-#my %tree_name = ();
-## This is necessary to display them in order:
-#my @trees = (); 
-#
-##
-#
-#my @tree_consensus_values = sort(0.5,0.66,0.8,0.9,0.95,0.99,1.0);
-#
-#my @alignment_consensus_values;
-#if ($speed == 0) {
-#    @alignment_consensus_values = sort(0.1,0.25,0.5,0.75);
-#}
-#elsif ($speed == 1) # default
-#{
-#    @alignment_consensus_values = (0.5);
-#}
-#elsif ($speed == 2) {
-#    @alignment_consensus_values = ();
-#}
-#
 #&determine_burnin();
 #
 ## create a new directory, decide whether or not to reuse existing directory
@@ -2260,108 +2391,6 @@ if __name__ == '__main__':
 #    return @values;
 #}
 #
-##Empirical(/home/bredelings/local/share/bali-phy/Data//wag.dat) 
-#
-#sub get_tree_prior
-#{
-#    return [] if ($personality !~ "bali-phy.*");
-#
-#    my $file = $out_files[0];
-#
-#    open my $FILE, $file or die "Can't open $file!";
-#
-#    while (my $line = portable_readline($FILE))
-#    {
-#	if ($line =~ /^T:topology (.*)$/)
-#	{
-#	    $topology_prior = $1;
-#	}
-#	if ($line =~ /^T:lengths (.*)$/)
-#	{
-#	    $branch_prior = $1;
-#	}
-#	last if ($line =~ /^iterations/);
-#    }
-#
-#    close $FILE;
-#}
-#
-#
-#sub get_models_for_run_file
-#{
-#    return [] if ($personality !~ "bali-phy.*");
-#
-#    my $name = shift;
-#    my $filename = shift;
-#
-#    my $j = get_json_from_file($filename);
-#
-#    my @scales = ();
-#
-#    foreach my $scale (@{${$j}{$name}})
-#    {
-#	push @scales, make_extracted($scale);
-#    }
-#
-#    return [@scales];
-#}
-#
-#sub arrays_all_equal
-#{
-#    my @arrays = @_;
-#    for(my $i=1;$i <= $#arrays ; $i++) {
-#	return $i if (!compare_arrays($arrays[$i], $arrays[0]));
-#    }
-#    return 0;
-#}
-#
-#
-#sub get_models_for_file
-#{
-#    my $name = shift;
-#    my $file = shift;
-#
-#    return [] if ($personality !~ "bali-phy.*");
-#
-#    open my $FILE, $file or die "Can't open $file!";
-#
-#    my @models = ();
-#
-#    while (my $line = portable_readline($FILE))
-#    {
-#	if ($line =~ /${name}([0-9]+) = (.+)/)
-#	{
-#	    push @models,make_extracted($2);
-#	}
-#	elsif ($line =~ /${name}([0-9]+) ~ (.+)/)
-#	{
-#	    push @models,make_extracted("~".$2);
-#	}
-#	else
-#	{
-#	    last if ($line =~ /^iterations = 0/);
-#	}
-#    }
-#    close $FILE;
-#
-#    return [@models];
-#}
-#
-#sub get_version_for_file
-#{
-#    my $file = shift;
-#    my $version = get_header_attributes("VERSION",$file);
-#    $version = (split /\s+/,$version)[0];
-#    return $version;
-#}
-#
-#sub get_version_for_run_file
-#{
-#    my $file = shift;
-#    my $j = get_json_from_file($file);
-#    return ${$j}{'program'}{'version'};
-#}
-#
 #sub get_all_versions
 #{
 #    return [] if ($#out_files == -1);
@@ -2503,118 +2532,7 @@ if __name__ == '__main__':
 #    exit(1);
 #}
 #
-#sub get_smodel_indices
-#{
-#    return [] if ($personality !~ "bali-phy.*");
-#
-#    open my $FILE, $out_files[0] or die "Can't open $out_files[0]!";
-#
-#    my @smodel_indices = ();
-#
-#    while (my $line = portable_readline($FILE))
-#    {
-#	if ($line =~ /smodel-index(.+) = (.+)/) {
-#	    push @smodel_indices,$2;
-#	}
-#	last if ($line =~ /^iterations = 0/);
-#    }
-#    close $FILE;
-#
-#    return [@smodel_indices];
-#}
-#
-#sub get_scale_model_indices
-#{
-#    return [] if ($personality !~ "bali-phy.*");
-#
-#    open my $FILE, $out_files[0] or die "Can't open $out_files[0]!";
-#
-#    my @scale_model_indices = ();
-#
-#    while (my $line = portable_readline($FILE))
-#    {
-#	if ($line =~ /scale-index(.+) = (.+)/) {
-#	    push @scale_model_indices,$2;
-#	}
-#	last if ($line =~ /^iterations = 0/);
-#    }
-#    close $FILE;
-#
-#    return [@scale_model_indices];
-#}
-#
-#sub get_imodel_indices
-#{
-#    return [] if ($personality !~ "bali-phy.*");
-#
-#    open my $FILE, $out_files[0] or die "Can't open $out_files[0]!";
-#
-#    my @imodel_indices = ();
-#
-#    while (my $line = portable_readline($FILE))
-#    {
-#	if ($line =~ /imodel-index(.+) = (.+)/) {
-#	    push @imodel_indices,$2;
-#	}
-#	last if ($line =~ /^iterations = 0/);
-#    }
-#    return [@imodel_indices];
-#}
-#
-#sub get_alphabets
-#{
-#    return [] if ($personality !~ "bali-phy.*");
-#
-#    open my $FILE, $out_files[0] or die "Can't open $out_files[0]!";
-#
-#    my @alphabets = ();
-#
-#    while (my $line = portable_readline($FILE))
-#    {
-#	if ($line =~ /alphabet(.+) = (.+)/) {
-#	    push @alphabets,$2;
-#	}
-#	if ($line =~ /alphabet = (.+)/) {
-#	    push @alphabets,$1;
-#	}
-#
-#	last if ($line =~ /^iterations = 0/);
-#    }
-#    close FILE;
-#
-#    return @alphabets;
-#}
-#
-#sub get_n_lines
-#{
-#    my $filename = shift;
-#
-#    open FILE, $filename;
-#
-#    my $n_lines = 0;
-#
-#    while (<FILE>) {
-#	$n_lines++;
-#    }
-#
-#    return $n_lines;
-#}
-#
-#sub get_n_iterations
-#{
-#    my @n_iterations;
-#    for my $tree_file (@tree_files)
-#    {
-#	my $n = get_n_lines($tree_file)-1;
-#	if ($n <= 0) {
-#	    print "Error: Tree file '$tree_file' has no samples!\n";
-#	    exit(1);
-#	}
-#	push @n_iterations,$n;
-#    }
-#    return @n_iterations;
-#}
-#
+
 #sub more_recent_than
 #{
 #    my $filename1 = shift;
@@ -2778,40 +2696,6 @@ if __name__ == '__main__':
 #	}
 #    }
 #    return $best_i;
-#}
-#
-#sub determine_burnin
-#{
-#    if (defined($burnin))
-#    {
-#	for(my $i=0;$i<=$#out_files;$i++)
-#	{
-#	    if ($burnin > $n_iterations[$i]) 
-#            {
-#		print "Chain #".($i+1)." with file $out_files[$i] has only $n_iterations[$i] iterations.\n";
-#		print "Error!  The the burnin (specified as $burnin) cannot be higher than this.\n";
-#		exit(1);
-#	    }
-#	}
-#    }
-#    return if (defined($burnin));
-#
-#    my $max_iterations = max(\@n_iterations);
-#    my $max_i = arg_max(\@n_iterations);
-#
-#    my $min_iterations = min(\@n_iterations);
-#    my $min_i = arg_min(\@n_iterations);
-#
-#    if ($max_iterations > 3*$min_iterations)
-#    {
-#	print "The variation in run length between MCMC chains is too great.\n";
-#	print "  Chain #".($max_i+1)." has $max_iterations iterations.\n";
-#	print "  Chain #".($min_i+1)." has $min_iterations iterations.\n";
-#	print "Not going to guess a burnin: please specify one.\n";
-#	exit(1)
-#    }
-#
-#    $burnin = int 0.1*min(\@n_iterations);
 #}
 #
 #sub get_the_only_subdirectory
