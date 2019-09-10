@@ -8,29 +8,6 @@ from os import path
 import json
 import itertools
 
-#
-#
-#use strict;
-#
-#use warnings;
-#
-#use Carp;
-#
-#use POSIX;
-#
-#use Cwd 'abs_path';
-#
-#use File::Temp qw(tempfile);
-#use File::Basename;
-#
-#use JSON::PP;
-#
-#my $home = $ENV{'HOME'};
-
-verbose = 0
-
-# maybe use derived classes for different personalities??
-
 def get_json_from_file(filename):
     with open(filename, encoding='utf-8') as json_file:
         return json.load(json_file)
