@@ -31,6 +31,29 @@ verbose = 0
 
 # maybe use derived classes for different personalities??
 
+def get_json_from_file(filename):
+    with open(filename, encoding='utf-8') as json_file:
+        return json.load(json_file)
+
+def make_extracted(x):
+    if not "main" in x:
+        return {"main": x, "extracted": []}
+    else:
+        return x
+
+def all_same(xs):
+    if len(xs) < 2:
+        return True
+    for x in xs:
+        if x != xs[0]:
+            return False
+    return True
+
+def first_all_same(xs):
+    if not all_same(xs):
+        raise Exception("Not all the same!")
+    return xs[0]
+
 def get_unused_dir_name():
     for i in itertools.count(1):
         dirname = "Results.{}".format(i)
@@ -182,6 +205,9 @@ class BAliPhyRun(MCMCRun):
     def n_partitions(self):
         return len(self.get_input_files())
 
+    def run(self,p):
+        return self.mcmc_runs[p]
+
     def __init__(self,mcmc_output):
         super().__init__(mcmc_output)
         self.prefix = 'C1'
@@ -200,6 +226,20 @@ class BAliPhy2_1Run(BAliPhyRun):
         super().__init__(mcmc_output)
         self.log_file = check_file_exists(path.join(self.get_dir(),'C1.p'))
 
+    def get_models(self, name1, name2):
+        models = []
+        with open(self.out_file,encoding='utf-8') as file:
+            for line in file:
+                m = re.match(name1+"([0-9]+) = (.+)", line)
+                if m:
+                    models.append(m.group(2))
+                m = re.match(name1+"([0-9]+) ~ (.+)", line)
+                if m:
+                    models.append("~"+m.group(2))
+                if re.match("^iterations = 0", line):
+                    break
+        return [make_extracted(model) for model in models]
+
 class BAliPhy3Run(BAliPhyRun):
     def __init__(self,mcmc_output):
         super().__init__(mcmc_output)
@@ -207,6 +247,13 @@ class BAliPhy3Run(BAliPhyRun):
         self.run_file = path.join(self.get_dir(),'C1.run.json')
         if not path.exists(self.run_file):
             self.run_file = None
+
+    def get_json_from_run_file(self):
+        return get_json_from_file(self.run_file)
+
+    def get_models(self, name1, name2):
+        j = self.get_json_from_run_file()
+        return [make_extracted(model) for model in j[name2]]
 
 class TreeFileRun(MCMCRun):
     def __init__(self,mcmc_output):
@@ -299,6 +346,12 @@ class Analysis(object):
         self.initialize_results_directory()
         self.log_shell_cmds = open("Results/commands.log",'w',encoding='utf-8')
 
+        for i in range(len(self.mcmc_runs)):
+            if self.mcmc_runs[i].get_cmd() != self.mcmc_runs[0].get_cmd():
+                print("WARNING: Commands differ!\n   {}\n   {}\n".format(self.mcmc_runs[0].get_cmd(),
+                                                                         self.mcmc_runs[i].get_cmd()))
+        self.get_input_files()
+
     def get_input_files(self):
         result = self.mcmc_runs[0].get_input_files()
         for run in self.mcmc_runs:
@@ -309,6 +362,12 @@ class Analysis(object):
 
     def get_alignments_files(self):
         return [run.get_alignments_files() for run in self.mcmc_runs]
+
+    def n_partitions(self):
+        return first_all_same([run.n_partitions() for run in self.mcmc_runs])
+
+    def get_models(self, name1, name2):
+        return first_all_same([run.get_models(name1,name2) for run in self.mcmc_runs])
 
     def exec_show(self,cmd):
         print(cmd,file=self.log_shell_cmds)
@@ -337,8 +396,7 @@ class Analysis(object):
     def load_analysis_properties(self):
         if not path.exists("Results/properties.json"):
             return dict()
-        with open('Results/properties.json') as json_file:
-            return json.load(json_file)
+        return get_json_from_file("Results/properties.json")
 
     def save_analysis_properties(self, properties):
         with open('Results/properties.json', 'w') as outfile:
@@ -406,48 +464,11 @@ if __name__ == '__main__':
 
     analysis = Analysis(args,args.mcmc_outputs)
 
+    smodels = analysis.get_models("subst model", "smodels")
+    imodels = analysis.get_models("indel model", "imodels")
+    scale_models = analysis.get_models("scale model", "scales")
+    print(smodels)
 
-#@commands = get_header_attributes("command",@out_files);
-#my $commands_differ=0;
-#for(my $i=1;$i<=$#commands;$i++)
-#{
-#    if ($commands[$i] ne $commands[0])
-#    {
-#	$commands_differ=1;
-#	print "WARNING: Commands differ!\n  $commands[0]\n  $commands[$i]\n";
-#    }
-#}
-#
-#@directories = get_header_attributes("directory",@out_files);
-#my $directories_differ=0;
-#for(my $i=1;$i<=$#directories;$i++)
-#{
-#    $directories_differ=1 if ($directories[$i] ne $directories[0]);
-#}
-#
-#my @versions = get_all_versions();
-#my $versions_differ=0;
-#for(my $i=1;$i<=$#versions;$i++)
-#{
-#    $versions_differ=1 if ($versions[$i] ne $versions[0]);
-#}
-#
-#@subdirs    = get_header_attributes("subdirectory",@out_files);
-#
-#my $betas = get_cmdline_attribute("beta");
-#my @beta = (1);
-#@beta = split(/,/, $betas) if (defined($betas));
-#@input_file_names = @{ get_input_file_names() };
-#my $n_partitions = 1+$#input_file_names;
-#
-#&determine_alignment_files();
-#
-#my @n_iterations = get_n_iterations();
-#
-#my @smodels      = @{ get_models("subst model","smodels") };
-#my @imodels      = @{ get_models("indel model","imodels") };
-#my @scale_models = @{ get_models("scale model","scales" ) };
-#
 #my $topology_prior;
 #my $branch_prior;
 #&get_tree_prior();
@@ -2289,38 +2310,6 @@ if __name__ == '__main__':
 #}
 #
 #
-#sub get_json_from_file
-#{
-#    my $filename = shift;
-#    
-#    my $json_text = do {
-#	open(my $json_fh, "<:encoding(UTF-8)", $filename)
-#	    or die("Can't open \$filename\": $!\n");
-#	local $/;
-#	<$json_fh>
-#    };
-#    $json_text =~ s/\015?\012/\n/g;
-#    my $json = JSON::PP->new->ascii->pretty->allow_nonref;
-#    my $data = $json->decode($json_text);
-#    return $data;
-#}
-#
-#sub add_extracted
-#{
-#    my $x = shift;
-#    return {"main",$x,"extracted",[]}
-#}
-#
-#sub make_extracted
-#{
-#    my $x = shift;
-#    if (ref $x eq "")
-#    {
-#	$x = add_extracted($x);
-#    }
-#    return $x;
-#}
-#
 #sub get_models_for_run_file
 #{
 #    return [] if ($personality !~ "bali-phy.*");
@@ -2856,42 +2845,6 @@ if __name__ == '__main__':
 #	exit(1);
 #    }
 #    return $subdirectories[0];
-#}
-#
-#sub determine_alignment_files
-#{
-#    if ($personality =~ "bali-phy.*") {
-#	if ($n_chains == 1) {
-#	    # In this case, we are constructing a list for each DIRECTORY
-#	    foreach my $directory (@subdirectories)
-#	    {
-#		my @samples = ();
-#		for(my $p=1;$p<=$n_partitions;$p++) {
-#		    push @samples,"$directory/C1.P$p.fastas";
-#		}
-#		push @partition_samples, [@samples];
-#	    }
-#	}
-#	else {
-#	    # In this case we are constructing the list of files for different temperatures
-#
-#	    my @samples = ();
-#	    my $first_dir = get_the_only_subdirectory();
-#	    for(my $p=1;$p<=$n_partitions;$p++) {
-#		push @samples,"$first_dir/C1.P$p.fastas";
-#	    }
-#	    push @partition_samples, [@samples];
-#	}
-#    }
-#    else {
-#	my $first_dir = get_the_only_subdirectory();
-#	my @samples = ();
-#	for(my $p=1;$p<=$n_partitions;$p++) {
-#	    push @samples,"$first_dir/1.P$p.fastas" if (-e "$first_dir/1.P$p.fastas");
-#	}
-#	@samples = ("$first_dir/1.out") if ($#samples == -1);
-#	push @partition_samples, [@samples];
-#    }
 #}
 #
 ## 0. Compute T1.p and T1.trees
