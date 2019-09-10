@@ -24,6 +24,95 @@ from os import path
 
 verbose = 0
 
+# maybe use derived classes for different personalities??
+
+class MCMCRun(object):
+    def __init__(self, mcmc_output):
+        self.mcmc_output = mcmc_output
+        self.dir = None
+        self.trees_file = None
+        self.log_file = None
+        self.alignments_files = None
+        self.cmd = None
+
+        if path.isdir(mcmc_output):
+            self.dir = mcmc_output
+        else:
+            self.dir = path.dirname(mcmc_output)
+
+    def get_dir(self):
+        return self.dir
+
+    def get_trees_file(self):
+        return self.trees_file
+
+    def get_alignments_file(self):
+        return self.alignments_file
+
+    def get_log_file(self):
+        return self.log_file
+
+    def cmd(self):
+        return self.cmd
+
+    def n_partitions(self):
+        return 1
+
+class BAliPhyRun(MCMCRun):
+    def __init__(self,mcmc_output):
+        super().__init__(mcmc_output)
+        self.trees_file = path.join(self.get_dir(),'C1.trees')
+        # We should have None if the alignment file is not generated
+        self.alignments_files = [path.join(self.get_dir(),'C1.P1.fastas')]
+        pass
+
+class BAliPhy2_1Run(BAliPhyRun):
+    def __init__(self,mcmc_output):
+        super().__init__(mcmc_output)
+        self.log_file = path.join(self.get_dir(),'C1.p')
+
+class BAliPhy3Run(BAliPhyRun):
+    def __init__(self,mcmc_output):
+        super().__init__(mcmc_output)
+        self.log_file = path.join(self.get_dir(),'C1.log')
+
+class TreeFileRun(MCMCRun):
+    def __init__(self,mcmc_output):
+        super().__init__(mcmc_output)
+
+class PhyloBayesRun(MCMCRun):
+    def __init__(self,mcmc_output):
+        super().__init__(mcmc_output)
+
+class BEASTRun(MCMCRun):
+    def __init__(self,mcmc_output):
+        super().__init__(mcmc_output)
+
+def ConstructRun(mcmc_output):
+    if not path.exists(mcmc_output):
+        print("No file or directory '{}'".format(mcmc_output))
+        exit(1)
+    if not path.isdir(mcmc_output):
+        return TreeFileRun(mcmc_output)
+
+    if path.exists(path.join(mcmc_output,"C1.out")):
+        if path.exists(path.join(mcmc_output,'C1.p')):
+            return BAliPhy2_1Run(mcmc_output)
+        if path.exists(path.join(mcmc_output,'C1.log')):
+            return BAliPhy3Run(mcmc_output)
+        print("Directory {} appears to be a BAli-Phy directory, but doesn't have 'C1.p' or 'C1.log'")
+        exit(1)
+
+    if glob.glob(path.join(mcmc_output,'*.treelist')):
+        return PhyloBayesRun(mcmc_output)
+
+    if glob.glob(path.join(mcmc_output,'*.trees')):
+        return BEASTRun(mcmc_output)
+
+    return None
+        
+
+
 class Analysis(object):
 
     def find_exe(self,name,message=None):
@@ -35,31 +124,26 @@ class Analysis(object):
                 print("Program '{}' not found.".format(name))
         return exe
 
-    def __init__(self,directories):
-        self.subdirectories = directories
-        for subdir in self.subdirectories:
-            if not path.exists(subdir):
-                print("Analysis directory '{}' does not exist!".format(subdir))
-                exit(1)
+    def __init__(self,mcmc_outputs):
+        self.mcmc_runs = [ConstructRun(mcmc_run) for mcmc_run in mcmc_outputs]
 
         self.trees_consensus_exe = self.find_exe('trees-consensus', message="See the main for adding the bali-phy programs to your PATH.")
         if self.trees_consensus_exe is None:
             exit(1)
 
         self.draw_tree_exe = self.find_exe('draw-tree', message="Tree pictures will not be generated.\n")
-        # FIXME - maybe switch to R?
+        # FIXME - maybe switch from gnuplot to R?
         self.gnuplot_exe = self.find_exe('gnuplot', message='Some graphs will not be generated.\n')
         self.R_exe = self.find_exe('R', message='Some mixing graphs will not be generated.\n')
-        self.subdirectories = directories
-        print(self.subdirectories)
-
-
+        for mcmc_run in self.mcmc_runs:
+            print(mcmc_run.get_dir())
+        
 #----------------------------- SETUP 1 --------------------------#
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate an HTML report summarizing MCMC runs for BAli-Phy and other software.",
                                      epilog= "Example: bp-analyze analysis-dir-1 analysis-dir-2")
 
-    parser.add_argument("subdirectories", default=['.'], help="Subdirectories with MCMC runs",nargs='*')
+    parser.add_argument("mcmc_outputs", default=['.'], help="Subdirectories with MCMC runs",nargs='*')
     parser.add_argument("--clean", help="Delete generated files")
     parser.add_argument("--verbose", help="Be verbose")
     parser.add_argument("--skip", help="Skip NUM iterations as burnin")
@@ -74,7 +158,7 @@ if __name__ == '__main__':
     parser.add_argument("--tree-file",nargs='*')
     args = parser.parse_args()
 
-    analysis = Analysis(args.subdirectories)
+    analysis = Analysis(args.mcmc_outputs)
 
 
 ## These things can be different between runs of the MCMC chain
