@@ -3,8 +3,11 @@
 import shutil
 import argparse
 import re
+import os
 from os import path
 import json
+import itertools
+
 #
 #
 #use strict;
@@ -28,42 +31,11 @@ verbose = 0
 
 # maybe use derived classes for different personalities??
 
-def check_out_file_names(out_files):
-    if not path.exists("Results/out_files"):
-        return True
-
-    old_out_files = []
-    with open("Results/out_files",'r',encoding='utf-8') as out:
-        for line in out:
-            old_out_files.append(line.strip())
-
-    return out_files == old_out_files
-
-def write_input_file_names(input_file_names):
-    with open("Results/input_files",w,encoding='utf-8') as out:
-        print(input_file_names.join('\n'),file=out)
-
-def initialize_results_directory():
-    reuse = check_out_file_names()
-
-    reuse = reuse and check_input_file_names()
-
-    reuse = reuse and check_burnin()
-
-    if not reuse and path.exists("Results"):
-        new_dir_name = get_unused_dir_name()
-        if path.exists("Results"):
-            print("Renaming 'Results/' to '{}'\n".format(new_dir_name))
-            os.rename("Results",new_dir_name)
-
-    if not path.exists("Results"):
-        print("Creating new directory Results/ for summary files.")
-        os.mkdir("Results")
-        os.mkdir("Results/Work")
-
-    write_input_file_names()
-    write_out_file_names()
-    write_burnin()
+def get_unused_dir_name():
+    for i in itertools.count(1):
+        dirname = "Results.{}".format(i)
+        if not path.exists(dirname):
+            return dirname
 
 def get_value_from_file(filename,attribute):
     with open(filename,'r',encoding='utf-8') as file:
@@ -72,47 +44,6 @@ def get_value_from_file(filename,attribute):
             if m:
                 return m.group(1)
     return None
-
-#sub exec_show
-#{
-#    my $cmd = shift;
-#    print $LOG "\ncommand:  $cmd\n\n";
-#    my ($tmp_fh,$tmp_filename) = tempfile();
-#
-#    my $result = `$cmd 2>$tmp_filename`;
-#    my $message = `cat $tmp_filename`; 
-#    print $LOG $message;
-#    if ($? != 0)
-#    {
-#	my $code = $?>>8;
-#	print STDERR "Subcommand failed! (code $code)\n";
-#	print $LOG    "Subcommand failed! (code $code)\n";
-#
-#	print STDERR "\n  command:  $cmd\n";
-#
-#	print STDERR "\n  message:  $message\n";
-#	exit($code);
-#    }
-#    elsif ($verbose)
-#    {
-#	print STDERR "\n\t$cmd\n\n";
-#    }
-#    close $tmp_fh;
-#    return $result;
-#}
-#
-#sub exec_result
-#{
-#    my $cmd = shift;
-#    print $LOG "\ncommand:  $cmd\n\n";
-#
-#    print STDERR "\n\t$cmd\n\n" if ($verbose);
-#
-#    my $result = `$cmd`;
-#    return $?;
-#}
-#
-#
 
 def check_file_exists(filename):
     if not path.exists(filename):
@@ -205,8 +136,8 @@ class MCMCRun(object):
     def get_input_files(self):
         return self.input_files
 
-    def get_alignments_file(self):
-        return self.alignments_file
+    def get_alignments_files(self):
+        return self.alignments_files
 
     def get_log_file(self):
         return self.log_file
@@ -350,7 +281,7 @@ class Analysis(object):
                 print("Program '{}' not found.".format(name))
         return exe
 
-    def __init__(self,mcmc_outputs):
+    def __init__(self,args,mcmc_outputs):
         self.mcmc_runs = [ConstructRun(mcmc_run) for mcmc_run in mcmc_outputs]
 
         self.trees_consensus_exe = self.find_exe('trees-consensus', message="See the main for adding the bali-phy programs to your PATH.")
@@ -365,10 +296,99 @@ class Analysis(object):
         self.subsample = None
         self.sub_partitions = False
         self.prune = None
+        self.burnin = None
 
         for mcmc_run in self.mcmc_runs:
             print(mcmc_run.get_dir())
+
+        self.initialize_results_directory()
+        self.log_shell_cmds = open("Results/commands.log",'w',encoding='utf-8')
+
+    def get_input_files(self):
+        result = self.mcmc_runs[0].get_input_files()
+        for run in self.mcmc_runs:
+            result2 = run.get_input_files()
+            if result != result2:
+                raise Exception("Differences in get_input_files!")
+        return result
+
+    def get_alignments_files(self):
+        return [run.get_alignments_files() for run in self.mcmc_runs]
+
+    def exec_show(self,cmd):
+        print(cmd,file=self.log_shell_cmds)
+
+        result = subprocess.run(cmd,stdout=subprocess.PIPE)
+        message = result.stdout.decode('utf-8')
+        code = result.returncode
+        if code != 0:
+            print("Subcommand file! (code {})",file=sys.stderr)
+            print("Subcommand file! (code {})",file=self.log_shell_cmds)
+            print("command: {}".format(cmd),file=sys.stderr)
+            print("message: {}".format(message),file=sys.stderr)
+            exit(code)
+        elif (self.verbose):
+            print("\n\t{}\n".format(cmd))
+        return result
+
+    def exec_result(self,cmd):
+        print(cmd,file=self.log_shell_cmds)
+        if self.verbose:
+            print(cmd,file=sys.stderr)
+        result = subprocess.run(cmd,stdout=subprocess.PIPE)
+        message = result.stdout.decode('utf-8')
+        return result.returncode
+
+    def load_analysis_properties(self):
+        if not path.exists("Results/properties.json"):
+            return dict()
+        with open('Results/properties.json') as json_file:
+            return json.load(json_file)
+
+    def save_analysis_properties(self, properties):
+        with open('Results/properties.json', 'w') as outfile:
+            json.dump(properties, outfile, indent=2)
+
+    def read_analysis_property(self,key):
+        return self.load_analysis_properties()[key]
+
+    def check_analysis_property(self,key,value):
+        properties = self.load_analysis_properties()
+        if key in properties:
+            return value == properties[key]
+        else:
+            return True
+
+    def write_analysis_property(self,key,value):
+        properties = self.load_analysis_properties()
+        properties[key] = value
+        self.save_analysis_properties(properties)
+        return properties
         
+    def write_input_file_names(input_file_names):
+        with open("Results/input_files",w,encoding='utf-8') as out:
+            print(input_file_names.join('\n'),file=out)
+
+    def initialize_results_directory(self):
+        reuse = self.check_analysis_property("burnin", self.burnin)
+        reuse = reuse and self.check_analysis_property("alignment_file_names",self.get_alignments_files())
+        reuse = reuse and self.check_analysis_property("input_files", self.get_input_files())
+
+        if not reuse and path.exists("Results"):
+            new_dir_name = get_unused_dir_name()
+            if path.exists("Results"):
+                print("Renaming 'Results/' to '{}'\n".format(new_dir_name))
+                os.rename("Results",new_dir_name)
+
+        if not path.exists("Results"):
+            print("Creating new directory Results/ for summary files.")
+            os.mkdir("Results")
+            os.mkdir("Results/Work")
+
+        self.write_analysis_property("burnin", self.burnin)
+        self.write_analysis_property("input_files", self.get_input_files())
+        self.write_analysis_property("alignment_file_names", self.get_alignments_files())
+
 #----------------------------- SETUP 1 --------------------------#
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate an HTML report summarizing MCMC runs for BAli-Phy and other software.",
@@ -389,7 +409,7 @@ if __name__ == '__main__':
     parser.add_argument("--tree-file",nargs='*')
     args = parser.parse_args()
 
-    analysis = Analysis(args.mcmc_outputs)
+    analysis = Analysis(args,args.mcmc_outputs)
 
 
 #&parse_command_line();
@@ -2122,15 +2142,6 @@ if __name__ == '__main__':
 #    print $FILE "$burnin\n";
 #
 #    close $ FILE;
-#}
-#
-#sub get_unused_dir_name
-#{
-#    for(my $i=1;;$i++)
-#    {
-#	my $unused_name = "Results.".$i;
-#	return $unused_name if (! -e $unused_name);
-#    }
 #}
 #
 #sub do_cleanup
