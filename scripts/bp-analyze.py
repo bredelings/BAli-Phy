@@ -2,6 +2,7 @@
 
 import shutil
 import argparse
+import re
 from os import path
 #
 #
@@ -33,6 +34,7 @@ class MCMCRun(object):
         self.trees_file = None
         self.log_file = None
         self.alignments_files = None
+        self.input_files = None
         self.cmd = None
 
         if path.isdir(mcmc_output):
@@ -46,6 +48,9 @@ class MCMCRun(object):
     def get_trees_file(self):
         return self.trees_file
 
+    def get_input_files(self):
+        return self.input_files
+
     def get_alignments_file(self):
         return self.alignments_file
 
@@ -55,16 +60,44 @@ class MCMCRun(object):
     def cmd(self):
         return self.cmd
 
+    def input_files(self):
+        return self.input_files
+
     def n_partitions(self):
         return 1
 
 class BAliPhyRun(MCMCRun):
+
+    def get_input_file_names_for_outfile(self,outfile):
+        input_filenames = []
+        with open(outfile,'r',encoding='utf-8') as outf:
+            for line in outf:
+                m = re.match(r'data(.+) = (.+)', line)
+                if m:
+                    input_filenames.append(m.group(2))
+
+        return input_filenames
+
+    def get_alignment_files(self):
+        filenames = []
+        for p in range(1,self.n_partitions()+1):
+            filename = path.join(self.get_dir(),'C1.P{}.fastas'.format(p))
+            if not path.exists(filename):
+                filename = None
+            filenames.append(filename)
+        return filenames
+
+    def n_partitions(self):
+        return len(self.get_input_files())
+
     def __init__(self,mcmc_output):
         super().__init__(mcmc_output)
+        self.out_file = path.join(self.get_dir(),'C1.out')
+        self.input_files = self.get_input_file_names_for_outfile(self.out_file)
         self.trees_file = path.join(self.get_dir(),'C1.trees')
-        # We should have None if the alignment file is not generated
-        self.alignments_files = [path.join(self.get_dir(),'C1.P1.fastas')]
-        pass
+        self.alignments_files = self.get_alignment_files()
+        self.MAP_file = path.join(self.get_dir(),'C1.MAP')
+        print(self.get_input_files())
 
 class BAliPhy2_1Run(BAliPhyRun):
     def __init__(self,mcmc_output):
@@ -135,6 +168,11 @@ class Analysis(object):
         # FIXME - maybe switch from gnuplot to R?
         self.gnuplot_exe = self.find_exe('gnuplot', message='Some graphs will not be generated.\n')
         self.R_exe = self.find_exe('R', message='Some mixing graphs will not be generated.\n')
+
+        self.subsample = None
+        self.sub_partitions = False
+        self.prune = None
+
         for mcmc_run in self.mcmc_runs:
             print(mcmc_run.get_dir())
         
@@ -161,39 +199,6 @@ if __name__ == '__main__':
     analysis = Analysis(args.mcmc_outputs)
 
 
-## These things can be different between runs of the MCMC chain
-#my @subdirectories;      # the name of the directories scanned, as given on the cmd line
-#my @out_files;
-#my @tree_files;
-#my @parameter_files;
-#my @run_files;
-#my @partition_samples;   # $partition_samples[$chain_number][$partition_number]
-#my @commands;
-#my @directories;
-#my @subdirs;             # the name of the subdirectories, as computed from the runs
-#
-## These things are the same between all MCMC chains
-#my $burnin;
-#my $MAP_file;
-#my $personality="";
-#my @input_file_names;
-#
-## These things are option values
-#my $subsample = 1;
-#my $muscle = 0;
-#my $probcons = 0;
-#my $sub_partitions=0;
-#my $do_consensus_alignments=0;
-#my $do_trace_plots=0;
-#my $prune;
-#my $speed=1;
-#my $max_iter;    # maximum number of iterations to consider
-#
-## These things are ... ??
-#my $n_chains=1;
-#my $min_support;
-#my $min_ESS;
-#
 #&parse_command_line();
 #
 #&determine_personality();
