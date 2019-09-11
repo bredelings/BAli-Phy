@@ -11,6 +11,112 @@ import itertools
 import glob
 import sys
 
+
+def hsv_to_rgb(H,S,V):
+    # decompose color range [0,6) into a discrete color (i) and fraction (f)
+    h = (H * 6);
+    i = int(h);
+    f = h - i;
+    i = i % 6;
+
+    p = V*(1.0 - S);
+    q = V*(1.0 - (S*f));
+    t = V*(1.0 - (S*(1.0-f)));
+
+    if i==0:
+        return (V,t,p)
+    elif i==1:
+        return (q,V,p)
+    elif i==2:
+        return (p,V,t)
+    elif i==3:
+        return (p,q,V)
+    elif i==4:
+        return (t,p,V)
+    elif i==5:
+        return (V,p,q)
+
+def rgb_to_color(rgb):
+    (r,g,b) = rgb
+    return "{} {} {}".format(r,g,b)
+
+def interpolate(i,total,start,end):
+    return start + (end-start)*(i/(total-1))
+
+def get_x3d_of_mds(point_string):
+    points = []
+    x = []
+    y = []
+    z = []
+    num = dict()
+
+    for line in point_string.strip().split('\n'):
+        line.strip()
+        point = line.split('\t')
+        x.append(float(point[0]))
+        y.append(float(point[1]))
+        z.append(float(point[2]))
+        group = 1
+        if len(point) > 3:
+            group = int(point[3])
+        if group not in num:
+            num[group]=0
+        num[group] += 1
+        points.append((float(point[0]),float(point[1]),float(point[2]),group))
+
+    xmin = min(x)
+    xmax = max(x)
+    xw = abs(xmax - xmin)
+
+    ymin = min(y)
+    ymax = max(y)
+    yw = abs(ymax - ymin)
+
+    zmin = min(z)
+    zmax = max(z)
+    zw = abs(zmax - zmin)
+
+    x3d = ""
+    seen = dict()
+    for group in num.keys():
+        seen[group] = 0
+
+    for (x,y,z,group) in points:
+        xx = (x - xmin)/xw*5.0 - 2.5
+        yy = (y - ymin)/yw*5.0 - 2.5
+        zz = (z - zmin)/zw*5.0 - 2.5
+
+        size = 0.04
+        scale = "{s} {s} {s}".format(s=size)
+
+        if group == 1:
+            color = rgb_to_color(hsv_to_rgb(interpolate(seen[group], num[group], 0.833333, 1.0),
+                                            interpolate(seen[group], num[group], 0.3,      1.0),
+                                            1)
+                                )
+        elif group == 2:
+            color = rgb_to_color(hsv_to_rgb(interpolate(seen[group], num[group], 0.5     , 0.666666),
+                                            interpolate(seen[group], num[group], 0.3,      1.0),
+                                            1)
+                                )
+        elif group == 3:
+            color = rgb_to_color(hsv_to_rgb(interpolate(seen[group], num[group], 0.166666, 0.333333),
+                                            interpolate(seen[group], num[group], 0.3,      1.0),
+                                            1)
+                                )
+        else:
+            color = "1 0 0"
+        obj = "<transform translation='{x} {y} {z}' scale='{scale}'><shape><appearance><material diffuseColor='{color}'></material></appearance><sphere></sphere></shape></transform>"
+        x3d += obj.format(x=xx,
+                          y=yy,
+                          z=zz,
+                          scale=scale,
+                          color=color)
+        x3d += "\n"
+        seen[group] += 1
+
+    return x3d
+
 def more_recent_than(f1,f2):
     if not path.exists(f1):
         return False
@@ -492,6 +598,7 @@ class Analysis(object):
         self.draw_trees()
         self.compute_tree_mixing_diagnostics()
         self.compute_srq_plots()
+        self.compute_tree_MDS()
 
     def n_chains(self):
         return(len(self.mcmc_runs))
@@ -505,7 +612,7 @@ class Analysis(object):
     def Rexec(self,script,args=[]):
         if not self.R_exe:
             return
-        self.exec_show([self.R_exe,'--slave','--vanilla','--args']+args,infile=script)
+        return self.exec_show([self.R_exe,'--slave','--vanilla','--args']+args,infile=script)
 
     def run_gnuplot(self,script):
         if not self.gnuplot_exe:
@@ -530,7 +637,7 @@ class Analysis(object):
     def get_trees_files(self):
         return [run.get_trees_file() for run in self.mcmc_runs]
 
-    def exec_show(self,cmd,**kwargs):
+    def exec_show_result(self,cmd,**kwargs):
         showcmd = ' '.join(["'{}'".format(word) for word in cmd])
 
         subargs = dict()
@@ -560,6 +667,19 @@ class Analysis(object):
 
         print(showcmd,file=self.log_shell_cmds)
         result = subprocess.run(cmd,**subargs)
+        if result.returncode != 0:
+            print("command: {}".format(showcmd),file=sys.stderr)
+            if "outfile" in kwargs and path.exists(kwargs["outfile"]):
+                os.remove(kwargs["outfile"])
+            if "handler" in kwargs:
+                handler = kwargs["handler"]
+                handler(result.returncode)
+        elif self.verbose:
+            print("\n\t{}\n".format(showcmd))
+        return result
+
+    def exec_show(self,cmd,**kwargs):
+        result = self.exec_show_result(cmd,**kwargs)
 
         out_message = None
         if "stdout" not in kwargs and "outfile" not in kwargs:
@@ -569,9 +689,14 @@ class Analysis(object):
         if "stderr" not in kwargs:
             err_message = result.stderr.decode('utf-8')
 
+        # Always record error messages in the log file.
+        if err_message:
+            print("  err: {}".format(err_message),file=self.log_shell_cmds)
+        if self.verbose and out_message:
+            print("  out: {}".format(out_message),file=self.log_shell_cmds)
+
         code = result.returncode
         if code != 0:
-            print("command: {}".format(cmd),file=sys.stderr)
             print(" exit: {}".format(code),file=sys.stderr)
 
             print(" exit: {}".format(code),file=self.log_shell_cmds)
@@ -580,25 +705,9 @@ class Analysis(object):
                 print("  out: {}".format(out_message),file=sys.stdout)
             if err_message:
                 print("  err: {}".format(err_message),file=self.log_shell_cmds)
-                print("  err: {}".format(err_message),file=sys.stderr)
 
-            if "outfile" in kwargs and path.exists(kwargs["outfile"]):
-                os.remove(kwargs["outfile"])
-            if "handler" in kwargs:
-                handler = kwargs["handler"]
-                handler(code)
             exit(code)
-        elif self.verbose:
-            print("\n\t{}\n".format(cmd))
-        return result
-
-    def exec_result(self,cmd):
-        print(cmd,file=self.log_shell_cmds)
-        if self.verbose:
-            print(cmd,file=sys.stderr)
-        result = subprocess.run(cmd,stdout=subprocess.PIPE)
-        message = result.stdout.decode('utf-8')
-        return result.returncode
+        return out_message
 
     def load_analysis_properties(self):
         if not path.exists("Results/properties.json"):
@@ -920,7 +1029,101 @@ set xlabel "Log10 posterior Odds (LOD)"
 set ylabel "Supported Splits"
 plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 """)
+    def compute_tree_MDS(self):
+        if not self.R_exe:
+            return
+        print ("\nGenerate MDS plots of topology burnin: ", end='',flush=True)
 
+        N = 400
+        dist_cmd = ['trees-distances','matrix','--max={}'.format(N),'--jitter=0.3']
+        if self.subsample is not None and self.subsample != 1:
+            dist_cmd.append("--subsample={}".format(self.subsample))
+        if self.burnin is not None:
+            dist_cmd.append("--skip={}".format(self.burnin))
+        if self.until is not None:
+            dist_cmd.append("--until={}".format(self.until))
+
+        if self.n_chains() == 1:
+            tree_file = self.get_trees_files()[0]
+            matfile = "Results/tree1.M"
+            outfile = "Results/tree1.svg"
+            if not more_recent_than(matfile, tree_file):
+                self.exec_show(dist_cmd+[tree_file], outfile=matfile)
+
+            if not more_recent_than(outfile, matfile):
+                script = self.get_libexec_script("tree-plot1.R")
+                self.Rexec(script,[matfile,outfile])
+
+            if not more_recent_than("Results/tree-3D-1.points", matfile):
+                script3d = self.get_libexec_script("tree-plot1-3D.R")
+                point_string = self.Rexec(script3d,[matfile])
+                self.write_x3d_file("Results","tree-3D-1.points", point_string)
+        elif self.n_chains() == 2:
+            outfile = "Results/tree-1-2.svg"
+            [tf1,tf2] = self.get_trees_files()
+            L1 = min([N,int((get_n_lines(tf1)-self.burnin)/self.subsample)])
+            L2 = min([N,int((get_n_lines(tf2)-self.burnin)/self.subsample)])
+            matfile = "Results/tree-1-2.M"
+            outfile3d = "Results/tree-1-2.points.html"
+
+            if not more_recent_than_all_of(matfile,self.get_trees_files()):
+                self.exec_show(dist_cmd+[tf1,tf2],outfile=matfile)
+
+            if not more_recent_than_all_of(outfile,self.get_trees_files()):
+                script = self.get_libexec_script("tree-plot2.R")
+                self.Rexec(script,[str(L1),str(L2),matfile,outfile])
+
+            if not more_recent_than_all_of(outfile3d,self.get_trees_files()):
+                script3d = self.get_libexec_script("tree-plot2-3D.R")
+                point_string = self.Rexec(script3d, [str(L1),str(L2),matfile])
+                self.write_x3d_file("Results","tree-1-2.points",point_string)
+
+        elif self.n_chains() >= 3:
+            script = self.get_libexec_script("tree-plot3.R")
+            tree_files = self.get_trees_files()[0:3]
+            [tf1,tf2,tf3] = tree_files
+            L1 = min([N,int((get_n_lines(tf1)-self.burnin)/self.subsample)])
+            L2 = min([N,int((get_n_lines(tf2)-self.burnin)/self.subsample)])
+            L3 = min([N,int((get_n_lines(tf3)-self.burnin)/self.subsample)])
+            matfile = "Results/tree-1-2-3.M"
+            outfile = "Results/tree-1-2-3.svg"
+            outfile3d = "Results/tree-1-2-3.points.html"
+            if not more_recent_than_all_of(matfile,tree_files):
+                self.exec_show(dist_cmd + tree_files,outfile=matfile)
+
+            if not more_recent_than_all_of(outfile,tree_files):
+                self.Rexec(script, [str(L1), str(L2), str(L3), matfile, outfile])
+
+            if not more_recent_than_all_of(outfile3d,tree_files):
+                script3d = self.get_libexec_script("tree-plot3-3D.R")
+                point_string = self.Rexec(script3d, [str(L1), str(L2), str(L3), matfile])
+                self.write_x3d_file("Results", "tree-1-2-3.points", point_string)
+
+    def write_x3d_file(self,dir,filename,point_string):
+        assert(point_string is not None)
+
+        if dir:
+            filename = path.join(dir,filename+".html")
+        with open(filename,"w+",encoding='utf-8') as x3d_file:
+            print("""\
+<html>
+ <head>
+   <title>MDS 3D Plot</title>
+   <script type='text/javascript' src='http://www.x3dom.org/download/x3dom.js'> </script>
+   <link rel='stylesheet' type='text/css' href='http://www.x3dom.org/download/x3dom.css'></link>
+    <style>
+      x3d { border:2px solid darkorange; }
+    </style>
+  </head>
+  <body>
+    <x3d width='1000px' height='1000px'>
+      <scene>""",file=x3d_file)
+            print(get_x3d_of_mds(point_string),file=x3d_file)
+            print("""\
+      </scene>
+    </x3d>
+  </body>
+</html>""",file=x3d_file)
 
 #----------------------------- SETUP 1 --------------------------#
 if __name__ == '__main__':
@@ -931,7 +1134,7 @@ if __name__ == '__main__':
     parser.add_argument("--clean", default=False,help="Delete generated files",action='store_true')
     parser.add_argument("--verbose",default=0, help="Be verbose",action='store_true')
     parser.add_argument("--skip", metavar='NUM',type=int,default=None,help="Skip NUM iterations as burnin")
-    parser.add_argument("--subsample",metavar='NUM',type=int,default=None,help="Keep only every NUM iterations")
+    parser.add_argument("--subsample",metavar='NUM',type=int,default=1,help="Keep only every NUM iterations")
     parser.add_argument("--until",type=int,default=None)
     parser.add_argument("--prune", default=None,help="Taxa to remove")
     parser.add_argument("--muscle")
@@ -949,14 +1152,6 @@ if __name__ == '__main__':
 #    scale_models = analysis.get_models("scale model", "scales")
 
 
-#my @SRQ = &SRQ_plots();
-#
-#my $tree_MDS = &tree_MDS();
-#
-#my @alignments = ();
-#my %alignment_names = ();
-#my @AU_alignments = ();
-#
 #&compute_initial_alignments();
 #
 #&compute_muscle_alignment();
@@ -2689,394 +2884,3 @@ if __name__ == '__main__':
 #    return $command;
 #}
 #
-#sub min
-#{
-#    my $array = shift;
-#    my $best = $$array[0];
-#    for my $element (@$array)
-#    {
-#	$best = $element if ($element < $best);
-#    }
-#    return $best;
-#}
-#
-#sub max
-#{
-#    my $array = shift;
-#    my $best = $$array[0];
-#    for my $element (@$array)
-#    {
-#	$best = $element if ($element > $best);
-#    }
-#    return $best;
-#}
-#
-#sub arg_max
-#{
-#    my $array = shift;
-#    my $best = $$array[0];
-#    my $best_i = 0;
-#    for(my $i=1;$i<=$#$array;$i++)
-#    {
-#	if ($$array[$i] > $best)
-#	{
-#	    $best = $$array[$i];
-#	    $best_i = $i;
-#	}
-#    }
-#    return $best_i;
-#}
-#
-#sub arg_min
-#{
-#    my $array = shift;
-#    my $best = $$array[0];
-#    my $best_i = 0;
-#    for(my $i=1;$i<=$#$array;$i++)
-#    {
-#	if ($$array[$i] < $best)
-#	{
-#	    $best = $$array[$i];
-#	    $best_i = $i;
-#	}
-#    }
-#    return $best_i;
-#}
-#
-#sub get_the_only_subdirectory
-#{
-#    if ($#subdirectories != 0)
-#    {
-#	print "Error: There is more than one subdirectory, but other subdirectories are being ignored.";
-#	exit(1);
-#    }
-#    return $subdirectories[0];
-#}
-#
-## 0. Compute T1.p and T1.trees
-#sub compute_tree_and_parameter_files_for_heated_chains
-#{
-#    return if ($n_chains == 1);
-#
-#    for(my $i=1;$i<=$n_chains;$i++)
-#    {
-#	# Construct C1.pt
-#	# Construct C1Ti.pt
-#	# Construct C1Ti.p
-#	# Construct C1Ti.trees
-#	next if (! -e "C$i.trees" );
-#	
-#	if (! more_recent_than_all_of("Results/C$i.t",[@tree_files]))
-#	{
-#	    exec_show("echo 'tree' > Results/C$i.t");
-#	    exec_show("cat C$i.trees >> Results/C$i.t");
-#	}
-#	
-#	if (! more_recent_than_all_of("Results/C$i.pt",[@tree_files, @parameter_files]))
-#	{
-#	    exec_show("stats-merge C$i.p Results/C$i.t > Results/C$i.pt 2>/dev/null");
-#	}
-#	
-#	if (! more_recent_than("Results/C${i}T1.pt","Results/C$i.pt")) 
-#	{
-#	    my $use_header = "";
-#	    $use_header = "--no-header" if ($i != 1);
-#	    
-#	    exec_show("subsample --header --skip=$burnin < Results/C$i.pt | stats-select -s beta=1 $use_header > Results/C${i}T1.pt");
-#	}
-#    }
-#    
-#    my $cmd = "cat ";
-#    my $rerun=0;
-#    for(my $i=1;$i<=$n_chains;$i++) {
-#	if (-e "Results/C${i}T1.pt") {
-#	    $cmd = "$cmd Results/C${i}T1.pt ";
-#	    $rerun=1 if (! more_recent_than("Results/T1.p","Results/C${i}T1.pt"));
-#	}
-#    }
-#    $cmd = "$cmd > Results/T1.pt";
-#    exec_show("$cmd") if ($rerun);
-#    
-#    if (! more_recent_than("Results/T1.trees","Results/T1.pt")) {
-#	exec_show("stats-select tree --no-header < Results/T1.pt > Results/T1.trees");
-#    }
-#    
-#    if (! more_recent_than("Results/T1.p","Results/T1.pt")) {
-#	exec_show("stats-select -r tree < Results/T1.pt > Results/T1.p");
-#	
-##       This messes up the printing of statistics
-##	exec_show("stats-select -i -r tree < Results/T1.pt > Results/T1.p");
-#	
-#    }
-#    
-#    @tree_files = ( "Results/T1.trees" );
-#    @parameter_files = ("Results/T1.p");
-#}
-#
-## Replace /cydrive/LETTER{STUFF} with LETTER:{STUFF}
-#sub translate_cygwin
-#{
-#    my $arg = shift;
-#    my $new_arg = $arg;
-#    $new_arg =~ s|^/cygdrive/([^/]*)(.*)$|$1:$2|;
-#
-#    if ($new_arg ne $arg)
-#    {
-#	print "Translating '$arg' to '$new_arg'\n";
-#	$arg = $new_arg;
-#    }
-#    return $arg;
-#}
-#
-#sub tree_MDS
-#{
-#    return if (!$have_R);
-#
-#    print "\nGenerate MDS plots of topology burnin ... ";
-#
-#    if ($#tree_files+1 == 1)
-#    {
-#	my $script = get_libexec_script("tree-plot1.R");
-#	my $tree_file = $tree_files[0];
-#	my $N = 400;
-#	my $matfile = "Results/tree1.M";
-#	my $outfile = "Results/tree1.svg";
-#	if (! more_recent_than($outfile, $tree_file))
-#	{
-#	    exec_show("trees-distances matrix --max=$N --jitter=0.3 $subsample_string $skip $tree_file > $matfile");
-#	    Rexec($script,"$matfile $outfile");
-#
-#	    my $script3d = get_libexec_script("tree-plot1-3D.R");
-#
-#	    my $point_string = Rexec($script3d, "$matfile");
-#	    &write_x3d_file("Results","tree-3D1-1.points", $point_string);
-#	}
-#    }
-#
-#    elsif ($#tree_files+1 == 2)
-#    {
-#	my $script = get_libexec_script("tree-plot2.R");
-#	my $tf1 = $tree_files[0];
-#	my $tf2 = $tree_files[1];
-#	my $N = 400;
-#	my $outfile = "Results/tree-1-2.svg";
-#	if (! more_recent_than($outfile, $tf1) || ! more_recent_than($outfile, $tf2))
-#	{
-#	    my $L1 = min([$N, int((get_n_lines($tf1)-$burnin)/$subsample)]);
-#	    my $L2 = min([$N, int((get_n_lines($tf2)-$burnin)/$subsample)]);
-#	    my $matfile = "Results/tree-1-2.M";
-#	    #	print "L1 = $L1  L2 = $L2\n";
-#	    exec_show("trees-distances matrix --max=$N --jitter=0.3 $subsample_string  $skip $tf1 $tf2 > $matfile");
-#	    Rexec($script,"$L1 $L2 $matfile $outfile");
-#
-#	    my $script3d = get_libexec_script("tree-plot2-3D.R");
-#	    #	print "3d script is at '${script3d}'\n";
-#	    my $point_string = Rexec($script3d, "$L1 $L2 $matfile");
-#
-#	    &write_x3d_file("Results","tree-1-2.points", $point_string);
-#	}
-#    }
-#
-#    elsif ($#tree_files+1 >= 3)
-#    {
-#	my $script = get_libexec_script("tree-plot3.R");
-#	my $tf1 = $tree_files[0];
-#	my $tf2 = $tree_files[1];
-#	my $tf3 = $tree_files[2];
-#	my $N = 400;
-#	my $L1 = min([$N, int((get_n_lines($tf1)-$burnin)/$subsample)]);
-#	my $L2 = min([$N, int((get_n_lines($tf2)-$burnin)/$subsample)]);
-#	my $L3 = min([$N, int((get_n_lines($tf3)-$burnin)/$subsample)]);
-#	my $matfile = "Results/tree-1-2-3.M";
-#	my $outfile = "Results/tree-1-2-3.svg";
-##	print "L1 = $L1  L2 = $L2\n";
-#	if (! more_recent_than($outfile, $tf1) || ! more_recent_than($outfile, $tf2) || ! more_recent_than($outfile, $tf3))
-#	{
-#	    exec_show("trees-distances matrix --max=$N --jitter=0.3 $subsample_string  $skip $tf1 $tf2 $tf3 > $matfile");
-#	    Rexec($script,"$L1 $L2 $L3 $matfile $outfile");
-#
-#	    my $script3d = get_libexec_script("tree-plot3-3D.R");
-#	    #	print "3d script is at '${script3d}'\n";
-#	    my $point_string = Rexec($script3d, "$L1 $L2 $L3 $matfile");
-#
-#	    &write_x3d_file("Results","tree-1-2-3.points", $point_string);
-#	}
-#    }
-#
-#}
-#
-#sub write_x3d_file
-#{
-#    my $dir = shift;
-#    my $filename = shift;
-#    my $point_string = shift;
-#
-#    $dir = "$dir/" if ("$dir");
-#    
-#    open FILE, ">${dir}${filename}.html";
-#    print FILE 
-#"<html>
-#  <head>
-#    <title>MDS 3D Plot</title>
-#    <script type='text/javascript' src='http://www.x3dom.org/download/x3dom.js'> </script>
-#    <link rel='stylesheet' type='text/css' href='http://www.x3dom.org/download/x3dom.css'></link>
-#    <style>
-#      x3d { border:2px solid darkorange; }
-#    </style>
-#  </head>
-#  <body>
-#    <x3d width='1000px' height='1000px'>
-#      <scene>";
-#    print FILE &gen_x3d_of_mds($point_string);
-#    print FILE "
-#      </scene>
-#    </x3d>
-#  </body>
-#</html>
-#";
-#    close FILE;
-#}
-#
-#sub hsv_to_rgb
-#{
-#    my $H = shift;
-#    my $S = shift;
-#    my $V = shift;
-#
-#    # decompose color range [0,6) into a discrete color (i) and fraction (f)
-#    my $h = ($H * 6);
-#    my $i = int($h);
-#    my $f = $h - $i;
-#    $i = $i % 6;
-#
-#    my $p = $V*(1.0 - $S);
-#    my $q = $V*(1.0 - ($S*$f));
-#    my $t = $V*(1.0 - ($S*(1.0-$f)));
-#
-#    if ($i==0) {
-#	return ($V,$t,$p);
-#    }
-#    elsif ($i==1) {
-#	return ($q,$V,$p);
-#    }
-#    elsif ($i==2) {
-#	return ($p,$V,$t);
-#    }
-#    elsif ($i==3) {
-#	return ($p,$q,$V);
-#    }
-#    elsif ($i==4) {
-#	return ($t,$p,$V);
-#    }
-#    elsif ($i==5) {
-#	return ($V,$p,$q);
-#    }
-#}
-#
-#sub rgb_to_color
-#{
-#    my $r = shift;
-#    my $g = shift;
-#    my $b = shift;
-#    return "$r $g $b";
-#}
-#
-#sub interpolate
-#{
-#    my $i = shift;
-#    my $total = shift;
-#    my $from = shift;
-#    my $to = shift;
-#    return $from + ($to-$from)*($i*1.0/($total-1));
-#}
-#
-#sub gen_x3d_of_mds
-#{
-#    my $point_string = shift;
-#
-#    my @points;
-#    my @x = ();
-#    my @y = ();
-#    my @z = ();
-#
-#    my %n = ();
-#
-#    foreach my $line (split "\n", $point_string)
-#    {
-#	chomp $line;
-#	my $point = [split "\t", $line];
-#	push @x, ${$point}[0];
-#	push @y, ${$point}[1];
-#	push @z, ${$point}[2];
-#	my $g = ${$point}[3];
-#	$g = 1 if (!defined($g));
-#	$n{$g} = 0 if (!defined($n{$g}));
-#	$n{$g}++;
-#	push @points, $point;
-#    }
-#
-#    my $xmin = min(\@x);
-#    my $xmax = max(\@x);
-#    my $xw = abs($xmax - $xmin);
-#
-#    my $ymin = min(\@y);
-#    my $ymax = max(\@y);
-#    my $yw = abs($ymax - $ymin);
-#
-#    my $zmin = min(\@z);
-#    my $zmax = max(\@z);
-#    my $zw = abs($zmax - $zmin);
-#    
-#    my $x3d = "";
-#    my %seen = ();
-#    foreach my $point (@points)
-#    {
-#	my $x = ${$point}[0];
-#	$x = ($x-$xmin)/$xw*5.0 - 2.5;
-#	my $y = ${$point}[1];
-#	$y = ($y-$ymin)/$yw*5.0 - 2.5;
-#	my $z = ${$point}[2];
-#	$z = ($z-$zmin)/$zw*5.0 - 2.5;
-#	my $g = ${$point}[3];
-#	$g = 1 if (!defined($g));
-#	$seen{$g} = 0 if (!defined($seen{$g}));
-#	my $color;
-#	my $size = 0.04;
-#	my $scale = "$size $size $size";
-#	$color = "1 0 0";
-#
-#	$color = rgb_to_color(hsv_to_rgb(interpolate($seen{$g}, $n{$g}, 0.833333, 1.0),
-##	$color = rgb_to_color(hsv_to_rgb(interpolate($seen{$g}, $n{$g}, 0.0,      0.0),
-#					 interpolate($seen{$g}, $n{$g}, 0.3,      1.0),
-#					 1)
-#	                      ) if (defined($g) && $g == 1);
-#
-#	$color = rgb_to_color(hsv_to_rgb(interpolate($seen{$g}, $n{$g}, 0.5,      0.666666),
-##	$color = rgb_to_color(hsv_to_rgb(interpolate($seen{$g}, $n{$g}, 0.666666, 0.666666),
-#					 interpolate($seen{$g}, $n{$g}, 0.3,      1.0),
-#					 1)
-#	                      ) if (defined($g) && $g == 2);
-#
-#	$color = rgb_to_color(hsv_to_rgb(interpolate($seen{$g}, $n{$g}, 0.166666, 0.333333),
-#					 interpolate($seen{$g}, $n{$g}, 0.3,      1.0),
-#					 1)
-#	    ) if (defined($g) && $g == 3);
-#
-#	$x3d .= "<transform translation='$x $y $z' scale='$scale'><shape><appearance><material diffuseColor='$color'></material></appearance><sphere></sphere></shape></transform>";
-#	$x3d .= "\n";
-#	$seen{$g}++;
-#    }
-#
-#    ## FIXME - Chrome can't <include /> local files because it treats them as cross-site scripting, which they are not, I think.
-##    $x3d = "<x3d><scene>\n$x3d\n</scene></x3d>\n";
-#    return $x3d;
-#}
-#
-#sub portable_readline
-#{
-#    my $fh = shift;
-#    my $line = readline($fh);
-#    return $line if (!defined($line));
-#    $line =~ s/\015?\012/\n/g;
-#    return $line;
-#}
