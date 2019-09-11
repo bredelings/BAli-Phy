@@ -5,9 +5,31 @@ import argparse
 import re
 import os
 from os import path
+import subprocess
 import json
 import itertools
+import glob
+import sys
 
+def more_recent_than(f1,f2):
+    if not path.exists(f1):
+        return False
+    return path.getmtime(f1) > path.getmtime(f2)
+
+def more_recent_than_all_of(f1,f2s):
+    for f2 in f2s:
+        if not more_recent_than(f1,f2):
+            return False;
+    return True
+
+def find_exe(name,message=None):
+    exe = shutil.which(name)
+    if exe is None:
+        if message is not None:
+            print("Program '{}' not found: {}".format(name,message))
+        else:
+            print("Program '{}' not found.".format(name))
+    return exe
 
 def get_n_lines(filename):
     count = 0
@@ -425,37 +447,31 @@ def ConstructRun(mcmc_output):
     if glob.glob(path.join(mcmc_output,'*.trees')):
         return BEASTRun(mcmc_output)
 
-    return None
+    print("Error: MCMC run '{}' is not a BAli-Phy, BEAST, or PhyloBayes run.".format(mcmc_output),file=sys.stderr)
+    exit(3)
         
 
 
 class Analysis(object):
 
-    def find_exe(self,name,message=None):
-        exe = shutil.which(name)
-        if exe is None:
-            if message is not None:
-                print("Program '{}' not found: {}".format(name,message))
-            else:
-                print("Program '{}' not found.".format(name))
-        return exe
-
     def __init__(self,args,mcmc_outputs):
         self.mcmc_runs = [ConstructRun(mcmc_run) for mcmc_run in mcmc_outputs]
 
-        self.trees_consensus_exe = self.find_exe('trees-consensus', message="See the main for adding the bali-phy programs to your PATH.")
+        self.trees_consensus_exe = find_exe('trees-consensus', message="See the main for adding the bali-phy programs to your PATH.")
         if self.trees_consensus_exe is None:
             exit(1)
 
-        self.draw_tree_exe = self.find_exe('draw-tree', message="Tree pictures will not be generated.\n")
+        self.draw_tree_exe = find_exe('draw-tree', message="Tree pictures will not be generated.\n")
         # FIXME - maybe switch from gnuplot to R?
-        self.gnuplot_exe = self.find_exe('gnuplot', message='Some graphs will not be generated.\n')
-        self.R_exe = self.find_exe('R', message='Some mixing graphs will not be generated.\n')
+        self.gnuplot_exe = find_exe('gnuplot', message='Some graphs will not be generated.\n')
+        self.R_exe = find_exe('R', message='Some mixing graphs will not be generated.\n')
 
-        self.subsample = None
-        self.sub_partitions = False
-        self.prune = None
-        self.burnin = None
+        self.sub_partitions = args.subpartitions
+        self.subsample = args.subsample
+        self.prune = args.prune
+        self.burnin = args.skip
+        self.until = args.until
+        self.verbose = args.verbose
 
         for mcmc_run in self.mcmc_runs:
             print(mcmc_run.get_dir())
@@ -471,20 +487,14 @@ class Analysis(object):
 
         self.determine_burnin()
         self.initialize_results_directory()
-        self.log_shell_cmds = open("Results/commands.log",'w',encoding='utf-8')
 
+        self.log_shell_cmds = open("Results/commands.log",'a+',encoding='utf-8')
+        print("-----------------------------------------------------------",file=self.log_shell_cmds)
 
+        self.summarize_numerical_parameters()
 
     def get_input_files(self):
-        result = self.mcmc_runs[0].get_input_files()
-        for run in self.mcmc_runs:
-            result2 = run.get_input_files()
-            if result != result2:
-                raise Exception("Differences in get_input_files!")
-        return result
-
-    def get_alignments_files(self):
-        return [run.get_alignments_files() for run in self.mcmc_runs]
+        return first_all_same([run.get_input_files() for run in self.mcmc_runs])
 
     def n_partitions(self):
         return first_all_same([run.n_partitions() for run in self.mcmc_runs])
@@ -492,19 +502,79 @@ class Analysis(object):
     def get_models(self, name1, name2):
         return first_all_same([run.get_models(name1,name2) for run in self.mcmc_runs])
 
-    def exec_show(self,cmd):
-        print(cmd,file=self.log_shell_cmds)
+    def get_alignments_files(self):
+        return [run.get_alignments_files() for run in self.mcmc_runs]
 
-        result = subprocess.run(cmd,stdout=subprocess.PIPE)
-        message = result.stdout.decode('utf-8')
+    def get_log_files(self):
+        return [run.get_log_file() for run in self.mcmc_runs]
+
+    def exec_show_write(self,cmd,outfile,**kwargs):
+        showcmd = ' '.join(["'{}'".format(word) for word in cmd]) + " > '{}'".format(outfile)
+        print(showcmd,file=self.log_shell_cmds)
+        args0 = kwargs.copy()
+        if "stdout" in kwargs:
+            raise Exception("exec_show_write: cannot specify stdout stream")
+        kwargs["stdout"] = open(outfile,'w+',encoding='utf-8')
+
+        if "stderr" not in kwargs:
+            kwargs["stderr"] = subprocess.PIPE
+
+        result = subprocess.run(cmd,**kwargs)
+
+        err_message = None
+        if "stderr" not in args0:
+            err_message = result.stderr.decode('utf-8')
+
         code = result.returncode
         if code != 0:
-            print("Subcommand file! (code {})",file=sys.stderr)
-            print("Subcommand file! (code {})",file=self.log_shell_cmds)
-            print("command: {}".format(cmd),file=sys.stderr)
-            print("message: {}".format(message),file=sys.stderr)
+            print("command: {}".format(showcmd),file=sys.stderr)
+            print(" exit: {}".format(code),file=sys.stderr)
+
+            print(" exit: {}".format(code),file=self.log_shell_cmds)
+            if err_message:
+                print("  err: {}".format(err_message),file=self.log_shell_cmds)
+                print("  err: {}".format(err_message),file=sys.stderr)
+            if path.exists(outfile):
+                os.remove(outfile)
             exit(code)
-        elif (self.verbose):
+        elif self.verbose:
+            print("\n\t{}\n".format(showcmd))
+        return result
+
+    def exec_show(self,cmd,**kwargs):
+        print(cmd,file=self.log_shell_cmds)
+
+        args0 = kwargs.copy()
+        if "stdout" not in kwargs:
+            kwargs["stdout"] = subprocess.PIPE
+
+        if "stderr" not in kwargs:
+            kwargs["stderr"] = subprocess.PIPE
+
+        result = subprocess.run(cmd,**kwargs)
+
+        out_message = None
+        if "stdout" not in args0:
+            out_message = result.stdout.decode('utf-8')
+
+        err_message = None
+        if "stderr" not in args0:
+            err_message = result.stderr.decode('utf-8')
+
+        code = result.returncode
+        if code != 0:
+            print("command: {}".format(cmd),file=sys.stderr)
+            print(" exit: {}".format(code),file=sys.stderr)
+
+            print(" exit: {}".format(code),file=self.log_shell_cmds)
+            if out_message:
+                print("  out: {}".format(out_message),file=self.log_shell_cmds)
+                print("  out: {}".format(out_message),file=sys.stdout)
+            if err_message:
+                print("  err: {}".format(err_message),file=self.log_shell_cmds)
+                print("  err: {}".format(err_message),file=sys.stderr)
+            exit(code)
+        elif self.verbose:
             print("\n\t{}\n".format(cmd))
         return result
 
@@ -547,6 +617,8 @@ class Analysis(object):
 
     def initialize_results_directory(self):
         reuse = self.check_analysis_property("burnin", self.burnin)
+        reuse = reuse and self.check_analysis_property("subsample", self.subsample)
+        reuse = reuse and self.check_analysis_property("until", self.until)
         reuse = reuse and self.check_analysis_property("alignment_file_names",self.get_alignments_files())
         reuse = reuse and self.check_analysis_property("input_files", self.get_input_files())
 
@@ -562,6 +634,8 @@ class Analysis(object):
             os.mkdir("Results/Work")
 
         self.write_analysis_property("burnin", self.burnin)
+        self.write_analysis_property("subsample", self.subsample)
+        self.write_analysis_property("until", self.until)
         self.write_analysis_property("input_files", self.get_input_files())
         self.write_analysis_property("alignment_file_names", self.get_alignments_files())
 
@@ -591,6 +665,19 @@ class Analysis(object):
 
         self.burnin = int(0.1*min_iterations)
 
+    def summarize_numerical_parameters(self):
+        print("Summarizing distribution of numerical parameters: ",end='')
+        if not more_recent_than_all_of("Results/Report",self.get_log_files()):
+            cmd = ["statreport"] + self.get_log_files()
+            if self.subsample is not None and self.subsample != 1:
+                cmd.append("--subsample={}".format(self.subsample))
+            if self.burnin is not None:
+                cmd.append("--skip={}".format(self.burnin))
+            if self.until is not None:
+                cmd.append("--until={}".format(self.until))
+            self.exec_show_write(cmd,"Results/Report")
+        print("done.")
+
 
 #----------------------------- SETUP 1 --------------------------#
 if __name__ == '__main__':
@@ -598,16 +685,16 @@ if __name__ == '__main__':
                                      epilog= "Example: bp-analyze analysis-dir-1 analysis-dir-2")
 
     parser.add_argument("mcmc_outputs", default=['.'], help="Subdirectories with MCMC runs",nargs='*')
-    parser.add_argument("--clean", help="Delete generated files")
-    parser.add_argument("--verbose", help="Be verbose")
-    parser.add_argument("--skip", help="Skip NUM iterations as burnin")
-    parser.add_argument("--subsample", help="Keep only every NUM iterations")
-    parser.add_argument("--prune", help="Taxa to remove")
+    parser.add_argument("--clean", default=False,help="Delete generated files",action='store_true')
+    parser.add_argument("--verbose",default=0, help="Be verbose",action='store_true')
+    parser.add_argument("--skip", metavar='NUM',type=int,default=None,help="Skip NUM iterations as burnin")
+    parser.add_argument("--subsample",metavar='NUM',type=int,default=None,help="Keep only every NUM iterations")
+    parser.add_argument("--until",type=int,default=None)
+    parser.add_argument("--prune", default=None,help="Taxa to remove")
     parser.add_argument("--muscle")
     parser.add_argument("--probcons")
     parser.add_argument("--mafft")
-    parser.add_argument("--max")
-    parser.add_argument("--mc-tree")
+    parser.add_argument("--subpartitions",default=False,action='store_true')
     # FIXME: change subdirs to check if we've got a list of tree files instead
     parser.add_argument("--tree-file",nargs='*')
     args = parser.parse_args()
@@ -620,34 +707,6 @@ if __name__ == '__main__':
 
     print(smodels)
 
-#&determine_burnin();
-#
-## create a new directory, decide whether or not to reuse existing directory
-#&initialize_results_directory();
-#
-#open my $LOG, ">>Results/bp-analyze.log";
-#print $LOG "------------------------------------------------\n";
-#
-#&compute_tree_and_parameter_files_for_heated_chains();
-#
-## 5. Summarize scalar parameters
-#my $max_arg = "";
-#$max_arg = "--max=$max_iter" if (defined($max_iter));
-#
-#my $skip="";
-#$skip="--skip=$burnin" if ($tree_files[0] ne "Results/T1.trees");
-#
-#my $subsample_string = "--subsample=$subsample";
-#$subsample_string = "" if ($subsample == 1);
-#
-#if ($personality =~ "bali-phy.*" || $personality eq "beast" || $personality eq "phylobayes") {
-#    print "Summarizing distribution of numerical parameters...";
-#    if (! more_recent_than_all_of("Results/Report",[@parameter_files])) {
-#	exec_show("statreport $subsample_string $max_arg $skip @parameter_files > Results/Report");
-#    }
-#    print "done.\n";
-#}
-#    
 ## 1. compute consensus trees
 #my $min_support_arg = "";
 #$min_support_arg = "--min-support=$min_support" if (defined($min_support));
