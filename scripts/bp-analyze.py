@@ -382,14 +382,6 @@ class BAliPhy3Run(BAliPhyRun):
         self.smodels = self.get_models("subst models", "smodels")
         self.imodels = self.get_models("indel models", "imodels")
         self.scale_models = self.get_models("scale model", "scales")
-        print(self.get_cmd())
-        print(self.get_smodels())
-        print(self.get_smodel_indices())
-        print(self.get_imodels())
-        print(self.get_imodel_indices())
-        print(self.get_input_files())
-        print(self.get_alignments_files())
-        print(self.get_alphabets())
 
     def get_models(self, name1, name2):
         return [make_extracted(model) for model in self.run_json[name2]]
@@ -473,9 +465,6 @@ class Analysis(object):
         self.until = args.until
         self.verbose = args.verbose
 
-        for mcmc_run in self.mcmc_runs:
-            print(mcmc_run.get_dir())
-
         for i in range(len(self.mcmc_runs)):
             if self.mcmc_runs[i].get_cmd() != self.mcmc_runs[0].get_cmd():
                 print("WARNING: Commands differ!\n   {}\n   {}\n".format(self.mcmc_runs[0].get_cmd(),
@@ -493,6 +482,7 @@ class Analysis(object):
 
         self.summarize_numerical_parameters()
         self.summarize_topology_distribution()
+        self.compute_mean_branch_lengths()
 
     def get_input_files(self):
         return first_all_same([run.get_input_files() for run in self.mcmc_runs])
@@ -680,9 +670,11 @@ class Analysis(object):
         if self.until is not None:
             cmd.append("--until={}".format(self.until))
 
+        tree_names=['Results/greedy.PP.tree','Results/MAP.PP.tree']
         consensus_trees=[]
         for level in self.tree_consensus_levels:
             filename = "Results/c{}.PP.tree".format(int(level*100))
+            tree_names.append(filename)
             consensus_trees.append("{}:{}".format(level,filename))
         cmd.append("--consensus={}".format(','.join(consensus_trees)))
 
@@ -702,6 +694,38 @@ class Analysis(object):
 
         if not more_recent_than_all_of("Results/consensus", self.get_trees_files()):
             self.exec_show(cmd)
+        for tree in tree_names:
+            if not path.exists(tree) or os.stat(tree).st_size == 0:
+                raise Exception("Tree '{}' not found!".format(tree))
+            assert(tree.endswith('.PP.tree'))
+            tree2 = tree[0:-8]+'.tree'
+            self.exec_show(['tree-tool',tree,'--strip-internal-names','--name-all-nodes'],outfile=tree2)
+        print(" done.")
+
+    # This routine computes mean branch lengths WITH NODE CIRCLES (*.ltree)
+    def compute_mean_branch_lengths(self):
+        print("\nComputing mean branch lengths: ",end='')
+        for level in self.tree_consensus_levels:
+            value = int(level*100)
+            prefix = "Results/c{}".format(value)
+            tree = prefix+".tree"
+
+            if more_recent_than_all_of("Results/{}.ltree",self.get_trees_files()):
+                break
+
+            cmd = ['tree-mean-lengths','--tree',tree,'--safe','--show-node-lengths']
+            cmd += self.get_trees_files()
+
+            if self.prune is not None:
+                cmd.append("--prune={}".format(self.prune))
+            if self.subsample is not None and self.subsample != 1:
+                cmd.append("--subsample={}".format(self.subsample))
+            if self.burnin is not None:
+                cmd.append("--skip={}".format(self.burnin))
+            if self.until is not None:
+                cmd.append("--until={}".format(self.until))
+            outfile=prefix+".ltree"
+            self.exec_show(cmd,outfile=outfile)
         print(" done.")
 
 #----------------------------- SETUP 1 --------------------------#
@@ -726,46 +750,11 @@ if __name__ == '__main__':
 
     analysis = Analysis(args,args.mcmc_outputs)
 
-    smodels = analysis.get_models("subst model", "smodels")
-    imodels = analysis.get_models("indel model", "imodels")
-    scale_models = analysis.get_models("scale model", "scales")
+#    smodels = analysis.get_models("subst model", "smodels")
+#    imodels = analysis.get_models("indel model", "imodels")
+#    scale_models = analysis.get_models("scale model", "scales")
 
-    print(smodels)
 
-## 1. compute consensus trees
-#my $min_support_arg = "";
-#$min_support_arg = "--min-support=$min_support" if (defined($min_support));
-#
-#my $maj_consensus_arg = "--consensus=". get_consensus_arg("PP.tree",\@tree_consensus_values);
-#my $e_consensus_arg = "";
-#$e_consensus_arg = "--extended-consensus=". get_consensus_arg("mtree",\@tree_consensus_values) if ($sub_partitions);
-#my $el_consensus_arg = "";
-#$el_consensus_arg = "--extended-consensus-L=". get_consensus_arg("mlengths",\@tree_consensus_values) if ($sub_partitions);
-#my $consensus_arg = "$maj_consensus_arg $e_consensus_arg $el_consensus_arg";
-#
-#my @tree_names = get_consensus_trees("PP.tree",\@tree_consensus_values);
-#@tree_names = ("Results/greedy.PP.tree","Results/MAP.PP.tree",@tree_names);
-#    
-#my $size_arg = "";
-#$size_arg = "--size=$max_iter" if defined($max_iter);
-#my $prune_arg = "";
-#my $prune_arg2 = "";
-#
-#print "\nSummarizing topology distribution ... ";
-#if (-z "Results/consensus" || ! more_recent_than_all_of("Results/consensus",[@tree_files])) {
-#    my $sub_string = "--sub-partitions";
-#    $sub_string = "" if (!$sub_partitions);
-#
-#    exec_show("trees-consensus @tree_files $select_trees_arg $min_support_arg $sub_string $consensus_arg $levels_arg --map-tree=Results/MAP.PP.tree --greedy-consensus=Results/greedy.PP.tree --report=Results/consensus");
-#    for my $tree (@tree_names)
-#    {
-#	my $tree2 = $tree;
-#	$tree2 =~ s/.PP.tree$/.tree/;
-#	exec_show("tree-tool $tree --strip-internal-names --name-all-nodes > $tree2")
-#    }
-#}
-#print "done.\n";
-#
 #
 #print "\nComputing mean branch lengths ... ";
 #    for my $cvalue (@tree_consensus_values)
