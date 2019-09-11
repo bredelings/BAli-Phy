@@ -466,6 +466,11 @@ class Analysis(object):
         self.verbose = args.verbose
         self.speed = 1
 
+        prefix=path.dirname(path.dirname(self.trees_consensus_exe))
+        self.libexecdir = path.join(prefix,"lib","bali-phy","libexec")
+        if not path.exists(self.libexecdir):
+            print("Can't find bali-phy libexec path '{}'".format(self.libexecdir))
+
         for i in range(len(self.mcmc_runs)):
             if self.mcmc_runs[i].get_cmd() != self.mcmc_runs[0].get_cmd():
                 print("WARNING: Commands differ!\n   {}\n   {}\n".format(self.mcmc_runs[0].get_cmd(),
@@ -485,6 +490,21 @@ class Analysis(object):
         self.summarize_topology_distribution()
         self.compute_mean_branch_lengths()
         self.draw_trees()
+        self.compute_mixing_diagnostics()
+
+    def n_chains(self):
+        return(len(self.mcmc_runs))
+
+    def get_libexec_script(self,file):
+        filepath = path.join(self.libexecdir,file)
+        if not path.exists(filepath):
+            print("Can't find script '{}'!".format(file))
+        return filepath
+
+    def Rexec(self,script,args=[]):
+        if not self.R_exe:
+            return
+        self.exec_show([self.R_exe,'--slave','--vanilla','--args']+args,infile=script)
 
     def get_input_files(self):
         return first_all_same([run.get_input_files() for run in self.mcmc_runs])
@@ -508,6 +528,13 @@ class Analysis(object):
         showcmd = ' '.join(["'{}'".format(word) for word in cmd])
 
         subargs = dict()
+        if "infile" in kwargs:
+            infile = kwargs["infile"]
+            subargs["stdin"] = open(infile,encoding='utf-8')
+            showcmd += " < '{}'".format(infile)
+        elif "stdin" in kwargs:
+            subargs["stdin"] = kwargs["stdin"]
+
         if "outfile" in kwargs:
             outfile = kwargs["outfile"]
             subargs["stdout"] = open(outfile,'w+',encoding='utf-8')
@@ -525,7 +552,6 @@ class Analysis(object):
         if "cwd" in kwargs:
             subargs["cwd"] = kwargs["cwd"]
 
-        print(subargs,file=self.log_shell_cmds)
         print(showcmd,file=self.log_shell_cmds)
         result = subprocess.run(cmd,**subargs)
 
@@ -782,6 +808,51 @@ class Analysis(object):
 
         print(". done.")
 
+    def compute_mixing_diagnostics(self):
+        print("\nGenerate mixing diagnostics for topologies ...",end='')
+
+        if not more_recent_than("Results/partitions","Results/consensus"):
+            self.exec_show(['pickout','--no-header','--large','pi'],
+                           infile="Results/consensus",
+                           outfile="Results/partitions")
+
+        # This just adds blank lines between the partitions.
+        if not more_recent_than("Results/partitions.pred","Results/partitions"):
+            with open("Results/partitions",encoding='utf-8') as infile:
+                with open("Results/partitions.pred","w+",encoding='utf-8') as outfile:
+                    for line in infile:
+                        print(line,file=outfile)
+
+        if not more_recent_than_all_of("Results/partitions.bs",self.get_trees_files()):
+            cmd = ['trees-bootstrap',
+                   '--pred=Results/partitions.pred',
+                   '--LOD-table=Results/LOD-table',
+                   '--pseudocount=1']
+            cmd += self.get_trees_files()
+            if self.prune is not None:
+                cmd.append("--ignore={}".format(self.prune))
+            if self.subsample is not None and self.subsample != 1:
+                cmd.append("--subsample={}".format(self.subsample))
+            if self.burnin is not None:
+                cmd.append("--skip={}".format(self.burnin))
+            if self.until is not None:
+                cmd.append("--until={}".format(self.until))
+            self.exec_show(cmd,outfile="Results/partitions.bs")
+
+        if self.n_chains() < 2:
+            print(" done.")
+            return
+
+        if not more_recent_than_all_of("Results/convergence-PP.pdf",self.get_trees_files()):
+            script = self.get_libexec_script("compare-runs.R")
+            self.Rexec(script,["Results/LOD-table","Results/convergence-PP.pdf"])
+
+        if (not more_recent_than_all_of("Results/convergence1-PP.svg",self.get_trees_files()) or
+            not more_recent_than_all_of("Results/convergence2-PP.svg",self.get_trees_files())):
+            script = self.get_libexec_script("compare-runs2.R")
+            self.Rexec(script,["Results/LOD-table","Results/convergence1-PP.svg","Results/convergence2-PP.svg"])
+        print(" done.")
+
 #----------------------------- SETUP 1 --------------------------#
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate an HTML report summarizing MCMC runs for BAli-Phy and other software.",
@@ -809,8 +880,6 @@ if __name__ == '__main__':
 #    scale_models = analysis.get_models("scale model", "scales")
 
 
-#&mixing_diagnostics();
-#
 #my @SRQ = &SRQ_plots();
 #
 #my $tree_MDS = &tree_MDS();
@@ -1707,87 +1776,6 @@ if __name__ == '__main__':
 #    }
 #}
 #
-#sub draw_trees
-#{
-#    return if (! $have_draw_tree);
-#
-#    print " Drawing trees:  ";
-#    for my $cvalue (@tree_consensus_values)
-#    {
-#	my $value = $cvalue*100;
-#	
-#	my $tree = "c$value";
-#
-#	# No node lengths???
-#	my $filename1 = "Results/$tree.tree";
-#	my $filename2 = "Results/$tree.mtree";
-#	
-#	if ($speed < 2)
-#	{
-#	    if (-e $filename2 && ! more_recent_than("Results/$tree-mctree.svg",$filename2)) {
-#		exec_show("draw-tree Results/$tree.mlengths --out=Results/$tree-mctree --output=svg --draw-clouds=only");
-#	    }
-#	    if (-e $filename2 && ! more_recent_than("Results/$tree-mctree.pdf",$filename2)) {
-#		exec_show("draw-tree Results/$tree.mlengths --out=Results/$tree-mctree --draw-clouds=only");
-#	    }
-#	}
-#	
-#	if (! more_recent_than("Results/$tree-tree.pdf",$filename1)) {
-#	    exec_show("cd Results ; draw-tree $tree.ltree --layout=equal-daylight"); # --no-shade is too slow!
-#	}
-#	
-#	if (! more_recent_than("Results/$tree-tree.svg",$filename1)) {
-#	    exec_show("cd Results ; draw-tree $tree.ltree --layout=equal-daylight --output=svg");
-#	}
-#	
-#	print "$tree ";
-#    }
-#
-#    exec_show("cd Results ; draw-tree greedy.tree --layout=equal-daylight") if (-e 'Results/greedy.tree');
-#    exec_show("cd Results ; draw-tree greedy.tree --layout=equal-daylight --output=svg ") if (-e 'Results/greedy.tree');
-#    print "greedy ";
-#
-#    exec_show("cd Results ; draw-tree MAP.tree --layout=equal-daylight") if (-e 'Results/MAP.tree');
-#    exec_show("cd Results ; draw-tree MAP.tree --layout=equal-daylight --output=svg ") if (-e 'Results/MAP.tree');
-#    print "MAP ";
-#
-#    print " ... done.\n";
-#}
-#
-#sub mixing_diagnostics
-#{
-## 10. Mixing diagnostics -- block bootstrap
-#    print "\nGenerate mixing diagnostics for topologies ... ";
-#
-#    if (!more_recent_than("Results/partitions","Results/consensus")) {
-#	exec_show("pickout --no-header --large pi < Results/consensus > Results/partitions");
-#    }
-#    if (!more_recent_than("Results/partitions.pred","Results/partitions")) {
-#	exec_show("perl -e 'while(<>) {s/\$/\\n/;print;}' < Results/partitions > Results/partitions.pred");
-#    }
-#
-#    if (!more_recent_than_all_of("Results/partitions.bs",[@tree_files])) {
-#	exec_show("trees-bootstrap $max_arg @tree_files $skip $subsample_string --pred Results/partitions.pred --LOD-table=Results/LOD-table --pseudocount 1 > Results/partitions.bs");
-#    }
-#    print "done.\n";
-#
-#    return if ($#tree_files <= 0);
-#
-#    if (!more_recent_than_all_of("Results/convergence-PP.pdf",[@tree_files]))
-#    {
-#	my $script = get_libexec_script("compare-runs.R");
-#	die "can't find script $script!" if (!defined($script));
-#	Rexec($script,"Results/LOD-table Results/convergence-PP.pdf");
-#    }
-#    if (!more_recent_than_all_of("Results/convergence1-PP.svg",[@tree_files]) or 
-#	!more_recent_than_all_of("Results/convergence2-PP.svg",[@tree_files]))
-#    {
-#	my $script = get_libexec_script("compare-runs2.R");
-#	die "can't find script $script!" if (!defined($script));
-#	Rexec($script,"Results/LOD-table Results/convergence1-PP.svg Results/convergence2-PP.svg");
-#    }
-#}
-#
 #sub SRQ_plots
 #{
 #    my @SRQ = ();
@@ -2256,41 +2244,6 @@ if __name__ == '__main__':
 #    }
 #}
 #
-#
-#sub get_libexec_script
-#{
-#    my $file = shift;
-#    my $prefix = dirname(dirname(abs_path(__FILE__)));
-#    my $libexecdir = "$prefix/lib/bali-phy/libexec/";
-#    die "Missing libexecdir '$libexecdir'!" if (! -e $libexecdir);
-#    my $path = "$libexecdir/$file";
-#    die "Missing libexec script '$file'!" if (! -e $path);
-#    
-#    return $path;
-#}
-#
-#sub find_in_path
-#{
-#    my $file = shift;
-#    my $home = $ENV{'HOME'};
-#
-#    my @dirs = split(':',$ENV{'PATH'});
-#    
-#    for my $dir (@dirs) {
-#	$dir =~ s/^~/$home/;
-#	if (-x "$dir/$file" ) {
-#	    return "$dir/$file";
-#	}
-#    }
-#
-#    return undef;
-#}
-#
-#sub is_in_path
-#{
-#    return 1 if (defined(find_in_path(@_)));
-#    return 0;
-#}
 #
 #sub check_input_file_names()
 #{
