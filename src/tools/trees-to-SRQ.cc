@@ -79,8 +79,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description all("Allowed options");
     all.add_options()
 	("help,h", "produce help message")
+	("files",value<vector<string> >()->composing(),"tree samples to examine")
 	("predicates",value<string>(),"predicates to examine")
-	("skip,s",value<int>()->default_value(0),"number of trees to skip")
+	("skip,s",value<string>()->default_value("10%"),"Number of trees to skip.")
 	("subsample,x",value<int>()->default_value(1),"factor by which to sub-sample")
 	("until,u",value<int>(),"Read until this number of trees.")
 	("max-points",value<int>(),"maximum number of points to record")
@@ -95,6 +96,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     // positional options
     positional_options_description p;
     p.add("predicates", 1);
+    p.add("files", -1);
   
     variables_map args;     
     store(command_line_parser(argc, argv).
@@ -103,7 +105,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     if (args.count("help")) {
 	cout<<"Generate Scaled Regeneration Quantile (SRQ) plot\n";
-	cout<<"Usage: tree-to-srq <predicates-file> < in-file\n\n";
+	cout<<"Usage: tree-to-srq <predicates-file> <sampled-trees> [<sampled-trees> ...]\n\n";
 	cout<<all<<"\n";
 	exit(0);
     }
@@ -120,11 +122,6 @@ int main(int argc,char* argv[])
 	// Load the partitions that we are considering
 	auto trees = load_partitions(args["predicates"].as<string>());
 
-	// Read in the trees
-	int skip = args["skip"].as<int>();
-
-	int subsample=args["subsample"].as<int>();
-
 	optional<int> last;
 	if (args.count("until"))
 	    last = args["until"].as<int>();
@@ -133,8 +130,7 @@ int main(int argc,char* argv[])
 	if (args.count("max-points"))
 	    max_points = args["max-points"].as<int>();
 
-	tree_sample tree_dist(std::cin, skip, last, subsample);
-
+	auto tree_dist = read_trees(args);
 
 	const int L = tree_dist.size();
 

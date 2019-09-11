@@ -491,6 +491,7 @@ class Analysis(object):
         self.compute_mean_branch_lengths()
         self.draw_trees()
         self.compute_tree_mixing_diagnostics()
+        self.compute_srq_plots()
 
     def n_chains(self):
         return(len(self.mcmc_runs))
@@ -505,6 +506,11 @@ class Analysis(object):
         if not self.R_exe:
             return
         self.exec_show([self.R_exe,'--slave','--vanilla','--args']+args,infile=script)
+
+    def run_gnuplot(self,script):
+        if not self.gnuplot_exe:
+            return
+        subprocess.Popen(self.gnuplot_exe,stdin=subprocess.PIPE).communicate(script.encode('utf-8'))
 
     def get_input_files(self):
         return first_all_same([run.get_input_files() for run in self.mcmc_runs])
@@ -608,10 +614,7 @@ class Analysis(object):
 
     def check_analysis_property(self,key,value):
         properties = self.load_analysis_properties()
-        if key in properties:
-            return value == properties[key]
-        else:
-            return True
+        return key in properties and value == properties[key]
 
     def write_analysis_property(self,key,value):
         properties = self.load_analysis_properties()
@@ -787,7 +790,7 @@ class Analysis(object):
             filename2 = "Results/{}.mtree".format(tree)
 
             if self.speed < 2 and path.exists(filename2):
-                cmd = ['draw-tree', filename2, '--out=Results/{}-mctree', '--draw-clouds=only']
+                cmd = ['draw-tree', 'Results/{}.mlengths'.format(tree), '--out=Results/{}-mctree'.format(tree), '--draw-clouds=only']
                 if not more_recent_than("Results/{}-mctree.svg".format(tree),filename2):
                     self.exec_show(cmd + ['--output=svg'])
                 if not more_recent_than("Results/{}-mctree.pdf".format(tree),filename2):
@@ -799,7 +802,7 @@ class Analysis(object):
             if not more_recent_than("Results/{}-tree.svg".format(tree), filename1):
                 cmd = ['draw-tree',tree+".ltree",'--layout=equal-daylight','--output=svg']
                 self.exec_show(cmd,cwd="Results")
-            print(tree+' ',end='')
+            print(tree+' ',end='',flush=True)
 
         for tree in ['greedy','MAP']:
             filename = "Results/{}.tree".format(tree)
@@ -857,6 +860,67 @@ class Analysis(object):
             script = self.get_libexec_script("compare-runs2.R")
             self.Rexec(script,["Results/LOD-table","Results/convergence1-PP.svg","Results/convergence2-PP.svg"])
         print(" done.")
+
+
+    def compute_srq_plots(self):
+        self.srq = []
+        print("Generate SRQ plot for partitions: ",end='')
+
+        if not more_recent_than_all_of("Results/partitions.SRQ",self.get_trees_files()):
+            cmd = ['trees-to-SRQ','Results/partitions.pred','--max-points=1000']
+            if self.subsample is not None and self.subsample != 1:
+                cmd.append("--subsample={}".format(self.subsample))
+            if self.burnin is not None:
+                cmd.append("--skip={}".format(self.burnin))
+            if self.until is not None:
+                cmd.append("--until={}".format(self.until))
+            cmd += self.get_trees_files()
+            self.exec_show(cmd,outfile="Results/partitions.SRQ")
+        print("done.");
+        self.srq.append("partitions")
+
+        print("Generate SRQ plot for c50 tree: ", end='')
+        if not more_recent_than_all_of("Results/c50.SRQ", self.get_trees_files()):
+            cmd = ['trees-to-SRQ','Results/c50.tree','--max-points=1000']
+            if self.subsample is not None and self.subsample != 1:
+                cmd.append("--subsample={}".format(self.subsample))
+            if self.burnin is not None:
+                cmd.append("--skip={}".format(self.burnin))
+            if self.until is not None:
+                cmd.append("--until={}".format(self.until))
+            cmd += self.get_trees_files()
+            self.exec_show(cmd,outfile="Results/c50.SRQ")
+        print("done.");
+        self.srq.append("c50")
+
+        for srq in self.srq:
+            cmd = ['gnuplot']
+            self.run_gnuplot("""\
+set terminal png size 300,300
+set output "Results/{srq}.SRQ.png"
+set key right bottom
+set xlabel "Regenerations (fraction)"
+set ylabel "Time (fraction)"
+set title "Scaled Regeneration Quantile (SRQ) plot: $srq"
+plot "Results/{srq}.SRQ" title "{srq}" with linespoints lw 1 lt 1, x title "Goal" lw 1 lt 3
+""".format(srq=srq))
+        if self.subpartitions:
+            self.run_gnuplot("""\
+set terminal svg
+set output "Results/c-levels.svg"
+set xlabel "Log10 posterior Odds (LOD)"
+set ylabel "Supported Splits"
+set style data lines
+plot [0:][0:] 'Results/c-levels.plot' title 'Full Splits','Results/extended-c-levels.plot' title 'Partial Splits'""")
+        else:
+            self.run_gnuplot("""\
+set terminal svg
+set output "Results/c-levels.svg"
+set xlabel "Log10 posterior Odds (LOD)"
+set ylabel "Supported Splits"
+plot [0:][0:] 'Results/c-levels.plot' with lines notitle
+""")
+
 
 #----------------------------- SETUP 1 --------------------------#
 if __name__ == '__main__':
@@ -1781,63 +1845,6 @@ if __name__ == '__main__':
 #    }
 #}
 #
-#sub SRQ_plots
-#{
-#    my @SRQ = ();
-## 12. Mixing diagnostics - SRQ plots
-#    print "Generate SRQ plot for partitions ... ";
-#    if (!more_recent_than_all_of("Results/partitions.SRQ",[@tree_files])) {
-#	exec_show("trees-to-SRQ Results/partitions.pred $max_arg $skip $subsample_string --max-points=1000 < $tree_files[0] > Results/partitions.SRQ");
-#    }
-#    print "done.\n";
-#    
-#    push @SRQ,"partitions";
-#
-#    print "Generate SRQ plot for c50 tree ... ";
-#    if (!more_recent_than_all_of("Results/c50.SRQ",[@tree_files])) {
-#	exec_show("trees-to-SRQ Results/c50.tree $max_arg $subsample_string $skip --max-points=1000 < $tree_files[0] > Results/c50.SRQ");
-#    }
-#    print "done.\n";
-#    
-#    push @SRQ,"c50";
-#    
-#    if ($have_gnuplot) {
-#	for my $srq (@SRQ) {
-#`gnuplot <<EOF
-#set terminal png size 300,300
-#set output "Results/$srq.SRQ.png"
-#set key right bottom
-#set xlabel "Regenerations (fraction)"
-#set ylabel "Time (fraction)"
-#set title "Scaled Regeneration Quantile (SRQ) plot: $srq"
-#plot 'Results/$srq.SRQ' title "$srq" with linespoints lw 1 lt 1, x title "Goal" lw 1 lt 3
-#EOF
-#`;
-#	}
-#    }
-#    if ($have_gnuplot) {
-#	if ($sub_partitions) {
-#`gnuplot <<EOF
-#set terminal svg
-#set output "Results/c-levels.svg"
-#set xlabel "Log10 posterior Odds (LOD)"
-#set ylabel "Supported Splits"
-#set style data lines
-#plot [0:][0:] 'Results/c-levels.plot' title 'Full Splits','Results/extended-c-levels.plot' title 'Partial Splits'
-#EOF`;
-#	}
-#	else {
-#`gnuplot <<EOF
-#set terminal svg
-#set output "Results/c-levels.svg"
-#set xlabel "Log10 posterior Odds (LOD)"
-#set ylabel "Supported Splits"
-#plot [0:][0:] 'Results/c-levels.plot' with lines notitle
-#EOF`;
-#	}
-#    }
-#    return @SRQ;
-#}
 #
 #sub compute_initial_alignments
 #{

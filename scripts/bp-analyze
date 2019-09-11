@@ -1483,7 +1483,7 @@ sub SRQ_plots
 # 12. Mixing diagnostics - SRQ plots
     print "Generate SRQ plot for partitions ... ";
     if (!more_recent_than_all_of("Results/partitions.SRQ",[@tree_files])) {
-	exec_show("trees-to-SRQ Results/partitions.pred $max_arg $skip $subsample_string --max-points=1000 < $tree_files[0] > Results/partitions.SRQ");
+	exec_show("trees-to-SRQ Results/partitions.pred $max_arg $skip $subsample_string --max-points=1000 $tree_files[0] > Results/partitions.SRQ");
     }
     print "done.\n";
     
