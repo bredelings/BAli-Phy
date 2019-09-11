@@ -464,6 +464,7 @@ class Analysis(object):
         self.burnin = args.skip
         self.until = args.until
         self.verbose = args.verbose
+        self.speed = 1
 
         for i in range(len(self.mcmc_runs)):
             if self.mcmc_runs[i].get_cmd() != self.mcmc_runs[0].get_cmd():
@@ -483,6 +484,7 @@ class Analysis(object):
         self.summarize_numerical_parameters()
         self.summarize_topology_distribution()
         self.compute_mean_branch_lengths()
+        self.draw_trees()
 
     def get_input_files(self):
         return first_all_same([run.get_input_files() for run in self.mcmc_runs])
@@ -520,6 +522,10 @@ class Analysis(object):
         else:
             subargs["stderr"] = subprocess.PIPE
 
+        if "cwd" in kwargs:
+            subargs["cwd"] = kwargs["cwd"]
+
+        print(subargs,file=self.log_shell_cmds)
         print(showcmd,file=self.log_shell_cmds)
         result = subprocess.run(cmd,**subargs)
 
@@ -595,6 +601,7 @@ class Analysis(object):
         reuse = self.check_analysis_property("burnin", self.burnin)
         reuse = reuse and self.check_analysis_property("subsample", self.subsample)
         reuse = reuse and self.check_analysis_property("until", self.until)
+        reuse = reuse and self.check_analysis_property("prune", self.prune)
         reuse = reuse and self.check_analysis_property("alignment_file_names",self.get_alignments_files())
         reuse = reuse and self.check_analysis_property("input_files", self.get_input_files())
 
@@ -612,6 +619,7 @@ class Analysis(object):
         self.write_analysis_property("burnin", self.burnin)
         self.write_analysis_property("subsample", self.subsample)
         self.write_analysis_property("until", self.until)
+        self.write_analysis_property("prune", self.prune)
         self.write_analysis_property("input_files", self.get_input_files())
         self.write_analysis_property("alignment_file_names", self.get_alignments_files())
 
@@ -728,6 +736,52 @@ class Analysis(object):
             self.exec_show(cmd,outfile=outfile)
         print(" done.")
 
+    def draw_trees(self):
+        self.trees = []
+        self.tree_name = dict()
+        for level in self.tree_consensus_levels:
+            value = int(level*100)
+            tree = "c{}".format(value)
+            self.trees.append(tree)
+            self.tree_name[tree] = "{}% consensus".format(value)
+        self.trees.append("MAP")
+        self.tree_name["MAP"] = "MAP"
+        self.trees.append("greedy")
+        self.tree_name["greedy"] = "greedy"
+        if not self.draw_tree_exe:
+            return
+        print("Drawing trees: ",end='')
+        for level in self.tree_consensus_levels:
+            value = int(level*100)
+            tree = "c{}".format(value)
+
+            filename1 = "Results/{}.tree".format(tree)
+            filename2 = "Results/{}.mtree".format(tree)
+
+            if self.speed < 2 and path.exists(filename2):
+                cmd = ['draw-tree', filename2, '--out=Results/{}-mctree', '--draw-clouds=only']
+                if not more_recent_than("Results/{}-mctree.svg".format(tree),filename2):
+                    self.exec_show(cmd + ['--output=svg'])
+                if not more_recent_than("Results/{}-mctree.pdf".format(tree),filename2):
+                    self.exec_show(cmd + ['--output=pdf'])
+
+            if not more_recent_than("Results/{}-tree.pdf".format(tree), filename1):
+                cmd = ['draw-tree',tree+".ltree",'--layout=equal-daylight']
+                self.exec_show(cmd,cwd="Results")
+            if not more_recent_than("Results/{}-tree.svg".format(tree), filename1):
+                cmd = ['draw-tree',tree+".ltree",'--layout=equal-daylight','--output=svg']
+                self.exec_show(cmd,cwd="Results")
+            print(tree+' ',end='')
+
+        for tree in ['greedy','MAP']:
+            filename = tree+".tree"
+            if path.exists('Results/'+filename):
+                self.exec_show(['draw-tree', filename,'--layout=equal-daylight'],cwd="Results")
+                self.exec_show(['draw-tree', filename,'--layout=equal-daylight','--output=svg'],cwd="Results")
+            print('{} '.format(tree), end='')
+
+        print(". done.")
+
 #----------------------------- SETUP 1 --------------------------#
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate an HTML report summarizing MCMC runs for BAli-Phy and other software.",
@@ -755,46 +809,6 @@ if __name__ == '__main__':
 #    scale_models = analysis.get_models("scale model", "scales")
 
 
-#
-#print "\nComputing mean branch lengths ... ";
-#    for my $cvalue (@tree_consensus_values)
-#    {
-#	my $value = $cvalue*100;
-#	
-#	my $tree = "c$value";
-#
-#	# No node lengths???
-#	my $filename1 = "Results/$tree.tree";
-#	my $filename2 = "Results/$tree.mtree";
-#	
-#        # Generate trees w/ node lengths.
-#	if (! more_recent_than("Results/$tree.ltree",$tree_files[0])) 
-#	{
-#	    $prune_arg2 = "--prune $prune" if (defined($prune));
-#	    exec_show("tree-mean-lengths Results/$tree.tree --safe --show-node-lengths $max_arg $skip $subsample_string $prune_arg2 < $tree_files[0] > Results/$tree.ltree");
-# 	}
-#    }
-#print "done.\n";
-#
-#
-#
-## 2. Draw trees
-#
-#for my $cvalue (@tree_consensus_values)
-#{
-#    my $value = $cvalue*100;
-#    my $tree = "c$value";
-#    $tree_name{$tree} = "$value\% consensus";
-#    push @trees,$tree;
-#}
-#push @trees, "MAP";
-#$tree_name{"MAP"} = "MAP";
-#
-#push @trees, "greedy";
-#$tree_name{"greedy"} = "greedy";
-#
-#&draw_trees();
-#
 #&mixing_diagnostics();
 #
 #my @SRQ = &SRQ_plots();
@@ -1727,9 +1741,6 @@ if __name__ == '__main__':
 #	}
 #	
 #	print "$tree ";
-#	my $prune_arg = "";
-#	$prune_arg = "--prune $prune" if defined($prune);
-#	
 #    }
 #
 #    exec_show("cd Results ; draw-tree greedy.tree --layout=equal-daylight") if (-e 'Results/greedy.tree');
