@@ -717,7 +717,7 @@ class Analysis(object):
             cmd += self.get_trees_files()
 
             if self.prune is not None:
-                cmd.append("--prune={}".format(self.prune))
+                cmd.append("--ignore={}".format(self.prune))
             if self.subsample is not None and self.subsample != 1:
                 cmd.append("--subsample={}".format(self.subsample))
             if self.burnin is not None:

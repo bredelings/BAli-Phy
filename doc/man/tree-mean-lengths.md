@@ -8,7 +8,7 @@
 
 # SYNOPSIS
 
-**tree-mean-lengths** _tree-file_ < in-file
+**tree-mean-lengths** [OPTIONS] _tree_ _file1_ [_file2_ ...]
 
 # DESCRIPTION
 
@@ -18,8 +18,11 @@ Compute the mean lengths for branches in the given topology.
 **-h**, **--help**
 : produce help message
 
-**--tree** _arg_
+**-T** _arg_, **--tree** _arg_
 : tree to re-root
+
+**--files** _arg_
+: tree samples to examine
 
 **-s** _arg_ (=0), **--skip** _arg_ (=0)
 : number of tree samples to skip
@@ -27,7 +30,7 @@ Compute the mean lengths for branches in the given topology.
 **-u** _arg_, **--until** _arg_
 : Read until this number of trees.
 
-**--prune** _arg_
+**--ignore** _arg_
 : Comma-separated taxa to remove
 
 **--simple**

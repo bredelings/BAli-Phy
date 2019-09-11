@@ -245,7 +245,6 @@ my @tree_names = get_consensus_trees("PP.tree",\@tree_consensus_values);
 my $size_arg = "";
 $size_arg = "--size=$max_iter" if defined($max_iter);
 my $prune_arg = "";
-my $prune_arg2 = "";
 
 print "\nSummarizing topology distribution ... ";
 if (-z "Results/consensus" || ! more_recent_than_all_of("Results/consensus",[@tree_files])) {
@@ -281,8 +280,7 @@ print "\nComputing mean branch lengths ... ";
         # Generate trees w/ node lengths.
 	if (! more_recent_than("Results/$tree.ltree",$tree_files[0])) 
 	{
-	    $prune_arg2 = "--prune $prune" if (defined($prune));
-	    exec_show("tree-mean-lengths @tree_files --tree=Results/$tree.tree --safe --show-node-lengths $max_arg $skip $subsample_string $prune_arg2 > Results/$tree.ltree");
+	    exec_show("tree-mean-lengths @tree_files --tree=Results/$tree.tree --safe --show-node-lengths $max_arg $skip $subsample_string $prune_arg > Results/$tree.ltree");
  	}
     }
 print "done.\n";

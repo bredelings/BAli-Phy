@@ -175,7 +175,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("files",value<vector<string> >()->composing(),"tree samples to examine")
 	("skip,s",value<int>()->default_value(0),"number of tree samples to skip")
 	("until,u",value<int>(),"Read until this number of trees.")
-	("prune",value<string>(),"Comma-separated taxa to remove")
+	("ignore",value<string>(),"Comma-separated taxa to remove")
 	("simple","Ignore all branches not in the query tree")
 	("subsample,x",value<int>()->default_value(1),"factor by which to sub-sample")
 	("var","report standard deviation of branch lengths instead of mean")
@@ -354,7 +354,7 @@ int main(int argc,char* argv[])
 
 	int subsample = args["subsample"].as<int>();
 
-	vector<string> prune = get_string_list(args, "prune");
+	vector<string> prune = get_string_list(args, "ignore");
 
 	//----------- Read the topology -----------//
 	SequenceTree Q = load_T(args);
