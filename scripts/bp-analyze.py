@@ -490,7 +490,7 @@ class Analysis(object):
         self.summarize_topology_distribution()
         self.compute_mean_branch_lengths()
         self.draw_trees()
-        self.compute_mixing_diagnostics()
+        self.compute_tree_mixing_diagnostics()
 
     def n_chains(self):
         return(len(self.mcmc_runs))
@@ -733,7 +733,8 @@ class Analysis(object):
                 raise Exception("Tree '{}' not found!".format(tree))
             assert(tree.endswith('.PP.tree'))
             tree2 = tree[0:-8]+'.tree'
-            self.exec_show(['tree-tool',tree,'--strip-internal-names','--name-all-nodes'],outfile=tree2)
+            if not more_recent_than(tree2,tree):
+                self.exec_show(['tree-tool',tree,'--strip-internal-names','--name-all-nodes'],outfile=tree2)
         print(" done.")
 
     # This routine computes mean branch lengths WITH NODE CIRCLES (*.ltree)
@@ -744,7 +745,8 @@ class Analysis(object):
             prefix = "Results/c{}".format(value)
             tree = prefix+".tree"
 
-            if more_recent_than_all_of("Results/{}.ltree",self.get_trees_files()):
+            outfile=prefix+".ltree"
+            if more_recent_than_all_of(outfile, self.get_trees_files()):
                 break
 
             cmd = ['tree-mean-lengths','--tree',tree,'--safe','--show-node-lengths']
@@ -758,7 +760,7 @@ class Analysis(object):
                 cmd.append("--skip={}".format(self.burnin))
             if self.until is not None:
                 cmd.append("--until={}".format(self.until))
-            outfile=prefix+".ltree"
+
             self.exec_show(cmd,outfile=outfile)
         print(" done.")
 
@@ -800,15 +802,18 @@ class Analysis(object):
             print(tree+' ',end='')
 
         for tree in ['greedy','MAP']:
-            filename = tree+".tree"
-            if path.exists('Results/'+filename):
-                self.exec_show(['draw-tree', filename,'--layout=equal-daylight'],cwd="Results")
-                self.exec_show(['draw-tree', filename,'--layout=equal-daylight','--output=svg'],cwd="Results")
+            filename = "Results/{}.tree".format(tree)
+            if path.exists(filename):
+                outname = "Results/{}-tree".format(tree)
+                if not more_recent_than(outname+".pdf", filename):
+                    self.exec_show(['draw-tree', tree+'.tree','--layout=equal-daylight'],cwd="Results")
+                if not more_recent_than(outname+".svg", filename):
+                    self.exec_show(['draw-tree', tree+'.tree','--layout=equal-daylight','--output=svg'],cwd="Results")
             print('{} '.format(tree), end='')
 
         print(". done.")
 
-    def compute_mixing_diagnostics(self):
+    def compute_tree_mixing_diagnostics(self):
         print("\nGenerate mixing diagnostics for topologies ...",end='')
 
         if not more_recent_than("Results/partitions","Results/consensus"):
