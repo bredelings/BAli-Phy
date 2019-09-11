@@ -171,7 +171,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description all("Allowed options");
     all.add_options()
 	("help,h", "produce help message")
-	("tree", value<string>(),"tree to re-root")
+	("tree,T", value<string>(),"tree to re-root")
+	("files",value<vector<string> >()->composing(),"tree samples to examine")
 	("skip,s",value<int>()->default_value(0),"number of tree samples to skip")
 	("until,u",value<int>(),"Read until this number of trees.")
 	("prune",value<string>(),"Comma-separated taxa to remove")
@@ -186,21 +187,27 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     // positional options
     positional_options_description p;
-    p.add("tree", 1);
+    p.add("files", -1);
   
     variables_map args;     
     store(command_line_parser(argc, argv).
 	  options(all).positional(p).run(), args);
-    notify(args);    
+    notify(args);
 
     if (args.count("help")) {
 	cout<<"Compute the mean lengths for branches in the given topology.\n\n";
-	cout<<"Usage: tree-mean-lengths <tree-file> < in-file\n\n";
+	cout<<"Usage: tree-mean-lengths [OPTIONS] <tree> <file1> [<file2> ...]\n\n";
 	cout<<all<<"\n";
 	exit(0);
     }
 
     if (args.count("verbose")) log_verbose = 1;
+
+    if (not args.count("tree"))
+	throw myexception()<<"No tree topology specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
+
+    if (not args.count("files") or args["files"].as<vector<string>>().empty())
+	throw myexception()<<"No filenames for trees specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
 
     return args;
 }
@@ -371,7 +378,15 @@ int main(int argc,char* argv[])
 	accum_branch_lengths_same_topology A(Q);
 
 	try {
-	    scan_trees(std::cin,skip,last,subsample,prune,Q.get_leaf_labels(), A);
+            vector<string> files;
+            if (args.count("files"))
+                files = args["files"].as<vector<string> >();
+
+            for(auto& file: files)
+            {
+                istream_or_ifstream f(std::cin,"-",file);
+                scan_trees(f,skip,last,subsample,prune,Q.get_leaf_labels(), A);
+            }
 	}
 	catch (std::exception& e) 
 	{
