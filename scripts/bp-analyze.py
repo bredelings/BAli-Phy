@@ -466,7 +466,7 @@ class Analysis(object):
         self.gnuplot_exe = find_exe('gnuplot', message='Some graphs will not be generated.\n')
         self.R_exe = find_exe('R', message='Some mixing graphs will not be generated.\n')
 
-        self.sub_partitions = args.subpartitions
+        self.subpartitions = args.subpartitions
         self.subsample = args.subsample
         self.prune = args.prune
         self.burnin = args.skip
@@ -482,7 +482,7 @@ class Analysis(object):
                                                                          self.mcmc_runs[i].get_cmd()))
         self.get_input_files()
 
-        self.tree_consensus_values = [0.5,0.66,0.8,0.9,0.95,0.99,1.0]
+        self.tree_consensus_levels = [0.5,0.66,0.8,0.9,0.95,0.99,1.0]
         self.alignment_consensus_values = [0.1,0.25,0.5,0.75]
 
         self.determine_burnin()
@@ -666,9 +666,42 @@ class Analysis(object):
 
     def summarize_topology_distribution(self):
         print("\nSummarizing topology distribution: ",end='')
-        cmd = ['trees-consensus']+self.get_trees_files()
+        cmd = ['trees-consensus','--map-tree=Results/MAP.PP.tree','--greedy-consensus=Results/greedy.PP.tree','--report=Results/consensus']+self.get_trees_files()
+        cmd.append("--support-levels=Results/c-levels.plot")
+        if self.subpartitions:
+            cmd.append("--sub-partitions")
+            cmd.append("--extended-support-levels=Results/extended-c-levels.plot")
+        if self.prune is not None:
+            cmd.append("--ignore={}".format(self.prune))
+        if self.subsample is not None and self.subsample != 1:
+            cmd.append("--subsample={}".format(self.subsample))
+        if self.burnin is not None:
+            cmd.append("--skip={}".format(self.burnin))
+        if self.until is not None:
+            cmd.append("--until={}".format(self.until))
+
+        consensus_trees=[]
+        for level in self.tree_consensus_levels:
+            filename = "Results/c{}.PP.tree".format(int(level*100))
+            consensus_trees.append("{}:{}".format(level,filename))
+        cmd.append("--consensus={}".format(','.join(consensus_trees)))
+
+        extended_consensus_trees=[]
+        for level in self.tree_consensus_levels:
+            filename = "Results/c{}.mtree".format(int(level*100))
+            extended_consensus_trees.append("{}:{}".format(level,filename))
+        if self.subpartitions:
+            cmd.append("--extended-consensus={}".format(','.join(extended_consensus_trees)))
+
+        extended_consensus_L=[]
+        for level in self.tree_consensus_levels:
+            filename = "Results/c{}.mlengths".format(int(level*100))
+            extended_consensus_L.append("{}:{}".format(level,filename))
+        if self.subpartitions:
+            cmd.append("--extended-consensus-L={}".format(','.join(extended_consensus_L)))
+
         if not more_recent_than_all_of("Results/consensus", self.get_trees_files()):
-            self.exec_show(cmd,outfile="Results/consensus")
+            self.exec_show(cmd)
         print(" done.")
 
 #----------------------------- SETUP 1 --------------------------#
@@ -722,11 +755,7 @@ if __name__ == '__main__':
 #if (-z "Results/consensus" || ! more_recent_than_all_of("Results/consensus",[@tree_files])) {
 #    my $sub_string = "--sub-partitions";
 #    $sub_string = "" if (!$sub_partitions);
-#    $prune_arg = "--ignore $prune" if (defined($prune));
 #
-#    my $select_trees_arg = "$max_arg $skip $subsample_string $prune_arg";
-#    my $levels_arg = "--support-levels=Results/c-levels.plot";
-#    $levels_arg = "$levels_arg --extended-support-levels=Results/extended-c-levels.plot" if ($sub_partitions);
 #    exec_show("trees-consensus @tree_files $select_trees_arg $min_support_arg $sub_string $consensus_arg $levels_arg --map-tree=Results/MAP.PP.tree --greedy-consensus=Results/greedy.PP.tree --report=Results/consensus");
 #    for my $tree (@tree_names)
 #    {
