@@ -492,6 +492,7 @@ class Analysis(object):
         print("-----------------------------------------------------------",file=self.log_shell_cmds)
 
         self.summarize_numerical_parameters()
+        self.summarize_topology_distribution()
 
     def get_input_files(self):
         return first_all_same([run.get_input_files() for run in self.mcmc_runs])
@@ -508,57 +509,36 @@ class Analysis(object):
     def get_log_files(self):
         return [run.get_log_file() for run in self.mcmc_runs]
 
-    def exec_show_write(self,cmd,outfile,**kwargs):
-        showcmd = ' '.join(["'{}'".format(word) for word in cmd]) + " > '{}'".format(outfile)
-        print(showcmd,file=self.log_shell_cmds)
-        args0 = kwargs.copy()
-        if "stdout" in kwargs:
-            raise Exception("exec_show_write: cannot specify stdout stream")
-        kwargs["stdout"] = open(outfile,'w+',encoding='utf-8')
-
-        if "stderr" not in kwargs:
-            kwargs["stderr"] = subprocess.PIPE
-
-        result = subprocess.run(cmd,**kwargs)
-
-        err_message = None
-        if "stderr" not in args0:
-            err_message = result.stderr.decode('utf-8')
-
-        code = result.returncode
-        if code != 0:
-            print("command: {}".format(showcmd),file=sys.stderr)
-            print(" exit: {}".format(code),file=sys.stderr)
-
-            print(" exit: {}".format(code),file=self.log_shell_cmds)
-            if err_message:
-                print("  err: {}".format(err_message),file=self.log_shell_cmds)
-                print("  err: {}".format(err_message),file=sys.stderr)
-            if path.exists(outfile):
-                os.remove(outfile)
-            exit(code)
-        elif self.verbose:
-            print("\n\t{}\n".format(showcmd))
-        return result
+    def get_trees_files(self):
+        return [run.get_trees_file() for run in self.mcmc_runs]
 
     def exec_show(self,cmd,**kwargs):
-        print(cmd,file=self.log_shell_cmds)
+        showcmd = ' '.join(["'{}'".format(word) for word in cmd])
 
-        args0 = kwargs.copy()
-        if "stdout" not in kwargs:
-            kwargs["stdout"] = subprocess.PIPE
+        subargs = dict()
+        if "outfile" in kwargs:
+            outfile = kwargs["outfile"]
+            subargs["stdout"] = open(outfile,'w+',encoding='utf-8')
+            showcmd += " > '{}'".format(outfile)
+        elif "stdout" in kwargs:
+            subargs["stdout"] = kwargs["stdout"]
+        else:
+            subargs["stdout"] = subprocess.PIPE
 
-        if "stderr" not in kwargs:
-            kwargs["stderr"] = subprocess.PIPE
+        if "stderr" in kwargs:
+            subargs["stderr"] = kwargs["stderr"]
+        else:
+            subargs["stderr"] = subprocess.PIPE
 
-        result = subprocess.run(cmd,**kwargs)
+        print(showcmd,file=self.log_shell_cmds)
+        result = subprocess.run(cmd,**subargs)
 
         out_message = None
-        if "stdout" not in args0:
+        if "stdout" not in kwargs and "outfile" not in kwargs:
             out_message = result.stdout.decode('utf-8')
 
         err_message = None
-        if "stderr" not in args0:
+        if "stderr" not in kwargs:
             err_message = result.stderr.decode('utf-8')
 
         code = result.returncode
@@ -573,6 +553,12 @@ class Analysis(object):
             if err_message:
                 print("  err: {}".format(err_message),file=self.log_shell_cmds)
                 print("  err: {}".format(err_message),file=sys.stderr)
+
+            if "outfile" in kwargs and path.exists(kwargs["outfile"]):
+                os.remove(kwargs["outfile"])
+            if "handler" in kwargs:
+                handler = kwargs["handler"]
+                handler(code)
             exit(code)
         elif self.verbose:
             print("\n\t{}\n".format(cmd))
@@ -675,9 +661,15 @@ class Analysis(object):
                 cmd.append("--skip={}".format(self.burnin))
             if self.until is not None:
                 cmd.append("--until={}".format(self.until))
-            self.exec_show_write(cmd,"Results/Report")
+            self.exec_show(cmd,outfile="Results/Report")
         print("done.")
 
+    def summarize_topology_distribution(self):
+        print("\nSummarizing topology distribution: ",end='')
+        cmd = ['trees-consensus']+self.get_trees_files()
+        if not more_recent_than_all_of("Results/consensus", self.get_trees_files()):
+            self.exec_show(cmd,outfile="Results/consensus")
+        print(" done.")
 
 #----------------------------- SETUP 1 --------------------------#
 if __name__ == '__main__':
