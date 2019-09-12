@@ -633,7 +633,6 @@ class Analysis(object):
         self.draw_alignments()
         self.compute_ancestral_states()
         self.compute_and_draw_AU_plots()
-        self.compute_marginal_likelihood()
         self.print_index_html()
 
     def n_chains(self):
@@ -1300,13 +1299,9 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
     def compute_and_draw_AU_plots(self):
         pass
 
-    def compute_marginal_likelihood(self):
-        return 0
-
     def print_index_html(self):
         print("\nReport written to 'Results/index.html");
 
-        
 #----------------------------- SETUP 1 --------------------------#
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate an HTML report summarizing MCMC runs for BAli-Phy and other software.",
@@ -1335,8 +1330,6 @@ if __name__ == '__main__':
 
 
 
-#&compute_ancestral_states(); # This needs to be after draw_alignments(), which reorders the alignments.
-#
 #&compute_and_draw_AU_plots();
 #
 #my $marginal_prob = &compute_marginal_likelihood();
@@ -2168,79 +2161,6 @@ if __name__ == '__main__':
 #
 #}
 #
-#sub compute_ancestral_states
-#{
-#    if ($personality =~ "bali-phy.*")
-#    {
-#        print "\nComputing ancestral state reconstructions: ";
-#	for(my $i=0;$i<$n_partitions;$i++)
-#        {
-#            my $p = $i+1;
-#
-#            my @afiles = get_alignments_for_partition($i);
-#            my $bad = 0;
-#            for my $afile (@afiles)
-#            {
-#                $bad++ if (! -e $afile);
-#            }
-#            if ($bad > 0)
-#            {
-#                print ".";
-#                next;
-#            }
-#
-#            die "wrong number of alignment and tree files for partition $i" if ((scalar @afiles) != (scalar @tree_files));
-#
-#            my $template = "Results/P${p}-max.fasta";
-#            $template = "Results/C1.P${p}.initial.fasta" if ($imodel_indices[$i] eq "--");
-#            my $tree = "Results/c66.tree";
-#
-#            my $cmd = "extract-ancestors -a ${template} -n ${tree} -g ${tree}";
-#
-#            foreach my $directory (@subdirectories)
-#            {
-#                $cmd = "${cmd} -A ${directory}/C1.P${p}.fastas -T ${directory}/C1.trees";
-#            }
-#
-#            my $output = "Results/P${p}.ancestors.fasta";
-#            if (!more_recent_than_all_of($output,[@tree_files]))
-#            {
-#                exec_show("${cmd} > ${output}");
-#            }
-#            print "*";
-#        }
-#	print " done.\n";
-#    }
-#}
-#
-#sub compute_consensus_alignments
-#{
-#    print "Computing consensus alignments:\n";
-#    for(my $i=0;$i<$n_partitions;$i++)
-#    {
-#	next if ($imodel_indices[$i] eq "--");
-#
-#	my $p = $i+1;
-#	my @afiles = get_alignments_for_partition($i);
-#	
-#	print " Partition $p: ";
-#	for my $cvalue (@alignment_consensus_values) {
-#	    my $value = $cvalue*100;
-#	    my $name = "P$p-consensus-$value";
-#	    print "c$value ";
-#	    if (! more_recent_than_all_of("Results/Work/$name-unordered.fasta",[@afiles]))
-#	    {
-#		my $infiles = join(' ',@afiles);
-#		exec_show("cut-range $infiles --skip=$burnin $size_arg | alignment-chop-internal --tree=Results/MAP.tree | alignment-consensus --cutoff=$cvalue> Results/Work/$name-unordered.fasta");
-#	    }
-#	    push @alignments,$name;
-#	    $alignment_names{$name} = "$value% consensus";
-#	}
-#	print "done.\n\n";
-#	push @AU_alignments,"P$p-consensus-10" if ($speed == 0);
-#    }
-#}
-#
 #sub get_partition_for_alignment
 #{
 #    my $alignment = shift;
@@ -2283,25 +2203,6 @@ if __name__ == '__main__':
 #	}
 #    }
 #}
-#
-#sub compute_marginal_likelihood
-#{
-#    my $marginal_prob = "unknown";
-#    if ($personality ne "treefile") 
-#    {
-#	print "Calculating marginal likelihood... ";
-#	
-#	if (!more_recent_than_all_of("Results/Pmarg",[@parameter_files])) {
-#	    my $likelihood = "likelihood";
-#	    $likelihood = "loglik" if ($personality eq "phylobayes");
-#	    exec_show("stats-select $likelihood --no-header < $parameter_files[0] | tail -n+$burnin | model_P > Results/Pmarg");
-#	}
-#	print "done.\n";
-#	$marginal_prob = `cat Results/Pmarg`;
-#    }
-#    return $marginal_prob;
-#}
-#
 #
 #sub check_input_file_names()
 #{
