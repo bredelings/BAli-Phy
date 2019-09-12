@@ -11,6 +11,11 @@ import itertools
 import glob
 import sys
 
+def flatten(l):
+    return [item for sublist in l for item in sublist]
+
+def file_is_empty(filename):
+    return path.getsize(filename) == 0
 
 def hsv_to_rgb(H,S,V):
     # decompose color range [0,6) into a discrete color (i) and fraction (f)
@@ -309,7 +314,7 @@ class MCMCRun(object):
         return None
 
     def compute_initial_alignments(self):
-        pass
+        return []
 
     def get_smodel_indices(self):
         return None
@@ -359,7 +364,7 @@ class BAliPhyRun(MCMCRun):
         return self.scale_model_indices
 
     def get_n_sequences(self):
-        features = get_alignment_info("Results/C1.P1.initial.fasta")
+        features = get_alignment_info("Results/P1.initial.fasta")
         return features["n_sequences"]
 
     def find_input_file_names_for_outfile(self,outfile):
@@ -463,12 +468,15 @@ class BAliPhyRun(MCMCRun):
 
     def compute_initial_alignments(self):
         print("Computing initial alignments: ",end='',flush=True)
+        alignment_names = []
         for i in range(self.n_partitions()):
-            name="C1.P{}.initial".format(i+1)
-            source = path.join(self.dir,name+".fasta")
+            name="P{}.initial".format(i+1)
+            source = path.join(self.dir,"C1."+name+".fasta")
             dest=path.join("Results","Work",name+"-unordered.fasta")
             shutil.copyfile(source,dest)
+            alignment_names.append(name)
         print(" done.")
+        return alignment_names
 
 class BAliPhy2_1Run(BAliPhyRun):
     def __init__(self,mcmc_output):
@@ -590,6 +598,9 @@ class Analysis(object):
         self.verbose = args.verbose
         self.speed = 1
 
+        # map from alignment name to alphabet name
+        self.alignments = dict()
+
         prefix=path.dirname(path.dirname(self.trees_consensus_exe))
         self.libexecdir = path.join(prefix,"lib","bali-phy","libexec")
         if not path.exists(self.libexecdir):
@@ -619,6 +630,11 @@ class Analysis(object):
         self.compute_tree_MDS()
         self.compute_initial_alignments()
         self.compute_wpd_alignments()
+        self.draw_alignments()
+        self.compute_ancestral_states()
+        self.compute_and_draw_AU_plots()
+        self.compute_marginal_likelihood()
+        self.print_index_html()
 
     def n_chains(self):
         return(len(self.mcmc_runs))
@@ -653,6 +669,9 @@ class Analysis(object):
 
     def get_models(self, name1, name2):
         return first_all_same([run.get_models(name1,name2) for run in self.mcmc_runs])
+
+    def get_alphabets(self):
+        return first_all_same([run.get_alphabets() for run in self.mcmc_runs])
 
     def get_alignments_files(self):
         return [run.get_alignments_files() for run in self.mcmc_runs]
@@ -870,7 +889,7 @@ class Analysis(object):
         if not more_recent_than_all_of("Results/consensus", self.get_trees_files()):
             self.exec_show(cmd)
         for tree in tree_names:
-            if not path.exists(tree) or os.stat(tree).st_size == 0:
+            if not path.exists(tree) or file_is_empty(tree):
                 raise Exception("Tree '{}' not found!".format(tree))
             assert(tree.endswith('.PP.tree'))
             tree2 = tree[0:-8]+'.tree'
@@ -1156,15 +1175,21 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 </html>""",file=x3d_file)
 
     def compute_initial_alignments(self):
-        self.run(0).compute_initial_alignments()
+        names = self.run(0).compute_initial_alignments()
+        for i in range(len(names)):
+            name = names[i]
+            self.alignments[name] = self.get_alphabets()[i]
+            self.make_ordered_alignment(name)
+
 
     def compute_wpd_alignments(self):
-        print("\nComputing WPD alignments: ", sep='',flush=True)
+        print("\nComputing WPD alignments: ", end='',flush=True)
         for i in range(self.n_partitions()):
             if self.get_imodel_indices()[i] is None:
                 continue
             afiles = self.get_alignments_for_partition(i)
-            name = "P{}-max".format(i+1)
+            name = "P{}.max".format(i+1)
+            self.alignments[name] = self.get_alphabets()[i]
             if not more_recent_than_all_of("Results/Work/{}-unordered.fasta".format(name),afiles):
                 cut_cmd=['cut-range']+afiles
                 if self.burnin is not None:
@@ -1181,8 +1206,107 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 
                 p1.wait()
                 p2.wait()
+                self.make_ordered_alignment(name)
+        print(" done.")
+
+    def reorder_alignment_by_tree(self,alignment,tree,outfile):
+        if not path.exists(tree):
+            print("Can't reorder alignment by tree '{}': tree file does not exist!".format(tree))
+        if file_is_empty(tree):
+            print("Can't reorder alignment by tree '{}': tree file is empty!".format(tree))
+        if not path.exists(alignment):
+            print("Can't reorder alignment '{}' by tree: alignment file does not exist!".format(tree))
+        if file_is_empty(alignment):
+            print("Can't reorder alignment '{}' by tree: alignment file is empty!".format(tree))
+        cmd = ['alignment-cat', alignment, '--reorder-by-tree={}'.format(tree)]
+        self.exec_show(cmd, outfile=outfile)
+        assert(path.exists(outfile))
+
+    def make_ordered_alignment(self,alignment):
+        ufilename = "Results/Work/{}-unordered.fasta".format(alignment)
+        filename = "Results/{}.fasta".format(alignment)
+        if not more_recent_than_all_of(filename, [ufilename,"Results/c50.tree"] ):
+            self.reorder_alignment_by_tree(ufilename,"Results/c50.tree",filename)
+        assert(path.exists(filename))
+        return filename
+
+    def color_scheme_for_alphabet(self,alphabet):
+        if alphabet == "Amino-Acids":
+            return "AA+contrast"
+        else:
+            return "DNA+contrast"
+
+    def draw_alignment(self,filename,color_scheme=None,outfile=None):
+        cmd = ['alignment-draw',filename,'--show-ruler']
+        if color_scheme is not None:
+            cmd += ['--color-scheme',color_scheme]
+        if outfile is None:
+            outfile = os.path.splitext(filename)[0]+'.html'
+        self.exec_show(cmd,outfile=outfile)
+        return outfile
+
+    def draw_alignments(self):
+        if not self.alignments:
+            return
+
+        print("Drawing alignments: ", end='', flush=True)
+        for (alignment,alphabet) in self.alignments.items():
+            filename = self.make_ordered_alignment(alignment)
+            color_scheme = self.color_scheme_for_alphabet(alphabet)
+            self.draw_alignment(filename, color_scheme)
+            print('*',end='',flush=True)
+
+        for i in range(self.n_partitions()):
+            if self.get_imodel_indices()[i] is None:
+                continue
+
+            outfile = "Results/P{}.initial-diff.AU".format(i+1)
+            initial = "Results/P{}.initial.fasta".format(i+1)
+            wpd = "Results/P{}.max.fasta".format(i+1)
+            self.exec_show(['alignments-diff',initial,wpd],outfile=outfile)
+
+            outhtml = "Results/P{}.initial-diff.html".format(i+1)
+            self.exec_show(['alignment-draw',initial,'--scale=identity','--AU',outfile,'--show-ruler','--color-scheme=diff[1]+contrast'],outfile=outhtml)
+            print("*",end='',flush=True);
+
+        print(" done.")
 
 
+    def compute_ancestral_states(self):
+        for i in range(self.n_partitions()):
+            afiles = self.get_alignments_for_partition(i)
+
+            if self.get_imodel_indices()[i] is None:
+                bad = 0
+                for afile in afiles:
+                    if afile is None or not path.exists(afile):
+                        bad += 1
+                if bad > 0:
+                    continue
+            assert(len(afiles) == self.n_chains())
+
+            template = "Results/P{}.max.fasta".format(i+1)
+            if self.get_imodel_indices()[i] is None:
+                template = "Results/P{}.initial.fasta".format(i+1)
+            tree = "Results/c50.tree"
+            cmd = ['extract-ancestors','-a',template,'-n',tree,'-g',tree]
+            for dir in [run.dir for run in self.mcmc_runs]:
+                cmd += ['-A',path.join(dir,'C1.P{}.fastas'.format(i+1)),
+                        '-T',path.join(dir,'C1.trees')]
+            output = "Results/P{}.ancestors.fasta".format(i+1)
+            if not more_recent_than_all_of(output,self.get_trees_files()+flatten(self.get_alignments_files())):
+                self.exec_show(cmd,outfile=output)
+
+    def compute_and_draw_AU_plots(self):
+        pass
+
+    def compute_marginal_likelihood(self):
+        return 0
+
+    def print_index_html(self):
+        print("\nReport written to 'Results/index.html");
+
+        
 #----------------------------- SETUP 1 --------------------------#
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate an HTML report summarizing MCMC runs for BAli-Phy and other software.",
@@ -1210,10 +1334,7 @@ if __name__ == '__main__':
 #    scale_models = analysis.get_models("scale model", "scales")
 
 
-#&compute_consensus_alignments() if ($do_consensus_alignments);
-#
-#&draw_alignments();
-#
+
 #&compute_ancestral_states(); # This needs to be after draw_alignments(), which reorders the alignments.
 #
 #&compute_and_draw_AU_plots();
@@ -2139,68 +2260,6 @@ if __name__ == '__main__':
 #    return $p;
 #}
 #
-#sub draw_alignments
-#{
-#    return if ($#alignments == -1);
-#
-#    print "Drawing alignments: ";
-#    for my $alignment (@alignments) 
-#    {
-#	if (! more_recent_than("Results/$alignment.fasta","Results/Work/$alignment-unordered.fasta") ||
-#	    ! more_recent_than("Results/$alignment.fasta","Results/c50.tree")) {
-#	    exec_show("alignment-cat Results/Work/$alignment-unordered.fasta --reorder-by-tree=Results/c50.tree > Results/$alignment.fasta");
-#	}
-#	
-#	my $color_scheme="DNA+contrast";
-#	my $p = get_partition_for_alignment($alignment);
-#	if (defined($p))
-#	{
-#	    $color_scheme="AA+contrast" if ($alphabets[$p] eq "Amino-Acids");
-#	}
-#	else
-#	{
-#	    print $LOG "WARNING: Don't know partition for alignment '$alignment'\n";
-#	}
-#	
-#	if (! more_recent_than("Results/$alignment.html","Results/$alignment.fasta")) {
-#	    exec_show("alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=${color_scheme} > Results/$alignment.html");
-#	}
-#        print "*";
-#    }
-#    
-#    # Generate  alignments-diff
-#    for my $alignment (@alignments) 
-#    {
-#	my $p = get_partition_for_alignment($alignment);
-#
-#        if (!defined($p) || $imodel_indices[$p] eq "--")
-#        {
-#            print ".";
-#            next;
-#        }
-#	
-#	# Find alignment to compare to.
-#	my $p1 = $p+1;
-#	my $compare_name = "P$p1-max";
-#	my $compare_fasta = "Results/${compare_name}.fasta";
-#
-#	next if ($alignment eq $compare_name);
-#
-#	next if (! -e ${compare_fasta});
-#	
-#	if (! more_recent_than("Results/$alignment-diff.fasta","Results/$alignment.fasta") || 
-#	    ! more_recent_than("Results/$alignment-diff.AU","Results/$alignment.fasta") )
-#	{
-#	    exec_show("alignments-diff Results/$alignment.fasta ${compare_fasta} > Results/$alignment-diff.AU");
-#	}
-#	
-#	if (! more_recent_than("Results/$alignment-diff.html","Results/$alignment-diff.AU")) {
-#	    exec_show("alignment-draw Results/$alignment.fasta --scale=identity --AU Results/$alignment-diff.AU --show-ruler --color-scheme=diff[1]+contrast > Results/$alignment-diff.html");
-#	}
-#        print "*";
-#    }
-#    print " done.\n";
-#}
 #
 #sub compute_and_draw_AU_plots
 #{
