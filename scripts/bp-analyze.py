@@ -308,6 +308,18 @@ class MCMCRun(object):
     def n_iterations(self):
         return None
 
+    def compute_initial_alignments(self):
+        pass
+
+    def get_smodel_indices(self):
+        return None
+
+    def get_imodel_indices(self):
+        return None
+
+    def get_scale_model_indices(self):
+        return None
+
 class BAliPhyRun(MCMCRun):
 
     def __init__(self,mcmc_output):
@@ -381,9 +393,6 @@ class BAliPhyRun(MCMCRun):
     def n_partitions(self):
         return len(self.get_input_files())
 
-    def run(self,p):
-        return self.mcmc_runs[p]
-
     def find_tree_prior(self):
         with open(self.out_file, encoding='utf-8') as file:
             for line in file:
@@ -451,6 +460,15 @@ class BAliPhyRun(MCMCRun):
             print("Error: Tree file '{}' has no samples!".format(self.get_tree_file()))
             exit(1)
         return n
+
+    def compute_initial_alignments(self):
+        print("Computing initial alignments: ",end='',flush=True)
+        for i in range(self.n_partitions()):
+            name="C1.P{}.initial".format(i+1)
+            source = path.join(self.dir,name+".fasta")
+            dest=path.join("Results","Work",name+"-unordered.fasta")
+            shutil.copyfile(source,dest)
+        print(" done.")
 
 class BAliPhy2_1Run(BAliPhyRun):
     def __init__(self,mcmc_output):
@@ -599,9 +617,14 @@ class Analysis(object):
         self.compute_tree_mixing_diagnostics()
         self.compute_srq_plots()
         self.compute_tree_MDS()
+        self.compute_initial_alignments()
+        self.compute_wpd_alignments()
 
     def n_chains(self):
         return(len(self.mcmc_runs))
+
+    def run(self,p):
+        return self.mcmc_runs[p]
 
     def get_libexec_script(self,file):
         filepath = path.join(self.libexecdir,file)
@@ -625,6 +648,9 @@ class Analysis(object):
     def n_partitions(self):
         return first_all_same([run.n_partitions() for run in self.mcmc_runs])
 
+    def get_imodel_indices(self):
+        return first_all_same([run.get_imodel_indices() for run in self.mcmc_runs])
+
     def get_models(self, name1, name2):
         return first_all_same([run.get_models(name1,name2) for run in self.mcmc_runs])
 
@@ -636,6 +662,9 @@ class Analysis(object):
 
     def get_trees_files(self):
         return [run.get_trees_file() for run in self.mcmc_runs]
+
+    def get_alignments_for_partition(self,p):
+        return [run.get_alignments_files()[p] for run in self.mcmc_runs]
 
     def exec_show_result(self,cmd,**kwargs):
         showcmd = ' '.join(["'{}'".format(word) for word in cmd])
@@ -1098,6 +1127,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                 script3d = self.get_libexec_script("tree-plot3-3D.R")
                 point_string = self.Rexec(script3d, [str(L1), str(L2), str(L3), matfile])
                 self.write_x3d_file("Results", "tree-1-2-3.points", point_string)
+        print(" done.")
 
     def write_x3d_file(self,dir,filename,point_string):
         assert(point_string is not None)
@@ -1124,6 +1154,34 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
     </x3d>
   </body>
 </html>""",file=x3d_file)
+
+    def compute_initial_alignments(self):
+        self.run(0).compute_initial_alignments()
+
+    def compute_wpd_alignments(self):
+        print("\nComputing WPD alignments: ", sep='',flush=True)
+        for i in range(self.n_partitions()):
+            if self.get_imodel_indices()[i] is None:
+                continue
+            afiles = self.get_alignments_for_partition(i)
+            name = "P{}-max".format(i+1)
+            if not more_recent_than_all_of("Results/Work/{}-unordered.fasta".format(name),afiles):
+                cut_cmd=['cut-range']+afiles
+                if self.burnin is not None:
+                    cut_cmd.append("--skip={}".format(self.burnin))
+                if self.until is not None:
+                    cut_cmd.append("--until={}".format(self.until))
+                p1 = subprocess.Popen(cut_cmd,  stdout=subprocess.PIPE)
+
+                chop_cmd=['alignment-chop-internal','--tree=Results/MAP.tree']
+                p2 = subprocess.Popen(chop_cmd, stdout=subprocess.PIPE, stdin=p1.stdout)
+
+                self.exec_show(['alignment-max'],stdin=p2.stdout, outfile="Results/Work/{}-unordered.fasta".format(name))
+                max_cmd=['alignment-max']
+
+                p1.wait()
+                p2.wait()
+
 
 #----------------------------- SETUP 1 --------------------------#
 if __name__ == '__main__':
@@ -1152,14 +1210,6 @@ if __name__ == '__main__':
 #    scale_models = analysis.get_models("scale model", "scales")
 
 
-#&compute_initial_alignments();
-#
-#&compute_muscle_alignment();
-#
-#&compute_probcons_alignment();
-#
-#&compute_wpd_alignments();
-#
 #&compute_consensus_alignments() if ($do_consensus_alignments);
 #
 #&draw_alignments();
@@ -1185,8 +1235,6 @@ if __name__ == '__main__':
 #}
 #close $CONSENSUS;
 #
-## 14. Traceplots for scalar variables
-#
 #my @var_names = ();
 #my %median = ();
 #my %CI_low = ();
@@ -1196,8 +1244,6 @@ if __name__ == '__main__':
 #my %ACT = ();
 #my %ESS = ();
 #my %Burnin = ();
-#
-#&generate_trace_plots();
 #
 #&print_index_html();
 #
@@ -2001,160 +2047,6 @@ if __name__ == '__main__':
 #
 #}
 #
-#sub Rexec
-#{
-#    return if (!$have_R);
-#
-#    my $script = shift;
-#
-#    my $args = shift;
-#
-#    exec_show("R --slave --vanilla --args $args < $script");
-#}
-#
-#sub show_help()
-#{
-#    print "Generate an HTML report summarizing bali-phy runs.\n\n";
-#    print "Usage: bp-analyze [OPTIONS] <directory1> [<directory2> ... ]\n\n";
-#    print "Options:\n";
-#    print "  -h [ --help ]             Print usage information.\n";
-#    print "  --skip=NUM                Skip NUM iterations as burnin\n";
-#    print "  --subsample=NUM           Keep only ever NUM iterations\n\n";
-#}
-#
-#
-#    elsif ($personality eq "beast")
-#    {
-#	print "Summarizing output files from BEAST:\n";
-#	my @tree_files = glob("*.trees");
-#	foreach my $tree_file (@tree_files)
-#	{
-#	    check_file_exists($tree_file);
-#	    my $prefix = get_file_prefix($tree_file);
-#	    push @parameter_files,check_file_exists("$prefix.log");
-#	}
-#    }
-#    else {
-#	print "Error: unrecognized analysis of type '$personality'";
-#	exit(1);
-#    }
-#}
-#
-#
-#sub compute_initial_alignments
-#{
-#    if ($personality =~ "bali-phy.*") {
-#	print "\nComputing initial alignments... ";
-#	for(my $i=0;$i<$n_partitions;$i++)
-#	{
-#	    my $p = $i+1;
-#	    my $name = "C1.P$p.initial";
-#	    push @alignments,$name;
-#	    $alignment_names{$name} = "Initial";
-#	    
-#	    # These initial alignments should never change!
-#	    if (! -s "Results/Work/$name-unordered.fasta") 
-#	    {
-#		my $dir1 = $subdirectories[0];
-#		exec_show("cp $dir1/$name.fasta Results/Work/$name-unordered.fasta");
-#	    }
-#	}
-#	print "done.\n";
-#    }
-#}
-#
-#sub compute_muscle_alignment
-#{
-#    if ($personality =~ "bali-phy.*") {
-#	if ($muscle) {
-#	    print "\nComputing MUSCLE alignment... ";
-#	    
-#	    for(my $i=0;$i<$n_partitions;$i++) {
-#		my $p = ($i+1);
-#		my $name = "P$p-muscle";
-#		if (! more_recent_than("Results/Work/$name-unordered.fasta", "Results/Work/P$p-initial-unordered.fasta")) {
-#		    exec_show("muscle -in Results/Work/P$p-initial-unordered.fasta -out Results/Work/$name-unordered.fasta -quiet");
-#		}
-#		push @alignments,$name;
-#		$alignment_names{$name} = "MUSCLE";
-#		
-#	    }
-#	    print "done.\n";
-#	}
-#    }
-#}
-#
-#sub compute_probcons_alignment
-#{
-## 6.5. Compute ProbCons alignments
-#
-#    if ($personality =~ "bali-phy.*") {
-#	if ($probcons) {
-#	    print "\nComputing ProbCons alignment... ";
-#	    
-#	    for(my $i=0;$i<$n_partitions;$i++) {
-#		my $p = ($i+1);
-#		my $name = "P$p-probcons";
-#		
-##    my $alignment_info = get_alignment_info("Results/Work/P$p-initial-unordered.fasta");
-#		my $alphabet = $alphabets[$i];
-#		
-#		if ($alphabet =~ /RNA nucleotides/) {
-#		    if (! more_recent_than("Results/Work/$name-unordered.fasta", "Results/Work/P$p-initial-unordered.fasta")) {
-#			exec_show("probcons-RNA Results/Work/P$p-initial-unordered.fasta > Results/Work/$name-unordered.fasta 2>/dev/null");
-#		    }
-#		}
-#		elsif (! more_recent_than("Results/Work/$name-unordered.fasta", "Results/Work/P$p-initial-unordered.fasta")) {
-#		    exec_show("probcons Results/Work/P$p-initial-unordered.fasta > Results/Work/$name-unordered.fasta 2>/dev/null");
-#		}
-#		push @alignments,$name;
-#		$alignment_names{$name} = "ProbCons";
-#		
-#	    }
-#	    print "done.\n";
-#	}
-#    }
-#}
-#
-#
-#sub get_alignments_for_partition
-#{
-#    my $i=shift;
-#    my @args=();
-#    foreach my $a (@partition_samples)
-#    {
-#	push @args,${$a}[$i];
-#    }
-#    return @args;
-#}
-#
-#sub compute_wpd_alignments
-#{
-#    if ($personality =~ "bali-phy.*") {
-#	print "\nComputing WPD alignments... ";
-#
-#	for(my $i=0;$i<$n_partitions;$i++) 
-#	{
-#	    next if ($imodel_indices[$i] eq "--");
-#	
-#	    my $p = $i+1;
-#	    my @afiles = get_alignments_for_partition($i);
-#	    
-#	    my $name = "P$p-max";
-#	    if (! more_recent_than_all_of("Results/Work/$name-unordered.fasta",[@afiles]))
-#	    {
-#		my $infiles = join(' ',@afiles);
-#		exec_show("cut-range $infiles --skip=$burnin $size_arg | alignment-chop-internal --tree=Results/MAP.tree | alignment-max> Results/Work/$name-unordered.fasta");
-#	    }
-#	    push @alignments,$name;
-#	    $alignment_names{$name} = "Best (WPD)";
-#	    push @AU_alignments,$name;
-#	}
-#	
-#	print "done.\n";
-#    }
-#}
-#
 #sub compute_ancestral_states
 #{
 #    if ($personality =~ "bali-phy.*")
@@ -2352,106 +2244,6 @@ if __name__ == '__main__':
 #}
 #
 #
-#sub generate_trace_plots
-#{
-#    
-#    if ($#parameter_files > -1) 
-#    {
-#	open my $VARS, $parameter_files[0];
-#	my $header = portable_readline($VARS);
-#	while ($header eq "" or substr($header,0,2) eq "# ") {
-#	    $header = portable_readline($VARS);
-#	}
-#	chomp $header;
-#	@var_names = split(/\t/,$header);
-#	close $VARS;
-#	
-#	print "Analyzing scalar variables ... ";
-#
-#	open my $REPORT, "Results/Report";
-#	
-#	while (my $line = portable_readline($REPORT)) {
-#	    chomp $line;
-#	    next if ($line eq "");
-#	    
-#	    if ($line =~ /\s+(.+) ~ (.+)\s+\((.+),(.+)\)/)
-#	    {
-#		my $var = $1;
-#		$median{$var} = $2;
-#		$CI_low{$var} = $3;
-#		$CI_high{$var} = $4;
-#
-#		$line = portable_readline($REPORT);
-#		$line =~ /t @ (.+)\s+Ne = ([^ ]+)\s+burnin = (Not Converged!|[^ ]+)/;
-#		$ACT{$var} = $1;
-#		$ESS{$var} = $2;
-#		$Burnin{$var} = $3;
-#
-#		$line = portable_readline($REPORT);
-#		if ($line =~ /PSRF-80%CI = ([^ ]+)\s+PSRF-RCF = ([^ ]+)/)
-#		{
-#		    $PSRF_CI80{$var} = $1;
-#		    $PSRF_RCF{$var} = $2;
-#		}
-#	    }
-#	    elsif ($line =~ /\s+(.+) = (.+)/) {
-#		my $var = $1;
-#		$median{$var} = $2;
-#	    }
-#	}
-#
-#	print "done\n";
-#
-#	return if (!$do_trace_plots);
-#	
-#	print "Generating trace-plots ... ";
-#
-#	my $Nmax = 5000;
-#	
-#	for(my $i=1;$i<= $#var_names; $i++)
-#	{
-#	    next if (more_recent_than("Results/$i.trace.png",$parameter_files[0]));
-#	    
-#	    my $var = $var_names[$i];
-#	    next if (!defined($CI_low{$var}));
-#	    
-#	    my $file1 = "Results/Work/T1.p.$i";
-#	    if ($personality =~ "bali-phy.*") {
-#		exec_show("stats-select iter '$var' --no-header < $parameter_files[0] > $file1");
-#	    }
-#	    elsif ($personality =~ "phylobayes.*") {
-#		exec_show("stats-select time '$var' --no-header < $parameter_files[0] > $file1");
-#	    }
-#	    elsif ($personality =~ "beast.*")
-#	    {
-#		exec_show("stats-select state '$var' --no-header < $parameter_files[0] > $file1");
-#	    }
-#	    
-#	    my $file2 = $file1.".2";
-#	    
-#	    my $N = $n_iterations[0] - $burnin;
-#	    
-#	    $N = 1000 if ($N > 1000);
-#	    
-#	    my $factor = ceil(($n_iterations[0] - $burnin) / $N);
-#	    
-#	    exec_show("subsample --skip=$burnin $factor < $file1 > $file2");
-#	
-#	    `gnuplot <<EOF
-#set terminal png size 800,600
-#set output "Results/$i.trace.png"
-#set key right bottom
-#set xlabel "Iteration"
-#set ylabel "$var"
-#plot '$file2' title '$var' with lines
-#EOF` if ($have_gnuplot);
-#	}
-#	
-#	print "done\n";
-#    }
-#}
-#
-#
 #sub check_input_file_names()
 #{
 #    return 0 if (! -e "Results/input_files");
@@ -2469,37 +2261,6 @@ if __name__ == '__main__':
 #    return compare_arrays( [@old_input_file_names], [@input_file_names]);
 #}
 #
-
-#sub write_out_file_names()
-#{
-#    open my $FILE,">Results/out_files";
-#
-#    print $FILE join("\n",@out_files);
-#
-#    close $FILE;
-#}
-#
-#sub check_burnin()
-#{
-#    return 0 if (! -e "Results/burnin");
-#    open my $FILE,"Results/burnin";
-#
-#    my $line = portable_readline($FILE);
-#    chomp $line;
-#
-#    close $FILE;
-#
-#    return ($burnin == $line);
-#}
-#
-#sub write_burnin()
-#{
-#    open my $FILE,">Results/burnin";
-#
-#    print $FILE "$burnin\n";
-#
-#    close $ FILE;
-#}
 #
 #sub do_cleanup
 #{
@@ -2522,26 +2283,6 @@ if __name__ == '__main__':
 #    rmdir $dir or print "error - $!";
 #}
 #
-#sub compare_arrays {
-#    my ($first, $second) = @_;
-#    no warnings;  # silence spurious -w undef complaints
-#    return 0 unless @$first == @$second;
-#    for (my $i = 0; $i < @$first; $i++) {
-#	return 0 if $first->[$i] ne $second->[$i];
-#    }
-#    return 1;
-#}  
-#
-
-#sub show_array
-#{
-#    my $spacer = shift;
-#    my $array = shift;
-#    foreach my $entry (@$array)
-#    {
-#	print $spacer.$entry."\n";
-#    }
-#}
 #
 #sub show_array_differences
 #{
@@ -2772,50 +2513,6 @@ if __name__ == '__main__':
 #    exit(1);
 #}
 #
-
-#sub more_recent_than
-#{
-#    my $filename1 = shift;
-#    my $filename2 = shift;
-#
-#    die "I can't open '$filename2'" if (! -f $filename2);
-#    return 0 if (! -f $filename1);
-#
-#    my $age1 = -M $filename1;
-#    my $age2 = -M $filename2;
-#
-#    return 1 if ($age1 <= $age2);
-#    return 0;
-#}
-#
-#sub more_recent_than_all_of
-#{
-#    my $filename1 = shift;
-#    my $temp = shift;
-#    my @filenames2 = @$temp;
-#
-#    foreach my $filename2 (@filenames2) {
-#	return 0 if (!more_recent_than($filename1,$filename2));
-#    }
-#
-#    return 1;
-#}
-#
-#sub get_prev_burnin
-#{
-#    my $prev_burnin;
-#    $prev_burnin = `cat Results/burnin` if (-e "Results/burnin");
-#    return $prev_burnin;
-#}
-#
-#sub record_burnin
-#{
-#    open BURN,">Results/burnin";
-#    print BURN $burnin;
-#    close BURN;
-#}
-#
-
 #sub tooltip
 #{
 #    my $text = shift;
