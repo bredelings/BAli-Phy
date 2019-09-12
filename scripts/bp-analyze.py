@@ -473,7 +473,8 @@ class BAliPhyRun(MCMCRun):
             name="P{}.initial".format(i+1)
             source = path.join(self.dir,"C1."+name+".fasta")
             dest=path.join("Results","Work",name+"-unordered.fasta")
-            shutil.copyfile(source,dest)
+            if not more_recent_than(dest,source):
+                shutil.copyfile(source,dest)
             alignment_names.append(name)
         print(" done.")
         return alignment_names
@@ -630,8 +631,8 @@ class Analysis(object):
         self.compute_tree_MDS()
         self.compute_initial_alignments()
         self.compute_wpd_alignments()
-        self.draw_alignments()
         self.compute_ancestral_states()
+        self.draw_alignments()
         self.compute_and_draw_AU_plots()
         self.print_index_html()
 
@@ -1200,8 +1201,8 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                 chop_cmd=['alignment-chop-internal','--tree=Results/MAP.tree']
                 p2 = subprocess.Popen(chop_cmd, stdout=subprocess.PIPE, stdin=p1.stdout)
 
-                self.exec_show(['alignment-max'],stdin=p2.stdout, outfile="Results/Work/{}-unordered.fasta".format(name))
                 max_cmd=['alignment-max']
+                self.exec_show(max_cmd,stdin=p2.stdout, outfile="Results/Work/{}-unordered.fasta".format(name))
 
                 p1.wait()
                 p2.wait()
@@ -1217,8 +1218,9 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             print("Can't reorder alignment '{}' by tree: alignment file does not exist!".format(tree))
         if file_is_empty(alignment):
             print("Can't reorder alignment '{}' by tree: alignment file is empty!".format(tree))
-        cmd = ['alignment-cat', alignment, '--reorder-by-tree={}'.format(tree)]
-        self.exec_show(cmd, outfile=outfile)
+        if not more_recent_than_all_of(outfile,[tree,alignment]):
+            cmd = ['alignment-cat', alignment, '--reorder-by-tree={}'.format(tree)]
+            self.exec_show(cmd, outfile=outfile)
         assert(path.exists(outfile))
 
     def make_ordered_alignment(self,alignment):
@@ -1235,12 +1237,30 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         else:
             return "DNA+contrast"
 
-    def draw_alignment(self,filename,color_scheme=None,outfile=None):
-        cmd = ['alignment-draw',filename,'--show-ruler']
-        if color_scheme is not None:
-            cmd += ['--color-scheme',color_scheme]
+    def draw_alignment(self,filename,**kwargs):
+        cmd = ['alignment-draw',filename]
+
+        if "color_scheme" in kwargs:
+            color_scheme = kwargs["color_scheme"]
+            if color_scheme is not None:
+                cmd += ['--color-scheme',color_scheme]
+
+        if "ruler" in kwargs:
+            if kwargs["ruler"]:
+                cmd += ['--show-ruler']
+
+        if "AU" in kwargs:
+            AU = kwargs["AU"]
+            if AU is not None:
+                cmd += ['--AU',AU]
+
+        if "outfile" in kwargs:
+            outfile = kwargs["outfile"]
+        else:
+            outfile = None
         if outfile is None:
             outfile = os.path.splitext(filename)[0]+'.html'
+
         self.exec_show(cmd,outfile=outfile)
         return outfile
 
@@ -1252,7 +1272,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         for (alignment,alphabet) in self.alignments.items():
             filename = self.make_ordered_alignment(alignment)
             color_scheme = self.color_scheme_for_alphabet(alphabet)
-            self.draw_alignment(filename, color_scheme)
+            self.draw_alignment(filename, color_scheme=color_scheme, ruler=True)
             print('*',end='',flush=True)
 
         for i in range(self.n_partitions()):
@@ -1272,9 +1292,13 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 
 
     def compute_ancestral_states(self):
+        print("Computing ancestral state alignment: ",end='',flush=True)
         for i in range(self.n_partitions()):
             afiles = self.get_alignments_for_partition(i)
-
+            name = 'P{}.ancestors'.format(i+1)
+#           We can't do AU on this, since it has too many rows!
+#           We should be able to draw it though.
+#            self.alignments[name] = self.get_alphabets()[i]
             if self.get_imodel_indices()[i] is None:
                 bad = 0
                 for afile in afiles:
@@ -1293,11 +1317,46 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                 cmd += ['-A',path.join(dir,'C1.P{}.fastas'.format(i+1)),
                         '-T',path.join(dir,'C1.trees')]
             output = "Results/P{}.ancestors.fasta".format(i+1)
-            if not more_recent_than_all_of(output,self.get_trees_files()+flatten(self.get_alignments_files())):
+            if not more_recent_than_all_of(output,self.get_trees_files()+list(filter(lambda x:x is not None,flatten(self.get_alignments_files())))):
                 self.exec_show(cmd,outfile=output)
+        print(" done.")
 
     def compute_and_draw_AU_plots(self):
-        pass
+        for (alignment,alphabet) in self.alignments.items():
+            m = re.match('^P([0-9]+).*',alignment)
+            if m:
+                i = int(m.group(1))-1
+                afile = "Results/{}.fasta".format(alignment)
+                afiles = self.get_alignments_for_partition(i)
+                if None in afiles:
+                    continue
+                print("Generating AU values for '{}'...".format(alignment),end='',flush=True)
+                AUfile = "Results/{}-AU.prob".format(alignment)
+                if not more_recent_than_all_of(AUfile, afiles):
+                    cut_cmd=['cut-range']+afiles
+                    if self.burnin is not None:
+                        cut_cmd.append("--skip={}".format(self.burnin))
+                    if self.until is not None:
+                        cut_cmd.append("--until={}".format(self.until))
+                    p1 = subprocess.Popen(cut_cmd,  stdout=subprocess.PIPE)
+
+                    chop_cmd=['alignment-chop-internal','--tree=Results/MAP.tree']
+                    p2 = subprocess.Popen(chop_cmd, stdout=subprocess.PIPE, stdin=p1.stdout)
+
+                    gild_cmd = ['alignment-gild',afile,'Results/MAP.tree','--max-alignments=500']
+                    self.exec_show(gild_cmd, stdin=p2.stdout, outfile=AUfile)
+
+                    p1.wait()
+                    p2.wait()
+
+                html_file = "Results/{}-AU.html".format(alignment)
+                if not more_recent_than_all_of(html_file,[afile,AUfile]):
+                    color_scheme=self.color_scheme_for_alphabet(alphabet)
+                    color_scheme += "+fade+fade+fade+fade"
+                    self.draw_alignment(afile,ruler=True,AU=AUfile,color_scheme=color_scheme,outfile=html_file)
+                print(' done.')
+
+
 
     def print_index_html(self):
         print("\nReport written to 'Results/index.html");
@@ -1330,39 +1389,6 @@ if __name__ == '__main__':
 
 
 
-#&compute_and_draw_AU_plots();
-#
-#my $marginal_prob = &compute_marginal_likelihood();
-#
-## 13. Get # of topologies sampled
-#
-#my $n_topologies = exec_show("pickout n_topologies -n < Results/consensus");
-#
-#my $n_topologies_95;
-#
-#open my $CONSENSUS, "Results/consensus";
-#while(my $line = portable_readline($CONSENSUS)) {
-#    if ($line =~ /contains ([^ ]+) topologies/) {
-#	$n_topologies_95 = $1;
-#	last;
-#    }
-#}
-#close $CONSENSUS;
-#
-#my @var_names = ();
-#my %median = ();
-#my %CI_low = ();
-#my %CI_high = ();
-#my %PSRF_CI80 = ();
-#my %PSRF_RCF = ();
-#my %ACT = ();
-#my %ESS = ();
-#my %Burnin = ();
-#
-#&print_index_html();
-#
-#print "\nReport written to 'Results/index.html'\n";
-#
 ##---------------------------------------- end execution ---------------------------
 #
 #
@@ -2180,29 +2206,6 @@ if __name__ == '__main__':
 #    return $p;
 #}
 #
-#
-#sub compute_and_draw_AU_plots
-#{
-#    for my $alignment (@AU_alignments) 
-#    {
-#	if ($alignment =~ /^P([^-]+)-.*/) {
-#	    print "Generating AU values for $alignment... ";
-#	    my $p = $1;
-#	    my @afiles = get_alignments_for_partition($p-1);
-#	    
-#	    if (!more_recent_than_all_of("Results/$alignment-AU.prob",[@afiles])) 
-#	    {
-#		my $infiles = join(' ',@afiles);
-#		exec_show("cut-range $infiles --skip=$burnin $size_arg | alignment-chop-internal --tree=Results/MAP.tree | alignment-gild Results/$alignment.fasta Results/MAP.tree --max-alignments=500 > Results/$alignment-AU.prob");
-#	    }
-#	    print "done.\n";
-#	    my $result = exec_result("alignment-draw Results/$alignment.fasta --show-ruler --AU Results/$alignment-AU.prob --color-scheme=DNA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html 2>/dev/null");
-#	    if ($result) {
-#		exec_show("alignment-draw Results/$alignment.fasta --show-ruler --AU Results/$alignment-AU.prob --color-scheme=AA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html");
-#	    }
-#	}
-#    }
-#}
 #
 #sub check_input_file_names()
 #{
