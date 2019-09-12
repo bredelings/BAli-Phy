@@ -192,9 +192,6 @@ def check_file_exists(filename):
         exit(1)
     return filename
 
-def get_alignment_info(filename):
-    pass
-
 def arg_max(xs):
     arg = None
     val = None
@@ -304,7 +301,7 @@ class MCMCRun(object):
     def n_partitions(self):
         return 1
 
-    def get_n_sequences(self):
+    def get_n_sequences(self,p):
         return None
 
     def get_alphabets(self):
@@ -363,8 +360,8 @@ class BAliPhyRun(MCMCRun):
     def get_scale_imodel_indices(self):
         return self.scale_model_indices
 
-    def get_n_sequences(self):
-        features = get_alignment_info("Results/P1.initial.fasta")
+    def get_n_sequences(self,p):
+        features = self.get_alignment_info(path.join(self.dir,"C1.P{}.initial.fasta".format(p+1)))
         return features["n_sequences"]
 
     def find_input_file_names_for_outfile(self,outfile):
@@ -540,7 +537,7 @@ class PhyloBayesRun(MCMCRun):
     def get_input_file_names_for_outfile(self,outfile):
         return get_value_from_file(outfile,"data file :")
 
-    def get_n_sequences(self):
+    def get_n_sequences(self, p):
         return get_value_from_file(self.out_file, "number of taxa:")
 
 class BEASTRun(MCMCRun):
@@ -634,7 +631,7 @@ class Analysis(object):
         self.compute_ancestral_states()
         self.draw_alignments()
         self.compute_and_draw_AU_plots()
-        self.print_index_html()
+        self.print_index_html("Results/index.html")
 
     def n_chains(self):
         return(len(self.mcmc_runs))
@@ -663,6 +660,9 @@ class Analysis(object):
 
     def n_partitions(self):
         return first_all_same([run.n_partitions() for run in self.mcmc_runs])
+
+    def get_n_sequences(self, p):
+        return first_all_same([run.get_n_sequences(p) for run in self.mcmc_runs])
 
     def get_imodel_indices(self):
         return first_all_same([run.get_imodel_indices() for run in self.mcmc_runs])
@@ -923,6 +923,27 @@ class Analysis(object):
 
             self.exec_show(cmd,outfile=outfile)
         print(" done.")
+
+    def get_alignment_info(filename):
+        output = self.exec_show(['alignment-info',filename])
+        features = dict()
+        for line in output.split('\n'):
+            m = re.match('Alphabet: (.*)$', line)
+            if m:
+                features["alphabet"] = m.group(1)
+                continue
+
+            m = re.match('Alignment: (.+) columns of (.+) sequences', line)
+            if m:
+                features["length"] = m.group(1)
+                features["n_sequences"] = m.group(2)
+                continue
+
+            m = re.match('sequence lengths: ([^ ]+)-([^ ]+)', line)
+            if m:
+                features["min_length"] = m.group(1)
+                features["max_length"] = m.group(2)
+        return features
 
     def draw_trees(self):
         self.trees = []
@@ -1358,8 +1379,150 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 
 
 
-    def print_index_html(self):
-        print("\nReport written to 'Results/index.html");
+    def print_index_html(self,filename):
+        with open(filename,"w+",encoding='utf-8') as index:
+            title = "MCMC Post-hoc Analysis"
+            output  = self.html_header(title)
+
+            #FIXME: We should only write sections that are not empty for this analysis!
+            output += self.topbar()
+            output += '<div class="content">\n'
+            output += "<h1>{}</h1>\n".format(title)
+            output += self.section_data_and_model()
+            output += self.section_scalar_variables()
+            output += self.section_alignment_distribution()
+            output += self.section_ancestral_sequences() # FIXME!
+            output += self.section_mixing()
+            output += self.section_analysis()
+            output += self.section_model_and_priors()
+            output += self.section_end()
+            print(output, file=index)
+
+        print("\nReport written to '{}".format(filename));
+
+    def html_header(self,title):
+        section = """\
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+"""
+        section += "<title>BAli-Phy: {}</title>\n".format(title);
+        section += """\
+      <style type="text/css">
+      body {margin:0; padding:0}
+      ol li {padding-bottom:0.5em}
+
+      th {padding-left: 0.5em; padding-right:0.5em}
+      td {padding: 0.1em;}
+      .backlit2 td {padding-left: 0.5em;}
+      .backlit2 td {padding-right: 1.0em;}
+
+#topbar {
+	background-color: rgb(201,217,233);
+	margin: 0;
+	padding: 0.5em;
+	display: table;
+        width: 100%;
+        position: fixed;
+        top: 0;
+}
+
+#topbar #menu {
+//	font-size: 90%;
+	display: table-cell;
+	text-align: right;
+        // Leave space for the menubar
+        padding-right: 0.75em;
+}
+#topbar #path {
+	font-weight: bold;
+	display: table-cell;
+	text-align: left;
+	white-space: nowrap;
+}
+
+      .content {margin:1em; margin-top: 3em}
+      .backlit td {background: rgb(220,220,220);}
+
+      :target:before {
+        content:"";
+        display:block;
+        height:2em; /* fixed header height*/
+        margin:-2em 0 0; /* negative fixed header height */
+      }
+
+      h1 {font-size: 150%;}
+      h2 {font-size: 130%; margin-top:2.5em; margin-bottom: 1em}
+      h3 {font-size: 110%; margin-bottom: 0.2em}// margin-top: 0.3em}
+
+      ul {margin-top: 0.4em;}
+
+      .center td {text-align: center};
+
+      *[title] {cursor:help;}
+      a[title] {vertical-align:top;color:#00f;font-size:70%; border-bottom:1px dotted;}
+      .floating_picture {float:left;padding-left:0.5em;padding-right:0.5em;margin:0.5em;}
+      .r_floating_picture {float:right;padding-left:0.5em;padding-right:0.5em;margin:0.5em;}
+      table.backlit2 {border-collapse: collapse; }
+      table.backlit2 tr:nth-child(odd) td { background-color: #F0F0F0; margin:0}
+      .clear {clear:both;}
+
+      .modelname {font-weight: bold; color: blue}
+      table.model {margin-left: 2em}
+      table.model td {vertical-align: top}
+      table.models td {vertical-align: top}
+
+    </style>
+</head>
+<body>
+"""
+        return section
+
+    def topbar(self):
+        return """\
+  <p id="topbar">
+    <span id="path">Sections:</span>
+    <span id="menu">
+      [<a href="#data">Data+Model</a>]
+      [<a href="#parameters">Parameters</a>]
+      [<a href="#topology">Phylogeny</a>]
+      [<a href="#alignment">Alignment</a>]
+      [<a href="#ancestors">Ancestors</a>]
+      [<a href="#mixing">Mixing</a>]
+      [<a href="#analysis">Analysis</a>]
+      [<a href="#models">Models+Priors</a>]
+    </span>
+"""
+
+    def section_data_and_model(self):
+        return ""
+
+    def section_scalar_variables(self):
+        return ""
+
+    def section_alignment_distribution(self):
+        return ""
+
+    def section_ancestral_sequences(self):   #REMOVE!
+        return ""
+
+    def section_mixing(self):
+        return ""
+
+    def section_analysis(self):
+        return ""
+
+    def section_model_and_priors(self):
+        return ""
+
+    def section_end(self):
+        return """\
+     </div>
+   </body>
+</html>
+"""
+
+
 
 #----------------------------- SETUP 1 --------------------------#
 if __name__ == '__main__':
@@ -1394,83 +1557,6 @@ if __name__ == '__main__':
 #
 #sub html_header
 #{
-#    my $title = shift;
-#    my $section = "";
-#    $section .= '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-#<html xmlns="http://www.w3.org/1999/xhtml">
-#  <head>
-#';
-#    $section .= "<title>BAli-Phy: $title</title>\n";
-#    $section .= 
-#'    <style type="text/css">
-#      body {margin:0; padding:0}
-#      ol li {padding-bottom:0.5em}
-#
-#      th {padding-left: 0.5em; padding-right:0.5em}
-#      td {padding: 0.1em;}
-#      .backlit2 td {padding-left: 0.5em;}
-#      .backlit2 td {padding-right: 1.0em;}
-#
-##topbar {
-#	background-color: rgb(201,217,233);
-#	margin: 0;
-#	padding: 0.5em;
-#	display: table;
-#        width: 100%;
-#        position: fixed;
-#        top: 0;
-#}
-#
-##topbar #menu {
-#//	font-size: 90%;
-#	display: table-cell;
-#	text-align: right; 
-#        // Leave space for the menubar
-#        padding-right: 0.75em;
-#}
-##topbar #path {
-#	font-weight: bold;
-#	display: table-cell;
-#	text-align: left; 
-#	white-space: nowrap;
-#}
-#
-#      .content {margin:1em; margin-top: 3em}
-#      .backlit td {background: rgb(220,220,220);}
-#
-#      :target:before {
-#        content:"";
-#        display:block;
-#        height:2em; /* fixed header height*/
-#        margin:-2em 0 0; /* negative fixed header height */
-#      }
-#
-#      h1 {font-size: 150%;}
-#      h2 {font-size: 130%; margin-top:2.5em; margin-bottom: 1em}
-#      h3 {font-size: 110%; margin-bottom: 0.2em}// margin-top: 0.3em}
-#
-#      ul {margin-top: 0.4em;}
-#
-#      .center td {text-align: center};
-#
-#      *[title] {cursor:help;}
-#      a[title] {vertical-align:top;color:#00f;font-size:70%; border-bottom:1px dotted;}
-#      .floating_picture {float:left;padding-left:0.5em;padding-right:0.5em;margin:0.5em;}    
-#      .r_floating_picture {float:right;padding-left:0.5em;padding-right:0.5em;margin:0.5em;}    
-#      table.backlit2 {border-collapse: collapse; }
-#      table.backlit2 tr:nth-child(odd) td { background-color: #F0F0F0; margin:0}
-#      .clear {clear:both;}    
-#
-#      .modelname {font-weight: bold; color: blue}
-#      table.model {margin-left: 2em}
-#      table.model td {vertical-align: top}
-#      table.models td {vertical-align: top}
-#
-#    </style>
-#</head>
-#<body>
-#';
-#    return $section;
 #}
 #
 #sub topbar
