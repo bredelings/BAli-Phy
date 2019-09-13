@@ -228,6 +228,9 @@ class MCMCRun(object):
             self.dir = path.dirname(mcmc_output)
             self.prefix = path.basename(mcmc_output)
 
+    def personality(self):
+        return None
+
     # A log file might then be in "{}/{}.log".format(self.dir,self.prefix)
     def get_dir(self):
         return self.dir
@@ -521,6 +524,9 @@ class PhyloBayesRun(MCMCRun):
             self.log_file = check_file_exists("{}.trace".format(prefix))
             self.out_file = check_file_exists("{}.log".format(prefix))
     
+    def personality(self):
+        return "phylobayes"
+
     def get_input_file_names_for_outfile(self,outfile):
         return get_value_from_file(outfile,"data file :")
 
@@ -847,9 +853,13 @@ class Analysis(object):
         self.burnin = int(0.1*min_iterations)
 
     def summarize_numerical_parameters(self):
+        log_files = self.get_log_files()
+        if log_files is None or None in log_files:
+            return
+
         print("Summarizing distribution of numerical parameters: ",end='')
-        if not more_recent_than_all_of("Results/Report",self.get_log_files()):
-            cmd = ["statreport"] + self.get_log_files()
+        if not more_recent_than_all_of("Results/Report",log_files):
+            cmd = ["statreport"] + log_files
             if self.subsample is not None and self.subsample != 1:
                 cmd.append("--subsample={}".format(self.subsample))
             if self.burnin is not None:
@@ -858,6 +868,60 @@ class Analysis(object):
                 cmd.append("--until={}".format(self.until))
             self.exec_show(cmd,outfile="Results/Report")
         print("done.")
+
+        print("Analyzing scalar variables: ",end='',flush=True)
+        self.median = dict()
+        self.CI_low = dict()
+        self.CI_high = dict()
+
+        self.ACT = dict()
+        self.ESS = dict()
+        self.Burnin = dict()
+        self.PSRF_CI80 = dict()
+        self.PSRF_RCF = dict()
+        self.min_ESS = 200
+
+        with open("Results/Report",encoding='utf-8') as report:
+            lines = report.readlines()
+            i = 0
+            while i < len(lines):
+                line = lines[i].strip()
+
+                if not line:
+                    i += 1
+                    continue
+                m = re.search('([^\s]+) ~ ([^\s]+)\s+\((.+),(.+)\)',line)
+                if m:
+                    var = m.group(1)
+                    self.median[var] = m.group(2)
+                    self.CI_low[var] = m.group(3)
+                    self.CI_high[var] = m.group(4)
+
+                    i += 1
+                    m = re.search('t @ (.+)\s+Ne = ([^ ]+)\s+burnin = (Not Converged!|[^ ]+)', lines[i])
+                    if m:
+                        self.ACT[var] = float(m.group(1))
+                        self.ESS[var] = float(m.group(2))
+                        self.Burnin[var] = m.group(3)
+                        if self.Burnin[var] != "Not Converged!":
+                            self.Burnin[var] = float(self.Burnin[var])
+
+                    i += 1
+                    m = re.search('PSRF-80%CI = ([^ ]+)\s+PSRF-RCF = ([^ ]+)',lines[i])
+                    if m:
+                        self.PSRF_CI80[var] = float(m.group(1))
+                        self.PSRF_RCF[var] = float(m.group(2))
+                    i += 1
+                    continue
+
+                m = re.search('\s+(.+) = (.+)', line)
+                if m:
+                    var = m.group(1)
+                    self.median[var] = m.group(2)
+                i += 1
+
+        print("done.")
+
 
     def summarize_topology_distribution(self):
         print("\nSummarizing topology distribution: ",end='')
@@ -950,7 +1014,7 @@ class Analysis(object):
                 features["n_sequences"] = m.group(2)
                 continue
 
-            m = re.match('.*sequence lengths: ([^ ]+)-([^ ]+) .*', line)
+            m = re.search('sequence lengths: ([^ ]+)-([^ ]+) ', line)
             if m:
                 features["min_length"] = m.group(1)
                 features["max_length"] = m.group(2)
@@ -1569,22 +1633,98 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         return section
 
     def section_scalar_variables(self):
-        return ""
+        log_files = self.get_log_files()
+        if log_files is None or None in log_files:
+            return
+
+        section = """\
+<h2 class="clear"><a class="anchor" name="parameters"></a>Scalar variables</h2>
+    <table class="backlit2">
+        <tr><th>Statistic</th><th>Median</th><th title="95% Bayesian Credible Interval">95% BCI</th><th title="Auto-Correlation Time">ACT</th><th title="Effective Sample Size">ESS</th><th>burnin</th><th title="Potential Scale Reduction Factor based on width of 80% credible interval">PSRF-CI80%</th><th>PSRF-RCF</th></tr>
+"""
+        for var in self.median:
+            if var == "iter":
+                continue
+            if var == "time" and self.personality() == "phylobayes":
+                continue
+            if var == "#treegen" and self.personality() == "phylobayes":
+                continue
+
+            row_style = "" if var in self.CI_low else 'style="font-style:italic"'
+            section += '<tr {}>\n'.format(row_style)
+            section += '  <td>{}</td>\n'.format(var)
+            section += '  <td>{}</td>\n'.format(self.median[var])
+            if var in self.CI_low:
+                section += '  <td>({}, {})</td>\n'.format(self.CI_low[var], self.CI_high[var])
+
+                ACT_style = ' style="color:red"' if self.ESS[var] <= self.min_ESS else ""
+                section += '  <td {}>{}</td>\n'.format(ACT_style,self.ACT[var])
+
+                if self.ESS[var] < 100:
+                    ESS_style = ' style="color:red"'
+                elif self.ESS[var] < 300:
+                    ESS_style = ' style="color:orange"'
+                else:
+                    ESS_style = ''
+                section += '  <td {}>{}</td>\n'.format(ESS_style,self.ESS[var])
+
+                burnin_style = ' style="color:red"' if self.Burnin[var] == "Not Converged!" else ""
+                section += '  <td {}>{}</td>\n'.format(burnin_style,self.Burnin[var])
+
+                if var in self.PSRF_CI80:
+                    if self.PSRF_CI80[var] >= 1.2:
+                        CI80_style = ' style="color:red"'
+                    elif self.PSRF_CI80[var] >= 1.05:
+                        CI80_style = ' style="color:orange"'
+                    else:
+                        CI80_style = ''
+                    section += '  <td {}>{}</td>\n'.format(CI80_style,self.PSRF_CI80[var])
+                else:
+                    section += '  <td>NA</td>\n'
+
+                if var in self.PSRF_RCF:
+                    if self.PSRF_RCF[var] >= 1.2:
+                        RCF_style = ' style="color:red"'
+                    elif self.PSRF_RCF[var] >= 1.05:
+                        RCF_style = ' style="color:orange"'
+                    else:
+                        RCF_style = ''
+                    section += '  <td {}>{}</td>\n'.format(RCF_style,self.PSRF_RCF[var])
+                else:
+                    section += '  <td>NA</td>\n'
+
+            else:
+                section += '  <td></td>\n'
+                section += '  <td></td>\n'
+                section += '  <td></td>\n'
+                section += '  <td></td>\n'
+                section += '  <td></td>\n'
+                section += '  <td></td>\n'
+
+            section += '</tr>\n'
+        section += '</table.\n'
+
+        return section
 
     def section_alignment_distribution(self):
-        return ""
+        section = ""
+        return section
 
     def section_ancestral_sequences(self):   #REMOVE!
-        return ""
+        section = ""
+        return section
 
     def section_mixing(self):
-        return ""
+        section = ""
+        return section
 
     def section_analysis(self):
-        return ""
+        section = ""
+        return section
 
     def section_model_and_priors(self):
-        return ""
+        section = ""
+        return section
 
     def section_end(self):
         return """\
