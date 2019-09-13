@@ -54,4 +54,5 @@ std::string guess_alphabet(const std::string& name_, const std::vector<sequence>
 std::vector<sequence> select(const std::vector<sequence>& s,const std::vector<int>& columns);
 std::vector<sequence> select(const std::vector<sequence>& s,const std::string& range);
 
+void pad_to_same_length(std::vector<sequence>& s);
 #endif

@@ -21,6 +21,8 @@
 #include "sequence.H"
 #include "util/myexception.H"
 #include "util/cmdline.H"
+#include <range/v3/algorithm/max.hpp>
+
 
 using namespace std;
 
@@ -109,9 +111,9 @@ string guess_alphabet(const vector<sequence>& sequences)
 	throw myexception()<<"Can't get alphabet from 0 letters!";
 
     // FIXME - we should maybe count things one time into a map from char -> int.
-    double ATGCN = letter_fraction("ATGCN","-?",sequences);
-    double AUGCN = letter_fraction("AUGCN","-?",sequences);
-    double AUTGCN = letter_fraction("AUTGCN","-?",sequences);
+    double ATGCN = letter_fraction("ATGCN","-?=",sequences);
+    double AUGCN = letter_fraction("AUGCN","-?=",sequences);
+    double AUTGCN = letter_fraction("AUTGCN","-?=",sequences);
     if (ATGCN > 0.95 and AUGCN <= ATGCN)
 	return "DNA";
     else if (AUGCN > 0.95)
@@ -119,17 +121,17 @@ string guess_alphabet(const vector<sequence>& sequences)
 
     if (AUTGCN > 0.95)
     {
-	double T = letter_fraction("T","-?",sequences);
-	double U = letter_fraction("U","-?",sequences);
+	double T = letter_fraction("T","-?=",sequences);
+	double U = letter_fraction("U","-?=",sequences);
 	throw myexception()<<"Can't guess alphabet!\n Seems to be DNA or RNA but contains both U and T:\n  AUTGCN="<<int(AUTGCN*100)<<"%   T="<<int(T*100)<<"%   U="<<int(U*100)<<"%";
     }
 
-    double digits = letter_fraction("0123456789","-?X",sequences);
+    double digits = letter_fraction("0123456789","-?X=",sequences);
     // FIXME - We can check the largest number ... but each column might have a different highest number.
     if (digits > 0.95)
 	return "Numeric[2]";
 
-    double aa = letter_fraction("ARNDCQEGHILKMFPSTWYVX","-?",sequences);
+    double aa = letter_fraction("ARNDCQEGHILKMFPSTWYVX","-?=",sequences);
     if (letter_fraction("ARNDCQEGHILKMFPSTWYVX","-?",sequences) > 0.9 and AUTGCN<0.5)
     {
 	if (letter_count("*",sequences) > 0)
@@ -206,5 +208,19 @@ vector<sequence> select(const vector<sequence>& s,const string& range)
     vector<int> columns = parse_multi_range(range, L);
 
     return select(s,columns);
+}
+
+void pad_to_same_length(vector<sequence>& s)
+{
+    // find total alignment length
+    vector<unsigned> L;
+    for(int i=0;i<s.size();i++)
+	L.push_back(s[i].size());
+    unsigned AL = ranges::max(L);
+
+    // pad sequences if they are less than this length
+    for(int i=0;i<s.size();i++)
+	if (L[i] < AL)
+	    (string&)s[i] = (string&)s[i] + string(AL-L[i],'-');
 }
 

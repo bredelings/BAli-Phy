@@ -232,20 +232,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     return args;
 }
 
-void pad_to_same_length(vector<sequence>& s)
-{
-    // find total alignment length
-    vector<unsigned> L;
-    for(int i=0;i<s.size();i++)
-	L.push_back(s[i].size());
-    unsigned AL = max(L);
-
-    // pad sequences if they are less than this length
-    for(int i=0;i<s.size();i++)
-	if (L[i] < AL)
-	    (string&)s[i] = (string&)s[i] + string(AL-L[i],'-');
-}
-
 vector<sequence> load_file(istream& file,bool pad)
 {
     vector<sequence> s = sequence_format::read_guess(file);
