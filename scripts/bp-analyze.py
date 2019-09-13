@@ -590,7 +590,7 @@ class Analysis(object):
         self.speed = 1
 
         # map from alignment name to alphabet name
-        self.alignments = dict()
+        self.alignments = list()
 
         prefix=path.dirname(path.dirname(self.trees_consensus_exe))
         self.libexecdir = path.join(prefix,"lib","bali-phy","libexec")
@@ -1018,6 +1018,21 @@ class Analysis(object):
             if m:
                 features["min_length"] = m.group(1)
                 features["max_length"] = m.group(2)
+
+            m = re.search(' const.: ([^ ]+) \(([^ ]+)\%\)', line)
+            if m:
+                features["n_const"] = m.group(1)
+                features["p_const"] = m.group(2)
+
+            m = re.search('inform.: ([^ ]+) \(([^ ]+)\%\)', line)
+            if m:
+                features["n_inform"] = m.group(1)
+                features["p_inform"] = m.group(1)
+
+            m = re.search(' ([^ ]+)% minimum sequence identity', line)
+            if m:
+                features["min_p_identity"] = m.group(1)
+
         return features
 
     def draw_trees(self):
@@ -1274,7 +1289,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         names = self.run(0).compute_initial_alignments()
         for i in range(len(names)):
             name = names[i]
-            self.alignments[name] = self.get_alphabets()[i]
+            self.alignments.append((name, self.get_alphabets()[i], "Initial"))
             self.make_ordered_alignment(name)
 
 
@@ -1285,7 +1300,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                 continue
             afiles = self.get_alignments_for_partition(i)
             name = "P{}.max".format(i+1)
-            self.alignments[name] = self.get_alphabets()[i]
+            self.alignments.append((name, self.get_alphabets()[i], "WPD"))
             if not more_recent_than_all_of("Results/Work/{}-unordered.fasta".format(name),afiles):
                 cut_cmd=['cut-range']+afiles
                 if self.burnin is not None:
@@ -1365,8 +1380,8 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             return
 
         print("Drawing alignments: ", end='', flush=True)
-        for (alignment,alphabet) in self.alignments.items():
-            filename = self.make_ordered_alignment(alignment)
+        for (alignment,alphabet,name) in self.alignments:
+            filename = "Results/{}.fasta".format(alignment)
             color_scheme = self.color_scheme_for_alphabet(alphabet)
             self.draw_alignment(filename, color_scheme=color_scheme, ruler=True)
             print('*',end='',flush=True)
@@ -1392,9 +1407,6 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         for i in range(self.n_partitions()):
             afiles = self.get_alignments_for_partition(i)
             name = 'P{}.ancestors'.format(i+1)
-#           We can't do AU on this, since it has too many rows!
-#           We should be able to draw it though.
-#            self.alignments[name] = self.get_alphabets()[i]
             if self.get_imodel_for_partition(i) is None:
                 bad = 0
                 for afile in afiles:
@@ -1403,6 +1415,8 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                 if bad > 0:
                     continue
             assert(len(afiles) == self.n_chains())
+
+            self.alignments.append((name,self.get_alphabets()[i], "Ancestral"))
 
             template = "Results/P{}.max.fasta".format(i+1)
             if self.get_imodel_for_partition(i) is None:
@@ -1418,7 +1432,12 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         print(" done.")
 
     def compute_and_draw_AU_plots(self):
-        for (alignment,alphabet) in self.alignments.items():
+        for (alignment,alphabet,name) in self.alignments:
+            # Don't try and compute AU plots for ancestral sequences
+            m = re.match('^P([0-9]+).ancest.*',alignment)
+            if m:
+                continue
+
             m = re.match('^P([0-9]+).*',alignment)
             if m:
                 i = int(m.group(1))-1
@@ -1716,23 +1735,45 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             section += """\
   <table>
     <tr>
+       <th style="padding-right:3em"></th>
        <th></th>
        <th></th>
-       <th></th>
-       <th title ="Comparison of this alignment (top) to the WPD alignment (bottom)"></th>
+       <th title ="Comparison of this alignment (top) to the WPD alignment (bottom)">Diff</th>
        <th></th>
        <th style="padding-right:0.5em;padding-left:0.5em" title="Percent identity of the most dissimilar sequences">Min. %identity</th>
        <th style="padding-right:0.5em;padding-left:0.5em" title="Number of columns in the alignment"># Sites</th>
        <th style="padding-right:0.5em;padding-left:0.5em" title="Number of invariant columns">Constant</th>
-       <th style="padding-right:0.5em;padding-left:0.5em" title="Number of variant columns">Variable</th>
-       <th title="Number of parsiomny-informative columns.">Informative</th>
+       <th title="Number of parsimony-informative columns.">Informative</th>
     </tr>
 """.format(i+1)
-            for (alignment,alphabet) in self.alignments.items():
+            for (alignment,alphabet,name) in self.alignments:
                 if not alignment.startswith('P{}.'.format(i+1)):
                     continue
                 section += '    <tr>\n'
-                section += '      <td>{}</td>\n'.format(alignment)
+                section += '      <td style="padding-right:3em">{}</td>\n'.format(name)
+                section += '      <td><a href="{}.fasta">FASTA</a></td>\n'.format(alignment)
+
+                if path.exists(path.join("Results",alignment+".html")):
+                    section += '      <td><a href="{}.html">HTML</a></td>\n'.format(alignment)
+                else:
+                    section += '      <td></td>\n'
+
+                if path.exists(path.join("Results",alignment+"-diff.html")):
+                    section += '      <td><a href="{}-diff.html">Diff</a></td>\n'.format(alignment)
+                else:
+                    section += '      <td></td>\n'
+
+                if path.exists(path.join("Results",alignment+"-AU.html")):
+                    section += '      <td><a href="{}-AU.html">AU</a></td>\n'.format(alignment)
+                else:
+                    section += '      <td></td>\n'
+
+                features = self.get_alignment_info("Results/{}.fasta".format(alignment))
+                section += '<td style="text-align: center">{}%</td>\n'.format(features['min_p_identity'])
+                section += '<td style="text-align: center">{}</td>\n'.format(features['length'])
+                section += '<td style="text-align: center">{} ({}%)</td>\n'.format(features['n_const'], features['p_const'])
+                section += '<td style="text-align: center">{} ({}%)</td>\n'.format(features['n_inform'], features['p_inform'])
+
                 section += '    </tr>\n'
             section += '  </table>\n'
         return section
