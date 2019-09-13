@@ -21,14 +21,15 @@
 #include <iostream>
 #include <fstream>
 #include "tree/tree.H"
-#include "alignment/alignment.H"
-#include "alignment/alignment-util.H"
-#include "alignment/load.H"
+#include "sequence/sequence.H"
+#include "sequence/sequence-format.H"
+#include "util/matrix.H"
 #include "util/string/split.H"
 #include "util/mapping.H"
 #include "util/io.H"
 #include "util/string/convert.H"
 #include "colors.H"
+#include "computation/object.H"
 
 #include <boost/program_options.hpp>
 
@@ -407,7 +408,7 @@ string latex_rgb(const vector<int>& RGB) {
 }
 
 
-matrix<double> read_alignment_certainty(const alignment& A, const string& filename) 
+matrix<double> read_alignment_certainty(const vector<sequence>& S, const string& filename)
 {
     checked_ifstream colorfile(filename,"alignment annotation file");
 
@@ -417,8 +418,8 @@ matrix<double> read_alignment_certainty(const alignment& A, const string& filena
 	portable_getline(colorfile,line);
 	vector<string> colornames = split(line,' ');
 	vector<string> leafnames;
-	for(int i=0;i<A.n_sequences();i++)
-	    leafnames.push_back(A.seq(i).name);
+	for(auto& s: S)
+	    leafnames.push_back(s.name);
 	mapping = compute_mapping(colornames,leafnames);
     }
 
@@ -426,7 +427,7 @@ matrix<double> read_alignment_certainty(const alignment& A, const string& filena
     mapping.push_back(mapping.size());
 
     //------------------ Read in the colors ------------------------//
-    matrix<double> colors(A.length(),A.n_sequences()+1);
+    matrix<double> colors(S[0].size(), S.size()+1);
     for(int column=0;column<colors.size1();column++) 
     { 
 	// read a line
@@ -656,8 +657,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description general("General options");
     general.add_options()
 	("help", "produce help message")
-	("align", value<string>(),"file with sequences and initial alignment")
-	("alphabet",value<string>(),"Set to 'Codons' to prefer codon alphabets")
+	("file", value<string>(),"file with sequences and initial alignment")
 	;
   
     options_description output("Output");
@@ -683,7 +683,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     // positional options
     positional_options_description p;
-    p.add("align", 1);
+    p.add("file", 1);
     p.add("AU", 2);
   
     variables_map args;     
@@ -711,6 +711,38 @@ variables_map parse_cmd_line(int argc,char* argv[])
 }
 
 
+vector<sequence> load_file(std::istream& file)
+{
+    vector<sequence> s = sequence_format::read_guess(file);
+    if (s.size() == 0)
+	throw myexception()<<"Alignment file didn't contain any sequences!";
+
+    for(int i=1;i<s.size();i++)
+        if (s[i].size() != s[0].size())
+        {
+            myexception e;
+            e<<"sequences have different length:\n";
+            e<<"  sequence '"<<s[0].name<<"' (#"<<1<<") has length "<<s[0].size()<<"\n";
+            e<<"  sequence '"<<s[i].name<<"' (#"<<i+1<<") has length "<<s[i].size()<<"\n";
+            throw e;
+        }
+
+    return s;
+}
+
+vector<sequence> load_file(const string& filename)
+{
+    checked_ifstream file(filename,"alignment file");
+    try{
+        return load_file(file);
+    }
+    catch (myexception& e)
+    {
+        e.prepend("In file '"+filename+"': ");
+        throw;
+    }
+}
+
 int main(int argc,char* argv[]) 
 { 
 
@@ -730,23 +762,31 @@ int main(int argc,char* argv[])
 	    showgaps = false;
 
 	//---------- Load alignment and tree -----------//
-	alignment A = load_A(args,false);
+        vector<sequence> S;
+        auto filename = args["file"].as<string>();
+        if (filename == "-")
+            S = load_file(std::cin);
+        else
+            S = load_file(filename);
+
+        int n_sequences = S.size();
+        int L = S[0].size();
 
 	//---- Find mapping from colorfile to alignment sequence order -----//
 	owned_ptr<ColorScheme> color_scheme = get_color_scheme(args);
 
 	//---------- Read alignment uncertainty, if available --------------//
-	matrix<double> colors(A.length(),A.n_sequences()+1);
+	matrix<double> colors(L, n_sequences+1);
     
 	if (args.count("AU"))
-	    colors = read_alignment_certainty(A,args["AU"].as<string>());
+	    colors = read_alignment_certainty(S,args["AU"].as<string>());
 	else
 	    for(int i=0;i<colors.size1();i++)
 		for(int j=0;j<colors.size2();j++)
 		    colors(i,j) = -1;
 
 	//-------------------- Get width -----------------------//
-	int width = 2*A.length();
+	int width = 2*L;
 	if (args.count("width"))
 	    width = args["width"].as<int>();
 
@@ -756,20 +796,20 @@ int main(int argc,char* argv[])
 	    start = args["start"].as<int>();
 	    if (start < 0)
 		throw myexception()<<"Parameter 'start' must be positive.";
-	    if (not (start < A.length()))
-		throw myexception()<<"Parameter 'start' must be less than the length of the alignment ("<<A.length()<<").";
+	    if (not (start < L))
+		throw myexception()<<"Parameter 'start' must be less than the length of the alignment ("<<L<<").";
 	}
     
 	//--------------------- Get end ------------------------//
-	int end = A.length()-1;
+	int end = L-1;
 	if (args.count("end")) {
 	    end =args["end"].as<int>();
 	    if (end < 0)
 		throw myexception()<<"Parameter 'end' must be positive.";
-	    if (not (end < A.length()))
-		throw myexception()<<"Parameter 'end' must be less than the length of the alignment ("<<A.length()<<").";
+	    if (not (end < L))
+		throw myexception()<<"Parameter 'end' must be less than the length of the alignment ("<<L<<").";
 	    if (end < start)
-		throw myexception()<<"Parameter 'end' must be >= than parameter 'start'"<<A.length()<<").";
+		throw myexception()<<"Parameter 'end' must be >= than parameter 'start'"<<L<<").";
 	}
 
 	if (args["format"].as<string>() == "latex") {
@@ -779,8 +819,6 @@ int main(int argc,char* argv[])
 \\definecolor{c2}{rgb}{1.0,0.5,0.0}\n";
 
 	    /*-------------------- Print the alignment ------------------------*/
-	    const alphabet& a = A.get_alphabet();
-    
 	    int pos=start;
 	    while(pos<=end) {
 		cout<<"\\begin{tabular}{";
@@ -788,11 +826,11 @@ int main(int argc,char* argv[])
 		    cout<<"c";
 		cout<<"}\n";
 	
-		for(int i=0;i<A.n_sequences();i++) {
+		for(int i=0;i<S.size();i++) {
 		    int s = i;
 
 		    for(int column=pos;column<pos+width and column <= end; column++) {
-			string c = a.lookup(A(column,s));
+			auto c = S[s][column];
 			string latexcolor = "";//latex_get_bgcolor(colors(column,s),sscale,color);
 			if (column != pos)
 			    cout<<"& ";
@@ -813,7 +851,7 @@ int main(int argc,char* argv[])
 <html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">\n\
  <head>\n\
   <meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\" />\n\
-  <title>Alignment Uncertainty: "<<args["align"].as<string>()<<"</title>\n\
+  <title>Alignment Uncertainty: "<<args["file"].as<string>()<<"</title>\n\
   <style type=\"text/css\">\n\
 \n\
 TABLE {\n\
@@ -876,10 +914,10 @@ BODY {\n\
 	    }
 
 	    //----------- Compute the position headings -------------------//
-	    string positions(A.length(),'.');
+	    string positions(L,'.');
 
 	    positions[0]='1';
-	    for(int pos=10;pos<A.length();pos+=10) {
+	    for(int pos=10;pos<L;pos+=10) {
 		string position = convertToString(pos);
 		const int start = pos - position.size()+1;
 		for(int j=0;j<position.size();j++) 
@@ -888,8 +926,6 @@ BODY {\n\
 
 
 	    //-------------------- Print the alignment ------------------------//
-	    const alphabet& a = A.get_alphabet();
-    
 	    int pos=start;
 	    while(pos<=end) {
 		cout<<"\n\n<table class=\"sequences\">\n";
@@ -899,7 +935,7 @@ BODY {\n\
 		    cout<<"<tr><td></td>";
 	  
 		    for(int column=pos;column<pos+width and column <= end; column++) {
-			double P=colors(column,A.n_sequences());
+			double P=colors(column, S.size());
 			string style = getstyle(P,"",*color_scheme);
 			if (columncolors)
 			    cout<<"<td style=\""<<style<<"\">"<<positions[column]<<"</td>";
@@ -909,19 +945,19 @@ BODY {\n\
 		    cout<<"</tr>\n";
 		}
 
-		for(int i=0;i<A.n_sequences();i++) {
+		for(int i=0;i<S.size();i++) {
 		    int s = i;
 		    cout<<"  <tr>\n";
-		    cout<<"    <td class=\"sequencename\">"<<A.seq(s).name<<"</td>\n";
+		    cout<<"    <td class=\"sequencename\">"<<S[s].name<<"</td>\n";
 		    for(int column=pos;column<pos+width and column <= end; column++) {
-			string c;
-			c+= a.lookup(A(column,s));
-			if (A.gap(column,s)) {
+                        auto c = S[s][column];
+                        string c_string(1, c);
+			if (c == '-') {
 			    if (not showgaps)
-				c = "&nbsp;";
+				c_string = "&nbsp;";
 			}
-			string style = getstyle(colors(column,s),c,*color_scheme);
-			cout<<"<td style=\""<<style<<"\">"<<c<<"</td>";
+			string style = getstyle(colors(column,s),string(1,c),*color_scheme);
+			cout<<"<td style=\""<<style<<"\">"<<c_string<<"</td>";
 		    }
 		    cout<<"  </tr>\n";
 		}
