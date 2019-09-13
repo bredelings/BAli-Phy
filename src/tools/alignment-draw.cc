@@ -715,17 +715,9 @@ vector<sequence> load_file(std::istream& file)
 {
     vector<sequence> s = sequence_format::read_guess(file);
     if (s.size() == 0)
-	throw myexception()<<"Alignment file didn't contain any sequences!";
+	throw myexception()<<"Alignment didn't contain any sequences!";
 
-    for(int i=1;i<s.size();i++)
-        if (s[i].size() != s[0].size())
-        {
-            myexception e;
-            e<<"sequences have different length:\n";
-            e<<"  sequence '"<<s[0].name<<"' (#"<<1<<") has length "<<s[0].size()<<"\n";
-            e<<"  sequence '"<<s[i].name<<"' (#"<<i+1<<") has length "<<s[i].size()<<"\n";
-            throw e;
-        }
+    pad_to_same_length(s);
 
     return s;
 }
@@ -738,7 +730,7 @@ vector<sequence> load_file(const string& filename)
     }
     catch (myexception& e)
     {
-        e.prepend("In file '"+filename+"': ");
+        e.prepend("File '"+filename+"': ");
         throw;
     }
 }
