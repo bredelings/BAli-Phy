@@ -212,51 +212,6 @@ def arg_min(xs):
             val = x
     return arg
 
-#
-#    my $filename = shift;
-#    open INFO,"alignment-info $filename |";
-#
-#    my %features = ();
-#
-#    my $indels = 0;
-#    while(my $line=<INFO>) {
-#	if ($line =~ /Alphabet: (.*)$/) {
-#	    $features{"alphabet"} = $1;
-#	}
-#	if ($line =~ /Alignment: (.+) columns of (.+) sequences/) 
-#	{
-#	    $features{"length"} = $1;
-#	    $features{"n_sequences"} = $2;
-#	}
-#	if ($line =~ /sequence lengths: ([^ ]+)-([^ ]+)/) {
-#	    $features{"min_length"} = $1;
-#	    $features{"max_length"} = $2;
-#	}
-#	if ($line =~ m|w/  indels|) {
-#	    $indels = 1;
-#	}
-#	next if ($indels == 0);
-#
-#	if ($line =~ / const.: ([^ ]+) \(([^ ]+)\%\)/) {
-#	    $features{"n_const"} = $1;
-#	    $features{"p_const"} = $2;
-#	}
-#	if ($line =~ /non-const.: ([^ ]+) \(([^ ]+)\%\)/) {
-#	    $features{"n_non-const"} = $1;
-#	    $features{"p_non-const"} = $2;
-#	}
-#	if ($line =~ /inform.: ([^ ]+) \(([^ ]+)\%\)/) {
-#	    $features{"n_inform"} = $1;
-#	    $features{"p_inform"} = $2;
-#	}
-#	if ($line =~ / ([^ ]+)% minimum sequence identity/){
-#	    $features{"min_p_identity"} = $1;
-#	}
-#    }
-#    return {%features};
-#}
-
-
 class MCMCRun(object):
     def __init__(self, mcmc_output):
         self.mcmc_output = mcmc_output
@@ -313,14 +268,68 @@ class MCMCRun(object):
     def compute_initial_alignments(self):
         return []
 
+    def get_smodels(self):
+        return None
+
     def get_smodel_indices(self):
         return None
+
+    def get_smodel_for_partition(self,p):
+        smodels = self.get_smodels()
+        if smodels is None:
+            return None
+
+        indices = self.get_smodel_indices()
+        if indices is None:
+            return None
+
+        index = indices[p]
+        if index is None:
+            return None
+
+        return smodels[index]
+
+    def get_imodels(self):
+        return None
+
+    def get_imodel_for_partition(self,p):
+        imodels = self.get_imodels()
+        if imodels is None:
+            return None
+
+        indices = self.get_imodel_indices()
+        if indices is None:
+            return None
+
+        index = indices[p]
+        if index is None:
+            return None
+
+        return imodels[index]
 
     def get_imodel_indices(self):
         return None
 
+    def get_scale_models(self):
+        return None
+
     def get_scale_model_indices(self):
         return None
+
+    def get_scale_model_for_partition(self,p):
+        scale_models = self.get_scale_models()
+        if scale_models is None:
+            return None
+
+        indices = self.get_scale_model_indices()
+        if indices is None:
+            return None
+
+        index = indices[p]
+        if index is None:
+            return None
+
+        return scale_models[index]
 
 class BAliPhyRun(MCMCRun):
 
@@ -357,7 +366,7 @@ class BAliPhyRun(MCMCRun):
     def get_scale_models(self):
         return self.scale_models
 
-    def get_scale_imodel_indices(self):
+    def get_scale_model_indices(self):
         return self.scale_model_indices
 
     def get_n_sequences(self,p):
@@ -407,54 +416,32 @@ class BAliPhyRun(MCMCRun):
                 if line.startswith("iterations"):
                     break
 
-    def find_smodel_indices(self):
-        smodel_indices = []
+    def find_partition_values(self,prefix):
+        indices = []
         with open(self.out_file,encoding='utf-8') as file:
+            regexp = prefix+"(.+) = (.+)"
             for line in file:
-                m = re.match("smodel-index(.+) = (.+)", line)
+                m = re.match(regexp, line)
                 if m:
-                    smodel_indices.append(int(m.group(2)))
+                    indices.append(m.group(2))
                 if line.startswith("iterations"):
                     break
-        return smodel_indices
+        return indices
+
+    def find_smodel_indices(self):
+        indices = self.find_partition_values('smodel-index')
+        return [None if index == '--' else int(index) for index in indices]
 
     def find_imodel_indices(self):
-        imodel_indices = []
-        with open(self.out_file,encoding='utf-8') as file:
-            for line in file:
-                m = re.match("imodel-index(.+) = (.+)", line)
-                if m:
-                    index = m.group(2)
-                    if index == "--":
-                        index = None
-                    else:
-                        index = int(index)
-                    imodel_indices.append(index)
-                if line.startswith("iterations"):
-                    break
-        return imodel_indices
+        indices = self.find_partition_values('imodel-index')
+        return [None if index == '--' else int(index) for index in indices]
 
     def find_scale_model_indices(self):
-        scale_model_indices = []
-        with open(self.out_file,encoding='utf-8') as file:
-            for line in file:
-                m = re.match("scale-index(.+) = (.+)", line)
-                if m:
-                    scale_model_indices.append(int(m.group(2)))
-                if line.startswith("iterations"):
-                    break
-        return scale_model_indices
+        indices= self.find_partition_values('scale-index')
+        return [None if index == '--' else int(index) for index in indices]
 
     def find_alphabets(self):
-        alphabets = []
-        with open(self.out_file,encoding='utf-8') as file:
-            for line in file:
-                m = re.match("alphabet.* = (.+)", line)
-                if m:
-                    alphabets.append(m.group(1))
-                if line.startswith("iterations"):
-                    break
-        return alphabets
+        return self.find_partition_values('alphabet')
 
     def n_iterations(self):
         n = get_n_lines(self.get_trees_file())-1
@@ -482,11 +469,11 @@ class BAliPhy2_1Run(BAliPhyRun):
         self.log_file = check_file_exists(path.join(self.get_dir(),'C1.p'))
         self.version = self.get_header_attributes("VERSION").split('\s+')
 
-        self.smodels = self.get_models("subst models", "smodels")
-        self.imodels = self.get_models("indel models", "imodels")
-        self.scale_models = self.get_models("scale model", "scales")
+        self.smodels = self.find_models("subst models", "smodels")
+        self.imodels = self.find_models("indel models", "imodels")
+        self.scale_models = self.find_models("scale model", "scales")
 
-    def get_models(self, name1, name2):
+    def find_models(self, name1, name2):
         models = []
         with open(self.out_file,encoding='utf-8') as file:
             for line in file:
@@ -509,11 +496,11 @@ class BAliPhy3Run(BAliPhyRun):
             self.run_file = None
         self.run_json = get_json_from_file(self.run_file)
         self.version = self.run_json["program"]["version"]
-        self.smodels = self.get_models("subst models", "smodels")
-        self.imodels = self.get_models("indel models", "imodels")
-        self.scale_models = self.get_models("scale model", "scales")
+        self.smodels = self.find_models("subst models", "smodels")
+        self.imodels = self.find_models("indel models", "imodels")
+        self.scale_models = self.find_models("scale model", "scales")
 
-    def get_models(self, name1, name2):
+    def find_models(self, name1, name2):
         return [make_extracted(model) for model in self.run_json[name2]]
 
 class TreeFileRun(MCMCRun):
@@ -664,11 +651,35 @@ class Analysis(object):
     def get_n_sequences(self, p):
         return first_all_same([run.get_n_sequences(p) for run in self.mcmc_runs])
 
+    def get_imodels(self):
+        return first_all_same([run.get_imodels() for run in self.mcmc_runs])
+
     def get_imodel_indices(self):
         return first_all_same([run.get_imodel_indices() for run in self.mcmc_runs])
 
-    def get_models(self, name1, name2):
-        return first_all_same([run.get_models(name1,name2) for run in self.mcmc_runs])
+    def get_imodel_for_partition(self,p):
+        return first_all_same([run.get_imodel_for_partition(p) for run in self.mcmc_runs])
+
+    def get_smodels(self):
+        return first_all_same([run.get_smodels() for run in self.mcmc_runs])
+
+    def get_smodel_indices(self):
+        return first_all_same([run.get_smodel_indices() for run in self.mcmc_runs])
+
+    def get_smodel_for_partition(self,p):
+        return first_all_same([run.get_smodel_for_partition(p) for run in self.mcmc_runs])
+
+    def get_scale_models(self):
+        return first_all_same([run.get_scale_models() for run in self.mcmc_runs])
+
+    def get_scale_model_indices(self):
+        return first_all_same([run.get_scale_model_indices() for run in self.mcmc_runs])
+
+    def get_scale_model_for_partition(self,p):
+        return first_all_same([run.get_scale_model_for_partition(p) for run in self.mcmc_runs])
+
+    def find_models(self, name1, name2):
+        return first_all_same([run.find_models(name1,name2) for run in self.mcmc_runs])
 
     def get_alphabets(self):
         return first_all_same([run.get_alphabets() for run in self.mcmc_runs])
@@ -924,7 +935,7 @@ class Analysis(object):
             self.exec_show(cmd,outfile=outfile)
         print(" done.")
 
-    def get_alignment_info(filename):
+    def get_alignment_info(self,filename):
         output = self.exec_show(['alignment-info',filename])
         features = dict()
         for line in output.split('\n'):
@@ -939,7 +950,7 @@ class Analysis(object):
                 features["n_sequences"] = m.group(2)
                 continue
 
-            m = re.match('sequence lengths: ([^ ]+)-([^ ]+)', line)
+            m = re.match('.*sequence lengths: ([^ ]+)-([^ ]+) .*', line)
             if m:
                 features["min_length"] = m.group(1)
                 features["max_length"] = m.group(2)
@@ -1206,7 +1217,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
     def compute_wpd_alignments(self):
         print("\nComputing WPD alignments: ", end='',flush=True)
         for i in range(self.n_partitions()):
-            if self.get_imodel_indices()[i] is None:
+            if self.get_imodel_for_partition(i) is None:
                 continue
             afiles = self.get_alignments_for_partition(i)
             name = "P{}.max".format(i+1)
@@ -1297,7 +1308,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             print('*',end='',flush=True)
 
         for i in range(self.n_partitions()):
-            if self.get_imodel_indices()[i] is None:
+            if self.get_imodel_for_partition(i) is None:
                 continue
 
             outfile = "Results/P{}.initial-diff.AU".format(i+1)
@@ -1320,7 +1331,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 #           We can't do AU on this, since it has too many rows!
 #           We should be able to draw it though.
 #            self.alignments[name] = self.get_alphabets()[i]
-            if self.get_imodel_indices()[i] is None:
+            if self.get_imodel_for_partition(i) is None:
                 bad = 0
                 for afile in afiles:
                     if afile is None or not path.exists(afile):
@@ -1330,7 +1341,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             assert(len(afiles) == self.n_chains())
 
             template = "Results/P{}.max.fasta".format(i+1)
-            if self.get_imodel_indices()[i] is None:
+            if self.get_imodel_for_partition(i) is None:
                 template = "Results/P{}.initial.fasta".format(i+1)
             tree = "Results/c50.tree"
             cmd = ['extract-ancestors','-a',template,'-n',tree,'-g',tree]
@@ -1495,7 +1506,67 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 """
 
     def section_data_and_model(self):
-        return ""
+        section = """\
+<h2 style="clear:both"><a class="anchor" name="data"></a>Data &amp; Model</h2>
+<table class="backlit2">
+  <tr><th>Partition</th><th>Sequences</th><th>Lengths</th><th>Alphabet</th><th>Substitution&nbsp;Model</th><th>Indel&nbsp;Model</th><th>Scale&nbsp;Model</th></tr>
+"""
+        for i in range(self.n_partitions()):
+            section += '<tr>\n'
+            section += '  <td>{}</td>\n'.format(i+1)
+            section += '  <td>{}</td>\n'.format(self.get_input_files()[i])
+
+            features = self.get_alignment_info("Results/P{}.initial.fasta".format(i+1))
+            minlength = features['min_length']
+            maxlength = features['max_length']
+            section += '<td>{} - {}</td>\n'.format(minlength,maxlength)
+
+            alphabet = self.get_alphabets()[i]
+            section += '<td>{}</td>\n'.format(alphabet)
+
+            smodel = self.get_smodel_for_partition(i)
+            if smodel:
+                smodel = smodel['main']
+                index = self.get_smodel_indices()[i]+1
+                target = "S{}".format(index)
+                link = '<a href="#{t}">{t}</a>'.format(t=target)
+                section += '<td>{} = {}</td>\n'.format(link,smodel)
+            elif self.get_smodels() is not None:
+                section += '<td>none</td>\n'
+            else:
+                section += '<td></td>\n'
+
+            imodel = self.get_imodel_for_partition(i)
+            if imodel:
+                imodel = imodel['main']
+                index = self.get_imodel_indices()[i]+1
+                target = "I{}".format(index)
+                link = '<a href="#{t}">{t}</a>'.format(t=target)
+                section += '<td>{} = {}</td>\n'.format(link,imodel)
+            elif self.get_imodels() is not None:
+                section += '<td>none</td>\n'
+            else:
+                section += '<td></td>\n'
+
+            scale_model = self.get_scale_model_for_partition(i)
+            if scale_model:
+                scale_model = scale_model['main']
+                index = self.get_scale_model_indices()[i]+1
+                target = "scale{}".format(index)
+                link = '<a href="#{t}">{t}</a>'.format(t=target)
+                assign = '='
+                if scale_model[0] == '~':
+                    scale_model = scale_model[1:]
+                    assign = '~'
+                section += '<td>{} {} {}</td>\n'.format(link,assign,scale_model)
+            elif self.get_scale_models() is not None:
+                section += '<td>none</td>\n'
+            else:
+                section += '<td></td>\n'
+
+            section += '</tr>\n'
+        section += '</table>\n'
+        return section
 
     def section_scalar_variables(self):
         return ""
@@ -1627,89 +1698,6 @@ if __name__ == '__main__':
 #    return $section;
 #}
 #
-#
-#sub print_data_and_model
-#{
-#    my $section = "";
-#    $section .= "<h2 style=\"clear:both\"><a class=\"anchor\" name=\"data\"></a>Data &amp; Model</h2>\n";
-#    $section .= "<table class=\"backlit2\">\n";
-#    $section .= "<tr><th>Partition</th><th>Sequences</th><th>Lengths</th><th>Alphabet</th><th>Substitution&nbsp;Model</th><th>Indel&nbsp;Model</th><th>Scale&nbsp;Model</th></tr>\n";
-#    for(my $p=0;$p<=$#input_file_names;$p++) 
-#    {
-#	$section .= "<tr>\n";
-#	$section .= " <td>".($p+1)."</td>\n";
-#	$section .= " <td>$input_file_names[$p]</td>\n";
-#
-#	my $features = get_alignment_info("Results/C1.P".($p+1).".initial.fasta");
-#	my $min = $features->{'min_length'};
-#	my $max = $features->{'max_length'};
-#	my $alphabet = $alphabets[$p];
-#
-#	$section .= "<td>";
-#	$section .= "$min - $max" if defined ($min);
-#	$section .= "</td>\n";
-#
-#	$section .= "<td>$alphabet</td>" if ($personality =~ "bali-phy.*");
-#
-#	if ($personality =~ "bali-phy.*")
-#	{
-#	    my $smodel = $smodels[$smodel_indices[$p]];
-#	    $smodel = ${${smodel}}{'main'};
-#	    my $index = $smodel_indices[$p]+1;
-#	    my $target = "S".$index;
-#
-#	    my $link = "<a href=\"#$target\">$target</a>";
-#
-#	    $section .= "<td>$link = $smodel</td>\n";
-#	}
-#	else
-#	{
-#	    $section .= " <td></td>\n";
-#	}
-#
-#	my $imodel ="none";
-#
-#	if ($imodel_indices[$p] ne "--")
-#	{
-#	    $imodel = $imodels[$imodel_indices[$p]];
-#	    $imodel = ${${imodel}}{'main'};
-#
-#	    my $index = $imodel_indices[$p]+1;
-#	    my $target = "I".$index;
-#
-#	    my $link = "<a href=\"#$target\">$target</a>";
-#	    $imodel = "$link = $imodel";
-#	}
-#	$section .= " <td>$imodel</td>\n";
-#
-#	if ($personality =~ "bali-phy.*")
-#	{
-#	    my $scale_model = $scale_models[$scale_model_indices[$p]];
-#	    $scale_model = ${${scale_model}}{'main'};
-#
-#	    my $index = $scale_model_indices[$p]+1;
-#	    my $target = "scale".$index;
-#
-#	    my $link = "<a href=\"#$target\">$target</a>";
-#
-#	    my $assign = '=';
-#	    if (substr($scale_model,0,1) eq "~")
-#	    {
-#		$scale_model = substr($scale_model,1);
-#		$assign = "~";
-#	    }
-#	    $section .= " <td>$link $assign $scale_model</td>\n";
-#	}
-#	else
-#	{
-#	    $section .= " <td></td>\n";
-#	}
-#	$section .= "</tr>\n";
-#    }
-#    
-#    $section .= "</table>\n";
-#    return $section;
-#}
 #
 #sub print_model_section
 #{
