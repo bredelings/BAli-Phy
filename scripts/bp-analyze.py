@@ -1702,7 +1702,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                 section += '  <td></td>\n'
 
             section += '</tr>\n'
-        section += '</table.\n'
+        section += '</table>\n'
 
         return section
 
