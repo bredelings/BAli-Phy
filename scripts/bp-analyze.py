@@ -1707,7 +1707,34 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         return section
 
     def section_alignment_distribution(self):
-        section = ""
+        if not self.n_partitions():
+            return
+
+        section = '<h2 class="clear"><a class="anchor" name="alignment"></a>Alignment Distribution</h2>\n'
+        for i in range(self.n_partitions()):
+            section += '<h3>Partition {}</h3>\n'.format(i+1)
+            section += """\
+  <table>
+    <tr>
+       <th></th>
+       <th></th>
+       <th></th>
+       <th title ="Comparison of this alignment (top) to the WPD alignment (bottom)"></th>
+       <th></th>
+       <th style="padding-right:0.5em;padding-left:0.5em" title="Percent identity of the most dissimilar sequences">Min. %identity</th>
+       <th style="padding-right:0.5em;padding-left:0.5em" title="Number of columns in the alignment"># Sites</th>
+       <th style="padding-right:0.5em;padding-left:0.5em" title="Number of invariant columns">Constant</th>
+       <th style="padding-right:0.5em;padding-left:0.5em" title="Number of variant columns">Variable</th>
+       <th title="Number of parsiomny-informative columns.">Informative</th>
+    </tr>
+""".format(i+1)
+            for (alignment,alphabet) in self.alignments.items():
+                if not alignment.startswith('P{}.'.format(i+1)):
+                    continue
+                section += '    <tr>\n'
+                section += '      <td>{}</td>\n'.format(alignment)
+                section += '    </tr>\n'
+            section += '  </table>\n'
         return section
 
     def section_ancestral_sequences(self):   #REMOVE!
