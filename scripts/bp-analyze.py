@@ -11,6 +11,41 @@ import itertools
 import glob
 import sys
 
+def print_model(model):
+    main = model['main']
+
+    assign = '='
+    if main[0:1] == '~':
+        main = main[1:]
+        assign = '~'
+
+    section = main + '\n'
+    extracted = model['extracted']
+
+    if extracted:
+        section += '<table class="model">\n'
+        for arg in extracted:
+            name = arg[0]
+            submodel = arg[1]
+            (subassign, submodel) = print_model(submodel)
+            section += '<tr><td>{}</td><td>{}</td><td>{}</td></tr>\n'.format(name,subassign,submodel)
+        section += '</table>'
+    return (assign, section)
+
+
+def print_models(name,models):
+    section = '<table class="models">\n'
+    i = 1
+    for model in models:
+        model_name =  "{}{}".format(name,i)
+        (assign, model_html) = print_model(model)
+        section += '<tr><td><a name="model_name" class="anchor"></a><span class="modelname">{}</span></td><td>{}</td><td>\n'.format(model_name,assign)
+        section += model_html
+        section += '</td></tr>\n'
+        i += 1
+    section += '</table>\n'
+    return section
+
 def flatten(l):
     return [item for sublist in l for item in sublist]
 
@@ -343,6 +378,12 @@ class MCMCRun(object):
             return None
 
         return scale_models[index]
+
+    def get_topology_prior(self):
+        return None
+
+    def get_branch_length_prior(self):
+        return None
     
 class BAliPhyRun(MCMCRun):
 
@@ -355,13 +396,14 @@ class BAliPhyRun(MCMCRun):
         self.alignments_files = self.get_alignment_files()
         self.MAP_file = check_file_exists(path.join(self.get_dir(),'C1.MAP'))
         self.command = self.find_header_attribute("command")
-        print("command = {}".format(self.command))
         self.version = self.find_header_attribute("VERSION").split('\s+')[0]
         self.find_tree_prior()
         self.smodel_indices = self.find_smodel_indices()
         self.imodel_indices = self.find_imodel_indices()
         self.scale_model_indices = self.find_scale_model_indices()
         self.alphabets = self.find_alphabets()
+        self.topology_prior = self.find_in_header('T:topology ')
+        self.branch_prior = self.find_in_header('T:lengths ')
 
     def get_alphabets(self):
         return self.alphabets
@@ -383,6 +425,12 @@ class BAliPhyRun(MCMCRun):
 
     def get_scale_model_indices(self):
         return self.scale_model_indices
+
+    def get_topology_prior(self):
+        return self.topology_prior
+
+    def get_branch_length_prior(self):
+        return self.branch_prior
 
     def get_n_sequences(self,p):
         features = self.get_alignment_info(path.join(self.dir,"C1.P{}.initial.fasta".format(p+1)))
@@ -408,8 +456,11 @@ class BAliPhyRun(MCMCRun):
         return filenames
 
     def find_header_attribute(self, attribute):
+        return self.find_in_header(attribute + ': ')
+
+    def find_in_header(self, key):
         with open(self.out_file,'r',encoding='utf-8') as file:
-            reg = attribute + ': (.*)$'
+            reg = key + '(.*)$'
             for line in file:
                 m = re.match(reg,line)
                 if m:
@@ -694,6 +745,12 @@ class Analysis(object):
 
     def get_scale_model_for_partition(self,p):
         return first_all_same([run.get_scale_model_for_partition(p) for run in self.mcmc_runs])
+
+    def get_topology_prior(self):
+        return first_all_same([run.get_topology_prior() for run in self.mcmc_runs])
+
+    def get_branch_length_prior(self):
+        return first_all_same([run.get_branch_length_prior() for run in self.mcmc_runs])
 
     def find_models(self, name1, name2):
         return first_all_same([run.find_models(name1,name2) for run in self.mcmc_runs])
@@ -1307,7 +1364,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                 continue
             afiles = self.get_alignments_for_partition(i)
             name = "P{}.max".format(i+1)
-            self.alignments.append((name, self.get_alphabets()[i], "WPD"))
+            self.alignments.append((name, self.get_alphabets()[i], "Best (WPD)"))
             if not more_recent_than_all_of("Results/Work/{}-unordered.fasta".format(name),afiles):
                 cut_cmd=['cut-range']+afiles
                 if self.burnin is not None:
@@ -2033,7 +2090,25 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         return section
 
     def section_model_and_priors(self):
-        section = ""
+        section = '<h2 style="clear:both"><a class="anchor" name="models"></a>Model and priors</h2>\n'
+
+        section += '<h3 style="clear:both"><a class="anchor" name="tree"></a>Tree (+priors)</h3>\n'
+#    $section .= "<table class=\"backlit2\">\n";
+        section += "<table>\n"
+        if self.get_topology_prior():
+            section += '<tr><td class="modelname">topology</td><td>{}</td></tr>'.format(self.get_topology_prior())
+        if self.get_branch_length_prior():
+            section += '<tr><td class="modelname">branch lengths</td><td>{}</td></tr>'.format(self.get_branch_length_prior())
+        section += '</table>\n'
+
+        section += '<h3 style="clear:both"><a class="anchor" name="smodel"></a>Substitution model (+priors)</h3>\n'
+        section += print_models("S",self.get_smodels())
+
+        section += '<h3 style="clear:both"><a class="anchor" name="imodel"></a>Indel model (+priors)</h3>\n'
+        section += print_models("I",self.get_imodels())
+
+        section += '<h3 style="clear:both"><a class="anchor" name="scales"></a>Scales (+priors)</h3>\n'
+        section += print_models("scale",self.get_scale_models());
         return section
 
     def section_end(self):
@@ -2044,8 +2119,6 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 """
 
 
-
-#----------------------------- SETUP 1 --------------------------#
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate an HTML report summarizing MCMC runs for BAli-Phy and other software.",
                                      epilog= "Example: bp-analyze analysis-dir-1 analysis-dir-2")
@@ -2066,503 +2139,3 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     analysis = Analysis(args,args.mcmc_outputs)
-
-#    smodels = analysis.get_models("subst model", "smodels")
-#    imodels = analysis.get_models("indel model", "imodels")
-#    scale_models = analysis.get_models("scale model", "scales")
-
-
-
-##---------------------------------------- end execution ---------------------------
-#
-#
-#sub html_header
-#{
-#}
-#
-#sub topbar
-#{
-#    return '<p id="topbar"> 
-#   <span id="path">Sections:</span>
-#   <span id="menu">
-#    [<a href="#data">Data+Model</a>]
-#    [<a href="#parameters">Parameters</a>]
-#    [<a href="#topology">Phylogeny</a>]
-#    [<a href="#alignment">Alignment</a>]
-#    [<a href="#ancestors">Ancestors</a>]
-#    [<a href="#mixing">Mixing</a>]
-#    [<a href="#analysis">Analysis</a>]
-#    [<a href="#models">Models+Priors</a>]
-#   </span>
-#</p>
-#';
-#}
-#
-#sub print_model
-#{
-#    my $model = shift;
-#
-#    my $main= ${${model}}{'main'};
-#
-#    my $assign = '=';
-#    if (substr($main,0,1) eq '~')
-#    {
-#	$main = substr($main,1);
-#	$assign = "~";
-#    }
-#
-#    my $section = $main . "\n";
-#
-#    my @extracted = @{${${model}}{'extracted'}};
-#    if (scalar @extracted != 0)
-#    {
-#	$section .= "<table class=\"model\">\n";
-#	foreach my $arg (@extracted)
-#	{
-#	    my $name = ${$arg}[0];
-#	    my $submodel = ${$arg}[1];
-#	    (my $subassign,$submodel) = print_model($submodel);
-#	    $section .= "<tr><td>$name</td><td>$subassign</td><td>$submodel</td></tr>\n";
-#	}
-#	$section .= "</table>";
-#    }
-#    return ($assign,$section);
-#}
-#
-#sub print_models
-#{
-#    my $name = shift;
-#    my $models = shift;
-#    my $section = "<table class=\"models\">\n";
-#    my $i=1;
-#    foreach my $model (@$models)
-#    {
-#	my $model_name = $name.$i;
-#	my ($assign, $model_html) = print_model($model);
-#	$section .= "<tr><td><a name=\"$model_name\" class=\"anchor\"></a><span class=\"modelname\">$model_name</span></td><td>$assign</td><td>\n";
-#	$section .= $model_html;
-#	$section .= "</td></tr>\n";
-#	$i = $i + 1;
-#    }
-#    $section .= "</table>\n";
-#    return $section;
-#}
-#
-#
-#sub print_model_section
-#{
-#
-#    my $section = "<h2 style=\"clear:both\"><a class=\"anchor\" name=\"models\"></a>Model and priors</h2>\n";
-#    
-#    $section .= "<h3 style=\"clear:both\"><a class=\"anchor\" name=\"tree\"></a>Tree (+priors)</h3>\n";
-##    $section .= "<table class=\"backlit2\">\n";
-#    $section .= "<table>\n";
-#    $section .= "<tr><td class=\"modelname\">topology</td><td>$topology_prior</td></tr>" if (defined($topology_prior));
-#    $section .= "<tr><td class=\"modelname\">branch lengths</td><td>$branch_prior</td></tr>" if (defined($branch_prior));
-#    $section .= "</table>\n";
-#    
-#    $section .= "<h3 style=\"clear:both\"><a class=\"anchor\" name=\"smodel\"></a>Substitution model (+priors)</h3>\n";
-#    $section .= print_models("S",\@smodels);
-#
-#    $section .= "<h3 style=\"clear:both\"><a class=\"anchor\" name=\"imodel\"></a>Indel model (+priors)</h3>\n";
-#    $section .= print_models("I",\@imodels);
-#
-#    $section .= "<h3 style=\"clear:both\"><a class=\"anchor\" name=\"scales\"></a>Scales (+priors)</h3>\n";
-#    $section .= print_models("scale",\@scale_models);
-#
-#    return $section;
-#}
-#
-#sub section_analysis
-#{
-#    my $section = "";
-#    $section .= "<br/><hr/><br/>\n";
-#    $section .= "<h2><a class=\"anchor\" name=\"analysis\"></a>Analysis</h2>\n";
-#    $section .= "<p>" if (!$commands_differ || !$directories_differ || !$versions_differ);
-#    $section .= "<b>command line</b>: $commands[0]</br>\n" if (!$commands_differ);
-#    $section .= "<b>directory</b>: $directories[0]</br>\n" if (!$directories_differ);
-#    $section .= "<b>version</b>: $versions[0]\n" if (!$versions_differ);
-#    $section .= "</p>" if (!$commands_differ || !$directories_differ || !$versions_differ);
-#    #$section .= '<table style="width:100%">'."\n";
-#
-#    #$section .= '<table class="backlit2 center" style="width:100%">'."\n";
-#    $section .= '<table class="backlit2 center">'."\n";
-#    $section .= "<tr><th>chain #</th>";
-#    $section .= "<th>version</th>" if ($versions_differ);
-#    $section .= "<th>burnin</th><th>subsample</th><th>Iterations (after burnin)</th>";
-#    $section .= "<th>command line</th>" if ($commands_differ);
-#    $section .= "<th>subdirectory</th>";
-#    $section .= "<th>directory</th>" if ($directories_differ);
-#    $section .= "</tr>\n";
-#    for(my $i=0;$i<=$#out_files;$i++)
-#    {
-#$section .= "<tr>\n";
-#
-#$section .= "  <td>".($i+1)."</td>\n";
-#$section .= "  <td>$versions[$i]</td>\n" if ($versions_differ);
-#
-#$section .= "  <td>$burnin</td>\n";
-#$section .= "  <td>$subsample</td>\n";
-#
-#my $remaining = ($n_iterations[$i] - $burnin)/$subsample;
-#$section .= "  <td>$remaining</td>\n";
-#
-#$section .= "  <td>$commands[$i]</td>\n" if ($commands_differ);
-#$section .= "  <td>$subdirs[$i]</td>\n";
-#$section .= "  <td>$directories[$i]</td>\n" if ($directories_differ);
-#
-#
-#$section .= "</tr>\n";
-#    }
-#$section .= "</table>\n";
-#
-#$section .= "<br/>\n";
-#$section .= '<table style="width:100%">'."\n";
-#$section .= "<tr>\n";
-#$section .= "  <td>$marginal_prob</td>\n";
-#$section .= "  <td>Complete sample: $n_topologies topologies</td>\n";
-#$section .= "  <td>95% Bayesian credible interval: $n_topologies_95 topologies</td>\n";
-#$section .= "</tr>\n";
-#$section .= "</table>\n";
-#
-#
-#    return $section;
-#}
-#
-#sub section_phylogeny_distribution
-#{
-#    my $section = "";
-#    $section .= "<h2><a class=\"anchor\" name=\"topology\"></a>Phylogeny Distribution</h2>\n";
-#    $section .= html_svg("c-levels.svg","35%","",["r_floating_picture"]);
-#
-#
-#    $section .= html_svg("c50-tree.svg","25%","",["floating_picture"]);
-#    $section .= '<table>'."\n";
-#    $section .= "<tr><td>Partition support: <a href=\"consensus\">Summary</a></td><td><a href=\"partitions.bs\">Across chains</a></td></tr>\n";
-##    $section .= "<tr><td><span title=\"How many partitions are supported at each level of Posterior Log Odds (LOD)?\">Partition support graph:</span> <a href=\"c-levels.svg\">SVG</a></td></tr>\n";
-#    $section .= "</table>\n";
-#
-#    $section .= "<table>\n";
-#    for my $tree (@trees)
-#    {
-#	my $name = $tree_name{$tree};
-#	$section .= "<tr>";
-#	$section .= "<td>$name</td>";
-##    $section .= "<td><a href=\"$tree.topology\">-L</a></td>";
-#	$section .= "<td><a href=\"$tree.tree\">Newick</a> (<a href=\"$tree.PP.tree\">+PP</a>)</td>";
-#	$section .= "<td><a href=\"$tree-tree.pdf\">PDF</a></td>";
-#	$section .= "<td><a href=\"$tree-tree.svg\">SVG</a></td>";
-#	
-#	if ($sub_partitions && (-f "Results/$tree.mtree" || -f "Results/$tree-mctree.svg" ||
-#				-f "Results/$tree-mctree.pdf" )) 
-#	{
-#	    $section .= "<td>MC Tree:</td>";
-#	}
-#	else {
-#	    $section .= "<td></td>"     
-#	}
-#	
-#	if ($sub_partitions && -f "Results/$tree.mtree") {
-#	    $section .= "<td><a href=\"$tree.mtree\">-L</a></td>"     
-#	}
-#	else {
-#	    $section .= "<td></td>"     
-#	}
-#	if ($sub_partitions && -f "Results/$tree-mctree.pdf") {
-#	    $section .= "<td><a href=\"$tree-mctree.pdf\">PDF</a></td>";
-#	}
-#	else {
-#	    $section .= "<td></td>"     
-#	}
-#	if ($sub_partitions && -f "Results/$tree-mctree.svg") {
-#	    $section .= "<td><a href=\"$tree-mctree.svg\">SVG</a></td>";
-#	}
-#	else {
-#	    $section .= "<td></td>"     
-#	}
-#	$section .= "</tr>";
-#    }
-#    $section .= "</table>\n";
-#    return $section;
-#}
-#
-
-#sub do_cleanup
-#{
-#    rmdir_recursive("Results") if (-e "Results");
-#}
-#
-#sub rmdir_recursive 
-#{
-#    my $dir = shift;
-#    local *DIR;
-#
-#    opendir DIR, $dir or die "opendir $dir: $!";
-#    for (readdir DIR) {
-#	next if /^\.{1,2}$/;
-#	my $path = "$dir/$_";
-#	unlink $path if -f $path;
-#	rmdir_recursive($path) if -d $path;
-#    }
-#    closedir DIR;
-#    rmdir $dir or print "error - $!";
-#}
-#
-#sub get_cmdline_attribute
-#{
-#    return "unknown" if ($personality !~ "bali-phy.*");
-#    my $attribute = shift;
-#    my $value;
-#
-#    open my $FILE, $out_files[0] or die "Can't open $out_files[0]!";
-#
-#    my @partitions = ();
-#
-#    my $line = portable_readline($FILE);
-#    {
-#	if ($line =~ /--$attribute[ =]([^ ]*)$/) {
-#	    $value = $1;
-#	    last;
-#	}
-#	last if ($line =~ /^iterations = 0/);
-#    }
-#    close $FILE;
-#
-#    return $value;
-#}
-#
-#sub get_header_attributes
-#{
-#    return ("unknown") if ($personality !~ "bali-phy.*");
-#    my $attribute = shift;
-#    my @filenames = @_;
-#    my @values;
-#
-#    foreach my $filename (@filenames)
-#    {
-#
-#	open my $FILE, $filename or die "Can't open $filename!";
-#
-#	while (my $line = portable_readline($FILE))
-#	{
-#	    if ($line =~ /$attribute: (.*)$/) {
-#		push @values, $1;
-#		last;
-#	    }
-#	    last if ($line =~ /^iterations = 0/);
-#	}
-#	close $FILE;
-#    }
-#
-#    return @values;
-#}
-#
-#sub get_all_versions
-#{
-#    return [] if ($#out_files == -1);
-#    my @versions;
-#
-#    if (!@run_files)
-#    {
-#	foreach my $out_file (@out_files)
-#	{
-#	    push @versions, get_version_for_file($out_file);
-#	}
-#    }
-#    else
-#    {
-#	foreach my $run_file (@run_files)
-#	{
-#	    push @versions, get_version_for_run_file($run_file);
-#	}
-#    }
-#    return @versions;
-#}
-#
-#sub get_models
-#{
-#    my $name1 = shift;
-#    my $name2 = shift;
-#    return [] if ($#out_files == -1);
-#    my @models;
-#
-#    if (!@run_files)
-#    {
-#	foreach my $out_file (@out_files)
-#	{
-#	    push @models, get_models_for_file($name1, $out_file);
-#	}
-#    }
-#    else
-#    {
-#	foreach my $run_file (@run_files)
-#	{
-#	    push @models, get_models_for_run_file($name2, $run_file);
-#	}
-#    }
-#    return $models[0];
-#}
-#
-#sub get_smodels
-#{
-#    return [] if ($#out_files == -1);
-#    my @smodels;
-#
-#
-#    if (!@run_files)
-#    {
-#	foreach my $out_file (@out_files)
-#	{
-#	    push @smodels, get_smodels_for_file($out_file);
-#	}
-#    }
-#    else
-#    {
-#	foreach my $run_file (@run_files)
-#	{
-#	    push @smodels, get_smodels_for_run_file($run_file);
-#	}
-#    }
-#
-#    my $different = arrays_all_equal(@smodels);
-#
-#    return $smodels[0] if (! $different);
-#
-#    print "\nError! Different MCMC chains have different substitution models!\n";
-#    show_array_differences("    subst model = ", $out_files[0], $smodels[0], $out_files[$different], $smodels[$different]);
-#    exit(1);
-#}
-#
-#sub get_scale_models
-#{
-#    return [] if ($#out_files == -1);
-#    my @scale_models;
-#
-#    foreach my $out_file (@out_files)
-#    {
-#	push @scale_models, get_scale_models_for_file($out_file);
-#    }
-#
-#    my $different = arrays_all_equal(@scale_models);
-#
-#    return $scale_models[0] if (! $different);
-#
-#    print "\nError! Different MCMC chains have different scale models!\n";
-#    show_array_differences("    subst model = ", $out_files[0], $scale_models[0], $out_files[$different], $scale_models[$different]);
-#    exit(1);
-#}
-#
-#sub get_imodels_for_file
-#{
-#    my $file = shift;
-#
-#    return [] if ($personality !~ "bali-phy.*");
-#
-#    open my $FILE, $file or die "Can't open $file!";
-#
-#    my @imodels = ();
-#
-#    while (my $line = portable_readline($FILE))
-#    {
-#	if ($line =~ /indel model(.+) = (.+)/) {
-#	    push @imodels,$2;
-#	}
-#	if ($line =~ /indel model = (.+)/) {
-#	    push @imodels,$1;
-#	}
-#
-#	last if ($line =~ /^iterations = 0/);
-#    }
-#    close $FILE;
-#
-#    push @imodels, "none" if ($#imodels == -1);
-#    return [@imodels];
-#}
-#
-#sub get_imodels
-#{
-#    return [] if ($#out_files == -1);
-#    my @imodels;
-#
-#    foreach my $out_file (@out_files)
-#    {
-#	push @imodels, get_imodels_for_file($out_file);
-#    }
-#
-#    my $different = arrays_all_equal(@imodels);
-#
-#    return $imodels[0] if (! $different);
-#
-#    print "\nError! Different MCMC chains have different substitution models!\n";
-#    show_array_differences("    subst model = ", $out_files[0], $imodels[0], $out_files[$different], $imodels[$different]);
-#    exit(1);
-#}
-#
-#sub tooltip
-#{
-#    my $text = shift;
-#    return "<a title=\"$text\">?</a>";
-#}
-#
-#sub get_consensus_arg
-#{
-#    my $suffix = shift;
-#    my $levels = shift;
-#    my @pairs = @$levels;
-#    for my $level (@pairs)
-#    {
-#	my $filename = $level*100;
-#	$filename = "Results/c$filename.".$suffix;
-#	$level = "$level:$filename";
-#    }
-#    return join(',',@pairs);
-#}
-#
-#sub get_consensus_trees
-#{
-#    my $suffix = shift;
-#    my $levels = shift;
-#    my @filenames = ();
-#    for my $level (@$levels)
-#    {
-#	my $filename = $level*100;
-#	$filename = "Results/c$filename.".$suffix;
-#	push @filenames,$filename;
-#    }
-#    return @filenames;
-#}
-#
-#sub get_file_prefix
-#{
-#    my $filename = shift;
-#    if ($filename =~ /(.*)\.([^.\/\\]*)$/)
-#    {
-#	return $1;
-#    }
-#    return $filename;
-#}
-#
-#sub get_file_suffix
-#{
-#    my $filename = shift;
-#    if ($filename =~ /(.*)\.([^.\/\\]*)$/)
-#    {
-#	return $2;
-#    }
-#    return "";
-#}
-#
-#sub get_mcmc_command_line
-#{
-#    my $command;
-#    if ($personality =~ "bali-phy.*") 
-#    {
-#	$command = get_header_attribute($out_files[0],"command");
-#    }
-#    else
-#    {
-#	$command = "unknown";
-#    }
-#    return $command;
-#}
-#
