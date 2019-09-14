@@ -147,84 +147,6 @@ extern "C" closure builtin_function_modifiable(OperationArgs& Args)
     return {mod_exp, {r_value}};
 }
 
-extern "C" closure builtin_function_is_changeable(OperationArgs& Args)
-{
-    assert(not Args.evaluate_changeables());
-
-    int R1 = Args.evaluate_slot_to_reg(0);
-
-    const reg_heap& M = Args.memory();
-    if (M.reg_is_changeable(R1))
-	return bool_true;
-    else
-	return bool_false;
-}
-
-extern "C" closure builtin_function_is_modifiable(OperationArgs& Args)
-{
-    assert(not Args.evaluate_changeables());
-
-    int R1 = Args.evaluate_slot_to_reg(0);
-
-    const reg_heap& M = Args.memory();
-
-    if (is_modifiable(M[R1].exp))
-	return bool_true;
-    else
-	return bool_false;
-}
-
-extern "C" closure builtin_function_get_modifiable_for_index(OperationArgs& Args)
-{
-    assert(not Args.evaluate_changeables());
-
-    int R1 = Args.evaluate(0).as_int();
-
-    return {index_var(0),{R1}};
-}
-
-extern "C" closure builtin_function_get_modifiable_index(OperationArgs& Args)
-{
-    assert(not Args.evaluate_changeables());
-
-    int R1 = Args.evaluate_slot_to_reg(0);
-
-    const reg_heap& M = Args.memory();
-
-    assert(is_modifiable(M[R1].exp));
-
-    return {R1};
-}
-
-extern "C" closure builtin_function_set_modifiable_value(OperationArgs& Args)
-{
-    assert(not Args.evaluate_changeables());
-
-    int c = Args.evaluate(0).as_int();
-
-    int R1 = Args.evaluate_slot_to_reg(1);
-    int R2 = Args.evaluate_slot_to_reg(2);
-
-    Args.memory().set_reg_value_in_context(R1, {index_var(0),{R2}}, c);
-
-    return constructor("()",0);
-}
-
-extern "C" closure builtin_function_get_modifiable_value(OperationArgs& Args)
-{
-    assert(not Args.evaluate_changeables());
-
-    int c = Args.evaluate(0).as_int();
-
-    int R1 = Args.evaluate_slot_to_reg(1);
-
-    int R2 = Args.memory().get_modifiable_value_in_context(R1, c);
-
-    assert( R2 );
-
-    return {index_var(0),{R2}};
-}
-
 extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 {
     int R = Args.reg_for_slot(0);
@@ -249,31 +171,6 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
     M.register_likelihood_(R);
 
     return constructor("()",0);
-}
-
-extern "C" closure builtin_function_evaluate(OperationArgs& Args)
-{
-    auto& M = Args.memory();
-
-    int c = Args.evaluate(0).as_int();
-
-#ifndef NDEBUG
-    if (Args.evaluate_changeables() and c >= 0)
-	throw myexception()<<"Calling builtin_function_evaluate( ) when evaluate_changeables=true and c >= 0";
-#endif
-
-    int R1 = Args.reg_for_slot(1);
-
-    int R2 = 0;
-
-    if (c < 0)
-	R2 = M.incremental_evaluate_unchangeable(R1);
-    else
-	R2 = M.incremental_evaluate_in_context(R1, c).first;
-
-    assert( R2 );
-
-    return {index_var(0),{R2}};
 }
 
 extern "C" closure builtin_function_add_named_head(OperationArgs& Args)
