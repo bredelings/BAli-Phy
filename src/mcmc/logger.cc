@@ -162,30 +162,6 @@ namespace MCMC {
 	:function(f)
     { }
 
-    expression_ref get_computation(const Model& M, int index)
-    {
-	expression_ref result = M.evaluate(index);
-
-	if (result.is_double())
-	    return result;
-	else if (result.is_int())
-	    return result;
-	else if (result.is_a<String>())
-	    return result;
-	else if (result.head().is_a<constructor>())
-	{
-	    auto& c = result.head().as_<constructor>();
-	    if (is_bool_true(c))
-		return 1;
-	    else if (is_bool_false(c))
-		return 0;
-	    else
-		return -1;
-	}
-	else
-	    return -1;
-    }
-
     int alignment_length(const data_partition& P)
     {
 	auto branches = P.t().all_branches_from_node(0);
