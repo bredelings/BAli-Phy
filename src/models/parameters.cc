@@ -549,7 +549,6 @@ void tree_constants::register_branch_lengths(context* C, const expression_ref& b
 
     int branch_lengths_index = C->add_compute_expression( branch_lengths_exp );
     auto branch_lengths = C->get_expression(branch_lengths_index);
-    C->evaluate(branch_lengths_index);
 
     branch_durations = get_params_from_list(C, branch_lengths, B);
 }
