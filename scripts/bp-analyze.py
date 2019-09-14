@@ -939,11 +939,15 @@ class Analysis(object):
         if self.until is not None:
             cmd.append("--until={}".format(self.until))
 
+        self.trees = [("greedy","greedy"),("MAP","MAP")]
         tree_names=['Results/greedy.PP.tree','Results/MAP.PP.tree']
         consensus_trees=[]
         for level in self.tree_consensus_levels:
-            filename = "Results/c{}.PP.tree".format(int(level*100))
+            value = int(level*100)
+            name = "c{}".format(value)
+            filename = "Results/{}.PP.tree".format(name)
             tree_names.append(filename)
+            self.trees.append((name,'{}% consensus'.format(value)))
             consensus_trees.append("{}:{}".format(level,filename))
         cmd.append("--consensus={}".format(','.join(consensus_trees)))
 
@@ -1036,17 +1040,6 @@ class Analysis(object):
         return features
 
     def draw_trees(self):
-        self.trees = []
-        self.tree_name = dict()
-        for level in self.tree_consensus_levels:
-            value = int(level*100)
-            tree = "c{}".format(value)
-            self.trees.append(tree)
-            self.tree_name[tree] = "{}% consensus".format(value)
-        self.trees.append("MAP")
-        self.tree_name["MAP"] = "MAP"
-        self.trees.append("greedy")
-        self.tree_name["greedy"] = "greedy"
         if not self.draw_tree_exe:
             return
         print("Drawing trees: ",end='')
@@ -1484,6 +1477,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             output += "<h1>{}</h1>\n".format(title)
             output += self.section_data_and_model()
             output += self.section_scalar_variables()
+            output += self.section_phylogeny_distribution()
             output += self.section_alignment_distribution()
             output += self.section_ancestral_sequences() # FIXME!
             output += self.section_mixing()
@@ -1581,7 +1575,6 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
       [<a href="#parameters">Parameters</a>]
       [<a href="#topology">Phylogeny</a>]
       [<a href="#alignment">Alignment</a>]
-      [<a href="#ancestors">Ancestors</a>]
       [<a href="#mixing">Mixing</a>]
       [<a href="#analysis">Analysis</a>]
       [<a href="#models">Models+Priors</a>]
@@ -1725,6 +1718,34 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 
         return section
 
+    def section_phylogeny_distribution(self):
+        section = '<h2><a class="anchor" name="topology"></a>Phylogeny Distribution</h2>\n'
+        section += self.html_svg('c-levels.svg','35%','',['r_floating_picture'])
+        section += self.html_svg('c50-tree.svg','25%','',['floating_picture'])
+
+        section += """\
+<table>
+  <tr>
+    <td>Partition support: <a href="consensus">Summary</a></td>
+    <td><a href="partitions.bs">Across chains</a></td>
+  </tr>
+</table>
+"""
+        section += '<table>\n'
+        print(self.trees)
+        for (tree,name) in self.trees:
+            section += """\
+  <tr>
+    <td>{name}</td>
+    <td><a href="{tree}.tree">Newick</a></td>
+    <td>(<a href="{tree}.PP.tree">+PP</a>)</td>
+    <td><a href="{tree}-tree.pdf">PDF</a></td>
+    <td><a href="{tree}-tree.svg">SVG</a></td>
+""".format(name=name,tree=tree)
+            section += '  </tr>\n'
+        section += '</table>'
+        return section
+
     def section_alignment_distribution(self):
         if not self.n_partitions():
             return
@@ -1778,12 +1799,142 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             section += '  </table>\n'
         return section
 
+    def get_value_from_file(self,filename,attribute):
+        with open(filename,encoding='utf-8') as file:
+            for line in file:
+                m = re.search(attribute + ' ([^ ]*)($| )', line)
+                if m:
+                    return m.group(1)
+        return None
+
+    def html_svg(self,url,width=None,height=None,classes=[],extra=None):
+        classes.append('svg-image')
+        class_=' '.join(classes)
+        svg = '<object data="{}" type="image/svg+xml" class="{}"'.format(url,class_)
+        if width:
+            svg += " width={}".format(width)
+        if height:
+            svg += " height={}".format(height)
+        if extra:
+            svg += " "+extra
+        svg += ' ></object>'
+        return svg
+
     def section_ancestral_sequences(self):   #REMOVE!
         section = ""
         return section
 
     def section_mixing(self):
-        section = ""
+        section = """\
+<h2><a class="anchor" name="mixing"></a>Mixing</h2>
+  <table style="width:100%;clear:both">
+    <tr>
+      <td style="vertical-align:top">
+        <p><b>Statistics:</b></p>
+        <table class="backlit2">
+"""
+        burnin_before = "NA"
+        min_NE = "NA"
+        if self.get_log_files():
+            burnin_before = self.get_value_from_file("Results/Report", 'min burnin <=')
+            if burnin_before == "Not":
+                burnin_before = "Not Converged!"
+            min_NE = self.get_value_from_file("Results/Report", 'Ne  >=')
+        section += "<tr><td><b>scalar burnin</b></td><td>{}</td></tr>\n".format(burnin_before)
+        section += "<tr><td><b>scalar ESS</b></td><td>{}</td></tr>\n".format(min_NE)
+
+        min_NE_partition = self.get_value_from_file('Results/partitions.bs','min Ne =')
+        section += '<tr><td><b title=\"Effective Sample Size for bit-vectors of partition support (smallest)\">topological ESS</b></td><td>{}</td></tr>\n'.format(min_NE_partition)
+
+        asdsf = self.get_value_from_file('Results/partitions.bs','ASDSF\[min=0.100\] =')
+        if asdsf is None:
+            asdsf = "NA"
+        section += '<tr><td><b title=\"Average Standard Deviation of Split Frequencies\">ASDSF</b></td><td>{}</td></tr>'.format(asdsf)
+
+        msdsf = self.get_value_from_file('Results/partitions.bs','MSDSF =')
+        if msdsf is None:
+            msdsf = "NA"
+        section += '<tr><td><b title=\"Maximum Standard Deviation of Split Frequencies\">MSDSF</b></td><td>{}</td></tr>'.format(msdsf)
+
+        psrf_80 = 'NA'
+        psrf_rcf = 'NA'
+        if self.get_log_files() and len(self.get_log_files()) >= 2:
+            psrf_80 = self.get_value_from_file('Results/Report','PSRF-80%CI <=')
+            psrf_rcf = self.get_value_from_file('Results/Report','PSRF-RCF <=')
+        section += '<tr><td><b>PSRF CI80%</b></td><td>{}</td><tr>\n'.format(psrf_80)
+        section += '<tr><td><b>PSRF RCF</b></td><td>{}</td><tr>\n'.format(psrf_rcf)
+
+        section += '</table>\n'
+        section += '</td>\n'
+
+        section += '    <td>\n'
+        section += '      <img src="c50.SRQ.png" alt="SRQ plot for supprt of 50% consensus tree."/>'
+        section += '      <img src="partitions.SRQ.png" alt="SRQ plot for supprt of each partition."/>'
+        section += '    </td>\n'
+        section += '  </tr></table>\n'
+
+        if self.n_chains() >= 3:
+            MDS_figure = "tree-1-2-3.svg"
+            MDS_figure_3d = "tree-1-2-3.points"
+            if self.n_chains() == 3:
+                MDS_title = "3 chains"
+            else:
+                MDS_title = "the first 3 chains"
+        elif self.n_chains() == 2:
+            MDS_figure = "tree-1-2.svg"
+            MDS_figure_3d = "tree-1-2.points"
+            MDS_title = "2 chains"
+        elif self.n_chains() == 1:
+            MDS_figure = "tree1.svg"
+            MDS_figure_3d = "tree-3D-1.points"
+            MDS_title = "1 chain"
+
+        section += """\
+<table style="width:100%;clear:both">
+  <tr>
+    <td style="width:40%;vertical-align:top">
+      <h4 style=\"text-align:center\">Projection of RF distances for {} (<a href=\"https://doi.org/10.1080/10635150590946961\">Hillis et al 2005</a>)</h4>
+""".format(MDS_title)
+        if path.exists(path.join("Results",MDS_figure)):
+            section += self.html_svg(MDS_figure,"90%","",[])
+            section += '<a href="{}.html">3D</a>'.format(MDS_figure_3d)
+        else:
+            if not self.R_exe:
+                section += "<p>Not generated: can't find R</p>"
+        section += '</td>'
+        section += '<td style="width:40%;vertical-align:top">'
+        section += '<h4 style="text-align:center">Variation of split PPs across chains (<a href="https://doi.org/10.1080/10635150600812544">Beiko et al 2006</a>)</h4>'
+        if path.exists("Results/convergence1-PP.svg"):
+            section += self.html_svg("convergence1-PP.svg","90%","",[])
+        else:
+            if not self.R_exe:
+                section += "<p>Not generated: can't find R.</p>"
+            elif self.n_chains() == 1:
+                section += "<p>Not generated: multiple chains needed.</p>"
+            else:
+                section += "<p>Not generated.</p>"
+
+        if path.exists("Results/convergence2-PP.svg"):
+            section += "<br/><br/><br/><br/>"
+            section += self.html_svg("convergence2-PP.svg","90%","",[])
+        section += "</td>"
+        section += "</tr></table>"
+
+        print("")
+        if burnin_before:
+            print("NOTE: burnin (scalar) <= {}".format(burnin_before))
+        if min_NE:
+            print("NOTE: min_ESS (scalar)    = {}".format(min_NE))
+        if min_NE_partition:
+            print("NOTE: min_ESS (partition)    = {}".format(min_NE_partition))
+        if asdsf:
+            print("NOTE: ASDSF = {}".format(asdsf))
+        if msdsf:
+            print("NOTE: MSDSF = {}".format(msdsf))
+        if psrf_80:
+            print("NOTE: PSRF-80%CI = {}".format(psrf_80))
+        if psrf_rcf:
+            print("NOTE: PSRF-RCF = {}".format(psrf_rcf))
         return section
 
     def section_analysis(self):
@@ -1987,55 +2138,6 @@ if __name__ == '__main__':
 #    return $section;
 #}
 #
-#sub html_svg_object
-#{
-#    my $url = shift;
-#    my $width = shift;
-#    my $height = shift;
-#    my $classes = shift;
-#    my $extra = shift;
-#
-#    $classes = [] if (!defined($classes));
-#    push @$classes,"svg-image";
-#    my $class = join(' ',@$classes);
-#
-#    my $svg = "<object data=\"$url\" type=\"image/svg+xml\" class=\"$class\"";
-#
-#    $svg = "$svg width=\"$width\"" if (defined($width));
-#    $svg = "$svg height=\"$height\"" if (defined($height));
-#    $svg = "$svg $extra" if (defined($extra));
-#    $svg = "$svg ></object>";
-#
-#    return $svg;
-#}
-#
-#sub html_svg_img
-#{
-#    my $url = shift;
-#    my $width = shift;
-#    my $height = shift;
-#    my $classes = shift;
-#    my $extra = shift;
-#
-#    $classes = [] if (!defined($classes));
-#    push @$classes,"svg-image";
-#    my $class = join(' ',@$classes);
-#
-#    my $svg = "<img src=\"$url\" class=\"$class\"";
-#
-#    $svg = "$svg width=\"$width\"" if (defined($width) and ($width ne ""));
-#    $svg = "$svg height=\"$height\"" if (defined($height) and ($height ne ""));
-#    $svg = "$svg $extra" if (defined($extra));
-#    $svg = "$svg />";
-#
-#    return $svg;
-#}
-#
-#sub html_svg
-#{
-#    return html_svg_img(@_);
-#}
-#
 #sub section_phylogeny_distribution
 #{
 #    my $section = "";
@@ -2093,256 +2195,7 @@ if __name__ == '__main__':
 #    return $section;
 #}
 #
-#sub section_alignment_distribution
-#{
-#    return "" if ($n_partitions == 0);
-#
-#    my $section .= "<h2 class=\"clear\"><a class=\"anchor\" name=\"alignment\"></a>Alignment Distribution</h2>\n";
-#
-#    for(my $i=0;$i<$n_partitions;$i++) 
-#    {
-#	my $p = $i+1;
-#	$section .= "<h3>Partition $p</h3>\n";
-#	$section .= "<table>\n";
-#	$section .= "<tr>\n";
-#	$section .= "<th></th>\n";
-#	$section .= "<th></th>\n";
-#	$section .= "<th></th>\n";
-#	$section .= "<th title=\"Comparison of this alignment (top) to the WPD alignment (bottom)\">Diff</th>\n";
-#	$section .= "<th></th>\n";
-#	$section .= "<th style=\"padding-right:0.5em;padding-left:0.5em\" title=\"Percent identity of the most dissimilar sequences\">Min. %identity</th>\n";
-#	$section .= "<th style=\"padding-right:0.5em;padding-left:0.5em\" title=\"Number of columns in the alignment\"># Sites</th>\n";
-#	$section .= "<th style=\"padding-right:0.5em;padding-left:0.5em\" title=\"Number of invariant columns\">Constant</th>\n";
-##    $section .= "<th style=\"padding-right:0.5em;padding-left:0.5em\" title=\"Number of variant columns\">Variable</th>\n";
-#	$section .= "<th title=\"Number of parsiomny-informative columns.\">Informative</th>\n";
-#	$section .= "</tr>\n";
-#	for my $alignment (@alignments)
-#	{
-#	    next if ($alignment !~ /^C1.P$p./ && $alignment !~ /^P$p./);
-#	    my $name = $alignment_names{$alignment};
-#	    my $features = get_alignment_info("Results/$alignment.fasta");
-#	    
-#	    $section .= "<tr>\n";
-#	    $section .= "<td>$name</td>\n";
-#	    $section .= "<td><a href=\"$alignment.fasta\">FASTA</a></td>\n";
-#	    if (-f "Results/$alignment.html") {
-#		$section .= "<td><a href=\"$alignment.html\">HTML</a></td>\n";
-#	    }
-#	    else {
-#		$section .= "<td></td>\n";
-#	    }
-#	    if (-f "Results/$alignment-diff.html") {
-#		$section .= "<td><a href=\"$alignment-diff.html\">Diff</a></td>\n";
-#	    }
-#	    else {
-#		$section .= "<td></td>\n";
-#	    }
-#	    if (-f "Results/$alignment-AU.html") {
-#		$section .= "<td><a href=\"$alignment-AU.html\">AU</a></td>\n";
-#	    }
-#	    else {
-#		$section .= "<td></td>\n";
-#	    }
-#	    $section .= "<td style=\"text-align: center\">${$features}{'min_p_identity'}%</td>\n";
-#	    $section .= "<td style=\"text-align: center\">${$features}{'length'}</td>\n";
-#	    $section .= "<td style=\"text-align: center\">${$features}{'n_const'} (${$features}{'p_const'}%)</td>\n";
-##	$section .= "<td style=\"text-align: center\">${$features}{'n_non-const'} (${$features}{'p_non-const'}%)</td>\n";
-#	    $section .= "<td style=\"text-align: center\">${$features}{'n_inform'} (${$features}{'p_inform'}%)</td>\n";
-#	    $section .= "</tr>\n";
-#	}
-#	$section .= "</table>\n";
-#    }
-#    return $section;
-#}
-#
-#
-#sub section_ancestral_sequences
-#{
-#    return "" if ($n_partitions == 0);
-#
-#    my $section .= "<h2 class=\"clear\"><a class=\"anchor\" name=\"ancestors\"></a>Ancestral sequence estimates</h2>\n";
-#
-#    $section .= "<ul>\n";
-#    for(my $i=0;$i<$n_partitions;$i++)
-#    {
-#        my $p = $i+1;
-#        my $ancestors = "P${p}.ancestors.fasta";
-#        next if (! -e "Results/$ancestors");
-#
-#        $section .= "    <li><a href=\"${ancestors}\">Partition ${p}</li>\n";
-#    }
-#    $section .= "</ul>\n";
-#
-#    return $section;
-#}
-#
-#sub section_mixing
-#{
-#    my $section = "";
-#
-#    $section .= "<h2><a class=\"anchor\" name=\"mixing\"></a>Mixing</h2>\n";
-#
-#    $section .= '<table style="width:100%;clear:both"><tr>';
-#    $section .= '<td style="vertical-align:top">';
-#    
-#    $section .= "<ol>\n";
-##    for my $srq (@SRQ) {
-##	$section .= "<li><a href=\"$srq.SRQ.png\">SRQ plot: $srq</a></li>\n";
-##    }
-##    $section .= '<li><a href="convergence-PP.pdf">Variation in split frequency estimates</a></li>'."\n" if (-f "Results/convergence-PP.pdf");
-#    $section .= "</ol>\n";
-#    
-#
-#    
-#    $section .= "<p><b>Statistics:</b></p>";
-#    $section .= "<table class=\"backlit2\">";
-##    $section .= "<tr><th>burnin (scalar)</th><th>ESS (scalar)</th><th>ESS (partition)</th><th>ASDSF</th><th>MSDSF</th><th>PSRF-CI80%</th><th>PSRF-RCF</th></tr>";
-#
-#    my $burnin_before = "NA";
-#    my $min_NE = "NA";
-#    if ($#parameter_files != -1)
-#    {
-#	$burnin_before = get_value_from_file('Results/Report','min burnin <=');
-#	$burnin_before = "Not Converged!" if ($burnin_before eq "Not");
-#	$min_NE = get_value_from_file('Results/Report','Ne  >=');
-#    }
-#    
-#    $section .= "<tr><td><b>scalar burnin</b></td><td>$burnin_before</td></tr>";
-#    $section .= "<tr><td><b>scalar ESS</b></td><td>$min_NE</td></tr>";
-#    my $min_NE_partition = get_value_from_file('Results/partitions.bs','min Ne =');
-#    $section .= "<tr><td><b title=\"Effective Sample Size for bit-vectors of partition support (smallest)\">topological ESS</b></td><td>$min_NE_partition</td></tr>";
-#
-#    my $asdsf = get_value_from_file('Results/partitions.bs','ASDSF\[min=0.100\] =');
-#    $asdsf = "NA" if (!defined($asdsf));
-#    $section .= "<tr><td><b title=\"Average Standard Deviation of Split Frequencies\">ASDSF</b></td><td>$asdsf</td></tr>";
-#
-#    my $msdsf = get_value_from_file('Results/partitions.bs','MSDSF =');
-#    $msdsf = "NA" if (!defined($msdsf));
-#    $section .= "<tr><td><b title=\"Maximum Standard Deviation of Split Frequencies\">MSDSF</b></td><td>$msdsf</td></tr>";
-#
-#    my $psrf_80 = "NA";
-#    my $psrf_rcf = "NA";
-#    if ($#parameter_files != 0)
-#    {
-#        $psrf_80 = get_value_from_file('Results/Report','PSRF-80%CI <=');
-#	$psrf_rcf = get_value_from_file('Results/Report','PSRF-RCF <=');
-#    }
-#    $section .= "<tr><td><b>PSRF CI80%</b></td><td>$psrf_80</td></tr>";
-#    $section .= "<tr><td><b>PSRF RCF</b></td><td>$psrf_rcf</td></tr>";
-#
-#    $section .= "</table>\n";
-#
-#    ###### What file should we show for MDS?
-#    my $MDS_figure;
-#    my $MDS_figure_3d;
-#    my $MDS_title;
-#    if (-e "Results/tree-1-2-3.svg")
-#    {
-#	$MDS_figure = "tree-1-2-3.svg";
-#	$MDS_figure_3d = "tree-1-2-3.points";
-#	$MDS_title = "the first 3 chains";
-#    }
-#    elsif (-e "Results/tree-1-2.svg")
-#    {
-#	$MDS_figure = "tree-1-2.svg";
-#	$MDS_figure_3d = "tree-1-2.points";
-#	$MDS_title = "2 chains";
-#    }
-#    elsif (-e "Results/tree1.svg")
-#    {
-#	$MDS_figure = "tree1.svg";
-#	$MDS_figure_3d = "tree-3D1-1.points";
-#	$MDS_title = "1 chain";
-#    }
-#    else
-#    {
-#	$MDS_title = "1 chain" if ($n_chains == 1);
-#	$MDS_title = "2 chains" if ($n_chains == 2);
-#	$MDS_title = "3 chains" if ($n_chains == 3);
-#	$MDS_title = "the first 3 chains" if ($n_chains > 3);
-#    }
-#    $section .= '</td>';
-##$section .= '<object class="r_floating_picture" data="partitions.SRQ.svg" type="image/svg+xml" height="200pt"></object>';
-#    $section .= '<td>';
-##    $section .= '</td>';
-##$section .= '<object class="r_floating_picture" data="c50.SRQ.svg" type="image/svg+xml" height="200pt"></object>';
-##$section .= '<embed class="r_floating_picture" src="c50.SRQ.svg" type="image/svg+xml" height="200" />';
-##$section .= '<embed class="r_floating_picture" src="partitions.SRQ.svg" type="image/svg+xml" height="200" />';
-##    $section .= '<td>';
-#    $section .= '<img src="c50.SRQ.png" alt="SRQ plot for supprt of 50% consensus tree."/>';
-#    $section .= '<img src="partitions.SRQ.png" alt="SRQ plot for support of each partition."/>';
-#    $section .= '</td>';
-#
-#    $section .= '</tr></table>';
-#    
-#    ###### Table of MDS versus 
-#    $section .= '<table style="width:100%;clear:both"><tr>';
-#
-#    $section .= '<td style="width:40%;vertical-align:top">';
-#    $section .= "<h4 style=\"text-align:center\">Projection of RF distances for $MDS_title (<a href=\"https://doi.org/10.1080/10635150590946961\">Hillis et al 2005</a>)</h4>";
-#    if (defined($MDS_figure))
-#    {
-#
-#	$section .= html_svg($MDS_figure,"90%","",[]);
-#	$section .= "<a href='${MDS_figure_3d}.html'>3D</a>";
-#    }
-#    elsif (!$have_R)
-#    {
-#	$section .= "<p>Not generated: can't find R.</p>";
-#    }
-#    $section .= '</td>';
-#    
-#    $section .= '<td style="width:40%;vertical-align:top">';
-#    $section .= '<h4 style="text-align:center">Variation of split PPs across chains (<a href="https://doi.org/10.1080/10635150600812544">Beiko et al 2006</a>)</h4>';
-#    if (-e "Results/convergence1-PP.svg")
-#    {
-#	$section .= html_svg("convergence1-PP.svg","90%","",[])
-#    }
-#    else
-#    {
-#	if (!$have_R)
-#	{
-#	    $section .= "<p>Not generated: can't find R.</p>";
-#	}
-#	elsif ($n_chains == 1)
-#	{
-#	    $section .= "<p>Not generated: multiple chains needed.</p>";
-#	}
-#	else
-#	{
-#	    $section .= "<p>Not generated.</p>";
-#	}
-#    }
-#
-#    if (-e "Results/convergence2-PP.svg")
-#    {
-#	$section .= "<br/><br/><br/><br/>";
-#	$section .= html_svg("convergence2-PP.svg","90%","",[]);
-#    }
-#
-#    $section .= '</td>';
-#    
-#
-#    $section .= '</tr></table>';
-#
-#my $tne_string = exec_show("pickout -n Ne < Results/partitions.bs");
-#my @tne_array = split(/\n/,$tne_string);
-#@tne_array = sort {$a <=> $b} @tne_array;
-##my $min_tESS = $tne_array[0];
-#my $min_tESS = exec_show("pickout -n 'min Ne' < Results/partitions.bs");
-#
-#print "\n";
-#print "NOTE: burnin (scalar) <= $burnin_before\n" if defined($burnin_before);
-#print "NOTE: min_ESS (scalar)    = $min_ESS\n" if defined($min_ESS);
-#print "NOTE: min_ESS (partition) = $min_tESS\n" if defined($min_tESS);
-#print "NOTE: ASDSF = $asdsf\n" if defined($asdsf);
-#print "NOTE: MSDSF = $msdsf\n" if defined($msdsf);
-#print "NOTE: PSRF-80%CI = $psrf_80\n" if defined($psrf_80);
-#print "NOTE: PSRF-RCF = $psrf_rcf\n" if defined($psrf_rcf);
-#
-#    return $section;
-#}
-#
+
 #sub do_cleanup
 #{
 #    rmdir_recursive("Results") if (-e "Results");
