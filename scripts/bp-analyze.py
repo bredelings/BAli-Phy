@@ -1732,7 +1732,6 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 </table>
 """
         section += '<table>\n'
-        print(self.trees)
         for (tree,name) in self.trees:
             section += """\
   <tr>
@@ -1742,6 +1741,29 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
     <td><a href="{tree}-tree.pdf">PDF</a></td>
     <td><a href="{tree}-tree.svg">SVG</a></td>
 """.format(name=name,tree=tree)
+            print("tree = {}, name = {}, subpartitions = {}".format(tree, name, self.subpartitions))
+            if self.subpartitions and (path.exists("Results/{}.mtree".format(tree)) or
+                                       path.exists("Results/{}-mctree.svg".format(tree)) or
+                                       path.exists("Results/{}-mctree.pdf".format(tree))):
+                section += '<td>MC Tree:</td>\n'
+            else:
+                section +='<td></td>'
+
+            if self.subpartitions and path.exists("Results/{}.mtree".format(tree)):
+                section += '<td><a href="{}.mtree">-L</a></td>\n'.format(tree)
+            else:
+                section +='<td></td>'
+
+            if self.subpartitions and path.exists("Results/{}-mctree.pdf".format(tree)):
+                section += '<td><a href="{}-mctree.pdf">PDF</a></td>\n'.format(tree)
+            else:
+                section +='<td></td>'
+
+            if self.subpartitions and path.exists("Results/{}-mctree.svg".format(tree)):
+                section += '<td><a href="{}-mctree.svg">SVG</a></td>\n'.format(tree)
+            else:
+                section +='<td></td>'
+
             section += '  </tr>\n'
         section += '</table>'
         return section
