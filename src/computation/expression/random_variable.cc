@@ -5,6 +5,11 @@
 closure random_variable_op(OperationArgs& Args)
 {
     int r_var =     Args.reg_for_slot(0);
+
+    // This pdf has to be a function of the NON-triggered version of the variable.
+    // Otherwise, we will have a loop between (evaluatin the random_variable) <-> (evaluating the pdf)
+    Args.evaluate_(1).as_log_double();
+
 //    int r_pdf =     Args.reg_for_slot(1);
 //    int r_range =   Args.reg_for_slot(2);
 //    int r_c_range = Args.reg_for_slot(3);
