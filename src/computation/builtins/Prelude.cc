@@ -252,7 +252,8 @@ expression_ref recursive_eval(OperationArgs& Args, int r1)
     reg_heap& M = Args.memory();
 
     // 1. First evaluate the regs.  This will yield not any index_vars.
-    auto [r2, value] = M.incremental_evaluate(r1);
+    int r2 = Args.evaluate_reg_to_reg(r1);
+    int value = M.value_for_reg(r2);
 
     if (M[value].exp.size() == 0) return M[value].exp;
 
@@ -280,8 +281,11 @@ bool recursive_equals(OperationArgs& Args, int r1, int r2)
     reg_heap& M = Args.memory();
 
     // 1. First evaluate the regs.  This will yield not any index_vars.
-    auto [r1e, value1] = M.incremental_evaluate(r1);
-    auto [r2e, value2] = M.incremental_evaluate(r2);
+    int r1e = Args.evaluate_reg_to_reg(r1);
+    int value1 = M.value_for_reg(r1e);
+
+    int r2e = Args.evaluate_reg_to_reg(r2);
+    int value2 = M.value_for_reg(r2e);
 
     // 2. Then check if the two expressions have a different head.
     if (M[value1].exp.head() != M[value2].exp.head()) return do_return(false);
