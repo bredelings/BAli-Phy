@@ -259,12 +259,13 @@ size_t reg_heap::size() const
 
 void reg_heap::register_prior(int r)
 {
-    mark_completely_dirty(root_token);
-    auto [r2,v] = incremental_evaluate(r);
-    r = r2;
+    r = follow_index_var(r);
 
-    // We can only put the bit on a changeable reg, not on (say) an index_var.
-    // Therefore, we must evaluate r -> r2 here.
+    if (not reg_has_value(r))
+        throw myexception()<<"Can't register a prior reg that is unevaluated!";
+
+    if (regs.access(r).flags.test(0))
+        throw myexception()<<"Can't register a prior reg that is already registered!";
 
     if (reg_is_constant(r))
     {
