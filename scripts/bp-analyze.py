@@ -879,7 +879,6 @@ class Analysis(object):
         self.Burnin = dict()
         self.PSRF_CI80 = dict()
         self.PSRF_RCF = dict()
-        self.min_ESS = 200
 
         with open("Results/Report",encoding='utf-8') as report:
             lines = report.readlines()
@@ -920,6 +919,7 @@ class Analysis(object):
                     self.median[var] = m.group(2)
                 i += 1
 
+        self.min_ESS = min(self.ESS.values())
         print("done.")
 
 
