@@ -215,29 +215,39 @@ def arg_min(xs):
 class MCMCRun(object):
     def __init__(self, mcmc_output):
         self.mcmc_output = mcmc_output
+        self.out_file = None
         self.trees_file = None
         self.log_file = None
         self.alignments_files = None
         self.input_files = None
-        self.cmd = None
+        self.command = None
+        self.version = None
 
-        if path.isdir(mcmc_output):
-            self.dir = mcmc_output
+        if path.isdir(self.mcmc_output):
+            self.dir = self.mcmc_output
             self.prefix = None
         else:
-            self.dir = path.dirname(mcmc_output)
-            self.prefix = path.basename(mcmc_output)
+            self.dir = path.dirname(self.mcmc_output)
+            self.prefix = path.basename(self.mcmc_output)
 
     def personality(self):
         return None
 
-    # A log file might then be in "{}/{}.log".format(self.dir,self.prefix)
+    def get_parent_dir(self):
+        return path.dirname(path.abspath(self.get_dir()))
+
+    def get_version(self):
+        return self.version
+
     def get_dir(self):
         return self.dir
 
     def get_prefix(self):
         return self.prefix
     
+    def get_out_file(self):
+        return self.out_file
+
     def get_trees_file(self):
         return self.trees_file
 
@@ -250,8 +260,8 @@ class MCMCRun(object):
     def get_log_file(self):
         return self.log_file
 
-    def get_cmd(self):
-        return self.cmd
+    def get_command(self):
+        return self.command
 
     def input_files(self):
         return self.input_files
@@ -333,7 +343,7 @@ class MCMCRun(object):
             return None
 
         return scale_models[index]
-
+    
 class BAliPhyRun(MCMCRun):
 
     def __init__(self,mcmc_output):
@@ -344,7 +354,9 @@ class BAliPhyRun(MCMCRun):
         self.trees_file = check_file_exists(path.join(self.get_dir(),'C1.trees'))
         self.alignments_files = self.get_alignment_files()
         self.MAP_file = check_file_exists(path.join(self.get_dir(),'C1.MAP'))
-        self.cmd = self.find_header_attribute("command")
+        self.command = self.find_header_attribute("command")
+        print("command = {}".format(self.command))
+        self.version = self.find_header_attribute("VERSION").split('\s+')[0]
         self.find_tree_prior()
         self.smodel_indices = self.find_smodel_indices()
         self.imodel_indices = self.find_imodel_indices()
@@ -470,7 +482,6 @@ class BAliPhy2_1Run(BAliPhyRun):
     def __init__(self,mcmc_output):
         super().__init__(mcmc_output)
         self.log_file = check_file_exists(path.join(self.get_dir(),'C1.p'))
-        self.version = self.get_header_attributes("VERSION").split('\s+')
 
         self.smodels = self.find_models("subst models", "smodels")
         self.imodels = self.find_models("indel models", "imodels")
@@ -598,9 +609,9 @@ class Analysis(object):
             print("Can't find bali-phy libexec path '{}'".format(self.libexecdir))
 
         for i in range(len(self.mcmc_runs)):
-            if self.mcmc_runs[i].get_cmd() != self.mcmc_runs[0].get_cmd():
-                print("WARNING: Commands differ!\n   {}\n   {}\n".format(self.mcmc_runs[0].get_cmd(),
-                                                                         self.mcmc_runs[i].get_cmd()))
+            if self.mcmc_runs[i].get_command() != self.mcmc_runs[0].get_command():
+                print("WARNING: Commands differ!\n   {}\n   {}\n".format(self.mcmc_runs[0].get_command(),
+                                                                         self.mcmc_runs[i].get_command()))
         self.get_input_files()
 
         self.tree_consensus_levels = [0.5,0.66,0.8,0.9,0.95,0.99,1.0]
@@ -689,6 +700,9 @@ class Analysis(object):
 
     def get_alphabets(self):
         return first_all_same([run.get_alphabets() for run in self.mcmc_runs])
+
+    def get_out_files(self):
+        return [run.get_out_file() for run in self.mcmc_runs]
 
     def get_alignments_files(self):
         return [run.get_alignments_files() for run in self.mcmc_runs]
@@ -1741,7 +1755,6 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
     <td><a href="{tree}-tree.pdf">PDF</a></td>
     <td><a href="{tree}-tree.svg">SVG</a></td>
 """.format(name=name,tree=tree)
-            print("tree = {}, name = {}, subpartitions = {}".format(tree, name, self.subpartitions))
             if self.subpartitions and (path.exists("Results/{}.mtree".format(tree)) or
                                        path.exists("Results/{}-mctree.svg".format(tree)) or
                                        path.exists("Results/{}-mctree.pdf".format(tree))):
@@ -1961,6 +1974,62 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 
     def section_analysis(self):
         section = ""
+
+        commands = [run.get_command() for run in self.mcmc_runs]
+        versions = [run.get_version() for run in self.mcmc_runs]
+        parent_dirs = [run.get_parent_dir() for run in self.mcmc_runs]
+
+        something_common = all_same(commands) or all_same(versions) or all_same(parent_dirs)
+
+        section += '<br/><hr/><br/>\n'
+        section += '<h2><a class="anchor" name="analysis"></a>Analysis</h2>\n'
+        if something_common:
+            section += "<p>"
+        if all_same(commands):
+            section += "<b>command line</b>: {}</br>\n".format(commands[0])
+        if all_same(parent_dirs):
+            section += "<b>directory</b>: {}</br>\n".format(parent_dirs[0])
+        if all_same(versions):
+            section += "<b>version</b>: {}\n".format(versions[0])
+        if something_common:
+            section += "</p>"
+        #section += '<table style="width:100%">'."\n"
+
+        #section += '<table class="backlit2 center" style="width:100%">'."\n"
+        section += '<table class="backlit2 center">\n'
+        section += "<tr><th>chain #</th>"
+        if not all_same(versions):
+            section += "<th>version</th>" 
+        section += "<th>burnin</th><th>subsample</th><th>samples</th>"
+        if not all_same(commands):
+            section += "<th>command line</th>"
+        section += "<th>subdirectory</th>"
+        if not all_same(parent_dirs):
+            section += "<th>directory</th>"
+        section += "</tr>\n"
+
+        for i in range(self.n_chains()):
+            section += "<tr>\n"
+
+            section += "  <td>{}</td>\n".format(i+1)
+            if not all_same(versions):
+                section += "  <td>{}</td>\n".format(versions[i])
+
+            section += "  <td>{}</td>\n".format(self.burnin)
+            section += "  <td>{}</td>\n".format(self.subsample)
+
+            remaining = (self.run(i).n_iterations() - self.burnin)/self.subsample
+            section += "  <td>{}</td>\n".format(remaining)
+
+            if not all_same(commands):
+                section += "  <td>{}</td>\n".format(commands[i])
+            section += "  <td>{}</td>\n".format(self.run(i).get_dir())
+            if not all_same(parent_dirs):
+                section += "  <td>{}/td>\n".format(parent_dirs[i])
+
+            section += "</tr>\n"
+
+        section += "</table>\n"
         return section
 
     def section_model_and_priors(self):
