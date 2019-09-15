@@ -9,6 +9,12 @@ modifiable_alignment   (AlignmentOnTree tree n_seqs ls as) | otherwise         =
     where as' = mkArray (numElements as) (\i -> modifiable $ (as!i))
           ls' = listArray' [ seqlength as' tree node | node <- [0..numNodes tree - 1]]
 
+--FIXME: I should make this only trigger if you start looking at the VALUES of the pairwise alignments!
+--FIXME: Maybe I should also reduce this to just a list of pairwise alignments?
+modifiable_alignment_structure value effect = let a = modifiable_alignment value
+                                                  triggered_a = effect `seq` a
+                                              in (a, triggered_a)
+
 -- Compare to unaligned_alignments_on_tree in parameters.cc
 unaligned_alignments_on_tree t ls = [ make_a' b | b <- [0..2*numBranches t-1]]
     where make_a' b = let b' = reverseEdge t b in
@@ -52,6 +58,6 @@ alignment_pr' alignment hmms model var_a = if var_a then
                                            else
                                                doubleToLogDouble 1.0
 
-random_alignment tree hmms model tip_lengths var_a = Distribution (\a -> [alignment_pr' a hmms model var_a]) (no_quantile "random_alignment") (RandomStructure do_nothing modifiable_alignment do_sample) ()
+random_alignment tree hmms model tip_lengths var_a = Distribution (\a -> [alignment_pr' a hmms model var_a]) (no_quantile "random_alignment") (RandomStructure do_nothing modifiable_alignment_structure do_sample) ()
     where do_sample = sample_alignment tree hmms tip_lengths
 

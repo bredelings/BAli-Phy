@@ -30,8 +30,7 @@ distRange (Distribution _ _ _ r) = r
 data Effects = Effects
 
 -- This implements the Random monad by transforming it into the IO monad.
-data Random a = RandomStructure (a->Effects) (a->a) (Random a)
-              | RandomStructure2 (a->Effects) a (Random a)
+data Random a = RandomStructure (a->Effects) (a->Effects->a) (Random a)
               | Sample (Distribution a)
               | SampleWithInitialValue (Distribution a) a
               | Observe (Distribution b) b
@@ -93,7 +92,6 @@ run_effects alpha rate (AddMove m) = register_transition_kernel m
 run_effects alpha rate (SamplingRate rate2 a) = run_effects alpha (rate*rate2) a
 
 run_lazy alpha (RandomStructure _ _ a) = run_lazy alpha a
-run_lazy alpha (RandomStructure2 _ _ a) = run_lazy alpha a
 run_lazy alpha (IOAndPass f g) = do
   x <- unsafeInterleaveIO $ run_lazy alpha f
   run_lazy alpha $ g x
@@ -129,6 +127,10 @@ run_strict' alpha rate (Lazy r) = run_lazy' alpha rate r
 --       SOMETHING `seq` result.  And this means that we need to frequently
 --       intersperse unsafeInterleaveIO to avoid `seq`-ing on previous statements.
 
+modifiable_structure value effect = let x = modifiable value
+                                        triggered_x = effect `seq` x
+                                    in (x, triggered_x)
+
 run_lazy' alpha rate (LiftIO a) = a
 run_lazy' alpha rate (IOAndPass f g) = do
   x <- unsafeInterleaveIO $ run_lazy' alpha rate f
@@ -137,21 +139,12 @@ run_lazy' alpha rate (IOReturn v) = return v
 run_lazy' alpha rate (Sample dist@(Distribution _ _ (RandomStructure _ _ do_sample) range)) = do
   value <- unsafeInterleaveIO $ run_lazy alpha do_sample
   run_lazy' alpha rate $ SampleWithInitialValue dist value
-run_lazy' alpha rate (Sample dist@(Distribution _ _ (RandomStructure2 _ _ do_sample) range)) = do
-  value <- unsafeInterleaveIO $ run_lazy alpha do_sample
-  run_lazy' alpha rate $ SampleWithInitialValue dist value
 run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStructure effect structure do_sample) range) initial_value) = unsafeInterleaveIO $ do
-  -- do we need to perform the sample and discard the result, in order to force the parameters of the distribution? 
-  let x = structure initial_value
-      pdf = density dist x
-  -- Note that we could return (x, rv `seq` x) as a random variable in this case also.
-  run_effects alpha rate $ effect x
-  return $ random_variable x pdf range rate
-run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStructure2 effect structure do_sample) range) initial_value) = unsafeInterleaveIO $ do
   -- do we need to perform the sample and discard the result, in order to force the parameters of the distribution? 
   let (x,triggered_x) = structure initial_value do_effects
       pdf = density dist x
       rv = random_variable x pdf range rate
+      -- Note that performing the rv (i) forces the pdf (a FORCE) and (ii) registers the rv (an EFFECT)
       do_effects = (unsafePerformIO $ run_effects alpha rate $ effect x) `seq` rv
   return triggered_x
 run_lazy' alpha rate (Sample (Distribution _ _ s _)) = run_lazy' alpha rate s

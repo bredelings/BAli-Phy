@@ -25,8 +25,8 @@ do_crp'' alpha n bins counts = let inc (c:cs) 0 = (c+1:cs)
 
 builtin crp_density 4 "CRP_density" "Distribution"
 builtin sample_crp_vector 3 "sample_CRP" "Distribution"
-sample_crp alpha n d = RandomStructure do_nothing modifiable $ liftIO $ do v <- (IOAction3 sample_crp_vector alpha n d)
-                                                                           return $ list_from_vector_of_size v n
+sample_crp alpha n d = RandomStructure do_nothing modifiable_structure $ liftIO $ do v <- (IOAction3 sample_crp_vector alpha n d)
+                                                                                     return $ list_from_vector_of_size v n
 --crp alpha n d = Distribution (crp_density alpha n d) (no_quantile "crp") (do_crp alpha n d) (ListRange $ replicate n $ integer_between 0 (n+d-1))
 modifiable_list_and_triggered_list value rand_var = let raw_list = map modifiable value
                                                         trigger_list = map (rand_var `seq`) raw_list
@@ -34,7 +34,7 @@ modifiable_list_and_triggered_list value rand_var = let raw_list = map modifiabl
 
 crp_effect n d x = add_move (\c -> mapM_ (\l-> gibbs_sample_categorical (x!!l) (n+d) c) [0..n-1])
 
-crp alpha n d = Distribution (make_densities $ density) (no_quantile "crp") (RandomStructure2 (crp_effect n d) (modifiable_list_and_triggered_list) (sample_crp alpha n d)) (ListRange $ replicate n subrange)
+crp alpha n d = Distribution (make_densities $ density) (no_quantile "crp") (RandomStructure (crp_effect n d) (modifiable_list_and_triggered_list) (sample_crp alpha n d)) (ListRange $ replicate n subrange)
                   where subrange = integer_between 0 (n+d-1)
                         density = crp_density alpha n d
 

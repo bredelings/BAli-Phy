@@ -47,4 +47,4 @@ triggered_modifiable_tree value rand_var = let tree = modifiable_tree modifiable
                                                triggered_tree = modifiable_tree (rand_var `seq`) tree
                                            in (tree, triggered_tree)
 
-uniform_topology n = Distribution (\tree-> [uniform_topology_pr n]) (no_quantile "uniform_topology") (RandomStructure2 do_nothing triggered_modifiable_tree (random_tree n)) (TreeRange n)
+uniform_topology n = Distribution (\tree-> [uniform_topology_pr n]) (no_quantile "uniform_topology") (RandomStructure do_nothing triggered_modifiable_tree (random_tree n)) (TreeRange n)
