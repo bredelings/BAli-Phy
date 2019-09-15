@@ -152,7 +152,7 @@ run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStruc
   let (x,triggered_x) = structure initial_value do_effects
       pdf = density dist x
       rv = random_variable x pdf range rate
-      do_effects = (run_effects alpha rate $ effect x) `seq` rv
+      do_effects = (unsafePerformIO $ run_effects alpha rate $ effect x) `seq` rv
   return triggered_x
 run_lazy' alpha rate (Sample (Distribution _ _ s _)) = run_lazy' alpha rate s
 run_lazy' alpha rate (MFix f) = MFix ((run_lazy' alpha rate).f)
