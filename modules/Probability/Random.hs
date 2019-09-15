@@ -32,7 +32,6 @@ data Effects = Effects
 -- This implements the Random monad by transforming it into the IO monad.
 data Random a = RandomStructure (a->Effects) (a->Effects->a) (Random a)
               | Sample (Distribution a)
-              | SampleWithInitialValue (Distribution a) a
               | Observe (Distribution b) b
               | AddMove (Int->a)
               | Print b
@@ -46,7 +45,6 @@ data Random a = RandomStructure (a->Effects) (a->Effects->a) (Random a)
 sample dist = Sample dist
 -- I feel sample_with_initial_value actually needs to run the sampler... and make the result come out of that.
 -- Maybe this needs to be equivalent to running the regular sample and then setting the value... 
-sample_with_initial_value dist value = SampleWithInitialValue dist value
 observe = Observe
 liftIO = LiftIO
 random = Lazy
@@ -98,7 +96,6 @@ run_lazy alpha (IOAndPass f g) = do
 run_lazy alpha (IOReturn v) = return v
 run_lazy alpha (LiftIO a) = a
 run_lazy alpha (Sample (Distribution _ _ a _)) = unsafeInterleaveIO $ run_lazy alpha a
-run_lazy alpha (SampleWithInitialValue (Distribution _ _ a _) _) = unsafeInterleaveIO $ run_lazy alpha a
 run_lazy alpha GetAlphabet = return alpha
 run_lazy alpha (SetAlphabet a2 x) = run_lazy a2 x
 run_lazy alpha (SamplingRate _ model) = run_lazy alpha model
@@ -118,10 +115,7 @@ run_strict' alpha rate (Observe dist datum) = sequence_ [register_likelihood ter
 run_strict' alpha rate (Print s) = putStrLn (show s)
 run_strict' alpha rate (Lazy r) = run_lazy' alpha rate r
 
--- 1. If we add transition kernel INSIDE the SampleWithInitialValue move, then maybe
---    we could STOP annotation each random variable with `range` and `rate`.
-
--- 2. Could we somehow implement slice sampling windows for non-contingent variables?
+-- 1. Could we somehow implement slice sampling windows for non-contingent variables?
 
 -- NOTE: In order for (run_lazy') to actually be lazy, we need to avoid returning
 --       SOMETHING `seq` result.  And this means that we need to frequently
@@ -136,15 +130,13 @@ run_lazy' alpha rate (IOAndPass f g) = do
   x <- unsafeInterleaveIO $ run_lazy' alpha rate f
   run_lazy' alpha rate $ g x
 run_lazy' alpha rate (IOReturn v) = return v
-run_lazy' alpha rate (Sample dist@(Distribution _ _ (RandomStructure _ _ do_sample) range)) = do
+run_lazy' alpha rate (Sample dist@(Distribution _ _ (RandomStructure effect structure do_sample) range)) = do
+  -- Note: unsafeInterleaveIO means that we will only execute this line if `value` is accessed.
   value <- unsafeInterleaveIO $ run_lazy alpha do_sample
-  run_lazy' alpha rate $ SampleWithInitialValue dist value
-run_lazy' alpha rate (SampleWithInitialValue dist@(Distribution _ _ (RandomStructure effect structure do_sample) range) initial_value) = unsafeInterleaveIO $ do
-  -- do we need to perform the sample and discard the result, in order to force the parameters of the distribution? 
-  let (x,triggered_x) = structure initial_value do_effects
+  let (x,triggered_x) = structure value do_effects
       pdf = density dist x
       rv = random_variable x pdf range rate
-      -- Note that performing the rv (i) forces the pdf (a FORCE) and (ii) registers the rv (an EFFECT)
+      -- Note: performing the rv (i) forces the pdf (a FORCE) and (ii) registers the rv (an EFFECT)
       do_effects = (unsafePerformIO $ run_effects alpha rate $ effect x) `seq` rv
   return triggered_x
 run_lazy' alpha rate (Sample (Distribution _ _ s _)) = run_lazy' alpha rate s
