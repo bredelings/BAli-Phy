@@ -1257,9 +1257,9 @@ void reg_heap::check_used_regs_in_token(int t) const
 	prog_temp[r].set(0);
 
 	// No results for constant regs
-	assert(regs.access(r).type != reg::type_t::constant);
 	if (res > 0)
 	{
+            assert(regs.access(r).type != reg::type_t::constant);
 	    assert(not steps.is_free(results[res].source_step));
 	    int call = results[res].call_edge.first;
 	    if (call > 0)
@@ -1274,7 +1274,8 @@ void reg_heap::check_used_regs_in_token(int t) const
 	// If the step is unshared, the result must be unshared as well: this allows us to just walk unshared results.
 	assert(prog_temp[r].test(0) and prog_temp[r].test(1));
 	// No steps for constant regs
-	assert(regs.access(r).type != reg::type_t::constant);
+        if (step > 0)
+            assert(regs.access(r).type != reg::type_t::constant);
     }
 
     // FIXME - nonlocal. The same result/step are not set in multiple places!
