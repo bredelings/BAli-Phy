@@ -282,9 +282,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 	    if (reg_has_call(R))
 	    {
 		// Evaluate S, looking through unchangeable redirections
-		auto p = incremental_evaluate(call_for_reg(R));
-		int call = p.first;
-		int value = p.second;
+		auto [call, value] = incremental_evaluate(call_for_reg(R));
 
 		// If computation_for_reg(R).call can be evaluated to refer to S w/o moving through any changable operations, 
 		// then it should be safe to change computation_for_reg(R).call to refer to S, even if R is changeable.
@@ -423,8 +421,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 #endif
 		    closure_stack.pop_back();
 
-		    int r3 = p.first;
-		    int value = p.second;
+		    auto [r3,value] = p;
 
 		    set_call(R, r3);
 		    set_result_value_for_reg(R);
