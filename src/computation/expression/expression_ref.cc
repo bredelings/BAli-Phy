@@ -353,3 +353,14 @@ EVector::EVector(const vector<char>& v1)
     for(int i=0;i<v1.size();i++)
 	(*this)[i] = v1[i];
 }
+
+EPair::EPair(const pair<int,int>& p)
+{
+    first = p.first;
+    second = p.second;
+}
+
+EPair::operator std::pair<int,int>() const
+{
+    return std::pair<int,int>(first.as_int(), second.as_int());
+}

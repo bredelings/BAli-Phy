@@ -396,8 +396,21 @@ struct EVector: public Vector<expression_ref>
     explicit operator std::vector<char>() const;
 };
 
+struct EPair: public Pair<expression_ref,expression_ref>
+{
+    EPair() = default;
+
+    using Pair<expression_ref,expression_ref>::Pair;
+
+    EPair* clone() const {return new EPair(*this);};
+
+    explicit EPair(const std::pair<int,int>& p);
+
+    explicit operator std::pair<int,int>() const;
+};
+
+
 typedef std::pair<expression_ref,expression_ref> Epair;
-typedef Pair<expression_ref,expression_ref> EPair;
 
 template<>
 inline std::string Box<std::vector<expression_ref>>::print() const
