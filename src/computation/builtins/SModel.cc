@@ -1338,6 +1338,15 @@ namespace substitution {
                                                const pairwise_alignment_t& A2,
                                                const Matrix& F);
 
+    Vector<pair<int,int>> sample_internal_node_sequence(const Vector<pair<int,int>>& parent_seq,
+                                                        const EVector& transition_Ps,
+                                                        const Likelihood_Cache_Branch& cache1,
+                                                        const Likelihood_Cache_Branch& cache2,
+                                                        const pairwise_alignment_t& A0,
+                                                        const pairwise_alignment_t& A1,
+                                                        const pairwise_alignment_t& A2,
+                                                        const Matrix& F);
+
     log_double_t calc_root_probability(const Likelihood_Cache_Branch* LCB1,
 				       const Likelihood_Cache_Branch* LCB2,
 				       const Likelihood_Cache_Branch* LCB3,
@@ -1390,6 +1399,27 @@ extern "C" closure builtin_function_sample_root_sequence(OperationArgs& Args)
                                               arg4.as_<Box<pairwise_alignment_t>>(),
                                               arg5.as_<Box<pairwise_alignment_t>>(),
                                               arg6.as_<Box<Matrix>>());
+}
+
+extern "C" closure builtin_function_sample_internal_node_sequence(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+    auto arg4 = Args.evaluate(4);
+    auto arg5 = Args.evaluate(5);
+    auto arg6 = Args.evaluate(6);
+    auto arg7 = Args.evaluate(7);
+
+    return substitution::sample_internal_node_sequence(arg0.as_<Vector<pair<int,int>>>(),
+                                                       arg1.as_<EVector>(),
+                                                       arg2.as_<Likelihood_Cache_Branch>(),
+                                                       arg3.as_<Likelihood_Cache_Branch>(),
+                                                       arg4.as_<Box<pairwise_alignment_t>>(),
+                                                       arg5.as_<Box<pairwise_alignment_t>>(),
+                                                       arg6.as_<Box<pairwise_alignment_t>>(),
+                                                       arg7.as_<Box<Matrix>>());
 }
 
 extern "C" closure builtin_function_calc_root_probability_SEV(OperationArgs& Args)
