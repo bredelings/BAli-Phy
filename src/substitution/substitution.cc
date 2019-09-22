@@ -1525,6 +1525,7 @@ namespace substitution {
         Matrix S(n_models, n_states);
         const int matrix_size = n_models * n_states;
 
+
         // 4. Walk the alignment and sample (model,letter) for ancestral sequence
         vector<pair<int,int>> ancestral_characters(L0);
         for(int i=0;i<L0;i++)
@@ -1536,6 +1537,61 @@ namespace substitution {
             auto S = F;
 
             if (i0 != -1) element_prod_modify(S.begin(), cache0[i0], matrix_size);
+            if (i1 != -1) element_prod_modify(S.begin(), cache1[i1], matrix_size);
+            if (i2 != -1) element_prod_modify(S.begin(), cache2[i2], matrix_size);
+
+            ancestral_characters[i] = sample(S);
+        }
+        return ancestral_characters;
+    }
+
+    vector<pair<int,int>> sample_internal_node_sequence(const vector<pair<int,int>>& parent_seq,
+                                                        const EVector& transition_Ps,
+                                                        const Likelihood_Cache_Branch& cache1,
+                                                        const Likelihood_Cache_Branch& cache2,
+                                                        const pairwise_alignment_t& A0,
+                                                        const pairwise_alignment_t& A1,
+                                                        const pairwise_alignment_t& A2,
+                                                        const Matrix& F)
+    {
+        // 1. Get and check length for the central node
+        int L0 = A0.length2();
+        assert(L0 == A1.length2());
+        assert(L0 == A2.length2());
+
+        // 2. Get the alignment of columns present at the internal node.
+        auto a10 = convert_to_bits(A0,1,0);
+        auto a20 = convert_to_bits(A1,2,0);
+        auto a30 = convert_to_bits(A2,3,0);
+        auto a0123 = Glue_A(a10, Glue_A(a20,a30));
+        auto index = get_indices_from_bitpath_w(a0123, {1,2,3}, (1<<0));
+        assert(L0 == index.size1());
+
+        // 3. Construct a scratch matrix and check that dimensions match inputs
+        int n_models = F.size1();
+        int n_states = F.size2();
+        assert(n_models == cache1.n_models());
+        assert(n_states == cache1.n_states());
+        assert(n_models == cache2.n_models());
+        assert(n_states == cache2.n_states());
+        Matrix S(n_models, n_states);
+        const int matrix_size = n_models * n_states;
+
+
+        // 4. Walk the alignment and sample (model,letter) for ancestral sequence
+        vector<pair<int,int>> ancestral_characters(L0);
+        for(int i=0;i<L0;i++)
+        {
+            int i0 = index(i,0);
+            int i1 = index(i,1);
+            int i2 = index(i,2);
+
+            pair<int,int> parent_state(-1,-1);
+            if (i0 != -1)
+                parent_state = parent_seq[i0];
+
+            calc_transition_prob_from_parent(S, parent_state, transition_Ps, F);
+
             if (i1 != -1) element_prod_modify(S.begin(), cache1[i1], matrix_size);
             if (i2 != -1) element_prod_modify(S.begin(), cache2[i2], matrix_size);
 
