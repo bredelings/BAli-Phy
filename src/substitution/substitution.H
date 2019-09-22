@@ -36,7 +36,7 @@ class data_partition;
 /// A namespace for functions related to calculating the substitution likelihood.
 namespace substitution {
 
-    std::vector<std::vector<std::pair<int,int>>> sample_ancestral_states(const data_partition& P);
+    std::vector<Vector<std::pair<int,int>>> sample_ancestral_states(const data_partition& P);
 
 
     Likelihood_Cache_Branch get_column_likelihoods(const data_partition&, const std::vector<int>& b, const matrix<int>& index,int delta=0);

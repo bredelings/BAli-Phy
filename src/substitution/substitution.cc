@@ -1490,7 +1490,7 @@ namespace substitution {
         }
     }
 
-    vector<pair<int,int>> sample_root_sequence(const Likelihood_Cache_Branch& cache0,
+    Vector<pair<int,int>> sample_root_sequence(const Likelihood_Cache_Branch& cache0,
                                                const Likelihood_Cache_Branch& cache1,
                                                const Likelihood_Cache_Branch& cache2,
                                                const pairwise_alignment_t& A0,
@@ -1527,7 +1527,7 @@ namespace substitution {
 
 
         // 4. Walk the alignment and sample (model,letter) for ancestral sequence
-        vector<pair<int,int>> ancestral_characters(L0);
+        Vector<pair<int,int>> ancestral_characters(L0);
         for(int i=0;i<L0;i++)
         {
             int i0 = index(i,0);
@@ -1545,7 +1545,7 @@ namespace substitution {
         return ancestral_characters;
     }
 
-    vector<pair<int,int>> sample_internal_node_sequence(const vector<pair<int,int>>& parent_seq,
+    Vector<pair<int,int>> sample_internal_node_sequence(const Vector<pair<int,int>>& parent_seq,
                                                         const EVector& transition_Ps,
                                                         const Likelihood_Cache_Branch& cache1,
                                                         const Likelihood_Cache_Branch& cache2,
@@ -1579,7 +1579,7 @@ namespace substitution {
 
 
         // 4. Walk the alignment and sample (model,letter) for ancestral sequence
-        vector<pair<int,int>> ancestral_characters(L0);
+        Vector<pair<int,int>> ancestral_characters(L0);
         for(int i=0;i<L0;i++)
         {
             int i0 = index(i,0);
@@ -1601,7 +1601,7 @@ namespace substitution {
     }
 
     
-    vector<pair<int,int>> sample_leaf_node_sequence(const vector<pair<int,int>>& parent_seq,
+    Vector<pair<int,int>> sample_leaf_node_sequence(const Vector<pair<int,int>>& parent_seq,
                                                     const EVector& transition_Ps,
                                                     const EVector& sequence,
                                                     const alphabet& a,
@@ -1624,7 +1624,7 @@ namespace substitution {
         Matrix S(n_models, n_states);
 
         // 4. Walk the alignment and sample (model,letter) for leaf sequence
-        vector<pair<int,int>> ancestral_characters(L0);
+        Vector<pair<int,int>> ancestral_characters(L0);
         for(int i=0;i<L0;i++)
         {
             int i0 = index(i,0);
@@ -1643,7 +1643,7 @@ namespace substitution {
     }
 
 
-    vector<vector<pair<int,int>>> 
+    vector<Vector<pair<int,int>>> 
     sample_subst_history(const data_partition& P, const TreeInterface& t)
     {
         auto smap = P.state_letters();
@@ -1654,7 +1654,7 @@ namespace substitution {
         Matrix F = P.WeightedFrequencyMatrix();
 
         // 1. Allocate arrays for storing results and temporary results.
-        vector<vector<pair<int,int> > > ancestral_characters (t.n_nodes());
+        vector<Vector<pair<int,int> > > ancestral_characters (t.n_nodes());
     
         {
             // compute root branches
@@ -1711,7 +1711,7 @@ namespace substitution {
         return ancestral_characters;
     }
 
-    vector<vector<pair<int,int>>> sample_ancestral_states(const data_partition& P)
+    vector<Vector<pair<int,int>>> sample_ancestral_states(const data_partition& P)
     {
         return sample_subst_history(P, P.t());
     }
