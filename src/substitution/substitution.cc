@@ -1445,8 +1445,8 @@ namespace substitution {
 
     void calc_transition_prob_from_parent(Matrix& S, pair<int,int>& state_model_parent, const EVector& Ps, const Matrix& WF)
     {
-        int mp = state_model_parent.first;
-        int lp = state_model_parent.second;
+        auto [mp,lp] = state_model_parent;
+
         int n_states = S.size2();
 
         // If there IS no parent character, then we can sample from F
