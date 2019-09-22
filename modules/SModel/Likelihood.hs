@@ -12,6 +12,7 @@ builtin calc_root_probability 7 "calc_root_probability" "SModel"
 -- ancestral sequence sampling for connected-CLVs
 builtin sample_root_sequence 7 "sample_root_sequence" "SModel"
 builtin sample_internal_sequence 8 "sample_internal_node_sequence" "SModel"
+builtin sample_leaf_sequence 7 "sample_leaf_node_sequence" "SModel"
 
 -- peeling for SEV
 builtin bitmask_from_alignment 2 "bitmask_from_alignment" "Alignment"
