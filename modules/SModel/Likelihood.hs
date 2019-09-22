@@ -9,6 +9,9 @@ builtin alignment_index3 3 "alignment_index3" "SModel"
 builtin peel_internal_branch 6 "peel_internal_branch" "SModel"
 builtin calc_root_probability 7 "calc_root_probability" "SModel"
 
+-- ancestral sequence sampling for connected-CLVs
+builtin sample_root_sequence 7 "sample_root_sequence" "SModel"
+
 -- peeling for SEV
 builtin bitmask_from_alignment 2 "bitmask_from_alignment" "Alignment"
 builtin peel_leaf_branch_SEV 4 "peel_leaf_branch_SEV" "SModel"
