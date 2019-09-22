@@ -1664,12 +1664,6 @@ namespace substitution {
         // 1. Allocate arrays for storing results and temporary results.
         vector<vector<pair<int,int> > > ancestral_characters (t.n_nodes());
     
-        // We initially use this array to store the ancestral character, but then replace it with the sampled character.
-        // If the ancestral character is (-1,-1) then the ancestor is a gap, and does not exist.
-        // Thus, all the (-1,-1)'s should be overwritten with the sampled character.
-        for(int i=0;i<t.n_nodes();i++)
-            ancestral_characters[i] = vector<pair<int,int>>(P.seqlength(i), {-1,-1});
-
         {
             // compute root branches
             vector<int> rb;
@@ -1680,37 +1674,11 @@ namespace substitution {
             const auto& cache1 = P.cache(rb[1]);
             const auto& cache2 = P.cache(rb[2]);
 
-            vector<int> nodes = {root};
-            auto a10 = convert_to_bits(P.get_pairwise_alignment(rb[0]),1,0);
-            auto a20 = convert_to_bits(P.get_pairwise_alignment(rb[1]),2,0);
-            auto a30 = convert_to_bits(P.get_pairwise_alignment(rb[2]),3,0);
-            auto a0123 = Glue_A(a10, Glue_A(a20,a30));
-            auto index = get_indices_from_bitpath_w(a0123, {1,2,3},(1<<0));
+            auto A0 = P.get_pairwise_alignment(rb[0]);
+            auto A1 = P.get_pairwise_alignment(rb[1]);
+            auto A2 = P.get_pairwise_alignment(rb[2]);
 
-            int node0 = t.source(rb[0]);
-            int node1 = t.source(rb[1]);
-            int node2 = t.source(rb[2]);
-
-            // FIXME - this doesn't handle case where tree has only 2 leaves.
-            for(int i=0;i<index.size1();i++)
-            {
-                int i0 = index(i,0);
-                int i1 = index(i,1);
-                int i2 = index(i,2);
-
-                S = F;
-
-                if (i0 != -1) element_prod_modify(S.begin(), cache0[i0], matrix_size);
-                if (i1 != -1) element_prod_modify(S.begin(), cache1[i1], matrix_size);
-                if (i2 != -1) element_prod_modify(S.begin(), cache2[i2], matrix_size);
-
-                pair<int,int> state_model = sample(S);
-
-                ancestral_characters[root][i] = state_model;
-                if (i0 != -1) ancestral_characters[node0][i0] = state_model;
-                if (i1 != -1) ancestral_characters[node1][i1] = state_model;
-                if (i2 != -1) ancestral_characters[node2][i2] = state_model;
-            }
+            ancestral_characters[root] = sample_root_sequence(cache0,cache1,cache2,A0,A1,A2,F);
         }
 
         vector<int> branches = t.all_branches_toward_node(P.subst_root());
@@ -1718,6 +1686,7 @@ namespace substitution {
 
         for(int b: branches)
         {
+            int parent = t.target(b);
             int node = t.source(b);
 
             const auto& transition_P = P.transition_P(b);
@@ -1728,57 +1697,22 @@ namespace substitution {
 
             assert(local_branches.size() == 3 or local_branches.size() == 1);
 
-            matrix<int> index;
-            if (local_branches.size() == 1)
-                index = get_indices_n(P.seqlength(P.t().source(b)));
-            else
-            {
-                auto a1 = convert_to_bits(P.get_pairwise_alignment(local_branches[1]),1,0);
-                auto a2 = convert_to_bits(P.get_pairwise_alignment(local_branches[2]),2,0);
-                auto a012 = Glue_A(a1,a2);
-                index = get_indices_from_bitpath_w(a012,{1,2},(1<<0));
-            }
-      
-
-            // Sample value of leaf characters
+            auto& parent_seq = ancestral_characters[parent];
+            auto A0 = P.get_pairwise_alignment(t.reverse(local_branches[0]));
             if (local_branches.size() == 1)
             {
-                const auto& sequence = P.get_sequence(node).data();
-                for(int i=0;i<index.size1();i++)
-                {
-                    calc_transition_prob_from_parent(S, ancestral_characters[node][i], transition_P, F);
-
-                    calc_leaf_likelihood(S, sequence[i].as_int(), P.get_alphabet(), smap);
-
-                    ancestral_characters[node][i] = sample(S);
-                }
+                auto leaf_sequence = P.get_sequence(node);
+                auto& a = P.get_alphabet();
+                ancestral_characters[node] = sample_leaf_node_sequence(parent_seq, transition_P, leaf_sequence, a, smap, A0, F);
             }
-            // Sample value of internal characters, and save as ancestral value of child characters.
             else
             {
+                // All pairwise alignments should be pointing to `node`
+                auto A1 = P.get_pairwise_alignment(local_branches[1]);
+                auto A2 = P.get_pairwise_alignment(local_branches[2]);
                 const auto& cache1 = P.cache(local_branches[1]);
                 const auto& cache2 = P.cache(local_branches[2]);
-
-                int node1 = t.source(local_branches[1]);
-                int node2 = t.source(local_branches[2]);
-
-                for(int i=0;i<index.size1();i++)
-                {
-                    int i1 = index(i,0);
-                    int i2 = index(i,1);
-
-                    calc_transition_prob_from_parent(S, ancestral_characters[node][i], transition_P, F);
-
-                    // We need child branch CLVs, since we save CLVs and the end of each branch.
-                    if (i1 != -1) element_prod_modify(S.begin(), cache1[i1], matrix_size);
-                    if (i2 != -1) element_prod_modify(S.begin(), cache2[i2], matrix_size);
-
-                    pair<int,int> state_model = sample(S);
-
-                    ancestral_characters[node][i] = state_model;
-                    if (i1 != -1) ancestral_characters[node1][i1] = state_model;
-                    if (i2 != -1) ancestral_characters[node2][i2] = state_model;
-                }
+                ancestral_characters[node] = sample_internal_node_sequence(parent_seq, transition_P, cache1, cache2, A0, A1, A2, F);
             }
         }
 
