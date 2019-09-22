@@ -1643,7 +1643,7 @@ namespace substitution {
     }
 
 
-    vector<Vector<pair<int,int>>> 
+    EVector
     sample_subst_history(const data_partition& P, const TreeInterface& t)
     {
         auto smap = P.state_letters();
@@ -1654,7 +1654,7 @@ namespace substitution {
         Matrix F = P.WeightedFrequencyMatrix();
 
         // 1. Allocate arrays for storing results and temporary results.
-        vector<Vector<pair<int,int> > > ancestral_characters (t.n_nodes());
+        EVector ancestral_characters (t.n_nodes());
     
         {
             // compute root branches
@@ -1689,7 +1689,7 @@ namespace substitution {
 
             assert(local_branches.size() == 3 or local_branches.size() == 1);
 
-            auto& parent_seq = ancestral_characters[parent];
+            auto& parent_seq = ancestral_characters[parent].as_<Vector<pair<int,int>>>();
             auto A0 = P.get_pairwise_alignment(t.reverse(local_branches[0]));
             if (local_branches.size() == 1)
             {
@@ -1711,7 +1711,7 @@ namespace substitution {
         return ancestral_characters;
     }
 
-    vector<Vector<pair<int,int>>> sample_ancestral_states(const data_partition& P)
+    EVector sample_ancestral_states(const data_partition& P)
     {
         return sample_subst_history(P, P.t());
     }

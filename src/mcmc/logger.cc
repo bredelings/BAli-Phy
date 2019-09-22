@@ -395,12 +395,14 @@ namespace MCMC {
     
 	for(int i=0;i<A.n_sequences();i++)
 	{
+            auto& node_states = states[i].as_<Vector<pair<int,int>>>();
+
 	    vector<int> columns = A.get_columns_for_characters(i);
-	    assert(columns.size() == states[i].size());
+	    assert(columns.size() == node_states.size());
 
 	    auto& seq = A.seq(i);
 	    // The length of the observed sequence should be equal to the length of the sampled sequence.
-	    assert(seq.size() == 0 or seq.size() == states[i].size());
+	    assert(seq.size() == 0 or seq.size() == node_states.size());
 
 	    // Technically we could have 0-length observed sequences -- but they would have no letters.
 	    bool observed = seq.size() > 0;
@@ -409,7 +411,7 @@ namespace MCMC {
 
 	    for(int j=0;j<columns.size();j++)
 	    {
-		int state = states[i][j].second;
+		int state = node_states[j].second;
 		int letter = smap[state];
 
 		int c = columns[j];
