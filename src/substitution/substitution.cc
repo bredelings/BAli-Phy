@@ -1622,7 +1622,6 @@ namespace substitution {
         int n_models = F.size1();
         int n_states = F.size2();
         Matrix S(n_models, n_states);
-        const int matrix_size = n_models * n_states;
 
         // 4. Walk the alignment and sample (model,letter) for leaf sequence
         vector<pair<int,int>> ancestral_characters(L0);
@@ -1648,13 +1647,6 @@ namespace substitution {
     sample_subst_history(const data_partition& P, const TreeInterface& t)
     {
         auto smap = P.state_letters();
-
-        const int n_models = P.n_base_models();
-        const int n_states = P.n_states();
-        const int matrix_size = n_models * n_states;
-
-        // scratch matrix 
-        Matrix S(n_models, n_states);
 
         int root = P.subst_root();
 
