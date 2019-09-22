@@ -1601,6 +1601,49 @@ namespace substitution {
     }
 
     
+    vector<pair<int,int>> sample_leaf_node_sequence(const vector<pair<int,int>>& parent_seq,
+                                                    const EVector& transition_Ps,
+                                                    const EVector& sequence,
+                                                    const alphabet& a,
+                                                    const vector<int>& smap,
+                                                    const pairwise_alignment_t& A0,
+                                                    const Matrix& F)
+    {
+        // 1. Get and check length for the leaf node
+        int L0 = A0.length2();
+
+        // 2. Get the alignment of columns present at the leaf node.
+        auto a10 = convert_to_bits(A0,1,0);
+        auto index = get_indices_from_bitpath_w(a10, {1}, (1<<0));
+        assert(L0 == index.size1());
+        assert(L0 == sequence.size());
+
+        // 3. Construct a scratch matrix and check that dimensions match inputs
+        int n_models = F.size1();
+        int n_states = F.size2();
+        Matrix S(n_models, n_states);
+        const int matrix_size = n_models * n_states;
+
+        // 4. Walk the alignment and sample (model,letter) for leaf sequence
+        vector<pair<int,int>> ancestral_characters(L0);
+        for(int i=0;i<L0;i++)
+        {
+            int i0 = index(i,0);
+
+            pair<int,int> parent_state(-1,-1);
+            if (i0 != -1)
+                parent_state = parent_seq[i0];
+
+            calc_transition_prob_from_parent(S, parent_state, transition_Ps, F);
+
+            calc_leaf_likelihood(S, sequence[i].as_int(), a, smap);
+
+            ancestral_characters[i] = sample(S);
+        }
+        return ancestral_characters;
+    }
+
+
     vector<vector<pair<int,int>>> 
     sample_subst_history(const data_partition& P, const TreeInterface& t)
     {
