@@ -133,7 +133,7 @@ public:
     int n_states() const;                       // used in substitution.CC for get_letter_likelihoods, get_leaf_seq_likelihoods, get_column_likelihoods, sample_subst_history
 
     // Perhaps this should also be per-mixture-component.
-    std::vector<int> state_letters() const;
+    EVector state_letters() const;
   
     Matrix WeightedFrequencyMatrix() const;     // used in sample-alignment.cc, sample-cube.cc, sample-tri.cc, substitution.cc[sample_subst_history]
 

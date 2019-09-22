@@ -1259,13 +1259,14 @@ namespace substitution {
 
         element_assign(R,0.0);
 
+        // FIXME - its wasteful to do this for each letter.
         auto smap = P.state_letters();
 
         if (a.is_letter(l))
         {
             for(int m=0;m<n_models;m++)
                 for(int s=0;s<n_states;s++)
-                    if (l == smap[s])
+                    if (l == smap[s].as_int())
                         R(m,s) = 1;
         }
         else if (a.is_letter_class(l))
@@ -1274,7 +1275,7 @@ namespace substitution {
                 if (a.matches(l,l2))
                     for(int m=0;m<n_models;m++)
                         for(int s=0;s<n_states;s++)
-                            if (l2 == smap[s])
+                            if (l2 == smap[s].as_int())
                                 R(m,s) = 1;
         }
         else
@@ -1605,10 +1606,12 @@ namespace substitution {
                                                     const EVector& transition_Ps,
                                                     const EVector& sequence,
                                                     const alphabet& a,
-                                                    const vector<int>& smap,
+                                                    const EVector& smap1,
                                                     const pairwise_alignment_t& A0,
                                                     const Matrix& F)
     {
+        auto smap2 = (vector<int>)smap1;
+
         // 1. Get and check length for the leaf node
         int L0 = A0.length2();
 
@@ -1635,7 +1638,7 @@ namespace substitution {
 
             calc_transition_prob_from_parent(S, parent_state, transition_Ps, F);
 
-            calc_leaf_likelihood(S, sequence[i].as_int(), a, smap);
+            calc_leaf_likelihood(S, sequence[i].as_int(), a, smap2);
 
             ancestral_characters[i] = sample(S);
         }
