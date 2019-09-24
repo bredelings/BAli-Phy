@@ -1777,7 +1777,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     /* ---------------- Set up the tree ------------------------------ */
     branches_from_affected_node.resize(ttt.n_nodes());
-    fs::path program_filename = fs::path(dir) / "Main.hs";
+    fs::path program_filename = fs::path(dir) / "BAliPhy.Main.hs";
 
     {
         checked_ofstream program_file(program_filename.string());
