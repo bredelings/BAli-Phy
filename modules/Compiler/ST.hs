@@ -5,9 +5,11 @@ module Compiler.ST (unsafeInterleaveST,
     where
 
 import Compiler.Base -- for seq, IO = IOActionX, LazyIO, IOAndPass, MFIX, IOReturn
+import Data.Tuple    -- for snd
 
 unsafeInterleaveST x = LazyIO x
 
+runST' (IOAction f) = snd (f 0)
 runST' (IOAction1 x y) = x y
 runST' (IOAction2 x y z) = x y z
 runST' (IOAction3 x y z w) = x y z w
