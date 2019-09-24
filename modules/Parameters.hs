@@ -20,7 +20,7 @@ c_range (IntegerInterval a b) = getIntegerBounds (IntegerInterval a b)
 c_range r = r
 
 -- should this be in IO?  It does have the side-effect of registering the random variable
+--register_random_variable x pdf range rate = IOAction1 builtin_register_random_variable (builtin_random_variable x pdf range (c_range range) rate)
 random_variable x pdf range rate = builtin_register_random_variable $ builtin_random_variable x pdf range (c_range range) rate
-register_random_variable x pdf range rate = IOAction1 builtin_register_random_variable (builtin_random_variable x pdf range (c_range range) rate)
 
 add_named_head name r = IOAction2 builtin_add_named_head (listToString name) r
