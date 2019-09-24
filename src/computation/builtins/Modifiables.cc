@@ -176,16 +176,3 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
 
     return {EPair(state+1, constructor("()",0))};
 }
-
-extern "C" closure builtin_function_add_named_head(OperationArgs& Args)
-{
-    auto& M = Args.memory();
-
-    std::string name = Args.evaluate(0).as_checked<String>();
-
-    int r = Args.reg_for_slot(1);
-
-    M.add_named_head(name, r);
-
-    return constructor("()",0);
-}
