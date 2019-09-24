@@ -66,7 +66,7 @@ putStrLn line = IOAction1 builtin_putStrLn (listToString line)
 
 newString s = IOAction1 builtinNewString s
 
-setStringIndexInt v i x = IOAction3 builtinSetStringIndexInt v i x
+setStringIndexInt v i x = IOAction (pair_from_c . builtinSetStringIndexInt v i x)
 
 copyListToString [] v i = return ()
 copyListToString (h:t) v i = do setStringIndexInt v i h

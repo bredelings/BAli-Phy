@@ -61,12 +61,13 @@ extern "C" closure builtin_function_SetStringIndex(OperationArgs& Args)
     object_ptr<const String> v = Args.evaluate(0).assert_is_a<String>();
     int i = Args.evaluate(1).as_int();
     char x = Args.evaluate(2).as_char();
+    int state = Args.evaluate(3).as_int();
 
     const String* vv = &(*v);
     String* vvv = const_cast<String*>(vv);
     (*vvv)[i] = x;
 
-    return constructor("()",0);
+    return EPair(state+1,constructor("()",0));
 }
 
 template <class T>
