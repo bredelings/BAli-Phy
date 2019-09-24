@@ -25,7 +25,7 @@ do_crp'' alpha n bins counts = let inc (c:cs) 0 = (c+1:cs)
 
 builtin crp_density 4 "CRP_density" "Distribution"
 builtin sample_crp_vector 3 "sample_CRP" "Distribution"
-sample_crp alpha n d = RandomStructure do_nothing modifiable_structure $ liftIO $ do v <- (IOAction3 sample_crp_vector alpha n d)
+sample_crp alpha n d = RandomStructure do_nothing modifiable_structure $ liftIO $ do v <- IOAction (\s->(s,sample_crp_vector alpha n d s))
                                                                                      return $ list_from_vector_of_size v n
 --crp alpha n d = Distribution (crp_density alpha n d) (no_quantile "crp") (do_crp alpha n d) (ListRange $ replicate n $ integer_between 0 (n+d-1))
 modifiable_list_and_triggered_list value rand_var = let raw_list = map modifiable value
