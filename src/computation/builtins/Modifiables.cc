@@ -151,11 +151,13 @@ extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 {
     int R = Args.reg_for_slot(0);
 
+    int state = Args.evaluate(1).as_int();
+
     auto& M = Args.memory();
 
     M.register_prior(R);
 
-    return constructor("()",0);
+    return EPair(state+1, constructor("()",0));
 }
 
 extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
