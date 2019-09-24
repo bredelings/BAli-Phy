@@ -10,10 +10,6 @@ import Data.Tuple    -- for snd
 unsafeInterleaveIO x = LazyIO x
 
 unsafePerformIO (IOAction f) = snd (f 0)
-unsafePerformIO (IOAction1 x y) = x y
-unsafePerformIO (IOAction2 x y z) = x y z
-unsafePerformIO (IOAction3 x y z w) = x y z w
-unsafePerformIO (IOAction4 x y z w u) = x y z w u
 unsafePerformIO (LazyIO f) = unsafePerformIO f
 unsafePerformIO (IOAndPass (LazyIO f) g) = let x = unsafePerformIO f in unsafePerformIO (g x)
 unsafePerformIO (IOAndPass f g) = let x = unsafePerformIO f in x `seq` unsafePerformIO (g x)

@@ -4,11 +4,7 @@ module Compiler.Base where
 
 builtin error 1 "error" "Prelude"
 
-data IO a = IOAction1 (b->a) a |
-            IOAction2 (b->c->a) b c |
-            IOAction3 (b->c->d->a) b c d |
-            IOAction4 (b->c->d->e->a) b c d e |
-            IOAction  (s->(s,a)) |
+data IO a = IOAction  (s->(s,a)) |
             LazyIO a |
             MFix a |
             IOReturn a |
