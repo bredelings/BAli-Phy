@@ -33,7 +33,7 @@ closure GetVectorElement(OperationArgs& Args)
 extern "C" closure builtin_function_sizeOfString(OperationArgs& Args)
 {
     const std::string& s = Args.evaluate(0).as_<String>();
-  
+
     return {(int)s.size()};
 }
 
@@ -41,7 +41,7 @@ extern "C" closure builtin_function_getStringElement(OperationArgs& Args)
 {
     const std::string& s = Args.evaluate(0).as_<String>();
     int i = Args.evaluate(1).as_int();
-  
+
     return {s[i]};
 }
 
