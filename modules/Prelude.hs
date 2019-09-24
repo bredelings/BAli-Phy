@@ -64,7 +64,7 @@ zip' = zipWith' (,)
 putStrLn line = IOAction (pair_from_c . builtin_putStrLn (listToString line))
 
 
-newString s = IOAction1 builtinNewString s
+newString s = IOAction (pair_from_c . builtinNewString s)
 
 setStringIndexInt v i x = IOAction (pair_from_c . builtinSetStringIndexInt v i x)
 

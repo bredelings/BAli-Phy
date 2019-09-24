@@ -47,13 +47,16 @@ extern "C" closure builtin_function_getStringElement(OperationArgs& Args)
 
 extern "C" closure builtin_function_NewString(OperationArgs& Args)
 {
-    const int& length = Args.evaluate(0).as_int();
+    int length = Args.evaluate(0).as_int();
+
+    int state = Args.evaluate(1).as_int();
 
     object_ptr<String> v (new String);
 
     v->resize(length);
 
-    return v;
+    // Are we copying the v here?  Because that is wasteful and feels wrong.
+    return EPair(state+1, v);
 }
 
 extern "C" closure builtin_function_SetStringIndex(OperationArgs& Args)
