@@ -138,6 +138,9 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
     //------------- 1c. Get context index --------------
     int c1 = Args.evaluate(2).as_int();
 
+    //------------- 1d. Get monad thread state ---------
+    int state = Args.evaluate(3).as_int();
+
     //------------- 2. Find the location of the variable -------------//
     auto& M = Args.memory();
     auto x_mod_reg = M.find_modifiable_reg(x_reg);
@@ -168,7 +171,7 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
     if (x2 != x1)
 	C1.set_reg_value(*x_mod_reg, expression_ref(x2));
 
-    return constructor("()",0);
+    return EPair(state+1,constructor("()",0));
 }
 
 extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Args)
