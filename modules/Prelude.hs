@@ -8,6 +8,7 @@ module Prelude (module Prelude,
                 module Data.Array,
                 module Data.Function,
                 module Data.Ord,
+                module Foreign.Pair,
                 module Foreign.Vector,
                 module Foreign.String,
                 module Control.Monad,
@@ -35,6 +36,7 @@ import Data.Array
 import Data.Function
 import Data.Ord
 import Control.Monad
+import Foreign.Pair
 import Foreign.Vector
 import Foreign.String
 
@@ -45,9 +47,6 @@ builtin is_char 1 "is_char" "Prelude"
 builtin is_double 1 "is_double" "Prelude"
 builtin is_int 1 "is_int" "Prelude"
 
-builtin c_fst 1 "c_fst" "Pair"
-builtin c_snd 1 "c_snd" "Pair"
-builtin c_pair' 2 "c_pair" "Pair"
 builtin builtin_show 1 "show" "Prelude"
 builtin builtin_read_int 1 "read_int" "Prelude"
 builtin builtin_read_double 1 "read_double" "Prelude"
@@ -61,10 +60,6 @@ zipWith' z (a:as) (b:bs) =  z a b : zipWith z as bs
 zipWith' _ [] []         =  []
 
 zip' = zipWith' (,)
-
-c_pair (x,y) = c_pair' x y
-
-pair_from_c p = (c_fst p, c_snd p)
 
 putStrLn line = IOAction1 builtin_putStrLn (listToString line)
 
