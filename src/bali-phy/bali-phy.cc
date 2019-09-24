@@ -420,10 +420,10 @@ void run_print_expression(const string& argv0, variables_map& args, const shared
 
     expression_ref a = get_alphabet_expression_from_args(args);
     {
-        checked_ofstream program_file("Print.hs");
+        checked_ofstream program_file("Print.Main.hs");
         program_file<<generate_print_program(print, a);
     }
-    execute_file(L, "Print.hs");
+    execute_file(L, "Print.Main.hs");
 }
 
 int simple_size(const expression_ref& E);
