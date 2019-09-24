@@ -164,6 +164,8 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
 {
     int R = Args.reg_for_slot(0);
 
+    int state = Args.evaluate(1).as_int();
+
     auto result_reg = Args.evaluate_slot_no_record(0);
 
     auto& M = Args.memory();
@@ -172,7 +174,7 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
 
     M.register_likelihood_(R);
 
-    return constructor("()",0);
+    return {EPair(state+1, constructor("()",0))};
 }
 
 extern "C" closure builtin_function_add_named_head(OperationArgs& Args)

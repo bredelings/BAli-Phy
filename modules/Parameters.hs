@@ -4,7 +4,7 @@ import Range
 import Foreign.Pair       -- for pair_from_c
 
 builtin builtin_register_prior 2 "register_prior" "Modifiables"
-builtin builtin_register_likelihood 1 "register_likelihood" "Modifiables"
+builtin builtin_register_likelihood 2 "register_likelihood" "Modifiables"
 builtin maybe_modifiable_structure 1 "maybe_modifiable_structure" "Modifiables"
 
 builtin builtin_random_variable 5 "random_variable" "Modifiables"
@@ -12,8 +12,8 @@ builtin builtin_register_random_variable 1 "register_random_variable" "Modifiabl
 builtin modifiable 1 "modifiable" "Modifiables"
 builtin builtin_add_named_head 2 "add_named_head" "Modifiables"
 
-register_likelihood pr = IOAction1 builtin_register_likelihood pr
 register_prior pr = IOAction (pair_from_c . builtin_register_prior pr)
+register_likelihood pr = IOAction (pair_from_c . builtin_register_likelihood pr)
 
 c_range (OpenInterval a b) = getBounds (OpenInterval a b)
 c_range (IntegerInterval a b) = getIntegerBounds (IntegerInterval a b)
