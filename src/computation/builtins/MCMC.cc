@@ -49,6 +49,8 @@ log_double_t get_multiplier(reg_heap& M, const vector<int>& I_regs, int c1)
 
 extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 {
+    int state = Args.evaluate(3).as_int();
+
     assert(not Args.evaluate_changeables());
 
     reg_heap& M = Args.memory();
@@ -121,7 +123,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 	M.switch_to_context(c1,c2);
     M.release_context(c2);
     
-    return constructor("()",0);
+    return EPair(state+1,constructor("()",0));
 }
 
 // gibbs_sample_categorical x n pr
