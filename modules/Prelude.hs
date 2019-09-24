@@ -41,7 +41,7 @@ import Foreign.Vector
 import Foreign.String
 
 builtin reapply 2 "reapply" "Prelude"
-builtin builtin_putStrLn 1 "putStrLn" "Prelude"
+builtin builtin_putStrLn 2 "putStrLn" "Prelude"
 
 builtin is_char 1 "is_char" "Prelude"
 builtin is_double 1 "is_double" "Prelude"
@@ -61,7 +61,7 @@ zipWith' _ [] []         =  []
 
 zip' = zipWith' (,)
 
-putStrLn line = IOAction1 builtin_putStrLn (listToString line)
+putStrLn line = IOAction (pair_from_c . builtin_putStrLn (listToString line))
 
 
 newString s = IOAction1 builtinNewString s
