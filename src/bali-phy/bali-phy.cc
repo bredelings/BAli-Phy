@@ -53,6 +53,7 @@ namespace mpi = boost::mpi;
 #include "util/io.H"
 #include "util/string/split.H"
 #include "util/log-level.H"
+#include "util/set.H"
 #include "models/parameters.H"
 #include "models/rules.H"
 #include "models/setup.H"
@@ -364,47 +365,21 @@ std::shared_ptr<module_loader> setup_module_loader(variables_map& args, const st
 std::string generate_print_program(const model_t& print, const expression_ref& a)
 {
     std::ostringstream program_file;
-    program_file<<"\nimport SModel";
-    program_file<<"\nimport IModel";
-    program_file<<"\nimport Probability";
-    program_file<<"\nimport Parameters";
-    program_file<<"\nimport Range";
-    program_file<<"\nimport PopGen";
-    program_file<<"\nimport Alignment";
-    program_file<<"\nimport BAliPhy.ATModel";
-    program_file<<"\nimport BAliPhy.ATModel.DataPartition";
-    program_file<<"\nimport Alphabet";
-    program_file<<"\nimport Tree";
-    program_file<<"\nimport Data.Maybe";
 
+    set<string> imports;
+    imports.insert("Probability.Random");     // for run_lazy
+    add(imports, print.imports);
+    for(auto& mod: imports)
+        program_file<<"import "<<mod<<"\n";
 
-    program_file<<"\nimport SModel.ReversibleMarkov";
-    program_file<<"\nimport SModel.Codons";
-    program_file<<"\nimport Probability.Random";
-    program_file<<"\nimport Compiler.Real";
-    program_file<<"\nimport Data.Tuple";
-    program_file<<"\nimport Data.List";
-    program_file<<"\nimport Foreign.Vector";
-    program_file<<"\nimport Foreign.String";
-    program_file<<"\nimport SModel.Nucleotides";
-    program_file<<"\nimport SModel.Frequency";
-    program_file<<"\nimport Probability.Distribution.Tree";
-    program_file<<"\nimport Probability.Distribution.Laplace";
-    program_file<<"\nimport Probability.Distribution.Normal";
-    program_file<<"\nimport Probability.Distribution.Beta";
-    program_file<<"\nimport Probability.Distribution.Exponential";
-    program_file<<"\nimport Probability.Distribution.ExpTransform";
-    program_file<<"\nimport Probability.Distribution.Dirichlet";
-    program_file<<"\nimport Probability.Distribution.Gamma";
-    program_file<<"\nimport Probability.Distribution.List";
-    program_file<<"\nimport Probability.Distribution.Uniform";
-    program_file<<"\nimport Data.Bool";
-    program_file<<"\nimport Compiler.Base";
-
-    program_file<<"\n\nprint_model = "<<print.expression.print();
-    program_file<<"\n\nalphabet = "<<a.print();
-    program_file<<"\n\nmain = putStrLn $ show $ fst $ unsafePerformIO $ run_lazy alphabet print_model";
     program_file<<"\n";
+    program_file<<"print_model = "<<print.expression.print()<<"\n";
+    program_file<<"\n";
+    program_file<<"alphabet = "<<a.print()<<"\n";
+    program_file<<"\n";
+    program_file<<"main = do\n";
+    program_file<<"  result <- run_lazy alphabet print_model\n";
+    program_file<<"  putStrLn $ show $ fst result\n";
 
     return program_file.str();
 }
