@@ -291,10 +291,13 @@ void reg_heap::register_likelihood_(int r)
 
     // We can only put the bit on a changeable reg, not on (say) an index_var.
     // Therefore, we must evaluate r -> r2 here.
+    // QUESTION: WHY can't we put the bit on constant regs?
 
     if (reg_is_constant(r))
     {
         // Also avoid putting a bit on constant regs?
+
+	likelihood_heads.push_back(r);
     }
     else
     {
