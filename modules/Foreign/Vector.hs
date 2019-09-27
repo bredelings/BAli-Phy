@@ -14,6 +14,7 @@ builtin vector_size 1 "vector_size" "Vector"
 
 -- list_to_vector:: [a] -> EVector
 builtin list_to_vector 1 "list_to_vector" "Vector"
+builtin array_to_vector 1 "array_to_vector" "Vector"
 
 list_from_vector_of_size v n = go 0 n where
     go _ 0 = []
