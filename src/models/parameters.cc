@@ -313,6 +313,11 @@ log_double_t data_partition::likelihood() const
     return DPC().likelihood_index.get_value(*P).as_log_double();
 }
 
+EVector data_partition::ancestral_sequences() const
+{
+    return substitution::sample_ancestral_states(*this);
+}
+
 log_double_t data_partition::heated_likelihood() const 
 {
     // Don't waste time calculating likelihood if we're sampling from the prior.

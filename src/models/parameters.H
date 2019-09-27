@@ -164,6 +164,8 @@ public:
 
     const matrix<int>& alignment_constraint() const;
 
+    EVector ancestral_sequences() const;
+
     // The prior, likelihood, and probability
     log_double_t prior_alignment() const;
     log_double_t likelihood() const;

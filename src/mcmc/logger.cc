@@ -391,7 +391,7 @@ namespace MCMC {
 
 	auto smap = P[p].state_letters();
 
-	auto states = substitution::sample_ancestral_states(P[p]);
+        auto states = P[p].ancestral_sequences();
     
 	for(int i=0;i<A.n_sequences();i++)
 	{
