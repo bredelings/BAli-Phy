@@ -67,6 +67,8 @@ struct data_partition_constants
 
     param cl_index;
 
+    param ancestral_sequences_index;
+
     std::vector<int> conditional_likelihoods_for_branch;
 
     std::vector<param> leaf_sequence_indices;
@@ -233,6 +235,7 @@ struct parameters_constants: public Object
     param atmodel;
     param partition_likelihoods;
     param partition_cond_likes;
+    param partition_ancestral_seqs;
     param partition_transition_ps;
     param imodel_training;
     param sequence_names;
@@ -381,6 +384,7 @@ public:
     expression_ref my_partition_likelihoods() const;
     expression_ref my_partition_cond_likes() const;
     expression_ref my_partition_transition_ps() const;
+    expression_ref my_partition_ancestral_sequences() const;
 
     // bool
     expression_ref my_variable_alignment() const;

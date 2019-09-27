@@ -41,6 +41,36 @@ substitution_likelihood t root seqs as alpha ps f = let cl = cached_conditional_
                                                         counts = mkArray (numElements seqs) (\n -> list_to_vector $ replicate (vector_size $ seqs!n) 1)
                                                     in peel_likelihood t cl as f root
 
+sample_ancestral_sequences t root seqs as alpha ps f cl smap =
+    let rt = add_root t root
+        ancestor_seqs = mkArray (numNodes t) ancestor_for_node
+        ancestor_for_node n = ancestor_for_branch n (parentBranch rt n)
+        ancestor_for_branch n Nothing = sample_root_sequence (cl!b0) (cl!b1) (cl!b2) (as!b0) (as!b1) (as!b2) f where [b0,b1,b2] = edgesTowardNode t n
+        ancestor_for_branch n (Just to_p) = let p = targetNode t to_p
+                                                parent_seq = ancestor_seqs!p
+                                                b0 = reverseEdge t to_p
+                                                ps_for_b0 = ps!(b0 `mod` (numBranches t))
+                                                a0 = as!b0
+                                            in case edgesBeforeEdge t to_p of
+                                                 [] -> sample_leaf_sequence
+                                                          parent_seq
+                                                          ps_for_b0
+                                                          (seqs!n)
+                                                          alpha
+                                                          smap
+                                                          a0
+                                                          f
+                                                 [b1,b2] -> sample_internal_sequence
+                                                               parent_seq
+                                                               ps_for_b0
+                                                               (cl!b1)
+                                                               (cl!b2)
+                                                               a0
+                                                               (as!b1)
+                                                               (as!b2)
+                                                               f
+    in ancestor_seqs
+
 cached_conditional_likelihoods_SEV t seqs alpha ps f a =
     let lc    = mkArray (2*numBranches t) lcf
         lcf b = let bb = b `mod` (numBranches t) in
