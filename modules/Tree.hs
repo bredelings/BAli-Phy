@@ -26,7 +26,9 @@ add_root t r = rt
 away_from_root (RootedTree t r arr) b = arr!b
 toward_root    rt b = not $ away_from_root rt b
 
-parentNode rooted_tree n = listToMaybe [targetNode rooted_tree b | b <- edgesOutOfNode rooted_tree n, toward_root rooted_tree b]
+parentBranch rooted_tree n = listToMaybe [b | b <- edgesOutOfNode rooted_tree n, toward_root rooted_tree b]
+parentNode rooted_tree n = case parentBranch rooted_tree n of Just b  -> Just $ targetNode rooted_tree b
+                                                              Nothing -> Nothing
 
 -- For numNodes, numBranches, edgesOutOfNode, and nodesForEdge I'm currently using fake polymorphism
 edgesTowardNode t node = map (reverseEdge t) $ edgesOutOfNode t node
