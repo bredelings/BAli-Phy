@@ -770,6 +770,8 @@ void reg_heap::set_call_from_step(int s, int R2)
     // Don't override an *existing* call
     assert(steps[s].call == 0);
 
+    assert(not expression_at(R2).is_index_var());
+
     // Set the call
     steps[s].call = R2;
 }
