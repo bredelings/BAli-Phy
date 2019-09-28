@@ -25,14 +25,13 @@
    - bali-phy program
      - Make a unified program that computes an ATModel object.
      - Generate a Haskell program that is moderately readable.
-     0 Use param objects to record compute expressions.
-     0 New c++ class do_block to generate Haskell code.
+     - Sample ancestral sequences inside program.
    - MCMC
      - Run all dynamically registered transition kernels - we don't need detailed balance!
    - Logging
      - Do logging by computing a JSON object.
      - Allow logging strings.
-     - Allow logging all fields JSON format as well as TSV format.
+     - Allow logging all fields in JSON format as well as TSV format.
      - Allow reading tables from JSON formatted output of constant shape.
      - Add TableReader class that uses only one line at a time.
    - Virtual machine
