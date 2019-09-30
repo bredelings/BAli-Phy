@@ -25,6 +25,8 @@ protected:
     mutable std::vector<record> memory;
 
     int first_free = -1;
+    int last_free  = -1;
+
     int first_used = -1;
 
 public:
@@ -73,14 +75,39 @@ public:
 	}
 
     int add_to_free_list(int r)
+        {
+            return add_to_back_of_free_list(r);
+        }
+
+    int add_to_front_of_free_list(int r)
 	{
 	    lookup(r).value.clear();
 	    lookup(r).state = free;
 	    lookup(r).prev = -1;
 	    lookup(r).next = first_free;
+
 	    if (first_free != -1)
 		lookup(first_free).prev = r;
+            else
+                last_free = r;
+
 	    first_free = r;
+	    return r;
+	}
+
+    int add_to_back_of_free_list(int r)
+	{
+	    lookup(r).value.clear();
+	    lookup(r).state = free;
+	    lookup(r).prev = last_free;
+            lookup(r).next = -1;
+
+	    if (last_free != -1)
+		lookup(last_free).next = r;
+            else
+                first_free = r;
+
+	    last_free = r;
 	    return r;
 	}
 
@@ -92,6 +119,9 @@ public:
 
 	    assert(is_free(r));
 	    first_free = lookup(r).next;
+            if (first_free == -1)
+                last_free = -1;
+
 	    lookup(r).prev = -1;
 	    lookup(r).next = -1;
 	    lookup(r).state = none;
