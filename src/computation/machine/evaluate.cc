@@ -662,7 +662,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
 	    // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable value.
 	    // Therefore, we cannot do "assert(not result_for_reg(t,R).changeable);" here.
 
-#ifdef DEBUG_MACHINE
+#if defined(DEBUG_MACHINE) && DEBUG_MACHINE>2
 	    string SS = "";
 	    SS = compact_graph_expression(*this, R, get_identifiers()).print();
 	    string SSS = untranslate_vars(deindexify(trim_unnormalize(closure_at(R))),  
@@ -699,7 +699,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
 		throw_reg_exception(*this, root_token, R, e, false);
 	    }
 
-#ifdef DEBUG_MACHINE
+#if defined(DEBUG_MACHINE) && DEBUG_MACHINE > 2
 	    //      std::cerr<<"   + recomputing "<<SS<<"\n\n";
 	    std::cerr<<"   + Executing statement {"<<O<<"}:  "<<SS<<"\n\n";
 #endif
