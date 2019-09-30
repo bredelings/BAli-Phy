@@ -76,7 +76,11 @@ public:
 
     int add_to_free_list(int r)
         {
+#ifdef DEBUG_MACHINE
             return add_to_back_of_free_list(r);
+#else
+            return add_to_front_of_free_list(r);
+#endif
         }
 
     int add_to_front_of_free_list(int r)
