@@ -166,7 +166,8 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
 
     int state = Args.evaluate(1).as_int();
 
-    auto result_reg = Args.evaluate_slot_no_record(0);
+    // We are suppose to evaluate the likelihood before we register.
+    auto result_reg = Args.evaluate_slot_force(0);
 
     auto& M = Args.memory();
     auto likelihood = M[result_reg].exp;

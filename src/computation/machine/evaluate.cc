@@ -77,7 +77,14 @@ class RegOperationArgs: public OperationArgs
     bool evaluate_changeables() const {return true;}
 
     /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
-    int evaluate_reg_no_record(int R2)
+    int evaluate_reg(int R2)
+	{
+	    auto [_, value] = memory().incremental_evaluate(R2);
+	    return value;
+	}
+
+    /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
+    int evaluate_reg_force(int R2)
 	{
 	    auto [R3, value] = memory().incremental_evaluate(R2);
 
@@ -115,7 +122,7 @@ class RegOperationArgs: public OperationArgs
   
     const closure& evaluate_reg_to_closure_(int R2)
 	{
-	    int R3 = evaluate_reg_no_record(R2);
+	    int R3 = evaluate_reg_force(R2);
 	    return M[R3];
 	}
 
@@ -529,7 +536,13 @@ class RegOperationArgsUnchangeable: public OperationArgs
     bool evaluate_changeables() const {return false;}
 
     /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
-    int evaluate_reg_no_record(int R2)
+    int evaluate_reg(int R2)
+	{
+	    return memory().incremental_evaluate_unchangeable(R2);
+	}
+
+    /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
+    int evaluate_reg_force(int R2)
 	{
 	    return memory().incremental_evaluate_unchangeable(R2);
 	}

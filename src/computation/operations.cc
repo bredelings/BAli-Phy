@@ -294,7 +294,7 @@ closure join_op(OperationArgs& Args)
 
 closure seq_op(OperationArgs& Args)
 {
-    Args.evaluate_slot_no_record(0);
+    Args.evaluate_slot_force(0);
 
     int R = Args.current_closure().reg_for_slot(1);
 

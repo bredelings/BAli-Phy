@@ -26,9 +26,9 @@ const closure& OperationArgs::evaluate_slot_to_closure_(int slot)
     return evaluate_reg_to_closure_(reg_for_slot(slot));
 }
 
-int OperationArgs::evaluate_slot_no_record(int slot)
+int OperationArgs::evaluate_slot_force(int slot)
 {
-    return evaluate_reg_no_record(reg_for_slot(slot));
+    return evaluate_reg_force(reg_for_slot(slot));
 }
 
 int OperationArgs::evaluate_slot_to_reg(int slot)

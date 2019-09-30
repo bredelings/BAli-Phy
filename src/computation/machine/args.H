@@ -33,9 +33,11 @@ public:
 
     int reg_for_slot(int slot) const;
 
-    virtual int evaluate_reg_no_record(int) = 0;
+    virtual int evaluate_reg(int) = 0;
 
-    int evaluate_slot_no_record(int);
+    virtual int evaluate_reg_force(int) = 0;
+
+    int evaluate_slot_force(int);
 
     virtual int evaluate_reg_to_reg(int) = 0;
   

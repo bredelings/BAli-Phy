@@ -193,7 +193,7 @@ extern "C" closure builtin_function_array_to_vector(OperationArgs& Args)
     for(int i=0; i<n; i++)
     {
         // We don't want to record a ton of extra uses for changeable reg
-        auto [_,array_reg] = M.incremental_evaluate(Args.reg_for_slot(0));
+        int array_reg = Args.evaluate_reg(Args.reg_for_slot(0));
         int element_reg = M[array_reg].reg_for_slot(i);
         (*v)[i] = Args.evaluate_reg_to_object(element_reg);
     }
