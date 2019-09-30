@@ -381,6 +381,8 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 	assert(x.none());
 #endif
 
+    constexpr int pdf_bit = 4;
+
     // 1. reroot to c1 and force the program
     evaluate_program(c1);
 
@@ -396,9 +398,9 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 	    // We're only interested in cases where both contexts have a result that is > 0.
 	    // But (i) we need to seen the "seen" flag in any case
 	    //    (ii) we need to remember that we have set it so that we can unset it.
-	    if (regs.is_used(r) and regs.access(r).flags.any() and not prog_temp[r].test(2))
+	    if (regs.is_used(r) and regs.access(r).flags.any() and not prog_temp[r].test(pdf_bit))
 	    {
-		prog_temp[r].set(2);
+		prog_temp[r].set(pdf_bit);
 		original_pdf_results.push_back(p);
 	    }
 	}
@@ -414,9 +416,9 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 
     for(auto [pdf_reg, pdf_res]: original_pdf_results)
     {
-	assert(prog_temp[pdf_reg].test(2));
+	assert(prog_temp[pdf_reg].test(pdf_bit));
 
-	prog_temp[pdf_reg].reset(2);
+	prog_temp[pdf_reg].reset(pdf_bit);
 
 	// Only compute a ratio if the pdf is present and computed in BOTH contexts.
 	if (pdf_res > 0 and has_result(pdf_reg))
