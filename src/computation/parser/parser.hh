@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.4.1.
+// A Bison parser, made by GNU Bison 3.4.2.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
@@ -66,7 +66,7 @@
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 
-  expression_ref make_sig_vars(const std::vector<expression_ref>& sig_vars);
+  expression_ref make_sig_vars(const std::vector<std::string>& sig_vars);
   expression_ref make_data_or_newtype(const std::string& d_or_n, const expression_ref& tycls_hdr, const std::vector<expression_ref>& constrs);
   expression_ref make_context(const expression_ref& context, const expression_ref& type);
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
@@ -586,7 +586,6 @@ namespace yy {
       // topdecls_semi
       // decls
       // decllist
-      // sig_vars
       // sigtypes1
       // btype_no_ops
       // tyapps
@@ -616,6 +615,7 @@ namespace yy {
       char dummy10[sizeof (std::vector<expression_ref>)];
 
       // ops
+      // sig_vars
       char dummy11[sizeof (std::vector<std::string>)];
     };
 
@@ -1191,7 +1191,6 @@ switch (yytype)
       case 176: // topdecls_semi
       case 202: // decls
       case 203: // decllist
-      case 212: // sig_vars
       case 213: // sigtypes1
       case 224: // btype_no_ops
       case 225: // tyapps
@@ -1222,6 +1221,7 @@ switch (yytype)
         break;
 
       case 174: // ops
+      case 212: // sig_vars
         value.template destroy< std::vector<std::string> > ();
         break;
 
@@ -4004,7 +4004,6 @@ switch (yytype)
       case 176: // topdecls_semi
       case 202: // decls
       case 203: // decllist
-      case 212: // sig_vars
       case 213: // sigtypes1
       case 224: // btype_no_ops
       case 225: // tyapps
@@ -4035,6 +4034,7 @@ switch (yytype)
         break;
 
       case 174: // ops
+      case 212: // sig_vars
         value.move< std::vector<std::string> > (std::move (that.value));
         break;
 
@@ -4226,7 +4226,6 @@ switch (yytype)
       case 176: // topdecls_semi
       case 202: // decls
       case 203: // decllist
-      case 212: // sig_vars
       case 213: // sigtypes1
       case 224: // btype_no_ops
       case 225: // tyapps
@@ -4257,6 +4256,7 @@ switch (yytype)
         break;
 
       case 174: // ops
+      case 212: // sig_vars
         value.copy< std::vector<std::string> > (YY_MOVE (that.value));
         break;
 
@@ -4455,7 +4455,6 @@ switch (yytype)
       case 176: // topdecls_semi
       case 202: // decls
       case 203: // decllist
-      case 212: // sig_vars
       case 213: // sigtypes1
       case 224: // btype_no_ops
       case 225: // tyapps
@@ -4486,6 +4485,7 @@ switch (yytype)
         break;
 
       case 174: // ops
+      case 212: // sig_vars
         value.move< std::vector<std::string> > (YY_MOVE (s.value));
         break;
 

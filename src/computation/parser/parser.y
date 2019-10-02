@@ -29,7 +29,7 @@
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 
-  expression_ref make_sig_vars(const std::vector<expression_ref>& sig_vars);
+  expression_ref make_sig_vars(const std::vector<std::string>& sig_vars);
   expression_ref make_data_or_newtype(const std::string& d_or_n, const expression_ref& tycls_hdr, const std::vector<expression_ref>& constrs);
   expression_ref make_context(const expression_ref& context, const expression_ref& type);
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
@@ -316,7 +316,7 @@
 %type <expression_ref> opt_tyconsig
 %type <expression_ref> sigtype
 %type <expression_ref> sigtypedoc
-%type <std::vector<expression_ref>> sig_vars
+%type <std::vector<std::string>> sig_vars
 %type <std::vector<expression_ref>> sigtypes1
 
 %type <std::string> strict_mark
@@ -1517,9 +1517,17 @@ expression_ref make_builtin_expr(const string& name, int args, const string& s1)
     return new expression(AST_node("Builtin"),{String(name), args, String(s1)});
 }
 
-expression_ref make_sig_vars(const vector<expression_ref>& sig_vars)
+vector<expression_ref> make_String_vec(const vector<string>& strings)
 {
-    return new expression(AST_node("sig_vars"),sig_vars);
+    vector<expression_ref> Strings;
+    for(auto& string: strings)
+        Strings.push_back(String(string));
+    return Strings;
+}
+
+expression_ref make_sig_vars(const vector<std::string>& sig_vars)
+{
+    return new expression(AST_node("sig_vars"),make_String_vec(sig_vars));
 }
 
 expression_ref make_data_or_newtype(const string& d_or_n, const expression_ref& tycls_hdr, const vector<expression_ref>& constrs)
@@ -1702,10 +1710,7 @@ expression_ref make_stmts(const vector<expression_ref>& stmts)
 
 expression_ref make_infix(const string& infix, optional<int>& prec, vector<string>& op_names)
 {
-    vector<expression_ref> o;
-    for(auto& op_name: op_names)
-	o.push_back(String(op_name));
-    expression_ref ops = new expression(AST_node("Ops"),o);
+    expression_ref ops = new expression(AST_node("Ops"), make_String_vec(op_names));
 
     vector<expression_ref> e;
     e.push_back(String(infix));
