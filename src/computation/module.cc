@@ -397,7 +397,7 @@ void Module::rename_infix(const Program&)
     if (topdecls)
     {
 	assert(is_AST(topdecls,"TopDecls"));
-	topdecls = ::rename_infix(*this,topdecls);
+	topdecls = ::rename_infix_top(*this,topdecls);
     }
 }
 
@@ -858,6 +858,40 @@ void Module::load_builtins(const module_loader& L)
     topdecls = expression_ref{AST_node("TopDecls"), new_decls};
 }
 
+int get_constructor_arity(const expression_ref& constr)
+{
+    expression_ref type = constr;
+    if (is_AST(type,"TypeApply"))
+    {
+        if (type.size() >= 2 and is_AST(type.sub()[1],"FieldDecls"))
+        {
+            auto& fields = type.sub()[1];
+            // We could have e.g. f1,f2 :: Int, adding 2 to the arity.
+            int arity = 0;
+            for(auto& field_group: fields.sub())
+            {
+                assert(is_AST(field_group,"FieldDecl"));
+                auto& sig_vars = field_group.sub()[0];
+                assert(is_AST(sig_vars,"sig_vars"));
+                arity += sig_vars.size();
+            }
+            return arity;
+        }
+        else
+            return type.size()-1;
+    }
+    return 0;
+}
+
+string get_constructor_name(const expression_ref& constr)
+{
+    auto id = constr;
+    if (is_AST(id,"TypeApply"))
+        id = constr.sub()[0];
+    assert(is_AST(id,"type_id"));
+    return id.head().as_<AST_node>().value;
+}
+
 void Module::load_constructors()
 {
     if (not topdecls) return;
@@ -873,15 +907,9 @@ void Module::load_constructors()
 		assert(is_AST(constrs,"constrs"));
 		for(const auto& constr: constrs.sub())
 		{
-		    int arity = 0;
-		    expression_ref type = constr;
-		    if (is_AST(type,"TypeApply"))
-		    {
-			arity = type.size()-1;
-			type = type.sub()[0];
-		    }
-		    assert(is_AST(type,"type_id"));
-		    string cname = type.head().as_<AST_node>().value;
+		    auto arity = get_constructor_arity(constr);
+                    auto cname = get_constructor_name(constr);
+
 		    string qualified_name = name+"."+cname;
 		    expression_ref body = lambda_expression( constructor(qualified_name, arity) );
 		    new_decls.push_back(AST_node("Decl") + var(qualified_name) + body);
@@ -1314,16 +1342,8 @@ void Module::add_local_symbols()
 		expression_ref constrs = decl.sub()[1];
 		for(const auto& constr: constrs.sub())
 		{
-		    int arity = 0;
-		    auto type = constr;
-		    if (is_AST(type,"TypeApply"))
-		    {
-			arity = type.size()-1;
-			type = type.sub()[0];
-		    }
-		    if (not is_AST(type,"type_id"))
-			throw myexception()<<"Constructor does not being with type id!\n"<<decl.print();
-		    string cname = type.head().as_<AST_node>().value;
+		    auto arity = get_constructor_arity(constr);
+		    auto cname = get_constructor_name(constr);
 		    def_constructor(cname,arity);
 		}
 	    }
