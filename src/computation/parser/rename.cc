@@ -255,6 +255,96 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     return expression_ref{E.head(),v};
 }
 
+
+expression_ref rename_infix_top(const Module& m, const expression_ref& decls)
+{
+    if (not decls.is_expression()) return decls;
+
+    assert(is_AST(decls, "TopDecls"));
+
+    auto v = decls.sub();
+
+    for(auto& decl: decls.sub())
+    {
+        if (not is_AST(decl,"Decl:data")) continue;
+        if (decl.size() < 2) continue;
+        expression_ref constrs = decl.sub()[1];
+        assert(is_AST(constrs,"constrs"));
+
+        // field -> con -> pos
+        map<string,map<string,int>> constructor_fields;
+        // con -> arity
+        map<string,int> arity;
+
+        for(auto& constr: constrs.sub())
+        {
+            if (not is_AST(constr,"TypeApply")) continue;
+            if (constr.size() < 2) continue;
+
+            auto ConName = constr.sub()[0].as_<AST_node>().value;
+            auto fields = constr.sub()[1];
+            if (not is_AST(fields,"FieldDecls")) continue;
+
+            int i = 0;
+            for(auto& field_group: fields.sub())
+            {
+                assert(is_AST(field_group,"FieldDecl"));
+                auto& sig_vars = field_group.sub()[0];
+                assert(is_AST(sig_vars,"sig_vars"));
+
+                for(auto& sig_var: sig_vars.sub())
+                {
+                    string field_name = sig_var.as_<String>();
+                    constructor_fields[field_name][ConName] = i;
+                    i++;
+                }
+            }
+            arity[ConName] = i;
+        }
+
+        if (not arity.empty())
+        {
+            for(auto& [field_name, constrs]: constructor_fields)
+            {
+                expression_ref name = AST_node("id",field_name);
+                vector<expression_ref> alts;
+
+                for(auto& [ConName,pos]: constrs)
+                {
+                    int a = arity[ConName];
+                    vector<expression_ref> f;
+                    for(int i=0;i<a;i++)
+                        if (i == pos)
+                            f.push_back(name);
+                        else
+                            f.push_back(AST_node("WildcardPattern"));
+
+                    auto pattern = expression_ref{AST_node("id",ConName),f};
+                    expression_ref body = AST_node("rhs") + name;
+                    alts.push_back(AST_node("alt") + pattern + body);
+                }
+                {
+                    expression_ref pattern = AST_node("WildcardPattern");
+                    expression_ref body = error(field_name+": pattern match failure");
+                    body = AST_node("rhs") + body;
+                    alts.push_back(AST_node("alt") + pattern + body);
+                }
+
+                AST_node x("id","#0");
+                expression_ref body = AST_node("Case") + x + expression_ref(AST_node("alts"),alts);
+                body = AST_node("Lambda") + x + body;
+                body = AST_node("rhs") + body;
+
+                v.push_back(AST_node("Decl") + name + body);
+            }
+        }
+    }
+
+    expression_ref E{AST_node("TopDecls"),v};
+
+    return rename_infix(m, E);
+}
+
 // 1. The primary purpose of the rename pass is to convert identifiers to (possibly qualified) vars.
 
 // 2. Additionally, we also try and translate rec expressions to mfix expressions here.
