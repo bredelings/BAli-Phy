@@ -5,7 +5,7 @@ language: cpp
 matrix:
   include:
     - os: linux
-      dist: xenial
+      dist: bionic
       env: CXX_COMPILER=g++-7
       addons:
         apt:
@@ -15,7 +15,7 @@ matrix:
           - g++-7
           - pandoc
     - os: linux
-      dist: xenial
+      dist: bionic
       env: CXX_COMPILER=g++-8
       addons:
         apt:
@@ -25,7 +25,7 @@ matrix:
           - g++-8
           - pandoc
     - os: linux
-      dist: xenial
+      dist: bionic
       env: CXX_COMPILER=g++-9
       addons:
         apt:
@@ -35,7 +35,7 @@ matrix:
           - g++-9
           - pandoc
     - os: linux
-      dist: xenial
+      dist: bionic
       compiler: clang++
       addons:
         apt:
