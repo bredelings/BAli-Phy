@@ -10,7 +10,7 @@ matrix:
       addons:
         apt:
           sources:
-          - ubuntu-toolchain-r-test
+          - ppa:ubuntu-toolchain-r/test
           packages:
           - g++-7
           - pandoc
@@ -20,7 +20,7 @@ matrix:
       addons:
         apt:
           sources:
-          - ubuntu-toolchain-r-test
+          - ppa:ubuntu-toolchain-r/test
           packages:
           - g++-8
           - pandoc
@@ -30,7 +30,7 @@ matrix:
       addons:
         apt:
           sources:
-          - ubuntu-toolchain-r-test
+          - ppa:ubuntu-toolchain-r/test
           packages:
           - g++-9
           - pandoc
@@ -40,7 +40,7 @@ matrix:
       addons:
         apt:
           sources:
-          - ubuntu-toolchain-r-test
+          - ppa:ubuntu-toolchain-r/test
           packages:
           - g++-8
           - pandoc
