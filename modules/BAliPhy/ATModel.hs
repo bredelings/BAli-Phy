@@ -59,5 +59,6 @@ observe_partition_type_0 partition compressed_alignment leaf_sequences column_co
                   alphabet
                   transition_ps
                   f
+                  smap
           likelihood = peel_likelihood tree cls as (weighted_frequency_matrix smodel) subst_root
           ancestral_sequences = array_to_vector $ sample_ancestral_sequences tree subst_root leaf_sequences as alphabet transition_ps f cls smap
