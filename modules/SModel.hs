@@ -252,6 +252,10 @@ transition_p_index smodel_on_tree = mkArray n_branches (list_to_vector . branch_
 data SingleBranchLengthModel a = SingleBranchLengthModel Tree (Array Int Double) a
 get_tree (SingleBranchLengthModel t _ _) = t
 
+get_smap (ReversibleMarkov _ s _ _ _ _ _) = s
+get_smap (MixtureModel ((_,m):_)) = get_smap m
+get_smap (MixtureModels branch_cat_list mms) = get_smap $ head mms
+
 -- branch_transition_p :: Tree -> a -> Array Int Double -> Int -> EVector
 branch_transition_p (SingleBranchLengthModel tree ds smodel@(MixtureModels branch_cat_list mms)) b = branch_transition_p (SingleBranchLengthModel tree ds mx) b  where mx = mms!!(branch_cat_list!!b)
 branch_transition_p (SingleBranchLengthModel tree ds smodel@(MixtureModel cs                  )) b = [qExp $ scale (ds!b/r) component | (_,component) <- cs]     where r = rate smodel
