@@ -71,10 +71,10 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
                                                                f
     in ancestor_seqs
 
-cached_conditional_likelihoods_SEV t seqs alpha ps f a =
+cached_conditional_likelihoods_SEV t seqs alpha ps f a smap =
     let lc    = mkArray (2*numBranches t) lcf
         lcf b = let bb = b `mod` (numBranches t) in
-                case edgesBeforeEdge t b of []      -> peel_leaf_branch_SEV (seqs!sourceNode t b) alpha (ps!bb) (bitmask_from_alignment a $ sourceNode t b)
+                case edgesBeforeEdge t b of []      -> peel_leaf_branch_SEV (seqs!sourceNode t b) alpha (ps!bb) (bitmask_from_alignment a $ sourceNode t b) smap
                                             [b1,b2] -> peel_internal_branch_SEV (lc!b1) (lc!b2) (ps!bb) f
     in lc
 

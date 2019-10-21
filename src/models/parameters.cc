@@ -1661,6 +1661,8 @@ std::string generate_atmodel_program(int n_partitions,
         program.let(scale,{var("BAliPhy.ATModel.DataPartition.scale"),partition});
         var smodel("smodel_part"+part);
         program.let(smodel,{var("BAliPhy.ATModel.DataPartition.smodel"),partition});
+        var smap("smap_part"+part);
+        program.let(smap,{var("SModel.get_smap"),smodel});
 
         var distances("distances_part"+part);
         {
@@ -1689,7 +1691,7 @@ std::string generate_atmodel_program(int n_partitions,
             program.let(leaf_seq_counts, {var("listArray'"),{var("Alignment.leaf_sequence_counts"), compressed_alignment_var, n_leaves, counts_var}});
 
             // Create and set conditional likelihoods for each branch
-            program.let(cls_var, {var("cached_conditional_likelihoods"), tree_var, leaf_sequences_var, leaf_seq_counts, as, alphabet_var, transition_ps, f});
+            program.let(cls_var, {var("cached_conditional_likelihoods"), tree_var, leaf_sequences_var, leaf_seq_counts, as, alphabet_var, transition_ps, f, smap});
 
             // FIXME: broken for fixed alignments of 2 sequences.
             if (n_nodes > 2)
@@ -1698,7 +1700,7 @@ std::string generate_atmodel_program(int n_partitions,
         else if (likelihood_calculator == 1)
         {
             // Create and set conditional likelihoods for each branch
-            program.let(cls_var,{var("cached_conditional_likelihoods_SEV"),tree_var,leaf_sequences_var, alphabet_var ,transition_ps,f, compressed_alignment_var});  
+            program.let(cls_var,{var("cached_conditional_likelihoods_SEV"),tree_var,leaf_sequences_var, alphabet_var ,transition_ps,f, compressed_alignment_var, smap});  
 
             // FIXME: broken for fixed alignments of 2 sequences.
             if (n_nodes > 2)
