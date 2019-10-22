@@ -69,6 +69,8 @@ public:
 
     void stack_pop();
 
+    virtual void set_effect(int r);
+
     int allocate(closure&&);
 
     virtual int allocate_reg();
