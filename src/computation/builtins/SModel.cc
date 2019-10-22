@@ -401,6 +401,128 @@ extern "C" closure builtin_function_equ(OperationArgs& Args)
 // when the discrete approximation to the continuous distribution has
 // low resolution.
 
+
+// Lets suppose that we have a list of `n_levels` different rate matrices with:
+//    * rate matrices Qs[leven]
+//    * pi vectors pis[level]
+//    * state maps smaps[level]
+// for k=1..K.
+
+void inc_modulated_states_matrix(int& r, int& level, int& state, const EVector& Qs)
+{
+    r++;
+    state++;
+    if (state < Qs[level].as_<Box<Matrix>>().size1())
+        ;
+    else
+    {
+        level++;
+        state=0;
+    }
+}
+
+void inc_modulated_states_vec(int& r, int& level, int& state, const EVector& pis)
+{
+    r++;
+    state++;
+    if (state < pis[level].as_<EVector>().size())
+        ;
+    else
+    {
+        level++;
+        state=0;
+    }
+}
+
+// We switch between these different "levels" with KxK rate matrix `rates_between`.
+// The equilibrium frequencies for each level in `R` are given by `level_frequencies`.
+extern "C" closure builtin_function_modulated_markov_rates(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& Qs = arg0.as_<EVector>();
+    int n_levels = Qs.size();
+
+    auto arg1 = Args.evaluate(1);
+    auto& rates_between = arg1.as_<Box<Matrix>>();
+    assert(rates_between.size1() == n_levels);
+    assert(rates_between.size2() == n_levels);
+
+    int total_states = 0;
+    for(int l = 0; l < n_levels; l++)
+    {
+        auto& Q = Qs[l].as_<Box<Matrix>>();
+        int n_states_for_level = Q.size1();
+        assert(Q.size2() == n_states_for_level);
+
+        total_states += n_states_for_level;
+    }
+
+    auto R = new Box<Matrix>(total_states, total_states);
+    for(int r1=0, l1=0, s1=0; r1 < total_states; inc_modulated_states_matrix(r1,l1,s1,Qs))
+    {
+        double sum = 0;
+        for(int r2=0, l2=0, s2=0; r2 < total_states; inc_modulated_states_matrix(r2,l2,s2,Qs))
+        {
+            if (r1 == r2) continue;
+
+            double rate = 0;
+            if (l1 != l2 and s1 != s2)
+                ;
+            else if (l1 != l2)
+                rate = rates_between(l1,l2);
+            else
+            {
+                auto& Q = Qs[l1].as_<Box<Matrix>>();
+                rate = Q(s1,s2);
+            }
+            (*R)(r1,r2) = rate;
+            sum += rate;
+        }
+        (*R)(r1,r1) = -sum;
+    }
+
+    return R;
+}
+
+extern "C" closure builtin_function_modulated_markov_pi(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& pis = arg0.as_<EVector>();
+    int n_levels = pis.size();
+
+    auto arg1 = Args.evaluate(1);
+    auto& level_probs = arg1.as_<EVector>();
+    assert(level_probs.size() == n_levels);
+
+    int total_states = 0;
+    for(int l = 0; l < n_levels; l++)
+    {
+        auto& pi = pis[l].as_<EVector>();
+        int n_states_for_level = pi.size();
+
+        total_states += n_states_for_level;
+    }
+
+    vector<double> pi(total_states);
+    for(int r=0, l=0, s=0; r < total_states; inc_modulated_states_vec(r,l,s,pis))
+        pi[r] = level_probs[l].as_double() * pis[l].as_<EVector>()[s].as_double();
+
+    return EVector(pi);
+}
+
+extern "C" closure builtin_function_modulated_markov_smap(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& smaps = arg0.as_<EVector>();
+
+    EVector new_smap;
+    for(auto& smap: smaps)
+        for(auto& x: smap.as_<EVector>())
+            new_smap.push_back(x);
+
+    return new_smap;
+}
+
 /*
   object_ptr<ReversibleMarkovModelObject> Modulated_Markov_Function(const ExchangeModelObject& S,MultiModelObject M)
   {
