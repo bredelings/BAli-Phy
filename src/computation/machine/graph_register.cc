@@ -93,6 +93,16 @@ long max_version = 0;
  *    loop until no more regs (and thus computations) are being freed.
  */
 
+bool Step::has_nonforce_effect() const
+{
+    return flags.test(6);
+}
+
+void Step::mark_with_nonforce_effect()
+{
+    flags.set(6);
+}
+
 void Step::clear()
 {
     source_reg = -1;
@@ -101,8 +111,9 @@ void Step::clear()
     truncate(forced_regs);
     assert(created_regs.empty());
 
+    flags.reset();
     // This should already be cleared.
-    assert(flags.none());
+    // assert(flags.none());
 }
 
 void Step::check_cleared()
@@ -264,6 +275,8 @@ void reg_heap::register_prior(int r)
     if (not reg_has_value(r))
         throw myexception()<<"Can't register a prior reg that is unevaluated!";
 
+    assert(access_value_for_reg(r).exp.is_log_double());
+
     if (regs.access(r).flags.test(0))
         throw myexception()<<"Can't register a prior reg that is already registered!";
 
@@ -285,6 +298,8 @@ void reg_heap::register_likelihood_(int r)
 
     if (not reg_has_value(r))
         throw myexception()<<"Can't register a likelihood reg that is unevaluated!";
+
+    assert(access_value_for_reg(r).exp.is_log_double());
 
     if (regs.access(r).flags.test(1))
         throw myexception()<<"Can't register a likelihood reg that is already registered!";
@@ -856,6 +871,11 @@ void reg_heap::mark_reg_created_by_step(int r, int s)
     assert(regs.access(r).created_by.first == 0);
     assert(regs.access(r).created_by.second == 0);
     regs.access(r).created_by = {s,index};
+}
+
+void reg_heap::mark_step_with_nonforce_effect(int s, int /* r */)
+{
+    steps[s].mark_with_nonforce_effect();
 }
 
 int reg_heap::allocate()

@@ -33,6 +33,10 @@ struct Step
 
     std::bitset<8> flags;
 
+    bool has_nonforce_effect() const;
+
+    void mark_with_nonforce_effect();
+
     void clear();
 
     void check_cleared();
@@ -174,6 +178,7 @@ public:
     int allocate_reg_from_step(int s, closure&& C);
     int allocate_reg_from_step_in_token(int s, int t);
     void mark_reg_created_by_step(int r, int s);
+    void mark_step_with_nonforce_effect(int s, int r);
 
     void get_roots(std::vector<int>&, bool keep_identifiers=true) const;
 
