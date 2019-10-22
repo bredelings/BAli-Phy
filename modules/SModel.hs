@@ -27,6 +27,9 @@ builtin builtin_weighted_frequency_matrix 2 "weighted_frequency_matrix" "SModel"
 builtin builtin_frequency_matrix 1 "frequency_matrix" "SModel"
 builtin mut_sel_q 2 "mut_sel_q" "SModel"
 builtin mut_sel_pi 2 "mut_sel_pi" "SModel"
+builtin builtin_modulated_markov_rates 2 "modulated_markov_rates" "SModel"
+builtin builtin_modulated_markov_pi 2 "modulated_markov_pi" "SModel"
+builtin builtin_modulated_markov_smap 1 "modulated_markov_smap" "SModel"
 
 data F81 = F81 a b c d
 data MixtureModel a = MixtureModel [(Double,a)]
@@ -182,6 +185,18 @@ fMutSel0 codon_a aa_w omega nuc_q  = fMutSel codon_a codon_w omega nuc_q
 fMutSel0' codon_a amino_ws' omega nuc_model = fMutSel0 codon_a amino_ws omega nuc_model
                                                where amino_ws = get_ordered_elements (alphabet_letters amino_a) amino_ws' "fitnesses"
                                                      amino_a = getAminoAcids codon_a
+
+
+modulated_markov_rates qs rates_between = builtin_modulated_markov_rates (list_to_vector qs) rates_between
+
+modulated_markov_pi pis level_probs = builtin_modulated_markov_pi (list_to_vector pis) (list_to_vector level_probs)
+
+modulated_markov_smap smaps = builtin_modulated_markov_smap (list_to_vector smaps)
+
+modulated_markov a qs level_probs smaps rates_between = reversible_markov a smap q pi where
+    q = modulated_markov_rates qs rates_between
+    pi = modulated_markov_pi level_probs
+    smap = modulated_markov_smap smaps
 
 -- Issue: bad mixing on fMutSel model
 
