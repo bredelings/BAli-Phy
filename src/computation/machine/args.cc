@@ -1,5 +1,6 @@
 #include "args.H"
 #include "graph_register.H"
+#include "effect.H"
 #include "computation/expression/lambda.H"
 
 int OperationArgs::reg_for_slot(int slot) const
@@ -103,6 +104,13 @@ int OperationArgs::allocate_reg()
     int r = M.push_temp_head();
     n_allocated++;
     return r;
+}
+
+void OperationArgs::set_effect(int r)
+{
+    auto& M = memory();
+    auto& eff = M.expression_at(r).as_<effect>();
+    eff.register_effect(M,r);
 }
 
 OperationArgs::OperationArgs(reg_heap& m)
