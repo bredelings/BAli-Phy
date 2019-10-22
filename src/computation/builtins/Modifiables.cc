@@ -147,19 +147,6 @@ extern "C" closure builtin_function_modifiable(OperationArgs& Args)
     return {mod_exp, {r_value}};
 }
 
-extern "C" closure builtin_function_register_prior(OperationArgs& Args)
-{
-    int R = Args.reg_for_slot(0);
-
-    int state = Args.evaluate(1).as_int();
-
-    auto& M = Args.memory();
-
-    M.register_prior(R);
-
-    return EPair(state+1, constructor("()",0));
-}
-
 extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
 {
     int R = Args.reg_for_slot(0);
