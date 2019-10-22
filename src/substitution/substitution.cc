@@ -644,14 +644,14 @@ namespace substitution {
     }
 
 
-    inline double sum(const Matrix& Q, const vector<unsigned>& smap, int n_letters, 
+    inline double sum(const Matrix& Q, const EVector& smap, int n_letters,
                       int s1, int l)
     {
         double total = 0;
         int n_states = smap.size();
 #ifdef DEBUG_SMAP
         for(int s2=0; s2<n_states; s2++)
-            if (smap[s2] == l)
+            if (smap[s2].as_int() == l)
                 total += Q(s1,s2);
 #else    
         for(int s2=l; s2<n_states; s2+=n_letters)
@@ -660,7 +660,7 @@ namespace substitution {
         return total;
     }
 
-    inline double sum(const Matrix Q,const vector<unsigned>& smap,
+    inline double sum(const Matrix Q,const EVector& smap,
                       int s1, int l2, const alphabet& a)
     {
         double total=0;
@@ -679,11 +679,9 @@ namespace substitution {
 
 
     Likelihood_Cache_Branch*
-    peel_leaf_branch(const EVector& sequence, const EVector& counts, const alphabet& a, const EVector& transition_P)
+    peel_leaf_branch_simple(const EVector& sequence, const EVector& counts, const alphabet& a, const EVector& transition_P)
     {
         total_peel_leaf_branches++;
-
-        //    const vector<unsigned>& smap = MC.state_letters();
 
         int L0 = sequence.size();
         assert(counts.size() == L0);
@@ -691,9 +689,12 @@ namespace substitution {
         const int n_models  = transition_P.size();
         const int n_states  = transition_P[0].as_<Box<Matrix>>().size1();
         const int matrix_size = n_models * n_states;
+        const int n_letters = a.n_letters();
 
         auto LCB = new Likelihood_Cache_Branch(L0, n_models, n_states);
     
+        assert(n_states >= n_letters and n_states%n_letters == 0);
+
         for(int i=0;i<L0;i++)
         {
             assert(counts[0].as_int() >= 1);
@@ -868,19 +869,31 @@ namespace substitution {
         return LCB;
     }
 
-    Likelihood_Cache_Branch*
-    peel_leaf_branch_modulated(const EVector& sequence, const alphabet& a,
-                               const EVector& transition_P, const vector<unsigned>& smap)
+    bool is_iota(const EVector& v)
     {
-        total_peel_leaf_branches++;
+        for(int i=0;i<v.size();i++)
+            if (i != v[i].as_int())
+                return false;
+        return true;
+    }
 
+    Likelihood_Cache_Branch*
+    peel_leaf_branch(const EVector& sequence, const EVector& counts, const alphabet& a,
+                     const EVector& transition_P, const EVector& smap)
+    {
         // Do this before accessing matrices or other_subst
         int L0 = sequence.size();
+        assert(counts.size() == L0);
 
         const int n_models  = transition_P.size();
         const int n_states  = transition_P[0].as_<Box<Matrix>>().size1();
         const int matrix_size = n_models * n_states;
         const int n_letters = a.n_letters();
+
+        if (n_states == n_letters and is_iota(smap))
+            return peel_leaf_branch_simple(sequence, counts, a, transition_P);
+
+        total_peel_leaf_branches++;
 
         auto LCB = new Likelihood_Cache_Branch(L0, n_models, n_states);
 
@@ -888,6 +901,9 @@ namespace substitution {
 
         for(int i=0;i<L0;i++)
         {
+            assert(counts[0].as_int() >= 1);
+            LCB->count(i) = counts[i].as_int();
+
             double* R = (*LCB)[i];
             // compute the distribution at the parent node
             int l2 = sequence[i].as_int();
@@ -1463,7 +1479,7 @@ namespace substitution {
         }
     }
 
-    void calc_leaf_likelihood(Matrix& S, int l, const alphabet& a, const vector<int>& smap)
+    void calc_leaf_likelihood(Matrix& S, int l, const alphabet& a, const EVector& smap)
     {
         int n_models = S.size1();
         int n_states = S.size2();
@@ -1474,7 +1490,7 @@ namespace substitution {
         {
             // Clear S(m,s) for every state s that doesn't map to the observed letter l
             for(int s=0;s<n_states;s++)
-                if (smap[s] != l)
+                if (smap[s].as_int() != l)
                     for(int m=0;m<n_models;m++)
                         S(m,s) = 0;
         }
@@ -1485,7 +1501,7 @@ namespace substitution {
             for(int l=0;l<letters.size();l++)
                 if (letters.test(l))
                     for(int s=0;s<n_states;s++)
-                        if (smap[s] != l)
+                        if (smap[s].as_int() != l)
                             for(int m=0;m<n_models;m++)
                                 S(m,s) = 0;
         }
@@ -1606,12 +1622,10 @@ namespace substitution {
                                                     const EVector& transition_Ps,
                                                     const EVector& sequence,
                                                     const alphabet& a,
-                                                    const EVector& smap1,
+                                                    const EVector& smap,
                                                     const pairwise_alignment_t& A0,
                                                     const Matrix& F)
     {
-        auto smap2 = (vector<int>)smap1;
-
         // 1. Get and check length for the leaf node
         int L0 = A0.length2();
 
@@ -1638,7 +1652,7 @@ namespace substitution {
 
             calc_transition_prob_from_parent(S, parent_state, transition_Ps, F);
 
-            calc_leaf_likelihood(S, sequence[i].as_int(), a, smap2);
+            calc_leaf_likelihood(S, sequence[i].as_int(), a, smap);
 
             ancestral_characters[i] = sample(S);
         }
