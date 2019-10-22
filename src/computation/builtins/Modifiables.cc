@@ -1,5 +1,6 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "computation/machine/args.H"
+#include "computation/machine/effects.H"
 #include "computation/operations.H"
 #include "util/myexception.H"
 #include "computation/machine/graph_register.H"
@@ -127,14 +128,16 @@ extern "C" closure builtin_function_random_variable(OperationArgs& Args)
 
 extern "C" closure builtin_function_register_random_variable(OperationArgs& Args)
 {
-    reg_heap& M = Args.memory();
-
     int r_random_var = Args.current_closure().reg_for_slot(0);
 
-    M.register_random_variable(r_random_var);
+    // FIXME: force the random_variable here, instead of in the registration function?
 
-    // Return a reference to the new modifiable.
-    return {index_var(0),{r_random_var}};
+    int r_effect = Args.allocate(new register_random_variable(r_random_var));
+
+    Args.set_effect(r_effect);
+
+    // Return a reference to the effect.
+    return {index_var(0),{r_effect}};
 }
 
 extern "C" closure builtin_function_modifiable(OperationArgs& Args)
