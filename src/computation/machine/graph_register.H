@@ -235,6 +235,7 @@ public:
     const std::vector<int>& random_variables() const;
 
     void register_random_variable(int r);
+    void unregister_random_variable(int r);
 
     // the list of transition kernels
     std::vector<int> transition_kernels_;
