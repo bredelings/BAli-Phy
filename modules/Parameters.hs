@@ -16,4 +16,5 @@ c_range (OpenInterval a b) = getBounds (OpenInterval a b)
 c_range (IntegerInterval a b) = getIntegerBounds (IntegerInterval a b)
 c_range r = r
 
-random_variable x pdf range rate = builtin_register_random_variable $ builtin_random_variable x pdf range (c_range range) rate
+random_variable x pdf range rate = let rv = builtin_random_variable x pdf range (c_range range) rate
+                                   in builtin_register_random_variable rv `seq` rv
