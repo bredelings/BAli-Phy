@@ -29,7 +29,7 @@ computation_sources = [
   'machine/args.cc','machine/tokens.cc', 'machine/graph_register.cc',
   'machine/show_graph.cc',
   'machine/evaluate.cc', 'machine/sums.cc',
-  'machine/gc.cc','machine/reroot.cc',
+  'machine/gc.cc','machine/reroot.cc', 'machine/effects.cc',
 
   'optimization/let-float.cc',
   'optimization/simplifier.cc',

@@ -463,6 +463,32 @@ void reg_heap::register_random_variable(int r)
     register_prior(r_pdf);
 }
 
+void reg_heap::unregister_random_variable(int r)
+{
+    // NOTE: We are NOT going to clear the bit on the reg.
+    //       That is supposed to be set even for things that are NOT in the root.
+    //       It will be cleared when the reg is destroyed.
+
+    // FIXME: This is SLOW because we have to walk the list to find the random variable.
+    //        Alternatives: (i) use a set (ii) use a hash (iii) record the position in the list somehow.
+
+    if (not is_random_variable(expression_at(r)))
+	throw myexception()<<"Trying to unregister `"<<expression_at(r)<<"` as random variable";
+
+    std::optional<int> index;
+    for(int i=0;i<random_variables_.size();i++)
+        if (random_variables_[i] == r)
+            index = i;
+
+    if (not index)
+	throw myexception()<<"unregister_random_variable: random variable <"<<r<<"> not found!";
+
+    if (*index + 1 < random_variables_.size())
+        std::swap(random_variables_[*index], random_variables_.back());
+
+    random_variables_.pop_back();
+}
+
 const vector<int>& reg_heap::random_variables() const
 {
     return random_variables_;
