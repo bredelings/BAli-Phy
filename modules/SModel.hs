@@ -15,6 +15,8 @@ import SModel.Codons
 import SModel.ReversibleMarkov
 import SModel.Likelihood
 
+import Data.Matrix
+
 builtin builtin_average_frequency 1 "average_frequency" "SModel"
 builtin builtin_empirical 2 "empirical" "SModel"
 builtin pam 1 "pam" "SModel"
@@ -186,6 +188,8 @@ fMutSel0' codon_a amino_ws' omega nuc_model = fMutSel0 codon_a amino_ws omega nu
                                                where amino_ws = get_ordered_elements (alphabet_letters amino_a) amino_ws' "fitnesses"
                                                      amino_a = getAminoAcids codon_a
 
+-- Issue: bad mixing on fMutSel model
+
 
 modulated_markov_rates qs rates_between = builtin_modulated_markov_rates (list_to_vector qs) rates_between
 
@@ -193,12 +197,20 @@ modulated_markov_pi pis level_probs = builtin_modulated_markov_pi (list_to_vecto
 
 modulated_markov_smap smaps = builtin_modulated_markov_smap (list_to_vector smaps)
 
-modulated_markov a qs level_probs smaps rates_between = reversible_markov a smap q pi where
+modulated_markov a qs pis level_probs smaps rates_between = reversible_markov a smap q pi where
     q = modulated_markov_rates qs rates_between
-    pi = modulated_markov_pi level_probs
+    pi = modulated_markov_pi pis level_probs
     smap = modulated_markov_smap smaps
 
--- Issue: bad mixing on fMutSel model
+---
+
+tuffley_steel_98 s01 s10 q = modulated_markov a qs pis level_probs smaps rates_between where
+    a = getAlphabet q
+    qs = [get_q $ scale 0.0 q, get_q $ q]
+    pis = [pi, pi] where pi = get_pi q
+    level_probs = [s10/(s10+s01), s01/(s10+s01)]
+    smaps = [smap, smap] where smap = get_smap q
+    rates_between = fromLists [[-s01,s01],[s10,-s10]]
 
 gamma_rates_dist alpha = gamma alpha (1.0/alpha)
 

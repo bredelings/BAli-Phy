@@ -1,0 +1,36 @@
+{
+    "name": "ts98",
+    "synonyms": ["tuffley_steel_98"],
+    "title":"The Tuffley-Steel Covarion Model",
+    "result_type": "RevCTMC[a]",
+    "call": "tuffley_steel_98[@s01,@s10,@submodel]",
+    "import": ["SModel"],
+    "citation":{"type": "article",
+		"title": "Modeling the covarion hypothesis of nucleotide substitution",
+		"year": "1998",
+		"author": [{"name": "Tuffley, Chris"},{"name": "Steel, Mike"}],
+		"journal": {"name": "Mathematical Biosciences", "volume": "147", "number": "1", "pages": "63--91"},
+		"identifier": [{"type":"doi","id":"10.1016/S0025-5564(97)00081-3"}]
+               },
+    "args": [
+        {
+            "arg_name": "s01",
+            "arg_type": "Double",
+	    "default_value":"~exponential[0.5]",
+	    "description":"Rate from OFF to ON"
+        },
+        {
+            "arg_name": "s10",
+            "arg_type": "Double",
+	    "default_value":"~exponential[0.5]",
+	    "description":"Rate from ON to OFF"
+        },
+        {
+            "arg_name": "submodel",
+            "arg_type": "RevCTMC[a]",
+	    "description": "The base model"
+        }
+    ],
+    "description": "The Tuffley-Steel covarion rate matrix:\n  Q(i,j) = sym(i,j) * pi[j]",
+    "extract": "all"
+}

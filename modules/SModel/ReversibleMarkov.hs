@@ -16,6 +16,8 @@ qExp (ReversibleMarkov a s q pi l t r) = lExp l pi t
 
 get_q (ReversibleMarkov _ _ q _ _ _ _) = q
 
+get_pi (ReversibleMarkov _ _ _ pi _ _ _) = pi
+
 scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r)
 
 simple_smap a = list_to_vector [0..(alphabetSize a)-1]
