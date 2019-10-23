@@ -247,3 +247,27 @@ extern "C" closure builtin_function_unpack_cpp_string(OperationArgs& Args)
 
 Operation unpack_cpp_string(2, builtin_function_unpack_cpp_string, "unpack_cpp_string");
 
+extern "C" closure builtin_function_fromVectors(OperationArgs& Args)
+{
+    // This doesn't distinguish between a 0x0, 2x0 or 2x0 matrix.
+
+    // If I really want something like the Haskell matrix, I could use an EVector of EVectors.
+    // Then I could get a matrix of anything -- integers, doubles, log_doubles, etc.
+
+    auto arg = Args.evaluate(0);
+    auto& V = arg.as_<EVector>();
+    int I = V.size();
+    if (I <= 0)
+        return Box<Matrix>();
+
+    int J = V[0].as_<EVector>().size();
+    if (J <= 0)
+        return Box<Matrix>();
+
+    auto M = new Box<Matrix>(I,J);
+    for(int i=0;i<I;i++)
+        for(int j=0;j<J;j++)
+            (*M)(i,j) = V[i].as_<EVector>()[j].as_double();
+
+    return M;
+}
