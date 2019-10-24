@@ -472,9 +472,12 @@ extern "C" closure builtin_function_modulated_markov_rates(OperationArgs& Args)
                 rate = rates_between(l1,l2);
             else
             {
+                assert(l1 == l2);
                 auto& Q = Qs[l1].as_<Box<Matrix>>();
+                assert(s1 != s2);
                 rate = Q(s1,s2);
             }
+            assert(rate >= 0);
             (*R)(r1,r2) = rate;
             sum += rate;
         }
@@ -507,6 +510,7 @@ extern "C" closure builtin_function_modulated_markov_pi(OperationArgs& Args)
     for(int r=0, l=0, s=0; r < total_states; inc_modulated_states_vec(r,l,s,pis))
         pi[r] = level_probs[l].as_double() * pis[l].as_<EVector>()[s].as_double();
 
+    assert(std::abs(sum(pi) - 1.0) < 1.0e-9);
     return EVector(pi);
 }
 
