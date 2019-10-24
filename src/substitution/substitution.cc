@@ -649,14 +649,12 @@ namespace substitution {
     {
         double total = 0;
         int n_states = smap.size();
-#ifdef DEBUG_SMAP
+
         for(int s2=0; s2<n_states; s2++)
             if (smap[s2].as_int() == l)
                 total += Q(s1,s2);
-#else    
-        for(int s2=l; s2<n_states; s2+=n_letters)
-            total += Q(s1,s2);
-#endif
+
+        assert(total <= 1.0);
         return total;
     }
 
@@ -665,15 +663,12 @@ namespace substitution {
     {
         double total=0;
         int n_letters = a.n_letters();
-#ifdef DEBUG_SMAP
+
         for(int s=0;s<smap.size();s++)
             if (a.matches(smap[s].as_int(),l2))
                 total += Q(s1,s);
-#else
-        for(int L=0;L<n_letters;L++)
-            if (a.matches(L,l2))
-                total += sum(Q,smap,n_letters,s1,L);
-#endif
+
+        assert(total <= 1.0);
         return total;
     }
 
