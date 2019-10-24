@@ -197,19 +197,18 @@ modulated_markov_pi pis level_probs = builtin_modulated_markov_pi (list_to_vecto
 
 modulated_markov_smap smaps = builtin_modulated_markov_smap (list_to_vector smaps)
 
-modulated_markov a qs pis level_probs smaps rates_between = reversible_markov a smap q pi where
+-- This could get renamed, after I look at the paper that uses the term "modulated markov"
+modulated_markov models rates_between level_probs = reversible_markov a smap q pi where
+    a = getAlphabet $ head models
+    qs = map get_q models
+    pis = map get_pi models
+    smaps = map get_smap models
     q = modulated_markov_rates qs rates_between
     pi = modulated_markov_pi pis level_probs
     smap = modulated_markov_smap smaps
 
----
-
-tuffley_steel_98 s01 s10 q = modulated_markov a qs pis level_probs smaps rates_between where
-    a = getAlphabet q
-    qs = [get_q $ scale 0.0 q, get_q $ q]
-    pis = [pi, pi] where pi = get_pi q
-    level_probs = [s10/(s10+s01), s01/(s10+s01)]
-    smaps = [smap, smap] where smap = get_smap q
+tuffley_steel_98 s01 s10 q = modulated_markov [scale 0.0 q, q] rates_between level_probs where
+    level_probs = [s10/total, s01/total] where total = s10 + s01
     rates_between = fromLists [[-s01,s01],[s10,-s10]]
 
 gamma_rates_dist alpha = gamma alpha (1.0/alpha)
