@@ -213,6 +213,16 @@ tuffley_steel_98 s01 s10 q = modulated_markov [scale 0.0 q, q] rates_between lev
 
 huelsenbeck_02 s01 s10 (MixtureModel dist) = MixtureModel [(p, tuffley_steel_98 s01 s10 q) | (p,q) <- dist]
 
+galtier01_ssrv nu (MixtureModel dist) = modulated_markov models rates_between level_probs where
+    level_probs = map fst dist
+    models = map snd dist
+    n_levels = length dist
+    -- This is really a generic gtr...  We should be able to get this with f81
+    rates_between = (generic_equ n_levels nu) %*% (plus_f_matrix $ list_to_vector level_probs)
+
+galtier01 nu pi model | pi > 0    = multiParameter (\x -> galtier01_ssrv x model) [(1.0-pi,0),(pi,nu)]
+                      | otherwise = galtier01_ssrv nu model
+
 gamma_rates_dist alpha = gamma alpha (1.0/alpha)
 
 gamma_rates base alpha n = multi_rate_unif_bins base (gamma_rates_dist alpha) n
