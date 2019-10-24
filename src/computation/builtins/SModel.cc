@@ -1093,21 +1093,18 @@ extern "C" closure builtin_function_m0(OperationArgs& Args)
     return R;
 }
 
-extern "C" closure builtin_function_plus_gwF(OperationArgs& Args)
+extern "C" closure builtin_function_plus_gwf_matrix(OperationArgs& Args)
 {
-    const alphabet& a = Args.evaluate(0).as_<alphabet>();
+    auto pi = vector<double>( Args.evaluate(0).as_<EVector>() );
 
     double f = Args.evaluate(1).as_double();
 
-    auto pi = vector<double>( Args.evaluate(2).as_<EVector>() );
-
-    const int n = a.size();
+    int n = pi.size();
 
     auto R = new Box<Matrix>(n,n);
 
     // compute frequencies
     normalize(pi);
-    assert(a.size() == pi.size());
     
     // compute transition rates
     valarray<double> pi_f(n);

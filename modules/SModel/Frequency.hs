@@ -1,13 +1,10 @@
 module SModel.Frequency where
 
 import Alphabet
-builtin builtin_plus_gwf 3 "plus_gwF" "SModel"
+builtin plus_gwf_matrix 2 "plus_gwf_matrix" "SModel"
 
 -- pi is a vector double here
-plus_f_matrix a pi = plus_gwf_matrix a pi 1.0
-
--- pi is a vector double here
-plus_gwf_matrix a pi f = builtin_plus_gwf a f pi
+plus_f_matrix pi = plus_gwf_matrix pi 1.0
 
 -- pi is [Double] here
 uniform_frequencies a = replicate n $ 1.0/(intToDouble n) where n = alphabetSize a

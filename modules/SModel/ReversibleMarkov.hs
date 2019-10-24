@@ -31,7 +31,7 @@ equ a = gtr_sym (replicate nn 1.0) a
 generic_gtr_sym exchange n = builtin_gtr_sym (list_to_vector exchange) n
 gtr_sym exchange a = generic_gtr_sym exchange (alphabetSize a)
 
-gtr a s pi = reversible_markov a (simple_smap a) (s %*% (plus_f_matrix a pi')) pi' where pi' = list_to_vector pi
+gtr a s pi = reversible_markov a (simple_smap a) (s %*% plus_f_matrix pi') pi' where pi' = list_to_vector pi
 
 f81     pi a = gtr a (equ a) pi
 jukes_cantor a = gtr a (equ a) (uniform_frequencies a)
@@ -57,4 +57,4 @@ gtr_sym' es' a = gtr_sym es a where lpairs = all_pairs (alphabet_letters a)
 
 plus_f   a s pi   = gtr a s pi
 plus_fe  a s      = plus_f a s (uniform_frequencies a)
-plus_gwf a s pi f = reversible_markov a (simple_smap a) (s %*% (plus_gwf_matrix a pi' f)) pi' where pi' = list_to_vector pi
+plus_gwf a s pi f = reversible_markov a (simple_smap a) (s %*% plus_gwf_matrix pi' f) pi' where pi' = list_to_vector pi
