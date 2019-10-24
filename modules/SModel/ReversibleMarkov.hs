@@ -2,6 +2,7 @@ module SModel.ReversibleMarkov (module SModel.ReversibleMarkov, module SModel.Fr
 
 import SModel.Frequency
 import Alphabet
+import Data.Matrix
 
 builtin get_equilibrium_rate 4 "get_equilibrium_rate" "SModel"
 builtin get_eigensystem 2 "get_eigensystem" "SModel"
@@ -14,7 +15,7 @@ data ReversibleMarkov = ReversibleMarkov a b c d e f g
 
 qExp (ReversibleMarkov a s q pi l t r) = lExp l pi t
 
-get_q (ReversibleMarkov _ _ q _ _ _ _) = q
+get_q (ReversibleMarkov _ _ q _ _ t _) = scaleMatrix t q
 
 get_pi (ReversibleMarkov _ _ _ pi _ _ _) = pi
 
