@@ -1,6 +1,6 @@
 {
-    "name": "ts98",
-    "synonyms": ["tuffley_steel_98"],
+    "name": "Covarion.ts98",
+    "synonyms": ["Covarion.tuffley_steel_98"],
     "title":"The Tuffley-Steel Covarion Model",
     "result_type": "RevCTMC[a]",
     "call": "tuffley_steel_98[@s01,@s10,@submodel]",
