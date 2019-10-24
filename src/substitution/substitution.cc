@@ -667,7 +667,7 @@ namespace substitution {
         int n_letters = a.n_letters();
 #ifdef DEBUG_SMAP
         for(int s=0;s<smap.size();s++)
-            if (a.matches(smap[s],l2))
+            if (a.matches(smap[s].as_int(),l2))
                 total += Q(s1,s);
 #else
         for(int L=0;L<n_letters;L++)
