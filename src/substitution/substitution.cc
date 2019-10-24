@@ -325,7 +325,7 @@ namespace substitution {
         return total;
     }
 
-    inline double sum(const Matrix Q,int l1, int l2, const alphabet& a)
+    inline double sum(const Matrix& Q,int l1, int l2, const alphabet& a)
     {
         double total=0;
         for(int l=0;l<a.size();l++)
@@ -660,7 +660,7 @@ namespace substitution {
         return total;
     }
 
-    inline double sum(const Matrix Q,const EVector& smap,
+    inline double sum(const Matrix& Q,const EVector& smap,
                       int s1, int l2, const alphabet& a)
     {
         double total=0;
