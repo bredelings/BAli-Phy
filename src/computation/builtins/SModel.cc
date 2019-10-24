@@ -1005,6 +1005,25 @@ extern "C" closure builtin_function_fixup_diagonal_rates(OperationArgs& Args)
 }
 
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
+extern "C" closure builtin_function_scaleMatrix(OperationArgs& Args)
+{
+    double factor = Args.evaluate(0).as_double();;
+
+    auto arg2 = Args.evaluate(1);
+    const Matrix& m = arg2.as_<Box<Matrix>>();
+
+    int n1 = m.size1();
+    int n2 = m.size2();
+
+    auto m2 = new Box<Matrix>(n1,n2);
+    for(int i=0;i<n1;i++)
+	for(int j=0;j<n2;j++)
+	    (*m2)(i,j) = factor * m(i,j);
+
+    return m2;
+}
+
+// Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
 extern "C" closure builtin_function_elementwise_multiply(OperationArgs& Args)
 {
     auto arg1 = Args.evaluate(0);
