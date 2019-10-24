@@ -211,6 +211,8 @@ tuffley_steel_98 s01 s10 q = modulated_markov [scale 0.0 q, q] rates_between lev
     level_probs = [s10/total, s01/total] where total = s10 + s01
     rates_between = fromLists [[-s01,s01],[s10,-s10]]
 
+huelsenbeck_02 s01 s10 (MixtureModel dist) = MixtureModel [(p, tuffley_steel_98 s01 s10 q) | (p,q) <- dist]
+
 gamma_rates_dist alpha = gamma alpha (1.0/alpha)
 
 gamma_rates base alpha n = multi_rate_unif_bins base (gamma_rates_dist alpha) n

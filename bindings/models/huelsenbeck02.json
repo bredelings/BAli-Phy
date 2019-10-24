@@ -1,0 +1,38 @@
+{
+    "name": "Covarion.hb02",
+    "synonyms": ["Covarion.huelsenbeck02"],
+    "title":"The Huelsenbeck Covarion Model",
+    "result_type": "MixtureModel[a]",
+    "call": "huelsenbeck_02[@s01,@s10,@submodel]",
+    "import": ["SModel"],
+    "citation":{"type": "article",
+		"title": "Testing a covariotide model of DNA substitution",
+		"year": "2002",
+		"author": [{"name": "Huelsenbeck, John P"}],
+		"journal": {"name": "Molecular Biology and Evolution", "volume": "19", "number": "5", "pages": "698--707"},
+		"identifier": [{"type":"doi","id":"10.1093/oxfordjournals.molbev.a004128"}]
+               },
+    "args": [
+        {
+            "arg_name": "s01",
+            "arg_type": "Double",
+	    "default_value":"~exponential[0.5]",
+	    "description":"Rate from OFF to ON"
+        },
+        {
+            "arg_name": "s10",
+            "arg_type": "Double",
+	    "default_value":"~exponential[0.5]",
+	    "description":"Rate from ON to OFF"
+        },
+        {
+            "arg_name": "submodel",
+            "arg_type": "MixtureModel[a]",
+	    "description": "The base model"
+        }
+    ],
+    "description": "The Huelsenbeck covarion model adds among-site rate heterogeneity to the Tuffley-Steel covarion model.  However, instead of scaling the Tuffley-Steel covarion rate matrix by factor f[i] for bin i, the Huelsenbeck approach involves scaling the Q matrix for bin i by f[i] before constructing the Tuffley-Steel rate matrix.  This has the benefit that sites with faster evolution do not switch between ON and OFF at a faster rate.",
+    "examples": ["gtr+Rates.gamma+Covarion.hb02","gtr+Rates.free+Covarion.hb02"],
+    "see": ["ts98"],
+    "extract": "all"
+}
