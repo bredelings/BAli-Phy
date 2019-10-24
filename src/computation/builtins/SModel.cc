@@ -953,13 +953,11 @@ extern "C" closure builtin_function_gtr_sym(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto& S = arg0.as_<EVector>();
-    auto arg1 = Args.evaluate(1);
-    const alphabet& a = arg1.as_<alphabet>();
+    int n = Args.evaluate(1).as_int();
 
-    int n = a.size();
     auto R = new Box<Matrix>(n,n);
     if (S.size() != n*(n-1)/2)
-	throw myexception()<<"Alphabet size is "<<n<<" but only got "<<S.size()<<" exchangeabilities";
+	throw myexception()<<"Matrix of size "<<n<<" x "<<n<<" should have "<<n*(n-1)/2<<" exchangeabilities, but got "<<S.size()<<"!";
 
     double total = 0;
     for(int i=0;i<S.size();i++)
