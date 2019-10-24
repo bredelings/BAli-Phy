@@ -25,9 +25,11 @@ simple_smap a = list_to_vector [0..(alphabetSize a)-1]
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 reversible_markov a smap q pi = ReversibleMarkov a smap q2 pi (get_eigensystem q2 pi) 1.0 (get_equilibrium_rate a smap q2 pi) where q2 = fixup_diagonal_rates q
 
-equ a = gtr_sym (replicate nn 1.0) a
-    where n=alphabetSize a
-          nn=n*(n-1) `div` 2
+generic_equ n x = generic_gtr_sym (replicate n_elements x) n
+    where n_elements = n*(n-1) `div` 2
+
+equ a = generic_equ (alphabetSize a) 1.0
+
 generic_gtr_sym exchange n = builtin_gtr_sym (list_to_vector exchange) n
 gtr_sym exchange a = generic_gtr_sym exchange (alphabetSize a)
 
