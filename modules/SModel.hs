@@ -58,7 +58,9 @@ scale_MMs rs ms = [scaleMM r m | (r,m) <- zip' rs ms]
 -- For mixtures like mixture([hky85,tn93,gtr]), we probably need to mix on the Matrix level, to avoid shared scaling.
 scaled_mixture ms rs fs = mixMM fs (scale_MMs rs ms)
 
+parameter_mixture :: (a -> MixtureModel b) -> [a] -> MixtureModel b
 parameter_mixture model_fn values = MixtureModel [ (f*p, m) |(p,x) <- values, let MixtureModel dist = model_fn x, (f,m) <- dist]
+parameter_mixture :: (a -> ReversibleMarkov b) -> [a] -> MixtureModel b
 parameter_mixture_unit model_fn values = parameter_mixture (unit_mixture . model_fn) values
 
 rate_mixture m d = parameter_mixture (\x->scaleMM x m) d
@@ -213,15 +215,26 @@ tuffley_steel_98 s01 s10 q = modulated_markov [scale 0.0 q, q] rates_between lev
 
 huelsenbeck_02 s01 s10 (MixtureModel dist) = MixtureModel [(p, tuffley_steel_98 s01 s10 q) | (p,q) <- dist]
 
-galtier01_ssrv nu (MixtureModel dist) = modulated_markov models rates_between level_probs where
+galtier_01_ssrv :: Double -> MixtureModel a -> ReversibleMarkov a
+galtier_01_ssrv nu (MixtureModel dist) = modulated_markov models rates_between level_probs where
     level_probs = map fst dist
     models = map snd dist
     n_levels = length dist
     -- This is really a generic gtr...  We should be able to get this with f81
     rates_between = (generic_equ n_levels nu) %*% (plus_f_matrix $ list_to_vector level_probs)
 
-galtier01 nu pi model | pi > 0    = parameter_mixture (\nu' -> galtier01_ssrv nu' model) [(1.0-pi,0),(pi,nu)]
-                      | otherwise = galtier01_ssrv nu model
+galtier_01 :: Double -> Double -> MixtureModel a -> ReversibleMarkov a
+galtier_01 nu pi model | pi == 1.0  = galtier_01_ssrv nu model
+                       | otherwise  = parameter_mixture (\nu' -> galtier_01_ssrv nu' model) [(1.0-pi,0.0),(pi,nu)]
+
+wang_07_ssrv :: Double -> Double -> Double -> MixtureModel a -> ReversibleMarkov a
+wang_07_ssrv s01 s10 s11 model = tuffley_steel_98 s01 s10 $ galtier_01_ssrv nu model where nu = s11 / 4.0
+
+wang_07 :: Double -> Double -> Double -> Double -> MixtureModel a -> ReversibleMarkov a
+wang_07 pi s01 s10 s11 model | pi == 1.0  = wang_07_ssrv s01 s10 s11 model
+                            | otherwise  = parameter_mixture
+                                             (\s11' -> wang_07_ssrv s01 s10 s11' model)
+                                             [(1.0-pi,0.0),(pi,s11)]
 
 gamma_rates_dist alpha = gamma alpha (1.0/alpha)
 
