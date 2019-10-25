@@ -2,7 +2,7 @@
     "name": "Covarion.gt01",
     "synonyms": ["Covarion.galtier01"],
     "title":"The Galtier (2001) Covarion Model",
-    "result_type": "MixtureModel[a]",
+    "result_type": "RevCTMC[a]",
     "call": "galtier_01_ssrv[@nu,@submodel]",
     "import": ["SModel"],
     "citation":{"type": "article",
