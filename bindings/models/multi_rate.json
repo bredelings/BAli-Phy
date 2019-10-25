@@ -2,7 +2,7 @@
     "name": "multi_rate",
     "synonyms": ["MultiRate"],
     "result_type": "MixtureModel[a]",
-    "call": "multi_rate_unif_bins[@submodel,@dist,@n_bins]",
+    "call": "rate_mixture_unif_bins[@submodel,@dist,@n_bins]",
     "import": ["SModel"],
     "args": [
         {

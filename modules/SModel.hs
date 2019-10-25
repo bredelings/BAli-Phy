@@ -58,10 +58,10 @@ scale_MMs rs ms = [scaleMM r m | (r,m) <- zip' rs ms]
 -- For mixtures like mixture([hky85,tn93,gtr]), we probably need to mix on the Matrix level, to avoid shared scaling.
 scaled_mixture ms rs fs = mixMM fs (scale_MMs rs ms)
 
-multiParameter model_fn values = MixtureModel [ (f*p, m) |(p,x) <- values, let dist = case model_fn x of MixtureModel d -> d, (f,m) <- dist]
-multiParameter_unit model_fn values = multiParameter (\x -> unit_mixture $ model_fn x) values
+parameter_mixture model_fn values = MixtureModel [ (f*p, m) |(p,x) <- values, let MixtureModel dist = model_fn x, (f,m) <- dist]
+parameter_mixture_unit model_fn values = parameter_mixture (\x -> unit_mixture $ model_fn x) values
 
-multi_rate m d = multiParameter (\x->scaleMM x m) d
+rate_mixture m d = parameter_mixture (\x->scaleMM x m) d
 
 average_frequency (MixtureModel ms) = list_from_vector $ builtin_average_frequency $ weighted_frequency_matrix $ MixtureModel ms
 
@@ -71,7 +71,7 @@ plus_inv mm p_inv = extend_mixture mm (p_inv, scale 0.0 $ f81 pi a)
     where a  = getAlphabet mm
           pi = average_frequency mm
 
-multi_rate_unif_bins base dist n_bins = multi_rate base $ uniformDiscretize dist n_bins
+rate_mixture_unif_bins base dist n_bins = rate_mixture base $ uniformDiscretize dist n_bins
 
 rate (ReversibleMarkov a s q pi l t r) = r
 rate (MixtureModel d) = average [(p,rate m) | (p,m) <- d]
@@ -121,23 +121,23 @@ m8a_test_omega_dist mu gamma n_bins posP posW _ = m8_omega_dist mu gamma n_bins 
 
 --  w1 <- uniform 0.0 1.0
 --  [f1, f2] <- dirichlet' 2 1.0
-m1a model_func w1 f1 = multiParameter_unit model_func (m1a_omega_dist f1 w1)
+m1a model_func w1 f1 = parameter_mixture_unit model_func (m1a_omega_dist f1 w1)
 
-m2a model_func w1 f1 posP posW = multiParameter_unit model_func (m2a_omega_dist f1 w1 posP posW)
+m2a model_func w1 f1 posP posW = parameter_mixture_unit model_func (m2a_omega_dist f1 w1 posP posW)
 
-m2a_test model_func w1 f1 posP posW posSelection = multiParameter_unit model_func (m2a_test_omega_dist f1 w1 posP posW posSelection)
+m2a_test model_func w1 f1 posP posW posSelection = parameter_mixture_unit model_func (m2a_test_omega_dist f1 w1 posP posW posSelection)
 
-m3 model_func ps omegas = multiParameter_unit model_func (m3_omega_dist ps omegas)
+m3 model_func ps omegas = parameter_mixture_unit model_func (m3_omega_dist ps omegas)
 
-m3_test model_func ps omegas posP posW posSelection = multiParameter_unit model_func (m3_test_omega_dist ps omegas posP posW posSelection)
+m3_test model_func ps omegas posP posW posSelection = parameter_mixture_unit model_func (m3_test_omega_dist ps omegas posP posW posSelection)
 
-m7 model_func mu gamma n_bins =  multiParameter_unit model_func (m7_omega_dist mu gamma n_bins)
+m7 model_func mu gamma n_bins =  parameter_mixture_unit model_func (m7_omega_dist mu gamma n_bins)
 
-m8 model_func mu gamma n_bins posP posW = multiParameter_unit model_func (m8_omega_dist mu gamma n_bins posP posW)
+m8 model_func mu gamma n_bins posP posW = parameter_mixture_unit model_func (m8_omega_dist mu gamma n_bins posP posW)
 
-m8a model_func mu gamma n_bins posP = multiParameter_unit model_func (m8a_omega_dist mu gamma n_bins posP)
+m8a model_func mu gamma n_bins posP = parameter_mixture_unit model_func (m8a_omega_dist mu gamma n_bins posP)
 
-m8a_test model_func mu gamma n_bins posP posW posSelection = multiParameter_unit model_func (m8a_test_omega_dist mu gamma n_bins posP posW posSelection)
+m8a_test model_func mu gamma n_bins posP posW posSelection = parameter_mixture_unit model_func (m8a_test_omega_dist mu gamma n_bins posP posW posSelection)
 
 -- OK, so if I change this from [Mixture Omega] to Mixture [Omega] or Mixture (\Int -> Omega), how do I apply the function model_func to all the omegas?
 branch_site model_func fs ws posP posW branch_cats = MixtureModels branch_cats [bg_mixture,fg_mixture]
@@ -146,9 +146,9 @@ branch_site model_func fs ws posP posW branch_cats = MixtureModels branch_cats [
 -- accelerated omega distribution -- posW for all categories
           accel_dist = zip fs (repeat posW)
 -- background branches always use the background omega distribution              
-          bg_mixture = multiParameter_unit model_func (mix [1.0-posP, posP] [bg_dist, bg_dist])
+          bg_mixture = parameter_mixture_unit model_func (mix [1.0-posP, posP] [bg_dist, bg_dist])
 -- foreground branches use the foreground omega distribution with probability posP
-          fg_mixture = multiParameter_unit model_func (mix [1.0-posP, posP] [bg_dist, accel_dist])
+          fg_mixture = parameter_mixture_unit model_func (mix [1.0-posP, posP] [bg_dist, accel_dist])
 
 branch_site_test model_func fs ws posP posW posSelection = branch_site model_func fs ws posP posW'
     where posW' = if (posSelection == 1) then posW else 1.0
@@ -220,20 +220,20 @@ galtier01_ssrv nu (MixtureModel dist) = modulated_markov models rates_between le
     -- This is really a generic gtr...  We should be able to get this with f81
     rates_between = (generic_equ n_levels nu) %*% (plus_f_matrix $ list_to_vector level_probs)
 
-galtier01 nu pi model | pi > 0    = multiParameter (\x -> galtier01_ssrv x model) [(1.0-pi,0),(pi,nu)]
+galtier01 nu pi model | pi > 0    = parameter_mixture (\nu' -> galtier01_ssrv nu' model) [(1.0-pi,0),(pi,nu)]
                       | otherwise = galtier01_ssrv nu model
 
 gamma_rates_dist alpha = gamma alpha (1.0/alpha)
 
-gamma_rates base alpha n = multi_rate_unif_bins base (gamma_rates_dist alpha) n
+gamma_rates base alpha n = rate_mixture_unif_bins base (gamma_rates_dist alpha) n
 
 log_normal_rates_dist sigmaOverMu = log_normal lmu lsigma where x = log(1.0+sigmaOverMu^2)
                                                                 lmu = -0.5*x
                                                                 lsigma = sqrt x
 
-log_normal_rates base sigmaOverMu n = multi_rate_unif_bins base (log_normal_rates_dist sigmaOverMu) n
+log_normal_rates base sigmaOverMu n = rate_mixture_unif_bins base (log_normal_rates_dist sigmaOverMu) n
 
---dp base rates fraction = multi_rate base dist where dist = zip fraction rates
+--dp base rates fraction = rate_mixture base dist where dist = zip fraction rates
 free_rates base rates fraction = scaled_mixture (replicate (length fraction) base) rates fraction
 
 transition_p_index smodel_on_tree = mkArray n_branches (list_to_vector . branch_transition_p smodel_on_tree) where tree = get_tree smodel_on_tree
