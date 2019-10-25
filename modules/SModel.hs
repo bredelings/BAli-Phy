@@ -323,7 +323,7 @@ weighted_frequency_matrix (MixtureModel d) = let model = MixtureModel d
                                                  dist = list_to_vector $ distribution model
                                                  freqs = list_to_vector $ map (componentFrequencies model) [0..nBaseModels model-1]
                                              in builtin_weighted_frequency_matrix dist freqs
-weighted_frequency_matrix smodel@(ReversibleMarkov _ _ _ pi _ _ _) = builtin_weighted_frequency_matrix (list_to_vector [1.0]) pi
+weighted_frequency_matrix smodel@(ReversibleMarkov _ _ _ pi _ _ _) = builtin_weighted_frequency_matrix (list_to_vector [1.0]) (list_to_vector [pi])
 
 -- frequency_matrix :: a -> Matrix
 frequency_matrix (MixtureModels _ (m:ms)) = frequency_matrix m
