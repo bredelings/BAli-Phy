@@ -232,7 +232,7 @@ wang_07_ssrv s01 s10 s11 model = tuffley_steel_98 s01 s10 $ galtier_01_ssrv nu m
 
 wang_07 :: Double -> Double -> Double -> Double -> MixtureModel a -> ReversibleMarkov a
 wang_07 pi s01 s10 s11 model | pi == 1.0  = wang_07_ssrv s01 s10 s11 model
-                            | otherwise  = parameter_mixture
+                             | otherwise  = parameter_mixture
                                              (\s11' -> wang_07_ssrv s01 s10 s11' model)
                                              [(1.0-pi,0.0),(pi,s11)]
 
