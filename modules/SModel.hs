@@ -60,7 +60,8 @@ scaled_mixture ms rs fs = mixMM fs (scale_MMs rs ms)
 
 parameter_mixture :: (a -> MixtureModel b) -> [a] -> MixtureModel b
 parameter_mixture model_fn values = MixtureModel [ (f*p, m) |(p,x) <- values, let MixtureModel dist = model_fn x, (f,m) <- dist]
-parameter_mixture :: (a -> ReversibleMarkov b) -> [a] -> MixtureModel b
+
+parameter_mixture_unit :: (a -> ReversibleMarkov b) -> [a] -> MixtureModel b
 parameter_mixture_unit model_fn values = parameter_mixture (unit_mixture . model_fn) values
 
 rate_mixture m d = parameter_mixture (\x->scale x m) d
