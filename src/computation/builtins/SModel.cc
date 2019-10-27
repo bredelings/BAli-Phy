@@ -959,19 +959,13 @@ extern "C" closure builtin_function_gtr_sym(OperationArgs& Args)
     if (S.size() != n*(n-1)/2)
 	throw myexception()<<"Matrix of size "<<n<<" x "<<n<<" should have "<<n*(n-1)/2<<" exchangeabilities, but got "<<S.size()<<"!";
 
-    double total = 0;
-    for(int i=0;i<S.size();i++)
-	total += S[i].as_double();
-
-    assert(total > 0);
-
     int k=0;
     for(int i=0;i<n;i++)
     {
 	(*R)(i,i) = 0;
 	for(int j=i+1;j<n;j++)
 	{
-	    double x = S[k++].as_double()/total;
+	    double x = S[k++].as_double();
 	    (*R)(i,j) = (*R)(j,i) = x;
 	}
     }
