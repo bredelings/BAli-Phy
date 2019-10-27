@@ -49,12 +49,12 @@ branch_categories (MixtureModels categories _) = categories
 -- Should we select branch-specific models at the level of rate matrices, or the level of transition probability matrices, or both?
 
 
--- Probably we should define `scale` to work on (ReversibleMarkov, MixtureModel, MixtureModels)
--- Probably we should also define some kind of generic mixture thing, instead just mixMM.
-scaleMM x (MixtureModel dist            ) = MixtureModel [(p, scale x m) | (p, m) <- dist]
+scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r)
+scale x (MixtureModel dist              ) = MixtureModel [(p, scale x m) | (p, m) <- dist]
 
 mixMM fs ms = MixtureModel $ mix fs [m | MixtureModel m <- ms]
-scale_MMs rs ms = [scaleMM r m | (r,m) <- zip' rs ms]
+scale_MMs rs ms = [scale r m | (r,m) <- zip' rs ms]
+
 -- For mixtures like mixture([hky85,tn93,gtr]), we probably need to mix on the Matrix level, to avoid shared scaling.
 scaled_mixture ms rs fs = mixMM fs (scale_MMs rs ms)
 
@@ -63,7 +63,7 @@ parameter_mixture model_fn values = MixtureModel [ (f*p, m) |(p,x) <- values, le
 parameter_mixture :: (a -> ReversibleMarkov b) -> [a] -> MixtureModel b
 parameter_mixture_unit model_fn values = parameter_mixture (unit_mixture . model_fn) values
 
-rate_mixture m d = parameter_mixture (\x->scaleMM x m) d
+rate_mixture m d = parameter_mixture (\x->scale x m) d
 
 average_frequency (MixtureModel ms) = list_from_vector $ builtin_average_frequency $ weighted_frequency_matrix $ MixtureModel ms
 

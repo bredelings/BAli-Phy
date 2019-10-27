@@ -19,8 +19,6 @@ get_q (ReversibleMarkov _ _ q _ _ t _) = scaleMatrix t q
 
 get_pi (ReversibleMarkov _ _ _ pi _ _ _) = pi
 
-scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r)
-
 simple_smap a = list_to_vector [0..(alphabetSize a)-1]
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
