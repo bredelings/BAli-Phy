@@ -54,6 +54,8 @@ rate (MixtureModel d) = average [(p,rate m) | (p,m) <- d]
 scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r)
 scale x (MixtureModel dist              ) = MixtureModel [(p, scale x m) | (p, m) <- dist]
 
+rescale q r = scale (r/rate q) q
+
 mixMM fs ms = MixtureModel $ mix fs [m | MixtureModel m <- ms]
 scale_MMs rs ms = [scale r m | (r,m) <- zip' rs ms]
 
