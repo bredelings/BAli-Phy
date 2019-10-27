@@ -48,6 +48,8 @@ branch_categories (MixtureModels categories _) = categories
 -- Should we combine mixture only at one of the levels?
 -- Should we select branch-specific models at the level of rate matrices, or the level of transition probability matrices, or both?
 
+rate (ReversibleMarkov a s q pi l t r) = r
+rate (MixtureModel d) = average [(p,rate m) | (p,m) <- d]
 
 scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r)
 scale x (MixtureModel dist              ) = MixtureModel [(p, scale x m) | (p, m) <- dist]
@@ -75,9 +77,6 @@ plus_inv mm p_inv = extend_mixture mm (p_inv, scale 0.0 $ f81 pi a)
           pi = average_frequency mm
 
 rate_mixture_unif_bins base dist n_bins = rate_mixture base $ uniformDiscretize dist n_bins
-
-rate (ReversibleMarkov a s q pi l t r) = r
-rate (MixtureModel d) = average [(p,rate m) | (p,m) <- d]
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 baseModel (MixtureModel l) i = snd (l !! i)
