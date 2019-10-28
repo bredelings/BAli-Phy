@@ -1,5 +1,5 @@
 sudo: required
-cache: apt
+cache: ccache
 language: cpp
 
 matrix:
