@@ -211,6 +211,9 @@ modulated_markov models rates_between level_probs = reversible_markov a smap q p
     pi = modulated_markov_pi pis level_probs
     smap = modulated_markov_smap smaps
 
+-- We need to rescale submodels to have substitution rate `1.0`.
+-- Otherwise class-switching rates are not relative to the substitution rate.
+
 tuffley_steel_98_unscaled s01 s10 q = modulated_markov [scale 0.0 q, q] rates_between level_probs where
     level_probs = [s10/total, s01/total] where total = s10 + s01
     rates_between = fromLists [[-s01,s01],[s10,-s10]]
@@ -221,7 +224,8 @@ huelsenbeck_02 s01 s10 model = MixtureModel [(p, tuffley_steel_98_unscaled s01 s
     MixtureModel dist = rescale model 1.0
 
 galtier_01_ssrv :: Double -> MixtureModel a -> ReversibleMarkov a
-galtier_01_ssrv nu (MixtureModel dist) = modulated_markov models rates_between level_probs where
+galtier_01_ssrv nu model = modulated_markov models rates_between level_probs where
+    MixtureModel dist = rescale model 1.0
     level_probs = map fst dist
     models = map snd dist
     n_levels = length dist
