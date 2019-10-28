@@ -4,7 +4,7 @@ project('bali-phy', ['cpp','c'],
 	  'buildtype=release',
 	  'cpp_std=c++17'
 	],
-	meson_version: '>= 0.49',
+	meson_version: '>= 0.52',
 	license: 'GPLv2')
 
 cpp = meson.get_compiler('cpp')
@@ -96,7 +96,7 @@ if get_option('eigen') == 'auto'
     eigen = declare_dependency(include_directories: eigen)
   endif
 elif get_option('eigen') == 'system'
-  eigen = dependency('eigen3')
+  eigen = dependency('eigen3').as_system()
 else
   eigen = include_directories('external/eigen3', is_system: true)
   eigen = declare_dependency(include_directories: eigen)
