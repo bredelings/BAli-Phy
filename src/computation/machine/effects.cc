@@ -37,3 +37,40 @@ void register_random_variable::unregister_effect(reg_heap& M, int) const
 {
     M.unregister_random_variable(random_variable_reg);
 }
+
+//--------------------------------------------------------------------
+
+bool register_transition_kernel::operator==(const register_transition_kernel& e) const
+{
+    return transition_kernel_reg == e.transition_kernel_reg;
+}
+
+bool register_transition_kernel::operator==(const Object& O) const
+{
+    if (this == &O) return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    auto* e = dynamic_cast<const register_transition_kernel*>(&O);
+
+    return (*this) == *e;
+}
+
+string register_transition_kernel::print() const
+{
+    return string("register_transition_kernel[")+std::to_string(transition_kernel_reg)+"]";
+}
+
+register_transition_kernel::register_transition_kernel(int r)
+    :transition_kernel_reg(r)
+{ }
+
+void register_transition_kernel::register_effect(reg_heap& M, int) const
+{
+    M.register_transition_kernel(transition_kernel_reg);
+}
+
+void register_transition_kernel::unregister_effect(reg_heap& M, int) const
+{
+    M.unregister_transition_kernel(transition_kernel_reg);
+}
