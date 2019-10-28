@@ -252,7 +252,7 @@ log_normal_rates_dist sigmaOverMu = log_normal lmu lsigma where x = log(1.0+sigm
 log_normal_rates base sigmaOverMu n = rate_mixture_unif_bins base (log_normal_rates_dist sigmaOverMu) n
 
 --dp base rates fraction = rate_mixture base dist where dist = zip fraction rates
-free_rates base rates fraction = scaled_mixture (replicate (length fraction) base) rates fraction
+free_rates base rates fractions = scaled_mixture (replicate (length fractions) base) rates fractions
 
 transition_p_index smodel_on_tree = mkArray n_branches (list_to_vector . branch_transition_p smodel_on_tree) where tree = get_tree smodel_on_tree
                                                                                                                    n_branches = numBranches tree
