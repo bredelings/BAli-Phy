@@ -228,9 +228,8 @@ galtier_01_ssrv nu (MixtureModel dist) = modulated_markov models rates_between l
     -- This is really a generic gtr...  We should be able to get this with f81
     rates_between = (generic_equ n_levels nu) %*% (plus_f_matrix $ list_to_vector level_probs)
 
-galtier_01 :: Double -> Double -> MixtureModel a -> ReversibleMarkov a
-galtier_01 nu pi model | pi == 1.0  = galtier_01_ssrv nu model
-                       | otherwise  = parameter_mixture (\nu' -> galtier_01_ssrv nu' model) [(1.0-pi,0.0),(pi,nu)]
+galtier_01 :: Double -> Double -> MixtureModel a -> MixtureModel a
+galtier_01 nu pi model = parameter_mixture_unit (\nu' -> galtier_01_ssrv nu' model) [(1.0-pi,0.0),(pi,nu)]
 
 wang_07_ssrv :: Double -> Double -> Double -> MixtureModel a -> ReversibleMarkov a
 wang_07_ssrv s01 s10 s11 model = tuffley_steel_98 s01 s10 $ galtier_01_ssrv nu model where nu = s11 / 4.0
