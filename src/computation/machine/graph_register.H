@@ -247,7 +247,8 @@ public:
 
     const std::vector<int>& transition_kernels() const;
 
-    int add_transition_kernel(int);
+    void register_transition_kernel(int);
+    void unregister_transition_kernel(int);
 
     /// The registered indices of the named parameters.
     std::vector<std::pair<std::string,int>> parameters;

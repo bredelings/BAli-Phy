@@ -509,6 +509,32 @@ const vector<int>& reg_heap::random_variables() const
     return random_variables_;
 }
 
+void reg_heap::register_transition_kernel(int r)
+{
+    transition_kernels_.push_back(r);
+}
+
+void reg_heap::unregister_transition_kernel(int r)
+{
+    std::optional<int> index;
+    for(int i=0;i<transition_kernels_.size();i++)
+        if (transition_kernels_[i] == r)
+            index = i;
+
+    if (not index)
+	throw myexception()<<"unregister_transition_kernel: transition kernel <"<<r<<"> not found!";
+
+    if (*index + 1 < transition_kernels_.size())
+        std::swap(transition_kernels_[*index], transition_kernels_.back());
+
+    transition_kernels_.pop_back();
+}
+
+const vector<int>& reg_heap::transition_kernels() const
+{
+    return transition_kernels_;
+}
+
 optional<int> reg_heap::parameter_is_modifiable_reg(int index)
 {
     int& R = parameters[index].second;
@@ -1792,18 +1818,6 @@ int reg_heap::find_parameter(const string& s) const
     if (not index)
 	throw myexception()<<"Can't find parameter '"<<s<<"'!";
     return *index;
-}
-
-const vector<int>& reg_heap::transition_kernels() const
-{
-    return transition_kernels_;
-}
-
-int reg_heap::add_transition_kernel(int r)
-{
-    int i = transition_kernels_.size();
-    transition_kernels_.push_back(r);
-    return i;
 }
 
 int reg_heap::add_modifiable_parameter(const string& full_name)
