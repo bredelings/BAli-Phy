@@ -3,6 +3,7 @@
 #include <algorithm>
 #include "util/range.H"
 #include "mapping.H"
+#include "effect.H"
 
 using std::string;
 using std::vector;
@@ -93,8 +94,28 @@ void reg_heap::reroot_at(int t)
     root_token = t;
     assert(is_root_token(t));
 
-    // 5. Remove probabilities for invalidated regs from the current probability
+    // 5. Pivot effects
+    for(auto& [r,s1]: tokens[parent].delta_step())
+    {
+        if (s1 > 0 and steps.access(s1).has_nonforce_effect())
+        {
+            int call = steps[s1].call;
+            auto& e = expression_at(call);
+            assert(e.is_a<effect>());
+            e.as_<effect>().unregister_effect(*this,r);
+        }
 
+        int s2 = step_index_for_reg(r);
+        if (s2 > 0 and steps.access(s2).has_nonforce_effect())
+        {
+            int call = steps[s1].call;
+            auto& e = expression_at(call);
+            assert(e.is_a<effect>());
+            e.as_<effect>().register_effect(*this,r);
+        }
+    }
+
+    // 6. Remove probabilities for invalidated regs from the current probability
     for(auto& reroot_handler: reroot_handlers)
         reroot_handler(parent);
 
