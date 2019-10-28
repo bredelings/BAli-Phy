@@ -1,0 +1,53 @@
+{
+    "name": "Covarion.wssr07",
+    "synonyms": ["Covarion.wang07"],
+    "title":"The WSSR (2007) Covarion Model",
+    "result_type": "MixtureModel[a]",
+    "call": "wssr07[@s01,@s10,@nu,@pi,@submodel]",
+    "import": ["SModel"],
+    "citation":{"type": "article",
+		"title": "Testing for Covarion-like Evolution in Protein Sequences",
+		"year": "2007",
+		"author": [{"name": "Wang, Huai-Chun"},
+                           {"name": "Spenser, Matthew"},
+                           {"name": "Susko, Edward"},
+                           {"name": "Roger, Andrew J"}
+                          ],
+		"journal": {"name": "Molecular Biology and Evolution", "volume": "24", "number": "1", "pages": "294--305"},
+		"identifier": [{"type":"doi","id":"10.1093/molbev/msl155"}]
+               },
+    "args": [
+        {
+            "arg_name": "s01",
+            "arg_type": "Double",
+	    "default_value":"~exponential[0.5]",
+	    "description":"Rate from OFF to ON"
+        },
+        {
+            "arg_name": "s10",
+            "arg_type": "Double",
+	    "default_value":"~exponential[0.5]",
+	    "description":"Rate from ON to OFF"
+        },
+        {
+            "arg_name": "nu",
+            "arg_type": "Double",
+	    "default_value":"~exponential[0.5]",
+	    "description":"Rate of class-switching"
+        },
+        {
+            "arg_name": "pi",
+            "arg_type": "Double",
+	    "default_value":"~uniform[0,1]",
+	    "description":"Fraction of sites undergoing class-switching"
+        },
+        {
+            "arg_name": "submodel",
+            "arg_type": "MixtureModel[a]",
+	    "description": "The base mixture model"
+        }
+    ],
+    "description": "The WSSR covarion model implements both switching between ON/OFF states, and switching between classes.",
+    "examples": ["gtr+Rates.gamma+Covarion.wssr07","gtr+Rates.free+Covarion.wssr07"],
+    "extract": "all"
+}
