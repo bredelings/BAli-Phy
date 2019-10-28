@@ -186,7 +186,7 @@ extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Ar
 
     auto& M = Args.memory();
 
-    M.add_transition_kernel(R);
+    M.register_transition_kernel(R);
 
     return EPair(state+1,constructor("()",0));
 }
