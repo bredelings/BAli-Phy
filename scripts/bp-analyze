@@ -39,7 +39,7 @@ def print_models(name,models):
     for model in models:
         model_name =  "{}{}".format(name,i)
         (assign, model_html) = print_model(model)
-        section += '<tr><td><a name="model_name" class="anchor"></a><span class="modelname">{}</span></td><td>{}</td><td>\n'.format(model_name,assign)
+        section += '<tr><td><a name="{m}" class="anchor"></a><span class="modelname">{m}</span></td><td>{a}</td><td>\n'.format(m=model_name,a=assign)
         section += model_html
         section += '</td></tr>\n'
         i += 1
