@@ -644,8 +644,7 @@ namespace substitution {
     }
 
 
-    inline double sum(const Matrix& Q, const EVector& smap, int n_letters,
-                      int s1, int l)
+    inline double sum(const Matrix& Q, const EVector& smap, int s1, int l)
     {
         double total = 0;
         int n_states = smap.size();
@@ -662,7 +661,6 @@ namespace substitution {
                       int s1, int l2, const alphabet& a)
     {
         double total=0;
-        int n_letters = a.n_letters();
 
         for(int s=0;s<smap.size();s++)
             if (a.matches(smap[s].as_int(),l2))
@@ -907,7 +905,7 @@ namespace substitution {
                 for(int m=0;m<n_models;m++) {
                     const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
                     for(int s1=0;s1<n_states;s1++)
-                        R[m*n_states + s1] = sum(Q,smap,n_letters,s1,l2);
+                        R[m*n_states + s1] = sum(Q,smap,s1,l2);
                 }
             else if (a.is_letter_class(l2)) {
                 for(int m=0;m<n_models;m++) {
