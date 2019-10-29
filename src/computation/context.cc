@@ -156,11 +156,6 @@ expression_ref context_ref::recursive_evaluate(int i) const
     return recursive_evaluate_reg(get_compute_expression_reg(i));
 }
 
-vector<double> context_ref::get_mcmc_move_weights() const
-{
-    return vector<double>(n_transition_kernels(), 1.0);
-}
-
 int get_reps(double x)
 {
     int xx = (int)x;
@@ -170,14 +165,17 @@ int get_reps(double x)
 
 void context_ref::run_transition_kernels()
 {
-    auto weights = get_mcmc_move_weights();
+    vector<pair<int,int>> weighted_tks;
+    for(int i=0;i<n_transition_kernels();i++)
+        weighted_tks.push_back({1.0,memory()->transition_kernels()[i]});
+
     vector<int> order;
 
-    for(int i=0;i<n_transition_kernels();i++)
+    for(auto& [w,r]: weighted_tks)
     {
-        int n = get_reps(weights[i]);
+        int n = get_reps(w);
         for(int j=0;j<n;j++)
-            order.push_back(i);
+            order.push_back(r);
     }
 
     random_shuffle(order);
@@ -186,9 +184,8 @@ void context_ref::run_transition_kernels()
         perform_transition_kernel(move);
 }
 
-void context_ref::perform_transition_kernel(int i)
+void context_ref::perform_transition_kernel(int r)
 {
-    int r = memory()->transition_kernels()[i];
     expression_ref E = {reg_var(r), get_context_index()};
     perform_expression(E);
 }

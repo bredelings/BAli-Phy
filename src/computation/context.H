@@ -209,8 +209,6 @@ public:
 
     prob_ratios_t probability_ratios(const context_ref& C1) const;
 
-    std::vector<double> get_mcmc_move_weights() const;
-
 protected:  
     void collect_garbage() const;
 
