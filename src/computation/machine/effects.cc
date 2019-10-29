@@ -1,5 +1,6 @@
 #include "effects.H"
 #include "graph_register.H"
+#include "util/log-level.H"
 
 using std::string;
 
@@ -30,11 +31,15 @@ register_random_variable::register_random_variable(int r)
 
 void register_random_variable::register_effect(reg_heap& M, int) const
 {
+    if (log_verbose >= 2)
+        std::cerr<<"register_random_variable["<<random_variable_reg<<"]: REGISTER!\n";
     M.register_random_variable(random_variable_reg);
 }
 
 void register_random_variable::unregister_effect(reg_heap& M, int) const
 {
+    if (log_verbose >= 2)
+        std::cerr<<"register_random_variable["<<random_variable_reg<<"]: UNregister!\n";
     M.unregister_random_variable(random_variable_reg);
 }
 
@@ -67,10 +72,14 @@ register_transition_kernel::register_transition_kernel(int r)
 
 void register_transition_kernel::register_effect(reg_heap& M, int) const
 {
+    if (log_verbose >= 2)
+        std::cerr<<"register_transition_kernel["<<transition_kernel_reg<<"]: REGISTER!\n";
     M.register_transition_kernel(transition_kernel_reg);
 }
 
 void register_transition_kernel::unregister_effect(reg_heap& M, int) const
 {
+    if (log_verbose >= 2)
+        std::cerr<<"register_transition_kernel["<<transition_kernel_reg<<"]: UNregister!\n";
     M.unregister_transition_kernel(transition_kernel_reg);
 }
