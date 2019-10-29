@@ -516,6 +516,8 @@ void reg_heap::register_transition_kernel(int r)
 
 void reg_heap::unregister_transition_kernel(int r)
 {
+    clear_transition_kernel_active(r);
+
     std::optional<int> index;
     for(int i=0;i<transition_kernels_.size();i++)
         if (transition_kernels_[i] == r)
@@ -533,6 +535,22 @@ void reg_heap::unregister_transition_kernel(int r)
 const vector<int>& reg_heap::transition_kernels() const
 {
     return transition_kernels_;
+}
+
+void reg_heap::mark_transition_kernel_active(int r)
+{
+    regs[r].flags.set(7);
+}
+
+bool reg_heap::transition_kernel_is_active(int r)
+{
+    return regs.is_used(r) and regs[r].flags.test(7);
+}
+
+void reg_heap::clear_transition_kernel_active(int r)
+{
+    if (regs.is_used(r) and transition_kernel_is_active(r))
+        regs[r].flags.set(7,false);
 }
 
 optional<int> reg_heap::parameter_is_modifiable_reg(int index)

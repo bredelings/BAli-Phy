@@ -250,6 +250,10 @@ public:
     void register_transition_kernel(int);
     void unregister_transition_kernel(int);
 
+    void mark_transition_kernel_active(int r);
+    bool transition_kernel_is_active(int r);
+    void clear_transition_kernel_active(int r);
+
     /// The registered indices of the named parameters.
     std::vector<std::pair<std::string,int>> parameters;
   

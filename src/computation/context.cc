@@ -173,6 +173,8 @@ void context_ref::run_transition_kernels()
 
     for(auto& [w,r]: weighted_tks)
     {
+        memory()->mark_transition_kernel_active(r);
+
         int n = get_reps(w);
         for(int j=0;j<n;j++)
             order.push_back(r);
@@ -181,7 +183,11 @@ void context_ref::run_transition_kernels()
     random_shuffle(order);
 
     for(int move: order)
-        perform_transition_kernel(move);
+        if (memory()->transition_kernel_is_active(move))
+            perform_transition_kernel(move);
+
+    for(auto& [w,r]: weighted_tks)
+        memory()->clear_transition_kernel_active(r);
 }
 
 void context_ref::perform_transition_kernel(int r)
