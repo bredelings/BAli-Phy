@@ -1,8 +1,10 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "computation/machine/args.H"
 #include "computation/context.H"
+#include "computation/expression/index_var.H"
 #include "util/myexception.H"
 #include "computation/machine/graph_register.H"
+#include "computation/machine/effects.H"
 #include "util/rng.H"
 #include "probability/choose.H"
 #include "computation/expression/constructor.H"
@@ -178,16 +180,13 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
 
 extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Args)
 {
-//    assert(not Args.evaluate_changeables());
+    int r_transition_kernel = Args.reg_for_slot(0);
 
-    int R = Args.reg_for_slot(0);
+    int r_effect = Args.allocate(new register_transition_kernel(r_transition_kernel));
 
-    int state = Args.evaluate(1).as_int();
+    Args.set_effect(r_effect);
 
-    auto& M = Args.memory();
-
-    M.register_transition_kernel(R);
-
-    return EPair(state+1,constructor("()",0));
+    // Return a reference to the effect.
+    return {index_var(0),{r_effect}};
 }
 
