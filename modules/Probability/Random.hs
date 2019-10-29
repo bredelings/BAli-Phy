@@ -78,13 +78,12 @@ run_strict alpha (Lazy r) = run_lazy alpha r
 -- Moving such effects out of the "strict" monad leaves that monad as
 -- containing just random sampling and observations.
 --
-run_effects alpha rate (IOAndPass f g) = do
-  x <- run_effects alpha rate f
-  run_effects alpha rate $ g x
-run_effects alpha rate (IOReturn v) = return v
+run_effects alpha rate (IOAndPass f g) = let x = run_effects alpha rate f
+                                         in x `seq` run_effects alpha rate $ g x
+run_effects alpha rate (IOReturn v) = v
 -- LiftIO and Print are only here for debugging purposes
-run_effects alpha rate (LiftIO a) = a
-run_effects alpha rate (Print s) = putStrLn (show s)
+-- run_effects alpha rate (LiftIO a) = a
+-- run_effects alpha rate (Print s) = putStrLn (show s)
 -- FIXME: We don't use the rate here, but we should!
 run_effects alpha rate (AddMove m) = register_transition_kernel m
 run_effects alpha rate (SamplingRate rate2 a) = run_effects alpha (rate*rate2) a
@@ -137,7 +136,7 @@ run_lazy' alpha rate (Sample dist@(Distribution _ _ (RandomStructure effect stru
       pdf = density dist x
       rv = random_variable x pdf range rate
       -- Note: performing the rv (i) forces the pdf (a FORCE) and (ii) registers the rv (an EFFECT)
-      do_effects = (unsafePerformIO $ run_effects alpha rate $ effect x) `seq` rv
+      do_effects = (run_effects alpha rate $ effect x) `seq` rv
   return triggered_x
 run_lazy' alpha rate (Sample (Distribution _ _ s _)) = run_lazy' alpha rate s
 run_lazy' alpha rate (MFix f) = MFix ((run_lazy' alpha rate).f)
@@ -146,8 +145,8 @@ run_lazy' alpha _    GetAlphabet = return alpha
 run_lazy' alpha rate (SetAlphabet a2 x) = run_lazy' a2 rate x
 run_lazy' alpha rate (WithEffect action effect) = unsafeInterleaveIO $ do
   result <- run_lazy' alpha rate action
-  run_effects alpha rate $ effect result
-  return result
+  let effect = run_effects alpha rate $ effect result
+  return (effect `seq` result)
 
 set_alphabet a x = do (a',_) <- a
                       SetAlphabet a' x
