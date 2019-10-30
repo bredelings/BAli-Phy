@@ -79,7 +79,7 @@ public:
     context C0;
 
     // The proposed point
-    context& C;
+    context_ref& C;
 
     double operator()(double);
 
@@ -89,9 +89,9 @@ public:
 
     virtual double current_value() const = 0;
 
-    context_slice_function(context&);
+    context_slice_function(context_ref&);
 
-    context_slice_function(context&, const bounds<double>&);
+    context_slice_function(context_ref&, const bounds<double>&);
 };
 
 /// A slice_function for slice-sampling a single parameter
@@ -104,7 +104,7 @@ struct random_variable_slice_function: public context_slice_function
 
     double current_value() const;
 
-    random_variable_slice_function(context&, const bounds<double>&, int);
+    random_variable_slice_function(context_ref&, const bounds<double>&, int);
 };
 
 
@@ -118,7 +118,7 @@ struct integer_random_variable_slice_function:public context_slice_function
 
     double current_value() const;
 
-    integer_random_variable_slice_function(context&, const bounds<int>&, int);
+    integer_random_variable_slice_function(context_ref&, const bounds<int>&, int);
 };
 
 
@@ -218,7 +218,7 @@ struct constant_sum_slice_function:public context_slice_function
 
     double current_value() const;
 
-    constant_sum_slice_function(context&, const std::vector<int>&, int);
+    constant_sum_slice_function(context_ref&, const std::vector<int>&, int);
 };
 
 /// \brief A slice_function for resampling \f$x_n\f$ when \f$\sum_i x_i=C\f$
@@ -247,7 +247,7 @@ struct constant_sum_modifiable_slice_function: public context_slice_function
 
     double current_value() const;
 
-    constant_sum_modifiable_slice_function(context&, const std::vector<int>&, int);
+    constant_sum_modifiable_slice_function(context_ref&, const std::vector<int>&, int);
 };
 
 #endif

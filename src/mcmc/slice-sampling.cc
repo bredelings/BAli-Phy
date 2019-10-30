@@ -43,11 +43,11 @@ double slice_function::current_value() const
 }
 
 // ********************************** modifiable slice function ****************************************** //
-context_slice_function::context_slice_function(context& c)
+context_slice_function::context_slice_function(context_ref& c)
     :context_slice_function(c, {})
 {}
 
-context_slice_function::context_slice_function(context& c, const bounds<double>& b)
+context_slice_function::context_slice_function(context_ref& c, const bounds<double>& b)
     :slice_function(b), C0(c), C(c)
 {
     current_fn_value.log() = 0;
@@ -59,7 +59,7 @@ double context_slice_function::operator()(double x)
 
     // We are intentionally only calling context::operator==( ) here.
     // Maybe we should actually call merely context::operator==( ) though?
-    reinterpret_cast<context&>(C) = C0;
+    C = C0;
     set_value(x);
 
     // Here is where we return 0 if the number of variables changes.
@@ -83,7 +83,7 @@ double random_variable_slice_function::current_value() const
     return C.get_modifiable_value(r_mod).as_double();
 }
 
-random_variable_slice_function::random_variable_slice_function(context& c, const bounds<double>& bounds, int rv)
+random_variable_slice_function::random_variable_slice_function(context_ref& c, const bounds<double>& bounds, int rv)
     :context_slice_function(c, bounds)
 {
     if (auto m = C.get_modifiable_reg(rv))
@@ -111,7 +111,7 @@ double integer_random_variable_slice_function::current_value() const
     return C.get_modifiable_value(r_mod).as_int();
 }
 
-integer_random_variable_slice_function::integer_random_variable_slice_function(context& c, const bounds<int>& bounds, int rv)
+integer_random_variable_slice_function::integer_random_variable_slice_function(context_ref& c, const bounds<int>& bounds, int rv)
     :context_slice_function(c, convert_bounds(bounds))
 {
     if (auto m = C.get_modifiable_reg(rv))
@@ -144,7 +144,7 @@ double alignment_branch_length_slice_function::operator()(double x)
 
     // We are intentionally only calling context::operator==( ) here.
     // Maybe we should actually call merely context::operator==( ) though?
-    reinterpret_cast<context&>(C) = C0;
+    C = C0;
     set_value(x);
     auto alignment_sum_ratio_1 = sample_alignment(static_cast<Parameters&>(C),b);
 
@@ -354,7 +354,7 @@ double constant_sum_slice_function::current_value() const
 }
 
 
-constant_sum_slice_function::constant_sum_slice_function(context& P, const vector<int>& indices_,int n_)
+constant_sum_slice_function::constant_sum_slice_function(context_ref& P, const vector<int>& indices_,int n_)
     :context_slice_function(P),
      indices(indices_),
      n(n_)
@@ -413,7 +413,7 @@ double constant_sum_modifiable_slice_function::current_value() const
     return P.get_modifiable_value(indices[n]).as_double();
 }
 
-constant_sum_modifiable_slice_function::constant_sum_modifiable_slice_function(context& c, const vector<int>& indices_,int n_)
+constant_sum_modifiable_slice_function::constant_sum_modifiable_slice_function(context_ref& c, const vector<int>& indices_,int n_)
     :context_slice_function(c),
      indices(indices_),
      n(n_)
