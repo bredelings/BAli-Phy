@@ -8,6 +8,7 @@
 #include "util/rng.H"
 #include "probability/choose.H"
 #include "computation/expression/constructor.H"
+#include "mcmc/slice-sampling.H"
 
 using boost::dynamic_pointer_cast;
 using namespace std;
@@ -174,6 +175,47 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
 
     if (x2 != x1)
 	C1.set_reg_value(*x_mod_reg, expression_ref(x2));
+
+    return EPair(state+1,constructor("()",0));
+}
+
+template <typename T>
+using Bounds = Box<bounds<T>>;
+
+// gibbs_sample_categorical x n pr
+extern "C" closure builtin_function_slice_sample_real_random_variable(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
+
+    //------------- 1a. Get argument X -----------------
+    int x_reg = Args.evaluate_slot_to_reg(0);
+
+    //------------- 1b. Get context index --------------
+    int c1 = Args.evaluate(1).as_int();
+    context_ref C1(M, c1);
+
+    //------------- 1c. Get monad thread state ---------
+    int state = Args.evaluate(2).as_int();
+
+    //------------- 2. Find the location of the variable -------------//
+    if (auto r = M.find_random_variable(x_reg))
+        x_reg = *r;
+    else
+        throw myexception()<<"slice_sample_rv: reg "<<x_reg<<" is not a random variable!";
+
+    //------------- 3. Get initial value x1 for variable -------------//
+    auto bnds = M. get_range_for_random_variable(c1, x_reg);
+    if (not bnds.is_a<Bounds<double>>())
+        throw myexception()<<"random variable doesn't have a range that is bounds<double>";
+
+    random_variable_slice_function slice_fn(C1, bnds.as_<Bounds<double>>(), x_reg);
+
+    // OK, this is a bit problematic.
+    double w = 1.0;
+
+    double v1 = slice_fn.current_value();
+    double v2 = slice_sample(v1, slice_fn, w, 100);
 
     return EPair(state+1,constructor("()",0));
 }
