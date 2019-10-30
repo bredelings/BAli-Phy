@@ -54,68 +54,6 @@ vector<expression_ref> model_parameter_expressions(const Model& M)
     return sub;
 }
 
-EVector Model::get_parameter_values(const std::vector<int>& indices) const
-{
-    EVector values(indices.size());
-    
-    for(int i=0;i<values.size();i++)
-	values[i] = get_parameter_value(indices[i]);
-  
-    return values;  
-}
-
-bool Model::parameter_has_bounds(int i) const
-{
-    auto e = get_parameter_range(i);
-
-    return (e and e.is_a<Bounds<double>>());
-}
-
-const bounds<double>& Model::get_parameter_bounds(int i) const
-{
-    auto e = get_parameter_range(i);
-
-    assert(e);
-
-    if (not e.is_a<Bounds<double>>())
-	throw myexception()<<"parameter '"<<parameter_name(i)<<"' doesn't have bounds<double>.";
-
-    return e.as_<Bounds<double>>();
-}
-
-EVector Model::get_modifiable_values(const std::vector<int>& indices) const
-{
-    EVector values(indices.size());
-    
-    for(int i=0;i<values.size();i++)
-	values[i] = get_modifiable_value(indices[i]);
-  
-    return values;  
-}
-
-void Model::set_parameter_values(const vector<int>& indices,const vector<expression_ref>& p)
-{
-    assert(indices.size() == p.size());
-
-    for(int i=0;i<indices.size();i++)
-	set_parameter_value(indices[i], p[i]);
-}
-
-log_double_t Model::heated_likelihood() const
-{
-    // Don't waste time calculating likelihood if we're sampling from the prior.
-    if (get_beta() == 0)
-	return 1;
-    else
-	return pow(likelihood(),get_beta());
-}
-
-log_double_t Model::heated_probability_ratio(const context& C1) const
-{
-    auto ratios = probability_ratios(C1);
-    return ratios.prior_ratio * pow(ratios.likelihood_ratio, get_beta());
-}
-
 Model::Model(const std::shared_ptr<module_loader>& L, const key_map_t& k)
     :context(L),keys(new key_map_t(k))
 { }

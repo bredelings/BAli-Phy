@@ -238,6 +238,53 @@ bounds<double> context_ref::get_bounds_for_compute_expression(int index) const
     return e.as_<Bounds<double>>();
 }
 
+EVector context_ref::get_parameter_values(const std::vector<int>& indices) const
+{
+    EVector values(indices.size());
+
+    for(int i=0;i<values.size();i++)
+	values[i] = get_parameter_value(indices[i]);
+
+    return values;
+}
+
+bool context_ref::parameter_has_bounds(int i) const
+{
+    auto e = get_parameter_range(i);
+
+    return (e and e.is_a<Bounds<double>>());
+}
+
+const bounds<double>& context_ref::get_parameter_bounds(int i) const
+{
+    auto e = get_parameter_range(i);
+
+    assert(e);
+
+    if (not e.is_a<Bounds<double>>())
+	throw myexception()<<"parameter '"<<parameter_name(i)<<"' doesn't have bounds<double>.";
+
+    return e.as_<Bounds<double>>();
+}
+
+EVector context_ref::get_modifiable_values(const std::vector<int>& indices) const
+{
+    EVector values(indices.size());
+
+    for(int i=0;i<values.size();i++)
+	values[i] = get_modifiable_value(indices[i]);
+
+    return values;
+}
+
+void context_ref::set_parameter_values(const vector<int>& indices,const vector<expression_ref>& p)
+{
+    assert(indices.size() == p.size());
+
+    for(int i=0;i<indices.size();i++)
+	set_parameter_value(indices[i], p[i]);
+}
+
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 const expression_ref& context_ref::get_reg_value(int R) const
 {
@@ -410,6 +457,21 @@ int context_ref::add_likelihood_factor(const expression_ref& E)
 prob_ratios_t context_ref::probability_ratios(const context_ref& C1) const
 {
     return memory()->probability_ratios(C1.context_index, context_index);
+}
+
+log_double_t context_ref::heated_likelihood() const
+{
+    // Don't waste time calculating likelihood if we're sampling from the prior.
+    if (get_beta() == 0)
+	return 1;
+    else
+	return pow(likelihood(),get_beta());
+}
+
+log_double_t context_ref::heated_probability_ratio(const context& C1) const
+{
+    auto ratios = probability_ratios(C1);
+    return ratios.prior_ratio * pow(ratios.likelihood_ratio, get_beta());
 }
 
 void context_ref::collect_garbage() const

@@ -50,6 +50,18 @@ public:
 
     std::optional<int> get_modifiable_reg(int i) const;
 
+    bool parameter_has_bounds(int i) const;
+    const bounds<double>& get_parameter_bounds(int i) const;
+
+    /// Get SOME model modifiable values
+    EVector get_modifiable_values(const std::vector<int>&) const;
+
+    /// Get SOME model parameter values
+    EVector get_parameter_values(const std::vector<int>&) const;
+
+    /// Set SOME of the model parameter values
+    void set_parameter_values(const std::vector<int>& indices,const std::vector<expression_ref>& p);
+
     const reg_heap& get_memory() const {return *memory();}
 
     const std::vector<std::string>& get_args() const;
@@ -185,6 +197,15 @@ public:
     virtual log_double_t likelihood() const;
 
     virtual log_double_t probability() const;
+
+    virtual double get_beta() const {return 1.0;}
+
+    virtual void set_beta(double) {std::abort();}
+
+    virtual log_double_t heated_likelihood() const;
+    virtual log_double_t heated_probability() const {return prior() * heated_likelihood();}
+
+    virtual log_double_t heated_probability_ratio(const context&) const;
 
     prob_ratios_t probability_ratios(const context_ref& C1) const;
 

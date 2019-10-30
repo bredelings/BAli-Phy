@@ -85,27 +85,6 @@ public:
     /// Make a copy of this object
     virtual Model* clone() const {return new Model(*this);}
 
-    virtual double get_beta() const {return 1.0;}
-
-    virtual void set_beta(double) {std::abort();}
-
-    virtual log_double_t heated_likelihood() const;
-    virtual log_double_t heated_probability() const {return prior() * heated_likelihood();}
-
-    virtual log_double_t heated_probability_ratio(const context&) const;
-
-    bool parameter_has_bounds(int i) const;
-    const bounds<double>& get_parameter_bounds(int i) const;
-
-    /// Get SOME model modifiable values
-    EVector get_modifiable_values(const std::vector<int>&) const;
-
-    /// Get SOME model parameter values
-    EVector get_parameter_values(const std::vector<int>&) const;
-
-    /// Set SOME of the model parameter values
-    void set_parameter_values(const std::vector<int>& indices,const std::vector<expression_ref>& p);
-
     /// Construct an empty model
     Model(const std::shared_ptr<module_loader>&, const key_map_t& k = {});
 
