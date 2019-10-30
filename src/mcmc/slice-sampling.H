@@ -31,7 +31,7 @@
 #include "computation/context.H"   // for context
 #include "util/bounds.H"           // for bounds
 #include "util/math/log-double.H"  // for log_double_t
-class Model;
+
 class Parameters;
 
 namespace slice_sampling {
@@ -66,7 +66,7 @@ std::pair<int,double> slice_sample_multi(std::vector<double>& X0, std::vector<sl
 
 std::pair<int,double> slice_sample_multi(std::vector<slice_function*>& g, double w, int m);
 
-class model_slice_function: public slice_function
+class context_slice_function: public slice_function
 {
 protected:
     log_double_t current_fn_value;
@@ -79,7 +79,7 @@ public:
     context C0;
 
     // The proposed point
-    Model& M;
+    context& C;
 
     double operator()(double);
 
@@ -89,13 +89,13 @@ public:
 
     virtual double current_value() const = 0;
 
-    model_slice_function(Model&);
+    context_slice_function(context&);
 
-    model_slice_function(Model&, const bounds<double>&);
+    context_slice_function(context&, const bounds<double>&);
 };
 
 /// A slice_function for slice-sampling a single parameter
-struct random_variable_slice_function: public model_slice_function
+struct random_variable_slice_function: public context_slice_function
 {
     /// The random_variable index.
     int r_mod;
@@ -104,12 +104,12 @@ struct random_variable_slice_function: public model_slice_function
 
     double current_value() const;
 
-    random_variable_slice_function(Model&, const bounds<double>&, int);
+    random_variable_slice_function(context&, const bounds<double>&, int);
 };
 
 
 /// A slice_function for slice-sampling a single parameter
-struct integer_random_variable_slice_function:public model_slice_function
+struct integer_random_variable_slice_function:public context_slice_function
 {
     /// The random_variable index.
     int r_mod;
@@ -118,12 +118,12 @@ struct integer_random_variable_slice_function:public model_slice_function
 
     double current_value() const;
 
-    integer_random_variable_slice_function(Model&, const bounds<int>&, int);
+    integer_random_variable_slice_function(context&, const bounds<int>&, int);
 };
 
 
 /// A slice_function for slice-sampling a single branch length
-struct branch_length_slice_function: public model_slice_function
+struct branch_length_slice_function: public context_slice_function
 {
     int b;
 
@@ -135,12 +135,12 @@ struct branch_length_slice_function: public model_slice_function
 };
 
 /// A slice_function for slice-sampling a single branch length
-struct alignment_branch_length_slice_function: public model_slice_function
+struct alignment_branch_length_slice_function: public context_slice_function
 {
     log_double_t alignment_sum_ratio_0;
     int b;
 
-    double operator()() {return model_slice_function::operator()();};
+    double operator()() {return context_slice_function::operator()();};
     double operator()(double x);
 
     void set_value(double);
@@ -151,7 +151,7 @@ struct alignment_branch_length_slice_function: public model_slice_function
 };
 
 /// A slice_function for slice-sampling two adjacent branch lengths which preserving their sum
-struct slide_node_slice_function: public model_slice_function
+struct slide_node_slice_function: public context_slice_function
 {
     int b1;
     int b2;
@@ -175,12 +175,12 @@ struct slide_node_slice_function: public model_slice_function
 ///   n = the number of means,
 ///   B = the number of branch lengths.
 ///
-struct scale_means_only_slice_function: public model_slice_function
+struct scale_means_only_slice_function: public context_slice_function
 {
     /// The sum of the branch mean parameters for the initial point.
     double initial_sum_of_means;
 
-    double operator()(double x) {return model_slice_function::operator()(x);}
+    double operator()(double x) {return context_slice_function::operator()(x);}
 
     // We need to override the probability_ratio to add a jacobian.
     double operator()();
@@ -201,7 +201,7 @@ struct scale_means_only_slice_function: public model_slice_function
 /// The slices are levels of \f$Pr(x)\times(C-x[n])^{N-1}$ where
 ///  N = the dimension of x.
 ///
-struct constant_sum_slice_function:public model_slice_function
+struct constant_sum_slice_function:public context_slice_function
 {
     /// Which indices form the dirichlet parameter that we are resampling?
     std::vector<int> indices;
@@ -209,7 +209,7 @@ struct constant_sum_slice_function:public model_slice_function
     /// Which of the above indices is the one that we are resampling?
     int n;
 
-    double operator()(double x) {return model_slice_function::operator()(x);}
+    double operator()(double x) {return context_slice_function::operator()(x);}
 
     /// return the probability * mu^(B-1)
     double operator()();
@@ -218,7 +218,7 @@ struct constant_sum_slice_function:public model_slice_function
 
     double current_value() const;
 
-    constant_sum_slice_function(Model&, const std::vector<int>&, int);
+    constant_sum_slice_function(context&, const std::vector<int>&, int);
 };
 
 /// \brief A slice_function for resampling \f$x_n\f$ when \f$\sum_i x_i=C\f$
@@ -230,7 +230,7 @@ struct constant_sum_slice_function:public model_slice_function
 /// The slices are levels of \f$Pr(x)\times(C-x[n])^{N-1}$ where
 ///  N = the dimension of x.
 ///
-struct constant_sum_modifiable_slice_function: public model_slice_function
+struct constant_sum_modifiable_slice_function: public context_slice_function
 {
     /// Which indices form the dirichlet parameter that we are resampling?
     std::vector<int> indices;
@@ -238,7 +238,7 @@ struct constant_sum_modifiable_slice_function: public model_slice_function
     /// Which of the above indices is the one that we are resampling?
     int n;
 
-    double operator()(double x) {return model_slice_function::operator()(x);}
+    double operator()(double x) {return context_slice_function::operator()(x);}
 
     /// return the probability * mu^(B-1)
     double operator()();
@@ -247,7 +247,7 @@ struct constant_sum_modifiable_slice_function: public model_slice_function
 
     double current_value() const;
 
-    constant_sum_modifiable_slice_function(Model&, const std::vector<int>&, int);
+    constant_sum_modifiable_slice_function(context&, const std::vector<int>&, int);
 };
 
 #endif

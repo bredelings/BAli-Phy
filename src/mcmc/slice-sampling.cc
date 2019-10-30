@@ -43,50 +43,50 @@ double slice_function::current_value() const
 }
 
 // ********************************** modifiable slice function ****************************************** //
-model_slice_function::model_slice_function(Model& m)
-    :model_slice_function(m, {})
+context_slice_function::context_slice_function(context& c)
+    :context_slice_function(c, {})
 {}
 
-model_slice_function::model_slice_function(Model& m, const bounds<double>& b)
-    :slice_function(b), C0(m), M(m)
+context_slice_function::context_slice_function(context& c, const bounds<double>& b)
+    :slice_function(b), C0(c), C(c)
 {
     current_fn_value.log() = 0;
 }
 
-double model_slice_function::operator()(double x)
+double context_slice_function::operator()(double x)
 {
     count++;
 
-    // We are intentionally only calling Model::operator==( ) here.
+    // We are intentionally only calling context::operator==( ) here.
     // Maybe we should actually call merely context::operator==( ) though?
-    reinterpret_cast<context&>(M) = C0;
+    reinterpret_cast<context&>(C) = C0;
     set_value(x);
 
     // Here is where we return 0 if the number of variables changes.
     // How can we automate this so that it is called only once?
-    current_fn_value = M.heated_probability_ratio(C0);
+    current_fn_value = C.heated_probability_ratio(C0);
     return operator()();
 }
 
-double model_slice_function::operator()()
+double context_slice_function::operator()()
 {
     return log(current_fn_value);
 }
 
 void random_variable_slice_function::set_value(double x)
 {
-    M.set_modifiable_value(r_mod, x);
+    C.set_modifiable_value(r_mod, x);
 }
 
 double random_variable_slice_function::current_value() const
 {
-    return M.get_modifiable_value(r_mod).as_double();
+    return C.get_modifiable_value(r_mod).as_double();
 }
 
-random_variable_slice_function::random_variable_slice_function(Model& M_, const bounds<double>& bounds, int rv)
-    :model_slice_function(M_, bounds)
+random_variable_slice_function::random_variable_slice_function(context& c, const bounds<double>& bounds, int rv)
+    :context_slice_function(c, bounds)
 {
-    if (auto m = M.get_modifiable_reg(rv))
+    if (auto m = C.get_modifiable_reg(rv))
 	r_mod = *m;
     else
 	throw myexception()<<"No modifiable reg for slice function!";
@@ -103,18 +103,18 @@ bounds<double> convert_bounds(const bounds<int>& int_bounds)
 void integer_random_variable_slice_function::set_value(double x)
 {
     int x_integer = (int)floor(x);
-    M.set_modifiable_value(r_mod, x_integer);
+    C.set_modifiable_value(r_mod, x_integer);
 }
 
 double integer_random_variable_slice_function::current_value() const
 {
-    return M.get_modifiable_value(r_mod).as_int();
+    return C.get_modifiable_value(r_mod).as_int();
 }
 
-integer_random_variable_slice_function::integer_random_variable_slice_function(Model& M_, const bounds<int>& bounds, int rv)
-    :model_slice_function(M_, convert_bounds(bounds))
+integer_random_variable_slice_function::integer_random_variable_slice_function(context& c, const bounds<int>& bounds, int rv)
+    :context_slice_function(c, convert_bounds(bounds))
 {
-    if (auto m = M.get_modifiable_reg(rv))
+    if (auto m = C.get_modifiable_reg(rv))
 	r_mod = *m;
     else
 	throw myexception()<<"No modifiable reg for slice function!";
@@ -124,16 +124,16 @@ integer_random_variable_slice_function::integer_random_variable_slice_function(M
 
 void branch_length_slice_function::set_value(double l)
 {
-    static_cast<Parameters&>(M).setlength(b,l);
+    static_cast<Parameters&>(C).setlength(b,l);
 }
 
 double branch_length_slice_function::current_value() const
 {
-    return static_cast<Parameters&>(M).t().branch_length(b);
+    return static_cast<Parameters&>(C).t().branch_length(b);
 }
 
 branch_length_slice_function::branch_length_slice_function(Parameters& P,int b_)
-    :model_slice_function(P),b(b_)
+    :context_slice_function(P),b(b_)
 { 
     set_lower_bound(0);
 }
@@ -142,30 +142,30 @@ double alignment_branch_length_slice_function::operator()(double x)
 {
     count++;
 
-    // We are intentionally only calling Model::operator==( ) here.
+    // We are intentionally only calling context::operator==( ) here.
     // Maybe we should actually call merely context::operator==( ) though?
-    reinterpret_cast<context&>(M) = C0;
+    reinterpret_cast<context&>(C) = C0;
     set_value(x);
-    auto alignment_sum_ratio_1 = sample_alignment(static_cast<Parameters&>(M),b);
+    auto alignment_sum_ratio_1 = sample_alignment(static_cast<Parameters&>(C),b);
 
     // Here is where we return 0 if the number of variables changes.
     // How can we automate this so that it is called only once?
-    current_fn_value = M.heated_probability_ratio(C0)*alignment_sum_ratio_1/alignment_sum_ratio_0;
+    current_fn_value = C.heated_probability_ratio(C0)*alignment_sum_ratio_1/alignment_sum_ratio_0;
     return operator()();
 }
 
 void alignment_branch_length_slice_function::set_value(double l)
 {
-    static_cast<Parameters&>(M).setlength(b,l);
+    static_cast<Parameters&>(C).setlength(b,l);
 }
 
 double alignment_branch_length_slice_function::current_value() const
 {
-    return static_cast<Parameters&>(M).t().branch_length(b);
+    return static_cast<Parameters&>(C).t().branch_length(b);
 }
 
 alignment_branch_length_slice_function::alignment_branch_length_slice_function(Parameters& P,int b_)
-    :model_slice_function(P),b(b_)
+    :context_slice_function(P),b(b_)
 { 
     set_lower_bound(0);
     alignment_sum_ratio_0 = sample_alignment(P, b);
@@ -180,17 +180,17 @@ void slide_node_slice_function::set_value(double x)
        Solution: Store x0 and y0 separately, and compute y = y0 + (x0-x).
     */
     assert(0 <= x and x <= (x0+y0));
-    static_cast<Parameters&>(M).setlength(b1,x);
-    static_cast<Parameters&>(M).setlength(b2,y0+(x0-x));
+    static_cast<Parameters&>(C).setlength(b1,x);
+    static_cast<Parameters&>(C).setlength(b2,y0+(x0-x));
 }
 
 double slide_node_slice_function::current_value() const
 {
-    return static_cast<Parameters&>(M).t().branch_length(b1);
+    return static_cast<Parameters&>(C).t().branch_length(b1);
 }
 
 slide_node_slice_function::slide_node_slice_function(Parameters& P,int b0)
-    :model_slice_function(P)
+    :context_slice_function(P)
 {
     vector<int> b = P.t().branches_after(b0);
 
@@ -208,7 +208,7 @@ slide_node_slice_function::slide_node_slice_function(Parameters& P,int b0)
 }
 
 slide_node_slice_function::slide_node_slice_function(Parameters& P,int i1,int i2)
-    :model_slice_function(P), b1(i1), b2(i2)
+    :context_slice_function(P), b1(i1), b2(i2)
 {
     x0 = P.t().branch_length(b1);
     y0 = P.t().branch_length(b2);
@@ -228,7 +228,7 @@ double sum_of_means(const Parameters& P)
 
 /// \brief Scale the branch means of \a P so that they sum to \a t, but do not invalidate cached values.
 ///
-/// \param P The model state to modify.
+/// \param P The context state to modify.
 /// \param t The sum of the branch means after modification.
 ///
 /// The lengths D=mu*T are not updated by calling recalc, so that the smodel and imodel do not get updated.
@@ -245,7 +245,7 @@ double set_sum_of_means(Parameters& P, double t)
 
 void scale_means_only_slice_function::set_value(double t)
 {
-    auto& P = static_cast<Parameters&>(M);
+    auto& P = static_cast<Parameters&>(C);
 
     // Set the values of \mu[i]
     double scale = set_sum_of_means(P, initial_sum_of_means * exp(t));
@@ -260,24 +260,24 @@ void scale_means_only_slice_function::set_value(double t)
 
 double scale_means_only_slice_function::operator()()
 {
-    auto& P = static_cast<Parameters&>(M);
+    auto& P = static_cast<Parameters&>(C);
 
     const int B = P.t().n_branches();
     const int n = P.n_branch_scales();
 
     // return pi * (\sum_i \mu_i)^(n-B)
-    return model_slice_function::operator()() + log(sum_of_means(P))*(n-B);
+    return context_slice_function::operator()() + log(sum_of_means(P))*(n-B);
 }
 
 double scale_means_only_slice_function::current_value() const
 {
-    auto& P = static_cast<Parameters&>(M);
+    auto& P = static_cast<Parameters&>(C);
     double t = log(sum_of_means(P)/initial_sum_of_means);
     return t;
 }
 
 scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P)
-    :model_slice_function(P),
+    :context_slice_function(P),
      initial_sum_of_means(sum_of_means(P))
 { 
     bounds<double>& b = *this;
@@ -308,7 +308,7 @@ scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P)
 
 void constant_sum_slice_function::set_value(double t)
 {
-    auto& P = static_cast<Parameters&>(M);
+    auto& P = static_cast<Parameters&>(C);
     auto y = P.get_parameter_values(indices);
     auto x = (vector<double>)y;
 
@@ -333,7 +333,7 @@ void constant_sum_slice_function::set_value(double t)
 
 double constant_sum_slice_function::operator()()
 {
-    auto& P = static_cast<Parameters&>(M);
+    auto& P = static_cast<Parameters&>(C);
 
     auto x = (vector<double>)P.get_parameter_values(indices);
 
@@ -344,18 +344,18 @@ double constant_sum_slice_function::operator()()
     const int N = indices.size();
 
     // return pi * (1-x)^(N-1)
-    return model_slice_function::operator()() + (N-1)*log(total-t);
+    return context_slice_function::operator()() + (N-1)*log(total-t);
 }
 
 double constant_sum_slice_function::current_value() const
 {
-    auto& P = static_cast<Parameters&>(M);
+    auto& P = static_cast<Parameters&>(C);
     return P.get_parameter_value(indices[n]).as_double();
 }
 
 
-constant_sum_slice_function::constant_sum_slice_function(Model& P, const vector<int>& indices_,int n_)
-    :model_slice_function(P),
+constant_sum_slice_function::constant_sum_slice_function(context& P, const vector<int>& indices_,int n_)
+    :context_slice_function(P),
      indices(indices_),
      n(n_)
 { 
@@ -368,7 +368,7 @@ constant_sum_slice_function::constant_sum_slice_function(Model& P, const vector<
 
 void constant_sum_modifiable_slice_function::set_value(double t)
 {
-    auto& P = static_cast<Parameters&>(M);
+    auto& P = static_cast<Parameters&>(C);
     const int N = indices.size();
 
     vector<double> x(N);
@@ -394,7 +394,7 @@ void constant_sum_modifiable_slice_function::set_value(double t)
 
 double constant_sum_modifiable_slice_function::operator()()
 {
-    auto& P = static_cast<Parameters&>(M);
+    auto& P = static_cast<Parameters&>(C);
     const int N = indices.size();
 
     double total = 0;
@@ -404,21 +404,21 @@ double constant_sum_modifiable_slice_function::operator()()
     double t = current_value();
 
     // return pi * (1-x)^(N-1)
-    return model_slice_function::operator()() + (N-1)*log(total-t);
+    return context_slice_function::operator()() + (N-1)*log(total-t);
 }
 
 double constant_sum_modifiable_slice_function::current_value() const
 {
-    auto& P = static_cast<Parameters&>(M);
+    auto& P = static_cast<Parameters&>(C);
     return P.get_modifiable_value(indices[n]).as_double();
 }
 
-constant_sum_modifiable_slice_function::constant_sum_modifiable_slice_function(Model& M, const vector<int>& indices_,int n_)
-    :model_slice_function(M),
+constant_sum_modifiable_slice_function::constant_sum_modifiable_slice_function(context& c, const vector<int>& indices_,int n_)
+    :context_slice_function(c),
      indices(indices_),
      n(n_)
 { 
-    auto x = (vector<double>)M.get_modifiable_values(indices);
+    auto x = (vector<double>)C.get_modifiable_values(indices);
     double total = sum(x);
 
     set_lower_bound(0);
