@@ -94,8 +94,8 @@ public:
 
     virtual log_double_t heated_probability_ratio(const context&) const;
 
-    bool has_bounds(int i) const;
-    const bounds<double>& get_bounds(int i) const;
+    bool parameter_has_bounds(int i) const;
+    const bounds<double>& get_parameter_bounds(int i) const;
 
     /// Get SOME model modifiable values
     EVector get_modifiable_values(const std::vector<int>&) const;

@@ -191,7 +191,7 @@ void sample_parameter_and_alignment_on_branch(owned_ptr<Model>& P, MoveStats& St
   // is this right for epsilon?  Shouldn't we use shift_epsilon?
   double v2 = v1 + cauchy(0,sigma);
 
-  bounds<double> range = P->get_bounds(p);
+  bounds<double> range = P->get_parameter_bounds(p);
 
   if (v2 > 0)
     v2 = -v2;

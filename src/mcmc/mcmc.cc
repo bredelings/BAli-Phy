@@ -372,9 +372,9 @@ namespace MCMC {
 
 	    if (not P->get_parameter_value(i).is_double()) continue;
 
-	    if (not P->has_bounds(i)) continue;
+	    if (not P->parameter_has_bounds(i)) continue;
 	
-	    bounds<double> range = P->get_bounds(i);
+	    bounds<double> range = P->get_parameter_bounds(i);
 	    if (not range.in_range(P->get_parameter_value(i).as_double()))
 		throw myexception()<<"Parameter "<<P->parameter_name(i)<<" = "<<P->get_parameter_value(i).as_double()<<" is NOT in range "<<range;
 	    if (not range.in_range(P2->get_parameter_value(i).as_double()))

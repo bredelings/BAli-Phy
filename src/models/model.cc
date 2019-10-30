@@ -64,14 +64,14 @@ EVector Model::get_parameter_values(const std::vector<int>& indices) const
     return values;  
 }
 
-bool Model::has_bounds(int i) const 
+bool Model::parameter_has_bounds(int i) const
 {
     auto e = get_parameter_range(i);
 
     return (e and e.is_a<Bounds<double>>());
 }
 
-const bounds<double>& Model::get_bounds(int i) const 
+const bounds<double>& Model::get_parameter_bounds(int i) const
 {
     auto e = get_parameter_range(i);
 
