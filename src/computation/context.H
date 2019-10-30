@@ -228,7 +228,7 @@ public:
 
     virtual json get_logged_parameters() const;
 
-    context_ref& operator=(const context_ref& c) = delete;
+    context_ref& operator=(const context_ref& c);
 
     context_ref(const context_ref&) = delete;
 
@@ -260,9 +260,7 @@ public:
 
     context& operator+=(const std::vector<std::string>& module_names);
 
-    context& operator=(const context_ref& c);
-
-    context& operator=(const context& c);
+    context& operator=(const context&) = default;
 
     context(const context_ref&);
 

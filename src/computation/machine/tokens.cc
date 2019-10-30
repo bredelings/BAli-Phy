@@ -401,8 +401,13 @@ int reg_heap::copy_context(int c)
     return c2;
 }
 
+long total_create_context1 = 0;
+long total_create_context2 = 0;
+
 int reg_heap::get_new_context()
 {
+    total_create_context2++;
+
     // Add an unused context if we are missing one
     if (unused_contexts.empty())
     {

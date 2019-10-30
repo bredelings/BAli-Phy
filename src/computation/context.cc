@@ -30,9 +30,6 @@ using std::endl;
 template <typename T>
 using Bounds = Box<bounds<T>>;
 
-long total_create_context1 = 0;
-long total_create_context2 = 0;
-
 object_ptr<reg_heap>& context_ref::memory() const {return memory_;}
 
 const std::vector<int>& context_ref::heads() const {return memory()->get_heads();}
@@ -567,23 +564,36 @@ void context_ref::set_args(const vector<string>& a)
     memory()->args = a;
 }
 
+// This probably should not really be an equals operator, since it
+// can't be implemented by copy-construction, which just makes another
+// reference to the same thing.
 
-/*
 // Make the context point to the same token as the other context
 context_ref& context_ref::operator=(const context_ref& C)
 {
-    assert(memory_ == C.memory_);
+    assert(&get_memory() == &C.get_memory());
 
-    context_index = C.get_context_index();
+    memory_->switch_to_context(context_index, C.get_context_index());
 
     return *this;
 }
 
-context_ref::context(const context_ref& C)
+/*
+Delete this, since it would be confusing to have
+
+   context_ref C1 = C2;
+
+and
+
+   context_ref C1(M,c1);
+   C1 = C2;
+
+mean different things.
+
+context_ref::context_ref(const context_ref& C)
     :memory_(C.memory_),
      context_index(C.get_context_index())
 {
-    total_create_context2++;
 }
 */
 
@@ -686,37 +696,16 @@ context& context::operator+=(const Module& M)
     return *this;
 }
 
-// Make the context point to the same token as the other context
-context& context::operator=(const context_ref& C)
-{
-    assert(&get_memory() == &C.get_memory());
-
-    memory_->switch_to_context(context_index, C.get_context_index());
-
-    return *this;
-}
-
-context& context::operator=(const context& C)
-{
-    assert(&get_memory() == &C.get_memory());
-
-    memory_->switch_to_context(context_index, C.get_context_index());
-
-    return *this;
-}
-
 context::context(const context_ref& C)
     :context_ref(*C.memory_,
                  C.memory_->copy_context(C.get_context_index()))
 {
-    total_create_context2++;
 }
 
 context::context(const context& C)
-    :context_ref(*C.memory_)
+    :context_ref(*C.memory_,
+                 C.memory_->copy_context(C.get_context_index()))
 {
-    context_index = memory_->copy_context(C.get_context_index());
-    total_create_context2++;
 }
 
 context::context(const Program& P)
