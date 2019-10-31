@@ -136,7 +136,8 @@ run_lazy' alpha rate (Sample dist@(Distribution _ _ (RandomStructure effect stru
       pdf = density dist x
       rv = random_variable x pdf range rate
       -- Note: performing the rv (i) forces the pdf (a FORCE) and (ii) registers the rv (an EFFECT)
-      do_effects = (run_effects alpha rate $ effect x) `seq` rv
+      -- Passing `x` to the effect instead of `rv` maybe should work, but doesn't.
+      do_effects = (run_effects alpha rate $ effect rv) `seq` rv
   return triggered_x
 run_lazy' alpha rate (Sample (Distribution _ _ s _)) = run_lazy' alpha rate s
 run_lazy' alpha rate (MFix f) = MFix ((run_lazy' alpha rate).f)
