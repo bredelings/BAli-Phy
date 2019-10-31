@@ -146,8 +146,8 @@ run_lazy' alpha _    GetAlphabet = return alpha
 run_lazy' alpha rate (SetAlphabet a2 x) = run_lazy' a2 rate x
 run_lazy' alpha rate (WithEffect action effect) = unsafeInterleaveIO $ do
   result <- run_lazy' alpha rate action
-  let effect = run_effects alpha rate $ effect result
-  return (effect `seq` result)
+  let effect_result = run_effects alpha rate $ effect result
+  return (effect_result `seq` result)
 
 set_alphabet a x = do (a',_) <- a
                       SetAlphabet a' x
