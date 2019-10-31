@@ -534,8 +534,20 @@ optional<int> reg_heap::find_update_random_variable(int& R)
     // Note: here we always update R
     R = incremental_evaluate_unchangeable(R);
 
-    if (is_random_variable(expression_at(R)))
+    auto& C = closure_at(R);
+
+    if (is_random_variable(C.exp))
 	return R;
+    else if (is_seq(C.exp))
+    {
+        int R2 = C.reg_for_slot(1);
+        return find_update_random_variable(R2);
+    }
+    else if (is_join(C.exp))
+    {
+        int R2 = C.reg_for_slot(1);
+        return find_update_random_variable(R2);
+    }
     else
 	return {};
 }
