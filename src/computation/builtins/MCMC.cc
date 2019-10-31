@@ -18,57 +18,30 @@ using boost::dynamic_pointer_cast;
 using std::optional;
 using std::vector;
 
-optional<int> find_modifiable_in_root_token_(reg_heap& M, int r)
-{
-    // FIXME - we might need to handle random variables when generating here, as we do in reg_head::find_update_modifiable_reg( ).
-
-    // 1. First evaluate the reg.  This will yield a non-index_var.
-    r = M.incremental_evaluate_unchangeable(r);
-
-    // r2 can only be constant or changeable, not unknown or index_var.
-    assert(M.reg_is_constant(r) or M.reg_is_changeable(r));
-
-    // 2. If this is a modifiable, stop here and return that.
-    if (is_modifiable(M[r].exp))
-        return r;
-
-    // 3. Look through a random_variable to its value.
-    else if (is_random_variable(M[r].exp))
-    {
-	int r3 = M[r].reg_for_slot(0);
-        return find_modifiable_in_root_token_(M,r3);
-    }
-    // 4. Look through a seq
-    else if (is_seq(M[r].exp))
-    {
-	int r3 = M[r].reg_for_slot(1);
-        return find_modifiable_in_root_token_(M,r3);
-    }
-    // 5. Look through a join
-    else if (is_join(M[r].exp))
-    {
-	int r3 = M[r].reg_for_slot(1);
-        return find_modifiable_in_root_token_(M,r3);
-    }
-    // 6. Look through a "changeable" operation with a call
-    else if (M.reg_has_call(r))
-    {
-        int r3 = M.call_for_reg(r);
-        return find_modifiable_in_root_token_(M,r3);
-    }
-
-    // 4. Handle changeable computations with no call
-    return {};
-}
-
 optional<int> find_modifiable_in_root_token(reg_heap& M, int r)
 {
-    // Warning: ABOMINATION!       TODO/FIXME: Can we `seq` this when we register the mcmc move?
-    M.incremental_evaluate(r);
+    // Warning: ABOMINATION!
+    // FIXME: This should be forced by a `seq` inside the program.
+    r = M.incremental_evaluate(r).first;
 
-    return find_modifiable_in_root_token_(M, r);
+    // r should not be unknown or an index_var
+    assert(M.reg_is_constant(r) or (M.reg_is_changeable(r) and M.reg_has_call(r)));
+
+    while (not M.reg_is_constant(r))
+    {
+        assert(M.reg_is_changeable(r));
+        assert(M.reg_has_call(r));
+
+        if (is_modifiable(M[r].exp))
+            return r;
+        else
+            r = M.call_for_reg(r);
+    };
+
+    // r is (now) a constant.
+    // There is therefore no modifiable.
+    return {};
 }
-
 
 // The idea here is to propose new values of X, and evaluate them by summing over each Y_i \in {True,False}.
 // Then the Y_i are resampled.  
