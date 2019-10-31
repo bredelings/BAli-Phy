@@ -14,6 +14,7 @@ matrix:
           packages:
           - g++-7
           - pandoc
+          - ccache
     - os: linux
       dist: bionic
       env: CXX_COMPILER=g++-8
@@ -24,6 +25,7 @@ matrix:
           packages:
           - g++-8
           - pandoc
+          - ccache
     - os: linux
       dist: bionic
       env: CXX_COMPILER=g++-9
@@ -34,6 +36,7 @@ matrix:
           packages:
           - g++-9
           - pandoc
+          - ccache
     - os: linux
       dist: bionic
       compiler: clang++
@@ -44,6 +47,7 @@ matrix:
           packages:
           - g++-8
           - pandoc
+          - ccache
     - os: osx
       osx_image: xcode10.2
     - os: osx
@@ -55,7 +59,7 @@ before_install:
   - echo $PATH
   - if [ -n "${C_COMPILER}" ]; then export CC="${C_COMPILER}"; fi
   - if [ -n "${CXX_COMPILER}" ]; then export CXX="${CXX_COMPILER}"; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update && brew install meson; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update && brew install meson ccache; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PKG_CONFIG_PATH="/usr/local/opt/libffi/lib/pkgconfig" ; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget https://github.com/ninja-build/ninja/releases/download/v1.9.0/ninja-linux.zip && unzip -q ninja-linux.zip -d ~/bin && pyenv local 3.7.1 && pip3 install meson; fi
 
