@@ -21,12 +21,9 @@ using std::vector;
 // (ii)  translate modifiables -> modifiable + reg_var(r)
 // (iii) translate other non-constant fields to reg_var(r)
 
-expression_ref maybe_modifiable_structure(OperationArgs& Args, int r1)
+expression_ref maybe_modifiable_structure(reg_heap& M, int r1)
 {
     // FIXME - we might need to handle random variables when generating here, as we do in reg_head::find_update_modifiable_reg( ).
-
-    // 0. We aren't going to record any uses or forces.  We just want to extract information.
-    reg_heap& M = Args.memory();
 
     // 1. First evaluate the reg.  This will yield a non-index_var.
     int r2 = M.incremental_evaluate_unchangeable(r1);
@@ -52,7 +49,7 @@ expression_ref maybe_modifiable_structure(OperationArgs& Args, int r1)
         // 2b. Constants with fields need their fields translated.
         vector<expression_ref> sub;
         for(int i=0; i< M[r2].exp.size(); i++)
-            sub.push_back(maybe_modifiable_structure(Args, M[r2].reg_for_slot(i)));
+            sub.push_back(maybe_modifiable_structure(M, M[r2].reg_for_slot(i)));
 
         return expression_ref(M[r2].exp.head(), sub);
     }
@@ -72,7 +69,7 @@ expression_ref maybe_modifiable_structure(OperationArgs& Args, int r1)
     else if (is_random_variable(M[r2].exp))
     {
 	int r3 = M[r2].reg_for_slot(0);
-        auto E = maybe_modifiable_structure(Args,r3);
+        auto E = maybe_modifiable_structure(M,r3);
         if (is_modifiable(E))
         {
             expression_ref m = constructor("Modifiable",1);
@@ -85,17 +82,17 @@ expression_ref maybe_modifiable_structure(OperationArgs& Args, int r1)
     else if (is_seq(M[r2].exp))
     {
 	int r3 = M[r2].reg_for_slot(1);
-        return maybe_modifiable_structure(Args,r3);
+        return maybe_modifiable_structure(M,r3);
     }
     else if (is_join(M[r2].exp))
     {
 	int r3 = M[r2].reg_for_slot(1);
-        return maybe_modifiable_structure(Args,r3);
+        return maybe_modifiable_structure(M,r3);
     }
     else if (M.reg_has_call(r2))
     {
         int r3 = M.call_for_reg(r2);
-        return maybe_modifiable_structure(Args,r3);
+        return maybe_modifiable_structure(M,r3);
     }
 
     // 4. Handle changeable computations with no call
@@ -109,7 +106,7 @@ extern "C" closure builtin_function_maybe_modifiable_structure(OperationArgs& Ar
 
     int R1 = Args.reg_for_slot(0);
 
-    return maybe_modifiable_structure(Args, R1);
+    return maybe_modifiable_structure(Args.memory(), R1);
 }
 
 extern "C" closure builtin_function_random_variable(OperationArgs& Args)
