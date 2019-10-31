@@ -222,9 +222,11 @@ extern "C" closure builtin_function_slice_sample_real_random_variable(OperationA
 
 extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Args)
 {
-    int r_transition_kernel = Args.reg_for_slot(0);
+    int r_rate = Args.reg_for_slot(0);
 
-    int r_effect = Args.allocate(new register_transition_kernel(r_transition_kernel));
+    int r_transition_kernel = Args.reg_for_slot(1);
+
+    int r_effect = Args.allocate(new register_transition_kernel(r_rate, r_transition_kernel));
 
     Args.set_effect(r_effect);
 

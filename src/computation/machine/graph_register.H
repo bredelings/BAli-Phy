@@ -243,11 +243,11 @@ public:
     void unregister_random_variable(int r);
 
     // the list of transition kernels
-    std::vector<int> transition_kernels_;
+    std::vector<std::pair<int,int>> transition_kernels_;
 
-    const std::vector<int>& transition_kernels() const;
+    const std::vector<std::pair<int,int>>& transition_kernels() const;
 
-    void register_transition_kernel(int);
+    void register_transition_kernel(int,int);
     void unregister_transition_kernel(int);
 
     void mark_transition_kernel_active(int r);

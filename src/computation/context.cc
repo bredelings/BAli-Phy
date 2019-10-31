@@ -165,9 +165,17 @@ int get_reps(double x)
 
 void context_ref::run_transition_kernels()
 {
-    vector<pair<int,int>> weighted_tks;
-    for(int i=0;i<n_transition_kernels();i++)
-        weighted_tks.push_back({1.0,memory()->transition_kernels()[i]});
+    vector<pair<double,int>> weighted_tks;
+    // Don't use a range-for, since the number of transition kernels could change
+    for(int i=0; i< memory()->transition_kernels().size(); ++i)
+    {
+        auto& [r_rate, r_kernel] = memory()->transition_kernels()[i];
+
+        // We could force new random variables here, which would be weird.
+        double rate = get_reg_value(r_rate).as_double();
+        if (rate > 0)
+            weighted_tks.push_back({rate, r_kernel});
+    }
 
     vector<int> order;
 

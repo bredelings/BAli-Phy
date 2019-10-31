@@ -22,7 +22,8 @@ public:
 
 class register_transition_kernel: public effect
 {
-    int transition_kernel_reg;
+    int rate_reg;
+    int kernel_reg;
 
 public:
     register_transition_kernel* clone() const {return new register_transition_kernel(*this);}
@@ -32,7 +33,7 @@ public:
 
     std::string print () const;
 
-    register_transition_kernel(int r);
+    register_transition_kernel(int r1, int r2);
 
     void register_effect(reg_heap&, int r) const;
     void unregister_effect(reg_heap&, int r) const;

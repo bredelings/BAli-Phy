@@ -509,22 +509,22 @@ const vector<int>& reg_heap::random_variables() const
     return random_variables_;
 }
 
-void reg_heap::register_transition_kernel(int r)
+void reg_heap::register_transition_kernel(int r_rate, int r_kernel)
 {
-    transition_kernels_.push_back(r);
+    transition_kernels_.push_back({r_rate, r_kernel});
 }
 
-void reg_heap::unregister_transition_kernel(int r)
+void reg_heap::unregister_transition_kernel(int r_kernel)
 {
-    clear_transition_kernel_active(r);
+    clear_transition_kernel_active(r_kernel);
 
     std::optional<int> index;
     for(int i=0;i<transition_kernels_.size();i++)
-        if (transition_kernels_[i] == r)
+        if (transition_kernels_[i].second == r_kernel)
             index = i;
 
     if (not index)
-	throw myexception()<<"unregister_transition_kernel: transition kernel <"<<r<<"> not found!";
+	throw myexception()<<"unregister_transition_kernel: transition kernel <"<<r_kernel<<"> not found!";
 
     if (*index + 1 < transition_kernels_.size())
         std::swap(transition_kernels_[*index], transition_kernels_.back());
@@ -532,7 +532,7 @@ void reg_heap::unregister_transition_kernel(int r)
     transition_kernels_.pop_back();
 }
 
-const vector<int>& reg_heap::transition_kernels() const
+const vector<pair<int,int>>& reg_heap::transition_kernels() const
 {
     return transition_kernels_;
 }
@@ -1119,7 +1119,8 @@ void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
     // * we should be able to remove random_variables_.  However, walking random_variables_ might find references to old, destroyed, variables then.
     insert_at_end(scan, likelihood_heads); // yes
     insert_at_end(scan, random_variables_); // yes
-    insert_at_end(scan, transition_kernels_); // yes
+    for(auto& [_,r]: transition_kernels_)
+        scan.push_back(r);
 
     for(const auto& C: closure_stack)
 	for(int r: C.Env)
