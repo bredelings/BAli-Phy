@@ -85,7 +85,7 @@ run_effects alpha rate (IOReturn v) = v
 -- run_effects alpha rate (LiftIO a) = a
 -- run_effects alpha rate (Print s) = putStrLn (show s)
 -- FIXME: We don't use the rate here, but we should!
-run_effects alpha rate (AddMove m) = register_transition_kernel m
+run_effects alpha rate (AddMove m) = register_transition_kernel rate m
 run_effects alpha rate (SamplingRate rate2 a) = run_effects alpha (rate*rate2) a
 
 run_lazy alpha (RandomStructure _ _ a) = run_lazy alpha a
