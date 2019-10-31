@@ -89,7 +89,7 @@ endif
 
 ## Handle auto / system / internal method of finding/building EIGEN
 if get_option('eigen') == 'auto'
-  eigen = dependency('eigen3', required: false)
+  eigen = dependency('eigen3', required: false).as_system()
   if not eigen.found()
     message('Using internal copy of eigen.')
     eigen = include_directories('external/eigen3', is_system: true)
