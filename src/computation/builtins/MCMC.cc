@@ -205,7 +205,7 @@ extern "C" closure builtin_function_slice_sample_real_random_variable(OperationA
         throw myexception()<<"slice_sample_rv: reg "<<x_reg<<" is not a random variable!";
 
     //------------- 3. Get initial value x1 for variable -------------//
-    auto bnds = M. get_range_for_random_variable(c1, x_reg);
+    auto bnds = M.get_range_for_random_variable(c1, x_reg);
     if (not bnds.is_a<Bounds<double>>())
         throw myexception()<<"random variable doesn't have a range that is bounds<double>";
 
