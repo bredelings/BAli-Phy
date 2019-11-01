@@ -925,6 +925,19 @@ vector<int> allele_counts(const alignment& A, int col)
     return counts;
 }
 
+vector<int> allele_counts(const alignment& A, int col, const vector<int>& seqs)
+{
+    auto& a = A.get_alphabet();
+    vector<int> counts(a.size(), 0);
+    for(int i:seqs)
+    {
+	auto c = A(col,i);
+	if (a.is_letter(c))
+	    counts[c]++;
+    }
+    return counts;
+}
+
 vector<vector<int>> make_bins(const vector<int>& columns, int width)
 {
     vector<vector<int>> bins;
@@ -963,6 +976,18 @@ int largest_minor_allele_count(const alignment& A, int col)
 	    m2 = count;
     }
     return m2;
+}
+
+vector<pair<int,int>> get_non_zero_allele_counts2(const alignment& A, int col, const vector<int>& seqs)
+{
+    auto counts = allele_counts(A, col, seqs);
+
+    vector<pair<int,int>> allele_count;
+    for(int i = 0; i< counts.size(); i++)
+        if (counts[i] > 0)
+            allele_count.push_back({i,counts[i]});
+
+    return allele_count;
 }
 
 vector<pair<int,int>> get_allele_counts2(const alignment& A, int col)
@@ -1168,6 +1193,21 @@ vector<int> find_sequence_subset_with_prefix(const alignment& a, const string& p
     return sequence_indices;
 }
 
+int get_derived_count(const alignment& A, int col, const vector<int>& pop, int ancestral_allele, int derived_allele)
+{
+    auto pop_counts = get_non_zero_allele_counts2(A, col, pop);
+
+    assert(pop_counts.size() >= 1 and pop_counts.size() <= 2);
+
+    for(auto& [allele,count]: pop_counts)
+        if (allele == derived_allele)
+            return count;
+        else if (allele != ancestral_allele)
+            std::abort();
+
+    return 0;
+}
+
 matrix<int> compute_2d_sfs(const alignment& A,
                            const vector<int>& pop1,
                            const vector<int>& pop2,
@@ -1176,8 +1216,48 @@ matrix<int> compute_2d_sfs(const alignment& A,
 {
     matrix<int> counts(pop1.size()+1, pop2.size()+1,0);
 
+    auto pop12 = pop1;
+    pop12.insert(pop12.end(), pop2.begin(), pop2.end());
+
+    auto all = pop12;
+    all.insert(all.end(), anc.begin(), anc.end());
+
     for(int i=0;i<A.length();i++)
     {
+        // Require 2 alleles in the populations
+        auto pop_counts = get_non_zero_allele_counts2(A, i, pop12);
+        if (pop_counts.size() != 2) continue;
+
+        // Require 2 alleles in the populations and the ancestor.
+        auto all_counts = get_non_zero_allele_counts2(A, i, all);
+        if (all_counts.size() != 2) continue;
+
+        // Require 1 allele in the ancestral populations
+        auto anc_counts = get_non_zero_allele_counts2(A, i, anc);
+        if (anc_counts.size() != 1) continue;
+
+        bool missing_data = false;
+        for(int j: pop12)
+            if (A.gap(i,j))
+                missing_data = true;
+
+        if (missing_data) continue;
+
+        // Then its easy to find "the" ancestral allele
+        auto ancestral_allele = anc_counts[0].first;
+
+        // Then we have to find the derived allele
+        assert(all_counts[0].first == ancestral_allele or all_counts[1].first == ancestral_allele);
+        int derived_allele = all_counts[0].first;
+        if (derived_allele == ancestral_allele)
+            derived_allele = all_counts[1].first;
+        assert(ancestral_allele != derived_allele);
+        assert(all_counts[0].first == derived_allele or all_counts[1].first == derived_allele);
+
+        int derived_count1 = get_derived_count(A, i, pop1, ancestral_allele, derived_allele);
+        int derived_count2 = get_derived_count(A, i, pop2, ancestral_allele, derived_allele);
+
+        counts(derived_count1, derived_count2)++;
     }
     
     return counts;
