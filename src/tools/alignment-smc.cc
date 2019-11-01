@@ -131,6 +131,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("pi-matrix","Calculate pi for each pair of sequences")
 	("autoclean","Mask blocks with too many SNPs")
 	("histogram",value<int>(),"Output SNP counts for blocks of arg bases")
+        ("sfs2d",value<string>(),"pop1:pop2:anc:window")
 	;
 
     // positional options
@@ -1158,6 +1159,31 @@ map<string,translation_table> get_translation_tables(const string& filename)
     return tables;
 }
 
+vector<int> find_sequence_subset_with_prefix(const alignment& a, const string& prefix)
+{
+    vector<int> sequence_indices;
+    for(int i=0;i<a.n_sequences();i++)
+        if (starts_with(a.seq(i).name, prefix))
+            sequence_indices.push_back(i);
+    return sequence_indices;
+}
+
+matrix<int> compute_2d_sfs(const alignment& A,
+                           const vector<int>& pop1,
+                           const vector<int>& pop2,
+                           const vector<int>& anc,
+                           int window_size)
+{
+    matrix<int> counts(pop1.size()+1, pop2.size()+1,0);
+
+    for(int i=0;i<A.length();i++)
+    {
+    }
+    
+    return counts;
+}
+
+
 int main(int argc,char* argv[]) 
 { 
     try {
@@ -1332,6 +1358,28 @@ int main(int argc,char* argv[])
 	    write_histogram(std::cout, args["histogram"].as<int>(), A);
 	    exit(0);
 	}
+
+        if (args.count("sfs2d"))
+        {
+            auto args2d = split(args["sfs2d"].as<string>(),":");
+            if (args2d.size() != 4)
+                throw myexception()<<"sfs2d: argument '"<<args["sfs2d"].as<string>()<<"' should have 4 colon-separated parts";
+
+            auto pop1prefix = args2d[0];
+            auto pop2prefix = args2d[1];
+            auto ancprefix = args2d[2];
+            auto window_size = convertTo<int>(args2d[3]);
+            auto pop1 = find_sequence_subset_with_prefix(A, pop1prefix);
+            auto pop2 = find_sequence_subset_with_prefix(A, pop2prefix);
+            auto anc = find_sequence_subset_with_prefix(A, ancprefix);
+
+            auto sfs_counts = compute_2d_sfs(A,pop1,pop2,anc,window_size);
+            for(int i=0;i<sfs_counts.size1();i++)
+                for(int j=0;j<sfs_counts.size2();j++)
+                    std::cout<<i<<"\t"<<j<<"\t"<<sfs_counts(i,j)<<"\n";
+
+            exit(0);
+        }
 
 	if (args.count("minor-allele"))
 	{
