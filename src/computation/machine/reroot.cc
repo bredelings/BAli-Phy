@@ -108,7 +108,7 @@ void reg_heap::reroot_at(int t)
         int s2 = step_index_for_reg(r);
         if (s2 > 0 and steps.access(s2).has_nonforce_effect())
         {
-            int call = steps[s1].call;
+            int call = steps[s2].call;
             auto& e = expression_at(call);
             assert(e.is_a<effect>());
             e.as_<effect>().register_effect(*this,r);
