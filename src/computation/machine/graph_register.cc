@@ -8,6 +8,7 @@
 #include "computation/expression/random_variable.H"
 #include "computation/expression/modifiable.H"
 #include "computation/operations.H"
+#include "effect.H"
 
 using std::string;
 using std::vector;
@@ -372,6 +373,82 @@ int reg_heap::follow_index_var(int r) const
     return r;
 }
 
+void reg_heap::register_effect_pending_at_step(int s)
+{
+    // Step must have effect
+    assert(steps[s].has_nonforce_effect());
+
+    // Step must have not be on pending list
+    assert(not steps[s].has_pending_nonforce_effect());
+
+    steps[s].set_pending_nonforce_effect();
+
+    pending_effect_steps.push_back(s);
+}
+
+void reg_heap::unregister_effect_pending_at_step(int s)
+{
+    // Step must have effect
+    assert(steps[s].has_nonforce_effect());
+
+    // Step must have be on pending list
+    assert(steps[s].has_pending_nonforce_effect());
+
+    steps[s].clear_pending_nonforce_effect();
+
+    std::optional<int> index;
+    for(int i=0;i<pending_effect_steps.size();i++)
+        if (pending_effect_steps[i]== s)
+            index = i;
+
+    if (not index)
+	throw myexception()<<"unregister_effect_pending_at_step: step <"<<s<<"> not found on pending list!";
+
+    if (*index + 1 < pending_effect_steps.size())
+        std::swap(pending_effect_steps[*index], pending_effect_steps.back());
+
+    pending_effect_steps.pop_back();
+}
+
+void reg_heap::register_effect_at_step(int s)
+{
+    // Step must have effect
+    assert(steps[s].has_nonforce_effect());
+
+    // Step may have been on pending list, but is no longer there.
+    steps[s].clear_pending_nonforce_effect();
+
+    int call = steps[s].call;
+    auto& e = expression_at(call);
+    assert(e.is_a<effect>());
+    e.as_<effect>().register_effect(*this, steps[s].source_reg);
+}
+
+void reg_heap::unregister_effect_at_step(int s)
+{
+    // Step must have effect
+    assert(steps[s].has_nonforce_effect());
+
+    // Step must have not be on pending list
+    assert(not steps[s].has_pending_nonforce_effect());
+
+    int call = steps[s].call;
+    auto& e = expression_at(call);
+    assert(e.is_a<effect>());
+    e.as_<effect>().unregister_effect(*this, steps[s].source_reg);
+}
+
+void reg_heap::register_pending_effects()
+{
+    for(int s: pending_effect_steps)
+    {
+        assert(steps[s].has_pending_nonforce_effect());
+        register_effect_at_step(s);
+    }
+
+    pending_effect_steps.clear();
+}
+
 expression_ref reg_heap::evaluate_program(int c)
 {
     if (not program_result_head)
@@ -401,6 +478,8 @@ expression_ref reg_heap::evaluate_program(int c)
         assert(reg_has_value(follow_index_var(r_pdf)));
     }
 #endif
+
+    register_pending_effects();
 
     return result;
 }

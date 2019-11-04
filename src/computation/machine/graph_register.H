@@ -218,6 +218,16 @@ public:
 
     /* ---- */
 
+    void register_pending_effects();
+
+    void register_effect_pending_at_step(int s);
+
+    void unregister_effect_pending_at_step(int s);
+
+    void register_effect_at_step(int s);
+
+    void unregister_effect_at_step(int s);
+
     expression_ref evaluate_program(int c);
 
     /* ---- */
@@ -346,7 +356,9 @@ private:
     std::vector<int> prog_steps;
     std::vector<int> prog_results;
     mutable std::vector<std::bitset<8>> prog_temp;
-  
+
+    std::vector<int> pending_effect_steps;
+
 public:
     /// Is a particular token unused?
     bool token_is_used(int) const;

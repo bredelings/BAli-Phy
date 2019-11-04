@@ -3,7 +3,6 @@
 #include <algorithm>
 #include "util/range.H"
 #include "mapping.H"
-#include "effect.H"
 
 using std::string;
 using std::vector;
@@ -99,20 +98,15 @@ void reg_heap::reroot_at(int t)
     {
         if (s1 > 0 and steps.access(s1).has_nonforce_effect())
         {
-            int call = steps[s1].call;
-            auto& e = expression_at(call);
-            assert(e.is_a<effect>());
-            e.as_<effect>().unregister_effect(*this,r);
+            if (steps[s1].has_pending_nonforce_effect())
+                unregister_effect_pending_at_step(s1);
+            else
+                unregister_effect_at_step(s1);
         }
 
         int s2 = step_index_for_reg(r);
         if (s2 > 0 and steps.access(s2).has_nonforce_effect())
-        {
-            int call = steps[s2].call;
-            auto& e = expression_at(call);
-            assert(e.is_a<effect>());
-            e.as_<effect>().register_effect(*this,r);
-        }
+            register_effect_pending_at_step(s1);
     }
 
     // 6. Remove probabilities for invalidated regs from the current probability
