@@ -467,6 +467,13 @@ prob_ratios_t context_ref::probability_ratios(const context_ref& C1) const
     return memory()->probability_ratios(C1.context_index, context_index);
 }
 
+prob_ratios_t context_ref::heated_probability_ratios(const context_ref& C1) const
+{
+    auto ratio = probability_ratios(C1);
+    ratio.heat(get_beta());
+    return ratio;
+}
+
 log_double_t context_ref::heated_likelihood() const
 {
     // Don't waste time calculating likelihood if we're sampling from the prior.
