@@ -544,8 +544,10 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 
 void reg_heap::register_random_variable(int r)
 {
-    auto [r2,_] = incremental_evaluate(r);
-    r = r2;
+    r = follow_index_var(r);
+
+    if (not reg_has_value(r))
+        throw myexception()<<"Can't register a random variable that is unevaluated!";
 
     if (not is_random_variable(expression_at(r)))
 	throw myexception()<<"Trying to register `"<<expression_at(r)<<"` as random variable";
