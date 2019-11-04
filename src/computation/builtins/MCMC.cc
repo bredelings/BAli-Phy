@@ -6,6 +6,7 @@
 #include "computation/machine/graph_register.H"
 #include "computation/machine/effects.H"
 #include "util/rng.H"
+#include "util/log-level.H"
 #include "probability/choose.H"
 #include "computation/expression/constructor.H"
 #include "computation/expression/random_variable.H"
@@ -41,6 +42,20 @@ optional<int> find_modifiable_in_root_token(reg_heap& M, int r)
     // r is (now) a constant.
     // There is therefore no modifiable.
     return {};
+}
+
+extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Args)
+{
+    int r_rate = Args.reg_for_slot(0);
+
+    int r_transition_kernel = Args.reg_for_slot(1);
+
+    int r_effect = Args.allocate(new register_transition_kernel(r_rate, r_transition_kernel));
+
+    Args.set_effect(r_effect);
+
+    // Return a reference to the effect.
+    return {index_var(0),{r_effect}};
 }
 
 // The idea here is to propose new values of X, and evaluate them by summing over each Y_i \in {True,False}.
@@ -221,6 +236,8 @@ extern "C" closure builtin_function_slice_sample_real_random_variable(OperationA
     //------------- 1a. Get argument X -----------------
     int x_reg = Args.evaluate_slot_to_reg(0);
 
+    if (log_verbose >= 3) std::cerr<<" [slice_sample_real_random_variable] <"<<x_reg<<">\n";
+
     //------------- 1b. Get context index --------------
     int c1 = Args.evaluate(1).as_int();
     context_ref C1(M, c1);
@@ -232,35 +249,65 @@ extern "C" closure builtin_function_slice_sample_real_random_variable(OperationA
     if (auto r = M.find_random_variable(x_reg))
         x_reg = *r;
     else
-        throw myexception()<<"slice_sample_rv: reg "<<x_reg<<" is not a random variable!";
+        throw myexception()<<"slice_sample_real_random_variable: reg "<<x_reg<<" is not a random variable!";
 
     //------------- 3. Get initial value x1 for variable -------------//
     auto bnds = M.get_range_for_random_variable(c1, x_reg);
     if (not bnds.is_a<Bounds<double>>())
         throw myexception()<<"random variable doesn't have a range that is bounds<double>";
 
-    random_variable_slice_function slice_fn(C1, bnds.as_<Bounds<double>>(), x_reg);
+    random_variable_slice_function logp(C1, bnds.as_<Bounds<double>>(), x_reg);
 
     // OK, this is a bit problematic.
     double w = 1.0;
 
-    double v1 = slice_fn.current_value();
-    double v2 = slice_sample(v1, slice_fn, w, 100);
+    double v1 = logp.current_value();
+    double v2 = slice_sample(v1, logp, w, 100);
+
+    if (log_verbose >= 3) std::cerr<<"   - Posterior evaluated "<<logp.count<<" times.\n";
 
     return EPair(state+1,constructor("()",0));
 }
 
-extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Args)
+// gibbs_sample_categorical x n pr
+extern "C" closure builtin_function_slice_sample_integer_random_variable(OperationArgs& Args)
 {
-    int r_rate = Args.reg_for_slot(0);
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
 
-    int r_transition_kernel = Args.reg_for_slot(1);
+    //------------- 1a. Get argument X -----------------
+    int x_reg = Args.evaluate_slot_to_reg(0);
 
-    int r_effect = Args.allocate(new register_transition_kernel(r_rate, r_transition_kernel));
+    if (log_verbose >= 3) std::cerr<<" [slice_sample_integer_random_variable] <"<<x_reg<<">\n";
 
-    Args.set_effect(r_effect);
+    //------------- 1b. Get context index --------------
+    int c1 = Args.evaluate(1).as_int();
+    context_ref C1(M, c1);
 
-    // Return a reference to the effect.
-    return {index_var(0),{r_effect}};
+    //------------- 1c. Get monad thread state ---------
+    int state = Args.evaluate(2).as_int();
+
+    //------------- 2. Find the location of the variable -------------//
+    if (auto r = M.find_random_variable(x_reg))
+        x_reg = *r;
+    else
+        throw myexception()<<"slice_sample_integer_random_variable: reg "<<x_reg<<" is not a random variable!";
+
+    //------------- 3. Get initial value x1 for variable -------------//
+    auto bnds = M.get_range_for_random_variable(c1, x_reg);
+    if (not bnds.is_a<Bounds<int>>())
+        throw myexception()<<"random variable doesn't have a range that is bounds<int>";
+
+    integer_random_variable_slice_function logp(C1, bnds.as_<Bounds<int>>(), x_reg);
+
+    // OK, this is a bit problematic.
+    double w = 1.0;
+
+    double v1 = logp.current_value() + uniform();
+    double v2 = slice_sample(v1, logp, w, 100);
+
+    if (log_verbose >= 3) std::cerr<<"   - Posterior evaluated "<<logp.count<<" times.\n";
+
+    return EPair(state+1,constructor("()",0));
 }
 
