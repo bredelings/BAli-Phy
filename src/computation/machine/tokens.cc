@@ -100,6 +100,7 @@ void reg_heap::release_tip_token(int t)
     {
 	assert(is_root_token(t));
 	root_token = -1;
+        pending_effect_steps.clear();
 	assert(tokens.size() - unused_tokens.size() == 0);
     }
 
