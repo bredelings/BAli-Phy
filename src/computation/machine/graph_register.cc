@@ -394,8 +394,6 @@ void reg_heap::unregister_effect_pending_at_step(int s)
     // Step must have be on pending list
     assert(steps[s].has_pending_nonforce_effect());
 
-    steps[s].clear_pending_nonforce_effect();
-
     std::optional<int> index;
     for(int i=0;i<pending_effect_steps.size();i++)
         if (pending_effect_steps[i]== s)
@@ -406,6 +404,8 @@ void reg_heap::unregister_effect_pending_at_step(int s)
 
     if (*index + 1 < pending_effect_steps.size())
         std::swap(pending_effect_steps[*index], pending_effect_steps.back());
+
+    steps[s].clear_pending_nonforce_effect();
 
     pending_effect_steps.pop_back();
 }
