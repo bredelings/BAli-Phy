@@ -476,6 +476,11 @@ log_double_t context_ref::heated_likelihood() const
 	return pow(likelihood(),get_beta());
 }
 
+log_double_t context_ref::heated_probability() const
+{
+    return prior() * heated_likelihood();
+}
+
 log_double_t context_ref::heated_probability_ratio(const context& C1) const
 {
     auto ratios = probability_ratios(C1);

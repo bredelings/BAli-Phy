@@ -192,22 +192,17 @@ public:
 
     void compile();
 
-    virtual log_double_t prior() const;
-
-    virtual log_double_t likelihood() const;
-
-    virtual log_double_t probability() const;
+    log_double_t prior() const;
+    log_double_t likelihood() const;
+    log_double_t probability() const;
 
     virtual double get_beta() const {return 1.0;}
-
     virtual void set_beta(double) {std::abort();}
-
-    virtual log_double_t heated_likelihood() const;
-    virtual log_double_t heated_probability() const {return prior() * heated_likelihood();}
-
-    virtual log_double_t heated_probability_ratio(const context&) const;
+    log_double_t heated_likelihood() const;
+    log_double_t heated_probability() const;
 
     prob_ratios_t probability_ratios(const context_ref& C1) const;
+    log_double_t heated_probability_ratio(const context&) const;
 
 protected:  
     void collect_garbage() const;
