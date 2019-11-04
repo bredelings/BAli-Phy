@@ -34,6 +34,10 @@
 
 class Parameters;
 
+struct variables_changed_exception: public myexception
+{
+    using myexception::myexception;
+};
 
 /// A function interface object for use in slice sampling
 struct slice_function: public bounds<double>
@@ -46,6 +50,8 @@ struct slice_function: public bounds<double>
 
     /// Return the current value of x
     virtual double current_value() const;
+
+    virtual void reset() {std::abort();};
 
     slice_function() {}
     slice_function(const bounds<double>& b):bounds<double>(b) {}
@@ -84,6 +90,8 @@ public:
     virtual void set_value(double x) = 0;
 
     virtual double current_value() const = 0;
+
+    void reset();
 
     context_slice_function(context_ref&);
 

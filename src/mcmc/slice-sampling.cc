@@ -60,13 +60,23 @@ double context_slice_function::operator()(double x)
 
     // Here is where we return 0 if the number of variables changes.
     // How can we automate this so that it is called only once?
-    current_fn_value = C.heated_probability_ratio(C0);
+    auto ratio = C.heated_probability_ratios(C0);
+    if (ratio.variables_changed)
+        throw variables_changed_exception()<<"Variable changed during slice sampling!";
+
+    current_fn_value = ratio.total_ratio();
+
     return operator()();
 }
 
 double context_slice_function::operator()()
 {
     return log(current_fn_value);
+}
+
+void context_slice_function::reset()
+{
+    C = C0;
 }
 
 void random_variable_slice_function::set_value(double x)
@@ -519,7 +529,7 @@ double search_interval(double x0,double& L, double& R, slice_function& g,double 
     return x0;
 }
 
-double slice_sample(double x0, slice_function& g,double w, int m)
+double slice_sample_(double x0, slice_function& g, double w, int m)
 {
     assert(g.in_range(x0));
 
@@ -548,6 +558,21 @@ double slice_sample(double x0, slice_function& g,double w, int m)
     // Sample from the interval, shrinking it on each rejection
 
     return search_interval(x0,L,R,g,logy);
+}
+
+double slice_sample(double x0, slice_function& g,double w, int m)
+{
+    try
+    {
+        return slice_sample_(x0, g, w, m);
+    }
+    catch (variables_changed_exception& e)
+    {
+        if (log_verbose >= 2)
+            std::cerr<<e.what()<<"\n";
+        g.reset();
+    }
+    return x0;
 }
 
 double slice_sample(slice_function& g, double w, int m)
