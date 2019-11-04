@@ -483,8 +483,7 @@ log_double_t context_ref::heated_probability() const
 
 log_double_t context_ref::heated_probability_ratio(const context& C1) const
 {
-    auto ratios = probability_ratios(C1);
-    return ratios.prior_ratio * pow(ratios.likelihood_ratio, get_beta());
+    return heated_probability_ratios(C1).total_ratio();
 }
 
 void context_ref::collect_garbage() const
