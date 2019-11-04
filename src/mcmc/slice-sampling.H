@@ -34,7 +34,7 @@
 
 class Parameters;
 
-struct variables_changed_exception: public myexception
+class variables_changed_exception: public myexception
 {
     using myexception::myexception;
 };
