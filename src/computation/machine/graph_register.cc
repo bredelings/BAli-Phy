@@ -277,8 +277,9 @@ void reg_heap::register_prior(int r)
 
     assert(access_value_for_reg(r).exp.is_log_double());
 
-    if (regs.access(r).flags.test(0))
-        throw myexception()<<"Can't register a prior reg that is already registered!";
+    // We set bit zero of regs[r].flag every time we register OR REREGISTER it.
+    // Therefore if two different random variables share a PDF, we cannot detect it
+    //  simply by the bit being set twice.
 
     if (reg_is_constant(r))
     {
