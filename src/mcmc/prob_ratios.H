@@ -5,10 +5,12 @@
 
 struct prob_ratios_t
 {
-    log_double_t prior_ratio;
-    log_double_t likelihood_ratio;
-    log_double_t total_ratio() const {return prior_ratio * likelihood_ratio;}
     bool variables_changed = false;
+
+    log_double_t prior_ratio = 1.0;
+    log_double_t likelihood_ratio = 1.0;
+
+    log_double_t total_ratio() const {return prior_ratio * likelihood_ratio;}
 };
 
 #endif

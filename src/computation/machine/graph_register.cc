@@ -428,7 +428,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     evaluate_program(c2);
 
     // 4. compute the ratio only for (i) changed pdfs that (ii) exist in both c1 and c2
-    prob_ratios_t R{1.0, 1.0, false};
+    prob_ratios_t R;
 
     for(auto [pdf_reg, pdf_res]: original_pdf_results)
     {
