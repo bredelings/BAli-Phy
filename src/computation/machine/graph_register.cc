@@ -103,6 +103,21 @@ void Step::mark_with_nonforce_effect()
     flags.set(6);
 }
 
+bool Step::has_pending_nonforce_effect() const
+{
+    return flags.test(5);
+}
+
+void Step::set_pending_nonforce_effect()
+{
+    flags.set(5);
+}
+
+void Step::clear_pending_nonforce_effect()
+{
+    flags.set(5,false);
+}
+
 void Step::clear()
 {
     source_reg = -1;

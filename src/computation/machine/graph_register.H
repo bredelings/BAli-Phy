@@ -37,6 +37,12 @@ struct Step
 
     void mark_with_nonforce_effect();
 
+    bool has_pending_nonforce_effect() const;
+
+    void set_pending_nonforce_effect();
+
+    void clear_pending_nonforce_effect();
+
     void clear();
 
     void check_cleared();
