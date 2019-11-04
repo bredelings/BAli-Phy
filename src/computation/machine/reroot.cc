@@ -106,7 +106,7 @@ void reg_heap::reroot_at(int t)
 
         int s2 = step_index_for_reg(r);
         if (s2 > 0 and steps.access(s2).has_nonforce_effect())
-            register_effect_pending_at_step(s1);
+            register_effect_pending_at_step(s2);
     }
 
     // 6. Remove probabilities for invalidated regs from the current probability
