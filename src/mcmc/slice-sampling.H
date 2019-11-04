@@ -34,10 +34,6 @@
 
 class Parameters;
 
-namespace slice_sampling {
-    /// This function returns the value \a x that was passed in.
-    double identity(double x);
-}
 
 /// A function interface object for use in slice sampling
 struct slice_function: public bounds<double>

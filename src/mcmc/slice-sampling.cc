@@ -33,10 +33,6 @@ extern int log_verbose;
 
 using std::vector;
 
-namespace slice_sampling {
-    double identity(double x) {return x;}
-}
-
 double slice_function::current_value() const
 {
     std::abort();
