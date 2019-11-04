@@ -158,9 +158,9 @@ expression_ref context_ref::recursive_evaluate(int i) const
 
 int get_reps(double x)
 {
-    int xx = (int)x;
-    x -= xx;
-    return x + poisson(xx);
+    int x_int = (int)x;
+    double x_frac = x - x_int;
+    return x_int + poisson(x_frac);
 }
 
 void context_ref::run_transition_kernels()
