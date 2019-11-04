@@ -96,6 +96,8 @@ random_variable_slice_function::random_variable_slice_function(context_ref& c, c
 bounds<double> convert_bounds(const bounds<int>& int_bounds)
 {
     bounds<double> double_bounds = int_bounds;
+    if (double_bounds.upper_bound)
+        double_bounds.upper_bound = *double_bounds.upper_bound + 1;
 
     return double_bounds;
 }
