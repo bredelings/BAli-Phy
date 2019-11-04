@@ -449,6 +449,8 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 	    else 
 		R.likelihood_ratio *= r;
 	}
+        else
+            R.variables_changed = true;
     }
 
 #if DEBUG_MACHINE >= 2
