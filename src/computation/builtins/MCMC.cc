@@ -103,6 +103,8 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 
     reg_heap& M = Args.memory();
 
+    if (log_verbose >= 3) std::cerr<<"\n\n[sum_out_coals]\n";
+
     //------------- 1a. Get argument X -----------------
     int t_reg = Args.evaluate_slot_to_reg(0);
     if (auto t_mod_reg = find_modifiable_in_root_token(M, t_reg))
@@ -185,6 +187,8 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
     //------------- 1b. Get range [0,n) for X ----------
     int n_values = Args.evaluate(1).as_int();
 
+    if (log_verbose >= 3) std::cerr<<"\n\n[gibbs sample_categorical] <"<<x_reg<<"> in [0, "<<n_values-1<<"]\n";
+
     //------------- 1c. Get context index --------------
     int c1 = Args.evaluate(2).as_int();
 
@@ -236,7 +240,7 @@ extern "C" closure builtin_function_slice_sample_real_random_variable(OperationA
     //------------- 1a. Get argument X -----------------
     int x_reg = Args.evaluate_slot_to_reg(0);
 
-    if (log_verbose >= 3) std::cerr<<" [slice_sample_real_random_variable] <"<<x_reg<<">\n";
+    if (log_verbose >= 3) std::cerr<<"\n\n[slice_sample_real_random_variable] <"<<x_reg<<">\n";
 
     //------------- 1b. Get context index --------------
     int c1 = Args.evaluate(1).as_int();
@@ -277,7 +281,7 @@ extern "C" closure builtin_function_slice_sample_integer_random_variable(Operati
     //------------- 1a. Get argument X -----------------
     int x_reg = Args.evaluate_slot_to_reg(0);
 
-    if (log_verbose >= 3) std::cerr<<" [slice_sample_integer_random_variable] <"<<x_reg<<">\n";
+    if (log_verbose >= 3) std::cerr<<"\n\n[slice_sample_integer_random_variable] <"<<x_reg<<">\n";
 
     //------------- 1b. Get context index --------------
     int c1 = Args.evaluate(1).as_int();
