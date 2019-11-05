@@ -5,7 +5,7 @@ import MCMC
 
 builtin builtin_sample_bernoulli 2 "sample_bernoulli" "Distribution"
 
-bernoulli_effect x = add_move (\c -> slice_sample_integer_random_variable x c)
+bernoulli_effect x = add_move (\c -> discrete_uniform_avoid_mh x 0 1 c)
 
 sample_bernoulli p = RandomStructure bernoulli_effect modifiable_structure $ liftIO (IOAction (\s->(s,builtin_sample_bernoulli p s)))
 
