@@ -228,6 +228,54 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
     return EPair(state+1,constructor("()",0));
 }
 
+// gibbs_sample_categorical x n pr
+extern "C" closure builtin_function_discrete_uniform_avoid_mh(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+
+    //------------- 1a. Get argument X -----------------
+    int x_reg = Args.evaluate_slot_to_reg(0);
+
+    //------------- 1bc. Get range [a,a+n-1] for X -----
+    int a = Args.evaluate(1).as_int();
+    int b = Args.evaluate(2).as_int();
+
+    if (log_verbose >= 3) std::cerr<<"\n\n[discrete_uniform_avoid_mh] <"<<x_reg<<"> in ["<<a<<", "<<b<<"]\n";
+
+    //------------- 1d. Get context index --------------
+    int c1 = Args.evaluate(3).as_int();
+
+    //------------- 1e. Get monad thread state ---------
+    int state = Args.evaluate(4).as_int();
+
+    //------------- 2. Find the location of the variable -----------//
+    auto& M = Args.memory();
+    auto x_mod_reg = find_modifiable_in_root_token(M, x_reg);
+    if (not x_mod_reg)
+        throw myexception()<<"discrete_uniform_avoid_mh: reg "<<x_reg<<" not modifiable!";
+
+    //------------- 3. Get initial value x1 for variable -----------//
+    context_ref C1(M, c1);
+
+    int x1 = C1.get_reg_value(*x_mod_reg).as_int();
+    if (x1 < a or x1 > b)
+        throw myexception()<<"discrete_uniform_avoid_mh: value "<<x1<<" not in range ["<<a<<", "<<b<<"]";
+
+    //------------- 4. Propose new value avoiding x1 ---------------//
+    int x2 = uniform(a,b-1);
+    if (x2 >= x1) x2++;
+
+    //------------- 5. Create a context with the new value----------//
+    context C2 = C1;
+    C2.set_reg_value(*x_mod_reg, expression_ref(x2));
+
+    //------------- 6. Move if MH rule is satisfied ----------------//
+    if (accept_MH(C1,C2,1.0))
+        C1 = C2;
+
+    return EPair(state+1,constructor("()",0));
+}
+
 template <typename T>
 using Bounds = Box<bounds<T>>;
 
@@ -313,4 +361,3 @@ extern "C" closure builtin_function_slice_sample_integer_random_variable(Operati
 
     return EPair(state+1,constructor("()",0));
 }
-
