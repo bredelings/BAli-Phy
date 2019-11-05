@@ -93,12 +93,6 @@ public:
 
 Model::key_map_t parse_key_map(const std::vector<std::string>& key_value_strings);
 
-void show_parameters(std::ostream& o,const Model& M, bool = true);
-
-std::string show_parameters(const Model& M, bool = true);
-
-bool has_parameter(const Model& M, const std::string& name);
-
 std::vector<std::string> parameter_names(const Model& M);
 
 std::vector<std::string> short_parameter_names(const Model& M);

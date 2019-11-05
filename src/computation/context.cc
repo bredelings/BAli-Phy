@@ -13,6 +13,7 @@
 #include "expression/modifiable.H"
 #include "expression/reg_var.H"
 #include "util/rng.H"
+#include "util/log-level.H"
 #include "util/permute.H"
 
 using std::string;
@@ -748,5 +749,73 @@ context::context(const Program& P)
 context::~context()
 {
     memory_->release_context(context_index);
+}
+
+bool accept_MH(const context_ref& C1,const context_ref& C2,log_double_t rho)
+{
+    if (log_verbose >= 3)
+    {
+        std::cerr<<"accept_MH: rho = "<<rho<<endl;
+
+        show_parameters(std::cerr,C1);
+        std::cerr<<C1.probability()<<" = "<<C1.likelihood()<<" + "<<C1.prior()<<endl;
+        std::cerr<<endl;
+
+        show_parameters(std::cerr,C2);
+        std::cerr<<C2.probability()<<" = "<<C2.likelihood()<<" + "<<C2.prior();
+        std::cerr<<endl<<endl;
+    }
+
+    log_double_t ratio = rho*C2.heated_probability_ratio(C1);
+
+    bool accept = (ratio >= 1.0 or uniform() < ratio);
+
+    if (log_verbose >=3) std::cerr<<"accept_MH: accept = "<<accept<<endl;
+
+    return accept;
+}
+
+void simplify(json& j);
+json flatten_me(const json& j);
+
+void show_parameters(std::ostream& o,const context_ref& C, bool show_hidden) {
+    for(int i=0;i<C.n_parameters();i++) {
+	string name = C.parameter_name(i);
+	if ((not show_hidden) and name.size() > 1 and name[0] == '*') continue;
+
+	o<<"    "<<name<<" = ";
+
+	string output = C.recursive_evaluate_parameter(i).print();
+	if (output.find(10) != string::npos or output.find(13) != string::npos)
+	    output = "[multiline]";
+	o<<output;
+    }
+    auto j = C.get_logged_parameters();
+    simplify(j);
+    j = flatten_me(j);
+    for(auto& [key,j2]: j.items())
+        o<<"   "<<key<<" = "<<j2;
+    o<<"\n";
+    o<<"\n";
+}
+
+std::string show_parameters(const context_ref& C, bool show_hidden)
+{
+    std::ostringstream oss;
+    show_parameters(oss,C, show_hidden);
+    return oss.str();
+}
+
+/// \brief Check if the model C has a parameter called name
+///
+/// \param C      The model
+/// \param name   A parameter name
+///
+bool has_parameter(const context_ref& C, const string& name)
+{
+    for(int i=0;i<C.n_parameters();i++)
+	if (C.parameter_name(i) == name)
+	    return true;
+    return false;
 }
 

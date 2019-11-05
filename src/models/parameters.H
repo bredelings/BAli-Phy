@@ -451,7 +451,6 @@ public:
                const std::string&);
 };
 
-bool accept_MH(const Model& P1, const Model& P2, log_double_t rho);
 std::string write_newick(const Parameters&, bool=true);
 
 #endif

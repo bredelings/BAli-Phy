@@ -59,50 +59,6 @@ Model::Model(const std::shared_ptr<module_loader>& L, const key_map_t& k)
 { }
 
 
-void simplify(json& j);
-json flatten_me(const json& j);
-
-void show_parameters(std::ostream& o,const Model& M, bool show_hidden) {
-    for(int i=0;i<M.n_parameters();i++) {
-	string name = M.parameter_name(i);
-	if ((not show_hidden) and name.size() > 1 and name[0] == '*') continue;
-
-	o<<"    "<<name<<" = ";
-
-	string output = M.recursive_evaluate_parameter(i).print();
-	if (output.find(10) != string::npos or output.find(13) != string::npos)
-	    output = "[multiline]";
-	o<<output;
-    }
-    auto j = M.get_logged_parameters();
-    simplify(j);
-    j = flatten_me(j);
-    for(auto& [key,j2]: j.items())
-        o<<"   "<<key<<" = "<<j2;
-    o<<"\n";
-    o<<"\n";
-}
-
-std::string show_parameters(const Model& M, bool show_hidden)
-{
-    std::ostringstream oss;
-    show_parameters(oss,M, show_hidden);
-    return oss.str();
-}
-
-/// \brief Check if the model M has a parameter called name
-///
-/// \param M      The model
-/// \param name   A parameter name
-///
-bool has_parameter(const Model& M, const string& name)
-{
-    for(int i=0;i<M.n_parameters();i++)
-	if (M.parameter_name(i) == name)
-	    return true;
-    return false;
-}
-
 /// \brief Check if the string s1 matches a pattern s2
 ///
 /// \param s1   The string

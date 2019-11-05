@@ -1955,28 +1955,3 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 :Parameters(L, A, filename_ranges, t, SMs, s_mapping, vector<model_t>{}, vector<optional<int>>{}, scaleMs, scale_mapping, branch_length_model, like_calcs, k, dir)
 { }
 
-// FIXME - move to .. model.cc? mcmc?
-bool accept_MH(const Model& P1,const Model& P2,log_double_t rho)
-{
-    if (log_verbose >= 3)
-    {
-        std::cerr<<"accept_MH: rho = "<<rho<<endl;
-
-        show_parameters(std::cerr,P1);
-        std::cerr<<P1.probability()<<" = "<<P1.likelihood()<<" + "<<P1.prior()<<endl;
-        std::cerr<<endl;
-
-        show_parameters(std::cerr,P2);
-        std::cerr<<P2.probability()<<" = "<<P2.likelihood()<<" + "<<P2.prior();
-        std::cerr<<endl<<endl;
-    }
-
-    log_double_t ratio = rho*P2.heated_probability_ratio(P1);
-
-    bool accept = (ratio >= 1.0 or uniform() < ratio);
-
-    if (log_verbose >=3) std::cerr<<"accept_MH: accept = "<<accept<<endl;
-
-    return accept;
-}
-
