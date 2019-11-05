@@ -227,7 +227,7 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
 template <typename T>
 using Bounds = Box<bounds<T>>;
 
-// gibbs_sample_categorical x n pr
+// slice_sample_real_random_variable x context state
 extern "C" closure builtin_function_slice_sample_real_random_variable(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
@@ -268,7 +268,7 @@ extern "C" closure builtin_function_slice_sample_real_random_variable(OperationA
     return EPair(state+1,constructor("()",0));
 }
 
-// gibbs_sample_categorical x n pr
+// slice_sample_integer_random_variable x context state
 extern "C" closure builtin_function_slice_sample_integer_random_variable(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
