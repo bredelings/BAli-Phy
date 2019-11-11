@@ -239,12 +239,12 @@ void reg_heap::unshare_regs(int t)
     for(;i<delta_result.size();i++)
         if (auto [r,_] = delta_result[i]; has_result(r))
         {
-            const auto& Result = result_for_reg(r);
-
-            // Look at results that call the root's result (that is overridden in t)
-            for(int res2: Result.called_by)
-                if (int r2 = results[res2].source_reg; prog_results[r2] == res2)
+	    // Look at steps that CALL the reg in the root (that has overridden result in t)
+            for(int s2: regs[r].called_by)
+                if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
                     unshare_result(r2);
+
+            const auto& Result = result_for_reg(r);
 
             // Look at step that use the root's result (that is overridden in t)
             for(auto& [s2,_]: Result.used_by)

@@ -29,6 +29,10 @@ struct Step
     /// Which reg's were used to reduce this expression?
     boost::container::small_vector< std::pair<int,int>, 2 > used_inputs;
     boost::container::small_vector< int, 2 > forced_regs;
+
+    /// Does C reduce to another reg that we need to evaluate to get the true value?
+    std::pair<int,int> call_edge;
+
     boost::container::small_vector< int, 2 > created_regs;
 
     std::bitset<8> flags;
@@ -65,14 +69,8 @@ struct Result
     /// What final WHNF does this computation reduce to?
     int value = 0;
 
-    /// Does C reduce to another reg that we need to evaluate to get the true value?
-    std::pair<int,int> call_edge;
-  
     /// Which pairs (reg,slot) USED the reduction value of C (via an operation)?
     boost::container::small_vector<std::pair<int,int>, 2> used_by;
-
-    /// Which reduction values made use of the value of this expression (via call)
-    boost::container::small_vector<int, 5> called_by;
 
     std::bitset<8> flags;
 
@@ -102,6 +100,9 @@ public:
     enum class type_t {unknown=0, index_var=1, constant=2, changeable=3};
 
     type_t type = type_t::unknown;
+
+    /// Which reduction values made use of the value of this expression (via call)
+    boost::container::small_vector<int, 5> called_by;
 
     std::pair<int, int> created_by;
 
@@ -141,7 +142,7 @@ class reg_heap: public Object
 
     void reclaim_used(int);
 
-    bool result_is_called_by(int, int) const;
+    bool reg_is_called_by(int, int) const;
     bool result_is_used_by(int, int) const;
     bool reg_is_used_by(int, int) const;
 
