@@ -70,8 +70,6 @@ struct Result
     /// What final WHNF does this computation reduce to?
     int value = 0;
 
-    std::bitset<8> flags;
-
     void clear();
 
     void check_cleared() const;
