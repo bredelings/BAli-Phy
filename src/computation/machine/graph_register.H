@@ -61,18 +61,6 @@ struct Step
     Step(Step&&) noexcept;
 };
 
-struct Result
-{
-    int source_step = -1;
-
-    /// What final WHNF does this computation reduce to?
-    int value = 0;
-
-    void clear();
-
-    void check_cleared() const;
-};
-
 constexpr int non_computed_index = -1;
 
 constexpr int non_existant_index = -2;
@@ -119,8 +107,6 @@ class reg_heap: public Object
     pool<reg> regs;
 
     mutable pool<Step> steps;
-
-    mutable pool<Result> results;
 
     mutable int n_active_scratch_lists = 0;
     mutable std::vector< object_ptr<Vector<int> > > scratch_lists;
@@ -482,13 +468,10 @@ public:
     int result_index_for_reg(int r) const;
     const Step& step_for_reg(int r) const ;
     Step& step_for_reg(int r);
-    const Result& result_for_reg(int r) const ;
-    Result& result_for_reg(int r);
     bool has_step(int r) const;
     bool has_result(int r) const;
     bool reg_has_value(int r) const;
     int follow_index_var(int r) const;
-    bool reg_has_result_value(int r) const;
     int result_value_for_reg(int r) const;
     bool reg_has_call(int r) const;
     int call_for_reg(int r) const;
@@ -498,20 +481,16 @@ public:
     int remove_shared_result(int t, int r);
 
     int get_shared_step(int r);
-    int get_shared_result(int step);
 
     int add_shared_step(int r);
-    int add_shared_result(int r, int step);
 
     void clear_step(int r);
     void clear_result(int r);
 
     void clear_back_edges_for_reg(int r);
     void clear_back_edges_for_step(int s);
-    void clear_back_edges_for_result(int rc);
 
     void check_back_edges_cleared_for_step(int rc);
-    void check_back_edges_cleared_for_result(int rc);
 
     int value_for_reg(int r) const;
 
@@ -527,7 +506,6 @@ public:
     /*----- Graph splitting -----*/
     /// Update the value of a non-constant, non-computed index
     void set_reg_value(int index, closure&&, int t);
-    void set_shared_value(int r, int v);
     bool reg_is_shared(int t, int r) const;
     void unshare_regs(int t1);
     void mark_completely_dirty(int t);

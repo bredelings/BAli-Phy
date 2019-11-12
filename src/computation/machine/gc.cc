@@ -13,13 +13,11 @@ void shrink(V& v)
 long total_gc = 0;
 long total_regs = 0;
 long total_steps = 0;
-long total_comps = 0;
 void reg_heap::collect_garbage()
 {
     total_gc++;
     total_regs = size();
     total_steps = steps.size();
-    total_comps = results.size();
 
     // Avoid memory leaks.  But can we do this faster?
     {

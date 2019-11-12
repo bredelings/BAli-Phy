@@ -238,7 +238,6 @@ void show_ending_messages(bool show_only)
         extern long total_gc;
         extern long total_regs;
         extern long total_steps;
-        extern long total_comps;
 
         extern long total_case_op;
         extern long total_let_op;
@@ -260,7 +259,6 @@ void show_ending_messages(bool show_only)
             cout<<"total step allocations         = "<<total_step_allocations<<endl;
             cout<<"total regs                     = "<<total_regs<<endl;
             cout<<"total steps                    = "<<total_steps<<endl;
-            cout<<"total computations             = "<<total_comps<<endl;
             cout<<"\ntotal reroot operations        = "<<total_reroot<<endl;
             cout<<"  total atomic reroot          = "<<total_reroot_one<<endl;
             cout<<"  total steps pivoted          = "<<total_steps_pivoted<<endl;

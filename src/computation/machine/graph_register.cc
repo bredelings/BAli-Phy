@@ -166,17 +166,6 @@ Step::Step(Step&& S) noexcept
      flags ( S.flags )
 { }
 
-void Result::clear()
-{
-    source_step = -1;
-    value = 0;
-}
-
-void Result::check_cleared() const
-{
-    assert(not value);
-}
-
 void reg::clear()
 {
     C.clear();
@@ -504,16 +493,16 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     // 4. compute the ratio only for (i) changed pdfs that (ii) exist in both c1 and c2
     prob_ratios_t R;
 
-    for(auto [pdf_reg, pdf_res]: original_pdf_results)
+    for(auto [pdf_reg, orig_pdf_value]: original_pdf_results)
     {
 	assert(prog_temp[pdf_reg].test(pdf_bit));
 
 	prog_temp[pdf_reg].reset(pdf_bit);
 
 	// Only compute a ratio if the pdf is present and computed in BOTH contexts.
-	if (pdf_res > 0 and has_result(pdf_reg))
+	if (orig_pdf_value > 0 and has_result(pdf_reg))
 	{
-	    int result_reg1 = results[pdf_res].value;
+	    int result_reg1 = orig_pdf_value;
 	    int result_reg2 = result_value_for_reg(pdf_reg);
 	    log_double_t r = (*this)[result_reg2].exp.as_log_double() / (*this)[result_reg1].exp.as_log_double();
 
@@ -775,18 +764,6 @@ Step& reg_heap::step_for_reg(int r)
     return steps.access_unused(s);
 }
 
-const Result& reg_heap::result_for_reg(int r) const 
-{ 
-    int res = result_index_for_reg(r);
-    return results.access_unused(res);
-}
-
-Result& reg_heap::result_for_reg(int r)
-{ 
-    int res = result_index_for_reg(r);
-    return results.access_unused(res);
-}
-
 const closure& reg_heap::access_value_for_reg(int R1) const
 {
     int R2 = value_for_reg(R1);
@@ -798,12 +775,7 @@ bool reg_heap::reg_has_value(int r) const
     if (regs.access(r).type == reg::type_t::constant)
 	return true;
     else
-	return reg_has_result_value(r);
-}
-
-bool reg_heap::reg_has_result_value(int r) const
-{
-    return has_result(r) and result_value_for_reg(r);
+	return has_result(r);
 }
 
 bool reg_heap::reg_has_call(int r) const
@@ -828,42 +800,30 @@ bool reg_heap::has_result(int r) const
 
 int reg_heap::value_for_reg(int r) const 
 {
-    assert(not (*this)[r].exp.is_index_var());
-    if (regs.access(r).type == reg::type_t::changeable)
+    assert(not expression_at(r).is_index_var());
+    if (reg_is_changeable(r))
 	return result_value_for_reg(r);
     else
     {
-	assert(regs.access(r).type == reg::type_t::constant);
+	assert(reg_is_constant(r));
 	return r;
     }
 }
 
 int reg_heap::result_value_for_reg(int r) const 
 {
-    return result_for_reg(r).value;
+    return result_index_for_reg(r);
 }
 
 void reg_heap::set_result_value_for_reg(int r1)
 {
-    // 1. Find step object for current reg
-    int s1 = step_index_for_reg(r1);
-    auto& S1 = steps[s1];
-
-    // 2. Find result object for current reg
-    int res1 = result_index_for_reg(r1);
-    if (res1 < 0)
-        res1 = add_shared_result(r1, s1);
-    assert(res1 > 0);
-    auto& RES1 = results[res1];
-
-    // 3. Find called reg
-    int r2 = S1.call;
-    assert(r2);
+    // 1. Find called reg
+    int r2 = step_for_reg(r1).call;
     assert(reg_is_constant(r2) or reg_is_changeable(r2));
 
-    // 4. Set the result value for the current reg
-    RES1.value = value_for_reg(r2);
-    assert(RES1.value);
+    // 2. Set the result value for the current reg
+    prog_results[r1] = value_for_reg(r2);
+    assert(prog_results[r1] > 0);
 }
 
 void reg_heap::set_used_input(int s1, int r2)
@@ -875,7 +835,6 @@ void reg_heap::set_used_input(int s1, int r2)
     assert(closure_at(r2));
 
     assert(has_result(r2));
-    assert(result_value_for_reg(r2));
 
     // An index_var's value only changes if the thing the index-var points to also changes.
     // So, we may as well forbid using an index_var as an input.
@@ -900,7 +859,6 @@ void reg_heap::set_forced_input(int s1, int R2)
     assert(closure_at(R2));
 
     assert(has_result(R2));
-    assert(result_value_for_reg(R2));
 
     // An index_var's value only changes if the thing the index-var points to also changes.
     // So, we may as well forbid using an index_var as an input.
@@ -1132,16 +1090,6 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
     check_used_regs();
     check_tokens();
 #endif
-}
-
-void reg_heap::set_shared_value(int r, int v)
-{
-    // add a new computation
-    int step = add_shared_step(r);
-    add_shared_result(r, step);
-
-    // set the value
-    set_call(r, v);
 }
 
 /*
@@ -1465,17 +1413,14 @@ void reg_heap::check_used_regs_in_token(int t) const
 {
     assert(token_is_used(t));
 
-    for(auto [r,res]: tokens[t].delta_result())
+    for(auto [r,result]: tokens[t].delta_result())
     {
 	assert(not prog_temp[r].test(0));
 	prog_temp[r].set(0);
 
 	// No results for constant regs
-	if (res > 0)
-	{
+	if (result > 0)
             assert(regs.access(r).type != reg::type_t::constant);
-	    assert(not steps.is_free(results[res].source_step));
-	}
     }
     for(auto [r,step]: tokens[t].delta_step())
     {
@@ -1509,40 +1454,6 @@ void reg_heap::check_used_regs_in_token(int t) const
 	}
     }
 
-    for(auto [reg, res]: tokens[t].delta_result())
-    {
-	if (res < 0) continue;
-
-	int step = results[res].source_step;
-	int call = steps[step].call;
-	
-	assert(steps[step].source_reg == reg);
-	//FIXME! Check that source_step is in same token, for same reg
-	int value = results[res].value;
-
-	if (value)
-	    assert(call);
-
-	if (call and value == call)
-	    assert(regs.access(call).type == reg::type_t::constant);
-
-	if (call and value and regs.access(call).type == reg::type_t::constant)
-	    assert(value == call);
-
-	if (t != root_token) continue;
-
-	// Regs with values should have back-references from their call.
-	if (value and regs.access(call).type != reg::type_t::constant)
-	{
-	    assert( has_result(call) );
-            assert( reg_is_called_by(reg, step) );
-	}
-
-	// If we have a value, then our call should have a value
-	if (value)
-	    assert(reg_has_value(call));
-    }
-
     for(auto [reg,res]: tokens[t].delta_result())
     {
 	prog_temp[reg].reset(0);
@@ -1569,12 +1480,6 @@ void reg_heap::check_used_regs() const
     {
         if (S.call > 0)
             assert(not regs.is_free(S.call));
-    }
-
-    // Check results that are not mapped
-    for(const auto& result: results)
-    {
-	assert(not steps.is_free(result.source_step));
     }
 }
 
@@ -1608,38 +1513,6 @@ int reg_heap::add_shared_step(int r)
     return s;
 }
 
-int reg_heap::get_shared_result(int s)
-{
-    // 1. Get a new result
-    int res = results.allocate();
-    total_comp_allocations++;
-  
-    // 2. Set the source of the result
-    results[res].source_step = s;
-
-    assert(res > 0);
-
-    return res;
-}
-
-/// Add a shared result at (t,r) -- assuming there isn't one already
-int reg_heap::add_shared_result(int r, int s)
-{
-    assert(not has_result(r));
-    // There should already be a step, if there is a result
-    assert(has_step(r));
-
-    // Get a result
-    int res = get_shared_result(s);
-
-    // Link it in to the mapping
-    prog_results[r] = res;
-
-    assert(res > 0);
-
-    return res;
-}
-
 void reg_heap::check_back_edges_cleared_for_step(int s)
 {
     for(auto& [_,index]: steps.access_unused(s).used_inputs)
@@ -1654,10 +1527,6 @@ void reg_heap::check_back_edges_cleared_for_step(int s)
 	assert(step == 0);
 	assert(index == 0);
     }
-}
-
-void reg_heap::check_back_edges_cleared_for_result(int)
-{
 }
 
 void reg_heap::clear_back_edges_for_reg(int r)
@@ -1727,11 +1596,6 @@ void reg_heap::clear_back_edges_for_step(int s)
     steps[s].created_regs.clear();
 }
 
-void reg_heap::clear_back_edges_for_result(int res)
-{
-    assert(res > 0);
-}
-
 void reg_heap::clear_step(int r)
 {
     assert(not has_result(r));
@@ -1749,16 +1613,7 @@ void reg_heap::clear_step(int r)
 
 void reg_heap::clear_result(int r)
 {
-    int res = prog_results[r];
     prog_results[r] = non_computed_index;
-
-    if (res > 0)
-    {
-#ifndef NDEBUG
-	check_back_edges_cleared_for_result(res);
-#endif
-	results.reclaim_used(res);
-    }
 }
 
 const expression_ref& reg_heap::get_parameter_value_in_context(int p, int c)
@@ -1870,7 +1725,6 @@ int reg_heap::add_identifier(const string& name)
 reg_heap::reg_heap(const std::shared_ptr<module_loader>& L)
     :regs(1,[this](int s){resize(s);}, [this](){collect_garbage();} ),
      steps(1),
-     results(1),
      P(new Program(L)),
      prog_steps(1,non_existant_index),
      prog_results(1, non_existant_index),

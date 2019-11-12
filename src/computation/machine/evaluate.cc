@@ -278,18 +278,12 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 	else if (reg_type == reg::type_t::changeable)
 	{
 	    total_changeable_eval++;
-	    int rc = result_index_for_reg(R);
+	    int result = result_index_for_reg(R);
 
-	    // If we have a value, then we are done.
-	    if (rc > 0)
+	    if (result > 0)
 	    {
-		int value = results[rc].value;
-
-		if (value)
-		{
-		    total_changeable_eval_with_result++;
-		    return {R, value};
-		}
+                total_changeable_eval_with_result++;
+                return {R, result};
 	    }
 
 	    // If we know what to call, then call it and use it to set the value
