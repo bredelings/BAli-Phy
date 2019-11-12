@@ -199,6 +199,27 @@ Result::Result(Result&& R) noexcept
 			 flags ( R.flags )
 { }
 
+void reg::clear()
+{
+    C.clear();
+    type = type_t::unknown;
+    truncate(used_by);
+    truncate(called_by);
+    created_by = {0,0};
+    flags.reset();
+}
+
+void reg::check_cleared()
+{
+    assert(not C);
+    assert(type == type_t::unknown);
+    assert(used_by.empty());
+    assert(called_by.empty());
+    assert(created_by.first == 0);
+    assert(created_by.second == 0);
+    assert(flags.none());
+}
+
 reg& reg::operator=(reg&& R) noexcept
 {
     C = std::move(R.C);
@@ -224,27 +245,6 @@ reg::reg(reg&& R) noexcept
      created_by( std::move(R.created_by) ),
      flags ( R.flags )
 { }
-
-void reg::clear()
-{
-    C.clear();
-    type = type_t::unknown;
-    truncate(used_by);
-    truncate(called_by);
-    created_by = {0,0};
-    flags.reset();
-}
-
-void reg::check_cleared()
-{
-    assert(not C);
-    assert(type == type_t::unknown);
-    assert(used_by.empty());
-    assert(called_by.empty());
-    assert(created_by.first == 0);
-    assert(created_by.second == 0);
-    assert(flags.none());
-}
 
 std::optional<int> reg_heap::creator_of_reg(int r) const
 {
