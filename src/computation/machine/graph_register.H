@@ -50,7 +50,7 @@ struct Step
 
     void clear();
 
-    void check_cleared();
+    void check_cleared() const;
 
     Step& operator=(const Step&) = delete;
     Step& operator=(Step&&) noexcept;
@@ -74,7 +74,7 @@ struct Result
 
     void clear();
 
-    void check_cleared();
+    void check_cleared() const;
 
     Result& operator=(const Result&) = delete;
     Result& operator=(Result&&) noexcept;
@@ -111,7 +111,7 @@ public:
 
     void clear();
 
-    void check_cleared();
+    void check_cleared() const;
 
     reg& operator=(const reg&) = delete;
     reg& operator=(reg&&) noexcept;
