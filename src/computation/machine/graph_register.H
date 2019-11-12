@@ -465,7 +465,6 @@ public:
 
     /*----- Virtual memory ------*/
     int step_index_for_reg(int r) const;
-    int result_index_for_reg(int r) const;
     const Step& step_for_reg(int r) const ;
     Step& step_for_reg(int r);
     bool has_step(int r) const;

@@ -278,7 +278,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 	else if (reg_type == reg::type_t::changeable)
 	{
 	    total_changeable_eval++;
-	    int result = result_index_for_reg(R);
+	    int result = result_for_reg(R);
 
 	    if (result > 0)
 	    {

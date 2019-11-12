@@ -746,12 +746,6 @@ int reg_heap::step_index_for_reg(int r) const
     return prog_steps[r];
 }
 
-int reg_heap::result_index_for_reg(int r) const 
-{
-    assert(prog_results[r] != 0);
-    return prog_results[r];
-}
-
 const Step& reg_heap::step_for_reg(int r) const 
 { 
     int s = step_index_for_reg(r);
@@ -795,7 +789,7 @@ bool reg_heap::has_step(int r) const
 
 bool reg_heap::has_result(int r) const
 {
-    return result_index_for_reg(r)>0;
+    return result_for_reg(r)>0;
 }
 
 int reg_heap::value_for_reg(int r) const 
@@ -812,7 +806,8 @@ int reg_heap::value_for_reg(int r) const
 
 int reg_heap::result_for_reg(int r) const 
 {
-    return result_index_for_reg(r);
+    assert(prog_results[r] != 0);
+    return prog_results[r];
 }
 
 void reg_heap::set_result_for_reg(int r1)
