@@ -472,7 +472,7 @@ public:
     bool has_result(int r) const;
     bool reg_has_value(int r) const;
     int follow_index_var(int r) const;
-    int result_value_for_reg(int r) const;
+    int result_for_reg(int r) const;
     bool reg_has_call(int r) const;
     int call_for_reg(int r) const;
 
@@ -494,7 +494,7 @@ public:
 
     int value_for_reg(int r) const;
 
-    void set_result_value_for_reg(int r1);
+    void set_result_for_reg(int r1);
 
     std::vector<int> used_regs_for_reg(int r) const;
     std::vector<int> forced_regs_for_reg(int r) const;

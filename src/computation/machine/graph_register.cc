@@ -503,7 +503,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 	if (orig_pdf_value > 0 and has_result(pdf_reg))
 	{
 	    int result_reg1 = orig_pdf_value;
-	    int result_reg2 = result_value_for_reg(pdf_reg);
+	    int result_reg2 = result_for_reg(pdf_reg);
 	    log_double_t r = (*this)[result_reg2].exp.as_log_double() / (*this)[result_reg1].exp.as_log_double();
 
 	    assert(regs.access(pdf_reg).flags.test(0) or regs.access(pdf_reg).flags.test(1));
@@ -802,7 +802,7 @@ int reg_heap::value_for_reg(int r) const
 {
     assert(not expression_at(r).is_index_var());
     if (reg_is_changeable(r))
-	return result_value_for_reg(r);
+	return result_for_reg(r);
     else
     {
 	assert(reg_is_constant(r));
@@ -810,12 +810,12 @@ int reg_heap::value_for_reg(int r) const
     }
 }
 
-int reg_heap::result_value_for_reg(int r) const 
+int reg_heap::result_for_reg(int r) const 
 {
     return result_index_for_reg(r);
 }
 
-void reg_heap::set_result_value_for_reg(int r1)
+void reg_heap::set_result_for_reg(int r1)
 {
     // 1. Find called reg
     int r2 = step_for_reg(r1).call;
@@ -1634,7 +1634,7 @@ const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
     if (has_result(R))
     {
 	total_get_reg_value_non_const_with_result++;
-	int R2 = result_value_for_reg(R);
+	int R2 = result_for_reg(R);
 	if (R2) return expression_at(R2);
     }
 

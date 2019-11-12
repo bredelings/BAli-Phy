@@ -301,7 +301,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		}
 
 		// R gets its value from S.
-		set_result_value_for_reg( R);
+		set_result_for_reg( R);
 		total_changeable_eval_with_call++;
 		return {R, value};
 	    }
@@ -432,7 +432,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		    auto [r3,value] = p;
 
 		    set_call(R, r3);
-		    set_result_value_for_reg(R);
+		    set_result_for_reg(R);
 		    return {R, value};
 		}
 	    }
