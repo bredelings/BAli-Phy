@@ -177,19 +177,6 @@ void Result::check_cleared() const
     assert(not value);
 }
 
-Result& Result::operator=(Result&& R) noexcept
-{
-    value = R.value;
-    source_step = R.source_step;
-
-    return *this;
-}
-
-Result::Result(Result&& R) noexcept
-    :source_step(R.source_step),
-     value (R.value)
-{ }
-
 void reg::clear()
 {
     C.clear();

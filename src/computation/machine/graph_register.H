@@ -71,14 +71,6 @@ struct Result
     void clear();
 
     void check_cleared() const;
-
-    Result& operator=(const Result&) = delete;
-    Result& operator=(Result&&) noexcept;
-
-    Result() = default;
-
-    Result(const Result&) = delete;
-    Result(Result&&) noexcept;
 };
 
 constexpr int non_computed_index = -1;
