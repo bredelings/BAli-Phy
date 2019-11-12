@@ -169,7 +169,6 @@ Step::Step(Step&& S) noexcept
 void Result::clear()
 {
     source_step = -1;
-    source_reg = -1;
     value = 0;
 }
 
@@ -182,14 +181,12 @@ Result& Result::operator=(Result&& R) noexcept
 {
     value = R.value;
     source_step = R.source_step;
-    source_reg = R.source_reg;
 
     return *this;
 }
 
 Result::Result(Result&& R) noexcept
     :source_step(R.source_step),
-     source_reg(R.source_reg),
      value (R.value)
 { }
 
@@ -1622,7 +1619,7 @@ int reg_heap::add_shared_step(int r)
     return s;
 }
 
-int reg_heap::get_shared_result(int r, int s)
+int reg_heap::get_shared_result(int s)
 {
     // 1. Get a new result
     int res = results.allocate();
@@ -1630,7 +1627,6 @@ int reg_heap::get_shared_result(int r, int s)
   
     // 2. Set the source of the result
     results[res].source_step = s;
-    results[res].source_reg = r;
 
     assert(res > 0);
 
@@ -1645,7 +1641,7 @@ int reg_heap::add_shared_result(int r, int s)
     assert(has_step(r));
 
     // Get a result
-    int res = get_shared_result(r,s);
+    int res = get_shared_result(s);
 
     // Link it in to the mapping
     prog_results[r] = res;

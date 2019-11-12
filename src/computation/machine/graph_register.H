@@ -65,8 +65,6 @@ struct Result
 {
     int source_step = -1;
 
-    int source_reg = -1;
-
     /// What final WHNF does this computation reduce to?
     int value = 0;
 
@@ -508,7 +506,7 @@ public:
     int remove_shared_result(int t, int r);
 
     int get_shared_step(int r);
-    int get_shared_result(int r, int step);
+    int get_shared_result(int step);
 
     int add_shared_step(int r);
     int add_shared_result(int r, int step);
