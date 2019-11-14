@@ -52,19 +52,10 @@ void reg_heap::release_tip_token(int t)
 
     total_destroy_token++;
 
-    // 1. Clear flags of results in the root token before destroying the root token!
-    // if (is_root_token(t))
-    //     for(auto p: tokens[root_token].delta_result())
-    //     {
-    //         int rc = p.second;
-    //         if (rc > 0 and results[rc].flags.test(0))
-    //     	dec_prior(rc);
-    //     }
-
-    // 2. Destroy computations in the token (this is an optimization)
+    // 1. Destroy computations in the token (this is an optimization)
     destroy_all_computations_in_token(t);
 
-    // 3. Adjust the token tree
+    // 2. Adjust the token tree
     int parent = parent_token(t);
 
     unused_tokens.push_back(t);
@@ -87,10 +78,10 @@ void reg_heap::release_tip_token(int t)
 	assert(tokens.size() - unused_tokens.size() == 0);
     }
 
-    // 4. Set the token to unused
+    // 3. Set the token to unused
     tokens[t].used = false;
 
-    // 5. Make sure the token is empty
+    // 4. Make sure the token is empty
     assert(tokens[t].vm_step.empty());
     assert(tokens[t].vm_result.empty());
 }
