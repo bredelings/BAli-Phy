@@ -1595,7 +1595,6 @@ void reg_heap::clear_step(int r)
 {
     assert(not has_result(r));
     int s = prog_steps[r];
-    prog_steps[r] = non_computed_index;
   
     if (s > 0)
     {
@@ -1604,6 +1603,8 @@ void reg_heap::clear_step(int r)
 #endif
 	steps.reclaim_used(s);
     }
+
+    prog_steps[r] = non_computed_index;
 }
 
 void reg_heap::clear_result(int r)
