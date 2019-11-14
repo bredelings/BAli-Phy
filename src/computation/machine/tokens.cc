@@ -17,9 +17,8 @@ void reg_heap::destroy_all_computations_in_token(int t)
     auto& delta_step = tokens[t].delta_step();
 
     // Remove use back-edges
-    for(auto p: delta_step)
+    for(auto& [_,s]: delta_step)
     {
-	int s = p.second;
 	if (s > 0)
 	{
 	    for(int r: steps[s].created_regs)
@@ -35,9 +34,8 @@ void reg_heap::destroy_all_computations_in_token(int t)
 	}
     }
 
-    for(auto p: delta_step)
+    for(auto& [_,s]: delta_step)
     {
-	int s = p.second;
 	if (s > 0)
 	    steps.reclaim_used(s);
     }
