@@ -2,7 +2,7 @@ size = 1   Test.#0 = 10
 size = 1   Test.#1 = "case: failed pattern match"
 size = 1   Test.#10 = Test.#8:Test.#3
 size = 1   Test.#12 = Vector:unpack_cpp_string Test.#1 Test.#19
-size = 1   Test.#1250 = 2
+size = 1   Test.#1259 = 2
 size = 1   Test.#13 = Test.#7:Test.#10
 size = 1   Test.#19 = 0
 size = 1   Test.#2 = '!'
@@ -11,6 +11,6 @@ size = 1   Test.#4 = Compiler.Base.error Test.#12
 size = 1   Test.#7 = 'y'
 size = 1   Test.#8 = 'o'
 size = 1   Test.#9 = Compiler.Base.error Test.#13
-size = 1   Test.f = \#6 -> case #6 of {#1245:#1246 -> #1245; [] -> Test.#9; _ -> Test.#4}
-size = 3   Test.g = \#1246 -> let {#0 = 10} in let {#1249 = case #1246 of {#1250:#1251 -> #1250; [] -> Test.#9; _ -> Test.#4}} in Prelude:add #0 #1249
-size = 1   Test.h = Prelude:add Test.#0 Test.#1250
+size = 1   Test.f = \#6 -> case #6 of {#1254:#1255 -> #1254; [] -> Test.#9; _ -> Test.#4}
+size = 3   Test.g = \#1255 -> let {#0 = 10} in let {#1258 = case #1255 of {#1259:#1260 -> #1259; [] -> Test.#9; _ -> Test.#4}} in Prelude:add #0 #1258
+size = 1   Test.h = Prelude:add Test.#0 Test.#1259
