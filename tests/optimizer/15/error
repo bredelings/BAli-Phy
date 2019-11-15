@@ -1,5 +1,5 @@
-size = 1   Test.#0 = Vector:unpack_cpp_string Test.#1 Test.#21
 size = 1   Test.#1 = "case: failed pattern match"
-size = 1   Test.#21 = 0
-size = 1   Test.#4 = Prelude:error Test.#0
-size = 2   Test.f = \#6 -> case #6 of {(#1252, #3) -> 2; _ -> Test.#4}
+size = 1   Test.#19 = 0
+size = 1   Test.#2 = Vector:unpack_cpp_string Test.#1 Test.#19
+size = 1   Test.#4 = Compiler.Base.error Test.#2
+size = 2   Test.f = \#6 -> case #6 of {(#1239, #3) -> 2; _ -> Test.#4}
