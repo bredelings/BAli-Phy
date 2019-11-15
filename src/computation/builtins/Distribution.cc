@@ -343,7 +343,7 @@ extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
 extern "C" closure builtin_function_sample_categorical(OperationArgs& Args)
 {
     //------------- 1. Get argument p -----------------
-    auto z = (vector<double>) get_vector_from_list_(Args,0);
+    auto z = (vector<double>) Args.evaluate(0).as_<EVector>();
 
     return { choose_scratch(z) };
 }
