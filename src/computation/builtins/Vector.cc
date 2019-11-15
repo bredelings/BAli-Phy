@@ -128,28 +128,6 @@ int allocate_closure(OperationArgs& Args, const expression_ref& E)
     return Args.allocate(std::move(C));
 }
 
-extern Operation unpack_cpp_string;
-
-extern "C" closure builtin_function_unpack_cpp_string(OperationArgs& Args)
-{
-    reg_heap& M = Args.memory();
-
-    int i = Args.evaluate(1).as_int();
-    int r_string = Args.evaluate_slot_to_reg(0);
-    auto& s = M[r_string].exp.as_checked<String>();
-
-    if (i >= s.size())
-        return constructor("[]",0);
-
-    expression_ref all = cons(s[i], expression_ref(unpack_cpp_string,{reg_var(r_string),i+1}));
-
-    int r = allocate_closure(Args, all);
-
-    return {index_var(0),{r}};
-}
-
-Operation unpack_cpp_string(2, builtin_function_unpack_cpp_string, "unpack_cpp_string");
-
 extern "C" closure builtin_function_fromVectors(OperationArgs& Args)
 {
     // This doesn't distinguish between a 0x0, 2x0 or 2x0 matrix.

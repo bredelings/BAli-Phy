@@ -1,13 +1,13 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Foreign.String where
 
+import Compiler.Num -- for (-)
+
 data CppString
 
 builtin getStringElement 2 "getStringElement" "Vector"
 builtin sizeOfString 1 "sizeOfString" "Vector"
 
-builtin builtin_unpack_cpp_string 2 "unpack_cpp_string" "Vector"
-
-unpack_cpp_string s = builtin_unpack_cpp_string s 0
+unpack_cpp_string s = [getStringElement s i | i <- [0..sizeOfString s - 1]]
 listFromString s = unpack_cpp_string s
 
