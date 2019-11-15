@@ -45,63 +45,6 @@ extern "C" closure builtin_function_getStringElement(OperationArgs& Args)
     return {s[i]};
 }
 
-template <class T>
-closure NewVector(OperationArgs& Args)
-{
-    int length = Args.evaluate(0).as_int();
-
-    auto v = new Vector<T>;
-
-    v->resize(length);
-
-    return v;
-}
-
-extern "C" closure builtin_function_NewVectorInt(OperationArgs& Args)
-{
-    return NewVector<int>(Args);
-}
-
-extern "C" closure builtin_function_NewVectorDouble(OperationArgs& Args)
-{
-    return NewVector<double>(Args);
-}
-
-extern "C" closure builtin_function_SetVectorIndexInt(OperationArgs& Args)
-{
-    object_ptr<const Vector<int>> v = Args.evaluate(0).assert_is_a<Vector<int>>();
-    int i = Args.evaluate(1).as_int();
-    int x = Args.evaluate(2).as_int();
-
-    const Vector<int>* vv = &(*v);
-    Vector<int>* vvv = const_cast<Vector<int>*>(vv);
-    (*vvv)[i] = x;
-
-    return constructor("()",0);
-}
-
-extern "C" closure builtin_function_SetVectorIndexDouble(OperationArgs& Args)
-{
-    object_ptr<const Vector<double>> v = Args.evaluate(0).assert_is_a<Vector<double>>();
-    int i = Args.evaluate(1).as_int();
-    double x = Args.evaluate(2).as_double();
-
-    const Vector<double>* vv = &(*v);
-    Vector<double>* vvv = const_cast<Vector<double>*>(vv);
-    (*vvv)[i] = x;
-
-    return constructor("()",0);
-}
-
-extern "C" closure builtin_function_new_vector(OperationArgs& Args)
-{
-    int length = Args.evaluate(0).as_int();
-
-    object_ptr<EVector> v = new EVector(length);
-
-    return v;
-}
-
 extern "C" closure builtin_function_vector_size(OperationArgs& Args)
 {
     const EVector& v = Args.evaluate(0).as_<EVector>();

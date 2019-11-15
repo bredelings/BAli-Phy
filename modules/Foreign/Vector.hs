@@ -7,9 +7,6 @@ import Foreign.Pair
 
 data EVector = EVector
 
-builtin builtin_set_vector_index 3 "set_vector_index" "Vector"
-builtin builtin_new_vector 1 "new_vector" "Vector"
-
 builtin get_vector_index 2 "get_vector_index" "Vector"
 builtin vector_size 1 "vector_size" "Vector"
 
