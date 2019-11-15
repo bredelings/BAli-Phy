@@ -152,10 +152,10 @@ extern "C" closure builtin_function_random_variable(OperationArgs& Args)
 
 extern "C" closure builtin_function_register_random_variable(OperationArgs& Args)
 {
-    int r_random_var = Args.current_closure().reg_for_slot(0);
-
     // We are supposed to evaluate the random_variable before we register
-    Args.evaluate_reg_force(r_random_var);
+    Args.evaluate_(0);
+
+    int r_random_var = Args.current_closure().reg_for_slot(0);
 
     auto& M = Args.memory();
 
@@ -163,10 +163,6 @@ extern "C" closure builtin_function_register_random_variable(OperationArgs& Args
         r_random_var = *r;
     else
 	throw myexception()<<"Trying to register `"<<M.expression_at(r_random_var)<<"` as random variable";
-
-//    Currently the pdf is forced when evaluating (random_variable x pdf) => x
-//    int r_pdf = M[r_random_var].reg_for_slot(1);
-//    Args.evaluate_reg_force(r_pdf);
 
     int r_effect = Args.allocate(new register_random_variable(r_random_var));
 
