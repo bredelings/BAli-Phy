@@ -104,25 +104,6 @@ extern "C" closure builtin_function_list_to_string(OperationArgs& Args)
     return s;
 }
 
-extern "C" closure builtin_function_array_to_vector(OperationArgs& Args)
-{
-    // 1. Force the array, and get the size
-    int n = Args.evaluate(0).size();
-
-    // 2. Get the array location.  We need the index, since the elements of the closure could keep changing.
-    object_ptr<EVector> v (new EVector(n));
-    auto& M = Args.memory();
-    for(int i=0; i<n; i++)
-    {
-        // We don't want to record a ton of extra uses for changeable reg
-        int array_reg = Args.evaluate_reg(Args.reg_for_slot(0));
-        int element_reg = M[array_reg].reg_for_slot(i);
-        (*v)[i] = Args.evaluate_reg_to_object(element_reg);
-    }
-
-    return v;
-}
-
 // Hmm... maybe we need something to make applying C functions more of a thing.
 
 int allocate_closure(OperationArgs& Args, const expression_ref& E)
