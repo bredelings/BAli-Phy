@@ -34,16 +34,4 @@ inline std::optional<std::vector<int>> maybe_get_regs_for_list(OperationArgs& Ar
     assert(has_constructor(top->exp,"[]"));
     return regs;
 }
-
-inline std::vector<int> get_regs_for_list(OperationArgs& Args, int r)
-{
-    auto regs = maybe_get_regs_for_list(Args, r);
-    if (not regs)
-    {
-	const closure* top = &Args.evaluate_reg_to_closure(r);
-	throw myexception()<<"get_regs_for_list: '"<<top->exp<<"' is not a list!";
-    }
-    return *regs;
-}
-
 #endif
