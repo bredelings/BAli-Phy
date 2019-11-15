@@ -245,71 +245,46 @@ extern "C" closure builtin_function_negate(OperationArgs& Args)
 	throw myexception()<<"Negate: object '"<<x.print()<<"' is not double, int, or char'";
 }
 
-expression_ref recursive_eval(OperationArgs& Args, int r1)
+extern "C" closure builtin_function_get_n_args(OperationArgs& Args)
 {
-    // 0. We aren't going to record any uses or forces.  We just want to extract information.
-    reg_heap& M = Args.memory();
-
-    // 1. First evaluate the regs.  This will yield not any index_vars.
-    int r2 = Args.evaluate_reg_to_reg(r1);
-    int value = M.value_for_reg(r2);
-
-    if (M[value].exp.size() == 0) return M[value].exp;
-
-    // 2. Then check if the two expressions have a different head.
-
-    vector<expression_ref> sub;
-    for(int i=0;i<M[value].exp.size();i++)
-        sub.push_back(recursive_eval(Args, M[value].reg_for_slot(i)));
-
-    return expression_ref(M[value].exp.head(), sub);
+    auto x = Args.evaluate(0);
+    return {expression_ref(int(x.size()))};
 }
 
-bool recursive_equals(OperationArgs& Args, int r1, int r2)
+extern "C" closure builtin_function_get_arg(OperationArgs& Args)
 {
-    Args.stack_push(r1);
-    Args.stack_push(r2);
+    auto& x = Args.evaluate_slot_to_closure(0);
 
-    auto do_return = [&](bool b){
-                         Args.stack_pop(r2);
-                         Args.stack_pop(r1);
-                         return b;
-                     };
+    int i = Args.evaluate(1).as_int();
 
-    // 0. We aren't going to record any uses or forces.  We just want to extract information.
-    reg_heap& M = Args.memory();
+    if (i < 0 or i >= x.exp.size())
+        throw myexception()<<"Prelude:get_arg: Can't access argument "<<i<<" of '"<<x.print()<<"'";
 
-    // 1. First evaluate the regs.  This will yield not any index_vars.
-    int r1e = Args.evaluate_reg_to_reg(r1);
-    int value1 = M.value_for_reg(r1e);
+    int r = x.reg_for_slot(i);
 
-    int r2e = Args.evaluate_reg_to_reg(r2);
-    int value2 = M.value_for_reg(r2e);
-
-    // 2. Then check if the two expressions have a different head.
-    if (M[value1].exp.head() != M[value2].exp.head()) return do_return(false);
-    assert(is_constructor_exp(M[value1].exp.size() == M[value2].exp.size()));
-
-    for(int i=0;i<M[value1].exp.size();i++)
-    {
-        assert(i >0 or is_constructor_exp(M[value1].exp));
-
-        int arg1 = M[value1].reg_for_slot(i);
-        int arg2 = M[value2].reg_for_slot(i);
-        if (not recursive_equals(Args, arg1, arg2)) return do_return(false);
-    }
-
-    return do_return(true);
+    return closure{index_var(0),{r}};
 }
 
-extern "C" closure builtin_function_recursive_equals(OperationArgs& Args)
+extern "C" closure builtin_function_equals_top(OperationArgs& Args)
 {
-    auto r1 = Args.evaluate_slot_to_reg(0);
-    auto r2 = Args.evaluate_slot_to_reg(1);
+    constexpr int False = 1;
+    constexpr int True =  2;
+    constexpr int DontKnow = 3;
 
-    bool result = recursive_equals(Args, r1, r2);
+    auto x = Args.evaluate(0);
+    auto y = Args.evaluate(1);
 
-    return {expression_ref(result)};
+    // 1. If the heads aren't equal, then x /= y.
+    if (x.head() != y.head()) return {expression_ref(False)};
+
+    // 2. If the number of argumets isn't equal, then x /= y
+    if (x.size() != y.size()) return {expression_ref(False)};
+
+    // 3. If x and y have no arguments, then x == y
+    if (x.size() == 0) return {expression_ref(True)};
+
+    // 4. Otherwise we dont know.
+    return {expression_ref(DontKnow)};
 }
 
 template <typename T>
