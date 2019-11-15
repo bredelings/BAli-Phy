@@ -1,8 +1,16 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Compiler.Base where
 
+import Foreign.Pair
 
-builtin error 1 "error" "Prelude"
+deep_eval_list [] = []
+deep_eval_list (x:xs) = c_pair x (deep_eval_list xs)
+
+builtin builtin_list_to_string 1 "list_to_string" "Vector"
+list_to_string x = builtin_list_to_string (deep_eval_list x)
+
+builtin builtin_error 1 "error" "Prelude"
+error x = builtin_error (list_to_string x)
 
 data IO a = IOAction  (s->(s,a)) |
             LazyIO a |

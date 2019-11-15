@@ -4,7 +4,6 @@
 #include "computation/expression/constructor.H"
 #include "computation/expression/bool.H"
 #include "computation/operations.H"
-#include "vector_from_list.H"
 #include "util/string/convert.H"
 #include "computation/machine/graph_register.H"
 
@@ -519,11 +518,7 @@ extern "C" closure builtin_function_show(OperationArgs& Args)
 
 extern "C" closure builtin_function_error(OperationArgs& Args)
 {
-    auto v = get_vector_from_list(Args,0);
-
-    string message;
-    for(auto ch: v)
-	message += ch.as_char();
+    string message = Args.evaluate(0).as_<String>();
   
     throw error_exception(message);
 }
