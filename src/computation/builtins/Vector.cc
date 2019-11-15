@@ -160,25 +160,16 @@ extern "C" closure builtin_function_get_vector_index(OperationArgs& Args)
 
 extern "C" closure builtin_function_list_to_vector(OperationArgs& Args)
 {
+    auto xs = Args.evaluate(0);
+
     object_ptr<EVector> v (new EVector);
 
-    const closure* top = &Args.evaluate_slot_to_closure(0);
-    while(top->exp.size())
+    auto E2 = xs;
+    while(E2.is_a<EPair>())
     {
-	assert(has_constructor(top->exp,":"));
-	assert(top->exp.size() == 2);
-
-	int element_reg = top->reg_for_slot(0);
-
-	int next_reg = top->reg_for_slot(1);
-
-	// Add the element to the list.
-	v->push_back( Args.evaluate_reg_to_object(element_reg) );
-	// Move to the next element or end
-	top = &Args.evaluate_reg_to_closure(next_reg);
+        v->push_back(E2.as_<EPair>().first);
+        E2 = E2.as_<EPair>().second;
     }
-    assert(has_constructor(top->exp,"[]"));
-
     return v;
 }
 
