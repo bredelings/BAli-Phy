@@ -63,21 +63,6 @@ zip' = zipWith' (,)
 
 putStrLn line = IOAction (pair_from_c . builtin_putStrLn (listToString line))
 
-
-newString s = IOAction (pair_from_c . builtinNewString s)
-
-setStringIndexInt v i x = IOAction (pair_from_c . builtinSetStringIndexInt v i x)
-
-copyListToString [] v i = return ()
-copyListToString (h:t) v i = do setStringIndexInt v i h
-                                copyListToString t v (i+1)
-
-listToString l = runST $ do v <- newString (length l)
-                            copyListToString l v 0
-                            return v
-
-pack_cpp_string = listToString
-
 show () = "()"
 show (x,y) = "(" ++ show x ++ "," ++ show y ++ ")"
 show (x,y,z) = "(" ++ show x ++ "," ++ show y ++ "," ++ show z ++ ")"

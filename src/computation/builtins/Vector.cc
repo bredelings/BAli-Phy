@@ -45,34 +45,6 @@ extern "C" closure builtin_function_getStringElement(OperationArgs& Args)
     return {s[i]};
 }
 
-extern "C" closure builtin_function_NewString(OperationArgs& Args)
-{
-    int length = Args.evaluate(0).as_int();
-
-    int state = Args.evaluate(1).as_int();
-
-    object_ptr<String> v (new String);
-
-    v->resize(length);
-
-    // Are we copying the v here?  Because that is wasteful and feels wrong.
-    return EPair(state+1, v);
-}
-
-extern "C" closure builtin_function_SetStringIndex(OperationArgs& Args)
-{
-    object_ptr<const String> v = Args.evaluate(0).assert_is_a<String>();
-    int i = Args.evaluate(1).as_int();
-    char x = Args.evaluate(2).as_char();
-    int state = Args.evaluate(3).as_int();
-
-    const String* vv = &(*v);
-    String* vvv = const_cast<String*>(vv);
-    (*vvv)[i] = x;
-
-    return EPair(state+1,constructor("()",0));
-}
-
 template <class T>
 closure NewVector(OperationArgs& Args)
 {
@@ -171,6 +143,22 @@ extern "C" closure builtin_function_list_to_vector(OperationArgs& Args)
         E2 = E2.as_<EPair>().second;
     }
     return v;
+}
+
+extern "C" closure builtin_function_list_to_string(OperationArgs& Args)
+{
+    auto xs = Args.evaluate(0);
+
+    object_ptr<String> s (new String);
+
+    auto E2 = xs;
+    while(E2.is_a<EPair>())
+    {
+        int c = E2.as_<EPair>().first.as_char();
+        (*s) += c;
+        E2 = E2.as_<EPair>().second;
+    }
+    return s;
 }
 
 extern "C" closure builtin_function_array_to_vector(OperationArgs& Args)

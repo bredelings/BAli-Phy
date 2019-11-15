@@ -3,9 +3,6 @@ module Foreign.String where
 
 data CppString
 
-builtin builtinNewString 2 "NewString" "Vector"
-builtin builtinSetStringIndexInt 4 "SetStringIndex" "Vector"
-
 builtin getStringElement 2 "getStringElement" "Vector"
 builtin sizeOfString 1 "sizeOfString" "Vector"
 
