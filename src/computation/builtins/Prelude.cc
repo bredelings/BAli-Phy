@@ -274,11 +274,11 @@ extern "C" closure builtin_function_equals_top(OperationArgs& Args)
     auto x = Args.evaluate(0);
     auto y = Args.evaluate(1);
 
-    // 1. If the heads aren't equal, then x /= y.
-    if (x.head() != y.head()) return {expression_ref(False)};
-
-    // 2. If the number of argumets isn't equal, then x /= y
+    // 1. If the number of arguments isn't equal, then x /= y
     if (x.size() != y.size()) return {expression_ref(False)};
+
+    // 2. If the heads aren't equal, then x /= y.
+    if (x.head() != y.head()) return {expression_ref(False)};
 
     // 3. If x and y have no arguments, then x == y
     if (x.size() == 0) return {expression_ref(True)};
@@ -287,40 +287,27 @@ extern "C" closure builtin_function_equals_top(OperationArgs& Args)
     return {expression_ref(DontKnow)};
 }
 
+enum Ordering {LT=4,GT=5,EQ=6,DontKnow=7};
+
 template <typename T>
-int compare(const T& x, const T& y)
+Ordering compare(const T& x, const T& y)
 {
-    if (x < y) return -1;
-    if (x > y) return 1;
-    return 0;
+    if (x < y) return Ordering::LT;
+    if (x > y) return Ordering::GT;
+    return Ordering::EQ;
 }
 
-int recursive_compare(OperationArgs& Args, int r1, int r2)
+extern "C" closure builtin_function_compare_top(OperationArgs& Args)
 {
-    Args.stack_push(r1);
-    Args.stack_push(r2);
+    auto x = Args.evaluate(0);
+    auto y = Args.evaluate(1);
 
-    auto do_return = [&](int i){
-                         Args.stack_pop(r2);
-                         Args.stack_pop(r1);
-                         return i;
-                     };
+    // 1. Compare number of arguments
+    auto cmp = compare( x.size(), y.size() );
+    if (cmp != Ordering::EQ)
+        return expression_ref(int(cmp));
 
-    // 0. We aren't going to record any uses or forces.  We just want to extract information.
-    reg_heap& M = Args.memory();
-
-    // 1. First evaluate the regs.  This will yield not any index_vars.
-    int r1e = Args.evaluate_reg_to_reg(r1);
-    int value1 = M.value_for_reg(r1e);
-
-    int r2e = Args.evaluate_reg_to_reg(r2);
-    int value2 = M.value_for_reg(r2e);
-
-    // 2. Then check if the two expressions have a different head.
-    auto& x = M.expression_at(value1);
-    auto& y = M.expression_at(value2);
-
-    std::optional<int> cmp;
+    // 2. Compare the heads
     if (x.is_int())
         cmp = compare(x.as_int(), y.as_int());
     else if (x.is_double())
@@ -331,53 +318,27 @@ int recursive_compare(OperationArgs& Args, int r1, int r2)
         cmp = compare(x.as_char(), y.as_char());
     else if (x.is_a<String>())
         cmp = compare<string>(x.as_<String>(), y.as_<String>());
-    if (cmp)
-        return do_return(*cmp);
-
-    if (not x.head().is_a<constructor>())
-        throw myexception()<<"builtin_compare: `"<<M[value1].print()<<"` and `"<<M[value2].print()<<"` can't be compared!";
-
-    // Constructors with fewer arguments are less
-    auto xc = x.head().as_<constructor>();
-    auto yc = y.head().as_<constructor>();
-
-    cmp = compare( xc.n_args(), yc.n_args() );
-    if (*cmp != 0)
-        return do_return(*cmp);
-
-    // For constructors with the same numbers of arguments, compare the name string.
-    cmp = compare<string>(xc.f_name, yc.f_name);
-    if (*cmp != 0)
-        return do_return(*cmp);
-
-    const int arity = M.expression_at(value1).size();
-    assert(M.expression_at(value2).size() == arity);
-    assert(xc.n_args() == arity);
-    assert(yc.n_args() == arity);
-
-    // 3. Then compare the arguments
-    for(int i=0; i<arity; i++)
+    else if (x.head().is_a<constructor>())
     {
-        assert(i >0 or is_constructor_exp(M.expression_at(value1)));
+        auto xc = x.head().as_<constructor>();
+        auto yc = y.head().as_<constructor>();
 
-        int arg1 = M[value1].reg_for_slot(i);
-        int arg2 = M[value2].reg_for_slot(i);
-        int cmp_arg = recursive_compare(Args, arg1, arg2);
-        if (cmp_arg != 0)
-            return do_return(cmp_arg);
+        assert(x.size() == xc.n_args());
+        assert(y.size() == yc.n_args());
+
+        cmp = compare<string>(xc.f_name, xc.f_name);
     }
+    else
+        throw myexception()<<"Prelude:compare_top: `"<<x<<"` and `"<<y<<"` can't be compared!";
 
-    return do_return(0);
-}
+    if (cmp != Ordering::EQ)
+        return expression_ref(int(cmp));
 
-extern "C" closure builtin_function_recursive_compare(OperationArgs& Args)
-{
-    auto r1 = Args.evaluate_slot_to_reg(0);
-    auto r2 = Args.evaluate_slot_to_reg(1);
+    // 3. If x and y have no arguments, then x == y
+    if (x.size() == 0) return {expression_ref(int(Ordering::EQ))};
 
-    int result = recursive_compare(Args, r1, r2);
-
-    return {expression_ref(result)};
+    // 4. Otherwise we don't know
+    return {expression_ref(int(Ordering::DontKnow))};
 }
 
 extern "C" closure builtin_function_greaterthan(OperationArgs& Args)
