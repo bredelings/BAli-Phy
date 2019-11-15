@@ -29,5 +29,4 @@ deep_eval_list (x:xs) = c_pair x (deep_eval_list xs)
 list_to_vector x = builtin_list_to_vector (deep_eval_list x)
 list_to_string x = builtin_list_to_string (deep_eval_list x)
 
-listToString = list_to_string
 pack_cpp_string = list_to_string

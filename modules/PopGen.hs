@@ -12,9 +12,9 @@ builtin ewens_sampling_probability 2 "ewens_sampling_probability" "PopGen"
 builtin builtin_ewens_sampling_mixture_probability 3 "ewens_sampling_mixture_probability" "PopGen"
 builtin builtin_selfing_coalescence_probability 3 "selfing_coalescence_probability" "PopGen"
 
-read_phase_file filename = map list_from_vector $ list_from_vector $ builtin_read_phase_file $ listToString filename
+read_phase_file filename = map list_from_vector $ list_from_vector $ builtin_read_phase_file $ list_to_string filename
 
-read_phase2_file filename = map list_from_vector $ list_from_vector $ builtin_read_phase2_file $ listToString filename
+read_phase2_file filename = map list_from_vector $ list_from_vector $ builtin_read_phase2_file $ list_to_string filename
 
 ewens_sampling_mixture_probability thetas ps x = builtin_ewens_sampling_mixture_probability (list_to_vector thetas) (list_to_vector ps) x
 

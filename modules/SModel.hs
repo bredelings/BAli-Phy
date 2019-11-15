@@ -364,7 +364,7 @@ unit_mixture m = MixtureModel (certainly m)
 
 mmm m branch_cats = MixtureModels branch_cats [m]
 
-empirical a filename = builtin_empirical a (listToString filename)
+empirical a filename = builtin_empirical a (list_to_string filename)
 
 wag_frequencies a = zip (alphabet_letters a) (list_from_vector $ builtin_wag_frequencies a)
 lg_frequencies a = zip (alphabet_letters a) (list_from_vector $ builtin_lg_frequencies a)

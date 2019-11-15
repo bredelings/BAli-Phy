@@ -61,7 +61,7 @@ zipWith' _ [] []         =  []
 
 zip' = zipWith' (,)
 
-putStrLn line = IOAction (pair_from_c . builtin_putStrLn (listToString line))
+putStrLn line = IOAction (pair_from_c . builtin_putStrLn (list_to_string line))
 
 show () = "()"
 show (x,y) = "(" ++ show x ++ "," ++ show y ++ ")"
@@ -77,10 +77,10 @@ show False = "False"
 show x     = listFromString $ builtin_show x
 
 read_int [] = error "Can't convert empty string to int."
-read_int (h:t) = builtin_read_int (listToString (h:t))
+read_int (h:t) = builtin_read_int (list_to_string (h:t))
 read_int s = builtin_read_int s
 
 read_double [] = error "Can't convert empty string to double."
-read_double (h:t) = builtin_read_double (listToString (h:t))
+read_double (h:t) = builtin_read_double (list_to_string (h:t))
 read_double s = builtin_read_double s
 
