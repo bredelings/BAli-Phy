@@ -40,7 +40,6 @@ import Foreign.Pair
 import Foreign.Vector
 import Foreign.String
 
-builtin reapply 2 "reapply" "Prelude"
 builtin builtin_putStrLn 2 "putStrLn" "Prelude"
 
 builtin is_char 1 "is_char" "Prelude"

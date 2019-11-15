@@ -534,31 +534,6 @@ extern "C" closure builtin_function_putStrLn(OperationArgs& Args)
     return EPair(state+1, constructor("()",0));
 }
 
-extern "C" closure builtin_function_reapply(OperationArgs& Args)
-{
-    int R1 = Args.current_closure().reg_for_slot(0);
-
-    int R2 = Args.current_closure().reg_for_slot(1);
-
-    expression_ref apply_E;
-    {
-	expression_ref fE = index_var(1);
-	expression_ref argE = index_var(0);
-	apply_E = {fE, argE};
-    }
-
-    // %1 %0 {R1,R2}
-    int apply_reg = Args.allocate({apply_E,{R1, R2}});
-
-    // FIXME - aren't we trying to eliminate general evaluation of regs that aren't children?  See below:
-
-    // Evaluate the newly create application reg - and depend upon it!
-    if (Args.evaluate_changeables())
-	Args.evaluate_reg_to_object(apply_reg);
-
-    return {index_var(0),{apply_reg}};
-}
-
 extern "C" closure builtin_function_read_int(OperationArgs& Args)
 {
     string s = Args.evaluate(0).as_<String>();
