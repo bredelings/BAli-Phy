@@ -8,7 +8,6 @@
 #include "probability/probability.H"
 #include "util/bounds.H"
 #include "util/rng.H"
-#include "vector_from_list.H"
 
 using std::vector;
 using std::string;
@@ -281,7 +280,7 @@ extern "C" closure builtin_function_CRP_density(OperationArgs& Args)
     int D = Args.evaluate(2).as_int();
 
     //------------- 2. Get argument Z -----------------
-    auto z = (vector<int>) get_vector_from_list(Args,3);
+    auto z = (vector<int>) Args.evaluate(3).as_<EVector>();
 
     return { ::CRP_pdf(alpha,N,D,z) };
 }

@@ -5,7 +5,9 @@ import Probability.Random
 import Probability.Distribution.List
 import Probability.Distribution.Normal
 import Probability.Distribution.Categorical
-    
+
+import Foreign.Vector
+
 import MCMC -- for GibbsSampleCategorical
 
 normalize v = map (/total) v where total=sum v
@@ -23,7 +25,8 @@ do_crp'' alpha n bins counts = let inc (c:cs) 0 = (c+1:cs)
                                   cs <- do_crp'' alpha (n-1) bins (inc counts c) 
                                   return (c:cs)
 
-builtin crp_density 4 "CRP_density" "Distribution"
+builtin builtin_crp_density 4 "CRP_density" "Distribution"
+crp_density alpha n d z = builtin_crp_density alpha n d (list_to_vector z)
 builtin sample_crp_vector 4 "sample_CRP" "Distribution"
 sample_crp alpha n d = RandomStructure do_nothing modifiable_structure $ liftIO $ do v <- IOAction (\s->(s,sample_crp_vector alpha n d s))
                                                                                      return $ list_from_vector_of_size v n
