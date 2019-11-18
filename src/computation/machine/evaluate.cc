@@ -66,7 +66,7 @@ void throw_reg_exception(reg_heap& M, int t, int R, myexception& e, bool changea
 }
 
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
-class RegOperationArgs: public OperationArgs
+class RegOperationArgs final: public OperationArgs
 {
     const int S;
 
@@ -440,7 +440,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 }
 
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
-class RegOperationArgsUnchangeable: public OperationArgs
+class RegOperationArgsUnchangeable final: public OperationArgs
 {
     const int R;
 
