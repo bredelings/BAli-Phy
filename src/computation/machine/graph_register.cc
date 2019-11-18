@@ -1152,8 +1152,6 @@ std::vector<int> reg_heap::forced_regs_for_reg(int r) const
 void reg_heap::reclaim_used(int r)
 {
     // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
-    assert(not regs.access(r).created_by.first);
-    assert(not regs.access(r).created_by.second);
     assert(not has_step(r));
   
     regs.reclaim_used(r);

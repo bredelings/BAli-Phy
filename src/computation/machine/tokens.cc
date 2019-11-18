@@ -23,19 +23,16 @@ void reg_heap::destroy_all_computations_in_token(int t)
 	{
 	    for(int r: steps[s].created_regs)
 	    {
-		// Unsharing created regs in unshare_regs( ) ensures that any steps/result for created regs must be in this token.
+		// Unsharing created regs in unshare_regs( ) ensures that any steps for created regs must be in this token.
                 // This allows us to reclaim allocated regs here instead of just waiting for GC to eliminate them.
 
-                // Since the step s that created this reg is going to be destroyed, we don't need to adjust the
-                // created_regs edge from steps[s].
-                clear_back_edges_for_reg(r,false);
+                // Clearing the reg deallocates RAM used by (For example) cached conditional likelihoods.
 
-                // This clears the reg.  That deallocates RAM used by (For example) cached conditional likelihoods.
-                regs.access(r).clear();  // Why do we need this line?
-		reclaim_used(r);
+                clear_back_edges_for_reg(r,false);    // We don't need to adjust steps[s].created_regs, since we will destroy steps[s].
+		reclaim_used(r);                      // This clears the reg.
 	    }
-	    clear_back_edges_for_step(s); // This clears steps[s].created_regs.
-	    steps.reclaim_used(s);
+	    clear_back_edges_for_step(s);             // This clears steps[s].created_regs.
+	    steps.reclaim_used(s);                    // This clears the step
 	}
     }
 
