@@ -126,6 +126,7 @@ void Step::clear()
     truncate(used_inputs);
     truncate(forced_regs);
     truncate(call_edge);
+    // We are clearing created_regs in clear_back_edges_for_step.
     assert(created_regs.empty());
 
     flags.reset();
@@ -1588,8 +1589,10 @@ void reg_heap::clear_back_edges_for_step(int s)
         clear_call(s);
 
     // 3. Clear list of created regs.
+#ifndef NDEBUG
     for(auto& r: steps[s].created_regs)
-	regs.access(r).created_by = {0,{}};
+        assert(regs.is_free(r));
+#endif
     steps[s].created_regs.clear();
 }
 

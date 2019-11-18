@@ -34,16 +34,11 @@ void reg_heap::destroy_all_computations_in_token(int t)
                 regs.access(r).clear();  // Why do we need this line?
 		reclaim_used(r);
 	    }
-	    steps[s].created_regs.clear();
-	    clear_back_edges_for_step(s);
+	    clear_back_edges_for_step(s); // This clears steps[s].created_regs.
+	    steps.reclaim_used(s);
 	}
     }
 
-    for(auto& [_,s]: delta_step)
-    {
-	if (s > 0)
-	    steps.reclaim_used(s);
-    }
     tokens[t].vm_step.clear();
 
     tokens[t].vm_result.clear();
