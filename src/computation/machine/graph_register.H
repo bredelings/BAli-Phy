@@ -518,8 +518,6 @@ public:
 private:  
     std::pair<int,int> incremental_evaluate_(int R);
     int incremental_evaluate_unchangeable_(int R);
-    void incremental_evaluate_from_call(int S, closure&);
-    void incremental_evaluate_from_call_(int S);
 
 public:
   
