@@ -300,24 +300,24 @@ public:
 
     struct Token
     {
-	// The context this context is derived from.
-	int parent = -1;
-	// Contexts that are derived from this one.
-	std::vector<int> children;
+        // The context this context is derived from.
+        int parent = -1;
+        // Contexts that are derived from this one.
+        std::vector<int> children;
 
-	// Contexts that point here
-	int n_context_refs = 0;
-	bool is_referenced() const {assert(n_context_refs >= 0); return n_context_refs > 0;}
+        // Contexts that point here
+        int n_context_refs = 0;
+        bool is_referenced() const {assert(n_context_refs >= 0); return n_context_refs > 0;}
     
-	/// Mapping from closures to steps/results
-	const auto& delta_result() const { return vm_result.delta(); }
-	const auto& delta_step() const {return vm_step.delta(); }
+        /// Mapping from closures to steps/results
+        const auto& delta_result() const { return vm_result.delta(); }
+        const auto& delta_step() const {return vm_step.delta(); }
 
-	mapping<int> vm_result;
-	mapping<int> vm_step;
+        mapping<int> vm_result;
+        mapping<int> vm_step;
 
-	bool used = false;
-	long version = 0;
+        bool used = false;
+        long version = 0;
     };
 private:
     int root_token = -1;
