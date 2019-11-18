@@ -143,6 +143,7 @@ public:
     void trace_and_reclaim_unreachable();
     bool reg_is_changeable(int r) const;
     bool reg_is_constant(int r) const;
+    bool reg_is_unknown(int r) const;
     void make_reg_changeable(int r);
 
     void set_used_input(int s1, int R2);

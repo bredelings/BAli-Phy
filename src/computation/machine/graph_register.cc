@@ -1355,6 +1355,11 @@ bool reg_heap::reg_is_changeable(int r) const
     return regs.access(r).type == reg::type_t::changeable;
 }
 
+bool reg_heap::reg_is_unknown(int r) const
+{
+    return regs.access(r).type == reg::type_t::unknown;
+}
+
 void reg_heap::make_reg_changeable(int r)
 {
     assert( regs.access(r).type == reg::type_t::changeable or regs.access(r).type == reg::type_t::unknown );
