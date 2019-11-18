@@ -486,7 +486,7 @@ public:
     void clear_step(int r);
     void clear_result(int r);
 
-    void clear_back_edges_for_reg(int r);
+    void clear_back_edges_for_reg(int r, bool creator_survives=true);
     void clear_back_edges_for_step(int s);
 
     void check_back_edges_cleared_for_step(int rc);

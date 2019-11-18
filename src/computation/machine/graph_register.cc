@@ -1524,8 +1524,10 @@ void reg_heap::check_back_edges_cleared_for_step(int s)
     }
 }
 
-void reg_heap::clear_back_edges_for_reg(int r)
+void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
 {
+    if (not creator_survives) return;
+
     assert(r > 0);
     auto& created_by = regs.access(r).created_by;
     auto [s,j] = created_by;
