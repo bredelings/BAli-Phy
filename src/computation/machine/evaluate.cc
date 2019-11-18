@@ -1,7 +1,7 @@
 //#ifdef NDEBUG
 //#undef NDEBUG
 //#endif
-#define COMBINE_STEPS
+
 #include "util/log-level.H"
 #include "graph_register.H"
 #include "error_exception.H"
@@ -395,7 +395,6 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		    make_reg_changeable(R);
 		    closure_stack.push_back(value);
 
-#ifndef COMBINE_STEPS
 		    int r2;
 		    if (closure_stack.back().exp.head().is_index_var())
 		    {
@@ -408,30 +407,10 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 			assert(not has_step(r2));
 		    }
 
-		    auto p = incremental_evaluate(r2);
-#else
-		    incremental_evaluate_from_call_(S);
-
-		    pair<int,int> p;
-		    if (closure_stack.back().exp.head().is_index_var())
-		    {
-			int r2 = closure_stack.back().reg_for_index_var();
-			p = incremental_evaluate(r2);
-		    }
-		    else
-		    {
-			int r2 = Args.allocate( std::move(closure_stack.back()) );
-			assert(not has_step(r2));
-			regs.access(r2).type = reg::type_t::constant;
-			// assert(is_WHNF(expression_at(r2))) ?
-			p = {r2,r2};
-		    }
-#endif
+		    auto [call,value] = incremental_evaluate(r2);
 		    closure_stack.pop_back();
 
-		    auto [r3,value] = p;
-
-		    set_call(R, r3);
+		    set_call(R, call);
 		    set_result_for_reg(R);
 		    return {R, value};
 		}
