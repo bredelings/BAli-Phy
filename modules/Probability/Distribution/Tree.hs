@@ -16,6 +16,8 @@ remove_one [] = error "Cannot remove one from empty list"
 remove_one list = do i <- sample $ uniform_int 0 (length list-1)
                      return $ pick_index i list
 
+-- choose 2 leaves, connect them to an internal node, and put that internal node on the list of leaves
+-- This is I think gives more weight to more balanced trees?
 random_tree_edges [l1] _         = return []
 random_tree_edges [l1,l2] _      = return [(l1,l2)]
 random_tree_edges leaves internal = do (l1,leaves')  <- remove_one leaves
@@ -24,9 +26,16 @@ random_tree_edges leaves internal = do (l1,leaves')  <- remove_one leaves
                                        other_edges <- random_tree_edges (i:leaves'') internal'
                                        return $ [(l1,i),(l2,i)]++other_edges
 
+-- Create a tree of size n-1, choose an edge at random, and insert the next leaf there.
+uniform_topology_edges [l1]    _     = return []
+uniform_topology_edges [l1,l2] _     = return [(l1,l2)]
+uniform_topology_edges (l:ls) (i:is) = do es1 <- uniform_topology_edges ls is
+                                          ((x,y),es2) <- remove_one es1
+                                          return $ [(l,i),(x,i),(i,y)] ++ es2
+
 random_tree 1 = return $ Tree (listArray' [[]]) (listArray' []) 1 0
 random_tree n = do let num_nodes = 2*n-2
-                   edges <- random_tree_edges [0..n-1] [n..num_nodes-1]
+                   edges <- uniform_topology_edges [0..n-1] [n..num_nodes-1]
                    -- This flipping is suppose flip edges from (internal,leaf) -> (leaf, internal)
                    let maybe_flip (x,y) | (y<x)     = (y,x)
                                         | otherwise = (x,y)
@@ -34,6 +43,7 @@ random_tree n = do let num_nodes = 2*n-2
                    -- in order to assign leaf branches the names 0..n-1
                    let sorted_edges = sortOn fst $ map maybe_flip edges
                    return $ tree_from_edges num_nodes sorted_edges
+
 
 modifiable_tree mod tree = Tree (listArray' nodes) (listArray' branches) (numNodes tree) (numBranches tree) where
     nodes =    [ map mod (edgesOutOfNode tree n) | n <- xrange 0 (numNodes tree) ]
