@@ -26,11 +26,6 @@ struct Step
     // NOTE: There is a space-time trade-off in the number of used_inputs here.
     //       However, small_vector< ,1> takes little or no extra space, and noticeably saves time.
 
-    /// Which reg's were used to reduce this expression?
-    boost::container::small_vector< std::pair<int,int>, 2 > used_inputs;
-
-    boost::container::small_vector< int, 2 > forced_regs;
-
     /// Does C reduce to another reg that we need to evaluate to get the true value?
     std::pair<int,int> call_edge;
 
@@ -74,6 +69,11 @@ public:
     enum class type_t {unknown=0, index_var=1, constant=2, changeable=3};
 
     type_t type = type_t::unknown;
+
+    /// Which reg's were used to reduce this expression?
+    boost::container::small_vector< std::pair<int,int>, 2 > used_inputs;
+
+    boost::container::small_vector< int, 2 > forced_regs;
 
     /// Which steps (step,index) USE this reg?
     boost::container::small_vector<std::pair<int,int>, 2> used_by;
@@ -143,12 +143,13 @@ public:
     void trace_and_reclaim_unreachable();
     bool reg_is_changeable(int r) const;
     bool reg_is_constant(int r) const;
+    bool reg_is_unknown(int r) const;
     void make_reg_changeable(int r);
 
-    void set_used_input(int s1, int R2);
-    void set_forced_input(int s1, int R2);
-    void set_call(int R1, int R2);
-    void set_call_from_step(int s, int R2);
+    void set_used_input(int r1, int r2);
+    void set_forced_input(int r1, int r2);
+    void set_call(int r1, int r2);
+    void set_call_from_step(int s, int r2);
     void destroy_all_computations_in_token(int t);
     void clear_call(int s);
     void clear_call_for_reg(int R);
@@ -300,24 +301,24 @@ public:
 
     struct Token
     {
-	// The context this context is derived from.
-	int parent = -1;
-	// Contexts that are derived from this one.
-	std::vector<int> children;
+        // The context this context is derived from.
+        int parent = -1;
+        // Contexts that are derived from this one.
+        std::vector<int> children;
 
-	// Contexts that point here
-	int n_context_refs = 0;
-	bool is_referenced() const {assert(n_context_refs >= 0); return n_context_refs > 0;}
+        // Contexts that point here
+        int n_context_refs = 0;
+        bool is_referenced() const {assert(n_context_refs >= 0); return n_context_refs > 0;}
     
-	/// Mapping from closures to steps/results
-	const auto& delta_result() const { return vm_result.delta(); }
-	const auto& delta_step() const {return vm_step.delta(); }
+        /// Mapping from closures to steps/results
+        const auto& delta_result() const { return vm_result.delta(); }
+        const auto& delta_step() const {return vm_step.delta(); }
 
-	mapping<int> vm_result;
-	mapping<int> vm_step;
+        mapping<int> vm_result;
+        mapping<int> vm_step;
 
-	bool used = false;
-	long version = 0;
+        bool used = false;
+        long version = 0;
     };
 private:
     int root_token = -1;
@@ -486,10 +487,11 @@ public:
     void clear_step(int r);
     void clear_result(int r);
 
-    void clear_back_edges_for_reg(int r);
+    void clear_back_edges_for_reg(int r, bool creator_survives=true);
     void clear_back_edges_for_step(int s);
 
-    void check_back_edges_cleared_for_step(int rc);
+    void check_back_edges_cleared_for_reg(int r) const;
+    void check_back_edges_cleared_for_step(int s) const;
 
     int value_for_reg(int r) const;
 
@@ -517,8 +519,6 @@ public:
 private:  
     std::pair<int,int> incremental_evaluate_(int R);
     int incremental_evaluate_unchangeable_(int R);
-    void incremental_evaluate_from_call(int S, closure&);
-    void incremental_evaluate_from_call_(int S);
 
 public:
   

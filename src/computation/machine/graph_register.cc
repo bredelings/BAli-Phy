@@ -123,9 +123,8 @@ void Step::clear()
 {
     source_reg = -1;
     call = 0;
-    truncate(used_inputs);
-    truncate(forced_regs);
     truncate(call_edge);
+    // We are clearing created_regs in clear_back_edges_for_step.
     assert(created_regs.empty());
 
     flags.reset();
@@ -136,8 +135,6 @@ void Step::clear()
 void Step::check_cleared() const
 {
     assert(not call);
-    assert(used_inputs.empty());
-    assert(forced_regs.empty());
     assert(not call_edge.first);
     assert(created_regs.empty());
     assert(flags.none());
@@ -147,8 +144,6 @@ Step& Step::operator=(Step&& S) noexcept
 {
     source_reg = S.source_reg;
     call = S.call;
-    used_inputs  = std::move( S.used_inputs );
-    forced_regs  = std::move( S.forced_regs );
     call_edge = S.call_edge;
     created_regs  = std::move( S.created_regs );
     flags = S.flags;
@@ -159,8 +154,6 @@ Step& Step::operator=(Step&& S) noexcept
 Step::Step(Step&& S) noexcept
     :source_reg( S.source_reg),
      call ( S.call ),
-     used_inputs ( std::move(S.used_inputs) ),
-     forced_regs (std::move(S.forced_regs) ),
      call_edge (S.call_edge),
      created_regs ( std::move(S.created_regs) ),
      flags ( S.flags )
@@ -170,6 +163,8 @@ void reg::clear()
 {
     C.clear();
     type = type_t::unknown;
+    truncate(used_inputs);
+    truncate(forced_regs);
     truncate(used_by);
     truncate(called_by);
     created_by = {0,0};
@@ -180,6 +175,8 @@ void reg::check_cleared() const
 {
     assert(not C);
     assert(type == type_t::unknown);
+    assert(used_inputs.empty());
+    assert(forced_regs.empty());
     assert(used_by.empty());
     assert(called_by.empty());
     assert(created_by.first == 0);
@@ -192,6 +189,10 @@ reg& reg::operator=(reg&& R) noexcept
     C = std::move(R.C);
 
     type = R.type;
+
+    used_inputs  = std::move( R.used_inputs );
+
+    forced_regs  = std::move( R.forced_regs );
 
     used_by = std::move( R.used_by );
 
@@ -207,6 +208,8 @@ reg& reg::operator=(reg&& R) noexcept
 reg::reg(reg&& R) noexcept
     :C( std::move(R.C) ),
      type ( R.type ),
+     used_inputs ( std::move(R.used_inputs) ),
+     forced_regs (std::move(R.forced_regs) ),
      used_by ( std::move( R.used_by) ),
      called_by ( std::move( R.called_by) ),
      created_by( std::move(R.created_by) ),
@@ -218,9 +221,9 @@ std::optional<int> reg_heap::creator_of_reg(int r) const
     int s = regs[r].created_by.first;
     assert(s >= 0);
     if (s == 0)
-	return {};
+        return {};
     else
-	return s;
+        return s;
 }
 
 bool reg_heap::reg_is_contingent(int r) const
@@ -240,9 +243,9 @@ bool reg_heap::reg_exists(int r) const
 {
     auto s = creator_of_reg(r);
     if (not s)
-	return true;
+        return true;
     else
-	return step_exists_in_root(*s);
+        return step_exists_in_root(*s);
 }
 
 size_t reg_heap::size() const
@@ -272,9 +275,9 @@ void reg_heap::register_prior(int r)
     }
     else
     {
-	regs.access(r).flags.set(0);
+        regs.access(r).flags.set(0);
 
-	assert(reg_is_changeable(r));
+        assert(reg_is_changeable(r));
     }
 }
 
@@ -298,15 +301,15 @@ void reg_heap::register_likelihood_(int r)
     {
         // Also avoid putting a bit on constant regs?
 
-	likelihood_heads.push_back(r);
+        likelihood_heads.push_back(r);
     }
     else
     {
-	regs.access(r).flags.set(1);
+        regs.access(r).flags.set(1);
 
-	assert(reg_is_changeable(r));
+        assert(reg_is_changeable(r));
 
-	likelihood_heads.push_back(r);
+        likelihood_heads.push_back(r);
     }
 }
 
@@ -369,7 +372,7 @@ void reg_heap::unregister_effect_pending_at_step(int s)
             index = i;
 
     if (not index)
-	throw myexception()<<"unregister_effect_pending_at_step: step <"<<s<<"> not found on pending list!";
+        throw myexception()<<"unregister_effect_pending_at_step: step <"<<s<<"> not found on pending list!";
 
     if (*index + 1 < pending_effect_steps.size())
         std::swap(pending_effect_steps[*index], pending_effect_steps.back());
@@ -421,7 +424,7 @@ void reg_heap::register_pending_effects()
 expression_ref reg_heap::evaluate_program(int c)
 {
     if (not program_result_head)
-	throw myexception()<<"No program has been set!";
+        throw myexception()<<"No program has been set!";
 
     auto result = lazy_evaluate(heads[*program_result_head], c).exp;
 
@@ -457,7 +460,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 {
 #if DEBUG_MACHINE >= 2
     for(auto x : prog_temp)
-	assert(x.none());
+        assert(x.none());
 #endif
 
     constexpr int pdf_bit = 4;
@@ -470,19 +473,19 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 
     std::function<void(int)> handler = [&original_pdf_results,this](int old_root)
     {
-	for(auto& p: tokens[old_root].delta_result())
-	{
-	    int r =  p.first;
+        for(auto& p: tokens[old_root].delta_result())
+        {
+            int r =  p.first;
 
-	    // We're only interested in cases where both contexts have a result that is > 0.
-	    // But (i) we need to seen the "seen" flag in any case
-	    //    (ii) we need to remember that we have set it so that we can unset it.
-	    if (regs.is_used(r) and regs.access(r).flags.any() and not prog_temp[r].test(pdf_bit))
-	    {
-		prog_temp[r].set(pdf_bit);
-		original_pdf_results.push_back(p);
-	    }
-	}
+            // We're only interested in cases where both contexts have a result that is > 0.
+            // But (i) we need to seen the "seen" flag in any case
+            //    (ii) we need to remember that we have set it so that we can unset it.
+            if (regs.is_used(r) and regs.access(r).flags.any() and not prog_temp[r].test(pdf_bit))
+            {
+                prog_temp[r].set(pdf_bit);
+                original_pdf_results.push_back(p);
+            }
+        }
     };
 
     reroot_handlers.push_back(handler);
@@ -495,30 +498,30 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 
     for(auto [pdf_reg, orig_pdf_value]: original_pdf_results)
     {
-	assert(prog_temp[pdf_reg].test(pdf_bit));
+        assert(prog_temp[pdf_reg].test(pdf_bit));
 
-	prog_temp[pdf_reg].reset(pdf_bit);
+        prog_temp[pdf_reg].reset(pdf_bit);
 
-	// Only compute a ratio if the pdf is present and computed in BOTH contexts.
-	if (orig_pdf_value > 0 and has_result(pdf_reg))
-	{
-	    int result_reg1 = orig_pdf_value;
-	    int result_reg2 = result_for_reg(pdf_reg);
-	    log_double_t r = (*this)[result_reg2].exp.as_log_double() / (*this)[result_reg1].exp.as_log_double();
+        // Only compute a ratio if the pdf is present and computed in BOTH contexts.
+        if (orig_pdf_value > 0 and has_result(pdf_reg))
+        {
+            int result_reg1 = orig_pdf_value;
+            int result_reg2 = result_for_reg(pdf_reg);
+            log_double_t r = (*this)[result_reg2].exp.as_log_double() / (*this)[result_reg1].exp.as_log_double();
 
-	    assert(regs.access(pdf_reg).flags.test(0) or regs.access(pdf_reg).flags.test(1));
-	    if (regs.access(pdf_reg).flags.test(0))
-		R.prior_ratio *= r;
-	    else 
-		R.likelihood_ratio *= r;
-	}
+            assert(regs.access(pdf_reg).flags.test(0) or regs.access(pdf_reg).flags.test(1));
+            if (regs.access(pdf_reg).flags.test(0))
+                R.prior_ratio *= r;
+            else 
+                R.likelihood_ratio *= r;
+        }
         else
             R.variables_changed = true;
     }
 
 #if DEBUG_MACHINE >= 2
     for(auto x : prog_temp)
-	assert(x.none());
+        assert(x.none());
 #endif
 
     // 5. remove the reroot handler
@@ -526,7 +529,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 
 //  If pr1 and pr2 are off far enough, this test will fail...
 //    if (pr1 > 0.0 and pr2 > 0.0)
-//	assert( std::abs( (pr2/pr1).log() - R.prior_ratio.log() - R.likelihood_ratio.log()) < 1.0e-4 );
+//      assert( std::abs( (pr2/pr1).log() - R.prior_ratio.log() - R.likelihood_ratio.log()) < 1.0e-4 );
 
     return R;
 }
@@ -539,7 +542,7 @@ void reg_heap::register_random_variable(int r)
         throw myexception()<<"Can't register a random variable that is unevaluated!";
 
     if (not is_random_variable(expression_at(r)))
-	throw myexception()<<"Trying to register `"<<expression_at(r)<<"` as random variable";
+        throw myexception()<<"Trying to register `"<<expression_at(r)<<"` as random variable";
     random_variables_.push_back(r);
 
     int r_pdf = (*this)[r].reg_for_slot(1);
@@ -556,7 +559,7 @@ void reg_heap::unregister_random_variable(int r)
     //        Alternatives: (i) use a set (ii) use a hash (iii) record the position in the list somehow.
 
     if (not is_random_variable(expression_at(r)))
-	throw myexception()<<"Trying to unregister `"<<expression_at(r)<<"` as random variable";
+        throw myexception()<<"Trying to unregister `"<<expression_at(r)<<"` as random variable";
 
     std::optional<int> index;
     for(int i=0;i<random_variables_.size();i++)
@@ -564,7 +567,7 @@ void reg_heap::unregister_random_variable(int r)
             index = i;
 
     if (not index)
-	throw myexception()<<"unregister_random_variable: random variable <"<<r<<"> not found!";
+        throw myexception()<<"unregister_random_variable: random variable <"<<r<<"> not found!";
 
     if (*index + 1 < random_variables_.size())
         std::swap(random_variables_[*index], random_variables_.back());
@@ -592,7 +595,7 @@ void reg_heap::unregister_transition_kernel(int r_kernel)
             index = i;
 
     if (not index)
-	throw myexception()<<"unregister_transition_kernel: transition kernel <"<<r_kernel<<"> not found!";
+        throw myexception()<<"unregister_transition_kernel: transition kernel <"<<r_kernel<<"> not found!";
 
     if (*index + 1 < transition_kernels_.size())
         std::swap(transition_kernels_[*index], transition_kernels_.back());
@@ -643,11 +646,11 @@ optional<int> reg_heap::find_update_modifiable_reg(int& R)
     auto& C = (*this)[R];
 
     if (is_modifiable(C.exp))
-	return R;
+        return R;
     else if (is_random_variable(C.exp))
     {
-	int R2 = C.reg_for_slot(0);
-	return find_update_modifiable_reg(R2);
+        int R2 = C.reg_for_slot(0);
+        return find_update_modifiable_reg(R2);
     }
     else if (is_seq(C.exp))
     {
@@ -660,7 +663,7 @@ optional<int> reg_heap::find_update_modifiable_reg(int& R)
         return find_update_modifiable_reg(R2);
     }
     else
-	return {};
+        return {};
 }
 
 optional<int> reg_heap::find_modifiable_reg(int R)
@@ -690,7 +693,7 @@ optional<int> reg_heap::find_update_random_variable(int& R)
     auto& C = closure_at(R);
 
     if (is_random_variable(C.exp))
-	return R;
+        return R;
     else if (is_seq(C.exp))
     {
         int R2 = C.reg_for_slot(1);
@@ -702,7 +705,7 @@ optional<int> reg_heap::find_update_random_variable(int& R)
         return find_update_random_variable(R2);
     }
     else
-	return {};
+        return {};
 }
 
 optional<int> reg_heap::find_random_variable(int R)
@@ -713,31 +716,31 @@ optional<int> reg_heap::find_random_variable(int R)
 const expression_ref reg_heap::get_parameter_range(int c, int p)
 {
     if (auto rv = parameter_is_random_variable(p))
-	return get_range_for_random_variable(c, *rv);
+        return get_range_for_random_variable(c, *rv);
     else
-	return {};
+        return {};
 }
 
 const expression_ref reg_heap::get_range_for_random_variable(int c, int r)
 {
     if (find_update_random_variable(r))
     {
-	int r_range = closure_at(r).reg_for_slot(3);
-	return get_reg_value_in_context(r_range, c);
+        int r_range = closure_at(r).reg_for_slot(3);
+        return get_reg_value_in_context(r_range, c);
     }
     else
-	throw myexception()<<"Trying to get range from `"<<closure_at(r).print()<<"`, which is not a random_variable!";
+        throw myexception()<<"Trying to get range from `"<<closure_at(r).print()<<"`, which is not a random_variable!";
 }
 
 double reg_heap::get_rate_for_random_variable(int c, int r)
 {
     if (find_update_random_variable(r))
     {
-	int r_rate = closure_at(r).reg_for_slot(4);
+        int r_rate = closure_at(r).reg_for_slot(4);
         return get_reg_value_in_context(r_rate, c).as_double();
     }
     else
-	throw myexception()<<"Trying to get rate from `"<<closure_at(r).print()<<"`, which is not a random_variable!";
+        throw myexception()<<"Trying to get rate from `"<<closure_at(r).print()<<"`, which is not a random_variable!";
 }
 
 int reg_heap::step_index_for_reg(int r) const 
@@ -767,9 +770,9 @@ const closure& reg_heap::access_value_for_reg(int R1) const
 bool reg_heap::reg_has_value(int r) const
 {
     if (regs.access(r).type == reg::type_t::constant)
-	return true;
+        return true;
     else
-	return has_result(r);
+        return has_result(r);
 }
 
 bool reg_heap::reg_has_call(int r) const
@@ -796,11 +799,11 @@ int reg_heap::value_for_reg(int r) const
 {
     assert(not expression_at(r).is_index_var());
     if (reg_is_changeable(r))
-	return result_for_reg(r);
+        return result_for_reg(r);
     else
     {
-	assert(reg_is_constant(r));
-	return r;
+        assert(reg_is_constant(r));
+        return r;
     }
 }
 
@@ -821,7 +824,7 @@ void reg_heap::set_result_for_reg(int r1)
     assert(prog_results[r1] > 0);
 }
 
-void reg_heap::set_used_input(int s1, int r2)
+void reg_heap::set_used_input(int r1, int r2)
 {
     assert(reg_is_changeable(r2));
 
@@ -835,31 +838,31 @@ void reg_heap::set_used_input(int s1, int r2)
     // So, we may as well forbid using an index_var as an input.
     assert(not expression_at(r2).is_index_var());
 
-    auto& S1 = steps[s1];
+    auto& R1 = regs[r1];
     auto& R2 = regs[r2];
     int back_index = R2.used_by.size();
-    int forw_index = S1.used_inputs.size();
-    R2.used_by.push_back({s1,forw_index});
-    S1.used_inputs.push_back({r2,back_index});
+    int forw_index = R1.used_inputs.size();
+    R2.used_by.push_back({r1,forw_index});
+    R1.used_inputs.push_back({r2,back_index});
 
-    assert(reg_is_used_by(s1,r2));
+    assert(reg_is_used_by(r1,r2));
 }
 
-void reg_heap::set_forced_input(int s1, int R2)
+void reg_heap::set_forced_input(int r1, int r2)
 {
-    assert(reg_is_changeable(R2));
+    assert(reg_is_changeable(r2));
 
-    assert(regs.is_used(R2));
+    assert(regs.is_used(r2));
 
-    assert(closure_at(R2));
+    assert(closure_at(r2));
 
-    assert(has_result(R2));
+    assert(has_result(r2));
 
     // An index_var's value only changes if the thing the index-var points to also changes.
     // So, we may as well forbid using an index_var as an input.
-    assert(not expression_at(R2).is_index_var());
+    assert(not expression_at(r2).is_index_var());
 
-    steps[s1].forced_regs.push_back(R2);
+    regs[r1].forced_regs.push_back(r2);
 }
 
 void reg_heap::set_call(int R1, int R2)
@@ -949,7 +952,7 @@ void reg_heap::clear_call_for_reg(int R)
 {
     int s = step_index_for_reg(R);
     if (s > 0)
-	clear_call( s );
+        clear_call( s );
 }
 
 void reg_heap::set_C(int R, closure&& C)
@@ -961,7 +964,7 @@ void reg_heap::set_C(int R, closure&& C)
     regs.access(R).C = std::move(C);
 #ifndef NDEBUG
     for(int r: closure_at(R).Env)
-	assert(regs.is_valid_address(r));
+        assert(regs.is_valid_address(r));
 #endif
 }
 
@@ -1036,7 +1039,7 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
     assert(reg_is_changeable(R));
 
     if (not is_root_token(t) and tokens[t].version == tokens[parent_token(t)].version)
-	tokens[t].version--;
+        tokens[t].version--;
 
     // assert(not is_root_token and tokens[t].version < tokens[parent_token(t)].version) 
 
@@ -1064,21 +1067,21 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
     // If the value is a pre-existing reg_var, then call it.
     if (value.exp.head().type() == index_var_type)
     {
-	int Q = value.reg_for_index_var();
+        int Q = value.reg_for_index_var();
 
-	// Set the call
-	set_call_from_step(s, Q);
+        // Set the call
+        set_call_from_step(s, Q);
     }
     // Otherwise, regardless of whether the expression is WHNF or not, create a new reg for the value and call it.
     else
     {
-	int R2 = allocate_reg_from_step_in_token(s,t);
+        int R2 = allocate_reg_from_step_in_token(s,t);
 
-	// Set the call
-	set_C(R2, std::move( value ) );
+        // Set the call
+        set_C(R2, std::move( value ) );
 
-	// clear 'reg created' edge from s to old call.
-	set_call_from_step(s, R2);
+        // clear 'reg created' edge from s to old call.
+        set_call_from_step(s, R2);
     }
 
 #if DEBUG_MACHINE >= 2
@@ -1105,15 +1108,15 @@ void reg_heap::mark_completely_dirty(int t)
 {
     auto& version = tokens[t].version;
     for(int t2:tokens[t].children)
-	version = std::max(version, tokens[t2].version+1);
+        version = std::max(version, tokens[t2].version+1);
     max_version = std::max(version, max_version);
 }
 
 bool reg_heap::is_dirty(int t) const
 {
     for(int t2:tokens[t].children)
-	if (tokens[t].version > tokens[t2].version)
-	    return true;
+        if (tokens[t].version > tokens[t2].version)
+            return true;
     return false;
 }
 
@@ -1121,8 +1124,8 @@ bool reg_heap::is_dirty(int t) const
 bool reg_heap::is_completely_dirty(int t) const
 {
     for(int t2:tokens[t].children)
-	if (tokens[t].version <= tokens[t2].version)
-	    return false;
+        if (tokens[t].version <= tokens[t2].version)
+            return false;
     return true;
 }
   
@@ -1131,7 +1134,7 @@ std::vector<int> reg_heap::used_regs_for_reg(int r) const
     vector<int> U;
     if (not has_step(r)) return U;
 
-    for(const auto& [r2,_]: step_for_reg(r).used_inputs)
+    for(const auto& [r2,_]: regs[r].used_inputs)
         U.push_back(r2);
 
     return U;
@@ -1142,8 +1145,8 @@ std::vector<int> reg_heap::forced_regs_for_reg(int r) const
     vector<int> U;
     if (not has_step(r)) return U;
 
-    for(int r: step_for_reg(r).forced_regs)
-	U.push_back(r);
+    for(int r: regs[r].forced_regs)
+        U.push_back(r);
 
     return U;
 }
@@ -1151,8 +1154,6 @@ std::vector<int> reg_heap::forced_regs_for_reg(int r) const
 void reg_heap::reclaim_used(int r)
 {
     // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
-    assert(not regs.access(r).created_by.first);
-    assert(not regs.access(r).created_by.second);
     assert(not has_step(r));
   
     regs.reclaim_used(r);
@@ -1178,14 +1179,14 @@ void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
         scan.push_back(r);
 
     for(const auto& C: closure_stack)
-	for(int r: C.Env)
-	    scan.push_back(r);
+        for(int r: C.Env)
+            scan.push_back(r);
 
     for(const auto& [name,reg]: parameters) // yes
-	scan.push_back(reg);
+        scan.push_back(reg);
     if (keep_identifiers)
-	for(const auto& [name,reg]: identifiers) // no
-	    scan.push_back(reg);
+        for(const auto& [name,reg]: identifiers) // no
+            scan.push_back(reg);
 }
 
 /// Add an expression that may be replaced by its reduced form
@@ -1228,7 +1229,7 @@ int reg_heap::add_perform_io_head()
 int reg_heap::add_program(const expression_ref& E)
 {
     if (program_result_head or logging_head)
-	throw myexception()<<"Trying to set program a second time!";
+        throw myexception()<<"Trying to set program a second time!";
 
     auto P = E;
     P = {var("Probability.Random.gen_model_no_alphabet"), P};
@@ -1337,12 +1338,12 @@ void reg_heap::resize(int s)
     // Now we can use size() again.
     for(auto i=old_size;i<size();i++)
     {
-	prog_steps[i] = non_computed_index;
-	prog_results[i] = non_computed_index;
+        prog_steps[i] = non_computed_index;
+        prog_results[i] = non_computed_index;
 
-	assert(prog_steps[i] == non_computed_index);
-	assert(prog_results[i] == non_computed_index);
-	assert(prog_temp[i].none());
+        assert(prog_steps[i] == non_computed_index);
+        assert(prog_results[i] == non_computed_index);
+        assert(prog_temp[i].none());
     }
 }
 
@@ -1356,6 +1357,11 @@ bool reg_heap::reg_is_changeable(int r) const
     return regs.access(r).type == reg::type_t::changeable;
 }
 
+bool reg_heap::reg_is_unknown(int r) const
+{
+    return regs.access(r).type == reg::type_t::unknown;
+}
+
 void reg_heap::make_reg_changeable(int r)
 {
     assert( regs.access(r).type == reg::type_t::changeable or regs.access(r).type == reg::type_t::unknown );
@@ -1367,16 +1373,16 @@ bool reg_heap::reg_is_called_by(int r1, int s1) const
 {
     for(int s: regs[r1].called_by)
         if (s == s1)
-	    return true;
+            return true;
 
     return false;
 }
 
-bool reg_heap::reg_is_used_by(int s1, int r2) const
+bool reg_heap::reg_is_used_by(int r1, int r2) const
 {
-    for(auto& [s,_]: regs[r2].used_by)
-	if (s == s1)
-	    return true;
+    for(auto& [r,_]: regs[r2].used_by)
+        if (r == r1)
+            return true;
 
     return false;
 }
@@ -1386,21 +1392,21 @@ void reg_heap::check_tokens() const
 #ifndef NDEBUG
     for(int c=0;c<get_n_contexts();c++)
     {
-	int t = token_for_context(c);
-	if (t >= 0)
-	{
-	    assert(tokens[t].is_referenced());
-	    assert(tokens[t].used);
-	}
+        int t = token_for_context(c);
+        if (t >= 0)
+        {
+            assert(tokens[t].is_referenced());
+            assert(tokens[t].used);
+        }
     }
 
     for(int t=0;t<tokens.size();t++)
-	if (token_is_used(t))
-	{
-	    assert(tokens[t].is_referenced() or tokens[t].children.size() >= 1);
-	    for(int t2: children_of_token(t))
-		assert(tokens[t].version >= tokens[t2].version);
-	}
+        if (token_is_used(t))
+        {
+            assert(tokens[t].is_referenced() or tokens[t].children.size() >= 1);
+            for(int t2: children_of_token(t))
+                assert(tokens[t].version >= tokens[t2].version);
+        }
 #endif
 }
 
@@ -1410,55 +1416,37 @@ void reg_heap::check_used_regs_in_token(int t) const
 
     for(auto [r,result]: tokens[t].delta_result())
     {
-	assert(not prog_temp[r].test(0));
-	prog_temp[r].set(0);
+        assert(not prog_temp[r].test(0));
+        prog_temp[r].set(0);
 
-	// No results for constant regs
-	if (result > 0)
+        // No results for constant regs
+        if (result > 0)
             assert(regs.access(r).type != reg::type_t::constant);
     }
     for(auto [r,step]: tokens[t].delta_step())
     {
-	assert(not prog_temp[r].test(1));
-	prog_temp[r].set(1);
+        assert(not prog_temp[r].test(1));
+        prog_temp[r].set(1);
 
-	// If the step is unshared, the result must be unshared as well: this allows us to just walk unshared results.
-	assert(prog_temp[r].test(0) and prog_temp[r].test(1));
-	// No steps for constant regs
+        // If the step is unshared, the result must be unshared as well: this allows us to just walk unshared results.
+        assert(prog_temp[r].test(0) and prog_temp[r].test(1));
+        // No steps for constant regs
         if (step > 0)
             assert(regs.access(r).type != reg::type_t::constant);
     }
 
     // FIXME - nonlocal. The same result/step are not set in multiple places!
 
-    for(auto [r,step]: tokens[t].delta_step())
-    {
-	if (step < 0) continue;
-	
-        for(const auto& [r2,_]: steps[step].used_inputs)
-	{
-	    // Used regs should have back-references to R
-            assert( reg_is_used_by(step, r2) );
-
-	    // Used computations should be mapped computation for the current token, if we are at the root
-            assert(reg_is_changeable(r2));
-
-	    // The used result should be referenced somewhere more root-ward
-	    // so that this result can be invalidated, and the used result won't be GC-ed.
-            // FIXME - nonlocal.  assert(is_modifiable(expression_at(R2)) or result_is_referenced(t,res2));
-	}
-    }
-
     for(auto [reg,res]: tokens[t].delta_result())
     {
-	prog_temp[reg].reset(0);
-	prog_temp[reg].reset(1);
+        prog_temp[reg].reset(0);
+        prog_temp[reg].reset(1);
     }
 
     for(auto [reg,step]: tokens[t].delta_step())
     {
-	prog_temp[reg].reset(0);
-	prog_temp[reg].reset(1);
+        prog_temp[reg].reset(0);
+        prog_temp[reg].reset(1);
     }
 }
 
@@ -1468,14 +1456,36 @@ void reg_heap::check_used_regs() const
     assert(tokens[root_token].vm_result.empty());
 
     for(int t=0; t< tokens.size(); t++)
-	if (token_is_used(t))
-	    check_used_regs_in_token(t);
+        if (token_is_used(t))
+            check_used_regs_in_token(t);
 
     for(auto& S:steps)
     {
         if (S.call > 0)
             assert(not regs.is_free(S.call));
     }
+
+    for(auto i = regs.begin(); i != regs.end(); i++)
+    {
+        int r1 = i.addr();
+
+        if (not regs[r1].used_inputs.empty())
+            assert(reg_is_changeable(r1));
+
+        for(const auto& [r2,_]: regs[r1].used_inputs)
+        {
+            // Used regs should have back-references to R
+            assert( reg_is_used_by(r1, r2) );
+
+            // Used computations should be mapped computation for the current token, if we are at the root
+            assert(reg_is_changeable(r2));
+
+            // The used result should be referenced somewhere more root-ward
+            // so that this result can be invalidated, and the used result won't be GC-ed.
+            // FIXME - nonlocal.  assert(is_modifiable(expression_at(R2)) or result_is_referenced(t,res2));
+        }
+    }
+
 }
 
 int reg_heap::get_shared_step(int r)
@@ -1508,86 +1518,94 @@ int reg_heap::add_shared_step(int r)
     return s;
 }
 
-void reg_heap::check_back_edges_cleared_for_step(int s)
+void reg_heap::check_back_edges_cleared_for_step(int s) const
 {
-    for(auto& [_,index]: steps.access_unused(s).used_inputs)
-	assert(index == 0);
-
     assert(steps[s].call_edge.first == 0);
     assert(steps[s].call_edge.second == 0);
 
     for(auto& r: steps.access_unused(s).created_regs)
     {
-	auto [step, index] = regs.access(r).created_by;
-	assert(step == 0);
-	assert(index == 0);
+        auto [step, index] = regs.access(r).created_by;
+        assert(step == 0);
+        assert(index == 0);
     }
 }
 
-void reg_heap::clear_back_edges_for_reg(int r)
+void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
 {
+    // 1. When destroying a reg, remove edge from regs[r] <---used_by--- regs[r3]
+    assert(r > 0);
+    for(auto& forward: regs[r].used_inputs)
+    {
+        auto [r3,j] = forward;
+        if (regs.is_free(r3)) continue;
+        auto& backward = regs[r3].used_by;
+        assert(0 <= j and j < backward.size());
+
+        forward = {0,0};
+
+        if (j+1 < backward.size())
+        {
+            // erase the backward edge by moving another backward edge on top of it.
+            backward[j] = backward.back();
+            auto [r2,i2] = backward[j];
+            // adjust the forward edge for that backward edge
+            auto& forward2 = regs[r2].used_inputs;
+            assert(0 <= i2 and i2 < forward2.size());
+            forward2[i2].second = j;
+
+            assert(regs[r2].used_inputs[i2].second == j);
+            assert(regs[forward2[i2].first].used_by[forward2[i2].second].second == i2);
+        }
+
+        backward.pop_back();
+    }
+
+
+    // 2. When destroying a reg, remove edge from step[s] ---created_regs---> regs[r]
+    if (not creator_survives) return;
+
     assert(r > 0);
     auto& created_by = regs.access(r).created_by;
     auto [s,j] = created_by;
     if (s > 0)
     {
-	auto& backward = steps[s].created_regs;
-	assert(0 <= j and j < backward.size());
+        auto& backward = steps[s].created_regs;
+        assert(0 <= j and j < backward.size());
 
-	// Clear the forward edge.
-	created_by = {0, 0};
+        // Clear the forward edge.
+        created_by = {0, 0};
 
-	// Move the last element to the hole, and adjust index of correspond forward edge.
-	if (j + 1 < backward.size())
-	{
-	    backward[j] = backward.back();
-	    auto& forward2 = regs.access(backward[j]);
-	    forward2.created_by.second = j;
+        // Move the last element to the hole, and adjust index of correspond forward edge.
+        if (j + 1 < backward.size())
+        {
+            backward[j] = backward.back();
+            auto& forward2 = regs.access(backward[j]);
+            forward2.created_by.second = j;
 
-	    assert(regs.access(backward[j]).created_by.second == j);
-	}
-	backward.pop_back();
+            assert(regs.access(backward[j]).created_by.second == j);
+        }
+        backward.pop_back();
     }
+}
+
+void reg_heap::check_back_edges_cleared_for_reg(int r) const
+{
+    for(auto& [_,index]: regs.access_unused(r).used_inputs)
+        assert(index == 0);
 }
 
 void reg_heap::clear_back_edges_for_step(int s)
 {
-    // 1a. When destroying a step, remove edge from steps[s] <---used_by--- reg[r]
-    assert(s > 0);
-    for(auto& forward: steps[s].used_inputs)
-    {
-        auto [r,j] = forward;
-        if (regs.is_free(r)) continue;
-        auto& backward = regs[r].used_by;
-	assert(0 <= j and j < backward.size());
-
-	forward = {0,0};
-
-	if (j+1 < backward.size())
-	{
-	    // erase the backward edge by moving another backward edge on top of it.
-	    backward[j] = backward.back();
-	    auto [s2,i2] = backward[j];
-	    // adjust the forward edge for that backward edge
-	    auto& forward2 = steps[s2].used_inputs;
-	    assert(0 <= i2 and i2 < forward2.size());
-	    forward2[i2].second = j;
-
-	    assert(steps[s2].used_inputs[i2].second == j);
-            assert(regs[forward2[i2].first].used_by[forward2[i2].second].second == i2);
-	}
-
-	backward.pop_back();
-    }
-    // 1b. Clear list of used_inputs.
-
     // 2. Clear edges from steps[s] <---> reg[call]
     if (steps[s].call > 0)
         clear_call(s);
 
     // 3. Clear list of created regs.
+#ifndef NDEBUG
     for(auto& r: steps[s].created_regs)
-	regs.access(r).created_by = {0,{}};
+        assert(regs.is_free(r));
+#endif
     steps[s].created_regs.clear();
 }
 
@@ -1599,9 +1617,9 @@ void reg_heap::clear_step(int r)
     if (s > 0)
     {
 #ifndef NDEBUG
-	check_back_edges_cleared_for_step(s);
+        check_back_edges_cleared_for_step(s);
 #endif
-	steps.reclaim_used(s);
+        steps.reclaim_used(s);
     }
 
     prog_steps[r] = non_computed_index;
@@ -1629,9 +1647,9 @@ const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
 
     if (has_result(R))
     {
-	total_get_reg_value_non_const_with_result++;
-	int R2 = result_for_reg(R);
-	if (R2) return expression_at(R2);
+        total_get_reg_value_non_const_with_result++;
+        int R2 = result_for_reg(R);
+        if (R2) return expression_at(R2);
     }
 
     // If the value needs to be computed (e.g. its a call expression) then compute it.
@@ -1685,7 +1703,7 @@ const closure& reg_heap::lazy_evaluate_head(int index, int c)
     int R1 = heads[index];
     auto [R2, value] = incremental_evaluate_in_context(R1,c);
     if (R2 != R1)
-	set_head(index, R2);
+        set_head(index, R2);
 
     return closure_at(value);
 }
@@ -1710,7 +1728,7 @@ int reg_heap::add_identifier(const string& name)
 {
     // if there's already an 's', then complain
     if (identifiers.count(name))
-	throw myexception()<<"Cannot add identifier '"<<name<<"': there is already an identifier with that name.";
+        throw myexception()<<"Cannot add identifier '"<<name<<"': there is already an identifier with that name.";
 
     int R = allocate();
 
@@ -1736,7 +1754,7 @@ void reg_heap::release_scratch_list() const
 vector<int>& reg_heap::get_scratch_list() const
 {
     while(n_active_scratch_lists >= scratch_lists.size())
-	scratch_lists.push_back( new Vector<int> );
+        scratch_lists.push_back( new Vector<int> );
 
     vector<int>& v = *scratch_lists[ n_active_scratch_lists++ ];
 
@@ -1748,8 +1766,8 @@ vector<int>& reg_heap::get_scratch_list() const
 optional<int> reg_heap::maybe_find_parameter(const string& s) const
 {
     for(int i=0;i<parameters.size();i++)
-	if (parameters[i].first == s)
-	    return i;
+        if (parameters[i].first == s)
+            return i;
 
     return {};
 }
@@ -1758,7 +1776,7 @@ int reg_heap::find_parameter(const string& s) const
 {
     auto index = maybe_find_parameter(s);
     if (not index)
-	throw myexception()<<"Can't find parameter '"<<s<<"'!";
+        throw myexception()<<"Can't find parameter '"<<s<<"'!";
     return *index;
 }
 
@@ -1784,8 +1802,8 @@ void reg_heap::add_parameter(const string& full_name, int r)
 
     // 1. Check that we don't already have a parameter with that name
     for(const auto& [p_name, _]: parameters)
-	if (p_name == full_name)
-	    throw myexception()<<"A parameter with name '"<<full_name<<"' already exists - cannot add another one.";
+        if (p_name == full_name)
+            throw myexception()<<"A parameter with name '"<<full_name<<"' already exists - cannot add another one.";
 
     // 2. Allocate space for the parameter
     parameters.push_back( {full_name, r} );

@@ -247,8 +247,8 @@ void reg_heap::unshare_regs(int t)
                     unshare_result(r2);
 
 	    // Look at steps that USE the reg in the root (that has overridden result in t)
-            for(auto& [s2,_]: R.used_by)
-                if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
+            for(auto& [r2,_]: R.used_by)
+                if (prog_steps[r2] > 0)
                     unshare_step(r2);
         }
 

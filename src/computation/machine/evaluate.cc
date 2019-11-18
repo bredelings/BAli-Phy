@@ -1,7 +1,7 @@
 //#ifdef NDEBUG
 //#undef NDEBUG
 //#endif
-#define COMBINE_STEPS
+
 #include "util/log-level.H"
 #include "graph_register.H"
 #include "error_exception.H"
@@ -66,11 +66,15 @@ void throw_reg_exception(reg_heap& M, int t, int R, myexception& e, bool changea
 }
 
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
-class RegOperationArgs: public OperationArgs
+class RegOperationArgs final: public OperationArgs
 {
+    const int R;
+
     const int S;
 
     const int P;
+
+    const bool first_eval;
 
     const closure& current_closure() const {return memory().closure_stack.back();}
 
@@ -91,7 +95,8 @@ class RegOperationArgs: public OperationArgs
 	    if (M.reg_is_changeable(R3))
 	    {
 		used_changeable = true;
-		M.set_forced_input(S, R3);
+                if (first_eval)
+                    M.set_forced_input(R, R3);
 	    }
 
 	    return value;
@@ -108,7 +113,8 @@ class RegOperationArgs: public OperationArgs
 	    if (M.reg_is_changeable(R3))
 	    {
 		used_changeable = true;
-		M.set_used_input(S, R3);
+                if (first_eval)
+                    M.set_used_input(R, R3);
 	    }
 
 	    return value;
@@ -157,8 +163,8 @@ public:
 
     RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
-    RegOperationArgs(int s, int p, reg_heap& m)
-	:OperationArgs(m), S(s), P(p)
+    RegOperationArgs(int r, int s, int p, reg_heap& m)
+	:OperationArgs(m), R(r), S(s), P(p), first_eval(m.reg_is_unknown(R))
 	{ }
 };
 
@@ -372,13 +378,11 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 	    try
 	    {
 		closure_stack.push_back (closure_at(R) );
-		RegOperationArgs Args(S, P, *this);
+		RegOperationArgs Args(R, S, P, *this);
 		auto O = expression_at(R).head().assert_is_a<Operation>()->op;
 		closure value = (*O)(Args);
 		closure_stack.pop_back();
 		total_reductions++;
-		if (not steps[S].used_inputs.empty())
-		    total_changeable_reductions++;
 
 		// If the reduction doesn't depend on modifiable, then replace E with the value.
 		if (not Args.used_changeable)
@@ -386,16 +390,16 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		    // The old used_input slots are not invalid, which is OK since none of them are changeable.
 		    assert(not reg_has_call(R) );
 		    assert(not reg_has_value(R));
-		    assert(step_for_reg(R).used_inputs.empty());
+		    assert(regs[R].used_inputs.empty());
 		    assert(step_for_reg(R).created_regs.empty());
 		    set_C(R, std::move(value) );
 		}
 		else
 		{
+		    total_changeable_reductions++;
 		    make_reg_changeable(R);
 		    closure_stack.push_back(value);
 
-#ifndef COMBINE_STEPS
 		    int r2;
 		    if (closure_stack.back().exp.head().is_index_var())
 		    {
@@ -408,30 +412,10 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 			assert(not has_step(r2));
 		    }
 
-		    auto p = incremental_evaluate(r2);
-#else
-		    incremental_evaluate_from_call_(S);
-
-		    pair<int,int> p;
-		    if (closure_stack.back().exp.head().is_index_var())
-		    {
-			int r2 = closure_stack.back().reg_for_index_var();
-			p = incremental_evaluate(r2);
-		    }
-		    else
-		    {
-			int r2 = Args.allocate( std::move(closure_stack.back()) );
-			assert(not has_step(r2));
-			regs.access(r2).type = reg::type_t::constant;
-			// assert(is_WHNF(expression_at(r2))) ?
-			p = {r2,r2};
-		    }
-#endif
+		    auto [call,value] = incremental_evaluate(r2);
 		    closure_stack.pop_back();
 
-		    auto [r3,value] = p;
-
-		    set_call(R, r3);
+		    set_call(R, call);
 		    set_result_for_reg(R);
 		    return {R, value};
 		}
@@ -460,75 +444,8 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
     std::abort();
 }
 
-void reg_heap::incremental_evaluate_from_call(int S, closure& value)
-{
-    closure_stack.push_back( value );
-
-    incremental_evaluate_from_call_(S);
-}
-
-// The goal here is to merge steps S->S2->S3 => S.  At this point S is known to be changeable.
-//
-// However, S->S2 and S has performed allocations, then we don't want S2 to unshare those
-// if it is unshared.  Therefore once allocations have been performed we don't want to merge
-// with any downstream regs that are changeable.
-//
-// Therefore, if we have any allocations performed in S, create a new reg and delegate to it.
-void reg_heap::incremental_evaluate_from_call_(int S)
-{
-    assert(is_completely_dirty(root_token));
-
-    assert(S > 0);
-
-    while (not closure_stack.back().exp.head().is_index_var() and
-	   not is_WHNF(closure_stack.back().exp))
-    {
-#ifndef NDEBUG
-	assert(not closure_stack.back().exp.head().is_a<Trim>());
-	assert(closure_stack.back().exp.type() != parameter_type);
-#endif
-
-	// If any allocations have been performed by any of the steps merged into S
-	// then don't merge any children into S.
-	if (not steps[S].created_regs.empty())
-	{
-	    int r2 = allocate_reg_from_step(S,std::move(closure_stack.back()));
-	    closure_stack.back() = closure(index_var(0),{r2});
-	    return;
-	}
-
-	try
-	{
-	    RegOperationArgs Args(S, S, *this);
-	    auto O = closure_stack.back().exp.head().assert_is_a<Operation>()->op;
-	    closure_stack.back() = (*O)(Args);
-	
-	    total_reductions++;
-	    if (Args.used_changeable)
-		total_changeable_reductions++;
-	}
-	catch (error_exception& e)
-	{
-	    if (log_verbose)
-		throw_reg_exception(*this, root_token, closure_stack.back(), e);
-	    else
-		throw;
-	}
-	catch (myexception& e)
-	{
-	    throw_reg_exception(*this, root_token, closure_stack.back(), e);
-	}
-	catch (const std::exception& ee)
-	{
-	    myexception e;
-	    e<<ee.what();
-	    throw_reg_exception(*this, root_token, closure_stack.back(), e);
-	}
-    }
-}
-
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
-class RegOperationArgsUnchangeable: public OperationArgs
+class RegOperationArgsUnchangeable final: public OperationArgs
 {
     const int R;
 

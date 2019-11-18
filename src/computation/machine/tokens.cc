@@ -19,26 +19,23 @@ void reg_heap::destroy_all_computations_in_token(int t)
     // Remove use back-edges
     for(auto& [_,s]: delta_step)
     {
-	if (s > 0)
-	{
-	    for(int r: steps[s].created_regs)
-	    {
-		// Truncating access(r) here deallocates RAM used by (for example) cached conditional likelihoods.
-		// Since we now ensure that any steps/result for these regs must be in this token, we can actually
-		//   deallocate the regs here instead of just waiting for GC to eliminate them.
-		regs.access(r).clear();
-		reclaim_used(r);
-	    }
-	    steps[s].created_regs.clear();
-	    clear_back_edges_for_step(s);
-	}
+        if (s > 0)
+        {
+            for(int r: steps[s].created_regs)
+            {
+                // Unsharing created regs in unshare_regs( ) ensures that any steps for created regs must be in this token.
+                // This allows us to reclaim allocated regs here instead of just waiting for GC to eliminate them.
+
+                // Clearing the reg deallocates RAM used by (For example) cached conditional likelihoods.
+
+                clear_back_edges_for_reg(r,false);    // We don't need to adjust steps[s].created_regs, since we will destroy steps[s].
+                reclaim_used(r);                      // This clears the reg.
+            }
+            clear_back_edges_for_step(s);             // This clears steps[s].created_regs.
+            steps.reclaim_used(s);                    // This clears the step
+        }
     }
 
-    for(auto& [_,s]: delta_step)
-    {
-	if (s > 0)
-	    steps.reclaim_used(s);
-    }
     tokens[t].vm_step.clear();
 
     tokens[t].vm_result.clear();
@@ -52,34 +49,48 @@ void reg_heap::release_tip_token(int t)
 
     total_destroy_token++;
 
-    // 1. Destroy computations in the token (this is an optimization)
-    destroy_all_computations_in_token(t);
-
-    // 2. Adjust the token tree
+    // 1. Adjust the token tree
     int parent = parent_token(t);
 
     unused_tokens.push_back(t);
   
     if (parent != -1)
     {
-	// mark token for this context unused
-	assert(not is_root_token(t));
-	assert(tokens.size() - unused_tokens.size() > 0);
+        // mark token for this context unused
+        assert(not is_root_token(t));
+        assert(tokens.size() - unused_tokens.size() > 0);
 
-	int index = remove_element(tokens[parent_token(t)].children, t);
-	assert(index != -1);
-	tokens[t].parent = -1;
+        int index = remove_element(tokens[parent_token(t)].children, t);
+        assert(index != -1);
+        tokens[t].parent = -1;
     }
     else
     {
-	assert(is_root_token(t));
-	root_token = -1;
+        assert(is_root_token(t));
+        root_token = -1;
         pending_effect_steps.clear();
-	assert(tokens.size() - unused_tokens.size() == 0);
+        assert(tokens.size() - unused_tokens.size() == 0);
     }
 
-    // 3. Set the token to unused
+    // 2. Set the token to unused
     tokens[t].used = false;
+
+    // 3. Destroy the computations
+    try
+    {
+        destroy_all_computations_in_token(t);
+    }
+    catch (std::exception& e)
+    {
+        std::cerr<<"Exception thrown while releasing tip token!\n";
+        std::cerr<<e.what()<<"\n";
+        std::abort();
+    }
+    catch (...)
+    {
+        std::cerr<<"Exception thrown while releasing tip token!\n";
+        std::abort();
+    }
 
     // 4. Make sure the token is empty
     assert(tokens[t].vm_step.empty());
@@ -111,8 +122,8 @@ void load_map(const mapping<T>& vm, vector<std::bitset<8>>& prog_temp)
 {
     for(auto [r,_]: vm.delta())
     {
-	assert(not prog_temp[r].test(0));
-	prog_temp[r].set(0);
+        assert(not prog_temp[r].test(0));
+        prog_temp[r].set(0);
     }
 }
 
@@ -121,8 +132,8 @@ void unload_map(const mapping<T>& vm, vector<std::bitset<8>>& prog_temp)
 {
     for(auto [r,_]: vm.delta())
     {
-	assert(prog_temp[r].test(0));
-	prog_temp[r].reset(0);
+        assert(prog_temp[r].test(0));
+        prog_temp[r].reset(0);
     }
 }
 
@@ -131,16 +142,16 @@ void merge_split_mapping_(mapping<T>& vm1, mapping<T>& vm2, vector<std::bitset<8
 {
     for(int i=0;i<vm1.delta().size();)
     {
-	auto [r,v] = vm1.delta()[i];
+        auto [r,v] = vm1.delta()[i];
 
-	if (not prog_temp[r].test(0))
-	{
-	    vm2.add_value(r,v);
-	    prog_temp[r].set(0);
-	    vm1.erase_value_at(i);
-	}
-	else
-	    i++;
+        if (not prog_temp[r].test(0))
+        {
+            vm2.add_value(r,v);
+            prog_temp[r].set(0);
+            vm1.erase_value_at(i);
+        }
+        else
+            i++;
     }
 }
 
@@ -157,32 +168,32 @@ void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
     load_map(tokens[child_token].vm_result, prog_temp);
     for(int t: knuckle_tokens)
     {
-	assert(token_is_used(t));
-	assert(not tokens[t].is_referenced());
-	assert(tokens[t].children.size() == 1);
+        assert(token_is_used(t));
+        assert(not tokens[t].is_referenced());
+        assert(tokens[t].children.size() == 1);
 
-	assert(tokens[t].version <= tokens[child_token].version);
+        assert(tokens[t].version <= tokens[child_token].version);
 
-	// The child token (t2) needs to be up-to-date with respect to the parent token.
-	assert(tokens[t].version <= tokens[child_token].version);
+        // The child token (t2) needs to be up-to-date with respect to the parent token.
+        assert(tokens[t].version <= tokens[child_token].version);
 
-	merge_split_mapping_(tokens[t].vm_result, tokens[child_token].vm_result, prog_temp);
+        merge_split_mapping_(tokens[t].vm_result, tokens[child_token].vm_result, prog_temp);
     }
     unload_map(tokens[child_token].vm_result, prog_temp);
 
     load_map(tokens[child_token].vm_step, prog_temp);
     for(int t: knuckle_tokens)
     {
-	assert(token_is_used(t));
-	assert(not tokens[t].is_referenced());
-	assert(tokens[t].children.size() == 1);
+        assert(token_is_used(t));
+        assert(not tokens[t].is_referenced());
+        assert(tokens[t].children.size() == 1);
 
-	assert(tokens[t].version <= tokens[child_token].version);
+        assert(tokens[t].version <= tokens[child_token].version);
 
-	// The child token (t2) needs to be up-to-date with respect to the parent token.
-	assert(tokens[t].version <= tokens[child_token].version);
+        // The child token (t2) needs to be up-to-date with respect to the parent token.
+        assert(tokens[t].version <= tokens[child_token].version);
 
-	merge_split_mapping_(tokens[t].vm_step, tokens[child_token].vm_step, prog_temp);
+        merge_split_mapping_(tokens[t].vm_step, tokens[child_token].vm_step, prog_temp);
     }
     unload_map(tokens[child_token].vm_step, prog_temp);
 }
@@ -196,22 +207,22 @@ int reg_heap::release_knuckle_tokens(int child_token)
 
     while (true)
     {
-	t = tokens[t].parent;
-	if (t != root_token and not tokens[t].is_referenced() and tokens[t].children.size() == 1)
-	    knuckle_path.push_back(t);
-	else
-	    break;
+        t = tokens[t].parent;
+        if (t != root_token and not tokens[t].is_referenced() and tokens[t].children.size() == 1)
+            knuckle_path.push_back(t);
+        else
+            break;
     }
 
     merge_split_mappings(knuckle_path);
 
     for(int t2: knuckle_path)
     {
-	capture_parent_token(child_token);
+        capture_parent_token(child_token);
 
-	total_release_knuckle++;
+        total_release_knuckle++;
 
-	release_tip_token(t2);
+        release_tip_token(t2);
     }
 
     return tokens[child_token].parent;
@@ -223,12 +234,12 @@ int reg_heap::release_unreferenced_tips(int t)
 
     while(t != -1 and not tokens[t].is_referenced() and tokens[t].children.empty())
     {
-	int parent = parent_token(t);
+        int parent = parent_token(t);
 
-	// clear only the mappings that were actually updated here.
-	release_tip_token(t);
+        // clear only the mappings that were actually updated here.
+        release_tip_token(t);
 
-	t = parent;
+        t = parent;
     }
 
     return t;
@@ -263,7 +274,7 @@ int reg_heap::degree_of_token(int t) const
 {
     int degree = children_of_token(t).size();
     if (not is_root_token(t))
-	degree++;
+        degree++;
     return degree;
 }
   
@@ -386,8 +397,8 @@ int reg_heap::get_new_context()
     // Add an unused context if we are missing one
     if (unused_contexts.empty())
     {
-	unused_contexts.push_back(get_n_contexts());
-	token_for_context_.push_back(-1);
+        unused_contexts.push_back(get_n_contexts());
+        token_for_context_.push_back(-1);
     }
 
     // Get a new context index and check it has no token
@@ -443,9 +454,9 @@ int reg_heap::get_unused_token()
 {
     if (unused_tokens.empty())
     {
-	unused_tokens.push_back(get_n_tokens());
-	tokens.push_back(Token());
-	total_tokens = tokens.size();
+        unused_tokens.push_back(get_n_tokens());
+        tokens.push_back(Token());
+        total_tokens = tokens.size();
     }
 
     int t = unused_tokens.back();
@@ -457,11 +468,11 @@ int reg_heap::get_unused_token()
 
     if (root_token == -1)
     {
-	assert(tokens.size() - unused_tokens.size() == 1);
-	root_token = t;
+        assert(tokens.size() - unused_tokens.size() == 1);
+        root_token = t;
     }
     else
-	assert(tokens.size() - unused_tokens.size() > 1);
+        assert(tokens.size() - unused_tokens.size() > 1);
 
     assert(tokens[t].parent == -1);
     assert(tokens[t].children.empty());
