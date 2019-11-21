@@ -95,8 +95,39 @@ Matrix expm1(const EigenValues& solution,double t)
     return E;
 }
 
+// compute the exp(M) I from the SVD for M (i.e. M=O D O^t )
+Matrix exp(const EigenValues& solution,double t)
+{
+    const Matrix& O = solution.Rotation();
+    std::vector<double> D = solution.Diagonal();
+
+    // Exponentiate Eigenvalues
+    for(int i=0;i<solution.size();i++)
+	D[i] = exp(t*D[i]);
+
+    //Matrix E = prod(O,prod(D,trans(O)));
+
+    int size = O.size1();
+    Matrix E(size,size);
+    for(int i=0;i<size;i++)
+	for(int j=0;j<size;j++) {
+	    double temp =0;
+	    for(int k=0;k<size;k++)
+		temp += O(i,k)*O(j,k)*D[k];
+	    E(i,j) = temp;
+	}
+
+#ifndef NDEBUG
+    for(int i=0;i<E.size1();i++)
+	for(int j=0;j<E.size2();j++)
+	    assert(E(i,j) >= -1.0e-10);
+#endif
+
+    return E;
+}
+
 /// Compute the exponential of a matrix from a reversible markov chain
-Matrix exp(const EigenValues& eigensystem, const vector<double>& pi, const double t)
+Matrix exp_small(const EigenValues& eigensystem, const vector<double>& pi, const double t)
 {
     Matrix E = expm1(eigensystem,t);
 
@@ -132,5 +163,57 @@ Matrix exp(const EigenValues& eigensystem, const vector<double>& pi, const doubl
         assert(std::abs(sum - 1.0) < 1.0e-10*E.size1());
     }
 #endif
+
     return E;
+}
+
+/// Compute the exponential of a matrix from a reversible markov chain
+Matrix exp_large(const EigenValues& eigensystem, const vector<double>& pi, const double t)
+{
+    Matrix E = exp(eigensystem,t);
+
+    const int n = pi.size();
+
+    std::vector<double> DP(n);
+    std::vector<double> DN(n);
+    for(int i=0;i<pi.size();i++) {
+	DP[i] = sqrt(pi[i]);
+	DN[i] = 1.0/DP[i];
+    }
+
+    for(int i=0;i<E.size1();i++)
+	for(int j=0;j<E.size2();j++)
+	    E(i,j) *= DN[i]*DP[j];
+
+    for(int i=0;i<E.size1();i++)
+	for(int j=0;j<E.size2();j++) {
+	    assert(E(i,j) >= -1.0e-10);
+	    if (E(i,j)<0)
+		E(i,j)=0;
+	}
+
+#ifndef NDEBUG
+    for(int i=0;i<E.size1();i++)
+    {
+        double sum = 0;
+	for(int j=0;j<E.size2();j++)
+            sum += E(i,j);
+        assert(std::abs(sum - 1.0) < 1.0e-10*E.size1());
+    }
+#endif
+
+    return E;
+}
+
+Matrix exp(const EigenValues& eigensystem, const vector<double>& pi, const double t)
+{
+    bool small = true;
+    for(double eigenvalue: eigensystem.Diagonal())
+        if (eigenvalue * t < -1)
+            small = false;
+
+    if (small)
+        return exp_small(eigensystem, pi, t);
+    else
+        return exp_large(eigensystem, pi, t);
 }
