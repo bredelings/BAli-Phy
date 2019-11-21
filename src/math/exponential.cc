@@ -123,5 +123,14 @@ Matrix exp(const EigenValues& eigensystem, const vector<double>& pi, const doubl
 		E(i,j)=0;
 	}
 
+#ifndef NDEBUG
+    for(int i=0;i<E.size1();i++)
+    {
+        double sum = 0;
+	for(int j=0;j<E.size2();j++)
+            sum += E(i,j);
+        assert(std::abs(sum - 1.0) < 1.0e-10*E.size1());
+    }
+#endif
     return E;
 }
