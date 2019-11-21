@@ -1470,7 +1470,7 @@ int main(int argc,char* argv[])
                 auto snp_positions = get_snp_positions(A,i,i2);
                 for(int j=1;j<=max_d;j++)
                     for(int k=0;k+j < snp_positions.size();k+=j)
-                        std::cout<<i<<"\t"<<i2<<"\t"<<j<<"\t"<<snp_positions[k].first<<"\t"<<snp_positions[k+j].second - snp_positions[k].second + 1<<"\n";
+                        std::cout<<i<<"\t"<<i2<<"\t"<<j<<"\t"<<snp_positions[k].first<<"\t"<<snp_positions[k+j].second - snp_positions[k].second<<"\n";
             }
 
             exit(0);
