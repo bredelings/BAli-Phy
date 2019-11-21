@@ -131,6 +131,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("pi-matrix","Calculate pi for each pair of sequences")
 	("autoclean","Mask blocks with too many SNPs")
 	("histogram",value<int>(),"Output SNP counts for blocks of arg bases")
+        ("snp-snp-lengths",value<int>(),"Output counts of snp-snp\nlengths up to arg snps")
         ("sfs2d",value<string>(),"pop1:pop2:anc:window")
 	;
 
@@ -1263,6 +1264,29 @@ matrix<int> compute_2d_sfs(const alignment& A,
     return counts;
 }
 
+vector<pair<int,int>> get_snp_positions(const alignment& A, int i, int j)
+{
+    auto& a = A.get_alphabet();
+
+    vector<pair<int,int>> positions;
+
+    int i_pos=0;
+    int consensus_pos=0;
+    for(int c=0;c<A.length();c++)
+    {
+        int li = A(c,i);
+        int lj = A(c,j);
+        if (a.is_letter(li) and a.is_letter(lj) and li != lj)
+            positions.push_back({consensus_pos,i_pos});
+
+        if (not A.gap(c,i))
+            i_pos++;
+        if (not A.gap(c,0))
+            consensus_pos++;
+    }
+
+    return positions;
+}
 
 int main(int argc,char* argv[]) 
 { 
@@ -1432,6 +1456,25 @@ int main(int argc,char* argv[])
 	    // 3. Alter the alignment
 	    remove_and_mask_columns(A, [&gaps](int c){return gaps[c];});
 	}
+
+        if (args.count("snp-snp-lengths"))
+        {
+            int max_d = args["snp-snp-lengths"].as<int>();
+            // Go through non-overlapping pairs, using the first sequence in the pair as a reference.
+            // (If we were scanning to remove things we would use every sequence as a reference, but this is just to get a distribution).
+            std::cout<<"seq1\tseq2\tSNPs\tref_pos\tdistance\n";
+            for(int i=0;i<A.n_sequences();i+=2)
+            {
+                int i2 = (i+1)%A.n_sequences();
+                // positions are measured in terms of distance along i
+                auto snp_positions = get_snp_positions(A,i,i2);
+                for(int j=1;j<=max_d;j++)
+                    for(int k=0;k+j < snp_positions.size();k+=j)
+                        std::cout<<i<<"\t"<<i2<<"\t"<<j<<"\t"<<snp_positions[k].first<<"\t"<<snp_positions[k+j].second - snp_positions[k].second + 1<<"\n";
+            }
+
+            exit(0);
+        }
 
 	if (args.count("histogram"))
 	{
