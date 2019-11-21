@@ -1212,7 +1212,7 @@ matrix<int> compute_2d_sfs(const alignment& A,
                            const vector<int>& pop1,
                            const vector<int>& pop2,
                            const vector<int>& anc,
-                           int window_size)
+                           int /* window_size */)
 {
     matrix<int> counts(pop1.size()+1, pop2.size()+1,0);
 
