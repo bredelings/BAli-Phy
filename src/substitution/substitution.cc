@@ -653,7 +653,7 @@ namespace substitution {
             if (smap[s2].as_int() == l)
                 total += Q(s1,s2);
 
-        assert(total <= 1.0);
+        assert(total - 1.0 < 1.0e-9*Q.size1());
         return total;
     }
 
@@ -666,7 +666,7 @@ namespace substitution {
             if (a.matches(smap[s].as_int(),l2))
                 total += Q(s1,s);
 
-        assert(total <= 1.0);
+        assert(total - 1.0 < 1.0e-9*Q.size1());
         return total;
     }
 
