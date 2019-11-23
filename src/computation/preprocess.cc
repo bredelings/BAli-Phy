@@ -11,7 +11,6 @@
 #include "computation/expression/index_var.H"
 #include "computation/expression/indexify.H"
 #include "computation/expression/constructor.H"
-#include "computation/expression/parameter.H"
 #include "computation/expression/reg_var.H"
 #include "computation/expression/expression.H" // for is_reglike( )
 #include "computation/optimization/let-float.H"
@@ -188,20 +187,7 @@ expression_ref reg_heap::translate_refs(const expression_ref& E, closure::Env_t&
 {
     optional<int> reg;
 
-    // Replace parameters with the appropriate reg_var: of value parameter( )
-    if (E.is_a<parameter>())
-    {
-	string name = E.as_<parameter>().parameter_name;
-
-	int param_index = find_parameter(name);
-    
-	if (param_index == -1)
-	    throw myexception()<<"Can't translate undefined parameter '"<<name<<"' in expression!";
-
-	reg = parameters[param_index].second;
-    }
-
-    else if (is_resolved_symbol(E))
+    if (is_resolved_symbol(E))
     {
         auto& name = E.as_<resolved_symbol>().name;
 	reg = reg_for_id(name);
