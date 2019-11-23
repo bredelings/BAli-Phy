@@ -146,8 +146,6 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
 	    if (p[i][j].variable_alignment())
 	    {
 		Matrices[i].push_back(sample_two_nodes_base(p[i][j], a123456[j], order[i], order[0]));
-		//    p[i][j].LC.invalidate_node(p[i].T,order[i][4]);
-		//    p[i][j].LC.invalidate_node(p[i].T,order[i][5]);
 		if (Matrices[i].back()->Pr_sum_all_paths() <= 0.0)
 		    std::cerr<<"Pr = 0   i = "<<i<<"   j="<<j<<" \n";
 #ifndef NDEBUG
