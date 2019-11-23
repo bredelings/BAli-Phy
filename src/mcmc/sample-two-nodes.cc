@@ -135,6 +135,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
     vector<log_double_t> rho = rho_;
     assert(p.size() == order.size());
 
+    double heat_beta = p[0].get_beta();
     vector<vector<HMM::bitmask_t>> a123456(p[0].n_data_partitions());
     for(int j=0;j<p[0].n_data_partitions();j++) 
         a123456[j] = A5::get_bitpath(p[0][j], order[0]);
@@ -187,7 +188,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
 	// sum of substitution and alignment probability over all paths
 	for(int j=0;j<p[i].n_data_partitions();j++)
 	{
-	    Pr[i] *= pow(OS[i][j], p[i][j].get_beta());
+	    Pr[i] *= pow(OS[i][j], heat_beta);
 	    if (p[i][j].variable_alignment())
 	    {
 		Pr[i] *= Matrices[i][j]->Pr_sum_all_paths();
