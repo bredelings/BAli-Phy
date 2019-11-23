@@ -50,7 +50,6 @@
 #include "computation/expression/var.H"
 #include "computation/expression/reg_var.H"
 #include "computation/expression/let.H"
-#include "computation/expression/parameter.H"
 #include "computation/expression/do_block.H"
 #include "computation/module.H"
 #include "computation/operations.H" // for VectorFromList<>
