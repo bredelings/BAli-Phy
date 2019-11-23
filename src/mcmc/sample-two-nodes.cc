@@ -109,11 +109,16 @@ sample_two_nodes_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a1
 
     const auto& nodes = order.nodes;
 
-    P.set_pairwise_alignment(P.t().find_branch(nodes[0],nodes[4]), get_pairwise_alignment_from_path(path, *Matrices, 0, 4));
-    P.set_pairwise_alignment(P.t().find_branch(nodes[1],nodes[4]), get_pairwise_alignment_from_path(path, *Matrices, 1, 4));
-    P.set_pairwise_alignment(P.t().find_branch(nodes[2],nodes[5]), get_pairwise_alignment_from_path(path, *Matrices, 2, 5));
-    P.set_pairwise_alignment(P.t().find_branch(nodes[3],nodes[5]), get_pairwise_alignment_from_path(path, *Matrices, 3, 5));
-    P.set_pairwise_alignment(P.t().find_branch(nodes[4],nodes[5]), get_pairwise_alignment_from_path(path, *Matrices, 4, 5));
+    int b04 = P.t().find_branch(nodes[0],nodes[4]);
+    int b14 = P.t().find_branch(nodes[1],nodes[4]);
+    int b25 = P.t().find_branch(nodes[2],nodes[5]);
+    int b35 = P.t().find_branch(nodes[3],nodes[5]);
+    int b45 = P.t().find_branch(nodes[4],nodes[5]);
+    P.set_pairwise_alignment(b04, get_pairwise_alignment_from_path(path, *Matrices, 0, 4));
+    P.set_pairwise_alignment(b14, get_pairwise_alignment_from_path(path, *Matrices, 1, 4));
+    P.set_pairwise_alignment(b25, get_pairwise_alignment_from_path(path, *Matrices, 2, 5));
+    P.set_pairwise_alignment(b35, get_pairwise_alignment_from_path(path, *Matrices, 3, 5));
+    P.set_pairwise_alignment(b45, get_pairwise_alignment_from_path(path, *Matrices, 4, 5));
 
     return Matrices;
 }
