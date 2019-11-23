@@ -46,7 +46,7 @@ using std::shared_ptr;
 using boost::dynamic_bitset;
 
 shared_ptr<DParrayConstrained>
-sample_two_nodes_base(mutable_data_partition P, const data_partition& P0, const A5::hmm_order& order, const A5::hmm_order& order0)
+sample_two_nodes_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a123456, const A5::hmm_order& order, const A5::hmm_order& order0)
 {
     assert(P.variable_alignment());
     HMM m12345 = A5::get_HMM(P,order);
@@ -57,9 +57,8 @@ sample_two_nodes_base(mutable_data_partition P, const data_partition& P0, const 
 	I guess it means that we used (A0,T0,nodes0) to get an order.  We then keep that order
 	for use with (A[i],T[i],nodes[i]).  */
 
-    vector<HMM::bitmask_t> a123456 = A5::get_bitpath(P0, order0);
-    a123456 = remap_bitpath(a123456, compute_mapping(order0.nodes, order.nodes));
-    vector<HMM::bitmask_t> a1234 = remove_silent(a123456, m12345.all_bits() & ~m12345.hidden_bits);
+    auto a123456_remapped = remap_bitpath(a123456, compute_mapping(order0.nodes, order.nodes));
+    vector<HMM::bitmask_t> a1234 = remove_silent(a123456_remapped, m12345.all_bits() & ~m12345.hidden_bits);
 
     /*-------------- Create DP matrices ---------------*/
 
@@ -130,22 +129,10 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
     vector<A5::hmm_order> order = order_;
     vector<log_double_t> rho = rho_;
     assert(p.size() == order.size());
-  
-/*
-//------------ Check the alignment branch constraints ------------//
-for(int i=0;i<p.size();i++) {
-vector<int> branches;
 
-branches.push_back(p[i].t().branch(order[i].nodes[0], order[i].nodes[4]));
-branches.push_back(p[i].t().branch(order[i].nodes[1], order[i].nodes[4]));
-branches.push_back(p[i].t().branch(order[i].nodes[2], order[i].nodes[5]));
-branches.push_back(p[i].t().branch(order[i].nodes[3], order[i].nodes[5]));
-branches.push_back(p[i].t().branch(order[i].nodes[4], order[i].nodes[5]));
-
-if (any_branches_constrained(branches, p[i].t(), p[i].PC->TC, p[i].PC->AC))
-return -1;
-}
-*/
+    vector<vector<HMM::bitmask_t>> a123456(p[0].n_data_partitions());
+    for(int j=0;j<p[0].n_data_partitions();j++) 
+        a123456[j] = A5::get_bitpath(p[0][j], order[0]);
   
     //----------- Generate the different states and Matrices ---------//
     log_double_t C1 = A5::correction(p[0],order[0]);
@@ -158,7 +145,7 @@ return -1;
 	for(int j=0;j<p[i].n_data_partitions();j++) 
 	    if (p[i][j].variable_alignment())
 	    {
-		Matrices[i].push_back(sample_two_nodes_base(p[i][j], p[0][j], order[i], order[0]));
+		Matrices[i].push_back(sample_two_nodes_base(p[i][j], a123456[j], order[i], order[0]));
 		//    p[i][j].LC.invalidate_node(p[i].T,order[i][4]);
 		//    p[i][j].LC.invalidate_node(p[i].T,order[i][5]);
 		if (Matrices[i].back()->Pr_sum_all_paths() <= 0.0)
