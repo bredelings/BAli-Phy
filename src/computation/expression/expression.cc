@@ -17,7 +17,6 @@
 #include "lambda.H"
 #include "bool.H"
 #include "modifiable.H"
-#include "parameter.H"
 #include "reg_var.H"
 
 using std::vector;
@@ -27,73 +26,6 @@ using std::pair;
 using std::multiset;
 
 using boost::dynamic_pointer_cast;
-
-// 1. factor out: list, tuple
-// Also try to simplify the apply_subst stuff in tuple & list files
-// 2. eliminate substitution.H
-// 3. Eliminate identifier in favor of var (==var)?
-// 4. Remove horrible (#symbol)*(#function) substitution in module.C
-
-/// 1. Hey, could we solve the problem of needing to rename dummies by doing capture-avoiding substitution?
-/// I think we could!
-///
-/// Suppose we have Lf.Lx.fx, and we apply it to Lx.x (the identity function), then we get
-///    (Lf.Lx.fx)(Lx.x) = (Lx.fx)[f := Lx.x] = Lx.(Lx.x)x.
-/// Then, if we apply this to y, we get
-///    (Lx.(Lx.x)x)y = (Lx.x)x[x := y] = (Lx.x)y 
-/// And
-///    (Lx.x)y = y;
-///
-/// 2. However, is sometimes still necessary to rename dummies.  This is true if E2 contains unbound dummies
-///    that are bound in E1.
-///
-///    For example, apply Lx.y to x, then we would get Lx.x, which is not allowed.
-///    Instead, we must "alpha-convert" Lx.y to Lz.y, and then apply Lz.y to x, leading to Lz.x .
-
-/// Literally E2 for D in E1. (e.g. don't rename variables in E2).  Throw an exception if D is a lambda-bound variable.
-
-void find_named_parameters(const expression_ref& E, std::set<string>& names)
-{
-    assert(E);
-    // If this is a parameter, then makes sure we've got its name.
-    if (E.is_a<parameter>())
-    {
-	auto& n = E.as_<parameter>();
-	assert(not E.size());
-	if (names.find(n.parameter_name) == names.end())
-	    names.insert(n.parameter_name);
-    }
-
-    // Check the sub-objects of this expression.
-    for(int i=0;i<E.size();i++)
-	find_named_parameters(E.sub()[i], names);
-}
-
-set<string> find_named_parameters(const expression_ref& e)
-{
-    set<string> names;
-    find_named_parameters(e, names);
-    return names;
-}
-
-set<string> find_named_parameters(const vector<expression_ref>& notes)
-{
-    set<string> names;
-    for(int i=0;i<notes.size();i++)
-	find_named_parameters(notes[i], names);
-    return names;
-}
-
-expression_ref add_prefix(const string& prefix, const expression_ref& E)
-{
-    std::set<string> names = find_named_parameters(E);
-
-    expression_ref E2 = E;
-    for(const auto& name: names)
-	E2 = substitute(E2, parameter(name), parameter(prefix+"."+name));
-
-    return E2;
-}
 
 /* Legal terms are:
 
