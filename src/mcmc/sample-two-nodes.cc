@@ -134,6 +134,10 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
     for(int j=0;j<p[0].n_data_partitions();j++) 
         a123456[j] = A5::get_bitpath(p[0][j], order[0]);
   
+    vector< vector<log_double_t> > OS(p.size());
+    vector< vector<log_double_t> > OP(p.size());
+    vector<log_double_t> Pr(p.size());
+
     //----------- Generate the different states and Matrices ---------//
     log_double_t C1 = A5::correction(p[0],order[0]);
 #if !defined(NDEBUG_DP) || !defined(NDEBUG)
@@ -141,8 +145,10 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
 #endif
 
     vector< vector< shared_ptr<DParrayConstrained> > > Matrices(p.size());
-    for(int i=0;i<p.size();i++) 
-	for(int j=0;j<p[i].n_data_partitions();j++) 
+    for(int i=0;i<p.size();i++)
+    {
+	for(int j=0;j<p[i].n_data_partitions();j++)
+        {
 	    if (p[i][j].variable_alignment())
 	    {
 		Matrices[i].push_back(sample_two_nodes_base(p[i][j], a123456[j], order[i], order[0]));
@@ -154,16 +160,9 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
 	    }
 	    else
 		Matrices[i].push_back(NULL);
-	
+        }
 
-
-    //-------- Calculate corrections to path probabilities ---------//
-
-    vector< vector<log_double_t> > OS(p.size());
-    vector< vector<log_double_t> > OP(p.size());
-
-    for(int i=0; i<p.size(); i++) 
-    {
+        //-------- Calculate corrections to path probabilities ---------//
 	if (do_OS)
 	    for(int j=0;j<p[i].n_data_partitions();j++)
 		OS[i].push_back( p[i][j].likelihood() );
@@ -175,14 +174,10 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
 		OP[i].push_back( other_prior(p[i][j],order[i].nodes) );
 	else
 	    OP[i] = vector<log_double_t>(p[i].n_data_partitions(),log_double_t(1));
-    }
 
-    //---------------- Calculate choice probabilities --------------//
-    vector<log_double_t> Pr(p.size());
 
-    for(int i=0;i<Pr.size();i++) 
-    {
-	Pr[i] = rho[i] * p[i].prior_no_alignment();
+        //---------------- Calculate choice probabilities --------------//
+        Pr[i] = rho[i] * p[i].prior_no_alignment();
 
 	// sum of substitution and alignment probability over all paths
 	for(int j=0;j<p[i].n_data_partitions();j++)
