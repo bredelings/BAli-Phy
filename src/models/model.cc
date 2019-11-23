@@ -29,7 +29,6 @@
 #include "models/model.H"
 #include "models/path.H"
 #include "computation/program.H"
-#include "computation/expression/parameter.H"
 #include "computation/module.H"
 #include "computation/loader.H"
 #include "computation/parser/desugar.H"
@@ -45,14 +44,6 @@ using boost::dynamic_pointer_cast;
 
 template <typename T>
 using Bounds = Box<bounds<T>>;
-
-vector<expression_ref> model_parameter_expressions(const Model& M)
-{
-    vector< expression_ref > sub;
-    for(int i=0;i<M.n_parameters();i++) 
-	sub.push_back( parameter(M.parameter_name(i)) );
-    return sub;
-}
 
 Model::Model(const std::shared_ptr<module_loader>& L, const key_map_t& k)
     :context(L),keys(new key_map_t(k))
