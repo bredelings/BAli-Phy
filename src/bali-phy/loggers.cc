@@ -3,7 +3,6 @@
 #include "loggers.H"
 #include "tools/parsimony.H"
 #include "tools/stats-table.H"
-#include "computation/expression/parameter.H"
 #include "computation/expression/bool.H"
 #include "computation/expression/constructor.H"
 #include "computation/expression/var.H"
