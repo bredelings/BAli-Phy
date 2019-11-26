@@ -31,16 +31,18 @@
 
 class state_array
 {
-    int s1;
-    int s2;
+    int s1 = 0;
+    int s2 = 0;
 
-    std::vector<double> data;
-    std::vector<int> scale_;
+    double* data = nullptr;
+    int data_size = 0;
 
-    // Guarantee that these things aren't ever copied
-    state_array& operator=(const state_array&) {return *this;}
+    int* scale_ = nullptr;
 
 public:
+    // Guarantee that these things aren't ever copied
+    state_array& operator=(const state_array&)  = delete;
+
     int size1() const {return s1;}
     int size2() const {return s2;}
 
@@ -68,20 +70,35 @@ public:
 
     void resize(int i1,int i2)
         {
-            s1 = i1; s2 = i2;
-            data.resize(s1*s2);
-            scale_.resize(s1);
+            if (i1*i2 > data_size)
+            {
+                delete[] data;
+                data = new double[i1*i2];
+                data_size = i1*i2;
+            }
+
+            if (i1 > s1)
+            {
+                delete[] scale_;
+                scale_ = new int[i1];
+            }
+
+            s1 = i1;
+            s2 = i2;
         }
 
-    state_array()
-        :s1(0),
-         s2(0)
-        { }
+    state_array() = default;
+
+    state_array(const state_array&) = delete;
 
     state_array(int i1,int i2)
-        :s1(0),
-         s2(0)
         { resize(i1,i2); }
+
+    ~state_array()
+     {
+         delete[] data;
+         delete[] scale_;
+     }
 };
 
 
