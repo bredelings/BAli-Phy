@@ -972,15 +972,21 @@ void Parameters::NNI(int b1, int b2, bool allow_disconnect_subtree)
             minimally_connect(a123456[i]);
         }
 
+    int b04 = t().find_branch(nodes[0],nodes[4]);
+    int b14 = t().find_branch(nodes[1],nodes[4]);
+    int b25 = t().find_branch(nodes[2],nodes[5]);
+    int b35 = t().find_branch(nodes[3],nodes[5]);
+    b45 = t().find_branch(nodes[4],nodes[5]);
+
     // 5. Set the pairwise alignments.
     for(int i=0;i<n_data_partitions();i++)
     {
         auto dp = get_data_partition(i);
-        dp.set_pairwise_alignment(t().find_branch(nodes[0],nodes[4]), get_pairwise_alignment_from_bits(a123456[i], 0, 4));
-        dp.set_pairwise_alignment(t().find_branch(nodes[1],nodes[4]), get_pairwise_alignment_from_bits(a123456[i], 1, 4));
-        dp.set_pairwise_alignment(t().find_branch(nodes[2],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 2, 5));
-        dp.set_pairwise_alignment(t().find_branch(nodes[3],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 3, 5));
-        dp.set_pairwise_alignment(t().find_branch(nodes[4],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 4, 5));
+        dp.set_pairwise_alignment(b04, get_pairwise_alignment_from_bits(a123456[i], 0, 4));
+        dp.set_pairwise_alignment(b14, get_pairwise_alignment_from_bits(a123456[i], 1, 4));
+        dp.set_pairwise_alignment(b25, get_pairwise_alignment_from_bits(a123456[i], 2, 5));
+        dp.set_pairwise_alignment(b35, get_pairwise_alignment_from_bits(a123456[i], 3, 5));
+        dp.set_pairwise_alignment(b45, get_pairwise_alignment_from_bits(a123456[i], 4, 5));
     }
 
 }
