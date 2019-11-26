@@ -575,6 +575,8 @@ void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     //------ Generate Topologies and alter caches ------///
     vector<Parameters> p(3,PP);
 
+    double L0 = PP.t().branch_length(b);
+
     int b1 = PP.t().find_branch(nodes[4],nodes[1]);
     int b2 = PP.t().find_branch(nodes[5],nodes[2]);
     int b3 = PP.t().find_branch(nodes[5],nodes[3]);
@@ -601,11 +603,11 @@ void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     result.totals[0] = (C>0)?1:0;
     // This gives us the average length of branches prior to successful swaps
     if (C>0)
-	result.totals[1] = p[0].t().branch_length(b);
+	result.totals[1] = L0;
     else
 	result.counts[1] = 0;
 
-    NNI_inc(Stats,"NNI (3-way)", result, p[0].t().branch_length(b));
+    NNI_inc(Stats,"NNI (3-way)", result, L0);
 }
 
 void three_way_topology_and_alignment_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
