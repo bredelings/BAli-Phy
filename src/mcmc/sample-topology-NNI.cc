@@ -449,29 +449,6 @@ void two_way_NNI_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 	two_way_NNI_and_branches_sample(P,Stats,b);
 }
 
-/// This has to be Gibbs, and use the same substitution::Model in each case...
-
-int three_way_topology_sample(vector<Parameters>& p, const vector<log_double_t>& rho, int b) 
-{
-    assert(p[0].variable_alignment() == p[1].variable_alignment());
-    assert(p[1].variable_alignment() == p[2].variable_alignment());
-
-    vector< A5::hmm_order > orders(3);
-    orders[0] = A5::get_nodes_random(p[0].t(), b);
-    orders[1] = A5::get_nodes_random(p[1].t(), b);
-    orders[2] = A5::get_nodes_random(p[2].t(), b);
-
-    try {
-	return sample_two_nodes_multi(p,orders,rho,true,false);
-    }
-    catch (choose_exception<log_double_t>& c)
-    {
-	c.prepend(__PRETTY_FUNCTION__);
-	throw c;
-    }
-}
-
-
 void three_way_topology_sample_slice(owned_ptr<Model>& P, MoveStats& Stats, int b) 
 {
     Parameters& PP = *P.as<Parameters>();
@@ -557,6 +534,26 @@ void three_way_topology_sample_slice(owned_ptr<Model>& P, MoveStats& Stats, int 
     NNI_inc(Stats,"NNI (3-way,slice)", result, L);
 }
 
+int three_way_topology_sample(vector<Parameters>& p, const vector<log_double_t>& rho, int b) 
+{
+    assert(p[0].variable_alignment() == p[1].variable_alignment());
+    assert(p[1].variable_alignment() == p[2].variable_alignment());
+
+    vector< A5::hmm_order > orders(3);
+    orders[0] = A5::get_nodes_random(p[0].t(), b);
+    orders[1] = A5::get_nodes_random(p[1].t(), b);
+    orders[2] = A5::get_nodes_random(p[2].t(), b);
+
+    try {
+	return sample_two_nodes_multi(p,orders,rho,true,false);
+    }
+    catch (choose_exception<log_double_t>& c)
+    {
+	c.prepend(__PRETTY_FUNCTION__);
+	throw c;
+    }
+}
+
 void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
 {
     Parameters& PP = *P.as<Parameters>();
@@ -588,16 +585,10 @@ void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     p[1].NNI(b1, b2);
     p[1].select_root(b);
 
-    //  if (not extends(p[1].t(), PP.PC->TC))
-    //    return;
-
     // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
     p[2].NNI(b1, b3);
     p[2].select_root(b);
   
-    //  if (not extends(p[2].t(), PP.PC->TC))
-    //    return;
-
     const vector<log_double_t> rho(3,1);
 
     //------ Resample alignments and select topology -----//
