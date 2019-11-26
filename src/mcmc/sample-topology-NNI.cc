@@ -573,8 +573,6 @@ void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     const auto& nodes = order.nodes;
 
     //------ Generate Topologies and alter caches ------///
-    // PP.likelihood();  Why does this not make a difference in speed?
-
     vector<Parameters> p(3,PP);
 
     int b1 = PP.t().find_branch(nodes[4],nodes[1]);
