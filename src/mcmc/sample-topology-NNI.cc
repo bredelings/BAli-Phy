@@ -534,26 +534,6 @@ void three_way_topology_sample_slice(owned_ptr<Model>& P, MoveStats& Stats, int 
     NNI_inc(Stats,"NNI (3-way,slice)", result, L);
 }
 
-int three_way_topology_sample(vector<Parameters>& p, const vector<log_double_t>& rho, int b) 
-{
-    assert(p[0].variable_alignment() == p[1].variable_alignment());
-    assert(p[1].variable_alignment() == p[2].variable_alignment());
-
-    vector< A5::hmm_order > orders(3);
-    orders[0] = A5::get_nodes_random(p[0].t(), b);
-    orders[1] = A5::get_nodes_random(p[1].t(), b);
-    orders[2] = A5::get_nodes_random(p[2].t(), b);
-
-    try {
-	return sample_two_nodes_multi(p,orders,rho,true,false);
-    }
-    catch (choose_exception<log_double_t>& c)
-    {
-	c.prepend(__PRETTY_FUNCTION__);
-	throw c;
-    }
-}
-
 void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
 {
     Parameters& PP = *P.as<Parameters>();
@@ -571,6 +551,7 @@ void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 
     A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
     const auto& nodes = order.nodes;
+    PP.select_root(b);
 
     //------ Generate Topologies and alter caches ------///
     vector<Parameters> p(3,PP);
@@ -581,33 +562,44 @@ void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     int b2 = PP.t().find_branch(nodes[5],nodes[2]);
     int b3 = PP.t().find_branch(nodes[5],nodes[3]);
 
+    vector< A5::hmm_order > orders(3);
+    orders[0] = A5::get_nodes_random(p[0].t(), b);
+
     // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
     p[1].NNI(b1, b2);
-    p[1].select_root(b);
+    orders[1] = A5::get_nodes_random(p[1].t(), b);
 
     // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
     p[2].NNI(b1, b3);
-    p[2].select_root(b);
+    orders[2] = A5::get_nodes_random(p[2].t(), b);
   
     const vector<log_double_t> rho(3,1);
 
     //------ Resample alignments and select topology -----//
-    int C = three_way_topology_sample(p,rho,b);
 
-    if (C != -1) {
-	PP = p[C];
-    }    
+    try {
+	int C = sample_two_nodes_multi(p,orders,rho,true,false);
 
-    MCMC::Result result(2);
+        if (C != -1) {
+            PP = p[C];
+        }
 
-    result.totals[0] = (C>0)?1:0;
-    // This gives us the average length of branches prior to successful swaps
-    if (C>0)
-	result.totals[1] = L0;
-    else
-	result.counts[1] = 0;
+        MCMC::Result result(2);
 
-    NNI_inc(Stats,"NNI (3-way)", result, L0);
+        result.totals[0] = (C>0)?1:0;
+        // This gives us the average length of branches prior to successful swaps
+        if (C>0)
+            result.totals[1] = L0;
+        else
+            result.counts[1] = 0;
+
+        NNI_inc(Stats,"NNI (3-way)", result, L0);
+    }
+    catch (choose_exception<log_double_t>& c)
+    {
+	c.prepend(__PRETTY_FUNCTION__);
+	throw c;
+    }
 }
 
 void three_way_topology_and_alignment_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
