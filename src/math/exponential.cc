@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2004-2007, 2010, 2012, 2014 Benjamin Redelings
+  Copyright (C) 2004-2007, 2010, 2012, 2014, 2017-2019 Benjamin Redelings
 
   This file is part of BAli-Phy.
 
@@ -147,23 +147,6 @@ Matrix exp_small(const EigenValues& eigensystem, const vector<double>& pi, const
     for(int i=0;i<E.size1();i++)
 	E(i,i) += 1.0;
 
-    for(int i=0;i<E.size1();i++)
-	for(int j=0;j<E.size2();j++) {
-	    assert(E(i,j) >= -1.0e-10);
-	    if (E(i,j)<0)
-		E(i,j)=0;
-	}
-
-#ifndef NDEBUG
-    for(int i=0;i<E.size1();i++)
-    {
-        double sum = 0;
-	for(int j=0;j<E.size2();j++)
-            sum += E(i,j);
-        assert(std::abs(sum - 1.0) < 1.0e-10*E.size1());
-    }
-#endif
-
     return E;
 }
 
@@ -185,23 +168,6 @@ Matrix exp_large(const EigenValues& eigensystem, const vector<double>& pi, const
 	for(int j=0;j<E.size2();j++)
 	    E(i,j) *= DN[i]*DP[j];
 
-    for(int i=0;i<E.size1();i++)
-	for(int j=0;j<E.size2();j++) {
-	    assert(E(i,j) >= -1.0e-10);
-	    if (E(i,j)<0)
-		E(i,j)=0;
-	}
-
-#ifndef NDEBUG
-    for(int i=0;i<E.size1();i++)
-    {
-        double sum = 0;
-	for(int j=0;j<E.size2();j++)
-            sum += E(i,j);
-        assert(std::abs(sum - 1.0) < 1.0e-10*E.size1());
-    }
-#endif
-
     return E;
 }
 
@@ -212,8 +178,23 @@ Matrix exp(const EigenValues& eigensystem, const vector<double>& pi, const doubl
         if (eigenvalue * t < -1)
             small = false;
 
-    if (small)
-        return exp_small(eigensystem, pi, t);
-    else
-        return exp_large(eigensystem, pi, t);
+    auto E = small?exp_small(eigensystem, pi, t):exp_large(eigensystem, pi, t);
+
+    // Force positive, and renormalize rows.
+    for(int i=0;i<E.size1();i++)
+    {
+        double sum = 0;
+	for(int j=0;j<E.size2();j++) {
+	    assert(E(i,j) >= -1.0e-10);
+            // Force positive
+            E(i,j) = std::max(0.0, E(i,j));
+            sum += E(i,j);
+	}
+        // Renormalize rows
+        assert(std::abs(sum - 1.0) < 1.0e-10*E.size1());
+        double factor = 1.0/sum;
+	for(int j=0;j<E.size2();j++)
+            E(i,j) *= factor;
+    }
+    return E;
 }
