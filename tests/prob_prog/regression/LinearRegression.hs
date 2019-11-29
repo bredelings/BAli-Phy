@@ -10,11 +10,11 @@ ys = read_file_as_double "ys"
 
 sample_model = do
 
-  b <- sample $ normal 0.0 1.0
+  b <- normal 0.0 1.0
 
-  a <- sample $ normal 0.0 1.0
+  a <- normal 0.0 1.0
 
-  s <- sample $ exponential 1.0
+  s <- exponential 1.0
 
   return (a,b,s)
 

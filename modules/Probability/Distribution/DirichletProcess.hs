@@ -21,7 +21,7 @@ do_crp'' alpha n bins counts = let inc (c:cs) 0 = (c+1:cs)
                                    f 0 = alpha/(intToDouble nzeros)
                                    f i = intToDouble i
                                in 
-                               do c <- sample $ categorical (p alpha counts)
+                               do c <- categorical (p alpha counts)
                                   cs <- do_crp'' alpha (n-1) bins (inc counts c) 
                                   return (c:cs)
 
@@ -52,12 +52,12 @@ dpm n alpha mean_dist noise_dist= do
 
   let delta = 4
 
-  mean <- sample $ iid (n+delta) mean_dist
-  sigmaOverMu <- sample $ iid (n+delta) noise_dist
+  mean <- iid (n+delta) mean_dist
+  sigmaOverMu <- iid (n+delta) noise_dist
 
-  z <- sample $ iid n (normal 0.0 1.0)
+  z <- iid n (normal 0.0 1.0)
 
-  category <- sample $ crp alpha n delta
+  category <- crp alpha n delta
 
   return [ mean!!k * safe_exp (z!!i * sigmaOverMu!!k) | i <- take n [0..], let k=category!!i]
 
@@ -65,8 +65,8 @@ dp n alpha mean_dist = do
 
   let delta = 4
 
-  mean <- sample $ iid (n+delta) mean_dist
+  mean <- iid (n+delta) mean_dist
 
-  category <- sample $ crp alpha n delta
+  category <- crp alpha n delta
 
   return [ mean!!k | i <- take n [0..], let k=category!!i]

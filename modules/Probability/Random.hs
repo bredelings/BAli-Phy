@@ -31,7 +31,6 @@ data Effects = Effects
 
 -- This implements the Random monad by transforming it into the IO monad.
 data Random a = RandomStructure (a->Effects) (a->Effects->a) (Random a)
-              | Sample (Distribution a)
               | Observe (Distribution b) b
               | AddMove (Int->a)
               | Print b
@@ -42,7 +41,6 @@ data Random a = RandomStructure (a->Effects) (a->Effects->a) (Random a)
               | WithEffect (Random a) (Random a)
               | LiftIO (IO a)
 
-sample dist = Sample dist
 -- I feel sample_with_initial_value actually needs to run the sampler... and make the result come out of that.
 -- Maybe this needs to be equivalent to running the regular sample and then setting the value... 
 observe = Observe
@@ -94,7 +92,7 @@ run_lazy alpha (IOAndPass f g) = do
   run_lazy alpha $ g x
 run_lazy alpha (IOReturn v) = return v
 run_lazy alpha (LiftIO a) = a
-run_lazy alpha (Sample (Distribution _ _ a _)) = unsafeInterleaveIO $ run_lazy alpha a
+run_lazy alpha (Distribution _ _ a _) = unsafeInterleaveIO $ run_lazy alpha a
 run_lazy alpha GetAlphabet = return alpha
 run_lazy alpha (SetAlphabet a2 x) = run_lazy a2 x
 run_lazy alpha (SamplingRate _ model) = run_lazy alpha model
@@ -129,7 +127,7 @@ run_lazy' alpha rate (IOAndPass f g) = do
   x <- unsafeInterleaveIO $ run_lazy' alpha rate f
   run_lazy' alpha rate $ g x
 run_lazy' alpha rate (IOReturn v) = return v
-run_lazy' alpha rate (Sample dist@(Distribution _ _ (RandomStructure effect structure do_sample) range)) = do
+run_lazy' alpha rate dist@(Distribution _ _ (RandomStructure effect structure do_sample) range) = do
   -- Note: unsafeInterleaveIO means that we will only execute this line if `value` is accessed.
   value <- unsafeInterleaveIO $ run_lazy alpha do_sample
   let (x,triggered_x) = structure value do_effects
@@ -139,7 +137,7 @@ run_lazy' alpha rate (Sample dist@(Distribution _ _ (RandomStructure effect stru
       -- Passing `x` to the effect instead of `rv` maybe should work, but doesn't.
       do_effects = (run_effects alpha rate $ effect rv) `seq` rv
   return triggered_x
-run_lazy' alpha rate (Sample (Distribution _ _ s _)) = run_lazy' alpha rate s
+run_lazy' alpha rate (Distribution _ _ s _) = run_lazy' alpha rate s
 run_lazy' alpha rate (MFix f) = MFix ((run_lazy' alpha rate).f)
 run_lazy' alpha rate (SamplingRate rate2 a) = run_lazy' alpha (rate*rate2) a
 run_lazy' alpha _    GetAlphabet = return alpha

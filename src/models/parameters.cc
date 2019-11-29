@@ -1403,7 +1403,7 @@ std::string generate_atmodel_program(int n_partitions,
     program_file<<"\n\nsample_branch_lengths_1 = "<<branch_length_model.expression.print();
 
     // F5. Topology
-    program_file<<"\n\nsample_topology_1 = sample $ uniform_topology "<<n_leaves;
+    program_file<<"\n\nsample_topology_1 = uniform_topology "<<n_leaves;
 
     /* --------------------------------------------------------------- */
     do_block program;
@@ -1584,7 +1584,7 @@ std::string generate_atmodel_program(int n_partitions,
             program.let(leaf_sequence_lengths, {var("get_sequence_lengths"),leaf_sequences_var});
 
             // alignment_on_tree <- sample $ random_alignment tree hmms model leaf_seqs_array p->my_variable_alignment()
-            sample_atmodel.perform(alignment_on_tree, {var("sample"),{var("random_alignment"), tree_var, branch_hmms, imodel, leaf_sequence_lengths, variable_alignment_var}});
+            sample_atmodel.perform(alignment_on_tree, {var("random_alignment"), tree_var, branch_hmms, imodel, leaf_sequence_lengths, variable_alignment_var});
         }
         else
         {

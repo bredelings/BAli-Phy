@@ -6,7 +6,7 @@ cumsum xs = go 0 xs where
                     acc':go acc' ys
 
 main = random $ do
-  z1 <- sample $ iid 3 (poisson 1.0)
+  z1 <- iid 3 (poisson 1.0)
   let z2 = [1..3]
   let z3 = replicate 3 0
 

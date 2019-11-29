@@ -12,7 +12,7 @@ expTransform (Distribution d q s r) = Distribution pdf' q' s' r'
  where
   pdf' x = case (d $ log x) of [pdf] -> pdf/(doubleToLogDouble x)
   q'   = exp . q
-  s'   = do v <- sample $ Distribution d q s r
+  s'   = do v <- Distribution d q s r
             return $ exp v
   r'   = expTransformRange r
 
