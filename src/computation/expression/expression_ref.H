@@ -211,31 +211,7 @@ public:
 	    return (type_ != null_type);
 	}
 
-    std::string print() const
-	{
-	    switch(type_)
-	    {
-	    case null_type:
-		return "[NULL]";
-	    case int_type:
-                return (i<0)?"("+convertToString(i)+")":convertToString(i);
-		break;
-	    case double_type:
-                return (d<0)?"("+convertToString(d)+")":convertToString(d);
-		break;
-	    case log_double_type:
-		return "LD"+convertToString(ld);
-		break;
-	    case char_type:
-		return std::string("'")+c+"'";
-		break;
-	    case index_var_type:
-		return std::string("%")+convertToString(i);
-		break;
-	    default:
-		return ptr()->print();
-	    }
-	}
+    std::string print() const;
 
     typedef object_ptr<const Object> otype;
 

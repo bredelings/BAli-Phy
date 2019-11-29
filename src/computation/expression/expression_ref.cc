@@ -28,6 +28,47 @@ using std::unique_ptr;
 
 using boost::dynamic_pointer_cast;
 
+string double_to_string(double d)
+{
+    string s = convertToString(d);
+    int i = s.size()-1;
+    if (s[i] == '0' and s.find('.') != string::npos)
+    {
+        while(i>=0 and s[i] == '0')
+            i--;
+        if (s[i] == '.')
+            i++;
+        s.resize(i+1);
+    }
+    return s;
+}
+
+std::string expression_ref::print() const
+{
+    switch(type_)
+    {
+    case null_type:
+        return "[NULL]";
+    case int_type:
+        return (i<0)?"("+convertToString(i)+")":convertToString(i);
+        break;
+    case double_type:
+        return (d<0)?"("+double_to_string(d)+")":double_to_string(d);
+        break;
+    case log_double_type:
+        return "LD"+convertToString(ld);
+        break;
+    case char_type:
+        return std::string("'")+c+"'";
+        break;
+    case index_var_type:
+        return std::string("%")+convertToString(i);
+        break;
+    default:
+        return ptr()->print();
+    }
+}
+
 string print_list(const expression_ref& E)
 {
     if (not has_constructor(E,":")) std::abort();
