@@ -17,6 +17,10 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
+#include <boost/graph/graph_traits.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/topological_sort.hpp>
+
 #include "index-matrix.H"
 #include "alignment/alignment-util.H"
 #include "util/mapping.H"
@@ -378,10 +382,6 @@ map<unsigned,pair<unsigned,unsigned> > index_matrix::merge(const Edges& E,double
 
     return graph;
 }
-
-#include <boost/graph/graph_traits.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/topological_sort.hpp>
 
 using namespace boost;
 
