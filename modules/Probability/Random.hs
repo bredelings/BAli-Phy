@@ -54,8 +54,11 @@ do_nothing _ = return ()
 
 log_all loggers = (Nothing,loggers)
 
-infix 1 %%
-x %% y = (y,(Just x,[]))
+infix 1 %=%, %=>%
+x %=% y      = (x,(Just y,[]))
+x %=>% (y,z) = (x,(Just y,z))
+infixr 1 %>%
+x %>% y      = (x,(Nothing,y))
 
 run_strict alpha (IOAndPass f g) = do
   x <- run_strict alpha f

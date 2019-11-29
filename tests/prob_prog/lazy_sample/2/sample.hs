@@ -8,4 +8,4 @@ model = do
 main = do
   zs <- random $ model
   observe (normal (zs!!2) 1.0) 10.0
-  return $ log_all [ zs %% "zs"]
+  return $ log_all [ "zs" %=% zs ]

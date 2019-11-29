@@ -11,4 +11,4 @@ main = random $ do
   x1 <- normal 0.0 1.0
   x2 <- normal x1 (sqrt $ 1.0/3.0)
   xs <- random_walk 100 x1 x2
-  return $ log_all [ xs %% "x"]
+  return $ log_all [ "x" %=% xs ]

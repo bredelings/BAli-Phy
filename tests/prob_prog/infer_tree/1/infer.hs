@@ -16,8 +16,8 @@ sample_imodel topology = do
   mean_length <- do l <- exponential 10.0
                     return (l+1.0)
   let imodel = rs07 logLambda mean_length topology 1.0 False
-      loggers = [logLambda %% "logLambda",
-                 mean_length %% "mean_length"]
+      loggers = ["logLambda" %=% logLambda,
+                 "mean_length" %=% mean_length]
   return (imodel, loggers)
 
 sample_smodel = do
@@ -28,9 +28,9 @@ sample_smodel = do
   -- If we generalize e.g. transition_ps, we wouldn't need to write (mmm $ unit_mixture $ ) in from of tn93
   let pi' = frequencies_from_dict dna pi
       smodel = mmm $ unit_mixture $ tn93 kappa1 kappa2 pi' dna
-      smodel_loggers = [kappa1 %% "kappa1",
-                        kappa2 %% "kappa2",
-                        pi %% "pi"]
+      smodel_loggers = ["kappa1" %=% kappa1,
+                        "kappa2" %=% kappa2,
+                        "pi" %=% pi]
 
   return (smodel, smodel_loggers)
 
@@ -62,11 +62,11 @@ model alphabet n_tips seqs = random $ do
 
           as <- Main.sample_alignment topology ts imodel scale tip_seq_lengths
 
-          let loggers = log_all [write_newick topology %% "topology",
-                                 ts %% "T",
-                                 scale %% "scale",
-                                 ("tn93",(Nothing,smodel_loggers)),
-                                 ("rs07",(Nothing,imodel_loggers))
+          let loggers = log_all ["topology" %=% write_newick topology,
+                                 "T" %=% ts,
+                                 "scale" %=% scale,
+                                 "tn93" %>% smodel_loggers,
+                                 "rs07" %>% imodel_loggers
                                 ]
 
           return (ctmc_on_tree topology root as alphabet smodel ts scale, loggers)

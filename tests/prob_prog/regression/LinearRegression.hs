@@ -26,4 +26,4 @@ main = do
 
   sequence_ [observe (normal mu_y s) y | (x,y) <- zip xs ys, let mu_y = f x]
 
-  return $ log_all [b %% "b", a %% "a", s %% "s"]
+  return $ log_all ["b" %=% b, "a" %=% a, "s" %=% s]
