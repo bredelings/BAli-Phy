@@ -1,5 +1,3 @@
-module Line where
-
 import Probability
 import Data.ReadFile
 import System.Environment
