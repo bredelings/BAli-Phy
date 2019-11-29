@@ -11,9 +11,9 @@ observe_list ys dists = sequence_ [observe dist y | (y,dist) <- zip ys dists]
 
 main = do
 
-  alpha <- sample $ cauchy 0.0 1.0
+  alpha <- cauchy 0.0 1.0
 
-  beta <- sample $ cauchy 0.0 1.0
+  beta <- cauchy 0.0 1.0
 
   observe_list fatalities [poisson $ safe_exp(alpha + beta*i) | i <- indices fatalities]
-  return $ log_all [ alpha %% "alpha", beta %% "beta"]
+  return $ log_all [ "alpha" %=% alpha, "beta" %=% beta]

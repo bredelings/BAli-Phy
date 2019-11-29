@@ -12,18 +12,18 @@ observe_list ys dists = sequence_ [observe dist y | (y,dist) <- zip ys dists]
 
 main = do
 
-  eta <- sample $ gamma 10.0 20.0
+  eta <- gamma 10.0 20.0
 
-  lambda <- sample $ gamma 2.0 eta
+  lambda <- gamma 2.0 eta
 
-  gamm <- sample $ gamma 2.0 eta
+  gamm <- gamma 2.0 eta
 
-  theta <- sample $ uniform 1852.0 1962.0
+  theta <- uniform 1852.0 1962.0
 
   let mean year = if (theta > intToDouble year) then lambda else gamm
 
   observe_list fatalities [poisson (mean year) | year <- years]
-  return $ log_all [eta %% "eta",
-                    lambda %% "lambda",
-                    gamma %% "gamma",
-                    theta %% "theta"]
+  return $ log_all ["eta" %=% eta,
+                    "lambda" %=% lambda,
+                    "gamma" %=% gamma,
+                    "theta" %=% theta]

@@ -4,8 +4,8 @@ import Probability
 
 main = do
 
-  p <- sample $ beta 5.0 1.0
+  p <- beta 5.0 1.0
 
-  n <- sample $ geometric p
+  n <- geometric p
 
-  return $ log_all [ p %% "p", n %% "n"]
+  return $ log_all [ "p" %=% p, "n" %=% n]
