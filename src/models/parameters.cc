@@ -1492,7 +1492,8 @@ std::string generate_atmodel_program(int n_partitions,
         auto scale_var = sample_atmodel.bind_and_log_model(prefix , scale_model, program_loggers, false);
         scales.push_back(scale_var);
     }
-    program_loggers.push_back( logger("Scale", get_list(scales), List()) );
+    if (auto l = logger("Scale", get_list(scales), List()) )
+        program_loggers.push_back( l );
 
 
     // FIXME: We can't load the alignments to read their names until we know the alphabets!

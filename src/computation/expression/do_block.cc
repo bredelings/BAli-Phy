@@ -124,13 +124,21 @@ pair<expression_ref, expression_ref> do_block::bind_model(const std::string& pre
 
 expression_ref logger(const string& prefix, const expression_ref& x, const expression_ref& x_loggers, bool do_log)
 {
-    auto maybe_x = do_log ? expression_ref({ var("Just"), x }) : expression_ref(var("Nothing"));
-    return Tuple( String(prefix), Tuple( maybe_x, x_loggers) );
+    bool has_subloggers = not x_loggers or not (x_loggers.is_a<constructor>());
+    if (do_log and not has_subloggers)
+        return expression_ref({var("%=%"),String(prefix),x});
+    else if (has_subloggers and not do_log)
+        return expression_ref({var("%>%"),String(prefix),x_loggers});
+    else if (has_subloggers and do_log)
+        return expression_ref({var("%=>%"),String(prefix),Tuple(x,x_loggers)});
+    else
+        return {}; // we shouldn't be making a logger
 }
 
 expression_ref do_block::bind_and_log_model(const string& prefix, const expression_ref& model, vector<expression_ref>& loggers, bool do_log)
 {
     auto [x, x_loggers] = bind_model(prefix,model);
-    loggers.push_back( logger(prefix, x, x_loggers, do_log) );
+    if (auto l = logger(prefix, x, x_loggers, do_log) )
+        loggers.push_back(l);
     return x;
 }
