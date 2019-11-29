@@ -2,7 +2,7 @@ module Demo4 where
 
 import Probability
 
-main = do
+main = random $ do
 
   xs <- iid 10 (normal 0.0 1.0)
 

@@ -2,7 +2,7 @@ module Demo1 where
 
 import Probability
 
-main = do
+main = random $ do
 
   p <- beta 5.0 1.0
 

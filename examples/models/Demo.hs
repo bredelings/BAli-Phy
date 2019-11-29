@@ -12,25 +12,25 @@ random_walk x0 n f | n < 1     = error "Random walk needs at least 1 element"
 
 main = do
 
-  p <- beta 10.0 1.0
+  p <- random $ beta 10.0 1.0
 
-  n <- geometric p
+  n <- random $ geometric p
 
-  q <- cauchy 0.0 1.0
+  q <- random $ cauchy 0.0 1.0
 
-  x <- iid 10 (normal 0.0 1.0)
+  x <- random $ iid 10 (normal 0.0 1.0)
  
   -- Random array indices.
   -- You can't do this in BUGS: it makes a dynamic graph!
-  c <- iid 10 (categorical (replicate 10 0.1))
+  c <- random $ iid 10 (categorical (replicate 10 0.1))
 
   let w = [x!!(c!!i) | i <- [0..9]]
 
   -- y[i] depends on x[i]
-  y <- list [normal (x!!i) 1.0 | i <- [0..9]]
+  y <- random $ independent [normal (x!!i) 1.0 | i <- [0..9]]
 
   -- Brownian-bridge-like
-  z <- random_walk 0.0 10 (\mu -> normal mu 1.0)
+  z <- random $ random_walk 0.0 10 (\mu -> normal mu 1.0)
   observe (normal (last z) 1.0) 2.0
 
   return $ log_all [ "p" %=% p,
