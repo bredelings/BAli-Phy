@@ -1,5 +1,3 @@
-module Demo3 where
-
 import Probability
 
 main = random $ do
