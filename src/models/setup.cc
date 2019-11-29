@@ -820,12 +820,16 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
             continue;
         }
 
-        // If there are no sub-loggers, and we are not logging this value, then don't emit a logger at all;
-        if (not arg_loggers[i] and not do_log) continue;
-
-        expression_ref l1 = do_log ? expression_ref{var("Just"),x_ret} : var("Nothing");
-        expression_ref l2 = arg_loggers[i] ? logger : List();
-        logger_bits.push_back(Tuple(String(log_name),Tuple(l1,l2)));
+        expression_ref logger_bit;
+        if (do_log and not arg_loggers[i])                      // value, but no sub-loggers
+            logger_bit = {var("%=%"),String(log_name),x_ret};
+        else if (arg_loggers[i] and not do_log)                 // sub-loggers, but no value
+            logger_bit = {var("%>%"),String(log_name),logger};
+        else if (arg_loggers[i] and do_log)                     // value and sub-loggers
+            logger_bit = {var("%=>%"),Tuple(x_ret,logger)};
+        else                                                    // no value and no sub-loggers: don't emit a logger at all
+            continue;
+        logger_bits.push_back(logger_bit);
     }
     expression_ref loggers = get_list(logger_bits);
 
