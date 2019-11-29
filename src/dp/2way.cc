@@ -17,6 +17,10 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
+#include <boost/graph/graph_traits.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/topological_sort.hpp>
+
 #include "2way.H"
 #include "alignment/alignment-util.H"
 #include "util/assert.hh"
@@ -114,10 +118,6 @@ vector<bitset<8>> convert_to_bits(const pairwise_alignment_t& A, int b1, int b2)
     }
     return a;
 }
-
-#include <boost/graph/graph_traits.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/topological_sort.hpp>
 
 using namespace boost;
 
