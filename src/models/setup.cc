@@ -80,6 +80,7 @@
 #include <boost/program_options.hpp>
 #include "models/setup.H"
 #include "util/string/join.H"
+#include "util/string/pred.H"
 #include "util/set.H"
 #include "util/range.H"
 #include "util/myexception.H"
@@ -649,8 +650,9 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
     
     if (not is_haskell_qid(call.get_value<string>()) and
         not is_haskell_qsym(call.get_value<string>()) and
-        not is_haskell_builtin_con_name(call.get_value<string>()))
-	throw myexception()<<"For rule '"<<name<<"', function '"<<call.get_value<string>()<<"' doesn't seem to be a valid haskell id.";
+        not is_haskell_builtin_con_name(call.get_value<string>()) and
+        not starts_with(call.get_value<string>(),"@"))
+	throw myexception()<<"For rule '"<<name<<"', function '"<<call.get_value<string>()<<"' doesn't seem to be a valid haskell id or a valid argument reference.";
 
     // 2. Parse models for arguments to figure out which free lambda variables they contain
     vector<expression_ref> arg_models;
