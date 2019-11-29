@@ -24,6 +24,6 @@ main = do
   
   let f x = b*x + a
 
-  sequence_ [observe (normal mu_y s) y | (x,y) <- zip xs ys, let mu_y = f x]
+  observe (independent [normal (f x) s | x <- xs]) ys
 
   return $ log_all ["b" %=% b, "a" %=% a, "s" %=% s]

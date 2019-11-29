@@ -9,6 +9,6 @@ main = random $ do
 
   rec let mu Nothing  = 0.0
           mu (Just p) = xs!!p
-      xs <- list [normal (mu parent_node) 1.0  | n <- nodes rtree, let parent_node = parentNode rtree n]
+      xs <- independent [normal (mu parent_node) 1.0  | n <- nodes rtree, let parent_node = parentNode rtree n]
 
   return $ log_all [ "tree" %=% write_newick rtree, "xs" %=% xs, "ps" %=% ps ]
