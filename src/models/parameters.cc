@@ -1530,8 +1530,7 @@ std::string generate_atmodel_program(int n_partitions,
         }
 
         // L1. scale_P ...
-        var scale("scale_part"+part);
-        sample_atmodel.let(scale, scales[scale_index]);
+        expression_ref scale = scales[scale_index];
 
         // L2. distances_P = map (*scale_P) branch_lengths
         var distances("distances_part"+part);
@@ -1541,8 +1540,7 @@ std::string generate_atmodel_program(int n_partitions,
         }
 
         // L3. let smodel_P = ...
-        var smodel("smodel_part"+part);
-        sample_atmodel.let(smodel, smodels[smodel_index]);
+        expression_ref smodel = smodels[smodel_index];
 
         //---------------------------------------------------------------------------
         var compressed_alignment_var("compressed_alignment_part"+part);
@@ -1573,8 +1571,7 @@ std::string generate_atmodel_program(int n_partitions,
         var alignment_on_tree("alignment_on_tree_part"+part);
         if (imodel_index)
         {
-            auto imodel = var("imodel_part"+part);
-            sample_atmodel.let(imodel, imodels[*imodel_index]);
+            expression_ref imodel = imodels[*imodel_index];
 
             var branch_hmms("branch_hmms_part"+part);
             sample_atmodel.let(branch_hmms, {var("branch_hmms"), imodel, distances, n_branches});
