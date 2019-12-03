@@ -45,7 +45,7 @@ std::string Stmts::print() const
     vector<string> stmt_string;
     for(auto& stmt: *this)
         stmt_string.push_back(stmt.print());
-    return "{"+join(stmt_string,";")+"}";
+    return "{"+join(stmt_string,"\n;")+"}";
 }
 
 string Rec::print() const
