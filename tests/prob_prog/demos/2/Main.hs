@@ -6,5 +6,5 @@ main = random $ do
 
   let ys = map (\x -> x*x) xs
 
-  return $ log_all ["xs" %=% xs, "squares" %=% ys, "sum" %=% sum ys]
+  return ["xs" %=% xs, "squares" %=% ys, "sum" %=% sum ys]
 

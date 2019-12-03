@@ -10,4 +10,4 @@ main = do
   beta <- random $ cauchy 0.0 1.0
 
   observe (independent [poisson $ safe_exp(alpha + beta*(intToDouble i)) | i <- [0..length fatalities-1]]) fatalities
-  return $ log_all [ "alpha" %=% alpha, "beta" %=% beta]
+  return [ "alpha" %=% alpha, "beta" %=% beta]

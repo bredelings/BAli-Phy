@@ -11,4 +11,4 @@ main = random $ do
       mu xs (Just p) = xs!!p
   xs <- mfix (\xs -> independent [normal (mu xs p) 1.0  | n <- nodes rtree, let p = parentNode rtree n])
 
-  return $ log_all [ "tree" %=% write_newick rtree , "xs" %=% xs, "ps" %=% ps ]
+  return [ "tree" %=% write_newick rtree , "xs" %=% xs, "ps" %=% ps ]

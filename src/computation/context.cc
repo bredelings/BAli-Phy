@@ -635,7 +635,7 @@ context_ref::context_ref(reg_heap& M, int c)
 
 int context::add_program(const expression_ref& E)
 {
-    return memory()->add_program(E);
+    return memory()->add_program(E, context_index);
 }
 
 int context::add_identifier(const string& name) const

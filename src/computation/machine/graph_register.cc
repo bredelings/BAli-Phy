@@ -1226,8 +1226,9 @@ int reg_heap::add_perform_io_head()
 // 3. Return the value, and store it in the program head
 // 4. Register the logging head, but don't return it.
 
-int reg_heap::add_program(const expression_ref& E)
+int reg_heap::add_program(const expression_ref& E, int c)
 {
+    // 1. Get the program head
     if (program_result_head or logging_head)
         throw myexception()<<"Trying to set program a second time!";
 
@@ -1238,8 +1239,20 @@ int reg_heap::add_program(const expression_ref& E)
     int program_head = add_compute_expression(P);
     P = reg_var(heads[program_head]);
 
+    // 2. If the program doesn't return a pair, make it a pair
+    auto result = lazy_evaluate(heads[program_head], c).exp;
+    if (not has_constructor(result, "(,)"))
+    {
+        assert(has_constructor(result,":") or has_constructor(result,"[]"));
+        P = Tuple(var("Data.Maybe.Nothing"),P);
+        program_head = add_compute_expression(P);
+        P = reg_var(heads[program_head]);
+    }
+
+    // 3. Add the program RESULT head
     program_result_head = add_compute_expression({fst,P});
 
+    // 4. Add the program LOGGING head
     expression_ref L = {var("Probability.Random.log_to_json"),{snd, P}};
     L = {var("Data.JSON.c_json"), L};
 

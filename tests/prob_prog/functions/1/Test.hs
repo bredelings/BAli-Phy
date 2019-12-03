@@ -21,7 +21,7 @@ main = random $ do
   -- we should be able to do functions of data structures with random fields
   let w1 = cumsum z1
 
-  return $ log_all [ "z1" %=% z1,
+  return [ "z1" %=% z1,
                      "z2" %=% z2,
                      "z3" %=% z3,
                      "x"  %=% x,

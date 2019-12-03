@@ -24,4 +24,4 @@ main = do
 
   observe (independent [normal (f x) s | x <- xs]) ys
 
-  return $ log_all ["b" %=% b, "a" %=% a, "s" %=% s]
+  return ["b" %=% b, "a" %=% a, "s" %=% s]

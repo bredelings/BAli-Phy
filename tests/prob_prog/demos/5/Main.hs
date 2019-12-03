@@ -15,4 +15,4 @@ main = do
 
   observe (normal (last zs) 1.0) 2.0
 
-  return $ log_all [ "zs" %=% zs ]
+  return [ "zs" %=% zs ]

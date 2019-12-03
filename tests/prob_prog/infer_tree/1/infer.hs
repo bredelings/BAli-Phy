@@ -62,12 +62,12 @@ model alphabet n_tips seqs = random $ do
 
           as <- Main.sample_alignment topology ts imodel scale tip_seq_lengths
 
-          let loggers = log_all ["topology" %=% write_newick topology,
-                                 "T" %=% ts,
-                                 "scale" %=% scale,
-                                 "tn93" %>% smodel_loggers,
-                                 "rs07" %>% imodel_loggers
-                                ]
+          let loggers = ["topology" %=% write_newick topology,
+                         "T" %=% ts,
+                         "scale" %=% scale,
+                         "tn93" %>% smodel_loggers,
+                         "rs07" %>% imodel_loggers
+                        ]
 
           return (ctmc_on_tree topology root as alphabet smodel ts scale, loggers)
 

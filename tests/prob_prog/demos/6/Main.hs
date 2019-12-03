@@ -33,7 +33,7 @@ main = do
 
   observe (normal (last z) 1.0) 2.0
 
-  return $ log_all [ "p" %=% p,
+  return [ "p" %=% p,
                      "n" %=% n,
                      "q" %=% q,
                      "x" %=% x,

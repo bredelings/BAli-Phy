@@ -52,8 +52,6 @@ with_effect = WithEffect
 
 do_nothing _ = return ()
 
-log_all loggers = (Nothing,loggers)
-
 infix 1 %=%, %=>%
 x %=% y      = (x,(Just y,[]))
 x %=>% (y,z) = (x,(Just y,z))

@@ -23,7 +23,7 @@ main = do
 
   observe (independent [poisson (mean year) | year <- years]) fatalities 
 
-  return $ log_all ["eta" %=% eta,
+  return ["eta" %=% eta,
                     "lambda" %=% lambda,
                     "gamma" %=% gamma,
                     "theta" %=% theta]

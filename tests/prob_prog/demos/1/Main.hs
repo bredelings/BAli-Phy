@@ -6,4 +6,4 @@ main = random $ do
 
   n <- geometric p
 
-  return $ log_all [ "p" %=% p, "n" %=% n]
+  return [ "p" %=% p, "n" %=% n]
