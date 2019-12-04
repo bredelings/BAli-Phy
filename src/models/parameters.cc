@@ -1421,6 +1421,7 @@ std::string generate_atmodel_program(int n_partitions,
             {variable_alignment_var, {modifiable, make_Bool(variable_alignment_)}},
             {subst_root_var,         {modifiable, n_nodes-1}}
         });
+    program.empty_stmt();
 
     // ATModel smodels imodels scales branch_lengths
     // Loggers = [(string,(Maybe a,Loggers)]
@@ -1494,7 +1495,7 @@ std::string generate_atmodel_program(int n_partitions,
     }
     if (auto l = logger("Scale", get_list(scales), List()) )
         program_loggers.push_back( l );
-
+    sample_atmodel.empty_stmt();
 
     // FIXME: We can't load the alignments to read their names until we know the alphabets!
     // FIXME: Can we load the alignments as SEQUENCES first?
@@ -1562,6 +1563,7 @@ std::string generate_atmodel_program(int n_partitions,
         var leaf_sequences_var("leaf_sequences_part"+part);
         program.let(leaf_sequences_var, {var("listArray'"),{var("take"),n_leaves,sequences_var}});
         leaf_sequences.push_back(leaf_sequences_var);
+        program.empty_stmt();
 
         // L4. let imodel_P = Nothing | Just
         expression_ref maybe_imodel = var("Nothing");
@@ -1597,6 +1599,7 @@ std::string generate_atmodel_program(int n_partitions,
 
             sample_atmodel.let(alignment_on_tree, {var("AlignmentOnTree"), tree_var, n_nodes, seq_lengths, pairwise_as});
         }
+        sample_atmodel.empty_stmt();
 
         // FIXME - to make an AT *model* we probably need to remove the data from here.
         partitions.push_back({var("Partition"), smodel, maybe_imodel, scale, tree_var, alignment_on_tree, maybe_hmms});
@@ -1625,6 +1628,7 @@ std::string generate_atmodel_program(int n_partitions,
         std::cout<<sample_atmodel.get_expression()<<std::endl;
 
     program.let(var("leaf_sequences"),get_list(leaf_sequences));
+    program.empty_stmt();
     program.perform(Tuple(var("atmodel"),var("loggers")), {var("$"),var("random"),sample_atmodel.get_expression()});
     var branch_lengths1("branch_lengths_1");
     program.let(branch_lengths1,{var("BAliPhy.ATModel.branch_lengths"),var("atmodel")});
