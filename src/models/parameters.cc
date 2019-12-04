@@ -1634,6 +1634,7 @@ std::string generate_atmodel_program(int n_partitions,
     program.let(branch_lengths1,{var("BAliPhy.ATModel.branch_lengths"),var("atmodel")});
     for(int i=0; i < n_partitions; i++)
     {
+        program.empty_stmt();
         string part = std::to_string(i+1);
         int likelihood_calculator = like_calcs[i];
 
@@ -1725,6 +1726,7 @@ std::string generate_atmodel_program(int n_partitions,
             program.let(ancestral_sequences_var, 0);
         }
     }
+    program.empty_stmt();
 
     vector<expression_ref> transition_ps;
     vector<expression_ref> cond_likes;
@@ -1743,7 +1745,9 @@ std::string generate_atmodel_program(int n_partitions,
     program.let(var("cond_likes"),get_list(cond_likes));
     program.let(var("anc_seqs"),get_list(anc_seqs));
     program.let(var("likelihoods"),get_list(likelihoods));
+    program.empty_stmt();
     program.perform({var("observe"),{var("fake_dist"),var("likelihoods")},var("leaf_sequences")});
+    program.empty_stmt();
     program.finish_return(Tuple({var("ATModelExport"),
                                  var("atmodel"),
                                  var("transition_ps"),
