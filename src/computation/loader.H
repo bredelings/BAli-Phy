@@ -16,6 +16,8 @@ class module_loader: public simplifier_options
 public:
     std::vector<std::string> plugins_path;
 
+    std::vector<std::string> args;
+
     bool try_add_plugin_path(const std::string& path);
   
     std::string find_module(const std::string& modid) const;

@@ -495,6 +495,7 @@ int main(int argc,char* argv[])
 
         //------------- Setup module loader -------------//
         auto L = setup_module_loader(args, argv[0]);
+        L->args = trailing_args(argc, argv, trailing_args_separator);
 
         //---------- Initialize random seed -----------//
         unsigned long seed = init_rng_and_get_seed(args);
@@ -589,7 +590,6 @@ int main(int argc,char* argv[])
                 add_model(*M,filename);
             }
         }
-        M->set_args(trailing_args(argc, argv, trailing_args_separator));
         set_initial_parameter_values(*M,args);
         L.reset();
 
