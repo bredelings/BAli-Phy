@@ -5,13 +5,11 @@ random_walk next x0 = do
     xs <- random_walk next x1
     return (x0 : xs)
 
-random_walk_n n next x0 = do
-    xs <- random_walk next x0
-    return (take n xs)
-
--- 20 element brownian bridge
+-- 20 element brownian bridge from 0.0 to 2.0
 main = do
-    zs <- random $ random_walk_n 19 (\mu -> normal mu 1.0) 0.0
+    walk <- random $ random_walk (\mu -> normal mu 1.0) 0.0
+
+    let zs = take 19 walk
 
     observe (normal (last zs) 1.0) 2.0
 
