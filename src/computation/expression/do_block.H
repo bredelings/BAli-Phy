@@ -32,6 +32,12 @@ struct Binds: public Box<std::vector<Decl>>
 };
 
 
+struct EmptyStmt: public Stmt
+{
+    EmptyStmt* clone() const {return new EmptyStmt(*this);}
+    std::string print() const;
+};
+
 struct PatQual: public Object
 {
     expression_ref bindpat;
@@ -41,7 +47,6 @@ struct PatQual: public Object
     std::string print() const;
     PatQual(const expression_ref& b, const expression_ref& e);
 };
-
 
 struct SimpleQual: public Stmt
 {
@@ -105,6 +110,8 @@ public:
     do_block& let(const expression_ref& pattern, const expression_ref& E);
 
     do_block& rec(const do_block& rec_block);
+
+    do_block& empty_stmt();
 
     expression_ref finish(const expression_ref& E1);
 

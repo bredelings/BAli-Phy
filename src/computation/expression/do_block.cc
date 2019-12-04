@@ -25,6 +25,8 @@ Binds::Binds(const std::initializer_list<Decl>& decls)
     :Box<vector<Decl>>(decls)
 { }
 
+std::string EmptyStmt::print() const {return "";};
+
 std::string PatQual::print() const
 {
     return bindpat.print() + " <- " + exp.print();
@@ -90,6 +92,12 @@ do_block& do_block::let(const expression_ref& pattern, const expression_ref& E)
 do_block& do_block::rec(const do_block& rec_block)
 {
     stmts.push_back(Rec(rec_block.stmts));
+    return *this;
+}
+
+do_block& do_block::empty_stmt()
+{
+    stmts.push_back(EmptyStmt());
     return *this;
 }
 
