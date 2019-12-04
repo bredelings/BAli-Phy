@@ -1,8 +1,8 @@
-import Probability
+import           Probability
 
-import Tree
+import           Tree
 
 main = random $ do
-  xs <- crp 2.0 10 2
-  return [ "xs" %=% xs]
+    xs <- crp 2.0 10 2
+    return ["xs" %=% xs]
 

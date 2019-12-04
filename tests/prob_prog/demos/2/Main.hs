@@ -1,10 +1,10 @@
-import Probability
+import           Probability
 
 main = random $ do
 
-  xs <- iid 10 (normal 0.0 1.0)
+    xs <- iid 10 (normal 0.0 1.0)
 
-  let ys = map (\x -> x*x) xs
+    let ys = map (\x -> x * x) xs
 
-  return ["xs" %=% xs, "squares" %=% ys, "sum" %=% sum ys]
+    return ["xs" %=% xs, "squares" %=% ys, "sum" %=% sum ys]
 

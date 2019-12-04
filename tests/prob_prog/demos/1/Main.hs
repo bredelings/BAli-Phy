@@ -1,9 +1,9 @@
-import Probability
+import           Probability
 
 main = random $ do
 
-  p <- beta 5.0 1.0
+    p <- beta 5.0 1.0
 
-  n <- geometric p
+    n <- geometric p
 
-  return [ "p" %=% p, "n" %=% n]
+    return ["p" %=% p, "n" %=% n]

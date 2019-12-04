@@ -1,8 +1,8 @@
-import Probability
+import           Probability
 
-import Tree
+import           Tree
 
 main = random $ do
-  tree <- uniform_topology 5
-  return [ "tree" %=% write_newick tree ]
+    tree <- uniform_topology 5
+    return ["tree" %=% write_newick tree]
 
