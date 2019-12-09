@@ -329,13 +329,9 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 
 	    assert( not reg_has_call(R) );
 
-	    regs.access(R).type = reg::type_t::index_var;
+	    assert( not has_step(R) );
 
-	    clear_result(R);
-	    int s = step_index_for_reg(R);
-	    if (s > 0)
-		clear_back_edges_for_step(s);
-	    clear_step(R);
+	    regs.access(R).type = reg::type_t::index_var;
 
 	    int R2 = closure_at(R).reg_for_index_var();
 
@@ -349,11 +345,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 	else if (is_WHNF(expression_at(R)))
 	{
 	    regs.access(R).type = reg::type_t::constant;
-	    clear_result(R);
-	    int s = step_index_for_reg(R);
-	    if (s > 0)
-		clear_back_edges_for_step(s);
-	    clear_step(R);
+	    assert( not has_step(R) );
 	    return {R,R};
 	}
 
@@ -369,9 +361,8 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 	{
 	    // We keep the (same) computation here, until we prove that we don't need one.
 	    // We don't need one if we evaluate to WHNF, and then we remove it.
-	    if (not has_step(R))
-		add_shared_step(R);
-	    int S = step_index_for_reg(R);
+            assert(prog_steps[R]<=0);
+            int S = get_shared_step(R);
 	    // FIXME - check that this agrees with our caller!
 	    int P = regs.access(R).created_by.first;
 
@@ -387,12 +378,12 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		// If the reduction doesn't depend on modifiable, then replace E with the value.
 		if (not Args.used_changeable)
 		{
-		    // The old used_input slots are not invalid, which is OK since none of them are changeable.
 		    assert(not reg_has_call(R) );
 		    assert(not reg_has_value(R));
 		    assert(regs[R].used_inputs.empty());
-		    assert(step_for_reg(R).created_regs.empty());
+		    assert(steps[S].created_regs.empty());
 		    set_C(R, std::move(value) );
+                    steps.reclaim_used(S);
 		}
 		else
 		{
@@ -415,6 +406,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		    auto [call,value] = incremental_evaluate(r2);
 		    closure_stack.pop_back();
 
+                    prog_steps[R] = S;
 		    set_call(R, call);
 		    set_result_for_reg(R);
 		    return {R, value};
