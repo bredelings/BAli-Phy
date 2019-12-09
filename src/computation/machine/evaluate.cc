@@ -38,10 +38,10 @@ void throw_reg_exception(reg_heap& M, int t, const closure& C, myexception& e)
 {
     dot_graph_for_token(M, t);
     string SSS = unlet(untranslate_vars(
-			   untranslate_vars(deindexify(trim_unnormalize(C)), M.get_identifiers()),
-			   get_constants(M,t)
-			   )
-	).print();
+                           untranslate_vars(deindexify(trim_unnormalize(C)), M.get_identifiers()),
+                           get_constants(M,t)
+                           )
+        ).print();
     std::ostringstream o;
     o<<"evaluating: "<<SSS<<"\n\n";
     e.prepend(o.str());
@@ -52,10 +52,10 @@ void throw_reg_exception(reg_heap& M, int t, int R, myexception& e, bool changea
 {
     dot_graph_for_token(M, t);
     string SSS = unlet(untranslate_vars(
-			   untranslate_vars(deindexify(trim_unnormalize(M[R])), M.get_identifiers()),
-			   get_constants(M,t)
-			   )
-	).print();
+                           untranslate_vars(deindexify(trim_unnormalize(M[R])), M.get_identifiers()),
+                           get_constants(M,t)
+                           )
+        ).print();
     std::ostringstream o;
     o<<"evaluating reg # "<<R;
     if (not changeable)
@@ -82,55 +82,55 @@ class RegOperationArgs final: public OperationArgs
 
     /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
     int evaluate_reg(int R2)
-	{
-	    auto [_, value] = memory().incremental_evaluate(R2);
-	    return value;
-	}
+        {
+            auto [_, value] = memory().incremental_evaluate(R2);
+            return value;
+        }
 
     /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
     int evaluate_reg_force(int R2)
-	{
-	    auto [R3, value] = memory().incremental_evaluate(R2);
+        {
+            auto [R3, value] = memory().incremental_evaluate(R2);
 
-	    if (M.reg_is_changeable(R3))
-	    {
-		used_changeable = true;
+            if (M.reg_is_changeable(R3))
+            {
+                used_changeable = true;
                 if (first_eval)
                     M.set_forced_input(R, R3);
-	    }
+            }
 
-	    return value;
-	}
+            return value;
+        }
 
     /// Evaluate the reg R2, record a dependency on R2, and return the reg following call chains.
     int evaluate_reg_to_reg(int R2)
-	{
-	    // Compute the value, and follow index_var chains (which are not changeable).
-	    auto [R3, value] = M.incremental_evaluate(R2);
+        {
+            // Compute the value, and follow index_var chains (which are not changeable).
+            auto [R3, value] = M.incremental_evaluate(R2);
 
-	    // Note that although R2 is newly used, R3 might be already used if it was 
-	    // found from R2 through a non-changeable reg_var chain.
-	    if (M.reg_is_changeable(R3))
-	    {
-		used_changeable = true;
+            // Note that although R2 is newly used, R3 might be already used if it was 
+            // found from R2 through a non-changeable reg_var chain.
+            if (M.reg_is_changeable(R3))
+            {
+                used_changeable = true;
                 if (first_eval)
                     M.set_used_input(R, R3);
-	    }
+            }
 
-	    return value;
-	}
+            return value;
+        }
 
     const closure& evaluate_reg_to_closure(int R2)
-	{
-	    int R3 = evaluate_reg_to_reg(R2);
-	    return M[R3];
-	}
+        {
+            int R3 = evaluate_reg_to_reg(R2);
+            return M[R3];
+        }
   
     const closure& evaluate_reg_to_closure_(int R2)
-	{
-	    int R3 = evaluate_reg_force(R2);
-	    return M[R3];
-	}
+        {
+            int R3 = evaluate_reg_force(R2);
+            return M[R3];
+        }
 
 public:
 
@@ -138,7 +138,7 @@ public:
 
     void make_changeable()
     {
-	used_changeable = true;
+        used_changeable = true;
     }
 
     // If we unreference regs that evaluate to a variable, then we unreference p->let q=2 in q
@@ -146,13 +146,13 @@ public:
     // only be referenced if the slot that created it is still referenced.
     
     int allocate_reg()
-	{
-	    int s = used_changeable?S:P;
-	    int r = OperationArgs::allocate_reg();
-	    if (s>0)
-		M.mark_reg_created_by_step(r,s);
-	    return r;
-	}
+        {
+            int s = used_changeable?S:P;
+            int r = OperationArgs::allocate_reg();
+            if (s>0)
+                M.mark_reg_created_by_step(r,s);
+            return r;
+        }
   
     void set_effect(int r)
         {
@@ -164,8 +164,8 @@ public:
     RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
     RegOperationArgs(int r, int s, int p, reg_heap& m)
-	:OperationArgs(m), R(r), S(s), P(p), first_eval(m.reg_is_unevaluated(R))
-	{ }
+        :OperationArgs(m), R(r), S(s), P(p), first_eval(m.reg_is_unevaluated(R))
+        { }
 };
 
 /*
@@ -260,176 +260,176 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 #ifndef NDEBUG
     if (reg_has_value(R))
     {
-	expression_ref E = access_value_for_reg(R).exp;
-	assert(is_WHNF(E));
-	assert(not E.head().is_a<expression>());
-	assert(not E.is_index_var());
+        expression_ref E = access_value_for_reg(R).exp;
+        assert(is_WHNF(E));
+        assert(not E.head().is_a<expression>());
+        assert(not E.is_index_var());
     }
     if (expression_at(R).is_index_var())
-	assert(not reg_has_value(R));
+        assert(not reg_has_value(R));
 #endif
 
     while (1)
     {
-	assert(expression_at(R));
+        assert(expression_at(R));
 
 #ifndef NDEBUG
-	//    std::cerr<<"   statement: "<<R<<":   "<<regs.access(R).E.print()<<std::endl;
+        //    std::cerr<<"   statement: "<<R<<":   "<<regs.access(R).E.print()<<std::endl;
 #endif
 
-	reg::type_t reg_type = regs.access(R).type;
+        reg::type_t reg_type = regs.access(R).type;
 
-	if (reg_type == reg::type_t::constant) return {R,R};
+        if (reg_type == reg::type_t::constant) return {R,R};
 
-	else if (reg_type == reg::type_t::changeable)
-	{
-	    total_changeable_eval++;
-	    int result = result_for_reg(R);
+        else if (reg_type == reg::type_t::changeable)
+        {
+            total_changeable_eval++;
+            int result = result_for_reg(R);
 
-	    if (result > 0)
-	    {
+            if (result > 0)
+            {
                 total_changeable_eval_with_result++;
                 return {R, result};
-	    }
+            }
 
-	    // If we know what to call, then call it and use it to set the value
-	    if (reg_has_call(R))
-	    {
-		// Evaluate S, looking through unchangeable redirections
-		auto [call, value] = incremental_evaluate(call_for_reg(R));
+            // If we know what to call, then call it and use it to set the value
+            if (reg_has_call(R))
+            {
+                // Evaluate S, looking through unchangeable redirections
+                auto [call, value] = incremental_evaluate(call_for_reg(R));
 
-		// If computation_for_reg(R).call can be evaluated to refer to S w/o moving through any changable operations, 
-		// then it should be safe to change computation_for_reg(R).call to refer to S, even if R is changeable.
-		if (call != call_for_reg(R))
-		{
-		    clear_call_for_reg(R);
-		    set_call(R, call);
-		}
+                // If computation_for_reg(R).call can be evaluated to refer to S w/o moving through any changable operations, 
+                // then it should be safe to change computation_for_reg(R).call to refer to S, even if R is changeable.
+                if (call != call_for_reg(R))
+                {
+                    clear_call_for_reg(R);
+                    set_call(R, call);
+                }
 
-		// R gets its value from S.
-		set_result_for_reg( R);
-		total_changeable_eval_with_call++;
-		return {R, value};
-	    }
-	}
-	else if (reg_type == reg::type_t::index_var)
-	{
-	    int R2 = closure_at(R).reg_for_index_var();
-	    return incremental_evaluate(R2);
-	}
-	else
-	    assert(reg_type == reg::type_t::unevaluated);
+                // R gets its value from S.
+                set_result_for_reg( R);
+                total_changeable_eval_with_call++;
+                return {R, value};
+            }
+        }
+        else if (reg_type == reg::type_t::index_var)
+        {
+            int R2 = closure_at(R).reg_for_index_var();
+            return incremental_evaluate(R2);
+        }
+        else
+            assert(reg_type == reg::type_t::unevaluated);
 
-	/*---------- Below here, there is no call, and no value. ------------*/
-	if (expression_at(R).is_index_var())
-	{
-	    assert( not reg_is_changeable(R) );
+        /*---------- Below here, there is no call, and no value. ------------*/
+        if (expression_at(R).is_index_var())
+        {
+            assert( not reg_is_changeable(R) );
 
-	    assert( not reg_has_value(R) );
+            assert( not reg_has_value(R) );
 
-	    assert( not reg_has_call(R) );
+            assert( not reg_has_call(R) );
 
-	    assert( not has_step(R) );
+            assert( not has_step(R) );
 
-	    regs.access(R).type = reg::type_t::index_var;
+            regs.access(R).type = reg::type_t::index_var;
 
-	    int R2 = closure_at(R).reg_for_index_var();
+            int R2 = closure_at(R).reg_for_index_var();
 
-	    // Return the end of the index_var chain.
-	    // We used to update the index_var to point to the end of the chain.
+            // Return the end of the index_var chain.
+            // We used to update the index_var to point to the end of the chain.
 
-	    return incremental_evaluate(R2);
-	}
+            return incremental_evaluate(R2);
+        }
 
-	// Check for WHNF *OR* heap variables
-	else if (is_WHNF(expression_at(R)))
-	{
-	    regs.access(R).type = reg::type_t::constant;
-	    assert( not has_step(R) );
-	    return {R,R};
-	}
+        // Check for WHNF *OR* heap variables
+        else if (is_WHNF(expression_at(R)))
+        {
+            regs.access(R).type = reg::type_t::constant;
+            assert( not has_step(R) );
+            return {R,R};
+        }
 
 #ifndef NDEBUG
-	else if (expression_at(R).head().is_a<Trim>())
-	    std::abort();
-	else if (expression_at(R).type() == parameter_type)
-	    std::abort();
+        else if (expression_at(R).head().is_a<Trim>())
+            std::abort();
+        else if (expression_at(R).type() == parameter_type)
+            std::abort();
 #endif
 
-	// 3. Reduction: Operation (includes @, case, +, etc.)
-	else
-	{
+        // 3. Reduction: Operation (includes @, case, +, etc.)
+        else
+        {
             assert( prog_steps[R] <=0 );
             // The only we reason we are getting this here is to store created_regs on it,
             // if we perform allocations AFTER using/forcing something changeable.
             int S = get_shared_step(R);
 
-	    int P = regs.access(R).created_by.first;
+            int P = regs.access(R).created_by.first;
 
-	    try
-	    {
-		closure_stack.push_back (closure_at(R) );
-		RegOperationArgs Args(R, S, P, *this);
-		auto O = expression_at(R).head().assert_is_a<Operation>()->op;
-		closure value = (*O)(Args);
-		closure_stack.pop_back();
-		total_reductions++;
+            try
+            {
+                closure_stack.push_back (closure_at(R) );
+                RegOperationArgs Args(R, S, P, *this);
+                auto O = expression_at(R).head().assert_is_a<Operation>()->op;
+                closure value = (*O)(Args);
+                closure_stack.pop_back();
+                total_reductions++;
 
-		// If the reduction doesn't depend on modifiable, then replace E with the value.
-		if (not Args.used_changeable)
-		{
-		    assert( not reg_has_call(R) );
-		    assert( not reg_has_value(R) );
-		    assert( regs[R].used_inputs.empty() );
-		    assert( steps[S].created_regs.empty() ); // Any allocations should have gone to P
-		    set_C( R, std::move(value) );
+                // If the reduction doesn't depend on modifiable, then replace E with the value.
+                if (not Args.used_changeable)
+                {
+                    assert( not reg_has_call(R) );
+                    assert( not reg_has_value(R) );
+                    assert( regs[R].used_inputs.empty() );
+                    assert( steps[S].created_regs.empty() ); // Any allocations should have gone to P
+                    set_C( R, std::move(value) );
                     steps.reclaim_used(S);
-		}
-		else
-		{
-		    total_changeable_reductions++;
-		    make_reg_changeable(R);
-		    closure_stack.push_back(value);
+                }
+                else
+                {
+                    total_changeable_reductions++;
+                    make_reg_changeable(R);
+                    closure_stack.push_back(value);
 
-		    int r2;
-		    if (closure_stack.back().exp.head().is_index_var())
-		    {
-			r2 = closure_stack.back().reg_for_index_var();
-		    }
-		    else
-		    {
-			r2 = Args.allocate( std::move(closure_stack.back()) ) ;
-			assert(regs.access(r2).created_by.first == S);
-			assert(not has_step(r2));
-		    }
+                    int r2;
+                    if (closure_stack.back().exp.head().is_index_var())
+                    {
+                        r2 = closure_stack.back().reg_for_index_var();
+                    }
+                    else
+                    {
+                        r2 = Args.allocate( std::move(closure_stack.back()) ) ;
+                        assert(regs.access(r2).created_by.first == S);
+                        assert(not has_step(r2));
+                    }
 
-		    auto [call,value] = incremental_evaluate(r2);
-		    closure_stack.pop_back();
+                    auto [call,value] = incremental_evaluate(r2);
+                    closure_stack.pop_back();
 
                     prog_steps[R] = S;
-		    set_call(R, call);
-		    set_result_for_reg(R);
-		    return {R, value};
-		}
-	    }
-	    catch (error_exception& e)
-	    {
-		if (log_verbose)
-		    throw_reg_exception(*this, root_token, R, e, true);
-		else
-		    throw;
-	    }
-	    catch (myexception& e)
-	    {
-		throw_reg_exception(*this, root_token, R, e, true);
-	    }
-	    catch (const std::exception& ee)
-	    {
-		myexception e;
-		e<<ee.what();
-		throw_reg_exception(*this, root_token, R, e, true);
-	    }
-	}
+                    set_call(R, call);
+                    set_result_for_reg(R);
+                    return {R, value};
+                }
+            }
+            catch (error_exception& e)
+            {
+                if (log_verbose)
+                    throw_reg_exception(*this, root_token, R, e, true);
+                else
+                    throw;
+            }
+            catch (myexception& e)
+            {
+                throw_reg_exception(*this, root_token, R, e, true);
+            }
+            catch (const std::exception& ee)
+            {
+                myexception e;
+                e<<ee.what();
+                throw_reg_exception(*this, root_token, R, e, true);
+            }
+        }
     }
 
     std::cerr<<"incremental_evaluate: unreachable?";
@@ -447,49 +447,49 @@ class RegOperationArgsUnchangeable final: public OperationArgs
 
     /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
     int evaluate_reg(int R2)
-	{
-	    return memory().incremental_evaluate_unchangeable(R2);
-	}
+        {
+            return memory().incremental_evaluate_unchangeable(R2);
+        }
 
     /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
     int evaluate_reg_force(int R2)
-	{
-	    return memory().incremental_evaluate_unchangeable(R2);
-	}
+        {
+            return memory().incremental_evaluate_unchangeable(R2);
+        }
 
     /// Evaluate the reg R2, record a dependency on R2, and return the reg following call chains.
     int evaluate_reg_to_reg(int R2)
-	{
-	    // Compute the value, and follow index_var chains (which are not changeable).
-	    return memory().incremental_evaluate_unchangeable(R2);
-	}
+        {
+            // Compute the value, and follow index_var chains (which are not changeable).
+            return memory().incremental_evaluate_unchangeable(R2);
+        }
 
     const closure& evaluate_reg_to_closure(int R2)
-	{
-	    int R3 = evaluate_reg_to_reg(R2);
-	    if (M.reg_type(R3) == reg::type_t::changeable)
-		throw no_context();
-	    assert(M.reg_type(R3) == reg::type_t::constant);
-	    return M[R3];
-	}
+        {
+            int R3 = evaluate_reg_to_reg(R2);
+            if (M.reg_type(R3) == reg::type_t::changeable)
+                throw no_context();
+            assert(M.reg_type(R3) == reg::type_t::constant);
+            return M[R3];
+        }
 
     const closure& evaluate_reg_to_closure_(int R2)
-	{
-	    return evaluate_reg_to_closure(R2);
-	}
+        {
+            return evaluate_reg_to_closure(R2);
+        }
 
 public:
 
     void make_changeable()
     {
-	throw no_context();
+        throw no_context();
     }
 
     RegOperationArgsUnchangeable* clone() const {return new RegOperationArgsUnchangeable(*this);}
 
     RegOperationArgsUnchangeable(int r, reg_heap& m)
-	:OperationArgs(m),R(r)
-	{ }
+        :OperationArgs(m),R(r)
+        { }
 };
 
 int reg_heap::incremental_evaluate_unchangeable(int R)
@@ -521,99 +521,99 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
 
     while (1)
     {
-	assert(expression_at(R));
+        assert(expression_at(R));
 
-	reg::type_t reg_type = regs.access(R).type;
+        reg::type_t reg_type = regs.access(R).type;
 
-	if (reg_type == reg::type_t::constant or reg_type == reg::type_t::changeable)
-	    break;
+        if (reg_type == reg::type_t::constant or reg_type == reg::type_t::changeable)
+            break;
 
-	else if (reg_type == reg::type_t::index_var)
-	{
-	    int R2 = closure_at(R).reg_for_index_var();
-	    return incremental_evaluate_unchangeable(R2);
-	}
-	else
-	    assert(reg_type == reg::type_t::unevaluated);
+        else if (reg_type == reg::type_t::index_var)
+        {
+            int R2 = closure_at(R).reg_for_index_var();
+            return incremental_evaluate_unchangeable(R2);
+        }
+        else
+            assert(reg_type == reg::type_t::unevaluated);
 
-	/*---------- Below here, there is no call, and no value. ------------*/
-	const int type = expression_at(R).head().type();
-	if (type == index_var_type)
-	{
-	    regs.access(R).type = reg::type_t::index_var;
+        /*---------- Below here, there is no call, and no value. ------------*/
+        const int type = expression_at(R).head().type();
+        if (type == index_var_type)
+        {
+            regs.access(R).type = reg::type_t::index_var;
 
-	    int R2 = closure_at(R).reg_for_index_var();
+            int R2 = closure_at(R).reg_for_index_var();
 
-	    int R3 = incremental_evaluate_unchangeable( R2 );
+            int R3 = incremental_evaluate_unchangeable( R2 );
 
-	    // If we point to R3 through an intermediate index_var chain, then change us to point to the end
-	    if (R3 != R2)
-		set_C(R, closure(index_var(0),{R3}));
+            // If we point to R3 through an intermediate index_var chain, then change us to point to the end
+            if (R3 != R2)
+                set_C(R, closure(index_var(0),{R3}));
 
-	    return R3;
-	}
+            return R3;
+        }
 
-	// Check for WHNF *OR* heap variables
-	else if (is_WHNF(expression_at(R)))
-	    regs.access(R).type = reg::type_t::constant;
+        // Check for WHNF *OR* heap variables
+        else if (is_WHNF(expression_at(R)))
+            regs.access(R).type = reg::type_t::constant;
 
 #ifndef NDEBUG
-	else if (expression_at(R).head().is_a<Trim>())
-	    std::abort();
-	else if (expression_at(R).type() == parameter_type)
-	    std::abort();
+        else if (expression_at(R).head().is_a<Trim>())
+            std::abort();
+        else if (expression_at(R).type() == parameter_type)
+            std::abort();
 #endif
 
-	// 3. Reduction: Operation (includes @, case, +, etc.)
-	else
-	{
-	    auto O = expression_at(R).head().assert_is_a<Operation>()->op;
+        // 3. Reduction: Operation (includes @, case, +, etc.)
+        else
+        {
+            auto O = expression_at(R).head().assert_is_a<Operation>()->op;
 
-	    // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable value.
-	    // Therefore, we cannot do "assert(not result_for_reg(t,R).changeable);" here.
+            // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable value.
+            // Therefore, we cannot do "assert(not result_for_reg(t,R).changeable);" here.
 
 #if defined(DEBUG_MACHINE) && DEBUG_MACHINE>2
-	    string SS = "";
-	    SS = compact_graph_expression(*this, R, get_identifiers()).print();
-	    string SSS = untranslate_vars(deindexify(trim_unnormalize(closure_at(R))),  
-					  get_identifiers()).print();
-	    if (log_verbose >= 3)
-		dot_graph_for_token(*this, root_token);
+            string SS = "";
+            SS = compact_graph_expression(*this, R, get_identifiers()).print();
+            string SSS = untranslate_vars(deindexify(trim_unnormalize(closure_at(R))),  
+                                          get_identifiers()).print();
+            if (log_verbose >= 3)
+                dot_graph_for_token(*this, root_token);
 #endif
 
-	    try
-	    {
-		RegOperationArgsUnchangeable Args(R, *this);
-		closure value = (*O)(Args);
-		total_reductions++;
-	
-		set_C(R, std::move(value) );
-	    }
-	    catch (no_context&)
-	    {
-		regs.access(R).type = reg::type_t::changeable;
-		return R;
-	    }
-	    catch (error_exception& e)
-	    {
-		throw;
-	    }
-	    catch (myexception& e)
-	    {
-		throw_reg_exception(*this, root_token, R, e, false);
-	    }
-	    catch (const std::exception& ee)
-	    {
-		myexception e;
-		e<<ee.what();
-		throw_reg_exception(*this, root_token, R, e, false);
-	    }
+            try
+            {
+                RegOperationArgsUnchangeable Args(R, *this);
+                closure value = (*O)(Args);
+                total_reductions++;
+        
+                set_C(R, std::move(value) );
+            }
+            catch (no_context&)
+            {
+                regs.access(R).type = reg::type_t::changeable;
+                return R;
+            }
+            catch (error_exception& e)
+            {
+                throw;
+            }
+            catch (myexception& e)
+            {
+                throw_reg_exception(*this, root_token, R, e, false);
+            }
+            catch (const std::exception& ee)
+            {
+                myexception e;
+                e<<ee.what();
+                throw_reg_exception(*this, root_token, R, e, false);
+            }
 
 #if defined(DEBUG_MACHINE) && DEBUG_MACHINE > 2
-	    //      std::cerr<<"   + recomputing "<<SS<<"\n\n";
-	    std::cerr<<"   + Executing statement {"<<O<<"}:  "<<SS<<"\n\n";
+            //      std::cerr<<"   + recomputing "<<SS<<"\n\n";
+            std::cerr<<"   + Executing statement {"<<O<<"}:  "<<SS<<"\n\n";
 #endif
-	}
+        }
     }
 
     return R;
