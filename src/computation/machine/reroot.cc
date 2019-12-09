@@ -160,16 +160,55 @@ void reg_heap::unshare_regs(int t)
     assert(is_root_token(parent_token(t)));
     assert(tokens[root_token].version >= tokens[t].version);
 
-    if (tokens[root_token].version <= tokens[t].version) return;
+    constexpr int result_bit = 0;
+    constexpr int step_bit = 1;
+
+    if (tokens[root_token].version <= tokens[t].version)
+    {
+#if DEBUG_MACHINE >= 1
+        const auto& delta_result = tokens[t].vm_result.delta();
+        const auto& delta_step = tokens[t].vm_step.delta();
+
+        // All the regs with delta_result set have results invalidated in t
+        for(auto [r,_]: delta_result)
+            prog_temp[r].set(result_bit);
+
+        // All the regs with delta_step set have steps (and results) invalidated in t
+        for(auto [r,_]: delta_step)
+        {
+            prog_temp[r].set(step_bit);
+            assert(prog_temp[r].test(result_bit));
+            assert(prog_temp[r].test(step_bit));
+        }
+
+        for(int j=0;j<delta_step.size();j++)
+            if (auto [r,_] = delta_step[j]; has_step(r))
+                for(int r2: step_for_reg(r).created_regs)
+                {
+                    if (prog_steps[r2] > 0)
+                    {
+                        assert(regs.access(r2).type == reg::type_t::changeable);
+                        assert(prog_temp[r].test(step_bit));
+                    }
+                    assert(prog_temp[r].test(result_bit));
+                }
+
+        // Erase the marks that we made on prog_temp.
+        for(auto [r,_]: delta_result)
+        {
+            prog_temp[r].reset(result_bit);
+            prog_temp[r].reset(step_bit);
+        }
+
+#endif
+        return;
+    }
 
 #if DEBUG_MACHINE >= 2
     check_used_regs();
 #endif
 
     total_invalidate++;
-  
-    constexpr int result_bit = 0;
-    constexpr int step_bit = 1;
 
     auto& vm_result = tokens[t].vm_result;
     auto& vm_step = tokens[t].vm_step;
@@ -225,8 +264,9 @@ void reg_heap::unshare_regs(int t)
         for(int r2: Step.created_regs)
         {
             auto t = regs.access(r2).type;
-            if (t == reg::type_t::changeable or t == reg::type_t::unknown)
+            if (prog_steps[r2] > 0)
             {
+                assert(regs.access(r2).type == reg::type_t::changeable);
                 assert(prog_temp[r2].test(result_bit));
                 assert(prog_temp[r2].test(step_bit));
             }
@@ -266,9 +306,11 @@ void reg_heap::unshare_regs(int t)
         if (auto [r,_] = delta_step[j]; has_step(r))
             for(int r2: step_for_reg(r).created_regs)
             {
-                auto t = regs.access(r2).type;
-                if (t == reg::type_t::changeable or t == reg::type_t::unknown)
+                if (prog_steps[r2] > 0)
+                {
+                    assert(regs.access(r2).type == reg::type_t::changeable);
                     unshare_step(r2);
+                }
             }
 
 #ifndef NDEBUG
@@ -281,9 +323,9 @@ void reg_heap::unshare_regs(int t)
         // Any results or steps in the delta should already have their regs unshared.
         for(int r2: Step.created_regs)
         {
-            auto t = regs.access(r2).type;
-            if (t == reg::type_t::changeable or t == reg::type_t::unknown)
+            if (prog_steps[r2] > 0)
             {
+                assert(regs.access(r2).type == reg::type_t::changeable);
                 assert(prog_temp[r2].test(result_bit));
                 assert(prog_temp[r2].test(step_bit));
             }
