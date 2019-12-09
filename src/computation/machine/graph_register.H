@@ -66,9 +66,9 @@ public:
     /* The closure */
     closure C;
 
-    enum class type_t {unknown=0, index_var=1, constant=2, changeable=3};
+    enum class type_t {unevaluated=0, index_var=1, constant=2, changeable=3};
 
-    type_t type = type_t::unknown;
+    type_t type = type_t::unevaluated;
 
     /// Which reg's were used to reduce this expression?
     boost::container::small_vector< std::pair<int,int>, 2 > used_inputs;
@@ -143,7 +143,7 @@ public:
     void trace_and_reclaim_unreachable();
     bool reg_is_changeable(int r) const;
     bool reg_is_constant(int r) const;
-    bool reg_is_unknown(int r) const;
+    bool reg_is_unevaluated(int r) const;
     void make_reg_changeable(int r);
 
     void set_used_input(int r1, int r2);

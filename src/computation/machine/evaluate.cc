@@ -164,7 +164,7 @@ public:
     RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
     RegOperationArgs(int r, int s, int p, reg_heap& m)
-	:OperationArgs(m), R(r), S(s), P(p), first_eval(m.reg_is_unknown(R))
+	:OperationArgs(m), R(r), S(s), P(p), first_eval(m.reg_is_unevaluated(R))
 	{ }
 };
 
@@ -318,7 +318,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 	    return incremental_evaluate(R2);
 	}
 	else
-	    assert(reg_type == reg::type_t::unknown);
+	    assert(reg_type == reg::type_t::unevaluated);
 
 	/*---------- Below here, there is no call, and no value. ------------*/
 	if (expression_at(R).is_index_var())
@@ -542,7 +542,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
 	    return incremental_evaluate_unchangeable(R2);
 	}
 	else
-	    assert(reg_type == reg::type_t::unknown);
+	    assert(reg_type == reg::type_t::unevaluated);
 
 	/*---------- Below here, there is no call, and no value. ------------*/
 	const int type = expression_at(R).head().type();

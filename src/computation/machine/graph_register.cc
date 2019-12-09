@@ -162,7 +162,7 @@ Step::Step(Step&& S) noexcept
 void reg::clear()
 {
     C.clear();
-    type = type_t::unknown;
+    type = type_t::unevaluated;
     truncate(used_inputs);
     truncate(forced_regs);
     truncate(used_by);
@@ -174,7 +174,7 @@ void reg::clear()
 void reg::check_cleared() const
 {
     assert(not C);
-    assert(type == type_t::unknown);
+    assert(type == type_t::unevaluated);
     assert(used_inputs.empty());
     assert(forced_regs.empty());
     assert(used_by.empty());
@@ -1370,14 +1370,14 @@ bool reg_heap::reg_is_changeable(int r) const
     return regs.access(r).type == reg::type_t::changeable;
 }
 
-bool reg_heap::reg_is_unknown(int r) const
+bool reg_heap::reg_is_unevaluated(int r) const
 {
-    return regs.access(r).type == reg::type_t::unknown;
+    return regs.access(r).type == reg::type_t::unevaluated;
 }
 
 void reg_heap::make_reg_changeable(int r)
 {
-    assert( regs.access(r).type == reg::type_t::changeable or regs.access(r).type == reg::type_t::unknown );
+    assert( regs.access(r).type == reg::type_t::changeable or regs.access(r).type == reg::type_t::unevaluated );
 
     regs.access(r).type = reg::type_t::changeable;
 }
