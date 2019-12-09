@@ -263,7 +263,6 @@ void reg_heap::unshare_regs(int t)
         // Any results or steps in the delta should already have their regs unshared.
         for(int r2: Step.created_regs)
         {
-            auto t = regs.access(r2).type;
             if (prog_steps[r2] > 0)
             {
                 assert(regs.access(r2).type == reg::type_t::changeable);
