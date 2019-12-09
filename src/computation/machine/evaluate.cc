@@ -359,11 +359,11 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 	// 3. Reduction: Operation (includes @, case, +, etc.)
 	else
 	{
-	    // We keep the (same) computation here, until we prove that we don't need one.
-	    // We don't need one if we evaluate to WHNF, and then we remove it.
-            assert(prog_steps[R]<=0);
+            assert( prog_steps[R] <=0 );
+            // The only we reason we are getting this here is to store created_regs on it,
+            // if we perform allocations AFTER using/forcing something changeable.
             int S = get_shared_step(R);
-	    // FIXME - check that this agrees with our caller!
+
 	    int P = regs.access(R).created_by.first;
 
 	    try
@@ -378,11 +378,11 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		// If the reduction doesn't depend on modifiable, then replace E with the value.
 		if (not Args.used_changeable)
 		{
-		    assert(not reg_has_call(R) );
-		    assert(not reg_has_value(R));
-		    assert(regs[R].used_inputs.empty());
-		    assert(steps[S].created_regs.empty());
-		    set_C(R, std::move(value) );
+		    assert( not reg_has_call(R) );
+		    assert( not reg_has_value(R) );
+		    assert( regs[R].used_inputs.empty() );
+		    assert( steps[S].created_regs.empty() ); // Any allocations should have gone to P
+		    set_C( R, std::move(value) );
                     steps.reclaim_used(S);
 		}
 		else
