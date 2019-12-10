@@ -1620,7 +1620,7 @@ std::string generate_atmodel_program(int n_partitions,
 
     sample_atmodel.finish_return(
         Tuple(
-            {var("ATModel"), tree_var, get_list(smodels), get_list(imodels), get_list(scales), branch_lengths, branch_categories, get_list(partitions)},
+            {var("ATModel"), tree_var, get_list(smodels), get_list(scales), branch_lengths, branch_categories, get_list(partitions)},
             get_list(program_loggers))
         );
     
