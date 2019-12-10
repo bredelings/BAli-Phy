@@ -68,7 +68,7 @@ void throw_reg_exception(reg_heap& M, int t, int R, myexception& e, bool changea
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
 class RegOperationArgs final: public OperationArgs
 {
-    const int R;
+    const int r;
 
     const int S;
 
@@ -80,56 +80,56 @@ class RegOperationArgs final: public OperationArgs
 
     bool evaluate_changeables() const {return true;}
 
-    /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
-    int evaluate_reg(int R2)
+    /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
+    int evaluate_reg(int r2)
         {
-            auto [_, value] = memory().incremental_evaluate(R2);
+            auto [_, value] = memory().incremental_evaluate(r2);
             return value;
         }
 
-    /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
-    int evaluate_reg_force(int R2)
+    /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
+    int evaluate_reg_force(int r2)
         {
-            auto [R3, value] = memory().incremental_evaluate(R2);
+            auto [r3, value] = memory().incremental_evaluate(r2);
 
-            if (M.reg_is_changeable(R3))
+            if (M.reg_is_changeable(r3))
             {
                 used_changeable = true;
                 if (first_eval)
-                    M.set_forced_input(R, R3);
+                    M.set_forced_input(r, r3);
             }
 
             return value;
         }
 
-    /// Evaluate the reg R2, record a dependency on R2, and return the reg following call chains.
-    int evaluate_reg_to_reg(int R2)
+    /// Evaluate the reg r2, record a dependency on r2, and return the reg following call chains.
+    int evaluate_reg_to_reg(int r2)
         {
             // Compute the value, and follow index_var chains (which are not changeable).
-            auto [R3, value] = M.incremental_evaluate(R2);
+            auto [r3, value] = M.incremental_evaluate(r2);
 
-            // Note that although R2 is newly used, R3 might be already used if it was 
-            // found from R2 through a non-changeable reg_var chain.
-            if (M.reg_is_changeable(R3))
+            // Note that although r2 is newly used, r3 might be already used if it was 
+            // found from r2 through a non-changeable reg_var chain.
+            if (M.reg_is_changeable(r3))
             {
                 used_changeable = true;
                 if (first_eval)
-                    M.set_used_input(R, R3);
+                    M.set_used_input(r, r3);
             }
 
             return value;
         }
 
-    const closure& evaluate_reg_to_closure(int R2)
+    const closure& evaluate_reg_to_closure(int r2)
         {
-            int R3 = evaluate_reg_to_reg(R2);
-            return M[R3];
+            int r3 = evaluate_reg_to_reg(r2);
+            return M[r3];
         }
 
-    const closure& evaluate_reg_to_closure_(int R2)
+    const closure& evaluate_reg_to_closure_(int r2)
         {
-            int R3 = evaluate_reg_force(R2);
-            return M[R3];
+            int r3 = evaluate_reg_force(r2);
+            return M[r3];
         }
 
 public:
@@ -147,24 +147,24 @@ public:
 
     int allocate_reg()
         {
-            int s = used_changeable?S:P;
-            int r = OperationArgs::allocate_reg();
-            if (s>0)
-                M.mark_reg_created_by_step(r,s);
-            return r;
+            int s_alloc = used_changeable?S:P;
+            int r_alloc = OperationArgs::allocate_reg();
+            if (s_alloc > 0)
+                M.mark_reg_created_by_step(r_alloc, s_alloc);
+            return r_alloc;
         }
 
-    void set_effect(int r)
+    void set_effect(int r_effect)
         {
             used_changeable = true;
-            memory().mark_step_with_nonforce_effect(S,r);
-            OperationArgs::set_effect(r);
+            memory().mark_step_with_nonforce_effect(S,r_effect);
+            OperationArgs::set_effect(r_effect);
         }
 
     RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
-    RegOperationArgs(int r, int s, int p, reg_heap& m)
-        :OperationArgs(m), R(r), S(s), P(p), first_eval(m.reg_is_unevaluated(R))
+    RegOperationArgs(int r_, int s, int p, reg_heap& m)
+        :OperationArgs(m), r(r_), S(s), P(p), first_eval(m.reg_is_unevaluated(r))
         { }
 };
 
@@ -222,20 +222,20 @@ public:
  */
 
 
-pair<int,int> reg_heap::incremental_evaluate(int R)
+pair<int,int> reg_heap::incremental_evaluate(int r)
 {
 #ifndef NDEBUG
-    if (regs.access(R).flags.test(3))
-        throw myexception()<<"Evaluating reg "<<R<<" that is already on the stack!";
+    if (regs.access(r).flags.test(3))
+        throw myexception()<<"Evaluating reg "<<r<<" that is already on the stack!";
     else
-        regs.access(R).flags.set(3);
+        regs.access(r).flags.set(3);
 #endif
-    stack.push_back(R);
-    auto result = incremental_evaluate_(R);
+    stack.push_back(r);
+    auto result = incremental_evaluate_(r);
     stack.pop_back();
 #ifndef NDEBUG
-    assert(regs.access(R).flags.test(3));
-    regs.access(R).flags.flip(3);
+    assert(regs.access(r).flags.test(3));
+    regs.access(r).flags.flip(3);
 #endif
     return result;
 }
@@ -249,7 +249,7 @@ pair<int,int> reg_heap::incremental_evaluate(int R)
 // (e) Make translate_refs use only one names for refs that occur twice.
 // (f) Make a pretty printer for expression_ref?
 
-/// Evaluate R and look through reg_var chains to return the first reg that is NOT a reg_var.
+/// Evaluate r and look through reg_var chains to return the first reg that is NOT a reg_var.
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg_var.
 pair<int,int> reg_heap::incremental_evaluate_(int r)
 {
@@ -439,43 +439,43 @@ pair<int,int> reg_heap::incremental_evaluate_(int r)
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
 class RegOperationArgsUnchangeable final: public OperationArgs
 {
-    const int R;
+    const int r;
 
-    const closure& current_closure() const {return memory()[R];}
+    const closure& current_closure() const {return memory()[r];}
 
     bool evaluate_changeables() const {return false;}
 
-    /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
-    int evaluate_reg(int R2)
+    /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
+    int evaluate_reg(int r2)
         {
-            return memory().incremental_evaluate_unchangeable(R2);
+            return memory().incremental_evaluate_unchangeable(r2);
         }
 
-    /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
-    int evaluate_reg_force(int R2)
+    /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
+    int evaluate_reg_force(int r2)
         {
-            return memory().incremental_evaluate_unchangeable(R2);
+            return memory().incremental_evaluate_unchangeable(r2);
         }
 
-    /// Evaluate the reg R2, record a dependency on R2, and return the reg following call chains.
-    int evaluate_reg_to_reg(int R2)
+    /// Evaluate the reg r2, record a dependency on r2, and return the reg following call chains.
+    int evaluate_reg_to_reg(int r2)
         {
             // Compute the value, and follow index_var chains (which are not changeable).
-            return memory().incremental_evaluate_unchangeable(R2);
+            return memory().incremental_evaluate_unchangeable(r2);
         }
 
-    const closure& evaluate_reg_to_closure(int R2)
+    const closure& evaluate_reg_to_closure(int r2)
         {
-            int R3 = evaluate_reg_to_reg(R2);
-            if (M.reg_type(R3) == reg::type_t::changeable)
+            int r3 = evaluate_reg_to_reg(r2);
+            if (M.reg_type(r3) == reg::type_t::changeable)
                 throw no_context();
-            assert(M.reg_type(R3) == reg::type_t::constant);
-            return M[R3];
+            assert(M.reg_type(r3) == reg::type_t::constant);
+            return M[r3];
         }
 
-    const closure& evaluate_reg_to_closure_(int R2)
+    const closure& evaluate_reg_to_closure_(int r2)
         {
-            return evaluate_reg_to_closure(R2);
+            return evaluate_reg_to_closure(r2);
         }
 
 public:
@@ -487,8 +487,8 @@ public:
 
     RegOperationArgsUnchangeable* clone() const {return new RegOperationArgsUnchangeable(*this);}
 
-    RegOperationArgsUnchangeable(int r, reg_heap& m)
-        :OperationArgs(m),R(r)
+    RegOperationArgsUnchangeable(int r_, reg_heap& m)
+        :OperationArgs(m),r(r_)
         { }
 };
 
@@ -510,72 +510,72 @@ int reg_heap::incremental_evaluate_unchangeable(int R)
     return result;
 }
 
-int reg_heap::incremental_evaluate_unchangeable_(int R)
+int reg_heap::incremental_evaluate_unchangeable_(int r)
 {
-    assert(regs.is_valid_address(R));
-    assert(regs.is_used(R));
+    assert(regs.is_valid_address(r));
+    assert(regs.is_used(r));
 
 #ifndef NDEBUG
-    assert(not expression_at(R).head().is_a<expression>());
+    assert(not expression_at(r).head().is_a<expression>());
 #endif
 
     while (1)
     {
-        assert(expression_at(R));
+        assert(expression_at(r));
 
-        reg::type_t reg_type = regs.access(R).type;
+        reg::type_t reg_type = regs.access(r).type;
 
         if (reg_type == reg::type_t::constant or reg_type == reg::type_t::changeable)
             break;
 
         else if (reg_type == reg::type_t::index_var)
         {
-            int R2 = closure_at(R).reg_for_index_var();
-            return incremental_evaluate_unchangeable(R2);
+            int r2 = closure_at(r).reg_for_index_var();
+            return incremental_evaluate_unchangeable(r2);
         }
         else
             assert(reg_type == reg::type_t::unevaluated);
 
         /*---------- Below here, there is no call, and no value. ------------*/
-        const int type = expression_at(R).head().type();
+        const int type = expression_at(r).head().type();
         if (type == index_var_type)
         {
-            regs.access(R).type = reg::type_t::index_var;
+            regs.access(r).type = reg::type_t::index_var;
 
-            int R2 = closure_at(R).reg_for_index_var();
+            int r2 = closure_at(r).reg_for_index_var();
 
-            int R3 = incremental_evaluate_unchangeable( R2 );
+            int r3 = incremental_evaluate_unchangeable( r2 );
 
-            // If we point to R3 through an intermediate index_var chain, then change us to point to the end
-            if (R3 != R2)
-                set_C(R, closure(index_var(0),{R3}));
+            // If we point to r3 through an intermediate index_var chain, then change us to point to the end
+            if (r3 != r2)
+                set_C(r, closure(index_var(0),{r3}));
 
-            return R3;
+            return r3;
         }
 
         // Check for WHNF *OR* heap variables
-        else if (is_WHNF(expression_at(R)))
-            regs.access(R).type = reg::type_t::constant;
+        else if (is_WHNF(expression_at(r)))
+            regs.access(r).type = reg::type_t::constant;
 
 #ifndef NDEBUG
-        else if (expression_at(R).head().is_a<Trim>())
+        else if (expression_at(r).head().is_a<Trim>())
             std::abort();
-        else if (expression_at(R).type() == parameter_type)
+        else if (expression_at(r).type() == parameter_type)
             std::abort();
 #endif
 
         // 3. Reduction: Operation (includes @, case, +, etc.)
         else
         {
-            auto O = expression_at(R).head().assert_is_a<Operation>()->op;
+            auto O = expression_at(r).head().assert_is_a<Operation>()->op;
 
             // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable value.
-            // Therefore, we cannot do "assert(not result_for_reg(t,R).changeable);" here.
+            // Therefore, we cannot do "assert(not result_for_reg(t,r).changeable);" here.
 
 #if defined(DEBUG_MACHINE) && DEBUG_MACHINE>2
             string SS = "";
-            SS = compact_graph_expression(*this, R, get_identifiers()).print();
-            string SSS = untranslate_vars(deindexify(trim_unnormalize(closure_at(R))),  
+            SS = compact_graph_expression(*this, r, get_identifiers()).print();
+            string SSS = untranslate_vars(deindexify(trim_unnormalize(closure_at(r))),
                                           get_identifiers()).print();
             if (log_verbose >= 3)
                 dot_graph_for_token(*this, root_token);
@@ -583,16 +583,16 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
 
             try
             {
-                RegOperationArgsUnchangeable Args(R, *this);
+                RegOperationArgsUnchangeable Args(r, *this);
                 closure value = (*O)(Args);
                 total_reductions++;
         
-                set_C(R, std::move(value) );
+                set_C(r, std::move(value) );
             }
             catch (no_context&)
             {
-                regs.access(R).type = reg::type_t::changeable;
-                return R;
+                regs.access(r).type = reg::type_t::changeable;
+                return r;
             }
             catch (error_exception& e)
             {
@@ -600,13 +600,13 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
             }
             catch (myexception& e)
             {
-                throw_reg_exception(*this, root_token, R, e, false);
+                throw_reg_exception(*this, root_token, r, e, false);
             }
             catch (const std::exception& ee)
             {
                 myexception e;
                 e<<ee.what();
-                throw_reg_exception(*this, root_token, R, e, false);
+                throw_reg_exception(*this, root_token, r, e, false);
             }
 
 #if defined(DEBUG_MACHINE) && DEBUG_MACHINE > 2
@@ -616,6 +616,6 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
         }
     }
 
-    return R;
+    return r;
 }
 
