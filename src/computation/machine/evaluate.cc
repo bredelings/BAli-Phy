@@ -70,9 +70,9 @@ class RegOperationArgs final: public OperationArgs
 {
     const int r;
 
-    const int S;
+    const int s;
 
-    const int P;
+    const int sp;  // creator step
 
     const bool first_eval;
 
@@ -147,7 +147,7 @@ public:
 
     int allocate_reg()
         {
-            int s_alloc = used_changeable?S:P;
+            int s_alloc = used_changeable?s:sp;
             int r_alloc = OperationArgs::allocate_reg();
             if (s_alloc > 0)
                 M.mark_reg_created_by_step(r_alloc, s_alloc);
@@ -157,14 +157,14 @@ public:
     void set_effect(int r_effect)
         {
             used_changeable = true;
-            memory().mark_step_with_nonforce_effect(S,r_effect);
+            memory().mark_step_with_nonforce_effect(s,r_effect);
             OperationArgs::set_effect(r_effect);
         }
 
     RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
-    RegOperationArgs(int r_, int s, int p, reg_heap& m)
-        :OperationArgs(m), r(r_), S(s), P(p), first_eval(m.reg_is_unevaluated(r))
+    RegOperationArgs(int r_, int s_, int sp_, reg_heap& m)
+        :OperationArgs(m), r(r_), s(s_), sp(sp_), first_eval(m.reg_is_unevaluated(r))
         { }
 };
 
