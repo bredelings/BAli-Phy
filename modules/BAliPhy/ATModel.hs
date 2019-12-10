@@ -39,11 +39,12 @@ data ATModelExport = ATModelExport
       sequence_names :: EVector
     }
 
-observe_partition_type_0 partition compressed_alignment leaf_sequences column_counts alphabet subst_root = (transition_ps, cls, ancestral_sequences, likelihood)
+observe_partition_type_0 partition compressed_alignment leaf_sequences column_counts subst_root = (transition_ps, cls, ancestral_sequences, likelihood)
     where tree = DP.get_tree partition
           as = pairwise_alignments (DP.get_alignment partition)
           distances = DP.get_branch_lengths partition
           smodel = DP.smodel partition
+          alphabet = getAlphabet smodel
           smap   = stateLetters smodel
           smodel_on_tree = SModel.SingleBranchLengthModel tree distances smodel
           transition_ps = transition_p_index smodel_on_tree

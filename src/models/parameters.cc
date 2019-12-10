@@ -1654,7 +1654,7 @@ std::string generate_atmodel_program(int n_partitions,
         if (n_nodes > 2 and likelihood_calculator == 0)
         {
             program.let(Tuple(transition_ps, cls_var, ancestral_sequences_var, likelihood_var),
-                        {var("observe_partition_type_0"),partition,compressed_alignment_var,leaf_sequences_var,counts_var,alphabet_var,subst_root_var});
+                        {var("observe_partition_type_0"),partition,compressed_alignment_var,leaf_sequences_var,counts_var,subst_root_var});
             continue;
         }
 
