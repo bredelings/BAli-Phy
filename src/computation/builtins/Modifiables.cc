@@ -99,34 +99,6 @@ expression_ref maybe_modifiable_structure(reg_heap& M, int r1)
     return reg_var(r2);
 }
 
-optional<int> find_random_variable_in_root_token(reg_heap& M, int r)
-{
-    // Warning: ABOMINATION!
-    // FIXME: This should be forced by a `seq` inside the program.
-    r = M.incremental_evaluate(r).first;
-
-    // r should not be unknown or an index_var
-    assert(M.reg_is_constant(r) or (M.reg_is_changeable(r) and M.reg_has_call(r)));
-
-    while (not M.reg_is_constant(r))
-    {
-        assert(M.reg_is_changeable(r));
-        assert(M.reg_has_call(r));
-
-        if (is_random_variable(M[r].exp))
-            return r;
-        else if (is_modifiable(M[r].exp))
-            return {};
-        else
-            r = M.call_for_reg(r);
-    };
-
-    // r is (now) a constant.
-    // There is therefore no modifiable.
-    return {};
-}
-
-
 extern "C" closure builtin_function_maybe_modifiable_structure(OperationArgs& Args)
 {
     Args.evaluate_slot_to_reg(0);
@@ -159,7 +131,7 @@ extern "C" closure builtin_function_register_random_variable(OperationArgs& Args
 
     auto& M = Args.memory();
 
-    if (auto r = find_random_variable_in_root_token(M, r_random_var))
+    if (auto r = Args.find_random_variable_in_root_token(r_random_var))
         r_random_var = *r;
     else
 	throw myexception()<<"Trying to register `"<<M.expression_at(r_random_var)<<"` as random variable";

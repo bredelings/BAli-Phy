@@ -19,31 +19,6 @@ using boost::dynamic_pointer_cast;
 using std::optional;
 using std::vector;
 
-optional<int> find_modifiable_in_root_token(reg_heap& M, int r)
-{
-    // Warning: ABOMINATION!
-    // FIXME: This should be forced by a `seq` inside the program.
-    r = M.incremental_evaluate(r).first;
-
-    // r should not be unknown or an index_var
-    assert(M.reg_is_constant(r) or (M.reg_is_changeable(r) and M.reg_has_call(r)));
-
-    while (not M.reg_is_constant(r))
-    {
-        assert(M.reg_is_changeable(r));
-        assert(M.reg_has_call(r));
-
-        if (is_modifiable(M[r].exp))
-            return r;
-        else
-            r = M.call_for_reg(r);
-    };
-
-    // r is (now) a constant.
-    // There is therefore no modifiable.
-    return {};
-}
-
 extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Args)
 {
     int r_rate = Args.reg_for_slot(0);
@@ -107,7 +82,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 
     //------------- 1a. Get argument X -----------------
     int t_reg = Args.evaluate_slot_to_reg(0);
-    if (auto t_mod_reg = find_modifiable_in_root_token(M, t_reg))
+    if (auto t_mod_reg = Args.find_modifiable_in_root_token(t_reg))
         t_reg = *t_mod_reg;
     else
         throw myexception()<<"sum_out_coals: time variable is not modifiable!";
@@ -130,7 +105,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 
 	// evaluate the list element in token 0
 	element_reg = Args.evaluate_reg_to_reg(element_reg);
-        if (auto element_mod_reg = find_modifiable_in_root_token(M, element_reg))
+        if (auto element_mod_reg = Args.find_modifiable_in_root_token(element_reg))
             element_reg = *element_mod_reg;
         else
             throw myexception()<<"sum_out_coals: indicator variable is not modifiable!";
@@ -197,7 +172,7 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
 
     //------------- 2. Find the location of the variable -------------//
     auto& M = Args.memory();
-    auto x_mod_reg = find_modifiable_in_root_token(M, x_reg);
+    auto x_mod_reg = Args.find_modifiable_in_root_token(x_reg);
     if (not x_mod_reg)
         throw myexception()<<"gibbs_sample_categorical: reg "<<x_reg<<" not modifiable!";
 
@@ -250,7 +225,7 @@ extern "C" closure builtin_function_discrete_uniform_avoid_mh(OperationArgs& Arg
 
     //------------- 2. Find the location of the variable -----------//
     auto& M = Args.memory();
-    auto x_mod_reg = find_modifiable_in_root_token(M, x_reg);
+    auto x_mod_reg = Args.find_modifiable_in_root_token(x_reg);
     if (not x_mod_reg)
         throw myexception()<<"discrete_uniform_avoid_mh: reg "<<x_reg<<" not modifiable!";
 

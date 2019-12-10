@@ -1,6 +1,7 @@
 #ifndef COMPUTATION_H
 #define COMPUTATION_H
 
+#include <optional>
 #include "computation/object.H"
 #include "computation/closure.H"
 
@@ -62,6 +63,9 @@ public:
     const expression_ref& evaluate(int);
 
     const expression_ref& evaluate_(int);
+
+    std::optional<int> find_random_variable_in_root_token(int r);
+    std::optional<int> find_modifiable_in_root_token(int r);
 
     void stack_push(int);
 
