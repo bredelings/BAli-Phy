@@ -168,6 +168,8 @@ public:
         { }
 };
 
+/// Evaluate r and look through index_var chains to return the first reg that is NOT a reg_var.
+/// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not an reg_var.
 pair<int,int> reg_heap::incremental_evaluate(int r)
 {
 #ifndef NDEBUG
@@ -186,17 +188,6 @@ pair<int,int> reg_heap::incremental_evaluate(int r)
     return result;
 }
 
-// Perhaps rewrite the expression system to
-// (a) DONE: Separate the head (object_ref) from the other args (expression_ref)
-// (b) Make a constructor take some number of arguments.
-// (c) Change the interpretation of closure constructors so that they are always C n n-1 ... 1 0.
-//     I guess if we don't then we have to actually look into the constructor expression.
-// (d) DONE: Remove Operation::evaluate( ) and just use lazy_evaluate( ).
-// (e) Make translate_refs use only one names for refs that occur twice.
-// (f) Make a pretty printer for expression_ref?
-
-/// Evaluate r and look through reg_var chains to return the first reg that is NOT a reg_var.
-/// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg_var.
 pair<int,int> reg_heap::incremental_evaluate_(int r)
 {
     assert(is_completely_dirty(root_token));
