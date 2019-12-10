@@ -125,7 +125,7 @@ class RegOperationArgs final: public OperationArgs
             int R3 = evaluate_reg_to_reg(R2);
             return M[R3];
         }
-  
+
     const closure& evaluate_reg_to_closure_(int R2)
         {
             int R3 = evaluate_reg_force(R2);
@@ -144,7 +144,7 @@ public:
     // If we unreference regs that evaluate to a variable, then we unreference p->let q=2 in q
     // and point references to q instead of p.  But then it would not be true that a variable can
     // only be referenced if the slot that created it is still referenced.
-    
+
     int allocate_reg()
         {
             int s = used_changeable?S:P;
@@ -153,7 +153,7 @@ public:
                 M.mark_reg_created_by_step(r,s);
             return r;
         }
-  
+
     void set_effect(int r)
         {
             used_changeable = true;
@@ -368,7 +368,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 
             try
             {
-                closure_stack.push_back (closure_at(R) );
+                closure_stack.push_back( closure_at(R) );
                 RegOperationArgs Args(R, S, P, *this);
                 auto O = expression_at(R).head().assert_is_a<Operation>()->op;
                 closure value = (*O)(Args);
