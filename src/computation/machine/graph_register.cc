@@ -865,28 +865,7 @@ void reg_heap::set_forced_input(int r1, int r2)
     regs[r1].forced_regs.push_back(r2);
 }
 
-void reg_heap::set_call(int R1, int R2)
-{
-    // Check that R1 is legal
-    assert(regs.is_used(R1));
-
-    // R1 should be changeable
-    assert(reg_is_changeable(R1));
-
-    // Only modify the call for the current context;
-    assert(has_step(R1));
-
-    // Don't override an *existing* call
-    assert(not reg_has_call(R1));
-
-    // Check that we aren't overriding an existing *value*
-    assert(not reg_has_value(R1));
-
-    // Set the call
-    set_call_from_step(step_index_for_reg(R1), R2);
-}
-
-void reg_heap::set_call_from_step(int s1, int r2)
+void reg_heap::set_call(int s1, int r2)
 {
     // Check that step s is legal
     assert(steps.is_used(s1));
@@ -1070,7 +1049,7 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
         int Q = value.reg_for_index_var();
 
         // Set the call
-        set_call_from_step(s, Q);
+        set_call(s, Q);
     }
     // Otherwise, regardless of whether the expression is WHNF or not, create a new reg for the value and call it.
     else
@@ -1081,7 +1060,7 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
         set_C(R2, std::move( value ) );
 
         // clear 'reg created' edge from s to old call.
-        set_call_from_step(s, R2);
+        set_call(s, R2);
     }
 
 #if DEBUG_MACHINE >= 2

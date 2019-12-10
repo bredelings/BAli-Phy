@@ -148,8 +148,7 @@ public:
 
     void set_used_input(int r1, int r2);
     void set_forced_input(int r1, int r2);
-    void set_call(int r1, int r2);
-    void set_call_from_step(int s, int r2);
+    void set_call(int s, int r2);
     void destroy_all_computations_in_token(int t);
     void clear_call(int s);
     void clear_call_for_reg(int R);

@@ -230,21 +230,24 @@ pair<int,int> reg_heap::incremental_evaluate_(int r)
             }
 
             // If we know what to call, then call it and use it to set the value
-            if (reg_has_call(r))
+            if (int s = step_index_for_reg(r); s > 0)
             {
                 // Evaluate S, looking through unchangeable redirections
-                auto [call, value] = incremental_evaluate(call_for_reg(r));
+                auto [call, value] = incremental_evaluate(steps[s].call);
 
                 // If computation_for_reg(r).call can be evaluated to refer to S w/o moving through any changable operations, 
                 // then it should be safe to change computation_for_reg(r).call to refer to S, even if r is changeable.
                 if (call != call_for_reg(r))
                 {
+                    // This should only ever happen for modifiable values set with set_reg_value( ).
+                    // In such cases, we need this, because the value we set could evaluate to an index_var.
+                    // Otherwise, we set the call AFTER we have evaluated to a changeable or a constant.
                     clear_call_for_reg(r);
-                    set_call(r, call);
+                    set_call(s, call);
                 }
 
                 // r gets its value from S.
-                set_result_for_reg( r);
+                set_result_for_reg( r );
                 total_changeable_eval_with_call++;
                 return {r, value};
             }
@@ -343,9 +346,11 @@ pair<int,int> reg_heap::incremental_evaluate_(int r)
                     auto [call,value] = incremental_evaluate(r2);
                     closure_stack.pop_back();
 
+                    set_call(s, call);
+
                     prog_steps[r] = s;
-                    set_call(r, call);
                     set_result_for_reg(r);
+
                     return {r, value};
                 }
             }
