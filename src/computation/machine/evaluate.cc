@@ -168,60 +168,6 @@ public:
         { }
 };
 
-/*
- * incremental_eval R1
- *
- *   Note: index_var's never have a value, or call, and are never changeable.
- *   Note: only operations can have a call, and only if the operation uses values of changeable parameters.
- * 
- *   while(not R1.value) do:
- *
- *   If R1.E = (Op or parameter) with call
- *      assert(R1.changeable == true)
- *      R1.call = incremental_evaluate(R1.call)
- *      R1.value = R1.call.value
- *      <break>
- *
- *   If R1.E = <R2>
- *      assert(not R1.changeable)
- *      assert(not R1.call)
- *      R3 = incremental_evaluate(R2)
- *      if (R3 != R2)
- *         R1.E = <R3>
- *      return R3
- *      <break>
- *
- *   If (R1.E is WHNF)
- *      R1.value = R1.E
- *      <break>
- *
- *   If R1.E = modifiable and no call
- *      Complain: modifiable should always have a call!
- *  
- *   If R1.E = Op args (no call)
- *      **Execute reduction**
- *      R1.changeable = reduction changeable
- *      If (changeable)
- *         R1.call = new reg (reduction value)
- *      Else
- *         R1.E = reduction value
- *      <continue>
- *
- *   If R1.E = let expression
- *      R1.E = reduction value
- *      assert(not changeable)
- *      assert(no call)
- *      assert(no value)
- *      <continue>
- *
- *   assert(R1 has a value)
- *   assert(R1.value is WHNF)
- *   assert(R1.value is not a reg_var <*>)
- *   assert(R1.value is not an index_var <*>)
- *   return R1
- */
-
-
 pair<int,int> reg_heap::incremental_evaluate(int r)
 {
 #ifndef NDEBUG
