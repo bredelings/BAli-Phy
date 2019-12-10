@@ -251,126 +251,126 @@ pair<int,int> reg_heap::incremental_evaluate(int R)
 
 /// Evaluate R and look through reg_var chains to return the first reg that is NOT a reg_var.
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg_var.
-pair<int,int> reg_heap::incremental_evaluate_(int R)
+pair<int,int> reg_heap::incremental_evaluate_(int r)
 {
     assert(is_completely_dirty(root_token));
-    assert(regs.is_valid_address(R));
-    assert(regs.is_used(R));
+    assert(regs.is_valid_address(r));
+    assert(regs.is_used(r));
 
 #ifndef NDEBUG
-    if (reg_has_value(R))
+    if (reg_has_value(r))
     {
-        expression_ref E = access_value_for_reg(R).exp;
+        expression_ref E = access_value_for_reg(r).exp;
         assert(is_WHNF(E));
         assert(not E.head().is_a<expression>());
         assert(not E.is_index_var());
     }
-    if (expression_at(R).is_index_var())
-        assert(not reg_has_value(R));
+    if (expression_at(r).is_index_var())
+        assert(not reg_has_value(r));
 #endif
 
     while (1)
     {
-        assert(expression_at(R));
+        assert(expression_at(r));
 
 #ifndef NDEBUG
-        //    std::cerr<<"   statement: "<<R<<":   "<<regs.access(R).E.print()<<std::endl;
+        //    std::cerr<<"   statement: "<<r<<":   "<<regs.access(r).E.print()<<std::endl;
 #endif
 
-        reg::type_t reg_type = regs.access(R).type;
+        reg::type_t reg_type = regs.access(r).type;
 
-        if (reg_type == reg::type_t::constant) return {R,R};
+        if (reg_type == reg::type_t::constant) return {r,r};
 
         else if (reg_type == reg::type_t::changeable)
         {
             total_changeable_eval++;
-            int result = result_for_reg(R);
+            int result = result_for_reg(r);
 
             if (result > 0)
             {
                 total_changeable_eval_with_result++;
-                return {R, result};
+                return {r, result};
             }
 
             // If we know what to call, then call it and use it to set the value
-            if (reg_has_call(R))
+            if (reg_has_call(r))
             {
                 // Evaluate S, looking through unchangeable redirections
-                auto [call, value] = incremental_evaluate(call_for_reg(R));
+                auto [call, value] = incremental_evaluate(call_for_reg(r));
 
-                // If computation_for_reg(R).call can be evaluated to refer to S w/o moving through any changable operations, 
-                // then it should be safe to change computation_for_reg(R).call to refer to S, even if R is changeable.
-                if (call != call_for_reg(R))
+                // If computation_for_reg(r).call can be evaluated to refer to S w/o moving through any changable operations, 
+                // then it should be safe to change computation_for_reg(r).call to refer to S, even if r is changeable.
+                if (call != call_for_reg(r))
                 {
-                    clear_call_for_reg(R);
-                    set_call(R, call);
+                    clear_call_for_reg(r);
+                    set_call(r, call);
                 }
 
-                // R gets its value from S.
-                set_result_for_reg( R);
+                // r gets its value from S.
+                set_result_for_reg( r);
                 total_changeable_eval_with_call++;
-                return {R, value};
+                return {r, value};
             }
         }
         else if (reg_type == reg::type_t::index_var)
         {
-            int R2 = closure_at(R).reg_for_index_var();
-            return incremental_evaluate(R2);
+            int r2 = closure_at(r).reg_for_index_var();
+            return incremental_evaluate(r2);
         }
         else
             assert(reg_type == reg::type_t::unevaluated);
 
         /*---------- Below here, there is no call, and no value. ------------*/
-        if (expression_at(R).is_index_var())
+        if (expression_at(r).is_index_var())
         {
-            assert( not reg_is_changeable(R) );
+            assert( not reg_is_changeable(r) );
 
-            assert( not reg_has_value(R) );
+            assert( not reg_has_value(r) );
 
-            assert( not reg_has_call(R) );
+            assert( not reg_has_call(r) );
 
-            assert( not has_step(R) );
+            assert( not has_step(r) );
 
-            regs.access(R).type = reg::type_t::index_var;
+            regs.access(r).type = reg::type_t::index_var;
 
-            int R2 = closure_at(R).reg_for_index_var();
+            int r2 = closure_at(r).reg_for_index_var();
 
             // Return the end of the index_var chain.
             // We used to update the index_var to point to the end of the chain.
 
-            return incremental_evaluate(R2);
+            return incremental_evaluate(r2);
         }
 
         // Check for WHNF *OR* heap variables
-        else if (is_WHNF(expression_at(R)))
+        else if (is_WHNF(expression_at(r)))
         {
-            regs.access(R).type = reg::type_t::constant;
-            assert( not has_step(R) );
-            return {R,R};
+            regs.access(r).type = reg::type_t::constant;
+            assert( not has_step(r) );
+            return {r,r};
         }
 
 #ifndef NDEBUG
-        else if (expression_at(R).head().is_a<Trim>())
+        else if (expression_at(r).head().is_a<Trim>())
             std::abort();
-        else if (expression_at(R).type() == parameter_type)
+        else if (expression_at(r).type() == parameter_type)
             std::abort();
 #endif
 
         // 3. Reduction: Operation (includes @, case, +, etc.)
         else
         {
-            assert( prog_steps[R] <=0 );
+            assert( prog_steps[r] <=0 );
             // The only we reason we are getting this here is to store created_regs on it,
             // if we perform allocations AFTER using/forcing something changeable.
-            int S = get_shared_step(R);
+            int s = get_shared_step(r);
 
-            int P = regs.access(R).created_by.first;
+            int sp = regs.access(r).created_by.first;
 
             try
             {
-                closure_stack.push_back( closure_at(R) );
-                RegOperationArgs Args(R, S, P, *this);
-                auto O = expression_at(R).head().assert_is_a<Operation>()->op;
+                closure_stack.push_back( closure_at(r) );
+                RegOperationArgs Args(r, s, sp, *this);
+                auto O = expression_at(r).head().assert_is_a<Operation>()->op;
                 closure value = (*O)(Args);
                 closure_stack.pop_back();
                 total_reductions++;
@@ -378,17 +378,17 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
                 // If the reduction doesn't depend on modifiable, then replace E with the value.
                 if (not Args.used_changeable)
                 {
-                    assert( not reg_has_call(R) );
-                    assert( not reg_has_value(R) );
-                    assert( regs[R].used_inputs.empty() );
-                    assert( steps[S].created_regs.empty() ); // Any allocations should have gone to P
-                    set_C( R, std::move(value) );
-                    steps.reclaim_used(S);
+                    assert( not reg_has_call(r) );
+                    assert( not reg_has_value(r) );
+                    assert( regs[r].used_inputs.empty() );
+                    assert( steps[s].created_regs.empty() ); // Any allocations should have gone to sp
+                    set_C( r, std::move(value) );
+                    steps.reclaim_used(s);
                 }
                 else
                 {
                     total_changeable_reductions++;
-                    make_reg_changeable(R);
+                    make_reg_changeable(r);
                     closure_stack.push_back(value);
 
                     int r2;
@@ -399,35 +399,35 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
                     else
                     {
                         r2 = Args.allocate( std::move(closure_stack.back()) ) ;
-                        assert(regs.access(r2).created_by.first == S);
+                        assert(regs.access(r2).created_by.first == s);
                         assert(not has_step(r2));
                     }
 
                     auto [call,value] = incremental_evaluate(r2);
                     closure_stack.pop_back();
 
-                    prog_steps[R] = S;
-                    set_call(R, call);
-                    set_result_for_reg(R);
-                    return {R, value};
+                    prog_steps[r] = s;
+                    set_call(r, call);
+                    set_result_for_reg(r);
+                    return {r, value};
                 }
             }
             catch (error_exception& e)
             {
                 if (log_verbose)
-                    throw_reg_exception(*this, root_token, R, e, true);
+                    throw_reg_exception(*this, root_token, r, e, true);
                 else
                     throw;
             }
             catch (myexception& e)
             {
-                throw_reg_exception(*this, root_token, R, e, true);
+                throw_reg_exception(*this, root_token, r, e, true);
             }
             catch (const std::exception& ee)
             {
                 myexception e;
                 e<<ee.what();
-                throw_reg_exception(*this, root_token, R, e, true);
+                throw_reg_exception(*this, root_token, r, e, true);
             }
         }
     }
