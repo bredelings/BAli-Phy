@@ -1602,7 +1602,7 @@ std::string generate_atmodel_program(int n_partitions,
         sample_atmodel.empty_stmt();
 
         // FIXME - to make an AT *model* we probably need to remove the data from here.
-        partitions.push_back({var("Partition"), smodel, maybe_imodel, scale, tree_var, alignment_on_tree, maybe_hmms});
+        partitions.push_back({var("Partition"), smodel, maybe_imodel, distances, tree_var, alignment_on_tree, maybe_hmms});
     }
 
     // FIXME - we need to observe the likelihoods for each partition here.
@@ -1654,7 +1654,7 @@ std::string generate_atmodel_program(int n_partitions,
         if (n_nodes > 2 and likelihood_calculator == 0)
         {
             program.let(Tuple(transition_ps, cls_var, ancestral_sequences_var, likelihood_var),
-                        {var("observe_partition_type_0"),partition,compressed_alignment_var,leaf_sequences_var,counts_var,alphabet_var,branch_lengths1,subst_root_var});
+                        {var("observe_partition_type_0"),partition,compressed_alignment_var,leaf_sequences_var,counts_var,alphabet_var,subst_root_var});
             continue;
         }
 
