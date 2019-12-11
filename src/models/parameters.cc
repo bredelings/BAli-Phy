@@ -1630,8 +1630,6 @@ std::string generate_atmodel_program(int n_partitions,
     program.let(var("leaf_sequences"),get_list(leaf_sequences));
     program.empty_stmt();
     program.perform(Tuple(var("atmodel"),var("loggers")), {var("$"),var("random"),sample_atmodel.get_expression()});
-    var branch_lengths1("branch_lengths_1");
-    program.let(branch_lengths1,{var("BAliPhy.ATModel.branch_lengths"),var("atmodel")});
     for(int i=0; i < n_partitions; i++)
     {
         program.empty_stmt();
