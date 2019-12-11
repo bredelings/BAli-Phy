@@ -1665,18 +1665,13 @@ std::string generate_atmodel_program(int n_partitions,
         var as("as_part"+part);
         program.let(as, {var("pairwise_alignments"), alignment_on_tree});
 
-        var scale("scale_part"+part);
-        program.let(scale,{var("BAliPhy.ATModel.DataPartition.scale"),partition});
         var smodel("smodel_part"+part);
         program.let(smodel,{var("BAliPhy.ATModel.DataPartition.smodel"),partition});
         var smap("smap_part"+part);
         program.let(smap,{var("SModel.get_smap"),smodel});
 
         var distances("distances_part"+part);
-        {
-            var x("x");
-            program.let(distances, {var("listArray'"),{var("map"), lambda_quantify(x,{var("*"),scale,x}), branch_lengths1}});
-        }
+        program.let(distances,{var("BAliPhy.ATModel.DataPartition.get_branch_lengths"),partition});
 
         var smodel_on_tree("smodel_on_tree_part"+part);
         program.let(smodel_on_tree,{var("SModel.SingleBranchLengthModel"), tree_var, distances, smodel});
