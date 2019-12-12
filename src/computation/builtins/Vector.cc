@@ -104,30 +104,6 @@ extern "C" closure builtin_function_list_to_string(OperationArgs& Args)
     return s;
 }
 
-// Hmm... maybe we need something to make applying C functions more of a thing.
-
-int allocate_closure(OperationArgs& Args, const expression_ref& E)
-{
-    if (is_reg_var(E))
-        return E.as_<reg_var>().target;
-
-    if (not E.size())
-        return Args.allocate({E});
-
-    vector<expression_ref> args;
-    for(int i=0;i<E.size();i++)
-        args.push_back(index_var(int(E.size())-1-i));
-    expression_ref E2(E.head(),args);
-
-    closure C(E2);
-    for(int i=0;i<E.size();i++)
-    {
-        int r = allocate_closure(Args, E.sub()[i]);
-        C.Env.push_back(r);
-    }
-    return Args.allocate(std::move(C));
-}
-
 extern "C" closure builtin_function_fromVectors(OperationArgs& Args)
 {
     // This doesn't distinguish between a 0x0, 2x0 or 2x0 matrix.
