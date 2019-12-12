@@ -110,11 +110,10 @@ int OperationArgs::allocate_reg()
     return r;
 }
 
-void OperationArgs::set_effect(int r)
+void OperationArgs::set_effect(const effect& e)
 {
     auto& M = memory();
-    auto& eff = M.expression_at(r).as_<effect>();
-    eff.register_effect(M);
+    e.register_effect(M);
 }
 
 OperationArgs::OperationArgs(reg_heap& m)

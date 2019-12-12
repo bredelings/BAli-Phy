@@ -7,6 +7,7 @@
 
 class expression_ref;
 class reg_heap;
+class effect;
 
 class OperationArgs: public Object
 {
@@ -73,7 +74,7 @@ public:
 
     void stack_pop();
 
-    virtual void set_effect(int r);
+    virtual void set_effect(const effect&);
 
     int allocate(closure&&);
 

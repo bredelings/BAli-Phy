@@ -25,12 +25,11 @@ extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Ar
 
     int r_transition_kernel = Args.reg_for_slot(1);
 
-    int r_effect = Args.allocate(new register_transition_kernel(r_rate, r_transition_kernel));
+    auto effect = new register_transition_kernel(r_rate, r_transition_kernel);
 
-    Args.set_effect(r_effect);
+    Args.set_effect(*effect);
 
-    // Return a reference to the effect.
-    return {index_var(0),{r_effect}};
+    return effect;
 }
 
 // The idea here is to propose new values of X, and evaluate them by summing over each Y_i \in {True,False}.

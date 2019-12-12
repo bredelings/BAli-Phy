@@ -154,11 +154,11 @@ public:
             return r_alloc;
         }
 
-    void set_effect(int r_effect)
+    void set_effect(const effect& e)
         {
             used_changeable = true;
-            OperationArgs::set_effect(r_effect);
             memory().mark_step_with_nonforce_effect(s);
+            OperationArgs::set_effect(e);
         }
 
     RegOperationArgs* clone() const {return new RegOperationArgs(*this);}

@@ -136,12 +136,11 @@ extern "C" closure builtin_function_register_random_variable(OperationArgs& Args
     else
 	throw myexception()<<"Trying to register `"<<M.expression_at(r_random_var)<<"` as random variable";
 
-    int r_effect = Args.allocate(new register_random_variable(r_random_var));
+    auto effect = new register_random_variable(r_random_var);
 
-    Args.set_effect(r_effect);
+    Args.set_effect(*effect);
 
-    // Return a reference to the effect.
-    return {index_var(0),{r_effect}};
+    return effect;
 }
 
 extern "C" closure builtin_function_modifiable(OperationArgs& Args)
