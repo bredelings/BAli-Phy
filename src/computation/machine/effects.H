@@ -14,10 +14,10 @@ public:
 
     std::string print () const;
 
-    register_random_variable(int r);
+    void register_effect(reg_heap&) const;
+    void unregister_effect(reg_heap&) const;
 
-    void register_effect(reg_heap&, int r) const;
-    void unregister_effect(reg_heap&, int r) const;
+    register_random_variable(int r);
 };
 
 class register_transition_kernel: public effect
@@ -33,10 +33,10 @@ public:
 
     std::string print () const;
 
-    register_transition_kernel(int r1, int r2);
+    void register_effect(reg_heap&) const;
+    void unregister_effect(reg_heap&) const;
 
-    void register_effect(reg_heap&, int r) const;
-    void unregister_effect(reg_heap&, int r) const;
+    register_transition_kernel(int r1, int r2);
 };
 
 #endif

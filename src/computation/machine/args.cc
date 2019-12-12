@@ -114,7 +114,7 @@ void OperationArgs::set_effect(int r)
 {
     auto& M = memory();
     auto& eff = M.expression_at(r).as_<effect>();
-    eff.register_effect(M,r);
+    eff.register_effect(M);
 }
 
 OperationArgs::OperationArgs(reg_heap& m)
