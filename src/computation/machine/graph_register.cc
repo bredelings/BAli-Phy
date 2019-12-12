@@ -964,7 +964,7 @@ void reg_heap::mark_reg_created_by_step(int r, int s)
     regs.access(r).created_by = {s,index};
 }
 
-void reg_heap::mark_step_with_nonforce_effect(int s, int /* r */)
+void reg_heap::mark_step_with_nonforce_effect(int s)
 {
     steps[s].mark_with_nonforce_effect();
 }

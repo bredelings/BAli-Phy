@@ -157,8 +157,8 @@ public:
     void set_effect(int r_effect)
         {
             used_changeable = true;
-            memory().mark_step_with_nonforce_effect(s,r_effect);
             OperationArgs::set_effect(r_effect);
+            memory().mark_step_with_nonforce_effect(s);
         }
 
     RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
