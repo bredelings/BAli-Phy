@@ -156,6 +156,8 @@ alignment select_rows(const alignment& A,const std::vector<int>& keep);
 
 alignment select_columns(const alignment& A,const std::vector<int>& sites);
 
+alignment select_columns(const alignment& A,const boost::dynamic_bitset<>& keep);
+
 alignment reverse(const alignment& A);
 
 alignment complement(const alignment& A);

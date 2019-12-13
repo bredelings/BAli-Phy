@@ -32,6 +32,8 @@
 #include <utility>
 #include "alignment/index-matrix.H"
 
+#include <boost/dynamic_bitset.hpp>
+
 extern int log_verbose;
 
 using std::pair;
@@ -49,6 +51,7 @@ using std::cerr;
 using std::endl;
 
 using std::string;
+using boost::dynamic_bitset;
 
 variables_map parse_cmd_line(int argc,char* argv[]) 
 { 
@@ -79,6 +82,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     options_description col_filter("Column filtering options");
     col_filter.add_options()
+        ("keep-columns,K",value<string>(),"Keep columns from this sequence")
 	("min-letters,m",value<int>(),"Remove columns with fewer than <arg> letters.")
 	("remove-unique,u",value<int>(),"Remove insertions in a single sequence if longer than <arg> letters")
 	("erase-empty-columns,e","Remove columns with no characters (all gaps).");
@@ -276,24 +280,14 @@ matrix<int> symmetric_overlap_matrix(const alignment& A)
     return D;
 }
 
-int remove_almost_empty_columns(alignment& A,int n)
+dynamic_bitset<> enough_letters(alignment& A, int n)
 {
-    int length = 0;
+    dynamic_bitset<> keep(A.length());
 
     for(int column=0;column<A.length();column++)
-	if (n_characters(A,column) >= n) 
-	{
-	    if (column != length)
-		for(int i=0;i<A.n_sequences();i++)
-		    A.set_value(length,i, A(column,i) );
-	    length++;
-	}
-
-    int n_empty = A.length() - length;
-
-    A.changelength(length);
-
-    return n_empty;
+	if (n_characters(A,column) >= n)
+            keep[column] = true;
+    return keep;
 }
 
 int unique_letter(const alignment& A,int c)
@@ -318,6 +312,64 @@ vector<int> get_taxon_indices(const vector<string>& names, const vector<string>&
 	    throw myexception()<<"keep: can't find sequence '"<<lookup[i]<<"' to keep.";
     }
     return indices;
+}
+
+dynamic_bitset<> column_contains_sequence(const alignment& A, int index)
+{
+    dynamic_bitset<> present(A.length());
+    for(int c=0; c < A.length(); c++)
+        present[c] = A.character(c,index)?1:0;
+    return present;
+}
+
+
+dynamic_bitset<> part_of_long_insertion(const alignment& A, int L)
+{
+    dynamic_bitset<> unique(A.length());
+    for(int i=0;i<A.length();i++)
+        unique[i] = unique_letter(A,i);
+
+    vector<vector<int> > columns = column_lookup(A);
+
+    dynamic_bitset<> in_long_insertion(A.length());
+
+    for(int i=0;i<A.n_sequences();i++)
+    {
+        int count = 0;
+
+        for(int j=0;j<columns[i].size()+1;j++)
+        {
+            int u = -1;
+            if (j< columns[i].size())
+                u = unique[columns[i][j]];
+
+            if (u == i)
+                count++;
+            else {
+                // close out the current insertion if there is one
+                if (count > L) 
+                {
+                    // remove count-L sites from the middle of the insertion
+                    int start = j - count;
+                    int end   = j - 1;
+
+                    if (start == 0)
+                        end -= L;
+                    else if (end == columns[i].size()-1)
+                        start += L;
+                    else {
+                        start += L/2;
+                        end   -= (L-L/2);
+                    }
+
+                    for(int k=start;k<=end;k++)
+                        in_long_insertion[columns[i][k]] = 1;
+                }
+                count = 0;
+            }
+        }
+    }
+    return in_long_insertion;
 }
 
 int main(int argc,char* argv[])
@@ -611,74 +663,36 @@ int main(int argc,char* argv[])
 	//------- Select the sequences -------//
 	alignment A2 = select_rows(A,keep);
 
-	//------- Remove consecutive unique sites -----//
+        dynamic_bitset<> site_is_protected(A2.length());
+        if (args.count("keep-columns"))
+        {
+            string reference = args["keep-columns"].as<string>();
+            auto index = find_index(names,reference);
+            if (not index)
+                throw myexception()<<"--keep-columns: Can't find sequence '"<<reference<<"'";
+            site_is_protected = column_contains_sequence(A, *index);
+        }
 
-	// Question: should I remove ALL of the sites, or just the sites beyond L aa/nucs?
-	//    And, how would I remove the MIDDLE sites?
-	// Question: should I remove only sites that have no ?  How should I do so?
+	//------- Remove consecutive unique sites -----//
+        dynamic_bitset<> keep_sites(A2.length());
+        keep_sites.flip();
+
 	if (args.count("remove-unique"))
 	{
+            // Question: should I remove ALL of the sites, or just the sites beyond L aa/nucs?
+            //    And, how would I remove the MIDDLE sites?
+            // Question: should I remove only sites that have no ?  How should I do so?
+
 	    int L = args["remove-unique"].as<int>();
-
-	    vector<int> keep_sites(A2.length(),1);
-
-	    vector<int> unique(A2.length(),-1);
-	    for(int i=0;i<A2.length();i++)
-		unique[i] = unique_letter(A,i);
-
-	    vector<vector<int> > columns = column_lookup(A);
-
-	    for(int i=0;i<A.n_sequences();i++)
-	    {
-		int count =0;
-
-		for(int j=0;j<columns[i].size()+1;j++)
-		{
-		    int u = -1;
-		    if (j< columns[i].size())
-			u = unique[columns[i][j]];
-
-		    if (u == i)
-			count++;
-		    else {
-			// close out the current insertion if there is one
-			if (count > L) 
-			{
-			    // remove count-L sites from the middle of the insertion
-			    int start = j - count;
-			    int end   = j - 1;
-
-			    if (start == 0)
-				end -= L;
-			    else if (end == columns[i].size()-1)
-				start += L;
-			    else {
-				start += L/2;
-				end   -= (L-L/2);
-			    }
-
-			    for(int k=start;k<=end;k++)
-				keep_sites[columns[i][k]]=0;
-			}
-			count = 0;
-		    }
-		}
-	    }
-
-	    // actually remove the unwanted sites
-	    vector<int> sites;
-	    for(int i=0;i<keep_sites.size();i++)
-		if (keep_sites[i])
-		    sites.push_back(i);
-	    A2 = select_columns(A2,sites);
+            keep_sites &= ~part_of_long_insertion(A2, L);
 	}
 
+	// ------- Remove columns with too few letters ------ //
+	if (args.count("min-letters"))
+            keep_sites &= enough_letters( A2, args["min-letters"].as<int>() );
 
-	//------- Remove columns with too few letters ------//
-	if (args.count("min-letters")) {
-	    int m = args["min-letters"].as<int>();
-	    remove_almost_empty_columns(A2,m);
-	}
+        // ------- Actually remove columns ----------------- //
+        A2 = select_columns(A2, keep_sites | site_is_protected);
 
 	if (args.count("erase-empty-columns")) 
 	    remove_empty_columns(A2);

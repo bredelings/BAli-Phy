@@ -1086,6 +1086,18 @@ alignment select_columns(const alignment& A,const vector<int>& sites)
     return A2;
 }
 
+alignment select_columns(const alignment& A,const dynamic_bitset<>& keep) 
+{
+    assert(keep.size() == A.length());
+
+    vector<int> columns;
+    for(int i = 0; i < keep.size(); i++)
+        if (keep[i])
+            columns.push_back(i);
+
+    return select_columns(A, columns);
+}
+
 alignment reverse(const alignment& A)
 {
     int L = A.length();
