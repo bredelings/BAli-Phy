@@ -6,8 +6,8 @@ builtin getAminoAcids 1 "getAminoAcids" "Alphabet"
 
 builtin alphabetSize 1 "alphabetSize" "Alphabet"
 
-builtin builtin_alphabet_letters 1 "alphabet_letters" "Alphabet"
-alphabet_letters a = map listFromString (list_from_vector (builtin_alphabet_letters a) )
+builtin builtin_letters 1 "alphabet_letters" "Alphabet"
+letters a = map listFromString (list_from_vector (builtin_letters a) )
 
 builtin translate 2 "translate" "Alphabet"
 

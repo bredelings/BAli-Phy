@@ -42,7 +42,7 @@ gtr' s'    pi a = gtr a (gtr_sym' s'    a) (frequencies_from_dict a pi)
 -- es' is a [(String,Double)] here
 all_pairs l = [(x,y) | (x:ys) <- tails l, y <- ys]
 
-letter_pair_names a = [l1++l2|(l1,l2) <- all_pairs (alphabet_letters a)]
+letter_pair_names a = [l1++l2|(l1,l2) <- all_pairs (letters a)]
 
 get_element_exchange []                 x y = error ("No exchangeability specified for '" ++ x ++ "'")
 get_element_exchange ((key,value):rest) x y = if key == x || key == y then value else get_element_exchange rest x y
@@ -50,7 +50,7 @@ get_element_exchange ((key,value):rest) x y = if key == x || key == y then value
 -- factor out code to get gtr exch list
 -- maybe put ReversibleFrequency into this file.
 -- clean up f1x4 and f3x4?
-gtr_sym' es' a = gtr_sym es a where lpairs = all_pairs (alphabet_letters a)
+gtr_sym' es' a = gtr_sym es a where lpairs = all_pairs (letters a)
                                     es = if length lpairs == length es' then
                                              [get_element_exchange es' (l1++l2) (l2++l1)| (l1,l2) <- lpairs]
                                          else

@@ -163,20 +163,20 @@ mut_sel w' (ReversibleMarkov a smap q0 pi0 _ _ _) = reversible_markov a smap q p
     pi = mut_sel_pi pi0 w
 
 mut_sel' w' q0 = mut_sel w q0 where
-    w = get_ordered_elements (alphabet_letters a) w' "fitnesses"
+    w = get_ordered_elements (letters a) w' "fitnesses"
     a = getAlphabet q0
 
 mut_sel_aa ws q@(ReversibleMarkov codon_a _ _ _ _ _ _) = mut_sel (aa_to_codon codon_a ws) q
 
 mut_sel_aa' ws' q0 = mut_sel_aa ws q0 where
-    ws = get_ordered_elements (alphabet_letters amino_alphabet) ws' "fitnesses"
+    ws = get_ordered_elements (letters amino_alphabet) ws' "fitnesses"
     codon_alphabet = getAlphabet q0
     amino_alphabet = getAminoAcids codon_alphabet
 
 fMutSel codon_a codon_w omega nuc_model = nuc_model & x3 codon_a & dNdS omega & mut_sel codon_w
 
 fMutSel' codon_a codon_ws' omega nuc_model = fMutSel codon_a codon_ws omega nuc_model
-    where codon_ws = get_ordered_elements (alphabet_letters codon_a) codon_ws' "fitnesses"
+    where codon_ws = get_ordered_elements (letters codon_a) codon_ws' "fitnesses"
 
 aa_to_codon codon_a xs = [xs_array!aa | codon <- codons, let aa = translate codon_a codon]
     where xs_array = listArray' xs
@@ -189,7 +189,7 @@ fMutSel0 codon_a aa_w omega nuc_q  = fMutSel codon_a codon_w omega nuc_q
     where codon_w = aa_to_codon codon_a aa_w
 
 fMutSel0' codon_a amino_ws' omega nuc_model = fMutSel0 codon_a amino_ws omega nuc_model
-                                               where amino_ws = get_ordered_elements (alphabet_letters amino_a) amino_ws' "fitnesses"
+                                               where amino_ws = get_ordered_elements (letters amino_a) amino_ws' "fitnesses"
                                                      amino_a = getAminoAcids codon_a
 
 -- Issue: bad mixing on fMutSel model
@@ -366,8 +366,8 @@ mmm m branch_cats = MixtureModels branch_cats [m]
 
 empirical a filename = builtin_empirical a (list_to_string filename)
 
-wag_frequencies a = zip (alphabet_letters a) (list_from_vector $ builtin_wag_frequencies a)
-lg_frequencies a = zip (alphabet_letters a) (list_from_vector $ builtin_lg_frequencies a)
+wag_frequencies a = zip (letters a) (list_from_vector $ builtin_wag_frequencies a)
+lg_frequencies a = zip (letters a) (list_from_vector $ builtin_lg_frequencies a)
 
 -- FIXME: need polymorphism.
 --        This needs to be after weighted_frequency_matrix.
