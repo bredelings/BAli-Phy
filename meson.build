@@ -2,6 +2,8 @@ project('bali-phy', ['cpp','c'],
 	version: '3.5alpha',
 	default_options : [
 	  'buildtype=release',
+          'warning_level=3',
+          'optimization=3',
 	  'cpp_std=c++17'
 	],
 	meson_version: '>= 0.52',
@@ -29,12 +31,12 @@ configure_file(output : 'config.h', configuration : conf_data)
 root_inc = include_directories('.','src')
 add_project_arguments('-DHAVE_CONFIG_H', language : 'cpp')
 
-warn_flags = ['-Wall','-Wextra','-Wno-sign-compare','-Wno-maybe-uninitialized','-Woverloaded-virtual','-Wstrict-aliasing','-Wno-unknown-pragmas', '-fdiagnostics-show-template-tree']
+warn_flags = ['-Wno-sign-compare','-Wno-maybe-uninitialized','-Woverloaded-virtual','-Wstrict-aliasing','-Wno-unknown-pragmas', '-fdiagnostics-show-template-tree']
 
 add_project_arguments(cpp.get_supported_arguments(warn_flags), language : 'cpp')
 
-if get_option('buildtype') == 'release' or get_option('buildtype') == 'plain'
-  opt_flags = ['-O3','-funroll-loops','-fno-math-errno','-fno-signed-zeros']
+if get_option('optimization') == '2' or get_option('optimization') == '3'
+  opt_flags = ['-funroll-loops','-fno-math-errno','-fno-signed-zeros']
   add_project_arguments(['-DNDEBUG','-DNDEBUG_DP']+cpp.get_supported_arguments(opt_flags), language : 'cpp')
 endif
 
