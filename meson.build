@@ -1,13 +1,13 @@
 project('bali-phy', ['cpp','c'],
-	version: '3.5alpha',
-	default_options : [
-	  'buildtype=release',
+        version: '3.5alpha',
+        default_options : [
+          'buildtype=release',
           'warning_level=3',
           'optimization=3',
-	  'cpp_std=c++17'
-	],
-	meson_version: '>= 0.52',
-	license: 'GPLv2')
+          'cpp_std=c++17'
+        ],
+        meson_version: '>= 0.52',
+        license: 'GPLv2')
 
 cpp = meson.get_compiler('cpp')
 cc = meson.get_compiler('c')
@@ -52,9 +52,9 @@ endif
 install_data('scripts/bp-analyze', install_mode: 'rwxr-xr-x', install_dir: 'bin')
 install_data('scripts/bali-phy-pkg', install_mode: 'rwxr-xr-x', install_dir: 'bin')
 install_data(['scripts/compare-runs.R', 'scripts/compare-runs2.R', 'scripts/tree-plot1.R',
-	      'scripts/tree-plot2.R', 'scripts/tree-plot3.R', 'scripts/tree-plot2-3D.R',
-	      'scripts/tree-plot1-3D.R', 'scripts/tree-plot3-3D.R'],
-	     install_dir:'lib/bali-phy/libexec')
+              'scripts/tree-plot2.R', 'scripts/tree-plot3.R', 'scripts/tree-plot2-3D.R',
+              'scripts/tree-plot1-3D.R', 'scripts/tree-plot3-3D.R'],
+             install_dir:'lib/bali-phy/libexec')
 
 ## we need to build libdl if we are on windows (cygwin or mingw64, and then find the library
 install_subdir('modules', install_dir: 'lib/bali-phy')
