@@ -12,6 +12,42 @@ using std::endl;
 long total_destroy_token = 0;
 long total_release_knuckle = 0;
 
+token_type reverse(token_type type)
+{
+    switch(type)
+    {
+    case token_type::none:                std::abort();
+    case token_type::root:                std::abort();
+    case token_type::merged:              return token_type::merged;
+    case token_type::set:                 return token_type::reverse_set;
+    case token_type::set_unshare:         return token_type::reverse_set_unshare;
+    case token_type::execute:             return token_type::reverse_execute;
+    case token_type::reverse_set:         return token_type::set;
+    case token_type::reverse_set_unshare: return token_type::set_unshare;
+    case token_type::reverse_execute:     return token_type::execute;
+    }
+    std::abort();
+}
+
+std::ostream& operator<<(std::ostream& o, token_type type)
+{
+    switch(type)
+    {
+    case token_type::none:                o<<"none";break;
+    case token_type::root:                o<<"root";break;
+    case token_type::merged:              o<<"merged";break;
+    case token_type::set:                 o<<"set";break;
+    case token_type::set_unshare:         o<<"set_unshare";break;
+    case token_type::execute:             o<<"execute";break;
+    case token_type::reverse_set:         o<<"reverse_set";break;
+    case token_type::reverse_set_unshare: o<<"reverse_set_unshare";break;
+    case token_type::reverse_execute:     o<<"reverse_execute";break;
+    default:                              std::abort();
+    }
+    return o;
+}
+
+
 void reg_heap::destroy_all_computations_in_token(int t)
 {
     auto& delta_step = tokens[t].delta_step();

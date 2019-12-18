@@ -60,6 +60,12 @@ constexpr int non_computed_index = -1;
 
 constexpr int non_existant_index = -2;
 
+enum class token_type {none,root,merged,set,set_unshare,execute,reverse_set,reverse_set_unshare,reverse_execute};
+
+token_type reverse(token_type);
+
+std::ostream& operator<<(std::ostream& o, token_type);
+
 class reg
 {
 public:
