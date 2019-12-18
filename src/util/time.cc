@@ -18,7 +18,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 /**
- * @file timer_stack.C
+ * @file time.cc
  */
 
 #include "util/time.H"
@@ -29,6 +29,14 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 using namespace std;
 using namespace boost::chrono;
+
+/*
+   FIXME: We aren't using std::chrono because only boost::chrono
+   supplies a clock that measures CPU time in a cross-platform way.
+
+   To generate a human-readable elapsed time using std::chrono see:
+      https://stackoverflow.com/questions/22590821/convert-stdduration-to-human-readable-time
+ */
 
 duration_t total_cpu_time()
 {
