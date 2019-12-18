@@ -79,14 +79,14 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 
     if (log_verbose >= 3) std::cerr<<"\n\n[sum_out_coals]\n";
 
+    int c1 = Args.evaluate(2).as_int();
+
     //------------- 1a. Get argument X -----------------
     int t_reg = Args.evaluate_slot_to_reg(0);
-    if (auto t_mod_reg = Args.find_modifiable_in_root_token(t_reg))
+    if (auto t_mod_reg = Args.find_modifiable_in_context(t_reg, c1))
         t_reg = *t_mod_reg;
     else
         throw myexception()<<"sum_out_coals: time variable is not modifiable!";
-
-    int c1 = Args.evaluate(2).as_int();
 
     //------------- 1b. Get arguments Y_i  -----------------
     vector<int> I_regs;
@@ -104,7 +104,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 
 	// evaluate the list element in token 0
 	element_reg = Args.evaluate_reg_to_reg(element_reg);
-        if (auto element_mod_reg = Args.find_modifiable_in_root_token(element_reg))
+        if (auto element_mod_reg = Args.find_modifiable_in_context(element_reg, c1))
             element_reg = *element_mod_reg;
         else
             throw myexception()<<"sum_out_coals: indicator variable is not modifiable!";
@@ -171,7 +171,7 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
 
     //------------- 2. Find the location of the variable -------------//
     auto& M = Args.memory();
-    auto x_mod_reg = Args.find_modifiable_in_root_token(x_reg);
+    auto x_mod_reg = Args.find_modifiable_in_context(x_reg, c1);
     if (not x_mod_reg)
         throw myexception()<<"gibbs_sample_categorical: reg "<<x_reg<<" not modifiable!";
 
@@ -224,7 +224,7 @@ extern "C" closure builtin_function_discrete_uniform_avoid_mh(OperationArgs& Arg
 
     //------------- 2. Find the location of the variable -----------//
     auto& M = Args.memory();
-    auto x_mod_reg = Args.find_modifiable_in_root_token(x_reg);
+    auto x_mod_reg = Args.find_modifiable_in_context(x_reg, c1);
     if (not x_mod_reg)
         throw myexception()<<"discrete_uniform_avoid_mh: reg "<<x_reg<<" not modifiable!";
 

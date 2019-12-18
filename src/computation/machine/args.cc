@@ -128,6 +128,8 @@ OperationArgs::~OperationArgs()
 
 optional<int> OperationArgs::find_random_variable_in_root_token(int r)
 {
+    assert(evaluate_changeables());
+
     auto& M = memory();
 
     // Warning: ABOMINATION!
@@ -162,14 +164,18 @@ optional<int> OperationArgs::find_random_variable_in_root_token(int r)
          from MCMC that is being done *unchangeably*.
  */
 
-optional<int> OperationArgs::find_modifiable_in_root_token(int r)
+optional<int> OperationArgs::find_modifiable_in_context(int r, int c)
 {
+    assert(not evaluate_changeables());
+
     auto& M = memory();
 
     // Warning: ABOMINATION!
     // FIXME: This should be forced by a `seq` inside the program.
     // But that probably requires force-edges to be working.
-    M.incremental_evaluate(r);
+    M.incremental_evaluate_in_context(r,c);
+
+    assert(M.is_root_token(M.token_for_context(c)));
 
     r = M.follow_index_var(r);
 
