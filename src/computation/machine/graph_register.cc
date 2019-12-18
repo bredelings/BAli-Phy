@@ -1,6 +1,7 @@
 #include <iostream>
 #include <algorithm>
 #include "util/truncate.H"
+#include "util/io/vector.H"
 #include "graph_register.H"
 #include "computation/expression/var.H"
 #include "computation/expression/reg_var.H"
@@ -1394,6 +1395,23 @@ void reg_heap::check_used_regs_in_token(int t) const
 {
     assert(token_is_used(t));
 
+    if (tokens[t].type == token_type::reverse_execute)
+    {
+        for(auto [r,result]: tokens[t].delta_result())
+            assert(result < 0);
+
+        for(auto [r,step]: tokens[t].delta_step())
+            assert(step < 0);
+    }
+    else if (tokens[t].type == token_type::execute)
+    {
+        for(auto [r,result]: tokens[t].delta_result())
+            assert(result > 0);
+
+        for(auto [r,step]: tokens[t].delta_step())
+            assert(step > 0);
+    }
+
     for(auto [r,result]: tokens[t].delta_result())
     {
         // Check that there are no duplicate regs.
@@ -1652,6 +1670,21 @@ void reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
     set_reg_value(P, std::move(C), t);
 }
 
+bool reg_heap::execution_allowed() const
+{
+    if (root_token < 0) return false;
+
+    if (tokens[root_token].children.size() == 0) return true;
+
+    if (tokens[root_token].children.size() == 1)
+    {
+        int t1 = tokens[root_token].children[0];
+        return (tokens[t1].type == reverse(token_type::execute));
+    }
+
+    return false;
+}
+
 pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 {
 #if DEBUG_MACHINE >= 2
@@ -1659,6 +1692,20 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 #endif
 
     reroot_at_context(c);
+    if (not execution_allowed())
+    {
+        int t1 = token_for_context(c);
+        assert(t1 == root_token);
+        int t2 = get_unused_token(token_type::root);
+        tokens[t2].children.push_back(t1);
+        tokens[t1].parent = t2;
+        tokens[t1].type = token_type::reverse_execute;
+        root_token = t2;
+        switch_to_token(c,t2);
+        assert(execution_allowed());
+    }
+
+    assert(execution_allowed());
     mark_completely_dirty(root_token);
     auto p = incremental_evaluate(R);
 

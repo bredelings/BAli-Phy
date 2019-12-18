@@ -172,6 +172,8 @@ public:
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not an reg_var.
 pair<int,int> reg_heap::incremental_evaluate(int r)
 {
+    assert(execution_allowed());
+
 #ifndef NDEBUG
     if (regs.access(r).flags.test(3))
         throw myexception()<<"Evaluating reg "<<r<<" that is already on the stack!";

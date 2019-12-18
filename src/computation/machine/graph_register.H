@@ -517,6 +517,7 @@ public:
     void mark_completely_dirty(int t);
     bool is_completely_dirty(int t) const;
     bool is_dirty(int t) const;
+    bool execution_allowed() const;
 
     std::pair<int,int> incremental_evaluate_in_context(int R, int c);
 
