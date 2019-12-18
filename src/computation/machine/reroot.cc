@@ -91,6 +91,9 @@ void reg_heap::reroot_at(int t)
     std::swap(tokens[parent].vm_result, tokens[t].vm_result);
 
     // 4. Alter the inheritance tree
+    tokens[t].type = reverse(tokens[t].type);
+    std::swap(tokens[t].type, tokens[parent].type);
+
     tokens[parent].parent = t;
     int index = remove_element(tokens[parent].children, t);
     assert(index != -1);
@@ -217,6 +220,11 @@ void reg_heap::unshare_regs(int t)
 #endif
 
     total_invalidate++;
+
+    if (tokens[t].type == token_type::set)
+        tokens[t].type = token_type::set_unshare;
+    else
+        tokens[t].type = token_type::merged;
 
     auto& vm_result = tokens[t].vm_result;
     auto& vm_step = tokens[t].vm_step;

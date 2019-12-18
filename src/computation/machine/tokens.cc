@@ -110,6 +110,7 @@ void reg_heap::release_tip_token(int t)
 
     // 2. Set the token to unused
     tokens[t].used = false;
+    tokens[t].type = token_type::none;
 
     // 3. Destroy the computations
     try
@@ -199,7 +200,12 @@ void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
 {
     if (knuckle_tokens.empty()) return;
 
+    // This is the child that will survive, versus the knuckles that will be deleted.
     int child_token = tokens[knuckle_tokens[0]].children[0];
+
+    tokens[child_token].type = token_type::merged;
+    for(int t: knuckle_tokens)
+        tokens[t].type = token_type::merged;
 
     load_map(tokens[child_token].vm_result, prog_temp);
     for(int t: knuckle_tokens)
@@ -327,7 +333,7 @@ vector<int> reg_heap::get_used_tokens() const
 }
 
 
-int reg_heap::make_child_token(int t)
+int reg_heap::make_child_token(int t, token_type type)
 {
 #ifdef DEBUG_MACHINE
     check_used_regs();
@@ -335,7 +341,7 @@ int reg_heap::make_child_token(int t)
 
     assert(tokens[t].used);
 
-    int t2 = get_unused_token();
+    int t2 = get_unused_token(type);
 
     // assert(temp.empty());
 
@@ -371,12 +377,12 @@ void reg_heap::switch_to_context(int c1, int c2)
     check_tokens();
 }
 
-int reg_heap::switch_to_child_token(int c)
+int reg_heap::switch_to_child_token(int c, token_type type)
 {
     check_tokens();
 
     int t1 = token_for_context(c);
-    int t2 = make_child_token(t1);
+    int t2 = make_child_token(t1, type);
     switch_to_token(c, t2);
 
     check_tokens();
@@ -455,7 +461,7 @@ int reg_heap::get_unused_context()
 {
     int c = get_new_context();
   
-    set_token_for_context(c, get_unused_token());
+    set_token_for_context(c, get_unused_token(token_type::root));
 
     check_tokens();
 
@@ -492,7 +498,7 @@ void reg_heap::release_context(int c)
  * 3. If the reg was 
  */
 
-int reg_heap::get_unused_token()
+int reg_heap::get_unused_token(token_type type)
 {
     if (unused_tokens.empty())
     {
@@ -507,6 +513,7 @@ int reg_heap::get_unused_token()
     assert(not token_is_used(t));
 
     tokens[t].used = true;
+    tokens[t].type = type;
 
     if (root_token == -1)
     {

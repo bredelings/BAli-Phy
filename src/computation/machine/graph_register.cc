@@ -1378,6 +1378,12 @@ void reg_heap::check_tokens() const
         if (token_is_used(t))
         {
             assert(tokens[t].is_referenced() or tokens[t].children.size() >= 1);
+            assert(tokens[t].type != token_type::none);
+            if (t == root_token)
+                assert(tokens[t].type == token_type::root);
+            else
+                assert(tokens[t].type != token_type::root);
+
             for(int t2: children_of_token(t))
                 assert(tokens[t].version >= tokens[t2].version);
         }
@@ -1641,7 +1647,7 @@ const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
 
 void reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
 {
-    int t = switch_to_child_token(c);
+    int t = switch_to_child_token(c, token_type::set);
 
     set_reg_value(P, std::move(C), t);
 }

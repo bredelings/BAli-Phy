@@ -318,6 +318,7 @@ public:
         mapping<int> vm_result;
         mapping<int> vm_step;
 
+        token_type type = token_type::none;
         bool used = false;
         long version = 0;
     };
@@ -348,7 +349,7 @@ public:
     const Token& get_token(int t) const {return tokens[t];}
 
     /// Acquire an unused token
-    int get_unused_token();
+    int get_unused_token(token_type type);
 
     /// Report all used tokens
     std::vector<int> get_used_tokens() const;
@@ -381,10 +382,10 @@ public:
     void switch_to_context(int c1, int c2);
 
     /// Acquire a copy of a token
-    int make_child_token(int);
+    int make_child_token(int, token_type type);
 
     /// Make a child of the current token, point to the child, and unreference the current token.
-    int switch_to_child_token(int c);
+    int switch_to_child_token(int c, token_type type);
 
     void merge_split_mappings(const std::vector<int>&);
 
