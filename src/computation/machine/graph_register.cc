@@ -1390,7 +1390,10 @@ void reg_heap::check_used_regs_in_token(int t) const
 
     for(auto [r,result]: tokens[t].delta_result())
     {
+        // Check that there are no duplicate regs.
         assert(not prog_temp[r].test(0));
+
+        // Mark the reg as having a result in the delta.
         prog_temp[r].set(0);
 
         // No results for constant regs
@@ -1399,7 +1402,10 @@ void reg_heap::check_used_regs_in_token(int t) const
     }
     for(auto [r,step]: tokens[t].delta_step())
     {
+        // Check that there are no duplicate regs.
         assert(not prog_temp[r].test(1));
+
+        // Mark the reg as having a step in the delta.
         prog_temp[r].set(1);
 
         // If the step is unshared, the result must be unshared as well: this allows us to just walk unshared results.
