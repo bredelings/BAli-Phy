@@ -458,11 +458,6 @@ log_double_t context_ref::probability() const
     return memory()->probability_for_context(context_index);
 }
 
-int context_ref::add_likelihood_factor(const expression_ref& E)
-{
-    return memory()->register_likelihood(preprocess(E));
-}
-
 prob_ratios_t context_ref::probability_ratios(const context_ref& C1) const
 {
     return memory()->probability_ratios(C1.context_index, context_index);

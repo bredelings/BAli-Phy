@@ -184,8 +184,6 @@ public:
     /// Add a literal expression that MAY be reduced
     int add_compute_expression_(closure&&);
 
-    int add_likelihood_factor(const expression_ref& E);
-
     int n_expressions() const;
 
     expression_ref get_expression(int i) const;
