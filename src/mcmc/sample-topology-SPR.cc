@@ -971,6 +971,36 @@ move_pruned_subtree(Parameters& P,
 vector<optional<vector<HMM::bitmask_t>>> A23_constraints(const Parameters& P, const vector<int>& nodes, bool original);
 log_double_t pr_sum_out_A_tri(Parameters P, const vector<optional<vector<HMM::bitmask_t>>>& a23, const vector<int>& nodes);
 
+void set_attachment_probability(spr_attachment_probabilities& Pr, const spr_attachment_points& locations, const tree_edge& subtree_edge, const tree_edge& target_edge, Parameters p2, const map<tree_edge,vector<int>>& nodes, const tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>& alignment3way, bool sum_out_A)
+{
+    // ---------------- Compute the attachment probability -----------------------
+    double L = p2.t().branch_length(p2.t().find_branch(target_edge));
+    auto& nodes_ = nodes.at(target_edge);
+
+    // 0. Save constraints before we regraft
+    vector<optional<vector<HMM::bitmask_t>>> a23_constraint;
+    if (sum_out_A)
+        a23_constraint = A23_constraints(p2, nodes_, false);
+
+    // 1. Regraft subtree and set pairwise alignments on three branches
+    regraft_subtree_and_set_3way_alignments(p2, subtree_edge, target_edge, alignment3way, not sum_out_A);
+
+    // 2. Set branch lengths
+    int n0 = subtree_edge.node2;
+    set_lengths_at_location(p2, n0, L, target_edge, locations);
+
+    // 3. Compute likelihood and probability
+    if (sum_out_A)
+        Pr[target_edge] = pr_sum_out_A_tri(p2, a23_constraint, nodes_);
+    else
+        Pr[target_edge] = p2.heated_likelihood() * p2.prior();
+
+#ifdef DEBUG_SPR_ALL
+    Pr.LLL[target_edge] = p2.heated_likelihood();
+#endif
+
+}
+
 /// Compute the probability of pruning b1^t and regraftion at \a locations
 ///
 /// After this routine, likelihood caches and subalignment indices for branches in the
@@ -996,10 +1026,6 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
     if (I.n_attachment_branches() == 1) return spr_attachment_probabilities();
 
     /*----------------------- Initialize likelihood for each attachment point ----------------------- */
-    vector<Parameters> Ps;
-    Ps.reserve(I.attachment_branch_pairs.size());
-    Ps.push_back(P);
-
     spr_attachment_probabilities Pr;
     if (sum_out_A)
     {
@@ -1016,54 +1042,61 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
     alignments3way.reserve(I.attachment_branch_pairs.size());
 
     // 1. Prune subtree and store homology bitpath
-    alignments3way.push_back(prune_subtree_and_get_3way_alignments(Ps[0], subtree_edge, I.initial_edge, nodes.at(I.initial_edge), not sum_out_A));
+    alignments3way.push_back(prune_subtree_and_get_3way_alignments(P, subtree_edge, I.initial_edge, nodes.at(I.initial_edge), not sum_out_A));
+
+    int x0 = P.t().find_branch(I.initial_edge);
+    int x1 = P.t().reverse(x0);
+
+    if (not P.t().is_leaf_branch(x0))
+        for(int j=0;j<P.n_data_partitions();j++)
+        {
+            P[j].transition_P(x0);
+            P[j].cache(x0);
+        }
+
+    if (not P.t().is_leaf_branch(x1))
+        for(int j=0;j<P.n_data_partitions();j++)
+        {
+            P[j].transition_P(x1);
+            P[j].cache(x1);
+        }
+
+    vector<Parameters> Ps;
+    Ps.reserve(I.attachment_branch_pairs.size());
+    Ps.push_back(P);
 
     // 2. Move to each attachment branch and compute homology bitpath, but don't attch
     for(int i=1;i<I.attachment_branch_pairs.size();i++)
     {
 	// Define target branch b2 - pointing away from subtree_edge
 	const auto& BB = I.attachment_branch_pairs[i];
-	const tree_edge& next_target_edge = BB.edge;
+	const tree_edge& target_edge = BB.edge;
+        const tree_edge& sibling_edge = BB.sibling;
 
 	int prev_i = BB.prev_i;
 	const tree_edge& prev_target_edge = I.attachment_branch_pairs[prev_i].edge;
 
-	if (prev_i != 0) assert(prev_target_edge.node2 == next_target_edge.node1);
+	if (prev_i != 0) assert(prev_target_edge.node2 == target_edge.node1);
 	Ps.push_back(Ps[prev_i]);
 	assert(Ps.size() == i+1);
-	auto& p = Ps.back();
-	alignments3way.push_back( move_pruned_subtree(p, alignments3way[prev_i], subtree_edge, prev_target_edge, next_target_edge, BB.sibling, not sum_out_A) );
+	auto& p0 = Ps.back();
+	auto alignment_3way = move_pruned_subtree(p0, alignments3way[prev_i], subtree_edge, prev_target_edge, target_edge, sibling_edge, not sum_out_A);
+
+        int b = p0.t().find_branch(BB.edge);
+        if (not p0.t().is_leaf_branch(b))
+            for(int j=0;j<p0.n_data_partitions();j++)
+            {
+                p0[j].transition_P(b);
+                p0[j].cache(b);
+            }
+
+        set_attachment_probability(Pr, locations, subtree_edge, target_edge, Ps[i], nodes, alignment_3way, sum_out_A);
+
+	alignments3way.push_back( std::move(alignment_3way) );
     }
 
-    // 3. Attach at each attachment branch at compute probabilities
     for(int i=(int)I.attachment_branch_pairs.size()-1;i>0;i--)
     {
-	const tree_edge& target_edge = I.attachment_branch_pairs[i].edge;
-	auto& p = Ps[i];
-	double L = p.t().branch_length(p.t().find_branch(target_edge));
-	auto& nodes_ = nodes.at(target_edge);
-
-	// 0. Save constraints before we regraft
-	vector<optional<vector<HMM::bitmask_t>>> a23_constraint;
-	if (sum_out_A)
-	    a23_constraint = A23_constraints(p, nodes_, false);
-
-	// 1. Regraft subtree and set pairwise alignments on three branches
-	regraft_subtree_and_set_3way_alignments(p, subtree_edge, target_edge, alignments3way[i], not sum_out_A);
-
-        // 2. Set branch lengths
-	int n0 = subtree_edge.node2;
-	set_lengths_at_location(p, n0, L, target_edge, locations);
-
-	// 3. Compute likelihood and probability
-	if (sum_out_A)
-	    Pr[target_edge] = pr_sum_out_A_tri(p, a23_constraint, nodes_);
-	else
-	    Pr[target_edge] = p.heated_likelihood() * p.prior();
-
-#ifdef DEBUG_SPR_ALL
-	Pr.LLL[target_edge] = p.heated_likelihood();
-#endif
 	Ps.pop_back();
     }
 
@@ -1178,11 +1211,11 @@ void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0)
     for(int j=1;j<indices.size();j++)
     {
 	const auto& BB = I.attachment_branch_pairs[indices[j]];
-	const tree_edge& next_target_edge = BB.edge;
+	const tree_edge& target_edge = BB.edge;
 	const tree_edge& sibling_edge = BB.sibling;
 	const tree_edge& prev_target_edge = I.attachment_branch_pairs[BB.prev_i].edge;
 
-	alignments3way.push_back( move_pruned_subtree(P, alignments3way[j-1], subtree_edge, prev_target_edge, next_target_edge, sibling_edge, false) );
+	alignments3way.push_back( move_pruned_subtree(P, alignments3way[j-1], subtree_edge, prev_target_edge, target_edge, sibling_edge, false) );
     }
 
     // 3. Regraft the subtree to the correct edge and set branch lengths
