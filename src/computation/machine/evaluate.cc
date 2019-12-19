@@ -250,6 +250,11 @@ pair<int,int> reg_heap::incremental_evaluate_(int r)
 
                 // r gets its value from S.
                 set_result_for_reg( r );
+                if (not tokens[root_token].children.empty())
+                {
+                    int t = tokens[root_token].children[0];
+                    tokens[t].vm_result.add_value(r, non_computed_index);
+                }
                 total_changeable_eval_with_call++;
                 return {r, value};
             }
@@ -352,6 +357,12 @@ pair<int,int> reg_heap::incremental_evaluate_(int r)
 
                     prog_steps[r] = s;
                     set_result_for_reg(r);
+                    if (not tokens[root_token].children.empty())
+                    {
+                        int t = tokens[root_token].children[0];
+                        tokens[t].vm_result.add_value(r, non_computed_index);
+                        tokens[t].vm_step.add_value(r, non_computed_index);
+                    }
 
                     return {r, value};
                 }
