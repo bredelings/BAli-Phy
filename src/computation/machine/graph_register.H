@@ -344,7 +344,10 @@ public:
     /// Acquire an unused token
     int get_unused_token();
 
-    /// Release the token, and also the parent if its an unreferenced knuckle
+    /// Report all used tokens
+    std::vector<int> get_used_tokens() const;
+
+    /// Releases the token, and also the parent if its an unreferenced knuckle
     int release_unreferenced_tips(int);
 
     /// Release the tip token

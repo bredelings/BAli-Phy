@@ -285,6 +285,16 @@ bool reg_heap::token_is_used(int t) const
     return tokens[t].used;
 }
 
+vector<int> reg_heap::get_used_tokens() const
+{
+    vector<int> toks;
+    for(int t=0;t<tokens.size();t++)
+        if (token_is_used(t))
+            toks.push_back(t);
+    return toks;
+}
+
+
 int reg_heap::make_child_token(int t)
 {
 #ifdef DEBUG_MACHINE
