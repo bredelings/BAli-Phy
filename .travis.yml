@@ -77,7 +77,7 @@ before_install:
   - if [ -n "${C_COMPILER}" ]; then export CC="ccache ${C_COMPILER}"; fi
   - if [ -n "${CXX_COMPILER}" ]; then export CXX="ccache ${CXX_COMPILER}"; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PKG_CONFIG_PATH="/usr/local/opt/libffi/lib/pkgconfig" ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pyenv local 3.7.1 && pip3 install meson ninja; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pyenv local 3.7 && pip3 install meson ninja; fi
 
 script:
   - meson build --prefix=$HOME/local
