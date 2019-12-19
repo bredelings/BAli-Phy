@@ -313,24 +313,6 @@ void reg_heap::register_likelihood_(int r)
     }
 }
 
-void reg_heap::register_likelihood(int r)
-{
-    mark_completely_dirty(root_token);
-    auto [r2,v] = incremental_evaluate(r);
-
-    register_likelihood_(r2);
-}
-
-int reg_heap::register_likelihood(closure&& C)
-{
-    assert(not C.exp.head().is_a<expression>());
-
-    int r = allocate();
-    set_C(r, std::move(C));
-    register_likelihood(r);
-    return r;
-}
-
 log_double_t reg_heap::probability_for_context(int c)
 {
     total_context_pr++;

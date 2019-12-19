@@ -215,10 +215,6 @@ public:
 
     void register_likelihood_(int r);
 
-    void register_likelihood(int r);
-
-    int register_likelihood(closure&& C);
-
     log_double_t likelihood_for_context(int c);
 
     log_double_t probability_for_context(int c);
