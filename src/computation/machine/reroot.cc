@@ -221,6 +221,8 @@ void reg_heap::unshare_regs(int t)
 
     total_invalidate++;
 
+    assert(tokens[t].type == token_type::set);
+
     if (tokens[t].type == token_type::set)
         tokens[t].type = token_type::set_unshare;
     else

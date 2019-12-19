@@ -1706,7 +1706,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
     }
 
     assert(execution_allowed());
-    mark_completely_dirty(root_token);
+
     auto p = incremental_evaluate(R);
 
 #if DEBUG_MACHINE >= 2
@@ -1718,7 +1718,6 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 
 const closure& reg_heap::lazy_evaluate(int& R)
 {
-    mark_completely_dirty(root_token);
     auto [R2, value] = incremental_evaluate(R);
     R = R2;
     return closure_at(value);

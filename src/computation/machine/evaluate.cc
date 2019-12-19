@@ -192,7 +192,6 @@ pair<int,int> reg_heap::incremental_evaluate(int r)
 
 pair<int,int> reg_heap::incremental_evaluate_(int r)
 {
-    assert(is_completely_dirty(root_token));
     assert(regs.is_valid_address(r));
     assert(regs.is_used(r));
 
