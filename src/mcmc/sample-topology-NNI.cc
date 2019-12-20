@@ -616,22 +616,19 @@ void three_way_topology_and_alignment_sample(owned_ptr<Model>& P, MoveStats& Sta
     //--------- Generate the Different Topologies -------//
     // We ALWAYS resample the connection between two_way_nodes [0] and [4].
 
+    double L0 = PP.t().branch_length(b);
+
+    int b1 = PP.t().find_branch(two_way_nodes[4],two_way_nodes[1]);
+    int b2 = PP.t().find_branch(two_way_nodes[5],two_way_nodes[2]);
+    int b3 = PP.t().find_branch(two_way_nodes[5],two_way_nodes[3]);
+
     vector<Parameters> p(3,PP);
-    int b1 = p[0].t().find_branch(two_way_nodes[4],two_way_nodes[1]);
-    int b2 = p[0].t().find_branch(two_way_nodes[5],two_way_nodes[2]);
-    int b3 = p[0].t().find_branch(two_way_nodes[5],two_way_nodes[3]);
 
     // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
     p[1].NNI(b1, b2, true);
 
-    //  if (not extends(p[1].t(), PP.PC->TC))
-    //    return;
-
     // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
     p[2].NNI(b1, b3, true);
-
-    //  if (not extends(p[2].t(), PP.PC->TC))
-    //    return;
 
     vector< vector< int> > nodes;
     for(int i=0;i<p.size();i++)
@@ -658,9 +655,9 @@ void three_way_topology_and_alignment_sample(owned_ptr<Model>& P, MoveStats& Sta
     result.totals[0] = (C>0)?1:0;
     // This gives us the average length of branches prior to successful swaps
     if (C>0)
-	result.totals[1] = p[0].t().branch_length(b);
+	result.totals[1] = L0;
     else
 	result.counts[1] = 0;
   
-    NNI_inc(Stats,"NNI (3-way) + A", result, p[0].t().branch_length(b));
+    NNI_inc(Stats,"NNI (3-way) + A", result, L0);
 }
