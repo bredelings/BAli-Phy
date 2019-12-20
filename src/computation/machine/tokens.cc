@@ -172,8 +172,6 @@ void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
         assert(not tokens[t].is_referenced());
         assert(tokens[t].children.size() == 1);
 
-        assert(tokens[t].version <= tokens[child_token].version);
-
         // The child token (t2) needs to be up-to-date with respect to the parent token.
         assert(tokens[t].version <= tokens[child_token].version);
 
@@ -187,8 +185,6 @@ void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
         assert(token_is_used(t));
         assert(not tokens[t].is_referenced());
         assert(tokens[t].children.size() == 1);
-
-        assert(tokens[t].version <= tokens[child_token].version);
 
         // The child token (t2) needs to be up-to-date with respect to the parent token.
         assert(tokens[t].version <= tokens[child_token].version);
