@@ -155,7 +155,7 @@ void merge_split_mapping_(mapping<T>& vm1, mapping<T>& vm2, vector<std::bitset<8
     }
 }
 
-// This function splits handles the composition of deltas: Delta1 o Delta2
+// This function handles the composition of deltas: Delta1 o Delta2
 //   It is only ever used to remove knuckle tokens (see tokens.cc).
 // Given mapping (m1,v1) followed by (m2,v2), compute a combined mapping for (m1,v1)+(m2,v2) -> (m2,v2)
 // and a mapping (m1,v1)-(m2,v2)->(m1,v1) for things that now are unused.
