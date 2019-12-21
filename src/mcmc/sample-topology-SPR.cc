@@ -479,6 +479,7 @@ MCMC::Result sample_SPR(Parameters& P, int b1, int b2, bool slice = false)
     int n2 = P.t().source(b1);
 
     P.set_root(n1);
+    P.likelihood();
     vector<Parameters> p(2,P);
 
     // 2. ----- Generate the node order for 3-way alignment paths P.t().target(b1)) -------- //
@@ -1149,6 +1150,7 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
     if (P.variable_alignment() and not sum_out_A)
 #endif
     {
+        p[1].likelihood();
 	spr_attachment_probabilities PrB2 = SPR_search_attachment_points(p[1], E_parent, I.range, locations, nodes_for_branch, sum_out_A);
 	vector<log_double_t> Pr2 = I.convert_to_vector(PrB2);
     
@@ -1299,6 +1301,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     spr_attachment_probabilities PrB;
     try
     {
+        P.likelihood();
 	PrB = SPR_search_attachment_points(P, subtree_edge, range, locations, nodes, sum_out_A);
     }
     catch (choose_exception<log_double_t>& c)
