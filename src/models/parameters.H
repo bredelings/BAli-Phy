@@ -418,9 +418,15 @@ public:
 
     double branch_mean() const;
 
+    std::string name() const {return "Full Model";}
+
     Parameters* clone() const {return new Parameters(*this);}
 
-    std::string name() const {return "Full Model";}
+    Parameters& operator=(const Parameters&) = default;
+    Parameters& operator=(Parameters&&) = default;
+
+    Parameters(const Parameters&) = default;
+    Parameters(Parameters&&) = default;
 
     Parameters(const std::shared_ptr<module_loader>& L,
 	       const std::vector<alignment>& A,

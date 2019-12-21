@@ -85,8 +85,13 @@ public:
     /// Make a copy of this object
     virtual Model* clone() const {return new Model(*this);}
 
+    Model& operator=(const Model&) = default;
+    Model& operator=(Model&&) = default;
+
     /// Construct an empty model
     Model(const std::shared_ptr<module_loader>&, const key_map_t& k = {});
+    Model(const Model&) = default;
+    Model(Model&&) = default;
 
     virtual ~Model() {};
 };
