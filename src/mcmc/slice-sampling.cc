@@ -55,6 +55,7 @@ double context_slice_function::operator()(double x)
 
     // We are intentionally only calling context::operator==( ) here.
     // Maybe we should actually call merely context::operator==( ) though?
+    if (count == 1) C0.evaluate_program();
     C = C0;
     set_value(x);
 
@@ -152,6 +153,7 @@ double alignment_branch_length_slice_function::operator()(double x)
 
     // We are intentionally only calling context::operator==( ) here.
     // Maybe we should actually call merely context::operator==( ) though?
+    if (count == 1) C0.evaluate_program();
     C = C0;
     set_value(x);
     auto alignment_sum_ratio_1 = sample_alignment(static_cast<Parameters&>(C),b);
