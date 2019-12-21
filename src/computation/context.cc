@@ -726,6 +726,18 @@ context::context(const context& C)
 {
 }
 
+context& context::operator=(context&& C)
+{
+    std::swap(context_index, C.context_index);
+    return *this;
+}
+
+context::context(context&& C)
+    :context_ref(*C.memory_, -1)
+{
+    std::swap(context_index, C.context_index);
+}
+
 context::context(const Program& P)
     :context_ref(*new reg_heap(P.get_module_loader()))
 {
@@ -743,7 +755,8 @@ context::context(const Program& P)
 
 context::~context()
 {
-    memory_->release_context(context_index);
+    if (context_index != -1)
+        memory_->release_context(context_index);
 }
 
 bool accept_MH(const context_ref& C1,const context_ref& C2,log_double_t rho)

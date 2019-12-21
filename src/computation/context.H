@@ -254,9 +254,13 @@ public:
 
     context& operator=(const context&) = default;
 
+    context& operator=(context&&);
+
     context(const context_ref&);
 
     context(const context&);
+
+    context(context&&);
 
     context(const Program& P);
 
