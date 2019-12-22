@@ -340,6 +340,7 @@ namespace MCMC {
 
 	iterations++;
 
+        P->evaluate_program();
 	owned_ptr<Model> P2 = P;
 
 	log_double_t ratio = 1;

@@ -339,6 +339,7 @@ void slide_node(owned_ptr<Model>& P, MoveStats& Stats,int b)
     double L2a = PP->t().branch_length(branches[1]);
 
     PP->set_root(t.target(b));
+    PP->likelihood();
 
     double p = P->load_value("branch_slice_fraction",0.9);
     if (uniform() < p)
