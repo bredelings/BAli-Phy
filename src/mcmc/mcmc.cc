@@ -353,7 +353,6 @@ namespace MCMC {
 	    e.prepend(o.str());
 	    throw;
 	}
-    
 
 	int n = 1;
 	Proposal2* p2 = dynamic_cast<Proposal2*>(&(*proposal));
@@ -363,24 +362,6 @@ namespace MCMC {
 	    n = 2;
 	}
 	Result result(n);
-
-#ifndef NDEBUG
-	// Check that we have not strayed outside the bounds.
-	for(int i=0;i<P->n_parameters();i++)
-	{
-	    if (not P->parameter_is_modifiable_reg(i)) continue;
-
-	    if (not P->get_parameter_value(i).is_double()) continue;
-
-	    if (not P->parameter_has_bounds(i)) continue;
-	
-	    bounds<double> range = P->get_parameter_bounds(i);
-	    if (not range.in_range(P->get_parameter_value(i).as_double()))
-		throw myexception()<<"Parameter "<<P->parameter_name(i)<<" = "<<P->get_parameter_value(i).as_double()<<" is NOT in range "<<range;
-	    if (not range.in_range(P2->get_parameter_value(i).as_double()))
-		throw myexception()<<"Parameter "<<P->parameter_name(i)<<" = "<<P->get_parameter_value(i).as_double()<<" is NOT in range "<<range;
-	}
-#endif
 
 	// Accept or Reject
 	if (accept_MH(*P,*P2,ratio)) {
