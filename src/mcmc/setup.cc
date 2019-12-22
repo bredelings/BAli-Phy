@@ -58,7 +58,7 @@ template <typename T>
 using Bounds = Box<bounds<T>>;
 
 /// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
-void add_random_variable_MH_move(const Model& P, const string& name, const proposal_fn& proposal, int rv, const vector<double>& parameters,
+void add_random_variable_MH_move(const context_ref& P, const string& name, const proposal_fn& proposal, int rv, const vector<double>& parameters,
 				 MCMC::MoveAll& M, double weight=1)
 {
     double rate = P.get_rate_for_random_variable(rv);
@@ -66,58 +66,12 @@ void add_random_variable_MH_move(const Model& P, const string& name, const propo
     M.add(rate * weight, MCMC::MH_Move( Proposal2M(proposal, *r_mod, parameters), name) );
 }
 
-/// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
-void add_MH_move(Model& P, const proposal_fn& proposal, const vector<string>& names,
-		 const vector<string>& pnames, const vector<double>& pvalues,
-		 MCMC::MoveAll& M, double weight=1)
-{
-    // FIXME - Change names to vector<vector<string>>, and deduce a move name from pathname shared by all parameters.
-    // FIXME - then replace the routine above with this one!
-
-    // 1. Set the parameter values to their defaults, if they are not set yet.
-    if (pnames.size() != pvalues.size()) std::abort();
-
-    for(int i=0;i<pnames.size();i++)
-	set_if_undef(*P.keys.modify(), pnames[i], json(pvalues[i]));
-
-    // 2. For each MCMC parameter, create a move for it.
-    for(const auto& parameter_name: names) 
-    {
-	assert(P.maybe_find_parameter(parameter_name));
-
-	Proposal2 proposal2(proposal, parameter_name, pnames, P);
-
-	M.add(weight, MCMC::MH_Move(proposal2, "MH_sample_"+parameter_name));
-    }
-}
-
-/// \brief Add a Metropolis-Hastings sub-move for parameter name to M
-///
-/// \param P       The model that contains the parameters
-/// \param p       The proposal function
-/// \param name    The name of the parameter to create a move for
-/// \param pname   The name of the proposal width for this move
-/// \param sigma   A default proposal width, in case the user didn't specify one
-/// \param M       The group of moves to which to add the newly-created sub-move
-/// \param weight  How often to run this move.
-///
-void add_MH_move(Model& P,const proposal_fn& proposal, const string& name, const string& pname,double sigma,
-		 MCMC::MoveAll& M,double weight=1)
-{
-    vector<int> indices = flatten( parameters_with_extension(P,name) );
-    vector<string> names;
-    for(int i: indices)
-	names.push_back(P.parameter_name(i));
-
-    add_MH_move(P, proposal, names, {pname}, {sigma}, M, weight);
-}
-
-double default_sampling_rate(const Model& /*M*/, const string& /*parameter_name*/)
+double default_sampling_rate(const context_ref& /*M*/, const string& /*parameter_name*/)
 {
     return 1.0;
 }
 
-bool add_slice_move(const Model& P, int rv, MCMC::MoveAll& M, double weight = 1.0)
+bool add_slice_move(const context_ref& P, int rv, MCMC::MoveAll& M, double weight = 1.0)
 {
     double rate = P.get_rate_for_random_variable(rv);
     auto range = P.get_range_for_random_variable(rv);
@@ -130,7 +84,7 @@ bool add_slice_move(const Model& P, int rv, MCMC::MoveAll& M, double weight = 1.
     return true;
 }
 
-void add_boolean_MH_moves(const Model& P, MCMC::MoveAll& M, double weight = 1.0)
+void add_boolean_MH_moves(const context_ref& P, MCMC::MoveAll& M, double weight = 1.0)
 {
     for(int rv: P.random_variables())
     {
@@ -145,14 +99,14 @@ void add_boolean_MH_moves(const Model& P, MCMC::MoveAll& M, double weight = 1.0)
 }
 
 /// Find parameters with distribution name Dist
-void add_real_slice_moves(const Model& P, MCMC::MoveAll& M, double weight = 1.0)
+void add_real_slice_moves(const context_ref& P, MCMC::MoveAll& M, double weight = 1.0)
 {
     for(int rv: P.random_variables())
 	add_slice_move(P, rv, M, weight);
 }
 
 /// Find parameters with distribution name Dist
-void add_real_MH_moves(const Model& P, MCMC::MoveAll& M, double weight = 1.0)
+void add_real_MH_moves(const context_ref& P, MCMC::MoveAll& M, double weight = 1.0)
 {
     for(int rv: P.random_variables())
     {
@@ -169,7 +123,7 @@ void add_real_MH_moves(const Model& P, MCMC::MoveAll& M, double weight = 1.0)
 }
 
 /// Find parameters with distribution name Dist
-void add_integer_uniform_MH_moves(const Model& P, MCMC::MoveAll& M, double weight)
+void add_integer_uniform_MH_moves(const context_ref& P, MCMC::MoveAll& M, double weight)
 {
     for(int rv: P.random_variables())
     {
@@ -185,7 +139,7 @@ void add_integer_uniform_MH_moves(const Model& P, MCMC::MoveAll& M, double weigh
     }
 }
 
-void add_integer_slice_moves(const Model& P, MCMC::MoveAll& M, double weight)
+void add_integer_slice_moves(const context_ref& P, MCMC::MoveAll& M, double weight)
 {
     for(int rv: P.random_variables())
     {
@@ -205,13 +159,13 @@ void add_integer_slice_moves(const Model& P, MCMC::MoveAll& M, double weight)
     }
 }
 
-optional<int> scale_is_random_variable(const Model& M, int s)
+optional<int> scale_is_random_variable(const context_ref& M, int s)
 {
     auto& P = dynamic_cast<const Parameters&>(M);
     return P.branch_scale(s).is_random_variable(M);
 }
 
-bool all_scales_modifiable(const Model& M)
+bool all_scales_modifiable(const context_ref& M)
 {
     auto& P = dynamic_cast<const Parameters&>(M);
 
@@ -222,7 +176,7 @@ bool all_scales_modifiable(const Model& M)
     return true;
 }
 
-void add_alignment_and_parameter_moves(MCMC::MoveAll& moves, Model& M, double weight = 1.0, double enabled = true)
+void add_alignment_and_parameter_moves(MCMC::MoveAll& moves, context_ref& M, double weight = 1.0, double enabled = true)
 {
     if (not dynamic_cast<const Parameters*>(&M)) return;
 
@@ -237,7 +191,7 @@ void add_alignment_and_parameter_moves(MCMC::MoveAll& moves, Model& M, double we
 	string pname1 = model_path({prefix,"rs07:log_rate"});
 	if (auto index = M.maybe_find_parameter(pname1))
 	{
-	    auto proposal = [index,partitions](Model& P){ return realign_and_propose_parameter(P, *index, partitions, shift_cauchy, {0.25}) ;};
+	    auto proposal = [index,partitions](context_ref& P){ return realign_and_propose_parameter(P, *index, partitions, shift_cauchy, {0.25}) ;};
 
 	    moves.add(weight, MCMC::MH_Move(Generic_Proposal(proposal),"realign_and_sample_"+pname1), enabled);
 	}
@@ -245,7 +199,7 @@ void add_alignment_and_parameter_moves(MCMC::MoveAll& moves, Model& M, double we
 	string pname2 = model_path({prefix,"rs07:mean_length"});
 	if (auto index = M.maybe_find_parameter(pname2))
 	{
-	    auto proposal = [index,partitions](Model& P){ return realign_and_propose_parameter(P, *index, partitions, log_scaled(more_than(0.0, shift_laplace)), {0.5}) ;};
+	    auto proposal = [index,partitions](context_ref& P){ return realign_and_propose_parameter(P, *index, partitions, log_scaled(more_than(0.0, shift_laplace)), {0.5}) ;};
 
 	    moves.add(weight, MCMC::MH_Move(Generic_Proposal(proposal),"realign_and_sample_"+pname2), enabled);
 	}
@@ -258,7 +212,7 @@ void add_alignment_and_parameter_moves(MCMC::MoveAll& moves, Model& M, double we
 	vector<int> partitions = dynamic_cast<const Parameters&>(M).partitions_for_scale(s);
 	if (auto r = dynamic_cast<const Parameters&>(M).branch_scale(s).is_modifiable(M))
 	{
-	    auto proposal = [r,partitions](Model& P){
+	    auto proposal = [r,partitions](context_ref& P){
 		return realign_and_propose_parameter(P, *r, partitions, log_scaled(more_than(0.0, shift_laplace)), {0.25}) ;
 	    };
 
@@ -276,7 +230,7 @@ void add_alignment_and_parameter_moves(MCMC::MoveAll& moves, Model& M, double we
 ///
 /// \param P   The model and state.
 ///
-MCMC::MoveAll get_parameter_MH_moves(Model& M)
+MCMC::MoveAll get_parameter_MH_moves(context_ref& M)
 {
     MCMC::MoveAll MH_moves("parameters:MH");
 
@@ -313,14 +267,15 @@ MCMC::MoveAll get_parameter_MH_moves(Model& M)
       add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.gamma.sigma/mu","gamma.sigma_scale_sigma",  0.25, MH_moves);
       add_MH_move(P, log_scaled(Between(-20,0,shift_cauchy)),    "*.Beta.varOverMu", "beta.Var_scale_sigma",  0.25, MH_moves);
       add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.LogNormal.sigma_over_mu","log-normal.sigma_scale_sigma",  0.25, MH_moves);
+
+      add_MH_move(M, shift_delta,                  "b*.delta",       "lambda_shift_sigma",     0.35, MH_moves, 10);
+      add_MH_move(M, Between(-20,20,shift_cauchy),  model_path({"*","rs07:log_rate"}),      "lambda_shift_sigma",    0.25, MH_moves, 10);
+      add_MH_move(M, log_scaled(more_than(0.0, shift_laplace)), model_path({"*","rs07:mean_length"}), "length_shift_sigma",   0.5, MH_moves, 10);
+
     */
     if (dynamic_cast<Parameters*>(&M) and all_scales_modifiable(M))
 	MH_moves.add(4,MCMC::SingleMove(scale_means_only, "scale_Scales_only", "scale"));
   
-    add_MH_move(M, shift_delta,                  "b*.delta",       "lambda_shift_sigma",     0.35, MH_moves, 10);
-    add_MH_move(M, Between(-20,20,shift_cauchy),  model_path({"*","rs07:log_rate"}),      "lambda_shift_sigma",    0.25, MH_moves, 10);
-    add_MH_move(M, log_scaled(more_than(0.0, shift_laplace)), model_path({"*","rs07:mean_length"}), "length_shift_sigma",   0.5, MH_moves, 10);
-
     // Add these moves disabled
     add_alignment_and_parameter_moves(MH_moves, M, 1.0, false);
 
@@ -341,7 +296,7 @@ MCMC::MoveAll get_scale_slice_moves(Parameters& P)
 ///
 /// \param P   The model and state.
 ///
-MCMC::MoveAll get_parameter_slice_moves(Model& M)
+MCMC::MoveAll get_parameter_slice_moves(context_ref& M)
 {
     MCMC::MoveAll slice_moves("parameters:slice");
 
@@ -542,7 +497,7 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
 ///
 /// \param P   The model and state.
 ///
-MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Model& M)
+MCMC::MoveAll get_parameter_MH_but_no_slice_moves(context_ref& M)
 {
     using namespace MCMC;
 
@@ -560,33 +515,7 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Model& M)
     // Actually there ARE slice moves for this, but they don't jump modes!
     add_real_MH_moves(M, parameter_moves, 0.1);
 
-    // FIXME - we need a proposal that sorts after changing
-    //         then we can un-hack the recalc function in smodel.C
-    //         BUT, this assumes that we have the DP::rate* names in *numerical* order
-    //          whereas we probably find them in *lexical* order....
-    //          ... or creation order?  That might be OK for now! 
-
-    for(int i=0;;i++) {
-	string name = "M3.omega" + convertToString(i+1);
-	if (not has_parameter(M,name))
-	    break;
-    
-	add_MH_move(M, log_scaled(Between(-20,20,shift_cauchy)), name, "omega_scale_sigma", 1, parameter_moves);
-	//    Proposal2 m(log_scaled(shift_cauchy), name, vector<string>(1,"omega_scale_sigma"), P);
-	//    parameter_moves.add(1, MCMC::MH_Move(m,"sample_M3.omega"));
-    }
-
-    {
-	auto index = M.maybe_find_parameter("lambdaScaleBranch");
-	if (index and (M.get_parameter_value(*index).as_int() != -1 or M.contains_key("lambda_search_all")))
-	{
-	    M.set_parameter_value(*index, 0);
-	    Generic_Proposal m(move_scale_branch);
-	    parameter_moves.add(1.0, MCMC::MH_Move(m,"sample_lambdaScaleBranch"));
-	}
-    }
-
-    if (M.contains_key("sample_foreground_branch"))
+    if (auto MM = dynamic_cast<Model*>(&M); MM->contains_key("sample_foreground_branch"))
     {
 	Generic_Proposal m(move_subst_type_branch);
 	parameter_moves.add(1.0, MCMC::MH_Move(m,"sample_foreground_branch"));
@@ -659,7 +588,7 @@ double fraction_non_gap(const Parameters& P)
     return total_char/total_cell;
 }
 
-void log_preburnin(ostream& o, const Model& M, const string& name, int iter)
+void log_preburnin(ostream& o, const context_ref& M, const string& name, int iter)
 {
     auto& P = dynamic_cast<const Parameters&>(M);
 

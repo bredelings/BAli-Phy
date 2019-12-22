@@ -498,60 +498,7 @@ sorted::sorted(const proposal_fn& P)
     :proposal(P)
 { }
 
-log_double_t Proposal2::operator()(Model& P) const
-{
-    //  vector< expression_ref > parameters = P.get_parameter_values();
-
-    if (not indices.size())
-	throw myexception()<<"Proposal2::operator() - No parameters to alter! (all parameters fixed?)";
-
-    // Load parameter values from names
-    vector<double> p(pnames.size());
-    for(int i=0;i<p.size();i++)
-	p[i] = P.lookup_key(pnames[i]);
-
-    // read, alter, and write parameter values
-    vector< expression_ref > y = P.get_parameter_values(indices);
-    vector< expression_ref > x(y.size());
-    for(int i=0;i<x.size();i++)
-	x[i] = y[i];
-
-    auto ratio = proposal(x,p);
-
-    for(int i=0;i<y.size();i++)
-	y[i] = x[i];
-
-    P.set_parameter_values(indices,y);
-
-    return ratio;
-}
-
-Proposal2::Proposal2(const proposal_fn& p,const std::string& s, const std::vector<string>& v,
-		     const Model& P)
-    :proposal(p),
-     pnames(v)
-{
-    auto index = P.maybe_find_parameter(s);
-    if (not index)
-	throw myexception()<<"Model has no parameter called '"<<s<<"' - can't create proposal for it.";
-    indices.push_back(*index);
-}
-
-
-Proposal2::Proposal2(const proposal_fn& p,const vector<std::string>& s, const std::vector<string>& v,
-		     const Model& P)
-    :proposal(p),
-     pnames(v)
-{
-    for(int i=0;i<s.size();i++) {
-	auto index = P.maybe_find_parameter(s[i]);
-	if (not index)
-	    throw myexception()<<"Model has no parameter called '"<<s[i]<<"' - can't create proposal for it.";
-	indices.push_back(*index);
-    }
-}
-
-log_double_t Proposal2M::operator()(Model& P) const
+log_double_t Proposal2M::operator()(context_ref& P) const
 {
     if (not indices.size())
 	throw myexception()<<"Proposal2M::operator() - No modifiables to alter!";
@@ -581,7 +528,7 @@ Proposal2M::Proposal2M(const proposal_fn& p,const vector<int>& s, const vector<d
      parameters(v)
 { }
 
-log_double_t move_scale_branch(Model& /*P */)
+log_double_t move_scale_branch(context_ref& /*P */)
 {
 /*
   Parameters& PP = dynamic_cast<Parameters&>(P);
@@ -618,7 +565,7 @@ log_double_t move_scale_branch(Model& /*P */)
     return 1.0;
 }
 
-log_double_t move_subst_type_branch(Model& P)
+log_double_t move_subst_type_branch(context_ref& P)
 {
     Parameters& PP = dynamic_cast<Parameters&>(P);
 
@@ -653,7 +600,7 @@ log_double_t move_subst_type_branch(Model& P)
 // Can't we just send in any sigma parameters or whatever WITH the proposal?
 vector<int> walk_tree_path_toward(const TreeInterface& t, int root);
 
-log_double_t realign_and_propose_parameter(Model& P, int param, const vector<int>& partitions, const proposal_fn& proposal, const vector<double>& v)
+log_double_t realign_and_propose_parameter(context_ref& P, int param, const vector<int>& partitions, const proposal_fn& proposal, const vector<double>& v)
 {
     Parameters& PP = dynamic_cast<Parameters&>(P);
     Parameters P0 = PP;

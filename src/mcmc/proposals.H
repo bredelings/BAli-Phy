@@ -26,7 +26,7 @@
 #include "computation/object.H"    // for Object
 #include "util/bounds.H"           // for bounds
 #include "util/math/log-double.H"  // for log_double_t
-class Model;
+class context_ref;
 class expression_ref;
 
 log_double_t scale_gaussian(double& x,double sigma);
@@ -34,10 +34,10 @@ log_double_t scale_gaussian(double& x,double sigma);
 class Proposal: public Object {
 public:
     Proposal* clone() const =0;
-    virtual log_double_t operator()(Model& P) const=0;
+    virtual log_double_t operator()(context_ref&) const=0;
 };
 
-typedef std::function<log_double_t(Model& P)> generic_proposal_t;
+typedef std::function<log_double_t(context_ref& P)> generic_proposal_t;
 
 class Generic_Proposal: public Proposal
 {
@@ -45,7 +45,7 @@ class Generic_Proposal: public Proposal
   
 public:
     Generic_Proposal* clone() const {return new Generic_Proposal(*this);}
-    log_double_t operator()(Model& P) const {return proposal(P);}
+    log_double_t operator()(context_ref& P) const {return proposal(P);}
     Generic_Proposal(generic_proposal_t gp):proposal(gp) {}
 };
 
@@ -115,23 +115,6 @@ public:
     sorted(const proposal_fn& P);
 };
 
-class Proposal2: public Proposal
-{
-    proposal_fn proposal;
-    std::vector<int> indices;
-    std::vector<std::string> pnames;
-
-public:
-    const std::vector<int>& get_indices() const {return indices;}
-    Proposal2* clone() const {return new Proposal2(*this);}
-    log_double_t operator()(Model& P) const;
-    Proposal2(const proposal_fn& p,const std::string& s, const std::vector<std::string>& v,
-	      const Model& P);
-    Proposal2(const proposal_fn& p,const std::vector<std::string>& s, const std::vector<std::string>& v,
-	      const Model& P);
-};
-
-
 class Proposal2M: public Proposal
 {
     proposal_fn proposal;
@@ -141,7 +124,7 @@ class Proposal2M: public Proposal
 public:
     const std::vector<int>& get_indices() const {return indices;}
     Proposal2M* clone() const {return new Proposal2M(*this);}
-    log_double_t operator()(Model& P) const;
+    log_double_t operator()(context_ref& P) const;
     Proposal2M(const proposal_fn& p,int, const std::vector<double>& v);
     Proposal2M(const proposal_fn& p,const std::vector<int>&, const std::vector<double>& v);
 };
@@ -167,10 +150,10 @@ log_double_t discrete_uniform(std::vector< expression_ref >& x, const std::vecto
 
 log_double_t discrete_uniform_avoid(std::vector< expression_ref >& x, const std::vector<double>& p);
 
-log_double_t move_scale_branch(Model& P);
+log_double_t move_scale_branch(context_ref& P);
 
-log_double_t move_subst_type_branch(Model& P);
+log_double_t move_subst_type_branch(context_ref& P);
 
-log_double_t realign_and_propose_parameter(Model& P, int param, const std::vector<int>&, const proposal_fn& proposal, const std::vector<double>& v);
+log_double_t realign_and_propose_parameter(context_ref& P, int param, const std::vector<int>&, const proposal_fn& proposal, const std::vector<double>& v);
 
 #endif
