@@ -248,7 +248,7 @@ namespace MCMC {
 
     /// A Move which runs a specific moves each round
     class MH_Move: public Move {
-	owned_ptr<Proposal> proposal;
+	Proposal proposal;
     public:
 	MH_Move* clone() const {return new MH_Move(*this);}
 

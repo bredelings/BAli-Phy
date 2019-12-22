@@ -193,7 +193,7 @@ void add_alignment_and_parameter_moves(MCMC::MoveAll& moves, context_ref& M, dou
 	{
 	    auto proposal = [index,partitions](context_ref& P){ return realign_and_propose_parameter(P, *index, partitions, shift_cauchy, {0.25}) ;};
 
-	    moves.add(weight, MCMC::MH_Move(Generic_Proposal(proposal),"realign_and_sample_"+pname1), enabled);
+	    moves.add(weight, MCMC::MH_Move(proposal,"realign_and_sample_"+pname1), enabled);
 	}
 
 	string pname2 = model_path({prefix,"rs07:mean_length"});
@@ -201,7 +201,7 @@ void add_alignment_and_parameter_moves(MCMC::MoveAll& moves, context_ref& M, dou
 	{
 	    auto proposal = [index,partitions](context_ref& P){ return realign_and_propose_parameter(P, *index, partitions, log_scaled(more_than(0.0, shift_laplace)), {0.5}) ;};
 
-	    moves.add(weight, MCMC::MH_Move(Generic_Proposal(proposal),"realign_and_sample_"+pname2), enabled);
+	    moves.add(weight, MCMC::MH_Move(proposal,"realign_and_sample_"+pname2), enabled);
 	}
     }
 
@@ -216,7 +216,7 @@ void add_alignment_and_parameter_moves(MCMC::MoveAll& moves, context_ref& M, dou
 		return realign_and_propose_parameter(P, *r, partitions, log_scaled(more_than(0.0, shift_laplace)), {0.25}) ;
 	    };
 
-	    moves.add(weight, MCMC::MH_Move(Generic_Proposal(proposal),"realign_and_sample_"+pname), enabled);
+	    moves.add(weight, MCMC::MH_Move(proposal,"realign_and_sample_"+pname), enabled);
 	}
     }
 }
@@ -517,8 +517,7 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(context_ref& M)
 
     if (auto MM = dynamic_cast<Model*>(&M); MM->contains_key("sample_foreground_branch"))
     {
-	Generic_Proposal m(move_subst_type_branch);
-	parameter_moves.add(1.0, MCMC::MH_Move(m,"sample_foreground_branch"));
+	parameter_moves.add(1.0, MCMC::MH_Move(move_subst_type_branch,"sample_foreground_branch"));
     }
 
     return parameter_moves;

@@ -344,7 +344,7 @@ namespace MCMC {
 
 	log_double_t ratio = 1;
 	try {
-	    ratio = (*proposal)(*P2);
+	    ratio = proposal(*P2);
 	}
 	catch (myexception& e)
 	{

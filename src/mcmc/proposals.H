@@ -31,23 +31,7 @@ class expression_ref;
 
 log_double_t scale_gaussian(double& x,double sigma);
 
-class Proposal: public Object {
-public:
-    Proposal* clone() const =0;
-    virtual log_double_t operator()(context_ref&) const=0;
-};
-
-typedef std::function<log_double_t(context_ref& P)> generic_proposal_t;
-
-class Generic_Proposal: public Proposal
-{
-    generic_proposal_t proposal;
-  
-public:
-    Generic_Proposal* clone() const {return new Generic_Proposal(*this);}
-    log_double_t operator()(context_ref& P) const {return proposal(P);}
-    Generic_Proposal(generic_proposal_t gp):proposal(gp) {}
-};
+typedef std::function<log_double_t(context_ref& P)> Proposal;
 
 // This type of proposal can't check if arguments are fixed, and therefore must assume that they are
 // all variable.  Therefore, it can't have any fixed arguments.
@@ -77,7 +61,6 @@ class Between
     double max;
     proposal_fn proposal;
 public:
-    Between* clone() const {return new Between(*this);}
     log_double_t operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
     Between(double m1,double m2,const proposal_fn& P);
 };
@@ -115,7 +98,7 @@ public:
     sorted(const proposal_fn& P);
 };
 
-class Proposal2M: public Proposal
+class Proposal2M
 {
     proposal_fn proposal;
     std::vector<int> indices;
@@ -123,7 +106,6 @@ class Proposal2M: public Proposal
 
 public:
     const std::vector<int>& get_indices() const {return indices;}
-    Proposal2M* clone() const {return new Proposal2M(*this);}
     log_double_t operator()(context_ref& P) const;
     Proposal2M(const proposal_fn& p,int, const std::vector<double>& v);
     Proposal2M(const proposal_fn& p,const std::vector<int>&, const std::vector<double>& v);
