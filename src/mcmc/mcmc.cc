@@ -354,40 +354,12 @@ namespace MCMC {
 	    throw;
 	}
 
-	int n = 1;
-	Proposal2* p2 = dynamic_cast<Proposal2*>(&(*proposal));
-	int n_indices = -1;
-	if (p2) {
-	    n_indices = p2->get_indices().size();
-	    n = 2;
-	}
-	Result result(n);
+	Result result(1);
 
 	// Accept or Reject
-	if (accept_MH(*P,*P2,ratio)) {
+	if (accept_MH(*P,*P2,ratio))
+        {
 	    result.totals[0] = 1;
-	    if (n == 2) {
-		int first_index = p2->get_indices()[0];
-		if (n_indices == 1 and P->get_parameter_value(first_index).is_double()) 
-		{
-		    double v1 = P->get_parameter_value(first_index).as_double();
-		    double v2 = P2->get_parameter_value(first_index).as_double();
-		    //      cerr<<"v1 = "<<v1<<"   v2 = "<<v2<<"\n";
-		    result.totals[1] = std::abs(v2-v1);
-		}
-		else if (n_indices > 1 and P->get_parameter_value(first_index).is_double()) //currently this can only be a dirichlet proposal
-		{
-		    double total = 0;
-		    for(int i=0;i<n_indices;i++) 
-		    {
-			int j = p2->get_indices()[i];
-			double v1 = P->get_parameter_value(j).as_double();
-			double v2 = P2->get_parameter_value(j).as_double();
-			total += std::abs(log(v1/v2));
-		    }
-		    result.totals[1] = total;
-		}
-	    }
 	    P = P2;
 	}
 
