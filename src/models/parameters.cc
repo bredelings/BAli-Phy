@@ -1024,6 +1024,14 @@ log_double_t Parameters::prior_alignment() const
     return Pr;
 }
 
+void Parameters::cache_likelihood_branches() const
+{
+    auto branches = t().branches_in(subst_root());
+    for(int i=0; i < n_data_partitions();i++)
+        for(auto b: branches)
+            (*this)[i].cache(b);
+}
+
 void Parameters::select_root(int b) const
 {
     if (t().source(b) == subst_root() or t().target(b) == subst_root())

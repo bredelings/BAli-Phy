@@ -148,7 +148,7 @@ void two_way_topology_slice_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     const auto& nodes = order.nodes;
 
     PP.select_root(b);
-    PP.likelihood();
+    PP.cache_likelihood_branches();
 
     int b1 = PP.t().find_branch(nodes[4],nodes[1]);
     int b2 = PP.t().find_branch(nodes[5],nodes[2]);
@@ -220,7 +220,7 @@ void two_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     const auto& nodes = order.nodes;
 
     PP.select_root(b);
-    PP.likelihood();
+    PP.cache_likelihood_branches();
 
     int b1 = PP.t().find_branch(nodes[4],nodes[1]);
     int b2 = PP.t().find_branch(nodes[5],nodes[2]);
@@ -314,7 +314,7 @@ void two_way_NNI_SPR_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     const auto& nodes = order.nodes;
 
     PP.select_root(b);
-    PP.likelihood();
+    PP.cache_likelihood_branches();
 
     int b1 = PP.t().find_branch(nodes[4],nodes[1]);
     int b2 = PP.t().find_branch(nodes[5],nodes[2]);
@@ -380,7 +380,7 @@ void two_way_NNI_and_branches_sample(owned_ptr<Model>& P, MoveStats& Stats, int 
     const auto& nodes = order.nodes;
 
     PP.select_root(b);
-    PP.likelihood();
+    PP.cache_likelihood_branches();
 
     int b1 = PP.t().find_branch(nodes[4],nodes[1]);
     int b2 = PP.t().find_branch(nodes[5],nodes[2]);
@@ -461,7 +461,7 @@ void three_way_topology_sample_slice(owned_ptr<Model>& P, MoveStats& Stats, int 
 
     //------ Generate Topologies and alter caches ------///
     PP.select_root(b);
-    PP.likelihood();
+    PP.cache_likelihood_branches();
 
     int b1 = PP.t().find_branch(nodes[4],nodes[1]);
     int b2 = PP.t().find_branch(nodes[5],nodes[2]);
@@ -545,7 +545,7 @@ void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
     const auto& nodes = order.nodes;
     PP.select_root(b);
-    PP.likelihood();
+    PP.cache_likelihood_branches();
 
     int b1 = PP.t().find_branch(nodes[4],nodes[1]);
     int b2 = PP.t().find_branch(nodes[5],nodes[2]);
@@ -609,12 +609,11 @@ void three_way_topology_and_alignment_sample(owned_ptr<Model>& P, MoveStats& Sta
 
     //--------- Generate the Different Topologies -------//
     // We ALWAYS resample the connection between two_way_nodes [0] and [4].
-    PP.likelihood();
 
     double L0 = PP.t().branch_length(b);
 
     PP.select_root(b);
-    // PP.likelihood();  Why does this not make a difference in speed?
+    PP.cache_likelihood_branches();
 
     int b1 = PP.t().find_branch(two_way_nodes[4],two_way_nodes[1]);
     int b2 = PP.t().find_branch(two_way_nodes[5],two_way_nodes[2]);

@@ -362,6 +362,8 @@ public:
     log_double_t prior_no_alignment() const;
     log_double_t prior_alignment() const;
 
+    void cache_likelihood_branches() const;
+
     /// How many substitution models?
     int n_smodels() const {return PC->SModels.size();}
   
