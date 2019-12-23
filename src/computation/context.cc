@@ -783,6 +783,15 @@ bool accept_MH(const context_ref& C1,const context_ref& C2,log_double_t rho)
     return accept;
 }
 
+bool perform_MH(context_ref& C1,const context_ref& C2,log_double_t rho)
+{
+    bool accept = accept_MH(C1, C2, rho);
+    if (accept)
+        C1 = C2;
+    return accept;
+}
+
+
 void simplify(json& j);
 json flatten_me(const json& j);
 

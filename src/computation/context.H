@@ -275,6 +275,8 @@ bool has_parameter(const context_ref& C, const std::string& name);
 
 bool accept_MH(const context_ref& C1, const context_ref& C2, log_double_t rho);
 
+bool perform_MH(context_ref& C1, const context_ref& C2, log_double_t rho);
+
 std::ostream& operator<<(std::ostream&, const context_ref& C);
 
 #endif

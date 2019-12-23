@@ -30,22 +30,6 @@ using std::vector;
 using std::string;
 using std::abs;
 
-bool do_MH_move(owned_ptr<Model>& P,
-		const owned_ptr<Model>& P2,
-		double rho) 
-{
-    bool success = accept_MH(*P,*P2,rho);
-    if (success) {
-	P=P2;
-	//    std::cerr<<"accepted\n";
-    }
-    else {
-	//    std::cerr<<"rejected\n";
-    }
-
-    return success;
-}
-
 log_double_t branch_twiddle(double& T,double sigma) {
     T += gaussian(0,sigma);
     return 1;
@@ -75,7 +59,7 @@ MCMC::Result change_branch_length_(owned_ptr<Model>& P,int b,double sigma,
     P2.as<Parameters>()->select_root(b);
 
     //--------- Do the M-H step if OK--------------//
-    if (do_MH_move(P,P2,ratio)) {
+    if (perform_MH(*P, *P2, ratio)) {
 	result.totals[0] = 1;
 	result.totals[1] = abs(length - newlength);
 	result.totals[2] = abs(log(length/newlength));
@@ -245,7 +229,7 @@ void change_branch_length_and_T(owned_ptr<Model>& P,MoveStats& Stats,int b)
 	P2.as<Parameters>()->select_root(b);
 
 	//--------- Do the M-H step if OK--------------//
-	if (do_MH_move(P,P2,ratio)) {
+	if (perform_MH(*P, *P2, ratio)) {
 	    result.totals[0] = 1;
 	    result.totals[1] = 1;
 	    result.totals[3] = abs(newlength - length);
@@ -335,9 +319,7 @@ bool slide_node(owned_ptr<Model>& P,
     P2.as<Parameters>()->setlength(branches[0], lengths[0]);
     P2.as<Parameters>()->setlength(branches[1], lengths[1]);
     
-    bool success = do_MH_move(P,P2,ratio);
-
-    return success;
+    return perform_MH(*P, *P2, ratio);
 }
 
 
@@ -528,7 +510,7 @@ void change_3_branch_lengths(owned_ptr<Model>& P,MoveStats& Stats,int n)
     P2.as<Parameters>()->set_root(n);
   
     //--------- Do the M-H step if OK--------------//
-    if (do_MH_move(P,P2,ratio)) {
+    if (perform_MH(*P, *P2, ratio)) {
 	result.totals[0] = 1;
 	result.totals[1] = abs(T1_-T1) + abs(T2_-T2) + abs(T3_-T3);
     }

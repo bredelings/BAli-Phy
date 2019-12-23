@@ -357,11 +357,8 @@ namespace MCMC {
 	Result result(1);
 
 	// Accept or Reject
-	if (accept_MH(*P,*P2,ratio))
-        {
+	if (perform_MH(*P, *P2, ratio))
 	    result.totals[0] = 1;
-	    P = P2;
-	}
 
 	Stats.inc(name,result);
     }

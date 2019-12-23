@@ -244,8 +244,7 @@ extern "C" closure builtin_function_discrete_uniform_avoid_mh(OperationArgs& Arg
     C2.set_reg_value(*x_mod_reg, expression_ref(x2));
 
     //------------- 6. Move if MH rule is satisfied ----------------//
-    if (accept_MH(C1,C2,1.0))
-        C1 = C2;
+    perform_MH(C1,C2,1.0);
 
     return EPair(state+1,constructor("()",0));
 }
