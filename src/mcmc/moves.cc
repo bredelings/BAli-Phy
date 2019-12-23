@@ -619,7 +619,7 @@ void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats)
       auto t = P.as<Parameters>()->t();
       int node1 = t.source(b);
       int node2 = t.target(b);
-      if (log_verbose >=3)
+      if (log_verbose >=4)
       {
           auto length = [&](int node) {return (*P.as<Parameters>())[0].seqlength(node);};
           vector<int> children = t.branches_after(b);
@@ -654,7 +654,7 @@ void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats)
       }
       sample_branch_length_(P,Stats,b);
 
-      if (log_verbose >= 3)
+      if (log_verbose >= 4)
       {
           auto t = P.as<Parameters>()->t();
           int node1 = t.source(b);
@@ -676,7 +676,7 @@ void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats)
       three_way_topology_sample(P,Stats,b);
   }
   int AL1 = MCMC::alignment_length(*P.as<Parameters>());
-  if (log_verbose>=3) std::cerr<<"realign_from_tips: |A1| = "<<AL1<<"\n";
+  if (log_verbose>=4) std::cerr<<"realign_from_tips: |A1| = "<<AL1<<"\n";
 
   MCMC::Result result(2);
   result.totals[0] = 1;

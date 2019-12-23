@@ -373,7 +373,7 @@ namespace MCMC {
 	iterations++;
 
 	//------------- Find new value --------------//
-	if (log_verbose >= 3)
+	if (log_verbose >= 4)
 	{
 	    show_parameters(std::cerr,P);
 	    std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
@@ -392,7 +392,7 @@ namespace MCMC {
 		W = 0.95*W + 0.05*W_predicted;
 	}
 
-	if (log_verbose >= 3)
+	if (log_verbose >= 4)
 	{
 	    show_parameters(std::cerr,P);
 	    std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior()<<std::endl;
