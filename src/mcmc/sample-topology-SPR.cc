@@ -1058,14 +1058,14 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
     int x0 = P.t().find_branch(I.initial_edge);
     int x1 = P.t().reverse(x0);
 
-    if (not P.t().is_leaf_branch(x0))
+    if (not P.t().is_leaf_node(I.initial_edge.node2))
         for(int j=0;j<P.n_data_partitions();j++)
         {
             P[j].transition_P(x0);
             P[j].cache(x0);
         }
 
-    if (not P.t().is_leaf_branch(x1))
+    if (not P.t().is_leaf_node(I.initial_edge.node1))
         for(int j=0;j<P.n_data_partitions();j++)
         {
             P[j].transition_P(x1);
@@ -1094,7 +1094,7 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
 	auto alignment_3way = move_pruned_subtree(p0, alignments3way[prev_i], subtree_edge, prev_target_edge, target_edge, sibling_edge, not sum_out_A);
 
         int b = p0.t().find_branch(BB.edge);
-        if (not p0.t().is_leaf_branch(b))
+        if (not p0.t().is_leaf_node(BB.edge.node2))
             for(int j=0;j<p0.n_data_partitions();j++)
             {
                 p0[j].transition_P(b);
