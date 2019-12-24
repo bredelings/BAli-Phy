@@ -339,7 +339,6 @@ void slide_node(owned_ptr<Model>& P, MoveStats& Stats,int b)
     double L2a = PP->t().branch_length(branches[1]);
 
     PP->set_root(t.target(b));
-    PP->cache_likelihood_branches();
 
     double p = P->load_value("branch_slice_fraction",0.9);
     if (uniform() < p)
@@ -354,6 +353,7 @@ void slide_node(owned_ptr<Model>& P, MoveStats& Stats,int b)
 	Stats.inc("slide_node_slice",result);
     }
     else {
+        PP->cache_likelihood_branches();
 	bool success; string name;
 	if (uniform() < 0.5) {
 	    success = slide_node(P, branches, slide_node_no_expand_branch);
