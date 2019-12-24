@@ -1041,14 +1041,21 @@ void Parameters::select_root(int b) const
     if (t().subtree_contains(r, subst_root()))
         b = r;
 
-    set_root(t().target(b));
+    set_root_(t().target(b));
 }
 
-void Parameters::set_root(int node) const
+void Parameters::set_root_(int node) const
 {
     assert(not t().is_leaf_node(node));
     const context* C = this;
     PC->subst_root.set_value(*const_cast<context*>(C), node);
+}
+
+void Parameters::set_root(int node) const
+{
+    if (subst_root() != node)
+        set_root_(node);
+    assert(subst_root() == node);
 }
 
 bool Parameters::get_imodel_training() const

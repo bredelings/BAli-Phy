@@ -396,6 +396,7 @@ public:
     // int
     expression_ref my_subst_root() const;
     void select_root(int b) const;
+    void set_root_(int n) const;
     void set_root(int n) const;
     int subst_root() const;
 
