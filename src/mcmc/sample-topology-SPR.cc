@@ -1019,7 +1019,7 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
     // This node will move around, but we will always peel up to this node to calculate the likelihood.
     int root_node = subtree_edge.node2;
     // Because the attachment node keeps its name, this will stay in effect throughout the likelihood calculations.
-    P.set_root(root_node);
+
     P.variable_alignment(false);
 
     spr_info I(P.t(), subtree_edge, range);
@@ -1031,10 +1031,20 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
     if (sum_out_A)
     {
 	auto& nodes_ = nodes.at(I.initial_edge);
+        P.set_root(root_node);
 	Pr[I.initial_edge] = pr_sum_out_A_tri(P, A23_constraints(P, nodes_, true), nodes_);
     }
     else
+    {
 	Pr[I.initial_edge] = P.heated_likelihood() * P.prior();
+        P.set_root(root_node);
+        for(int j=0;j<P.n_data_partitions();j++)
+        {
+            int b0 = P.t().find_branch(subtree_edge);
+            P[j].cache(b0);
+            P[j].transition_P(b0);
+        }
+    }
 #ifdef DEBUG_SPR_ALL
     Pr.LLL[I.initial_edge] = P.heated_likelihood();
 #endif
