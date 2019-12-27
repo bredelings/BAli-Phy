@@ -278,6 +278,7 @@ struct profile
 {
     const alignment& template_A;
     vector<vector<int>> observations; // observations[site][i]
+    int count = 0;
 
     void count_alignment(const alignment& A, int row, const vector<pair<int,int>>& corresponding_columns);
     int max_for_position(int i, bool gap_must_be_half=true) const;
@@ -339,6 +340,7 @@ int profile::max_for_position(int pos, bool gap_must_be_half) const
 
 void profile::count_alignment(const alignment& A, int row, const vector<pair<int,int>>& corresponding_columns)
 {
+    count++;
     for(auto [template_c, sample_c]: corresponding_columns)
     {
         observations[template_c].push_back( A(sample_c,row) );
@@ -497,8 +499,6 @@ pair<vector<profile>,vector<profile>> extract_sequence(const joint_A_T& samples,
                 write_alignment_row(std::cout, name, A, node);
             std::cout<<"\n\n";
         }
-
-
     }
 
     // Report statistics on the frequency of queried nodes
@@ -509,7 +509,8 @@ pair<vector<profile>,vector<profile>> extract_sequence(const joint_A_T& samples,
             auto q_node_name = node_queries->get_label(q_node);
             if (q_node_name.empty()) continue;
 
-            std::cerr<<"Node '"<<q_node_name<<"': present in "<<node_counts[q_node]<<"/"<<samples.size()<<" = "<<double(node_counts[q_node])/samples.size()*100<<"% of samples.\n";
+            double fraction = double(node_counts[q_node])/samples.size();
+            std::cerr<<"Node '"<<q_node_name<<"': present in "<<node_counts[q_node]<<"/"<<samples.size()<<" = "<<fraction*100<<"% of samples.\n";
         }
     }
 
@@ -549,7 +550,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description ancestors("Ancestor options");
     ancestors.add_options()
         ("nodes,n",value<string>(),"Newick tree with labelled ancestors")
+        ("nodes-min",value<double>()->default_value(0.33),"Minimum fraction to include a node.")
         ("groups,g",value<string>(),"File with named groups")
+        ("groups-min",value<double>()->default_value(0.33),"Minimum fraction to include a group.")
         ;
 
     options_description output("Output options");
@@ -570,6 +573,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     if (args.count("help")) {
         cout<<"Construct alignments with internal sequences for labeled nodes in query tree.\n\n";
         cout<<"Usage: extract-ancestors <alignments file> <trees file> <alignment file> [OPTIONS]\n";
+
         cout<<all<<"\n";
         cout<<"Examples:\n\n";
         cout<<"   % extract-ancestors -A C1.P1.fastas -T C1.trees -a P1-max.fasta --nodes query.tree --groups query.tree\n\n";
@@ -634,23 +638,40 @@ int main(int argc,char* argv[])
             for(int node=0;node<samples.leaf_names().size();node++)
                 write_alignment_row(std::cout, samples.leaf_names()[node], *A, node);
 
-            for(int i=0;i < branch_queries->size(); i++)
+            if (node_queries)
             {
-                auto& [name,_] = (*branch_queries)[i];
-                std::cout<<">"<<name<<"\n";
-                for(int col=0; col<A->length(); col++)
-                    std::cout<<a.lookup(branch_profiles[i].max_for_position(col));
-                std::cout<<"\n";
-            }
-            for(int node=node_queries->n_leaves();node<node_queries->n_nodes();node++)
-            {
-                auto name = node_queries->get_label(node);
-                if (name.empty()) continue;
+                double nodes_min = args["nodes-min"].as<double>();
+                for(int node=node_queries->n_leaves();node<node_queries->n_nodes();node++)
+                {
+                    auto name = node_queries->get_label(node);
+                    if (name.empty()) continue;
 
-                std::cout<<">"<<name<<"\n";
-                for(int col=0; col<A->length(); col++)
-                    std::cout<<a.lookup(node_profiles[node].max_for_position(col));
-                std::cout<<"\n";
+                    // Skip nodes if they occur less that 33.3% of the time.
+                    double fraction = double(node_profiles[node].count)/samples.size();
+                    if (fraction < nodes_min) continue;
+
+                    std::cout<<">"<<name<<"\n";
+                    for(int col=0; col<A->length(); col++)
+                        std::cout<<a.lookup(node_profiles[node].max_for_position(col));
+                    std::cout<<"\n";
+                }
+            }
+
+            if (branch_queries)
+            {
+                double groups_min = args["groups-min"].as<double>();
+                for(int i=0;i < branch_queries->size(); i++)
+                {
+                    auto& [name,_] = (*branch_queries)[i];
+
+                    double fraction = double(branch_profiles[i].count)/samples.size();
+                    if (fraction < groups_min) continue;
+
+                    std::cout<<">"<<name<<"\n";
+                    for(int col=0; col<A->length(); col++)
+                        std::cout<<a.lookup(branch_profiles[i].max_for_position(col));
+                    std::cout<<"\n";
+                }
             }
         }
     }
