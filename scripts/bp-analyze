@@ -916,8 +916,8 @@ class Analysis(object):
 
         if max_iterations > 3*min_iterations:
             print("The variation in run length between MCMC chains is too great.\n")
-            print("  Chain #{} has {} iterations.".format(max_iterations))
-            print("  Chain #{} has {} iterations.".format(min_iterations))
+            print("  Chain #{} has {} iterations.".format(max_i, max_iterations))
+            print("  Chain #{} has {} iterations.".format(min_i, min_iterations))
             print("Not going to guess a burnin: please specify one.")
             exit(1)
 
