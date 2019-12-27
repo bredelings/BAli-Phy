@@ -147,9 +147,12 @@ vector<pair<string,dynamic_bitset<>>> get_branch_queries_from_tree(SequenceTree 
     remap_T_leaf_indices(Q, leaf_names);
 
     // 2. Check that all nodes are labelled.
+    int n_unlabelled = 0;
     for(auto& label: Q.get_labels())
         if (label.empty())
-            throw myexception()<<"groups-from-tree: tree contains unlabelled node!";
+            n_unlabelled++;
+
+    std::cerr<<"Warning: Tree contains "<<n_unlabelled<<" nodes!\n";
 
     // 3. Construct groups from branches
     vector<pair<string,dynamic_bitset<>>> groups;
@@ -160,7 +163,9 @@ vector<pair<string,dynamic_bitset<>>> get_branch_queries_from_tree(SequenceTree 
 
         if (Q.node(target).is_leaf_node()) continue;
 
-        string name = Q.get_labels()[source] + "=>" + Q.get_labels()[target];
+        if (Q.get_labels()[source].empty() or Q.get_labels()[target].empty()) continue;
+
+        string name = Q.get_labels()[target] + "<=" + Q.get_labels()[source];
 
         auto split = branch_partition(Q,b);
         groups.push_back({name, split});
@@ -170,7 +175,7 @@ vector<pair<string,dynamic_bitset<>>> get_branch_queries_from_tree(SequenceTree 
             if (split[i])
                 std::cerr<<Q.get_label(i)<<" ";
         }
-        std::cerr<<"\n";
+        std::cerr<<"\n\n";
     }
     return groups;
 }
