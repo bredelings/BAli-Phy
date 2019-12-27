@@ -461,7 +461,8 @@ pair<vector<profile>,vector<profile>> extract_sequence(const joint_A_T& samples,
                     node_profiles[q_node].count_alignment(A, t_node, *corresponding_columns);
 
                 auto name = node_queries->get_labels()[q_node];
-                internal_nodes.insert({name, t_node});
+                if (not name.empty())
+                    internal_nodes.insert({name, t_node});
             }
         }
 
@@ -644,6 +645,8 @@ int main(int argc,char* argv[])
             for(int node=node_queries->n_leaves();node<node_queries->n_nodes();node++)
             {
                 auto name = node_queries->get_label(node);
+                if (name.empty()) continue;
+
                 std::cout<<">"<<name<<"\n";
                 for(int col=0; col<A->length(); col++)
                     std::cout<<a.lookup(node_profiles[node].max_for_position(col));
