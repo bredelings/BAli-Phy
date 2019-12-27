@@ -556,7 +556,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     output.add_options()
         ("template-alignment,a", value<string>(), "File with template alignment")
         // FIXME, Add option to use a template alignment, but print only ancestors.
-        ("show-ancestors",value<bool>()->default_value(false),"Write input alignments augmented with ancestor sequences.")
+        ("show-ancestors","Write input alignments augmented with ancestor sequences.")
         ;
 
     options_description all("All options");
@@ -613,7 +613,7 @@ int main(int argc,char* argv[])
             if (log_verbose) cerr<<"done.\n";
         }
 
-        bool show_ancestors = get_arg_default<bool>(args,"show-ancestors",false);
+        bool show_ancestors = args.count("show-ancestors");
         if (not show_ancestors and not args.count("template-alignment"))
             throw myexception()<<"Neither --show-ancestors not --template-align=<FASTA file> is set!";
         
