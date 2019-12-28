@@ -631,16 +631,16 @@ int main(int argc,char* argv[])
             if (log_verbose) cerr<<"read "<<samples.size()<<" (A,T) pairs.\n\n";
 
         // 2. Load template alignment
-        optional<alignment> A;
+        optional<alignment> template_A;
         if (auto filename = get_arg<string>(args,"template-alignment"))
         {
             if (log_verbose) cerr<<"extract-ancestors: Loading template alignment...\n";
 
             vector<sequence> sequences = sequence_format::load_from_file(*filename);
             auto a_name = get_arg_default<string>(args,"alphabet", "");
-            A = load_alignment(sequences, a_name);
+            template_A = load_alignment(sequences, a_name);
 
-            A = remap_A_indices(*A, samples.leaf_names(), samples.T(0).n_leaves(), samples.T(0).n_nodes());
+            template_A = remap_A_indices(*template_A, samples.leaf_names(), samples.T(0).n_leaves(), samples.T(0).n_nodes());
 
             if (log_verbose) cerr<<"done.\n";
         }
@@ -656,16 +656,16 @@ int main(int argc,char* argv[])
             std::cerr<<"WARNING: no ancestors defined!\n";
         
         // 4. Extract profiles
-        auto [node_profiles, branch_profiles] = extract_sequence(samples, A, show_ancestors, node_queries, branch_queries);
+        auto [node_profiles, branch_profiles] = extract_sequence(samples, template_A, show_ancestors, node_queries, branch_queries);
 
         // 5. Write profiles for template alignments
-        if (A and not show_ancestors)
+        if (template_A and not show_ancestors)
         {
-            auto& a = A->get_alphabet();
+            auto& a = template_A->get_alphabet();
 
             if (args.count("show-leaves"))
                 for(int node=0;node<samples.leaf_names().size();node++)
-                    write_alignment_row(std::cout, samples.leaf_names()[node], *A, node);
+                    write_alignment_row(std::cout, samples.leaf_names()[node], *template_A, node);
 
             if (node_queries)
             {
@@ -680,7 +680,7 @@ int main(int argc,char* argv[])
                     if (fraction < nodes_min) continue;
 
                     std::cout<<">"<<name<<"\n";
-                    for(int col=0; col<A->length(); col++)
+                    for(int col=0; col<template_A->length(); col++)
                         std::cout<<a.lookup(node_profiles[node].max_for_position(col));
                     std::cout<<"\n";
                 }
@@ -697,7 +697,7 @@ int main(int argc,char* argv[])
                     if (fraction < groups_min) continue;
 
                     std::cout<<">"<<name<<"\n";
-                    for(int col=0; col<A->length(); col++)
+                    for(int col=0; col<template_A->length(); col++)
                         std::cout<<a.lookup(branch_profiles[i].max_for_position(col));
                     std::cout<<"\n";
                 }
