@@ -420,6 +420,23 @@ std::ostream& write_alignment_row(std::ostream& o, const string& name, const ali
     return o;
 }
 
+
+std::ostream& write_corresponding_alignment_row(std::ostream& o, const string& name, const alignment& A, int row,
+                                                const vector<pair<int,int>>& corresponding_columns, int row_length)
+{
+    vector<int> corresponding_row(row_length,alphabet::unknown);
+    for(auto& [template_c, sample_c]: corresponding_columns)
+        corresponding_row[template_c] = A(sample_c,row);
+
+    o<<">"<<name<<"\n";
+    auto& a = A.get_alphabet();
+    for(int c: corresponding_row)
+        o<<a.lookup(c);
+    o<<"\n";
+    return o;
+}
+
+
 pair<vector<profile>,vector<profile>> extract_sequence(const joint_A_T& samples, const optional<alignment>& template_A,
                                                        bool show_ancestors,
                                                        const optional<SequenceTree>& node_queries,
@@ -485,19 +502,29 @@ pair<vector<profile>,vector<profile>> extract_sequence(const joint_A_T& samples,
 
         if (log_verbose or (show_ancestors and not internal_nodes.empty()))
         {
-            // 4. Write leaf sequences 
-            for(int node=0;node<samples.leaf_names().size();node++)
-                write_alignment_row(std::cout, samples.leaf_names()[node], A, node);
+            if (corresponding_columns)
+            {
+                // 6. Write named ancestors sequences corresponding to node and branch queries
+                for (auto& [name, node]: internal_nodes)
+                    write_corresponding_alignment_row(std::cout, name, A, node, *corresponding_columns, template_A->length());
+                std::cout<<"\n\n";
+            }
+            else
+            {
+                // 4. Write leaf sequences
+                for(int node=0;node<samples.leaf_names().size();node++)
+                    write_alignment_row(std::cout, samples.leaf_names()[node], A, node);
 
-            // 5. Write internal node sequences for debugging purposes
-            if (log_verbose)
-                for(auto& [name,node]: internal_nodes)
+                // 5. Write internal node sequences for debugging purposes
+                if (log_verbose)
+                    for(auto& [name,node]: internal_nodes)
+                        write_alignment_row(std::cout, name, A, node);
+
+                // 6. Write named ancestors sequences corresponding to node and branch queries
+                for (auto& [name, node]: internal_nodes)
                     write_alignment_row(std::cout, name, A, node);
-
-            // 6. Write named ancestors sequences corresponding to node and branch queries
-            for (auto& [name, node]: internal_nodes)
-                write_alignment_row(std::cout, name, A, node);
-            std::cout<<"\n\n";
+                std::cout<<"\n\n";
+            }
         }
     }
 
@@ -558,6 +585,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description output("Output options");
     output.add_options()
         ("template-alignment,a", value<string>(), "File with template alignment")
+        ("show-leaves","Show leaf sequences even for template alignments.")
         // FIXME, Add option to use a template alignment, but print only ancestors.
         ("show-ancestors","Write input alignments augmented with ancestor sequences.")
         ;
@@ -620,7 +648,7 @@ int main(int argc,char* argv[])
         bool show_ancestors = args.count("show-ancestors");
         if (not show_ancestors and not args.count("template-alignment"))
             throw myexception()<<"Neither --show-ancestors not --template-align=<FASTA file> is set!";
-        
+
         // 3. Load queries to find ancestor nodes on the tree
         auto node_queries = get_node_queries(args, samples);
         auto branch_queries = get_branch_queries(args, samples);
@@ -631,12 +659,13 @@ int main(int argc,char* argv[])
         auto [node_profiles, branch_profiles] = extract_sequence(samples, A, show_ancestors, node_queries, branch_queries);
 
         // 5. Write profiles for template alignments
-        if (A)
+        if (A and not show_ancestors)
         {
             auto& a = A->get_alphabet();
 
-            for(int node=0;node<samples.leaf_names().size();node++)
-                write_alignment_row(std::cout, samples.leaf_names()[node], *A, node);
+            if (args.count("show-leaves"))
+                for(int node=0;node<samples.leaf_names().size();node++)
+                    write_alignment_row(std::cout, samples.leaf_names()[node], *A, node);
 
             if (node_queries)
             {
