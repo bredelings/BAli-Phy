@@ -4,15 +4,24 @@
    + Brownian model on *random* rooted tree.
  - Misc
    - Switch to c++17
-   - Read tree properties that look like [&key=value,&key=value]
+   + Read tree properties that look like [&key=value,&key=value]
  - Models
-   - Add +mut_sel_aa for selection on amino-acids in codo models.
+   - Add +mut_sel_aa for selection on amino-acids in codon models.
+   + Add 4 Covarion models: ts98, huelsenbeck02, galtier01, wssr07
  - MCMC
    - Add move to slice sample a branch length while integrating out the alignment.
+ - Speed
+   + bp-analyze should be faster.
+   - Switch contexts less in NNI.
+   - Don't waste time memsetting the state array.
  - Graphical models
-   + Allow sampling characters on random trees (recursive, via mfix).
-     - Implement syntactic sugar 'rec' for mfix.
-   - Interpreter
+   - Probability language/interpreter
+     - Simplify logging commands:
+       - Remove "log_all"
+       - Replace %% with %=%, %>% and %=>%.
+     - Remove "sample" keyword.
+     + Allow sampling characters on random trees (recursive, via mfix).
+       - Implement syntactic sugar 'rec' for mfix.
      - Evaluate the program changeably.
      - Switch the interpreter to a lazy interpreter.
      - Separate random variables from modifiables.
@@ -23,11 +32,12 @@
      - Sample the tree inside the machine.
      + Observe lists in an efficient manner.
    - bali-phy program
-     - Make a unified program that computes an ATModel object.
      - Generate a Haskell program that is moderately readable.
+     - Make a unified program that computes an ATModel object.
      - Sample ancestral sequences inside program.
    - MCMC
-     - Run all dynamically registered transition kernels - we don't need detailed balance!
+     - Run all dynamically registered transition kernels - not quite right.
+     - Make slice sampling bail when number of variables changes.
    - Logging
      - Do logging by computing a JSON object.
      - Allow logging strings.
@@ -35,15 +45,24 @@
      - Allow reading tables from JSON formatted output of constant shape.
      - Add TableReader class that uses only one line at a time.
    - Virtual machine
+     - Forward-only sharing.
+     - unshare_regs: only unshare created-regs with steps.
+     - Remove COMBINE_STEPS
+     - Fixed uses/forces for each step.
+     - Remove reapply.
+     - Remove `Result` objects in favor of just an index.
+     - Implement side-effects.
      - Record force edges.
      - Garbage-collection no longer deletes steps or results.
      - SPEED: inline mapping routines
-     - SPEED: unshare_regs: move loop over created_regs out of loop on results
-     - SPEED: unshare_regs: don't unshare constants and index_vars
      - FIX graphviz description of graph by using HTML records.
+   - Haskell syntax
+     - Add record syntax for declaring structures.
    - Haskell modules
      - New Data.Eq module.
      - New Data.Text module.
+     - New Data.Set module.
+     - New Data.Matrix module.
      - Move distributions to Probability.Distribution.NAME modules.
  - Docs
    - Split up developer docs.
@@ -62,6 +81,8 @@
      - Move utility code under util/
      - Split util/util.H into several other files.
      - Make separate libutil and libcomputation
+   - Rewrite bp-analyze in python.
+   - Generalize MCMC proposals using std::function.
  - Packaging
    + Distribute `draw-tree` binary on windows.
  - Fixes
@@ -76,6 +97,7 @@
    - Correctly compute PP version of MAP and greedy trees.
    + Fix crp / dirichlet process prior.
    - Fix export of entities imported from another module.
+   + Stabilize matrix exponential.
 
 * 3.4.1 (Jan 18, 2019)
  - Help
