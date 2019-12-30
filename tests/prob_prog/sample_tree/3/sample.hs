@@ -8,8 +8,9 @@ main = random $ do
 
     let ps    = map (show . parentNode rtree) [0 .. 5]
 
-    rec let mu Nothing  = 0.0
-            mu (Just n) = xs !! n
-        xs <- independent [ normal (mu p) 1.0 | n <- nodes rtree, let p = parentNode rtree n ]
+    rec let mu n = case parentNode rtree n of
+                Nothing -> 0.0
+                Just n  -> xs !! n
+        xs <- independent [ normal (mu n) 1.0 | n <- nodes rtree ]
 
     return ["tree" %=% write_newick rtree, "xs" %=% xs, "ps" %=% ps]
