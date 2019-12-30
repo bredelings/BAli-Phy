@@ -1,103 +1,103 @@
 * 3.5 (unreleased)
  + Reconstruct ancestral sequences by default.
  - Graphical model framework
-   + Brownian model on *random* rooted tree.
+     + Brownian model on *random* rooted tree.
  - Misc
-   - Switch to c++17
-   + Read tree properties that look like [&key=value,&key=value]
+     - Switch to c++17
+     + Read tree properties that look like [&key=value,&key=value]
  - Models
-   - Add +mut_sel_aa for selection on amino-acids in codon models.
-   + Add 4 Covarion models: ts98, huelsenbeck02, galtier01, wssr07
+     - Add +mut_sel_aa for selection on amino-acids in codon models.
+     + Add 4 Covarion models: ts98, huelsenbeck02, galtier01, wssr07
  - MCMC
-   - Add move to slice sample a branch length while integrating out the alignment.
+     - Add move to slice sample a branch length while integrating out the alignment.
  - Speed
-   + bp-analyze should be faster.
-   - Switch contexts less in NNI.
-   - Don't waste time memsetting the state array.
+     + bp-analyze should be faster.
+     - Switch contexts less in NNI.
+     - Don't waste time memsetting the state array.
  - Graphical models
-   - Probability language/interpreter
-     - Simplify logging commands:
-       - Remove "log_all"
-       - Replace %% with %=%, %>% and %=>%.
-     - Remove "sample" keyword.
-     + Allow sampling characters on random trees (recursive, via mfix).
-       - Implement syntactic sugar 'rec' for mfix.
-     - Evaluate the program changeably.
-     - Switch the interpreter to a lazy interpreter.
-     - Separate random variables from modifiables.
-       - Make modifiables evaluate to an initial value.
-       - Allow specifying modifiable *structures*, such as a list of modifiables.
-     - Allow sampling a random tree topology.
-     - Observe likelihood of sequences on tree.
-     - Sample the tree inside the machine.
-     + Observe lists in an efficient manner.
-   - bali-phy program
-     - Generate a Haskell program that is moderately readable.
-     - Make a unified program that computes an ATModel object.
-     - Sample ancestral sequences inside program.
-   - MCMC
-     - Run all dynamically registered transition kernels - not quite right.
-     - Make slice sampling bail when number of variables changes.
-   - Logging
-     - Do logging by computing a JSON object.
-     - Allow logging strings.
-     - Allow logging all fields in JSON format as well as TSV format.
-     - Allow reading tables from JSON formatted output of constant shape.
-     - Add TableReader class that uses only one line at a time.
-   - Virtual machine
-     - Forward-only sharing.
-     - unshare_regs: only unshare created-regs with steps.
-     - Remove COMBINE_STEPS
-     - Fixed uses/forces for each step.
-     - Remove reapply.
-     - Remove `Result` objects in favor of just an index.
-     - Implement side-effects.
-     - Record force edges.
-     - Garbage-collection no longer deletes steps or results.
-     - SPEED: inline mapping routines
-     - FIX graphviz description of graph by using HTML records.
-   - Haskell syntax
-     - Add record syntax for declaring structures.
-   - Haskell modules
-     - New Data.Eq module.
-     - New Data.Text module.
-     - New Data.Set module.
-     - New Data.Matrix module.
-     - Move distributions to Probability.Distribution.NAME modules.
+     - Probability language/interpreter
+         - Simplify logging commands:
+             - Remove "log_all"
+             - Replace %% with %=%, %>% and %=>%.
+         - Remove "sample" keyword.
+         + Allow sampling characters on random trees (recursive, via mfix).
+             - Implement syntactic sugar 'rec' for mfix.
+         - Evaluate the program changeably.
+         - Switch the interpreter to a lazy interpreter.
+         - Separate random variables from modifiables.
+             - Make modifiables evaluate to an initial value.
+             - Allow specifying modifiable *structures*, such as a list of modifiables.
+         - Allow sampling a random tree topology.
+         - Observe likelihood of sequences on tree.
+         - Sample the tree inside the machine.
+         + Observe lists in an efficient manner.
+     - bali-phy program
+         - Generate a Haskell program that is moderately readable.
+         - Make a unified program that computes an ATModel object.
+         - Sample ancestral sequences inside program.
+     - MCMC
+         - Run all dynamically registered transition kernels - not quite right.
+         - Make slice sampling bail when number of variables changes.
+     - Logging
+         - Do logging by computing a JSON object.
+         - Allow logging strings.
+         - Allow logging all fields in JSON format as well as TSV format.
+         - Allow reading tables from JSON formatted output of constant shape.
+         - Add TableReader class that uses only one line at a time.
+     - Virtual machine
+         - Forward-only sharing.
+         - unshare_regs: only unshare created-regs with steps.
+         - Remove COMBINE_STEPS
+         - Fixed uses/forces for each step.
+         - Remove reapply.
+         - Remove `Result` objects in favor of just an index.
+         - Implement side-effects.
+         - Record force edges.
+         - Garbage-collection no longer deletes steps or results.
+         - SPEED: inline mapping routines
+         - FIX graphviz description of graph by using HTML records.
+     - Haskell syntax
+         - Add record syntax for declaring structures.
+     - Haskell modules
+         - New Data.Eq module.
+         - New Data.Text module.
+         - New Data.Set module.
+         - New Data.Matrix module.
+         - Move distributions to Probability.Distribution.NAME modules. 
  - Docs
-   - Split up developer docs.
+     - Split up developer docs.
  - Help
-   + Display functions more compactly with `help functions`
-   - Handle `quote` better in terminal output.
-   + Allow getting help on functions, models, and distributions.
+     + Display functions more compactly with `help functions`
+     - Handle `quote` better in terminal output.
+     + Allow getting help on functions, models, and distributions.
  - Tools
-   + Allow reading from files wherever we take a comma-separated-list
-   + alignment-info: add option to show sequence names and/or lengths.
-   + extract-ancestors: new program to get specific ancestral sequences.
-   - trees-consensus: always write out PP.
-   - tree-tool: add command to remove internal node names.
+     + Allow reading from files wherever we take a comma-separated-list
+     + alignment-info: add option to show sequence names and/or lengths.
+     + extract-ancestors: new program to get specific ancestral sequences.
+     - trees-consensus: always write out PP.
+     - tree-tool: add command to remove internal node names.
  - Code
-   + Refactoring
-     - Move utility code under util/
-     - Split util/util.H into several other files.
-     - Make separate libutil and libcomputation
-   - Rewrite bp-analyze in python.
-   - Generalize MCMC proposals using std::function.
+     + Refactoring
+         - Move utility code under util/
+         - Split util/util.H into several other files.
+         - Make separate libutil and libcomputation
+     - Rewrite bp-analyze in python.
+     - Generalize MCMC proposals using std::function.
  - Packaging
-   + Distribute `draw-tree` binary on windows.
+     + Distribute `draw-tree` binary on windows.
  - Fixes
-   + Correctly escape newick names when writing tree samples.
-   - Correctly handle FAIL when desugaring case expressions.
-   + Make bp-analyze handle windows line endings when run from cygwin/UNIX.
-   - Compile without errors in C++17 mode.
-   + Link to math library if available: fix build on kfreebsd
-   + Avoid crash with NaN on armhf.
-   - Don't print out newick trees rooted at a leaf.
-   - Speed up tree drawing in bp-analyze.
-   - Correctly compute PP version of MAP and greedy trees.
-   + Fix crp / dirichlet process prior.
-   - Fix export of entities imported from another module.
-   + Stabilize matrix exponential.
+     + Correctly escape newick names when writing tree samples.
+     - Correctly handle FAIL when desugaring case expressions.
+     + Make bp-analyze handle windows line endings when run from cygwin/UNIX.
+     - Compile without errors in C++17 mode.
+     + Link to math library if available: fix build on kfreebsd
+     + Avoid crash with NaN on armhf.
+     - Don't print out newick trees rooted at a leaf.
+     - Speed up tree drawing in bp-analyze.
+     - Correctly compute PP version of MAP and greedy trees.
+     + Fix crp / dirichlet process prior.
+     - Fix export of entities imported from another module.
+     + Stabilize matrix exponential.
 
 * 3.4.1 (Jan 18, 2019)
  - Help
