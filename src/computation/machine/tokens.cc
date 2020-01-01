@@ -98,7 +98,6 @@ void reg_heap::release_tip_token(int t)
 
         int index = remove_element(tokens[parent_token(t)].children, t);
         assert(index != -1);
-        tokens[t].parent = -1;
     }
     else
     {
@@ -109,6 +108,8 @@ void reg_heap::release_tip_token(int t)
     }
 
     // 2. Set the token to unused
+
+    tokens[t].parent = -1;
     tokens[t].used = false;
     tokens[t].type = token_type::none;
 
