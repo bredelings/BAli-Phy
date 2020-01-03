@@ -57,6 +57,7 @@
 #include "models/setup.H"
 #include "site-compression.H"
 #include "tree-align/link2.H"
+#include "computation/machine/graph_register.H"
 
 using std::vector;
 using std::string;
@@ -1807,7 +1808,8 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
                                                alphabet_exps, filename_ranges, SMs, s_mapping, IMs, i_mapping, scaleMs, scale_mapping, branch_length_model, like_calcs, variable_alignment_, allow_compression);
     }
 
-    PC->atmodel_export = read_add_model(*this, program_filename.string() );
+    read_add_model(*this, program_filename.string() );
+    PC->atmodel_export = *memory()->program_result_head;
 
     PC->constants.push_back(-1);
 
