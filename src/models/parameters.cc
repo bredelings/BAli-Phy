@@ -1376,9 +1376,13 @@ std::string generate_atmodel_program(int n_partitions,
                                      const vector<optional<int>>& scale_mapping,
                                      const model_t& branch_length_model,
                                      const std::vector<int>& like_calcs,
-                                     bool variable_alignment_,
                                      bool allow_compression)
 {
+    bool variable_alignment = false;
+    for(auto& i: i_mapping)
+        if (i)
+            variable_alignment = true;
+
     int n_leaves   = n_sequences;
     int n_nodes    = (n_leaves==1)?1:2*n_leaves - 2;
     int n_branches = (n_leaves==1)?0:2*n_leaves - 3;
@@ -1434,7 +1438,7 @@ std::string generate_atmodel_program(int n_partitions,
     program.let({
             {imodel_training_var, {modifiable, make_Bool(false)}},
             {heat_var           , {modifiable, 1.0}},
-            {variable_alignment_var, {modifiable, make_Bool(variable_alignment_)}},
+            {variable_alignment_var, {modifiable, make_Bool(variable_alignment)}},
             {subst_root_var,         {modifiable, n_nodes-1}}
         });
     program.empty_stmt();
@@ -1776,6 +1780,55 @@ std::string generate_atmodel_program(int n_partitions,
     return program_file.str();
 }
 
+template<typename T>
+T load_value(const Model::key_map_t& keys, const std::string& key, const T& t)
+{
+    auto loc = keys.find(key);
+    if (loc != keys.end())
+        return loc->second;
+    else
+        return t;
+}
+
+string gen_atmodel_program(const std::shared_ptr<module_loader>& L,
+                           const vector<alignment>& A,
+                           const vector<pair<string,string>>& filename_ranges,
+                           const SequenceTree& ttt,
+                           const vector<model_t>& SMs,
+                           const vector<optional<int>>& s_mapping,
+                           const vector<model_t>& IMs,
+                           const vector<optional<int>>& i_mapping,
+                           const vector<model_t>& scaleMs,
+                           const vector<optional<int>>& scale_mapping,
+                           const model_t& branch_length_model,
+                           const std::vector<int>& like_calcs,
+                           const Model::key_map_t& k,
+                           const string& dir)
+{
+    // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
+    bool allow_compression = load_value(k, "site-compression", ttt.n_nodes() > 2) and not load_value(k, "write-fixed-alignments",false);
+
+    const int n_partitions = filename_ranges.size();
+    fs::path program_filename = fs::path(dir) / "BAliPhy.Main.hs";
+    {
+        checked_ofstream program_file(program_filename.string());
+        vector<expression_ref> alphabet_exps;
+        for(int i=0;i<n_partitions;i++)
+            alphabet_exps.push_back(get_alphabet_expression(A[i].get_alphabet()));
+        program_file<<generate_atmodel_program(n_partitions,
+                                               ttt.n_leaves(),
+                                               alphabet_exps,
+                                               filename_ranges,
+                                               SMs, s_mapping,
+                                               IMs, i_mapping,
+                                               scaleMs, scale_mapping,
+                                               branch_length_model,
+                                               like_calcs,
+                                               allow_compression);
+    }
+    return program_filename.string();
+}
+
 Parameters::Parameters(const std::shared_ptr<module_loader>& L,
                        const vector<alignment>& A,
                        const vector<pair<string,string>>& filename_ranges,
@@ -1795,20 +1848,10 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
      variable_alignment_( n_imodels() > 0 ),
      updown(-1)
 {
-    // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
+    auto program_filename = gen_atmodel_program(L, A, filename_ranges, ttt, SMs, s_mapping, IMs, i_mapping, scaleMs, scale_mapping, branch_length_model, like_calcs, k, dir);
+    read_add_model(*this, program_filename );
     bool allow_compression = load_value("site-compression", ttt.n_nodes() > 2) and not load_value("write-fixed-alignments",false);
     const int n_partitions = filename_ranges.size();
-    fs::path program_filename = fs::path(dir) / "BAliPhy.Main.hs";
-    {
-        checked_ofstream program_file(program_filename.string());
-        vector<expression_ref> alphabet_exps;
-        for(int i=0;i<n_partitions;i++)
-            alphabet_exps.push_back(get_alphabet_expression(A[i].get_alphabet()));
-        program_file<<generate_atmodel_program(n_partitions, ttt.n_leaves(),
-                                               alphabet_exps, filename_ranges, SMs, s_mapping, IMs, i_mapping, scaleMs, scale_mapping, branch_length_model, like_calcs, variable_alignment_, allow_compression);
-    }
-
-    read_add_model(*this, program_filename.string() );
     PC->atmodel_export = *memory()->program_result_head;
 
     PC->constants.push_back(-1);
