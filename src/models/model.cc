@@ -49,6 +49,15 @@ Model::Model(const std::shared_ptr<module_loader>& L, const key_map_t& k)
     :context(L),keys(new key_map_t(k))
 { }
 
+Model::Model(const std::shared_ptr<module_loader>& L, const string& filename, const key_map_t& k)
+    :context(L),keys(new key_map_t(k))
+{
+    auto m = read_model(filename);
+    (*this) += m;
+    add_model(*this, m.name);
+}
+
+
 
 /// \brief Check if the string s1 matches a pattern s2
 ///
@@ -353,13 +362,6 @@ Module read_model(const string& filename)
 {
     // 1. Read module
     return module_loader({}).load_module_from_file(filename);
-}
-
-int read_add_model(Model& M, const std::string& filename)
-{
-    auto m = read_model(filename);
-    M += m;
-    return add_model(M, m.name);
 }
 
 void execute_file(const std::shared_ptr<module_loader>& L, const std::string& filename)

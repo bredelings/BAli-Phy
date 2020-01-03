@@ -577,18 +577,20 @@ int main(int argc,char* argv[])
             Model::key_map_t keys;
             if (args.count("set"))
                 keys = parse_key_map(args["set"].as<vector<string> >());
-            M = Model(L, keys);
 
             if (args.count("model"))
             {
-                const string filename = args["model"].as<string>();
-                read_add_model(*M,filename);
+                auto filename = args["model"].as<string>();
+                M = Model(L, filename, keys);
             }
             else if (args.count("Model"))
             {
-                const string filename = args["Model"].as<string>();
+                auto filename = args["Model"].as<string>();
+                M = Model(L, keys);
                 add_model(*M,filename);
             }
+            else
+                std::abort();
         }
         set_initial_parameter_values(*M,args);
         L.reset();

@@ -1843,13 +1843,13 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
                        const std::vector<int>& like_calcs,
                        const key_map_t& k,
                        const string& dir)
-    :Model(L,k),
+    :Model(L,
+           gen_atmodel_program(L, A, filename_ranges, ttt, SMs, s_mapping, IMs, i_mapping, scaleMs, scale_mapping, branch_length_model, like_calcs, k, dir),
+           k),
      PC(new parameters_constants(filename_ranges.size(), ttt, SMs.size(), s_mapping, i_mapping, scale_mapping)),
      variable_alignment_( n_imodels() > 0 ),
      updown(-1)
 {
-    auto program_filename = gen_atmodel_program(L, A, filename_ranges, ttt, SMs, s_mapping, IMs, i_mapping, scaleMs, scale_mapping, branch_length_model, like_calcs, k, dir);
-    read_add_model(*this, program_filename );
     bool allow_compression = load_value("site-compression", ttt.n_nodes() > 2) and not load_value("write-fixed-alignments",false);
     const int n_partitions = filename_ranges.size();
     PC->atmodel_export = *memory()->program_result_head;
