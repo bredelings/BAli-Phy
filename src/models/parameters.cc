@@ -1794,14 +1794,24 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
      variable_alignment_( n_imodels() > 0 ),
      updown(-1)
 {
-    PC->constants.push_back(-1);
-
-    const int n_partitions = filename_ranges.size();
-
-    /* ---------------- compress alignments -------------------------- */
-
     // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
     bool allow_compression = load_value("site-compression", ttt.n_nodes() > 2) and not load_value("write-fixed-alignments",false);
+    const int n_partitions = filename_ranges.size();
+    fs::path program_filename = fs::path(dir) / "BAliPhy.Main.hs";
+    {
+        checked_ofstream program_file(program_filename.string());
+        vector<expression_ref> alphabet_exps;
+        for(int i=0;i<n_partitions;i++)
+            alphabet_exps.push_back(get_alphabet_expression(A[i].get_alphabet()));
+        program_file<<generate_atmodel_program(n_partitions, ttt.n_leaves(),
+                                               alphabet_exps, filename_ranges, SMs, s_mapping, IMs, i_mapping, scaleMs, scale_mapping, branch_length_model, like_calcs, variable_alignment_, allow_compression);
+    }
+
+    PC->atmodel_export = read_add_model(*this, program_filename.string() );
+
+    PC->constants.push_back(-1);
+
+    /* ---------------- compress alignments -------------------------- */
 
     vector<optional<compressed_alignment>> compressed_alignments(n_partitions);
     vector<const alignment*> alignments(n_partitions);
@@ -1819,18 +1829,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     /* ---------------- Set up the tree ------------------------------ */
     branches_from_affected_node.resize(ttt.n_nodes());
-    fs::path program_filename = fs::path(dir) / "BAliPhy.Main.hs";
 
-    {
-        checked_ofstream program_file(program_filename.string());
-        vector<expression_ref> alphabet_exps;
-        for(int i=0;i<n_partitions;i++)
-            alphabet_exps.push_back(get_alphabet_expression(A[i].get_alphabet()));
-        program_file<<generate_atmodel_program(n_partitions, ttt.n_leaves(),
-                                               alphabet_exps, filename_ranges, SMs, s_mapping, IMs, i_mapping, scaleMs, scale_mapping, branch_length_model, like_calcs, variable_alignment_, allow_compression);
-    }
-
-    PC->atmodel_export = read_add_model(*this, program_filename.string() );
     PC->atmodel = add_compute_expression({var("BAliPhy.ATModel.get_atmodel"), my_atmodel_export()});
 
     PC->partition_transition_ps = add_compute_expression({var("BAliPhy.ATModel.get_all_transition_ps"),my_atmodel_export()});
