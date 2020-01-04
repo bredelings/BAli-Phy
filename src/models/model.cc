@@ -45,14 +45,14 @@ using boost::dynamic_pointer_cast;
 template <typename T>
 using Bounds = Box<bounds<T>>;
 
-Model::Model(const std::shared_ptr<module_loader>& L, const key_map_t& k)
-    :context(L),keys(new key_map_t(k))
+Model::Model(const Program& P, const key_map_t& k)
+    :context(P),keys(new key_map_t(k))
 { }
 
-Model::Model(const std::shared_ptr<module_loader>& L, const string& filename, const key_map_t& k)
-    :context(L),keys(new key_map_t(k))
+Model::Model(const Program& P, const string& filename, const key_map_t& k)
+    :context(P),keys(new key_map_t(k))
 {
-    auto m = L->load_module_from_file(filename);
+    auto m = P.get_module_loader()->load_module_from_file(filename);
 
     (*this) += m;
 
