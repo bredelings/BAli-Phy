@@ -548,23 +548,23 @@ std::ostream& operator<<(std::ostream& o, const context_ref& C)
 
 Program& context_ref::get_Program()
 {
-    if (not memory()->P)
+    if (not memory()->program)
 	throw myexception()<<"Program used after being cleared!";
 
-    return *(memory()->P);
+    return *(memory()->program);
 }
 
 const Program& context_ref::get_Program() const
 {
-    if (not memory()->P)
+    if (not memory()->program)
 	throw myexception()<<"Program used after being cleared!";
 
-    return *(memory()->P);
+    return *(memory()->program);
 }
 
 void context_ref::clear_program()
 {
-    memory()->P.reset();
+    memory()->program.reset();
 }
 
 void context_ref::clear_identifiers()

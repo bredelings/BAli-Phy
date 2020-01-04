@@ -1771,7 +1771,7 @@ int reg_heap::add_identifier(const string& name)
 reg_heap::reg_heap(const std::shared_ptr<module_loader>& L)
     :regs(1,[this](int s){resize(s);}, [this](){collect_garbage();} ),
      steps(1),
-     P(new Program(L)),
+     program(new Program(L)),
      args(L->args),
      prog_steps(1,non_existant_index),
      prog_results(1, non_existant_index),

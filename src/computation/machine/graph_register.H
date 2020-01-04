@@ -253,7 +253,7 @@ public:
     /// Probably this would be non-parameter identifiers
     std::map<std::string, int> identifiers;
   
-    std::shared_ptr<Program> P;
+    std::shared_ptr<Program> program;
 
     std::vector<std::string> args;
 
