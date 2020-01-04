@@ -25,6 +25,9 @@ class Program: public std::vector<Module>
     int count_module(const std::string& module_name) const;
 
 public:
+
+    std::optional<std::string> main;
+
           std::vector<Module>& modules();
 
     const std::vector<Module>& modules() const;
