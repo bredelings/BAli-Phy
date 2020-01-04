@@ -578,7 +578,7 @@ int main(int argc,char* argv[])
             if (args.count("set"))
                 keys = parse_key_map(args["set"].as<vector<string> >());
 
-            Program P(L);
+            Program P(L, Program::exe_type::log_list);
             if (args.count("model"))
             {
                 auto filename = args["model"].as<string>();

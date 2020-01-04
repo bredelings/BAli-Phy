@@ -1827,7 +1827,7 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
                                                allow_compression);
     }
 
-    Program P(L);
+    Program P(L, Program::exe_type::log_pair);
     auto m = P.get_module_loader()->load_module_from_file(program_filename.string());
     P.add(m);
     P.main = "Main.main";

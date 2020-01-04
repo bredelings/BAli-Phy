@@ -27,6 +27,10 @@ Program::Program(const std::shared_ptr<module_loader>& L)
     :loader(L)
 {}
 
+Program::Program(const std::shared_ptr<module_loader>& L, exe_type t)
+    :loader(L),type(t)
+{}
+
 int Program::find_module(const string& module_name) const
 {
     for(int i=0;i<modules().size();i++)

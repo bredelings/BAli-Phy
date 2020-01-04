@@ -1202,10 +1202,8 @@ int reg_heap::add_program(const expression_ref& E, int c)
     P = reg_var(heads[program_head]);
 
     // 2. If the program doesn't return a pair, make it a pair
-    auto result = lazy_evaluate(heads[program_head], c).exp;
-    if (not has_constructor(result, "(,)"))
+    if (program->type == Program::exe_type::log_list)
     {
-        assert(has_constructor(result,":") or has_constructor(result,"[]"));
         P = Tuple(var("Data.Maybe.Nothing"),P);
         program_head = add_compute_expression(P);
         P = reg_var(heads[program_head]);
