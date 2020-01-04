@@ -743,12 +743,12 @@ context::context(const Program& P)
 {
     context_index = memory_->get_unused_context();
 
-    for(auto& M: P.modules())
-	(*this) += M;
+    get_Program() = P;
 
-    // For Prelude.unsafePerformIO
-    if (not P.size())
-	(*this) += "Prelude";
+    if (not get_Program().size())
+        get_Program().add("Prelude");
+
+    allocate_identifiers_for_modules(get_Program().module_names());
 
     memory_->add_perform_io_head();
 }
