@@ -1790,20 +1790,20 @@ T load_value(const Model::key_map_t& keys, const std::string& key, const T& t)
         return t;
 }
 
-string gen_atmodel_program(const std::shared_ptr<module_loader>& L,
-                           const vector<alignment>& A,
-                           const vector<pair<string,string>>& filename_ranges,
-                           const SequenceTree& ttt,
-                           const vector<model_t>& SMs,
-                           const vector<optional<int>>& s_mapping,
-                           const vector<model_t>& IMs,
-                           const vector<optional<int>>& i_mapping,
-                           const vector<model_t>& scaleMs,
-                           const vector<optional<int>>& scale_mapping,
-                           const model_t& branch_length_model,
-                           const std::vector<int>& like_calcs,
-                           const Model::key_map_t& k,
-                           const string& dir)
+Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
+                            const vector<alignment>& A,
+                            const vector<pair<string,string>>& filename_ranges,
+                            const SequenceTree& ttt,
+                            const vector<model_t>& SMs,
+                            const vector<optional<int>>& s_mapping,
+                            const vector<model_t>& IMs,
+                            const vector<optional<int>>& i_mapping,
+                            const vector<model_t>& scaleMs,
+                            const vector<optional<int>>& scale_mapping,
+                            const model_t& branch_length_model,
+                            const std::vector<int>& like_calcs,
+                            const Model::key_map_t& k,
+                            const string& dir)
 {
     // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
     bool allow_compression = load_value(k, "site-compression", ttt.n_nodes() > 2) and not load_value(k, "write-fixed-alignments",false);
@@ -1826,7 +1826,12 @@ string gen_atmodel_program(const std::shared_ptr<module_loader>& L,
                                                like_calcs,
                                                allow_compression);
     }
-    return program_filename.string();
+
+    Program P(L);
+    auto m = P.get_module_loader()->load_module_from_file(program_filename.string());
+    P.add(m);
+    P.main = "Main.main";
+    return P;
 }
 
 Parameters::Parameters(const std::shared_ptr<module_loader>& L,
@@ -1843,8 +1848,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
                        const std::vector<int>& like_calcs,
                        const key_map_t& k,
                        const string& dir)
-    :Model(L,
-           gen_atmodel_program(L, A, filename_ranges, ttt, SMs, s_mapping, IMs, i_mapping, scaleMs, scale_mapping, branch_length_model, like_calcs, k, dir),
+    :Model(gen_atmodel_program(L, A, filename_ranges, ttt, SMs, s_mapping, IMs, i_mapping, scaleMs, scale_mapping, branch_length_model, like_calcs, k, dir),
            k),
      PC(new parameters_constants(filename_ranges.size(), ttt, SMs.size(), s_mapping, i_mapping, scale_mapping)),
      variable_alignment_( n_imodels() > 0 ),
