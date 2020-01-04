@@ -52,9 +52,11 @@ Model::Model(const std::shared_ptr<module_loader>& L, const key_map_t& k)
 Model::Model(const std::shared_ptr<module_loader>& L, const string& filename, const key_map_t& k)
     :context(L),keys(new key_map_t(k))
 {
-    auto m = read_model(filename);
+    auto m = L->load_module_from_file(filename);
+
     (*this) += m;
-    add_model(*this, m.name);
+
+    add_program( var(m.name+".main") );
 }
 
 
@@ -358,25 +360,11 @@ Model::key_map_t parse_key_map(const vector<string>& key_value_strings)
     return keys;
 }
 
-Module read_model(const string& filename)
-{
-    // 1. Read module
-    return module_loader({}).load_module_from_file(filename);
-}
-
 void execute_file(const std::shared_ptr<module_loader>& L, const std::string& filename)
 {
     Program P(L);
     context C(P);
-    auto m = read_model(filename);
+    auto m = L->load_module_from_file(filename);
     C += m;
     C.perform_expression(var(m.name+".main"));
-}
-
-int add_model(Model& M, const std::string& name)
-{
-    M += name;
-    string prefix = name;
-    expression_ref P = var(name+".main");
-    return M.add_program( P );
 }

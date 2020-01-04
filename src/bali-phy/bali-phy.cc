@@ -585,9 +585,11 @@ int main(int argc,char* argv[])
             }
             else if (args.count("Model"))
             {
-                auto filename = args["Model"].as<string>();
-                M = Model(L, keys);
-                add_model(*M,filename);
+                auto module = args["Model"].as<string>();
+                string filename;
+                // We should generate a stub that reads 'import Module; main = Module.main'
+                M = Model(L, filename, keys);
+                std::abort();
             }
             else
                 std::abort();

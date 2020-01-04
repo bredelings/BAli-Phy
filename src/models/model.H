@@ -116,8 +116,5 @@ std::string show_probability_expression(const expression_ref&);
 
 std::vector< std::string > show_probability_expressions(const context& C);
 
-Module read_model(const std::string& filename);
-int add_model(Model& M, const std::string& filename);
-
 void execute_file(const std::shared_ptr<module_loader>& L, const std::string& filename);
 #endif
