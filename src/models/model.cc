@@ -47,7 +47,10 @@ using Bounds = Box<bounds<T>>;
 
 Model::Model(const Program& P, const key_map_t& k)
     :context(P),keys(new key_map_t(k))
-{ }
+{
+    if (P.main)
+        add_program( var( *P.main ) );
+}
 
 Model::Model(const Program& P, const string& filename, const key_map_t& k)
     :context(P),keys(new key_map_t(k))
