@@ -578,21 +578,24 @@ int main(int argc,char* argv[])
             if (args.count("set"))
                 keys = parse_key_map(args["set"].as<vector<string> >());
 
+            Program P(L);
             if (args.count("model"))
             {
                 auto filename = args["model"].as<string>();
-                M = Model(L, filename, keys);
+                auto m = P.get_module_loader()->load_module_from_file(filename);
+                P.add(m);
+                P.main = m.name + ".main";
             }
             else if (args.count("Model"))
             {
-                auto module = args["Model"].as<string>();
-                string filename;
-                // We should generate a stub that reads 'import Module; main = Module.main'
-                M = Model(L, filename, keys);
-                std::abort();
+                auto module_name = args["Model"].as<string>();
+                P.add(module_name);
+                P.main = module_name + ".main";
             }
             else
                 std::abort();
+
+            M = Model(P, keys);
         }
         set_initial_parameter_values(*M,args);
         L.reset();

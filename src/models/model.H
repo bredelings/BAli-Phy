@@ -90,7 +90,6 @@ public:
 
     /// Construct an empty model
     Model(const Program& P, const key_map_t& k = {});
-    Model(const Program& P, const std::string& filename, const key_map_t& k = {});
 
     Model(const Model&) = default;
     Model(Model&&) = default;

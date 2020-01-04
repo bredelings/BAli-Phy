@@ -52,18 +52,6 @@ Model::Model(const Program& P, const key_map_t& k)
         add_program( var( *P.main ) );
 }
 
-Model::Model(const Program& P, const string& filename, const key_map_t& k)
-    :context(P),keys(new key_map_t(k))
-{
-    auto m = P.get_module_loader()->load_module_from_file(filename);
-
-    (*this) += m;
-
-    add_program( var(m.name+".main") );
-}
-
-
-
 /// \brief Check if the string s1 matches a pattern s2
 ///
 /// \param s1   The string
