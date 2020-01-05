@@ -35,8 +35,6 @@ object_ptr<reg_heap>& context_ref::memory() const {return memory_;}
 
 const std::vector<int>& context_ref::heads() const {return memory()->get_heads();}
 
-std::vector<std::pair<std::string,int>>& context_ref::parameters() const {return memory()->get_parameters();}
-
 const closure& context_ref::operator[](int i) const {return (*memory())[i];}
 
 closure context_ref::preprocess(const closure& C) const

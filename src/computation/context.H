@@ -34,8 +34,6 @@ protected:
 
     const std::vector<int>& heads() const;
 
-    std::vector<std::pair<std::string,int>>& parameters() const;
-
     closure preprocess(const closure& C) const;
 
 public:

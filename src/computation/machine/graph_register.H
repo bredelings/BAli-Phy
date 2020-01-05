@@ -268,19 +268,11 @@ public:
 
     closure preprocess(const closure& C);
 
-    /// Lookup the index for the named parameter s
-    std::optional<int> maybe_find_parameter(const std::string& s) const;
-
-    /// Lookup the index for the named parameter s
-    int find_parameter(const std::string& s) const;
-
     /*----- Modifiable regs ----*/
 private:
     std::optional<int> find_update_modifiable_reg(int& R);
 public:
     std::optional<int> find_modifiable_reg(int R);
-
-    std::optional<int> parameter_is_modifiable_reg(int index);
 
     std::optional<int> compute_expression_is_modifiable_reg(int index);
 
@@ -408,8 +400,6 @@ public:
 
     int token_for_context(int) const;
 
-    const expression_ref& get_parameter_value_in_context(int R, int c);
-
     const expression_ref& get_reg_value_in_context(int& R, int c);
 
     void set_reg_value_in_context(int index, closure&& C, int c);
@@ -421,9 +411,6 @@ public:
     const std::vector<int>& get_temp_heads() const {return temp;}
 
     const std::vector<int>& get_heads() const {return heads;}
-
-    const std::vector<std::pair<std::string,int>>& get_parameters() const {return parameters;}
-    std::vector<std::pair<std::string,int>>& get_parameters()       {return parameters;}
 
     const std::map<std::string,int>& get_identifiers() const {return identifiers;}
     std::map<std::string,int>& get_identifiers()       {return identifiers;}
@@ -445,15 +432,6 @@ public:
 
     /// Add a new identifier, pointing to a newly allocated location
     int add_identifier(const std::string&);
-
-    /// Add a new parameter, which is a modifiable.
-    int add_modifiable_parameter(const std::string&);
-
-    /// Add a new parameter, which is a modifiable.
-    int add_parameter(const std::string&, const expression_ref&);
-
-    /// Add a new parameter pointing to reg r.
-    void add_parameter(const std::string&, int r);
 
     /*----- Graph walking ------*/
     void find_all_regs_in_context(int, bool, std::vector<int>&) const;
