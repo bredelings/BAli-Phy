@@ -205,8 +205,7 @@ po::options_description model_options(int level)
 	model.add_options()
 	    ("model,m",value<string>(),"File containing hierarchical model.")
 	    ("Model,M",value<string>(),"Module containing hierarchical model.")
-	    ("print,p",value<string>(),"Evaluate and print expression.")
-	    ("initial-value",value<vector<string> >()->composing(),"Set parameter=<initial value>");
+	    ("print,p",value<string>(),"Evaluate and print expression.");
     return model;
 }
 

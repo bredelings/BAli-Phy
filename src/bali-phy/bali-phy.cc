@@ -136,48 +136,6 @@ void operator delete(void * p)
 }
 #endif
 
-/// Parse command line arguments of the form --fix X=x or --unfix X=x or --set X=x and modify P
-void set_initial_parameter_values(Model& M, const variables_map& args) 
-{
-    //-------------- Specify fixed parameters ----------------//
-    vector<string> doset;
-    if (args.count("initial-value"))
-        doset = args["initial-value"].as<vector<string> >();
-
-    vector<string> short_names = short_parameter_names(M);
-
-    // set parameters
-    for(const auto& arg: doset)
-    {
-        //parse
-        vector<string> parse = split(arg,'=');
-        if (parse.size() != 2)
-            throw myexception()<<"Ill-formed initial condition '"<<arg<<"'.";
-
-        string name = parse[0];
-        expression_ref value;
-        try {
-            value = parse_object(parse[1]);
-        }
-        catch (myexception& e)
-        {
-            std::ostringstream o;
-            o<<"Setting parameter '"<<name<<"': ";
-            e.prepend(o.str());
-            throw;
-        }
-
-        auto p_index = M.maybe_find_parameter(name);
-
-        if (not p_index)
-            p_index = find_index(short_names,name);
-        if (not p_index)
-            throw myexception()<<"Can't find parameter '"<<name<<"' to set value '"<<parse[1]<<"'";
-
-        M.set_parameter_value(*p_index,value);
-    }
-}
-
 /// Initialize the default random number generator and return the seed
 unsigned long init_rng_and_get_seed(const variables_map& args)
 {
@@ -597,7 +555,6 @@ int main(int argc,char* argv[])
 
             M = Model(P, keys);
         }
-        set_initial_parameter_values(*M,args);
         L.reset();
 
         //------------ Avoid printing seed during unrelated error messages ---//
