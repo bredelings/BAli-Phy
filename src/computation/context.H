@@ -44,9 +44,6 @@ public:
 
     std::optional<int> get_modifiable_reg(int i) const;
 
-    bool parameter_has_bounds(int i) const;
-    const bounds<double>& get_parameter_bounds(int i) const;
-
     /// Get SOME model modifiable values
     EVector get_modifiable_values(const std::vector<int>&) const;
 

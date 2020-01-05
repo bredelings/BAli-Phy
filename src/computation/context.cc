@@ -250,25 +250,6 @@ EVector context_ref::get_parameter_values(const std::vector<int>& indices) const
     return values;
 }
 
-bool context_ref::parameter_has_bounds(int i) const
-{
-    auto e = get_parameter_range(i);
-
-    return (e and e.is_a<Bounds<double>>());
-}
-
-const bounds<double>& context_ref::get_parameter_bounds(int i) const
-{
-    auto e = get_parameter_range(i);
-
-    assert(e);
-
-    if (not e.is_a<Bounds<double>>())
-	throw myexception()<<"parameter '"<<parameter_name(i)<<"' doesn't have bounds<double>.";
-
-    return e.as_<Bounds<double>>();
-}
-
 EVector context_ref::get_modifiable_values(const std::vector<int>& indices) const
 {
     EVector values(indices.size());
