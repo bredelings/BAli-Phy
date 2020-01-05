@@ -1122,8 +1122,6 @@ void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
         for(int r: C.Env)
             scan.push_back(r);
 
-    for(const auto& [name,reg]: parameters) // yes
-        scan.push_back(reg);
     if (keep_identifiers)
         for(const auto& [name,reg]: identifiers) // no
             scan.push_back(reg);

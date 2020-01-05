@@ -298,8 +298,6 @@ pair<int,int> reg_heap::incremental_evaluate_(int r)
 #ifndef NDEBUG
         else if (expression_at(r).head().is_a<Trim>())
             std::abort();
-        else if (expression_at(r).type() == parameter_type)
-            std::abort();
 #endif
 
         // 3. Reduction: Operation (includes @, case, +, etc.)
@@ -513,8 +511,6 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
 
 #ifndef NDEBUG
         else if (expression_at(r).head().is_a<Trim>())
-            std::abort();
-        else if (expression_at(r).type() == parameter_type)
             std::abort();
 #endif
 

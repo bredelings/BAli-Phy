@@ -249,9 +249,6 @@ public:
     bool transition_kernel_is_active(int r);
     void clear_transition_kernel_active(int r);
 
-    /// The registered indices of the named parameters.
-    std::vector<std::pair<std::string,int>> parameters;
-  
     /// Probably this would be non-parameter identifiers
     std::map<std::string, int> identifiers;
   
@@ -261,9 +258,9 @@ public:
 
     /// Get the memory location (reg) for a given identifier (string)
     int reg_for_id(const std::string&);
-    /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references
+    /// Translate named identifiers (struct var) into reg_var references
     expression_ref translate_refs(const expression_ref& R, closure::Env_t&);
-    /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references
+    /// Translate named identifiers (struct var) into reg_var references
     closure translate_refs(closure&& C);
 
     closure preprocess(const closure& C);
