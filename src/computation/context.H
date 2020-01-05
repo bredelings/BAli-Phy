@@ -104,14 +104,8 @@ public:
     /// Return a structure where all fields are evaluated and substituted.
     expression_ref recursive_evaluate(int r) const;
 
-    /// Return a structure where all fields are evaluated and substituted.
-    expression_ref recursive_evaluate_parameter(int) const;
-
     /// Find the name of the ith named parameter
     std::string parameter_name(int i) const;
-
-    /// Change the name of the i-th named parameter
-    void rename_parameter(int i, const std::string& s);
 
     /// Get the value of a modifiable - by its location in memory
     const expression_ref& get_reg_value(int R) const;
@@ -145,8 +139,6 @@ public:
     const std::vector<int>& random_variables() const;
 
     const expression_ref get_range_for_random_variable(int r) const;
-
-    const expression_ref get_parameter_range(int p) const;
 
     double get_rate_for_random_variable(int r) const;
 

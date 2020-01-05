@@ -49,11 +49,6 @@ string context_ref::parameter_name(int i) const
     return parameters()[i].first;
 }
 
-void context_ref::rename_parameter(int i, const string& new_name)
-{
-    parameters()[i].first = new_name;
-}
-
 /// Return the value of a particular index, computing it if necessary
 const closure& context_ref::lazy_evaluate(int index) const
 {
@@ -347,11 +342,6 @@ const expression_ref context_ref::get_range_for_random_variable(int r) const
 double context_ref::get_rate_for_random_variable(int r) const
 {
     return memory()->get_rate_for_random_variable(context_index, r);
-}
-
-const expression_ref context_ref::get_parameter_range(int p) const
-{
-    return memory()->get_parameter_range(context_index, p);
 }
 
 /// Add an expression that may be replaced by its reduced form
