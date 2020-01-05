@@ -179,11 +179,11 @@ bool all_scales_modifiable(const context_ref& M)
 void add_alignment_and_parameter_moves(MCMC::MoveAll& moves, context_ref& M, double weight = 1.0, double enabled = true)
 {
     if (not dynamic_cast<const Parameters*>(&M)) return;
-
+    /* 
     int n = dynamic_cast<const Parameters&>(M).n_imodels();
 
     // FIXME -- reintroduce realigning everything while proposing e.g. rs07:log_rate or rs07:mean_length
-    /* 
+
     for(int i=0; i<n; i++)
     {
 	string prefix = "I"+convertToString(i+1);
@@ -206,7 +206,6 @@ void add_alignment_and_parameter_moves(MCMC::MoveAll& moves, context_ref& M, dou
 	    moves.add(weight, MCMC::MH_Move(proposal,"realign_and_sample_"+pname2), enabled);
 	}
     }
-    */
 
     int n_scales = dynamic_cast<const Parameters&>(M).n_branch_scales();
     for(int s=0; s<n_scales; s++)
@@ -222,6 +221,7 @@ void add_alignment_and_parameter_moves(MCMC::MoveAll& moves, context_ref& M, dou
 	    moves.add(weight, MCMC::MH_Move(proposal,"realign_and_sample_"+pname), enabled);
 	}
     }
+    */
 }
 
 //FIXME - how to make a number of variants with certain things fixed, for burn-in?
