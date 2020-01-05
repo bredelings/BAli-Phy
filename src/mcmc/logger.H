@@ -95,11 +95,11 @@ namespace MCMC {
 
     struct Get_Rao_Blackwellized_Parameter_Function
     {
-	int parameter;
+	int node;
 	std::vector<expression_ref> values;
 
 	std::string operator()(const Model& M, long t);
-	Get_Rao_Blackwellized_Parameter_Function(int p, const std::vector<expression_ref>& v);
+	Get_Rao_Blackwellized_Parameter_Function(int n, const std::vector<expression_ref>& v);
     };
 
     struct Get_Tree_Length_Function

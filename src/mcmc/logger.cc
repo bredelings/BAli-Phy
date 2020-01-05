@@ -256,20 +256,20 @@ namespace MCMC {
 
     string Get_Rao_Blackwellized_Parameter_Function::operator()(const Model& M, long)
     {
-	if (parameter == -1) std::abort();
+	if (node == -1) std::abort();
 
 	owned_ptr<Model> M2 = M;
 	vector<log_double_t> Prs;
 	log_double_t total = 0;
 
-	auto cur_value = M.get_parameter_value(parameter);
+	auto cur_value = M.get_modifiable_value(node);
 
         // Record probabilities
-	for(const auto& v: values)
+	for(const auto& value: values)
 	{
-	    if (v.type() != cur_value.type())
-		throw myexception()<<"Rao-Blackwellization: Trying to set parameter with value '"<<cur_value<<"' to '"<<v<<"'";
-	    M2->set_parameter_value(parameter, v);
+	    if (value.type() != cur_value.type())
+		throw myexception()<<"Rao-Blackwellization: Trying to set parameter with value '"<<cur_value<<"' to '"<<value<<"'";
+	    M2->set_modifiable_value(node, value);
 	    log_double_t Pr = M2->probability();
 	    total += Pr;
 	    Prs.push_back(Pr);
@@ -305,8 +305,8 @@ namespace MCMC {
 	return convertToString( result );
     }
 
-    Get_Rao_Blackwellized_Parameter_Function::Get_Rao_Blackwellized_Parameter_Function(int p, const vector<expression_ref>& v)
-	:parameter(p), values(v)
+    Get_Rao_Blackwellized_Parameter_Function::Get_Rao_Blackwellized_Parameter_Function(int n, const vector<expression_ref>& v)
+	:node(n), values(v)
     { }
 
     string Get_Tree_Length_Function::operator()(const Model& M, long)
