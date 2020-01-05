@@ -600,7 +600,7 @@ log_double_t move_subst_type_branch(context_ref& P)
 // Can't we just send in any sigma parameters or whatever WITH the proposal?
 vector<int> walk_tree_path_toward(const TreeInterface& t, int root);
 
-log_double_t realign_and_propose_parameter(context_ref& P, int param, const vector<int>& partitions, const proposal_fn& proposal, const vector<double>& v)
+log_double_t realign_and_propose_parameter(context_ref& P, const vector<int>& partitions, const Proposal& propose)
 {
     Parameters& PP = dynamic_cast<Parameters&>(P);
     Parameters P0 = PP;
@@ -619,11 +619,7 @@ log_double_t realign_and_propose_parameter(context_ref& P, int param, const vect
     }
 
     // 2. Read, alter, and write parameter values
-    vector< expression_ref > x = P.get_parameter_values({param});
-
-    log_double_t ratio = proposal(x, v);
-
-    P.set_parameter_values({param},x);
+    auto ratio = propose(P);
 
     // 3. Realign all branches using the new parameter value
 

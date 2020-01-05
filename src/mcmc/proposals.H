@@ -136,6 +136,6 @@ log_double_t move_scale_branch(context_ref& P);
 
 log_double_t move_subst_type_branch(context_ref& P);
 
-log_double_t realign_and_propose_parameter(context_ref& P, int param, const std::vector<int>&, const proposal_fn& proposal, const std::vector<double>& v);
+log_double_t realign_and_propose_parameter(context_ref& P, const std::vector<int>& partitions, const Proposal& propose);
 
 #endif
