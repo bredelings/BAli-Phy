@@ -290,11 +290,7 @@ private:
 public:
     std::optional<int> find_random_variable(int R);
 
-    std::optional<int> parameter_is_random_variable(int index);
-
     std::optional<int> compute_expression_is_random_variable(int index);
-
-    const expression_ref get_parameter_range(int c, int r);
 
     const expression_ref get_range_for_random_variable(int c, int r);
 

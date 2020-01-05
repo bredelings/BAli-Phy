@@ -44,11 +44,6 @@ closure context_ref::preprocess(const closure& C) const
     return memory()->preprocess(C);
 }
 
-string context_ref::parameter_name(int i) const
-{
-    return parameters()[i].first;
-}
-
 /// Return the value of a particular index, computing it if necessary
 const closure& context_ref::lazy_evaluate(int index) const
 {
@@ -198,11 +193,6 @@ int context_ref::n_transition_kernels() const
     return memory()->transition_kernels().size();
 }
 
-optional<int> context_ref::parameter_is_modifiable_reg(int index) const
-{
-    return memory()->parameter_is_modifiable_reg(index);
-}
-
 optional<int> context_ref::compute_expression_is_modifiable_reg(int index) const
 {
     return memory()->compute_expression_is_modifiable_reg(index);
@@ -235,16 +225,6 @@ bounds<double> context_ref::get_bounds_for_compute_expression(int index) const
     return e.as_<Bounds<double>>();
 }
 
-EVector context_ref::get_parameter_values(const std::vector<int>& indices) const
-{
-    EVector values(indices.size());
-
-    for(int i=0;i<values.size();i++)
-	values[i] = get_parameter_value(indices[i]);
-
-    return values;
-}
-
 EVector context_ref::get_modifiable_values(const std::vector<int>& indices) const
 {
     EVector values(indices.size());
@@ -267,20 +247,6 @@ const expression_ref& context_ref::get_modifiable_value(int R) const
     return get_reg_value(*get_modifiable_reg(R));
 }
 
-/// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
-const expression_ref& context_ref::get_parameter_value(int index) const
-{
-    return memory()->get_parameter_value_in_context(index, context_index);
-}
-
-/// Get the value of a non-constant, non-computed index
-const expression_ref& context_ref::get_parameter_value(const std::string& name) const
-{
-    auto index = find_parameter(name);
-
-    return get_parameter_value(index);
-}
-
 void context_ref::set_modifiable_value_(int R, closure&& C)
 {
     set_reg_value(*get_modifiable_reg(R), std::move(C) );
@@ -300,33 +266,10 @@ void context_ref::set_reg_value(int P, closure&& C)
     memory()->set_reg_value_in_context(P, std::move(C), context_index);
 }
 
-int context_ref::n_parameters() const
-{
-    return parameters().size();
-}
-
-optional<int> context_ref::maybe_find_parameter(const string& s) const
-{
-    return memory()->maybe_find_parameter(s);
-}
-
-int context_ref::find_parameter(const string& s) const
-{
-    return memory()->find_parameter(s);
-}
-
 param context_ref::new_modifiable(const expression_ref& value)
 {
     expression_ref M{var("Parameters.modifiable"), value};
     return add_compute_expression(M);
-}
-
-int context_ref::add_modifiable_parameter(const string& full_name, const expression_ref& value)
-{
-    expression_ref M(modifiable(),{value});
-    int p = n_parameters();
-    memory()->add_parameter(full_name, M);
-    return p;
 }
 
 const vector<int>& context_ref::random_variables() const

@@ -47,9 +47,6 @@ public:
     /// Get SOME model modifiable values
     EVector get_modifiable_values(const std::vector<int>&) const;
 
-    /// Get SOME model parameter values
-    EVector get_parameter_values(const std::vector<int>&) const;
-
     const reg_heap& get_memory() const {return *memory();}
 
     const std::vector<std::string>& get_args() const;
@@ -64,8 +61,6 @@ public:
     const closure& access_result_for_reg(int i) const;
 
     const closure& operator[](int i) const;
-
-    std::optional<int> parameter_is_modifiable_reg(int p) const;
 
     std::optional<int> compute_expression_is_modifiable_reg(int p) const;
 
@@ -104,20 +99,11 @@ public:
     /// Return a structure where all fields are evaluated and substituted.
     expression_ref recursive_evaluate(int r) const;
 
-    /// Find the name of the ith named parameter
-    std::string parameter_name(int i) const;
-
     /// Get the value of a modifiable - by its location in memory
     const expression_ref& get_reg_value(int R) const;
 
     /// Get the value of a modifiable
     const expression_ref& get_modifiable_value(int index) const;
-
-    /// Get the value of a parameter
-    const expression_ref& get_parameter_value(int index) const;
-
-    /// Get the value of a parameter
-    const expression_ref& get_parameter_value(const std::string&) const;
 
     /// Update the value of a modifiable - by its location in memory
     void set_reg_value(int R, closure&&);
@@ -128,14 +114,6 @@ public:
     /// Set the value of a modifiable
     void set_modifiable_value(int index, const expression_ref&);
 
-    int n_parameters() const;
-
-    /// Lookup the index for the named parameter s
-    std::optional<int> maybe_find_parameter(const std::string& s) const;
-
-    /// Lookup the index for the named parameter s
-    int find_parameter(const std::string& s) const;
-
     const std::vector<int>& random_variables() const;
 
     const expression_ref get_range_for_random_variable(int r) const;
@@ -145,8 +123,6 @@ public:
 public:
     /// Create a new modifiable head with initial value 'value'
     param new_modifiable(const expression_ref& value);
-    /// Create a new modifiable parameter named s with initial value 'value'
-    int add_modifiable_parameter(const std::string& s, const expression_ref& value);
 
     /// Add a literal expression that MAY be reduced
     int add_compute_expression(const expression_ref& e);

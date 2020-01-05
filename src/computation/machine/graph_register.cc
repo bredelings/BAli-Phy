@@ -654,13 +654,6 @@ optional<int> reg_heap::find_modifiable_reg(int R)
     return find_update_modifiable_reg(R);
 }
 
-optional<int> reg_heap::parameter_is_random_variable(int index)
-{
-    int& R = parameters[index].second;
-
-    return find_update_random_variable(R);
-}
-
 optional<int> reg_heap::compute_expression_is_random_variable(int index)
 {
     int& H = heads[index];
@@ -694,14 +687,6 @@ optional<int> reg_heap::find_update_random_variable(int& R)
 optional<int> reg_heap::find_random_variable(int R)
 {
     return find_update_random_variable(R);
-}
-
-const expression_ref reg_heap::get_parameter_range(int c, int p)
-{
-    if (auto rv = parameter_is_random_variable(p))
-        return get_range_for_random_variable(c, *rv);
-    else
-        return {};
 }
 
 const expression_ref reg_heap::get_range_for_random_variable(int c, int r)
@@ -1837,23 +1822,6 @@ vector<int>& reg_heap::get_scratch_list() const
     v.clear();
 
     return v;
-}
-
-optional<int> reg_heap::maybe_find_parameter(const string& s) const
-{
-    for(int i=0;i<parameters.size();i++)
-        if (parameters[i].first == s)
-            return i;
-
-    return {};
-}
-
-int reg_heap::find_parameter(const string& s) const
-{
-    auto index = maybe_find_parameter(s);
-    if (not index)
-        throw myexception()<<"Can't find parameter '"<<s<<"'!";
-    return *index;
 }
 
 int reg_heap::add_modifiable_parameter(const string& full_name)
