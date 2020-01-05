@@ -351,8 +351,9 @@ Model::key_map_t parse_key_map(const vector<string>& key_value_strings)
 void execute_file(const std::shared_ptr<module_loader>& L, const std::string& filename)
 {
     Program P(L);
-    context C(P);
     auto m = L->load_module_from_file(filename);
-    C += m;
+    P.add(m);
+
+    context C(P);
     C.perform_expression(var(m.name+".main"));
 }

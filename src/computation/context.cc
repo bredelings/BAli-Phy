@@ -37,8 +37,6 @@ const std::vector<int>& context_ref::heads() const {return memory()->get_heads()
 
 std::vector<std::pair<std::string,int>>& context_ref::parameters() const {return memory()->get_parameters();}
 
-std::map<std::string, int>& context_ref::identifiers() const {return memory()->get_identifiers();}
-
 const closure& context_ref::operator[](int i) const {return (*memory())[i];}
 
 closure context_ref::preprocess(const closure& C) const
@@ -546,22 +544,6 @@ std::ostream& operator<<(std::ostream& o, const context_ref& C)
     return o;
 }
 
-Program& context_ref::get_Program()
-{
-    if (not memory()->program)
-	throw myexception()<<"Program used after being cleared!";
-
-    return *(memory()->program);
-}
-
-const Program& context_ref::get_Program() const
-{
-    if (not memory()->program)
-	throw myexception()<<"Program used after being cleared!";
-
-    return *(memory()->program);
-}
-
 void context_ref::clear_program()
 {
     memory()->program.reset();
@@ -627,92 +609,6 @@ context_ref::context_ref(reg_heap& M, int c)
 }
 
 /*----------------------*/
-
-int context::add_program(const expression_ref& E)
-{
-    return memory()->add_program(E);
-}
-
-int context::add_identifier(const string& name) const
-{
-    if (maybe_find_parameter(name))
-	throw myexception()<<"Cannot add identifier '"<<name<<"': there is already a parameter with that name.";
-
-    return memory()->add_identifier(name);
-}
-
-void context::allocate_identifiers_for_modules(const vector<string>& module_names)
-{
-    // 2. Give each identifier a pointer to an unused location; define parameter bodies.
-    for(const auto& name: module_names)
-    {
-	const Module& M = get_Program().get_module(name);
-
-	for(const auto& [name,_]: M.code_defs())
-	    add_identifier(name);
-    }
-      
-    // 3. Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
-    for(const auto& module_name: module_names)
-    {
-	const Module& M = get_Program().get_module(module_name);
-
-	for(const auto& [name,body]: M.code_defs())
-	{
-	    // get the root for each identifier
-	    auto loc = identifiers().find(name);
-	    assert(loc != identifiers().end());
-	    int R = loc->second;
-
-#ifdef DEBUG_OPTIMIZE
-	    std::cerr<<name<<" := "<<body<<"\n\n";
-	    std::cerr<<name<<" := "<<preprocess(body).exp<<"\n\n\n\n";
-#endif
-
-	    // load the body into the machine
-	    assert(R != -1);
-	    memory()->set_C(R, preprocess(body) );
-	}
-    }
-}
-
-context& context::operator+=(const string& module_name)
-{
-    if (not get_Program().contains_module(module_name))
-	(*this) += get_Program().get_module_loader()->load_module(module_name);
-
-    return *this;
-}
-
-context& context::operator+=(const vector<string>& module_names)
-{
-    for(const auto& name: module_names)
-	(*this) += name;
-
-    return *this;
-}
-
-// \todo FIXME:cleanup If we can make this only happen once, we can assume old_module_names is empty.
-context& context::operator+=(const Module& M)
-{
-    Program& PP = get_Program();
-
-    // Get module_names, but in a set<string>
-    set<string> old_module_names = PP.module_names_set();
-
-    // 1. Add the new modules to the program, add notes, perform imports, and resolve symbols.
-    get_Program().add(M);
-
-    // 2. Give each identifier a pointer to an unused location; define parameter bodies.
-    vector<string> new_module_names;
-    for(auto& module: PP)
-	if (not old_module_names.count(module.name))
-	    new_module_names.push_back(module.name);
-
-    allocate_identifiers_for_modules(new_module_names);
-
-    return *this;
-}
 
 context::context(const context_ref& C)
     :context_ref(*C.memory_,

@@ -36,11 +36,7 @@ protected:
 
     std::vector<std::pair<std::string,int>>& parameters() const;
 
-    std::map<std::string, int>& identifiers() const;
-
     closure preprocess(const closure& C) const;
-
-    Program& get_Program();
 
 public:
 
@@ -68,8 +64,6 @@ public:
     void set_args(const std::vector<std::string>& args);
 
     int get_context_index() const {return context_index;}
-
-    const Program& get_Program() const;
 
     void clear_program();
 
@@ -238,19 +232,6 @@ class context: public context_ref
 
 public:
 //    context* clone() const {return new context(*this);}
-
-    int add_program(const expression_ref&);
-
-    /// Reserve an identifier with name s
-    int add_identifier(const std::string& s) const;
-
-    void allocate_identifiers_for_modules(const std::vector<std::string>& module_names);
-
-    context& operator+=(const Module& M);
-
-    context& operator+=(const std::string& module_name);
-
-    context& operator+=(const std::vector<std::string>& module_names);
 
     context& operator=(const context&) = default;
 
