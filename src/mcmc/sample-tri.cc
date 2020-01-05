@@ -641,16 +641,16 @@ bool tri_sample_alignment_branch(Parameters& P,
 
 #include "mcmc/proposals.H"
 
-bool tri_sample_alignment_and_parameter(Parameters& P, int node1,int node2, const Proposal& f)
+bool tri_sample_alignment_and_parameter(Parameters& P, int node1,int node2, const Proposal& propose)
 {
     //----------- Generate the Different Matrices ---------//
     vector<Parameters> p(2,P);
 
     vector< vector<int> > nodes (2, A3::get_nodes_branch_random(P.t(),node1,node2) );
 
-    double rho = f(p[1]);
+    double rho = propose(p[1]);
 
-    int C = sample_tri_multi(p,nodes,{1.0, rho},false,false);
+    int C = sample_tri_multi(p, nodes, {1.0, rho}, false, false);
 
     if (C != -1) {
 	P = p[C];
