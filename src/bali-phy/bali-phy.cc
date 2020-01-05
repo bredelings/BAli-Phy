@@ -622,10 +622,6 @@ int main(int argc,char* argv[])
 
             //------ Redirect output to files -------//
 
-            // Force the creation of parameters
-            for(int i=0;i<M->n_parameters();i++)
-                M->parameter_is_modifiable_reg(i);
-
             avoid_zero_likelihood(M, *files[0], out_both);
 
             do_pre_burnin(args, M, *files[0], out_both);
