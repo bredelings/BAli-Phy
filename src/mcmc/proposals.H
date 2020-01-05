@@ -132,8 +132,6 @@ log_double_t discrete_uniform(std::vector< expression_ref >& x, const std::vecto
 
 log_double_t discrete_uniform_avoid(std::vector< expression_ref >& x, const std::vector<double>& p);
 
-log_double_t move_scale_branch(context_ref& P);
-
 log_double_t move_subst_type_branch(context_ref& P);
 
 log_double_t realign_and_propose_parameter(context_ref& P, const std::vector<int>& partitions, const Proposal& propose);
