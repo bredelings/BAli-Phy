@@ -145,11 +145,6 @@ expression_ref context_ref::recursive_evaluate_reg(int r) const
     return expression_ref(std::move(E));
 }
 
-expression_ref context_ref::recursive_evaluate_parameter(int i) const
-{
-    return recursive_evaluate_reg(get_parameter_reg(i));
-}
-
 expression_ref context_ref::recursive_evaluate(int i) const
 {
     return recursive_evaluate_reg(get_compute_expression_reg(i));
@@ -515,13 +510,6 @@ json context_ref::get_logged_parameters() const
     return L.as_checked<Box<json>>().value();
 }
 
-int context_ref::get_parameter_reg(int index) const
-{
-    assert(index >= 0 and index < n_parameters());
-
-    return parameters()[index].second;
-}
-
 int context_ref::get_compute_expression_reg(int index) const
 {
     assert(index >= 0 and index < heads().size());
@@ -682,18 +670,8 @@ bool perform_MH(context_ref& C1,const context_ref& C2,log_double_t rho)
 void simplify(json& j);
 json flatten_me(const json& j);
 
-void show_parameters(std::ostream& o,const context_ref& C, bool show_hidden) {
-    for(int i=0;i<C.n_parameters();i++) {
-	string name = C.parameter_name(i);
-	if ((not show_hidden) and name.size() > 1 and name[0] == '*') continue;
-
-	o<<"    "<<name<<" = ";
-
-	string output = C.recursive_evaluate_parameter(i).print();
-	if (output.find(10) != string::npos or output.find(13) != string::npos)
-	    output = "[multiline]";
-	o<<output;
-    }
+void show_parameters(std::ostream& o,const context_ref& C, bool show_hidden)
+{
     auto j = C.get_logged_parameters();
     simplify(j);
     j = flatten_me(j);

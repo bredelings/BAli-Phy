@@ -40,8 +40,6 @@ protected:
 
 public:
 
-    int get_parameter_reg(int i) const;
-
     int get_compute_expression_reg(int i) const;
 
     std::optional<int> get_modifiable_reg(int i) const;
