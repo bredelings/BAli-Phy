@@ -635,16 +635,3 @@ std::string show_parameters(const context_ref& C, bool show_hidden)
     return oss.str();
 }
 
-/// \brief Check if the model C has a parameter called name
-///
-/// \param C      The model
-/// \param name   A parameter name
-///
-bool has_parameter(const context_ref& C, const string& name)
-{
-    for(int i=0;i<C.n_parameters();i++)
-	if (C.parameter_name(i) == name)
-	    return true;
-    return false;
-}
-
