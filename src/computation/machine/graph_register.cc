@@ -1188,7 +1188,7 @@ int reg_heap::add_perform_io_head()
 // 3. Return the value, and store it in the program head
 // 4. Register the logging head, but don't return it.
 
-int reg_heap::add_program(const expression_ref& E, int c)
+int reg_heap::add_program(const expression_ref& E)
 {
     // 1. Get the program head
     if (program_result_head or logging_head)

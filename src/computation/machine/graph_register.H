@@ -185,7 +185,7 @@ public:
     std::optional<int> logging_head;
 
     int add_perform_io_head();
-    int add_program(const expression_ref& E, int c);
+    int add_program(const expression_ref& E);
 
     // the list of regs that are currently being evaluated
     std::vector<int> stack;
