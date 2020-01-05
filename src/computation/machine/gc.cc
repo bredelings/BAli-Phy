@@ -83,7 +83,7 @@ void reg_heap::trace(vector<int>& remap)
 	mark_reg(r);
 
     // There shouldn't be any steps if there are no tokens.
-    if (not get_n_tokens()) assert(steps.size() == 0);
+    if (not get_n_tokens()) assert(steps.size() == steps.n_null());
 
     // 4. Mark all regs with steps
     for(auto& S: steps)
