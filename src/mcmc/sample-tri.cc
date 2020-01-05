@@ -648,7 +648,7 @@ bool tri_sample_alignment_and_parameter(Parameters& P, int node1,int node2, cons
 
     vector< vector<int> > nodes (2, A3::get_nodes_branch_random(P.t(),node1,node2) );
 
-    double rho = propose(p[1]);
+    auto rho = propose(p[1]);
 
     int C = sample_tri_multi(p, nodes, {1.0, rho}, false, false);
 
