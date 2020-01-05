@@ -329,22 +329,6 @@ namespace MCMC {
 				      const bounds<int>& b, double W_ = 1.0);
     };
 
-    class Dirichlet_Slice_Move: public Slice_Move
-    {
-	std::vector<int> indices;
-
-	int n;
-
-    public:
-	Dirichlet_Slice_Move* clone() const {return new Dirichlet_Slice_Move(*this);}
-
-	void iterate(owned_ptr<Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
-
-	void iterate(owned_ptr<Model>& P,MoveStats&,int);
-
-	Dirichlet_Slice_Move(const std::string&, const std::vector<int>&, int);
-    };
-
     class Dirichlet_Modifiable_Slice_Move: public Slice_Move
     {
 	std::vector<int> indices;

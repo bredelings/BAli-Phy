@@ -205,35 +205,6 @@ struct scale_means_only_slice_function: public context_slice_function
 /// The slices are levels of \f$Pr(x)\times(C-x[n])^{N-1}$ where
 ///  N = the dimension of x.
 ///
-struct constant_sum_slice_function:public context_slice_function
-{
-    /// Which indices form the dirichlet parameter that we are resampling?
-    std::vector<int> indices;
-
-    /// Which of the above indices is the one that we are resampling?
-    int n;
-
-    double operator()(double x) {return context_slice_function::operator()(x);}
-
-    /// return the probability * mu^(B-1)
-    double operator()();
-
-    void set_value(double);
-
-    double current_value() const;
-
-    constant_sum_slice_function(context_ref&, const std::vector<int>&, int);
-};
-
-/// \brief A slice_function for resampling \f$x_n\f$ when \f$\sum_i x_i=C\f$
-///
-/// This function is parameterized in terms of t, where
-///  x'[i] = x[i] * (C-t)/(C-x[n])   if (i!=n)
-///  x'[n] = t
-///
-/// The slices are levels of \f$Pr(x)\times(C-x[n])^{N-1}$ where
-///  N = the dimension of x.
-///
 struct constant_sum_modifiable_slice_function: public context_slice_function
 {
     /// Which indices form the dirichlet parameter that we are resampling?

@@ -316,66 +316,6 @@ scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P)
 #endif
 }
 
-void constant_sum_slice_function::set_value(double t)
-{
-    auto& P = static_cast<Parameters&>(C);
-    auto y = P.get_parameter_values(indices);
-    auto x = (vector<double>)y;
-
-    double total = sum(x);
-
-    double factor = (total - t)/(total - x[n]);
-
-    for(int i=0;i<indices.size();i++)
-	if (i == n)
-	    x[i] = t;
-	else
-	    x[i] *= factor;
-
-    assert(std::abs(::sum(x) - total) < 1.0e-9);
-
-    for(int i=0;i<y.size();i++)
-	y[i] = x[i];
-
-    P.set_parameter_values(indices,y);
-}
-
-
-double constant_sum_slice_function::operator()()
-{
-    auto& P = static_cast<Parameters&>(C);
-
-    auto x = (vector<double>)P.get_parameter_values(indices);
-
-    double total = sum(x);
-
-    double t = current_value();
-
-    const int N = indices.size();
-
-    // return pi * (1-x)^(N-1)
-    return context_slice_function::operator()() + (N-1)*log(total-t);
-}
-
-double constant_sum_slice_function::current_value() const
-{
-    auto& P = static_cast<Parameters&>(C);
-    return P.get_parameter_value(indices[n]).as_double();
-}
-
-
-constant_sum_slice_function::constant_sum_slice_function(context_ref& P, const vector<int>& indices_,int n_)
-    :context_slice_function(P),
-     indices(indices_),
-     n(n_)
-{ 
-    auto x = (vector<double>)P.get_parameter_values(indices);
-    double total = sum(x);
-
-    set_lower_bound(0);
-    set_upper_bound(total);
-}
-
 void constant_sum_modifiable_slice_function::set_value(double t)
 {
     auto& P = static_cast<Parameters&>(C);

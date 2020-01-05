@@ -506,30 +506,6 @@ namespace MCMC {
 	:Slice_Move(s,v,W_), m_index(m), bounds_(b)
     {}
 
-    void Dirichlet_Slice_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int)
-    {
-	if (log_verbose >= 3) clog<<" [dirichlet slice] move"<<endl;
-
-	double v1 = P->get_parameter_value(indices[n]).as_double();
-	constant_sum_slice_function slice_levels_function(*P,indices,n);
-
-	double v2 = sample(*P,slice_levels_function,v1);
-
-	//---------- Record Statistics - -------------//
-	Result result(2);
-	auto x = (vector<double>) P->get_parameter_values(indices);
-	double total = sum(x);
-	double factor = (total - v2)/(total-v1);
-	result.totals[0] = std::abs(log(v2/v1)) + (indices.size()-1)*(std::abs(log(factor)));
-	result.totals[1] = slice_levels_function.count;
-
-	Stats.inc(name,result);
-    }
-
-    Dirichlet_Slice_Move::Dirichlet_Slice_Move(const string& s, const vector<int>& indices_, int n_)
-	:Slice_Move(s,0.2/indices_.size()),indices(indices_),n(n_)
-    { }
-
     void Dirichlet_Modifiable_Slice_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int)
     {
 	if (log_verbose >= 3) clog<<" [dirichlet modifiable slice] move"<<endl;
