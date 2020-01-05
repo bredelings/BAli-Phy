@@ -214,20 +214,6 @@ void simplify(json& j)
         j[name] = std::move(obj);
 }
 
-vector<string> parameter_names(const Model& M)
-{
-    vector<string> names;
-    for(int i=0;i<M.n_parameters();i++)
-	names.push_back( M.parameter_name(i) );
-
-    return names;
-}
-
-vector<string> short_parameter_names(const Model& M)
-{
-    return short_parameter_names( parameter_names( M ) );
-}
-
 // The key may have '*', '?', 'text*', and 'text'.  Here
 // - '?' matches exactly one element.
 // - '*' matches 0 or more elements
@@ -309,16 +295,6 @@ map<string,map<string,int>> parameters_with_extension(const vector<string>& M, s
     }
 
     return indices;
-}
-
-/// \brief Find the index of model parameters that match the pattern name
-///
-/// \param M      The model
-/// \param name   The pattern
-///
-map<string,map<string,int>> parameters_with_extension(const Model& M, string name)
-{
-    return parameters_with_extension(parameter_names(M), name);
 }
 
 vector<int> flatten(const map<string,map<string,int>>& names)

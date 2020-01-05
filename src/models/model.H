@@ -99,13 +99,7 @@ public:
 
 Model::key_map_t parse_key_map(const std::vector<std::string>& key_value_strings);
 
-std::vector<std::string> parameter_names(const Model& M);
-
-std::vector<std::string> short_parameter_names(const Model& M);
-
 std::vector<std::string> short_parameter_names(const std::vector<std::string>& names);
-
-std::map<std::string,std::map<std::string,int>> parameters_with_extension(const Model& M, std::string name);
 
 std::map<std::string,std::map<std::string,int>> parameters_with_extension(const std::vector<std::string>& M, std::string name);
 
