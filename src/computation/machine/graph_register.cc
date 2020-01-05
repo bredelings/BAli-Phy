@@ -1815,6 +1815,11 @@ reg_heap::reg_heap(const Program& P)
         program->add("Prelude");
 
     allocate_identifiers_for_program();
+
+    if (P.main)
+        add_program( var( *P.main ) );
+
+    add_perform_io_head();
 }
 
 void reg_heap::release_scratch_list() const

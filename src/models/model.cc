@@ -47,10 +47,7 @@ using Bounds = Box<bounds<T>>;
 
 Model::Model(const Program& P, const key_map_t& k)
     :context(P),keys(new key_map_t(k))
-{
-    if (P.main)
-        add_program( var( *P.main ) );
-}
+{ }
 
 /// \brief Check if the string s1 matches a pattern s2
 ///

@@ -742,8 +742,6 @@ context::context(const Program& P)
     :context_ref(*new reg_heap(P))
 {
     context_index = memory_->get_unused_context();
-
-    memory_->add_perform_io_head();
 }
 
 context::~context()
