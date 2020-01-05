@@ -1766,6 +1766,42 @@ int reg_heap::add_identifier(const string& name)
     return R;
 }
 
+// FIXME: We SHOULD be able to do each module in sequences, since there are no
+//        transitive dependencies.
+//
+//        Currently that doesn't work, because things implicitly depend on
+//        Foreign.String.unpack_cpp_string to get strings.
+//
+void reg_heap::allocate_identifiers_for_program()
+{
+    // 1. Give each identifier a pointer to an unused location; define parameter bodies.
+    for(auto& M: *program)
+        for(const auto& [name, _]: M.code_defs())
+            add_identifier(name);
+
+    // Since the body for any identifier could reference the body for any other, we have to
+    // allocate locations for all identifiers before we preprocess the bodies for any.
+
+    // 2. Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
+    for(auto& M: *program)
+        for(const auto& [name, body]: M.code_defs())
+        {
+            // get the root for each identifier
+            auto loc = identifiers.find(name);
+            assert(loc != identifiers.end());
+            int R = loc->second;
+
+#ifdef DEBUG_OPTIMIZE
+            std::cerr<<name<<" := "<<body<<"\n\n";
+            std::cerr<<name<<" := "<<preprocess(body).exp<<"\n\n\n\n";
+#endif
+
+            // load the body into the machine
+            assert(R != -1);
+            set_C(R, preprocess(body) );
+        }
+}
+
 reg_heap::reg_heap(const Program& P)
     :regs(1,[this](int s){resize(s);}, [this](){collect_garbage();} ),
      steps(1),
@@ -1777,6 +1813,8 @@ reg_heap::reg_heap(const Program& P)
 {
     if (not program->size())
         program->add("Prelude");
+
+    allocate_identifiers_for_program();
 }
 
 void reg_heap::release_scratch_list() const

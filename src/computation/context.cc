@@ -743,8 +743,6 @@ context::context(const Program& P)
 {
     context_index = memory_->get_unused_context();
 
-    allocate_identifiers_for_modules(get_Program().module_names());
-
     memory_->add_perform_io_head();
 }
 

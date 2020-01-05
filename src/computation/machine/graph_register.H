@@ -126,6 +126,8 @@ class reg_heap: public Object
     bool reg_is_called_by(int, int) const;
     bool reg_is_used_by(int, int) const;
 
+    void allocate_identifiers_for_program();
+
 public:
     const closure& closure_at(int r) const {assert(r); return regs.access(r).C;}
     const expression_ref& expression_at(int r) const {return closure_at(r).exp;}
