@@ -260,14 +260,6 @@ EVector context_ref::get_modifiable_values(const std::vector<int>& indices) cons
     return values;
 }
 
-void context_ref::set_parameter_values(const vector<int>& indices,const vector<expression_ref>& p)
-{
-    assert(indices.size() == p.size());
-
-    for(int i=0;i<indices.size();i++)
-	set_parameter_value(indices[i], p[i]);
-}
-
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 const expression_ref& context_ref::get_reg_value(int R) const
 {
@@ -308,35 +300,9 @@ void context_ref::set_modifiable_value(int R, const expression_ref& E)
     set_modifiable_value_(R, E);
 }
 
-void context_ref::set_parameter_value(int index, const expression_ref& E)
-{
-    assert(not E.size());
-    assert(not E.is_index_var());
-    assert(not E.is_a<reg_var>());
-    assert(not E.is_a<var>());
-    set_parameter_value_(index, E);
-}
-
-void context_ref::set_parameter_value_(int index, closure&& C)
-{
-    assert(index >= 0);
-
-    auto P = parameter_is_modifiable_reg(index);
-
-    set_reg_value(*P, std::move(C) );
-}
-
 void context_ref::set_reg_value(int P, closure&& C)
 {
     memory()->set_reg_value_in_context(P, std::move(C), context_index);
-}
-
-/// Update the value of a non-constant, non-computed index
-void context_ref::set_parameter_value(const std::string& var, const expression_ref& O)
-{
-    int i = find_parameter(var);
-    
-    set_parameter_value(i, O);
 }
 
 int context_ref::n_parameters() const

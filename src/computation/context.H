@@ -50,9 +50,6 @@ public:
     /// Get SOME model parameter values
     EVector get_parameter_values(const std::vector<int>&) const;
 
-    /// Set SOME of the model parameter values
-    void set_parameter_values(const std::vector<int>& indices,const std::vector<expression_ref>& p);
-
     const reg_heap& get_memory() const {return *memory();}
 
     const std::vector<std::string>& get_args() const;
@@ -136,15 +133,6 @@ public:
 
     /// Set the value of a modifiable
     void set_modifiable_value(int index, const expression_ref&);
-
-    /// Update the value of a non-constant, non-computed index
-    void set_parameter_value(int index, const expression_ref&);
-
-    /// Update the value of a non-constant, non-computed index
-    void set_parameter_value_(int index, closure&&);
-
-    /// Update the value of a non-constant, non-computed index
-    void set_parameter_value(const std::string& var, const expression_ref&);
 
     int n_parameters() const;
 
