@@ -739,14 +739,9 @@ context::context(context&& C)
 }
 
 context::context(const Program& P)
-    :context_ref(*new reg_heap(P.get_module_loader()))
+    :context_ref(*new reg_heap(P))
 {
     context_index = memory_->get_unused_context();
-
-    get_Program() = P;
-
-    if (not get_Program().size())
-        get_Program().add("Prelude");
 
     allocate_identifiers_for_modules(get_Program().module_names());
 

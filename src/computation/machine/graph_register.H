@@ -541,7 +541,7 @@ public:
     std::vector<int>& get_scratch_list() const;
     void release_scratch_list() const;
 
-    reg_heap(const std::shared_ptr<module_loader>&);
+    reg_heap(const Program& P);
 };
 
 expression_ref graph_normalize(const expression_ref& R);

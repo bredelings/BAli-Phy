@@ -1766,15 +1766,17 @@ int reg_heap::add_identifier(const string& name)
     return R;
 }
 
-reg_heap::reg_heap(const std::shared_ptr<module_loader>& L)
+reg_heap::reg_heap(const Program& P)
     :regs(1,[this](int s){resize(s);}, [this](){collect_garbage();} ),
      steps(1),
-     program(new Program(L)),
-     args(L->args),
+     program(new Program(P)),
+     args(program->get_module_loader()->args),
      prog_steps(1,non_existant_index),
      prog_results(1, non_existant_index),
      prog_temp(1)
 {
+    if (not program->size())
+        program->add("Prelude");
 }
 
 void reg_heap::release_scratch_list() const
