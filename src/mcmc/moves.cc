@@ -23,6 +23,7 @@
 #include "util/log-level.H"
 #include <algorithm>
 #include "mcmc.H"
+#include "proposals.H"
 #include "dp/3way.H"
 #include "util/permute.H"
 #include "alignment/alignment-util.H"
@@ -149,13 +150,11 @@ void sample_cube_branch_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
 }
 
 
-void sample_parameter_and_alignment_on_branch(owned_ptr<Model>& P, MoveStats& Stats,int b) 
+void sample_parameter_and_alignment_on_branch(owned_ptr<Model>& P, MoveStats& Stats, int b, const Proposal& proposal)
 {
     Parameters* PP = P.as<Parameters>();
 
-    if (not PP->load_value("parameter_tri", true)) return;
-
-    MCMC::Result result(2);
+    MCMC::Result result(1);
 
     assert(PP->variable_alignment()); 
 
@@ -170,40 +169,14 @@ void sample_parameter_and_alignment_on_branch(owned_ptr<Model>& P, MoveStats& St
     if (node1 < t.n_leaves())
         std::swap(node1,node2);
     
-    vector<int> indices;
-    double sigma = 0.5;
-    if (uniform() < 0.5)
+    if (tri_sample_alignment_and_parameter(*PP, node1, node2, proposal))
     {
-        indices = flatten( parameters_with_extension(*PP,"logLambda") );
-        //    sigma = 0.5;
-    }
-    else
-    {
-        // FIXME - this isn't going to work.
-        indices = flatten( parameters_with_extension(*PP,"meanIndelLengthMinus1") );
-        //    sigma = 0.5;
-    }
-    if (not indices.size()) return;
-    int p = indices[uniform(0,indices.size()-1)];
-    std::string pname = PP->parameter_name(p);
-
-    double v1 = PP->get_parameter_value(p).as_double();
-    // is this right for epsilon?  Shouldn't we use shift_epsilon?
-    double v2 = v1 + cauchy(0,sigma);
-
-    bounds<double> range = P->get_parameter_bounds(p);
-
-    if (v2 > 0)
-        v2 = -v2;
-    if (not range.in_range(v2)) return;
-
-
-    if (tri_sample_alignment_and_parameter(*PP,node1,node2,p,1,v2)) {
         result.totals[0] = 1;
-        result.totals[1] = std::abs(v2 - v1);
     }
 
-    Stats.inc("sample_"+pname+"_and_alignment_on_branch",result);
+    // FIXME... somehow the proposal itself has to know something about what to log.
+
+    Stats.inc("sample_and_alignment_on_branch",result);
 }
 
 
@@ -594,7 +567,7 @@ void walk_tree_sample_alignments(owned_ptr<Model>& P, MoveStats& Stats)
                     sample_tri_one(P,Stats,b);
             }
             else
-                sample_parameter_and_alignment_on_branch(P,Stats,b);
+                ; // sample_parameter_and_alignment_on_branch(P,Stats,b);
         }
         else
             sample_alignments_one(P,Stats,b);
