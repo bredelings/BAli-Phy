@@ -29,6 +29,7 @@
 #include "util/assert.hh"
 #include "util/string/split.H"
 #include "util/cmdline.H"
+#include "tools/read-trees.H"
 
 #include <boost/program_options.hpp>
 
@@ -169,7 +170,20 @@ int main(int argc,char* argv[])
         vector<string> prune = get_string_list(args, "prune");
 
         //----------- Read the topology -----------//
-        RootedSequenceTree T = load_T(args);
+        if (not args.count("tree"))
+            throw myexception()<<"Tree file not specified! (--tree <filename>)";
+
+        RootedSequenceTree T;
+        {
+            auto filename = args["tree"].as<string>();
+            using namespace trees_format;
+            istream_or_ifstream file(std::cin, "-", filename, "tree file");
+            std::shared_ptr<reader_t> trees_in(new Newick_or_NEXUS(file));
+            if (not prune.empty())
+                trees_in = std::shared_ptr<reader_t>(new Prune(prune,*trees_in));
+            if (not trees_in->next_tree(T))
+                throw myexception()<<"No tree in file '"<<filename<<"'";
+        }
 
         if (args.count("remove-root-branch"))
         {
@@ -223,16 +237,11 @@ int main(int argc,char* argv[])
         }
 
         if (args.count("length"))
-        {
             std::cout<<tree_length(T)<<std::endl;
-            return 0;
-        }
         else if (args.count("diameter"))
-        {
             std::cout<<tree_diameter(T)<<std::endl;
-            return 0;
-        }
-        std::cout<<T<<std::endl;
+        else
+            std::cout<<T<<std::endl;
     }
     catch (std::exception& e) {
         std::cerr<<"tree-tool: Error! "<<e.what()<<endl;
