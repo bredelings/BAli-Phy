@@ -2341,29 +2341,35 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
 
     <section><info><title>Statistical inferences without a summary alignment.</title></info>
     <para>Inferences about ancestral sequence are often done by analyzing the summary alignment and
-    its ancestral sequences.  An alternative approach is to analyze each sampled alignment and
+    its ancestral sequences.  An alternative approach is to analyze each sampled alignment with
     ancestors separately, and then average the results across all posterior samples. When this
     approach is feasible, it is more statistically rigorous than constructing a single summary
-    alignment, and also requires a smaller number of posterior samples as input.
+    alignment, because it operates on joint reconstructions and because it incorporates uncertainty
+    in the phylogeny, alignment, and ancestral sequences.  It also requires a smaller number of
+    posterior samples as input. This can be difficult if the analysis results are not easy
+    to average.
     </para>
 
-    <para>Since the alignment and tree are not fixed, some samples may not contain a particular
-    alignment column or an ancestral node on the tree. For example, one could compute the
-    ancestral sequence length for a given node, and average the result across all sampled
-    (alignment,tree) pairs.  Ignoring samples where the tree does not contain the given node,
-    yields the posterior expected sequence length for that node <emphasis>conditional on the
-    existence of that node</emphasis>.  It is not necessary to perform multiple runs where each run
-    conditions on the existence of a given node.  However, conditioning on the existence of
-    low-probability nodes does not work very well, and is discouraged.
+    <para>When the tree is not fixed, some samples may not contain a particular ancestral node or
+    branch on the tree.  Ignoring samples where some node or branch is not present is allowed, and
+    yields a posterior expectation <emphasis>conditional on the existence of that node or
+    branch</emphasis>.  For example, one could compute the ancestral sequence length for a given
+    node, and average the result across all sampled  (alignment,tree) pairs,  ignoring samples where
+    the tree does not contain the given node.  This yields the posterior expected sequence length for that
+    node <emphasis>conditional on the node's existence.</emphasis>.  It is not necessary to
+    perform multiple runs where each run conditions on the existence of a given node.  However,
+    conditioning on the existence of low-probability nodes does not work very well.  In that case,
+    you might consider fixing the tree, since BAli-Phy doesn't allow fixing particular branches or nodes.
     </para>
 
-    <para>A more difficult problem is that some types of analyses produce results that cannot be
-    easily averaged. For example, if we look for a change from L to V at site 2 on a given branch,
-    this does not work, since site 2 has a different meaning in different alignments.  Instead, we
-    need a method of identifying the relevant column that does not depend on the site number.  Then
-    we could compute the probability of an L-to-V change as the fraction of sampled alignments with
-    an L-to-V change in the identified column, <emphasis>conditional on the existence of such a column</emphasis>.
-    However, if the alignment column has low probability, then this approach may also be problematic.
+    <para>When the alignment is not fixed, some samples may not contain a particular
+    alignment column. If we look for a change from L to V
+    at site 2 on a given branch, this does not work, since site 2 has a different meaning in
+    different alignments.  Instead, we need a method of identifying the relevant column that does
+    not depend on the site number.  Then we could compute the probability of an L-to-V change as the
+    fraction of sampled alignments with an L-to-V change in the identified column,
+    <emphasis>conditional on the existence of such a column</emphasis>. However, if the alignment
+    column has low probability, then this approach may also be problematic. 
     </para>
     </section>
 
