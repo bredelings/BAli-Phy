@@ -1352,13 +1352,17 @@ void reg_heap::check_tokens() const
     for(int t=0;t<tokens.size();t++)
         if (token_is_used(t))
         {
+            // No unreferenced tip tokens
             assert(tokens[t].is_referenced() or tokens[t].children.size() >= 1);
+
+            // No invalid token types
             assert(tokens[t].type != token_type::none);
             if (t == root_token)
                 assert(tokens[t].type == token_type::root);
             else
                 assert(tokens[t].type != token_type::root);
 
+            // No incorrect token versions
             for(int t2: children_of_token(t))
                 assert(tokens[t].version >= tokens[t2].version);
         }
