@@ -369,7 +369,7 @@ public:
     void switch_to_context(int c1, int c2);
 
     /// Acquire a copy of a token
-    int make_child_token(int, token_type type);
+    int make_child_token(int c, token_type type);
 
     /// Make a child of the current token, point to the child, and unreference the current token.
     int switch_to_child_token(int c, token_type type);
