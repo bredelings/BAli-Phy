@@ -1662,7 +1662,17 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
     check_used_regs();
 #endif
 
+    if (reg_is_constant(R)) return {R,R};
+
     reroot_at_context(c);
+
+    // Don't create a new token for up-to-date results!
+    if (reg_is_changeable(R))
+    {
+        int r2 = result_for_reg(R);
+        if (r2 > 0) return {R,r2};
+    }
+
     if (not execution_allowed())
     {
         int t1 = token_for_context(c);
