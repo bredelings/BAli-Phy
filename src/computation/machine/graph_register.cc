@@ -1667,12 +1667,15 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
     {
         int t1 = token_for_context(c);
         assert(t1 == root_token);
-        int t2 = get_unused_token(token_type::root);
-        tokens[t2].children.push_back(t1);
-        tokens[t1].parent = t2;
-        tokens[t1].type = token_type::reverse_execute;
-        root_token = t2;
-        switch_to_token(c,t2);
+
+        int t2 = make_child_token(t1, token_type::execute);
+        switch_to_token(c, t2);
+
+        // This should not allow removing t1.
+        reroot_at_context(c);
+        assert(t2 == root_token);
+
+        // We can't remove t1 even if its a knuckle.
         assert(execution_allowed());
     }
 
