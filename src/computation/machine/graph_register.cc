@@ -1171,6 +1171,15 @@ int reg_heap::add_program(const expression_ref& E)
         throw myexception()<<"Trying to set program a second time!";
 
     auto P = E;
+
+    if (program->type == Program::exe_type::standard)
+    {
+        P = {var("Compiler.IO.unsafePerformIO"), P};
+        int program_head = add_compute_expression(P);
+        program_result_head = program_head;
+        return *program_result_head;
+    }
+
     P = {var("Probability.Random.gen_model_no_alphabet"), P};
     P = {var("Compiler.IO.unsafePerformIO"), P};
 
