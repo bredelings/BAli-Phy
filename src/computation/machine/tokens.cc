@@ -316,7 +316,7 @@ int reg_heap::degree_of_token(int t) const
         degree++;
     return degree;
 }
-  
+
 
 bool reg_heap::token_is_used(int t) const
 {
@@ -458,13 +458,15 @@ int reg_heap::get_new_context()
     return c;
 }
 
-int reg_heap::get_unused_context()
+int reg_heap::get_first_context()
 {
     int c = get_new_context();
   
     set_token_for_context(c, get_unused_token(token_type::root));
 
     check_tokens();
+
+    evaluate_program(c);
 
     return c;
 }

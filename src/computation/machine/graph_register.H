@@ -391,7 +391,7 @@ public:
 
     int get_new_context();
 
-    int get_unused_context();
+    int get_first_context();
 
     void release_context(int);
 

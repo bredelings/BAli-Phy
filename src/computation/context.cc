@@ -503,7 +503,7 @@ context::context(context&& C)
 context::context(const Program& P)
     :context_ref(*new reg_heap(P))
 {
-    context_index = memory_->get_unused_context();
+    context_index = memory_->get_first_context();
 }
 
 context::~context()
