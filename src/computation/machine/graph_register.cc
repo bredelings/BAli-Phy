@@ -1675,15 +1675,10 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 
     if (not execution_allowed())
     {
-        int t1 = token_for_context(c);
-        assert(t1 == root_token);
+        switch_to_child_token(c, token_type::execute);
 
-        int t2 = make_child_token(t1, token_type::execute);
-        switch_to_token(c, t2);
-
-        // This should not allow removing t1.
+        // This should not allow removing the old root token.
         reroot_at_context(c);
-        assert(t2 == root_token);
 
         // We can't remove t1 even if its a knuckle.
         assert(execution_allowed());
