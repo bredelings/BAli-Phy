@@ -296,7 +296,7 @@ public:
 
         // Contexts that point here
         int n_context_refs = 0;
-        bool is_referenced() const {assert(n_context_refs >= 0); return n_context_refs > 0;}
+        bool is_referenced() const {assert(n_context_refs >= 0); return n_context_refs > 0 or not prev_prog_active_refs.empty();}
     
         /// Mapping from closures to steps/results
         const auto& delta_result() const { return vm_result.delta(); }
@@ -315,7 +315,7 @@ public:
     };
 
     void set_prev_prog_token(int t, std::optional<std::pair<int,std::optional<int>>> prev_prog_token);
-    void unset_prev_prog_token(int t);
+    std::optional<int> unset_prev_prog_token(int t);
 
 private:
     int root_token = -1;
@@ -374,9 +374,6 @@ public:
     /// Make the context point to a token
     void switch_to_token(int c, int t);
 
-    /// Make the context point to the token of another context
-    void switch_to_context(int c1, int c2);
-
     /// Acquire a copy of a token
     int make_child_token(int c, token_type type);
 
@@ -392,13 +389,21 @@ public:
 
     int get_n_contexts() const;
 
-    int unset_token_for_context(int c);
+private:
+    std::pair<int,std::optional<int>> unset_token_for_context_no_release_(int c);
 
-    void set_token_for_context(int c, int t);
+    void set_unset_token_for_context_(int c, int t);
 
-    int copy_context(int);
+    // This is the safe interface that allows resetting things and releases unreferenced tips.
+    void set_token_for_context(int c, std::optional<int> t);
 
     int get_new_context();
+
+public:
+    int copy_context(int);
+
+    /// Make the context point to the token of another context
+    void switch_to_context(int c1, int c2);
 
     int get_first_context();
 

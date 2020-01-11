@@ -88,8 +88,12 @@ void reg_heap::release_tip_token(int t)
 
     // 0. Remove prev_prog edges to and from this token.
 
-    // Clear link to prev prog token
+    // Clear link to prev prog token.
+    // This doesn't remove a reference, since t has no context references.
+    assert(tokens[t].n_context_refs == 0);
     unset_prev_prog_token(t);
+
+    assert(tokens[t].prev_prog_active_refs.empty());
 
     // Mark inactive references to this token as dead
     for(int t2: tokens[t].prev_prog_inactive_refs)
@@ -105,6 +109,8 @@ void reg_heap::release_tip_token(int t)
         assert(tokens[t2].prev_prog_token);
         tokens[t2].prev_prog_token->second = {};
     }
+    tokens[t].prev_prog_inactive_refs.clear();
+    tokens[t].prev_prog_active_refs.clear();
 
     // 1. Adjust the token tree
     int parent = parent_token(t);
@@ -382,21 +388,85 @@ int reg_heap::make_child_token(int t, token_type type)
     return t2;
 }
 
-void reg_heap::switch_to_token(int c, int t2)
+// This could unreference a prev_prog_token.
+pair<int,optional<int>> reg_heap::unset_token_for_context_no_release_(int c)
 {
-    int t1 = unset_token_for_context(c);
-    set_token_for_context(c,t2);
+    int t = token_for_context(c);
 
-    release_unreferenced_tips(t1);
+    if (t == -1) return {-1,{}};
+
+    assert(t != -1);
+    assert(tokens[t].is_referenced());
+
+    optional<pair<int,optional<int>>> p;
+    optional<int> t2;
+
+    // FIXME: instead of unsetting prev_prog_token, maybe just unset the index.
+
+    // 1. Remove the link from the active list
+    if (tokens[t].n_context_refs == 1)
+    {
+        p = tokens[t].prev_prog_token;
+        t2 = unset_prev_prog_token(t);
+    }
+
+    // 2. Decrement the reference count;
+    token_for_context_[c] = -1;
+    tokens[t].n_context_refs--;
+    assert(tokens[t].n_context_refs >= 0);
+
+    // 3. Add the link to the inactive list
+    if (tokens[t].n_context_refs == 0)
+        set_prev_prog_token(t,p);
+
+    return {t,t2};
+}
+
+// The context token must original be unset.
+// This cannot unreference a prev_prog_token.
+void reg_heap::set_unset_token_for_context_(int c, int t)
+{
+    // The context token must original be unset.
+    assert(token_for_context(c) == -1);
+
+    auto p = tokens[t].prev_prog_token;
+
+    // 1. Remove the link to the inactive list
+    if (tokens[t].n_context_refs == 0)
+        unset_prev_prog_token(t);
+
+    // 2. Increment the reference count
+    token_for_context_[c] = t;
+    tokens[t].n_context_refs++;
+    assert(tokens[t].is_referenced());
+
+    // 3. Add the link to the active list
+    if (tokens[t].n_context_refs == 1)
+        set_prev_prog_token(t, p);
+}
+
+void reg_heap::set_token_for_context(int c, optional<int> t2)
+{
+    // We can't do check_tokens() here because when we create the first token, it will
+    // be an unreferenced tip until we finish this routine.
+
+    auto [t1, p1] = unset_token_for_context_no_release_(c);
+
+    if (t2)
+        set_unset_token_for_context_(c, *t2);
+
+    if (p1)
+        release_unreferenced_tips(*p1);
+
+    if (t1 != -1 and tokens[t1].used)
+        release_unreferenced_tips(t1);
+
+    check_tokens();
 }
 
 void reg_heap::switch_to_context(int c1, int c2)
 {
-    check_tokens();
-
-    switch_to_token(c1, token_for_context(c2));
-
-    check_tokens();
+    set_token_for_context(c1, token_for_context(c2));
 }
 
 int reg_heap::switch_to_child_token(int c, token_type type)
@@ -404,8 +474,10 @@ int reg_heap::switch_to_child_token(int c, token_type type)
     check_tokens();
 
     int t1 = token_for_context(c);
+
     int t2 = make_child_token(t1, type);
-    switch_to_token(c, t2);
+
+    set_token_for_context(c, t2);
 
     check_tokens();
 
@@ -421,51 +493,6 @@ int reg_heap::token_for_context(int c) const
 {
     assert(c >= 0);
     return token_for_context_[c];
-}
-
-int reg_heap::unset_token_for_context(int c)
-{
-    int t = token_for_context(c);
-    assert(t != -1);
-    assert(tokens[t].is_referenced());
-
-    auto p = tokens[t].prev_prog_token;
-
-    // 1. Remove the link to the active list
-    if (tokens[t].n_context_refs == 1)
-        unset_prev_prog_token(t);
-
-    // 2. Decrement the reference count;
-    token_for_context_[c] = -1;
-    tokens[t].n_context_refs--;
-    assert(tokens[t].n_context_refs >= 0);
-
-    // 3. Add the link to the inactive list
-    if (tokens[t].n_context_refs == 0)
-        set_prev_prog_token(t,p);
-
-    return t;
-}
-
-void reg_heap::set_token_for_context(int c, int t)
-{
-    assert(token_for_context(c) == -1);
-    assert(tokens[t].n_context_refs >= 0);
-
-    auto p = tokens[t].prev_prog_token;
-
-    // 1. Remove the link to the inactive list
-    if (tokens[t].n_context_refs == 0)
-        unset_prev_prog_token(t);
-
-    // 2. Increment the reference count
-    token_for_context_[c] = t;
-    tokens[t].n_context_refs++;
-    assert(tokens[t].is_referenced());
-
-    // 3. Add the link to the inactive list
-    if (tokens[t].n_context_refs == 1)
-        set_prev_prog_token(t, p);
 }
 
 int reg_heap::copy_context(int c)
@@ -517,18 +544,11 @@ int reg_heap::get_first_context()
 
 void reg_heap::release_context(int c)
 {
-    // release the reference to the token
-    check_tokens();
-
-    int t = unset_token_for_context(c);
-
-    release_unreferenced_tips(t);
+    set_token_for_context(c, {});
 
     // Mark the context as unused
     token_for_context_[c] = -1;
     unused_contexts.push_back(c);
-
-    check_tokens();
 }
 
 /*
@@ -576,8 +596,8 @@ int reg_heap::get_unused_token(token_type type, optional<int> prev_token)
     assert(tokens[t].vm_result.empty());
     assert(not tokens[t].is_referenced());
 
-    tokens[t].prev_prog_inactive_refs.clear();
-    tokens[t].prev_prog_active_refs.clear();
+    assert(tokens[t].prev_prog_active_refs.empty());
+    assert(tokens[t].prev_prog_inactive_refs.empty());
     assert(not tokens[t].prev_prog_token);
 
     if (prev_token)
@@ -626,20 +646,23 @@ void reg_heap::set_prev_prog_token(int t, optional<pair<int,optional<int>>> prev
 #endif
 }
 
-void reg_heap::unset_prev_prog_token(int t)
+optional<int> reg_heap::unset_prev_prog_token(int t)
 {
+    assert(tokens[t].used);
+
     // Already unset
-    if (not tokens[t].prev_prog_token) return;
+    if (not tokens[t].prev_prog_token) return {};
 
     // Set but dead.
     if (not tokens[t].prev_prog_token->second)
     {
         tokens[t].prev_prog_token = {};
-        return;
+        return {};
     }
 
     // Get the prev prog token and the index for t in its list
     auto t2 = tokens[t].prev_prog_token->first;
+    assert(tokens[t2].used);
     auto j  = *tokens[t].prev_prog_token->second;
 
     auto& prev_prog_refs = (tokens[t].n_context_refs > 0)
@@ -673,4 +696,6 @@ void reg_heap::unset_prev_prog_token(int t)
     for(int t3: tokens[t2].prev_prog_inactive_refs)
         assert(tokens[t3].used);
 #endif
+
+    return t2;
 }

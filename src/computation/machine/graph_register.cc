@@ -1715,8 +1715,12 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 #endif
 
     int t = token_for_context(c);
-    unset_prev_prog_token(t);
+    auto t2 = unset_prev_prog_token(t);
     set_prev_prog_token(t, pair(t,0));
+    if (t2)
+        release_unreferenced_tips(*t2);
+
+    check_tokens();
 
     return p;
 }
