@@ -305,10 +305,18 @@ public:
         mapping<int> vm_result;
         mapping<int> vm_step;
 
+        boost::container::small_vector< int, 2> prev_prog_active_refs;
+        boost::container::small_vector< int, 2> prev_prog_inactive_refs;
+        std::optional<std::pair<int,std::optional<int>>> prev_prog_token;
+
         token_type type = token_type::none;
         bool used = false;
         long version = 0;
     };
+
+    void set_prev_prog_token(int t, std::optional<std::pair<int,std::optional<int>>> prev_prog_token);
+    void unset_prev_prog_token(int t);
+
 private:
     int root_token = -1;
 
@@ -325,6 +333,7 @@ private:
     std::vector<int> pending_effect_steps;
 
 public:
+
     /// Is a particular token unused?
     bool token_is_used(int) const;
 
@@ -336,7 +345,7 @@ public:
     const Token& get_token(int t) const {return tokens[t];}
 
     /// Acquire an unused token
-    int get_unused_token(token_type type);
+    int get_unused_token(token_type type, std::optional<int> prev);
 
     /// Report all used tokens
     std::vector<int> get_used_tokens() const;

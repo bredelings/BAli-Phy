@@ -1359,6 +1359,34 @@ void reg_heap::check_tokens() const
             // No incorrect token versions
             for(int t2: children_of_token(t))
                 assert(tokens[t].version >= tokens[t2].version);
+
+            // Check that forward prev_prog_token edges are right.
+            if (tokens[t].prev_prog_token and tokens[t].prev_prog_token->second)
+            {
+                int t2 = tokens[t].prev_prog_token->first;
+                int j = *tokens[t].prev_prog_token->second;
+                assert(tokens[t2].used);
+
+                auto& prev_prog_refs = (tokens[t].n_context_refs > 0)
+                    ? tokens[t2].prev_prog_active_refs
+                    : tokens[t2].prev_prog_inactive_refs;
+
+                assert(prev_prog_refs[j] == t);
+            }
+
+            // Check that backward prev_prog_token edges are right.
+            for(auto t2: tokens[t].prev_prog_active_refs)
+            {
+                assert(tokens[t2].used);
+                assert(tokens[t2].prev_prog_token);
+                assert(tokens[t2].prev_prog_token->first == t);
+            }
+            for(auto t2: tokens[t].prev_prog_inactive_refs)
+            {
+                assert(tokens[t2].used);
+                assert(tokens[t2].prev_prog_token);
+                assert(tokens[t2].prev_prog_token->first == t);
+            }
         }
 #endif
 }
@@ -1685,6 +1713,10 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 #if DEBUG_MACHINE >= 2
     check_used_regs();
 #endif
+
+    int t = token_for_context(c);
+    unset_prev_prog_token(t);
+    set_prev_prog_token(t, pair(t,0));
 
     return p;
 }
