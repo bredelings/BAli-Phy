@@ -258,6 +258,7 @@ size_t reg_heap::size() const
 {
     assert(regs.size() == prog_steps.size());
     assert(regs.size() == prog_results.size());
+    assert(regs.size() == prog_forces.size());
     assert(regs.size() == prog_temp.size());
     return regs.size();
 }
@@ -826,6 +827,12 @@ bool reg_heap::has_result(int r) const
     return result_for_reg(r)>0;
 }
 
+bool reg_heap::has_force(int r) const
+{
+    assert(prog_forces[r] != 0);
+    return prog_forces[r] > 0;
+}
+
 int reg_heap::value_for_reg(int r) const 
 {
     assert(not expression_at(r).is_index_var());
@@ -1036,6 +1043,7 @@ int reg_heap::allocate_reg_from_step_in_token(int s, int t)
     int r = allocate_reg_from_step(s);
     tokens[t].vm_result.add_value(r, non_computed_index);
     tokens[t].vm_step.add_value(r, non_computed_index);
+    tokens[t].vm_force.add_value(r, non_computed_index);
     return r;
 }
 
@@ -1074,6 +1082,9 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
 
     assert(tokens[t].vm_result.empty());
     tokens[t].vm_result.add_value(R, non_computed_index);
+
+    assert(tokens[t].vm_force.empty());
+    tokens[t].vm_force.add_value(R, non_computed_index);
 
     assert(not children_of_token(t).size());
 
@@ -1323,6 +1334,7 @@ void reg_heap::resize(int s)
     // Extend program.  Use regs.size() instead of size()
     prog_steps.resize(regs.size());
     prog_results.resize(regs.size());
+    prog_forces.resize(regs.size());
     prog_temp.resize(regs.size());
 
     // Now we can use size() again.
@@ -1330,9 +1342,11 @@ void reg_heap::resize(int s)
     {
         prog_steps[i] = non_computed_index;
         prog_results[i] = non_computed_index;
+        prog_forces[i] = non_computed_index;
 
         assert(prog_steps[i] == non_computed_index);
         assert(prog_results[i] == non_computed_index);
+        assert(prog_forces[i] == non_computed_index);
         assert(prog_temp[i].none());
     }
 }
@@ -1453,6 +1467,7 @@ void reg_heap::check_used_regs() const
 {
     assert(tokens[root_token].vm_step.empty());
     assert(tokens[root_token].vm_result.empty());
+    assert(tokens[root_token].vm_force.empty());
 
     for(int t=0; t< tokens.size(); t++)
         if (token_is_used(t))
@@ -1855,6 +1870,7 @@ reg_heap::reg_heap(const Program& P)
      args(program->get_module_loader()->args),
      prog_steps(1,non_existant_index),
      prog_results(1, non_existant_index),
+     prog_forces(1, non_existant_index),
      prog_temp(1)
 {
     if (not program->size())
