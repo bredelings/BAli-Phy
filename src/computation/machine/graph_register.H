@@ -80,10 +80,13 @@ public:
     /// Which reg's were used to reduce this expression?
     boost::container::small_vector< std::pair<int,int>, 2 > used_regs;
 
-    boost::container::small_vector< int, 2 > forced_regs;
+    boost::container::small_vector< std::pair<int,int>, 2 > forced_regs;
 
     /// Which regs (reg,index) USE this reg?
     boost::container::small_vector<std::pair<int,int>, 2> used_by;
+
+    /// Which regs (reg,index) FORCE this reg?
+    boost::container::small_vector<std::pair<int,int>, 2> forced_by;
 
     /// Which reduction values made use of the value of this expression (via call)
     boost::container::small_vector<int, 5> called_by;
@@ -129,6 +132,7 @@ class reg_heap: public Object
 
     bool reg_is_called_by(int, int) const;
     bool reg_is_used_by(int, int) const;
+    bool reg_is_forced_by(int, int) const;
 
     void allocate_identifiers_for_program();
 
@@ -158,8 +162,8 @@ public:
     bool reg_is_unevaluated(int r) const;
     void make_reg_changeable(int r);
 
-    void set_forced_input(int r1, int r2);
     void set_used_reg(int r1, int r2);
+    void set_forced_reg(int r1, int r2);
     void set_call(int s, int r2);
     void destroy_all_computations_in_token(int t);
     void clear_call(int s);
