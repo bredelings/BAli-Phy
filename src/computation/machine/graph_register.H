@@ -472,6 +472,7 @@ public:
     int result_for_reg(int r) const;
     bool reg_has_call(int r) const;
     int call_for_reg(int r) const;
+    void force_reg(int r);
 
     const closure& access_value_for_reg(int R1) const;
 
