@@ -422,7 +422,7 @@ expression_ref reg_heap::evaluate_program(int c)
     if (not program_result_head)
         throw myexception()<<"No program has been set!";
 
-    auto result = lazy_evaluate(heads[*program_result_head], c).exp;
+    auto result = lazy_evaluate(heads[*program_result_head], c, true).exp;
 
     // Force the computation of priors and likelihoods
     likelihood_for_context(c);
@@ -1659,7 +1659,7 @@ bool reg_heap::execution_allowed() const
     return false;
 }
 
-pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
+pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c, bool reforce)
 {
 #if DEBUG_MACHINE >= 2
     check_used_regs();
@@ -1673,7 +1673,12 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
     if (reg_is_changeable(R))
     {
         int r2 = result_for_reg(R);
-        if (r2 > 0) return {R,r2};
+
+        if (reforce ? has_force(R) : r2 > 0)
+        {
+            assert(r2 > 0);
+            return {R,r2};
+        }
     }
 
     if (not execution_allowed())
@@ -1689,7 +1694,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 
     assert(execution_allowed());
 
-    auto p = incremental_evaluate(R);
+    auto p = incremental_evaluate(R, reforce);
 
 #if DEBUG_MACHINE >= 2
     check_used_regs();
@@ -1700,14 +1705,14 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 
 const closure& reg_heap::lazy_evaluate(int& R)
 {
-    auto [R2, value] = incremental_evaluate(R);
+    auto [R2, value] = incremental_evaluate(R, false);
     R = R2;
     return closure_at(value);
 }
 
-const closure& reg_heap::lazy_evaluate(int& R, int c)
+const closure& reg_heap::lazy_evaluate(int& R, int c, bool reforce)
 {
-    auto [R2, value] = incremental_evaluate_in_context(R,c);
+    auto [R2, value] = incremental_evaluate_in_context(R, c, reforce);
     R = R2;
     return closure_at(value);
 }
