@@ -23,7 +23,7 @@ struct Step
 
     int call = 0;
 
-    // NOTE: There is a space-time trade-off in the number of used_inputs here.
+    // NOTE: There is a space-time trade-off in the number of used_regs here.
     //       However, small_vector< ,1> takes little or no extra space, and noticeably saves time.
 
     /// Does C reduce to another reg that we need to evaluate to get the true value?
@@ -77,11 +77,11 @@ public:
     type_t type = type_t::unevaluated;
 
     /// Which reg's were used to reduce this expression?
-    boost::container::small_vector< std::pair<int,int>, 2 > used_inputs;
+    boost::container::small_vector< std::pair<int,int>, 2 > used_regs;
 
     boost::container::small_vector< int, 2 > forced_regs;
 
-    /// Which steps (step,index) USE this reg?
+    /// Which regs (reg,index) USE this reg?
     boost::container::small_vector<std::pair<int,int>, 2> used_by;
 
     /// Which reduction values made use of the value of this expression (via call)
@@ -154,8 +154,8 @@ public:
     bool reg_is_unevaluated(int r) const;
     void make_reg_changeable(int r);
 
-    void set_used_input(int r1, int r2);
     void set_forced_input(int r1, int r2);
+    void set_used_reg(int r1, int r2);
     void set_call(int s, int r2);
     void destroy_all_computations_in_token(int t);
     void clear_call(int s);

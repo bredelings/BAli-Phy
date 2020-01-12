@@ -585,7 +585,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 		o<<"{rank = same; "<<name<<"; "<<name2<<";}"<<std::endl;
 	}
 
-	// used_inputs
+	// used_regs
 	for(int R2: C.used_regs_for_reg(R))
 	{
 	    bool is_ref_edge_also = false;

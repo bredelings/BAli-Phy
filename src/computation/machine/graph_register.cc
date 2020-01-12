@@ -45,7 +45,7 @@ long max_version = 0;
  *
  * Forward edges consist of
  * - E edges
- * - used edges (forward: used_inputs, backward: used_by)
+ * - used edges (forward: used_regs, backward: used_by)
  * - call edges (forward: call, backward: called_by)
  * - value edges (computed by following call edges).
  * The called_by back edges indicate that a value is being used by another value that calls us.
@@ -75,7 +75,7 @@ long max_version = 0;
  *
  * 5. Clean up back-edges to computations when computations are destroyed.
  *
- * 6. Move call and used_inputs into reduction
+ * 6. Move call and used_regs into reduction
  *
  * 7. Make back-edges from reduction to computations that use it.
  *    - remove duplicate_computation( ).
@@ -164,7 +164,7 @@ void reg::clear()
 {
     C.clear();
     type = type_t::unevaluated;
-    truncate(used_inputs);
+    truncate(used_regs);
     truncate(forced_regs);
     truncate(used_by);
     truncate(called_by);
@@ -176,7 +176,7 @@ void reg::check_cleared() const
 {
     assert(not C);
     assert(type == type_t::unevaluated);
-    assert(used_inputs.empty());
+    assert(used_regs.empty());
     assert(forced_regs.empty());
     assert(used_by.empty());
     assert(called_by.empty());
@@ -191,7 +191,7 @@ reg& reg::operator=(reg&& R) noexcept
 
     type = R.type;
 
-    used_inputs  = std::move( R.used_inputs );
+    used_regs  = std::move( R.used_regs );
 
     forced_regs  = std::move( R.forced_regs );
 
@@ -209,7 +209,7 @@ reg& reg::operator=(reg&& R) noexcept
 reg::reg(reg&& R) noexcept
     :C( std::move(R.C) ),
      type ( R.type ),
-     used_inputs ( std::move(R.used_inputs) ),
+     used_regs ( std::move(R.used_regs) ),
      forced_regs (std::move(R.forced_regs) ),
      used_by ( std::move( R.used_by) ),
      called_by ( std::move( R.called_by) ),
@@ -785,7 +785,7 @@ void reg_heap::set_result_for_reg(int r1)
     assert(prog_results[r1] > 0);
 }
 
-void reg_heap::set_used_input(int r1, int r2)
+void reg_heap::set_used_reg(int r1, int r2)
 {
     assert(reg_is_changeable(r2));
 
@@ -802,9 +802,9 @@ void reg_heap::set_used_input(int r1, int r2)
     auto& R1 = regs[r1];
     auto& R2 = regs[r2];
     int back_index = R2.used_by.size();
-    int forw_index = R1.used_inputs.size();
+    int forw_index = R1.used_regs.size();
     R2.used_by.push_back({r1,forw_index});
-    R1.used_inputs.push_back({r2,back_index});
+    R1.used_regs.push_back({r2,back_index});
 
     assert(reg_is_used_by(r1,r2));
 }
@@ -1074,7 +1074,7 @@ std::vector<int> reg_heap::used_regs_for_reg(int r) const
     vector<int> U;
     if (not has_step(r)) return U;
 
-    for(const auto& [r2,_]: regs[r].used_inputs)
+    for(const auto& [r2,_]: regs[r].used_regs)
         U.push_back(r2);
 
     return U;
@@ -1460,10 +1460,10 @@ void reg_heap::check_used_regs() const
     {
         int r1 = i.addr();
 
-        if (not regs[r1].used_inputs.empty())
+        if (not regs[r1].used_regs.empty())
             assert(reg_is_changeable(r1));
 
-        for(const auto& [r2,_]: regs[r1].used_inputs)
+        for(const auto& [r2,_]: regs[r1].used_regs)
         {
             // Used regs should have back-references to R
             assert( reg_is_used_by(r1, r2) );
@@ -1526,7 +1526,7 @@ void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
 {
     // 1. When destroying a reg, remove edge from regs[r] <---used_by--- regs[r3]
     assert(r > 0);
-    for(auto& forward: regs[r].used_inputs)
+    for(auto& forward: regs[r].used_regs)
     {
         auto [r3,j] = forward;
         if (regs.is_free(r3)) continue;
@@ -1541,11 +1541,11 @@ void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
             backward[j] = backward.back();
             auto [r2,i2] = backward[j];
             // adjust the forward edge for that backward edge
-            auto& forward2 = regs[r2].used_inputs;
+            auto& forward2 = regs[r2].used_regs;
             assert(0 <= i2 and i2 < forward2.size());
             forward2[i2].second = j;
 
-            assert(regs[r2].used_inputs[i2].second == j);
+            assert(regs[r2].used_regs[i2].second == j);
             assert(regs[forward2[i2].first].used_by[forward2[i2].second].second == i2);
         }
 
@@ -1582,7 +1582,7 @@ void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
 
 void reg_heap::check_back_edges_cleared_for_reg(int r) const
 {
-    for(auto& [_,index]: regs.access_unused(r).used_inputs)
+    for(auto& [_,index]: regs.access_unused(r).used_regs)
         assert(index == 0);
 }
 
