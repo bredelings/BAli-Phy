@@ -97,6 +97,7 @@ class RegOperationArgs final: public OperationArgs
             if (M.reg_is_changeable(r3))
             {
                 used_changeable = true;
+                is_forced = is_forced and M.has_force(r3);
                 if (first_eval)
                     M.set_forced_reg(r, r3);
             }
@@ -115,6 +116,7 @@ class RegOperationArgs final: public OperationArgs
             if (M.reg_is_changeable(r3))
             {
                 used_changeable = true;
+                is_forced = is_forced and M.has_force(r3);
                 if (first_eval)
                     M.set_used_reg(r, r3);
             }
@@ -135,6 +137,8 @@ class RegOperationArgs final: public OperationArgs
         }
 
 public:
+
+    bool is_forced = true;
 
     bool used_changeable = false;
 
