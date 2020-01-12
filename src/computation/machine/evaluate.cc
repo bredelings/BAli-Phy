@@ -231,6 +231,21 @@ pair<int,int> reg_heap::incremental_evaluate_(int r, bool reforce)
             if (result > 0)
             {
                 total_changeable_eval_with_result++;
+
+                // FIXME: might we need to set force here even if reforce == false?
+                // If there are no force-edges, then I think yes.
+                if (reforce and not has_force(r))
+                {
+                    force_reg(r);
+                    prog_forces[r] = 1;
+                    if (not tokens[root_token].children.empty())
+                    {
+                        int t = tokens[root_token].children[0];
+                        tokens[t].vm_force.add_value(r, non_computed_index);
+                    }
+                    assert(has_force(r));
+                }
+
                 return {r, result};
             }
 
@@ -257,7 +272,18 @@ pair<int,int> reg_heap::incremental_evaluate_(int r, bool reforce)
                 {
                     int t = tokens[root_token].children[0];
                     tokens[t].vm_result.add_value(r, non_computed_index);
+                    tokens[t].vm_force.add_value(r, non_computed_index);
                 }
+
+                // FIXME: might we need to set force here even if reforce == false?
+                // If there are no force-edges, then I think yes.
+                if (reforce and not has_force(r))
+                {
+                    force_reg(r);
+                    prog_forces[r] = 1;
+                    assert(has_force(r));
+                }
+
                 total_changeable_eval_with_call++;
                 return {r, value};
             }
