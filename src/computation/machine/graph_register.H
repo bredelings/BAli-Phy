@@ -499,11 +499,11 @@ public:
     void unshare_regs(int t1);
     bool execution_allowed() const;
 
-    std::pair<int,int> incremental_evaluate_in_context(int R, int c);
+    std::pair<int,int> incremental_evaluate_in_context(int R, int c, bool reforce = false);
 
-    std::pair<int,int> incremental_evaluate(int R);
+    std::pair<int,int> incremental_evaluate(int R, bool reforce);
 private:  
-    std::pair<int,int> incremental_evaluate_(int R);
+    std::pair<int,int> incremental_evaluate_(int R, bool reforce);
     int incremental_evaluate_unchangeable_(int R);
 
 public:
@@ -512,7 +512,7 @@ public:
 
     const closure& lazy_evaluate(int& R);
 
-    const closure& lazy_evaluate(int& R, int c);
+    const closure& lazy_evaluate(int& R, int c, bool reforce = false);
 
     const closure& lazy_evaluate_head(int h, int c);
 
