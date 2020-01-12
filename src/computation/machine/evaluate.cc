@@ -83,14 +83,14 @@ class RegOperationArgs final: public OperationArgs
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
     int evaluate_reg(int r2)
         {
-            auto [_, value] = memory().incremental_evaluate(r2);
+            auto [_, value] = M.incremental_evaluate(r2);
             return value;
         }
 
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
     int evaluate_reg_force(int r2)
         {
-            auto [r3, value] = memory().incremental_evaluate(r2);
+            auto [r3, value] = M.incremental_evaluate(r2);
 
             if (M.reg_is_changeable(r3))
             {
