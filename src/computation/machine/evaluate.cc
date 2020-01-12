@@ -98,7 +98,7 @@ class RegOperationArgs final: public OperationArgs
             {
                 used_changeable = true;
                 if (first_eval)
-                    M.set_forced_input(r, r3);
+                    M.set_forced_reg(r, r3);
             }
 
             return value;
@@ -327,6 +327,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int r, bool reforce)
                     assert( not reg_has_call(r) );
                     assert( not reg_has_value(r) );
                     assert( regs[r].used_regs.empty() );
+                    assert( regs[r].forced_regs.empty() );
                     assert( steps[s].created_regs.empty() ); // Any allocations should have gone to sp
                     set_C( r, std::move(value) );
                     steps.reclaim_used(s);

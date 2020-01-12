@@ -602,7 +602,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	    o<<"];\n";
 	}
 
-	// forced_inputs
+	// forced_regs
 	for(int R2: C.forced_regs_for_reg(R))
 	{
 	    bool is_ref_edge_also = false;

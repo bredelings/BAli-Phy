@@ -167,6 +167,7 @@ void reg::clear()
     truncate(used_regs);
     truncate(forced_regs);
     truncate(used_by);
+    truncate(forced_by);
     truncate(called_by);
     created_by = {0,0};
     flags.reset();
@@ -179,6 +180,7 @@ void reg::check_cleared() const
     assert(used_regs.empty());
     assert(forced_regs.empty());
     assert(used_by.empty());
+    assert(forced_by.empty());
     assert(called_by.empty());
     assert(created_by.first == 0);
     assert(created_by.second == 0);
@@ -197,6 +199,8 @@ reg& reg::operator=(reg&& R) noexcept
 
     used_by = std::move( R.used_by );
 
+    forced_by = std::move( R.forced_by );
+
     called_by = std::move( R.called_by );
 
     created_by = std::move(R.created_by);
@@ -212,6 +216,7 @@ reg::reg(reg&& R) noexcept
      used_regs ( std::move(R.used_regs) ),
      forced_regs (std::move(R.forced_regs) ),
      used_by ( std::move( R.used_by) ),
+     forced_by ( std::move( R.forced_by) ),
      called_by ( std::move( R.called_by) ),
      created_by( std::move(R.created_by) ),
      flags ( R.flags )
@@ -869,7 +874,7 @@ void reg_heap::set_used_reg(int r1, int r2)
     assert(reg_is_used_by(r1,r2));
 }
 
-void reg_heap::set_forced_input(int r1, int r2)
+void reg_heap::set_forced_reg(int r1, int r2)
 {
     assert(reg_is_changeable(r2));
 
@@ -883,7 +888,14 @@ void reg_heap::set_forced_input(int r1, int r2)
     // So, we may as well forbid using an index_var as an input.
     assert(not expression_at(r2).is_index_var());
 
-    regs[r1].forced_regs.push_back(r2);
+    auto& R1 = regs[r1];
+    auto& R2 = regs[r2];
+    int back_index = R2.forced_by.size();
+    int forw_index = R1.forced_regs.size();
+    R2.forced_by.push_back({r1,forw_index});
+    R1.forced_regs.push_back({r2,back_index});
+
+    assert(reg_is_forced_by(r1,r2));
 }
 
 void reg_heap::set_call(int s1, int r2)
@@ -1103,8 +1115,8 @@ std::vector<int> reg_heap::forced_regs_for_reg(int r) const
     vector<int> U;
     if (not has_step(r)) return U;
 
-    for(int r: regs[r].forced_regs)
-        U.push_back(r);
+    for(const auto& [r2,_]: regs[r].forced_regs)
+        U.push_back(r2);
 
     return U;
 }
@@ -1342,6 +1354,15 @@ bool reg_heap::reg_is_used_by(int r1, int r2) const
     return false;
 }
 
+bool reg_heap::reg_is_forced_by(int r1, int r2) const
+{
+    for(auto& [r,_]: regs[r2].forced_by)
+        if (r == r1)
+            return true;
+
+    return false;
+}
+
 void reg_heap::check_tokens() const
 {
 #ifndef NDEBUG
@@ -1454,6 +1475,18 @@ void reg_heap::check_used_regs() const
             // so that this result can be invalidated, and the used result won't be GC-ed.
             // FIXME - nonlocal.  assert(is_modifiable(expression_at(R2)) or result_is_referenced(t,res2));
         }
+        for(const auto& [r2,_]: regs[r1].forced_regs)
+        {
+            // Used regs should have back-references to R
+            assert( reg_is_forced_by(r1, r2) );
+
+            // Used computations should be mapped computation for the current token, if we are at the root
+            assert(reg_is_changeable(r2));
+
+            // The used result should be referenced somewhere more root-ward
+            // so that this result can be invalidated, and the used result won't be GC-ed.
+            // FIXME - nonlocal.  assert(is_modifiable(expression_at(R2)) or result_is_referenced(t,res2));
+        }
     }
 
 }
@@ -1532,7 +1565,36 @@ void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
     }
 
 
-    // 2. When destroying a reg, remove edge from step[s] ---created_regs---> regs[r]
+    // 2. When destroying a reg, remove edge from regs[r] <---forced_by--- regs[r3]
+    assert(r > 0);
+    for(auto& forward: regs[r].forced_regs)
+    {
+        auto [r3,j] = forward;
+        if (regs.is_free(r3)) continue;
+        auto& backward = regs[r3].forced_by;
+        assert(0 <= j and j < backward.size());
+
+        forward = {0,0};
+
+        if (j+1 < backward.size())
+        {
+            // erase the backward edge by moving another backward edge on top of it.
+            backward[j] = backward.back();
+            auto [r2,i2] = backward[j];
+            // adjust the forward edge for that backward edge
+            auto& forward2 = regs[r2].forced_regs;
+            assert(0 <= i2 and i2 < forward2.size());
+            forward2[i2].second = j;
+
+            assert(regs[r2].forced_regs[i2].second == j);
+            assert(regs[forward2[i2].first].forced_by[forward2[i2].second].second == i2);
+        }
+
+        backward.pop_back();
+    }
+
+
+    // 3. When destroying a reg, remove edge from step[s] ---created_regs---> regs[r]
     if (not creator_survives) return;
 
     assert(r > 0);
@@ -1562,6 +1624,8 @@ void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
 void reg_heap::check_back_edges_cleared_for_reg(int r) const
 {
     for(auto& [_,index]: regs.access_unused(r).used_regs)
+        assert(index == 0);
+    for(auto& [_,index]: regs.access_unused(r).forced_regs)
         assert(index == 0);
 }
 
