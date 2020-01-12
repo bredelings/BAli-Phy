@@ -841,6 +841,52 @@ bool reg_heap::has_force(int r) const
     return prog_forces[r] > 0;
 }
 
+void reg_heap::force_reg(int r)
+{
+    assert(reg_is_changeable(r));
+    assert(has_step(r));
+    assert(has_result(r));
+    assert(not has_force(r));
+
+    int s = step_index_for_reg(r);
+
+    assert(reg_is_constant(steps[s].call) or reg_is_changeable(steps[s].call));
+    if (reg_is_changeable(steps[s].call))
+        assert(has_result(steps[s].call));
+
+    // We can't use a range-for here because regs[r] can be moved
+    // during the loop if we do evaluation.
+    for(int i=0; i < regs[r].used_regs.size(); i++)
+    {
+        auto [r2,_] = regs[r].used_regs[i];
+        if (not has_force(r2))
+            incremental_evaluate(r2, true);
+        assert(has_result(r2));
+        assert(has_force(r2));
+    }
+
+    for(int i=0; i < regs[r].forced_regs.size(); i++)
+    {
+        auto [r2,_] = regs[r].forced_regs[i];
+        if (not has_force(r2))
+            incremental_evaluate(r2, true);
+        assert(has_result(r2));
+        assert(has_force(r2));
+    }
+
+    assert(steps[s].call > 0);
+
+    // If R2 is WHNF then we are done
+    if (not reg_is_constant(steps[s].call))
+    {
+        if (not has_force(steps[s].call))
+            incremental_evaluate(steps[s].call, true);
+        assert(has_result(steps[s].call));
+        assert(has_force(steps[s].call));
+    }
+}
+
+
 int reg_heap::value_for_reg(int r) const 
 {
     assert(not expression_at(r).is_index_var());
