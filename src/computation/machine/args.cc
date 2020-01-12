@@ -135,7 +135,7 @@ optional<int> OperationArgs::find_random_variable_in_root_token(int r)
     // Warning: ABOMINATION!
     // FIXME: This should be forced by a `seq` inside the program.
     // But that probably requires force-edges to be working.
-    M.incremental_evaluate(r);
+    evaluate_reg(r);
 
     r = M.follow_index_var(r);
 
