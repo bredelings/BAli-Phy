@@ -75,6 +75,8 @@ void reg_heap::destroy_all_computations_in_token(int t)
     tokens[t].vm_step.clear();
 
     tokens[t].vm_result.clear();
+
+    tokens[t].vm_force.clear();
 }
 
 void reg_heap::release_tip_token(int t)
@@ -133,6 +135,7 @@ void reg_heap::release_tip_token(int t)
     // 4. Make sure the token is empty
     assert(tokens[t].vm_step.empty());
     assert(tokens[t].vm_result.empty());
+    assert(tokens[t].vm_force.empty());
 }
 
 // Given parent -> t1 -> t2 -> XXX, make t2 a child of parent instead of t1.
@@ -210,6 +213,17 @@ void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
         assert(tokens[t].type != token_type::set);
         tokens[t].type = token_type::merged;
     }
+
+    load_map(tokens[child_token].vm_force, prog_temp);
+    for(int t: knuckle_tokens)
+    {
+        assert(token_is_used(t));
+        assert(not tokens[t].is_referenced());
+        assert(tokens[t].children.size() == 1);
+
+        merge_split_mapping_(tokens[t].vm_force, tokens[child_token].vm_force, prog_temp);
+    }
+    unload_map(tokens[child_token].vm_force, prog_temp);
 
     load_map(tokens[child_token].vm_result, prog_temp);
     for(int t: knuckle_tokens)
@@ -530,6 +544,7 @@ int reg_heap::get_unused_token(token_type type)
     assert(tokens[t].children.empty());
     assert(tokens[t].vm_step.empty());
     assert(tokens[t].vm_result.empty());
+    assert(tokens[t].vm_force.empty());
     assert(not tokens[t].is_referenced());
 
     return t;
