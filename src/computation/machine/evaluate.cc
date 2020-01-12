@@ -74,6 +74,8 @@ class RegOperationArgs final: public OperationArgs
 
     const bool first_eval;
 
+    const bool reforce;
+
     const closure& current_closure() const {return memory().closure_stack.back();}
 
     bool evaluate_changeables() const {return true;}
@@ -81,14 +83,14 @@ class RegOperationArgs final: public OperationArgs
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
     int evaluate_reg(int r2)
         {
-            auto [_, value] = M.incremental_evaluate(r2);
+            auto [_, value] = M.incremental_evaluate(r2, reforce);
             return value;
         }
 
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
     int evaluate_reg_force(int r2)
         {
-            auto [r3, value] = M.incremental_evaluate(r2);
+            auto [r3, value] = M.incremental_evaluate(r2, reforce);
 
             if (M.reg_is_changeable(r3))
             {
@@ -104,7 +106,7 @@ class RegOperationArgs final: public OperationArgs
     int evaluate_reg_to_reg(int r2)
         {
             // Compute the value, and follow index_var chains (which are not changeable).
-            auto [r3, value] = M.incremental_evaluate(r2);
+            auto [r3, value] = M.incremental_evaluate(r2, reforce);
 
             // Note that although r2 is newly used, r3 might be already used if it was 
             // found from r2 through a non-changeable reg_var chain.
@@ -161,14 +163,14 @@ public:
 
     RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
-    RegOperationArgs(int r_, int s_, int sp_, reg_heap& m)
-        :OperationArgs(m), r(r_), s(s_), sp(sp_), first_eval(m.reg_is_unevaluated(r))
+    RegOperationArgs(int r_, int s_, int sp_, bool rf, reg_heap& m)
+        :OperationArgs(m), r(r_), s(s_), sp(sp_), first_eval(m.reg_is_unevaluated(r)), reforce(rf)
         { }
 };
 
 /// Evaluate r and look through index_var chains to return the first reg that is NOT a reg_var.
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not an reg_var.
-pair<int,int> reg_heap::incremental_evaluate(int r)
+pair<int,int> reg_heap::incremental_evaluate(int r, bool reforce)
 {
     assert(execution_allowed());
 
@@ -179,7 +181,7 @@ pair<int,int> reg_heap::incremental_evaluate(int r)
         regs.access(r).flags.set(3);
 #endif
     stack.push_back(r);
-    auto result = incremental_evaluate_(r);
+    auto result = incremental_evaluate_(r, reforce);
     stack.pop_back();
 #ifndef NDEBUG
     assert(regs.access(r).flags.test(3));
@@ -188,7 +190,7 @@ pair<int,int> reg_heap::incremental_evaluate(int r)
     return result;
 }
 
-pair<int,int> reg_heap::incremental_evaluate_(int r)
+pair<int,int> reg_heap::incremental_evaluate_(int r, bool reforce)
 {
     assert(regs.is_valid_address(r));
     assert(regs.is_used(r));
@@ -232,7 +234,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int r)
             if (int s = step_index_for_reg(r); s > 0)
             {
                 // Evaluate S, looking through unchangeable redirections
-                auto [call, value] = incremental_evaluate(steps[s].call);
+                auto [call, value] = incremental_evaluate(steps[s].call, reforce);
 
                 // If computation_for_reg(r).call can be evaluated to refer to S w/o moving through any changable operations, 
                 // then it should be safe to change computation_for_reg(r).call to refer to S, even if r is changeable.
@@ -259,7 +261,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int r)
         else if (reg_type == reg::type_t::index_var)
         {
             int r2 = closure_at(r).reg_for_index_var();
-            return incremental_evaluate(r2);
+            return incremental_evaluate(r2, reforce);
         }
         else
             assert(reg_type == reg::type_t::unevaluated);
@@ -282,7 +284,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int r)
             // Return the end of the index_var chain.
             // We used to update the index_var to point to the end of the chain.
 
-            return incremental_evaluate(r2);
+            return incremental_evaluate(r2, reforce);
         }
 
         // Check for WHNF *OR* heap variables
@@ -311,7 +313,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int r)
             try
             {
                 closure_stack.push_back( closure_at(r) );
-                RegOperationArgs Args(r, s, sp, *this);
+                RegOperationArgs Args(r, s, sp, reforce, *this);
                 auto O = expression_at(r).head().assert_is_a<Operation>()->op;
                 closure value = (*O)(Args);
                 closure_stack.pop_back();
@@ -345,7 +347,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int r)
                         assert(not has_step(r2));
                     }
 
-                    auto [call,value] = incremental_evaluate(r2);
+                    auto [call,value] = incremental_evaluate(r2, reforce);
                     closure_stack.pop_back();
 
                     set_call(s, call);
