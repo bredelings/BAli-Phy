@@ -310,11 +310,13 @@ public:
         bool is_referenced() const {assert(n_context_refs >= 0); return n_context_refs > 0;}
     
         /// Mapping from closures to steps/results
+        const auto& delta_force() const { return vm_force.delta(); }
         const auto& delta_result() const { return vm_result.delta(); }
         const auto& delta_step() const {return vm_step.delta(); }
 
         mapping<int> vm_result;
         mapping<int> vm_step;
+        mapping<char> vm_force;
 
         token_type type = token_type::none;
         bool used = false;
@@ -330,6 +332,7 @@ private:
 
     std::vector<int> prog_steps;
     std::vector<int> prog_results;
+    std::vector<char> prog_forces;
     mutable std::vector<std::bitset<8>> prog_temp;
 
     std::unordered_set<int> pending_effect_steps;
@@ -462,6 +465,7 @@ public:
     bool has_result(int r) const;
     bool reg_has_value(int r) const;
     int follow_index_var(int r) const;
+    bool has_force(int r) const;
     int result_for_reg(int r) const;
     bool reg_has_call(int r) const;
     int call_for_reg(int r) const;
