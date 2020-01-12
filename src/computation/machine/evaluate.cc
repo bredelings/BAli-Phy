@@ -359,9 +359,13 @@ pair<int,int> reg_heap::incremental_evaluate_(int r, bool reforce)
 
                     prog_steps[r] = s;
                     set_result_for_reg(r);
+                    if (Args.is_forced and (reg_is_constant(call) or has_force(call)))
+                        prog_forces[r] = 1;
+                    assert(not reforce or Args.is_forced);
                     if (not tokens[root_token].children.empty())
                     {
                         int t = tokens[root_token].children[0];
+                        tokens[t].vm_force.add_value(r, non_computed_index);
                         tokens[t].vm_result.add_value(r, non_computed_index);
                         tokens[t].vm_step.add_value(r, non_computed_index);
                     }
