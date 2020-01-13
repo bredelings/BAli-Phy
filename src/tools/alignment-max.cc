@@ -78,7 +78,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
 	("skip,s",value<unsigned>()->default_value(0),"Number of alignment samples to skip")
 	("max-alignments,m",value<int>()->default_value(1000),"Maximum number of alignments to analyze")
-	("analysis",value<string>()->default_value("wsum"),"sum, wsum, multiply")
+	("analysis",value<string>()->default_value("wsum"),"sum, wsum, wsum2, multiply")
 	("out,o",value<string>()->default_value("-"),"Output file (defaults to stdout)")
 	("out-probabilities,p",value<string>(),"Output file for column probabilities, if specified")
 	("verbose,v","Output more log messages on stderr.")
@@ -502,6 +502,8 @@ vector<double> MPD::get_score(int type) const
 	    score[i] *= n;
 	else if (type == 2)
 	    score[i] = log(score[i]);
+        else if (type == 3)
+            score[i] *= n*(n-1)/2;
     }
 
     return score;
@@ -649,6 +651,8 @@ int main(int argc,char* argv[])
 	    type = 1;
 	else if (analysis == "multiply")
 	    type = 2;
+        else if (analysis == "wsum2")
+            type = 3;
 	else
 	    throw myexception()<<"I don't recognize analysis type '"<<analysis<<"'.";
 
