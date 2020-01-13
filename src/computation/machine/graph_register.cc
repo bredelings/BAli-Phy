@@ -1413,28 +1413,46 @@ void reg_heap::check_used_regs_in_token(int t) const
             assert(step > 0);
     }
 
-    for(auto [r,result]: tokens[t].delta_result())
+    constexpr int force_bit = 2;
+    constexpr int result_bit = 0;
+    constexpr int step_bit = 1;
+
+    for(auto [r,result]: tokens[t].delta_force())
     {
         // Check that there are no duplicate regs.
-        assert(not prog_temp[r].test(0));
+        assert(not prog_temp[r].test(force_bit));
 
         // Mark the reg as having a result in the delta.
-        prog_temp[r].set(0);
+        prog_temp[r].set(force_bit);
 
         // No results for constant regs
         if (result > 0)
             assert(regs.access(r).type != reg::type_t::constant);
     }
+
+    for(auto [r,result]: tokens[t].delta_result())
+    {
+        // Check that there are no duplicate regs.
+        assert(not prog_temp[r].test(result_bit));
+
+        // Mark the reg as having a result in the delta.
+        prog_temp[r].set(result_bit);
+
+        // No results for constant regs
+        if (result > 0)
+            assert(regs.access(r).type != reg::type_t::constant);
+    }
+
     for(auto [r,step]: tokens[t].delta_step())
     {
         // Check that there are no duplicate regs.
-        assert(not prog_temp[r].test(1));
+        assert(not prog_temp[r].test(step_bit));
 
         // Mark the reg as having a step in the delta.
-        prog_temp[r].set(1);
+        prog_temp[r].set(step_bit);
 
         // If the step is unshared, the result must be unshared as well: this allows us to just walk unshared results.
-        assert(prog_temp[r].test(0) and prog_temp[r].test(1));
+        assert(prog_temp[r].test(result_bit) and prog_temp[r].test(step_bit));
         // No steps for constant regs
         if (step > 0)
             assert(regs.access(r).type != reg::type_t::constant);
@@ -1442,16 +1460,25 @@ void reg_heap::check_used_regs_in_token(int t) const
 
     // FIXME - nonlocal. The same result/step are not set in multiple places!
 
+    for(auto [reg,res]: tokens[t].delta_force())
+    {
+        prog_temp[reg].reset(force_bit);
+        prog_temp[reg].reset(result_bit);
+        prog_temp[reg].reset(step_bit);
+    }
+
     for(auto [reg,res]: tokens[t].delta_result())
     {
-        prog_temp[reg].reset(0);
-        prog_temp[reg].reset(1);
+        prog_temp[reg].reset(force_bit);
+        prog_temp[reg].reset(result_bit);
+        prog_temp[reg].reset(step_bit);
     }
 
     for(auto [reg,step]: tokens[t].delta_step())
     {
-        prog_temp[reg].reset(0);
-        prog_temp[reg].reset(1);
+        prog_temp[reg].reset(force_bit);
+        prog_temp[reg].reset(result_bit);
+        prog_temp[reg].reset(step_bit);
     }
 }
 
@@ -1477,6 +1504,31 @@ void reg_heap::check_used_regs() const
 
         if (not regs[r1].used_regs.empty())
             assert(reg_is_changeable(r1));
+
+        if (not regs[r1].forced_regs.empty())
+            assert(reg_is_changeable(r1));
+
+        if (not has_step(r1))
+        {
+            assert(not has_force(r1));
+            assert(not has_result(r1));
+        }
+
+        if (not has_result(r1))
+        {
+            assert(not has_force(r1));
+        }
+
+        if (has_force(r1))
+        {
+            for(auto r2: used_regs_for_reg(r1))
+                assert(has_force(r2));
+            for(auto r2: forced_regs_for_reg(r1))
+                assert(has_force(r2));
+            int call = step_for_reg(r1).call;
+            if (reg_is_changeable(call))
+                assert(has_force(call));
+        }
 
         for(const auto& [r2,_]: regs[r1].used_regs)
         {
