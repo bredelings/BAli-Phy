@@ -537,4 +537,21 @@ extern long total_comp_allocations;
 extern long total_reroot;
 extern long total_tokens;
 
+/// Inlined functions
+
+inline bool reg_heap::reg_is_constant(int r) const
+{
+    return regs.access(r).type == reg::type_t::constant;
+}
+
+inline bool reg_heap::reg_is_unevaluated(int r) const
+{
+    return regs.access(r).type == reg::type_t::unevaluated;
+}
+
+inline bool reg_heap::reg_is_changeable(int r) const
+{
+    return regs.access(r).type == reg::type_t::changeable;
+}
+
 #endif

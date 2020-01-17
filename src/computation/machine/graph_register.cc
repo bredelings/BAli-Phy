@@ -1305,21 +1305,6 @@ void reg_heap::resize(int s)
     }
 }
 
-bool reg_heap::reg_is_constant(int r) const
-{
-    return regs.access(r).type == reg::type_t::constant;
-}
-
-bool reg_heap::reg_is_changeable(int r) const
-{
-    return regs.access(r).type == reg::type_t::changeable;
-}
-
-bool reg_heap::reg_is_unevaluated(int r) const
-{
-    return regs.access(r).type == reg::type_t::unevaluated;
-}
-
 void reg_heap::make_reg_changeable(int r)
 {
     assert( regs.access(r).type == reg::type_t::changeable or regs.access(r).type == reg::type_t::unevaluated );
