@@ -657,7 +657,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	    }
 
 	    log_preburnin(out_both, *P, "(S)+(L)+(P)+Alignment", i);
-	    show_parameters(out_log, *P, false);
+	    show_parameters(out_log, *P);
 	}
 	out_both<<endl;
     }
@@ -679,7 +679,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	for(int i=0;i<n_pre_burnin;i++) {
 	    pre_burnin.iterate(P,Stats);
 	    log_preburnin(out_both, *P, "Tree (S)ize", i);
-	    show_parameters(out_log, *P, false);
+	    show_parameters(out_log, *P);
 	}
     }
     out_both<<endl;
@@ -699,7 +699,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	for(int i=0;i<n_pre_burnin;i++) {
 	    pre_burnin.iterate(P,Stats);
 	    log_preburnin(out_both, *P, "(S)+Branch (L)engths", i);
-	    show_parameters(out_log, *P, false);
+	    show_parameters(out_log, *P);
 	}
     }
     out_both<<endl;
@@ -720,7 +720,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	for(int i=0;i<n_pre_burnin;i++) {
 	    pre_burnin.iterate(P,Stats);
 	    log_preburnin(out_both, *P, "(S)+(L)+(P)arameters", i);
-	    show_parameters(out_log, *P, false);
+	    show_parameters(out_log, *P);
 	}
     }
     out_both<<endl;
@@ -742,7 +742,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	for(int i=0;i<n_pre_burnin2;i++) {
 	    pre_burnin.iterate(P,Stats);
 	    log_preburnin(out_both, *P, "(S)+(L)+(P)+NNI", i);
-	    show_parameters(out_log, *P, false);
+	    show_parameters(out_log, *P);
 	}
     }
     out_both<<endl;
@@ -762,7 +762,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	for(int i=0;i<1;i++) {
 	    pre_burnin.iterate(P,Stats);
 	    log_preburnin(out_both, *P, "SPR", i);
- 	    show_parameters(out_log, *P, false);
+ 	    show_parameters(out_log, *P);
 	}
 	out_both<<endl;
     }
@@ -783,7 +783,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	for(int i=0;i<n_pre_burnin;i++) {
 	    pre_burnin.iterate(P,Stats);
 	    log_preburnin(out_both, *P, "(S)+(L)+(P)+NNI", i);
-	    show_parameters(out_log, *P, false);
+	    show_parameters(out_log, *P);
 	}
     }
     out_both<<endl;
@@ -817,7 +817,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	for(int i=0;i<n_pre_burnin;i++)
 	{
 	    log_preburnin(out_both, *P, "SPR+A (training)", i);
-	    show_parameters(out_log,*P,false);
+	    show_parameters(out_log,*P);
 	    pre_burnin.iterate(P,Stats);
 	}
 
@@ -829,7 +829,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	for(int i=0;i<n_pre_burnin;i++)
 	{
 	    log_preburnin(out_both, *P, "SPR+A", i);
-	    show_parameters(out_log,*P,false);
+	    show_parameters(out_log,*P);
 	    pre_burnin.iterate(P,Stats);
 	}
 
