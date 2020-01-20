@@ -92,7 +92,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("sort,S","Sort partially ordered columns to group similar gaps.")
 	("show-lengths,L","Just print out sequence lengths.")
 	("show-names,N","Just print out sequence lengths.")
-	("find-dups,F", value<string>(),"For each sequence, find the closest other sequence.");
+	("find-dups,F", value<string>(),"For each sequence, find the closest other sequence.")
+        ;
 
     // positional options
     positional_options_description p;
