@@ -133,6 +133,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("histogram",value<int>(),"Output SNP counts for blocks of arg bases")
         ("snp-snp-lengths",value<int>(),"Output counts of snp-snp\nlengths up to arg snps")
         ("sfs2d",value<string>(),"pop1:pop2:anc:window")
+        ("find-alleles",value<string>(), "Find alleles with S snps in L bases and count >= N")
+        ("consensus-seqs",value<string>(), "sequences to use in consensus")
 	;
 
     // positional options
@@ -926,6 +928,23 @@ vector<int> allele_counts(const alignment& A, int col)
     return counts;
 }
 
+vector<int> allele_counts_with_gap(const alignment& A, int col)
+{
+    auto& a = A.get_alphabet();
+    vector<int> counts(a.size()+1, 0);
+    const int gap = a.size();
+    for(int i=0;i<A.n_sequences();i++)
+    {
+	auto c = A(col,i);
+	if (a.is_letter(c))
+	    counts[c]++;
+        else if (c == alphabet::gap)
+            counts[gap]++;
+        // Could be N!
+    }
+    return counts;
+}
+
 vector<int> allele_counts(const alignment& A, int col, const vector<int>& seqs)
 {
     auto& a = A.get_alphabet();
@@ -935,6 +954,22 @@ vector<int> allele_counts(const alignment& A, int col, const vector<int>& seqs)
 	auto c = A(col,i);
 	if (a.is_letter(c))
 	    counts[c]++;
+    }
+    return counts;
+}
+
+vector<int> allele_counts_with_gap(const alignment& A, int col, const vector<int>& seqs)
+{
+    auto& a = A.get_alphabet();
+    vector<int> counts(a.size()+1, 0);
+    int gap = a.size();
+    for(int i:seqs)
+    {
+	auto c = A(col,i);
+	if (a.is_letter(c))
+	    counts[c]++;
+        else
+            counts[gap]++;
     }
     return counts;
 }
@@ -977,6 +1012,33 @@ int largest_minor_allele_count(const alignment& A, int col)
 	    m2 = count;
     }
     return m2;
+}
+
+vector<int> get_consensus(const alignment& A, const vector<int>& seqs)
+{
+    auto& a = A.get_alphabet();
+    int gap = a.size();
+
+    vector<int> consensus(A.length(), alphabet::unknown);
+
+    for(int col=0; col < A.length(); col++)
+    {
+        auto counts = allele_counts_with_gap(A, col, seqs);
+
+        if (counts[gap]*2 > seqs.size())
+            consensus[col] = gap;
+        else
+        {
+            for(int letter = 0; letter < a.size(); letter++)
+                if (counts[letter]*2 > seqs.size())
+                    consensus[col] = letter;
+
+            if (consensus[col] == alphabet::unknown)
+                consensus[col] == alphabet::not_gap;
+        }
+    }
+
+    return consensus;
 }
 
 vector<pair<int,int>> get_non_zero_allele_counts2(const alignment& A, int col, const vector<int>& seqs)
@@ -1288,6 +1350,54 @@ vector<pair<int,int>> get_snp_positions(const alignment& A, int i, int j)
     return positions;
 }
 
+vector<pair<int,int>> get_snp_positions_versus_consensus(const alignment& A, const vector<int> consensus, int i)
+{
+    auto& a = A.get_alphabet();
+
+    vector<pair<int,int>> positions;
+
+    int i_pos=0;
+    int ref_pos=0;
+    for(int c=0;c<A.length();c++)
+    {
+        int li = A(c,i);
+        int lc = consensus[c];
+        if (a.is_letter(li) and a.is_letter(lc) and li != lc)
+            positions.push_back({ref_pos,i_pos});
+
+        if (not A.gap(c,i))
+            i_pos++;
+        if (not A.gap(c,0))
+            ref_pos++;
+    }
+
+    return positions;
+}
+
+void find_alleles(const vector<int>& consensus, const alignment& A, int n_snps, int L, int min_count)
+{
+    assert(consensus.size() == A.length());
+    assert(n_snps > 1);
+    assert(L > 1);
+    assert(min_count > 0);
+
+    /*
+     * OK, so we could go find all the alleles in sequence i that have n_snps in L bases.
+     * But how do we check the count?
+     * Also, ideally we would allow finding a few extra SNPs in some of the sequences -- maybe no back-mutations though.
+     */
+
+    /*
+     * So... if we find (say) 2 SNPs in 2 bases, we might want to mask, count or not.
+     * Likewise if we find (say) 5 snps in 20 bases.
+     */
+
+    /*
+     *  However, if we find (say) 3 SNPs in 50 bases... we might want to determine the couNT.
+     */
+}
+
+
 int main(int argc,char* argv[]) 
 { 
     try {
@@ -1456,6 +1566,26 @@ int main(int argc,char* argv[])
 	    // 3. Alter the alignment
 	    remove_and_mask_columns(A, [&gaps](int c){return gaps[c];});
 	}
+
+	if (args.count("find-alleles"))
+        {
+            string range = args.count("consensus-seqs") ? args["consensus-seqs"].as<string>() : "-";
+
+            auto consensus_seqs1 = parse_multi_range(range, A.n_sequences());
+
+            auto consensus1 = get_consensus(A, consensus_seqs1);
+
+            auto find_args = split(args["find-alleles"].as<string>(),':');
+            if (args.size() < 3)
+                throw myexception()<<"argument to --find-alleles only has "<<args.size()<<" colon-separate elements.";
+            int n_snps = convertTo<int>(find_args[0]);
+            int L = convertTo<int>(find_args[1]);
+            int min_count = convertTo<int>(find_args[2]);
+
+            find_alleles(consensus1, A, n_snps, L, min_count);
+            exit(0);
+        }
+
 
         if (args.count("snp-snp-lengths"))
         {
