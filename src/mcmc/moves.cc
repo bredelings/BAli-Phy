@@ -567,7 +567,9 @@ void walk_tree_sample_alignments(owned_ptr<Model>& P, MoveStats& Stats)
                     sample_tri_one(P,Stats,b);
             }
             else
-                ; // sample_parameter_and_alignment_on_branch(P,Stats,b);
+            {
+                // sample_parameter_and_alignment_on_branch(P,Stats,b);
+            }
         }
         else
             sample_alignments_one(P,Stats,b);

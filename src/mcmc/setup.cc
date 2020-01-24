@@ -176,7 +176,7 @@ bool all_scales_modifiable(const context_ref& M)
     return true;
 }
 
-void add_alignment_and_parameter_moves(MCMC::MoveAll& moves, context_ref& M, double weight = 1.0, double enabled = true)
+void add_alignment_and_parameter_moves(MCMC::MoveAll& /*moves*/, context_ref& M, double /*weight*/ = 1.0, double /*enabled*/ = true)
 {
     if (not dynamic_cast<const Parameters*>(&M)) return;
     /* 
