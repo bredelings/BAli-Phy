@@ -1034,8 +1034,12 @@ vector<int> get_consensus(const alignment& A, const vector<int>& seqs)
             consensus[col] = gap;
         else
         {
+            int total_non_gap = 0;
             for(int letter = 0; letter < a.size(); letter++)
-                if (counts[letter]*2 > seqs.size())
+                total_non_gap++;
+
+            for(int letter = 0; letter < a.size(); letter++)
+                if (counts[letter]*2 > total_non_gap)
                     consensus[col] = letter;
 
             if (consensus[col] == alphabet::unknown)
