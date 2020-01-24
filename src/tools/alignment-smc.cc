@@ -45,6 +45,11 @@
 #include "util/matrix.H"
 #include "util/io/matrix.H"
 
+#include "range/v3/all.hpp"
+namespace view = ranges::view;
+namespace action = ranges::action;
+
+
 using std::vector;
 using std::valarray;
 using std::set;
@@ -1034,7 +1039,7 @@ vector<int> get_consensus(const alignment& A, const vector<int>& seqs)
                     consensus[col] = letter;
 
             if (consensus[col] == alphabet::unknown)
-                consensus[col] == alphabet::not_gap;
+                consensus[col] = alphabet::not_gap;
         }
     }
 
@@ -1350,7 +1355,7 @@ vector<pair<int,int>> get_snp_positions(const alignment& A, int i, int j)
     return positions;
 }
 
-vector<pair<int,int>> get_snp_positions_versus_consensus(const alignment& A, const vector<int> consensus, int i)
+vector<pair<int,int>> get_snps_versus_consensus(const alignment& A, const vector<int> consensus, int i)
 {
     auto& a = A.get_alphabet();
 
@@ -1363,7 +1368,7 @@ vector<pair<int,int>> get_snp_positions_versus_consensus(const alignment& A, con
         int li = A(c,i);
         int lc = consensus[c];
         if (a.is_letter(li) and a.is_letter(lc) and li != lc)
-            positions.push_back({ref_pos,i_pos});
+            positions.push_back({ref_pos, lc});
 
         if (not A.gap(c,i))
             i_pos++;
@@ -1373,28 +1378,93 @@ vector<pair<int,int>> get_snp_positions_versus_consensus(const alignment& A, con
 
     return positions;
 }
+/*
+//using boost::hash_combine
+template <class T>
+inline void hash_combine(std::size_t& seed, T const& v)
+{
+    seed ^= std::hash<T>()(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
 
-void find_alleles(const vector<int>& consensus, const alignment& A, int n_snps, int L, int min_count)
+namespace std
+{
+    template<typename T>
+    struct hash<vector<T>>
+    {
+        typedef vector<T> argument_type;
+        typedef std::size_t result_type;
+        result_type operator()(argument_type const& in) const
+        {
+            size_t size = in.size();
+            size_t seed = 0;
+            for (size_t i = 0; i < size; i++)
+                //Combine the hash of the current vector with the hashes of the previous ones
+                hash_combine(seed, in[i]);
+            return seed;
+        }
+    };
+
+    template <class T1, class T2>
+    struct hash<pair<T1,T2>>
+    {
+        std::size_t operator()(const pair<T1,T2>& p) const noexcept
+        {
+            return std::hash<T1>()(p.first) ^ std::hash<T2>()(p.second);
+        }
+    };
+}
+*/
+void find_alleles(const vector<int>& consensus, const alignment& A, int n_snps, int L_max, int min_count, const vector<int>& seqs)
 {
     assert(consensus.size() == A.length());
     assert(n_snps > 1);
     assert(L > 1);
     assert(min_count > 0);
 
-    /*
-     * OK, so we could go find all the alleles in sequence i that have n_snps in L bases.
-     * But how do we check the count?
-     * Also, ideally we would allow finding a few extra SNPs in some of the sequences -- maybe no back-mutations though.
-     */
+    typedef vector<pair<int,int>> allele_t;
 
-    /*
-     * So... if we find (say) 2 SNPs in 2 bases, we might want to mask, count or not.
-     * Likewise if we find (say) 5 snps in 20 bases.
-     */
+    // 1. Find alleles that satisfy n_snps SNPs in L_max bases, and record the count;
 
-    /*
-     *  However, if we find (say) 3 SNPs in 50 bases... we might want to determine the couNT.
-     */
+    std::map<allele_t, int> allele_count;
+    for(int seq_index: seqs)
+    {
+        // The position here is versus the reference (sequence 0).
+        auto snps = get_snps_versus_consensus(A, consensus, seq_index);
+
+        for(int snp_index=0; snp_index<(int)snps.size()-n_snps; snp_index++)
+        {
+            int L = snps[snp_index+n_snps-1].first - snps[snp_index].first;
+
+            if (L > L_max) continue;
+
+            allele_t allele(n_snps);
+            for(int j=0;j<n_snps;j++)
+                allele[j] = snps[snp_index+j];
+
+            if (allele_count.count(allele))
+                allele_count[allele] += 1;
+            else
+                allele_count[allele] = 1;
+        }
+    }
+
+    // 2. Sort alleles by their genomic position
+    vector<pair<allele_t,int>> alleles;
+    for(auto& ac : allele_count)
+        if (ac.second >= min_count)
+            alleles.push_back(ac);
+
+    ranges::sort(alleles, {}, [](auto& x){return x.first[0].first;});
+
+    // 3. 
+    std::cout<<"count"<<"\t"<<"start"<<"\t"<<"length"<<"\n";
+    for(auto& [allele, count]: alleles)
+    {
+        // Add 1 to the position, because it is stored as 0-based.
+        int start = allele[0].first+1;
+        int length = allele.back().first - allele[0].first+1;
+        std::cout<<count<<"\t"<<start<<"\t"<<length<<"\n";
+    }
 }
 
 
@@ -1582,7 +1652,7 @@ int main(int argc,char* argv[])
             int L = convertTo<int>(find_args[1]);
             int min_count = convertTo<int>(find_args[2]);
 
-            find_alleles(consensus1, A, n_snps, L, min_count);
+            find_alleles(consensus1, A, n_snps, L, min_count, consensus_seqs1);
             exit(0);
         }
 
