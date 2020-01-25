@@ -25,7 +25,7 @@ Binds::Binds(const std::initializer_list<Decl>& decls)
     :Box<vector<Decl>>(decls)
 { }
 
-std::string EmptyStmt::print() const {return "";};
+std::string EmptyStmt::print() const {return "";}
 
 std::string PatQual::print() const
 {
