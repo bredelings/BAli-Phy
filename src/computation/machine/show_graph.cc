@@ -6,7 +6,6 @@
 #include "computation/expression/case.H"
 #include "computation/expression/modifiable.H"
 #include "computation/expression/reg_var.H"
-#include "computation/expression/parameter.H"
 #include "computation/expression/random_variable.H"
 #include "computation/expression/expression.H" // for launchbury_unnormalize( )
 #include "util/set.H"
@@ -290,7 +289,7 @@ expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& 
 	{
 	    auto loc = ids.find(E.as_<reg_var>().target);
 	    if (loc != ids.end())
-		return parameter(loc->second);  // Use parameter for everything, even dummies, to avoid checks on legal variable names.
+		return var(loc->second);  // Using var( ) here used to cause a problem if the name is not a legal Haskell identifier.
 	    else
 		return E;
 	}
