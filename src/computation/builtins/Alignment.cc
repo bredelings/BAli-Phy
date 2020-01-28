@@ -6,11 +6,15 @@
 #include "computation/expression/constructor.H"
 #include <boost/dynamic_bitset.hpp>
 #include "alignment/alignment.H"
+#include "sequence/sequence-format.H"
 #include "dp/2way.H"
 #include "models/site-compression.H"
 
+using std::string;
+using std::vector;
+
 // #include "alignment/alignment-util.H"
-std::vector<int> alignment_row_counts(const alignment& A, int i, const std::vector<int>& counts);
+vector<int> alignment_row_counts(const alignment& A, int i, const vector<int>& counts);
 
 
 extern "C" closure builtin_function_flip_alignment(OperationArgs& Args)
@@ -91,8 +95,6 @@ extern "C" closure builtin_function_transition_counts(OperationArgs& Args)
 
     return counts;
 }
-
-using std::vector;
 
 extern "C" closure builtin_function_rs07_lengthp(OperationArgs& Args)
 {
@@ -356,11 +358,24 @@ extern "C" closure builtin_function_load_alignment(OperationArgs& Args)
     auto arg0 = Args.evaluate(0);
     auto& a = arg0.as_checked<alphabet>();
 
-    std::string filename = Args.evaluate(1).as_checked<String>();
+    string filename = Args.evaluate(1).as_checked<String>();
 
     object_ptr<Box<alignment>> A(new Box<alignment>(a,filename));
 
     return A;
+}
+
+extern "C" closure builtin_function_load_sequences(OperationArgs& Args)
+{
+    string filename = Args.evaluate(0).as_checked<String>();
+
+    auto sequences_ = sequence_format::load_from_file(filename);
+
+    EVector sequences(sequences_.size());
+    for(int i=0;i<sequences.size();i++)
+        sequences[i] = std::move(sequences_[i]);
+
+    return sequences;
 }
 
 extern "C" closure builtin_function_sequences_from_alignment(OperationArgs& Args)
@@ -402,7 +417,7 @@ extern "C" closure builtin_function_reorder_alignment(OperationArgs& Args)
     auto arg1 = Args.evaluate(1);
     auto& A1 = arg1.as_<Box<alignment>>().value();
 
-    vector<std::string> sequence_names;
+    vector<string> sequence_names;
     for(auto& name: names)
         sequence_names.push_back(name.as_<String>());
 

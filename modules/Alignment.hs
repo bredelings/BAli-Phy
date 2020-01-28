@@ -12,6 +12,7 @@ builtin alignment_length 1 "alignment_length" "Alignment"
 -- Alignment -> Int -> EVector Int-> EVector (EVector Int)
 builtin builtin_leaf_sequence_counts 3 "leaf_sequence_counts" "Alignment"
 
+builtin builtin_load_sequences 1 "load_sequences" "Alignment"
 builtin builtin_load_alignment 2 "load_alignment" "Alignment"
 
 builtin builtin_alignment_row_to_bitvector 2 "alignment_row_to_presence_bitvector" "Bits"
@@ -28,6 +29,8 @@ builtin builtin_sequence_names 1 "sequence_names" "Alignment"
 sequence_names a = map unpack_cpp_string $ list_from_vector $ builtin_sequence_names a
 builtin builtin_reorder_alignment 2 "reorder_alignment" "Alignment"
 reorder_alignment names a = builtin_reorder_alignment names' a where names' = list_to_vector $ map pack_cpp_string names
+
+load_sequences filename = builtin_load_sequences (list_to_string filename)
 
 load_alignment alphabet filename = builtin_load_alignment alphabet (list_to_string filename)
 
