@@ -1406,6 +1406,7 @@ std::string generate_atmodel_program(int n_partitions,
     program_file<<"module Main where";
     for(auto& mod: imports)
         program_file<<"\nimport "<<mod;
+    program_file <<"\nimport qualified Data.Map as Map"; // for Map.fromList
 
     // F1. Substitution models
     for(int i=0;i<SMs.size();i++)
@@ -1528,6 +1529,27 @@ std::string generate_atmodel_program(int n_partitions,
     // P6. Create objects for data partitions
     vector<expression_ref> partitions;
     vector<expression_ref> leaf_sequences;
+
+    // Emit filenames var
+    var filenames_var("filenames");
+    {
+        set<string> filenames;
+        for(auto& [filename,_]: filename_ranges)
+            filenames.insert(filename);
+        vector<expression_ref> filenames_;
+        for(auto& filename: filenames)
+            filenames_.push_back(String(filename));
+        program.let(filenames_var,get_list(filenames_));
+    }
+
+    var filename_to_seqs("filename_to_seqs");
+    {
+        expression_ref body = Tuple(var("filename"),{var("load_sequences"),var("filename")});
+        vector<expression_ref> quals = { PatQual(var("filename"),filenames_var) };
+        program.let(filename_to_seqs,{var("Map.fromList"), list_comprehension( body, quals)});
+    }
+    program.empty_stmt();
+
     for(int i=0; i < n_partitions; i++)
     {
         string part = std::to_string(i+1);
@@ -1539,15 +1561,16 @@ std::string generate_atmodel_program(int n_partitions,
         var alphabet_var("alphabet_part"+part);
         program.let(alphabet_var, alphabet_exps[i]);
         var alignment_var("alignment_part"+part);
+        expression_ref load_alignment = {var("alignment_from_sequences"), alphabet_var, {var("Map.!"),filename_to_seqs,String(filename_ranges[i].first)}};
         if (i==0)
         {
-            program.let(alignment_var, {var("load_alignment"), alphabet_var, String(filename_ranges[i].first)});
+            program.let(alignment_var, load_alignment);
             program.let(sequence_names_var, {var("Alignment.builtin_sequence_names"),alignment_var});
         }
         else
         {
             // This is using EVector String instead of [[Char]] for the sequence names!
-            program.let(alignment_var, {var("builtin_reorder_alignment"),sequence_names_var,{var("load_alignment"), alphabet_var, String(filename_ranges[i].first)}});
+            program.let(alignment_var, {var("builtin_reorder_alignment"),sequence_names_var,load_alignment});
         }
 
         // L1. scale_P ...
