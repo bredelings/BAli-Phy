@@ -58,12 +58,19 @@ template <typename T>
 using Bounds = Box<bounds<T>>;
 
 /// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
+void add_modifiable_MH_move(const context_ref& P, const string& name, const proposal_fn& proposal, int rv, const vector<double>& parameters,
+                            MCMC::MoveAll& M, double weight=1)
+{
+    auto r_mod = P.get_modifiable_reg(rv);
+    M.add(weight, MCMC::MH_Move( Proposal2M(proposal, *r_mod, parameters), name) );
+}
+
+/// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
 void add_random_variable_MH_move(const context_ref& P, const string& name, const proposal_fn& proposal, int rv, const vector<double>& parameters,
 				 MCMC::MoveAll& M, double weight=1)
 {
     double rate = P.get_rate_for_random_variable(rv);
-    auto r_mod = P.get_modifiable_reg(rv);
-    M.add(rate * weight, MCMC::MH_Move( Proposal2M(proposal, *r_mod, parameters), name) );
+    add_modifiable_MH_move(P, name, proposal, rv, parameters, M, rate * weight);
 }
 
 double default_sampling_rate(const context_ref& /*M*/, const string& /*parameter_name*/)
@@ -71,7 +78,15 @@ double default_sampling_rate(const context_ref& /*M*/, const string& /*parameter
     return 1.0;
 }
 
-bool add_slice_move(const context_ref& P, int rv, MCMC::MoveAll& M, double weight = 1.0)
+bool add_modifiable_slice_move(int rv, const Bounds<double>& bounds, MCMC::MoveAll& M, double weight = 1.0)
+{
+    string name = "m_real_"+convertToString<int>(rv);
+
+    M.add( weight, MCMC::Random_Variable_Slice_Move(name, rv, bounds, 1.0) );
+    return true;
+}
+
+bool add_random_variable_slice_move(const context_ref& P, int rv, MCMC::MoveAll& M, double weight = 1.0)
 {
     double rate = P.get_rate_for_random_variable(rv);
     auto range = P.get_range_for_random_variable(rv);
@@ -80,8 +95,7 @@ bool add_slice_move(const context_ref& P, int rv, MCMC::MoveAll& M, double weigh
     auto& bounds = range.as_<Bounds<double>>();
     string name = "m_real_"+convertToString<int>(rv);
 
-    M.add( rate * weight, MCMC::Random_Variable_Slice_Move(name, rv, bounds, 1.0) );
-    return true;
+    return add_modifiable_slice_move(rv, bounds, M, weight * rate);
 }
 
 void add_boolean_MH_moves(const context_ref& P, MCMC::MoveAll& M, double weight = 1.0)
@@ -102,7 +116,7 @@ void add_boolean_MH_moves(const context_ref& P, MCMC::MoveAll& M, double weight 
 void add_real_slice_moves(const context_ref& P, MCMC::MoveAll& M, double weight = 1.0)
 {
     for(int rv: P.random_variables())
-	add_slice_move(P, rv, M, weight);
+	add_random_variable_slice_move(P, rv, M, weight);
 }
 
 /// Find parameters with distribution name Dist
@@ -159,18 +173,19 @@ void add_integer_slice_moves(const context_ref& P, MCMC::MoveAll& M, double weig
     }
 }
 
-optional<int> scale_is_random_variable(const context_ref& M, int s)
+optional<int> scale_is_modifiable(const context_ref& M, int s)
 {
     auto& P = dynamic_cast<const Parameters&>(M);
-    return P.branch_scale(s).is_random_variable(M);
+    return P.branch_scale(s).is_modifiable(M);
 }
 
 bool all_scales_modifiable(const context_ref& M)
 {
+    return false;
     auto& P = dynamic_cast<const Parameters&>(M);
 
     for(int s=0;s<P.n_branch_scales();s++)
-	if (not scale_is_random_variable(M,s))
+	if (not scale_is_modifiable(M,s))
 	    return false;
 
     return true;
@@ -239,10 +254,10 @@ MCMC::MoveAll get_parameter_MH_moves(context_ref& M)
 
     if (Parameters* P = dynamic_cast<Parameters*>(&M))
 	for(int i=0;i<P->n_branch_scales();i++)
-	    if (auto r = scale_is_random_variable(M, i))
+	    if (auto r = scale_is_modifiable(M, i))
 	    {
 		string name = "scale_scale_"+convertToString<int>(i+1);
-		add_random_variable_MH_move(M, name, log_scaled(Between(-20,20,shift_cauchy)),    *r, {1.0}, MH_moves);
+		add_modifiable_MH_move(M, name, log_scaled(Between(-20,20,shift_cauchy)),    *r, {1.0}, MH_moves);
 	    }
 
 
@@ -289,8 +304,8 @@ MCMC::MoveAll get_scale_slice_moves(Parameters& P)
 {
     MCMC::MoveAll slice_moves("parameters:scale:MH");
     for(int i=0;i<P.n_branch_scales();i++)
-	if (auto r = scale_is_random_variable(P,i))
-	    add_slice_move(P, *r, slice_moves);
+	if (auto r = scale_is_modifiable(P,i))
+	    add_modifiable_slice_move(*r, lower_bound<double>(0), slice_moves);
 
     return slice_moves;
 }
@@ -307,8 +322,8 @@ MCMC::MoveAll get_parameter_slice_moves(context_ref& M)
     {
 	// scale parameters - do we need this?
 	for(int i=0;i<P->n_branch_scales();i++)
-	    if (auto r = scale_is_random_variable(M,i))
-		add_slice_move(*P, *r, slice_moves);
+	    if (auto r = scale_is_modifiable(M,i))
+		add_modifiable_slice_move(*r, lower_bound<double>(0), slice_moves);
 
 	if (all_scales_modifiable(M))
 	    slice_moves.add(2,MCMC::Scale_Means_Only_Slice_Move("scale_Scales_only_slice",0.6));
