@@ -13,6 +13,7 @@ builtin alignment_length 1 "alignment_length" "Alignment"
 builtin builtin_leaf_sequence_counts 3 "leaf_sequence_counts" "Alignment"
 
 builtin builtin_load_sequences 1 "load_sequences" "Alignment"
+builtin builtin_select_range 2 "select_range" "Alignment"
 builtin builtin_load_alignment 2 "load_alignment" "Alignment"
 builtin alignment_from_sequences 2 "alignment_from_sequences" "Alignment"
 
@@ -34,6 +35,7 @@ reorder_alignment names a = builtin_reorder_alignment names' a where names' = li
 load_sequences filename = builtin_load_sequences (list_to_string filename)
 
 load_alignment alphabet filename = builtin_load_alignment alphabet (list_to_string filename)
+select_range range sequences = builtin_select_range (list_to_string range) sequences
 
 -- sequence_from_alignment :: AlignmentMatrix -> [ Vector<int> ]
 builtin builtin_sequences_from_alignment 1 "sequences_from_alignment" "Alignment"

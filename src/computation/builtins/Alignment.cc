@@ -9,7 +9,7 @@
 #include "sequence/sequence-format.H"
 #include "dp/2way.H"
 #include "models/site-compression.H"
-
+#include "util/cmdline.H"
 using std::string;
 using std::vector;
 
@@ -376,6 +376,38 @@ extern "C" closure builtin_function_load_sequences(OperationArgs& Args)
         sequences[i] = new Box<sequence>(sequences_[i]);
 
     return sequences;
+}
+
+extern "C" closure builtin_function_select_range(OperationArgs& Args)
+{
+    string range = Args.evaluate(0).as_checked<String>();
+
+    auto arg1 = Args.evaluate(1);
+    auto& sequences = arg1.as_<EVector>();
+
+    // 1. Get maximum length
+    int L = 0;
+    for(auto& s: sequences)
+	L = std::max<int>(L, s.as_<Box<sequence>>().size());
+
+    // 2. Find columns
+    vector<int> columns = parse_multi_range(range, L);
+
+    EVector sequences2;
+    for(auto& e: sequences)
+    {
+        auto& s = e.as_<Box<sequence>>();
+        // unshare
+        auto s2 = new Box<sequence>(s);
+        // make empty
+        s2->string::operator=("");
+	for(int col : columns)
+            if (col < s.size())
+                (*s2) += s[col];
+        sequences2.push_back(s2);
+    }
+
+    return sequences2;
 }
 
 extern "C" closure builtin_function_alignment_from_sequences(OperationArgs& Args)
