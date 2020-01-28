@@ -1561,16 +1561,20 @@ std::string generate_atmodel_program(int n_partitions,
         var alphabet_var("alphabet_part"+part);
         program.let(alphabet_var, alphabet_exps[i]);
         var alignment_var("alignment_part"+part);
-        expression_ref load_alignment = {var("alignment_from_sequences"), alphabet_var, {var("Map.!"),filename_to_seqs,String(filename_ranges[i].first)}};
+        expression_ref loaded_sequences = {var("Map.!"),filename_to_seqs,String(filename_ranges[i].first)};
+        if (not filename_ranges[i].second.empty())
+            loaded_sequences = {var("select_range"), String(filename_ranges[i].second), loaded_sequences};
+        expression_ref loaded_alignment = {var("alignment_from_sequences"), alphabet_var, loaded_sequences};
+
         if (i==0)
         {
-            program.let(alignment_var, load_alignment);
+            program.let(alignment_var, loaded_alignment);
             program.let(sequence_names_var, {var("Alignment.builtin_sequence_names"),alignment_var});
         }
         else
         {
             // This is using EVector String instead of [[Char]] for the sequence names!
-            program.let(alignment_var, {var("builtin_reorder_alignment"),sequence_names_var,load_alignment});
+            program.let(alignment_var, {var("builtin_reorder_alignment"),sequence_names_var,loaded_alignment});
         }
 
         // L1. scale_P ...
