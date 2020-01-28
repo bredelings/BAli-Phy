@@ -38,7 +38,7 @@ struct EmptyStmt: public Stmt
     std::string print() const;
 };
 
-struct PatQual: public Object
+struct PatQual: public Stmt
 {
     expression_ref bindpat;
     expression_ref exp;
@@ -86,6 +86,10 @@ struct Rec: public Stmt
     Rec(const Stmts&);
 };
 
+// A Qual
+// A stmt is either a Rec or a Qual
+// Probably we should make a variant, instead of a base class.
+
 class do_block: public Object
 {
     Stmts stmts;
@@ -120,6 +124,17 @@ public:
     std::pair<expression_ref, expression_ref> bind_model(const std::string& prefix, const expression_ref& model);
 
     expression_ref bind_and_log_model(const std::string& prefix, const expression_ref& model, std::vector<expression_ref>& loggers, bool do_log = true);
+};
+
+class list_comprehension: public Object
+{
+    expression_ref body;
+    std::vector<expression_ref> quals;
+public:
+    list_comprehension* clone() const {return new list_comprehension(*this);}
+
+    std::string print() const;
+    list_comprehension(const expression_ref& b, const std::vector<expression_ref>& qs);
 };
 
 expression_ref logger(const std::string& prefix, const expression_ref& x, const expression_ref& x_loggers, bool do_log = true);

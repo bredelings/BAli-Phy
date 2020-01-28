@@ -150,3 +150,16 @@ expression_ref do_block::bind_and_log_model(const string& prefix, const expressi
         loggers.push_back(l);
     return x;
 }
+
+string list_comprehension::print() const
+{
+    vector<string> qual_strings;
+    for(auto& qual: quals)
+        qual_strings.push_back(qual.print());
+    return "[" + body.print() + " | " + join(qual_strings,", ") + "]";
+}
+
+list_comprehension::list_comprehension(const expression_ref& b, const vector<expression_ref>& qs)
+    :body(b), quals(qs)
+{
+}
