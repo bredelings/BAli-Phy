@@ -1,6 +1,6 @@
 module Data.Map where
 
-import Prelude hiding (filter,foldl,foldr,null,map,take,drop,splitAt,elems,lookup)
+import Prelude hiding (filter,foldl,foldr,null,map,take,drop,splitAt,elems,lookup,(!))
 import qualified Data.List as List
 import qualified Data.Set as Set
 
@@ -132,9 +132,13 @@ lookup k' (Map kxs) = go kxs where
     go ((k,x):kxs) | k' == k   = Just x
                    | otherwise = go kxs
 
-infixl 9 !?
+infixl 9 !
 
-m !? k = lookup k m
+m ! k = case lookup k m of Just x -> x
+                           Nothing -> "Error: element not in the map"
+
+m ! k = case lookup k m of Just x -> x
+                           Nothing -> "Error: element not in the map"
 
 elems m = List.map snd $ toAscList m
 

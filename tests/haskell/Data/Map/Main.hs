@@ -1,4 +1,4 @@
-import Data.Map as Map
+import qualified Data.Map as Map
 
 main = do
   let m = Map.fromList [("A",2),("B",7)]
@@ -6,4 +6,4 @@ main = do
   putStrLn (show $ Map.elems m)
   putStrLn (show $ Map.assocs m)
   putStrLn (show $ Map.keySet m)
-  putStrLn (show $ m!?"C")
+  putStrLn (show $ m Map.! "A")
