@@ -378,6 +378,26 @@ extern "C" closure builtin_function_load_sequences(OperationArgs& Args)
     return sequences;
 }
 
+extern "C" closure builtin_function_alignment_from_sequences(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& a = arg0.as_checked<alphabet>();
+
+    auto arg1 = Args.evaluate(1);
+    auto& sequences_ = arg1.as_<EVector>();
+
+    vector<sequence> sequences;
+    for(auto& s: sequences_)
+        sequences.push_back(s.as_<Box<sequence>>());
+
+    object_ptr<Box<alignment>> A(new Box<alignment>(a));
+
+    A->load(sequences);
+
+    return A;
+}
+
+
 extern "C" closure builtin_function_sequences_from_alignment(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
@@ -425,3 +445,4 @@ extern "C" closure builtin_function_reorder_alignment(OperationArgs& Args)
 
     return A2;
 }
+

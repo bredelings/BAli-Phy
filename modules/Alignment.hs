@@ -14,6 +14,7 @@ builtin builtin_leaf_sequence_counts 3 "leaf_sequence_counts" "Alignment"
 
 builtin builtin_load_sequences 1 "load_sequences" "Alignment"
 builtin builtin_load_alignment 2 "load_alignment" "Alignment"
+builtin alignment_from_sequences 2 "alignment_from_sequences" "Alignment"
 
 builtin builtin_alignment_row_to_bitvector 2 "alignment_row_to_presence_bitvector" "Bits"
 builtin builtin_pairwise_alignment_from_bits 2 "pairwise_alignment_from_bits" "Bits"
