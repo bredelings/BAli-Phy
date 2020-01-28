@@ -38,7 +38,7 @@ delete x s@(Set xs) = Set $ List.filter (/=x) xs
 member x s@(Set xs) | elem x xs  = True
                     | otherwise  = False
 
-notMember x s = not member x s 
+notMember x s = not $ member x s
 
 -- lookupLT
 
