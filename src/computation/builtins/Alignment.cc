@@ -373,7 +373,7 @@ extern "C" closure builtin_function_load_sequences(OperationArgs& Args)
 
     EVector sequences(sequences_.size());
     for(int i=0;i<sequences.size();i++)
-        sequences[i] = std::move(sequences_[i]);
+        sequences[i] = new Box<sequence>(sequences_[i]);
 
     return sequences;
 }
