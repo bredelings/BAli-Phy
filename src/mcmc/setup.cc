@@ -181,7 +181,6 @@ optional<int> scale_is_modifiable(const context_ref& M, int s)
 
 bool all_scales_modifiable(const context_ref& M)
 {
-    return false;
     auto& P = dynamic_cast<const Parameters&>(M);
 
     for(int s=0;s<P.n_branch_scales();s++)

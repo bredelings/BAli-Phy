@@ -392,25 +392,7 @@ void scale_means_only(owned_ptr<Model>& P,MoveStats& Stats)
     }
 
 
-    bounds<double> b;
-    for(int i=0; i<PP->n_branch_scales(); i++)
-    {
-	bounds<double> b2 = *PP->branch_scale(i).has_bounds(*PP);
-	double mu = PP->get_branch_scale(i);
-
-	if (b2.lower_bound and *b2.lower_bound > 0)
-	    b2.lower_bound = log(*b2.lower_bound) - log(mu);
-	else
-	    b2.lower_bound = {};
-
-	if (b2.upper_bound)
-	    b2.upper_bound = log(*b2.upper_bound) - log(mu);
-
-	b = b and b2;
-    }
-
     double scale = gaussian(0,sigma);
-    scale = wrap(scale, b);
     scale = exp(scale);
 
     //-------- Change branch lengths and mean -------//
