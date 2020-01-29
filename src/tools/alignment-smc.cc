@@ -1422,7 +1422,7 @@ void find_alleles(const vector<int>& consensus, const alignment& A, int n_snps, 
 {
     assert(consensus.size() == A.length());
     assert(n_snps > 1);
-    assert(L > 1);
+    assert(L_max > 1);
     assert(min_count > 0);
 
     typedef vector<pair<int,int>> allele_t;
