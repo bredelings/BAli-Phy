@@ -160,8 +160,8 @@ Graph construct_directed_reference_graph(CDecls& decls, set<var>& free_vars)
     {
 	int i = work[k];
 	// 3.1 Analyze the bound statement
-	set<var> free_vars_i;
-	tie(decls[i].second, free_vars_i) = occurrence_analyzer(decls[i].second);
+	auto [E, free_vars_i] = occurrence_analyzer(decls[i].second);
+        decls[i].second = E;
 
 	// 3.2 Record occurrences
 	merge_occurrences_into(free_vars, free_vars_i);
@@ -420,9 +420,7 @@ pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_c
 	assert(E.size() == 2);
 
 	// 1. Analyze the body and marks its variables
-	set<var> free_vars;
-	expression_ref body;
-	tie(body, free_vars) = occurrence_analyzer(E.sub()[1]);
+	auto [body, free_vars] = occurrence_analyzer(E.sub()[1]);
 
 	// 2. Mark bound variable with occurrence info from the body
 	// 3. Remove variable from free variables
@@ -439,8 +437,8 @@ pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_c
     if (parse_case_expression(E, object, patterns, bodies))
     {
 	// Analyze the object
-	set<var> free_vars;
-	tie(object, free_vars) = occurrence_analyzer(object);
+        auto [object_, free_vars] = occurrence_analyzer(object);
+        object = object_;
 
 	const int L = patterns.size();
 	// Just normalize the bodies
@@ -449,8 +447,8 @@ pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_c
 	for(int i=0;i<L;i++)
 	{
 	    // Analyze the i-ith branch
-	    set<var> alt_i_free_vars;
-	    tie(bodies[i], alt_i_free_vars) = occurrence_analyzer(bodies[i]);
+            auto [bodies_i, alt_i_free_vars] = occurrence_analyzer(bodies[i]);
+            bodies[i] = bodies_i;
 
 	    // Remove pattern vars from free variables
 	    // Copy occurrence info into pattern variables
@@ -484,10 +482,8 @@ pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_c
 	object_ptr<expression> F = new expression(E.head());
 	for(int i=0;i<E.size();i++)
 	{
-	    set<var> free_vars_i;
-	    expression_ref arg_i;
 	    auto context = (i==0 and is_apply_exp(E)) ? var_context::unknown : var_context::argument;
-	    tie(arg_i,free_vars_i) = occurrence_analyzer(E.sub()[i], context);
+	    auto [arg_i, free_vars_i] = occurrence_analyzer(E.sub()[i], context);
 	    F->sub.push_back(arg_i);
 	    merge_occurrences_into(free_vars, free_vars_i);
 	}
@@ -499,11 +495,9 @@ pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_c
     if (is_let_expression(E))
     {
 	auto decls = let_decls(E);
-	auto body = let_body(E);
 
 	// 1. Analyze the body
-	set<var> free_vars;
-	tie(body, free_vars) = occurrence_analyzer(body);
+	auto [body, free_vars] = occurrence_analyzer(let_body(E));
 
 	auto decls_groups = occurrence_analyze_decls(decls, free_vars);
 

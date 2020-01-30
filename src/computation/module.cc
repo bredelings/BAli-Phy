@@ -483,8 +483,9 @@ void Module::export_small_decls()
     // Find free vars in the decls that are not bound by *other* decls.
     for(auto& decl: small_decls_out)
     {
-	set<var> free_vars;
-	tie(decl.second, free_vars) = occurrence_analyzer(decl.second);
+	auto [E, free_vars] = occurrence_analyzer(decl.second);
+	decl.second = E;
+
 	for(auto& x: free_vars)
 	    if (not small_decls_out.count(x))
 		small_decls_out_free_vars.insert(x);
