@@ -1461,13 +1461,21 @@ void find_alleles(const vector<int>& consensus, const alignment& A, int n_snps, 
     ranges::sort(alleles, {}, [](auto& x){return x.first[0].first;});
 
     // 3. 
-    std::cout<<"count"<<"\t"<<"start"<<"\t"<<"length"<<"\n";
+    std::cout<<"count"<<"\t"<<"start"<<"\t"<<"length"<<"\t"<<"consensus"<<"\t"<<"allele"<<"\n";
     for(auto& [allele, count]: alleles)
     {
         // Add 1 to the position, because it is stored as 0-based.
         int start = allele[0].first+1;
         int length = allele.back().first - allele[0].first+1;
-        std::cout<<count<<"\t"<<start<<"\t"<<length<<"\n";
+        string allele_chars;
+        string consensus_chars;
+        for(auto& [pos,c]: allele)
+        {
+            allele_chars += A.get_alphabet().lookup(c);
+            auto c2 = consensus[pos];
+            consensus_chars += A.get_alphabet().lookup(c2);
+        }
+        std::cout<<count<<"\t"<<start<<"\t"<<length<<"\t"<<consensus_chars<<"\t"<<allele_chars<<"\n";
     }
 }
 
