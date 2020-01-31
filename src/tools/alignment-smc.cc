@@ -1036,7 +1036,7 @@ vector<int> get_consensus(const alignment& A, const vector<int>& seqs)
         {
             int total_non_gap = 0;
             for(int letter = 0; letter < a.size(); letter++)
-                total_non_gap++;
+                total_non_gap += counts[letter];
 
             for(int letter = 0; letter < a.size(); letter++)
                 if (counts[letter]*2 > total_non_gap)
@@ -1372,7 +1372,7 @@ vector<pair<int,int>> get_snps_versus_consensus(const alignment& A, const vector
         int li = A(c,i);
         int lc = consensus[c];
         if (a.is_letter(li) and a.is_letter(lc) and li != lc)
-            positions.push_back({ref_pos, lc});
+            positions.push_back({ref_pos, li});
 
         if (not A.gap(c,i))
             i_pos++;
