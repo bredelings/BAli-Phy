@@ -3,6 +3,7 @@
 
 #include <set>
 #include <string>
+#include <optional>
 #include "computation/object.H"
 #include "expression_ref.H"
 
@@ -34,6 +35,8 @@ struct var: public Object, public occurrence_info
     int index;
 
     std::string name;
+
+    std::optional<int> level;
 
     bool operator==(const var&) const;
     bool operator==(const Object& o) const;
