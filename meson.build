@@ -137,6 +137,8 @@ else
   subdir('external/range-v3/')
 endif
 
+subdir('external/immer/')
+
 math_dep = cpp.find_library('m', required:false)
 
 small_fasta=files('examples/sequences/5S-rRNA/5d.fasta')
