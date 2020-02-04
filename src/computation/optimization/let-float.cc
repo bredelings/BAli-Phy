@@ -13,7 +13,12 @@
 #include "computation/operation.H"
 #include "util/set.H"
 
+#include "immer/map.hpp" // for immer::map
+
 #include "util/string/join.H"
+
+#include "range/v3/all.hpp"
+namespace view = ranges::view;
 
 using std::vector;
 using std::set;
@@ -350,6 +355,11 @@ const FreeVarSet& get_free_vars(const expression_ref& E)
     return get_free_vars(E.as_<annot_expression_ref<FreeVarSet>>());
 }
 
+const expression_ref un_fv(const expression_ref& AE)
+{
+    return AE.as_<annot_expression_ref<FreeVarSet>>().exp;
+}
+
 // from simplifier.cc
 vector<var> get_used_vars(const expression_ref& pattern);
 
@@ -468,4 +478,151 @@ add_free_variable_annotations(const expression_ref& E)
     }
 
     std::abort();
+}
+
+typedef immer::map<var,int> level_env_t;
+
+expression_ref set_level_maybe_MFE(const expression_ref& AE, int level, const level_env_t& env);
+
+int max_level(const level_env_t& env, const FreeVarSet& free_vars)
+{
+    // Global variables that are free will not be in the env, so just ignore them.
+    int level = 0;
+    for(auto& x: free_vars)
+        if (auto value = env.find(x))
+            level = std::max(level, *value);
+    return level;
+}
+
+expression_ref set_level(const expression_ref& AE, int level, const level_env_t& env)
+{
+    const auto& E = AE.as_<annot_expression_ref<FreeVarSet>>().exp;
+
+    // 1. Var
+    if (is_var(E))
+        return E;
+
+    // 2. Constant
+    else if (not E.size())
+        return E;
+
+    // 3. Apply or constructor or Operation
+    else if (is_apply_exp(E) or is_constructor_exp(E) or is_non_apply_op_exp(E))
+    {
+        object_ptr<expression> V2 = E.as_expression().clone();
+
+        // All the arguments except the first one are supposed to be vars .... I think?
+        for(int i=0;i<E.size();i++)
+            V2->sub[i] = set_level(V2->sub[i], level, env);
+
+        return V2;
+    }
+
+    // 4. Lambda
+    else if (is_lambda_exp(E))
+    {
+        int level2 = level + 1;
+        auto env2 = env;
+
+        vector<var> args;
+        auto AE2 = AE;
+        while(is_lambda_exp(un_fv(AE2)))
+        {
+            auto& E2 = un_fv(AE2);
+
+            auto x = E2.sub()[0].as_<var>();
+
+            // assert that none of the other args have the same name!
+            // we should check this in the renamer, I think.
+
+            env2 = env2.insert({x,level2});
+
+            args.push_back(x);
+            AE2 = E2.sub()[1];
+        }
+
+        auto E2 = set_level_maybe_MFE(AE2, level2, env2);
+
+        for(auto x : args | view::reverse)
+            E2 = lambda_quantify(x,E2);
+
+        return E2;
+    }
+
+    // 4. Case
+    else if (is_case(E))
+    {
+        expression_ref object;
+        vector<expression_ref> patterns;
+        vector<expression_ref> bodies;
+        parse_case_expression(E, object, patterns, bodies);
+
+        auto object2 = set_level_maybe_MFE(object, level, env);
+
+        vector<expression_ref> bodies2(bodies.size());
+        for(int i=0;i<bodies2.size();i++)
+        {
+            int level2 = level; // only minor level incremented.
+            auto binders = get_used_vars(patterns[i]);
+            auto env2 = env;
+            for(auto binder: binders)
+                env2 = env2.insert({binder,level2});
+            bodies2[i] = set_level_maybe_MFE(bodies[i], level2, env2);
+        }
+
+        return make_case_expression(object2,patterns,bodies2);
+    }
+
+    // 5. Let
+    else if (is_let_expression(E))
+    {
+        auto decls = let_decls(E);
+        auto body = let_body(E);
+
+        FreeVarSet free_vars;
+        vector<var> binders;
+        for(auto& [x,rhs]: decls)
+        {
+            free_vars = get_union(free_vars, get_free_vars(rhs));
+            binders.push_back(x);
+        }
+        free_vars = erase(free_vars, binders);
+
+        int level2 = max_level(env, free_vars);
+
+        auto env2 = env;
+        for(auto& [x,rhs]: decls)
+            env2 = env2.insert({x,level2});
+
+        auto body2 = set_level_maybe_MFE(body, level2, env2);
+
+        for(auto& [var,rhs]: decls)
+        {
+            var.level = level2;
+            rhs = set_level(rhs, level2, env2);
+        }
+
+        return let_expression(decls,body2);
+    }
+
+    std::abort();
+}
+
+expression_ref set_level_maybe_MFE(const expression_ref& AE, int level, const level_env_t& env)
+{
+    int level2 = max_level(env, get_free_vars(AE));
+    const auto& E = un_fv(AE);
+    if (level2 < level and not is_var(E) and not is_WHNF(E))
+    {
+        auto E = set_level(AE, level2, env);
+        var x("$v");
+        return let_expression({{x,E}},x);
+    }
+    else
+        return set_level(AE, level, env);
+}
+
+expression_ref set_level(const expression_ref& E)
+{
+    return set_level(add_free_variable_annotations(E), 0, {});
 }
