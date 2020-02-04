@@ -179,6 +179,16 @@ string expression::print() const
 	}
     }
 
+    // We have to do this BEFORE we compute pargs, otherwise we do everything twice, which leads to exponential growth.
+    if (head.is_a<Operator>())
+    {
+        auto& O = head.as_<Operator>();
+	if (O.name() == ":" and size() == 2)
+	{
+	    return print_list(*this);
+	}
+    }
+
     // Print the (unparenthesized) sub-expressions
     vector<string> args(1+size());
     args[0] = head.print();
@@ -225,10 +235,6 @@ string expression::print() const
             }
 
 	    return O.print_expression( pargs );
-	}
-	else if (O.name() == ":" and size() == 2)
-	{
-	    return print_list(*this);
 	}
 	else if (O.precedence() > -1 and size() == 2)
 	{
