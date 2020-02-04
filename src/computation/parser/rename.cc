@@ -981,8 +981,6 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	e = rename(e, bound);
 
     // Apply fully-applied multi-argument constructors during rename.
-    // We don't do this for single-argument constructors. By leaving them as vars, we avoid
-    //   getting many let-allocated copies of (), [], True, False, Nothing, etc.
     //
     // If we don't we get the following problem in simplification, so it takes too many rounds:
     // (:) x y => (\a b -> a:b) x y => let a=x;b=y in a:b => let a=3 in a:y (if a=3 in a containing let).
@@ -993,6 +991,9 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
     //
     // For the meantime, we have this.  And it at least leads to more readable output from rename.
     // It could conceivably help the type-checker also...
+    //
+    // We don't do this for single-argument constructors. By leaving them as vars, we avoid
+    //   getting many let-allocated copies of (), [], True, False, Nothing, etc.
     if (is_apply(E.head()) and v[0].is_a<var>() and is_haskell_con_name(v[0].as_<var>().name))
     {
 	auto& id = v[0].as_<var>().name;
