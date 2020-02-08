@@ -690,7 +690,7 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
             env2 = env2.insert({x,x2});
         }
 
-        auto body2 = set_level_maybe_MFE(body, level2, env2);
+        auto body2 = set_level_maybe_MFE(body, level, env2);
 
         for(auto& [var,rhs]: decls)
         {
