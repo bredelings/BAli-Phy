@@ -481,15 +481,16 @@ add_free_variable_annotations(const expression_ref& E)
     std::abort();
 }
 
-typedef immer::map<var,int> level_env_t;
+// This maps the in-name to (i) the out-name and (ii) the level, which is stored on the out-name.
+typedef immer::map<var,var> level_env_t;
 
 int max_level(const level_env_t& env, const FreeVarSet& free_vars)
 {
     // Global variables that are free will not be in the env, so just ignore them.
     int level = 0;
     for(auto& x: free_vars)
-        if (auto value = env.find(x))
-            level = std::max(level, *value);
+        if (auto x_out = env.find(x))
+            level = std::max(level, *x_out->level);
     return level;
 }
 
@@ -497,22 +498,25 @@ struct let_floater_state
 {
 //    const Module& m;
     std::map<string,int> used_index_for_name;
-    var new_unique_var(const var& x);
-    var new_unique_var(const string& name);
+
+    var new_unique_var(const var& x, int level);
+    var new_unique_var(const string& name, int level);
+
     expression_ref set_level(const expression_ref& AE, int level, const level_env_t& env);
     expression_ref set_level_maybe_MFE(const expression_ref& AE, int level, const level_env_t& env);
 
 //    let_floater_state(const Module& m_):m(m_) {}
 };
 
-var let_floater_state::new_unique_var(const var& x)
+var let_floater_state::new_unique_var(const var& x, int level)
 {
-    return new_unique_var(x.name);
+    return new_unique_var(x.name, level);
 }
 
-var let_floater_state::new_unique_var(const string& name)
+
+var let_floater_state::new_unique_var(const string& name, int level)
 {
-    int index = 0;
+    int index = 1;
     auto iter = used_index_for_name.find(name);
     if (iter == used_index_for_name.end())
         used_index_for_name.insert({name,index});
@@ -521,10 +525,54 @@ var let_floater_state::new_unique_var(const string& name)
         iter->second++;
         index = iter->second;
     }
-    return var(name,index);
+    auto x2 = var(name,index);
+    x2.level = level;
+    return x2;
 }
 
+var strip_level(var x)
+{
+    x.level.reset();
+    return x;
+}
 
+var subst_var(const var& x, const level_env_t& env)
+{
+    // We should handle this in ... desugar?
+    if (is_wildcard(x)) return x; 
+
+    auto record = env.find(x);
+    assert(record);
+    return *record;
+}
+
+var subst_var(const expression_ref& E, const level_env_t& env)
+{
+    const auto& x = E.as_<var>();
+    return subst_var(x, env);
+}
+
+expression_ref subst_pattern(const expression_ref& pattern, const level_env_t& env)
+{
+    // I THINK that these should never be VARs in the current paradigm... but we should fix that.
+
+    if (is_var(pattern))
+        return strip_level(subst_var(pattern, env));
+    else if (not pattern.size())
+        return pattern;
+    else
+    {
+        object_ptr<expression> pattern2 = pattern.as_expression().clone();
+
+        for(auto& Ex: pattern2->sub)
+        {
+            assert(is_var(Ex));
+
+            Ex = subst_pattern(Ex, env);
+        }
+        return pattern2;
+    }
+}
 
 expression_ref let_floater_state::set_level(const expression_ref& AE, int level, const level_env_t& env)
 {
@@ -532,7 +580,14 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
 
     // 1. Var
     if (is_var(E))
-        return E;
+    {
+        const auto& x = E.as_<var>();
+        // Top-level symbols from this module and other modules won't be in the env.
+        if (auto x_out = env.find(x))
+            return strip_level(*x_out);
+        else
+            return E;
+    }
 
     // 2. Constant
     else if (not E.size())
@@ -567,16 +622,17 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
             // assert that none of the other args have the same name!
             // we should check this in the renamer, I think.
 
-            env2 = env2.insert({x,level2});
+            auto x2 = new_unique_var(x, level2);
+            env2 = env2.insert({x,x2});
 
-            args.push_back(x);
+            args.push_back(x2);
             AE2 = E2.sub()[1];
         }
 
         auto E2 = set_level_maybe_MFE(AE2, level2, env2);
 
-        for(auto x : args | view::reverse)
-            E2 = lambda_quantify(x,E2);
+        for(auto x2 : args | view::reverse)
+            E2 = lambda_quantify(strip_level(x2),E2);
 
         return E2;
     }
@@ -591,6 +647,7 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
 
         auto object2 = set_level_maybe_MFE(object, level, env);
 
+        vector<expression_ref> patterns2(patterns.size());
         vector<expression_ref> bodies2(bodies.size());
         for(int i=0;i<bodies2.size();i++)
         {
@@ -598,11 +655,15 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
             auto binders = get_used_vars(patterns[i]);
             auto env2 = env;
             for(auto binder: binders)
-                env2 = env2.insert({binder,level2});
+            {
+                auto binder2 = new_unique_var(binder, level2);
+                env2 = env2.insert({binder,binder2});
+            }
+            patterns2[i] = subst_pattern(patterns[i], env2);
             bodies2[i] = set_level_maybe_MFE(bodies[i], level2, env2);
         }
 
-        return make_case_expression(object2,patterns,bodies2);
+        return make_case_expression(object2,patterns2,bodies2);
     }
 
     // 5. Let
@@ -624,13 +685,16 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
 
         auto env2 = env;
         for(auto& [x,rhs]: decls)
-            env2 = env2.insert({x,level2});
+        {
+            auto x2 = new_unique_var(x, level2);
+            env2 = env2.insert({x,x2});
+        }
 
         auto body2 = set_level_maybe_MFE(body, level2, env2);
 
         for(auto& [var,rhs]: decls)
         {
-            var.level = level2;
+            var = subst_var(var, env2);
             rhs = set_level(rhs, level2, env2);
         }
 
@@ -647,9 +711,8 @@ expression_ref let_floater_state::set_level_maybe_MFE(const expression_ref& AE, 
     if (level2 < level and not is_var(E) and not is_WHNF(E))
     {
         auto E = set_level(AE, level2, env);
-        var x = new_unique_var("$v");
-        x.level = level2;
-        return let_expression({{x,E}},x);
+        var v = new_unique_var("$v", level2);
+        return let_expression({{v,E}},v);
     }
     else
         return set_level(AE, level, env);
