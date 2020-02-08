@@ -1,9 +1,7 @@
 project('bali-phy', ['cpp','c'],
         version: '3.5alpha',
         default_options : [
-          'buildtype=release',
           'warning_level=3',
-          'optimization=3',
           'cpp_std=c++17'
         ],
         meson_version: '>= 0.52',
