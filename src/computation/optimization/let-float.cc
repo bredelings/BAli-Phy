@@ -11,6 +11,7 @@
 #include "computation/expression/case.H"
 #include "computation/expression/operator.H"
 #include "computation/operation.H"
+#include "computation/module.H"
 #include "util/set.H"
 
 #include "immer/map.hpp" // for immer::map
@@ -482,8 +483,6 @@ add_free_variable_annotations(const expression_ref& E)
 
 typedef immer::map<var,int> level_env_t;
 
-expression_ref set_level_maybe_MFE(const expression_ref& AE, int level, const level_env_t& env);
-
 int max_level(const level_env_t& env, const FreeVarSet& free_vars)
 {
     // Global variables that are free will not be in the env, so just ignore them.
@@ -494,7 +493,40 @@ int max_level(const level_env_t& env, const FreeVarSet& free_vars)
     return level;
 }
 
-expression_ref set_level(const expression_ref& AE, int level, const level_env_t& env)
+struct let_floater_state
+{
+//    const Module& m;
+    std::map<string,int> used_index_for_name;
+    var new_unique_var(const var& x);
+    var new_unique_var(const string& name);
+    expression_ref set_level(const expression_ref& AE, int level, const level_env_t& env);
+    expression_ref set_level_maybe_MFE(const expression_ref& AE, int level, const level_env_t& env);
+
+//    let_floater_state(const Module& m_):m(m_) {}
+};
+
+var let_floater_state::new_unique_var(const var& x)
+{
+    return new_unique_var(x.name);
+}
+
+var let_floater_state::new_unique_var(const string& name)
+{
+    int index = 0;
+    auto iter = used_index_for_name.find(name);
+    if (iter == used_index_for_name.end())
+        used_index_for_name.insert({name,index});
+    else
+    {
+        iter->second++;
+        index = iter->second;
+    }
+    return var(name,index);
+}
+
+
+
+expression_ref let_floater_state::set_level(const expression_ref& AE, int level, const level_env_t& env)
 {
     const auto& E = AE.as_<annot_expression_ref<FreeVarSet>>().exp;
 
@@ -608,14 +640,15 @@ expression_ref set_level(const expression_ref& AE, int level, const level_env_t&
     std::abort();
 }
 
-expression_ref set_level_maybe_MFE(const expression_ref& AE, int level, const level_env_t& env)
+expression_ref let_floater_state::set_level_maybe_MFE(const expression_ref& AE, int level, const level_env_t& env)
 {
     int level2 = max_level(env, get_free_vars(AE));
     const auto& E = un_fv(AE);
     if (level2 < level and not is_var(E) and not is_WHNF(E))
     {
         auto E = set_level(AE, level2, env);
-        var x("$v");
+        var x = new_unique_var("$v");
+        x.level = level2;
         return let_expression({{x,E}},x);
     }
     else
@@ -624,5 +657,6 @@ expression_ref set_level_maybe_MFE(const expression_ref& AE, int level, const le
 
 expression_ref set_level(const expression_ref& E)
 {
-    return set_level(add_free_variable_annotations(E), 0, {});
+    let_floater_state l_f_s;
+    return l_f_s.set_level(add_free_variable_annotations(E), 0, {});
 }
