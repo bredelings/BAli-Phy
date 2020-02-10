@@ -20,6 +20,7 @@
 
 #include "range/v3/all.hpp"
 namespace view = ranges::view;
+namespace action = ranges::action;
 
 using std::vector;
 using std::set;
@@ -536,6 +537,26 @@ var strip_level(var x)
     return x;
 }
 
+expression_ref strip_level_from_pattern(const expression_ref& pattern)
+{
+    if (is_var(pattern))
+        return strip_level(pattern.as_<var>());
+    else if (not pattern.size())
+        return pattern;
+    else
+    {
+        object_ptr<expression> pattern2 = pattern.as_expression().clone();
+
+        for(auto& Ex: pattern2->sub)
+        {
+            assert(is_var(Ex));
+
+            Ex = strip_level_from_pattern(Ex);
+        }
+        return pattern2;
+    }
+}
+
 var subst_var(const var& x, const level_env_t& env)
 {
     // We should handle this in ... desugar?
@@ -742,21 +763,182 @@ int get_level(const CDecls& decl_group)
     return level;
 }
 
-vector<CDecls> partition_decl_groups_by_level(vector<CDecls>& decl_groups, int level)
+typedef std::map<int,vector<CDecls>> float_binds_t;
+
+vector<CDecls> get_decl_groups_at_level(float_binds_t& float_binds, int level)
 {
-    vector<CDecls> decl_groups_here;
-    vector<CDecls> decl_groups_higher;
-    for(auto& decl_group: decl_groups)
-    {
-        auto this_level = get_level(decl_group);
-        if (this_level == level)
-            decl_groups_here.push_back(std::move(decl_group));
-        else
-            decl_groups_higher.push_back(std::move(decl_group));
-    }
+    auto iter = float_binds.find(level);
+    if (iter == float_binds.end())
+        return {};
 
-    std::swap(decl_groups, decl_groups_higher);
+    vector<CDecls> decl_groups;
+    std::swap(decl_groups, iter->second);
+    float_binds.erase(iter);
 
-    return decl_groups_here;
+    return decl_groups;
 }
 
+pair<vector<var>,expression_ref> get_lambda_binders(expression_ref E)
+{
+    assert(is_lambda_exp(E));
+    vector<var> binders;
+    while(is_lambda_exp(E))
+    {
+        auto x = E.sub()[0].as_<var>();
+        binders.push_back(x);
+        E = E.sub()[1];
+    }
+    return {std::move(binders), E};
+}
+
+expression_ref make_lambda(const vector<var>& args, expression_ref E)
+{
+    for(auto x : args | view::reverse)
+        E = lambda_quantify(x,E);
+    return E;
+}
+
+float_binds_t
+float_lets(expression_ref& E, int level);
+
+float_binds_t
+float_lets_install_current_level(expression_ref& E, int level)
+{
+    auto float_binds = float_lets(E,level);
+    auto decl_groups_here = get_decl_groups_at_level(float_binds, level);
+    E = let_expression(decl_groups_here, E);
+    return float_binds;
+}
+
+void append(vector<CDecls>& decl_groups1, vector<CDecls>& decl_groups2)
+{
+    assert(&decl_groups1 != &decl_groups2);
+    for(auto& decls: decl_groups2)
+        decl_groups1.push_back(std::move(decls));
+}
+
+void append(float_binds_t& float_binds1, float_binds_t& float_binds2)
+{
+    assert(&float_binds1 != &float_binds2);
+    for(auto& [level,decl_groups]: float_binds2)
+    {
+        if (auto iter = float_binds1.find(level); iter != float_binds1.end())
+            append(float_binds1[level], decl_groups);
+        else
+            float_binds1[level] = std::move(decl_groups);
+    }
+}
+
+float_binds_t
+float_lets(expression_ref& E, int level)
+{
+    // 1. Var
+    if (is_var(E))
+        return {};
+
+    // 2. Constant
+    else if (not E.size())
+        return {};
+
+    // 3. Constructor or Operation
+    else if (is_constructor_exp(E) or is_non_apply_op_exp(E))
+        return {};
+
+    // 4. Apply @ E x1 x2 x3 ... x[n-1];
+    else if (is_apply_exp(E))
+    {
+        object_ptr<expression> V2 = E.as_expression().clone();
+        auto float_binds = float_lets(V2->sub[0], level);
+#ifndef NDEBUG
+        for(int i=1;i<V2->sub.size();i++)
+                assert(is_var(V2->sub[i]));
+#endif
+        E = V2;
+        return float_binds;
+    }
+
+    // 5. Lambda
+    else if (is_lambda_exp(E))
+    {
+        auto [binders,body] = get_lambda_binders(E);
+        for(auto& x: binders)
+            x = strip_level(x);
+
+        int level2 = level + 1;
+
+        auto float_binds = float_lets_install_current_level(body, level2);
+
+        E = make_lambda(binders,body);
+
+        return float_binds;
+    }
+
+    // 6. Case
+    else if (is_case(E))
+    {
+        expression_ref object;
+        vector<expression_ref> patterns;
+        vector<expression_ref> bodies;
+        parse_case_expression(E, object, patterns, bodies);
+
+        auto float_binds = float_lets(object, level);
+        int level2 = level + 1;
+        for(int i=0; i<patterns.size(); i++)
+        {
+            patterns[i] = strip_level_from_pattern(patterns[i]);
+            auto float_binds_alt = float_lets_install_current_level(bodies[i],level2);
+
+            append(float_binds, float_binds_alt);
+        }
+
+        E = make_case_expression(object,patterns,bodies);
+        return float_binds;
+    }
+
+    // 7. Let
+    else if (is_let_expression(E))
+    {
+        auto decls = let_decls(E);
+        auto body = let_body(E);
+
+        int level2 = get_level(decls);
+        assert(level2 <= level);
+
+        auto float_binds = float_lets(body, level);
+
+        for(auto& [x,rhs]: decls)
+        {
+            x = strip_level(x);
+            auto float_binds_x = float_lets_install_current_level(rhs, level2);
+
+            append(float_binds, float_binds_x);
+        }
+
+        if (level2 < level)
+        {
+            auto& level_binds = float_binds[level2];
+            level_binds.push_back(std::move(decls));
+            E = body;
+        }
+        else
+            E = let_expression(decls, body);
+
+        return float_binds;
+    }
+
+    std::abort();
+}
+
+expression_ref float_lets(const expression_ref& E)
+{
+    auto E2 = set_level(E);
+    auto float_binds = float_lets(E2,0);
+
+    assert(float_binds.size() <= 1);
+    if (float_binds.size() == 1)
+    {
+        return let_expression(float_binds.at(0),E2);
+    }
+    else
+        return E2;
+}

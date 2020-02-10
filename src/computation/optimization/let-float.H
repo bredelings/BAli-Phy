@@ -32,5 +32,6 @@ annot_expression_ref<FreeVarSet>
 add_free_variable_annotations(const expression_ref& E);
 
 expression_ref set_level(const expression_ref& E);
+expression_ref float_lets(const expression_ref& E);
 
 #endif
