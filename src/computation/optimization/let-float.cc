@@ -723,3 +723,22 @@ expression_ref set_level(const expression_ref& E)
     let_floater_state l_f_s;
     return l_f_s.set_level(add_free_variable_annotations(E), 0, {});
 }
+
+int get_level(const CDecls& decl_group)
+{
+    assert( not decl_group.empty() );
+    assert( decl_group[0].first.level );
+
+    auto level = *decl_group[0].first.level;
+
+#ifndef NDEBUG
+    for(int i=1; i<decl_group.size(); i++)
+    {
+        assert( decl_group[i].first.level );
+        assert( *decl_group[i].first.level == level );
+    }
+#endif
+
+    return level;
+}
+
