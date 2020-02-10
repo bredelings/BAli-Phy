@@ -742,3 +742,21 @@ int get_level(const CDecls& decl_group)
     return level;
 }
 
+vector<CDecls> partition_decl_groups_by_level(vector<CDecls>& decl_groups, int level)
+{
+    vector<CDecls> decl_groups_here;
+    vector<CDecls> decl_groups_higher;
+    for(auto& decl_group: decl_groups)
+    {
+        auto this_level = get_level(decl_group);
+        if (this_level == level)
+            decl_groups_here.push_back(std::move(decl_group));
+        else
+            decl_groups_higher.push_back(std::move(decl_group));
+    }
+
+    std::swap(decl_groups, decl_groups_higher);
+
+    return decl_groups_here;
+}
+
