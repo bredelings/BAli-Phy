@@ -651,7 +651,7 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
         vector<expression_ref> bodies2(bodies.size());
         for(int i=0;i<bodies2.size();i++)
         {
-            int level2 = level; // only minor level incremented.
+            int level2 = level+1; // Increment level, since we're going to float out of case alternatives.
             auto binders = get_used_vars(patterns[i]);
             auto env2 = env;
             for(auto binder: binders)
