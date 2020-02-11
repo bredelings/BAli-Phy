@@ -34,7 +34,8 @@ computation_sources = [
   'optimization/let-float.cc',
   'optimization/simplifier.cc',
   'optimization/occurrence.cc',
-  'optimization/inliner.cc'
+  'optimization/inliner.cc',
+  'optimization/free-vars.cc'
 ]
 
 

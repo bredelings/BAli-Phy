@@ -4,6 +4,7 @@
 #include <set>
 #include <string>
 #include <optional>
+#include <functional>
 #include "computation/object.H"
 #include "expression_ref.H"
 
@@ -27,7 +28,7 @@ struct occurrence_info
 
     bool pre_inline() const;
 };
-    
+
 
 // a variable expression
 struct var: public Object, public occurrence_info
@@ -71,5 +72,18 @@ std::set<var> get_free_indices(const expression_ref& E);
 std::set<var> get_bound_indices(const expression_ref& E);
 
 int get_safe_binder_index(const expression_ref& E);
+
+namespace std
+{
+    template <>
+    class hash < var >{
+    public :
+        size_t operator()(const var &x) const
+        {
+            size_t h =   std::hash<int>()(x.index) ^ std::hash<std::string>()(x.name);
+            return  h ;
+        }
+    };
+}
 
 #endif
