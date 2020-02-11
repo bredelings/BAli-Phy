@@ -1,6 +1,6 @@
 # The `--verbose` command:
 
--v                                          Analyze initial values and exit
+-V                                          Analyze initial values and exit
 --verbose
 
 Turn on verbose warning and error messages.
