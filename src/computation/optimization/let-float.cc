@@ -362,8 +362,21 @@ const expression_ref un_fv(const expression_ref& AE)
     return AE.as_<annot_expression_ref<FreeVarSet>>().exp;
 }
 
-// from simplifier.cc
-vector<var> get_used_vars(const expression_ref& pattern);
+void get_vars_(const expression_ref& pattern, vector<var>& vars)
+{
+    if (is_var(pattern))
+        vars.push_back(pattern.as_<var>());
+    else if (pattern.is_expression())
+        for(auto& Evar: pattern.sub())
+            get_vars_(Evar, vars);
+}
+
+vector<var> get_vars(const expression_ref& pattern)
+{
+    vector<var> vars;
+    get_vars_(pattern, vars);
+    return vars;
+}
 
 FreeVarSet get_union(const FreeVarSet& s1, const FreeVarSet& s2)
 {
@@ -371,14 +384,16 @@ FreeVarSet get_union(const FreeVarSet& s1, const FreeVarSet& s2)
     {
         FreeVarSet s3 = s1;
         for(auto& x: s2)
-            s3 = s3.insert(x);
+            if (not s3.count(x))
+                s3 = s3.insert(x);
         return s3;
     }
     else
     {
         FreeVarSet s3 = s2;
         for(auto& x: s1)
-            s3 = s3.insert(x);
+            if (not s3.count(x))
+                s3 = s3.insert(x);
         return s3;
     }
 }
@@ -435,7 +450,7 @@ add_free_variable_annotations(const expression_ref& E)
         for(int i=0;i<bodies2.size();i++)
         {
             auto b2 = add_free_variable_annotations(bodies[i]);
-            auto free_vars_i = erase(get_free_vars(b2), get_used_vars(patterns[i]));
+            auto free_vars_i = erase(get_free_vars(b2), get_vars(patterns[i]));
             free_vars = get_union(free_vars, free_vars_i);
             bodies2[i] = b2;
         }
@@ -673,7 +688,7 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
         for(int i=0;i<bodies2.size();i++)
         {
             int level2 = level+1; // Increment level, since we're going to float out of case alternatives.
-            auto binders = get_used_vars(patterns[i]);
+            auto binders = get_vars(patterns[i]);
             auto env2 = env;
             for(auto binder: binders)
             {
