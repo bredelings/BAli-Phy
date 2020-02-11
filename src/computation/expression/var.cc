@@ -39,10 +39,14 @@ string var::print() const {
 	assert(index == 0);
 	return string("(") + name + ")";
     }
-    else if (name.size() and index == 0)
-	return name;
+    string s = name;
+    if (name.size() and index == 0)
+        ;
     else
-	return name+string("#")+convertToString(index);
+	s += string("#")+convertToString(index);
+    if (level)
+        s += ":"+std::to_string(*level);
+    return s;
 }
 
 bool var::operator<(const var& D) const 
