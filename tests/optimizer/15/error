@@ -1,4 +1,4 @@
-size = 1   Test.#2 = Foreign.String.unpack_cpp_string Test.#7
-size = 1   Test.#4 = Compiler.Base.error Test.#2
-size = 1   Test.#7 = "case: failed pattern match"
-size = 2   Test.f = \#6 -> case #6 of {(#1245, #3) -> 2; _ -> Test.#4}
+size = 1   Test.#5 = Foreign.String.unpack_cpp_string Test.#6
+size = 1   Test.#6 = "case: failed pattern match"
+size = 1   Test.$v#1 = Compiler.Base.error Test.#5
+size = 2   Test.f = \#1 -> case #1 of {(#2, #3) -> 2; _ -> Test.$v#1}
