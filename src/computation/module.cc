@@ -804,10 +804,8 @@ void Module::optimize(const Program& P)
 	    mark_exported_decls(decls, exported_symbols(), name);
 
 	    vector<CDecls> decl_groups = {decls};
-	    for(int i=0;i<P.get_module_loader()->max_iterations;i++)
-	    {
-		decl_groups = simplify_module(*P.get_module_loader(), small_decls_in, small_decls_in_free_vars, decl_groups);
-	    }
+
+            decl_groups = simplify_module(*P.get_module_loader(), small_decls_in, small_decls_in_free_vars, decl_groups);
 
 	    decls = flatten(std::move(decl_groups));
 	    topdecls = make_topdecls(decls);

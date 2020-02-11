@@ -830,8 +830,8 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 }
 
 
-vector<CDecls> simplify_module(const simplifier_options& options, const map<var,expression_ref>& small_decls_in,const set<var>& small_decls_in_free_vars,
-			       const vector<CDecls>& decl_groups_in)
+vector<CDecls> simplify_module_one(const simplifier_options& options, const map<var,expression_ref>& small_decls_in,const set<var>& small_decls_in_free_vars,
+                                   const vector<CDecls>& decl_groups_in)
 {
     set<var> free_vars;
 
@@ -866,3 +866,23 @@ vector<CDecls> simplify_module(const simplifier_options& options, const map<var,
 }
 
 
+vector<CDecls> simplify_module_gently(const simplifier_options& options, const map<var,expression_ref>& small_decls_in,const set<var>& small_decls_in_free_vars,
+                                      const vector<CDecls>& decl_groups_in)
+{
+    simplifier_options options_gentle = options;
+    options_gentle.case_of_case = false;
+    return simplify_module(options_gentle, small_decls_in, small_decls_in_free_vars, decl_groups_in);
+}
+
+vector<CDecls> simplify_module(const simplifier_options& options, const map<var,expression_ref>& small_decls_in,const set<var>& small_decls_in_free_vars,
+                               const vector<CDecls>& decl_groups_in)
+{
+    auto decl_groups = decl_groups_in;
+
+    for(int i = 0; i < options.max_iterations; i++)
+    {
+        decl_groups = simplify_module_one(options, small_decls_in, small_decls_in_free_vars, decl_groups);
+    }
+
+    return decl_groups;
+}
