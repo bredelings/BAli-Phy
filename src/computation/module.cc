@@ -789,8 +789,6 @@ void Module::optimize(const Program& P)
 		// This won't float things to the top level!
 		auto name = decl.sub()[0].as_<var>().name;
 		auto body = decl.sub()[1];
-		if (P.get_module_loader()->fully_lazy)
-		    body = let_float(body);
 		body = graph_normalize(body);
 
 		new_decls.push_back(AST_node("Decl") + decl.sub()[0] + body);
@@ -804,6 +802,15 @@ void Module::optimize(const Program& P)
 	    mark_exported_decls(decls, exported_symbols(), name);
 
 	    vector<CDecls> decl_groups = {decls};
+
+            decl_groups = simplify_module_gently(*P.get_module_loader(), small_decls_in, small_decls_in_free_vars, decl_groups);
+
+            for(auto& decl_group: decl_groups)
+                for(auto& [x,rhs]: decl_group)
+                {
+                    if (P.get_module_loader()->fully_lazy)
+                        rhs = float_lets(rhs);
+                }
 
             decl_groups = simplify_module(*P.get_module_loader(), small_decls_in, small_decls_in_free_vars, decl_groups);
 
