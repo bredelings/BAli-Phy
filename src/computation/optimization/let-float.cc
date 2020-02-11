@@ -916,8 +916,11 @@ float_lets(expression_ref& E, int level)
 
         if (level2 < level)
         {
-            auto& level_binds = float_binds[level2];
-            level_binds.push_back(std::move(decls));
+            // The decls here have to go BEFORE the decls from the (i) the body and (ii) the decl rhs's.
+            float_binds_t float_binds_first;
+            float_binds_first[level2].push_back(std::move(decls));
+            append(float_binds_first, float_binds);
+            std::swap(float_binds_first, float_binds);
             E = body;
         }
         else
