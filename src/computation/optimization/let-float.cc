@@ -801,12 +801,17 @@ expression_ref make_lambda(const vector<var>& args, expression_ref E)
 float_binds_t
 float_lets(expression_ref& E, int level);
 
+expression_ref install_current_level(float_binds_t& float_binds, int level, const expression_ref& E)
+{
+    auto decl_groups_here = get_decl_groups_at_level(float_binds, level);
+    return let_expression(decl_groups_here, E);
+}
+
 float_binds_t
 float_lets_install_current_level(expression_ref& E, int level)
 {
     auto float_binds = float_lets(E,level);
-    auto decl_groups_here = get_decl_groups_at_level(float_binds, level);
-    E = let_expression(decl_groups_here, E);
+    E = install_current_level(float_binds, level, E);
     return float_binds;
 }
 
@@ -923,8 +928,11 @@ float_lets(expression_ref& E, int level)
             std::swap(float_binds_first, float_binds);
             E = body;
         }
+        // Prevents floated bindings at the same level from getting installed HIGHER than
+        // bindings that they reference.
+        // Does this place floated bindings as deep as possible at the correct level?
         else
-            E = let_expression(decls, body);
+            E = let_expression(decls, install_current_level(float_binds, level, body));
 
         return float_binds;
     }
