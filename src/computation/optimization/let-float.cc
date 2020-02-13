@@ -332,7 +332,10 @@ int max_level(const level_env_t& env, const FreeVarSet& free_vars)
     int level = 0;
     for(auto& x: free_vars)
         if (auto x_out = env.find(x))
+        {
+            assert(x_out->level);
             level = std::max(level, *x_out->level);
+        }
     return level;
 }
 
@@ -354,12 +357,16 @@ struct let_floater_state
 
 var let_floater_state::new_unique_var(const var& x, int level)
 {
+    assert(not x.is_exported);
     return new_unique_var(x.name, level);
 }
 
 
 var let_floater_state::new_unique_var(const string& name, int level)
 {
+    assert(not is_haskell_builtin_con_name(name));
+    // qualified names are actually allowed here, as long as they are not exported.
+
     int index = 1;
     auto iter = used_index_for_name.find(name);
     if (iter == used_index_for_name.end())
@@ -459,15 +466,16 @@ level_env_t let_floater_state::set_level_decl_group(CDecls& decls, const level_e
     auto env2 = env;
     for(auto& [x,rhs]: decls)
     {
-        auto x2 = new_unique_var(x, level2);
-        env2 = env2.insert({x,x2});
+        if (not x.is_exported)
+        {
+            auto x2 = new_unique_var(x, level2);
+            env2 = env2.insert({x,x2});
+            x = x2;
+        }
     }
 
     for(auto& [var,rhs]: decls)
-    {
-        var = subst_var(var, env2);
         rhs = set_level(rhs, level2, env2);
-    }
 
     return env2;
 }
@@ -593,10 +601,18 @@ expression_ref let_floater_state::set_level_maybe_MFE(const expression_ref& AE, 
         return set_level(AE, level, env);
 }
 
-expression_ref set_level(const expression_ref& E)
+void set_level_for_module(vector<CDecls>& module)
 {
-    let_floater_state l_f_s;
-    return l_f_s.set_level(add_free_variable_annotations(E), 0, {});
+    vector<CDecls> module_out;
+
+    let_floater_state state;
+    level_env_t env;
+    for(auto& decls: module)
+    {
+        for(auto& [x,rhs]: decls)
+            rhs = add_free_variable_annotations(rhs);
+        env = state.set_level_decl_group(decls, env);
+    }
 }
 
 int get_level(const CDecls& decl_group)
@@ -796,7 +812,7 @@ float_lets(expression_ref& E, int level)
 
 expression_ref float_lets(const expression_ref& E)
 {
-    auto E2 = set_level(E);
+    auto E2 = E;
     auto float_binds = float_lets(E2,0);
 
     assert(float_binds.size() <= 1);
@@ -810,6 +826,8 @@ expression_ref float_lets(const expression_ref& E)
 
 void float_out_from_module(vector<CDecls>& decl_groups)
 {
+    set_level_for_module(decl_groups);
+
     for(auto& decl_group: decl_groups)
         for(auto& [x,rhs]: decl_group)
             rhs = float_lets(rhs);

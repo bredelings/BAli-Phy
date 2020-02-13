@@ -5,7 +5,7 @@
 
 expression_ref let_float(const expression_ref& E);
 
-expression_ref set_level(const expression_ref& E);
+void set_level_for_module(std::vector<CDecls>& module);
 void float_out_from_module(std::vector<CDecls>& module);
 
 #endif
