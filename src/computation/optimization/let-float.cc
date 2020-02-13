@@ -704,6 +704,22 @@ void append(float_binds_t& float_binds1, float_binds_t& float_binds2)
     }
 }
 
+pair<float_binds_t,int> float_out_from_decl_group(CDecls& decls)
+{
+    int level2 = get_level(decls);
+
+    float_binds_t float_binds;
+    for(auto& [x,rhs]: decls)
+    {
+        x = strip_level(x);
+        auto float_binds_x = float_lets_install_current_level(rhs, level2);
+
+        append(float_binds, float_binds_x);
+    }
+
+    return pair<float_binds_t,int>(std::move(float_binds), level2);
+}
+
 float_binds_t
 float_lets(expression_ref& E, int level)
 {
@@ -776,18 +792,12 @@ float_lets(expression_ref& E, int level)
         auto decls = let_decls(E);
         auto body = let_body(E);
 
-        int level2 = get_level(decls);
+        auto [float_binds, level2] = float_out_from_decl_group(decls);
         assert(level2 <= level);
 
-        auto float_binds = float_lets(body, level);
+        auto float_binds_from_body = float_lets(body, level);
 
-        for(auto& [x,rhs]: decls)
-        {
-            x = strip_level(x);
-            auto float_binds_x = float_lets_install_current_level(rhs, level2);
-
-            append(float_binds, float_binds_x);
-        }
+        append(float_binds, float_binds_from_body);
 
         if (level2 < level)
         {
