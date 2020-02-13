@@ -660,7 +660,9 @@ std::optional<string> get_new_name(const var& x, const string& module_name)
 
     if (is_qualified_var(x))
     {
-	assert(x.index == 0);
+        // Allow adding suffixes like #1 to qualified names IF they are not exported.
+        // Such suffixes can be added by renaming inside of let-floating.
+        assert(x.index == 0 or not x.is_exported);
 	return {};
     }
 
