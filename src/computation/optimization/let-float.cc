@@ -400,14 +400,19 @@ expression_ref strip_level_from_pattern(const expression_ref& pattern)
     }
 }
 
-var subst_var(const var& x, const level_env_t& env)
+var subst_var(var x, const level_env_t& env)
 {
     // We should handle this in ... desugar?
     if (is_wildcard(x)) return x; 
 
     auto record = env.find(x);
     assert(record);
-    return *record;
+
+    x.level = record->level;
+    x.name = record->name;
+    x.index = record->index;
+
+    return x;
 }
 
 var subst_var(const expression_ref& E, const level_env_t& env)
