@@ -347,6 +347,8 @@ struct let_floater_state
     expression_ref set_level(const expression_ref& AE, int level, const level_env_t& env);
     expression_ref set_level_maybe_MFE(const expression_ref& AE, int level, const level_env_t& env);
 
+    level_env_t set_level_decl_group(CDecls& decls, const level_env_t& env);
+
 //    let_floater_state(const Module& m_):m(m_) {}
 };
 
@@ -434,6 +436,35 @@ expression_ref subst_pattern(const expression_ref& pattern, const level_env_t& e
         }
         return pattern2;
     }
+}
+
+level_env_t let_floater_state::set_level_decl_group(CDecls& decls, const level_env_t& env)
+{
+    FreeVarSet free_vars;
+    vector<var> binders;
+    for(auto& [x,rhs]: decls)
+    {
+        free_vars = get_union(free_vars, get_free_vars(rhs));
+        binders.push_back(x);
+    }
+    free_vars = erase(free_vars, binders);
+
+    int level2 = max_level(env, free_vars);
+
+    auto env2 = env;
+    for(auto& [x,rhs]: decls)
+    {
+        auto x2 = new_unique_var(x, level2);
+        env2 = env2.insert({x,x2});
+    }
+
+    for(auto& [var,rhs]: decls)
+    {
+        var = subst_var(var, env2);
+        rhs = set_level(rhs, level2, env2);
+    }
+
+    return env2;
 }
 
 expression_ref let_floater_state::set_level(const expression_ref& AE, int level, const level_env_t& env)
@@ -532,33 +563,10 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
     else if (is_let_expression(E))
     {
         auto decls = let_decls(E);
+        auto env2 = set_level_decl_group(decls, env);
+
         auto body = let_body(E);
-
-        FreeVarSet free_vars;
-        vector<var> binders;
-        for(auto& [x,rhs]: decls)
-        {
-            free_vars = get_union(free_vars, get_free_vars(rhs));
-            binders.push_back(x);
-        }
-        free_vars = erase(free_vars, binders);
-
-        int level2 = max_level(env, free_vars);
-
-        auto env2 = env;
-        for(auto& [x,rhs]: decls)
-        {
-            auto x2 = new_unique_var(x, level2);
-            env2 = env2.insert({x,x2});
-        }
-
         auto body2 = set_level_maybe_MFE(body, level, env2);
-
-        for(auto& [var,rhs]: decls)
-        {
-            var = subst_var(var, env2);
-            rhs = set_level(rhs, level2, env2);
-        }
 
         return let_expression(decls,body2);
     }
