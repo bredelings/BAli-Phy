@@ -802,3 +802,10 @@ expression_ref float_lets(const expression_ref& E)
     else
         return E2;
 }
+
+void float_out_from_module(vector<CDecls>& decl_groups)
+{
+    for(auto& decl_group: decl_groups)
+        for(auto& [x,rhs]: decl_group)
+            rhs = float_lets(rhs);
+}

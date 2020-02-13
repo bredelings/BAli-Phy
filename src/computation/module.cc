@@ -805,12 +805,8 @@ void Module::optimize(const Program& P)
 
             decl_groups = simplify_module_gently(*P.get_module_loader(), small_decls_in, small_decls_in_free_vars, decl_groups);
 
-            for(auto& decl_group: decl_groups)
-                for(auto& [x,rhs]: decl_group)
-                {
-                    if (P.get_module_loader()->fully_lazy)
-                        rhs = float_lets(rhs);
-                }
+            if (P.get_module_loader()->fully_lazy)
+                float_out_from_module(decl_groups);
 
             decl_groups = simplify_module(*P.get_module_loader(), small_decls_in, small_decls_in_free_vars, decl_groups);
 
