@@ -633,7 +633,23 @@ int get_level(const CDecls& decl_group)
     return level;
 }
 
-typedef std::map<int,vector<CDecls>> float_binds_t;
+struct float_binds_t: public std::map<int,vector<CDecls>>
+{
+    using std::map<int,vector<CDecls>>::map;
+
+    void append_level(int level, CDecls&);
+
+    void append_level(int level, vector<CDecls>&);
+
+    void append(float_binds_t& float_binds2);
+
+    float_binds_t() = default;
+    float_binds_t(const float_binds_t&) = default;
+    float_binds_t(float_binds_t&&) = default;
+    float_binds_t& operator=(const float_binds_t&) = default;
+    float_binds_t& operator=(float_binds_t&&) = default;
+};
+
 
 vector<CDecls> get_decl_groups_at_level(float_binds_t& float_binds, int level)
 {
@@ -692,16 +708,31 @@ void append(vector<CDecls>& decl_groups1, vector<CDecls>& decl_groups2)
         decl_groups1.push_back(std::move(decls));
 }
 
-void append(float_binds_t& float_binds1, float_binds_t& float_binds2)
+void float_binds_t::append_level(int level, vector<CDecls>& decl_groups)
 {
-    assert(&float_binds1 != &float_binds2);
+    auto& level_binds = *this;
+
+    if (auto iter = level_binds.find(level); iter != level_binds.end())
+        ::append(level_binds[level], decl_groups);
+    else
+        level_binds[level] = std::move(decl_groups);
+
+    decl_groups.clear();
+}
+
+void float_binds_t::append_level(int level, CDecls& decls)
+{
+    vector<CDecls> decl_groups;
+    decl_groups.push_back( std::move(decls) );
+    append_level( level, decl_groups );
+}
+
+void float_binds_t::append(float_binds_t& float_binds2)
+{
+    assert(this != &float_binds2);
+
     for(auto& [level,decl_groups]: float_binds2)
-    {
-        if (auto iter = float_binds1.find(level); iter != float_binds1.end())
-            append(float_binds1[level], decl_groups);
-        else
-            float_binds1[level] = std::move(decl_groups);
-    }
+        append_level(level, decl_groups);
 }
 
 pair<float_binds_t,int> float_out_from_decl_group(CDecls& decls)
@@ -714,7 +745,7 @@ pair<float_binds_t,int> float_out_from_decl_group(CDecls& decls)
         x = strip_level(x);
         auto float_binds_x = float_lets_install_current_level(rhs, level2);
 
-        append(float_binds, float_binds_x);
+        float_binds.append(float_binds_x);
     }
 
     return pair<float_binds_t,int>(std::move(float_binds), level2);
@@ -779,7 +810,7 @@ float_lets(expression_ref& E, int level)
             patterns[i] = strip_level_from_pattern(patterns[i]);
             auto float_binds_alt = float_lets_install_current_level(bodies[i],level2);
 
-            append(float_binds, float_binds_alt);
+            float_binds.append(float_binds_alt);
         }
 
         E = make_case_expression(object,patterns,bodies);
@@ -797,14 +828,14 @@ float_lets(expression_ref& E, int level)
 
         auto float_binds_from_body = float_lets(body, level);
 
-        append(float_binds, float_binds_from_body);
+        float_binds.append(float_binds_from_body);
 
         if (level2 < level)
         {
             // The decls here have to go BEFORE the decls from the (i) the body and (ii) the decl rhs's.
             float_binds_t float_binds_first;
-            float_binds_first[level2].push_back(std::move(decls));
-            append(float_binds_first, float_binds);
+            float_binds_first.append_level(level2, decls);
+            float_binds_first.append(float_binds);
             std::swap(float_binds_first, float_binds);
             E = body;
         }
