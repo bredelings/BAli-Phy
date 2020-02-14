@@ -12,7 +12,6 @@
 #include "computation/expression/AST_node.H"
 #include "computation/expression/constructor.H"
 #include "computation/expression/expression.H" // for is_reglike( )
-#include "let-float.H"
 #include "occurrence.H"
 
 #include "util/range.H"

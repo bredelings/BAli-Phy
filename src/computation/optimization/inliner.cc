@@ -12,7 +12,6 @@
 #include "computation/expression/indexify.H"
 #include "computation/expression/AST_node.H"
 #include "computation/expression/expression.H" // for is_WHNF( )
-#include "let-float.H"
 #include "occurrence.H"
 #include "inliner.H"
 #include "simplifier.H"

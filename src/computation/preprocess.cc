@@ -13,7 +13,6 @@
 #include "computation/expression/constructor.H"
 #include "computation/expression/reg_var.H"
 #include "computation/expression/expression.H" // for is_reglike( )
-#include "computation/optimization/let-float.H"
 
 
 using std::optional;
@@ -124,12 +123,6 @@ expression_ref graph_normalize(const expression_ref& E)
 //      by Alberto de la Encina and Ricardo Pena.
 
 
-
-closure let_float(closure&& C)
-{
-    C.exp = let_float(expression_ref(C.exp));
-    return std::move(C);
-}
 
 closure graph_normalize(closure&& C)
 {

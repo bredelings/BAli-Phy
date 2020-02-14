@@ -21,7 +21,7 @@
 #include "expression/substitute.H"
 #include "computation/optimization/simplifier.H"
 #include "computation/optimization/occurrence.H"
-#include "computation/optimization/let-float.H"
+#include "computation/optimization/float-out.H"
 #include "computation/optimization/inliner.H"
 
 using std::pair;

@@ -31,7 +31,7 @@ computation_sources = [
   'machine/evaluate.cc', 'machine/sums.cc',
   'machine/gc.cc','machine/reroot.cc', 'machine/effects.cc',
 
-  'optimization/let-float.cc', 'optimization/free-vars.cc', 'optimization/set-levels.cc', 'optimization/float-out.cc',
+  'optimization/free-vars.cc', 'optimization/set-levels.cc', 'optimization/float-out.cc',
 
   'optimization/occurrence.cc', 'optimization/inliner.cc', 'optimization/simplifier.cc'
 ]
