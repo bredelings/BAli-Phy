@@ -633,9 +633,11 @@ int get_level(const CDecls& decl_group)
     return level;
 }
 
-struct float_binds_t: public std::map<int,vector<CDecls>>
+struct float_binds_t
 {
-    using std::map<int,vector<CDecls>>::map;
+    std::map<int,vector<CDecls>> level_binds;
+
+    vector<CDecls> get_decl_groups_at_level(int level);
 
     void append_level(int level, CDecls&);
 
@@ -651,15 +653,15 @@ struct float_binds_t: public std::map<int,vector<CDecls>>
 };
 
 
-vector<CDecls> get_decl_groups_at_level(float_binds_t& float_binds, int level)
+vector<CDecls> float_binds_t::get_decl_groups_at_level(int level)
 {
-    auto iter = float_binds.find(level);
-    if (iter == float_binds.end())
+    auto iter = level_binds.find(level);
+    if (iter == level_binds.end())
         return {};
 
     vector<CDecls> decl_groups;
     std::swap(decl_groups, iter->second);
-    float_binds.erase(iter);
+    level_binds.erase(iter);
 
     return decl_groups;
 }
@@ -689,7 +691,7 @@ float_lets(expression_ref& E, int level);
 
 expression_ref install_current_level(float_binds_t& float_binds, int level, const expression_ref& E)
 {
-    auto decl_groups_here = get_decl_groups_at_level(float_binds, level);
+    auto decl_groups_here = float_binds.get_decl_groups_at_level(level);
     return let_expression(decl_groups_here, E);
 }
 
@@ -710,8 +712,6 @@ void append(vector<CDecls>& decl_groups1, vector<CDecls>& decl_groups2)
 
 void float_binds_t::append_level(int level, vector<CDecls>& decl_groups)
 {
-    auto& level_binds = *this;
-
     if (auto iter = level_binds.find(level); iter != level_binds.end())
         ::append(level_binds[level], decl_groups);
     else
@@ -731,7 +731,7 @@ void float_binds_t::append(float_binds_t& float_binds2)
 {
     assert(this != &float_binds2);
 
-    for(auto& [level,decl_groups]: float_binds2)
+    for(auto& [level,decl_groups]: float_binds2.level_binds)
         append_level(level, decl_groups);
 }
 
@@ -856,10 +856,10 @@ expression_ref float_lets(const expression_ref& E)
     auto E2 = E;
     auto float_binds = float_lets(E2,0);
 
-    assert(float_binds.size() <= 1);
-    if (float_binds.size() == 1)
+    assert(float_binds.level_binds.size() <= 1);
+    if (float_binds.level_binds.size() == 1)
     {
-        return let_expression(float_binds.at(0),E2);
+        return let_expression(float_binds.level_binds.at(0),E2);
     }
     else
         return E2;
