@@ -472,6 +472,8 @@ level_env_t let_floater_state::set_level_decl_group(CDecls& decls, const level_e
             env2 = env2.insert({x,x2});
             x = x2;
         }
+        else
+            x.level = 0;
     }
 
     for(auto& [var,rhs]: decls)
@@ -492,7 +494,7 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
         if (auto x_out = env.find(x))
             return strip_level(*x_out);
         else
-            return E;
+            return strip_level(x);
     }
 
     // 2. Constant
