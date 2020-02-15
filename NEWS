@@ -6,12 +6,13 @@
      - Switch to c++17
      + Read tree properties that look like [&key=value,&key=value]
  - Models
-     - Add +mut_sel_aa for selection on amino-acids in codon models.
+     + Add +mut_sel_aa for selection on amino-acids in codon models.
      + Add 4 Covarion models: ts98, huelsenbeck02, galtier01, wssr07
  - MCMC
      - Add move to slice sample a branch length while integrating out the alignment.
  - Speed
      + bp-analyze should be faster.
+     + Fix slow startup with lots of partitions.
      - Switch contexts less in NNI.
      - Don't waste time memsetting the state array.
  - Graphical models
@@ -63,7 +64,9 @@
          - New Data.Text module.
          - New Data.Set module.
          - New Data.Matrix module.
-         - Move distributions to Probability.Distribution.NAME modules. 
+         - Move distributions to Probability.Distribution.NAME modules.
+     - Haskell optimization
+         - Reimplement "full laziness" via floating out lets and MFEs.
  - Docs
      - Split up developer docs.
  - Help
