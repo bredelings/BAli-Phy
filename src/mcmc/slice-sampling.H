@@ -182,7 +182,13 @@ struct slide_node_slice_function: public context_slice_function
 struct scale_means_only_slice_function: public context_slice_function
 {
     /// The sum of the branch mean parameters for the initial point.
-    double initial_sum_of_means;
+    double log_current_factor=0;
+
+    double initial_average_scale;
+    std::vector<double> initial_scales;
+    std::vector<double> initial_branch_lengths;
+
+    double log_average_scale() const;
 
     double operator()(double x) {return context_slice_function::operator()(x);}
 

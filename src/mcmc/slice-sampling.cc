@@ -227,93 +227,81 @@ slide_node_slice_function::slide_node_slice_function(Parameters& P,int i1,int i2
     set_upper_bound(x0+y0);
 }
 
-/// \brief Compute the sum of the branch mean parameters for \a P
-double sum_of_means(const Parameters& P)
-{
-    double sum = 0;
-    for(int i=0;i<P.n_branch_scales();i++) 
-	sum += P.get_branch_scale(i);
-    return sum;
-}
 
-/// \brief Scale the branch means of \a P so that they sum to \a t, but do not invalidate cached values.
-///
-/// \param P The context state to modify.
-/// \param t The sum of the branch means after modification.
-///
-/// The lengths D=mu*T are not updated by calling recalc, so that the smodel and imodel do not get updated.
-///
-double set_sum_of_means(Parameters& P, double t)
-{
-    double sum = sum_of_means(P);
-    double scale = t/sum;
-    for(int i=0;i<P.n_branch_scales();i++) 
-	P.set_branch_scale(i,P.get_branch_scale(i) * scale);
-
-    return scale;
-}
+/*
+ * Joint scaling of branch lengths and scales so that the T*R=D remains constant.
+ */
 
 void scale_means_only_slice_function::set_value(double t)
 {
+    log_current_factor = t;
+    double scale = exp(log_current_factor);
+
     auto& P = static_cast<Parameters&>(C);
 
-    // Set the values of \mu[i]
-    double scale = set_sum_of_means(P, initial_sum_of_means * exp(t));
+    // Scale the branch-scaling factor for each partition.
+    for(int i=0; i<initial_scales.size(); i++)
+	P.set_branch_scale(i, initial_scales[i]*scale);
 
-    // Scale the tree in the opposite direction
-    for(int b=0;b<P.t().n_branches();b++) 
-    {
-	const double L = P.t().branch_length(b);
-	P.setlength_unsafe(b, L/scale);
-    }
+    // Scale the branch lengths in the opposite direction
+    for(int b=0; b<initial_branch_lengths.size(); b++)
+	P.setlength_unsafe(b, initial_branch_lengths[b]/scale);
+}
+
+double scale_means_only_slice_function::log_average_scale() const
+{
+    return log(initial_average_scale) + log_current_factor;
 }
 
 double scale_means_only_slice_function::operator()()
 {
-    auto& P = static_cast<Parameters&>(C);
-
-    const int B = P.t().n_branches();
-    const int n = P.n_branch_scales();
-
     // return pi * (\sum_i \mu_i)^(n-B)
-    return context_slice_function::operator()() + log(sum_of_means(P))*(n-B);
+    return context_slice_function::operator()() - log_average_scale()*((int)initial_scales.size() - (int)initial_branch_lengths.size());
 }
 
 double scale_means_only_slice_function::current_value() const
 {
-    auto& P = static_cast<Parameters&>(C);
-    double t = log(sum_of_means(P)/initial_sum_of_means);
-    return t;
+    return log_current_factor;
 }
 
 scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P)
-    :context_slice_function(P),
-     initial_sum_of_means(sum_of_means(P))
+    :context_slice_function(P)
 { 
+    // 1. Set up initial scales
+    if (P.n_branch_scales() == 0)
+        throw myexception()<<"Can't do scale_means_only_slice function if there are no scales!";
+
+    initial_average_scale = 0;
+    initial_scales.resize(P.n_branch_scales());
+    for(int i=0;i<initial_scales.size();i++)
+    {
+        initial_scales[i] = P.get_branch_scale(i);
+        initial_average_scale += initial_scales[i];
+    }
+    initial_average_scale /= initial_scales.size();
+
+    // FIXME: We should be able to assert that all of the scales are modifiable.
+
+    // 3. Set up initial branch_lengths
+    initial_branch_lengths.resize(P.t().n_branches());
+    for(int b=0; b<initial_branch_lengths.size(); b++)
+        initial_branch_lengths[b] = P.t().branch_length(b);
+
+    // FIXME: We should be able to assert that all of the branch lengths are modifiable.
+
+    // 4. Set bounds on the scale factor to avoid numeric overflow/underflow.
     bounds<double>& b = *this;
+
+    // We want to require that
+    //     log(average_scale)                              \in [-40,40]
+    //     log(initial_average_scale) + log_current_factor \in [-40,40]
+    //                                  log_current_factor \in [-40 - log(initial_average_scale), 40 - log(initial_average_scale)]
+    double shift = -log(initial_average_scale);
+
+    b = between<double>(-40+shift,40+shift);
 
 #ifndef NDEBUG
     std::clog<<"bounds on t are "<<b<<std::endl;
-#endif
-
-    for(int i=0; i<P.n_branch_scales(); i++)
-    {
-        // If the branch scale is modifiable, its bounds SHOULD be [0,\infty)
-        auto b2 = ::lower_bound<double>(0);
-
-	if (b2.lower_bound and *b2.lower_bound > 0)
-	    b2.lower_bound = log(*b2.lower_bound) - log(P.get_branch_scale(i));
-	else
-	    b2.lower_bound = {};
-
-	if (b2.upper_bound)
-	    b2.upper_bound = log(*b2.upper_bound) - log(P.get_branch_scale(i));
-
-	b = b and b2;
-    }
-
-#ifndef NDEBUG
-    std::clog<<"Bounds on t are now "<<b<<std::endl<<std::endl;
 #endif
 }
 
@@ -474,6 +462,13 @@ double search_interval(double x0,double& L, double& R, slice_function& g,double 
 
 double slice_sample_(double x0, slice_function& g, double w, int m)
 {
+    // If x is not in the range then this could be a range that is reduced to avoid loss of precision.
+    if (not g.in_range(x0))
+    {
+        if (log_verbose >= 4) std::cerr<<x0<<" not in range!";
+        return x0;
+    }
+
     assert(g.in_range(x0));
 
     double gx0 = g();
