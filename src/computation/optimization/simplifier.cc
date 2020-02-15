@@ -870,6 +870,9 @@ vector<CDecls> simplify_module_gently(const simplifier_options& options, const m
 {
     simplifier_options options_gentle = options;
     options_gentle.case_of_case = false;
+//    options_gentle.beta_reduction = false;  This breaks the inliner.  Should probably fix!
+    options_gentle.max_iterations = 1;
+    options_gentle.inline_threshhold = -100;
     return simplify_module(options_gentle, small_decls_in, small_decls_in_free_vars, decl_groups_in);
 }
 
