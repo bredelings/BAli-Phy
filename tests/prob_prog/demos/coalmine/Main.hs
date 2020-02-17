@@ -136,4 +136,4 @@ main = do
 
     observe (independent [ poisson (mean year) | year <- years ]) fatalities
 
-    return ["eta" %=% eta, "lambda" %=% lambda, "gamma" %=% gamma, "theta" %=% theta]
+    return ["eta" %=% eta, "lambda" %=% lambda, "gamma" %=% gamm, "theta" %=% theta]
