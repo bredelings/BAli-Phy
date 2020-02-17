@@ -813,11 +813,12 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
 
         if (arg_lambda_vars[i].empty() and simple_value[i] and not arg_referenced[i])
         {
-            // Since these vars don't perform any actions, they shouldn't be random.
-            assert(not do_log);
-            // FIXME: Currently the assert fails for let-bound vars that are random!
-            //        Probably this is related to let-bound vars sometimes not getting logged.
-            continue;
+            // Under these circumstances, we don't output `let arg_var = simple_value[i]`,
+            // we just substitute simple_value[i] where arg_var would go.
+            //
+            // FIXME - if simple_value[i] is not atomic, like f x, then we duplicate work by
+            // definining a let.
+            x_ret = simple_value[i];
         }
 
         expression_ref logger_bit;
