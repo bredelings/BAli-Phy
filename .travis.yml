@@ -80,7 +80,7 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pyenv local 3.7 && pip3 install meson ninja; fi
 
 script:
-  - meson build --prefix=$HOME/local
+  - meson build --prefix=$HOME/local --buildtype=release
   - ninja -C build install
 # Run internal test suite
   - cd tests
