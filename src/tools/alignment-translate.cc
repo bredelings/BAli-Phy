@@ -139,7 +139,7 @@ int main(int argc,char* argv[])
       A1 = reverse_complement(A1);
 
     //------- Construct the alphabets that we are using  --------//
-    object_ptr<const Genetic_Code> G = get_genetic_code(args["genetic-code"].as<string>());
+    auto G = get_genetic_code(args["genetic-code"].as<string>());
 
     AminoAcidsWithStop AA;
 
