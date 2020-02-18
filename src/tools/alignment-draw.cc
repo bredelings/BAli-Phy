@@ -29,7 +29,6 @@
 #include "util/io.H"
 #include "util/string/convert.H"
 #include "colors.H"
-#include "computation/object.H"
 
 #include <boost/program_options.hpp>
 
@@ -355,11 +354,12 @@ public:
 	{}
 };
 
-class ColorScheme: public Object {
+class ColorScheme
+{
     std::function<double(double)> transform;
     owned_ptr<ColorMap> color_map;
 public:
-    virtual ColorScheme* clone() const {return new ColorScheme(*this);}
+    ColorScheme* clone() const {return new ColorScheme(*this);}
 
     RGB bg_color(double x,const string& s) const {
 	return color_map->bg_color(transform(x),s);
