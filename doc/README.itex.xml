@@ -1,5 +1,5 @@
 <!DOCTYPE book [
-<!ENTITY  version        "3.4.1"         >
+<!ENTITY  version        "3.5"         >
 
 <!ENTITY  source.file    "bali-phy-&version;.tar.gz"         >
 <!ENTITY  linux64.file   "bali-phy-&version;-linux64.tar.gz"         >
@@ -2810,7 +2810,7 @@ Otherwise you can install meson through pip3:
 </para>
 <para>
 Then run meson to configure the build process:
-<screen><prompt>%</prompt><userinput> meson build --prefix=&#36;HOME/Applications/bali-phy-&version;/</userinput></screen>
+<screen><prompt>%</prompt><userinput> meson build --prefix=&#36;HOME/Applications/bali-phy-&version;/ --buildtype=release</userinput></screen>
 </para>
 <para>
 Finally, build and install the software:
@@ -2824,14 +2824,14 @@ The command <command>bali-phy</command> and its associated tools should then be 
       <section><info><title>Options: compiler and linker flags</title></info>
 	
       <para>You can select the C++ compiler by setting the CXX variable.  A useful example of this is to use <command>g++-8</command> on systems where <command>g++</command> invokes a compiler that is too old:
- <screen><prompt>%</prompt> <userinput>CXX=g++-8 meson build --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>
+ <screen><prompt>%</prompt> <userinput>CXX=g++-8 meson build --prefix=&#36;HOME/Applications/bali-phy-&version; --buildtype=release</userinput></screen>
  You may also set compiler and linker options using the CPPFLAGS, CXXFLAGS, and LDFLAGS variables.  For example, you can instruct the compiler to use all the features of your chip, instead of producing generic code that will run anywhere:
  <screen><prompt>%</prompt> <userinput>CXXFLAGS="-mtune=native -march=native" meson --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>
 
  For example, you can set the CPPFLAGS and LDFLAGS variables to instruct the compiler where to look for libraries, such as cairo:
-	  <screen><prompt>%</prompt> <userinput>CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" meson build --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" meson build --prefix=&#36;HOME/Applications/bali-phy-&version; --buildtype=release</userinput></screen>
  Another useful example of this is to produce an OS X executable on that can run on older versions of OS X:
-	  <screen><prompt>%</prompt> <userinput>CXXFLAGS="-mmacosx-version-min=10.9" LDFLAGS="-mmacosx-version-min=10.9" meson build --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>	</para>
+	  <screen><prompt>%</prompt> <userinput>CXXFLAGS="-mmacosx-version-min=10.9" LDFLAGS="-mmacosx-version-min=10.9" meson build --prefix=&#36;HOME/Applications/bali-phy-&version; --buildtype=release</userinput></screen>	</para>
       </section>
 
     </section>
