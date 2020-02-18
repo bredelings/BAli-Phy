@@ -2,6 +2,7 @@
 #define OBJECT_H
 
 #include <string>
+#include <memory>
 #include <boost/intrusive_ptr.hpp>
 #include <iostream>
 
@@ -105,6 +106,30 @@ public:
     Box(Box<T>&&) = default;
     Box(const T& t):T(t) {}
     Box(T&& t):T(std::move(t)) {}
+};
+
+template<typename T>
+class PtrBox: public Object
+{
+    std::shared_ptr<const T> data;
+public:
+    PtrBox<T>* clone() const {return new PtrBox<T>(*this);}
+
+    PtrBox<T>& operator=(const PtrBox<T>& t) = default;
+    PtrBox<T>& operator=(PtrBox<T>&& t) = default;
+
+    std::string print() const {return Object::print();}
+
+    const T& value() const {return *data;}
+
+    operator const T&() const {return value();}
+
+    PtrBox() = default;
+    PtrBox(const PtrBox<T>&) = default;
+    PtrBox(PtrBox<T>&&) = default;
+    PtrBox(const std::shared_ptr<const T>& pt):data(pt) {}
+    PtrBox(std::shared_ptr<const T>&& pt):data(pt) {}
+    PtrBox(const T* pt):data(pt) {}
 };
 
 /***************** Make log_double_t count as an arithmetic type **************/
