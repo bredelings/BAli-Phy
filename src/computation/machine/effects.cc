@@ -32,14 +32,16 @@ register_random_variable::register_random_variable(int r)
 void register_random_variable::register_effect(reg_heap& M) const
 {
     if (log_verbose >= 2)
-        std::cerr<<"register_random_variable["<<random_variable_reg<<"]: REGISTER!\n";
+        std::cerr<<"register_random_variable["<<random_variable_reg<<"]: REGISTER! ("<<M.random_variables().size()<<" -> "<<M.random_variables().size()+1<<")\n";
     M.register_random_variable(random_variable_reg);
 }
 
 void register_random_variable::unregister_effect(reg_heap& M) const
 {
     if (log_verbose >= 2)
-        std::cerr<<"register_random_variable["<<random_variable_reg<<"]: UNregister!\n";
+    {
+        std::cerr<<"register_random_variable["<<random_variable_reg<<"]: UNregister! ("<<M.random_variables().size()<<" -> "<<M.random_variables().size()-1<<")\n";
+    }
     M.unregister_random_variable(random_variable_reg);
 }
 
