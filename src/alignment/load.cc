@@ -357,7 +357,7 @@ std::list<alignment> load_alignments(std::istream& ifile, const string& alph_nam
     // The actually first alignment might be freed later on, so we can't
     // rely on a reference to it's alphabet.
     auto& first = alignments.front();
-    object_ptr<const alphabet> a = first.get_alphabet().clone();
+    std::shared_ptr<const alphabet> a(first.get_alphabet().clone());
 
     vector<string> names = sequence_names(alignments.front());
 

@@ -19,6 +19,8 @@ using std::cerr;
 using std::endl;
 using std::abs;
 
+using Alphabet = PtrBox<alphabet>;
+
 extern "C" closure builtin_function_lExp(OperationArgs& Args)
 {
     auto L = Args.evaluate(0);
@@ -95,7 +97,7 @@ extern "C" closure builtin_function_get_eigensystem(OperationArgs& Args)
 extern "C" closure builtin_function_get_equilibrium_rate(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
-    const alphabet& a = arg0.as_<alphabet>();
+    const alphabet& a = *arg0.as_<Alphabet>();
 
     auto arg1 = Args.evaluate(1);
     auto& smap = arg1.as_< EVector >();
@@ -134,7 +136,7 @@ extern "C" closure builtin_function_get_equilibrium_rate(OperationArgs& Args)
 extern "C" closure builtin_function_rna_16a_exchange(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
-    const Doublets& D = arg0.as_<Doublets>();
+    auto& D = *arg0.poly_as_<alphabet,Doublets>();
 
     // 2 changes: between matches/wobbles (both transitions)
     double alpha_D = Args.evaluate(2).as_double();
@@ -217,7 +219,7 @@ extern "C" closure builtin_function_rna_16a_exchange(OperationArgs& Args)
 extern "C" closure builtin_function_singlet_to_doublet_rates(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
-    const Doublets& D = arg0.as_<Doublets>();
+    auto& D = *arg0.poly_as_<alphabet,Doublets>();
 
     auto arg1 = Args.evaluate(1);
     const Matrix& R1 = arg1.as_<Box<Matrix>>();
@@ -277,7 +279,7 @@ extern "C" closure builtin_function_singlet_to_doublet_rates(OperationArgs& Args
 extern "C" closure builtin_function_singlet_to_triplet_rates(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
-    const Triplets& T = arg0.as_<Triplets>();
+    auto& T = *arg0.poly_as_<alphabet,Triplets>();
   
     auto arg1 = Args.evaluate(1);
     const Matrix& R1 = arg1.as_<Box<Matrix>>();
@@ -719,7 +721,7 @@ extern "C" closure builtin_function_empirical(OperationArgs& Args)
 {
     auto a = Args.evaluate(0);
     auto S = Args.evaluate(1);
-    return Empirical_Exchange_Function(a.as_<alphabet>(), S.as_<String>());
+    return Empirical_Exchange_Function(*a.as_<Alphabet>(), S.as_<String>());
 }
 
 object_ptr<const Object> PAM_Exchange_Function(const alphabet& a)
@@ -751,7 +753,7 @@ object_ptr<const Object> PAM_Exchange_Function(const alphabet& a)
 extern "C" closure builtin_function_pam(OperationArgs& Args)
 {
     auto a = Args.evaluate(0);
-    return PAM_Exchange_Function(a.as_<alphabet>());
+    return PAM_Exchange_Function(*a.as_<Alphabet>());
 }
 
 object_ptr<const Object> JTT_Exchange_Function(const alphabet& a)
@@ -783,7 +785,7 @@ object_ptr<const Object> JTT_Exchange_Function(const alphabet& a)
 extern "C" closure builtin_function_jtt(OperationArgs& Args)
 {
     auto a = Args.evaluate(0);
-    return JTT_Exchange_Function(a.as_<alphabet>());
+    return JTT_Exchange_Function(*a.as_<Alphabet>());
 }
 
 const char* wag_string =
@@ -815,14 +817,14 @@ extern "C" closure builtin_function_wag(OperationArgs& Args)
 {
     auto a = Args.evaluate(0);
     istringstream file(wag_string);
-    return Empirical_Exchange_Function(a.as_<alphabet>(), file);
+    return Empirical_Exchange_Function(*a.as_<Alphabet>(), file);
 }
 
 extern "C" closure builtin_function_wag_frequencies(OperationArgs& Args)
 {
     auto a = Args.evaluate(0);
     istringstream file(wag_string);
-    return Empirical_Frequencies_Function(a.as_<alphabet>(), file);
+    return Empirical_Frequencies_Function(*a.as_<Alphabet>(), file);
 }
 
 
@@ -851,20 +853,20 @@ extern "C" closure builtin_function_lg(OperationArgs& Args)
 {
     auto a = Args.evaluate(0);
     istringstream file(lg_string);
-    return Empirical_Exchange_Function(a.as_<alphabet>(), file);
+    return Empirical_Exchange_Function(*a.as_<Alphabet>(), file);
 }
 
 extern "C" closure builtin_function_lg_frequencies(OperationArgs& Args)
 {
     auto a = Args.evaluate(0);
     istringstream file(lg_string);
-    return Empirical_Frequencies_Function(a.as_<alphabet>(), file);
+    return Empirical_Frequencies_Function(*a.as_<Alphabet>(), file);
 }
 
 extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
-    const Triplets& T = arg0.as_<Triplets>();
+    auto& T = *arg0.poly_as_<alphabet,Triplets>();
     // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
 
     auto arg1 = Args.evaluate(1);
@@ -911,7 +913,7 @@ extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
 extern "C" closure builtin_function_f2x4_frequencies(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
-    const Doublets& D = arg0.as_<Doublets>();
+    auto& D = *arg0.poly_as_<alphabet,Doublets>();
     // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
 
     auto arg1 = Args.evaluate(1);
@@ -1043,7 +1045,7 @@ extern "C" closure builtin_function_elementwise_multiply(OperationArgs& Args)
 extern "C" closure builtin_function_dNdS_matrix(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
-    const Codons& C = arg0.as_checked<Codons>();
+    const Codons& C = *arg0.poly_as_<alphabet,Codons>();
 
     double omega = Args.evaluate(1).as_double();
 
@@ -1061,7 +1063,7 @@ extern "C" closure builtin_function_dNdS_matrix(OperationArgs& Args)
 extern "C" closure builtin_function_m0(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
-    const Codons& C = arg0.as_<Codons>();
+    auto& C = *arg0.poly_as_<alphabet,Codons>();
 
     auto arg1 = Args.evaluate(1);
     const Matrix& S = arg1.as_<Box<Matrix>>();
@@ -1380,7 +1382,7 @@ extern "C" closure builtin_function_peel_leaf_branch(OperationArgs& Args)
     auto arg3 = Args.evaluate(3);
     auto arg4 = Args.evaluate(4);
 
-    return substitution::peel_leaf_branch(arg0.as_<EVector>(), arg1.as_<EVector>(), arg2.as_<alphabet>(), arg3.as_<EVector>(), arg4.as_<EVector>());
+    return substitution::peel_leaf_branch(arg0.as_<EVector>(), arg1.as_<EVector>(), *arg2.as_<Alphabet>(), arg3.as_<EVector>(), arg4.as_<EVector>());
 }
 
 
@@ -1391,7 +1393,7 @@ extern "C" closure builtin_function_peel_leaf_branch_SEV(OperationArgs& Args)
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
 
-    return substitution::peel_leaf_branch_SEV(arg0.as_<EVector>(), arg1.as_<alphabet>(), arg2.as_<EVector>(), arg3.as_<Box<dynamic_bitset<>>>());
+    return substitution::peel_leaf_branch_SEV(arg0.as_<EVector>(), *arg1.as_<Alphabet>(), arg2.as_<EVector>(), arg3.as_<Box<dynamic_bitset<>>>());
 }
 
 
@@ -1578,7 +1580,7 @@ extern "C" closure builtin_function_sample_leaf_node_sequence(OperationArgs& Arg
     return substitution::sample_leaf_node_sequence(arg0.as_<Vector<pair<int,int>>>(),
                                                    arg1.as_<EVector>(),
                                                    arg2.as_<EVector>(),
-                                                   arg3.as_<alphabet>(),
+                                                   *arg3.as_<Alphabet>(),
                                                    arg4.as_<EVector>(),
                                                    arg5.as_<Box<pairwise_alignment_t>>(),
                                                    arg6.as_<Box<Matrix>>());
@@ -1627,7 +1629,7 @@ extern "C" closure builtin_function_peel_likelihood_1(OperationArgs& Args)
     auto arg2 = Args.evaluate(2);
 
     const auto& seq  = arg0.as_<EVector>();
-    const auto& a    = arg1.as_<alphabet>();
+    const auto& a    = *arg1.as_<Alphabet>();
     const auto& WF   = arg2.as_<Box<Matrix>>();
 
     // Make frequency-vector AND log(frequency)-vector
@@ -1659,7 +1661,7 @@ extern "C" closure builtin_function_peel_likelihood_2(OperationArgs& Args)
 
     const auto& seq1  = arg0.as_<EVector>();
     const auto& seq2  = arg1.as_<EVector>();
-    const auto& alpha = arg2.as_<alphabet>();
+    const alphabet& alpha = *arg2.as_<Alphabet>();
     const auto& A     = arg3.as_<Box<pairwise_alignment_t>>();
     const auto& P     = arg4.as_<EVector>();
     const auto& WF    = arg5.as_<Box<Matrix>>();

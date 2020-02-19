@@ -13,6 +13,8 @@
 using std::string;
 using std::vector;
 
+using Alphabet = PtrBox<alphabet>;
+
 // #include "alignment/alignment-util.H"
 vector<int> alignment_row_counts(const alignment& A, int i, const vector<int>& counts);
 
@@ -356,7 +358,7 @@ extern "C" closure builtin_function_leaf_sequence_counts(OperationArgs& Args)
 extern "C" closure builtin_function_load_alignment(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
-    auto& a = arg0.as_checked<alphabet>();
+    auto& a = *arg0.as_checked<Alphabet>();
 
     string filename = Args.evaluate(1).as_checked<String>();
 
@@ -413,7 +415,7 @@ extern "C" closure builtin_function_select_range(OperationArgs& Args)
 extern "C" closure builtin_function_alignment_from_sequences(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
-    auto& a = arg0.as_checked<alphabet>();
+    auto& a = *arg0.as_checked<Alphabet>();
 
     auto arg1 = Args.evaluate(1);
     auto& sequences_ = arg1.as_<EVector>();

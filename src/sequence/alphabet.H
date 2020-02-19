@@ -24,6 +24,7 @@
 #ifndef ALPHABET_H
 #define ALPHABET_H
 
+#include <memory>
 #include <vector>
 #include <valarray>
 #include <iostream>
@@ -31,7 +32,6 @@
 #include "util/assert.hh"
 #include <boost/dynamic_bitset.hpp>
 #include "util/myexception.H"
-#include "computation/object.H"
 #include "util/owned-ptr.H"
 
 /// An exception that is thrown upon reading a letter that is not in the current alphabet.
@@ -51,7 +51,7 @@ struct bad_letter:public myexception
 /***************** struct alphabet ********************/
 
 /// Converts between a list of letters, and their integer indices
-class alphabet: public Object
+class alphabet
 {
 public:
     typedef boost::dynamic_bitset<> bitmask_t;
@@ -216,18 +216,6 @@ public:
 
     /// Estimate frequencies from counts in a way that uses alphabet-dependant pseudocounts
     virtual std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=1.0) const;
-
-    bool operator==(const Object& O) const
-	{
-	    if (this == &O) 
-		return true;
-
-	    if (typeid(*this) != typeid(O)) return false;
-
-	    const alphabet* a = dynamic_cast<const alphabet*>(&O);
-
-	    return (*this) == *a;
-	}
 
     std::string print () const;
 
@@ -410,7 +398,7 @@ public:
 };
 
 /// A Class that maps 3 nucleotides to an outcome in the amino_acid+stop alphabet
-class Genetic_Code: public Object
+class Genetic_Code
 {
     std::string name_;
 
@@ -432,7 +420,7 @@ protected:
     void setup_table_from_file(const std::string& filename);
 
 public:
-    Genetic_Code* clone() const=0;
+    virtual Genetic_Code* clone() const=0;
 
     const std::string& name() const {return name_;}
 
@@ -452,6 +440,8 @@ public:
     Genetic_Code(const std::string& name, std::istream&);
 
     Genetic_Code(const std::string& name, const std::string& filename);
+
+    virtual ~Genetic_Code() = default;
 };
 
 
@@ -549,7 +539,7 @@ std::valarray<double> get_nucleotide_counts_from_codon_counts(const Triplets& C,
 /// Compute codon frequences from nucleotide frequencies if the nucleotide positions in the codon are independent
 std::valarray<double> get_codon_frequencies_from_independent_nucleotide_frequencies(const Triplets& C,const std::valarray<double>& fN );
 
-object_ptr<const alphabet> get_alphabet(const std::string& name);
-object_ptr<const Nucleotides> get_nucleotides(const std::string& name);
-object_ptr<const Genetic_Code> get_genetic_code(const std::string& name);
+std::shared_ptr<const alphabet> get_alphabet(const std::string& name);
+std::shared_ptr<const Nucleotides> get_nucleotides(const std::string& name);
+std::shared_ptr<const Genetic_Code> get_genetic_code(const std::string& name);
 #endif

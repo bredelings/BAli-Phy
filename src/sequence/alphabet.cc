@@ -30,6 +30,7 @@ using std::vector;
 using std::string;
 using std::valarray;
 using std::istream;
+using std::shared_ptr;
 
 bad_letter::bad_letter(const string& l)
     :myexception(string("Letter '") + sanitize_string(l) + string("' not in alphabet.")),letter(l)
@@ -1168,34 +1169,34 @@ Codons::Codons(const Nucleotides& N1,const AminoAcids& A1, const Genetic_Code& G
     name = string("Codons[") + getNucleotides().name + ","+ G->name() + "]";
 }
 
-object_ptr<const Genetic_Code> get_genetic_code(const string& name)
+shared_ptr<const Genetic_Code> get_genetic_code(const string& name)
 {
     if (name == "standard")
-	return object_ptr<const Genetic_Code>(new Standard_Genetic_Code());
+	return shared_ptr<const Genetic_Code>(new Standard_Genetic_Code());
     else if (name == "mt-vert")
-	return object_ptr<const Genetic_Code>(new Mt_Vertebrate_Genetic_Code());
+	return shared_ptr<const Genetic_Code>(new Mt_Vertebrate_Genetic_Code());
     else if (name == "mt-invert")
-	return object_ptr<const Genetic_Code>(new Mt_Invertebrate_Genetic_Code());
+	return shared_ptr<const Genetic_Code>(new Mt_Invertebrate_Genetic_Code());
     else if (name == "mt-yeast")
-	return object_ptr<const Genetic_Code>(new Mt_Yeast_Genetic_Code());
+	return shared_ptr<const Genetic_Code>(new Mt_Yeast_Genetic_Code());
     else if (name == "mt-protozoan")
-	return object_ptr<const Genetic_Code>(new Mt_Protozoan_Genetic_Code());
+	return shared_ptr<const Genetic_Code>(new Mt_Protozoan_Genetic_Code());
     else
 	throw myexception()<<"I don't recognize genetic code name '"<<name<<"'.\n"
 	    "  Try one of 'standard', 'mt-vert', 'mt-invert', 'mt-protozoan', 'mt-yeast'.";
 }
 
-object_ptr<const Nucleotides> get_nucleotides(const string& name)
+shared_ptr<const Nucleotides> get_nucleotides(const string& name)
 {
     if (name == "DNA")
-	return new DNA;
+	return shared_ptr<const Nucleotides>(new DNA);
     else if (name == "RNA")
-	return new RNA;
+	return shared_ptr<const Nucleotides>(new RNA);
 
     throw myexception()<<"'"<<name<<"' is not a valid nucleotides alphabet.  Please specify DNA or RNA.";
 }
 
-object_ptr<const alphabet> get_alphabet(const string& name_)
+shared_ptr<const alphabet> get_alphabet(const string& name_)
 {
     string name = name_;
     vector<string> arguments = get_arguments(name,'[',']');
@@ -1208,7 +1209,7 @@ object_ptr<const alphabet> get_alphabet(const string& name_)
 	auto N = get_nucleotides(arguments[0]);
 	auto G = get_genetic_code(arguments[1]);
 
-	return new Codons(*N, AminoAcids(), *G);
+	return shared_ptr<const alphabet>(new Codons(*N, AminoAcids(), *G));
     }
     else if (name == "Triplets")
     {
@@ -1217,7 +1218,7 @@ object_ptr<const alphabet> get_alphabet(const string& name_)
 
 	auto N = get_nucleotides(arguments[0]);
 
-	return new Triplets(*N);
+	return shared_ptr<const alphabet>(new Triplets(*N));
     }
     else if (name == "Doublets")
     {
@@ -1226,7 +1227,7 @@ object_ptr<const alphabet> get_alphabet(const string& name_)
 
 	auto N = get_nucleotides(arguments[0]);
 
-	return new Doublets(*N);
+	return shared_ptr<const alphabet>(new Doublets(*N));
     }
     else if (name == "Numeric")
     {
@@ -1234,16 +1235,16 @@ object_ptr<const alphabet> get_alphabet(const string& name_)
 	    throw myexception()<<"Numeric needs one argument specifying the number of states: e.g. Numeric[2].";
 	int n = convertTo<int>(arguments[0]);
 
-	return new Numeric(n);
+	return shared_ptr<const alphabet>(new Numeric(n));
     }
     else if (name == "DNA")
-	return new DNA;
+	return shared_ptr<const alphabet>(new DNA);
     else if (name == "RNA")
-	return new RNA;
+	return shared_ptr<const alphabet>(new RNA);
     else if (name == "Amino-Acids" or name == "AA")
-	return new AminoAcids;
+	return shared_ptr<const alphabet>(new AminoAcids);
     else if (name == "Amino-Acids+stop" or name == "AA*")
-	return new AminoAcidsWithStop;
+	return shared_ptr<const alphabet>(new AminoAcidsWithStop);
 
     throw myexception()<<"I don't recognize alphabet '"<<name<<"'";
 }

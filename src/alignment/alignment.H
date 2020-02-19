@@ -55,7 +55,7 @@ class alignment
     void add_row(const std::vector<int>&);
 
     /// The alphabet that translates integers back to letters.
-    object_ptr<const alphabet> a;
+    std::shared_ptr<const alphabet> a;
   
 public:
 

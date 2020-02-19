@@ -869,7 +869,7 @@ void mutable_data_partition::set_alignment(const alignment& A)
 {
     // 1. Check if the alphabet on the alignment is right.
     if (get_alphabet() != A.get_alphabet())
-        throw myexception()<<"Can't set alignment with alphabet '"<<A.get_alphabet()<<"' in partition with alphabet '"<<get_alphabet().name<<"'";
+        throw myexception()<<"Can't set alignment with alphabet '"<<A.get_alphabet().print()<<"' in partition with alphabet '"<<get_alphabet().name<<"'";
 
     auto T = t();
 
