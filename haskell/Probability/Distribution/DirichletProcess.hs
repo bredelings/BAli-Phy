@@ -48,14 +48,19 @@ safe_exp x = if (x < (-20.0)) then
              else
                exp x
 
+-- FIXME! For now, we want all thetas forced so that the number of random variables does not change.
+iid_forced n dist = do xs <- iid n dist
+                       return $ deepseq_list xs xs
+    where deepseq_list (x:xs) obj = foldr seq obj xs
+
 dpm n alpha mean_dist noise_dist= do 
 
   let delta = 4
 
-  mean <- iid (n+delta) mean_dist
-  sigmaOverMu <- iid (n+delta) noise_dist
+  mean <- iid_forced (n+delta) mean_dist
+  sigmaOverMu <- iid_forced (n+delta) noise_dist
 
-  z <- iid n (normal 0.0 1.0)
+  z <- iid_forced n (normal 0.0 1.0)
 
   category <- crp alpha n delta
 
@@ -65,7 +70,7 @@ dp n alpha mean_dist = do
 
   let delta = 4
 
-  mean <- iid (n+delta) mean_dist
+  mean <- iid_forced (n+delta) mean_dist
 
   category <- crp alpha n delta
 
