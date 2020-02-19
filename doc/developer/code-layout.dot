@@ -20,8 +20,9 @@ subgraph modules_dir
 {
 node [fillcolor="#99ff99"]
 modules -> SModel
-modules [label=<<b>modules/</b><br/><i>language: Haskell</i>>]
-modules -> Distributions
+modules [label=<<b>haskell/</b><br/><i>language: Haskell</i>>]
+modules -> Probability
+Probability -> Distributions
 }
 
 subgraph modules_dir
@@ -31,7 +32,7 @@ bindings [label=<<b>bindings/</b><br/><i>language: JSON</i>>]
 bindings -> functions
 functions [label=<<b>functions/</b>>]
 bindings -> models
-models [label=<<b>model/</b>>]
+models [label=<<b>models/</b>>]
 bindings -> distributions
 distributions [label=<<b>distributions/</b>>]
 }

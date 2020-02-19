@@ -1,6 +1,6 @@
 % Add a probability distributon to BAli-Phy
 
-Distributions are defined in [modules/Distributions.hs](https://github.com/bredelings/BAli-Phy/blob/master/modules/Distributions.hs).
+Distributions are defined in [haskell/Distributions.hs](https://github.com/bredelings/BAli-Phy/blob/master/modules/Distributions.hs).
 
 ## Making a ProbDensity object
 

@@ -1,7 +1,7 @@
 % Adding a C++ function
 
 BAli-Phy executes C++ functions much more quickly than it executes Haskell functions.
-To add a "builtin" C++ operation to bali-phy's Haskell code, you must add the C++ code for the operation to one of the C++ files in the [src/builtins/](https://github.com/bredelings/BAli-Phy/blob/master/src/builtins) directory.  You must also tell the Haskell interpreter how to call this function by declaring it one of Haskell modules in the [modules/](https://github.com/bredelings/BAli-Phy/blob/master/modules/) directory.
+To add a "builtin" C++ operation to bali-phy's Haskell code, you must add the C++ code for the operation to one of the C++ files in the [src/builtins/](https://github.com/bredelings/BAli-Phy/blob/master/src/builtins) directory.  You must also tell the Haskell interpreter how to call this function by declaring it one of Haskell modules in the [haskell/](https://github.com/bredelings/BAli-Phy/blob/master/haskell/) directory.
 
 ## Declaring a C++ builtin in Haskell
 
@@ -11,7 +11,7 @@ A builtin is declared via the following syntax:
 builtin haskell_name number_of_arguments "c++ name" "module name"
 ```
 
-For example, the Haskell function `poisson_density` is declared with the following line from [modules/Distributions.hs](https://github.com/bredelings/BAli-Phy/blob/master/modules/Distributions.hs):
+For example, the Haskell function `poisson_density` is declared with the following line from [haskell/Distributions.hs](https://github.com/bredelings/BAli-Phy/blob/master/haskell/Distributions.hs):
 
 ``` Haskell
 builtin poisson_density 2 "poisson_density" "Distribution"
