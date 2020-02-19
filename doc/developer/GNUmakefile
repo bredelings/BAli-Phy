@@ -1,4 +1,4 @@
-all:  developer.html git.html building.html code.html architecture.png architecture.svg code-layout.png code-layout.svg \
+all:  git.html building.html code.html architecture.png architecture.svg code-layout.png code-layout.svg \
       add_function.html builtin.html distribution.html mcmc_move.html binding.html tests.html
 
 clean:
