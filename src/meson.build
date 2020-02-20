@@ -121,7 +121,7 @@ libbaliphy = static_library('baliphy', libbaliphy_sources,
 			    
 subdir('bali-phy')
 
-subdir('computation/builtins')
+subdir('builtins')
 
 test('bali-phy version', baliphy, args:['--version'])
 test('bali-phy help', baliphy, args:['--help'])

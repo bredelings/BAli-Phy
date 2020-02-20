@@ -15,7 +15,7 @@ endif
 foreach mod : builtins
   shared_module(mod,
 		mod + '.cc',
-		include_directories: [libutil_inc,source_inc],
+		include_directories: [libutil_inc, source_inc, root_inc],
 		dependencies: [boost, json, eigen],
 		link_with: implibs,
 		install_dir: 'lib/bali-phy',
