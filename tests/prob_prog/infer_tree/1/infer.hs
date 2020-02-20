@@ -1,4 +1,4 @@
-import           Alignment               hiding ( sample_alignment )
+import           Bio.Alignment               hiding ( sample_alignment )
 import           Alphabet
 import           Probability
 import           Tree
@@ -37,7 +37,7 @@ sample_alignment topology ts imodel scale tip_seq_lengths = do
         ds         = listArray' $ map (* scale) ts
         hmms       = branch_hmms imodel ds n_branches
     alignment_on_tree <- random_alignment topology hmms imodel tip_seq_lengths True
-    return $ Alignment.pairwise_alignments alignment_on_tree
+    return $ Bio.Alignment.pairwise_alignments alignment_on_tree
 
 model alphabet n_tips seqs = random $ do
 
