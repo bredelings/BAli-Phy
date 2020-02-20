@@ -2,7 +2,7 @@ module Probability.Distribution.RandomAlignment where
 
 import Probability.Random
 import Tree
-import Alignment
+import Bio.Alignment
 
 modifiable_alignment a@(AlignmentOnTree tree n_seqs ls as) | numNodes tree < 2 = a
 modifiable_alignment   (AlignmentOnTree tree n_seqs ls as) | otherwise         = AlignmentOnTree tree n_seqs ls' as'

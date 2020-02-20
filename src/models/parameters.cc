@@ -478,8 +478,8 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     // Extract alignment from data partition
     auto alignment_on_tree = expression_ref{var("BAliPhy.ATModel.DataPartition.get_alignment"), partition};
     alignment_on_tree = p->get_expression( p->add_compute_expression(alignment_on_tree) );
-    auto as = expression_ref{var("Alignment.pairwise_alignments"), alignment_on_tree};
-    auto seq_lengths = expression_ref{var("Alignment.sequence_lengths"),alignment_on_tree};
+    auto as = expression_ref{var("Bio.Alignment.pairwise_alignments"), alignment_on_tree};
+    auto seq_lengths = expression_ref{var("Bio.Alignment.sequence_lengths"),alignment_on_tree};
 
     for(int n=0;n<t.n_nodes();n++)
         sequence_length_indices[n] = p->add_compute_expression( {var("Data.Array.!"), seq_lengths, n} );
@@ -1389,7 +1389,7 @@ std::string generate_atmodel_program(int n_partitions,
 
     set<string> imports;
     imports.insert("Parameters");                        // for Parameters.modifiable
-    imports.insert("Alignment");                         // for Alignment.load_alignment
+    imports.insert("Bio.Alignment");                         // for Alignment.load_alignment
     imports.insert("Alphabet");                          // for Alphabet.dna, etc.
     imports.insert("BAliPhy.ATModel");                   // for ATModel
     imports.insert("BAliPhy.ATModel.DataPartition");     // for Partition
@@ -1569,7 +1569,7 @@ std::string generate_atmodel_program(int n_partitions,
         if (i==0)
         {
             program.let(alignment_var, loaded_alignment);
-            program.let(sequence_names_var, {var("Alignment.builtin_sequence_names"),alignment_var});
+            program.let(sequence_names_var, {var("Bio.Alignment.builtin_sequence_names"),alignment_var});
         }
         else
         {
@@ -1736,7 +1736,7 @@ std::string generate_atmodel_program(int n_partitions,
         else if (likelihood_calculator == 0)
         {
             var leaf_seq_counts("leaf_sequence_counts_part"+part);
-            program.let(leaf_seq_counts, {var("listArray'"),{var("Alignment.leaf_sequence_counts"), compressed_alignment_var, n_leaves, counts_var}});
+            program.let(leaf_seq_counts, {var("listArray'"),{var("Bio.Alignment.leaf_sequence_counts"), compressed_alignment_var, n_leaves, counts_var}});
 
             // Create and set conditional likelihoods for each branch
             program.let(cls_var, {var("cached_conditional_likelihoods"), tree_var, leaf_sequences_var, leaf_seq_counts, as, alphabet_var, transition_ps, f, smap});

@@ -1,11 +1,11 @@
-module Alignment (module Alignment,
-                  module Sequence) where
+module Bio.Alignment (module Bio.Alignment,
+                      module Bio.Sequence) where
 
 import Tree
 import Data.BitVector
 import Parameters
 import Foreign.Vector
-import Sequence
+import Bio.Sequence
 
 builtin pairwise_alignment_length1 1 "pairwise_alignment_length1" "Alignment"
 builtin pairwise_alignment_length2 1 "pairwise_alignment_length2" "Alignment"

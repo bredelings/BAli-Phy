@@ -3,7 +3,7 @@ module BAliPhy.ATModel where
 import BAliPhy.ATModel.DataPartition
 import BAliPhy.ATModel.DataPartition as DP
 import Foreign.Vector
-import Alignment
+import Bio.Alignment
 import Tree
 import SModel
 
@@ -48,7 +48,7 @@ observe_partition_type_0 partition compressed_alignment leaf_sequences column_co
           smodel_on_tree = SModel.SingleBranchLengthModel tree distances smodel
           transition_ps = transition_p_index smodel_on_tree
           n_leaves = numLeaves tree
-          leaf_sequence_counts = listArray' (Alignment.leaf_sequence_counts compressed_alignment n_leaves column_counts)
+          leaf_sequence_counts = listArray' (Bio.Alignment.leaf_sequence_counts compressed_alignment n_leaves column_counts)
           f = weighted_frequency_matrix smodel
           cls = cached_conditional_likelihoods
                   tree

@@ -2,7 +2,7 @@ module BAliPhy.ATModel.DataPartition where
 
 import Data.Maybe
 import Tree
-import Alignment
+import Bio.Alignment
 
 data IModel
 data SModel
