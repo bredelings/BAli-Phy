@@ -2,10 +2,12 @@
 
 #include <vector>
 
+#include "math/pow2.H"
 #include "util/matrix.H"
 #include "util/range.H"
 #include "util/math/log-double.H"
 #include "alignment/alignment.H"
+#include "alignment/alignment-util.H"
 #include "probability/choose.H"
 #include "computation/machine/args.H"
 
@@ -932,3 +934,102 @@ extern "C" closure builtin_function_trace_to_trees(OperationArgs& Args)
 
     return { String(s.str()) };
 }
+
+double li_stephens_2003_theta(int n)
+{
+    double inv_theta = 0;
+    for(int i=1;i<=n;i++)
+        inv_theta += 1.0/n;
+    double theta = 1.0/inv_theta;
+    return theta;
+}
+
+log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment& A, const vector<int>& d, int k, double rho, double theta)
+{
+    // 1. Determine mutation probabilities when copying from a given parent.
+    assert(k>=1);
+    double emission_diff_state = (theta <1.0) ? 0.5*theta/(k + theta) : 0.5/(k/theta + 1);
+    double emission_same_state = 1.0 - emission_diff_state;
+
+    // 2. Set the probability of copying from each of the k parents to 1/k at location 0.
+    double L = A.length();
+    Matrix m(L+1,k);
+    vector<int> scale(L+1,0);
+    for(int i=0;i<k;i++)
+        m(0,i) = 1.0/k;
+
+    // 3. Perform the forward algorithm
+    int prev_column = 0;
+    for(int column1=0; column1<L; column1++)
+    {
+        double maximum = 0;
+
+        int column2 = column1 + 1;
+        double dist = d[column1] - prev_column;
+        double transition_diff_parent = (1.0-exp(-rho*dist/k))/k;
+        double transition_same_parent = 1.0 - (k-1)*transition_diff_parent;
+
+        for(int i2=0;i2<k;i2++)
+        {
+            // Emission is 1.0 if missing data
+            double emission_i2 = 1.0;
+            // Emission is given by whether the characters match, otherwise.
+            if (A(column1,i2) >=0 and A(column1,k) >=0)
+                emission_i2 = (A(column1,i2) == A(column1,k)) ? emission_same_state : emission_diff_state;
+
+            double total = 0;
+            for(int i1=0;i1<k;i1++)
+            {
+                double transition_i1_i2 = (i1==i2) ? transition_same_parent : transition_diff_parent;
+                total += m(column1,i1) * transition_i1_i2 * emission_i2;
+            }
+            if (total > maximum) maximum = total;
+            m(column2,i2) = total;
+        }
+        prev_column = d[column1];
+
+        scale[column2] = scale[column1];
+
+        //------- if exponent is too low, rescale ------//
+        if (maximum > 0 and maximum < fp_scale::lo_cutoff)
+        {
+            int logs = -(int)log2(maximum);
+            double scale_factor = pow2(logs);
+            for(int i2=0;i2<k;i2++)
+                m(column2,i2) *= scale_factor;
+            scale[column2] -= logs;
+        }
+    }
+
+    // 3. Compute the total probability
+    double total = 0;
+    for(int i=0;i<k;i++)
+        total += m(L-1,i);
+
+    log_double_t Pr = pow(log_double_t(2.0),scale[L-1]) * total;
+    
+    return { Pr };
+}
+
+extern "C" closure builtin_function_li_stephens_2003_composite_likelihood(OperationArgs& Args)
+{
+    double rho = Args.evaluate(0).as_double();
+
+    auto arg1 = Args.evaluate(1);
+    auto& A = arg1.as_<Box<alignment>>().value();
+
+    int n = A.n_sequences();
+
+    auto variant_columns = find_columns(A, [&](int c){return is_variant_column(A,c);});
+    alignment A2 = select_columns(A, variant_columns);
+
+    double theta_ish = li_stephens_2003_theta(n);
+
+    log_double_t Pr = 1.0;
+
+    for(int i=1;i<n;i++)
+        Pr *= li_stephens_2003_conditional_sampling_distribution(A2, variant_columns, i, rho, theta_ish);
+
+    return { Pr };
+}
+
