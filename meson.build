@@ -141,7 +141,7 @@ math_dep = cpp.find_library('m', required:false)
 
 small_fasta=files('examples/sequences/5S-rRNA/5d.fasta')
 big_fasta=files('examples/sequences/5S-rRNA/48-muscle.fasta')
-builtins = meson.build_root()/'src/computation/builtins'
+builtins = meson.build_root()/'src/builtins'
 packagepath = '--package-path=@0@:@1@'.format(builtins,meson.source_root())
 
 subdir('src')
