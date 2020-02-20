@@ -1,21 +1,19 @@
 module Bio.Alignment (module Bio.Alignment,
-                      module Bio.Sequence) where
+                      module Bio.Sequence,
+                      module Bio.Alignment.Matrix) where
 
 import Tree
 import Data.BitVector
 import Parameters
 import Foreign.Vector
 import Bio.Sequence
+import Bio.Alignment.Matrix
 
 builtin pairwise_alignment_length1 1 "pairwise_alignment_length1" "Alignment"
 builtin pairwise_alignment_length2 1 "pairwise_alignment_length2" "Alignment"
-builtin alignment_length 1 "alignment_length" "Alignment"
 
 -- Alignment -> Int -> EVector Int-> EVector (EVector Int)
 builtin builtin_leaf_sequence_counts 3 "leaf_sequence_counts" "Alignment"
-
-builtin builtin_load_alignment 2 "load_alignment" "Alignment"
-builtin alignment_from_sequences 2 "alignment_from_sequences" "Alignment"
 
 builtin builtin_alignment_row_to_bitvector 2 "alignment_row_to_presence_bitvector" "Bits"
 builtin builtin_pairwise_alignment_from_bits 2 "pairwise_alignment_from_bits" "Bits"
@@ -26,17 +24,6 @@ branch_hmms (model,_) distances n_branches = listArray' $ map (model distances) 
   
 seqlength as tree node = pairwise_alignment_length1 (as!b) where
     b = head $ edgesOutOfNode tree node
-
-builtin builtin_sequence_names 1 "sequence_names" "Alignment"
-sequence_names a = map unpack_cpp_string $ list_from_vector $ builtin_sequence_names a
-builtin builtin_reorder_alignment 2 "reorder_alignment" "Alignment"
-reorder_alignment names a = builtin_reorder_alignment names' a where names' = list_to_vector $ map pack_cpp_string names
-
-load_alignment alphabet filename = builtin_load_alignment alphabet (list_to_string filename)
-
--- sequence_from_alignment :: AlignmentMatrix -> [ Vector<int> ]
-builtin builtin_sequences_from_alignment 1 "sequences_from_alignment" "Alignment"
-sequences_from_alignment a = list_from_vector $ builtin_sequences_from_alignment a
 
 alignment_row_to_bitvector a row = BitVector $ builtin_alignment_row_to_bitvector a row
 

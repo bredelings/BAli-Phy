@@ -1,0 +1,35 @@
+module Bio.Alignment.Matrix where
+
+import Bio.Sequence
+
+data AlignmentMatrix
+
+alignment_length :: AlignmentMatrix -> Int
+builtin alignment_length 1 "alignment_length" "Alignment"
+
+builtin_load_alignment :: Alphabet -> CPPString -> AlignmentMatrix
+builtin builtin_load_alignment 2 "load_alignment" "Alignment"
+
+load_alignment :: Alphabet -> String -> AlignmentMatrix
+load_alignment alphabet filename = builtin_load_alignment alphabet (list_to_string filename)
+
+alignment_from_sequences :: Alphabet -> EVector Sequence -> AlignmentMatrix
+builtin alignment_from_sequences 2 "alignment_from_sequences" "Alignment"
+
+builtin_sequences_from_alignment :: AlignmentMatrix -> EVector Sequence
+builtin builtin_sequences_from_alignment 1 "sequences_from_alignment" "Alignment"
+
+sequences_from_alignment :: AlignmentMatrix -> [ Sequence ]
+sequences_from_alignment a = list_from_vector $ builtin_sequences_from_alignment a
+
+builtin_sequence_names :: AlignmentMatrix -> EVector CPPString
+builtin builtin_sequence_names 1 "sequence_names" "Alignment"
+
+sequence_names :: AlignmentMatrix -> [String]
+sequence_names a = map unpack_cpp_string $ list_from_vector $ builtin_sequence_names a
+
+builtin_reorder_alignment :: EVector Int -> AlignmentMatrix -> AlignmentMatrix
+builtin builtin_reorder_alignment 2 "reorder_alignment" "Alignment"
+
+reorder_alignment :: [Int] -> AlignmentMatrix -> AlignmentMatrix
+reorder_alignment names a = builtin_reorder_alignment names' a where names' = list_to_vector $ map pack_cpp_string names
