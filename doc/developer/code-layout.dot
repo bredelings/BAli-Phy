@@ -11,7 +11,7 @@ src -> computation
 computation [label=<<b>computation/</b>>]
 src -> util
 util [label=<<b>util/</b>>]
-computation -> builtins
+src -> builtins
 builtins [label=<<b>builtins/</b>>]
 }
 
