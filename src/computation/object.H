@@ -176,8 +176,8 @@ const T* convert_and_check(const Object* o)
 template <typename T1, typename T2>
 std::shared_ptr<const T2> poly_convert_and_check(const Object* o)
 {
-    std::shared_ptr<const T1> converted1 = convert_and_check<PtrBox<T1>>>(o);
-    std::shared_ptr<const T2> converted2 = std::dynamic_pointer_cast<const T2>(converted1);
+    auto* converted1 = convert_and_check<PtrBox<T1>>(o);
+    std::shared_ptr<const T2> converted2 = std::dynamic_pointer_cast<const T2>(*converted1);
     if (not converted2)
 	throw myexception()<<"Cannot convert '"<<o->print()<<"' from type "<<demangle(typeid(T1).name())<<" to type "<<demangle(typeid(T2).name());
     return converted2;
@@ -200,8 +200,8 @@ template <typename T1, typename T2>
 std::shared_ptr<const T2> poly_convert_and_check(const object_ptr<const Object>& o)
 {
     assert(o);
-    std::shared_ptr<const T1> converted1 = convert_and_check<PtrBox<T1>>(o);
-    std::shared_ptr<const T2> converted2 = std::dynamic_pointer_cast<const T2>(converted1);
+    auto* converted1 = convert_and_check<PtrBox<T1>>(o);
+    std::shared_ptr<const T2> converted2 = std::dynamic_pointer_cast<const T2>(*converted1);
     if (not converted2)
     {
 	const Object* oo = o.get();
