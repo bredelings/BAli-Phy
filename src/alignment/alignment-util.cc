@@ -1074,12 +1074,27 @@ alignment select_rows(const alignment& A,const vector<int>& keep)
 	return A;
 }
 
+void select_columns_inplace(alignment& A, const vector<int>& columns)
+{
+    int j=0;
+    for(int column: columns)
+    {
+	// Copy column column -> column j
+	if (column != j)
+	    for(int k=0;k<A.n_sequences();k++)
+		A.set_value(j,k, A(column,k) );
+	j++;
+    }
+    A.changelength(j);
+}
+
 alignment select_columns(const alignment& A,const vector<int>& sites) 
 {
     alignment A2 = A;
     A2.changelength(sites.size());
-    for(int i=0;i<sites.size();i++) {
-	int column = sites[i];
+    for(int i=0;i<sites.size();i++)
+    {
+        int column = sites[i];
 	for(int j=0;j<A2.n_sequences();j++)
 	    A2.set_value(i,j, A(column,j) );
     }
@@ -1235,3 +1250,141 @@ alignment unalign_all(const alignment& A, int n)
  
     return A2;
 }
+
+bool is_masked_column(const alignment& A, int c)
+{
+    for(int i=0;i<A.n_sequences();i++)
+	if (A(c,i) != alphabet::not_gap)
+	    return false;
+    return true;
+}
+
+bool is_variant_column(const alignment& A, int c)
+{
+    assert(0 <= c and c < A.length());
+    int i=0;
+    int l0 = -1;
+    for(;i<A.n_sequences() and l0 < 0;i++)
+	l0 = A(c,i);
+
+    for(;i<A.n_sequences();i++)
+	if (A(c,i) >= 0 and A(c,i) != l0) return true;
+
+    return false;
+}
+
+int count_variant_columns(const alignment& A, int c1, int c2)
+{
+    int count = 0;
+    for(int c=c1;c<=c2 and c<A.length();c++)
+	if (is_variant_column(A,c))
+	    count++;
+    return count;
+}
+
+void remove_columns(alignment& A, const std::function<bool(int)>& remove)
+{
+    int j=0;
+    for(int i=0;i<A.length();i++)
+	if (not remove(i))
+	{
+	    // Copy column i -> column j
+	    if (i != j)
+		for(int k=0;k<A.n_sequences();k++)
+		    A.set_value(j,k, A(i,k) );
+	    j++;
+	}
+    A.changelength(j);
+}
+
+
+void mask_column(alignment& A, int column)
+{
+    for(int k=0;k<A.n_sequences();k++)
+    {
+	int value = A(column,k);
+	if (alphabet::is_feature(value))
+	    A.set_value(column,k, alphabet::not_gap);
+    }
+}
+
+void remove_and_mask_columns(alignment& A, const std::function<int(int)>& remove_or_mask)
+{
+    int j=0;
+    for(int i=0;i<A.length();i++)
+    {
+	int fate = remove_or_mask(i);
+
+	// Remove this column
+	if (fate == 2)
+	    continue;
+
+	// Mask the features in this column
+	else if (fate == 1)
+	    mask_column(A,i);
+
+	// Copy column i -> j
+	else if (i != 0)
+	    for(int k=0;k<A.n_sequences();k++)
+		A.set_value(j,k, A(i,k) );
+
+	j++;
+    }
+
+    A.changelength(j);
+}
+
+dynamic_bitset<> find_columns(const alignment& A, const std::function<bool(const alignment&,int)>& pred)
+{
+    dynamic_bitset<> p(A.length());
+    for(int i=0;i<A.length();i++)
+	p[i] = pred(A,i);
+    return p;
+}
+
+vector<int> find_columns(const alignment& A, const std::function<bool(const alignment&,int)>& pred, int label)
+{
+    vector<int> p(A.length(), 0);
+    for(int i=0;i<A.length();i++)
+	if (pred(A,i))
+	    p[i] = label;
+    return p;
+}
+
+vector<int> find_columns(const alignment& A, const std::function<bool(int)>& keep)
+{
+    vector<int> columns;
+    for(int column=0; column<A.length(); column++)
+	if (keep(column))
+	    columns.push_back(column);
+    return columns;
+}
+
+dynamic_bitset<> gap_columns(const alignment& A)
+{
+    return find_columns(A, [](const alignment&A, int c) {return n_characters(A,c) != A.n_sequences();});
+}
+
+vector<int> gap_columns(const alignment& A, int label)
+{
+    return find_columns(A, [](const alignment&A, int c) {return n_characters(A,c) != A.n_sequences();}, label);
+}
+
+dynamic_bitset<> variant_columns(const alignment& A)
+{
+    return find_columns(A, is_variant_column);
+}
+
+dynamic_bitset<> variant_column_at_distance(const alignment& A,int d)
+{
+    auto variants = variant_columns(A);
+    auto variants2 = variants;
+    for(int i=0;i<A.length();i++)
+    {
+	if (not variants2[i]) continue;
+	if (i-d <0 or not variants[i-d])
+	    variants2[i] = false;
+    }
+    return variants2;
+}
+

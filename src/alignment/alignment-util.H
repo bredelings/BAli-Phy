@@ -27,6 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define ALIGNMENT_UTIL_H
 
 #include <boost/dynamic_bitset.hpp>
+#include <functional>
 #include <optional>
 #include <string>
 #include <vector>
@@ -154,6 +155,8 @@ std::vector<unsigned> sequence_lengths(const alignment& A,unsigned n);
 
 alignment select_rows(const alignment& A,const std::vector<int>& keep);
 
+void select_columns_inplace(alignment& A, const std::vector<int>& columns);
+
 alignment select_columns(const alignment& A,const std::vector<int>& sites);
 
 alignment select_columns(const alignment& A,const boost::dynamic_bitset<>& keep);
@@ -177,4 +180,31 @@ void check_same_sequence_lengths(const std::vector<int>&, const alignment&);
 alignment unalign_all(const alignment& A, int);
 
 std::optional<int> check_characters_present(const alignment& A, const std::vector<boost::dynamic_bitset<>>& present);
+
+bool is_masked_column(const alignment& A, int c);
+
+bool is_variant_column(const alignment& A, int c);
+
+int count_variant_columns(const alignment& A, int c1, int c2);
+
+void remove_columns(alignment& A, const std::function<bool(int)>& remove);
+
+void mask_column(alignment& A, int column);
+
+void remove_and_mask_columns(alignment& A, const std::function<int(int)>& remove_or_mask);
+
+boost::dynamic_bitset<> find_columns(const alignment& A, const std::function<bool(const alignment&,int)>& pred);
+
+std::vector<int> find_columns(const alignment& A, const std::function<bool(int)>& keep);
+
+std::vector<int> find_columns(const alignment& A, const std::function<bool(const alignment&,int)>& pred, int label);
+
+boost::dynamic_bitset<> gap_columns(const alignment& A);
+
+std::vector<int> gap_columns(const alignment& A, int label);
+
+boost::dynamic_bitset<> variant_columns(const alignment& A);
+
+boost::dynamic_bitset<> variant_column_at_distance(const alignment& A,int d);
+
 #endif
