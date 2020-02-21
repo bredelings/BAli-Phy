@@ -24,22 +24,33 @@ jobs:
         python-version: ${{ matrix.python }}
     - name: Setup build environment
       run: |
-        if [ "$RUNNER_OS" != "Linux" ]; then
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          sudo apt install -y pandoc libcairo2-dev
+          sudo apt autoremove
+          sudo rm -rf /usr/local/share/boost
+        else
+          brew update
+          brew install pkg-config pandoc cairo
           export PKG_CONFIG_PATH="/usr/local/opt/libffi/lib/pkgconfig"
         fi
         python3 -mpip install meson ninja
-    - name: Build
+    - name: Configure
       run: |
         meson build --prefix=$HOME/local --buildtype=release
-        ninja -C build install
+    - name: Build
+      run: |
+        ninja -C build install -j4
     - name: Test
       run: |
+        export PATH=$HOME/local/bin:$PATH
+        echo ::group::Test suite
         cd tests
-        python3 run-tests.py bali-phy
-    - name: Testiphy
-      run: |
+        ./run-tests.py bali-phy
         cd
+        echo ::endgroup::
+        echo ::group::testiphy
         git clone https://gitlab.com/testiphy/testiphy.git
         cd testiphy
         which bali-phy || true
         ./testiphy bali-phy
+        echo ::endgroup::
