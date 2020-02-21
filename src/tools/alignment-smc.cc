@@ -880,7 +880,7 @@ vector<int> get_consensus(const alignment& A, const vector<int>& seqs)
         auto counts = allele_counts_with_gap(A, col, seqs);
 
         if (counts[gap]*2 > seqs.size())
-            consensus[col] = gap;
+            consensus[col] = alphabet::gap;
         else
         {
             int total_non_gap = 0;
