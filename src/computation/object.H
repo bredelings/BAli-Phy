@@ -204,7 +204,6 @@ std::shared_ptr<const T2> poly_convert_and_check(const object_ptr<const Object>&
     std::shared_ptr<const T2> converted2 = std::dynamic_pointer_cast<const T2>(*converted1);
     if (not converted2)
     {
-	const Object* oo = o.get();
 	throw myexception()<<"Cannot convert '"<<o->print()<<"' from type "<<demangle(typeid(T1).name())<<" to type "<<demangle(typeid(T2).name());
     }
     return converted2;
