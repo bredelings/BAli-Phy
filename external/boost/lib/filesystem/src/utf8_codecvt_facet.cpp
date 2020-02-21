@@ -7,11 +7,10 @@
 // not casts. See ticket 5048
 #define _INCLUDE_STDCSOURCE_199901
 
-#ifndef BOOST_SYSTEM_NO_DEPRECATED 
+#ifndef BOOST_SYSTEM_NO_DEPRECATED
 # define BOOST_SYSTEM_NO_DEPRECATED
 #endif
 
-#define BOOST_FILESYSTEM_SOURCE
 #include <boost/filesystem/config.hpp>
 
 #define BOOST_UTF8_BEGIN_NAMESPACE \

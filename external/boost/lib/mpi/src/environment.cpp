@@ -8,6 +8,7 @@
 #include <boost/mpi/environment.hpp>
 #include <boost/mpi/exception.hpp>
 #include <boost/mpi/detail/mpi_datatype_cache.hpp>
+#include <boost/core/uncaught_exceptions.hpp>
 #include <cassert>
 #include <string>
 #include <exception>
@@ -62,9 +63,9 @@ std::ostream& operator<<(std::ostream& out, level l)
 } // namespace threading
 
 #ifdef BOOST_MPI_HAS_NOARG_INITIALIZATION
-environment::environment(bool abort_on_exception)
+environment::environment(bool abrt)
   : i_initialized(false),
-    abort_on_exception(abort_on_exception)
+    abort_on_exception(abrt)
 {
   if (!initialized()) {
     BOOST_MPI_CHECK_RESULT(MPI_Init, (0, 0));
@@ -78,9 +79,9 @@ environment::environment(bool abort_on_exception)
 #endif
 }
 
-environment::environment(threading::level mt_level, bool abort_on_exception)
+environment::environment(threading::level mt_level, bool abrt)
   : i_initialized(false),
-    abort_on_exception(abort_on_exception)
+    abort_on_exception(abrt)
 {
   // It is not clear that we can pass null in MPI_Init_thread.
   int dummy_thread_level = 0;
@@ -98,9 +99,9 @@ environment::environment(threading::level mt_level, bool abort_on_exception)
 }
 #endif
 
-environment::environment(int& argc, char** &argv, bool abort_on_exception)
+environment::environment(int& argc, char** &argv, bool abrt)
   : i_initialized(false),
-    abort_on_exception(abort_on_exception)
+    abort_on_exception(abrt)
 {
   if (!initialized()) {
     BOOST_MPI_CHECK_RESULT(MPI_Init, (&argc, &argv));
@@ -115,9 +116,9 @@ environment::environment(int& argc, char** &argv, bool abort_on_exception)
 }
 
 environment::environment(int& argc, char** &argv, threading::level mt_level,
-                         bool abort_on_exception)
+                         bool abrt)
   : i_initialized(false),
-    abort_on_exception(abort_on_exception)
+    abort_on_exception(abrt)
 {
   // It is not clear that we can pass null in MPI_Init_thread.
   int dummy_thread_level = 0;
@@ -137,7 +138,7 @@ environment::environment(int& argc, char** &argv, threading::level mt_level,
 environment::~environment()
 {
   if (i_initialized) {
-    if (std::uncaught_exception() && abort_on_exception) {
+    if (boost::core::uncaught_exceptions() > 0 && abort_on_exception) {
       abort(-1);
     } else if (!finalized()) {
       detail::mpi_datatype_cache().clear();
@@ -245,6 +246,13 @@ bool environment::is_main_thread()
 
   BOOST_MPI_CHECK_RESULT(MPI_Is_thread_main, (&isit));
   return static_cast<bool>(isit);
+}
+
+std::pair<int, int> environment::version()
+{
+  int major, minor;
+  BOOST_MPI_CHECK_RESULT(MPI_Get_version, (&major, &minor));
+  return std::make_pair(major, minor);
 }
 
 } } // end namespace boost::mpi

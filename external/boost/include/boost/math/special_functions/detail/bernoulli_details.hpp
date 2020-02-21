@@ -9,66 +9,10 @@
 
 #include <boost/config.hpp>
 #include <boost/detail/lightweight_mutex.hpp>
+#include <boost/math/tools/atomic.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/math/tools/toms748_solve.hpp>
 #include <vector>
-
-#ifdef BOOST_HAS_THREADS
-
-#ifndef BOOST_NO_CXX11_HDR_ATOMIC
-#  include <atomic>
-#  define BOOST_MATH_ATOMIC_NS std
-#if ATOMIC_INT_LOCK_FREE == 2
-typedef std::atomic<int> atomic_counter_type;
-typedef int atomic_integer_type;
-#elif ATOMIC_SHORT_LOCK_FREE == 2
-typedef std::atomic<short> atomic_counter_type;
-typedef short atomic_integer_type;
-#elif ATOMIC_LONG_LOCK_FREE == 2
-typedef std::atomic<long> atomic_counter_type;
-typedef long atomic_integer_type;
-#elif ATOMIC_LLONG_LOCK_FREE == 2
-typedef std::atomic<long long> atomic_counter_type;
-typedef long long atomic_integer_type;
-#else
-#  define BOOST_MATH_NO_ATOMIC_INT
-#endif
-
-#else // BOOST_NO_CXX11_HDR_ATOMIC
-//
-// We need Boost.Atomic, but on any platform that supports auto-linking we do
-// not need to link against a separate library:
-//
-#define BOOST_ATOMIC_NO_LIB
-#include <boost/atomic.hpp>
-#  define BOOST_MATH_ATOMIC_NS boost
-
-namespace boost{ namespace math{ namespace detail{
-
-//
-// We need a type to use as an atomic counter:
-//
-#if BOOST_ATOMIC_INT_LOCK_FREE == 2
-typedef boost::atomic<int> atomic_counter_type;
-typedef int atomic_integer_type;
-#elif BOOST_ATOMIC_SHORT_LOCK_FREE == 2
-typedef boost::atomic<short> atomic_counter_type;
-typedef short atomic_integer_type;
-#elif BOOST_ATOMIC_LONG_LOCK_FREE == 2
-typedef boost::atomic<long> atomic_counter_type;
-typedef long atomic_integer_type;
-#elif BOOST_ATOMIC_LLONG_LOCK_FREE == 2
-typedef boost::atomic<long long> atomic_counter_type;
-typedef long long atomic_integer_type;
-#else
-#  define BOOST_MATH_NO_ATOMIC_INT
-#endif
-
-}}} // namespaces
-
-#endif  // BOOST_NO_CXX11_HDR_ATOMIC
-
-#endif // BOOST_HAS_THREADS
 
 namespace boost{ namespace math{ namespace detail{
 //
@@ -125,7 +69,7 @@ T t2n_asymptotic(int n)
 //
 struct max_bernoulli_root_functor
 {
-   max_bernoulli_root_functor(long long t) : target(static_cast<double>(t)) {}
+   max_bernoulli_root_functor(ulong_long_type t) : target(static_cast<double>(t)) {}
    double operator()(double n)
    {
       BOOST_MATH_STD_USING
@@ -149,11 +93,18 @@ private:
 template <class T, class Policy>
 inline std::size_t find_bernoulli_overflow_limit(const mpl::false_&)
 {
-   long long t = lltrunc(boost::math::tools::log_max_value<T>());
+   // Set a limit on how large the result can ever be:
+   static const double max_result = static_cast<double>((std::numeric_limits<std::size_t>::max)() - 1000u);
+
+   ulong_long_type t = lltrunc(boost::math::tools::log_max_value<T>());
    max_bernoulli_root_functor fun(t);
    boost::math::tools::equal_floor tol;
    boost::uintmax_t max_iter = boost::math::policies::get_max_root_iterations<Policy>();
-   return static_cast<std::size_t>(boost::math::tools::toms748_solve(fun, sqrt(double(t)), double(t), tol, max_iter).first) / 2;
+   double result = boost::math::tools::toms748_solve(fun, sqrt(double(t)), double(t), tol, max_iter).first / 2;
+   if (result > max_result)
+      result = max_result;
+   
+   return static_cast<std::size_t>(result);
 }
 
 template <class T, class Policy>
@@ -248,9 +199,18 @@ struct fixed_vector : private std::allocator<T>
    }
    ~fixed_vector()
    {
+#ifdef BOOST_NO_CXX11_ALLOCATOR
       for(unsigned i = 0; i < m_used; ++i)
          this->destroy(&m_data[i]);
       this->deallocate(m_data, m_capacity);
+#else
+      typedef std::allocator<T> allocator_type;
+      typedef std::allocator_traits<allocator_type> allocator_traits; 
+      allocator_type& alloc = *this; 
+      for(unsigned i = 0; i < m_used; ++i)
+         allocator_traits::destroy(alloc, &m_data[i]);
+      allocator_traits::deallocate(alloc, m_data, m_capacity);
+#endif
    }
    T& operator[](unsigned n) { BOOST_ASSERT(n < m_used); return m_data[n]; }
    const T& operator[](unsigned n)const { BOOST_ASSERT(n < m_used); return m_data[n]; }

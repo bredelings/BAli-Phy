@@ -18,6 +18,16 @@
 #include <boost/math/policies/error_handling.hpp>
 #include <boost/assert.hpp>
 
+#if defined(__GNUC__) && defined(BOOST_MATH_USE_FLOAT128)
+//
+// This is the only way we can avoid
+// warning: non-standard suffix on floating constant [-Wpedantic]
+// when building with -Wall -pedantic.  Neither __extension__
+// nor #pragma dianostic ignored work :(
+//
+#pragma GCC system_header
+#endif
+
 // Modified Bessel function of the second kind of order zero
 // minimax rational approximations on intervals, see
 // Russon and Blair, Chalk River Report AECL-3461, 1969,
@@ -525,7 +535,7 @@ namespace boost { namespace math { namespace detail{
    inline T bessel_k1(const T& x)
    {
       typedef mpl::int_<
-         std::numeric_limits<T>::digits == 0 ?
+         ((std::numeric_limits<T>::digits == 0) || (std::numeric_limits<T>::radix != 2)) ?
          0 :
          std::numeric_limits<T>::digits <= 24 ?
          24 :

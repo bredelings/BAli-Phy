@@ -7,6 +7,7 @@
 #include <boost/mpi/group.hpp>
 #include <boost/mpi/intercommunicator.hpp>
 #include <boost/mpi/graph_communicator.hpp>
+#include <boost/mpi/cartesian_communicator.hpp>
 #include <boost/mpi/skeleton_and_content.hpp>
 #include <boost/mpi/detail/point_to_point.hpp>
 
@@ -160,34 +161,52 @@ optional<intercommunicator> communicator::as_intercommunicator() const
     return optional<intercommunicator>();
 }
 
-optional<graph_communicator> communicator::as_graph_communicator() const
+bool communicator::has_graph_topology() const
 {
-  optional<graph_communicator> graph;
+  bool is_graph = false;
   // topology test not allowed on MPI_NULL_COMM
   if (bool(*this)) {
     int status;
     BOOST_MPI_CHECK_RESULT(MPI_Topo_test, ((MPI_Comm)*this, &status));
-    if (status == MPI_GRAPH)
-      graph = graph_communicator(comm_ptr);
+    is_graph = status == MPI_GRAPH;
   }
-  return graph;
+  return is_graph;
+}
+
+optional<graph_communicator> communicator::as_graph_communicator() const
+{
+  if (has_graph_topology()) {
+    return graph_communicator(comm_ptr);
+  } else {
+    return optional<graph_communicator>();
+  }
 }
 
 bool communicator::has_cartesian_topology() const
 {
+  bool is_cart = false;
   // topology test not allowed on MPI_NULL_COM
-  if (!bool(*this)) {
-    return false;
-  } else {
+  if (bool(*this)) {
     int status;
     BOOST_MPI_CHECK_RESULT(MPI_Topo_test, ((MPI_Comm)*this, &status));
-    return status == MPI_CART;
+    is_cart = status == MPI_CART;
+  }
+  return is_cart;
+}
+
+optional<cartesian_communicator> communicator::as_cartesian_communicator() const
+{
+  if (has_cartesian_topology()) {
+    return cartesian_communicator(comm_ptr);
+  } else {
+    return optional<cartesian_communicator>();
   }
 }
 
 void communicator::abort(int errcode) const
 {
   BOOST_MPI_CHECK_RESULT(MPI_Abort, (MPI_Comm(*this), errcode));
+  std::abort();
 }
 
 /*************************************************************
@@ -198,7 +217,7 @@ void
 communicator::send<packed_oarchive>(int dest, int tag,
                                     const packed_oarchive& ar) const
 {
-  detail::packed_archive_send(MPI_Comm(*this), dest, tag, ar);
+  detail::packed_archive_send(*this, dest, tag, ar);
 }
 
 template<>
@@ -223,7 +242,7 @@ communicator::recv<packed_iarchive>(int source, int tag,
                                     packed_iarchive& ar) const
 {
   status stat;
-  detail::packed_archive_recv(MPI_Comm(*this), source, tag, ar,
+  detail::packed_archive_recv(*this, source, tag, ar,
                               stat.m_status);
   return stat;
 }
@@ -255,10 +274,7 @@ request
 communicator::isend<packed_oarchive>(int dest, int tag,
                                      const packed_oarchive& ar) const
 {
-  request req;
-  detail::packed_archive_isend(MPI_Comm(*this), dest, tag, ar,
-                               &req.m_requests[0] ,2);
-  return req;
+  return detail::packed_archive_isend(*this, dest, tag, ar);
 }
 
 template<>
@@ -272,20 +288,12 @@ communicator::isend<packed_skeleton_oarchive>
 template<>
 request communicator::isend<content>(int dest, int tag, const content& c) const
 {
-  request req;
-  BOOST_MPI_CHECK_RESULT(MPI_Isend,
-                         (MPI_BOTTOM, 1, c.get_mpi_datatype(),
-                          dest, tag, MPI_Comm(*this), &req.m_requests[0]));
-  return req;
+  return request::make_bottom_send(*this, dest, tag, c.get_mpi_datatype());
 }
 
 request communicator::isend(int dest, int tag) const
 {
-  request req;
-  BOOST_MPI_CHECK_RESULT(MPI_Isend,
-                         (MPI_BOTTOM, 0, MPI_PACKED,
-                          dest, tag, MPI_Comm(*this), &req.m_requests[0]));
-  return req;
+  return request::make_empty_send(*this, dest, tag);
 }
 
 template<>
@@ -301,27 +309,19 @@ request
 communicator::irecv<const content>(int source, int tag,
                                    const content& c) const
 {
-  request req;
-  BOOST_MPI_CHECK_RESULT(MPI_Irecv,
-                         (MPI_BOTTOM, 1, c.get_mpi_datatype(),
-                          source, tag, MPI_Comm(*this), &req.m_requests[0]));
-  return req;
+  return request::make_bottom_recv(*this, source, tag, c.get_mpi_datatype());
 }
 
 request communicator::irecv(int source, int tag) const
 {
-  request req;
-  BOOST_MPI_CHECK_RESULT(MPI_Irecv,
-                         (MPI_BOTTOM, 0, MPI_PACKED,
-                          source, tag, MPI_Comm(*this), &req.m_requests[0]));
-  return req;
+  return request::make_empty_recv(*this, source, tag);
 }
 
 bool operator==(const communicator& comm1, const communicator& comm2)
 {
   int result;
   BOOST_MPI_CHECK_RESULT(MPI_Comm_compare,
-                         ((MPI_Comm)comm1, (MPI_Comm)comm2, &result));
+                         (MPI_Comm(comm1), MPI_Comm(comm2), &result));
   return result == MPI_IDENT;
 }
 

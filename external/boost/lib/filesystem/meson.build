@@ -1,4 +1,7 @@
 filesystem_sources = ['src/operations.cpp',
+                      'src/directory.cpp',
+                      'src/exception.cpp',
+                      'src/operations.cpp',
 		      'src/path.cpp',
 		      'src/path_traits.cpp',
 		      'src/portability.cpp',
