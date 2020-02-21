@@ -1267,14 +1267,19 @@ namespace std
     };
 }
 */
-void find_alleles(const vector<int>& consensus, const alignment& A, int n_snps, int L_max, int min_count, const vector<int>& seqs)
+
+typedef vector<pair<int,int>> allele_t;
+
+/*
+ * How about cases where we have >=n snps in L bases, but n UNIQUE snps in L bases?  Does thus make sense if looking for a count of (say) 2 for each base?
+ * Possibly, we could just pass min_count and max_count in to get_n_snps_versus consensus?
+ */
+vector<pair<allele_t,int>> find_alleles(const vector<int>& consensus, const alignment& A, int n_snps, int L_max, int min_count, int max_count, const vector<int>& seqs)
 {
     assert(consensus.size() == A.length());
     assert(n_snps > 1);
     assert(L_max > 1);
     assert(min_count > 0);
-
-    typedef vector<pair<int,int>> allele_t;
 
     // 1. Find alleles that satisfy n_snps SNPs in L_max bases, and record the count;
 
@@ -1304,11 +1309,16 @@ void find_alleles(const vector<int>& consensus, const alignment& A, int n_snps, 
     // 2. Sort alleles by their genomic position
     vector<pair<allele_t,int>> alleles;
     for(auto& ac : allele_count)
-        if (ac.second >= min_count)
+        if (ac.second >= min_count and ac.second <= max_count)
             alleles.push_back(ac);
 
     ranges::sort(alleles, {}, [](auto& x){return x.first[0].first;});
 
+    return alleles;
+}
+
+void show_alleles(const vector<pair<allele_t,int>>& alleles, const alphabet& a, const vector<int>& consensus)
+{
     // 3. 
     std::cout<<"count"<<"\t"<<"start"<<"\t"<<"length"<<"\t"<<"consensus"<<"\t"<<"allele"<<"\n";
     for(auto& [allele, count]: alleles)
@@ -1320,9 +1330,10 @@ void find_alleles(const vector<int>& consensus, const alignment& A, int n_snps, 
         string consensus_chars;
         for(auto& [pos,c]: allele)
         {
-            allele_chars += A.get_alphabet().lookup(c);
+            assert(a.is_letter(c));
+            allele_chars += a.lookup(c);
             auto c2 = consensus[pos];
-            consensus_chars += A.get_alphabet().lookup(c2);
+            consensus_chars += a.lookup(c2);
         }
         std::cout<<count<<"\t"<<start<<"\t"<<length<<"\t"<<consensus_chars<<"\t"<<allele_chars<<"\n";
     }
@@ -1507,13 +1518,19 @@ int main(int argc,char* argv[])
             auto consensus1 = get_consensus(A, consensus_seqs1);
 
             auto find_args = split(args["find-alleles"].as<string>(),':');
-            if (args.size() < 3)
-                throw myexception()<<"argument to --find-alleles only has "<<args.size()<<" colon-separate elements.";
+            if (find_args.size() < 4)
+                throw myexception()<<"argument to --find-alleles only has "<<find_args.size()<<" colon-separate elements.";
             int n_snps = convertTo<int>(find_args[0]);
             int L = convertTo<int>(find_args[1]);
-            int min_count = convertTo<int>(find_args[2]);
+            int min_count = 0;
+            if (not find_args[2].empty())
+                min_count = convertTo<int>(find_args[2]);
+            int max_count = A.n_sequences();
+            if (not find_args[3].empty())
+                max_count = convertTo<int>(find_args[3]);
 
-            find_alleles(consensus1, A, n_snps, L, min_count, consensus_seqs1);
+            auto alleles = find_alleles(consensus1, A, n_snps, L, min_count, max_count, consensus_seqs1);
+            show_alleles(alleles, A.get_alphabet(), consensus1);
             exit(0);
         }
 
