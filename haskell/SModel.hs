@@ -5,7 +5,7 @@ module SModel (module SModel,
                module SModel.ReversibleMarkov,
                module SModel.Likelihood) where 
 import Probability
-import Alphabet
+import Bio.Alphabet
 import Tree
 import Parameters
 

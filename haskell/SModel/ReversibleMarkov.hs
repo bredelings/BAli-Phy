@@ -1,7 +1,7 @@
 module SModel.ReversibleMarkov (module SModel.ReversibleMarkov, module SModel.Frequency) where
 
 import SModel.Frequency
-import Alphabet
+import Bio.Alphabet
 import Data.Matrix
 
 builtin get_equilibrium_rate 4 "get_equilibrium_rate" "SModel"

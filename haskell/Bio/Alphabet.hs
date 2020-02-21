@@ -1,4 +1,4 @@
-module Alphabet where
+module Bio.Alphabet where
 
 builtin getNucleotides 1 "getNucleotides" "Alphabet"
 
@@ -19,10 +19,10 @@ builtin codons 2 "codons" "Alphabet"
 
 builtin builtin_dna 1 "dna" "Alphabet"
 dna = builtin_dna ()
-        
+
 builtin builtin_rna 1 "rna" "Alphabet"
 rna = builtin_rna ()
-        
+
 builtin builtin_aa  1 "aa" "Alphabet"
 aa  = builtin_aa  ()
 amino_acids = builtin_aa

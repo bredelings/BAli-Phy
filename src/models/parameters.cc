@@ -1335,11 +1335,11 @@ expression_ref get_genetic_code_expression(const Genetic_Code& code)
 expression_ref get_alphabet_expression(const alphabet& a)
 {
     if (a.name == "DNA")
-        return  var("Alphabet.dna");
+        return  var("Bio.Alphabet.dna");
     else if (a.name == "RNA")
-        return var("Alphabet.rna");
+        return var("Bio.Alphabet.rna");
     else if (a.name == "Amino-Acids")
-        return var("Alphabet.aa");
+        return var("Bio.Alphabet.aa");
     else if (auto codons = dynamic_cast<const Codons*>(&a))
     {
         auto nucs = get_alphabet_expression(codons->getNucleotides());
@@ -1390,7 +1390,7 @@ std::string generate_atmodel_program(int n_partitions,
     set<string> imports;
     imports.insert("Parameters");                        // for Parameters.modifiable
     imports.insert("Bio.Alignment");                         // for Alignment.load_alignment
-    imports.insert("Alphabet");                          // for Alphabet.dna, etc.
+    imports.insert("Bio.Alphabet");                          // for Bio.Alphabet.dna, etc.
     imports.insert("BAliPhy.ATModel");                   // for ATModel
     imports.insert("BAliPhy.ATModel.DataPartition");     // for Partition
     for(auto& m: SMs)

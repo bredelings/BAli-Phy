@@ -1,6 +1,6 @@
 module SModel.Doublets where
 
-import Alphabet
+import Bio.Alphabet
 import SModel.ReversibleMarkov
 import SModel.Nucleotides
 

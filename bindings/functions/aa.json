@@ -3,7 +3,7 @@
     "synonyms": ["AA"],
     "result_type": "AA",
     "call": "Alphabet.aa",
-    "import": ["Alphabet"],
+    "import": ["Bio.Alphabet"],
     "args": [],
     "title": "The amino-acid alphabet"
 }

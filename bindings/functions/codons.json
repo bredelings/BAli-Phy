@@ -3,7 +3,7 @@
     "synonyms": [ "Codons" ],
     "result_type": "Codons[a]",
     "call": "Alphabet.codons[@nucleotides,@code]",
-    "import": ["Alphabet"],
+    "import": ["Bio.Alphabet"],
     "args": [
         {
             "arg_name": "nucleotides",

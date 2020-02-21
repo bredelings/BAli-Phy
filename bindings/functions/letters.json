@@ -2,7 +2,7 @@
     "name": "letters",
     "result_type": "List[String]",
     "call": "letters[@a]",
-    "import": ["Alphabet"],
+    "import": ["Bio.Alphabet"],
     "args": [
         {
             "arg_name": "a",

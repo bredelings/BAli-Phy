@@ -2,7 +2,7 @@
     "name": "standard_code",
     "result_type": "GeneticCode",
     "call": "standard_code",
-    "import": ["Alphabet"],
+    "import": ["Bio.Alphabet"],
     "args": [],
     "title": "The standard genetic code"
 }

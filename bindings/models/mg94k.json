@@ -4,7 +4,7 @@
     "result_type": "RevCTMC[Codons[a]]",
     "constraints": ["Nucleotides[a]"],
     "call": "mg94k[@a,@kappa,frequencies_from_dict[getNucleotides[@a],@pi],@omega]",
-    "import": ["SModel","Alphabet"],
+    "import": ["SModel","Bio.Alphabet"],
     "args": [
         {
             "arg_name": "kappa",

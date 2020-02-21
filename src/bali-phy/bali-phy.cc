@@ -325,7 +325,7 @@ std::string generate_print_program(const model_t& print, const expression_ref& a
     program_file<<"-- Use the program `brittany` (or `hindent`) to indent this file for readability\n";
     set<string> imports;
     imports.insert("Probability.Random");     // for run_lazy
-    imports.insert("Alphabet");               // for dna
+    imports.insert("Bio.Alphabet");               // for dna
     add(imports, print.imports);
     for(auto& mod: imports)
         program_file<<"import "<<mod<<"\n";

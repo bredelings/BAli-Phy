@@ -5,7 +5,7 @@
     "constraints": ["Nucleotides[a]"],
     "title": "The Muse & Gaut (1994) model of dN/dS.",
     "call": "mg94[@a,frequencies_from_dict[getNucleotides[@a],@pi],@omega]",
-    "import": ["SModel","Alphabet"],
+    "import": ["SModel","Bio.Alphabet"],
     "args": [
         {
             "arg_name": "omega",
