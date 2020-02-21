@@ -95,8 +95,8 @@
      - Compile without errors in C++17 mode.
      + Link to math library if available: fix build on kfreebsd
      + Avoid crash with NaN on armhf.
-     - Don't print out newick trees rooted at a leaf.
-     - Speed up tree drawing in bp-analyze.
+     + Don't print out newick trees rooted at a leaf.
+     + Speed up tree drawing in bp-analyze.
      - Correctly compute PP version of MAP and greedy trees.
      + Fix crp / dirichlet process prior.
      - Fix export of entities imported from another module.
