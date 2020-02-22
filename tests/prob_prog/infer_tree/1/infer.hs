@@ -1,5 +1,5 @@
 import           Bio.Alignment               hiding ( sample_alignment )
-import           Alphabet
+import           Bio.Alphabet
 import           Probability
 import           Tree
 import           Data.BitVector
