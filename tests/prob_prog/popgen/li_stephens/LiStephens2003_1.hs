@@ -1,6 +1,7 @@
 module LiStephens2003 where
 
 import           Bio.Alignment
+import           Bio.Alphabet
 import           Probability
 import           PopGen
 import           System.Environment
