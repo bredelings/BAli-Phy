@@ -576,6 +576,10 @@ class LogFileRun(MCMCRun):
     def __init__(self,mcmc_output):
         super().__init__(mcmc_output)
 
+class TreeLogFileRun(MCMCRun):
+    def __init__(self,mcmc_output):
+        super().__init__(mcmc_output)
+
 # Since PhyloBayes doesn't make new run files for each dir, maybe we need to file the different prefixes, and pass them to PhyloBayes?
 # A prefix could be like dir/prefix (e.g. dir/prefix.trace) or prefix (e.g. prefix.trace)
 class PhyloBayesRun(MCMCRun):
@@ -603,28 +607,115 @@ class BEASTRun(MCMCRun):
             self.prefix = get_file_prefix(tree_file)
             self.log_file = check_file_exists("{}.log".format(prefix))
 
-def ConstructRun(mcmc_output):
-    if not path.exists(mcmc_output):
-        print("No file or directory '{}'".format(mcmc_output))
-        exit(1)
-    if not path.isdir(mcmc_output):
-        return TreeFileRun(mcmc_output)
+def get_bali_phy3_runs(mcmc_args):
+    runs = []
+    good = []
+    bad = []
+    for mcmc_dir in mcmc_args:
+        if path.exists(mcmc_dir) and path.exists(path.join(mcmc_dir,'C1.out')) and path.exists(path.join(mcmc_dir,'C1.log')):
+            runs.append(BAliPhy3Run(mcmc_dir))
+            good.append(mcmc_dir)
+        else:
+            bad.append(mcmc_dir)
+    if len(bad) > 0 and len(good) > 0:
+        raise Exception(f"{good} appear to be BAli-Phy 3 runs, but {bad} do not!")
+    return runs
 
-    if path.exists(path.join(mcmc_output,"C1.out")):
-        if path.exists(path.join(mcmc_output,'C1.p')):
-            return BAliPhy2_1Run(mcmc_output)
-        if path.exists(path.join(mcmc_output,'C1.log')):
-            return BAliPhy3Run(mcmc_output)
-        print("Directory {} appears to be a BAli-Phy directory, but doesn't have 'C1.p' or 'C1.log'")
-        exit(1)
+def get_bali_phy2_1_runs(mcmc_args):
+    runs = []
+    good = []
+    bad = []
+    for mcmc_dir in mcmc_args:
+        if path.exists(mcmc_dir) and path.exists(path.join(mcmc_dir,'C1.out')) and path.exists(path.join(mcmc_dir,'C1.p')):
+            runs.append(BAliPhy3Run(mcmc_dir))
+            good.append(mcmc_dir)
+        else:
+            bad.append(mcmc_dir)
+    if len(bad) > 0 and len(good) > 0:
+        raise Exception(f"{good} appear to be BAli-Phy 2 runs, but {bad} do not!")
+    return runs
 
-    if glob.glob(path.join(mcmc_output,'*.treelist')):
-        return PhyloBayesRun(mcmc_output)
+def get_phylobayes_runs(mcmc_args):
+    runs = []
+    good = []
+    bad = []
+    for run_name in mcmc_args:
+        if path.exists(run_name+".treelist"):
+            runs.append(PhyloBayesRun(run_name))
+            good.append(run_name)
+        else:
+            bad.append(run_name)
+    if len(bad) > 0 and len(good) > 0:
+        raise Exception(f"{good} appear to be phylobayes runs, but {bad} do not!")
+    return runs
 
-    if glob.glob(path.join(mcmc_output,'*.trees')):
-        return BEASTRun(mcmc_output)
+def get_tree_log_runs(mcmc_args):
+    runs = []
+    good = []
+    bad = []
+    for run_name in mcmc_args:
+        if path.exists(run_name+".trees") and path.exists(run_name+".log"):
+            runs.append(TreeLogFileRun(run_name))
+            good.append(run_name)
+        else:
+            bad.append(run_name)
+    if len(bad) > 0 and len(good) > 0:
+        raise Exception(f"{good} appear to be generic tree/parameters runs, but {bad} do not!")
+    return runs
 
-    print("Error: MCMC run '{}' is not a BAli-Phy, BEAST, or PhyloBayes run.".format(mcmc_output),file=sys.stderr)
+def get_tree_runs(mcmc_args):
+    runs = []
+    good = []
+    bad = []
+    for run_name in mcmc_args:
+        if path.exists(run_name+".trees") and not path.exists(run_name+".log"):
+            runs.append(TreeFileRun(run_name))
+            good.append(run_name)
+        else:
+            bad.append(run_name)
+    if len(bad) > 0 and len(good) > 0:
+        raise Exception(f"{good} appear to be generic tree-only runs, but {bad} do not!")
+    return runs
+
+def get_log_runs(mcmc_args):
+    runs = []
+    good = []
+    bad = []
+    for run_name in mcmc_args:
+        if not path.exists(run_name+".trees") and path.exists(run_name+".log"):
+            runs.append(LogFileRun(run_name))
+            good.append(run_name)
+        else:
+            bad.append(run_name)
+    if len(bad) > 0 and len(good) > 0:
+        raise Exception(f"{good} appear to be generic parameter-only runs, but {bad} do not!")
+    return runs
+
+def construct_runs(mcmc_outputs):
+
+    for mcmc_output in mcmc_outputs:
+        if not glob.glob(mcmc_output+'*'):
+            print("No file or directory '{}'".format(mcmc_output+'*'))
+            exit(1)
+
+    run_groups = []
+    run_groups.append( get_bali_phy3_runs(mcmc_outputs) )
+
+    run_groups.append(  get_bali_phy2_1_runs(mcmc_outputs) )
+
+    run_groups.append( get_phylobayes_runs(mcmc_outputs) )
+
+    run_groups.append( get_tree_log_runs(mcmc_outputs) )
+
+    run_groups.append( get_tree_runs(mcmc_outputs) )
+
+    run_groups.append( get_log_runs(mcmc_outputs) )
+
+    for run_group in run_groups:
+        if run_group:
+            return run_group
+
+    print("Error: MCMC runs '{}' are not BAli-Phy, BEAST, or PhyloBayes run.".format(mcmc_outputs),file=sys.stderr)
     exit(3)
         
 
@@ -632,7 +723,7 @@ def ConstructRun(mcmc_output):
 class Analysis(object):
 
     def __init__(self,args,mcmc_outputs):
-        self.mcmc_runs = [ConstructRun(mcmc_run) for mcmc_run in mcmc_outputs]
+        self.mcmc_runs = construct_runs(mcmc_outputs)
 
         self.trees_consensus_exe = find_exe('trees-consensus', message="See the main for adding the bali-phy programs to your PATH.")
         if self.trees_consensus_exe is None:
