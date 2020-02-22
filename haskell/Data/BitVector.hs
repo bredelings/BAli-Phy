@@ -1,6 +1,7 @@
 module Data.BitVector where
 
 data BitVector = BitVector ()
+data CBitVector = CBitVector
 
 builtin builtin_zeros 1 "empty_bitvector" "Bits"
 builtin builtin_complement 1 "complement" "Bits"
@@ -47,6 +48,7 @@ width x = size x
 
 --int x = 0            -- convert the bitvector to an integer using 2s-complement
 
+-- This is a hack since I can't define (==) and (/=.) without type classes.
 (BitVector x) ==. (BitVector y) = builtin_eq x y  -- assumes size is the same
 
 (BitVector x) /=. (BitVector y) = builtin_neq x y -- assumes size is the same
