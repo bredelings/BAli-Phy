@@ -10,6 +10,7 @@ import json
 import itertools
 import glob
 import sys
+import logging
 
 def print_model(model):
     main = model['main']
@@ -248,7 +249,7 @@ def arg_min(xs):
     return arg
 
 class MCMCRun(object):
-    def __init__(self, mcmc_output):
+    def __init__(self, mcmc_output,**kwargs):
         self.mcmc_output = mcmc_output
         self.out_file = None
         self.trees_file = None
@@ -267,6 +268,18 @@ class MCMCRun(object):
 
     def personality(self):
         return None
+
+    def has_trees(self):
+        return self.trees_file
+
+    def has_parameters(self):
+        return self.log_file
+
+    def has_alignments(self):
+        return self.alignments_files
+
+    def has_model(self):
+        return False
 
     def get_parent_dir(self):
         return path.dirname(path.abspath(self.get_dir()))
@@ -384,11 +397,38 @@ class MCMCRun(object):
 
     def get_branch_length_prior(self):
         return None
-    
-class BAliPhyRun(MCMCRun):
 
-    def __init__(self,mcmc_output):
-        super().__init__(mcmc_output)
+class LogFileRun(MCMCRun):
+    def __init__(self,mcmc_output,**kwargs):
+        super().__init__(mcmc_output, **kwargs)
+        self.log_file = mcmc_output+".log"
+        logging.debug(f"LogFileRun: {mcmc_output}")
+
+    def n_iterations(self):
+        n = get_n_lines(self.get_log_file())-1
+        if n <= 0:
+            print("Error: Log file '{}' has no samples!".format(self.get_log_file()))
+            exit(1)
+        return n
+
+class TreeFileRun(MCMCRun):
+    def __init__(self, mcmc_output, **kwargs):
+        super().__init__(mcmc_output, **kwargs)
+        self.trees_file = mcmc_output+".trees"
+        logging.debug(f"TreeFileRun: {mcmc_output}")
+
+    def n_iterations(self):
+        n = get_n_lines(self.get_trees_file())-1
+        if n <= 0:
+            print("Error: Tree file '{}' has no samples!".format(self.get_tree_file()))
+            exit(1)
+        return n
+
+    
+class BAliPhyRun(TreeFileRun,LogFileRun):
+
+    def __init__(self,mcmc_output,**kwargs):
+        super().__init__(mcmc_output,**kwargs)
         self.prefix = 'C1'
         self.out_file = check_file_exists(path.join(self.get_dir(),'C1.out'))
         self.input_files = self.find_input_file_names_for_outfile(self.out_file)
@@ -404,9 +444,13 @@ class BAliPhyRun(MCMCRun):
         self.alphabets = self.find_alphabets()
         self.topology_prior = self.find_in_header('T:topology ')
         self.branch_prior = self.find_in_header('T:lengths ')
+        logging.debug(f"BAliPhyRun: {mcmc_output}")
 
     def get_alphabets(self):
         return self.alphabets
+
+    def has_model(self):
+        return True
 
     def get_smodels(self):
         return self.smodels
@@ -509,13 +553,6 @@ class BAliPhyRun(MCMCRun):
     def find_alphabets(self):
         return self.find_partition_values('alphabet')
 
-    def n_iterations(self):
-        n = get_n_lines(self.get_trees_file())-1
-        if n <= 0:
-            print("Error: Tree file '{}' has no samples!".format(self.get_tree_file()))
-            exit(1)
-        return n
-
     def compute_initial_alignments(self):
         print("Computing initial alignments: ",end='',flush=True)
         alignment_names = []
@@ -530,13 +567,14 @@ class BAliPhyRun(MCMCRun):
         return alignment_names
 
 class BAliPhy2_1Run(BAliPhyRun):
-    def __init__(self,mcmc_output):
-        super().__init__(mcmc_output)
+    def __init__(self,mcmc_output, **kwargs):
+        super().__init__(mcmc_output, **kwargs)
         self.log_file = check_file_exists(path.join(self.get_dir(),'C1.p'))
 
         self.smodels = self.find_models("subst models", "smodels")
         self.imodels = self.find_models("indel models", "imodels")
         self.scale_models = self.find_models("scale model", "scales")
+        logging.debug(f"BAliPhy2_1Run: {mcmc_output}")
 
     def find_models(self, name1, name2):
         models = []
@@ -553,8 +591,8 @@ class BAliPhy2_1Run(BAliPhyRun):
         return [make_extracted(model) for model in models]
 
 class BAliPhy3Run(BAliPhyRun):
-    def __init__(self,mcmc_output):
-        super().__init__(mcmc_output)
+    def __init__(self,mcmc_output, **kwargs):
+        super().__init__(mcmc_output, **kwargs)
         self.log_file = check_file_exists(path.join(self.get_dir(),'C1.log'))
         self.run_file = path.join(self.get_dir(),'C1.run.json')
         if not path.exists(self.run_file):
@@ -564,31 +602,24 @@ class BAliPhy3Run(BAliPhyRun):
         self.smodels = self.find_models("subst models", "smodels")
         self.imodels = self.find_models("indel models", "imodels")
         self.scale_models = self.find_models("scale model", "scales")
+        logging.debug(f"BAliPhy3Run: {mcmc_output}")
 
     def find_models(self, name1, name2):
         return [make_extracted(model) for model in self.run_json[name2]]
 
-class TreeFileRun(MCMCRun):
-    def __init__(self,mcmc_output):
-        super().__init__(mcmc_output)
-
-class LogFileRun(MCMCRun):
-    def __init__(self,mcmc_output):
-        super().__init__(mcmc_output)
-
-class TreeLogFileRun(MCMCRun):
-    def __init__(self,mcmc_output):
-        super().__init__(mcmc_output)
+class TreeLogFileRun(TreeFileRun,LogFileRun):
+    def __init__(self,mcmc_output, **kwargs):
+        super().__init__(mcmc_output, **kwargs)
+        logging.debug(f"TreeLogFile Run: {mcmc_output}")
 
 # Since PhyloBayes doesn't make new run files for each dir, maybe we need to file the different prefixes, and pass them to PhyloBayes?
 # A prefix could be like dir/prefix (e.g. dir/prefix.trace) or prefix (e.g. prefix.trace)
 class PhyloBayesRun(MCMCRun):
-    def __init__(self,mcmc_output):
-        super().__init__(mcmc_output)
-        for treelist in glob.glob(path.join(self.get_dir(),'*.treelist')):
-            self.prefix = get_file_prefix(treelist)
-            self.log_file = check_file_exists("{}.trace".format(prefix))
-            self.out_file = check_file_exists("{}.log".format(prefix))
+    def __init__(self,mcmc_output, **kwargs):
+        super().__init__(mcmc_output, **kwargs)
+        self.log_file = check_file_exists("{}.trace".format(prefix))
+        self.out_file = check_file_exists("{}.log".format(prefix))
+        logging.debug(f"PhyloBayesRun: {mcmc_output}")
     
     def personality(self):
         return "phylobayes"
@@ -600,8 +631,8 @@ class PhyloBayesRun(MCMCRun):
         return get_value_from_file(self.out_file, "number of taxa:")
 
 class BEASTRun(MCMCRun):
-    def __init__(self,mcmc_output):
-        super().__init__(mcmc_output)
+    def __init__(self,mcmc_output, **kwargs):
+        super().__init__(mcmc_output, **kwargs)
         for tree_file in glob.glob(path.join(self.get_dir(),'*,trees')):
             check_file_exists(tree_file)
             self.prefix = get_file_prefix(tree_file)
@@ -701,7 +732,7 @@ def construct_runs(mcmc_outputs):
     run_groups = []
     run_groups.append( get_bali_phy3_runs(mcmc_outputs) )
 
-    run_groups.append(  get_bali_phy2_1_runs(mcmc_outputs) )
+    run_groups.append( get_bali_phy2_1_runs(mcmc_outputs) )
 
     run_groups.append( get_phylobayes_runs(mcmc_outputs) )
 
@@ -765,22 +796,37 @@ class Analysis(object):
         self.log_shell_cmds = open("Results/commands.log",'a+',encoding='utf-8')
         print("-----------------------------------------------------------",file=self.log_shell_cmds)
 
-        self.summarize_numerical_parameters()
-        self.summarize_topology_distribution()
-        self.compute_mean_branch_lengths()
-        self.draw_trees()
-        self.compute_tree_mixing_diagnostics()
-        self.compute_srq_plots()
-        self.compute_tree_MDS()
-        self.compute_initial_alignments()
-        self.compute_wpd_alignments()
-        self.compute_ancestral_states()
-        self.draw_alignments()
-        self.compute_and_draw_AU_plots()
+        if self.has_parameters():
+            self.summarize_numerical_parameters()
+        if self.has_trees():
+            self.summarize_topology_distribution()
+            self.compute_mean_branch_lengths()
+            self.draw_trees()
+            self.compute_tree_mixing_diagnostics()
+            self.compute_srq_plots()
+            self.compute_tree_MDS()
+        if self.has_alignments():
+            self.compute_initial_alignments()
+            self.compute_wpd_alignments()
+            self.compute_ancestral_states()
+            self.draw_alignments()
+            self.compute_and_draw_AU_plots()
         self.print_index_html("Results/index.html")
 
     def n_chains(self):
         return(len(self.mcmc_runs))
+
+    def has_trees(self):
+        return self.mcmc_runs[0].has_trees()
+
+    def has_parameters(self):
+        return self.mcmc_runs[0].has_parameters()
+
+    def has_alignments(self):
+        return self.mcmc_runs[0].has_alignments()
+
+    def has_model(self):
+        return self.mcmc_runs[0].has_model()
 
     def run(self,p):
         return self.mcmc_runs[p]
@@ -1086,6 +1132,8 @@ class Analysis(object):
 
 
     def summarize_topology_distribution(self):
+        assert(self.has_trees())
+
         print("\nSummarizing topology distribution: ",end='')
         cmd = ['trees-consensus','--map-tree=Results/MAP.PP.tree','--greedy-consensus=Results/greedy.PP.tree','--report=Results/consensus']+self.get_trees_files()
         cmd.append("--support-levels=Results/c-levels.plot")
@@ -1637,14 +1685,19 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             output += self.topbar()
             output += '<div class="content">\n'
             output += "<h1>{}</h1>\n".format(title)
-            output += self.section_data_and_model()
-            output += self.section_scalar_variables()
-            output += self.section_phylogeny_distribution()
-            output += self.section_alignment_distribution()
+            if self.has_model():
+                output += self.section_data_and_model()
+            if self.has_parameters():
+                output += self.section_scalar_variables()
+            if self.has_trees():
+                output += self.section_phylogeny_distribution()
+            if self.has_alignments():
+                output += self.section_alignment_distribution()
             output += self.section_ancestral_sequences() # FIXME!
             output += self.section_mixing()
             output += self.section_analysis()
-            output += self.section_model_and_priors()
+            if self.has_model():
+                output += self.section_model_and_priors()
             output += self.section_end()
             print(output, file=index)
 
@@ -2026,18 +2079,20 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         section += "<tr><td><b>scalar burnin</b></td><td>{}</td></tr>\n".format(burnin_before)
         section += "<tr><td><b>scalar ESS</b></td><td>{}</td></tr>\n".format(min_NE)
 
-        min_NE_partition = self.get_value_from_file('Results/partitions.bs','min Ne =')
-        section += '<tr><td><b title=\"Effective Sample Size for bit-vectors of partition support (smallest)\">topological ESS</b></td><td>{}</td></tr>\n'.format(min_NE_partition)
 
-        asdsf = self.get_value_from_file('Results/partitions.bs','ASDSF\[min=0.100\] =')
-        if asdsf is None:
-            asdsf = "NA"
-        section += '<tr><td><b title=\"Average Standard Deviation of Split Frequencies\">ASDSF</b></td><td>{}</td></tr>'.format(asdsf)
+        if self.has_trees():
+            min_NE_partition = self.get_value_from_file('Results/partitions.bs','min Ne =')
+            section += '<tr><td><b title=\"Effective Sample Size for bit-vectors of partition support (smallest)\">topological ESS</b></td><td>{}</td></tr>\n'.format(min_NE_partition)
 
-        msdsf = self.get_value_from_file('Results/partitions.bs','MSDSF =')
-        if msdsf is None:
-            msdsf = "NA"
-        section += '<tr><td><b title=\"Maximum Standard Deviation of Split Frequencies\">MSDSF</b></td><td>{}</td></tr>'.format(msdsf)
+            asdsf = self.get_value_from_file('Results/partitions.bs','ASDSF\[min=0.100\] =')
+            if asdsf is None:
+                asdsf = "NA"
+            section += '<tr><td><b title=\"Average Standard Deviation of Split Frequencies\">ASDSF</b></td><td>{}</td></tr>'.format(asdsf)
+
+            msdsf = self.get_value_from_file('Results/partitions.bs','MSDSF =')
+            if msdsf is None:
+                msdsf = "NA"
+            section += '<tr><td><b title=\"Maximum Standard Deviation of Split Frequencies\">MSDSF</b></td><td>{}</td></tr>'.format(msdsf)
 
         psrf_80 = 'NA'
         psrf_rcf = 'NA'
@@ -2108,12 +2163,13 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             print("NOTE: burnin (scalar) <= {}".format(burnin_before))
         if min_NE:
             print("NOTE: min_ESS (scalar)    = {}".format(min_NE))
-        if min_NE_partition:
-            print("NOTE: min_ESS (partition)    = {}".format(min_NE_partition))
-        if asdsf:
-            print("NOTE: ASDSF = {}".format(asdsf))
-        if msdsf:
-            print("NOTE: MSDSF = {}".format(msdsf))
+        if self.has_trees():
+            if min_NE_partition:
+                print("NOTE: min_ESS (partition)    = {}".format(min_NE_partition))
+            if asdsf:
+                print("NOTE: ASDSF = {}".format(asdsf))
+            if msdsf:
+                print("NOTE: MSDSF = {}".format(msdsf))
         if psrf_80:
             print("NOTE: PSRF-80%CI = {}".format(psrf_80))
         if psrf_rcf:
@@ -2228,5 +2284,8 @@ if __name__ == '__main__':
     # FIXME: change subdirs to check if we've got a list of tree files instead
     parser.add_argument("--tree-file",nargs='*')
     args = parser.parse_args()
+
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
 
     analysis = Analysis(args,args.mcmc_outputs)
