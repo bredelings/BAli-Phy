@@ -1,6 +1,7 @@
 module Bio.Alignment.Matrix where
 
 import Bio.Sequence
+import Data.BitVector
 
 data AlignmentMatrix
 
@@ -33,3 +34,7 @@ builtin builtin_reorder_alignment 2 "reorder_alignment" "Alignment"
 
 reorder_alignment :: [Int] -> AlignmentMatrix -> AlignmentMatrix
 reorder_alignment names a = builtin_reorder_alignment names' a where names' = list_to_vector $ map pack_cpp_string names
+
+builtin builtin_alignment_row_to_bitvector 2 "alignment_row_to_presence_bitvector" "Bits"
+alignment_row_to_bitvector a row = BitVector $ builtin_alignment_row_to_bitvector a row
+

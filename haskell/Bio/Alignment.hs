@@ -1,6 +1,7 @@
 module Bio.Alignment (module Bio.Alignment,
                       module Bio.Sequence,
-                      module Bio.Alignment.Matrix) where
+                      module Bio.Alignment.Matrix,
+                      module Bio.Alignment.Pairwise) where
 
 import Tree
 import Data.BitVector
@@ -8,24 +9,16 @@ import Parameters
 import Foreign.Vector
 import Bio.Sequence
 import Bio.Alignment.Matrix
-
-builtin pairwise_alignment_length1 1 "pairwise_alignment_length1" "Alignment"
-builtin pairwise_alignment_length2 1 "pairwise_alignment_length2" "Alignment"
+import Bio.Alignment.Pairwise
 
 -- Alignment -> Int -> EVector Int-> EVector (EVector Int)
 builtin builtin_leaf_sequence_counts 3 "leaf_sequence_counts" "Alignment"
-
-builtin builtin_alignment_row_to_bitvector 2 "alignment_row_to_presence_bitvector" "Bits"
-builtin builtin_pairwise_alignment_from_bits 2 "pairwise_alignment_from_bits" "Bits"
-builtin unaligned_pairwise_alignment 2 "unaligned_pairwise_alignment" "Alignment"
-builtin flip_alignment 1 "flip_alignment" "Alignment"
 
 branch_hmms (model,_) distances n_branches = listArray' $ map (model distances) [0..n_branches-1]
   
 seqlength as tree node = pairwise_alignment_length1 (as!b) where
     b = head $ edgesOutOfNode tree node
 
-alignment_row_to_bitvector a row = BitVector $ builtin_alignment_row_to_bitvector a row
 
 minimally_connect_characters a t = mkArray (numNodes t) node_to_bits where
     pairs l = [(x,y) | (x:ys) <- tails l, y <- ys]
@@ -41,10 +34,6 @@ pairwise_alignments_from_matrix a tree = [ pairwise_alignment_from_bits bits1 bi
                                                                                            let bits1 = bits ! sourceNode tree b,
                                                                                            let bits2 = bits ! targetNode tree b]
     where bits = minimally_connect_characters a tree
-
-pairwise_alignment_from_bits (BitVector x) (BitVector y) = builtin_pairwise_alignment_from_bits x y
-
-data PairwiseAlignment = PairwiseAlignment
 
 data AlignmentOnTree = AlignmentOnTree Tree Int (Array Int Int) (Array Int PairwiseAlignment)
 n_sequences         (AlignmentOnTree _ n _  _) = n
