@@ -210,9 +210,286 @@ Partition::Partition(const vector<string>& n,const dynamic_bitset<>& g,const dyn
     assert(not group1.intersects(group2));
 }
 
+// line -> word (space word)*
+// word = quoted_word | unquoted_word
+// quoted_word = " (letter|escape| )* "
+// unquoted_word = (letter|escape| )+
+// escape = \"
+
+struct parse_input
+{
+    const string* data;
+    int pos;
+    bool ok() const {return pos < data->size();}
+    int operator++() {return pos++;}
+    std::optional<char> get_ch() {
+        if (ok())
+            return (*data)[pos++];
+        else
+            return {};
+    }
+    parse_input(const string& s):data(&s),pos(0) {}
+};
+
+
+template <typename T>
+using parse_result = std::optional<std::pair<T,parse_input>>;
+
+template <typename T>
+using parser = std::function<parse_result<T>(parse_input)>;
+
+template <typename T>
+using fail = std::optional<pair<T,parse_input>>;
+
+parse_result<char> get_char_(parse_input input)
+{
+    if (auto c = input.get_ch())
+        return pair(*c,input);
+    else
+        return {};
+}
+
+parser<char> get_char = get_char_;
+
+parser<char> Char(char c)
+{
+    return [c](parse_input input) -> parse_result<char>
+               {
+                   auto result = get_char(input);
+                   if (result->first == c)
+                       return result;
+                   else
+                       return {};
+               };
+}
+
+parser<string> String(const string& s)
+{
+    return [&](parse_input input) -> parse_result<string>
+               {
+                   for(char c: s)
+                       if (not Char(c)(input))
+                           return fail<string>{};
+                   return {}; //parse_result{s,input};
+               };
+}
+
+template <typename T1,typename T2>
+constexpr parser<pair<T1,T2>> match_both(const parser<T1>& p1, const parser<T2>& p2)
+{
+    return [&](parse_input input) -> parse_result<pair<T1,T2>>
+               {
+                   auto result1 = p1(input);
+                   if (result1)
+                   {
+                       auto result2 = p2(result1->second);
+                       if (result2)
+                           return {{{result1->first,result2->first},result2->second}};
+                       else
+                           return {};
+                   }
+                   else
+                       return {};
+               };
+}
+
+template <typename T1,typename T2>
+constexpr parser<pair<T1,T2>> operator>>(const parser<T1>& p1, const parser<T2>& p2)
+{
+    return match_both(p1,p2);
+}
+
+template <typename T>
+constexpr parser<T> match_first(const parser<T>& p1, const parser<T>& p2)
+{
+    return [&](parse_input input)
+               {
+                   if (auto result1 = p1(input))
+                       return result1;
+                   else
+                       return p2(input);
+               };
+}
+
+template <typename T>
+constexpr parser<T> operator|(const parser<T>& p1, const parser<T>& p2)
+{
+    return match_first(p1,p2);
+}
+
+
+parse_result<char> escaped_letter_(parse_input input)
+{
+    auto result = (Char('\\')>>get_char)(input);
+    if (result)
+        return {{result->first.second, result->second}};
+    else
+        return {};
+}
+
+parse_result<char> unescaped_letter_(parse_input input)
+{
+    auto result = get_char(input);
+    char c = result->first;
+    if (c == '\\' or c == '"' or c == ' ')
+        return {};
+    else
+        return result;
+}
+
+parser<char> escaped_letter = escaped_letter_;
+parser<char> unescaped_letter = unescaped_letter_;
+
+
+parser<char> letter = escaped_letter|unescaped_letter;
+
+template <typename T>
+parser<vector<T>> match_star(const parser<T>& p)
+{
+    return [&](parse_input input) -> parse_result<vector<T>>
+               {
+                   vector<T> results;
+                   while (true)
+                   {
+                       auto result = p(input);
+                       if (not result)
+                           return {{results,input}};
+                       input = result->second;
+                       results.push_back(result->first);
+                   }
+               };
+}
+
+template <typename T>
+constexpr parser<vector<T>> operator*(const parser<T>& p)
+{
+    return match_star(p);
+}
+
+template <typename T>
+struct vector_out
+{
+    typedef vector<T> value_type;
+};
+
+template <>
+struct vector_out<char>
+{
+    typedef string value_type;
+};
+
+template <typename T>
+parser<typename vector_out<T>::value_type> match_plus(const parser<T>& p)
+{
+    return [&](parse_input input) -> parse_result<typename vector_out<T>::value_type>
+               {
+                   auto result1 = p(input);
+                   if (not result1)
+                       return {};
+                   input = result1->second;
+                   vector<T> results;
+                   results.push_back(result1->first);
+                   while (true)
+                   {
+                       auto result2 = p(input);
+                       if (not result2)
+                           return {{results,input}};
+                       input = result2->second;
+                       results.push_back(result2->first);
+                   }
+               };
+}
+
+template <>
+parser<typename vector_out<char>::value_type> match_plus(const parser<char>& p)
+{
+    return [&](parse_input input) -> parse_result<typename vector_out<char>::value_type>
+               {
+                   auto result1 = p(input);
+                   if (not result1)
+                       return {};
+                   input = result1->second;
+                   string results;
+                   results += result1->first;
+                   while (true)
+                   {
+                       auto result2 = p(input);
+                       if (not result2)
+                           return {{results,input}};
+                       input = result2->second;
+                       results += result2->first;
+                   }
+               };
+}
+
+
+
+parse_result<string> quoted_word_(parse_input input)
+{
+    auto result1 = Char('"')(input);
+    if (not result1)
+        return {};
+    input = result1->second;
+
+    auto result2 = (*(letter|Char(' ')))(input);
+    if (not result2)
+        return {};
+    input = result2->second;
+
+    auto result3 = Char('"')(input);
+    if (not result3)
+        return {};
+    input = result3->second;
+    
+    vector<char>& v = result2->first;
+    string s;
+    for(int i=0;i<v.size();i++)
+        s += v[i];
+    return {{s,input}};
+}
+parser<string> quoted_word = quoted_word_;
+
+parser<string> unquoted_word = match_plus<char>(letter);
+
+parser<string> word = quoted_word|unquoted_word;
+
+template <typename T1, typename T2>
+parser<vector<T1>> intercalate(const parser<T1>& p1, const parser<T2>& p2)
+{
+    return [&](parse_input input) -> parse_result<vector<T1>>
+    {
+        vector<T1> output;
+        auto result1 = p1(input);
+        if (result1)
+        {
+            output.push_back(result1->first);
+            input = result1->second;
+
+            auto result2 = (*(p2>>p1))(input);
+            assert(result2);
+            input = result2->second;
+            for(auto& x: result2->first)
+                output.push_back(x.second);
+        }
+        return {{output,input}};
+    };
+}
+
+template <typename T>
+std::optional<T> parse(const string& s, const parser<T>& p)
+{
+    parse_input input(s);
+    auto result = p(input);
+    if (result) // We might not consume the whole line here
+        return result->first;
+    else
+        return {};
+}
+
 vector< vector<string> > parse_partition(const string& line)
 {
-    vector<string> all_names = split(line,' ');
+    auto result = parse(line, intercalate(word,Char(' ')));
+    vector<string> all_names = *result;
 
     vector< vector<string> > names(3);
 
@@ -285,23 +562,31 @@ bool valid(const partition& p) {
     return p.group1.any() and p.group2.any();
 }
 
+string quote(const string& s)
+{
+    if (s.find(' ') != std::string::npos)
+        return '"'+s+'"';
+    else
+        return s;
+}
+
 std::ostream& operator<<(std::ostream& o, const Partition& P) 
 {
     assert(not P.group1.intersects(P.group2));
 
     for(int i=0;i<P.size();i++)
-	if (P.group1[i]) o<<P.names[i]<<" ";
+	if (P.group1[i]) o<<quote(P.names[i])<<" ";
   
     o<<"| ";
   
     for(int i=0;i<P.size();i++)
-	if (P.group2[i]) o<<P.names[i]<<" ";
+	if (P.group2[i]) o<<quote(P.names[i])<<" ";
 
     dynamic_bitset<> rmask = ~(P.group1 | P.group2);
     if (rmask.any()) {
 	o<<" [ ";
 	for(int i=0;i<P.size();i++) {
-	    if (rmask[i]) o<<P.names[i]<<" ";
+	    if (rmask[i]) o<<quote(P.names[i])<<" ";
 	}
 	o<<"]";
     }
