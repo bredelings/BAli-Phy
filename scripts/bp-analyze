@@ -1133,8 +1133,8 @@ class Analysis(object):
 
     def summarize_topology_distribution(self):
         assert(self.has_trees())
-
         print("\nSummarizing topology distribution: ",end='')
+        logging.debug("tree files = {}".format(self.get_trees_files()))
         cmd = ['trees-consensus','--map-tree=Results/MAP.PP.tree','--greedy-consensus=Results/greedy.PP.tree','--report=Results/consensus']+self.get_trees_files()
         cmd.append("--support-levels=Results/c-levels.plot")
         if self.subpartitions:
@@ -2060,57 +2060,9 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         section = ""
         return section
 
-    def section_mixing(self):
-        section = """\
-<h2><a class="anchor" name="mixing"></a>Mixing</h2>
-  <table style="width:100%;clear:both">
-    <tr>
-      <td style="vertical-align:top">
-        <p><b>Statistics:</b></p>
-        <table class="backlit2">
-"""
-        burnin_before = "NA"
-        min_NE = "NA"
-        if self.get_log_files():
-            burnin_before = self.get_value_from_file("Results/Report", 'min burnin <=')
-            if burnin_before == "Not":
-                burnin_before = "Not Converged!"
-            min_NE = self.get_value_from_file("Results/Report", 'Ne  >=')
-        section += "<tr><td><b>scalar burnin</b></td><td>{}</td></tr>\n".format(burnin_before)
-        section += "<tr><td><b>scalar ESS</b></td><td>{}</td></tr>\n".format(min_NE)
-
-
-        if self.has_trees():
-            min_NE_partition = self.get_value_from_file('Results/partitions.bs','min Ne =')
-            section += '<tr><td><b title=\"Effective Sample Size for bit-vectors of partition support (smallest)\">topological ESS</b></td><td>{}</td></tr>\n'.format(min_NE_partition)
-
-            asdsf = self.get_value_from_file('Results/partitions.bs','ASDSF\[min=0.100\] =')
-            if asdsf is None:
-                asdsf = "NA"
-            section += '<tr><td><b title=\"Average Standard Deviation of Split Frequencies\">ASDSF</b></td><td>{}</td></tr>'.format(asdsf)
-
-            msdsf = self.get_value_from_file('Results/partitions.bs','MSDSF =')
-            if msdsf is None:
-                msdsf = "NA"
-            section += '<tr><td><b title=\"Maximum Standard Deviation of Split Frequencies\">MSDSF</b></td><td>{}</td></tr>'.format(msdsf)
-
-        psrf_80 = 'NA'
-        psrf_rcf = 'NA'
-        if self.get_log_files() and len(self.get_log_files()) >= 2:
-            psrf_80 = self.get_value_from_file('Results/Report','PSRF-80%CI <=')
-            psrf_rcf = self.get_value_from_file('Results/Report','PSRF-RCF <=')
-        section += '<tr><td><b>PSRF CI80%</b></td><td>{}</td><tr>\n'.format(psrf_80)
-        section += '<tr><td><b>PSRF RCF</b></td><td>{}</td><tr>\n'.format(psrf_rcf)
-
-        section += '</table>\n'
-        section += '</td>\n'
-
-        section += '    <td>\n'
-        section += '      <img src="c50.SRQ.png" alt="SRQ plot for supprt of 50% consensus tree."/>'
-        section += '      <img src="partitions.SRQ.png" alt="SRQ plot for supprt of each partition."/>'
-        section += '    </td>\n'
-        section += '  </tr></table>\n'
-
+    def section_tree_mixing2(self):
+        section = ""
+        assert(self.has_trees())
         if self.n_chains() >= 3:
             MDS_figure = "tree-1-2-3.svg"
             MDS_figure_3d = "tree-1-2-3.points"
@@ -2157,6 +2109,62 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             section += self.html_svg("convergence2-PP.svg","90%","",[])
         section += "</td>"
         section += "</tr></table>"
+        return section
+
+    def section_mixing(self):
+        section = """\
+<h2><a class="anchor" name="mixing"></a>Mixing</h2>
+  <table style="width:100%;clear:both">
+    <tr>
+      <td style="vertical-align:top">
+        <p><b>Statistics:</b></p>
+        <table class="backlit2">
+"""
+        burnin_before = "NA"
+        min_NE = "NA"
+        if self.get_log_files():
+            burnin_before = self.get_value_from_file("Results/Report", 'min burnin <=')
+            if burnin_before == "Not":
+                burnin_before = "Not Converged!"
+            min_NE = self.get_value_from_file("Results/Report", 'Ne  >=')
+        section += "<tr><td><b>scalar burnin</b></td><td>{}</td></tr>\n".format(burnin_before)
+        section += "<tr><td><b>scalar ESS</b></td><td>{}</td></tr>\n".format(min_NE)
+
+
+        if self.has_trees():
+            min_NE_partition = self.get_value_from_file('Results/partitions.bs','min Ne =')
+            section += '<tr><td><b title=\"Effective Sample Size for bit-vectors of partition support (smallest)\">topological ESS</b></td><td>{}</td></tr>\n'.format(min_NE_partition)
+
+            asdsf = self.get_value_from_file('Results/partitions.bs','ASDSF\[min=0.100\] =')
+            if asdsf is None:
+                asdsf = "NA"
+            section += '<tr><td><b title=\"Average Standard Deviation of Split Frequencies\">ASDSF</b></td><td>{}</td></tr>'.format(asdsf)
+
+            msdsf = self.get_value_from_file('Results/partitions.bs','MSDSF =')
+            if msdsf is None:
+                msdsf = "NA"
+            section += '<tr><td><b title=\"Maximum Standard Deviation of Split Frequencies\">MSDSF</b></td><td>{}</td></tr>'.format(msdsf)
+
+        psrf_80 = 'NA'
+        psrf_rcf = 'NA'
+        if self.get_log_files() and len(self.get_log_files()) >= 2:
+            psrf_80 = self.get_value_from_file('Results/Report','PSRF-80%CI <=')
+            psrf_rcf = self.get_value_from_file('Results/Report','PSRF-RCF <=')
+        section += '<tr><td><b>PSRF CI80%</b></td><td>{}</td><tr>\n'.format(psrf_80)
+        section += '<tr><td><b>PSRF RCF</b></td><td>{}</td><tr>\n'.format(psrf_rcf)
+
+        section += '</table>\n'
+        section += '</td>\n'
+
+        section += '    <td>\n'
+        if self.has_trees():
+            section += '      <img src="c50.SRQ.png" alt="SRQ plot for supprt of 50% consensus tree."/>'
+            section += '      <img src="partitions.SRQ.png" alt="SRQ plot for supprt of each partition."/>'
+        section += '    </td>\n'
+        section += '  </tr></table>\n'
+
+        if self.has_trees():
+            section += self.section_tree_mixing2()
 
         print("")
         if burnin_before:
