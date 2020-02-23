@@ -231,23 +231,33 @@ struct parse_input
     parse_input(const string& s):data(&s),pos(0) {}
 };
 
+template <typename T>
+struct parse_result_ok
+{
+    T output;
+    parse_input next_input;
+};
+
+template <>
+struct parse_result_ok<void>
+{
+    parse_input next_input;
+};
 
 template <typename T>
-using parse_result = std::optional<std::pair<T,parse_input>>;
+using parse_result = std::optional<parse_result_ok<T>>;
 
 template <typename T>
 using parser = std::function<parse_result<T>(parse_input)>;
 
-template <typename T>
-using fail = std::optional<pair<T,parse_input>>;
-
 parse_result<char> get_char_(parse_input input)
 {
     if (auto c = input.get_ch())
-        return pair(*c,input);
+        return {{*c,input}};
     else
         return {};
 }
+
 
 parser<char> get_char = get_char_;
 
@@ -256,7 +266,7 @@ parser<char> Char(char c)
     return [c](parse_input input) -> parse_result<char>
                {
                    auto result = get_char(input);
-                   if (result->first == c)
+                   if (result and result->output == c)
                        return result;
                    else
                        return {};
@@ -269,8 +279,8 @@ parser<string> String(const string& s)
                {
                    for(char c: s)
                        if (not Char(c)(input))
-                           return fail<string>{};
-                   return {}; //parse_result{s,input};
+                           return {};
+                   return {};
                };
 }
 
@@ -282,9 +292,9 @@ constexpr parser<pair<T1,T2>> match_both(const parser<T1>& p1, const parser<T2>&
                    auto result1 = p1(input);
                    if (result1)
                    {
-                       auto result2 = p2(result1->second);
+                       auto result2 = p2(result1->next_input);
                        if (result2)
-                           return {{{result1->first,result2->first},result2->second}};
+                           return {{{result1->output,result2->output},result2->next_input}};
                        else
                            return {};
                    }
@@ -322,7 +332,7 @@ parse_result<char> escaped_letter_(parse_input input)
 {
     auto result = (Char('\\')>>get_char)(input);
     if (result)
-        return {{result->first.second, result->second}};
+        return {{result->output.second, result->next_input}};
     else
         return {};
 }
@@ -330,7 +340,7 @@ parse_result<char> escaped_letter_(parse_input input)
 parse_result<char> unescaped_letter_(parse_input input)
 {
     auto result = get_char(input);
-    char c = result->first;
+    char c = result->output;
     if (c == '\\' or c == '"' or c == ' ')
         return {};
     else
@@ -342,29 +352,6 @@ parser<char> unescaped_letter = unescaped_letter_;
 
 
 parser<char> letter = escaped_letter|unescaped_letter;
-
-template <typename T>
-parser<vector<T>> match_star(const parser<T>& p)
-{
-    return [&](parse_input input) -> parse_result<vector<T>>
-               {
-                   vector<T> results;
-                   while (true)
-                   {
-                       auto result = p(input);
-                       if (not result)
-                           return {{results,input}};
-                       input = result->second;
-                       results.push_back(result->first);
-                   }
-               };
-}
-
-template <typename T>
-constexpr parser<vector<T>> operator*(const parser<T>& p)
-{
-    return match_star(p);
-}
 
 template <typename T>
 struct vector_out
@@ -379,6 +366,47 @@ struct vector_out<char>
 };
 
 template <typename T>
+parser<typename vector_out<T>::value_type> match_star(const parser<T>& p)
+{
+    return [&](parse_input input) -> parse_result<typename vector_out<T>::value_type>
+               {
+                   vector<T> results;
+                   while (true)
+                   {
+                       auto result = p(input);
+                       if (not result)
+                           return {{results,input}};
+                       input = result->next_input;
+                       results.push_back(result->output);
+                   }
+               };
+}
+
+template <>
+parser<typename vector_out<char>::value_type> match_star(const parser<char>& p)
+{
+    return [&](parse_input input) -> parse_result<typename vector_out<char>::value_type>
+               {
+                   string results;
+                   while (true)
+                   {
+                       auto result = p(input);
+                       if (not result)
+                           return {{results,input}};
+                       input = result->next_input;
+                       results += result->output;
+                   }
+               };
+}
+
+template <typename T>
+constexpr parser<typename vector_out<T>::value_type> operator*(const parser<T>& p)
+{
+    return match_star(p);
+}
+
+
+template <typename T>
 parser<typename vector_out<T>::value_type> match_plus(const parser<T>& p)
 {
     return [&](parse_input input) -> parse_result<typename vector_out<T>::value_type>
@@ -386,16 +414,16 @@ parser<typename vector_out<T>::value_type> match_plus(const parser<T>& p)
                    auto result1 = p(input);
                    if (not result1)
                        return {};
-                   input = result1->second;
+                   input = result1->next_input;
                    vector<T> results;
-                   results.push_back(result1->first);
+                   results.push_back(result1->output);
                    while (true)
                    {
                        auto result2 = p(input);
                        if (not result2)
                            return {{results,input}};
-                       input = result2->second;
-                       results.push_back(result2->first);
+                       input = result2->next_input;
+                       results.push_back(result2->output);
                    }
                };
 }
@@ -408,18 +436,24 @@ parser<typename vector_out<char>::value_type> match_plus(const parser<char>& p)
                    auto result1 = p(input);
                    if (not result1)
                        return {};
-                   input = result1->second;
+                   input = result1->next_input;
                    string results;
-                   results += result1->first;
+                   results += result1->output;
                    while (true)
                    {
                        auto result2 = p(input);
                        if (not result2)
                            return {{results,input}};
-                       input = result2->second;
-                       results += result2->first;
+                       input = result2->next_input;
+                       results += result2->output;
                    }
                };
+}
+
+template <typename T>
+constexpr parser<typename vector_out<T>::value_type> operator+(const parser<T>& p)
+{
+    return match_plus(p);
 }
 
 
@@ -429,27 +463,23 @@ parse_result<string> quoted_word_(parse_input input)
     auto result1 = Char('"')(input);
     if (not result1)
         return {};
-    input = result1->second;
+    input = result1->next_input;
 
     auto result2 = (*(letter|Char(' ')))(input);
     if (not result2)
         return {};
-    input = result2->second;
+    input = result2->next_input;
 
     auto result3 = Char('"')(input);
     if (not result3)
         return {};
-    input = result3->second;
+    input = result3->next_input;
     
-    vector<char>& v = result2->first;
-    string s;
-    for(int i=0;i<v.size();i++)
-        s += v[i];
-    return {{s,input}};
+    return {{result2->output,input}};
 }
 parser<string> quoted_word = quoted_word_;
 
-parser<string> unquoted_word = match_plus<char>(letter);
+parser<string> unquoted_word = +letter;
 
 parser<string> word = quoted_word|unquoted_word;
 
@@ -462,13 +492,13 @@ parser<vector<T1>> intercalate(const parser<T1>& p1, const parser<T2>& p2)
         auto result1 = p1(input);
         if (result1)
         {
-            output.push_back(result1->first);
-            input = result1->second;
+            output.push_back(result1->output);
+            input = result1->next_input;
 
             auto result2 = (*(p2>>p1))(input);
             assert(result2);
-            input = result2->second;
-            for(auto& x: result2->first)
+            input = result2->next_input;
+            for(auto& x: result2->output)
                 output.push_back(x.second);
         }
         return {{output,input}};
@@ -481,7 +511,7 @@ std::optional<T> parse(const string& s, const parser<T>& p)
     parse_input input(s);
     auto result = p(input);
     if (result) // We might not consume the whole line here
-        return result->first;
+        return result->output;
     else
         return {};
 }
