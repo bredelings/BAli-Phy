@@ -1207,8 +1207,24 @@ int num_distinct(const vector<optional<int>>& v)
     return m+1;
 }
 
+int get_num_models(const vector<optional<int>>& mapping)
+{
+    int m = -1;
+    set<int> models;
+    for(auto& model: mapping)
+        if (model)
+        {
+            assert(*model >= 0);
+            m = std::max(*model,-1);
+            models.insert(*model);
+        }
+
+    int n = models.size();
+    assert(m+1 == n);
+    return n;
+}
+
 parameters_constants::parameters_constants(int n_partitions, const SequenceTree& t,
-                                           int n_smodels,
                                            const vector<optional<int>>& s_mapping,
                                            const vector<optional<int>>& i_mapping,
                                            const vector<optional<int>>& scale_mapping)
@@ -1225,6 +1241,8 @@ parameters_constants::parameters_constants(int n_partitions, const SequenceTree&
         throw myexception()<<"There are "<<n_partitions
                            <<" data partitions, but you mapped smodels onto "
                            <<smodel_for_partition.size();
+
+    int n_smodels = get_num_models(s_mapping);
 
     // check that we only map existing smodels to data partitions
     for(int i=0;i<smodel_for_partition.size();i++) {
@@ -1864,13 +1882,12 @@ Parameters::Parameters(const Program& prog,
                        const vector<alignment>& A,
                        const vector<pair<string,string>>& filename_ranges,
                        const SequenceTree& ttt,
-                       const vector<model_t>& SMs,
                        const vector<optional<int>>& s_mapping,
                        const vector<optional<int>>& i_mapping,
                        const vector<optional<int>>& scale_mapping,
                        const std::vector<int>& like_calcs)
 :Model(prog, keys),
- PC(new parameters_constants(filename_ranges.size(), ttt, SMs.size(), s_mapping, i_mapping, scale_mapping)),
+ PC(new parameters_constants(filename_ranges.size(), ttt, s_mapping, i_mapping, scale_mapping)),
  variable_alignment_( n_imodels() > 0 ),
  updown(-1)
 {
@@ -1975,7 +1992,8 @@ Parameters::Parameters(const Program& prog,
 #endif
 
     // R3. Register methods for each of the individual substitution models
-    for(int i=0;i<SMs.size();i++)
+    int n_smodels = get_num_models(s_mapping);
+    for(int i=0;i<n_smodels;i++)
     {
         expression_ref smodel = {var("Data.List.!!"),{var("BAliPhy.ATModel.smodels"), my_atmodel()}, i};
 

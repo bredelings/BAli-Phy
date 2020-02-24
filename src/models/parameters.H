@@ -286,7 +286,6 @@ struct parameters_constants: public Object
     parameters_constants* clone() const {return new parameters_constants(*this);}
 
     parameters_constants(int n_partitions, const SequenceTree&, 
-                         int n_smodels,
 			 const std::vector<std::optional<int>>&,
 			 const std::vector<std::optional<int>>&,
 			 const std::vector<std::optional<int>>&);
@@ -437,7 +436,6 @@ public:
 	       const std::vector<alignment>& A,
 	       const std::vector<std::pair<std::string,std::string>>& filename_ranges,
                const SequenceTree&,
-	       const std::vector<model_t>&,
 	       const std::vector<std::optional<int>>&,
 	       const std::vector<std::optional<int>>&,
 	       const std::vector<std::optional<int>>&,
