@@ -322,7 +322,7 @@ expression_ref compact_graph_expression(const reg_heap& C, int R, const map<stri
 map<int,string> get_register_names(const map<string, int>& ids)
 {
     map<int,string> ids2;
-    for(const auto i:ids)
+    for(const auto& i:ids)
 	ids2[i.second] = i.first;
     return ids2;
 }
@@ -330,7 +330,7 @@ map<int,string> get_register_names(const map<string, int>& ids)
 set<string> get_names(const map<string, int>& ids)
 {
     set<string> names;
-    for(const auto i:ids)
+    for(const auto& i:ids)
 	names.insert(i.first);
     return names;
 }
