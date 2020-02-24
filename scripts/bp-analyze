@@ -800,7 +800,6 @@ class Analysis(object):
             self.summarize_numerical_parameters()
         if self.has_trees():
             self.summarize_topology_distribution()
-            self.compute_mean_branch_lengths()
             self.draw_trees()
             self.compute_tree_mixing_diagnostics()
             self.compute_srq_plots()
@@ -1186,33 +1185,6 @@ class Analysis(object):
                 self.exec_show(['tree-tool',tree,'--strip-internal-names','--name-all-nodes'],outfile=tree2)
         print(" done.")
 
-    # This routine computes mean branch lengths WITH NODE CIRCLES (*.ltree)
-    def compute_mean_branch_lengths(self):
-        print("\nComputing mean branch lengths: ",end='')
-        for level in self.tree_consensus_levels:
-            value = int(level*100)
-            prefix = "Results/c{}".format(value)
-            tree = prefix+".tree"
-
-            outfile=prefix+".ltree"
-            if more_recent_than_all_of(outfile, self.get_trees_files()):
-                break
-
-            cmd = ['tree-mean-lengths','--tree',tree,'--safe','--show-node-lengths']
-            cmd += self.get_trees_files()
-
-            if self.prune is not None:
-                cmd.append("--ignore={}".format(self.prune))
-            if self.subsample is not None and self.subsample != 1:
-                cmd.append("--subsample={}".format(self.subsample))
-            if self.burnin is not None:
-                cmd.append("--skip={}".format(self.burnin))
-            if self.until is not None:
-                cmd.append("--until={}".format(self.until))
-
-            self.exec_show(cmd,outfile=outfile)
-        print(" done.")
-
     def get_alignment_info(self,filename):
         output = self.exec_show(['alignment-info',filename])
         features = dict()
@@ -1268,10 +1240,10 @@ class Analysis(object):
                     self.exec_show(cmd + ['--output=pdf'])
 
             if not more_recent_than("Results/{}-tree.pdf".format(tree), filename1):
-                cmd = ['draw-tree',tree+".ltree",'--layout=equal-daylight']
+                cmd = ['draw-tree',tree+".tree",'--layout=equal-daylight']
                 self.exec_show(cmd,cwd="Results")
             if not more_recent_than("Results/{}-tree.svg".format(tree), filename1):
-                cmd = ['draw-tree',tree+".ltree",'--layout=equal-daylight','--output=svg']
+                cmd = ['draw-tree',tree+".tree",'--layout=equal-daylight','--output=svg']
                 self.exec_show(cmd,cwd="Results")
             print(tree+' ',end='',flush=True)
 
