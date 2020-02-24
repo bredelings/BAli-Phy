@@ -1381,8 +1381,7 @@ expression_ref get_alphabet_expression(const alphabet& a)
 
 // FIXME: move this routine to A-T-Model
 
-std::string generate_atmodel_program(int n_partitions,
-                                     int n_sequences,
+std::string generate_atmodel_program(int n_sequences,
                                      const vector<expression_ref>& alphabet_exps,
                                      const vector<pair<string,string>>& filename_ranges,
                                      const vector<model_t>& SMs,
@@ -1395,6 +1394,8 @@ std::string generate_atmodel_program(int n_partitions,
                                      const std::vector<int>& like_calcs,
                                      bool allow_compression)
 {
+    int n_partitions = filename_ranges.size();
+
     bool variable_alignment = false;
     for(auto& i: i_mapping)
         if (i)
@@ -1855,8 +1856,7 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
     const int n_partitions = filename_ranges.size();
     {
         checked_ofstream program_file(program_filename.string());
-        program_file<<generate_atmodel_program(n_partitions,
-                                               n_leaves,
+        program_file<<generate_atmodel_program(n_leaves,
                                                alphabet_exps,
                                                filename_ranges,
                                                SMs, s_mapping,
