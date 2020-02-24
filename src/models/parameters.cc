@@ -2035,19 +2035,3 @@ Parameters::Parameters(const Program& prog,
     if (some_branch_lengths_not_set)
         std::cerr<<"Warning!  Some branch lengths not set because they are not directly modifiable.\n\n";
 }
-
-Parameters::Parameters(const Program& prog,
-                       const key_map_t& keys,
-                       const vector<alignment>& A,
-                       const vector<pair<string,string>>& filename_ranges,
-                       const SequenceTree& t,
-                       const vector<model_t>& SMs,
-                       const vector<optional<int>>& s_mapping,
-                       const vector<model_t>& scaleMs,
-                       const vector<optional<int>>& scale_mapping,
-                       const model_t& branch_length_model,
-                       const std::vector<int>& like_calcs,
-                       const string& dir)
-:Parameters(prog, keys, A, filename_ranges, t, SMs, s_mapping, vector<model_t>{}, vector<optional<int>>{}, scaleMs, scale_mapping, branch_length_model, like_calcs, dir)
-{ }
-

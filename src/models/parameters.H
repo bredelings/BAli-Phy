@@ -432,19 +432,6 @@ public:
     Parameters(Parameters&&) = default;
 
     Parameters(const Program& P,
-               const key_map_t&,
-	       const std::vector<alignment>& A,
-	       const std::vector<std::pair<std::string,std::string>>& filename_ranges,
-               const SequenceTree&,
-	       const std::vector<model_t>&,
-	       const std::vector<std::optional<int>>&,
-	       const std::vector<model_t>&,
-	       const std::vector<std::optional<int>>&,
-	       const model_t&,
-	       const std::vector<int>&,
-               const std::string&);
-
-    Parameters(const Program& P,
 	       const key_map_t&,
 	       const std::vector<alignment>& A,
 	       const std::vector<std::pair<std::string,std::string>>& filename_ranges,
