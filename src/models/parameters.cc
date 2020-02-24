@@ -1818,6 +1818,7 @@ T load_value(const Model::key_map_t& keys, const std::string& key, const T& t)
 }
 
 Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
+                            const Model::key_map_t& k,
                             const vector<alignment>& A,
                             const vector<pair<string,string>>& filename_ranges,
                             const SequenceTree& ttt,
@@ -1829,7 +1830,6 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
                             const vector<optional<int>>& scale_mapping,
                             const model_t& branch_length_model,
                             const std::vector<int>& like_calcs,
-                            const Model::key_map_t& k,
                             const string& dir)
 {
     // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
@@ -1861,7 +1861,11 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
     return P;
 }
 
-Parameters::Parameters(const std::shared_ptr<module_loader>& L,
+// scaleMs
+// 
+
+Parameters::Parameters(const Program& prog,
+                       const key_map_t& keys,
                        const vector<alignment>& A,
                        const vector<pair<string,string>>& filename_ranges,
                        const SequenceTree& ttt,
@@ -1873,13 +1877,11 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
                        const vector<optional<int>>& scale_mapping,
                        const model_t& branch_length_model,
                        const std::vector<int>& like_calcs,
-                       const key_map_t& k,
                        const string& dir)
-    :Model(gen_atmodel_program(L, A, filename_ranges, ttt, SMs, s_mapping, IMs, i_mapping, scaleMs, scale_mapping, branch_length_model, like_calcs, k, dir),
-           k),
-     PC(new parameters_constants(filename_ranges.size(), ttt, SMs.size(), s_mapping, i_mapping, scale_mapping)),
-     variable_alignment_( n_imodels() > 0 ),
-     updown(-1)
+:Model(prog, keys),
+ PC(new parameters_constants(filename_ranges.size(), ttt, SMs.size(), s_mapping, i_mapping, scale_mapping)),
+ variable_alignment_( n_imodels() > 0 ),
+ updown(-1)
 {
     bool allow_compression = load_value("site-compression", ttt.n_nodes() > 2) and not load_value("write-fixed-alignments",false);
     const int n_partitions = filename_ranges.size();
@@ -2034,7 +2036,8 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
         std::cerr<<"Warning!  Some branch lengths not set because they are not directly modifiable.\n\n";
 }
 
-Parameters::Parameters(const std::shared_ptr<module_loader>& L,
+Parameters::Parameters(const Program& prog,
+                       const key_map_t& keys,
                        const vector<alignment>& A,
                        const vector<pair<string,string>>& filename_ranges,
                        const SequenceTree& t,
@@ -2044,8 +2047,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
                        const vector<optional<int>>& scale_mapping,
                        const model_t& branch_length_model,
                        const std::vector<int>& like_calcs,
-                       const key_map_t& k,
                        const string& dir)
-:Parameters(L, A, filename_ranges, t, SMs, s_mapping, vector<model_t>{}, vector<optional<int>>{}, scaleMs, scale_mapping, branch_length_model, like_calcs, k, dir)
+:Parameters(prog, keys, A, filename_ranges, t, SMs, s_mapping, vector<model_t>{}, vector<optional<int>>{}, scaleMs, scale_mapping, branch_length_model, like_calcs, dir)
 { }
 

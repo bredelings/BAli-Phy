@@ -431,7 +431,8 @@ public:
     Parameters(const Parameters&) = default;
     Parameters(Parameters&&) = default;
 
-    Parameters(const std::shared_ptr<module_loader>& L,
+    Parameters(const Program& P,
+               const key_map_t&,
 	       const std::vector<alignment>& A,
 	       const std::vector<std::pair<std::string,std::string>>& filename_ranges,
                const SequenceTree&,
@@ -441,10 +442,10 @@ public:
 	       const std::vector<std::optional<int>>&,
 	       const model_t&,
 	       const std::vector<int>&,
-	       const key_map_t&,
                const std::string&);
 
-    Parameters(const std::shared_ptr<module_loader>& L,
+    Parameters(const Program& P,
+	       const key_map_t&,
 	       const std::vector<alignment>& A,
 	       const std::vector<std::pair<std::string,std::string>>& filename_ranges,
                const SequenceTree&,
@@ -456,10 +457,24 @@ public:
 	       const std::vector<std::optional<int>>&,
 	       const model_t&,
 	       const std::vector<int>&,
-	       const key_map_t&,
                const std::string&);
 };
 
 std::string write_newick(const Parameters&, bool=true);
+
+Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
+                            const Model::key_map_t& k,
+                            const std::vector<alignment>& A,
+                            const std::vector<std::pair<std::string,std::string>>& filename_ranges,
+                            const SequenceTree& ttt,
+                            const std::vector<model_t>& SMs,
+                            const std::vector<std::optional<int>>& s_mapping,
+                            const std::vector<model_t>& IMs,
+                            const std::vector<std::optional<int>>& i_mapping,
+                            const std::vector<model_t>& scaleMs,
+                            const std::vector<std::optional<int>>& scale_mapping,
+                            const model_t& branch_length_model,
+                            const std::vector<int>& like_calcs,
+                            const std::string& dir);
 
 #endif
