@@ -452,7 +452,7 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
                             const Model::key_map_t& k,
                             const boost::filesystem::path& program_filename,
 
-                            const std::vector<alignment>& A,
+                            const std::vector<expression_ref>& alphabet_exps,
                             const std::vector<std::pair<std::string,std::string>>& filename_ranges,
                             const SequenceTree& ttt,
                             const std::vector<model_t>& SMs,

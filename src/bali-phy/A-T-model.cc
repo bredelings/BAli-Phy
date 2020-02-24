@@ -830,7 +830,12 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
         keys = parse_key_map(args["set"].as<vector<string> >());
 
     fs::path program_filename = fs::path(dir) / "BAliPhy.Main.hs";
-    auto prog = gen_atmodel_program(L, keys, program_filename, A, alignment_files, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, full_scale_models, scale_mapping, branch_length_model, likelihood_calculators);
+    vector<expression_ref> alphabet_exps;
+    for(int i=0;i<n_partitions;i++)
+        alphabet_exps.push_back(get_alphabet_expression(A[i].get_alphabet()));
+
+    auto prog = gen_atmodel_program(L, keys, program_filename,
+                                    alphabet_exps, alignment_files, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, full_scale_models, scale_mapping, branch_length_model, likelihood_calculators);
     Parameters P(prog, keys, A, alignment_files, T, full_smodels, smodel_mapping, imodel_mapping, scale_mapping, likelihood_calculators);
 
     P.probability();

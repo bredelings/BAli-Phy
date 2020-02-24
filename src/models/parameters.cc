@@ -1819,7 +1819,7 @@ T load_value(const Model::key_map_t& keys, const std::string& key, const T& t)
 Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
                             const Model::key_map_t& k,
                             const fs::path& program_filename,
-                            const vector<alignment>& A,
+                            const vector<expression_ref>& alphabet_exps,
                             const vector<pair<string,string>>& filename_ranges,
                             const SequenceTree& ttt,
                             const vector<model_t>& SMs,
@@ -1837,9 +1837,6 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
     const int n_partitions = filename_ranges.size();
     {
         checked_ofstream program_file(program_filename.string());
-        vector<expression_ref> alphabet_exps;
-        for(int i=0;i<n_partitions;i++)
-            alphabet_exps.push_back(get_alphabet_expression(A[i].get_alphabet()));
         program_file<<generate_atmodel_program(n_partitions,
                                                ttt.n_leaves(),
                                                alphabet_exps,
