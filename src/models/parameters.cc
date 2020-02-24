@@ -26,7 +26,6 @@
 
 #include <map>
 #include <sstream>
-#include <boost/filesystem.hpp>
 #include "util/assert.hh"
 
 #include "models/parameters.H"
@@ -1819,6 +1818,7 @@ T load_value(const Model::key_map_t& keys, const std::string& key, const T& t)
 
 Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
                             const Model::key_map_t& k,
+                            const fs::path& program_filename,
                             const vector<alignment>& A,
                             const vector<pair<string,string>>& filename_ranges,
                             const SequenceTree& ttt,
@@ -1829,14 +1829,12 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
                             const vector<model_t>& scaleMs,
                             const vector<optional<int>>& scale_mapping,
                             const model_t& branch_length_model,
-                            const std::vector<int>& like_calcs,
-                            const string& dir)
+                            const std::vector<int>& like_calcs)
 {
     // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
     bool allow_compression = load_value(k, "site-compression", ttt.n_nodes() > 2) and not load_value(k, "write-fixed-alignments",false);
 
     const int n_partitions = filename_ranges.size();
-    fs::path program_filename = fs::path(dir) / "BAliPhy.Main.hs";
     {
         checked_ofstream program_file(program_filename.string());
         vector<expression_ref> alphabet_exps;
@@ -1871,13 +1869,9 @@ Parameters::Parameters(const Program& prog,
                        const SequenceTree& ttt,
                        const vector<model_t>& SMs,
                        const vector<optional<int>>& s_mapping,
-                       const vector<model_t>& IMs,
                        const vector<optional<int>>& i_mapping,
-                       const vector<model_t>& scaleMs,
                        const vector<optional<int>>& scale_mapping,
-                       const model_t& branch_length_model,
-                       const std::vector<int>& like_calcs,
-                       const string& dir)
+                       const std::vector<int>& like_calcs)
 :Model(prog, keys),
  PC(new parameters_constants(filename_ranges.size(), ttt, SMs.size(), s_mapping, i_mapping, scale_mapping)),
  variable_alignment_( n_imodels() > 0 ),

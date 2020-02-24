@@ -29,6 +29,7 @@
 
 #include <algorithm>                                // for copy
 #include <boost/smart_ptr/intrusive_ptr.hpp>        // for intrusive_ptr
+#include <boost/filesystem.hpp>                     // for boost::filesystem::path
 #include <memory>                                   // for shared_ptr, alloc...
 #include <optional>                                 // for optional
 #include <string>                                   // for string
@@ -438,19 +439,19 @@ public:
                const SequenceTree&,
 	       const std::vector<model_t>&,
 	       const std::vector<std::optional<int>>&,
-	       const std::vector<model_t>&,
 	       const std::vector<std::optional<int>>&,
-	       const std::vector<model_t>&,
 	       const std::vector<std::optional<int>>&,
-	       const model_t&,
-	       const std::vector<int>&,
-               const std::string&);
+	       const std::vector<int>&);
 };
 
 std::string write_newick(const Parameters&, bool=true);
 
+expression_ref get_alphabet_expression(const alphabet& a);
+
 Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
                             const Model::key_map_t& k,
+                            const boost::filesystem::path& program_filename,
+
                             const std::vector<alignment>& A,
                             const std::vector<std::pair<std::string,std::string>>& filename_ranges,
                             const SequenceTree& ttt,
@@ -461,7 +462,6 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
                             const std::vector<model_t>& scaleMs,
                             const std::vector<std::optional<int>>& scale_mapping,
                             const model_t& branch_length_model,
-                            const std::vector<int>& like_calcs,
-                            const std::string& dir);
+                            const std::vector<int>& like_calcs);
 
 #endif

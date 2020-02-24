@@ -829,8 +829,9 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     if (args.count("set"))
         keys = parse_key_map(args["set"].as<vector<string> >());
 
-    auto prog = gen_atmodel_program(L, keys, A, alignment_files, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, full_scale_models, scale_mapping, branch_length_model, likelihood_calculators, dir);
-    Parameters P(prog, keys, A, alignment_files, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, full_scale_models, scale_mapping, branch_length_model, likelihood_calculators, dir);
+    fs::path program_filename = fs::path(dir) / "BAliPhy.Main.hs";
+    auto prog = gen_atmodel_program(L, keys, program_filename, A, alignment_files, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, full_scale_models, scale_mapping, branch_length_model, likelihood_calculators);
+    Parameters P(prog, keys, A, alignment_files, T, full_smodels, smodel_mapping, imodel_mapping, scale_mapping, likelihood_calculators);
 
     P.probability();
     //-------- Set the alignments for variable partitions ---------//
