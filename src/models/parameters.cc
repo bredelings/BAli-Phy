@@ -1821,7 +1821,7 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
                             const fs::path& program_filename,
                             const vector<expression_ref>& alphabet_exps,
                             const vector<pair<string,string>>& filename_ranges,
-                            const SequenceTree& ttt,
+                            int n_leaves,
                             const vector<model_t>& SMs,
                             const vector<optional<int>>& s_mapping,
                             const vector<model_t>& IMs,
@@ -1832,13 +1832,13 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
                             const std::vector<int>& like_calcs)
 {
     // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
-    bool allow_compression = load_value(k, "site-compression", ttt.n_nodes() > 2) and not load_value(k, "write-fixed-alignments",false);
+    bool allow_compression = load_value(k, "site-compression", n_leaves) and not load_value(k, "write-fixed-alignments",false);
 
     const int n_partitions = filename_ranges.size();
     {
         checked_ofstream program_file(program_filename.string());
         program_file<<generate_atmodel_program(n_partitions,
-                                               ttt.n_leaves(),
+                                               n_leaves,
                                                alphabet_exps,
                                                filename_ranges,
                                                SMs, s_mapping,

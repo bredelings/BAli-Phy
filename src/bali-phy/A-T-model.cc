@@ -493,9 +493,9 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
                                       int proc_id, const string& dir)
 {
     //------ Determine number of partitions ------//
-    auto alignment_files = split_on_last(':', args["align"].as<vector<string> >() );
+    auto filename_ranges = split_on_last(':', args["align"].as<vector<string> >() );
 
-    const int n_partitions = alignment_files.size();
+    const int n_partitions = filename_ranges.size();
 
     //------------- Get smodel names -------------------
     auto smodel_names_mapping = get_mapping(args, "smodel", n_partitions);
@@ -509,7 +509,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
             full_smodels[i] = get_model(R, "MultiMixtureModel[a]",smodel_names_mapping.unique(i));
 
     //------------- Get alphabet names -------------------
-    shared_items<string> alphabet_names_mapping = get_mapping(args, "alphabet", alignment_files.size());
+    shared_items<string> alphabet_names_mapping = get_mapping(args, "alphabet", filename_ranges.size());
     vector<string> alphabet_names;
     for(int i=0;i<alphabet_names_mapping.n_partitions();i++)
         alphabet_names.push_back(alphabet_names_mapping[i]);
@@ -608,18 +608,18 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     }
 
     //----------- Load alignments  ---------//
-    vector<alignment> A(alignment_files.size());
+    vector<alignment> A(filename_ranges.size());
 
     // 3. -- load alignments for SPECIFIED and UNSPECIFIED alphabets
     {
         map<string,vector<sequence>> sequences_for_filename;
-        for(auto& [filename, range]: alignment_files)
+        for(auto& [filename, range]: filename_ranges)
             if (not sequences_for_filename.count(filename))
                 sequences_for_filename[filename] = sequence_format::load_from_file(filename);
 
-        for(int i=0;i<alignment_files.size();i++)
+        for(int i=0;i<filename_ranges.size();i++)
         {
-            auto [filename, range] = alignment_files[i];
+            auto [filename, range] = filename_ranges[i];
             try
             {
                 A[i] = load_alignment(select(sequences_for_filename[filename], range), alphabet_names[i]);
@@ -640,7 +640,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 
     for(int i=0;i<A.size();i++) {
         check_alignment_names(A[i]);
-        check_alignment_values(A[i],alignment_files[i]);
+        check_alignment_values(A[i],filename_ranges[i]);
     }
 
     //----------- Load tree and link to alignments ---------//
@@ -835,8 +835,14 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
         alphabet_exps.push_back(get_alphabet_expression(A[i].get_alphabet()));
 
     auto prog = gen_atmodel_program(L, keys, program_filename,
-                                    alphabet_exps, alignment_files, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, full_scale_models, scale_mapping, branch_length_model, likelihood_calculators);
-    Parameters P(prog, keys, A, alignment_files, T, full_smodels, smodel_mapping, imodel_mapping, scale_mapping, likelihood_calculators);
+                                    alphabet_exps, filename_ranges, T.n_leaves(),
+                                    full_smodels, smodel_mapping,
+                                    full_imodels, imodel_mapping,
+                                    full_scale_models, scale_mapping,
+                                    branch_length_model,
+                                    likelihood_calculators);
+
+    Parameters P(prog, keys, A, filename_ranges, T, full_smodels, smodel_mapping, imodel_mapping, scale_mapping, likelihood_calculators);
 
     P.probability();
     //-------- Set the alignments for variable partitions ---------//
@@ -885,14 +891,14 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 
 void write_initial_alignments(variables_map& args, int proc_id, const string& dir_name)
 {
-    auto alignment_files = split_on_last(':', args["align"].as<vector<string> >() );
+    auto filename_ranges = split_on_last(':', args["align"].as<vector<string> >() );
 
     fs::path dir(dir_name);
 
     string base = "C" + convertToString(proc_id+1);
 
     int i=1;
-    for(auto& [filename, range]: alignment_files)
+    for(auto& [filename, range]: filename_ranges)
     {
         auto sequences = load_sequences_with_range(filename, range);
 

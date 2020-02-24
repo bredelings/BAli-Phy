@@ -454,7 +454,7 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
 
                             const std::vector<expression_ref>& alphabet_exps,
                             const std::vector<std::pair<std::string,std::string>>& filename_ranges,
-                            const SequenceTree& ttt,
+                            int n_leaves,
                             const std::vector<model_t>& SMs,
                             const std::vector<std::optional<int>>& s_mapping,
                             const std::vector<model_t>& IMs,
