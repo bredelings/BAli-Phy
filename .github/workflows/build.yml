@@ -25,15 +25,30 @@ jobs:
     - name: Setup build environment
       run: |
         if [ "$RUNNER_OS" = "Linux" ]; then
-          sudo apt install -y pandoc libcairo2-dev
+          sudo apt install -y pandoc libcairo2-dev ccache
           sudo apt autoremove
           sudo rm -rf /usr/local/share/boost
         else
           brew update
-          brew install pkg-config pandoc cairo
+          brew install pkg-config pandoc cairo ccache
           export PKG_CONFIG_PATH="/usr/local/opt/libffi/lib/pkgconfig"
         fi
         python3 -mpip install meson ninja
+
+    - name: Prepare ccache timestamp
+      id: ccache_cache_timestamp
+      run: |
+        current_date=$(date "%Y-%m-%d-%H;%M;%S" UTC)
+        echo ::set-output name=timestamp::${current_date}
+
+    - name: ccache cache files
+      uses: actions/cache@v1.1.0
+      with:
+      path: .ccache
+      key: ${ { matrix.config.name } }-ccache-${ { steps.ccache_cache_timestamp.outputs.timestamp } }
+      restore-keys: |
+        ${ { matrix.config.name } }-ccache-
+
     - name: Configure
       run: |
         meson build --prefix=$HOME/local --buildtype=release
