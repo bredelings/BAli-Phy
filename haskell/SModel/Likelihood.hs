@@ -81,3 +81,4 @@ cached_conditional_likelihoods_SEV t seqs alpha ps f a smap =
 peel_likelihood_SEV t cl f root counts = let branches_in = map (reverseEdge t) (edgesOutOfNode t root) in
                                          case branches_in of [b1,b2,b3]-> calc_root_probability_SEV (cl!b1) (cl!b2) (cl!b3) f counts
 
+sample_ancestral_sequences_SEV t root seqs alpha ps f cl smap counts = error "sample_leaf_sequences_SEV not implemented!"

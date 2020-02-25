@@ -61,3 +61,44 @@ observe_partition_type_0 partition compressed_alignment leaf_sequences column_co
                   smap
           likelihood = peel_likelihood tree cls as (weighted_frequency_matrix smodel) subst_root
           ancestral_sequences = array_to_vector $ sample_ancestral_sequences tree subst_root leaf_sequences as alphabet transition_ps f cls smap
+
+observe_partition_type_1 partition compressed_alignment leaf_sequences column_counts subst_root = (transition_ps, cls, ancestral_sequences, likelihood)
+    where tree = DP.get_tree partition
+--          as = pairwise_alignments (DP.get_alignment partition)
+          distances = DP.get_branch_lengths partition
+          smodel = DP.smodel partition
+          alphabet = getAlphabet smodel
+          smap   = stateLetters smodel
+          smodel_on_tree = SModel.SingleBranchLengthModel tree distances smodel
+          transition_ps = transition_p_index smodel_on_tree
+--          n_leaves = numLeaves tree
+--          leaf_sequence_counts = listArray' (Bio.Alignment.leaf_sequence_counts compressed_alignment n_leaves column_counts)
+          f = weighted_frequency_matrix smodel
+          cls = cached_conditional_likelihoods_SEV
+                  tree
+                  leaf_sequences
+--                  leaf_sequence_counts
+--                  as
+                  alphabet
+                  transition_ps
+                  f
+                  compressed_alignment
+                  smap
+          likelihood = peel_likelihood_SEV
+                         tree
+                         cls
+--                         as
+                         (weighted_frequency_matrix smodel)
+                         subst_root
+                         column_counts
+--        This also needs the map from columns to compressed columns:
+          ancestral_sequences = array_to_vector $ sample_ancestral_sequences_SEV
+                                tree
+                                subst_root
+                                leaf_sequences
+--                                as
+                                alphabet
+                                transition_ps
+                                f
+                                cls
+                                smap
