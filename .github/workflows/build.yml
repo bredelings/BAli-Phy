@@ -38,8 +38,7 @@ jobs:
     - name: Prepare ccache timestamp
       id: ccache_cache_timestamp
       run: |
-        current_date=$(date "%Y-%m-%d-%H;%M;%S" UTC)
-        echo ::set-output name=timestamp::${current_date}
+        echo ::set-output name=timestamp::$(date -Ins)
 
     - name: ccache cache files
       uses: actions/cache@v1.1.0
