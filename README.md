@@ -33,7 +33,7 @@ You will also need to install
 You will also need
  * python3
  * ninja
- * meson >= 0.49
+ * meson >= 0.52
 
 Install Prerequisites
 ---------------------
