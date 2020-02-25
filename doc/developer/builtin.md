@@ -1,7 +1,9 @@
 % Adding a C++ function
 
-BAli-Phy executes C++ functions much more quickly than it executes Haskell functions.
-To add a "builtin" C++ operation to bali-phy's Haskell code, you must add the C++ code for the operation to one of the C++ files in the [src/builtins/](https://github.com/bredelings/BAli-Phy/blob/master/src/builtins) directory.  You must also tell the Haskell interpreter how to call this function by declaring it one of Haskell modules in the [haskell/](https://github.com/bredelings/BAli-Phy/blob/master/haskell/) directory.
+To add a "builtin" C++ operation to bali-phy's Haskell code, you need to do two things:
+1.. *write* the code for function in a C++ file.
+2. *declare* the C++ builtin function in a Haskell module.
+The second step is necessary to make the C++ function visible in Haskell.
 
 ## Declaring a C++ builtin in Haskell
 
@@ -18,6 +20,8 @@ builtin poisson_density 2 "poisson_density" "Distribution"
 ```
 
 The first two arguments specify the Haskell name (`poisson_density`) and the number of arguments in Haskell (`2`).  The C++ function name is derived from the third argument (`poisson_density`) by adding `builtin_function_` in front.  So the C++ function will be called `builtin_function_poisson_density`.  The last argument specifies which loadable module contains the C++ function.  Since this function is in the module "Distribution", its source code goes in [src/builtins/Distribution.cc](https://github.com/bredelings/BAli-Phy/blob/master/src/builtins/Distribution.cc).
+
+To make this  in the [haskell/](https://github.com/bredelings/BAli-Phy/blob/master/haskell/) directory.
 
 ## Writing a builtin in C++
 
