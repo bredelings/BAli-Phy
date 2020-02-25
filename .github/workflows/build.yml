@@ -12,16 +12,47 @@ jobs:
   build:
     strategy:
       matrix:
-        os:
-          - macos-latest
-          - ubuntu-latest
-        python: [3.7, 3.8]
+        name: [ubuntu-gcc-8,
+               ubuntu-gcc-9,
+               ubuntu-clang-9,
+               macos-xcode-10.3,
+               macos-xcode-latest,
+               macos-clang]
+
+        include:
+          - name: ubuntu-gcc-8
+            os: ubuntu-latest
+            compiler: gcc
+            version: "8"
+
+          - name: ubuntu-gcc-9
+            os: ubuntu-latest
+            compiler: gcc
+            version: "9"
+
+          - name: ubuntu-clang-9
+            os: ubuntu-latest
+            compiler: clang-9
+
+          - name: macos-xcode-10.3
+            os: macos-latest
+            compiler: xcode
+            version: "10.3"
+
+          - name: macos-xcode-latest
+            os: macos-latest
+            compiler: xcode
+
+          - name: macos-clang
+            os: macos-latest
+            compiler: clang
+
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v1
       with:
-        python-version: ${{ matrix.python }}
+        python-version: 3.8
     - name: Setup build environment
       run: |
         if [ "$RUNNER_OS" = "Linux" ]; then
@@ -30,7 +61,7 @@ jobs:
           sudo rm -rf /usr/local/share/boost
         else
           brew update
-          brew install pkg-config pandoc cairo ccache
+          brew install pkg-config pandoc cairo ccache coreutils
           export PKG_CONFIG_PATH="/usr/local/opt/libffi/lib/pkgconfig"
         fi
         python3 -mpip install meson ninja
@@ -38,7 +69,11 @@ jobs:
     - name: Prepare ccache timestamp
       id: ccache_cache_timestamp
       run: |
-        echo ::set-output name=timestamp::$(date -Ins)
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          echo ::set-output name=timestamp::$(date -Ins)
+        else
+          echo ::set-output name=timestamp::$(gdate -Ins)
+        fi
 
     - name: ccache cache files
       uses: actions/cache@v1.1.0
