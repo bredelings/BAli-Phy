@@ -54,6 +54,31 @@ jobs:
     - uses: actions/setup-python@v1
       with:
         python-version: 3.8
+
+    # Caches for different branches are isolated, so we don't need to put the branch name into the key.
+    # The total size for all caches in a repository is 5Gb.
+
+    - name: Prepare ccache timestamp
+      id: ccache_cache_timestamp
+      run: |
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          echo ::set-output name=timestamp::$(date -Ins)
+        else
+          echo ::set-output name=timestamp::$(gdate -Ins)
+        fi
+
+    - name: print cache key
+      run: |
+        echo ${ { matrix.config.name } }-ccache-${ { steps.ccache_cache_timestamp.outputs.timestamp } }
+
+    - name: ccache cache files
+      uses: actions/cache@v1.1.0
+      with:
+         path: .ccache
+         key: ${ { matrix.config.name } }-ccache-${ { steps.ccache_cache_timestamp.outputs.timestamp } }
+         restore-keys: |
+           ${ { matrix.config.name } }-ccache-
+
     - name: Setup build environment
       run: |
         if [ "$RUNNER_OS" = "Linux" ]; then
@@ -66,23 +91,6 @@ jobs:
           export PKG_CONFIG_PATH="/usr/local/opt/libffi/lib/pkgconfig"
         fi
         python3 -mpip install meson ninja
-
-    - name: Prepare ccache timestamp
-      id: ccache_cache_timestamp
-      run: |
-        if [ "$RUNNER_OS" = "Linux" ]; then
-          echo ::set-output name=timestamp::$(date -Ins)
-        else
-          echo ::set-output name=timestamp::$(gdate -Ins)
-        fi
-
-    - name: ccache cache files
-      uses: actions/cache@v1.1.0
-      with:
-         path: .ccache
-         key: ${ { matrix.config.name } }-ccache-${ { steps.ccache_cache_timestamp.outputs.timestamp } }
-         restore-keys: |
-           ${ { matrix.config.name } }-ccache-
 
     - name: Configure
       run: |
