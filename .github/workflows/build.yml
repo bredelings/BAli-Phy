@@ -59,7 +59,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
           sudo apt-get update
-          sudo apt install -y pandoc libcairo2-dev ccache meson
+          sudo apt install -y pandoc libcairo2-dev ccache
           sudo apt autoremove
           sudo rm -rf /usr/local/share/boost
           if [ "${{ matrix.compiler }}" = "gcc" ]; then
@@ -76,8 +76,13 @@ jobs:
       if: runner.os == 'macOS'
       run: |
           brew update
-          brew install pkg-config pandoc cairo ccache coreutils meson
+          brew install pkg-config pandoc cairo ccache coreutils
           sudo xcode-select -switch /Applications/Xcode_${{ matrix.version }}.app
+
+
+    - name: Install meson
+      run: |
+        python3 -mpip install meson ninja
 
     # Caches for different branches are isolated, so we don't need to put the branch name into the key.
     # The total size for all caches in a repository is 5Gb.
