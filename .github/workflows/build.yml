@@ -55,18 +55,29 @@ jobs:
       with:
         python-version: 3.8
 
-    - name: Setup build environment
+    - name: Install (Linux)
+      if: runner.os == 'Linux'
       run: |
-        if [ "$RUNNER_OS" = "Linux" ]; then
-          sudo apt install -y pandoc libcairo2-dev ccache
+          sudo apt-get update
+          sudo apt install -y pandoc libcairo2-dev ccache meson ninja
           sudo apt autoremove
           sudo rm -rf /usr/local/share/boost
-        else
+          if [ "${{ matrix.compiler }}" = "gcc" ]; then
+            sudo apt-get install -y g++-${{ matrix.version }}
+            echo "::set-env name=CC::gcc-${{ matrix.version }}"
+            echo "::set-env name=CXX::g++-${{ matrix.version }}"
+          else
+            sudo apt-get install -y clang-${{ matrix.version }}
+            echo "::set-env name=CC::clang-${{ matrix.version }}"
+            echo "::set-env name=CXX::clang++-${{ matrix.version }}"
+          fi
+
+    - name: Install (macOS)
+      if: runner.os == 'macOS'
+      run: |
           brew update
-          brew install pkg-config pandoc cairo ccache coreutils
-          export PKG_CONFIG_PATH="/usr/local/opt/libffi/lib/pkgconfig"
-        fi
-        python3 -mpip install meson ninja
+          brew install pkg-config pandoc cairo ccache coreutils meson ninja
+          sudo xcode-select -switch /Applications/Xcode_${{ matrix.version }}.app
 
     # Caches for different branches are isolated, so we don't need to put the branch name into the key.
     # The total size for all caches in a repository is 5Gb.
