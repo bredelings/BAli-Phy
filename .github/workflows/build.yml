@@ -32,7 +32,8 @@ jobs:
 
           - name: ubuntu-clang-9
             os: ubuntu-latest
-            compiler: clang-9
+            compiler: clang
+            version: "9"
 
           - name: macos-xcode-10.3
             os: macos-latest
@@ -58,19 +59,23 @@ jobs:
     - name: Install (Linux)
       if: runner.os == 'Linux'
       run: |
-          sudo apt-get update
-          sudo apt install -y pandoc libcairo2-dev ccache
-          sudo apt autoremove
-          sudo rm -rf /usr/local/share/boost
-          if [ "${{ matrix.compiler }}" = "gcc" ]; then
-            sudo apt-get install -y g++-${{ matrix.version }}
-            echo "::set-env name=CC::gcc-${{ matrix.version }}"
-            echo "::set-env name=CXX::g++-${{ matrix.version }}"
-          else
-            sudo apt-get install -y clang-${{ matrix.version }}
-            echo "::set-env name=CC::clang-${{ matrix.version }}"
-            echo "::set-env name=CXX::clang++-${{ matrix.version }}"
-          fi
+        # LLVM 9 is not in Bionic's repositories so we add the official LLVM repository.
+￼       if [ "${{ matrix.compiler }}" = "clang" ] && [ "${{ matrix.version }}" = "9" ]; then
+￼         sudo add-apt-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-9 main"
+￼       fi
+        sudo apt-get update
+        sudo apt install -y pandoc libcairo2-dev ccache
+        sudo apt autoremove
+        sudo rm -rf /usr/local/share/boost
+        if [ "${{ matrix.compiler }}" = "gcc" ]; then
+          sudo apt-get install -y g++-${{ matrix.version }}
+          echo "::set-env name=CC::gcc-${{ matrix.version }}"
+          echo "::set-env name=CXX::g++-${{ matrix.version }}"
+        else
+          sudo apt-get install -y clang-${{ matrix.version }}
+          echo "::set-env name=CC::clang-${{ matrix.version }}"
+          echo "::set-env name=CXX::clang++-${{ matrix.version }}"
+        fi
 
     - name: Install (macOS)
       if: runner.os == 'macOS'
