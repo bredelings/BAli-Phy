@@ -53,12 +53,12 @@ jobs:
         sudo rm -rf /usr/local/share/boost
         if [ "${{ matrix.compiler }}" = "gcc" ]; then
           sudo apt-get install -y g++-${{ matrix.version }}
-          echo "::set-env name=CC::gcc-${{ matrix.version }}"
-          echo "::set-env name=CXX::g++-${{ matrix.version }}"
+          echo "::set-env name=CC::ccache gcc-${{ matrix.version }}"
+          echo "::set-env name=CXX::ccache g++-${{ matrix.version }}"
         else
           sudo apt-get install -y clang-${{ matrix.version }}
-          echo "::set-env name=CC::clang-${{ matrix.version }}"
-          echo "::set-env name=CXX::clang++-${{ matrix.version }}"
+          echo "::set-env name=CC::ccache clang-${{ matrix.version }}"
+          echo "::set-env name=CXX::ccache clang++-${{ matrix.version }}"
         fi
 
     - name: Install (macOS)
