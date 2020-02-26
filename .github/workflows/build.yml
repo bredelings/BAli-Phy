@@ -103,9 +103,11 @@ jobs:
     - name: Configure
       run: |
         meson build --prefix=$HOME/local --buildtype=release
+
     - name: Build
       run: |
         ninja -C build install -j4
+
     - name: Test
       run: |
         export PATH=$HOME/local/bin:$PATH
