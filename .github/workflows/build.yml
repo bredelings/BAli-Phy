@@ -35,19 +35,10 @@ jobs:
             compiler: clang
             version: "9"
 
-          - name: macos-xcode-10.3
-            os: macos-latest
-            compiler: xcode
-            version: "10.3"
-
           - name: macos-xcode-11.2
             os: macos-latest
             compiler: xcode
-            version: "11.2"
-
-          - name: macos-clang
-            os: macos-latest
-            compiler: clang
+            version: "11.3.1"
 
     runs-on: ${{ matrix.os }}
     steps:
