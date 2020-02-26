@@ -59,9 +59,9 @@ jobs:
     - name: Install (Linux)
       if: runner.os == 'Linux'
       run: |
-￼       if [ "${{ matrix.compiler }}" = "clang" ] && [ "${{ matrix.version }}" = "9" ]; then
-￼         sudo add-apt-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-9 main"
-￼       fi
+        if [ "${{ matrix.compiler }}" = "clang" ] && [ "${{ matrix.version }}" = "9" ]; then
+          sudo add-apt-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-9 main"
+        fi
         sudo apt-get update
         sudo apt install -y pandoc libcairo2-dev ccache
         sudo apt autoremove
