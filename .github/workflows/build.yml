@@ -62,14 +62,12 @@ jobs:
       id: ccache_cache_timestamp
       run: |
         if [ "$RUNNER_OS" = "Linux" ]; then
-          echo ::set-output name=timestamp::$(date -Ins)
+          stamp=$(date -Ins)
         else
-          echo ::set-output name=timestamp::$(gdate -Ins)
+          stamp=$(gdate -Ins)
         fi
-
-    - name: print cache key
-      run: |
-        echo ${ { matrix.config.name } }-ccache-${ { steps.ccache_cache_timestamp.outputs.timestamp } }
+        echo ${stamp}
+        echo ::set-output name=timestamp::${stamp}
 
     - name: ccache cache files
       uses: actions/cache@v1.1.0
