@@ -55,6 +55,19 @@ jobs:
       with:
         python-version: 3.8
 
+    - name: Setup build environment
+      run: |
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          sudo apt install -y pandoc libcairo2-dev ccache
+          sudo apt autoremove
+          sudo rm -rf /usr/local/share/boost
+        else
+          brew update
+          brew install pkg-config pandoc cairo ccache coreutils
+          export PKG_CONFIG_PATH="/usr/local/opt/libffi/lib/pkgconfig"
+        fi
+        python3 -mpip install meson ninja
+
     # Caches for different branches are isolated, so we don't need to put the branch name into the key.
     # The total size for all caches in a repository is 5Gb.
 
@@ -76,19 +89,6 @@ jobs:
          key: ${ { matrix.config.name } }-ccache-${ { steps.ccache_cache_timestamp.outputs.timestamp } }
          restore-keys: |
            ${ { matrix.config.name } }-ccache-
-
-    - name: Setup build environment
-      run: |
-        if [ "$RUNNER_OS" = "Linux" ]; then
-          sudo apt install -y pandoc libcairo2-dev ccache
-          sudo apt autoremove
-          sudo rm -rf /usr/local/share/boost
-        else
-          brew update
-          brew install pkg-config pandoc cairo ccache coreutils
-          export PKG_CONFIG_PATH="/usr/local/opt/libffi/lib/pkgconfig"
-        fi
-        python3 -mpip install meson ninja
 
     - name: Configure
       run: |
