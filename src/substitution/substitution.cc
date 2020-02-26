@@ -1555,6 +1555,42 @@ namespace substitution {
         return ancestral_characters;
     }
 
+    Vector<pair<int,int>> sample_root_sequence_SEV(const Likelihood_Cache_Branch& cache0,
+                                                   const Likelihood_Cache_Branch& cache1,
+                                                   const Likelihood_Cache_Branch& cache2,
+                                                   const Matrix& F,
+                                                   const EVector& compressed_col_for_col)
+    {
+        // 1. Construct a scratch matrix and check that dimensions match inputs
+        int n_models = F.size1();
+        int n_states = F.size2();
+        assert(n_models == cache0.n_models());
+        assert(n_states == cache0.n_states());
+        assert(n_models == cache1.n_models());
+        assert(n_states == cache1.n_states());
+        assert(n_models == cache2.n_models());
+        assert(n_states == cache2.n_states());
+        Matrix S(n_models, n_states);
+        const int matrix_size = n_models * n_states;
+
+        // 4. Walk the alignment and sample (model,letter) for ancestral sequence
+        int L = compressed_col_for_col.size();
+        Vector<pair<int,int>> ancestral_characters(L);
+        for(int c = 0; c < L; c++)
+        {
+            int c2 = compressed_col_for_col[c].as_int();
+
+            auto S = F;
+
+            element_prod_modify(S.begin(), cache0[c2], matrix_size);
+            element_prod_modify(S.begin(), cache1[c2], matrix_size);
+            element_prod_modify(S.begin(), cache2[c2], matrix_size);
+
+            ancestral_characters[c] = sample(S);
+        }
+        return ancestral_characters;
+    }
+
     Vector<pair<int,int>> sample_internal_node_sequence(const Vector<pair<int,int>>& parent_seq,
                                                         const EVector& transition_Ps,
                                                         const Likelihood_Cache_Branch& cache1,
@@ -1611,6 +1647,45 @@ namespace substitution {
     }
 
     
+    Vector<pair<int,int>> sample_internal_node_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
+                                                            const EVector& transition_Ps,
+                                                            const Likelihood_Cache_Branch& cache1,
+                                                            const Likelihood_Cache_Branch& cache2,
+                                                            const Matrix& F,
+                                                            const EVector& compressed_col_for_col)
+    {
+        // 1. Construct a scratch matrix and check that dimensions match inputs
+        int n_models = F.size1();
+        int n_states = F.size2();
+        assert(n_models == cache1.n_models());
+        assert(n_states == cache1.n_states());
+        assert(n_models == cache2.n_models());
+        assert(n_states == cache2.n_states());
+        Matrix S(n_models, n_states);
+        const int matrix_size = n_models * n_states;
+
+
+        // 2. Walk the alignment and sample (model,letter) for ancestral sequence
+        int L = compressed_col_for_col.size();
+        Vector<pair<int,int>> ancestral_characters(L);
+        for(int c = 0; c < L; c++)
+        {
+            int c2 = compressed_col_for_col[c].as_int();
+
+            pair<int,int> parent_state(-1,-1);
+            parent_state = parent_seq[c2];
+
+            calc_transition_prob_from_parent(S, parent_state, transition_Ps, F);
+
+            element_prod_modify(S.begin(), cache1[c2], matrix_size);
+            element_prod_modify(S.begin(), cache2[c2], matrix_size);
+
+            ancestral_characters[c2] = sample(S);
+        }
+        return ancestral_characters;
+    }
+
+    
     Vector<pair<int,int>> sample_leaf_node_sequence(const Vector<pair<int,int>>& parent_seq,
                                                     const EVector& transition_Ps,
                                                     const EVector& sequence,
@@ -1648,6 +1723,43 @@ namespace substitution {
             calc_leaf_likelihood(S, sequence[i].as_int(), a, smap);
 
             ancestral_characters[i] = sample(S);
+        }
+        return ancestral_characters;
+    }
+
+
+    Vector<pair<int,int>> sample_leaf_node_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
+                                                        const EVector& transition_Ps,
+                                                        const EVector& sequence,
+                                                        const alphabet& a,
+                                                        const EVector& smap,
+                                                        const Matrix& F,
+                                                        const EVector& compressed_col_for_col)
+    {
+        // 1. Construct a scratch matrix and check that dimensions match inputs
+        int n_models = F.size1();
+        int n_states = F.size2();
+        Matrix S(n_models, n_states);
+
+        // 2. Walk the alignment and sample (model,letter) for leaf sequence
+        int L = compressed_col_for_col.size();
+        Vector<pair<int,int>> ancestral_characters(L,{-1,-1});
+        for(int c = 0; c < L; c++)
+        {
+            int letter = sequence[c].as_int();
+
+            if (letter != alphabet::gap)
+            {
+                int c2 = compressed_col_for_col[c].as_int();
+
+                auto parent_state = parent_seq[c2];
+
+                calc_transition_prob_from_parent(S, parent_state, transition_Ps, F);
+
+                calc_leaf_likelihood(S, letter, a, smap);
+
+                ancestral_characters[c] = sample(S);
+            }
         }
         return ancestral_characters;
     }

@@ -20,6 +20,11 @@ builtin peel_leaf_branch_SEV 4 "peel_leaf_branch_SEV" "SModel"
 builtin peel_internal_branch_SEV 4 "peel_internal_branch_SEV" "SModel"
 builtin calc_root_probability_SEV 5 "calc_root_probability_SEV" "SModel"
 
+-- ancestral sequence sampling for SEV
+builtin sample_root_sequence_SEV 5 "sample_root_sequence_SEV" "SModel"
+builtin sample_internal_sequence_SEV 6 "sample_internal_node_sequence_SEV" "SModel"
+builtin sample_leaf_sequence_SEV 7 "sample_leaf_node_sequence_SEV" "SModel"
+
 builtin peel_likelihood_1 3 "peel_likelihood_1" "SModel"
 builtin peel_likelihood_2 6 "peel_likelihood_2" "SModel"
 
@@ -82,3 +87,31 @@ peel_likelihood_SEV t cl f root counts = let branches_in = map (reverseEdge t) (
                                          case branches_in of [b1,b2,b3]-> calc_root_probability_SEV (cl!b1) (cl!b2) (cl!b3) f counts
 
 sample_ancestral_sequences_SEV t root seqs alpha ps f cl smap counts = error "sample_leaf_sequences_SEV not implemented!"
+
+sample_ancestral_sequences_SEV t root seqs alpha ps f cl smap col_to_compressed =
+    let rt = add_root t root
+        ancestor_seqs = mkArray (numNodes t) ancestor_for_node
+        ancestor_for_node n = ancestor_for_branch n (parentBranch rt n)
+        ancestor_for_branch n Nothing = sample_root_sequence_SEV (cl!b0) (cl!b1) (cl!b2) f col_to_compressed where [b0,b1,b2] = edgesTowardNode t n
+        ancestor_for_branch n (Just to_p) = let p = targetNode t to_p
+                                                parent_seq = ancestor_seqs!p
+                                                b0 = reverseEdge t to_p
+                                                ps_for_b0 = ps!(b0 `mod` (numBranches t))
+                                            in case edgesBeforeEdge t to_p of
+                                                 [] -> sample_leaf_sequence_SEV
+                                                          parent_seq
+                                                          ps_for_b0
+                                                          (seqs!n)
+                                                          alpha
+                                                          smap
+                                                          f
+                                                          col_to_compressed
+                                                 [b1,b2] -> sample_internal_sequence_SEV
+                                                               parent_seq
+                                                               ps_for_b0
+                                                               (cl!b1)
+                                                               (cl!b2)
+                                                               f
+                                                               col_to_compressed
+    in ancestor_seqs
+                                                                       

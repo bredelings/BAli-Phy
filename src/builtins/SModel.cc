@@ -1492,6 +1492,27 @@ namespace substitution {
                                                     const pairwise_alignment_t& A0,
                                                     const Matrix& F);
 
+    Vector<pair<int,int>> sample_root_sequence_SEV(const Likelihood_Cache_Branch& cache0,
+                                                   const Likelihood_Cache_Branch& cache1,
+                                                   const Likelihood_Cache_Branch& cache2,
+                                                   const Matrix& F,
+                                                   const EVector& compressed_col_for_col);
+
+    Vector<pair<int,int>> sample_internal_node_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
+                                                            const EVector& transition_Ps,
+                                                            const Likelihood_Cache_Branch& cache1,
+                                                            const Likelihood_Cache_Branch& cache2,
+                                                            const Matrix& F,
+                                                            const EVector& compressed_col_for_col);
+
+    Vector<pair<int,int>> sample_leaf_node_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
+                                                        const EVector& transition_Ps,
+                                                        const EVector& sequence,
+                                                        const alphabet& a,
+                                                        const EVector& smap1,
+                                                        const Matrix& F,
+                                                        const EVector& compressed_col_for_col);
+
     log_double_t calc_root_probability(const Likelihood_Cache_Branch* LCB1,
 				       const Likelihood_Cache_Branch* LCB2,
 				       const Likelihood_Cache_Branch* LCB3,
@@ -1546,6 +1567,23 @@ extern "C" closure builtin_function_sample_root_sequence(OperationArgs& Args)
                                               arg6.as_<Box<Matrix>>());
 }
 
+extern "C" closure builtin_function_sample_root_sequence_SEV(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+    auto arg4 = Args.evaluate(4);
+    auto arg5 = Args.evaluate(5);
+    auto arg6 = Args.evaluate(6);
+
+    return substitution::sample_root_sequence_SEV(arg0.as_<Likelihood_Cache_Branch>(),
+                                              arg1.as_<Likelihood_Cache_Branch>(),
+                                              arg2.as_<Likelihood_Cache_Branch>(),
+                                              arg3.as_<Box<Matrix>>(),
+                                              arg3.as_<EVector>());
+}
+
 extern "C" closure builtin_function_sample_internal_node_sequence(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
@@ -1567,6 +1605,23 @@ extern "C" closure builtin_function_sample_internal_node_sequence(OperationArgs&
                                                        arg7.as_<Box<Matrix>>());
 }
 
+extern "C" closure builtin_function_sample_internal_node_sequence_SEV(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+    auto arg4 = Args.evaluate(4);
+    auto arg5 = Args.evaluate(5);
+
+    return substitution::sample_internal_node_sequence_SEV(arg0.as_<Vector<pair<int,int>>>(),
+                                                           arg1.as_<EVector>(),
+                                                           arg2.as_<Likelihood_Cache_Branch>(),
+                                                           arg3.as_<Likelihood_Cache_Branch>(),
+                                                           arg4.as_<Box<Matrix>>(),
+                                                           arg5.as_<EVector>());
+}
+
 extern "C" closure builtin_function_sample_leaf_node_sequence(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
@@ -1584,6 +1639,25 @@ extern "C" closure builtin_function_sample_leaf_node_sequence(OperationArgs& Arg
                                                    arg4.as_<EVector>(),
                                                    arg5.as_<Box<pairwise_alignment_t>>(),
                                                    arg6.as_<Box<Matrix>>());
+}
+
+extern "C" closure builtin_function_sample_leaf_node_sequence_SEV(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+    auto arg4 = Args.evaluate(4);
+    auto arg5 = Args.evaluate(5);
+    auto arg6 = Args.evaluate(6);
+
+    return substitution::sample_leaf_node_sequence_SEV(arg0.as_<Vector<pair<int,int>>>(),
+                                                       arg1.as_<EVector>(),
+                                                       arg2.as_<EVector>(),
+                                                       *arg3.as_<Alphabet>(),
+                                                       arg4.as_<EVector>(),
+                                                       arg5.as_<Box<Matrix>>(),
+                                                       arg6.as_<EVector>());
 }
 
 extern "C" closure builtin_function_calc_root_probability_SEV(OperationArgs& Args)
