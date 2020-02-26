@@ -79,8 +79,8 @@ jobs:
         else
           stamp=$(gdate -Ins)
         fi
-        echo ${stamp}
-        echo ::set-output name=timestamp::${stamp}
+        echo "${stamp}"
+        echo "::set-output name=timestamp::${stamp}"
 
     - name: ccache cache files
       uses: actions/cache@v1.1.0
