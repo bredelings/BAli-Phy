@@ -86,9 +86,9 @@ jobs:
       id: ccache_cache_timestamp
       run: |
         if [ "$RUNNER_OS" = "Linux" ]; then
-          stamp=$(date -Ins)
+          stamp=$(date '+%s')
         else
-          stamp=$(gdate -Ins)
+          stamp=$(gdate '+%s')
         fi
         echo "${stamp}"
         echo "::set-output name=timestamp::${stamp}"
