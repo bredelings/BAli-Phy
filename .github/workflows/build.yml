@@ -50,7 +50,6 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt install -y pandoc libcairo2-dev ccache
-        sudo apt autoremove
         sudo rm -rf /usr/local/share/boost
         if [ "${{ matrix.compiler }}" = "gcc" ]; then
           sudo apt-get install -y g++-${{ matrix.version }}
@@ -92,9 +91,9 @@ jobs:
       uses: actions/cache@v1.1.0
       with:
          path: .ccache
-         key: ${{ matrix.config.name }}-ccache-${{ steps.ccache_cache_timestamp.outputs.timestamp }}
+         key: ${{ matrix.name }}-ccache-${{ steps.ccache_cache_timestamp.outputs.timestamp }}
          restore-keys: |
-           ${{ matrix.config.name }}-ccache-
+           ${{ matrix.name }}-ccache-
 
     - name: Configure
       run: |
