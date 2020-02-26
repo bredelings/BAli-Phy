@@ -15,9 +15,8 @@ jobs:
         name: [ubuntu-gcc-8,
                ubuntu-gcc-9,
                ubuntu-clang-9,
-               macos-xcode-10.3,
-               macos-xcode-11.2,
-               macos-clang]
+               macos-xcode-11.3.1
+               ]
 
         include:
           - name: ubuntu-gcc-8
@@ -35,7 +34,7 @@ jobs:
             compiler: clang
             version: "9"
 
-          - name: macos-xcode-11.2
+          - name: macos-xcode-11.3.1
             os: macos-latest
             compiler: xcode
             version: "11.3.1"
