@@ -88,7 +88,7 @@ observe_partition_type_1 partition compressed_alignment leaf_sequences column_co
                          tree
                          cls
 --                         as
-                         (weighted_frequency_matrix smodel)
+                         f
                          subst_root
                          column_counts
 --        This also needs the map from columns to compressed columns:
