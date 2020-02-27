@@ -1555,38 +1555,73 @@ namespace substitution {
         return ancestral_characters;
     }
 
-    Vector<pair<int,int>> sample_root_sequence_SEV(const Likelihood_Cache_Branch& cache0,
-                                                   const Likelihood_Cache_Branch& cache1,
+    Vector<pair<int,int>> sample_root_sequence_SEV(const Likelihood_Cache_Branch& cache1,
                                                    const Likelihood_Cache_Branch& cache2,
+                                                   const Likelihood_Cache_Branch& cache3,
                                                    const Matrix& F,
                                                    const EVector& compressed_col_for_col)
     {
-        // 1. Construct a scratch matrix and check that dimensions match inputs
+        // 1. Construct a scratch CL matrix, and check that dimensions match inputs
         int n_models = F.size1();
         int n_states = F.size2();
-        assert(n_models == cache0.n_models());
-        assert(n_states == cache0.n_states());
         assert(n_models == cache1.n_models());
         assert(n_states == cache1.n_states());
         assert(n_models == cache2.n_models());
         assert(n_states == cache2.n_states());
+        assert(n_models == cache3.n_models());
+        assert(n_states == cache3.n_states());
         Matrix S(n_models, n_states);
         const int matrix_size = n_models * n_states;
 
+        // 2. Get the total length of the COMPRESSED matrix.
+        const auto& bits1 = cache1.bits;
+        const auto& bits2 = cache2.bits;
+        const auto& bits3 = cache3.bits;
+        int cL = bits1.size();
+        assert(bits1.size() == cL);
+        assert(bits2.size() == cL);
+        assert(bits3.size() == cL);
+
+        // 3. Compute the CLs at the root node of the COMPRESSED matrix.
+        int i1 = 0;
+        int i2 = 0;
+        int i3 = 0;
+        Likelihood_Cache_Branch compressed_cache(cL, n_models, n_states);
+        for(int c2 = 0; c2 < cL; c2++)
+        {
+            S = F;
+
+            // Modify the matrix AND increment the counter!
+            if (bits1.test(c2))
+            {
+                element_prod_modify(S.begin(), cache1[i1], matrix_size);
+                i1++;
+            }
+            if (bits2.test(c2))
+            {
+                element_prod_modify(S.begin(), cache2[i2], matrix_size);
+                i2++;
+            }
+            if (bits3.test(c2))
+            {
+                element_prod_modify(S.begin(), cache3[i3], matrix_size);
+                i3++;
+            }
+
+            compressed_cache.set(c2, S);
+        }
+        assert(i1 == cache1.n_columns());
+        assert(i2 == cache2.n_columns());
+        assert(i3 == cache3.n_columns());
+
         // 4. Walk the alignment and sample (model,letter) for ancestral sequence
         int L = compressed_col_for_col.size();
-        Vector<pair<int,int>> ancestral_characters(L);
+        Vector<pair<int,int>> ancestral_characters(L,{-1,-1});
         for(int c = 0; c < L; c++)
         {
             int c2 = compressed_col_for_col[c].as_int();
-
-            auto S = F;
-
-            element_prod_modify(S.begin(), cache0[c2], matrix_size);
-            element_prod_modify(S.begin(), cache1[c2], matrix_size);
-            element_prod_modify(S.begin(), cache2[c2], matrix_size);
-
-            ancestral_characters[c] = sample(S);
+            compressed_cache.get(c2, S);
+            ancestral_characters[c] = sample( S );
         }
         return ancestral_characters;
     }
