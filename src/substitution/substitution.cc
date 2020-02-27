@@ -1544,7 +1544,7 @@ namespace substitution {
             int i1 = index(i,1);
             int i2 = index(i,2);
 
-            auto S = F;
+            S = F;
 
             if (i0 != -1) element_prod_modify(S.begin(), cache0[i0], matrix_size);
             if (i1 != -1) element_prod_modify(S.begin(), cache1[i1], matrix_size);
