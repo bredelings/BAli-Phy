@@ -1853,7 +1853,6 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
     // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
     bool allow_compression = load_value(k, "site-compression", n_leaves) and not load_value(k, "write-fixed-alignments",false);
 
-    const int n_partitions = filename_ranges.size();
     {
         checked_ofstream program_file(program_filename.string());
         program_file<<generate_atmodel_program(n_leaves,
