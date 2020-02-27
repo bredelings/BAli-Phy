@@ -632,9 +632,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description ancestors("Ancestor options");
     ancestors.add_options()
         ("nodes,n",value<string>(),"Newick tree with labelled ancestors")
-        ("nodes-min",value<double>()->default_value(0.33),"Minimum fraction to include a node.")
         ("groups,g",value<string>(),"File with named groups")
-        ("groups-min",value<double>()->default_value(0.33),"Minimum fraction to include a group.")
+        ("nodes-min",value<double>()->default_value(0.34,"0.34"),"Minimum fraction to include a node.")
+        ("groups-min",value<double>()->default_value(0.34,"0.34"),"Minimum fraction to include a group.")
         ;
 
     options_description output("Output options");
