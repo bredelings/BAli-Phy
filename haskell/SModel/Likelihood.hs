@@ -104,14 +104,12 @@ sample_ancestral_sequences_SEV t root seqs alpha ps f cl smap col_to_compressed 
                                                           (seqs!n)
                                                           alpha
                                                           smap
-                                                          f
                                                           col_to_compressed
                                                  [b1,b2] -> sample_internal_sequence_SEV
                                                                parent_seq
                                                                ps_for_b0
                                                                (cl!b1)
                                                                (cl!b2)
-                                                               f
                                                                col_to_compressed
     in ancestor_seqs
                                                                        
