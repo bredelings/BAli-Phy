@@ -1776,7 +1776,6 @@ namespace substitution {
                                                         const EVector& sequence,
                                                         const alphabet& a,
                                                         const EVector& smap,
-                                                        const Matrix& F,
                                                         const EVector& compressed_col_for_col)
     {
         // 1. Construct a scratch matrix and check that dimensions match inputs

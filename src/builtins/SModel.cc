@@ -1509,7 +1509,6 @@ namespace substitution {
                                                         const EVector& sequence,
                                                         const alphabet& a,
                                                         const EVector& smap1,
-                                                        const Matrix& F,
                                                         const EVector& compressed_col_for_col);
 
     log_double_t calc_root_probability(const Likelihood_Cache_Branch* LCB1,
@@ -1646,15 +1645,13 @@ extern "C" closure builtin_function_sample_leaf_node_sequence_SEV(OperationArgs&
     auto arg3 = Args.evaluate(3);
     auto arg4 = Args.evaluate(4);
     auto arg5 = Args.evaluate(5);
-    auto arg6 = Args.evaluate(6);
 
     return substitution::sample_leaf_node_sequence_SEV(arg0.as_<Vector<pair<int,int>>>(),
                                                        arg1.as_<EVector>(),
                                                        arg2.as_<EVector>(),
                                                        *arg3.as_<Alphabet>(),
                                                        arg4.as_<EVector>(),
-                                                       arg5.as_<Box<Matrix>>(),
-                                                       arg6.as_<EVector>());
+                                                       arg5.as_<EVector>());
 }
 
 extern "C" closure builtin_function_calc_root_probability_SEV(OperationArgs& Args)
