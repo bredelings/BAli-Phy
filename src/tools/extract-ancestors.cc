@@ -23,11 +23,13 @@
 #include <vector>
 #include "util/myexception.H"
 #include "util/log-level.H"
+#include "util/rng.H"
 #include "util/string/strip.H"
 #include "util/string/split.H"
 #include "util/io.H"
 #include "util/cmdline.H"
 #include "alignment/alignment.H"
+#include "alignment/index-matrix.H"
 #include "partition.H"
 #include "tree-align/link.H"
 #include "alignment/load.H"
@@ -152,31 +154,38 @@ vector<pair<string,dynamic_bitset<>>> get_branch_queries_from_tree(SequenceTree 
         if (label.empty())
             n_unlabelled++;
 
-    std::cerr<<"Warning: Tree contains "<<n_unlabelled<<" nodes!\n";
+    if (n_unlabelled > 0)
+        std::cerr<<"Warning: Tree contains "<<n_unlabelled<<" nodes!\n";
 
     // 3. Construct groups from branches
     vector<pair<string,dynamic_bitset<>>> groups;
-    for(int b=0;b<2*Q.n_branches();b++)
+    for(int n=0;n<Q.n_nodes();n++)
     {
-        int source = Q.directed_branch(b).source();
-        int target = Q.directed_branch(b).target();
+        if (Q.node(n).is_leaf_node()) continue;
 
-        if (Q.node(target).is_leaf_node()) continue;
-
-        if (Q.get_labels()[source].empty() or Q.get_labels()[target].empty()) continue;
-
-        string name = Q.get_labels()[target] + "<=" + Q.get_labels()[source];
-
-        auto split = branch_partition(Q,b);
-        groups.push_back({name, split});
-        std::cerr<<name<<" = ";
-        for(int i=0;i<split.size();i++)
+        for(auto n2: Q.neighbors(n))
         {
-            if (split[i])
-                std::cerr<<Q.get_label(i)<<" ";
+            if (Q.get_labels()[n].empty() or Q.get_labels()[n2].empty()) continue;
+            string name = Q.get_labels()[n] + "<=" + Q.get_labels()[n2];
+
+            int b = Q.directed_branch(n2,n);
+
+            auto split = branch_partition(Q,b);
+            groups.push_back({name, split});
+
+            if (log_verbose)
+            {
+                std::cerr<<name<<" = ";
+                for(int i=0;i<split.size();i++)
+                {
+                    if (split[i])
+                        std::cerr<<Q.get_label(i)<<" ";
+                }
+                std::cerr<<"\n\n";
+            }
         }
-        std::cerr<<"\n\n";
     }
+
     return groups;
 }
 
@@ -389,6 +398,52 @@ vector<pair<int,int>> map_columns(const alignment& template_A, const alignment& 
     return columns;
 }
 
+vector<pair<int,int>> get_characters(const matrix<int>& template_m, int c)
+{
+    assert(0 <= c);
+    assert(c < template_m.size1());
+
+    vector<pair<int,int>> characters;
+    for(int i=0; i<template_m.size2(); i++)
+        if (int x = template_m(c,i); x!= -1)
+            characters.push_back({i,x});
+
+    return characters;
+}
+
+pair<int,int> choose_representative_character(const matrix<int>& template_m, int c)
+{
+    assert(template_m.size2() > 0);
+
+    auto characters = get_characters(template_m, c);
+
+    assert(not characters.empty());
+
+    int n = characters.size();
+
+    return characters[uniform(0,n-1)];
+}
+
+
+vector<pair<int,int>> map_columns_random(const alignment& template_A, const alignment& sample_A)
+{
+    auto template_m = M(template_A);
+
+    // 1. Construct list of (template column, sample column)
+    index_matrix sample_m( sample_A );
+
+    vector<pair<int,int>> columns;
+    for(int c=0; c<template_A.length(); c++)
+    {
+        auto [seq,index] = choose_representative_character(template_m, c);
+
+        int c2 = sample_m.column(seq,index);
+        columns.push_back({c,c2});
+    }
+
+    return columns;
+}
+
 
 optional<SequenceTree> get_node_queries(const variables_map& args, const joint_A_T& samples)
 {
@@ -465,7 +520,7 @@ pair<vector<profile>,vector<profile>> extract_sequence(const joint_A_T& samples,
         // 1. Find out which columns of the alignment template are in the alignment sample
         optional<vector<pair<int,int>>> corresponding_columns;
         if (template_A)
-            corresponding_columns = map_columns(*template_A, A);
+            corresponding_columns = map_columns_random(*template_A, A);
 
         map<string,int> internal_nodes;
         
@@ -614,7 +669,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
 }
 
 int main(int argc,char* argv[])
-{ 
+{
+    myrand_init();
+
     try {
         variables_map args = parse_cmd_line(argc,argv);
         //Arguments args;
