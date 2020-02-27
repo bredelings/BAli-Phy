@@ -53,6 +53,7 @@
 using std::valarray;
 using std::vector;
 using std::pair;
+using std::optional;
 
 // This file assumes that 
 // * the matrix is reversible.  This means that we evaluate
@@ -1453,7 +1454,7 @@ namespace substitution {
         return Pr;
     }
 
-    void calc_transition_prob_from_parent(Matrix& S, pair<int,int>& state_model_parent, const EVector& Ps, const Matrix& WF)
+    void calc_transition_prob_from_parent(Matrix& S, const pair<int,int>& state_model_parent, const EVector& Ps, const Matrix& WF)
     {
         auto [mp,lp] = state_model_parent;
 
@@ -1470,6 +1471,22 @@ namespace substitution {
             for(int l=0;l<n_states;l++)
                 S(mp,l) = Pr(lp,l);
         }
+    }
+
+    void calc_transition_prob_from_parent(Matrix& S, const pair<int,int>& state_model_parent, const EVector& Ps)
+    {
+        auto [mp,lp] = state_model_parent;
+
+        int n_states = S.size2();
+
+        // If there IS no parent character, then we can sample from F
+        assert(mp != -1);
+
+        auto& Pr = Ps[mp].as_<Box<Matrix>>();
+        assert(mp != -1);
+        element_assign(S,0);
+        for(int l=0;l<n_states;l++)
+            S(mp,l) = Pr(lp,l);
     }
 
     void calc_leaf_likelihood(Matrix& S, int l, const alphabet& a, const EVector& smap)
@@ -1555,6 +1572,21 @@ namespace substitution {
         return ancestral_characters;
     }
 
+    vector<optional<int>> get_index_for_column(const boost::dynamic_bitset<>& bits)
+    {
+        vector<optional<int>> index_for_column(bits.size());
+        int index = 0;
+        for(int c=0;c<bits.size();c++)
+        {
+            if (bits.test(c))
+            {
+                index_for_column[c] = index;
+                index++;
+            }
+        }
+        return index_for_column;
+    }
+
     Vector<pair<int,int>> sample_root_sequence_SEV(const Likelihood_Cache_Branch& cache1,
                                                    const Likelihood_Cache_Branch& cache2,
                                                    const Likelihood_Cache_Branch& cache3,
@@ -1573,54 +1605,28 @@ namespace substitution {
         Matrix S(n_models, n_states);
         const int matrix_size = n_models * n_states;
 
-        // 2. Get the total length of the COMPRESSED matrix.
-        const auto& bits1 = cache1.bits;
-        const auto& bits2 = cache2.bits;
-        const auto& bits3 = cache3.bits;
-        int cL = bits1.size();
-        assert(bits1.size() == cL);
-        assert(bits2.size() == cL);
-        assert(bits3.size() == cL);
+        // 2. Map each compressed column to an SEV index (or missing).
+        auto allbits = cache1.bits | cache2.bits | cache3.bits;
 
-        // 3. Compute the CLs at the root node of the COMPRESSED matrix.
-        int i1 = 0;
-        int i2 = 0;
-        int i3 = 0;
-        Likelihood_Cache_Branch compressed_cache(cL, n_models, n_states);
-        for(int c2 = 0; c2 < cL; c2++)
-        {
-            S = F;
+        auto index_for_column1 = get_index_for_column(cache1.bits);
+        auto index_for_column2 = get_index_for_column(cache2.bits);
+        auto index_for_column3 = get_index_for_column(cache3.bits);
 
-            // Modify the matrix AND increment the counter!
-            if (bits1.test(c2))
-            {
-                element_prod_modify(S.begin(), cache1[i1], matrix_size);
-                i1++;
-            }
-            if (bits2.test(c2))
-            {
-                element_prod_modify(S.begin(), cache2[i2], matrix_size);
-                i2++;
-            }
-            if (bits3.test(c2))
-            {
-                element_prod_modify(S.begin(), cache3[i3], matrix_size);
-                i3++;
-            }
-
-            compressed_cache.set(c2, S);
-        }
-        assert(i1 == cache1.n_columns());
-        assert(i2 == cache2.n_columns());
-        assert(i3 == cache3.n_columns());
-
-        // 4. Walk the alignment and sample (model,letter) for ancestral sequence
+        // 3. Walk the alignment and sample (model,letter) for ancestral sequence
         int L = compressed_col_for_col.size();
         Vector<pair<int,int>> ancestral_characters(L,{-1,-1});
         for(int c = 0; c < L; c++)
         {
             int c2 = compressed_col_for_col[c].as_int();
-            compressed_cache.get(c2, S);
+            if (not allbits.test(c2)) continue;
+            S = F;
+            if (auto i1 = index_for_column1[c2])
+                element_prod_modify(S.begin(), cache1[*i1], matrix_size);
+            if (auto i2 = index_for_column2[c2])
+                element_prod_modify(S.begin(), cache2[*i2], matrix_size);
+            if (auto i3 = index_for_column3[c2])
+                element_prod_modify(S.begin(), cache3[*i3], matrix_size);
+
             ancestral_characters[c] = sample( S );
         }
         return ancestral_characters;
@@ -1686,36 +1692,38 @@ namespace substitution {
                                                             const EVector& transition_Ps,
                                                             const Likelihood_Cache_Branch& cache1,
                                                             const Likelihood_Cache_Branch& cache2,
-                                                            const Matrix& F,
                                                             const EVector& compressed_col_for_col)
     {
         // 1. Construct a scratch matrix and check that dimensions match inputs
-        int n_models = F.size1();
-        int n_states = F.size2();
-        assert(n_models == cache1.n_models());
-        assert(n_states == cache1.n_states());
+        int n_models = cache1.n_models();
+        int n_states = cache1.n_states();
         assert(n_models == cache2.n_models());
         assert(n_states == cache2.n_states());
         Matrix S(n_models, n_states);
         const int matrix_size = n_models * n_states;
 
+        // 2. Get the total length of the COMPRESSED matrix.
+        auto allbits = cache1.bits | cache2.bits ;
 
-        // 2. Walk the alignment and sample (model,letter) for ancestral sequence
+        auto index_for_column1 = get_index_for_column(cache1.bits);
+        auto index_for_column2 = get_index_for_column(cache2.bits);
+
+        // 3. Walk the alignment and sample (model,letter) for ancestral sequence
         int L = compressed_col_for_col.size();
-        Vector<pair<int,int>> ancestral_characters(L);
+        Vector<pair<int,int>> ancestral_characters(L,{-1,-1});
         for(int c = 0; c < L; c++)
         {
             int c2 = compressed_col_for_col[c].as_int();
+            if (not allbits.test(c2)) continue;
 
-            pair<int,int> parent_state(-1,-1);
-            parent_state = parent_seq[c2];
+            calc_transition_prob_from_parent(S, parent_seq[c], transition_Ps);
 
-            calc_transition_prob_from_parent(S, parent_state, transition_Ps, F);
+            if (auto i1 = index_for_column1[c2])
+                element_prod_modify(S.begin(), cache1[*i1], matrix_size);
+            if (auto i2 = index_for_column2[c2])
+                element_prod_modify(S.begin(), cache2[*i2], matrix_size);
 
-            element_prod_modify(S.begin(), cache1[c2], matrix_size);
-            element_prod_modify(S.begin(), cache2[c2], matrix_size);
-
-            ancestral_characters[c2] = sample(S);
+            ancestral_characters[c] = sample(S);
         }
         return ancestral_characters;
     }

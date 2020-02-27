@@ -1502,7 +1502,6 @@ namespace substitution {
                                                             const EVector& transition_Ps,
                                                             const Likelihood_Cache_Branch& cache1,
                                                             const Likelihood_Cache_Branch& cache2,
-                                                            const Matrix& F,
                                                             const EVector& compressed_col_for_col);
 
     Vector<pair<int,int>> sample_leaf_node_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
@@ -1612,14 +1611,12 @@ extern "C" closure builtin_function_sample_internal_node_sequence_SEV(OperationA
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
     auto arg4 = Args.evaluate(4);
-    auto arg5 = Args.evaluate(5);
 
     return substitution::sample_internal_node_sequence_SEV(arg0.as_<Vector<pair<int,int>>>(),
                                                            arg1.as_<EVector>(),
                                                            arg2.as_<Likelihood_Cache_Branch>(),
                                                            arg3.as_<Likelihood_Cache_Branch>(),
-                                                           arg4.as_<Box<Matrix>>(),
-                                                           arg5.as_<EVector>());
+                                                           arg4.as_<EVector>());
 }
 
 extern "C" closure builtin_function_sample_leaf_node_sequence(OperationArgs& Args)
