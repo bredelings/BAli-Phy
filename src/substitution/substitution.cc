@@ -1695,8 +1695,10 @@ namespace substitution {
                                                             const EVector& compressed_col_for_col)
     {
         // 1. Construct a scratch matrix and check that dimensions match inputs
-        int n_models = cache1.n_models();
-        int n_states = cache1.n_states();
+        const int n_models  = transition_Ps.size();
+        const int n_states  = transition_Ps[0].as_<Box<Matrix>>().size1();
+        assert(n_models == cache1.n_models());
+        assert(n_states == cache1.n_states());
         assert(n_models == cache2.n_models());
         assert(n_states == cache2.n_states());
         Matrix S(n_models, n_states);
@@ -1774,29 +1776,30 @@ namespace substitution {
     Vector<pair<int,int>> sample_leaf_node_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
                                                         const EVector& transition_Ps,
                                                         const EVector& sequence,
+                                                        const Likelihood_Cache_Branch& cache,
                                                         const alphabet& a,
                                                         const EVector& smap,
                                                         const EVector& compressed_col_for_col)
     {
         // 1. Construct a scratch matrix and check that dimensions match inputs
-        int n_models = F.size1();
-        int n_states = F.size2();
+        const int n_models  = transition_Ps.size();
+        const int n_states  = transition_Ps[0].as_<Box<Matrix>>().size1();
         Matrix S(n_models, n_states);
 
         // 2. Walk the alignment and sample (model,letter) for leaf sequence
+        auto index_for_column = get_index_for_column(cache.bits);
+
         int L = compressed_col_for_col.size();
         Vector<pair<int,int>> ancestral_characters(L,{-1,-1});
         for(int c = 0; c < L; c++)
         {
-            int letter = sequence[c].as_int();
+            int c2 = compressed_col_for_col[c].as_int();
 
-            if (letter != alphabet::gap)
+            if (auto index = index_for_column[c2])
             {
-                int c2 = compressed_col_for_col[c].as_int();
+                int letter = sequence[*index].as_int();
 
-                auto parent_state = parent_seq[c2];
-
-                calc_transition_prob_from_parent(S, parent_state, transition_Ps, F);
+                calc_transition_prob_from_parent(S, parent_seq[c], transition_Ps);
 
                 calc_leaf_likelihood(S, letter, a, smap);
 

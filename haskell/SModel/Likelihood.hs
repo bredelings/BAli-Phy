@@ -23,7 +23,7 @@ builtin calc_root_probability_SEV 5 "calc_root_probability_SEV" "SModel"
 -- ancestral sequence sampling for SEV
 builtin sample_root_sequence_SEV 5 "sample_root_sequence_SEV" "SModel"
 builtin sample_internal_sequence_SEV 5 "sample_internal_node_sequence_SEV" "SModel"
-builtin sample_leaf_sequence_SEV 6 "sample_leaf_node_sequence_SEV" "SModel"
+builtin sample_leaf_sequence_SEV 7 "sample_leaf_node_sequence_SEV" "SModel"
 
 builtin peel_likelihood_1 3 "peel_likelihood_1" "SModel"
 builtin peel_likelihood_2 6 "peel_likelihood_2" "SModel"
@@ -102,6 +102,7 @@ sample_ancestral_sequences_SEV t root seqs alpha ps f cl smap col_to_compressed 
                                                           parent_seq
                                                           ps_for_b0
                                                           (seqs!n)
+                                                          (cl!to_p)
                                                           alpha
                                                           smap
                                                           col_to_compressed

@@ -1507,6 +1507,7 @@ namespace substitution {
     Vector<pair<int,int>> sample_leaf_node_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
                                                         const EVector& transition_Ps,
                                                         const EVector& sequence,
+                                                        const Likelihood_Cache_Branch& cache1,  // just for the mask
                                                         const alphabet& a,
                                                         const EVector& smap1,
                                                         const EVector& compressed_col_for_col);
@@ -1645,13 +1646,15 @@ extern "C" closure builtin_function_sample_leaf_node_sequence_SEV(OperationArgs&
     auto arg3 = Args.evaluate(3);
     auto arg4 = Args.evaluate(4);
     auto arg5 = Args.evaluate(5);
+    auto arg6 = Args.evaluate(6);
 
     return substitution::sample_leaf_node_sequence_SEV(arg0.as_<Vector<pair<int,int>>>(),
                                                        arg1.as_<EVector>(),
                                                        arg2.as_<EVector>(),
-                                                       *arg3.as_<Alphabet>(),
-                                                       arg4.as_<EVector>(),
-                                                       arg5.as_<EVector>());
+                                                       arg3.as_<Likelihood_Cache_Branch>(),
+                                                       *arg4.as_<Alphabet>(),
+                                                       arg5.as_<EVector>(),
+                                                       arg6.as_<EVector>());
 }
 
 extern "C" closure builtin_function_calc_root_probability_SEV(OperationArgs& Args)
