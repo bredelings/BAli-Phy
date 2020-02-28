@@ -2115,10 +2115,10 @@ mg94[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]
       </informaltable>
       <para>
         <note>
-          Note that to combine the Tuffley-Steel model with rate heterogeneity you need to use the right approach:
+          Note that the obvious way to combine the Tuffley-Steel model with rate heterogeneity is wrong:
           <itemizedlist>
-            <listitem><para><userinput>Q+Covarion.ts98+Rates.gamma</userinput>: This is <emphasis>wrong</emphasis>!  Under this model, sites with faster substitution rates will switch between the ON/OFF states faster, which is not correct.</para></listitem>
-            <listitem><para><userinput>Q+Rates.gamma+Covarion.hb02</userinput>: This is OK.  Sites switch between ON/OFF states independent of the speed of substitution.</para></listitem>
+            <listitem><para><userinput>Q+Covarion.ts98+Rates.gamma</userinput>: This is <emphasis>wrong</emphasis>!  Under this model, sites with faster substitution rates will switch between the ON/OFF states faster.</para></listitem>
+            <listitem><para><userinput>Q+Rates.gamma+Covarion.hb02</userinput>: This is correct.  Sites switch between ON/OFF states independent of the speed of substitution.</para></listitem>
           </itemizedlist>
         </note>
       </para>
