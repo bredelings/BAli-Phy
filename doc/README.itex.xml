@@ -2296,7 +2296,7 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
           <filename>C1.P<replaceable>n</replaceable>.fastas</filename>. 
         </para>
         <para>
-          Ancestral states in thes alignments are randomly sampled from their joint posterior and do
+          Ancestral states in these alignments are randomly sampled from their joint posterior and do
           <emphasis>not</emphasis> represent the most probable ancestral state.  The alignment of
           ancestral sequences is also inferred, so these sequences may contain gaps.  The length of
           ancestral sequences may vary between samples when the length of the ancestral sequence is
@@ -2335,12 +2335,12 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
         cannot simply extract ancestral sequences with a given name.
       </para>
     <section>
-      <info><title>Extracting sequences and naming sequences that satisfy a query</title></info>
+      <info><title>Extracting and naming sequences that satisfy a query</title></info>
       <para>
         To extract ancestral sequences for a given node, you need to specify a method of identifying
         that node on a tree, and a name to give to the sequence at that node.  This is called a
         <emphasis>query</emphasis>. For example, you might
-        specify how to identify the ancestor of Eukaryotes, and the name "Eukaryotes" to use for the
+        specify how to identify the ancestor node of Eukaryotes, and the name "Eukaryotes" to use for the
         sequence there.  You can then use the program <userinput>extract-ancestors</userinput> to
         extract ancestral sequences from the sampled trees and alignment, and label them with useable names.
 
@@ -2351,7 +2351,7 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
     </para>
     </section>
 
-    <section><info><title>Node-based queries.</title></info>
+    <section><info><title>Node-based queries</title></info>
     <para>A node exists in a sampled tree if every branch connected to that node exists in the sampled tree.
     A node-based query asks for the reconstructed ancestral sequence only from samples where every branch
     connected to that node exists. A node-based query is more stringent than a branch-based query, since it
@@ -2361,17 +2361,15 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
     </para>
     </section>
 
-    <section><info><title>Branch-based queries.</title></info>
+    <section><info><title>Branch-based queries</title></info>
     <para>A branch-based query requires only that a single branch exist in a sampled tree.  The branch-based
     query asks for the reconstructed ancestral sequence on one endpoint of that (directed) branch.  When the focus
     is on changes that occur on a particular branch, this makes more sense than a node-based query.
     </para>
-    <para>BAli-Phy allows constructing branch-based queries by passing in a Newick tree with labelled internal nodes.
-    A branch-based query is automatically constructed from each branch where both endpoints are labelled.  The query
-    for a branch from <userinput>node1</userinput> to <userinput>node2</userinput> is named <userinput>"node2&lt;=node1"</userinput>.
+    <para>BAli-Phy allows constructing branch-based queries from a file where every line is either a Newick tree <emphasis>or</emphasis> a named group of taxa.  For each line that contains a Newick tree, a branch-based query is automatically constructed from each branch where <emphasis>both</emphasis> endpoints are labelled.  For a branch from <userinput>node1</userinput> to <userinput>node2</userinput>, the query is named <userinput>"node2&lt;=node1"</userinput>.
     </para>
     <para>
-      Branch-based queries can also be written in the form
+      Branch-based query files can also contain lines of the form
       <programlisting>name = taxon1 taxon2 ... taxonN</programlisting>
       This matches branches that separate the listed taxa from all other taxa, and points toward the listed taxa.
     </para>
@@ -2404,6 +2402,19 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
     </para>
     </section -->
 
+
+    <section><info><title>Statistical inferences without a summary alignment.</title></info>
+    <para>Inferences about ancestral sequence are sometimes done by analyzing the summary alignment and
+    its ancestral sequences.  A more correct approach is to analyze each sampled alignment separately, and then average the results.  (This yield the posterior mean of the analysis result.)
+When this
+    approach is feasible, it is more statistically rigorous than analyzing the summary alignment,
+    because it operates on joint reconstructions and because it incorporates uncertainty in the
+    phylogeny, alignment, and ancestral sequences.
+    </para>
+    <para>Analyzing the samples and pooling the results also allows each sampled alignment to be
+    analyzed in combination with the corresponding sampled tree.</para>
+    </section>
+
     <section>
       <info><title>Generating a summary alignment with ancestral sequences</title></info>
 
@@ -2419,19 +2430,6 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
     
     </para>
     </section>
-
-    <section><info><title>Statistical inferences without a summary alignment.</title></info>
-    <para>Inferences about ancestral sequence are sometimes done by analyzing the summary alignment and
-    its ancestral sequences.  A more correct approach is to analyze each sampled alignment separately,
-    and then average the results across all posterior samples.  When this
-    approach is feasible, it is more statistically rigorous than analyzing the summary alignment,
-    because it operates on joint reconstructions and because it incorporates uncertainty in the
-    phylogeny, alignment, and ancestral sequences.
-    </para>
-    <para>Analyzing the samples and pooling the results also allows each sampled alignment to be
-    analyzed in combination with the corresponding sampled tree.</para>
-    </section>
-
 
 
     </section>
