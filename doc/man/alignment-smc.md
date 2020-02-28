@@ -42,6 +42,9 @@ Generate input for SMC programs.
 **--write-bed** _arg_
 : Write selected columns in BED format with chromosome name _arg_
 
+**--show-freq**
+: Show allele frequencies
+
 **--translate-mask** _arg_
 : Masks (CSV or @file)
 
@@ -63,17 +66,26 @@ Generate input for SMC programs.
 **--psmc**
 : Output file for PSMC
 
-**--pi**
-: Calculate average hamming distance
-
 **--pi-matrix**
-: Calculate average hamming distance
+: Calculate pi for each pair of sequences
 
 **--autoclean**
 : Mask blocks with too many SNPs
 
 **--histogram** _arg_
 : Output SNP counts for blocks of arg bases
+
+**--snp-snp-lengths** _arg_
+: Output counts of snp-snp lengths up to arg snps
+
+**--sfs2d** _arg_
+: pop1:pop2:anc:window
+
+**--find-alleles** _arg_
+: Find alleles with S snps in L bases and count >= N
+
+**--consensus-seqs** _arg_
+: sequences to use in consensus
 
 
 # EXAMPLES:
