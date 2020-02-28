@@ -2322,44 +2322,34 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
     </section>
 
     <section>
-      <info><title>Extracting sequences for a specific node.</title></info>
+      <info><title>Tree uncertainty in ancestral sequence reconstruction.</title></info>
+      <para>
+        Some programs require you to fix the tree when sampling ancestral sequences.  When the
+        tree is fixed, selecting the ancestral sequences for a particular node is simple, since
+        the node always exists, and always has the same name.
+      </para>
       <para>
         Typically in BAli-Phy analyses the tree is not fixed. In this situation, the internal node
         corresponding to the ancestral sequence you wish to reconstruct may not exist in every iteration.
-        As a result, the sequence names for internal nodes may change over time. Therefore, you cannot
-        simply extract ancestral sequences with a given name. Instead, for each corresponding (alignment,tree)
-        pair, you must determine whether the node you are interested in exists in the tree, and then extract
-        the sequence with the corresponding name from the alignment. 
-    <screen><prompt>%</prompt> <userinput>trees-consensus <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees | tree-tool - --strip-internal-names --name-all-nodes &gt; c50.tree</userinput>
-<prompt>%</prompt> <userinput>extract-ancestors -A <replaceable>dir</replaceable>-1/C1.P1.fastas -T <replaceable>dir</replaceable>-1/C1.trees -A <replaceable>dir</replaceable>-2/C1.P1.fastas -T <replaceable>dir</replaceable>-2/C1.trees -n c50.tree > P1.ancestors.fastas</userinput></screen>
+        As a result, the sequence names (e.g. A6) for internal nodes may change over time. Therefore, you
+        cannot simply extract ancestral sequences with a given name.
       </para>
-    </section>
-    
     <section>
-      <info><title>Generating summary alignment with ancestral sequences.</title></info>
+      <info><title>Extracting sequences and naming sequences that satisfy a query</title></info>
+      <para>
+        To extract ancestral sequences for a given node, you need to specify a method of identifying
+        that node on a tree, and a name to give to the sequence at that node.  This is called a
+        <emphasis>query</emphasis>. For example, you might
+        specify how to identify the ancestor of Eukaryotes, and the name "Eukaryotes" to use for the
+        sequence there.  You can then use the program <userinput>extract-ancestors</userinput> to
+        extract ancestral sequences from the sampled trees and alignment, and label them with useable names.
 
-    <para>Users can also summarize the posterior distribution in terms of a single
-    representative alignment with ancestral sequences. This approach is most similar to the output
-    of ancestral sequence reconstruction for other programs with a fixed alignment.  In this mode,
-    BAli-Phy shows the most probable ancestral state instead of a randomly sampled ancestral state.
-    Since a fixed alignment is used as a template, variation in ancestral sequence length is
-    removed.
     <screen><prompt>%</prompt> <userinput>trees-consensus <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees | tree-tool - --strip-internal-names --name-all-nodes &gt; c50.tree</userinput>
-<prompt>%</prompt> <userinput>cut-range <replaceable>dir</replaceable>-1/C1.P<replaceable>p</replaceable>.fastas <replaceable>dir</replaceable>-2/C1.P<replaceable>p</replaceable>.fastas --skip=<replaceable>burn-in</replaceable> | alignment-chop-internal --tree c50.tree | alignment-max &gt; P1-max.fasta</userinput>
-<prompt>%</prompt> <userinput>extract-ancestors -A <replaceable>dir</replaceable>-1/C1.P1.fastas -T <replaceable>dir</replaceable>-1/C1.trees -A <replaceable>dir</replaceable>-2/C1.P1.fastas -T <replaceable>dir</replaceable>-2/C1.trees -a P1.max.fasta -n c50.tree > P1.ancestors.fasta</userinput></screen>
-    
+<prompt>%</prompt> <userinput>extract-ancestors -A <replaceable>dir</replaceable>-1/C1.P1.fastas -T <replaceable>dir</replaceable>-1/C1.trees -A <replaceable>dir</replaceable>-2/C1.P1.fastas -T <replaceable>dir</replaceable>-2/C1.trees -n c50.tree -g c50.tree > P1.ancestors.fastas</userinput></screen>
+       Here the options <userinput>-n c50.tree</userinput> and <userinput>-g c50.tree</userinput> specify
+       node-based queries and branch-based queries.
     </para>
-    <section><info><title>Tree uncertainty in ancestral sequence reconstruction.</title></info>
-    <para>Some programs require you to fix the tree when inferring ancestral sequences.  When the
-    tree is fixed, inferring the sequence at a node is simple, since the node always exists.
-    BAli-Phy does not require you to fix the tree.  As a result, inferring ancestral sequences
-    does not require a second analysis.</para>
-
-    <para>If the tree is not fixed, then reconstructing the sequence at a node becomes more complicated.
-    This is because that node might not exist in every posterior tree sample.  However, it is still
-    possible to reconstruct the sequence at a node by selectingancestral sequences from tree where the
-    node exists. 
-    </para>
+    </section>
 
     <section><info><title>Node-based queries.</title></info>
     <para>A node exists in a sampled tree if every branch connected to that node exists in the sampled tree.
@@ -2374,12 +2364,11 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
     <section><info><title>Branch-based queries.</title></info>
     <para>A branch-based query requires only that a single branch exist in a sampled tree.  The branch-based
     query asks for the reconstructed ancestral sequence on one endpoint of that (directed) branch.  When the focus
-    is on changes that occur on a particular branch, it does not make sense to also require that other branches
-    connected to the endpoint also exist.
+    is on changes that occur on a particular branch, this makes more sense than a node-based query.
     </para>
     <para>BAli-Phy allows constructing branch-based queries by passing in a Newick tree with labelled internal nodes.
     A branch-based query is automatically constructed from each branch where both endpoints are labelled.  The query
-    for a branch from node1 to node2 is named "node2&lt;=node1".
+    for a branch from <userinput>node1</userinput> to <userinput>node2</userinput> is named <userinput>"node2&lt;=node1"</userinput>.
     </para>
     <para>
       Branch-based queries can also be written in the form
@@ -2415,19 +2404,34 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
     </para>
     </section -->
 
+    <section>
+      <info><title>Generating a summary alignment with ancestral sequences</title></info>
+
+    <para>Users can also summarize the posterior distribution in terms of a single
+    representative alignment with ancestral sequences. This approach is most similar to the output
+    of ancestral sequence reconstruction for other programs with a fixed alignment.  In this mode,
+    BAli-Phy shows the most probable ancestral state instead of a randomly sampled ancestral state.
+    Since a fixed alignment is used as a template, variation in ancestral sequence length is
+    removed.
+    <screen><prompt>%</prompt> <userinput>cut-range <replaceable>dir</replaceable>-1/C1.P<replaceable>p</replaceable>.fastas <replaceable>dir</replaceable>-2/C1.P<replaceable>p</replaceable>.fastas --skip=<replaceable>burn-in</replaceable> | alignment-chop-internal --tree c50.tree | alignment-max &gt; P1-max.fasta</userinput>
+<prompt>%</prompt> <userinput>trees-consensus <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees | tree-tool - --strip-internal-names --name-all-nodes &gt; c50.tree</userinput>
+<prompt>%</prompt> <userinput>extract-ancestors -A <replaceable>dir</replaceable>-1/C1.P1.fastas -T <replaceable>dir</replaceable>-1/C1.trees -A <replaceable>dir</replaceable>-2/C1.P1.fastas -T <replaceable>dir</replaceable>-2/C1.trees -n c50.tree -g c50.tree -a P1.max.fasta > P1.ancestors.fasta</userinput></screen>
+    
+    </para>
     </section>
 
     <section><info><title>Statistical inferences without a summary alignment.</title></info>
     <para>Inferences about ancestral sequence are sometimes done by analyzing the summary alignment and
-    its ancestral sequences.  A more correct approach is to analyze each sampled alignment with
-    ancestors separately, and then average the results across all posterior samples.  When this
-    approach is feasible, it is more statistically rigorous than analysis of the summary alignment,
+    its ancestral sequences.  A more correct approach is to analyze each sampled alignment separately,
+    and then average the results across all posterior samples.  When this
+    approach is feasible, it is more statistically rigorous than analyzing the summary alignment,
     because it operates on joint reconstructions and because it incorporates uncertainty in the
     phylogeny, alignment, and ancestral sequences.
     </para>
     <para>Analyzing the samples and pooling the results also allows each sampled alignment to be
     analyzed in combination with the corresponding sampled tree.</para>
     </section>
+
 
 
     </section>
