@@ -18,11 +18,8 @@ Draw an alignment to HTML, optionally coloring residues by AU.
 **--help**
 : produce help message
 
-**--align** _arg_
+**--file** _arg_
 : file with sequences and initial alignment
-
-**--alphabet** _arg_
-: Set to 'Codons' to prefer codon alphabets
 
 **--legend**
 : Print a legend showing how color-scheme indicates uncertainty.

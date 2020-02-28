@@ -38,11 +38,17 @@ Perform various operations on Newick trees.
 **--remove-knuckles**
 : Remove degree-2 nodes.
 
-
-# OUTPUT OPTIONS:
 **--scale** _arg_
 : Scale branch-lengths by factor
 
+**--strip-internal-names**
+: Remove internal node names
+
+**--name-all-nodes**
+: Add node names
+
+
+# OUTPUT OPTIONS:
 **--length**
 : Report the total tree length
 

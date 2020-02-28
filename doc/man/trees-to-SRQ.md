@@ -8,7 +8,7 @@
 
 # SYNOPSIS
 
-**tree-to-srq** _predicates-file_ < in-file
+**tree-to-srq** _predicates-file_ _sampled-trees_ [_sampled-trees_ ...]
 
 # DESCRIPTION
 
@@ -18,11 +18,14 @@ Generate Scaled Regeneration Quantile (SRQ) plot
 **-h**, **--help**
 : produce help message
 
+**--files** _arg_
+: tree samples to examine
+
 **--predicates** _arg_
 : predicates to examine
 
-**-s** _arg_ (=0), **--skip** _arg_ (=0)
-: number of trees to skip
+**-s** _arg_ (=10%), **--skip** _arg_ (=10%)
+: Number of trees to skip.
 
 **-x** _arg_ (=1), **--subsample** _arg_ (=1)
 : factor by which to sub-sample

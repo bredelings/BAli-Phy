@@ -28,7 +28,7 @@ Construct a posterior decoding alignment to summarize an alignment sample.
 : Maximum number of alignments to analyze
 
 **--analysis** _arg_ (=wsum)
-: sum, wsum, multiply
+: sum, wsum, wsum2, multiply
 
 **-o** _arg_ (=-), **--out** _arg_ (=-)
 : Output file (defaults to stdout)

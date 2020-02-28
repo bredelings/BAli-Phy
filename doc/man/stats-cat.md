@@ -36,6 +36,12 @@ Append tab-delimited files with the same field names.
 **-S** _arg_, **--select** _arg_
 : Analyze only these fields.
 
+**-O** _arg_, **--output** _arg_
+: Output format: json, tsv
+
+**--unnest**
+: Unnest JSON file.
+
 
 # REPORTING BUGS:
  BAli-Phy online help: <http://www.bali-phy.org/docs.php>.

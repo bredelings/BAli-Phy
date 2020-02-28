@@ -27,8 +27,11 @@ Usage: joint-indels <alignments file> <trees file> [OPTIONS]
 **--alphabet** _arg_
 : set to 'Codons' to prefer codon alphabets
 
-**--verbose**
-: Output more log messages on stderr.
+**-V**, **--verbose**
+: \[=arg(=1)\] Show more log messages on stderr.
+
+**--extract-sequences** _arg_
+: Extract sequences corresponding to tree
 
 
 # REPORTING BUGS:

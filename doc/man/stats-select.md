@@ -15,7 +15,7 @@
 Select columns from a Tracer-format data file.
 
 # ALL OPTIONS:
-**--help**
+**-h**, **--help**
 : Produce help message
 
 **--no-header**

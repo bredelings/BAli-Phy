@@ -23,22 +23,25 @@ Remove sequences or columns from an alignment.
 
 
 # SEQUENCE FILTERING OPTIONS:
-**--protect** _arg_
+**-p** _arg_, **--protect** _arg_
 : Sequences that cannot be removed (comma-separated).
 
-**--remove** _arg_
+**-k** _arg_, **--keep** _arg_
+: Remove sequences not in comma-separated list _arg_.
+
+**-r** _arg_, **--remove** _arg_
 : Remove sequences in comma-separated list _arg_.
 
-**--longer-than** _arg_
+**-l** _arg_, **--longer-than** _arg_
 : Remove sequences not longer than _arg_.
 
-**--shorter-than** _arg_
+**-s** _arg_, **--shorter-than** _arg_
 : Remove sequences not shorter than _arg_.
 
-**--cutoff** _arg_
+**-c** _arg_, **--cutoff** _arg_
 : Remove similar sequences with #mismatches < cutoff.
 
-**--down-to** _arg_
+**-d** _arg_, **--down-to** _arg_
 : Remove similar sequences down to _arg_ sequences.
 
 **--remove-crazy** _arg_
@@ -49,21 +52,30 @@ Remove sequences or columns from an alignment.
 
 
 # COLUMN FILTERING OPTIONS:
-**--min-letters** _arg_
+**-K** _arg_, **--keep-columns** _arg_
+: Keep columns from this sequence
+
+**-m** _arg_, **--min-letters** _arg_
 : Remove columns with fewer than _arg_ letters.
 
-**--remove-unique** _arg_
+**-u** _arg_, **--remove-unique** _arg_
 : Remove insertions in a single sequence if longer than _arg_ letters
+
+**-e**, **--erase-empty-columns**
+: Remove columns with no characters (all gaps).
 
 
 # OUTPUT OPTIONS:
-**--sort**
+**-S**, **--sort**
 : Sort partially ordered columns to group similar gaps.
 
-**--show-lengths**
+**-L**, **--show-lengths**
 : Just print out sequence lengths.
 
-**--find-dups** _arg_
+**-N**, **--show-names**
+: Just print out sequence lengths.
+
+**-F** _arg_, **--find-dups** _arg_
 : For each sequence, find the closest other sequence.
 
 
@@ -77,6 +89,10 @@ Remove columns without a minimum number of letters:
 Remove sequences by name:
 ```
 % alignment-thin --remove=seq1,seq2 file.fasta > file2.fasta
+```
+
+```
+% alignment-thin --keep=seq1,seq2   file.fasta > file2.fasta
 ```
 
 Remove short sequences:
@@ -102,6 +118,10 @@ Remove dissimilar sequences that are missing conserved columns:
 Protect some sequences from being removed:
 ```
 % alignment-thin --down-to=30 file.fasta --protect=seq1,seq2 > file2.fasta
+```
+
+```
+% alignment-thin --down-to=30 file.fasta --protect=@filename > file2.fasta
 ```
 
 
