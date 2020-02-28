@@ -8,7 +8,7 @@
 
 # SYNOPSIS
 
-**extract-ancestors** _alignments file_ _trees file_ _alignment file_ [OPTIONS]
+**extract-ancestors** [OPTIONS]
 
 # DESCRIPTION
 
@@ -43,19 +43,28 @@ Construct alignments with internal sequences for labeled nodes in query tree.
 **-g** _arg_, **--groups** _arg_
 : File with named groups
 
+**--nodes-min** _arg_ (=0.34)
+: Minimum fraction to include a node.
+
+**--groups-min** _arg_ (=0.34)
+: Minimum fraction to include a group.
+
 
 # OUTPUT OPTIONS:
 **-a** _arg_, **--template-alignment** _arg_
 : File with template alignment
 
-**--show-ancestors** _arg_ (=0)
-: Write input alignments augmented with ancestor sequences.
-
 
 # EXAMPLES:
  
+Add named ancestral sequences to alignments where they are present:
 ```
-% extract-ancestors -A C1.P1.fastas -T C1.trees -a P1-max.fasta --nodes query.tree --groups query.tree
+% extract-ancestors -A C1.P1.fastas -T C1.trees --nodes query.tree --groups query.tree
+```
+
+Add ancestral sequences to summary alignment:
+```
+% extract-ancestors -A C1.P1.fastas -T C1.trees --nodes query.tree --groups query.tree -a P1.max.fasta
 ```
 
 
