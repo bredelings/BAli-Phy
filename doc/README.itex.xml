@@ -1951,10 +1951,10 @@ mg94[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]
       <section><info><title>The branch-site substitution model</title></info>
       <para>In order to use the branch-site substitution model, the user needs to specify an unrooted tree topology and disable topology changes in order to keep the topology fixed:
     <screen><prompt>%</prompt> bali-phy <replaceable>alignment</replaceable>.fasta -S branch_site -T <replaceable>tree</replaceable>.tree --disable=topology</screen>
-    The tree file should be in Newick format, with foreground branches labelled using NHX attributes. The NHX attribute must be applied to the branch, not the node, so it must occur after a colon.
+    The tree file should be in Newick format, with foreground branches labelled using &amp; attributes. The attribute must be applied to the branch, not the node, so it must occur after a colon.
 
 <example><title>An tree with a foreground branch</title>
-(((A1, B1),(C1, D1)),((E1:[&amp;&amp;NHX:foreground=1], F1:[&amp;&amp;NHX:foreground=1]),(G1, H1)),(((A2, B2),(C2, D2)),((E2, F2),(G2, H2))));
+(((A1, B1),(C1, D1)),((E1:[&amp;foreground=1], F1:[&amp;foreground=1]),(G1, H1)),(((A2, B2),(C2, D2)),((E2, F2),(G2, H2))));
 </example>
       </para>
       <para>The posterior probability of positive selection is the posterior mean of the posSelection parameter.  This may be computed using the statreport program with the <userinput>--mean</userinput> option. In case this probability is extremely close to 1 or 0, you may wish to add the option <userinput>--Rao-Blackwellize branch_site:posSelection</userinput>.  This will report the log-probability of positive selection each iteration.  The user may exponentiate the reported values and then average them (using R, for example) in order to compute a more accurate estimate of the posterior probability of positive selection.
