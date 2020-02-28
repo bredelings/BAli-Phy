@@ -556,7 +556,7 @@ pair<vector<profile>,vector<profile>> extract_sequence(const joint_A_T& samples,
             }
         }
 
-        if (log_verbose or (do_extract and not internal_nodes.empty()))
+        if (log_verbose or do_extract)
         {
             // 4. Write leaf sequences
             for(int node=0;node<samples.leaf_names().size();node++)
