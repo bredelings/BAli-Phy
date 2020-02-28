@@ -2027,7 +2027,103 @@ mg94[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]
       </informaltable>
 
     </section>
-      </section>
+    <section>
+      <info><title>Heterotachy models</title></info>
+      <para>
+        These models attempt to model the fact that evolutionary rates may change over time within a single column.
+        These models are sometimes called "covarion" models, based on the idea that changes in rate might be caused
+        by changes in an unspecified covarying site.
+      </para>
+      <para>
+        These models are "Markov modulated" models that create multiple different states for each letter by augmenting
+        each letter with some unobserved hidden state.  They attempt to model the fact that substitution processes might
+        not be Markov on the letters, but might become more Markov given some the hidden state.
+      </para>
+
+      <informaltable>
+      <tgroup cols="3">
+	  <thead><row>
+	      <entry>Model</entry>
+	      <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+	      <entry>Summary</entry>
+	  </row></thead>
+	  <tbody>
+
+	    <row>
+	      <entry><userinput><replaceable>Q</replaceable> + Covarion.ts98</userinput></entry>
+	      <entry>df(<replaceable>submodel</replaceable>)+2</entry>
+	      <entry>
+                <para>Each state in rate matrix Q is split into an ON and OFF variant.  Models burstiness.</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink"  xlink:href="https://doi.org/10.1016/S0025-5564(97)00081-3">
+		    (Tuffley and Steel 1998)
+		  </link>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry>
+                <para><userinput><replaceable>Q</replaceable>&nbsp;+&nbsp;Rates.gamma&nbsp;+&nbsp;Covarion.hb02</userinput></para>
+                <para><userinput><replaceable>submodel</replaceable>&nbsp;+&nbsp;Covarion.hb02</userinput></para>
+              </entry>
+	      <entry>
+                <para>df(<replaceable>Q+Rates.gamma</replaceable>)+2</para>
+                <para>df(<replaceable>submodel</replaceable>)+2</para>
+              </entry>
+	      <entry>
+                <para>Combines Gamma (or other) rate heterogeneity with the Tuffley-Steel model.</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink"  xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a004128">
+		    (Huelsenbeck 2002)
+		  </link>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry>
+                <para><userinput><replaceable>Q</replaceable>&nbsp;+&nbsp;Rates.gamma&nbsp;+&nbsp;Covarion.hb02</userinput></para>
+                <para><userinput><replaceable>submodel</replaceable>&nbsp;+&nbsp;Covarion.hb02</userinput></para>
+              </entry>
+	      <entry>
+                <para>df(<replaceable>Q+Rates.gamma</replaceable>)+2</para>
+                <para>df(<replaceable>submodel</replaceable>)+2</para>
+              </entry>
+	      <entry>
+                <para>Allows switching between Gamma (or other) rate classes over time.  Models changes in conservation.</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink"  xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a003868">
+		    (Galtier 2001)
+		  </link>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry>
+                <para><userinput><replaceable>Q</replaceable>&nbsp;+&nbsp;Rates.gamma&nbsp;+&nbsp;Covarion.hb02</userinput></para>
+                <para><userinput><replaceable>submodel</replaceable>&nbsp;+&nbsp;Covarion.hb02</userinput></para>
+              </entry>
+	      <entry>
+                <para>df(<replaceable>Q+Rates.gamma</replaceable>)+4</para>
+                <para>df(<replaceable>submodel</replaceable>)+4</para>
+              </entry>
+	      <entry>
+                <para>Allows switching between ON/OFF states and <emphasis>also</emphasis> between Gamma (or other) rate classes over time.  Models both burstiness and changes in conservation.</para>
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink"  xlink:href="https://doi.org/10.1093/molbev/msl155">
+		    (Wang et al 2007)
+		  </link>
+	      </entry>
+	    </row>
+          </tbody>1
+	</tgroup>
+      </informaltable>
+      <para>
+        <note>
+          Note that to combine the Tuffley-Steel model with rate heterogeneity you need to use the right approach:
+          <itemizedlist>
+            <listitem><para><userinput>Q+Covarion.ts98+Rates.gamma</userinput>: This is <emphasis>wrong</emphasis>!  Under this model, sites with faster substitution rates will switch between the ON/OFF states faster, which is not correct.</para></listitem>
+            <listitem><para><userinput>Q+Rates.gamma+Covarion.hb02</userinput>: This is OK.  Sites switch between ON/OFF states independent of the speed of substitution.</para></listitem>
+          </itemizedlist>
+        </note>
+      </para>
+    </section>
+  </section>
 
 
     <section xml:id="indel_models"><info><title>Insertion/deletion models</title></info>
