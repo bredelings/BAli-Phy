@@ -2037,7 +2037,7 @@ mg94[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]
       <para>
         These models are "Markov modulated" models that create multiple different states for each letter by augmenting
         each letter with some unobserved hidden state.  They attempt to model the fact that substitution processes might
-        not be Markov on the letters, but might become more Markov given some the hidden state.
+        not be Markov on the letters, but might become more Markov given the hidden state.
       </para>
 
       <informaltable>
@@ -2342,7 +2342,7 @@ By default each partition has a separate scale, but you can force groups of part
     <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1:tn93 --link=1,2 -t</userinput>
 bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing values 'tn93' and ''</screen></para>
     <para>You can also specify which of the 3 attributes "smodel", "imodel", and "scale" are being linked:
-    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --link=1,2:smodel,scale -t</userinput>    // Don&quot;t link the indel model</screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --link=1,2:smodel,scale -t</userinput>    // Don&apos;t link the indel model</screen>
     </para>
     </section>
     </section>
@@ -2353,11 +2353,11 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
       <section>
         <info><title>Ancestral sequences with gaps</title></info>
         <para>
-          BAli-Phy can reconstruct ancestral sequences for all internal nodes. Unlike other programs,
+          BAli-Phy can reconstruct ancestral sequences for all internal nodes. Unlike some programs,
           BAli-Phy explicitly infers the presence and absence of characters in ancestral sequences. This
           means that if the ancestral sequence has no character for a column, the reconstructed
           ancestors will have a gap there. BAli-Phy reconstructs ancestors for fixed-alignment partitions
-          as well as variable-alignment partitions, but it won&quot;t write out fixed alignment samples unless
+          as well as variable-alignment partitions, but it won&apos;t write out fixed alignment samples unless
           you add the flag <userinput>--set write-fixed-alignments=true</userinput>. Additionally, if you
           have an ambiguous character such as <userinput>N</userinput> in an observed sequence bali-phy
           can impute this character, but will not do so unless you add the flag
