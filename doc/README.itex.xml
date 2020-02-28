@@ -2246,41 +2246,37 @@ By default each partition has a separate scale, but you can force groups of part
     <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1:tn93 --link=1,2 -t</userinput>
 bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing values 'tn93' and ''</screen></para>
     <para>You can also specify which of the 3 attributes "smodel", "imodel", and "scale" are being linked:
-    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --link=1,2:smodel,scale -t</userinput>    // Don't link the indel model</screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --link=1,2:smodel,scale -t</userinput>    // Don&quot;t link the indel model</screen>
     </para>
     </section>
     </section>
 
-    <section xml:id="ancestral_sequence_reconstruction"><info><title>Ancestral sequence reconstruction</title></info>
+    <section xml:id="ancestral_sequence_reconstruction">
+      <info><title>Ancestral sequence reconstruction</title></info>
 
+      <section>
+        <info><title>Ancestral sequences with gaps</title></info>
+        <para>
+          BAli-Phy can reconstruct ancestral sequences for all internal nodes. Unlike other programs,
+          BAli-Phy explicitly infers the presence and absence of characters in ancestral sequences. This
+          means that if the ancestral sequence has no character for a column, the reconstructed
+          ancestors will have a gap there. BAli-Phy reconstructs ancestors for fixed-alignment partitions
+          as well as variable-alignment partitions, but it won&quot;t write out fixed alignment samples unless
+          you add the flag <userinput>--set write-fixed-alignments=true</userinput>. Additionally, if you
+          have an ambiguous character such as <userinput>N</userinput> in an observed sequence bali-phy
+          can impute this character, but will not do so unless you add the flag
+          <userinput>--set infer-ambiguous-observed=true</userinput>.
+        </para>
+      </section>
 
-    <para>
-      BAli-Phy writes out ancestral sequences for each alignment sample from the posterior. 
-      The <command>bp-analyze</command> commands also constructs a summary alignment with ancestral sequences.  
-      In both cases, BAli-Phy explicitly infers the presence and absence of characters in ancestral sequences.  
-      This means that if an ancestral sequence has no character for a column, the reconstructed ancestor will have a gap there.
-    </para>
-
-    <para>
-      BAli-Phy reconstructs ancestors for fixed-alignment partitions as well as
-      variable-alignment partitions, but it won't write out ancestors and alignments for fixed
-      alignment partitions unless you add the flag 
-      <userinput>--set write-fixed-alignments=true</userinput>.  In fixed-alignment partitions,
-      gaps are inferred in a much simpler fashion, since they are not part of the model.
-    </para>
-
-    <para>
-      BAli-Phy can impute ambiguous characters (such as <userinput>N</userinput>) in observed
-      sequences.  However, it will not do so unless you add the flag  <userinput>--set infer-ambiguous-observed=true</userinput>.  
-    </para>
-
-    <section><info><title>Multiple sampled alignments with ancestral sequences</title></info>
-    <section><info><title>Sampled alignments contain ancestral sequences</title></info>
-    <para>Each sampled alignment contains ancestral sequences as part of the alignment matrix.
-    Names for ancestral sequence start with the letter <userinput>A</userinput>.  For example, in the
-    following alignment, the sequences <userinput>A5</userinput>, <userinput>A6</userinput>, and
-    <userinput>A7</userinput> are reconstructed ancestors:
-    <programlisting>&gt;Halobacterium
+      <section>
+        <info><title>Sampled alignments contain ancestral sequences</title></info>
+        <para>
+          Ancestral sequences are written as part of the alignment matrix in each iteration.  Ancestral sequences
+          are given names starting with the letter <userinput>A</userinput>.  For example, in the
+          following alignment, the sequences <userinput>A5</userinput>, <userinput>A6</userinput>, and
+          <userinput>A7</userinput> are reconstructed ancestors:
+          <programlisting>&gt;Halobacterium
 -T-TAAGGCGGCCATAGCGGTGGGGTTACTCCCGTAC
 &gt;Pyrococcus
 GG-TACGGCGGTCATAGCGGGGGGGCCACACCCGGTC
@@ -2296,35 +2292,51 @@ GG-CAAGGCGGCCATAGCGGGGGGGCCACACCCGGCC
 GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC
 &gt;A7   
 GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
-    Ancestral states are randomly sampled from their joint posterior and do not represent the most
-    probable ancestral state.  The alignment of ancestral sequences is also inferred, so these
-    sequences may contain gaps.  The length of ancestral sequences may vary between samples
-    when the length of the ancestral sequence is uncertain.
-    </para>
+          Sampled alignments for the <replaceable>n</replaceable>th partition are in the file.
+          <filename>C1.P<replaceable>n</replaceable>.fastas</filename>. 
+        </para>
+        <para>
+          Ancestral states in thes alignments are randomly sampled from their joint posterior and do
+          <emphasis>not</emphasis> represent the most probable ancestral state.  The alignment of
+          ancestral sequences is also inferred, so these sequences may contain gaps.  The length of
+          ancestral sequences may vary between samples when the length of the ancestral sequence is
+          uncertain.
+        </para>
+      </section>
 
-    <para>Sampled alignments for the <replaceable>n</replaceable>th partition are in the file.
-    <filename>C1.P<replaceable>n</replaceable>.fastas</filename>. 
-
-    </para>
+      <section>
+        <info><title>Sampled alignments correspond to specific sampled trees</title></info>
+        <para>
+          Each sampled alignment matrix corresponds to a tree in the file <filename>C1.trees</filename>
+          that is written in the same iteration. This tree specifies the phylogenetic location of each
+          ancestral sequence by labelling the internal nodes of the tree.  For example, the tree below
+          shows where the internal nodes <userinput>A5</userinput>, <userinput>A6</userinput>, and <userinput>A7</userinput> are
+          located on the tree:
+          <programlisting>(Halobacterium:0.213240,((Escherichia:0.435762,Pyrococcus:0.122678)<emphasis role="strong">A5</emphasis>:0.114725,Sulfolobus:0.427210))<emphasis role="strong">A6</emphasis>:0.042527,Homo:0.427026))<emphasis role="strong">A7</emphasis>;</programlisting>
+          While the tree is written every iteration, the alignment is only written every 10 iterations
+          (by default) in order to save disk space.  One method for extracting the trees that correspond
+          to saved alignments is to extract every 10th tree with the program
+          <userinput>bali-subsample</userinput>: 
+            <screen><prompt>%</prompt> <userinput>bali-subsample 10 &lt; C1.trees &gt; C1.10.trees</userinput></screen>
+        </para>
     </section>
 
-    <section><info><title>Corresponding alignments and trees</title></info>
-    <para>
-    Each sampled alignment matrix corresponds to a tree in the file <filename>C1.trees</filename> that is written in the same iteration.
-    This tree specifies the phylogenetic location of each ancestral sequence by labelling the internal nodes of the tree.  For example,
-    the tree below shows where the internal nodes <userinput>A5</userinput>, <userinput>A6</userinput>, and <userinput>A7</userinput> are
-    located on the tree:
-    <programlisting>(Halobacterium:0.213240,((Escherichia:0.435762,Pyrococcus:0.122678)<emphasis role="strong">A5</emphasis>:0.114725,Sulfolobus:0.427210))<emphasis role="strong">A6</emphasis>:0.042527,Homo:0.427026))<emphasis role="strong">A7</emphasis>;</programlisting>
-    While the tree is written every iteration, the alignment is only written every 10 iterations
-    (by default) in order to save disk space.  One method for extracting the trees that correspond
-    to saved alignments is to extract every 10th tree with the program
-    <userinput>bali-subsample</userinput>: 
-  <screen><prompt>%</prompt> <userinput>bali-subsample 10 &lt; C1.trees &gt; C1.10.trees</userinput></screen>
-    </para>
+    <section>
+      <info><title>Extracting sequences for a specific node.</title></info>
+      <para>
+        Typically in BAli-Phy analyses the tree is not fixed. In this situation, the internal node
+        corresponding to the ancestral sequence you wish to reconstruct may not exist in every iteration.
+        As a result, the sequence names for internal nodes may change over time. Therefore, you cannot
+        simply extract ancestral sequences with a given name. Instead, for each corresponding (alignment,tree)
+        pair, you must determine whether the node you are interested in exists in the tree, and then extract
+        the sequence with the corresponding name from the alignment. 
+    <screen><prompt>%</prompt> <userinput>trees-consensus <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees | tree-tool - --strip-internal-names --name-all-nodes &gt; c50.tree</userinput>
+<prompt>%</prompt> <userinput>extract-ancestors -A <replaceable>dir</replaceable>-1/C1.P1.fastas -T <replaceable>dir</replaceable>-1/C1.trees -A <replaceable>dir</replaceable>-2/C1.P1.fastas -T <replaceable>dir</replaceable>-2/C1.trees -n c50.tree > P1.ancestors.fastas</userinput></screen>
+      </para>
     </section>
-    </section>
-
-    <section><info><title>Single summary alignment with ancestral sequences.</title></info>
+    
+    <section>
+      <info><title>Generating summary alignment with ancestral sequences.</title></info>
 
     <para>Users can also summarize the posterior distribution in terms of a single
     representative alignment with ancestral sequences. This approach is most similar to the output
@@ -2334,43 +2346,87 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
     removed.
     <screen><prompt>%</prompt> <userinput>trees-consensus <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees | tree-tool - --strip-internal-names --name-all-nodes &gt; c50.tree</userinput>
 <prompt>%</prompt> <userinput>cut-range <replaceable>dir</replaceable>-1/C1.P<replaceable>p</replaceable>.fastas <replaceable>dir</replaceable>-2/C1.P<replaceable>p</replaceable>.fastas --skip=<replaceable>burn-in</replaceable> | alignment-chop-internal --tree c50.tree | alignment-max &gt; P1-max.fasta</userinput>
-<prompt>%</prompt> <userinput>extract-ancestors -A <replaceable>dir</replaceable>-1/C1.P1.fastas -T <replaceable>dir</replaceable>-1/C1.trees -A <replaceable>dir</replaceable>-2/C1.P1.fastas -T <replaceable>dir</replaceable>-2/C1.trees -a P1.max.fasta -n c50.tree --show-leaves > P1.ancestors.fasta</userinput></screen>
+<prompt>%</prompt> <userinput>extract-ancestors -A <replaceable>dir</replaceable>-1/C1.P1.fastas -T <replaceable>dir</replaceable>-1/C1.trees -A <replaceable>dir</replaceable>-2/C1.P1.fastas -T <replaceable>dir</replaceable>-2/C1.trees -a P1.max.fasta -n c50.tree > P1.ancestors.fasta</userinput></screen>
     
+    </para>
+    <section><info><title>Tree uncertainty in ancestral sequence reconstruction.</title></info>
+    <para>Some programs require you to fix the tree when inferring ancestral sequences.  When the
+    tree is fixed, inferring the sequence at a node is simple, since the node always exists.
+    BAli-Phy does not require you to fix the tree.  As a result, inferring ancestral sequences
+    does not require a second analysis.</para>
+
+    <para>If the tree is not fixed, then reconstructing the sequence at a node becomes more complicated.
+    This is because that node might not exist in every posterior tree sample.  However, it is still
+    possible to reconstruct the sequence at a node by selectingancestral sequences from tree where the
+    node exists. 
+    </para>
+
+    <section><info><title>Node-based queries.</title></info>
+    <para>A node exists in a sampled tree if every branch connected to that node exists in the sampled tree.
+    A node-based query asks for the reconstructed ancestral sequence only from samples where every branch
+    connected to that node exists. A node-based query is more stringent than a branch-based query, since it
+    requires multiple branches to exist.</para>
+    <para>BAli-Phy allows constructing node-based queries by passing in a Newick tree with labelled internal nodes.
+    A node-based query is automatically constructed from each internal node that is labelled.
     </para>
     </section>
 
+    <section><info><title>Branch-based queries.</title></info>
+    <para>A branch-based query requires only that a single branch exist in a sampled tree.  The branch-based
+    query asks for the reconstructed ancestral sequence on one endpoint of that (directed) branch.  When the focus
+    is on changes that occur on a particular branch, it does not make sense to also require that other branches
+    connected to the endpoint also exist.
+    </para>
+    <para>BAli-Phy allows constructing branch-based queries by passing in a Newick tree with labelled internal nodes.
+    A branch-based query is automatically constructed from each branch where both endpoints are labelled.  The query
+    for a branch from node1 to node2 is named "node2&lt;=node1".
+    </para>
+    <para>
+      Branch-based queries can also be written in the form
+      <programlisting>name = taxon1 taxon2 ... taxonN</programlisting>
+      This matches branches that separate the listed taxa from all other taxa, and points toward the listed taxa.
+    </para>
+    </section>
+
+    </section>
+
+    <!-- section><info><title>Alignment uncertainty in ancestral sequence reconstruction.</title></info>
+    <para>
+      Most programs for reconstructing ancestral sequences assume that the alignment is known.
+      When this is true, identifying the ancestor at a particular node and column is trivial if the node exists in the tree.
+    </para>
+    <para>
+      However, BAli-Phy allows estimating ancestral sequences when the alignment is not known.  This is more
+      complicated, the length of the ancestral sequence at a given node may be different between different sample.
+      Even worse, identifying the ancestral character in a given column no longer makes sense, since the particular
+      set of leaf characters that identify the column may not always be aligned.
+    </para>
+    <para>
+      Another way of stating this problem is that if we seek to identify the ancestral character for
+      one letter in a column, it may be different that the ancestral character for another letter in the same column,
+      since those two letters may not be homologous in a given ancestral sample.
+    </para>
+    <para>
+      BAli-Phy currently solves this problem by selecting a representative letter in a template alignment to identify
+      that column.  When finding the ancestral character from a particular sampled alignment, BAli-Phy chooses the
+      ancestral character from the sampled alignment column that contains the representative letter.
+      This approach collapses to the standard approach for columns that are definitely homologous.
+      However, this is a challenging problem that is not completely solved.
+    </para>
+    </section -->
+
+    </section>
+
     <section><info><title>Statistical inferences without a summary alignment.</title></info>
-    <para>Inferences about ancestral sequence are often done by analyzing the summary alignment and
-    its ancestral sequences.  An alternative approach is to analyze each sampled alignment with
-    ancestors separately, and then average the results across all posterior samples. When this
-    approach is feasible, it is more statistically rigorous than constructing a single summary
-    alignment, because it operates on joint reconstructions and because it incorporates uncertainty
-    in the phylogeny, alignment, and ancestral sequences.  It also requires a smaller number of
-    posterior samples as input. This can be difficult if the analysis results are not easy
-    to average.
+    <para>Inferences about ancestral sequence are sometimes done by analyzing the summary alignment and
+    its ancestral sequences.  A more correct approach is to analyze each sampled alignment with
+    ancestors separately, and then average the results across all posterior samples.  When this
+    approach is feasible, it is more statistically rigorous than analysis of the summary alignment,
+    because it operates on joint reconstructions and because it incorporates uncertainty in the
+    phylogeny, alignment, and ancestral sequences.
     </para>
-
-    <para>When the tree is not fixed, some samples may not contain a particular ancestral node or
-    branch on the tree.  Ignoring samples where some node or branch is not present is allowed, and
-    yields a posterior expectation <emphasis>conditional on the existence of that node or
-    branch</emphasis>.  For example, one could compute the ancestral sequence length for a given
-    node, and average the result across all sampled  (alignment,tree) pairs,  ignoring samples where
-    the tree does not contain the given node.  This yields the posterior expected sequence length for that
-    node <emphasis>conditional on the node's existence.</emphasis>.  It is not necessary to
-    perform multiple runs where each run conditions on the existence of a given node.  However,
-    conditioning on the existence of low-probability nodes does not work very well.  In that case,
-    you might consider fixing the tree, since BAli-Phy doesn't allow fixing particular branches or nodes.
-    </para>
-
-    <para>When the alignment is not fixed, some samples may not contain a particular
-    alignment column. If we look for a change from L to V
-    at site 2 on a given branch, this does not work, since site 2 has a different meaning in
-    different alignments.  Instead, we need a method of identifying the relevant column that does
-    not depend on the site number.  Then we could compute the probability of an L-to-V change as the
-    fraction of sampled alignments with an L-to-V change in the identified column,
-    <emphasis>conditional on the existence of such a column</emphasis>. However, if the alignment
-    column has low probability, then this approach may also be problematic. 
-    </para>
+    <para>Analyzing the samples and pooling the results also allows each sampled alignment to be
+    analyzed in combination with the corresponding sampled tree.</para>
     </section>
 
 

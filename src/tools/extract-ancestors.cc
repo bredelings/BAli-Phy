@@ -493,10 +493,11 @@ std::ostream& write_corresponding_alignment_row(std::ostream& o, const string& n
 
 
 pair<vector<profile>,vector<profile>> extract_sequence(const joint_A_T& samples, const optional<alignment>& template_A,
-                                                       bool show_ancestors,
                                                        const optional<SequenceTree>& node_queries,
                                                        const optional<vector<pair<string,dynamic_bitset<>>>> branch_queries)
 {
+    bool do_extract = not template_A;
+
     vector<int> node_counts;
     vector<profile> node_profiles;
     if (node_queries)
@@ -555,31 +556,17 @@ pair<vector<profile>,vector<profile>> extract_sequence(const joint_A_T& samples,
             }
         }
 
-        if (log_verbose or (show_ancestors and not internal_nodes.empty()))
+        if (log_verbose or (do_extract and not internal_nodes.empty()))
         {
-            if (corresponding_columns)
-            {
-                // 6. Write named ancestors sequences corresponding to node and branch queries
-                for (auto& [name, node]: internal_nodes)
-                    write_corresponding_alignment_row(std::cout, name, A, node, *corresponding_columns, template_A->length());
-                std::cout<<"\n\n";
-            }
-            else
-            {
-                // 4. Write leaf sequences
-                for(int node=0;node<samples.leaf_names().size();node++)
-                    write_alignment_row(std::cout, samples.leaf_names()[node], A, node);
+            // 4. Write leaf sequences
+            for(int node=0;node<samples.leaf_names().size();node++)
+                write_alignment_row(std::cout, samples.leaf_names()[node], A, node);
 
-                // 5. Write internal node sequences for debugging purposes
-                if (log_verbose)
-                    for(auto& [name,node]: internal_nodes)
-                        write_alignment_row(std::cout, name, A, node);
+            // 5. Write named ancestors sequences corresponding to node and branch queries
+            for(auto& [name,node]: internal_nodes)
+                write_alignment_row(std::cout, name, A, node);
 
-                // 6. Write named ancestors sequences corresponding to node and branch queries
-                for (auto& [name, node]: internal_nodes)
-                    write_alignment_row(std::cout, name, A, node);
-                std::cout<<"\n\n";
-            }
+            std::cout<<"\n\n";
         }
     }
 
@@ -640,9 +627,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description output("Output options");
     output.add_options()
         ("template-alignment,a", value<string>(), "File with template alignment")
-        ("show-leaves","Show leaf sequences even for template alignments.")
-        // FIXME, Add option to use a template alignment, but print only ancestors.
-        ("show-ancestors","Write input alignments augmented with ancestor sequences.")
         ;
 
     options_description all("All options");
@@ -655,15 +639,24 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     if (args.count("help")) {
         cout<<"Construct alignments with internal sequences for labeled nodes in query tree.\n\n";
-        cout<<"Usage: extract-ancestors <alignments file> <trees file> <alignment file> [OPTIONS]\n";
+        cout<<"Usage: extract-ancestors [OPTIONS]\n";
 
         cout<<all<<"\n";
         cout<<"Examples:\n\n";
-        cout<<"   % extract-ancestors -A C1.P1.fastas -T C1.trees -a P1-max.fasta --nodes query.tree --groups query.tree\n\n";
+        cout<<" Add named ancestral sequences to alignments where they are present:\n";
+        cout<<"   % extract-ancestors -A C1.P1.fastas -T C1.trees --nodes query.tree --groups query.tree\n\n";
+        cout<<" Add ancestral sequences to summary alignment:\n";
+        cout<<"   % extract-ancestors -A C1.P1.fastas -T C1.trees --nodes query.tree --groups query.tree -a P1.max.fasta\n\n";
         exit(0);
     }
 
     if (args.count("verbose")) log_verbose = args["verbose"].as<int>();
+
+    if (not args.count("alignments"))
+        throw myexception()<<"No alignments given! (Use -A alignments_file)";
+
+    if (not args.count("trees"))
+        throw myexception()<<"No trees given! (Use -T trees_file)";
 
     return args;
 }
@@ -702,10 +695,6 @@ int main(int argc,char* argv[])
             if (log_verbose) cerr<<"done.\n";
         }
 
-        bool show_ancestors = args.count("show-ancestors");
-        if (not show_ancestors and not args.count("template-alignment"))
-            throw myexception()<<"Neither --show-ancestors not --template-align=<FASTA file> is set!";
-
         // 3. Load queries to find ancestor nodes on the tree
         auto node_queries = get_node_queries(args, samples);
         auto branch_queries = get_branch_queries(args, samples);
@@ -713,16 +702,15 @@ int main(int argc,char* argv[])
             std::cerr<<"WARNING: no ancestors defined!\n";
         
         // 4. Extract profiles
-        auto [node_profiles, branch_profiles] = extract_sequence(samples, template_A, show_ancestors, node_queries, branch_queries);
+        auto [node_profiles, branch_profiles] = extract_sequence(samples, template_A, node_queries, branch_queries);
 
         // 5. Write profiles for template alignments
-        if (template_A and not show_ancestors)
+        if (template_A)
         {
             auto& a = template_A->get_alphabet();
 
-            if (args.count("show-leaves"))
-                for(int node=0;node<samples.leaf_names().size();node++)
-                    write_alignment_row(std::cout, samples.leaf_names()[node], *template_A, node);
+            for(int node=0;node<samples.leaf_names().size();node++)
+                write_alignment_row(std::cout, samples.leaf_names()[node], *template_A, node);
 
             if (node_queries)
             {
@@ -762,7 +750,7 @@ int main(int argc,char* argv[])
         }
     }
     catch (std::exception& e) {
-        cerr<<"joint-indels: Error! "<<e.what()<<endl;
+        cerr<<"extract-ancestors: Error! "<<e.what()<<endl;
         exit(1);
     }
     return 0;
