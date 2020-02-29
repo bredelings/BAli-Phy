@@ -528,9 +528,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     p.add("files", -1);
   
     variables_map args;     
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-    // store(parse_command_line(argc, argv, desc), args);
+    store(command_line_parser(argc, argv).options(all).positional(p).run(), args);
     notify(args);    
 
     if (args.count("help")) {
