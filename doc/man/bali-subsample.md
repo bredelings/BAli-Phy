@@ -1,14 +1,14 @@
-% bali-subsample(1)
+% subsample(1)
 % Benjamin Redelings
 % Feb 2018
 
 # NAME
 
-**bali-subsample** - Subsample lines in a file.
+**subsample** - Subsample lines in a file.
 
 # SYNOPSIS
 
-**bali-subsample** [OPTIONS] < in-file
+**subsample** [OPTIONS] < in-file
 
 # DESCRIPTION
 

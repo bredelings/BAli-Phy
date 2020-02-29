@@ -139,7 +139,7 @@ tools = ['model_P','statreport','stats-select','alignment-gild','alignment-conse
 	 'alignment-indices','alignment-info','alignment-cat','alignment-translate','alignment-find','trees-consensus',
 	 'tree-mean-lengths','mctree-mean-lengths','trees-to-SRQ','pickout','cut-range','trees-distances', 'alignment-thin',
 	 'alignments-diff','tree-tool','alignment-distances','alignment-draw', 'trees-bootstrap', 'draw-tree', 'extract-ancestors',
-         'summarize-ancestors' ]
+         'summarize-ancestors']
 
 extra_tools = ['stats-merge', 'stats-cat', 'alignment-identity', 'alignment-compare', 'joint-indels', 'joint-parsimony', 'alignment-smc',
 		 'alignment-convert', 'alignment-find-conserved', 'partitions-supported', 'draw-graph', 'trees-pair-distances', 'tree-partitions', 'tree-reroot',
@@ -157,7 +157,7 @@ extra_sources = {'alignment-draw': ['tools/colors.cc'], 'trees-bootstrap': ['too
 
 extra_deps = {'draw-tree': [cairo]}
 
-foreach tool: tools
+foreach tool: tools + prefixed_tools
   sources = ['tools/' + tool + '.cc']
   if tool in extra_sources
     sources += extra_sources[tool]
