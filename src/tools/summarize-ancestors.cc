@@ -597,19 +597,19 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description invisible("Invisible options");
     invisible.add_options()
         ("template-alignment,a", value<string>(), "File with template alignment")
+        ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
         ;
 
     // named options
     options_description general("General options");
     general.add_options()
         ("help,h", "produces help message")
-        ("verbose,v",value<int>()->implicit_value(1),"Show more log messages on stderr.")
+        ("verbose,V",value<int>()->implicit_value(1),"Show more log messages on stderr.")
         ;
 
     options_description input("Input options");
     input.add_options()
         ("alignments,A", value<vector<string>>()->composing(),"File of alignment samples")
-        ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
         ("trees,T", value<vector<string>>()->composing(), "File of corresponding tree samples")
         ("subsample,x",value<unsigned>()->default_value(10),"factor by which to sub-sample trees")
         ;
@@ -640,7 +640,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
         cout<<"Construct alignments with internal sequences for labeled nodes in query tree.\n\n";
         cout<<"Usage: summarize-ancestors <alignment> -A <fastas1> -T <trees1> [OPTIONS]\n";
 
-        cout<<all<<"\n";
+        cout<<visible<<"\n";
         cout<<"Examples:\n\n";
         cout<<" Add ancestral sequences to summary alignment:\n";
         cout<<"   % summarize-ancestors summary.fasta -A C1.P1.fastas -T C1.trees --nodes query.tree --groups query.tree\n\n";
