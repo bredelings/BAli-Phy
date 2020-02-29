@@ -74,7 +74,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("help,h", "Produce help message")
 	("skip,s",value<unsigned>()->default_value(0),"Number of alignment samples to skip.")
 	("max,m",value<int>()->default_value(1000),"Maximum number of alignments to analyze.")
-	("verbose,v","Output more log messages on stderr.")
+	("verbose,V","Output more log messages on stderr.")
 	("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
 	;
 

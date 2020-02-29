@@ -138,7 +138,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // named options
   options_description all("Allowed options");
   all.add_options()
-    ("help", "produce help message")
+    ("help,h", "produce help message")
     ("seed", value<unsigned long>(),"random seed")
     ("verbose","Output more log messages on stderr.")
     ;

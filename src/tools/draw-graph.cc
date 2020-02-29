@@ -45,7 +45,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // named options
   options_description input("Input options");
   input.add_options()
-    ("help", "produce help message")
+    ("help,h", "produce help message")
     ("file",value<string>(),"predicates to examine")
     ;
   

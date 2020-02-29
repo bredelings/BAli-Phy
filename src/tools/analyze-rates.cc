@@ -52,7 +52,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   options_description visible("All options");
   visible.add_options()
-    ("help", "Produce help message")
+    ("help,h", "Produce help message")
     ("level", value<double>()->default_value(0.5),"confidence level to report")
     ("bins", value<unsigned>()->default_value(100),"number of bins")
     ("smooth", value<unsigned>()->default_value(30),"number of smoothing iterations")

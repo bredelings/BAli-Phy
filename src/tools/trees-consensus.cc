@@ -401,7 +401,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description input("Input options");
     input.add_options()
 	("help,h", "Produce help message.")
-	("verbose,v","Output more log messages on stderr.")
+	("verbose,V","Output more log messages on stderr.")
 	("skip,s",value<string>()->default_value("10%"),"Number of trees to skip.")
 	("until,u",value<int>(),"Read until this number of trees.")
 	("max,m",value<int>(),"Thin tree samples down to this number of trees.")

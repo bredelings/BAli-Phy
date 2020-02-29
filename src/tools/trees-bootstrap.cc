@@ -498,7 +498,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("subsample,x",value<int>(),"Factor by which to sub-sample.")
 	("predicates",value<string>(),"Predicates to examine.")
 	("min-support",value<double>()->default_value(0.1,"0.1"),"Minimum value of predicates to consider interesting..")
-	("verbose,v","Output more log messages on stderr.")
+	("verbose,V","Output more log messages on stderr.")
 	;
   
     options_description bootstrap("Block bootstrap options");

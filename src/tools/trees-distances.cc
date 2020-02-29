@@ -125,7 +125,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("until,u",value<int>(),"Read until this number of trees.")
 	("max,m",value<int>(),"Thin tree samples down to this number of trees.")
 	("subsample,x",value<int>()->default_value(1),"factor by which to subsample")
-	("verbose,v","Output more log messages on stderr.")
+	("verbose,V","Output more log messages on stderr.")
 	;
 
     options_description analysis("Analysis options");

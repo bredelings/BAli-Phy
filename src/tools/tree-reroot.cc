@@ -47,7 +47,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     // named options
     options_description all("Allowed options");
     all.add_options()
-	("help", "produce help message")
+	("help,h", "produce help message")
 	("tree", value<string>(),"tree to re-root")
 	("outgroup", value<string>(),"Add root in middle of branch to this leaf")
 	("leaf", value<string>(),"Root tree at this leaf")

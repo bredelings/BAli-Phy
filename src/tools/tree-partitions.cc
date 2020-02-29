@@ -40,7 +40,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // named options
   options_description input("Input options");
   input.add_options()
-    ("help", "produce help message")
+    ("help,h", "produce help message")
     ("all","show only informative partitions")
     ("info","Print information about the tree")
     ("scale",value<double>(),"Scale the branch lengths")

@@ -62,7 +62,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description visible("All options");
     visible.add_options()
 	("help,h", "Produce help message.")
-	("verbose,v","Output more log messages on stderr.")
+	("verbose,V","Output more log messages on stderr.")
 
 	("skip,s",value<string>()->default_value("10%"),"Number of initial lines to skip.")
 	("subsample,x",value<int>()->default_value(1),"Factor by which to sub-sample.")

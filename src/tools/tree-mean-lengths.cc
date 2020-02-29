@@ -182,7 +182,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("no-node-lengths","ignore branches not in the specified topology")
 	("safe","Don't die if no trees match the topology")
 	("show-node-lengths","Output special format")
-	("verbose,v","Output more log messages on stderr.")
+	("verbose,V","Output more log messages on stderr.")
 	;
 
     // positional options

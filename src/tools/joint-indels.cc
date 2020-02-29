@@ -258,7 +258,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     // named options
     options_description visible("Allowed options");
     visible.add_options()
-	("help", "produces help message")
+	("help,h", "produces help message")
 	("subsample",value<unsigned>()->default_value(10),"factor by which to sub-sample trees")
 	("partition", value<string>(), "find indels along internal branch that bi-partitions given taxa (<taxa1>:<taxa2>:...)")
 	("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")

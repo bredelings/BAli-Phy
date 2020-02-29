@@ -167,7 +167,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("safe","Don't die if no trees match the topology")
 	("drop-partial","Remove partial branches")
 	("seed", value<unsigned long>(),"random seed")
-	("verbose,v","Output more log messages on stderr.")
+	("verbose,V","Output more log messages on stderr.")
 	;
 
     // positional options

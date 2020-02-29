@@ -353,7 +353,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
 	("skip",value<unsigned>()->default_value(0),"number of alignment samples to skip")
 	("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
-	("verbose,v","Output more log messages on stderr.")
+	("verbose,V","Output more log messages on stderr.")
 	;
 
     // positional options

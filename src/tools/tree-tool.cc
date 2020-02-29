@@ -64,7 +64,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description general("General options");
     general.add_options()
         ("help,h", "produce help message")
-        ("verbose,v","Output more log messages on stderr.")
+        ("verbose,V","Output more log messages on stderr.")
         ;
 
     options_description commands("Modification options");

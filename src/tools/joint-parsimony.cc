@@ -63,7 +63,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     options_description visible("All options");
     visible.add_options()
-        ("help", "produces help message")
+        ("help,h", "produces help message")
         ("subsample",value<unsigned>()->default_value(10),"factor by which to sub-sample trees")
         ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
         ;
