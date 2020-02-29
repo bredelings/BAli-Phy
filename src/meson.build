@@ -179,7 +179,6 @@ foreach tool: tools + prefixed_tools
 			sources,
 			include_directories: [root_inc, libutil_inc],
 			dependencies: deps,
-			# libcomputation is just for the Object class!
 			link_with: [libutil,libcommon],
 			install_rpath: extra_rpath,
 			install: true)
