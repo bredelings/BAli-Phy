@@ -2514,15 +2514,16 @@ When this
     <section>
       <info><title>Generating a summary alignment with ancestral sequences</title></info>
 
-    <para>Users can also summarize the posterior distribution in terms of a single
-    representative alignment with ancestral sequences. This approach is most similar to the output
-    of ancestral sequence reconstruction for other programs with a fixed alignment.  In this mode,
-    BAli-Phy shows the most probable ancestral state instead of a randomly sampled ancestral state.
-    Since a fixed alignment is used as a template, variation in ancestral sequence length is
-    removed.
+    <para>It is also possible to display the most probable ancestral residue (or gap) in each site of 
+    a single representative alignment, as opposed to a randomly sampled ancestral state.  This is most
+    similar to the behavior of other fixed-alignment ancestral sequence reconstruction programs.
+    When computing the probability of an ancestral residue, this summary averages over uncertainty in the topology,
+    the alignment, and the ancestral state itself. However, the choice of a single representative alignment
+    to define the "columns" means that variation in ancestral sequence length cannot be displayed by this summary.
+
     <screen><prompt>%</prompt> <userinput>cut-range <replaceable>dir</replaceable>-1/C1.P<replaceable>p</replaceable>.fastas <replaceable>dir</replaceable>-2/C1.P<replaceable>p</replaceable>.fastas --skip=<replaceable>burn-in</replaceable> | alignment-chop-internal --tree c50.tree | alignment-max &gt; P1-max.fasta</userinput>
 <prompt>%</prompt> <userinput>trees-consensus <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees | tree-tool - --strip-internal-names --name-all-nodes &gt; c50.tree</userinput>
-<prompt>%</prompt> <userinput>extract-ancestors -A <replaceable>dir</replaceable>-1/C1.P1.fastas -T <replaceable>dir</replaceable>-1/C1.trees -A <replaceable>dir</replaceable>-2/C1.P1.fastas -T <replaceable>dir</replaceable>-2/C1.trees -n c50.tree -g c50.tree -a P1.max.fasta > P1.ancestors.fasta</userinput></screen>
+<prompt>%</prompt> <userinput>summarize-ancestors P1.max.fasta -A <replaceable>dir</replaceable>-1/C1.P1.fastas -T <replaceable>dir</replaceable>-1/C1.trees -A <replaceable>dir</replaceable>-2/C1.P1.fastas -T <replaceable>dir</replaceable>-2/C1.trees -n c50.tree -g c50.tree > P1.ancestors.fasta</userinput></screen>
     
     </para>
     </section>
