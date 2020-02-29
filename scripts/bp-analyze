@@ -1597,7 +1597,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             if self.get_imodel_for_partition(i) is None:
                 template = "Results/P{}.initial.fasta".format(i+1)
             tree = "Results/c50.tree"
-            cmd = ['extract-ancestors','-a',template,'-n',tree,'-g',tree]
+            cmd = ['summarize-ancestors',template,'-n',tree,'-g',tree]
             for dir in [run.dir for run in self.mcmc_runs]:
                 cmd += ['-A',path.join(dir,'C1.P{}.fastas'.format(i+1)),
                         '-T',path.join(dir,'C1.trees')]
