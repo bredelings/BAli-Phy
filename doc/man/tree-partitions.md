@@ -15,7 +15,7 @@
 Get partitions from a tree.
 
 # INPUT OPTIONS:
-**--help**
+**-h**, **--help**
 : produce help message
 
 **--all**

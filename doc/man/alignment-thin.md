@@ -18,7 +18,7 @@ Remove sequences or columns from an alignment.
 **-h**, **--help**
 : Print usage information.
 
-**-v**, **--verbose**
+**-V**, **--verbose**
 : Output more log messages on stderr.
 
 

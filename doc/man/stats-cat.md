@@ -18,7 +18,7 @@ Append tab-delimited files with the same field names.
 **-h**, **--help**
 : Produce help message.
 
-**-v**, **--verbose**
+**-V**, **--verbose**
 : Output more log messages on stderr.
 
 **-s** _arg_, **--skip** _arg_

@@ -30,7 +30,7 @@ Compute autocorrelations or other functions of tree distances.
 **-x** _arg_ (=1), **--subsample** _arg_ (=1)
 : factor by which to subsample
 
-**-v**, **--verbose**
+**-V**, **--verbose**
 : Output more log messages on stderr.
 
 

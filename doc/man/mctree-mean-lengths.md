@@ -48,7 +48,7 @@ Compute the mean lengths for branches in the given topology.
 **--seed** _arg_
 : random seed
 
-**-v**, **--verbose**
+**-V**, **--verbose**
 : Output more log messages on stderr.
 
 

@@ -15,7 +15,7 @@
 Usage: draw-graph <file1>
 
 # INPUT OPTIONS:
-**--help**
+**-h**, **--help**
 : produce help message
 
 **--file** _arg_

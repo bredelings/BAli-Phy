@@ -15,7 +15,7 @@
 Show useful statistics about the alignment.
 
 # ALLOWED OPTIONS:
-**--help**
+**-h**, **--help**
 : produce help message
 
 **--align** _arg_

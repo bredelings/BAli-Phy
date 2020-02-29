@@ -36,7 +36,7 @@ Construct a posterior decoding alignment to summarize an alignment sample.
 **-p** _arg_, **--out-probabilities** _arg_
 : Output file for column probabilities, if specified
 
-**-v**, **--verbose**
+**-V**, **--verbose**
 : Output more log messages on stderr.
 
 

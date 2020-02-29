@@ -15,7 +15,7 @@
 Place the root on the external branch leading to <outgroup>.
 
 # ALLOWED OPTIONS:
-**--help**
+**-h**, **--help**
 : produce help message
 
 **--tree** _arg_

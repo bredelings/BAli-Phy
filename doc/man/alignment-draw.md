@@ -15,7 +15,7 @@
 Draw an alignment to HTML, optionally coloring residues by AU.
 
 # GENERAL OPTIONS:
-**--help**
+**-h**, **--help**
 : produce help message
 
 **--file** _arg_

@@ -14,25 +14,17 @@
 
 Construct alignments with internal sequences for labeled nodes in query tree.
 
-# INVISIBLE OPTIONS:
-**-a** _arg_, **--template-alignment** _arg_
-: File with template alignment
-
-
 # GENERAL OPTIONS:
 **-h**, **--help**
 : produces help message
 
-**-v**, **--verbose**
-: \[=arg(=1)\]      Show more log messages on stderr.
+**-V**, **--verbose**
+: \[=arg(=1)\]   Show more log messages on stderr.
 
 
 # INPUT OPTIONS:
 **-A** _arg_, **--alignments** _arg_
 : File of alignment samples
-
-**--alphabet** _arg_
-: set to 'Codons' to prefer codon alphabets
 
 **-T** _arg_, **--trees** _arg_
 : File of corresponding tree samples

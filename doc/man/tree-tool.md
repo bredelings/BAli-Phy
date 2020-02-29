@@ -18,7 +18,7 @@ Perform various operations on Newick trees.
 **-h**, **--help**
 : produce help message
 
-**-v**, **--verbose**
+**-V**, **--verbose**
 : Output more log messages on stderr.
 
 

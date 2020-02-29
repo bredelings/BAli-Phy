@@ -15,7 +15,7 @@
 Compute marginal likelihoods using stabilized harmonic mean estimator
 
 # ALLOWED OPTIONS:
-**--help**
+**-h**, **--help**
 : produce help message
 
 **--seed** _arg_

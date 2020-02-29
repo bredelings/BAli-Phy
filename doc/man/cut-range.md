@@ -14,7 +14,7 @@
 
 Select lines between certain values of a key. (e.g. iterations)
 
-# ALLOWED OPTIONS:
+# ALL OPTIONS:
 **-h**, **--help**
 : produce help message
 
@@ -32,6 +32,11 @@ Select lines between certain values of a key. (e.g. iterations)
 
 **--verbose**
 : Output more log messages on stderr.
+
+
+# INVISIBLE OPTIONS:
+**--filenames** _arg_
+: Filenames to read
 
 
 # REPORTING BUGS:

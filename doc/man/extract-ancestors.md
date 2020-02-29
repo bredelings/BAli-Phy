@@ -4,7 +4,7 @@
 
 # NAME
 
-**extract-ancestors** - Construct alignments with internal sequences for labeled nodes in query tree.
+**extract-ancestors** - Extract and name ancestral sequences according to node- and branch- queries.
 
 # SYNOPSIS
 
@@ -12,22 +12,19 @@
 
 # DESCRIPTION
 
-Construct alignments with internal sequences for labeled nodes in query tree.
+Extract and name ancestral sequences according to node- and branch- queries.
 
 # GENERAL OPTIONS:
 **-h**, **--help**
 : produces help message
 
-**-v**, **--verbose**
-: \[=arg(=1)\]      Show more log messages on stderr.
+**-V**, **--verbose**
+: \[=arg(=1)\]   Show more log messages on stderr.
 
 
-# ALLOWED OPTIONS:
+# INPUT OPTIONS:
 **-A** _arg_, **--alignments** _arg_
 : File of alignment samples
-
-**--alphabet** _arg_
-: set to 'Codons' to prefer codon alphabets
 
 **-T** _arg_, **--trees** _arg_
 : File of corresponding tree samples
@@ -36,7 +33,7 @@ Construct alignments with internal sequences for labeled nodes in query tree.
 : factor by which to sub-sample trees
 
 
-# ANCESTOR OPTIONS:
+# ANCESTOR QUERY OPTIONS:
 **-n** _arg_, **--nodes** _arg_
 : Newick tree with labelled ancestors
 
@@ -50,21 +47,11 @@ Construct alignments with internal sequences for labeled nodes in query tree.
 : Minimum fraction to include a group.
 
 
-# OUTPUT OPTIONS:
-**-a** _arg_, **--template-alignment** _arg_
-: File with template alignment
-
-
 # EXAMPLES:
  
 Add named ancestral sequences to alignments where they are present:
 ```
 % extract-ancestors -A C1.P1.fastas -T C1.trees --nodes query.tree --groups query.tree
-```
-
-Add ancestral sequences to summary alignment:
-```
-% extract-ancestors -A C1.P1.fastas -T C1.trees --nodes query.tree --groups query.tree -a P1.max.fasta
 ```
 
 

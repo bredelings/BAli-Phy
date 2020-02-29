@@ -36,7 +36,7 @@ Compare support for partitions between different files.
 **--min-support** _arg_ (=0.1)
 : Minimum value of predicates to consider interesting..
 
-**-v**, **--verbose**
+**-V**, **--verbose**
 : Output more log messages on stderr.
 
 

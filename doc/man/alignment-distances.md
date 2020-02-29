@@ -24,7 +24,7 @@ Compute distances between alignments.
 **-m** _arg_ (=1000), **--max** _arg_ (=1000)
 : Maximum number of alignments to analyze.
 
-**-v**, **--verbose**
+**-V**, **--verbose**
 : Output more log messages on stderr.
 
 **--alphabet** _arg_

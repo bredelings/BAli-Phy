@@ -15,7 +15,7 @@
 Usage: joint-indels <alignments file> <trees file> [OPTIONS]
 
 # ALLOWED OPTIONS:
-**--help**
+**-h**, **--help**
 : produces help message
 
 **--subsample** _arg_ (=10)

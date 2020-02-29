@@ -18,7 +18,7 @@ Compute summary statistics for tab-delimited data files.
 **-h**, **--help**
 : Produce help message.
 
-**-v**, **--verbose**
+**-V**, **--verbose**
 : Output more log messages on stderr.
 
 **-s** _arg_ (=10%), **--skip** _arg_ (=10%)

@@ -15,7 +15,7 @@
 Usage: joint-parsimony <alignments file> <trees file> [OPTIONS]
 
 # ALL OPTIONS:
-**--help**
+**-h**, **--help**
 : produces help message
 
 **--subsample** _arg_ (=10)

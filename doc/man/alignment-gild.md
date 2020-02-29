@@ -36,7 +36,7 @@ Annotate each residue in the alignment according to the probability that it shou
 **--max-alignments** _arg_ (=1000)
 : maximum number of alignments to analyze
 
-**-v**, **--verbose**
+**-V**, **--verbose**
 : Output more log messages on stderr.
 
 

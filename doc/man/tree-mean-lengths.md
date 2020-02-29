@@ -51,7 +51,7 @@ Compute the mean lengths for branches in the given topology.
 **--show-node-lengths**
 : Output special format
 
-**-v**, **--verbose**
+**-V**, **--verbose**
 : Output more log messages on stderr.
 
 
