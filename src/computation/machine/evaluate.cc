@@ -400,34 +400,36 @@ class RegOperationArgsUnchangeable final: public OperationArgs
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
     int evaluate_reg(int r2)
         {
-            return memory().incremental_evaluate_unchangeable(r2);
+            int r3 = memory().incremental_evaluate_unchangeable(r2);
+            if (M.reg_type(r3) == reg::type_t::changeable)
+                throw no_context();
+            return r3;
         }
 
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
     int evaluate_reg_force(int r2)
         {
-            return memory().incremental_evaluate_unchangeable(r2);
+            return evaluate_reg(r2);
         }
 
     /// Evaluate the reg r2, record a dependency on r2, and return the reg following call chains.
     int evaluate_reg_to_reg(int r2)
         {
-            // Compute the value, and follow index_var chains (which are not changeable).
-            return memory().incremental_evaluate_unchangeable(r2);
+            return evaluate_reg(r2);
         }
 
     const closure& evaluate_reg_to_closure(int r2)
         {
             int r3 = evaluate_reg_to_reg(r2);
-            if (M.reg_type(r3) == reg::type_t::changeable)
-                throw no_context();
             assert(M.reg_type(r3) == reg::type_t::constant);
             return M[r3];
         }
 
     const closure& evaluate_reg_to_closure_(int r2)
         {
-            return evaluate_reg_to_closure(r2);
+            int r3 = evaluate_reg_to_reg(r2);
+            assert(M.reg_type(r3) == reg::type_t::constant);
+            return M[r3];
         }
 
 public:
