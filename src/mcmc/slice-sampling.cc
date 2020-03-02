@@ -256,7 +256,7 @@ double scale_means_only_slice_function::log_average_scale() const
 double scale_means_only_slice_function::operator()()
 {
     // return pi * (\sum_i \mu_i)^(n-B)
-    return context_slice_function::operator()() - log_average_scale()*((int)initial_scales.size() - (int)initial_branch_lengths.size());
+    return context_slice_function::operator()() + log_average_scale()*((int)initial_scales.size() - (int)initial_branch_lengths.size());
 }
 
 double scale_means_only_slice_function::current_value() const
