@@ -295,6 +295,11 @@ TableReader::TableReader(std::istream& f, int sk, int sub, int lst, const vector
     {
         string line;
         portable_getline(file,line);
+        json header = json::parse(line);
+        if (not header.count("version"))
+            throw myexception()<<"JSON log file does not have a valid header line: no \"version\" field.";
+
+        portable_getline(file,line);
         names_ = parameter_names_children(json::parse(line));
         saved_line = line;
     }

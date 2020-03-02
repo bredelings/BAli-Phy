@@ -194,6 +194,23 @@ json logged_params_and_some_computed_stuff(const Model& M, long t)
     return j;
 }
 
+string logged_params_and_some_computed_stuff_with_header(const Model& M, long t)
+{
+    json j = logged_params_and_some_computed_stuff(M,t);
+
+    string line = j.dump()+"\n";
+
+    if (t == 0)
+    {
+        json header;
+        header["version"] = "0.1";
+        header["fields"] = {"iter","prior","likelihood","posterior"};
+        header["nested"] = true;
+        line = header.dump()+"\n"+line;
+    }
+    return line;
+}
+
 
 owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>& M, const vector<string>&)
 {
@@ -321,7 +338,7 @@ vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_m
   
     // FIXME: output all the extra stuff from construction_table_function( ).
     if (log_formats.count("json"))
-        loggers.push_back( append_line_to_file(base + ".log.json", &logged_params_and_some_computed_stuff) );
+        loggers.push_back( append_to_file(base + ".log.json", &logged_params_and_some_computed_stuff_with_header) );
 
     if (not P) return loggers;
 

@@ -109,18 +109,28 @@ int main(int argc,char* argv[])
                 out_format = "json";
         }
 
+        // it looks like currently we do not allow converting tsv to json, just json to tsv.
         if (out_format == "json")
         {
             if (not filenames.size())
                 throw myexception()<<"--unnest: at least one file required.";
+
             auto file = shared_ptr<istream>(new istream_or_ifstream(std::cin, "-", filenames[0], "statistics file"));
 
             auto is_json = (file->peek() == '{');
             if (not is_json)
                 throw myexception()<<"--unnest: file must be in JSON format";
 
-            bool do_unnest = args.count("unnest");
             string line;
+            if (portable_getline(*file,line))
+            {
+                auto h = json::parse(line);
+                if (not h.count("version"))
+                    throw myexception()<<"JSON log file does not have a valid header line: no \"version\" field.";
+                std::cout<<h.dump()<<"\n";
+            }
+
+            bool do_unnest = args.count("unnest");
             while(portable_getline(*file,line))
             {
                 auto j = json::parse(line);
