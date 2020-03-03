@@ -2027,7 +2027,7 @@ mg94[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]
       </informaltable>
 
     </section>
-    <section>
+    <section xml:id="covarion_models">
       <info><title>Heterotachy models</title></info>
       <para>
         These models attempt to model the fact that evolutionary rates may change over time within a single column.
