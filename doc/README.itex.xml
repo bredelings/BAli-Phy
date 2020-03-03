@@ -2132,7 +2132,7 @@ mg94[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]
 
 	<para>The default insertion/deletion model is <userinput>rs07</userinput>.</para>
 	
-    <informaltable><info><title>Insertion-Deletion Models</title></info>
+    <informaltable>
 	  
 	  <tgroup cols="3">
 	    <colspec colnum="1" colname="col1" colwidth="1*"/>
