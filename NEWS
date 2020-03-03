@@ -1,4 +1,4 @@
-* 3.5 (unreleased)
+* 3.5 (Mar 2, 2020)
  + Reconstruct ancestral sequences by default.
  - Graphical model framework
      + Brownian model on *random* rooted tree.
