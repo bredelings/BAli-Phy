@@ -1,0 +1,142 @@
+name: Upload release artifacts
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        name: [ubuntu-gcc-9,
+               macos-xcode-11.3.1
+               ]
+
+        include:
+          - name: ubuntu-gcc-9
+            os: ubuntu-16.04
+            compiler: gcc
+            version: "9"
+            arch: "linux64"
+
+          - name: macos-xcode-11.3.1
+            os: macos-latest
+            compiler: xcode
+            version: "11.3.1"
+            arch: "mac64"
+
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+
+    - name: Install (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt install -y pandoc libcairo2-dev ccache
+        sudo rm -rf /usr/local/share/boost
+        if [ "${{ matrix.compiler }}" = "gcc" ]; then
+          sudo apt-get install -y g++-${{ matrix.version }}
+          echo "::set-env name=CC::ccache gcc-${{ matrix.version }}"
+          echo "::set-env name=CXX::ccache g++-${{ matrix.version }}"
+        else
+          sudo apt-get install -y clang-${{ matrix.version }}
+          echo "::set-env name=CC::ccache clang-${{ matrix.version }}"
+          echo "::set-env name=CXX::ccache clang++-${{ matrix.version }}"
+        fi
+
+    - name: Install (macOS)
+      if: runner.os == 'macOS'
+      run: |
+          brew update
+          brew install pkg-config pandoc cairo ccache coreutils
+          sudo xcode-select -switch /Applications/Xcode_${{ matrix.version }}.app
+
+
+    - name: Install meson
+      run: |
+        python3 -mpip install meson ninja
+
+    # Caches for different branches are isolated, so we don't need to put the branch name into the key.
+    # The total size for all caches in a repository is 5Gb.
+
+    - name: Prepare ccache timestamp
+      id: ccache_cache_timestamp
+      run: |
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          stamp=$(date '+%s')
+        else
+          stamp=$(gdate '+%s')
+        fi
+        echo "${stamp}"
+        echo "::set-output name=timestamp::${stamp}"
+
+    - name: ccache cache files
+      uses: actions/cache@v1.1.0
+      with:
+         path: ~/.ccache
+         key: ${{ matrix.name }}-ccache-${{ steps.ccache_cache_timestamp.outputs.timestamp }}
+         restore-keys: |
+           ${{ matrix.name }}-ccache-
+
+    - name: Configure
+      run: |
+        if [ "$RUNNER_OS" = "macOS" ]; then
+          export CFLAGS="-mmacosx-version-min=10.14"
+          export CXXFLAGS="-mmacosx-version-min=10.14"
+          export LDFLAGS="-mmacosx-version-min=10.14"
+        fi
+        meson build --prefix=$HOME/local --buildtype=release
+
+    - name: Build
+      run: |
+        ninja -C build install -j4
+
+    - name: Get version
+      id: get_version
+      run: |
+        echo ::set-output name=version::$(echo $GITHUB_REF | cut -d / -f 3)
+
+    - name: Create tarball
+      id: create_tarball
+      run: |
+        OUTPUT=$HOME/local
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          CC=gcc-${{ matrix.version }}
+          cp $(${CC} -print-file-name=libstdc++.so.6) $OUTPUT/lib/bali-phy/libstdc++.so.6
+        fi
+        PACKAGE=bali-phy-${{ steps.get_version.outputs.version }}
+        TAR=bali-phy-${{ steps.get_version.outputs.version }}-${{ matrix.arch }}.tar.gz
+        cp -a $OUTPUT $PACKAGE
+        tar -zcf $TAR ${PACKAGE}
+        echo ::set-output name=archive::${TAR}
+
+    - name: Test
+      run: |
+        export PATH=$HOME/local/bin:$PATH
+        bali-phy --help
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ steps.get_version.outputs.version }} 
+        draft: true
+        prerelease: false
+
+    - name: Upload Release Asset
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./${{ steps.create_tarball.outputs.archive }}
+        asset_name: ${{ steps.create_tarball.outputs.archive }}
+        asset_content_type: application/zip
