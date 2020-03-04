@@ -191,7 +191,7 @@ vector<pair<string,dynamic_bitset<>>> get_branch_queries_from_tree(SequenceTree 
 
 vector<pair<string,dynamic_bitset<>>> load_groups_from_file(const string& filename, const vector<string>& leaf_names)
 {
-    namespace view = ranges::view;
+    namespace views = ranges::views;
     vector<pair<string,dynamic_bitset<>>> groups;
 
     istream_or_ifstream groups_file(std::cin,"-",filename,"groups file");
@@ -222,7 +222,7 @@ vector<pair<string,dynamic_bitset<>>> load_groups_from_file(const string& filena
                 throw myexception()<<"In groups file '"<<filename<<"':\n  Badly formed line:\n    |"<<line_;
 
             auto name = words[0];
-            auto taxon_names = words | view::drop(2);
+            auto taxon_names = words | views::drop(2) | ranges::to<std::vector>;
             dynamic_bitset<> group = group_from_names(leaf_names, taxon_names);
             groups.push_back({name,group});
         }

@@ -18,8 +18,8 @@
 #include "immer/map.hpp" // for immer::map
 
 #include "range/v3/all.hpp"
-namespace view = ranges::view;
-namespace action = ranges::action;
+namespace views = ranges::views;
+namespace actions = ranges::actions;
 
 using std::vector;
 using std::set;
@@ -247,7 +247,7 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
 
         auto E2 = set_level_maybe_MFE(AE2, level2, env2);
 
-        for(auto x2 : args | view::reverse)
+        for(auto x2 : args | views::reverse)
             E2 = lambda_quantify(strip_level(x2),E2);
 
         return E2;

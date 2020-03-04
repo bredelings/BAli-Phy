@@ -1,0 +1,10 @@
+set(CMAKE_FOLDER "${CMAKE_FOLDER}/utility")
+
+rv3_add_test(test.utility.box utility.box box.cpp)
+rv3_add_test(test.utility.concepts utility.concepts concepts.cpp)
+rv3_add_test(test.utility.common_type utility.common_type common_type.cpp)
+rv3_add_test(test.utility.functional utility.functional functional.cpp)
+rv3_add_test(test.utility.swap utility.swap swap.cpp)
+rv3_add_test(test.utility.variant utility.variant variant.cpp)
+rv3_add_test(test.utility.meta utility.meta meta.cpp)
+rv3_add_test(test.utility.scope_exit utility.scope_exit scope_exit.cpp)

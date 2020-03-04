@@ -46,9 +46,6 @@
 #include "util/io/matrix.H"
 
 #include "range/v3/all.hpp"
-namespace view = ranges::view;
-namespace action = ranges::action;
-
 
 using std::vector;
 using std::valarray;

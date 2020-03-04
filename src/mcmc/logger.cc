@@ -47,8 +47,7 @@
 
 #include "range/v3/all.hpp"
 
-namespace view = ranges::view;
-namespace action = ranges::action;
+namespace views = ranges::views;
 
 using std::endl;
 using std::pair;
@@ -102,10 +101,10 @@ namespace MCMC {
 
 	auto v_sub = select(v,indices[0]);
 
-	vector<int> O = view::ints(0,N);
+	vector<int> O = views::ints(0,N) | ranges::to<vector>;
 	ranges::sort(O, {}, [&](int i) { return (double)v_sub[i];});
 
-	vector<int> O_all = view::ints(0, (int)v.size());
+	vector<int> O_all = views::ints(0, (int)v.size()) | ranges::to<vector>;
 	for(auto& I: indices)
 	{
 	    assert(I.size() == N);

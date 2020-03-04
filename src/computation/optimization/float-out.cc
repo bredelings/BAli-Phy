@@ -19,8 +19,7 @@
 #include "immer/map.hpp" // for immer::map
 
 #include "range/v3/all.hpp"
-namespace view = ranges::view;
-namespace action = ranges::action;
+namespace views = ranges::views;
 
 using std::vector;
 using std::set;
@@ -97,7 +96,7 @@ pair<vector<var>,expression_ref> get_lambda_binders(expression_ref E)
 
 expression_ref make_lambda(const vector<var>& args, expression_ref E)
 {
-    for(auto x : args | view::reverse)
+    for(auto x : args | views::reverse)
         E = lambda_quantify(x,E);
     return E;
 }
