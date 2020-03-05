@@ -1215,7 +1215,7 @@ int get_num_models(const vector<optional<int>>& mapping)
         if (model)
         {
             assert(*model >= 0);
-            m = std::max(*model,-1);
+            m = std::max(m,*model);
             models.insert(*model);
         }
 
