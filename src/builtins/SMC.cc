@@ -971,11 +971,16 @@ log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment&
 
         for(int i2=0;i2<k;i2++)
         {
-            // Emission is 1.0 if missing data
+            // Emission is 1.0 if missing data at i2
             double emission_i2 = 1.0;
-            // Emission is given by whether the characters match, otherwise.
-            if (A(column1,i2) >=0 and A(column1,k) >=0)
-                emission_i2 = (A(column1,i2) == A(column1,k)) ? emission_same_state : emission_diff_state;
+            if (A(column1,i2) >=0)
+            {
+                if (A(column1,k) >=0)
+                    emission_i2 = (A(column1,i2) == A(column1,k)) ? emission_same_state : emission_diff_state;
+                // Emission is 0.5 if copying from missing data?
+                else
+                    emission_i2 = 0.5;
+            }
 
             double total = 0;
             for(int i1=0;i1<k;i1++)
