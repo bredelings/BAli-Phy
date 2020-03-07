@@ -83,3 +83,5 @@ read_double [] = error "Can't convert empty string to double."
 read_double (h:t) = builtin_read_double (list_to_string (h:t))
 read_double s = builtin_read_double s
 
+builtin builtin_readFile 1 "readFile" "Data"
+readFile = listFromString . builtin_readFile
