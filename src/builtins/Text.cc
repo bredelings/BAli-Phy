@@ -1,5 +1,8 @@
+#include <cctype>
+
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "computation/machine/args.H"
+
 
 extern "C" closure builtin_function_pack(OperationArgs& Args)
 {
@@ -12,3 +15,12 @@ extern "C" closure builtin_function_pack(OperationArgs& Args)
     return {s};
 }
 
+extern "C" closure builtin_function_isDigit(OperationArgs& Args)
+{
+    char c = Args.evaluate(0).as_char();
+
+    if (std::isdigit(c))
+        return {expression_ref(1)};
+    else
+        return {expression_ref(0)};
+}
