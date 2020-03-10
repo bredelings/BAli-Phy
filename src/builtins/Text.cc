@@ -14,13 +14,3 @@ extern "C" closure builtin_function_pack(OperationArgs& Args)
         s[i] = etext[i].as_char();
     return {s};
 }
-
-extern "C" closure builtin_function_isDigit(OperationArgs& Args)
-{
-    char c = Args.evaluate(0).as_char();
-
-    if (std::isdigit(c))
-        return {expression_ref(1)};
-    else
-        return {expression_ref(0)};
-}

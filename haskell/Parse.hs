@@ -1,9 +1,8 @@
 module Parse where
 
-data Parser a = Parser (String -> [(a,String)])
+import Data.Char
 
-builtin builtin_isDigit 1 "isDigit" "Text"
-isDigit c = if builtin_isDigit c == 1 then True else False
+data Parser a = Parser (String -> [(a,String)])
 
 parse (Parser method) s = method s
 parse (IOAndPass p f) s = concat [parse (f x) s' | (x,s') <- parse p s]
