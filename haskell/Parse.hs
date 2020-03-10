@@ -99,9 +99,17 @@ parens m = do
   reserved ")"
   return n
 
-  
--- There is going to be some trouble defining >>= and return since we don't have actually polymorphism.
--- I could make runParser handle IOAnd and IOReturn
--- See nanoparsec ...
--- However, maybe also see the parsec paper, which avoids various space leaks and such.
-    
+sepBy1 p sep = do { x <- p ; rest x }
+    where
+      rest x = (do sep
+                   xs <- sepBy1 p sep
+                   return (x:xs))
+               <|> return [x]
+
+sepBy p sep = sepBy1 p sep <|> return []
+
+optional p = (p >> return ()) <|> return ()
+
+optionMaybe p = (Just <$> p) <|> (return Nothing)
+
+alphaNum c = satisfy isAlphaNum
