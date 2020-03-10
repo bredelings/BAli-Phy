@@ -159,5 +159,5 @@ extern "C" closure builtin_function_intToDigit(OperationArgs& Args)
     else
         throw myexception()<<"intToDigit: integer "<<i<<" is not a digit!";
 
-    return {expression_ref(char(i))};
+    return {expression_ref(c)};
 }
