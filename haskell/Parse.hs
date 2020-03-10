@@ -113,3 +113,20 @@ optional p = (p >> return ()) <|> return ()
 optionMaybe p = (Just <$> p) <|> (return Nothing)
 
 alphaNum c = satisfy isAlphaNum
+
+-- a double is -integer[.integer][einteger]
+parse_double = do s <- sign <|> return []
+                  i1 <- some digit
+                  i2 <- fraction <|> return []
+                  i3 <- exponent <|> return []
+                  let word = s++i1++i2++i3
+                  return (read_double word)
+    where fraction = do string "."
+                        n <- some digit
+                        return ('.':n)
+          exponent = do string "e"
+                        s <- sign <|> return []
+                        n <- some digit
+                        return ('e':(s++n))
+          sign = (\c->[c]) <$> oneOf "+-"
+
