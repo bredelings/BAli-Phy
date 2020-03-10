@@ -47,14 +47,16 @@ quoted_label = do string "'"
 unquoted_label = some unquoted_char
 
 -- lex: label
-node_label = token (quoted_label <|> unquoted_label)
+node_label = quoted_label <|> unquoted_label
 
 
 -- I don't want to REQUIRE a branch length
 branch_length = ( string ":" >> spaces >> optionMaybe (token parse_double) ) <|> return Nothing
 
 subtree = do children <- option [] descendant_list
+             spaces
              node_label <- optionMaybe node_label
+             spaces
              branch_length <- branch_length
              return (Newick node_label branch_length children)
 
