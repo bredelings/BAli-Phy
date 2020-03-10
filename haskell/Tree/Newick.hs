@@ -53,7 +53,7 @@ node_label = token (quoted_label <|> unquoted_label)
 -- I don't want to REQUIRE a branch length
 branch_length = ( string ":" >> spaces >> optionMaybe (token parse_double) ) <|> return Nothing
 
-subtree = do children <- (descendant_list <|> return [])
+subtree = do children <- option [] descendant_list
              node_label <- optionMaybe node_label
              branch_length <- branch_length
              return (Newick node_label branch_length children)

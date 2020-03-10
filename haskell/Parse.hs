@@ -115,17 +115,17 @@ optionMaybe p = (Just <$> p) <|> (return Nothing)
 alphaNum c = satisfy isAlphaNum
 
 -- a double is -integer[.integer][einteger]
-parse_double = do s <- sign <|> return []
+parse_double = do s <- option [] sign
                   i1 <- some digit
-                  i2 <- fraction <|> return []
-                  i3 <- exponent <|> return []
+                  i2 <- option [] fraction
+                  i3 <- option [] exponent
                   let word = s++i1++i2++i3
                   return (read_double word)
     where fraction = do string "."
                         n <- some digit
                         return ('.':n)
           exponent = do string "e"
-                        s <- sign <|> return []
+                        s <- option [] sign
                         n <- some digit
                         return ('e':(s++n))
           sign = (\c->[c]) <$> oneOf "+-"
