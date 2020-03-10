@@ -26,12 +26,10 @@ failure = Parser (\s -> [])
 
 combine p q = Parser (\s -> parse p s ++ parse q s)
 
-option p q = Parser $ \s ->
-             case parse p s of
-               []  -> parse q s
-               res -> res
-
-(<|>) = option
+p <|> q = Parser $ \s ->
+          case parse p s of
+            []  -> parse q s
+            res -> res
 
 some v = some_v
     where
@@ -107,6 +105,8 @@ sepBy1 p sep = do { x <- p ; rest x }
                <|> return [x]
 
 sepBy p sep = sepBy1 p sep <|> return []
+
+option x p = p <|> return x
 
 optional p = (p >> return ()) <|> return ()
 
