@@ -217,6 +217,13 @@ string expression::print() const
 
             return s1+" -> "+t2.print();
         }
+
+        if (is_type_forall(*this))
+        {
+            auto& tv = sub[0];
+            auto& subtype = sub[1];
+            return "forall "+tv.print()+"."+subtype.print();
+        }
     }
 
     // We have to do this BEFORE we compute pargs, otherwise we do everything twice, which leads to exponential growth.
