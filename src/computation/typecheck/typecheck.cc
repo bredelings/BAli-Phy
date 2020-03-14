@@ -294,9 +294,16 @@ typechecker_state::infer_type(const type_environment_t& env, const expression_re
     }
     else if (is_constructor_exp(E))
     {
-        // We can't handle constants correctly, so always given them a new type.
+        substitution_t s;
+        type_environment_t env2 = env;
+        for(int i=0; i<E.size(); i++)
+        {
+            auto [s_i, t_i] = infer_type(env2, E.sub()[i]);
+            s = compose(s_i, s);
+            env2 = apply_subst(s_i, env2);
+        }
         auto t = fresh_type_var();
-        return {{},t};
+        return {s,t};
     }
     else if (is_non_apply_op_exp(E))
     {
