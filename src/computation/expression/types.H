@@ -88,7 +88,9 @@ expression_ref type_forall(const expression_ref& x, const expression_ref& E);
 
 bool is_type_forall(const expression_ref& E);
 
+bool is_type_con_expression(const expression_ref& E);
 
+expression_ref expand_type(const expression_ref& E);
 
 // function types
 

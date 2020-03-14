@@ -238,3 +238,34 @@ std::set<type_var> free_type_variables(const expression_ref& E)
     return free;
 }
 
+bool is_type_con_expression(const expression_ref& E)
+{
+    if (is_type_con(E))
+        return true;
+    else if (is_type_apply(E))
+    {
+        assert(is_type_con_expression(E.sub()[0]));
+        return true;
+    }
+    return false;
+}
+
+expression_ref expand_type(const expression_ref& E)
+{
+    if (is_type_var(E)) return E;
+
+    if (is_type_con(E)) return E;
+
+    if (is_type_forall(E))
+    {
+        auto tv = E.sub()[0];
+        auto subtype = E.sub()[1];
+        subtype = expand_type( subtype );
+        return type_forall_node() + tv + subtype;
+    }
+
+    assert(is_type_apply(E));
+    assert(is_type_con_expression(E.sub()[0]));
+    
+    return expand_type(E.sub()[0]) + expand_type(E.sub()[1]);
+}
