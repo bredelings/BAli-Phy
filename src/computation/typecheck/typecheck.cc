@@ -374,7 +374,8 @@ expression_ref typecheck_topdecls(const expression_ref& topdecls)
     {
         typechecker_state state;
         auto [s,t] = state.infer_type({},e);
-        std::cerr<<x<<" :: "<<t<<"\n\n\n";
+        std::cerr<<x<<" :: "<<t<<"\n";
+        std::cerr<<x<<" = "<<e<<"\n\n\n";
     }
     return {};
 }
