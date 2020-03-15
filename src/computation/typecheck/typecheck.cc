@@ -1,3 +1,4 @@
+#include <vector>
 #include <utility>
 #include "typecheck.H"
 #include "immer/map.hpp" // for immer::map
@@ -10,6 +11,7 @@
 #include "expression/constructor.H"
 
 using std::pair;
+using std::vector;
 
 typedef immer::map<var,expression_ref> type_environment_t;
 
@@ -320,12 +322,38 @@ typechecker_state::infer_type(const type_environment_t& env, const expression_re
     {
         substitution_t s;
         type_environment_t env2 = env;
+        vector<expression_ref> arg_types;
         for(int i=0; i<E.size(); i++)
         {
             auto [s_i, t_i] = infer_type(env2, E.sub()[i]);
+            arg_types.push_back(t_i);
             s = compose(s_i, s);
             env2 = apply_subst(s_i, env2);
         }
+        auto& con = E.head().as_<constructor>();
+        if (con.name() == "(,)")
+        {
+            expression_ref t = type_con("(,)");
+            t = type_apply(t,arg_types[0]);
+            t = type_apply(t,arg_types[1]);
+            t = apply_subst(s,t);
+            return {s,t};
+        }
+        else if (con.name() == ":")
+        {
+            assert(E.size() == 2);
+
+            auto t1 = arg_types[0];
+            t1 = apply_subst(s,t1);
+
+            auto t2 = arg_types[1];
+
+            s = unify (type_apply(type_con("[]"),t1), t2);
+
+            return {s, apply_subst(s,t2) };
+            // (:) :: a -> [a] -> [a]
+        }
+
         auto t = fresh_type_var();
         return {s,t};
     }
