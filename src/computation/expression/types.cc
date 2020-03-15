@@ -161,6 +161,8 @@ bool is_type(const expression_ref& E)
     if (is_type_con(E)) return true;
 
     if (is_type_apply(E)) return true;
+
+    return false;
 }
 
 // function types
