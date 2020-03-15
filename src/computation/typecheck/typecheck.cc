@@ -158,6 +158,8 @@ substitution_t unify(const expression_ref& t1, const expression_ref& t2)
     {
         substitution_t s;
         auto& tv = t1.as_<type_var>();
+        if (t1 == t2)
+            return s;
         if (occurs_check(tv,t2))
             throw myexception()<<"Occurs check: cannot construct infinite type: "<<tv<<" ~ "<<t2<<"\n";
         return s.insert({tv, t2});
@@ -166,6 +168,8 @@ substitution_t unify(const expression_ref& t1, const expression_ref& t2)
     {
         substitution_t s;
         auto& tv = t2.as_<type_var>();
+        if (t1 == t2)
+            return s;
         if (occurs_check(tv,t1))
             throw myexception()<<"Occurs check: cannot construct infinite type: "<<tv<<" ~ "<<t1<<"\n";
         return s.insert({tv, t1});
