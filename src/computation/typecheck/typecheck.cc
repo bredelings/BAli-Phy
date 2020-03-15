@@ -209,6 +209,10 @@ typechecker_state::infer_type(const type_environment_t& env, const expression_re
     }
     else if (not E.size())
     {
+        if (E.is_int())
+            return {{},type_con("Num")};
+        else if (E.is_double())
+            return {{},type_con("Num")};
         // We can't handle constants correctly, so always given them a new type.
         auto tau = fresh_type_var();
         return {{},tau};
