@@ -217,6 +217,18 @@ typechecker_state::infer_type(const type_environment_t& env, const expression_re
             return {{},type_con("Num")};
         else if (E.is_char())
             return {{},type_con("Char#")};
+        else if (is_constructor(E))
+        {
+            auto& con = E.as_<constructor>();
+            if (con.name() == "()")
+                return {{},type_con("()")};
+            else if (con.name() == "[]")
+            {
+                auto tau = fresh_type_var();
+                return {{},type_apply(type_con("[]"),tau)};
+            }
+        }
+
         // We can't handle constants correctly, so always given them a new type.
         auto tau = fresh_type_var();
         return {{},tau};
