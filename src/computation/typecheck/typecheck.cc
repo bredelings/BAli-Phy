@@ -348,9 +348,9 @@ typechecker_state::infer_type(const type_environment_t& env, const expression_re
 
             auto t2 = arg_types[1];
 
-            s = unify (type_apply(type_con("[]"),t1), t2);
+            auto s2 = unify (type_apply(type_con("[]"),t1), t2);
 
-            return {s, apply_subst(s,t2) };
+            return {compose(s2,s), apply_subst(s,t2) };
             // (:) :: a -> [a] -> [a]
         }
 
