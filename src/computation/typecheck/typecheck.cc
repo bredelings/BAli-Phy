@@ -87,6 +87,8 @@ std::set<type_var> free_type_variables(const type_environment_t& env)
 // like f . g
 substitution_t compose(substitution_t s2, substitution_t s1)
 {
+    if (s2.empty()) return s1;
+
     auto s3 = s2;
     for(auto& [tv,e]: s1)
         s3 = s3.insert({tv,apply_subst(s2,e)});
