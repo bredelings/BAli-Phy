@@ -399,7 +399,7 @@ typechecker_state::infer_type(const type_environment_t& env, const expression_re
     else if (is_non_apply_op_exp(E))
     {
         std::abort();
-        // what is an example of this?
+        // this includes builtins like Prelude::add
     }
     std::abort();
 }
