@@ -292,34 +292,43 @@ typechecker_state::infer_type(const type_environment_t& env, const expression_re
     }
     else if (is_let_expression(E))
     {
+        // let x[i] = e[i] in e
         auto decls = let_decls(E);
 
-        // let x[i] = e[i] in e
-        // auto env2 = env;
-        // for(auto& [x,e]: decls)
-        // {
-        //    let t = fresh_type_var();
-        //    env2 = envs.insert({x,t});
-        // }
+        // 1. Add each let-binder to the environment with a fresh type variable
+        auto env2 = env;
+        for(auto& [x,e]: decls)
+        {
+            auto t = fresh_type_var();
+            env2 = env2.insert({x,t});
+        }
 
-        // let x = e1 in e2
-        auto& [x,e1] = decls[0];
-        auto& e2 = E.sub()[1];
+        // 2. Infer the types of each of the x[i]
+        substitution_t s;
+        for(auto& [x_i, e_i]: decls)
+        {
+            auto t_x_i = env2[x_i];
+            auto [s_i, t_e_i] = infer_type(env2, e_i);
 
-        // (s1, t1) <- infer env e1
-        auto [s1,t1] = infer_type(env, e1);
+            s = compose(s_i, compose(unify(t_x_i, t_e_i), s));
 
-        // let env' = apply s1 env
-        auto env2 = apply_subst(s1,env);
+            env2 = apply_subst(s, env2);
+        }
 
-        // t'   = generalize env' t1
-        auto t_ = generalize(env2, t1);
+        // 3. Generalize each type over variables not in the *original* environment
+        for(auto& [x,e]: decls)
+        {
+            auto monotype = env2[x];
+            auto polytype = generalize(env,monotype);
+            env2 = env2.insert({x,polytype});
+        }
 
         // (s2, t2) <- infer (env' `extend` (x, t')) e2
-        auto [s2, t2] = infer_type(env2.insert({x,t_}), e2);
+        auto& e_body = E.sub()[1];
+        auto [s_body, t_body] = infer_type(env2, e_body);
 
         // return (s1 `compose` s2, t2)
-        return {compose(s1,s2), t2};
+        return {compose(s_body,s), t_body};
     }
     else if (is_constructor_exp(E))
     {
