@@ -205,7 +205,8 @@ typechecker_state::infer_type(const type_environment_t& env, const expression_re
         auto sigma = env.find(x);
 
         // x should be in the type environment
-        assert(sigma);
+        if (not sigma)
+            throw myexception()<<"infer_type: can't find type of variable '"<<x.print()<<"'";
 
         auto tau = instantiate(*sigma);
 
