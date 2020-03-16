@@ -426,6 +426,8 @@ expression_ref typecheck_topdecls(const expression_ref& topdecls)
     type_environment_t env0;
     env0 = env0.insert({var("Compiler.Base.error"),error_type});
 
+    env0 = env0.insert({var("Foreign.String.unpack_cpp_string"),function_type(type_con("String#"),list_type(type_con("Char")))});
+
     auto [s,env] = state.infer_type_for_decls(env0, decls);
     for(auto& [x,e]: decls)
     {
