@@ -231,7 +231,7 @@ void get_free_type_variables(const expression_ref& E, multiset<type_var>& bound,
         assert(is_type_var(E.sub()[0]));
         auto& tv = E.sub()[0].as_<type_var>();
         bound.insert(tv);
-        get_free_type_variables(E, bound, free);
+        get_free_type_variables(E.sub()[1], bound, free);
         bound.erase(tv);
     }
     else
