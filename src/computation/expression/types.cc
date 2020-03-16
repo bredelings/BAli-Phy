@@ -198,6 +198,36 @@ bool is_function_type(const expression_ref& T1)
 }
 
 
+type_con list_type_con_node()
+{
+    return type_con("[]");
+}
+
+bool is_list_type_con_node(const expression_ref& E)
+{
+    if (not is_type_con(E)) return false;
+
+    auto& tc = E.as_<type_con>();
+
+    return tc == list_type_con_node();
+}
+
+expression_ref list_type(const expression_ref& a)
+{
+    return type_apply(list_type_con_node(),a);
+}
+
+bool is_list_type(const expression_ref& T1)
+{
+    // ([] a) -> []
+    if (not is_type_apply(T1)) return false;
+
+    auto T2 = T1.sub()[0];
+
+    return is_list_type_con_node(T2);
+}
+
+
 void get_free_type_variables(const expression_ref& E, multiset<type_var>& bound, set<type_var>& free)
 {
     // 1. fv x = { x }

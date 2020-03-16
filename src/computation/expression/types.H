@@ -102,7 +102,20 @@ expression_ref function_type(const expression_ref& t1, const expression_ref& t2)
 
 bool is_function_type(const expression_ref& E);
 
+// list types
+
+type_con list_type_con_node();
+
+bool is_list_type_con_node(const expression_ref& E);
+
+expression_ref list_type(const expression_ref& t1);
+
+bool is_list_type(const expression_ref& E);
+
+
+
 bool is_type(const expression_ref& E);
+
 
 
 // free type variables
