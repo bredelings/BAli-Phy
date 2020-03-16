@@ -167,33 +167,6 @@ struct typechecker_state
     infer_type_for_decls(const type_environment_t& env, const CDecls& E);
 };
 
-pair<substitution_t,type_environment_t>
-typechecker_state::infer_type_for_decls(const type_environment_t& env, const CDecls& decls)
-{
-    // 1. Add each let-binder to the environment with a fresh type variable
-    auto env2 = env;
-    for(auto& [x,e]: decls)
-    {
-        auto t = fresh_type_var();
-        env2 = env2.insert({x,t});
-    }
-
-    // 2. Infer the types of each of the x[i]
-    substitution_t s;
-    for(auto& [x_i, e_i]: decls)
-    {
-        auto t_x_i = env2[x_i];
-        auto [s_i, t_e_i] = infer_type(env2, e_i);
-
-        s = compose(s_i, compose(unify(t_x_i, t_e_i), s));
-
-        env2 = apply_subst(s, env2);
-    }
-
-    return {s, env2};
-}
-
-
 void get_free_type_variables(const type_environment_t& env, std::set<type_var>& free)
 {
     for(auto& [x,type]: env)
@@ -234,6 +207,41 @@ expression_ref typechecker_state::instantiate(const expression_ref& t)
     }
     return apply_subst(s,t2);
 }
+
+pair<substitution_t,type_environment_t>
+typechecker_state::infer_type_for_decls(const type_environment_t& env, const CDecls& decls)
+{
+    // 1. Add each let-binder to the environment with a fresh type variable
+    auto env2 = env;
+    for(auto& [x,e]: decls)
+    {
+        auto t = fresh_type_var();
+        env2 = env2.insert({x,t});
+    }
+
+    // 2. Infer the types of each of the x[i]
+    substitution_t s;
+    for(auto& [x_i, e_i]: decls)
+    {
+        auto t_x_i = env2[x_i];
+        auto [s_i, t_e_i] = infer_type(env2, e_i);
+
+        s = compose(s_i, compose(unify(t_x_i, t_e_i), s));
+
+        env2 = apply_subst(s, env2);
+    }
+
+    // 3. Generalize each type over variables not in the *original* environment
+    for(auto& [x,e]: decls)
+    {
+        auto monotype = env2[x];
+        auto polytype = generalize(env,monotype);
+        env2 = env2.insert({x,polytype});
+    }
+
+    return {s, env2};
+}
+
 
 // This is mostly algorithm W from wikipedia: https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system#Algorithm_W
 // Also see: http://dev.stephendiehl.com/fun/006_hindley_milner.html
