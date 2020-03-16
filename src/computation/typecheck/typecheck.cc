@@ -419,7 +419,12 @@ expression_ref typecheck_topdecls(const expression_ref& topdecls)
     auto decls = parse_decls(topdecls);
     typechecker_state state;
 
+    auto a = state.named_type_var("a");
+    auto b = state.named_type_var("b");
+    auto error_type = type_forall(a,type_forall(b,function_type(a,b)));
+
     type_environment_t env0;
+    env0 = env0.insert({var("Compiler.Base.error"),error_type});
 
     auto [s,env] = state.infer_type_for_decls(env0, decls);
     for(auto& [x,e]: decls)
