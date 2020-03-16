@@ -5,10 +5,11 @@
 #include "expression/var.H"
 #include "expression/types.H"
 #include "expression/let.H"
-#include "operation.H"
 #include "expression/apply.H"
+#include "expression/case.H"
 #include "expression/lambda.H"
 #include "expression/constructor.H"
+#include "operation.H"
 
 using std::pair;
 using std::vector;
@@ -400,6 +401,13 @@ typechecker_state::infer_type(const type_environment_t& env, const expression_re
     {
         std::abort();
         // this includes builtins like Prelude::add
+    }
+    else if (is_case(E))
+    {
+        expression_ref object;
+        vector<expression_ref> patterns;
+        vector<expression_ref> bodies;
+        std::abort();
     }
     std::abort();
 }
