@@ -12,26 +12,13 @@
 
 using std::pair;
 using std::vector;
-
-typedef immer::map<var,expression_ref> type_environment_t;
+using std::string;
 
 typedef immer::map<type_var,expression_ref> substitution_t;
 
-struct typechecker_state
-{
-    int next_var_index = 0;
-
-    type_var fresh_type_var() {return type_var(next_var_index++);}
-
-    expression_ref instantiate(const expression_ref& t);
-
-    pair<substitution_t,expression_ref>
-    infer_type(const type_environment_t& env, const expression_ref& E);
-
-    pair<substitution_t,expression_ref>
-    typecheck_decls(const type_environment_t& env, const CDecls& E);
-};
-
+// I don't think this is right!
+// When combining two substitutions, we really need to *unify* the equations!
+// Don't we?
 
 expression_ref apply_subst(const substitution_t& s, const expression_ref& t)
 {
@@ -62,27 +49,6 @@ expression_ref apply_subst(const substitution_t& s, const expression_ref& t)
     std::abort();
 }
 
-type_environment_t apply_subst(const substitution_t& s, const type_environment_t& env1)
-{
-    type_environment_t env2;
-    for(auto& [x,type]: env1)
-        env2 = env2.insert({x, apply_subst(s,type)});
-    return env2;
-}
-
-void get_free_type_variables(const type_environment_t& env, std::set<type_var>& free)
-{
-    for(auto& [x,type]: env)
-        get_free_type_variables(type, free);
-}
-
-std::set<type_var> free_type_variables(const type_environment_t& env)
-{
-    std::set<type_var> free;
-    get_free_type_variables(env, free);
-    return free;
-}
-
 // This should yield a substitution that is equivalent to apply FIRST s1 and THEN s2,
 // like f . g
 substitution_t compose(substitution_t s2, substitution_t s1)
@@ -93,34 +59,6 @@ substitution_t compose(substitution_t s2, substitution_t s1)
     for(auto& [tv,e]: s1)
         s3 = s3.insert({tv,apply_subst(s2,e)});
     return s3;
-}
-
-expression_ref generalize(const type_environment_t& env, const expression_ref& monotype)
-{
-    auto ftv1 = free_type_variables(monotype);
-    auto ftv2 = free_type_variables(env);
-    for(auto tv: ftv2)
-        ftv1.erase(tv);
-
-    auto polytype = monotype;
-    for(auto tv: ftv1)
-    {
-        polytype = type_forall(tv,polytype);
-    }
-    return polytype;
-}
-
-expression_ref typechecker_state::instantiate(const expression_ref& t)
-{
-    substitution_t s;
-    auto t2 = t;
-    while(is_type_forall(t2))
-    {
-        auto& tv = t2.sub()[0].as_<type_var>();
-        s = s.insert({tv,fresh_type_var()});
-        t2 = t2.sub()[1];
-    }
-    return apply_subst(s,t2);
 }
 
 bool occurs_check(const type_var& tv, const expression_ref& t)
@@ -148,6 +86,8 @@ bool occurs_check(const type_var& tv, const expression_ref& t)
         throw myexception()<<"types do not unify!";
     }
 }
+
+
 
 // Is there a better way to implement this?
 substitution_t unify(const expression_ref& t1, const expression_ref& t2)
@@ -190,6 +130,110 @@ substitution_t unify(const expression_ref& t1, const expression_ref& t2)
     }
 }
 
+
+typedef immer::map<var,expression_ref> type_environment_t;
+
+type_environment_t apply_subst(const substitution_t& s, const type_environment_t& env1)
+{
+    type_environment_t env2;
+    for(auto& [x,type]: env1)
+        env2 = env2.insert({x, apply_subst(s,type)});
+    return env2;
+}
+
+struct typechecker_state
+{
+    int next_var_index = 1;
+
+    type_var fresh_type_var() {
+        type_var tv("t"+std::to_string(next_var_index), next_var_index);
+        next_var_index++;
+        return tv;
+    }
+
+    type_var named_type_var(const string& name)
+    {
+        type_var tv(name+"_"+std::to_string(next_var_index), next_var_index);
+        next_var_index++;
+        return type_var(next_var_index++);
+    }
+
+    expression_ref instantiate(const expression_ref& t);
+
+    pair<substitution_t,expression_ref>
+    infer_type(const type_environment_t& env, const expression_ref& E);
+
+    pair<substitution_t,type_environment_t>
+    infer_type_for_decls(const type_environment_t& env, const CDecls& E);
+};
+
+pair<substitution_t,type_environment_t>
+typechecker_state::infer_type_for_decls(const type_environment_t& env, const CDecls& decls)
+{
+    // 1. Add each let-binder to the environment with a fresh type variable
+    auto env2 = env;
+    for(auto& [x,e]: decls)
+    {
+        auto t = fresh_type_var();
+        env2 = env2.insert({x,t});
+    }
+
+    // 2. Infer the types of each of the x[i]
+    substitution_t s;
+    for(auto& [x_i, e_i]: decls)
+    {
+        auto t_x_i = env2[x_i];
+        auto [s_i, t_e_i] = infer_type(env2, e_i);
+
+        s = compose(s_i, compose(unify(t_x_i, t_e_i), s));
+
+        env2 = apply_subst(s, env2);
+    }
+
+    return {s, env2};
+}
+
+
+void get_free_type_variables(const type_environment_t& env, std::set<type_var>& free)
+{
+    for(auto& [x,type]: env)
+        get_free_type_variables(type, free);
+}
+
+std::set<type_var> free_type_variables(const type_environment_t& env)
+{
+    std::set<type_var> free;
+    get_free_type_variables(env, free);
+    return free;
+}
+
+expression_ref generalize(const type_environment_t& env, const expression_ref& monotype)
+{
+    auto ftv1 = free_type_variables(monotype);
+    auto ftv2 = free_type_variables(env);
+    for(auto tv: ftv2)
+        ftv1.erase(tv);
+
+    auto polytype = monotype;
+    for(auto tv: ftv1)
+    {
+        polytype = type_forall(tv,polytype);
+    }
+    return polytype;
+}
+
+expression_ref typechecker_state::instantiate(const expression_ref& t)
+{
+    substitution_t s;
+    auto t2 = t;
+    while(is_type_forall(t2))
+    {
+        auto& tv = t2.sub()[0].as_<type_var>();
+        s = s.insert({tv,fresh_type_var()});
+        t2 = t2.sub()[1];
+    }
+    return apply_subst(s,t2);
+}
 
 // This is mostly algorithm W from wikipedia: https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system#Algorithm_W
 // Also see: http://dev.stephendiehl.com/fun/006_hindley_milner.html
@@ -295,40 +339,15 @@ typechecker_state::infer_type(const type_environment_t& env, const expression_re
         // let x[i] = e[i] in e
         auto decls = let_decls(E);
 
-        // 1. Add each let-binder to the environment with a fresh type variable
-        auto env2 = env;
-        for(auto& [x,e]: decls)
-        {
-            auto t = fresh_type_var();
-            env2 = env2.insert({x,t});
-        }
+        // 1. Extend environment with types for decls, get any substitutions
+        auto [s_decls, env_decls] = infer_type_for_decls(env, decls);
 
-        // 2. Infer the types of each of the x[i]
-        substitution_t s;
-        for(auto& [x_i, e_i]: decls)
-        {
-            auto t_x_i = env2[x_i];
-            auto [s_i, t_e_i] = infer_type(env2, e_i);
-
-            s = compose(s_i, compose(unify(t_x_i, t_e_i), s));
-
-            env2 = apply_subst(s, env2);
-        }
-
-        // 3. Generalize each type over variables not in the *original* environment
-        for(auto& [x,e]: decls)
-        {
-            auto monotype = env2[x];
-            auto polytype = generalize(env,monotype);
-            env2 = env2.insert({x,polytype});
-        }
-
-        // (s2, t2) <- infer (env' `extend` (x, t')) e2
+        // 2. Compute type of let body
         auto& e_body = E.sub()[1];
-        auto [s_body, t_body] = infer_type(env2, e_body);
+        auto [s_body, t_body] = infer_type(env_decls, e_body);
 
         // return (s1 `compose` s2, t2)
-        return {compose(s_body,s), t_body};
+        return {compose(s_body, s_decls), t_body};
     }
     else if (is_constructor_exp(E))
     {

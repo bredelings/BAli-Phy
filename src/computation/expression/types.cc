@@ -26,13 +26,7 @@ bool type_var::operator==(const Object& o) const
 }
 
 string type_var::print() const {
-    string s = name;
-    if (name.size() and index == 0)
-        ;
-    else
-	s += string("#")+convertToString(index);
-
-    return s;
+    return name;
 }
 
 bool type_var::operator<(const type_var& D) const 
