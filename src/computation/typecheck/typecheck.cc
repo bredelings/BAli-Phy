@@ -417,10 +417,14 @@ typechecker_state::infer_type(const type_environment_t& env, const expression_re
 expression_ref typecheck_topdecls(const expression_ref& topdecls)
 {
     auto decls = parse_decls(topdecls);
+    typechecker_state state;
+
+    type_environment_t env0;
+
+    auto [s,env] = state.infer_type_for_decls(env0, decls);
     for(auto& [x,e]: decls)
     {
-        typechecker_state state;
-        auto [s,t] = state.infer_type({},e);
+        auto t = env[x];
         std::cerr<<x<<" :: "<<t<<"\n";
         std::cerr<<x<<" = "<<e<<"\n\n\n";
     }
