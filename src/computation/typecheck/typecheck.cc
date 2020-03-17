@@ -171,6 +171,8 @@ struct typechecker_state
 
     data instantiate(const data& d);
 
+    pair<expression_ref, vector<expression_ref>> lookup_data_from_pattern(const expression_ref& pattern);
+
     int next_var_index = 1;
 
     type_var fresh_type_var() {
@@ -210,6 +212,36 @@ data typechecker_state::instantiate(const data& d)
         s = s.insert({ftv,fresh_type_var()});
 
     return apply_subst(s,d);
+}
+
+pair<expression_ref, vector<expression_ref>> typechecker_state::lookup_data_from_pattern(const expression_ref& pattern)
+{
+    // 1. Find the data type
+    auto& con = pattern.head().as_<constructor>();
+    if (not con_to_data.count(con))
+        throw myexception()<<"Unrecognized constructor: "<<con;
+    auto d = con_to_data.at(con);
+
+    // 2. Check that pattern has the correct arity
+    auto object_type = d->type;
+    auto pattern_types = d->constructors.at(con);
+    if (pattern.size() != pattern_types.size())
+        throw myexception()<<"pattern '"<<pattern<<"' has "<<pattern.size()<<" arguments, but constructor has arity '"<<pattern_types.size()<<"'";
+
+    // 3. Instantiate data record with fresh variables
+
+    // 3a. Find free variables in the object type
+    auto ftvs = free_type_variables(object_type);
+    substitution_t s;
+    for(auto ftv: ftvs)
+        s = s.insert({ftv, fresh_type_var()});
+
+    // 3b. Install fresh type variables
+    object_type = apply_subst(s, object_type);
+    for(auto& type: pattern_types)
+        type = apply_subst(s, type);
+
+    return {object_type, pattern_types};
 }
 
 void get_free_type_variables(const type_environment_t& env, std::set<type_var>& free)
@@ -330,14 +362,8 @@ typechecker_state::infer_type(const type_environment_t& env, const expression_re
             return {{},type_con("Char#")};
         else if (is_constructor(E))
         {
-            auto& con = E.as_<constructor>();
-            if (con.name() == "()")
-                return {{},type_con("()")};
-            else if (con.name() == "[]")
-            {
-                auto tau = fresh_type_var();
-                return {{},type_apply(type_con("[]"),tau)};
-            }
+            auto [object_type,_] = lookup_data_from_pattern(E);
+            return {{}, object_type};
         }
 
         // We can't handle constants correctly, so always given them a new type.
@@ -413,6 +439,8 @@ typechecker_state::infer_type(const type_environment_t& env, const expression_re
     }
     else if (is_constructor_exp(E))
     {
+        auto [object_type, pattern_types] = lookup_data_from_pattern(E);
+
         substitution_t s;
         type_environment_t env2 = env;
         vector<expression_ref> arg_types;
@@ -420,35 +448,15 @@ typechecker_state::infer_type(const type_environment_t& env, const expression_re
         {
             auto [s_i, t_i] = infer_type(env2, E.sub()[i]);
             arg_types.push_back(t_i);
-            s = compose(s_i, s);
+
+            // REQUIRE that i-th argument matches the type for the i-th field.
+            auto s2_i = unify(pattern_types[i], t_i);
+
+            s = compose(compose(s2_i,s_i), s);
             env2 = apply_subst(s_i, env2);
         }
-        auto& con = E.head().as_<constructor>();
-        if (con.name() == "(,)")
-        {
-            expression_ref t = type_con("(,)");
-            t = type_apply(t,arg_types[0]);
-            t = type_apply(t,arg_types[1]);
-            t = apply_subst(s,t);
-            return {s,t};
-        }
-        else if (con.name() == ":")
-        {
-            assert(E.size() == 2);
 
-            auto t1 = arg_types[0];
-            t1 = apply_subst(s,t1);
-
-            auto t2 = arg_types[1];
-
-            auto s2 = unify (type_apply(type_con("[]"),t1), t2);
-
-            return {compose(s2,s), apply_subst(s2,t2) };
-            // (:) :: a -> [a] -> [a]
-        }
-
-        auto t = fresh_type_var();
-        return {s,t};
+        return {s, apply_subst(s, object_type)};
     }
     else if (is_non_apply_op_exp(E))
     {
@@ -472,36 +480,24 @@ typechecker_state::infer_type(const type_environment_t& env, const expression_re
             }
             else
             {
-                auto& con = pattern.head().as_<constructor>();
-                if (not con_to_data.count(con))
-                    throw myexception()<<"Unrecognized constructor: "<<con;
-                auto d = con_to_data.at(con);
-                // 2.a Instantiate the data type with fresh variables
-                *d = instantiate(*d);
+                // 2a. Lookup the object type and pattern types.
+                auto [object_type_i, pattern_types_i] = lookup_data_from_pattern(pattern);
 
-                // 2.b Unify object type from constructor with the
-                auto object_type_from_constructor_i = d->type;
-                // REQUIRE that object types are the same.
-                auto s_same_object = unify(object_type_from_constructor_i, object_type);
+                // 2b. REQUIRE that object types are the same
+                auto s_same_object = unify(object_type_i, object_type);
                 s = compose(s_same_object, s);
-                *d = apply_subst(s, *d);
                 env2 = apply_subst(s, env2);
                 object_type = apply_subst(s, object_type);
+                for(auto& type: pattern_types_i)
+                    type = apply_subst(s, type);
 
-                // 2c. Extract type for constructor fields
-                auto pattern_types = d->constructors.at(con);
-
-                if (pattern.size() != pattern_types.size())
-                    throw myexception()<<"pattern '"<<pattern<<"' has "<<pattern.size()<<" arguments, but constructor has arity '"<<pattern_types.size()<<"'";
-
-                // 2d. Bind constructor fields to their type in the type environment
+                // 2c. Bind constructor fields to their type in the type environment
                 env3 = env2;
-
-                for(int i=0;i<pattern_types.size();i++)
+                for(int i=0;i<pattern_types_i.size();i++)
                 {
                     if (is_wildcard(pattern.sub()[i])) continue;
                     auto& x = pattern.sub()[i].as_<var>();
-                    env3 = env3.insert({x, pattern_types[i]});
+                    env3 = env3.insert({x, pattern_types_i[i]});
                 }
             }
 
