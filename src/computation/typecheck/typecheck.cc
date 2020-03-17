@@ -443,7 +443,7 @@ typechecker_state::infer_type(const type_environment_t& env, const expression_re
 
             auto s2 = unify (type_apply(type_con("[]"),t1), t2);
 
-            return {compose(s2,s), apply_subst(s,t2) };
+            return {compose(s2,s), apply_subst(s2,t2) };
             // (:) :: a -> [a] -> [a]
         }
 
