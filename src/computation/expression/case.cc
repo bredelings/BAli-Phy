@@ -78,3 +78,15 @@ bool is_case(const expression_ref& E)
     return E.head().type() == case_type;
 }
 
+std::optional<case_expression> parse_case_expression(const expression_ref& E)
+{
+    if (not is_case(E)) return {};
+
+    case_expression c;
+    c.object = E.sub()[0];
+
+    for(auto& alt: E.sub()[1].sub())
+        c.alts.push_back({alt.sub()[0], alt.sub()[1]});
+
+    return c;
+}
