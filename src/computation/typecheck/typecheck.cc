@@ -1,4 +1,5 @@
 #include <vector>
+#include <map>
 #include <utility>
 #include "typecheck.H"
 #include "immer/map.hpp" // for immer::map
@@ -12,6 +13,7 @@
 #include "operation.H"
 
 using std::pair;
+using std::map;
 using std::vector;
 using std::string;
 
@@ -140,6 +142,21 @@ type_environment_t apply_subst(const substitution_t& s, const type_environment_t
     for(auto& [x,type]: env1)
         env2 = env2.insert({x, apply_subst(s,type)});
     return env2;
+}
+
+struct data
+{
+    expression_ref type;
+    map<constructor, std::vector<expression_ref>> constructors;
+};
+
+data apply_subst(const substitution_t& s, data d)
+{
+    d.type = apply_subst(s, d.type);
+    for(auto& [con,types]: d.constructors)
+        for(auto& type: types)
+            type = apply_subst(s, type);
+    return d;
 }
 
 struct typechecker_state
