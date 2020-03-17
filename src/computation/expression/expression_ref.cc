@@ -198,7 +198,11 @@ string print_expanded_type(const expression_ref& type)
             if (type_needs_paren(t))
                 sub_names[i] = "(" + sub_names[i] + ")";
         }
-        return con.name + " " + join(sub_names, " ");
+
+        if (sub_names.size())
+            return con.name + " " + join(sub_names, " ");
+        else
+            return con.name;
     }
 
 
