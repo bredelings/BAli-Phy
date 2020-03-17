@@ -1,3 +1,4 @@
+#include <memory>
 #include <vector>
 #include <map>
 #include <utility>
@@ -15,6 +16,7 @@
 using std::pair;
 using std::map;
 using std::vector;
+using std::shared_ptr;
 using std::string;
 
 typedef immer::map<type_var,expression_ref> substitution_t;
@@ -161,12 +163,20 @@ data apply_subst(const substitution_t& s, data d)
 
 struct typechecker_state
 {
+    map<constructor,shared_ptr<data>> con_to_data;
+
     int next_var_index = 1;
 
     type_var fresh_type_var() {
         type_var tv("t"+std::to_string(next_var_index), next_var_index);
         next_var_index++;
         return tv;
+    }
+
+    void add_data_type(const shared_ptr<data>& d)
+    {
+        for(auto& [con,_]: d->constructors)
+            con_to_data[con] = d;
     }
 
     type_var named_type_var(const string& name)
