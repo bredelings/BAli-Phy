@@ -12,6 +12,8 @@ struct constructor: public Operator
 
     bool operator==(const Object& o) const;
   
+    bool operator<(const constructor&) const;
+
     std::string f_name;
     int n_args_;
 
@@ -46,5 +48,8 @@ inline bool is_constructor_exp(const expression_ref& E)
 {
     return is_constructor(E.head());
 }
+
+
+
 
 #endif

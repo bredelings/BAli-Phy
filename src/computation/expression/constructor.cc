@@ -13,6 +13,10 @@ bool constructor::operator==(const Object& o) const
 
     return f_name == E->f_name;
 }
+bool constructor::operator<(const constructor& c2) const
+{
+    return (f_name < c2.f_name);
+}
 
 constructor::constructor(const string& s, int n)
     :f_name(s), n_args_(n), assoc(assoc_none),prec(-1)
