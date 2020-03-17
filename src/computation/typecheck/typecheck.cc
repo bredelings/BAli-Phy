@@ -11,6 +11,7 @@
 #include "expression/case.H"
 #include "expression/lambda.H"
 #include "expression/constructor.H"
+#include "expression/tuple.H"
 #include "operation.H"
 
 using std::pair;
@@ -454,6 +455,20 @@ expression_ref typecheck_topdecls(const expression_ref& topdecls)
     env0 = env0.insert({var("Compiler.Base.error"),error_type});
 
     env0 = env0.insert({var("Foreign.String.unpack_cpp_string"),function_type(type_con("String#"),list_type(type_con("Char")))});
+
+
+    auto data_pair = std::make_shared<data>();
+    data_pair->type = type_apply(type_apply(type_con("(,)"),a),b);
+    data_pair->constructors[tuple_head(2)] = {a,b};
+    state.add_data_type(data_pair);
+
+    auto data_list = std::make_shared<data>();
+    data_list->type = list_type(a);
+    constructor cons(":",2);
+    data_list->constructors[cons] = {a,list_type(a)};
+    constructor nil("[]",0);
+    data_list->constructors[nil] = {};
+    state.add_data_type(data_list);
 
     auto [s,env] = state.infer_type_for_decls(env0, decls);
     for(auto& [x,e]: decls)
