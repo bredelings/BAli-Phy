@@ -1,3 +1,4 @@
+#include <range/v3/all.hpp>
 #include <memory>
 #include <vector>
 #include <map>
@@ -13,6 +14,8 @@
 #include "expression/constructor.H"
 #include "expression/tuple.H"
 #include "operation.H"
+
+namespace views = ranges::views;
 
 using std::pair;
 using std::map;
@@ -235,6 +238,16 @@ expression_ref generalize(const type_environment_t& env, const expression_ref& m
         polytype = type_forall(tv,polytype);
     }
     return polytype;
+}
+
+expression_ref remove_top_level_foralls(expression_ref t)
+{
+    while(is_type_forall(t))
+    {
+        auto t2 = t.sub()[1];
+        t = t2;
+    }
+    return t;
 }
 
 expression_ref typechecker_state::instantiate(const expression_ref& t)
@@ -512,7 +525,78 @@ typechecker_state::infer_type(const type_environment_t& env, const expression_re
     std::abort();
 }
 
+string alphabetized_type_var_name(int i)
+{
+    string s;
+    while (true)
+    {
+        s.push_back( char('a'+(i%26)) );
+        if (i < 26) break;
+        i /= 26;
+    }
+    return s;
+}
 
+type_var alphabetized_type_var(int i)
+{
+    auto s = alphabetized_type_var_name(i);
+    return type_var(s,i);
+}
+
+expression_ref alphabetize_type(const expression_ref& type, map<type_var,type_var>& s, int& index)
+{
+    if (is_type_var(type))
+    {
+        auto& tv = type.as_<type_var>();
+        auto rec = s.find(tv);
+        if (rec == s.end())
+        {
+            rec = s.insert({tv, alphabetized_type_var(index++)}).first;
+        }
+        return expression_ref(rec->second);
+    }
+    else if (is_type_con(type))
+        return type;
+    else if (is_type_forall(type))
+    {
+        // 2a. Alphabetize body without foralls
+        auto type2 = alphabetize_type(remove_top_level_foralls(type), s, index);
+
+        // 2b. Get bound type variables
+        vector<type_var> binders;
+        auto type3 = type;
+        while(is_type_forall(type3))
+        {
+            auto& tv = type3.sub()[0].as_<type_var>();
+            binders.push_back(s.at(tv));
+            type3 = type3.sub()[1];
+        }
+
+        // 2c. Sort bound type variables in order of use in the body
+        ranges::sort(binders, {}, [](auto& tv){return tv.index;});
+
+        // 2d. Put back the bound type variables in their new order
+        for(auto& tv: binders | views::reverse)
+            type2=type_forall(tv,type2);
+
+        // 2e. Return the type
+        return type2;
+    }
+    else if (is_type_apply(type))
+    {
+        auto t0 = alphabetize_type(type.sub()[0], s, index);
+        auto t1 = alphabetize_type(type.sub()[1], s, index);
+        return type_apply(t0,t1);
+    }
+    std::abort();
+}
+
+expression_ref alphabetize_type(const expression_ref& type)
+{
+    map<type_var, type_var> s;
+    int index = 0;
+    return alphabetize_type(type, s, index);
+}
 
 expression_ref typecheck_topdecls(const expression_ref& topdecls)
 {
@@ -546,7 +630,7 @@ expression_ref typecheck_topdecls(const expression_ref& topdecls)
     for(auto& [x,e]: decls)
     {
         auto t = env[x];
-        std::cerr<<x<<" :: "<<t<<"\n";
+        std::cerr<<x<<" :: "<<remove_top_level_foralls(alphabetize_type(t))<<"\n";
         std::cerr<<x<<" = "<<e<<"\n\n\n";
     }
     return {};
