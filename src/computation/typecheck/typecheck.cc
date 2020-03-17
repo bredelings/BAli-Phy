@@ -166,6 +166,8 @@ struct typechecker_state
 {
     map<constructor,shared_ptr<data>> con_to_data;
 
+    data instantiate(const data& d);
+
     int next_var_index = 1;
 
     type_var fresh_type_var() {
@@ -195,6 +197,17 @@ struct typechecker_state
     pair<substitution_t,type_environment_t>
     infer_type_for_decls(const type_environment_t& env, const CDecls& E);
 };
+
+data typechecker_state::instantiate(const data& d)
+{
+    auto ftvs = free_type_variables(d.type);
+
+    substitution_t s;
+    for(auto ftv: ftvs)
+        s = s.insert({ftv,fresh_type_var()});
+
+    return apply_subst(s,d);
+}
 
 void get_free_type_variables(const type_environment_t& env, std::set<type_var>& free)
 {
@@ -270,7 +283,6 @@ typechecker_state::infer_type_for_decls(const type_environment_t& env, const CDe
 
     return {s, env2};
 }
-
 
 // This is mostly algorithm W from wikipedia: https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system#Algorithm_W
 // Also see: http://dev.stephendiehl.com/fun/006_hindley_milner.html
@@ -430,12 +442,72 @@ typechecker_state::infer_type(const type_environment_t& env, const expression_re
         std::abort();
         // this includes builtins like Prelude::add
     }
-    else if (is_case(E))
+    else if (auto case_exp = parse_case_expression(E))
     {
-        expression_ref object;
-        vector<expression_ref> patterns;
-        vector<expression_ref> bodies;
-        std::abort();
+        // 1. Determine object type
+        auto [s, object_type] = infer_type(env, case_exp->object);
+        auto env2 = apply_subst(s, env);
+        expression_ref case_type;
+
+        // 2. Determine data type for object from patterns.
+        for(auto& [pattern,body]: case_exp->alts)
+        {
+            type_environment_t env3;
+            if (is_wildcard(pattern))
+            {
+                env3 = env2;
+            }
+            else
+            {
+                auto& con = pattern.head().as_<constructor>();
+                if (not con_to_data.count(con))
+                    throw myexception()<<"Unrecognized constructor: "<<con;
+                auto d = con_to_data.at(con);
+                // 2.a Instantiate the data type with fresh variables
+                *d = instantiate(*d);
+
+                // 2.b Unify object type from constructor with the
+                auto object_type_from_constructor_i = d->type;
+                // REQUIRE that object types are the same.
+                auto s_same_object = unify(object_type_from_constructor_i, object_type);
+                s = compose(s_same_object, s);
+                *d = apply_subst(s, *d);
+                env2 = apply_subst(s, env2);
+                object_type = apply_subst(s, object_type);
+
+                // 2c. Extract type for constructor fields
+                auto pattern_types = d->constructors.at(con);
+
+                if (pattern.size() != pattern_types.size())
+                    throw myexception()<<"pattern '"<<pattern<<"' has "<<pattern.size()<<" arguments, but constructor has arity '"<<pattern_types.size()<<"'";
+
+                // 2d. Bind constructor fields to their type in the type environment
+                env3 = env2;
+
+                for(int i=0;i<pattern_types.size();i++)
+                {
+                    if (is_wildcard(pattern.sub()[i])) continue;
+                    auto& x = pattern.sub()[i].as_<var>();
+                    env3 = env3.insert({x, pattern_types[i]});
+                }
+            }
+
+            // 2e. Infer the body type.
+            auto [body_subst, body_type] = infer_type(env3, body);
+            if (case_type)
+            {
+                // REQUIRE that body types are the same.
+                auto s2 = unify(body_type, case_type);
+                body_subst = compose(s2,body_subst);
+            }
+            else
+                case_type = body_type;
+
+            s = compose(body_subst, s);
+            env2 = apply_subst(s, env2);
+            object_type = apply_subst(s, object_type);
+        }
+        return {s,case_type};
     }
     std::abort();
 }
