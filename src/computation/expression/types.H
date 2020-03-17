@@ -113,6 +113,16 @@ expression_ref list_type(const expression_ref& t1);
 bool is_list_type(const expression_ref& E);
 
 
+// tuple types
+
+type_con tuple_type_con_node(int n);
+
+bool is_tuple_type_con_node(const expression_ref& E);
+
+bool is_tuple_type_con_node(const expression_ref& E, int n);
+
+
+
 
 bool is_type(const expression_ref& E);
 

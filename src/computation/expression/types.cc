@@ -1,6 +1,7 @@
 #include "types.H"
 #include "computation/expression/expression_ref.H"
 #include "computation/expression/let.H"
+#include "computation/expression/tuple.H"
 #include "computation/expression/case.H"
 #include "computation/module.H"
 
@@ -227,6 +228,34 @@ bool is_list_type(const expression_ref& T1)
     return is_list_type_con_node(T2);
 }
 
+
+// tuple types
+
+type_con tuple_type_con_node(int n)
+{
+    return type_con(tuple_name(n));
+}
+
+bool is_tuple_type_con_node(const expression_ref& E)
+{
+    if (not is_type_con(E)) return false;
+
+    auto& tc = E.as_<type_con>();
+
+    return is_tuple_name(tc.name);
+}
+
+bool is_tuple_type_con_node(const expression_ref& E, int n)
+{
+    if (not is_type_con(E)) return false;
+
+    auto& tc = E.as_<type_con>();
+
+    return tc == tuple_type_con_node(n);
+}
+
+
+// free variables
 
 void get_free_type_variables(const expression_ref& E, multiset<type_var>& bound, set<type_var>& free)
 {
