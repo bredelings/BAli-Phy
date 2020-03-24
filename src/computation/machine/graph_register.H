@@ -218,6 +218,8 @@ public:
 
     expression_ref evaluate_program(int c);
 
+    int force_count(int r) const;
+
     /* ---- */
 
     void register_prior(int r);
