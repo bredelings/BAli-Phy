@@ -424,6 +424,32 @@ void reg_heap::register_pending_effects()
     assert(pending_effect_steps.empty());
 }
 
+int reg_heap::force_count(int r) const
+{
+    if (not has_step(r)) return -1;
+
+    // Look at steps that USE the root's result
+    int count = 0;
+    if (program_result_head and r == heads[*program_result_head])
+        count = 1;
+
+    for(auto& [r2,_]: regs[r].used_by)
+        if (prog_steps[r2] > 0)
+            count++;
+
+    // Look at steps that FORCE the root's result
+    for(auto& [r2,_]: regs[r].forced_by)
+        if (prog_steps[r2] > 0)
+            count++;
+
+    // Look at steps that FORCE the root's result
+    for(auto& s2: regs[r].called_by)
+        if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
+            count++;
+
+    return count;
+}
+
 expression_ref reg_heap::evaluate_program(int c)
 {
     if (not program_result_head)
