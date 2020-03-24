@@ -220,6 +220,8 @@ public:
 
     int force_count(int r) const;
 
+    int unmap_unforced_steps(int );
+
     /* ---- */
 
     void register_prior(int r);
