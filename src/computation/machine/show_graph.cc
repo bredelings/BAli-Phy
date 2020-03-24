@@ -515,8 +515,10 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	if (C.reg_is_changeable(R))
 	    o<<",style=\"dashed,filled\",color=red";
 
-	if (C.reg_is_changeable(R) and C.has_result(R))
+	if (C.reg_is_changeable(R) and C.has_result(R) and C.has_force(R))
 	    o<<",fillcolor=\"#007700\",fontcolor=white";
+	else if (C.reg_is_changeable(R) and C.has_result(R))
+	    o<<",fillcolor=\"#997700\",fontcolor=white";
 	else if (C.reg_is_changeable(R))
 	    o<<",fillcolor=\"#770000\",fontcolor=white";
 	else if (C[R].exp.head().type() == index_var_type)
