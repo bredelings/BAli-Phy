@@ -450,6 +450,98 @@ int reg_heap::force_count(int r) const
     return count;
 }
 
+/*
+ * FIXME: The simplest method of unmapping would be to leave the root at t1 and do
+ *              tokens[t2].vm_step.add_value(r, non_computed_index);
+ *        This has the benefit of handling effects automatically we reroot
+ *        to t2.
+ *
+ *        However, the force_count( ) function only computes force_counts *in the root*.
+ *        So we need to root to be at t2 to use that.
+ *
+ *        If we store a prog_force_count and decrement force counts for t2 when we move steps
+ *        back to t2, it also seems like the root should be at t2 to modify prog_force_count.
+ *
+ */
+
+int reg_heap::unmap_unforced_steps(int c)
+{
+    // 0. Record original token for context c.
+    int t1 = token_for_context(c);
+
+    // 1. Leave new marker context c2 at t1 to avoid t1 being deleted.
+    int c2 = copy_context(c);
+
+    // 2. Switch context c to new child token of t1
+    switch_to_child_token(c, token_type::unmap);
+
+    // 3. Reroot at the new child context.
+    reroot_at_context(c);
+
+    // 4. Define function to check and unmap
+    assert(token_is_used(t1));
+    auto& vm_force = tokens[t1].vm_force;
+    auto& vm_result = tokens[t1].vm_result;
+    auto& vm_step = tokens[t1].vm_step;
+
+    assert(token_is_used(t1));
+    auto check_unmap = [&,this](int r) {
+                           if (has_step(r) and force_count(r) == 0)
+                           {
+                               vm_step.add_value(r, prog_steps[r]);
+                               vm_result.add_value(r, prog_results[r]);
+                               vm_force.add_value(r, prog_forces[r]);
+
+                               prog_steps[r] = non_computed_index;
+                               prog_results[r] = non_computed_index;
+                               prog_forces[r] = non_computed_index;
+                           }
+                       };
+
+    // 5. Find all the unforced steps.
+    for(int r=1;r<regs.size();r++)
+        if (not regs.is_free(r))
+            check_unmap(r);
+
+    // 6. Begin iteratively unmapping steps.
+    const auto& delta_step   = vm_step.delta();
+    for(int i=0;i<delta_step.size();i++)
+    {
+        // Don't use a reference, since delta_step can be moved, leaving an invalid reference.
+        auto [r,s] = delta_step[i];
+
+        // 6a. Unregister any effects marked on the unmapped steps!
+        if (steps[s].has_nonforce_effect())
+        {
+            if (steps[s].has_pending_nonforce_effect())
+                unregister_effect_pending_at_step(s);
+            else
+                unregister_effect_at_step(s);
+        }
+
+        // 6b. Check if any of used used, forced, or called steps are now unforced.
+        for(auto& [r2,_]: regs[r].used_regs)
+            check_unmap(r2);
+
+        for(auto& [r2,_]: regs[r].forced_regs)
+            check_unmap(r2);
+
+        check_unmap(steps[s].call);
+    }
+
+    // 7. If there was nothing to unmap, move c back to t1.
+    if (delta_step.empty())
+        switch_to_token(c, t1);
+
+    // 8. Release marker context c2
+    release_context(c2);
+
+    // 9. Make sure we are rooted at context c
+    reroot_at_context(c);
+
+    return token_for_context(c);
+}
+
 expression_ref reg_heap::evaluate_program(int c)
 {
     if (not program_result_head)
@@ -497,6 +589,8 @@ expression_ref reg_heap::evaluate_program(int c)
 #endif
 
     register_pending_effects();
+
+    unmap_unforced_steps(c);
 
     return result;
 }
