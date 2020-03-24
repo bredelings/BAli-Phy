@@ -282,6 +282,11 @@ void reg_heap::register_prior(int r)
     }
 }
 
+void reg_heap::unregister_prior(int r)
+{
+    regs.access(r).flags.reset(0);
+}
+
 void reg_heap::register_likelihood_(int r)
 {
     r = follow_index_var(r);
@@ -312,6 +317,11 @@ void reg_heap::register_likelihood_(int r)
 
         likelihood_heads.push_back(r);
     }
+}
+
+void reg_heap::unregister_likelihood_(int r)
+{
+    regs.access(r).flags.reset(1);
 }
 
 log_double_t reg_heap::probability_for_context(int c)

@@ -217,11 +217,15 @@ public:
 
     void register_prior(int r);
 
+    void unregister_prior(int r);
+
     log_double_t prior_for_context(int c);
 
     std::vector<int> likelihood_heads;
 
     void register_likelihood_(int r);
+
+    void unregister_likelihood_(int r);
 
     log_double_t likelihood_for_context(int c);
 
