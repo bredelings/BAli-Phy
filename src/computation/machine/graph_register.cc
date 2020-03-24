@@ -1210,10 +1210,7 @@ int reg_heap::add_program(const expression_ref& E)
     program_result_head = add_compute_expression({fst,P});
 
     // 4. Add the program LOGGING head
-    expression_ref L = {var("Probability.Random.log_to_json"),{snd, P}};
-    L = {var("Data.JSON.c_json"), L};
-
-    logging_head = add_compute_expression(L);
+    logging_head = add_compute_expression({var("Data.JSON.c_json"), {var("Probability.Random.log_to_json"),{snd, P}}});
 
     return *program_result_head;
 }
