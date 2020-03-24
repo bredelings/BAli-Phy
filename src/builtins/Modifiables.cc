@@ -143,6 +143,20 @@ extern "C" closure builtin_function_register_random_variable(OperationArgs& Args
     return effect;
 }
 
+extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
+{
+    // We are supposed to evaluate the likelihood before we register
+    Args.evaluate_(0);
+
+    int r_likelihood = Args.current_closure().reg_for_slot(0);
+
+    auto effect = new register_likelihood(r_likelihood);
+
+    Args.set_effect(*effect);
+
+    return effect;
+}
+
 extern "C" closure builtin_function_modifiable(OperationArgs& Args)
 {
     int r_value = Args.reg_for_slot(0);
@@ -151,22 +165,4 @@ extern "C" closure builtin_function_modifiable(OperationArgs& Args)
     expression_ref mod_exp( modifiable(),{index_var(0)} );
 
     return {mod_exp, {r_value}};
-}
-
-extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
-{
-    int R = Args.reg_for_slot(0);
-
-    int state = Args.evaluate(1).as_int();
-
-    // We are suppose to evaluate the likelihood before we register.
-    auto result_reg = Args.evaluate_slot_force(0);
-
-    auto& M = Args.memory();
-    auto likelihood = M[result_reg].exp;
-    assert(likelihood.is_log_double());
-
-    M.register_likelihood_(R);
-
-    return {EPair(state+1, constructor("()",0))};
 }

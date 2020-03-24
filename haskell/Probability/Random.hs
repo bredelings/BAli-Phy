@@ -109,7 +109,9 @@ run_strict' alpha rate (IOReturn v) = return v
 run_strict' alpha rate (LiftIO a) = a
 run_strict' alpha _    GetAlphabet = return alpha
 run_strict' alpha rate (SetAlphabet a2 x) = run_strict' a2 rate x
-run_strict' alpha rate (Observe dist datum) = sequence_ [register_likelihood term | term <- densities dist datum]
+run_strict' alpha rate (Observe dist datum) = go [register_likelihood term | term <- densities dist datum] `seq` return ()
+    where go [] = []
+          go (x:xs) = x `seq` go xs
 run_strict' alpha rate (Print s) = putStrLn (show s)
 run_strict' alpha rate (Lazy r) = run_lazy' alpha rate r
 
