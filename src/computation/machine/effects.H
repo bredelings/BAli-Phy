@@ -20,6 +20,24 @@ public:
     register_random_variable(int r);
 };
 
+class register_likelihood: public effect
+{
+    int likelihood_reg;
+
+public:
+    register_likelihood* clone() const {return new register_likelihood(*this);}
+
+    bool operator==(const register_likelihood&) const;
+    bool operator==(const Object& O) const;
+
+    std::string print () const;
+
+    void register_effect(reg_heap&) const;
+    void unregister_effect(reg_heap&) const;
+
+    register_likelihood(int r);
+};
+
 class register_transition_kernel: public effect
 {
     int rate_reg;

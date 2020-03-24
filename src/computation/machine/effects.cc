@@ -47,6 +47,49 @@ void register_random_variable::unregister_effect(reg_heap& M) const
 
 //--------------------------------------------------------------------
 
+bool register_likelihood::operator==(const register_likelihood& e) const
+{
+    return likelihood_reg == e.likelihood_reg;
+}
+
+bool register_likelihood::operator==(const Object& O) const
+{
+    if (this == &O) return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    auto* e = dynamic_cast<const register_likelihood*>(&O);
+
+    return (*this) == *e;
+}
+
+string register_likelihood::print() const
+{
+    return string("register_likelihood[")+std::to_string(likelihood_reg)+"]";
+}
+
+register_likelihood::register_likelihood(int r)
+    :likelihood_reg(r)
+{ }
+
+void register_likelihood::register_effect(reg_heap& M) const
+{
+    if (log_verbose >= 2)
+        std::cerr<<"register_likelihood["<<likelihood_reg<<"]: REGISTER! ("<<M.likelihood_heads.size()<<" -> "<<M.likelihood_heads.size()+1<<")\n";
+    M.register_likelihood_(likelihood_reg);
+}
+
+void register_likelihood::unregister_effect(reg_heap& M) const
+{
+    if (log_verbose >= 2)
+    {
+        std::cerr<<"register_likelihood["<<likelihood_reg<<"]: UNregister! ("<<M.likelihood_heads.size()<<" -> "<<M.likelihood_heads.size()-1<<")\n";
+    }
+    M.unregister_likelihood_(likelihood_reg);
+}
+
+//--------------------------------------------------------------------
+
 bool register_transition_kernel::operator==(const register_transition_kernel& e) const
 {
     return rate_reg == e.rate_reg and kernel_reg == e.kernel_reg;
