@@ -359,6 +359,8 @@ void reg_heap::unregister_effect_pending_at_step(int s)
     // Step must have be on pending list
     assert(steps[s].has_pending_nonforce_effect());
 
+    // SLOW! Scanning the whole list to find the pending effect seems like a bad idea.
+    //       We could fix this by using a hash, for example.
     std::optional<int> index;
     for(int i=0;i<pending_effect_steps.size();i++)
         if (pending_effect_steps[i]== s)
