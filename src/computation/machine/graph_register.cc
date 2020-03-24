@@ -1196,18 +1196,15 @@ int reg_heap::add_program(const expression_ref& E)
     }
 
     P = {var("Probability.Random.gen_model_no_alphabet"), P};
+    if (program->type == Program::exe_type::log_list)
+    {
+        // 2. If the program doesn't return a pair, make it a pair
+        P = {var("Probability.Random.add_null_program_result"), P};
+    }
     P = {var("Compiler.IO.unsafePerformIO"), P};
 
     int program_head = add_compute_expression(P);
     P = reg_var(heads[program_head]);
-
-    // 2. If the program doesn't return a pair, make it a pair
-    if (program->type == Program::exe_type::log_list)
-    {
-        P = Tuple(var("Data.Maybe.Nothing"),P);
-        program_head = add_compute_expression(P);
-        P = reg_var(heads[program_head]);
-    }
 
     // 3. Add the program RESULT head
     program_result_head = add_compute_expression({fst,P});
