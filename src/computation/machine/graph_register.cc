@@ -566,6 +566,9 @@ void reg_heap::unregister_random_variable(int r)
         std::swap(random_variables_[*index], random_variables_.back());
 
     random_variables_.pop_back();
+
+    int r_pdf = (*this)[r].reg_for_slot(1);
+    unregister_prior(r_pdf);
 }
 
 const vector<int>& reg_heap::random_variables() const
