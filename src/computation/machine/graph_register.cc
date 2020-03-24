@@ -492,10 +492,10 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
             int result_reg2 = result_for_reg(pdf_reg);
             log_double_t r = (*this)[result_reg2].exp.as_log_double() / (*this)[result_reg1].exp.as_log_double();
 
-            assert(regs.access(pdf_reg).flags.test(0) or regs.access(pdf_reg).flags.test(1));
+            // The reg might be unregistered between the two programs...
             if (regs.access(pdf_reg).flags.test(0))
                 R.prior_ratio *= r;
-            else 
+            else if (regs.access(pdf_reg).flags.test(1))
                 R.likelihood_ratio *= r;
         }
         else
