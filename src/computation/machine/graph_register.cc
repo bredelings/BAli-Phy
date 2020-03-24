@@ -564,9 +564,9 @@ expression_ref reg_heap::evaluate_program(int c)
     }
     auto result = lazy_evaluate(heads[*program_result_head], c, true).exp;
 
-    // Force the computation of priors and likelihoods
-    likelihood_for_context(c);
-    prior_for_context(c);
+    register_pending_effects();
+
+    unmap_unforced_steps(c);
 
     // Check that all the priors and likelihoods are forced.
 #ifndef NDEBUG
@@ -586,10 +586,6 @@ expression_ref reg_heap::evaluate_program(int c)
         assert(reg_has_value(follow_index_var(r_pdf)));
     }
 #endif
-
-    register_pending_effects();
-
-    unmap_unforced_steps(c);
 
     return result;
 }
