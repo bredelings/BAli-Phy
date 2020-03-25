@@ -781,7 +781,10 @@ int reg_heap::value_for_reg(int r) const
 {
     assert(not expression_at(r).is_index_var());
     if (reg_is_changeable(r))
+    {
+        assert(has_result(r));
         return result_for_reg(r);
+    }
     else
     {
         assert(reg_is_constant(r));
