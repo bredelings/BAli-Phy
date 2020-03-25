@@ -131,7 +131,7 @@ class reg_heap: public Object
 public:
     const closure& closure_at(int r) const {assert(r>0); return regs.access(r).C;}
     const expression_ref& expression_at(int r) const {return closure_at(r).exp;}
-    const closure& operator[](int r) const {return regs.access(r).C;}
+    const closure& operator[](int r) const {return closure_at(r);}
 
     bool reg_is_used(int r) const {return regs.is_used(r);}
     reg::type_t reg_type(int r) const {return regs.access(r).type;}
