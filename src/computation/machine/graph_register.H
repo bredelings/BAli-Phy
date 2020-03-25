@@ -129,7 +129,7 @@ class reg_heap: public Object
     void allocate_identifiers_for_program();
 
 public:
-    const closure& closure_at(int r) const {assert(r); return regs.access(r).C;}
+    const closure& closure_at(int r) const {assert(r>0); return regs.access(r).C;}
     const expression_ref& expression_at(int r) const {return closure_at(r).exp;}
     const closure& operator[](int r) const {return regs.access(r).C;}
 
