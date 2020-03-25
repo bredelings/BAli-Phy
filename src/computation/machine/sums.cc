@@ -50,6 +50,9 @@ log_double_t reg_heap::prior_for_context(int c)
 {
     total_context_prior++;
 
+    evaluate_program(c);
+    reroot_at_context(c);
+
     /*
       This version doesn't really change the amount of time in incremental_evaluate.
       However, it drastically increases the amount of time spent in reg_has_value( 30% ),
@@ -130,6 +133,8 @@ log_double_t reg_heap::likelihood_for_context(int c)
 
       With those removed, this could be comparable, or even faster.
     */
+    evaluate_program(c);
+    reroot_at_context(c);
 
     double log_pr = 0.0;
     double C = 0.0;
