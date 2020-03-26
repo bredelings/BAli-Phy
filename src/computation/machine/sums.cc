@@ -71,22 +71,13 @@ log_double_t reg_heap::prior_for_context(int c)
      *
      *       This ensures that a range-for is OK. (Range-for's assume that begin() and end() do not change).
      */
-    int num_rvs = random_variables_.size();
 
     for(int r: random_variables_)
     {
+        // The PDF is the 2nd entry of the random_variable node.
 	int r_pdf = (*this)[r].reg_for_slot(1);
 
-        /* For now, let's require priors to exist in all contexts.
-
-           We could skip priors for contexts that don't have them, but we have
-           no way of eliminating random variables registered by contexts that
-           no longer exist.
-        */
-        assert(reg_exists(r_pdf));
-
-	const auto& x = get_reg_value_in_context(r_pdf, c);
-        assert(random_variables_.size() == num_rvs);
+	const auto& x = value_for_precomputed_reg(r_pdf).exp;
 
 	log_double_t X = x.as_log_double();
 
@@ -107,15 +98,6 @@ log_double_t reg_heap::prior_for_context(int c)
 	}
 	log_pr = t;
     }
-
-    /*
-     * NOTE: We need to check evaluation of PDF doesn't create any new random variables_.
-     *       Insertion of random_variables can caused random_variables_ to be moved during the loop,
-     *          which does not work for a range-based for loop, since the start
-     *       It only works for `int r = random_variables_[i]`.
-     */
-    if (random_variables_.size() != num_rvs)
-        throw myexception()<<"The number of random variables changes while evaluating PDF!";
 
     log_double_t Pr;
     Pr.log() = log_pr;
@@ -140,7 +122,7 @@ log_double_t reg_heap::likelihood_for_context(int c)
     double C = 0.0;
     for(int r: likelihood_heads)
     {
-	const auto& x = get_reg_value_in_context(r, c);
+	const auto& x = value_for_precomputed_reg(r).exp;
 	log_double_t X = x.as_log_double();
 
 	double t;
