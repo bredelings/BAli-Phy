@@ -460,6 +460,8 @@ public:
 
     const closure& access_value_for_reg(int R1) const;
 
+    const closure& value_for_precomputed_reg(int r) const;
+
     int remove_shared_result(int t, int r);
 
     int get_shared_step(int r);

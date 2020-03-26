@@ -743,6 +743,12 @@ const closure& reg_heap::access_value_for_reg(int R1) const
     return closure_at(R2);
 }
 
+const closure& reg_heap::value_for_precomputed_reg(int r) const
+{
+    r = follow_index_var(r);
+    return access_value_for_reg(r);
+}
+
 bool reg_heap::reg_has_value(int r) const
 {
     if (regs.access(r).type == reg::type_t::constant)
