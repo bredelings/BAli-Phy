@@ -1,4 +1,5 @@
 #include <iostream>
+#include <range/v3/all.hpp>
 #include <algorithm>
 #include "util/truncate.H"
 #include "util/io/vector.H"
@@ -348,7 +349,7 @@ void reg_heap::register_effect_pending_at_step(int s)
 
     steps[s].set_pending_nonforce_effect();
 
-    pending_effect_steps.push_back(s);
+    pending_effect_steps.insert(s);
 }
 
 void reg_heap::unregister_effect_pending_at_step(int s)
@@ -358,23 +359,11 @@ void reg_heap::unregister_effect_pending_at_step(int s)
 
     // Step must have be on pending list
     assert(steps[s].has_pending_nonforce_effect());
+    assert(pending_effect_steps.count(s));
 
-    // SLOW! Scanning the whole list to find the pending effect seems like a bad idea.
-    //       We could fix this by using a hash, for example.
-    std::optional<int> index;
-    for(int i=0;i<pending_effect_steps.size();i++)
-        if (pending_effect_steps[i]== s)
-            index = i;
-
-    if (not index)
-        throw myexception()<<"unregister_effect_pending_at_step: step <"<<s<<"> not found on pending list!";
-
-    if (*index + 1 < pending_effect_steps.size())
-        std::swap(pending_effect_steps[*index], pending_effect_steps.back());
-
+    // Remove step from pending list
+    pending_effect_steps.erase(s);
     steps[s].clear_pending_nonforce_effect();
-
-    pending_effect_steps.pop_back();
 }
 
 void reg_heap::register_effect_at_step(int s)
@@ -382,8 +371,16 @@ void reg_heap::register_effect_at_step(int s)
     // Step must have effect
     assert(steps[s].has_nonforce_effect());
 
-    // Step may have been on pending list, but is no longer there.
-    steps[s].clear_pending_nonforce_effect();
+    // Remove step from pending list if it is there.
+    if (steps[s].has_pending_nonforce_effect())
+    {
+        steps[s].clear_pending_nonforce_effect();
+
+        assert(pending_effect_steps.count(s));
+        pending_effect_steps.erase(s);
+    }
+    else
+        assert(not pending_effect_steps.count(s));
 
     int call = steps[s].call;
     auto& e = expression_at(call);
@@ -398,6 +395,7 @@ void reg_heap::unregister_effect_at_step(int s)
 
     // Step must have not be on pending list
     assert(not steps[s].has_pending_nonforce_effect());
+    assert(not pending_effect_steps.count(s));
 
     int call = steps[s].call;
     auto& e = expression_at(call);
@@ -407,13 +405,16 @@ void reg_heap::unregister_effect_at_step(int s)
 
 void reg_heap::register_pending_effects()
 {
-    for(int s: pending_effect_steps)
+    // Don't modify `pending_effect_steps` while we are walking it!
+    auto v = pending_effect_steps | ranges::to<vector>;
+    for(int s: v)
     {
         assert(steps[s].has_pending_nonforce_effect());
+        assert(pending_effect_steps.count(s));
         register_effect_at_step(s);
     }
 
-    pending_effect_steps.clear();
+    assert(pending_effect_steps.empty());
 }
 
 expression_ref reg_heap::evaluate_program(int c)

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_set>
 #include "computation/object.H"
 #include "computation/expression/expression_ref.H"
 #include <utility>
@@ -326,7 +327,7 @@ private:
     std::vector<int> prog_results;
     mutable std::vector<std::bitset<8>> prog_temp;
 
-    std::vector<int> pending_effect_steps;
+    std::unordered_set<int> pending_effect_steps;
 
 public:
     /// Is a particular token unused?
