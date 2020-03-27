@@ -2,6 +2,8 @@
 #include <range/v3/all.hpp>
 #include <algorithm>
 #include "util/truncate.H"
+#include "util/log-level.H"
+#include "util/string/join.H"
 #include "util/io/vector.H"
 #include "graph_register.H"
 #include "computation/expression/var.H"
@@ -293,7 +295,7 @@ void reg_heap::unregister_prior(int r)
     regs.access(r).flags.reset(0);
 }
 
-void reg_heap::register_likelihood_(int r)
+void reg_heap::register_likelihood_(int r, int /*s*/)
 {
     // We can't register index_vars -- they could go away!
     assert(not expression_at(r).is_index_var());
@@ -326,7 +328,7 @@ void reg_heap::register_likelihood_(int r)
     }
 }
 
-void reg_heap::unregister_likelihood_(int r)
+void reg_heap::unregister_likelihood_(int r, int /*s*/)
 {
     regs.access(r).flags.reset(1);
 }
@@ -391,7 +393,7 @@ void reg_heap::register_effect_at_step(int s)
     int call = steps[s].call;
     auto& e = expression_at(call);
     assert(e.is_a<effect>());
-    e.as_<effect>().register_effect(*this);
+    e.as_<effect>().register_effect(*this, s);
 }
 
 void reg_heap::unregister_effect_at_step(int s)
@@ -406,7 +408,7 @@ void reg_heap::unregister_effect_at_step(int s)
     int call = steps[s].call;
     auto& e = expression_at(call);
     assert(e.is_a<effect>());
-    e.as_<effect>().unregister_effect(*this);
+    e.as_<effect>().unregister_effect(*this, s);
 }
 
 void reg_heap::register_pending_effects()
@@ -576,7 +578,8 @@ expression_ref reg_heap::evaluate_program(int c)
         assert(reg_has_value(follow_index_var(r_likelihood)));
     }
 
-    for(int r_rv: random_variables_)
+    assert(random_variables_.size() == random_variables_map.size());
+    for(int r_rv: random_variables())
     {
         assert(reg_exists(r_rv));
 
@@ -672,7 +675,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     return R;
 }
 
-void reg_heap::register_random_variable(int r)
+void reg_heap::register_random_variable(int r, int s)
 {
     // We can't register index_vars -- they could go away!
     assert(not expression_at(r).is_index_var());
@@ -682,57 +685,77 @@ void reg_heap::register_random_variable(int r)
 
     if (not is_random_variable(expression_at(r)))
         throw myexception()<<"Trying to register `"<<expression_at(r)<<"` as random variable";
-    random_variables_.push_back(r);
+
+    assert(not random_variables_.count(r));
 
     int r_pdf = (*this)[r].reg_for_slot(1);
-    register_prior(r_pdf);
+
+    if (random_variables_.count(r))
+    {
+        assert(random_variables_map.count(r));
+        auto& steps = random_variables_map.find(r)->second;
+        assert(not steps.count(s));
+        steps.insert(s);
+    }
+    else
+    {
+        assert(not random_variables_map.count(r));
+        random_variables_.insert(r);
+        random_variables_map[r].insert(s);
+        register_prior(r_pdf);
+    }
+    if (log_verbose >= 2)
+    {
+        std::cerr<<"  {";
+        join(std::cerr, random_variables_map.at(r), ", ");
+        std::cerr<<"}\n";
+    }
 }
 
-void reg_heap::unregister_random_variable(int r)
+void reg_heap::unregister_random_variable(int r, int s)
 {
-    // NOTE: We are NOT going to clear the bit on the reg.
-    //       That is supposed to be set even for things that are NOT in the root.
-    //       It will be cleared when the reg is destroyed.
-
-    // FIXME: This is SLOW because we have to walk the list to find the random variable.
-    //        Alternatives: (i) use a set (ii) use a hash (iii) record the position in the list somehow.
-
     if (not is_random_variable(expression_at(r)))
         throw myexception()<<"Trying to unregister `"<<expression_at(r)<<"` as random variable";
 
-    std::optional<int> index;
-    for(int i=0;i<random_variables_.size();i++)
-        if (random_variables_[i] == r)
-            index = i;
+    assert(random_variables_.count(r));
+    assert(random_variables_map.count(r));
+    if (log_verbose >= 2)
+    {
+        std::cerr<<"  {";
+        join(std::cerr, random_variables_map.at(r), ", ");
+        std::cerr<<"}\n";
+    }
 
-    if (not index)
-        throw myexception()<<"unregister_random_variable: random variable <"<<r<<"> not found!";
-
-    if (*index + 1 < random_variables_.size())
-        std::swap(random_variables_[*index], random_variables_.back());
-
-    random_variables_.pop_back();
-
-    int r_pdf = (*this)[r].reg_for_slot(1);
-    unregister_prior(r_pdf);
+    auto& steps = random_variables_map.find(r)->second;
+    assert(steps.count(s));
+    steps.erase(s);
+    if (steps.empty())
+    {
+        random_variables_.erase(r);
+        random_variables_map.erase(r);
+        int r_pdf = (*this)[r].reg_for_slot(1);
+        // This clear the pdf bit.
+        unregister_prior(r_pdf);
+    }
 }
 
-const vector<int>& reg_heap::random_variables() const
+const std::unordered_set<int>& reg_heap::random_variables() const
 {
     return random_variables_;
 }
 
-void reg_heap::register_transition_kernel(int r_rate, int r_kernel)
+void reg_heap::register_transition_kernel(int r_rate, int r_kernel, int /*s*/)
 {
     // We can't register index_vars -- they could go away!
     assert(not expression_at(r_rate).is_index_var());
 
     assert(not expression_at(r_kernel).is_index_var());
 
+    // Multiple steps from different contexts COULD register the same transition kernel.
     transition_kernels_.push_back({r_rate, r_kernel});
 }
 
-void reg_heap::unregister_transition_kernel(int r_kernel)
+void reg_heap::unregister_transition_kernel(int r_kernel, int /*s*/)
 {
     clear_transition_kernel_active(r_kernel);
 
