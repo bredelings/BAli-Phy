@@ -361,6 +361,8 @@ public:
 
     bool is_root_token(int) const;
 
+    int get_root_token() const;
+
     int parent_token(int) const;
 
     const std::vector<int>& children_of_token(int) const;

@@ -291,6 +291,11 @@ bool reg_heap::is_terminal_token(int t) const
     return tokens[t].children.empty();
 }
 
+int reg_heap::get_root_token() const
+{
+    return root_token;
+}
+
 bool reg_heap::is_root_token(int t) const
 {
     assert(token_is_used(t));

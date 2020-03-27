@@ -153,6 +153,8 @@ public:
 
     void show_graph() const;
   
+    void show_graph_for_root_token() const;
+
     void run_transition_kernels();
 
     void perform_transition_kernel(int i);

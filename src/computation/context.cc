@@ -373,6 +373,11 @@ void context_ref::show_graph() const
     dot_graph_for_token(*memory(), t);
 }
 
+void context_ref::show_graph_for_root_token() const
+{
+    dot_graph_for_token(*memory(), memory()->get_root_token());
+}
+
 expression_ref context_ref::evaluate_program() const
 {
     return memory()->evaluate_program(context_index);

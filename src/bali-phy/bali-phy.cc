@@ -686,7 +686,16 @@ int main(int argc,char* argv[])
         retval=1;
 
         if (log_verbose > 0 and M)
-            M->show_graph();
+        {
+            try
+            {
+                M->show_graph_for_root_token();
+            }
+            catch(...)
+            {
+                err_both<<"\n\nError thrown while printing graph after catching exception!\n\n";
+            }
+        }
     }
 
     show_ending_messages(show_only);
