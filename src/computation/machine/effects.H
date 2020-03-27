@@ -14,8 +14,8 @@ public:
 
     std::string print () const;
 
-    void register_effect(reg_heap&) const;
-    void unregister_effect(reg_heap&) const;
+    void register_effect(reg_heap&,int) const;
+    void unregister_effect(reg_heap&,int) const;
 
     register_random_variable(int r);
 };
@@ -32,8 +32,8 @@ public:
 
     std::string print () const;
 
-    void register_effect(reg_heap&) const;
-    void unregister_effect(reg_heap&) const;
+    void register_effect(reg_heap&,int) const;
+    void unregister_effect(reg_heap&,int) const;
 
     register_likelihood(int r);
 };
@@ -51,8 +51,8 @@ public:
 
     std::string print () const;
 
-    void register_effect(reg_heap&) const;
-    void unregister_effect(reg_heap&) const;
+    void register_effect(reg_heap&,int) const;
+    void unregister_effect(reg_heap&,int) const;
 
     register_transition_kernel(int r1, int r2);
 };
