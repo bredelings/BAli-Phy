@@ -4,6 +4,7 @@
 
 #include "util/log-level.H"
 #include "graph_register.H"
+#include "effect.H"
 #include "error_exception.H"
 #include "computation/expression/expression.H" // is_WHNF( )
 #include "computation/expression/let.H"
@@ -162,9 +163,9 @@ public:
 
     void set_effect(const effect& e)
         {
-            used_changeable = true;
+            make_changeable();
             memory().mark_step_with_nonforce_effect(s);
-            OperationArgs::set_effect(e);
+            e.register_effect(M, s);
         }
 
     RegOperationArgs* clone() const {return new RegOperationArgs(*this);}

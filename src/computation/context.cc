@@ -21,6 +21,7 @@ using std::vector;
 using std::map;
 using std::pair;
 using std::set;
+using std::unordered_set;
 using std::unique_ptr;
 using boost::dynamic_pointer_cast;
 using std::optional;
@@ -296,7 +297,7 @@ param context_ref::new_modifiable(const expression_ref& value)
     return add_compute_expression(M);
 }
 
-const vector<int>& context_ref::random_variables() const
+const unordered_set<int>& context_ref::random_variables() const
 {
     return memory()->random_variables();
 }

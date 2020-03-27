@@ -29,20 +29,20 @@ register_random_variable::register_random_variable(int r)
     :random_variable_reg(r)
 { }
 
-void register_random_variable::register_effect(reg_heap& M) const
+void register_random_variable::register_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 2)
         std::cerr<<"register_random_variable["<<random_variable_reg<<"]: REGISTER! ("<<M.random_variables().size()<<" -> "<<M.random_variables().size()+1<<")\n";
-    M.register_random_variable(random_variable_reg);
+    M.register_random_variable(random_variable_reg, s);
 }
 
-void register_random_variable::unregister_effect(reg_heap& M) const
+void register_random_variable::unregister_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 2)
     {
         std::cerr<<"register_random_variable["<<random_variable_reg<<"]: UNregister! ("<<M.random_variables().size()<<" -> "<<M.random_variables().size()-1<<")\n";
     }
-    M.unregister_random_variable(random_variable_reg);
+    M.unregister_random_variable(random_variable_reg, s);
 }
 
 //--------------------------------------------------------------------
@@ -72,20 +72,20 @@ register_likelihood::register_likelihood(int r)
     :likelihood_reg(r)
 { }
 
-void register_likelihood::register_effect(reg_heap& M) const
+void register_likelihood::register_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 2)
         std::cerr<<"register_likelihood["<<likelihood_reg<<"]: REGISTER! ("<<M.likelihood_heads.size()<<" -> "<<M.likelihood_heads.size()+1<<")\n";
-    M.register_likelihood_(likelihood_reg);
+    M.register_likelihood_(likelihood_reg, s);
 }
 
-void register_likelihood::unregister_effect(reg_heap& M) const
+void register_likelihood::unregister_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 2)
     {
         std::cerr<<"register_likelihood["<<likelihood_reg<<"]: UNregister! ("<<M.likelihood_heads.size()<<" -> "<<M.likelihood_heads.size()-1<<")\n";
     }
-    M.unregister_likelihood_(likelihood_reg);
+    M.unregister_likelihood_(likelihood_reg, s);
 }
 
 //--------------------------------------------------------------------
@@ -115,16 +115,16 @@ register_transition_kernel::register_transition_kernel(int r1, int r2)
     :rate_reg(r1), kernel_reg(r2)
 { }
 
-void register_transition_kernel::register_effect(reg_heap& M) const
+void register_transition_kernel::register_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 2)
         std::cerr<<"register_transition_kernel["<<kernel_reg<<"]: REGISTER!\n";
-    M.register_transition_kernel(rate_reg, kernel_reg);
+    M.register_transition_kernel(rate_reg, kernel_reg, s);
 }
 
-void register_transition_kernel::unregister_effect(reg_heap& M) const
+void register_transition_kernel::unregister_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 2)
         std::cerr<<"register_transition_kernel["<<kernel_reg<<"]: UNregister!\n";
-    M.unregister_transition_kernel(kernel_reg);
+    M.unregister_transition_kernel(kernel_reg, s);
 }
