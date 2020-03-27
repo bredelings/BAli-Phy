@@ -98,81 +98,6 @@ bool add_random_variable_slice_move(const context_ref& P, int rv, MCMC::MoveAll&
     return add_modifiable_slice_move(rv, bounds, M, weight * rate);
 }
 
-void add_boolean_MH_moves(const context_ref& P, MCMC::MoveAll& M, double weight = 1.0)
-{
-    for(int rv: P.random_variables())
-    {
-	auto range = P.get_range_for_random_variable(rv);
-
-	if (not range.head().is_a<constructor>()) continue;
-	if (range.head().as_<constructor>().f_name != "TrueFalseRange") continue;
-
-	string name = "m_bool_flip_"+convertToString<int>(rv);
-	add_random_variable_MH_move(P,name, bit_flip, rv, vector<double>{}, M, weight);
-    }
-}
-
-/// Find parameters with distribution name Dist
-void add_real_slice_moves(const context_ref& P, MCMC::MoveAll& M, double weight = 1.0)
-{
-    for(int rv: P.random_variables())
-	add_random_variable_slice_move(P, rv, M, weight);
-}
-
-/// Find parameters with distribution name Dist
-void add_real_MH_moves(const context_ref& P, MCMC::MoveAll& M, double weight = 1.0)
-{
-    for(int rv: P.random_variables())
-    {
-	auto range = P.get_range_for_random_variable(rv);
-	if (not range.is_a<Bounds<double>>()) continue;
-
-	auto& bounds = range.as_<Bounds<double>>();
-	string name = "m_real_cauchy_"+convertToString<int>(rv);
-	if (bounds.lower_bound and *bounds.lower_bound >= 0.0)
-	    add_random_variable_MH_move(P,name, Reflect(bounds, log_scaled(Between(-20,20,shift_cauchy))), rv, {1.0}, M, weight);
-	else
-	    add_random_variable_MH_move(P,name, Reflect(bounds, shift_cauchy), rv, {1.0}, M, weight);
-    }
-}
-
-/// Find parameters with distribution name Dist
-void add_integer_uniform_MH_moves(const context_ref& P, MCMC::MoveAll& M, double weight)
-{
-    for(int rv: P.random_variables())
-    {
-	auto range = P.get_range_for_random_variable(rv);
-	if (not range.is_a<Bounds<int>>()) continue;
-
-	auto& bounds = range.as_<Bounds<int>>();
-	if (not bounds.lower_bound or not bounds.upper_bound) continue;
-	string name = "m_int_uniform_"+convertToString<int>(rv);
-	double l = *bounds.lower_bound;
-	double u = *bounds.upper_bound;
-	add_random_variable_MH_move(P,name, discrete_uniform_avoid, rv, {double(l),double(u)}, M, weight);
-    }
-}
-
-void add_integer_slice_moves(const context_ref& P, MCMC::MoveAll& M, double weight)
-{
-    for(int rv: P.random_variables())
-    {
-	auto range = P.get_range_for_random_variable(rv);
-	double rate = P.get_rate_for_random_variable(rv);
-	if (not range.is_a<Bounds<int>>()) continue;
-
-	// FIXME: righteousness.
-	// We need a more intelligent way of determining when we should do this.
-	// For example, we do not want to do this for categorical-type variables.
-	auto& bounds = range.as_<Bounds<int>>();
-	if (bounds.upper_bound and bounds.lower_bound) continue;
-
-	string name = "m_int_"+convertToString<int>(rv);
-
-	M.add( rate * weight, MCMC::Integer_Random_Variable_Slice_Move(name, rv, bounds) );
-    }
-}
-
 optional<int> scale_is_modifiable(const context_ref& M, int s)
 {
     auto& P = dynamic_cast<const Parameters&>(M);
@@ -327,10 +252,6 @@ MCMC::MoveAll get_parameter_slice_moves(context_ref& M)
 	if (all_scales_modifiable(M))
 	    slice_moves.add(2,MCMC::Scale_Means_Only_Slice_Move("scale_Scales_only_slice",0.6));
     }
-
-    // Add slice moves for continuous 1D distributions
-    add_real_slice_moves(M, slice_moves, 1.0);
-    add_integer_slice_moves(M, slice_moves, 1.0);
 
     return slice_moves;
 }
@@ -508,36 +429,6 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
 	tree_moves.add(0.5,SingleMove(walk_tree_sample_NNI_and_A,"walk_tree_NNI_and_A","topology:lengths:nodes:alignment:alignment_branch"));
 
     return tree_moves;
-}
-
-/// \brief Construct Metropolis-Hastings moves for scalar numeric parameters without a corresponding slice move
-///
-/// \param P   The model and state.
-///
-MCMC::MoveAll get_parameter_MH_but_no_slice_moves(context_ref& M)
-{
-    using namespace MCMC;
-
-    MoveAll parameter_moves("parameters");
-
-    // Why 1.5?
-    // Well, there's some danger here that we could flip in a periodic fashion, and only observe variable when its True (or only if its False).
-    //  - It seems to be OK, though.  Why?
-    //  - Note that this should only be an issue when this does not affect the likelihood.
-    // Also, how hard would it be to make a Gibbs flipper?  We could (perhaps) run that once per iteration to avoid periodicity.
-
-    add_boolean_MH_moves(M, parameter_moves, 1.5);
-    add_integer_uniform_MH_moves(M, parameter_moves, 1.0);
-
-    // Actually there ARE slice moves for this, but they don't jump modes!
-    add_real_MH_moves(M, parameter_moves, 0.1);
-
-    if (auto MM = dynamic_cast<Model*>(&M); MM->contains_key("sample_foreground_branch"))
-    {
-	parameter_moves.add(1.0, MCMC::MH_Move(move_subst_type_branch,"sample_foreground_branch"));
-    }
-
-    return parameter_moves;
 }
 
 void enable_disable_transition_kernels(MCMC::MoveAll& sampler, const variables_map& args)
@@ -884,7 +775,6 @@ void do_sampling(const variables_map& args,
     Sampler sampler("sampler");
 
     MoveAll slice_moves = get_parameter_slice_moves(*P);
-    MoveAll MH_but_no_slice_moves = get_parameter_MH_but_no_slice_moves(*P);
     MoveAll MH_moves = get_parameter_MH_moves(*P);
 
     if (is_parameters)
@@ -910,7 +800,6 @@ void do_sampling(const variables_map& args,
 	// - It does call the likelihood function, doesn't it?
 	// FIXME -   However, it is probably not so important to resample most parameters in a way that is interleaved with stuff... (?)
 	// FIXME -   Certainly, we aren't going to be interleaved with branches, anyway!
-	sampler.add(5 + log(1+PP->t().n_branches()), MH_but_no_slice_moves);
 	if (P->load_value("MH_sampling",false))
 	    sampler.add(5 + log(1+PP->t().n_branches()),MH_moves);
 	else
@@ -918,7 +807,6 @@ void do_sampling(const variables_map& args,
     }
     else
     {
-	sampler.add(5, MH_but_no_slice_moves);
 	sampler.add(1, MH_moves);
     }
 
