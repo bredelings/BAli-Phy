@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <unordered_set>
+#include <unordered_map>
 #include "computation/object.H"
 #include "computation/expression/expression_ref.H"
 #include <utility>
@@ -235,9 +236,9 @@ public:
 
     std::vector<int> likelihood_heads;
 
-    void register_likelihood_(int r);
+    void register_likelihood_(int r, int s);
 
-    void unregister_likelihood_(int r);
+    void unregister_likelihood_(int r, int s);
 
     log_double_t likelihood_for_context(int c);
 
@@ -246,20 +247,21 @@ public:
     prob_ratios_t probability_ratios(int c1, int c2);
 
     // the list of random variables
-    std::vector<int> random_variables_;
+    std::unordered_map<int,std::unordered_set<int>> random_variables_map;
+    std::unordered_set<int> random_variables_;
 
-    const std::vector<int>& random_variables() const;
+    const std::unordered_set<int>& random_variables() const;
 
-    void register_random_variable(int r);
-    void unregister_random_variable(int r);
+    void register_random_variable(int r, int s);
+    void unregister_random_variable(int r, int s);
 
     // the list of transition kernels
     std::vector<std::pair<int,int>> transition_kernels_;
 
     const std::vector<std::pair<int,int>>& transition_kernels() const;
 
-    void register_transition_kernel(int,int);
-    void unregister_transition_kernel(int);
+    void register_transition_kernel(int,int,int);
+    void unregister_transition_kernel(int,int);
 
     void mark_transition_kernel_active(int r);
     bool transition_kernel_is_active(int r);
