@@ -120,10 +120,9 @@ int OperationArgs::allocate_reg()
     return r;
 }
 
-void OperationArgs::set_effect(const effect& e)
+void OperationArgs::set_effect(const effect& /*e*/)
 {
-    auto& M = memory();
-    e.register_effect(M);
+    make_changeable();
 }
 
 OperationArgs::OperationArgs(reg_heap& m)

@@ -1,6 +1,8 @@
 #ifndef CONTEXT_H
 #define CONTEXT_H
 
+#include <unordered_set>
+#include <vector>
 #include "computation/closure.H"
 #include "computation/param.H"
 #include "computation/program.H"
@@ -121,7 +123,7 @@ public:
     /// Set the value of a modifiable
     void set_modifiable_value(int index, const expression_ref&);
 
-    const std::vector<int>& random_variables() const;
+    const std::unordered_set<int>& random_variables() const;
 
     const expression_ref get_range_for_random_variable(int r) const;
 
