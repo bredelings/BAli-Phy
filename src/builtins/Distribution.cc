@@ -29,6 +29,8 @@ extern "C" closure builtin_function_sample_shifted_gamma(OperationArgs& Args)
     double a2    = Args.evaluate_(1).as_double();
     double shift = Args.evaluate_(2).as_double();
   
+    Args.make_changeable();
+
     return { gamma(a1, a2) + shift };
 }
 
@@ -56,6 +58,8 @@ extern "C" closure builtin_function_sample_beta(OperationArgs& Args)
     double a1 = Args.evaluate_(0).as_double();
     double a2 = Args.evaluate_(1).as_double();
   
+    Args.make_changeable();
+
     return { beta(a1, a2) };
 }
 
@@ -82,6 +86,8 @@ extern "C" closure builtin_function_sample_normal(OperationArgs& Args)
     double a1 = Args.evaluate_(0).as_double();
     double a2 = Args.evaluate_(1).as_double();
   
+    Args.make_changeable();
+
     return { gaussian(a1, a2) };
 }
  
@@ -107,6 +113,8 @@ extern "C" closure builtin_function_sample_cauchy(OperationArgs& Args)
 {
     double a1 = Args.evaluate_(0).as_double();
     double a2 = Args.evaluate_(1).as_double();
+
+    Args.make_changeable();
 
     return { cauchy(a1, a2) };
 }
@@ -136,6 +144,8 @@ extern "C" closure builtin_function_sample_laplace(OperationArgs& Args)
     double m = Args.evaluate_(0).as_double();
     double s = Args.evaluate_(1).as_double();
   
+    Args.make_changeable();
+
     return { laplace(m,s) };
 }
 
@@ -154,6 +164,8 @@ extern "C" closure builtin_function_sample_uniform(OperationArgs& Args)
     double a2 = Args.evaluate_(1).as_double();
 
     assert(a1 < a2);
+
+    Args.make_changeable();
 
     return { a1 + (a2-a1)*uniform() };
 }
@@ -176,6 +188,8 @@ extern "C" closure builtin_function_sample_uniform_int(OperationArgs& Args)
 
     int w = a2-a1+1;
 
+    Args.make_changeable();
+
     return { a1 + int(w*uniform()) };
 }
 
@@ -193,12 +207,16 @@ extern "C" closure builtin_function_sample_binomial(OperationArgs& Args)
     int n = Args.evaluate_(0).as_int();
     double p = Args.evaluate_(1).as_double();
 
+    Args.make_changeable();
+
     return { (int)binomial(n,p) };
 }
 
 extern "C" closure builtin_function_sample_bernoulli(OperationArgs& Args)
 {
     double p = Args.evaluate_(0).as_double();
+
+    Args.make_changeable();
 
     return { (int)bernoulli(p) };
 }
@@ -216,6 +234,8 @@ extern "C" closure builtin_function_sample_geometric(OperationArgs& Args)
 {
     double p = Args.evaluate_(0).as_double();
 
+    Args.make_changeable();
+
     return { (int)geometric(p) };
 }
 
@@ -230,6 +250,8 @@ extern "C" closure builtin_function_poisson_density(OperationArgs& Args)
 extern "C" closure builtin_function_sample_poisson(OperationArgs& Args)
 {
     double mu = Args.evaluate_(0).as_double();
+
+    Args.make_changeable();
 
     return { (int)poisson(mu) };
 }
@@ -336,6 +358,8 @@ extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
 	S->push_back(categories[index]);
     }
 
+    Args.make_changeable();
+
     return S;
 }
 
@@ -343,6 +367,8 @@ extern "C" closure builtin_function_sample_categorical(OperationArgs& Args)
 {
     //------------- 1. Get argument p -----------------
     auto z = (vector<double>) Args.evaluate(0).as_<EVector>();
+
+    Args.make_changeable();
 
     return { choose_scratch(z) };
 }
