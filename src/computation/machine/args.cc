@@ -81,6 +81,16 @@ const expression_ref& OperationArgs::evaluate_(int slot)
     return evaluate_slot_to_object_(slot);
 }
 
+int OperationArgs::evaluate_reg_unchangeable(int r)
+{
+    return M.incremental_evaluate_unchangeable(r);
+}
+
+int OperationArgs::evaluate_slot_unchangeable(int slot)
+{
+    return evaluate_reg_unchangeable(reg_for_slot(slot));
+}
+
 void OperationArgs::stack_push(int r)
 {
     M.stack_push(r);

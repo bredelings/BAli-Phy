@@ -82,7 +82,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
     int c1 = Args.evaluate(2).as_int();
 
     //------------- 1a. Get argument X -----------------
-    int t_reg = Args.evaluate_slot_to_reg(0);
+    int t_reg = Args.evaluate_slot_unchangeable(0);
     if (auto t_mod_reg = Args.find_modifiable_in_context(t_reg, c1))
         t_reg = *t_mod_reg;
     else
@@ -103,7 +103,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 	next_reg = top->reg_for_slot(1);
 
 	// evaluate the list element in token 0
-	element_reg = Args.evaluate_reg_to_reg(element_reg);
+	element_reg = Args.evaluate_reg_unchangeable(element_reg);
         if (auto element_mod_reg = Args.find_modifiable_in_context(element_reg, c1))
             element_reg = *element_mod_reg;
         else
@@ -156,7 +156,7 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
     assert(not Args.evaluate_changeables());
 
     //------------- 1a. Get argument X -----------------
-    int x_reg = Args.evaluate_slot_to_reg(0);
+    int x_reg = Args.evaluate_slot_unchangeable(0);
 
     //------------- 1b. Get range [0,n) for X ----------
     int n_values = Args.evaluate(1).as_int();
@@ -208,7 +208,7 @@ extern "C" closure builtin_function_discrete_uniform_avoid_mh(OperationArgs& Arg
     assert(not Args.evaluate_changeables());
 
     //------------- 1a. Get argument X -----------------
-    int x_reg = Args.evaluate_slot_to_reg(0);
+    int x_reg = Args.evaluate_slot_unchangeable(0);
 
     //------------- 1bc. Get range [a,a+n-1] for X -----
     int a = Args.evaluate(1).as_int();
@@ -259,7 +259,7 @@ extern "C" closure builtin_function_slice_sample_real_random_variable(OperationA
     auto& M = Args.memory();
 
     //------------- 1a. Get argument X -----------------
-    int x_reg = Args.evaluate_slot_to_reg(0);
+    int x_reg = Args.evaluate_slot_unchangeable(0);
 
     if (log_verbose >= 3) std::cerr<<"\n\n[slice_sample_real_random_variable] <"<<x_reg<<">\n";
 
@@ -300,7 +300,7 @@ extern "C" closure builtin_function_slice_sample_integer_random_variable(Operati
     auto& M = Args.memory();
 
     //------------- 1a. Get argument X -----------------
-    int x_reg = Args.evaluate_slot_to_reg(0);
+    int x_reg = Args.evaluate_slot_unchangeable(0);
 
     if (log_verbose >= 3) std::cerr<<"\n\n[slice_sample_integer_random_variable] <"<<x_reg<<">\n";
 
