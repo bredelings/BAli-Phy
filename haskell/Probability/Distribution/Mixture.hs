@@ -1,9 +1,15 @@
 module Probability.Distribution.Mixture where
 
 import Probability.Random
+import Probability.Distribution.Categorical
 
-mixtureRange ((_,dist1):_) = distRange dist1
-mixture_density ((p1,dist1):l) x = (doubleToLogDouble p1)*(density dist1 x) + (mixture_density l x)
-mixture_density [] _ = (doubleToLogDouble 0.0)
-sample_mixture ((p1,dist1):l) = dist1
-mixture args = Distribution (make_densities $ mixture_density args) (no_quantile "mixture") (sample_mixture args) (mixtureRange args)
+mixtureRange _ (d:ds) = distRange
+mixture_density (p:ps) (dist:dists) x = (doubleToLogDouble p)*(density dist x) + (mixture_density ps dists x)
+mixture_density [] _ x = (doubleToLogDouble 0.0)
+sample_mixture weights dists = do cat <- categorical weights
+                                  dists!!cat
+
+mixture weights dists = Distribution (make_densities $ mixture_density weights dists)
+                                     (no_quantile "mixture")
+                                     (sample_mixture weights dists)
+                                     (mixtureRange weights dists)
