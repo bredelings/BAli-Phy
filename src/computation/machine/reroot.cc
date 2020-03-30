@@ -126,10 +126,8 @@ void reg_heap::reroot_at(int t)
 
     total_reroot_one++;
   
-    assert(tokens[parent].version == tokens[t].version);
-
     for(int t2: tokens[t].children)
-        assert(tokens[t2].version <= tokens[t].version);
+        assert(tokens[t2].type != token_type::reverse_set);
 
     assert(is_root_token(t));
 }
@@ -169,12 +167,12 @@ void reg_heap::unshare_regs(int t)
 {
     // parent_token(t) should be the root.
     assert(is_root_token(parent_token(t)));
-    assert(tokens[root_token].version >= tokens[t].version);
+    assert(tokens[t].type != token_type::reverse_set);
 
     constexpr int result_bit = 0;
     constexpr int step_bit = 1;
 
-    if (tokens[root_token].version <= tokens[t].version)
+    if (tokens[t].type != token_type::set)
     {
 #if DEBUG_MACHINE >= 1
         const auto& delta_result = tokens[t].vm_result.delta();
@@ -223,10 +221,7 @@ void reg_heap::unshare_regs(int t)
 
     assert(tokens[t].type == token_type::set);
 
-    if (tokens[t].type == token_type::set)
-        tokens[t].type = token_type::set_unshare;
-    else
-        tokens[t].type = token_type::merged;
+    tokens[t].type = token_type::set_unshare;
 
     auto& vm_result = tokens[t].vm_result;
     auto& vm_step = tokens[t].vm_step;
@@ -363,8 +358,6 @@ void reg_heap::unshare_regs(int t)
     total_results_scanned += delta_result.size();
     total_steps_scanned += delta_step.size();
 
-    tokens[t].version = tokens[root_token].version;
-  
 #if DEBUG_MACHINE >= 2
     check_used_regs();
 #endif

@@ -30,7 +30,6 @@ long total_get_reg_value_non_const = 0;
 long total_get_reg_value_non_const_with_result = 0;
 long total_context_pr = 0;
 long total_tokens = 0;
-long max_version = 0;
 
 /*
  * Goal: Share computation of WHNF structures between contexts, even when those
@@ -1000,14 +999,11 @@ int reg_heap::allocate_reg_from_step_in_token(int s, int t)
 void reg_heap::set_reg_value(int R, closure&& value, int t)
 {
     total_set_reg_value++;
-    assert(not is_dirty(t));
     assert(not children_of_token(t).size());
     assert(reg_is_changeable(R));
 
-    if (not is_root_token(t) and tokens[t].version == tokens[parent_token(t)].version)
-        tokens[t].version--;
-
-    // assert(not is_root_token and tokens[t].version < tokens[parent_token(t)].version) 
+    if (not is_root_token(t))
+        assert(tokens[t].type == token_type::set);
 
     // Check that this reg is indeed settable
     if (not is_modifiable(expression_at(R)))
@@ -1056,45 +1052,6 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
 #endif
 }
 
-/*
- * If parent token's version is greater than its child, this means that there could
- * be computations in the parent that are shared into the child that should not be.
- *
- * This occurs EITHER if we perform computation in the parent, OR of we alter a modifiable
- * value in the child.  Therefore, we increase the root version (mark_completely_dirty)
- * before executing in the root token, and decrease the child version when changing its 
- * modifiable values.
- *
- * Computations that are improperly shared into the child have dependencies on computations
- * in the parent context even though these computations are overridden in the child context.
- * We detect and invalidate such computations in invalidate_shared_regs( ).
- */
-
-void reg_heap::mark_completely_dirty(int t)
-{
-    auto& version = tokens[t].version;
-    for(int t2:tokens[t].children)
-        version = std::max(version, tokens[t2].version+1);
-    max_version = std::max(version, max_version);
-}
-
-bool reg_heap::is_dirty(int t) const
-{
-    for(int t2:tokens[t].children)
-        if (tokens[t].version > tokens[t2].version)
-            return true;
-    return false;
-}
-
-// Note that a context can be completely dirty, w/o being dirty :-P
-bool reg_heap::is_completely_dirty(int t) const
-{
-    for(int t2:tokens[t].children)
-        if (tokens[t].version <= tokens[t2].version)
-            return false;
-    return true;
-}
-  
 std::vector<int> reg_heap::used_regs_for_reg(int r) const
 {
     vector<int> U;
@@ -1362,24 +1319,6 @@ void reg_heap::check_tokens() const
             assert(tokens[t].used);
         }
     }
-
-    for(int t=0;t<tokens.size();t++)
-        if (token_is_used(t))
-        {
-            // No unreferenced tip tokens
-            assert(tokens[t].is_referenced() or tokens[t].children.size() >= 1);
-
-            // No invalid token types
-            assert(tokens[t].type != token_type::none);
-            if (t == root_token)
-                assert(tokens[t].type == token_type::root);
-            else
-                assert(tokens[t].type != token_type::root);
-
-            // No incorrect token versions
-            for(int t2: children_of_token(t))
-                assert(tokens[t].version >= tokens[t2].version);
-        }
 #endif
 }
 

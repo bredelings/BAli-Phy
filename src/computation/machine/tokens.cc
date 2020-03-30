@@ -206,7 +206,10 @@ void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
 
     tokens[child_token].type = token_type::merged;
     for(int t: knuckle_tokens)
+    {
+        assert(tokens[t].type != token_type::set);
         tokens[t].type = token_type::merged;
+    }
 
     load_map(tokens[child_token].vm_result, prog_temp);
     for(int t: knuckle_tokens)
@@ -214,9 +217,6 @@ void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
         assert(token_is_used(t));
         assert(not tokens[t].is_referenced());
         assert(tokens[t].children.size() == 1);
-
-        // The child token (t2) needs to be up-to-date with respect to the parent token.
-        assert(tokens[t].version <= tokens[child_token].version);
 
         merge_split_mapping_(tokens[t].vm_result, tokens[child_token].vm_result, prog_temp);
     }
@@ -228,9 +228,6 @@ void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
         assert(token_is_used(t));
         assert(not tokens[t].is_referenced());
         assert(tokens[t].children.size() == 1);
-
-        // The child token (t2) needs to be up-to-date with respect to the parent token.
-        assert(tokens[t].version <= tokens[child_token].version);
 
         merge_split_mapping_(tokens[t].vm_step, tokens[child_token].vm_step, prog_temp);
     }
@@ -356,8 +353,6 @@ int reg_heap::make_child_token(int t, token_type type)
     tokens[t2].children.clear();
 
     tokens[t].children.push_back(t2);
-
-    tokens[t2].version = tokens[t].version;
 
 #ifdef DEBUG_MACHINE
     check_used_regs();
