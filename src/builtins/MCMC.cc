@@ -12,6 +12,7 @@
 #include "computation/expression/random_variable.H"
 #include "computation/expression/modifiable.H"
 #include "mcmc/slice-sampling.H"
+#include "mcmc/proposals.H"
 #include "computation/operations.H"      // for is_seq( )
 
 using boost::dynamic_pointer_cast;
@@ -202,15 +203,56 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
     return EPair(state+1,constructor("()",0));
 }
 
+Proposal uniform_avoid_mh_proposal(int a, int b, int x_reg)
+{
+    return [=](context_ref& C)
+           {
+               // 1. Find the modifiable
+               auto x_mod_reg = C.find_modifiable_reg_in_context(x_reg);
+               if (not x_mod_reg)
+                   throw myexception()<<"discrete_uniform_avoid_mh: reg "<<x_reg<<" not modifiable!";
+
+               // 2. Get the current value
+               int x1 = C.get_reg_value(*x_mod_reg).as_int();
+               if (x1 < a or x1 > b)
+                   throw myexception()<<"discrete_uniform_avoid_mh: value "<<x1<<" not in range ["<<a<<", "<<b<<"]";
+
+               // 3. Propose a new value
+               int x2 = uniform(a,b-1);
+               if (x2 >= x1) x2++;
+
+               // 4. Set the new value
+               C.set_reg_value(*x_mod_reg, expression_ref(x2));
+
+               // 5. Return the proposal ratio
+               return 1.0;
+           };
+}
+
+bool perform_MH_(reg_heap& M, int context_index, const Proposal& proposal)
+{
+    // 1. Construct a reference to the context
+    context_ref C1(M, context_index);
+
+    // 2. Make a duplicate context to modify
+    context C2 = C1;
+
+    // 3. Propose a new state
+    auto proposal_ratio = proposal(C2);
+
+    // 4. Accept or reject the proposal
+    return perform_MH(C1, C2, proposal_ratio);
+}
+
+
 // gibbs_sample_categorical x n pr
 extern "C" closure builtin_function_discrete_uniform_avoid_mh(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
 
-    //------------- 1a. Get argument X -----------------
+    //------------- 1a. Get the proposal ---------------
     int x_reg = Args.evaluate_slot_unchangeable(0);
 
-    //------------- 1bc. Get range [a,a+n-1] for X -----
     int a = Args.evaluate(1).as_int();
     int b = Args.evaluate(2).as_int();
 
@@ -222,30 +264,14 @@ extern "C" closure builtin_function_discrete_uniform_avoid_mh(OperationArgs& Arg
     //------------- 1e. Get monad thread state ---------
     int state = Args.evaluate(4).as_int();
 
-    //------------- 2. Find the location of the variable -----------//
+    //------------- 2. Perform the proposal ------------
     auto& M = Args.memory();
-    auto x_mod_reg = Args.find_modifiable_in_context(x_reg, c1);
-    if (not x_mod_reg)
-        throw myexception()<<"discrete_uniform_avoid_mh: reg "<<x_reg<<" not modifiable!";
 
-    //------------- 3. Get initial value x1 for variable -----------//
-    context_ref C1(M, c1);
+    auto proposal = uniform_avoid_mh_proposal(a, b, x_reg);
 
-    int x1 = C1.get_reg_value(*x_mod_reg).as_int();
-    if (x1 < a or x1 > b)
-        throw myexception()<<"discrete_uniform_avoid_mh: value "<<x1<<" not in range ["<<a<<", "<<b<<"]";
+    perform_MH_(M, c1, proposal);
 
-    //------------- 4. Propose new value avoiding x1 ---------------//
-    int x2 = uniform(a,b-1);
-    if (x2 >= x1) x2++;
-
-    //------------- 5. Create a context with the new value----------//
-    context C2 = C1;
-    C2.set_reg_value(*x_mod_reg, expression_ref(x2));
-
-    //------------- 6. Move if MH rule is satisfied ----------------//
-    perform_MH(C1,C2,1.0);
-
+    //------------- 4. Return the modified IO state ----
     return EPair(state+1,constructor("()",0));
 }
 
