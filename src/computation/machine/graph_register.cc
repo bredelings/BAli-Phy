@@ -813,6 +813,14 @@ optional<int> reg_heap::find_modifiable_reg(int R)
 
 optional<int> reg_heap::find_modifiable_reg_in_context(int r, int c)
 {
+    // Note that value_for_precomputed_reg( ) also does
+    // - follow_index_var( )
+    // Although it does not do
+    // - r = call_for_reg(r)
+    // After we stop performing evaluation here, this looks a lot like
+    // a hypothetical `value_for_precomputed_reg_in_context( )`,
+    // except that we stop at modifiables.
+
     // Warning: ABOMINATION!
     // FIXME: This should be forced by a `seq` inside the program.
     // But that probably requires force-edges to be working.
