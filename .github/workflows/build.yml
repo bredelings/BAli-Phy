@@ -64,10 +64,8 @@ jobs:
     - name: Install (macOS)
       if: runner.os == 'macOS'
       run: |
-          brew update
           brew install pkg-config pandoc cairo ccache coreutils
           sudo xcode-select -switch /Applications/Xcode_${{ matrix.version }}.app
-          brew reinstall python    # fix for ssl module not working?
 
     - name: Install meson
       run: |
