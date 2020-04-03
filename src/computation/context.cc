@@ -405,6 +405,11 @@ optional<int> context_ref::get_modifiable_reg(int r) const
     return memory()->find_modifiable_reg(r);
 }
 
+optional<int> context_ref::find_modifiable_reg_in_context(int r) const
+{
+    return memory()->find_modifiable_reg_in_context(r, context_index);
+}
+
 std::ostream& operator<<(std::ostream& o, const context_ref& C)
 {
     for(int index = 0;index < C.n_expressions(); index++)
