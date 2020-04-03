@@ -462,6 +462,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 
     // 1. reroot to c1 and force the program
     evaluate_program(c1);
+    int num_rvs1 = random_variables_.size();
 
     // 2. install another reroot handler
     vector<pair<int,int>> original_pdf_results;
@@ -487,9 +488,11 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 
     // 3. reroot to c2 and force the program
     evaluate_program(c2);
+    int num_rvs2 = random_variables_.size();
 
     // 4. compute the ratio only for (i) changed pdfs that (ii) exist in both c1 and c2
     prob_ratios_t R;
+    R.variables_changed = (num_rvs1 != num_rvs2);
 
     for(auto [pdf_reg, orig_pdf_value]: original_pdf_results)
     {
