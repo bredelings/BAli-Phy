@@ -180,31 +180,6 @@ optional<int> OperationArgs::find_modifiable_in_context(int r, int c)
 
     auto& M = memory();
 
-    // Warning: ABOMINATION!
-    // FIXME: This should be forced by a `seq` inside the program.
-    // But that probably requires force-edges to be working.
-    M.incremental_evaluate_in_context(r,c);
-
-    assert(M.is_root_token(M.token_for_context(c)));
-
-    r = M.follow_index_var(r);
-
-    // r should not be unknown or an index_var
-    assert(M.reg_is_constant(r) or (M.reg_is_changeable(r) and M.reg_has_call(r)));
-
-    while (not M.reg_is_constant(r))
-    {
-        assert(M.reg_is_changeable(r));
-        assert(M.reg_has_call(r));
-
-        if (is_modifiable(M[r].exp))
-            return r;
-        else
-            r = M.call_for_reg(r);
-    };
-
-    // r is (now) a constant.
-    // There is therefore no modifiable.
-    return {};
+    return M.find_modifiable_reg_in_context(r,c);
 }
 
