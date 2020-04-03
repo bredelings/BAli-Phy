@@ -6,7 +6,9 @@ import MCMC
 builtin geometric_density 3 "geometric_density" "Distribution"
 builtin builtin_sample_geometric 2 "sample_geometric" "Distribution"
 
-geometric_effect x = add_move (\c -> slice_sample_integer_random_variable x c)
+geometric_effect x = do
+  add_move (\c -> slice_sample_integer_random_variable x c)
+  add_move (\c -> inc_dec_mh x c)
 
 sample_geometric p_success = RandomStructure geometric_effect modifiable_structure $ liftIO (IOAction (\s->(s,builtin_sample_geometric p_success s)))
 
