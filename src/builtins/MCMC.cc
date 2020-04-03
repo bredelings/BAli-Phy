@@ -275,6 +275,62 @@ extern "C" closure builtin_function_discrete_uniform_avoid_mh(OperationArgs& Arg
     return EPair(state+1,constructor("()",0));
 }
 
+
+
+Proposal inc_dec_mh_proposal(int x_reg)
+{
+    return [=](context_ref& C)
+           {
+               // 1. Find the modifiable
+               auto x_mod_reg = C.find_modifiable_reg_in_context(x_reg);
+               if (not x_mod_reg)
+                   throw myexception()<<"discrete_uniform_avoid_mh: reg "<<x_reg<<" not modifiable!";
+
+               // 2. Get the current value
+               int x1 = C.get_reg_value(*x_mod_reg).as_int();
+
+               // 3. Propose a new value
+               int x2 = x1;
+               if (uniform(0,1) > 0.5)
+                   x2++;
+               else
+                   x2--;
+
+               // 4. Set the new value
+               C.set_reg_value(*x_mod_reg, expression_ref(x2));
+
+               // 5. Return the proposal ratio
+               return 1.0;
+           };
+}
+
+// gibbs_sample_categorical x n pr
+extern "C" closure builtin_function_inc_dec_mh(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+
+    //------------- 1a. Get the proposal ---------------
+    int x_reg = Args.evaluate_slot_unchangeable(0);
+
+    if (log_verbose >= 3) std::cerr<<"\n\n[inc_dec_mh] <"<<x_reg<<">\n";
+
+    //------------- 1d. Get context index --------------
+    int c1 = Args.evaluate(1).as_int();
+
+    //------------- 1e. Get monad thread state ---------
+    int state = Args.evaluate(2).as_int();
+
+    //------------- 2. Perform the proposal ------------
+    auto& M = Args.memory();
+
+    auto proposal = inc_dec_mh_proposal(x_reg);
+
+    perform_MH_(M, c1, proposal);
+
+    //------------- 4. Return the modified IO state ----
+    return EPair(state+1,constructor("()",0));
+}
+
 template <typename T>
 using Bounds = Box<bounds<T>>;
 
