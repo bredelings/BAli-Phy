@@ -3,6 +3,7 @@ module Probability.Distribution.RandomAlignment where
 import           Probability.Random
 import           Tree
 import           Bio.Alignment
+import           Control.DeepSeq
 
 modifiable_alignment a@(AlignmentOnTree tree n_seqs ls as) | numNodes tree < 2 = a
 modifiable_alignment (AlignmentOnTree tree n_seqs ls as) | otherwise           = AlignmentOnTree tree n_seqs ls' as'
@@ -21,13 +22,8 @@ unaligned_alignments_on_tree t ls = [ make_a' b | b <- [0 .. 2 * numBranches t -
             l2 = if n2 < numElements ls then ls ! n2 else 0
         in  unaligned_pairwise_alignment l1 l2
 
-deepseq_array array obj = go (numElements array - 1) array obj
-  where
-    go i array obj | i == -1   = obj
-                   | otherwise = (array ! i) `seq` (go (i - 1) array obj)
-
 -- Here we want to (i) force the tree, (ii) force the hmms, and (iii) match parameters.cc:unaligned_alignments_on_tree 
-sample_alignment tree hmms tip_lengths = return (hmms `deepseq_array` (AlignmentOnTree tree n_nodes ls as))
+sample_alignment tree hmms tip_lengths = return (hmms `deepseq` (AlignmentOnTree tree n_nodes ls as))
   where
     n_leaves = numElements tip_lengths
     ls       = listArray' $ [ if node < n_leaves then tip_lengths ! node else seqlength as tree node | node <- [0 .. n_nodes - 1] ]

@@ -8,6 +8,7 @@ import Probability.Distribution.Categorical
 
 import Foreign.Vector
 
+import Control.DeepSeq
 import MCMC -- for GibbsSampleCategorical
 
 normalize v = map (/total) v where total=sum v
@@ -50,8 +51,7 @@ safe_exp x = if (x < (-20.0)) then
 
 -- FIXME! For now, we want all thetas forced so that the number of random variables does not change.
 iid_forced n dist = do xs <- iid n dist
-                       return $ deepseq_list xs xs
-    where deepseq_list (x:xs) obj = foldr seq obj xs
+                       return $ deepseq xs xs
 
 dpm n alpha mean_dist noise_dist= do 
 
