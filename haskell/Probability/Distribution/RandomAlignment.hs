@@ -50,7 +50,7 @@ alignment_pr' alignment hmms model var_a = if var_a then alignment_pr alignment 
 --FIXME: Maybe I should also reduce this to just a list of pairwise alignments?
 triggered_modifiable_alignment value effect =
     let a           = modifiable_alignment value
-        triggered_a = effect `seq` a
+        triggered_a = a `deepseq` effect `seq` a
     in  (a, triggered_a)
 
 random_alignment tree hmms model tip_lengths var_a = Distribution (\a -> [alignment_pr' a hmms model var_a])

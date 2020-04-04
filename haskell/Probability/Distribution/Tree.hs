@@ -3,6 +3,7 @@ module Probability.Distribution.Tree where
 import           Tree
 import           Probability.Random
 import           Probability.Distribution.Uniform
+import           Control.DeepSeq
 
 xrange start end | start < end = start : xrange (start + 1) end
                  | otherwise   = []
@@ -63,9 +64,12 @@ uniform_topology_pr 1 = doubleToLogDouble 1.0
 uniform_topology_pr 2 = doubleToLogDouble 1.0
 uniform_topology_pr n = uniform_topology_pr (n - 1) / (doubleToLogDouble $ intToDouble $ 2 * n - 5)
 
+-- We don't want to force all fields of the tree when any tree field is accessed, only when a _random_ field is accessed.
+-- This is why triggered tree still uses 'tree' as input to 'modifiable_tree'.
 triggered_modifiable_tree value effect =
     let tree           = modifiable_tree modifiable value
-        triggered_tree = modifiable_tree (effect `seq`) tree
+        force_tree     = tree `deepseq` tree
+        triggered_tree = modifiable_tree (force_tree `seq` effect `seq`) tree
     in  (tree, triggered_tree)
 
 uniform_topology n = Distribution (\tree -> [uniform_topology_pr n])
