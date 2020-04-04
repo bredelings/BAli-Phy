@@ -16,6 +16,10 @@ import Data.List
 import Data.Function
 import Compiler.Num
 
+-- hack, until we have a type system
+is_array :: a -> Bool
+builtin is_array 1 "is_array" "Array"
+
 infixl 9 !
 builtin ! 2 "getIndex" "Array"
 
