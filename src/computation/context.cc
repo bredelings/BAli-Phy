@@ -42,6 +42,24 @@ closure context_ref::preprocess(const closure& C) const
     return memory()->preprocess(C);
 }
 
+const closure* context_ref::precomputed_value_for_reg(int r) const
+{
+    auto& M = *memory();
+
+    if (auto r2 = M.precomputed_value_in_context(r, context_index))
+    {
+        return &M[*r2];
+    }
+    else
+        return nullptr;
+}
+
+const closure* context_ref::precomputed_value_for_head(int index) const
+{
+    int H = heads()[index];
+    return precomputed_value_for_reg(H);
+}
+
 /// Return the value of a particular index, computing it if necessary
 const closure& context_ref::lazy_evaluate(int index) const
 {
@@ -52,6 +70,14 @@ const closure& context_ref::lazy_evaluate(int index) const
 const expression_ref& context_ref::evaluate(int index) const
 {
     return lazy_evaluate(index).exp;
+}
+
+/// Return the value of a particular index, computing it if necessary
+const expression_ref& context_ref::evaluate_unchangeable(int index) const
+{
+    int H = heads()[index];
+
+    return memory()->lazy_evaluate_unchangeable(H).exp;
 }
 
 /// Return the value of a particular index, computing it if necessary
