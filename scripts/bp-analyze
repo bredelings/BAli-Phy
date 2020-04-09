@@ -2263,8 +2263,6 @@ if __name__ == '__main__':
     parser.add_argument("--probcons")
     parser.add_argument("--mafft")
     parser.add_argument("--subpartitions",default=False,action='store_true')
-    # FIXME: change subdirs to check if we've got a list of tree files instead
-    parser.add_argument("--tree-file",nargs='*')
     args = parser.parse_args()
 
     if args.verbose:
