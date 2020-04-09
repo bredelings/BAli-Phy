@@ -513,6 +513,9 @@ public:
     std::pair<int,int> incremental_evaluate_in_context(int R, int c, bool reforce = false);
 
     std::pair<int,int> incremental_evaluate(int R, bool reforce);
+
+    std::optional<int> precomputed_value_in_context(int R, int c);
+
 private:  
     std::pair<int,int> incremental_evaluate_(int R, bool reforce);
     int incremental_evaluate_unchangeable_(int R);
