@@ -709,13 +709,14 @@ optional<int> reg_heap::find_modifiable_reg(int R)
 
 optional<int> reg_heap::find_modifiable_reg_in_context(int r, int c)
 {
-    // Note that value_for_precomputed_reg( ) also does
+    // Note that value_for_precomputed_reg( ) and precomputed_value_in_context( ) also do
     // - follow_index_var( )
     // Although it does not do
     // - r = call_for_reg(r)
     // After we stop performing evaluation here, this looks a lot like
     // a hypothetical `value_for_precomputed_reg_in_context( )`,
-    // except that we stop at modifiables.
+    // except that (i) we stop at modifiables and (ii) we walk through calls instead of
+    // requiring valid result or force.
 
     // Warning: ABOMINATION!
     // FIXME: This should be forced by a `seq` inside the program.
@@ -825,12 +826,6 @@ const closure& reg_heap::access_value_for_reg(int R1) const
 {
     int R2 = value_for_reg(R1);
     return closure_at(R2);
-}
-
-const closure& reg_heap::value_for_precomputed_reg(int r) const
-{
-    r = follow_index_var(r);
-    return access_value_for_reg(r);
 }
 
 bool reg_heap::reg_has_value(int r) const
@@ -1872,6 +1867,32 @@ bool reg_heap::execution_allowed() const
     }
 
     return false;
+}
+
+const closure& reg_heap::value_for_precomputed_reg(int r) const
+{
+    r = follow_index_var(r);
+    return access_value_for_reg(r);
+}
+
+optional<int> reg_heap::precomputed_value_in_context(int r, int c)
+{
+    r = follow_index_var(r);
+
+    if (reg_is_constant(r)) return r;
+
+    reroot_at_context(c);
+
+    // In theory, variants of this routine could allow
+    // * having a result, but no force.
+    // * have a chain of steps, but no result.
+    if (reg_is_changeable(r) and has_force(r))
+        return result_for_reg(r);
+    else
+    {
+        std::abort();
+        return {};
+    }
 }
 
 pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c, bool reforce)
