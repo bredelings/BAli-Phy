@@ -42,7 +42,20 @@ optional<bounds<double>> param::has_bounds(const context& C) const
 expression_ref param::get_value(const context& C) const
 {
     if (head)
-        return C.evaluate(*head);
+    {
+        if (strategy == eval_strategy::changeable)
+            return C.evaluate(*head);
+        else if (strategy == eval_strategy::precomputed)
+        {
+            auto result = C.precomputed_value_for_head(*head);
+            assert(result);
+            return result->exp;
+        }
+        else if (strategy == eval_strategy::unchangeable)
+            return C.evaluate_unchangeable(*head);
+        else
+            std::abort();
+    }
     else
         return *value;
 }
@@ -62,7 +75,7 @@ void param::set_value(context& C, const expression_ref& v) const
 
 // for use with maybe_modifiable_structure
 
-param get_param(context& C, const expression_ref& E)
+param get_param(context& C, const expression_ref& E, eval_strategy s)
 {
     if (E.head() == constructor("Modifiable",1))
     {
@@ -70,7 +83,7 @@ param get_param(context& C, const expression_ref& E)
         if (not is_reg_var(reg))
             throw myexception()<<"get_param: modifiable expression "<<E<<" should have a reg_var as its object.";
 
-        return C.add_compute_expression(reg);
+        return param(C.add_compute_expression(reg), s);
     }
     else if (is_reg_var(E) or E.size())
     {
