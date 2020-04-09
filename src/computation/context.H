@@ -69,11 +69,18 @@ public:
     bool compute_expression_has_bounds(int i) const;
     bounds<double> get_bounds_for_compute_expression(int i) const;
 
+    const closure* precomputed_value_for_reg(int r) const;
+
+    const closure* precomputed_value_for_head(int index) const;
+
     /// Return the value of a particular index, computing it if necessary
     const closure& lazy_evaluate(int index) const;
 
     /// Return the value of a particular index, computing it if necessary
     const expression_ref& evaluate(int index) const;
+
+    /// Return the value of a particular index, computing it if necessary
+    const expression_ref& evaluate_unchangeable(int index) const;
 
     /// Return the value of a particular index, computing it if necessary
     const expression_ref& perform(int index, bool ec = false) const;
