@@ -7,10 +7,13 @@
 
 class context;
 
+enum class eval_strategy {unset, unchangeable, precomputed, changeable};
+
 class param
 {
     std::optional<int> head;
     std::optional<expression_ref> value;
+    eval_strategy strategy=eval_strategy::unset;
 
 public:
     expression_ref ref(const context& C) const;
@@ -28,11 +31,13 @@ public:
     explicit operator bool() const {return head or value;}
 
     param() {}
-    param(int h):head(h) {}
+    param(int h, eval_strategy s=eval_strategy::changeable)
+        :head(h), strategy(s)
+        {}
     param(const expression_ref& v):value(v) {}
 };
 
-param get_param(context& C, const expression_ref& E);
+param get_param(context& C, const expression_ref& E, eval_strategy s = eval_strategy::changeable);
 
 class ConstParam
 {
