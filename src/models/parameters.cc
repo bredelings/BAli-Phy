@@ -2159,7 +2159,7 @@ Parameters::Parameters(const Program& prog,
     }
 
     // FIXME: We currently need this to make sure all parameters get instantiated before we finish the constructor.
-    probability();
+    evaluate_program();
 
     // Load the specified tree BRANCH LENGTHS into the machine.
     bool some_branch_lengths_not_set = false;
