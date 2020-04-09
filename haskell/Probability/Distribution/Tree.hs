@@ -56,9 +56,23 @@ random_tree n = do
     return (Tree es ns nn (nn - 1))
 
 
-modifiable_tree mod tree = Tree (listArray' nodes) (listArray' branches) (numNodes tree) (numBranches tree)  where
-    nodes    = [ map mod (edgesOutOfNode tree n) | n <- xrange 0 (numNodes tree) ]
-    branches = [ (mod s, mod i, mod t, mod r) | b <- xrange 0 (numBranches tree * 2), let (s, i, t, r) = nodesForEdge tree b ]
+mapn n f xs = go 0 where
+    go i | i==n      = []
+         | otherwise = f (xs!!i):go (i+1)
+
+-- leaves   nodes  branches
+-- 1        1      0
+-- 2        2      1
+-- 3        4      3
+-- 4        6      5
+modifiable_cayley_tree n_leaves mod tree = Tree (listArray' nodes) (listArray' branches) n_nodes n_branches  where
+    n_nodes | n_leaves == 1  = 1
+            | otherwise      = 2*n_leaves - 2
+    n_branches = n_nodes - 1
+    degree node | node < n_leaves = 1
+                | otherwise       = 3
+    nodes    = [ mapn (degree node) mod (edgesOutOfNode tree node) | node <- xrange 0 n_nodes ]
+    branches = [ (mod s, mod i, mod t, mod r) | b <- xrange 0 (n_branches * 2), let (s, i, t, r) = nodesForEdge tree b ]
 
 uniform_topology_pr 1 = doubleToLogDouble 1.0
 uniform_topology_pr 2 = doubleToLogDouble 1.0
@@ -66,13 +80,13 @@ uniform_topology_pr n = uniform_topology_pr (n - 1) / (doubleToLogDouble $ intTo
 
 -- We don't want to force all fields of the tree when any tree field is accessed, only when a _random_ field is accessed.
 -- This is why triggered tree still uses 'tree' as input to 'modifiable_tree'.
-triggered_modifiable_tree value effect =
-    let tree           = modifiable_tree modifiable value
+triggered_modifiable_tree n value effect =
+    let tree           = modifiable_cayley_tree n modifiable value
         force_tree     = tree `deepseq` tree
-        triggered_tree = modifiable_tree (force_tree `seq` effect `seq`) tree
+        triggered_tree = modifiable_cayley_tree n (force_tree `seq` effect `seq`) tree
     in  (tree, triggered_tree)
 
 uniform_topology n = Distribution (\tree -> [uniform_topology_pr n])
                                   (no_quantile "uniform_topology")
-                                  (RandomStructure do_nothing triggered_modifiable_tree (random_tree n))
+                                  (RandomStructure do_nothing (triggered_modifiable_tree n) (random_tree n))
                                   (TreeRange n)
