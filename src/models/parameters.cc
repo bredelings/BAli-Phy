@@ -946,6 +946,10 @@ void Parameters::NNI(int b1, int b2, bool allow_disconnect_subtree)
     assert(nodes[2] == t2);
 
     // OK, br1 is nodes[0]<->nodes[4] and br2 is nodes[2]<->nodes[5]
+    int b04 = t().find_branch(nodes[0],nodes[4]);
+    int b14 = t().find_branch(nodes[1],nodes[4]);
+    int b25 = t().find_branch(nodes[2],nodes[5]);
+    int b35 = t().find_branch(nodes[3],nodes[5]);
 
     vector<vector<HMM::bitmask_t>> a123456(n_data_partitions());
     for(int i=0;i<n_data_partitions();i++)
@@ -954,6 +958,7 @@ void Parameters::NNI(int b1, int b2, bool allow_disconnect_subtree)
     // 3. Perform NNI
     exchange_subtrees(b1, b2);  // alter tree
     std::swap(nodes[0],nodes[2]); // alter nodes
+    std::swap(b04, b25);
     for(int i=0;i<n_data_partitions();i++)
         for(auto& col: a123456[i]) // alter matrix
         {
@@ -972,11 +977,11 @@ void Parameters::NNI(int b1, int b2, bool allow_disconnect_subtree)
             minimally_connect(a123456[i]);
         }
 
-    int b04 = t().find_branch(nodes[0],nodes[4]);
-    int b14 = t().find_branch(nodes[1],nodes[4]);
-    int b25 = t().find_branch(nodes[2],nodes[5]);
-    int b35 = t().find_branch(nodes[3],nodes[5]);
-    b45 = t().find_branch(nodes[4],nodes[5]);
+    assert(b04 == t().find_branch(nodes[0],nodes[4]));
+    assert(b14 == t().find_branch(nodes[1],nodes[4]));
+    assert(b25 == t().find_branch(nodes[2],nodes[5]));
+    assert(b35 == t().find_branch(nodes[3],nodes[5]));
+    assert(b45 == t().find_branch(nodes[4],nodes[5]));
 
     // 5. Set the pairwise alignments.
     for(int i=0;i<n_data_partitions();i++)
