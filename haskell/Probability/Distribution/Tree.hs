@@ -3,7 +3,6 @@ module Probability.Distribution.Tree where
 import           Tree
 import           Probability.Random
 import           Probability.Distribution.Uniform
-import           Control.DeepSeq
 
 xrange start end | start < end = start : xrange (start + 1) end
                  | otherwise   = []
@@ -60,6 +59,11 @@ mapn n f xs = go 0 where
     go i | i==n      = []
          | otherwise = f (xs!!i):go (i+1)
 
+
+force_tree tree@(Tree nodes branches n_nodes n_branches) = force_nodes `seq` force_branches where
+    force_nodes    = force_struct $ listArray' [ force_list $ edgesOutOfNode tree node | node <- xrange 0 n_nodes ]
+    force_branches = force_struct $ listArray' [ force_struct $ nodesForEdge tree b | b <- xrange 0 (n_branches * 2)]
+
 -- leaves   nodes  branches
 -- 1        1      0
 -- 2        2      1
@@ -78,12 +82,15 @@ uniform_topology_pr 1 = doubleToLogDouble 1.0
 uniform_topology_pr 2 = doubleToLogDouble 1.0
 uniform_topology_pr n = uniform_topology_pr (n - 1) / (doubleToLogDouble $ intToDouble $ 2 * n - 5)
 
--- We don't want to force all fields of the tree when any tree field is accessed, only when a _random_ field is accessed.
+-- The *triggered* tree is lazy: when we access anything that is modifiable, it triggers all effects,
+-- which includes forcing all the modifiables in the *untriggered* tree.
+
+-- We don't want to force all fields of the tree when _any_ tree field is accessed, only when a _random_ field is accessed.
 -- This is why triggered tree still uses 'tree' as input to 'modifiable_tree'.
 triggered_modifiable_tree n value effect =
     let tree           = modifiable_cayley_tree n modifiable value
-        force_tree     = tree `deepseq` tree
-        triggered_tree = modifiable_cayley_tree n (force_tree `seq` effect `seq`) tree
+        effect'        = force_tree tree `seq` effect
+        triggered_tree = modifiable_cayley_tree n (effect' `seq`) tree
     in  (tree, triggered_tree)
 
 uniform_topology n = Distribution (\tree -> [uniform_topology_pr n])

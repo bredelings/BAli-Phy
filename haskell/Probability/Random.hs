@@ -183,3 +183,8 @@ foldt f z xs  = foldt f z (pair_apply f xs)
 
 balanced_product xs = foldt (*) (doubleToLogDouble 1.0) xs
 
+force_struct x = struct_seq x x
+
+force_list [] = []
+force_list (x:xs) = force_struct (x:(force_list xs))
+
