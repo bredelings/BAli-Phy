@@ -69,15 +69,15 @@ force_tree tree@(Tree nodes branches n_nodes n_branches) = force_nodes `seq` for
 -- 2        2      1
 -- 3        4      3
 -- 4        6      5
-modifiable_cayley_tree n_leaves mod tree = Tree (listArray' nodes) (listArray' branches) n_nodes n_branches  where
+modifiable_cayley_tree n_leaves modf tree = Tree (listArray' nodes) (listArray' branches) n_nodes n_branches  where
     n_nodes | n_leaves == 1  = 1
             | otherwise      = 2*n_leaves - 2
     n_branches = n_nodes - 1
     degree node | n_leaves == 1   = 0
                 | node < n_leaves = 1
                 | otherwise       = 3
-    nodes    = [ mapn (degree node) mod (edgesOutOfNode tree node) | node <- xrange 0 n_nodes ]
-    branches = [ (mod s, mod i, mod t, mod r) | b <- xrange 0 (n_branches * 2), let (s, i, t, r) = nodesForEdge tree b ]
+    nodes    = [ mapn (degree node) modf (edgesOutOfNode tree node) | node <- xrange 0 n_nodes ]
+    branches = [ (modf s, modf i, modf t, (b + n_branches) `mod` (2*n_branches)) | b <- xrange 0 (n_branches * 2), let (s, i, t, _) = nodesForEdge tree b ]
 
 uniform_topology_pr 1 = doubleToLogDouble 1.0
 uniform_topology_pr 2 = doubleToLogDouble 1.0
