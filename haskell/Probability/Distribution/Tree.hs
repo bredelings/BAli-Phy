@@ -73,7 +73,8 @@ modifiable_cayley_tree n_leaves mod tree = Tree (listArray' nodes) (listArray' b
     n_nodes | n_leaves == 1  = 1
             | otherwise      = 2*n_leaves - 2
     n_branches = n_nodes - 1
-    degree node | node < n_leaves = 1
+    degree node | n_leaves == 1   = 0
+                | node < n_leaves = 1
                 | otherwise       = 3
     nodes    = [ mapn (degree node) mod (edgesOutOfNode tree node) | node <- xrange 0 n_nodes ]
     branches = [ (mod s, mod i, mod t, mod r) | b <- xrange 0 (n_branches * 2), let (s, i, t, r) = nodesForEdge tree b ]
