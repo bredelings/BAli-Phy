@@ -30,4 +30,5 @@ infixr 0 $!, `seq`, `join`
 f $! x = x `seq` f x
 builtin seq 2 "seq" "Prelude"
 builtin join 2 "join" "Prelude"
+builtin struct_seq 2 "struct_seq" "Prelude"
 
