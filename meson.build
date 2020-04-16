@@ -38,6 +38,8 @@ if get_option('optimization') == '2' or get_option('optimization') == '3'
   add_project_arguments(['-DNDEBUG','-DNDEBUG_DP']+cpp.get_supported_arguments(opt_flags), language : 'cpp')
 endif
 
+threads = dependency('threads')
+
 if host_machine.system() == 'darwin'
   add_project_arguments('-fvisibility=default', language : 'cpp')
 endif
