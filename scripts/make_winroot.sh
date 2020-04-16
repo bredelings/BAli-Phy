@@ -8,22 +8,10 @@ echo "1. Writing sysroot dir ${SYSROOT}"
 mkdir -p "${SYSROOT}"
 mkdir -p "${SYSROOT}/bin"
 
-# 2. Generate pkg-config wrapper
-echo
-echo "2. Generating pkg-config wrapper"
-cat > "${SYSROOT}/bin/pkg-config" <<EOF
-#!/bin/bash
-export PKG_CONFIG_SYSROOT_DIR=${SYSROOT}
-export PKG_CONFIG_LIBDIR=${SYSROOT}/mingw64/lib/pkgconfig
-
-eval pkg-config "\$@"
-EOF
-chmod +x "${SYSROOT}/bin/pkg-config"
-
-# 3. Generate cross file
+# 2. Generate cross file
 CROSSNAME=win64-cross.txt
 echo
-echo "3. Writing cross file to '${CROSSNAME}'"
+echo "2. Writing cross file to '${CROSSNAME}'"
 cat > "${CROSSNAME}" <<EOF
 [binaries]
 c = '/usr/bin/x86_64-w64-mingw32-gcc'
@@ -41,6 +29,8 @@ c_link_args = ['-L${SYSROOT}/mingw64/lib']
 cpp_args = ['-I${SYSROOT}/mingw64/include']
 cpp_link_args = ['-L${SYSROOT}/mingw64/lib']
 
+sys_root = '${SYSROOT}'
+pkg_config_libdir = '${SYSROOT}/mingw64/lib/pkgconfig' 
 
 [host_machine]
 system = 'windows'
@@ -49,9 +39,9 @@ cpu = 'x86_64'
 endian = 'little'
 EOF
 
-# 4. Download boost
+# 3. Download boost
 echo
-echo "4. Installing boost to ${SYSROOT}"
+echo "3. Installing boost to ${SYSROOT}"
 echo
 cd ${SYSROOT}
 PKGS="boost-1.70.0-2"
