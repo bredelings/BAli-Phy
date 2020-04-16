@@ -46,11 +46,16 @@ alignment_pr (AlignmentOnTree tree n_seqs ls as) hmms model | numNodes tree < 1 
 
 alignment_pr' alignment hmms model var_a = if var_a then alignment_pr alignment hmms model else doubleToLogDouble 1.0
 
+force_alignment a@(AlignmentOnTree tree n_seqs ls as) = force_ls `seq` force_as where
+    force_as = force_struct as
+    force_ls = force_struct ls
+
 --FIXME: I should make this only trigger if you start looking at the VALUES of the pairwise alignments!
 --FIXME: Maybe I should also reduce this to just a list of pairwise alignments?
 triggered_modifiable_alignment value effect =
     let a           = modifiable_alignment value
-        triggered_a = a `deepseq` effect `seq` a
+        effect'     = force_alignment a `seq` effect
+        triggered_a = effect' `seq` a
     in  (a, triggered_a)
 
 random_alignment tree hmms model tip_lengths var_a = Distribution (\a -> [alignment_pr' a hmms model var_a])
