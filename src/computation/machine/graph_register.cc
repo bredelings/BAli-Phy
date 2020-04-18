@@ -455,6 +455,22 @@ expression_ref reg_heap::evaluate_program(int c)
     if (not program_result_head)
         throw myexception()<<"No program has been set!";
 
+    // Evaluation with re-force=true should be in a new context in we've
+    // don't any previous evaluation with re-force=false, in order to avoid
+    // double-unsharing of forces.
+    {
+        // We need to reroot to here first, so that switching to a child token
+        // doesn't delete the current token as a knuckle.
+        reroot_at_context(c);
+
+        switch_to_child_token(c, token_type::execute);
+
+        // This should not allow removing the old root token.
+        reroot_at_context(c);
+
+        // We can't remove t1 even if its a knuckle.
+        assert(execution_allowed());
+    }
     auto result = lazy_evaluate(heads[*program_result_head], c, true).exp;
 
     // Force the computation of priors and likelihoods
