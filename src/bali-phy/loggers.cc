@@ -328,7 +328,7 @@ vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_m
 
     auto TL = construct_table_function(M, Rao_Blackwellize);
 
-    auto TF3 = [TL](const Model& M, long t) mutable { return table_logger_line(*TL,M,t); };
+    auto TF3 = &logged_params_and_some_computed_stuff_with_header;
 
     auto log_formats = get_log_formats(args, (bool)P);
 
