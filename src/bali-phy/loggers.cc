@@ -120,13 +120,13 @@ vector< vector< vector<int> > > get_un_identifiable_indices(const vector<string>
 template <typename K>
 void add_value(json& j, const K& key, const json& value)
 {
-    j[key] = {{"value",value}};
+    j[key] = value;
 }
 
 template <typename K>
 void add_children(json& j, const K& key, const json& value)
 {
-    j[key] = {{"children",value}};
+    j[string(key)+'/'] = value;
 }
 
 json logged_params_and_some_computed_stuff(const Model& M, long t)
@@ -269,7 +269,7 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
 
     {
 	json log = M->get_logged_parameters();
-	vector<string> names = parameter_names_children(log);
+	vector<string> names = parameter_names(log);
 	for(auto& name: names)
 	    name = translate_structures(name);
 	names = short_parameter_names(names);

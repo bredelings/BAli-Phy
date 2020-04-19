@@ -33,6 +33,8 @@
 #include "computation/loader.H"
 #include "computation/parser/desugar.H"
 
+#include "tools/stats-table.H"
+
 using std::vector;
 using std::string;
 using std::pair;
@@ -89,26 +91,6 @@ bool operator<(const vector<string>& p1, const vector<string>& p2)
     return false;
 }
 
-json* has_children(json& j)
-{
-    if (not j.is_object()) return nullptr;
-
-    auto children = j.find("children");
-    if (children == j.end()) return nullptr;
-    if (not children->is_object()) return nullptr;
-    return &(*children);
-}
-
-const json* has_children(const json& j)
-{
-    if (not j.is_object()) return nullptr;
-
-    auto children = j.find("children");
-    if (children == j.end()) return nullptr;
-    if (not children->is_object()) return nullptr;
-    return &(*children);
-}
-
 // This me be a good candidate for the range library.
 vector<pair<string,json>> flatten_value(const string& name, const json& value)
 {
@@ -130,21 +112,21 @@ vector<pair<string,json>> flatten_value(const string& name, const json& value)
     return values;
 }
 
+// Kind of like unnesting, but we call flatten_value on children.
 json flatten_me(const json& j)
 {
     json j2;
     for(auto& [name, obj]: j.items())
     {
-        if (auto children = has_children(obj))
+        if (has_children(name))
         {
-            json c = flatten_me(*children);
+            json c = flatten_me(obj);
             for(auto& [name2,j3]: c.items())
-                j2[name+"/"+name2] = std::move(j3);
+                j2[name+name2] = std::move(j3);
         }
-        
-        if (auto value = obj.find("value"); value != obj.end())
-            for(auto& [name2,v2]: flatten_value(name, *value))
-                j2[name2] = std::move(v2);
+        else // Without this transofmration, we are just unnesting.
+            for(auto& [name2,value2]: flatten_value(name, obj))
+                j2[name2] = std::move(value2);
     }
     return j2;
 }
@@ -156,9 +138,9 @@ void simplify(json& j)
     if (j.empty()) return;
 
     // 1. First we simplify all the levels below this level.
-    for(auto& [_, obj]: j.items())
-        if (auto children = has_children(obj))
-            simplify(*children);
+    for(auto& [name, obj]: j.items())
+        if (has_children(name))
+            simplify(obj);
 
     // 2. In order to move child-level names up to the top level, we have to avoid
     //   a. clashing with the same name at the top level
@@ -169,8 +151,8 @@ void simplify(json& j)
     for(auto& [name, obj]: j.items())
     {
         names.insert(name);
-        if (auto children = has_children(obj))
-            for(auto& [name2, j2]: children->items())
+        if (has_children(name))
+            for(auto& [name2, j2]: obj.items())
                 names.insert(name2);
     }
 
@@ -179,12 +161,13 @@ void simplify(json& j)
     vector<pair<string,json>> moved;
     for(auto iter = j.begin(); iter != j.end(); )
     {
+        auto& name = iter.key();
         auto& obj = iter.value();
 
-        if (auto children = has_children(obj))
+        if (has_children(name))
         {
             bool collision = false;
-            for(auto& [name2, _]: children->items())
+            for(auto& [name2, _]: obj.items())
             {
                 if (names.count(name2) > 1)
                 {
@@ -195,16 +178,15 @@ void simplify(json& j)
 
             if (not collision)
             {
-                for(auto& [name2, j2]: children->items())
+                for(auto& [name2, j2]: obj.items())
                 {
                     moved.push_back({name2,std::move(j2)});
                 }
-                obj.erase("children");
+                iter = j.erase(iter);
             }
+            else
+                ++iter;
         }
-
-        if (obj.empty())
-            iter = j.erase(iter);
         else
             ++iter;
     }

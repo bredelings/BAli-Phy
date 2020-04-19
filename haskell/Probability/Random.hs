@@ -164,9 +164,9 @@ add_logger old name (value,loggers) do_log = (name,(if do_log then Just value el
 
 -- Add function to create JSON from logger
 log_to_json_one (name,(Nothing,[])) = []
-log_to_json_one (name,(Just x,[])) = [(name, J.Object[("value", to_json x)])]
-log_to_json_one (name,(Just x,sub_loggers)) = [(name, J.Object[("value", to_json x),("children", log_to_json sub_loggers)])]
-log_to_json_one (name,(Nothing,sub_loggers)) = [(name, J.Object[("children", log_to_json sub_loggers)])]
+log_to_json_one (name,(Just x,[])) = [(name, to_json x)]
+log_to_json_one (name,(Just x,sub_loggers)) = [(name, to_json x), (name++"/", log_to_json sub_loggers)]
+log_to_json_one (name,(Nothing,sub_loggers)) = [(name++"/", log_to_json sub_loggers)]
 
 log_to_json loggers = J.Object $ concatMap log_to_json_one loggers
 

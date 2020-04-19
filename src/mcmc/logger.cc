@@ -64,7 +64,7 @@ namespace MCMC {
 
     vector<json> json_to_table_function::operator()(const Model& M, long)
     {
-	auto values = parameter_values_children( M.get_logged_parameters() );
+	auto values = parameter_values( M.get_logged_parameters() );
 
 	// Check the number of fields.
 	if (values.size() != n_fields())
