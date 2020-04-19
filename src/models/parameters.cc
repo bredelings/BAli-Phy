@@ -1662,7 +1662,7 @@ std::string generate_atmodel_program(int n_sequences,
             expression_ref initial_alignments_exp = {var("pairwise_alignments_from_matrix"), compressed_alignment_var, tree_var};
 
             var pairwise_as("pairwise_as_part"+part);
-            sample_atmodel.let(pairwise_as,  {var("listArray'"), {var("map"),var("modifiable"),initial_alignments_exp}});
+            sample_atmodel.let(pairwise_as,  {var("force_struct"),{var("listArray'"), {var("map"),var("modifiable"),initial_alignments_exp}}});
 
             // R4. Register sequence length methods
             auto seq_lengths = expression_ref{{var("listArray'"),{var("compute_sequence_lengths"), leaf_sequences_var, tree_var, pairwise_as}}};
