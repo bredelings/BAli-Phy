@@ -1,3 +1,10 @@
+* 4.0 (unrelease)
+ - Preliminary (slow) version of lazy random variable creation and destruction.
+
+* 3.6 (unreleased)
+ + Make the "nested": true form of JSON log format more readable.
+ - Make modifiable structures instantiate either all their fields or none.
+
 * 3.5 (Mar 2, 2020)
  + Reconstruct ancestral sequences by default.
  - Graphical model framework
