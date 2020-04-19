@@ -564,9 +564,9 @@ expression_ref reg_heap::evaluate_program(int c)
     }
     auto result = lazy_evaluate(heads[*program_result_head], c, true).exp;
 
-    register_pending_effects();
-
     unmap_unforced_steps(c);
+
+    register_pending_effects();
 
     // Check that all the priors and likelihoods are forced.
 #ifndef NDEBUG
