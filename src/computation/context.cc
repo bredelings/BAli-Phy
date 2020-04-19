@@ -174,6 +174,9 @@ int get_reps(double x)
 
 void context_ref::run_transition_kernels()
 {
+    // unmap any transition kernels that are not currently used.
+    evaluate_program();
+
     vector<pair<double,int>> weighted_tks;
     // Don't use a range-for, since the number of transition kernels could change
     for(int i=0; i< memory()->transition_kernels().size(); ++i)
