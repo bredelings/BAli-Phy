@@ -17,6 +17,6 @@ inc_dec_mh x c = IOAction (pair_from_c . builtin_inc_dec_mh x c)
 builtin builtin_slice_sample_real_random_variable 4 "slice_sample_real_random_variable" "MCMC"
 slice_sample_real_random_variable x bnds c = IOAction (pair_from_c . builtin_slice_sample_real_random_variable x bnds c)
 
-builtin builtin_slice_sample_integer_random_variable 3 "slice_sample_integer_random_variable" "MCMC"
-slice_sample_integer_random_variable x c = IOAction (pair_from_c . builtin_slice_sample_integer_random_variable x c)
+builtin builtin_slice_sample_integer_random_variable 4 "slice_sample_integer_random_variable" "MCMC"
+slice_sample_integer_random_variable x bnds c = IOAction (pair_from_c . builtin_slice_sample_integer_random_variable x bnds c)
 
