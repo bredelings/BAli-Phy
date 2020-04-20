@@ -365,12 +365,19 @@ extern "C" closure builtin_function_slice_sample_real_random_variable(OperationA
 
     if (log_verbose >= 3) std::cerr<<"\n\n[slice_sample_real_random_variable] <"<<x_reg<<">\n";
 
-    //------------- 1b. Get context index --------------
-    int c1 = Args.evaluate(1).as_int();
+    //------------- 1c. Get context index --------------
+    int c1 = Args.evaluate(2).as_int();
     context_ref C1(M, c1);
 
-    //------------- 1c. Get monad thread state ---------
-    int state = Args.evaluate(2).as_int();
+    //------------- 1b. Get bounds --------------
+    int bnds_reg = Args.reg_for_slot(1);
+    auto bnds_result = M.precomputed_value_in_context(bnds_reg, c1);
+    if (not bnds_result)
+        throw myexception()<<"slice_sample_real_random_variable: bounds not precomputed at reg "<<bnds_reg<<"  in context "<<c1<<"!";
+    auto bnds = M.expression_at(*bnds_result);
+
+    //------------- 1d. Get monad thread state ---------
+    int state = Args.evaluate(3).as_int();
 
     //------------- 2. Find the location of the variable -------------//
     if (auto r = M.find_random_variable(x_reg))
@@ -379,7 +386,6 @@ extern "C" closure builtin_function_slice_sample_real_random_variable(OperationA
         throw myexception()<<"slice_sample_real_random_variable: reg "<<x_reg<<" is not a random variable!";
 
     //------------- 3. Get initial value x1 for variable -------------//
-    auto bnds = M.get_range_for_random_variable(c1, x_reg);
     if (not bnds.is_a<Bounds<double>>())
         throw myexception()<<"random variable doesn't have a range that is bounds<double>";
 
