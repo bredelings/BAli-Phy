@@ -2420,22 +2420,26 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
     <section>
       <info><title>Tree uncertainty in ancestral sequence reconstruction.</title></info>
       <para>
-        Some programs require you to fix the tree when sampling ancestral sequences.  When the
-        tree is fixed, selecting the ancestral sequences for a particular node is simple, since
-        the node always exists, and always has the same name.
+        In Bayesian phylogenetic analyses, the tree is not fixed. Therefore the internal node
+        corresponding to the ancestral sequence you wish to reconstruct may not exist in every iteration.  The standard Bayesian approach to tree uncertainty is to reconstruct the ancestor for each 
+        node by conditioning on the existence of that node in the tree.  This allows the reconstructed
+        ancestor for each node to average over uncertainty about the existence of other nodes.
       </para>
       <para>
-        Typically in BAli-Phy analyses the tree is not fixed. In this situation, the internal node
-        corresponding to the ancestral sequence you wish to reconstruct may not exist in every iteration.
-        As a result, the sequence names (e.g. A6) for internal nodes may change over time. Therefore, you
-        cannot simply extract ancestral sequences with a given name.
+        BAli-Phy additionally allows the researcher to condition on branches, since a branch
+        condition is less restrictive.  BAli-Phy does not run a separate MCMC chain with a tree constraint for each node, but instead performs conditioning by selecting samples from a single run that satisfy the  condition.
       </para>
     <section>
       <info><title>Extracting and naming sequences that satisfy a query</title></info>
       <para>
+        Note that the sequence names (e.g. A6) for internal nodes may change over time. Therefore, you
+        cannot simply extract ancestral sequences with a given name.
+
         To extract ancestral sequences for a given node, you need to specify a method of identifying
         that node on a tree, and a name to give to the sequence at that node.  This is called a
-        <emphasis>query</emphasis>. For example, you might
+        <emphasis>query</emphasis>.
+      </para>
+        <para>For example, you might
         specify how to identify the ancestor node of Eukaryotes, and the name "Eukaryotes" to use for the
         sequence there.  You can then use the program <userinput>extract-ancestors</userinput> to
         extract ancestral sequences from the sampled trees and alignment, and label them with useable names.
@@ -2447,7 +2451,7 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
     </para>
     </section>
 
-    <section><info><title>Node-based queries</title></info>
+    <section><info><title>Conditioning on a node: node-based queries</title></info>
     <para>A node exists in a sampled tree if every branch connected to that node exists in the sampled tree.
     A node-based query asks for the reconstructed ancestral sequence only from samples where every branch
     connected to that node exists. A node-based query is more stringent than a branch-based query, since it
@@ -2457,7 +2461,7 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
     </para>
     </section>
 
-    <section><info><title>Branch-based queries</title></info>
+    <section><info><title>Conditioning on a branch: branch-based queries</title></info>
     <para>A branch-based query requires only that a single branch exist in a sampled tree.  The branch-based
     query asks for the reconstructed ancestral sequence on one endpoint of that (directed) branch.  When the focus
     is on changes that occur on a particular branch, this makes more sense than a node-based query.
@@ -2515,8 +2519,8 @@ When this
       <info><title>Generating a summary alignment with ancestral sequences</title></info>
 
     <para>It is also possible to display the most probable ancestral residue (or gap) in each site of 
-    a single representative alignment, as opposed to a randomly sampled ancestral state.  This is most
-    similar to the behavior of other fixed-alignment ancestral sequence reconstruction programs.
+    a single representative alignment, as opposed to a randomly sampled ancestral state.  This
+    summary alignment is most output of other fixed-alignment ancestral sequence reconstruction programs.
     When computing the probability of an ancestral residue, this summary averages over uncertainty in the topology,
     the alignment, and the ancestral state itself. However, the choice of a single representative alignment
     to define the "columns" means that variation in ancestral sequence length cannot be displayed by this summary.
@@ -2525,6 +2529,12 @@ When this
 <prompt>%</prompt> <userinput>trees-consensus <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees | tree-tool - --strip-internal-names --name-all-nodes &gt; c50.tree</userinput>
 <prompt>%</prompt> <userinput>summarize-ancestors P1.max.fasta -A <replaceable>dir</replaceable>-1/C1.P1.fastas -T <replaceable>dir</replaceable>-1/C1.trees -A <replaceable>dir</replaceable>-2/C1.P1.fastas -T <replaceable>dir</replaceable>-2/C1.trees -n c50.tree -g c50.tree > P1.ancestors.fasta</userinput></screen>
     
+BAli-Phy uses the maximum-posterior-decoding alignment as a template to construct a summary alignment with ancestral sequences.  However, BAli-Phy doesn&apos;t condition on the alignment columns, because (i) many columns occur only once in a posterior sample and (ii) conditioning on the column gives too much weight to the template alignment.
+</para>
+
+<para>For each residue in column C of the template alignment, we can ask what the ancestral residue is in row R of a sampled alignment.  Thus we can ask what the ancestor of the human residue is, and we can ask what the ancestor of the E. coli residue is, etc.  The problem is that these questions can have different answers!  This is because these different residues can be in different columns of a sampled alignment, even though they are in the same column of the template alignment.  As a result, asking what the ancestral character in row R is for a column C of the template alignment is not well defined.</para>
+
+<para>BAli-Phy&apos;s solution to this problem is to average across the different residues in each column C of the template alignment.  When identifying the ancestral character to column C from a sampled alignment A, we random select a residue in C and use it to select a column from A.  Thus the ill-defined question is handled by averaging over a collection of well-defined questions.  This procedure has the nice property that if will yield the standard ancestral residue prediction if the alignment column is fixed.
     </para>
     </section>
 
@@ -2546,7 +2556,7 @@ When this
       diagnose when more samples must be taken.
     </para>
 
-    <para>Some of the better diagnostics for lack of convergence rely on running at least 2 independent copies of the Markov chain (preferably 4-10) from different random starting points to see if the sampled posterior distributions for each chain are the same.  Unfortunately, when the distributions all seem to be this same, this doesn't <emphasis>prove</emphasis> that they have all converged to the equilibrium distribution.  However, if the distributions are different then you can reject either convergence or good mixing.</para>
+    <para>Some of the better diagnostics for lack of convergence rely on running at least 2 independent copies of the Markov chain (preferably 4-10) from different random starting points to see if the sampled posterior distributions for each chain are the same.  Unfortunately, when the distributions all seem to be this same, this doesn&apos;t <emphasis>prove</emphasis> that they have all converged to the equilibrium distribution.  However, if the distributions are different then you can reject either convergence or good mixing.</para>
 
     <section><info><title>Definition of Convergence</title></info>
       
@@ -2571,7 +2581,7 @@ When this
 	this happens, each new sample contributes very little new
 	information, and we need to obtain many more samples to get
 	good precision on our parameter estimates.  In such a case, we say 
-	that the chain isn't "mixing" well. 
+	that the chain isn&apos;t "mixing" well. 
       </para>
     </section>
 
@@ -2901,7 +2911,7 @@ The stabilization criterion is the same one described above for numerical values
       <listitem>a <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://en.wikipedia.org/wiki/C%2B%2B14">C++14</link> compiler</listitem>
       <listitem><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://mesonbuild.com">meson</link> (version >= 0.45)</listitem>
     </itemizedlist>
-    We recommend the GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>) version 5.0 (or higher) or the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link> compiler version 3.5.0 or higher. The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cairographics.org/">Cairo</link> graphics library is optional, but if it is missing, the <command>drawtree</command> tool that is used to draw consensus trees won't be built. See also <xref linkend="software_req"/>. </para>
+    We recommend the GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>) version 5.0 (or higher) or the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link> compiler version 3.5.0 or higher. The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cairographics.org/">Cairo</link> graphics library is optional, but if it is missing, the <command>drawtree</command> tool that is used to draw consensus trees won&apos;t be built. See also <xref linkend="software_req"/>. </para>
 
     <section><info><title>Linux</title></info>
     <para>On Debian and Ubuntu, you can type:
@@ -3002,7 +3012,7 @@ The command <command>bali-phy</command> and its associated tools should then be 
 	    <para>Yes, BAli-Phy accepts the wildcard characters "N"
 	    (for DNA) and "X" (for proteins).  These characters
 	    indicate that some letter is present (as opposed to a
-	    gap), but that you don't know <emphasis>which</emphasis>
+	    gap), but that you don&apos;t know <emphasis>which</emphasis>
 	    letter it is.  
 	    </para>
 	  </answer>
@@ -3110,7 +3120,7 @@ The command <command>bali-phy</command> and its associated tools should then be 
 	<qandaentry>
 	  <question><para>I tried to use <userinput>-S lg08+Rates.gamma[6]</userinput> and I got an error message "bali-phy: No match."  What gives?</para></question>
 	  <answer>
-	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <userinput>lg08+Rates.gamma[6]</userinput> as an array before running the command, and it is not succeeding.  Therefore, it doesn't even run <command>bali-phy</command>.</para>
+	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <userinput>lg08+Rates.gamma[6]</userinput> as an array before running the command, and it is not succeeding.  Therefore, it doesn&apos;t even run <command>bali-phy</command>.</para>
 	    <para>To avoid this, put quotes around the substitution model, like this: <userinput>-S "lg08+Rates.gamma[6]"</userinput>.  This will keep the C-shell from interfering with your command.
 	    </para>
 	  </answer>
