@@ -37,9 +37,4 @@ getIntegerBounds (IntegerInterval (Just l) Nothing)  = builtinGetIntegerBounds l
 getIntegerBounds (IntegerInterval (Just l) (Just u)) = builtinGetIntegerBounds l u
 getIntegerBounds _                                = error "getIntegerBounds is undefined if argument is not an IntegerInterval!"
 
-get_integer_bounds (IntegerInterval Nothing Nothing)   = ((),())
-get_integer_bounds (IntegerInterval Nothing (Just u))  = ((),u)
-get_integer_bounds (IntegerInterval (Just l) Nothing)  = (l,())
-get_integer_bounds (IntegerInterval (Just l) (Just u)) = (l, u)
-get_integer_bounds _                                   = error "getIntegerBounds is undefined if argument is not an IntegerInterval!"
 
