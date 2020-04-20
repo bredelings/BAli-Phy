@@ -191,7 +191,7 @@ Matrix exp(const EigenValues& eigensystem, const vector<double>& pi, const doubl
             sum += E(i,j);
 	}
         // Renormalize rows
-        assert(std::abs(sum - 1.0) < 1.0e-10*E.size1());
+        assert(t > 10 or std::abs(sum - 1.0) < 1.0e-10*E.size1());
         double factor = 1.0/sum;
 	for(int j=0;j<E.size2();j++)
             E(i,j) *= factor;
