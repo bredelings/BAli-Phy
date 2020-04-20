@@ -380,10 +380,10 @@ extern "C" closure builtin_function_slice_sample_real_random_variable(OperationA
     int state = Args.evaluate(3).as_int();
 
     //------------- 2. Find the location of the variable -------------//
-    if (auto r = M.find_random_variable(x_reg))
+    if (auto r = M.find_modifiable_reg(x_reg))
         x_reg = *r;
     else
-        throw myexception()<<"slice_sample_real_random_variable: reg "<<x_reg<<" is not a random variable!";
+        throw myexception()<<"slice_sample_real_random_variable: reg "<<x_reg<<" is not a modifiable!";
 
     //------------- 3. Get initial value x1 for variable -------------//
     if (not bnds.is_a<Bounds<double>>())
