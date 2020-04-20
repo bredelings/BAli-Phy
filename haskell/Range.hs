@@ -37,4 +37,7 @@ getIntegerBounds (IntegerInterval (Just l) Nothing)  = builtinGetIntegerBounds l
 getIntegerBounds (IntegerInterval (Just l) (Just u)) = builtinGetIntegerBounds l u
 getIntegerBounds _                                = error "getIntegerBounds is undefined if argument is not an IntegerInterval!"
 
+c_range (OpenInterval a b) = getBounds (OpenInterval a b)
+c_range (IntegerInterval a b) = getIntegerBounds (IntegerInterval a b)
+c_range r = r
 
