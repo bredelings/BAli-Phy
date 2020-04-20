@@ -2520,7 +2520,7 @@ When this
 
     <para>It is also possible to display the most probable ancestral residue (or gap) in each site of 
     a single representative alignment, as opposed to a randomly sampled ancestral state.  This
-    summary alignment is most output of other fixed-alignment ancestral sequence reconstruction programs.
+    summary alignment is most similar to the output of fixed-alignment ancestral sequence reconstruction programs.
     When computing the probability of an ancestral residue, this summary averages over uncertainty in the topology,
     the alignment, and the ancestral state itself. However, the choice of a single representative alignment
     to define the "columns" means that variation in ancestral sequence length cannot be displayed by this summary.
