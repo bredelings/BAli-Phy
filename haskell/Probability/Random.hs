@@ -123,12 +123,11 @@ run_lazy' rate (IOReturn v) = return v
 run_lazy' rate dist@(Distribution _ _ (RandomStructure effect structure do_sample) range) = do
   -- Note: unsafeInterleaveIO means that we will only execute this line if `value` is accessed.
   value <- unsafeInterleaveIO $ run_lazy do_sample
-  let (x,triggered_x) = structure value do_effects
-      pdf = density dist x
-      rv = random_variable x pdf range rate
+  let (raw_x,triggered_x) = structure value do_effects
+      pdf = density dist raw_x
       -- Note: performing the rv (i) forces the pdf (a FORCE) and (ii) registers the rv (an EFFECT)
       -- Passing `x` to the effect instead of `rv` maybe should work, but doesn't.
-      do_effects = (run_effects rate $ effect x) `seq` rv
+      do_effects = (run_effects rate $ effect raw_x) `seq` register_random_variable raw_x pdf range rate
   return triggered_x
 run_lazy' rate (Distribution _ _ s _) = run_lazy' rate s
 run_lazy' rate (MFix f) = MFix ((run_lazy' rate).f)

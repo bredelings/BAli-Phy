@@ -13,5 +13,5 @@ builtin register_likelihood 1 "register_likelihood" "Modifiables"
 -- builtin builtin_register_likelihood 2 "register_likelihood" "Modifiables"
 -- register_likelihood pr = IOAction (pair_from_c . builtin_register_likelihood pr)
 
-random_variable x pdf range rate = let rv = builtin_random_variable x pdf range (c_range range) rate
-                                   in rv `seq` builtin_register_random_variable rv `seq` rv
+register_random_variable x pdf range rate = let rv = builtin_random_variable x pdf range (c_range range) rate
+                                            in rv `seq` builtin_register_random_variable rv
