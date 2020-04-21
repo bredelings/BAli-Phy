@@ -128,7 +128,7 @@ run_lazy' rate dist@(Distribution _ _ (RandomStructure effect structure do_sampl
       rv = random_variable x pdf range rate
       -- Note: performing the rv (i) forces the pdf (a FORCE) and (ii) registers the rv (an EFFECT)
       -- Passing `x` to the effect instead of `rv` maybe should work, but doesn't.
-      do_effects = (run_effects rate $ effect rv) `seq` rv
+      do_effects = (run_effects rate $ effect x) `seq` rv
   return triggered_x
 run_lazy' rate (Distribution _ _ s _) = run_lazy' rate s
 run_lazy' rate (MFix f) = MFix ((run_lazy' rate).f)
