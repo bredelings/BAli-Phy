@@ -21,9 +21,13 @@ using std::vector;
 
 extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Args)
 {
+    Args.evaluate_slot_force(0);
+
     int r_rate = Args.reg_for_slot(0);
 
     r_rate = Args.memory().follow_index_var(r_rate);
+
+    Args.evaluate_slot_force(1);
 
     int r_transition_kernel = Args.reg_for_slot(1);
 
