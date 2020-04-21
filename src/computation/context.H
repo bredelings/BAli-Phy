@@ -66,8 +66,6 @@ public:
 
     std::optional<int> compute_expression_is_modifiable_reg(int p) const;
 
-    std::optional<int> compute_expression_is_random_variable(int p) const;
-
     const closure* precomputed_value_for_reg(int r) const;
 
     const closure* precomputed_value_for_head(int index) const;

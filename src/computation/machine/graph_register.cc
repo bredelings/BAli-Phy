@@ -876,13 +876,6 @@ optional<int> reg_heap::find_modifiable_reg_in_context(int r, int c)
 }
 
 
-optional<int> reg_heap::compute_expression_is_random_variable(int index)
-{
-    int& H = heads[index];
-
-    return find_update_random_variable(H);
-}
-
 optional<int> reg_heap::find_update_random_variable(int& R)
 {
     // Note: here we always update R
