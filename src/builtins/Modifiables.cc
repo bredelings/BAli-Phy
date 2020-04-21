@@ -91,7 +91,7 @@ extern "C" closure builtin_function_maybe_modifiable_structure(OperationArgs& Ar
 extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 {
     // We are supposed to evaluate the random_variable before we register
-    Args.evaluate_(0);
+    Args.evaluate_slot_force(0);
 
     int r_pdf = Args.current_closure().reg_for_slot(0);
 
@@ -107,7 +107,7 @@ extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
 {
     // We are supposed to evaluate the likelihood before we register
-    Args.evaluate_(0);
+    Args.evaluate_slot_force(0);
 
     int r_likelihood = Args.current_closure().reg_for_slot(0);
 
