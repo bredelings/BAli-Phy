@@ -226,11 +226,6 @@ optional<int> context_ref::compute_expression_is_modifiable_reg(int index) const
     return memory()->compute_expression_is_modifiable_reg(index);
 }
 
-optional<int> context_ref::compute_expression_is_random_variable(int index) const
-{
-    return memory()->compute_expression_is_random_variable(index);
-}
-
 EVector context_ref::get_modifiable_values(const std::vector<int>& indices) const
 {
     EVector values(indices.size());
