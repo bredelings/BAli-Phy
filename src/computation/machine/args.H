@@ -74,8 +74,6 @@ public:
 
     const expression_ref& evaluate_(int);
 
-    std::optional<int> find_modifiable_in_context(int r, int c);
-
     void stack_push(int);
 
     void stack_pop(int);

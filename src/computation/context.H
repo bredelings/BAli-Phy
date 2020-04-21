@@ -42,9 +42,7 @@ public:
 
     int get_compute_expression_reg(int i) const;
 
-    std::optional<int> get_modifiable_reg(int r) const;
-
-    std::optional<int> find_modifiable_reg_in_context(int r) const;
+    std::optional<int> find_modifiable_reg(int r) const;
 
     /// Get SOME model modifiable values
     EVector get_modifiable_values(const std::vector<int>&) const;
