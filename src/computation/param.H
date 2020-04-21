@@ -24,7 +24,6 @@ public:
     std::optional<expression_ref> constant_value() const {return value;}
     std::optional<int> is_modifiable(const context& C) const;
     std::optional<int> is_random_variable(const context& C) const;
-    std::optional<bounds<double>> has_bounds(const context& C) const;
 
     param& operator=(const param&) = default;
 
@@ -53,7 +52,6 @@ public:
     std::optional<int> is_modifiable() const;
 
     std::optional<int> is_random_variable() const;
-    std::optional<bounds<double>> has_bounds() const;
 
     explicit operator bool();
 
@@ -74,7 +72,6 @@ public:
     std::optional<expression_ref> constant_value() const;
     std::optional<int> is_modifiable() const;
     std::optional<int> is_random_variable() const;
-    std::optional<bounds<double>> has_bounds() const;
 
     explicit operator bool();
 
