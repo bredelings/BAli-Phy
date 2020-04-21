@@ -23,7 +23,6 @@ public:
 
     std::optional<expression_ref> constant_value() const {return value;}
     std::optional<int> is_modifiable(const context& C) const;
-    std::optional<int> is_random_variable(const context& C) const;
 
     param& operator=(const param&) = default;
 

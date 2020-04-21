@@ -118,8 +118,6 @@ public:
     /// Set the value of a modifiable
     void set_modifiable_value(int index, const expression_ref&);
 
-    const std::unordered_set<int>& random_variables() const;
-
 public:
     /// Create a new modifiable head with initial value 'value'
     param new_modifiable(const expression_ref& value);

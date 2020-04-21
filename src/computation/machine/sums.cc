@@ -72,11 +72,8 @@ log_double_t reg_heap::prior_for_context(int c)
      *       This ensures that a range-for is OK. (Range-for's assume that begin() and end() do not change).
      */
 
-    for(int r: random_variables_)
+    for(int r_pdf: random_variables_)
     {
-        // The PDF is the 2nd entry of the random_variable node.
-	int r_pdf = (*this)[r].reg_for_slot(1);
-
 	const auto& x = value_for_precomputed_reg(r_pdf).exp;
 
 	log_double_t X = x.as_log_double();
