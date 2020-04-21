@@ -86,18 +86,6 @@ bool add_modifiable_slice_move(int rv, const Bounds<double>& bounds, MCMC::MoveA
     return true;
 }
 
-bool add_random_variable_slice_move(const context_ref& P, int rv, MCMC::MoveAll& M, double weight = 1.0)
-{
-    double rate = P.get_rate_for_random_variable(rv);
-    auto range = P.get_range_for_random_variable(rv);
-    if (not range.is_a<Bounds<double>>()) return false;
-
-    auto& bounds = range.as_<Bounds<double>>();
-    string name = "m_real_"+convertToString<int>(rv);
-
-    return add_modifiable_slice_move(rv, bounds, M, weight * rate);
-}
-
 optional<int> scale_is_modifiable(const context_ref& M, int s)
 {
     auto& P = dynamic_cast<const Parameters&>(M);

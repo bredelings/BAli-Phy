@@ -301,8 +301,6 @@ public:
 
     std::optional<int> compute_expression_is_random_variable(int index);
 
-    const expression_ref get_range_for_random_variable(int c, int r);
-
     double get_rate_for_random_variable(int c, int r);
 
     /*----- Token manager ------*/
