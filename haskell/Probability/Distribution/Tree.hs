@@ -55,11 +55,6 @@ random_tree n = do
     return (Tree es ns nn (nn - 1))
 
 
-mapn n f xs = go 0 where
-    go i | i==n      = []
-         | otherwise = f (xs!!i):go (i+1)
-
-
 force_tree tree@(Tree nodes branches n_nodes n_branches) = force_nodes `seq` force_branches where
     force_nodes    = force_struct $ listArray' [ force_list $ edgesOutOfNode tree node | node <- xrange 0 n_nodes ]
     force_branches = force_struct $ listArray' [ force_struct $ nodesForEdge tree b | b <- xrange 0 (n_branches * 2)]

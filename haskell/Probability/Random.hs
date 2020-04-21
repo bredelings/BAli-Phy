@@ -188,3 +188,7 @@ force_struct x = struct_seq x x
 force_list [] = []
 force_list (x:xs) = force_struct (x:(force_list xs))
 
+-- maybe I should rename this to (modifiable_list_n n f value) or something.
+mapn n f xs = go 0 where
+    go i | i==n      = []
+         | otherwise = f (xs!!i):go (i+1)
