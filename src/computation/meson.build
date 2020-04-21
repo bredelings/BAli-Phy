@@ -20,7 +20,7 @@ computation_sources = [
   'expression/case.cc','expression/trim.cc',
   'expression/tuple.cc','expression/list.cc',
   'expression/var.cc','expression/lambda.cc',
-  'expression/random_variable.cc', 'expression/modifiable.cc',
+  'expression/modifiable.cc',
   'expression/reg_var.cc',
   'expression/bool.cc', 'expression/resolved_symbol.cc',
   'expression/maybe.cc',

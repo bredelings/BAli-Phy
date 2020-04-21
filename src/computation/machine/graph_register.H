@@ -291,10 +291,7 @@ public:
     std::optional<int> compute_expression_is_modifiable_reg(int index);
 
     /*----- Random variables ----*/
-private:
-    std::optional<int> find_update_random_variable(int& R);
 public:
-    std::optional<int> find_random_variable(int R);
 
     /*----- Token manager ------*/
 

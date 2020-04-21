@@ -1,4 +1,3 @@
-#include "random_variable.H"
 #include "modifiable.H"
 #include "index_var.H"
 

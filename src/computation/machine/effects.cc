@@ -6,7 +6,7 @@ using std::string;
 
 bool register_random_variable::operator==(const register_random_variable& e) const
 {
-    return random_variable_reg == e.random_variable_reg;
+    return pdf_reg == e.pdf_reg;
 }
 
 bool register_random_variable::operator==(const Object& O) const
@@ -22,27 +22,27 @@ bool register_random_variable::operator==(const Object& O) const
 
 string register_random_variable::print() const
 {
-    return string("register_random_variable[")+std::to_string(random_variable_reg)+"]";
+    return string("register_random_variable[")+std::to_string(pdf_reg)+"]";
 }
 
 register_random_variable::register_random_variable(int r)
-    :random_variable_reg(r)
+    :pdf_reg(r)
 { }
 
 void register_random_variable::register_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 2)
-        std::cerr<<"register_random_variable["<<random_variable_reg<<"]: REGISTER! ("<<M.random_variables().size()<<" -> "<<M.random_variables().size()+1<<")\n";
-    M.register_random_variable(random_variable_reg, s);
+        std::cerr<<"register_random_variable["<<pdf_reg<<"]: REGISTER! ("<<M.random_variables().size()<<" -> "<<M.random_variables().size()+1<<")\n";
+    M.register_random_variable(pdf_reg, s);
 }
 
 void register_random_variable::unregister_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 2)
     {
-        std::cerr<<"register_random_variable["<<random_variable_reg<<"]: UNregister! ("<<M.random_variables().size()<<" -> "<<M.random_variables().size()-1<<")\n";
+        std::cerr<<"register_random_variable["<<pdf_reg<<"]: UNregister! ("<<M.random_variables().size()<<" -> "<<M.random_variables().size()-1<<")\n";
     }
-    M.unregister_random_variable(random_variable_reg, s);
+    M.unregister_random_variable(pdf_reg, s);
 }
 
 //--------------------------------------------------------------------
