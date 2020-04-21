@@ -30,15 +30,6 @@ optional<int> param::is_random_variable(const context& C) const
         return {};
 }
 
-optional<bounds<double>> param::has_bounds(const context& C) const
-{
-    if (head and C.compute_expression_has_bounds(*head))
-        return C.get_bounds_for_compute_expression(*head);
-    else
-        return {};
-}
-
-
 expression_ref param::get_value(const context& C) const
 {
     if (head)
@@ -121,11 +112,6 @@ optional<int> ConstParam::is_random_variable() const
     return x.is_random_variable(*C);
 }
 
-optional<bounds<double>> ConstParam::has_bounds() const
-{
-    return x.has_bounds(*C);
-}
-
 ConstParam::operator bool()
 {
     return (bool)x;
@@ -166,11 +152,6 @@ optional<int> Param::is_modifiable() const
 optional<int> Param::is_random_variable() const
 {
     return x.is_random_variable(*C);
-}
-
-optional<bounds<double>> Param::has_bounds() const
-{
-    return x.has_bounds(*C);
 }
 
 Param::operator bool()

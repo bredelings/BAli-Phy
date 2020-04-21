@@ -231,28 +231,6 @@ optional<int> context_ref::compute_expression_is_random_variable(int index) cons
     return memory()->compute_expression_is_random_variable(index);
 }
 
-bool context_ref::compute_expression_has_bounds(int index) const
-{
-    auto R = compute_expression_is_random_variable(index);
-    if (not R) return false;
-    auto e = get_range_for_random_variable(*R);
-
-    return (e and e.is_a<Bounds<double>>());
-}
-
-bounds<double> context_ref::get_bounds_for_compute_expression(int index) const
-{
-    auto R = compute_expression_is_random_variable(index);
-    auto e = get_range_for_random_variable(*R);
-
-    assert(e);
-
-    if (not e.is_a<Bounds<double>>())
-	throw myexception()<<"compute expression "<<index<<" doesn't have bounds<double>.";
-
-    return e.as_<Bounds<double>>();
-}
-
 EVector context_ref::get_modifiable_values(const std::vector<int>& indices) const
 {
     EVector values(indices.size());
@@ -303,11 +281,6 @@ param context_ref::new_modifiable(const expression_ref& value)
 const unordered_set<int>& context_ref::random_variables() const
 {
     return memory()->random_variables();
-}
-
-const expression_ref context_ref::get_range_for_random_variable(int r) const
-{
-    return memory()->get_range_for_random_variable(context_index, r);
 }
 
 double context_ref::get_rate_for_random_variable(int r) const
