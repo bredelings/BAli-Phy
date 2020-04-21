@@ -911,17 +911,6 @@ optional<int> reg_heap::find_random_variable(int R)
     return find_update_random_variable(R);
 }
 
-const expression_ref reg_heap::get_range_for_random_variable(int c, int r)
-{
-    if (find_update_random_variable(r))
-    {
-        int r_range = closure_at(r).reg_for_slot(3);
-        return get_reg_value_in_context(r_range, c);
-    }
-    else
-        throw myexception()<<"Trying to get range from `"<<closure_at(r).print()<<"`, which is not a random_variable!";
-}
-
 double reg_heap::get_rate_for_random_variable(int c, int r)
 {
     if (find_update_random_variable(r))
