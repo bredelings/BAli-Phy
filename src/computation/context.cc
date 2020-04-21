@@ -278,11 +278,6 @@ const unordered_set<int>& context_ref::random_variables() const
     return memory()->random_variables();
 }
 
-double context_ref::get_rate_for_random_variable(int r) const
-{
-    return memory()->get_rate_for_random_variable(context_index, r);
-}
-
 /// Add an expression that may be replaced by its reduced form
 int context_ref::add_compute_expression(const expression_ref& E)
 {

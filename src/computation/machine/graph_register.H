@@ -296,8 +296,6 @@ private:
 public:
     std::optional<int> find_random_variable(int R);
 
-    double get_rate_for_random_variable(int c, int r);
-
     /*----- Token manager ------*/
 
     struct Token
