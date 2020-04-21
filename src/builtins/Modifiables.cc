@@ -7,7 +7,6 @@
 #include "computation/expression/bool.H"
 #include "computation/expression/index_var.H"
 #include "computation/expression/reg_var.H"
-#include "computation/expression/random_variable.H"
 #include "computation/expression/modifiable.H"
 #include "computation/expression/list.H"
 
@@ -65,26 +64,7 @@ expression_ref maybe_modifiable_structure(reg_heap& M, int r1)
         m = m + reg_var(r2);
         return m;
     }
-    // 4. If we see a random_variable guarding a modifiable, we want to claim to be modifiable, but reference the random variable.
-    else if (is_random_variable(M[r2].exp))
-    {
-	int r3 = M[r2].reg_for_slot(0);
-        auto E = maybe_modifiable_structure(M,r3);
-        if (is_modifiable(E))
-        {
-            expression_ref m = constructor("Modifiable",1);
-            m = m + reg_var(r2);
-            return m;
-        }
-        else
-            return E;
-    }
     else if (is_seq(M[r2].exp))
-    {
-	int r3 = M[r2].reg_for_slot(1);
-        return maybe_modifiable_structure(M,r3);
-    }
-    else if (is_join(M[r2].exp))
     {
 	int r3 = M[r2].reg_for_slot(1);
         return maybe_modifiable_structure(M,r3);
@@ -108,36 +88,16 @@ extern "C" closure builtin_function_maybe_modifiable_structure(OperationArgs& Ar
     return maybe_modifiable_structure(Args.memory(), R1);
 }
 
-extern "C" closure builtin_function_random_variable(OperationArgs& Args)
-{
-    int r_var     = Args.reg_for_slot(0);
-    int r_pdf     = Args.reg_for_slot(1);
-    int r_range   = Args.reg_for_slot(2);
-    int r_c_range = Args.reg_for_slot(3);
-    int r_rate    = Args.reg_for_slot(4);
-
-    // Allocate a reg so that we get its address, and fill it with a modifiable of the correct index
-    expression_ref E(random_variable(),{index_var(4), index_var(3), index_var(2), index_var(1), index_var(0)});
-
-    return closure{E,{r_var, r_pdf, r_range, r_c_range, r_rate}};
-}
-
-extern "C" closure builtin_function_register_random_variable(OperationArgs& Args)
+extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 {
     // We are supposed to evaluate the random_variable before we register
     Args.evaluate_(0);
 
-    int r_random_var = Args.current_closure().reg_for_slot(0);
+    int r_pdf = Args.current_closure().reg_for_slot(0);
 
-    auto& M = Args.memory();
-    r_random_var = Args.memory().follow_index_var(r_random_var);
+    r_pdf = Args.memory().follow_index_var(r_pdf);
 
-    if (auto r = Args.find_random_variable_in_root_token(r_random_var))
-        r_random_var = *r;
-    else
-	throw myexception()<<"Trying to register `"<<M.expression_at(r_random_var)<<"` as random variable";
-
-    auto effect = new register_random_variable(r_random_var);
+    auto effect = new register_random_variable(r_pdf);
 
     Args.set_effect(*effect);
 

@@ -273,11 +273,6 @@ param context_ref::new_modifiable(const expression_ref& value)
     return add_compute_expression(M);
 }
 
-const unordered_set<int>& context_ref::random_variables() const
-{
-    return memory()->random_variables();
-}
-
 /// Add an expression that may be replaced by its reduced form
 int context_ref::add_compute_expression(const expression_ref& E)
 {

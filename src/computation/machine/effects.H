@@ -4,7 +4,7 @@
 
 class register_random_variable: public effect
 {
-    int random_variable_reg;
+    int pdf_reg;
 
 public:
     register_random_variable* clone() const {return new register_random_variable(*this);}
