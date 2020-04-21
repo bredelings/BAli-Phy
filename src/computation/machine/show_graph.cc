@@ -7,7 +7,6 @@
 #include "computation/expression/case.H"
 #include "computation/expression/modifiable.H"
 #include "computation/expression/reg_var.H"
-#include "computation/expression/random_variable.H"
 #include "computation/expression/expression.H" // for launchbury_unnormalize( )
 #include "util/set.H"
 
@@ -435,7 +434,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	expression_ref F = C[R].exp;
 
 	bool print_record = false;
-	if (F.head().type() == operation_type or F.head().type() == constructor_type or is_random_variable(F))
+	if (F.head().type() == operation_type or F.head().type() == constructor_type)
 	{
 	    if (not is_case(F) and not F.head().is_a<Apply>())
 	    {

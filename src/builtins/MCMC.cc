@@ -9,7 +9,6 @@
 #include "util/log-level.H"
 #include "probability/choose.H"
 #include "computation/expression/constructor.H"
-#include "computation/expression/random_variable.H"
 #include "computation/expression/modifiable.H"
 #include "mcmc/slice-sampling.H"
 #include "mcmc/proposals.H"
