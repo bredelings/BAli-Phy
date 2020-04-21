@@ -280,7 +280,7 @@ extern "C" closure builtin_function_discrete_uniform_avoid_mh(OperationArgs& Arg
 
 
 
-Proposal inc_dec_mh_proposal(int x_reg)
+Proposal inc_dec_mh_proposal(int x_reg, const bounds<int>& range)
 {
     return [=](context_ref& C)
            {
@@ -299,15 +299,24 @@ Proposal inc_dec_mh_proposal(int x_reg)
                else
                    x2--;
 
-               // 4. Set the new value
-               C.set_reg_value(*x_mod_reg, expression_ref(x2));
+               // 4. Cancel move if its outside of the bounds
+               if (not range.in_range(x2))
+                   x2 = x1;
+               // This retains symmetry between an item on the edge of the range, and its neighbor.
 
-               // 5. Return the proposal ratio
+               // 5. Set the new value
+               if (x1 != x2)
+                   C.set_reg_value(*x_mod_reg, expression_ref(x2));
+
+               // 6. Return the proposal ratio
                return 1.0;
            };
 }
 
-// gibbs_sample_categorical x n pr
+template <typename T>
+using Bounds = Box<bounds<T>>;
+
+// inc_dec_mh x bounds context state
 extern "C" closure builtin_function_inc_dec_mh(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
@@ -317,25 +326,25 @@ extern "C" closure builtin_function_inc_dec_mh(OperationArgs& Args)
 
     if (log_verbose >= 3) std::cerr<<"\n\n[inc_dec_mh] <"<<x_reg<<">\n";
 
-    //------------- 1d. Get context index --------------
-    int c1 = Args.evaluate(1).as_int();
+    //------------- 1b. Get context index --------------
+    auto range = Args.evaluate(1).as_<Bounds<int>>();
 
-    //------------- 1e. Get monad thread state ---------
-    int state = Args.evaluate(2).as_int();
+    //------------- 1c. Get context index --------------
+    int c1 = Args.evaluate(2).as_int();
+
+    //------------- 1d. Get monad thread state ---------
+    int state = Args.evaluate(3).as_int();
 
     //------------- 2. Perform the proposal ------------
     auto& M = Args.memory();
 
-    auto proposal = inc_dec_mh_proposal(x_reg);
+    auto proposal = inc_dec_mh_proposal(x_reg, range);
 
     perform_MH_(M, c1, proposal);
 
     //------------- 4. Return the modified IO state ----
     return EPair(state+1,constructor("()",0));
 }
-
-template <typename T>
-using Bounds = Box<bounds<T>>;
 
 // slice_sample_real_random_variable x context state
 extern "C" closure builtin_function_slice_sample_real_random_variable(OperationArgs& Args)
