@@ -22,14 +22,6 @@ optional<int> param::is_modifiable(const context& C) const
         return {};
 }
 
-optional<int> param::is_random_variable(const context& C) const
-{
-    if (head)
-        return C.compute_expression_is_random_variable(*head);
-    else
-        return {};
-}
-
 expression_ref param::get_value(const context& C) const
 {
     if (head)
@@ -107,11 +99,6 @@ optional<int> ConstParam::is_modifiable() const
     return x.is_modifiable(*C);
 }
 
-optional<int> ConstParam::is_random_variable() const
-{
-    return x.is_random_variable(*C);
-}
-
 ConstParam::operator bool()
 {
     return (bool)x;
@@ -147,11 +134,6 @@ optional<expression_ref> Param::constant_value() const
 optional<int> Param::is_modifiable() const
 {
     return x.is_modifiable(*C);
-}
-
-optional<int> Param::is_random_variable() const
-{
-    return x.is_random_variable(*C);
 }
 
 Param::operator bool()
