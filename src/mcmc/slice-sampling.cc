@@ -93,7 +93,7 @@ double random_variable_slice_function::current_value() const
 random_variable_slice_function::random_variable_slice_function(context_ref& c, const bounds<double>& bounds, int rv)
     :context_slice_function(c, bounds)
 {
-    if (auto m = C.get_modifiable_reg(rv))
+    if (auto m = C.find_modifiable_reg(rv))
 	r_mod = *m;
     else
 	throw myexception()<<"No modifiable reg for slice function!";
@@ -123,7 +123,7 @@ double integer_random_variable_slice_function::current_value() const
 integer_random_variable_slice_function::integer_random_variable_slice_function(context_ref& c, const bounds<int>& bounds, int rv)
     :context_slice_function(c, convert_bounds(bounds))
 {
-    if (auto m = C.get_modifiable_reg(rv))
+    if (auto m = C.find_modifiable_reg(rv))
 	r_mod = *m;
     else
 	throw myexception()<<"No modifiable reg for slice function!";

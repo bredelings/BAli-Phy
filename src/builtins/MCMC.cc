@@ -87,7 +87,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 
     //------------- 1a. Get argument X -----------------
     int t_reg = Args.evaluate_slot_unchangeable(0);
-    if (auto t_mod_reg = Args.find_modifiable_in_context(t_reg, c1))
+    if (auto t_mod_reg = M.find_modifiable_reg(t_reg))
         t_reg = *t_mod_reg;
     else
         throw myexception()<<"sum_out_coals: time variable is not modifiable!";
@@ -108,7 +108,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 
 	// evaluate the list element in token 0
 	element_reg = Args.evaluate_reg_unchangeable(element_reg);
-        if (auto element_mod_reg = Args.find_modifiable_in_context(element_reg, c1))
+        if (auto element_mod_reg = M.find_modifiable_reg(element_reg))
             element_reg = *element_mod_reg;
         else
             throw myexception()<<"sum_out_coals: indicator variable is not modifiable!";
@@ -175,7 +175,7 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
 
     //------------- 2. Find the location of the variable -------------//
     auto& M = Args.memory();
-    auto x_mod_reg = Args.find_modifiable_in_context(x_reg, c1);
+    auto x_mod_reg = M.find_modifiable_reg(x_reg);
     if (not x_mod_reg)
         throw myexception()<<"gibbs_sample_categorical: reg "<<x_reg<<" not modifiable!";
 
@@ -211,7 +211,7 @@ Proposal uniform_avoid_mh_proposal(int a, int b, int x_reg)
     return [=](context_ref& C)
            {
                // 1. Find the modifiable
-               auto x_mod_reg = C.find_modifiable_reg_in_context(x_reg);
+               auto x_mod_reg = C.find_modifiable_reg(x_reg);
                if (not x_mod_reg)
                    throw myexception()<<"discrete_uniform_avoid_mh: reg "<<x_reg<<" not modifiable!";
 
@@ -285,7 +285,7 @@ Proposal inc_dec_mh_proposal(int x_reg)
     return [=](context_ref& C)
            {
                // 1. Find the modifiable
-               auto x_mod_reg = C.find_modifiable_reg_in_context(x_reg);
+               auto x_mod_reg = C.find_modifiable_reg(x_reg);
                if (not x_mod_reg)
                    throw myexception()<<"discrete_uniform_avoid_mh: reg "<<x_reg<<" not modifiable!";
 

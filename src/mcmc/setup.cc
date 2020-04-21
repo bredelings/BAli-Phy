@@ -61,7 +61,7 @@ using Bounds = Box<bounds<T>>;
 void add_modifiable_MH_move(const context_ref& P, const string& name, const proposal_fn& proposal, int rv, const vector<double>& parameters,
                             MCMC::MoveAll& M, double weight=1)
 {
-    auto r_mod = P.get_modifiable_reg(rv);
+    auto r_mod = P.find_modifiable_reg(rv);
     M.add(weight, MCMC::MH_Move( Proposal2M(proposal, *r_mod, parameters), name) );
 }
 
