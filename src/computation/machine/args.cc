@@ -133,13 +133,3 @@ OperationArgs::~OperationArgs()
     for(int i=0;i<n_allocated;i++)
 	M.pop_temp_head();
 }
-
-optional<int> OperationArgs::find_modifiable_in_context(int r, int c)
-{
-    assert(not evaluate_changeables());
-
-    auto& M = memory();
-
-    return M.find_modifiable_reg_in_context(r,c);
-}
-
