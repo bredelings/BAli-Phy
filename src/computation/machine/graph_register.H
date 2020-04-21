@@ -299,8 +299,6 @@ private:
 public:
     std::optional<int> find_random_variable(int R);
 
-    std::optional<int> compute_expression_is_random_variable(int index);
-
     double get_rate_for_random_variable(int c, int r);
 
     /*----- Token manager ------*/

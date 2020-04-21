@@ -51,8 +51,6 @@ public:
 
     std::optional<int> is_modifiable() const;
 
-    std::optional<int> is_random_variable() const;
-
     explicit operator bool();
 
     ConstParam();
@@ -71,7 +69,6 @@ public:
 
     std::optional<expression_ref> constant_value() const;
     std::optional<int> is_modifiable() const;
-    std::optional<int> is_random_variable() const;
 
     explicit operator bool();
 
