@@ -74,7 +74,6 @@ public:
 
     const expression_ref& evaluate_(int);
 
-    std::optional<int> find_random_variable_in_root_token(int r);
     std::optional<int> find_modifiable_in_context(int r, int c);
 
     void stack_push(int);

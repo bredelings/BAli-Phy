@@ -3,7 +3,6 @@
 #include "effect.H"
 #include "computation/expression/lambda.H"
 #include "computation/expression/modifiable.H"
-#include "computation/expression/random_variable.H"
 
 using std::optional;
 
@@ -134,44 +133,6 @@ OperationArgs::~OperationArgs()
     for(int i=0;i<n_allocated;i++)
 	M.pop_temp_head();
 }
-
-optional<int> OperationArgs::find_random_variable_in_root_token(int r)
-{
-    assert(evaluate_changeables());
-
-    auto& M = memory();
-
-    // Warning: ABOMINATION!
-    // FIXME: This should be forced by a `seq` inside the program.
-    // But that probably requires force-edges to be working.
-    evaluate_reg(r);
-
-    r = M.follow_index_var(r);
-
-    // r should not be unknown or an index_var
-    assert(M.reg_is_constant(r) or (M.reg_is_changeable(r) and M.reg_has_call(r)));
-
-    while (not M.reg_is_constant(r))
-    {
-        assert(M.reg_is_changeable(r));
-        assert(M.reg_has_call(r));
-
-        if (is_random_variable(M[r].exp))
-            return r;
-        else if (is_modifiable(M[r].exp))
-            return {};
-        else
-            r = M.call_for_reg(r);
-    };
-
-    // r is (now) a constant.
-    // There is therefore no modifiable.
-    return {};
-}
-
-/* NOTE: We are currently using this to cheat and do *changeable* evaluation
-         from MCMC that is being done *unchangeably*.
- */
 
 optional<int> OperationArgs::find_modifiable_in_context(int r, int c)
 {
