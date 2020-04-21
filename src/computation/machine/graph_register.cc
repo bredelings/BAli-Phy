@@ -810,47 +810,6 @@ optional<int> reg_heap::find_modifiable_reg(int R)
     return find_update_modifiable_reg(R);
 }
 
-
-optional<int> reg_heap::find_modifiable_reg_in_context(int r, int c)
-{
-    // Note that value_for_precomputed_reg( ) and precomputed_value_in_context( ) also do
-    // - follow_index_var( )
-    // Although it does not do
-    // - r = call_for_reg(r)
-    // After we stop performing evaluation here, this looks a lot like
-    // a hypothetical `value_for_precomputed_reg_in_context( )`,
-    // except that (i) we stop at modifiables and (ii) we walk through calls instead of
-    // requiring valid result or force.
-
-    // Warning: ABOMINATION!
-    // FIXME: This should be forced by a `seq` inside the program.
-    // But that probably requires force-edges to be working.
-    incremental_evaluate_in_context(r,c);
-
-    assert(is_root_token(token_for_context(c)));
-
-    r = follow_index_var(r);
-
-    // r should not be unknown or an index_var
-    assert(reg_is_constant(r) or (reg_is_changeable(r) and reg_has_call(r)));
-
-    while (not reg_is_constant(r))
-    {
-        assert(reg_is_changeable(r));
-        assert(reg_has_call(r));
-
-        if (is_modifiable(expression_at(r)))
-            return r;
-        else
-            r = call_for_reg(r);
-    };
-
-    // r is (now) a constant.
-    // There is therefore no modifiable.
-    return {};
-}
-
-
 int reg_heap::step_index_for_reg(int r) const 
 {
     assert(prog_steps[r] != 0);
