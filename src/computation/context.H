@@ -68,9 +68,6 @@ public:
 
     std::optional<int> compute_expression_is_random_variable(int p) const;
 
-    bool compute_expression_has_bounds(int i) const;
-    bounds<double> get_bounds_for_compute_expression(int i) const;
-
     const closure* precomputed_value_for_reg(int r) const;
 
     const closure* precomputed_value_for_head(int index) const;
@@ -124,8 +121,6 @@ public:
     void set_modifiable_value(int index, const expression_ref&);
 
     const std::unordered_set<int>& random_variables() const;
-
-    const expression_ref get_range_for_random_variable(int r) const;
 
     double get_rate_for_random_variable(int r) const;
 
