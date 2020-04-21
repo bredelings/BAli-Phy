@@ -245,12 +245,12 @@ const expression_ref& context_ref::get_reg_value(int R) const
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 const expression_ref& context_ref::get_modifiable_value(int R) const
 {
-    return get_reg_value(*get_modifiable_reg(R));
+    return get_reg_value(*find_modifiable_reg(R));
 }
 
 void context_ref::set_modifiable_value_(int R, closure&& C)
 {
-    set_reg_value(*get_modifiable_reg(R), std::move(C) );
+    set_reg_value(*find_modifiable_reg(R), std::move(C) );
 }
 
 void context_ref::set_modifiable_value(int R, const expression_ref& E)
@@ -388,14 +388,9 @@ int context_ref::get_compute_expression_reg(int index) const
     return heads()[index];
 }
 
-optional<int> context_ref::get_modifiable_reg(int r) const
+optional<int> context_ref::find_modifiable_reg(int r) const
 {
     return memory()->find_modifiable_reg(r);
-}
-
-optional<int> context_ref::find_modifiable_reg_in_context(int r) const
-{
-    return memory()->find_modifiable_reg_in_context(r, context_index);
 }
 
 std::ostream& operator<<(std::ostream& o, const context_ref& C)
