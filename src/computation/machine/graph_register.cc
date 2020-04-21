@@ -9,7 +9,6 @@
 #include "computation/expression/var.H"
 #include "computation/expression/reg_var.H"
 #include "computation/expression/tuple.H"
-#include "computation/expression/random_variable.H"
 #include "computation/expression/modifiable.H"
 #include "computation/operations.H"
 #include "effect.H"
@@ -579,11 +578,8 @@ expression_ref reg_heap::evaluate_program(int c)
     }
 
     assert(random_variables_.size() == random_variables_map.size());
-    for(int r_rv: random_variables())
+    for(int r_pdf: random_variables())
     {
-        assert(reg_exists(r_rv));
-
-        int r_pdf = (*this)[r_rv].reg_for_slot(1);
         assert(reg_exists(r_pdf));
 
         assert(reg_has_value(follow_index_var(r_pdf)));
@@ -680,15 +676,7 @@ void reg_heap::register_random_variable(int r, int s)
     // We can't register index_vars -- they could go away!
     assert(not expression_at(r).is_index_var());
 
-    if (not reg_has_value(r))
-        throw myexception()<<"Can't register a random variable that is unevaluated!";
-
-    if (not is_random_variable(expression_at(r)))
-        throw myexception()<<"Trying to register `"<<expression_at(r)<<"` as random variable";
-
     assert(not random_variables_.count(r));
-
-    int r_pdf = (*this)[r].reg_for_slot(1);
 
     if (random_variables_.count(r))
     {
@@ -702,7 +690,7 @@ void reg_heap::register_random_variable(int r, int s)
         assert(not random_variables_map.count(r));
         random_variables_.insert(r);
         random_variables_map[r].insert(s);
-        register_prior(r_pdf);
+        register_prior(r);
     }
     if (log_verbose >= 2)
     {
@@ -714,9 +702,7 @@ void reg_heap::register_random_variable(int r, int s)
 
 void reg_heap::unregister_random_variable(int r, int s)
 {
-    if (not is_random_variable(expression_at(r)))
-        throw myexception()<<"Trying to unregister `"<<expression_at(r)<<"` as random variable";
-
+    r = follow_index_var(r);
     assert(random_variables_.count(r));
     assert(random_variables_map.count(r));
     if (log_verbose >= 2)
@@ -733,9 +719,8 @@ void reg_heap::unregister_random_variable(int r, int s)
     {
         random_variables_.erase(r);
         random_variables_map.erase(r);
-        int r_pdf = (*this)[r].reg_for_slot(1);
         // This clear the pdf bit.
-        unregister_prior(r_pdf);
+        unregister_prior(r);
     }
 }
 
@@ -810,17 +795,7 @@ optional<int> reg_heap::find_update_modifiable_reg(int& R)
 
     if (is_modifiable(C.exp))
         return R;
-    else if (is_random_variable(C.exp))
-    {
-        int R2 = C.reg_for_slot(0);
-        return find_update_modifiable_reg(R2);
-    }
     else if (is_seq(C.exp))
-    {
-        int R2 = C.reg_for_slot(1);
-        return find_update_modifiable_reg(R2);
-    }
-    else if (is_join(C.exp))
     {
         int R2 = C.reg_for_slot(1);
         return find_update_modifiable_reg(R2);
@@ -874,34 +849,6 @@ optional<int> reg_heap::find_modifiable_reg_in_context(int r, int c)
     return {};
 }
 
-
-optional<int> reg_heap::find_update_random_variable(int& R)
-{
-    // Note: here we always update R
-    R = incremental_evaluate_unchangeable(R);
-
-    auto& C = closure_at(R);
-
-    if (is_random_variable(C.exp))
-        return R;
-    else if (is_seq(C.exp))
-    {
-        int R2 = C.reg_for_slot(1);
-        return find_update_random_variable(R2);
-    }
-    else if (is_join(C.exp))
-    {
-        int R2 = C.reg_for_slot(1);
-        return find_update_random_variable(R2);
-    }
-    else
-        return {};
-}
-
-optional<int> reg_heap::find_random_variable(int R)
-{
-    return find_update_random_variable(R);
-}
 
 int reg_heap::step_index_for_reg(int r) const 
 {
