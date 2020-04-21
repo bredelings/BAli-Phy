@@ -24,7 +24,11 @@ extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Ar
 {
     int r_rate = Args.reg_for_slot(0);
 
+    r_rate = Args.memory().follow_index_var(r_rate);
+
     int r_transition_kernel = Args.reg_for_slot(1);
+
+    r_transition_kernel = Args.memory().follow_index_var(r_transition_kernel);
 
     auto effect = new register_transition_kernel(r_rate, r_transition_kernel);
 

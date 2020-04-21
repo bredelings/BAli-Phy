@@ -130,6 +130,7 @@ extern "C" closure builtin_function_register_random_variable(OperationArgs& Args
     int r_random_var = Args.current_closure().reg_for_slot(0);
 
     auto& M = Args.memory();
+    r_random_var = Args.memory().follow_index_var(r_random_var);
 
     if (auto r = Args.find_random_variable_in_root_token(r_random_var))
         r_random_var = *r;
@@ -149,6 +150,8 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
     Args.evaluate_(0);
 
     int r_likelihood = Args.current_closure().reg_for_slot(0);
+
+    r_likelihood = Args.memory().follow_index_var(r_likelihood);
 
     auto effect = new register_likelihood(r_likelihood);
 

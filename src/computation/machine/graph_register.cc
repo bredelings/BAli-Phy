@@ -289,7 +289,8 @@ void reg_heap::unregister_prior(int r)
 
 void reg_heap::register_likelihood_(int r)
 {
-    r = follow_index_var(r);
+    // We can't register index_vars -- they could go away!
+    assert(not expression_at(r).is_index_var());
 
     if (not reg_has_value(r))
         throw myexception()<<"Can't register a likelihood reg that is unevaluated!";
@@ -535,7 +536,8 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 
 void reg_heap::register_random_variable(int r)
 {
-    r = follow_index_var(r);
+    // We can't register index_vars -- they could go away!
+    assert(not expression_at(r).is_index_var());
 
     if (not reg_has_value(r))
         throw myexception()<<"Can't register a random variable that is unevaluated!";
@@ -584,6 +586,11 @@ const vector<int>& reg_heap::random_variables() const
 
 void reg_heap::register_transition_kernel(int r_rate, int r_kernel)
 {
+    // We can't register index_vars -- they could go away!
+    assert(not expression_at(r_rate).is_index_var());
+
+    assert(not expression_at(r_kernel).is_index_var());
+
     transition_kernels_.push_back({r_rate, r_kernel});
 }
 
