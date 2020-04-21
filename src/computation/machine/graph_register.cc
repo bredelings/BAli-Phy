@@ -267,7 +267,8 @@ size_t reg_heap::size() const
 
 void reg_heap::register_prior(int r)
 {
-    r = follow_index_var(r);
+    // We can't register index_vars -- they could go away!
+    assert(not expression_at(r).is_index_var());
 
     if (not reg_has_value(r))
         throw myexception()<<"Can't register a prior reg that is unevaluated!";
@@ -292,6 +293,9 @@ void reg_heap::register_prior(int r)
 
 void reg_heap::unregister_prior(int r)
 {
+    // We can't register index_vars -- they could go away!
+    assert(not expression_at(r).is_index_var());
+
     regs.access(r).flags.reset(0);
 }
 
@@ -575,15 +579,14 @@ expression_ref reg_heap::evaluate_program(int c)
     for(int r_likelihood: likelihood_heads)
     {
         assert(reg_exists(r_likelihood));
-        assert(reg_has_value(follow_index_var(r_likelihood)));
+        assert(reg_has_value(r_likelihood));
     }
 
     assert(random_variables_.size() == random_variables_map.size());
     for(int r_pdf: random_variables())
     {
         assert(reg_exists(r_pdf));
-
-        assert(reg_has_value(follow_index_var(r_pdf)));
+        assert(reg_has_value(r_pdf));
     }
 #endif
 
@@ -703,7 +706,9 @@ void reg_heap::register_random_variable(int r, int s)
 
 void reg_heap::unregister_random_variable(int r, int s)
 {
-    r = follow_index_var(r);
+    // We can't register index_vars -- they could go away!
+    assert(not expression_at(r).is_index_var());
+
     assert(random_variables_.count(r));
     assert(random_variables_map.count(r));
     if (log_verbose >= 2)
