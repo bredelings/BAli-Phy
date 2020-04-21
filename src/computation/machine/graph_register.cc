@@ -904,17 +904,6 @@ optional<int> reg_heap::find_random_variable(int R)
     return find_update_random_variable(R);
 }
 
-double reg_heap::get_rate_for_random_variable(int c, int r)
-{
-    if (find_update_random_variable(r))
-    {
-        int r_rate = closure_at(r).reg_for_slot(4);
-        return get_reg_value_in_context(r_rate, c).as_double();
-    }
-    else
-        throw myexception()<<"Trying to get rate from `"<<closure_at(r).print()<<"`, which is not a random_variable!";
-}
-
 int reg_heap::step_index_for_reg(int r) const 
 {
     assert(prog_steps[r] != 0);

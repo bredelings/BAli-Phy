@@ -120,8 +120,6 @@ public:
 
     const std::unordered_set<int>& random_variables() const;
 
-    double get_rate_for_random_variable(int r) const;
-
 public:
     /// Create a new modifiable head with initial value 'value'
     param new_modifiable(const expression_ref& value);
