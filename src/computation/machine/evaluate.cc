@@ -162,7 +162,7 @@ public:
     void set_effect(const effect& e)
         {
             make_changeable();
-            memory().mark_step_with_nonforce_effect(s);
+            memory().mark_step_with_effect(s);
             e.register_effect(M, s);
         }
 
