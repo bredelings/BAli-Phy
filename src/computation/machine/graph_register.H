@@ -333,7 +333,7 @@ private:
     std::vector<char> prog_forces;
     mutable std::vector<bitmask_8> prog_temp;
 
-    std::unordered_set<int> pending_effect_steps;
+    std::unordered_set<int> steps_pending_effect_registration;
 
 public:
     /// Is a particular token unused?
