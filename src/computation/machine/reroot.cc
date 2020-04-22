@@ -112,16 +112,16 @@ void reg_heap::reroot_at(int t)
     // 5. Pivot effects
     for(auto& [r,s1]: tokens[parent].delta_step())
     {
-        if (s1 > 0 and steps.access(s1).has_nonforce_effect())
+        if (s1 > 0 and steps.access(s1).has_effect())
         {
-            if (steps[s1].has_pending_nonforce_effect())
+            if (steps[s1].has_pending_effect())
                 unregister_effect_pending_at_step(s1);
             else
                 unregister_effect_at_step(s1);
         }
 
         int s2 = step_index_for_reg(r);
-        if (s2 > 0 and steps.access(s2).has_nonforce_effect())
+        if (s2 > 0 and steps.access(s2).has_effect())
             register_effect_pending_at_step(s2);
     }
 

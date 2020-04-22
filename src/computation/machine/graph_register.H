@@ -35,15 +35,15 @@ struct Step
 
     std::bitset<8> flags;
 
-    bool has_nonforce_effect() const;
+    bool has_effect() const;
 
-    void mark_with_nonforce_effect();
+    void mark_with_effect();
 
-    bool has_pending_nonforce_effect() const;
+    bool has_pending_effect() const;
 
-    void set_pending_nonforce_effect();
+    void set_pending_effect();
 
-    void clear_pending_nonforce_effect();
+    void clear_pending_effect();
 
     void clear();
 
@@ -173,7 +173,7 @@ public:
     int allocate_reg_from_step(int s, closure&& C);
     int allocate_reg_from_step_in_token(int s, int t);
     void mark_reg_created_by_step(int r, int s);
-    void mark_step_with_nonforce_effect(int s);
+    void mark_step_with_effect(int s);
 
     void get_roots(std::vector<int>&, bool keep_identifiers=true) const;
 

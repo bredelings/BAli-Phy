@@ -96,27 +96,27 @@ long total_tokens = 0;
  *    loop until no more regs (and thus computations) are being freed.
  */
 
-bool Step::has_nonforce_effect() const
+bool Step::has_effect() const
 {
     return flags.test(6);
 }
 
-void Step::mark_with_nonforce_effect()
+void Step::mark_with_effect()
 {
     flags.set(6);
 }
 
-bool Step::has_pending_nonforce_effect() const
+bool Step::has_pending_effect() const
 {
     return flags.test(5);
 }
 
-void Step::set_pending_nonforce_effect()
+void Step::set_pending_effect()
 {
     flags.set(5);
 }
 
-void Step::clear_pending_nonforce_effect()
+void Step::clear_pending_effect()
 {
     flags.set(5,false);
 }
@@ -353,12 +353,12 @@ int reg_heap::follow_index_var(int r) const
 void reg_heap::register_effect_pending_at_step(int s)
 {
     // Step must have effect
-    assert(steps[s].has_nonforce_effect());
+    assert(steps[s].has_effect());
 
     // Step must have not be on pending list
-    assert(not steps[s].has_pending_nonforce_effect());
+    assert(not steps[s].has_pending_effect());
 
-    steps[s].set_pending_nonforce_effect();
+    steps[s].set_pending_effect();
 
     pending_effect_steps.insert(s);
 }
@@ -366,26 +366,26 @@ void reg_heap::register_effect_pending_at_step(int s)
 void reg_heap::unregister_effect_pending_at_step(int s)
 {
     // Step must have effect
-    assert(steps[s].has_nonforce_effect());
+    assert(steps[s].has_effect());
 
     // Step must have be on pending list
-    assert(steps[s].has_pending_nonforce_effect());
+    assert(steps[s].has_pending_effect());
     assert(pending_effect_steps.count(s));
 
     // Remove step from pending list
     pending_effect_steps.erase(s);
-    steps[s].clear_pending_nonforce_effect();
+    steps[s].clear_pending_effect();
 }
 
 void reg_heap::register_effect_at_step(int s)
 {
     // Step must have effect
-    assert(steps[s].has_nonforce_effect());
+    assert(steps[s].has_effect());
 
     // Remove step from pending list if it is there.
-    if (steps[s].has_pending_nonforce_effect())
+    if (steps[s].has_pending_effect())
     {
-        steps[s].clear_pending_nonforce_effect();
+        steps[s].clear_pending_effect();
 
         assert(pending_effect_steps.count(s));
         pending_effect_steps.erase(s);
@@ -402,10 +402,10 @@ void reg_heap::register_effect_at_step(int s)
 void reg_heap::unregister_effect_at_step(int s)
 {
     // Step must have effect
-    assert(steps[s].has_nonforce_effect());
+    assert(steps[s].has_effect());
 
     // Step must have not be on pending list
-    assert(not steps[s].has_pending_nonforce_effect());
+    assert(not steps[s].has_pending_effect());
     assert(not pending_effect_steps.count(s));
 
     int call = steps[s].call;
@@ -420,7 +420,7 @@ void reg_heap::register_pending_effects()
     auto v = pending_effect_steps | ranges::to<vector>;
     for(int s: v)
     {
-        assert(steps[s].has_pending_nonforce_effect());
+        assert(steps[s].has_pending_effect());
         assert(pending_effect_steps.count(s));
         register_effect_at_step(s);
     }
@@ -515,9 +515,9 @@ int reg_heap::unmap_unforced_steps(int c)
         auto [r,s] = delta_step[i];
 
         // 6a. Unregister any effects marked on the unmapped steps!
-        if (steps[s].has_nonforce_effect())
+        if (steps[s].has_effect())
         {
-            if (steps[s].has_pending_nonforce_effect())
+            if (steps[s].has_pending_effect())
                 unregister_effect_pending_at_step(s);
             else
                 unregister_effect_at_step(s);
@@ -1097,9 +1097,9 @@ void reg_heap::mark_reg_created_by_step(int r, int s)
     regs.access(r).created_by = {s,index};
 }
 
-void reg_heap::mark_step_with_nonforce_effect(int s)
+void reg_heap::mark_step_with_effect(int s)
 {
-    steps[s].mark_with_nonforce_effect();
+    steps[s].mark_with_effect();
 }
 
 int reg_heap::allocate()
