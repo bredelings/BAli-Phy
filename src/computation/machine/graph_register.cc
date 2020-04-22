@@ -361,7 +361,7 @@ void reg_heap::register_effect_pending_at_step(int s)
 
     steps[s].set_pending_effect();
 
-    pending_effect_steps.insert(s);
+    steps_pending_effect_registration.insert(s);
 }
 
 void reg_heap::unregister_effect_pending_at_step(int s)
@@ -371,10 +371,10 @@ void reg_heap::unregister_effect_pending_at_step(int s)
 
     // Step must have be on pending list
     assert(steps[s].has_pending_effect());
-    assert(pending_effect_steps.count(s));
+    assert(steps_pending_effect_registration.count(s));
 
     // Remove step from pending list
-    pending_effect_steps.erase(s);
+    steps_pending_effect_registration.erase(s);
     steps[s].clear_pending_effect();
 }
 
@@ -388,11 +388,11 @@ void reg_heap::register_effect_at_step(int s)
     {
         steps[s].clear_pending_effect();
 
-        assert(pending_effect_steps.count(s));
-        pending_effect_steps.erase(s);
+        assert(steps_pending_effect_registration.count(s));
+        steps_pending_effect_registration.erase(s);
     }
     else
-        assert(not pending_effect_steps.count(s));
+        assert(not steps_pending_effect_registration.count(s));
 
     int call = steps[s].call;
     auto& e = expression_at(call);
@@ -407,7 +407,7 @@ void reg_heap::unregister_effect_at_step(int s)
 
     // Step must have not be on pending list
     assert(not steps[s].has_pending_effect());
-    assert(not pending_effect_steps.count(s));
+    assert(not steps_pending_effect_registration.count(s));
 
     int call = steps[s].call;
     auto& e = expression_at(call);
@@ -417,16 +417,16 @@ void reg_heap::unregister_effect_at_step(int s)
 
 void reg_heap::register_pending_effects()
 {
-    // Don't modify `pending_effect_steps` while we are walking it!
-    auto v = pending_effect_steps | ranges::to<vector>;
+    // Don't modify `steps_pending_effect_registration` while we are walking it!
+    auto v = steps_pending_effect_registration | ranges::to<vector>;
     for(int s: v)
     {
         assert(steps[s].has_pending_effect());
-        assert(pending_effect_steps.count(s));
+        assert(steps_pending_effect_registration.count(s));
         register_effect_at_step(s);
     }
 
-    assert(pending_effect_steps.empty());
+    assert(steps_pending_effect_registration.empty());
 }
 
 int reg_heap::force_count(int r) const
