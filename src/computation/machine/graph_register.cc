@@ -370,7 +370,7 @@ void reg_heap::mark_effect_to_register_at_step(int s)
     // Step must have effect
     assert(steps[s].has_effect());
 
-    // Step must have not be on pending list
+    // Step must have not be on pending reg list
     assert(not steps[s].has_pending_effect_registration());
 
     steps[s].set_pending_effect_registration();
@@ -383,13 +383,40 @@ void reg_heap::unmark_effect_to_register_at_step(int s)
     // Step must have effect
     assert(steps[s].has_effect());
 
-    // Step must have be on pending list
+    // Step must have be on pending reg list
     assert(steps[s].has_pending_effect_registration());
     assert(steps_pending_effect_registration.count(s));
 
-    // Remove step from pending list
+    // Remove step from pending reg list
     steps_pending_effect_registration.erase(s);
     steps[s].clear_pending_effect_registration();
+}
+
+void reg_heap::mark_effect_to_unregister_at_step(int s)
+{
+    // Step must have effect
+    assert(steps[s].has_effect());
+
+    // Step must have not be on pending unreg list
+    assert(not steps[s].has_pending_effect_unregistration());
+
+    steps[s].set_pending_effect_unregistration();
+
+    steps_pending_effect_unregistration.insert(s);
+}
+
+void reg_heap::unmark_effect_to_unregister_at_step(int s)
+{
+    // Step must have effect
+    assert(steps[s].has_effect());
+
+    // Step must have be on pending unreg list
+    assert(steps[s].has_pending_effect_unregistration());
+    assert(steps_pending_effect_unregistration.count(s));
+
+    // Remove step from pending unreg list
+    steps_pending_effect_unregistration.erase(s);
+    steps[s].clear_pending_effect_unregistration();
 }
 
 void reg_heap::register_effect_at_step(int s)
@@ -397,14 +424,9 @@ void reg_heap::register_effect_at_step(int s)
     // Step must have effect
     assert(steps[s].has_effect());
 
-    // Remove step from pending list if it is there.
+    // Remove step from pending-reg list if it is there.
     if (steps[s].has_pending_effect_registration())
-    {
-        steps[s].clear_pending_effect_registration();
-
-        assert(steps_pending_effect_registration.count(s));
-        steps_pending_effect_registration.erase(s);
-    }
+        unmark_effect_to_register_at_step(s);
     else
         assert(not steps_pending_effect_registration.count(s));
 
@@ -419,9 +441,11 @@ void reg_heap::unregister_effect_at_step(int s)
     // Step must have effect
     assert(steps[s].has_effect());
 
-    // Step must have not be on pending list
-    assert(not steps[s].has_pending_effect_registration());
-    assert(not steps_pending_effect_registration.count(s));
+    // Remove step from pending-unreg list if it is there.
+    if (steps[s].has_pending_effect_unregistration())
+        unmark_effect_to_unregister_at_step(s);
+    else
+        assert(not steps_pending_effect_unregistration.count(s));
 
     int call = steps[s].call;
     auto& e = expression_at(call);
@@ -429,7 +453,7 @@ void reg_heap::unregister_effect_at_step(int s)
     e.as_<effect>().unregister_effect(*this, s);
 }
 
-void reg_heap::do_pending_effect_reg_unreg()
+void reg_heap::do_pending_effect_registrations()
 {
     // Don't modify `steps_pending_effect_registration` while we are walking it!
     auto v = steps_pending_effect_registration | ranges::to<vector>;
@@ -441,6 +465,20 @@ void reg_heap::do_pending_effect_reg_unreg()
     }
 
     assert(steps_pending_effect_registration.empty());
+}
+
+void reg_heap::do_pending_effect_unregistrations()
+{
+    // Don't modify `steps_pending_effect_unregistration` while we are walking it!
+    auto v = steps_pending_effect_unregistration | ranges::to<vector>;
+    for(int s: v)
+    {
+        assert(steps[s].has_pending_effect_unregistration());
+        assert(steps_pending_effect_unregistration.count(s));
+        unregister_effect_at_step(s);
+    }
+
+    assert(steps_pending_effect_unregistration.empty());
 }
 
 int reg_heap::force_count(int r) const
@@ -582,11 +620,14 @@ expression_ref reg_heap::evaluate_program(int c)
         // We can't remove t1 even if its a knuckle.
         assert(execution_allowed());
     }
+
     auto result = lazy_evaluate(heads[*program_result_head], c, true).exp;
 
     unmap_unforced_steps(c);
 
-    do_pending_effect_reg_unreg();
+    // Perform any pending registration or unregistration of effects.
+    do_pending_effect_registrations();
+    assert(steps_pending_effect_unregistration.empty());
 
     // Check that all the priors and likelihoods are forced.
 #ifndef NDEBUG
