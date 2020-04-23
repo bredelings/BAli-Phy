@@ -122,6 +122,21 @@ void Step::clear_pending_effect_registration()
     flags.set(5,false);
 }
 
+bool Step::has_pending_effect_unregistration() const
+{
+    return flags.test(4);
+}
+
+void Step::set_pending_effect_unregistration()
+{
+    flags.set(4);
+}
+
+void Step::clear_pending_effect_unregistration()
+{
+    flags.set(4,false);
+}
+
 void Step::clear()
 {
     source_reg = -1;
