@@ -114,7 +114,7 @@ void reg_heap::reroot_at(int t)
     {
         if (s1 > 0 and steps.access(s1).has_effect())
         {
-            if (steps[s1].has_pending_effect())
+            if (steps[s1].has_pending_effect_registration())
                 unmark_effect_to_register_at_step(s1);
             else
                 unregister_effect_at_step(s1);
