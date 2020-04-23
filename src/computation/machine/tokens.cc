@@ -61,6 +61,9 @@ void reg_heap::destroy_all_computations_in_token(int t)
     {
         if (s > 0)
         {
+            assert(not steps[s].has_pending_effect_registration());
+            assert(not steps[s].has_pending_effect_unregistration());
+
             for(int r: steps[s].created_regs)
             {
                 // Unsharing created regs in unshare_regs( ) ensures that any steps for created regs must be in this token.
