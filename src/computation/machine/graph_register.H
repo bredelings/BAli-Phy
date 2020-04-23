@@ -39,11 +39,11 @@ struct Step
 
     void mark_with_effect();
 
-    bool has_pending_effect() const;
+    bool has_pending_effect_registration() const;
 
-    void set_pending_effect();
+    void set_pending_effect_registration();
 
-    void clear_pending_effect();
+    void clear_pending_effect_registration();
 
     void clear();
 

@@ -107,17 +107,17 @@ void Step::mark_with_effect()
     flags.set(6);
 }
 
-bool Step::has_pending_effect() const
+bool Step::has_pending_effect_registration() const
 {
     return flags.test(5);
 }
 
-void Step::set_pending_effect()
+void Step::set_pending_effect_registration()
 {
     flags.set(5);
 }
 
-void Step::clear_pending_effect()
+void Step::clear_pending_effect_registration()
 {
     flags.set(5,false);
 }
@@ -357,9 +357,9 @@ void reg_heap::mark_effect_to_register_at_step(int s)
     assert(steps[s].has_effect());
 
     // Step must have not be on pending list
-    assert(not steps[s].has_pending_effect());
+    assert(not steps[s].has_pending_effect_registration());
 
-    steps[s].set_pending_effect();
+    steps[s].set_pending_effect_registration();
 
     steps_pending_effect_registration.insert(s);
 }
@@ -370,12 +370,12 @@ void reg_heap::unmark_effect_to_register_at_step(int s)
     assert(steps[s].has_effect());
 
     // Step must have be on pending list
-    assert(steps[s].has_pending_effect());
+    assert(steps[s].has_pending_effect_registration());
     assert(steps_pending_effect_registration.count(s));
 
     // Remove step from pending list
     steps_pending_effect_registration.erase(s);
-    steps[s].clear_pending_effect();
+    steps[s].clear_pending_effect_registration();
 }
 
 void reg_heap::register_effect_at_step(int s)
@@ -384,9 +384,9 @@ void reg_heap::register_effect_at_step(int s)
     assert(steps[s].has_effect());
 
     // Remove step from pending list if it is there.
-    if (steps[s].has_pending_effect())
+    if (steps[s].has_pending_effect_registration())
     {
-        steps[s].clear_pending_effect();
+        steps[s].clear_pending_effect_registration();
 
         assert(steps_pending_effect_registration.count(s));
         steps_pending_effect_registration.erase(s);
@@ -406,7 +406,7 @@ void reg_heap::unregister_effect_at_step(int s)
     assert(steps[s].has_effect());
 
     // Step must have not be on pending list
-    assert(not steps[s].has_pending_effect());
+    assert(not steps[s].has_pending_effect_registration());
     assert(not steps_pending_effect_registration.count(s));
 
     int call = steps[s].call;
@@ -421,7 +421,7 @@ void reg_heap::register_pending_effects()
     auto v = steps_pending_effect_registration | ranges::to<vector>;
     for(int s: v)
     {
-        assert(steps[s].has_pending_effect());
+        assert(steps[s].has_pending_effect_registration());
         assert(steps_pending_effect_registration.count(s));
         register_effect_at_step(s);
     }
@@ -518,7 +518,7 @@ int reg_heap::unmap_unforced_steps(int c)
         // 6a. Unregister any effects marked on the unmapped steps!
         if (steps[s].has_effect())
         {
-            if (steps[s].has_pending_effect())
+            if (steps[s].has_pending_effect_registration())
                 unmark_effect_to_register_at_step(s);
             else
                 unregister_effect_at_step(s);
