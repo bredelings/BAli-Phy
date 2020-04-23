@@ -35,15 +35,29 @@ struct Step
 
     std::bitset<8> flags;
 
+    // Bit 6 for being an effect step.
+
     bool has_effect() const;
 
     void mark_with_effect();
+
+    // Bit 5 for being on the pending-registration list.
 
     bool has_pending_effect_registration() const;
 
     void set_pending_effect_registration();
 
     void clear_pending_effect_registration();
+
+    // Bit 4 for being on the pending-unregistration list.
+
+    bool has_pending_effect_unregistration() const;
+
+    void set_pending_effect_unregistration();
+
+    void clear_pending_effect_unregistration();
+
+    // End bits
 
     void clear();
 
