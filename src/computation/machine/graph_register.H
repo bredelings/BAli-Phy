@@ -209,9 +209,9 @@ public:
 
     void register_pending_effects();
 
-    void register_effect_pending_at_step(int s);
+    void mark_effect_to_register_at_step(int s);
 
-    void unregister_effect_pending_at_step(int s);
+    void unmark_effect_to_register_at_step(int s);
 
     void register_effect_at_step(int s);
 

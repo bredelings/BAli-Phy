@@ -115,14 +115,14 @@ void reg_heap::reroot_at(int t)
         if (s1 > 0 and steps.access(s1).has_effect())
         {
             if (steps[s1].has_pending_effect())
-                unregister_effect_pending_at_step(s1);
+                unmark_effect_to_register_at_step(s1);
             else
                 unregister_effect_at_step(s1);
         }
 
         int s2 = step_index_for_reg(r);
         if (s2 > 0 and steps.access(s2).has_effect())
-            register_effect_pending_at_step(s2);
+            mark_effect_to_register_at_step(s2);
     }
 
     // 6. Remove probabilities for invalidated regs from the current probability

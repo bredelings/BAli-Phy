@@ -351,7 +351,7 @@ int reg_heap::follow_index_var(int r) const
     return r;
 }
 
-void reg_heap::register_effect_pending_at_step(int s)
+void reg_heap::mark_effect_to_register_at_step(int s)
 {
     // Step must have effect
     assert(steps[s].has_effect());
@@ -364,7 +364,7 @@ void reg_heap::register_effect_pending_at_step(int s)
     steps_pending_effect_registration.insert(s);
 }
 
-void reg_heap::unregister_effect_pending_at_step(int s)
+void reg_heap::unmark_effect_to_register_at_step(int s)
 {
     // Step must have effect
     assert(steps[s].has_effect());
@@ -519,7 +519,7 @@ int reg_heap::unmap_unforced_steps(int c)
         if (steps[s].has_effect())
         {
             if (steps[s].has_pending_effect())
-                unregister_effect_pending_at_step(s);
+                unmark_effect_to_register_at_step(s);
             else
                 unregister_effect_at_step(s);
         }
