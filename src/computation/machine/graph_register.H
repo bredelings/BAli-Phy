@@ -221,7 +221,7 @@ public:
 
     /* ---- */
 
-    void register_pending_effects();
+    void do_pending_reg_unreg();
 
     void mark_effect_to_register_at_step(int s);
 

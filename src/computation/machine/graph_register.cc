@@ -429,7 +429,7 @@ void reg_heap::unregister_effect_at_step(int s)
     e.as_<effect>().unregister_effect(*this, s);
 }
 
-void reg_heap::register_pending_effects()
+void reg_heap::do_pending_effect_reg_unreg()
 {
     // Don't modify `steps_pending_effect_registration` while we are walking it!
     auto v = steps_pending_effect_registration | ranges::to<vector>;
@@ -586,7 +586,7 @@ expression_ref reg_heap::evaluate_program(int c)
 
     unmap_unforced_steps(c);
 
-    register_pending_effects();
+    do_pending_effect_reg_unreg();
 
     // Check that all the priors and likelihoods are forced.
 #ifndef NDEBUG
