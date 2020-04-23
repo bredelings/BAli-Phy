@@ -4,18 +4,18 @@ import Probability.Random
 import Probability.Distribution.Gamma
 
 builtin builtin_dirichlet_density 2 "dirichlet_density" "Distribution"
-dirichlet_density ns ps = builtin_dirichlet_density (list_to_vector ns) (list_to_vector ps)
-sample_dirichlet ns = SamplingRate (1.0/sqrt(intToDouble $ length ns)) $ do vs <- mapM (\a-> gamma a 1.0) ns
+dirichlet_density as ps = builtin_dirichlet_density (list_to_vector as) (list_to_vector ps)
+sample_dirichlet as = SamplingRate (1.0/sqrt(intToDouble $ length as)) $ do vs <- mapM (\a-> gamma a 1.0) as
                                                                             return $ map (/(sum vs)) vs
-dirichlet ns = Distribution (make_densities $ dirichlet_density ns) (no_quantile "dirichlet") (sample_dirichlet ns) (Simplex (length ns) 1.0)
+dirichlet as = Distribution (make_densities $ dirichlet_density as) (no_quantile "dirichlet") (sample_dirichlet as) (Simplex (length as) 1.0)
 
-dirichlet' l n = dirichlet (replicate l n)
+dirichlet' n a = dirichlet (replicate n a)
 
-sample_dirichlet_on xs ns = do ps <- sample_dirichlet ns
-                               return $ zip xs ps
+sample_dirichlet_on items as = do ps <- sample_dirichlet as
+                                  return $ zip items ps
 
-dirichlet_on_density ns xps = dirichlet_density ns ps where
-    ps = map (\(x,p) -> p) xps
-dirichlet_on xs ns = Distribution (make_densities $ dirichlet_on_density ns) (no_quantile "dirichlet_on") (sample_dirichlet_on xs ns) (LabelledSimplex xs 1.0)
-dirichlet_on' xs n = dirichlet_on xs (replicate (length xs) n)
+dirichlet_on_density as item_ps = dirichlet_density as ps where
+    ps = map (\(item,p) -> p) item_ps
+dirichlet_on items as = Distribution (make_densities $ dirichlet_on_density as) (no_quantile "dirichlet_on") (sample_dirichlet_on items as) (LabelledSimplex items 1.0)
+dirichlet_on' items a = dirichlet_on items (replicate (length items) a)
 
