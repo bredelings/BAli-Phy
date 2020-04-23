@@ -224,11 +224,17 @@ public:
 
     /* ---- */
 
-    void do_pending_reg_unreg();
+    void do_pending_effect_registrations();
+
+    void do_pending_effect_unregistrations();
 
     void mark_effect_to_register_at_step(int s);
 
     void unmark_effect_to_register_at_step(int s);
+
+    void mark_effect_to_unregister_at_step(int s);
+
+    void unmark_effect_to_unregister_at_step(int s);
 
     void register_effect_at_step(int s);
 
@@ -348,6 +354,7 @@ private:
     mutable std::vector<bitmask_8> prog_temp;
 
     std::unordered_set<int> steps_pending_effect_registration;
+    std::unordered_set<int> steps_pending_effect_unregistration;
 
 public:
     /// Is a particular token unused?
