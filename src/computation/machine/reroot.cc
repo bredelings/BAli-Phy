@@ -50,6 +50,12 @@ void reg_heap::reroot_at_context(int c)
     for(int i=int(path.size())-2; i>=0; i--)
         reroot_at(path[i]);
 
+    // 4. Unregister steps that were in the initial root but not the final root.
+
+    // We postpone registrations until evaluate_program( ), but UNregistrations are performed here so that
+    // we don't have to scan for unregistrations in destroy_all_computations_in_token( ).
+    do_pending_effect_unregistrations();
+
     // 4. Clean up old root token if it became an unused tip
     int t2 = release_unreferenced_tips(old_root);
 
@@ -66,6 +72,8 @@ void reg_heap::reroot_at_context(int c)
 #endif
 }
 
+
+// reroot_at( ) is only called from (i) itself and (ii) reroot_at_context( ).
 void reg_heap::reroot_at(int t)
 {
     assert(not is_root_token(t) and is_root_token(tokens[t].parent));
@@ -117,7 +125,7 @@ void reg_heap::reroot_at(int t)
             if (steps[s1].has_pending_effect_registration())
                 unmark_effect_to_register_at_step(s1);
             else
-                unregister_effect_at_step(s1);
+                mark_effect_to_unregister_at_step(s1);
         }
 
         int s2 = step_index_for_reg(r);
