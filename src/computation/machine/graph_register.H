@@ -417,9 +417,9 @@ public:
 
     int get_n_contexts() const;
 
-    int unset_token_for_context(int c);
-
 private:
+    int unset_token_for_context_no_release_tips_(int c);
+
     void set_token_for_unset_context_(int c, int t);
 
 public:
