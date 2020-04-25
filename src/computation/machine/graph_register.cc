@@ -614,6 +614,22 @@ expression_ref reg_heap::evaluate_program(int c)
     if (not program_result_head)
         throw myexception()<<"No program has been set!";
 
+    assert(get_prev_prog_token_for_context(c));
+
+    // 1. If we can revert to a previously executed program instead of unmapping, then do that.
+    int t = token_for_context(c);
+    if (tokens[t].prev_prog_token->can_revert)
+    {
+        // assert that there are only execution tokens on the path to the previous evaluation token.
+        assert(is_program_execution_token(*get_prev_prog_token_for_context(c)));
+        set_token_for_context(c,t);
+        reroot_at_context(c);
+        int r = heads[*program_result_head];
+        assert(reg_is_constant(r) or has_force(r));
+        return value_for_precomputed_reg(r).exp;
+    }
+
+    // 2. Always perform execution in a new token.
     // Evaluation with re-force=true should be in a new context in we've
     // don't any previous evaluation with re-force=false, in order to avoid
     // double-unsharing of forces.
@@ -631,14 +647,16 @@ expression_ref reg_heap::evaluate_program(int c)
         assert(execution_allowed());
     }
 
+    // 3. Execute with reforce = true
     auto result = lazy_evaluate(heads[*program_result_head], c, true).exp;
 
     assert(get_prev_prog_token_for_context(c));
     assert(is_program_execution_token(*get_prev_prog_token_for_context(c)));
 
+    // 4. Remove unforced steps.
     unmap_unforced_steps(c);
 
-    // Perform any pending registration or unregistration of effects.
+    // 5. Perform any pending registration or unregistration of effects.
     do_pending_effect_registrations();
     assert(steps_pending_effect_unregistration.empty());
 
