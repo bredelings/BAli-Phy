@@ -109,14 +109,14 @@ void reg_heap::release_tip_token(int t)
     {
         assert(tokens[t2].used);
         assert(tokens[t2].prev_prog_token);
-        tokens[t2].prev_prog_token->second = {};
+        tokens[t2].prev_prog_token->index = {};
     }
     // Mark active references to this token as dead
     for(int t2: tokens[t].prev_prog_active_refs)
     {
         assert(tokens[t2].used);
         assert(tokens[t2].prev_prog_token);
-        tokens[t2].prev_prog_token->second = {};
+        tokens[t2].prev_prog_token->index = {};
     }
     tokens[t].prev_prog_inactive_refs.clear();
     tokens[t].prev_prog_active_refs.clear();
@@ -564,7 +564,8 @@ int reg_heap::get_first_context()
 
     int t = get_unused_token(token_type::root, {});
   
-    set_prev_prog_token(t, pair(t,0));
+    // We need to set can_revert to false here so that we don't revert to nothing.
+    set_prev_prog_token(t, prev_prog_token_t(t,0,false));
 
     set_token_for_context(c, t);
 
@@ -631,12 +632,15 @@ int reg_heap::get_unused_token(token_type type, optional<int> prev_token)
     assert(not tokens[t].prev_prog_token);
 
     if (prev_token)
+    {
         set_prev_prog_token(t, tokens[*prev_token].prev_prog_token);
+        tokens[t].prev_prog_token->can_revert = false;
+    }
 
     return t;
 }
 
-void reg_heap::set_prev_prog_token(int t, optional<prev_prog_tok_t> prev_prog_token)
+void reg_heap::set_prev_prog_token(int t, optional<prev_prog_token_t> prev_prog_token)
 {
     // The current prev_prog_token should be unset.
     assert(not tokens[t].prev_prog_token);
@@ -644,10 +648,10 @@ void reg_heap::set_prev_prog_token(int t, optional<prev_prog_tok_t> prev_prog_to
     // If we aren't trying to set it, quit now.
     if (not prev_prog_token) return;
 
-    int t2 = prev_prog_token->first;
+    int t2 = prev_prog_token->token;
 
     // If the previous program token is dead, then we don't have to fiddle with any edges.
-    if (not prev_prog_token->second)
+    if (not prev_prog_token->index)
     {
         tokens[t].prev_prog_token = prev_prog_token;
         return;
@@ -658,14 +662,14 @@ void reg_heap::set_prev_prog_token(int t, optional<prev_prog_tok_t> prev_prog_to
         : tokens[t2].prev_prog_inactive_refs;
 
     // Create the backward edge.
-    prev_prog_token->second = prev_prog_refs.size();
+    prev_prog_token->index = prev_prog_refs.size();
     prev_prog_refs.push_back(t);
 
     // Finally create the forward edge.
     tokens[t].prev_prog_token = prev_prog_token;
 
 #ifndef NDEBUG
-    int j = *tokens[t].prev_prog_token->second;
+    int j = *tokens[t].prev_prog_token->index;
     assert(j < prev_prog_refs.size());
     assert(prev_prog_refs[j] == t);
 
@@ -684,16 +688,16 @@ optional<int> reg_heap::unset_prev_prog_token(int t)
     if (not tokens[t].prev_prog_token) return {};
 
     // Set but dead.
-    if (not tokens[t].prev_prog_token->second)
+    if (not tokens[t].prev_prog_token->index)
     {
         tokens[t].prev_prog_token = {};
         return {};
     }
 
     // Get the prev prog token and the index for t in its list
-    auto t2 = tokens[t].prev_prog_token->first;
+    auto t2 = tokens[t].prev_prog_token->token;
     assert(tokens[t2].used);
-    auto j  = *tokens[t].prev_prog_token->second;
+    auto j  = *tokens[t].prev_prog_token->index;
 
     auto& prev_prog_refs = (tokens[t].n_context_refs > 0)
         ? tokens[t2].prev_prog_active_refs
@@ -709,12 +713,12 @@ optional<int> reg_heap::unset_prev_prog_token(int t)
         auto t3 = prev_prog_refs.back();
         assert(tokens[t3].used);
         assert(tokens[t3].prev_prog_token);
-        assert(tokens[t3].prev_prog_token->second);
+        assert(tokens[t3].prev_prog_token->index);
 
         // move the t3 entry over entry j
         prev_prog_refs[j] = prev_prog_refs.back();
         // update the t3 index to j
-        tokens[t3].prev_prog_token->second = j;
+        tokens[t3].prev_prog_token->index = j;
     }
     prev_prog_refs.pop_back();
 
@@ -733,7 +737,7 @@ optional<int> reg_heap::unset_prev_prog_token(int t)
 optional<int> reg_heap::get_prev_prog_token_for_token(int t) const
 {
     if (tokens[t].prev_prog_token)
-        return tokens[t].prev_prog_token->first;
+        return tokens[t].prev_prog_token->token;
     else
         return {};
 }
