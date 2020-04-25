@@ -325,7 +325,7 @@ public:
 
         // Contexts that point here
         int n_context_refs = 0;
-        bool is_referenced() const {assert(n_context_refs >= 0); return n_context_refs > 0;}
+        bool is_referenced() const {assert(n_context_refs >= 0); return n_context_refs > 0 or not prev_prog_active_refs.empty();}
     
         /// Mapping from closures to steps/results
         const auto& delta_force() const { return vm_force.delta(); }
@@ -336,9 +336,17 @@ public:
         mapping<int> vm_step;
         mapping<char> vm_force;
 
+        boost::container::small_vector< int, 2> prev_prog_active_refs;
+        boost::container::small_vector< int, 2> prev_prog_inactive_refs;
+        std::optional<std::pair<int,std::optional<int>>> prev_prog_token;
+
         token_type type = token_type::none;
         bool used = false;
     };
+
+    void set_prev_prog_token(int t, std::optional<std::pair<int,std::optional<int>>> prev_prog_token);
+    std::optional<int> unset_prev_prog_token(int t);
+
 private:
     int root_token = -1;
 
@@ -357,6 +365,7 @@ private:
     std::unordered_set<int> steps_pending_effect_unregistration;
 
 public:
+
     /// Is a particular token unused?
     bool token_is_used(int) const;
 
@@ -368,7 +377,7 @@ public:
     const Token& get_token(int t) const {return tokens[t];}
 
     /// Acquire an unused token
-    int get_unused_token(token_type type);
+    int get_unused_token(token_type type, std::optional<int> prev);
 
     /// Report all used tokens
     std::vector<int> get_used_tokens() const;
@@ -399,9 +408,6 @@ public:
     /// Make the context point to a token
     void switch_to_token(int c, int t);
 
-    /// Make the context point to the token of another context
-    void switch_to_context(int c1, int c2);
-
     /// Acquire a copy of a token
     int make_child_token(int c, token_type type);
 
@@ -418,14 +424,20 @@ public:
     int get_n_contexts() const;
 
 private:
-    int unset_token_for_context_no_release_tips_(int c);
+    std::pair<int,std::optional<int>> unset_token_for_context_no_release_tips_(int c);
 
     void set_token_for_unset_context_(int c, int t);
+
+    // This is the safe interface that allows resetting things and releases unreferenced tips.
+    void set_token_for_context(int c, std::optional<int> t);
+
+    int get_new_context();
 
 public:
     int copy_context(int);
 
-    int get_new_context();
+    /// Make the context point to the token of another context
+    void switch_to_context(int c1, int c2);
 
     int get_first_context();
 
