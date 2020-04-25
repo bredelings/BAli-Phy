@@ -589,13 +589,22 @@ int reg_heap::unmap_unforced_steps(int c)
 
     // 7. If there was nothing to unmap, move c back to t1.
     if (delta_step.empty())
-        switch_to_token(c, t1);
+        set_token_for_context(c, t1);
 
     // 8. Release marker context c2
     release_context(c2);
 
     // 9. Make sure we are rooted at context c
     reroot_at_context(c);
+
+    // 10. Mark the current token as a previous_program_token.
+    int t = token_for_context(c);
+    auto t2 = unset_prev_prog_token(t);
+    set_prev_prog_token(t, pair(t,0));
+    if (t2)
+        release_unreferenced_tips(*t2);
+
+    check_tokens();
 
     return token_for_context(c);
 }
@@ -1548,6 +1557,34 @@ void reg_heap::check_tokens() const
         {
             assert(tokens[t].is_referenced());
             assert(tokens[t].used);
+
+            // Check that forward prev_prog_token edges are right.
+            if (tokens[t].prev_prog_token and tokens[t].prev_prog_token->second)
+            {
+                int t2 = tokens[t].prev_prog_token->first;
+                int j = *tokens[t].prev_prog_token->second;
+                assert(tokens[t2].used);
+
+                auto& prev_prog_refs = (tokens[t].n_context_refs > 0)
+                    ? tokens[t2].prev_prog_active_refs
+                    : tokens[t2].prev_prog_inactive_refs;
+
+                assert(prev_prog_refs[j] == t);
+            }
+
+            // Check that backward prev_prog_token edges are right.
+            for(auto t2: tokens[t].prev_prog_active_refs)
+            {
+                assert(tokens[t2].used);
+                assert(tokens[t2].prev_prog_token);
+                assert(tokens[t2].prev_prog_token->first == t);
+            }
+            for(auto t2: tokens[t].prev_prog_inactive_refs)
+            {
+                assert(tokens[t2].used);
+                assert(tokens[t2].prev_prog_token);
+                assert(tokens[t2].prev_prog_token->first == t);
+            }
         }
     }
 #endif
