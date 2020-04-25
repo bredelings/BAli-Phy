@@ -633,6 +633,9 @@ expression_ref reg_heap::evaluate_program(int c)
 
     auto result = lazy_evaluate(heads[*program_result_head], c, true).exp;
 
+    assert(get_prev_prog_token_for_context(c));
+    assert(is_program_execution_token(*get_prev_prog_token_for_context(c)));
+
     unmap_unforced_steps(c);
 
     // Perform any pending registration or unregistration of effects.
