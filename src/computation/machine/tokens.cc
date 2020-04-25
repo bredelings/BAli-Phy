@@ -409,6 +409,7 @@ int reg_heap::make_child_token(int t, token_type type)
     return t2;
 }
 
+// This is the *safe* interface that should leave things in a valid state when it is done.
 void reg_heap::set_token_for_context(int c, optional<int> t2)
 {
     // We can't do check_tokens() here because when we create the first token, it will
@@ -418,6 +419,12 @@ void reg_heap::set_token_for_context(int c, optional<int> t2)
 
     if (t2)
         set_token_for_unset_context_(c, *t2);
+    else if (t1 != -1)
+    {
+        // Mark the context as unused
+        token_for_context_[c] = -1;
+        unused_contexts.push_back(c);
+    }
 
     if (p1)
         release_unreferenced_tips(*p1);
@@ -430,6 +437,7 @@ void reg_heap::set_token_for_context(int c, optional<int> t2)
 
 void reg_heap::switch_to_context(int c1, int c2)
 {
+    assert(token_for_context(c2) != -1);
     set_token_for_context(c1, token_for_context(c2));
 }
 
@@ -566,10 +574,6 @@ int reg_heap::get_first_context()
 void reg_heap::release_context(int c)
 {
     set_token_for_context(c, {});
-
-    // Mark the context as unused
-    token_for_context_[c] = -1;
-    unused_contexts.push_back(c);
 }
 
 /*
