@@ -419,8 +419,10 @@ public:
 
     int unset_token_for_context(int c);
 
-    void set_token_for_context(int c, int t);
+private:
+    void set_token_for_unset_context_(int c, int t);
 
+public:
     int copy_context(int);
 
     int get_new_context();
