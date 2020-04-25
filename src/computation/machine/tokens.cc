@@ -384,7 +384,7 @@ int reg_heap::make_child_token(int t, token_type type)
 
 void reg_heap::switch_to_token(int c, int t2)
 {
-    int t1 = unset_token_for_context(c);
+    int t1 = unset_token_for_context_no_release_tips_(c);
     set_token_for_unset_context_(c,t2);
 
     release_unreferenced_tips(t1);
@@ -423,7 +423,7 @@ int reg_heap::token_for_context(int c) const
     return token_for_context_[c];
 }
 
-int reg_heap::unset_token_for_context(int c)
+int reg_heap::unset_token_for_context_no_release_tips_(int c)
 {
     int t = token_for_context(c);
     assert(t != -1);
@@ -497,7 +497,7 @@ void reg_heap::release_context(int c)
     // release the reference to the token
     check_tokens();
 
-    int t = unset_token_for_context(c);
+    int t = unset_token_for_context_no_release_tips_(c);
 
     release_unreferenced_tips(t);
 
