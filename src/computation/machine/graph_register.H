@@ -343,6 +343,9 @@ public:
 
     void set_prev_prog_token(int t, std::optional<std::pair<int,std::optional<int>>> prev_prog_token);
     std::optional<int> unset_prev_prog_token(int t);
+    std::optional<int> get_prev_prog_token_for_token(int t) const;
+    std::optional<int> get_prev_prog_token_for_context(int c) const;
+    bool is_program_execution_token(int) const;
 
 private:
     int root_token = -1;

@@ -725,3 +725,22 @@ optional<int> reg_heap::unset_prev_prog_token(int t)
 
     return t2;
 }
+
+optional<int> reg_heap::get_prev_prog_token_for_token(int t) const
+{
+    if (tokens[t].prev_prog_token)
+        return tokens[t].prev_prog_token->first;
+    else
+        return {};
+}
+
+optional<int> reg_heap::get_prev_prog_token_for_context(int c) const
+{
+    return get_prev_prog_token_for_token(token_for_context(c));
+}
+
+bool reg_heap::is_program_execution_token(int t) const
+{
+    auto t2 = get_prev_prog_token_for_token(t);
+    return (t2 and *t2 == t);
+}
