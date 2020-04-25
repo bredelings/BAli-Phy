@@ -19,6 +19,8 @@
 #include "mcmc/prob_ratios.H"
 #include "mapping.H"
 
+using prev_prog_token_t = std::optional<int,std::optional<int>>;
+
 struct Step
 {
     int source_reg = -1;
@@ -335,13 +337,13 @@ public:
 
         boost::container::small_vector< int, 2> prev_prog_active_refs;
         boost::container::small_vector< int, 2> prev_prog_inactive_refs;
-        std::optional<std::pair<int,std::optional<int>>> prev_prog_token;
+        std::optional<prev_prog_token_t> prev_prog_token;
 
         token_type type = token_type::none;
         bool used = false;
     };
 
-    void set_prev_prog_token(int t, std::optional<std::pair<int,std::optional<int>>> prev_prog_token);
+    void set_prev_prog_token(int t, std::optional<prev_prog_token_t> prev_prog_token);
     std::optional<int> unset_prev_prog_token(int t);
     std::optional<int> get_prev_prog_token_for_token(int t) const;
     std::optional<int> get_prev_prog_token_for_context(int c) const;

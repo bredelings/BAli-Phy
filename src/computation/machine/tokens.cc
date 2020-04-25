@@ -477,7 +477,7 @@ pair<int,optional<int>> reg_heap::unset_token_for_context_no_release_tips_(int c
     assert(t != -1);
     assert(tokens[t].is_referenced());
 
-    optional<pair<int,optional<int>>> p;
+    optional<prev_prog_token_t> p;
     optional<int> t2;
 
     // FIXME: instead of unsetting prev_prog_token, maybe just unset the index.
@@ -636,7 +636,7 @@ int reg_heap::get_unused_token(token_type type, optional<int> prev_token)
     return t;
 }
 
-void reg_heap::set_prev_prog_token(int t, optional<pair<int,optional<int>>> prev_prog_token)
+void reg_heap::set_prev_prog_token(int t, optional<prev_prog_tok_t> prev_prog_token)
 {
     // The current prev_prog_token should be unset.
     assert(not tokens[t].prev_prog_token);
