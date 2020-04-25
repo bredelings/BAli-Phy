@@ -561,8 +561,12 @@ int reg_heap::get_new_context()
 int reg_heap::get_first_context()
 {
     int c = get_new_context();
+
+    int t = get_unused_token(token_type::root, {});
   
-    set_token_for_context(c, get_unused_token(token_type::root, {}));
+    set_prev_prog_token(t, pair(t,0));
+
+    set_token_for_context(c, t);
 
     check_tokens();
 
