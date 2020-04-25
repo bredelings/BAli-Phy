@@ -19,7 +19,13 @@
 #include "mcmc/prob_ratios.H"
 #include "mapping.H"
 
-using prev_prog_token_t = std::optional<int,std::optional<int>>;
+struct prev_prog_token_t
+{
+    int token;
+    std::optional<int> index;
+    bool can_revert;
+    prev_prog_token_t(int i, std::optional<int> oi, bool b):token(i),index(oi),can_revert(b) {}
+};
 
 struct Step
 {

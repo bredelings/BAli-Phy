@@ -600,7 +600,7 @@ int reg_heap::unmap_unforced_steps(int c)
     // 10. Mark the current token as a previous_program_token.
     int t = token_for_context(c);
     auto t2 = unset_prev_prog_token(t);
-    set_prev_prog_token(t, pair(t,0));
+    set_prev_prog_token(t, prev_prog_token_t(t,0,true));
     if (t2)
         release_unreferenced_tips(*t2);
 
@@ -1562,10 +1562,10 @@ void reg_heap::check_tokens() const
             assert(tokens[t].used);
 
             // Check that forward prev_prog_token edges are right.
-            if (tokens[t].prev_prog_token and tokens[t].prev_prog_token->second)
+            if (tokens[t].prev_prog_token and tokens[t].prev_prog_token->index)
             {
-                int t2 = tokens[t].prev_prog_token->first;
-                int j = *tokens[t].prev_prog_token->second;
+                int t2 = tokens[t].prev_prog_token->token;
+                int j = *tokens[t].prev_prog_token->index;
                 assert(tokens[t2].used);
 
                 auto& prev_prog_refs = (tokens[t].n_context_refs > 0)
@@ -1580,13 +1580,13 @@ void reg_heap::check_tokens() const
             {
                 assert(tokens[t2].used);
                 assert(tokens[t2].prev_prog_token);
-                assert(tokens[t2].prev_prog_token->first == t);
+                assert(tokens[t2].prev_prog_token->token == t);
             }
             for(auto t2: tokens[t].prev_prog_inactive_refs)
             {
                 assert(tokens[t2].used);
                 assert(tokens[t2].prev_prog_token);
-                assert(tokens[t2].prev_prog_token->first == t);
+                assert(tokens[t2].prev_prog_token->token == t);
             }
         }
     }
