@@ -1518,6 +1518,7 @@ void reg_heap::resize(int s)
     prog_steps.resize(regs.size());
     prog_results.resize(regs.size());
     prog_forces.resize(regs.size());
+    prog_force_counts.resize(regs.size());
     prog_temp.resize(regs.size());
 
     // Now we can use size() again.
@@ -1530,6 +1531,7 @@ void reg_heap::resize(int s)
         assert(prog_steps[i] == non_computed_index);
         assert(prog_results[i] == non_computed_index);
         assert(prog_forces[i] == non_computed_index);
+        assert(prog_force_counts[i] == 0);
         assert(prog_temp[i].none());
     }
 }
@@ -1706,6 +1708,7 @@ void reg_heap::check_used_regs() const
     assert(tokens[root_token].vm_step.empty());
     assert(tokens[root_token].vm_result.empty());
     assert(tokens[root_token].vm_force.empty());
+    assert(tokens[root_token].vm_force_count.empty());
 
     for(int t=0; t< tokens.size(); t++)
         if (token_is_used(t))
@@ -2160,6 +2163,7 @@ reg_heap::reg_heap(const Program& P)
      prog_steps(1,non_existant_index),
      prog_results(1, non_existant_index),
      prog_forces(1, non_existant_index),
+     prog_force_counts(1, 0),
      prog_temp(1)
 {
     if (not program->size())

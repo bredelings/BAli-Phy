@@ -102,6 +102,8 @@ void reg_heap::reroot_at(int t)
     std::swap(tokens[parent].vm_result, tokens[t].vm_result);
     pivot_mapping(prog_forces, tokens[t].vm_force);
     std::swap(tokens[parent].vm_force, tokens[t].vm_force);
+    pivot_mapping(prog_force_counts, tokens[t].vm_force_count);
+    std::swap(tokens[parent].vm_force_count, tokens[t].vm_force_count);
 
     // 4. Alter the inheritance tree
     tokens[t].type = reverse(tokens[t].type);
