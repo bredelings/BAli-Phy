@@ -248,6 +248,8 @@ public:
 
     void unregister_effect_at_step(int s);
 
+    void first_evaluate_program(int c);
+
     expression_ref evaluate_program(int c);
 
     int force_count(int r) const;
