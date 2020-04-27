@@ -21,7 +21,8 @@ public:
 
     void add_value(int r, T v)
     {
-	assert(v);
+        // For the force_count program, we need 0-values.
+	// assert(v);
 
 	delta_.emplace_back(r,v);
     }
@@ -64,9 +65,10 @@ void pivot_mapping(std::vector<T>& prog1, mapping<T>& vm2)
 	auto& s1 = prog1[r];
 	auto& s2 = vm2.delta()[i].second;
 
+        // For the force_count_program, we need 0 values.
 	// Check that neither value is 0
-	assert(s1 != 0);
-	assert(s2 != 0);
+	// assert(s1 != 0);
+	// assert(s2 != 0);
 
 	// switch root positions
 	std::swap(s1,s2);
