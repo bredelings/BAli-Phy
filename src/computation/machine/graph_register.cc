@@ -501,7 +501,7 @@ int reg_heap::force_count(int r) const
         if (prog_steps[r2] > 0)
             count++;
 
-    // Look at steps that FORCE the root's result
+    // Look at steps that CALL the root's result
     for(auto& s2: regs[r].called_by)
         if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
             count++;
