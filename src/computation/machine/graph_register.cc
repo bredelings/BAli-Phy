@@ -484,13 +484,14 @@ void reg_heap::do_pending_effect_unregistrations()
 
 int reg_heap::force_count(int r) const
 {
-    if (not has_step(r)) return -1;
+    if (not has_step(r)) return 0;
 
-    // Look at steps that USE the root's result
+    // Count a reference from the program_result_head.
     int count = 0;
     if (program_result_head and r == heads[*program_result_head])
         count = 1;
 
+    // Look at steps that USE the root's result
     for(auto& [r2,_]: regs[r].used_by)
         if (prog_steps[r2] > 0)
             count++;
