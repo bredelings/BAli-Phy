@@ -484,7 +484,7 @@ void reg_heap::do_pending_effect_unregistrations()
 
 int reg_heap::force_count(int r) const
 {
-    if (not has_step(r)) return 0;
+    if (not reg_is_changeable(r)) return 0;
 
     // Count a reference from the program_result_head.
     int count = 0;
