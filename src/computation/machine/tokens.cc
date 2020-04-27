@@ -579,13 +579,13 @@ int reg_heap::get_first_context()
     int t = get_unused_token(token_type::root, {});
   
     // We need to set can_revert to false here so that we don't revert to nothing.
-    set_prev_prog_token(t, prev_prog_token_t(t,0,false));
+    set_prev_prog_token(t, prev_prog_token_t(t,0,true));
 
     set_token_for_context(c, t);
 
     check_tokens();
 
-    evaluate_program(c);
+    first_evaluate_program(c);
 
     return c;
 }
