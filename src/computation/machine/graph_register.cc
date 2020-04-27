@@ -610,6 +610,72 @@ int reg_heap::unmap_unforced_steps(int c)
     return token_for_context(c);
 }
 
+void reg_heap::first_evaluate_program(int c)
+{
+    if (not program_result_head)
+        throw myexception()<<"No program has been set!";
+
+    assert(get_prev_prog_token_for_context(c));
+
+    // 1. Execute with reforce = true.  (For the first execution, this shouldn't matter though.)
+    assert(token_for_context(c) == root_token);
+    auto [program_result_reg, _] = incremental_evaluate(heads[*program_result_head], true);
+    heads[*program_result_head] = program_result_reg;
+
+    assert(get_prev_prog_token_for_context(c));
+    assert(is_program_execution_token(*get_prev_prog_token_for_context(c)));
+
+    // 2. Nothing to unmap!
+
+    // 3. Perform any pending registration or unregistration of effects.
+    do_pending_effect_registrations();
+    assert(steps_pending_effect_unregistration.empty());
+
+    // 4. Update force_counts
+    for(auto& S: steps)
+    {
+        auto& R = regs[S.source_reg];
+
+        // 3a. Count uses
+        for(auto [ur,_]: R.used_regs)
+            prog_force_counts[ur]++;
+
+        // 3b. Count forces
+        for(auto [fr,_]: R.forced_regs)
+            prog_force_counts[fr]++;
+
+        // 3c. Count calls
+        if (reg_is_changeable(S.call))
+            prog_force_counts[S.call]++;
+    }
+
+    if (reg_is_changeable(program_result_reg))
+    {
+        prog_force_counts[program_result_reg]++;
+        assert(steps.size() > 0);
+    }
+
+    // Check that all the priors and likelihoods are forced.
+#ifndef NDEBUG
+    for(int r_likelihood: likelihood_heads)
+    {
+        assert(reg_exists(r_likelihood));
+        assert(reg_has_value(r_likelihood));
+    }
+
+    assert(random_variables_.size() == random_variables_map.size());
+    for(int r_pdf: random_variables())
+    {
+        assert(reg_exists(r_pdf));
+        assert(reg_has_value(r_pdf));
+    }
+
+    for(int r=1;r<regs.size();r++)
+        if (not regs.is_free(r))
+            assert(prog_force_counts[r] == force_count(r));
+#endif
+}
+
 expression_ref reg_heap::evaluate_program(int c)
 {
     if (not program_result_head)
