@@ -539,13 +539,27 @@ int reg_heap::unmap_unforced_steps(int c)
 
     // 4. Define function to check and unmap
     assert(token_is_used(t1));
+    auto& vm_force_count = tokens[t1].vm_force_count;
     auto& vm_force = tokens[t1].vm_force;
     auto& vm_result = tokens[t1].vm_result;
     auto& vm_step = tokens[t1].vm_step;
 
+    auto update_force_count = [&](int r, int count)
+                                  {
+                                      assert(reg_is_changeable(r));
+                                      assert(count >= 0);
+                                      assert(prog_force_counts[r] != count);
+                                      if (not prog_temp[r].test(0))
+                                      {
+                                          prog_temp[r].set(0);
+                                          vm_force_count.add_value(r, prog_force_counts[r]);
+                                      }
+                                      prog_force_counts[r] = count;
+                                  };
+
     assert(token_is_used(t1));
     auto check_unmap = [&,this](int r) {
-                           if (has_step(r) and force_count(r) == 0)
+                           if (has_step(r) and prog_force_counts[r] == 0)
                            {
                                vm_step.add_value(r, prog_steps[r]);
                                vm_result.add_value(r, prog_results[r]);
@@ -556,6 +570,26 @@ int reg_heap::unmap_unforced_steps(int c)
                                prog_forces[r] = non_computed_index;
                            }
                        };
+
+    auto inc_force_count = [&](int r)
+                               {
+                                   update_force_count(r, prog_force_counts[r]+1);
+                               };
+
+    auto dec_force_count = [&,this](int r)
+                               {
+                                   update_force_count(r, prog_force_counts[r]-1);
+                                   check_unmap(r);
+                               };
+
+    // 5. Find all the unforced steps.
+    for(int r=1;r<regs.size();r++)
+        if (not regs.is_free(r))
+        {
+            int count = force_count(r);
+            if (count != prog_force_counts[r])
+                update_force_count(r, count);
+        }
 
     // 5. Find all the unforced steps.
     for(int r=1;r<regs.size();r++)
@@ -580,13 +614,25 @@ int reg_heap::unmap_unforced_steps(int c)
 
         // 6b. Check if any of used used, forced, or called steps are now unforced.
         for(auto& [r2,_]: regs[r].used_regs)
-            check_unmap(r2);
+            dec_force_count(r2);
 
         for(auto& [r2,_]: regs[r].forced_regs)
-            check_unmap(r2);
+            dec_force_count(r2);
 
-        check_unmap(steps[s].call);
+        int call = steps[s].call;
+        if (not reg_is_constant(call))
+            dec_force_count(call);
     }
+
+    // Clear mark that force count has changed.
+    for(auto [r,_]: vm_force_count.delta())
+        prog_temp[r].reset(0);
+
+#ifndef NDEBUG
+    for(int r=1;r<regs.size();r++)
+        if (not regs.is_free(r))
+            assert(prog_force_counts[r] == force_count(r));
+#endif
 
     // 7. If there was nothing to unmap, move c back to t1.
     if (delta_step.empty())
@@ -1394,6 +1440,10 @@ void reg_heap::reclaim_used(int r)
 {
     // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
     assert(not has_step(r));
+
+    // Clear any force counts.
+    // This reg was in a tip token that could have forced it.  But no other programs will force it.
+    prog_force_counts[r] = 0;
   
     regs.reclaim_used(r);
 }
@@ -1790,6 +1840,9 @@ void reg_heap::check_used_regs() const
     for(auto i = regs.begin(); i != regs.end(); i++)
     {
         int r1 = i.addr();
+
+        if (prog_force_counts[r1] > 0)
+            assert(reg_is_changeable(r1));
 
         if (not regs[r1].used_regs.empty())
             assert(reg_is_changeable(r1));
