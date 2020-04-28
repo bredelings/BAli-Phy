@@ -1751,9 +1751,22 @@ void reg_heap::check_used_regs_in_token(int t) const
             assert(step > 0);
     }
 
+    constexpr int force_count_bit = 3;
     constexpr int force_bit = 2;
     constexpr int result_bit = 0;
     constexpr int step_bit = 1;
+
+    for(auto [r,count]: tokens[t].delta_force_count())
+    {
+        // Check that there are no duplicate regs.
+        assert(not prog_temp[r].test(force_bit));
+
+        // Mark the reg as having a result in the delta.
+        prog_temp[r].set(force_count_bit);
+
+        // No results for constant regs
+        assert(count >= 0);
+    }
 
     for(auto [r,result]: tokens[t].delta_force())
     {
@@ -1797,6 +1810,9 @@ void reg_heap::check_used_regs_in_token(int t) const
     }
 
     // FIXME - nonlocal. The same result/step are not set in multiple places!
+
+    for(auto [reg,res]: tokens[t].delta_force_count())
+        prog_temp[reg].reset(force_count_bit);
 
     for(auto [reg,res]: tokens[t].delta_force())
     {
