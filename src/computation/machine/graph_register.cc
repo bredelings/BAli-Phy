@@ -634,22 +634,17 @@ int reg_heap::unmap_unforced_steps(int c)
             assert(prog_force_counts[r] == force_count(r));
 #endif
 
-    // 7. If there was nothing to unmap, move c back to t1.
-    if (delta_step.empty())
-        set_token_for_context(c, t1);
+    assert(root_token == token_for_context(c));
 
-    // 8. Release marker context c2
-    release_context(c2);
-
-    // 9. Make sure we are rooted at context c
-    reroot_at_context(c);
-
-    // 10. Mark the current token as a previous_program_token.
+    // 8. Mark the current token as a previous_program_token.
     int t = token_for_context(c);
     auto t2 = unset_prev_prog_token(t);
     set_prev_prog_token(t, prev_prog_token_t(t,0,true));
     if (t2)
         release_unreferenced_tips(*t2);
+
+    // 9. Release marker context c2
+    release_context(c2);
 
     check_tokens();
 
