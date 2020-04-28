@@ -583,18 +583,102 @@ int reg_heap::unmap_unforced_steps(int c)
                                };
 
     // 5. Find all the unforced steps.
-    for(int r=1;r<regs.size();r++)
-        if (not regs.is_free(r))
-        {
-            int count = force_count(r);
-            if (count != prog_force_counts[r])
-                update_force_count(r, count);
-        }
 
-    // 5. Find all the unforced steps.
+    // 5a. Walk all the delta_steps from the PPET to the root, recording the step that would
+    //     be in the PPET if we rerooted to it.
+    vector<pair<int,int>> modified_steps;
+    for(int path_token = get_prev_prog_token_for_context(c).value(); path_token != root_token; path_token = tokens[path_token].parent)
+    {
+        for(auto& [r,s]: tokens[path_token].vm_step.delta())
+        {
+            // If this is the first time we've seen this reg
+            if (not prog_temp[r].test(1))
+            {
+                prog_temp[r].set(1);
+                modified_steps.push_back({r,s});
+            }
+        }
+    }
+
+    // 5b. Increment force counts for new steps
+    for(const auto& [r,s2]: modified_steps)
+    {
+        int s1 = prog_steps[r];
+
+        if (s1 > 0)
+        {
+            if (s1 == s2) continue;
+
+            int call1 = steps[s1].call;
+            int call2 = -1;
+            if (s2 < 0)
+            {
+                for(auto& [r2,_]: regs[r].used_regs)
+                    inc_force_count(r2);
+
+                for(auto& [r2,_]: regs[r].forced_regs)
+                    inc_force_count(r2);
+            }
+            else
+                call2 = steps[s2].call;
+
+            if (not reg_is_constant(call1) and call1 != call2)
+                inc_force_count(call1);
+        }
+    }
+
+    // 5c. Decrement force counts for old steps
+    vector<int> regs_to_unmap;
+    auto dec_force_count_ = [&,this](int r)
+                               {
+                                   update_force_count(r, prog_force_counts[r]-1);
+                                   if (has_step(r) and prog_force_counts[r] == 0)
+                                       regs_to_unmap.push_back(r);
+                               };
+
+    for(const auto& [r,s2]: modified_steps)
+    {
+        int s1 = prog_steps[r];
+
+        if (s2 > 0)
+        {
+            if (s1 == s2) continue;
+
+            int call1 = -1;
+            int call2 = steps[s2].call;
+            if (s1 < 0)
+            {
+                for(auto& [r2,_]: regs[r].used_regs)
+                    dec_force_count_(r2);
+
+                for(auto& [r2,_]: regs[r].forced_regs)
+                    dec_force_count_(r2);
+            }
+            else
+                call1 = steps[s1].call;
+
+            if (not reg_is_constant(call2) and call1 != call2)
+                dec_force_count_(call2);
+        }
+    }
+
+#ifdef DEBUG_MACHINE
     for(int r=1;r<regs.size();r++)
         if (not regs.is_free(r))
-            check_unmap(r);
+            assert(prog_force_counts[r] == force_count(r));
+#endif
+
+    for(int r: regs_to_unmap)
+    {
+        vm_step.add_value(r, prog_steps[r]);
+        vm_result.add_value(r, prog_results[r]);
+        vm_force.add_value(r, prog_forces[r]);
+
+        prog_steps[r] = non_computed_index;
+        prog_results[r] = non_computed_index;
+        prog_forces[r] = non_computed_index;
+    }
+
 
     // 6. Begin iteratively unmapping steps.
     const auto& delta_step   = vm_step.delta();
@@ -624,11 +708,14 @@ int reg_heap::unmap_unforced_steps(int c)
             dec_force_count(call);
     }
 
-    // Clear mark that force count has changed.
+    // 7a. Clear mark that force count has changed between the root token and the PPET.
     for(auto [r,_]: vm_force_count.delta())
         prog_temp[r].reset(0);
+    // 7b. Clear mark that the step has changed between the root token and the PPET.
+    for(auto [r,_]: modified_steps)
+        prog_temp[r].reset(1);
 
-#ifndef NDEBUG
+#ifdef DEBUG_MACHINE
     for(int r=1;r<regs.size();r++)
         if (not regs.is_free(r))
             assert(prog_force_counts[r] == force_count(r));
@@ -647,6 +734,12 @@ int reg_heap::unmap_unforced_steps(int c)
     release_context(c2);
 
     check_tokens();
+
+#ifdef DEBUG_MACHINE
+    for(int r=1;r<regs.size();r++)
+        if (not regs.is_free(r))
+            assert(prog_force_counts[r] == force_count(r));
+#endif
 
     return token_for_context(c);
 }
@@ -710,7 +803,9 @@ void reg_heap::first_evaluate_program(int c)
         assert(reg_exists(r_pdf));
         assert(reg_has_value(r_pdf));
     }
+#endif
 
+#ifdef DEBUG_MACHINE
     for(int r=1;r<regs.size();r++)
         if (not regs.is_free(r))
             assert(prog_force_counts[r] == force_count(r));
