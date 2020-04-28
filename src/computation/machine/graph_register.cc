@@ -1837,9 +1837,14 @@ void reg_heap::check_used_regs() const
             assert(not regs.is_free(S.call));
     }
 
+    bool check_force_counts = is_program_execution_token(root_token);
+
     for(auto i = regs.begin(); i != regs.end(); i++)
     {
         int r1 = i.addr();
+
+        if (check_force_counts)
+            assert(prog_force_counts[r1] == force_count(r1));
 
         if (prog_force_counts[r1] > 0)
             assert(reg_is_changeable(r1));
