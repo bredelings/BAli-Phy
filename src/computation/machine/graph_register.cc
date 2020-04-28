@@ -2170,7 +2170,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c, bool refor
         }
     }
 
-    if (not execution_allowed())
+    if (not execution_allowed() or is_program_execution_token(token_for_context(c)))
     {
         switch_to_child_token(c, token_type::execute);
 
