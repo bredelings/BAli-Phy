@@ -586,8 +586,14 @@ int reg_heap::unmap_unforced_steps(int c)
 
     // 5a. Walk all the delta_steps from the PPET to the root, recording the step that would
     //     be in the PPET if we rerooted to it.
+    int ppe_token = get_prev_prog_token_for_context(c).value();
+
+    // This token's child has type reverse_execute, making it an execute_token, in a sense.  Its type is reverse_unmap.
+    assert(tokens[root_token].children.size() == 1);
+    int root_child_token = tokens[root_token].children[0];
+
     vector<pair<int,int>> modified_steps;
-    for(int path_token = get_prev_prog_token_for_context(c).value(); path_token != root_token; path_token = tokens[path_token].parent)
+    for(int path_token = ppe_token; path_token != root_child_token; path_token = tokens[path_token].parent)
     {
         for(auto& [r,s]: tokens[path_token].vm_step.delta())
         {
