@@ -717,8 +717,12 @@ int reg_heap::unmap_unforced_steps(int c)
 
 #ifdef DEBUG_MACHINE
     for(int r=1;r<regs.size();r++)
+    {
         if (not regs.is_free(r))
             assert(prog_force_counts[r] == force_count(r));
+        if (has_step(r))
+            assert(prog_force_counts[r] > 0);
+    }
 #endif
 
     assert(root_token == token_for_context(c));
@@ -807,8 +811,12 @@ void reg_heap::first_evaluate_program(int c)
 
 #ifdef DEBUG_MACHINE
     for(int r=1;r<regs.size();r++)
+    {
         if (not regs.is_free(r))
             assert(prog_force_counts[r] == force_count(r));
+        if (has_step(r))
+            assert(prog_force_counts[r] > 0);
+    }
 #endif
 }
 
@@ -1950,7 +1958,11 @@ void reg_heap::check_used_regs() const
         int r1 = i.addr();
 
         if (check_force_counts)
+        {
             assert(prog_force_counts[r1] == force_count(r1));
+            if (has_step(r1))
+                assert(prog_force_counts[r1] > 0);
+        }
 
         if (prog_force_counts[r1] > 0)
             assert(reg_is_changeable(r1));
