@@ -756,6 +756,22 @@ int reg_heap::unmap_unforced_steps(int c)
     }
 #endif
 
+    // Remove deltas from force_count where don't change anything.
+    auto& delta_force_count = vm_force_count.delta();
+    for(int i=0;i<delta_force_count.size();)
+    {
+        auto [r,count] = delta_force_count[i];
+
+        if (count == prog_force_counts[r])
+        {
+            if (i + 1 < delta_force_count.size())
+                std::swap(delta_force_count[i], delta_force_count.back());
+            delta_force_count.pop_back();
+        }
+        else
+            i++;
+    }
+
     assert(root_token == token_for_context(c));
 
     // 8. Mark the current token as a previous_program_token.
