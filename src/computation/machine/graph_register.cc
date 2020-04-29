@@ -592,9 +592,17 @@ int reg_heap::unmap_unforced_steps(int c)
     assert(tokens[root_token].children.size() == 1);
     int root_child_token = tokens[root_token].children[0];
 
+    // This is the only grandchild of the root.  It is the place we were when we decided to evaluate the program.
+    assert(tokens[root_child_token].children.size() == 1);
+    int root_grandchild_token = tokens[root_child_token].children[0];
+
     vector<pair<int,int>> modified_steps;
+    optional<int> n_steps_between_progs;
     for(int path_token = ppe_token; path_token != root_child_token; path_token = tokens[path_token].parent)
     {
+        if (path_token == root_grandchild_token)
+            n_steps_between_progs = modified_steps.size();
+
         for(auto& [r,s]: tokens[path_token].vm_step.delta())
         {
             // If this is the first time we've seen this reg
@@ -605,6 +613,7 @@ int reg_heap::unmap_unforced_steps(int c)
             }
         }
     }
+    assert(n_steps_between_progs);
 
     // 5b. Increment force counts for new steps
     for(const auto& [r,s2]: modified_steps)
@@ -668,6 +677,14 @@ int reg_heap::unmap_unforced_steps(int c)
         }
     }
 
+    // 5d. Check whether we need to unmap steps that were executed BETWEEN tokens.
+    for(int i=0; i < *n_steps_between_progs; i++)
+    {
+        auto [r,s] = modified_steps[i];
+        if (s < 0 and has_step(r) and prog_force_counts[r] == 0)
+            regs_to_unmap.push_back(r);
+    }
+
 #ifdef DEBUG_MACHINE
     for(int r=1;r<regs.size();r++)
         if (not regs.is_free(r))
@@ -728,6 +745,14 @@ int reg_heap::unmap_unforced_steps(int c)
             assert(prog_force_counts[r] == force_count(r));
         if (has_step(r))
             assert(prog_force_counts[r] > 0);
+    }
+#endif
+
+#ifndef NDEBUG
+    for(auto [r,s]: delta_step)
+    {
+        for(int r2: steps[s].created_regs)
+            assert(not has_step(r2));
     }
 #endif
 
