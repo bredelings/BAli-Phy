@@ -314,7 +314,7 @@ void reg_heap::unregister_prior(int r)
     regs.access(r).flags.reset(0);
 }
 
-void reg_heap::register_likelihood_(int r, int /*s*/)
+void reg_heap::register_likelihood_(int r, int s)
 {
     // We can't register index_vars -- they could go away!
     assert(not expression_at(r).is_index_var());
@@ -334,21 +334,24 @@ void reg_heap::register_likelihood_(int r, int /*s*/)
     if (reg_is_constant(r))
     {
         // Also avoid putting a bit on constant regs?
-
-        likelihood_heads.push_back(r);
     }
     else
     {
         regs.access(r).flags.set(1);
 
         assert(reg_is_changeable(r));
-
-        likelihood_heads.push_back(r);
     }
+
+    assert(not likelihood_heads.count(s));
+    likelihood_heads[s] = r;
 }
 
-void reg_heap::unregister_likelihood_(int r, int /*s*/)
+void reg_heap::unregister_likelihood_(int r, int s)
 {
+    assert(likelihood_heads.count(s));
+    assert(likelihood_heads.at(s) == r);
+    likelihood_heads.erase(s);
+
     regs.access(r).flags.reset(1);
 }
 
@@ -842,7 +845,7 @@ void reg_heap::first_evaluate_program(int c)
 
     // Check that all the priors and likelihoods are forced.
 #ifndef NDEBUG
-    for(int r_likelihood: likelihood_heads)
+    for(auto [s,r_likelihood]: likelihood_heads)
     {
         assert(reg_exists(r_likelihood));
         assert(reg_has_value(r_likelihood));
@@ -920,7 +923,7 @@ expression_ref reg_heap::evaluate_program(int c)
 
     // Check that all the priors and likelihoods are forced.
 #ifndef NDEBUG
-    for(int r_likelihood: likelihood_heads)
+    for(auto [s,r_likelihood]: likelihood_heads)
     {
         assert(reg_exists(r_likelihood));
         assert(reg_has_value(r_likelihood));
@@ -1607,8 +1610,9 @@ void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
 
     // FIXME: We want to remove all of these.
     // * we should be able to remove random_variables_.  However, walking random_variables_ might find references to old, destroyed, variables then.
-    insert_at_end(scan, likelihood_heads); // yes
     insert_at_end(scan, random_variables_); // yes
+    for(auto& [_,r]: likelihood_heads) // yes
+        scan.push_back(r);
     for(auto& [_,r]: transition_kernels_)
         scan.push_back(r);
 
