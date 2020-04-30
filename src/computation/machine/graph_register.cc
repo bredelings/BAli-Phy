@@ -356,7 +356,7 @@ void reg_heap::unregister_likelihood_(int r, int s)
     likelihood_heads.erase(s);
 
     // Check that this reg isn't registered as a likelihood by two different steps.
-    assert(regs.access(r).flags.test(1));
+    assert(reg_is_constant(r) or regs.access(r).flags.test(1));
 
     regs.access(r).flags.reset(1);
 }
