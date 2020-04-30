@@ -529,11 +529,11 @@ bool accept_MH(const context_ref& C1,const context_ref& C2,log_double_t rho)
         std::cerr<<"accept_MH: rho = "<<rho<<endl;
 
         show_parameters(std::cerr,C1);
-        std::cerr<<C1.probability()<<" = "<<C1.likelihood()<<" + "<<C1.prior()<<endl;
+        std::cerr<<C1.probability()<<" = "<<C1.likelihood()<<" [likelihood] + "<<C1.prior()<<" [prior]"<<endl;
         std::cerr<<endl;
 
         show_parameters(std::cerr,C2);
-        std::cerr<<C2.probability()<<" = "<<C2.likelihood()<<" + "<<C2.prior();
+        std::cerr<<C2.probability()<<" = "<<C2.likelihood()<<" [likelihood] + "<<C2.prior()<<" [prior]"<<endl;
         std::cerr<<endl<<endl;
     }
 
