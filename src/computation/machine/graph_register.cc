@@ -311,6 +311,9 @@ void reg_heap::unregister_prior(int r)
     // We can't register index_vars -- they could go away!
     assert(not expression_at(r).is_index_var());
 
+    // Check that this reg isn't registered as a priorby two different steps.
+    assert(regs.access(r).flags.test(0));
+
     regs.access(r).flags.reset(0);
 }
 
@@ -351,6 +354,9 @@ void reg_heap::unregister_likelihood_(int r, int s)
     assert(likelihood_heads.count(s));
     assert(likelihood_heads.at(s) == r);
     likelihood_heads.erase(s);
+
+    // Check that this reg isn't registered as a likelihood by two different steps.
+    assert(regs.access(r).flags.test(1));
 
     regs.access(r).flags.reset(1);
 }
@@ -851,8 +857,7 @@ void reg_heap::first_evaluate_program(int c)
         assert(reg_has_value(r_likelihood));
     }
 
-    assert(random_variables_.size() == random_variables_map.size());
-    for(int r_pdf: random_variables())
+    for(auto [s,r_pdf]: random_variables)
     {
         assert(reg_exists(r_pdf));
         assert(reg_has_value(r_pdf));
@@ -929,8 +934,7 @@ expression_ref reg_heap::evaluate_program(int c)
         assert(reg_has_value(r_likelihood));
     }
 
-    assert(random_variables_.size() == random_variables_map.size());
-    for(int r_pdf: random_variables())
+    for(auto [s,r_pdf]: random_variables)
     {
         assert(reg_exists(r_pdf));
         assert(reg_has_value(r_pdf));
@@ -951,7 +955,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 
     // 1. reroot to c1 and force the program
     evaluate_program(c1);
-    int num_rvs1 = random_variables_.size();
+    int num_rvs1 = random_variables.size();
 
     // 2. install another reroot handler
     vector<pair<int,int>> original_pdf_results;
@@ -977,7 +981,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 
     // 3. reroot to c2 and force the program
     evaluate_program(c2);
-    int num_rvs2 = random_variables_.size();
+    int num_rvs2 = random_variables.size();
 
     // 4. compute the ratio only for (i) changed pdfs that (ii) exist in both c1 and c2
     prob_ratios_t R;
@@ -1027,28 +1031,12 @@ void reg_heap::register_random_variable(int r, int s)
     // We can't register index_vars -- they could go away!
     assert(not expression_at(r).is_index_var());
 
-    assert(not random_variables_.count(r));
+    assert(not random_variables.count(s));
 
-    if (random_variables_.count(r))
-    {
-        assert(random_variables_map.count(r));
-        auto& steps = random_variables_map.find(r)->second;
-        assert(not steps.count(s));
-        steps.insert(s);
-    }
-    else
-    {
-        assert(not random_variables_map.count(r));
-        random_variables_.insert(r);
-        random_variables_map[r].insert(s);
-        register_prior(r);
-    }
-    if (log_verbose >= 2)
-    {
-        std::cerr<<"  {";
-        join(std::cerr, random_variables_map.at(r), ", ");
-        std::cerr<<"}\n";
-    }
+    random_variables[s] = r;
+
+    // This sets the pdf bit.
+    register_prior(r);
 }
 
 void reg_heap::unregister_random_variable(int r, int s)
@@ -1056,30 +1044,12 @@ void reg_heap::unregister_random_variable(int r, int s)
     // We can't register index_vars -- they could go away!
     assert(not expression_at(r).is_index_var());
 
-    assert(random_variables_.count(r));
-    assert(random_variables_map.count(r));
-    if (log_verbose >= 2)
-    {
-        std::cerr<<"  {";
-        join(std::cerr, random_variables_map.at(r), ", ");
-        std::cerr<<"}\n";
-    }
+    assert(random_variables.count(s));
 
-    auto& steps = random_variables_map.find(r)->second;
-    assert(steps.count(s));
-    steps.erase(s);
-    if (steps.empty())
-    {
-        random_variables_.erase(r);
-        random_variables_map.erase(r);
-        // This clear the pdf bit.
-        unregister_prior(r);
-    }
-}
+    random_variables.erase(s);
 
-const std::unordered_set<int>& reg_heap::random_variables() const
-{
-    return random_variables_;
+    // This clears the pdf bit.
+    unregister_prior(r);
 }
 
 void reg_heap::register_transition_kernel(int r_rate, int r_kernel, int /*s*/)
@@ -1610,7 +1580,8 @@ void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
 
     // FIXME: We want to remove all of these.
     // * we should be able to remove random_variables_.  However, walking random_variables_ might find references to old, destroyed, variables then.
-    insert_at_end(scan, random_variables_); // yes
+    for(auto& [_,r]: random_variables) // yes
+        scan.push_back(r);
     for(auto& [_,r]: likelihood_heads) // yes
         scan.push_back(r);
     for(auto& [_,r]: transition_kernels_)

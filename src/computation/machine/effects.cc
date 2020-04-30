@@ -32,7 +32,7 @@ register_random_variable::register_random_variable(int r)
 void register_random_variable::register_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 2)
-        std::cerr<<"register_random_variable["<<pdf_reg<<"]: REGISTER! ("<<M.random_variables().size()<<" -> "<<M.random_variables().size()+1<<")\n";
+        std::cerr<<"register_random_variable["<<pdf_reg<<"]: REGISTER! ("<<M.random_variables.size()<<" -> "<<M.random_variables.size()+1<<")\n";
     M.register_random_variable(pdf_reg, s);
 }
 
@@ -40,7 +40,7 @@ void register_random_variable::unregister_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 2)
     {
-        std::cerr<<"register_random_variable["<<pdf_reg<<"]: UNregister! ("<<M.random_variables().size()<<" -> "<<M.random_variables().size()-1<<")\n";
+        std::cerr<<"register_random_variable["<<pdf_reg<<"]: UNregister! ("<<M.random_variables.size()<<" -> "<<M.random_variables.size()-1<<")\n";
     }
     M.unregister_random_variable(pdf_reg, s);
 }

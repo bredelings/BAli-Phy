@@ -72,7 +72,7 @@ log_double_t reg_heap::prior_for_context(int c)
      *       This ensures that a range-for is OK. (Range-for's assume that begin() and end() do not change).
      */
 
-    for(int r_pdf: random_variables_)
+    for(auto [s,r_pdf]: random_variables)
     {
 	const auto& x = value_for_precomputed_reg(r_pdf).exp;
 

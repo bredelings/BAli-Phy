@@ -274,10 +274,7 @@ public:
     prob_ratios_t probability_ratios(int c1, int c2);
 
     // the list of random variables
-    std::unordered_map<int,std::unordered_set<int>> random_variables_map;
-    std::unordered_set<int> random_variables_;
-
-    const std::unordered_set<int>& random_variables() const;
+    std::unordered_map<int,int> random_variables;
 
     void register_random_variable(int r, int s);
     void unregister_random_variable(int r, int s);
