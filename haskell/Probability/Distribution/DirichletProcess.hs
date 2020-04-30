@@ -65,6 +65,12 @@ dpm_lognormal n alpha mean_dist noise_dist = dpm n alpha sample_dist
                                                       return $ mean*safe_exp (z*sigma_over_mu)
                            return sample_log_normal
 
+-- In theory we could implement `dpm` in terms of `dp`:
+--   dpm n alpha sample_dist = sequence $ dp n alpha sample_dist
+-- I think the problem with that is that it might not be lazy in n.
+-- I need the take to be at the end:
+--   liftM (take n) $ sequence $ dp alpha sample_dist
+
 dpm n alpha sample_dist = do
 
   dists  <- sequence $ repeat $ sample_dist
