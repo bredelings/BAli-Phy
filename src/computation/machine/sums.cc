@@ -117,7 +117,7 @@ log_double_t reg_heap::likelihood_for_context(int c)
 
     double log_pr = 0.0;
     double C = 0.0;
-    for(int r: likelihood_heads)
+    for(auto [s,r]: likelihood_heads)
     {
 	const auto& x = value_for_precomputed_reg(r).exp;
 	log_double_t X = x.as_log_double();
