@@ -264,7 +264,7 @@ public:
 
     log_double_t prior_for_context(int c);
 
-    std::vector<int> likelihood_heads;
+    std::unordered_map<int,int> likelihood_heads;
 
     void register_likelihood_(int r, int s);
 
