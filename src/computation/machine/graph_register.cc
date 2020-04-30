@@ -312,7 +312,7 @@ void reg_heap::unregister_prior(int r)
     assert(not expression_at(r).is_index_var());
 
     // Check that this reg isn't registered as a priorby two different steps.
-    assert(regs.access(r).flags.test(0));
+    assert(reg_is_constant(r) or regs.access(r).flags.test(0));
 
     regs.access(r).flags.reset(0);
 }
