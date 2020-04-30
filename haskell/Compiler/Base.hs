@@ -26,9 +26,12 @@ return f = IOReturn f
 fail e = error e
 mfix f = MFix f
 
-infixr 0 $!, `seq`, `join`
+-- join x = x >>= id
+join x = do y <- x
+            y
+
+infixr 0 $!, `seq`
 f $! x = x `seq` f x
 builtin seq 2 "seq" "Prelude"
-builtin join 2 "join" "Prelude"
 builtin struct_seq 2 "struct_seq" "Prelude"
 
