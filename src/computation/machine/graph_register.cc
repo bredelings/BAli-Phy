@@ -882,6 +882,8 @@ expression_ref reg_heap::evaluate_program(int c)
 
     assert(get_prev_prog_token_for_context(c));
 
+    expression_ref result;
+
     // 1. If we can revert to a previously executed program instead of unmapping, then do that.
     int t = token_for_context(c);
     if (tokens[t].prev_prog_token->can_revert)
@@ -892,41 +894,46 @@ expression_ref reg_heap::evaluate_program(int c)
         reroot_at_context(c);
         int r = heads[*program_result_head];
         assert(reg_is_constant(r) or has_force(r));
-        return value_for_precomputed_reg(r).exp;
-    }
 
-    // 2. Always perform execution in a new token.
-    // Evaluation with re-force=true should be in a new context in we've
-    // don't any previous evaluation with re-force=false, in order to avoid
-    // double-unsharing of forces.
+        result = value_for_precomputed_reg(r).exp;
+    }
+    else
     {
-        // We need to reroot to here first, so that switching to a child token
-        // doesn't delete the current token as a knuckle.
-        reroot_at_context(c);
 
-        switch_to_child_token(c, token_type::execute);
+        // 2. Always perform execution in a new token.
+        // Evaluation with re-force=true should be in a new context in we've
+        // don't any previous evaluation with re-force=false, in order to avoid
+        // double-unsharing of forces.
+        {
+            // We need to reroot to here first, so that switching to a child token
+            // doesn't delete the current token as a knuckle.
+            reroot_at_context(c);
 
-        // This should not allow removing the old root token.
-        reroot_at_context(c);
+            switch_to_child_token(c, token_type::execute);
 
-        // We can't remove t1 even if its a knuckle.
-        assert(execution_allowed());
+            // This should not allow removing the old root token.
+            reroot_at_context(c);
+
+            // We can't remove t1 even if its a knuckle.
+            assert(execution_allowed());
+        }
+
+        // 3. Execute with reforce = true
+        result = lazy_evaluate(heads[*program_result_head], c, true).exp;
+
+        assert(get_prev_prog_token_for_context(c));
+        assert(is_program_execution_token(*get_prev_prog_token_for_context(c)));
+
+        // 4. Remove unforced steps.
+        unmap_unforced_steps(c);
     }
-
-    // 3. Execute with reforce = true
-    auto result = lazy_evaluate(heads[*program_result_head], c, true).exp;
-
-    assert(get_prev_prog_token_for_context(c));
-    assert(is_program_execution_token(*get_prev_prog_token_for_context(c)));
-
-    // 4. Remove unforced steps.
-    unmap_unforced_steps(c);
 
     // 5. Perform any pending registration or unregistration of effects.
     do_pending_effect_registrations();
     assert(steps_pending_effect_unregistration.empty());
+    assert(steps_pending_effect_registration.empty());
 
-    // Check that all the priors and likelihoods are forced.
+    // 6. Check that all the priors and likelihoods are forced.
 #ifndef NDEBUG
     for(auto [s,r_likelihood]: likelihood_heads)
     {
