@@ -58,18 +58,22 @@ safe_exp x = if (x < (-20.0)) then
              else
                exp x
 
-dpm n alpha mean_dist noise_dist = do
+dpm_lognormal n alpha mean_dist noise_dist = dpm n alpha sample_dist
+    where sample_dist = do mean <- mean_dist
+                           sigma_over_mu <- noise_dist
+                           let sample_log_normal = do z <- normal 0.0 1.0
+                                                      return $ mean*safe_exp (z*sigma_over_mu)
+                           return sample_log_normal
 
-  let delta = 4
+dpm n alpha sample_dist = do
 
-  mean <- iid (n+delta) mean_dist
-  sigmaOverMu <- iid (n+delta) noise_dist
+  dists  <- sequence $ repeat $ sample_dist
 
-  z <- iid n (normal 0.0 1.0)
+  breaks <- sequence $ repeat $ beta 1.0 alpha
 
-  category <- crp alpha n delta
+-- stick selects a distribution from the list, and join then samples from the distribution
+  iid n (join $ stick breaks dists)
 
-  return [ mean!!k * safe_exp (z!!i * sigmaOverMu!!k) | i <- take n [0..], let k=category!!i]
 
 dp n alpha dist = do
 
