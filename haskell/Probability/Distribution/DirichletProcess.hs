@@ -14,7 +14,7 @@ import Control.DeepSeq
 import MCMC -- for GibbsSampleCategorical
 
 stick (p:ps) (x:xs) = do keep <- bernoulli p
-                         if keep == 0 then
+                         if keep == 1 then
                              return x
                          else
                              stick ps xs
