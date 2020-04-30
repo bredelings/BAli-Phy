@@ -4,12 +4,20 @@ import Probability.Random
 
 import Probability.Distribution.List
 import Probability.Distribution.Normal
+import Probability.Distribution.Bernoulli
+import Probability.Distribution.Beta
 import Probability.Distribution.Categorical
 
 import Foreign.Vector
 
 import Control.DeepSeq
 import MCMC -- for GibbsSampleCategorical
+
+stick (p:ps) (x:xs) = do keep <- bernoulli p
+                         if keep == 0 then
+                             return x
+                         else
+                             stick ps xs
 
 normalize v = map (/total) v where total=sum v
 
@@ -63,12 +71,10 @@ dpm n alpha mean_dist noise_dist = do
 
   return [ mean!!k * safe_exp (z!!i * sigmaOverMu!!k) | i <- take n [0..], let k=category!!i]
 
-dp n alpha mean_dist = do 
+dp n alpha dist = do
 
-  let delta = 4
+  atoms  <- sequence $ repeat $ dist
 
-  mean <- iid (n+delta) mean_dist
+  breaks <- sequence $ repeat $ beta 1.0 alpha
 
-  category <- crp alpha n delta
-
-  return [ mean!!k | i <- take n [0..], let k=category!!i]
+  iid n (stick breaks atoms)
