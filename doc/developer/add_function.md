@@ -1,46 +1,36 @@
 % Adding a function to BAli-Phy
 
-You can add a function to your probabilistic model file using Haskell
-syntax.  For example, we can define a function called `square` that
-squares its input as follows:
-``` Haskell
-square x = x * x
-```
+Since BAli-Phy models are written in Haskell, you can define functions
+inside your own model file.  However, some functions are used frequently
+enough to add them to BAli-Phy itself instead of including them
+separately in multiple different model files.
 
-However, you might want to make the function part of the BAli-Phy
-system so that it can be used in multiple different model files.  This
-can be done by adding it to one of the built in Haskell modules, or by
-creating a new module to contain it.
-
-Adding a Haskell function to a module does not automatically make the
-function visible from the command line for use in the `--smodel`
-command and other commands.  To make the function visible from the
-command line, you will need to add a JSON file to the `bindings`
+Adding a function to BAli-Phy involves adding it to one of the Haskell
+modules that comes with BAli-Phy so that it can be used from multiple
+different model files.  To make the function visible from the 
+command line as well, you will need to add a JSON file to the `bindings`
 directory that describes how to access the Haskell function.
 
-## Creating a new built in module
+## Haskell modules
 
-Suppose you want to create a new module called `Bio.MyModule`.  You
-would do this by creating a Haskell file that begins with
+In order to add a function to BAli-Phy you need to add it to a module.
+For example, if you add the function to the module
+`SModel.Nucleotides` then you could access it by adding
 ```Haskell
-module Bio.MyModule where
-
+import SModel.Nucleotides
 ```
-In order for BAli-Phy to find this file, you then need to place it at
-`haskell/Bio/MyModule.hs`. (See the [haskell/](https://github.com/bredelings/BAli-Phy/blob/master/haskell/)
-directory on github.)
+to the beginning of your model file.
 
-Note that Haskell module names need to conform to a certain rules.
-Module names names must begin with an upper-case letter.  After the
-first letter, lower-case letters, numbers, and `_` are allowed.
+The Haskell file for the module `SModel.Nucleotides` is located at
+`haskell/SModel/Nucleotides.hs`. (See the [haskell/](https://github.com/bredelings/BAli-Phy/blob/master/haskell/) 
+directory on github.) The module file begins with a 
+module declaration:
 
-## Adding a function to a builtin module
+```Haskell
+module SModel.Nucleotides where
+```
 
-First locate the Haskell file for the module that you want to modify.
-For example, the module `SModel.Nucleotides` is located as
-`haskell/SModel/Nucleotides.hs`.
-
-Then write a function inside this module.  For example, in the module
+We can then write a function inside this module.  For example, in the module
 `SModel.Nucleotides`, we have the function `hky85`:
 ```Haskell
 hky85 k    pi a = gtr a (hky85_sym k a) pi
@@ -49,10 +39,24 @@ This function defines the `hky85` model as a function of the
 transition-transversion ratio (`k`), the equilibrium frequencies
 (`pi`) and the DNA or RNA alphabet (`a`).
 
-Note that other Haskell modules (including your model file) need to
-_import_ the module in order for its functions to be
-accessible.  To import the `hky85` function, the command `import
-SModel.Nucleotides` would do the trick.
+
+## Creating a new module
+
+Let's create a new module called `Bio.MyModule` that
+contains a function for squaring numbers.  First we create a new
+module at `haskell/Bio/MyModule.hs`.  Module names must begin with
+an upper-case letter.  After the first letter, lower-case letters,
+numbers, and `_` are allowed. 
+
+Then we add the following to the file:
+```Haskell
+module Bio.MyModule where
+
+square x = x * x
+```
+
+After we rerun `ninja install`, the function `square` module will be
+accessible to model files that import `Bio.MyModule`.
 
 ## Using a function from the command line
 
