@@ -4,7 +4,7 @@ project('bali-phy', ['cpp','c'],
           'warning_level=3',
           'cpp_std=c++17'
         ],
-        meson_version: '>= 0.52',
+        meson_version: '>= 0.53',
         license: 'GPLv2')
 
 cpp = meson.get_compiler('cpp')
@@ -46,7 +46,10 @@ endif
 
 cairo = dependency('cairo', required: false)
 if not cairo.found()
+  used_cairo = 'not found'
   cairo = disabler()
+else
+  used_cairo = 'system'
 endif
 
 install_data('scripts/bp-analyze', install_mode: 'rwxr-xr-x', install_dir: 'bin')
@@ -77,11 +80,15 @@ endif
 # FIXME: Perhaps use our own if we think the system one won't work
 
 ## Handle auto / system / internal method of finding/building BOOST
+used_boost = get_option('boost')
 if get_option('boost') == 'auto'
   boost = dependency('boost', modules : boost_modules, version: '>=1.63', required: false)
   if not boost.found()
     message('Building internal BOOST libraries.')
     subdir('external/boost')
+    used_boost = 'internal'
+  else
+    used_boost = 'system'
   endif
 elif get_option('boost') == 'system'
   boost = dependency('boost', modules : boost_modules)
@@ -90,12 +97,16 @@ else
 endif
 
 ## Handle auto / system / internal method of finding/building EIGEN
+used_eigen = get_option('eigen')
 if get_option('eigen') == 'auto'
   eigen = dependency('eigen3', required: false).as_system()
   if not eigen.found()
+    used_eigen = 'internal'
     message('Using internal copy of eigen.')
     eigen = include_directories('external/eigen3', is_system: true)
     eigen = declare_dependency(include_directories: eigen)
+  else
+    used_eigen = 'system'
   endif
 elif get_option('eigen') == 'system'
   eigen = dependency('eigen3').as_system()
@@ -105,10 +116,13 @@ else
 endif
 
 ## Handle auto / system / internal method of finding  <nlohmann/json.hpp>
+used_json = get_option('json')
 if get_option('json') == 'auto'
   if cpp.has_header('nlohmann/json.hpp')
+    used_json = 'system'
     json = []
   else
+    used_json = 'internal'
     message('Using internal copy of <nlohman/json.hpp>.')
     json = include_directories('external/nlohmann', is_system: true)
     json = declare_dependency(include_directories: json)
@@ -132,8 +146,10 @@ else
 endif
 
 if cpp.has_header('range/v3/view/take.hpp')
+  used_librange = 'system'
   librange = []
 else
+  used_librange = 'internal'
   subdir('external/range-v3/')
 endif
 
@@ -158,3 +174,20 @@ test('bali-phy testsuite',
      timeout: 3000,
      workdir: meson.source_root()/'tests',
      args:[baliphy.full_path(), packagepath])
+
+summary({'host': host_machine.system()
+        }, section: 'Architecture')
+
+summary({'BOOST': used_boost,
+         'Eigen': used_eigen,
+         'nlohmann::json': used_json,
+         'range v3': used_librange,
+         'cairo': used_cairo
+        },section: 'Libraries')
+
+summary({'prefix': get_option('prefix'),
+        },section: 'Directories')
+
+summary({'optimization': get_option('optimization'),
+         'debug': get_option('debug'),
+        },section: 'Configuration')
