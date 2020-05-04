@@ -67,15 +67,7 @@
   <section><info><title>Install a Unix command line: Cygwin (recommended)</title></info>
   <para>Before you can use <application>BAli-Phy</application> on Windows, you need to install a Unix command-line environment.  We recommand installing <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/install.html">Cygwin</link>.  You may then access the Unix command line environment by running the Cygwin shell (not the normal windows command line).  The Cygwin shell mounts the <filename>C:</filename> drive on <filename>/cygdrive/c/</filename>, so you can access the directory <filename>C:/Users/</filename> as <filename>/cygdrive/c/Users/</filename> from within the Cygwin shell, for example.</para>
   <para>
-    While running the Cygwin installer <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.cygwin.com/setup-x86_64.exe"><filename>setup-x86_64.exe</filename></link>, you will be given an opportunity to select additional packages.
-	<itemizedlist>
-	  <listitem><para>From <guilabel>Science</guilabel>, select <guilabel>R</guilabel>.</para></listitem>
-	  <listitem><para>From <guilabel>Math</guilabel>, select <guilabel>gnuplot</guilabel>.</para></listitem>
-	  <listitem><para>From <guilabel>Interpreters</guilabel>, select <guilabel>perl</guilabel>.</para></listitem>
-	  <listitem><para>From <guilabel>Web</guilabel>, select <guilabel>wget</guilabel>.</para></listitem>
-	  <listitem><para>From <guilabel>Editors</guilabel>, select <guilabel>nano</guilabel>.</para></listitem>
-	</itemizedlist>
-    You can re-run the installer to add packages that you did not add during the initial install.
+    While running the Cygwin installer <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.cygwin.com/setup-x86_64.exe"><filename>setup-x86_64.exe</filename></link>, you will be given an opportunity to select additional packages.  Add the following packages: <userinput>R</userinput>, <userinput>gnuplot</userinput>, <userinput>perl</userinput>, <userinput>python3</userinput>, <userinput>wget</userinput>, and <userinput>nano</userinput>.  Its easiest to find them if you set the View to "Full" and enter the package names in the Search box.  You can run the installer again to add more packages.
   </para>
       <note>BAli-Phy refers to windows files using the normal
       <filename>C:/</filename> method because it is compiled as a
@@ -94,7 +86,7 @@
   <section><info><title>Install a Unix command line: Msys2 (alternative)</title></info>
   <para>You can optionally use <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.msys2.org">MSYS2</link> instead of Cygwin. Both MSYS2 and Cygwin can be installed at the same time.  After installing MSYS2, You may access the Unix command line environment by running the MSYS2 shell (not the normal windows command line).  The MSYS2 shell mounts the <filename>C:</filename> drive on <filename>/c/</filename>, so you can access the directory <filename>C:/Users/</filename> as <filename>/c/Users/</filename> from within the MSYS2 shell, for example.</para>
   <para>After installing MSYS2 you will need to install a few packages before you proceed.  Run the MSYS2 shell, and enter the command:
-  <screen><prompt>%</prompt> <userinput>pacman -S perl tar</userinput></screen>
+  <screen><prompt>%</prompt> <userinput>pacman -S perl tar python3 nano</userinput></screen>
   </para>
 
   </section>
@@ -304,8 +296,9 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
 
     <section xml:id="tests"><info><title>Test the installed software</title></info>
     <para>In order to determine that the software has been correctly installed, and the <envar>PATH</envar> has been correctly set, run the following commands:
-    <screen><prompt>%</prompt> <userinput>bali-phy &install.path;/share/doc/bali-phy/examples/sequences/5S-rRNA/25.fasta --iter=150</userinput>
-<prompt>%</prompt> <userinput>bali-phy &install.path;/share/doc/bali-phy/examples/sequences/5S-rRNA/25.fasta --iter=150</userinput>
+    <screen><prompt>%</prompt> <userinput>cp &install.path;/share/doc/bali-phy/examples/sequences/5S-rRNA/25.fasta .</userinput>
+<prompt>%</prompt> <userinput>bali-phy 25.fasta --iter=150</userinput>
+<prompt>%</prompt> <userinput>bali-phy 25.fasta --iter=150</userinput>
 <prompt>%</prompt> <userinput>bp-analyze 25-1 25-2</userinput></screen>
     </para>
     <para>Furthermore, the directories <filename>25-1</filename> and <filename>25-2</filename> should contain a file called <filename>C1.log</filename>.  You should be able to load these files in Tracer, although the chain will not really have converged yet.</para>
