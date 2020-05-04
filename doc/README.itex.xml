@@ -62,47 +62,47 @@
 
   <para>In order to remove an older version, simply delete the directory <filename>bali-phy-<replaceable>oldversion</replaceable></filename>.  This will completely uninstall the old version from the system. BAli-Phy does not create hidden files that will remain after you remove its directory.</para>
   </section>
+
   <section><info><title>Install on MS Windows</title></info>
-  <para>First check that you have a 64-bit version of the Windows operation system installed. The executables for download will only run on a 64-bit installation of Windows.  </para>
-  <section><info><title>Install a Unix command line: Cygwin (recommended)</title></info>
-  <para>Before you can use <application>BAli-Phy</application> on Windows, you need to install a Unix command-line environment.  We recommand installing <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/install.html">Cygwin</link>.  You may then access the Unix command line environment by running the Cygwin shell (not the normal windows command line).  The Cygwin shell mounts the <filename>C:</filename> drive on <filename>/cygdrive/c/</filename>, so you can access the directory <filename>C:/Users/</filename> as <filename>/cygdrive/c/Users/</filename> from within the Cygwin shell, for example.</para>
-  <para>
-    While running the Cygwin installer <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.cygwin.com/setup-x86_64.exe"><filename>setup-x86_64.exe</filename></link>, you will be given an opportunity to select additional packages.  Add the following packages: <userinput>R</userinput>, <userinput>gnuplot</userinput>, <userinput>perl</userinput>, <userinput>python3</userinput>, <userinput>wget</userinput>, and <userinput>nano</userinput>.  Its easiest to find them if you set the View to "Full" and enter the package names in the Search box.  You can run the installer again to add more packages.
-  </para>
-      <note>BAli-Phy refers to windows files using the normal
-      <filename>C:/</filename> method because it is compiled as a
-      native windows executable.
-      The combination of native windows executables (which want <filename>C:/</filename>)
-      and the Cygwin shell (which wants <filename>/cygdrive/c/</filename>) can be
-      confusing.  If you supply Cygwin filenames with
-      <filename>/cygdrive/</filename> to native windows executables like BAli-Phy, then it
-      may complain that the files cannot be found.  
-      </note>
-      <!-- note>
-	In the Cygwin shell you can access downloaded files at
-      <filename>/cygdrive/c/Documents\ and\ Settings/<replaceable>username</replaceable>/Downloads/</filename>. 
-      </note -->
-  </section>
-  <section><info><title>Install a Unix command line: Msys2 (alternative)</title></info>
-  <para>You can optionally use <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.msys2.org">MSYS2</link> instead of Cygwin. Both MSYS2 and Cygwin can be installed at the same time.  After installing MSYS2, You may access the Unix command line environment by running the MSYS2 shell (not the normal windows command line).  The MSYS2 shell mounts the <filename>C:</filename> drive on <filename>/c/</filename>, so you can access the directory <filename>C:/Users/</filename> as <filename>/c/Users/</filename> from within the MSYS2 shell, for example.</para>
-  <para>After installing MSYS2 you will need to install a few packages before you proceed.  Run the MSYS2 shell, and enter the command:
-  <screen><prompt>%</prompt> <userinput>pacman -S perl tar python3 nano</userinput></screen>
-  </para>
+    <para>First check that you have a 64-bit version of the Windows operation system installed. The executables for download will only run on a 64-bit installation of Windows.  </para>
+    <section><info><title>Install a Unix command line: Cygwin (recommended)</title></info>
+    <para>
+       Before you can use <application>BAli-Phy</application> on Windows, you need to install a Unix command-line environment.  
+       We recommand installing <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/install.html">Cygwin</link>: 
+<itemizedlist>
+<listitem>Run the Cygwin installer <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.cygwin.com/setup-x86_64.exe"><filename>setup-x86_64.exe</filename></link>. </listitem>
+<listitem>In the installer, add the following extra packages: <userinput>R</userinput>, <userinput>gnuplot</userinput>, <userinput>perl</userinput>, <userinput>python3</userinput>, <userinput>wget</userinput>, and <userinput>nano</userinput>.</listitem>
+</itemizedlist>
+       Its easiest to find extra packages if you set the View to "Full" and enter each package name in the Search box.  
+       After you run the installer, you can access the Unix command line environment by running the Cygwin shell (not the normal windows command line).  
+       You can run the installer again to add more packages.
+    </para>
+
+    <para>BAli-Phy uses Windows-style filenames (such as <filename>C:\</filename>) because it is compiled as a native windows executable.  However, the Cygwin shell uses UNIX-style filenames.
+<informaltable>
+<tgroup cols="2">
+<colspec colnum="1" colname="col1" colwidth="1*"/>
+<colspec colnum="2" colname="col2" colwidth="1*"/>
+<thead><row>
+<entry>UNIX-style</entry>
+<entry>Windows-style</entry>
+</row></thead>
+<tbody>
+<row><entry>/home/<emphasis>username</emphasis></entry><entry>C:\cygwin64\home\<emphasis>username</emphasis></entry></row>
+<row><entry>~/file</entry><entry>C:\cygwin64\home\<emphasis>username</emphasis>\file</entry></row>
+<row><entry>/cygdrive/c/file</entry><entry>C:\file</entry></row>
+</tbody>
+</tgroup>
+</informaltable>
+You can use the <userinput>cygpath</userinput> program to convert between UNIX and Windows filenames:
+<screen><prompt>%</prompt> cygpath -w ~/Applications
+C:\cygwin64\home\<emphasis>username</emphasis>\Applications\
+</screen>
+</para>
+    <note>If you supply UNIX-style filenames to BAli-Phy, then it will complain "<emphasis role="strong">file does not exist!</emphasis>".</note>
 
   </section>
-  <section><info><title>Install BAli-Phy executables from website</title></info>
-      <para>
-After installing a Unix command line, use it to download and extract the bali-phy executables from the website:
-      <screen><prompt>%</prompt> <userinput>mkdir -p &install.prefix;</userinput>
-<prompt>%</prompt> <userinput>cd &install.prefix;</userinput>
-<prompt>%</prompt> <userinput>wget &win64.url;</userinput>
-<prompt>%</prompt> <userinput>tar -zxf &win64.file;</userinput></screen>
-       Second, check that the <command>bali-phy</command> executable runs:
-      <screen><prompt>%</prompt> <userinput>~/Applications/bali-phy-&version;/bin/bali-phy --version</userinput></screen>
-      You still need to add it to your PATH as described in <xref linkend="path"/>.
-    </para>
 </section>
-  </section>
 
     <section><info><title>Install on Mac OS X</title></info>
     <section><info><title>Install BAli-Phy using homebrew (recommended) </title></info>
