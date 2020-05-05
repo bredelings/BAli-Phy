@@ -659,7 +659,7 @@ int reg_heap::unmap_unforced_steps(int c)
     }
 
     // 5c. Decrement force counts for old steps
-    vector<int> regs_to_unmap;
+    auto& regs_to_unmap = get_scratch_list();
     auto dec_force_count_ = [&,this](int r)
                                {
                                    update_force_count(r, prog_force_counts[r]-1);
@@ -718,6 +718,7 @@ int reg_heap::unmap_unforced_steps(int c)
         prog_forces[r] = non_computed_index;
     }
 
+    release_scratch_list();
 
     // 6. Begin iteratively unmapping steps.
     const auto& delta_step   = vm_step.delta();
