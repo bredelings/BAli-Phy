@@ -607,11 +607,8 @@ int reg_heap::unmap_unforced_steps(int c)
 
     vector<pair<int,int>> modified_steps;
     optional<int> n_steps_between_progs;
-    for(int path_token = ppe_token; path_token != root_child_token; path_token = tokens[path_token].parent)
+    for(int path_token = ppe_token; path_token != root_grandchild_token; path_token = tokens[path_token].parent)
     {
-        if (path_token == root_grandchild_token)
-            n_steps_between_progs = modified_steps.size();
-
         for(auto& [r,s]: tokens[path_token].vm_step.delta())
         {
             // If this is the first time we've seen this reg
@@ -620,6 +617,16 @@ int reg_heap::unmap_unforced_steps(int c)
                 prog_temp[r].set(1);
                 modified_steps.push_back({r,s});
             }
+        }
+    }
+    n_steps_between_progs = modified_steps.size();
+    for(auto& [r,s]: tokens[root_grandchild_token].vm_step.delta())
+    {
+        // If this is the first time we've seen this reg
+        if (not prog_temp[r].test(1))
+        {
+            prog_temp[r].set(1);
+            modified_steps.push_back({r,s});
         }
     }
     assert(n_steps_between_progs);
