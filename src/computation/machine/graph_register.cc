@@ -658,8 +658,18 @@ int reg_heap::unmap_unforced_steps(int c)
         }
     }
 
-    // 5c. Decrement force counts for old steps
+    // 5c. First find regs that start with zero force count.
+    //     We need to do this before decrementing to avoid putting regs on the list twice.
     auto& regs_to_unmap = get_scratch_list();
+    for(int i=0; i < *n_steps_between_progs; i++)
+    {
+        auto [r,s] = modified_steps[i];
+        if (has_step(r) and prog_force_counts[r] == 0)
+            regs_to_unmap.push_back(r);
+    }
+
+    // 5d. Second, decrement force counts for old steps, and find unforced regs
+    //     that started with positive force count.
     auto dec_force_count_ = [&,this](int r)
                                {
                                    update_force_count(r, prog_force_counts[r]-1);
@@ -693,14 +703,6 @@ int reg_heap::unmap_unforced_steps(int c)
         }
     }
 
-    // 5d. Check whether we need to unmap steps that were executed BETWEEN tokens.
-    for(int i=0; i < *n_steps_between_progs; i++)
-    {
-        auto [r,s] = modified_steps[i];
-        if (s < 0 and has_step(r) and prog_force_counts[r] == 0)
-            regs_to_unmap.push_back(r);
-    }
-
 #ifdef DEBUG_MACHINE
     for(int r=1;r<regs.size();r++)
         if (not regs.is_free(r))
@@ -709,6 +711,9 @@ int reg_heap::unmap_unforced_steps(int c)
 
     for(int r: regs_to_unmap)
     {
+        // Don't unmap regs twice!
+        assert(has_step(r));
+
         vm_step.add_value(r, prog_steps[r]);
         vm_result.add_value(r, prog_results[r]);
         vm_force.add_value(r, prog_forces[r]);
