@@ -981,11 +981,13 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
         {
             auto [r,s] =  p;
 
+            // r can be a free reg if s == non_computed_index (-1).
+
             // Record (reg,original result) for likelihood and prior pdfs that change results, including unmapping.
-            if (regs.access(r).flags.any() and not prog_temp[r].test(seen_pdf_bit))
+            if (regs.access_unused(r).flags.any() and not prog_temp[r].test(seen_pdf_bit))
             {
-                // The reg should be used in the original context!
-                assert(regs.is_used(r));
+                // If r is free, we should not get here.
+                assert(not regs.is_free(r));
                 // The reg should be forced in the original context, so should have a step!
                 assert(s > 0);
                 prog_temp[r].set(seen_pdf_bit);
@@ -1895,6 +1897,12 @@ void reg_heap::check_used_regs_in_token(int t) const
 
     for(auto [r,count]: tokens[t].delta_force_count())
     {
+        // Regs can have inaccurate force counts if they are not program-execution tokens.
+        // So its possible to have positive force counts for destroyed regs, in tokens where
+        // the previous program-execution token is destroyed.
+
+        // assert(not regs.is_free(r) or count == 0);
+
         // Check that there are no duplicate regs.
         assert(not prog_temp[r].test(force_bit));
 
@@ -1907,6 +1915,9 @@ void reg_heap::check_used_regs_in_token(int t) const
 
     for(auto [r,result]: tokens[t].delta_force())
     {
+        // Deltas should not contain free regs except resets.
+        assert(not regs.is_free(r) or result < 0);
+
         // Check that there are no duplicate regs.
         assert(not prog_temp[r].test(force_bit));
 
@@ -1920,6 +1931,9 @@ void reg_heap::check_used_regs_in_token(int t) const
 
     for(auto [r,result]: tokens[t].delta_result())
     {
+        // Deltas should not contain free regs except resets.
+        assert(not regs.is_free(r) or result < 0);
+
         // Check that there are no duplicate regs.
         assert(not prog_temp[r].test(result_bit));
 
@@ -1933,6 +1947,9 @@ void reg_heap::check_used_regs_in_token(int t) const
 
     for(auto [r,step]: tokens[t].delta_step())
     {
+        // Deltas should not contain free regs except resets.
+        assert(not regs.is_free(r) or step < 0);
+
         // Check that there are no duplicate regs.
         assert(not prog_temp[r].test(step_bit));
 
