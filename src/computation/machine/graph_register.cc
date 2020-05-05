@@ -1239,15 +1239,15 @@ void reg_heap::force_reg(int r)
         assert(has_force(r2));
     }
 
-    assert(steps[s].call > 0);
-
     // If R2 is WHNF then we are done
-    if (not reg_is_constant(steps[s].call))
+    int call = steps[s].call;
+    assert(call > 0);
+    if (not reg_is_constant(call))
     {
-        if (not has_force(steps[s].call))
-            incremental_evaluate(steps[s].call, true);
-        assert(has_result(steps[s].call));
-        assert(has_force(steps[s].call));
+        if (not has_force(call))
+            incremental_evaluate(call, true);
+        assert(has_result(call));
+        assert(has_force(call));
     }
 }
 
