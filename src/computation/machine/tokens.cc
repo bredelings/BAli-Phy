@@ -577,8 +577,6 @@ int reg_heap::get_first_context()
     int c = get_new_context();
 
     int t = get_unused_token(token_type::root, {});
-  
-    // We need to set can_revert to false here so that we don't revert to nothing.
     set_prev_prog_token(t, prev_prog_token_t(t,0,true));
 
     set_token_for_context(c, t);
@@ -609,6 +607,10 @@ void reg_heap::release_context(int c)
  * 3. If the reg was 
  */
 
+
+// This is only called from two places:
+// - get_first_context():            here we DO NOT set the prev_prog_token
+// - make_child_token(token, type):  here we DO     set the prov_prog_token
 int reg_heap::get_unused_token(token_type type, optional<int> prev_token)
 {
     if (unused_tokens.empty())
@@ -648,7 +650,8 @@ int reg_heap::get_unused_token(token_type type, optional<int> prev_token)
     if (prev_token)
     {
         set_prev_prog_token(t, tokens[*prev_token].prev_prog_token);
-        tokens[t].prev_prog_token->can_revert = false;
+        if (type == token_type::set)
+            tokens[t].prev_prog_token->can_revert = false;
     }
 
     return t;
