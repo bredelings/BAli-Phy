@@ -658,9 +658,16 @@ int reg_heap::unmap_unforced_steps(int c)
         }
     }
 
+    // We currently record regs to unmap on this list instead of just unmapping them directly.
+    // This is because:
+    // (i)  we are using prog_steps to guide how we handle modified_steps below, and unmapping
+    //      things modifies prog_steps.
+    // (ii) we want to check the force counts after we decrement counts from old steps, but
+    //      before we modify the counts by unmapping things.
+    auto& regs_to_unmap = get_scratch_list();
+
     // 5c. First find regs that start with zero force count.
     //     We need to do this before decrementing to avoid putting regs on the list twice.
-    auto& regs_to_unmap = get_scratch_list();
     for(int i=0; i < *n_steps_between_progs; i++)
     {
         auto [r,s] = modified_steps[i];
