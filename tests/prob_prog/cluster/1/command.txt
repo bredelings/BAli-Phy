@@ -1,0 +1,1 @@
+-m Clusters1.hs --iter=2 --name ignore-output
