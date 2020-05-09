@@ -149,6 +149,8 @@ class reg_heap: public Object
 
     std::vector<std::function<void(int)>> reroot_handlers;
 
+    std::vector<std::function<void(int)>> register_likelihood_handlers;
+
     void resize(int s);
 
     void reclaim_used(int);
