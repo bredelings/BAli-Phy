@@ -347,6 +347,8 @@ void reg_heap::register_likelihood_(int r, int s)
 
     assert(not likelihood_heads.count(s));
     likelihood_heads[s] = r;
+    for(auto& handler: register_likelihood_handlers)
+        handler(r);
 }
 
 void reg_heap::unregister_likelihood_(int r, int s)
