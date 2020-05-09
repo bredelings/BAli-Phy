@@ -983,13 +983,15 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     constexpr int seen_pdf_bit = 4;
 
     // 1. reroot to c1 and force the program
+//  auto L1 = likelihood_for_context(c1);
     evaluate_program(c1);
     int num_rvs1 = random_variables.size();
 
     // 2. install another reroot handler
-    vector<pair<int,int>> original_pdf_results;
+    vector<pair<int,int>> original_prior_results;
+    vector<pair<int,int>> original_likelihood_results;
 
-    std::function<void(int)> handler = [&original_pdf_results,this](int old_root)
+    std::function<void(int)> reroot_handler = [&,this](int old_root)
     {
         for(auto& p: tokens[old_root].delta_result())
         {
@@ -1005,12 +1007,28 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
                 // The reg should be forced in the original context, so should have a result!
                 assert(res > 0);
                 prog_temp[r].set(seen_pdf_bit);
-                original_pdf_results.push_back(p);
+
+                assert(regs[r].flags.count() == 1);
+                if (regs[r].flags.test(0))
+                    original_prior_results.push_back(p);
+                else
+                {
+                    assert(regs[r].flags.test(1));
+                    original_likelihood_results.push_back(p);
+                }
             }
         }
     };
 
-    reroot_handlers.push_back(handler);
+    // 2b. install a register_likelihood handler.
+    vector<int> new_likelihood_regs;
+    std::function<void(int)> register_likelihood_handler = [&,this](int likelihood_reg)
+    {
+        new_likelihood_regs.push_back(likelihood_reg);
+    };
+
+    reroot_handlers.push_back(reroot_handler);
+    register_likelihood_handlers.push_back(register_likelihood_handler);
 
     // 3. reroot to c2 and force the program
     evaluate_program(c2);
@@ -1020,29 +1038,51 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     prob_ratios_t R;
     R.variables_changed = (num_rvs1 != num_rvs2);
 
-    for(auto [pdf_reg, orig_pdf_value]: original_pdf_results)
+    for(auto [r_pdf, result1]: original_prior_results)
     {
-        assert(prog_temp[pdf_reg].test(seen_pdf_bit));
+        assert(prog_temp[r_pdf].test(seen_pdf_bit));
 
-        prog_temp[pdf_reg].reset(seen_pdf_bit);
+        prog_temp[r_pdf].reset(seen_pdf_bit);
 
-        // Only compute a ratio if the pdf is present and computed in BOTH contexts.
-        assert(orig_pdf_value > 0);
-        if (has_result(pdf_reg))
+        // Only compute a ratio if the prior is present and computed in BOTH contexts.
+        // How can we do this while also making the prior a list of multiple factors at different regs?
+        if (regs[r_pdf].flags.test(0))
         {
-            int result_reg1 = orig_pdf_value;
-            assert(reg_is_changeable(pdf_reg));
-            int result_reg2 = result_for_reg(pdf_reg);
-            log_double_t r = (*this)[result_reg2].exp.as_log_double() / (*this)[result_reg1].exp.as_log_double();
+            assert(has_result(r_pdf));
+            int result2 = result_for_reg(r_pdf);
+            auto prior1 = (*this)[result1].exp.as_log_double();
+            auto prior2 = (*this)[result2].exp.as_log_double();
 
-            // The reg might be unregistered between the two programs...
-            if (regs.access(pdf_reg).flags.test(0))
-                R.prior_ratio *= r;
-            else if (regs.access(pdf_reg).flags.test(1))
-                R.likelihood_ratio *= r;
+            R.prior_ratio *= (prior2 / prior1);
         }
         else
             R.variables_changed = true;
+    }
+
+    for(auto [r_pdf, result1]: original_likelihood_results)
+    {
+        assert(prog_temp[r_pdf].test(seen_pdf_bit));
+
+        prog_temp[r_pdf].reset(seen_pdf_bit);
+
+        auto likelihood1 = (*this)[result1].exp.as_log_double();
+
+        if (regs[r_pdf].flags.test(1))
+        {
+            assert(has_result(r_pdf));
+            int result2 = result_for_reg(r_pdf);
+            auto likelihood2 = (*this)[result2].exp.as_log_double();
+            R.likelihood_ratio *= (likelihood2 / likelihood1);
+        }
+        else
+            R.likelihood_ratio /= likelihood1;
+    }
+
+    for(int r_pdf: new_likelihood_regs)
+    {
+        int result2 = result_for_reg(r_pdf);
+        auto likelihood2 = (*this)[result2].exp.as_log_double();
+        R.likelihood_ratio *= likelihood2;
     }
 
 #if DEBUG_MACHINE >= 2
@@ -1050,12 +1090,16 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
         assert(x.none());
 #endif
 
-    // 5. remove the reroot handler
+    // 5a. remove the reroot handler
     reroot_handlers.pop_back();
+    // 5b. remove the register_likelihood handler
+    register_likelihood_handlers.pop_back();
 
-//  If pr1 and pr2 are off far enough, this test will fail...
-//    if (pr1 > 0.0 and pr2 > 0.0)
-//      assert( std::abs( (pr2/pr1).log() - R.prior_ratio.log() - R.likelihood_ratio.log()) < 1.0e-4 );
+//  auto L2 = likelihood_for_context(c2);
+//
+//  If L1 and L2 are off far enough, this test will fail...
+//  if (L1 > 0.0 and L2 > 0.0)
+//      assert( std::abs( (L2/L1).log() - R.likelihood_ratio.log()) < 1.0e-4 );
 
     return R;
 }
