@@ -988,8 +988,8 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     int num_rvs1 = random_variables.size();
 
     // 2. install another reroot handler
-    vector<pair<int,int>> original_prior_results;
-    vector<pair<int,int>> original_likelihood_results;
+    auto& original_prior_results = get_pair_scratch_list();
+    auto& original_likelihood_results = get_pair_scratch_list();
 
     std::function<void(int)> reroot_handler = [&,this](int old_root)
     {
@@ -1021,7 +1021,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     };
 
     // 2b. install a register_likelihood handler.
-    vector<int> new_likelihood_regs;
+    auto& new_likelihood_regs = get_scratch_list();
     std::function<void(int)> register_likelihood_handler = [&,this](int likelihood_reg)
     {
         new_likelihood_regs.push_back(likelihood_reg);
@@ -1100,6 +1100,10 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 //  If L1 and L2 are off far enough, this test will fail...
 //  if (L1 > 0.0 and L2 > 0.0)
 //      assert( std::abs( (L2/L1).log() - R.likelihood_ratio.log()) < 1.0e-4 );
+
+    release_scratch_list();        // new_likelihood_regs
+    release_pair_scratch_list();   // orig_likelihood_results
+    release_pair_scratch_list();   // orig_pdf_results
 
     return R;
 }
