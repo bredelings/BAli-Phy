@@ -1025,7 +1025,8 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
         prog_temp[pdf_reg].reset(seen_pdf_bit);
 
         // Only compute a ratio if the pdf is present and computed in BOTH contexts.
-        if (orig_pdf_value > 0 and has_result(pdf_reg))
+        assert(orig_pdf_value > 0);
+        if (has_result(pdf_reg))
         {
             int result_reg1 = orig_pdf_value;
             assert(reg_is_changeable(pdf_reg));
