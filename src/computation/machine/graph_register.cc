@@ -991,7 +991,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     {
         for(auto& p: tokens[old_root].delta_result())
         {
-            auto [r,s] =  p;
+            auto [r,res] =  p;
 
             // r can be a free reg if s == non_computed_index (-1).
 
@@ -1000,8 +1000,8 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
             {
                 // If r is free, we should not get here.
                 assert(not regs.is_free(r));
-                // The reg should be forced in the original context, so should have a step!
-                assert(s > 0);
+                // The reg should be forced in the original context, so should have a result!
+                assert(res > 0);
                 prog_temp[r].set(seen_pdf_bit);
                 original_pdf_results.push_back(p);
             }
