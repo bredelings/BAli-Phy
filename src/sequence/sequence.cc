@@ -23,9 +23,8 @@
 #include "util/cmdline.H"
 #include <range/v3/algorithm/max.hpp>
 
-
-using namespace std;
-
+using std::vector;
+using std::string;
 
 sequence_info::sequence_info(const string& n)
     :name(n)
