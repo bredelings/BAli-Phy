@@ -2552,3 +2552,20 @@ vector<int>& reg_heap::get_scratch_list() const
     return v;
 }
 
+void reg_heap::release_pair_scratch_list() const
+{
+    n_active_pair_scratch_lists--;
+}
+
+vector<pair<int,int>>& reg_heap::get_pair_scratch_list() const
+{
+    while(n_active_pair_scratch_lists >= pair_scratch_lists.size())
+        pair_scratch_lists.push_back( new Vector<pair<int,int>> );
+
+    vector<pair<int,int>>& v = *pair_scratch_lists[ n_active_pair_scratch_lists++ ];
+
+    v.clear();
+
+    return v;
+}
+
