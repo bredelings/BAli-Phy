@@ -530,18 +530,19 @@ MCMC::Result sample_SPR(Parameters& P, int b1, int b2, bool slice = false)
 	vector<log_double_t> rho = {1, 1};
 	int C = sample_tri_multi(p, nodes, rho, true, true);
 
+#ifndef NDEBUG
 	for(auto& x : p)
-	{
-	    for(int b=0; b<2*x.t().n_branches(); b++)
-		for(int i=0;i<x.n_data_partitions(); i++)
-		{
-		    auto A = x[i].get_pairwise_alignment(b);
-		    int n1 = x.t().source(b);
-		    int n2 = x.t().target(b);
-		    assert(A.length1() == x[i].seqlength(n1));
-		    assert(A.length2() == x[i].seqlength(n2));
-		}
-	}
+            for(int i=0;i<x.n_data_partitions(); i++)
+                if (x[i].has_pairwise_alignments())
+                    for(int b=0; b<2*x.t().n_branches(); b++)
+                    {
+                        auto A = x[i].get_pairwise_alignment(b);
+                        int n1 = x.t().source(b);
+                        int n2 = x.t().target(b);
+                        assert(A.length1() == x[i].seqlength(n1));
+                        assert(A.length2() == x[i].seqlength(n2));
+                    }
+#endif
 
 	// 7. Move to the new configuration if chosen.
 
