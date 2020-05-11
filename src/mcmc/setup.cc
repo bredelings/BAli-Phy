@@ -611,7 +611,6 @@ void log_preburnin(ostream& o, const context_ref& M, const string& name, int ite
     double TL = tree_length(P.t());
     o<<" "<<name<<" #"<<iter+1<<"   prior = "<<P.prior()<<"   likelihood = "<<P.likelihood();
     o<<"   |T| = "<<TL;
-    o<<"   |A| = "<<MCMC::alignment_length(P);
     for(int s=0;s<P.n_branch_scales();s++)
 	o<<"   Scale"<<s+1<<"*|T| = "<<P.get_branch_scale(s)*TL;
     o<<std::endl;
