@@ -1501,10 +1501,11 @@ std::string generate_atmodel_program(int n_sequences,
     vector<expression_ref> program_loggers;
     // Therefore, we are constructing a list with values [(prefix1,(Just value1, loggers1)), (prefix1, (Just value1, loggers2))
 
+    // P1. Topology
     auto tree_var = var("topology1");
     sample_atmodel.perform(tree_var, var("sample_topology_1"));
 
-    // P4. Branch lengths
+    // P2. Branch lengths
     expression_ref branch_lengths = List();
     if (n_branches > 0)
     {
@@ -1515,11 +1516,44 @@ std::string generate_atmodel_program(int n_sequences,
     }
 
 
-    // P5. Branch categories
+    // P3. Branch categories
     var branch_categories("branch_categories");
     sample_atmodel.let(branch_categories, { var("map"), var("modifiable"), {var("replicate"), n_branches, 0} });
 
-    // P1. Substitution models
+    // P4. Scales
+    vector<expression_ref> scales;
+    for(int i=0; i<scaleMs.size(); i++)
+    {
+        // FIXME: Ideally we would actually join these models together using a Cons operation and prefix.
+        //        This would obviate the need to create a Scale1 (etc) prefix here.
+        string prefix = "Scale"+convertToString(i+1);
+
+        auto scale_model = var("sample_scale_"+std::to_string(i+1));
+        auto scale_var = sample_atmodel.bind_and_log_model(prefix , scale_model, program_loggers, false);
+        scales.push_back(scale_var);
+    }
+    if (auto l = logger("Scale", get_list(scales), List()) )
+        program_loggers.push_back( l );
+
+    // P5. Distances
+    for(int i=0; i < n_partitions; i++)
+    {
+        string part = std::to_string(i+1);
+        int scale_index = *scale_mapping[i];
+
+        // L1. scale_P ...
+        expression_ref scale = scales[scale_index];
+
+        // L2. distances_P = map (*scale_P) branch_lengths
+        var distances("distances_part"+part);
+        {
+            var x("x");
+            sample_atmodel.let(distances, {var("listArray'"),{var("map"), lambda_quantify(x,{var("*"),scale,x}), branch_lengths}});
+        }
+    }
+    sample_atmodel.empty_stmt();
+
+    // P6. Substitution models
     vector<expression_ref> smodels;
     for(int i=0;i<SMs.size();i++)
     {
@@ -1552,23 +1586,8 @@ std::string generate_atmodel_program(int n_sequences,
         sample_atmodel.let(imodel_var2, {imodel_var, tree_var, heat_var, imodel_training_var});
         imodels.push_back(imodel_var2);
     }
-
-
-    // P3. Scales
-    vector<expression_ref> scales;
-    for(int i=0; i<scaleMs.size(); i++)
-    {
-        // FIXME: Ideally we would actually join these models together using a Cons operation and prefix.
-        //        This would obviate the need to create a Scale1 (etc) prefix here.
-        string prefix = "Scale"+convertToString(i+1);
-
-        auto scale_model = var("sample_scale_"+std::to_string(i+1));
-        auto scale_var = sample_atmodel.bind_and_log_model(prefix , scale_model, program_loggers, false);
-        scales.push_back(scale_var);
-    }
-    if (auto l = logger("Scale", get_list(scales), List()) )
-        program_loggers.push_back( l );
     sample_atmodel.empty_stmt();
+
 
     // FIXME: We can't load the alignments to read their names until we know the alphabets!
     // FIXME: Can we load the alignments as SEQUENCES first?
@@ -1632,13 +1651,6 @@ std::string generate_atmodel_program(int n_sequences,
         // L1. scale_P ...
         expression_ref scale = scales[scale_index];
 
-        // L2. distances_P = map (*scale_P) branch_lengths
-        var distances("distances_part"+part);
-        {
-            var x("x");
-            sample_atmodel.let(distances, {var("listArray'"),{var("map"), lambda_quantify(x,{var("*"),scale,x}), branch_lengths}});
-        }
-
         // L3. let smodel_P = ...
         expression_ref smodel = smodels[smodel_index];
 
@@ -1669,6 +1681,7 @@ std::string generate_atmodel_program(int n_sequences,
         expression_ref maybe_hmms   = var("Nothing");
 
         // Sample the alignment
+        var distances("distances_part"+part);
         var alignment_on_tree("alignment_on_tree_part"+part);
         if (imodel_index)
         {
@@ -1684,6 +1697,7 @@ std::string generate_atmodel_program(int n_sequences,
 
             // alignment_on_tree <- sample $ random_alignment tree hmms model leaf_seqs_array p->my_variable_alignment()
             sample_atmodel.perform(alignment_on_tree, {var("random_alignment"), tree_var, branch_hmms, imodel, leaf_sequence_lengths, variable_alignment_var});
+            sample_atmodel.empty_stmt();
         }
         else
         {
@@ -1699,13 +1713,13 @@ std::string generate_atmodel_program(int n_sequences,
                 auto seq_lengths = expression_ref{{var("listArray'"),{var("compute_sequence_lengths"), leaf_sequences_var, tree_var, pairwise_as}}};
 
                 sample_atmodel.let(alignment_on_tree, {var("AlignmentOnTree"), tree_var, n_nodes, seq_lengths, pairwise_as});
+                sample_atmodel.empty_stmt();
             }
             else if (like_calcs[i] == 1)
             {
                 alignment_on_tree = var("Nothing");
             }
         }
-        sample_atmodel.empty_stmt();
 
         // FIXME - to make an AT *model* we probably need to remove the data from here.
         partitions.push_back({var("Partition"), smodel, maybe_imodel, distances, tree_var, alignment_on_tree, maybe_hmms});
