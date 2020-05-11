@@ -799,16 +799,19 @@ prune_subtree_and_get_3way_alignments(Parameters& P,  const tree_edge& b_subtree
     vector<optional<vector<HMM::bitmask_t>>> As(P.n_data_partitions());
     for(int i=0;i<P.n_data_partitions();i++)
 	// 1a. For variable alignments that we aren't preserving homologies for: record the pairwise alignment A{2,3}
-	if (P[i].variable_alignment() and not preserve_homology)
-	{
-	    auto b0123 = A3::get_bitpath(P[i], nodes0); 	    // The central node (nodes[0]) is mapped to bit 3!
-	    A23[i]  = get_pairwise_alignment_from_bits(b0123, 1, 2);
-	    assert(A23[i]->length1() == P[i].seqlength(nodes0[2]));
-	    assert(A23[i]->length2() == P[i].seqlength(nodes0[3]));
-	}
-        // 1b. If we are preserving homology, then record the alignment A{a,b,x}
-	else
-	    As[i] = get_3way_alignment(P.get_data_partition(i), a, b, x, y);
+        if (P[i].has_pairwise_alignments())
+        {
+            if (P[i].variable_alignment() and not preserve_homology)
+            {
+                auto b0123 = A3::get_bitpath(P[i], nodes0); 	    // The central node (nodes[0]) is mapped to bit 3!
+                A23[i]  = get_pairwise_alignment_from_bits(b0123, 1, 2);
+                assert(A23[i]->length1() == P[i].seqlength(nodes0[2]));
+                assert(A23[i]->length2() == P[i].seqlength(nodes0[3]));
+            }
+            // 1b. If we are preserving homology, then record the alignment A{a,b,x}
+            else
+                As[i] = get_3way_alignment(P.get_data_partition(i), a, b, x, y);
+        }
 
     P.prune_subtree(b_subtree);
 
@@ -816,11 +819,12 @@ prune_subtree_and_get_3way_alignments(Parameters& P,  const tree_edge& b_subtree
     //    set the correct pairwise alignment for the branch (nodes0[2],nodes0[3])
     int branch_from_2_to_3 = P.t().find_branch(nodes0[2],nodes0[3]);
     for(int i=0;i<P.n_data_partitions();i++)
-	if (P[i].variable_alignment() and not preserve_homology)
-	{
-	    P[i].set_pairwise_alignment(branch_from_2_to_3, *A23[i]);
-	    // clear other pairwise alignments??
-	}
+        if (P[i].has_pairwise_alignments())
+            if (P[i].variable_alignment() and not preserve_homology)
+            {
+                P[i].set_pairwise_alignment(branch_from_2_to_3, *A23[i]);
+                // clear other pairwise alignments??
+            }
 
     return tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>{a, b, x, std::move(As)};
 }
@@ -870,8 +874,9 @@ void regraft_subtree_and_set_3way_alignments(Parameters& P, const tree_edge& b_s
     assert(get<2>(alignments) == x);
     assert(get<0>(alignments) == a and get<1>(alignments) == b);
     for(int i=0; i<P.n_data_partitions(); i++)
-	if (preserve_homology or not P[i].variable_alignment())
-	    set_3way_alignment(P[i], bxy, bya, byb, *get<3>(alignments)[i]);
+        if (P[i].has_pairwise_alignments())
+            if (preserve_homology or not P[i].variable_alignment())
+                set_3way_alignment(P[i], bxy, bya, byb, *get<3>(alignments)[i]);
 }
 
 
@@ -959,13 +964,14 @@ move_pruned_subtree(Parameters& P,
     // 3. Adjust pairwise alignments and construct 3-node alignment for attaching to new edge
     vector<optional<vector<HMM::bitmask_t>>> alignments_next(P.n_data_partitions());
     for(int i=0; i<P.n_data_partitions(); i++)
-	if (preserve_homology or not P[i].variable_alignment())
-	{
-	    if (flip_prev_A)
-		alignments_next[i] = move_pruned_subtree(P[i], remap_bitpath(*std::get<3>(alignments_prev)[i],{1,0,2,3,4}), b_ab, b_bc, b_bd);
-	    else
-		alignments_next[i] = move_pruned_subtree(P[i], *std::get<3>(alignments_prev)[i], b_ab, b_bc, b_bd);
-	}
+        if (P[i].has_pairwise_alignments())
+            if (preserve_homology or not P[i].variable_alignment())
+            {
+                if (flip_prev_A)
+                    alignments_next[i] = move_pruned_subtree(P[i], remap_bitpath(*std::get<3>(alignments_prev)[i],{1,0,2,3,4}), b_ab, b_bc, b_bd);
+                else
+                    alignments_next[i] = move_pruned_subtree(P[i], *std::get<3>(alignments_prev)[i], b_ab, b_bc, b_bd);
+            }
 
     return tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>{b, c, x, std::move(alignments_next)};
 }
