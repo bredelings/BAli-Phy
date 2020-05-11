@@ -39,6 +39,7 @@
 #include "dp/dp-array.H"
 
 using std::vector;
+using std::optional;
 using std::abs;
 using std::endl;
 using std::shared_ptr;
@@ -136,9 +137,11 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
     assert(p.size() == order.size());
 
     double heat_beta = p[0].get_beta();
-    vector<vector<HMM::bitmask_t>> a123456(p[0].n_data_partitions());
-    for(int j=0;j<p[0].n_data_partitions();j++) 
-        a123456[j] = A5::get_bitpath(p[0][j], order[0]);
+    vector<optional<vector<HMM::bitmask_t>>> a123456(p[0].n_data_partitions());
+
+    for(int j=0;j<p[0].n_data_partitions();j++)
+        if (p[0][j].has_pairwise_alignments())
+            a123456[j] = A5::get_bitpath(p[0][j], order[0]);
   
     vector< vector<log_double_t> > OS(p.size());
     vector< vector<log_double_t> > OP(p.size());
@@ -157,7 +160,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
         {
 	    if (p[i][j].variable_alignment())
 	    {
-		Matrices[i].push_back(sample_two_nodes_base(p[i][j], a123456[j], order[i], order[0]));
+		Matrices[i].push_back(sample_two_nodes_base(p[i][j], *a123456[j], order[i], order[0]));
 		if (Matrices[i].back()->Pr_sum_all_paths() <= 0.0)
 		    std::cerr<<"Pr = 0   i = "<<i<<"   j="<<j<<" \n";
 #ifndef NDEBUG
