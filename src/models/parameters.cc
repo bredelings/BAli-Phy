@@ -1782,6 +1782,14 @@ std::string generate_atmodel_program(int n_sequences,
                         {var("observe_partition_type_0"),partition,compressed_alignment_var,leaf_sequences_var,counts_var,subst_root_var});
             continue;
         }
+        else if (n_nodes > 2 and not i_mapping[i])
+        {
+            assert(likelihood_calculator == 1);
+
+            program.let(Tuple(transition_ps, cls_var, ancestral_sequences_var, likelihood_var),
+                        {var("observe_partition_type_1"),partition,compressed_alignment_var,leaf_sequences_var,counts_var,subst_root_var});
+            continue;
+        }
 
         var tree_var("tree_part"+part);
         program.let(tree_var, {var("BAliPhy.ATModel.DataPartition.get_tree"),partition});

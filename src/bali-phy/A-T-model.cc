@@ -801,6 +801,10 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 
     //-------------- Likelihood calculator types -----------//
     vector<int> likelihood_calculators(A.size(), 0);
+    for(int i=0;i<imodel_mapping.size();i++)
+        if (not imodel_mapping[i])
+            likelihood_calculators[i] = 1;
+
     if (args.count("likelihood-calculators"))
     {
         likelihood_calculators = convertTo<int>(split(args["likelihood-calculators"].as<string>(), ","));
