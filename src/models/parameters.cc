@@ -969,22 +969,32 @@ void Parameters::NNI(int b1, int b2, bool allow_disconnect_subtree)
 
     vector<vector<HMM::bitmask_t>> a123456(n_data_partitions());
     for(int i=0;i<n_data_partitions();i++)
-        a123456[i] = A5::get_bitpath((*this)[i], order);
+    {
+        if (get_data_partition(i).has_pairwise_alignments())
+            a123456[i] = A5::get_bitpath((*this)[i], order);
+    }
 
     // 3. Perform NNI
     exchange_subtrees(b1, b2);  // alter tree
     std::swap(nodes[0],nodes[2]); // alter nodes
     std::swap(b04, b25);
+
     for(int i=0;i<n_data_partitions();i++)
-        for(auto& col: a123456[i]) // alter matrix
-        {
-            auto col2 = col;
-            col.set(0,col2.test(2));
-            col.set(2,col2.test(0));
-        }
+    {
+        if (get_data_partition(i).has_pairwise_alignments())
+            for(auto& col: a123456[i]) // alter matrix
+            {
+                auto col2 = col;
+                col.set(0,col2.test(2));
+                col.set(2,col2.test(0));
+            }
+    }
 
     // 4. Fix-up the alignment matrix (bits)
     for(int i=0;i<n_data_partitions();i++)
+    {
+        if (not get_data_partition(i).has_pairwise_alignments()) continue;
+
         if (get_data_partition(i).variable_alignment() and allow_disconnect_subtree)
             disconnect_subtree(a123456[i]);
         else
@@ -992,6 +1002,7 @@ void Parameters::NNI(int b1, int b2, bool allow_disconnect_subtree)
             disconnect(a123456[i]);
             minimally_connect(a123456[i]);
         }
+    }
 
     assert(b04 == t().find_branch(nodes[0],nodes[4]));
     assert(b14 == t().find_branch(nodes[1],nodes[4]));
@@ -1003,13 +1014,15 @@ void Parameters::NNI(int b1, int b2, bool allow_disconnect_subtree)
     for(int i=0;i<n_data_partitions();i++)
     {
         auto dp = get_data_partition(i);
-        dp.set_pairwise_alignment(b04, get_pairwise_alignment_from_bits(a123456[i], 0, 4));
-        dp.set_pairwise_alignment(b14, get_pairwise_alignment_from_bits(a123456[i], 1, 4));
-        dp.set_pairwise_alignment(b25, get_pairwise_alignment_from_bits(a123456[i], 2, 5));
-        dp.set_pairwise_alignment(b35, get_pairwise_alignment_from_bits(a123456[i], 3, 5));
-        dp.set_pairwise_alignment(b45, get_pairwise_alignment_from_bits(a123456[i], 4, 5));
+        if (dp.has_pairwise_alignments())
+        {
+            dp.set_pairwise_alignment(b04, get_pairwise_alignment_from_bits(a123456[i], 0, 4));
+            dp.set_pairwise_alignment(b14, get_pairwise_alignment_from_bits(a123456[i], 1, 4));
+            dp.set_pairwise_alignment(b25, get_pairwise_alignment_from_bits(a123456[i], 2, 5));
+            dp.set_pairwise_alignment(b35, get_pairwise_alignment_from_bits(a123456[i], 3, 5));
+            dp.set_pairwise_alignment(b45, get_pairwise_alignment_from_bits(a123456[i], 4, 5));
+        }
     }
-
 }
 
 void Parameters::show_h_tree() const
