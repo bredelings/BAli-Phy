@@ -248,7 +248,7 @@ bool data_partition::pairwise_alignment_is_unset(int b) const
 
 void mutable_data_partition::unset_pairwise_alignment(int b)
 {
-    assert(not has_IModel() or likelihood_calculator() == 0);
+    assert(likelihood_calculator() == 0);
     int B = t().reverse(b);
     assert(pairwise_alignment_is_unset(b) or (get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped()));
 
@@ -261,7 +261,7 @@ void mutable_data_partition::unset_pairwise_alignment(int b)
 /// Set the pairwise alignment value, but don't mark the alignment & sequence lengths as changed.
 void mutable_data_partition::set_pairwise_alignment(int b, const pairwise_alignment_t& pi)
 {
-    assert(not has_IModel() or likelihood_calculator() == 0);
+    assert(likelihood_calculator() == 0);
     int B = t().reverse(b);
     assert(pairwise_alignment_is_unset(b) or (get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped()));
     const context* C = P;
@@ -277,7 +277,7 @@ const matrix<int>& data_partition::alignment_constraint() const
 
 expression_ref data_partition::get_pairwise_alignment_(int b) const
 {
-    assert(not has_IModel() or likelihood_calculator() == 0);
+    assert(likelihood_calculator() == 0);
     return DPC().pairwise_alignment_for_branch[b].get_value(*P);
 }
 
@@ -486,36 +486,42 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     for(int i=0; i<p->t().n_leaves(); i++)
         sequences[i] = (vector<int>)(leaf_sequence_indices[i].get_value(*p).as_<EVector>());
 
-    // Extract alignment from data partition
-    auto alignment_on_tree = expression_ref{var("BAliPhy.ATModel.DataPartition.get_alignment"), partition};
-    alignment_on_tree = p->get_expression( p->add_compute_expression(alignment_on_tree) );
-    auto as = expression_ref{var("Bio.Alignment.pairwise_alignments"), alignment_on_tree};
-    auto seq_lengths = expression_ref{var("Bio.Alignment.sequence_lengths"),alignment_on_tree};
-
-    for(int n=0;n<t.n_nodes();n++)
-        sequence_length_indices[n] = p->add_compute_expression( {var("Data.Array.!"), seq_lengths, n} );
-
-    // Add method indices for calculating branch HMMs and alignment prior
-    if (imodel_index)
+    if (like_calc == 0)
     {
-        // D = Params.substitutionBranchLengths!scale_index
+        // Extract pairwise alignments from data partition
+        auto alignment_on_tree = expression_ref{var("BAliPhy.ATModel.DataPartition.get_alignment"), partition};
+        alignment_on_tree = p->get_expression( p->add_compute_expression(alignment_on_tree) );
 
-        // R5. Register probabilities of each sequence length
-        expression_ref model = {fromJust,{var("BAliPhy.ATModel.DataPartition.imodel"),partition}};
-        expression_ref lengthp = {snd,model};
-        for(int n=0;n<sequence_length_pr_indices.size();n++)
+        /* Initialize params -- from alignments.ref(*p) */
+        auto as = expression_ref{var("Bio.Alignment.pairwise_alignments"), alignment_on_tree};
+        pairwise_alignment_for_branch = get_params_from_array(p, as, 2*B);
+
+        auto seq_lengths = expression_ref{var("Bio.Alignment.sequence_lengths"),alignment_on_tree};
+        for(int n=0;n<t.n_nodes();n++)
+            sequence_length_indices[n] = p->add_compute_expression( {var("Data.Array.!"), seq_lengths, n} );
+
+        // Add method indices for calculating branch HMMs and alignment prior
+        if (imodel_index)
         {
-            expression_ref l = sequence_length_indices[n].ref(*p);
-            sequence_length_pr_indices[n] = p->add_compute_expression( {lengthp,l} );
+            // D = Params.substitutionBranchLengths!scale_index
+
+            // R5. Register probabilities of each sequence length
+            expression_ref model = {fromJust,{var("BAliPhy.ATModel.DataPartition.imodel"),partition}};
+            expression_ref lengthp = {snd,model};
+            for(int n=0;n<sequence_length_pr_indices.size();n++)
+            {
+                expression_ref l = sequence_length_indices[n].ref(*p);
+                sequence_length_pr_indices[n] = p->add_compute_expression( {lengthp,l} );
+            }
+
+            // R6. Register branch HMMs
+            param hmms = p->add_compute_expression({fromJust,{var("BAliPhy.ATModel.DataPartition.hmms"),partition}});
+            for(int b=0;b<B;b++)
+                branch_HMMs.push_back( p->add_compute_expression( {var("Data.Array.!"), hmms.ref(*p), b} ) );
+
+            // Alignment prior
+            alignment_prior_index = p->add_compute_expression( {var("Probability.Distribution.RandomAlignment.alignment_pr"), alignment_on_tree, hmms.ref(*p), model} );
         }
-
-        // R6. Register branch HMMs
-        param hmms = p->add_compute_expression({fromJust,{var("BAliPhy.ATModel.DataPartition.hmms"),partition}});
-        for(int b=0;b<B;b++)
-            branch_HMMs.push_back( p->add_compute_expression( {var("Data.Array.!"), hmms.ref(*p), b} ) );
-
-        // Alignment prior
-        alignment_prior_index = p->add_compute_expression( {var("Probability.Distribution.RandomAlignment.alignment_pr"), alignment_on_tree, hmms.ref(*p), model} );
     }
 
     cl_index = p->add_compute_expression({var("Data.List.!!"),p->my_partition_cond_likes(),i});
@@ -527,8 +533,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
         conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cl_index.ref(*p),b});
 
-    /* Initialize params -- from alignments.ref(*p) */
-    pairwise_alignment_for_branch = get_params_from_array(p, as, 2*B);
 }
 
 //-----------------------------------------------------------------------------//
@@ -1670,16 +1674,23 @@ std::string generate_atmodel_program(int n_sequences,
         }
         else
         {
-            // P5.II Create modifiables for pairwise alignments
-            expression_ref initial_alignments_exp = {var("pairwise_alignments_from_matrix"), compressed_alignment_var, tree_var};
+            if (like_calcs[i] == 0)
+            {
+                // P5.II Create modifiables for pairwise alignments
+                expression_ref initial_alignments_exp = {var("pairwise_alignments_from_matrix"), compressed_alignment_var, tree_var};
 
-            var pairwise_as("pairwise_as_part"+part);
-            sample_atmodel.let(pairwise_as,  {var("force_struct"),{var("listArray'"), {var("map"),var("modifiable"),initial_alignments_exp}}});
+                var pairwise_as("pairwise_as_part"+part);
+                sample_atmodel.let(pairwise_as,  {var("force_struct"),{var("listArray'"), {var("map"),var("modifiable"),initial_alignments_exp}}});
 
-            // R4. Register sequence length methods
-            auto seq_lengths = expression_ref{{var("listArray'"),{var("compute_sequence_lengths"), leaf_sequences_var, tree_var, pairwise_as}}};
+                // R4. Register sequence length methods
+                auto seq_lengths = expression_ref{{var("listArray'"),{var("compute_sequence_lengths"), leaf_sequences_var, tree_var, pairwise_as}}};
 
-            sample_atmodel.let(alignment_on_tree, {var("AlignmentOnTree"), tree_var, n_nodes, seq_lengths, pairwise_as});
+                sample_atmodel.let(alignment_on_tree, {var("AlignmentOnTree"), tree_var, n_nodes, seq_lengths, pairwise_as});
+            }
+            else if (like_calcs[i] == 1)
+            {
+                alignment_on_tree = var("Nothing");
+            }
         }
         sample_atmodel.empty_stmt();
 
@@ -2033,13 +2044,14 @@ Parameters::Parameters(const Program& prog,
             // construct compressed alignment, counts, and mapping
             auto& [AA, counts, mapping] = *compressed_alignments[i];
             PC->DPC.emplace_back(this, i, AA.get_alphabet(), like_calcs[i]);
-            get_data_partition(i).set_alignment(AA);
+            if (like_calcs[i] == 0)
+                get_data_partition(i).set_alignment(AA);
         }
         else
         {
             auto counts = vector<int>(A[i].length(), 1);
             PC->DPC.emplace_back(this, i, A[i].get_alphabet(), like_calcs[i]);
-            if (not imodel_index_for_partition(i))
+            if (like_calcs[i] == 0)
                 get_data_partition(i).set_alignment(A[i]);
         }
     }
