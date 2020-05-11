@@ -119,6 +119,10 @@ protected:
 
 public:
 
+    bool has_pairwise_alignments() const;
+
+    bool has_alignment_matrix() const;
+
     /// Is the alignment allowed to vary?
     bool variable_alignment() const;
 

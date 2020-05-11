@@ -326,6 +326,18 @@ log_double_t data_partition::heated_likelihood() const
         return pow(likelihood(),get_beta());
 }
 
+bool data_partition::has_pairwise_alignments()  const
+{
+    // FIXME -- perhaps we should make the vector of pairwise alignments into an optionl<vector<T>> and check that.
+    return likelihood_calculator() == 0;
+}
+
+bool data_partition::has_alignment_matrix() const
+{
+    return likelihood_calculator() == 1;
+}
+
+
 int data_partition::likelihood_calculator() const
 {
     return DPC().likelihood_calculator;
