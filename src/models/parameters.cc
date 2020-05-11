@@ -235,6 +235,8 @@ int data_partition::seqlength(int n) const
     if (n < DPC().sequences.size())
         return DPC().sequences[n].size();
 
+    assert(has_pairwise_alignments());
+
     int l = DPC().sequence_length_indices[n].get_value(*P).as_int();
 
     return l;
