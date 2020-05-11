@@ -16,7 +16,7 @@ builtin sample_leaf_sequence 7 "sample_leaf_node_sequence" "SModel"
 
 -- peeling for SEV
 builtin bitmask_from_alignment 2 "bitmask_from_alignment" "Alignment"
-builtin peel_leaf_branch_SEV 4 "peel_leaf_branch_SEV" "SModel"
+builtin peel_leaf_branch_SEV 5 "peel_leaf_branch_SEV" "SModel"
 builtin peel_internal_branch_SEV 4 "peel_internal_branch_SEV" "SModel"
 builtin calc_root_probability_SEV 5 "calc_root_probability_SEV" "SModel"
 
