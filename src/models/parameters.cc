@@ -1526,13 +1526,13 @@ std::string generate_atmodel_program(int n_sequences,
     {
         // FIXME: Ideally we would actually join these models together using a Cons operation and prefix.
         //        This would obviate the need to create a Scale1 (etc) prefix here.
-        string prefix = "Scale"+convertToString(i+1);
+        string prefix = "scale"+convertToString(i+1);
 
         auto scale_model = var("sample_scale_"+std::to_string(i+1));
         auto scale_var = sample_atmodel.bind_and_log_model(prefix , scale_model, program_loggers, false);
         scales.push_back(scale_var);
     }
-    if (auto l = logger("Scale", get_list(scales), List()) )
+    if (auto l = logger("scale", get_list(scales), List()) )
         program_loggers.push_back( l );
 
     // P5. Distances
