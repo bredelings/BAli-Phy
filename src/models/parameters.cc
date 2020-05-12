@@ -1672,17 +1672,13 @@ std::string generate_atmodel_program(int n_sequences,
         {
             program.let(Tuple(compressed_alignment_var, counts_var, var(-1)), {var("compress_alignment"), alignment_var, n_leaves});
         }
-        else
-        {
-            program.let(compressed_alignment_var, alignment_var);
-        }
         //---------------------------------------------------------------------------//
 
         var sequences_var("sequences_part"+part);
         var leaf_sequences_var("leaf_sequences_part"+part);
         if (like_calcs[i] == 0 or n_nodes == 1)
         {
-            program.let(sequences_var, {var("sequences_from_alignment"),compressed_alignment_var});
+            program.let(sequences_var, {var("sequences_from_alignment"),alignment_var});
             program.let(leaf_sequences_var, {var("listArray'"),{var("take"),n_leaves,sequences_var}});
             leaf_sequences.push_back(leaf_sequences_var);
         }
