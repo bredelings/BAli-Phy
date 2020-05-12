@@ -1823,11 +1823,8 @@ std::string generate_atmodel_program(int n_sequences,
         }
         else if (likelihood_calculator == 0)
         {
-            var leaf_seq_counts("leaf_sequence_counts_part"+part);
-            program.let(leaf_seq_counts, {var("listArray'"),{var("Bio.Alignment.leaf_sequence_counts"), compressed_alignment_var, n_leaves, counts_var}});
-
             // Create and set conditional likelihoods for each branch
-            program.let(cls_var, {var("cached_conditional_likelihoods"), tree_var, leaf_sequences_var, leaf_seq_counts, as, alphabet_var, transition_ps, f, smap});
+            program.let(cls_var, {var("cached_conditional_likelihoods"), tree_var, leaf_sequences_var, as, alphabet_var, transition_ps, f, smap});
 
             // FIXME: broken for fixed alignments of 2 sequences.
             if (n_nodes > 2)

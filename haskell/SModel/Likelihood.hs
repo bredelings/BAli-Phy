@@ -3,7 +3,7 @@ module SModel.Likelihood  where
 import Tree
 
 -- peeling for connected-CLVs
-builtin peel_leaf_branch 5 "peel_leaf_branch" "SModel"
+builtin peel_leaf_branch 4 "peel_leaf_branch" "SModel"
 builtin alignment_index2 2 "alignment_index2" "SModel"
 builtin alignment_index3 3 "alignment_index3" "SModel"
 builtin peel_internal_branch 6 "peel_internal_branch" "SModel"
@@ -28,13 +28,13 @@ builtin sample_leaf_sequence_SEV 7 "sample_leaf_node_sequence_SEV" "SModel"
 builtin peel_likelihood_1 3 "peel_likelihood_1" "SModel"
 builtin peel_likelihood_2 6 "peel_likelihood_2" "SModel"
 
-cached_conditional_likelihoods t seqs counts as alpha ps f smap = let lc    = mkArray (2*numBranches t) lcf
-                                                                      lcf b = let bb = b `mod` (numBranches t)
-                                                                              in case edgesBeforeEdge t b of 
-                                                                                   []      -> let n=sourceNode t b
-                                                                                              in peel_leaf_branch (seqs!n) (counts!n) alpha (ps!bb) smap
-                                                                                   [b1,b2] -> peel_internal_branch (lc!b1) (lc!b2) (as!b1) (as!b2) (ps!bb) f
-                                                                  in lc
+cached_conditional_likelihoods t seqs as alpha ps f smap = let lc    = mkArray (2*numBranches t) lcf
+                                                               lcf b = let bb = b `mod` (numBranches t)
+                                                                       in case edgesBeforeEdge t b of 
+                                                                            []      -> let n=sourceNode t b
+                                                                                       in peel_leaf_branch (seqs!n) alpha (ps!bb) smap
+                                                                            [b1,b2] -> peel_internal_branch (lc!b1) (lc!b2) (as!b1) (as!b2) (ps!bb) f
+                                                           in lc
 
 peel_likelihood t cl as f root = let likelihoods = mkArray (numNodes t) peel_likelihood'
                                      peel_likelihood' root = let branches_in = edgesTowardNode t root

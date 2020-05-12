@@ -669,7 +669,7 @@ namespace substitution {
 
 
     Likelihood_Cache_Branch*
-    peel_leaf_branch_simple(const EVector& sequence, const EVector& counts, const alphabet& a, const EVector& transition_P)
+    peel_leaf_branch_simple(const EVector& sequence, const alphabet& a, const EVector& transition_P)
     {
         total_peel_leaf_branches++;
 
@@ -874,8 +874,7 @@ namespace substitution {
     // This version differs from the 'simple' version because it has to use sum(Q,smap,s1,l2)
     // instead of just Q(s1,l2).
     Likelihood_Cache_Branch*
-    peel_leaf_branch(const EVector& sequence, const EVector& counts, const alphabet& a,
-                     const EVector& transition_P, const EVector& smap)
+    peel_leaf_branch(const EVector& sequence, const alphabet& a, const EVector& transition_P, const EVector& smap)
     {
         // Do this before accessing matrices or other_subst
         int L0 = sequence.size();
@@ -886,7 +885,7 @@ namespace substitution {
         const int n_letters = a.n_letters();
 
         if (n_states == n_letters and is_iota(smap))
-            return peel_leaf_branch_simple(sequence, counts, a, transition_P);
+            return peel_leaf_branch_simple(sequence, a, transition_P);
 
         total_peel_leaf_branches++;
 

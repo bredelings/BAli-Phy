@@ -1368,7 +1368,7 @@ using boost::dynamic_bitset;
 
 namespace substitution {
     Likelihood_Cache_Branch*
-    peel_leaf_branch(const EVector& sequence, const EVector& counts, const alphabet& a, const EVector& transition_P, const EVector& smap);
+    peel_leaf_branch(const EVector& sequence, const alphabet& a, const EVector& transition_P, const EVector& smap);
 
     Likelihood_Cache_Branch*
     peel_leaf_branch_SEV(const EVector& sequence, const alphabet& a, const EVector& transition_P, const dynamic_bitset<>& mask, const EVector& smap);
@@ -1380,9 +1380,8 @@ extern "C" closure builtin_function_peel_leaf_branch(OperationArgs& Args)
     auto arg1 = Args.evaluate(1);
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
-    auto arg4 = Args.evaluate(4);
 
-    return substitution::peel_leaf_branch(arg0.as_<EVector>(), arg1.as_<EVector>(), *arg2.as_<Alphabet>(), arg3.as_<EVector>(), arg4.as_<EVector>());
+    return substitution::peel_leaf_branch(arg0.as_<EVector>(), *arg1.as_<Alphabet>(), arg2.as_<EVector>(), arg3.as_<EVector>());
 }
 
 
