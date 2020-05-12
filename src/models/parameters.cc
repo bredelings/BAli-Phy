@@ -1960,7 +1960,7 @@ Parameters::Parameters(const Program& prog,
         if (not imodel_index_for_partition(i) and allow_compression)
         {
             compressed_alignments[i] = compress_alignment(A[i], ttt);
-            alignments[i] = &compressed_alignments[i]->A;
+            alignments[i] = &compressed_alignments[i]->compressed;
             std::cerr<<"Partition #"<<i+1<<": "<<A[i].length()<<" columns -> "<<alignments[i]->length()<<" unique patterns.\n";
         }
         else

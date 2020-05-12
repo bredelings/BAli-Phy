@@ -8,7 +8,7 @@
 
 struct compressed_alignment
 {
-    alignment A;
+    alignment compressed;
     std::vector<int> counts;
     std::vector<int> mapping;
 };
