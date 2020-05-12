@@ -1591,7 +1591,7 @@ std::string generate_atmodel_program(int n_sequences,
 
     // FIXME: We can't load the alignments to read their names until we know the alphabets!
     // FIXME: Can we load the alignments as SEQUENCES first?
-    var sequence_names_var("sequence_names");
+    var taxon_names_var("taxa");
 
     // FIXME: We aren't using the ranges to select columns!
 
@@ -1640,12 +1640,12 @@ std::string generate_atmodel_program(int n_sequences,
         if (i==0)
         {
             program.let(alignment_var, loaded_alignment);
-            program.let(sequence_names_var, {var("Bio.Alignment.builtin_sequence_names"),alignment_var});
+            program.let(taxon_names_var, {var("Bio.Alignment.sequence_names"),alignment_var});
         }
         else
         {
             // This is using EVector String instead of [[Char]] for the sequence names!
-            program.let(alignment_var, {var("builtin_reorder_alignment"),sequence_names_var,loaded_alignment});
+            program.let(alignment_var, {var("reorder_alignment"),taxon_names_var,loaded_alignment});
         }
 
         // L1. scale_P ...
@@ -1871,7 +1871,7 @@ std::string generate_atmodel_program(int n_sequences,
                                  heat_var,
                                  variable_alignment_var,
                                  subst_root_var,
-                                 sequence_names_var},
+                                 taxon_names_var},
 
                            var("loggers")));
     program_file<<"\n\nmain = "<<program.get_expression().print();
@@ -1978,7 +1978,10 @@ Parameters::Parameters(const Program& prog,
 
     // 1. Get the leaf labels out of the machine.  These should be based on the leaf sequences alignment for partition 1.
     // FIXME, if partition 1 has ancestral sequences, we will do the wrong thing here, even if we pass in a tree.
-    PC->sequence_names     = add_compute_expression({var("BAliPhy.ATModel.sequence_names"), my_atmodel_export()});
+    expression_ref sequence_names_exp = {var("BAliPhy.ATModel.sequence_names"), my_atmodel_export()};
+    sequence_names_exp = {var("Data.List.map"),var("Foreign.Vector.pack_cpp_string"),sequence_names_exp};
+    sequence_names_exp = {var("Foreign.Vector.list_to_vector"),sequence_names_exp};
+    PC->sequence_names     = add_compute_expression(sequence_names_exp);
 
     // FIXME: make the program represent these as [String], and translate it to an EVector just for export purposes?
     auto sequence_names = PC->sequence_names.get_value(*this).as_<EVector>();

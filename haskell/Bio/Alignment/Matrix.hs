@@ -29,10 +29,10 @@ builtin builtin_sequence_names 1 "sequence_names" "Alignment"
 sequence_names :: AlignmentMatrix -> [String]
 sequence_names a = map unpack_cpp_string $ list_from_vector $ builtin_sequence_names a
 
-builtin_reorder_alignment :: EVector Int -> AlignmentMatrix -> AlignmentMatrix
+builtin_reorder_alignment :: EVector Sequence -> AlignmentMatrix -> AlignmentMatrix
 builtin builtin_reorder_alignment 2 "reorder_alignment" "Alignment"
 
-reorder_alignment :: [Int] -> AlignmentMatrix -> AlignmentMatrix
+reorder_alignment :: [String] -> AlignmentMatrix -> AlignmentMatrix
 reorder_alignment names a = builtin_reorder_alignment names' a where names' = list_to_vector $ map pack_cpp_string names
 
 builtin builtin_alignment_row_to_bitvector 2 "alignment_row_to_presence_bitvector" "Bits"
