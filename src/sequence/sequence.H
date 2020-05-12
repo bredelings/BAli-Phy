@@ -28,9 +28,9 @@ struct sequence_info
     std::string comment;
     sequence_info() {}
 
-    sequence_info(const std::string& n);
+    explicit sequence_info(const std::string& n);
 
-    sequence_info(const std::string& n,const std::string& c);
+    explicit sequence_info(const std::string& n,const std::string& c);
 };
 
 struct sequence: public std::string, public sequence_info
@@ -41,9 +41,9 @@ struct sequence: public std::string, public sequence_info
 
     sequence() {}
 
-    sequence(const sequence_info&);
+    explicit sequence(const sequence_info&);
 
-    sequence(const std::string& n,const std::string& c);
+    explicit sequence(const std::string& n,const std::string& c);
 };
 
 bool operator==(const sequence&,const sequence&);
