@@ -53,5 +53,10 @@ compress_alignment a n = (a', counts, mapping) where ca = builtin_compress_align
                                                      counts = get_vector_index ca 1
                                                      mapping = get_vector_index ca 2
 
+
+builtin builtin_uncompress_alignment 2 "uncompress_alignment" "Alignment"
+
+uncompress_alignment (a, counts, mapping) = builtin_uncompress_alignment a mapping
+
 -- Alignment -> Int -> EVector Int -> [EVector Int]
 leaf_sequence_counts a n counts = list_from_vector $ builtin_leaf_sequence_counts a n counts

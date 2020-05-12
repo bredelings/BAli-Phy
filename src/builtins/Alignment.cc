@@ -338,6 +338,17 @@ extern "C" closure builtin_function_compress_alignment(OperationArgs& Args)
     return result;
 }
 
+extern "C" closure builtin_function_uncompress_alignment(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& A1 = arg0.as_checked<alignment>();
+
+    auto arg1 = Args.evaluate(1);
+    auto& mapping = arg1.as_<EVector>();
+
+    return object_ptr<Box<alignment>>(new Box<alignment>(uncompress_alignment(A1, (vector<int>)mapping)));
+}
+
 extern "C" closure builtin_function_leaf_sequence_counts(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
