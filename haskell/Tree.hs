@@ -5,28 +5,51 @@ data Tree = Tree (Array Int [Int]) (Array Int (Int,Int,Int,Int)) Int Int
 -- If we allow adding branches to functions later, we could move polymorphic definitions into files. e.g. for show.
 data RootedTree = RootedTree Tree Int (Array Int Bool)
 
+data LabelledTree = LabelledTree Tree [String]
+
 edgesOutOfNode (Tree nodesArray _ _ _) node = nodesArray ! node
 edgesOutOfNode (RootedTree t _ _) node = edgesOutOfNode t node
+edgesOutOfNode (LabelledTree t _) node = edgesOutOfNode t node
+
 nodesForEdge (Tree _ branchesArray _ _) edgeIndex = branchesArray ! edgeIndex
 nodesForEdge (RootedTree t _ _) edgeIndex = nodesForEdge t edgeIndex
+nodesForEdge (LabelledTree t _) edgeIndex = nodesForEdge t edgeIndex
+
 numNodes (Tree _ _ n _) = n
 numNodes (RootedTree t _ _) = numNodes t
+numNodes (LabelledTree t _) = numNodes t
+
 numBranches (Tree _ _ _ n) = n
 numBranches (RootedTree t _ _) = numBranches t
+numBranches (LabelledTree t _) = numBranches t
+
 -- Given that this is a tree, would numNodes t - numBranches t + 2 work for n_leaves >=3?
 numLeaves t = length $ leaf_nodes t
 
 root (RootedTree _ r _) = r
+root (LabelledTree t _) = root t
+
 remove_root (RootedTree t _ _) = t
+remove_root (LabelledTree t labels) = LabelledTree (remove_root t) labels
+
+get_labels (LabelledTree _ labels) = labels
+add_labels t labels = LabelledTree t labels
+
+add_root (LabelledTree t labels) r = LabelledTree (add_root t r) labels
 add_root t r = rt
     where check_away_from_root b = (sourceNode rt b == root rt) || (or $ map (away_from_root rt) (edgesBeforeEdge rt b))
           nb = numBranches t * 2
           rt = RootedTree t r (mkArray nb check_away_from_root)
 
 away_from_root (RootedTree t r arr) b = arr!b
+away_from_root (LabelledTree t _) b = away_from_root t b
+
 toward_root    rt b = not $ away_from_root rt b
 
+parentBranch (LabelledTree t _) n = parentBranch t n
 parentBranch rooted_tree n = listToMaybe [b | b <- edgesOutOfNode rooted_tree n, toward_root rooted_tree b]
+
+parentNode (LabelledTree t _) n = parentNode t n
 parentNode rooted_tree n = case parentBranch rooted_tree n of Just b  -> Just $ targetNode rooted_tree b
                                                               Nothing -> Nothing
 
