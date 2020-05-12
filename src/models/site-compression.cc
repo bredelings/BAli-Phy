@@ -76,11 +76,7 @@ alignment alignment_from_patterns(const alignment& old, const vector<vector<int>
 {
     assert(n_leaves == patterns[0].size());
 
-    vector<sequence> seqs;
-    for(int i=0;i<n_leaves;i++)
-        seqs.push_back(sequence(old.seqs()[i].name));
-
-    alignment A(old.get_alphabet(), seqs, patterns.size());
+    alignment A(old.get_alphabet(), old.seqs(), patterns.size());
 
     for(int i=0;i<n_leaves;i++)
         for(int c=0;c<A.length();c++)
