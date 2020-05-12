@@ -1672,7 +1672,6 @@ std::string generate_atmodel_program(int n_sequences,
         else
         {
             program.let(compressed_alignment_var, alignment_var);
-            program.let(counts_var, {var("list_to_vector"),{ var("replicate"), {var("alignment_length"),alignment_var}, 1} });
         }
         //---------------------------------------------------------------------------//
 
