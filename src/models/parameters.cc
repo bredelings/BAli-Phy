@@ -445,7 +445,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
      sequence_length_indices(p->t().n_nodes()),
      sequence_length_pr_indices(p->t().n_nodes()),
      seqs( p->t().n_nodes() ),
-     sequences( p->t().n_leaves() ),
+     sequences(),
      a(a_.clone()),
      branch_HMM_type(p->t().n_branches(),0),
      likelihood_calculator(like_calc)
@@ -480,13 +480,16 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     for(int b=0;b<B;b++)
         transition_p_method_indices.push_back( p->add_compute_expression( {var("Data.Array.!"), transition_ps, b} ) );
 
-    // R2. Register array of leaf sequences
-    expression_ref leaf_sequences = {var("Data.List.!!"),{var("BAliPhy.ATModel.leaf_sequences"),p->my_atmodel_export()},i};
-    for(int i=0; i<p->t().n_leaves(); i++)
-        leaf_sequence_indices.push_back( p->add_compute_expression({var("Data.Array.!"),leaf_sequences,i}) );
+    if (like_calc == 0)
+    {
+        // R2. Register array of leaf sequences
+        expression_ref leaf_sequences = {var("Data.List.!!"),{var("BAliPhy.ATModel.leaf_sequences"),p->my_atmodel_export()},i};
+        for(int i=0; i<p->t().n_leaves(); i++)
+            leaf_sequence_indices.push_back( p->add_compute_expression({var("Data.Array.!"),leaf_sequences,i}) );
 
-    for(int i=0; i<p->t().n_leaves(); i++)
-        sequences[i] = (vector<int>)(leaf_sequence_indices[i].get_value(*p).as_<EVector>());
+        for(int i=0; i<p->t().n_leaves(); i++)
+            sequences.push_back( (vector<int>)(leaf_sequence_indices[i].get_value(*p).as_<EVector>()) );
+    }
 
     if (like_calc == 0)
     {
@@ -1676,10 +1679,15 @@ std::string generate_atmodel_program(int n_sequences,
         //---------------------------------------------------------------------------//
 
         var sequences_var("sequences_part"+part);
-        program.let(sequences_var, {var("sequences_from_alignment"),compressed_alignment_var});
         var leaf_sequences_var("leaf_sequences_part"+part);
-        program.let(leaf_sequences_var, {var("listArray'"),{var("take"),n_leaves,sequences_var}});
-        leaf_sequences.push_back(leaf_sequences_var);
+        if (like_calcs[i] == 0 or n_nodes == 1)
+        {
+            program.let(sequences_var, {var("sequences_from_alignment"),compressed_alignment_var});
+            program.let(leaf_sequences_var, {var("listArray'"),{var("take"),n_leaves,sequences_var}});
+            leaf_sequences.push_back(leaf_sequences_var);
+        }
+        else
+            leaf_sequences.push_back(var("Nothing"));
         program.empty_stmt();
 
         // L4. let imodel_P = Nothing | Just
