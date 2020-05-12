@@ -674,7 +674,6 @@ namespace substitution {
         total_peel_leaf_branches++;
 
         int L0 = sequence.size();
-        assert(counts.size() == L0);
 
         const int n_models  = transition_P.size();
         const int n_states  = transition_P[0].as_<Box<Matrix>>().size1();
