@@ -112,3 +112,19 @@ compressed_alignment compress_alignment(const alignment& A, const Tree& t)
     auto [patterns, counts, mapping] = compress_site_patterns(A, t.n_leaves());
     return {alignment_from_patterns(A, patterns, t), counts, mapping};
 }
+
+alignment uncompress_alignment(const compressed_alignment& A)
+{
+    return uncompress_alignment(A.compressed, A.mapping);
+}
+
+alignment uncompress_alignment(const alignment& compressed, const vector<int>& mapping)
+{
+    alignment A(compressed.get_alphabet(), compressed.seqs(), mapping.size());
+
+    for(int i=0;i<mapping.size();i++)
+        for(int row = 0; row < A.n_sequences(); row++)
+            A.set_value(i, row, compressed(mapping[i], row) );
+
+    return A;
+}

@@ -44,4 +44,7 @@ struct compressed_alignment
 compressed_alignment compress_alignment(const alignment& A, const Tree& t);
 compressed_alignment compress_alignment(const alignment& A, int n);
 
+alignment uncompress_alignment(const compressed_alignment& A);
+alignment uncompress_alignment(const alignment& A, const std::vector<int>& mapping);
+
 #endif
