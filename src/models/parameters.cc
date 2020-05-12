@@ -1670,7 +1670,7 @@ std::string generate_atmodel_program(int n_sequences,
         var counts_var("counts_part"+part);
         if (allow_compression and (not i_mapping[i]))
         {
-            program.let(Tuple(compressed_alignment_var, counts_var, var(-1)), {var("compress_alignment"), alignment_var, n_leaves});
+            program.let(compressed_alignment_var, {var("compress_alignment"), alignment_var, n_leaves});
         }
         //---------------------------------------------------------------------------//
 
@@ -1790,7 +1790,7 @@ std::string generate_atmodel_program(int n_sequences,
             assert(likelihood_calculator == 1);
 
             program.let(Tuple(transition_ps, cls_var, ancestral_sequences_var, likelihood_var),
-                        {var("observe_partition_type_1"),partition,compressed_alignment_var,counts_var,subst_root_var});
+                        {var("observe_partition_type_1"),partition,compressed_alignment_var,subst_root_var});
             continue;
         }
 
