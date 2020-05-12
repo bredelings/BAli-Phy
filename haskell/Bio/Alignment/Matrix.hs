@@ -14,8 +14,11 @@ builtin builtin_load_alignment 2 "load_alignment" "Alignment"
 load_alignment :: Alphabet -> String -> AlignmentMatrix
 load_alignment alphabet filename = builtin_load_alignment alphabet (list_to_string filename)
 
-alignment_from_sequences :: Alphabet -> EVector Sequence -> AlignmentMatrix
-builtin alignment_from_sequences 2 "alignment_from_sequences" "Alignment"
+builtin_alignment_from_sequences :: Alphabet -> EVector Sequence -> AlignmentMatrix
+builtin builtin_alignment_from_sequences 2 "alignment_from_sequences" "Alignment"
+
+alignment_from_sequences :: Alphabet -> [Sequence] -> AlignmentMatrix
+alignment_from_sequences a seqs = builtin_alignment_from_sequences a (list_to_vector seqs)
 
 builtin_sequences_from_alignment :: AlignmentMatrix -> EVector Sequence
 builtin builtin_sequences_from_alignment 1 "sequences_from_alignment" "Alignment"
