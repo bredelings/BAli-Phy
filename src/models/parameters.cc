@@ -1659,7 +1659,6 @@ std::string generate_atmodel_program(int n_sequences,
         var counts_var("counts_part"+part);
         if (allow_compression and (not i_mapping[i]))
         {
-            var compressed_alignment_tuple("compressed_alignment_tuple_part"+part);
             program.let(Tuple(compressed_alignment_var, counts_var, var(-1)), {var("compress_alignment"), alignment_var, n_leaves});
         }
         else
