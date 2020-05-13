@@ -325,7 +325,7 @@ extern "C" closure builtin_function_compress_alignment(OperationArgs& Args)
     auto arg0 = Args.evaluate(0);
     auto& A1 = arg0.as_checked<alignment>();
 
-    int n = Args.evaluate(1).as_int();
+    int n = A1.n_sequences();
 
     auto [A,counts,mapping] = compress_alignment(A1,n);
 

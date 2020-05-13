@@ -47,11 +47,11 @@ compute_sequence_lengths seqs tree as = [ if node < n_leaves then vector_size (s
     where n_leaves = numElements seqs
 
 -- Current a' is an alignment, but counts and mapping are EVector
-builtin builtin_compress_alignment 2 "compress_alignment" "Alignment"
-compress_alignment a n = (a', counts, mapping) where ca = builtin_compress_alignment a n
-                                                     a' = get_vector_index ca 0
-                                                     counts = get_vector_index ca 1
-                                                     mapping = get_vector_index ca 2
+builtin builtin_compress_alignment 1 "compress_alignment" "Alignment"
+compress_alignment a = (compressed, counts, mapping) where ca = builtin_compress_alignment a
+                                                           compressed = get_vector_index ca 0
+                                                           counts = get_vector_index ca 1
+                                                           mapping = get_vector_index ca 2
 
 
 builtin builtin_uncompress_alignment 2 "uncompress_alignment" "Alignment"

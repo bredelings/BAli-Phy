@@ -1673,7 +1673,7 @@ std::string generate_atmodel_program(int n_sequences,
         var counts_var("counts_part"+part);
         if (allow_compression and (not i_mapping[i]))
         {
-            program.let(compressed_alignment_var, {var("compress_alignment"), alignment_var, n_leaves});
+            program.let(compressed_alignment_var, {var("compress_alignment"), alignment_var});
         }
         //---------------------------------------------------------------------------//
 
