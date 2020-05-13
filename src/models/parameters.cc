@@ -1656,7 +1656,10 @@ std::string generate_atmodel_program(int n_sequences,
         else
         {
             // This is using EVector String instead of [[Char]] for the sequence names!
-            program.let(alignment_var, {var("reorder_alignment"),taxon_names_var,loaded_alignment});
+            if (like_calcs[i] == 0)
+                program.let(alignment_var, {var("reorder_alignment"),taxon_names_var,loaded_alignment});
+            else
+                program.let(alignment_var, loaded_alignment);
         }
 
         // L1. scale_P ...

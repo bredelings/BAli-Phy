@@ -40,6 +40,7 @@ data ATModelExport = ATModelExport
 
 observe_partition_type_0 partition leaf_sequences subst_root = (transition_ps, cls, ancestral_sequences, likelihood)
     where tree = DP.get_tree partition
+          taxa = get_labels tree
           as = pairwise_alignments (DP.get_alignment partition)
           distances = DP.get_branch_lengths partition
           smodel = DP.smodel partition
@@ -60,8 +61,10 @@ observe_partition_type_0 partition leaf_sequences subst_root = (transition_ps, c
           likelihood = peel_likelihood tree cls as (weighted_frequency_matrix smodel) subst_root
           ancestral_sequences = array_to_vector $ sample_ancestral_sequences tree subst_root leaf_sequences as alphabet transition_ps f cls smap
 
-observe_partition_type_1 partition (compressed_alignment,column_counts,_) subst_root = (transition_ps, cls, ancestral_sequences, likelihood)
+observe_partition_type_1 partition (compressed_alignment',column_counts,_) subst_root = (transition_ps, cls, ancestral_sequences, likelihood)
     where tree = DP.get_tree partition
+          taxa = get_labels tree
+          compressed_alignment = reorder_alignment taxa compressed_alignment'
           distances = DP.get_branch_lengths partition
           smodel = DP.smodel partition
           alphabet = getAlphabet smodel
@@ -89,7 +92,6 @@ observe_partition_type_1 partition (compressed_alignment,column_counts,_) subst_
                                 tree
                                 subst_root
                                 leaf_sequences
---                                as
                                 alphabet
                                 transition_ps
                                 f
