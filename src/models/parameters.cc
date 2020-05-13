@@ -1682,7 +1682,7 @@ std::string generate_atmodel_program(int n_sequences,
         if (like_calcs[i] == 0 or n_nodes == 1)
         {
             program.let(sequences_var, {var("sequences_from_alignment"),alignment_var});
-            program.let(leaf_sequences_var, {var("listArray'"),{var("take"),n_leaves,sequences_var}});
+            program.let(leaf_sequences_var, {var("listArray'"),sequences_var});
             leaf_sequences.push_back(leaf_sequences_var);
         }
         else
