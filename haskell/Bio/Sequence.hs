@@ -15,8 +15,8 @@ load_sequences filename = builtin_load_sequences (list_to_string filename)
 
 builtin_select_range :: CPPString -> EVector Sequence -> EVector Sequence
 builtin builtin_select_range 2 "select_range" "Alignment"
-select_range :: String -> EVector Sequence -> EVector Sequence
-select_range range sequences = builtin_select_range (list_to_string range) sequences
+select_range :: String -> [Sequence] -> [Sequence]
+select_range range sequences = list_from_vector $ builtin_select_range (list_to_string range) (list_to_vector sequences)
 
 
     
