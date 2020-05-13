@@ -92,3 +92,7 @@ uniform_topology n = Distribution (\tree -> [uniform_topology_pr n])
                                   (no_quantile "uniform_topology")
                                   (RandomStructure do_nothing (triggered_modifiable_tree n) (random_tree n))
                                   (TreeRange n)
+
+uniform_labelled_topology taxa = do
+  topology <- uniform_topology (length taxa)
+  return $ add_labels topology taxa

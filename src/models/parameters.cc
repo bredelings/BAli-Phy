@@ -582,9 +582,15 @@ tree_constants::tree_constants(context* C, const vector<string>& labels, int tre
 {
     //------------------------- Create the tree structure -----------------------//
     auto tree_structure = C->evaluate_expression({var("Parameters.maybe_modifiable_structure"), C->get_expression(tree_head)});
-
     if (log_verbose >= 3)
         std::cerr<<"tree = "<<tree_structure<<"\n\n";
+
+    if (has_constructor(tree_structure,"Tree.LabelledTree"))
+    {
+        assert(tree_structure.sub().size() == 2);
+        tree_structure = tree_structure.sub()[0];
+    }
+    assert(tree_structure.sub().size() == 4);
 
     auto edges_out_of_node = tree_structure.sub()[0];
     auto nodes_for_edge    = tree_structure.sub()[1];
@@ -1476,7 +1482,7 @@ std::string generate_atmodel_program(int n_sequences,
     program_file<<"\n\nsample_branch_lengths_1 = "<<branch_length_model.expression.print();
 
     // F5. Topology
-    program_file<<"\n\nsample_topology_1 = uniform_topology "<<n_leaves;
+    program_file<<"\n\nsample_topology_1 taxa = uniform_labelled_topology taxa";
 
     /* --------------------------------------------------------------- */
     do_block program;
@@ -1487,6 +1493,10 @@ std::string generate_atmodel_program(int n_sequences,
     var variable_alignment_var("variable_alignment");
     var subst_root_var("subst_root");
     var modifiable("Parameters.modifiable");
+
+    // FIXME: We can't load the alignments to read their names until we know the alphabets!
+    // FIXME: Can we load the alignments as SEQUENCES first?
+    var taxon_names_var("taxa");
 
     program.let({
             {imodel_training_var, {modifiable, make_Bool(false)}},
@@ -1503,7 +1513,7 @@ std::string generate_atmodel_program(int n_sequences,
 
     // P1. Topology
     auto tree_var = var("topology1");
-    sample_atmodel.perform(tree_var, var("sample_topology_1"));
+    sample_atmodel.perform(tree_var, {var("sample_topology_1"),taxon_names_var});
 
     // P2. Branch lengths
     expression_ref branch_lengths = List();
@@ -1588,10 +1598,6 @@ std::string generate_atmodel_program(int n_sequences,
     }
     sample_atmodel.empty_stmt();
 
-
-    // FIXME: We can't load the alignments to read their names until we know the alphabets!
-    // FIXME: Can we load the alignments as SEQUENCES first?
-    var taxon_names_var("taxa");
 
     // FIXME: We aren't using the ranges to select columns!
 
