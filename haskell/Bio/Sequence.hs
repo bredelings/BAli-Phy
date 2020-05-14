@@ -8,6 +8,11 @@ builtin builtin_sequence_name 1 "sequence_name" "Alignment"
 sequence_name :: Sequence -> String
 sequence_name = unpack_cpp_string . builtin_sequence_name
 
+sequence_to_indices :: Sequence -> EVector Int
+builtin sequence_to_indices 2 "sequence_to_indices" "Alignment"
+-- sequence_to_indices :: Sequence -> [Int]
+-- maybe add this later
+
 builtin_load_sequences :: CPPString -> EVector Sequence
 builtin builtin_load_sequences 1 "load_sequences" "Alignment"
 load_sequences :: String -> [Sequence]

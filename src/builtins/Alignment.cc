@@ -451,6 +451,19 @@ extern "C" closure builtin_function_sequence_name(OperationArgs& Args)
 }
 
 
+extern "C" closure builtin_function_sequence_to_indices(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& a = *arg0.as_checked<Alphabet>();
+
+    auto arg1 = Args.evaluate(1);
+    auto& s = arg0.as_checked<Box<sequence>>();
+
+    auto letters = a(s);
+
+    return new EVector(letters);
+}
+
 
 extern "C" closure builtin_function_sequences_from_alignment(OperationArgs& Args)
 {
