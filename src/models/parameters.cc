@@ -1782,6 +1782,7 @@ std::string generate_atmodel_program(int n_sequences,
         var leaf_sequences_var("leaf_sequences_part"+part);
         var compressed_alignment_var("compressed_alignment_part"+part);
         var counts_var("counts_part"+part);
+        var sequence_data_var("sequence_data"+part);
 
         var partition("part"+part);
         program.let(partition,{var("!!"),{var("partitions"),var("atmodel")},i});
@@ -1797,7 +1798,7 @@ std::string generate_atmodel_program(int n_sequences,
             assert(likelihood_calculator == 1);
 
             program.let(Tuple(transition_ps, cls_var, ancestral_sequences_var, likelihood_var),
-                        {var("observe_partition_type_1"),partition,compressed_alignment_var,subst_root_var});
+                        {var("observe_partition_type_1"),partition,sequence_data_var,subst_root_var});
             continue;
         }
 
