@@ -163,6 +163,8 @@ namespace MCMC {
 
     int alignment_length(const data_partition& P)
     {
+        if (not P.has_pairwise_alignments()) return 0;
+
 	auto branches = P.t().all_branches_from_node(0);
 
 	int total = P.seqlength(0);
@@ -174,6 +176,8 @@ namespace MCMC {
 
     int n_indels(const data_partition& P)
     {
+        if (not P.has_pairwise_alignments()) return 0;
+
 	auto branches = P.t().all_branches_from_node(0);
 
 	int total = 0;
@@ -184,6 +188,8 @@ namespace MCMC {
 
     int total_length_indels(const data_partition& P)
     {
+        if (not P.has_pairwise_alignments()) return 0;
+
 	auto branches = P.t().all_branches_from_node(0);
 
 	int total = 0;
@@ -196,7 +202,7 @@ namespace MCMC {
     {
 	int total = 0;
 	for(int p=0;p<P.n_data_partitions();p++)
-	    total += alignment_length(P[p]);
+            total += alignment_length(P[p]);
 	return total;
     }
 

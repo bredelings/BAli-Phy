@@ -198,6 +198,8 @@ int accumulate_root_leaf(int b, const data_partition& P, const matrix<int>& cost
 
 int n_mutations(const data_partition& P, const matrix<int>& cost)
 {
+    if (not P.has_pairwise_alignments()) return 0;
+
     int total = 0;
   
     int root = 0;
