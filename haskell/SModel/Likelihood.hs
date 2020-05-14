@@ -42,8 +42,7 @@ peel_likelihood t cl as f root = let likelihoods = mkArray (numNodes t) peel_lik
                                  in likelihoods!root
 
 
-substitution_likelihood t root seqs as alpha ps f smap = let cl = cached_conditional_likelihoods t seqs counts as alpha ps f smap
-                                                             counts = mkArray (numElements seqs) (\n -> list_to_vector $ replicate (vector_size $ seqs!n) 1)
+substitution_likelihood t root seqs as alpha ps f smap = let cl = cached_conditional_likelihoods t seqs as alpha ps f smap
                                                          in peel_likelihood t cl as f root
 
 sample_ancestral_sequences t root seqs as alpha ps f cl smap =
