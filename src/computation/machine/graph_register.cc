@@ -9,6 +9,7 @@
 #include "computation/expression/tuple.H"
 #include "computation/expression/random_variable.H"
 #include "computation/expression/modifiable.H"
+#include "computation/expression/expression.H" // is_WHNF( )
 #include "computation/operations.H"
 #include "effect.H"
 
@@ -1081,13 +1082,24 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
     {
         int Q = value.reg_for_index_var();
 
+        // Never set the call to an index var.
+        Q = follow_index_var(Q);
+
+        // Never call something unevaluated either.
+        assert(regs[Q].type != reg::type_t::unevaluated);
+
         // Set the call
         set_call(s, Q);
     }
     // Otherwise, regardless of whether the expression is WHNF or not, create a new reg for the value and call it.
     else
     {
+        assert(value.exp.size() == 0);
+        assert(is_WHNF(value.exp));
+
         int R2 = allocate_reg_from_step_in_token(s,t);
+
+        regs[R2].type = reg::type_t::constant;
 
         // Set the call
         set_C(R2, std::move( value ) );
