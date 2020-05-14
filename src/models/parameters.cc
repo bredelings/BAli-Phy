@@ -1639,14 +1639,18 @@ std::string generate_atmodel_program(int n_sequences,
         int smodel_index = *s_mapping[i];
         auto imodel_index = i_mapping[i];
 
-        // L0. scale_P ...
-        var alphabet_var("alphabet_part"+part);
-        program.let(alphabet_var, alphabet_exps[i]);
-        var alignment_var("alignment_part"+part);
+        // L1. Sequence data ...
+        var sequence_data_var("sequence_data"+part);
         expression_ref loaded_sequences = {var("Map.!"),filename_to_seqs,String(filename_ranges[i].first)};
         if (not filename_ranges[i].second.empty())
             loaded_sequences = {var("select_range"), String(filename_ranges[i].second), loaded_sequences};
-        expression_ref loaded_alignment = {var("alignment_from_sequences"), alphabet_var, loaded_sequences};
+        program.let(sequence_data_var, loaded_sequences);
+
+        // L2. Alignment ...
+        var alphabet_var("alphabet_part"+part);
+        program.let(alphabet_var, alphabet_exps[i]);
+        var alignment_var("alignment_part"+part);
+        expression_ref loaded_alignment = {var("alignment_from_sequences"), alphabet_var, sequence_data_var};
 
         if (i==0)
         {
@@ -1662,10 +1666,10 @@ std::string generate_atmodel_program(int n_sequences,
                 program.let(alignment_var, loaded_alignment);
         }
 
-        // L1. scale_P ...
+        // L3. scale_P ...
         expression_ref scale = scales[scale_index];
 
-        // L3. let smodel_P = ...
+        // L4. let smodel_P = ...
         expression_ref smodel = smodels[smodel_index];
 
         //---------------------------------------------------------------------------
