@@ -442,6 +442,15 @@ extern "C" closure builtin_function_alignment_from_sequences(OperationArgs& Args
     return A;
 }
 
+extern "C" closure builtin_function_sequence_name(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& s = arg0.as_checked<Box<sequence>>();
+
+    return new String(s.name);
+}
+
+
 
 extern "C" closure builtin_function_sequences_from_alignment(OperationArgs& Args)
 {

@@ -3,6 +3,11 @@ module Bio.Sequence where
 -- Dummy type that stands for the c++ `sequence` type
 data Sequence = Sequence
 
+builtin_sequence_name :: Sequence -> CPPString
+builtin builtin_sequence_name 1 "sequence_name" "Alignment"
+sequence_name :: Sequence -> String
+sequence_name = unpack_cpp_string . builtin_sequence_name
+
 builtin_load_sequences :: CPPString -> EVector Sequence
 builtin builtin_load_sequences 1 "load_sequences" "Alignment"
 load_sequences :: String -> EVector Sequence
