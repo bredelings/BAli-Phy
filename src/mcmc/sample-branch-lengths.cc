@@ -391,7 +391,6 @@ void scale_means_only(owned_ptr<Model>& P,MoveStats& Stats)
 	    return;
     }
 
-
     double scale = gaussian(0,sigma);
     scale = exp(scale);
 
@@ -407,27 +406,13 @@ void scale_means_only(owned_ptr<Model>& P,MoveStats& Stats)
 	P2->set_branch_scale(i, P2->get_branch_scale(i) * scale);
   
     //--------- Compute proposal ratio ---------//
-    log_double_t p_ratio = pow(log_double_t(scale),P2->n_data_partitions()-P2->t().n_branches());
-    log_double_t a_ratio = P2->prior_no_alignment()/PP->prior_no_alignment()*p_ratio;
+    // Previously this was n_data_partitions(), but that seems wrong...
+    log_double_t ratio = pow(log_double_t(scale),P2->n_branch_scales()-P2->t().n_branches());
 
-#ifndef NDEBUG
-    log_double_t a_ratio2 = P2->probability()/PP->probability()*p_ratio;
-    double diff2 = abs(log(a_ratio2)-log(a_ratio));
-    if (diff2 > 1.0e-9) {
-	std::cerr<<"scale_mean_only: a_ratio diff = "<<diff2<<std::endl;
-	std::cerr<<"probability ratio = "<<log(P2->probability()/PP->probability())<<std::endl;
-	std::cerr<<"likelihood ratio = "<<log(P2->likelihood()/PP->likelihood())<<std::endl;
-	std::cerr<<"prior ratio       = "<<log(P2->prior()/PP->prior())<<std::endl;
-	std::cerr<<"prior ratio (no A)= "<<log(P2->prior_no_alignment()/PP->prior_no_alignment())<<std::endl;
-	std::cerr<<"prior ratio (   A)= "<<log(P2->prior_alignment()/PP->prior_alignment())<<std::endl;
-	std::cerr<<"    a ratio = "<<log(a_ratio)<<std::endl;
-	std::abort();
-    }
-#endif
-  
-    if (a_ratio.log() > 0 or uniform() < double(a_ratio)) 
+    // We used to try and avoid computing the likelihood here, since it should not change,
+    // but its hard to do that when we need to evaluate the whole program.
+    if (perform_MH(*P, *P2, ratio))
     {
-	P=P2;
 	result.totals[0] = 1;
 	result.totals[1] = abs(log(scale));
     }
