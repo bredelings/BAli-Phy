@@ -1673,15 +1673,6 @@ std::string generate_atmodel_program(int n_sequences,
         // L4. let smodel_P = ...
         expression_ref smodel = smodels[smodel_index];
 
-        //---------------------------------------------------------------------------
-        var compressed_alignment_var("compressed_alignment_part"+part);
-        var counts_var("counts_part"+part);
-        if (allow_compression and (not i_mapping[i]))
-        {
-            program.let(compressed_alignment_var, {var("compress_alignment"), alignment_var});
-        }
-        //---------------------------------------------------------------------------//
-
         var sequences_var("sequences_part"+part);
         var leaf_sequences_var("leaf_sequences_part"+part);
         if (like_calcs[i] == 0 or n_nodes == 1)
@@ -1703,6 +1694,7 @@ std::string generate_atmodel_program(int n_sequences,
         var alignment_on_tree("alignment_on_tree_part"+part);
         if (imodel_index)
         {
+            assert(like_calcs[i] == 0);
             expression_ref imodel = imodels[*imodel_index];
 
             var branch_hmms("branch_hmms_part"+part);
@@ -1719,24 +1711,9 @@ std::string generate_atmodel_program(int n_sequences,
         }
         else
         {
-            if (like_calcs[i] == 0)
-            {
-                // P5.II Create modifiables for pairwise alignments
-                expression_ref initial_alignments_exp = {var("pairwise_alignments_from_matrix"), compressed_alignment_var, tree_var};
+            assert(like_calcs[i] == 1);
 
-                var pairwise_as("pairwise_as_part"+part);
-                sample_atmodel.let(pairwise_as,  {var("force_struct"),{var("listArray'"), {var("map"),var("modifiable"),initial_alignments_exp}}});
-
-                // R4. Register sequence length methods
-                auto seq_lengths = expression_ref{{var("listArray'"),{var("compute_sequence_lengths"), leaf_sequences_var, tree_var, pairwise_as}}};
-
-                sample_atmodel.let(alignment_on_tree, {var("AlignmentOnTree"), tree_var, n_nodes, seq_lengths, pairwise_as});
-                sample_atmodel.empty_stmt();
-            }
-            else if (like_calcs[i] == 1)
-            {
-                alignment_on_tree = var("Nothing");
-            }
+            alignment_on_tree = var("Nothing");
         }
 
         // FIXME - to make an AT *model* we probably need to remove the data from here.
