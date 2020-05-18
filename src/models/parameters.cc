@@ -1651,13 +1651,13 @@ std::string generate_atmodel_program(int n_sequences,
         var leaf_sequences_var("leaf_sequences_part"+part);
         if (like_calcs[i] == 0)
         {
+            expression_ref sequences_exp = sequence_data_var;
+            if (i!=0)
+                sequences_exp = {var("reorder_sequences"),taxon_names_var,sequences_exp};
+            expression_ref loaded_alignment = {var("alignment_from_sequences"), alphabet_exps[i], sequences_exp};
             var alignment_var("alignment_part"+part);
-            expression_ref loaded_alignment = {var("alignment_from_sequences"), alphabet_exps[i], sequence_data_var};
+            program.let(alignment_var, loaded_alignment);
             var sequences_var("sequences_part"+part);
-            if (i==0)
-                program.let(alignment_var, loaded_alignment);
-            else
-                program.let(alignment_var, {var("reorder_alignment"),taxon_names_var,loaded_alignment});
             program.let(sequences_var, {var("sequences_from_alignment"),alignment_var});
             program.let(leaf_sequences_var, {var("listArray'"),sequences_var});
             leaf_sequences.push_back(leaf_sequences_var);

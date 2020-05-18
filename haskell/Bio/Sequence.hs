@@ -1,5 +1,7 @@
 module Bio.Sequence where
 
+import Data.Map as Map
+
 -- Dummy type that stands for the c++ `sequence` type
 data Sequence = Sequence
 
@@ -23,5 +25,6 @@ builtin builtin_select_range 2 "select_range" "Alignment"
 select_range :: String -> [Sequence] -> [Sequence]
 select_range range sequences = list_from_vector $ builtin_select_range (list_to_string range) (list_to_vector sequences)
 
-
-    
+reorder_sequences names sequences | length names /= length sequences  = error "Sequences.reorder_sequences: different number of names and sequences!"
+                                  | otherwise = [ sequences_map Map.! name | name <- names ]
+    where sequences_map = Map.fromList [ (sequence_name sequence, sequence) | sequence <- sequences ]
