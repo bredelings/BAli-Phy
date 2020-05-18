@@ -1781,87 +1781,26 @@ std::string generate_atmodel_program(int n_sequences,
         var ancestral_sequences_var("ancestral_sequences_part"+part);
         var likelihood_var("likelihood_part"+part);
         var leaf_sequences_var("leaf_sequences_part"+part);
-        var compressed_alignment_var("compressed_alignment_part"+part);
-        var counts_var("counts_part"+part);
         var sequence_data_var("sequence_data"+part);
 
         var partition("part"+part);
         program.let(partition,{var("!!"),{var("partitions"),var("atmodel")},i});
 
-        if (n_nodes > 2 and likelihood_calculator == 0)
+        if (likelihood_calculator == 0)
         {
             program.let(Tuple(transition_ps, cls_var, ancestral_sequences_var, likelihood_var),
                         {var("observe_partition_type_0"),partition,leaf_sequences_var,subst_root_var});
-            continue;
         }
-        else if (n_nodes > 2 and not i_mapping[i])
+        else if (likelihood_calculator == 1)
         {
+            assert(not i_mapping[i]);
             assert(likelihood_calculator == 1);
 
             program.let(Tuple(transition_ps, cls_var, ancestral_sequences_var, likelihood_var),
                         {var("observe_partition_type_1"),partition,sequence_data_var,subst_root_var});
-            continue;
         }
-
-        var tree_var("tree_part"+part);
-        program.let(tree_var, {var("BAliPhy.ATModel.DataPartition.get_tree"),partition});
-
-        auto alignment_on_tree = expression_ref{var("BAliPhy.ATModel.DataPartition.get_alignment"),partition};
-        var as("as_part"+part);
-        program.let(as, {var("pairwise_alignments"), alignment_on_tree});
-
-        var smodel("smodel_part"+part);
-        program.let(smodel,{var("BAliPhy.ATModel.DataPartition.smodel"),partition});
-        var smap("smap_part"+part);
-        program.let(smap,{var("SModel.get_smap"),smodel});
-
-        var distances("distances_part"+part);
-        program.let(distances,{var("BAliPhy.ATModel.DataPartition.get_branch_lengths"),partition});
-
-        var smodel_on_tree("smodel_on_tree_part"+part);
-        program.let(smodel_on_tree,{var("SModel.SingleBranchLengthModel"), tree_var, distances, smodel});
-
-        auto f = expression_ref{var("weighted_frequency_matrix"), smodel};
-
-        program.let(transition_ps, {var("transition_p_index"), smodel_on_tree});
-
-        if (n_nodes == 1)
-        {
-            expression_ref seq = {var("!"),leaf_sequences_var, 0};
-            program.let(cls_var, 0);
-            program.let(ancestral_sequences_var, 0);
-            program.let(likelihood_var, {var("peel_likelihood_1"), seq, alphabet_var, f});
-            
-        }
-        else if (likelihood_calculator == 0)
-        {
-            // Create and set conditional likelihoods for each branch
-            program.let(cls_var, {var("cached_conditional_likelihoods"), tree_var, leaf_sequences_var, as, alphabet_var, transition_ps, f, smap});
-
-            // FIXME: broken for fixed alignments of 2 sequences.
-            if (n_nodes > 2)
-                program.let(likelihood_var, {var("peel_likelihood"), tree_var, cls_var, as, f, subst_root_var});
-        }
-        else if (likelihood_calculator == 1)
-        {
-            // Create and set conditional likelihoods for each branch
-            program.let(cls_var,{var("cached_conditional_likelihoods_SEV"),tree_var,leaf_sequences_var, alphabet_var ,transition_ps,f, compressed_alignment_var, smap});  
-
-            // FIXME: broken for fixed alignments of 2 sequences.
-            if (n_nodes > 2)
-                program.let(likelihood_var,{var("peel_likelihood_SEV"), tree_var, cls_var, f, subst_root_var, counts_var});
-        }
-
-        if (n_nodes == 2)
-        {
-            // We probably want the cls?
-            expression_ref seq1 = {var("!"), leaf_sequences_var, 0};
-            expression_ref seq2 = {var("!"), leaf_sequences_var, 1};
-            expression_ref A = {var("!"), as, 0};
-            expression_ref P = {var("!"), transition_ps, 0};
-            program.let(likelihood_var,{var("peel_likelihood_2"), seq1, seq2, alphabet_var, A, P, f});
-            program.let(ancestral_sequences_var, 0);
-        }
+        else
+            std::abort();
     }
     program.empty_stmt();
 

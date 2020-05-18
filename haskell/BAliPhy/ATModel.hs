@@ -40,6 +40,7 @@ data ATModelExport = ATModelExport
 
 observe_partition_type_0 partition leaf_sequences subst_root = (transition_ps, cls, ancestral_sequences, likelihood)
     where tree = DP.get_tree partition
+          n_leaves = numLeaves tree
           taxa = get_labels tree
           as = pairwise_alignments (DP.get_alignment partition)
           distances = DP.get_branch_lengths partition
@@ -48,7 +49,6 @@ observe_partition_type_0 partition leaf_sequences subst_root = (transition_ps, c
           smap   = stateLetters smodel
           smodel_on_tree = SModel.SingleBranchLengthModel tree distances smodel
           transition_ps = transition_p_index smodel_on_tree
-          n_leaves = numLeaves tree
           f = weighted_frequency_matrix smodel
           cls = cached_conditional_likelihoods
                   tree
@@ -58,12 +58,23 @@ observe_partition_type_0 partition leaf_sequences subst_root = (transition_ps, c
                   transition_ps
                   f
                   smap
-          likelihood = peel_likelihood tree cls as (weighted_frequency_matrix smodel) subst_root
-          ancestral_sequences = array_to_vector $ sample_ancestral_sequences tree subst_root leaf_sequences as alphabet transition_ps f cls smap
+          likelihood = if n_leaves == 1 then
+                           peel_likelihood_1 (leaf_sequences ! 0) alphabet f
+                       else if n_leaves == 2 then
+                           peel_likelihood_2 (leaf_sequences ! 0) (leaf_sequences ! 1) alphabet (as ! 0) (transition_ps ! 0) f
+                       else
+                           peel_likelihood tree cls as (weighted_frequency_matrix smodel) subst_root
+          ancestral_sequences = if n_leaves == 1 then
+                                    0
+                                else if n_leaves == 2 then
+                                    0
+                                else
+                                    array_to_vector $ sample_ancestral_sequences tree subst_root leaf_sequences as alphabet transition_ps f cls smap
 
 observe_partition_type_1 partition sequences subst_root = (transition_ps, cls, ancestral_sequences, likelihood)
     where (compressed_alignment',column_counts,_) = compress_alignment $ alignment_from_sequences alphabet sequences
           tree = DP.get_tree partition
+          n_leaves = numLeaves tree
           taxa = get_labels tree
           compressed_alignment = reorder_alignment taxa compressed_alignment'
           distances = DP.get_branch_lengths partition
@@ -82,19 +93,24 @@ observe_partition_type_1 partition sequences subst_root = (transition_ps, cls, a
                   f
                   compressed_alignment
                   smap
-          likelihood = peel_likelihood_SEV
-                         tree
-                         cls
-                         f
-                         subst_root
-                         column_counts
+          likelihood = if n_leaves == 1 then
+                           1.0
+                       else if n_leaves == 2 then
+                           1.0
+                       else
+                           peel_likelihood_SEV tree cls f subst_root column_counts
 --        This also needs the map from columns to compressed columns:
-          ancestral_sequences = array_to_vector $ sample_ancestral_sequences_SEV
-                                tree
-                                subst_root
-                                leaf_sequences
-                                alphabet
-                                transition_ps
-                                f
-                                cls
-                                smap
+          ancestral_sequences = if n_leaves == 1 then
+                                    0
+                                else if n_leaves == 2 then
+                                    0
+                                else
+                                    array_to_vector $ sample_ancestral_sequences_SEV
+                                         tree
+                                         subst_root
+                                         leaf_sequences
+                                         alphabet
+                                         transition_ps
+                                         f
+                                         cls
+                                         smap
