@@ -1740,7 +1740,6 @@ std::string generate_atmodel_program(int n_sequences,
         var cls_var("cls_part"+part);
         var ancestral_sequences_var("ancestral_sequences_part"+part);
         var likelihood_var("likelihood_part"+part);
-        var leaf_sequences_var("leaf_sequences_part"+part);
         var sequence_data_var("sequence_data"+part);
 
         var partition("part"+part);
@@ -1749,7 +1748,7 @@ std::string generate_atmodel_program(int n_sequences,
         if (likelihood_calculator == 0)
         {
             program.let(Tuple(transition_ps, cls_var, ancestral_sequences_var, likelihood_var),
-                        {var("observe_partition_type_0"),partition,leaf_sequences_var,subst_root_var});
+                        {var("observe_partition_type_0"), partition, sequence_data_var, subst_root_var});
         }
         else if (likelihood_calculator == 1)
         {
@@ -1757,7 +1756,7 @@ std::string generate_atmodel_program(int n_sequences,
             assert(likelihood_calculator == 1);
 
             program.let(Tuple(transition_ps, cls_var, ancestral_sequences_var, likelihood_var),
-                        {var("observe_partition_type_1"),partition,sequence_data_var,subst_root_var});
+                        {var("observe_partition_type_1"), partition, sequence_data_var, subst_root_var});
         }
         else
             std::abort();
