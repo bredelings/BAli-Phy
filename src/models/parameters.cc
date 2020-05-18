@@ -1654,11 +1654,8 @@ std::string generate_atmodel_program(int n_sequences,
             expression_ref sequences_exp = sequence_data_var;
             if (i!=0)
                 sequences_exp = {var("reorder_sequences"),taxon_names_var,sequences_exp};
-            expression_ref loaded_alignment = {var("alignment_from_sequences"), alphabet_exps[i], sequences_exp};
-            var alignment_var("alignment_part"+part);
-            program.let(alignment_var, loaded_alignment);
             var sequences_var("sequences_part"+part);
-            program.let(sequences_var, {var("sequences_from_alignment"),alignment_var});
+            program.let(sequences_var, {var("map"),{var("sequence_to_indices"),alphabet_exps[i]},sequences_exp});
             program.let(leaf_sequences_var, {var("listArray'"),sequences_var});
             leaf_sequences.push_back(leaf_sequences_var);
         }

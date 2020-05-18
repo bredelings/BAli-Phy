@@ -450,20 +450,23 @@ extern "C" closure builtin_function_sequence_name(OperationArgs& Args)
     return new String(s.name);
 }
 
-
+// This is the no_gaps version...
 extern "C" closure builtin_function_sequence_to_indices(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto& a = *arg0.as_checked<Alphabet>();
 
     auto arg1 = Args.evaluate(1);
-    auto& s = arg0.as_checked<Box<sequence>>();
+    auto& s = arg1.as_checked<Box<sequence>>();
 
     auto letters = a(s);
+    vector<int> letters2;
+    for(auto letter: letters)
+        if (a.is_feature(letter))
+            letters2.push_back(letter);
 
-    return new EVector(letters);
+    return new EVector(letters2);
 }
-
 
 extern "C" closure builtin_function_sequences_from_alignment(OperationArgs& Args)
 {
