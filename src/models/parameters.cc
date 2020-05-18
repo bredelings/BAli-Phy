@@ -1645,7 +1645,8 @@ std::string generate_atmodel_program(int n_sequences,
         if (not filename_ranges[i].second.empty())
             loaded_sequences = {var("select_range"), String(filename_ranges[i].second), loaded_sequences};
         program.let(sequence_data_var, loaded_sequences);
-        program.let(taxon_names_var, {var("map"),var("sequence_name"),sequence_data_var});
+        if (i==0)
+            program.let(taxon_names_var, {var("map"),var("sequence_name"),sequence_data_var});
 
         // L2. Alignment ...
         var alphabet_var("alphabet_part"+part);
