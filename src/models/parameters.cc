@@ -1436,8 +1436,7 @@ std::string generate_atmodel_program(int n_sequences,
                                      const vector<model_t>& scaleMs,
                                      const vector<optional<int>>& scale_mapping,
                                      const model_t& branch_length_model,
-                                     const std::vector<int>& like_calcs,
-                                     bool allow_compression)
+                                     const std::vector<int>& like_calcs)
 {
     int n_partitions = filename_ranges.size();
 
@@ -1649,34 +1648,16 @@ std::string generate_atmodel_program(int n_sequences,
             program.let(taxon_names_var, {var("map"),var("sequence_name"),sequence_data_var});
 
         // L2. Alignment ...
-        var alphabet_var("alphabet_part"+part);
-        program.let(alphabet_var, alphabet_exps[i]);
-        var alignment_var("alignment_part"+part);
-        expression_ref loaded_alignment = {var("alignment_from_sequences"), alphabet_var, sequence_data_var};
-
-        if (i==0)
-        {
-            program.let(alignment_var, loaded_alignment);
-        }
-        else
-        {
-            // This is using EVector String instead of [[Char]] for the sequence names!
-            if (like_calcs[i] == 0)
-                program.let(alignment_var, {var("reorder_alignment"),taxon_names_var,loaded_alignment});
-            else
-                program.let(alignment_var, loaded_alignment);
-        }
-
-        // L3. scale_P ...
-        expression_ref scale = scales[scale_index];
-
-        // L4. let smodel_P = ...
-        expression_ref smodel = smodels[smodel_index];
-
-        var sequences_var("sequences_part"+part);
         var leaf_sequences_var("leaf_sequences_part"+part);
-        if (like_calcs[i] == 0 or n_nodes == 1)
+        if (like_calcs[i] == 0)
         {
+            var alignment_var("alignment_part"+part);
+            expression_ref loaded_alignment = {var("alignment_from_sequences"), alphabet_exps[i], sequence_data_var};
+            var sequences_var("sequences_part"+part);
+            if (i==0)
+                program.let(alignment_var, loaded_alignment);
+            else
+                program.let(alignment_var, {var("reorder_alignment"),taxon_names_var,loaded_alignment});
             program.let(sequences_var, {var("sequences_from_alignment"),alignment_var});
             program.let(leaf_sequences_var, {var("listArray'"),sequences_var});
             leaf_sequences.push_back(leaf_sequences_var);
@@ -1684,6 +1665,12 @@ std::string generate_atmodel_program(int n_sequences,
         else
             leaf_sequences.push_back(var("Nothing"));
         program.empty_stmt();
+
+        // L3. scale_P ...
+        expression_ref scale = scales[scale_index];
+
+        // L4. let smodel_P = ...
+        expression_ref smodel = smodels[smodel_index];
 
         // L4. let imodel_P = Nothing | Just
         expression_ref maybe_imodel = var("Nothing");
@@ -1752,7 +1739,6 @@ std::string generate_atmodel_program(int n_sequences,
         int likelihood_calculator = like_calcs[i];
 
         // L0. scale_P ...
-        var alphabet_var("alphabet_part"+part);
         var transition_ps("transition_ps_part"+part);
         var cls_var("cls_part"+part);
         var ancestral_sequences_var("ancestral_sequences_part"+part);
@@ -1831,7 +1817,7 @@ T load_value(const Model::key_map_t& keys, const std::string& key, const T& t)
 }
 
 Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
-                            const Model::key_map_t& k,
+                            const Model::key_map_t&,
                             const fs::path& program_filename,
                             const vector<expression_ref>& alphabet_exps,
                             const vector<pair<string,string>>& filename_ranges,
@@ -1846,8 +1832,6 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
                             const std::vector<int>& like_calcs)
 {
     // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
-    bool allow_compression = load_value(k, "site-compression", n_leaves) and not load_value(k, "write-fixed-alignments",false);
-
     {
         checked_ofstream program_file(program_filename.string());
         program_file<<generate_atmodel_program(n_leaves,
@@ -1857,8 +1841,7 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
                                                IMs, i_mapping,
                                                scaleMs, scale_mapping,
                                                branch_length_model,
-                                               like_calcs,
-                                               allow_compression);
+                                               like_calcs);
     }
 
     Program P(L, Program::exe_type::log_pair);
