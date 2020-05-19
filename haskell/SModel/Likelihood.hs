@@ -9,6 +9,7 @@ builtin alignment_index3 3 "alignment_index3" "SModel"
 builtin peel_internal_branch 6 "peel_internal_branch" "SModel"
 builtin calc_root_probability 7 "calc_root_probability" "SModel"
 builtin peel_likelihood_2 6 "peel_likelihood_2" "SModel"
+builtin peel_likelihood_1 3 "peel_likelihood_1" "SModel"
 
 -- ancestral sequence sampling for connected-CLVs
 builtin sample_root_sequence 7 "sample_root_sequence" "SModel"
@@ -21,13 +22,13 @@ builtin peel_leaf_branch_SEV 5 "peel_leaf_branch_SEV" "SModel"
 builtin peel_internal_branch_SEV 4 "peel_internal_branch_SEV" "SModel"
 builtin calc_root_probability_SEV 5 "calc_root_probability_SEV" "SModel"
 builtin peel_likelihood_2_SEV 5 "peel_likelihood_2_SEV" "SModel"
+builtin peel_likelihood_1_SEV 4 "peel_likelihood_1_SEV" "SModel"
 
 -- ancestral sequence sampling for SEV
 builtin sample_root_sequence_SEV 5 "sample_root_sequence_SEV" "SModel"
 builtin sample_internal_sequence_SEV 5 "sample_internal_node_sequence_SEV" "SModel"
 builtin sample_leaf_sequence_SEV 7 "sample_leaf_node_sequence_SEV" "SModel"
 
-builtin peel_likelihood_1 3 "peel_likelihood_1" "SModel"
 
 cached_conditional_likelihoods t seqs as alpha ps f smap = let lc    = mkArray (2*numBranches t) lcf
                                                                lcf b = let bb = b `mod` (numBranches t)

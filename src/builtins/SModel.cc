@@ -1821,6 +1821,40 @@ extern "C" closure builtin_function_peel_likelihood_2(OperationArgs& Args)
     return {Pr};
 }
 
+extern "C" closure builtin_function_peel_likelihood_1_SEV(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+
+    const auto& A        = arg0.as_<Box<alignment>>();
+    const alphabet& a    = *arg1.as_<Alphabet>();
+    const auto& WF       = arg2.as_<Box<Matrix>>();
+    const auto& counts   = arg3.as_<EVector>();
+
+    // Make frequency-vector AND log(frequency)-vector
+    vector<double> F(a.size(),0);
+    vector<log_double_t> LF(a.size());
+    for(int l=0;l<F.size();l++)
+    {
+	for(int m=0;m<WF.size1();m++)
+	    F[l] += WF(m,l);
+	LF[l] = F[l];
+    }
+
+    log_double_t Pr = 1;
+    for(int i=0;i<A.length();i++)
+    {
+        int l = A(i,0);
+        log_double_t p = letter_frequency(l, a, F, LF);
+        int count = counts[i].as_int();
+	Pr *= pow(p,count);
+    }
+
+    return {Pr};
+}
+
 extern "C" closure builtin_function_peel_likelihood_2_SEV(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
