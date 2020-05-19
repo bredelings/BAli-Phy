@@ -484,6 +484,13 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     {
         // R2. Register array of leaf sequences
         expression_ref leaf_sequences_exp = {var("Data.List.!!"),{var("BAliPhy.ATModel.leaf_sequences"),p->my_atmodel_export()},i};
+        auto tree = expression_ref{var("BAliPhy.ATModel.DataPartition.get_tree"), partition};
+        auto taxa = expression_ref{var("Tree.get_labels"),tree};
+        leaf_sequences_exp = {var("Bio.Sequence.reorder_sequences"),taxa,leaf_sequences_exp};
+        auto smodel = expression_ref{var("BAliPhy.ATModel.DataPartition.smodel"),partition};
+        auto alphabet = expression_ref{var("SModel.getAlphabet"),smodel};
+        leaf_sequences_exp = {var("Data.List.map"), {var("Bio.Sequence.sequence_to_indices"),alphabet},leaf_sequences_exp};
+
         auto leaf_sequences = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"),leaf_sequences_exp}) );
         for(int i=0; i<p->t().n_leaves(); i++)
             leaf_sequence_indices.push_back( p->add_compute_expression({var("Data.Array.!"),leaf_sequences,i}) );
@@ -1610,7 +1617,7 @@ std::string generate_atmodel_program(int n_sequences,
 
     // P6. Create objects for data partitions
     vector<expression_ref> partitions;
-    vector<expression_ref> leaf_sequences;
+    vector<expression_ref> sequence_data;
 
     // Emit filenames var
     var filenames_var("filenames");
@@ -1645,21 +1652,9 @@ std::string generate_atmodel_program(int n_sequences,
         if (not filename_ranges[i].second.empty())
             loaded_sequences = {var("select_range"), String(filename_ranges[i].second), loaded_sequences};
         program.let(sequence_data_var, loaded_sequences);
-        if (i==0)
-            program.let(taxon_names_var, {var("map"),var("sequence_name"),sequence_data_var});
 
         // L2. Alignment ...
-        if (like_calcs[i] == 0)
-        {
-            expression_ref sequences_exp = sequence_data_var;
-            if (i!=0)
-                sequences_exp = {var("reorder_sequences"),taxon_names_var,sequences_exp};
-            var sequences_var("sequences_part"+part);
-            program.let(sequences_var, {var("map"),{var("sequence_to_indices"),alphabet_exps[i]},sequences_exp});
-            leaf_sequences.push_back(sequences_var);
-        }
-        else
-            leaf_sequences.push_back(var("Nothing"));
+        sequence_data.push_back(sequence_data_var);
         program.empty_stmt();
 
         // L3. scale_P ...
@@ -1726,8 +1721,14 @@ std::string generate_atmodel_program(int n_sequences,
     if (log_verbose >= 4)
         std::cout<<sample_atmodel.get_expression()<<std::endl;
 
-    program.let(var("sequences"),get_list(leaf_sequences));
+    var sequence_data_var("sequence_data");
+    program.let(sequence_data_var, get_list(sequence_data));
     program.empty_stmt();
+    if (n_partitions > 0)
+    {
+        program.let(taxon_names_var, {var("map"),var("sequence_name"),var("sequence_data1")});
+        program.empty_stmt();
+    }
     program.perform(Tuple(var("atmodel"),var("loggers")), {var("$"),var("random"),sample_atmodel.get_expression()});
     for(int i=0; i < n_partitions; i++)
     {
@@ -1781,7 +1782,7 @@ std::string generate_atmodel_program(int n_sequences,
     program.let(var("anc_seqs"),get_list(anc_seqs));
     program.let(var("likelihoods"),get_list(likelihoods));
     program.empty_stmt();
-    program.perform({var("observe"),{var("fake_dist"),var("likelihoods")},var("sequences")});
+    program.perform({var("observe"),{var("fake_dist"),var("likelihoods")}, sequence_data_var});
     program.empty_stmt();
     program.finish_return(Tuple({var("ATModelExport"),
                                  var("atmodel"),
@@ -1789,7 +1790,7 @@ std::string generate_atmodel_program(int n_sequences,
                                  var("cond_likes"),
                                  var("anc_seqs"),
                                  var("likelihoods"),
-                                 var("sequences"),
+                                 sequence_data_var,
                                  imodel_training_var,
                                  heat_var,
                                  variable_alignment_var,
