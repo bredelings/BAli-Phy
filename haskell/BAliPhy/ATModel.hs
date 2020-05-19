@@ -97,7 +97,7 @@ observe_partition_type_1 partition sequences subst_root = (transition_ps, cls, a
           likelihood = if n_leaves == 1 then
                            1.0
                        else if n_leaves == 2 then
-                           1.0
+                           peel_likelihood_2_SEV compressed_alignment alphabet (transition_ps!0) f column_counts
                        else
                            peel_likelihood_SEV tree cls f subst_root column_counts
 --        This also needs the map from columns to compressed columns:
