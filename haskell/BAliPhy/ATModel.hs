@@ -95,7 +95,7 @@ observe_partition_type_1 partition sequences subst_root = (transition_ps, cls, a
                   compressed_alignment
                   smap
           likelihood = if n_leaves == 1 then
-                           1.0
+                           peel_likelihood_1_SEV compressed_alignment alphabet f column_counts
                        else if n_leaves == 2 then
                            peel_likelihood_2_SEV compressed_alignment alphabet (transition_ps!0) f column_counts
                        else
