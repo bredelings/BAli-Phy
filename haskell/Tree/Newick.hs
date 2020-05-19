@@ -15,6 +15,7 @@ import Data.Char
 
 write_newick t@(Tree _ _ _ _) = write_newick_node 0 t
 write_newick rt@(RootedTree t r _) = write_newick_node r t
+write_newick rt@(LabelledTree t labels) = write_newick t
 
 write_newick_node root tree = (write_branches_and_node tree (edgesOutOfNode tree root) root) ++ ";" where
     write_branches_and_node tree branches node = write_branches tree branches ++ show node

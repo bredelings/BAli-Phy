@@ -6,6 +6,7 @@ module SModel (module SModel,
                module SModel.Likelihood) where 
 import Probability
 import Bio.Alphabet
+import Bio.Sequence
 import Tree
 import Parameters
 
@@ -371,13 +372,15 @@ lg_frequencies a = zip (letters a) (list_from_vector $ builtin_lg_frequencies a)
 
 -- FIXME: need polymorphism.
 --        This needs to be after weighted_frequency_matrix.
---        Because we have no polymorphism, wfm needs to be after MixtureModel and MixtureModels.
-subst_like_on_tree topology root as alphabet smodel ts scale seqs = substitution_likelihood topology root seqs' as alphabet ps f smap
-    where f = weighted_frequency_matrix smodel
-          ps = transition_p_index (SingleBranchLengthModel topology ds smodel)
+--        Because we have no polymorphism, wfm needs to be defined after MixtureModel and MixtureModels.
+subst_like_on_tree topology root as smodel ts scale seqs = substitution_likelihood topology root seqs' as alphabet ps f smap
+    where taxa = get_labels topology
+          f = weighted_frequency_matrix smodel
           ds = listArray' $ map (scale*) ts
-          seqs' = listArray' seqs
+          ps = transition_p_index (SingleBranchLengthModel topology ds smodel)
+          seqs' = listArray' $ map (sequence_to_indices alphabet) $ reorder_sequences taxa seqs
+          alphabet = getAlphabet smodel
           smap = get_smap smodel
 
-ctmc_on_tree topology root as alphabet smodel ts scale =
-    Distribution (\seqs -> [subst_like_on_tree topology root as alphabet smodel ts scale seqs]) (no_quantile "ctmc_on_tree") () ()
+ctmc_on_tree topology root as smodel ts scale =
+    Distribution (\seqs -> [subst_like_on_tree topology root as smodel ts scale seqs]) (no_quantile "ctmc_on_tree") () ()

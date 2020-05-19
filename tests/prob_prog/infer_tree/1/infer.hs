@@ -40,11 +40,9 @@ sample_alignment topology ts imodel scale tip_seq_lengths = do
     alignment_on_tree <- random_alignment topology hmms imodel tip_seq_lengths True
     return $ Bio.Alignment.pairwise_alignments alignment_on_tree
 
-model alphabet n_tips seqs = random $ do
+model taxa tip_seq_lengths = do
 
-    let tip_seq_lengths = get_sequence_lengths $ listArray' seqs
-
-    topology <- uniform_topology n_tips
+    topology <- uniform_labelled_topology taxa
 
     let b           = numBranches topology
         root        = targetNode topology 0
@@ -64,16 +62,15 @@ model alphabet n_tips seqs = random $ do
     let loggers =
             ["topology" %=% write_newick topology, "T" %=% ts, "scale" %=% scale, "tn93" %>% smodel_loggers, "rs07" %>% imodel_loggers]
 
-    return (ctmc_on_tree topology root as alphabet smodel ts scale, loggers)
+    return (ctmc_on_tree topology root as smodel ts scale, loggers)
 
 main = do
-    let alphabet = dna
-        a        = load_alignment alphabet "5d-muscle.fasta"
-        n_tips   = (length $ sequences_from_alignment a)
-        seqs     = sequences_from_alignment a
+    let seq_data        = load_sequences "5d-muscle.fasta"
+        taxa            = map sequence_name seq_data
+        tip_seq_lengths = get_sequence_lengths dna seq_data
 
-    (seq_dist, loggers) <- model dna n_tips seqs
+    (seq_dist, loggers) <- random $ model taxa tip_seq_lengths
 
-    observe seq_dist seqs
+    observe seq_dist seq_data
 
     return loggers
