@@ -483,7 +483,8 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     if (like_calc == 0)
     {
         // R2. Register array of leaf sequences
-        expression_ref leaf_sequences = {var("Data.List.!!"),{var("BAliPhy.ATModel.leaf_sequences"),p->my_atmodel_export()},i};
+        expression_ref leaf_sequences_exp = {var("Data.List.!!"),{var("BAliPhy.ATModel.leaf_sequences"),p->my_atmodel_export()},i};
+        auto leaf_sequences = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"),leaf_sequences_exp}) );
         for(int i=0; i<p->t().n_leaves(); i++)
             leaf_sequence_indices.push_back( p->add_compute_expression({var("Data.Array.!"),leaf_sequences,i}) );
 
@@ -1648,7 +1649,6 @@ std::string generate_atmodel_program(int n_sequences,
             program.let(taxon_names_var, {var("map"),var("sequence_name"),sequence_data_var});
 
         // L2. Alignment ...
-        var leaf_sequences_var("leaf_sequences_part"+part);
         if (like_calcs[i] == 0)
         {
             expression_ref sequences_exp = sequence_data_var;
@@ -1656,8 +1656,7 @@ std::string generate_atmodel_program(int n_sequences,
                 sequences_exp = {var("reorder_sequences"),taxon_names_var,sequences_exp};
             var sequences_var("sequences_part"+part);
             program.let(sequences_var, {var("map"),{var("sequence_to_indices"),alphabet_exps[i]},sequences_exp});
-            program.let(leaf_sequences_var, {var("listArray'"),sequences_var});
-            leaf_sequences.push_back(leaf_sequences_var);
+            leaf_sequences.push_back(sequences_var);
         }
         else
             leaf_sequences.push_back(var("Nothing"));
@@ -1727,7 +1726,7 @@ std::string generate_atmodel_program(int n_sequences,
     if (log_verbose >= 4)
         std::cout<<sample_atmodel.get_expression()<<std::endl;
 
-    program.let(var("leaf_sequences"),get_list(leaf_sequences));
+    program.let(var("sequences"),get_list(leaf_sequences));
     program.empty_stmt();
     program.perform(Tuple(var("atmodel"),var("loggers")), {var("$"),var("random"),sample_atmodel.get_expression()});
     for(int i=0; i < n_partitions; i++)
@@ -1782,7 +1781,7 @@ std::string generate_atmodel_program(int n_sequences,
     program.let(var("anc_seqs"),get_list(anc_seqs));
     program.let(var("likelihoods"),get_list(likelihoods));
     program.empty_stmt();
-    program.perform({var("observe"),{var("fake_dist"),var("likelihoods")},var("leaf_sequences")});
+    program.perform({var("observe"),{var("fake_dist"),var("likelihoods")},var("sequences")});
     program.empty_stmt();
     program.finish_return(Tuple({var("ATModelExport"),
                                  var("atmodel"),
@@ -1790,7 +1789,7 @@ std::string generate_atmodel_program(int n_sequences,
                                  var("cond_likes"),
                                  var("anc_seqs"),
                                  var("likelihoods"),
-                                 var("leaf_sequences"),
+                                 var("sequences"),
                                  imodel_training_var,
                                  heat_var,
                                  variable_alignment_var,
