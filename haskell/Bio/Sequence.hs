@@ -28,3 +28,7 @@ select_range range sequences = list_from_vector $ builtin_select_range (list_to_
 reorder_sequences names sequences | length names /= length sequences  = error "Sequences.reorder_sequences: different number of names and sequences!"
                                   | otherwise = [ sequences_map Map.! name | name <- names ]
     where sequences_map = Map.fromList [ (sequence_name sequence, sequence) | sequence <- sequences ]
+
+sequence_length a sequence = vector_size $ sequence_to_indices a sequence
+
+get_sequence_lengths a sequences = Map.fromList [ (sequence_name sequence, sequence_length a sequence) | sequence <- sequences]

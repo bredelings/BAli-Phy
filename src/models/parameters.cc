@@ -1686,8 +1686,9 @@ std::string generate_atmodel_program(int n_sequences,
             maybe_imodel = {var("Just"), imodel};
             maybe_hmms   = {var("Just"), branch_hmms};
 
-            var leaf_sequence_lengths("leaf_sequence_lengths_part"+part);
-            sample_atmodel.let(leaf_sequence_lengths, {var("get_sequence_lengths"),leaf_sequences_var});
+            var leaf_sequence_lengths("sequence_lengths_part"+part);
+            expression_ref alphabet = {var("getAlphabet"),smodel};
+            sample_atmodel.let(leaf_sequence_lengths, {var("get_sequence_lengths"), alphabet,  sequence_data_var});
 
             // alignment_on_tree <- sample $ random_alignment tree hmms model leaf_seqs_array p->my_variable_alignment()
             sample_atmodel.perform(alignment_on_tree, {var("random_alignment"), tree_var, branch_hmms, imodel, leaf_sequence_lengths, variable_alignment_var});

@@ -4,6 +4,7 @@ import           Probability.Random
 import           Tree
 import           Bio.Alignment
 import           Control.DeepSeq
+import qualified Data.Map as Map
 
 modifiable_alignment a@(AlignmentOnTree tree n_seqs ls as) | numNodes tree < 2 = a
 modifiable_alignment (AlignmentOnTree tree n_seqs ls as) | otherwise           = AlignmentOnTree tree n_seqs ls' as'
@@ -12,21 +13,22 @@ modifiable_alignment (AlignmentOnTree tree n_seqs ls as) | otherwise           =
     ls' = listArray' [ seqlength as' tree node | node <- [0 .. numNodes tree - 1] ]
 
 -- Compare to unaligned_alignments_on_tree in parameters.cc
-unaligned_alignments_on_tree t ls = [ make_a' b | b <- [0 .. 2 * numBranches t - 1] ]
+unaligned_alignments_on_tree tree ls = [ make_a' b | b <- [0 .. 2 * numBranches tree - 1] ]
   where
-    make_a' b = let b' = reverseEdge t b in if (b > b') then flip_alignment $ make_a b' else make_a b
+    taxa = listArray' $ get_labels tree
+    length_for_node node = if node < numElements taxa then ls Map.! (taxa ! node) else 0
+    make_a' b = let b' = reverseEdge tree b in if (b > b') then flip_alignment $ make_a b' else make_a b
     make_a b =
-        let n1 = sourceNode t b
-            n2 = targetNode t b
-            l1 = if n1 < numElements ls then ls ! n1 else 0
-            l2 = if n2 < numElements ls then ls ! n2 else 0
+        let l1 = length_for_node $ sourceNode tree b
+            l2 = length_for_node $ targetNode tree b
         in  unaligned_pairwise_alignment l1 l2
 
 -- Here we want to (i) force the tree, (ii) force the hmms, and (iii) match parameters.cc:unaligned_alignments_on_tree 
 sample_alignment tree hmms tip_lengths = return (hmms `deepseq` (AlignmentOnTree tree n_nodes ls as))
   where
     n_leaves = numElements tip_lengths
-    ls       = listArray' $ [ if node < n_leaves then tip_lengths ! node else seqlength as tree node | node <- [0 .. n_nodes - 1] ]
+    taxa     = listArray' $ get_labels tree
+    ls       = listArray' $ [ if node < n_leaves then tip_lengths Map.! (taxa ! node) else seqlength as tree node | node <- [0 .. n_nodes - 1] ]
     as       = listArray' $ unaligned_alignments_on_tree tree tip_lengths
     n_nodes  = numNodes tree
 
