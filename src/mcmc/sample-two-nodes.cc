@@ -142,8 +142,6 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
         if (p[0][j].has_pairwise_alignments())
             a123456[j] = A5::get_bitpath(p[0][j], order[0]);
   
-    vector< vector<log_double_t> > OS(p.size());
-    vector< vector<log_double_t> > OP(p.size());
     vector<log_double_t> Pr(p.size());
 
     //----------- Generate the different states and Matrices ---------//
@@ -209,8 +207,6 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
     order.push_back(order[0]);
     rho.push_back( rho[0] );
     Matrices.push_back( Matrices[0] );
-    OS.push_back( OS[0] );
-    OP.push_back( OP[0] );
 
     vector< vector< vector<int> > >paths(p.size());
 
@@ -231,12 +227,10 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
 	    {
 		paths[i].push_back( get_path_unique(A5::get_bitpath(p[i][j], order[i]), *Matrices[i][j]) );
     
-		OS[i][j] = p[i][j].likelihood();
-		OP[i][j] = other_prior(p[i][j],order[i].nodes);
+		auto OS = p[i][j].likelihood();
+		auto OP = other_prior(p[i][j],order[i].nodes) / A5::correction(p[i][j],order[i]);
 	
-		log_double_t OP_i = OP[i][j] / A5::correction(p[i][j],order[i]);
-	
-		check_match_P(p[i][j], OS[i][j], OP_i, paths[i][j], *Matrices[i][j]);
+		check_match_P(p[i][j], OS, OP, paths[i][j], *Matrices[i][j]);
 	    }
 	    else
 		paths[i].push_back( vector<int>() );
