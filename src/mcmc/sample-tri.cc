@@ -163,12 +163,7 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
 
     // If the DP matrix ended up having probability 0, don't try to sample a path through it!
     if (Matrices->Pr_sum_all_paths() <= 0.0) 
-    {
-#ifndef NDEBUG_DP
-	Matrices->clear();
-#endif
 	return Matrices;
-    }
 
     vector<int> path_g = Matrices->sample_path();
 
@@ -178,10 +173,6 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
 	int b = t.find_branch(nodes[0],nodes[i+1]);
 	P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i));
     }
-
-#ifdef NDEBUG_DP
-    Matrices->clear();
-#endif
 
     return Matrices;
 }
@@ -317,7 +308,10 @@ void sample_A3_multi_calculation::run_dp()
 	Matrices[i].resize(p[i].n_data_partitions());
 	for(int j=0;j<p[i].n_data_partitions();j++) {
 	    if (p[i][j].variable_alignment())
-		Matrices[i][j] = compute_matrix(i,j);
+            {
+		auto M = compute_matrix(i,j);
+		Matrices[i][j] = M;
+            }
 	}
     }
 
