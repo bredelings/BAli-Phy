@@ -191,6 +191,17 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
 		Pr[i] *= OP[i][j];
 	    }
 	}
+
+        log_double_t Pr2 = rho[i] * p[i].probability();
+        for(int j=0;j<p[i].n_data_partitions();j++)
+            if (p[i][j].variable_alignment())
+            {
+                auto path = get_path_unique(A5::get_bitpath(p[i][j], order[i]), *Matrices[i][j]);
+                vector<int> path_g = Matrices[i][j]->generalize(path);
+                Pr2 /= (Matrices[i][j]->path_P(path_g)* Matrices[i][j]->generalize_P(path));
+                Pr2 *= A5::correction(p[i][j], order[i]);
+            }
+        assert(std::abs(Pr2.log() - Pr[i].log()) < 1.0e-8);
     }
 
     // Fail if Pr[0] is 0
