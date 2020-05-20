@@ -171,27 +171,6 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
 		Matrices[i].push_back(NULL);
         }
 
-        //-------- Calculate corrections to path probabilities ---------//
-        for(int j=0;j<p[i].n_data_partitions();j++)
-            OS[i].push_back( p[i][j].likelihood() );
-    
-        for(int j=0;j<p[i].n_data_partitions();j++)
-            OP[i].push_back( other_prior(p[i][j],order[i].nodes) );
-
-        //---------------- Calculate choice probabilities --------------//
-        Pr[i] = rho[i] * p[i].prior_no_alignment();
-
-	// sum of substitution and alignment probability over all paths
-	for(int j=0;j<p[i].n_data_partitions();j++)
-	{
-	    Pr[i] *= pow(OS[i][j], heat_beta);
-	    if (p[i][j].variable_alignment())
-	    {
-		Pr[i] *= Matrices[i][j]->Pr_sum_all_paths();
-		Pr[i] *= OP[i][j];
-	    }
-	}
-
         log_double_t Pr2 = rho[i] * p[i].probability();
         for(int j=0;j<p[i].n_data_partitions();j++)
             if (p[i][j].variable_alignment())
@@ -201,7 +180,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
                 Pr2 /= (Matrices[i][j]->path_P(path_g)* Matrices[i][j]->generalize_P(path));
                 Pr2 *= A5::correction(p[i][j], order[i]);
             }
-        assert(std::abs(Pr2.log() - Pr[i].log()) < 1.0e-8);
+        Pr[i] = Pr2;
     }
 
     // Fail if Pr[0] is 0
