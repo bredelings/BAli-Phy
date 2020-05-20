@@ -56,7 +56,7 @@ using std::optional;
 using std::shared_ptr;
 using boost::dynamic_bitset;
 
-shared_ptr<DPmatrixConstrained>
+pair<shared_ptr<DPmatrixConstrained>,log_double_t>
 tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, const vector<HMM::bitmask_t>& a23,
 			  int /* bandwidth */)
 {
@@ -163,7 +163,7 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
 
     // If the DP matrix ended up having probability 0, don't try to sample a path through it!
     if (Matrices->Pr_sum_all_paths() <= 0.0) 
-	return Matrices;
+	return {Matrices,0};
 
     vector<int> path_g = Matrices->sample_path();
 
@@ -174,7 +174,10 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
 	P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i));
     }
 
-    return Matrices;
+    // What is the probability that we choose the specific alignment that we did?
+    auto sampling_pr = Matrices->path_P(path_g)* Matrices->generalize_P(path);
+
+    return {Matrices,sampling_pr};
 }
 
 // If there is an original 3way alignment, then we need to construct a 3way path and project to 2way
@@ -205,7 +208,7 @@ vector<optional<vector<HMM::bitmask_t>>> A23_constraints(const Parameters& P, co
     return a23;
 }
 
-shared_ptr<DPmatrixConstrained>
+pair<shared_ptr<DPmatrixConstrained>,log_double_t>
 tri_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
 			  const vector<int>& nodes, const vector<int>& nodes0,
 			  int bandwidth)
@@ -271,7 +274,7 @@ log_double_t pr_sum_out_A_tri(Parameters P, const vector<optional<vector<HMM::bi
     for(int j=0;j<P.n_data_partitions();j++)
     {
 	if (P[j].variable_alignment()) {
-	    auto Matrices = tri_sample_alignment_base(P[j], nodes, *a23[j], -1);
+	    auto [Matrices,sampling_pr] = tri_sample_alignment_base(P[j], nodes, *a23[j], -1);
 	    Pr *= Matrices->Pr_sum_all_paths();
 	    Pr *= pow(other_subst(P[j], nodes), P[j].get_beta());
 	    Pr *= other_prior(P[j], nodes);
@@ -309,7 +312,7 @@ void sample_A3_multi_calculation::run_dp()
 	for(int j=0;j<p[i].n_data_partitions();j++) {
 	    if (p[i][j].variable_alignment())
             {
-		auto M = compute_matrix(i,j);
+		auto [M,sampling_pr] = compute_matrix(i,j);
 		Matrices[i][j] = M;
             }
 	}
@@ -486,7 +489,7 @@ int sample_A3_multi_calculation::choose(bool correct)
     return C;
 }
 
-shared_ptr<DPengine> sample_tri_multi_calculation::compute_matrix(int i, int j)
+pair<shared_ptr<DPengine>,log_double_t> sample_tri_multi_calculation::compute_matrix(int i, int j)
 {
     return tri_sample_alignment_base(p[i][j], p[0][j], nodes[i], nodes[0], bandwidth);
 }
