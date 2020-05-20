@@ -126,7 +126,7 @@ sample_two_nodes_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a1
 
 ///(a[0],p[0]) is the point from which the proposal originates, and must be valid.
 int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_,
-			   const vector<log_double_t>& rho_,bool do_OS,bool do_OP) 
+			   const vector<log_double_t>& rho_)
 {
     for(int i=1;i<p.size();i++)
 	for(int j=0;j<p[0].n_data_partitions();j++)
@@ -136,7 +136,6 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
     vector<log_double_t> rho = rho_;
     assert(p.size() == order.size());
 
-    double heat_beta = p[0].get_beta();
     vector<optional<vector<HMM::bitmask_t>>> a123456(p[0].n_data_partitions());
 
     for(int j=0;j<p[0].n_data_partitions();j++)
@@ -303,7 +302,7 @@ void sample_two_nodes(Parameters& P,int b)
 
     vector<log_double_t> rho(1,1);
 
-    int C = sample_two_nodes_multi(p,order,rho,false,false);
+    int C = sample_two_nodes_multi(p,order,rho);
 
     if (C != -1) {
 	P = p[C];
