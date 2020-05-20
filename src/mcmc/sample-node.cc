@@ -202,6 +202,17 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 	    }
 	    else
 		Pr[i] *= p[i][j].heated_likelihood();
+
+        log_double_t Pr2 = rho[i] * p[i].heated_probability();
+	for(int j=0;j<p[i].n_data_partitions();j++)
+	    if (p[i][j].variable_alignment())
+	    {
+                auto path = get_path_unique(A3::get_bitpath(p[i][j], nodes[i]), *Matrices[i][j]);
+                auto path_g = Matrices[i][j]->generalize(path);
+                Pr2 /= (Matrices[i][j]->path_P(path_g)* Matrices[i][j]->generalize_P(path));
+                Pr2 *= A3::correction(p[i][j], nodes[i]);
+	    }
+        assert(std::abs(Pr2.log() - Pr[i].log()) < 1.0e-8);
     }
 
     assert(Pr[0] > 0.0);
