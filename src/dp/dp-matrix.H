@@ -52,6 +52,7 @@ public:
     int size3() const {return s3;}
 
     double& operator()(int i,int j,int k) {
+        assert(data);
 	assert(0 <= i and i < s1);
 	assert(0 <= j and j < s2);
 	assert(0 <= k and k < s3);
@@ -59,6 +60,7 @@ public:
     }
 
     double operator()(int i,int j,int k) const {
+        assert(data);
 	assert(0 <= i and i < s1);
 	assert(0 <= j and j < s2);
 	assert(0 <= k and k < s3);
@@ -66,6 +68,7 @@ public:
     }
 
     int& scale(int i,int j) {
+        assert(scale_);
 	assert(0 <= i and i < s1);
 	assert(0 <= j and j < s2);
 	return scale_[i*s2 + j];
