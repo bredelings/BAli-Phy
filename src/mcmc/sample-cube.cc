@@ -49,9 +49,10 @@ using std::endl;
 using std::shared_ptr;
 using boost::dynamic_bitset;
 
-shared_ptr<DPcubeSimple> cube_sample_alignment_base(mutable_data_partition P, const data_partition& P0, 
-							   const vector<int>& nodes, const vector<int>& nodes0,
-							   int bandwidth)
+pair<shared_ptr<DPcubeSimple>,log_double_t>
+cube_sample_alignment_base(mutable_data_partition P, const data_partition& P0, 
+                           const vector<int>& nodes, const vector<int>& nodes0,
+                           int bandwidth)
 {
     const auto t = P.t();
     const auto t0 = P0.t();
@@ -149,7 +150,7 @@ shared_ptr<DPcubeSimple> cube_sample_alignment_base(mutable_data_partition P, co
 #ifndef NDEBUG_DP
 	Matrices->clear();
 #endif
-	return Matrices;
+	return {Matrices,0};
     }
 
     vector<int> path_g = Matrices->sample_path();
@@ -165,10 +166,13 @@ shared_ptr<DPcubeSimple> cube_sample_alignment_base(mutable_data_partition P, co
     Matrices->clear();
 #endif
 
-    return Matrices;
+    // What is the probability that we choose the specific alignment that we did?
+    auto sampling_pr = Matrices->path_P(path_g)* Matrices->generalize_P(path);
+
+    return {Matrices,sampling_pr};
 }
 
-shared_ptr<DPengine> sample_cube_multi_calculation::compute_matrix(int i, int j)
+pair<shared_ptr<DPengine>,log_double_t> sample_cube_multi_calculation::compute_matrix(int i, int j)
 {
     return cube_sample_alignment_base(p[i][j], p[0][j], nodes[i], nodes[0], bandwidth);
 }
