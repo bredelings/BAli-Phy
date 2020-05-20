@@ -134,7 +134,7 @@ shared_ptr<DParrayConstrained> sample_node_base(mutable_data_partition P,const v
 }
 
 int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
-		      const vector<log_double_t>& rho_, bool do_OS,bool do_OP) 
+		      const vector<log_double_t>& rho_)
 {
     vector<vector<int> > nodes = nodes_;
     vector<log_double_t> rho = rho_; 
@@ -166,23 +166,6 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 		Matrices[i].push_back( sample_node_base(p[i][j],nodes[i]) );
 	    else
 		Matrices[i].push_back( shared_ptr<DParrayConstrained>() );
-    }
-
-    //-------- Calculate corrections to path probabilities ---------//
-
-    vector< vector<log_double_t> > OS(p.size());
-    vector< vector<log_double_t> > OP(p.size());
-
-    for(int i=0; i<p.size(); i++) 
-    {
-        for(int j=0;j<p[i].n_data_partitions();j++)
-            if (p[i][j].variable_alignment())
-                OS[i].push_back( p[i][j].likelihood() );
-            else
-                OS[i].push_back( 1 );
-    
-        for(int j=0;j<p[i].n_data_partitions();j++)
-            OP[i].push_back( other_prior(p[i][j],nodes[i]) );
     }
 
     //---------------- Calculate choice probabilities --------------//
@@ -233,8 +216,6 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     nodes.push_back(nodes[0]);
     rho.push_back( rho[0] );
     Matrices.push_back( Matrices[0] );
-    OS.push_back( OS[0] );
-    OP.push_back( OP[0] );
 
     vector< vector< vector<int> > > paths(p.size());
 
@@ -245,12 +226,10 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 	    {
 		paths[i].push_back( get_path_unique(A3::get_bitpath(p[i][j], nodes[i]), *Matrices[i][j] ) );
 	
-		OS[i][j] = p[i][j].likelihood();
-		OP[i][j] = other_prior(p[i][j],nodes[i]);
+		auto OS = p[i][j].likelihood();
+		auto OP = other_prior(p[i][j],nodes[i]) / A3::correction(p[i][j],nodes[i]);
 	
-		log_double_t OP_i = OP[i][j] / A3::correction(p[i][j],nodes[i]);
-	
-		check_match_P(p[i][j], OS[i][j], OP_i, paths[i][j], *Matrices[i][j]);
+		check_match_P(p[i][j], OS, OP, paths[i][j], *Matrices[i][j]);
 	    }
 	    else
 		paths[i].push_back( vector<int>() );
@@ -311,7 +290,7 @@ void sample_node(Parameters& P,int node)
 
     vector<log_double_t> rho(1,1);
 
-    int C = sample_node_multi(p,nodes,rho,false,false);
+    int C = sample_node_multi(p,nodes,rho);
 
     if (C != -1) {
 	P = p[C];
