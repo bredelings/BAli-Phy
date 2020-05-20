@@ -171,7 +171,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
 		Matrices[i].push_back(NULL);
         }
 
-        log_double_t Pr2 = rho[i] * p[i].probability();
+        log_double_t Pr2 = rho[i] * p[i].heated_probability();
         for(int j=0;j<p[i].n_data_partitions();j++)
             if (p[i][j].variable_alignment())
             {
