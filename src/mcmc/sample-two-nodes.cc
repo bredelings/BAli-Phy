@@ -261,7 +261,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
       
 	// sample_P(p[i][j], choice_ratio, rho[i], paths[i][j], *Matrices[i][j]);
 	// PR[i][j][0] *= A5::correction(p[i][j],nodes[i]);
-	PR[i][0] = p[i].heated_probability(); // p[i].prior_no_alignment() * p[i].prior_alignment() * p[i].likelihood();
+	PR[i][0] = p[i].heated_probability();
 	PR[i][2] = rho[i];
 	PR[i][3] = choice_ratio;
 	for(int j=0;j<p[i].n_data_partitions();j++) 
