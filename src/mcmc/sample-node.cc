@@ -175,20 +175,14 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 
     for(int i=0; i<p.size(); i++) 
     {
-	if (do_OS)
-	    for(int j=0;j<p[i].n_data_partitions();j++)
-		if (p[i][j].variable_alignment())
-		    OS[i].push_back( p[i][j].likelihood() );
-		else
-		    OS[i].push_back( 1 );
-	else
-	    OS[i] = vector<log_double_t>(p[i].n_data_partitions(),log_double_t(1));
+        for(int j=0;j<p[i].n_data_partitions();j++)
+            if (p[i][j].variable_alignment())
+                OS[i].push_back( p[i][j].likelihood() );
+            else
+                OS[i].push_back( 1 );
     
-	if (do_OP)
-	    for(int j=0;j<p[i].n_data_partitions();j++)
-		OP[i].push_back( other_prior(p[i][j],nodes[i]) );
-	else
-	    OP[i] = vector<log_double_t>(p[i].n_data_partitions(),log_double_t(1));
+        for(int j=0;j<p[i].n_data_partitions();j++)
+            OP[i].push_back( other_prior(p[i][j],nodes[i]) );
     }
 
     //---------------- Calculate choice probabilities --------------//
