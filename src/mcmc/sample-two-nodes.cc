@@ -43,10 +43,11 @@ using std::optional;
 using std::abs;
 using std::endl;
 using std::shared_ptr;
+using std::pair;
 
 using boost::dynamic_bitset;
 
-shared_ptr<DParrayConstrained>
+pair<shared_ptr<DParrayConstrained>, log_double_t>
 sample_two_nodes_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a123456, const A5::hmm_order& order, const A5::hmm_order& order0)
 {
     assert(P.variable_alignment());
@@ -100,7 +101,7 @@ sample_two_nodes_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a1
     if (Matrices->Pr_sum_all_paths() <= 0.0) 
     {
 	std::cerr<<"sample_two_nodes_base( ): All paths have probability 0!"<<std::endl;
-	return Matrices;
+	return {Matrices,0};
     }
 
     //------------- Sample a path from the matrix -------------------//
@@ -121,7 +122,10 @@ sample_two_nodes_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a1
     P.set_pairwise_alignment(b35, get_pairwise_alignment_from_path(path, *Matrices, 3, 5));
     P.set_pairwise_alignment(b45, get_pairwise_alignment_from_path(path, *Matrices, 4, 5));
 
-    return Matrices;
+    // What is the probability that we choose the specific alignment that we did?
+    auto sampling_pr = Matrices->path_P(path_g)* Matrices->generalize_P(path);
+
+    return {Matrices, sampling_pr};
 }
 
 ///(a[0],p[0]) is the point from which the proposal originates, and must be valid.
@@ -153,31 +157,31 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
     vector< vector< shared_ptr<DParrayConstrained> > > Matrices(p.size());
     for(int i=0;i<p.size();i++)
     {
+        Pr[i] = rho[i];
+
+#ifndef NDEBUG_DP
+        Matrices[i].resize(p[i].n_data_partitions());
+#endif
+
 	for(int j=0;j<p[i].n_data_partitions();j++)
         {
 	    if (p[i][j].variable_alignment())
 	    {
-		Matrices[i].push_back(sample_two_nodes_base(p[i][j], *a123456[j], order[i], order[0]));
-		if (Matrices[i].back()->Pr_sum_all_paths() <= 0.0)
+                auto [M, sampling_pr] = sample_two_nodes_base(p[i][j], *a123456[j], order[i], order[0]);
+                Pr[i] /= sampling_pr;
+                Pr[i] *= A5::correction(p[i][j], order[i]);
+
+		if (M->Pr_sum_all_paths() <= 0.0)
 		    std::cerr<<"Pr = 0   i = "<<i<<"   j="<<j<<" \n";
-#ifndef NDEBUG
-		p[i][j].likelihood();  // check the likelihood calculation
+
+#ifndef NDEBUG_DP
+                p[i][j].likelihood();  // check the likelihood calculation
+		Matrices[i][j] = M;
 #endif
-	    }
-	    else
-		Matrices[i].push_back(NULL);
+            }
         }
 
-        log_double_t Pr2 = rho[i] * p[i].heated_probability();
-        for(int j=0;j<p[i].n_data_partitions();j++)
-            if (p[i][j].variable_alignment())
-            {
-                auto path = get_path_unique(A5::get_bitpath(p[i][j], order[i]), *Matrices[i][j]);
-                vector<int> path_g = Matrices[i][j]->generalize(path);
-                Pr2 /= (Matrices[i][j]->path_P(path_g)* Matrices[i][j]->generalize_P(path));
-                Pr2 *= A5::correction(p[i][j], order[i]);
-            }
-        Pr[i] = Pr2;
+        Pr[i] *= p[i].heated_probability();
     }
 
     // Fail if Pr[0] is 0
