@@ -306,37 +306,36 @@ void sample_A3_multi_calculation::run_dp()
     //----------- Generate the different states and Matrices ---------//
     C1 = A3::correction(p[0],nodes[0]);
 
+    vector<log_double_t> Pr2(p.size());
     for(int i=0;i<p.size();i++) 
     {
+        Pr2[i] = 1.0;
 	Matrices[i].resize(p[i].n_data_partitions());
 	for(int j=0;j<p[i].n_data_partitions();j++) {
 	    if (p[i][j].variable_alignment())
             {
 		auto [M,sampling_pr] = compute_matrix(i,j);
+                Pr2[i] /= sampling_pr;
+                Pr2[i] *= A3::correction(p[i][j], nodes[i]);
 		Matrices[i][j] = M;
             }
 	}
+        Pr2[i] *= p[i].heated_probability();
     }
 
     //-------- Calculate corrections to path probabilities ---------//
 
     for(int i=0; i<p.size(); i++) 
     {
-	if (do_OS)
-	    for(int j=0;j<p[i].n_data_partitions();j++)  {
-		if (p[i][j].variable_alignment())
-		    OS[i].push_back( other_subst(p[i][j],nodes[i]));
-		else
-		    OS[i].push_back( 1 );
-	    }
-	else
-	    OS[i] = vector<log_double_t>(p[i].n_data_partitions(),log_double_t(1));
+        for(int j=0;j<p[i].n_data_partitions();j++)  {
+            if (p[i][j].variable_alignment())
+                OS[i].push_back( other_subst(p[i][j],nodes[i]));
+            else
+                OS[i].push_back( 1 );
+        }
 
-	if (do_OP)
-	    for(int j=0;j<p[i].n_data_partitions();j++) 
-		OP[i].push_back( other_prior(p[i][j],nodes[i]) );
-	else
-	    OP[i] = vector<log_double_t>(p[i].n_data_partitions(),log_double_t(1));
+        for(int j=0;j<p[i].n_data_partitions();j++)
+            OP[i].push_back( other_prior(p[i][j],nodes[i]) );
     }
 
     //---------------- Calculate choice probabilities --------------//
@@ -353,6 +352,7 @@ void sample_A3_multi_calculation::run_dp()
 	    }
 	    else
 		Pr[i] *= p[i][j].heated_likelihood();
+        assert(std::abs(Pr[i].log() - Pr2[i].log()) < 1.0e-8);
     }
     assert(Pr[0] > 0.0);
 }
