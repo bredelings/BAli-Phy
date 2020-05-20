@@ -98,7 +98,7 @@ int two_way_topology_sample(vector<Parameters>& p,const vector<log_double_t>& rh
     orders[1] = A5::get_nodes_random(p[1].t(), b);
 
     try {
-	return sample_two_nodes_multi(p,orders,rho,true,false);
+	return sample_two_nodes_multi(p,orders,rho);
     }
     catch (choose_exception<log_double_t>& c)
     {
@@ -274,7 +274,7 @@ void two_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 
     int C = -1;
     try {
-	C = sample_two_nodes_multi(p,orders,rho,true,false);
+	C = sample_two_nodes_multi(p,orders,rho);
     }
     catch (choose_exception<log_double_t>& c)
     {
@@ -572,7 +572,7 @@ void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     //------ Resample alignments and select topology -----//
 
     try {
-	int C = sample_two_nodes_multi(p,orders,rho,true,false);
+	int C = sample_two_nodes_multi(p,orders,rho);
 
         if (C != -1) {
             PP = p[C];
