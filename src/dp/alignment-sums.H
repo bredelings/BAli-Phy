@@ -82,7 +82,7 @@ struct sample_A3_multi_calculation
     log_double_t C1;
     int bandwidth;
 
-    virtual std::shared_ptr<DPengine> compute_matrix(int,int) = 0;
+    virtual std::pair<std::shared_ptr<DPengine>,log_double_t> compute_matrix(int,int) = 0;
 
     void run_dp();
 
@@ -97,7 +97,7 @@ struct sample_A3_multi_calculation
 
 struct sample_tri_multi_calculation: public sample_A3_multi_calculation
 {
-    virtual std::shared_ptr<DPengine> compute_matrix(int,int);
+    virtual std::pair<std::shared_ptr<DPengine>,log_double_t> compute_matrix(int,int);
 
     sample_tri_multi_calculation(std::vector<Parameters>&,const std::vector< std::vector<int> >& nodes_,
 				 bool do_OS,bool do_OP,int b=-1);
@@ -105,7 +105,7 @@ struct sample_tri_multi_calculation: public sample_A3_multi_calculation
 
 struct sample_cube_multi_calculation: public sample_A3_multi_calculation
 {
-    virtual std::shared_ptr<DPengine> compute_matrix(int,int);
+    virtual std::pair<std::shared_ptr<DPengine>,log_double_t> compute_matrix(int,int);
 
     sample_cube_multi_calculation(std::vector<Parameters>&,const std::vector< std::vector<int> >& nodes_,
 				  bool do_OS,bool do_OP,int b=-1);
