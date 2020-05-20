@@ -172,18 +172,11 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
         }
 
         //-------- Calculate corrections to path probabilities ---------//
-	if (do_OS)
-	    for(int j=0;j<p[i].n_data_partitions();j++)
-		OS[i].push_back( p[i][j].likelihood() );
-	else
-	    OS[i] = vector<log_double_t>(p[i].n_data_partitions(),log_double_t(1));
+        for(int j=0;j<p[i].n_data_partitions();j++)
+            OS[i].push_back( p[i][j].likelihood() );
     
-	if (do_OP)
-	    for(int j=0;j<p[i].n_data_partitions();j++)
-		OP[i].push_back( other_prior(p[i][j],order[i].nodes) );
-	else
-	    OP[i] = vector<log_double_t>(p[i].n_data_partitions(),log_double_t(1));
-
+        for(int j=0;j<p[i].n_data_partitions();j++)
+            OP[i].push_back( other_prior(p[i][j],order[i].nodes) );
 
         //---------------- Calculate choice probabilities --------------//
         Pr[i] = rho[i] * p[i].prior_no_alignment();
