@@ -43,10 +43,10 @@ using std::pair;
 void state_matrix::clear() 
 {
     delete[] data; 
-    data = NULL;
+    data = nullptr;
   
     delete[] scale_; 
-    scale_ = NULL;
+    scale_ = nullptr;
 }
 
 state_matrix::~state_matrix() 
