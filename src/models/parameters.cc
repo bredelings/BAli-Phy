@@ -1122,18 +1122,6 @@ void Parameters::show_h_tree() const
     }
 }
 
-log_double_t Parameters::prior_no_alignment() const 
-{
-    if (variable_alignment_)
-    {
-        auto P2 = *this;
-        P2.variable_alignment(false);
-        return P2.prior();
-    }
-    else
-        return prior();
-}
-
 log_double_t Parameters::prior_alignment() const 
 {
     log_double_t Pr = 1;
