@@ -94,7 +94,7 @@ int topology_sample_SPR(vector<Parameters>& p,const vector<log_double_t>& rho,in
     nodes[1] = A3::get_nodes_branch_random(p[1].t(), n1, n2);     //  probabilities for p[i] and p[j] when p[i] == p[j].
 
     try {
-	return sample_tri_multi(p,nodes,rho,true,true);
+	return sample_tri_multi(p,nodes,rho);
     }
     catch (choose_exception<log_double_t>& c)
     {
@@ -528,7 +528,7 @@ MCMC::Result sample_SPR(Parameters& P, int b1, int b2, bool slice = false)
 	//                 * (C ==  1) the      new tree with a new alignment
 
 	vector<log_double_t> rho = {1, 1};
-	int C = sample_tri_multi(p, nodes, rho, true, true);
+	int C = sample_tri_multi(p, nodes, rho);
 
 #ifndef NDEBUG
 	for(auto& x : p)
@@ -1155,9 +1155,9 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
 
     shared_ptr<sample_A3_multi_calculation> tri;
     if (do_cube)
-	tri = shared_ptr<sample_A3_multi_calculation>(new sample_cube_multi_calculation(p, nodes, true, true));
+	tri = shared_ptr<sample_A3_multi_calculation>(new sample_cube_multi_calculation(p, nodes));
     else
-	tri = shared_ptr<sample_A3_multi_calculation>(new sample_tri_multi_calculation(p, nodes, true, true));
+	tri = shared_ptr<sample_A3_multi_calculation>(new sample_tri_multi_calculation(p, nodes));
     tri->run_dp();
 
     //--------- Compute PrL2: reverse proposal probabilities ---------//
