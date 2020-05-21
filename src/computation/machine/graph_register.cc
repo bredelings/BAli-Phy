@@ -1266,12 +1266,6 @@ bool reg_heap::has_result(int r) const
     return result_for_reg(r)>0;
 }
 
-bool reg_heap::has_force(int r) const
-{
-    assert(prog_forces[r] != 0);
-    return prog_forces[r] > 0;
-}
-
 void reg_heap::force_reg(int r)
 {
     assert(reg_is_changeable(r));
