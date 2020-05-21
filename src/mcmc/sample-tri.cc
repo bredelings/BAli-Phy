@@ -322,21 +322,6 @@ void sample_A3_multi_calculation::run_dp()
         Pr[i] *= p[i].heated_probability();
     }
 
-    //-------- Calculate corrections to path probabilities ---------//
-
-    for(int i=0; i<p.size(); i++) 
-    {
-        for(int j=0;j<p[i].n_data_partitions();j++)  {
-            if (p[i][j].variable_alignment())
-                OS[i].push_back( other_subst(p[i][j],nodes[i]));
-            else
-                OS[i].push_back( 1 );
-        }
-
-        for(int j=0;j<p[i].n_data_partitions();j++)
-            OP[i].push_back( other_prior(p[i][j],nodes[i]) );
-    }
-
     assert(Pr[0] > 0.0);
 }
 
@@ -410,12 +395,10 @@ int sample_A3_multi_calculation::choose(bool correct)
 	    {
 		paths[i].push_back( get_path_unique(A3::get_bitpath(p[i][j],nodes[i]),*Matrices[i][j]) );
 	  
-		OS[i][j] = other_subst(p[i][j],nodes[i]);
-		OP[i][j] = other_prior(p[i][j],nodes[i]);
+		auto OS = other_subst(p[i][j],nodes[i]);
+		auto OP = other_prior(p[i][j],nodes[i]) / A3::correction(p[i][j],nodes[i]);
 	
-		log_double_t OP_i = OP[i][j] / A3::correction(p[i][j],nodes[i]);
-	
-		check_match_P(p[i][j], OS[i][j], OP_i, paths[i][j], *Matrices[i][j]);
+		check_match_P(p[i][j], OS, OP, paths[i][j], *Matrices[i][j]);
 	    }
 	    else
 		paths[i].push_back( vector<int>() );
