@@ -635,7 +635,7 @@ void three_way_topology_and_alignment_sample(owned_ptr<Model>& P, MoveStats& Sta
 
     int C = -1;
     try {
-	C = sample_tri_multi(p,nodes,rho,true,true);
+	C = sample_tri_multi(p,nodes,rho);
     }
     catch (choose_exception<log_double_t>& c)
     {
