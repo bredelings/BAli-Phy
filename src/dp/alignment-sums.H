@@ -53,16 +53,16 @@ int sample_two_nodes_multi(std::vector<Parameters>& p,const std::vector< A5::hmm
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
 int sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
-		     const std::vector<log_double_t>& rho, bool do_OS,bool do_OP);
+		     const std::vector<log_double_t>& rho);
 
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
 int sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
-		     const std::vector<log_double_t>& rho, bool do_OS,bool do_OP, int bandwidth);
+		     const std::vector<log_double_t>& rho, int bandwidth);
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
 int sample_cube_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
-		      const std::vector<log_double_t>& rho, bool do_OS,bool do_OP);
+		      const std::vector<log_double_t>& rho);
 
 
 struct sample_A3_multi_calculation
@@ -74,10 +74,6 @@ struct sample_A3_multi_calculation
     std::vector<std::vector<int> > nodes;
     std::vector<log_double_t> rho;
     std::vector<std::vector<std::shared_ptr<DPengine> > > Matrices;
-    bool do_OS;
-    bool do_OP;
-    std::vector< std::vector<log_double_t> > OS;
-    std::vector< std::vector<log_double_t> > OP;
     std::vector<log_double_t> Pr;
     log_double_t C1;
     int bandwidth;
@@ -87,7 +83,7 @@ struct sample_A3_multi_calculation
     void run_dp();
 
     sample_A3_multi_calculation(std::vector<Parameters>&,const std::vector< std::vector<int> >& nodes_,
-				 bool do_OS,bool do_OP,int b=-1);
+                                int b=-1);
 
     void set_proposal_probabilities(const std::vector<log_double_t>&);
 
@@ -100,7 +96,7 @@ struct sample_tri_multi_calculation: public sample_A3_multi_calculation
     virtual std::pair<std::shared_ptr<DPengine>,log_double_t> compute_matrix(int,int);
 
     sample_tri_multi_calculation(std::vector<Parameters>&,const std::vector< std::vector<int> >& nodes_,
-				 bool do_OS,bool do_OP,int b=-1);
+				 int b=-1);
 };
 
 struct sample_cube_multi_calculation: public sample_A3_multi_calculation
@@ -108,7 +104,7 @@ struct sample_cube_multi_calculation: public sample_A3_multi_calculation
     virtual std::pair<std::shared_ptr<DPengine>,log_double_t> compute_matrix(int,int);
 
     sample_cube_multi_calculation(std::vector<Parameters>&,const std::vector< std::vector<int> >& nodes_,
-				  bool do_OS,bool do_OP,int b=-1);
+				  int b=-1);
 };
 
 //------------------- Checking Routines ------------------------//

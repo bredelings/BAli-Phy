@@ -178,18 +178,18 @@ pair<shared_ptr<DPengine>,log_double_t> sample_cube_multi_calculation::compute_m
 }
 
 sample_cube_multi_calculation::sample_cube_multi_calculation(vector<Parameters>& pp,const vector< vector<int> >& nodes_,
-							   bool do_OS,bool do_OP, int b)
-    :sample_A3_multi_calculation(pp, nodes_, do_OS, do_OP, b)
+							   int b)
+    :sample_A3_multi_calculation(pp, nodes_, b)
 { }
 
 // Consider making into object! That would make it easier to mix
 // and match parts of the routine, while saving state.
 
 int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
-		     const vector<log_double_t>& rho, bool do_OS,bool do_OP) 
+		     const vector<log_double_t>& rho) 
 {
     try {
-	sample_cube_multi_calculation tri(p, nodes, do_OS, do_OP);
+	sample_cube_multi_calculation tri(p, nodes);
 
 	// The DP matrix construction didn't work.
 	if (tri.Pr[0] <= 0.0) return -1;
@@ -205,14 +205,14 @@ int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 }
 
 int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
-		     const vector<log_double_t>& rho, bool do_OS,bool do_OP, int bandwidth) 
+		     const vector<log_double_t>& rho, int bandwidth) 
 {
     assert(bandwidth >= 0);
     try {
 	vector<Parameters> p2 = p;
 
 	//----------------- Part 1: Forward -----------------//
-	sample_cube_multi_calculation tri1(p, nodes, do_OS, do_OP, bandwidth);
+	sample_cube_multi_calculation tri1(p, nodes, bandwidth);
 
 	// The DP matrix construction didn't work.
 	if (tri1.Pr[0] <= 0.0) return -1;
@@ -236,7 +236,7 @@ int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 	//	p2[i][j].A_ = p[C1][j].A_;
 	std::abort();
 
-	sample_cube_multi_calculation tri2(p2, nodes, do_OS, do_OP, bandwidth);
+	sample_cube_multi_calculation tri2(p2, nodes, bandwidth);
 
 	// The DP matrix construction didn't work.
 	if (tri2.Pr[0] <= 0.0) return -1;
@@ -275,9 +275,9 @@ void cube_sample_alignment(Parameters& P,int node1,int node2)
 
     int C = -1;
     if (bandwidth >= 0)
-	C = sample_cube_multi(p,nodes,rho,false,false, bandwidth);
+	C = sample_cube_multi(p,nodes,rho, bandwidth);
     else
-	C = sample_cube_multi(p,nodes,rho,false,false);
+	C = sample_cube_multi(p,nodes,rho);
 
     if (C != -1) {
 	P = p[C];
@@ -303,7 +303,7 @@ bool cube_sample_alignment_branch(Parameters& P,
     rho[0] = 1;
     rho[1] = rho_;
 
-    int C = sample_cube_multi(p,nodes,rho,false,false);
+    int C = sample_cube_multi(p,nodes,rho);
 
     if (C != -1) {
 	P = p[C];
@@ -323,7 +323,7 @@ bool cube_sample_alignment_and_parameter(Parameters& P, int node1,int node2, con
 
     auto rho = propose(p[1]);
 
-    int C = sample_cube_multi(p, nodes, {1.0, rho}, false, false);
+    int C = sample_cube_multi(p, nodes, {1.0, rho});
 
     if (C != -1) {
 	P = p[C];
@@ -346,7 +346,7 @@ bool cube_sample_alignment_branch_model(Parameters& P,int node1,int node2)
 
     vector<log_double_t> rho(2,1.0);
 
-    int C = sample_cube_multi(p,nodes,rho,false,false);
+    int C = sample_cube_multi(p,nodes,rho);
 
     if (C != -1) {
 	P = p[C];

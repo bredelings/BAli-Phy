@@ -249,7 +249,7 @@ tri_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
 
 
 sample_A3_multi_calculation::sample_A3_multi_calculation(vector<Parameters>& pp,const vector< vector<int> >& nodes_,
-							 bool do_OS_,bool do_OP_, int b)
+                                                         int b)
     :
     p(pp),
 #ifndef NDEBUG_DP
@@ -257,10 +257,6 @@ sample_A3_multi_calculation::sample_A3_multi_calculation(vector<Parameters>& pp,
 #endif
     nodes(nodes_),
     Matrices(p.size()),
-    do_OS(do_OS_),
-    do_OP(do_OP_),
-    OS(p.size()),
-    OP(p.size()),
     Pr(p.size()),
     bandwidth(b)
 {
@@ -308,14 +304,19 @@ void sample_A3_multi_calculation::run_dp()
     for(int i=0;i<p.size();i++) 
     {
         Pr[i] = 1.0;
+
+#ifndef NDEBUG        
 	Matrices[i].resize(p[i].n_data_partitions());
+#endif
 	for(int j=0;j<p[i].n_data_partitions();j++) {
 	    if (p[i][j].variable_alignment())
             {
 		auto [M,sampling_pr] = compute_matrix(i,j);
                 Pr[i] /= sampling_pr;
                 Pr[i] *= A3::correction(p[i][j], nodes[i]);
+#ifndef NDEBUG                
 		Matrices[i][j] = M;
+#endif
             }
 	}
         Pr[i] *= p[i].heated_probability();
@@ -369,8 +370,6 @@ int sample_A3_multi_calculation::choose(bool correct)
     nodes.push_back(nodes[0]);
     rho.push_back( rho[0] );
     Matrices.push_back( Matrices[0] );
-    OS.push_back( OS[0] );
-    OP.push_back( OP[0] );
 
     vector< vector< vector<int> > > paths(p.size());
 
@@ -460,22 +459,22 @@ pair<shared_ptr<DPengine>,log_double_t> sample_tri_multi_calculation::compute_ma
 }
 
 sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& pp,const vector< vector<int> >& nodes_,
-							   bool do_OS,bool do_OP, int b)
-    :sample_A3_multi_calculation(pp, nodes_, do_OS, do_OP, b)
+							   int b)
+    :sample_A3_multi_calculation(pp, nodes_, b)
 { }
 
 // Consider making into object! That would make it easier to mix
 // and match parts of the routine, while saving state.
 
 int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
-		     const vector<log_double_t>& rho, bool do_OS,bool do_OP) 
+		     const vector<log_double_t>& rho) 
 {
     try {
 	shared_ptr<sample_A3_multi_calculation> tri;
 	if (uniform() < p[0].load_value("cube_fraction",0.0))
-	    tri = shared_ptr<sample_A3_multi_calculation>(new sample_cube_multi_calculation(p, nodes, do_OS, do_OP));
+	    tri = shared_ptr<sample_A3_multi_calculation>(new sample_cube_multi_calculation(p, nodes));
 	else
-	    tri = shared_ptr<sample_A3_multi_calculation>(new sample_tri_multi_calculation(p, nodes, do_OS, do_OP));
+	    tri = shared_ptr<sample_A3_multi_calculation>(new sample_tri_multi_calculation(p, nodes));
 	tri->run_dp();
 
 	// The DP matrix construction didn't work.
@@ -492,14 +491,14 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 }
 
 int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
-		     const vector<log_double_t>& rho, bool do_OS,bool do_OP, int bandwidth) 
+		     const vector<log_double_t>& rho, int bandwidth) 
 {
     assert(bandwidth >= 0);
     try {
 	vector<Parameters> p2 = p;
 
 	//----------------- Part 1: Forward -----------------//
-	sample_tri_multi_calculation tri1(p, nodes, do_OS, do_OP, bandwidth);
+	sample_tri_multi_calculation tri1(p, nodes, bandwidth);
 	tri1.run_dp();
 
 	// The DP matrix construction didn't work.
@@ -524,7 +523,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 	//	p2[i][j].A_ = p[C1][j].A_;
 	std::abort();
 
-	sample_tri_multi_calculation tri2(p2, nodes, do_OS, do_OP, bandwidth);
+	sample_tri_multi_calculation tri2(p2, nodes, bandwidth);
 	tri2.run_dp();
 
 	// The DP matrix construction didn't work.
@@ -564,9 +563,9 @@ void tri_sample_alignment(Parameters& P,int node1,int node2)
 
     int C = -1;
     if (bandwidth >= 0)
-	C = sample_tri_multi(p,nodes,rho,false,false, bandwidth);
+	C = sample_tri_multi(p,nodes,rho,bandwidth);
     else
-	C = sample_tri_multi(p,nodes,rho,false,false);
+	C = sample_tri_multi(p,nodes,rho);
 
     if (C != -1) {
 	P = p[C];
@@ -592,7 +591,7 @@ bool tri_sample_alignment_branch(Parameters& P,
     rho[0] = 1;
     rho[1] = rho_;
 
-    int C = sample_tri_multi(p,nodes,rho,false,false);
+    int C = sample_tri_multi(p,nodes,rho);
 
     if (C != -1) {
 	P = p[C];
@@ -612,7 +611,7 @@ bool tri_sample_alignment_and_parameter(Parameters& P, int node1,int node2, cons
 
     auto rho = propose(p[1]);
 
-    int C = sample_tri_multi(p, nodes, {1.0, rho}, false, false);
+    int C = sample_tri_multi(p, nodes, {1.0, rho});
 
     if (C != -1) {
 	P = p[C];
@@ -635,7 +634,7 @@ bool tri_sample_alignment_branch_model(Parameters& P,int node1,int node2)
 
     vector<log_double_t> rho(2,1.0);
 
-    int C = sample_tri_multi(p,nodes,rho,false,false);
+    int C = sample_tri_multi(p,nodes,rho);
 
     if (C != -1) {
 	P = p[C];
