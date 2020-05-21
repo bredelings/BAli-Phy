@@ -624,4 +624,10 @@ inline bool reg_heap::reg_is_changeable(int r) const
     return regs.access(r).type == reg::type_t::changeable;
 }
 
+inline bool reg_heap::has_force(int r) const
+{
+    assert(prog_forces[r] != 0);
+    return prog_forces[r] > 0;
+}
+
 #endif
