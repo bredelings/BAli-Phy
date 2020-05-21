@@ -268,19 +268,18 @@ sample_A3_multi_calculation::sample_A3_multi_calculation(vector<Parameters>& pp,
 
 log_double_t pr_sum_out_A_tri(Parameters P, const vector<optional<vector<HMM::bitmask_t>>>& a23, const vector<int>& nodes)
 {
-    log_double_t Pr = P.prior_no_alignment();
+    log_double_t Pr = P.heated_probability();
 
     // sum of substitution and alignment probability over all paths
     for(int j=0;j<P.n_data_partitions();j++)
     {
-	if (P[j].variable_alignment()) {
+	if (P[j].variable_alignment())
+        {
 	    auto [Matrices,sampling_pr] = tri_sample_alignment_base(P[j], nodes, *a23[j], -1);
-	    Pr *= Matrices->Pr_sum_all_paths();
-	    Pr *= pow(other_subst(P[j], nodes), P[j].get_beta());
-	    Pr *= other_prior(P[j], nodes);
-	}
-	else
-	    Pr *= P[j].heated_likelihood();
+	    Pr /= sampling_pr;
+            Pr *= A3::correction(P[j], nodes);
+            // FIXME! These sums still need to be accepted/rejected!
+        }
     }
 
     return Pr;
