@@ -363,7 +363,6 @@ public:
     }
   
     // The prior, likelihood, and probability
-    log_double_t prior_no_alignment() const;
     log_double_t prior_alignment() const;
 
     void cache_likelihood_branches() const;
