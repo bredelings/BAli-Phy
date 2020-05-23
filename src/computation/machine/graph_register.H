@@ -12,9 +12,9 @@
 #include "pool.H"
 #include "computation/program.H"
 #include <boost/container/small_vector.hpp>
-#include <bitset>
 #include "computation/loader.H"
 #include "util/assert.hh"
+#include "util/bitmask.H"
 #include "kahan.H"
 #include "mcmc/prob_ratios.H"
 #include "mapping.H"
@@ -41,7 +41,7 @@ struct Step
 
     boost::container::small_vector< int, 2 > created_regs;
 
-    std::bitset<8> flags;
+    bitmask_8 flags;
 
     // Bit 6 for being an effect step.
 
@@ -116,7 +116,7 @@ public:
 
     std::pair<int, int> created_by;
 
-    std::bitset<8> flags;
+    bitmask_8 flags;
 
     void clear();
 
@@ -374,7 +374,7 @@ private:
     std::vector<int> prog_results;
     std::vector<char> prog_forces;
     std::vector<int> prog_force_counts;
-    mutable std::vector<std::bitset<8>> prog_temp;
+    mutable std::vector<bitmask_8> prog_temp;
 
     std::unordered_set<int> steps_pending_effect_registration;
     std::unordered_set<int> steps_pending_effect_unregistration;

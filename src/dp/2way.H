@@ -22,7 +22,7 @@
 
 #include "util/assert.hh"          // for assert
 #include <algorithm>               // for max
-#include <bitset>                  // for bitset
+#include "util/bitmask.H"          // for bitmask
 #include <vector>                  // for vector
 #include "A2_states.H"             // for G1, G2, M, E
 #include "alignment/alignment.H"   // for alignment
@@ -89,8 +89,8 @@ public:
 
 bool operator==(const pairwise_alignment_t&, const pairwise_alignment_t&);
 
-std::bitset<8> convert_to_bits(int, int, int);
-std::vector<std::bitset<8>> convert_to_bits(const pairwise_alignment_t&, int, int );
+bitmask_8 convert_to_bits(int, int, int);
+std::vector<bitmask_8> convert_to_bits(const pairwise_alignment_t&, int, int );
 
 matrix<int> construct(const TreeInterface& t, const std::vector<pairwise_alignment_t>& A);
 

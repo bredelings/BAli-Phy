@@ -88,9 +88,9 @@ bool operator==(const pairwise_alignment_t& pi1, const pairwise_alignment_t& pi2
     return true;
 }
 
-bitset<8> convert_to_bits(int s, int b1, int b2)
+bitmask_8 convert_to_bits(int s, int b1, int b2)
 {
-    bitset<8> bits;
+    bitmask_8 bits;
     if (s == A2::states::M)
     {
 	bits.set(b1);
@@ -104,9 +104,9 @@ bitset<8> convert_to_bits(int s, int b1, int b2)
     return bits;
 }
 
-vector<bitset<8>> convert_to_bits(const pairwise_alignment_t& A, int b1, int b2)
+vector<bitmask_8> convert_to_bits(const pairwise_alignment_t& A, int b1, int b2)
 {
-    vector<bitset<8>> a;
+    vector<bitmask_8> a;
     a.reserve(A.size());
 
     for(int i=0;i<A.size();i++)

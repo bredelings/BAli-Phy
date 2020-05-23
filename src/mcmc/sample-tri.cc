@@ -18,7 +18,7 @@
   <http://www.gnu.org/licenses/>.  */
 
 #include <algorithm>                                // for sort, max
-#include <bitset>                                   // for operator&, bitset
+#include "util/bitmask.H"                           // for bitmask
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>  // for dynamic_bitset
 #include <iostream>                                 // for operator<<, endl
 #include <memory>                                   // for shared_ptr, __sha...
@@ -113,7 +113,7 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
     // Construct the states that are allowed for each emission pattern.
     for(int S2: Matrices->dp_order())
     {
-	unsigned int mask = (m123.state_emit[S2] & Matrices->emit2).to_ulong();
+	auto mask = (m123.state_emit[S2] & Matrices->emit2).raw();
 
 	// Hidden states never contradict an emission pattern.
 	if (not mask) // m123.silent(S2))
@@ -131,7 +131,7 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
     // Determine which states are allowed to match (,c2)
     for(int c2=1;c2<Matrices->dists2.n_columns()-1;c2++) 
     {
-	unsigned int mask = (a23[c2-1]&Matrices->emit2).to_ulong();
+	auto mask = (a23[c2-1]&Matrices->emit2).raw();
 	mask >>= 1;
 	assert(mask);
 
