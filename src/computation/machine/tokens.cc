@@ -156,7 +156,7 @@ void reg_heap::capture_parent_token(int t2)
 }
 
 template <typename T>
-void load_map(const mapping<T>& vm, vector<std::bitset<8>>& prog_temp)
+void load_map(const mapping<T>& vm, vector<bitmask_8>& prog_temp)
 {
     for(auto [r,_]: vm.delta())
     {
@@ -166,7 +166,7 @@ void load_map(const mapping<T>& vm, vector<std::bitset<8>>& prog_temp)
 }
 
 template<typename T>
-void unload_map(const mapping<T>& vm, vector<std::bitset<8>>& prog_temp)
+void unload_map(const mapping<T>& vm, vector<bitmask_8>& prog_temp)
 {
     for(auto [r,_]: vm.delta())
     {
@@ -176,7 +176,7 @@ void unload_map(const mapping<T>& vm, vector<std::bitset<8>>& prog_temp)
 }
 
 template <typename T>
-void merge_split_mapping_(mapping<T>& vm1, mapping<T>& vm2, vector<std::bitset<8>>& prog_temp)
+void merge_split_mapping_(mapping<T>& vm1, mapping<T>& vm2, vector<bitmask_8>& prog_temp)
 {
     for(int i=0;i<vm1.delta().size();)
     {

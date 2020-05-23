@@ -27,10 +27,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define HMM_H
 
 #include <vector>
-#include <bitset>
 #include <utility>
 #include "util/math/log-double.H"
 #include "util/matrix.H"
+#include "util/bitmask.H"
 
 // Can I make Q into a general function, backed by a matrix in some cases?
 
@@ -39,7 +39,7 @@ namespace indel { class PairHMM; }
 /// A Hidden Markov Model - represented by the transition matrix and accessory functions
 class HMM {
 public:
-  typedef std::bitset<8> bitmask_t;
+  typedef bitmask_8 bitmask_t;
 
   /// bitmasks of whether states emit features in each sequence
   std::vector<bitmask_t> state_emit;

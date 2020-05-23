@@ -72,7 +72,7 @@ sample_two_nodes_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a1
 
     for(int S2: Matrices->dp_order())
     {
-	unsigned int mask = (m12345.state_emit[S2] & ~m12345.hidden_bits).to_ulong();
+	auto mask = (m12345.state_emit[S2] & ~m12345.hidden_bits).raw();
 
 	// Hidden states never contradict an emission pattern.
 	if (not mask)
@@ -87,7 +87,7 @@ sample_two_nodes_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a1
     // Determine which states are allowed to match (c2)
     for(int c2=0;c2<Matrices->size()-1;c2++) 
     {
-	unsigned mask=a1234[c2].to_ulong();
+	auto mask=a1234[c2].raw();
 
 	Matrices->states(c2+1) = allowed_states_for_mask[mask];
     }
