@@ -225,7 +225,7 @@ void reg_heap::unshare_regs(int t)
                 {
                     if (prog_steps[r2] > 0)
                     {
-                        assert(regs.access(r2).type == reg::type_t::changeable);
+                        assert(reg_is_changeable(r2));
                         assert(prog_temp[r].test(step_bit));
                     }
                     assert(prog_temp[r].test(result_bit));
@@ -333,7 +333,7 @@ void reg_heap::unshare_regs(int t)
         {
             if (prog_steps[r2] > 0)
             {
-                assert(regs.access(r2).type == reg::type_t::changeable);
+                assert(reg_is_changeable(r2));
                 assert(prog_temp[r2].test(force_bit));
                 assert(prog_temp[r2].test(result_bit));
                 assert(prog_temp[r2].test(step_bit));
@@ -398,7 +398,7 @@ void reg_heap::unshare_regs(int t)
             {
                 if (prog_steps[r2] > 0)
                 {
-                    assert(regs.access(r2).type == reg::type_t::changeable);
+                    assert(reg_is_changeable(r2));
                     unshare_step(r2);
                 }
             }
@@ -415,7 +415,7 @@ void reg_heap::unshare_regs(int t)
         {
             if (prog_steps[r2] > 0)
             {
-                assert(regs.access(r2).type == reg::type_t::changeable);
+                assert(reg_is_changeable(r2));
                 assert(prog_temp[r2].test(result_bit));
                 assert(prog_temp[r2].test(step_bit));
             }
