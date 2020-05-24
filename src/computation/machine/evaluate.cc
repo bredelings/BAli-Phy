@@ -297,7 +297,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int r, bool reforce)
             return incremental_evaluate(r2, reforce);
         }
         else
-            assert(reg_type == reg::type_t::unevaluated);
+            assert(reg_is_unevaluated(r));
 
         /*---------- Below here, there is no call, and no value. ------------*/
         if (expression_at(r).is_index_var())
@@ -439,7 +439,7 @@ class RegOperationArgsUnchangeable final: public OperationArgs
     int evaluate_reg(int r2)
         {
             int r3 = memory().incremental_evaluate_unchangeable(r2);
-            if (M.reg_type(r3) == reg::type_t::changeable)
+            if (M.reg_is_changeable(r3))
                 throw no_context();
             return r3;
         }
@@ -459,14 +459,14 @@ class RegOperationArgsUnchangeable final: public OperationArgs
     const closure& evaluate_reg_to_closure(int r2)
         {
             int r3 = evaluate_reg_to_reg(r2);
-            assert(M.reg_type(r3) == reg::type_t::constant);
+            assert(M.reg_is_constant(r3));
             return M[r3];
         }
 
     const closure& evaluate_reg_to_closure_(int r2)
         {
             int r3 = evaluate_reg_to_reg(r2);
-            assert(M.reg_type(r3) == reg::type_t::constant);
+            assert(M.reg_is_constant(r3));
             return M[r3];
         }
 
@@ -526,7 +526,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
             return incremental_evaluate_unchangeable(r2);
         }
         else
-            assert(reg_type == reg::type_t::unevaluated);
+            assert(reg_is_unevaluated(r));
 
         /*---------- Below here, there is no call, and no value. ------------*/
         const int type = expression_at(r).head().type();

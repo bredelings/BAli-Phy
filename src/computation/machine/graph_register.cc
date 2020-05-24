@@ -1851,7 +1851,7 @@ void reg_heap::resize(int s)
 
 void reg_heap::make_reg_changeable(int r)
 {
-    assert( reg_is_changeable(r) or reg_is_unevaluate(r));
+    assert( reg_is_changeable(r) or reg_is_unevaluated(r));
 
     regs.access(r).type = reg::type_t::changeable;
 }
