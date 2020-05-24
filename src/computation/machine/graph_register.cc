@@ -1499,7 +1499,9 @@ void reg_heap::mark_step_with_effect(int s)
 int reg_heap::allocate()
 {
     total_reg_allocations++;
-    return regs.allocate();
+    int r = regs.allocate();
+    mark_reg_unevaluated(r);
+    return r;
 }
 
 int reg_heap::allocate_reg_from_step(int s)
@@ -1593,7 +1595,7 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
 
         int R2 = allocate_reg_from_step_in_token(s,t);
 
-        regs[R2].type = reg::type_t::constant;
+        mark_reg_constant(R2);
 
         // Set the call
         set_C(R2, std::move( value ) );
@@ -1847,13 +1849,6 @@ void reg_heap::resize(int s)
         assert(prog_force_counts[i] == 0);
         assert(prog_temp[i].none());
     }
-}
-
-void reg_heap::make_reg_changeable(int r)
-{
-    assert( reg_is_changeable(r) or reg_is_unevaluated(r));
-
-    regs.access(r).type = reg::type_t::changeable;
 }
 
 bool reg_heap::reg_is_called_by(int r1, int s1) const

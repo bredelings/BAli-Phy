@@ -182,10 +182,14 @@ public:
     void collect_garbage();
     void trace(std::vector<int>& remap);
     void trace_and_reclaim_unreachable();
-    bool reg_is_changeable(int r) const;
-    bool reg_is_constant(int r) const;
     bool reg_is_unevaluated(int r) const;
-    void make_reg_changeable(int r);
+    void mark_reg_unevaluated(int r);
+    bool reg_is_constant(int r) const;
+    void mark_reg_constant(int r);
+    bool reg_is_changeable(int r) const;
+    void mark_reg_changeable(int r);
+    bool reg_is_index_var(int r) const;
+    void mark_reg_index_var(int r);
 
     void set_used_reg(int r1, int r2);
     void set_forced_reg(int r1, int r2);
@@ -609,19 +613,50 @@ extern long total_tokens;
 
 /// Inlined functions
 
-inline bool reg_heap::reg_is_constant(int r) const
-{
-    return regs.access(r).type == reg::type_t::constant;
-}
-
 inline bool reg_heap::reg_is_unevaluated(int r) const
 {
     return regs.access(r).type == reg::type_t::unevaluated;
 }
 
+inline void reg_heap::mark_reg_unevaluated(int r)
+{
+    regs[r].type = reg::type_t::unevaluated;
+}
+
+inline bool reg_heap::reg_is_constant(int r) const
+{
+    return regs.access(r).type == reg::type_t::constant;
+}
+
+inline void reg_heap::mark_reg_constant(int r)
+{
+    assert( reg_is_constant(r) or reg_is_unevaluated(r));
+
+    regs[r].type = reg::type_t::constant;
+}
+
 inline bool reg_heap::reg_is_changeable(int r) const
 {
     return regs.access(r).type == reg::type_t::changeable;
+}
+
+inline void reg_heap::mark_reg_changeable(int r)
+{
+    assert( reg_is_changeable(r) or reg_is_unevaluated(r));
+
+    regs.access(r).type = reg::type_t::changeable;
+}
+
+inline bool reg_heap::reg_is_index_var(int r) const
+{
+    return regs.access(r).type == reg::type_t::index_var;
+}
+
+inline void reg_heap::mark_reg_index_var(int r)
+{
+    assert( reg_is_index_var(r) or reg_is_unevaluated(r));
+
+    regs.access(r).type = reg::type_t::index_var;
 }
 
 inline bool reg_heap::has_force(int r) const

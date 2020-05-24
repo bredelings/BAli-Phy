@@ -222,11 +222,9 @@ pair<int,int> reg_heap::incremental_evaluate_(int r, bool reforce)
         //    std::cerr<<"   statement: "<<r<<":   "<<regs.access(r).E.print()<<std::endl;
 #endif
 
-        reg::type_t reg_type = regs.access(r).type;
+        if (reg_is_constant(r)) return {r,r};
 
-        if (reg_type == reg::type_t::constant) return {r,r};
-
-        else if (reg_type == reg::type_t::changeable)
+        else if (reg_is_changeable(r))
         {
             total_changeable_eval++;
             int result = result_for_reg(r);
@@ -291,7 +289,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int r, bool reforce)
                 return {r, value};
             }
         }
-        else if (reg_type == reg::type_t::index_var)
+        else if (reg_is_index_var(r))
         {
             int r2 = closure_at(r).reg_for_index_var();
             return incremental_evaluate(r2, reforce);
@@ -310,7 +308,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int r, bool reforce)
 
             assert( not has_step(r) );
 
-            regs.access(r).type = reg::type_t::index_var;
+            mark_reg_index_var(r);
 
             int r2 = closure_at(r).reg_for_index_var();
 
@@ -323,7 +321,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int r, bool reforce)
         // Check for WHNF *OR* heap variables
         else if (is_WHNF(expression_at(r)))
         {
-            regs.access(r).type = reg::type_t::constant;
+            mark_reg_constant(r);
             assert( not has_step(r) );
             return {r,r};
         }
@@ -366,7 +364,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int r, bool reforce)
                 else
                 {
                     total_changeable_reductions++;
-                    make_reg_changeable(r);
+                    mark_reg_changeable(r);
                     closure_stack.push_back(value);
 
                     int r2;
@@ -515,12 +513,10 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
     {
         assert(expression_at(r));
 
-        reg::type_t reg_type = regs.access(r).type;
-
-        if (reg_type == reg::type_t::constant or reg_type == reg::type_t::changeable)
+        if (reg_is_constant(r) or reg_is_changeable(r))
             break;
 
-        else if (reg_type == reg::type_t::index_var)
+        else if (reg_is_index_var(r))
         {
             int r2 = closure_at(r).reg_for_index_var();
             return incremental_evaluate_unchangeable(r2);
@@ -532,7 +528,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
         const int type = expression_at(r).head().type();
         if (type == index_var_type)
         {
-            regs.access(r).type = reg::type_t::index_var;
+            mark_reg_index_var(r);
 
             int r2 = closure_at(r).reg_for_index_var();
 
@@ -547,7 +543,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
 
         // Check for WHNF *OR* heap variables
         else if (is_WHNF(expression_at(r)))
-            regs.access(r).type = reg::type_t::constant;
+            mark_reg_constant(r);
 
 #ifndef NDEBUG
         else if (expression_at(r).head().is_a<Trim>())
@@ -581,7 +577,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
             }
             catch (no_context&)
             {
-                regs.access(r).type = reg::type_t::changeable;
+                mark_reg_changeable(r);
                 return r;
             }
             catch (error_exception& e)
