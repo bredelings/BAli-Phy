@@ -1240,7 +1240,7 @@ const closure& reg_heap::access_value_for_reg(int R1) const
 
 bool reg_heap::reg_has_value(int r) const
 {
-    if (regs.access(r).type == reg::type_t::constant)
+    if (reg_is_constant(r))
         return true;
     else
         return has_result(r);
@@ -1580,7 +1580,7 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
         Q = follow_index_var(Q);
 
         // Never call something unevaluated either.
-        assert(regs[Q].type != reg::type_t::unevaluated);
+        assert(not reg_is_unevaluated(Q));
 
         // Set the call
         set_call(s, Q);
@@ -1851,7 +1851,7 @@ void reg_heap::resize(int s)
 
 void reg_heap::make_reg_changeable(int r)
 {
-    assert( regs.access(r).type == reg::type_t::changeable or regs.access(r).type == reg::type_t::unevaluated );
+    assert( reg_is_changeable(r) or reg_is_unevaluate(r));
 
     regs.access(r).type = reg::type_t::changeable;
 }
@@ -1983,7 +1983,7 @@ void reg_heap::check_used_regs_in_token(int t) const
 
         // No results for constant regs
         if (result > 0)
-            assert(regs.access(r).type != reg::type_t::constant);
+            assert(not reg_is_constant(r));
     }
 
     for(auto [r,result]: tokens[t].delta_result())
@@ -1999,7 +1999,7 @@ void reg_heap::check_used_regs_in_token(int t) const
 
         // No results for constant regs
         if (result > 0)
-            assert(regs.access(r).type != reg::type_t::constant);
+            assert(not reg_is_constant(r));
     }
 
     for(auto [r,step]: tokens[t].delta_step())
@@ -2017,7 +2017,7 @@ void reg_heap::check_used_regs_in_token(int t) const
         assert(prog_temp[r].test(result_bit) and prog_temp[r].test(step_bit));
         // No steps for constant regs
         if (step > 0)
-            assert(regs.access(r).type != reg::type_t::constant);
+            assert(not reg_is_constant(r));
     }
 
     // FIXME - nonlocal. The same result/step are not set in multiple places!
@@ -2312,7 +2312,7 @@ void reg_heap::clear_result(int r)
 const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
 {
     total_get_reg_value++;
-    if (regs.access(R).type == reg::type_t::constant) return expression_at(R);
+    if (reg_is_constant(R)) return expression_at(R);
 
     total_get_reg_value_non_const++;
     reroot_at_context(c);
