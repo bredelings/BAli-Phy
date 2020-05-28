@@ -533,10 +533,14 @@ expression_ref make_call(const ptree& call, const map<string,expression_ref>& si
     if (name[0] == '@')
     {
         name = name.substr(1);
-        if (simple_args.count(name))
+        try
+        {
             E = simple_args.at(name);
-        else
-            E = var("arg_"+name);
+        }
+        catch(...)
+        {
+            throw myexception()<<"cannot find argument '"<<name<<"'";
+        }
     }
     else
 	E = var(name);
@@ -761,15 +765,26 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
     }
 
     // 4. Construct the call expression
-    map<string,expression_ref> simple_args;
+    map<string,expression_ref> argument_environment;
     for(int i=0;i<args.size();i++)
     {
 	auto argi = array_index(args,i);
 	string arg_name = argi.get_child("arg_name").get_value<string>();
         if (simple_value[i] and not arg_referenced[i] and arg_lambda_vars[i].empty())
-            simple_args[arg_name] = simple_value[i];
+            argument_environment[arg_name] = simple_value[i];
+        else
+            argument_environment[arg_name] = var("arg_"+arg_name);
     }
-    expression_ref E = make_call(call, simple_args);
+    expression_ref E;
+    try
+    {
+        E = make_call(call, argument_environment);
+    }
+    catch(myexception& E)
+    {
+        E.prepend("In call for function '"+name+"': ");
+        throw;
+    }
 
     // 5. let-bind arg_var_<name> for any arguments that are (i) not performed and (ii) depend on a lambda variable.
     for(int i=0;i<args.size();i++)
