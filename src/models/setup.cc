@@ -687,9 +687,11 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
     for(int i=0;i<args.size();i++)
     {
 	auto argi = array_index(args,i);
-
 	string arg_name = argi.get_child("arg_name").get_value<string>();
-	auto [m, arg_imports, vars, arg_free_vars_, any_arg_loggers] = get_model_as(R, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
+        auto arg = model_rep.get_child(arg_name);
+        bool is_default_value = arg.get_child("is_default_value").get_value<bool>();
+
+        auto [m, arg_imports, vars, arg_free_vars_, any_arg_loggers] = get_model_as(R, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
         arg_free_vars[i] = arg_free_vars_;
         add(imports, arg_imports);
 
