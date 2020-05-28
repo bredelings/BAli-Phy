@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -109,6 +110,13 @@ public:
 	    return {};
     }
 
+    std::set<std::string> keys() const
+    {
+        std::set<std::string> ks;
+        for(auto& [key,value]: *this)
+            ks.insert(key);
+        return ks;
+    }
 
     operator bool () const;
     operator int () const;
