@@ -15,4 +15,5 @@ std::pair<ptree,equations> translate_model(const Rules& R,
 					   const std::vector<std::pair<std::string,term_t>>& scope);
 
 term_t extract_value(const term_t& T);
+term_t valueize(const term_t& T);
 #endif
