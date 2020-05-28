@@ -228,9 +228,12 @@ struct var_info_t
     { }
 };
 
-typedef map<string,var_info_t> names_in_scope_t;
+struct name_scope_t
+{
+    map<string,var_info_t> identifiers;
+};
 
-bool is_random(const ptree& model, const names_in_scope_t& scope)
+bool is_random(const ptree& model, const name_scope_t& scope)
 {
     if (is_constant(model)) return false;
 
@@ -241,7 +244,7 @@ bool is_random(const ptree& model, const names_in_scope_t& scope)
 
     // 2. If this is a random variable, then yes.
     if (not model.size() and model.is_a<string>())
-	if (scope.count(name) and scope.at(name).is_random) return true;
+	if (scope.identifiers.count(name) and scope.identifiers.at(name).is_random) return true;
 
     // 3. Otherwise check if children are random and unlogged
     for(const auto& p: model)
@@ -251,7 +254,7 @@ bool is_random(const ptree& model, const names_in_scope_t& scope)
     return false;
 }
 
-bool is_unlogged_random(const Rules& R, const ptree& model, const names_in_scope_t& scope)
+bool is_unlogged_random(const Rules& R, const ptree& model, const name_scope_t& scope)
 {
     if (is_constant(model)) return false;
 
@@ -262,7 +265,7 @@ bool is_unlogged_random(const Rules& R, const ptree& model, const names_in_scope
 
     // 2. If this is a random variable, then yes.
     if (not model.size() and model.is_a<string>())
-	if (scope.count(name) and scope.at(name).is_random) return true;
+	if (scope.identifiers.count(name) and scope.identifiers.at(name).is_random) return true;
 
     // 3. If this function is loggable then any random children have already been logged.
     if (is_loggable_function(R, name)) return false;
@@ -275,7 +278,7 @@ bool is_unlogged_random(const Rules& R, const ptree& model, const names_in_scope
     return false;
 }
 
-bool should_log(const Rules& R, const ptree& model, const string& arg_name, const names_in_scope_t& scope)
+bool should_log(const Rules& R, const ptree& model, const string& arg_name, const name_scope_t& scope)
 {
     auto name = model.get_value<string>();
 
@@ -291,16 +294,16 @@ bool should_log(const Rules& R, const ptree& model, const string& arg_name, cons
 	return false;
 }
 
-names_in_scope_t extend_scope(names_in_scope_t scope, const string& var, const var_info_t& var_info)
+name_scope_t extend_scope(name_scope_t scope, const string& var, const var_info_t& var_info)
 {
-    if (scope.count(var))
-	scope.erase(var);
-    scope.insert({var, var_info});
+    if (scope.identifiers.count(var))
+	scope.identifiers.erase(var);
+    scope.identifiers.insert({var, var_info});
     return scope;
 }
 
 // When processing arg i, we should only have args i+1 and after in scope.
-names_in_scope_t extend_scope(const ptree& rule, int skip, const names_in_scope_t& scope)
+name_scope_t extend_scope(const ptree& rule, int skip, const name_scope_t& scope)
 {
     auto scope2 = scope;
     int i=0;
@@ -313,8 +316,8 @@ names_in_scope_t extend_scope(const ptree& rule, int skip, const names_in_scope_
 	auto ref_name = "@"+arg_name;
 	var x("arg_"+arg_name);
 
-	scope2.erase(ref_name);
-	scope2.insert({ref_name,{x,false,false}});
+	scope2.identifiers.erase(ref_name);
+	scope2.identifiers.insert({ref_name,{x,false,false}});
     }
 
     return scope2;
@@ -332,7 +335,7 @@ int get_index_for_arg_name(const ptree& rule, const string& arg_name)
     throw myexception()<<"No arg named '"<<arg_name<<"'";
 }
 
-tuple<expression_ref,set<string>,set<string>,set<string>,bool> get_model_as(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope);
+tuple<expression_ref,set<string>,set<string>,set<string>,bool> get_model_as(const Rules& R, const ptree& model_rep, const name_scope_t& scope);
 
 expression_ref parse_constant(const ptree& model)
 {
@@ -358,16 +361,16 @@ expression_ref get_constant_model(const ptree& model_rep)
 	return {};
 }
 
-optional<tuple<expression_ref,set<string>,set<string>,set<string>,bool>> get_variable_model(const ptree& E, const names_in_scope_t& scope)
+optional<tuple<expression_ref,set<string>,set<string>,set<string>,bool>> get_variable_model(const ptree& E, const name_scope_t& scope)
 {
     if (E.size() or not E.is_a<string>()) return {};
 
     auto name = E.get_value<string>();
 
     // 1. If the name is not in scope then we are done.
-    if (not scope.count(name)) return {};
+    if (not scope.identifiers.count(name)) return {};
 
-    var x = scope.at(name).x;
+    var x = scope.identifiers.at(name).x;
 
     expression_ref V;
     set<string> lambda_vars;
@@ -376,7 +379,7 @@ optional<tuple<expression_ref,set<string>,set<string>,set<string>,bool>> get_var
     free_vars.insert(name);
 
     // 2. If the name is a lambda var, then we need to quantify it, and put it into the list of free lambda vars
-    if (scope.at(name).depends_on_lambda)
+    if (scope.identifiers.at(name).depends_on_lambda)
     {
 	V = lambda_quantify(x,x);
 	lambda_vars.insert(name);
@@ -401,7 +404,7 @@ optional<tuple<expression_ref,set<string>,set<string>,set<string>,bool>> get_var
  *   pair_body <- let_body
  *   return (fst pair_body, [("let:var",(Nothing,[(var_name,pair_x)])),("let:body",(Nothing,snd pair_body))])
  */
-optional<tuple<expression_ref,set<string>,set<string>,set<string>,bool>> get_model_let(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
+optional<tuple<expression_ref,set<string>,set<string>,set<string>,bool>> get_model_let(const Rules& R, const ptree& model_rep, const name_scope_t& scope)
 {
     auto name = model_rep.get_value<string>();
     set<string> imports;
@@ -460,7 +463,7 @@ optional<tuple<expression_ref,set<string>,set<string>,set<string>,bool>> get_mod
     return {{code.get_expression(), imports, let_body_lambda_vars, free_vars, any_body_loggers or any_arg_loggers}};
 }
 
-optional<tuple<expression_ref,set<string>, set<string>,set<string>,bool>> get_model_lambda(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
+optional<tuple<expression_ref,set<string>, set<string>,set<string>,bool>> get_model_lambda(const Rules& R, const ptree& model_rep, const name_scope_t& scope)
 {
     auto name = model_rep.get_value<string>();
 
@@ -484,7 +487,7 @@ optional<tuple<expression_ref,set<string>, set<string>,set<string>,bool>> get_mo
     // E = E x l1 l2 l3
     expression_ref E = body_var;
     for(auto& vname: lambda_vars)
-	E = {E, body_scope.at(vname).x};
+	E = {E, body_scope.identifiers.at(vname).x};
 
     // E = \x -> E
     E = lambda_quantify(x, E);
@@ -495,7 +498,7 @@ optional<tuple<expression_ref,set<string>, set<string>,set<string>,bool>> get_mo
 
     // E = \l1 l2 l3 -> E
     for(auto& vname: std::reverse(lambda_vars))
-	E = lambda_quantify(scope.at(vname).x,E);
+	E = lambda_quantify(scope.identifiers.at(vname).x,E);
 
     do_block code;
 
@@ -633,7 +636,7 @@ expression_ref simplify_intToDouble(const expression_ref& E)
 
 
 // NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
-tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_function(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
+tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_function(const Rules& R, const ptree& model_rep, const name_scope_t& scope)
 {
     auto name = model_rep.get_value<string>();
     set<string> imports;
@@ -800,7 +803,7 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
 	    // Apply the free lambda variables to arg result before using it.
 	    expression_ref F = x_func;
 	    for(auto& vname: arg_lambda_vars[i])
-		F = {F, scope.at(vname).x};
+		F = {F, scope.identifiers.at(vname).x};
 
 	    E = let_expression({{x,F}},E);
 	}
@@ -808,7 +811,7 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
 
     // 6. Return a lambda function
     for(auto& vname: std::reverse(lambda_vars))
-	E = lambda_quantify(scope.at(vname).x, E);
+	E = lambda_quantify(scope.identifiers.at(vname).x, E);
 
     // 7. Compute loggers
     vector<expression_ref> logger_bits;
@@ -865,7 +868,7 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
     return {code.get_expression(), imports, lambda_vars, free_vars, any_loggers};
 }
 
-tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_as(const Rules& R, const ptree& model_rep, const names_in_scope_t& scope)
+tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_as(const Rules& R, const ptree& model_rep, const name_scope_t& scope)
 {
     //  std::cout<<"model = "<<model<<std::endl;
     //  auto result = parse(model);
@@ -905,7 +908,7 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_as(
 /// \param a The alphabet.
 /// \param frequencies The initial letter frequencies in the model.
 ///
-model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& constraints, const ptree& model_rep, const names_in_scope_t& scope)
+model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& constraints, const ptree& model_rep, const name_scope_t& scope)
 {
     // --------- Convert model to MultiMixtureModel ------------//
     auto [full_model, imports, _1, _2, _3] = get_model_as(R, extract_value(model_rep), scope);
@@ -942,9 +945,9 @@ model_t get_model(const Rules& R, const string& type, const string& model_string
 	std::cout<<std::endl;
     }
 
-    names_in_scope_t names_in_scope;
+    name_scope_t names_in_scope;
     for(auto& [name,type]: scope)
-	names_in_scope.insert({name, var_info_t(var("var_"+name))});
+	names_in_scope.identifiers.insert({name, var_info_t(var("var_"+name))});
 
     return get_model(R, required_type, equations.get_constraints(), model, names_in_scope);
 }
