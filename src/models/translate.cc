@@ -112,6 +112,18 @@ term_t extract_value(const term_t& T)
     return value;
 }
 
+term_t valueize(const term_t& T)
+{
+    term_t t;
+    t.value = T.value;
+    for(auto& [key,value]: T)
+        t.push_back({key,valueize(value)});
+    term_t T2;
+    T2.push_back({"value",t});
+    T2.push_back({"is_default_value",ptree(false)});
+    return T2;
+}
+
 Rule substitute_in_rule_types(const equations& renaming, Rule rule)
 {
     substitute(renaming, rule.get_child("result_type") );
