@@ -119,9 +119,9 @@ expression_ref do_return = var("return");
 string model_t::show(bool top) const
 {
     if (top)
-	return show_model_annotated(description);
+        return show_model_annotated(description);
     else
-	return unparse_annotated(description);
+        return unparse_annotated(description);
 }
 
 string model_t::show_pretty(bool top) const
@@ -153,10 +153,10 @@ void to_json(json& j, const pretty_model_t& m)
     json extracted = json::array();
     for(int i=0;i<m.terms.size();i++)
     {
-	json p = json::array();
-	p[0] = m.term_names[i];
-	p[1] = m.terms[i];
-	extracted.push_back(p);
+        json p = json::array();
+        p[0] = m.term_names[i];
+        p[1] = m.terms[i];
+        extracted.push_back(p);
     }
     j["extracted"] = extracted;
 }
@@ -177,28 +177,28 @@ string show(vector<string> args)
 string default_markov_model(const alphabet& a) 
 {
     if (dynamic_cast<const Nucleotides*>(&a))
-	return "tn93";
+        return "tn93";
     else if (dynamic_cast<const AminoAcidsWithStop*>(&a))
-	return "";
+        return "";
     else if (dynamic_cast<const AminoAcids*>(&a))
-	return "lg08";
+        return "lg08";
     else if (dynamic_cast<const Codons*>(&a))
-	return "gy94";
+        return "gy94";
     else if (dynamic_cast<const Doublets*>(&a))
-	return "tn93_sym+x2_sym+f";
+        return "tn93_sym+x2_sym+f";
     else if (dynamic_cast<const Triplets*>(&a))
-	return "tn93+x3";
+        return "tn93+x3";
     else
-	return "";
+        return "";
 }
 
 auto index(const ptree& p, int i)
 {
     if (i > p.size())
-	throw myexception()<<"Can't get entry "<<i<<" for tree with size "<<p.size();
+        throw myexception()<<"Can't get entry "<<i<<" for tree with size "<<p.size();
     auto it = p.begin();
     for(int j=0;j<i;j++)
-	it++;
+        it++;
     return *it;
 }
 
@@ -224,7 +224,7 @@ struct var_info_t
     bool is_random = false;
     bool depends_on_lambda = false;
     var_info_t(const var& v, bool r=false, bool l=false)
-	:x(v),is_random(r),depends_on_lambda(l)
+        :x(v),is_random(r),depends_on_lambda(l)
     { }
 };
 
@@ -260,12 +260,12 @@ bool is_random(const ptree& model_, const name_scope_t& scope)
 
     // 2. If this is a random variable, then yes.
     if (not model.size() and model.is_a<string>())
-	if (scope.identifiers.count(name) and scope.identifiers.at(name).is_random) return true;
+        if (scope.identifiers.count(name) and scope.identifiers.at(name).is_random) return true;
 
     // 3. Otherwise check if children are random and unlogged
     for(const auto& p: model)
-	if (is_random(p.second, scope))
-	    return true;
+        if (is_random(p.second, scope))
+            return true;
 
     return false;
 }
@@ -283,15 +283,15 @@ bool is_unlogged_random(const Rules& R, const ptree& model_, const name_scope_t&
 
     // 2. If this is a random variable, then yes.
     if (not model.size() and model.is_a<string>())
-	if (scope.identifiers.count(name) and scope.identifiers.at(name).is_random) return true;
+        if (scope.identifiers.count(name) and scope.identifiers.at(name).is_random) return true;
 
     // 3. If this function is loggable then any random children have already been logged.
     if (is_loggable_function(R, name)) return false;
 
     // 4. Otherwise check if children are random and unlogged
     for(const auto& p: model)
-	if (is_unlogged_random(R, p.second, scope))
-	    return true;
+        if (is_unlogged_random(R, p.second, scope))
+            return true;
 
     return false;
 }
@@ -309,15 +309,15 @@ bool should_log(const Rules& R, const ptree& model_, const string& arg_name, con
     auto arg = model.get_child(arg_name);
 
     if (is_unlogged_random(R, arg, scope))
-	return true;
+        return true;
     else
-	return false;
+        return false;
 }
 
 name_scope_t extend_scope(name_scope_t scope, const string& var, const var_info_t& var_info)
 {
     if (scope.identifiers.count(var))
-	scope.identifiers.erase(var);
+        scope.identifiers.erase(var);
     scope.identifiers.insert({var, var_info});
     return scope;
 }
@@ -329,15 +329,15 @@ name_scope_t extend_scope(const ptree& rule, int skip, const name_scope_t& scope
     int i=0;
     for(const auto& arg: rule.get_child("args"))
     {
-	if (i++ <= skip) continue;
+        if (i++ <= skip) continue;
 
-	const auto& argument = arg.second;
-	auto arg_name = argument.get<string>("arg_name");
-	auto ref_name = "@"+arg_name;
-	var x("arg_"+arg_name);
+        const auto& argument = arg.second;
+        auto arg_name = argument.get<string>("arg_name");
+        auto ref_name = "@"+arg_name;
+        var x("arg_"+arg_name);
 
-	scope2.identifiers.erase(ref_name);
-	scope2.identifiers.insert({ref_name,{x,false,false}});
+        scope2.identifiers.erase(ref_name);
+        scope2.identifiers.insert({ref_name,{x,false,false}});
     }
 
     return scope2;
@@ -348,9 +348,9 @@ int get_index_for_arg_name(const ptree& rule, const string& arg_name)
     ptree args = rule.get_child("args");
     for(int i=0; i < args.size(); i++)
     {
-	auto argi = array_index(args,i);
-	if (arg_name == argi.get_child("arg_name").get_value<string>())
-	    return i;
+        auto argi = array_index(args,i);
+        if (arg_name == argi.get_child("arg_name").get_value<string>())
+            return i;
     }
     throw myexception()<<"No arg named '"<<arg_name<<"'";
 }
@@ -360,7 +360,7 @@ tuple<expression_ref,set<string>,set<string>,set<string>,bool> get_model_as(cons
 expression_ref parse_constant(const ptree& model)
 {
     if (model.value_is_empty())
-	throw myexception()<<"parse_constant( ): got a null value!";
+        throw myexception()<<"parse_constant( ): got a null value!";
 
     if (model.is_a<int>()) return (int)model;
     if (model.is_a<double>()) return (double)model;
@@ -375,11 +375,11 @@ expression_ref get_constant_model(const ptree& model)
     auto model_rep = model.get_child("value");
     if (expression_ref C = parse_constant(model_rep))
     {
-	if (model_rep.size() != 0) throw myexception()<<"An constant cannot have arguments!\n  '"<<model_rep.show()<<"'";
-	return {do_return, Tuple(C,List())};
+        if (model_rep.size() != 0) throw myexception()<<"An constant cannot have arguments!\n  '"<<model_rep.show()<<"'";
+        return {do_return, Tuple(C,List())};
     }
     else
-	return {};
+        return {};
 }
 
 optional<tuple<expression_ref,set<string>,set<string>,set<string>,bool>> get_variable_model(const ptree& model, const name_scope_t& scope)
@@ -419,12 +419,12 @@ optional<tuple<expression_ref,set<string>,set<string>,set<string>,bool>> get_var
     // 2. If the name is a lambda var, then we need to quantify it, and put it into the list of free lambda vars
     if (scope.identifiers.at(name).depends_on_lambda)
     {
-	V = lambda_quantify(x,x);
-	lambda_vars.insert(name);
+        V = lambda_quantify(x,x);
+        lambda_vars.insert(name);
     }
     // 3. Otherwise the expression is just the variable itself
     else
-	V = x;
+        V = x;
 
     // 4. Construct the logging tuple and return it in order to allow this action to be performed.
     V = {do_return, Tuple(V,List())};
@@ -527,7 +527,7 @@ optional<tuple<expression_ref,set<string>, set<string>,set<string>,bool>> get_mo
     // E = E x l1 l2 l3
     expression_ref E = body_var;
     for(auto& vname: lambda_vars)
-	E = {E, body_scope.identifiers.at(vname).x};
+        E = {E, body_scope.identifiers.at(vname).x};
 
     // E = \x -> E
     E = lambda_quantify(x, E);
@@ -538,7 +538,7 @@ optional<tuple<expression_ref,set<string>, set<string>,set<string>,bool>> get_mo
 
     // E = \l1 l2 l3 -> E
     for(auto& vname: std::reverse(lambda_vars))
-	E = lambda_quantify(scope.identifiers.at(vname).x,E);
+        E = lambda_quantify(scope.identifiers.at(vname).x,E);
 
     do_block code;
 
@@ -558,16 +558,16 @@ optional<tuple<expression_ref,set<string>, set<string>,set<string>,bool>> get_mo
 expression_ref make_call(const ptree& call, const map<string,expression_ref>& simple_args)
 {
     if (call.is_null())
-	throw myexception()<<"Can't construct expression from null value:\n"<<call.show()<<"\n";
+        throw myexception()<<"Can't construct expression from null value:\n"<<call.show()<<"\n";
     if (not call.empty() and not call.has_value<string>())
-	throw myexception()<<"Call should not have arguments:\n"<<call.show()<<"\n";
+        throw myexception()<<"Call should not have arguments:\n"<<call.show()<<"\n";
 
     if (call.is_a<bool>())
-	return {bool(call)};
+        return {bool(call)};
     else if (call.is_a<int>())
-	return {int(call)};
+        return {int(call)};
     else if (call.is_a<double>())
-	return {double(call)};
+        return {double(call)};
     assert(call.has_value<string>());
     auto name = call.get_value<string>();
     expression_ref E;
@@ -586,10 +586,10 @@ expression_ref make_call(const ptree& call, const map<string,expression_ref>& si
         }
     }
     else
-	E = var(name);
+        E = var(name);
 
     for(auto& pair: call)
-	E = {E,make_call(pair.second, simple_args)};
+        E = {E,make_call(pair.second, simple_args)};
 
     return E;
 }
@@ -700,14 +700,14 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
         not is_haskell_qsym(call.get_value<string>()) and
         not is_haskell_builtin_con_name(call.get_value<string>()) and
         not starts_with(call.get_value<string>(),"@"))
-	throw myexception()<<"For rule '"<<name<<"', function '"<<call.get_value<string>()<<"' doesn't seem to be a valid haskell id or a valid argument reference.";
+        throw myexception()<<"For rule '"<<name<<"', function '"<<call.get_value<string>()<<"' doesn't seem to be a valid haskell id or a valid argument reference.";
 
     // 4. Construct the call expression
     map<string,expression_ref> argument_environment;
     for(int i=0;i<args.size();i++)
     {
-	auto argi = array_index(args,i);
-	string arg_name = argi.get_child("arg_name").get_value<string>();
+        auto argi = array_index(args,i);
+        string arg_name = argi.get_child("arg_name").get_value<string>();
         argument_environment[arg_name] = var("arg_"+arg_name);
     }
 
@@ -724,8 +724,8 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
     bool any_loggers = false;
     for(int i=0;i<args.size();i++)
     {
-	auto argi = array_index(args,i);
-	string arg_name = argi.get_child("arg_name").get_value<string>();
+        auto argi = array_index(args,i);
+        string arg_name = argi.get_child("arg_name").get_value<string>();
         auto arg = model_rep.get_child(arg_name);
         bool is_default_value = arg.get_child("is_default_value").get_value<bool>();
         auto scope2 = extend_scope(*rule,i,scope);
@@ -741,28 +741,28 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
 
         add(imports, arg_imports);
 
-	if (perform_function and vars.size())
-	    throw myexception()<<"Argument '"<<arg_name<<"' of '"<<name<<"' contains a lambda variable: not allowed!";
+        if (perform_function and vars.size())
+            throw myexception()<<"Argument '"<<arg_name<<"' of '"<<name<<"' contains a lambda variable: not allowed!";
 
         arg_loggers.push_back(any_arg_loggers);
         any_loggers = any_loggers or any_arg_loggers;
-	arg_models.push_back(m);
-	arg_lambda_vars.push_back(vars);
-	add(lambda_vars, vars);
+        arg_models.push_back(m);
+        arg_lambda_vars.push_back(vars);
+        add(lambda_vars, vars);
 
-	// Wrap the argument in its appropriate Alphabet type
-	if (auto alphabet_expression = argi.get_child_optional("alphabet"))
-	{
-	    auto alphabet_scope = extend_scope(*rule, i, scope);
+        // Wrap the argument in its appropriate Alphabet type
+        if (auto alphabet_expression = argi.get_child_optional("alphabet"))
+        {
+            auto alphabet_scope = extend_scope(*rule, i, scope);
             alphabet_scope.arg_env = {{name,arg_name,argument_environment}};
-	    auto [A, alphabet_imports, alphabet_lambda_vars, alphabet_free_vars, any_alphabet_loggers] = get_model_as(R, valueize(*alphabet_expression), alphabet_scope);
-	    if (lambda_vars.size())
-		throw myexception()<<"An alphabet cannot depend on a lambda variable!";
+            auto [A, alphabet_imports, alphabet_lambda_vars, alphabet_free_vars, any_alphabet_loggers] = get_model_as(R, valueize(*alphabet_expression), alphabet_scope);
+            if (lambda_vars.size())
+                throw myexception()<<"An alphabet cannot depend on a lambda variable!";
             add(arg_free_vars[i], alphabet_free_vars);
             add(imports, alphabet_imports);
             arg_models.back() = {var("set_alphabet"),A,arg_models.back()};
             any_loggers = any_loggers or any_alphabet_loggers;
-	}
+        }
 
 
         for(int j=i+1;j<args.size();j++)
@@ -787,15 +787,15 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
     // 3. Peform the rule arguments in reverse order
     for(int i=args.size()-1; i>=0 ;i--)
     {
-	auto argi = array_index(args,i);
+        auto argi = array_index(args,i);
 
-	string arg_name = argi.get_child("arg_name").get_value<string>();
-	expression_ref arg = arg_models[i];
+        string arg_name = argi.get_child("arg_name").get_value<string>();
+        expression_ref arg = arg_models[i];
 
         // If there are no lambda vars used, then we can just place the result into scope directly, without applying anything to it.
         var x("arg_"+arg_name);
         var logger("log_"+arg_name);
-	if (arg_lambda_vars[i].empty())
+        if (arg_lambda_vars[i].empty())
         {
             if (simple_value[i])
             {
@@ -829,8 +829,8 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
     // 4. Construct the call expression
     for(int i=0;i<args.size();i++)
     {
-	auto argi = array_index(args,i);
-	string arg_name = argi.get_child("arg_name").get_value<string>();
+        auto argi = array_index(args,i);
+        string arg_name = argi.get_child("arg_name").get_value<string>();
         if (simple_value[i] and not arg_referenced[i] and arg_lambda_vars[i].empty())
             argument_environment[arg_name] = simple_value[i];
     }
@@ -848,36 +848,36 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
     // 5. let-bind arg_var_<name> for any arguments that are (i) not performed and (ii) depend on a lambda variable.
     for(int i=0;i<args.size();i++)
     {
-	auto argi = array_index(args,i);
-	string arg_name = argi.get_child("arg_name").get_value<string>();
+        auto argi = array_index(args,i);
+        string arg_name = argi.get_child("arg_name").get_value<string>();
 
         if (not arg_lambda_vars[i].empty())
-	{
-	    var x_func("arg_"+arg_name+"_func");
-	    var x("arg_"+arg_name);
+        {
+            var x_func("arg_"+arg_name+"_func");
+            var x("arg_"+arg_name);
 
-	    // Apply the free lambda variables to arg result before using it.
-	    expression_ref F = x_func;
-	    for(auto& vname: arg_lambda_vars[i])
-		F = {F, scope.identifiers.at(vname).x};
+            // Apply the free lambda variables to arg result before using it.
+            expression_ref F = x_func;
+            for(auto& vname: arg_lambda_vars[i])
+                F = {F, scope.identifiers.at(vname).x};
 
-	    E = let_expression({{x,F}},E);
-	}
+            E = let_expression({{x,F}},E);
+        }
     }
 
     // 6. Return a lambda function
     for(auto& vname: std::reverse(lambda_vars))
-	E = lambda_quantify(scope.identifiers.at(vname).x, E);
+        E = lambda_quantify(scope.identifiers.at(vname).x, E);
 
     // 7. Compute loggers
     vector<expression_ref> logger_bits;
     for(int i=0;i<args.size();i++)
     {
-	auto argi = array_index(args,i);
+        auto argi = array_index(args,i);
 
-	string arg_name = argi.get_child("arg_name").get_value<string>();
+        string arg_name = argi.get_child("arg_name").get_value<string>();
 
-	auto log_name = name + ":" + arg_name;
+        auto log_name = name + ":" + arg_name;
 
         expression_ref x_ret = (arg_lambda_vars[i].empty()) ? var("arg_"+arg_name) : var("arg_"+arg_name+"_func");
         expression_ref logger = (arg_loggers[i])?var("log_"+arg_name):List();
@@ -935,23 +935,23 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_as(
 
     // 1. Complain on empty expressions
     if (model_rep.empty() and model_rep.value_is_empty())
-	throw myexception()<<"Can't construct model from from empty description!";
+        throw myexception()<<"Can't construct model from from empty description!";
 
     // 2. Handle constant expressions
     else if (auto constant = get_constant_model(model_rep))
-	return {constant, {}, {}, {}, false};
+        return {constant, {}, {}, {}, false};
 
     // 3. Handle variables
     else if (auto variable = get_variable_model(model_rep, scope))
-	return *variable;
+        return *variable;
 
     // 4. Let expressions
     else if (auto let = get_model_let(R, model_rep, scope))
-	return *let;
+        return *let;
 
     // 5. Let expressions
     else if (auto func = get_model_lambda(R, model_rep, scope))
-	return *func;
+        return *func;
 
     // 6. Functions
     return get_model_function(R, model_rep, scope);
@@ -970,7 +970,7 @@ model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& con
     auto [full_model, imports, _1, _2, _3] = get_model_as(R, model_rep, scope);
 
     if (log_verbose >= 2)
-	std::cout<<"full_model = "<<full_model<<std::endl;
+        std::cout<<"full_model = "<<full_model<<std::endl;
 
     return {model_rep, imports, type, constraints, full_model};
 }
@@ -983,7 +983,7 @@ model_t get_model(const Rules& R, const string& type, const string& model_string
 
     vector<pair<string,ptree>> typed_scope;
     for(auto& [name,type]: scope)
-	typed_scope.push_back({name, parse_type(type)});
+        typed_scope.push_back({name, parse_type(type)});
     auto [model, equations] = translate_model(R, required_type, model_rep, typed_scope);
 
     model_rep = extract_value(model);
@@ -992,18 +992,18 @@ model_t get_model(const Rules& R, const string& type, const string& model_string
     substitute(equations, required_type);
     if (log_verbose >= 1)
     {
-	std::cout<<"model = "<<unparse_annotated(model)<<std::endl;
-	std::cout<<"type = "<<unparse_type(required_type)<<std::endl;
-	std::cout<<"equations: "<<show(equations)<<std::endl;
-	std::cout<<"structure = "<<show(model_rep)<<std::endl;
-	std::cout<<"annotated structure = "<<show(model)<<std::endl;
-	std::cout<<"pretty:\n"<<pretty_model_t(model).show()<<std::endl;
-	std::cout<<std::endl;
+        std::cout<<"model = "<<unparse_annotated(model)<<std::endl;
+        std::cout<<"type = "<<unparse_type(required_type)<<std::endl;
+        std::cout<<"equations: "<<show(equations)<<std::endl;
+        std::cout<<"structure = "<<show(model_rep)<<std::endl;
+        std::cout<<"annotated structure = "<<show(model)<<std::endl;
+        std::cout<<"pretty:\n"<<pretty_model_t(model).show()<<std::endl;
+        std::cout<<std::endl;
     }
 
     name_scope_t names_in_scope;
     for(auto& [name,type]: scope)
-	names_in_scope.identifiers.insert({name, var_info_t(var("var_"+name))});
+        names_in_scope.identifiers.insert({name, var_info_t(var("var_"+name))});
 
     return get_model(R, required_type, equations.get_constraints(), model, names_in_scope);
 }
@@ -1042,23 +1042,23 @@ bool do_extract(const ptree& func, const ptree& arg)
     // 2. If this is a model, then extract non-random things that are not models.
     if (annotated_term_is_model(func))
     {
-	if (annotated_term_is_model(arg)) return false;
+        if (annotated_term_is_model(arg)) return false;
 
-	// FIXME - It would be nice if we could universally return true here.
-	//         But first, we need to handle - not extracting gamma::n
-	//                                      - suppressing gamma::a = getAlphabet
-	if (arg_type == "Int" or arg_type == "Double" or arg_type == "LogDouble")
-	    return true;
-	if (arg_type == "List[Double]" or arg_type == "List[Pair[String,Double]]")
-	    return true;
+        // FIXME - It would be nice if we could universally return true here.
+        //         But first, we need to handle - not extracting gamma::n
+        //                                      - suppressing gamma::a = getAlphabet
+        if (arg_type == "Int" or arg_type == "Double" or arg_type == "LogDouble")
+            return true;
+        if (arg_type == "List[Double]" or arg_type == "List[Pair[String,Double]]")
+            return true;
     }
 
     if (not is_constant(arg_value))
     {
-	auto arg_name = arg_value.get_value<string>();
+        auto arg_name = arg_value.get_value<string>();
 
-	// 3. Pull out random arguments
-	if (arg_name == "sample") return true;
+        // 3. Pull out random arguments
+        if (arg_name == "sample") return true;
     }
 
     return false;
@@ -1078,21 +1078,21 @@ vector<pair<string, ptree>> extract_terms(ptree& m)
     // Walk each argument and determine if it should be pulled out
     for(auto& [arg_name,arg_value]: value)
     {
-	string name = value.get_value<string>() + ":" + arg_name;
+        string name = value.get_value<string>() + ":" + arg_name;
 
-	// If we should pull out the argument then do so
-	if (do_extract(m, arg_value))
-	{
-	    ptree extracted_value;
-	    std::swap(arg_value, extracted_value);
-	    extracted_top.push_back({name, extracted_value});
-	}
-	// Otherwise look into the argument's value and try to pull things out
-	else if (not arg_value.is_null()) // for function[x=null,body=E]
-	{
+        // If we should pull out the argument then do so
+        if (do_extract(m, arg_value))
+        {
+            ptree extracted_value;
+            std::swap(arg_value, extracted_value);
+            extracted_top.push_back({name, extracted_value});
+        }
+        // Otherwise look into the argument's value and try to pull things out
+        else if (not arg_value.is_null()) // for function[x=null,body=E]
+        {
             for(auto& [sub_name,sub_term]: extract_terms(arg_value))
-		extracted.push_back({name+"/"+sub_name, std::move(sub_term)});
-	}
+                extracted.push_back({name+"/"+sub_name, std::move(sub_term)});
+        }
     }
     std::move(extracted_top.begin(), extracted_top.end(), std::back_inserter(extracted));
     return extracted;
@@ -1108,9 +1108,9 @@ string pretty_model_t::show_extracted() const
 
     for(int i=0; i<terms.size(); i++)
     {
-	string t = string(indent,' ') + term_names[i] + " ";
-	string value = terms[i].show(false);
-	output += "\n" + t + indent_and_wrap(0, t.size() + 2, 10000, value);
+        string t = string(indent,' ') + term_names[i] + " ";
+        string value = terms[i].show(false);
+        output += "\n" + t + indent_and_wrap(0, t.size() + 2, 10000, value);
     }
     return output;
 }
@@ -1118,9 +1118,9 @@ string pretty_model_t::show_extracted() const
 string pretty_model_t::show_main(bool top) const
 {
     if (top)
-	return unparse_annotated(main);
+        return unparse_annotated(main);
     else
-	return show_model_annotated(main);
+        return show_model_annotated(main);
 }
 
 string pretty_model_t::show(bool top) const
@@ -1134,13 +1134,13 @@ pretty_model_t::pretty_model_t(const ptree& m)
     // 1. Extract terms
     for(auto& [name,term]: extract_terms(main))
     {
-	term_names.push_back(name);
-	terms.push_back(term);
+        term_names.push_back(name);
+        terms.push_back(term);
     }
 
     // 2. Fix up names
     for(auto& name: term_names)
-	name = translate_structures(name);
+        name = translate_structures(name);
 
     term_names = short_parameter_names(term_names);
 }
