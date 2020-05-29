@@ -228,9 +228,23 @@ struct var_info_t
     { }
 };
 
+struct arg_env_t
+{
+    string func; // context: calling func:arg
+    string arg;
+    map<string,expression_ref> code_for_arg;
+
+    arg_env_t(const string& f, const string& a, const map<string,expression_ref>& c):
+        func(f),
+        arg(a),
+        code_for_arg(c)
+    { };
+};
+
 struct name_scope_t
 {
     map<string,var_info_t> identifiers;
+    optional<arg_env_t> arg_env;
 };
 
 bool is_random(const ptree& model_, const name_scope_t& scope)
@@ -376,6 +390,23 @@ optional<tuple<expression_ref,set<string>,set<string>,set<string>,bool>> get_var
 
     auto name = E.get_value<string>();
 
+    // 0. Handle references to other arguments in default_value and alphabet
+    if (not name.empty() and name[0] == '@')
+    {
+        name = name.substr(1);
+        if (not scope.arg_env)
+            throw myexception()<<"Looking up argument '"<<name<<"' in an empty environment!";
+
+        auto& env = *scope.arg_env;
+        if (not env.code_for_arg.count(name))
+            throw myexception()<<env.func<<"."<<env.arg<<": can't find argument '"<<name<<"' referenced in default_value or alphabet";
+
+        expression_ref V = env.code_for_arg.at(name);
+        V = {do_return, Tuple(V,List())};
+
+        return {{V, {}, {}, {name}, false}};
+    }
+
     // 1. If the name is not in scope then we are done.
     if (not scope.identifiers.count(name)) return {};
 
@@ -383,9 +414,7 @@ optional<tuple<expression_ref,set<string>,set<string>,set<string>,bool>> get_var
 
     expression_ref V;
     set<string> lambda_vars;
-    set<string> free_vars;
 
-    free_vars.insert(name);
 
     // 2. If the name is a lambda var, then we need to quantify it, and put it into the list of free lambda vars
     if (scope.identifiers.at(name).depends_on_lambda)
@@ -401,7 +430,7 @@ optional<tuple<expression_ref,set<string>,set<string>,set<string>,bool>> get_var
     V = {do_return, Tuple(V,List())};
 
     // 5. We need an extra level of {} to allow constructing the optional.
-    return {{V,{},lambda_vars,free_vars,false}};
+    return {{V,{},lambda_vars,{},false}};
 }
 
 
@@ -673,6 +702,15 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
         not starts_with(call.get_value<string>(),"@"))
 	throw myexception()<<"For rule '"<<name<<"', function '"<<call.get_value<string>()<<"' doesn't seem to be a valid haskell id or a valid argument reference.";
 
+    // 4. Construct the call expression
+    map<string,expression_ref> argument_environment;
+    for(int i=0;i<args.size();i++)
+    {
+	auto argi = array_index(args,i);
+	string arg_name = argi.get_child("arg_name").get_value<string>();
+        argument_environment[arg_name] = var("arg_"+arg_name);
+    }
+
     // 2. Parse models for arguments to figure out which free lambda variables they contain
     vector<expression_ref> arg_models;
     vector<set<string>> arg_lambda_vars;
@@ -690,24 +728,18 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
 	string arg_name = argi.get_child("arg_name").get_value<string>();
         auto arg = model_rep.get_child(arg_name);
         bool is_default_value = arg.get_child("is_default_value").get_value<bool>();
+        auto scope2 = extend_scope(*rule,i,scope);
+        if (is_default_value)
+            scope2.arg_env = {{name,arg_name,argument_environment}};
 
-        auto [m, arg_imports, vars, arg_free_vars_, any_arg_loggers] = get_model_as(R, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
-        arg_free_vars[i] = arg_free_vars_;
+        auto [m, arg_imports, vars, used_args, any_arg_loggers] = get_model_as(R, model_rep.get_child(arg_name), scope2);
+
+        if (is_default_value)
+            arg_free_vars[i] = used_args;
+        else
+            add(free_vars, used_args);
+
         add(imports, arg_imports);
-
-        for(int j=i+1;j<args.size();j++)
-        {
-            auto argj = array_index(args,j);
-
-            string arg_name_j = "@"+argj.get_child("arg_name").get_value<string>();
-            if (arg_free_vars[i].count(arg_name_j))
-            {
-                arg_free_vars[i].erase(arg_name_j);
-                arg_referenced[j] = true;
-                if (log_verbose > 1)
-                    std::cerr<<"Arg "<<name<<":"<<arg_name<<" references "<<name<<":"<<arg_name_j<<"\n";
-            }
-        }
 
 	if (perform_function and vars.size())
 	    throw myexception()<<"Argument '"<<arg_name<<"' of '"<<name<<"' contains a lambda variable: not allowed!";
@@ -716,11 +748,13 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
         any_loggers = any_loggers or any_arg_loggers;
 	arg_models.push_back(m);
 	arg_lambda_vars.push_back(vars);
+	add(lambda_vars, vars);
 
 	// Wrap the argument in its appropriate Alphabet type
 	if (auto alphabet_expression = argi.get_child_optional("alphabet"))
 	{
 	    auto alphabet_scope = extend_scope(*rule, i, scope);
+            alphabet_scope.arg_env = {{name,arg_name,argument_environment}};
 	    auto [A, alphabet_imports, alphabet_lambda_vars, alphabet_free_vars, any_alphabet_loggers] = get_model_as(R, valueize(*alphabet_expression), alphabet_scope);
 	    if (lambda_vars.size())
 		throw myexception()<<"An alphabet cannot depend on a lambda variable!";
@@ -730,8 +764,19 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
             any_loggers = any_loggers or any_alphabet_loggers;
 	}
 
-	add(lambda_vars, vars);
-        add(free_vars, arg_free_vars[i]);
+
+        for(int j=i+1;j<args.size();j++)
+        {
+            auto argj = array_index(args,j);
+
+            string arg_name_j = argj.get_child("arg_name").get_value<string>();
+            if (arg_free_vars[i].count(arg_name_j))
+            {
+                arg_referenced[j] = true;
+                if (log_verbose > 1)
+                    std::cerr<<"Arg "<<name<<":"<<arg_name<<" references "<<name<<":"<<arg_name_j<<"\n";
+            }
+        }
 
         simple_value.push_back(simplify_intToDouble(is_simple_return(arg_models.back())));
         simple_action.push_back(is_simple_action_return(arg_models.back()));
@@ -782,15 +827,12 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
     }
 
     // 4. Construct the call expression
-    map<string,expression_ref> argument_environment;
     for(int i=0;i<args.size();i++)
     {
 	auto argi = array_index(args,i);
 	string arg_name = argi.get_child("arg_name").get_value<string>();
         if (simple_value[i] and not arg_referenced[i] and arg_lambda_vars[i].empty())
             argument_environment[arg_name] = simple_value[i];
-        else
-            argument_environment[arg_name] = var("arg_"+arg_name);
     }
     expression_ref E;
     try
