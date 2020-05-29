@@ -436,6 +436,8 @@ optional<tuple<expression_ref,set<string>,set<string>,set<string>,bool>> get_var
  */
 optional<tuple<expression_ref,set<string>,set<string>,set<string>,bool>> get_model_let(const Rules& R, const ptree& model, const name_scope_t& scope)
 {
+    auto scope2 = scope;
+
     auto model_rep = model.get_child("value");
     auto name = model_rep.get_value<string>();
     set<string> imports;
@@ -446,12 +448,12 @@ optional<tuple<expression_ref,set<string>,set<string>,set<string>,bool>> get_mod
     auto [var_name , var_exp ] = model_rep[0];
     auto [body_name, body_exp] = model_rep[1];
 
-    var x("var_"+var_name);
-    var arg_loggers("loggers_"+var_name);
-
-    var body_var("let_body_var");
-    var body_loggers("let_body_loggers");
+    var x = scope2.get_var(var_name);
+    var arg_loggers = scope2.get_var("log_" + var_name);
     var_info_t var_info(x,is_random(var_exp, scope));
+
+    var body_var = scope2.get_var("body");
+    var body_loggers = scope2.get_var("log_body");
 
     set<string> free_vars;
 
