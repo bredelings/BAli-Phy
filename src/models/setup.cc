@@ -666,6 +666,26 @@ expression_ref simplify_intToDouble(const expression_ref& E)
     return E;
 }
 
+optional<string> get_func_name(const ptree& model)
+{
+    auto value = model.get_child("value");
+    if (not value.has_value<string>())
+        return {};
+
+    auto func_name = value.get_value<string>();
+
+    if (func_name == "function")
+        return get_func_name(value[1].second);
+
+    if (is_qualified_symbol(func_name))
+        func_name = get_unqualified_name(func_name);
+
+    if (is_haskell_id(func_name))
+        return func_name+"_model";
+    else
+        return {};
+}
+
 
 // NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
 tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_function(const Rules& R, const ptree& model, const name_scope_t& scope)
@@ -706,6 +726,12 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
         string arg_name = argi.get_child("arg_name").get_value<string>();
 
         auto var_name = arg_name;
+        if (var_name == "submodel")
+        {
+            auto arg = model_rep.get_child(arg_name);
+            if (auto func_name = get_func_name(arg))
+                var_name = (*func_name)+"_model";
+        }
         arg_vars.push_back(scope2.get_var(var_name));
         log_vars.push_back(scope2.get_var("log_"+var_name));
         arg_func_vars.push_back(scope2.get_var(var_name+"_func"));
