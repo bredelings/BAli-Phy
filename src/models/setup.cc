@@ -322,27 +322,6 @@ name_scope_t extend_scope(name_scope_t scope, const string& var, const var_info_
     return scope;
 }
 
-// When processing arg i, we should only have args i+1 and after in scope.
-name_scope_t extend_scope(const ptree& rule, int skip, const name_scope_t& scope)
-{
-    auto scope2 = scope;
-    int i=0;
-    for(const auto& arg: rule.get_child("args"))
-    {
-        if (i++ <= skip) continue;
-
-        const auto& argument = arg.second;
-        auto arg_name = argument.get<string>("arg_name");
-        auto ref_name = "@"+arg_name;
-        var x("arg_"+arg_name);
-
-        scope2.identifiers.erase(ref_name);
-        scope2.identifiers.insert({ref_name,{x,false,false}});
-    }
-
-    return scope2;
-}
-
 int get_index_for_arg_name(const ptree& rule, const string& arg_name)
 {
     ptree args = rule.get_child("args");
@@ -728,7 +707,7 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
         string arg_name = argi.get_child("arg_name").get_value<string>();
         auto arg = model_rep.get_child(arg_name);
         bool is_default_value = arg.get_child("is_default_value").get_value<bool>();
-        auto scope2 = extend_scope(*rule,i,scope);
+        auto scope2 = scope;
         if (is_default_value)
             scope2.arg_env = {{name,arg_name,argument_environment}};
 
@@ -753,7 +732,7 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
         // Wrap the argument in its appropriate Alphabet type
         if (auto alphabet_expression = argi.get_child_optional("alphabet"))
         {
-            auto alphabet_scope = extend_scope(*rule, i, scope);
+            auto alphabet_scope = scope;
             alphabet_scope.arg_env = {{name,arg_name,argument_environment}};
             auto [A, alphabet_imports, alphabet_lambda_vars, alphabet_free_vars, any_alphabet_loggers] = get_model_as(R, valueize(*alphabet_expression), alphabet_scope);
             if (lambda_vars.size())
