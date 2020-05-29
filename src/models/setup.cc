@@ -681,7 +681,7 @@ optional<string> get_func_name(const ptree& model)
         func_name = get_unqualified_name(func_name);
 
     if (is_haskell_id(func_name))
-        return func_name+"_model";
+        return func_name;
     else
         return {};
 }
