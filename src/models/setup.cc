@@ -1120,9 +1120,9 @@ model_t get_model(const Rules& R, const string& type, const string& model_string
     auto model_rep = parse(R, model_string);
 //    std::cout<<"model1 = "<<show(model_rep)<<std::endl;
 
-    vector<pair<string,ptree>> typed_scope;
+    map<string,ptree> typed_scope;
     for(auto& [name,type]: scope)
-        typed_scope.push_back({name, parse_type(type)});
+        typed_scope.insert({name, parse_type(type)});
     auto [model, equations] = translate_model(R, required_type, model_rep, typed_scope);
 
     model_rep = extract_value(model);
