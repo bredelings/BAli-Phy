@@ -631,6 +631,34 @@ optional<tuple<expression_ref,set<string>,set<string>,set<string>,bool>> get_mod
     return {{code.get_expression(), imports, let_body_lambda_vars, free_vars, any_body_loggers or any_arg_loggers}};
 }
 
+expression_ref eta_reduce(expression_ref E)
+{
+    while(is_lambda_exp(E))
+    {
+        auto& x    = E.sub()[0].as_<var>();
+        auto& body = E.sub()[1];
+
+        if (is_apply_exp(body) and body.sub().back() == x)
+        {
+            // ($) f x  ==> f
+            if (body.size() == 2)
+                E = body.sub()[0];
+            // ($) f y x ==> ($) f y
+            else
+            {
+                // This is the simple case, where we can just pop an argument off the end of the list.
+                assert(body.size() > 2);
+                object_ptr<expression> body2 = body.as_expression().clone();
+                body2->sub.pop_back();
+                E = body2;
+            }
+        }
+        else
+            break;
+    }
+    return E;
+}
+
 optional<tuple<expression_ref,set<string>, set<string>,set<string>,bool>> get_model_lambda(const Rules& R, const ptree& model, const name_scope_t& scope)
 {
     auto scope2 = scope;
