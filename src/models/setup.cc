@@ -78,6 +78,9 @@
 
 #include <vector>
 #include <boost/program_options.hpp>
+
+#include "util/graph.H"
+
 #include "models/setup.H"
 #include "util/string/join.H"
 #include "util/string/pred.H"
@@ -778,6 +781,52 @@ expression_ref make_call(const ptree& call, const map<string,expression_ref>& si
     return E;
 }
 
+vector<bool> get_args_referenced(const vector<string>& arg_names, const vector<set<string>>& used_args_for_arg)
+{
+    vector<bool> referenced(arg_names.size(), false);
+    for(int i=0;i<arg_names.size();i++)
+        for(int j=0;j<arg_names.size();j++)
+        {
+            if (used_args_for_arg[i].count(arg_names[j]))
+            {
+                referenced[j] = true;
+                if (log_verbose > 1)
+                    std::cerr<<arg_names[i]<<" references "<<arg_names[j]<<"\n";
+            }
+        }
+    return referenced;
+}
+
+vector<int> get_args_order(const vector<string>& arg_names, const vector<set<string>> used_args_for_arg)
+{
+    const int N = arg_names.size();
+
+    // 1. Construct the directed reference graph
+    auto G = make_graph(N, [&](int i, int j) { return used_args_for_arg[i].count(arg_names[j]); });
+
+    // 2. Complain about loops
+    for(auto& loop_component: get_loop_components(G))
+    {
+        if (loop_component.size() == 1)
+        {
+            int i = loop_component[0];
+            throw myexception()<<"default argument for '"<<arg_names[i]<<"' references itself!";
+        }
+        else
+        {
+            vector<string> loop_names;
+            for(int i: loop_component)
+                loop_names.push_back(arg_names[i]);
+            throw myexception()<<"Must specify at least one of: "<<join(loop_names,',');
+        }
+    }
+    
+    auto order = topo_sort(G);
+//    std::reverse(order.begin(), order.end());
+    return order;
+}
+
+
 // NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
 tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_function(const Rules& R, const ptree& model, const name_scope_t& scope)
 {
@@ -833,32 +882,32 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
     // 2. Parse models for arguments to figure out which free lambda variables they contain
     vector<expression_ref> arg_models;
     vector<set<string>> arg_lambda_vars;
-    vector<set<string>> arg_free_vars(args.size());
+    vector<set<string>> used_args_for_arg(args.size());
+    vector<string> arg_names(args.size());
     set<string> lambda_vars;
     set<string> free_vars;
     vector<bool> arg_loggers;
-    vector<bool> arg_referenced(args.size(), false);
     bool any_loggers = false;
     for(int i=0;i<args.size();i++)
     {
         auto argi = array_index(args,i);
-        string arg_name = argi.get_child("arg_name").get_value<string>();
-        auto arg = model_rep.get_child(arg_name);
+        arg_names[i] = argi.get_child("arg_name").get_value<string>();
+        auto arg = model_rep.get_child(arg_names[i]);
         bool is_default_value = arg.get_child("is_default_value").get_value<bool>();
         if (is_default_value)
-            scope2.arg_env = {{name,arg_name,argument_environment}};
+            scope2.arg_env = {{name,arg_names[i],argument_environment}};
 
-        auto [m, arg_imports, vars, used_args, any_arg_loggers] = get_model_as(R, model_rep.get_child(arg_name), scope2);
+        auto [m, arg_imports, vars, used_args, any_arg_loggers] = get_model_as(R, model_rep.get_child(arg_names[i]), scope2);
 
         if (is_default_value)
-            arg_free_vars[i] = used_args;
+            used_args_for_arg[i] = used_args;
         else
             add(free_vars, used_args);
 
         add(imports, arg_imports);
 
         if (perform_function and vars.size())
-            throw myexception()<<"Argument '"<<arg_name<<"' of '"<<name<<"' contains a lambda variable: not allowed!";
+            throw myexception()<<"Argument '"<<arg_names[i]<<"' of '"<<name<<"' contains a lambda variable: not allowed!";
 
         arg_loggers.push_back(any_arg_loggers);
         any_loggers = any_loggers or any_arg_loggers;
@@ -870,11 +919,11 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
         if (auto alphabet_expression = argi.get_child_optional("alphabet"))
         {
             auto alphabet_scope = scope2;
-            alphabet_scope.arg_env = {{name,arg_name,argument_environment}};
+            alphabet_scope.arg_env = {{name,arg_names[i],argument_environment}};
             auto [A, alphabet_imports, alphabet_lambda_vars, alphabet_free_vars, any_alphabet_loggers] = get_model_as(R, valueize(*alphabet_expression), alphabet_scope);
             if (lambda_vars.size())
                 throw myexception()<<"An alphabet cannot depend on a lambda variable!";
-            add(arg_free_vars[i], alphabet_free_vars);
+            add(used_args_for_arg[i], alphabet_free_vars);
             add(imports, alphabet_imports);
             if (auto simple_a = is_simple_return(A))
             {
@@ -886,25 +935,19 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
             }
             any_loggers = any_loggers or any_alphabet_loggers;
         }
-
-        for(int j=i+1;j<args.size();j++)
-        {
-            auto argj = array_index(args,j);
-
-            string arg_name_j = argj.get_child("arg_name").get_value<string>();
-            if (arg_free_vars[i].count(arg_name_j))
-            {
-                arg_referenced[j] = true;
-                if (log_verbose > 1)
-                    std::cerr<<"Arg "<<name<<":"<<arg_name<<" references "<<name<<":"<<arg_name_j<<"\n";
-            }
-        }
     }
+
+    // 2. Figure out which args are referenced from other args
+    //    FIXME!  We should start with just args referenced by the call expression.
+    //    We could also count HOW MANY times each arg is referenced by the call expression.
+    auto arg_referenced = get_args_referenced(arg_names, used_args_for_arg);
+
+    auto arg_order = get_args_order(arg_names, used_args_for_arg);
 
     do_block code;
 
     // 3. Peform the rule arguments in reverse order
-    for(int i=args.size()-1; i>=0 ;i--)
+    for(int i: arg_order)
     {
         // (x, logger) <- arg
         auto x = arg_vars[i];
