@@ -633,6 +633,8 @@ optional<tuple<expression_ref,set<string>,set<string>,set<string>,bool>> get_mod
 
 optional<tuple<expression_ref,set<string>, set<string>,set<string>,bool>> get_model_lambda(const Rules& R, const ptree& model, const name_scope_t& scope)
 {
+    auto scope2 = scope;
+
     auto model_rep = model.get_child("value");
     auto name = model_rep.get_value<string>();
 
@@ -641,17 +643,16 @@ optional<tuple<expression_ref,set<string>, set<string>,set<string>,bool>> get_mo
 
     // 2. Get the variable name and the body from the model
     string var_name = model_rep[0].first;
-    var x("lambda_var_" + var_name);
+    auto x = scope2.get_var(var_name);
+    auto body_var = scope2.get_var("lbody");
+    auto body_loggers = scope2.get_var("log_lbody");
 
-    var body_var("arg_lambda_body");
-    var body_loggers("log_lambda_body");
     ptree body_exp = model_rep[1].second;
 
     // 3. Parse the body with the lambda variable in scope, and find the free variables.
     var_info_t var_info(x,false,true);
-    auto body_scope = extend_scope(scope, var_name, var_info);
-    auto [body, body_imports, lambda_vars, lambda_free_vars, any_loggers] = get_model_as(R, body_exp, body_scope);
-    auto free_vars = lambda_free_vars;
+    auto body_scope = extend_scope(scope2, var_name, var_info);
+    auto [body, body_imports, lambda_vars, used_args, any_loggers] = get_model_as(R, body_exp, body_scope);
 
     // E = E x l1 l2 l3
     expression_ref E = body_var;
@@ -663,11 +664,10 @@ optional<tuple<expression_ref,set<string>, set<string>,set<string>,bool>> get_mo
     
     // Remove x from the lambda vars.
     if (lambda_vars.count(var_name)) lambda_vars.erase(var_name);
-    if (free_vars.count(var_name)) free_vars.erase(var_name);
 
     // E = \l1 l2 l3 -> E
     for(auto& vname: std::reverse(lambda_vars))
-        E = lambda_quantify(scope.identifiers.at(vname).x,E);
+        E = lambda_quantify(scope2.identifiers.at(vname).x,E);
 
     do_block code;
 
@@ -681,7 +681,7 @@ optional<tuple<expression_ref,set<string>, set<string>,set<string>,bool>> get_mo
     //E = do
     //      (body_var,body_loggers) <- body_action
     //      return $ (\l1 l2 l3 -> \x -> (body_var x l1 l2 l3) , body_loggers)
-    return {{code.get_expression(), body_imports, lambda_vars, free_vars, true}};
+    return {{code.get_expression(), body_imports, lambda_vars, used_args, true}};
 }
 
 expression_ref make_call(const ptree& call, const map<string,expression_ref>& simple_args)
