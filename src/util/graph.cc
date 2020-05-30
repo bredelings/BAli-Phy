@@ -2,14 +2,21 @@
 
 using std::vector;
 
-Graph get_subgraph(const vector<int> vertices, const Graph& graph)
+Graph make_graph(int N, std::function<bool(int,int)> edge_from_to)
 {
-    Graph subgraph(vertices.size());
-    for(int i=0;i<vertices.size();i++)
-	for(int j=0;j<vertices.size();j++)
-	    if (edge(vertices[i],vertices[j],graph).second)
-		boost::add_edge(i, j, subgraph);
-    return subgraph;
+    Graph G(N);
+    for(int i=0;i<N;i++)
+        for(int j=0;j<N;j++)
+            if (edge_from_to(i,j))
+                boost::add_edge(i,j,G);
+    return G;
+}
+
+Graph get_subgraph(const vector<int>& vertices, const Graph& graph)
+{
+    auto edge_from_to = [&](int i, int j) { return edge(vertices[i], vertices[j], graph).second; };
+
+    return make_graph(vertices.size(), edge_from_to);
 }
 
 vector<vector<int>> get_ordered_strong_components(const Graph& graph)
@@ -31,6 +38,22 @@ vector<vector<int>> get_ordered_strong_components(const Graph& graph)
     }
 
     return components;
+}
+
+vector<vector<int>> get_loop_components(const Graph& graph)
+{
+    vector<vector<int>> loop_components;
+
+    using namespace boost;
+
+    for(auto& component: get_ordered_strong_components(graph))
+    {
+        if (component.size() == 1 and not edge(component[0], component[0], graph).second) continue;
+
+        loop_components.push_back(std::move(component));
+    }
+
+    return loop_components;
 }
 
 vector<int> topo_sort(const Graph& graph)
