@@ -544,6 +544,26 @@ void maybe_log(vector<expression_ref>& logger_bits,
         logger_bits.push_back(logger_bit);
 }
 
+
+void perform_action_simplified(do_block& code, const var& x, const var& log_x, bool is_referenced, const expression_ref& E)
+{
+    // (x, log_x) <- return (F,[])
+    if (auto simple_value = is_simple_return(E))
+    {
+        if (is_referenced)
+            // let x = F
+            code.let(x, simplify_intToDouble(simple_value));
+    }
+    // PAT <- E
+    // (x, log_x) <- return (PAT,[])
+    else if (auto simple_action = is_simple_action_return(E))
+        // x <- E
+        code.perform(x, simple_action);
+    else
+        // (x, log_x) <- E
+        code.perform(Tuple(x,log_x), E);
+}
+
 /*
  *
  * do
@@ -586,21 +606,7 @@ optional<tuple<expression_ref,set<string>,set<string>,set<string>,bool>> get_mod
     if (arg_vars.size())
         throw myexception()<<"You cannot let-bind a variable to an expression with a function-variable";
 
-    bool referenced = true;
-    if (auto simple_value = is_simple_return(arg))
-    {
-        if (referenced)
-            code.let(x, simplify_intToDouble(simple_value));
-        else
-            assert(not any_arg_loggers);
-    }
-    else if (auto simple_action = is_simple_action_return(arg))
-    {
-        assert(not any_arg_loggers);
-        code.perform(x, simple_action);
-    }
-    else
-        code.perform(Tuple(x,log_x), arg);
+    perform_action_simplified(code, x, log_x, true, arg);
 
     // 2. Perform the body with var_name in scope
     auto [let_body, let_body_imports, let_body_lambda_vars, let_body_free_vars, any_body_loggers] = get_model_as(R, body_exp, extend_scope(scope, var_name, var_info));
@@ -908,35 +914,10 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
 
         // If there are no lambda vars used, then we can just place the result into scope directly, without applying anything to it.
         if (arg_lambda_vars[i].empty())
-        {
-            // (x, log_x) <- return (E,[])
-            if (auto simple_value = is_simple_return(arg))
-            {
-                if (not arg_referenced[i])
-                    assert(not arg_loggers[i]);
-                else
-                    // let x = E
-                    code.let(x, simplify_intToDouble(simple_value));
-            }
-            // PAT <- E
-            // (x, log_x) <- return (PAT, [])
-            else if (auto simple_action = is_simple_action_return(arg))
-            {
-                assert(not arg_loggers[i]);
-                // x <- E
-                code.perform(x, simple_action);
-            }
-            else
-            {
-                // (x, log_x) <- arg
-                code.perform(Tuple(x,log_x), arg);
-            }
-        }
+            perform_action_simplified(code, x,      log_x, arg_referenced[i], arg);
         else
-        {
-            // (x_func, log_x) <- arg
-            code.perform(Tuple(x_func, log_x), arg);
-        }
+            perform_action_simplified(code, x_func, log_x, true, arg);
+
     }
 
     // 4. Construct the call expression
