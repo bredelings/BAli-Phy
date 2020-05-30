@@ -146,51 +146,52 @@ Rule freshen_type_vars(Rule rule, const set<string>& bound_vars)
     return substitute_in_rule_types(renaming, rule);
 }
 
+struct tr_name_scope_t
+{
+    map<string,ptree> identifiers;
+    optional<map<string,ptree>> args;
+};
 
-set<string> find_type_variables_from_scope(const vector<pair<string, ptree>>& scope)
+set<string> find_type_variables_from_scope(const tr_name_scope_t& scope)
 {
     set<string> vars;
-    for(auto& x: scope)
-	add(vars, find_variables_in_type(x.second));
+    for(auto& [_, type]: scope.identifiers)
+	add(vars, find_variables_in_type(type));
+    if (scope.args)
+        for(auto& [_, type]: *scope.args)
+            add(vars, find_variables_in_type(type));
     return vars;
 }
 
-optional<ptree> type_for_var_in_scope(const string& name, const vector<pair<string,ptree>>& in_scope)
+optional<ptree> type_for_var_in_scope(const string& name, const tr_name_scope_t& scope)
 {
-    for(int i=int(in_scope.size())-1;i>=0;i--)
-	if (in_scope[i].first == name)
-	    return in_scope[i].second;
-    return {};
+    if (scope.identifiers.count(name))
+        return scope.identifiers.at(name);
+    else
+        return {};
 }
 
-vector<pair<string, ptree>> extend_scope(const vector<pair<string, ptree>>& scope, const string& var, const type_t type)
+optional<ptree> type_for_arg_in_scope(const string& name, const tr_name_scope_t& scope)
 {
-    auto scope2 = scope;
-    scope2.push_back({var,type});
-    return scope2;
+    if (not scope.args)
+        return {};
+    else if (scope.args->count(name))
+        return scope.args->at(name);
+    else
+        return {};
 }
 
-vector<pair<string, ptree>> extend_scope(const ptree& rule, int skip, const vector<pair<string, ptree>>& scope)
+tr_name_scope_t extend_scope(const tr_name_scope_t& scope, const string& var, const type_t type)
 {
     auto scope2 = scope;
-    int i=0;
-    for(const auto& arg: rule.get_child("args"))
-    {
-	i++;
-	if (i < skip) continue;
-
-	const auto& argument = arg.second;
-	string arg_name = argument.get<string>("arg_name");
-	type_t arg_required_type = get_type_for_arg(rule, arg_name);
-
-	scope2.push_back({"@"+arg_name, arg_required_type});
-    }
-
+    if (scope2.identifiers.count(var))
+        scope2.identifiers.erase(var);
+    scope2.identifiers.insert({var,type});
     return scope2;
 }
 
 // OK, so 'model' is going to have arg=value pairs set, but not necessarily in the right order.
-equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<string> bound_vars, const vector<pair<string, ptree>>& scope)
+equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<string> bound_vars, const tr_name_scope_t& scope)
 {
     // 0a. Any variables in required_type must be listed as bound
     assert(includes(bound_vars, find_variables_in_type(required_type)));
@@ -214,6 +215,13 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	    result_type=type_t("String");
 	else if (auto type = type_for_var_in_scope(name, scope))
 	    result_type = *type;
+	else if (not name.empty() and name[0] == '@')
+        {
+            auto type = type_for_arg_in_scope(name.substr(1), scope);
+            if (not type)
+                throw myexception()<<"can't find argument '"<<name<<"'";
+	    result_type = *type;
+        }
 	else if (name == "let")  //let[m=E,F]
 	{
 	    string var_name = model[0].first;
@@ -348,6 +356,15 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	    throw myexception()<<"Supplied argument '"<<arg_name<<"' more than once in term:\n"<<model.show();
     }
 
+    map<string,ptree> arg_env;
+    for(const auto& [_, argument]: rule->get_child("args"))
+    {
+	string arg_name = argument.get<string>("arg_name");
+
+	auto arg_required_type = argument.get_child("arg_type");
+        arg_env.insert({arg_name, arg_required_type});
+    }
+
     // 7. Handle arguments in rule order
     int skip=0;
     for(const auto& arg: rule->get_child("args"))
@@ -370,7 +387,12 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	}
 	else
 	    throw myexception()<<"Command '"<<name<<"' missing required argument '"<<arg_name<<"'";
-	E = E && pass2(R, arg_required_type, arg_value, bound_vars, extend_scope(*rule,skip,scope));
+
+        auto scope2 = scope;
+        if (is_default)
+            scope2.args = arg_env;
+
+	E = E && pass2(R, arg_required_type, arg_value, bound_vars, scope2);
 	for(auto& x: argument)
 	    arg_value.push_back(x);
 	if (not E)
@@ -397,9 +419,11 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
     return E;
 }
 
-std::pair<ptree,equations> translate_model(const Rules& R, const ptree& required_type, ptree model, const vector<pair<string,ptree>>& scope)
+std::pair<ptree,equations> translate_model(const Rules& R, const ptree& required_type, ptree model, const map<string,ptree>& scope)
 {
-    auto E = pass2(R, required_type, model, find_variables_in_type(required_type), scope);
+    tr_name_scope_t scope2;
+    scope2.identifiers = scope;
+    auto E = pass2(R, required_type, model, find_variables_in_type(required_type), scope2);
     return {model,E};
 }
 
