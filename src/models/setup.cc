@@ -672,44 +672,65 @@ optional<tuple<expression_ref,set<string>, set<string>,set<string>,bool>> get_mo
     // 2. Get the variable name and the body from the model
     string var_name = model_rep[0].first;
     auto x = scope2.get_var(var_name);
-    auto body_var = scope2.get_var("lbody");
-    auto body_loggers = scope2.get_var("log_lbody");
+    auto body = scope2.get_var("lbody");
+    auto log_body = scope2.get_var("log_lbody");
 
-    ptree body_exp = model_rep[1].second;
+    ptree body_model = model_rep[1].second;
 
     // 3. Parse the body with the lambda variable in scope, and find the free variables.
     var_info_t var_info(x,false,true);
     auto body_scope = extend_scope(scope2, var_name, var_info);
-    auto [body, body_imports, lambda_vars, used_args, any_loggers] = get_model_as(R, body_exp, body_scope);
+    auto [body_exp, body_imports, lambda_vars, used_args, any_loggers] = get_model_as(R, body_model, body_scope);
 
-    // E = E x l1 l2 l3
-    expression_ref E = body_var;
+    // FIXME! If we can ensure that arguments are applied with most-nested first, then
+    // we can avoid the complicated code in both #4a,b,d,e and #5b.
+    // All this code is just to handle the possibility that arguments are in a different order.
+
+    // 4. Make the lambda expression:
+
+    // 4a. Apply argments: E = E x l1 l2 l3
+    expression_ref E = body;
     for(auto& vname: lambda_vars)
         E = {E, body_scope.identifiers.at(vname).x};
 
-    // E = \x -> E
+    // 4b. First quantify with x: E = \x -> E
     E = lambda_quantify(x, E);
     
-    // Remove x from the lambda vars.
+    // 4c. Remove x from the lambda vars.
     if (lambda_vars.count(var_name)) lambda_vars.erase(var_name);
 
+    // 4d. Then quantify with all the other vars.
     // E = \l1 l2 l3 -> E
     for(auto& vname: std::reverse(lambda_vars))
         E = lambda_quantify(scope2.identifiers.at(vname).x,E);
 
-    do_block code;
+    // Here E = (\l1 l2 l3 -> \x -> (body x l1 l2 l3))
 
-    // (body_var, body_loggers) <- body
-    code.perform(Tuple(body_var,body_loggers), body);
+    // 4e. Now eta-reduce E.  If E == (\x -> body x), we will get just E == body
+    E = eta_reduce(E);
 
-    // return $ (E,body_loggers)
-    code.finish_return( Tuple(E, body_loggers) );
+    // 5. If E is the same as body var, we can just return the previous values unchanged,
+    //    except that we have removed x from the lambda_vars.
+    if (E == body)
+    {
+        return {{body_exp, body_imports, lambda_vars, used_args, any_loggers}};
+    }
+    else
+    {
+        do_block code;
 
-    // In summary, we have
-    //E = do
-    //      (body_var,body_loggers) <- body_action
-    //      return $ (\l1 l2 l3 -> \x -> (body_var x l1 l2 l3) , body_loggers)
-    return {{code.get_expression(), body_imports, lambda_vars, used_args, true}};
+        // (body, log_body) <- body_exp
+        code.perform(Tuple(body,log_body), body_exp);
+
+        // return $ (E, log_body)
+        code.finish_return( Tuple(E, log_body) );
+
+        // In summary, we have
+        //E = do
+        //      (body,log_body) <- body_action
+        //      return $ (\l1 l2 l3 -> \x -> (body x l1 l2 l3) , log_body)
+        return {{code.get_expression(), body_imports, lambda_vars, used_args, any_loggers}};
+    }
 }
 
 expression_ref make_call(const ptree& call, const map<string,expression_ref>& simple_args)
