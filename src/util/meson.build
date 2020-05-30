@@ -5,6 +5,7 @@ libutil_sources = [
   'string/split.cc',
   'log-level.cc',
   'io.cc',
+  'graph.cc',
   'range.cc',
   'demangle.cc',
   'mapping.cc',
