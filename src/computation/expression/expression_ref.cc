@@ -11,6 +11,7 @@
 #include "tuple.H"
 #include "list.H" // for char_list
 #include "bool.H"
+#include "do_block.H"
 #include "index_var.H"
 #include "computation/operations.H"
 #include "computation/module.H"
@@ -198,8 +199,8 @@ string expression::print() const
     vector<string> pargs = args;
     for(int i=1;i<pargs.size();i++)
     {
-        // This avoid parenthesizing do blocks, which is probably wrong.
-	if (not sub[i-1].size()) continue;
+        // Maybe do blocks should have more visible structure?
+	if (not sub[i-1].size() and not sub[i-1].is_a<do_block>()) continue;
 
 	if (sub[i-1].head().is_a<Operator>())
 	{
