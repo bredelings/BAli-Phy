@@ -1434,6 +1434,15 @@ expression_ref get_alphabet_expression(const alphabet& a)
 
 // FIXME: move this routine to A-T-Model
 
+string maybe_emit_code(map<string,string>& code_to_name, const string& name, string code)
+{
+    if (code_to_name.count(code))
+        code = code_to_name.at(code);
+    else
+        code_to_name.insert({code,name});
+    return name + " = " + code + "\n";
+}
+
 std::string generate_atmodel_program(int n_sequences,
                                      const vector<expression_ref>& alphabet_exps,
                                      const vector<pair<string,string>>& filename_ranges,
@@ -1479,22 +1488,37 @@ std::string generate_atmodel_program(int n_sequences,
     program_file <<"\nimport qualified Data.Map as Map"; // for Map.fromList
 
     // F1. Substitution models
+    map<string,string> code_to_name;
+
+    program_file<<"\n\n";
     for(int i=0;i<SMs.size();i++)
-        program_file<<"\n\nsample_smodel_"<<i+1<<" = "<<SMs[i].expression.print();
+    {
+        auto name = "sample_smodel_"+std::to_string(i+1);
+        auto code = SMs[i].expression.print();
+        program_file<<maybe_emit_code(code_to_name, name, code)<<"\n";
+    }
 
     // F2. Indel models
     for(int i=0;i<IMs.size();i++)
-        program_file<<"\n\nsample_imodel_"<<i+1<<" = "<<IMs[i].expression.print();
+    {
+        auto name = "sample_imodel_"+std::to_string(i+1);
+        auto code = IMs[i].expression.print();
+        program_file<<maybe_emit_code(code_to_name, name, code)<<"\n";
+    }
 
     // F3. Scale models
     for(int i=0; i<scaleMs.size(); i++)
-        program_file<<"\n\nsample_scale_"<<i+1<<" = "<<scaleMs[i].expression.print();
+    {
+        auto name = "sample_scale_"+std::to_string(i+1);
+        auto code = scaleMs[i].expression.print();
+        program_file<<maybe_emit_code(code_to_name, name, code)<<"\n";
+    }
 
     // F4. Branch lengths
-    program_file<<"\n\nsample_branch_lengths_1 = "<<branch_length_model.expression.print();
+    program_file<<"sample_branch_lengths_1 = "<<branch_length_model.expression.print()<<"\n";
 
     // F5. Topology
-    program_file<<"\n\nsample_topology_1 taxa = uniform_labelled_topology taxa";
+    program_file<<"\nsample_topology_1 taxa = uniform_labelled_topology taxa\n";
 
     /* --------------------------------------------------------------- */
     do_block program;
@@ -1798,7 +1822,7 @@ std::string generate_atmodel_program(int n_sequences,
                                  taxon_names_var},
 
                            var("loggers")));
-    program_file<<"\n\nmain = "<<program.get_expression().print();
+    program_file<<"\nmain = "<<program.get_expression().print();
 
     return program_file.str();
 }
