@@ -16,11 +16,7 @@
 
 #include "util/range.H"
 #include "util/mapping.H"
-
-#include <boost/graph/graph_traits.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/topological_sort.hpp>
-#include <boost/graph/strong_components.hpp>
+#include "util/graph.H"
 
 #include "simplifier.H"
 
@@ -189,37 +185,6 @@ Graph construct_directed_reference_graph(CDecls& decls, set<var>& free_vars)
     return graph;
 }
 
-Graph get_subgraph(const vector<int> vertices, const Graph& graph)
-{
-    Graph subgraph(vertices.size());
-    for(int i=0;i<vertices.size();i++)
-	for(int j=0;j<vertices.size();j++)
-	    if (edge(vertices[i],vertices[j],graph).second)
-		boost::add_edge(i, j, subgraph);
-    return subgraph;
-}
-
-vector<vector<int>> get_ordered_strong_components(const Graph& graph)
-{
-    using namespace boost;
-    const int L = num_vertices(graph);
-
-    // 1. Label each vertex with its component
-    vector<int> component_for_index(L);
-    int C = strong_components(graph, make_iterator_property_map(component_for_index.begin(), get(vertex_index, graph)));
-
-    // find live variables in each component
-    vector<vector<int>> components(C);
-
-    for(int i=0;i<L;i++)
-    {
-	int c = component_for_index[i];
-	components[c].push_back(i);
-    }
-
-    return components;
-}
-
 vector<int> get_live_vars(const vector<int>& vars, const CDecls& decls)
 {
     vector<int> live_vars;
@@ -266,21 +231,6 @@ int select_loop_breaker(const vector<int>& sub_component, const vector<int>& com
     std::function<int(int)> score_fn = [&](int k) {return get_score(decls[component[sub_component[k]]]);};
     return sub_component[argmin(sub_component.size(), score_fn)];
 }
-
-vector<int> topo_sort(const Graph& graph)
-{
-    using namespace boost;
-
-    vector<Vertex> sorted_vertices;
-    topological_sort(graph, std::back_inserter(sorted_vertices));
-
-    vector<int> sorted_indices(sorted_vertices.size());
-    for(int i=0;i<sorted_indices.size();i++)
-	sorted_indices[i] = get(vertex_index, graph, sorted_vertices[i]);
-
-    return sorted_indices;
-}
-
 
 // free_vars: (in) vars that are free in the body of the let statement.
 //            (out) vars that are free in the let statement.
