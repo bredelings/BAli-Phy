@@ -124,7 +124,9 @@ Rec::Rec(const Stmts& s):stmts(s) {}
 
 pair<expression_ref, expression_ref> do_block::bind_model(const std::string& prefix, const expression_ref& model)
 {
-    var x("arg_" + prefix);
+    var x(prefix);
+    if (prefix.empty() or not std::islower(prefix[0]))
+        x = var("_"+prefix);
     var loggers("log_" + prefix);
     perform(Tuple(x,loggers),model);        // (x,loggers) <- model
     return {x,loggers};
