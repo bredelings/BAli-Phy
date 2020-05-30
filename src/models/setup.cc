@@ -870,7 +870,14 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
                 throw myexception()<<"An alphabet cannot depend on a lambda variable!";
             add(arg_free_vars[i], alphabet_free_vars);
             add(imports, alphabet_imports);
-            arg_models.back() = {var("set_alphabet"),A,arg_models.back()};
+            if (auto simple_a = is_simple_return(A))
+            {
+                arg_models.back() = {var("set_alphabet'"), simple_a, arg_models.back()};
+            }
+            else
+            {
+                arg_models.back() = {var("set_alphabet"), A, arg_models.back()};
+            }
             any_loggers = any_loggers or any_alphabet_loggers;
         }
 
