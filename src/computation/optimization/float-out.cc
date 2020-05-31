@@ -180,6 +180,16 @@ pair<float_binds_t,int> float_out_from_decl_group(CDecls& decls)
         float_binds.append(float_binds_x);
     }
 
+    // We need to move any level-0 bindings to the top level.
+    // Otherwise (i) some of their components and/or (ii) components from the let body
+    //  could get floated above their binders.
+    if (level2 == 0)
+    {
+        for(auto& decl: decls)
+            float_binds.top_binds.push_back(std::move(decl));
+        decls.clear();
+    }
+
     return pair<float_binds_t,int>(std::move(float_binds), level2);
 }
 
