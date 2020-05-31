@@ -1706,7 +1706,7 @@ std::string generate_atmodel_program(int n_sequences,
 
             var leaf_sequence_lengths("sequence_lengths_part"+part);
             expression_ref alphabet = {var("getAlphabet"),smodel};
-            sample_atmodel.let(leaf_sequence_lengths, {var("get_sequence_lengths"), alphabet,  sequence_data_var});
+            sample_atmodel.let(leaf_sequence_lengths, {var("get_sequence_lengths"), alphabet,  {var("!!"),var("sequence_data"),i}});
 
             // alignment_on_tree <- sample $ random_alignment tree hmms model leaf_seqs_array p->my_variable_alignment()
             sample_atmodel.perform(alignment_on_tree, {var("random_alignment"), tree_var, branch_hmms, imodel, leaf_sequence_lengths, variable_alignment_var});
@@ -1753,7 +1753,9 @@ std::string generate_atmodel_program(int n_sequences,
         program.let(taxon_names_var, {var("map"),var("sequence_name"),var("sequence_data1")});
         program.empty_stmt();
     }
-    program.perform(Tuple(var("atmodel"),var("loggers")), {var("$"),var("random"),sample_atmodel.get_expression()});
+
+    program.perform(Tuple(var("atmodel"),var("loggers")), {var("$"),var("random"),{var("model"),taxon_names_var,sequence_data_var,imodel_training_var,heat_var,variable_alignment_var}});
+
     for(int i=0; i < n_partitions; i++)
     {
         program.empty_stmt();
@@ -1822,6 +1824,8 @@ std::string generate_atmodel_program(int n_sequences,
                                  taxon_names_var},
 
                            var("loggers")));
+    program_file<<"\nmodel taxa sequence_data imodel_training heat variable_alignment = "<<sample_atmodel.get_expression().print()<<"\n";
+
     program_file<<"\nmain = "<<program.get_expression().print();
 
     return program_file.str();
