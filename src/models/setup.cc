@@ -451,7 +451,16 @@ int get_index_for_arg_name(const ptree& rule, const string& arg_name)
     throw myexception()<<"No arg named '"<<arg_name<<"'";
 }
 
-tuple<expression_ref,set<string>,set<string>,set<string>,bool> get_model_as(const Rules& R, const ptree& model_rep, const name_scope_t& scope);
+struct translation_result_t
+{
+    expression_ref exp;
+    set<string> imports;
+    set<string> lambda_vars;
+    set<string> used_args;
+    bool has_loggers;
+};
+
+translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const name_scope_t& scope);
 
 expression_ref parse_constant(const ptree& model)
 {
@@ -478,7 +487,7 @@ expression_ref get_constant_model(const ptree& model)
         return {};
 }
 
-optional<tuple<expression_ref,set<string>,set<string>,set<string>,bool>> get_variable_model(const ptree& model, const name_scope_t& scope)
+optional<translation_result_t> get_variable_model(const ptree& model, const name_scope_t& scope)
 {
     auto E = model.get_child("value");
 
@@ -575,7 +584,7 @@ void perform_action_simplified(do_block& code, const var& x, const var& log_x, b
  *   pair_body <- let_body
  *   return (fst pair_body, [("let:var",(Nothing,[(var_name,pair_x)])),("let:body",(Nothing,snd pair_body))])
  */
-optional<tuple<expression_ref,set<string>,set<string>,set<string>,bool>> get_model_let(const Rules& R, const ptree& model, const name_scope_t& scope)
+optional<translation_result_t> get_model_let(const Rules& R, const ptree& model, const name_scope_t& scope)
 {
     auto scope2 = scope;
 
@@ -668,7 +677,7 @@ expression_ref eta_reduce(expression_ref E)
     return E;
 }
 
-optional<tuple<expression_ref,set<string>, set<string>,set<string>,bool>> get_model_lambda(const Rules& R, const ptree& model, const name_scope_t& scope)
+optional<translation_result_t> get_model_lambda(const Rules& R, const ptree& model, const name_scope_t& scope)
 {
     auto scope2 = scope;
 
@@ -828,7 +837,7 @@ vector<int> get_args_order(const vector<string>& arg_names, const vector<set<str
 
 
 // NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
-tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_function(const Rules& R, const ptree& model, const name_scope_t& scope)
+translation_result_t get_model_function(const Rules& R, const ptree& model, const name_scope_t& scope)
 {
     auto scope2 = scope;
     auto model_rep = model.get_child("value");
@@ -1063,7 +1072,7 @@ tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_fun
     return {code.get_expression(), imports, lambda_vars, free_vars, any_loggers};
 }
 
-tuple<expression_ref, set<string>, set<string>, set<string>, bool> get_model_as(const Rules& R, const ptree& model_rep, const name_scope_t& scope)
+translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const name_scope_t& scope)
 {
     //  std::cout<<"model = "<<model<<std::endl;
     //  auto result = parse(model);
