@@ -844,7 +844,9 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     auto scope2 = scope;
     auto model_rep = model.get_child("value");
     auto name = model_rep.get_value<string>();
-    set<string> imports;
+
+    translation_result_t result;
+    result.has_loggers = false;
 
     // 1. Get the rule for the function
     auto rule = R.get_rule_for_func(name);
@@ -853,7 +855,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     if (auto rule_imports = rule->get_child_optional("import"))
     {
         for(auto& [_, mod]: *rule_imports)
-            imports.insert(mod.get_value<string>());
+            result.imports.insert(mod.get_value<string>());
     }
 
     bool perform_function = rule->get("perform",false);
@@ -895,10 +897,8 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     vector<set<string>> arg_lambda_vars;
     vector<set<string>> used_args_for_arg(args.size());
     vector<string> arg_names(args.size());
-    set<string> lambda_vars;
-    set<string> free_vars;
     vector<bool> arg_loggers;
-    bool any_loggers = false;
+
     for(int i=0;i<args.size();i++)
     {
         auto argi = array_index(args,i);
@@ -913,18 +913,18 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         if (is_default_value)
             used_args_for_arg[i] = used_args;
         else
-            add(free_vars, used_args);
+            add(result.used_args, used_args);
 
-        add(imports, arg_imports);
+        add(result.imports, arg_imports);
 
         if (perform_function and vars.size())
             throw myexception()<<"Argument '"<<arg_names[i]<<"' of '"<<name<<"' contains a lambda variable: not allowed!";
 
         arg_loggers.push_back(any_arg_loggers);
-        any_loggers = any_loggers or any_arg_loggers;
+        result.has_loggers = result.has_loggers or any_arg_loggers;
         arg_models.push_back(m);
         arg_lambda_vars.push_back(vars);
-        add(lambda_vars, vars);
+        add(result.lambda_vars, vars);
 
         // Wrap the argument in its appropriate Alphabet type
         if (auto alphabet_expression = argi.get_child_optional("alphabet"))
@@ -932,10 +932,10 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
             auto alphabet_scope = scope2;
             alphabet_scope.arg_env = {{name,arg_names[i],argument_environment}};
             auto [A, alphabet_imports, alphabet_lambda_vars, alphabet_free_vars, any_alphabet_loggers] = get_model_as(R, valueize(*alphabet_expression), alphabet_scope);
-            if (lambda_vars.size())
+            if (result.lambda_vars.size())
                 throw myexception()<<"An alphabet cannot depend on a lambda variable!";
             add(used_args_for_arg[i], alphabet_free_vars);
-            add(imports, alphabet_imports);
+            add(result.imports, alphabet_imports);
             if (auto simple_a = is_simple_return(A))
             {
                 arg_models.back() = {var("set_alphabet'"), simple_a, arg_models.back()};
@@ -944,7 +944,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
             {
                 arg_models.back() = {var("set_alphabet"), A, arg_models.back()};
             }
-            any_loggers = any_loggers or any_alphabet_loggers;
+            result.has_loggers = result.has_loggers or any_alphabet_loggers;
         }
     }
 
@@ -1015,7 +1015,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     }
 
     // 6. Return a lambda function
-    for(auto& vname: std::reverse(lambda_vars))
+    for(auto& vname: std::reverse(result.lambda_vars))
         E = lambda_quantify(scope.identifiers.at(vname).x, E);
 
     // 7. Compute loggers
@@ -1032,7 +1032,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         expression_ref logger = (arg_loggers[i])?log_vars[i]:List();
 
         bool do_log = arg_lambda_vars[i].empty() ? should_log(R, model, arg_name, scope) : false;
-        any_loggers = any_loggers or do_log;
+        result.has_loggers = result.has_loggers or do_log;
 
         auto simple_value = simplify_intToDouble(is_simple_return(arg_models[i]));
         if (arg_lambda_vars[i].empty() and simple_value and not arg_referenced[i])
@@ -1071,7 +1071,8 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         code.finish_return( Tuple(var("result"),loggers) );
     }
 
-    return {code.get_expression(), imports, lambda_vars, free_vars, any_loggers};
+    result.code = code.get_expression();
+    return result;
 }
 
 translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const name_scope_t& scope)
