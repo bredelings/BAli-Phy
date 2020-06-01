@@ -453,7 +453,7 @@ int get_index_for_arg_name(const ptree& rule, const string& arg_name)
 
 struct translation_result_t
 {
-    expression_ref exp;
+    expression_ref code;
     set<string> imports;
     set<string> lambda_vars;
     set<string> used_args;
@@ -590,7 +590,6 @@ optional<translation_result_t> get_model_let(const Rules& R, const ptree& model,
 
     auto model_rep = model.get_child("value");
     auto name = model_rep.get_value<string>();
-    set<string> imports;
 
     // 1. If the phrase is not a let, then we are done.
     if (name != "let") return {};
@@ -606,47 +605,49 @@ optional<translation_result_t> get_model_let(const Rules& R, const ptree& model,
     var body = scope2.get_var("body");
     var log_body = scope2.get_var("log_body");
 
-    set<string> free_vars;
-
-    do_block code;
-
     // 1. Perform the variable expression
-    auto [arg, arg_imports, arg_vars, arg_free_vars, any_arg_loggers] = get_model_as(R, var_exp, scope);
-    add(imports, arg_imports);
-    add(free_vars, arg_free_vars);
+    auto arg_result = get_model_as(R, var_exp, scope);
 
-    if (arg_vars.size())
+    if (arg_result.lambda_vars.size())
         throw myexception()<<"You cannot let-bind a variable to an expression with a function-variable";
 
-    perform_action_simplified(code, x, log_x, true, arg);
-
     // 2. Perform the body with var_name in scope
-    auto [let_body, let_body_imports, let_body_lambda_vars, let_body_free_vars, any_body_loggers] = get_model_as(R, body_exp, extend_scope(scope, var_name, var_info));
-    add(imports, let_body_imports);
-    add(free_vars, let_body_free_vars);
+    auto body_result = get_model_as(R, body_exp, extend_scope(scope, var_name, var_info));
 
-    free_vars.erase(var_name);
-
-    // (let_body, let_body_logers) <- let_body
-    code.perform(Tuple(body, log_body), let_body);
+    auto result = body_result;
+    add(result.imports, arg_result.imports);
+    add(result.used_args, arg_result.used_args);
+    result.has_loggers = body_result.has_loggers or arg_result.has_loggers;
 
     // 3. Construct loggers
     vector<expression_ref> logger_bits;
     {
         expression_ref value = x_is_random ? x : expression_ref{};
-        expression_ref subloggers = any_arg_loggers ? log_x : expression_ref{};
+        expression_ref subloggers = arg_result.has_loggers ? log_x : expression_ref{};
         maybe_log(logger_bits, var_name, value, subloggers);
     }
     {
-        expression_ref subloggers = any_body_loggers ? log_body : expression_ref{};
+        expression_ref subloggers = body_result.has_loggers ? log_body : expression_ref{};
         maybe_log(logger_bits, "body", {}, subloggers);
     }
     expression_ref loggers = get_list(logger_bits);
 
-    // return (let_body, loggers)
+    // 4. Construct code.
+
+    do_block code;
+
+    // (x, log_x) <- E
+    perform_action_simplified(code, x, log_x, true, arg_result.code);
+
+    // (body, log_body) <- body
+    code.perform(Tuple(body, log_body), body_result.code);
+
+    // return (body, loggers)
     code.finish_return(Tuple(body,loggers));
 
-    return {{code.get_expression(), imports, let_body_lambda_vars, free_vars, any_body_loggers or any_arg_loggers}};
+    result.code = code.get_expression();
+
+    return result;
 }
 
 expression_ref eta_reduce(expression_ref E)
