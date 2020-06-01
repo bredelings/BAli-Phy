@@ -699,7 +699,7 @@ optional<translation_result_t> get_model_lambda(const Rules& R, const ptree& mod
     // 3. Parse the body with the lambda variable in scope, and find the free variables.
     var_info_t var_info(x,false,true);
     auto body_scope = extend_scope(scope2, var_name, var_info);
-    auto [body_exp, body_imports, lambda_vars, used_args, any_loggers] = get_model_as(R, body_model, body_scope);
+    auto body_result = get_model_as(R, body_model, body_scope);
 
     // FIXME! If we can ensure that arguments are applied with most-nested first, then
     // we can avoid the complicated code in both #4a,b,d,e and #5b.
@@ -716,7 +716,7 @@ optional<translation_result_t> get_model_lambda(const Rules& R, const ptree& mod
     E = lambda_quantify(x, E);
     
     // 4c. Remove x from the lambda vars.
-    if (lambda_vars.count(var_name)) lambda_vars.erase(var_name);
+    if (body_result.lambda_vars.count(var_name)) body_result.lambda_vars.erase(var_name);
 
     // 4d. Then quantify with all the other vars.
     // E = \l1 l2 l3 -> E
@@ -732,23 +732,24 @@ optional<translation_result_t> get_model_lambda(const Rules& R, const ptree& mod
     //    except that we have removed x from the lambda_vars.
     if (E == body)
     {
-        return {{body_exp, body_imports, lambda_vars, used_args, any_loggers}};
+        return body_result;
     }
     else
     {
         do_block code;
 
         // (body, log_body) <- body_exp
-        code.perform(Tuple(body,log_body), body_exp);
+        code.perform(Tuple(body,log_body), body_result.code);
 
         // return $ (E, log_body)
         code.finish_return( Tuple(E, log_body) );
 
+        body_result.code = code.get_expression();
         // In summary, we have
         //E = do
         //      (body,log_body) <- body_action
         //      return $ (\l1 l2 l3 -> \x -> (body x l1 l2 l3) , log_body)
-        return {{code.get_expression(), body_imports, lambda_vars, used_args, any_loggers}};
+        return body_result;
     }
 }
 
