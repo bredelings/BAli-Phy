@@ -709,7 +709,7 @@ optional<translation_result_t> get_model_lambda(const Rules& R, const ptree& mod
 
     // 4a. Apply argments: E = E x l1 l2 l3
     expression_ref E = body;
-    for(auto& vname: lambda_vars)
+    for(auto& vname: body_result.lambda_vars)
         E = {E, body_scope.identifiers.at(vname).x};
 
     // 4b. First quantify with x: E = \x -> E
@@ -720,7 +720,7 @@ optional<translation_result_t> get_model_lambda(const Rules& R, const ptree& mod
 
     // 4d. Then quantify with all the other vars.
     // E = \l1 l2 l3 -> E
-    for(auto& vname: std::reverse(lambda_vars))
+    for(auto& vname: std::reverse(body_result.lambda_vars))
         E = lambda_quantify(scope2.identifiers.at(vname).x,E);
 
     // Here E = (\l1 l2 l3 -> \x -> (body x l1 l2 l3))
