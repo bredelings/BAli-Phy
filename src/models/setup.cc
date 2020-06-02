@@ -457,7 +457,7 @@ struct translation_result_t
     set<string> imports;
     set<string> lambda_vars;
     set<string> used_args;
-    bool has_loggers;
+    bool has_loggers = false;
 };
 
 translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const name_scope_t& scope);
@@ -509,7 +509,8 @@ optional<translation_result_t> get_variable_model(const ptree& model, const name
         expression_ref V = env.code_for_arg.at(name);
         V = {do_return, Tuple(V,List())};
 
-        return {{V, {}, {}, {name}, false}};
+        translation_result_t result = {V, {}, {}, {name}, false};
+        return result;
     }
 
     // 1. If the name is not in scope then we are done.
@@ -535,7 +536,8 @@ optional<translation_result_t> get_variable_model(const ptree& model, const name
     V = {do_return, Tuple(V,List())};
 
     // 5. We need an extra level of {} to allow constructing the optional.
-    return {{V,{},lambda_vars,{},false}};
+    translation_result_t result = {V, {}, lambda_vars, {}, false};
+    return result;
 }
 
 
@@ -846,7 +848,6 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     auto name = model_rep.get_value<string>();
 
     translation_result_t result;
-    result.has_loggers = false;
 
     // 1. Get the rule for the function
     auto rule = R.get_rule_for_func(name);
@@ -1089,7 +1090,11 @@ translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const 
 
     // 2. Handle constant expressions
     else if (auto constant = get_constant_model(model_rep))
-        return {constant, {}, {}, {}, false};
+    {
+        translation_result_t result;
+        result.code = constant;
+        return result;
+    }
 
     // 3. Handle variables
     else if (auto variable = get_variable_model(model_rep, scope))
