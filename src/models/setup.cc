@@ -908,43 +908,42 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         if (is_default_value)
             scope2.arg_env = {{name,arg_names[i],argument_environment}};
 
-        auto [m, arg_imports, vars, used_args, any_arg_loggers] = get_model_as(R, model_rep.get_child(arg_names[i]), scope2);
+        auto arg_result = get_model_as(R, model_rep.get_child(arg_names[i]), scope2);
 
         if (is_default_value)
-            used_args_for_arg[i] = used_args;
+            used_args_for_arg[i] = arg_result.used_args;
         else
-            add(result.used_args, used_args);
+            add(result.used_args, arg_result.used_args);
 
-        add(result.imports, arg_imports);
-
-        if (perform_function and vars.size())
+        if (perform_function and arg_result.lambda_vars.size())
             throw myexception()<<"Argument '"<<arg_names[i]<<"' of '"<<name<<"' contains a lambda variable: not allowed!";
 
-        arg_loggers.push_back(any_arg_loggers);
-        result.has_loggers = result.has_loggers or any_arg_loggers;
-        arg_models.push_back(m);
-        arg_lambda_vars.push_back(vars);
-        add(result.lambda_vars, vars);
+        arg_loggers.push_back(arg_result.has_loggers);
+        result.has_loggers = result.has_loggers or arg_result.has_loggers;
+        arg_models.push_back(arg_result.code);
+        arg_lambda_vars.push_back(arg_result.lambda_vars);
+        add(result.lambda_vars, arg_result.lambda_vars);
+        add(result.imports, arg_result.imports);
 
         // Wrap the argument in its appropriate Alphabet type
         if (auto alphabet_expression = argi.get_child_optional("alphabet"))
         {
             auto alphabet_scope = scope2;
             alphabet_scope.arg_env = {{name,arg_names[i],argument_environment}};
-            auto [A, alphabet_imports, alphabet_lambda_vars, alphabet_free_vars, any_alphabet_loggers] = get_model_as(R, valueize(*alphabet_expression), alphabet_scope);
-            if (result.lambda_vars.size())
+            auto alphabet_result = get_model_as(R, valueize(*alphabet_expression), alphabet_scope);
+            if (alphabet_result.lambda_vars.size())
                 throw myexception()<<"An alphabet cannot depend on a lambda variable!";
-            add(used_args_for_arg[i], alphabet_free_vars);
-            add(result.imports, alphabet_imports);
-            if (auto simple_a = is_simple_return(A))
+            add(used_args_for_arg[i], alphabet_result.used_args);
+            add(result.imports, alphabet_result.imports);
+            result.has_loggers = result.has_loggers or alphabet_result.has_loggers;
+            if (auto simple_a = is_simple_return(alphabet_result.code))
             {
                 arg_models.back() = {var("set_alphabet'"), simple_a, arg_models.back()};
             }
             else
             {
-                arg_models.back() = {var("set_alphabet"), A, arg_models.back()};
+                arg_models.back() = {var("set_alphabet"), alphabet_result.code, arg_models.back()};
             }
-            result.has_loggers = result.has_loggers or any_alphabet_loggers;
         }
     }
 
