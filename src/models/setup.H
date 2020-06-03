@@ -29,7 +29,7 @@ public:
 struct generated_code_t
 {
     expression_ref E;
-    bool is_action = true;
+    bool is_action = false;
     bool has_loggers = false;
 
     std::string print() const {return E.print();}

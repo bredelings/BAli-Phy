@@ -334,8 +334,16 @@ std::string generate_print_program(const model_t& print, const expression_ref& a
     program_file<<"alphabet = "<<a.print()<<"\n";
     program_file<<"\n";
     program_file<<"main = do\n";
-    program_file<<"  result <- run_lazy alphabet print_model\n";
-    program_file<<"  putStrLn $ show $ fst result\n";
+
+    if (print.code.is_action)
+        program_file<<"  result <- run_lazy alphabet print_model\n";
+    else
+        program_file<<"  let result = print_model\n";
+
+    if (print.code.has_loggers)
+        program_file<<"  putStrLn $ show $ fst result\n";
+    else
+        program_file<<"  putStrLn $ show $ result\n";
 
     return program_file.str();
 }
