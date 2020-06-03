@@ -561,21 +561,37 @@ void maybe_log(vector<expression_ref>& logger_bits,
 
 void perform_action_simplified(do_block& block, const var& x, const var& log_x, bool is_referenced, const generated_code_t& code)
 {
-    // (x, log_x) <- return (F,[])
-    if (auto simple_value = is_simple_return(code.E))
+    if (code.is_action)
     {
-        if (is_referenced)
-            // let x = F
-            block.let(x, simplify_intToDouble(simple_value));
+        if (not code.has_loggers)
+            // x <- code
+            block.perform(x, code.E);
+        else
+        {
+            // (x, log_x) <- return (F,[])
+            if (auto simple_value = is_simple_return(code.E))
+            {
+                if (is_referenced)
+                    // let x = F
+                    block.let(x, simplify_intToDouble(simple_value));
+            }
+            // PAT <- code
+            // (x, log_x) <- return (PAT,[])
+            else if (auto simple_action = is_simple_action_return(code.E))
+                // x <- code
+                block.perform(x, simple_action);
+            else
+                // (x, log_x) <- code
+                block.perform(Tuple(x,log_x), code.E);
+        }
     }
-    // PAT <- code
-    // (x, log_x) <- return (PAT,[])
-    else if (auto simple_action = is_simple_action_return(code.E))
-        // x <- code
-        block.perform(x, simple_action);
     else
-        // (x, log_x) <- code
-        block.perform(Tuple(x,log_x), code.E);
+    {
+        if (code.has_loggers)
+            block.let(Tuple(x,log_x), code.E);
+        else if (is_referenced)
+            block.let(x, code.E);
+    }
 }
 
 /*
@@ -645,7 +661,10 @@ optional<translation_result_t> get_model_let(const Rules& R, const ptree& model,
     perform_action_simplified(code, body, log_body, true, body_result.code);
 
     // return (body, loggers)
-    code.finish_return(Tuple(body,loggers));
+    if (body_result.code.has_loggers)
+        code.finish_return(Tuple(body,loggers));
+    else
+        code.finish_return(body);
 
     result.code = {code.get_expression(),true,true};
 
@@ -744,7 +763,10 @@ optional<translation_result_t> get_model_lambda(const Rules& R, const ptree& mod
         perform_action_simplified(code, body, log_body, true, body_result.code);
 
         // return $ (E, log_body)
-        code.finish_return( Tuple(E, log_body) );
+        if (body_result.code.has_loggers)
+            code.finish_return( Tuple(E, log_body) );
+        else
+            code.finish_return( E );
 
         body_result.code = {code.get_expression(),true,true};
         // In summary, we have
