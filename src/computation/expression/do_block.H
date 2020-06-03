@@ -101,6 +101,8 @@ public:
 
     int size() const {return stmts.size();}
 
+    bool empty() const {return stmts.empty();}
+
     const Stmts& get_stmts() const { return stmts; }
 
     expression_ref get_expression() const;
