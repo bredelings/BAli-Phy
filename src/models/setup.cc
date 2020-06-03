@@ -729,8 +729,13 @@ expression_ref make_call(const ptree& call, const map<string,expression_ref>& si
     else
         E = var(name);
 
-    for(auto& pair: call)
-        E = {E,make_call(pair.second, simple_args)};
+    for(int i=0;i<call.size();i++)
+    {
+        if (i == call.size()-1 and call[i].second == "@submodel")
+            E = {var("&"), make_call(call[i].second, simple_args),E};
+        else
+            E = {E, make_call(call[i].second, simple_args)};
+    }
 
     return E;
 }
