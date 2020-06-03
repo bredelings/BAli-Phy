@@ -5,6 +5,7 @@
 #include <utility>                                  // for pair
 #include <vector>                                   // for vector
 #include "computation/expression/expression_ref.H"  // for expression_ref
+#include "computation/expression/do_block.H"        // for do_block
 #include "sequence/alphabet.H"                      // for alphabet
 #include "unification.H"                            // for term_t, less
 #include "util/json.hh"                             // for json
@@ -29,10 +30,16 @@ struct generated_code_t
 {
     expression_ref E;
     bool is_action = true;
-    bool has_loggers = true;
+    bool has_loggers = false;
 
     std::string print() const {return E.print();}
 };
+
+void perform_action_simplified(do_block& block, const var& x, const var& log_x, bool is_referenced, const generated_code_t& code);
+void maybe_log(std::vector<expression_ref>& logger_bits,
+               const std::string& name,
+               const expression_ref& value,
+               const expression_ref& subloggers);
 
 class model_t
 {

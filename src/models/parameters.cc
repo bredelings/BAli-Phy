@@ -1431,6 +1431,19 @@ string maybe_emit_code(map<string,string>& code_to_name, const string& name, str
     return name + " = " + code + "\n";
 }
 
+
+var bind_and_log(bool do_log, const string& name, const generated_code_t& code, do_block& block, vector<expression_ref>& loggers, bool is_referenced=true)
+{
+    string var_name = name;
+    if (var_name.empty() or not std::islower(var_name[0]))
+        var_name = "_"+var_name;
+    var x(var_name);
+    var log_x("log_"+name);
+    perform_action_simplified(block, x, log_x, true, code);
+    maybe_log(loggers, name, do_log?x:expression_ref{}, code.has_loggers?log_x:expression_ref{});
+    return x;
+}
+
 std::string generate_atmodel_program(int n_sequences,
                                      const vector<expression_ref>& alphabet_exps,
                                      const vector<pair<string,string>>& filename_ranges,
@@ -1503,7 +1516,7 @@ std::string generate_atmodel_program(int n_sequences,
     }
 
     // F4. Branch lengths
-    program_file<<"sample_branch_lengths_1 = "<<branch_length_model.code.print()<<"\n";
+    program_file<<"sample_branch_lengths = "<<branch_length_model.code.print()<<"\n";
 
     // F5. Topology
     program_file<<"\nsample_topology_1 taxa = uniform_labelled_topology taxa\n";
@@ -1543,10 +1556,11 @@ std::string generate_atmodel_program(int n_sequences,
     expression_ref branch_lengths = List();
     if (n_branches > 0)
     {
-        string prefix = "branch_lengths";
-        expression_ref branch_lengths_model = {var("sample_branch_lengths_1"), tree_var};
-        auto [x,loggers] = sample_atmodel.bind_model(prefix , branch_lengths_model);
-        branch_lengths = x;
+        string var_name = "branch_lengths";
+        auto code = branch_length_model.code;
+        code.E = {var("sample_"+var_name),tree_var};
+
+        branch_lengths = bind_and_log(false, var_name, code, sample_atmodel, program_loggers);
     }
 
 
@@ -1560,10 +1574,13 @@ std::string generate_atmodel_program(int n_sequences,
     {
         // FIXME: Ideally we would actually join these models together using a Cons operation and prefix.
         //        This would obviate the need to create a Scale1 (etc) prefix here.
-        string prefix = "scale"+convertToString(i+1);
+        string var_name = "scale"+convertToString(i+1);
 
-        auto scale_model = var("sample_scale_"+std::to_string(i+1));
-        auto scale_var = sample_atmodel.bind_and_log_model(prefix , scale_model, program_loggers, false);
+        auto code = scaleMs[i].code;
+        code.E = var("sample_scale_"+convertToString(i+1));
+
+        auto scale_var = bind_and_log(true, var_name, code, sample_atmodel, program_loggers);
+
         scales.push_back(scale_var);
     }
     if (auto l = logger("scale", get_list(scales), List()) )
@@ -1601,7 +1618,10 @@ std::string generate_atmodel_program(int n_sequences,
         expression_ref smodel = var("sample_smodel_"+std::to_string(i+1));
         smodel = {var("set_alphabet'"), alphabet_exps[*first_partition], smodel};
 
-        auto smodel_var = sample_atmodel.bind_and_log_model(prefix , smodel, program_loggers, false);
+        auto code = SMs[i].code;
+        code.E = smodel;
+
+        auto smodel_var = bind_and_log(false, prefix, code, sample_atmodel, program_loggers);
         auto smodel_var2 = var("smodel_"+std::to_string(i+1));
         sample_atmodel.let(smodel_var2, {smodel_var, branch_categories});
         smodels.push_back(smodel_var2);
@@ -1614,7 +1634,10 @@ std::string generate_atmodel_program(int n_sequences,
     {
         string prefix = "I" + convertToString(i+1);
         expression_ref imodel = var("sample_imodel_"+std::to_string(i+1));
-        auto imodel_var = sample_atmodel.bind_and_log_model(prefix, imodel, program_loggers, false);
+
+        auto code = IMs[i].code;
+        code.E = imodel;
+        auto imodel_var = bind_and_log(false, prefix, code, sample_atmodel, program_loggers);
 
         var imodel_var2("imodel_"+std::to_string(i+1));
         sample_atmodel.let(imodel_var2, {imodel_var, tree_var, heat_var, imodel_training_var});
