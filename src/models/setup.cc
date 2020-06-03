@@ -457,7 +457,6 @@ struct translation_result_t
     set<string> imports;
     set<string> lambda_vars;
     set<string> used_args;
-    bool has_loggers = false;
 };
 
 translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const name_scope_t& scope);
@@ -475,13 +474,14 @@ expression_ref parse_constant(const ptree& model)
     return {};
 }
 
-expression_ref get_constant_model(const ptree& model)
+optional<translation_result_t> get_constant_model(const ptree& model)
 {
     auto model_rep = model.get_child("value");
     if (expression_ref C = parse_constant(model_rep))
     {
         if (model_rep.size() != 0) throw myexception()<<"An constant cannot have arguments!\n  '"<<model_rep.show()<<"'";
-        return {do_return, Tuple(C,List())};
+        C = {do_return,C};
+        return translation_result_t{{C,true,false},{},{},{}};
     }
     else
         return {};
@@ -507,9 +507,9 @@ optional<translation_result_t> get_variable_model(const ptree& model, const name
             throw myexception()<<env.func<<"."<<env.arg<<": can't find argument '"<<name<<"' referenced in default_value or alphabet";
 
         expression_ref V = env.code_for_arg.at(name);
-        V = {do_return, Tuple(V,List())};
+        V = {do_return, V};
 
-        translation_result_t result = {{V,true,true}, {}, {}, {name}, false};
+        translation_result_t result = {{V,true,false}, {}, {}, {name}};
         return result;
     }
 
@@ -533,10 +533,10 @@ optional<translation_result_t> get_variable_model(const ptree& model, const name
         V = x;
 
     // 4. Construct the logging tuple and return it in order to allow this action to be performed.
-    V = {do_return, Tuple(V,List())};
+    V = {do_return, V};
 
     // 5. We need an extra level of {} to allow constructing the optional.
-    translation_result_t result = {{V,true,true}, {}, lambda_vars, {}, false};
+    translation_result_t result = {{V,true,false}, {}, lambda_vars, {}};
     return result;
 }
 
@@ -630,17 +630,17 @@ optional<translation_result_t> get_model_let(const Rules& R, const ptree& model,
     auto result = body_result;
     add(result.imports, arg_result.imports);
     add(result.used_args, arg_result.used_args);
-    result.has_loggers = body_result.has_loggers or arg_result.has_loggers;
+    result.code.has_loggers = body_result.code.has_loggers or arg_result.code.has_loggers or x_is_random;
 
     // 3. Construct loggers
     vector<expression_ref> logger_bits;
     {
         expression_ref value = x_is_random ? x : expression_ref{};
-        expression_ref subloggers = arg_result.has_loggers ? log_x : expression_ref{};
+        expression_ref subloggers = arg_result.code.has_loggers ? log_x : expression_ref{};
         maybe_log(logger_bits, var_name, value, subloggers);
     }
     {
-        expression_ref subloggers = body_result.has_loggers ? log_body : expression_ref{};
+        expression_ref subloggers = body_result.code.has_loggers ? log_body : expression_ref{};
         maybe_log(logger_bits, "body", {}, subloggers);
     }
     expression_ref loggers = get_list(logger_bits);
@@ -661,7 +661,7 @@ optional<translation_result_t> get_model_let(const Rules& R, const ptree& model,
     else
         code.finish_return(body);
 
-    result.code = {code.get_expression(),true,true};
+    result.code.E = code.get_expression();
 
     return result;
 }
@@ -763,7 +763,7 @@ optional<translation_result_t> get_model_lambda(const Rules& R, const ptree& mod
         else
             code.finish_return( E );
 
-        body_result.code = {code.get_expression(),true,true};
+        body_result.code.E = code.get_expression();
         // In summary, we have
         //E = do
         //      (body,log_body) <- body_action
@@ -936,8 +936,8 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         if (perform_function and arg_result.lambda_vars.size())
             throw myexception()<<"Argument '"<<arg_names[i]<<"' of '"<<name<<"' contains a lambda variable: not allowed!";
 
-        arg_loggers.push_back(arg_result.has_loggers);
-        result.has_loggers = result.has_loggers or arg_result.has_loggers;
+        arg_loggers.push_back(arg_result.code.has_loggers);
+        result.code.has_loggers = result.code.has_loggers or arg_result.code.has_loggers;
         arg_models.push_back(arg_result.code);
         arg_lambda_vars.push_back(arg_result.lambda_vars);
         add(result.lambda_vars, arg_result.lambda_vars);
@@ -953,7 +953,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
                 throw myexception()<<"An alphabet cannot depend on a lambda variable!";
             add(used_args_for_arg[i], alphabet_result.used_args);
             add(result.imports, alphabet_result.imports);
-            result.has_loggers = result.has_loggers or alphabet_result.has_loggers;
+            result.code.has_loggers = result.code.has_loggers or alphabet_result.code.has_loggers;
             if (auto simple_a = is_simple_return(alphabet_result.code.E))
             {
                 arg_models.back().E = {var("set_alphabet'"), simple_a, arg_models.back().E};
@@ -1049,7 +1049,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         expression_ref logger = (arg_loggers[i])?log_vars[i]:List();
 
         bool do_log = arg_lambda_vars[i].empty() ? should_log(R, model, arg_name, scope) : false;
-        result.has_loggers = result.has_loggers or do_log;
+        result.code.has_loggers = result.code.has_loggers or do_log;
 
         auto simple_value = simplify_intToDouble(is_simple_return(arg_models[i].E));
         if (arg_lambda_vars[i].empty() and simple_value and not arg_referenced[i])
@@ -1078,17 +1078,25 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     // 8. Return the function call: 'return (f call.name1 call.name2 call.name3)'
     if (not perform_function)
     {
-        code.finish_return( Tuple(E,loggers) );
+        if (result.code.has_loggers)
+            code.finish_return( Tuple(E,loggers) );
+        else
+            code.finish_return( E );
     }
     else
     {
-        // result <- E
-        code.perform( var("result"), E );
-        // return (result, loggers)
-        code.finish_return( Tuple(var("result"),loggers) );
+        if (result.code.has_loggers)
+        {
+            // result <- E
+            code.perform( var("result"), E );
+            // return (result, loggers)
+            code.finish_return( Tuple(var("result"),loggers) );
+        }
+        else
+            code.finish( E );
     }
 
-    result.code = {code.get_expression(),true,true};
+    result.code.E = code.get_expression();
     return result;
 }
 
@@ -1107,11 +1115,7 @@ translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const 
 
     // 2. Handle constant expressions
     else if (auto constant = get_constant_model(model_rep))
-    {
-        translation_result_t result;
-        result.code = {constant,true,true};
-        return result;
-    }
+        return *constant;
 
     // 3. Handle variables
     else if (auto variable = get_variable_model(model_rep, scope))
@@ -1139,7 +1143,7 @@ translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const 
 model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& constraints, const ptree& model_rep, const name_scope_t& scope)
 {
     // --------- Convert model to MultiMixtureModel ------------//
-    auto [full_model, imports, _1, _2, _3] = get_model_as(R, model_rep, scope);
+    auto [full_model, imports, _1, _2] = get_model_as(R, model_rep, scope);
 
     if (log_verbose >= 2)
         std::cout<<"full_model = "<<full_model.E<<std::endl;
