@@ -559,23 +559,23 @@ void maybe_log(vector<expression_ref>& logger_bits,
 }
 
 
-void perform_action_simplified(do_block& code, const var& x, const var& log_x, bool is_referenced, const generated_code_t& E)
+void perform_action_simplified(do_block& block, const var& x, const var& log_x, bool is_referenced, const generated_code_t& code)
 {
     // (x, log_x) <- return (F,[])
-    if (auto simple_value = is_simple_return(E.E))
+    if (auto simple_value = is_simple_return(code.E))
     {
         if (is_referenced)
             // let x = F
-            code.let(x, simplify_intToDouble(simple_value));
+            block.let(x, simplify_intToDouble(simple_value));
     }
-    // PAT <- E
+    // PAT <- code
     // (x, log_x) <- return (PAT,[])
-    else if (auto simple_action = is_simple_action_return(E.E))
-        // x <- E
-        code.perform(x, simple_action);
+    else if (auto simple_action = is_simple_action_return(code.E))
+        // x <- code
+        block.perform(x, simple_action);
     else
-        // (x, log_x) <- E
-        code.perform(Tuple(x,log_x), E.E);
+        // (x, log_x) <- code
+        block.perform(Tuple(x,log_x), code.E);
 }
 
 /*
