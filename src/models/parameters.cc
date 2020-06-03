@@ -1451,7 +1451,7 @@ var bind_and_log(bool do_log, const string& name, const generated_code_t& code, 
         var_name = "_"+var_name;
     var x(var_name);
     var log_x("log_"+name);
-    perform_action_simplified(block, x, log_x, true, code);
+    perform_action_simplified(block, x, log_x, is_referenced, code);
     maybe_log(loggers, name, do_log?x:expression_ref{}, code.has_loggers?log_x:expression_ref{});
     return x;
 }
