@@ -580,7 +580,9 @@ int main(int argc,char* argv[])
                 std::cout<<table_logger_line(*TL, *M, 0)<<"\n";
             if (log_formats.count("json"))
                 std::cout<<logged_params_and_some_computed_stuff(*M, 0)<<"\n";
-            M->show_graph();
+
+            if (args.count("verbose"))
+                M->show_graph();
         }
         else 
         {
