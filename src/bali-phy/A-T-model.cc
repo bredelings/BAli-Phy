@@ -796,7 +796,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
             M = "~iid[num_branches[T],gamma[0.5,div[2,num_branches[T]]]]";
 
         branch_length_model = get_model(R, "List[Double]", M, {{"T","Tree"}});
-        branch_length_model.expression = lambda_quantify(var("var_T"), branch_length_model.expression);
+        branch_length_model.code.E = lambda_quantify(var("var_T"), branch_length_model.code.E);
     }
 
     //-------------- Likelihood calculator types -----------//

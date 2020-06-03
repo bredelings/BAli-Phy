@@ -329,7 +329,7 @@ std::string generate_print_program(const model_t& print, const expression_ref& a
         program_file<<"import "<<mod<<"\n";
 
     program_file<<"\n";
-    program_file<<"print_model = "<<print.expression.print()<<"\n";
+    program_file<<"print_model = "<<print.code.print()<<"\n";
     program_file<<"\n";
     program_file<<"alphabet = "<<a.print()<<"\n";
     program_file<<"\n";

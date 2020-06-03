@@ -25,6 +25,15 @@ public:
     pretty_model_t(const ptree& m);
 };
 
+struct generated_code_t
+{
+    expression_ref E;
+    bool is_action = true;
+    bool has_loggers = true;
+
+    std::string print() const {return E.print();}
+};
+
 class model_t
 {
     ptree description;
@@ -32,7 +41,7 @@ public:
     std::set<std::string> imports;
     ptree type;
     std::set<term_t> constraints;
-    expression_ref expression;
+    generated_code_t code;
 
     pretty_model_t pretty_model() const {return {description};};
 
@@ -43,7 +52,7 @@ public:
     std::string show_extracted() const;
 
     model_t() = default;
-    model_t(const ptree&,const std::set<std::string>&, const ptree&, const std::set<term_t>&, const expression_ref&);
+    model_t(const ptree&,const std::set<std::string>&, const ptree&, const std::set<term_t>&, const generated_code_t&);
 };
 
 void to_json(json& j, const pretty_model_t& m);

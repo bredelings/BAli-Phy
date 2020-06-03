@@ -1482,7 +1482,7 @@ std::string generate_atmodel_program(int n_sequences,
     for(int i=0;i<SMs.size();i++)
     {
         auto name = "sample_smodel_"+std::to_string(i+1);
-        auto code = SMs[i].expression.print();
+        auto code = SMs[i].code.print();
         program_file<<maybe_emit_code(code_to_name, name, code)<<"\n";
     }
 
@@ -1490,7 +1490,7 @@ std::string generate_atmodel_program(int n_sequences,
     for(int i=0;i<IMs.size();i++)
     {
         auto name = "sample_imodel_"+std::to_string(i+1);
-        auto code = IMs[i].expression.print();
+        auto code = IMs[i].code.print();
         program_file<<maybe_emit_code(code_to_name, name, code)<<"\n";
     }
 
@@ -1498,12 +1498,12 @@ std::string generate_atmodel_program(int n_sequences,
     for(int i=0; i<scaleMs.size(); i++)
     {
         auto name = "sample_scale_"+std::to_string(i+1);
-        auto code = scaleMs[i].expression.print();
+        auto code = scaleMs[i].code.print();
         program_file<<maybe_emit_code(code_to_name, name, code)<<"\n";
     }
 
     // F4. Branch lengths
-    program_file<<"sample_branch_lengths_1 = "<<branch_length_model.expression.print()<<"\n";
+    program_file<<"sample_branch_lengths_1 = "<<branch_length_model.code.print()<<"\n";
 
     // F5. Topology
     program_file<<"\nsample_topology_1 taxa = uniform_labelled_topology taxa\n";
