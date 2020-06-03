@@ -210,72 +210,6 @@ ptree array_index(const ptree& p, int i)
     return index(p,i).second;
 }
 
-// @ return (X,[])
-expression_ref is_simple_return_stmt(const expression_ref& E)
-{
-    if (E.size() != 2) return {};
-
-    if (not is_apply_exp(E)) return {};
-
-    if (is_var(E.sub()[0]) and E.sub()[0].as_<var>().name == "return")
-    {
-        auto arg = E.sub()[1];
-
-        if (arg.size() != 2) return {};
-
-        if (not has_constructor(arg,tuple_head(2).name())) return {};
-
-        auto logger = arg.sub()[1];
-
-        if (logger == List())
-            return arg.sub()[0];
-    }
-    return {};
-}
-
-// do { return (X,[]) }
-expression_ref is_simple_return(const expression_ref& E)
-{
-    if (auto x = is_simple_return_stmt(E))
-        return x;
-
-    if (not E.is_a<do_block>()) return {};
-
-    auto& stmts = E.as_<do_block>().get_stmts();
-
-    if (stmts.size() != 1) return {};
-
-    if (not stmts[0].is_a<SimpleQual>()) return {};
-
-    return is_simple_return_stmt(stmts[0].as_<SimpleQual>().exp);
-}
-
-//do { PAT <- X ; return (PAT,[]) }
-expression_ref is_simple_action_return(const expression_ref& E)
-{
-    if (not E.is_a<do_block>()) return {};
-
-    auto& stmts = E.as_<do_block>().get_stmts();
-
-    if (stmts.size() != 2) return {};
-
-    if (not stmts[0].is_a<PatQual>()) return {};
-
-    auto& pattern = stmts[0].as_<PatQual>().bindpat;
-    auto& action  = stmts[0].as_<PatQual>().exp;
-
-    if (not stmts[1].is_a<SimpleQual>()) return {};
-
-    auto return_pat = is_simple_return_stmt(stmts[1].as_<SimpleQual>().exp);
-
-    if (not return_pat) return {};
-
-    if (return_pat == pattern)
-        return action;
-    else
-        return {};
-}
-
 expression_ref simplify_intToDouble(const expression_ref& E)
 {
     if (is_apply_exp(E) and E.size() == 2)
@@ -480,8 +414,7 @@ optional<translation_result_t> get_constant_model(const ptree& model)
     if (expression_ref C = parse_constant(model_rep))
     {
         if (model_rep.size() != 0) throw myexception()<<"An constant cannot have arguments!\n  '"<<model_rep.show()<<"'";
-        C = {do_return,C};
-        return translation_result_t{{C,true,false},{},{},{}};
+        return translation_result_t{{C,false,false},{},{},{}};
     }
     else
         return {};
@@ -507,9 +440,8 @@ optional<translation_result_t> get_variable_model(const ptree& model, const name
             throw myexception()<<env.func<<"."<<env.arg<<": can't find argument '"<<name<<"' referenced in default_value or alphabet";
 
         expression_ref V = env.code_for_arg.at(name);
-        V = {do_return, V};
 
-        translation_result_t result = {{V,true,false}, {}, {}, {name}};
+        translation_result_t result = {{V,false,false}, {}, {}, {name}};
         return result;
     }
 
@@ -532,11 +464,8 @@ optional<translation_result_t> get_variable_model(const ptree& model, const name
     else
         V = x;
 
-    // 4. Construct the logging tuple and return it in order to allow this action to be performed.
-    V = {do_return, V};
-
-    // 5. We need an extra level of {} to allow constructing the optional.
-    translation_result_t result = {{V,true,false}, {}, lambda_vars, {}};
+    // 4. We need an extra level of {} to allow constructing the optional.
+    translation_result_t result = {{V,false,false}, {}, lambda_vars, {}};
     return result;
 }
 
@@ -562,23 +491,8 @@ void perform_action_simplified(do_block& block, const var& x, const var& log_x, 
             // x <- code
             block.perform(x, code.E);
         else
-        {
-            // (x, log_x) <- return (F,[])
-            if (auto simple_value = is_simple_return(code.E))
-            {
-                if (is_referenced)
-                    // let x = F
-                    block.let(x, simplify_intToDouble(simple_value));
-            }
-            // PAT <- code
-            // (x, log_x) <- return (PAT,[])
-            else if (auto simple_action = is_simple_action_return(code.E))
-                // x <- code
-                block.perform(x, simple_action);
-            else
-                // (x, log_x) <- code
-                block.perform(Tuple(x,log_x), code.E);
-        }
+            // (x, log_x) <- code
+            block.perform(Tuple(x,log_x), code.E);
     }
     else
     {
@@ -656,10 +570,20 @@ optional<translation_result_t> get_model_let(const Rules& R, const ptree& model,
     perform_action_simplified(code, body, log_body, true, body_result.code);
 
     // return (body, loggers)
-    if (body_result.code.has_loggers)
-        code.finish_return(Tuple(body,loggers));
+    if (body_result.code.is_action)
+    {
+        if (body_result.code.has_loggers)
+            code.finish_return(Tuple(body,loggers));
+        else
+            code.finish_return(body);
+    }
     else
-        code.finish_return(body);
+    {
+        if (body_result.code.has_loggers)
+            code.finish(Tuple(body,loggers));
+        else
+            code.finish(body);
+    }
 
     result.code.E = code.get_expression();
 
@@ -938,6 +862,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
 
         arg_loggers.push_back(arg_result.code.has_loggers);
         result.code.has_loggers = result.code.has_loggers or arg_result.code.has_loggers;
+        result.code.is_action = result.code.is_action or arg_result.code.is_action;
         arg_models.push_back(arg_result.code);
         arg_lambda_vars.push_back(arg_result.lambda_vars);
         add(result.lambda_vars, arg_result.lambda_vars);
@@ -951,17 +876,11 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
             auto alphabet_result = get_model_as(R, valueize(*alphabet_expression), alphabet_scope);
             if (alphabet_result.lambda_vars.size())
                 throw myexception()<<"An alphabet cannot depend on a lambda variable!";
+            assert(not alphabet_result.code.has_loggers);
+            assert(not alphabet_result.code.is_action);
             add(used_args_for_arg[i], alphabet_result.used_args);
             add(result.imports, alphabet_result.imports);
-            result.code.has_loggers = result.code.has_loggers or alphabet_result.code.has_loggers;
-            if (auto simple_a = is_simple_return(alphabet_result.code.E))
-            {
-                arg_models.back().E = {var("set_alphabet'"), simple_a, arg_models.back().E};
-            }
-            else
-            {
-                arg_models.back().E = {var("set_alphabet"), alphabet_result.code.E, arg_models.back().E};
-            }
+            arg_models.back().E = {var("set_alphabet'"), alphabet_result.code.E, arg_models.back().E};
         }
     }
 
@@ -984,8 +903,9 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         auto x_func = arg_func_vars[i];
 
         // If there are no lambda vars used, then we can just place the result into scope directly, without applying anything to it.
+        bool need_to_emit = arg_referenced[i] or arg.has_loggers;
         if (arg_lambda_vars[i].empty())
-            perform_action_simplified(code, x,      log_x, arg_referenced[i], arg);
+            perform_action_simplified(code, x,      log_x, need_to_emit, arg);
         else
             perform_action_simplified(code, x_func, log_x, true, arg);
 
@@ -996,9 +916,11 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     {
         auto argi = array_index(args,i);
         string arg_name = argi.get_child("arg_name").get_value<string>();
-        auto simple_value = simplify_intToDouble(is_simple_return(arg_models[i].E));
-        if (simple_value and not arg_referenced[i] and arg_lambda_vars[i].empty())
-            argument_environment[arg_name] = simple_value;
+        auto arg = arg_models[i];
+
+        bool can_substitute = not arg.is_action and not arg.has_loggers;
+        if (can_substitute and not arg_referenced[i] and arg_lambda_vars[i].empty())
+            argument_environment[arg_name] = arg.E;
     }
     expression_ref E;
     try
@@ -1045,33 +967,25 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
 
         auto log_name = name + ":" + arg_name;
 
-        expression_ref x_ret = (arg_lambda_vars[i].empty()) ? arg_vars[i] : arg_func_vars[i];
-        expression_ref logger = (arg_loggers[i])?log_vars[i]:List();
-
         bool do_log = arg_lambda_vars[i].empty() ? should_log(R, model, arg_name, scope) : false;
+
+        expression_ref value  = do_log                    ? arg_vars[i] : expression_ref{};
+        expression_ref logger = arg_models[i].has_loggers ? log_vars[i] : expression_ref{};
+
         result.code.has_loggers = result.code.has_loggers or do_log;
 
-        auto simple_value = simplify_intToDouble(is_simple_return(arg_models[i].E));
-        if (arg_lambda_vars[i].empty() and simple_value and not arg_referenced[i])
+        auto can_substitute = not arg_models[i].is_action and not arg_models[i].has_loggers;
+        if (arg_lambda_vars[i].empty() and can_substitute and not arg_referenced[i])
         {
             // Under these circumstances, we don't output `let arg_var = simple_value[i]`,
             // we just substitute simple_value[i] where arg_var would go.
             //
             // FIXME - if simple_value[i] is not atomic (like f x) then we duplicate work
             // then we duplicate work by substituting:
-            x_ret = simple_value;
+            value = arg_models[i].E;
         }
 
-        expression_ref logger_bit;
-        if (do_log and not arg_loggers[i])                      // value, but no sub-loggers
-            logger_bit = {var("%=%"),String(log_name),x_ret};
-        else if (arg_loggers[i] and not do_log)                 // sub-loggers, but no value
-            logger_bit = {var("%>%"),String(log_name),logger};
-        else if (arg_loggers[i] and do_log)                     // value and sub-loggers
-            logger_bit = {var("%=>%"),Tuple(x_ret,logger)};
-        else                                                    // no value and no sub-loggers: don't emit a logger at all
-            continue;
-        logger_bits.push_back(logger_bit);
+        maybe_log(logger_bits, log_name, value, logger);
     }
     expression_ref loggers = get_list(logger_bits);
 
@@ -1079,24 +993,27 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     if (not perform_function)
     {
         if (result.code.has_loggers)
-            code.finish_return( Tuple(E,loggers) );
-        else
-            code.finish_return( E );
+            E = Tuple(E,loggers);
+        if (result.code.is_action)
+            E = {do_return, E};
+        if (not code.empty())
+            E = code.finish(E);
     }
     else
     {
+        result.code.is_action = true;
         if (result.code.has_loggers)
         {
             // result <- E
             code.perform( var("result"), E );
             // return (result, loggers)
-            code.finish_return( Tuple(var("result"),loggers) );
+            E = code.finish_return( Tuple(var("result"),loggers) );
         }
-        else
-            code.finish( E );
+        else if (not code.empty())
+            E = code.finish( E );
     }
 
-    result.code.E = code.get_expression();
+    result.code.E = simplify_intToDouble(E);
     return result;
 }
 
