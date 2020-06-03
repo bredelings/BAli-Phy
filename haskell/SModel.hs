@@ -132,9 +132,9 @@ m2a model_func w1 f1 posP posW = parameter_mixture_unit model_func (m2a_omega_di
 
 m2a_test model_func w1 f1 posP posW posSelection = parameter_mixture_unit model_func (m2a_test_omega_dist f1 w1 posP posW posSelection)
 
-m3 model_func ps omegas = parameter_mixture_unit model_func (m3_omega_dist ps omegas)
+m3 ps omegas model_func = parameter_mixture_unit model_func (m3_omega_dist ps omegas)
 
-m3_test model_func ps omegas posP posW posSelection = parameter_mixture_unit model_func (m3_test_omega_dist ps omegas posP posW posSelection)
+m3_test ps omegas posP posW posSelection model_func = parameter_mixture_unit model_func (m3_test_omega_dist ps omegas posP posW posSelection)
 
 m7 model_func mu gamma n_bins =  parameter_mixture_unit model_func (m7_omega_dist mu gamma n_bins)
 
