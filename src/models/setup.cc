@@ -541,21 +541,16 @@ optional<translation_result_t> get_variable_model(const ptree& model, const name
 }
 
 
-void maybe_log(vector<expression_ref>& logger_bits,
+void maybe_log(vector<expression_ref>& loggers,
                const string& name,
                const expression_ref& value,
                const expression_ref& subloggers)
 {
     expression_ref logger_bit;
-    if (value and not subloggers)
-        logger_bit = {var("%=%"),String(name),value};
-    else if (subloggers and not value)
-        logger_bit = {var("%>%"),String(name),subloggers};
-    else if (value and subloggers)
-        logger_bit = {var("%=>%"),Tuple(value,subloggers)};
-
-    if (logger_bit)
-        logger_bits.push_back(logger_bit);
+    if (value)
+        loggers.push_back({var("%=%"),String(name),value});
+    if (subloggers)
+        loggers.push_back({var("%>%"),String(name),subloggers});
 }
 
 
