@@ -145,8 +145,8 @@ string model_t::show_extracted() const
     return p.show_extracted();
 }
 
-model_t::model_t(const ptree& d, const set<string>& i, const ptree&t, const std::set<term_t>& c, const expression_ref& e)
-    :description(d), imports(i), type(t), constraints(c), expression(e)
+model_t::model_t(const ptree& d, const set<string>& i, const ptree&t, const std::set<term_t>& s, const generated_code_t& c)
+    :description(d), imports(i), type(t), constraints(s), code(c)
 {
 }
 
@@ -453,7 +453,7 @@ int get_index_for_arg_name(const ptree& rule, const string& arg_name)
 
 struct translation_result_t
 {
-    expression_ref code;
+    generated_code_t code;
     set<string> imports;
     set<string> lambda_vars;
     set<string> used_args;
@@ -509,7 +509,7 @@ optional<translation_result_t> get_variable_model(const ptree& model, const name
         expression_ref V = env.code_for_arg.at(name);
         V = {do_return, Tuple(V,List())};
 
-        translation_result_t result = {V, {}, {}, {name}, false};
+        translation_result_t result = {{V,true,true}, {}, {}, {name}, false};
         return result;
     }
 
@@ -536,7 +536,7 @@ optional<translation_result_t> get_variable_model(const ptree& model, const name
     V = {do_return, Tuple(V,List())};
 
     // 5. We need an extra level of {} to allow constructing the optional.
-    translation_result_t result = {V, {}, lambda_vars, {}, false};
+    translation_result_t result = {{V,true,true}, {}, lambda_vars, {}, false};
     return result;
 }
 
@@ -559,10 +559,10 @@ void maybe_log(vector<expression_ref>& logger_bits,
 }
 
 
-void perform_action_simplified(do_block& code, const var& x, const var& log_x, bool is_referenced, const expression_ref& E)
+void perform_action_simplified(do_block& code, const var& x, const var& log_x, bool is_referenced, const generated_code_t& E)
 {
     // (x, log_x) <- return (F,[])
-    if (auto simple_value = is_simple_return(E))
+    if (auto simple_value = is_simple_return(E.E))
     {
         if (is_referenced)
             // let x = F
@@ -570,12 +570,12 @@ void perform_action_simplified(do_block& code, const var& x, const var& log_x, b
     }
     // PAT <- E
     // (x, log_x) <- return (PAT,[])
-    else if (auto simple_action = is_simple_action_return(E))
+    else if (auto simple_action = is_simple_action_return(E.E))
         // x <- E
         code.perform(x, simple_action);
     else
         // (x, log_x) <- E
-        code.perform(Tuple(x,log_x), E);
+        code.perform(Tuple(x,log_x), E.E);
 }
 
 /*
@@ -642,12 +642,12 @@ optional<translation_result_t> get_model_let(const Rules& R, const ptree& model,
     perform_action_simplified(code, x, log_x, true, arg_result.code);
 
     // (body, log_body) <- body
-    code.perform(Tuple(body, log_body), body_result.code);
+    code.perform(Tuple(body, log_body), body_result.code.E);
 
     // return (body, loggers)
     code.finish_return(Tuple(body,loggers));
 
-    result.code = code.get_expression();
+    result.code = {code.get_expression(),true,true};
 
     return result;
 }
@@ -741,12 +741,12 @@ optional<translation_result_t> get_model_lambda(const Rules& R, const ptree& mod
         do_block code;
 
         // (body, log_body) <- body_exp
-        code.perform(Tuple(body,log_body), body_result.code);
+        code.perform(Tuple(body,log_body), body_result.code.E);
 
         // return $ (E, log_body)
         code.finish_return( Tuple(E, log_body) );
 
-        body_result.code = code.get_expression();
+        body_result.code = {code.get_expression(),true,true};
         // In summary, we have
         //E = do
         //      (body,log_body) <- body_action
@@ -894,7 +894,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     }
 
     // 2. Parse models for arguments to figure out which free lambda variables they contain
-    vector<expression_ref> arg_models;
+    vector<generated_code_t> arg_models;
     vector<set<string>> arg_lambda_vars;
     vector<set<string>> used_args_for_arg(args.size());
     vector<string> arg_names(args.size());
@@ -937,13 +937,13 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
             add(used_args_for_arg[i], alphabet_result.used_args);
             add(result.imports, alphabet_result.imports);
             result.has_loggers = result.has_loggers or alphabet_result.has_loggers;
-            if (auto simple_a = is_simple_return(alphabet_result.code))
+            if (auto simple_a = is_simple_return(alphabet_result.code.E))
             {
-                arg_models.back() = {var("set_alphabet'"), simple_a, arg_models.back()};
+                arg_models.back().E = {var("set_alphabet'"), simple_a, arg_models.back().E};
             }
             else
             {
-                arg_models.back() = {var("set_alphabet"), alphabet_result.code, arg_models.back()};
+                arg_models.back().E = {var("set_alphabet"), alphabet_result.code.E, arg_models.back().E};
             }
         }
     }
@@ -963,7 +963,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         // (x, logger) <- arg
         auto x = arg_vars[i];
         auto log_x = log_vars[i];
-        expression_ref arg = arg_models[i];
+        auto arg = arg_models[i];
         auto x_func = arg_func_vars[i];
 
         // If there are no lambda vars used, then we can just place the result into scope directly, without applying anything to it.
@@ -979,7 +979,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     {
         auto argi = array_index(args,i);
         string arg_name = argi.get_child("arg_name").get_value<string>();
-        auto simple_value = simplify_intToDouble(is_simple_return(arg_models[i]));
+        auto simple_value = simplify_intToDouble(is_simple_return(arg_models[i].E));
         if (simple_value and not arg_referenced[i] and arg_lambda_vars[i].empty())
             argument_environment[arg_name] = simple_value;
     }
@@ -1034,7 +1034,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         bool do_log = arg_lambda_vars[i].empty() ? should_log(R, model, arg_name, scope) : false;
         result.has_loggers = result.has_loggers or do_log;
 
-        auto simple_value = simplify_intToDouble(is_simple_return(arg_models[i]));
+        auto simple_value = simplify_intToDouble(is_simple_return(arg_models[i].E));
         if (arg_lambda_vars[i].empty() and simple_value and not arg_referenced[i])
         {
             // Under these circumstances, we don't output `let arg_var = simple_value[i]`,
@@ -1071,7 +1071,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         code.finish_return( Tuple(var("result"),loggers) );
     }
 
-    result.code = code.get_expression();
+    result.code = {code.get_expression(),true,true};
     return result;
 }
 
@@ -1092,7 +1092,7 @@ translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const 
     else if (auto constant = get_constant_model(model_rep))
     {
         translation_result_t result;
-        result.code = constant;
+        result.code = {constant,true,true};
         return result;
     }
 
@@ -1125,9 +1125,9 @@ model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& con
     auto [full_model, imports, _1, _2, _3] = get_model_as(R, model_rep, scope);
 
     if (log_verbose >= 2)
-        std::cout<<"full_model = "<<full_model<<std::endl;
+        std::cout<<"full_model = "<<full_model.E<<std::endl;
 
-    return {model_rep, imports, type, constraints, full_model};
+    return model_t{model_rep, imports, type, constraints, full_model};
 }
 
 model_t get_model(const Rules& R, const string& type, const string& model_string, const vector<pair<string,string>>& scope)
