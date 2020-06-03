@@ -642,7 +642,7 @@ optional<translation_result_t> get_model_let(const Rules& R, const ptree& model,
     perform_action_simplified(code, x, log_x, true, arg_result.code);
 
     // (body, log_body) <- body
-    code.perform(Tuple(body, log_body), body_result.code.E);
+    perform_action_simplified(code, body, log_body, true, body_result.code);
 
     // return (body, loggers)
     code.finish_return(Tuple(body,loggers));
@@ -741,7 +741,7 @@ optional<translation_result_t> get_model_lambda(const Rules& R, const ptree& mod
         do_block code;
 
         // (body, log_body) <- body_exp
-        code.perform(Tuple(body,log_body), body_result.code.E);
+        perform_action_simplified(code, body, log_body, true, body_result.code);
 
         // return $ (E, log_body)
         code.finish_return( Tuple(E, log_body) );
