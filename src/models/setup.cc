@@ -1101,7 +1101,10 @@ model_t get_model(const Rules& R, const string& type, const string& model_string
 
     name_scope_t names_in_scope;
     for(auto& [name,type]: scope)
-        names_in_scope.identifiers.insert({name, var_info_t(var("var_"+name))});
+    {
+        auto x = names_in_scope.get_var(name);
+        names_in_scope.identifiers.insert({name, var_info_t(x)});
+    }
 
     return get_model(R, required_type, equations.get_constraints(), model, names_in_scope);
 }
