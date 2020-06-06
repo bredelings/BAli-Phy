@@ -98,6 +98,32 @@ string print_list(const expression_ref& E)
 
 }
 
+bool is_infix_expression(const expression& e)
+{
+    if (not is_apply(e.head)) return false;
+
+    if (e.size() != 3) return false;
+
+    if (not e.sub[0].is_a<var>()) return false;
+
+    auto id = e.sub[0].as_<var>().name;
+
+    return is_haskell_sym(id);
+}
+
+bool is_infix_expression(const expression_ref& e)
+{
+    if (not is_apply_exp(e)) return false;
+
+    if (e.size() != 3) return false;
+
+    if (not e.sub()[0].is_a<var>()) return false;
+
+    auto id = e.sub()[0].as_<var>().name;
+
+    return is_haskell_sym(id);
+}
+
 // How do I make constructor-specific methods of printing data expressions?
 // Can I move to defining the print function using an expression?
 string expression::print() const 
@@ -226,13 +252,18 @@ string expression::print() const
             // Don't print @ f x y, just print f x y
 	    pargs.erase(pargs.begin());
 
-            if (size() == 3 and sub[0].is_a<var>())
+            if (is_infix_expression(*this))
             {
-                if (auto id = sub[0].as_<var>().name; is_haskell_sym(id))
-                {
-                    pargs[0] = id; // otherwise it would be (id)
-                    std::swap(pargs[0],pargs[1]);
-                }
+                // Don't parenthesize the operator!
+                pargs[0] = sub[0].as_<var>().name;
+
+                if (is_apply_exp(sub[1]) and not is_infix_expression(sub[1]))
+                    pargs[1] = args[2];
+
+                if (is_apply_exp(sub[2]) and not is_infix_expression(sub[2]))
+                    pargs[2] = args[3];
+
+                std::swap(pargs[0],pargs[1]);
             }
 
 	    return O.print_expression( pargs );
