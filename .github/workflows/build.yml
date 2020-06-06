@@ -14,6 +14,7 @@ jobs:
       matrix:
         name: [ubuntu-gcc-8,
                ubuntu-gcc-9,
+               ubuntu-gcc-10,
                ubuntu-clang-8,
                macos-xcode-11.3.1
                ]
@@ -28,6 +29,11 @@ jobs:
             os: ubuntu-latest
             compiler: gcc
             version: "9"
+
+          - name: ubuntu-gcc-10
+            os: ubuntu-latest
+            compiler: gcc
+            version: "10"
 
           - name: ubuntu-clang-8
             os: ubuntu-latest
