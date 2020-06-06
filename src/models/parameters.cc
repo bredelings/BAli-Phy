@@ -1393,11 +1393,11 @@ expression_ref get_genetic_code_expression(const Genetic_Code& code)
 expression_ref get_alphabet_expression(const alphabet& a)
 {
     if (a.name == "DNA")
-        return  var("Bio.Alphabet.dna");
+        return  var("dna");
     else if (a.name == "RNA")
-        return var("Bio.Alphabet.rna");
+        return var("rna");
     else if (a.name == "Amino-Acids")
-        return var("Bio.Alphabet.aa");
+        return var("aa");
     else if (auto codons = dynamic_cast<const Codons*>(&a))
     {
         auto nucs = get_alphabet_expression(codons->getNucleotides());
