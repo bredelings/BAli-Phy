@@ -1616,7 +1616,7 @@ std::string generate_atmodel_program(int n_sequences,
                 first_partition = j;
 
         expression_ref smodel = var("sample_smodel_"+std::to_string(i+1));
-        smodel = {var("set_alphabet'"), alphabet_exps[*first_partition], smodel};
+        smodel = {smodel, alphabet_exps[*first_partition]};
 
         auto code = SMs[i].code;
         code.E = smodel;
