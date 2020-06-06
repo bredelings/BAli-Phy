@@ -51,7 +51,7 @@ struct var: public Object, public occurrence_info
     bool is_wildcard() const {return index < 0 and not name.size();}
 
     var(int i):index(i) {}
-    var(const std::string& s):var(s,0) {}
+    explicit var(const std::string& s):var(s,0) {}
     var(const std::string& s,int i):index(i),name(s) {assert(name != "_");}
 };
 
