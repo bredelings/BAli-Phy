@@ -284,6 +284,7 @@ struct name_scope_t
     map<string,var_info_t> identifiers;
     set<var> vars;
     optional<arg_env_t> arg_env;
+    map<string, var> state;
 
     var get_var(string name)
     {
@@ -294,6 +295,14 @@ struct name_scope_t
             x = var(name+"_"+std::to_string(i));
         vars.insert(x);
         return x;
+    }
+
+    void set_state(const string& name, const var& x)
+    {
+        assert(vars.count(x));
+        if (state.count(name))
+            state.erase(name);
+        state.insert({name,x});
     }
 };
 
@@ -840,11 +849,41 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     }
 
     // 2. Parse models for arguments to figure out which free lambda variables they contain
+    do_block code;
+
     vector<generated_code_t> arg_models;
     vector<set<string>> arg_lambda_vars;
     vector<set<string>> used_args_for_arg(args.size());
     vector<string> arg_names(args.size());
     vector<bool> arg_loggers;
+    vector<optional<pair<var,expression_ref>>> alphabet_for_arg(args.size());
+
+    for(int i=0;i<args.size();i++)
+    {
+        auto argi = array_index(args,i);
+        arg_names[i] = argi.get_child("arg_name").get_value<string>();
+        auto arg = model_rep.get_child(arg_names[i]);
+
+        // So... if we are going to lift the alphabet vars out of the scope of their arguments, then
+        // we need to put them ALL into scope before we do ANY of the arguments, right?
+        // Wrap the argument in its appropriate Alphabet type
+        if (auto alphabet_expression = argi.get_child_optional("alphabet"))
+        {
+            auto x = scope2.get_var("alpha");
+
+            auto alphabet_scope = scope2;
+            alphabet_scope.arg_env = {{name,arg_names[i],argument_environment}};
+            auto alphabet_result = get_model_as(R, valueize(*alphabet_expression), alphabet_scope);
+            if (alphabet_result.lambda_vars.size())
+                throw myexception()<<"An alphabet cannot depend on a lambda variable!";
+            assert(not alphabet_result.code.has_loggers);
+            assert(not alphabet_result.code.is_action);
+
+            add(used_args_for_arg[i], alphabet_result.used_args);
+            add(result.imports, alphabet_result.imports);
+            alphabet_for_arg[i] = {x,alphabet_result.code.E};
+        }
+    }
 
     for(int i=0;i<args.size();i++)
     {
@@ -852,10 +891,13 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         arg_names[i] = argi.get_child("arg_name").get_value<string>();
         auto arg = model_rep.get_child(arg_names[i]);
         bool is_default_value = arg.get_child("is_default_value").get_value<bool>();
-        if (is_default_value)
-            scope2.arg_env = {{name,arg_names[i],argument_environment}};
 
-        auto arg_result = get_model_as(R, model_rep.get_child(arg_names[i]), scope2);
+        auto scope3 = scope2;
+        if (is_default_value)
+            scope3.arg_env = {{name,arg_names[i],argument_environment}};
+        if (alphabet_for_arg[i])
+            scope3.set_state("alphabet",alphabet_for_arg[i]->first);
+        auto arg_result = get_model_as(R, model_rep.get_child(arg_names[i]), scope3);
 
         if (is_default_value)
             used_args_for_arg[i] = arg_result.used_args;
@@ -873,20 +915,6 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         add(result.lambda_vars, arg_result.lambda_vars);
         add(result.imports, arg_result.imports);
 
-        // Wrap the argument in its appropriate Alphabet type
-        if (auto alphabet_expression = argi.get_child_optional("alphabet"))
-        {
-            auto alphabet_scope = scope2;
-            alphabet_scope.arg_env = {{name,arg_names[i],argument_environment}};
-            auto alphabet_result = get_model_as(R, valueize(*alphabet_expression), alphabet_scope);
-            if (alphabet_result.lambda_vars.size())
-                throw myexception()<<"An alphabet cannot depend on a lambda variable!";
-            assert(not alphabet_result.code.has_loggers);
-            assert(not alphabet_result.code.is_action);
-            add(used_args_for_arg[i], alphabet_result.used_args);
-            add(result.imports, alphabet_result.imports);
-            arg_models.back().E = {var("set_alphabet'"), alphabet_result.code.E, arg_models.back().E};
-        }
     }
 
     // 2. Figure out which args are referenced from other args
@@ -895,8 +923,6 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     auto arg_referenced = get_args_referenced(arg_names, used_args_for_arg);
 
     auto arg_order = get_args_order(arg_names, used_args_for_arg);
-
-    do_block code;
 
     // 3. Peform the rule arguments in reverse order
     for(int i: arg_order)
@@ -909,6 +935,11 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
 
         // If there are no lambda vars used, then we can just place the result into scope directly, without applying anything to it.
         bool need_to_emit = arg_referenced[i] or arg.has_loggers;
+        if (alphabet_for_arg[i])
+        {
+            auto [x,E] = *alphabet_for_arg[i];
+            code.let(x,E);
+        }
         if (arg_lambda_vars[i].empty())
             perform_action_simplified(code, x,      log_x, need_to_emit, arg);
         else
@@ -1022,6 +1053,37 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     return result;
 }
 
+// NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
+optional<translation_result_t> get_model_state(const Rules&, const ptree& model, const name_scope_t& scope)
+{
+    auto model_rep = model.get_child("value");
+    auto name = model_rep.get_value<string>();
+
+    optional<string> state_name;
+    if (name == "getAlphabet")
+    {
+        state_name = "alphabet";
+    }
+    else if (name == "get_state")
+    {
+        // How do we access the child here?
+    }
+
+    if (state_name)
+    {
+        if (scope.state.count(*state_name))
+        {
+            auto x = scope.state.at(*state_name);
+            translation_result_t result = {{x,false,false}, {}, {}, {}};
+            return result;
+        }
+        else
+            throw myexception()<<"No state '"<<*state_name<<"'!";
+    }
+    else
+        return {};
+}
+
 translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const name_scope_t& scope)
 {
     //  std::cout<<"model = "<<model<<std::endl;
@@ -1047,11 +1109,15 @@ translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const 
     else if (auto let = get_model_let(R, model_rep, scope))
         return *let;
 
-    // 5. Let expressions
+    // 5. Lambda expressions
     else if (auto func = get_model_lambda(R, model_rep, scope))
         return *func;
 
-    // 6. Functions
+    // 6. read_state[state] expressions.
+    else if (auto state = get_model_state(R, model_rep, scope))
+        return *state;
+
+    // 7. Functions
     return get_model_function(R, model_rep, scope);
 }
 
@@ -1073,7 +1139,9 @@ model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& con
     return model_t{model_rep, imports, type, constraints, full_model};
 }
 
-model_t get_model(const Rules& R, const string& type, const string& model_string, const vector<pair<string,string>>& scope)
+model_t get_model(const Rules& R, const string& type, const string& model_string,
+                  const vector<pair<string,string>>& scope,
+                  const map<string,pair<string,string>>& state)
 {
     auto required_type = parse_type(type);
     auto model_rep = parse(R, model_string);
@@ -1082,7 +1150,13 @@ model_t get_model(const Rules& R, const string& type, const string& model_string
     map<string,ptree> typed_scope;
     for(auto& [name,type]: scope)
         typed_scope.insert({name, parse_type(type)});
-    auto [model, equations] = translate_model(R, required_type, model_rep, typed_scope);
+    map<string,ptree> typed_state;
+    for(auto& [state_name,p]: state)
+    {
+        auto& [_, var_type_string] = p;
+        typed_state.insert({state_name,parse_type(var_type_string)});
+    }
+    auto [model, equations] = translate_model(R, required_type, model_rep, typed_scope, typed_state);
 
     model_rep = extract_value(model);
 
@@ -1099,14 +1173,27 @@ model_t get_model(const Rules& R, const string& type, const string& model_string
         std::cout<<std::endl;
     }
 
+    vector<var> lambda_vars;
+
     name_scope_t names_in_scope;
     for(auto& [name,type]: scope)
     {
         auto x = names_in_scope.get_var(name);
         names_in_scope.identifiers.insert({name, var_info_t(x)});
     }
+    
+    for(auto& [state_name,p]: state)
+    {
+        auto& [var_name, _] = p;
+        auto x = names_in_scope.get_var(var_name);
+        names_in_scope.set_state(state_name,x);
+        lambda_vars.push_back(x);
+    }
 
-    return get_model(R, required_type, equations.get_constraints(), model, names_in_scope);
+    auto result = get_model(R, required_type, equations.get_constraints(), model, names_in_scope);
+    for(int i=lambda_vars.size()-1; i>=0; i--)
+        result.code.E = lambda_quantify(lambda_vars[i],result.code.E);
+    return result;
 }
 
 // Some things, like log, exp, add, sub, etc. don't really have named arguments.

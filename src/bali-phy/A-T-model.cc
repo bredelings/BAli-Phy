@@ -506,7 +506,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     // 1. Get smodels for all SPECIFIED smodel names.
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
         if (not smodel_names_mapping.unique(i).empty())
-            full_smodels[i] = get_model(R, "MultiMixtureModel[a]",smodel_names_mapping.unique(i));
+            full_smodels[i] = get_model(R, "MultiMixtureModel[a]",smodel_names_mapping.unique(i),{},{{"alphabet",{"alpha","a"}}});
 
     //------------- Get alphabet names -------------------
     shared_items<string> alphabet_names_mapping = get_mapping(args, "alphabet", filename_ranges.size());
@@ -746,7 +746,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
             if (smodel_names_mapping.unique(i) == "")
                 throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a.name<<"'";
 
-            full_smodels[i] = get_model(R, "MultiMixtureModel[a]",smodel_names_mapping.unique(i));
+            full_smodels[i] = get_model(R, "MultiMixtureModel[a]",smodel_names_mapping.unique(i),{},{{"alphabet",{"alpha","a"}}});
         }
     
     // 8. Check that alignment alphabet fits requirements from smodel.

@@ -150,6 +150,7 @@ struct tr_name_scope_t
 {
     map<string,ptree> identifiers;
     optional<map<string,ptree>> args;
+    map<string,ptree> state;
 };
 
 set<string> find_type_variables_from_scope(const tr_name_scope_t& scope)
@@ -419,10 +420,13 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
     return E;
 }
 
-std::pair<ptree,equations> translate_model(const Rules& R, const ptree& required_type, ptree model, const map<string,ptree>& scope)
+std::pair<ptree,equations> translate_model(const Rules& R, const ptree& required_type, ptree model,
+                                           const map<string,term_t>& scope,
+                                           const map<string,term_t>& state)
 {
     tr_name_scope_t scope2;
     scope2.identifiers = scope;
+    scope2.state = state;
     auto E = pass2(R, required_type, model, find_variables_in_type(required_type), scope2);
     return {model,E};
 }
