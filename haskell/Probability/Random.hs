@@ -19,8 +19,6 @@ distRange (Distribution _ _ _ r) = r
 -- FIXME: We might need GADTS for
 --   Independant :: (Random a, Random b) -> Random (a,b)
 --   Observe :: b -> (Distribution b) -> Random ()
---   GetAlphabet :: Random b ?
---   SetAlphabet :: b -> (Random a) -> Random a
 --   AddMove :: b -> Random ()
 
 -- FIXME: the Random constructor here seems a bit weird.
@@ -35,8 +33,6 @@ data Random a = RandomStructure (a->Effects) (a->Effects->a) (Random a)
               | AddMove (Int->a)
               | Print b
               | SamplingRate Double (Random a)
-              | GetAlphabet
-              | SetAlphabet b (Random a)
               | Lazy (Random a)
               | WithEffect (Random a) (Random a)
               | LiftIO (IO a)
@@ -58,15 +54,13 @@ x %=>% (y,z) = (x,(Just y,z))
 infixr 1 %>%
 x %>% y      = (x,(Nothing,y))
 
-run_strict alpha (IOAndPass f g) = do
-  x <- run_strict alpha f
-  run_strict alpha $ g x
-run_strict alpha (IOReturn v) = return v
-run_strict alpha (LiftIO a) = a
-run_strict alpha GetAlphabet = return alpha
-run_strict alpha (SetAlphabet a2 x) = run_strict a2 x
-run_strict alpha (Print s) = putStrLn (show s)
-run_strict alpha (Lazy r) = run_lazy alpha r
+run_strict (IOAndPass f g) = do
+  x <- run_strict f
+  run_strict $ g x
+run_strict (IOReturn v) = return v
+run_strict (LiftIO a) = a
+run_strict (Print s) = putStrLn (show s)
+run_strict (Lazy r) = run_lazy r
 
 
 -- The machine should have certain side-effects that can be registered
@@ -77,43 +71,39 @@ run_strict alpha (Lazy r) = run_lazy alpha r
 -- Moving such effects out of the "strict" monad leaves that monad as
 -- containing just random sampling and observations.
 --
-run_effects alpha rate (IOAndPass f g) = let x = run_effects alpha rate f
-                                         in x `seq` run_effects alpha rate $ g x
-run_effects alpha rate (IOReturn v) = v
+run_effects rate (IOAndPass f g) = let x = run_effects rate f
+                                   in x `seq` run_effects rate $ g x
+run_effects rate (IOReturn v) = v
 -- LiftIO and Print are only here for debugging purposes
 -- run_effects alpha rate (LiftIO a) = a
 -- run_effects alpha rate (Print s) = putStrLn (show s)
 -- FIXME: We don't use the rate here, but we should!
-run_effects alpha rate (AddMove m) = register_transition_kernel rate m
-run_effects alpha rate (SamplingRate rate2 a) = run_effects alpha (rate*rate2) a
+run_effects rate (AddMove m) = register_transition_kernel rate m
+run_effects rate (SamplingRate rate2 a) = run_effects (rate*rate2) a
 
-run_lazy alpha (RandomStructure _ _ a) = run_lazy alpha a
-run_lazy alpha (IOAndPass f g) = do
-  x <- unsafeInterleaveIO $ run_lazy alpha f
-  run_lazy alpha $ g x
-run_lazy alpha (IOReturn v) = return v
-run_lazy alpha (LiftIO a) = a
-run_lazy alpha (Distribution _ _ a _) = unsafeInterleaveIO $ run_lazy alpha a
-run_lazy alpha GetAlphabet = return alpha
-run_lazy alpha (SetAlphabet a2 x) = run_lazy a2 x
-run_lazy alpha (SamplingRate _ model) = run_lazy alpha model
-run_lazy alpha (MFix f) = MFix ((run_lazy alpha).f)
-run_lazy alpha (WithEffect action _) = run_lazy alpha action
+run_lazy (RandomStructure _ _ a) = run_lazy a
+run_lazy (IOAndPass f g) = do
+  x <- unsafeInterleaveIO $ run_lazy f
+  run_lazy $ g x
+run_lazy (IOReturn v) = return v
+run_lazy (LiftIO a) = a
+run_lazy (Distribution _ _ a _) = unsafeInterleaveIO $ run_lazy a
+run_lazy (SamplingRate _ model) = run_lazy model
+run_lazy (MFix f) = MFix (run_lazy.f)
+run_lazy (WithEffect action _) = run_lazy action
 
 -- Also, shouldn't the modifiable function actually be some kind of monad, to prevent let x=modifiable 0;y=modifiable 0 from merging x and y?
 
-run_strict' alpha rate (IOAndPass f g) = do
-  x <- run_strict' alpha rate f
-  run_strict' alpha rate $ g x
-run_strict' alpha rate (IOReturn v) = return v
-run_strict' alpha rate (LiftIO a) = a
-run_strict' alpha _    GetAlphabet = return alpha
-run_strict' alpha rate (SetAlphabet a2 x) = run_strict' a2 rate x
-run_strict' alpha rate (Observe dist datum) = go [register_likelihood term | term <- densities dist datum] `seq` return ()
+run_strict' rate (IOAndPass f g) = do
+  x <- run_strict' rate f
+  run_strict' rate $ g x
+run_strict' rate (IOReturn v) = return v
+run_strict' rate (LiftIO a) = a
+run_strict' rate (Observe dist datum) = go [register_likelihood term | term <- densities dist datum] `seq` return ()
     where go [] = []
           go (x:xs) = x `seq` go xs
-run_strict' alpha rate (Print s) = putStrLn (show s)
-run_strict' alpha rate (Lazy r) = run_lazy' alpha rate r
+run_strict' rate (Print s) = putStrLn (show s)
+run_strict' rate (Lazy r) = run_lazy' rate r
 
 -- 1. Could we somehow implement slice sampling windows for non-contingent variables?
 
@@ -125,37 +115,30 @@ modifiable_structure value effect = let x = modifiable value
                                         triggered_x = effect `seq` x
                                     in (x, triggered_x)
 
-run_lazy' alpha rate (LiftIO a) = a
-run_lazy' alpha rate (IOAndPass f g) = do
-  x <- unsafeInterleaveIO $ run_lazy' alpha rate f
-  run_lazy' alpha rate $ g x
-run_lazy' alpha rate (IOReturn v) = return v
-run_lazy' alpha rate dist@(Distribution _ _ (RandomStructure effect structure do_sample) range) = do
+run_lazy' rate (LiftIO a) = a
+run_lazy' rate (IOAndPass f g) = do
+  x <- unsafeInterleaveIO $ run_lazy' rate f
+  run_lazy' rate $ g x
+run_lazy' rate (IOReturn v) = return v
+run_lazy' rate dist@(Distribution _ _ (RandomStructure effect structure do_sample) range) = do
   -- Note: unsafeInterleaveIO means that we will only execute this line if `value` is accessed.
-  value <- unsafeInterleaveIO $ run_lazy alpha do_sample
+  value <- unsafeInterleaveIO $ run_lazy do_sample
   let (x,triggered_x) = structure value do_effects
       pdf = density dist x
       rv = random_variable x pdf range rate
       -- Note: performing the rv (i) forces the pdf (a FORCE) and (ii) registers the rv (an EFFECT)
       -- Passing `x` to the effect instead of `rv` maybe should work, but doesn't.
-      do_effects = (run_effects alpha rate $ effect rv) `seq` rv
+      do_effects = (run_effects rate $ effect rv) `seq` rv
   return triggered_x
-run_lazy' alpha rate (Distribution _ _ s _) = run_lazy' alpha rate s
-run_lazy' alpha rate (MFix f) = MFix ((run_lazy' alpha rate).f)
-run_lazy' alpha rate (SamplingRate rate2 a) = run_lazy' alpha (rate*rate2) a
-run_lazy' alpha _    GetAlphabet = return alpha
-run_lazy' alpha rate (SetAlphabet a2 x) = run_lazy' a2 rate x
-run_lazy' alpha rate (WithEffect action effect) = unsafeInterleaveIO $ do
-  result <- run_lazy' alpha rate action
-  let effect_result = run_effects alpha rate $ effect result
+run_lazy' rate (Distribution _ _ s _) = run_lazy' rate s
+run_lazy' rate (MFix f) = MFix ((run_lazy' rate).f)
+run_lazy' rate (SamplingRate rate2 a) = run_lazy' (rate*rate2) a
+run_lazy' rate (WithEffect action effect) = unsafeInterleaveIO $ do
+  result <- run_lazy' rate action
+  let effect_result = run_effects rate $ effect result
   return (effect_result `seq` result)
 
-set_alphabet a x = do (a',_) <- a
-                      SetAlphabet a' x
-
-set_alphabet' = SetAlphabet
-
-gen_model_no_alphabet m = run_strict' (error "No default alphabet!") 1.0 m
+gen_model_no_alphabet m = run_strict' 1.0 m
 add_null_program_result p = do result <- p
                                return (Nothing,result)
 

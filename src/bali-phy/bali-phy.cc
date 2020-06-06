@@ -336,7 +336,7 @@ std::string generate_print_program(const model_t& print, const expression_ref& a
     program_file<<"main = do\n";
 
     if (print.code.is_action)
-        program_file<<"  result <- run_lazy alphabet print_model\n";
+        program_file<<"  result <- run_lazy print_model\n";
     else
         program_file<<"  let result = print_model alphabet\n";
 

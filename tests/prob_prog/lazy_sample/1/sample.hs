@@ -6,5 +6,5 @@ model = random $ do
     return $ (x * x) : (take 10 ys)
 
 main = do
-    y <- run_strict (error "No alphabet!") model
+    y <- run_strict model
     putStrLn $ show y
