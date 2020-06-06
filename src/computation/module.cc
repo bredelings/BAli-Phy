@@ -692,7 +692,7 @@ expression_ref rename_top_level(const expression_ref& decls, const string& modul
         if (auto new_name = get_new_name(x, module_name))
         {
             x2 = var(*new_name);
-            assert(not substitution.count(x2.name));
+            assert(not substitution.count(var(x2.name)));
             substitution.insert({x,x2});
         }
 
