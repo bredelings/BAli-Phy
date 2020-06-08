@@ -68,9 +68,23 @@ struct LetQual: public Stmt
     LetQual(const Binds& b);
 };
 
+struct do_block;
+
 struct Stmts: public Box<std::vector<expression_ref>>
 {
     Stmts* clone() const {return new Stmts(*this);}
+
+    Stmts& perform(const expression_ref& E1);
+
+    Stmts& perform(const expression_ref& pattern, const expression_ref& E1);
+
+    Stmts& let(const Binds&);
+
+    Stmts& let(const expression_ref& pattern, const expression_ref& E);
+
+    Stmts& rec(const do_block& rec_block);
+
+    Stmts& empty_stmt();
 
     std::string print() const;
 };
@@ -105,19 +119,19 @@ public:
 
     const Stmts& get_stmts() const { return stmts; }
 
+    do_block& perform(const expression_ref& E) { stmts.perform(E); return *this;}
+
+    do_block& perform(const expression_ref& pattern, const expression_ref& E) {stmts.perform(pattern,E); return *this;}
+
+    do_block& let(const Binds& decls) {stmts.let(decls); return *this;}
+
+    do_block& let(const expression_ref& pattern, const expression_ref& E) {stmts.let(pattern,E); return *this;}
+
+    do_block& rec(const do_block& block) {stmts.rec(block); return *this;};
+
+    do_block& empty_stmt() {stmts.empty_stmt(); return *this;}
+
     expression_ref get_expression() const;
-
-    do_block& perform(const expression_ref& E1);
-
-    do_block& perform(const expression_ref& pattern, const expression_ref& E1);
-
-    do_block& let(const Binds&);
-
-    do_block& let(const expression_ref& pattern, const expression_ref& E);
-
-    do_block& rec(const do_block& rec_block);
-
-    do_block& empty_stmt();
 
     expression_ref finish(const expression_ref& E1);
 
