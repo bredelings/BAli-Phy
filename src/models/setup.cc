@@ -855,7 +855,6 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     vector<set<string>> arg_lambda_vars;
     vector<set<string>> used_args_for_arg(args.size());
     vector<string> arg_names(args.size());
-    vector<bool> arg_loggers;
     vector<optional<pair<var,expression_ref>>> alphabet_for_arg(args.size());
 
     for(int i=0;i<args.size();i++)
@@ -907,7 +906,6 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         if (perform_function and arg_result.lambda_vars.size())
             throw myexception()<<"Argument '"<<arg_names[i]<<"' of '"<<name<<"' contains a lambda variable: not allowed!";
 
-        arg_loggers.push_back(arg_result.code.has_loggers);
         result.code.has_loggers = result.code.has_loggers or arg_result.code.has_loggers;
         result.code.is_action = result.code.is_action or arg_result.code.is_action;
         arg_models.push_back(arg_result.code);
