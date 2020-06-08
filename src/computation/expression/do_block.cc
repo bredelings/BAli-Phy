@@ -50,6 +50,42 @@ std::string Stmts::print() const
     return "{"+join(stmt_string,"\n;")+"\n}";
 }
 
+Stmts& Stmts::perform(const expression_ref& E1)
+{
+    push_back(SimpleQual(E1));
+    return *this;
+}
+
+Stmts& Stmts::perform(const expression_ref& pattern, const expression_ref& E)
+{
+    push_back(PatQual(pattern,E));
+    return *this;
+}
+
+Stmts& Stmts::let(const Binds& binds)
+{
+    push_back(LetQual(binds));
+    return *this;
+}
+
+Stmts& Stmts::let(const expression_ref& pattern, const expression_ref& E)
+{
+    Decl decl{pattern,E};
+    return let(Binds({decl}));
+}
+
+Stmts& Stmts::rec(const do_block& block)
+{
+    push_back(Rec(block.get_stmts()));
+    return *this;
+}
+
+Stmts& Stmts::empty_stmt()
+{
+    push_back(EmptyStmt());
+    return *this;
+}
+
 string Rec::print() const
 {
     return "rec " + stmts.print();
@@ -63,42 +99,6 @@ string do_block::print() const
 expression_ref do_block::get_expression() const
 {
     return (*this);
-}
-
-do_block& do_block::perform(const expression_ref& E1)
-{
-    stmts.push_back(SimpleQual(E1));
-    return *this;
-}
-
-do_block& do_block::perform(const expression_ref& pattern, const expression_ref& E)
-{
-    stmts.push_back(PatQual(pattern,E));
-    return *this;
-}
-
-do_block& do_block::let(const Binds& binds)
-{
-    stmts.push_back(LetQual(binds));
-    return *this;
-}
-
-do_block& do_block::let(const expression_ref& pattern, const expression_ref& E)
-{
-    Decl decl{pattern,E};
-    return let(Binds({decl}));
-}
-
-do_block& do_block::rec(const do_block& rec_block)
-{
-    stmts.push_back(Rec(rec_block.stmts));
-    return *this;
-}
-
-do_block& do_block::empty_stmt()
-{
-    stmts.push_back(EmptyStmt());
-    return *this;
 }
 
 expression_ref do_block::finish(const expression_ref& E)
