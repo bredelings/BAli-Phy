@@ -75,7 +75,7 @@ average_frequency (MixtureModel ms) = list_from_vector $ builtin_average_frequen
 
 extend_mixture (MixtureModel ms) (p,x) = MixtureModel $ mix [p, 1.0-p] [certainly x, ms]
 
-plus_inv mm p_inv = extend_mixture mm (p_inv, scale 0.0 $ f81 pi a)
+plus_inv p_inv mm = extend_mixture mm (p_inv, scale 0.0 $ f81 pi a)
     where a  = getAlphabet mm
           pi = average_frequency mm
 
@@ -145,7 +145,7 @@ m8a model_func mu gamma n_bins posP = parameter_mixture_unit model_func (m8a_ome
 m8a_test model_func mu gamma n_bins posP posW posSelection = parameter_mixture_unit model_func (m8a_test_omega_dist mu gamma n_bins posP posW posSelection)
 
 -- OK, so if I change this from [Mixture Omega] to Mixture [Omega] or Mixture (\Int -> Omega), how do I apply the function model_func to all the omegas?
-branch_site model_func fs ws posP posW branch_cats = MixtureModels branch_cats [bg_mixture,fg_mixture]
+branch_site fs ws posP posW model_func branch_cats = MixtureModels branch_cats [bg_mixture,fg_mixture]
 -- background omega distribution -- where the last omega is 1.0 (neutral)
     where bg_dist = zip fs (ws ++ [1.0])
 -- accelerated omega distribution -- posW for all categories
@@ -155,7 +155,7 @@ branch_site model_func fs ws posP posW branch_cats = MixtureModels branch_cats [
 -- foreground branches use the foreground omega distribution with probability posP
           fg_mixture = parameter_mixture_unit model_func (mix [1.0-posP, posP] [bg_dist, accel_dist])
 
-branch_site_test model_func fs ws posP posW posSelection = branch_site model_func fs ws posP posW'
+branch_site_test fs ws posP posW posSelection model_func = branch_site fs ws posP posW' model_func
     where posW' = if (posSelection == 1) then posW else 1.0
 
 mut_sel w' (ReversibleMarkov a smap q0 pi0 _ _ _) = reversible_markov a smap q pi where
@@ -244,16 +244,16 @@ wssr07 s01 s10 nu pi model = parameter_mixture_unit (\nu' -> wssr07_ssrv s01 s10
 
 gamma_rates_dist alpha = gamma alpha (1.0/alpha)
 
-gamma_rates base alpha n = rate_mixture_unif_bins base (gamma_rates_dist alpha) n
+gamma_rates alpha n base = rate_mixture_unif_bins base (gamma_rates_dist alpha) n
 
 log_normal_rates_dist sigmaOverMu = log_normal lmu lsigma where x = log(1.0+sigmaOverMu^2)
                                                                 lmu = -0.5*x
                                                                 lsigma = sqrt x
 
-log_normal_rates base sigmaOverMu n = rate_mixture_unif_bins base (log_normal_rates_dist sigmaOverMu) n
+log_normal_rates sigmaOverMu n base = rate_mixture_unif_bins base (log_normal_rates_dist sigmaOverMu) n
 
 --dp base rates fraction = rate_mixture base dist where dist = zip fraction rates
-free_rates base rates fractions = scaled_mixture (replicate (length fractions) base) rates fractions
+free_rates rates fractions base = scaled_mixture (replicate (length fractions) base) rates fractions
 
 transition_p_index smodel_on_tree = mkArray n_branches (list_to_vector . branch_transition_p smodel_on_tree) where tree = get_tree smodel_on_tree
                                                                                                                    n_branches = numBranches tree
