@@ -566,6 +566,19 @@ void perform_action_simplified(generated_code_t& block, const var& x, const var&
     perform_action_simplified(block.stmts, x, log_x, is_referenced, code.generate(), code.is_action(), code.has_loggers());
 }
 
+void perform_action_simplified(translation_result_t& block, const var& x, const var& log_x, bool is_referenced, const translation_result_t& code, const string& name)
+{
+    add(block.imports, code.imports);
+    add(block.lambda_vars, code.lambda_vars);
+    add(block.vars, code.vars);
+    if (not code.is_default_value)
+        add(block.used_args, code.used_args);
+    perform_action_simplified(block.code, x, log_x, is_referenced, code.code);
+
+    if (code.code.has_loggers())
+        block.code.log_sub(name,log_x);
+}
+
 void generated_code_t::log_value(const string& name, const expression_ref& value)
 {
     loggers.push_back({var("%=%"),String(name),value});
