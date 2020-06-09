@@ -636,7 +636,7 @@ optional<translation_result_t> get_model_let(const Rules& R, const ptree& model,
         throw myexception()<<"You cannot let-bind a variable to an expression with a function-variable";
 
     // 2. Perform the body with var_name in scope
-    auto body_result = get_model_as(R, body_exp, extend_scope(scope, var_name, var_info));
+    auto body_result = get_model_as(R, body_exp, extend_scope(scope2, var_name, var_info));
 
     // 3. Construct code.
 
