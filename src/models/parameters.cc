@@ -1432,15 +1432,15 @@ string maybe_emit_code(map<string,string>& code_to_name, const string& name, str
 }
 
 
-var bind_and_log(bool do_log, const string& name, const generated_code_t& code, do_block& block, vector<expression_ref>& loggers, bool is_referenced=true)
+var bind_and_log(bool do_log, const string& name, const expression_ref& E, bool is_action, bool has_loggers, do_block& block, vector<expression_ref>& loggers, bool is_referenced=true)
 {
     string var_name = name;
     if (var_name.empty() or not std::islower(var_name[0]))
         var_name = "_"+var_name;
     var x(var_name);
     var log_x("log_"+name);
-    perform_action_simplified(block, x, log_x, is_referenced, code);
-    maybe_log(loggers, name, do_log?x:expression_ref{}, code.has_loggers?log_x:expression_ref{});
+    perform_action_simplified(block.get_stmts(), x, log_x, is_referenced, E, is_action, has_loggers);
+    maybe_log(loggers, name, do_log?x:expression_ref{}, has_loggers?log_x:expression_ref{});
     return x;
 }
 
@@ -1558,9 +1558,9 @@ std::string generate_atmodel_program(int n_sequences,
     {
         string var_name = "branch_lengths";
         auto code = branch_length_model.code;
-        code.E = {var("sample_"+var_name),tree_var};
+        expression_ref E = {var("sample_"+var_name),tree_var};
 
-        branch_lengths = bind_and_log(false, var_name, code, sample_atmodel, program_loggers);
+        branch_lengths = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), sample_atmodel, program_loggers);
     }
 
 
@@ -1577,9 +1577,9 @@ std::string generate_atmodel_program(int n_sequences,
         string var_name = "scale"+convertToString(i+1);
 
         auto code = scaleMs[i].code;
-        code.E = var("sample_scale_"+convertToString(i+1));
+        expression_ref E = var("sample_scale_"+convertToString(i+1));
 
-        auto scale_var = bind_and_log(true, var_name, code, sample_atmodel, program_loggers);
+        auto scale_var = bind_and_log(true, var_name, E, code.is_action(), code.has_loggers(), sample_atmodel, program_loggers);
 
         scales.push_back(scale_var);
     }
@@ -1619,9 +1619,8 @@ std::string generate_atmodel_program(int n_sequences,
         smodel = {smodel, alphabet_exps[*first_partition]};
 
         auto code = SMs[i].code;
-        code.E = smodel;
 
-        auto smodel_var = bind_and_log(false, prefix, code, sample_atmodel, program_loggers);
+        auto smodel_var = bind_and_log(false, prefix, smodel, code.is_action(), code.has_loggers(), sample_atmodel, program_loggers);
         auto smodel_var2 = var("smodel_"+std::to_string(i+1));
         sample_atmodel.let(smodel_var2, {smodel_var, branch_categories});
         smodels.push_back(smodel_var2);
@@ -1637,7 +1636,7 @@ std::string generate_atmodel_program(int n_sequences,
 
         auto code = IMs[i].code;
         code.E = imodel;
-        auto imodel_var = bind_and_log(false, prefix, code, sample_atmodel, program_loggers);
+        auto imodel_var = bind_and_log(false, prefix, imodel, code.is_action(), code.has_loggers(), sample_atmodel, program_loggers);
 
         var imodel_var2("imodel_"+std::to_string(i+1));
         sample_atmodel.let(imodel_var2, {imodel_var, tree_var, heat_var, imodel_training_var});

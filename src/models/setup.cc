@@ -256,6 +256,49 @@ bool is_loggable_function(const Rules& R, const string& name)
     return not rule->get("no_log",false);
 }
 
+expression_ref generated_code_t::generate_top() const
+{
+    auto R = generate();
+    for(int i=lambda_vars.size()-1; i>=0; i--)
+        R = lambda_quantify(lambda_vars[i],R);
+    return R;
+}
+
+expression_ref generated_code_t::generate() const
+{
+    do_block code(stmts);
+
+    auto L = get_list(loggers);
+
+    auto R = simplify_intToDouble(E);
+
+    if (not perform_function)
+    {
+        if (has_loggers())
+            R = Tuple(R,L);
+        // If there are let stmts, we could return let{decls} in R
+        if (not code.empty())
+            R = code.finish_return(R);
+    }
+    else
+    {
+        if (has_loggers())
+        {
+            // result <- E
+            code.perform( var("result"), R );
+            // return (result, loggers)
+            R = code.finish_return( Tuple(var("result"),L) );
+        }
+        else if (not code.empty())
+            R = code.finish( R );
+    }
+
+    // if is_action() is false, we should not have a do_block()
+    assert(is_action() or not R.is_a<do_block>());
+
+    return R;
+}
+
 struct var_info_t
 {
     var x;
@@ -423,7 +466,9 @@ optional<translation_result_t> get_constant_model(const ptree& model)
     if (expression_ref C = parse_constant(model_rep))
     {
         if (model_rep.size() != 0) throw myexception()<<"An constant cannot have arguments!\n  '"<<model_rep.show()<<"'";
-        return translation_result_t{{C,false,false},{},{},{}};
+        translation_result_t result;
+        result.code.E = C;
+        return result;
     }
     else
         return {};
@@ -450,7 +495,9 @@ optional<translation_result_t> get_variable_model(const ptree& model, const name
 
         expression_ref V = env.code_for_arg.at(name);
 
-        translation_result_t result = {{V,false,false}, {}, {}, {name}};
+        translation_result_t result;
+        result.code.E = V;
+        result.used_args = {name};
         return result;
     }
 
@@ -474,7 +521,9 @@ optional<translation_result_t> get_variable_model(const ptree& model, const name
         V = x;
 
     // 4. We need an extra level of {} to allow constructing the optional.
-    translation_result_t result = {{V,false,false}, {}, lambda_vars, {}};
+    translation_result_t result;
+    result.code.E = V;
+    result.lambda_vars = lambda_vars;
     return result;
 }
 
@@ -492,24 +541,29 @@ void maybe_log(vector<expression_ref>& loggers,
 }
 
 
-void perform_action_simplified(do_block& block, const var& x, const var& log_x, bool is_referenced, const generated_code_t& code)
+void perform_action_simplified(Stmts& block, const var& x, const var& log_x, bool is_referenced, expression_ref E, bool is_action, bool has_loggers)
 {
-    if (code.is_action)
+    if (is_action)
     {
-        if (not code.has_loggers)
+        if (not has_loggers)
             // x <- code
-            block.perform(x, code.E);
+            block.perform(x, E);
         else
             // (x, log_x) <- code
-            block.perform(Tuple(x,log_x), code.E);
+            block.perform(Tuple(x,log_x), E);
     }
     else
     {
-        if (code.has_loggers)
-            block.let(Tuple(x,log_x), code.E);
+        if (has_loggers)
+            block.let(Tuple(x,log_x), E);
         else if (is_referenced)
-            block.let(x, code.E);
+            block.let(x, E);
     }
+}
+
+void perform_action_simplified(generated_code_t& block, const var& x, const var& log_x, bool is_referenced, const generated_code_t& code)
+{
+    perform_action_simplified(block.stmts, x, log_x, is_referenced, code.generate(), code.is_action(), code.has_loggers());
 }
 
 /*
@@ -553,24 +607,20 @@ optional<translation_result_t> get_model_let(const Rules& R, const ptree& model,
     auto result = body_result;
     add(result.imports, arg_result.imports);
     add(result.used_args, arg_result.used_args);
-    result.code.has_loggers = body_result.code.has_loggers or arg_result.code.has_loggers or x_is_random;
 
+    generated_code_t code;
+    
     // 3. Construct loggers
-    vector<expression_ref> logger_bits;
     {
         expression_ref value = x_is_random ? x : expression_ref{};
-        expression_ref subloggers = arg_result.code.has_loggers ? log_x : expression_ref{};
-        maybe_log(logger_bits, var_name, value, subloggers);
+        expression_ref subloggers = arg_result.code.has_loggers() ? log_x : expression_ref{};
+        maybe_log(code.loggers, var_name, value, subloggers);
     }
     {
-        expression_ref subloggers = body_result.code.has_loggers ? log_body : expression_ref{};
-        maybe_log(logger_bits, "body", {}, subloggers);
+        expression_ref subloggers = body_result.code.has_loggers() ? log_body : expression_ref{};
+        maybe_log(code.loggers, "body", {}, subloggers);
     }
-    expression_ref loggers = get_list(logger_bits);
-
     // 4. Construct code.
-
-    do_block code;
 
     // (x, log_x) <- E
     perform_action_simplified(code, x, log_x, true, arg_result.code);
@@ -578,23 +628,9 @@ optional<translation_result_t> get_model_let(const Rules& R, const ptree& model,
     // (body, log_body) <- body
     perform_action_simplified(code, body, log_body, true, body_result.code);
 
-    // return (body, loggers)
-    if (body_result.code.is_action)
-    {
-        if (body_result.code.has_loggers)
-            code.finish_return(Tuple(body,loggers));
-        else
-            code.finish_return(body);
-    }
-    else
-    {
-        if (body_result.code.has_loggers)
-            code.finish(Tuple(body,loggers));
-        else
-            code.finish(body);
-    }
+    code.E = body;
 
-    result.code.E = code.get_expression();
+    result.code = code;
 
     return result;
 }
@@ -685,18 +721,15 @@ optional<translation_result_t> get_model_lambda(const Rules& R, const ptree& mod
     }
     else
     {
-        do_block code;
+        generated_code_t code;
 
         // (body, log_body) <- body_exp
         perform_action_simplified(code, body, log_body, true, body_result.code);
 
-        // return $ (E, log_body)
-        if (body_result.code.has_loggers)
-            code.finish_return( Tuple(E, log_body) );
-        else
-            code.finish_return( E );
+        maybe_log(code.loggers, "lambda", {}, var(log_body));
 
-        body_result.code.E = code.get_expression();
+        body_result.code = code;
+
         // In summary, we have
         //E = do
         //      (body,log_body) <- body_action
@@ -814,7 +847,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
             result.imports.insert(mod.get_value<string>());
     }
 
-    bool perform_function = rule->get("perform",false);
+    result.code.perform_function = rule->get("perform",false);
     ptree call = rule->get_child("call");
     ptree args = rule->get_child("args");
     
@@ -849,8 +882,6 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     }
 
     // 2. Parse models for arguments to figure out which free lambda variables they contain
-    do_block code;
-
     vector<generated_code_t> arg_models;
     vector<set<string>> arg_lambda_vars;
     vector<set<string>> used_args_for_arg(args.size());
@@ -875,8 +906,8 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
             auto alphabet_result = get_model_as(R, valueize(*alphabet_expression), alphabet_scope);
             if (alphabet_result.lambda_vars.size())
                 throw myexception()<<"An alphabet cannot depend on a lambda variable!";
-            assert(not alphabet_result.code.has_loggers);
-            assert(not alphabet_result.code.is_action);
+            assert(not alphabet_result.code.has_loggers());
+            assert(not alphabet_result.code.is_action());
 
             add(used_args_for_arg[i], alphabet_result.used_args);
             add(result.imports, alphabet_result.imports);
@@ -896,6 +927,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
             scope3.arg_env = {{name,arg_names[i],argument_environment}};
         if (alphabet_for_arg[i])
             scope3.set_state("alphabet",alphabet_for_arg[i]->first);
+
         auto arg_result = get_model_as(R, model_rep.get_child(arg_names[i]), scope3);
 
         if (is_default_value)
@@ -903,16 +935,15 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         else
             add(result.used_args, arg_result.used_args);
 
-        if (perform_function and arg_result.lambda_vars.size())
+        // Move this to generate()
+        if (result.code.perform_function and arg_result.lambda_vars.size())
             throw myexception()<<"Argument '"<<arg_names[i]<<"' of '"<<name<<"' contains a lambda variable: not allowed!";
 
-        result.code.has_loggers = result.code.has_loggers or arg_result.code.has_loggers;
-        result.code.is_action = result.code.is_action or arg_result.code.is_action;
+        // Store arg_result, instead of arg_result.code, and push this all down to where the actions are PERFORMED.
         arg_models.push_back(arg_result.code);
         arg_lambda_vars.push_back(arg_result.lambda_vars);
         add(result.lambda_vars, arg_result.lambda_vars);
         add(result.imports, arg_result.imports);
-
     }
 
     // 2. Figure out which args are referenced from other args
@@ -932,17 +963,16 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         auto x_func = arg_func_vars[i];
 
         // If there are no lambda vars used, then we can just place the result into scope directly, without applying anything to it.
-        bool need_to_emit = arg_referenced[i] or arg.has_loggers;
+        bool need_to_emit = arg_referenced[i] or arg.has_loggers();
         if (alphabet_for_arg[i])
         {
             auto [x,E] = *alphabet_for_arg[i];
-            code.let(x,E);
+            result.code.stmts.let(x,E);
         }
         if (arg_lambda_vars[i].empty())
-            perform_action_simplified(code, x,      log_x, need_to_emit, arg);
+            perform_action_simplified(result.code, x,      log_x, need_to_emit, arg);
         else
-            perform_action_simplified(code, x_func, log_x, true, arg);
-
+            perform_action_simplified(result.code, x_func, log_x, true, arg);
     }
 
     // 4. Construct the call expression
@@ -952,18 +982,18 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         string arg_name = argi.get_child("arg_name").get_value<string>();
         auto arg = arg_models[i];
 
-        bool can_substitute = not arg.is_action and not arg.has_loggers;
+        bool can_substitute = not arg.is_action() and not arg.has_loggers();
         if (can_substitute and not arg_referenced[i] and arg_lambda_vars[i].empty())
             argument_environment[arg_name] = arg.E;
     }
-    expression_ref E;
+
     try
     {
-        E = make_call(call, argument_environment);
+        result.code.E = make_call(call, argument_environment);
     }
-    catch(myexception& E)
+    catch(myexception& err)
     {
-        E.prepend("In call for function '"+name+"': ");
+        err.prepend("In call for function '"+name+"': ");
         throw;
     }
 
@@ -983,16 +1013,15 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
             for(auto& vname: arg_lambda_vars[i])
                 F = {F, scope.identifiers.at(vname).x};
 
-            E = let_expression({{x,F}},E);
+            result.code.E = let_expression({{x,F}},result.code.E);
         }
     }
 
     // 6. Return a lambda function
     for(auto& vname: std::reverse(result.lambda_vars))
-        E = lambda_quantify(scope.identifiers.at(vname).x, E);
+        result.code.E = lambda_quantify(scope.identifiers.at(vname).x, result.code.E);
 
     // 7. Compute loggers
-    vector<expression_ref> logger_bits;
     for(int i=0;i<args.size();i++)
     {
         auto argi = array_index(args,i);
@@ -1003,13 +1032,11 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
 
         bool do_log = arg_lambda_vars[i].empty() ? should_log(R, model, arg_name, scope) : false;
 
-        expression_ref value  = do_log                    ? arg_vars[i] : expression_ref{};
-        expression_ref logger = arg_models[i].has_loggers ? log_vars[i] : expression_ref{};
+        expression_ref value  = do_log                      ? arg_vars[i] : expression_ref{};
+        expression_ref logger = arg_models[i].has_loggers() ? log_vars[i] : expression_ref{};
 
-        result.code.has_loggers = result.code.has_loggers or do_log;
-
-        auto can_substitute = not arg_models[i].is_action and not arg_models[i].has_loggers;
-        if (arg_lambda_vars[i].empty() and can_substitute and not arg_referenced[i])
+        auto can_substitute = not arg_models[i].is_action() and not arg_models[i].has_loggers();
+        if (do_log and arg_lambda_vars[i].empty() and can_substitute and not arg_referenced[i])
         {
             // Under these circumstances, we don't output `let arg_var = simple_value[i]`,
             // we just substitute simple_value[i] where arg_var would go.
@@ -1019,35 +1046,11 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
             value = arg_models[i].E;
         }
 
-        maybe_log(logger_bits, log_name, value, logger);
-    }
-    expression_ref loggers = get_list(logger_bits);
-
-    // 8. Return the function call: 'return (f call.name1 call.name2 call.name3)'
-    if (not perform_function)
-    {
-        if (result.code.has_loggers)
-            E = Tuple(E,loggers);
-        if (result.code.is_action)
-            E = {do_return, E};
-        if (not code.empty())
-            E = code.finish(E);
-    }
-    else
-    {
-        result.code.is_action = true;
-        if (result.code.has_loggers)
-        {
-            // result <- E
-            code.perform( var("result"), E );
-            // return (result, loggers)
-            E = code.finish_return( Tuple(var("result"),loggers) );
-        }
-        else if (not code.empty())
-            E = code.finish( E );
+        maybe_log(result.code.loggers, log_name, value, logger);
     }
 
-    result.code.E = simplify_intToDouble(E);
+    result.code.E = simplify_intToDouble(result.code.E);
+
     return result;
 }
 
@@ -1072,7 +1075,8 @@ optional<translation_result_t> get_model_state(const Rules&, const ptree& model,
         if (scope.state.count(*state_name))
         {
             auto x = scope.state.at(*state_name);
-            translation_result_t result = {{x,false,false}, {}, {}, {}};
+            translation_result_t result;
+            result.code.E = x;
             return result;
         }
         else
@@ -1189,8 +1193,7 @@ model_t get_model(const Rules& R, const string& type, const string& model_string
     }
 
     auto result = get_model(R, required_type, equations.get_constraints(), model, names_in_scope);
-    for(int i=lambda_vars.size()-1; i>=0; i--)
-        result.code.E = lambda_quantify(lambda_vars[i],result.code.E);
+    result.code.lambda_vars = lambda_vars;
     return result;
 }
 
