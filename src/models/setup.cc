@@ -566,6 +566,16 @@ void perform_action_simplified(generated_code_t& block, const var& x, const var&
     perform_action_simplified(block.stmts, x, log_x, is_referenced, code.generate(), code.is_action(), code.has_loggers());
 }
 
+void generated_code_t::log_value(const string& name, const expression_ref& value)
+{
+    loggers.push_back({var("%=%"),String(name),value});
+}
+
+void generated_code_t::log_sub(const string& name, const expression_ref& sub)
+{
+    loggers.push_back({var("%>%"),String(name),sub});
+}
+
 /*
  *
  * do

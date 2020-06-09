@@ -42,6 +42,9 @@ struct generated_code_t
 
     expression_ref generate_top() const;
 
+    void log_value(const std::string&, const expression_ref&);
+    void log_sub(const std::string&, const expression_ref&);
+
     std::string print() const {return generate_top().print();}
 };
 
