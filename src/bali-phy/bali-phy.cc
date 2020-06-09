@@ -335,12 +335,12 @@ std::string generate_print_program(const model_t& print, const expression_ref& a
     program_file<<"\n";
     program_file<<"main = do\n";
 
-    if (print.code.is_action)
-        program_file<<"  result <- run_lazy print_model\n";
+    if (print.code.is_action())
+        program_file<<"  result <- run_lazy (print_model alphabet)\n";
     else
         program_file<<"  let result = print_model alphabet\n";
 
-    if (print.code.has_loggers)
+    if (print.code.has_loggers())
         program_file<<"  putStrLn $ show $ fst result\n";
     else
         program_file<<"  putStrLn $ show $ result\n";
@@ -371,6 +371,8 @@ expression_ref get_alphabet_expression_from_args(const variables_map& args)
                 a = {var("triplets"),var("dna")};
             else if (alpha == "Codons")
                 a = {var("codons"),var("dna"),var("standard_code")};
+            else
+                throw myexception()<<"I don't recognize alphabet '"<<alpha<<"'";
         }
     }
     return a;

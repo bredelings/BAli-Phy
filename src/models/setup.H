@@ -28,14 +28,26 @@ public:
 
 struct generated_code_t
 {
-    expression_ref E;
-    bool is_action = false;
-    bool has_loggers = false;
+    std::vector<var> lambda_vars;
 
-    std::string print() const {return E.print();}
+    Stmts stmts;
+    expression_ref E;
+    std::vector<expression_ref> loggers;
+    bool perform_function = false;
+    // Under these circumstances, we will return a monadic action
+    bool is_action() const {return perform_function or not stmts.empty();}
+    bool has_loggers() const {return not loggers.empty();}
+
+    expression_ref generate() const;
+
+    expression_ref generate_top() const;
+
+    std::string print() const {return generate_top().print();}
 };
 
-void perform_action_simplified(do_block& block, const var& x, const var& log_x, bool is_referenced, const generated_code_t& code);
+void perform_action_simplified(Stmts& block, const var& x, const var& log_x, bool is_referenced, expression_ref E, bool is_action, bool has_loggers);
+void perform_action_simplified(generated_code_t& block, const var& x, const var& log_x, bool is_referenced, const generated_code_t& code);
+
 void maybe_log(std::vector<expression_ref>& logger_bits,
                const std::string& name,
                const expression_ref& value,
