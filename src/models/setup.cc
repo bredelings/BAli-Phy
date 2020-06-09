@@ -443,6 +443,8 @@ struct translation_result_t
     set<string> imports;
     set<string> lambda_vars;
     set<string> used_args;
+    set<var> vars;
+    bool is_default_value = false;
 };
 
 translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const name_scope_t& scope);
@@ -563,7 +565,16 @@ void perform_action_simplified(Stmts& block, const var& x, const var& log_x, boo
 
 void perform_action_simplified(generated_code_t& block, const var& x, const var& log_x, bool is_referenced, const generated_code_t& code)
 {
-    perform_action_simplified(block.stmts, x, log_x, is_referenced, code.generate(), code.is_action(), code.has_loggers());
+    for(auto& stmt: code.stmts)
+        block.stmts.push_back(stmt);
+
+    if (code.has_loggers())
+        block.stmts.let(log_x,get_list(code.loggers));
+
+    if (code.perform_function)
+        block.stmts.perform(x,code.E);
+    else if (is_referenced or code.is_action())
+        block.stmts.let(x, code.E);
 }
 
 void perform_action_simplified(translation_result_t& block, const var& x, const var& log_x, bool is_referenced, const translation_result_t& code, const string& name)
@@ -627,33 +638,21 @@ optional<translation_result_t> get_model_let(const Rules& R, const ptree& model,
     // 2. Perform the body with var_name in scope
     auto body_result = get_model_as(R, body_exp, extend_scope(scope, var_name, var_info));
 
-    auto result = body_result;
-    add(result.imports, arg_result.imports);
-    add(result.used_args, arg_result.used_args);
+    // 3. Construct code.
 
-    generated_code_t code;
-    
-    // 3. Construct loggers
-    {
-        expression_ref value = x_is_random ? x : expression_ref{};
-        expression_ref subloggers = arg_result.code.has_loggers() ? log_x : expression_ref{};
-        maybe_log(code.loggers, var_name, value, subloggers);
-    }
-    {
-        expression_ref subloggers = body_result.code.has_loggers() ? log_body : expression_ref{};
-        maybe_log(code.loggers, "body", {}, subloggers);
-    }
-    // 4. Construct code.
+    translation_result_t result;
+    result.vars = scope2.vars;
 
     // (x, log_x) <- E
-    perform_action_simplified(code, x, log_x, true, arg_result.code);
+    perform_action_simplified(result, x, log_x, true, arg_result, var_name);
+    if (x_is_random)
+        result.code.log_value(var_name, x);
 
     // (body, log_body) <- body
-    perform_action_simplified(code, body, log_body, true, body_result.code);
+    perform_action_simplified(result, body, log_body, true, body_result, "body");
 
-    code.E = body;
-
-    result.code = code;
+    // return body
+    result.code.E = body;
 
     return result;
 }
@@ -744,20 +743,15 @@ optional<translation_result_t> get_model_lambda(const Rules& R, const ptree& mod
     }
     else
     {
-        generated_code_t code;
+        translation_result_t result;
 
-        // (body, log_body) <- body_exp
-        perform_action_simplified(code, body, log_body, true, body_result.code);
+        // (body, log_body) <- body_action
+        perform_action_simplified(result, body, log_body, true, body_result, "function");
 
-        maybe_log(code.loggers, "lambda", {}, var(log_body));
+        // return $ (\l1 l2 l3 -> \x -> (body x l1 l2 l3) , log_body)
+        result.code.E = E;
 
-        body_result.code = code;
-
-        // In summary, we have
-        //E = do
-        //      (body,log_body) <- body_action
-        //      return $ (\l1 l2 l3 -> \x -> (body x l1 l2 l3) , log_body)
-        return body_result;
+        return result;
     }
 }
 
@@ -910,11 +904,14 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     vector<set<string>> used_args_for_arg(args.size());
     vector<string> arg_names(args.size());
     vector<optional<pair<var,expression_ref>>> alphabet_for_arg(args.size());
+    vector<string> log_names(args.size());
 
     for(int i=0;i<args.size();i++)
     {
         auto argi = array_index(args,i);
         arg_names[i] = argi.get_child("arg_name").get_value<string>();
+        log_names[i] = name + ":" + arg_names[i];
+
         auto arg = model_rep.get_child(arg_names[i]);
 
         // So... if we are going to lift the alphabet vars out of the scope of their arguments, then
@@ -953,9 +950,10 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         auto arg_result = get_model_as(R, model_rep.get_child(arg_names[i]), scope3);
 
         if (is_default_value)
+        {
             used_args_for_arg[i] = arg_result.used_args;
-        else
-            add(result.used_args, arg_result.used_args);
+            arg_result.is_default_value = true;
+        }
 
         // Move this to generate()
         if (result.code.perform_function and arg_result.lambda_vars.size())
@@ -963,9 +961,9 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
 
         // Store arg_result, instead of arg_result.code, and push this all down to where the actions are PERFORMED.
         arg_models.push_back(arg_result);
-        arg_lambda_vars.push_back(arg_result.lambda_vars);
-        add(result.lambda_vars, arg_result.lambda_vars);
-        add(result.imports, arg_result.imports);
+
+        // Avoid re-using any haskell vars.
+        add(scope2.vars, arg_result.vars);
     }
 
     // 5.. Figure out which args are referenced from other args
@@ -984,17 +982,19 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         auto arg = arg_models[i];
         auto x_func = arg_func_vars[i];
 
-        // If there are no lambda vars used, then we can just place the result into scope directly, without applying anything to it.
-        bool need_to_emit = arg_referenced[i] or arg.code.has_loggers();
         if (alphabet_for_arg[i])
         {
             auto [x,E] = *alphabet_for_arg[i];
             result.code.stmts.let(x,E);
         }
-        if (arg_lambda_vars[i].empty())
-            perform_action_simplified(result.code, x,      log_x, need_to_emit, arg.code);
+
+        // If there are no lambda vars used, then we can just place the result into scope directly, without applying anything to it.
+        bool need_to_emit = arg_referenced[i] or arg.code.has_loggers();
+
+        if (arg_models[i].lambda_vars.empty())
+            perform_action_simplified(result, x,      log_x, need_to_emit, arg, log_names[i]);
         else
-            perform_action_simplified(result.code, x_func, log_x, true, arg.code);
+            perform_action_simplified(result, x_func, log_x, true, arg, log_names[i]);
     }
 
     // 7. Construct the call expression
@@ -1005,7 +1005,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         auto arg = arg_models[i].code;
 
         bool can_substitute = not arg.is_action() and not arg.has_loggers();
-        if (can_substitute and not arg_referenced[i] and arg_lambda_vars[i].empty())
+        if (can_substitute and not arg_referenced[i] and arg_models[i].lambda_vars.empty())
             argument_environment[arg_name] = arg.E;
     }
 
@@ -1025,14 +1025,14 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         auto argi = array_index(args,i);
         string arg_name = argi.get_child("arg_name").get_value<string>();
 
-        if (not arg_lambda_vars[i].empty())
+        if (not arg_models[i].lambda_vars.empty())
         {
             auto x_func = arg_func_vars[i];
             auto x = arg_vars[i];
 
             // Apply the free lambda variables to arg result before using it.
             expression_ref F = x_func;
-            for(auto& vname: arg_lambda_vars[i])
+            for(auto& vname: arg_models[i].lambda_vars)
                 F = {F, scope.identifiers.at(vname).x};
 
             result.code.E = let_expression({{x,F}},result.code.E);
@@ -1043,7 +1043,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     for(auto& vname: std::reverse(result.lambda_vars))
         result.code.E = lambda_quantify(scope.identifiers.at(vname).x, result.code.E);
 
-    // 9. Compute loggers
+    // 9. Compute value loggers
     for(int i=0;i<args.size();i++)
     {
         auto argi = array_index(args,i);
@@ -1051,15 +1051,13 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         string arg_name = argi.get_child("arg_name").get_value<string>();
         auto arg_code = arg_models[i].code;
 
-        auto log_name = name + ":" + arg_name;
+        if (not arg_models[i].lambda_vars.empty()) continue;
 
-        bool do_log = arg_lambda_vars[i].empty() ? should_log(R, model, arg_name, scope) : false;
+        if (not should_log(R, model, arg_name, scope)) continue;
 
-        expression_ref value  = do_log                 ? arg_vars[i] : expression_ref{};
-        expression_ref logger = arg_code.has_loggers() ? log_vars[i] : expression_ref{};
-
+        expression_ref value  = arg_vars[i];
         auto can_substitute = not arg_code.is_action() and not arg_code.has_loggers();
-        if (do_log and arg_lambda_vars[i].empty() and can_substitute and not arg_referenced[i])
+        if (arg_models[i].lambda_vars.empty() and can_substitute and not arg_referenced[i])
         {
             // Under these circumstances, we don't output `let arg_var = simple_value[i]`,
             // we just substitute simple_value[i] where arg_var would go.
@@ -1068,12 +1066,12 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
             // then we duplicate work by substituting:
             value = arg_code.E;
         }
-
-        maybe_log(result.code.loggers, log_name, value, logger);
+        result.code.log_value(log_names[i], value);
     }
 
     // 10. Perform basic simplification on the computed value.
     result.code.E = simplify_intToDouble(result.code.E);
+    add(result.vars, scope2.vars);
 
     return result;
 }
@@ -1157,7 +1155,7 @@ translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const 
 model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& constraints, const ptree& model_rep, const name_scope_t& scope)
 {
     // --------- Convert model to MultiMixtureModel ------------//
-    auto [full_model, imports, _1, _2] = get_model_as(R, model_rep, scope);
+    auto [full_model, imports, _1, _2, _3, _4] = get_model_as(R, model_rep, scope);
 
     if (log_verbose >= 2)
         std::cout<<"full_model = "<<full_model.E<<std::endl;
