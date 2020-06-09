@@ -857,7 +857,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         not starts_with(call.get_value<string>(),"@"))
         throw myexception()<<"For rule '"<<name<<"', function '"<<call.get_value<string>()<<"' doesn't seem to be a valid haskell id or a valid argument reference.";
 
-    // 4. Construct the call expression
+    // 2. Construct the names of the haskell variables.
     map<string,expression_ref> argument_environment;
     vector<var> arg_vars;
     vector<var> log_vars;
@@ -881,8 +881,8 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         argument_environment[arg_name] = arg_vars.back();
     }
 
-    // 2. Parse models for arguments to figure out which free lambda variables they contain
-    vector<generated_code_t> arg_models;
+    // 3. Construct the alphabet for each argument, if there is one.
+    vector<translation_result_t> arg_models;
     vector<set<string>> arg_lambda_vars;
     vector<set<string>> used_args_for_arg(args.size());
     vector<string> arg_names(args.size());
@@ -915,10 +915,9 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         }
     }
 
+    // 4. Generate the code for each argument.
     for(int i=0;i<args.size();i++)
     {
-        auto argi = array_index(args,i);
-        arg_names[i] = argi.get_child("arg_name").get_value<string>();
         auto arg = model_rep.get_child(arg_names[i]);
         bool is_default_value = arg.get_child("is_default_value").get_value<bool>();
 
@@ -940,20 +939,20 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
             throw myexception()<<"Argument '"<<arg_names[i]<<"' of '"<<name<<"' contains a lambda variable: not allowed!";
 
         // Store arg_result, instead of arg_result.code, and push this all down to where the actions are PERFORMED.
-        arg_models.push_back(arg_result.code);
+        arg_models.push_back(arg_result);
         arg_lambda_vars.push_back(arg_result.lambda_vars);
         add(result.lambda_vars, arg_result.lambda_vars);
         add(result.imports, arg_result.imports);
     }
 
-    // 2. Figure out which args are referenced from other args
+    // 5.. Figure out which args are referenced from other args
     //    FIXME!  We should start with just args referenced by the call expression.
     //    We could also count HOW MANY times each arg is referenced by the call expression.
     auto arg_referenced = get_args_referenced(arg_names, used_args_for_arg);
 
     auto arg_order = get_args_order(arg_names, used_args_for_arg);
 
-    // 3. Peform the rule arguments in reverse order
+    // 6. Peform each argument before other arguments that reference it.
     for(int i: arg_order)
     {
         // (x, logger) <- arg
@@ -963,24 +962,24 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         auto x_func = arg_func_vars[i];
 
         // If there are no lambda vars used, then we can just place the result into scope directly, without applying anything to it.
-        bool need_to_emit = arg_referenced[i] or arg.has_loggers();
+        bool need_to_emit = arg_referenced[i] or arg.code.has_loggers();
         if (alphabet_for_arg[i])
         {
             auto [x,E] = *alphabet_for_arg[i];
             result.code.stmts.let(x,E);
         }
         if (arg_lambda_vars[i].empty())
-            perform_action_simplified(result.code, x,      log_x, need_to_emit, arg);
+            perform_action_simplified(result.code, x,      log_x, need_to_emit, arg.code);
         else
-            perform_action_simplified(result.code, x_func, log_x, true, arg);
+            perform_action_simplified(result.code, x_func, log_x, true, arg.code);
     }
 
-    // 4. Construct the call expression
+    // 7. Construct the call expression
     for(int i=0;i<args.size();i++)
     {
         auto argi = array_index(args,i);
         string arg_name = argi.get_child("arg_name").get_value<string>();
-        auto arg = arg_models[i];
+        auto arg = arg_models[i].code;
 
         bool can_substitute = not arg.is_action() and not arg.has_loggers();
         if (can_substitute and not arg_referenced[i] and arg_lambda_vars[i].empty())
@@ -997,7 +996,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         throw;
     }
 
-    // 5. let-bind arg_var_<name> for any arguments that are (i) not performed and (ii) depend on a lambda variable.
+    // 8. let-bind arg_var_<name> for any arguments that are (i) not performed and (ii) depend on a lambda variable.
     for(int i=0;i<args.size();i++)
     {
         auto argi = array_index(args,i);
@@ -1017,25 +1016,26 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         }
     }
 
-    // 6. Return a lambda function
+    // 8. Return a lambda function
     for(auto& vname: std::reverse(result.lambda_vars))
         result.code.E = lambda_quantify(scope.identifiers.at(vname).x, result.code.E);
 
-    // 7. Compute loggers
+    // 9. Compute loggers
     for(int i=0;i<args.size();i++)
     {
         auto argi = array_index(args,i);
 
         string arg_name = argi.get_child("arg_name").get_value<string>();
+        auto arg_code = arg_models[i].code;
 
         auto log_name = name + ":" + arg_name;
 
         bool do_log = arg_lambda_vars[i].empty() ? should_log(R, model, arg_name, scope) : false;
 
-        expression_ref value  = do_log                      ? arg_vars[i] : expression_ref{};
-        expression_ref logger = arg_models[i].has_loggers() ? log_vars[i] : expression_ref{};
+        expression_ref value  = do_log                 ? arg_vars[i] : expression_ref{};
+        expression_ref logger = arg_code.has_loggers() ? log_vars[i] : expression_ref{};
 
-        auto can_substitute = not arg_models[i].is_action() and not arg_models[i].has_loggers();
+        auto can_substitute = not arg_code.is_action() and not arg_code.has_loggers();
         if (do_log and arg_lambda_vars[i].empty() and can_substitute and not arg_referenced[i])
         {
             // Under these circumstances, we don't output `let arg_var = simple_value[i]`,
@@ -1043,12 +1043,13 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
             //
             // FIXME - if simple_value[i] is not atomic (like f x) then we duplicate work
             // then we duplicate work by substituting:
-            value = arg_models[i].E;
+            value = arg_code.E;
         }
 
         maybe_log(result.code.loggers, log_name, value, logger);
     }
 
+    // 10. Perform basic simplification on the computed value.
     result.code.E = simplify_intToDouble(result.code.E);
 
     return result;
