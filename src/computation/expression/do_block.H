@@ -119,6 +119,8 @@ public:
 
     const Stmts& get_stmts() const { return stmts; }
 
+          Stmts& get_stmts()       { return stmts; }
+
     do_block& perform(const expression_ref& E) { stmts.perform(E); return *this;}
 
     do_block& perform(const expression_ref& pattern, const expression_ref& E) {stmts.perform(pattern,E); return *this;}
@@ -140,6 +142,9 @@ public:
     std::pair<expression_ref, expression_ref> bind_model(const std::string& prefix, const expression_ref& model);
 
     expression_ref bind_and_log_model(const std::string& prefix, const expression_ref& model, std::vector<expression_ref>& loggers, bool do_log = true);
+
+    do_block() = default;
+    do_block(const Stmts&);
 };
 
 class list_comprehension: public Object

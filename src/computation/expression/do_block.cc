@@ -122,6 +122,8 @@ LetQual::LetQual(const Binds& b):binds(b) {}
 
 Rec::Rec(const Stmts& s):stmts(s) {}
 
+do_block::do_block(const Stmts& s): stmts(s) {}
+
 pair<expression_ref, expression_ref> do_block::bind_model(const std::string& prefix, const expression_ref& model)
 {
     var x(prefix);
