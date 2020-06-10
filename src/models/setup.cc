@@ -919,7 +919,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     }
 
     // 3. Construct the alphabet for each argument, if there is one.
-    vector<translation_result_t> arg_models;
+    vector<translation_result_t> arg_models(args.size());
     vector<set<string>> arg_lambda_vars;
     vector<set<string>> used_args_for_arg(args.size());
     vector<string> arg_names(args.size());
@@ -967,23 +967,20 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         if (alphabet_for_arg[i])
             scope3.set_state("alphabet",alphabet_for_arg[i]->first);
 
-        auto arg_result = get_model_as(R, model_rep.get_child(arg_names[i]), scope3);
+        arg_models[i] = get_model_as(R, model_rep.get_child(arg_names[i]), scope3);
 
         if (is_default_value)
         {
-            used_args_for_arg[i] = arg_result.used_args;
-            arg_result.is_default_value = true;
+            used_args_for_arg[i] = arg_models[i].used_args;
+            arg_models[i].is_default_value = true;
         }
 
         // Move this to generate()
-        if (result.code.perform_function and arg_result.lambda_vars.size())
+        if (result.code.perform_function and arg_models[i].lambda_vars.size())
             throw myexception()<<"Argument '"<<arg_names[i]<<"' of '"<<name<<"' contains a lambda variable: not allowed!";
 
-        // Store arg_result, instead of arg_result.code, and push this all down to where the actions are PERFORMED.
-        arg_models.push_back(arg_result);
-
         // Avoid re-using any haskell vars.
-        add(scope2.vars, arg_result.vars);
+        add(scope2.vars, arg_models[i].vars);
     }
 
     // 5.. Figure out which args are referenced from other args
