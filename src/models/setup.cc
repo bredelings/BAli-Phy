@@ -577,17 +577,40 @@ void perform_action_simplified(generated_code_t& block, const var& x, const var&
         block.stmts.let(x, code.E);
 }
 
-void perform_action_simplified(translation_result_t& block, const var& x, const var& log_x, bool is_referenced, const translation_result_t& code, const string& name)
+void use_block(translation_result_t& block, const var& log_x, const translation_result_t& code, const string& name)
 {
     add(block.imports, code.imports);
     add(block.lambda_vars, code.lambda_vars);
     add(block.vars, code.vars);
     if (not code.is_default_value)
         add(block.used_args, code.used_args);
-    perform_action_simplified(block.code, x, log_x, is_referenced, code.code);
 
     if (code.code.has_loggers())
         block.code.log_sub(name,log_x);
+}
+
+void perform_action_simplified(translation_result_t& block, const var& x, const var& log_x, bool is_referenced, const translation_result_t& code, const string& name)
+{
+    use_block(block, log_x, code, name);
+    perform_action_simplified(block.code, x, log_x, is_referenced, code.code);
+}
+
+void finish_action(generated_code_t& block, const var& log_x, const generated_code_t& code)
+{
+    for(auto& stmt: code.stmts)
+        block.stmts.push_back(stmt);
+
+    assert(not block.E);
+    block.E = code.E;
+
+    if (code.has_loggers())
+        block.stmts.let(log_x,get_list(code.loggers));
+}
+
+void finish_action(translation_result_t& block, const var& log_x, const translation_result_t& code, const string& name)
+{
+    use_block(block, log_x, code, name);
+    finish_action(block.code, log_x, code.code);
 }
 
 void generated_code_t::log_value(const string& name, const expression_ref& value)
@@ -643,16 +666,13 @@ optional<translation_result_t> get_model_let(const Rules& R, const ptree& model,
     translation_result_t result;
     result.vars = scope2.vars;
 
-    // (x, log_x) <- E
+    // (x, log_x) <- arg_result
     perform_action_simplified(result, x, log_x, true, arg_result, var_name);
     if (x_is_random)
         result.code.log_value(var_name, x);
 
-    // (body, log_body) <- body
-    perform_action_simplified(result, body, log_body, true, body_result, "body");
-
-    // return body
-    result.code.E = body;
+    // body_result
+    finish_action(result, log_body, body_result, "body");
 
     return result;
 }
