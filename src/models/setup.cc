@@ -264,11 +264,29 @@ expression_ref generated_code_t::generate_top() const
     return R;
 }
 
+expression_ref is_single_sub_logger(const vector<expression_ref>& loggers)
+{
+    if (loggers.empty()) return {};
+    if (loggers.size() > 1) return {};
+
+    auto logger = loggers[0];
+    if (not is_apply_exp(logger)) return {};
+    if (logger.size() != 3) return {};
+
+    auto func = logger.sub()[0];
+    if (not is_var(func)) return {};
+    if (func.as_<var>().name != "%>%") return {};
+
+    return logger.sub()[2];
+}
+
 expression_ref generated_code_t::generate() const
 {
     do_block code(stmts);
 
     auto L = get_list(loggers);
+    if (auto logger = is_single_sub_logger(loggers))
+        L = logger;
 
     auto R = simplify_intToDouble(E);
 
@@ -563,13 +581,10 @@ void perform_action_simplified(Stmts& block, const var& x, const var& log_x, boo
     }
 }
 
-void perform_action_simplified(generated_code_t& block, const var& x, const var& log_x, bool is_referenced, const generated_code_t& code)
+void perform_action_simplified_(generated_code_t& block, const var& x, bool is_referenced, const generated_code_t& code)
 {
     for(auto& stmt: code.stmts)
         block.stmts.push_back(stmt);
-
-    if (code.has_loggers())
-        block.stmts.let(log_x,get_list(code.loggers));
 
     if (code.perform_function)
         block.stmts.perform(x,code.E);
@@ -586,31 +601,36 @@ void use_block(translation_result_t& block, const var& log_x, const translation_
         add(block.used_args, code.used_args);
 
     if (code.code.has_loggers())
-        block.code.log_sub(name,log_x);
+    {
+        if (auto logger = is_single_sub_logger(code.code.loggers))
+            block.code.log_sub(name,logger);
+        else
+        {
+            block.code.stmts.let(log_x,get_list(code.code.loggers));
+            block.code.log_sub(name,log_x);
+        }
+    }
 }
 
 void perform_action_simplified(translation_result_t& block, const var& x, const var& log_x, bool is_referenced, const translation_result_t& code, const string& name)
 {
+    perform_action_simplified_(block.code, x, is_referenced, code.code);
     use_block(block, log_x, code, name);
-    perform_action_simplified(block.code, x, log_x, is_referenced, code.code);
 }
 
-void finish_action(generated_code_t& block, const var& log_x, const generated_code_t& code)
+void finish_action(generated_code_t& block, const generated_code_t& code)
 {
     for(auto& stmt: code.stmts)
         block.stmts.push_back(stmt);
 
     assert(not block.E);
     block.E = code.E;
-
-    if (code.has_loggers())
-        block.stmts.let(log_x,get_list(code.loggers));
 }
 
 void finish_action(translation_result_t& block, const var& log_x, const translation_result_t& code, const string& name)
 {
+    finish_action(block.code, code.code);
     use_block(block, log_x, code, name);
-    finish_action(block.code, log_x, code.code);
 }
 
 void generated_code_t::log_value(const string& name, const expression_ref& value)
