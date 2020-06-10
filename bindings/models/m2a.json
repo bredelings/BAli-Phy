@@ -2,7 +2,7 @@
     "name": "m2a",
     "synonyms": ["M2a"],
     "result_type": "MixtureModel[Codons[a]]",
-    "call": "SModel.m2a[@submodel,@omega0,@p0,@posP,@posW]",
+    "call": "SModel.m2a[@omega0,@p0,@posP,@posW,@submodel]",
     "import": ["SModel"],
     "args": [
         {

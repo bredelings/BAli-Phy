@@ -126,23 +126,23 @@ m8a_test_omega_dist mu gamma n_bins posP posW _ = m8_omega_dist mu gamma n_bins 
 
 --  w1 <- uniform 0.0 1.0
 --  [f1, f2] <- dirichlet' 2 1.0
-m1a model_func w1 f1 = parameter_mixture_unit model_func (m1a_omega_dist f1 w1)
+m1a w1 f1 model_func = parameter_mixture_unit model_func (m1a_omega_dist f1 w1)
 
-m2a model_func w1 f1 posP posW = parameter_mixture_unit model_func (m2a_omega_dist f1 w1 posP posW)
+m2a w1 f1 posP posW model_func = parameter_mixture_unit model_func (m2a_omega_dist f1 w1 posP posW)
 
-m2a_test model_func w1 f1 posP posW posSelection = parameter_mixture_unit model_func (m2a_test_omega_dist f1 w1 posP posW posSelection)
+m2a_test w1 f1 posP posW posSelection model_func = parameter_mixture_unit model_func (m2a_test_omega_dist f1 w1 posP posW posSelection)
 
 m3 ps omegas model_func = parameter_mixture_unit model_func (m3_omega_dist ps omegas)
 
 m3_test ps omegas posP posW posSelection model_func = parameter_mixture_unit model_func (m3_test_omega_dist ps omegas posP posW posSelection)
 
-m7 model_func mu gamma n_bins =  parameter_mixture_unit model_func (m7_omega_dist mu gamma n_bins)
+m7 mu gamma n_bins model_func =  parameter_mixture_unit model_func (m7_omega_dist mu gamma n_bins)
 
-m8 model_func mu gamma n_bins posP posW = parameter_mixture_unit model_func (m8_omega_dist mu gamma n_bins posP posW)
+m8 mu gamma n_bins posP posW model_func = parameter_mixture_unit model_func (m8_omega_dist mu gamma n_bins posP posW)
 
-m8a model_func mu gamma n_bins posP = parameter_mixture_unit model_func (m8a_omega_dist mu gamma n_bins posP)
+m8a mu gamma n_bins posP model_func = parameter_mixture_unit model_func (m8a_omega_dist mu gamma n_bins posP)
 
-m8a_test model_func mu gamma n_bins posP posW posSelection = parameter_mixture_unit model_func (m8a_test_omega_dist mu gamma n_bins posP posW posSelection)
+m8a_test mu gamma n_bins posP posW posSelection model_func = parameter_mixture_unit model_func (m8a_test_omega_dist mu gamma n_bins posP posW posSelection)
 
 -- OK, so if I change this from [Mixture Omega] to Mixture [Omega] or Mixture (\Int -> Omega), how do I apply the function model_func to all the omegas?
 branch_site fs ws posP posW model_func branch_cats = MixtureModels branch_cats [bg_mixture,fg_mixture]
