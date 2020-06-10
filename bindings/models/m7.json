@@ -2,7 +2,7 @@
     "name": "m7",
     "synonyms": ["M7"],
     "result_type": "MixtureModel[Codons[a]]",
-    "call": "SModel.m7[@submodel,@mu,@gamma,@n]",
+    "call": "SModel.m7[@mu,@gamma,@n,@submodel]",
     "import": ["SModel"],
     "args": [
         {

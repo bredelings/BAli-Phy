@@ -2,7 +2,7 @@
     "name": "m8a_test",
     "synonyms": ["M8a_Test"],
     "result_type": "MixtureModel[Codons[a]]",
-    "call": "SModel.m8a_test[@submodel,@mu,@gamma,@n,@posP,@posW,@posSelection]",
+    "call": "SModel.m8a_test[@mu,@gamma,@n,@posP,@posW,@posSelection,@submodel]",
     "import": ["SModel"],
     "args": [
         {
