@@ -2,7 +2,7 @@
     "name": "dna",
     "synonyms": ["DNA"],
     "result_type": "DNA",
-    "call": "Alphabet.dna",
+    "call": "dna",
     "import": ["Bio.Alphabet"],
     "args": [],
     "title": "The DNA alphabet"
