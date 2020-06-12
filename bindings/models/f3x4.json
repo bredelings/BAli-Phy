@@ -9,19 +9,19 @@
         {
             "arg_name": "pi1",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "~dirichlet_on[letters[getNucleotides[@a]],1.0]",
+            "default_value": "~symmetric_dirichlet_on[letters[getNucleotides[@a]],1.0]",
 	    "description": "Nucleotide frequencies for position 1"
         },
         {
             "arg_name": "pi2",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "~dirichlet_on[letters[getNucleotides[@a]],1.0]",
+            "default_value": "~symmetric_dirichlet_on[letters[getNucleotides[@a]],1.0]",
 	    "description": "Nucleotide frequencies for position 2"
         },
         {
             "arg_name": "pi3",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "~dirichlet_on[letters[getNucleotides[@a]],1.0]",
+            "default_value": "~symmetric_dirichlet_on[letters[getNucleotides[@a]],1.0]",
 	    "description": "Nucleotide frequencies for position 3"
         },
         {

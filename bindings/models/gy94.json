@@ -22,7 +22,7 @@
         {
             "arg_name": "pi",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "~dirichlet_on[letters[@a],1]",
+            "default_value": "~symmetric_dirichlet_on[letters[@a],1]",
 	    "description": "Letter frequencies"
         },
         {
