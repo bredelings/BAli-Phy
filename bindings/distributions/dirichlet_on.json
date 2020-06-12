@@ -2,7 +2,7 @@
     "name": "dirichlet_on",
     "synonyms": ["DirichletOn"],
     "result_type": "Distribution[List[Pair[a,Double]]]",
-    "call": "dirichlet_on'[@items,@n]",
+    "call": "symmetric_dirichlet_on[@items,@n]",
     "import": ["Probability"],
     "args": [
         {

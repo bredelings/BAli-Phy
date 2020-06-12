@@ -20,7 +20,7 @@ sample_v_dirichlet n as = SamplingRate (1.0/sqrt(intToDouble n)) $ do vs <- inde
 
 v_dirichlet n as = Distribution (make_densities $ dirichlet_density (take n as)) (no_quantile "v_dirichlet") (sample_v_dirichlet n as) (Simplex n 1.0)
 
-dirichlet' n a = v_dirichlet n (repeat a)
+symmetric_dirichlet n a = v_dirichlet n (repeat a)
 
 sample_dirichlet_on items as = do ps <- sample_dirichlet as
                                   return $ zip items ps
@@ -28,5 +28,5 @@ sample_dirichlet_on items as = do ps <- sample_dirichlet as
 dirichlet_on_density as item_ps = dirichlet_density as ps where
     ps = map (\(item,p) -> p) item_ps
 dirichlet_on items as = Distribution (make_densities $ dirichlet_on_density as) (no_quantile "dirichlet_on") (sample_dirichlet_on items as) (LabelledSimplex items 1.0)
-dirichlet_on' items a = dirichlet_on items (replicate (length items) a)
+symmetric_dirichlet_on items a = dirichlet_on items (replicate (length items) a)
 
