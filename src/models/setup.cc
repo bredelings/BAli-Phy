@@ -618,18 +618,6 @@ void perform_action_simplified(translation_result_t& block, const var& x, const 
     perform_action_simplified_(block.code, x, is_referenced, code.code);
 }
 
-void finish_action(generated_code_t& block, const generated_code_t& code)
-{
-    assert(not block.E);
-    block.E = code.E;
-}
-
-void finish_action(translation_result_t& block, const var& log_x, const translation_result_t& code, const string& name)
-{
-    use_block(block, log_x, code, name);
-    finish_action(block.code, code.code);
-}
-
 void generated_code_t::log_value(const string& name, const expression_ref& value)
 {
     loggers.push_back({var("%=%"),String(name),value});
@@ -689,7 +677,8 @@ optional<translation_result_t> get_model_let(const Rules& R, const ptree& model,
         result.code.log_value(var_name, x);
 
     // body_result
-    finish_action(result, log_body, body_result, "body");
+    use_block(result, log_body, body_result, "body");
+    result.code.E = body_result.code.E;
 
     return result;
 }
