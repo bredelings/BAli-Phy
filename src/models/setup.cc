@@ -1127,6 +1127,8 @@ optional<translation_result_t> get_model_state(const Rules&, const ptree& model,
     else if (name == "get_state")
     {
         // How do we access the child here?
+        auto arg = model_rep[0].second;
+        state_name = arg.get_child("value");
     }
 
     if (state_name)
