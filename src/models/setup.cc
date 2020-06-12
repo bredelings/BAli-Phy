@@ -583,9 +583,6 @@ void perform_action_simplified(Stmts& block, const var& x, const var& log_x, boo
 
 void perform_action_simplified_(generated_code_t& block, const var& x, bool is_referenced, const generated_code_t& code)
 {
-    for(auto& stmt: code.stmts)
-        block.stmts.push_back(stmt);
-
     if (code.perform_function)
         block.stmts.perform(x,code.E);
     else if (is_referenced or code.is_action())
@@ -599,6 +596,9 @@ void use_block(translation_result_t& block, const var& log_x, const translation_
     add(block.vars, code.vars);
     if (not code.is_default_value)
         add(block.used_args, code.used_args);
+
+    for(auto& stmt: code.code.stmts)
+        block.code.stmts.push_back(stmt);
 
     if (code.code.has_loggers())
     {
@@ -614,23 +614,20 @@ void use_block(translation_result_t& block, const var& log_x, const translation_
 
 void perform_action_simplified(translation_result_t& block, const var& x, const var& log_x, bool is_referenced, const translation_result_t& code, const string& name)
 {
-    perform_action_simplified_(block.code, x, is_referenced, code.code);
     use_block(block, log_x, code, name);
+    perform_action_simplified_(block.code, x, is_referenced, code.code);
 }
 
 void finish_action(generated_code_t& block, const generated_code_t& code)
 {
-    for(auto& stmt: code.stmts)
-        block.stmts.push_back(stmt);
-
     assert(not block.E);
     block.E = code.E;
 }
 
 void finish_action(translation_result_t& block, const var& log_x, const translation_result_t& code, const string& name)
 {
-    finish_action(block.code, code.code);
     use_block(block, log_x, code, name);
+    finish_action(block.code, code.code);
 }
 
 void generated_code_t::log_value(const string& name, const expression_ref& value)
