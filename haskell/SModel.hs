@@ -145,7 +145,7 @@ m8a mu gamma n_bins posP model_func = parameter_mixture_unit model_func (m8a_ome
 m8a_test mu gamma n_bins posP posW posSelection model_func = parameter_mixture_unit model_func (m8a_test_omega_dist mu gamma n_bins posP posW posSelection)
 
 -- OK, so if I change this from [Mixture Omega] to Mixture [Omega] or Mixture (\Int -> Omega), how do I apply the function model_func to all the omegas?
-branch_site fs ws posP posW model_func branch_cats = MixtureModels branch_cats [bg_mixture,fg_mixture]
+branch_site fs ws posP posW branch_cats model_func = MixtureModels branch_cats [bg_mixture,fg_mixture]
 -- background omega distribution -- where the last omega is 1.0 (neutral)
     where bg_dist = zip fs (ws ++ [1.0])
 -- accelerated omega distribution -- posW for all categories
@@ -155,7 +155,7 @@ branch_site fs ws posP posW model_func branch_cats = MixtureModels branch_cats [
 -- foreground branches use the foreground omega distribution with probability posP
           fg_mixture = parameter_mixture_unit model_func (mix [1.0-posP, posP] [bg_dist, accel_dist])
 
-branch_site_test fs ws posP posW posSelection model_func = branch_site fs ws posP posW' model_func
+branch_site_test fs ws posP posW posSelection branch_cats model_func = branch_site fs ws posP posW' branch_cats model_func
     where posW' = if (posSelection == 1) then posW else 1.0
 
 mut_sel w' (ReversibleMarkov a smap q0 pi0 _ _ _) = reversible_markov a smap q pi where
@@ -363,7 +363,7 @@ componentFrequencies        (MixtureModels _ (m:ms))         i = componentFreque
 
 unit_mixture m = MixtureModel (certainly m)
 
-mmm m branch_cats = MixtureModels branch_cats [m]
+mmm branch_cats m = MixtureModels branch_cats [m]
 
 empirical a filename = builtin_empirical a (list_to_string filename)
 

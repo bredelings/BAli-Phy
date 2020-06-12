@@ -21,14 +21,14 @@ sample_imodel topology = do
         loggers = ["logLambda" %=% logLambda, "mean_length" %=% mean_length]
     return (imodel, loggers)
 
-sample_smodel = do
+sample_smodel branch_cats = do
     pi     <- dirichlet_on ["A", "C", "G", "T"] [1.0, 1.0, 1.0, 1.0]
     kappa1 <- log_normal 0.0 1.0
     kappa2 <- log_normal 0.0 1.0
 
     -- If we generalize e.g. transition_ps, we wouldn't need to write (mmm $ unit_mixture $ ) in from of tn93
     let pi'            = frequencies_from_dict dna pi
-        smodel         = mmm $ unit_mixture $ tn93 kappa1 kappa2 pi' dna
+        smodel         = mmm branch_cats $ unit_mixture $ tn93 kappa1 kappa2 pi' dna
         smodel_loggers = ["kappa1" %=% kappa1, "kappa2" %=% kappa2, "pi" %=% pi]
 
     return (smodel, smodel_loggers)
@@ -52,8 +52,7 @@ model taxa tip_seq_lengths = do
 
     scale                     <- gamma 0.5 2.0
 
-    (smodel', smodel_loggers) <- sample_smodel
-    let smodel = smodel' branch_cats
+    (smodel, smodel_loggers) <- sample_smodel branch_cats
 
     (imodel, imodel_loggers) <- sample_imodel topology
 

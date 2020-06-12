@@ -1432,6 +1432,13 @@ string maybe_emit_code(map<string,string>& code_to_name, const string& name, str
 }
 
 
+var bind_and_log(bool do_log, const var& x, const var& log_x, const string& name, const expression_ref& E, bool is_action, bool has_loggers, do_block& block, vector<expression_ref>& loggers, bool is_referenced=true)
+{
+    perform_action_simplified(block.get_stmts(), x, log_x, is_referenced, E, is_action, has_loggers);
+    maybe_log(loggers, name, do_log?x:expression_ref{}, has_loggers?log_x:expression_ref{});
+    return x;
+}
+
 var bind_and_log(bool do_log, const string& name, const expression_ref& E, bool is_action, bool has_loggers, do_block& block, vector<expression_ref>& loggers, bool is_referenced=true)
 {
     string var_name = name;
@@ -1439,9 +1446,7 @@ var bind_and_log(bool do_log, const string& name, const expression_ref& E, bool 
         var_name = "_"+var_name;
     var x(var_name);
     var log_x("log_"+name);
-    perform_action_simplified(block.get_stmts(), x, log_x, is_referenced, E, is_action, has_loggers);
-    maybe_log(loggers, name, do_log?x:expression_ref{}, has_loggers?log_x:expression_ref{});
-    return x;
+    return bind_and_log(do_log, x, log_x, name, E, is_action, has_loggers, block, loggers, is_referenced);
 }
 
 std::string generate_atmodel_program(int n_sequences,
@@ -1616,14 +1621,14 @@ std::string generate_atmodel_program(int n_sequences,
                 first_partition = j;
 
         expression_ref smodel = var("sample_smodel_"+std::to_string(i+1));
-        smodel = {smodel, alphabet_exps[*first_partition]};
+        smodel = {smodel, alphabet_exps[*first_partition], branch_categories};
 
         auto code = SMs[i].code;
 
-        auto smodel_var = bind_and_log(false, prefix, smodel, code.is_action(), code.has_loggers(), sample_atmodel, program_loggers);
-        auto smodel_var2 = var("smodel_"+std::to_string(i+1));
-        sample_atmodel.let(smodel_var2, {smodel_var, branch_categories});
-        smodels.push_back(smodel_var2);
+        auto smodel_var = var("smodel_"+std::to_string(i+1));
+        auto log_smodel = var("log_"+smodel_var.name);
+        bind_and_log(false, smodel_var, log_smodel, prefix, smodel, code.is_action(), code.has_loggers(), sample_atmodel, program_loggers);
+        smodels.push_back(smodel_var);
     }
 
 
