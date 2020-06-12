@@ -97,6 +97,7 @@ Rule substitute_in_rule_types(const map<string,term_t>& renaming, Rule rule)
 template <typename Substitution>
 void substitute_in_types(const Substitution& renaming, term_t& T)
 {
+    // maybe skip this if there is not child called "value"?
     substitute(renaming, T.get_child("type") );
     for(auto& x: T.get_child("value"))
 	if (not x.second.is_null()) //  // For function[x=null,body=E]
@@ -292,6 +293,27 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 
 	    return E;
 	}
+        else if (name == "get_state")
+        {
+            string state_name = model[0].second;
+            result_type = scope.state.at(state_name);
+            auto E = unify(result_type, required_type);
+            if (not E)
+                throw myexception()<<"get_state: state '"<<state_name<<"' is of type '"<<unparse_type(result_type)<<"', not required type '"<<unparse_type(required_type)<<"'";
+
+            auto arg = ptree({{"value",ptree(state_name)},{"type","String"}});
+            // ARGH: arrays with ptree are really annoying.
+            model = ptree("get_state",{ {"",arg}});
+
+            auto keep = find_variables_in_type(required_type);
+            add(keep, find_type_variables_from_scope(scope));
+            auto S = E.eliminate_except(keep);
+
+            model = ptree({{"value",model},{"type",required_type}});
+            substitute_in_types(S, model);
+
+            return E;
+        }
 	else
 	{
 	    rule = R.require_rule_for_func(name);

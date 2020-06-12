@@ -295,6 +295,15 @@ void handle_positional_args(ptree& model, const Rules& R)
 	return;
     }
 
+    if (head == "get_state")
+    {
+        if (model.size() != 1)
+	    throw myexception()<<"set_state: got "<<model.size()<<" arguments, 1 argument required.\n  "<<model.show();
+	if (not model[0].first.empty() or not model[0].second.is_a<string>())
+	    throw myexception()<<"set_state: first argument must be an unquoted state name!\n  "<<model.show();
+        return;
+    }
+
     auto rule = R.require_rule_for_func(head);
 
     int i=0;
