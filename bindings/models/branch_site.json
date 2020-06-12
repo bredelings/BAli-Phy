@@ -22,7 +22,7 @@
         {
             "arg_name": "fs",
             "arg_type": "List[Double]",
-            "default_value": "~dirichlet[2,1]",
+            "default_value": "~symmetric_dirichlet[2,1]",
 	    "description":"Class frequencies in the background model."
         },
         {

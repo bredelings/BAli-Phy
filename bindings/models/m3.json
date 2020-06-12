@@ -14,7 +14,7 @@
         {
             "arg_name": "ps",
             "arg_type": "List[Double]",
-            "default_value": "~dirichlet[@n,2]",
+            "default_value": "~symmetric_dirichlet[@n,2]",
 	    "description": "The frequency of each omega"
         },
         {

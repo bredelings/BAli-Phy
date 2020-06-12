@@ -1,5 +1,5 @@
 {
-    "name": "dirichlet_on",
+    "name": "symmetric_dirichlet_on",
     "synonyms": ["DirichletOn"],
     "result_type": "Distribution[List[Pair[a,Double]]]",
     "call": "symmetric_dirichlet_on[@items,@n]",
