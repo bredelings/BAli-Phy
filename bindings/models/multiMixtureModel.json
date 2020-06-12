@@ -3,12 +3,17 @@
     "synonyms": ["MultiMixtureModel"],
     "result_type": "MultiMixtureModel[a]",
     "no_log": true,
-    "call": "SModel.mmm[@submodel]",
+    "call": "SModel.mmm[@branch_cats,@submodel]",
     "import": ["SModel"],
     "args": [
         {
             "arg_name": "submodel",
             "arg_type": "MixtureModel[a]"
+        },
+        {
+            "arg_name": "branch_cats",
+            "arg_type": "List[Int]",
+            "default_value": "get_state[branch_categories]"
         }
     ]
 }

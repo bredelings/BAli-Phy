@@ -10,7 +10,7 @@
 	"journal": { "name": "Molecular biology and evolution", "volume": "22", "number": "12", "pages": "2472--2479"},
 	"identifier": [{"type":"doi","id":"10.1093/molbev/msi237"}]
     },
-    "call": "branch_site_test[@fs,@omegas,@posP,@posW,@posSelection,@submodel]",
+    "call": "branch_site_test[@fs,@omegas,@posP,@posW,@posSelection,@branch_cats,@submodel]",
     "import": ["SModel"],
     "args": [
         {
@@ -48,6 +48,11 @@
             "arg_type": "Int",
             "default_value": "~bernoulli[0.5]",
 	    "description": "The model indicator: if 0, the sites only switch to neutrality on the foreground branches.\n If 1 then sites may switch to dN/dS=posW."
+        },
+        {
+            "arg_name": "branch_cats",
+            "arg_type": "List[Int]",
+            "default_value": "get_state[branch_categories]"
         }
     ],
     "extract": "all"

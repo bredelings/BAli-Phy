@@ -296,6 +296,8 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
         else if (name == "get_state")
         {
             string state_name = model[0].second;
+            if (not scope.state.count(state_name))
+                throw myexception()<<"translate: no state '"<<state_name<<"'!";
             result_type = scope.state.at(state_name);
             auto E = unify(result_type, required_type);
             if (not E)
