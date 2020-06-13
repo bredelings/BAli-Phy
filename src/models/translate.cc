@@ -417,11 +417,12 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
         if (is_default)
             scope2.args = arg_env;
 
+        auto orig_arg_value = arg_value;
 	E = E && pass2(R, arg_required_type, arg_value, bound_vars, scope2);
+	if (not E)
+	    throw myexception()<<"Expression '"<<unparse(orig_arg_value, R)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
 	for(auto& x: argument)
 	    arg_value.push_back(x);
-	if (not E)
-	    throw myexception()<<"Expression '"<<unparse(arg_value, R)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
 	arg_value.push_back({"is_default_value",ptree(is_default)});
 	model2.push_back({arg_name, arg_value});
 	add(bound_vars, E.referenced_vars());
