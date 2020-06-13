@@ -441,6 +441,7 @@ string unparse(const ptree& p, const Rules& rules)
     else if (p.is_a<string>() and is_constant(p))
 	return p.get_value<string>();
 
+    assert(p.has_value<string>());
     string s = p.get_value<string>();
     if (s == "let")
     {
