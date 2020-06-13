@@ -851,7 +851,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         not starts_with(call.get_value<string>(),"@"))
         throw myexception()<<"For rule '"<<name<<"', function '"<<call.get_value<string>()<<"' doesn't seem to be a valid haskell id or a valid argument reference.";
 
-    // 2. Construct the names of the haskell variables.
+    // 2. Construct the names of the haskell variables for the arguments.
     map<string,expression_ref> argument_environment;
     vector<var> arg_vars;
     vector<var> log_vars;
@@ -959,28 +959,41 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         auto arg = arg_models[i];
         auto x_func = arg_func_vars[i];
 
+        // 6a. Emit computed alphabets used by get_state[alphabet]
         if (alphabet_for_arg[i])
         {
             auto [x,E] = *alphabet_for_arg[i];
             result.code.stmts.let(x,E);
         }
 
+        bool do_log = should_log(R, model, arg_name, scope) and arg_models[i].lambda_vars.empty();
+
+        // 6b. Emit x <- or x = for the variable, or prepare to substitute it.
         use_block(result, log_x, arg, log_names[i]);
         if (arg_models[i].code.perform_function)
             result.code.stmts.perform(x, arg.code.E);
-        else if (arg_referenced[i] or should_log(R, model, arg_name, scope))
+        else if (arg_referenced[i] or do_log)
+        {
             result.code.stmts.let(x, arg.code.E);
+        }
         else
         {
             // Substitute for the expression
             // FIXME: This assumes that the argument occurs in the call at most once!
             argument_environment[arg_name] = arg.code.E;
         }
+
+        // 6c. Write the logger for the variable.
+        if (do_log)
+            result.code.log_value(log_names[i], arg_vars[i]);
     }
 
+    // 7. Compute the call expression.
     try
     {
         result.code.E = make_call(call, argument_environment);
+
+        result.code.E = simplify_intToDouble(result.code.E);
     }
     catch(myexception& err)
     {
@@ -988,38 +1001,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         throw;
     }
 
-    // 8. Return a lambda function
-//    for(auto& vname: std::reverse(result.lambda_vars))
-//        result.code.E = lambda_quantify(scope.identifiers.at(vname).x, result.code.E);
-
-    // 9. Compute value loggers
-    for(int i=0;i<args.size();i++)
-    {
-        auto argi = array_index(args,i);
-
-        string arg_name = argi.get_child("arg_name").get_value<string>();
-        auto arg_code = arg_models[i].code;
-
-        if (not arg_models[i].lambda_vars.empty()) continue;
-
-        if (not should_log(R, model, arg_name, scope)) continue;
-
-        expression_ref value  = arg_vars[i];
-//        auto can_substitute = not arg_code.is_action() and not arg_code.has_loggers();
-//        if (arg_models[i].lambda_vars.empty() and can_substitute and not arg_referenced[i])
-//        {
-            // Under these circumstances, we don't output `let arg_var = simple_value[i]`,
-            // we just substitute simple_value[i] where arg_var would go.
-            //
-            // FIXME - if simple_value[i] is not atomic (like f x) then we duplicate work
-            // then we duplicate work by substituting:
-//            value = arg_code.E;
-//        }
-        result.code.log_value(log_names[i], value);
-    }
-
-    // 10. Perform basic simplification on the computed value.
-    result.code.E = simplify_intToDouble(result.code.E);
+    // 8. Make sure not to re-use any vars adding do this code.
     add(result.vars, scope2.vars);
 
     return result;
