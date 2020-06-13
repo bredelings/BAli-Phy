@@ -248,7 +248,12 @@ optional<string> get_func_name(const ptree& model)
 bool is_loggable_function(const Rules& R, const string& name)
 {
     auto rule = R.get_rule_for_func(name);
-    if (name == "let") return true;
+
+    // A random "let" has NOT necessarily been logged.
+    // * let[k=random,k+2]         # OK    : we assume that if k is random, the whole thing is random.
+    // * let[k=random,hky85[k]]    # Not OK: we assume that if k is random, the whole thing is random.
+    // Probably we should track whether the result is an unlogged random in translation_result_t.
+    if (name == "let") return false;
 
     if (name == "function") return true;
 
