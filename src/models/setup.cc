@@ -889,9 +889,6 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
 
         auto arg = model_rep.get_child(arg_names[i]);
 
-        // So... if we are going to lift the alphabet vars out of the scope of their arguments, then
-        // we need to put them ALL into scope before we do ANY of the arguments, right?
-        // Wrap the argument in its appropriate Alphabet type
         if (auto alphabet_expression = argi.get_child_optional("alphabet"))
         {
             auto x = scope2.get_var("alpha");
