@@ -881,6 +881,8 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     vector<optional<pair<var,expression_ref>>> alphabet_for_arg(args.size());
     vector<string> log_names(args.size());
 
+    // FIXME! There might be some problem where we reference alphabet vars like a_3
+    //        before we define them, in situations where we don't substitute.
     for(int i=0;i<args.size();i++)
     {
         auto argi = array_index(args,i);
