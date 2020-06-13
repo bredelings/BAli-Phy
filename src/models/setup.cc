@@ -524,26 +524,12 @@ optional<translation_result_t> get_variable_model(const ptree& model, const name
     // 1. If the name is not in scope then we are done.
     if (not scope.identifiers.count(name)) return {};
 
-    var x = scope.identifiers.at(name).x;
+    var_info_t var_info = scope.identifiers.at(name);
 
-    expression_ref V;
-    set<string> lambda_vars;
-
-
-    // 2. If the name is a lambda var, then we need to quantify it, and put it into the list of free lambda vars
-    if (scope.identifiers.at(name).depends_on_lambda)
-    {
-        V = lambda_quantify(x,x);
-        lambda_vars.insert(name);
-    }
-    // 3. Otherwise the expression is just the variable itself
-    else
-        V = x;
-
-    // 4. We need an extra level of {} to allow constructing the optional.
     translation_result_t result;
-    result.code.E = V;
-    result.lambda_vars = lambda_vars;
+    result.code.E = var_info.x;
+    if (var_info.depends_on_lambda)
+        result.lambda_vars = {name};
     return result;
 }
 
@@ -661,7 +647,7 @@ optional<translation_result_t> get_model_let(const Rules& R, const ptree& model,
     auto arg_result = get_model_as(R, var_exp, scope);
 
     if (arg_result.lambda_vars.size())
-        throw myexception()<<"You cannot let-bind a variable to an expression with a function-variable";
+        var_info.depends_on_lambda = true;
 
     // 2. Perform the body with var_name in scope
     auto body_result = get_model_as(R, body_exp, extend_scope(scope2, var_name, var_info));
@@ -734,51 +720,16 @@ optional<translation_result_t> get_model_lambda(const Rules& R, const ptree& mod
     auto body_scope = extend_scope(scope2, var_name, var_info);
     auto body_result = get_model_as(R, body_model, body_scope);
 
-    // FIXME! If we can ensure that arguments are applied with most-nested first, then
-    // we can avoid the complicated code in both #4a,b,d,e and #5b.
-    // All this code is just to handle the possibility that arguments are in a different order.
-
-    // 4. Make the lambda expression:
-
-    // 4a. Apply argments: E = E x l1 l2 l3
-    expression_ref E = body;
-    for(auto& vname: body_result.lambda_vars)
-        E = {E, body_scope.identifiers.at(vname).x};
-
-    // 4b. First quantify with x: E = \x -> E
-    E = lambda_quantify(x, E);
-    
-    // 4c. Remove x from the lambda vars.
+    // 4. Remove x from the lambda vars.
     if (body_result.lambda_vars.count(var_name)) body_result.lambda_vars.erase(var_name);
 
-    // 4d. Then quantify with all the other vars.
-    // E = \l1 l2 l3 -> E
-    for(auto& vname: std::reverse(body_result.lambda_vars))
-        E = lambda_quantify(scope2.identifiers.at(vname).x,E);
+    // 5. Add the lambda in front of the expression
+    body_result.code.E = lambda_quantify(x, body_result.code.E);
 
-    // Here E = (\l1 l2 l3 -> \x -> (body x l1 l2 l3))
+    // 6. Now eta-reduce E.  If E == (\x -> body x), we will get just E == body
+    body_result.code.E = eta_reduce(body_result.code.E);
 
-    // 4e. Now eta-reduce E.  If E == (\x -> body x), we will get just E == body
-    E = eta_reduce(E);
-
-    // 5. If E is the same as body var, we can just return the previous values unchanged,
-    //    except that we have removed x from the lambda_vars.
-    if (E == body)
-    {
-        return body_result;
-    }
-    else
-    {
-        translation_result_t result;
-
-        // (body, log_body) <- body_action
-        perform_action_simplified(result, body, log_body, true, body_result, "function");
-
-        // return $ (\l1 l2 l3 -> \x -> (body x l1 l2 l3) , log_body)
-        result.code.E = E;
-
-        return result;
-    }
+    return body_result;
 }
 
 expression_ref make_call(const ptree& call, const map<string,expression_ref>& simple_args)
@@ -953,7 +904,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
             if (alphabet_result.lambda_vars.size())
                 throw myexception()<<"An alphabet cannot depend on a lambda variable!";
             assert(not alphabet_result.code.has_loggers());
-            assert(not alphabet_result.code.is_action());
+            assert(not alphabet_result.code.perform_function);
 
             add(used_args_for_arg[i], alphabet_result.used_args);
             add(result.imports, alphabet_result.imports);
@@ -999,6 +950,9 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     // 6. Peform each argument before other arguments that reference it.
     for(int i: arg_order)
     {
+        auto argi = array_index(args,i);
+        string arg_name = argi.get_child("arg_name").get_value<string>();
+
         // (x, logger) <- arg
         auto x = arg_vars[i];
         auto log_x = log_vars[i];
@@ -1011,25 +965,17 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
             result.code.stmts.let(x,E);
         }
 
-        // If there are no lambda vars used, then we can just place the result into scope directly, without applying anything to it.
-        bool need_to_emit = arg_referenced[i] or arg.code.has_loggers();
-
-        if (arg_models[i].lambda_vars.empty())
-            perform_action_simplified(result, x,      log_x, need_to_emit, arg, log_names[i]);
+        use_block(result, log_x, arg, log_names[i]);
+        if (arg_models[i].code.perform_function)
+            result.code.stmts.perform(x, arg.code.E);
+        else if (arg_referenced[i] or should_log(R, model, arg_name, scope))
+            result.code.stmts.let(x, arg.code.E);
         else
-            perform_action_simplified(result, x_func, log_x, true, arg, log_names[i]);
-    }
-
-    // 7. Construct the call expression
-    for(int i=0;i<args.size();i++)
-    {
-        auto argi = array_index(args,i);
-        string arg_name = argi.get_child("arg_name").get_value<string>();
-        auto arg = arg_models[i].code;
-
-        bool can_substitute = not arg.is_action() and not arg.has_loggers();
-        if (can_substitute and not arg_referenced[i] and arg_models[i].lambda_vars.empty())
-            argument_environment[arg_name] = arg.E;
+        {
+            // Substitute for the expression
+            // FIXME: This assumes that the argument occurs in the call at most once!
+            argument_environment[arg_name] = arg.code.E;
+        }
     }
 
     try
@@ -1042,29 +988,9 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         throw;
     }
 
-    // 8. let-bind arg_var_<name> for any arguments that are (i) not performed and (ii) depend on a lambda variable.
-    for(int i=0;i<args.size();i++)
-    {
-        auto argi = array_index(args,i);
-        string arg_name = argi.get_child("arg_name").get_value<string>();
-
-        if (not arg_models[i].lambda_vars.empty())
-        {
-            auto x_func = arg_func_vars[i];
-            auto x = arg_vars[i];
-
-            // Apply the free lambda variables to arg result before using it.
-            expression_ref F = x_func;
-            for(auto& vname: arg_models[i].lambda_vars)
-                F = {F, scope.identifiers.at(vname).x};
-
-            result.code.E = let_expression({{x,F}},result.code.E);
-        }
-    }
-
     // 8. Return a lambda function
-    for(auto& vname: std::reverse(result.lambda_vars))
-        result.code.E = lambda_quantify(scope.identifiers.at(vname).x, result.code.E);
+//    for(auto& vname: std::reverse(result.lambda_vars))
+//        result.code.E = lambda_quantify(scope.identifiers.at(vname).x, result.code.E);
 
     // 9. Compute value loggers
     for(int i=0;i<args.size();i++)
@@ -1079,16 +1005,16 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         if (not should_log(R, model, arg_name, scope)) continue;
 
         expression_ref value  = arg_vars[i];
-        auto can_substitute = not arg_code.is_action() and not arg_code.has_loggers();
-        if (arg_models[i].lambda_vars.empty() and can_substitute and not arg_referenced[i])
-        {
+//        auto can_substitute = not arg_code.is_action() and not arg_code.has_loggers();
+//        if (arg_models[i].lambda_vars.empty() and can_substitute and not arg_referenced[i])
+//        {
             // Under these circumstances, we don't output `let arg_var = simple_value[i]`,
             // we just substitute simple_value[i] where arg_var would go.
             //
             // FIXME - if simple_value[i] is not atomic (like f x) then we duplicate work
             // then we duplicate work by substituting:
-            value = arg_code.E;
-        }
+//            value = arg_code.E;
+//        }
         result.code.log_value(log_names[i], value);
     }
 
