@@ -855,7 +855,6 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     map<string,expression_ref> argument_environment;
     vector<var> arg_vars;
     vector<var> log_vars;
-    vector<var> arg_func_vars;
     for(int i=0;i<args.size();i++)
     {
         auto argi = array_index(args,i);
@@ -870,7 +869,6 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         }
         arg_vars.push_back(scope2.get_var(var_name));
         log_vars.push_back(scope2.get_var("log_"+var_name));
-        arg_func_vars.push_back(scope2.get_var(var_name+"_func"));
 
         argument_environment[arg_name] = arg_vars.back();
     }
@@ -957,7 +955,6 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         auto x = arg_vars[i];
         auto log_x = log_vars[i];
         auto arg = arg_models[i];
-        auto x_func = arg_func_vars[i];
 
         // 6a. Emit computed alphabets used by get_state[alphabet]
         if (alphabet_for_arg[i])
