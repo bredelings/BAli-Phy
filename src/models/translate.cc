@@ -320,6 +320,8 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	{
 	    rule = R.require_rule_for_func(name);
 	    rule = freshen_type_vars(*rule, bound_vars);
+            // Record any new variables that we are using as bound variables
+            add(bound_vars, find_rule_type_vars(*rule));
 
 	    //	std::cout<<"name = "<<name<<" required_type = "<<unparse_type(required_type)<<"  result_type = "<<unparse_type(result_type)<<std::endl;
 
@@ -361,10 +363,6 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
     // 5.1 Update required type and rules with discovered constraints
     rule = substitute_in_rule_types(E, *rule);
 
-    // 5.2 Record any new variables that we are using as bound variables
-    //     (I think that only rules can introduce new variables)
-    add(bound_vars, find_rule_type_vars(*rule));
-    
     // Create the new model tree with args in correct order
     auto name = model.get_value<string>();
     ptree model2(name);
