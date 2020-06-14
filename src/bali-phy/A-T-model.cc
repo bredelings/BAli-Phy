@@ -488,6 +488,26 @@ bool can_share_imodel(const alphabet& a1, const alphabet& a2)
     return a1.name == a2.name;
 }
 
+
+model_t get_smodel(const Rules& R, const std::string& model)
+{
+    map<string,pair<string,string>> smodel_states = {{"alphabet",{"alpha","a"}},
+                                                     {"branch_categories",{"branch_categories","List[Int]"}}};
+
+    try {
+        return get_model(R, "RevCTMC[a]", model, {}, smodel_states);
+    }
+    catch (myexception& e) {};
+
+    try {
+        return get_model(R, "MixtureModel[a]", model, {}, smodel_states);
+    }
+    catch (myexception& e) {};
+
+    return get_model(R, "MultiMixtureModel[a]", model, {}, smodel_states);
+}
+
+
 owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,
                                       ostream& out_cache, ostream& out_screen, ostream& out_both, json& info,
                                       int proc_id, const string& dir)
@@ -503,13 +523,10 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 
     vector<model_t> full_smodels(smodel_names_mapping.n_unique_items());
 
-    map<string,pair<string,string>> smodel_states = {{"alphabet",{"alpha","a"}},
-                                                     {"branch_categories",{"branch_categories","List[Int]"}}};
-
     // 1. Get smodels for all SPECIFIED smodel names.
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
         if (not smodel_names_mapping.unique(i).empty())
-            full_smodels[i] = get_model(R, "MultiMixtureModel[a]", smodel_names_mapping.unique(i), {}, smodel_states);
+            full_smodels[i] = get_smodel(R, smodel_names_mapping.unique(i));
 
     //------------- Get alphabet names -------------------
     shared_items<string> alphabet_names_mapping = get_mapping(args, "alphabet", filename_ranges.size());
@@ -749,7 +766,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
             if (smodel_names_mapping.unique(i) == "")
                 throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a.name<<"'";
 
-            full_smodels[i] = get_model(R, "MultiMixtureModel[a]",smodel_names_mapping.unique(i),{},smodel_states);
+            full_smodels[i] = get_smodel(R, smodel_names_mapping.unique(i));
         }
     
     // 8. Check that alignment alphabet fits requirements from smodel.
