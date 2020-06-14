@@ -6,6 +6,7 @@
     "constraints": ["Nucleotides[a]"],
     "title": "The Goldman & Yang (1994) model of dN\/dS",
     "call": "gy94[@kappa,@omega,frequencies_from_dict[@a,@pi],@a]",
+    "import": ["SModel","Bio.Alphabet"],
     "args": [
         {
             "arg_name": "kappa",
