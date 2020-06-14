@@ -546,33 +546,41 @@ string unparse_annotated(const ptree& ann)
 	    return unparse_annotated(*child);
     vector<string> args;
     optional<string> submodel;
-    for(const auto& pair: p)
+    for(const auto& [arg_name, arg]: p)
     {
-	if (pair.second.is_null())
+	if (arg.is_null())
 	{
 	    args.push_back("");
 	    continue;
 	}
 	// Don't print submodel arguments: move out to submodel + <this>
-	else if (pair.first == "submodel")
+	else if (arg_name == "submodel")
 	{
 	    assert(not submodel);
-	    submodel = unparse_annotated(pair.second);
+	    submodel = unparse_annotated(arg);
 	    args.push_back("");
+            continue;
 	}
 	// Don't print alphabet=getAlphabet (FIXME: change to x=getAlphabet, if this is a default value)
-	else if (pair.second.get_child("value") == "getAlphabet" and pair.second.get_child("is_default_value") == true)
+	else if (arg.get_child("value") == "getAlphabet" and arg.get_child("is_default_value") == true)
 	{
 	    args.push_back("");
 	    continue;
 	}
-	else if (pair.second.get_child_optional("suppress_default") and pair.second.get_child("suppress_default")== true and pair.second.get_child("is_default_value") == true)
+
+        auto arg_value = arg.get_child("value");
+	if (arg_value.has_value<string>() and arg_value.get_value<string>() == "get_state" and arg.get_child("is_default_value") == true)
+	{
+	    args.push_back("");
+	    continue;
+	}
+	else if (arg.get_child_optional("suppress_default") and arg.get_child("suppress_default")== true and arg.get_child("is_default_value") == true)
 	{
 	    args.push_back("");
 	    continue;
 	}
 	else
-	    args.push_back( unparse_annotated(pair.second) );
+	    args.push_back( unparse_annotated(arg) );
     }
     while (args.size() and args.back() == "")
 	args.pop_back();
