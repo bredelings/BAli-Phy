@@ -1580,10 +1580,20 @@ std::string generate_atmodel_program(int n_sequences,
         branch_lengths = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), sample_atmodel, program_loggers);
     }
 
+    set<string> used_states;
+    for(int i=0;i<SMs.size();i++)
+        add(used_states, SMs[i].code.used_states);
 
     // P3. Branch categories
-    var branch_categories("branch_categories");
-    sample_atmodel.let(branch_categories, { var("map"), var("modifiable"), {var("replicate"), n_branches, 0} });
+    expression_ref maybe_branch_categories = var("Nothing");
+    expression_ref branch_categories;
+    if (used_states.count("branch_categories"))
+    {
+        var branch_categories_var("branch_categories");
+        sample_atmodel.let(branch_categories_var, { var("map"), var("modifiable"), {var("replicate"), n_branches, 0} });
+        branch_categories = branch_categories_var;
+        maybe_branch_categories = {var("Just"),branch_categories_var};
+    }
 
     // P4. Scales
     vector<expression_ref> scales;
@@ -1640,7 +1650,10 @@ std::string generate_atmodel_program(int n_sequences,
             if (state_name == "alphabet")
                 smodel = {smodel, alphabet_exps[*first_partition]};
             else if (state_name == "branch_categories")
+            {
+                assert(branch_categories);
                 smodel = {smodel, branch_categories};
+            }
             else
                 throw myexception()<<"Don't know how to supply variable for state '"<<state_name<<"'";
         }
@@ -1773,7 +1786,7 @@ std::string generate_atmodel_program(int n_sequences,
 
     sample_atmodel.finish_return(
         Tuple(
-            {var("ATModel"), tree_var, get_list(smodels), get_list(scales), branch_lengths, branch_categories, get_list(partitions)},
+            {var("ATModel"), tree_var, get_list(smodels), get_list(scales), branch_lengths, maybe_branch_categories, get_list(partitions)},
             get_list(program_loggers))
         );
     
@@ -2045,7 +2058,9 @@ Parameters::Parameters(const Program& prog,
         PC->TC.branch(b).set_length(-1);
 
     // R5. Register branch categories
-    PC->branch_categories = get_params_from_list(this, {var("BAliPhy.ATModel.branch_categories"), my_atmodel()}, tt.n_branches());
+    auto maybe_branch_cats = evaluate_expression( {var("BAliPhy.ATModel.branch_categories"), my_atmodel()} );
+    if (has_constructor(maybe_branch_cats,"Data.Maybe.Just"))
+        PC->branch_categories = get_params_from_list(this, {fromJust,{var("BAliPhy.ATModel.branch_categories"), my_atmodel()}}, tt.n_branches());
 
     // create data partitions
 
