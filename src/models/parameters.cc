@@ -1632,10 +1632,18 @@ std::string generate_atmodel_program(int n_sequences,
             if (s_mapping[j] and *s_mapping[j] == i)
                 first_partition = j;
 
-        expression_ref smodel = var("sample_smodel_"+std::to_string(i+1));
-        smodel = {smodel, alphabet_exps[*first_partition], branch_categories};
-
         auto code = SMs[i].code;
+
+        expression_ref smodel = var("sample_smodel_"+std::to_string(i+1));
+        for(auto& state_name: code.used_states)
+        {
+            if (state_name == "alphabet")
+                smodel = {smodel, alphabet_exps[*first_partition]};
+            else if (state_name == "branch_categories")
+                smodel = {smodel, branch_categories};
+            else
+                throw myexception()<<"Don't know how to supply variable for state '"<<state_name<<"'";
+        }
 
         auto smodel_var = var("smodel_"+std::to_string(i+1));
         auto log_smodel = var("log_"+smodel_var.name);

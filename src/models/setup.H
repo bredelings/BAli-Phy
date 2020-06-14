@@ -34,6 +34,10 @@ struct generated_code_t
     expression_ref E;
     std::vector<expression_ref> loggers;
     bool perform_function = false;
+
+    // Which states were actually used.
+    std::set<std::string> used_states;
+
     // Under these circumstances, we will return a monadic action
     bool is_action() const {return perform_function or not stmts.empty();}
     bool has_loggers() const {return not loggers.empty();}

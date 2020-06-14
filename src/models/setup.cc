@@ -585,6 +585,7 @@ void use_block(translation_result_t& block, const var& log_x, const translation_
     add(block.imports, code.imports);
     add(block.lambda_vars, code.lambda_vars);
     add(block.vars, code.vars);
+    add(block.code.used_states, code.code.used_states);
     if (not code.is_default_value)
         add(block.used_args, code.used_args);
 
@@ -1033,6 +1034,7 @@ optional<translation_result_t> get_model_state(const Rules&, const ptree& model,
             auto x = scope.state.at(*state_name);
             translation_result_t result;
             result.code.E = x;
+            result.code.used_states = {*state_name};
             return result;
         }
         else
@@ -1089,12 +1091,15 @@ translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const 
 model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& constraints, const ptree& model_rep, const name_scope_t& scope)
 {
     // --------- Convert model to MultiMixtureModel ------------//
-    auto [full_model, imports, _1, _2, _3, _4] = get_model_as(R, model_rep, scope);
+    auto [code, imports, _1, _2, _3, _4] = get_model_as(R, model_rep, scope);
 
     if (log_verbose >= 2)
-        std::cout<<"full_model = "<<full_model.E<<std::endl;
+        std::cout<<"full_model = "<<code.print()<<std::endl;
 
-    return model_t{model_rep, imports, type, constraints, full_model};
+    for(const string& state_name: code.used_states)
+        code.lambda_vars.push_back( scope.state.at(state_name) );
+
+    return model_t{model_rep, imports, type, constraints, code};
 }
 
 model_t get_model(const Rules& R, const string& type, const string& model_string,
@@ -1148,9 +1153,7 @@ model_t get_model(const Rules& R, const string& type, const string& model_string
         lambda_vars.push_back(x);
     }
 
-    auto result = get_model(R, required_type, equations.get_constraints(), model, names_in_scope);
-    result.code.lambda_vars = lambda_vars;
-    return result;
+    return get_model(R, required_type, equations.get_constraints(), model, names_in_scope);
 }
 
 // Some things, like log, exp, add, sub, etc. don't really have named arguments.
