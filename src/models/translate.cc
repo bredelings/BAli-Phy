@@ -192,7 +192,7 @@ tr_name_scope_t extend_scope(const tr_name_scope_t& scope, const string& var, co
     return scope2;
 }
 
-equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<string> bound_vars, const tr_name_scope_t& scope);
+pair<ptree, equations> pass2(const Rules& R, const ptree& required_type, const ptree& model, set<string> bound_vars, const tr_name_scope_t& scope);
 
 optional<pair<ptree,equations>>
 typecheck_and_annotate_let(const Rules& R, const ptree& required_type, const ptree& model, set<string> bound_vars, const tr_name_scope_t& scope)
@@ -210,20 +210,24 @@ typecheck_and_annotate_let(const Rules& R, const ptree& required_type, const ptr
     auto a = get_fresh_type_var(bound_vars);
     bound_vars.insert(a);
 
+    equations E;
+
     // 1. Analyze the body, forcing it to have the required type
-    equations E = pass2(R, required_type, body_exp, bound_vars, extend_scope(scope, var_name, a));
+    auto [body_exp2, E_body] = pass2(R, required_type, body_exp, bound_vars, extend_scope(scope, var_name, a));
+    E = E && E_body;
     if (not E)
-        throw myexception()<<"Expression '"<<unparse_annotated(body_exp)<<"' is not of required type "<<unparse_type(required_type)<<"!";
+        throw myexception()<<"Expression '"<<unparse_annotated(body_exp2)<<"' is not of required type "<<unparse_type(required_type)<<"!";
     add(bound_vars, E.referenced_vars());
 
     // 2. Analyze the bound expression with type a
     substitute(E, a);
-    E = E && pass2(R, a, var_exp, bound_vars, scope);
+    auto [var_exp2, E_var] = pass2(R, a, var_exp, bound_vars, scope);
+    E = E && E_var;
     if (not E)
-        throw myexception()<<"Expression '"<<unparse_annotated(var_exp)<<"' is not of required type "<<unparse_type(a)<<"!";
+        throw myexception()<<"Expression '"<<unparse_annotated(var_exp2)<<"' is not of required type "<<unparse_type(a)<<"!";
 
     // Create the new model tree with args in correct order
-    auto model2 = ptree("let",{{var_name, var_exp},{"",body_exp}});
+    auto model2 = ptree("let",{{var_name, var_exp2},{"",body_exp2}});
 
     auto keep = find_variables_in_type(required_type);
     add(keep, find_type_variables_from_scope(scope));
@@ -260,13 +264,14 @@ typecheck_and_annotate_lambda(const Rules& R, const ptree& required_type, const 
         throw myexception()<<"Supplying a function, but expected '"<<unparse_type(required_type)<<"!";
 
     // 2. Analyze the body, forcing it to have type (b)
-    E = E && pass2(R, b, body_exp, bound_vars, extend_scope(scope, var_name, a));
+    auto [body_exp2, E_body] =  pass2(R, b, body_exp, bound_vars, extend_scope(scope, var_name, a));
+    E = E && E_body;
     if (not E)
-        throw myexception()<<"Expression '"<<unparse(body_exp, R)<<"' is not of required type "<<unparse_type(required_type)<<"!";
+        throw myexception()<<"Expression '"<<unparse_annotated(body_exp2)<<"' is not of required type "<<unparse_type(required_type)<<"!";
     add(bound_vars, E.referenced_vars());
 
     // 3. Create the new model tree with args in correct order
-    auto model2 = ptree("function",{{var_name, {}},{"",body_exp}});
+    auto model2 = ptree("function",{{var_name, {}},{"",body_exp2}});
 
     auto keep = find_variables_in_type(required_type);
     add(keep, find_type_variables_from_scope(scope));
@@ -339,8 +344,8 @@ typecheck_and_annotate_var(const Rules& R, const ptree& required_type, const ptr
         auto model2 = model;
 	if (convertible_to(model2, result_type, required_type))
         {
-	    auto E = pass2(R, required_type, model2, bound_vars, scope);
-            return {{model2,E}};
+	    auto [model3,E] = pass2(R, required_type, model2, bound_vars, scope);
+            return {{model3,E}};
         }
 	else
 	    throw myexception()<<"Term '"<<unparse(model, R)<<"' of type '"<<unparse_type(result_type)
@@ -387,8 +392,8 @@ typecheck_and_annotate_constant(const Rules& R, const ptree& required_type, cons
         auto model2 = model;
 	if (convertible_to(model2, result_type, required_type))
         {
-	    auto E = pass2(R, required_type, model2, bound_vars, scope);
-            return {{model2,E}};
+	    auto [model3,E] = pass2(R, required_type, model2, bound_vars, scope);
+            return {{model3,E}};
         }
 	else
 	    throw myexception()<<"Term '"<<unparse(model, R)<<"' of type '"<<unparse_type(result_type)
@@ -428,8 +433,8 @@ pair<ptree,equations> typecheck_and_annotate_function(const Rules& R, const ptre
         auto model2 = model;
 	if (convertible_to(model2, result_type, required_type))
         {
-	    E = pass2(R, required_type, model2, bound_vars, scope);
-            return {model2,E};
+	    auto [model3,E] = pass2(R, required_type, model2, bound_vars, scope);
+            return {model3,E};
         }
 	else
 	    throw myexception()<<"Term '"<<unparse(model, R)<<"' of type '"<<unparse_type(result_type)
@@ -491,14 +496,14 @@ pair<ptree,equations> typecheck_and_annotate_function(const Rules& R, const ptre
         if (is_default)
             scope2.args = arg_env;
 
-        auto orig_arg_value = arg_value;
-	E = E && pass2(R, arg_required_type, arg_value, bound_vars, scope2);
+	auto [arg_value2, E_arg] = pass2(R, arg_required_type, arg_value, bound_vars, scope2);
+        E = E && E_arg;
 	if (not E)
-	    throw myexception()<<"Expression '"<<unparse(orig_arg_value, R)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
+	    throw myexception()<<"Expression '"<<unparse_annotated(arg_value2)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
 	for(auto& x: argument)
-	    arg_value.push_back(x);
-	arg_value.push_back({"is_default_value",ptree(is_default)});
-	model2.push_back({arg_name, arg_value});
+	    arg_value2.push_back(x);
+	arg_value2.push_back({"is_default_value",ptree(is_default)});
+	model2.push_back({arg_name, arg_value2});
 	add(bound_vars, E.referenced_vars());
     }
 
@@ -518,7 +523,7 @@ pair<ptree,equations> typecheck_and_annotate_function(const Rules& R, const ptre
 }
 
 // OK, so 'model' is going to have arg=value pairs set, but not necessarily in the right order.
-equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<string> bound_vars, const tr_name_scope_t& scope)
+pair<ptree,equations> pass2(const Rules& R, const ptree& required_type, const ptree& model, set<string> bound_vars, const tr_name_scope_t& scope)
 {
     // 0a. Any variables in required_type must be listed as bound
     assert(includes(bound_vars, find_variables_in_type(required_type)));
@@ -528,45 +533,21 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
     // 1. Get result type and the rule, if there is one.
     type_t result_type;
     if (auto constant = typecheck_and_annotate_constant(R, required_type, model, bound_vars, scope))
-    {
-        auto [model2, E] = *constant;
-        model = model2;
+        return *constant;
 
-        return E;
-    }
     else if (auto variable = typecheck_and_annotate_var(R, required_type, model, bound_vars, scope))
-    {
-        auto [model2, E] = *variable;
-        model = model2;
+        return *variable;
 
-        return E;
-    }
     else if (auto let = typecheck_and_annotate_let(R, required_type, model, bound_vars, scope))
-    {
-        auto [model2, E] = *let;
-        model = model2;
+        return *let;
 
-        return E;
-    }
     else if (auto lambda = typecheck_and_annotate_lambda(R, required_type, model, bound_vars, scope))
-    {
-        auto [model2, E] = *lambda;
-        model = model2;
+        return *lambda;
 
-        return E;
-    }
     else if (auto get_state = typecheck_and_annotate_get_state(required_type, model, scope))
-    {
-        auto [model2, E] = *get_state;
-        model = model2;
+        return *get_state;
 
-        return E;
-    }
-
-    auto [model2, E] = typecheck_and_annotate_function(R, required_type, model, bound_vars, scope);
-    model = model2;
-
-    return E;
+    return typecheck_and_annotate_function(R, required_type, model, bound_vars, scope);
 }
 
 std::pair<ptree,equations> translate_model(const Rules& R, const ptree& required_type, ptree model,
@@ -576,7 +557,6 @@ std::pair<ptree,equations> translate_model(const Rules& R, const ptree& required
     tr_name_scope_t scope2;
     scope2.identifiers = scope;
     scope2.state = state;
-    auto E = pass2(R, required_type, model, find_variables_in_type(required_type), scope2);
-    return {model,E};
+    return pass2(R, required_type, model, find_variables_in_type(required_type), scope2);
 }
 
