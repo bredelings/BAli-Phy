@@ -236,6 +236,49 @@ typecheck_and_annotate_let(const Rules& R, const ptree& required_type, const ptr
     return {{model2,E}};
 }
 
+optional<pair<ptree,equations>>
+typecheck_and_annotate_lambda(const Rules& R, const ptree& required_type, const ptree& model, set<string> bound_vars, const tr_name_scope_t& scope)
+{
+    if (not model.has_value<string>()) return {};
+
+    auto name = model.get_value<string>();
+
+    if (name != "function") return {}; //function[x,F]
+
+    string var_name = model[0].first;
+    ptree body_exp = model[1].second;
+
+    auto a = get_fresh_type_var(bound_vars);
+    bound_vars.insert(a);
+    auto b = get_fresh_type_var(bound_vars);
+    bound_vars.insert(b);
+
+    // 1. Unify required type with (a -> b)
+    auto ftype = ptree("Function",{ {"",a},{"",b} });
+    equations E = unify(ftype, required_type);
+    if (not E)
+        throw myexception()<<"Supplying a function, but expected '"<<unparse_type(required_type)<<"!";
+
+    // 2. Analyze the body, forcing it to have type (b)
+    E = E && pass2(R, b, body_exp, bound_vars, extend_scope(scope, var_name, a));
+    if (not E)
+        throw myexception()<<"Expression '"<<unparse(body_exp, R)<<"' is not of required type "<<unparse_type(required_type)<<"!";
+    add(bound_vars, E.referenced_vars());
+
+    // 3. Create the new model tree with args in correct order
+    auto model2 = ptree("function",{{var_name, {}},{"",body_exp}});
+
+    auto keep = find_variables_in_type(required_type);
+    add(keep, find_type_variables_from_scope(scope));
+    auto S = E.eliminate_except(keep);
+
+    model2 = ptree({{"value",model2},{"type",required_type}});
+
+    substitute_in_types(S,model2);
+
+    return {{model2,E}};
+}
+
 // OK, so 'model' is going to have arg=value pairs set, but not necessarily in the right order.
 equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<string> bound_vars, const tr_name_scope_t& scope)
 {
@@ -275,38 +318,10 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 
 	    return E;
 	}
-	else if (name == "function")  //function[x,F]
+	else if (auto lambda = typecheck_and_annotate_lambda(R, required_type, model, bound_vars, scope))
 	{
-	    string var_name = model[0].first;
-	    ptree body_exp = model[1].second;
-
-	    auto a = get_fresh_type_var(bound_vars);
-	    bound_vars.insert(a);
-	    auto b = get_fresh_type_var(bound_vars);
-	    bound_vars.insert(b);
-
-	    // 1. Unify required type with (a -> b)
-	    auto ftype = ptree("Function",{ {"",a},{"",b} });
-	    equations E = unify(ftype, required_type);
-	    if (not E)
-		throw myexception()<<"Supplying a function, but expected '"<<unparse_type(required_type)<<"!";
-
-            // 2. Analyze the body, forcing it to have type (b)
-	    E = E && pass2(R, b, body_exp, bound_vars, extend_scope(scope, var_name, a));
-	    if (not E)
-		throw myexception()<<"Expression '"<<unparse(body_exp, R)<<"' is not of required type "<<unparse_type(required_type)<<"!";
-	    add(bound_vars, E.referenced_vars());
-
-	    // 3. Create the new model tree with args in correct order
-	    model = ptree("function",{{var_name, {}},{"",body_exp}});
-
-	    auto keep = find_variables_in_type(required_type);
-	    add(keep, find_type_variables_from_scope(scope));
-	    auto S = E.eliminate_except(keep);
-
-	    model = ptree({{"value",model},{"type",required_type}});
-
-	    substitute_in_types(S,model);
+            auto [model2, E] = *lambda;
+            model = model2;
 
 	    return E;
 	}
