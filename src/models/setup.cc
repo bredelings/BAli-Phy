@@ -1073,7 +1073,7 @@ translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const 
     else if (auto func = get_model_lambda(R, model_rep, scope))
         return *func;
 
-    // 6. read_state[state] expressions.
+    // 6. get_state[state] expressions.
     else if (auto state = get_model_state(R, model_rep, scope))
         return *state;
 
