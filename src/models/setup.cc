@@ -1119,7 +1119,7 @@ model_t get_model(const Rules& R, const string& type, const string& model_string
         auto& [_, var_type_string] = p;
         typed_state.insert({state_name,parse_type(var_type_string)});
     }
-    auto [model, equations] = translate_model(R, required_type, model_rep, typed_scope, typed_state);
+    auto [model, equations] = typecheck_and_annotate_model(R, required_type, model_rep, typed_scope, typed_state);
 
     model_rep = extract_value(model);
 
