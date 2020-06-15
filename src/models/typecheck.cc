@@ -1,4 +1,4 @@
-#include "translate.H"
+#include "typecheck.H"
 #include "parse.H"
 #include <vector>
 #include <set>
