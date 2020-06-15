@@ -405,53 +405,8 @@ typecheck_and_annotate_constant(const Rules& R, const ptree& required_type, cons
     return {{model2,E}};
 }
 
-
-// OK, so 'model' is going to have arg=value pairs set, but not necessarily in the right order.
-equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<string> bound_vars, const tr_name_scope_t& scope)
+pair<ptree,equations> typecheck_and_annotate_function(const Rules& R, const ptree& required_type, const ptree& model, set<string> bound_vars, const tr_name_scope_t& scope)
 {
-    // 0a. Any variables in required_type must be listed as bound
-    assert(includes(bound_vars, find_variables_in_type(required_type)));
-    // 0b. Any type variables in scope must also be listed as bound
-    assert(includes(bound_vars, find_type_variables_from_scope(scope)));
-
-    // 1. Get result type and the rule, if there is one.
-    type_t result_type;
-    if (auto constant = typecheck_and_annotate_constant(R, required_type, model, bound_vars, scope))
-    {
-        auto [model2, E] = *constant;
-        model = model2;
-
-        return E;
-    }
-    else if (auto variable = typecheck_and_annotate_var(R, required_type, model, bound_vars, scope))
-    {
-        auto [model2, E] = *variable;
-        model = model2;
-
-        return E;
-    }
-    else if (auto let = typecheck_and_annotate_let(R, required_type, model, bound_vars, scope))
-    {
-        auto [model2, E] = *let;
-        model = model2;
-
-        return E;
-    }
-    else if (auto lambda = typecheck_and_annotate_lambda(R, required_type, model, bound_vars, scope))
-    {
-        auto [model2, E] = *lambda;
-        model = model2;
-
-        return E;
-    }
-    else if (auto get_state = typecheck_and_annotate_get_state(required_type, model, scope))
-    {
-        auto [model2, E] = *get_state;
-        model = model2;
-
-        return E;
-    }
-
     auto name = model.get_value<string>();
     auto rule = R.require_rule_for_func(name);
     rule = freshen_type_vars(rule, bound_vars);
@@ -460,7 +415,7 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 
     //	std::cout<<"name = "<<name<<" required_type = "<<unparse_type(required_type)<<"  result_type = "<<unparse_type(result_type)<<std::endl;
 
-    result_type = rule.get_child("result_type");
+    auto result_type = rule.get_child("result_type");
 
     // 2. Unify required type with rule result type
     auto E = unify(result_type, required_type);
@@ -470,21 +425,23 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
     // 3. Attempt a conversion if the result_type and the required_type don't match.
     if (not E)
     {
-	if (convertible_to(model, result_type, required_type))
-	    return pass2(R, required_type, model, bound_vars, scope);
+        auto model2 = model;
+	if (convertible_to(model2, result_type, required_type))
+        {
+	    E = pass2(R, required_type, model2, bound_vars, scope);
+            return {model2,E};
+        }
 	else
 	    throw myexception()<<"Term '"<<unparse(model, R)<<"' of type '"<<unparse_type(result_type)
 			       <<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
     }
 
-    // Use the canonical name for the function
-    model.value = rule.get<string>("name");
-
     // 5.1 Update required type and rules with discovered constraints
     rule = substitute_in_rule_types(E, rule);
 
     // Create the new model tree with args in correct order
-    ptree model2(name);
+    ptree model2;
+    model2.value =rule.get<string>("name"); 
 
     // 6. Check that we didn't supply unreferenced arguments.
     map<string,int> arg_count;
@@ -545,19 +502,69 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	add(bound_vars, E.referenced_vars());
     }
 
-    model = model2;
-
     auto keep = find_variables_in_type(required_type);
     add(keep, find_type_variables_from_scope(scope));
     auto S = E.eliminate_except(keep);
 
-    model = ptree({{"value",model},{"type",result_type}});
+    model2 = ptree({{"value",model2},{"type",result_type}});
     if (rule.get("no_log",false))
-	model.push_back({"no_log",ptree(true)});
+	model2.push_back({"no_log",ptree(true)});
     if (auto extract = rule.get_child_optional("extract"))
-	model.push_back({"extract",*extract});
+	model2.push_back({"extract",*extract});
 
-    substitute_in_types(S, model);
+    substitute_in_types(S, model2);
+
+    return {model2,E};
+}
+
+// OK, so 'model' is going to have arg=value pairs set, but not necessarily in the right order.
+equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<string> bound_vars, const tr_name_scope_t& scope)
+{
+    // 0a. Any variables in required_type must be listed as bound
+    assert(includes(bound_vars, find_variables_in_type(required_type)));
+    // 0b. Any type variables in scope must also be listed as bound
+    assert(includes(bound_vars, find_type_variables_from_scope(scope)));
+
+    // 1. Get result type and the rule, if there is one.
+    type_t result_type;
+    if (auto constant = typecheck_and_annotate_constant(R, required_type, model, bound_vars, scope))
+    {
+        auto [model2, E] = *constant;
+        model = model2;
+
+        return E;
+    }
+    else if (auto variable = typecheck_and_annotate_var(R, required_type, model, bound_vars, scope))
+    {
+        auto [model2, E] = *variable;
+        model = model2;
+
+        return E;
+    }
+    else if (auto let = typecheck_and_annotate_let(R, required_type, model, bound_vars, scope))
+    {
+        auto [model2, E] = *let;
+        model = model2;
+
+        return E;
+    }
+    else if (auto lambda = typecheck_and_annotate_lambda(R, required_type, model, bound_vars, scope))
+    {
+        auto [model2, E] = *lambda;
+        model = model2;
+
+        return E;
+    }
+    else if (auto get_state = typecheck_and_annotate_get_state(required_type, model, scope))
+    {
+        auto [model2, E] = *get_state;
+        model = model2;
+
+        return E;
+    }
+
+    auto [model2, E] = typecheck_and_annotate_function(R, required_type, model, bound_vars, scope);
+    model = model2;
 
     return E;
 }
