@@ -279,6 +279,85 @@ typecheck_and_annotate_lambda(const Rules& R, const ptree& required_type, const 
     return {{model2,E}};
 }
 
+optional<pair<ptree,equations>>
+typecheck_and_annotate_get_state(const ptree& required_type, const ptree& model, const tr_name_scope_t& scope)
+{
+    if (not model.has_value<string>()) return {};
+
+    auto name = model.get_value<string>();
+
+    if (name != "get_state") return {}; // get_state[state_name]
+
+    string state_name = model[0].second;
+    if (not scope.state.count(state_name))
+        throw myexception()<<"translate: no state '"<<state_name<<"'!";
+    auto result_type = scope.state.at(state_name);
+    auto E = unify(result_type, required_type);
+    if (not E)
+        throw myexception()<<"get_state: state '"<<state_name<<"' is of type '"<<unparse_type(result_type)<<"', not required type '"<<unparse_type(required_type)<<"'";
+
+    auto arg = ptree({{"value",ptree(state_name)},{"type","String"}});
+    // ARGH: arrays with ptree are really annoying.
+    auto model2 = ptree("get_state",{ {"",arg}});
+
+    auto keep = find_variables_in_type(required_type);
+    add(keep, find_type_variables_from_scope(scope));
+    auto S = E.eliminate_except(keep);
+
+    model2 = ptree({{"value",model2},{"type",required_type}});
+    substitute_in_types(S, model2);
+
+    return {{model2,E}};
+}
+
+optional<pair<ptree,equations>>
+typecheck_and_annotate_var(const Rules& R, const ptree& required_type, const ptree& model, set<string> bound_vars, const tr_name_scope_t& scope)
+{
+    if (not model.has_value<string>()) return {};
+
+    auto name = model.get_value<string>();
+
+    type_t result_type;
+    if (auto type = type_for_var_in_scope(name, scope))
+        result_type = *type;
+    else if (not name.empty() and name[0] == '@')
+    {
+        auto type = type_for_arg_in_scope(name.substr(1), scope);
+        if (not type)
+            throw myexception()<<"can't find argument '"<<name<<"'";
+        result_type = *type;
+    }
+    else
+        return {};
+
+    // 2. Unify required type with rule result type
+    auto E = unify(result_type, required_type);
+
+    // 3. Attempt a conversion if the result_type and the required_type don't match.
+    if (not E)
+    {
+        auto model2 = model;
+	if (convertible_to(model2, result_type, required_type))
+        {
+	    auto E = pass2(R, required_type, model2, bound_vars, scope);
+            return {{model2,E}};
+        }
+	else
+	    throw myexception()<<"Term '"<<unparse(model, R)<<"' of type '"<<unparse_type(result_type)
+			       <<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
+    }
+
+    // 4. If this is a constant or variable, then we are done here.
+    if (not model.empty())
+        throw myexception()<<"Term '"<<model.value<<"' of type '"<<unparse_type(result_type)
+                           <<"' should not have arguments!";
+
+    auto model2 = ptree({{"value",model},{"type",result_type}});
+
+    return {{model2,E}};
+}
+
+
 // OK, so 'model' is going to have arg=value pairs set, but not necessarily in the right order.
 equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<string> bound_vars, const tr_name_scope_t& scope)
 {
@@ -302,14 +381,12 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 
 	if (name.size()>=2 and name[0] == '"' and name.back() == '"')
 	    result_type=type_t("String");
-	else if (auto type = type_for_var_in_scope(name, scope))
-	    result_type = *type;
-	else if (not name.empty() and name[0] == '@')
+	else if (auto variable = typecheck_and_annotate_var(R, required_type, model, bound_vars, scope))
         {
-            auto type = type_for_arg_in_scope(name.substr(1), scope);
-            if (not type)
-                throw myexception()<<"can't find argument '"<<name<<"'";
-	    result_type = *type;
+            auto [model2, E] = *variable;
+            model = model2;
+
+	    return E;
         }
 	else if (auto let = typecheck_and_annotate_let(R, required_type, model, bound_vars, scope))
 	{
@@ -325,29 +402,13 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 
 	    return E;
 	}
-        else if (name == "get_state")
-        {
-            string state_name = model[0].second;
-            if (not scope.state.count(state_name))
-                throw myexception()<<"translate: no state '"<<state_name<<"'!";
-            result_type = scope.state.at(state_name);
-            auto E = unify(result_type, required_type);
-            if (not E)
-                throw myexception()<<"get_state: state '"<<state_name<<"' is of type '"<<unparse_type(result_type)<<"', not required type '"<<unparse_type(required_type)<<"'";
+	else if (auto get_state = typecheck_and_annotate_get_state(required_type, model, scope))
+	{
+            auto [model2, E] = *get_state;
+            model = model2;
 
-            auto arg = ptree({{"value",ptree(state_name)},{"type","String"}});
-            // ARGH: arrays with ptree are really annoying.
-            model = ptree("get_state",{ {"",arg}});
-
-            auto keep = find_variables_in_type(required_type);
-            add(keep, find_type_variables_from_scope(scope));
-            auto S = E.eliminate_except(keep);
-
-            model = ptree({{"value",model},{"type",required_type}});
-            substitute_in_types(S, model);
-
-            return E;
-        }
+	    return E;
+	}
 	else
 	{
 	    rule = R.require_rule_for_func(name);
