@@ -331,14 +331,26 @@ std::string generate_print_program(const model_t& print, const expression_ref& a
     program_file<<"\n";
     program_file<<"print_model = "<<print.code.print()<<"\n";
     program_file<<"\n";
-    program_file<<"alphabet = "<<a.print()<<"\n";
-    program_file<<"\n";
     program_file<<"main = do\n";
+
+    expression_ref E = var("print_model");
+    for(auto& state_name: print.code.used_states)
+    {
+        if (state_name == "alphabet")
+            E = {E, a};
+        else if (state_name == "branch_categories")
+        {
+            throw myexception()<<"Can't handle branch categories in --print expressions right now.";
+//            smodel = {smodel, branch_categories};
+        }
+        else
+            throw myexception()<<"Don't know how to supply variable for state '"<<state_name<<"'";
+    }
 
     if (print.code.is_action())
         program_file<<"  result <- run_lazy (print_model alphabet)\n";
     else
-        program_file<<"  let result = print_model alphabet\n";
+        program_file<<"  let result = "<<E<<"\n";
 
     if (print.code.has_loggers())
         program_file<<"  putStrLn $ show $ fst result\n";
