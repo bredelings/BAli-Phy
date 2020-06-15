@@ -68,6 +68,7 @@ public:
     ptree type;
     std::set<term_t> constraints;
     generated_code_t code;
+    std::set<std::string> used_args;
 
     pretty_model_t pretty_model() const {return {description};};
 

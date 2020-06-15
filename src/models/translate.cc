@@ -192,6 +192,50 @@ tr_name_scope_t extend_scope(const tr_name_scope_t& scope, const string& var, co
     return scope2;
 }
 
+equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<string> bound_vars, const tr_name_scope_t& scope);
+
+optional<pair<ptree,equations>>
+typecheck_and_annotate_let(const Rules& R, const ptree& required_type, const ptree& model, set<string> bound_vars, const tr_name_scope_t& scope)
+{
+    if (not model.has_value<string>()) return {};
+
+    auto name = model.get_value<string>();
+
+    if (name != "let") return {}; //let[m=E,F]
+
+    string var_name = model[0].first;
+    ptree var_exp = model[0].second;
+    ptree body_exp = model[1].second;
+
+    auto a = get_fresh_type_var(bound_vars);
+    bound_vars.insert(a);
+
+    // 1. Analyze the body, forcing it to have the required type
+    equations E = pass2(R, required_type, body_exp, bound_vars, extend_scope(scope, var_name, a));
+    if (not E)
+        throw myexception()<<"Expression '"<<unparse_annotated(body_exp)<<"' is not of required type "<<unparse_type(required_type)<<"!";
+    add(bound_vars, E.referenced_vars());
+
+    // 2. Analyze the bound expression with type a
+    substitute(E, a);
+    E = E && pass2(R, a, var_exp, bound_vars, scope);
+    if (not E)
+        throw myexception()<<"Expression '"<<unparse_annotated(var_exp)<<"' is not of required type "<<unparse_type(a)<<"!";
+
+    // Create the new model tree with args in correct order
+    auto model2 = ptree("let",{{var_name, var_exp},{"",body_exp}});
+
+    auto keep = find_variables_in_type(required_type);
+    add(keep, find_type_variables_from_scope(scope));
+    auto S = E.eliminate_except(keep);
+
+    model2 = ptree({{"value",model2},{"type",required_type}});
+
+    substitute_in_types(S,model2);
+
+    return {{model2,E}};
+}
+
 // OK, so 'model' is going to have arg=value pairs set, but not necessarily in the right order.
 equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<string> bound_vars, const tr_name_scope_t& scope)
 {
@@ -224,37 +268,10 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
                 throw myexception()<<"can't find argument '"<<name<<"'";
 	    result_type = *type;
         }
-	else if (name == "let")  //let[m=E,F]
+	else if (auto let = typecheck_and_annotate_let(R, required_type, model, bound_vars, scope))
 	{
-	    string var_name = model[0].first;
-	    ptree var_exp = model[0].second;
-	    ptree body_exp = model[1].second;
-
-	    auto a = get_fresh_type_var(bound_vars);
-	    bound_vars.insert(a);
-
-	    // 1. Analyze the body, forcing it to have the required type
-	    equations E = pass2(R, required_type, body_exp, bound_vars, extend_scope(scope, var_name, a));
-	    if (not E)
-		throw myexception()<<"Expression '"<<unparse_annotated(body_exp)<<"' is not of required type "<<unparse_type(required_type)<<"!";
-	    add(bound_vars, E.referenced_vars());
-
-	    // 2. Analyze the bound expression with type a
-	    substitute(E, a);
-	    E = E && pass2(R, a, var_exp, bound_vars, scope);
-	    if (not E)
-		throw myexception()<<"Expression '"<<unparse_annotated(var_exp)<<"' is not of required type "<<unparse_type(a)<<"!";
-
-	    // Create the new model tree with args in correct order
-	    model = ptree("let",{{var_name, var_exp},{"",body_exp}});
-
-	    auto keep = find_variables_in_type(required_type);
-	    add(keep, find_type_variables_from_scope(scope));
-	    auto S = E.eliminate_except(keep);
-
-	    model = ptree({{"value",model},{"type",required_type}});
-
-	    substitute_in_types(S,model);
+            auto [model2, E] = *let;
+            model = model2;
 
 	    return E;
 	}
