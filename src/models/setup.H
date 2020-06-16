@@ -44,12 +44,10 @@ struct generated_code_t
 
     expression_ref generate() const;
 
-    expression_ref generate_top() const;
-
     void log_value(const std::string&, const expression_ref&);
     void log_sub(const std::string&, const expression_ref&);
 
-    std::string print() const {return generate_top().print();}
+    std::string print() const {return generate().print();}
 };
 
 void perform_action_simplified(Stmts& block, const var& x, const var& log_x, bool is_referenced, expression_ref E, bool is_action, bool has_loggers);

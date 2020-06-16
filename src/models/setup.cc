@@ -261,14 +261,6 @@ bool is_loggable_function(const Rules& R, const string& name)
     return not rule->get("no_log",false);
 }
 
-expression_ref generated_code_t::generate_top() const
-{
-    auto R = generate();
-    for(int i=lambda_vars.size()-1; i>=0; i--)
-        R = lambda_quantify(lambda_vars[i],R);
-    return R;
-}
-
 expression_ref is_single_sub_logger(const vector<expression_ref>& loggers)
 {
     if (loggers.empty()) return {};
@@ -318,6 +310,9 @@ expression_ref generated_code_t::generate() const
 
     // if is_action() is false, we should not have a do_block()
     assert(is_action() or not R.is_a<do_block>());
+
+    for(int i=lambda_vars.size()-1; i>=0; i--)
+        R = lambda_quantify(lambda_vars[i],R);
 
     return R;
 }
