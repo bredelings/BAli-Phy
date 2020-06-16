@@ -926,12 +926,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
             add(result.imports, alphabet_result.imports);
             alphabet_for_arg[i] = {x,alphabet_result.code.E};
         }
-    }
 
-    // 4. Generate the code for each argument.
-    for(int i: arg_order)
-    {
-        auto arg = model_rep.get_child(arg_names[i]);
         bool is_default_value = arg.get_child("is_default_value").get_value<bool>();
 
         auto scope3 = scope2;
