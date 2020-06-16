@@ -192,6 +192,23 @@ tr_name_scope_t extend_scope(const tr_name_scope_t& scope, const string& var, co
     return scope2;
 }
 
+set<string> get_used_args(const ptree& model)
+{
+    set<string> used_args;
+    for(auto& [_,used_arg]: model.get_child("used_args"))
+        used_args.insert(used_arg.get_value<string>());
+    return used_args;
+}
+
+void set_used_args(ptree& model, const set<string>& used_args)
+{
+    ptree p_used_args;
+    for(auto& used_arg: used_args)
+        p_used_args.push_back({"",ptree(used_arg)});
+    model.push_back({"used_args",p_used_args});
+}
+
+
 pair<ptree, equations> typecheck_and_annotate(const Rules& R, const ptree& required_type, const ptree& model, set<string> bound_vars, const tr_name_scope_t& scope);
 
 optional<pair<ptree,equations>>
@@ -211,9 +228,11 @@ typecheck_and_annotate_let(const Rules& R, const ptree& required_type, const ptr
     bound_vars.insert(a);
 
     equations E;
+    set<string> used_args;
 
     // 1. Analyze the body, forcing it to have the required type
     auto [body_exp2, E_body] = typecheck_and_annotate(R, required_type, body_exp, bound_vars, extend_scope(scope, var_name, a));
+    used_args = get_used_args(body_exp2);
     E = E && E_body;
     if (not E)
         throw myexception()<<"Expression '"<<unparse_annotated(body_exp2)<<"' is not of required type "<<unparse_type(required_type)<<"!";
@@ -222,6 +241,7 @@ typecheck_and_annotate_let(const Rules& R, const ptree& required_type, const ptr
     // 2. Analyze the bound expression with type a
     substitute(E, a);
     auto [var_exp2, E_var] = typecheck_and_annotate(R, a, var_exp, bound_vars, scope);
+    add(used_args, get_used_args(var_exp2));
     E = E && E_var;
     if (not E)
         throw myexception()<<"Expression '"<<unparse_annotated(var_exp2)<<"' is not of required type "<<unparse_type(a)<<"!";
@@ -234,6 +254,7 @@ typecheck_and_annotate_let(const Rules& R, const ptree& required_type, const ptr
     auto S = E.eliminate_except(keep);
 
     model2 = ptree({{"value",model2},{"type",required_type}});
+    set_used_args(model2, used_args);
 
     substitute_in_types(S,model2);
 
@@ -266,6 +287,7 @@ typecheck_and_annotate_lambda(const Rules& R, const ptree& required_type, const 
     // 2. Analyze the body, forcing it to have type (b)
     auto [body_exp2, E_body] =  typecheck_and_annotate(R, b, body_exp, bound_vars, extend_scope(scope, var_name, a));
     E = E && E_body;
+    auto used_args = get_used_args(body_exp2);
     if (not E)
         throw myexception()<<"Expression '"<<unparse_annotated(body_exp2)<<"' is not of required type "<<unparse_type(required_type)<<"!";
     add(bound_vars, E.referenced_vars());
@@ -278,6 +300,7 @@ typecheck_and_annotate_lambda(const Rules& R, const ptree& required_type, const 
     auto S = E.eliminate_except(keep);
 
     model2 = ptree({{"value",model2},{"type",required_type}});
+    set_used_args(model2, used_args);
 
     substitute_in_types(S,model2);
 
@@ -310,6 +333,8 @@ typecheck_and_annotate_get_state(const ptree& required_type, const ptree& model,
     auto S = E.eliminate_except(keep);
 
     model2 = ptree({{"value",model2},{"type",required_type}});
+    set_used_args(model2,{});
+
     substitute_in_types(S, model2);
 
     return {{model2,E}};
@@ -323,11 +348,14 @@ typecheck_and_annotate_var(const Rules& R, const ptree& required_type, const ptr
     auto name = model.get_value<string>();
 
     type_t result_type;
+    set<string> used_args;
     if (auto type = type_for_var_in_scope(name, scope))
         result_type = *type;
     else if (not name.empty() and name[0] == '@')
     {
-        auto type = type_for_arg_in_scope(name.substr(1), scope);
+        auto arg_name = name.substr(1);
+        auto type = type_for_arg_in_scope(arg_name, scope);
+        used_args = {arg_name};
         if (not type)
             throw myexception()<<"can't find argument '"<<name<<"'";
         result_type = *type;
@@ -358,6 +386,7 @@ typecheck_and_annotate_var(const Rules& R, const ptree& required_type, const ptr
                            <<"' should not have arguments!";
 
     auto model2 = ptree({{"value",model},{"type",result_type}});
+    set_used_args(model2, used_args);
 
     return {{model2,E}};
 }
@@ -406,6 +435,7 @@ typecheck_and_annotate_constant(const Rules& R, const ptree& required_type, cons
                            <<"' should not have arguments!";
 
     auto model2 = ptree({{"value",model},{"type",result_type}});
+    set_used_args(model2,{});
 
     return {{model2,E}};
 }
@@ -446,6 +476,7 @@ pair<ptree,equations> typecheck_and_annotate_function(const Rules& R, const ptre
 
     // Create the new model tree with args in correct order
     ptree model2;
+    set<string> used_args;
     model2.value =rule.get<string>("name"); 
 
     // 6. Check that we didn't supply unreferenced arguments.
@@ -470,12 +501,8 @@ pair<ptree,equations> typecheck_and_annotate_function(const Rules& R, const ptre
     }
 
     // 7. Handle arguments in rule order
-    int skip=0;
-    for(const auto& arg: rule.get_child("args"))
+    for(const auto& [_,argument]: rule.get_child("args"))
     {
-	skip++;
-	const auto& argument = arg.second;
-
 	string arg_name = argument.get<string>("arg_name");
 
 	auto arg_required_type = argument.get_child("arg_type");
@@ -492,11 +519,29 @@ pair<ptree,equations> typecheck_and_annotate_function(const Rules& R, const ptre
 	else
 	    throw myexception()<<"Command '"<<name<<"' missing required argument '"<<arg_name<<"'";
 
+        optional<ptree> alphabet_value;
+        if (auto alphabet_expression = argument.get_child_optional("alphabet"))
+        {
+            auto scope2 = scope;
+            scope2.args = arg_env;
+            auto [alphabet_value2, E_alphabet] = typecheck_and_annotate(R, arg_required_type, *alphabet_expression, bound_vars, scope2);
+            E = E && E_alphabet;
+            if (not E)
+                throw myexception()<<"Expression '"<<unparse_annotated(alphabet_value2)<<"' makes unification fail!";
+            auto alphabet_type = alphabet_value2.get_child("type");
+            scope2.state["alphabet"] = alphabet_type;
+            add(bound_vars, E.referenced_vars());
+            add(used_args, get_used_args(alphabet_value2));
+            alphabet_value = alphabet_value2;
+        }
+
         auto scope2 = scope;
         if (is_default)
             scope2.args = arg_env;
 
 	auto [arg_value2, E_arg] = typecheck_and_annotate(R, arg_required_type, arg_value, bound_vars, scope2);
+        if (not is_default)
+            add(used_args, get_used_args(arg_value2));
         E = E && E_arg;
 	if (not E)
 	    throw myexception()<<"Expression '"<<unparse_annotated(arg_value2)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
@@ -518,6 +563,7 @@ pair<ptree,equations> typecheck_and_annotate_function(const Rules& R, const ptre
 	model2.push_back({"extract",*extract});
 
     substitute_in_types(S, model2);
+    set_used_args(model2, used_args);
 
     return {model2,E};
 }

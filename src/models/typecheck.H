@@ -16,6 +16,7 @@ typecheck_and_annotate_model(const Rules& R,
                              const std::map<std::string,term_t>& scope,
                              const std::map<std::string,term_t>& state = {});
 
+std::set<std::string> get_used_args(const ptree& model);
 term_t extract_value(const term_t& T);
 term_t valueize(const term_t& T);
 #endif
