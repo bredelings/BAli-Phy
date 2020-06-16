@@ -1440,7 +1440,7 @@ string maybe_emit_code(map<string,string>& code_to_name, const string& name, con
     if (code_to_name.count(code))
         code = code_to_name.at(code);
     else
-        code_to_name.insert({code,name});
+        code_to_name.insert({code," = " + name});
     return name + code + "\n";
 }
 
