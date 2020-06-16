@@ -670,34 +670,50 @@ simplify_decls(const simplifier_options& options, CDecls& orig_decls, const subs
     return S2;
 }
 
+// NOTE: See maybe_eta_reduce( ) in occurrence.cc
+//       That version depends on occurrence info.
+// NOTE: GHC says that for some reason the simplifier only eta-reduces
+//       when it produces a "trivial" expression  (See CoreSyn/CorePrep.hs)
+//       Why?  Is it for correctness, or because it is not always faster (for GHC)?
+
 // Eta-reduction : if f does not reference x2 then
 //                     \x2 ->               ($) f x2  ===>              f
 //                 We don't do this (could perform more allocation):
 //                     \x2 -> (let decls in ($) f x2) ===> let decls in f
-expression_ref maybe_eta_reduce(const expression_ref& E)
+expression_ref maybe_eta_reduce2(const expression_ref& E)
 {
     assert(is_lambda_exp(E));
     auto& x    = E.sub()[0].as_<var>();
     auto& body = E.sub()[1];
 
-    if (x.code_dup == amount_t::Once and
-	body.is_expression() and is_apply_exp(body) and
-	(body.as_expression().sub.back() == x))
+    // 1. Check that we have \x -> ($) ...
+    if (not is_apply_exp(body)) return E;
+
+    // 2. Check that we have \x -> ($) ... x
+    if (body.as_expression().sub.back() != x) return E;
+
+    // 3. Check that the function is a variable (and so cannot contain x)
+    if (not is_var(body.sub()[0])) return E;
+
+    // 4. Check that all entries are vars and are not x: \x -> ($) f a b c x
+    for(int i=0;i<body.size()-1;i++)
     {
-	// ($) f x  ==> f
-	if (body.size() == 2)
-	    return body.sub()[0];
-	// ($) f y x ==> ($) f y
-	else
-	{
-	    assert(body.size() > 2);
-	    object_ptr<expression> body2 = body.as_expression().clone();
-	    body2->sub.pop_back();
-	    return body2;
-	}
+        assert(is_var(body.sub()[i]));
+
+        if (body.sub()[i].as_<var>() == x) return E;
     }
+
+    // ($) f x  ==> f
+    if (body.size() == 2)
+        return body.sub()[0];
+    // ($) f y x ==> ($) f y
     else
-	return {};
+    {
+        assert(body.size() > 2);
+        object_ptr<expression> body2 = body.as_expression().clone();
+        body2->sub.pop_back();
+        return body2;
+    }
 }
 
 // Q1. Where do we handle beta-reduction (@ constant x1 x2 ... xn)?
@@ -742,13 +758,16 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     {
 	assert(E.size() == 2);
 
+        // NOTE: This was having a problem with "\\#5 -> let {k = #5} in let {a = #4} in SModel.Nucleotides.tn93_sym a k k"
+        //       That was getting changed into  "\\#5 -> SModel.Nucleotides.tn93_sym #4 #5 #5", but keeping the work_dup:Once mark on #5.
+
 	// 2.1 eta reduction: (\x -> @ f a1 ...... an x) => (@ f a1 ....... an)
-	if (auto E2 = maybe_eta_reduce(E))
-	{
+	// if (auto E2 = maybe_eta_reduce(E))
+	// {
 	    // Simplifying the body in (\x -> let {y=x} in f y y) can result in f x x even if x is originally only used once.
 	    // Since maybe_eta_reduce( ) uses occurrence info to check that x is only used once, we have to do this *before* we simplify E (below).
-	    return simplify(options, E2, S, bound_vars, context);
-	}
+            // return simplify(options, E2, S, bound_vars, context);
+        // }
 
 	auto S2 = S;
 
@@ -763,7 +782,12 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	unbind_var(bound_vars,x2);
 
 	// 2.5 Return (\x2 -> new_body) after eta-reduction
-	return lambda_quantify(x2, new_body);
+        auto E2 = lambda_quantify(x2, new_body);
+
+        // 2.6 Maybe eta reduce
+        //     I don't think there can be any substitutions that make the function body or other arguments
+        //     depend on x here, so this SHOULD be safe...
+        return maybe_eta_reduce2( E2 );
     }
 
     // 6. Case

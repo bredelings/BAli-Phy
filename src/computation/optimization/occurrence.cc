@@ -345,6 +345,36 @@ set<var> dup_work(set<var>& vars)
     return vars2;
 }
 
+// Eta-reduction : if f does not reference x2 then
+//                     \x2 ->               ($) f x2  ===>              f
+//                 We don't do this (could perform more allocation):
+//                     \x2 -> (let decls in ($) f x2) ===> let decls in f
+expression_ref maybe_eta_reduce(const expression_ref& E)
+{
+    assert(is_lambda_exp(E));
+    auto& x    = E.sub()[0].as_<var>();
+    auto& body = E.sub()[1];
+
+    if (x.code_dup == amount_t::Once and
+	body.is_expression() and is_apply_exp(body) and
+	(body.as_expression().sub.back() == x))
+    {
+	// ($) f x  ==> f
+	if (body.size() == 2)
+	    return body.sub()[0];
+	// ($) f y x ==> ($) f y
+	else
+	{
+	    assert(body.size() > 2);
+	    object_ptr<expression> body2 = body.as_expression().clone();
+	    body2->sub.pop_back();
+	    return body2;
+	}
+    }
+    else
+	return {};
+}
+
 pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_context context)
 {
     if (not E) return {E,set<var>{}};
@@ -375,8 +405,14 @@ pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_c
 	// 3. Remove variable from free variables
 	var x = remove_var_and_set_occurrence_info(E.sub()[0], free_vars);
 
-	// 4. change Once -> OnceInLam / work=Many, code=Once
-	return {lambda_quantify(x,body), dup_work(free_vars)};
+        // 4. Quantify and maybe eta-reduce.
+        //    Note that we also eta-reduce in simplifier.cc
+        auto unreduced = lambda_quantify(x,body);
+        if (auto reduced = maybe_eta_reduce(unreduced))
+            return {reduced, free_vars};
+        else
+            // change Once -> OnceInLam / work=Many, code=Once
+            return {unreduced, dup_work(free_vars)};
     }
 
     // 6. Case
