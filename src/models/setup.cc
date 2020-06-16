@@ -950,18 +950,10 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
 
         // Avoid re-using any haskell vars.
         add(scope2.vars, arg_models[i].vars);
-    }
-
-    // 6. Peform each argument before other arguments that reference it.
-    for(int i: arg_order)
-    {
-        auto argi = array_index(args,i);
-        string arg_name = argi.get_child("arg_name").get_value<string>();
 
         // (x, logger) <- arg
         auto x = arg_vars[i];
         auto log_x = log_vars[i];
-        auto arg = arg_models[i];
 
         // 6a. Emit computed alphabets used by get_state[alphabet]
         if (alphabet_for_arg[i])
@@ -970,21 +962,21 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
             result.code.stmts.let(x,E);
         }
 
-        bool do_log = should_log(R, model, arg_name, scope) and arg_models[i].lambda_vars.empty();
+        bool do_log = should_log(R, model, arg_names[i], scope) and arg_models[i].lambda_vars.empty();
 
         // 6b. Emit x <- or x = for the variable, or prepare to substitute it.
-        use_block(result, log_x, arg, log_names[i]);
+        use_block(result, log_x, arg_models[i], log_names[i]);
         if (arg_models[i].code.perform_function)
-            result.code.stmts.perform(x, arg.code.E);
+            result.code.stmts.perform(x, arg_models[i].code.E);
         else if (arg_referenced[i] or do_log)
         {
-            result.code.stmts.let(x, arg.code.E);
+            result.code.stmts.let(x, arg_models[i].code.E);
         }
         else
         {
             // Substitute for the expression
             // FIXME: This assumes that the argument occurs in the call at most once!
-            argument_environment[arg_name] = arg.code.E;
+            argument_environment[arg_names[i]] = arg_models[i].code.E;
         }
 
         // 6c. Write the logger for the variable.
