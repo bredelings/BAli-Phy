@@ -15,7 +15,7 @@
         {
             "arg_name": "ss",
             "arg_type": "List[Pair[String,Double]]",
-            "default_value": "let[aa_letters=letters[getAminoAcids[@a]],zip[aa_letters,~iid[length[aa_letters],normal[0,1]]]]",
+            "default_value": "let[aas=letters[getAminoAcids[@a]],zip[aas,~iid[length[aas],normal[0,1]]]]",
 	    "description": "Scaled selection coefficients (2Ns)"
         },
 	{
