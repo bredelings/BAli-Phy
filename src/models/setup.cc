@@ -465,9 +465,7 @@ struct translation_result_t
     generated_code_t code;
     set<string> imports;
     set<string> lambda_vars;
-    set<string> used_args;
     set<var> vars;
-    bool is_default_value = false;
 };
 
 translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const name_scope_t& scope);
@@ -522,7 +520,6 @@ optional<translation_result_t> get_variable_model(const ptree& model, const name
 
         translation_result_t result;
         result.code.E = V;
-        result.used_args = {name};
         return result;
     }
 
@@ -586,8 +583,6 @@ void use_block(translation_result_t& block, const var& log_x, const translation_
     add(block.lambda_vars, code.lambda_vars);
     add(block.vars, code.vars);
     add(block.code.used_states, code.code.used_states);
-    if (not code.is_default_value)
-        add(block.used_args, code.used_args);
 
     for(auto& stmt: code.code.stmts)
         block.code.stmts.push_back(stmt);
@@ -922,7 +917,6 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
             assert(not alphabet_result.code.has_loggers());
             assert(not alphabet_result.code.perform_function);
 
-            add(used_args_for_arg[i], alphabet_result.used_args);
             add(result.imports, alphabet_result.imports);
             alphabet_for_arg[i] = {x,alphabet_result.code.E};
         }
@@ -936,13 +930,6 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
             scope3.set_state("alphabet",alphabet_for_arg[i]->first);
 
         arg_models[i] = get_model_as(R, model_rep.get_child(arg_names[i]), scope3);
-
-        if (is_default_value)
-        {
-            assert(used_args_for_arg[i] == arg_models[i].used_args);
-            used_args_for_arg[i] = arg_models[i].used_args;
-            arg_models[i].is_default_value = true;
-        }
 
         // Move this to generate()
         if (result.code.perform_function and arg_models[i].lambda_vars.size())
@@ -1085,7 +1072,7 @@ translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const 
 model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& constraints, const ptree& model_rep, const name_scope_t& scope)
 {
     // --------- Convert model to MultiMixtureModel ------------//
-    auto [code, imports, _1, _2, _3, _4] = get_model_as(R, model_rep, scope);
+    auto [code, imports, _1, _2] = get_model_as(R, model_rep, scope);
 
     if (log_verbose >= 2)
         std::cout<<"full_model = "<<code.print()<<std::endl;
