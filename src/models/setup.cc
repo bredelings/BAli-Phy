@@ -960,7 +960,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         use_block(result, log_x, arg_models[i], log_names[i]);
         if (arg_models[i].code.perform_function)
             result.code.stmts.perform(x, arg_models[i].code.E);
-        else if (arg_referenced[i] or do_log)
+        else if ((arg_referenced[i] or do_log) and not is_var(arg_models[i].code.E))
         {
             result.code.stmts.let(x, arg_models[i].code.E);
         }
