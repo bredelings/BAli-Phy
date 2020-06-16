@@ -522,12 +522,16 @@ pair<ptree,equations> typecheck_and_annotate_function(const Rules& R, const ptre
 	else
 	    throw myexception()<<"Command '"<<name<<"' missing required argument '"<<arg_name<<"'";
 
+        auto scope2 = scope;
+        if (is_default)
+            scope2.args = arg_env;
+
         optional<ptree> alphabet_value;
         if (auto alphabet_expression = argument.get_child_optional("alphabet"))
         {
-            auto scope2 = scope;
-            scope2.args = arg_env;
-            auto [alphabet_value2, E_alphabet] = typecheck_and_annotate(R, arg_required_type, *alphabet_expression, bound_vars, scope2);
+            auto scope3 = scope;
+            scope3.args = arg_env;
+            auto [alphabet_value2, E_alphabet] = typecheck_and_annotate(R, arg_required_type, *alphabet_expression, bound_vars, scope3);
             E = E && E_alphabet;
             if (not E)
                 throw myexception()<<"Expression '"<<unparse_annotated(alphabet_value2)<<"' makes unification fail!";
@@ -536,10 +540,6 @@ pair<ptree,equations> typecheck_and_annotate_function(const Rules& R, const ptre
             add(bound_vars, E.referenced_vars());
             alphabet_value = alphabet_value2;
         }
-
-        auto scope2 = scope;
-        if (is_default)
-            scope2.args = arg_env;
 
 	auto [arg_value2, E_arg] = typecheck_and_annotate(R, arg_required_type, arg_value, bound_vars, scope2);
         if (not is_default)
