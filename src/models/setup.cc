@@ -903,7 +903,6 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     // 4. Construct the alphabet for each argument, if there is one.
     vector<translation_result_t> arg_models(args.size());
     vector<set<string>> arg_lambda_vars;
-    vector<optional<pair<var,expression_ref>>> alphabet_for_arg(args.size());
     vector<string> log_names(args.size());
 
     // FIXME! There might be some problem where we reference alphabet vars like a_3
@@ -917,7 +916,10 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         optional<var> alphabet;
         if (auto alphabet_expression = arg.get_child_optional("alphabet"))
         {
-            auto x = scope2.get_var("alpha");
+            string var_name = "alpha";
+            if (alphabet_expression->get_child("value").has_value<string>() and alphabet_expression->get_child("value").get_value<string>() == "getNucleotides")
+                var_name = "nucs";
+            auto x = scope2.get_var(var_name);
             auto log_x = scope2.get_var("log_"+arg_names[i]+"_alpha");
 
             auto alphabet_scope = scope2;
@@ -925,9 +927,6 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
             auto alphabet_result = get_model_as(R, *alphabet_expression, alphabet_scope);
             if (alphabet_result.lambda_vars.size())
                 throw myexception()<<"An alphabet cannot depend on a lambda variable!";
-
-            add(result.imports, alphabet_result.imports);
-            alphabet_for_arg[i] = {x,alphabet_result.code.E};
 
             assert(not alphabet_result.code.has_loggers());
             assert(not alphabet_result.code.perform_function);
