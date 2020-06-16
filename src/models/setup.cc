@@ -964,11 +964,16 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         {
             result.code.stmts.let(x, arg_models[i].code.E);
         }
-        else
+        else // Substitute for the expression
         {
-            // Substitute for the expression
             // FIXME: This assumes that the argument occurs in the call at most once!
             argument_environment[arg_names[i]] = arg_models[i].code.E;
+
+            // NOTE: if arg_models[i].lambda_vars isn't empty, then we need to note this in the argument_environment
+            // so that @arg references are known to depend on lambda vars.
+            // MAYBE: change code_for_arg< > to map<string,var_info_t>?
+
+            // NOTE: anything that references a lambda variable has to be in code.E, not code.stmts!
         }
 
         // 6c. Write the logger for the variable.
