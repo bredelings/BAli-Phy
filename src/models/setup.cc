@@ -973,7 +973,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
 
         // 6c. Write the logger for the variable.
         if (do_log)
-            result.code.log_value(log_names[i], arg_vars[i]);
+            result.code.log_value(log_names[i], argument_environment[arg_names[i]]);
     }
 
     // 7. Compute the call expression.
