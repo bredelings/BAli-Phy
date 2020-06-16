@@ -1007,11 +1007,7 @@ optional<translation_result_t> get_model_state(const Rules&, const ptree& model,
     auto name = model_rep.get_value<string>();
 
     optional<string> state_name;
-    if (name == "getAlphabet")
-    {
-        state_name = "alphabet";
-    }
-    else if (name == "get_state")
+    if (name == "get_state")
     {
         // How do we access the child here?
         auto arg = model_rep[0].second;

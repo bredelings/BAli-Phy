@@ -484,13 +484,9 @@ string unparse(const ptree& p, const Rules& rules)
 	    submodel = unparse(pair.second, rules);
 	    args.push_back("");
 	}
-	// Don't print alphabet=getAlphabet (FIXME: change to x=getAlphabet, if this is a default value)
-	else if (pair.second == "getAlphabet" and
-		 get_arg(rules.require_rule_for_func(s), pair.first).count("default_value") and
-		 get_arg(rules.require_rule_for_func(s), pair.first).get_child("default_value") == ptree("getAlphabet"))
-	    ;
 	else
 	    args.push_back( unparse(pair.second, rules) );
+	// FIXME: don't print get_state[state_name] if its a default value?
     }
     while (args.size() and args.back() == "")
 	args.pop_back();
@@ -560,12 +556,6 @@ string unparse_annotated(const ptree& ann)
 	    submodel = unparse_annotated(arg);
 	    args.push_back("");
             continue;
-	}
-	// Don't print alphabet=getAlphabet (FIXME: change to x=getAlphabet, if this is a default value)
-	else if (arg.get_child("value") == "getAlphabet" and arg.get_child("is_default_value") == true)
-	{
-	    args.push_back("");
-	    continue;
 	}
 
         auto arg_value = arg.get_child("value");

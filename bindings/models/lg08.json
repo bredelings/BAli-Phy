@@ -8,7 +8,7 @@
         {
             "arg_name": "a",
             "arg_type": "AA",
-            "default_value": "getAlphabet",
+            "default_value": "get_state[alphabet]",
             "description": "The alphabet"
         }
     ],

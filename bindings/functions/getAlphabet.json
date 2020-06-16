@@ -1,9 +1,0 @@
-{
-    "name": "getAlphabet",
-    "result_type": "a",
-    "perform": true,
-    "call": "GetAlphabet",
-    "import": ["Probability"],
-    "args": [],
-    "title" : "The current alphabet"
-}
