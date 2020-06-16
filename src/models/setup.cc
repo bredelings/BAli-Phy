@@ -905,6 +905,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
 
         auto arg = model_rep.get_child(arg_names[i]);
 
+        optional<var> alphabet;
         if (auto alphabet_expression = arg.get_child_optional("alphabet"))
         {
             auto x = scope2.get_var("alpha");
@@ -922,6 +923,14 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
             assert(not alphabet_result.code.has_loggers());
             assert(not alphabet_result.code.perform_function);
             use_block(result, log_x, alphabet_result, log_names[i]+":alphabet");
+
+            if (is_var(alphabet_result.code.E))
+                alphabet = alphabet_result.code.E.as_<var>();
+            else
+            {
+                alphabet = x;
+                result.code.stmts.let(x, alphabet_result.code.E);
+            }
         }
 
         bool is_default_value = arg.get_child("is_default_value").get_value<bool>();
@@ -929,8 +938,8 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         auto scope3 = scope2;
         if (is_default_value)
             scope3.arg_env = {{name,arg_names[i],argument_environment}};
-        if (alphabet_for_arg[i])
-            scope3.set_state("alphabet",alphabet_for_arg[i]->first);
+        if (alphabet)
+            scope3.set_state("alphabet", *alphabet);
 
         arg_models[i] = get_model_as(R, model_rep.get_child(arg_names[i]), scope3);
 
@@ -944,13 +953,6 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         // (x, logger) <- arg
         auto x = arg_vars[i];
         auto log_x = log_vars[i];
-
-        // 6a. Emit computed alphabets used by get_state[alphabet]
-        if (alphabet_for_arg[i])
-        {
-            auto [x,E] = *alphabet_for_arg[i];
-            result.code.stmts.let(x,E);
-        }
 
         bool do_log = should_log(R, model, arg_names[i], scope) and arg_models[i].lambda_vars.empty();
 
