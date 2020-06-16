@@ -858,52 +858,65 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         throw myexception()<<"For rule '"<<name<<"', function '"<<call.get_value<string>()<<"' doesn't seem to be a valid haskell id or a valid argument reference.";
 
     // 2. Construct the names of the haskell variables for the arguments.
+    vector<string> arg_names(args.size());
     map<string,expression_ref> argument_environment;
     vector<var> arg_vars;
     vector<var> log_vars;
+    vector<set<string>> used_args_for_arg(args.size());
     for(int i=0;i<args.size();i++)
     {
         auto argi = array_index(args,i);
-        string arg_name = argi.get_child("arg_name").get_value<string>();
+        arg_names[i] = argi.get_child("arg_name").get_value<string>();
 
-        auto var_name = arg_name;
+        auto arg = model_rep.get_child(arg_names[i]);
+        bool is_default_value = arg.get_child("is_default_value").get_value<bool>();
+
+        // We only count references from the argument if its a default value.
+        if (is_default_value)
+            used_args_for_arg[i] = get_used_args(arg);
+        // However, the alphabet always references the current arguments.
+        if (auto alphabet_exp = arg.get_child_optional("alphabet"))
+            add(used_args_for_arg[i], get_used_args(*alphabet_exp));
+
+        auto var_name = arg_names[i];
         if (var_name == "submodel")
         {
-            auto arg = model_rep.get_child(arg_name);
+            auto arg = model_rep.get_child(arg_names[i]);
             if (auto func_name = get_func_name(arg))
                 var_name = (*func_name)+"_model";
         }
         arg_vars.push_back(scope2.get_var(var_name));
         log_vars.push_back(scope2.get_var("log_"+var_name));
 
-        argument_environment[arg_name] = arg_vars.back();
+        argument_environment[arg_names[i]] = arg_vars.back();
     }
 
-    // 3. Construct the alphabet for each argument, if there is one.
+    // 3.. Figure out which args are referenced from other args
+    auto arg_referenced = get_args_referenced(arg_names, used_args_for_arg);
+
+    auto arg_order = get_args_order(arg_names, used_args_for_arg);
+
+    // 4. Construct the alphabet for each argument, if there is one.
     vector<translation_result_t> arg_models(args.size());
     vector<set<string>> arg_lambda_vars;
-    vector<set<string>> used_args_for_arg(args.size());
-    vector<string> arg_names(args.size());
     vector<optional<pair<var,expression_ref>>> alphabet_for_arg(args.size());
     vector<string> log_names(args.size());
 
     // FIXME! There might be some problem where we reference alphabet vars like a_3
     //        before we define them, in situations where we don't substitute.
-    for(int i=0;i<args.size();i++)
+    for(int i: arg_order)
     {
-        auto argi = array_index(args,i);
-        arg_names[i] = argi.get_child("arg_name").get_value<string>();
         log_names[i] = name + ":" + arg_names[i];
 
         auto arg = model_rep.get_child(arg_names[i]);
 
-        if (auto alphabet_expression = argi.get_child_optional("alphabet"))
+        if (auto alphabet_expression = arg.get_child_optional("alphabet"))
         {
             auto x = scope2.get_var("alpha");
 
             auto alphabet_scope = scope2;
             alphabet_scope.arg_env = {{name,arg_names[i],argument_environment}};
-            auto alphabet_result = get_model_as(R, valueize(*alphabet_expression), alphabet_scope);
+            auto alphabet_result = get_model_as(R, *alphabet_expression, alphabet_scope);
             if (alphabet_result.lambda_vars.size())
                 throw myexception()<<"An alphabet cannot depend on a lambda variable!";
             assert(not alphabet_result.code.has_loggers());
@@ -916,7 +929,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
     }
 
     // 4. Generate the code for each argument.
-    for(int i=0;i<args.size();i++)
+    for(int i: arg_order)
     {
         auto arg = model_rep.get_child(arg_names[i]);
         bool is_default_value = arg.get_child("is_default_value").get_value<bool>();
@@ -931,6 +944,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
 
         if (is_default_value)
         {
+            assert(used_args_for_arg[i] == arg_models[i].used_args);
             used_args_for_arg[i] = arg_models[i].used_args;
             arg_models[i].is_default_value = true;
         }
@@ -942,13 +956,6 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         // Avoid re-using any haskell vars.
         add(scope2.vars, arg_models[i].vars);
     }
-
-    // 5.. Figure out which args are referenced from other args
-    //    FIXME!  We should start with just args referenced by the call expression.
-    //    We could also count HOW MANY times each arg is referenced by the call expression.
-    auto arg_referenced = get_args_referenced(arg_names, used_args_for_arg);
-
-    auto arg_order = get_args_order(arg_names, used_args_for_arg);
 
     // 6. Peform each argument before other arguments that reference it.
     for(int i: arg_order)

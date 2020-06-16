@@ -205,7 +205,10 @@ void set_used_args(ptree& model, const set<string>& used_args)
     ptree p_used_args;
     for(auto& used_arg: used_args)
         p_used_args.push_back({"",ptree(used_arg)});
-    model.push_back({"used_args",p_used_args});
+    if (auto p = model.get_child_optional("used_args"))
+        *p = p_used_args;
+    else
+        model.push_back({"used_args",p_used_args});
 }
 
 
@@ -531,7 +534,6 @@ pair<ptree,equations> typecheck_and_annotate_function(const Rules& R, const ptre
             auto alphabet_type = alphabet_value2.get_child("type");
             scope2.state["alphabet"] = alphabet_type;
             add(bound_vars, E.referenced_vars());
-            add(used_args, get_used_args(alphabet_value2));
             alphabet_value = alphabet_value2;
         }
 
@@ -548,6 +550,8 @@ pair<ptree,equations> typecheck_and_annotate_function(const Rules& R, const ptre
 	for(auto& x: argument)
 	    arg_value2.push_back(x);
 	arg_value2.push_back({"is_default_value",ptree(is_default)});
+        if (alphabet_value)
+            *arg_value2.get_child_optional("alphabet") = *alphabet_value;
 	model2.push_back({arg_name, arg_value2});
 	add(bound_vars, E.referenced_vars());
     }
