@@ -28,7 +28,7 @@ sample_smodel branch_cats = do
 
     -- If we generalize e.g. transition_ps, we wouldn't need to write (mmm $ unit_mixture $ ) in from of tn93
     let pi'            = frequencies_from_dict dna pi
-        smodel         = mmm branch_cats $ unit_mixture $ tn93 kappa1 kappa2 pi' dna
+        smodel         = mmm branch_cats $ unit_mixture $ tn93 dna kappa1 kappa2 pi'
         smodel_loggers = ["kappa1" %=% kappa1, "kappa2" %=% kappa2, "pi" %=% pi]
 
     return (smodel, smodel_loggers)
