@@ -77,6 +77,7 @@
 // 16. Do the coercion on the ptree or string level.
 
 #include <vector>
+#include <sstream>
 #include <boost/program_options.hpp>
 
 #include "util/graph.H"
@@ -174,6 +175,19 @@ string show(vector<string> args)
     output += join(args,',');
     output += ']';
     return output;
+}
+
+string print_equals_function(expression_ref E)
+{
+    std::ostringstream result;
+    while(is_lambda_exp(E))
+    {
+        auto x = E.sub()[0];
+        E = E.sub()[1];
+        result<<" "<<x;
+    }
+    result<<" = "<<E;
+    return result.str();
 }
 
 /// \brief Return the default substitution model name for alphabet \a a, and "" if there is no default.

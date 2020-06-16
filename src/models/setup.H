@@ -87,5 +87,7 @@ model_t get_model(const Rules& R, const std::string& type, const std::string& mo
                   const std::map<std::string,std::pair<std::string,std::string>>& = {}
     );
 
+std::string print_equals_function(expression_ref E);
+
 std::string default_markov_model(const alphabet& a);
 #endif

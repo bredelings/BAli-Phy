@@ -1434,13 +1434,14 @@ expression_ref get_alphabet_expression(const alphabet& a)
 
 // FIXME: move this routine to A-T-Model
 
-string maybe_emit_code(map<string,string>& code_to_name, const string& name, string code)
+string maybe_emit_code(map<string,string>& code_to_name, const string& name, const expression_ref& E)
 {
+    auto code = print_equals_function(E);
     if (code_to_name.count(code))
         code = code_to_name.at(code);
     else
         code_to_name.insert({code,name});
-    return name + " = " + code + "\n";
+    return name + code + "\n";
 }
 
 
@@ -1512,7 +1513,7 @@ std::string generate_atmodel_program(int n_sequences,
     for(int i=0;i<SMs.size();i++)
     {
         auto name = "sample_smodel_"+std::to_string(i+1);
-        auto code = SMs[i].code.print();
+        auto code = SMs[i].code.generate();
         program_file<<maybe_emit_code(code_to_name, name, code)<<"\n";
     }
 
@@ -1520,7 +1521,7 @@ std::string generate_atmodel_program(int n_sequences,
     for(int i=0;i<IMs.size();i++)
     {
         auto name = "sample_imodel_"+std::to_string(i+1);
-        auto code = IMs[i].code.print();
+        auto code = IMs[i].code.generate();
         program_file<<maybe_emit_code(code_to_name, name, code)<<"\n";
     }
 
@@ -1528,12 +1529,12 @@ std::string generate_atmodel_program(int n_sequences,
     for(int i=0; i<scaleMs.size(); i++)
     {
         auto name = "sample_scale_"+std::to_string(i+1);
-        auto code = scaleMs[i].code.print();
+        auto code = scaleMs[i].code.generate();
         program_file<<maybe_emit_code(code_to_name, name, code)<<"\n";
     }
 
     // F4. Branch lengths
-    program_file<<"sample_branch_lengths = "<<branch_length_model.code.print()<<"\n";
+    program_file<<"sample_branch_lengths"<<print_equals_function(branch_length_model.code.generate())<<"\n";
 
     // F5. Topology
     program_file<<"\nsample_topology_1 taxa = uniform_labelled_topology taxa\n";
