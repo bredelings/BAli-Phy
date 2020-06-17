@@ -275,29 +275,103 @@ bool is_loggable_function(const Rules& R, const string& name)
     return not rule->get("no_log",false);
 }
 
-expression_ref is_single_sub_logger(const vector<expression_ref>& loggers)
+// See simplify(json& j) in models/model.cc and simplify(ptree&) models/in path.cc
+
+void simplify(Loggers& loggers)
 {
-    if (loggers.empty()) return {};
-    if (loggers.size() > 1) return {};
+    // 1. First we simplify all the level below this one.
+    for(auto& l: loggers)
+    {
+        if (auto lsub = l.as<LogSub>())
+            simplify(lsub->loggers);
+    }
 
-    auto logger = loggers[0];
-    if (not is_apply_exp(logger)) return {};
-    if (logger.size() != 3) return {};
+    // 2. In order to move child-level names up to the top level, we have to avoid
+    //   a. clashing with the same name at the top level
+    //   b. clashing with the same name in a sibling.
+    // We therefore count which names at these levels occur twice and avoid them.
 
-    auto func = logger.sub()[0];
-    if (not is_var(func)) return {};
-    if (func.as_<var>().name != "%>%") return {};
+    // NOTE: In theory we could have subloggers with internal names/prefixes that overlap with the
+    // external prefix of another logger.  But if that logger is going away, then its external
+    // prefix will disappear and the conflict isn't real.  However, we do prevent merging
+    // subloggers that have names that conflict with the (external) prefix of another logger.
+    // EXAMPLE: If we have a situation like {I1/S1, S2/I1} then this approach won't simplify to {S1,I1}
 
-    return logger.sub()[2];
+    std::multiset<string> names;
+    for(auto& l: loggers)
+    {
+        names.insert(l->get_name());
+        if (auto lsub = l.as<LogSub>())
+            for(auto& ll: lsub->loggers)
+                names.insert(ll->get_name());
+    }
+
+    // 3. If none of the names in an entry occur twice, then we can move all then
+    //    names in that entry up to the top level.
+    vector<bool> move_children(loggers.size());
+    for(int i=0; i<loggers.size(); i++)
+    {
+        auto l = loggers[i].as<LogSub>();
+        if (not l) continue;
+
+        bool ok = true;
+        for(auto& ll: l->loggers)
+        {
+            if (names.count(ll->get_name()) > 1)
+            {
+                ok = false;
+                break;
+            }
+        }
+        if (ok)
+            move_children[i] = true;
+    }
+
+    /// 4. Move the children
+    Loggers loggers2;
+    for(int i=0; i<loggers.size(); i++)
+    {
+        auto& l = loggers[i];
+        if (not move_children[i])
+            loggers2.push_back(std::move(l));
+        else
+        {
+            for(auto& ll: l.as<LogSub>()->loggers)
+                loggers2.push_back(std::move(ll));
+        }
+    }
+    std::swap(loggers, loggers2);
 }
+
+
+expression_ref generate_loggers(do_block& code, const Loggers& loggers)
+{
+    vector<expression_ref> simple_loggers;
+    for(auto& l: loggers)
+    {
+        if (auto lsub = l.as<LogSub>())
+        {
+            auto log_x = lsub->log_var;
+            auto logger_list = generate_loggers(code,lsub->loggers);
+            code.let(log_x,logger_list);
+            simple_loggers.push_back({var("%>%"),String(lsub->prefix),log_x});
+        }
+        else if (auto lvalue = l.as<LogValue>())
+            simple_loggers.push_back({var("%=%"),String(lvalue->name),lvalue->value});
+        else
+            std::abort();
+    }
+    return get_list(simple_loggers);
+}
+
 
 expression_ref generated_code_t::generate() const
 {
     do_block code(stmts);
 
-    auto L = get_list(loggers);
-    if (auto logger = is_single_sub_logger(loggers))
-        L = logger;
+    auto loggers2 = loggers;
+    simplify(loggers2);
+    auto L = generate_loggers(code,loggers2);
 
     auto R = simplify_intToDouble(E);
 
@@ -597,15 +671,7 @@ void use_block(translation_result_t& block, const var& log_x, const translation_
         block.code.stmts.push_back(stmt);
 
     if (code.code.has_loggers())
-    {
-        if (auto logger = is_single_sub_logger(code.code.loggers))
-            block.code.log_sub(name,logger);
-        else
-        {
-            block.code.stmts.let(log_x,get_list(code.code.loggers));
-            block.code.log_sub(name,log_x);
-        }
-    }
+        block.code.log_sub(name, log_x, code.code.loggers);
 }
 
 void perform_action_simplified(translation_result_t& block, const var& x, const var& log_x, bool is_referenced, const translation_result_t& code, const string& name)
@@ -616,12 +682,12 @@ void perform_action_simplified(translation_result_t& block, const var& x, const 
 
 void generated_code_t::log_value(const string& name, const expression_ref& value)
 {
-    loggers.push_back({var("%=%"),String(name),value});
+    loggers.push_back(LogValue(name, value));
 }
 
-void generated_code_t::log_sub(const string& name, const expression_ref& sub)
+void generated_code_t::log_sub(const string& name, const var& log_var, const Loggers& ls)
 {
-    loggers.push_back({var("%>%"),String(name),sub});
+    loggers.push_back(LogSub(name, log_var, ls));
 }
 
 /*

@@ -26,13 +26,55 @@ public:
     pretty_model_t(const ptree& m);
 };
 
+struct LoggerObj
+{
+    virtual std::string get_name() const = 0;
+    virtual LoggerObj* clone() const = 0;
+    virtual ~LoggerObj() {};
+};
+
+typedef owned_ptr<LoggerObj> Logger;
+
+typedef std::vector<Logger> Loggers;
+
+struct LogValue: public LoggerObj
+{
+    std::string name;
+    expression_ref value;
+
+    LogValue* clone() const {return new LogValue(*this);}
+
+    std::string get_name() const {return name;}
+
+    LogValue(const std::string& s, const expression_ref& e)
+        :name(s),value(e)
+    {}
+};
+
+struct LogSub: public LoggerObj
+{
+    std::string prefix;
+    var log_var; // we might emit logger_var = loggers, and then do prefix %>% logger_var
+    Loggers loggers;
+
+    LogSub* clone() const {return new LogSub(*this);}
+
+    std::string get_name() const {return prefix+"/";}
+
+    LogSub(const std::string& s, const var& v, const Loggers& ls)
+        :prefix(s), log_var(v), loggers(ls)
+    {}
+};
+
+expression_ref generate_loggers(do_block& code, const Loggers& Loggers);
+
 struct generated_code_t
 {
     std::vector<var> lambda_vars;
 
     Stmts stmts;
     expression_ref E;
-    std::vector<expression_ref> loggers;
+    Loggers loggers;
     bool perform_function = false;
 
     // Which states were actually used.
@@ -45,7 +87,7 @@ struct generated_code_t
     expression_ref generate() const;
 
     void log_value(const std::string&, const expression_ref&);
-    void log_sub(const std::string&, const expression_ref&);
+    void log_sub(const std::string&, const var&, const Loggers&);
 
     std::string print() const {return generate().print();}
 };
