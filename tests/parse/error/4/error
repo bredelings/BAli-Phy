@@ -1,1 +1,1 @@
-bali-phy: Error! Term 'List[2,gtr_sym]' of type 'List[var2]' cannot be converted to type 'ExchangeModel[var1]'
+bali-phy: Error! List: entry 1 'x=22 must not have a variable name!

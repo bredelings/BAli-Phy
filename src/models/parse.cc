@@ -295,6 +295,29 @@ void handle_positional_args(ptree& model, const Rules& R)
 	return;
     }
 
+    if (head == "List")
+    {
+        for(int i=0;i<model.size();i++)
+        {
+            if (not model[i].first.empty())
+                throw myexception()<<"List: entry "<<i+1<<" '"<<model[i].first<<"="<<unparse(model[i].second,R)<<"2 must not have a variable name!";
+        }
+	return;
+    }
+
+    if (head == "Tuple")
+    {
+        if (model.size() == 1)
+            throw myexception()<<"Tuple's 1 element not allowed:\n  "<<model.show();
+
+        for(int i=0;i<model.size();i++)
+        {
+            if (not model[i].first.empty())
+                throw myexception()<<"List: argument "<<i+1<<" must not have a variable name!\n  "<<model.show();
+        }
+	return;
+    }
+
     if (head == "get_state")
     {
         if (model.size() != 1)
@@ -346,79 +369,19 @@ void handle_positional_args(ptree& model, const Rules& R)
     std::swap(model, model2);
 }
 
-// Convert List[x1,x2...] -> Cons[x1,[Cons[x2,...]]
-void pass_list(ptree& p)
-{
-    if (p.has_value<string>() and p.get_value<string>() == "List")
-    {
-	ptree l = ptree("Nil");
-	for(auto& child: reverse(p))
-	{
-	    ptree l2 = ptree("Cons");
-	    l2.push_back({"",child.second});
-	    l2.push_back({"",l});
-	    std::swap(l,l2);
-	}
-	std::swap(p,l);
-    }
-}
-
 // Parse strings of the form head[args] + head[args] + ... + head[args]
 ptree parse(const Rules& R, const string& s)
 {
     // 1. Get the last head[args]
     auto model = parse(s);
 
-    // 2. Convert List[x1,x2...] -> Cons[x1,[Cons[x2,...]]
-    ptree_map(pass_list, model);
-
-    // 3. Fill in keywords where they are not given
+    // 2. Fill in keywords where they are not given
     auto f2 = [&](ptree& p) {handle_positional_args(p,R);};
     ptree_map(f2, model);
 
     return model;
 }
 
-
-optional<list<ptree>> get_list_elements(const ptree& p)
-{
-    string s = p.get_value<string>();
-    if (s == "Nil") return list<ptree>();
-
-    if (s == "Cons")
-    {
-	ptree h = p.get_child("first");
-	ptree t = p.get_child("second");
-	auto xs = get_list_elements(t);
-	if (xs)
-	{
-	    (*xs).push_front(h);
-	    return xs;
-	}
-    }
-    return {};
-}
-
-optional<list<ptree>> get_ann_list_elements(const ptree& ann)
-{
-    auto& p = ann.get_child("value");
-
-    string s = p.get_value<string>();
-    if (s == "Nil") return list<ptree>();
-
-    if (s == "Cons")
-    {
-	ptree h = p.get_child("first");
-	ptree t = p.get_child("second");
-	auto xs = get_ann_list_elements(t);
-	if (xs)
-	{
-	    (*xs).push_front(h);
-	    return xs;
-	}
-    }
-    return {};
-}
 
 string unparse(const ptree& p, const Rules& rules)
 {
@@ -456,13 +419,6 @@ string unparse(const ptree& p, const Rules& rules)
     else if (s == "sample")
 	return "~" + unparse(p.begin()->second, rules);
 
-    if (auto xs = get_list_elements(p))
-    {
-	vector<string> ss;
-	for(auto& x: *xs)
-	    ss.push_back(unparse(x, rules));
-	return "List[" + join(ss,",") + "]";
-    }
     if (s == "intToDouble")
 	return unparse(p.get_child("x"), rules);
     if (s == "unit_mixture" or s == "multiMixtureModel")
@@ -528,13 +484,6 @@ string unparse_annotated(const ptree& ann)
     }
     if (s == "sample")
 	return "~" + unparse_annotated(p.begin()->second);
-    if (auto xs = get_ann_list_elements(ann))
-    {
-	vector<string> ss;
-	for(auto& x: *xs)
-	    ss.push_back(unparse_annotated(x));
-	return "List[" + join(ss,",") + "]";
-    }
     if (s == "intToDouble")
 	return unparse_annotated(p.get_child("x"));
     if (s == "unit_mixture" or s == "multiMixtureModel")

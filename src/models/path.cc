@@ -41,38 +41,19 @@ string translate_structures(const string& name)
     optional<int> elem;
     for(auto& x: path)
     {
-	if (x == "Cons:second")
-	{
-	    if (elem)
-		elem = 1+*elem;
-	    else
-		elem = 1;
-	}
-	else if (x == "Cons:first")
-	{
-	    if (path2.empty()) path2.push_back("");
-	    if (not elem) elem = 0;
-	    elem = 1+*elem;
-
-	    path2.back() += "[" + convertToString(*elem) + "]";
-	    elem = {};
-	}
-	else
-	{
-	    elem = {};
-	    if (x == "Pair::first")
-	    {
-		if (path2.empty()) path2.push_back("");
-		path2.back() += "[1]";
-	    }
-	    else if (x == "Pair::second")
-	    {
-		if (path2.empty()) path2.push_back("");
-		path2.back() += "[2]";
-	    }
-	    else
-		path2.push_back(x);
-	}
+        elem = {};
+        if (x == "Pair::first")
+        {
+            if (path2.empty()) path2.push_back("");
+            path2.back() += "[1]";
+        }
+        else if (x == "Pair::second")
+        {
+            if (path2.empty()) path2.push_back("");
+            path2.back() += "[2]";
+        }
+        else
+            path2.push_back(x);
     }
     return model_path(path2);
 }

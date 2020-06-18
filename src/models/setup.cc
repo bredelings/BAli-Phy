@@ -899,6 +899,66 @@ vector<int> get_args_order(const vector<string>& arg_names, const vector<set<str
 
 
 // NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
+optional<translation_result_t> get_model_list(const Rules& R, const ptree& model, const name_scope_t& scope)
+{
+    auto scope2 = scope;
+    auto model_rep = model.get_child("value");
+    auto name = model_rep.get_value<string>();
+
+
+    // 1. If the phrase is not a lambda, then we are done.
+    if (name != "List") return {};
+
+    int N = model_rep.size();
+
+    translation_result_t result;
+
+    // 2. Construct the names of the haskell variables for the arguments.
+    vector<expression_ref> argument_environment(N);
+    for(int i=0; i<N; i++)
+    {
+        // 3a. Compute vars for element
+        string var_name = "_"+std::to_string(i+1);
+        string log_name = "["+std::to_string(i+1)+"]";
+
+        auto x = scope2.get_var(var_name);
+        argument_environment[i] = x;
+
+        // 3b. Generate code for the list element
+        auto element = array_index(model_rep, i);
+        auto element_result = get_model_as(R, element, scope2);
+
+        // 3c. Avoid re-using any haskell vars.
+        add(scope2.vars, element_result.vars);
+
+        // 3d. Include stmts and dependencies
+        auto log_x = scope2.get_var("log"+var_name);
+        use_block(result, log_x, element_result, log_name);
+
+        // 3e. Maybe emit code for the element.
+        bool do_log = is_unlogged_random(R, element, scope);
+        if (element_result.code.perform_function)
+            result.code.stmts.perform(x, element_result.code.E);
+        if (do_log and not is_var(element_result.code.E))
+            result.code.stmts.let(x, element_result.code.E);
+        else
+            argument_environment[i] = element_result.code.E;
+
+        // 3f. Maybe log the element.
+        if (do_log)
+            result.code.log_value(log_name, argument_environment[i]);
+    }
+
+    // 4. Compute the call expression.
+    result.code.E = get_list(argument_environment);
+
+    // 5. Make sure not to re-use any vars adding do this code.
+    add(result.vars, scope2.vars);
+
+    return result;
+}
+
+// NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
 translation_result_t get_model_function(const Rules& R, const ptree& model, const name_scope_t& scope)
 {
     auto scope2 = scope;
@@ -1135,10 +1195,14 @@ translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const 
         return *func;
 
     // 6. get_state[state] expressions.
+    else if (auto list = get_model_list(R, model_rep, scope))
+        return *list;
+
+    // 7. get_state[state] expressions.
     else if (auto state = get_model_state(R, model_rep, scope))
         return *state;
 
-    // 7. Functions
+    // 8. Functions
     return get_model_function(R, model_rep, scope);
 }
 

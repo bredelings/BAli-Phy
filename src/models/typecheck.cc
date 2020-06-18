@@ -311,6 +311,55 @@ typecheck_and_annotate_lambda(const Rules& R, const ptree& required_type, const 
 }
 
 optional<pair<ptree,equations>>
+typecheck_and_annotate_list(const Rules& R, const ptree& required_type, const ptree& model, set<string> bound_vars, const tr_name_scope_t& scope)
+{
+    if (not model.has_value<string>()) return {};
+
+    auto name = model.get_value<string>();
+
+    if (name != "List") return {}; //List[x,y,z,...]
+
+    // 1. Unify required type with (a -> b)
+
+    auto a = get_fresh_type_var(bound_vars);
+    bound_vars.insert(a);
+
+    auto list_type = ptree("List",{ {"",a} });
+    equations E = unify(list_type, required_type);
+    if (not E)
+        throw myexception()<<"Supplying a function, but expected '"<<unparse_type(required_type)<<"!";
+
+    // 2. Analyze the body, forcing it to have type (b)
+    set<string> used_args;
+    auto model2 = ptree("List",{});
+    for(auto& [_,element]: model)
+    {
+        auto element_required_type = a;
+        substitute(E, element_required_type);
+        auto [element2, E_element] =  typecheck_and_annotate(R, element_required_type, element, bound_vars, scope);
+        add(used_args, get_used_args(element2));
+        E = E && E_element;
+        if (not E)
+            throw myexception()<<"Expression '"<<unparse_annotated(element2)<<"' is not of required type "<<unparse_type(element_required_type)<<"!";
+        element2.push_back({"is_default_value",ptree(false)}); // Do we need to add this annotation?
+        model2.push_back({"",element2});
+        add(bound_vars, E.referenced_vars());
+    }
+
+    // 3. Create the new model tree with args in correct order
+    auto keep = find_variables_in_type(required_type);
+    add(keep, find_type_variables_from_scope(scope));
+    auto S = E.eliminate_except(keep);
+
+    model2 = ptree({{"value",model2},{"type",required_type}});
+    set_used_args(model2, used_args);
+
+    substitute_in_types(S,model2);
+
+    return {{model2,E}};
+}
+
+optional<pair<ptree,equations>>
 typecheck_and_annotate_get_state(const ptree& required_type, const ptree& model, const tr_name_scope_t& scope)
 {
     if (not model.has_value<string>()) return {};
@@ -593,6 +642,9 @@ pair<ptree,equations> typecheck_and_annotate(const Rules& R, const ptree& requir
 
     else if (auto lambda = typecheck_and_annotate_lambda(R, required_type, model, bound_vars, scope))
         return *lambda;
+
+    else if (auto list = typecheck_and_annotate_list(R, required_type, model, bound_vars, scope))
+        return *list;
 
     else if (auto get_state = typecheck_and_annotate_get_state(required_type, model, scope))
         return *get_state;
