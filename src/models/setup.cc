@@ -279,14 +279,55 @@ bool is_loggable_function(const Rules& R, const string& name)
 
 void simplify(Loggers& loggers)
 {
-    // 1. First we simplify all the level below this one.
+    // 1. Second, determine if we have subloggers where we can lift children out and append them to the prefix.
+    std::vector<bool> lift_children(loggers.size(), false);
+    for(int i=0;i<loggers.size();i++)
+    {
+        auto& l = loggers[i];
+        if (auto lsub = l.as<LogSub>())
+        {
+            lift_children[i] = true;
+            for(auto& ll: lsub->loggers)
+            {
+                if (auto llsub = ll.as<LogSub>())
+                {
+                    if (llsub->prefix.size() > 0 and llsub->prefix[0] == '[')
+                        continue;
+                }
+                lift_children[i] = false;
+                break;
+            }
+        }
+    }
+
+    /// 2. Move the children
+    Loggers loggers3;
+    for(int i=0; i<loggers.size(); i++)
+    {
+        auto& l = loggers[i];
+        if (not lift_children[i])
+            loggers3.push_back(std::move(l));
+        else
+        {
+            auto lsub = l.as<LogSub>();
+            for(auto& ll: lsub->loggers)
+            {
+                const auto& llsub = ll.as<LogSub>();
+                llsub->prefix = lsub->prefix + llsub->prefix;
+                loggers3.push_back(std::move(ll));
+            }
+        }
+    }
+    std::swap(loggers, loggers3);
+
+    // 3. First we simplify all the level below this one.
     for(auto& l: loggers)
     {
         if (auto lsub = l.as<LogSub>())
             simplify(lsub->loggers);
     }
 
-    // 2. In order to move child-level names up to the top level, we have to avoid
+    // 4. In order to move child-level names up to the top level, we have to avoid
     //   a. clashing with the same name at the top level
     //   b. clashing with the same name in a sibling.
     // We therefore count which names at these levels occur twice and avoid them.
@@ -306,7 +347,7 @@ void simplify(Loggers& loggers)
                 names.insert(ll->get_name());
     }
 
-    // 3. If none of the names in an entry occur twice, then we can move all then
+    // 5. If none of the names in an entry occur twice, then we can move all then
     //    names in that entry up to the top level.
     vector<bool> move_children(loggers.size());
     for(int i=0; i<loggers.size(); i++)
@@ -327,7 +368,7 @@ void simplify(Loggers& loggers)
             move_children[i] = true;
     }
 
-    /// 4. Move the children
+    /// 6. Move the children
     Loggers loggers2;
     for(int i=0; i<loggers.size(); i++)
     {
