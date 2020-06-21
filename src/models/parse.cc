@@ -305,6 +305,15 @@ void handle_positional_args(ptree& model, const Rules& R)
 	return;
     }
 
+    if (head == "Pair")
+    {
+        if (model.size() != 2)
+            throw myexception()<<"Pair's must have two elements: "<<unparse(model,R);
+
+        model.value = string("Tuple");
+        head = "Tuple";
+    }
+
     if (head == "Tuple")
     {
         if (model.size() == 1)

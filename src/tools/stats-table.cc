@@ -307,8 +307,6 @@ TableReader::TableReader(std::istream& f, int sk, int sub, int lst, const vector
         names_ = read_header(file);
 
     // 3. Select fields and determine header names.
-    for(auto& name: names_)
-        name = translate_structures(name);
     names_ = short_parameter_names(names_);
     indices = get_indices_for_names(names_, ignore, select);
     names_ = apply_indices(names_, indices);

@@ -33,32 +33,6 @@ vector<string> model_split_path(const string& path)
     return split(path, model_separator);
 }
 
-string translate_structures(const string& name)
-{
-    vector<string> path = model_split_path(name);
-
-    vector<string> path2;
-    optional<int> elem;
-    for(auto& x: path)
-    {
-        elem = {};
-        if (x == "Pair::first")
-        {
-            if (path2.empty()) path2.push_back("");
-            path2.back() += "[1]";
-        }
-        else if (x == "Pair::second")
-        {
-            if (path2.empty()) path2.push_back("");
-            path2.back() += "[2]";
-        }
-        else
-            path2.push_back(x);
-    }
-    return model_path(path2);
-}
-
-
 // We can think of this collection of name lists as a tree.
 // - Each name list is a path from the root to a tip.
 // - Each node (except the root) has a string name associated with it.

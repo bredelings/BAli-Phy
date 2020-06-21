@@ -270,8 +270,6 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
     {
 	json log = M->get_logged_parameters();
 	vector<string> names = parameter_names(log);
-	for(auto& name: names)
-	    name = translate_structures(name);
 	names = short_parameter_names(names);
 
 	json_to_table_function T1(names);

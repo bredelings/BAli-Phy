@@ -16,7 +16,5 @@ std::string show_model_abbrev(const ptree p, const Rules& rules, int length);
 ptree parse_type(const std::string& s);
 ptree parse(const Rules& R, const std::string& s);
 
-std::string translate_structures(const std::string& name);
-
 bool is_constant(const ptree& p);
 #endif
