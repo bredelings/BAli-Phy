@@ -4,14 +4,14 @@
  - Add slice moves when variables are created.
 
 * 3.6 (unreleased)
- + Make the "nested": true form of JSON log format more readable.
+ + Make the `"nested": true` form of JSON log format more readable.
  - Make modifiable structures instantiate either all their fields or none.
  + Generate cleaner Haskell code:
+   - Don't prefix variable names with "arg_", "let_var_", or "lambda_var_"
    - Rewrite code generation:
      - Track emitted Haskell variable names.
-   - Stop putting argument names into scope as identifiers.
-   - Allow default arguments to depend on earlier arguments.
-   - Don't prefix variable names with "arg_", "let_var_", or "lambda_var_"
+ - Stop putting argument names into scope as identifiers.
+ + Allow default arguments to depend on earlier arguments.
 
 * 3.5 (Mar 2, 2020)
  + Reconstruct ancestral sequences by default.
