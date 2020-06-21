@@ -146,5 +146,20 @@ std::string show(const ptree& pt, int depth=0);
 void to_json(json& j, const ptree::value_t& p);
 void to_json(json& j, const ptree& p);
 
+inline auto index(const ptree& p, int i)
+{
+    if (i > p.size())
+        throw myexception()<<"Can't get entry "<<i<<" for tree with size "<<p.size();
+    auto it = p.begin();
+    for(int j=0;j<i;j++)
+        it++;
+    return *it;
+}
+
+inline ptree array_index(const ptree& p, int i)
+{
+    return index(p,i).second;
+}
+
 
 #endif
