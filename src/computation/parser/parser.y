@@ -85,6 +85,7 @@
   UNDERSCORE    "_"
   AS            "as"
   CASE          "case"
+  CLASS         "class"
   DATA          "data"
   DEFAULT       "default"
   DERIVING      "deriving"
@@ -272,9 +273,10 @@
 %type <std::vector<expression_ref>> topdecls
 %type <std::vector<expression_ref>> topdecls_semi
 %type <expression_ref> topdecl
- /* %type <void> cl_decl */
+%type <expression_ref> cl_decl
 %type <expression_ref> ty_decl
- /* %type <void> inst_decl
+%type <expression_ref> inst_decl
+ /*
 %type <void> overlap_pragma
 %type <void> deriv_strategy_no_via
 %type <void> deriv_strategy_via
@@ -304,7 +306,7 @@
 */
 
 %type <std::vector<expression_ref>> decls
-%type <std::vector<expression_ref>> decllist
+%type <expression_ref> decllist
 %type <expression_ref> binds
 %type <expression_ref> wherebinds
  /*
@@ -334,8 +336,8 @@
 %type <expression_ref> tyapp
 %type <expression_ref> atype_docs
 %type <expression_ref> atype
+%type <expression_ref> inst_type
  /*
-%type <void> inst_type
 %type <void> deriv_types
  */
 %type <std::vector<expression_ref>> comma_types0
@@ -639,9 +641,9 @@ topdecls: topdecls_semi topdecl  { $$ = $1; $$.push_back($2); }
 topdecls_semi: topdecls_semi topdecl semis1 { $$ = $1; $$.push_back($2); }
 |              %empty                       { }
 
-topdecl: cl_decl                               {}
+topdecl: cl_decl                               {$$ = $1;}
 |        ty_decl                               {$$ = $1;}
-|        inst_decl                             {}
+|        inst_decl                             {$$ = $1;}
 /*|        stand_alone_deriving
   |        role_annot*/
 |        "default" "(" comma_types0 ")"        {}
@@ -658,18 +660,18 @@ topdecl: cl_decl                               {}
 |        "builtin" varop INTEGER STRING STRING {$$ = make_builtin_expr($2,$3,$4,$5);}
 |        "builtin" varop INTEGER STRING        {$$ = make_builtin_expr($2,$3,$4);}
 
-cl_decl: "class" tycl_hdr fds where_cls
+cl_decl: "class" tycl_hdr /*fds*/ wherebinds   {$$ = expression_ref{AST_node("Class"),{$2,$3}};}
 
 ty_decl: "type" type "=" ctypedoc                                          {}
-/* |        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family */
 |        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = make_data_or_newtype($1,$3,$4);}
 |        data_or_newtype capi_ctype tycl_hdr opt_kind_sig                  {}
+/* |        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family */
 /* |        "data" "family" type opt_datafam_kind_sig */
 
-inst_decl: "instance" overlap_pragma inst_type where_inst
+inst_decl: "instance" overlap_pragma inst_type wherebinds                  {$$ = expression_ref{AST_node("Instance"),{$3,$4}};}
 /* |          "type" "instance" ty_fam_inst_eqn */
-|          data_or_newtype "instance" capi_ctype tycl_hdr constrs
-|          data_or_newtype "instance" capi_ctype opt_kind_sig
+/* |          data_or_newtype "instance" capi_ctype tycl_hdr constrs
+   |          data_or_newtype "instance" capi_ctype opt_kind_sig */
 
 overlap_pragma: "{-# OVERLAPPABLE" "#-}"
 |               "{-# OVERLAPPING" "#-}"
@@ -734,8 +736,8 @@ opt_kind_sig: %empty
 
 /* opt_tyfam_at_kind_inj_sig: */
 
-tycl_hdr: context "=>" type  {$$ = new expression(AST_node("context"),{$1,$3});}
-|         type               {$$ = $1;}
+tycl_hdr: context "=>" type  {$$ = expression_ref{AST_node("ClassHeader"),{$1,$3}};}
+|         type               {$$ = expression_ref{AST_node("ClassHeader"),{{},$1}};}
 
 capi_ctype: "{-# CTYPE" STRING STRING "#-}"
 |           "{-# CTYPE" STRING "#-}"
@@ -777,46 +779,17 @@ pattern_synonym_sig: "pattern" con_list "::" sigtypedoc
 
 /* ------------- Nested declarations ----------------------------- */
 
-decl_cls: /*at_decl_cls | */ decl
-|         "default" infixexp "::" sigtypedoc
-
-decls_cls: decls_cls ";" decl_cls
-|          decls_cls ";"
-|          decl_cls
-|          %empty
-
-decllist_cls: "{" decls_cls "}"
-|             VOCURLY decls_cls close
-
-where_cls: "where" decllist_cls
-|          %empty
-
-decl_inst: /* at_decl_inst | */ decl
-
-decls_inst: decls_inst ";" decl_inst
-|           decls_inst ";"
-|           decl_inst
-|           %empty
-
-decllist_inst: "{" decls_inst "}"
-|              VOCURLY decls_inst close
-
-where_inst: "where" decllist_inst
-|           %empty
+/* Remove specializtion of binds for classes and instances */
 
 decls: decls ";" decl   {$$ = $1; $$.push_back($3);}
 |      decls ";"        {$$ = $1;}
 |      decl             {$$.push_back($1);}
 |      %empty           {}
 
-decllist: "{" decls "}"          {$$ = $2;}
-|         VOCURLY decls close    {$$ = $2;}
+decllist: "{" decls "}"          {$$ = expression_ref{AST_node("Decls"),$2};}
+|         VOCURLY decls close    {$$ = expression_ref{AST_node("Decls"),$2};}
 
-binds: decllist                  {$$ = new expression(AST_node("Decls"),$1);}
-/* The dbinds can't occur right now
-|     "{" dbinds "}"             {}
-|     VOCURLY dbinds close       {}
- */
+binds: decllist                  {$$ = $1;}
 
 wherebinds: "where" binds        {$$ = $2;}
 |           %empty               {}
@@ -925,7 +898,7 @@ atype: ntgtycon                        {$$ = make_type_id($1);}
 |      "(" ctype "::" kind ")"         {$$ = expression_ref{AST_node("TypeOfKind"),{$2,$4}};}
 /* Template Haskell */
 
-inst_type: sigtype
+inst_type: sigtype                     {$$ = $1;}
 
 deriv_types: typedoc
 |            typedoc "," deriv_types
@@ -945,6 +918,8 @@ tv_bndrs:   tv_bndrs tv_bndr   {$$ = $1; $$.push_back($2);}
 tv_bndr:    tyvar                   {$$ = AST_node("type_id",$1);}
 |           "(" tyvar "::" kind ")" {$$ = new expression(AST_node("type_of_kind"),{AST_node("type_id",$2),$4});}
 
+
+/* fds are functional dependencies = FunDeps 
 fds:        %empty
 |           "|" fds1
 
@@ -955,6 +930,7 @@ fd:         varids0 "->" varids0
 
 varids0:    %empty
 |           varids0 tyvar
+*/
 
 /* ------------- Kinds ------------------------------------------- */
 
@@ -1728,3 +1704,4 @@ expression_ref yy_make_string(const std::string& s)
 	chars.push_back(c);
     return make_list(chars);
 }
+

@@ -240,6 +240,7 @@ std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_words =
     {"_",{parser::token::TOK_UNDERSCORE,0}},
     {"as",{parser::token::TOK_AS,0}},
     {"case",{parser::token::TOK_CASE,0}},
+    {"class",{parser::token::TOK_CLASS,0}},
     {"data",{parser::token::TOK_DATA,0}},
     {"default",{parser::token::TOK_DEFAULT,0}},
     {"deriving",{parser::token::TOK_DERIVING,0}},
