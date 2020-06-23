@@ -660,7 +660,7 @@ topdecl: cl_decl                               {$$ = $1;}
 |        "builtin" varop INTEGER STRING STRING {$$ = make_builtin_expr($2,$3,$4,$5);}
 |        "builtin" varop INTEGER STRING        {$$ = make_builtin_expr($2,$3,$4);}
 
-cl_decl: "class" tycl_hdr /*fds*/ wherebinds   {$$ = expression_ref{AST_node("Class"),{$2,$3}};}
+cl_decl: "class" tycl_hdr /*fds*/ wherebinds   {$$ = expression_ref(AST_node("Class"),{$2,$3});}
 
 ty_decl: "type" type "=" ctypedoc                                          {}
 |        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = make_data_or_newtype($1,$3,$4);}
@@ -668,7 +668,7 @@ ty_decl: "type" type "=" ctypedoc                                          {}
 /* |        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family */
 /* |        "data" "family" type opt_datafam_kind_sig */
 
-inst_decl: "instance" overlap_pragma inst_type wherebinds                  {$$ = expression_ref{AST_node("Instance"),{$3,$4}};}
+inst_decl: "instance" overlap_pragma inst_type wherebinds                  {$$ = expression_ref(AST_node("Instance"),{$3,$4});}
 /* |          "type" "instance" ty_fam_inst_eqn */
 /* |          data_or_newtype "instance" capi_ctype tycl_hdr constrs
    |          data_or_newtype "instance" capi_ctype opt_kind_sig */
@@ -736,8 +736,8 @@ opt_kind_sig: %empty
 
 /* opt_tyfam_at_kind_inj_sig: */
 
-tycl_hdr: context "=>" type  {$$ = expression_ref{AST_node("ClassHeader"),{$1,$3}};}
-|         type               {$$ = expression_ref{AST_node("ClassHeader"),{{},$1}};}
+tycl_hdr: context "=>" type  {$$ = expression_ref(AST_node("ClassHeader"),{$1,$3});}
+|         type               {$$ = expression_ref(AST_node("ClassHeader"),{{},$1});}
 
 capi_ctype: "{-# CTYPE" STRING STRING "#-}"
 |           "{-# CTYPE" STRING "#-}"
@@ -886,16 +886,16 @@ atype_docs: atype /* FIX */        {$$ = $1;}
 atype: ntgtycon                        {$$ = make_type_id($1);}
 |      tyvar                           {$$ = make_type_id($1);}
 |      "*"                             {$$ = AST_node("kind_star");}
-|      strict_mark atype               {$$ = expression_ref{AST_node("strictness"),{$1,$2}};}
+|      strict_mark atype               {$$ = expression_ref(AST_node("strictness"),{$1,$2});}
 |      "{" fielddecls "}"              {$$ = expression_ref{AST_node("FieldDecls"),$2};}
 |      "(" ")"                         {$$ = make_type_id("()");}
 |      "(" comma_types1 "," ctype")"   {auto ts = $2;ts.push_back($4);$$ = expression_ref{AST_node("TupleType"),ts};}
 |      "(#" "#)"                       {}
 |      "(#" comma_types1 "#)"          {}
 |      "(#" bar_types2   "#)"          {}
-|      "[" ctype "]"                   {$$ = expression_ref{AST_node("ListType"),{$2}};}
+|      "[" ctype "]"                   {$$ = expression_ref(AST_node("ListType"),{$2});}
 |      "(" ctype ")"                   {$$ = $2;}
-|      "(" ctype "::" kind ")"         {$$ = expression_ref{AST_node("TypeOfKind"),{$2,$4}};}
+|      "(" ctype "::" kind ")"         {$$ = expression_ref(AST_node("TypeOfKind"),{$2,$4});}
 /* Template Haskell */
 
 inst_type: sigtype                     {$$ = $1;}
@@ -1676,7 +1676,7 @@ expression_ref make_gdrhs(const vector<expression_ref>& guards, const expression
 
 expression_ref make_gdrh(const vector<expression_ref>& guardquals, const expression_ref& exp)
 {
-    return expression_ref(AST_node("gdrh"), {expression_ref{AST_node("guards"),guardquals},exp});
+    return expression_ref(AST_node("gdrh"), {expression_ref(AST_node("guards"),guardquals),exp});
 }
 
 expression_ref make_stmts(const vector<expression_ref>& stmts)

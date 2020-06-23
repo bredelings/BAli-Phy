@@ -1996,7 +1996,7 @@ namespace yy {
 
   case 79:
 #line 663 "parser.y"
-                                               {yylhs.value.as < expression_ref > () = expression_ref{AST_node("Class"),{yystack_[1].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ()}};}
+                                               {yylhs.value.as < expression_ref > () = expression_ref(AST_node("Class"),{yystack_[1].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ()});}
 #line 2001 "parser.cc"
     break;
 
@@ -2020,7 +2020,7 @@ namespace yy {
 
   case 83:
 #line 671 "parser.y"
-                                                                           {yylhs.value.as < expression_ref > () = expression_ref{AST_node("Instance"),{yystack_[1].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ()}};}
+                                                                           {yylhs.value.as < expression_ref > () = expression_ref(AST_node("Instance"),{yystack_[1].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ()});}
 #line 2025 "parser.cc"
     break;
 
@@ -2038,13 +2038,13 @@ namespace yy {
 
   case 97:
 #line 739 "parser.y"
-                             {yylhs.value.as < expression_ref > () = expression_ref{AST_node("ClassHeader"),{yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ()}};}
+                             {yylhs.value.as < expression_ref > () = expression_ref(AST_node("ClassHeader"),{yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ()});}
 #line 2043 "parser.cc"
     break;
 
   case 98:
 #line 740 "parser.y"
-                             {yylhs.value.as < expression_ref > () = expression_ref{AST_node("ClassHeader"),{{},yystack_[0].value.as < expression_ref > ()}};}
+                             {yylhs.value.as < expression_ref > () = expression_ref(AST_node("ClassHeader"),{{},yystack_[0].value.as < expression_ref > ()});}
 #line 2049 "parser.cc"
     break;
 
@@ -2320,7 +2320,7 @@ namespace yy {
 
   case 166:
 #line 889 "parser.y"
-                                       {yylhs.value.as < expression_ref > () = expression_ref{AST_node("strictness"),{yystack_[1].value.as < std::string > (),yystack_[0].value.as < expression_ref > ()}};}
+                                       {yylhs.value.as < expression_ref > () = expression_ref(AST_node("strictness"),{yystack_[1].value.as < std::string > (),yystack_[0].value.as < expression_ref > ()});}
 #line 2325 "parser.cc"
     break;
 
@@ -2362,7 +2362,7 @@ namespace yy {
 
   case 173:
 #line 896 "parser.y"
-                                       {yylhs.value.as < expression_ref > () = expression_ref{AST_node("ListType"),{yystack_[1].value.as < expression_ref > ()}};}
+                                       {yylhs.value.as < expression_ref > () = expression_ref(AST_node("ListType"),{yystack_[1].value.as < expression_ref > ()});}
 #line 2367 "parser.cc"
     break;
 
@@ -2374,7 +2374,7 @@ namespace yy {
 
   case 175:
 #line 898 "parser.y"
-                                       {yylhs.value.as < expression_ref > () = expression_ref{AST_node("TypeOfKind"),{yystack_[3].value.as < expression_ref > (),yystack_[1].value.as < expression_ref > ()}};}
+                                       {yylhs.value.as < expression_ref > () = expression_ref(AST_node("TypeOfKind"),{yystack_[3].value.as < expression_ref > (),yystack_[1].value.as < expression_ref > ()});}
 #line 2379 "parser.cc"
     break;
 
@@ -6234,7 +6234,7 @@ expression_ref make_gdrhs(const vector<expression_ref>& guards, const expression
 
 expression_ref make_gdrh(const vector<expression_ref>& guardquals, const expression_ref& exp)
 {
-    return expression_ref(AST_node("gdrh"), {expression_ref{AST_node("guards"),guardquals},exp});
+    return expression_ref(AST_node("gdrh"), {expression_ref(AST_node("guards"),guardquals),exp});
 }
 
 expression_ref make_stmts(const vector<expression_ref>& stmts)
