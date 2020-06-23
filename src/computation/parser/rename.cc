@@ -387,6 +387,7 @@ struct renamer_state
     bound_var_info find_bound_vars_in_stmt(const expression_ref& stmt);
     bound_var_info find_bound_vars_in_decls(const expression_ref& stmt);
     bound_var_info rename_pattern(expression_ref& pat, bool top = false);
+    bound_var_info rename_decl_head(expression_ref& decl, bool is_top_level);
     expression_ref rename_decl(const expression_ref& decl, const bound_var_info& bound);
     bound_var_info rename_decls(expression_ref& decls, const bound_var_info& bound);
     bound_var_info rename_rec_stmt(expression_ref& stmt, const bound_var_info& bound);
@@ -638,7 +639,7 @@ expression_ref renamer_state::rename_decl(const expression_ref& decl, const boun
 
 bound_var_info renamer_state::find_bound_vars_in_decls(const expression_ref& decls)
 {
-    assert(is_AST(decls,"TopDecls") or is_AST(decls,"Decls"));
+    assert(is_AST(decls,"Decls"));
 
     if (not decls.size()) return {};
 
@@ -648,30 +649,40 @@ bound_var_info renamer_state::find_bound_vars_in_decls(const expression_ref& dec
     // qualified names.
     bound_var_info bound_names;
     for(auto& decl: v)
-    {
-	if (not is_AST(decl,"Decl")) continue;
+	if (is_AST(decl,"Decl"))
+            add(bound_names, rename_decl_head(decl, false));
+    return bound_names;
+}
 
-	auto w = decl.sub();
-	auto& lhs = w[0];
-	auto head = lhs.head();
-	assert(is_AST(head,"id"));
-	// For a constructor pattern, rename the whole lhs.
-	if (is_haskell_con_name(head.as_<AST_node>().value))
-	{
-	    add(bound_names,find_vars_in_pattern(lhs));
-	}
-	// For a function pattern, just rename the variable being defined
-	else if (lhs.size())
-	{
-	    add(bound_names, find_vars_in_pattern(head));
-	    lhs = expression_ref{head,lhs.sub()};
-	}
-	// For a variable pattern, the variable being defined is the whole lhs
-	else
-	{
-	    add(bound_names, find_vars_in_pattern(lhs));
-	}
+bound_var_info renamer_state::rename_decl_head(expression_ref& decl, bool is_top_level)
+{
+    bound_var_info bound_names;
+
+    assert(is_AST(decl,"Decl"));
+
+    auto w = decl.sub();
+    auto& lhs = w[0];
+    auto head = lhs.head();
+    assert(is_AST(head,"id"));
+    // For a constructor pattern, rename the whole lhs.
+    if (is_haskell_con_name(head.as_<AST_node>().value))
+    {
+        add(bound_names,rename_pattern(lhs, is_top_level));
     }
+    // For a function pattern, just rename the variable being defined
+    else if (lhs.size())
+    {
+        add(bound_names,rename_pattern(head, is_top_level));
+        lhs = expression_ref{head,lhs.sub()};
+    }
+    // For a variable pattern, the variable being defined is the whole lhs
+    else
+    {
+        add(bound_names,rename_pattern(lhs, is_top_level));
+    }
+
+    decl = expression_ref{decl.head(),w};
+
     return bound_names;
 }
 
@@ -693,29 +704,8 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
     bound_var_info bound_names;
     for(auto& decl: v)
     {
-	if (not is_AST(decl,"Decl")) continue;
-
-	auto w = decl.sub();
-	auto& lhs = w[0];
-	auto head = lhs.head();
-	assert(is_AST(head,"id"));
-	// For a constructor pattern, rename the whole lhs.
-	if (is_haskell_con_name(head.as_<AST_node>().value))
-	{
-	    add(bound_names,rename_pattern(lhs, top));
-	}
-	// For a function pattern, just rename the variable being defined
-	else if (lhs.size())
-	{
-	    add(bound_names,rename_pattern(head, top));
-	    lhs = expression_ref{head,lhs.sub()};
-	}
-	// For a variable pattern, the variable being defined is the whole lhs
-	else
-	{
-	    add(bound_names,rename_pattern(lhs, top));
-	}
-	decl = expression_ref{decl.head(),w};
+	if (is_AST(decl,"Decl"))
+            add(bound_names, rename_decl_head(decl, top));
     }
 
     // Replace ids with dummies
