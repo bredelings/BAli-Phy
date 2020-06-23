@@ -247,13 +247,18 @@ void Module::compile(const Program& P)
 
     declare_fixities();
 
-    rename_infix(P);  // FIXME - merge with rename() below.
+    // FIXME - merge with rename() below.
+    // Currently this (1) translates field-decls into function declarations
+    //                (2) rewrites @ f x y -> f x y (where f is the head) using unapply( ).
+    //                (3) rewrites infix expressions through desugar_infix( )
+    rename_infix(P);
 
     add_local_symbols();
 
     perform_exports();
 
-    // Currently we do renaming here, including adding prefixes to top-level decls.
+    // Currently we do "renaming" here.
+    // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
     rename(P);
 
     desugar(P);
