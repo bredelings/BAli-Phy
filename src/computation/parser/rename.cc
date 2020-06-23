@@ -714,6 +714,42 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
             add(bound_names, rename_pattern(id, top));
             decl = expression_ref(AST_node("Decl:sigtype"),{id,type});
         }
+        if (is_AST(decl,"Class"))
+        {
+            auto class_header = decl.sub()[0];
+            auto class_decls = decl.sub()[1];
+            assert(is_AST(class_decls, "Decls"));
+            auto cdecls = class_decls.sub();
+            for(auto& cdecl: cdecls)
+                if (is_AST(cdecl,"Decl"))
+                    add(bound_names,rename_decl_head(cdecl, true));
+                else if (is_AST(cdecl,"Decl:sigtype"))
+                {
+                    auto id = cdecl.sub()[0];
+                    auto type = cdecl.sub()[1];
+                    assert(is_AST(id,"id"));
+                    add(bound_names, rename_pattern(id, true));
+                    cdecl = expression_ref(AST_node("Decl:sigtype"),{id,type});
+                }
+            class_decls = expression_ref(AST_node("Decls"),cdecls);
+            decl = expression_ref(AST_node("Class"),{class_header, class_decls});
+        }
+        if (is_AST(decl,"Instance"))
+        {
+            auto instance_header = decl.sub()[0];
+            auto instance_decls = decl.sub()[1];
+            assert(is_AST(instance_decls, "Decls"));
+            auto idecls = instance_decls.sub();
+            for(auto& idecl: idecls)
+                if (is_AST(idecl,"Decl"))
+                    rename_decl_head(idecl, true);
+                else if (is_AST(idecl,"Decl:sigtype"))
+                {
+                    // ??
+                }
+            instance_decls = expression_ref(AST_node("Decls"),idecls);
+            decl = expression_ref(AST_node("Instance"),{instance_header, instance_decls});
+        }
     }
 
     // Replace ids with dummies
@@ -722,6 +758,28 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
     {
 	if (is_AST(decl,"Decl"))
 	    decl = rename_decl(decl, bound2);
+        if (is_AST(decl,"Class"))
+        {
+            auto class_header = decl.sub()[0];
+            auto class_decls = decl.sub()[1];
+            auto cdecls = class_decls.sub();
+            for(auto& cdecl: cdecls)
+                if (is_AST(cdecl,"Decl"))
+                    cdecl = rename_decl(cdecl, bound2);
+            class_decls = expression_ref(AST_node("Decls"),cdecls);
+            decl = expression_ref(AST_node("Class"),{class_header, class_decls});
+        }
+        if (is_AST(decl,"Instance"))
+        {
+            auto instance_header = decl.sub()[0];
+            auto instance_decls = decl.sub()[1];
+            auto idecls = instance_decls.sub();
+            for(auto& idecl: idecls)
+                if (is_AST(idecl,"Decl"))
+                    idecl = rename_decl(idecl, bound2);
+            instance_decls = expression_ref(AST_node("Decls"),idecls);
+            decl = expression_ref(AST_node("Instance"),{instance_header, instance_decls});
+        }
     }
 
     decls = expression_ref{decls.head(),v};
