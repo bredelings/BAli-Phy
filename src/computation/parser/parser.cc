@@ -1965,2053 +1965,2053 @@ namespace yy {
     break;
 
   case 74:
-#line 657 "parser.y"
-                                               {}
+#line 658 "parser.y"
+                                               {yylhs.value.as < expression_ref > () = make_infixexp(yystack_[0].value.as < std::vector<expression_ref> > ());}
 #line 1971 "parser.cc"
     break;
 
   case 75:
-#line 658 "parser.y"
+#line 659 "parser.y"
                                                {yylhs.value.as < expression_ref > () = make_builtin_expr(yystack_[3].value.as < std::string > (),yystack_[2].value.as < int > (),yystack_[1].value.as < std::string > (),yystack_[0].value.as < std::string > ());}
 #line 1977 "parser.cc"
     break;
 
   case 76:
-#line 659 "parser.y"
+#line 660 "parser.y"
                                                {yylhs.value.as < expression_ref > () = make_builtin_expr(yystack_[2].value.as < std::string > (),yystack_[1].value.as < int > (),yystack_[0].value.as < std::string > ());}
 #line 1983 "parser.cc"
     break;
 
   case 77:
-#line 660 "parser.y"
+#line 661 "parser.y"
                                                {yylhs.value.as < expression_ref > () = make_builtin_expr(yystack_[3].value.as < std::string > (),yystack_[2].value.as < int > (),yystack_[1].value.as < std::string > (),yystack_[0].value.as < std::string > ());}
 #line 1989 "parser.cc"
     break;
 
   case 78:
-#line 661 "parser.y"
+#line 662 "parser.y"
                                                {yylhs.value.as < expression_ref > () = make_builtin_expr(yystack_[2].value.as < std::string > (),yystack_[1].value.as < int > (),yystack_[0].value.as < std::string > ());}
 #line 1995 "parser.cc"
     break;
 
   case 79:
-#line 663 "parser.y"
+#line 664 "parser.y"
                                                {yylhs.value.as < expression_ref > () = expression_ref(AST_node("Class"),{yystack_[1].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ()});}
 #line 2001 "parser.cc"
     break;
 
   case 80:
-#line 665 "parser.y"
+#line 666 "parser.y"
                                                                            {}
 #line 2007 "parser.cc"
     break;
 
   case 81:
-#line 666 "parser.y"
+#line 667 "parser.y"
                                                                            {yylhs.value.as < expression_ref > () = make_data_or_newtype(yystack_[4].value.as < std::string > (),yystack_[2].value.as < expression_ref > (),yystack_[1].value.as < std::vector<expression_ref> > ());}
 #line 2013 "parser.cc"
     break;
 
   case 82:
-#line 667 "parser.y"
+#line 668 "parser.y"
                                                                            {}
 #line 2019 "parser.cc"
     break;
 
   case 83:
-#line 671 "parser.y"
+#line 672 "parser.y"
                                                                            {yylhs.value.as < expression_ref > () = expression_ref(AST_node("Instance"),{yystack_[1].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ()});}
 #line 2025 "parser.cc"
     break;
 
   case 93:
-#line 726 "parser.y"
+#line 727 "parser.y"
                            {yylhs.value.as < std::string > ()="data";}
 #line 2031 "parser.cc"
     break;
 
   case 94:
-#line 727 "parser.y"
+#line 728 "parser.y"
                            {yylhs.value.as < std::string > ()="newtype";}
 #line 2037 "parser.cc"
     break;
 
   case 97:
-#line 739 "parser.y"
+#line 740 "parser.y"
                              {yylhs.value.as < expression_ref > () = expression_ref(AST_node("ClassHeader"),{yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ()});}
 #line 2043 "parser.cc"
     break;
 
   case 98:
-#line 740 "parser.y"
+#line 741 "parser.y"
                              {yylhs.value.as < expression_ref > () = expression_ref(AST_node("ClassHeader"),{{},yystack_[0].value.as < expression_ref > ()});}
 #line 2049 "parser.cc"
     break;
 
   case 114:
-#line 784 "parser.y"
+#line 785 "parser.y"
                         {yylhs.value.as < std::vector<expression_ref> > () = yystack_[2].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2055 "parser.cc"
     break;
 
   case 115:
-#line 785 "parser.y"
+#line 786 "parser.y"
                         {yylhs.value.as < std::vector<expression_ref> > () = yystack_[1].value.as < std::vector<expression_ref> > ();}
 #line 2061 "parser.cc"
     break;
 
   case 116:
-#line 786 "parser.y"
+#line 787 "parser.y"
                         {yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2067 "parser.cc"
     break;
 
   case 117:
-#line 787 "parser.y"
+#line 788 "parser.y"
                         {}
 #line 2073 "parser.cc"
     break;
 
   case 118:
-#line 789 "parser.y"
+#line 790 "parser.y"
                                  {yylhs.value.as < expression_ref > () = expression_ref{AST_node("Decls"),yystack_[1].value.as < std::vector<expression_ref> > ()};}
 #line 2079 "parser.cc"
     break;
 
   case 119:
-#line 790 "parser.y"
+#line 791 "parser.y"
                                  {yylhs.value.as < expression_ref > () = expression_ref{AST_node("Decls"),yystack_[1].value.as < std::vector<expression_ref> > ()};}
 #line 2085 "parser.cc"
     break;
 
   case 120:
-#line 792 "parser.y"
+#line 793 "parser.y"
                                  {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 2091 "parser.cc"
     break;
 
   case 121:
-#line 794 "parser.y"
+#line 795 "parser.y"
                                  {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 2097 "parser.cc"
     break;
 
   case 122:
-#line 795 "parser.y"
+#line 796 "parser.y"
                                  {}
 #line 2103 "parser.cc"
     break;
 
   case 128:
-#line 816 "parser.y"
+#line 817 "parser.y"
                  {}
 #line 2109 "parser.cc"
     break;
 
   case 129:
-#line 817 "parser.y"
+#line 818 "parser.y"
                  {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 2115 "parser.cc"
     break;
 
   case 130:
-#line 819 "parser.y"
+#line 820 "parser.y"
                      {}
 #line 2121 "parser.cc"
     break;
 
   case 131:
-#line 820 "parser.y"
+#line 821 "parser.y"
                      {yylhs.value.as < expression_ref > () = make_type_id(yystack_[0].value.as < std::string > ());}
 #line 2127 "parser.cc"
     break;
 
   case 132:
-#line 822 "parser.y"
+#line 823 "parser.y"
                  {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 2133 "parser.cc"
     break;
 
   case 133:
-#line 824 "parser.y"
+#line 825 "parser.y"
                      {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 2139 "parser.cc"
     break;
 
   case 134:
-#line 826 "parser.y"
+#line 827 "parser.y"
                            {yylhs.value.as < std::vector<std::string> > () = yystack_[2].value.as < std::vector<std::string> > (); yylhs.value.as < std::vector<std::string> > ().push_back(yystack_[0].value.as < std::string > ());}
 #line 2145 "parser.cc"
     break;
 
   case 135:
-#line 827 "parser.y"
+#line 828 "parser.y"
                            {yylhs.value.as < std::vector<std::string> > ().push_back(yystack_[0].value.as < std::string > ());}
 #line 2151 "parser.cc"
     break;
 
   case 136:
-#line 829 "parser.y"
+#line 830 "parser.y"
                                  {yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2157 "parser.cc"
     break;
 
   case 137:
-#line 830 "parser.y"
+#line 831 "parser.y"
                                  {yylhs.value.as < std::vector<expression_ref> > () = yystack_[2].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2163 "parser.cc"
     break;
 
   case 138:
-#line 834 "parser.y"
+#line 835 "parser.y"
                                             {yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > ();}
 #line 2169 "parser.cc"
     break;
 
   case 139:
-#line 835 "parser.y"
+#line 836 "parser.y"
                                             {}
 #line 2175 "parser.cc"
     break;
 
   case 140:
-#line 836 "parser.y"
+#line 837 "parser.y"
                                             {yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > ();}
 #line 2181 "parser.cc"
     break;
 
   case 141:
-#line 838 "parser.y"
+#line 839 "parser.y"
                 {yylhs.value.as < std::string > () = "!";}
 #line 2187 "parser.cc"
     break;
 
   case 142:
-#line 839 "parser.y"
+#line 840 "parser.y"
                 {yylhs.value.as < std::string > () = "~";}
 #line 2193 "parser.cc"
     break;
 
   case 145:
-#line 844 "parser.y"
+#line 845 "parser.y"
                                    {yylhs.value.as < expression_ref > () = new expression(AST_node("forall"),{make_tv_bndrs(yystack_[2].value.as < std::vector<expression_ref> > ()),yystack_[0].value.as < expression_ref > ()});}
 #line 2199 "parser.cc"
     break;
 
   case 146:
-#line 845 "parser.y"
+#line 846 "parser.y"
                                    {yylhs.value.as < expression_ref > () = new expression(AST_node("context"),{yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ()});}
 #line 2205 "parser.cc"
     break;
 
   case 147:
-#line 847 "parser.y"
+#line 848 "parser.y"
                                    {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 2211 "parser.cc"
     break;
 
   case 148:
-#line 849 "parser.y"
+#line 850 "parser.y"
                                    {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 2217 "parser.cc"
     break;
 
   case 149:
-#line 858 "parser.y"
+#line 859 "parser.y"
                                    {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 2223 "parser.cc"
     break;
 
   case 150:
-#line 860 "parser.y"
+#line 861 "parser.y"
                                    {yylhs.value.as < expression_ref > () = make_tyapps(yystack_[0].value.as < std::vector<expression_ref> > ());}
 #line 2229 "parser.cc"
     break;
 
   case 151:
-#line 862 "parser.y"
+#line 863 "parser.y"
                                    {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 2235 "parser.cc"
     break;
 
   case 152:
-#line 863 "parser.y"
+#line 864 "parser.y"
                                    {yylhs.value.as < expression_ref > () = make_tyapps({make_type_id("->"),yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ()});}
 #line 2241 "parser.cc"
     break;
 
   case 153:
-#line 865 "parser.y"
+#line 866 "parser.y"
                                    {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 2247 "parser.cc"
     break;
 
   case 154:
-#line 868 "parser.y"
+#line 869 "parser.y"
                                    {yylhs.value.as < expression_ref > () = make_tyapps(yystack_[0].value.as < std::vector<expression_ref> > ());}
 #line 2253 "parser.cc"
     break;
 
   case 155:
-#line 870 "parser.y"
+#line 871 "parser.y"
                                        {yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2259 "parser.cc"
     break;
 
   case 156:
-#line 871 "parser.y"
+#line 872 "parser.y"
                                        {yylhs.value.as < std::vector<expression_ref> > () = yystack_[1].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2265 "parser.cc"
     break;
 
   case 157:
-#line 873 "parser.y"
+#line 874 "parser.y"
                                    {yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2271 "parser.cc"
     break;
 
   case 158:
-#line 874 "parser.y"
+#line 875 "parser.y"
                                    {yylhs.value.as < std::vector<expression_ref> > () = yystack_[1].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2277 "parser.cc"
     break;
 
   case 159:
-#line 876 "parser.y"
+#line 877 "parser.y"
                                    {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 2283 "parser.cc"
     break;
 
   case 160:
-#line 877 "parser.y"
+#line 878 "parser.y"
                                    {yylhs.value.as < expression_ref > () = make_type_id(yystack_[0].value.as < std::string > ());}
 #line 2289 "parser.cc"
     break;
 
   case 161:
-#line 878 "parser.y"
+#line 879 "parser.y"
                                    {yylhs.value.as < expression_ref > () = make_type_id(yystack_[0].value.as < std::string > ());}
 #line 2295 "parser.cc"
     break;
 
   case 162:
-#line 884 "parser.y"
+#line 885 "parser.y"
                                    {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 2301 "parser.cc"
     break;
 
   case 163:
-#line 886 "parser.y"
+#line 887 "parser.y"
                                        {yylhs.value.as < expression_ref > () = make_type_id(yystack_[0].value.as < std::string > ());}
 #line 2307 "parser.cc"
     break;
 
   case 164:
-#line 887 "parser.y"
+#line 888 "parser.y"
                                        {yylhs.value.as < expression_ref > () = make_type_id(yystack_[0].value.as < std::string > ());}
 #line 2313 "parser.cc"
     break;
 
   case 165:
-#line 888 "parser.y"
+#line 889 "parser.y"
                                        {yylhs.value.as < expression_ref > () = AST_node("kind_star");}
 #line 2319 "parser.cc"
     break;
 
   case 166:
-#line 889 "parser.y"
+#line 890 "parser.y"
                                        {yylhs.value.as < expression_ref > () = expression_ref(AST_node("strictness"),{yystack_[1].value.as < std::string > (),yystack_[0].value.as < expression_ref > ()});}
 #line 2325 "parser.cc"
     break;
 
   case 167:
-#line 890 "parser.y"
+#line 891 "parser.y"
                                        {yylhs.value.as < expression_ref > () = expression_ref{AST_node("FieldDecls"),yystack_[1].value.as < std::vector<expression_ref> > ()};}
 #line 2331 "parser.cc"
     break;
 
   case 168:
-#line 891 "parser.y"
+#line 892 "parser.y"
                                        {yylhs.value.as < expression_ref > () = make_type_id("()");}
 #line 2337 "parser.cc"
     break;
 
   case 169:
-#line 892 "parser.y"
+#line 893 "parser.y"
                                        {auto ts = yystack_[3].value.as < std::vector<expression_ref> > ();ts.push_back(yystack_[1].value.as < expression_ref > ());yylhs.value.as < expression_ref > () = expression_ref{AST_node("TupleType"),ts};}
 #line 2343 "parser.cc"
     break;
 
   case 170:
-#line 893 "parser.y"
+#line 894 "parser.y"
                                        {}
 #line 2349 "parser.cc"
     break;
 
   case 171:
-#line 894 "parser.y"
+#line 895 "parser.y"
                                        {}
 #line 2355 "parser.cc"
     break;
 
   case 172:
-#line 895 "parser.y"
+#line 896 "parser.y"
                                        {}
 #line 2361 "parser.cc"
     break;
 
   case 173:
-#line 896 "parser.y"
+#line 897 "parser.y"
                                        {yylhs.value.as < expression_ref > () = expression_ref(AST_node("ListType"),{yystack_[1].value.as < expression_ref > ()});}
 #line 2367 "parser.cc"
     break;
 
   case 174:
-#line 897 "parser.y"
+#line 898 "parser.y"
                                        {yylhs.value.as < expression_ref > () = yystack_[1].value.as < expression_ref > ();}
 #line 2373 "parser.cc"
     break;
 
   case 175:
-#line 898 "parser.y"
+#line 899 "parser.y"
                                        {yylhs.value.as < expression_ref > () = expression_ref(AST_node("TypeOfKind"),{yystack_[3].value.as < expression_ref > (),yystack_[1].value.as < expression_ref > ()});}
 #line 2379 "parser.cc"
     break;
 
   case 176:
-#line 901 "parser.y"
+#line 902 "parser.y"
                                        {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 2385 "parser.cc"
     break;
 
   case 179:
-#line 906 "parser.y"
+#line 907 "parser.y"
                                        {yylhs.value.as < std::vector<expression_ref> > () = yystack_[0].value.as < std::vector<expression_ref> > ();}
 #line 2391 "parser.cc"
     break;
 
   case 180:
-#line 907 "parser.y"
+#line 908 "parser.y"
                                        {}
 #line 2397 "parser.cc"
     break;
 
   case 181:
-#line 909 "parser.y"
+#line 910 "parser.y"
                                        {yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2403 "parser.cc"
     break;
 
   case 182:
-#line 910 "parser.y"
+#line 911 "parser.y"
                                        {yylhs.value.as < std::vector<expression_ref> > () = yystack_[2].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2409 "parser.cc"
     break;
 
   case 185:
-#line 915 "parser.y"
+#line 916 "parser.y"
                                {yylhs.value.as < std::vector<expression_ref> > () = yystack_[1].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2415 "parser.cc"
     break;
 
   case 186:
-#line 916 "parser.y"
+#line 917 "parser.y"
                                {}
 #line 2421 "parser.cc"
     break;
 
   case 187:
-#line 918 "parser.y"
+#line 919 "parser.y"
                                     {yylhs.value.as < expression_ref > () = AST_node("type_id",yystack_[0].value.as < std::string > ());}
 #line 2427 "parser.cc"
     break;
 
   case 188:
-#line 919 "parser.y"
+#line 920 "parser.y"
                                     {yylhs.value.as < expression_ref > () = new expression(AST_node("type_of_kind"),{AST_node("type_id",yystack_[3].value.as < std::string > ()),yystack_[1].value.as < expression_ref > ()});}
 #line 2433 "parser.cc"
     break;
 
   case 189:
-#line 937 "parser.y"
+#line 938 "parser.y"
              {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 2439 "parser.cc"
     break;
 
   case 190:
-#line 943 "parser.y"
+#line 944 "parser.y"
                                 {yylhs.value.as < std::vector<expression_ref> > () = yystack_[0].value.as < std::vector<expression_ref> > ();}
 #line 2445 "parser.cc"
     break;
 
   case 191:
-#line 945 "parser.y"
+#line 946 "parser.y"
                                 {yylhs.value.as < std::vector<expression_ref> > () = yystack_[2].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2451 "parser.cc"
     break;
 
   case 192:
-#line 946 "parser.y"
+#line 947 "parser.y"
                                 {yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2457 "parser.cc"
     break;
 
   case 193:
-#line 948 "parser.y"
+#line 949 "parser.y"
                                                 {yylhs.value.as < expression_ref > () = make_context(yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ());}
 #line 2463 "parser.cc"
     break;
 
   case 194:
-#line 949 "parser.y"
+#line 950 "parser.y"
                                                 {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 2469 "parser.cc"
     break;
 
   case 195:
-#line 951 "parser.y"
+#line 952 "parser.y"
                                 {if (yystack_[1].value.as < std::vector<expression_ref> > ().size()>1) yylhs.value.as < expression_ref > () = make_tv_bndrs(yystack_[1].value.as < std::vector<expression_ref> > ());}
 #line 2475 "parser.cc"
     break;
 
   case 196:
-#line 952 "parser.y"
+#line 953 "parser.y"
                                 {}
 #line 2481 "parser.cc"
     break;
 
   case 197:
-#line 954 "parser.y"
+#line 955 "parser.y"
                                                 {yylhs.value.as < expression_ref > () = make_tyapps(yystack_[0].value.as < std::vector<expression_ref> > ());}
 #line 2487 "parser.cc"
     break;
 
   case 198:
-#line 955 "parser.y"
+#line 956 "parser.y"
                                                 {yylhs.value.as < expression_ref > () = make_tyapps({AST_node("type_id",yystack_[1].value.as < std::string > ()),make_tyapps(yystack_[2].value.as < std::vector<expression_ref> > ()),make_tyapps(yystack_[0].value.as < std::vector<expression_ref> > ())});}
 #line 2493 "parser.cc"
     break;
 
   case 199:
-#line 957 "parser.y"
+#line 958 "parser.y"
                                 {}
 #line 2499 "parser.cc"
     break;
 
   case 200:
-#line 958 "parser.y"
+#line 959 "parser.y"
                                 {yylhs.value.as < std::vector<expression_ref> > () = yystack_[0].value.as < std::vector<expression_ref> > ();}
 #line 2505 "parser.cc"
     break;
 
   case 201:
-#line 960 "parser.y"
+#line 961 "parser.y"
                                         {yylhs.value.as < std::vector<expression_ref> > () = yystack_[2].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2511 "parser.cc"
     break;
 
   case 202:
-#line 961 "parser.y"
+#line 962 "parser.y"
                                         {yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2517 "parser.cc"
     break;
 
   case 203:
-#line 963 "parser.y"
+#line 964 "parser.y"
                                         {yylhs.value.as < expression_ref > () = new expression(AST_node("FieldDecl"),{make_sig_vars(yystack_[2].value.as < std::vector<std::string> > ()),yystack_[0].value.as < expression_ref > ()});}
 #line 2523 "parser.cc"
     break;
 
   case 214:
-#line 982 "parser.y"
+#line 983 "parser.y"
                               {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 2529 "parser.cc"
     break;
 
   case 215:
-#line 984 "parser.y"
+#line 985 "parser.y"
                               {yylhs.value.as < expression_ref > () = new expression(AST_node("Decl:Strict"),{(yystack_[1].value.as < expression_ref > ()),yystack_[0].value.as < expression_ref > ()});}
 #line 2535 "parser.cc"
     break;
 
   case 216:
-#line 986 "parser.y"
+#line 987 "parser.y"
                               {yylhs.value.as < expression_ref > () = new expression(AST_node("Decl"),{make_infixexp(yystack_[2].value.as < std::vector<expression_ref> > ()),yystack_[0].value.as < expression_ref > ()});}
 #line 2541 "parser.cc"
     break;
 
   case 217:
-#line 987 "parser.y"
+#line 988 "parser.y"
                               {}
 #line 2547 "parser.cc"
     break;
 
   case 218:
-#line 990 "parser.y"
+#line 991 "parser.y"
                               {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 2553 "parser.cc"
     break;
 
   case 219:
-#line 994 "parser.y"
+#line 995 "parser.y"
                               {yylhs.value.as < expression_ref > () = make_rhs(yystack_[1].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ());}
 #line 2559 "parser.cc"
     break;
 
   case 220:
-#line 995 "parser.y"
+#line 996 "parser.y"
                               {yylhs.value.as < expression_ref > () = make_gdrhs(yystack_[1].value.as < std::vector<expression_ref> > (),yystack_[0].value.as < expression_ref > ());}
 #line 2565 "parser.cc"
     break;
 
   case 221:
-#line 997 "parser.y"
+#line 998 "parser.y"
                               {yylhs.value.as < std::vector<expression_ref> > () = yystack_[1].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2571 "parser.cc"
     break;
 
   case 222:
-#line 998 "parser.y"
+#line 999 "parser.y"
                               {yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2577 "parser.cc"
     break;
 
   case 223:
-#line 1002 "parser.y"
+#line 1003 "parser.y"
                               {yylhs.value.as < expression_ref > () = make_gdrh(yystack_[2].value.as < std::vector<expression_ref> > (),yystack_[0].value.as < expression_ref > ());}
 #line 2583 "parser.cc"
     break;
 
   case 224:
-#line 1004 "parser.y"
-                                       {}
+#line 1005 "parser.y"
+                                             { yylhs.value.as < expression_ref > () = expression_ref(AST_node("Decl:sigtype"),{make_infixexp(yystack_[2].value.as < std::vector<expression_ref> > ()),yystack_[0].value.as < expression_ref > ()});}
 #line 2589 "parser.cc"
     break;
 
   case 225:
-#line 1005 "parser.y"
+#line 1006 "parser.y"
                                           {}
 #line 2595 "parser.cc"
     break;
 
   case 226:
-#line 1006 "parser.y"
+#line 1007 "parser.y"
                          { yylhs.value.as < expression_ref > () = make_infix(yystack_[2].value.as < std::string > (),yystack_[1].value.as < std::optional<int> > (),yystack_[0].value.as < std::vector<std::string> > ()); }
 #line 2601 "parser.cc"
     break;
 
   case 227:
-#line 1007 "parser.y"
+#line 1008 "parser.y"
                              {}
 #line 2607 "parser.cc"
     break;
 
   case 228:
-#line 1008 "parser.y"
+#line 1009 "parser.y"
                                                     {}
 #line 2613 "parser.cc"
     break;
 
   case 229:
-#line 1009 "parser.y"
+#line 1010 "parser.y"
                                             {}
 #line 2619 "parser.cc"
     break;
 
   case 230:
-#line 1010 "parser.y"
+#line 1011 "parser.y"
                               {}
 #line 2625 "parser.cc"
     break;
 
   case 231:
-#line 1011 "parser.y"
+#line 1012 "parser.y"
                                      {}
 #line 2631 "parser.cc"
     break;
 
   case 232:
-#line 1012 "parser.y"
+#line 1013 "parser.y"
                                                                {}
 #line 2637 "parser.cc"
     break;
 
   case 233:
-#line 1013 "parser.y"
+#line 1014 "parser.y"
                                                                       {}
 #line 2643 "parser.cc"
     break;
 
   case 234:
-#line 1014 "parser.y"
+#line 1015 "parser.y"
                                                      {}
 #line 2649 "parser.cc"
     break;
 
   case 239:
-#line 1024 "parser.y"
+#line 1025 "parser.y"
                            { yylhs.value.as < expression_ref > () = make_typed_exp(make_infixexp(yystack_[2].value.as < std::vector<expression_ref> > ()),yystack_[0].value.as < expression_ref > ()); }
 #line 2655 "parser.cc"
     break;
 
   case 240:
-#line 1025 "parser.y"
+#line 1026 "parser.y"
                            { yylhs.value.as < expression_ref > () = make_infixexp(yystack_[0].value.as < std::vector<expression_ref> > ()); }
 #line 2661 "parser.cc"
     break;
 
   case 241:
-#line 1027 "parser.y"
+#line 1028 "parser.y"
                                 {yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2667 "parser.cc"
     break;
 
   case 242:
-#line 1028 "parser.y"
+#line 1029 "parser.y"
                                 {yylhs.value.as < std::vector<expression_ref> > () = yystack_[2].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(make_id(yystack_[1].value.as < std::string > ())); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2673 "parser.cc"
     break;
 
   case 243:
-#line 1030 "parser.y"
+#line 1031 "parser.y"
                                 {yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2679 "parser.cc"
     break;
 
   case 244:
-#line 1031 "parser.y"
+#line 1032 "parser.y"
                                           {yylhs.value.as < std::vector<expression_ref> > () = yystack_[2].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(make_id(yystack_[1].value.as < std::string > ())); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2685 "parser.cc"
     break;
 
   case 245:
-#line 1033 "parser.y"
+#line 1034 "parser.y"
                                    {yylhs.value.as < expression_ref > () = make_minus(make_fexp(yystack_[0].value.as < std::vector<expression_ref> > ()));}
 #line 2691 "parser.cc"
     break;
 
   case 246:
-#line 1034 "parser.y"
+#line 1035 "parser.y"
                                    {}
 #line 2697 "parser.cc"
     break;
 
   case 247:
-#line 1035 "parser.y"
+#line 1036 "parser.y"
                                    {yylhs.value.as < expression_ref > () = make_fexp(yystack_[0].value.as < std::vector<expression_ref> > ());}
 #line 2703 "parser.cc"
     break;
 
   case 248:
-#line 1037 "parser.y"
+#line 1038 "parser.y"
                                  {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 2709 "parser.cc"
     break;
 
   case 249:
-#line 1038 "parser.y"
+#line 1039 "parser.y"
                                  {}
 #line 2715 "parser.cc"
     break;
 
   case 254:
-#line 1049 "parser.y"
+#line 1050 "parser.y"
                                  {yylhs.value.as < std::vector<expression_ref> > () = yystack_[1].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2721 "parser.cc"
     break;
 
   case 255:
-#line 1050 "parser.y"
+#line 1051 "parser.y"
                                  {}
 #line 2727 "parser.cc"
     break;
 
   case 256:
-#line 1051 "parser.y"
+#line 1052 "parser.y"
                                  {}
 #line 2733 "parser.cc"
     break;
 
   case 257:
-#line 1052 "parser.y"
+#line 1053 "parser.y"
                                  {yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2739 "parser.cc"
     break;
 
   case 258:
-#line 1054 "parser.y"
+#line 1055 "parser.y"
                                  {yylhs.value.as < expression_ref > () = make_as_pattern(yystack_[2].value.as < std::string > (),yystack_[0].value.as < expression_ref > ());}
 #line 2745 "parser.cc"
     break;
 
   case 259:
-#line 1055 "parser.y"
+#line 1056 "parser.y"
                                  {yylhs.value.as < expression_ref > () = make_lazy_pattern(yystack_[0].value.as < expression_ref > ());}
 #line 2751 "parser.cc"
     break;
 
   case 260:
-#line 1056 "parser.y"
+#line 1057 "parser.y"
                                  {yylhs.value.as < expression_ref > () = make_lambda(yystack_[2].value.as < std::vector<expression_ref> > (),yystack_[0].value.as < expression_ref > ());}
 #line 2757 "parser.cc"
     break;
 
   case 261:
-#line 1057 "parser.y"
+#line 1058 "parser.y"
                                  {yylhs.value.as < expression_ref > () = make_let(yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ());}
 #line 2763 "parser.cc"
     break;
 
   case 262:
-#line 1058 "parser.y"
+#line 1059 "parser.y"
                                  {}
 #line 2769 "parser.cc"
     break;
 
   case 263:
-#line 1059 "parser.y"
+#line 1060 "parser.y"
                                                        {yylhs.value.as < expression_ref > () = make_if(yystack_[6].value.as < expression_ref > (),yystack_[3].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ());}
 #line 2775 "parser.cc"
     break;
 
   case 264:
-#line 1060 "parser.y"
+#line 1061 "parser.y"
                                  {}
 #line 2781 "parser.cc"
     break;
 
   case 265:
-#line 1061 "parser.y"
+#line 1062 "parser.y"
                                  {yylhs.value.as < expression_ref > () = make_case(yystack_[2].value.as < expression_ref > (),make_alts(yystack_[0].value.as < std::vector<expression_ref> > ()));}
 #line 2787 "parser.cc"
     break;
 
   case 266:
-#line 1062 "parser.y"
+#line 1063 "parser.y"
                                  {yylhs.value.as < expression_ref > () = make_do(yystack_[0].value.as < std::vector<expression_ref> > ());}
 #line 2793 "parser.cc"
     break;
 
   case 267:
-#line 1063 "parser.y"
+#line 1064 "parser.y"
                                  {yylhs.value.as < expression_ref > () = make_mdo(yystack_[0].value.as < std::vector<expression_ref> > ());}
 #line 2799 "parser.cc"
     break;
 
   case 268:
-#line 1064 "parser.y"
+#line 1065 "parser.y"
                                  {}
 #line 2805 "parser.cc"
     break;
 
   case 269:
-#line 1065 "parser.y"
+#line 1066 "parser.y"
                                  {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 2811 "parser.cc"
     break;
 
   case 270:
-#line 1067 "parser.y"
+#line 1068 "parser.y"
                               {}
 #line 2817 "parser.cc"
     break;
 
   case 271:
-#line 1068 "parser.y"
+#line 1069 "parser.y"
                               {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 2823 "parser.cc"
     break;
 
   case 272:
-#line 1070 "parser.y"
+#line 1071 "parser.y"
                               {yylhs.value.as < expression_ref > () = make_id(yystack_[0].value.as < std::string > ());}
 #line 2829 "parser.cc"
     break;
 
   case 273:
-#line 1071 "parser.y"
+#line 1072 "parser.y"
                               {yylhs.value.as < expression_ref > () = make_id(yystack_[0].value.as < std::string > ());}
 #line 2835 "parser.cc"
     break;
 
   case 274:
-#line 1072 "parser.y"
+#line 1073 "parser.y"
                               {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 2841 "parser.cc"
     break;
 
   case 275:
-#line 1073 "parser.y"
+#line 1074 "parser.y"
                               {yylhs.value.as < expression_ref > () = yystack_[1].value.as < expression_ref > ();}
 #line 2847 "parser.cc"
     break;
 
   case 276:
-#line 1074 "parser.y"
+#line 1075 "parser.y"
                               {yylhs.value.as < expression_ref > () = yy_make_tuple(yystack_[1].value.as < std::vector<expression_ref> > ());}
 #line 2853 "parser.cc"
     break;
 
   case 277:
-#line 1075 "parser.y"
+#line 1076 "parser.y"
                               {}
 #line 2859 "parser.cc"
     break;
 
   case 278:
-#line 1076 "parser.y"
+#line 1077 "parser.y"
                               {}
 #line 2865 "parser.cc"
     break;
 
   case 279:
-#line 1077 "parser.y"
+#line 1078 "parser.y"
                               {yylhs.value.as < expression_ref > () = yystack_[1].value.as < expression_ref > ();}
 #line 2871 "parser.cc"
     break;
 
   case 280:
-#line 1078 "parser.y"
+#line 1079 "parser.y"
                               {yylhs.value.as < expression_ref > () = AST_node("WildcardPattern");}
 #line 2877 "parser.cc"
     break;
 
   case 281:
-#line 1083 "parser.y"
+#line 1084 "parser.y"
                       {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 2883 "parser.cc"
     break;
 
   case 282:
-#line 1084 "parser.y"
+#line 1085 "parser.y"
                       {yylhs.value.as < expression_ref > () = new expression(AST_node("LeftSection"),{make_infixexp(yystack_[1].value.as < std::vector<expression_ref> > ()),make_id(yystack_[0].value.as < std::string > ())});}
 #line 2889 "parser.cc"
     break;
 
   case 283:
-#line 1085 "parser.y"
+#line 1086 "parser.y"
                       {yylhs.value.as < expression_ref > () = new expression(AST_node("RightSection"),{make_id(yystack_[1].value.as < std::string > ()),make_infixexp(yystack_[0].value.as < std::vector<expression_ref> > ())});}
 #line 2895 "parser.cc"
     break;
 
   case 284:
-#line 1090 "parser.y"
+#line 1091 "parser.y"
                                  {yylhs.value.as < std::vector<expression_ref> > () = yystack_[2].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2901 "parser.cc"
     break;
 
   case 285:
-#line 1091 "parser.y"
+#line 1092 "parser.y"
                                  {yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[2].value.as < expression_ref > ()); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2907 "parser.cc"
     break;
 
   case 286:
-#line 1109 "parser.y"
+#line 1110 "parser.y"
                                  { yylhs.value.as < expression_ref > () = {AST_node("id",":"),yystack_[0].value.as < expression_ref > (),AST_node("id","[]")}; }
 #line 2913 "parser.cc"
     break;
 
   case 287:
-#line 1110 "parser.y"
+#line 1111 "parser.y"
                                  { yylhs.value.as < expression_ref > () = make_list(yystack_[0].value.as < std::vector<expression_ref> > ()); }
 #line 2919 "parser.cc"
     break;
 
   case 288:
-#line 1111 "parser.y"
+#line 1112 "parser.y"
                                  { yylhs.value.as < expression_ref > () = expression_ref(AST_node("enumFrom"),{yystack_[1].value.as < expression_ref > ()}); }
 #line 2925 "parser.cc"
     break;
 
   case 289:
-#line 1112 "parser.y"
+#line 1113 "parser.y"
                                  { yylhs.value.as < expression_ref > () = expression_ref(AST_node("enumFromThen"),{yystack_[3].value.as < expression_ref > (),yystack_[1].value.as < expression_ref > ()}); }
 #line 2931 "parser.cc"
     break;
 
   case 290:
-#line 1113 "parser.y"
+#line 1114 "parser.y"
                                  { yylhs.value.as < expression_ref > () = expression_ref(AST_node("enumFromTo"),{yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ()}); }
 #line 2937 "parser.cc"
     break;
 
   case 291:
-#line 1114 "parser.y"
+#line 1115 "parser.y"
                                  { yylhs.value.as < expression_ref > () = expression_ref(AST_node("enumFromThenTo"),{yystack_[4].value.as < expression_ref > (),yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ()}); }
 #line 2943 "parser.cc"
     break;
 
   case 292:
-#line 1115 "parser.y"
+#line 1116 "parser.y"
                                  { auto quals = yystack_[0].value.as < std::vector<expression_ref> > (); quals.push_back(yystack_[2].value.as < expression_ref > ()); yylhs.value.as < expression_ref > () = expression_ref(AST_node("ListComprehension"),quals); }
 #line 2949 "parser.cc"
     break;
 
   case 293:
-#line 1117 "parser.y"
+#line 1118 "parser.y"
                                  { yylhs.value.as < std::vector<expression_ref> > () = yystack_[2].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2955 "parser.cc"
     break;
 
   case 294:
-#line 1118 "parser.y"
+#line 1119 "parser.y"
                                  { yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[2].value.as < expression_ref > ()); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2961 "parser.cc"
     break;
 
   case 295:
-#line 1130 "parser.y"
+#line 1131 "parser.y"
                                           {yylhs.value.as < std::vector<expression_ref> > () = yystack_[2].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2967 "parser.cc"
     break;
 
   case 296:
-#line 1131 "parser.y"
+#line 1132 "parser.y"
                                           {yylhs.value.as < std::vector<expression_ref> > () = yystack_[2].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2973 "parser.cc"
     break;
 
   case 297:
-#line 1132 "parser.y"
+#line 1133 "parser.y"
                                           {yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2979 "parser.cc"
     break;
 
   case 298:
-#line 1133 "parser.y"
+#line 1134 "parser.y"
                                           {yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2985 "parser.cc"
     break;
 
   case 299:
-#line 1135 "parser.y"
+#line 1136 "parser.y"
                                                     {}
 #line 2991 "parser.cc"
     break;
 
   case 300:
-#line 1136 "parser.y"
+#line 1137 "parser.y"
                                                     {}
 #line 2997 "parser.cc"
     break;
 
   case 301:
-#line 1137 "parser.y"
+#line 1138 "parser.y"
                                                     {}
 #line 3003 "parser.cc"
     break;
 
   case 302:
-#line 1138 "parser.y"
+#line 1139 "parser.y"
                                                     {}
 #line 3009 "parser.cc"
     break;
 
   case 303:
-#line 1141 "parser.y"
+#line 1142 "parser.y"
                                    {yylhs.value.as < std::vector<expression_ref> > () = yystack_[0].value.as < std::vector<expression_ref> > ();}
 #line 3015 "parser.cc"
     break;
 
   case 304:
-#line 1143 "parser.y"
+#line 1144 "parser.y"
                                    {yylhs.value.as < std::vector<expression_ref> > () = yystack_[2].value.as < std::vector<expression_ref> > ();yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 3021 "parser.cc"
     break;
 
   case 305:
-#line 1144 "parser.y"
+#line 1145 "parser.y"
                                    {yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 3027 "parser.cc"
     break;
 
   case 306:
-#line 1147 "parser.y"
+#line 1148 "parser.y"
                                  {yylhs.value.as < std::vector<expression_ref> > () = yystack_[1].value.as < std::vector<expression_ref> > ();}
 #line 3033 "parser.cc"
     break;
 
   case 307:
-#line 1148 "parser.y"
+#line 1149 "parser.y"
                                  {yylhs.value.as < std::vector<expression_ref> > () = yystack_[1].value.as < std::vector<expression_ref> > ();}
 #line 3039 "parser.cc"
     break;
 
   case 308:
-#line 1149 "parser.y"
+#line 1150 "parser.y"
                                  {}
 #line 3045 "parser.cc"
     break;
 
   case 309:
-#line 1150 "parser.y"
+#line 1151 "parser.y"
                                  {}
 #line 3051 "parser.cc"
     break;
 
   case 310:
-#line 1152 "parser.y"
+#line 1153 "parser.y"
                                  {yylhs.value.as < std::vector<expression_ref> > () = yystack_[0].value.as < std::vector<expression_ref> > ();}
 #line 3057 "parser.cc"
     break;
 
   case 311:
-#line 1153 "parser.y"
+#line 1154 "parser.y"
                                  {yylhs.value.as < std::vector<expression_ref> > () = yystack_[0].value.as < std::vector<expression_ref> > ();}
 #line 3063 "parser.cc"
     break;
 
   case 312:
-#line 1155 "parser.y"
+#line 1156 "parser.y"
                                  {yylhs.value.as < std::vector<expression_ref> > () = yystack_[2].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 3069 "parser.cc"
     break;
 
   case 313:
-#line 1156 "parser.y"
+#line 1157 "parser.y"
                                  {yylhs.value.as < std::vector<expression_ref> > () = yystack_[1].value.as < std::vector<expression_ref> > ();}
 #line 3075 "parser.cc"
     break;
 
   case 314:
-#line 1157 "parser.y"
+#line 1158 "parser.y"
                                  {yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 3081 "parser.cc"
     break;
 
   case 315:
-#line 1159 "parser.y"
+#line 1160 "parser.y"
                                  {yylhs.value.as < expression_ref > () = yy_make_alt(yystack_[1].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ());}
 #line 3087 "parser.cc"
     break;
 
   case 316:
-#line 1161 "parser.y"
+#line 1162 "parser.y"
                                  {yylhs.value.as < expression_ref > () = make_rhs(yystack_[1].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ());}
 #line 3093 "parser.cc"
     break;
 
   case 317:
-#line 1162 "parser.y"
+#line 1163 "parser.y"
                                  {yylhs.value.as < expression_ref > () = make_gdrhs(yystack_[1].value.as < std::vector<expression_ref> > (),yystack_[0].value.as < expression_ref > ());}
 #line 3099 "parser.cc"
     break;
 
   case 318:
-#line 1164 "parser.y"
+#line 1165 "parser.y"
                                  {yylhs.value.as < std::vector<expression_ref> > () = yystack_[1].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 3105 "parser.cc"
     break;
 
   case 319:
-#line 1165 "parser.y"
+#line 1166 "parser.y"
                                  {yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 3111 "parser.cc"
     break;
 
   case 320:
-#line 1167 "parser.y"
+#line 1168 "parser.y"
                                  {}
 #line 3117 "parser.cc"
     break;
 
   case 321:
-#line 1168 "parser.y"
+#line 1169 "parser.y"
                                  {}
 #line 3123 "parser.cc"
     break;
 
   case 322:
-#line 1170 "parser.y"
+#line 1171 "parser.y"
                                  {yylhs.value.as < expression_ref > ()=make_gdrh(yystack_[2].value.as < std::vector<expression_ref> > (),yystack_[0].value.as < expression_ref > ());}
 #line 3129 "parser.cc"
     break;
 
   case 323:
-#line 1172 "parser.y"
+#line 1173 "parser.y"
               {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 3135 "parser.cc"
     break;
 
   case 324:
-#line 1173 "parser.y"
+#line 1174 "parser.y"
               {yylhs.value.as < expression_ref > () = make_strict_pattern(yystack_[0].value.as < expression_ref > ());}
 #line 3141 "parser.cc"
     break;
 
   case 325:
-#line 1175 "parser.y"
+#line 1176 "parser.y"
               {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 3147 "parser.cc"
     break;
 
   case 326:
-#line 1176 "parser.y"
+#line 1177 "parser.y"
               {yylhs.value.as < expression_ref > () = make_strict_pattern(yystack_[0].value.as < expression_ref > ());}
 #line 3153 "parser.cc"
     break;
 
   case 327:
-#line 1178 "parser.y"
+#line 1179 "parser.y"
               {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 3159 "parser.cc"
     break;
 
   case 328:
-#line 1179 "parser.y"
+#line 1180 "parser.y"
               {yylhs.value.as < expression_ref > () = make_strict_pattern(yystack_[0].value.as < expression_ref > ());}
 #line 3165 "parser.cc"
     break;
 
   case 329:
-#line 1181 "parser.y"
+#line 1182 "parser.y"
                     {yylhs.value.as < std::vector<expression_ref> > () = yystack_[1].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 3171 "parser.cc"
     break;
 
   case 330:
-#line 1182 "parser.y"
+#line 1183 "parser.y"
                     {yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 3177 "parser.cc"
     break;
 
   case 331:
-#line 1185 "parser.y"
+#line 1186 "parser.y"
                                {yylhs.value.as < std::vector<expression_ref> > () = yystack_[1].value.as < std::vector<expression_ref> > ();}
 #line 3183 "parser.cc"
     break;
 
   case 332:
-#line 1186 "parser.y"
+#line 1187 "parser.y"
                                {yylhs.value.as < std::vector<expression_ref> > () = yystack_[1].value.as < std::vector<expression_ref> > ();}
 #line 3189 "parser.cc"
     break;
 
   case 333:
-#line 1188 "parser.y"
+#line 1189 "parser.y"
                        {yylhs.value.as < std::vector<expression_ref> > () = yystack_[2].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 3195 "parser.cc"
     break;
 
   case 334:
-#line 1189 "parser.y"
+#line 1190 "parser.y"
                        {yylhs.value.as < std::vector<expression_ref> > () = yystack_[1].value.as < std::vector<expression_ref> > ();}
 #line 3201 "parser.cc"
     break;
 
   case 335:
-#line 1190 "parser.y"
+#line 1191 "parser.y"
                        {yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 3207 "parser.cc"
     break;
 
   case 336:
-#line 1191 "parser.y"
+#line 1192 "parser.y"
                        {}
 #line 3213 "parser.cc"
     break;
 
   case 337:
-#line 1196 "parser.y"
+#line 1197 "parser.y"
                         {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 3219 "parser.cc"
     break;
 
   case 338:
-#line 1197 "parser.y"
+#line 1198 "parser.y"
                         {yylhs.value.as < expression_ref > () = new expression(AST_node("Rec"),{yystack_[0].value.as < std::vector<expression_ref> > ()});}
 #line 3225 "parser.cc"
     break;
 
   case 339:
-#line 1199 "parser.y"
+#line 1200 "parser.y"
                         {yylhs.value.as < expression_ref > () = new expression(AST_node("PatQual"),{yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ()});}
 #line 3231 "parser.cc"
     break;
 
   case 340:
-#line 1200 "parser.y"
+#line 1201 "parser.y"
                         {yylhs.value.as < expression_ref > () = new expression(AST_node("SimpleQual"),{yystack_[0].value.as < expression_ref > ()});}
 #line 3237 "parser.cc"
     break;
 
   case 341:
-#line 1201 "parser.y"
+#line 1202 "parser.y"
                         {yylhs.value.as < expression_ref > () = new expression(AST_node("LetQual"),{yystack_[0].value.as < expression_ref > ()});}
 #line 3243 "parser.cc"
     break;
 
   case 349:
-#line 1246 "parser.y"
+#line 1247 "parser.y"
                { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3249 "parser.cc"
     break;
 
   case 350:
-#line 1247 "parser.y"
+#line 1248 "parser.y"
                { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3255 "parser.cc"
     break;
 
   case 351:
-#line 1249 "parser.y"
+#line 1250 "parser.y"
                       { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3261 "parser.cc"
     break;
 
   case 352:
-#line 1250 "parser.y"
+#line 1251 "parser.y"
                       { yylhs.value.as < std::string > () = yystack_[1].value.as < std::string > (); }
 #line 3267 "parser.cc"
     break;
 
   case 353:
-#line 1252 "parser.y"
+#line 1253 "parser.y"
                     { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3273 "parser.cc"
     break;
 
   case 354:
-#line 1253 "parser.y"
+#line 1254 "parser.y"
                     { yylhs.value.as < std::string > () = yystack_[1].value.as < std::string > (); }
 #line 3279 "parser.cc"
     break;
 
   case 355:
-#line 1254 "parser.y"
+#line 1255 "parser.y"
                     { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3285 "parser.cc"
     break;
 
   case 358:
-#line 1259 "parser.y"
+#line 1260 "parser.y"
                             { yylhs.value.as < std::string > () =  "()"; }
 #line 3291 "parser.cc"
     break;
 
   case 359:
-#line 1260 "parser.y"
+#line 1261 "parser.y"
                                    { yylhs.value.as < std::string > () = "("+std::string(yystack_[1].value.as < int > (),',')+")"; }
 #line 3297 "parser.cc"
     break;
 
   case 360:
-#line 1261 "parser.y"
+#line 1262 "parser.y"
                             { yylhs.value.as < std::string > () = "(##)"; }
 #line 3303 "parser.cc"
     break;
 
   case 361:
-#line 1262 "parser.y"
+#line 1263 "parser.y"
                                    { yylhs.value.as < std::string > () = "(#"+std::string(yystack_[1].value.as < int > (),',')+"#)"; }
 #line 3309 "parser.cc"
     break;
 
   case 362:
-#line 1264 "parser.y"
+#line 1265 "parser.y"
                          { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3315 "parser.cc"
     break;
 
   case 363:
-#line 1265 "parser.y"
+#line 1266 "parser.y"
                          { yylhs.value.as < std::string > () = "[]"; }
 #line 3321 "parser.cc"
     break;
 
   case 364:
-#line 1267 "parser.y"
+#line 1268 "parser.y"
               { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3327 "parser.cc"
     break;
 
   case 365:
-#line 1268 "parser.y"
+#line 1269 "parser.y"
                      { yylhs.value.as < std::string > () = yystack_[1].value.as < std::string > (); }
 #line 3333 "parser.cc"
     break;
 
   case 366:
-#line 1270 "parser.y"
+#line 1271 "parser.y"
                 { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3339 "parser.cc"
     break;
 
   case 367:
-#line 1271 "parser.y"
+#line 1272 "parser.y"
                       { yylhs.value.as < std::string > () = yystack_[1].value.as < std::string > (); }
 #line 3345 "parser.cc"
     break;
 
   case 368:
-#line 1274 "parser.y"
+#line 1275 "parser.y"
                      { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3351 "parser.cc"
     break;
 
   case 369:
-#line 1275 "parser.y"
+#line 1276 "parser.y"
                     { yylhs.value.as < std::string > () = "()"; }
 #line 3357 "parser.cc"
     break;
 
   case 370:
-#line 1276 "parser.y"
+#line 1277 "parser.y"
                     { yylhs.value.as < std::string > () = "(##)"; }
 #line 3363 "parser.cc"
     break;
 
   case 371:
-#line 1278 "parser.y"
+#line 1279 "parser.y"
                            { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3369 "parser.cc"
     break;
 
   case 372:
-#line 1279 "parser.y"
+#line 1280 "parser.y"
                           { yylhs.value.as < std::string > () = "("+std::string(yystack_[1].value.as < int > (),',')+")"; }
 #line 3375 "parser.cc"
     break;
 
   case 373:
-#line 1280 "parser.y"
+#line 1281 "parser.y"
                           { yylhs.value.as < std::string > () = "(#"+std::string(yystack_[1].value.as < int > (),',')+"#)"; }
 #line 3381 "parser.cc"
     break;
 
   case 374:
-#line 1281 "parser.y"
+#line 1282 "parser.y"
                           { yylhs.value.as < std::string > () = "->"; }
 #line 3387 "parser.cc"
     break;
 
   case 375:
-#line 1282 "parser.y"
+#line 1283 "parser.y"
                           { yylhs.value.as < std::string > () = "[]"; }
 #line 3393 "parser.cc"
     break;
 
   case 376:
-#line 1284 "parser.y"
+#line 1285 "parser.y"
                            { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3399 "parser.cc"
     break;
 
   case 377:
-#line 1285 "parser.y"
+#line 1286 "parser.y"
                            { yylhs.value.as < std::string > () = yystack_[1].value.as < std::string > (); }
 #line 3405 "parser.cc"
     break;
 
   case 378:
-#line 1286 "parser.y"
+#line 1287 "parser.y"
                            { yylhs.value.as < std::string > () = "~"; }
 #line 3411 "parser.cc"
     break;
 
   case 379:
-#line 1288 "parser.y"
+#line 1289 "parser.y"
                            { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3417 "parser.cc"
     break;
 
   case 380:
-#line 1289 "parser.y"
+#line 1290 "parser.y"
                            { yylhs.value.as < std::string > () = yystack_[1].value.as < std::string > (); }
 #line 3423 "parser.cc"
     break;
 
   case 381:
-#line 1290 "parser.y"
+#line 1291 "parser.y"
                            { yylhs.value.as < std::string > () = yystack_[1].value.as < std::string > (); }
 #line 3429 "parser.cc"
     break;
 
   case 382:
-#line 1291 "parser.y"
+#line 1292 "parser.y"
                            { yylhs.value.as < std::string > () = ":"; }
 #line 3435 "parser.cc"
     break;
 
   case 383:
-#line 1292 "parser.y"
+#line 1293 "parser.y"
                            { yylhs.value.as < std::string > () = "~"; }
 #line 3441 "parser.cc"
     break;
 
   case 384:
-#line 1295 "parser.y"
+#line 1296 "parser.y"
                          {yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3447 "parser.cc"
     break;
 
   case 385:
-#line 1296 "parser.y"
+#line 1297 "parser.y"
                          { yylhs.value.as < std::string > () = yystack_[1].value.as < std::string > (); }
 #line 3453 "parser.cc"
     break;
 
   case 386:
-#line 1298 "parser.y"
+#line 1299 "parser.y"
                   {yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > ();}
 #line 3459 "parser.cc"
     break;
 
   case 387:
-#line 1300 "parser.y"
+#line 1301 "parser.y"
                 { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3465 "parser.cc"
     break;
 
   case 388:
-#line 1301 "parser.y"
+#line 1302 "parser.y"
                 { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3471 "parser.cc"
     break;
 
   case 389:
-#line 1305 "parser.y"
+#line 1306 "parser.y"
                     { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3477 "parser.cc"
     break;
 
   case 390:
-#line 1307 "parser.y"
+#line 1308 "parser.y"
                     { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3483 "parser.cc"
     break;
 
   case 391:
-#line 1308 "parser.y"
+#line 1309 "parser.y"
                     { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3489 "parser.cc"
     break;
 
   case 392:
-#line 1309 "parser.y"
+#line 1310 "parser.y"
                     { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3495 "parser.cc"
     break;
 
   case 393:
-#line 1311 "parser.y"
+#line 1312 "parser.y"
                  { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3501 "parser.cc"
     break;
 
   case 394:
-#line 1312 "parser.y"
+#line 1313 "parser.y"
                  { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3507 "parser.cc"
     break;
 
   case 395:
-#line 1313 "parser.y"
+#line 1314 "parser.y"
                  { yylhs.value.as < std::string > () = ":"; }
 #line 3513 "parser.cc"
     break;
 
   case 396:
-#line 1314 "parser.y"
+#line 1315 "parser.y"
                  { yylhs.value.as < std::string > () = "-"; }
 #line 3519 "parser.cc"
     break;
 
   case 397:
-#line 1319 "parser.y"
+#line 1320 "parser.y"
            { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3525 "parser.cc"
     break;
 
   case 398:
-#line 1320 "parser.y"
+#line 1321 "parser.y"
            { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3531 "parser.cc"
     break;
 
   case 399:
-#line 1322 "parser.y"
+#line 1323 "parser.y"
                 { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3537 "parser.cc"
     break;
 
   case 400:
-#line 1323 "parser.y"
+#line 1324 "parser.y"
                 { yylhs.value.as < std::string > () = yystack_[1].value.as < std::string > (); }
 #line 3543 "parser.cc"
     break;
 
   case 401:
-#line 1325 "parser.y"
+#line 1326 "parser.y"
                 { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3549 "parser.cc"
     break;
 
   case 402:
-#line 1326 "parser.y"
+#line 1327 "parser.y"
                 { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3555 "parser.cc"
     break;
 
   case 403:
-#line 1327 "parser.y"
+#line 1328 "parser.y"
                 { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3561 "parser.cc"
     break;
 
   case 404:
-#line 1329 "parser.y"
+#line 1330 "parser.y"
                 { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3567 "parser.cc"
     break;
 
   case 405:
-#line 1330 "parser.y"
+#line 1331 "parser.y"
                 { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3573 "parser.cc"
     break;
 
   case 406:
-#line 1331 "parser.y"
+#line 1332 "parser.y"
                 { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3579 "parser.cc"
     break;
 
   case 407:
-#line 1333 "parser.y"
+#line 1334 "parser.y"
                       { yylhs.value.as < std::string > () = "_"; }
 #line 3585 "parser.cc"
     break;
 
   case 408:
-#line 1335 "parser.y"
+#line 1336 "parser.y"
                  { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3591 "parser.cc"
     break;
 
   case 409:
-#line 1336 "parser.y"
+#line 1337 "parser.y"
                        { yylhs.value.as < std::string > () = yystack_[1].value.as < std::string > (); }
 #line 3597 "parser.cc"
     break;
 
   case 410:
-#line 1338 "parser.y"
+#line 1339 "parser.y"
                            { yylhs.value.as < std::string > () =yystack_[0].value.as < std::string > (); }
 #line 3603 "parser.cc"
     break;
 
   case 411:
-#line 1339 "parser.y"
+#line 1340 "parser.y"
                  { yylhs.value.as < std::string > () = yystack_[1].value.as < std::string > (); }
 #line 3609 "parser.cc"
     break;
 
   case 412:
-#line 1343 "parser.y"
+#line 1344 "parser.y"
                           { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3615 "parser.cc"
     break;
 
   case 413:
-#line 1345 "parser.y"
+#line 1346 "parser.y"
                           { yylhs.value.as < std::string > () = yystack_[1].value.as < std::string > (); }
 #line 3621 "parser.cc"
     break;
 
   case 414:
-#line 1347 "parser.y"
+#line 1348 "parser.y"
                           { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3627 "parser.cc"
     break;
 
   case 415:
-#line 1348 "parser.y"
+#line 1349 "parser.y"
                           { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3633 "parser.cc"
     break;
 
   case 416:
-#line 1349 "parser.y"
+#line 1350 "parser.y"
                           { yylhs.value.as < std::string > () = "unsafe"; }
 #line 3639 "parser.cc"
     break;
 
   case 417:
-#line 1350 "parser.y"
+#line 1351 "parser.y"
                           { yylhs.value.as < std::string > () = "safe"; }
 #line 3645 "parser.cc"
     break;
 
   case 418:
-#line 1351 "parser.y"
+#line 1352 "parser.y"
                           { yylhs.value.as < std::string > () = "interruptible"; }
 #line 3651 "parser.cc"
     break;
 
   case 419:
-#line 1354 "parser.y"
+#line 1355 "parser.y"
            { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3657 "parser.cc"
     break;
 
   case 420:
-#line 1355 "parser.y"
+#line 1356 "parser.y"
                  {yylhs.value.as < std::string > () = yystack_[1].value.as < std::string > (); }
 #line 3663 "parser.cc"
     break;
 
   case 421:
-#line 1357 "parser.y"
+#line 1358 "parser.y"
              { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3669 "parser.cc"
     break;
 
   case 422:
-#line 1358 "parser.y"
+#line 1359 "parser.y"
                  {yylhs.value.as < std::string > () = yystack_[1].value.as < std::string > (); }
 #line 3675 "parser.cc"
     break;
 
   case 423:
-#line 1359 "parser.y"
+#line 1360 "parser.y"
                    {yylhs.value.as < std::string > () = yystack_[1].value.as < std::string > (); }
 #line 3681 "parser.cc"
     break;
 
   case 424:
-#line 1361 "parser.y"
+#line 1362 "parser.y"
               { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3687 "parser.cc"
     break;
 
   case 425:
-#line 1362 "parser.y"
+#line 1363 "parser.y"
          { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3693 "parser.cc"
     break;
 
   case 426:
-#line 1364 "parser.y"
+#line 1365 "parser.y"
                     { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3699 "parser.cc"
     break;
 
   case 427:
-#line 1365 "parser.y"
+#line 1366 "parser.y"
                     { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3705 "parser.cc"
     break;
 
   case 428:
-#line 1366 "parser.y"
+#line 1367 "parser.y"
                     { yylhs.value.as < std::string > () = "unsafe"; }
 #line 3711 "parser.cc"
     break;
 
   case 429:
-#line 1367 "parser.y"
+#line 1368 "parser.y"
                     { yylhs.value.as < std::string > () = "safe"; }
 #line 3717 "parser.cc"
     break;
 
   case 430:
-#line 1368 "parser.y"
+#line 1369 "parser.y"
                     { yylhs.value.as < std::string > () = "interruptible"; }
 #line 3723 "parser.cc"
     break;
 
   case 431:
-#line 1369 "parser.y"
+#line 1370 "parser.y"
                     { yylhs.value.as < std::string > () = "forall"; }
 #line 3729 "parser.cc"
     break;
 
   case 432:
-#line 1370 "parser.y"
+#line 1371 "parser.y"
                     { yylhs.value.as < std::string > () = "family"; }
 #line 3735 "parser.cc"
     break;
 
   case 433:
-#line 1371 "parser.y"
+#line 1372 "parser.y"
                     { yylhs.value.as < std::string > () = "role"; }
 #line 3741 "parser.cc"
     break;
 
   case 434:
-#line 1373 "parser.y"
+#line 1374 "parser.y"
                     { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3747 "parser.cc"
     break;
 
   case 435:
-#line 1374 "parser.y"
+#line 1375 "parser.y"
                     { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3753 "parser.cc"
     break;
 
   case 436:
-#line 1376 "parser.y"
+#line 1377 "parser.y"
                                   {yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > ();}
 #line 3759 "parser.cc"
     break;
 
   case 437:
-#line 1377 "parser.y"
+#line 1378 "parser.y"
                            {yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > ();}
 #line 3765 "parser.cc"
     break;
 
   case 438:
-#line 1379 "parser.y"
+#line 1380 "parser.y"
                          { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3771 "parser.cc"
     break;
 
   case 439:
-#line 1381 "parser.y"
+#line 1382 "parser.y"
                          { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3777 "parser.cc"
     break;
 
   case 440:
-#line 1382 "parser.y"
+#line 1383 "parser.y"
                          { yylhs.value.as < std::string > () = "-"; }
 #line 3783 "parser.cc"
     break;
 
   case 441:
-#line 1384 "parser.y"
+#line 1385 "parser.y"
                              {yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3789 "parser.cc"
     break;
 
   case 442:
-#line 1385 "parser.y"
+#line 1386 "parser.y"
                              {yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3795 "parser.cc"
     break;
 
   case 443:
-#line 1387 "parser.y"
+#line 1388 "parser.y"
                           { yylhs.value.as < std::string > () = "as"; }
 #line 3801 "parser.cc"
     break;
 
   case 444:
-#line 1388 "parser.y"
+#line 1389 "parser.y"
                           { yylhs.value.as < std::string > () = "qualified"; }
 #line 3807 "parser.cc"
     break;
 
   case 445:
-#line 1389 "parser.y"
+#line 1390 "parser.y"
                           { yylhs.value.as < std::string > () = "hiding"; }
 #line 3813 "parser.cc"
     break;
 
   case 446:
-#line 1390 "parser.y"
+#line 1391 "parser.y"
                           { yylhs.value.as < std::string > () = "export"; }
 #line 3819 "parser.cc"
     break;
 
   case 447:
-#line 1391 "parser.y"
+#line 1392 "parser.y"
                           { yylhs.value.as < std::string > () = "label"; }
 #line 3825 "parser.cc"
     break;
 
   case 448:
-#line 1392 "parser.y"
+#line 1393 "parser.y"
                           { yylhs.value.as < std::string > () = "dynamic"; }
 #line 3831 "parser.cc"
     break;
 
   case 449:
-#line 1393 "parser.y"
+#line 1394 "parser.y"
                           { yylhs.value.as < std::string > () = "stdcall"; }
 #line 3837 "parser.cc"
     break;
 
   case 450:
-#line 1394 "parser.y"
+#line 1395 "parser.y"
                           { yylhs.value.as < std::string > () = "ccall"; }
 #line 3843 "parser.cc"
     break;
 
   case 451:
-#line 1395 "parser.y"
+#line 1396 "parser.y"
                           { yylhs.value.as < std::string > () = "capi"; }
 #line 3849 "parser.cc"
     break;
 
   case 452:
-#line 1396 "parser.y"
+#line 1397 "parser.y"
                           { yylhs.value.as < std::string > () = "prim"; }
 #line 3855 "parser.cc"
     break;
 
   case 453:
-#line 1397 "parser.y"
+#line 1398 "parser.y"
                           { yylhs.value.as < std::string > () = "javascript"; }
 #line 3861 "parser.cc"
     break;
 
   case 454:
-#line 1398 "parser.y"
+#line 1399 "parser.y"
                           { yylhs.value.as < std::string > () = "group"; }
 #line 3867 "parser.cc"
     break;
 
   case 455:
-#line 1399 "parser.y"
+#line 1400 "parser.y"
                           { yylhs.value.as < std::string > () = "stock"; }
 #line 3873 "parser.cc"
     break;
 
   case 456:
-#line 1400 "parser.y"
+#line 1401 "parser.y"
                           { yylhs.value.as < std::string > () = "anyclass"; }
 #line 3879 "parser.cc"
     break;
 
   case 457:
-#line 1401 "parser.y"
+#line 1402 "parser.y"
                           { yylhs.value.as < std::string > () = "via"; }
 #line 3885 "parser.cc"
     break;
 
   case 458:
-#line 1402 "parser.y"
+#line 1403 "parser.y"
                           { yylhs.value.as < std::string > () = "unit"; }
 #line 3891 "parser.cc"
     break;
 
   case 459:
-#line 1403 "parser.y"
+#line 1404 "parser.y"
                           { yylhs.value.as < std::string > () = "dependency"; }
 #line 3897 "parser.cc"
     break;
 
   case 460:
-#line 1404 "parser.y"
+#line 1405 "parser.y"
                           { yylhs.value.as < std::string > () = "signature"; }
 #line 3903 "parser.cc"
     break;
 
   case 461:
-#line 1406 "parser.y"
+#line 1407 "parser.y"
                  { yylhs.value.as < std::string > () = "!"; }
 #line 3909 "parser.cc"
     break;
 
   case 462:
-#line 1407 "parser.y"
+#line 1408 "parser.y"
                  { yylhs.value.as < std::string > () = "."; }
 #line 3915 "parser.cc"
     break;
 
   case 463:
-#line 1408 "parser.y"
+#line 1409 "parser.y"
                  { yylhs.value.as < std::string > () = "*"; }
 #line 3921 "parser.cc"
     break;
 
   case 464:
-#line 1412 "parser.y"
+#line 1413 "parser.y"
                  { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3927 "parser.cc"
     break;
 
   case 465:
-#line 1413 "parser.y"
+#line 1414 "parser.y"
                  { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3933 "parser.cc"
     break;
 
   case 466:
-#line 1415 "parser.y"
+#line 1416 "parser.y"
                  { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3939 "parser.cc"
     break;
 
   case 467:
-#line 1417 "parser.y"
+#line 1418 "parser.y"
                  { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3945 "parser.cc"
     break;
 
   case 468:
-#line 1418 "parser.y"
+#line 1419 "parser.y"
                  { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3951 "parser.cc"
     break;
 
   case 469:
-#line 1420 "parser.y"
+#line 1421 "parser.y"
                  { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
 #line 3957 "parser.cc"
     break;
 
   case 470:
-#line 1421 "parser.y"
+#line 1422 "parser.y"
                  { yylhs.value.as < std::string > () = ":"; }
 #line 3963 "parser.cc"
     break;
 
   case 471:
-#line 1425 "parser.y"
+#line 1426 "parser.y"
                   {yylhs.value.as < expression_ref > () = yystack_[0].value.as < char > ();}
 #line 3969 "parser.cc"
     break;
 
   case 472:
-#line 1426 "parser.y"
+#line 1427 "parser.y"
                   {yylhs.value.as < expression_ref > () = yy_make_string(yystack_[0].value.as < std::string > ());}
 #line 3975 "parser.cc"
     break;
 
   case 473:
-#line 1427 "parser.y"
+#line 1428 "parser.y"
                   {yylhs.value.as < expression_ref > () = yystack_[0].value.as < int > ();}
 #line 3981 "parser.cc"
     break;
 
   case 474:
-#line 1428 "parser.y"
+#line 1429 "parser.y"
                   {yylhs.value.as < expression_ref > () = yystack_[0].value.as < double > ();}
 #line 3987 "parser.cc"
     break;
 
   case 476:
-#line 1436 "parser.y"
+#line 1437 "parser.y"
       { yyerrok; drv.pop_error_message(); drv.pop_context();}
 #line 3993 "parser.cc"
     break;
 
   case 477:
-#line 1440 "parser.y"
+#line 1441 "parser.y"
              {yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > ();}
 #line 3999 "parser.cc"
     break;
 
   case 478:
-#line 1441 "parser.y"
+#line 1442 "parser.y"
          {yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > ();}
 #line 4005 "parser.cc"
     break;
 
   case 479:
-#line 1443 "parser.y"
+#line 1444 "parser.y"
                    {yylhs.value.as < int > () = yystack_[1].value.as < int > () + 1;}
 #line 4011 "parser.cc"
     break;
 
   case 480:
-#line 1444 "parser.y"
+#line 1445 "parser.y"
                    {yylhs.value.as < int > () = 1;}
 #line 4017 "parser.cc"
     break;
@@ -5932,48 +5932,48 @@ namespace yy {
      587,   589,   591,   592,   594,   603,   604,   606,   607,   609,
      610,   612,   613,   615,   616,   618,   619,   621,   622,   627,
      628,   630,   631,   632,   634,   635,   639,   641,   642,   644,
-     645,   646,   649,   656,   657,   658,   659,   660,   661,   663,
-     665,   666,   667,   671,   676,   677,   678,   679,   680,   682,
-     683,   684,   686,   726,   727,   729,   730,   739,   740,   742,
-     743,   744,   761,   762,   763,   765,   766,   767,   769,   770,
-     772,   774,   775,   778,   784,   785,   786,   787,   789,   790,
-     792,   794,   795,   803,   804,   806,   807,   808,   816,   817,
-     819,   820,   822,   824,   826,   827,   829,   830,   834,   835,
-     836,   838,   839,   841,   842,   844,   845,   847,   849,   858,
-     860,   862,   863,   865,   868,   870,   871,   873,   874,   876,
-     877,   878,   884,   886,   887,   888,   889,   890,   891,   892,
-     893,   894,   895,   896,   897,   898,   901,   903,   904,   906,
-     907,   909,   910,   912,   913,   915,   916,   918,   919,   937,
-     943,   945,   946,   948,   949,   951,   952,   954,   955,   957,
-     958,   960,   961,   963,   965,   966,   968,   969,   971,   972,
-     973,   975,   976,   977,   982,   984,   986,   987,   990,   994,
-     995,   997,   998,  1002,  1004,  1005,  1006,  1007,  1008,  1009,
-    1010,  1011,  1012,  1013,  1014,  1016,  1017,  1019,  1020,  1024,
-    1025,  1027,  1028,  1030,  1031,  1033,  1034,  1035,  1037,  1038,
-    1041,  1042,  1044,  1045,  1049,  1050,  1051,  1052,  1054,  1055,
-    1056,  1057,  1058,  1059,  1060,  1061,  1062,  1063,  1064,  1065,
-    1067,  1068,  1070,  1071,  1072,  1073,  1074,  1075,  1076,  1077,
-    1078,  1083,  1084,  1085,  1090,  1091,  1109,  1110,  1111,  1112,
-    1113,  1114,  1115,  1117,  1118,  1130,  1131,  1132,  1133,  1135,
-    1136,  1137,  1138,  1141,  1143,  1144,  1147,  1148,  1149,  1150,
-    1152,  1153,  1155,  1156,  1157,  1159,  1161,  1162,  1164,  1165,
-    1167,  1168,  1170,  1172,  1173,  1175,  1176,  1178,  1179,  1181,
-    1182,  1185,  1186,  1188,  1189,  1190,  1191,  1196,  1197,  1199,
-    1200,  1201,  1206,  1207,  1209,  1210,  1211,  1213,  1214,  1246,
-    1247,  1249,  1250,  1252,  1253,  1254,  1256,  1257,  1259,  1260,
-    1261,  1262,  1264,  1265,  1267,  1268,  1270,  1271,  1274,  1275,
-    1276,  1278,  1279,  1280,  1281,  1282,  1284,  1285,  1286,  1288,
-    1289,  1290,  1291,  1292,  1295,  1296,  1298,  1300,  1301,  1305,
-    1307,  1308,  1309,  1311,  1312,  1313,  1314,  1319,  1320,  1322,
-    1323,  1325,  1326,  1327,  1329,  1330,  1331,  1333,  1335,  1336,
-    1338,  1339,  1343,  1345,  1347,  1348,  1349,  1350,  1351,  1354,
-    1355,  1357,  1358,  1359,  1361,  1362,  1364,  1365,  1366,  1367,
-    1368,  1369,  1370,  1371,  1373,  1374,  1376,  1377,  1379,  1381,
-    1382,  1384,  1385,  1387,  1388,  1389,  1390,  1391,  1392,  1393,
-    1394,  1395,  1396,  1397,  1398,  1399,  1400,  1401,  1402,  1403,
-    1404,  1406,  1407,  1408,  1412,  1413,  1415,  1417,  1418,  1420,
-    1421,  1425,  1426,  1427,  1428,  1433,  1436,  1440,  1441,  1443,
-    1444
+     645,   646,   649,   656,   658,   659,   660,   661,   662,   664,
+     666,   667,   668,   672,   677,   678,   679,   680,   681,   683,
+     684,   685,   687,   727,   728,   730,   731,   740,   741,   743,
+     744,   745,   762,   763,   764,   766,   767,   768,   770,   771,
+     773,   775,   776,   779,   785,   786,   787,   788,   790,   791,
+     793,   795,   796,   804,   805,   807,   808,   809,   817,   818,
+     820,   821,   823,   825,   827,   828,   830,   831,   835,   836,
+     837,   839,   840,   842,   843,   845,   846,   848,   850,   859,
+     861,   863,   864,   866,   869,   871,   872,   874,   875,   877,
+     878,   879,   885,   887,   888,   889,   890,   891,   892,   893,
+     894,   895,   896,   897,   898,   899,   902,   904,   905,   907,
+     908,   910,   911,   913,   914,   916,   917,   919,   920,   938,
+     944,   946,   947,   949,   950,   952,   953,   955,   956,   958,
+     959,   961,   962,   964,   966,   967,   969,   970,   972,   973,
+     974,   976,   977,   978,   983,   985,   987,   988,   991,   995,
+     996,   998,   999,  1003,  1005,  1006,  1007,  1008,  1009,  1010,
+    1011,  1012,  1013,  1014,  1015,  1017,  1018,  1020,  1021,  1025,
+    1026,  1028,  1029,  1031,  1032,  1034,  1035,  1036,  1038,  1039,
+    1042,  1043,  1045,  1046,  1050,  1051,  1052,  1053,  1055,  1056,
+    1057,  1058,  1059,  1060,  1061,  1062,  1063,  1064,  1065,  1066,
+    1068,  1069,  1071,  1072,  1073,  1074,  1075,  1076,  1077,  1078,
+    1079,  1084,  1085,  1086,  1091,  1092,  1110,  1111,  1112,  1113,
+    1114,  1115,  1116,  1118,  1119,  1131,  1132,  1133,  1134,  1136,
+    1137,  1138,  1139,  1142,  1144,  1145,  1148,  1149,  1150,  1151,
+    1153,  1154,  1156,  1157,  1158,  1160,  1162,  1163,  1165,  1166,
+    1168,  1169,  1171,  1173,  1174,  1176,  1177,  1179,  1180,  1182,
+    1183,  1186,  1187,  1189,  1190,  1191,  1192,  1197,  1198,  1200,
+    1201,  1202,  1207,  1208,  1210,  1211,  1212,  1214,  1215,  1247,
+    1248,  1250,  1251,  1253,  1254,  1255,  1257,  1258,  1260,  1261,
+    1262,  1263,  1265,  1266,  1268,  1269,  1271,  1272,  1275,  1276,
+    1277,  1279,  1280,  1281,  1282,  1283,  1285,  1286,  1287,  1289,
+    1290,  1291,  1292,  1293,  1296,  1297,  1299,  1301,  1302,  1306,
+    1308,  1309,  1310,  1312,  1313,  1314,  1315,  1320,  1321,  1323,
+    1324,  1326,  1327,  1328,  1330,  1331,  1332,  1334,  1336,  1337,
+    1339,  1340,  1344,  1346,  1348,  1349,  1350,  1351,  1352,  1355,
+    1356,  1358,  1359,  1360,  1362,  1363,  1365,  1366,  1367,  1368,
+    1369,  1370,  1371,  1372,  1374,  1375,  1377,  1378,  1380,  1382,
+    1383,  1385,  1386,  1388,  1389,  1390,  1391,  1392,  1393,  1394,
+    1395,  1396,  1397,  1398,  1399,  1400,  1401,  1402,  1403,  1404,
+    1405,  1407,  1408,  1409,  1413,  1414,  1416,  1418,  1419,  1421,
+    1422,  1426,  1427,  1428,  1429,  1434,  1437,  1441,  1442,  1444,
+    1445
   };
 
   void
@@ -6007,7 +6007,7 @@ namespace yy {
 } // yy
 #line 6009 "parser.cc"
 
-#line 1453 "parser.y"
+#line 1454 "parser.y"
 
 
 using std::optional;

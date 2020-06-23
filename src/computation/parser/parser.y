@@ -654,7 +654,8 @@ topdecl: cl_decl                               {$$ = $1;}
 |        "{-# RULES" rules "#-}"
 |        annotation*/
 |        decl_no_th                            {$$ = $1;}
-|        infixexp_top                          {}
+/* What is this for? How is this a decl ? */
+|        infixexp_top                          {$$ = make_infixexp($1);}
 |        "builtin" var INTEGER STRING STRING   {$$ = make_builtin_expr($2,$3,$4,$5);}
 |        "builtin" var INTEGER STRING          {$$ = make_builtin_expr($2,$3,$4);}
 |        "builtin" varop INTEGER STRING STRING {$$ = make_builtin_expr($2,$3,$4,$5);}
@@ -1001,7 +1002,7 @@ gdrhs: gdrhs gdrh             {$$ = $1; $$.push_back($2);}
 // gdrh is like gdpat, but with = instead of ->
 gdrh: "|" guardquals "=" exp  {$$ = make_gdrh($2,$4);}
 
-sigdecl: infixexp_top "::" sigtypedoc  {}
+sigdecl: infixexp_top "::" sigtypedoc        { $$ = expression_ref(AST_node("Decl:sigtype"),{make_infixexp($1),$3});}
 |        var "," sig_vars "::" sigtypedoc {}
 |        infix prec ops  { $$ = make_infix($1,$2,$3); }
 |        pattern_synonym_sig {}

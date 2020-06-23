@@ -706,14 +706,22 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
     {
 	if (is_AST(decl,"Decl"))
             add(bound_names, rename_decl_head(decl, top));
+        else if (is_AST(decl,"Decl:sigtype"))
+        {
+            auto id = decl.sub()[0];
+            auto type = decl.sub()[1];
+            assert(is_AST(id,"id"));
+            add(bound_names, rename_pattern(id, top));
+            decl = expression_ref(AST_node("Decl:sigtype"),{id,type});
+        }
     }
 
     // Replace ids with dummies
     add(bound2, bound_names);
-    for(auto& e: v)
+    for(auto& decl: v)
     {
-	if (is_AST(e,"Decl"))
-	    e = rename_decl(e, bound2);
+	if (is_AST(decl,"Decl"))
+	    decl = rename_decl(decl, bound2);
     }
 
     decls = expression_ref{decls.head(),v};

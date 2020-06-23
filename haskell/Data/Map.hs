@@ -36,7 +36,7 @@ null _        = False
 
 size (Map kxs) = length kxs
 
-isSubmapOf m1 m2 == Set.isSubsetOf (keySet m1) (keySet m2)
+isSubmapOf m1 m2 = Set.isSubsetOf (keySet m1) (keySet m2)
 
 isProperSubmapOf m1 m2 = Set.isProperSubsetOf (keySet m1) (keySet m2)
 
