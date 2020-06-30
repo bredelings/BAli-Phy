@@ -69,10 +69,10 @@ public:
     const closure* precomputed_value_for_head(int index) const;
 
     /// Return the value of a particular index, computing it if necessary
-    const closure& lazy_evaluate(int index) const;
+    const closure& lazy_evaluate(int index, bool reforce=false) const;
 
     /// Return the value of a particular index, computing it if necessary
-    const expression_ref& evaluate(int index) const;
+    const expression_ref& evaluate(int index, bool reforce=false) const;
 
     /// Return the value of a particular index, computing it if necessary
     const expression_ref& evaluate_unchangeable(int index) const;
