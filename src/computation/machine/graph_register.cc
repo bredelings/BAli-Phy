@@ -2418,9 +2418,9 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c, bool refor
     return p;
 }
 
-const closure& reg_heap::lazy_evaluate(int& R)
+const closure& reg_heap::lazy_evaluate(int& R, bool reforce)
 {
-    auto [R2, value] = incremental_evaluate(R, false);
+    auto [R2, value] = incremental_evaluate(R, reforce);
     R = R2;
     return closure_at(value);
 }
@@ -2432,10 +2432,10 @@ const closure& reg_heap::lazy_evaluate(int& R, int c, bool reforce)
     return closure_at(value);
 }
 
-const closure& reg_heap::lazy_evaluate_head(int index, int c)
+const closure& reg_heap::lazy_evaluate_head(int index, int c, bool reforce)
 {
     int R1 = heads[index];
-    auto [R2, value] = incremental_evaluate_in_context(R1,c);
+    auto [R2, value] = incremental_evaluate_in_context(R1, c, reforce);
     if (R2 != R1)
         set_head(index, R2);
 
