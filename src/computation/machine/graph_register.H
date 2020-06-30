@@ -574,11 +574,11 @@ public:
   
     int incremental_evaluate_unchangeable(int R);
 
-    const closure& lazy_evaluate(int& R);
+    const closure& lazy_evaluate(int& R, bool reforce = false);
 
     const closure& lazy_evaluate(int& R, int c, bool reforce = false);
 
-    const closure& lazy_evaluate_head(int h, int c);
+    const closure& lazy_evaluate_head(int h, int c, bool reforce = false);
 
     const closure& lazy_evaluate_unchangeable(int& R);
 
