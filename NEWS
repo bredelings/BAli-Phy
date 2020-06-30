@@ -10,6 +10,8 @@
    - Don't prefix variable names with "arg_", "let_var_", or "lambda_var_"
    - Rewrite code generation:
      - Track emitted Haskell variable names.
+   - Generate readable code for lists and tuples.
+   - Handle functions in a cleaner way.
  - Stop putting argument names into scope as identifiers.
  + Allow default arguments to depend on earlier arguments.
 
