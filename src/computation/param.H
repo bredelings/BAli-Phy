@@ -7,7 +7,7 @@
 
 class context;
 
-enum class eval_strategy {unset, unchangeable, precomputed, changeable};
+enum class eval_strategy {unset, unchangeable, precomputed, changeable, changeable_reforce};
 
 class param
 {
