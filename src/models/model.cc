@@ -20,7 +20,6 @@
 #include <set>
 #include <map>
 
-#include <boost/variant.hpp>
 #include "util/ptree.H"
 
 #include "util/string/join.H"
