@@ -68,7 +68,7 @@ struct LetQual: public Stmt
     LetQual(const Binds& b);
 };
 
-struct do_block;
+class do_block;
 
 struct Stmts: public Box<std::vector<expression_ref>>
 {
