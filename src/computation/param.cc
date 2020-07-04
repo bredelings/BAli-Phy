@@ -28,6 +28,8 @@ expression_ref param::get_value(const context& C) const
     {
         if (strategy == eval_strategy::changeable)
             return C.evaluate(*head);
+        else if (strategy == eval_strategy::changeable_reforce)
+            return C.evaluate(*head, true);
         else if (strategy == eval_strategy::precomputed)
         {
             auto result = C.precomputed_value_for_head(*head);
