@@ -7,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-#include <boost/variant.hpp>
+#include <variant>
 #include <optional>
 
 #include "util/json.hh"
@@ -23,7 +23,7 @@ struct ptree;
 struct ptree: public std::vector<std::pair<std::string,ptree>>
 {
 public:
-    typedef boost::variant<monostate,std::string,int,double,bool> value_t;
+    typedef std::variant<monostate,std::string,int,double,bool> value_t;
     value_t value;
 
     bool value_is_empty() const;
@@ -33,8 +33,8 @@ public:
     template <typename T>     bool has_value() const {return false;}
     template <typename T>     bool is_a() const {return empty() and has_value<T>();}
 
-    template <typename T>       T& get_value()       {return boost::get<T>(value);}
-    template <typename T> const T& get_value() const {return boost::get<T>(value);}
+    template <typename T>       T& get_value()       {return std::get<T>(value);}
+    template <typename T> const T& get_value() const {return std::get<T>(value);}
 
     template <typename T> void put_value(const T& t) {value = t;}
     void put_value(const char* s) {put_value<std::string>(s);}
@@ -136,10 +136,10 @@ public:
     ptree(const value_t& v,const std::vector<std::pair<std::string,ptree>>& x):std::vector<std::pair<std::string,ptree>>(x),value(v) { }
 };
 
-template <>  inline bool ptree::has_value<bool>()   const {return value.which() == 4;}
-template <>  inline bool ptree::has_value<int>()    const {return value.which() == 2;}
-template <>  inline bool ptree::has_value<double>() const {return value.which() == 3;}
-template <>  inline bool ptree::has_value<std::string>() const {return value.which() == 1;}
+template <>  inline bool ptree::has_value<bool>()   const {return value.index() == 4;}
+template <>  inline bool ptree::has_value<int>()    const {return value.index() == 2;}
+template <>  inline bool ptree::has_value<double>() const {return value.index() == 3;}
+template <>  inline bool ptree::has_value<std::string>() const {return value.index() == 1;}
 
 std::string show(const ptree& pt, int depth=0);
 
@@ -161,5 +161,6 @@ inline ptree array_index(const ptree& p, int i)
     return index(p,i).second;
 }
 
+std::ostream& operator<<(std::ostream& o, const ptree::value_t& v);
 
 #endif

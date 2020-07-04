@@ -13,7 +13,7 @@ std::ostream& operator<<(std::ostream& o,const monostate&) {o<<"()";return o;}
 
 bool ptree::value_is_empty() const
 {
-    return value.which() == 0;
+    return value.index() == 0;
 }
 
 bool ptree::is_null() const
@@ -217,16 +217,16 @@ string show(const ptree& pt, int depth)
 
 void to_json(json& j, const ptree::value_t& v)
 {
-    if (v.which() == 0)
+    if (v.index() == 0)
 	;
-    else if (v.which() == 1)
-	j = boost::get<std::string>(v);
-    else if (v.which() == 2)
-	j = boost::get<int>(v);
-    else if (v.which() == 3)
-	j = boost::get<double>(v);
-    else if (v.which() == 4)
-	j = boost::get<bool>(v);
+    else if (v.index() == 1)
+	j = std::get<std::string>(v);
+    else if (v.index() == 2)
+	j = std::get<int>(v);
+    else if (v.index() == 3)
+	j = std::get<double>(v);
+    else if (v.index() == 4)
+	j = std::get<bool>(v);
     else
 	std::abort();
 }
@@ -245,3 +245,21 @@ void to_json(json& j, const ptree& p)
     }
     j = {{"value",value},{"args",args}};
 }
+
+std::ostream& operator<<(std::ostream& o, const ptree::value_t& v)
+{
+    if (std::holds_alternative<monostate>(v))
+        o<<"()";
+    if (std::holds_alternative<bool>(v))
+        o<<std::get<bool>(v);
+    else if (std::holds_alternative<int>(v))
+        o<<std::get<int>(v);
+    else if (std::holds_alternative<std::string>(v))
+        o<<"'"<<std::get<string>(v)<<"'";
+    else if (std::holds_alternative<double>(v))
+        o<<std::get<double>(v);
+    else
+        std::abort();
+    return o;
+}
+
