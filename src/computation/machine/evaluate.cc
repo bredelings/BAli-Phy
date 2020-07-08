@@ -231,8 +231,17 @@ pair<int,int> reg_heap::incremental_evaluate_(int r, bool reforce)
             {
                 total_changeable_eval_with_result++;
 
-                // FIXME: might we need to set force here even if reforce == false?
-                // If there are no force-edges, then I think yes.
+                // We can't set prog_forces[r] = 1 here if reforce=false, because we could end up
+                // unsharing reg r twice (I think).  This doesn't happen when we set the result, because we
+                // we never set the result twice.
+
+                // What we really want to do here is to find all the regs that this reg uses or forces that do NOT have a result.
+                // The used regs must have a result, or this reg wouldn't have a result.
+                // The forced regs may NOT have a result.
+                // So, what we want to find is
+                // (i)  all the regs with a result and no force.  These regs need to be marked forced.
+                // (ii) all the regs with no result and no force. These regs need to be executed, which should mark them forced.
+
                 if (reforce and not has_force(r))
                 {
                     force_reg(r);
