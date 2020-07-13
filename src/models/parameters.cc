@@ -1577,6 +1577,7 @@ std::string generate_atmodel_program(int n_sequences,
         string var_name = "branch_lengths";
         auto code = branch_length_model.code;
         expression_ref E = {var("sample_"+var_name),tree_var};
+        E = {var("SamplingRate"),0.0,E};
 
         branch_lengths = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), sample_atmodel, program_loggers);
     }
