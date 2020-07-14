@@ -19,7 +19,7 @@ main = do
 
   let dists = take n_clusters all_dists
 
-  ps <- random $ dirichlet' n_clusters 0.5
+  ps <- random $ symmetric_dirichlet n_clusters 0.5
 
   observe (iid n_points (mixture ps dists)) xs
 
