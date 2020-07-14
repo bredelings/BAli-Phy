@@ -13,7 +13,7 @@ note sigmaOverMu ~ iid(n, gamma(1.05,0.1) );
 
   alpha = 1.0;
 
-note p ~ dirichlet' (n, alpha/(intToDouble n));
+note p ~ symmetric_dirichlet (n, alpha/(intToDouble n));
 
   data1 = get_observed_alleles filename;
 
