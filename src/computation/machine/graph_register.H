@@ -90,6 +90,8 @@ token_type reverse(token_type);
 
 std::ostream& operator<<(std::ostream& o, token_type);
 
+class effect;
+
 class reg
 {
 public:
@@ -149,7 +151,10 @@ class reg_heap: public Object
 
     std::vector<std::function<void(int)>> reroot_handlers;
 
-    std::vector<std::function<void(int)>> register_likelihood_handlers;
+    std::vector<std::function<void(const effect&, int)>> register_likelihood_handlers;
+    std::vector<std::function<void(const effect&, int)>> unregister_likelihood_handlers;
+    std::vector<std::function<void(const effect&, int)>> register_prior_handlers;
+    std::vector<std::function<void(const effect&, int)>> unregister_prior_handlers;
 
     void resize(int s);
 
@@ -264,17 +269,13 @@ public:
 
     /* ---- */
 
-    void register_prior(int r);
-
-    void unregister_prior(int r);
-
     log_double_t prior_for_context(int c);
 
     std::unordered_map<int,int> likelihood_heads;
 
-    void register_likelihood_(int r, int s);
+    void register_likelihood_(const effect& e, int s);
 
-    void unregister_likelihood_(int r, int s);
+    void unregister_likelihood_(const effect& e, int s);
 
     log_double_t likelihood_for_context(int c);
 
@@ -285,8 +286,8 @@ public:
     // the list of random variables
     std::unordered_map<int,int> random_variables;
 
-    void register_random_variable(int r, int s);
-    void unregister_random_variable(int r, int s);
+    void register_random_variable(const effect& e, int s);
+    void unregister_random_variable(const effect& e, int s);
 
     // the list of transition kernels
     std::vector<std::pair<int,int>> transition_kernels_;

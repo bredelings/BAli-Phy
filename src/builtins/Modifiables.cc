@@ -91,13 +91,17 @@ extern "C" closure builtin_function_maybe_modifiable_structure(OperationArgs& Ar
 extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 {
     // We are supposed to evaluate the random_variable before we register
+
+    // Force the raw_x so that we get a unique location for it.
     Args.evaluate_slot_force(0);
 
-    int r_pdf = Args.current_closure().reg_for_slot(0);
+    int r_var = Args.current_closure().reg_for_slot(0);
 
-    r_pdf = Args.memory().follow_index_var(r_pdf);
+    r_var = Args.memory().follow_index_var(r_var);
 
-    auto effect = new register_random_variable(r_pdf);
+    auto pdf = Args.evaluate(1).as_log_double();
+
+    auto effect = new register_random_variable(r_var, pdf);
 
     Args.set_effect(*effect);
 
@@ -107,13 +111,13 @@ extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
 {
     // We are supposed to evaluate the likelihood before we register
-    Args.evaluate_slot_force(0);
+    auto likelihood = Args.evaluate(0).as_log_double();
 
     int r_likelihood = Args.current_closure().reg_for_slot(0);
 
     r_likelihood = Args.memory().follow_index_var(r_likelihood);
 
-    auto effect = new register_likelihood(r_likelihood);
+    auto effect = new register_likelihood(r_likelihood, likelihood);
 
     Args.set_effect(*effect);
 
