@@ -1,4 +1,5 @@
 #include "graph_register.H"
+#include "effects.H"
 #include "kahan.H"
 
 long total_context_prior = 0;
@@ -72,11 +73,10 @@ log_double_t reg_heap::prior_for_context(int c)
      *       This ensures that a range-for is OK. (Range-for's assume that begin() and end() do not change).
      */
 
-    for(auto [s,r_pdf]: random_variables)
+    for(auto [s, _]: random_variables)
     {
-	const auto& x = value_for_precomputed_reg(r_pdf).exp;
-
-	log_double_t X = x.as_log_double();
+        auto r_pdf_effect = steps[s].call;
+	auto X = value_for_precomputed_reg(r_pdf_effect).exp.as_<::register_random_variable>().pdf;
 
 	double t;
 	if (std::abs(X.log()) > std::abs(log_pr))
@@ -117,10 +117,10 @@ log_double_t reg_heap::likelihood_for_context(int c)
 
     double log_pr = 0.0;
     double C = 0.0;
-    for(auto [s,r]: likelihood_heads)
+    for(auto [s,_]: likelihood_heads)
     {
-	const auto& x = value_for_precomputed_reg(r).exp;
-	log_double_t X = x.as_log_double();
+        int r_likelihood_effect = steps[s].call;
+	auto X = value_for_precomputed_reg(r_likelihood_effect).exp.as_<register_likelihood>().likelihood;
 
 	double t;
 	if (std::abs(X.log()) > std::abs(log_pr))

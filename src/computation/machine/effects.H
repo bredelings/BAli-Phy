@@ -2,11 +2,11 @@
 #define EFFECTS_H
 #include "effect.H"
 
-class register_random_variable: public effect
+struct register_random_variable: public effect
 {
-    int pdf_reg;
+    int variable_reg;
+    log_double_t pdf;
 
-public:
     register_random_variable* clone() const {return new register_random_variable(*this);}
 
     bool operator==(const register_random_variable&) const;
@@ -17,14 +17,14 @@ public:
     void register_effect(reg_heap&,int) const;
     void unregister_effect(reg_heap&,int) const;
 
-    register_random_variable(int r);
+    register_random_variable(int r, log_double_t pr);
 };
 
-class register_likelihood: public effect
+struct register_likelihood: public effect
 {
     int likelihood_reg;
+    log_double_t likelihood;
 
-public:
     register_likelihood* clone() const {return new register_likelihood(*this);}
 
     bool operator==(const register_likelihood&) const;
@@ -35,7 +35,7 @@ public:
     void register_effect(reg_heap&,int) const;
     void unregister_effect(reg_heap&,int) const;
 
-    register_likelihood(int r);
+    register_likelihood(int r, log_double_t lk);
 };
 
 class register_transition_kernel: public effect
