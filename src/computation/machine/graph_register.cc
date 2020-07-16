@@ -13,6 +13,7 @@
 #include "computation/expression/expression.H" // is_WHNF( )
 #include "computation/operations.H"
 #include "effect.H"
+#include "effects.H"
 
 using std::string;
 using std::vector;
@@ -280,87 +281,22 @@ size_t reg_heap::size() const
     return regs.size();
 }
 
-void reg_heap::register_prior(int r)
+void reg_heap::register_likelihood_(const effect& e, int s)
 {
-    // We can't register index_vars -- they could go away!
-    assert(not expression_at(r).is_index_var());
-
-    if (not reg_has_value(r))
-        throw myexception()<<"Can't register a prior reg that is unevaluated!";
-
-    assert(access_value_for_reg(r).exp.is_log_double());
-
-    // We set bit zero of regs[r].flag every time we register OR REREGISTER it.
-    // Therefore if two different random variables share a PDF, we cannot detect it
-    //  simply by the bit being set twice.
-
-    if (reg_is_constant(r))
-    {
-        // Also avoid putting a bit on constant regs?
-    }
-    else
-    {
-        regs.access(r).flags.set(0);
-
-        assert(reg_is_changeable(r));
-    }
-}
-
-void reg_heap::unregister_prior(int r)
-{
-    // We can't register index_vars -- they could go away!
-    assert(not expression_at(r).is_index_var());
-
-    // Check that this reg isn't registered as a priorby two different steps.
-    assert(reg_is_constant(r) or regs.access(r).flags.test(0));
-
-    regs.access(r).flags.reset(0);
-}
-
-void reg_heap::register_likelihood_(int r, int s)
-{
-    // We can't register index_vars -- they could go away!
-    assert(not expression_at(r).is_index_var());
-
-    if (not reg_has_value(r))
-        throw myexception()<<"Can't register a likelihood reg that is unevaluated!";
-
-    assert(access_value_for_reg(r).exp.is_log_double());
-
-    if (regs.access(r).flags.test(1))
-        throw myexception()<<"Can't register a likelihood reg that is already registered!";
-
-    // We can only put the bit on a changeable reg, not on (say) an index_var.
-    // Therefore, we must evaluate r -> r2 here.
-    // QUESTION: WHY can't we put the bit on constant regs?
-
-    if (reg_is_constant(r))
-    {
-        // Also avoid putting a bit on constant regs?
-    }
-    else
-    {
-        regs.access(r).flags.set(1);
-
-        assert(reg_is_changeable(r));
-    }
-
+    auto & E = dynamic_cast<const register_likelihood&>(e);
     assert(not likelihood_heads.count(s));
-    likelihood_heads[s] = r;
+    likelihood_heads[s] = E.likelihood_reg;
     for(auto& handler: register_likelihood_handlers)
-        handler(r);
+        handler(e, s);
 }
 
-void reg_heap::unregister_likelihood_(int r, int s)
+void reg_heap::unregister_likelihood_(const effect& e, int s)
 {
     assert(likelihood_heads.count(s));
-    assert(likelihood_heads.at(s) == r);
     likelihood_heads.erase(s);
-
-    // Check that this reg isn't registered as a likelihood by two different steps.
-    assert(reg_is_constant(r) or regs.access(r).flags.test(1));
-
-    regs.access(r).flags.reset(1);
+    // FIXME: run these in reverse order?
+    for(auto& handler: unregister_likelihood_handlers)
+        handler(e, s);
 }
 
 log_double_t reg_heap::probability_for_context(int c)
@@ -980,109 +916,90 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
         assert(x.none());
 #endif
 
-    constexpr int seen_pdf_bit = 4;
-
     // 1. reroot to c1 and force the program
 //  auto L1 = likelihood_for_context(c1);
     evaluate_program(c1);
-    int num_rvs1 = random_variables.size();
 
-    // 2. install another reroot handler
-    auto& original_prior_results = get_pair_scratch_list();
-    auto& original_likelihood_results = get_pair_scratch_list();
+    // 2. install handlers for register_random_variable and register_likelihood
+    std::unordered_map<int,log_double_t> priors1;
+    std::unordered_map<int,log_double_t> priors2;
 
-    std::function<void(int)> reroot_handler = [&,this](int old_root)
+    std::unordered_map<int,log_double_t> likelihoods1;
+    std::unordered_map<int,log_double_t> likelihoods2;
+
+    std::function<void(const effect&, int)> register_prior_handler = [&,this](const effect& e, int)
     {
-        for(auto& p: tokens[old_root].delta_result())
-        {
-            auto [r,res] =  p;
-
-            // r can be a free reg if s == non_computed_index (-1).
-
-            // Record (reg,original result) for likelihood and prior pdfs that change results, including unmapping.
-            if (regs.access_unused(r).flags.any() and not prog_temp[r].test(seen_pdf_bit))
-            {
-                // If r is free, we should not get here.
-                assert(not regs.is_free(r));
-                // The reg should be forced in the original context, so should have a result!
-                assert(res > 0);
-                prog_temp[r].set(seen_pdf_bit);
-
-                assert(regs[r].flags.count() == 1);
-                if (regs[r].flags.test(0))
-                    original_prior_results.push_back(p);
-                else
-                {
-                    assert(regs[r].flags.test(1));
-                    original_likelihood_results.push_back(p);
-                }
-            }
-        }
+        auto & E = dynamic_cast<const ::register_random_variable&>(e);
+        assert(not priors2.count(E.variable_reg));
+        priors2.insert({E.variable_reg, E.pdf});
     };
 
-    // 2b. install a register_likelihood handler.
-    auto& new_likelihood_regs = get_scratch_list();
-    std::function<void(int)> register_likelihood_handler = [&,this](int likelihood_reg)
+    std::function<void(const effect&, int)> unregister_prior_handler = [&,this](const effect& e, int)
     {
-        new_likelihood_regs.push_back(likelihood_reg);
+        auto & E = dynamic_cast<const ::register_random_variable&>(e);
+        assert(not priors1.count(E.variable_reg));
+        priors1.insert({E.variable_reg, E.pdf});
     };
 
-    reroot_handlers.push_back(reroot_handler);
+    std::function<void(const effect&, int)> register_likelihood_handler = [&,this](const effect& e, int)
+    {
+        auto & E = dynamic_cast<const register_likelihood&>(e);
+        assert(not likelihoods2.count(E.likelihood_reg));
+        likelihoods2.insert({E.likelihood_reg, E.likelihood});
+    };
+
+    std::function<void(const effect&, int)> unregister_likelihood_handler = [&,this](const effect& e, int)
+    {
+        auto & E = dynamic_cast<const register_likelihood&>(e);
+        assert(not likelihoods1.count(E.likelihood_reg));
+        likelihoods1.insert({E.likelihood_reg, E.likelihood});
+    };
+
     register_likelihood_handlers.push_back(register_likelihood_handler);
+    unregister_likelihood_handlers.push_back(unregister_likelihood_handler);
+    register_prior_handlers.push_back(register_prior_handler);
+    unregister_prior_handlers.push_back(unregister_prior_handler);
 
     // 3. reroot to c2 and force the program
     evaluate_program(c2);
-    int num_rvs2 = random_variables.size();
 
     // 4. compute the ratio only for (i) changed pdfs that (ii) exist in both c1 and c2
     prob_ratios_t R;
-    R.variables_changed = (num_rvs1 != num_rvs2);
+    R.variables_changed = priors1.size() != priors2.size();
 
-    for(auto [r_pdf, result1]: original_prior_results)
+    for(auto [r_variable, pdf1]: priors1)
     {
-        assert(prog_temp[r_pdf].test(seen_pdf_bit));
+        auto it2 = priors2.find(r_variable);
 
-        prog_temp[r_pdf].reset(seen_pdf_bit);
-
-        // Only compute a ratio if the prior is present and computed in BOTH contexts.
-        // How can we do this while also making the prior a list of multiple factors at different regs?
-        if (regs[r_pdf].flags.test(0))
+        if (it2 == priors2.end())
         {
-            assert(has_result(r_pdf));
-            int result2 = result_for_reg(r_pdf);
-            auto prior1 = (*this)[result1].exp.as_log_double();
-            auto prior2 = (*this)[result2].exp.as_log_double();
-
-            R.prior_ratio *= (prior2 / prior1);
-        }
-        else
             R.variables_changed = true;
+            continue;
+        }
+
+        auto pdf2 = it2->second;
+        R.prior_ratio *= (pdf2 / pdf1);
     }
 
-    for(auto [r_pdf, result1]: original_likelihood_results)
+    for(auto [r_likelihood, likelihood1]: likelihoods1)
     {
-        assert(prog_temp[r_pdf].test(seen_pdf_bit));
+        auto it2 = likelihoods2.find(r_likelihood);
 
-        prog_temp[r_pdf].reset(seen_pdf_bit);
-
-        auto likelihood1 = (*this)[result1].exp.as_log_double();
-
-        if (regs[r_pdf].flags.test(1))
+        if (it2 == priors2.end())
+            R.likelihood_ratio /= likelihood1;
+        else
         {
-            assert(has_result(r_pdf));
-            int result2 = result_for_reg(r_pdf);
-            auto likelihood2 = (*this)[result2].exp.as_log_double();
+            auto likelihood2 = it2->second;
             R.likelihood_ratio *= (likelihood2 / likelihood1);
         }
-        else
-            R.likelihood_ratio /= likelihood1;
     }
 
-    for(int r_pdf: new_likelihood_regs)
+    for(auto [r_likelihood, likelihood2]: likelihoods2)
     {
-        int result2 = result_for_reg(r_pdf);
-        auto likelihood2 = (*this)[result2].exp.as_log_double();
-        R.likelihood_ratio *= likelihood2;
+        auto it1 = likelihoods1.find(r_likelihood);
+
+        if (it1 == priors2.end())
+            R.likelihood_ratio *= likelihood2;
     }
 
 #if DEBUG_MACHINE >= 2
@@ -1090,10 +1007,11 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
         assert(x.none());
 #endif
 
-    // 5a. remove the reroot handler
-    reroot_handlers.pop_back();
-    // 5b. remove the register_likelihood handler
+    // 5. remove the handlers
     register_likelihood_handlers.pop_back();
+    unregister_likelihood_handlers.pop_back();
+    register_prior_handlers.pop_back();
+    unregister_prior_handlers.pop_back();
 
 //  auto L2 = likelihood_for_context(c2);
 //
@@ -1101,37 +1019,28 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 //  if (L1 > 0.0 and L2 > 0.0)
 //      assert( std::abs( (L2/L1).log() - R.likelihood_ratio.log()) < 1.0e-4 );
 
-    release_scratch_list();        // new_likelihood_regs
-    release_pair_scratch_list();   // orig_likelihood_results
-    release_pair_scratch_list();   // orig_pdf_results
 
     return R;
 }
 
-void reg_heap::register_random_variable(int r, int s)
+void reg_heap::register_random_variable(const effect& e, int s)
 {
-    // We can't register index_vars -- they could go away!
-    assert(not expression_at(r).is_index_var());
-
+    auto& E = dynamic_cast<const ::register_random_variable&>(e);
+    // We aren't supposed to ever register the same step twice.
     assert(not random_variables.count(s));
-
-    random_variables[s] = r;
-
-    // This sets the pdf bit.
-    register_prior(r);
+    random_variables[s] = E.variable_reg;
+    for(auto& handler: register_prior_handlers)
+        handler(e, s);
 }
 
-void reg_heap::unregister_random_variable(int r, int s)
+void reg_heap::unregister_random_variable(const effect& e, int s)
 {
-    // We can't register index_vars -- they could go away!
-    assert(not expression_at(r).is_index_var());
-
     assert(random_variables.count(s));
-
     random_variables.erase(s);
 
-    // This clears the pdf bit.
-    unregister_prior(r);
+    // FIXME: run these in reverse order?
+    for(auto& handler: unregister_prior_handlers)
+        handler(e, s);
 }
 
 void reg_heap::register_transition_kernel(int r_rate, int r_kernel, int /*s*/)
@@ -1658,10 +1567,6 @@ void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
 
     // FIXME: We want to remove all of these.
     // * we should be able to remove random_variables_.  However, walking random_variables_ might find references to old, destroyed, variables then.
-    for(auto& [_,r]: random_variables) // yes
-        scan.push_back(r);
-    for(auto& [_,r]: likelihood_heads) // yes
-        scan.push_back(r);
     for(auto& [_,r]: transition_kernels_)
         scan.push_back(r);
 
