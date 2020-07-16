@@ -6,7 +6,7 @@ using std::string;
 
 bool register_random_variable::operator==(const register_random_variable& e) const
 {
-    return pdf_reg == e.pdf_reg;
+    return variable_reg == e.variable_reg;
 }
 
 bool register_random_variable::operator==(const Object& O) const
@@ -22,27 +22,31 @@ bool register_random_variable::operator==(const Object& O) const
 
 string register_random_variable::print() const
 {
-    return string("register_random_variable[")+std::to_string(pdf_reg)+"]";
+    return string("register_random_variable[")+std::to_string(variable_reg)+","+std::to_string(pdf)+"]";
 }
 
-register_random_variable::register_random_variable(int r)
-    :pdf_reg(r)
+register_random_variable::register_random_variable(int r, log_double_t pr)
+    :variable_reg(r), pdf(pr)
 { }
 
 void register_random_variable::register_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 2)
-        std::cerr<<"register_random_variable["<<pdf_reg<<"]: REGISTER! ("<<M.random_variables.size()<<" -> "<<M.random_variables.size()+1<<")\n";
-    M.register_random_variable(pdf_reg, s);
+    {
+        std::cerr<<"register_random_variable[var="<<variable_reg<<",pdf="<<pdf<<",step="<<s<<"]: ";
+        std::cerr<<"  REGISTER! ("<<M.random_variables.size()<<" -> "<<M.random_variables.size()+1<<")\n";
+    }
+    M.register_random_variable(*this, s);
 }
 
 void register_random_variable::unregister_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 2)
     {
-        std::cerr<<"register_random_variable["<<pdf_reg<<"]: UNregister! ("<<M.random_variables.size()<<" -> "<<M.random_variables.size()-1<<")\n";
+        std::cerr<<"register_random_variable[var="<<variable_reg<<",pdf="<<pdf<<",step="<<s<<"]: ";
+        std::cerr<<"UNregister! ("<<M.random_variables.size()<<" -> "<<M.random_variables.size()-1<<")\n";
     }
-    M.unregister_random_variable(pdf_reg, s);
+    M.unregister_random_variable(*this, s);
 }
 
 //--------------------------------------------------------------------
@@ -65,27 +69,31 @@ bool register_likelihood::operator==(const Object& O) const
 
 string register_likelihood::print() const
 {
-    return string("register_likelihood[")+std::to_string(likelihood_reg)+"]";
+    return string("register_likelihood[")+std::to_string(likelihood_reg)+","+std::to_string(likelihood)+"]";
 }
 
-register_likelihood::register_likelihood(int r)
-    :likelihood_reg(r)
+register_likelihood::register_likelihood(int r, log_double_t lk)
+    :likelihood_reg(r), likelihood(lk)
 { }
 
 void register_likelihood::register_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 2)
-        std::cerr<<"register_likelihood["<<likelihood_reg<<"]: REGISTER! ("<<M.likelihood_heads.size()<<" -> "<<M.likelihood_heads.size()+1<<")\n";
-    M.register_likelihood_(likelihood_reg, s);
+    {
+        std::cerr<<"register_likelihood["<<likelihood_reg<<", likelihood="<<likelihood<<", step="<<s<<"]: ";
+        std::cerr<<"  REGISTER! ("<<M.likelihood_heads.size()<<" -> "<<M.likelihood_heads.size()+1<<")\n";
+    }
+    M.register_likelihood_(*this, s);
 }
 
 void register_likelihood::unregister_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 2)
     {
-        std::cerr<<"register_likelihood["<<likelihood_reg<<"]: UNregister! ("<<M.likelihood_heads.size()<<" -> "<<M.likelihood_heads.size()-1<<")\n";
+        std::cerr<<"register_likelihood["<<likelihood_reg<<", likelihood="<<likelihood<<", step="<<s<<"]: ";
+        std::cerr<<"UNregister! ("<<M.likelihood_heads.size()<<" -> "<<M.likelihood_heads.size()-1<<")\n";
     }
-    M.unregister_likelihood_(likelihood_reg, s);
+    M.unregister_likelihood_(*this, s);
 }
 
 //--------------------------------------------------------------------
