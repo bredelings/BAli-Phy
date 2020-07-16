@@ -250,7 +250,7 @@ std::ostream& operator<<(std::ostream& o, const ptree::value_t& v)
 {
     if (std::holds_alternative<monostate>(v))
         o<<"()";
-    if (std::holds_alternative<bool>(v))
+    else if (std::holds_alternative<bool>(v))
         o<<std::get<bool>(v);
     else if (std::holds_alternative<int>(v))
         o<<std::get<int>(v);
