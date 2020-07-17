@@ -158,15 +158,15 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 // gibbs_sample_categorical x n pr
 extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args)
 {
+    if (log_verbose >= 3) std::cerr<<"\n\n[gibbs_sample_categorical]\n";
+
     assert(not Args.evaluate_changeables());
 
     //------------- 1a. Get argument X -----------------
     int x_reg = Args.evaluate_slot_unchangeable(0);
 
     //------------- 1b. Get range [0,n) for X ----------
-    int n_values = Args.evaluate(1).as_int();
-
-    if (log_verbose >= 3) std::cerr<<"\n\n[gibbs sample_categorical] <"<<x_reg<<"> in [0, "<<n_values-1<<"]\n";
+    int n_values_reg = Args.evaluate_slot_unchangeable(1);
 
     //------------- 1c. Get context index --------------
     int c1 = Args.evaluate(2).as_int();
@@ -184,6 +184,9 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
     context_ref C1(M, c1);
 
     int x1 = C1.get_reg_value(*x_mod_reg).as_int();
+
+    int n_values = C1.get_reg_value(n_values_reg).as_int();
+    if (log_verbose >= 3) std::cerr<<"   gibbs_sample_categorical: <"<<x_reg<<">   [0, "<<n_values-1<<"]\n";
 
     //------------- 4. Figure out probability of each value ----------//
     vector<log_double_t> pr_x(n_values, 1.0);
