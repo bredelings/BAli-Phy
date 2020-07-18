@@ -187,12 +187,16 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
     if (log_verbose >= 3) std::cerr<<"   gibbs_sample_categorical: <"<<x_reg<<">   [0, "<<n_values-1<<"]\n";
 
     //------------- 4. Figure out probability of each value ----------//
+
+    context C2 = C1;
+    optional<int> c2_value;
     vector<log_double_t> pr_x(n_values, 1.0);
     for(int i=0; i<n_values; i++)
         // For i == x1 we already know that the ratio is 1.0
 	if (i != x1)
 	{
-            context C2 = C1;
+            C2 = C1;
+            c2_value = i;
 
 	    C2.set_reg_value(*x_mod_reg, expression_ref(i));
 
@@ -202,8 +206,14 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
     //------------- 5. Get new value x2 for variable -----------------//
     int x2 = choose(pr_x);
 
-    if (x2 != x1)
-	C1.set_reg_value(*x_mod_reg, expression_ref(x2));
+    if (log_verbose >= 3) std::cerr<<"   gibbs_sample_categorical: <"<<x_reg<<">   "<<x1<<" -> "<<x2<<"\n";
+
+    if (x2 == x1)
+        ;
+    else if (c2_value and x2 == *c2_value)
+        C1 = C2;
+    else
+        C1.set_reg_value(*x_mod_reg, expression_ref(x2));
 
     return EPair(state+1,constructor("()",0));
 }
