@@ -177,6 +177,9 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
 
     //------------- 3. Get initial value x1 for variable -------------//
     context_ref C1(M, c1);
+    // This  (i) drops references to previous execution contexts and
+    //      (ii) ensures that all computations will be shared forwards.
+    C1.evaluate_program();
 
     int x1 = C1.get_reg_value(*x_mod_reg).as_int();
 
