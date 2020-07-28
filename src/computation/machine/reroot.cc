@@ -14,6 +14,7 @@ using std::endl;
 long total_steps_pivoted = 0;
 long total_results_pivoted = 0;
 long total_forces_pivoted = 0;
+long total_force_counts_pivoted = 0;
 long total_reroot = 0;
 long total_reroot_one = 0;
 long total_invalidate = 0;
@@ -96,6 +97,8 @@ void reg_heap::reroot_at(int t)
     // 3. Change the relative mappings
     total_steps_pivoted += tokens[t].delta_step().size();
     total_results_pivoted += tokens[t].delta_result().size();
+    total_forces_pivoted += tokens[t].delta_force().size();
+    total_force_counts_pivoted += tokens[t].delta_force_count().size();
     pivot_mapping(prog_steps, tokens[t].vm_step);
     std::swap(tokens[parent].vm_step, tokens[t].vm_step);
     pivot_mapping(prog_results, tokens[t].vm_result);
