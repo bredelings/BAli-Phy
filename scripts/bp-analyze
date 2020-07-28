@@ -122,6 +122,10 @@ def get_x3d_of_mds(point_string):
     for group in num.keys():
         seen[group] = 0
 
+    lines = ""
+    spheres = ""
+    lastpoint=None
+    lastgroup=None
     for (x,y,z,group) in points:
         xx = (x - xmin)/xw*5.0 - 2.5
         yy = (y - ymin)/yw*5.0 - 2.5
@@ -147,15 +151,19 @@ def get_x3d_of_mds(point_string):
                                 )
         else:
             color = "1 0 0"
-        obj = "<transform translation='{x} {y} {z}' scale='{scale}'><shape><appearance><material diffuseColor='{color}'></material></appearance><sphere></sphere></shape></transform>"
-        x3d += obj.format(x=xx,
-                          y=yy,
-                          z=zz,
-                          scale=scale,
-                          color=color)
-        x3d += "\n"
-        seen[group] += 1
 
+        sphere = f"<transform translation='{xx} {yy} {zz}' scale='{scale}'><shape><appearance><material diffuseColor='{color}'/></material></appearance><sphere></sphere></shape></transform>\n"
+        if lastgroup is not None and lastgroup == group:
+            tmp=lastpoint+[xx,yy,zz]
+            xyzs=' '.join([str(t) for t in tmp])
+            line = f"<transform><shape><appearance><material emissiveColor='{color}'/></appearance><lineset vertexCount='2'><coordinate point='{xyzs}'/></lineset></shape></transform>\n"
+            lines += line
+        spheres += sphere
+        seen[group] += 1
+        lastpoint=[xx,yy,zz]
+        lastgroup=group
+
+    x3d = f"{lines}\n{spheres}"
     return x3d
 
 def more_recent_than(f1,f2):
