@@ -36,7 +36,6 @@ map<int,string> get_constants(const reg_heap& C, int t);
 
 void throw_reg_exception(reg_heap& M, int t, const closure& C, myexception& e)
 {
-    dot_graph_for_token(M, t);
     string SSS = unlet(untranslate_vars(
                            untranslate_vars(deindexify(trim_unnormalize(C)), M.get_identifiers()),
                            get_constants(M,t)
@@ -50,7 +49,6 @@ void throw_reg_exception(reg_heap& M, int t, const closure& C, myexception& e)
 
 void throw_reg_exception(reg_heap& M, int t, int R, myexception& e, bool changeable)
 {
-    dot_graph_for_token(M, t);
     string SSS = unlet(untranslate_vars(
                            untranslate_vars(deindexify(trim_unnormalize(M[R])), M.get_identifiers()),
                            get_constants(M,t)
