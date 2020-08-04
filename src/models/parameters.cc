@@ -1054,6 +1054,7 @@ void Parameters::NNI_discard_alignment(int b1, int b2)
         return;
     }
 
+#ifndef NDEBUG
     int s1 = t().source(b1);
     int t1 = t().target(b1);
 
@@ -1080,9 +1081,11 @@ void Parameters::NNI_discard_alignment(int b1, int b2)
     int b14 = t().find_branch(nodes[1],nodes[4]);
     int b25 = t().find_branch(nodes[2],nodes[5]);
     int b35 = t().find_branch(nodes[3],nodes[5]);
+#endif
 
     // 3. Perform NNI
     exchange_subtrees(b1, b2);  // alter tree
+#ifndef NDEBUG
     std::swap(nodes[0],nodes[2]); // alter nodes
     std::swap(b04, b25);
 
@@ -1105,6 +1108,7 @@ void Parameters::NNI_discard_alignment(int b1, int b2)
             dp.unset_pairwise_alignment(b45);
         }
     }
+#endif
 }
 
 void Parameters::show_h_tree() const
