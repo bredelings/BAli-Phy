@@ -156,7 +156,7 @@ void two_way_topology_slice_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     vector<Parameters> p(2,PP);
 
     // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-    p[1].NNI(b1, b2);
+    p[1].NNI_discard_alignment(b1, b2);
   
     //  if (not extends(p[1].t(), PP.PC->TC))
     //    return;
@@ -228,7 +228,7 @@ void two_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     vector<Parameters> p(2,PP);
 
     // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-    p[1].NNI(b1, b2);
+    p[1].NNI_discard_alignment(b1, b2);
   
     //  if (not extends(p[1].t(), PP.PC->TC))
     //    return;
@@ -322,7 +322,7 @@ void two_way_NNI_SPR_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     vector<Parameters> p(2,PP);
 
     // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-    p[1].NNI(b1, b2);
+    p[1].NNI_discard_alignment(b1, b2);
   
     //  if (not extends(p[1].t(), PP.PC->TC))
     //    return;
@@ -389,7 +389,7 @@ void two_way_NNI_and_branches_sample(owned_ptr<Model>& P, MoveStats& Stats, int 
 
     //---------------- Do the NNI operation -------------------//
     // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-    p[1].NNI(b1, b2);
+    p[1].NNI_discard_alignment(b1, b2);
   
     //  if (not extends(p[1].t(), PP.PC->TC))
     //    return;
@@ -470,10 +470,10 @@ void three_way_topology_sample_slice(owned_ptr<Model>& P, MoveStats& Stats, int 
     vector<Parameters> p(3,PP);
 
     // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-    p[1].NNI(b1, b2);
+    p[1].NNI_discard_alignment(b1, b2);
 
     // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
-    p[2].NNI(b1, b3);
+    p[2].NNI_discard_alignment(b1, b3);
 
     const vector<log_double_t> rho(3,1);
 
@@ -560,11 +560,11 @@ void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     orders[0] = A5::get_nodes_random(p[0].t(), b);
 
     // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-    p[1].NNI(b1, b2);
+    p[1].NNI_discard_alignment(b1, b2);
     orders[1] = A5::get_nodes_random(p[1].t(), b);
 
     // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
-    p[2].NNI(b1, b3);
+    p[2].NNI_discard_alignment(b1, b3);
     orders[2] = A5::get_nodes_random(p[2].t(), b);
   
     const vector<log_double_t> rho(3,1);

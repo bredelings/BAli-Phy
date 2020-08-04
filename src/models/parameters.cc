@@ -1044,6 +1044,69 @@ void Parameters::NNI(int b1, int b2, bool allow_disconnect_subtree)
     }
 }
 
+// b1 and b2 point outwards, away from the other subtrees.
+// The (possibly) disconnected subtree is the sibling of b1.
+void Parameters::NNI_discard_alignment(int b1, int b2)
+{
+    if (not variable_alignment())
+    {
+        NNI(b1,b2);
+        return;
+    }
+
+    int s1 = t().source(b1);
+    int t1 = t().target(b1);
+
+    int s2 = t().source(b2);
+    int t2 = t().target(b2);
+
+    assert(t().is_connected(s1,s2));
+    int b45 = t().find_branch(s1,s2);
+
+    // 1. Get alignments of sequences 123456
+    auto order = A5::get_nodes(t(),b45);
+    auto& nodes = order.nodes;
+    assert(nodes[4] == s1);
+    assert(nodes[5] == s2);
+
+    if (nodes[0] != t1) std::swap(nodes[0],nodes[1]);
+    assert(nodes[0] == t1);
+  
+    if (nodes[2] != t2) std::swap(nodes[2],nodes[3]);
+    assert(nodes[2] == t2);
+
+    // OK, br1 is nodes[0]<->nodes[4] and br2 is nodes[2]<->nodes[5]
+    int b04 = t().find_branch(nodes[0],nodes[4]);
+    int b14 = t().find_branch(nodes[1],nodes[4]);
+    int b25 = t().find_branch(nodes[2],nodes[5]);
+    int b35 = t().find_branch(nodes[3],nodes[5]);
+
+    // 3. Perform NNI
+    exchange_subtrees(b1, b2);  // alter tree
+    std::swap(nodes[0],nodes[2]); // alter nodes
+    std::swap(b04, b25);
+
+    assert(b04 == t().find_branch(nodes[0],nodes[4]));
+    assert(b14 == t().find_branch(nodes[1],nodes[4]));
+    assert(b25 == t().find_branch(nodes[2],nodes[5]));
+    assert(b35 == t().find_branch(nodes[3],nodes[5]));
+    assert(b45 == t().find_branch(nodes[4],nodes[5]));
+
+    // 5. Set the pairwise alignments.
+    for(int i=0;i<n_data_partitions();i++)
+    {
+        auto dp = get_data_partition(i);
+        if (dp.has_pairwise_alignments())
+        {
+            dp.unset_pairwise_alignment(b04);
+            dp.unset_pairwise_alignment(b14);
+            dp.unset_pairwise_alignment(b25);
+            dp.unset_pairwise_alignment(b35);
+            dp.unset_pairwise_alignment(b45);
+        }
+    }
+}
+
 void Parameters::show_h_tree() const
 {
     using std::get;

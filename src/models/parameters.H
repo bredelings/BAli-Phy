@@ -352,6 +352,7 @@ private:
 public:
     void NNI(const tree_edge& b1, const tree_edge& b2, bool disconnect_subtree=false);
     void NNI(int b1, int b2, bool disconnect_subtree=false);
+    void NNI_discard_alignment(int b1, int b2);
     void show_h_tree() const;
 
     /// Did we most recently hit beta==1 (1) or beta=0 (0)
