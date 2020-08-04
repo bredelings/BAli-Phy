@@ -1,4 +1,5 @@
 #include <fstream>
+#include <unordered_set>
 #include "graph_register.H"
 #include "computation/operations.H"
 #include "computation/expression/let.H"
@@ -114,9 +115,12 @@ void reg_heap::find_all_regs_in_context_no_check(int, vector<int>& scan, vector<
     }
 
 #ifndef NDEBUG
-    for(int i=0;i<unique.size();i++)
-	for(int j=0;j<i;j++)
-	    assert(unique[i] != unique[j]);
+    std::unordered_set<int> unique_set;
+    for(int r: unique)
+    {
+        assert(not unique_set.count(r));
+        unique_set.insert(r);
+    }
 #endif
 
     for(int i=0;i<unique.size();i++)
@@ -411,6 +415,11 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     map<int,string> constants = get_constants(C, t);
 
     vector<int> regs = C.find_all_used_regs_in_context(t,false);
+    std::unordered_set<int> regs_set;
+#ifndef NDEBUG
+    for(int r: regs)
+        regs_set.insert(r);
+#endif
 
     o<<"digraph \"token"<<t<<"\" {\n";
     o<<"graph [ranksep=0.25, fontname=Arial,  nodesep=0.25, ranksep=0.5];\n";
@@ -569,7 +578,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	if (C.reg_has_call(R))
 	{
 	    int R2 = C.call_for_reg(R);
-	    assert(includes(regs,R2));
+	    assert(regs_set.count(R2));
 
 	    bool created_call = false;
 	    for(int r: C.step_for_reg(R).created_regs)
