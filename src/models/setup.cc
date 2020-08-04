@@ -515,9 +515,10 @@ bool is_unlogged_random(const Rules& R, const ptree& model_, const name_scope_t&
     // 1. If this function is random, then yes.
     if (name == "sample") return true;
 
+    // Don't treat let-declared random variables as unlogged.
     // 2. If this is a random variable, then yes.
-    if (not model.size() and model.is_a<string>())
-        if (scope.identifiers.count(name) and scope.identifiers.at(name).is_random) return true;
+    // if (not model.size() and model.is_a<string>())
+    //    if (scope.identifiers.count(name) and scope.identifiers.at(name).is_random) return true;
 
     // 3. If this function is loggable then any random children have already been logged.
     if (is_loggable_function(R, name)) return false;
