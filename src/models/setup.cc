@@ -1399,6 +1399,10 @@ bool do_extract(const ptree& func, const ptree& arg)
     if (func_name == "let") return false;
     // 1c. Don't pull anything out of lambdas
     if (func_name == "function") return false;
+    // 1d. Don't pull anything out of lambdas
+    if (func_name == "List") return false;
+    // 1e. Don't pull anything out of lambdas
+    if (func_name == "Tuple") return false;
 
     auto arg_value = arg.get_child("value");
     string arg_type = unparse_type(arg.get_child("type"));
@@ -1439,10 +1443,16 @@ vector<pair<string, ptree>> extract_terms(ptree& m)
 
     vector<pair<string,ptree>> extracted;
     vector<pair<string,ptree>> extracted_top;
+    int i=0;
     // Walk each argument and determine if it should be pulled out
     for(auto& [arg_name,arg_value]: value)
     {
-        string name = value.get_value<string>() + ":" + arg_name;
+        auto func = value.get_value<string>();
+        string name = func + ":" + arg_name;
+        if (func == "List" or func == "Tuple")
+        {
+            name = "["+std::to_string(++i)+"]";
+        }
 
         // If we should pull out the argument then do so
         if (do_extract(m, arg_value))
@@ -1455,7 +1465,13 @@ vector<pair<string, ptree>> extract_terms(ptree& m)
         else if (not arg_value.is_null()) // for function[x=null,body=E]
         {
             for(auto& [sub_name,sub_term]: extract_terms(arg_value))
-                extracted.push_back({name+"/"+sub_name, std::move(sub_term)});
+            {
+                auto sup_name = name + "/" + sub_name;
+                // Fuse subscripts like [1] into the name.
+                if (sub_name.size() and sub_name[0] == '[')
+                    sup_name = name + sub_name;
+                extracted.emplace_back(sup_name, std::move(sub_term));
+            }
         }
     }
     std::move(extracted_top.begin(), extracted_top.end(), std::back_inserter(extracted));
