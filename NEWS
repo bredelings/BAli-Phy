@@ -1,19 +1,24 @@
-* 4.0 (unrelease)
+* 4.0 (unreleased)
  - Force edges. (20% slower)
  - Lazy random variable creation and destruction. (30% slower)
  - Add slice moves when variables are created.
 
 * 3.6 (unreleased)
  + Make the `"nested": true` form of JSON log format more readable.
+ + Connect 3D MDS points with lines.
+ + Update command-line model language
+   - Replace getAlphabet builtin with get_state[alphabet]
+   - Add get_state[branch_categories]
+   - Add Tuple[...] expression.
+   - Stop putting argument names into scope as identifiers.
+   - Allow default arguments to depend on earlier arguments.
+   + Generate cleaner Haskell code:
+     - Don't prefix variable names with "arg_", "let_var_", or "lambda_var_"
+     - Rewrite code generation:
+       - Track emitted Haskell variable names.
+     - Generate readable code for lists and tuples.
+     - Handle functions in a cleaner way.
  - Make modifiable structures instantiate either all their fields or none.
- + Generate cleaner Haskell code:
-   - Don't prefix variable names with "arg_", "let_var_", or "lambda_var_"
-   - Rewrite code generation:
-     - Track emitted Haskell variable names.
-   - Generate readable code for lists and tuples.
-   - Handle functions in a cleaner way.
- - Stop putting argument names into scope as identifiers.
- + Allow default arguments to depend on earlier arguments.
 
 * 3.5 (Mar 2, 2020)
  + Reconstruct ancestral sequences by default.
