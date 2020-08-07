@@ -18,6 +18,7 @@
        - Track emitted Haskell variable names.
      - Generate readable code for lists and tuples.
      - Handle functions in a cleaner way.
+     - Eliminate %>=% in favor of just %=% and %>%.
  - Make modifiable structures instantiate either all their fields or none.
 
 * 3.5 (Mar 2, 2020)
