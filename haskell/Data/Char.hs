@@ -1,4 +1,10 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 module Data.Char where
+
+import Compiler.Base
+import Compiler.Num
+import Data.Eq
+import Data.Ord
 
 data Char
 
@@ -111,7 +117,7 @@ digitToInt :: Char -> Int
 digitToInt c | dec <= 9  = dec
              | hexl <= 5 = hexl + 10
              | hexu <= 5 = hexu + 10
-             | otherwise = error ("digitToInt: bad digit " ++ show c)
+             | otherwise = error ("digitToInt: bad digit") --  ++ show c)
   where
     dec  = ord c - ord '0'
     hexl = ord c - ord 'a'

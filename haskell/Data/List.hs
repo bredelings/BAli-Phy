@@ -9,6 +9,7 @@ import Data.Maybe
 import Data.Tuple
 import Data.Function
 import Data.Ord
+import Data.Char
 
 infixr 5 ++
 [] ++ y = y
@@ -156,15 +157,24 @@ drop n (_:xs) =  drop (n-1) xs
 
 splitAt n xs  =  (take n xs, drop n xs)
 
--- takeWhile
+takeWhile _ []          = []
+takeWhile p (x:xs)
+          | p x         = x : takeWhile p xs
+          | otherwise   = []
 
--- dropWhile
+dropWhile _ []          = []
+dropWhile p xs@(x:xs')
+          | p x         = dropWhile p xs'
+          | otherwise   = xs
 
 -- dropWhileEnd
 
--- span
+span _ xs@[]       = (xs,xs)
+span p xs@(x:xs')
+     | p x         = let (ys,zs) = span p xs' in (x:ys, zs)
+     | otherwise   = ([],xs)
 
--- break
+break p = span (not . p)
 
 -- stripPrefix
 
@@ -225,24 +235,39 @@ zipWith _ _ _           =  []
 
 zip = zipWith (,)
 
--- many zips ... 3-7
+-- zip3
+-- zip4
+-- zip5
+-- zip6
+-- zip7
 
-unzip [] = ([],[])
-unzip [(x,y),l] = ([x:xs],[y:ys]) where z = unzip l
-                                        xs = fst z
-                                        ys = snd z
+unzip []    = ([]  ,[]  )
+unzip (h:t) = (x:xs,y:ys) where (x,y) = h
+                                (xs,ys) = unzip t
 
--- many unzips -- 3-7
+-- unzip3
+-- unzip4
+-- unzip5
+-- unzip6
+-- unzip7
 
--- lines
+lines "" = []
+lines s  = case break (== '\n') s of
+             (l, s') -> (l, case s' of
+                              [] -> []
+                              _:s'' -> lines s'')
 
--- words
+words s = case dropWhile isSpace s of
+            "" -> []
+            s' -> w : words s''
+                  where (w, s'') = break isSpace s'
 
--- unlines
+unlines []     = []
+unlines (l:ls) = l ++ '\n' : unlines ls
 
--- unwords
+unwords [] = ""
+unwords ws = foldr1 (\w s -> w ++ ' ':s) ws
 
--- nub
 nub = nubBy (==)
 
 -- delete
