@@ -33,11 +33,9 @@ word_dist_for_doc word_dist_for_topic nwords = do
 model = do
   (word_dist_for_topic, word_frequencies_for_topic) <- unzip `liftM` independent [sample_word_dist | topic <- topics]
       
-  word_dists_topic_frequencies <-
-      independent [word_dist_for_doc word_dist_for_topic nwords | w <- docs_words, let nwords = length w]
-  let topic_frequencies = map snd word_dists_topic_frequencies
-      word_dists =        map fst word_dists_topic_frequencies
-      loggers = ["word_frequencies_for_topic" %=% word_frequencies_for_topic,
+  (word_dists, topic_frequencies) <- unzip `liftM` independent [word_dist_for_doc word_dist_for_topic nwords | w <- docs_words, let nwords = length w]
+
+  let loggers = ["word_frequencies_for_topic" %=% word_frequencies_for_topic,
                  "topic_frequencies_for_doc" %=% topic_frequencies]
   return (word_dists, loggers)
 
