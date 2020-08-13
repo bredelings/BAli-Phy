@@ -75,7 +75,7 @@ foldl1 _ []      =  error "Data.List.foldl1: empty list"
 foldr f z [] = z
 foldr f z (x:xs) = (f x (foldr f z xs))
 
-foldr1 _ [x]    = [x]
+foldr1 _ [x]    = x
 foldr1 f (x:xs) = f x (foldr1 f xs)
 foldr1 f _      = error "Data.List.foldr1: empty list"
 
