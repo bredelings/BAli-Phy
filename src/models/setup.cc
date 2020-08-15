@@ -1452,6 +1452,21 @@ vector<pair<string, ptree>> extract_terms(ptree& m)
     ptree& value = m.get_child("value");
 
     vector<pair<string,ptree>> extracted;
+    if (value.has_value<string>() and value.get_value<string>() == "let")
+    {
+        assert(value.size() == 2);
+
+        string var_name = value[0].first;
+        ptree tmp1;
+        std::swap(tmp1,value[0].second);
+        ptree tmp2;
+        std::swap(tmp2,value[1].second);
+        auto extracted = extract_terms(tmp2);
+        extracted.insert(extracted.begin(),{var_name,tmp1});
+        std::swap(tmp2,m);
+        return extracted;
+    }
+
     vector<pair<string,ptree>> extracted_top;
     int i=0;
     // Walk each argument and determine if it should be pulled out
