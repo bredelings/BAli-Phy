@@ -61,6 +61,7 @@ mixMM fs ms = MixtureModel $ mix fs [m | MixtureModel m <- ms]
 scale_MMs rs ms = [scale r m | (r,m) <- zip' rs ms]
 
 -- For mixtures like mixture([hky85,tn93,gtr]), we probably need to mix on the Matrix level, to avoid shared scaling.
+mixture ms fs = mixMM fs ms
 scaled_mixture ms rs fs = mixMM fs (scale_MMs rs ms)
 
 parameter_mixture :: (a -> MixtureModel b) -> [a] -> MixtureModel b

@@ -1,14 +1,20 @@
 {
-    "name": "mixture",
+    "name": "scaled_mixture",
     "synonyms":["Mixture"],
     "result_type": "MixtureModel[a]",
-    "call": "SModel.mixture[@models,@frequencies]",
+    "call": "SModel.scaled_mixture[@models,@rates,@frequencies]",
     "import": ["SModel"],
     "args": [
         {
             "arg_name": "models",
             "arg_type": "List[MixtureModel[a]]",
 	    "description": "The models to mix"
+        },
+        {
+            "arg_name": "rates",
+            "arg_type": "List[Double]",
+            "default_value": "~symmetric_dirichlet[length[@models],2]",
+	    "description": "The (relative) scaling factors for each model"
         },
         {
             "arg_name": "frequencies",
