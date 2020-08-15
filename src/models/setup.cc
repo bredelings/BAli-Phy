@@ -1385,7 +1385,17 @@ model_t get_model(const Rules& R, const string& type, const string& model_string
 
 bool annotated_term_is_model(const ptree& term)
 {
-    return term.get<string>("extract","none") == "all";
+    if (term.get<string>("extract","none") == "all") return true;
+
+    auto value = term.get_child("value");
+
+    if (value.has_value<string>() and value.get_value<string>() == "List")
+    {
+        for(auto& [arg_name,arg_value]: term.get_child("value"))
+            if (annotated_term_is_model(arg_value)) return true;
+    }
+
+    return false;
 }
 
 bool do_extract(const ptree& func, const ptree& arg)
