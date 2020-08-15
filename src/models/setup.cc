@@ -1427,7 +1427,7 @@ bool do_extract(const ptree& func, const ptree& arg)
         //                                      - suppressing gamma::a = getAlphabet
         if (arg_type == "Int" or arg_type == "Double" or arg_type == "LogDouble")
             return true;
-        if (arg_type == "List[Double]" or arg_type == "List[Pair[String,Double]]")
+        if (arg_type == "List[Double]" or arg_type == "List[Tuple[String,Double]]")
             return true;
     }
 
