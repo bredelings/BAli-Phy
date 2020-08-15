@@ -55,13 +55,14 @@ rate (MixtureModel d) = average [(p,rate m) | (p,m) <- d]
 scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r)
 scale x (MixtureModel dist              ) = MixtureModel [(p, scale x m) | (p, m) <- dist]
 
-rescale q r = scale (r/rate q) q
+rescale r q = scale (r/rate q) q
 
 mixMM fs ms = MixtureModel $ mix fs [m | MixtureModel m <- ms]
 scale_MMs rs ms = [scale r m | (r,m) <- zip' rs ms]
 
 -- For mixtures like mixture([hky85,tn93,gtr]), we probably need to mix on the Matrix level, to avoid shared scaling.
 mixture ms fs = mixMM fs ms
+-- Note that this scales the models BY rs instead of TO rs.
 scaled_mixture ms rs fs = mixMM fs (scale_MMs rs ms)
 
 parameter_mixture :: (a -> MixtureModel b) -> [a] -> MixtureModel b
@@ -220,14 +221,14 @@ tuffley_steel_98_unscaled s01 s10 q = modulated_markov [scale 0.0 q, q] rates_be
     level_probs = [s10/total, s01/total] where total = s10 + s01
     rates_between = fromLists [[-s01,s01],[s10,-s10]]
 
-tuffley_steel_98 s01 s10 q = tuffley_steel_98_unscaled s01 s10 (rescale q 1.0)
+tuffley_steel_98 s01 s10 q = tuffley_steel_98_unscaled s01 s10 (rescale 1.0 q)
 
 huelsenbeck_02 s01 s10 model = MixtureModel [(p, tuffley_steel_98_unscaled s01 s10 q) | (p,q) <- dist] where
-    MixtureModel dist = rescale model 1.0
+    MixtureModel dist = rescale 1.0 model
 
 galtier_01_ssrv :: Double -> MixtureModel a -> ReversibleMarkov a
 galtier_01_ssrv nu model = modulated_markov models rates_between level_probs where
-    MixtureModel dist = rescale model 1.0
+    MixtureModel dist = rescale 1.0 model
     level_probs = map fst dist
     models = map snd dist
     n_levels = length dist
