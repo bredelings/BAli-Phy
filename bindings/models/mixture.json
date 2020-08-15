@@ -24,5 +24,6 @@
         }
     ],
     "title": "Mixture model",
-    "description": "A scaled and weighted mixture of other mixture models."
+    "description": "A scaled and weighted mixture of other mixture models.",
+    "extract": "all"
 }
