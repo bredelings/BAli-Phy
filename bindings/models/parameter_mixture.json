@@ -1,12 +1,18 @@
 {
     "name": "parameter_mixture",
     "result_type": "MixtureModel[a]",
-    "call": "SModel.parameter_mixture[@submodel,@dist]",
+    "call": "SModel.parameter_mixture[@submodel,zip[@frequencies,@values]]",
     "import": ["SModel"],
     "args": [
         {
-            "arg_name": "dist",
-            "arg_type": "List[Tuple[Double,b]]",
+            "arg_name": "values",
+            "arg_type": "List[b]",
+	    "description": "The frequencies for each model"
+        },
+        {
+            "arg_name": "frequencies",
+            "arg_type": "List[Double]",
+            "default_value": "let[n=length[@values],replicate[n,div[1.0,intToDouble[n]]]]",
 	    "description": "The frequencies for each model"
         },
         {
@@ -19,8 +25,8 @@
     "description": "A scaled and weighted mixture of other mixture models.",
     "examples":
     [
-        "function[k,unit_mixture[hky85[kappa=k]]]+parameter_mixture[[Tuple[0.5,1.0],Tuple[0.5,2.0]]]",
-        "function[k,unit_mixture[hky85[k]]]+parameter_mixture[zip[~symmetric_dirichlet[4,1],~iid[4,log_normal[0,1]]]]"
+        "function[k,hky85[kappa=k]]+parameter_mixture[[1.0,2.0],[0.5,0.5]]",
+        "function[k,hky85[k]]+parameter_mixture[~iid[4,log_normal[0,1]],~symmetric_dirichlet[4,1]]"
     ],
     "extract": "all"
 }
