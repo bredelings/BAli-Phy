@@ -491,6 +491,11 @@ string unparse_annotated(const ptree& ann)
 	string name = p[0].first;
 	return "let["+name+show_model_annotated(p[0].second)+","+unparse_annotated(p[1].second)+"]";
     }
+    else if (s == "function")
+    {
+	string name = p[0].first;
+	return "function["+name+","+unparse_annotated(p[1].second)+"]";
+    }
     if (s == "sample")
 	return "~" + unparse_annotated(p.begin()->second);
     if (s == "intToDouble")
