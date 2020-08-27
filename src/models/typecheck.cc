@@ -292,7 +292,7 @@ typecheck_and_annotate_lambda(const Rules& R, const ptree& required_type, const 
     E = E && E_body;
     auto used_args = get_used_args(body_exp2);
     if (not E)
-        throw myexception()<<"Expression '"<<unparse_annotated(body_exp2)<<"' is not of required type "<<unparse_type(required_type)<<"!";
+        throw myexception()<<"Expression '"<<unparse(model,R)<<"' is not of required type "<<unparse_type(required_type)<<"!";
     add(bound_vars, E.referenced_vars());
 
     // 3. Create the new model tree with args in correct order
