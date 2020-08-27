@@ -288,6 +288,8 @@ typecheck_and_annotate_lambda(const Rules& R, const ptree& required_type, const 
         throw myexception()<<"Supplying a function, but expected '"<<unparse_type(required_type)<<"!";
 
     // 2. Analyze the body, forcing it to have type (b)
+    if (auto btype = E.value_of_var(b))
+        b = *btype;
     auto [body_exp2, E_body] =  typecheck_and_annotate(R, b, body_exp, bound_vars, extend_scope(scope, var_name, a));
     E = E && E_body;
     auto used_args = get_used_args(body_exp2);
