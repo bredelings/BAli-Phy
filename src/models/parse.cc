@@ -489,7 +489,7 @@ string unparse_annotated(const ptree& ann)
     if (s == "let")
     {
 	string name = p[0].first;
-	return "let["+name+"="+unparse_annotated(p[0].second)+","+unparse_annotated(p[1].second)+"]";
+	return "let["+name+show_model_annotated(p[0].second)+","+unparse_annotated(p[1].second)+"]";
     }
     if (s == "sample")
 	return "~" + unparse_annotated(p.begin()->second);
