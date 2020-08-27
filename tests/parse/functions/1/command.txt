@@ -1,0 +1,1 @@
+dna.fasta -S function[k,unit_mixture[hky85[k]]]+parameter_mixture[zip[~symmetric_dirichlet[4,1],~iid[4,log_normal[0,1]]]] --test
