@@ -33,5 +33,6 @@
     ],
     "description": "The Galtier covarion model implements switching between classes at a rate `nu`.",
     "examples": ["gtr+Rates.gamma+Covarion.gt01","gtr+Rates.free+Covarion.gt01"],
+    "see": ["markov_modulate"],
     "extract": "all"
 }

@@ -1,0 +1,23 @@
+{
+    "name": "markov_modulate",
+    "result_type": "RevCTMC[a]",
+    "call": "markov_modulate_mixture[@nu,@submodel]",
+    "import": ["SModel"],
+    "args": [
+        {
+            "arg_name": "nu",
+            "arg_type": "Double",
+	    "default_value":"~exponential[0.1]",
+	    "description":"Rate of class-switching"
+        },
+        {
+            "arg_name": "submodel",
+            "arg_type": "MixtureModel[a]",
+	    "description": "The base mixture model"
+        }
+    ],
+    "description": "This constructs a modulated markov model that switches between classes in a mixture at a rate `nu`.",
+    "examples": ["gtr+Rates.gamma+markov_modulate","gtr+Rates.free+markov_modulate"],
+    "see": ["Covarion.gt01"],
+    "extract": "all"
+}

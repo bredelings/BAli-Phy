@@ -214,6 +214,10 @@ modulated_markov models rates_between level_probs = reversible_markov a smap q p
     pi = modulated_markov_pi pis level_probs
     smap = modulated_markov_smap smaps
 
+markov_modulate_mixture nu (MixtureModel dist) = modulated_markov models rates_between level_probs where
+    (level_probs,models) = unzip dist
+    rates_between = generic_equ (length models) nu
+
 -- We need to rescale submodels to have substitution rate `1.0`.
 -- Otherwise class-switching rates are not relative to the substitution rate.
 
