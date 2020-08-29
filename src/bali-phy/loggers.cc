@@ -108,7 +108,7 @@ vector< vector< vector<int> > > get_un_identifiable_indices(const vector<string>
 {
     vector< vector< vector<int> > > indices;
 
-    for(auto& patterns: vector<vector<string>>{ {"Rates.free:rates*","Rates.free:frequencies*"}, {"parameter_mixture:values*","parameter_mixture:frequencies*"} } )
+    for(auto& patterns: vector<vector<string>>{ {"Rates.free:rates*","Rates.free:frequencies*"}, {"m3:omegas*","m3:ps*"} } )
     {
 	auto x = get_un_identifiable_indices(names, patterns);
 	indices.insert(indices.end(), x.begin(), x.end());
