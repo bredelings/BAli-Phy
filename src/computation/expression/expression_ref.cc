@@ -443,3 +443,55 @@ EPair::operator std::pair<int,int>() const
 {
     return std::pair<int,int>(first.as_int(), second.as_int());
 }
+
+string EPtree::print() const
+{
+    string s;
+    s = head.print();
+    vector<string> args;
+    for(auto& [key,val]: (*this))
+    {
+        string arg = key + ":" + val.print();
+        args.push_back(arg);
+    }
+    return "{ " + join(args, ", ") + "}";
+}
+
+
+bool EPtree::operator==(const EPtree& E) const
+{
+    if (head != E.head) return false;
+
+    for(int i=0;i<size();i++)
+        if ((*this)[i] != E[i]) return false;
+
+    return true;
+}
+
+bool EPtree::operator==(const Object& o) const
+{
+    auto E = dynamic_cast<const EPtree*>(&o);
+    if (not E)
+        return false;
+
+    return operator==(*E);
+}
+
+EPtree::EPtree(const expression_ref& H)
+    :head(H)
+{
+    assert(H.is_atomic());
+}
+
+EPtree::EPtree(const expression_ref& H, const std::initializer_list< std::pair<std::string, expression_ref> > S)
+    :EPtree(H, std::vector< std::pair<std::string, expression_ref> >(S))
+{
+    assert(H.is_atomic());
+}
+
+
+EPtree::EPtree(const expression_ref& H, const std::vector< std::pair<std::string, expression_ref> > S)
+    :std::vector< std::pair< std::string, expression_ref> >(S), head(H)
+{
+    assert(H.is_atomic());
+}

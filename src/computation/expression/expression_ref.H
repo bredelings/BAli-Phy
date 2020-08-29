@@ -419,6 +419,29 @@ struct EPair: public Pair<expression_ref,expression_ref>
 
 typedef std::pair<expression_ref,expression_ref> Epair;
 
+struct EPtree: public Object, public std::vector<std::pair<std::string,expression_ref>>
+{
+    expression_ref head;
+
+    EPtree* clone() const {return new EPtree(*this);}
+    std::string print() const;
+
+    bool operator==(const EPtree& E) const;
+    bool operator==(const Object& o) const;
+
+    type_constant type() const {return eptree_type;}
+
+    EPtree() {}
+
+    EPtree(const expression_ref&);
+
+    EPtree(const expression_ref&, const std::initializer_list< std::pair<std::string, expression_ref> > S);
+
+    EPtree(const expression_ref&, const std::vector< std::pair<std::string, expression_ref> > S);
+
+    virtual ~EPtree() {}
+};
+
 template<>
 inline std::string Box<std::vector<expression_ref>>::print() const
 {
