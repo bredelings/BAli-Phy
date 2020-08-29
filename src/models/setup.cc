@@ -558,6 +558,14 @@ name_scope_t extend_scope(name_scope_t scope, const string& var, const var_info_
     return scope;
 }
 
+void extend_modify_scope(name_scope_t& scope, const string& var, const var_info_t& var_info)
+{
+    if (scope.identifiers.count(var))
+        scope.identifiers.erase(var);
+    scope.identifiers.insert({var, var_info});
+    scope.vars.insert(var_info.x);
+}
+
 int get_index_for_arg_name(const ptree& rule, const string& arg_name)
 {
     ptree args = rule.get_child("args");
@@ -774,7 +782,7 @@ optional<translation_result_t> get_model_let(const Rules& R, const ptree& model,
 
 expression_ref eta_reduce(expression_ref E)
 {
-    while(is_lambda_exp(E))
+    while(is_lambda_exp(E) and E.sub()[0].is_a<var>())
     {
         auto& x    = E.sub()[0].as_<var>();
         auto& body = E.sub()[1];
@@ -800,6 +808,31 @@ expression_ref eta_reduce(expression_ref E)
     return E;
 }
 
+set<string> find_vars_in_pattern(const ptree& pattern0)
+{
+    auto pattern = pattern0.get_child("value");
+
+    if (is_nontype_variable(pattern))
+        return {string(pattern)};
+    else if (is_tuple(pattern))
+    {
+        set<string> vars;
+        for(auto& [_,sub_pattern]: pattern)
+        {
+            auto slot_vars = find_vars_in_pattern(sub_pattern);
+            for(auto& var_name: slot_vars)
+            {
+                assert(not vars.count(var_name));
+                vars.insert(var_name);
+            }
+        }
+        return vars;
+    }
+    else
+        std::abort();
+}
+
+
 optional<translation_result_t> get_model_lambda(const Rules& R, const ptree& model, const name_scope_t& scope)
 {
     auto scope2 = scope;
@@ -811,23 +844,31 @@ optional<translation_result_t> get_model_lambda(const Rules& R, const ptree& mod
     if (name != "function") return {};
 
     // 2. Get the variable name and the body from the model
-    string var_name = model_rep[0].first;
-    auto x = scope2.get_var(var_name);
+    auto pattern = model_rep[0].second;
+    auto var_names = find_vars_in_pattern(pattern);
     auto body = scope2.get_var("lbody");
     auto log_body = scope2.get_var("log_lbody");
 
     ptree body_model = model_rep[1].second;
 
     // 3. Parse the body with the lambda variable in scope, and find the free variables.
-    var_info_t var_info(x,false,true);
-    auto body_scope = extend_scope(scope2, var_name, var_info);
-    auto body_result = get_model_as(R, body_model, body_scope);
 
-    // 4. Remove x from the lambda vars.
-    if (body_result.lambda_vars.count(var_name)) body_result.lambda_vars.erase(var_name);
+    for(auto& var_name: var_names)
+    {
+        auto x = scope2.get_var(var_name);
+        var_info_t var_info(x,false,true);
+        extend_modify_scope(scope2, var_name, var_info);
+    }
+    auto body_result = get_model_as(R, body_model, scope2);
+
+    // 4. Remove pattern variables from the lambda vars.
+    for(auto& var_name: var_names)
+        if (body_result.lambda_vars.count(var_name))
+            body_result.lambda_vars.erase(var_name);
 
     // 5. Add the lambda in front of the expression
-    body_result.code.E = lambda_quantify(x, body_result.code.E);
+    auto pattern2 = get_model_as(R, pattern, scope2);
+    body_result.code.E = lambda_quantify(pattern2.code.E, body_result.code.E);
 
     // 6. Now eta-reduce E.  If E == (\x -> body x), we will get just E == body
     body_result.code.E = eta_reduce(body_result.code.E);

@@ -213,7 +213,7 @@ optional<string> get_citation_url(const Rule& rule)
     return {};
 }
 
-string get_help_for_rule(const Rules& rules, const Rule& rule)
+string get_help_for_rule(const Rule& rule)
 {
     std::ostringstream help;
     if (auto title = rule.get_optional<string>("title"))
@@ -236,7 +236,7 @@ string get_help_for_rule(const Rules& rules, const Rule& rule)
 	auto& arg = argpair.second;
 	string arg_name = arg.get<string>("arg_name");
 	if (auto default_value = arg.get_child_optional("default_value"))
-	    arg_name += " " + show_model_abbrev(*default_value, rules, 15);
+	    arg_name += " " + show_model_abbrev(*default_value, 15);
 	args_names_types.push_back(arg_name);
     }
     help<<header("Usage");
@@ -268,7 +268,7 @@ string get_help_for_rule(const Rules& rules, const Rule& rule)
 
 	// 3. default =/~ default
 	if (auto default_value = arg.get_child_optional("default_value"))
-	    help<<"       default "<<show_model(*default_value, rules)<<"\n";
+	    help<<"       default "<<show_model(*default_value)<<"\n";
 
 	help<<std::endl;
     }
@@ -419,7 +419,7 @@ ptree load_help_files(const std::vector<fs::path>& package_paths)
 		for(auto& [_,s]: *cat)
 		    category.push_back(s);
 	    category.push_back(*name);
-	    string text = get_help_for_rule(R, rule);
+	    string text = get_help_for_rule(rule);
 	    help.make_path(category).put_value(text);
 	}
     }

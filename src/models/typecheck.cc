@@ -99,17 +99,16 @@ void substitute_in_types(const Substitution& renaming, term_t& T)
 {
     // maybe skip this if there is not child called "value"?
     substitute(renaming, T.get_child("type") );
-    for(auto& x: T.get_child("value"))
-	if (not x.second.is_null()) //  // For function[x=null,body=E]
-	    substitute_in_types( renaming, x.second );
+    auto value = T.get_child("value");
+    for(auto& x: value)
+        substitute_in_types( renaming, x.second );
 }
 
 term_t extract_value(const term_t& T)
 {
-    term_t value = T.get_child("value");
+    auto value = T.get_child("value");
     for(auto& x: value)
-	if (not x.second.is_null()) //  // For function[x=null,body=E]
-	    x.second = extract_value(x.second);
+        x.second = extract_value(x.second);
     return value;
 }
 
@@ -181,6 +180,13 @@ optional<ptree> type_for_arg_in_scope(const string& name, const tr_name_scope_t&
         return scope.args->at(name);
     else
         return {};
+}
+
+void extend_modify_scope(tr_name_scope_t& scope, const string& var, const type_t type)
+{
+    if (scope.identifiers.count(var))
+        scope.identifiers.erase(var);
+    scope.identifiers.insert({var,type});
 }
 
 tr_name_scope_t extend_scope(const tr_name_scope_t& scope, const string& var, const type_t type)
@@ -264,6 +270,36 @@ typecheck_and_annotate_let(const Rules& R, const ptree& required_type, const ptr
     return {{model2,E}};
 }
 
+pair<ptree, map<string,ptree>> parse_pattern(const ptree& pattern, set<string>& bound_vars)
+{
+    if (is_nontype_variable(pattern))
+    {
+        auto type = get_fresh_type_var(bound_vars);
+        bound_vars.insert(type);
+        return {type,{{string(pattern),type}}};
+    }
+    else if (is_tuple(pattern))
+    {
+        ptree type("Tuple");
+        map<string,ptree> var_to_type;
+        for(auto& [_,value]: pattern)
+        {
+            auto [slot_type, slot_vars] = parse_pattern(value, bound_vars);
+            type.push_back(pair(string(""),slot_type));
+            for(auto& [var_name,var_type]: slot_vars)
+            {
+                if (var_to_type.count(var_name))
+                    throw myexception()<<"Variable '"<<var_name<<"' occurs twice in "<<unparse(pattern)<<"!";
+                var_to_type.insert({var_name,var_type});
+            }
+        }
+        return {type,var_to_type};
+    }
+    else
+        std::abort();
+}
+
+
 optional<pair<ptree,equations>>
 typecheck_and_annotate_lambda(const Rules& R, const ptree& required_type, const ptree& model, set<string> bound_vars, const tr_name_scope_t& scope)
 {
@@ -273,11 +309,24 @@ typecheck_and_annotate_lambda(const Rules& R, const ptree& required_type, const 
 
     if (name != "function") return {}; //function[x,F]
 
-    string var_name = model[0].first;
+    // OK, to parse a pattern, we need to
+    // - find all the variables
+    // - give each variable a type
+    // - construct a type for the whole thing
+    // This could return a pair<type,map<name,type_var>>
+    // - we need to enforce that variable names are not duplicated within the pattern.
+    ptree pattern  = model[0].second;
     ptree body_exp = model[1].second;
 
-    auto a = get_fresh_type_var(bound_vars);
-    bound_vars.insert(a);
+    // 0. Compute the type (a -> b) of the function.
+
+    // This generates fresh type variables and adds them to bound_vars.
+    auto [a, type_for_binder] = parse_pattern(model[0].second, bound_vars);
+
+    auto scope2 = scope;
+    for(auto& [var,type]: type_for_binder)
+        extend_modify_scope(scope2, var, type);
+
     auto b = get_fresh_type_var(bound_vars);
     bound_vars.insert(b);
 
@@ -290,15 +339,17 @@ typecheck_and_annotate_lambda(const Rules& R, const ptree& required_type, const 
     // 2. Analyze the body, forcing it to have type (b)
     if (auto btype = E.value_of_var(b))
         b = *btype;
-    auto [body_exp2, E_body] =  typecheck_and_annotate(R, b, body_exp, bound_vars, extend_scope(scope, var_name, a));
+
+    auto [body_exp2, E_body] =  typecheck_and_annotate(R, b, body_exp, bound_vars, scope2);
     E = E && E_body;
     auto used_args = get_used_args(body_exp2);
     if (not E)
-        throw myexception()<<"Expression '"<<unparse(model,R)<<"' is not of required type "<<unparse_type(required_type)<<"!";
+        throw myexception()<<"Expression '"<<unparse(model)<<"' is not of required type "<<unparse_type(required_type)<<"!";
     add(bound_vars, E.referenced_vars());
 
     // 3. Create the new model tree with args in correct order
-    auto model2 = ptree("function",{{var_name, {}},{"",body_exp2}});
+    auto pattern2 = typecheck_and_annotate(R, a, pattern, bound_vars, scope2).first;
+    auto model2 = ptree("function",{{"",pattern2},{"",body_exp2}});
 
     auto keep = find_variables_in_type(required_type);
     add(keep, find_type_variables_from_scope(scope));
@@ -486,7 +537,7 @@ typecheck_and_annotate_var(const Rules& R, const ptree& required_type, const ptr
             return {{model3,E}};
         }
 	else
-	    throw myexception()<<"Term '"<<unparse(model, R)<<"' of type '"<<unparse_type(result_type)
+	    throw myexception()<<"Term '"<<unparse(model)<<"' of type '"<<unparse_type(result_type)
 			       <<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
     }
 
@@ -535,7 +586,7 @@ typecheck_and_annotate_constant(const Rules& R, const ptree& required_type, cons
             return {{model3,E}};
         }
 	else
-	    throw myexception()<<"Term '"<<unparse(model, R)<<"' of type '"<<unparse_type(result_type)
+	    throw myexception()<<"Term '"<<unparse(model)<<"' of type '"<<unparse_type(result_type)
 			       <<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
     }
 
@@ -577,7 +628,7 @@ pair<ptree,equations> typecheck_and_annotate_function(const Rules& R, const ptre
             return {model3,E};
         }
 	else
-	    throw myexception()<<"Term '"<<unparse(model, R)<<"' of type '"<<unparse_type(result_type)
+	    throw myexception()<<"Term '"<<unparse(model)<<"' of type '"<<unparse_type(result_type)
 			       <<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
     }
 

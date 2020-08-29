@@ -257,6 +257,84 @@ void ptree_map(std::function<void(ptree&)> f, ptree& p)
     f2(p);
 }
 
+bool is_nontype_variable(const ptree& model)
+{
+    if (not model.is_a<string>()) return false;
+
+    if (model.get_value<string>().empty()) return false;
+
+    if (model.get_value<string>() == "List") return false;
+
+    if (model.get_value<string>() == "Tuple") return false;
+
+    return true;
+}
+
+bool is_list(const ptree& model)
+{
+    if (not model.has_value<string>()) return false;
+
+    if (model.get_value<string>() != "List") return false;
+
+    for(int i=0;i<model.size();i++)
+    {
+        if (not model[i].first.empty())
+            throw myexception()<<"List: entry "<<i+1<<" '"<<model[i].first<<"="<<unparse(model[i].second)<<"2 must not have a variable name!";
+    }
+
+    return true;
+}
+
+bool is_tuple(const ptree& model)
+{
+    if (not model.has_value<string>()) return false;
+
+    if (model.get_value<string>() != "Tuple") return false;
+
+    if (model.size() == 1)
+        throw myexception()<<"Tuple's of 1 element not allowed:\n  "<<model.show();
+
+    for(int i=0;i<model.size();i++)
+    {
+        if (not model[i].first.empty())
+            throw myexception()<<"Tuple: entry "<<i+1<<" '"<<model[i].first<<"="<<unparse(model[i].second)<<"2 must not have a variable name!";
+    }
+
+    return true;
+}
+
+bool is_pattern(const ptree& model)
+{
+    if (is_nontype_variable(model)) return true;
+
+    if (is_list(model) or is_tuple(model))
+    {
+        for(auto& [_,value]: model)
+            if (not is_pattern(value)) return false;
+        return true;
+    }
+
+    return false;
+}
+
+bool is_function(const ptree& model)
+{
+    if (not model.has_value<string>()) return false;
+
+    if (model.get_value<string>() != "function") return false;
+
+    if (model.size() != 2)
+        throw myexception()<<"function: got "<<model.size()<<" arguments, 2 arguments required.\n  "<<model.show();
+
+    if (not model[0].first.empty() or not is_pattern(model[0].second))
+        throw myexception()<<"function: first argument must be a variable or pattern!\n  "<<model.show();
+    
+    if (not model[1].first.empty())
+        throw myexception()<<"function: second argument must not have a variable name!\n  "<<model.show();
+
+    return true;
+}
+
 void handle_positional_args(ptree& model, const Rules& R)
 {
     if (model.size() == 0) return;
@@ -278,54 +356,21 @@ void handle_positional_args(ptree& model, const Rules& R)
 	return;
     }
 
-    if (head == "function")
-    {
-	if (model.size() != 2)
-	    throw myexception()<<"function: got "<<model.size()<<" arguments, 2 arguments required.\n  "<<model.show();
+    if (is_function(model)) return;
 
-	// Complain about function[var=value,body]
-	if (not model[0].first.empty() or not model[0].second.is_a<string>())
-	    throw myexception()<<"function: first argument must be a variable!\n  "<<model.show();
-	// Move string value to first element of pair.
-	model[0].first = (string)model[0].second;
-	model[0].second = {};
+    if (is_list(model)) return;
 
-	if (not model[1].first.empty())
-	    throw myexception()<<"function: second argument must not have a variable name!\n  "<<model.show();
-	return;
-    }
-
-    if (head == "List")
-    {
-        for(int i=0;i<model.size();i++)
-        {
-            if (not model[i].first.empty())
-                throw myexception()<<"List: entry "<<i+1<<" '"<<model[i].first<<"="<<unparse(model[i].second,R)<<"2 must not have a variable name!";
-        }
-	return;
-    }
 
     if (head == "Pair")
     {
         if (model.size() != 2)
-            throw myexception()<<"Pair's must have two elements: "<<unparse(model,R);
+            throw myexception()<<"Pair's must have two elements: "<<unparse(model);
 
         model.value = string("Tuple");
         head = "Tuple";
     }
 
-    if (head == "Tuple")
-    {
-        if (model.size() == 1)
-            throw myexception()<<"Tuple's 1 element not allowed:\n  "<<model.show();
-
-        for(int i=0;i<model.size();i++)
-        {
-            if (not model[i].first.empty())
-                throw myexception()<<"List: argument "<<i+1<<" must not have a variable name!\n  "<<model.show();
-        }
-	return;
-    }
+    if (is_tuple(model)) return;
 
     if (head == "get_state")
     {
@@ -350,7 +395,7 @@ void handle_positional_args(ptree& model, const Rules& R)
 	if (not child.first.empty())
 	    seen_keyword = true;
 	else if (seen_keyword)
-	    throw myexception()<<"Positional argument after keyword argument in '"<<unparse(model, R)<<"'!";
+	    throw myexception()<<"Positional argument after keyword argument in '"<<unparse(model)<<"'!";
 	// Empty positional arguments argument can later have their value specified by keyword, so we ignore them completely
 	else if (child.second.is_null())
 	{
@@ -362,7 +407,7 @@ void handle_positional_args(ptree& model, const Rules& R)
 	    auto keyword = get_keyword_for_positional_arg(rule, i);
 
 	    if (model.count(keyword))
-		throw myexception()<<"Trying to set value for "<<head<<"."<<keyword<<" both by position and by keyword: \n"<<unparse(model, R);
+		throw myexception()<<"Trying to set value for "<<head<<"."<<keyword<<" both by position and by keyword: \n"<<unparse(model);
 
 	    child.first = keyword;
 	}
@@ -392,7 +437,7 @@ ptree parse(const Rules& R, const string& s)
 }
 
 
-string unparse(const ptree& p, const Rules& rules)
+string unparse(const ptree& p)
 {
     using namespace std::string_literals;
 
@@ -418,21 +463,21 @@ string unparse(const ptree& p, const Rules& rules)
     if (s == "let")
     {
 	string name = p[0].first;
-	return "let["+name+"="+unparse(p[0].second,rules)+","+unparse(p[1].second,rules)+"]";
+	return "let["+name+"="+unparse(p[0].second)+","+unparse(p[1].second)+"]";
     }
     else if (s == "function")
     {
 	string name = p[0].first;
-	return "function["+name+","+unparse(p[1].second,rules)+"]";
+	return "function["+name+","+unparse(p[1].second)+"]";
     }
     else if (s == "sample")
-	return "~" + unparse(p.begin()->second, rules);
+	return "~" + unparse(p.begin()->second);
 
     if (s == "intToDouble")
-	return unparse(p.get_child("x"), rules);
+	return unparse(p.get_child("x"));
     if (s == "unit_mixture" or s == "multiMixtureModel")
 	if (auto child = p.get_child_optional("submodel"))
-	    return unparse(*child, rules);
+	    return unparse(*child);
     vector<string> args;
     optional<string> submodel;
     for(const auto& pair: p)
@@ -446,11 +491,11 @@ string unparse(const ptree& p, const Rules& rules)
 	else if (pair.first == "submodel")
 	{
 	    assert(not submodel);
-	    submodel = unparse(pair.second, rules);
+	    submodel = unparse(pair.second);
 	    args.push_back("");
 	}
 	else
-	    args.push_back( unparse(pair.second, rules) );
+	    args.push_back( unparse(pair.second) );
 	// FIXME: don't print get_state[state_name] if its a default value?
     }
     while (args.size() and args.back() == "")
@@ -460,6 +505,11 @@ string unparse(const ptree& p, const Rules& rules)
     if (submodel)
 	s = *submodel + "+" + s;
     return s;
+}
+
+string unparse(const ptree& p, const Rules&)
+{
+    return unparse(p);
 }
 
 string unparse_annotated(const ptree& ann)
@@ -493,8 +543,7 @@ string unparse_annotated(const ptree& ann)
     }
     else if (s == "function")
     {
-	string name = p[0].first;
-	return "function["+name+","+unparse_annotated(p[1].second)+"]";
+	return "function["+unparse_annotated(p[0].second)+","+unparse_annotated(p[1].second)+"]";
     }
     if (s == "sample")
 	return "~" + unparse_annotated(p.begin()->second);
@@ -572,9 +621,9 @@ optional<ptree> peel_sample_annotated(ptree p)
 	return {};
 }
 
-string unparse_abbrev(ptree p, const Rules& rules, int length)
+string unparse_abbrev(ptree p, int length)
 {
-    string output = unparse(p, rules);
+    string output = unparse(p);
     if (output.size() > length)
     {
 	output = convertToString(p.value);
@@ -584,12 +633,12 @@ string unparse_abbrev(ptree p, const Rules& rules, int length)
     return output;
 }
 
-string show_model(ptree p, const Rules& rules)
+string show_model(ptree p)
 {
     if (auto q = peel_sample(p))
-	return "~ " + unparse(*q, rules);
+	return "~ " + unparse(*q);
     else
-	return "= " + unparse(p, rules);
+	return "= " + unparse(p);
 }
 
 
@@ -602,12 +651,12 @@ string show_model_annotated(ptree p)
 }
 
 
-string show_model_abbrev(ptree p, const Rules& rules, int length)
+string show_model_abbrev(ptree p, int length)
 {
     if (auto q = peel_sample(p))
-	return "~ " + unparse_abbrev(*q, rules, length-2);
+	return "~ " + unparse_abbrev(*q, length-2);
     else
-	return "= " + unparse_abbrev( p, rules, length-2);
+	return "= " + unparse_abbrev( p, length-2);
 }
 
 bool is_constant(const ptree& model)
