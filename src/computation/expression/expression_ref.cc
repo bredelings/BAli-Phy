@@ -444,6 +444,64 @@ EPair::operator std::pair<int,int>() const
     return std::pair<int,int>(first.as_int(), second.as_int());
 }
 
+int EPtree::count(const std::string& key) const
+{
+    int c = 0;
+    for(auto& [k,_]: *this)
+        if (key == k)
+            c++;
+    return c;
+}
+
+void EPtree::erase(const string& key)
+{
+    vector<pair<string,expression_ref>> children2;
+    for(auto& x: *this)
+        if (x.first != key)
+            children2.push_back(std::move(x));
+    std::swap(*this, children2);
+}
+
+std::optional<int> EPtree::get_child_index(const string& key) const
+{
+    for(int i=0; i<size(); i++)
+        if ((*this)[i].first == key)
+            return i;
+    return {};
+}
+
+expression_ref* EPtree::get_child_optional(const string& key)
+{
+    if (auto index = get_child_index(key))
+        return &(*this)[*index].second;
+    else
+        return nullptr;
+}
+
+const expression_ref* EPtree::get_child_optional(const string& key) const
+{
+    if (auto index = get_child_index(key))
+        return &(*this)[*index].second;
+    else
+        return nullptr;
+}
+
+expression_ref& EPtree::get_child(const string& key)
+{
+    if (auto c = get_child_optional(key))
+        return *c;
+    else
+	throw myexception()<<"No child with key '"<<key<<"'";
+}
+
+const expression_ref& EPtree::get_child(const string& key) const
+{
+    if (auto c = get_child_optional(key))
+        return *c;
+    else
+	throw myexception()<<"No child with key '"<<key<<"'";
+}
+
 string EPtree::print() const
 {
     string s;
@@ -454,7 +512,7 @@ string EPtree::print() const
         string arg = key + ":" + val.print();
         args.push_back(arg);
     }
-    return "{ " + join(args, ", ") + "}";
+    return " { " + join(args, ", ") + "}";
 }
 
 
@@ -491,7 +549,7 @@ EPtree::EPtree(const expression_ref& H, const std::initializer_list< std::pair<s
 
 
 EPtree::EPtree(const expression_ref& H, const std::vector< std::pair<std::string, expression_ref> > S)
-    :std::vector< std::pair< std::string, expression_ref> >(S), head(H)
+    :Vector< std::pair< std::string, expression_ref> >(S), head(H)
 {
     assert(H.is_atomic());
 }

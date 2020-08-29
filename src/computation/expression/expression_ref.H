@@ -419,7 +419,7 @@ struct EPair: public Pair<expression_ref,expression_ref>
 
 typedef std::pair<expression_ref,expression_ref> Epair;
 
-struct EPtree: public Object, public std::vector<std::pair<std::string,expression_ref>>
+struct EPtree: public Vector<std::pair<std::string,expression_ref>>
 {
     expression_ref head;
 
@@ -430,6 +430,20 @@ struct EPtree: public Object, public std::vector<std::pair<std::string,expressio
     bool operator==(const Object& o) const;
 
     type_constant type() const {return eptree_type;}
+
+    int count(const std::string& key) const;
+
+    void erase(const std::string& key);
+
+    std::optional<int> get_child_index(const std::string& key) const;
+
+    expression_ref* get_child_optional(const std::string& key);
+
+    const expression_ref* get_child_optional(const std::string& key) const;
+
+    expression_ref& get_child(const std::string& key);
+
+    const expression_ref& get_child(const std::string& key) const;
 
     EPtree() {}
 
