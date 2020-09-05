@@ -1656,6 +1656,23 @@ void reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
     set_reg_value(P, std::move(C), t);
 }
 
+pair<int,prob_ratios_t> reg_heap::set_and_evaluate_program(int r, closure&& value, int c)
+{
+    return set_and_evaluate_program({{r,std::move(value)}}, c);
+}
+
+pair<int,prob_ratios_t> reg_heap::set_and_evaluate_program(vector<pair<int, closure>>&& values, int c1)
+{
+    int c2 = copy_context(c1);
+
+    for(auto& [r,value]: values)
+        set_reg_value_in_context(r, std::move(value), c2);
+
+    auto ratios = probability_ratios(c1, 2);
+
+    return {c2, ratios};
+}
+
 bool reg_heap::execution_allowed() const
 {
     if (root_token < 0) return false;

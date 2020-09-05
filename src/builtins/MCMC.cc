@@ -59,9 +59,10 @@ log_double_t get_multiplier(reg_heap& M, const vector<int>& I_regs, int c1)
     {
 	int i = M.get_reg_value_in_context(r, c1).as_int();
 
-	int c2 = M.copy_context(c1);
-	M.set_reg_value_in_context(r, expression_ref(1-i), c2);
-	auto ratio = M.probability_ratios(c1,c2).total_ratio();
+        auto [c2, ratios] = M.set_and_evaluate_program(r, expression_ref(1-i), c1);
+
+        auto ratio = ratios.total_ratio();
+
 	if (uniform() < ratio/(1.0+ratio))
 	{
 	    M.switch_to_context(c1, c2);

@@ -412,6 +412,10 @@ public:
 
     void set_reg_value_in_context(int index, closure&& C, int c);
 
+    std::pair<int,prob_ratios_t> set_and_evaluate_program(int r, closure&& value, int c);
+
+    std::pair<int,prob_ratios_t> set_and_evaluate_program(std::vector<std::pair<int, closure>>&& values, int c);
+
     int get_modifiable_value_in_context(int R, int c);
 
     /*------------------------------------------------*/

@@ -167,6 +167,10 @@ public:
 
     virtual json get_logged_parameters() const;
 
+    prob_ratios_t set_and_evaluate_program(std::vector<std::pair<int,closure>>&& values);
+
+    prob_ratios_t set_and_evaluate_program(int r, closure&&);
+
     context_ref& operator=(const context_ref& c);
 
     context_ref(const context_ref&) = delete;

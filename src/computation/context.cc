@@ -393,6 +393,18 @@ json context_ref::get_logged_parameters() const
     return L.as_checked<Box<json>>().value();
 }
 
+prob_ratios_t context_ref::set_and_evaluate_program(int r, closure&& value)
+{
+    return set_and_evaluate_program({{r,std::move(value)}});
+}
+
+prob_ratios_t context_ref::set_and_evaluate_program(vector<pair<int,closure>>&& values)
+{
+    auto [c2,ratios] = memory()->set_and_evaluate_program(std::move(values), context_index);
+    context_index = c2;
+    return ratios;
+}
+
 int context_ref::get_compute_expression_reg(int index) const
 {
     assert(index >= 0 and index < heads().size());
