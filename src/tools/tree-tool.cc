@@ -29,6 +29,7 @@
 #include "util/assert.hh"
 #include "util/string/split.H"
 #include "util/cmdline.H"
+#include "findroot.H"
 #include "tools/read-trees.H"
 
 #include <boost/program_options.hpp>
@@ -70,6 +71,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description commands("Modification options");
     commands.add_options()
         ("prune",value<string>(),"Comma-separated taxa to remove")
+        ("root","Find a root position")
         ("resolve","Comma-separated taxa to remove")
         ("remove-root-branch","Remove single branch from root.")
         ("remove-root-branches","Ensure root is not a tip.")
@@ -234,6 +236,10 @@ int main(int argc,char* argv[])
                     all_names.insert(label);
                 }
             }
+        }
+        if (args.count("root"))
+        {
+            T = find_rooted_tree(T);
         }
 
         if (args.count("length"))
