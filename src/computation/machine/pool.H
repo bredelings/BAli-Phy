@@ -285,8 +285,10 @@ public:
 	    if (free_memory_callback)
 		free_memory_callback();
 
-	    if (memory.size() < n_used()*2+10 + n_null())
-		expand_memory(memory.size()*2+10);
+            int target_mem = n_used()*2+10 + n_null();
+            int diff = target_mem - memory.size();
+	    if (diff > 0)
+		expand_memory(diff);
 	}
 
     int allocate()
