@@ -27,17 +27,21 @@ long total_forces_scanned = 0;
 
 void reg_heap::reroot_at_context(int c)
 {
+    reroot_at_token(token_for_context(c));
+}
+
+void reg_heap::reroot_at_token(int t)
+{
     int old_root = root_token;
 
     // 1. Bail if we are already at the root.
-    int t = token_for_context(c);
     if (is_root_token(t)) return;
 
     total_reroot++;
 
     // 2. Get the tokens on the path to the root.
     boost::container::small_vector<int,10> path;
-    path.push_back(token_for_context(c));
+    path.push_back(t);
     while(true)
     {
         int parent = tokens[path.back()].parent;
