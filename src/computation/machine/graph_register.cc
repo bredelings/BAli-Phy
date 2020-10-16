@@ -833,8 +833,69 @@ void reg_heap::first_evaluate_program(int c)
 #endif
 }
 
+bool reg_heap::simple_set_path_to(int child_token) const
+{
+    assert(token_is_used(child_token));
+
+    for(int t = child_token; t != root_token; t = tokens[t].parent)
+    {
+        if (tokens[t].type != token_type::set) return false;
+
+        if (t != child_token and tokens[t].children.size() != 1) return false;
+    }
+
+    return true;
+}
+
+vector<pair<int,closure>> reg_heap::find_set_regs_on_path(int child_token) const
+{
+    assert(token_is_used(child_token));
+
+    vector<pair<int,closure>> reg_values;
+    for(int t = child_token; t != root_token; t = tokens[t].parent)
+    {
+        assert(tokens[t].type != token_type::reverse_set);
+        assert(tokens[t].type != token_type::reverse_set_unshare);
+        if (tokens[t].type == token_type::set or tokens[t].type == token_type::set_unshare)
+        {
+            auto [reg0, step0] = tokens[t].vm_step.delta()[0];
+            auto [reg1, step1] = tokens[t].vm_step.delta()[1];
+            auto value = closure_at(reg1);
+
+            assert(is_modifiable(expression_at(reg0)));
+            assert(steps[step0].call == reg1);
+            assert(step1 == non_computed_index);
+            assert(value.exp.is_atomic());
+
+            reg_values.push_back({reg0, value});
+        }
+    }
+    std::reverse(reg_values.begin(), reg_values.end());
+    assert(not reg_values.empty());
+
+    return reg_values;
+}
+
 expression_ref reg_heap::unshare_and_evaluate_program(int c)
 {
+    // 1. Reroot to the PPET
+    int t = token_for_context(c);
+    int PPET = tokens[t].prev_prog_token->token;
+    reroot_at_token(PPET);
+
+    // 2. Ensure that the path from the PPET is composed only of SET tokens!
+    if (not simple_set_path_to(t))
+    {
+        auto reg_values = find_set_regs_on_path(t);
+        set_token_for_context(c, PPET);
+        for(auto& [reg, value]: reg_values)
+            set_reg_value_in_context(reg, std::move(value), c);
+        t = token_for_context(c);
+    }
+
+    assert( simple_set_path_to(t) );
+
+
     // 1. Always perform execution in a new token.
     // Evaluation with re-force=true should be in a new context in we've
     // don't any previous evaluation with re-force=false, in order to avoid

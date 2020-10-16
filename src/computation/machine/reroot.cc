@@ -69,8 +69,8 @@ void reg_heap::reroot_at_token(int t)
 #endif
 
     // 5. Remove sequences of knuckles - only remove a knuckle if its child was part of the original path
-    for(; t2 != root_token;)
-        t2 = release_knuckle_tokens(t2);
+//    for(; t2 != root_token;)
+//        t2 = release_knuckle_tokens(t2);
 
 #ifdef DEBUG_MACHINE
     check_used_regs();
