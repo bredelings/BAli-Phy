@@ -555,6 +555,7 @@ public:
 
     void reroot_at(int t);
 
+    void reroot_at_token(int t);
     void reroot_at_context(int c);
 
     /*----- Graph splitting -----*/
