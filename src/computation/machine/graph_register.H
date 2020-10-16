@@ -242,7 +242,7 @@ public:
     std::vector<closure> closure_stack;
 
     /* ---- */
-
+private:
     void do_pending_effect_registrations();
 
     void do_pending_effect_unregistrations();
@@ -261,11 +261,12 @@ public:
 
     void first_evaluate_program(int c);
 
-    expression_ref evaluate_program(int c);
-
     int force_count(int r) const;
 
     int unmap_unforced_steps(int );
+
+public:
+    expression_ref evaluate_program(int c);
 
     /* ---- */
 
