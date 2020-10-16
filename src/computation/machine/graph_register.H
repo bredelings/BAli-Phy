@@ -261,6 +261,10 @@ private:
 
     void first_evaluate_program(int c);
 
+    bool simple_set_path_to(int child_token) const;
+
+    std::vector<std::pair<int,closure>> find_set_regs_on_path(int child_token) const;
+
     expression_ref unshare_and_evaluate_program(int c);
 
     int force_count(int r) const;
