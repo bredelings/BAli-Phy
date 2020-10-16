@@ -261,6 +261,8 @@ private:
 
     void first_evaluate_program(int c);
 
+    expression_ref unshare_and_evaluate_program(int c);
+
     int force_count(int r) const;
 
     int unmap_unforced_steps(int );
