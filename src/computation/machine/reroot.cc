@@ -155,6 +155,34 @@ void reg_heap::reroot_at(int t)
 }
 
 
+constexpr int force_bit  = 0;
+constexpr int result_bit = 1;
+constexpr int step_bit   = 2;
+
+void reg_heap::check_created_regs_unshared(int t)
+{
+    const auto& delta_step   = tokens[t].vm_step.delta();
+
+    for(auto [_,s]: delta_step)
+    {
+        if (s < 0) continue;
+
+        const auto& Step = steps[s];
+
+        // Any results or steps in the delta should already have their regs unshared.
+        for(int r2: Step.created_regs)
+        {
+            if (prog_steps[r2] > 0)
+            {
+                assert(reg_is_changeable(r2));
+                assert(prog_temp[r2].test(force_bit));
+                assert(prog_temp[r2].test(result_bit));
+                assert(prog_temp[r2].test(step_bit));
+            }
+        }
+    }
+}
+
 /*
  * In the current framework, regs may be incorrectly shared, if they are not overridden in the child and should be.
  * However, if a reg is overridden in the child, then its result must be correct.
@@ -196,10 +224,6 @@ void reg_heap::unshare_regs(int t)
 #endif
 
     total_invalidate++;
-
-    constexpr int force_bit  = 0;
-    constexpr int result_bit = 1;
-    constexpr int step_bit   = 2;
 
     auto& vm_force = tokens[t].vm_force;
     auto& vm_result = tokens[t].vm_result;
@@ -247,11 +271,13 @@ void reg_heap::unshare_regs(int t)
                                 vm_step.add_value(r, non_computed_index);
                             };
 
-    // All the regs in delta_force have forces invalidated in t
+    // 1. Mark unshared regs in prog_temp.
+
+    // 1a. All the regs in delta_force have forces invalidated in t
     for(auto [r,_]: delta_force)
         prog_temp[r].set(force_bit);
 
-    // All the regs with delta_result set have results invalidated in t
+    // 1b. All the regs with delta_result set have results invalidated in t
     for(auto [r,_]: delta_result)
     {
         prog_temp[r].set(result_bit);
@@ -259,7 +285,7 @@ void reg_heap::unshare_regs(int t)
         assert(prog_temp[r].test(result_bit));
     }
 
-    // All the regs with delta_step set have steps (and results) invalidated in t
+    // 1c. All the regs with delta_step set have steps (and results) invalidated in t
     for(auto [r,_]: delta_step)
     {
         prog_temp[r].set(step_bit);
@@ -269,28 +295,12 @@ void reg_heap::unshare_regs(int t)
     }
 
 #ifndef NDEBUG
-    for(auto [_,s]: delta_step)
-    {
-        if (s < 0) continue;
-
-        const auto& Step = steps[s];
-
-        // Any results or steps in the delta should already have their regs unshared.
-        for(int r2: Step.created_regs)
-        {
-            if (prog_steps[r2] > 0)
-            {
-                assert(reg_is_changeable(r2));
-                assert(prog_temp[r2].test(force_bit));
-                assert(prog_temp[r2].test(result_bit));
-                assert(prog_temp[r2].test(step_bit));
-            }
-        }
-    }
+    check_created_regs_unshared(t);
 #endif
+
     int i =0; // (FIXME?) We have to rescan all the existing steps and results because there might be new EDGES to them that have been added.
 
-    // Scan regs with different result in t that are used/called by root steps/results
+    // 2. Scan regs with different result in t that are used/called by root steps/results
     for(;i<delta_result.size();i++)
         if (auto [r,_] = delta_result[i]; has_result(r))
         {
@@ -307,8 +317,11 @@ void reg_heap::unshare_regs(int t)
                     unshare_step(r2);
         }
 
-    // LOGIC: Marking something unforced will never give it an invalid result.
-    //        Therefore, this logic need not go into the former loop.
+
+    // 3. Scan unforced regs and unforce: users, forces, and callers.
+
+    // Marking something unforced will never give it an invalid result.
+    // Therefore, this logic need not go into the former loop.
 
     for(int k=0;k<delta_force.size();k++)
         if (auto [r,_] = delta_force[k]; has_force(r))
@@ -328,6 +341,8 @@ void reg_heap::unshare_regs(int t)
 		if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
 		    unshare_force(r2);
 	}
+
+    // 4. Scan unshared steps, and unshare steps for created regs IF THEY HAVE A STEP.
 
 //  int j = delta_step.size();
     int j=0; // FIXME if the existing steps don't share any created regs, then we don't have to scan them.
@@ -351,26 +366,10 @@ void reg_heap::unshare_regs(int t)
             }
 
 #ifndef NDEBUG
-    for(auto [_,s]: delta_step)
-    {
-        if (s < 0) continue;
-
-        const auto& Step = steps[s];
-
-        // Any results or steps in the delta should already have their regs unshared.
-        for(int r2: Step.created_regs)
-        {
-            if (prog_steps[r2] > 0)
-            {
-                assert(reg_is_changeable(r2));
-                assert(prog_temp[r2].test(result_bit));
-                assert(prog_temp[r2].test(step_bit));
-            }
-        }
-    }
+    check_created_regs_unshared(t);
 #endif
 
-    // Erase the marks that we made on prog_temp.
+    // 5. Erase the marks that we made on prog_temp.
     for(auto [r,_]: delta_force)
     {
         prog_temp[r].reset(force_bit);
