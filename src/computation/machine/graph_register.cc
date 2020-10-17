@@ -895,14 +895,18 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
 
     assert( simple_set_path_to(t) );
 
-    // 3. Merge the set tokens
+    // 3. Merge the set tokens and all the result an execute token.
 
     // NOTE: This creates merged SET tokens, which violates the assumptions of find_set_regs_on_path( ).
     //       Therefore we need to ensure that find_set_regs_on_path( ) never sees these.
     release_knuckle_tokens(t);
     assert(tokens[t].parent == root_token);
+    tokens[t].type = token_type::execute;
 
-    // 1. Always perform execution in a new token.
+    // 4. Unshare regs in the token.
+    unshare_regs(t);
+
+    // 5. Always perform execution in a new token.
     // Evaluation with re-force=true should be in a new context in we've
     // don't any previous evaluation with re-force=false, in order to avoid
     // double-unsharing of forces.
@@ -920,7 +924,7 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
         assert(execution_allowed());
     }
 
-    // 3. Execute with reforce = true
+    // 6. Execute with reforce = true
     auto result = lazy_evaluate(heads[*program_result_head], c, true).exp;
 
     assert(get_prev_prog_token_for_context(c));
