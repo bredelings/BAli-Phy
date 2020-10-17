@@ -895,6 +895,12 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
 
     assert( simple_set_path_to(t) );
 
+    // 3. Merge the set tokens
+
+    // NOTE: This creates merged SET tokens, which violates the assumptions of find_set_regs_on_path( ).
+    //       Therefore we need to ensure that find_set_regs_on_path( ) never sees these.
+    release_knuckle_tokens(t);
+    assert(tokens[t].parent == root_token);
 
     // 1. Always perform execution in a new token.
     // Evaluation with re-force=true should be in a new context in we've
