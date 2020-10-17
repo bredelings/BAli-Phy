@@ -566,6 +566,7 @@ public:
     /// Update the value of a non-constant, non-computed index
     void set_reg_value(int index, closure&&, int t);
     bool reg_is_shared(int t, int r) const;
+    void unshare_regs(int t1);
     void maybe_unshare_regs(int t1);
     bool execution_allowed() const;
 
