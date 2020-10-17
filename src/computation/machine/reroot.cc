@@ -395,6 +395,62 @@ void reg_heap::unshare_regs(int t)
 #endif
 }
 
+void reg_heap::check_unshare_regs(int t)
+{
+    assert(t >= 0);
+
+#if DEBUG_MACHINE >= 1
+    const auto& delta_force = tokens[t].vm_force.delta();
+    const auto& delta_result = tokens[t].vm_result.delta();
+    const auto& delta_step = tokens[t].vm_step.delta();
+
+    // All the regs with delta_result set have results invalidated in t
+    for(auto [r,_]: delta_force)
+    {
+        prog_temp[r].set(force_bit);
+        assert(prog_temp[r].test(force_bit));
+    }
+
+    // All the regs with delta_result set have results invalidated in t
+    for(auto [r,_]: delta_result)
+    {
+        prog_temp[r].set(result_bit);
+        assert(prog_temp[r].test(force_bit));
+        assert(prog_temp[r].test(result_bit));
+    }
+
+    // All the regs with delta_step set have steps (and results) invalidated in t
+    for(auto [r,_]: delta_step)
+    {
+        prog_temp[r].set(step_bit);
+        assert(prog_temp[r].test(force_bit));
+        assert(prog_temp[r].test(result_bit));
+        assert(prog_temp[r].test(step_bit));
+    }
+
+    for(int j=0;j<delta_step.size();j++)
+        if (auto [r,_] = delta_step[j]; has_step(r))
+            for(int r2: step_for_reg(r).created_regs)
+            {
+                if (prog_steps[r2] > 0)
+                {
+                    assert(reg_is_changeable(r2));
+                    assert(prog_temp[r].test(step_bit));
+                }
+                assert(prog_temp[r].test(result_bit));
+                assert(prog_temp[r].test(force_bit));
+            }
+
+    // Erase the marks that we made on prog_temp.
+    for(auto [r,_]: delta_force)
+    {
+        prog_temp[r].reset(force_bit);
+        prog_temp[r].reset(result_bit);
+        prog_temp[r].reset(step_bit);
+    }
+#endif
+}
+
 void reg_heap::maybe_unshare_regs(int t)
 {
     // parent_token(t) should be the root.
@@ -403,57 +459,7 @@ void reg_heap::maybe_unshare_regs(int t)
 
     if (tokens[t].type != token_type::set)
     {
-#if DEBUG_MACHINE >= 1
-        const auto& delta_force = tokens[t].vm_force.delta();
-        const auto& delta_result = tokens[t].vm_result.delta();
-        const auto& delta_step = tokens[t].vm_step.delta();
-
-        // All the regs with delta_result set have results invalidated in t
-        for(auto [r,_]: delta_force)
-        {
-            prog_temp[r].set(force_bit);
-            assert(prog_temp[r].test(force_bit));
-        }
-
-        // All the regs with delta_result set have results invalidated in t
-        for(auto [r,_]: delta_result)
-        {
-            prog_temp[r].set(result_bit);
-            assert(prog_temp[r].test(force_bit));
-            assert(prog_temp[r].test(result_bit));
-        }
-
-        // All the regs with delta_step set have steps (and results) invalidated in t
-        for(auto [r,_]: delta_step)
-        {
-            prog_temp[r].set(step_bit);
-            assert(prog_temp[r].test(force_bit));
-            assert(prog_temp[r].test(result_bit));
-            assert(prog_temp[r].test(step_bit));
-        }
-
-        for(int j=0;j<delta_step.size();j++)
-            if (auto [r,_] = delta_step[j]; has_step(r))
-                for(int r2: step_for_reg(r).created_regs)
-                {
-                    if (prog_steps[r2] > 0)
-                    {
-                        assert(reg_is_changeable(r2));
-                        assert(prog_temp[r].test(step_bit));
-                    }
-                    assert(prog_temp[r].test(result_bit));
-                    assert(prog_temp[r].test(force_bit));
-                }
-
-        // Erase the marks that we made on prog_temp.
-        for(auto [r,_]: delta_force)
-        {
-            prog_temp[r].reset(force_bit);
-            prog_temp[r].reset(result_bit);
-            prog_temp[r].reset(step_bit);
-        }
-
-#endif
+        check_unshare_regs(t);
         return;
     }
 

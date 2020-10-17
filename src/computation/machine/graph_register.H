@@ -567,6 +567,7 @@ public:
     void set_reg_value(int index, closure&&, int t);
     bool reg_is_shared(int t, int r) const;
     void unshare_regs(int t1);
+    void check_unshare_regs(int t);
     void maybe_unshare_regs(int t1);
     bool execution_allowed() const;
 
