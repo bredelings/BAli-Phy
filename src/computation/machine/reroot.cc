@@ -197,10 +197,6 @@ void reg_heap::unshare_regs(int t)
 
     total_invalidate++;
 
-    assert(tokens[t].type == token_type::set);
-
-    tokens[t].type = token_type::set_unshare;
-
     constexpr int force_bit  = 0;
     constexpr int result_bit = 1;
     constexpr int step_bit   = 2;
@@ -457,13 +453,14 @@ void reg_heap::maybe_unshare_regs(int t)
     assert(is_root_token(parent_token(t)));
     assert(tokens[t].type != token_type::reverse_set);
 
-    if (tokens[t].type != token_type::set)
+    if (tokens[t].type == token_type::set)
     {
-        check_unshare_regs(t);
-        return;
-    }
+        unshare_regs(t);
 
-    unshare_regs(t);
+        tokens[t].type = token_type::set_unshare;
+    }
+    else
+        check_unshare_regs(t);
 }
 
 
