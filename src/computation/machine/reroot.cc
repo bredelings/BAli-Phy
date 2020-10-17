@@ -390,6 +390,183 @@ void reg_heap::unshare_regs(int t)
 #endif
 }
 
+void reg_heap::unshare_regs2(int t)
+{
+    // parent_token(t) should be the root.
+    assert(is_root_token(parent_token(t)));
+    assert(tokens[t].type != token_type::reverse_set);
+
+#if DEBUG_MACHINE >= 2
+    check_used_regs();
+#endif
+
+    total_invalidate++;
+
+    auto& vm_force = tokens[t].vm_force;
+    auto& vm_result = tokens[t].vm_result;
+    auto& vm_step = tokens[t].vm_step;
+
+    // find all regs in t that are not shared from the root
+    const auto& delta_force  = vm_force.delta();
+    const auto& delta_result = vm_result.delta();
+    const auto& delta_step   = vm_step.delta();
+
+    int n_delta_force0  = delta_force.size();
+    int n_delta_result0 = delta_result.size();
+    int n_delta_step0   = delta_step.size();
+
+    auto unshare_force = [&](int r)
+                              {
+                                  // This force is already unshared
+                                  if (not prog_temp[r].test(unshare_force_bit))
+                                  {
+                                      prog_temp[r].set(unshare_force_bit);
+                                      vm_force.add_value(r, non_computed_index);
+                                  }
+                              };
+
+    auto unshare_result = [&](int r)
+                              {
+                                  // This result is already unshared
+                                  if (not prog_temp[r].test(unshare_result_bit))
+                                  {
+                                      unshare_force(r);
+
+                                      prog_temp[r].set(unshare_result_bit);
+                                      vm_result.add_value(r, non_computed_index);
+                                  }
+                              };
+
+    auto unshare_step = [&](int r)
+                            {
+                                // This step is already unshared
+                                if (prog_temp[r].test(unshare_step_bit)) return;
+
+                                unshare_result(r);
+
+                                prog_temp[r].set(unshare_step_bit);
+                                vm_step.add_value(r, non_computed_index);
+                            };
+
+    // 1. Mark unshared regs in prog_temp.
+
+    // 1a. All the regs in delta_force have forces invalidated in t
+    for(auto [r,_]: delta_force)
+        prog_temp[r].set(unshare_force_bit);
+
+    // 1b. All the regs with delta_result set have results invalidated in t
+    for(auto [r,_]: delta_result)
+    {
+        prog_temp[r].set(unshare_result_bit);
+        assert(prog_temp[r].test(unshare_force_bit));
+        assert(prog_temp[r].test(unshare_result_bit));
+    }
+
+    // 1c. All the regs with delta_step set have steps (and results) invalidated in t
+    for(auto [r,_]: delta_step)
+    {
+        prog_temp[r].set(unshare_step_bit);
+        assert(prog_temp[r].test(unshare_force_bit));
+        assert(prog_temp[r].test(unshare_result_bit));
+        assert(prog_temp[r].test(unshare_step_bit));
+    }
+
+#ifndef NDEBUG
+    check_created_regs_unshared(t);
+#endif
+
+    int i =0; // (FIXME?) We have to rescan all the existing steps and results because there might be new EDGES to them that have been added.
+
+    // 2. Scan regs with different result in t that are used/called by root steps/results
+    for(;i<delta_result.size();i++)
+        if (auto [r,_] = delta_result[i]; has_result(r))
+        {
+            auto& R = regs[r];
+
+	    // Look at steps that CALL the reg in the root (that has overridden result in t)
+            for(int s2: R.called_by)
+                if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
+                    unshare_result(r2);
+
+	    // Look at steps that USE the reg in the root (that has overridden result in t)
+            for(auto& [r2,_]: R.used_by)
+                if (prog_steps[r2] > 0)
+                    unshare_step(r2);
+        }
+
+
+    // 3. Scan unforced regs and unforce: users, forces, and callers.
+
+    // Marking something unforced will never give it an invalid result.
+    // Therefore, this logic need not go into the former loop.
+
+    for(int k=0;k<delta_force.size();k++)
+        if (auto [r,_] = delta_force[k]; has_force(r))
+        {
+	    // Look at steps that FORCE the root's result (that is overridden in t)
+	    for(auto& [r2,_]: regs[r].used_by)
+		if (prog_steps[r2] > 0)
+		    unshare_force(r2);
+
+	    // Look at steps that FORCE the root's result (that is overridden in t)
+	    for(auto& [r2,_]: regs[r].forced_by)
+		if (prog_steps[r2] > 0)
+		    unshare_force(r2);
+
+	    // Look at steps that FORCE the root's result (that is overridden in t)
+	    for(auto& s2: regs[r].called_by)
+		if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
+		    unshare_force(r2);
+	}
+
+    // 4. Scan unshared steps, and unshare steps for created regs IF THEY HAVE A STEP.
+
+//  int j = delta_step.size();
+    int j=0; // FIXME if the existing steps don't share any created regs, then we don't have to scan them.
+             // FIXME: while the overriding steps in the child should have their created regs unshared, the overridden steps in the root need not!
+             //        this means that we need to scan all overridden steps each time :-(
+
+    // Also unshare any results and steps that are for regs created in the root context.
+    // LOGIC: Any reg that uses or call a created reg must either
+    //          (i) be another created reg, or
+    //          (ii) access the created reg through a chain of use or call edges to the step that created the reg.
+    //        In the former case, this loop handles them.  In the later case, they should be invalid.
+    for(;j<delta_step.size();j++)
+        if (auto [r,_] = delta_step[j]; has_step(r))
+            for(int r2: step_for_reg(r).created_regs)
+            {
+                if (prog_steps[r2] > 0)
+                {
+                    assert(reg_is_changeable(r2));
+                    unshare_step(r2);
+                }
+            }
+
+#ifndef NDEBUG
+    check_created_regs_unshared(t);
+#endif
+
+    // 5. Erase the marks that we made on prog_temp.
+    for(auto [r,_]: delta_force)
+    {
+        prog_temp[r].reset(unshare_force_bit);
+        prog_temp[r].reset(unshare_result_bit);
+        prog_temp[r].reset(unshare_step_bit);
+    }
+
+    total_forces_invalidated += (delta_force.size() - n_delta_force0);
+    total_results_invalidated += (delta_result.size() - n_delta_result0);
+    total_steps_invalidated += (delta_step.size() - n_delta_step0);
+
+    total_forces_scanned += delta_force.size();
+    total_results_scanned += delta_result.size();
+    total_steps_scanned += delta_step.size();
+
+#if DEBUG_MACHINE >= 2
+    check_used_regs();
+#endif
+}
+
 void reg_heap::check_unshare_regs(int t)
 {
     assert(t >= 0);
