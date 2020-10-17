@@ -244,13 +244,28 @@ void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
     // This is the child that will survive, versus the knuckles that will be deleted.
     int child_token = tokens[knuckle_tokens[0]].children[0];
 
-    tokens[child_token].type = token_type::merged;
-    for(int t: knuckle_tokens)
+    // 1. Determine if we are merging a sequence of SET tokens.
+    bool token_type_all_set = false;
+    if (tokens[child_token].type == token_type::set)
     {
-        assert(tokens[t].type != token_type::set);
-        tokens[t].type = token_type::merged;
+        token_type_all_set = true;
+        for(int t: knuckle_tokens)
+            if (tokens[t].type != token_type::set)
+                token_type_all_set = false;
     }
 
+    // 2. Rename the tokens to type MERGED if they are not all SET.
+    if (not token_type_all_set)
+    {
+        tokens[child_token].type = token_type::merged;
+        for(int t: knuckle_tokens)
+        {
+            assert(tokens[t].type != token_type::set);
+            tokens[t].type = token_type::merged;
+        }
+    }
+
+    // 3. Merge and split the mappings.
     load_map(tokens[child_token].vm_force_count, prog_temp);
     for(int t: knuckle_tokens)
     {
