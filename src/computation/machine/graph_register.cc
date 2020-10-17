@@ -904,7 +904,7 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
     tokens[t].type = token_type::execute;
 
     // 4. Unshare regs in the token.
-    unshare_regs(t);
+    unshare_regs2(t);
 
     // 5. Always perform execution in a new token.
     // Evaluation with re-force=true should be in a new context in we've
