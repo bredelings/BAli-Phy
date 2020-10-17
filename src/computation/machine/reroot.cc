@@ -96,7 +96,7 @@ void reg_heap::reroot_at(int t)
     assert(is_root_token(parent));
 
     // 2. Unshare regs
-    unshare_regs(t);
+    maybe_unshare_regs(t);
 
     // 3. Change the relative mappings
     total_steps_pivoted += tokens[t].delta_step().size();
@@ -185,15 +185,11 @@ void reg_heap::reroot_at(int t)
  *                         step <--- created_by --- reg <---located-at-- (step,result)
  */
 
-void reg_heap::unshare_regs(int t)
+void reg_heap::maybe_unshare_regs(int t)
 {
     // parent_token(t) should be the root.
     assert(is_root_token(parent_token(t)));
     assert(tokens[t].type != token_type::reverse_set);
-
-    constexpr int force_bit  = 0;
-    constexpr int result_bit = 1;
-    constexpr int step_bit   = 2;
 
     if (tokens[t].type != token_type::set)
     {
@@ -260,6 +256,10 @@ void reg_heap::unshare_regs(int t)
     assert(tokens[t].type == token_type::set);
 
     tokens[t].type = token_type::set_unshare;
+
+    constexpr int force_bit  = 0;
+    constexpr int result_bit = 1;
+    constexpr int step_bit   = 2;
 
     auto& vm_force = tokens[t].vm_force;
     auto& vm_result = tokens[t].vm_result;
