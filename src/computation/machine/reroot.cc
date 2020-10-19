@@ -415,6 +415,9 @@ void reg_heap::unshare_regs2(int t)
     int n_delta_result0 = delta_result.size();
     int n_delta_step0   = delta_step.size();
 
+    assert(n_delta_step0 == n_delta_result0);
+    assert(n_delta_step0 == n_delta_force0);
+
     auto unshare_force = [&](int r)
                               {
                                   // This force is already unshared
