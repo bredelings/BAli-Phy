@@ -418,11 +418,15 @@ void reg_heap::unshare_regs2(int t)
     assert(n_delta_step0 == n_delta_result0);
     assert(n_delta_step0 == n_delta_force0);
 
+    auto& unshared_regs = get_scratch_list();
+
     auto unshare_force = [&](int r)
                               {
                                   // This force is already unshared
                                   if (not prog_temp[r].test(unshare_force_bit))
                                   {
+                                      if (prog_temp[r].none())
+                                          unshared_regs.push_back(r);
                                       prog_temp[r].set(unshare_force_bit);
                                       vm_force.add_value(r, non_computed_index);
                                   }
@@ -435,6 +439,8 @@ void reg_heap::unshare_regs2(int t)
                                   {
                                       unshare_force(r);
 
+                                      if (prog_temp[r].none())
+                                          unshared_regs.push_back(r);
                                       prog_temp[r].set(unshare_result_bit);
                                       vm_result.add_value(r, non_computed_index);
                                   }
@@ -447,31 +453,19 @@ void reg_heap::unshare_regs2(int t)
 
                                 unshare_result(r);
 
+                                if (prog_temp[r].none())
+                                    unshared_regs.push_back(r);
                                 prog_temp[r].set(unshare_step_bit);
                                 vm_step.add_value(r, non_computed_index);
                             };
 
-    // 1. Mark unshared regs in prog_temp.
-
-    // 1a. All the regs in delta_force have forces invalidated in t
-    for(auto [r,_]: delta_force)
-        prog_temp[r].set(unshare_force_bit);
-
-    // 1b. All the regs with delta_result set have results invalidated in t
-    for(auto [r,_]: delta_result)
-    {
-        prog_temp[r].set(unshare_result_bit);
-        assert(prog_temp[r].test(unshare_force_bit));
-        assert(prog_temp[r].test(unshare_result_bit));
-    }
-
-    // 1c. All the regs with delta_step set have steps (and results) invalidated in t
+    // 1. Mark unshared regs.  All modified regs should have STEP/RESULT/FORCE unshared.
     for(auto [r,_]: delta_step)
     {
+        prog_temp[r].set(unshare_force_bit);
+        prog_temp[r].set(unshare_result_bit);
         prog_temp[r].set(unshare_step_bit);
-        assert(prog_temp[r].test(unshare_force_bit));
-        assert(prog_temp[r].test(unshare_result_bit));
-        assert(prog_temp[r].test(unshare_step_bit));
+        unshared_regs.push_back(r);
     }
 
 #ifndef NDEBUG
@@ -556,6 +550,8 @@ void reg_heap::unshare_regs2(int t)
         prog_temp[r].reset(unshare_result_bit);
         prog_temp[r].reset(unshare_step_bit);
     }
+
+    release_scratch_list(); // unshared_regs
 
     total_forces_invalidated += (delta_force.size() - n_delta_force0);
     total_results_invalidated += (delta_result.size() - n_delta_result0);
