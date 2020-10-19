@@ -472,11 +472,11 @@ void reg_heap::unshare_regs2(int t)
     check_created_regs_unshared(t);
 #endif
 
-    int i =0; // (FIXME?) We have to rescan all the existing steps and results because there might be new EDGES to them that have been added.
-
     // 2. Scan regs with different result in t that are used/called by root steps/results
-    for(;i<delta_result.size();i++)
-        if (auto [r,_] = delta_result[i]; has_result(r))
+    for(int i=0;i<unshared_regs.size();i++)
+    {
+        int r = unshared_regs[i];
+        if (has_result(r))
         {
             auto& R = regs[r];
 
@@ -490,6 +490,7 @@ void reg_heap::unshare_regs2(int t)
                 if (prog_steps[r2] > 0)
                     unshare_step(r2);
         }
+    }
 
 
     // 3. Scan unforced regs and unforce: users, forces, and callers.
