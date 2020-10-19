@@ -420,6 +420,30 @@ void reg_heap::unshare_regs2(int t)
 
     auto& unshared_regs = get_scratch_list();
 
+    auto unshare_force1 = [&](int r)
+                              {
+                                  if (prog_temp[r].none())
+                                      unshared_regs.push_back(r);
+                                  prog_temp[r].set(unshare_force_bit);
+                              };
+
+    auto unshare_result1 = [&](int r)
+                              {
+                                  if (prog_temp[r].none())
+                                      unshared_regs.push_back(r);
+                                  prog_temp[r].set(unshare_force_bit);
+                                  prog_temp[r].set(unshare_result_bit);
+                              };
+
+    auto unshare_step1 = [&](int r)
+                            {
+                                if (prog_temp[r].none())
+                                    unshared_regs.push_back(r);
+                                prog_temp[r].set(unshare_force_bit);
+                                prog_temp[r].set(unshare_result_bit);
+                                prog_temp[r].set(unshare_step_bit);
+                            };
+
     auto unshare_force = [&](int r)
                               {
                                   // This force is already unshared
@@ -483,15 +507,14 @@ void reg_heap::unshare_regs2(int t)
 	    // Look at steps that CALL the reg in the root (that has overridden result in t)
             for(int s2: R.called_by)
                 if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
-                    unshare_result(r2);
+                    unshare_result1(r2);
 
 	    // Look at steps that USE the reg in the root (that has overridden result in t)
             for(auto& [r2,_]: R.used_by)
                 if (prog_steps[r2] > 0)
-                    unshare_step(r2);
+                    unshare_step1(r2);
         }
     }
-
 
     // 3. Scan unforced regs and unforce: users, forces, and callers.
 
@@ -506,21 +529,40 @@ void reg_heap::unshare_regs2(int t)
 	    // Look at steps that FORCE the root's result (that is overridden in t)
 	    for(auto& [r2,_]: regs[r].used_by)
 		if (prog_steps[r2] > 0)
-		    unshare_force(r2);
+		    unshare_force1(r2);
 
 	    // Look at steps that FORCE the root's result (that is overridden in t)
 	    for(auto& [r2,_]: regs[r].forced_by)
 		if (prog_steps[r2] > 0)
-		    unshare_force(r2);
+		    unshare_force1(r2);
 
 	    // Look at steps that FORCE the root's result (that is overridden in t)
 	    for(auto& s2: regs[r].called_by)
 		if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
-		    unshare_force(r2);
+		    unshare_force1(r2);
 	}
     }
 
-    // 4. Scan unshared steps, and unshare steps for created regs IF THEY HAVE A STEP.
+    // 4. Unshare flagged regs.
+    for(int i=0;i<n_delta_step0;i++)
+    {
+        int r = unshared_regs[i];
+        prog_temp[r].reset(unshare_force_bit);
+        prog_temp[r].reset(unshare_result_bit);
+        prog_temp[r].reset(unshare_step_bit);
+    }
+
+    for(int r: unshared_regs)
+    {
+        if (prog_temp[r].test(unshare_force_bit))
+            vm_force.add_value(r, non_computed_index);
+        if (prog_temp[r].test(unshare_result_bit))
+            vm_result.add_value(r, non_computed_index);
+        if (prog_temp[r].test(unshare_step_bit))
+            vm_step.add_value(r, non_computed_index);
+    }
+
+    // 5. Scan unshared steps, and unshare steps for created regs IF THEY HAVE A STEP.
 
 //  int j = delta_step.size();
     int j=0; // FIXME if the existing steps don't share any created regs, then we don't have to scan them.
@@ -547,7 +589,7 @@ void reg_heap::unshare_regs2(int t)
     check_created_regs_unshared(t);
 #endif
 
-    // 5. Erase the marks that we made on prog_temp.
+    // 6. Erase the marks that we made on prog_temp.
     for(auto [r,_]: delta_force)
     {
         prog_temp[r].reset(unshare_force_bit);
