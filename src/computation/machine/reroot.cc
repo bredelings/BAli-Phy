@@ -498,8 +498,10 @@ void reg_heap::unshare_regs2(int t)
     // Marking something unforced will never give it an invalid result.
     // Therefore, this logic need not go into the former loop.
 
-    for(int k=0;k<delta_force.size();k++)
-        if (auto [r,_] = delta_force[k]; has_force(r))
+    for(int i=0;i<unshared_regs.size();i++)
+    {
+        int r = unshared_regs[i];
+        if (has_force(r))
         {
 	    // Look at steps that FORCE the root's result (that is overridden in t)
 	    for(auto& [r2,_]: regs[r].used_by)
@@ -516,6 +518,7 @@ void reg_heap::unshare_regs2(int t)
 		if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
 		    unshare_force(r2);
 	}
+    }
 
     // 4. Scan unshared steps, and unshare steps for created regs IF THEY HAVE A STEP.
 
