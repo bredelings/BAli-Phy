@@ -444,45 +444,6 @@ void reg_heap::unshare_regs2(int t)
                                 prog_temp[r].set(unshare_step_bit);
                             };
 
-    auto unshare_force = [&](int r)
-                              {
-                                  // This force is already unshared
-                                  if (not prog_temp[r].test(unshare_force_bit))
-                                  {
-                                      if (prog_temp[r].none())
-                                          unshared_regs.push_back(r);
-                                      prog_temp[r].set(unshare_force_bit);
-                                      vm_force.add_value(r, non_computed_index);
-                                  }
-                              };
-
-    auto unshare_result = [&](int r)
-                              {
-                                  // This result is already unshared
-                                  if (not prog_temp[r].test(unshare_result_bit))
-                                  {
-                                      unshare_force(r);
-
-                                      if (prog_temp[r].none())
-                                          unshared_regs.push_back(r);
-                                      prog_temp[r].set(unshare_result_bit);
-                                      vm_result.add_value(r, non_computed_index);
-                                  }
-                              };
-
-    auto unshare_step = [&](int r)
-                            {
-                                // This step is already unshared
-                                if (prog_temp[r].test(unshare_step_bit)) return;
-
-                                unshare_result(r);
-
-                                if (prog_temp[r].none())
-                                    unshared_regs.push_back(r);
-                                prog_temp[r].set(unshare_step_bit);
-                                vm_step.add_value(r, non_computed_index);
-                            };
-
     // 1. Mark unshared regs.  All modified regs should have STEP/RESULT/FORCE unshared.
     for(auto [r,_]: delta_step)
     {
