@@ -431,6 +431,264 @@ pair<int,int> reg_heap::incremental_evaluate_(int r, bool reforce)
     std::abort();
 }
 
+/// Evaluate r and look through index_var chains to return the first reg that is NOT a reg_var.
+/// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not an reg_var.
+pair<int,int> reg_heap::incremental_evaluate2(int r, bool reforce)
+{
+    assert(execution_allowed());
+
+#ifndef NDEBUG
+    if (regs.access(r).flags.test(3))
+        throw myexception()<<"Evaluating reg "<<r<<" that is already on the stack!";
+    else
+        regs.access(r).flags.set(3);
+#endif
+    stack.push_back(r);
+    auto result = incremental_evaluate2_(r, reforce);
+    stack.pop_back();
+#ifndef NDEBUG
+    assert(regs.access(r).flags.test(3));
+    regs.access(r).flags.flip(3);
+#endif
+    return result;
+}
+
+pair<int,int> reg_heap::incremental_evaluate2_(int r, bool reforce)
+{
+    assert(regs.is_valid_address(r));
+    assert(regs.is_used(r));
+
+#ifndef NDEBUG
+    if (reg_has_value(r))
+    {
+        expression_ref E = access_value_for_reg(r).exp;
+        assert(is_WHNF(E));
+        assert(not E.head().is_a<expression>());
+        assert(not E.is_index_var());
+    }
+    if (expression_at(r).is_index_var())
+        assert(not reg_has_value(r));
+#endif
+
+    while (1)
+    {
+        assert(expression_at(r));
+
+#ifndef NDEBUG
+        //    std::cerr<<"   statement: "<<r<<":   "<<regs.access(r).E.print()<<std::endl;
+#endif
+
+        if (reg_is_constant(r)) return {r,r};
+
+        else if (reg_is_changeable(r))
+        {
+            total_changeable_eval++;
+            int result = result_for_reg(r);
+
+            if (result > 0)
+            {
+                total_changeable_eval_with_result++;
+
+                // We can't set prog_forces[r] = 1 here if reforce=false, because we could end up
+                // unsharing reg r twice (I think).  This doesn't happen when we set the result, because we
+                // we never set the result twice.
+
+                // What we really want to do here is to find all the regs that this reg uses or forces that do NOT have a result.
+                // The used regs must have a result, or this reg wouldn't have a result.
+                // The forced regs may NOT have a result.
+                // So, what we want to find is
+                // (i)  all the regs with a result and no force.  These regs need to be marked forced.
+                // (ii) all the regs with no result and no force. These regs need to be executed, which should mark them forced.
+
+                if (reforce and not has_force(r))
+                {
+                    force_reg2(r);
+                    prog_forces[r] = 1;
+                    if (not tokens[root_token].children.empty())
+                    {
+                        int t = tokens[root_token].children[0];
+                        tokens[t].vm_force.add_value(r, non_computed_index);
+                    }
+                    assert(has_force(r));
+                }
+
+                return {r, result};
+            }
+
+            // If we know what to call, then call it and use it to set the value
+            if (int s = step_index_for_reg(r); s > 0)
+            {
+                // Evaluate S, looking through unchangeable redirections
+                auto [call, value] = incremental_evaluate2(steps[s].call, reforce);
+
+                // If computation_for_reg(r).call can be evaluated to refer to S w/o moving through any changable operations, 
+                // then it should be safe to change computation_for_reg(r).call to refer to S, even if r is changeable.
+                if (call != call_for_reg(r))
+                {
+                    // This should only ever happen for modifiable values set with set_reg_value( ).
+                    // In such cases, we need this, because the value we set could evaluate to an index_var.
+                    // Otherwise, we set the call AFTER we have evaluated to a changeable or a constant.
+                    clear_call_for_reg(r);
+                    set_call(s, call);
+                }
+
+                // r gets its value from S.
+                set_result_for_reg( r );
+                if (not tokens[root_token].children.empty())
+                {
+                    int t = tokens[root_token].children[0];
+                    tokens[t].vm_result.add_value(r, non_computed_index);
+                    tokens[t].vm_force.add_value(r, non_computed_index);
+                }
+
+                // FIXME: might we need to set force here even if reforce == false?
+                // If there are no force-edges, then I think yes.
+                if (reforce and not has_force(r))
+                {
+                    force_reg2(r);
+                    prog_forces[r] = 1;
+                    assert(has_force(r));
+                }
+
+                total_changeable_eval_with_call++;
+                return {r, value};
+            }
+        }
+        else if (reg_is_index_var(r))
+        {
+            int r2 = closure_at(r).reg_for_index_var();
+            return incremental_evaluate2(r2, reforce);
+        }
+        else
+            assert(reg_is_unevaluated(r));
+
+        /*---------- Below here, there is no call, and no value. ------------*/
+        if (expression_at(r).is_index_var())
+        {
+            assert( not reg_is_changeable(r) );
+
+            assert( not reg_has_value(r) );
+
+            assert( not reg_has_call(r) );
+
+            assert( not has_step(r) );
+
+            mark_reg_index_var(r);
+
+            int r2 = closure_at(r).reg_for_index_var();
+
+            // Return the end of the index_var chain.
+            // We used to update the index_var to point to the end of the chain.
+
+            return incremental_evaluate2(r2, reforce);
+        }
+
+        // Check for WHNF *OR* heap variables
+        else if (is_WHNF(expression_at(r)))
+        {
+            mark_reg_constant(r);
+            assert( not has_step(r) );
+            return {r,r};
+        }
+
+#ifndef NDEBUG
+        else if (expression_at(r).head().is_a<Trim>())
+            std::abort();
+#endif
+
+        // 3. Reduction: Operation (includes @, case, +, etc.)
+        else
+        {
+            assert( prog_steps[r] <=0 );
+            // The only we reason we are getting this here is to store created_regs on it,
+            // if we perform allocations AFTER using/forcing something changeable.
+            int s = get_shared_step(r);
+
+            int sp = regs.access(r).created_by.first;
+
+            try
+            {
+                closure_stack.push_back( closure_at(r) );
+                RegOperationArgs Args(r, s, sp, reforce, *this);
+                auto O = expression_at(r).head().assert_is_a<Operation>()->op;
+                closure value = (*O)(Args);
+                closure_stack.pop_back();
+                total_reductions++;
+
+                // If the reduction doesn't depend on modifiable, then replace E with the value.
+                if (not Args.used_changeable)
+                {
+                    assert( not reg_has_call(r) );
+                    assert( not reg_has_value(r) );
+                    assert( regs[r].used_regs.empty() );
+                    assert( regs[r].forced_regs.empty() );
+                    assert( steps[s].created_regs.empty() ); // Any allocations should have gone to sp
+                    set_C( r, std::move(value) );
+                    steps.reclaim_used(s);
+                }
+                else
+                {
+                    total_changeable_reductions++;
+                    mark_reg_changeable(r);
+                    closure_stack.push_back(value);
+
+                    int r2;
+                    if (closure_stack.back().exp.head().is_index_var())
+                    {
+                        r2 = closure_stack.back().reg_for_index_var();
+                    }
+                    else
+                    {
+                        r2 = Args.allocate( std::move(closure_stack.back()) ) ;
+                        assert(regs.access(r2).created_by.first == s);
+                        assert(not has_step(r2));
+                    }
+
+                    auto [call,value] = incremental_evaluate2(r2, reforce);
+                    closure_stack.pop_back();
+
+                    set_call(s, call);
+
+                    prog_steps[r] = s;
+                    set_result_for_reg(r);
+                    if (Args.is_forced and (reg_is_constant(call) or has_force(call)))
+                        prog_forces[r] = 1;
+                    assert(not reforce or Args.is_forced);
+                    if (not tokens[root_token].children.empty())
+                    {
+                        int t = tokens[root_token].children[0];
+                        tokens[t].vm_force.add_value(r, non_computed_index);
+                        tokens[t].vm_result.add_value(r, non_computed_index);
+                        tokens[t].vm_step.add_value(r, non_computed_index);
+                    }
+
+                    return {r, value};
+                }
+            }
+            catch (error_exception& e)
+            {
+                if (log_verbose)
+                    throw_reg_exception(*this, root_token, r, e, true);
+                else
+                    throw;
+            }
+            catch (myexception& e)
+            {
+                throw_reg_exception(*this, root_token, r, e, true);
+            }
+            catch (const std::exception& ee)
+            {
+                myexception e;
+                e<<ee.what();
+                throw_reg_exception(*this, root_token, r, e, true);
+            }
+        }
+    }
+
+    std::cerr<<"incremental_evaluate2: unreachable?";
+    std::abort();
+}
+
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
 class RegOperationArgsUnchangeable final: public OperationArgs
 {
