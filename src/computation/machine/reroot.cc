@@ -527,7 +527,7 @@ void reg_heap::unshare_regs2(int t)
     //    Actually, we do NOT need to do this here: we will fix this up in unmap_unforced_steps( ) later on.
 
     // 6. Erase the marks that we made on prog_temp.
-    for(auto [r,_]: delta_force)
+    for(auto r: unshared_regs)
     {
         prog_temp[r].reset(unshare_force_bit);
         prog_temp[r].reset(unshare_result_bit);
