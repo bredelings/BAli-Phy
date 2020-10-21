@@ -563,31 +563,7 @@ void reg_heap::unshare_regs2(int t)
     }
 
     // 5. Scan unshared steps, and unshare steps for created regs IF THEY HAVE A STEP.
-
-//  int j = delta_step.size();
-    int j=0; // FIXME if the existing steps don't share any created regs, then we don't have to scan them.
-             // FIXME: while the overriding steps in the child should have their created regs unshared, the overridden steps in the root need not!
-             //        this means that we need to scan all overridden steps each time :-(
-
-    // Also unshare any results and steps that are for regs created in the root context.
-    // LOGIC: Any reg that uses or call a created reg must either
-    //          (i) be another created reg, or
-    //          (ii) access the created reg through a chain of use or call edges to the step that created the reg.
-    //        In the former case, this loop handles them.  In the later case, they should be invalid.
-    for(;j<delta_step.size();j++)
-        if (auto [r,_] = delta_step[j]; has_step(r))
-            for(int r2: step_for_reg(r).created_regs)
-            {
-                if (prog_steps[r2] > 0)
-                {
-                    assert(reg_is_changeable(r2));
-                    unshare_step(r2);
-                }
-            }
-
-#ifndef NDEBUG
-    check_created_regs_unshared(t);
-#endif
+    //    Actually, we do NOT need to do this here: we will fix this up in unmap_unforced_steps( ) later on.
 
     // 6. Erase the marks that we made on prog_temp.
     for(auto [r,_]: delta_force)
