@@ -420,14 +420,14 @@ void reg_heap::unshare_regs2(int t)
 
     auto& unshared_regs = get_scratch_list();
 
-    auto unshare_force1 = [&](int r)
+    auto unshare_force = [&](int r)
                               {
                                   if (prog_temp[r].none())
                                       unshared_regs.push_back(r);
                                   prog_temp[r].set(unshare_force_bit);
                               };
 
-    auto unshare_result1 = [&](int r)
+    auto unshare_result = [&](int r)
                               {
                                   if (prog_temp[r].none())
                                       unshared_regs.push_back(r);
@@ -435,7 +435,7 @@ void reg_heap::unshare_regs2(int t)
                                   prog_temp[r].set(unshare_result_bit);
                               };
 
-    auto unshare_step1 = [&](int r)
+    auto unshare_step = [&](int r)
                             {
                                 if (prog_temp[r].none())
                                     unshared_regs.push_back(r);
@@ -468,12 +468,12 @@ void reg_heap::unshare_regs2(int t)
 	    // Look at steps that CALL the reg in the root (that has overridden result in t)
             for(int s2: R.called_by)
                 if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
-                    unshare_result1(r2);
+                    unshare_result(r2);
 
 	    // Look at steps that USE the reg in the root (that has overridden result in t)
             for(auto& [r2,_]: R.used_by)
                 if (prog_steps[r2] > 0)
-                    unshare_step1(r2);
+                    unshare_step(r2);
         }
     }
 
@@ -490,17 +490,17 @@ void reg_heap::unshare_regs2(int t)
 	    // Look at steps that FORCE the root's result (that is overridden in t)
 	    for(auto& [r2,_]: regs[r].used_by)
 		if (prog_steps[r2] > 0)
-		    unshare_force1(r2);
+		    unshare_force(r2);
 
 	    // Look at steps that FORCE the root's result (that is overridden in t)
 	    for(auto& [r2,_]: regs[r].forced_by)
 		if (prog_steps[r2] > 0)
-		    unshare_force1(r2);
+		    unshare_force(r2);
 
 	    // Look at steps that FORCE the root's result (that is overridden in t)
 	    for(auto& s2: regs[r].called_by)
 		if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
-		    unshare_force1(r2);
+		    unshare_force(r2);
 	}
     }
 
