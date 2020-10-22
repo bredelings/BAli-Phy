@@ -385,7 +385,7 @@ void reg_heap::unshare_regs(int t)
 template <typename T,typename F>
 void filter_unordered_vector(vector<T>& x, F ok)
 {
-    for(int i=0;i<x.size();i++)
+    for(int i=0;i<x.size();)
     {
         if (ok(x[i]))
             i++;
