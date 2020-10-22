@@ -86,6 +86,10 @@ constexpr int non_existant_index = -2;
 
 enum class token_type {none,root,merged,set,set_unshare,execute,reverse_set,reverse_set_unshare,reverse_execute,unmap,reverse_unmap};
 
+constexpr int unshare_force_bit  = 0;
+constexpr int unshare_result_bit = 1;
+constexpr int unshare_step_bit   = 2;
+
 token_type reverse(token_type);
 
 std::ostream& operator<<(std::ostream& o, token_type);
