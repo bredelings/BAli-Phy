@@ -382,6 +382,21 @@ void reg_heap::unshare_regs(int t)
 #endif
 }
 
+template <typename T,typename F>
+void filter_unordered_vector(vector<T>& x, F ok)
+{
+    for(int i=0;i<x.size();i++)
+    {
+        if (ok(x[i]))
+            i++;
+        else
+        {
+            x[i] = std::move(x.back());
+            x.pop_back();
+        }
+    }
+}
+
 void reg_heap::unshare_regs2(int t)
 {
     // parent_token(t) should be the root.
@@ -399,9 +414,9 @@ void reg_heap::unshare_regs2(int t)
     auto& vm_step = tokens[t].vm_step;
 
     // find all regs in t that are not shared from the root
-    const auto& delta_force  = vm_force.delta();
-    const auto& delta_result = vm_result.delta();
-    const auto& delta_step   = vm_step.delta();
+    auto& delta_force  = vm_force.delta();
+    auto& delta_result = vm_result.delta();
+    auto& delta_step   = vm_step.delta();
 
     int n_delta_force0  = delta_force.size();
     int n_delta_result0 = delta_result.size();
@@ -496,15 +511,20 @@ void reg_heap::unshare_regs2(int t)
 	}
     }
 
-    // 4. Unshare flagged regs.
-    for(int i=0;i<n_delta_step0;i++)
-    {
-        int r = unshared_regs[i];
-        prog_unshare[r].reset(unshare_force_bit);
-        prog_unshare[r].reset(unshare_result_bit);
-        prog_unshare[r].reset(unshare_step_bit);
-    }
+    // 4. Remove (r,-) entries from Delta, and remove the unshare bit for the (r,>0) remainder.
+    auto keep = [](const pair<int,int>& p) {return p.second > 0;};
 
+    filter_unordered_vector(delta_step, keep);
+    for(auto& [r,_]: delta_step)
+        prog_unshare[r].reset(unshare_step_bit);
+
+    filter_unordered_vector(delta_result, keep);
+    for(auto& [r,_]: delta_result)
+        prog_unshare[r].reset(unshare_result_bit);
+
+    filter_unordered_vector(delta_force, keep);
+    for(auto& [r,_]: delta_force)
+        prog_unshare[r].reset(unshare_force_bit);
 
     // 5. Reroot to token t.
     reroot_at_token(t);
@@ -530,8 +550,8 @@ void reg_heap::unshare_regs2(int t)
         if (prog_unshare[r].test(unshare_step_bit))
         {
             int s1 = prog_steps[r];
-            assert(s1 > 0);
-            if (steps.access(s1).has_effect())
+            // s1 should be > 0, except for the unshared steps for the VALUES of the set modifiables.
+            if (s1 > 0 and steps.access(s1).has_effect())
             {
                 if (steps[s1].has_pending_effect_registration())
                     unmark_effect_to_register_at_step(s1);
