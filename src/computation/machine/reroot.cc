@@ -142,10 +142,6 @@ void reg_heap::reroot_at(int t)
             mark_effect_to_register_at_step(s2);
     }
 
-    // 6. Remove probabilities for invalidated regs from the current probability
-    for(auto& reroot_handler: reroot_handlers)
-        reroot_handler(parent);
-
     total_reroot_one++;
   
     for(int t2: tokens[t].children)
