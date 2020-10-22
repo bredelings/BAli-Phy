@@ -506,7 +506,6 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                     force_reg2(r);
 
                     int t = tokens[root_token].children[0];
-                    assert(prog_forces[r] == non_computed_index);
                     tokens[t].vm_force.add_value(r, prog_forces[r]);
                     prog_unshare[r].reset(unshare_force_bit);
                     prog_forces[r] = 1;
@@ -536,12 +535,10 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
                 // r gets its value from S.
                 int t = tokens[root_token].children[0];
-                assert(prog_results[r] == non_computed_index);
                 tokens[t].vm_result.add_value(r, prog_results[r]);
                 prog_unshare[r].reset(unshare_result_bit);
                 set_result_for_reg( r );
 
-                assert(prog_forces[r] == non_computed_index);
                 // The call should already be forced, in this case.
                 force_reg2(r);
 
@@ -652,15 +649,12 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
                     int t = tokens[root_token].children[0];
 
-                    assert(prog_steps[r] == non_computed_index);
                     tokens[t].vm_step.add_value(r, prog_steps[r]);
                     prog_steps[r] = s;
 
-                    assert(prog_results[r] == non_computed_index);
                     tokens[t].vm_result.add_value(r, prog_results[r]);
                     set_result_for_reg(r);
 
-                    assert(prog_forces[r] == non_computed_index);
                     tokens[t].vm_force.add_value(r, prog_forces[r]);
                     prog_forces[r] = 1;
 
