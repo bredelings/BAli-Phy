@@ -631,6 +631,8 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 }
                 else
                 {
+                    assert(Args.is_forced);
+
                     total_changeable_reductions++;
                     mark_reg_changeable(r);
                     closure_stack.push_back(value);
@@ -666,7 +668,6 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                     tokens[t].vm_force.add_value(r, prog_forces[r]);
                     if (Args.is_forced and (reg_is_constant(call) or has_force(call)))
                         prog_forces[r] = 1;
-                    assert(Args.is_forced);
 
                     prog_unshare[r].reset();
 
