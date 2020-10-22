@@ -576,17 +576,17 @@ public:
 
     std::pair<int,int> incremental_evaluate_in_context(int R, int c, bool reforce = false);
 
-    std::pair<int,int> incremental_evaluate_in_context2(int R, int c, bool reforce = false);
+    std::pair<int,int> incremental_evaluate_in_context2(int R, int c);
 
     std::pair<int,int> incremental_evaluate(int R, bool reforce);
 
-    std::pair<int,int> incremental_evaluate2(int R, bool reforce);
+    std::pair<int,int> incremental_evaluate2(int R);
 
     std::optional<int> precomputed_value_in_context(int R, int c);
 
 private:  
     std::pair<int,int> incremental_evaluate_(int R, bool reforce);
-    std::pair<int,int> incremental_evaluate2_(int R, bool reforce);
+    std::pair<int,int> incremental_evaluate2_(int R);
     int incremental_evaluate_unchangeable_(int R);
 
 public:
@@ -595,11 +595,11 @@ public:
 
     const closure& lazy_evaluate(int& R, bool reforce = false);
 
-    const closure& lazy_evaluate2(int& R, bool reforce = false);
+    const closure& lazy_evaluate2(int& R);
 
     const closure& lazy_evaluate(int& R, int c, bool reforce = false);
 
-    const closure& lazy_evaluate2(int& R, int c, bool reforce = false);
+    const closure& lazy_evaluate2(int& R, int c);
 
     const closure& lazy_evaluate_head(int h, int c, bool reforce = false);
 

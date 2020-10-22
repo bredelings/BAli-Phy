@@ -925,7 +925,7 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
     }
 
     // 6. Execute with reforce = true
-    auto result = lazy_evaluate2(heads[*program_result_head], c, true).exp;
+    auto result = lazy_evaluate2(heads[*program_result_head], c).exp;
 
     assert(get_prev_prog_token_for_context(c));
     assert(is_program_execution_token(*get_prev_prog_token_for_context(c)));
@@ -1318,7 +1318,7 @@ void reg_heap::force_reg2(int r)
     {
         auto [r2,_] = regs[r].used_regs[i];
         if (not has_force(r2))
-            incremental_evaluate2(r2, true);
+            incremental_evaluate2(r2);
         assert(has_result(r2));
         assert(has_force(r2));
     }
@@ -1327,7 +1327,7 @@ void reg_heap::force_reg2(int r)
     {
         auto [r2,_] = regs[r].forced_regs[i];
         if (not has_force(r2))
-            incremental_evaluate2(r2, true);
+            incremental_evaluate2(r2);
         assert(has_result(r2));
         assert(has_force(r2));
     }
@@ -1338,7 +1338,7 @@ void reg_heap::force_reg2(int r)
     if (not reg_is_constant(call))
     {
         if (not has_force(call))
-            incremental_evaluate2(call, true);
+            incremental_evaluate2(call);
         assert(has_result(call));
         assert(has_force(call));
     }
@@ -2447,7 +2447,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c, bool refor
     return p;
 }
 
-pair<int,int> reg_heap::incremental_evaluate_in_context2(int R, int c, bool reforce)
+pair<int,int> reg_heap::incremental_evaluate_in_context2(int R, int c)
 {
 #if DEBUG_MACHINE >= 2
     check_used_regs();
@@ -2462,7 +2462,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context2(int R, int c, bool refo
     {
         int r2 = result_for_reg(R);
 
-        if (reforce ? has_force(R) : r2 > 0)
+        if (has_force(R))
         {
             assert(r2 > 0);
             return {R,r2};
@@ -2482,7 +2482,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context2(int R, int c, bool refo
 
     assert(execution_allowed());
 
-    auto p = incremental_evaluate2(R, reforce);
+    auto p = incremental_evaluate2(R);
 
 #if DEBUG_MACHINE >= 2
     check_used_regs();
@@ -2498,9 +2498,9 @@ const closure& reg_heap::lazy_evaluate(int& R, bool reforce)
     return closure_at(value);
 }
 
-const closure& reg_heap::lazy_evaluate2(int& R, bool reforce)
+const closure& reg_heap::lazy_evaluate2(int& R)
 {
-    auto [R2, value] = incremental_evaluate2(R, reforce);
+    auto [R2, value] = incremental_evaluate2(R);
     R = R2;
     return closure_at(value);
 }
@@ -2512,9 +2512,9 @@ const closure& reg_heap::lazy_evaluate(int& R, int c, bool reforce)
     return closure_at(value);
 }
 
-const closure& reg_heap::lazy_evaluate2(int& R, int c, bool reforce)
+const closure& reg_heap::lazy_evaluate2(int& R, int c)
 {
-    auto [R2, value] = incremental_evaluate_in_context2(R, c, reforce);
+    auto [R2, value] = incremental_evaluate_in_context2(R, c);
     R = R2;
     return closure_at(value);
 }
