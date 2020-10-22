@@ -505,7 +505,8 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                     force_reg2(r);
 
                     int t = tokens[root_token].children[0];
-                    tokens[t].vm_force.add_value(r, non_computed_index);
+                    assert(prog_forces[r] == non_computed_index);
+                    tokens[t].vm_force.add_value(r, prog_forces[r]);
                     prog_forces[r] = 1;
 
                     assert(has_force(r));
@@ -533,10 +534,12 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
                 // r gets its value from S.
                 int t = tokens[root_token].children[0];
-                tokens[t].vm_result.add_value(r, non_computed_index);
+                assert(prog_results[r] == non_computed_index);
+                tokens[t].vm_result.add_value(r, prog_results[r]);
                 set_result_for_reg( r );
 
-                tokens[t].vm_force.add_value(r, non_computed_index);
+                assert(prog_forces[r] == non_computed_index);
+                tokens[t].vm_force.add_value(r, prog_forces[r]);
                 // FIXME: might we need to set force here even if reforce == false?
                 // If there are no force-edges, then I think yes.
                 if (not has_force(r))
@@ -647,13 +650,16 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
                     int t = tokens[root_token].children[0];
 
-                    tokens[t].vm_step.add_value(r, non_computed_index);
+                    assert(prog_steps[r] == non_computed_index);
+                    tokens[t].vm_step.add_value(r, prog_steps[r]);
                     prog_steps[r] = s;
 
-                    tokens[t].vm_result.add_value(r, non_computed_index);
+                    assert(prog_results[r] == non_computed_index);
+                    tokens[t].vm_result.add_value(r, prog_results[r]);
                     set_result_for_reg(r);
 
-                    tokens[t].vm_force.add_value(r, non_computed_index);
+                    assert(prog_forces[r] == non_computed_index);
+                    tokens[t].vm_force.add_value(r, prog_forces[r]);
                     if (Args.is_forced and (reg_is_constant(call) or has_force(call)))
                         prog_forces[r] = 1;
                     assert(Args.is_forced);
