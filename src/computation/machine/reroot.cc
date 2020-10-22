@@ -513,6 +513,7 @@ void reg_heap::unshare_regs2(int t)
         prog_unshare[r].reset(unshare_step_bit);
     }
 
+    // 5. Flush pending unshares and clear unsharing bits.
     for(int r: unshared_regs)
     {
         if (prog_unshare[r].test(unshare_force_bit))
@@ -521,17 +522,7 @@ void reg_heap::unshare_regs2(int t)
             vm_result.add_value(r, non_computed_index);
         if (prog_unshare[r].test(unshare_step_bit))
             vm_step.add_value(r, non_computed_index);
-    }
-
-    // 5. Scan unshared steps, and unshare steps for created regs IF THEY HAVE A STEP.
-    //    Actually, we do NOT need to do this here: we will fix this up in unmap_unforced_steps( ) later on.
-
-    // 6. Erase the marks that we made on prog_unshare.
-    for(auto r: unshared_regs)
-    {
-        prog_unshare[r].reset(unshare_force_bit);
-        prog_unshare[r].reset(unshare_result_bit);
-        prog_unshare[r].reset(unshare_step_bit);
+        prog_unshare[r].reset();
     }
 
     release_scratch_list(); // unshared_regs
