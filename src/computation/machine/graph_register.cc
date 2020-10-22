@@ -1301,9 +1301,9 @@ void reg_heap::force_reg(int r)
 void reg_heap::force_reg2(int r)
 {
     assert(reg_is_changeable(r));
-    assert(has_step(r));
-    assert(has_result(r));
-    assert(not has_force(r));
+    assert(not prog_unshare[r].test(unshare_step_bit) and has_step(r));
+    assert(not prog_unshare[r].test(unshare_result_bit) and has_result(r));
+    assert(prog_unshare[r].test(unshare_force_bit) or not has_force(r));
 
     int s = step_index_for_reg(r);
 
