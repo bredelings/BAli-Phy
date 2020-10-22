@@ -391,6 +391,7 @@ private:
     std::vector<char> prog_forces;
     std::vector<int> prog_force_counts;
     mutable std::vector<bitmask_8> prog_temp;
+    mutable std::vector<bitmask_8> prog_unshare;
 
     std::unordered_set<int> steps_pending_effect_registration;
     std::unordered_set<int> steps_pending_effect_unregistration;
