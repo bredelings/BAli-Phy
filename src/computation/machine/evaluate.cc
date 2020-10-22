@@ -542,16 +542,12 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 set_result_for_reg( r );
 
                 assert(prog_forces[r] == non_computed_index);
+                // The call should already be forced, in this case.
+                force_reg2(r);
+
                 tokens[t].vm_force.add_value(r, prog_forces[r]);
                 prog_unshare[r].reset(unshare_force_bit);
-                // FIXME: might we need to set force here even if reforce == false?
-                // If there are no force-edges, then I think yes.
-                if (not has_force(r))
-                {
-                    force_reg2(r);
-                    prog_forces[r] = 1;
-                    assert(has_force(r));
-                }
+                prog_forces[r] = 1;
 
                 total_changeable_eval_with_call++;
                 return {r, value};
@@ -666,8 +662,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
                     assert(prog_forces[r] == non_computed_index);
                     tokens[t].vm_force.add_value(r, prog_forces[r]);
-                    if (Args.is_forced and (reg_is_constant(call) or has_force(call)))
-                        prog_forces[r] = 1;
+                    prog_forces[r] = 1;
 
                     prog_unshare[r].reset();
 
