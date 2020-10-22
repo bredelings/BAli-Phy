@@ -527,6 +527,8 @@ void reg_heap::unshare_regs2(int t)
     total_results_scanned += delta_result.size();
     total_steps_scanned += delta_step.size();
 
+    reroot_at_token(t);
+
 #if DEBUG_MACHINE >= 2
     check_used_regs();
 #endif
