@@ -525,10 +525,13 @@ public:
     const Step& step_for_reg(int r) const ;
     Step& step_for_reg(int r);
     bool has_step(int r) const;
+    bool has_step2(int r) const;
     bool has_result(int r) const;
+    bool has_result2(int r) const;
     bool reg_has_value(int r) const;
     int follow_index_var(int r) const;
     bool has_force(int r) const;
+    bool has_force2(int r) const;
     int result_for_reg(int r) const;
     bool reg_has_call(int r) const;
     int call_for_reg(int r) const;
@@ -689,6 +692,12 @@ inline bool reg_heap::has_force(int r) const
 {
     assert(prog_forces[r] != 0);
     return prog_forces[r] > 0;
+}
+
+inline bool reg_heap::has_force2(int r) const
+{
+    assert(prog_forces[r] != 0);
+    return (not prog_unshare[r].test(unshare_force_bit)) and prog_forces[r] > 0;
 }
 
 #endif

@@ -1247,9 +1247,19 @@ bool reg_heap::has_step(int r) const
     return step_index_for_reg(r)>0;
 }
 
+bool reg_heap::has_step2(int r) const
+{
+    return (not prog_unshare[r].test(unshare_step_bit)) and step_index_for_reg(r)>0;
+}
+
 bool reg_heap::has_result(int r) const
 {
     return result_for_reg(r)>0;
+}
+
+bool reg_heap::has_result2(int r) const
+{
+    return (not prog_unshare[r].test(unshare_result_bit)) and result_for_reg(r)>0;
 }
 
 void reg_heap::force_reg(int r)
