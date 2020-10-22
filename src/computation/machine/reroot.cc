@@ -509,15 +509,42 @@ void reg_heap::unshare_regs2(int t)
         prog_unshare[r].reset(unshare_step_bit);
     }
 
-    // 5. Flush pending unshares and clear unsharing bits.
+
+    // 5. Reroot to token t.
+    reroot_at_token(t);
+    assert(tokens[t].children.size() == 1);
+    int t2 = tokens[t].children[0];
+    auto& vm_force2  = tokens[t2].vm_force;
+    auto& vm_result2 = tokens[t2].vm_result;
+    auto& vm_step2   = tokens[t2].vm_step;
+
+    // 6. Flush pending unshares and clear unsharing bits.
     for(int r: unshared_regs)
     {
         if (prog_unshare[r].test(unshare_force_bit))
-            vm_force.add_value(r, non_computed_index);
+        {
+            vm_force2.add_value(r, prog_forces[r]);
+            prog_forces[r] = non_computed_index;
+        }
         if (prog_unshare[r].test(unshare_result_bit))
-            vm_result.add_value(r, non_computed_index);
+        {
+            vm_result2.add_value(r, prog_results[r]);
+            prog_results[r] = non_computed_index;
+        }
         if (prog_unshare[r].test(unshare_step_bit))
-            vm_step.add_value(r, non_computed_index);
+        {
+            int s1 = prog_steps[r];
+            assert(s1 > 0);
+            if (steps.access(s1).has_effect())
+            {
+                if (steps[s1].has_pending_effect_registration())
+                    unmark_effect_to_register_at_step(s1);
+                else
+                    mark_effect_to_unregister_at_step(s1);
+            }
+            vm_step2.add_value(r, s1);
+            prog_steps[r] = non_computed_index;
+        }
         prog_unshare[r].reset();
     }
 
@@ -530,8 +557,6 @@ void reg_heap::unshare_regs2(int t)
     total_forces_scanned += delta_force.size();
     total_results_scanned += delta_result.size();
     total_steps_scanned += delta_step.size();
-
-    reroot_at_token(t);
 
 #if DEBUG_MACHINE >= 2
     check_used_regs();
