@@ -278,6 +278,7 @@ size_t reg_heap::size() const
     assert(regs.size() == prog_results.size());
     assert(regs.size() == prog_forces.size());
     assert(regs.size() == prog_temp.size());
+    assert(regs.size() == prog_unshare.size());
     return regs.size();
 }
 
@@ -1864,6 +1865,7 @@ void reg_heap::resize(int s)
     prog_forces.resize(regs.size());
     prog_force_counts.resize(regs.size());
     prog_temp.resize(regs.size());
+    prog_unshare.resize(regs.size());
 
     // Now we can use size() again.
     for(auto i=old_size;i<size();i++)
@@ -1877,6 +1879,7 @@ void reg_heap::resize(int s)
         assert(prog_forces[i] == non_computed_index);
         assert(prog_force_counts[i] == 0);
         assert(prog_temp[i].none());
+        assert(prog_unshare[i].none());
     }
 }
 
@@ -2602,7 +2605,8 @@ reg_heap::reg_heap(const Program& P)
      prog_results(1, non_existant_index),
      prog_forces(1, non_existant_index),
      prog_force_counts(1, 0),
-     prog_temp(1)
+     prog_temp(1),
+     prog_unshare(1)
 {
     if (not program->size())
         program->add("Prelude");
