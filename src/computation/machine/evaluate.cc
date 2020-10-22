@@ -500,7 +500,8 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 // (i)  all the regs with a result and no force.  These regs need to be marked forced.
                 // (ii) all the regs with no result and no force. These regs need to be executed, which should mark them forced.
 
-                if (not has_force(r))
+                int force = prog_forces[r];
+                if (force < 0)
                 {
                     force_reg2(r);
 
