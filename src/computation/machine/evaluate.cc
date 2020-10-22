@@ -503,9 +503,11 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 if (not has_force(r))
                 {
                     force_reg2(r);
-                    prog_forces[r] = 1;
+
                     int t = tokens[root_token].children[0];
                     tokens[t].vm_force.add_value(r, non_computed_index);
+                    prog_forces[r] = 1;
+
                     assert(has_force(r));
                 }
 
@@ -530,11 +532,11 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 }
 
                 // r gets its value from S.
-                set_result_for_reg( r );
                 int t = tokens[root_token].children[0];
                 tokens[t].vm_result.add_value(r, non_computed_index);
-                tokens[t].vm_force.add_value(r, non_computed_index);
+                set_result_for_reg( r );
 
+                tokens[t].vm_force.add_value(r, non_computed_index);
                 // FIXME: might we need to set force here even if reforce == false?
                 // If there are no force-edges, then I think yes.
                 if (not has_force(r))
@@ -643,15 +645,18 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
                     set_call(s, call);
 
+                    int t = tokens[root_token].children[0];
+
+                    tokens[t].vm_step.add_value(r, non_computed_index);
                     prog_steps[r] = s;
+
+                    tokens[t].vm_result.add_value(r, non_computed_index);
                     set_result_for_reg(r);
+
+                    tokens[t].vm_force.add_value(r, non_computed_index);
                     if (Args.is_forced and (reg_is_constant(call) or has_force(call)))
                         prog_forces[r] = 1;
                     assert(Args.is_forced);
-                    int t = tokens[root_token].children[0];
-                    tokens[t].vm_force.add_value(r, non_computed_index);
-                    tokens[t].vm_result.add_value(r, non_computed_index);
-                    tokens[t].vm_step.add_value(r, non_computed_index);
 
                     return {r, value};
                 }
