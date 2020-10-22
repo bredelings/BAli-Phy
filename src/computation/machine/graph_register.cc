@@ -914,7 +914,7 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
     {
         // We need to reroot to here first, so that switching to a child token
         // doesn't delete the current token as a knuckle.
-        reroot_at_context(c);
+        reroot_at_token(t);
 
         switch_to_child_token(c, token_type::execute);
 
