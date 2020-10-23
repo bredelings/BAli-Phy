@@ -1311,34 +1311,34 @@ void reg_heap::force_reg(int r)
 void reg_heap::force_reg2(int r)
 {
     assert(reg_is_changeable(r));
-    assert(not prog_unshare[r].test(unshare_step_bit) and has_step(r));
-    assert(not prog_unshare[r].test(unshare_result_bit) and has_result(r));
-    assert(prog_unshare[r].test(unshare_force_bit) or not has_force(r));
+    assert(has_step2(r));
+    assert(has_result2(r));
+    assert(not has_force2(r));
 
     int s = step_index_for_reg(r);
 
     assert(reg_is_constant(steps[s].call) or reg_is_changeable(steps[s].call));
     if (reg_is_changeable(steps[s].call))
-        assert(has_result(steps[s].call));
+        assert(has_result2(steps[s].call));
 
     // We can't use a range-for here because regs[r] can be moved
     // during the loop if we do evaluation.
     for(int i=0; i < regs[r].used_regs.size(); i++)
     {
         auto [r2,_] = regs[r].used_regs[i];
-        if (not has_force(r2))
+        if (not has_force2(r2))
             incremental_evaluate2(r2);
-        assert(has_result(r2));
-        assert(has_force(r2));
+        assert(has_result2(r2));
+        assert(has_force2(r2));
     }
 
     for(int i=0; i < regs[r].forced_regs.size(); i++)
     {
         auto [r2,_] = regs[r].forced_regs[i];
-        if (not has_force(r2))
+        if (not has_force2(r2))
             incremental_evaluate2(r2);
-        assert(has_result(r2));
-        assert(has_force(r2));
+        assert(has_result2(r2));
+        assert(has_force2(r2));
     }
 
     // If R2 is WHNF then we are done
@@ -1346,10 +1346,10 @@ void reg_heap::force_reg2(int r)
     assert(call > 0);
     if (not reg_is_constant(call))
     {
-        if (not has_force(call))
+        if (not has_force2(call))
             incremental_evaluate2(call);
-        assert(has_result(call));
-        assert(has_force(call));
+        assert(has_result2(call));
+        assert(has_force2(call));
     }
 }
 
