@@ -549,20 +549,24 @@ void reg_heap::unshare_regs2(int t)
         }
         if (prog_unshare[r].test(unshare_step_bit))
         {
-            int s1 = prog_steps[r];
-            // s1 should be > 0, except for the unshared steps for the VALUES of the set modifiables.
-            if (s1 > 0 and steps.access(s1).has_effect())
-            {
-                if (steps[s1].has_pending_effect_registration())
-                    unmark_effect_to_register_at_step(s1);
-                else
-                    mark_effect_to_unregister_at_step(s1);
-            }
-            vm_step2.add_value(r, s1);
+            vm_step2.add_value(r, prog_steps[r]);
             prog_steps[r] = non_computed_index;
         }
         prog_unshare[r].reset();
     }
+
+    for(auto& [r,s]: vm_step2.delta())
+    {
+        if (s > 0 and steps[s].has_effect())
+        {
+            if (steps[s].has_pending_effect_registration())
+                unmark_effect_to_register_at_step(s);
+            else
+                mark_effect_to_unregister_at_step(s);
+        }
+    }
+
+    do_pending_effect_unregistrations();
 
     release_scratch_list(); // unshared_regs
 
