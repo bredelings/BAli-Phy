@@ -528,16 +528,16 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     // 5. Reroot to token t.
     reroot_at_token(t);
-    assert(tokens[t].children.size() == 1);
-    int t2 = tokens[t].children[0];
-    auto& vm_force2  = tokens[t2].vm_force;
-    auto& vm_result2 = tokens[t2].vm_result;
-    auto& vm_step2   = tokens[t2].vm_step;
 
     // 6. Evaluate the program
     auto result =  lazy_evaluate2(heads[*program_result_head]).exp;
 
     // 7. Flush pending unshares and clear unsharing bits.
+    assert(tokens[t].children.size() == 1);
+    int t2 = tokens[t].children[0];
+    auto& vm_force2  = tokens[t2].vm_force;
+    auto& vm_result2 = tokens[t2].vm_result;
+    auto& vm_step2   = tokens[t2].vm_step;
     for(int r: unshared_regs)
     {
         if (prog_unshare[r].test(unshare_force_bit))
