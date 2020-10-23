@@ -510,7 +510,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                     prog_unshare[r].reset(unshare_force_bit);
                     prog_forces[r] = 1;
 
-                    assert(has_force(r));
+                    assert(has_force2(r));
                 }
 
                 return {r, result};
@@ -567,7 +567,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
             assert( not reg_has_call(r) );
 
-            assert( not has_step(r) );
+            assert( not has_step2(r) );
 
             mark_reg_index_var(r);
 
@@ -583,7 +583,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
         else if (is_WHNF(expression_at(r)))
         {
             mark_reg_constant(r);
-            assert( not has_step(r) );
+            assert( not has_step2(r) );
             return {r,r};
         }
 
@@ -595,7 +595,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
         // 3. Reduction: Operation (includes @, case, +, etc.)
         else
         {
-            assert( prog_steps[r] <=0 );
+            assert( not has_step2(r) );
             // The only we reason we are getting this here is to store created_regs on it,
             // if we perform allocations AFTER using/forcing something changeable.
             int s = get_shared_step(r);
