@@ -569,17 +569,17 @@ expression_ref reg_heap::unshare_regs2(int t)
         }
     }
 
+    total_forces_invalidated += (vm_force2.delta().size() - n_delta_force0);
+    total_results_invalidated += (vm_result2.delta().size() - n_delta_result0);
+    total_steps_invalidated += (vm_step2.delta().size() - n_delta_step0);
+
+    total_forces_scanned += vm_force2.delta().size();
+    total_results_scanned += vm_result2.delta().size();
+    total_steps_scanned += vm_step2.delta().size();
+
     do_pending_effect_unregistrations();
 
     release_scratch_list(); // unshared_regs
-
-    total_forces_invalidated += (delta_force.size() - n_delta_force0);
-    total_results_invalidated += (delta_result.size() - n_delta_result0);
-    total_steps_invalidated += (delta_step.size() - n_delta_step0);
-
-    total_forces_scanned += delta_force.size();
-    total_results_scanned += delta_result.size();
-    total_steps_scanned += delta_step.size();
 
 #if DEBUG_MACHINE >= 2
     check_used_regs();
