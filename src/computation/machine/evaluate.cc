@@ -566,10 +566,10 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 if (not has_force2(r))
                 {
                     force_reg2(r);
-                    prog_forces[r] = 1;
+
                     int t = tokens[root_token].children[0];
                     tokens[t].vm_force.add_value(r, non_computed_index);
-                    assert(has_force2(r));
+                    prog_forces[r] = 1;
                 }
 
                 int result = result_for_reg(r);
@@ -595,17 +595,16 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 }
 
                 // r gets its value from S.
-                set_result_for_reg( r );
                 int t = tokens[root_token].children[0];
+
                 tokens[t].vm_result.add_value(r, non_computed_index);
-                tokens[t].vm_force.add_value(r, non_computed_index);
+                set_result_for_reg( r );
 
                 if (not has_force2(r))
-                {
                     force_reg2(r);
-                    prog_forces[r] = 1;
-                    assert(has_force2(r));
-                }
+
+                tokens[t].vm_force.add_value(r, non_computed_index);
+                prog_forces[r] = 1;
 
                 total_changeable_eval_with_call2++;
                 return {r, value};
@@ -706,14 +705,15 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
                     set_call(s, call);
 
-                    prog_steps[r] = s;
-                    set_result_for_reg(r);
-                    prog_forces[r] = 1;
-
                     int t = tokens[root_token].children[0];
-                    tokens[t].vm_force.add_value(r, non_computed_index);
-                    tokens[t].vm_result.add_value(r, non_computed_index);
                     tokens[t].vm_step.add_value(r, non_computed_index);
+                    prog_steps[r] = s;
+
+                    tokens[t].vm_result.add_value(r, non_computed_index);
+                    set_result_for_reg(r);
+
+                    tokens[t].vm_force.add_value(r, non_computed_index);
+                    prog_forces[r] = 1;
 
                     return {r, value};
                 }
