@@ -694,7 +694,8 @@ inline bool reg_heap::has_force1(int r) const
 inline bool reg_heap::has_force2(int r) const
 {
     assert(prog_forces[r] != 0);
-    return prog_forces[r] > 0;
+
+    return (not prog_unshare[r].test(unshare_force_bit)) and prog_forces[r] > 0;
 }
 
 #endif
