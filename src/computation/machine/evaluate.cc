@@ -408,8 +408,6 @@ class RegOperationArgs2 final: public OperationArgs
 
     const bool first_eval;
 
-    const bool reforce;
-
     const closure& current_closure() const {return memory().closure_stack.back();}
 
     bool evaluate_changeables() const {return true;}
@@ -417,14 +415,14 @@ class RegOperationArgs2 final: public OperationArgs
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
     int evaluate_reg(int r2)
         {
-            auto [_, value] = M.incremental_evaluate2(r2, reforce);
+            auto [_, value] = M.incremental_evaluate2(r2);
             return value;
         }
 
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
     int evaluate_reg_force(int r2)
         {
-            auto [r3, value] = M.incremental_evaluate2(r2, reforce);
+            auto [r3, value] = M.incremental_evaluate2(r2);
 
             if (M.reg_is_changeable(r3))
             {
@@ -441,7 +439,7 @@ class RegOperationArgs2 final: public OperationArgs
     int evaluate_reg_to_reg(int r2)
         {
             // Compute the value, and follow index_var chains (which are not changeable).
-            auto [r3, value] = M.incremental_evaluate2(r2, reforce);
+            auto [r3, value] = M.incremental_evaluate2(r2);
 
             // Note that although r2 is newly used, r3 might be already used if it was 
             // found from r2 through a non-changeable reg_var chain.
@@ -501,14 +499,14 @@ public:
 
     RegOperationArgs2* clone() const {return new RegOperationArgs2(*this);}
 
-    RegOperationArgs2(int r_, int s_, int sp_, bool rf, reg_heap& m)
-        :OperationArgs(m), r(r_), s(s_), sp(sp_), first_eval(m.reg_is_unevaluated(r)), reforce(rf)
+    RegOperationArgs2(int r_, int s_, int sp_, reg_heap& m)
+        :OperationArgs(m), r(r_), s(s_), sp(sp_), first_eval(m.reg_is_unevaluated(r))
         { }
 };
 
 /// Evaluate r and look through index_var chains to return the first reg that is NOT a reg_var.
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not an reg_var.
-pair<int,int> reg_heap::incremental_evaluate2(int r, bool reforce)
+pair<int,int> reg_heap::incremental_evaluate2(int r)
 {
     assert(execution_allowed());
 
@@ -519,7 +517,7 @@ pair<int,int> reg_heap::incremental_evaluate2(int r, bool reforce)
         regs.access(r).flags.set(3);
 #endif
     stack.push_back(r);
-    auto result = incremental_evaluate2_(r, reforce);
+    auto result = incremental_evaluate2_(r);
     stack.pop_back();
 #ifndef NDEBUG
     assert(regs.access(r).flags.test(3));
@@ -528,7 +526,7 @@ pair<int,int> reg_heap::incremental_evaluate2(int r, bool reforce)
     return result;
 }
 
-pair<int,int> reg_heap::incremental_evaluate2_(int r, bool reforce)
+pair<int,int> reg_heap::incremental_evaluate2_(int r)
 {
     assert(regs.is_valid_address(r));
     assert(regs.is_used(r));
@@ -563,18 +561,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r, bool reforce)
             {
                 total_changeable_eval_with_result++;
 
-                // We can't set prog_forces[r] = 1 here if reforce=false, because we could end up
-                // unsharing reg r twice (I think).  This doesn't happen when we set the result, because we
-                // we never set the result twice.
-
-                // What we really want to do here is to find all the regs that this reg uses or forces that do NOT have a result.
-                // The used regs must have a result, or this reg wouldn't have a result.
-                // The forced regs may NOT have a result.
-                // So, what we want to find is
-                // (i)  all the regs with a result and no force.  These regs need to be marked forced.
-                // (ii) all the regs with no result and no force. These regs need to be executed, which should mark them forced.
-
-                if (reforce and not has_force2(r))
+                if (not has_force2(r))
                 {
                     force_reg2(r);
                     prog_forces[r] = 1;
@@ -592,7 +579,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r, bool reforce)
             {
                 int s = step_index_for_reg(r);
                 // Evaluate S, looking through unchangeable redirections
-                auto [call, value] = incremental_evaluate2(steps[s].call, reforce);
+                auto [call, value] = incremental_evaluate2(steps[s].call);
 
                 // If computation_for_reg(r).call can be evaluated to refer to S w/o moving through any changable operations, 
                 // then it should be safe to change computation_for_reg(r).call to refer to S, even if r is changeable.
@@ -611,9 +598,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r, bool reforce)
                 tokens[t].vm_result.add_value(r, non_computed_index);
                 tokens[t].vm_force.add_value(r, non_computed_index);
 
-                // FIXME: might we need to set force here even if reforce == false?
-                // If there are no force-edges, then I think yes.
-                if (reforce and not has_force2(r))
+                if (not has_force2(r))
                 {
                     force_reg2(r);
                     prog_forces[r] = 1;
@@ -627,7 +612,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r, bool reforce)
         else if (reg_is_index_var(r))
         {
             int r2 = closure_at(r).reg_for_index_var();
-            return incremental_evaluate2(r2, reforce);
+            return incremental_evaluate2(r2);
         }
         else
             assert(reg_is_unevaluated(r));
@@ -650,7 +635,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r, bool reforce)
             // Return the end of the index_var chain.
             // We used to update the index_var to point to the end of the chain.
 
-            return incremental_evaluate2(r2, reforce);
+            return incremental_evaluate2(r2);
         }
 
         // Check for WHNF *OR* heap variables
@@ -679,7 +664,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r, bool reforce)
             try
             {
                 closure_stack.push_back( closure_at(r) );
-                RegOperationArgs2 Args(r, s, sp, reforce, *this);
+                RegOperationArgs2 Args(r, s, sp, *this);
                 auto O = expression_at(r).head().assert_is_a<Operation>()->op;
                 closure value = (*O)(Args);
                 closure_stack.pop_back();
@@ -714,7 +699,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r, bool reforce)
                         assert(not has_step1(r2));
                     }
 
-                    auto [call,value] = incremental_evaluate2(r2, reforce);
+                    auto [call,value] = incremental_evaluate2(r2);
                     closure_stack.pop_back();
 
                     set_call(s, call);
@@ -723,7 +708,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r, bool reforce)
                     set_result_for_reg(r);
                     if (Args.is_forced and (reg_is_constant(call) or has_force2(call)))
                         prog_forces[r] = 1;
-                    assert(not reforce or Args.is_forced);
+                    assert(Args.is_forced);
                     int t = tokens[root_token].children[0];
                     tokens[t].vm_force.add_value(r, non_computed_index);
                     tokens[t].vm_result.add_value(r, non_computed_index);
