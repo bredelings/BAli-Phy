@@ -205,7 +205,7 @@ void reg_heap::check_created_regs_unshared(int t)
  *                         step <--- created_by --- reg <---located-at-- (step,result)
  */
 
-void reg_heap::unshare_regs(int t)
+void reg_heap::unshare_regs1(int t)
 {
     // parent_token(t) should be the root.
     assert(is_root_token(parent_token(t)));
@@ -294,7 +294,7 @@ void reg_heap::unshare_regs(int t)
 
     // 2. Scan regs with different result in t that are used/called by root steps/results
     for(;i<delta_result.size();i++)
-        if (auto [r,_] = delta_result[i]; has_result(r))
+        if (auto [r,_] = delta_result[i]; has_result1(r))
         {
             auto& R = regs[r];
 
@@ -316,7 +316,7 @@ void reg_heap::unshare_regs(int t)
     // Therefore, this logic need not go into the former loop.
 
     for(int k=0;k<delta_force.size();k++)
-        if (auto [r,_] = delta_force[k]; has_force(r))
+        if (auto [r,_] = delta_force[k]; has_force1(r))
         {
 	    // Look at steps that FORCE the root's result (that is overridden in t)
 	    for(auto& [r2,_]: regs[r].used_by)
@@ -347,7 +347,7 @@ void reg_heap::unshare_regs(int t)
     //          (ii) access the created reg through a chain of use or call edges to the step that created the reg.
     //        In the former case, this loop handles them.  In the later case, they should be invalid.
     for(;j<delta_step.size();j++)
-        if (auto [r,_] = delta_step[j]; has_step(r))
+        if (auto [r,_] = delta_step[j]; has_step1(r))
             for(int r2: step_for_reg(r).created_regs)
             {
                 if (prog_steps[r2] > 0)
@@ -453,7 +453,7 @@ void reg_heap::unshare_regs2(int t)
     for(int i=0;i<unshared_regs.size();i++)
     {
         int r = unshared_regs[i];
-        if (has_result(r))
+        if (has_result1(r))
         {
             auto& R = regs[r];
 
@@ -477,7 +477,7 @@ void reg_heap::unshare_regs2(int t)
     for(int i=0;i<unshared_regs.size();i++)
     {
         int r = unshared_regs[i];
-        if (has_force(r))
+        if (has_force1(r))
         {
 	    // Look at steps that FORCE the root's result (that is overridden in t)
 	    for(auto& [r2,_]: regs[r].used_by)
@@ -566,7 +566,7 @@ void reg_heap::check_unshare_regs(int t)
     }
 
     for(int j=0;j<delta_step.size();j++)
-        if (auto [r,_] = delta_step[j]; has_step(r))
+        if (auto [r,_] = delta_step[j]; has_step1(r))
             for(int r2: step_for_reg(r).created_regs)
             {
                 if (prog_steps[r2] > 0)
@@ -596,7 +596,7 @@ void reg_heap::maybe_unshare_regs(int t)
 
     if (tokens[t].type == token_type::set)
     {
-        unshare_regs(t);
+        unshare_regs1(t);
 
         tokens[t].type = token_type::set_unshare;
     }
