@@ -537,7 +537,6 @@ public:
     int result_for_reg(int r) const;
     bool reg_has_call(int r) const;
     int call_for_reg(int r) const;
-    void force_reg1(int r);
     void force_reg2(int r);
 
     const closure& access_value_for_reg(int R1) const;
@@ -582,16 +581,16 @@ public:
     void maybe_unshare_regs(int t1);
     bool execution_allowed() const;
 
-    std::pair<int,int> incremental_evaluate_in_context(int R, int c, bool reforce = false);
+    std::pair<int,int> incremental_evaluate_in_context(int R, int c);
 
-    std::pair<int,int> incremental_evaluate1(int R, bool reforce);
+    std::pair<int,int> incremental_evaluate1(int R);
 
     std::pair<int,int> incremental_evaluate2(int R, bool reforce);
 
     std::optional<int> precomputed_value_in_context(int R, int c);
 
 private:  
-    std::pair<int,int> incremental_evaluate1_(int R, bool reforce);
+    std::pair<int,int> incremental_evaluate1_(int R);
     std::pair<int,int> incremental_evaluate2_(int R, bool reforce);
     int incremental_evaluate_unchangeable_(int R);
 
@@ -599,13 +598,13 @@ public:
   
     int incremental_evaluate_unchangeable(int R);
 
-    const closure& lazy_evaluate1(int& R, bool reforce = false);
+    const closure& lazy_evaluate1(int& R);
 
     const closure& lazy_evaluate2(int& R, bool reforce = false);
 
-    const closure& lazy_evaluate(int& R, int c, bool reforce = false);
+    const closure& lazy_evaluate(int& R, int c);
 
-    const closure& lazy_evaluate_head(int h, int c, bool reforce = false);
+    const closure& lazy_evaluate_head(int h, int c);
 
     const closure& lazy_evaluate_unchangeable(int& R);
 

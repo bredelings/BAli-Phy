@@ -772,7 +772,7 @@ void reg_heap::first_evaluate_program(int c)
 
     // 1. Execute with reforce = true.  (For the first execution, this shouldn't matter though.)
     assert(token_for_context(c) == root_token);
-    auto [program_result_reg, _] = incremental_evaluate1(heads[*program_result_head], true);
+    auto [program_result_reg, _] = incremental_evaluate1(heads[*program_result_head]);
     heads[*program_result_head] = program_result_reg;
 
     assert(get_prev_prog_token_for_context(c));
@@ -1263,52 +1263,6 @@ bool reg_heap::has_result2(int r) const
 {
     return result_for_reg(r)>0;
 }
-
-void reg_heap::force_reg1(int r)
-{
-    assert(reg_is_changeable(r));
-    assert(has_step1(r));
-    assert(has_result1(r));
-    assert(not has_force1(r));
-
-    int s = step_index_for_reg(r);
-
-    assert(reg_is_constant(steps[s].call) or reg_is_changeable(steps[s].call));
-    if (reg_is_changeable(steps[s].call))
-        assert(has_result1(steps[s].call));
-
-    // We can't use a range-for here because regs[r] can be moved
-    // during the loop if we do evaluation.
-    for(int i=0; i < regs[r].used_regs.size(); i++)
-    {
-        auto [r2,_] = regs[r].used_regs[i];
-        if (not has_force1(r2))
-            incremental_evaluate1(r2, true);
-        assert(has_result1(r2));
-        assert(has_force1(r2));
-    }
-
-    for(int i=0; i < regs[r].forced_regs.size(); i++)
-    {
-        auto [r2,_] = regs[r].forced_regs[i];
-        if (not has_force1(r2))
-            incremental_evaluate1(r2, true);
-        assert(has_result1(r2));
-        assert(has_force1(r2));
-    }
-
-    // If R2 is WHNF then we are done
-    int call = steps[s].call;
-    assert(call > 0);
-    if (not reg_is_constant(call))
-    {
-        if (not has_force1(call))
-            incremental_evaluate1(call, true);
-        assert(has_result1(call));
-        assert(has_force1(call));
-    }
-}
-
 
 void reg_heap::force_reg2(int r)
 {
@@ -2416,7 +2370,7 @@ optional<int> reg_heap::precomputed_value_in_context(int r, int c)
     }
 }
 
-pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c, bool reforce)
+pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 {
 #if DEBUG_MACHINE >= 2
     check_used_regs();
@@ -2431,7 +2385,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c, bool refor
     {
         int r2 = result_for_reg(R);
 
-        if (reforce ? has_force1(R) : r2 > 0)
+        if (r2 > 0)
         {
             assert(r2 > 0);
             return {R,r2};
@@ -2451,7 +2405,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c, bool refor
 
     assert(execution_allowed());
 
-    auto p = incremental_evaluate1(R, reforce);
+    auto p = incremental_evaluate1(R);
 
 #if DEBUG_MACHINE >= 2
     check_used_regs();
@@ -2460,9 +2414,9 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c, bool refor
     return p;
 }
 
-const closure& reg_heap::lazy_evaluate1(int& R, bool reforce)
+const closure& reg_heap::lazy_evaluate1(int& R)
 {
-    auto [R2, value] = incremental_evaluate1(R, reforce);
+    auto [R2, value] = incremental_evaluate1(R);
     R = R2;
     return closure_at(value);
 }
@@ -2474,17 +2428,17 @@ const closure& reg_heap::lazy_evaluate2(int& R, bool reforce)
     return closure_at(value);
 }
 
-const closure& reg_heap::lazy_evaluate(int& R, int c, bool reforce)
+const closure& reg_heap::lazy_evaluate(int& R, int c)
 {
-    auto [R2, value] = incremental_evaluate_in_context(R, c, reforce);
+    auto [R2, value] = incremental_evaluate_in_context(R, c);
     R = R2;
     return closure_at(value);
 }
 
-const closure& reg_heap::lazy_evaluate_head(int index, int c, bool reforce)
+const closure& reg_heap::lazy_evaluate_head(int index, int c)
 {
     int R1 = heads[index];
-    auto [R2, value] = incremental_evaluate_in_context(R1, c, reforce);
+    auto [R2, value] = incremental_evaluate_in_context(R1, c);
     if (R2 != R1)
         set_head(index, R2);
 
