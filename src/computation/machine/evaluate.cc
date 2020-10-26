@@ -433,7 +433,6 @@ class RegOperationArgs2 final: public OperationArgs
             if (M.reg_is_changeable(r3))
             {
                 used_changeable = true;
-                is_forced = is_forced and M.has_force2(r3);
                 if (first_eval)
                     M.set_forced_reg(r, r3);
             }
@@ -452,7 +451,6 @@ class RegOperationArgs2 final: public OperationArgs
             if (M.reg_is_changeable(r3))
             {
                 used_changeable = true;
-                is_forced = is_forced and M.has_force2(r3);
                 if (first_eval)
                     M.set_used_reg(r, r3);
             }
@@ -473,8 +471,6 @@ class RegOperationArgs2 final: public OperationArgs
         }
 
 public:
-
-    bool is_forced = true;
 
     bool used_changeable = false;
 
@@ -712,9 +708,8 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
                     prog_steps[r] = s;
                     set_result_for_reg(r);
-                    if (Args.is_forced and (reg_is_constant(call) or has_force2(call)))
-                        prog_forces[r] = 1;
-                    assert(Args.is_forced);
+                    prog_forces[r] = 1;
+
                     int t = tokens[root_token].children[0];
                     tokens[t].vm_force.add_value(r, non_computed_index);
                     tokens[t].vm_result.add_value(r, non_computed_index);
