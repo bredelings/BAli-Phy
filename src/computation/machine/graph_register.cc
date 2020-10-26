@@ -507,7 +507,7 @@ int reg_heap::unmap_unforced_steps(int c)
 
     assert(token_is_used(t1));
     auto check_unmap = [&,this](int r) {
-                           if (has_step(r) and prog_force_counts[r] == 0)
+                           if (has_step1(r) and prog_force_counts[r] == 0)
                            {
                                vm_step.add_value(r, prog_steps[r]);
                                vm_result.add_value(r, prog_results[r]);
@@ -610,7 +610,7 @@ int reg_heap::unmap_unforced_steps(int c)
     for(int i=0; i < *n_steps_between_progs; i++)
     {
         auto [r,s] = modified_steps[i];
-        if (has_step(r) and prog_force_counts[r] == 0)
+        if (has_step1(r) and prog_force_counts[r] == 0)
             regs_to_unmap.push_back(r);
     }
 
@@ -619,7 +619,7 @@ int reg_heap::unmap_unforced_steps(int c)
     auto dec_force_count_ = [&,this](int r)
                                {
                                    update_force_count(r, prog_force_counts[r]-1);
-                                   if (has_step(r) and prog_force_counts[r] == 0)
+                                   if (has_step1(r) and prog_force_counts[r] == 0)
                                        regs_to_unmap.push_back(r);
                                };
 
@@ -658,7 +658,7 @@ int reg_heap::unmap_unforced_steps(int c)
     for(int r: regs_to_unmap)
     {
         // Don't unmap regs twice!
-        assert(has_step(r));
+        assert(has_step1(r));
 
         vm_step.add_value(r, prog_steps[r]);
         vm_result.add_value(r, prog_results[r]);
@@ -711,7 +711,7 @@ int reg_heap::unmap_unforced_steps(int c)
     {
         if (not regs.is_free(r))
             assert(prog_force_counts[r] == force_count(r));
-        if (has_step(r))
+        if (has_step1(r))
             assert(prog_force_counts[r] > 0);
     }
 #endif
@@ -720,7 +720,7 @@ int reg_heap::unmap_unforced_steps(int c)
     for(auto [r,s]: delta_step)
     {
         for(int r2: steps[s].created_regs)
-            assert(not has_step(r2));
+            assert(not has_step1(r2));
     }
 #endif
 
@@ -772,7 +772,7 @@ void reg_heap::first_evaluate_program(int c)
 
     // 1. Execute with reforce = true.  (For the first execution, this shouldn't matter though.)
     assert(token_for_context(c) == root_token);
-    auto [program_result_reg, _] = incremental_evaluate(heads[*program_result_head], true);
+    auto [program_result_reg, _] = incremental_evaluate1(heads[*program_result_head], true);
     heads[*program_result_head] = program_result_reg;
 
     assert(get_prev_prog_token_for_context(c));
@@ -828,7 +828,7 @@ void reg_heap::first_evaluate_program(int c)
     {
         if (not regs.is_free(r))
             assert(prog_force_counts[r] == force_count(r));
-        if (has_step(r))
+        if (has_step1(r))
             assert(prog_force_counts[r] > 0);
     }
 #endif
@@ -926,7 +926,7 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
     }
 
     // 6. Execute with reforce = true
-    auto result = lazy_evaluate(heads[*program_result_head], true).exp;
+    auto result = lazy_evaluate2(heads[*program_result_head], true).exp;
 
     assert(get_prev_prog_token_for_context(c));
     assert(is_program_execution_token(*get_prev_prog_token_for_context(c)));
@@ -952,7 +952,7 @@ expression_ref reg_heap::evaluate_program(int c)
         set_token_for_context(c,t);
         reroot_at_context(c);
         int r = heads[*program_result_head];
-        assert(reg_is_constant(r) or has_force(r));
+        assert(reg_is_constant(r) or has_force1(r));
 
         result = value_for_precomputed_reg(r).exp;
     }
@@ -1231,12 +1231,12 @@ bool reg_heap::reg_has_value(int r) const
     if (reg_is_constant(r))
         return true;
     else
-        return has_result(r);
+        return has_result1(r);
 }
 
 bool reg_heap::reg_has_call(int r) const
 {
-    return has_step(r) and call_for_reg(r);
+    return has_step1(r) and call_for_reg(r);
 }
 
 int reg_heap::call_for_reg(int r) const
@@ -1244,7 +1244,7 @@ int reg_heap::call_for_reg(int r) const
     return step_for_reg(r).call;
 }
 
-bool reg_heap::has_step(int r) const
+bool reg_heap::has_step1(int r) const
 {
     return step_index_for_reg(r)>0;
 }
@@ -1254,7 +1254,7 @@ bool reg_heap::has_step2(int r) const
     return step_index_for_reg(r)>0;
 }
 
-bool reg_heap::has_result(int r) const
+bool reg_heap::has_result1(int r) const
 {
     return result_for_reg(r)>0;
 }
@@ -1264,37 +1264,37 @@ bool reg_heap::has_result2(int r) const
     return result_for_reg(r)>0;
 }
 
-void reg_heap::force_reg(int r)
+void reg_heap::force_reg1(int r)
 {
     assert(reg_is_changeable(r));
-    assert(has_step(r));
-    assert(has_result(r));
-    assert(not has_force(r));
+    assert(has_step1(r));
+    assert(has_result1(r));
+    assert(not has_force1(r));
 
     int s = step_index_for_reg(r);
 
     assert(reg_is_constant(steps[s].call) or reg_is_changeable(steps[s].call));
     if (reg_is_changeable(steps[s].call))
-        assert(has_result(steps[s].call));
+        assert(has_result1(steps[s].call));
 
     // We can't use a range-for here because regs[r] can be moved
     // during the loop if we do evaluation.
     for(int i=0; i < regs[r].used_regs.size(); i++)
     {
         auto [r2,_] = regs[r].used_regs[i];
-        if (not has_force(r2))
-            incremental_evaluate(r2, true);
-        assert(has_result(r2));
-        assert(has_force(r2));
+        if (not has_force1(r2))
+            incremental_evaluate1(r2, true);
+        assert(has_result1(r2));
+        assert(has_force1(r2));
     }
 
     for(int i=0; i < regs[r].forced_regs.size(); i++)
     {
         auto [r2,_] = regs[r].forced_regs[i];
-        if (not has_force(r2))
-            incremental_evaluate(r2, true);
-        assert(has_result(r2));
-        assert(has_force(r2));
+        if (not has_force1(r2))
+            incremental_evaluate1(r2, true);
+        assert(has_result1(r2));
+        assert(has_force1(r2));
     }
 
     // If R2 is WHNF then we are done
@@ -1302,10 +1302,10 @@ void reg_heap::force_reg(int r)
     assert(call > 0);
     if (not reg_is_constant(call))
     {
-        if (not has_force(call))
-            incremental_evaluate(call, true);
-        assert(has_result(call));
-        assert(has_force(call));
+        if (not has_force1(call))
+            incremental_evaluate1(call, true);
+        assert(has_result1(call));
+        assert(has_force1(call));
     }
 }
 
@@ -1361,7 +1361,7 @@ int reg_heap::value_for_reg(int r) const
     assert(not expression_at(r).is_index_var());
     if (reg_is_changeable(r))
     {
-        assert(has_result(r));
+        assert(has_result1(r));
         return result_for_reg(r);
     }
     else
@@ -1396,7 +1396,7 @@ void reg_heap::set_used_reg(int r1, int r2)
 
     assert(closure_at(r2));
 
-    assert(has_result(r2));
+    assert(has_result1(r2));
 
     // An index_var's value only changes if the thing the index-var points to also changes.
     // So, we may as well forbid using an index_var as an input.
@@ -1420,7 +1420,7 @@ void reg_heap::set_forced_reg(int r1, int r2)
 
     assert(closure_at(r2));
 
-    assert(has_result(r2));
+    assert(has_result1(r2));
 
     // An index_var's value only changes if the thing the index-var points to also changes.
     // So, we may as well forbid using an index_var as an input.
@@ -1552,7 +1552,7 @@ int reg_heap::allocate_reg_from_step(int s)
 {
     int r = allocate();
     mark_reg_created_by_step(r,s);
-    assert(not has_step(r));
+    assert(not has_step1(r));
     return r;
 }
 
@@ -1657,7 +1657,7 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
 std::vector<int> reg_heap::used_regs_for_reg(int r) const
 {
     vector<int> U;
-    if (not has_step(r)) return U;
+    if (not has_step1(r)) return U;
 
     for(const auto& [r2,_]: regs[r].used_regs)
         U.push_back(r2);
@@ -1668,7 +1668,7 @@ std::vector<int> reg_heap::used_regs_for_reg(int r) const
 std::vector<int> reg_heap::forced_regs_for_reg(int r) const
 {
     vector<int> U;
-    if (not has_step(r)) return U;
+    if (not has_step1(r)) return U;
 
     for(const auto& [r2,_]: regs[r].forced_regs)
         U.push_back(r2);
@@ -1679,7 +1679,7 @@ std::vector<int> reg_heap::forced_regs_for_reg(int r) const
 void reg_heap::reclaim_used(int r)
 {
     // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
-    assert(not has_step(r));
+    assert(not has_step1(r));
 
     // Clear any force counts.
     // This reg was in a tip token that could have forced it.  But no other programs will force it.
@@ -2110,7 +2110,7 @@ void reg_heap::check_used_regs() const
         if (check_force_counts)
         {
             assert(prog_force_counts[r1] == force_count(r1));
-            if (has_step(r1))
+            if (has_step1(r1))
                 assert(prog_force_counts[r1] > 0);
         }
 
@@ -2123,26 +2123,26 @@ void reg_heap::check_used_regs() const
         if (not regs[r1].forced_regs.empty())
             assert(reg_is_changeable(r1));
 
-        if (not has_step(r1))
+        if (not has_step1(r1))
         {
-            assert(not has_force(r1));
-            assert(not has_result(r1));
+            assert(not has_force1(r1));
+            assert(not has_result1(r1));
         }
 
-        if (not has_result(r1))
+        if (not has_result1(r1))
         {
-            assert(not has_force(r1));
+            assert(not has_force1(r1));
         }
 
-        if (has_force(r1))
+        if (has_force1(r1))
         {
             for(auto r2: used_regs_for_reg(r1))
-                assert(has_force(r2));
+                assert(has_force1(r2));
             for(auto r2: forced_regs_for_reg(r1))
-                assert(has_force(r2));
+                assert(has_force1(r2));
             int call = step_for_reg(r1).call;
             if (reg_is_changeable(call))
-                assert(has_force(call));
+                assert(has_force1(call));
         }
 
         for(const auto& [r2,_]: regs[r1].used_regs)
@@ -2190,7 +2190,7 @@ int reg_heap::get_shared_step(int r)
 /// Add a shared step at (t,r) -- assuming there isn't one already
 int reg_heap::add_shared_step(int r)
 {
-    assert(not has_step(r));
+    assert(not has_step1(r));
 
     // Allocate a step
     int s = get_shared_step(r);
@@ -2327,7 +2327,7 @@ void reg_heap::clear_back_edges_for_step(int s)
 
 void reg_heap::clear_step(int r)
 {
-    assert(not has_result(r));
+    assert(not has_result1(r));
     int s = prog_steps[r];
   
     if (s > 0)
@@ -2354,7 +2354,7 @@ const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
     total_get_reg_value_non_const++;
     reroot_at_context(c);
 
-    if (has_result(R))
+    if (has_result1(R))
     {
         total_get_reg_value_non_const_with_result++;
         int R2 = result_for_reg(R);
@@ -2407,7 +2407,7 @@ optional<int> reg_heap::precomputed_value_in_context(int r, int c)
     // In theory, variants of this routine could allow
     // * having a result, but no force.
     // * have a chain of steps, but no result.
-    if (reg_is_changeable(r) and has_force(r))
+    if (reg_is_changeable(r) and has_force1(r))
         return result_for_reg(r);
     else
     {
@@ -2431,7 +2431,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c, bool refor
     {
         int r2 = result_for_reg(R);
 
-        if (reforce ? has_force(R) : r2 > 0)
+        if (reforce ? has_force1(R) : r2 > 0)
         {
             assert(r2 > 0);
             return {R,r2};
@@ -2451,7 +2451,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c, bool refor
 
     assert(execution_allowed());
 
-    auto p = incremental_evaluate(R, reforce);
+    auto p = incremental_evaluate1(R, reforce);
 
 #if DEBUG_MACHINE >= 2
     check_used_regs();
@@ -2460,9 +2460,16 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c, bool refor
     return p;
 }
 
-const closure& reg_heap::lazy_evaluate(int& R, bool reforce)
+const closure& reg_heap::lazy_evaluate1(int& R, bool reforce)
 {
-    auto [R2, value] = incremental_evaluate(R, reforce);
+    auto [R2, value] = incremental_evaluate1(R, reforce);
+    R = R2;
+    return closure_at(value);
+}
+
+const closure& reg_heap::lazy_evaluate2(int& R, bool reforce)
+{
+    auto [R2, value] = incremental_evaluate2(R, reforce);
     R = R2;
     return closure_at(value);
 }
