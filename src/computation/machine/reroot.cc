@@ -505,29 +505,58 @@ void reg_heap::unshare_regs2(int t)
         prog_unshare[r].reset(unshare_step_bit);
     }
 
-    // 5. Flush pending unshares and clear unsharing bits.
+
+    // 5. Reroot to token t.
+    reroot_at_token(t);
+
+    // 6. Flush pending unshares and clear unsharing bits.
+    assert(tokens[t].children.size() == 1);
+    int t2 = tokens[t].children[0];
+    auto& vm_force2  = tokens[t2].vm_force;
+    auto& vm_result2 = tokens[t2].vm_result;
+    auto& vm_step2   = tokens[t2].vm_step;
     for(int r: unshared_regs)
     {
         if (prog_unshare[r].test(unshare_force_bit))
-            vm_force.add_value(r, non_computed_index);
+        {
+            vm_force2.add_value(r, prog_forces[r]);
+            prog_forces[r] = non_computed_index;
+        }
         if (prog_unshare[r].test(unshare_result_bit))
-            vm_result.add_value(r, non_computed_index);
+        {
+            vm_result2.add_value(r, prog_results[r]);
+            prog_results[r] = non_computed_index;
+        }
         if (prog_unshare[r].test(unshare_step_bit))
-            vm_step.add_value(r, non_computed_index);
+        {
+            vm_step2.add_value(r, prog_steps[r]);
+            prog_steps[r] = non_computed_index;
+        }
         prog_unshare[r].reset();
     }
 
+    // 7. Handle moving steps out of the root.
+    for(auto [_,s]: vm_step2.delta())
+    {
+        if (s > 0 and steps.access(s).has_effect())
+        {
+            if (steps[s].has_pending_effect_registration())
+                unmark_effect_to_register_at_step(s);
+            else
+                mark_effect_to_unregister_at_step(s);
+        }
+    }
+    do_pending_effect_unregistrations();
+
     release_scratch_list(); // unshared_regs
 
-    total_forces_invalidated += (delta_force.size() - n_delta_force0);
-    total_results_invalidated += (delta_result.size() - n_delta_result0);
-    total_steps_invalidated += (delta_step.size() - n_delta_step0);
+    total_forces_invalidated += (vm_force2.delta().size() - n_delta_force0);
+    total_results_invalidated += (vm_result.delta().size() - n_delta_result0);
+    total_steps_invalidated += (vm_step.delta().size() - n_delta_step0);
 
-    total_forces_scanned += delta_force.size();
-    total_results_scanned += delta_result.size();
-    total_steps_scanned += delta_step.size();
-
-    reroot_at_token(t);
+    total_forces_scanned += vm_force2.delta().size();
+    total_results_scanned += vm_result.delta().size();
+    total_steps_scanned += vm_step.delta().size();
 
 #if DEBUG_MACHINE >= 2
     check_used_regs();
