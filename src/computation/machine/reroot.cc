@@ -151,10 +151,6 @@ void reg_heap::reroot_at(int t)
 }
 
 
-constexpr int unshare_force_bit  = 0;
-constexpr int unshare_result_bit = 1;
-constexpr int unshare_step_bit   = 2;
-
 void reg_heap::check_created_regs_unshared(int t)
 {
     const auto& delta_step   = tokens[t].vm_step.delta();
