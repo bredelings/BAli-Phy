@@ -26,6 +26,12 @@ long total_changeable_eval = 0;
 long total_changeable_eval_with_result = 0;
 long total_changeable_eval_with_call = 0;
 
+long total_reductions2 = 0;
+long total_changeable_reductions2 = 0;
+long total_changeable_eval2 = 0;
+long total_changeable_eval_with_result2 = 0;
+long total_changeable_eval_with_call2 = 0;
+
 long total_case_op = 0;
 long total_let_op = 0;
 long total_index_op = 0;
@@ -555,11 +561,11 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
         else if (reg_is_changeable(r))
         {
-            total_changeable_eval++;
+            total_changeable_eval2++;
 
             if (has_result2(r))
             {
-                total_changeable_eval_with_result++;
+                total_changeable_eval_with_result2++;
 
                 if (not has_force2(r))
                 {
@@ -605,7 +611,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                     assert(has_force2(r));
                 }
 
-                total_changeable_eval_with_call++;
+                total_changeable_eval_with_call2++;
                 return {r, value};
             }
         }
@@ -668,7 +674,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 auto O = expression_at(r).head().assert_is_a<Operation>()->op;
                 closure value = (*O)(Args);
                 closure_stack.pop_back();
-                total_reductions++;
+                total_reductions2++;
 
                 // If the reduction doesn't depend on modifiable, then replace E with the value.
                 if (not Args.used_changeable)
@@ -683,7 +689,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 }
                 else
                 {
-                    total_changeable_reductions++;
+                    total_changeable_reductions2++;
                     mark_reg_changeable(r);
                     closure_stack.push_back(value);
 

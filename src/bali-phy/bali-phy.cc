@@ -170,6 +170,13 @@ void show_ending_messages(bool show_only)
         extern long total_changeable_eval_with_result;
         extern long total_changeable_eval_with_call;
         extern long total_changeable_reductions;
+
+        extern long total_reductions2;
+        extern long total_changeable_eval2;
+        extern long total_changeable_eval_with_result2;
+        extern long total_changeable_eval_with_call2;
+        extern long total_changeable_reductions2;
+
         extern long total_reg_allocations;
         extern long total_comp_allocations;
         extern long total_step_allocations;
@@ -205,12 +212,22 @@ void show_ending_messages(bool show_only)
         extern long total_index_op;
         if (total_reductions > 0)
         {
-            cout<<"total changeable evals         = "<<total_changeable_eval<<endl;
-            cout<<"  with result                  = "<<total_changeable_eval_with_result<<endl;
-            cout<<"  with call but not result     = "<<total_changeable_eval_with_call<<endl;
-            cout<<"total reduction steps          = "<<total_reductions<<endl;
-            cout<<"  changeable reduction steps   = "<<total_changeable_reductions<<endl;
-            cout<<"  unchangeable reduction steps = "<<total_reductions-total_changeable_reductions<<endl;
+            cout<<"Program evaluation:\n";
+            cout<<"  total changeable evals         = "<<total_changeable_eval2<<endl;
+            cout<<"    with result                  = "<<total_changeable_eval_with_result2<<endl;
+            cout<<"    with call but not result     = "<<total_changeable_eval_with_call2<<endl;
+            cout<<"  total reduction steps          = "<<total_reductions2<<endl;
+            cout<<"    changeable reduction steps   = "<<total_changeable_reductions2<<endl;
+            cout<<"    unchangeable reduction steps = "<<total_reductions2-total_changeable_reductions2<<endl;
+            cout<<"\n";
+            cout<<"Side evaluation:\n";
+            cout<<"  total changeable evals         = "<<total_changeable_eval<<endl;
+            cout<<"    with result                  = "<<total_changeable_eval_with_result<<endl;
+            cout<<"    with call but not result     = "<<total_changeable_eval_with_call<<endl;
+            cout<<"  total reduction steps          = "<<total_reductions<<endl;
+            cout<<"    changeable reduction steps   = "<<total_changeable_reductions<<endl;
+            cout<<"    unchangeable reduction steps = "<<total_reductions-total_changeable_reductions<<endl;
+            cout<<"\n";
             cout<<"  op:case                      = "<<total_case_op<<endl;
             cout<<"  op:let                       = "<<total_let_op<<endl;
             cout<<"  op:index                     = "<<total_index_op<<endl;
