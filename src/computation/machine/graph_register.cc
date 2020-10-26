@@ -901,7 +901,7 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
     //       Therefore we need to ensure that find_set_regs_on_path( ) never sees these.
     release_knuckle_tokens(t);
     assert(tokens[t].parent == root_token);
-    tokens[t].type = token_type::execute;
+    tokens[t].type = token_type::execute2;
 
     // 4. Unshare regs in the token.
     unshare_regs2(t);
