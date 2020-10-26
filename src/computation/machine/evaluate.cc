@@ -84,19 +84,19 @@ class RegOperationArgs final: public OperationArgs
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
     int evaluate_reg(int r2)
         {
-            auto [_, value] = M.incremental_evaluate(r2, reforce);
+            auto [_, value] = M.incremental_evaluate1(r2, reforce);
             return value;
         }
 
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
     int evaluate_reg_force(int r2)
         {
-            auto [r3, value] = M.incremental_evaluate(r2, reforce);
+            auto [r3, value] = M.incremental_evaluate1(r2, reforce);
 
             if (M.reg_is_changeable(r3))
             {
                 used_changeable = true;
-                is_forced = is_forced and M.has_force(r3);
+                is_forced = is_forced and M.has_force1(r3);
                 if (first_eval)
                     M.set_forced_reg(r, r3);
             }
@@ -108,14 +108,14 @@ class RegOperationArgs final: public OperationArgs
     int evaluate_reg_to_reg(int r2)
         {
             // Compute the value, and follow index_var chains (which are not changeable).
-            auto [r3, value] = M.incremental_evaluate(r2, reforce);
+            auto [r3, value] = M.incremental_evaluate1(r2, reforce);
 
             // Note that although r2 is newly used, r3 might be already used if it was 
             // found from r2 through a non-changeable reg_var chain.
             if (M.reg_is_changeable(r3))
             {
                 used_changeable = true;
-                is_forced = is_forced and M.has_force(r3);
+                is_forced = is_forced and M.has_force1(r3);
                 if (first_eval)
                     M.set_used_reg(r, r3);
             }
@@ -175,7 +175,7 @@ public:
 
 /// Evaluate r and look through index_var chains to return the first reg that is NOT a reg_var.
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not an reg_var.
-pair<int,int> reg_heap::incremental_evaluate(int r, bool reforce)
+pair<int,int> reg_heap::incremental_evaluate1(int r, bool reforce)
 {
     assert(execution_allowed());
 
@@ -186,7 +186,7 @@ pair<int,int> reg_heap::incremental_evaluate(int r, bool reforce)
         regs.access(r).flags.set(3);
 #endif
     stack.push_back(r);
-    auto result = incremental_evaluate_(r, reforce);
+    auto result = incremental_evaluate1_(r, reforce);
     stack.pop_back();
 #ifndef NDEBUG
     assert(regs.access(r).flags.test(3));
@@ -195,7 +195,7 @@ pair<int,int> reg_heap::incremental_evaluate(int r, bool reforce)
     return result;
 }
 
-pair<int,int> reg_heap::incremental_evaluate_(int r, bool reforce)
+pair<int,int> reg_heap::incremental_evaluate1_(int r, bool reforce)
 {
     assert(regs.is_valid_address(r));
     assert(regs.is_used(r));
@@ -242,16 +242,16 @@ pair<int,int> reg_heap::incremental_evaluate_(int r, bool reforce)
                 // (i)  all the regs with a result and no force.  These regs need to be marked forced.
                 // (ii) all the regs with no result and no force. These regs need to be executed, which should mark them forced.
 
-                if (reforce and not has_force(r))
+                if (reforce and not has_force1(r))
                 {
-                    force_reg(r);
+                    force_reg1(r);
                     prog_forces[r] = 1;
                     if (not tokens[root_token].children.empty())
                     {
                         int t = tokens[root_token].children[0];
                         tokens[t].vm_force.add_value(r, non_computed_index);
                     }
-                    assert(has_force(r));
+                    assert(has_force1(r));
                 }
 
                 return {r, result};
@@ -261,7 +261,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int r, bool reforce)
             if (int s = step_index_for_reg(r); s > 0)
             {
                 // Evaluate S, looking through unchangeable redirections
-                auto [call, value] = incremental_evaluate(steps[s].call, reforce);
+                auto [call, value] = incremental_evaluate1(steps[s].call, reforce);
 
                 // If computation_for_reg(r).call can be evaluated to refer to S w/o moving through any changable operations, 
                 // then it should be safe to change computation_for_reg(r).call to refer to S, even if r is changeable.
@@ -285,11 +285,11 @@ pair<int,int> reg_heap::incremental_evaluate_(int r, bool reforce)
 
                 // FIXME: might we need to set force here even if reforce == false?
                 // If there are no force-edges, then I think yes.
-                if (reforce and not has_force(r))
+                if (reforce and not has_force1(r))
                 {
-                    force_reg(r);
+                    force_reg1(r);
                     prog_forces[r] = 1;
-                    assert(has_force(r));
+                    assert(has_force1(r));
                 }
 
                 total_changeable_eval_with_call++;
@@ -299,7 +299,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int r, bool reforce)
         else if (reg_is_index_var(r))
         {
             int r2 = closure_at(r).reg_for_index_var();
-            return incremental_evaluate(r2, reforce);
+            return incremental_evaluate1(r2, reforce);
         }
         else
             assert(reg_is_unevaluated(r));
@@ -313,7 +313,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int r, bool reforce)
 
             assert( not reg_has_call(r) );
 
-            assert( not has_step(r) );
+            assert( not has_step1(r) );
 
             mark_reg_index_var(r);
 
@@ -322,14 +322,14 @@ pair<int,int> reg_heap::incremental_evaluate_(int r, bool reforce)
             // Return the end of the index_var chain.
             // We used to update the index_var to point to the end of the chain.
 
-            return incremental_evaluate(r2, reforce);
+            return incremental_evaluate1(r2, reforce);
         }
 
         // Check for WHNF *OR* heap variables
         else if (is_WHNF(expression_at(r)))
         {
             mark_reg_constant(r);
-            assert( not has_step(r) );
+            assert( not has_step1(r) );
             return {r,r};
         }
 
@@ -383,17 +383,17 @@ pair<int,int> reg_heap::incremental_evaluate_(int r, bool reforce)
                     {
                         r2 = Args.allocate( std::move(closure_stack.back()) ) ;
                         assert(regs.access(r2).created_by.first == s);
-                        assert(not has_step(r2));
+                        assert(not has_step1(r2));
                     }
 
-                    auto [call,value] = incremental_evaluate(r2, reforce);
+                    auto [call,value] = incremental_evaluate1(r2, reforce);
                     closure_stack.pop_back();
 
                     set_call(s, call);
 
                     prog_steps[r] = s;
                     set_result_for_reg(r);
-                    if (Args.is_forced and (reg_is_constant(call) or has_force(call)))
+                    if (Args.is_forced and (reg_is_constant(call) or has_force1(call)))
                         prog_forces[r] = 1;
                     assert(not reforce or Args.is_forced);
                     if (not tokens[root_token].children.empty())
@@ -681,7 +681,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r, bool reforce)
 
             assert( not reg_has_call(r) );
 
-            assert( not has_step(r) );
+            assert( not has_step1(r) );
 
             mark_reg_index_var(r);
 
@@ -697,7 +697,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r, bool reforce)
         else if (is_WHNF(expression_at(r)))
         {
             mark_reg_constant(r);
-            assert( not has_step(r) );
+            assert( not has_step1(r) );
             return {r,r};
         }
 
@@ -751,7 +751,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r, bool reforce)
                     {
                         r2 = Args.allocate( std::move(closure_stack.back()) ) ;
                         assert(regs.access(r2).created_by.first == s);
-                        assert(not has_step(r2));
+                        assert(not has_step1(r2));
                     }
 
                     auto [call,value] = incremental_evaluate2(r2, reforce);

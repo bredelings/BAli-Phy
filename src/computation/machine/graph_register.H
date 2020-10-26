@@ -526,18 +526,18 @@ public:
     int step_index_for_reg(int r) const;
     const Step& step_for_reg(int r) const ;
     Step& step_for_reg(int r);
-    bool has_step(int r) const;
+    bool has_step1(int r) const;
     bool has_step2(int r) const;
-    bool has_result(int r) const;
+    bool has_result1(int r) const;
     bool has_result2(int r) const;
     bool reg_has_value(int r) const;
     int follow_index_var(int r) const;
-    bool has_force(int r) const;
+    bool has_force1(int r) const;
     bool has_force2(int r) const;
     int result_for_reg(int r) const;
     bool reg_has_call(int r) const;
     int call_for_reg(int r) const;
-    void force_reg(int r);
+    void force_reg1(int r);
     void force_reg2(int r);
 
     const closure& access_value_for_reg(int R1) const;
@@ -576,7 +576,7 @@ public:
     void set_reg_value(int index, closure&&, int t);
     bool reg_is_shared(int t, int r) const;
     void check_created_regs_unshared(int t1);
-    void unshare_regs(int t1);
+    void unshare_regs1(int t1);
     void unshare_regs2(int t1);
     void check_unshare_regs(int t);
     void maybe_unshare_regs(int t1);
@@ -584,14 +584,14 @@ public:
 
     std::pair<int,int> incremental_evaluate_in_context(int R, int c, bool reforce = false);
 
-    std::pair<int,int> incremental_evaluate(int R, bool reforce);
+    std::pair<int,int> incremental_evaluate1(int R, bool reforce);
 
     std::pair<int,int> incremental_evaluate2(int R, bool reforce);
 
     std::optional<int> precomputed_value_in_context(int R, int c);
 
 private:  
-    std::pair<int,int> incremental_evaluate_(int R, bool reforce);
+    std::pair<int,int> incremental_evaluate1_(int R, bool reforce);
     std::pair<int,int> incremental_evaluate2_(int R, bool reforce);
     int incremental_evaluate_unchangeable_(int R);
 
@@ -599,7 +599,7 @@ public:
   
     int incremental_evaluate_unchangeable(int R);
 
-    const closure& lazy_evaluate(int& R, bool reforce = false);
+    const closure& lazy_evaluate1(int& R, bool reforce = false);
 
     const closure& lazy_evaluate2(int& R, bool reforce = false);
 
@@ -686,7 +686,7 @@ inline void reg_heap::mark_reg_index_var(int r)
     regs.access(r).type = reg::type_t::index_var;
 }
 
-inline bool reg_heap::has_force(int r) const
+inline bool reg_heap::has_force1(int r) const
 {
     assert(prog_forces[r] != 0);
     return prog_forces[r] > 0;
