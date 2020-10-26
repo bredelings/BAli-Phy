@@ -925,7 +925,7 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
     }
 
     // 6. Execute with reforce = true
-    auto result = lazy_evaluate(heads[*program_result_head], c, true).exp;
+    auto result = lazy_evaluate(heads[*program_result_head], true).exp;
 
     assert(get_prev_prog_token_for_context(c));
     assert(is_program_execution_token(*get_prev_prog_token_for_context(c)));
