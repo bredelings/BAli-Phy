@@ -926,7 +926,7 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
     }
 
     // 6. Execute with reforce = true
-    auto result = lazy_evaluate2(heads[*program_result_head], true).exp;
+    auto result = lazy_evaluate2(heads[*program_result_head]).exp;
 
     assert(get_prev_prog_token_for_context(c));
     assert(is_program_execution_token(*get_prev_prog_token_for_context(c)));
@@ -1283,7 +1283,7 @@ void reg_heap::force_reg2(int r)
     {
         auto [r2,_] = regs[r].used_regs[i];
         if (not has_force2(r2))
-            incremental_evaluate2(r2, true);
+            incremental_evaluate2(r2);
         assert(has_result2(r2));
         assert(has_force2(r2));
     }
@@ -1292,7 +1292,7 @@ void reg_heap::force_reg2(int r)
     {
         auto [r2,_] = regs[r].forced_regs[i];
         if (not has_force2(r2))
-            incremental_evaluate2(r2, true);
+            incremental_evaluate2(r2);
         assert(has_result2(r2));
         assert(has_force2(r2));
     }
@@ -1303,7 +1303,7 @@ void reg_heap::force_reg2(int r)
     if (not reg_is_constant(call))
     {
         if (not has_force2(call))
-            incremental_evaluate2(call, true);
+            incremental_evaluate2(call);
         assert(has_result2(call));
         assert(has_force2(call));
     }
@@ -2421,9 +2421,9 @@ const closure& reg_heap::lazy_evaluate1(int& R)
     return closure_at(value);
 }
 
-const closure& reg_heap::lazy_evaluate2(int& R, bool reforce)
+const closure& reg_heap::lazy_evaluate2(int& R)
 {
-    auto [R2, value] = incremental_evaluate2(R, reforce);
+    auto [R2, value] = incremental_evaluate2(R);
     R = R2;
     return closure_at(value);
 }
