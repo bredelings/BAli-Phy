@@ -905,26 +905,7 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
     tokens[t].type = token_type::execute2;
 
     // 4. Unshare regs in the token.
-    unshare_regs2(t);
-
-    // 5. Always perform execution in a new token.
-    // Evaluation with re-force=true should be in a new context in we've
-    // don't any previous evaluation with re-force=false, in order to avoid
-    // double-unsharing of forces.
-    {
-        // We need to reroot to here first, so that switching to a child token
-        // doesn't delete the current token as a knuckle.
-        switch_to_child_token(c, token_type::execute);
-
-        // This should not allow removing the old root token.
-        reroot_at_context(c);
-
-        // We can't remove t1 even if its a knuckle.
-        assert(execution_allowed());
-    }
-
-    // 6. Execute with reforce = true
-    auto result = lazy_evaluate2(heads[*program_result_head]).exp;
+    auto result = unshare_regs2(t);
 
     assert(get_prev_prog_token_for_context(c));
     assert(is_program_execution_token(*get_prev_prog_token_for_context(c)));
