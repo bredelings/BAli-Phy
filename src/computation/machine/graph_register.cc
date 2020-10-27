@@ -2325,7 +2325,7 @@ bool reg_heap::execution_allowed() const
     if (tokens[root_token].children.size() == 1)
     {
         int t1 = tokens[root_token].children[0];
-        return (tokens[t1].type == reverse(token_type::execute));
+        return (tokens[t1].type == reverse(token_type::execute) or tokens[t1].type == reverse(token_type::execute2));
     }
 
     return false;
