@@ -397,7 +397,7 @@ void filter_unordered_vector(vector<T>& x, F ok)
     }
 }
 
-void reg_heap::unshare_regs2(int t)
+expression_ref reg_heap::unshare_regs2(int t)
 {
     // parent_token(t) should be the root.
     assert(is_root_token(parent_token(t)));
@@ -529,7 +529,10 @@ void reg_heap::unshare_regs2(int t)
     // 5. Reroot to token t.
     reroot_at_token(t);
 
-    // 6. Flush pending unshares and clear unsharing bits.
+    // 6.  Evaluate the program
+    auto result = lazy_evaluate2(heads[*program_result_head]).exp;
+
+    // 7. Flush pending unshares and clear unsharing bits.
     assert(tokens[t].children.size() == 1);
     int t2 = tokens[t].children[0];
     auto& vm_force2  = tokens[t2].vm_force;
@@ -555,7 +558,7 @@ void reg_heap::unshare_regs2(int t)
         prog_unshare[r].reset();
     }
 
-    // 7. Handle moving steps out of the root.
+    // 8. Handle moving steps out of the root.
     for(auto [_,s]: vm_step2.delta())
     {
         if (s > 0 and steps.access(s).has_effect())
@@ -581,6 +584,8 @@ void reg_heap::unshare_regs2(int t)
 #if DEBUG_MACHINE >= 2
     check_used_regs();
 #endif
+
+    return result;
 }
 
 void reg_heap::check_unshare_regs(int t)
