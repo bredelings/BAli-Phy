@@ -576,7 +576,7 @@ public:
     bool reg_is_shared(int t, int r) const;
     void check_created_regs_unshared(int t1);
     void unshare_regs1(int t1);
-    void unshare_regs2(int t1);
+    expression_ref unshare_regs2(int t1);
     void check_unshare_regs(int t);
     void maybe_unshare_regs(int t1);
     bool execution_allowed() const;
