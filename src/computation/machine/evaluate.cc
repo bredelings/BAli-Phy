@@ -587,8 +587,12 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 // r gets its value from S.
                 int t = tokens[root_token].children[0];
 
-                tokens[t].vm_result.add_value(r, prog_results[r]);
-                set_result_for_reg( r );
+                bool reshare_result = prog_unshare[r].test(unshare_result_bit) and (prog_results[r] == value);
+                if (not reshare_result)
+                {
+                    tokens[t].vm_result.add_value(r, prog_results[r]);
+                    set_result_for_reg( r );
+                }
                 prog_unshare[r].reset(unshare_result_bit);
 
                 if (not has_force2(r))
@@ -693,14 +697,32 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                     auto [call,value] = incremental_evaluate2(r2);
                     closure_stack.pop_back();
 
-                    set_call(s, call);
+                    assert(not prog_unshare[r].test(unshare_step_bit) or prog_steps[r] > 0);
+                    bool reshare_step = prog_unshare[r].test(unshare_step_bit) and (steps[prog_steps[r]].call == call);
 
                     int t = tokens[root_token].children[0];
-                    tokens[t].vm_step.add_value(r, prog_steps[r]);
-                    prog_steps[r] = s;
+                    if (not reshare_step)
+                    {
+                        set_call(s, call);
 
-                    tokens[t].vm_result.add_value(r, prog_results[r]);
-                    set_result_for_reg(r);
+                        tokens[t].vm_step.add_value(r, prog_steps[r]);
+                        prog_steps[r] = s;
+                    }
+                    else
+                    {
+#ifndef NDEBUG
+                        for(auto cr: steps[s].created_regs)
+                            assert(not reg_is_changeable(cr));
+#endif
+                        destroy_step_and_created_regs(s);
+                    }
+
+                    bool reshare_result = reshare_step and prog_results[r] == value;
+                    if (not reshare_result)
+                    {
+                        tokens[t].vm_result.add_value(r, prog_results[r]);
+                        set_result_for_reg(r);
+                    }
 
                     prog_unshare[r].reset();
 
