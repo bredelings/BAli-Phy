@@ -1918,7 +1918,6 @@ void reg_heap::check_used_regs_in_token(int t) const
     }
 
     constexpr int force_count_bit = 3;
-    constexpr int force_bit = 2;
     constexpr int result_bit = 0;
     constexpr int step_bit = 1;
 
@@ -1938,22 +1937,6 @@ void reg_heap::check_used_regs_in_token(int t) const
 
         // No results for constant regs
         assert(count >= 0);
-    }
-
-    for(auto [r,result]: tokens[t].delta_force())
-    {
-        // Deltas should not contain free regs except resets.
-        assert(not regs.is_free(r) or result < 0);
-
-        // Check that there are no duplicate regs.
-        assert(not prog_temp[r].test(force_bit));
-
-        // Mark the reg as having a result in the delta.
-        prog_temp[r].set(force_bit);
-
-        // No results for constant regs
-        if (result > 0)
-            assert(not reg_is_constant(r));
     }
 
     for(auto [r,result]: tokens[t].delta_result())
@@ -1996,23 +1979,14 @@ void reg_heap::check_used_regs_in_token(int t) const
     for(auto [reg,res]: tokens[t].delta_force_count())
         prog_temp[reg].reset(force_count_bit);
 
-    for(auto [reg,res]: tokens[t].delta_force())
-    {
-        prog_temp[reg].reset(force_bit);
-        prog_temp[reg].reset(result_bit);
-        prog_temp[reg].reset(step_bit);
-    }
-
     for(auto [reg,res]: tokens[t].delta_result())
     {
-        prog_temp[reg].reset(force_bit);
         prog_temp[reg].reset(result_bit);
         prog_temp[reg].reset(step_bit);
     }
 
     for(auto [reg,step]: tokens[t].delta_step())
     {
-        prog_temp[reg].reset(force_bit);
         prog_temp[reg].reset(result_bit);
         prog_temp[reg].reset(step_bit);
     }
