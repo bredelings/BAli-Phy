@@ -276,7 +276,6 @@ size_t reg_heap::size() const
 {
     assert(regs.size() == prog_steps.size());
     assert(regs.size() == prog_results.size());
-    assert(regs.size() == prog_forces.size());
     assert(regs.size() == prog_temp.size());
     assert(regs.size() == prog_unshare.size());
     return regs.size();
@@ -488,7 +487,6 @@ int reg_heap::unmap_unforced_steps(int c)
     // 4. Define function to check and unmap
     assert(token_is_used(t1));
     auto& vm_force_count = tokens[t1].vm_force_count;
-    auto& vm_force = tokens[t1].vm_force;
     auto& vm_result = tokens[t1].vm_result;
     auto& vm_step = tokens[t1].vm_step;
 
@@ -511,11 +509,9 @@ int reg_heap::unmap_unforced_steps(int c)
                            {
                                vm_step.add_value(r, prog_steps[r]);
                                vm_result.add_value(r, prog_results[r]);
-                               vm_force.add_value(r, prog_forces[r]);
 
                                prog_steps[r] = non_computed_index;
                                prog_results[r] = non_computed_index;
-                               prog_forces[r] = non_computed_index;
                            }
                        };
 
@@ -662,11 +658,9 @@ int reg_heap::unmap_unforced_steps(int c)
 
         vm_step.add_value(r, prog_steps[r]);
         vm_result.add_value(r, prog_results[r]);
-        vm_force.add_value(r, prog_forces[r]);
 
         prog_steps[r] = non_computed_index;
         prog_results[r] = non_computed_index;
-        prog_forces[r] = non_computed_index;
     }
 
     release_scratch_list();
@@ -1501,7 +1495,6 @@ int reg_heap::allocate_reg_from_step_in_token(int s, int t)
     int r = allocate_reg_from_step(s);
     tokens[t].vm_result.add_value(r, non_computed_index);
     tokens[t].vm_step.add_value(r, non_computed_index);
-    tokens[t].vm_force.add_value(r, non_computed_index);
     return r;
 }
 
@@ -1540,9 +1533,6 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
 
     assert(tokens[t].vm_result.empty());
     tokens[t].vm_result.add_value(R, non_computed_index);
-
-    assert(tokens[t].vm_force.empty());
-    tokens[t].vm_force.add_value(R, non_computed_index);
 
     assert(not children_of_token(t).size());
 
@@ -1996,7 +1986,6 @@ void reg_heap::check_used_regs() const
 {
     assert(tokens[root_token].vm_step.empty());
     assert(tokens[root_token].vm_result.empty());
-    assert(tokens[root_token].vm_force.empty());
     assert(tokens[root_token].vm_force_count.empty());
 
     for(int t=0; t< tokens.size(); t++)
