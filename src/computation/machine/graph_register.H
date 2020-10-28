@@ -203,6 +203,7 @@ public:
     void set_used_reg(int r1, int r2);
     void set_forced_reg(int r1, int r2);
     void set_call(int s, int r2);
+    void destroy_step_and_created_regs(int s);
     void destroy_all_computations_in_token(int t);
     void clear_call(int s);
     void clear_call_for_reg(int R);
