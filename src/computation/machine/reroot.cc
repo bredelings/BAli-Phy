@@ -429,6 +429,8 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     auto unshare_force = [&](int r)
                               {
+                                  if (not has_result1(r))
+                                      return;
                                   if (prog_unshare[r].none())
                                       unshared_regs.push_back(r);
                                   prog_unshare[r].set(unshare_force_bit);
@@ -436,6 +438,8 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     auto unshare_result = [&](int r)
                               {
+                                  if (not has_result1(r))
+                                      return;
                                   if (prog_unshare[r].none())
                                       unshared_regs.push_back(r);
                                   prog_unshare[r].set(unshare_force_bit);
@@ -444,6 +448,8 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     auto unshare_step = [&](int r)
                             {
+                                if (not has_result1(r))
+                                    return;
                                 if (prog_unshare[r].none())
                                     unshared_regs.push_back(r);
                                 prog_unshare[r].set(unshare_force_bit);
@@ -453,12 +459,7 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     // 1. Mark unshared regs.  All modified regs should have STEP/RESULT/FORCE unshared.
     for(auto [r,_]: delta_step)
-    {
-        prog_unshare[r].set(unshare_force_bit);
-        prog_unshare[r].set(unshare_result_bit);
-        prog_unshare[r].set(unshare_step_bit);
-        unshared_regs.push_back(r);
-    }
+        unshare_step(r);
 
 #ifndef NDEBUG
     check_created_regs_unshared(t);
@@ -467,21 +468,17 @@ expression_ref reg_heap::unshare_regs2(int t)
     // 2. Scan regs with different result in t that are used/called by root steps/results
     for(int i=0;i<unshared_regs.size();i++)
     {
-        int r = unshared_regs[i];
-        if (has_result1(r))
-        {
-            auto& R = regs[r];
+        auto& R = regs[unshared_regs[i]];
 
-	    // Look at steps that CALL the reg in the root (that has overridden result in t)
-            for(int s2: R.called_by)
-                if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
-                    unshare_result(r2);
+        // Look at steps that CALL the reg in the root (that has overridden result in t)
+        for(int s2: R.called_by)
+            if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
+                unshare_result(r2);
 
-	    // Look at steps that USE the reg in the root (that has overridden result in t)
-            for(auto& [r2,_]: R.used_by)
-                if (prog_steps[r2] > 0)
-                    unshare_step(r2);
-        }
+        // Look at steps that USE the reg in the root (that has overridden result in t)
+        for(auto& [r2,_]: R.used_by)
+            if (prog_steps[r2] > 0)
+                unshare_step(r2);
     }
 
     // 3. Scan unforced regs and unforce: users, forces, and callers.
@@ -491,24 +488,22 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     for(int i=0;i<unshared_regs.size();i++)
     {
-        int r = unshared_regs[i];
-        if (has_result1(r))
-        {
-	    // Look at steps that FORCE the root's result (that is overridden in t)
-	    for(auto& [r2,_]: regs[r].used_by)
-		if (prog_steps[r2] > 0)
-		    unshare_force(r2);
+        auto& R = regs[unshared_regs[i]];
 
-	    // Look at steps that FORCE the root's result (that is overridden in t)
-	    for(auto& [r2,_]: regs[r].forced_by)
-		if (prog_steps[r2] > 0)
-		    unshare_force(r2);
+        // Look at steps that FORCE the root's result (that is overridden in t)
+        for(auto& [r2,_]: R.used_by)
+            if (prog_steps[r2] > 0)
+                unshare_force(r2);
 
-	    // Look at steps that FORCE the root's result (that is overridden in t)
-	    for(auto& s2: regs[r].called_by)
-		if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
-		    unshare_force(r2);
-	}
+        // Look at steps that FORCE the root's result (that is overridden in t)
+        for(auto& [r2,_]: R.forced_by)
+            if (prog_steps[r2] > 0)
+                unshare_force(r2);
+
+        // Look at steps that FORCE the root's result (that is overridden in t)
+        for(auto& s2: R.called_by)
+            if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
+                unshare_force(r2);
     }
 
     // 4. Remove (r,-) entries from Delta, and remove the unshare bit for the (r,>0) remainder.
