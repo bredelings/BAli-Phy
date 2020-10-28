@@ -257,7 +257,6 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                 {
                     int t = tokens[root_token].children[0];
                     tokens[t].vm_result.add_value(r, non_computed_index);
-                    tokens[t].vm_force.add_value(r, non_computed_index);
                 }
 
                 total_changeable_eval_with_call++;
@@ -365,7 +364,6 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                     if (not tokens[root_token].children.empty())
                     {
                         int t = tokens[root_token].children[0];
-                        tokens[t].vm_force.add_value(r, non_computed_index);
                         tokens[t].vm_result.add_value(r, non_computed_index);
                         tokens[t].vm_step.add_value(r, non_computed_index);
                     }
@@ -562,8 +560,6 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                     force_reg2(r);
 
                     int t = tokens[root_token].children[0];
-                    tokens[t].vm_force.add_value(r, prog_forces[r]);
-                    prog_forces[r] = 1;
                     prog_unshare[r].reset(unshare_force_bit);
                 }
 
@@ -599,8 +595,6 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 if (not has_force2(r))
                     force_reg2(r);
 
-                tokens[t].vm_force.add_value(r, prog_forces[r]);
-                prog_forces[r] = 1;
                 prog_unshare[r].reset(unshare_force_bit);
 
                 total_changeable_eval_with_call2++;
@@ -708,9 +702,6 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
                     tokens[t].vm_result.add_value(r, prog_results[r]);
                     set_result_for_reg(r);
-
-                    tokens[t].vm_force.add_value(r, prog_forces[r]);
-                    prog_forces[r] = 1;
 
                     prog_unshare[r].reset();
 
