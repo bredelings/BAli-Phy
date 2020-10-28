@@ -931,7 +931,7 @@ expression_ref reg_heap::evaluate_program(int c)
         set_token_for_context(c,t);
         reroot_at_context(c);
         int r = heads[*program_result_head];
-        assert(reg_is_constant(r) or has_force1(r));
+        assert(reg_is_constant(r) or has_result1(r));
 
         result = value_for_precomputed_reg(r).exp;
     }
