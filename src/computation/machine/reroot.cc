@@ -570,22 +570,13 @@ void reg_heap::check_unshare_regs(int t)
     assert(t >= 0);
 
 #if DEBUG_MACHINE >= 1
-    const auto& delta_force = tokens[t].vm_force.delta();
     const auto& delta_result = tokens[t].vm_result.delta();
     const auto& delta_step = tokens[t].vm_step.delta();
-
-    // All the regs with delta_result set have results invalidated in t
-    for(auto [r,_]: delta_force)
-    {
-        prog_temp[r].set(unshare_force_bit);
-        assert(prog_temp[r].test(unshare_force_bit));
-    }
 
     // All the regs with delta_result set have results invalidated in t
     for(auto [r,_]: delta_result)
     {
         prog_temp[r].set(unshare_result_bit);
-        assert(prog_temp[r].test(unshare_force_bit));
         assert(prog_temp[r].test(unshare_result_bit));
     }
 
@@ -593,7 +584,6 @@ void reg_heap::check_unshare_regs(int t)
     for(auto [r,_]: delta_step)
     {
         prog_temp[r].set(unshare_step_bit);
-        assert(prog_temp[r].test(unshare_force_bit));
         assert(prog_temp[r].test(unshare_result_bit));
         assert(prog_temp[r].test(unshare_step_bit));
     }
@@ -608,13 +598,11 @@ void reg_heap::check_unshare_regs(int t)
                     assert(prog_temp[r].test(unshare_step_bit));
                 }
                 assert(prog_temp[r].test(unshare_result_bit));
-                assert(prog_temp[r].test(unshare_force_bit));
             }
 
     // Erase the marks that we made on prog_temp.
-    for(auto [r,_]: delta_force)
+    for(auto [r,_]: delta_result)
     {
-        prog_temp[r].reset(unshare_force_bit);
         prog_temp[r].reset(unshare_result_bit);
         prog_temp[r].reset(unshare_step_bit);
     }
