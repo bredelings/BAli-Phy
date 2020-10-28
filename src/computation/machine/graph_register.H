@@ -354,13 +354,11 @@ public:
     
         /// Mapping from closures to steps/results
         const auto& delta_force_count() const { return vm_force_count.delta(); }
-        const auto& delta_force() const { return vm_force.delta(); }
         const auto& delta_result() const { return vm_result.delta(); }
         const auto& delta_step() const {return vm_step.delta(); }
 
         mapping<int> vm_result;
         mapping<int> vm_step;
-        mapping<char> vm_force;
         mapping<int> vm_force_count;
 
         boost::container::small_vector< int, 2> prev_prog_active_refs;
@@ -389,7 +387,6 @@ private:
 
     std::vector<int> prog_steps;
     std::vector<int> prog_results;
-    std::vector<char> prog_forces;
     std::vector<int> prog_force_counts;
     mutable std::vector<bitmask_8> prog_temp;
     mutable std::vector<bitmask_8> prog_unshare;
@@ -687,14 +684,10 @@ inline void reg_heap::mark_reg_index_var(int r)
 
 inline bool reg_heap::has_force2(int r) const
 {
-    assert(prog_forces[r] != 0);
-
-    /*
-     * Replacing (prog_forces[r] > 0) with (prog_forces[r] > 0) should have no effect because:
-     * - for unset regs, (prog_forces[r] > 0) == (prog_forces[r] > 0) in the PPET
-     * - for set regs, unshare_force_bit is set, so the result is always false.
+    /* A reg is force only if
+     * - It is not marked unforced (unshare_force_bit)
+     * - It is evaluated in the PPET (prog_results)
      */
-
     return (not prog_unshare[r].test(unshare_force_bit)) and prog_results[r] > 0;
 }
 
