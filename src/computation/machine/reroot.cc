@@ -217,36 +217,21 @@ void reg_heap::unshare_regs1(int t)
 
     total_invalidate++;
 
-    auto& vm_force = tokens[t].vm_force;
     auto& vm_result = tokens[t].vm_result;
     auto& vm_step = tokens[t].vm_step;
 
     // find all regs in t that are not shared from the root
-    const auto& delta_force  = vm_force.delta();
     const auto& delta_result = vm_result.delta();
     const auto& delta_step   = vm_step.delta();
 
-    int n_delta_force0  = delta_force.size();
     int n_delta_result0 = delta_result.size();
     int n_delta_step0   = delta_step.size();
-
-    auto unshare_force = [&](int r)
-                              {
-                                  // This force is already unshared
-                                  if (not prog_temp[r].test(unshare_force_bit))
-                                  {
-                                      prog_temp[r].set(unshare_force_bit);
-                                      vm_force.add_value(r, non_computed_index);
-                                  }
-                              };
 
     auto unshare_result = [&](int r)
                               {
                                   // This result is already unshared
                                   if (not prog_temp[r].test(unshare_result_bit))
                                   {
-                                      unshare_force(r);
-
                                       prog_temp[r].set(unshare_result_bit);
                                       vm_result.add_value(r, non_computed_index);
                                   }
@@ -265,23 +250,17 @@ void reg_heap::unshare_regs1(int t)
 
     // 1. Mark unshared regs in prog_temp.
 
-    // 1a. All the regs in delta_force have forces invalidated in t
-    for(auto [r,_]: delta_force)
-        prog_temp[r].set(unshare_force_bit);
-
-    // 1b. All the regs with delta_result set have results invalidated in t
+    // 1a. All the regs with delta_result set have results invalidated in t
     for(auto [r,_]: delta_result)
     {
         prog_temp[r].set(unshare_result_bit);
-        assert(prog_temp[r].test(unshare_force_bit));
         assert(prog_temp[r].test(unshare_result_bit));
     }
 
-    // 1c. All the regs with delta_step set have steps (and results) invalidated in t
+    // 1b. All the regs with delta_step set have steps (and results) invalidated in t
     for(auto [r,_]: delta_step)
     {
         prog_temp[r].set(unshare_step_bit);
-        assert(prog_temp[r].test(unshare_force_bit));
         assert(prog_temp[r].test(unshare_result_bit));
         assert(prog_temp[r].test(unshare_step_bit));
     }
@@ -340,16 +319,13 @@ void reg_heap::unshare_regs1(int t)
     // 5. Erase the marks that we made on prog_temp.
     for(auto [r,_]: delta_result)
     {
-        prog_temp[r].reset(unshare_force_bit);
         prog_temp[r].reset(unshare_result_bit);
         prog_temp[r].reset(unshare_step_bit);
     }
 
-    total_forces_invalidated += (delta_force.size() - n_delta_force0);
     total_results_invalidated += (delta_result.size() - n_delta_result0);
     total_steps_invalidated += (delta_step.size() - n_delta_step0);
 
-    total_forces_scanned += delta_force.size();
     total_results_scanned += delta_result.size();
     total_steps_scanned += delta_step.size();
 
@@ -385,21 +361,17 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     total_invalidate++;
 
-    auto& vm_force = tokens[t].vm_force;
     auto& vm_result = tokens[t].vm_result;
     auto& vm_step = tokens[t].vm_step;
 
     // find all regs in t that are not shared from the root
-    auto& delta_force  = vm_force.delta();
     auto& delta_result = vm_result.delta();
     auto& delta_step   = vm_step.delta();
 
-    int n_delta_force0  = delta_force.size();
     int n_delta_result0 = delta_result.size();
     int n_delta_step0   = delta_step.size();
 
     assert(n_delta_step0 == n_delta_result0);
-    assert(n_delta_step0 == n_delta_force0);
 
     auto& unshared_regs = get_scratch_list();
 
@@ -493,10 +465,6 @@ expression_ref reg_heap::unshare_regs2(int t)
     for(auto& [r,_]: delta_result)
         prog_unshare[r].reset(unshare_result_bit);
 
-    filter_unordered_vector(delta_force, keep);
-    for(auto& [r,_]: delta_force)
-        prog_unshare[r].reset(unshare_force_bit);
-
     // 5. Reroot to token t.
     tokens[t].flags.set(0);
     tokens[root_token].flags.set(0);
@@ -512,16 +480,10 @@ expression_ref reg_heap::unshare_regs2(int t)
     auto result = lazy_evaluate2(heads[*program_result_head]).exp;
 
     // 7. Flush pending unshares and clear unsharing bits.
-    auto& vm_force2  = tokens[t2].vm_force;
     auto& vm_result2 = tokens[t2].vm_result;
     auto& vm_step2   = tokens[t2].vm_step;
     for(int r: unshared_regs)
     {
-        if (prog_unshare[r].test(unshare_force_bit))
-        {
-            vm_force2.add_value(r, prog_forces[r]);
-            prog_forces[r] = non_computed_index;
-        }
         if (prog_unshare[r].test(unshare_result_bit))
         {
             vm_result2.add_value(r, prog_results[r]);
@@ -550,11 +512,9 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     release_scratch_list(); // unshared_regs
 
-    total_forces_invalidated += (vm_force2.delta().size() - n_delta_force0);
     total_results_invalidated += (vm_result.delta().size() - n_delta_result0);
     total_steps_invalidated += (vm_step.delta().size() - n_delta_step0);
 
-    total_forces_scanned += vm_force2.delta().size();
     total_results_scanned += vm_result.delta().size();
     total_steps_scanned += vm_step.delta().size();
 
