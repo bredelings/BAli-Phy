@@ -2335,7 +2335,7 @@ optional<int> reg_heap::precomputed_value_in_context(int r, int c)
     // In theory, variants of this routine could allow
     // * having a result, but no force.
     // * have a chain of steps, but no result.
-    if (reg_is_changeable(r) and has_force1(r))
+    if (reg_is_changeable(r) and has_result1(r))
         return result_for_reg(r);
     else
     {
