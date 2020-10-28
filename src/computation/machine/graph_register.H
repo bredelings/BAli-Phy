@@ -369,6 +369,7 @@ public:
 
         token_type type = token_type::none;
         bool used = false;
+        bitmask_8 flags;
     };
 
     void set_prev_prog_token(int t, std::optional<prev_prog_token_t> prev_prog_token);
