@@ -533,7 +533,6 @@ public:
     bool has_result2(int r) const;
     bool reg_has_value(int r) const;
     int follow_index_var(int r) const;
-    bool has_force1(int r) const;
     bool has_force2(int r) const;
     int result_for_reg(int r) const;
     bool reg_has_call(int r) const;
@@ -684,12 +683,6 @@ inline void reg_heap::mark_reg_index_var(int r)
     assert( reg_is_index_var(r) or reg_is_unevaluated(r));
 
     regs.access(r).type = reg::type_t::index_var;
-}
-
-inline bool reg_heap::has_force1(int r) const
-{
-    assert(prog_forces[r] != 0);
-    return prog_forces[r] > 0;
 }
 
 inline bool reg_heap::has_force2(int r) const
