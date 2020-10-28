@@ -60,6 +60,23 @@ std::ostream& operator<<(std::ostream& o, token_type type)
 }
 
 
+void reg_heap::destroy_step_and_created_regs(int s)
+{
+    assert(s > 0);
+    assert(not steps[s].has_pending_effect_registration());
+    assert(not steps[s].has_pending_effect_unregistration());
+
+    for(int r: steps[s].created_regs)
+    {
+        // Clearing the reg deallocates RAM used by (For example) cached conditional likelihoods.
+
+        clear_back_edges_for_reg(r,false);    // We don't need to adjust steps[s].created_regs, since we will destroy steps[s].
+        reclaim_used(r);                      // This clears the reg.
+    }
+    clear_back_edges_for_step(s);             // This clears steps[s].created_regs.
+    steps.reclaim_used(s);                    // This clears the step
+}
+
 void reg_heap::destroy_all_computations_in_token(int t)
 {
     auto& delta_step = tokens[t].delta_step();
@@ -67,24 +84,11 @@ void reg_heap::destroy_all_computations_in_token(int t)
     // Remove use back-edges
     for(auto& [_,s]: delta_step)
     {
+        // Unsharing created regs in unshare_regs( ) ensures that any steps for created regs must be in this token.
+        // This allows us to reclaim allocated regs here instead of just waiting for GC to eliminate them.
+
         if (s > 0)
-        {
-            assert(not steps[s].has_pending_effect_registration());
-            assert(not steps[s].has_pending_effect_unregistration());
-
-            for(int r: steps[s].created_regs)
-            {
-                // Unsharing created regs in unshare_regs( ) ensures that any steps for created regs must be in this token.
-                // This allows us to reclaim allocated regs here instead of just waiting for GC to eliminate them.
-
-                // Clearing the reg deallocates RAM used by (For example) cached conditional likelihoods.
-
-                clear_back_edges_for_reg(r,false);    // We don't need to adjust steps[s].created_regs, since we will destroy steps[s].
-                reclaim_used(r);                      // This clears the reg.
-            }
-            clear_back_edges_for_step(s);             // This clears steps[s].created_regs.
-            steps.reclaim_used(s);                    // This clears the step
-        }
+            destroy_step_and_created_regs(s);
     }
 
     tokens[t].vm_step.clear();
