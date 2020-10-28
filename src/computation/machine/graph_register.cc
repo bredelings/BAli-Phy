@@ -1972,6 +1972,7 @@ void reg_heap::check_used_regs_in_token(int t) const
             assert(not reg_is_constant(r));
     }
 
+    bool root_child = tokens[t].parent == root_token and tokens[t].flags.test(0);
     for(auto [r,step]: tokens[t].delta_step())
     {
         // Deltas should not contain free regs except resets.
@@ -1984,7 +1985,7 @@ void reg_heap::check_used_regs_in_token(int t) const
         prog_temp[r].set(step_bit);
 
         // If the step is unshared, the result must be unshared as well: this allows us to just walk unshared results.
-        assert(prog_temp[r].test(result_bit) and prog_temp[r].test(step_bit));
+        assert(((root_child and prog_unshare[r].test(unshare_result_bit)) or prog_temp[r].test(result_bit)) and prog_temp[r].test(step_bit));
         // No steps for constant regs
         if (step > 0)
             assert(not reg_is_constant(r));
