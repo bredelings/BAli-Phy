@@ -2059,24 +2059,18 @@ void reg_heap::check_used_regs() const
 
         if (not has_step1(r1))
         {
-            assert(not has_force1(r1));
             assert(not has_result1(r1));
         }
 
-        if (not has_result1(r1))
-        {
-            assert(not has_force1(r1));
-        }
-
-        if (has_force1(r1))
+        if (check_force_counts and has_result1(r1))
         {
             for(auto r2: used_regs_for_reg(r1))
-                assert(has_force1(r2));
+                assert(has_result1(r2));
             for(auto r2: forced_regs_for_reg(r1))
-                assert(has_force1(r2));
+                assert(has_result1(r2));
             int call = step_for_reg(r1).call;
             if (reg_is_changeable(call))
-                assert(has_force1(call));
+                assert(has_result1(call));
         }
 
         for(const auto& [r2,_]: regs[r1].used_regs)
