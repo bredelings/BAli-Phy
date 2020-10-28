@@ -492,7 +492,7 @@ expression_ref reg_heap::unshare_regs2(int t)
     for(int i=0;i<unshared_regs.size();i++)
     {
         int r = unshared_regs[i];
-        if (has_force1(r))
+        if (has_result1(r))
         {
 	    // Look at steps that FORCE the root's result (that is overridden in t)
 	    for(auto& [r2,_]: regs[r].used_by)
