@@ -338,7 +338,7 @@ void reg_heap::unshare_regs1(int t)
 #endif
 
     // 5. Erase the marks that we made on prog_temp.
-    for(auto [r,_]: delta_force)
+    for(auto [r,_]: delta_result)
     {
         prog_temp[r].reset(unshare_force_bit);
         prog_temp[r].reset(unshare_result_bit);
