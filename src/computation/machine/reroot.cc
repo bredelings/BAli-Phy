@@ -101,14 +101,11 @@ void reg_heap::reroot_at(int t)
     // 3. Change the relative mappings
     total_steps_pivoted += tokens[t].delta_step().size();
     total_results_pivoted += tokens[t].delta_result().size();
-    total_forces_pivoted += tokens[t].delta_force().size();
     total_force_counts_pivoted += tokens[t].delta_force_count().size();
     pivot_mapping(prog_steps, tokens[t].vm_step);
     std::swap(tokens[parent].vm_step, tokens[t].vm_step);
     pivot_mapping(prog_results, tokens[t].vm_result);
     std::swap(tokens[parent].vm_result, tokens[t].vm_result);
-    pivot_mapping(prog_forces, tokens[t].vm_force);
-    std::swap(tokens[parent].vm_force, tokens[t].vm_force);
     pivot_mapping(prog_force_counts, tokens[t].vm_force_count);
     std::swap(tokens[parent].vm_force_count, tokens[t].vm_force_count);
 

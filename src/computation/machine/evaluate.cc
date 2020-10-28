@@ -559,7 +559,6 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 {
                     force_reg2(r);
 
-                    int t = tokens[root_token].children[0];
                     prog_unshare[r].reset(unshare_force_bit);
                 }
 
