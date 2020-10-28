@@ -1931,7 +1931,7 @@ void reg_heap::check_used_regs_in_token(int t) const
         // assert(not regs.is_free(r) or count == 0);
 
         // Check that there are no duplicate regs.
-        assert(not prog_temp[r].test(force_bit));
+        assert(not prog_temp[r].test(force_count_bit));
 
         // Mark the reg as having a result in the delta.
         prog_temp[r].set(force_count_bit);
