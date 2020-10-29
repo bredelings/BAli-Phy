@@ -170,6 +170,8 @@ void show_ending_messages(bool show_only)
         extern long total_changeable_eval_with_result;
         extern long total_changeable_eval_with_call;
         extern long total_changeable_reductions;
+        extern long total_invalid_control_flow;
+        extern long total_valid_control_flow;
 
         extern long total_reductions2;
         extern long total_changeable_eval2;
@@ -178,7 +180,7 @@ void show_ending_messages(bool show_only)
         extern long total_changeable_reductions2;
 
         extern long total_reg_allocations;
-        extern long total_comp_allocations;
+//        extern long total_comp_allocations;
         extern long total_step_allocations;
         extern long total_destroy_token;
         extern long total_release_knuckle;
@@ -194,13 +196,13 @@ void show_ending_messages(bool show_only)
         extern long total_invalidate;
         extern long total_steps_invalidated;
         extern long total_results_invalidated;
-        extern long total_forces_invalidated;
+//        extern long total_forces_invalidated;
         extern long total_steps_scanned;
         extern long total_results_scanned;
-        extern long total_forces_scanned;
+//        extern long total_forces_scanned;
         extern long total_steps_pivoted;
         extern long total_results_pivoted;
-        extern long total_forces_pivoted;
+//        extern long total_forces_pivoted;
         extern long total_force_counts_pivoted;
         extern long total_context_pr;
         extern long total_gc;
@@ -233,7 +235,6 @@ void show_ending_messages(bool show_only)
             cout<<"  op:index                     = "<<total_index_op<<endl;
             cout<<"\ntotal garbage collection runs  = "<<total_gc<<endl;
             cout<<"total register allocations     = "<<total_reg_allocations<<endl;
-            cout<<"total computation allocations  = "<<total_comp_allocations<<endl;
             cout<<"total step allocations         = "<<total_step_allocations<<endl;
             cout<<"total regs                     = "<<total_regs<<endl;
             cout<<"total steps                    = "<<total_steps<<endl;
@@ -241,15 +242,15 @@ void show_ending_messages(bool show_only)
             cout<<"  total atomic reroot          = "<<total_reroot_one<<endl;
             cout<<"  total steps pivoted          = "<<total_steps_pivoted<<endl;
             cout<<"  total results pivoted        = "<<total_results_pivoted<<endl;
-            cout<<"  total forces pivoted         = "<<total_forces_pivoted<<endl;
             cout<<"  total force counts pivoted   = "<<total_force_counts_pivoted<<endl;
+            cout<<"\n";
             cout<<"total invalidations            = "<<total_invalidate<<endl;
+            cout<<"  total invalid flow           = "<<total_invalid_control_flow<<endl;
+            cout<<"  total valid flow             = "<<total_valid_control_flow<<endl;
             cout<<"  total steps invalidated      = "<<total_steps_invalidated<<endl;
             cout<<"  total results invalidated    = "<<total_results_invalidated<<endl;
-            cout<<"  total forces invalidated     = "<<total_forces_invalidated<<endl;
             cout<<"  total steps scanned          = "<<total_steps_scanned<<endl;
             cout<<"  total results scanned        = "<<total_results_scanned<<endl;
-            cout<<"  total forces scanned         = "<<total_forces_scanned<<endl;
             cout<<"total tokens                   = "<<total_tokens<<endl;
             cout<<"total tokens destroyed         = "<<total_destroy_token<<endl;
             cout<<"  total knuckles destroyed     = "<<total_release_knuckle<<endl;
