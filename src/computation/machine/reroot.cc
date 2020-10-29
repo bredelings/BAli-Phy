@@ -24,6 +24,8 @@ long total_forces_invalidated = 0;
 long total_steps_scanned = 0;
 long total_results_scanned = 0;
 long total_forces_scanned = 0;
+long total_invalid_control_flow = 0;
+long total_valid_control_flow = 0;
 
 void reg_heap::reroot_at_context(int c)
 {
@@ -425,6 +427,22 @@ expression_ref reg_heap::unshare_regs2(int t)
             if (prog_steps[r2] > 0)
                 unshare_step(r2);
     }
+
+    int n_invalid_control_flow = 0;
+    for(int r : unshared_regs)
+    {
+        if (prog_unshare[r].test(unshare_step_bit))
+        {
+            int s = prog_steps[r];
+            int r2 = steps[s].call;
+            if (prog_unshare[r2].any())
+                n_invalid_control_flow++;
+        }
+    }
+    if (n_invalid_control_flow > 0)
+        total_invalid_control_flow++;
+    else
+        total_valid_control_flow++;
 
     // 3. Scan unforced regs and unforce: users, forces, and callers.
 
