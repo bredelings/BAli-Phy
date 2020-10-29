@@ -3,6 +3,7 @@
 #include <algorithm>
 #include "util/range.H"
 #include "mapping.H"
+#include "range/v3/all.hpp"
 
 using std::string;
 using std::vector;
@@ -10,6 +11,8 @@ using std::pair;
 
 using std::cerr;
 using std::endl;
+
+namespace views = ranges::views;
 
 long total_steps_pivoted = 0;
 long total_results_pivoted = 0;
@@ -449,25 +452,26 @@ expression_ref reg_heap::unshare_regs2(int t)
     // Marking something unforced will never give it an invalid result.
     // Therefore, this logic need not go into the former loop.
 
-    for(int i=0;i<unshared_regs.size();i++)
-    {
-        auto& R = regs[unshared_regs[i]];
+    if (n_invalid_control_flow > 0)
+        for(int i=0;i<unshared_regs.size();i++)
+        {
+            auto& R = regs[unshared_regs[i]];
 
-        // Look at steps that FORCE the root's result (that is overridden in t)
-        for(auto& [r2,_]: R.used_by)
-            if (prog_steps[r2] > 0)
-                unshare_force(r2);
+            // Look at steps that FORCE the root's result (that is overridden in t)
+            for(auto& [r2,_]: R.used_by)
+                if (prog_steps[r2] > 0)
+                    unshare_force(r2);
 
-        // Look at steps that FORCE the root's result (that is overridden in t)
-        for(auto& [r2,_]: R.forced_by)
-            if (prog_steps[r2] > 0)
-                unshare_force(r2);
+            // Look at steps that FORCE the root's result (that is overridden in t)
+            for(auto& [r2,_]: R.forced_by)
+                if (prog_steps[r2] > 0)
+                    unshare_force(r2);
 
-        // Look at steps that FORCE the root's result (that is overridden in t)
-        for(auto& s2: R.called_by)
-            if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
-                unshare_force(r2);
-    }
+            // Look at steps that FORCE the root's result (that is overridden in t)
+            for(auto& s2: R.called_by)
+                if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
+                    unshare_force(r2);
+        }
 
     // 4. Remove (r,-) entries from Delta, and remove the unshare bit for the (r,>0) remainder.
     auto keep = [](const pair<int,int>& p) {return p.second > 0;};
@@ -492,6 +496,19 @@ expression_ref reg_heap::unshare_regs2(int t)
     tokens[t2].flags.reset(0);
 
     // 6.  Evaluate the program
+    if (n_invalid_control_flow == 0)
+    {
+        for(int r: unshared_regs | views::reverse)
+            if (prog_unshare[r].any())
+                incremental_evaluate2(r);
+
+        int p = heads[*program_result_head];
+        assert(not prog_unshare[p].test(unshare_step_bit));
+        assert(not prog_unshare[p].test(unshare_result_bit));
+        assert(not prog_unshare[p].test(unshare_force_bit));
+        assert(prog_results[p] > 0);
+    }
+
     auto result = lazy_evaluate2(heads[*program_result_head]).exp;
 
     // 7. Flush pending unshares and clear unsharing bits.
