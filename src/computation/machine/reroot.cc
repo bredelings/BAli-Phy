@@ -392,7 +392,6 @@ expression_ref reg_heap::unshare_regs2(int t)
                                       return;
                                   if (prog_unshare[r].none())
                                       unshared_regs.push_back(r);
-                                  prog_unshare[r].set(unshare_force_bit);
                                   prog_unshare[r].set(unshare_result_bit);
                               };
 
@@ -402,7 +401,6 @@ expression_ref reg_heap::unshare_regs2(int t)
                                     return;
                                 if (prog_unshare[r].none())
                                     unshared_regs.push_back(r);
-                                prog_unshare[r].set(unshare_force_bit);
                                 prog_unshare[r].set(unshare_result_bit);
                                 prog_unshare[r].set(unshare_step_bit);
                             };
@@ -453,9 +451,12 @@ expression_ref reg_heap::unshare_regs2(int t)
     // Therefore, this logic need not go into the former loop.
 
     if (n_invalid_control_flow > 0)
+    {
         for(int i=0;i<unshared_regs.size();i++)
         {
-            auto& R = regs[unshared_regs[i]];
+            int r = unshared_regs[i];
+            prog_unshare[r].set(unshare_force_bit);
+            auto& R = regs[r];
 
             // Look at steps that FORCE the root's result (that is overridden in t)
             for(auto& [r2,_]: R.used_by)
@@ -472,6 +473,7 @@ expression_ref reg_heap::unshare_regs2(int t)
                 if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
                     unshare_force(r2);
         }
+    }
 
     // 4. Remove (r,-) entries from Delta, and remove the unshare bit for the (r,>0) remainder.
     auto keep = [](const pair<int,int>& p) {return p.second > 0;};
