@@ -452,11 +452,27 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     if (n_invalid_control_flow > 0)
     {
-        for(int i=0;i<unshared_regs.size();i++)
+        int i=0;
+        int size1 = unshared_regs.size();
+        // The regs already on the unshared_regs list need their unshare_force_bit set.
+        // We don't need to scan their users or callers -- those regs are already on the list!
+        for(;i<size1;i++)
         {
             int r = unshared_regs[i];
             prog_unshare[r].set(unshare_force_bit);
             auto& R = regs[r];
+
+            // Look at steps that FORCE the root's result (that is overridden in t)
+            for(auto& [r2,_]: R.forced_by)
+                if (prog_steps[r2] > 0)
+                    unshare_force(r2);
+        }
+        // Any regs scanned by this loop were put on the list by the previous loop,
+        // and therefore have their unshare_force_bit already set.  They also have not
+        // been scanned before.
+        for(;i<unshared_regs.size();i++)
+        {
+            auto& R = regs[unshared_regs[i]];
 
             // Look at steps that FORCE the root's result (that is overridden in t)
             for(auto& [r2,_]: R.used_by)
