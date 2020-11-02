@@ -436,7 +436,7 @@ expression_ref reg_heap::unshare_regs2(int t)
         {
             int s = prog_steps[r];
             int r2 = steps[s].call;
-            if (prog_unshare[r2].any())
+            if (reg_is_changeable(r2))
                 n_invalid_control_flow++;
         }
     }
