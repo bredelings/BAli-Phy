@@ -377,15 +377,6 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     auto& unshared_regs = get_scratch_list();
 
-    auto unshare_force = [&](int r)
-                              {
-                                  if (not has_result1(r))
-                                      return;
-                                  if (prog_unshare[r].none())
-                                      unshared_regs.push_back(r);
-                                  prog_unshare[r].set(unshare_force_bit);
-                              };
-
     auto unshare_result = [&](int r)
                               {
                                   if (not has_result1(r))
@@ -429,69 +420,7 @@ expression_ref reg_heap::unshare_regs2(int t)
                 unshare_step(r2);
     }
 
-    int n_invalid_control_flow = 0;
-    for(int r : unshared_regs)
-    {
-        if (prog_unshare[r].test(unshare_step_bit))
-        {
-            int s = prog_steps[r];
-            int r2 = steps[s].call;
-            if (reg_is_changeable(r2))
-                n_invalid_control_flow++;
-        }
-    }
-    if (n_invalid_control_flow > 0)
-        total_invalid_control_flow++;
-    else
-        total_valid_control_flow++;
-
-    // 3. Scan unforced regs and unforce: users, forces, and callers.
-
-    // Marking something unforced will never give it an invalid result.
-    // Therefore, this logic need not go into the former loop.
-
-    if (n_invalid_control_flow > 0)
-    {
-        int i=0;
-        int size1 = unshared_regs.size();
-        // The regs already on the unshared_regs list need their unshare_force_bit set.
-        // We don't need to scan their users or callers -- those regs are already on the list!
-        for(;i<size1;i++)
-        {
-            int r = unshared_regs[i];
-            prog_unshare[r].set(unshare_force_bit);
-            auto& R = regs[r];
-
-            // Look at steps that FORCE the root's result (that is overridden in t)
-            for(auto& [r2,_]: R.forced_by)
-                if (prog_steps[r2] > 0)
-                    unshare_force(r2);
-        }
-        // Any regs scanned by this loop were put on the list by the previous loop,
-        // and therefore have their unshare_force_bit already set.  They also have not
-        // been scanned before.
-        for(;i<unshared_regs.size();i++)
-        {
-            auto& R = regs[unshared_regs[i]];
-
-            // Look at steps that FORCE the root's result (that is overridden in t)
-            for(auto& [r2,_]: R.used_by)
-                if (prog_steps[r2] > 0)
-                    unshare_force(r2);
-
-            // Look at steps that FORCE the root's result (that is overridden in t)
-            for(auto& [r2,_]: R.forced_by)
-                if (prog_steps[r2] > 0)
-                    unshare_force(r2);
-
-            // Look at steps that FORCE the root's result (that is overridden in t)
-            for(auto& s2: R.called_by)
-                if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
-                    unshare_force(r2);
-        }
-    }
-
-    // 4. Remove (r,-) entries from Delta, and remove the unshare bit for the (r,>0) remainder.
+    // 3. Remove (r,-) entries from Delta, and remove the unshare bit for the (r,>0) remainder.
     auto keep = [](const pair<int,int>& p) {return p.second > 0;};
 
     filter_unordered_vector(delta_step, keep);
@@ -502,7 +431,7 @@ expression_ref reg_heap::unshare_regs2(int t)
     for(auto& [r,_]: delta_result)
         prog_unshare[r].reset(unshare_result_bit);
 
-    // 5. Reroot to token t.
+    // 4. Reroot to token t.
     tokens[t].flags.set(0);
     tokens[root_token].flags.set(0);
 
@@ -513,23 +442,89 @@ expression_ref reg_heap::unshare_regs2(int t)
     tokens[t].flags.reset(0);
     tokens[t2].flags.reset(0);
 
-    // 6.  Evaluate the program
-    if (n_invalid_control_flow == 0)
-    {
-        for(int r: unshared_regs | views::reverse)
-            if (prog_unshare[r].any())
-                incremental_evaluate2(r);
+    // 5. Determine which invalid regs we can safely execute.
+    auto& zero_count_regs = get_scratch_list();
+    auto& vm_count2 = tokens[t2].vm_force_count;
 
-        int p = heads[*program_result_head];
-        assert(not prog_unshare[p].test(unshare_step_bit));
-        assert(not prog_unshare[p].test(unshare_result_bit));
-        assert(not prog_unshare[p].test(unshare_force_bit));
-        assert(prog_results[p] > 0);
+    auto dec_force_count = [&](int r)
+    {
+        if (not prog_unshare[r].test(unshare_count_bit))
+        {
+            prog_unshare[r].set(unshare_count_bit);
+            vm_count2.add_value(r, prog_force_counts[r]);
+        }
+
+        prog_force_counts[r]--;
+        assert(prog_force_counts[r] >= 0);
+
+        assert(has_step1(r));
+        if (prog_force_counts[r] == 0)
+            zero_count_regs.push_back(r);
+    };
+
+    // 5a. Decrement counts for calls of invalid steps.
+    int n_invalid_control_flow = 0;
+    for(int r : unshared_regs)
+    {
+        // At this point, unshare_step bit only picks out regs that are really -1,
+        // and so excludes e.g. the calls from modifiables.
+        if (prog_unshare[r].test(unshare_step_bit))
+        {
+            int s = prog_steps[r];
+            int r2 = steps[s].call;
+            if (reg_is_changeable(r2))
+            {
+                n_invalid_control_flow++;
+                dec_force_count(r2);
+            }
+        }
     }
+
+    if (n_invalid_control_flow > 0)
+        total_invalid_control_flow++;
+    else
+        total_valid_control_flow++;
+
+    std::cerr<<"reroot: n_invalid_control_flow = "<<n_invalid_control_flow<<"\n";
+
+    // 5b. Iteratively decrement counts from steps of zero_count regs.
+    for(int i=0;i<zero_count_regs.size();i++)
+    {
+        int r = zero_count_regs[i];
+        for(auto [r2,_]: regs[r].used_regs)
+            dec_force_count(r2);
+        for(auto [r2,_]: regs[r].forced_regs)
+            dec_force_count(r2);
+
+        // If unshare_step_bit is set, then we've already decremented any force_count!
+        if (not prog_unshare[r].test(unshare_step_bit))
+        {
+            int s = prog_steps[r];
+            int call = steps[s].call;
+            if (reg_is_changeable(call))
+                dec_force_count(call);
+        }
+    }
+
+    std::cerr<<"reroot: n_zero_count = "<<zero_count_regs.size()<<"\n";
+
+    // 6.  Evaluate the program
+    for(int r: unshared_regs | views::reverse)
+        if (prog_force_counts[r] > 0 and prog_unshare[r].test(unshare_result_bit))
+            incremental_evaluate2(r);
 
     auto result = lazy_evaluate2(heads[*program_result_head]).exp;
 
-    // 7. Flush pending unshares and clear unsharing bits.
+    // 7. Restore force_counts from previous program
+    for(auto [r,count]: tokens[t2].vm_force_count.delta())
+    {
+        prog_force_counts[r] = count;
+        prog_unshare[r].reset(unshare_count_bit);
+    }
+    tokens[t2].vm_force_count.delta().clear();
+    release_scratch_list(); // zero_count_regs
+
+    // 8. Flush pending unshares and clear unsharing bits.
     auto& vm_result2 = tokens[t2].vm_result;
     auto& vm_step2   = tokens[t2].vm_step;
     for(int r: unshared_regs)
@@ -547,7 +542,7 @@ expression_ref reg_heap::unshare_regs2(int t)
         prog_unshare[r].reset();
     }
 
-    // 8. Handle moving steps out of the root.
+    // 9. Handle moving steps out of the root.
     for(auto [_,s]: vm_step2.delta())
     {
         if (s > 0 and steps.access(s).has_effect())
