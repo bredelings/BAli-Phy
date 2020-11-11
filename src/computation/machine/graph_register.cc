@@ -1542,7 +1542,7 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
     if (not value) return;
 
     // If the value is a pre-existing reg_var, then call it.
-    if (value.exp.head().type() == index_var_type)
+    if (value.exp.is_index_var())
     {
         int Q = value.reg_for_index_var();
 
