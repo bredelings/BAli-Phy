@@ -28,7 +28,7 @@ expression_ref maybe_modifiable_structure(reg_heap& M, int r1)
     int r2 = M.incremental_evaluate_unchangeable(r1);
 
     // 2. If this is a structure then translate the parts.
-    if (M.reg_is_constant(r2))
+    if (M.reg_is_constant_no_force(r2))
     {
         // (i) The closure M[r2] can be moved, so a reference to it may become invalid.
         // (ii) Fields r can be updated to point through an index_var.
@@ -97,7 +97,7 @@ extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 
     int r_var = Args.current_closure().reg_for_slot(0);
 
-    r_var = Args.memory().follow_index_var(r_var);
+    r_var = Args.memory().follow_index_var_no_force(r_var);
 
     auto pdf = Args.evaluate(1).as_log_double();
 
@@ -115,7 +115,7 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
 
     int r_likelihood = Args.current_closure().reg_for_slot(0);
 
-    r_likelihood = Args.memory().follow_index_var(r_likelihood);
+    r_likelihood = Args.memory().follow_index_var_no_force(r_likelihood);
 
     auto effect = new register_likelihood(r_likelihood, likelihood);
 

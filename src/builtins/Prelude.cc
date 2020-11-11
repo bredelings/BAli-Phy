@@ -499,7 +499,7 @@ extern "C" closure builtin_function_struct_seq(OperationArgs& Args)
     if (M.reg_is_changeable(r0))
 	throw myexception()<<"struct_seq: structure must be constant at reg "<<r0<<"!";
 
-    assert(M.reg_is_constant(r0));
+    assert(M.reg_is_constant_no_force(r0));
 
     auto c = M.closure_at(r0);
 

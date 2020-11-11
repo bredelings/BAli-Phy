@@ -306,10 +306,11 @@ log_double_t reg_heap::probability_for_context(int c)
     return prior_for_context(c) * likelihood_for_context(c);
 }
 
-int reg_heap::follow_index_var(int r) const
+int reg_heap::follow_index_var_no_force(int r) const
 {
-    while((*this)[r].exp.is_index_var())
-        r = (*this)[r].reg_for_index_var();
+    while(reg_is_index_var_no_force(r))
+        r = closure_at(r).reg_for_index_var();
+    assert(not reg_is_unevaluated(r));
     return r;
 }
 
@@ -918,7 +919,7 @@ const closure& reg_heap::access_value_for_reg(int R1) const
 
 bool reg_heap::reg_has_value(int r) const
 {
-    if (reg_is_constant(r))
+    if (reg_is_constant_no_force(r))
         return true;
     else
         return has_result1(r);
@@ -997,7 +998,7 @@ void reg_heap::force_reg_with_call(int r)
     int call = steps[s].call;
     assert(call > 0);
 
-    assert(reg_is_constant(call) or reg_is_changeable(call));
+    assert(reg_is_constant_no_force(call) or reg_is_changeable(call));
 
     // If R2 is WHNF then we are done
     if (reg_is_changeable(call))
@@ -1020,7 +1021,7 @@ int reg_heap::value_for_reg(int r) const
     }
     else
     {
-        assert(reg_is_constant(r));
+        assert(reg_is_constant_no_force(r));
         return r;
     }
 }
@@ -1035,7 +1036,7 @@ void reg_heap::set_result_for_reg(int r1)
 {
     // 1. Find called reg
     int r2 = step_for_reg(r1).call;
-    assert(reg_is_constant(r2) or reg_is_changeable(r2));
+    assert(reg_is_constant_no_force(r2) or reg_is_changeable(r2));
 
     // 2. Set the result value for the current reg
     prog_results[r1] = value_for_reg(r2);
@@ -1111,7 +1112,7 @@ void reg_heap::set_call(int s1, int r2)
     // Set the call
     S1.call = r2;
 
-    if (not reg_is_constant(r2))
+    if (not reg_is_constant_no_force(r2))
     {
         // 6. Add a call edge from to R2.
         auto& R2 = regs[r2];
@@ -1273,7 +1274,7 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
         int Q = value.reg_for_index_var();
 
         // Never set the call to an index var.
-        Q = follow_index_var(Q);
+        Q = follow_index_var_no_force(Q);
 
         // Never call something unevaluated either.
         assert(not reg_is_unevaluated(Q));
@@ -1289,7 +1290,7 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
 
         int R2 = allocate_reg_from_step_in_token(s,t);
 
-        mark_reg_constant(R2);
+        mark_reg_constant_no_force(R2);
 
         // Set the call
         set_C(R2, std::move( value ) );
@@ -1664,7 +1665,7 @@ void reg_heap::check_used_regs_in_token(int t) const
 
         // No results for constant regs
         if (result > 0)
-            assert(not reg_is_constant(r));
+            assert(not reg_is_constant_no_force(r));
     }
 
     bool root_child = tokens[t].parent == root_token and tokens[t].flags.test(0);
@@ -1683,7 +1684,7 @@ void reg_heap::check_used_regs_in_token(int t) const
 //        assert(((root_child and prog_unshare[r].test(unshare_result_bit)) or prog_temp[r].test(result_bit)) and prog_temp[r].test(step_bit));
         // No steps for constant regs
         if (step > 0)
-            assert(not reg_is_constant(r));
+            assert(not reg_is_constant_no_force(r));
     }
 
     // FIXME - nonlocal. The same result/step are not set in multiple places!
@@ -1962,7 +1963,7 @@ void reg_heap::clear_result(int r)
 const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
 {
     total_get_reg_value++;
-    if (reg_is_constant(R)) return expression_at(R);
+    if (reg_is_constant_no_force(R)) return expression_at(R);
 
     total_get_reg_value_non_const++;
     reroot_at_context(c);
@@ -2005,15 +2006,15 @@ bool reg_heap::execution_allowed() const
 
 const closure& reg_heap::value_for_precomputed_reg(int r) const
 {
-    r = follow_index_var(r);
+    r = follow_index_var_no_force(r);
     return access_value_for_reg(r);
 }
 
 optional<int> reg_heap::precomputed_value_in_context(int r, int c)
 {
-    r = follow_index_var(r);
+    r = follow_index_var_no_force(r);
 
-    if (reg_is_constant(r)) return r;
+    if (reg_is_constant_no_force(r)) return r;
 
     reroot_at_context(c);
 
@@ -2035,7 +2036,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
     check_used_regs();
 #endif
 
-    if (reg_is_constant(R)) return {R,R};
+    if (reg_is_constant_no_force(R)) return {R,R};
 
     reroot_at_context(c);
 
