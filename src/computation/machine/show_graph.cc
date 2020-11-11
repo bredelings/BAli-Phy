@@ -520,7 +520,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	    o<<",fillcolor=\"#770000\",fontcolor=white";
 	else if (C[R].exp.is_index_var())
 	    o<<",fillcolor=\"#77bbbb\"";
-	else if (C.reg_is_constant(R))
+	else if (C.reg_is_constant_no_force(R))
 	    o<<",fillcolor=\"#bbbb77\"";
 	o<<"];\n";
 
