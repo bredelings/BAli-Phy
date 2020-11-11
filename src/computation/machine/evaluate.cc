@@ -840,8 +840,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
             assert(reg_is_unevaluated(r));
 
         /*---------- Below here, there is no call, and no value. ------------*/
-        const int type = expression_at(r).head().type();
-        if (type == index_var_type)
+        if (expression_at(r).is_index_var())
         {
             mark_reg_index_var(r);
 
