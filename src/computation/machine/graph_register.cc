@@ -310,7 +310,6 @@ int reg_heap::follow_index_var_no_force(int r) const
 {
     while(reg_is_index_var_no_force(r))
         r = closure_at(r).reg_for_index_var();
-    assert(not reg_is_unevaluated(r));
     return r;
 }
 
@@ -816,9 +815,9 @@ void reg_heap::unregister_random_variable(const effect& e, int s)
 void reg_heap::register_transition_kernel(int r_rate, int r_kernel, int /*s*/)
 {
     // We can't register index_vars -- they could go away!
-    assert(not expression_at(r_rate).is_index_var());
+    assert(not reg_is_index_var_no_force(r_rate));
 
-    assert(not expression_at(r_kernel).is_index_var());
+    assert(not reg_is_index_var_no_force(r_kernel));
 
     // Multiple steps from different contexts COULD register the same transition kernel.
     transition_kernels_.push_back({r_rate, r_kernel});
@@ -1055,7 +1054,7 @@ void reg_heap::set_used_reg(int r1, int r2)
 
     // An index_var's value only changes if the thing the index-var points to also changes.
     // So, we may as well forbid using an index_var as an input.
-    assert(not expression_at(r2).is_index_var());
+    assert(not reg_is_index_var_no_force(r2));
 
     auto& R1 = regs[r1];
     auto& R2 = regs[r2];
@@ -1079,7 +1078,7 @@ void reg_heap::set_forced_reg(int r1, int r2)
 
     // An index_var's value only changes if the thing the index-var points to also changes.
     // So, we may as well forbid using an index_var as an input.
-    assert(not expression_at(r2).is_index_var());
+    assert(not reg_is_index_var_no_force(r2));
 
     auto& R1 = regs[r1];
     auto& R2 = regs[r2];
@@ -1102,7 +1101,7 @@ void reg_heap::set_call(int s1, int r2)
     // R2 could be unevaluated if we are setting the value of a modifiable.
 
     // R2 shouldn't have an index var.
-    assert(not expression_at(r2).is_index_var());
+    assert(not reg_is_index_var_no_force(r2));
 
     // Don't override an *existing* call
     assert(steps[s1].call == 0);

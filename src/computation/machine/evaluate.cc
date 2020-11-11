@@ -256,7 +256,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                 return {r, value};
             }
         }
-        else if (reg_is_index_var_no_force(r))
+        else if (unevaluated_reg_is_index_var_no_force(r))
         {
             int r2 = closure_at(r).reg_for_index_var();
             return incremental_evaluate1(r2);
@@ -625,7 +625,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 return {r, value};
             }
         }
-        else if (reg_is_index_var_no_force(r))
+        else if (unevaluated_reg_is_index_var_no_force(r))
         {
             int r2 = closure_at(r).reg_for_index_var();
             return incremental_evaluate2(r2, false);
@@ -867,7 +867,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
         if (reg_is_constant_no_force(r) or reg_is_changeable(r))
             break;
 
-        else if (reg_is_index_var_no_force(r))
+        else if (unevaluated_reg_is_index_var_no_force(r))
         {
             int r2 = closure_at(r).reg_for_index_var();
             return incremental_evaluate_unchangeable(r2);
