@@ -213,7 +213,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
         //    std::cerr<<"   statement: "<<r<<":   "<<regs.access(r).E.print()<<std::endl;
 #endif
 
-        if (reg_is_constant(r)) return {r,r};
+        if (reg_is_constant_no_force(r)) return {r,r};
 
         else if (reg_is_changeable(r))
         {
@@ -256,7 +256,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                 return {r, value};
             }
         }
-        else if (reg_is_index_var(r))
+        else if (reg_is_index_var_no_force(r))
         {
             int r2 = closure_at(r).reg_for_index_var();
             return incremental_evaluate1(r2);
@@ -275,7 +275,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 
             assert( not has_step1(r) );
 
-            mark_reg_index_var(r);
+            mark_reg_index_var_no_force(r);
 
             int r2 = closure_at(r).reg_for_index_var();
 
@@ -288,7 +288,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
         // Check for WHNF *OR* heap variables
         else if (is_WHNF(expression_at(r)))
         {
-            mark_reg_constant(r);
+            mark_reg_constant_no_force(r);
             assert( not has_step1(r) );
             return {r,r};
         }
@@ -570,7 +570,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
         //    std::cerr<<"   statement: "<<r<<":   "<<regs.access(r).E.print()<<std::endl;
 #endif
 
-        if (reg_is_constant(r)) return {r,r};
+        if (reg_is_constant_no_force(r)) return {r,r};
 
         else if (reg_is_changeable(r))
         {
@@ -625,7 +625,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 return {r, value};
             }
         }
-        else if (reg_is_index_var(r))
+        else if (reg_is_index_var_no_force(r))
         {
             int r2 = closure_at(r).reg_for_index_var();
             return incremental_evaluate2(r2, false);
@@ -644,7 +644,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
             assert( not has_step1(r) );
 
-            mark_reg_index_var(r);
+            mark_reg_index_var_no_force(r);
 
             int r2 = closure_at(r).reg_for_index_var();
 
@@ -657,7 +657,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
         // Check for WHNF *OR* heap variables
         else if (is_WHNF(expression_at(r)))
         {
-            mark_reg_constant(r);
+            mark_reg_constant_no_force(r);
             assert( not has_step1(r) );
             return {r,r};
         }
@@ -808,14 +808,14 @@ class RegOperationArgsUnchangeable final: public OperationArgs
     const closure& evaluate_reg_to_closure(int r2)
         {
             int r3 = evaluate_reg_to_reg(r2);
-            assert(M.reg_is_constant(r3));
+            assert(M.reg_is_constant_no_force(r3));
             return M[r3];
         }
 
     const closure& evaluate_reg_to_closure_(int r2)
         {
             int r3 = evaluate_reg_to_reg(r2);
-            assert(M.reg_is_constant(r3));
+            assert(M.reg_is_constant_no_force(r3));
             return M[r3];
         }
 
@@ -864,10 +864,10 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
     {
         assert(expression_at(r));
 
-        if (reg_is_constant(r) or reg_is_changeable(r))
+        if (reg_is_constant_no_force(r) or reg_is_changeable(r))
             break;
 
-        else if (reg_is_index_var(r))
+        else if (reg_is_index_var_no_force(r))
         {
             int r2 = closure_at(r).reg_for_index_var();
             return incremental_evaluate_unchangeable(r2);
@@ -878,7 +878,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
         /*---------- Below here, there is no call, and no value. ------------*/
         if (expression_at(r).is_index_var())
         {
-            mark_reg_index_var(r);
+            mark_reg_index_var_no_force(r);
 
             int r2 = closure_at(r).reg_for_index_var();
 
@@ -893,7 +893,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
 
         // Check for WHNF *OR* heap variables
         else if (is_WHNF(expression_at(r)))
-            mark_reg_constant(r);
+            mark_reg_constant_no_force(r);
 
 #ifndef NDEBUG
         else if (expression_at(r).head().is_a<Trim>())
