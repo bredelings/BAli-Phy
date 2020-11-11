@@ -44,20 +44,19 @@ void do_remap(const reg_heap& M, vector<int>& remap, int r)
 
     const closure& C = M[r];
 
-    if (not C.exp or C.exp.head().type() != index_var_type)
+    if (C.exp and C.exp.is_index_var() and (M.reg_is_unevaluated(r) or M.reg_is_index_var_no_force(r)))
     {
-	remap[r] = r;
-	return;
+        int r2 = C.reg_for_index_var();
+
+        do_remap(M, remap, r2);
+
+        remap[r] = remap[r2];
+
+        assert(remap[r] != r);
+        assert(remap[remap[r]] == remap[r]);
     }
-
-    int r2 = C.reg_for_index_var();
-
-    do_remap(M, remap, r2);
-
-    remap[r] = remap[r2];
-
-    assert(remap[r] != r);
-    assert(remap[remap[r]] == remap[r]);
+    else
+	remap[r] = r;
 }
 
 void reg_heap::trace(vector<int>& remap)
