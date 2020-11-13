@@ -90,9 +90,8 @@ class RegOperationArgs final: public OperationArgs
         {
             auto [r3, value] = M.incremental_evaluate1(r2);
 
-            if (M.reg_is_changeable(r3))
+            if (M.reg_is_changeable_or_forcing(r3))
             {
-                used_changeable = true;
                 if (first_eval)
                     M.set_forced_reg(r, r3);
             }
@@ -108,11 +107,16 @@ class RegOperationArgs final: public OperationArgs
 
             // Note that although r2 is newly used, r3 might be already used if it was 
             // found from r2 through a non-changeable reg_var chain.
-            if (M.reg_is_changeable(r3))
+            if (M.reg_is_to_changeable(r3))
             {
                 used_changeable = true;
                 if (first_eval)
                     M.set_used_reg(r, r3);
+            }
+            else if (M.reg_is_changeable_or_forcing(r3))
+            {
+                if (first_eval)
+                    M.set_forced_reg(r, r3);
             }
 
             return value;
@@ -180,6 +184,9 @@ pair<int,int> reg_heap::incremental_evaluate1(int r)
 #endif
     stack.push_back(r);
     auto result = incremental_evaluate1_(r);
+    assert(not reg_is_index_var_no_force(result.first));
+    assert(not reg_is_unevaluated(result.first));
+    assert(not reg_is_unevaluated(r));
     stack.pop_back();
 #ifndef NDEBUG
     assert(regs.access(r).flags.test(3));
@@ -199,9 +206,9 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
         expression_ref E = access_value_for_reg(r).exp;
         assert(is_WHNF(E));
         assert(not E.head().is_a<expression>());
-        assert(not E.is_index_var());
+        assert(not reg_is_index_var_no_force(r));
     }
-    if (expression_at(r).is_index_var())
+    if (unevaluated_reg_is_index_var_no_force(r))
         assert(not reg_has_value(r));
 #endif
 
@@ -213,7 +220,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
         //    std::cerr<<"   statement: "<<r<<":   "<<regs.access(r).E.print()<<std::endl;
 #endif
 
-        if (reg_is_constant_no_force(r)) return {r,r};
+        if (reg_is_constant_no_force(r) or reg_is_constant_with_force(r)) return {r,r};
 
         else if (reg_is_changeable(r))
         {
@@ -253,6 +260,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                 }
 
                 total_changeable_eval_with_call++;
+                assert(not reg_is_unevaluated(r));
                 return {r, value};
             }
         }
@@ -261,8 +269,27 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
             int r2 = closure_at(r).reg_for_index_var();
             return incremental_evaluate1(r2);
         }
-        else
-            assert(reg_is_unevaluated(r));
+        else if (reg_is_index_var_with_force_to_changeable(r) or reg_is_index_var_with_force_to_nonchangeable(r))
+        {
+            int result = result_for_reg(r);
+            if (result > 0)
+                return {r, result};
+
+            int r2 = closure_at(r).reg_for_index_var();
+            auto [r3, result3] = incremental_evaluate1(r2);
+
+            // r gets its value from S.
+            prog_results[r] = result3;
+            if (not tokens[root_token].children.empty())
+            {
+                int t = tokens[root_token].children[0];
+                tokens[t].vm_result.add_value(r, non_computed_index);
+            }
+
+            total_changeable_eval_with_call++;
+            assert(not reg_is_unevaluated(r));
+            return {r, result3};
+        }
 
         /*---------- Below here, there is no call, and no value. ------------*/
         if (expression_at(r).is_index_var())
@@ -275,21 +302,51 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 
             assert( not has_step1(r) );
 
-            mark_reg_index_var_no_force(r);
-
             int r2 = closure_at(r).reg_for_index_var();
 
-            // Return the end of the index_var chain.
-            // We used to update the index_var to point to the end of the chain.
+            auto [r3, result] = incremental_evaluate1(r2);
 
-            return incremental_evaluate1(r2);
+            if (regs[r].forced_regs.empty())
+            {
+                // Return the end of the index_var chain.
+                // We used to update the index_var to point to the end of the chain.
+
+                mark_reg_index_var_no_force(r);
+                return {r3,result};
+            }
+
+            if (reg_is_to_changeable(r3))
+            {
+                mark_reg_index_var_with_force_to_changeable(r);
+                set_used_reg(r,r3);
+            }
+            else
+            {
+                mark_reg_index_var_with_force_to_nonchangeable(r);
+                if (reg_is_changeable_or_forcing(r3))
+                    set_forced_reg(r,r3);
+            }
+
+            prog_results[r] = result;
+            if (not tokens[root_token].children.empty())
+            {
+                int t = tokens[root_token].children[0];
+                tokens[t].vm_result.add_value(r, non_computed_index);
+            }
+
+            assert(not reg_is_unevaluated(r));
+            return {r, result};
         }
 
         // Check for WHNF *OR* heap variables
         else if (is_WHNF(expression_at(r)))
         {
-            mark_reg_constant_no_force(r);
+            if (regs[r].forced_regs.empty())
+                mark_reg_constant_no_force(r);
+            else
+                mark_reg_constant_with_force(r);
             assert( not has_step1(r) );
+            assert(not reg_is_unevaluated(r));
             return {r,r};
         }
 
@@ -323,7 +380,6 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                     assert( not reg_has_call(r) );
                     assert( not reg_has_value(r) );
                     assert( regs[r].used_regs.empty() );
-                    assert( regs[r].forced_regs.empty() );
                     assert( steps[s].created_regs.empty() ); // Any allocations should have gone to sp
                     set_C( r, std::move(value) );
                     steps.reclaim_used(s);
@@ -361,6 +417,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                         tokens[t].vm_step.add_value(r, non_computed_index);
                     }
 
+                    assert(not reg_is_unevaluated(r));
                     return {r, value};
                 }
             }
@@ -410,9 +467,8 @@ class RegOperationArgs2 final: public OperationArgs
         {
             auto [r3, value] = M.incremental_evaluate2(r2, zero_count);
 
-            if (M.reg_is_changeable(r3))
+            if (M.reg_is_changeable_or_forcing(r3))
             {
-                used_changeable = true;
                 if (first_eval)
                     M.set_forced_reg(r, r3);
             }
@@ -428,11 +484,16 @@ class RegOperationArgs2 final: public OperationArgs
 
             // Note that although r2 is newly used, r3 might be already used if it was 
             // found from r2 through a non-changeable reg_var chain.
-            if (M.reg_is_changeable(r3))
+            if (M.reg_is_to_changeable(r3))
             {
                 used_changeable = true;
                 if (first_eval)
                     M.set_used_reg(r, r3);
+            }
+            else if (M.reg_is_changeable_or_forcing(r3))
+            {
+                if (first_eval)
+                    M.set_forced_reg(r, r3);
             }
 
             return value;
