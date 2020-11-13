@@ -46,6 +46,8 @@ void do_remap(const reg_heap& M, vector<int>& remap, int r)
 
     if (C.exp and C.exp.is_index_var() and (M.reg_is_unevaluated(r) or M.reg_is_index_var_no_force(r)))
     {
+        assert(not M.has_result1(r));
+
         int r2 = C.reg_for_index_var();
 
         do_remap(M, remap, r2);
@@ -136,6 +138,7 @@ void reg_heap::trace_and_reclaim_unreachable()
 	if (not regs.is_marked(r))
 	{
             clear_back_edges_for_reg(r);
+            assert(not has_result1(r));
             regs.reclaim_used(r);
 	}
         else
