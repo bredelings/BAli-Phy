@@ -1581,7 +1581,6 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
 std::vector<int> reg_heap::used_regs_for_reg(int r) const
 {
     vector<int> U;
-    if (not has_step1(r)) return U;
 
     for(const auto& [r2,_]: regs[r].used_regs)
         U.push_back(r2);
@@ -1592,7 +1591,6 @@ std::vector<int> reg_heap::used_regs_for_reg(int r) const
 std::vector<int> reg_heap::forced_regs_for_reg(int r) const
 {
     vector<int> U;
-    if (not has_step1(r)) return U;
 
     for(const auto& [r2,_]: regs[r].forced_regs)
         U.push_back(r2);
