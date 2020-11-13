@@ -101,6 +101,8 @@ void reg_heap::trace(vector<int>& remap)
 	const auto& R = regs.access(r);
 	for(int r : R.C.Env)
 	    mark_reg(r);
+        for(auto [r,_] : R.forced_regs)
+	    mark_reg(r);
     }
 
     release_scratch_list();
