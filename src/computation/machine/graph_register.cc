@@ -808,6 +808,7 @@ void reg_heap::first_evaluate_program(int c)
     {
         assert(reg_exists(r_likelihood));
         assert(reg_has_value(r_likelihood));
+        assert(access_value_for_reg(r_likelihood).exp.is_log_double());
     }
 
     for(auto [s,r_pdf]: random_variables)
