@@ -101,6 +101,16 @@ void reg_heap::find_all_regs_in_context_no_check(int, vector<int>& scan, vector<
 	    }
 	}
 
+	// We can get dependencies on forced regs since we no merge operations that only force things.
+	for(int j: forced_regs_for_reg(r))
+	{
+	    if (regs.is_used(j) and not regs.is_marked(j))
+	    {
+		regs.set_mark(j);
+		unique.push_back(j);
+	    }
+	}
+
 	// Count also the references from the call
 	if (reg_has_call(r))
 	{
@@ -200,6 +210,9 @@ void discover_graph_vars(const reg_heap& H, int R, map<int,expression_ref>& name
     // find the names for each referenced var.
     for(int i: C.Env)
 	discover_graph_vars(H, i, names, id);
+
+    for(int r: H.forced_regs_for_reg(R))
+	discover_graph_vars(H, r, names, id);
 
     names[R] = subst_referenced_vars(C.exp, C.Env, names);
 }
