@@ -925,7 +925,7 @@ const closure& reg_heap::access_value_for_reg(int R1) const
 
 bool reg_heap::reg_has_value(int r) const
 {
-    if (reg_is_constant_no_force(r))
+    if (reg_is_constant_no_force(r) or reg_is_constant_with_force(r))
         return true;
     else
         return has_result1(r);
@@ -1016,19 +1016,18 @@ void reg_heap::force_reg_with_call(int r)
     }
 }
 
-
-int reg_heap::value_for_reg(int r) const 
+int reg_heap::value_for_reg(int r) const
 {
-    assert(not expression_at(r).is_index_var());
-    if (reg_is_changeable(r))
-    {
-        assert(has_result1(r));
-        return result_for_reg(r);
-    }
+    assert(not reg_is_unevaluated(r));
+    assert(not reg_is_index_var_no_force(r));
+
+    if (reg_is_constant_no_force(r) or reg_is_constant_with_force(r))
+        return r;
     else
     {
-        assert(reg_is_constant_no_force(r));
-        return r;
+        assert(reg_is_changeable(r) or reg_is_index_var_with_force_to_changeable(r) or reg_is_index_var_with_force_to_nonchangeable(r));
+        assert(has_result1(r));
+        return result_for_reg(r);
     }
 }
 
@@ -1042,7 +1041,7 @@ void reg_heap::set_result_for_reg(int r1)
 {
     // 1. Find called reg
     int r2 = step_for_reg(r1).call;
-    assert(reg_is_constant_no_force(r2) or reg_is_changeable(r2));
+    assert(reg_is_constant_no_force(r2) or reg_is_changeable_or_forcing(r2));
 
     // 2. Set the result value for the current reg
     prog_results[r1] = value_for_reg(r2);
@@ -1051,13 +1050,13 @@ void reg_heap::set_result_for_reg(int r1)
 
 void reg_heap::set_used_reg(int r1, int r2)
 {
-    assert(reg_is_changeable(r2));
+    assert(reg_is_to_changeable(r2));
 
     assert(regs.is_used(r2));
 
     assert(closure_at(r2));
 
-    assert(has_result1(r2));
+    assert(not reg_is_changeable(r2) or has_result1(r2));
 
     // An index_var's value only changes if the thing the index-var points to also changes.
     // So, we may as well forbid using an index_var as an input.
@@ -1075,13 +1074,13 @@ void reg_heap::set_used_reg(int r1, int r2)
 
 void reg_heap::set_forced_reg(int r1, int r2)
 {
-    assert(reg_is_changeable(r2));
+    assert(reg_is_changeable_or_forcing(r2));
 
     assert(regs.is_used(r2));
 
     assert(closure_at(r2));
 
-    assert(has_result1(r2));
+    assert(not reg_is_changeable(r2) or has_result1(r2));
 
     // An index_var's value only changes if the thing the index-var points to also changes.
     // So, we may as well forbid using an index_var as an input.
@@ -1118,6 +1117,7 @@ void reg_heap::set_call(int s1, int r2)
     // Set the call
     S1.call = r2;
 
+    // We may need a call edge to constant-with-force nodes in order to backward-propagate unforcedness.
     if (not reg_is_constant_no_force(r2))
     {
         // 6. Add a call edge from to R2.
