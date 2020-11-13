@@ -97,7 +97,7 @@ extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 
     int r_var = Args.current_closure().reg_for_slot(0);
 
-    r_var = Args.memory().follow_index_var_no_force(r_var);
+    r_var = Args.memory().follow_index_var(r_var);
 
     auto pdf = Args.evaluate(1).as_log_double();
 
