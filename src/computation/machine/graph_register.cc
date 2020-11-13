@@ -306,6 +306,13 @@ log_double_t reg_heap::probability_for_context(int c)
     return prior_for_context(c) * likelihood_for_context(c);
 }
 
+int reg_heap::follow_index_var(int r) const
+{
+    while(expression_at(r).is_index_var())
+        r = closure_at(r).reg_for_index_var();
+    return r;
+}
+
 int reg_heap::follow_index_var_no_force(int r) const
 {
     while(reg_is_index_var_no_force(r))
