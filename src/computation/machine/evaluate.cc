@@ -849,7 +849,7 @@ class RegOperationArgsUnchangeable final: public OperationArgs
     int evaluate_reg(int r2)
         {
             int r3 = memory().incremental_evaluate_unchangeable(r2);
-            if (M.reg_is_changeable(r3) or M.reg_is_unevaluated(r3))
+            if (M.reg_is_changeable_or_forcing(r3) or M.reg_is_unevaluated(r3))
                 throw no_context();
             return r3;
         }
@@ -925,7 +925,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
     {
         assert(expression_at(r));
 
-        if (reg_is_constant_no_force(r) or reg_is_changeable(r))
+        if (reg_is_constant_no_force(r) or reg_is_changeable_or_forcing(r))
             break;
 
         else if (unevaluated_reg_is_index_var_no_force(r))
