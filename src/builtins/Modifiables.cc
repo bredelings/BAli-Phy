@@ -28,7 +28,7 @@ expression_ref maybe_modifiable_structure(reg_heap& M, int r1)
     int r2 = M.incremental_evaluate_unchangeable(r1);
 
     // 2. If this is a structure then translate the parts.
-    if (M.reg_is_constant_no_force(r2))
+    if (M.reg_is_constant_no_force(r2) or M.reg_is_constant_with_force(r2))
     {
         // (i) The closure M[r2] can be moved, so a reference to it may become invalid.
         // (ii) Fields r can be updated to point through an index_var.
@@ -54,7 +54,7 @@ expression_ref maybe_modifiable_structure(reg_heap& M, int r1)
     }
 
     // We can actually get unevaluated seq ops here.
-    assert(M.reg_is_changeable(r2) or M.reg_is_unevaluated(r2));
+    assert(M.reg_is_changeable_or_forcing(r2) or M.reg_is_unevaluated(r2));
 
     // 3. If this is a modifiable, stop there and return that.
     if (is_modifiable(M[r2].exp))
@@ -66,14 +66,21 @@ expression_ref maybe_modifiable_structure(reg_heap& M, int r1)
     }
     else if (is_seq(M[r2].exp))
     {
-	int r3 = M[r2].reg_for_slot(1);
+        int r3 = M[r2].reg_for_slot(1);
         return maybe_modifiable_structure(M,r3);
     }
-    else if (M.reg_has_call(r2))
+    else if (M.reg_is_index_var_with_force_to_changeable(r2) or
+             M.reg_is_index_var_with_force_to_nonchangeable(r2))
+    {
+        int r3 = M[r2].reg_for_index_var();
+        return maybe_modifiable_structure(M,r3);
+    }
+    else if (M.reg_is_changeable(r2) and M.reg_has_call(r2))
     {
         int r3 = M.call_for_reg(r2);
         return maybe_modifiable_structure(M,r3);
     }
+    assert(M.reg_is_changeable(r2));
 
     // 4. Handle changeable computations with no call
     return reg_var(r2);
