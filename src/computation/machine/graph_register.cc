@@ -1121,6 +1121,8 @@ void reg_heap::set_call(int s1, int r2)
     // We may need a call edge to constant-with-force nodes in order to backward-propagate unforcedness.
     if (not reg_is_constant_no_force(r2))
     {
+        assert(not reg_is_index_var_no_force(r2));
+        assert(not reg_is_unevaluated(r2));
         // 6. Add a call edge from to R2.
         auto& R2 = regs[r2];
         int back_index = R2.called_by.size();
