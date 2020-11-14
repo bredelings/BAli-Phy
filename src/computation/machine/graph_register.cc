@@ -1671,7 +1671,7 @@ void reg_heap::check_used_regs_in_token(int t) const
 
         // No results for constant regs
         if (result > 0)
-            assert(not reg_is_constant_no_force(r));
+            assert(not reg_is_constant_no_force(r) and not reg_is_constant_with_force(r));
     }
 
     bool root_child = tokens[t].parent == root_token and tokens[t].flags.test(0);
@@ -1690,7 +1690,7 @@ void reg_heap::check_used_regs_in_token(int t) const
 //        assert(((root_child and prog_unshare[r].test(unshare_result_bit)) or prog_temp[r].test(result_bit)) and prog_temp[r].test(step_bit));
         // No steps for constant regs
         if (step > 0)
-            assert(not reg_is_constant_no_force(r));
+            assert(not reg_is_constant_no_force(r) and not reg_is_constant_with_force(r));
     }
 
     // FIXME - nonlocal. The same result/step are not set in multiple places!
@@ -1738,21 +1738,18 @@ void reg_heap::check_used_regs() const
             assert(prog_force_counts[r1] == force_count(r1));
             if (has_step1(r1))
                 assert(prog_force_counts[r1] > 0);
+            if (has_result1(r1))
+                assert(prog_force_counts[r1] > 0);
         }
 
         if (prog_force_counts[r1] > 0)
-            assert(reg_is_changeable(r1));
+            assert(reg_is_changeable_or_forcing(r1));
 
         if (not regs[r1].used_regs.empty())
-            assert(reg_is_changeable(r1));
+            assert(reg_is_changeable(r1) or reg_is_index_var_with_force_to_changeable(r1));
 
         if (not regs[r1].forced_regs.empty())
-            assert(reg_is_changeable(r1));
-
-        if (not has_step1(r1))
-        {
-            assert(not has_result1(r1));
-        }
+            assert(reg_is_changeable_or_forcing(r1));
 
         if (check_force_counts and has_result1(r1))
         {
@@ -1760,9 +1757,12 @@ void reg_heap::check_used_regs() const
                 assert(has_result1(r2));
             for(auto r2: forced_regs_for_reg(r1))
                 assert(has_result1(r2));
-            int call = step_for_reg(r1).call;
-            if (reg_is_changeable(call))
-                assert(has_result1(call));
+            if (has_step1(r1))
+            {
+                int call = step_for_reg(r1).call;
+                if (reg_is_to_changeable(call))
+                    assert(has_result1(call));
+            }
         }
 
         for(const auto& [r2,_]: regs[r1].used_regs)
@@ -1771,7 +1771,7 @@ void reg_heap::check_used_regs() const
             assert( reg_is_used_by(r1, r2) );
 
             // Used computations should be mapped computation for the current token, if we are at the root
-            assert(reg_is_changeable(r2));
+            assert(reg_is_to_changeable(r2));
 
             // The used result should be referenced somewhere more root-ward
             // so that this result can be invalidated, and the used result won't be GC-ed.
@@ -1783,7 +1783,7 @@ void reg_heap::check_used_regs() const
             assert( reg_is_forced_by(r1, r2) );
 
             // Used computations should be mapped computation for the current token, if we are at the root
-            assert(reg_is_changeable(r2));
+            assert(reg_is_changeable_or_forcing(r2));
 
             // The used result should be referenced somewhere more root-ward
             // so that this result can be invalidated, and the used result won't be GC-ed.
