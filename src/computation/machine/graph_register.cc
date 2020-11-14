@@ -499,10 +499,8 @@ void reg_heap::first_evaluate_program(int c)
     assert(steps_pending_effect_unregistration.empty());
 
     // 4. Update force_counts
-    for(auto& S: steps)
+    for(auto& R: regs)
     {
-        auto& R = regs[S.source_reg];
-
         // 3a. Count uses
         for(auto [ur,_]: R.used_regs)
             prog_force_counts[ur]++;
@@ -510,13 +508,16 @@ void reg_heap::first_evaluate_program(int c)
         // 3b. Count forces
         for(auto [fr,_]: R.forced_regs)
             prog_force_counts[fr]++;
+    }
 
+    for(auto& S: steps)
+    {
         // 3c. Count calls
-        if (reg_is_changeable(S.call))
+        if (reg_is_changeable_or_forcing(S.call))
             prog_force_counts[S.call]++;
     }
 
-    if (reg_is_changeable(program_result_reg))
+    if (reg_is_changeable_or_forcing(program_result_reg))
     {
         prog_force_counts[program_result_reg]++;
         assert(steps.size() > 0);
