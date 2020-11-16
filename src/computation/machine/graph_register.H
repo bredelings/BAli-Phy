@@ -125,7 +125,12 @@ public:
     /// Which reduction values made use of the value of this expression (via call)
     boost::container::small_vector<int, 5> called_by;
 
+    /// Which reduction values made use of the value of this expression (via call)
+    boost::container::small_vector<int, 5> called_by_index_vars;
+
     std::pair<int, int> created_by;
+
+    std::pair<int, int> index_var_ref;
 
     bitmask_8 flags;
 
@@ -222,6 +227,7 @@ public:
     void set_used_reg(int r1, int r2);
     void set_forced_reg(int r1, int r2);
     void set_call(int s, int r2);
+    void set_index_var_ref(int r1, int r2);
     void destroy_step_and_created_regs(int s);
     void destroy_all_computations_in_token(int t);
     void clear_call(int s);

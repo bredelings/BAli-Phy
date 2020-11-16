@@ -314,17 +314,15 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                 mark_reg_index_var_no_force(r);
                 return {r3,result};
             }
-
-            if (reg_is_to_changeable(r3))
-            {
-                mark_reg_index_var_with_force_to_changeable(r);
-                set_used_reg(r,r3);
-            }
             else
             {
-                mark_reg_index_var_with_force_to_nonchangeable(r);
-                if (reg_is_changeable_or_forcing(r3))
-                    set_forced_reg(r,r3);
+                if (reg_is_to_changeable(r3))
+                    mark_reg_index_var_with_force_to_changeable(r);
+                else
+                    mark_reg_index_var_with_force_to_nonchangeable(r);
+
+                if (not reg_is_constant_no_force(r3))
+                    set_index_var_ref(r,r3);
             }
 
             prog_results[r] = result;
