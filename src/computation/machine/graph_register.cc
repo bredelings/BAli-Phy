@@ -187,7 +187,9 @@ void reg::clear()
     truncate(used_by);
     truncate(forced_by);
     truncate(called_by);
+    truncate(called_by_index_vars);
     created_by = {0,0};
+    index_var_ref = {0,0};
     flags.reset();
 }
 
@@ -200,8 +202,11 @@ void reg::check_cleared() const
     assert(used_by.empty());
     assert(forced_by.empty());
     assert(called_by.empty());
+    assert(called_by_index_vars.empty());
     assert(created_by.first == 0);
     assert(created_by.second == 0);
+    assert(index_var_ref.first == 0);
+    assert(index_var_ref.second == 0);
     assert(flags.none());
 }
 
@@ -221,7 +226,11 @@ reg& reg::operator=(reg&& R) noexcept
 
     called_by = std::move( R.called_by );
 
+    called_by_index_vars = std::move( R.called_by_index_vars );
+
     created_by = std::move(R.created_by);
+
+    index_var_ref = std::move(R.index_var_ref);
 
     flags = R.flags;
 
@@ -236,7 +245,9 @@ reg::reg(reg&& R) noexcept
      used_by ( std::move( R.used_by) ),
      forced_by ( std::move( R.forced_by) ),
      called_by ( std::move( R.called_by) ),
+     called_by_index_vars ( std::move( R.called_by_index_vars) ),
      created_by( std::move(R.created_by) ),
+     index_var_ref( std::move(R.index_var_ref) ),
      flags ( R.flags )
 { }
 
@@ -460,6 +471,11 @@ int reg_heap::force_count(int r) const
         if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2 and prog_force_counts[r2] > 0)
             count++;
 
+    // Look at index-vars that refer to the root's result
+    for(auto& r2: regs[r].called_by_index_vars)
+        if (prog_force_counts[r2] > 0)
+            count++;
+
     return count;
 }
 
@@ -508,6 +524,10 @@ void reg_heap::first_evaluate_program(int c)
         // 3b. Count forces
         for(auto [fr,_]: R.forced_regs)
             prog_force_counts[fr]++;
+
+        int ref = R.index_var_ref.first;
+        if (ref > 0)
+            prog_force_counts[ref]++;
     }
 
     for(auto& S: steps)
@@ -1097,6 +1117,26 @@ void reg_heap::set_forced_reg(int r1, int r2)
     assert(reg_is_forced_by(r1,r2));
 }
 
+void reg_heap::set_index_var_ref(int r1, int r2)
+{
+    // Check that step s is legal
+    assert(regs.is_used(r1));
+
+    // Check that R2 is legal
+    assert(regs.is_used(r2));
+
+    // R2 shouldn't have an index var.
+    assert(not reg_is_index_var_no_force(r2));
+
+    // Don't override an *existing* call
+
+    int index = regs[r2].called_by_index_vars.size();
+    regs[r2].called_by_index_vars.push_back(r1);
+    assert(regs[r1].index_var_ref.first == 0);
+    assert(regs[r1].index_var_ref.second == 0);
+    regs[r1].index_var_ref = {r2, index};
+}
+
 void reg_heap::set_call(int s1, int r2)
 {
     // Check that step s is legal
@@ -1209,6 +1249,7 @@ int reg_heap::allocate()
     total_reg_allocations++;
     int r = regs.allocate();
     mark_reg_unevaluated(r);
+    assert(regs[r].used_regs.empty());
     return r;
 }
 
@@ -1716,9 +1757,12 @@ void reg_heap::check_used_regs_in_token(int t) const
 
 void reg_heap::check_used_regs() const
 {
-    assert(tokens[root_token].vm_step.empty());
-    assert(tokens[root_token].vm_result.empty());
-    assert(tokens[root_token].vm_force_count.empty());
+    if (root_token >= 0)
+    {
+        assert(tokens[root_token].vm_step.empty());
+        assert(tokens[root_token].vm_result.empty());
+        assert(tokens[root_token].vm_force_count.empty());
+    }
 
     for(int t=0; t< tokens.size(); t++)
         if (token_is_used(t))
@@ -1730,7 +1774,7 @@ void reg_heap::check_used_regs() const
             assert(not regs.is_free(S.call));
     }
 
-    bool check_force_counts = is_program_execution_token(root_token);
+    bool check_force_counts = (root_token>=0)?is_program_execution_token(root_token):false;
 
     for(auto i = regs.begin(); i != regs.end(); i++)
     {
@@ -1749,10 +1793,10 @@ void reg_heap::check_used_regs() const
             assert(reg_is_changeable_or_forcing(r1));
 
         if (not regs[r1].used_regs.empty())
-            assert(reg_is_changeable(r1) or reg_is_index_var_with_force_to_changeable(r1));
+            assert(reg_is_changeable(r1) or reg_is_unevaluated(r1));
 
         if (not regs[r1].forced_regs.empty())
-            assert(reg_is_changeable_or_forcing(r1));
+            assert(reg_is_changeable_or_forcing(r1) or reg_is_unevaluated(r1));
 
         if (check_force_counts and has_result1(r1))
         {
@@ -1898,29 +1942,53 @@ void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
         backward.pop_back();
     }
 
-
     // 3. When destroying a reg, remove edge from step[s] ---created_regs---> regs[r]
-    if (not creator_survives) return;
-
-    assert(r > 0);
-    auto& created_by = regs.access(r).created_by;
-    auto [s,j] = created_by;
-    if (s > 0)
+    if (creator_survives)
     {
-        auto& backward = steps[s].created_regs;
+        assert(r > 0);
+        auto& created_by = regs.access(r).created_by;
+        auto [s,j] = created_by;
+        if (s > 0)
+        {
+            auto& backward = steps[s].created_regs;
+            assert(0 <= j and j < backward.size());
+
+            // Clear the forward edge.
+            created_by = {0, 0};
+
+            // Move the last element to the hole, and adjust index of correspond forward edge.
+            if (j + 1 < backward.size())
+            {
+                backward[j] = backward.back();
+                auto& forward2 = regs.access(backward[j]);
+                forward2.created_by.second = j;
+
+                assert(regs.access(backward[j]).created_by.second == j);
+            }
+            backward.pop_back();
+        }
+    }
+
+    // 4. When destroying a reg, if there is an edge from regs[r] ---- index_var_ref ----> regs[r2]
+    assert(r > 0);
+    auto& index_var_ref = regs.access(r).index_var_ref;
+    auto [r2,j] = index_var_ref;
+    if (r2 > 0)
+    {
+        auto& backward = regs[r2].called_by_index_vars;
         assert(0 <= j and j < backward.size());
 
         // Clear the forward edge.
-        created_by = {0, 0};
+        index_var_ref = {0, 0};
 
         // Move the last element to the hole, and adjust index of correspond forward edge.
         if (j + 1 < backward.size())
         {
             backward[j] = backward.back();
             auto& forward2 = regs.access(backward[j]);
-            forward2.created_by.second = j;
-
-            assert(regs.access(backward[j]).created_by.second == j);
+            forward2.index_var_ref.second = j;
+            
+            assert(regs.access(backward[j]).index_var_ref.second == j);
         }
         backward.pop_back();
     }
