@@ -53,7 +53,7 @@ expression_ref maybe_modifiable_structure(reg_heap& M, int r1)
         return expression_ref(M[r2].exp.head(), sub);
     }
 
-    // r2 can only be constant or changeable, not unknown or index_var.
+    // We can actually get unevaluated seq ops here.
     assert(M.reg_is_changeable(r2) or M.reg_is_unevaluated(r2));
 
     // 3. If this is a modifiable, stop there and return that.
