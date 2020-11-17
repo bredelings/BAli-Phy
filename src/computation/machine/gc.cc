@@ -95,7 +95,21 @@ void reg_heap::trace(vector<int>& remap)
 	    mark_reg(S.call);
     }
 
-    // 5. Mark regs referenced only by regs as used.
+    // 5. Mark regs with results in any token as used.
+    for(auto i = regs.begin(); i != regs.end(); i++)
+    {
+        int r = i.addr();
+        if (has_result1(r))
+            mark_reg(r);
+    }
+
+    for(int t=0; t< tokens.size(); t++)
+        if (token_is_used(t))
+            for(auto [r,result]: tokens[t].vm_result.delta())
+                if (result > 0)
+                    mark_reg(r);
+
+    // 6. Mark regs referenced only by regs as used.
     for(int reg_index = 0;reg_index < used_regs.size();reg_index++)
     {
 	int r = used_regs[reg_index];
@@ -129,6 +143,15 @@ void reg_heap::trace_and_reclaim_unreachable()
 #ifdef DEBUG_MACHINE
     check_used_regs();
 #endif
+
+    // Would it be faster to register a clearing callback?
+    for(auto i = regs.begin();i != regs.end();)
+    {
+        int r = i.addr();
+        i++;
+	if (not regs.is_marked(r))
+            assert(not has_result1(r));
+    }
 
     // Would it be faster to register a clearing callback?
     for(auto i = regs.begin();i != regs.end();)
