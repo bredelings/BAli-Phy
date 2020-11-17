@@ -311,7 +311,7 @@ void reg_heap::unshare_regs1(int t)
         if (auto [r,_] = delta_step[j]; has_step1(r))
             for(int r2: step_for_reg(r).created_regs)
             {
-                if (prog_steps[r2] > 0)
+                if (prog_steps[r2] > 0 or prog_results[r2] > 0)
                 {
                     assert(reg_is_changeable(r2));
                     unshare_step(r2);
