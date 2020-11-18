@@ -1077,7 +1077,7 @@ void reg_heap::set_used_reg(int r1, int r2)
 
     assert(closure_at(r2));
 
-    assert(not reg_is_changeable(r2) or has_result1(r2));
+    assert(reg_has_value(r2));
 
     // An index_var's value only changes if the thing the index-var points to also changes.
     // So, we may as well forbid using an index_var as an input.
@@ -1101,7 +1101,7 @@ void reg_heap::set_forced_reg(int r1, int r2)
 
     assert(closure_at(r2));
 
-    assert(not reg_is_changeable(r2) or has_result1(r2));
+    assert(reg_has_value(r2));
 
     // An index_var's value only changes if the thing the index-var points to also changes.
     // So, we may as well forbid using an index_var as an input.
@@ -1774,7 +1774,8 @@ void reg_heap::check_used_regs() const
             assert(not regs.is_free(S.call));
     }
 
-    bool check_force_counts = (root_token>=0)?is_program_execution_token(root_token):false;
+    bool in_pe_token = (root_token>=0)?is_program_execution_token(root_token):false;
+    bool check_force_counts = in_pe_token and stack.empty();
 
     for(auto i = regs.begin(); i != regs.end(); i++)
     {
@@ -1798,17 +1799,19 @@ void reg_heap::check_used_regs() const
         if (not regs[r1].forced_regs.empty())
             assert(reg_is_changeable_or_forcing(r1) or reg_is_unevaluated(r1));
 
-        if (check_force_counts and has_result1(r1))
+        // Under what conditions should a constant_with_force have finished forcing its regs?
+        // If we add a result to it, then we can use that to mark it as being done.
+
+        if (in_pe_token and has_result1(r1))
         {
             for(auto r2: used_regs_for_reg(r1))
-                assert(has_result1(r2));
+                assert(reg_has_value(r2));
             for(auto r2: forced_regs_for_reg(r1))
-                assert(has_result1(r2));
+                assert(reg_has_value(r2));
             if (has_step1(r1))
             {
                 int call = step_for_reg(r1).call;
-                if (reg_is_to_changeable(call))
-                    assert(has_result1(call));
+                assert(reg_has_value(call));
             }
         }
 
@@ -2040,7 +2043,7 @@ void reg_heap::clear_result(int r)
 const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
 {
     total_get_reg_value++;
-    if (reg_is_constant_no_force(R)) return expression_at(R);
+    if (reg_is_constant_no_force(R) or reg_is_constant_with_force(R)) return expression_at(R);
 
     total_get_reg_value_non_const++;
     reroot_at_context(c);
@@ -2091,7 +2094,7 @@ optional<int> reg_heap::precomputed_value_in_context(int r, int c)
 {
     r = follow_index_var_no_force(r);
 
-    if (reg_is_constant_no_force(r)) return r;
+    if (reg_is_constant_no_force(r) or reg_is_constant_with_force(r)) return r;
 
     reroot_at_context(c);
 
