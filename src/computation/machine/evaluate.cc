@@ -207,6 +207,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
         assert(is_WHNF(E));
         assert(not E.head().is_a<expression>());
         assert(not reg_is_index_var_no_force(r));
+        assert(not reg_is_unevaluated(r));
     }
     if (unevaluated_reg_is_index_var_no_force(r))
         assert(not reg_has_value(r));
@@ -593,13 +594,16 @@ pair<int,int> reg_heap::incremental_evaluate2(int r, bool do_count)
 #endif
     stack.push_back(r);
     auto result = incremental_evaluate2_(r);
+    assert(not reg_is_index_var_no_force(result.first));
+    assert(not reg_is_unevaluated(result.first));
+    assert(not reg_is_unevaluated(r));
     stack.pop_back();
 #ifndef NDEBUG
     assert(regs.access(r).flags.test(3));
     regs.access(r).flags.flip(3);
 #endif
     int r2 = result.first;
-    if (do_count and reg_is_changeable(r2))
+    if (do_count and reg_is_changeable_or_forcing(r2))
         inc_count(r2);
     return result;
 }
@@ -615,9 +619,10 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
         expression_ref E = access_value_for_reg(r).exp;
         assert(is_WHNF(E));
         assert(not E.head().is_a<expression>());
-        assert(not E.is_index_var());
+        assert(not reg_is_index_var_no_force(r));
+        assert(not reg_is_unevaluated(r));
     }
-    if (expression_at(r).is_index_var())
+    if (unevaluated_reg_is_index_var_no_force(r))
         assert(not reg_has_value(r));
 #endif
 
@@ -630,6 +635,13 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 #endif
 
         if (reg_is_constant_no_force(r)) return {r,r};
+
+        else if (reg_is_constant_with_force(r))
+        {
+            if (not has_force2(r))
+                force_reg_no_call(r);
+            return {r,r};
+        }
 
         else if (reg_is_changeable(r))
         {
@@ -689,6 +701,30 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
             int r2 = closure_at(r).reg_for_index_var();
             return incremental_evaluate2(r2, false);
         }
+        else if (reg_is_index_var_with_force_to_changeable(r) or reg_is_index_var_with_force_to_nonchangeable(r))
+        {
+            if (not has_force2(r))
+                force_reg_no_call(r);
+
+            int result = result_for_reg(r);
+            if (result > 0)
+                return {r, result};
+
+            int r2 = closure_at(r).reg_for_index_var();
+            auto [r3, result3] = incremental_evaluate2(r2, not has_force2(r));
+
+            // r gets its value from S.
+            prog_results[r] = result3;
+            if (not tokens[root_token].children.empty())
+            {
+                int t = tokens[root_token].children[0];
+                tokens[t].vm_result.add_value(r, non_computed_index);
+            }
+
+            total_changeable_eval_with_call++;
+            assert(not reg_is_unevaluated(r));
+            return {r, result3};
+        }
         else
             assert(reg_is_unevaluated(r));
 
@@ -707,6 +743,26 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
             int r2 = closure_at(r).reg_for_index_var();
 
+            auto [r3, result] = incremental_evaluate2(r2, not has_force2(r));
+
+            if (regs[r].forced_regs.empty())
+            {
+                // Return the end of the index_var chain.
+                // We used to update the index_var to point to the end of the chain.
+
+                mark_reg_index_var_no_force(r);
+                return {r3,result};
+            }
+            else
+            {
+                if (reg_is_to_changeable(r3))
+                    mark_reg_index_var_with_force_to_changeable(r);
+                else
+                    mark_reg_index_var_with_force_to_nonchangeable(r);
+
+                if (not reg_is_constant_no_force(r3))
+                    set_index_var_ref(r,r3);
+            }
             // Return the end of the index_var chain.
             // We used to update the index_var to point to the end of the chain.
 
@@ -716,8 +772,12 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
         // Check for WHNF *OR* heap variables
         else if (is_WHNF(expression_at(r)))
         {
-            mark_reg_constant_no_force(r);
+            if (regs[r].forced_regs.empty())
+                mark_reg_constant_no_force(r);
+            else
+                mark_reg_constant_with_force(r);
             assert( not has_step1(r) );
+            assert(not reg_is_unevaluated(r));
             return {r,r};
         }
 

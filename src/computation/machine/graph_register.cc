@@ -984,8 +984,7 @@ bool reg_heap::has_result2(int r) const
 
 void reg_heap::force_reg_no_call(int r)
 {
-    assert(reg_is_changeable(r));
-    assert(has_step2(r));
+    assert(reg_is_changeable_or_forcing(r));
     assert(has_result2(r));
     assert(not has_force2(r));
 
