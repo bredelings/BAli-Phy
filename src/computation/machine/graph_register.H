@@ -764,6 +764,7 @@ inline bool reg_heap::reg_is_to_changeable(int r) const
 
 inline bool reg_heap::has_force2(int r) const
 {
+    assert(reg_is_changeable_or_forcing(r));
     return prog_force_counts[r] > 0;
 }
 

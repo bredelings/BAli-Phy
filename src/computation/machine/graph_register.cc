@@ -946,7 +946,7 @@ const closure& reg_heap::access_value_for_reg(int R1) const
 
 bool reg_heap::reg_has_value(int r) const
 {
-    if (reg_is_constant_no_force(r) or reg_is_constant_with_force(r))
+    if (reg_is_constant_no_force(r))
         return true;
     else
         return has_result1(r);
@@ -1041,11 +1041,11 @@ int reg_heap::value_for_reg(int r) const
     assert(not reg_is_unevaluated(r));
     assert(not reg_is_index_var_no_force(r));
 
-    if (reg_is_constant_no_force(r) or reg_is_constant_with_force(r))
+    if (reg_is_constant_no_force(r))
         return r;
     else
     {
-        assert(reg_is_changeable(r) or reg_is_index_var_with_force_to_changeable(r) or reg_is_index_var_with_force_to_nonchangeable(r));
+        assert(reg_is_changeable_or_forcing(r));
         assert(has_result1(r));
         return result_for_reg(r);
     }
@@ -1712,9 +1712,9 @@ void reg_heap::check_used_regs_in_token(int t) const
         // Mark the reg as having a result in the delta.
         prog_temp[r].set(result_bit);
 
-        // No results for constant regs
+        // Only changeable or forcing regs can have results.
         if (result > 0)
-            assert(not reg_is_constant_no_force(r) and not reg_is_constant_with_force(r));
+            assert(reg_is_changeable_or_forcing(r));
     }
 
     bool root_child = tokens[t].parent == root_token and tokens[t].flags.test(0);
@@ -1731,9 +1731,9 @@ void reg_heap::check_used_regs_in_token(int t) const
 
         // If the step is unshared, the result must be unshared as well: this allows us to just walk unshared results.
 //        assert(((root_child and prog_unshare[r].test(unshare_result_bit)) or prog_temp[r].test(result_bit)) and prog_temp[r].test(step_bit));
-        // No steps for constant regs
+        // Only  changeable regs can have steps.
         if (step > 0)
-            assert(not reg_is_constant_no_force(r) and not reg_is_constant_with_force(r));
+            assert(reg_is_changeable(r));
     }
 
     // FIXME - nonlocal. The same result/step are not set in multiple places!
