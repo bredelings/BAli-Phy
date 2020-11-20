@@ -399,6 +399,8 @@ class RegOperationArgs2 final: public OperationArgs
 
     const bool first_eval;
 
+    const bool zero_count;
+
     const closure& current_closure() const {return memory().closure_stack.back();}
 
     bool evaluate_changeables() const {return true;}
@@ -413,6 +415,8 @@ class RegOperationArgs2 final: public OperationArgs
                 used_changeable = true;
                 if (first_eval)
                     M.set_forced_reg(r, r3);
+                if (zero_count)
+                    M.inc_count(r3);
             }
 
             return value;
@@ -431,6 +435,8 @@ class RegOperationArgs2 final: public OperationArgs
                 used_changeable = true;
                 if (first_eval)
                     M.set_used_reg(r, r3);
+                if (zero_count)
+                    M.inc_count(r3);
             }
 
             return value;
@@ -480,9 +486,50 @@ public:
     RegOperationArgs2* clone() const {return new RegOperationArgs2(*this);}
 
     RegOperationArgs2(int r_, int s_, int sp_, reg_heap& m)
-        :OperationArgs(m), r(r_), s(s_), sp(sp_), first_eval(m.reg_is_unevaluated(r))
+        :OperationArgs(m), r(r_), s(s_), sp(sp_), first_eval(m.reg_is_unevaluated(r)), zero_count(not M.has_force2(r))
         { }
 };
+
+int reg_heap::inc_count(int r)
+{
+    assert(reg_is_changeable(r));
+    assert(tokens[root_token].children.size() == 1);
+
+    if (not prog_unshare[r].test(unshare_count_bit))
+    {
+        prog_unshare[r].set(unshare_count_bit);
+        int t = tokens[root_token].children[0];
+        tokens[t].vm_force_count.add_value(r, prog_force_counts[r]);
+    }
+
+    int before = prog_force_counts[r];
+    prog_force_counts[r]++;
+    return before;
+}
+
+int reg_heap::dec_count(int r)
+{
+    assert(reg_is_changeable(r));
+    assert(tokens[root_token].children.size() == 1);
+
+    if (not prog_unshare[r].test(unshare_count_bit))
+    {
+        prog_unshare[r].set(unshare_count_bit);
+        int t = tokens[root_token].children[0];
+        tokens[t].vm_force_count.add_value(r, prog_force_counts[r]);
+    }
+
+    prog_force_counts[r]--;
+    int end = prog_force_counts[r];
+    return end;
+}
+
+pair<int,int> reg_heap::incremental_evaluate2_and_count(int r)
+{
+    auto result = incremental_evaluate2(r);
+    inc_count(r);
+    return result;
+}
 
 /// Evaluate r and look through index_var chains to return the first reg that is NOT a reg_var.
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not an reg_var.
@@ -542,11 +589,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 total_changeable_eval_with_result2++;
 
                 if (not has_force2(r))
-                {
-                    force_reg2(r);
-
-                    prog_unshare[r].reset(unshare_force_bit);
-                }
+                    force_reg_with_call(r);
 
                 int result = result_for_reg(r);
                 return {r, result};
@@ -582,7 +625,13 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 prog_unshare[r].reset(unshare_result_bit);
 
                 if (not has_force2(r))
-                    force_reg2(r);
+                {
+                    // We can't evaluate the call a second time.
+                    // That would double-count the calls arguments, if the call is unforced.
+                    if (reg_is_changeable(call))
+                        inc_count(call);
+                    force_reg_no_call(r);
+                }
 
                 prog_unshare[r].reset(unshare_force_bit);
 
@@ -702,6 +751,8 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 #endif
                         destroy_step_and_created_regs(s);
                     }
+                    if (reg_is_changeable(call))
+                        inc_count(call);
 
                     bool reshare_result = reshare_step and prog_results[r] == value;
                     if (not reshare_result)
@@ -710,7 +761,8 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                         set_result_for_reg(r);
                     }
 
-                    prog_unshare[r].reset();
+                    prog_unshare[r].reset(unshare_result_bit);
+                    prog_unshare[r].reset(unshare_step_bit);
 
                     return {r, value};
                 }
