@@ -379,6 +379,7 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     auto unshare_result = [&](int r)
                               {
+                                  //assert(reg_is_changeable(r));
                                   if (not has_result1(r))
                                       return;
                                   if (prog_unshare[r].none())
@@ -388,6 +389,7 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     auto unshare_step = [&](int r)
                             {
+                                //assert(reg_is_changeable(r));
                                 if (not has_result1(r))
                                     return;
                                 if (prog_unshare[r].none())
@@ -397,7 +399,7 @@ expression_ref reg_heap::unshare_regs2(int t)
                             };
 
     // 1. Mark unshared regs.  All modified regs should have STEP/RESULT/FORCE unshared.
-    for(auto [r,_]: delta_step)
+    for(auto [r,s]: delta_step)
         unshare_step(r);
 
 #ifndef NDEBUG
@@ -444,10 +446,13 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     // 5. Determine which invalid regs we can safely execute.
     auto& zero_count_regs = get_scratch_list();
+    auto& vm_result2 = tokens[t2].vm_result;
+    auto& vm_step2   = tokens[t2].vm_step;
     auto& vm_count2 = tokens[t2].vm_force_count;
 
     auto dec_force_count = [&](int r)
     {
+        assert(reg_is_changeable(r));
         if (not prog_unshare[r].test(unshare_count_bit))
         {
             prog_unshare[r].set(unshare_count_bit);
@@ -462,7 +467,46 @@ expression_ref reg_heap::unshare_regs2(int t)
             zero_count_regs.push_back(r);
     };
 
-    // 5a. Decrement counts for calls of invalid steps.
+    auto inc_force_count = [&](int r)
+    {
+        assert(reg_is_changeable(r));
+        if (not prog_unshare[r].test(unshare_count_bit))
+        {
+            prog_unshare[r].set(unshare_count_bit);
+            vm_count2.add_value(r, prog_force_counts[r]);
+        }
+
+        assert(prog_force_counts[r] >= 0);
+        prog_force_counts[r]++;
+
+        assert(has_step1(r));
+    };
+
+    // 5a. Increment counts for new calls, if count > 0
+    for(auto& [r,_]: tokens[t2].vm_step.delta())
+    {
+        if (has_force2(r))
+        {
+            int call = call_for_reg(r);
+            if (reg_is_changeable(call))
+                inc_force_count(call);
+        }
+    }
+
+    // 5b. Execute unconditionally-executed regs here.
+
+    // 5c. Decrement calls from bumped steps
+    for(auto& [r,s]: tokens[t2].vm_step.delta())
+    {
+        if (s > 0)
+        {
+            int call = steps[s].call;
+            if (reg_is_changeable(call))
+                dec_force_count(call);
+        }
+    }
+
+    // 5d.1. Decrement counts for calls of invalid steps.
     int n_invalid_control_flow = 0;
     for(int r : unshared_regs)
     {
@@ -485,9 +529,7 @@ expression_ref reg_heap::unshare_regs2(int t)
     else
         total_valid_control_flow++;
 
-    std::cerr<<"reroot: n_invalid_control_flow = "<<n_invalid_control_flow<<"\n";
-
-    // 5b. Iteratively decrement counts from steps of zero_count regs.
+    // 5d.2. Iteratively decrement counts from steps of zero_count regs.
     for(int i=0;i<zero_count_regs.size();i++)
     {
         int r = zero_count_regs[i];
@@ -506,41 +548,63 @@ expression_ref reg_heap::unshare_regs2(int t)
         }
     }
 
-    std::cerr<<"reroot: n_zero_count = "<<zero_count_regs.size()<<"\n";
-
     // 6.  Evaluate the program
     for(int r: unshared_regs | views::reverse)
-        if (prog_force_counts[r] > 0 and prog_unshare[r].test(unshare_result_bit))
+        if (has_force2(r) and prog_unshare[r].test(unshare_result_bit))
+        {
             incremental_evaluate2(r);
+            assert(has_result2(r));
+        }
+
+    for(int r: unshared_regs | views::reverse)
+        if (has_force2(r))
+            assert(has_result2(r));
 
     auto result = lazy_evaluate2(heads[*program_result_head]).exp;
 
-    // 7. Restore force_counts from previous program
-    for(auto [r,count]: tokens[t2].vm_force_count.delta())
-    {
-        prog_force_counts[r] = count;
-        prog_unshare[r].reset(unshare_count_bit);
-    }
-    tokens[t2].vm_force_count.delta().clear();
-    release_scratch_list(); // zero_count_regs
+    // 8. Clear unshare_count_bit and remove no-effect override from delta-force-count
 
-    // 8. Flush pending unshares and clear unsharing bits.
-    auto& vm_result2 = tokens[t2].vm_result;
-    auto& vm_step2   = tokens[t2].vm_step;
-    for(int r: unshared_regs)
+    for(auto [r,_]: vm_count2.delta())
+        prog_unshare[r].reset(unshare_count_bit);
+
+    auto count_changed = [&](const pair<int,int>& p) {auto [r,count] = p; return count != prog_force_counts[r];};
+    filter_unordered_vector(vm_count2.delta(), count_changed);
+
+    // 9. Bump zero-count regs to child token, and clear result and step bits.
+    for(int r: zero_count_regs)
     {
-        if (prog_unshare[r].test(unshare_result_bit))
+        // Any regs that still have invalid_step or invalid_result should be zero-count,
+        // so we can clear the bits here.
+        prog_unshare[r].reset();
+
+        if (has_force2(r)) continue;
+
+        if (has_result1(r))
         {
             vm_result2.add_value(r, prog_results[r]);
             prog_results[r] = non_computed_index;
         }
-        if (prog_unshare[r].test(unshare_step_bit))
+        if (has_step1(r))
         {
             vm_step2.add_value(r, prog_steps[r]);
             prog_steps[r] = non_computed_index;
         }
-        prog_unshare[r].reset();
     }
+    release_scratch_list(); // zero_count_regs
+
+
+#ifdef DEBUG_MACHINE
+    for(int r=1;r<regs.size();r++)
+    {
+        assert(prog_unshare[r].none());
+        if (not regs.is_free(r))
+            assert(prog_force_counts[r] == force_count(r));
+        if (has_step1(r))
+            assert(prog_force_counts[r] > 0);
+        if (prog_force_counts[r] > 0)
+            assert(has_result1(r));
+    }
+#endif
 
     // 9. Handle moving steps out of the root.
     for(auto [_,s]: vm_step2.delta())
@@ -556,6 +620,12 @@ expression_ref reg_heap::unshare_regs2(int t)
     do_pending_effect_unregistrations();
 
     release_scratch_list(); // unshared_regs
+
+    // 10. Mark the current token as a previous_program_token.
+    auto t3 = unset_prev_prog_token(t);
+    set_prev_prog_token(t, prev_prog_token_t(t,0,true));
+    if (t3)
+        release_unreferenced_tips(*t3);
 
     total_results_invalidated += (vm_result.delta().size() - n_delta_result0);
     total_steps_invalidated += (vm_step.delta().size() - n_delta_step0);

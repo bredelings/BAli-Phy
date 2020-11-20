@@ -440,17 +440,17 @@ int reg_heap::force_count(int r) const
 
     // Look at steps that USE the root's result
     for(auto& [r2,_]: regs[r].used_by)
-        if (prog_steps[r2] > 0)
+        if (prog_force_counts[r2] > 0)
             count++;
 
     // Look at steps that FORCE the root's result
     for(auto& [r2,_]: regs[r].forced_by)
-        if (prog_steps[r2] > 0)
+        if (prog_force_counts[r2] > 0)
             count++;
 
     // Look at steps that CALL the root's result
     for(auto& s2: regs[r].called_by)
-        if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
+        if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2 and prog_force_counts[r2] > 0)
             count++;
 
     return count;
@@ -469,293 +469,6 @@ int reg_heap::force_count(int r) const
  *        back to t2, it also seems like the root should be at t2 to modify prog_force_count.
  *
  */
-
-int reg_heap::unmap_unforced_steps(int c)
-{
-    // 0. Record original token for context c.
-    int t1 = token_for_context(c);
-
-    // 1. Leave new marker context c2 at t1 to avoid t1 being deleted.
-    int c2 = copy_context(c);
-
-    // 2. Switch context c to new child token of t1
-    switch_to_child_token(c, token_type::unmap);
-
-    // 3. Reroot at the new child context.
-    reroot_at_context(c);
-
-    // 4. Define function to check and unmap
-    assert(token_is_used(t1));
-    auto& vm_force_count = tokens[t1].vm_force_count;
-    auto& vm_result = tokens[t1].vm_result;
-    auto& vm_step = tokens[t1].vm_step;
-
-    auto update_force_count = [&](int r, int count)
-                                  {
-                                      assert(reg_is_changeable(r));
-                                      assert(count >= 0);
-                                      assert(prog_force_counts[r] != count);
-                                      if (not prog_temp[r].test(0))
-                                      {
-                                          prog_temp[r].set(0);
-                                          vm_force_count.add_value(r, prog_force_counts[r]);
-                                      }
-                                      prog_force_counts[r] = count;
-                                  };
-
-    assert(token_is_used(t1));
-    auto check_unmap = [&,this](int r) {
-                           if (has_step1(r) and prog_force_counts[r] == 0)
-                           {
-                               vm_step.add_value(r, prog_steps[r]);
-                               vm_result.add_value(r, prog_results[r]);
-
-                               prog_steps[r] = non_computed_index;
-                               prog_results[r] = non_computed_index;
-                           }
-                       };
-
-    auto inc_force_count = [&](int r)
-                               {
-                                   update_force_count(r, prog_force_counts[r]+1);
-                               };
-
-    auto dec_force_count = [&,this](int r)
-                               {
-                                   update_force_count(r, prog_force_counts[r]-1);
-                                   check_unmap(r);
-                               };
-
-    // 5. Find all the unforced steps.
-
-    // 5a. Walk all the delta_steps from the PPET to the root, recording the step that would
-    //     be in the PPET if we rerooted to it.
-    int ppe_token = get_prev_prog_token_for_context(c).value();
-
-    // This token's child has type reverse_execute, making it an execute_token, in a sense.  Its type is reverse_unmap.
-    assert(tokens[root_token].children.size() == 1);
-    int root_child_token = tokens[root_token].children[0];
-
-    // This is the only grandchild of the root.  It is the place we were when we decided to evaluate the program.
-    assert(tokens[root_child_token].children.size() == 1);
-    int root_grandchild_token = tokens[root_child_token].children[0];
-
-    vector<pair<int,int>> modified_steps;
-    optional<int> n_steps_between_progs;
-    for(int path_token = ppe_token; path_token != root_grandchild_token; path_token = tokens[path_token].parent)
-    {
-        for(auto& [r,s]: tokens[path_token].vm_step.delta())
-        {
-            // If this is the first time we've seen this reg
-            if (not prog_temp[r].test(1))
-            {
-                prog_temp[r].set(1);
-                modified_steps.push_back({r,s});
-            }
-        }
-    }
-    n_steps_between_progs = modified_steps.size();
-    for(auto& [r,s]: tokens[root_grandchild_token].vm_step.delta())
-    {
-        // If this is the first time we've seen this reg
-        if (not prog_temp[r].test(1))
-        {
-            prog_temp[r].set(1);
-            modified_steps.push_back({r,s});
-        }
-    }
-    assert(n_steps_between_progs);
-
-    // 5b. Increment force counts for new steps
-    for(const auto& [r,s2]: modified_steps)
-    {
-        int s1 = prog_steps[r];
-
-        if (s1 > 0)
-        {
-            if (s1 == s2) continue;
-
-            int call1 = steps[s1].call;
-            int call2 = -1;
-            if (s2 < 0)
-            {
-                for(auto& [r2,_]: regs[r].used_regs)
-                    inc_force_count(r2);
-
-                for(auto& [r2,_]: regs[r].forced_regs)
-                    inc_force_count(r2);
-            }
-            else
-                call2 = steps[s2].call;
-
-            if (not reg_is_constant(call1) and call1 != call2)
-                inc_force_count(call1);
-        }
-    }
-
-    // We currently record regs to unmap on this list instead of just unmapping them directly.
-    // This is because:
-    // (i)  we are using prog_steps to guide how we handle modified_steps below, and unmapping
-    //      things modifies prog_steps.
-    // (ii) we want to check the force counts after we decrement counts from old steps, but
-    //      before we modify the counts by unmapping things.
-    auto& regs_to_unmap = get_scratch_list();
-
-    // 5c. First find regs that start with zero force count.
-    //     We need to do this before decrementing to avoid putting regs on the list twice.
-    for(int i=0; i < *n_steps_between_progs; i++)
-    {
-        auto [r,s] = modified_steps[i];
-        if (has_step1(r) and prog_force_counts[r] == 0)
-            regs_to_unmap.push_back(r);
-    }
-
-    // 5d. Second, decrement force counts for old steps, and find unforced regs
-    //     that started with positive force count.
-    auto dec_force_count_ = [&,this](int r)
-                               {
-                                   update_force_count(r, prog_force_counts[r]-1);
-                                   if (has_step1(r) and prog_force_counts[r] == 0)
-                                       regs_to_unmap.push_back(r);
-                               };
-
-    for(const auto& [r,s2]: modified_steps)
-    {
-        int s1 = prog_steps[r];
-
-        if (s2 > 0)
-        {
-            if (s1 == s2) continue;
-
-            int call1 = -1;
-            int call2 = steps[s2].call;
-            if (s1 < 0)
-            {
-                for(auto& [r2,_]: regs[r].used_regs)
-                    dec_force_count_(r2);
-
-                for(auto& [r2,_]: regs[r].forced_regs)
-                    dec_force_count_(r2);
-            }
-            else
-                call1 = steps[s1].call;
-
-            if (not reg_is_constant(call2) and call1 != call2)
-                dec_force_count_(call2);
-        }
-    }
-
-#ifdef DEBUG_MACHINE
-    for(int r=1;r<regs.size();r++)
-        if (not regs.is_free(r))
-            assert(prog_force_counts[r] == force_count(r));
-#endif
-
-    for(int r: regs_to_unmap)
-    {
-        // Don't unmap regs twice!
-        assert(has_step1(r));
-
-        vm_step.add_value(r, prog_steps[r]);
-        vm_result.add_value(r, prog_results[r]);
-
-        prog_steps[r] = non_computed_index;
-        prog_results[r] = non_computed_index;
-    }
-
-    release_scratch_list();
-
-    // 6. Begin iteratively unmapping steps.
-    const auto& delta_step   = vm_step.delta();
-    for(int i=0;i<delta_step.size();i++)
-    {
-        // Don't use a reference, since delta_step can be moved, leaving an invalid reference.
-        auto [r,s] = delta_step[i];
-
-        // 6a. Unregister any effects marked on the unmapped steps!
-        if (steps[s].has_effect())
-        {
-            if (steps[s].has_pending_effect_registration())
-                unmark_effect_to_register_at_step(s);
-            else
-                unregister_effect_at_step(s);
-        }
-
-        // 6b. Check if any of used used, forced, or called steps are now unforced.
-        for(auto& [r2,_]: regs[r].used_regs)
-            dec_force_count(r2);
-
-        for(auto& [r2,_]: regs[r].forced_regs)
-            dec_force_count(r2);
-
-        int call = steps[s].call;
-        if (not reg_is_constant(call))
-            dec_force_count(call);
-    }
-
-    // 7a. Clear mark that force count has changed between the root token and the PPET.
-    for(auto [r,_]: vm_force_count.delta())
-        prog_temp[r].reset(0);
-    // 7b. Clear mark that the step has changed between the root token and the PPET.
-    for(auto [r,_]: modified_steps)
-        prog_temp[r].reset(1);
-
-#ifdef DEBUG_MACHINE
-    for(int r=1;r<regs.size();r++)
-    {
-        if (not regs.is_free(r))
-            assert(prog_force_counts[r] == force_count(r));
-        if (has_step1(r))
-            assert(prog_force_counts[r] > 0);
-    }
-#endif
-
-#ifndef NDEBUG
-    for(auto [r,s]: delta_step)
-    {
-        for(int r2: steps[s].created_regs)
-            assert(not has_step1(r2));
-    }
-#endif
-
-    // Remove deltas from force_count where don't change anything.
-    auto& delta_force_count = vm_force_count.delta();
-    for(int i=0;i<delta_force_count.size();)
-    {
-        auto [r,count] = delta_force_count[i];
-
-        if (count == prog_force_counts[r])
-        {
-            if (i + 1 < delta_force_count.size())
-                std::swap(delta_force_count[i], delta_force_count.back());
-            delta_force_count.pop_back();
-        }
-        else
-            i++;
-    }
-
-    assert(root_token == token_for_context(c));
-
-    // 8. Mark the current token as a previous_program_token.
-    int t = token_for_context(c);
-    auto t2 = unset_prev_prog_token(t);
-    set_prev_prog_token(t, prev_prog_token_t(t,0,true));
-    if (t2)
-        release_unreferenced_tips(*t2);
-
-    // 9. Release marker context c2
-    release_context(c2);
-
-    check_tokens();
-
-#ifdef DEBUG_MACHINE
-    for(int r=1;r<regs.size();r++)
-        if (not regs.is_free(r))
-            assert(prog_force_counts[r] == force_count(r));
-#endif
-
-    return token_for_context(c);
-}
 
 void reg_heap::first_evaluate_program(int c)
 {
@@ -934,10 +647,13 @@ expression_ref reg_heap::evaluate_program(int c)
     {
         // 2. Actually evaluate the program.
         unshare_and_evaluate_program(c);
-        
-        // 3. Remove unforced steps.
-        unmap_unforced_steps(c);
     }
+
+#ifdef DEBUG_MACHINE
+    for(int r=1;r<regs.size();r++)
+        if (not regs.is_free(r))
+            assert(prog_force_counts[r] == force_count(r));
+#endif
 
     // 4. Perform any pending registration or unregistration of effects.
     do_pending_effect_registrations();
@@ -1235,29 +951,24 @@ bool reg_heap::has_result1(int r) const
 
 bool reg_heap::has_result2(int r) const
 {
-    return (not prog_unshare[r].test(unshare_result_bit)) and result_for_reg(r)>0;
+    return (not prog_unshare[r].test(unshare_result_bit)) and has_result1(r);
 }
 
-void reg_heap::force_reg2(int r)
+void reg_heap::force_reg_no_call(int r)
 {
     assert(reg_is_changeable(r));
     assert(has_step2(r));
     assert(has_result2(r));
     assert(not has_force2(r));
 
-    int s = step_index_for_reg(r);
-
-    assert(reg_is_constant(steps[s].call) or reg_is_changeable(steps[s].call));
-    if (reg_is_changeable(steps[s].call))
-        assert(has_result2(steps[s].call));
-
     // We can't use a range-for here because regs[r] can be moved
     // during the loop if we do evaluation.
     for(int i=0; i < regs[r].used_regs.size(); i++)
     {
         auto [r2,_] = regs[r].used_regs[i];
-        if (not has_force2(r2))
-            incremental_evaluate2(r2);
+
+        incremental_evaluate2_and_count(r2);
+
         assert(has_result2(r2));
         assert(has_force2(r2));
     }
@@ -1265,19 +976,34 @@ void reg_heap::force_reg2(int r)
     for(int i=0; i < regs[r].forced_regs.size(); i++)
     {
         auto [r2,_] = regs[r].forced_regs[i];
-        if (not has_force2(r2))
-            incremental_evaluate2(r2);
+
+        incremental_evaluate2_and_count(r2);
+
         assert(has_result2(r2));
         assert(has_force2(r2));
     }
+}
 
-    // If R2 is WHNF then we are done
+void reg_heap::force_reg_with_call(int r)
+{
+    assert(reg_is_changeable(r));
+    assert(has_step2(r));
+    assert(has_result2(r));
+    assert(not has_force2(r));
+
+    force_reg_no_call(r);
+
+    int s = step_index_for_reg(r);
     int call = steps[s].call;
     assert(call > 0);
-    if (not reg_is_constant(call))
+
+    assert(reg_is_constant(call) or reg_is_changeable(call));
+
+    // If R2 is WHNF then we are done
+    if (reg_is_changeable(call))
     {
-        if (not has_force2(call))
-            incremental_evaluate2(call);
+        assert(has_result2(call));
+        incremental_evaluate2_and_count(call);
         assert(has_result2(call));
         assert(has_force2(call));
     }
@@ -1954,7 +1680,7 @@ void reg_heap::check_used_regs_in_token(int t) const
         prog_temp[r].set(step_bit);
 
         // If the step is unshared, the result must be unshared as well: this allows us to just walk unshared results.
-        assert(((root_child and prog_unshare[r].test(unshare_result_bit)) or prog_temp[r].test(result_bit)) and prog_temp[r].test(step_bit));
+//        assert(((root_child and prog_unshare[r].test(unshare_result_bit)) or prog_temp[r].test(result_bit)) and prog_temp[r].test(step_bit));
         // No steps for constant regs
         if (step > 0)
             assert(not reg_is_constant(r));
