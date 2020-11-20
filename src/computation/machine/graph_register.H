@@ -275,8 +275,6 @@ private:
 
     int force_count(int r) const;
 
-    int unmap_unforced_steps(int );
-
 public:
     expression_ref evaluate_program(int c);
 
@@ -533,10 +531,13 @@ public:
     bool reg_has_value(int r) const;
     int follow_index_var(int r) const;
     bool has_force2(int r) const;
+    int inc_count(int r);
+    int dec_count(int r);
     int result_for_reg(int r) const;
     bool reg_has_call(int r) const;
     int call_for_reg(int r) const;
-    void force_reg2(int r);
+    void force_reg_no_call(int r);
+    void force_reg_with_call(int r);
 
     const closure& access_value_for_reg(int R1) const;
 
@@ -585,6 +586,8 @@ public:
     std::pair<int,int> incremental_evaluate1(int R);
 
     std::pair<int,int> incremental_evaluate2(int R);
+
+    std::pair<int,int> incremental_evaluate2_and_count(int R);
 
     std::optional<int> precomputed_value_in_context(int R, int c);
 
@@ -686,11 +689,7 @@ inline void reg_heap::mark_reg_index_var(int r)
 
 inline bool reg_heap::has_force2(int r) const
 {
-    /* A reg is force only if
-     * - It is not marked unforced (unshare_force_bit)
-     * - It is evaluated in the PPET (prog_results)
-     */
-    return (not prog_unshare[r].test(unshare_force_bit)) and prog_results[r] > 0;
+    return prog_force_counts[r] > 0;
 }
 
 #endif
