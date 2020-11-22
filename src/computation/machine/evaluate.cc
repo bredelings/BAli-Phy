@@ -408,15 +408,13 @@ class RegOperationArgs2 final: public OperationArgs
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
     int evaluate_reg_force(int r2)
         {
-            auto [r3, value] = M.incremental_evaluate2(r2);
+            auto [r3, value] = M.incremental_evaluate2(r2, zero_count);
 
             if (M.reg_is_changeable(r3))
             {
                 used_changeable = true;
                 if (first_eval)
                     M.set_forced_reg(r, r3);
-                if (zero_count)
-                    M.inc_count(r3);
             }
 
             return value;
@@ -426,7 +424,7 @@ class RegOperationArgs2 final: public OperationArgs
     int evaluate_reg_to_reg(int r2)
         {
             // Compute the value, and follow index_var chains (which are not changeable).
-            auto [r3, value] = M.incremental_evaluate2(r2);
+            auto [r3, value] = M.incremental_evaluate2(r2, zero_count);
 
             // Note that although r2 is newly used, r3 might be already used if it was 
             // found from r2 through a non-changeable reg_var chain.
@@ -435,8 +433,6 @@ class RegOperationArgs2 final: public OperationArgs
                 used_changeable = true;
                 if (first_eval)
                     M.set_used_reg(r, r3);
-                if (zero_count)
-                    M.inc_count(r3);
             }
 
             return value;
@@ -524,16 +520,9 @@ int reg_heap::dec_count(int r)
     return end;
 }
 
-pair<int,int> reg_heap::incremental_evaluate2_and_count(int r)
-{
-    auto result = incremental_evaluate2(r);
-    inc_count(r);
-    return result;
-}
-
 /// Evaluate r and look through index_var chains to return the first reg that is NOT a reg_var.
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not an reg_var.
-pair<int,int> reg_heap::incremental_evaluate2(int r)
+pair<int,int> reg_heap::incremental_evaluate2(int r, bool do_count)
 {
     assert(execution_allowed());
 
@@ -550,6 +539,9 @@ pair<int,int> reg_heap::incremental_evaluate2(int r)
     assert(regs.access(r).flags.test(3));
     regs.access(r).flags.flip(3);
 #endif
+    int r2 = result.first;
+    if (do_count and reg_is_changeable(r2))
+        inc_count(r2);
     return result;
 }
 
@@ -600,7 +592,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
             {
                 int s = step_index_for_reg(r);
                 // Evaluate S, looking through unchangeable redirections
-                auto [call, value] = incremental_evaluate2(steps[s].call);
+                auto [call, value] = incremental_evaluate2(steps[s].call, not has_force2(r));
 
                 // If computation_for_reg(r).call can be evaluated to refer to S w/o moving through any changable operations, 
                 // then it should be safe to change computation_for_reg(r).call to refer to S, even if r is changeable.
@@ -625,13 +617,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 prog_unshare[r].reset(unshare_result_bit);
 
                 if (not has_force2(r))
-                {
-                    // We can't evaluate the call a second time.
-                    // That would double-count the calls arguments, if the call is unforced.
-                    if (reg_is_changeable(call))
-                        inc_count(call);
                     force_reg_no_call(r);
-                }
 
                 prog_unshare[r].reset(unshare_force_bit);
 
@@ -642,7 +628,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
         else if (reg_is_index_var(r))
         {
             int r2 = closure_at(r).reg_for_index_var();
-            return incremental_evaluate2(r2);
+            return incremental_evaluate2(r2, false);
         }
         else
             assert(reg_is_unevaluated(r));
@@ -665,7 +651,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
             // Return the end of the index_var chain.
             // We used to update the index_var to point to the end of the chain.
 
-            return incremental_evaluate2(r2);
+            return incremental_evaluate2(r2, false);
         }
 
         // Check for WHNF *OR* heap variables
@@ -729,7 +715,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                         assert(not has_step1(r2));
                     }
 
-                    auto [call,value] = incremental_evaluate2(r2);
+                    auto [call,value] = incremental_evaluate2(r2, true);
                     closure_stack.pop_back();
 
                     assert(not prog_unshare[r].test(unshare_step_bit) or prog_steps[r] > 0);
@@ -751,8 +737,6 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 #endif
                         destroy_step_and_created_regs(s);
                     }
-                    if (reg_is_changeable(call))
-                        inc_count(call);
 
                     bool reshare_result = reshare_step and prog_results[r] == value;
                     if (not reshare_result)

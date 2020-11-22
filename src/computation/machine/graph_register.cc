@@ -967,7 +967,7 @@ void reg_heap::force_reg_no_call(int r)
     {
         auto [r2,_] = regs[r].used_regs[i];
 
-        incremental_evaluate2_and_count(r2);
+        incremental_evaluate2(r2, true);
 
         assert(has_result2(r2));
         assert(has_force2(r2));
@@ -977,7 +977,7 @@ void reg_heap::force_reg_no_call(int r)
     {
         auto [r2,_] = regs[r].forced_regs[i];
 
-        incremental_evaluate2_and_count(r2);
+        incremental_evaluate2(r2, true);
 
         assert(has_result2(r2));
         assert(has_force2(r2));
@@ -1003,7 +1003,7 @@ void reg_heap::force_reg_with_call(int r)
     if (reg_is_changeable(call))
     {
         assert(has_result2(call));
-        incremental_evaluate2_and_count(call);
+        incremental_evaluate2(call, true);
         assert(has_result2(call));
         assert(has_force2(call));
     }
@@ -2082,7 +2082,7 @@ const closure& reg_heap::lazy_evaluate1(int& R)
 
 const closure& reg_heap::lazy_evaluate2(int& R)
 {
-    auto [R2, value] = incremental_evaluate2(R);
+    auto [R2, value] = incremental_evaluate2(R,false);
     R = R2;
     return closure_at(value);
 }
