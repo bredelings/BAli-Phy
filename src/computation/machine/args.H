@@ -41,11 +41,9 @@ public:
 
     int evaluate_slot_unchangeable(int slot);
 
-    // evaluate_reg( ) and friends will throw no_context( )
+    // evaluate_reg_*( ) and friends will throw no_context( )
     // when evaluating a modifiable or other changeable reg
     // in an unchangeable context
-    virtual int evaluate_reg(int) = 0;
-
     virtual int evaluate_reg_force(int) = 0;
 
     int evaluate_slot_force(int);
