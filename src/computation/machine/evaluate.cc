@@ -86,13 +86,6 @@ class RegOperationArgs final: public OperationArgs
     bool evaluate_changeables() const {return true;}
 
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
-    int evaluate_reg(int r2)
-        {
-            auto [_, value] = M.incremental_evaluate1(r2);
-            return value;
-        }
-
-    /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
     int evaluate_reg_force(int r2)
         {
             auto [r3, value] = M.incremental_evaluate1(r2);
@@ -409,13 +402,6 @@ class RegOperationArgs2 final: public OperationArgs
     const closure& current_closure() const {return memory().closure_stack.back();}
 
     bool evaluate_changeables() const {return true;}
-
-    /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
-    int evaluate_reg(int r2)
-        {
-            auto [_, value] = M.incremental_evaluate2(r2);
-            return value;
-        }
 
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
     int evaluate_reg_force(int r2)
@@ -762,7 +748,7 @@ class RegOperationArgsUnchangeable final: public OperationArgs
 
     bool evaluate_changeables() const {return false;}
 
-    /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
+    // common worker called when either using or forcing.
     int evaluate_reg(int r2)
         {
             int r3 = memory().incremental_evaluate_unchangeable(r2);
