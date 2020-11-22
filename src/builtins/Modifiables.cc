@@ -54,7 +54,7 @@ expression_ref maybe_modifiable_structure(reg_heap& M, int r1)
     }
 
     // r2 can only be constant or changeable, not unknown or index_var.
-    assert(M.reg_is_changeable(r2));
+    assert(M.reg_is_changeable(r2) or M.reg_is_unevaluated(r2));
 
     // 3. If this is a modifiable, stop there and return that.
     if (is_modifiable(M[r2].exp))
