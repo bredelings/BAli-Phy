@@ -766,7 +766,7 @@ class RegOperationArgsUnchangeable final: public OperationArgs
     int evaluate_reg(int r2)
         {
             int r3 = memory().incremental_evaluate_unchangeable(r2);
-            if (M.reg_is_changeable(r3))
+            if (M.reg_is_changeable(r3) or M.reg_is_unevaluated(r3))
                 throw no_context();
             return r3;
         }
@@ -906,7 +906,6 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
             }
             catch (no_context&)
             {
-                mark_reg_changeable(r);
                 return r;
             }
             catch (error_exception& e)
