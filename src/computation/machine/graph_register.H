@@ -585,9 +585,7 @@ public:
 
     std::pair<int,int> incremental_evaluate1(int R);
 
-    std::pair<int,int> incremental_evaluate2(int R);
-
-    std::pair<int,int> incremental_evaluate2_and_count(int R);
+    std::pair<int,int> incremental_evaluate2(int R, bool);
 
     std::optional<int> precomputed_value_in_context(int R, int c);
 
