@@ -1,9 +1,9 @@
+#include "range/v3/all.hpp"
 #include <iostream>
 #include "graph_register.H"
 #include <algorithm>
 #include "util/range.H"
 #include "mapping.H"
-#include "range/v3/all.hpp"
 
 using std::string;
 using std::vector;
