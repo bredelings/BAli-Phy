@@ -377,6 +377,8 @@ find_slice_boundaries_stepping_out(double x0,slice_function& g,double logy, doub
     double u = uniform()*w;
     double L = x0 - u;
     double R = x0 + (w-u);
+    assert(L < x0);
+    assert(x0 < R);
 
     // Expand the interval until its ends are outside the slice, or until
     // the limit on steps is reached.
@@ -489,6 +491,7 @@ double slice_sample_(double x0, slice_function& g, double w, int m)
 
     // Find the initial interval to sample from.
 
+    assert(x0 + w > x0);
     std::pair<double,double> interval = find_slice_boundaries_stepping_out(x0,g,logy,w,m);
     double L = interval.first;
     double R = interval.second;
