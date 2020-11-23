@@ -187,7 +187,7 @@ class Tester:
         return test_dirs
 
     def run_test_cmd(self,test_subdir):
-        print("Running test:",test_subdir," ",end="")
+        print("Running test:",test_subdir," ",end="", flush=True)
         rundir = self.rundir_for_test(test_subdir)
         prefix = self.method.prefix() + "obtained-"
         obt_outf = os.path.join(rundir, prefix + 'output')
