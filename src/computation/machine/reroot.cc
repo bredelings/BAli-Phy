@@ -446,9 +446,9 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     // 5. Determine which invalid regs we can safely execute.
     auto& zero_count_regs = get_scratch_list();
-    auto& vm_result2 = tokens[t2].vm_result;
-    auto& vm_step2   = tokens[t2].vm_step;
-    auto& vm_count2 = tokens[t2].vm_force_count;
+    auto* vm_result2 = &tokens[t2].vm_result;
+    auto* vm_step2   = &tokens[t2].vm_step;
+    auto* vm_count2  = &tokens[t2].vm_force_count;
 
     auto dec_force_count = [&](int r)
     {
@@ -456,7 +456,7 @@ expression_ref reg_heap::unshare_regs2(int t)
         if (not prog_unshare[r].test(unshare_count_bit))
         {
             prog_unshare[r].set(unshare_count_bit);
-            vm_count2.add_value(r, prog_force_counts[r]);
+            vm_count2->add_value(r, prog_force_counts[r]);
         }
 
         prog_force_counts[r]--;
@@ -467,36 +467,21 @@ expression_ref reg_heap::unshare_regs2(int t)
             zero_count_regs.push_back(r);
     };
 
-    auto inc_force_count = [&](int r)
-    {
-        assert(reg_is_changeable(r));
-        if (not prog_unshare[r].test(unshare_count_bit))
-        {
-            prog_unshare[r].set(unshare_count_bit);
-            vm_count2.add_value(r, prog_force_counts[r]);
-        }
-
-        assert(prog_force_counts[r] >= 0);
-        prog_force_counts[r]++;
-
-        assert(has_step1(r));
-    };
-
     // 5a. Increment counts for new calls, if count > 0
-    for(auto& [r,_]: tokens[t2].vm_step.delta())
+    for(auto& [r,_]: vm_step2->delta())
     {
         if (has_force2(r))
         {
             int call = call_for_reg(r);
             if (reg_is_changeable(call))
-                inc_force_count(call);
+                inc_count(call);
         }
     }
 
     // 5b. Execute unconditionally-executed regs here.
 
     // 5c. Decrement calls from bumped steps
-    for(auto& [r,s]: tokens[t2].vm_step.delta())
+    for(auto& [r,s]: vm_step2->delta())
     {
         if (s > 0)
         {
@@ -542,6 +527,7 @@ expression_ref reg_heap::unshare_regs2(int t)
         if (not prog_unshare[r].test(unshare_step_bit))
         {
             int s = prog_steps[r];
+            assert(s > 0 and s < steps.size());
             int call = steps[s].call;
             if (reg_is_changeable(call))
                 dec_force_count(call);
@@ -562,13 +548,17 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     auto result = lazy_evaluate2(heads[*program_result_head]).exp;
 
+    vm_result2 = &tokens[t2].vm_result;
+    vm_step2   = &tokens[t2].vm_step;
+    vm_count2  = &tokens[t2].vm_force_count;
+
     // 8. Clear unshare_count_bit and remove no-effect override from delta-force-count
 
-    for(auto [r,_]: vm_count2.delta())
+    for(auto [r,_]: vm_count2->delta())
         prog_unshare[r].reset(unshare_count_bit);
 
     auto count_changed = [&](const pair<int,int>& p) {auto [r,count] = p; return count != prog_force_counts[r];};
-    filter_unordered_vector(vm_count2.delta(), count_changed);
+    filter_unordered_vector(vm_count2->delta(), count_changed);
 
     // 9. Bump zero-count regs to child token, and clear result and step bits.
     for(int r: zero_count_regs)
@@ -581,12 +571,12 @@ expression_ref reg_heap::unshare_regs2(int t)
 
         if (has_result1(r))
         {
-            vm_result2.add_value(r, prog_results[r]);
+            vm_result2->add_value(r, prog_results[r]);
             prog_results[r] = non_computed_index;
         }
         if (has_step1(r))
         {
-            vm_step2.add_value(r, prog_steps[r]);
+            vm_step2->add_value(r, prog_steps[r]);
             prog_steps[r] = non_computed_index;
         }
     }
@@ -607,7 +597,7 @@ expression_ref reg_heap::unshare_regs2(int t)
 #endif
 
     // 9. Handle moving steps out of the root.
-    for(auto [_,s]: vm_step2.delta())
+    for(auto [_,s]: vm_step2->delta())
     {
         if (s > 0 and steps.access(s).has_effect())
         {
@@ -627,11 +617,11 @@ expression_ref reg_heap::unshare_regs2(int t)
     if (t3)
         release_unreferenced_tips(*t3);
 
-    total_results_invalidated += (vm_result.delta().size() - n_delta_result0);
-    total_steps_invalidated += (vm_step.delta().size() - n_delta_step0);
+    total_results_invalidated += (vm_result2->delta().size() - n_delta_result0);
+    total_steps_invalidated += (vm_step2->delta().size() - n_delta_step0);
 
-    total_results_scanned += vm_result.delta().size();
-    total_steps_scanned += vm_step.delta().size();
+    total_results_scanned += vm_result2->delta().size();
+    total_steps_scanned += vm_step2->delta().size();
 
 #if DEBUG_MACHINE >= 2
     check_used_regs();
