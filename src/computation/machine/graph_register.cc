@@ -178,6 +178,16 @@ Step::Step(Step&& S) noexcept
      flags ( S.flags )
 { }
 
+void reg::mark_unconditionally_evaluated()
+{
+    flags.set(reg_is_always_evaluated_bit);
+}
+
+bool reg::is_unconditionally_evaluated() const
+{
+    return flags.test(reg_is_always_evaluated_bit);
+}
+
 void reg::clear()
 {
     C.clear();
@@ -546,6 +556,44 @@ void reg_heap::first_evaluate_program(int c)
     {
         prog_force_counts[program_result_reg]++;
         assert(steps.size() > 0);
+    }
+
+    // 5. Mark unconditionally-evaluated regs.
+    if (reg_is_changeable_or_forcing(program_result_reg))
+    {
+        auto & unconditionally_evaluated_regs = get_scratch_list();
+
+        auto use_reg_unconditionally = [&](int r)
+        {
+            if (not regs[r].is_unconditionally_evaluated())
+            {
+                regs[r].mark_unconditionally_evaluated();
+                unconditionally_evaluated_regs.push_back(r);
+            }
+        };
+
+        use_reg_unconditionally(program_result_reg);
+
+        for(int i=0;i<unconditionally_evaluated_regs.size();i++)
+        {
+            int r = unconditionally_evaluated_regs[i];
+            auto & R = regs[r];
+
+            // Mark used regs
+            for(auto [ur,_]: R.used_regs)
+                use_reg_unconditionally(ur);
+
+            // Mark force regs
+            for(auto [fr,_]: R.forced_regs)
+                use_reg_unconditionally(fr);
+
+            // Mark index-var-referenced regs.
+            auto [ref,_] = R.index_var_ref;
+            if (ref > 0)
+                use_reg_unconditionally(ref);
+        }
+
+        release_scratch_list(); // unconditionally_evaluated_regs
     }
 
     // Check that all the priors and likelihoods are forced.
