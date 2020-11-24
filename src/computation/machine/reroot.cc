@@ -465,7 +465,7 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     auto dec_force_count = [&](int r)
     {
-        assert(reg_is_changeable(r));
+        assert(reg_is_changeable_or_forcing(r));
         if (not prog_unshare[r].test(unshare_count_bit))
         {
             prog_unshare[r].set(unshare_count_bit);
@@ -475,7 +475,6 @@ expression_ref reg_heap::unshare_regs2(int t)
         prog_force_counts[r]--;
         assert(prog_force_counts[r] >= 0);
 
-        assert(has_step1(r));
         if (prog_force_counts[r] == 0)
             zero_count_regs.push_back(r);
     };
@@ -486,7 +485,7 @@ expression_ref reg_heap::unshare_regs2(int t)
         if (has_force2(r))
         {
             int call = call_for_reg(r);
-            if (reg_is_changeable(call))
+            if (reg_is_changeable_or_forcing(call))
                 inc_count(call);
         }
     }
@@ -499,7 +498,7 @@ expression_ref reg_heap::unshare_regs2(int t)
         if (s > 0)
         {
             int call = steps[s].call;
-            if (reg_is_changeable(call))
+            if (reg_is_changeable_or_forcing(call))
                 dec_force_count(call);
         }
     }
@@ -513,11 +512,11 @@ expression_ref reg_heap::unshare_regs2(int t)
         if (prog_unshare[r].test(unshare_step_bit))
         {
             int s = prog_steps[r];
-            int r2 = steps[s].call;
-            if (reg_is_changeable(r2))
+            int call = steps[s].call;
+            if (reg_is_changeable_or_forcing(call))
             {
                 n_invalid_control_flow++;
-                dec_force_count(r2);
+                dec_force_count(call);
             }
         }
     }
@@ -540,12 +539,12 @@ expression_ref reg_heap::unshare_regs2(int t)
             dec_force_count(ref);
 
         // If unshare_step_bit is set, then we've already decremented any force_count!
-        if (not prog_unshare[r].test(unshare_step_bit))
+        if (not prog_unshare[r].test(unshare_step_bit) and reg_is_changeable(r))
         {
             int s = prog_steps[r];
             assert(s > 0 and s < steps.size());
             int call = steps[s].call;
-            if (reg_is_changeable(call))
+            if (reg_is_changeable_or_forcing(call))
                 dec_force_count(call);
         }
     }
@@ -608,7 +607,7 @@ expression_ref reg_heap::unshare_regs2(int t)
         if (has_step1(r))
             assert(prog_force_counts[r] > 0);
         if (prog_force_counts[r] > 0)
-            assert(has_result1(r));
+            assert(reg_is_constant_with_force(r) or has_result1(r));
     }
 #endif
 
