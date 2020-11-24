@@ -132,6 +132,8 @@ public:
 
     std::pair<int, int> index_var_ref;
 
+    int n_regs_forced_before_step = 0;
+
     bitmask_8 flags;
 
     void clear();
@@ -562,6 +564,7 @@ public:
     int result_for_reg(int r) const;
     bool reg_has_call(int r) const;
     int call_for_reg(int r) const;
+    void force_regs_before_step(int r);
     void force_reg_no_call(int r);
     void force_reg_with_call(int r);
 
