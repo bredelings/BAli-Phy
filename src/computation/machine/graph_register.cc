@@ -1964,7 +1964,7 @@ void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
     assert(r > 0);
     auto& index_var_ref = regs.access(r).index_var_ref;
     auto [r2,j] = index_var_ref;
-    if (r2 > 0)
+    if (r2 > 0 and not regs.is_free(r2))
     {
         auto& backward = regs[r2].called_by_index_vars;
         assert(0 <= j and j < backward.size());
