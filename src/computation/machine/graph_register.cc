@@ -944,7 +944,7 @@ const closure& reg_heap::access_value_for_reg(int R1) const
 
 bool reg_heap::reg_has_value(int r) const
 {
-    if (reg_is_constant_no_force(r))
+    if (reg_is_constant(r))
         return true;
     else
         return has_result1(r);
@@ -983,7 +983,7 @@ bool reg_heap::has_result2(int r) const
 void reg_heap::force_reg_no_call(int r)
 {
     assert(reg_is_changeable_or_forcing(r));
-    assert(has_result2(r));
+    assert(reg_is_constant_with_force(r) or has_result2(r));
     assert(not has_force2(r));
 
     // We can't use a range-for here because regs[r] can be moved
@@ -1039,7 +1039,7 @@ int reg_heap::value_for_reg(int r) const
     assert(not reg_is_unevaluated(r));
     assert(not reg_is_index_var_no_force(r));
 
-    if (reg_is_constant_no_force(r))
+    if (reg_is_constant(r))
         return r;
     else
     {
@@ -2031,7 +2031,7 @@ void reg_heap::clear_result(int r)
 const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
 {
     total_get_reg_value++;
-    if (reg_is_constant_no_force(R) or reg_is_constant_with_force(R)) return expression_at(R);
+    if (reg_is_constant(R)) return expression_at(R);
 
     total_get_reg_value_non_const++;
     reroot_at_context(c);
@@ -2082,7 +2082,7 @@ optional<int> reg_heap::precomputed_value_in_context(int r, int c)
 {
     r = follow_index_var_no_force(r);
 
-    if (reg_is_constant_no_force(r) or reg_is_constant_with_force(r)) return r;
+    if (reg_is_constant(r)) return r;
 
     reroot_at_context(c);
 
@@ -2104,7 +2104,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
     check_used_regs();
 #endif
 
-    if (reg_is_constant_no_force(R)) return {R,R};
+    if (reg_is_constant(R)) return {R,R};
 
     reroot_at_context(c);
 
