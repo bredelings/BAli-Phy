@@ -567,6 +567,7 @@ int reg_heap::inc_count(int r)
     }
 
     int before = prog_force_counts[r];
+    assert(before >= 0);
     prog_force_counts[r]++;
     return before;
 }
@@ -585,6 +586,7 @@ int reg_heap::dec_count(int r)
 
     prog_force_counts[r]--;
     int end = prog_force_counts[r];
+    assert(end >= 0);
     return end;
 }
 
