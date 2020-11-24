@@ -360,7 +360,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
         // 3. Reduction: Operation (includes @, case, +, etc.)
         else
         {
-            assert( prog_steps[r] <=0 );
+            assert( not has_step1(r) );
             // The only we reason we are getting this here is to store created_regs on it,
             // if we perform allocations AFTER using/forcing something changeable.
             int s = get_shared_step(r);
