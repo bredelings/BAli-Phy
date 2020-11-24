@@ -595,16 +595,14 @@ vector<pair<int,closure>> reg_heap::find_set_regs_on_path(int child_token) const
         assert(tokens[t].type != token_type::reverse_set_unshare);
         if (tokens[t].type == token_type::set or tokens[t].type == token_type::set_unshare)
         {
-            auto [reg0, step0] = tokens[t].vm_step.delta()[0];
-            auto [reg1, step1] = tokens[t].vm_step.delta()[1];
-            auto value = closure_at(reg1);
-
-            assert(is_modifiable(expression_at(reg0)));
-            assert(steps[step0].call == reg1);
-            assert(step1 == non_computed_index);
+            auto [r, s] = tokens[t].vm_step.delta()[0];
+            assert(is_modifiable(expression_at(r)));
+            assert(s > 0);
+            int call = steps[s].call;
+            auto value = closure_at(call);
             assert(value.exp.is_atomic());
 
-            reg_values.push_back({reg0, value});
+            reg_values.push_back({r, value});
         }
     }
     std::reverse(reg_values.begin(), reg_values.end());
@@ -1267,15 +1265,6 @@ int reg_heap::allocate_reg_from_step(int s, closure&& C)
     return r;
 }
 
-int reg_heap::allocate_reg_from_step_in_token(int s, int t)
-{
-    int r = allocate_reg_from_step(s);
-    tokens[t].vm_result.add_value(r, non_computed_index);
-    tokens[t].vm_step.add_value(r, non_computed_index);
-    return r;
-}
-
-
 // If we replace a computation at P that is newly defined in this token,
 // there may be computations that call or use it that are also newly
 // defined in this token.  Such computations must be cleared, because they
@@ -1337,7 +1326,7 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
         assert(value.exp.size() == 0);
         assert(is_WHNF(value.exp));
 
-        int R2 = allocate_reg_from_step_in_token(s,t);
+        int R2 = allocate_reg_from_step(s);
 
         mark_reg_constant_no_force(R2);
 
