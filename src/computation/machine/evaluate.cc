@@ -843,7 +843,6 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                     assert( not reg_has_call(r) );
                     assert( not reg_has_value(r) );
                     assert( regs[r].used_regs.empty() );
-                    assert( regs[r].forced_regs.empty() );
                     assert( steps[s].created_regs.empty() ); // Any allocations should have gone to sp
                     set_C( r, std::move(value) );
                     steps.reclaim_used(s);
