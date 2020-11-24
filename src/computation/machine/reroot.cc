@@ -491,6 +491,12 @@ expression_ref reg_heap::unshare_regs2(int t)
     }
 
     // 5b. Execute unconditionally-executed regs here.
+    for(int r: unshared_regs | views::reverse)
+        if (regs[r].is_unconditionally_evaluated() and not has_result2(r))
+        {
+            incremental_evaluate2(r,false);
+            assert(has_result2(r));
+        }
 
     // 5c. Decrement calls from bumped steps
     for(auto& [r,s]: vm_step2->delta())
