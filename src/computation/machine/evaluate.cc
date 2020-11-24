@@ -763,16 +763,18 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
             int r2 = closure_at(r).reg_for_index_var();
 
-            auto [r3, result] = incremental_evaluate2(r2, not has_force2(r));
-
             if (regs[r].forced_regs.empty())
             {
                 // Return the end of the index_var chain.
                 // We used to update the index_var to point to the end of the chain.
 
+                auto [r3, result] = incremental_evaluate2(r2, false);
+
                 mark_reg_index_var_no_force(r);
                 return {r3,result};
             }
+
+            auto [r3, result] = incremental_evaluate2(r2, true);
 
             if (reg_is_to_changeable(r3))
                 mark_reg_index_var_with_force_to_changeable(r);
