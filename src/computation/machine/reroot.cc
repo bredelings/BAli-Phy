@@ -501,8 +501,12 @@ expression_ref reg_heap::unshare_regs2(int t)
     // 5c. Decrement calls from bumped steps
     for(auto& [r,s]: vm_step2->delta())
     {
+        // We can get bumped -1 steps here from executing new regs.
         if (s > 0)
         {
+            // But we should only be able to bump old steps here with new valid steps.
+            assert(prog_steps[r] > 0);
+
             int call = steps[s].call;
             if (reg_is_changeable_or_forcing(call))
                 dec_force_count(call);
