@@ -237,7 +237,6 @@ public:
     int allocate();
     int allocate_reg_from_step(int s);
     int allocate_reg_from_step(int s, closure&& C);
-    int allocate_reg_from_step_in_token(int s, int t);
     void mark_reg_created_by_step(int r, int s);
     void mark_step_with_effect(int s);
 
