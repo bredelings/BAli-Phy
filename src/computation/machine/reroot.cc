@@ -383,7 +383,7 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     auto unshare_result = [&](int r)
                               {
-                                  //assert(reg_is_changeable(r));
+                                  assert(reg_is_changeable_or_forcing(r));
                                   if (not has_result1(r))
                                       return;
                                   if (prog_unshare[r].none())
@@ -393,7 +393,7 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     auto unshare_step = [&](int r)
                             {
-                                //assert(reg_is_changeable(r));
+                                assert(reg_is_changeable(r));
                                 if (not has_result1(r))
                                     return;
                                 if (prog_unshare[r].none())
