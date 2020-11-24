@@ -1019,7 +1019,7 @@ void reg_heap::force_reg_no_call(int r)
 
         incremental_evaluate2(r2, true);
 
-        assert(has_result2(r2));
+        assert(reg_is_constant_with_force(r2) or has_result2(r2));
         assert(has_force2(r2));
     }
 
@@ -1029,7 +1029,7 @@ void reg_heap::force_reg_no_call(int r)
 
         incremental_evaluate2(r2, true);
 
-        assert(has_result2(r2));
+        assert(reg_is_constant_with_force(r2) or has_result2(r2));
         assert(has_force2(r2));
     }
 }
@@ -1047,10 +1047,10 @@ void reg_heap::force_reg_with_call(int r)
     int call = steps[s].call;
     assert(call > 0);
 
-    assert(reg_is_constant_no_force(call) or reg_is_changeable(call));
+    assert(reg_is_constant_no_force(call) or reg_is_changeable_or_forcing(call));
 
     // If R2 is WHNF then we are done
-    if (reg_is_changeable(call))
+    if (reg_is_changeable_or_forcing(call))
     {
         assert(has_result2(call));
         incremental_evaluate2(call, true);
@@ -1180,7 +1180,7 @@ void reg_heap::set_call(int s1, int r2)
     // Set the call
     S1.call = r2;
 
-    // We may need a call edge to constant-with-force nodes in order to backward-propagate unforcedness.
+    // We may need a call edge to constant-with-force nodes in order to achieve the proper count
     if (not reg_is_constant_no_force(r2))
     {
         assert(not reg_is_index_var_no_force(r2));
@@ -2114,7 +2114,7 @@ optional<int> reg_heap::precomputed_value_in_context(int r, int c)
     // In theory, variants of this routine could allow
     // * having a result, but no force.
     // * have a chain of steps, but no result.
-    if (reg_is_changeable(r) and has_result1(r))
+    if (reg_is_changeable_or_forcing(r) and has_result1(r))
         return result_for_reg(r);
     else
     {
@@ -2134,7 +2134,7 @@ pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
     reroot_at_context(c);
 
     // Don't create a new token for up-to-date results!
-    if (reg_is_changeable(R))
+    if (reg_is_changeable_or_forcing(R))
     {
         int r2 = result_for_reg(R);
 

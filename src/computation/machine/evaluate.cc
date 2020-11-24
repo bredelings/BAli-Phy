@@ -562,7 +562,7 @@ public:
 
 int reg_heap::inc_count(int r)
 {
-    assert(reg_is_changeable(r));
+    assert(reg_is_changeable_or_forcing(r));
     assert(tokens[root_token].children.size() == 1);
 
     if (not prog_unshare[r].test(unshare_count_bit))
@@ -580,7 +580,7 @@ int reg_heap::inc_count(int r)
 
 int reg_heap::dec_count(int r)
 {
-    assert(reg_is_changeable(r));
+    assert(reg_is_changeable_or_forcing(r));
     assert(tokens[root_token].children.size() == 1);
 
     if (not prog_unshare[r].test(unshare_count_bit))
