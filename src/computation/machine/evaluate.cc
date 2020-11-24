@@ -270,26 +270,30 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
             int r2 = closure_at(r).reg_for_index_var();
             return incremental_evaluate1(r2);
         }
-        else if (reg_is_index_var_with_force_to_changeable(r) or reg_is_index_var_with_force_to_nonchangeable(r))
+        else if (reg_is_index_var_with_force(r))
         {
-            int result = result_for_reg(r);
-            if (result > 0)
-                return {r, result};
-
             int r2 = closure_at(r).reg_for_index_var();
-            auto [r3, result3] = incremental_evaluate1(r2);
 
-            // r gets its value from S.
-            prog_results[r] = result3;
-            if (not tokens[root_token].children.empty())
+            if (has_result1(r))
             {
-                int t = tokens[root_token].children[0];
-                tokens[t].vm_result.add_value(r, non_computed_index);
+                int result = result_for_reg(r);
+                return {r,result};
             }
+            else
+            {
+                auto [r3, result3] = incremental_evaluate1(r2);
 
-            total_changeable_eval_with_call++;
-            assert(not reg_is_unevaluated(r));
-            return {r, result3};
+                // r gets its value from S.
+                if (not tokens[root_token].children.empty())
+                {
+                    int t = tokens[root_token].children[0];
+                    tokens[t].vm_result.add_value(r, non_computed_index);
+                }
+                prog_results[r] = result3;
+
+                assert(not reg_is_unevaluated(r));
+                return {r, result3};
+            }
         }
 
         /*---------- Below here, there is no call, and no value. ------------*/
@@ -315,24 +319,25 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                 mark_reg_index_var_no_force(r);
                 return {r3,result};
             }
+
+            if (reg_is_to_changeable(r3))
+                mark_reg_index_var_with_force_to_changeable(r);
             else
-            {
-                if (reg_is_to_changeable(r3))
-                    mark_reg_index_var_with_force_to_changeable(r);
-                else
-                    mark_reg_index_var_with_force_to_nonchangeable(r);
+                mark_reg_index_var_with_force_to_nonchangeable(r);
 
-                if (not reg_is_constant_no_force(r3))
-                    set_index_var_ref(r,r3);
-            }
+            if (not reg_is_constant_no_force(r3))
+                set_index_var_ref(r,r3);
 
-            prog_results[r] = result;
+            assert(not has_result1(r));
+
             if (not tokens[root_token].children.empty())
             {
                 int t = tokens[root_token].children[0];
                 tokens[t].vm_result.add_value(r, non_computed_index);
             }
+            prog_results[r] = result;
 
+            assert(not prog_unshare[r].test(unshare_result_bit));
             assert(not reg_is_unevaluated(r));
             return {r, result};
         }
@@ -705,29 +710,40 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
             int r2 = closure_at(r).reg_for_index_var();
             return incremental_evaluate2(r2, false);
         }
-        else if (reg_is_index_var_with_force_to_changeable(r) or reg_is_index_var_with_force_to_nonchangeable(r))
+        else if (reg_is_index_var_with_force(r))
         {
-            if (not has_force2(r))
-                force_reg_no_call(r);
-
-            int result = result_for_reg(r);
-            if (result > 0)
-                return {r, result};
-
             int r2 = closure_at(r).reg_for_index_var();
-            auto [r3, result3] = incremental_evaluate2(r2, not has_force2(r));
 
-            // r gets its value from S.
-            prog_results[r] = result3;
-            if (not tokens[root_token].children.empty())
+            if (has_result2(r))
             {
-                int t = tokens[root_token].children[0];
-                tokens[t].vm_result.add_value(r, non_computed_index);
-            }
+                if (not has_force2(r))
+                {
+                    force_reg_no_call(r);
+                    incremental_evaluate2(r2, true);
+                }
 
-            total_changeable_eval_with_call++;
-            assert(not reg_is_unevaluated(r));
-            return {r, result3};
+                int result = result_for_reg(r);
+                return {r,result};
+            }
+            else
+            {
+                auto [r3, result3] = incremental_evaluate2(r2, not has_force2(r));
+
+                bool reshare_result = prog_unshare[r].test(unshare_result_bit) and prog_results[r] == result3;
+                if (not reshare_result)
+                {
+                    int t = tokens[root_token].children[0];
+                    tokens[t].vm_result.add_value(r, prog_results[r]);
+                    prog_results[r] = result3;
+                }
+                prog_unshare[r].reset(unshare_result_bit);
+
+                if (not has_force2(r))
+                    force_reg_no_call(r);
+
+                assert(not reg_is_unevaluated(r));
+                return {r, result3};
+            }
         }
         else
             assert(reg_is_unevaluated(r));
@@ -743,8 +759,6 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
             assert( not has_step1(r) );
 
-            mark_reg_index_var_no_force(r);
-
             int r2 = closure_at(r).reg_for_index_var();
 
             auto [r3, result] = incremental_evaluate2(r2, not has_force2(r));
@@ -757,20 +771,27 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 mark_reg_index_var_no_force(r);
                 return {r3,result};
             }
+
+            if (reg_is_to_changeable(r3))
+                mark_reg_index_var_with_force_to_changeable(r);
             else
-            {
-                if (reg_is_to_changeable(r3))
-                    mark_reg_index_var_with_force_to_changeable(r);
-                else
-                    mark_reg_index_var_with_force_to_nonchangeable(r);
+                mark_reg_index_var_with_force_to_nonchangeable(r);
 
-                if (not reg_is_constant_no_force(r3))
-                    set_index_var_ref(r,r3);
-            }
-            // Return the end of the index_var chain.
-            // We used to update the index_var to point to the end of the chain.
+            if (not reg_is_constant_no_force(r3))
+                set_index_var_ref(r,r3);
 
-            return incremental_evaluate2(r2, false);
+            assert(not has_result1(r));
+
+
+
+            int t = tokens[root_token].children[0];
+            tokens[t].vm_result.add_value(r, prog_results[r]);
+
+            prog_results[r] = result;
+
+            assert(not prog_unshare[r].test(unshare_result_bit));
+            assert(not reg_is_unevaluated(r));
+            return {r, result};
         }
 
         // Check for WHNF *OR* heap variables
