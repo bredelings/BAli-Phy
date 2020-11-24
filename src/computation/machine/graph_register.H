@@ -80,6 +80,10 @@ struct Step
     Step(Step&&) noexcept;
 };
 
+// Bits in on regs[r].flags
+constexpr int reg_is_always_evaluated_bit = 6;
+constexpr int reg_has_active_tk_bit = 7;
+
 constexpr int non_computed_index = -1;
 
 constexpr int non_existant_index = -2;
@@ -135,6 +139,9 @@ public:
     int n_regs_forced_before_step = 0;
 
     bitmask_8 flags;
+
+    void mark_unconditionally_evaluated();
+    bool is_unconditionally_evaluated() const;
 
     void clear();
 
