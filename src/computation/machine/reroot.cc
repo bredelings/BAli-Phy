@@ -389,8 +389,7 @@ expression_ref reg_heap::unshare_regs2(int t)
     auto unshare_result = [&](int r)
                               {
                                   assert(reg_is_changeable_or_forcing(r));
-                                  if (not has_result1(r))
-                                      return;
+
                                   if (prog_unshare[r].none())
                                       unshared_regs.push_back(r);
                                   prog_unshare[r].set(unshare_result_bit);
@@ -399,8 +398,7 @@ expression_ref reg_heap::unshare_regs2(int t)
     auto unshare_step = [&](int r)
                             {
                                 assert(reg_is_changeable(r));
-                                if (not has_result1(r))
-                                    return;
+
                                 if (prog_unshare[r].none())
                                     unshared_regs.push_back(r);
                                 prog_unshare[r].set(unshare_result_bit);
@@ -425,16 +423,17 @@ expression_ref reg_heap::unshare_regs2(int t)
 
         // Look at steps that CALL the reg in the root (that has overridden result in t)
         for(int s2: R.called_by)
-            if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
+            if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2 and has_result1(r2))
                 unshare_result(r2);
 
         // Look at steps that have a FIXED CALL to the reg in the root (that has overridden result in t)
         for(int r2: R.called_by_index_vars)
-            unshare_result(r2);
+            if (has_result1(r2))
+                unshare_result(r2);
 
         // Look at steps that USE the reg in the root (that has overridden result in t)
         for(auto& [r2,_]: R.used_by)
-            if (prog_steps[r2] > 0)
+            if (prog_steps[r2] > 0 and has_result1(r2))
                 unshare_step(r2);
     }
 
