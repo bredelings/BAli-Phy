@@ -497,6 +497,9 @@ expression_ref reg_heap::unshare_regs2(int t)
             incremental_evaluate2(r,false);
             assert(has_result2(r));
         }
+    vm_result2 = &tokens[t2].vm_result;
+    vm_step2   = &tokens[t2].vm_step;
+    vm_count2  = &tokens[t2].vm_force_count;
 
     // 5c. Decrement calls from bumped steps
     for(auto& [r,s]: vm_step2->delta())
