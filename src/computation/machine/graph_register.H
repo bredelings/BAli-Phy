@@ -158,7 +158,6 @@ public:
 
 // These bits are used in evaluation as well as unsharing.
 
-constexpr int unshare_force_bit  = 0;
 constexpr int unshare_result_bit = 1;
 constexpr int unshare_step_bit   = 2;
 constexpr int unshare_count_bit  = 3;
