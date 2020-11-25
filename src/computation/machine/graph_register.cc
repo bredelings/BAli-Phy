@@ -1798,7 +1798,11 @@ void reg_heap::check_used_regs_in_token(int t) const
         prog_temp[r].set(step_bit);
 
         // If the step is unshared, the result must be unshared as well: this allows us to just walk unshared results.
-//        assert(((root_child and prog_unshare[r].test(unshare_result_bit)) or prog_temp[r].test(result_bit)) and prog_temp[r].test(step_bit));
+        if (root_child)
+            assert(prog_temp[r].test(result_bit) or prog_unshare[r].test(unshare_result_bit));
+        else
+            assert(prog_temp[r].test(result_bit));
+
         // Only  changeable regs can have steps.
         if (step > 0)
             assert(reg_is_changeable(r));
