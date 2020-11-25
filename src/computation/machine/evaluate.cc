@@ -707,8 +707,6 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 if (not has_force2(r))
                     force_reg_no_call(r);
 
-                prog_unshare[r].reset(unshare_force_bit);
-
                 total_changeable_eval_with_call2++;
                 return {r, value};
             }

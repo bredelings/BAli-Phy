@@ -169,7 +169,6 @@ void reg_heap::check_created_regs_unshared(int t)
             if (prog_steps[r2] > 0)
             {
                 assert(reg_is_changeable(r2));
-                assert(prog_temp[r2].test(unshare_force_bit));
                 assert(prog_temp[r2].test(unshare_result_bit));
                 assert(prog_temp[r2].test(unshare_step_bit));
             }
