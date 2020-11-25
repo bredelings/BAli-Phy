@@ -408,8 +408,11 @@ expression_ref reg_heap::unshare_regs2(int t)
     for(auto [r,s]: delta_step)
     {
         assert(has_force2(r));
+        assert(s > 0);
         unshare_step(r);
     }
+    // All the same regs should have (r,-) in the result.
+    assert(delta_step.size() == delta_result.size());
 
 #ifndef NDEBUG
     check_created_regs_unshared(t);
