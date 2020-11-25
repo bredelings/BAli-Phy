@@ -438,14 +438,21 @@ expression_ref reg_heap::unshare_regs2(int t)
                 unshare_step(r2);
     }
 
-    // 3. Remove (r,-) entries from Delta, and remove the unshare bit for the (r,>0) remainder.
+
+    // 3.  Remove (r,-) entries from Delta, and remove the unshare bit for the (r,>0) remainder.
+
+    // 3a. We can't have (r,-) entries in deltas, because they if we execute them, we would add a
+    //     second override during execution.
     auto keep = [](const pair<int,int>& p) {return p.second > 0;};
 
     filter_unordered_vector(delta_step, keep);
+    filter_unordered_vector(delta_result, keep);
+
+    // 3b. We can't have bits on the remaining (r,+) entries in the deltas during execution,
+    //     because (r,x)* is really shorthand for -/x at r, and we have x/y at r.
     for(auto& [r,_]: delta_step)
         prog_unshare[r].reset(unshare_step_bit);
 
-    filter_unordered_vector(delta_result, keep);
     for(auto& [r,_]: delta_result)
         prog_unshare[r].reset(unshare_result_bit);
 
