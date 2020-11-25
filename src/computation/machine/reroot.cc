@@ -409,7 +409,10 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     // 1. Mark unshared regs.  All modified regs should have STEP/RESULT/FORCE unshared.
     for(auto [r,s]: delta_step)
+    {
+        assert(has_force2(r));
         unshare_step(r);
+    }
 
 #ifndef NDEBUG
     check_created_regs_unshared(t);
