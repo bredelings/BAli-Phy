@@ -568,7 +568,7 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     // 6.  Evaluate the program
     for(int r: unshared_regs | views::reverse)
-        if (has_force2(r) and prog_unshare[r].test(unshare_result_bit))
+        if (has_force2(r) and not has_result2(r))
         {
             incremental_evaluate2(r,false);
             assert(has_result2(r));
