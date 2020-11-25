@@ -521,6 +521,7 @@ expression_ref reg_heap::unshare_regs2(int t)
         // and so excludes e.g. the calls from modifiables.
         if (prog_unshare[r].test(unshare_step_bit))
         {
+            prog_unshare[r].set(call_decremented_bit);
             int s = prog_steps[r];
             int call = steps[s].call;
             if (reg_is_changeable_or_forcing(call))
