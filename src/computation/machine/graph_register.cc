@@ -713,10 +713,16 @@ expression_ref reg_heap::evaluate_program(int c)
     int t = token_for_context(c);
     if (tokens[t].prev_prog_token->can_revert)
     {
-        // assert that there are only execution tokens on the path to the previous evaluation token.
-        assert(is_program_execution_token(*get_prev_prog_token_for_context(c)));
-        set_token_for_context(c,t);
+        int t2 = *get_prev_prog_token_for_context(c);
+
+        // Check that there are only execution tokens on the path to the previous evaluation token.
+        assert(is_program_execution_token(t2));
+
+        // Revert to previous program token
+        set_token_for_context(c, t2);
         reroot_at_context(c);
+
+        // Check that the program head is evaluated.
         int r = heads[*program_result_head];
         assert(reg_has_value(r));
 
