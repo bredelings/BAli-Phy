@@ -890,10 +890,18 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                     }
                     else
                     {
+                        // Can we decrement the count for the called reg here?  Unless the original call count has already been subtracted?
 #ifndef NDEBUG
                         for(auto cr: steps[s].created_regs)
                             assert(not reg_is_changeable(cr));
 #endif
+                        if (not prog_unshare[r].test(call_decremented_bit) and reg_is_changeable_or_forcing(call))
+                        {
+                            assert(prog_force_counts[call] >= 2);
+                            assert(prog_unshare[call].test(unshare_count_bit));
+                            prog_force_counts[call]--;
+                        }
+
                         destroy_step_and_created_regs(s);
                     }
 
@@ -906,6 +914,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
                     prog_unshare[r].reset(unshare_result_bit);
                     prog_unshare[r].reset(unshare_step_bit);
+                    prog_unshare[r].reset(call_decremented_bit);
 
                     // Evaluate the regs from non-changeable reduction steps leading to this changeable step.
                     if (first_eval)
