@@ -421,6 +421,28 @@ void reg_heap::find_unshared_regs(vector<int>& unshared_regs, vector<int>& zero_
     }
 }
 
+// Remove (r,-) entries from Delta, and remove the unshare bit for the (r,>0) remainder.
+void reg_heap::tweak_deltas_and_unshare_bits(int t)
+{
+    auto& delta_result = tokens[t].vm_result.delta();
+    auto& delta_step   = tokens[t].vm_step.delta();
+
+    // 1. We can't have (r,-) entries in deltas, because they if we execute them, we would add a
+    //     second override during execution.
+    auto keep = [](const pair<int,int>& p) {return p.second > 0;};
+
+    filter_unordered_vector(delta_step, keep);
+    filter_unordered_vector(delta_result, keep);
+
+    // 2. We can't have bits on the remaining (r,+) entries in the deltas during execution
+    //    because (r,x)* is really shorthand for -/x at r, and we have x/y at r.
+    for(auto& [r,_]: delta_step)
+        prog_unshare[r].reset(unshare_step_bit);
+
+    for(auto& [r,_]: delta_result)
+        prog_unshare[r].reset(unshare_result_bit);
+}
+
 void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_regs, vector<int>& zero_count_regs)
 {
     int t2 = tokens[root_token].children[0];
@@ -590,22 +612,8 @@ expression_ref reg_heap::unshare_regs2(int t)
     // 1. Mark regs with unshared steps or result.
     find_unshared_regs(unshared_regs, zero_count_regs_initial, t);
 
-    // 3.  Remove (r,-) entries from Delta, and remove the unshare bit for the (r,>0) remainder.
-
-    // 3a. We can't have (r,-) entries in deltas, because they if we execute them, we would add a
-    //     second override during execution.
-    auto keep = [](const pair<int,int>& p) {return p.second > 0;};
-
-    filter_unordered_vector(delta_step, keep);
-    filter_unordered_vector(delta_result, keep);
-
-    // 3b. We can't have bits on the remaining (r,+) entries in the deltas during execution,
-    //     because (r,x)* is really shorthand for -/x at r, and we have x/y at r.
-    for(auto& [r,_]: delta_step)
-        prog_unshare[r].reset(unshare_step_bit);
-
-    for(auto& [r,_]: delta_result)
-        prog_unshare[r].reset(unshare_result_bit);
+    // 2. Fixup deltas and unshare bits
+    tweak_deltas_and_unshare_bits(t);
 
     // 4. Reroot to token t.
     tokens[t].flags.set(0);
