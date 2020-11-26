@@ -494,42 +494,8 @@ int reg_heap::force_count(int r) const
     return count;
 }
 
-/*
- * FIXME: The simplest method of unmapping would be to leave the root at t1 and do
- *              tokens[t2].vm_step.add_value(r, non_computed_index);
- *        This has the benefit of handling effects automatically we reroot
- *        to t2.
- *
- *        However, the force_count( ) function only computes force_counts *in the root*.
- *        So we need to root to be at t2 to use that.
- *
- *        If we store a prog_force_count and decrement force counts for t2 when we move steps
- *        back to t2, it also seems like the root should be at t2 to modify prog_force_count.
- *
- */
-
-void reg_heap::first_evaluate_program(int c)
+void reg_heap::compute_initial_force_counts()
 {
-    if (not program_result_head)
-        throw myexception()<<"No program has been set!";
-
-    assert(get_prev_prog_token_for_context(c));
-
-    // 1. Execute with reforce = true.  (For the first execution, this shouldn't matter though.)
-    assert(token_for_context(c) == root_token);
-    auto [program_result_reg, _] = incremental_evaluate1(heads[*program_result_head]);
-    heads[*program_result_head] = program_result_reg;
-
-    assert(get_prev_prog_token_for_context(c));
-    assert(is_program_execution_token(*get_prev_prog_token_for_context(c)));
-
-    // 2. Nothing to unmap!
-
-    // 3. Perform any pending registration or unregistration of effects.
-    do_pending_effect_registrations();
-    assert(steps_pending_effect_unregistration.empty());
-
-    // 4. Update force_counts
     for(auto& R: regs)
     {
         // 3a. Count uses
@@ -552,11 +518,38 @@ void reg_heap::first_evaluate_program(int c)
             prog_force_counts[S.call]++;
     }
 
-    if (reg_is_changeable_or_forcing(program_result_reg))
+    int r = heads[*program_result_head];
+    if (reg_is_changeable_or_forcing(r))
     {
-        prog_force_counts[program_result_reg]++;
+        prog_force_counts[r]++;
         assert(steps.size() > 0);
     }
+}
+
+
+void reg_heap::first_evaluate_program(int c)
+{
+    if (not program_result_head)
+        throw myexception()<<"No program has been set!";
+
+    assert(get_prev_prog_token_for_context(c));
+
+    // 1. Execute with reforce = true.  (For the first execution, this shouldn't matter though.)
+    assert(token_for_context(c) == root_token);
+    auto [program_result_reg, _] = incremental_evaluate1(heads[*program_result_head]);
+    heads[*program_result_head] = program_result_reg;
+
+    assert(get_prev_prog_token_for_context(c));
+    assert(is_program_execution_token(*get_prev_prog_token_for_context(c)));
+
+    // 2. Nothing to unmap!
+
+    // 3. Perform any pending registration or unregistration of effects.
+    do_pending_effect_registrations();
+    assert(steps_pending_effect_unregistration.empty());
+
+    // 4. Compute initial force counts
+    compute_initial_force_counts();
 
     // 5. Mark unconditionally-evaluated regs.
     if (reg_is_changeable_or_forcing(program_result_reg))
