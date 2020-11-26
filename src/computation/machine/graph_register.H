@@ -620,6 +620,7 @@ public:
     void evaluate_unconditional_regs(const std::vector<int>& unshared_regs);
     void decrement_counts_from_invalid_calls(const std::vector<int>&, std::vector<int>&);
     void evaluate_forced_invalid_regs(const std::vector<int>&);
+    void cleanup_count_deltas_and_bits();
     void remove_zero_count_regs(const std::vector<int>&, const std::vector<int>&);
     expression_ref unshare_regs2(int t1);
 
