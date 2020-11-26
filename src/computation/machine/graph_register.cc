@@ -1043,7 +1043,7 @@ void reg_heap::force_regs_before_step(int r)
 {
     assert(reg_is_changeable(r));
     assert(has_result2(r));
-    assert(not has_force2(r));
+    assert(not reg_is_forced(r));
 
     // We can't use a range-for here because regs[r] can be moved
     // during the loop if we do evaluation.
@@ -1055,7 +1055,7 @@ void reg_heap::force_regs_before_step(int r)
         incremental_evaluate2(r2, true);
 
         assert(reg_is_constant_with_force(r2) or has_result2(r2));
-        assert(has_force2(r2));
+        assert(reg_is_forced(r2));
     }
 }
 
@@ -1063,7 +1063,7 @@ void reg_heap::force_reg_no_call(int r)
 {
     assert(reg_is_changeable_or_forcing(r));
     assert(reg_is_constant_with_force(r) or has_result2(r));
-    assert(not has_force2(r));
+    assert(not reg_is_forced(r));
 
     // We can't use a range-for here because regs[r] can be moved
     // during the loop if we do evaluation.
@@ -1074,7 +1074,7 @@ void reg_heap::force_reg_no_call(int r)
         incremental_evaluate2(r2, true);
 
         assert(reg_is_constant_with_force(r2) or has_result2(r2));
-        assert(has_force2(r2));
+        assert(reg_is_forced(r2));
     }
 
     for(int i=0; i < regs[r].forced_regs.size(); i++)
@@ -1084,7 +1084,7 @@ void reg_heap::force_reg_no_call(int r)
         incremental_evaluate2(r2, true);
 
         assert(reg_is_constant_with_force(r2) or has_result2(r2));
-        assert(has_force2(r2));
+        assert(reg_is_forced(r2));
     }
 }
 
@@ -1093,7 +1093,7 @@ void reg_heap::force_reg_with_call(int r)
     assert(reg_is_changeable(r));
     assert(has_step2(r));
     assert(has_result2(r));
-    assert(not has_force2(r));
+    assert(not reg_is_forced(r));
 
     force_reg_no_call(r);
 
@@ -1109,7 +1109,7 @@ void reg_heap::force_reg_with_call(int r)
         assert(has_result2(call));
         incremental_evaluate2(call, true);
         assert(has_result2(call));
-        assert(has_force2(call));
+        assert(reg_is_forced(call));
     }
 }
 

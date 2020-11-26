@@ -565,7 +565,7 @@ public:
     bool reg_has_value(int r) const;
     int follow_index_var(int r) const;
     int follow_index_var_no_force(int r) const;
-    bool has_force2(int r) const;
+    bool reg_is_forced(int r) const;
     int inc_count(int r);
     int dec_count(int r);
     int result_for_reg(int r) const;
@@ -784,7 +784,7 @@ inline bool reg_heap::reg_is_to_changeable(int r) const
     return reg_is_changeable(r) or reg_is_index_var_with_force_to_changeable(r);
 }
 
-inline bool reg_heap::has_force2(int r) const
+inline bool reg_heap::reg_is_forced(int r) const
 {
     assert(reg_is_changeable_or_forcing(r) or reg_is_unevaluated(r));
     return prog_force_counts[r] > 0;
