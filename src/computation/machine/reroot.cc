@@ -650,11 +650,10 @@ expression_ref reg_heap::unshare_regs2(int t)
     int n_delta_result0 = delta_result.size();
     int n_delta_step0   = delta_step.size();
 
+    // 1. Mark regs with unshared steps or result.
     auto& unshared_regs = get_scratch_list();
-
     auto& zero_count_regs_initial = get_scratch_list();
 
-    // 1. Mark regs with unshared steps or result.
     find_unshared_regs(unshared_regs, zero_count_regs_initial, t);
 
     // 2. Fixup deltas and unshare bits
