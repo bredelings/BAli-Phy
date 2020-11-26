@@ -527,6 +527,48 @@ void reg_heap::compute_initial_force_counts()
 }
 
 
+void reg_heap::mark_unconditional_regs()
+{
+    if (not program_result_head) return;
+
+    int program_result_reg = heads[*program_result_head];
+    if (not reg_is_changeable_or_forcing(program_result_reg)) return;
+
+    auto & unconditionally_evaluated_regs = get_scratch_list();
+
+    auto use_reg_unconditionally = [&](int r)
+    {
+        if (not regs[r].is_unconditionally_evaluated())
+        {
+            regs[r].mark_unconditionally_evaluated();
+            unconditionally_evaluated_regs.push_back(r);
+        }
+    };
+
+    use_reg_unconditionally(program_result_reg);
+
+    for(int i=0;i<unconditionally_evaluated_regs.size();i++)
+    {
+        int r = unconditionally_evaluated_regs[i];
+        auto & R = regs[r];
+
+        // Mark used regs
+        for(auto [ur,_]: R.used_regs)
+            use_reg_unconditionally(ur);
+
+        // Mark force regs
+        for(auto [fr,_]: R.forced_regs)
+            use_reg_unconditionally(fr);
+
+        // Mark index-var-referenced regs.
+        auto [ref,_] = R.index_var_ref;
+        if (ref > 0)
+            use_reg_unconditionally(ref);
+    }
+
+    release_scratch_list(); // unconditionally_evaluated_regs
+}
+
 void reg_heap::first_evaluate_program(int c)
 {
     if (not program_result_head)
@@ -552,42 +594,7 @@ void reg_heap::first_evaluate_program(int c)
     compute_initial_force_counts();
 
     // 5. Mark unconditionally-evaluated regs.
-    if (reg_is_changeable_or_forcing(program_result_reg))
-    {
-        auto & unconditionally_evaluated_regs = get_scratch_list();
-
-        auto use_reg_unconditionally = [&](int r)
-        {
-            if (not regs[r].is_unconditionally_evaluated())
-            {
-                regs[r].mark_unconditionally_evaluated();
-                unconditionally_evaluated_regs.push_back(r);
-            }
-        };
-
-        use_reg_unconditionally(program_result_reg);
-
-        for(int i=0;i<unconditionally_evaluated_regs.size();i++)
-        {
-            int r = unconditionally_evaluated_regs[i];
-            auto & R = regs[r];
-
-            // Mark used regs
-            for(auto [ur,_]: R.used_regs)
-                use_reg_unconditionally(ur);
-
-            // Mark force regs
-            for(auto [fr,_]: R.forced_regs)
-                use_reg_unconditionally(fr);
-
-            // Mark index-var-referenced regs.
-            auto [ref,_] = R.index_var_ref;
-            if (ref > 0)
-                use_reg_unconditionally(ref);
-        }
-
-        release_scratch_list(); // unconditionally_evaluated_regs
-    }
+    mark_unconditional_regs();
 
     // Check that all the priors and likelihoods are forced.
 #ifndef NDEBUG
