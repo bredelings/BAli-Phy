@@ -575,6 +575,22 @@ void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_r
 
 }
 
+void reg_heap::evaluate_forced_invalid_regs(const std::vector<int>& unshared_regs)
+{
+    for(int r: unshared_regs | views::reverse)
+        if (reg_is_forced(r) and not has_result2(r))
+        {
+            incremental_evaluate2(r,false);
+            assert(has_result2(r));
+        }
+
+#ifndef NDEBUG
+    for(int r: unshared_regs | views::reverse)
+        if (reg_is_forced(r))
+            assert(has_result2(r));
+#endif
+}
+
 void reg_heap::remove_zero_count_regs(const std::vector<int>& zero_count_regs_initial, const std::vector<int>& zero_count_regs)
 {
     int t2 = tokens[root_token].children[0];
@@ -675,20 +691,10 @@ expression_ref reg_heap::unshare_regs2(int t)
     auto& zero_count_regs = get_scratch_list();
     decrement_counts_from_invalid_calls(unshared_regs, zero_count_regs);
 
-    // 6.  Evaluate the program
-    for(int r: unshared_regs | views::reverse)
-        if (reg_is_forced(r) and not has_result2(r))
-        {
-            incremental_evaluate2(r,false);
-            assert(has_result2(r));
-        }
+    // 5. Evaluate forced invalid regs.
+    evaluate_forced_invalid_regs(unshared_regs);
 
-#ifndef NDEBUG
-    for(int r: unshared_regs | views::reverse)
-        if (reg_is_forced(r))
-            assert(has_result2(r));
-#endif
-
+    // 6. Get the program result.
     auto result = lazy_evaluate2(heads[*program_result_head]).exp;
 
     auto* vm_result2 = &tokens[t2].vm_result;
