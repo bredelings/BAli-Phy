@@ -299,9 +299,9 @@ private:
 
     void unregister_effect_at_step(int s);
 
-    void first_evaluate_program(int c);
-
     void compute_initial_force_counts();
+    void mark_unconditional_regs();
+    void first_evaluate_program(int c);
 
     bool simple_set_path_to(int child_token) const;
 
