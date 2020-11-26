@@ -421,6 +421,94 @@ void reg_heap::find_unshared_regs(vector<int>& unshared_regs, vector<int>& zero_
     }
 }
 
+void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_regs, vector<int>& zero_count_regs)
+{
+    int t2 = tokens[root_token].children[0];
+    
+    auto* vm_result2 = &tokens[t2].vm_result;
+    auto* vm_step2   = &tokens[t2].vm_step;
+    auto* vm_count2  = &tokens[t2].vm_force_count;
+
+    auto dec_force_count = [&](int r)
+    {
+        assert(reg_is_changeable_or_forcing(r));
+        if (not prog_unshare[r].test(unshare_count_bit))
+        {
+            prog_unshare[r].set(unshare_count_bit);
+            vm_count2->add_value(r, prog_force_counts[r]);
+        }
+
+        prog_force_counts[r]--;
+        assert(prog_force_counts[r] >= 0);
+
+        if (prog_force_counts[r] == 0)
+            zero_count_regs.push_back(r);
+    };
+
+    // 1. Decrement calls from bumped steps
+    for(auto& [r,s]: vm_step2->delta())
+    {
+        // We can get bumped -1 steps here from executing new regs.
+        if (s > 0)
+        {
+            // But we should only be able to bump old steps here with new valid steps.
+            assert(prog_steps[r] > 0);
+
+            int call = steps[s].call;
+            if (reg_is_changeable_or_forcing(call))
+                dec_force_count(call);
+        }
+    }
+
+    // 2. Decrement calls from invalid steps.
+    int n_invalid_control_flow = 0;
+    for(int r : unshared_regs)
+    {
+        // At this point, unshare_step bit only picks out regs that are really -1,
+        // and so excludes e.g. the calls from modifiables.
+        if (prog_unshare[r].test(unshare_step_bit))
+        {
+            prog_unshare[r].set(call_decremented_bit);
+            int s = prog_steps[r];
+            int call = steps[s].call;
+            if (reg_is_changeable_or_forcing(call))
+            {
+                n_invalid_control_flow++;
+                dec_force_count(call);
+            }
+        }
+    }
+
+    if (n_invalid_control_flow > 0)
+        total_invalid_control_flow++;
+    else
+        total_valid_control_flow++;
+
+    // 3. Iteratively decrement counts from steps of zero_count regs.
+    for(int i=0;i<zero_count_regs.size();i++)
+    {
+        int r = zero_count_regs[i];
+        for(auto [r2,_]: regs[r].used_regs)
+            dec_force_count(r2);
+        for(auto [r2,_]: regs[r].forced_regs)
+            dec_force_count(r2);
+        int ref = regs[r].index_var_ref.first;
+        if (ref > 0)
+            dec_force_count(ref);
+
+        // If unshare_step_bit is set, then we've already decremented any force_count!
+        if (not prog_unshare[r].test(unshare_step_bit) and reg_is_changeable(r))
+        {
+            int s = prog_steps[r];
+            assert(s > 0 and s < steps.size());
+            int call = steps[s].call;
+            if (reg_is_changeable_or_forcing(call))
+                dec_force_count(call);
+        }
+    }
+
+}
+
 expression_ref reg_heap::unshare_regs2(int t)
 {
     // parent_token(t) should be the root.
@@ -503,83 +591,7 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     auto& zero_count_regs = get_scratch_list();
 
-    auto dec_force_count = [&](int r)
-    {
-        assert(reg_is_changeable_or_forcing(r));
-        if (not prog_unshare[r].test(unshare_count_bit))
-        {
-            prog_unshare[r].set(unshare_count_bit);
-            vm_count2->add_value(r, prog_force_counts[r]);
-        }
-
-        prog_force_counts[r]--;
-        assert(prog_force_counts[r] >= 0);
-
-        if (prog_force_counts[r] == 0)
-            zero_count_regs.push_back(r);
-    };
-
-    // 5c. Decrement calls from bumped steps
-    for(auto& [r,s]: vm_step2->delta())
-    {
-        // We can get bumped -1 steps here from executing new regs.
-        if (s > 0)
-        {
-            // But we should only be able to bump old steps here with new valid steps.
-            assert(prog_steps[r] > 0);
-
-            int call = steps[s].call;
-            if (reg_is_changeable_or_forcing(call))
-                dec_force_count(call);
-        }
-    }
-
-    // 5d.1. Decrement counts for calls of invalid steps.
-    int n_invalid_control_flow = 0;
-    for(int r : unshared_regs)
-    {
-        // At this point, unshare_step bit only picks out regs that are really -1,
-        // and so excludes e.g. the calls from modifiables.
-        if (prog_unshare[r].test(unshare_step_bit))
-        {
-            prog_unshare[r].set(call_decremented_bit);
-            int s = prog_steps[r];
-            int call = steps[s].call;
-            if (reg_is_changeable_or_forcing(call))
-            {
-                n_invalid_control_flow++;
-                dec_force_count(call);
-            }
-        }
-    }
-
-    if (n_invalid_control_flow > 0)
-        total_invalid_control_flow++;
-    else
-        total_valid_control_flow++;
-
-    // 5d.2. Iteratively decrement counts from steps of zero_count regs.
-    for(int i=0;i<zero_count_regs.size();i++)
-    {
-        int r = zero_count_regs[i];
-        for(auto [r2,_]: regs[r].used_regs)
-            dec_force_count(r2);
-        for(auto [r2,_]: regs[r].forced_regs)
-            dec_force_count(r2);
-        int ref = regs[r].index_var_ref.first;
-        if (ref > 0)
-            dec_force_count(ref);
-
-        // If unshare_step_bit is set, then we've already decremented any force_count!
-        if (not prog_unshare[r].test(unshare_step_bit) and reg_is_changeable(r))
-        {
-            int s = prog_steps[r];
-            assert(s > 0 and s < steps.size());
-            int call = steps[s].call;
-            if (reg_is_changeable_or_forcing(call))
-                dec_force_count(call);
-        }
-    }
+    decrement_counts_from_invalid_calls(unshared_regs, zero_count_regs);
 
     // 6.  Evaluate the program
     for(int r: unshared_regs | views::reverse)
@@ -589,9 +601,11 @@ expression_ref reg_heap::unshare_regs2(int t)
             assert(has_result2(r));
         }
 
+#ifndef NDEBUG
     for(int r: unshared_regs | views::reverse)
         if (reg_is_forced(r))
             assert(has_result2(r));
+#endif
 
     auto result = lazy_evaluate2(heads[*program_result_head]).exp;
 
@@ -607,7 +621,7 @@ expression_ref reg_heap::unshare_regs2(int t)
     auto count_changed = [&](const pair<int,int>& p) {auto [r,count] = p; return count != prog_force_counts[r];};
     filter_unordered_vector(vm_count2->delta(), count_changed);
 
-    // 9. Bump zero-count regs to child token, and clear result and step bits.
+    // 9. Bump zero-count invalid regs to child token, and clear result and step bits.
     for(int r: zero_count_regs)
     {
         // Any regs that still have invalid_step or invalid_result should be zero-count,

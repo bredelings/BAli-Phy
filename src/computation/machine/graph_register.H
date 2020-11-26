@@ -613,6 +613,7 @@ public:
     void check_created_regs_unshared(int t1);
     void unshare_regs1(int t1);
     void find_unshared_regs(std::vector<int>&, std::vector<int>&, int t);
+    void decrement_counts_from_invalid_calls(const std::vector<int>&, std::vector<int>&);
     expression_ref unshare_regs2(int t1);
     void check_unshare_regs(int t);
     void maybe_unshare_regs(int t1);
