@@ -615,6 +615,7 @@ public:
 
     void find_unshared_regs(std::vector<int>&, std::vector<int>&, int t);
     void tweak_deltas_and_unshare_bits(int t);
+    void reroot_at_token_with_tweaked_deltas_and_bits(int t);
     void decrement_counts_from_invalid_calls(const std::vector<int>&, std::vector<int>&);
     void remove_zero_count_regs(const std::vector<int>&, const std::vector<int>&);
     expression_ref unshare_regs2(int t1);
