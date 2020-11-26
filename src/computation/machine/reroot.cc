@@ -667,6 +667,23 @@ void reg_heap::remove_zero_count_regs(const std::vector<int>& zero_count_regs_in
     }
 }
 
+void reg_heap::unregister_effects_for_bumped_steps()
+{
+    int t2 = tokens[root_token].children[0];
+
+    for(auto [_,s]: tokens[t2].vm_step.delta())
+    {
+        if (s > 0 and steps.access(s).has_effect())
+        {
+            if (steps[s].has_pending_effect_registration())
+                unmark_effect_to_register_at_step(s);
+            else
+                mark_effect_to_unregister_at_step(s);
+        }
+    }
+    do_pending_effect_unregistrations();
+}
+
 void reg_heap::mark_as_program_execution_token(int t)
 {
     auto t3 = unset_prev_prog_token(t);
@@ -724,9 +741,6 @@ expression_ref reg_heap::unshare_regs2(int t)
     // 6. Get the program result.
     auto result = lazy_evaluate2(heads[*program_result_head]).exp;
 
-    auto* vm_result2 = &tokens[t2].vm_result;
-    auto* vm_step2   = &tokens[t2].vm_step;
-
     // 7. Clear unshare_count_bit and remove no-effect override from delta-force-count
     cleanup_count_deltas_and_bits();
 
@@ -735,7 +749,7 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     release_scratch_list(); // zero_count_regs
     release_scratch_list(); // zero_count_regs_initial
-
+    release_scratch_list(); // unshared_regs
 
 #ifdef DEBUG_MACHINE
     for(int r=1;r<regs.size();r++)
@@ -751,22 +765,13 @@ expression_ref reg_heap::unshare_regs2(int t)
 #endif
 
     // 9. Handle moving steps out of the root.
-    for(auto [_,s]: vm_step2->delta())
-    {
-        if (s > 0 and steps.access(s).has_effect())
-        {
-            if (steps[s].has_pending_effect_registration())
-                unmark_effect_to_register_at_step(s);
-            else
-                mark_effect_to_unregister_at_step(s);
-        }
-    }
-    do_pending_effect_unregistrations();
-
-    release_scratch_list(); // unshared_regs
+    unregister_effects_for_bumped_steps();
 
     // 10. Mark the current token as a previous_program_token.
     mark_as_program_execution_token(t);
+
+    auto* vm_result2 = &tokens[t2].vm_result;
+    auto* vm_step2   = &tokens[t2].vm_step;
 
     total_results_invalidated += (vm_result2->delta().size() - n_delta_result0);
     total_steps_invalidated += (vm_step2->delta().size() - n_delta_step0);
