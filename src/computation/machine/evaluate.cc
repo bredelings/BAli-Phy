@@ -696,6 +696,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 // r gets its value from S.
                 int t = tokens[root_token].children[0];
 
+                // FIXME: How to avoid resharing results of changed modifiables?  Since the step is not shared, we should not reshare.
                 bool reshare_result = prog_unshare[r].test(unshare_result_bit) and (prog_results[r] == value);
                 if (not reshare_result)
                 {
