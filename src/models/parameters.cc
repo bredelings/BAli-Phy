@@ -116,7 +116,7 @@ namespace fs = boost::filesystem;
 /// Is the alignment allowed to vary?
 bool data_partition::variable_alignment() const
 {
-    return P->variable_alignment() and has_IModel();
+    return has_IModel() and P->variable_alignment();
 }
 
 const data_partition_constants& data_partition::DPC() const
