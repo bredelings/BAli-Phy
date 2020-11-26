@@ -976,6 +976,16 @@ move_pruned_subtree(Parameters& P,
     return tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>{b, c, x, std::move(alignments_next)};
 }
 
+log_double_t subst_likelihood_and_alignment_prior(const Parameters& P)
+{
+    log_double_t Pr = 1.0;
+
+    for(int j=0;j<P.n_data_partitions();j++)
+        Pr *= P[j].heated_likelihood() * P[j].prior_alignment();
+
+    return Pr;
+}
+
 vector<optional<vector<HMM::bitmask_t>>> A23_constraints(const Parameters& P, const vector<int>& nodes, bool original);
 log_double_t pr_sum_out_A_tri(Parameters P, const vector<optional<vector<HMM::bitmask_t>>>& a23, const vector<int>& nodes);
 
@@ -1001,7 +1011,7 @@ void set_attachment_probability(spr_attachment_probabilities& Pr, const spr_atta
     auto A_sampling_pr = (sum_out_A) ? pr_sum_out_A_tri(p2, a23_constraint, nodes_) : log_double_t(1.0);
 
     // 4. Compute likelihood and probability
-    Pr[target_edge] = p2.heated_likelihood() * p2.prior() / A_sampling_pr;
+    Pr[target_edge] = subst_likelihood_and_alignment_prior(p2) / A_sampling_pr;
 
 #ifdef DEBUG_SPR_ALL
     Pr.LLL[target_edge] = p2.heated_likelihood();
@@ -1040,11 +1050,11 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
 	auto& nodes_ = nodes.at(I.initial_edge);
         P.set_root(root_node);
         auto A_sampling_pr = pr_sum_out_A_tri(P, A23_constraints(P, nodes_, true), nodes_) ;
-	Pr[I.initial_edge] = P.heated_likelihood() * P.prior() / A_sampling_pr;
+	Pr[I.initial_edge] = subst_likelihood_and_alignment_prior(P) / A_sampling_pr;
     }
     else
     {
-	Pr[I.initial_edge] = P.heated_likelihood() * P.prior();
+	Pr[I.initial_edge] = subst_likelihood_and_alignment_prior(P);
         P.set_root(root_node);
         for(int j=0;j<P.n_data_partitions();j++)
         {
