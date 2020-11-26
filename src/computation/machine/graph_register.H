@@ -612,9 +612,12 @@ public:
     bool reg_is_shared(int t, int r) const;
     void check_created_regs_unshared(int t1);
     void unshare_regs1(int t1);
+
     void find_unshared_regs(std::vector<int>&, std::vector<int>&, int t);
     void decrement_counts_from_invalid_calls(const std::vector<int>&, std::vector<int>&);
+    void remove_zero_count_regs(const std::vector<int>&, const std::vector<int>&);
     expression_ref unshare_regs2(int t1);
+
     void check_unshare_regs(int t);
     void maybe_unshare_regs(int t1);
     bool execution_allowed() const;
