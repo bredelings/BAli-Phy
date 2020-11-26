@@ -88,7 +88,7 @@ class RegOperationArgs final: public OperationArgs
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
     int evaluate_reg_force(int r2)
         {
-            auto [r3, value] = M.incremental_evaluate1(r2);
+            auto [r3, result] = M.incremental_evaluate1(r2);
 
             if (M.reg_is_changeable_or_forcing(r3))
             {
@@ -96,14 +96,14 @@ class RegOperationArgs final: public OperationArgs
                     M.set_forced_reg(r, r3);
             }
 
-            return value;
+            return result;
         }
 
     /// Evaluate the reg r2, record a dependency on r2, and return the reg following call chains.
     int evaluate_reg_use(int r2)
         {
             // Compute the value, and follow index_var chains (which are not changeable).
-            auto [r3, value] = M.incremental_evaluate1(r2);
+            auto [r3, result] = M.incremental_evaluate1(r2);
 
             // Note that although r2 is newly used, r3 might be already used if it was 
             // found from r2 through a non-changeable reg_var chain.
@@ -119,7 +119,7 @@ class RegOperationArgs final: public OperationArgs
                     M.set_forced_reg(r, r3);
             }
 
-            return value;
+            return result;
         }
 
     const closure& evaluate_reg_to_closure(int r2)
@@ -231,7 +231,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
         if (int s = step_index_for_reg(r); s > 0)
         {
             // Evaluate S, looking through unchangeable redirections
-            auto [call, value] = incremental_evaluate1(steps[s].call);
+            auto [call, result] = incremental_evaluate1(steps[s].call);
 
             // If computation_for_reg(r).call can be evaluated to refer to S w/o moving through any changable operations,
             // then it should be safe to change computation_for_reg(r).call to refer to S, even if r is changeable.
@@ -254,7 +254,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 
             total_changeable_eval_with_call++;
             assert(not reg_is_unevaluated(r));
-            return {r, value};
+            return {r, result};
         }
     }
     else if (unevaluated_reg_is_index_var_no_force(r))
@@ -412,7 +412,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                         assert(not has_step1(r2));
                     }
 
-                    auto [call,value] = incremental_evaluate1(r2);
+                    auto [call,result] = incremental_evaluate1(r2);
                     closure_stack.pop_back();
 
                     set_call(s, call);
@@ -431,7 +431,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                         regs[r].n_regs_forced_before_step = n_forces;
 
                     assert(not reg_is_unevaluated(r));
-                    return {r, value};
+                    return {r, result};
                 }
             }
             catch (error_exception& e)
@@ -478,7 +478,7 @@ class RegOperationArgs2 final: public OperationArgs
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
     int evaluate_reg_force(int r2)
         {
-            auto [r3, value] = M.incremental_evaluate2(r2, zero_count);
+            auto [r3, result] = M.incremental_evaluate2(r2, zero_count);
 
             if (M.reg_is_changeable_or_forcing(r3))
             {
@@ -486,14 +486,14 @@ class RegOperationArgs2 final: public OperationArgs
                     M.set_forced_reg(r, r3);
             }
 
-            return value;
+            return result;
         }
 
     /// Evaluate the reg r2, record a dependency on r2, and return the reg following call chains.
     int evaluate_reg_use(int r2)
         {
             // Compute the value, and follow index_var chains (which are not changeable).
-            auto [r3, value] = M.incremental_evaluate2(r2, zero_count);
+            auto [r3, result] = M.incremental_evaluate2(r2, zero_count);
 
             // Note that although r2 is newly used, r3 might be already used if it was 
             // found from r2 through a non-changeable reg_var chain.
@@ -509,7 +509,7 @@ class RegOperationArgs2 final: public OperationArgs
                     M.set_forced_reg(r, r3);
             }
 
-            return value;
+            return result;
         }
 
     const closure& evaluate_reg_to_closure(int r2)
@@ -671,7 +671,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
         {
             int s = step_index_for_reg(r);
             // Evaluate S, looking through unchangeable redirections
-            auto [call, value] = incremental_evaluate2(steps[s].call, not reg_is_forced(r));
+            auto [call, result] = incremental_evaluate2(steps[s].call, not reg_is_forced(r));
 
             // If computation_for_reg(r).call can be evaluated to refer to S w/o moving through any changable operations,
             // then it should be safe to change computation_for_reg(r).call to refer to S, even if r is changeable.
@@ -688,7 +688,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
             int t = tokens[root_token].children[0];
 
             // FIXME: How to avoid resharing results of changed modifiables?  Since the step is not shared, we should not reshare.
-            bool reshare_result = prog_unshare[r].test(unshare_result_bit) and (prog_results[r] == value);
+            bool reshare_result = prog_unshare[r].test(unshare_result_bit) and (prog_results[r] == result);
             if (not reshare_result)
             {
                 tokens[t].vm_result.add_value(r, prog_results[r]);
@@ -700,7 +700,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 force_reg_no_call(r);
 
             total_changeable_eval_with_call2++;
-            return {r, value};
+            return {r, result};
         }
     }
     else if (unevaluated_reg_is_index_var_no_force(r))
@@ -870,7 +870,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                         assert(not has_step1(r2));
                     }
 
-                    auto [call,value] = incremental_evaluate2(r2, true);
+                    auto [call,result] = incremental_evaluate2(r2, true);
                     closure_stack.pop_back();
 
                     assert(not prog_unshare[r].test(unshare_step_bit) or prog_steps[r] > 0);
@@ -901,7 +901,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                         destroy_step_and_created_regs(s);
                     }
 
-                    bool reshare_result = reshare_step and prog_results[r] == value;
+                    bool reshare_result = reshare_step and prog_results[r] == result;
                     if (not reshare_result)
                     {
                         tokens[t].vm_result.add_value(r, prog_results[r]);
@@ -918,7 +918,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                     else if (not reg_is_forced(r))
                         force_regs_before_step(r);
 
-                    return {r, value};
+                    return {r, result};
                 }
             }
             catch (error_exception& e)
