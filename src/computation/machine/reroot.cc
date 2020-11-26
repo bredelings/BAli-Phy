@@ -443,6 +443,26 @@ void reg_heap::tweak_deltas_and_unshare_bits(int t)
         prog_unshare[r].reset(unshare_result_bit);
 }
 
+void reg_heap::reroot_at_token_with_tweaked_deltas_and_bits(int t)
+{
+    assert(is_root_token(parent_token(t)));
+    int t2 = root_token;
+
+    // 1. Mark tokens as having tweaked bits.
+    tokens[t].flags.set(0);
+    tokens[t2].flags.set(0);
+
+    // 2. Mark tokens as having tweaked bits.
+    reroot_at_token(t);
+
+    assert(tokens[t].children.size() == 1);
+    assert(tokens[t].children[0] == t2);
+
+    // 3. Unmark tokens
+    tokens[t].flags.reset(0);
+    tokens[t2].flags.reset(0);
+}
+
 void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_regs, vector<int>& zero_count_regs)
 {
     int t2 = tokens[root_token].children[0];
@@ -615,16 +635,10 @@ expression_ref reg_heap::unshare_regs2(int t)
     // 2. Fixup deltas and unshare bits
     tweak_deltas_and_unshare_bits(t);
 
-    // 4. Reroot to token t.
-    tokens[t].flags.set(0);
-    tokens[root_token].flags.set(0);
+    // 3. Reroot to token t.
+    int t2 = root_token;
+    reroot_at_token_with_tweaked_deltas_and_bits(t);
 
-    reroot_at_token(t);
-    assert(tokens[t].children.size() == 1);
-    int t2 = tokens[t].children[0];
-
-    tokens[t].flags.reset(0);
-    tokens[t2].flags.reset(0);
 
     // 5. Determine which invalid regs we can safely execute.
     auto* vm_result2 = &tokens[t2].vm_result;
