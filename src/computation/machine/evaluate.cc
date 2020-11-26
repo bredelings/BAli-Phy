@@ -100,7 +100,7 @@ class RegOperationArgs final: public OperationArgs
         }
 
     /// Evaluate the reg r2, record a dependency on r2, and return the reg following call chains.
-    int evaluate_reg_to_reg(int r2)
+    int evaluate_reg_use(int r2)
         {
             // Compute the value, and follow index_var chains (which are not changeable).
             auto [r3, value] = M.incremental_evaluate1(r2);
@@ -124,7 +124,7 @@ class RegOperationArgs final: public OperationArgs
 
     const closure& evaluate_reg_to_closure(int r2)
         {
-            int r3 = evaluate_reg_to_reg(r2);
+            int r3 = evaluate_reg_use(r2);
             return M[r3];
         }
 
@@ -490,7 +490,7 @@ class RegOperationArgs2 final: public OperationArgs
         }
 
     /// Evaluate the reg r2, record a dependency on r2, and return the reg following call chains.
-    int evaluate_reg_to_reg(int r2)
+    int evaluate_reg_use(int r2)
         {
             // Compute the value, and follow index_var chains (which are not changeable).
             auto [r3, value] = M.incremental_evaluate2(r2, zero_count);
@@ -514,7 +514,7 @@ class RegOperationArgs2 final: public OperationArgs
 
     const closure& evaluate_reg_to_closure(int r2)
         {
-            int r3 = evaluate_reg_to_reg(r2);
+            int r3 = evaluate_reg_use(r2);
             return M[r3];
         }
 
@@ -970,21 +970,21 @@ class RegOperationArgsUnchangeable final: public OperationArgs
         }
 
     /// Evaluate the reg r2, record a dependency on r2, and return the reg following call chains.
-    int evaluate_reg_to_reg(int r2)
+    int evaluate_reg_use(int r2)
         {
             return evaluate_reg(r2);
         }
 
     const closure& evaluate_reg_to_closure(int r2)
         {
-            int r3 = evaluate_reg_to_reg(r2);
+            int r3 = evaluate_reg_use(r2);
             assert(M.reg_is_constant_no_force(r3));
             return M[r3];
         }
 
     const closure& evaluate_reg_to_closure_(int r2)
         {
-            int r3 = evaluate_reg_to_reg(r2);
+            int r3 = evaluate_reg_use(r2);
             assert(M.reg_is_constant_no_force(r3));
             return M[r3];
         }

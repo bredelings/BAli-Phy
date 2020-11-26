@@ -88,7 +88,7 @@ expression_ref maybe_modifiable_structure(reg_heap& M, int r1)
 
 extern "C" closure builtin_function_maybe_modifiable_structure(OperationArgs& Args)
 {
-    Args.evaluate_slot_to_reg(0);
+    Args.evaluate_slot_use(0);
 
     int R1 = Args.reg_for_slot(0);
 
