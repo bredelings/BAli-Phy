@@ -404,11 +404,14 @@ expression_ref reg_heap::unshare_regs2(int t)
                                 prog_unshare[r].set(unshare_step_bit);
                             };
 
+    auto& zero_count_regs_initial = get_scratch_list();
+
     // 1. Mark unshared regs.  All modified regs should have STEP/RESULT/FORCE unshared.
     for(auto [r,s]: delta_step)
     {
-        assert(has_force2(r));
         assert(s > 0);
+        if (not has_force2(r))
+            zero_count_regs_initial.push_back(r);
         unshare_step(r);
     }
     // All the same regs should have (r,-) in the result.
@@ -620,7 +623,32 @@ expression_ref reg_heap::unshare_regs2(int t)
             prog_steps[r] = non_computed_index;
         }
     }
+
+    // We should ideally consider modifiable that start with {0,+} counts and end with {0,+} counts.
+    // This block handles regs that start with 0 and end with 0.
+    for(int r: zero_count_regs_initial)
+    {
+        if (has_force2(r))
+        {
+            assert(prog_unshare[r].none());
+            continue;
+        }
+
+        if (prog_unshare[r].test(unshare_result_bit))
+        {
+            assert(not has_result1(r));
+            vm_result2->add_value(r, prog_results[r]);
+        }
+        prog_results[r] = non_computed_index;
+
+        assert(not prog_unshare[r].test(unshare_step_bit));
+        prog_steps[r] = non_computed_index;
+
+        prog_unshare[r].reset();
+    }
+
     release_scratch_list(); // zero_count_regs
+    release_scratch_list(); // zero_count_regs_initial
 
 
 #ifdef DEBUG_MACHINE
