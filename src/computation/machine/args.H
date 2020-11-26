@@ -35,8 +35,8 @@ public:
 
     int reg_for_slot(int slot) const;
 
-    // evaluating a changeable reg unchangeably will return the
-    // return instead of throwing a no_context() exception.
+    // evaluating a changeable-or-forcing reg unchangeably will return the
+    // reg instead of throwing a no_context() exception.
     int evaluate_reg_unchangeable(int r);
 
     int evaluate_slot_unchangeable(int slot);
@@ -48,9 +48,9 @@ public:
 
     int evaluate_slot_force(int);
 
-    virtual int evaluate_reg_to_reg(int) = 0;
+    virtual int evaluate_reg_use(int) = 0;
   
-    int evaluate_slot_to_reg(int);
+    int evaluate_slot_use(int);
 
     virtual const closure& evaluate_reg_to_closure(int) = 0;
 

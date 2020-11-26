@@ -286,8 +286,8 @@ closure let_op(OperationArgs& Args)
 
 closure join_op(OperationArgs& Args)
 {
-    Args.evaluate_slot_to_reg(0);
-    int R = Args.evaluate_slot_to_reg(1);
+    Args.evaluate_slot_use(0);
+    int R = Args.evaluate_slot_use(1);
 
     return {index_var(0),{R}};
 }
