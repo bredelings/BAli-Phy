@@ -301,6 +301,8 @@ private:
 
     void first_evaluate_program(int c);
 
+    void compute_initial_force_counts();
+
     bool simple_set_path_to(int child_token) const;
 
     std::vector<std::pair<int,closure>> find_set_regs_on_path(int child_token) const;
