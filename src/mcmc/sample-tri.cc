@@ -273,13 +273,11 @@ log_double_t pr_sum_out_A_tri(Parameters P, const vector<optional<vector<HMM::bi
         {
             // This computes the sampling probability of the CHOSEN path, not the INPUT path!
 	    auto [Matrices,sampling_pr] = tri_sample_alignment_base(P[j], nodes, *a23[j], -1);
-	    Pr /= sampling_pr;
-            Pr *= A3::correction(P[j], nodes);
+	    Pr *= sampling_pr;
+            Pr /= A3::correction(P[j], nodes);
             // FIXME! These sums still need to be accepted/rejected!
         }
     }
-
-    Pr *= P.heated_probability();
 
     return Pr;
 }
@@ -359,7 +357,7 @@ int sample_A3_multi_calculation::choose(bool correct)
 
 	throw c;
     }
-  
+
     // \todo What do we do if partition 0 works, but other partitions fail cuz of constraints?
     assert(C == -1 or Pr[C] > 0.0);
 
