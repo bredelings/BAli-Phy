@@ -752,16 +752,7 @@ expression_ref reg_heap::unshare_regs2(int t)
     release_scratch_list(); // unshared_regs
 
 #ifdef DEBUG_MACHINE
-    for(int r=1;r<regs.size();r++)
-    {
-        assert(prog_unshare[r].none());
-        if (not regs.is_free(r))
-            assert(prog_force_counts[r] == force_count(r));
-        if (has_step1(r))
-            assert(prog_force_counts[r] > 0);
-        if (prog_force_counts[r] > 0)
-            assert(reg_is_constant_with_force(r) or has_result1(r));
-    }
+    check_force_counts();
 #endif
 
     // 9. Handle moving steps out of the root.
