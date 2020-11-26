@@ -591,6 +591,25 @@ void reg_heap::evaluate_forced_invalid_regs(const std::vector<int>& unshared_reg
 #endif
 }
 
+void reg_heap::cleanup_count_deltas_and_bits()
+{
+    int t2 = tokens[root_token].children[0];
+    auto& delta_count = tokens[t2].vm_force_count.delta();
+
+    // 1. Clear unsharing bits for vm_
+    for(auto [r,_]: delta_count)
+        prog_unshare[r].reset(unshare_count_bit);
+
+    // 2. Remove count overrides that are of no effect.
+    auto count_changed = [&](const pair<int,int>& p)
+    {
+        auto [r,count] = p;
+        return count != prog_force_counts[r];
+    };
+
+    filter_unordered_vector(delta_count, count_changed);
+}
+
 void reg_heap::remove_zero_count_regs(const std::vector<int>& zero_count_regs_initial, const std::vector<int>& zero_count_regs)
 {
     int t2 = tokens[root_token].children[0];
@@ -699,17 +718,11 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     auto* vm_result2 = &tokens[t2].vm_result;
     auto* vm_step2   = &tokens[t2].vm_step;
-    auto* vm_count2  = &tokens[t2].vm_force_count;
 
-    // 8. Clear unshare_count_bit and remove no-effect override from delta-force-count
+    // 7. Clear unshare_count_bit and remove no-effect override from delta-force-count
+    cleanup_count_deltas_and_bits();
 
-    for(auto [r,_]: vm_count2->delta())
-        prog_unshare[r].reset(unshare_count_bit);
-
-    auto count_changed = [&](const pair<int,int>& p) {auto [r,count] = p; return count != prog_force_counts[r];};
-    filter_unordered_vector(vm_count2->delta(), count_changed);
-
-    // 9. Remove zero count regs (previously-executed, and new modifiables) and clear unshare_* bits on unexecuted regs.
+    // 8. Remove zero count regs (previously-executed, and new modifiables) and clear unshare_* bits on unexecuted regs.
     remove_zero_count_regs(zero_count_regs_initial, zero_count_regs);
 
     release_scratch_list(); // zero_count_regs
