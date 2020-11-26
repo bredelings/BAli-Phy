@@ -613,13 +613,7 @@ void reg_heap::first_evaluate_program(int c)
 #endif
 
 #ifdef DEBUG_MACHINE
-    for(int r=1;r<regs.size();r++)
-    {
-        if (not regs.is_free(r))
-            assert(prog_force_counts[r] == force_count(r));
-        if (has_step1(r))
-            assert(prog_force_counts[r] > 0);
-    }
+    check_force_counts();
 #endif
 }
 
