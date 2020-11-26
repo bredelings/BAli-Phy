@@ -664,6 +664,20 @@ vector<pair<int,closure>> reg_heap::find_set_regs_on_path(int child_token) const
     return reg_values;
 }
 
+void reg_heap::check_force_counts()
+{
+    for(int r=1;r<regs.size();r++)
+    {
+        assert(prog_unshare[r].none());
+        if (not regs.is_free(r))
+            assert(prog_force_counts[r] == force_count(r));
+        if (has_step1(r))
+            assert(prog_force_counts[r] > 0);
+        if (prog_force_counts[r] > 0)
+            assert(reg_is_constant_with_force(r) or has_result1(r));
+    }
+}
+
 expression_ref reg_heap::unshare_and_evaluate_program(int c)
 {
     // 1. Reroot to the PPET
@@ -734,10 +748,8 @@ expression_ref reg_heap::evaluate_program(int c)
         unshare_and_evaluate_program(c);
     }
 
-#ifdef DEBUG_MACHINE
-    for(int r=1;r<regs.size();r++)
-        if (not regs.is_free(r))
-            assert(prog_force_counts[r] == force_count(r));
+#if DEBUG_MACHINE >= 2
+    check_force_counts();
 #endif
 
     // 4. Perform any pending registration or unregistration of effects.

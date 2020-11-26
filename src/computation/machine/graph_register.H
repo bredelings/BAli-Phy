@@ -624,6 +624,7 @@ public:
     void remove_zero_count_regs(const std::vector<int>&, const std::vector<int>&);
     void unregister_effects_for_bumped_steps();
     void mark_as_program_execution_token(int t);
+    void check_force_counts();
     expression_ref unshare_regs2(int t1);
 
     void check_unshare_regs(int t);
