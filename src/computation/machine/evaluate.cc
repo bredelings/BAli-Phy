@@ -213,6 +213,81 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
         assert(not reg_has_value(r));
 #endif
 
+    if (reg_is_constant(r)) return {r,r};
+
+    else if (reg_is_changeable(r))
+    {
+        total_changeable_eval++;
+        int result = result_for_reg(r);
+
+        if (result > 0)
+        {
+            total_changeable_eval_with_result++;
+
+            return {r, result};
+        }
+
+        // If we know what to call, then call it and use it to set the value
+        if (int s = step_index_for_reg(r); s > 0)
+        {
+            // Evaluate S, looking through unchangeable redirections
+            auto [call, value] = incremental_evaluate1(steps[s].call);
+
+            // If computation_for_reg(r).call can be evaluated to refer to S w/o moving through any changable operations,
+            // then it should be safe to change computation_for_reg(r).call to refer to S, even if r is changeable.
+            if (call != call_for_reg(r))
+            {
+                // This should only ever happen for modifiable values set with set_reg_value( ).
+                // In such cases, we need this, because the value we set could evaluate to an index_var.
+                // Otherwise, we set the call AFTER we have evaluated to a changeable or a constant.
+                clear_call_for_reg(r);
+                set_call(s, call);
+            }
+
+            // r gets its value from S.
+            set_result_for_reg( r );
+            if (not tokens[root_token].children.empty())
+            {
+                int t = tokens[root_token].children[0];
+                tokens[t].vm_result.add_value(r, non_computed_index);
+            }
+
+            total_changeable_eval_with_call++;
+            assert(not reg_is_unevaluated(r));
+            return {r, value};
+        }
+    }
+    else if (unevaluated_reg_is_index_var_no_force(r))
+    {
+        int r2 = closure_at(r).reg_for_index_var();
+        return incremental_evaluate1(r2);
+    }
+    else if (reg_is_index_var_with_force(r))
+    {
+        int r2 = closure_at(r).reg_for_index_var();
+
+        if (has_result1(r))
+        {
+            int result = result_for_reg(r);
+            return {r,result};
+        }
+        else
+        {
+            auto [r3, result3] = incremental_evaluate1(r2);
+
+            // r gets its value from S.
+            if (not tokens[root_token].children.empty())
+            {
+                int t = tokens[root_token].children[0];
+                tokens[t].vm_result.add_value(r, non_computed_index);
+            }
+            prog_results[r] = result3;
+
+            assert(not reg_is_unevaluated(r));
+            return {r, result3};
+        }
+    }
+
     while (1)
     {
         assert(expression_at(r));
@@ -220,81 +295,6 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 #ifndef NDEBUG
         //    std::cerr<<"   statement: "<<r<<":   "<<regs.access(r).E.print()<<std::endl;
 #endif
-
-        if (reg_is_constant(r)) return {r,r};
-
-        else if (reg_is_changeable(r))
-        {
-            total_changeable_eval++;
-            int result = result_for_reg(r);
-
-            if (result > 0)
-            {
-                total_changeable_eval_with_result++;
-
-                return {r, result};
-            }
-
-            // If we know what to call, then call it and use it to set the value
-            if (int s = step_index_for_reg(r); s > 0)
-            {
-                // Evaluate S, looking through unchangeable redirections
-                auto [call, value] = incremental_evaluate1(steps[s].call);
-
-                // If computation_for_reg(r).call can be evaluated to refer to S w/o moving through any changable operations, 
-                // then it should be safe to change computation_for_reg(r).call to refer to S, even if r is changeable.
-                if (call != call_for_reg(r))
-                {
-                    // This should only ever happen for modifiable values set with set_reg_value( ).
-                    // In such cases, we need this, because the value we set could evaluate to an index_var.
-                    // Otherwise, we set the call AFTER we have evaluated to a changeable or a constant.
-                    clear_call_for_reg(r);
-                    set_call(s, call);
-                }
-
-                // r gets its value from S.
-                set_result_for_reg( r );
-                if (not tokens[root_token].children.empty())
-                {
-                    int t = tokens[root_token].children[0];
-                    tokens[t].vm_result.add_value(r, non_computed_index);
-                }
-
-                total_changeable_eval_with_call++;
-                assert(not reg_is_unevaluated(r));
-                return {r, value};
-            }
-        }
-        else if (unevaluated_reg_is_index_var_no_force(r))
-        {
-            int r2 = closure_at(r).reg_for_index_var();
-            return incremental_evaluate1(r2);
-        }
-        else if (reg_is_index_var_with_force(r))
-        {
-            int r2 = closure_at(r).reg_for_index_var();
-
-            if (has_result1(r))
-            {
-                int result = result_for_reg(r);
-                return {r,result};
-            }
-            else
-            {
-                auto [r3, result3] = incremental_evaluate1(r2);
-
-                // r gets its value from S.
-                if (not tokens[root_token].children.empty())
-                {
-                    int t = tokens[root_token].children[0];
-                    tokens[t].vm_result.add_value(r, non_computed_index);
-                }
-                prog_results[r] = result3;
-
-                assert(not reg_is_unevaluated(r));
-                return {r, result3};
-            }
-        }
 
         /*---------- Below here, there is no call, and no value. ------------*/
         if (expression_at(r).is_index_var())
@@ -642,6 +642,110 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
         assert(not reg_has_value(r));
 #endif
 
+    if (reg_is_constant_no_force(r)) return {r,r};
+
+    else if (reg_is_constant_with_force(r))
+    {
+        if (not reg_is_forced(r))
+            force_reg_no_call(r);
+
+        return {r, r};
+    }
+    else if (reg_is_changeable(r))
+    {
+        total_changeable_eval2++;
+
+        if (has_result2(r))
+        {
+            total_changeable_eval_with_result2++;
+
+            if (not reg_is_forced(r))
+                force_reg_with_call(r);
+
+            int result = result_for_reg(r);
+            return {r, result};
+        }
+
+        // If we know what to call, then call it and use it to set the value
+        if (has_step2(r))
+        {
+            int s = step_index_for_reg(r);
+            // Evaluate S, looking through unchangeable redirections
+            auto [call, value] = incremental_evaluate2(steps[s].call, not reg_is_forced(r));
+
+            // If computation_for_reg(r).call can be evaluated to refer to S w/o moving through any changable operations,
+            // then it should be safe to change computation_for_reg(r).call to refer to S, even if r is changeable.
+            if (call != call_for_reg(r))
+            {
+                // This should only ever happen for modifiable values set with set_reg_value( ).
+                // In such cases, we need this, because the value we set could evaluate to an index_var.
+                // Otherwise, we set the call AFTER we have evaluated to a changeable or a constant.
+                clear_call_for_reg(r);
+                set_call(s, call);
+            }
+
+            // r gets its value from S.
+            int t = tokens[root_token].children[0];
+
+            // FIXME: How to avoid resharing results of changed modifiables?  Since the step is not shared, we should not reshare.
+            bool reshare_result = prog_unshare[r].test(unshare_result_bit) and (prog_results[r] == value);
+            if (not reshare_result)
+            {
+                tokens[t].vm_result.add_value(r, prog_results[r]);
+                set_result_for_reg( r );
+            }
+            prog_unshare[r].reset(unshare_result_bit);
+
+            if (not reg_is_forced(r))
+                force_reg_no_call(r);
+
+            total_changeable_eval_with_call2++;
+            return {r, value};
+        }
+    }
+    else if (unevaluated_reg_is_index_var_no_force(r))
+    {
+        int r2 = closure_at(r).reg_for_index_var();
+        return incremental_evaluate2(r2, false);
+    }
+    else if (reg_is_index_var_with_force(r))
+    {
+        int r2 = closure_at(r).reg_for_index_var();
+
+        if (has_result2(r))
+        {
+            if (not reg_is_forced(r))
+            {
+                force_reg_no_call(r);
+                incremental_evaluate2(r2, true);
+            }
+
+            int result = result_for_reg(r);
+            return {r,result};
+        }
+        else
+        {
+            auto [r3, result3] = incremental_evaluate2(r2, not reg_is_forced(r));
+
+            bool reshare_result = prog_unshare[r].test(unshare_result_bit) and prog_results[r] == result3;
+            if (not reshare_result)
+            {
+                int t = tokens[root_token].children[0];
+                tokens[t].vm_result.add_value(r, prog_results[r]);
+                prog_results[r] = result3;
+            }
+            prog_unshare[r].reset(unshare_result_bit);
+
+            if (not reg_is_forced(r))
+                force_reg_no_call(r);
+
+            assert(not reg_is_unevaluated(r));
+            return {r, result3};
+        }
+    }
+    else
+        assert(reg_is_unevaluated(r));
+
     while (1)
     {
         assert(expression_at(r));
@@ -649,111 +753,6 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 #ifndef NDEBUG
         //    std::cerr<<"   statement: "<<r<<":   "<<regs.access(r).E.print()<<std::endl;
 #endif
-
-        if (reg_is_constant_no_force(r)) return {r,r};
-
-        else if (reg_is_constant_with_force(r))
-        {
-            if (not reg_is_forced(r))
-                force_reg_no_call(r);
-
-            return {r, r};
-        }
-
-        else if (reg_is_changeable(r))
-        {
-            total_changeable_eval2++;
-
-            if (has_result2(r))
-            {
-                total_changeable_eval_with_result2++;
-
-                if (not reg_is_forced(r))
-                    force_reg_with_call(r);
-
-                int result = result_for_reg(r);
-                return {r, result};
-            }
-
-            // If we know what to call, then call it and use it to set the value
-            if (has_step2(r))
-            {
-                int s = step_index_for_reg(r);
-                // Evaluate S, looking through unchangeable redirections
-                auto [call, value] = incremental_evaluate2(steps[s].call, not reg_is_forced(r));
-
-                // If computation_for_reg(r).call can be evaluated to refer to S w/o moving through any changable operations, 
-                // then it should be safe to change computation_for_reg(r).call to refer to S, even if r is changeable.
-                if (call != call_for_reg(r))
-                {
-                    // This should only ever happen for modifiable values set with set_reg_value( ).
-                    // In such cases, we need this, because the value we set could evaluate to an index_var.
-                    // Otherwise, we set the call AFTER we have evaluated to a changeable or a constant.
-                    clear_call_for_reg(r);
-                    set_call(s, call);
-                }
-
-                // r gets its value from S.
-                int t = tokens[root_token].children[0];
-
-                // FIXME: How to avoid resharing results of changed modifiables?  Since the step is not shared, we should not reshare.
-                bool reshare_result = prog_unshare[r].test(unshare_result_bit) and (prog_results[r] == value);
-                if (not reshare_result)
-                {
-                    tokens[t].vm_result.add_value(r, prog_results[r]);
-                    set_result_for_reg( r );
-                }
-                prog_unshare[r].reset(unshare_result_bit);
-
-                if (not reg_is_forced(r))
-                    force_reg_no_call(r);
-
-                total_changeable_eval_with_call2++;
-                return {r, value};
-            }
-        }
-        else if (unevaluated_reg_is_index_var_no_force(r))
-        {
-            int r2 = closure_at(r).reg_for_index_var();
-            return incremental_evaluate2(r2, false);
-        }
-        else if (reg_is_index_var_with_force(r))
-        {
-            int r2 = closure_at(r).reg_for_index_var();
-
-            if (has_result2(r))
-            {
-                if (not reg_is_forced(r))
-                {
-                    force_reg_no_call(r);
-                    incremental_evaluate2(r2, true);
-                }
-
-                int result = result_for_reg(r);
-                return {r,result};
-            }
-            else
-            {
-                auto [r3, result3] = incremental_evaluate2(r2, not reg_is_forced(r));
-
-                bool reshare_result = prog_unshare[r].test(unshare_result_bit) and prog_results[r] == result3;
-                if (not reshare_result)
-                {
-                    int t = tokens[root_token].children[0];
-                    tokens[t].vm_result.add_value(r, prog_results[r]);
-                    prog_results[r] = result3;
-                }
-                prog_unshare[r].reset(unshare_result_bit);
-
-                if (not reg_is_forced(r))
-                    force_reg_no_call(r);
-
-                assert(not reg_is_unevaluated(r));
-                return {r, result3};
-            }
-        }
-        else
-            assert(reg_is_unevaluated(r));
 
         /*---------- Below here, there is no call, and no value. ------------*/
         if (expression_at(r).is_index_var())
@@ -790,8 +789,6 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 set_index_var_ref(r,r3);
 
             assert(not has_result1(r));
-
-
 
             int t = tokens[root_token].children[0];
             tokens[t].vm_result.add_value(r, prog_results[r]);
