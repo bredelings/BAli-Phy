@@ -410,7 +410,7 @@ expression_ref reg_heap::unshare_regs2(int t)
     for(auto [r,s]: delta_step)
     {
         assert(s > 0);
-        if (not has_force2(r))
+        if (not reg_is_forced(r))
             zero_count_regs_initial.push_back(r);
         unshare_step(r);
     }
@@ -496,7 +496,7 @@ expression_ref reg_heap::unshare_regs2(int t)
     // 5a. Increment counts for new calls, if count > 0
     for(auto& [r,_]: vm_step2->delta())
     {
-        if (has_force2(r))
+        if (reg_is_forced(r))
         {
             int call = call_for_reg(r);
             if (reg_is_changeable_or_forcing(call))
@@ -579,14 +579,14 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     // 6.  Evaluate the program
     for(int r: unshared_regs | views::reverse)
-        if (has_force2(r) and not has_result2(r))
+        if (reg_is_forced(r) and not has_result2(r))
         {
             incremental_evaluate2(r,false);
             assert(has_result2(r));
         }
 
     for(int r: unshared_regs | views::reverse)
-        if (has_force2(r))
+        if (reg_is_forced(r))
             assert(has_result2(r));
 
     auto result = lazy_evaluate2(heads[*program_result_head]).exp;
@@ -610,7 +610,7 @@ expression_ref reg_heap::unshare_regs2(int t)
         // so we can clear the bits here.
         prog_unshare[r].reset();
 
-        if (has_force2(r)) continue;
+        if (reg_is_forced(r)) continue;
 
         if (has_result1(r))
         {
@@ -628,7 +628,7 @@ expression_ref reg_heap::unshare_regs2(int t)
     // This block handles regs that start with 0 and end with 0.
     for(int r: zero_count_regs_initial)
     {
-        if (has_force2(r))
+        if (reg_is_forced(r))
         {
             assert(prog_unshare[r].none());
             continue;
