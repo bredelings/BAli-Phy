@@ -667,6 +667,14 @@ void reg_heap::remove_zero_count_regs(const std::vector<int>& zero_count_regs_in
     }
 }
 
+void reg_heap::mark_as_program_execution_token(int t)
+{
+    auto t3 = unset_prev_prog_token(t);
+    set_prev_prog_token(t, prev_prog_token_t(t,0,true));
+    if (t3)
+        release_unreferenced_tips(*t3);
+}
+
 expression_ref reg_heap::unshare_regs2(int t)
 {
     // parent_token(t) should be the root.
@@ -758,10 +766,7 @@ expression_ref reg_heap::unshare_regs2(int t)
     release_scratch_list(); // unshared_regs
 
     // 10. Mark the current token as a previous_program_token.
-    auto t3 = unset_prev_prog_token(t);
-    set_prev_prog_token(t, prev_prog_token_t(t,0,true));
-    if (t3)
-        release_unreferenced_tips(*t3);
+    mark_as_program_execution_token(t);
 
     total_results_invalidated += (vm_result2->delta().size() - n_delta_result0);
     total_steps_invalidated += (vm_step2->delta().size() - n_delta_step0);

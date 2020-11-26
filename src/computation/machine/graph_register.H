@@ -622,6 +622,7 @@ public:
     void evaluate_forced_invalid_regs(const std::vector<int>&);
     void cleanup_count_deltas_and_bits();
     void remove_zero_count_regs(const std::vector<int>&, const std::vector<int>&);
+    void mark_as_program_execution_token(int t);
     expression_ref unshare_regs2(int t1);
 
     void check_unshare_regs(int t);
