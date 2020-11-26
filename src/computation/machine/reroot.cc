@@ -509,6 +509,63 @@ void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_r
 
 }
 
+void reg_heap::remove_zero_count_regs(const std::vector<int>& zero_count_regs_initial, const std::vector<int>& zero_count_regs)
+{
+    int t2 = tokens[root_token].children[0];
+
+    auto* vm_result2 = &tokens[t2].vm_result;
+    auto* vm_step2   = &tokens[t2].vm_step;
+
+    // 1. Bump zero-count previously-executed regs to child token, and clear result and step bits.
+    for(int r: zero_count_regs)
+    {
+        // Any regs that still have invalid_step or invalid_result should be zero-count,
+        // so we can clear the bits here.
+        prog_unshare[r].reset();
+
+        if (reg_is_forced(r)) continue;
+
+        if (has_result1(r))
+        {
+            vm_result2->add_value(r, prog_results[r]);
+            prog_results[r] = non_computed_index;
+        }
+        if (has_step1(r))
+        {
+            vm_step2->add_value(r, prog_steps[r]);
+            prog_steps[r] = non_computed_index;
+        }
+    }
+
+    // 2. Remove new steps and results for unforced modifiables.
+    //
+    //    * We need to make sure that unshared results in the form [-]* are pushed into delta result;
+    //
+    //    * We should ideally consider modifiable that start with {0,+} counts and end with {0,+} counts.
+    //      This block handles regs that start with 0 and end with 0.
+
+    for(int r: zero_count_regs_initial)
+    {
+        if (reg_is_forced(r))
+        {
+            assert(prog_unshare[r].none());
+            continue;
+        }
+
+        if (prog_unshare[r].test(unshare_result_bit))
+        {
+            assert(not has_result1(r));
+            vm_result2->add_value(r, prog_results[r]);
+        }
+        prog_results[r] = non_computed_index;
+
+        assert(not prog_unshare[r].test(unshare_step_bit));
+        prog_steps[r] = non_computed_index;
+
+        prog_unshare[r].reset();
+    }
+}
+
 expression_ref reg_heap::unshare_regs2(int t)
 {
     // parent_token(t) should be the root.
@@ -621,49 +678,8 @@ expression_ref reg_heap::unshare_regs2(int t)
     auto count_changed = [&](const pair<int,int>& p) {auto [r,count] = p; return count != prog_force_counts[r];};
     filter_unordered_vector(vm_count2->delta(), count_changed);
 
-    // 9. Bump zero-count invalid regs to child token, and clear result and step bits.
-    for(int r: zero_count_regs)
-    {
-        // Any regs that still have invalid_step or invalid_result should be zero-count,
-        // so we can clear the bits here.
-        prog_unshare[r].reset();
-
-        if (reg_is_forced(r)) continue;
-
-        if (has_result1(r))
-        {
-            vm_result2->add_value(r, prog_results[r]);
-            prog_results[r] = non_computed_index;
-        }
-        if (has_step1(r))
-        {
-            vm_step2->add_value(r, prog_steps[r]);
-            prog_steps[r] = non_computed_index;
-        }
-    }
-
-    // We should ideally consider modifiable that start with {0,+} counts and end with {0,+} counts.
-    // This block handles regs that start with 0 and end with 0.
-    for(int r: zero_count_regs_initial)
-    {
-        if (reg_is_forced(r))
-        {
-            assert(prog_unshare[r].none());
-            continue;
-        }
-
-        if (prog_unshare[r].test(unshare_result_bit))
-        {
-            assert(not has_result1(r));
-            vm_result2->add_value(r, prog_results[r]);
-        }
-        prog_results[r] = non_computed_index;
-
-        assert(not prog_unshare[r].test(unshare_step_bit));
-        prog_steps[r] = non_computed_index;
-
-        prog_unshare[r].reset();
-    }
+    // 9. Remove zero count regs (previously-executed, and new modifiables) and clear unshare_* bits on unexecuted regs.
+    remove_zero_count_regs(zero_count_regs_initial, zero_count_regs);
 
     release_scratch_list(); // zero_count_regs
     release_scratch_list(); // zero_count_regs_initial
