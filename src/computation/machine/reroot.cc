@@ -425,7 +425,6 @@ void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_r
 {
     int t2 = tokens[root_token].children[0];
     
-    auto* vm_result2 = &tokens[t2].vm_result;
     auto* vm_step2   = &tokens[t2].vm_step;
     auto* vm_count2  = &tokens[t2].vm_force_count;
 
