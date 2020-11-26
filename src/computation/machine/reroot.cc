@@ -463,6 +463,21 @@ void reg_heap::reroot_at_token_with_tweaked_deltas_and_bits(int t)
     tokens[t2].flags.reset(0);
 }
 
+void reg_heap::increment_counts_from_new_calls()
+{
+    int t2 = tokens[root_token].children[0];
+
+    for(auto& [r,_]: tokens[t2].vm_step.delta())
+    {
+        if (reg_is_forced(r))
+        {
+            int call = call_for_reg(r);
+            if (reg_is_changeable_or_forcing(call))
+                inc_count(call);
+        }
+    }
+}
+
 void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_regs, vector<int>& zero_count_regs)
 {
     int t2 = tokens[root_token].children[0];
@@ -639,22 +654,13 @@ expression_ref reg_heap::unshare_regs2(int t)
     int t2 = root_token;
     reroot_at_token_with_tweaked_deltas_and_bits(t);
 
-
-    // 5. Determine which invalid regs we can safely execute.
+    // 4. Determine which invalid regs we can safely execute.
     auto* vm_result2 = &tokens[t2].vm_result;
     auto* vm_step2   = &tokens[t2].vm_step;
     auto* vm_count2  = &tokens[t2].vm_force_count;
 
-    // 5a. Increment counts for new calls, if count > 0
-    for(auto& [r,_]: vm_step2->delta())
-    {
-        if (reg_is_forced(r))
-        {
-            int call = call_for_reg(r);
-            if (reg_is_changeable_or_forcing(call))
-                inc_count(call);
-        }
-    }
+    // 4a. Increment counts for new calls, if count > 0
+    increment_counts_from_new_calls();
 
     // 5b. Execute unconditionally-executed regs here.
     for(int r: unshared_regs | views::reverse)
