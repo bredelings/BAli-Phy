@@ -478,6 +478,16 @@ void reg_heap::increment_counts_from_new_calls()
     }
 }
 
+void reg_heap::evaluate_unconditional_regs(const vector<int>& unshared_regs)
+{
+    for(int r: unshared_regs | views::reverse)
+        if (regs[r].is_unconditionally_evaluated() and not has_result2(r))
+        {
+            incremental_evaluate2(r,false);
+            assert(has_result2(r));
+        }
+}
+
 void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_regs, vector<int>& zero_count_regs)
 {
     int t2 = tokens[root_token].children[0];
@@ -655,26 +665,15 @@ expression_ref reg_heap::unshare_regs2(int t)
     reroot_at_token_with_tweaked_deltas_and_bits(t);
 
     // 4. Determine which invalid regs we can safely execute.
-    auto* vm_result2 = &tokens[t2].vm_result;
-    auto* vm_step2   = &tokens[t2].vm_step;
-    auto* vm_count2  = &tokens[t2].vm_force_count;
 
     // 4a. Increment counts for new calls, if count > 0
     increment_counts_from_new_calls();
 
-    // 5b. Execute unconditionally-executed regs here.
-    for(int r: unshared_regs | views::reverse)
-        if (regs[r].is_unconditionally_evaluated() and not has_result2(r))
-        {
-            incremental_evaluate2(r,false);
-            assert(has_result2(r));
-        }
-    vm_result2 = &tokens[t2].vm_result;
-    vm_step2   = &tokens[t2].vm_step;
-    vm_count2  = &tokens[t2].vm_force_count;
+    // 4b. Evaluate unconditionally-executed regs.
+    evaluate_unconditional_regs(unshared_regs);
 
+    // 4c. Decrement counts from invalid calls
     auto& zero_count_regs = get_scratch_list();
-
     decrement_counts_from_invalid_calls(unshared_regs, zero_count_regs);
 
     // 6.  Evaluate the program
@@ -693,9 +692,9 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     auto result = lazy_evaluate2(heads[*program_result_head]).exp;
 
-    vm_result2 = &tokens[t2].vm_result;
-    vm_step2   = &tokens[t2].vm_step;
-    vm_count2  = &tokens[t2].vm_force_count;
+    auto* vm_result2 = &tokens[t2].vm_result;
+    auto* vm_step2   = &tokens[t2].vm_step;
+    auto* vm_count2  = &tokens[t2].vm_force_count;
 
     // 8. Clear unshare_count_bit and remove no-effect override from delta-force-count
 
