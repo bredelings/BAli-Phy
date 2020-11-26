@@ -35,9 +35,9 @@ int OperationArgs::evaluate_slot_force(int slot)
     return evaluate_reg_force(reg_for_slot(slot));
 }
 
-int OperationArgs::evaluate_slot_to_reg(int slot)
+int OperationArgs::evaluate_slot_use(int slot)
 {
-    return evaluate_reg_to_reg(reg_for_slot(slot));
+    return evaluate_reg_use(reg_for_slot(slot));
 }
 
 const expression_ref& OperationArgs::evaluate_reg_to_object(int R2)
