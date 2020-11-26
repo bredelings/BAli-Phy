@@ -556,7 +556,7 @@ public:
     RegOperationArgs2* clone() const {return new RegOperationArgs2(*this);}
 
     RegOperationArgs2(int r_, int s_, int sp_, reg_heap& m)
-        :OperationArgs(m), r(r_), s(s_), sp(sp_), first_eval(m.reg_is_unevaluated(r)), zero_count(not M.has_force2(r))
+        :OperationArgs(m), r(r_), s(s_), sp(sp_), first_eval(m.reg_is_unevaluated(r)), zero_count(not M.reg_is_forced(r))
         { }
 };
 
@@ -654,7 +654,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
         else if (reg_is_constant_with_force(r))
         {
-            if (not has_force2(r))
+            if (not reg_is_forced(r))
                 force_reg_no_call(r);
 
             return {r, r};
@@ -668,7 +668,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
             {
                 total_changeable_eval_with_result2++;
 
-                if (not has_force2(r))
+                if (not reg_is_forced(r))
                     force_reg_with_call(r);
 
                 int result = result_for_reg(r);
@@ -680,7 +680,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
             {
                 int s = step_index_for_reg(r);
                 // Evaluate S, looking through unchangeable redirections
-                auto [call, value] = incremental_evaluate2(steps[s].call, not has_force2(r));
+                auto [call, value] = incremental_evaluate2(steps[s].call, not reg_is_forced(r));
 
                 // If computation_for_reg(r).call can be evaluated to refer to S w/o moving through any changable operations, 
                 // then it should be safe to change computation_for_reg(r).call to refer to S, even if r is changeable.
@@ -705,7 +705,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 }
                 prog_unshare[r].reset(unshare_result_bit);
 
-                if (not has_force2(r))
+                if (not reg_is_forced(r))
                     force_reg_no_call(r);
 
                 total_changeable_eval_with_call2++;
@@ -723,7 +723,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
             if (has_result2(r))
             {
-                if (not has_force2(r))
+                if (not reg_is_forced(r))
                 {
                     force_reg_no_call(r);
                     incremental_evaluate2(r2, true);
@@ -734,7 +734,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
             }
             else
             {
-                auto [r3, result3] = incremental_evaluate2(r2, not has_force2(r));
+                auto [r3, result3] = incremental_evaluate2(r2, not reg_is_forced(r));
 
                 bool reshare_result = prog_unshare[r].test(unshare_result_bit) and prog_results[r] == result3;
                 if (not reshare_result)
@@ -745,7 +745,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 }
                 prog_unshare[r].reset(unshare_result_bit);
 
-                if (not has_force2(r))
+                if (not reg_is_forced(r))
                     force_reg_no_call(r);
 
                 assert(not reg_is_unevaluated(r));
@@ -918,7 +918,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                     // Evaluate the regs from non-changeable reduction steps leading to this changeable step.
                     if (first_eval)
                         regs[r].n_regs_forced_before_step = n_forces;
-                    else if (not has_force2(r))
+                    else if (not reg_is_forced(r))
                         force_regs_before_step(r);
 
                     return {r, value};
