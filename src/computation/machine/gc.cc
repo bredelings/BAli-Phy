@@ -181,14 +181,6 @@ void reg_heap::trace_and_reclaim_unreachable()
 	    assert(regs.is_used(r2));
 	}
 
-    for(auto& C: closure_stack)
-	for(int& r2: C.Env)
-	{
-	    assert(regs.is_used(r2));
-	    r2 = remap[r2];
-	    assert(regs.is_used(r2));
-	}
-
     //  release_scratch_list();
     release_scratch_list();
 }

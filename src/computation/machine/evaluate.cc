@@ -81,7 +81,7 @@ class RegOperationArgs final: public OperationArgs
 
     const bool first_eval;
 
-    const closure& current_closure() const {return memory().closure_stack.back();}
+    const closure& current_closure() const {return memory().closure_at(r);}
 
     bool evaluate_changeables() const {return true;}
 
@@ -377,11 +377,9 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                 bool first_eval = reg_is_unevaluated(r);
                 int n_forces = first_eval ? regs[r].forced_regs.size() : 0;
 
-                closure_stack.push_back( closure_at(r) );
                 RegOperationArgs Args(r, s, sp, *this);
                 auto O = expression_at(r).head().assert_is_a<Operation>()->op;
                 closure value = (*O)(Args);
-                closure_stack.pop_back();
                 total_reductions++;
 
                 // If the reduction doesn't depend on modifiable, then replace E with the value.
@@ -398,22 +396,20 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                 {
                     total_changeable_reductions++;
                     mark_reg_changeable(r);
-                    closure_stack.push_back(value);
 
                     int r2;
-                    if (closure_stack.back().exp.head().is_index_var())
+                    if (value.exp.is_index_var())
                     {
-                        r2 = closure_stack.back().reg_for_index_var();
+                        r2 = value.reg_for_index_var();
                     }
                     else
                     {
-                        r2 = Args.allocate( std::move(closure_stack.back()) ) ;
+                        r2 = Args.allocate( std::move(value) ) ;
                         assert(regs.access(r2).created_by.first == s);
                         assert(not has_step1(r2));
                     }
 
                     auto [call,result] = incremental_evaluate1(r2);
-                    closure_stack.pop_back();
 
                     set_call(s, call);
 
@@ -471,7 +467,7 @@ class RegOperationArgs2 final: public OperationArgs
 
     const bool zero_count;
 
-    const closure& current_closure() const {return memory().closure_stack.back();}
+    const closure& current_closure() const {return memory().closure_at(r);}
 
     bool evaluate_changeables() const {return true;}
 
@@ -835,11 +831,9 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 bool first_eval = reg_is_unevaluated(r);
                 int n_forces = first_eval ? regs[r].forced_regs.size() : 0;
 
-                closure_stack.push_back( closure_at(r) );
                 RegOperationArgs2 Args(r, s, sp, *this);
                 auto O = expression_at(r).head().assert_is_a<Operation>()->op;
                 closure value = (*O)(Args);
-                closure_stack.pop_back();
                 total_reductions2++;
 
                 // If the reduction doesn't depend on modifiable, then replace E with the value.
@@ -856,22 +850,20 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 {
                     total_changeable_reductions2++;
                     mark_reg_changeable(r);
-                    closure_stack.push_back(value);
 
                     int r2;
-                    if (closure_stack.back().exp.head().is_index_var())
+                    if (value.exp.is_index_var())
                     {
-                        r2 = closure_stack.back().reg_for_index_var();
+                        r2 = value.reg_for_index_var();
                     }
                     else
                     {
-                        r2 = Args.allocate( std::move(closure_stack.back()) ) ;
+                        r2 = Args.allocate( std::move(value) ) ;
                         assert(regs.access(r2).created_by.first == s);
                         assert(not has_step1(r2));
                     }
 
                     auto [call,result] = incremental_evaluate2(r2, true);
-                    closure_stack.pop_back();
 
                     assert(not prog_unshare[r].test(unshare_step_bit) or prog_steps[r] > 0);
                     bool reshare_step = prog_unshare[r].test(unshare_step_bit) and (steps[prog_steps[r]].call == call);

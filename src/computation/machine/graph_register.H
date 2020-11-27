@@ -278,10 +278,6 @@ public:
     void stack_pop(int r);
     int stack_pop();
 
-    // a list of closures under evaluation
-    std::vector<closure> closure_stack;
-
-    /* ---- */
 private:
     void do_pending_effect_registrations();
 
