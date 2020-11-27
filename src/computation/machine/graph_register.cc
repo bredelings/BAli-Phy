@@ -1477,10 +1477,6 @@ void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
     for(auto& [_,r]: transition_kernels_)
         scan.push_back(r);
 
-    for(const auto& C: closure_stack)
-        for(int r: C.Env)
-            scan.push_back(r);
-
     if (keep_identifiers)
         for(const auto& [name,reg]: identifiers) // no
             scan.push_back(reg);
