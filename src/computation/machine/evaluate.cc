@@ -71,7 +71,7 @@ void throw_reg_exception(reg_heap& M, int t, int R, myexception& e, bool changea
 }
 
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
-class RegOperationArgs final: public OperationArgs
+class RegOperationArgs1 final: public OperationArgs
 {
     const int r;
 
@@ -163,9 +163,9 @@ public:
             e.register_effect(M, s);
         }
 
-    RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
+    RegOperationArgs1* clone() const {return new RegOperationArgs1(*this);}
 
-    RegOperationArgs(int r_, int s_, int sp_, reg_heap& m)
+    RegOperationArgs1(int r_, int s_, int sp_, reg_heap& m)
         :OperationArgs(m), r(r_), s(s_), sp(sp_), first_eval(m.reg_is_unevaluated(r))
         { }
 };
@@ -377,7 +377,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                 bool first_eval = reg_is_unevaluated(r);
                 int n_forces = first_eval ? regs[r].forced_regs.size() : 0;
 
-                RegOperationArgs Args(r, s, sp, *this);
+                RegOperationArgs1 Args(r, s, sp, *this);
                 auto O = expression_at(r).head().assert_is_a<Operation>()->op;
                 closure value = (*O)(Args);
                 total_reductions++;
