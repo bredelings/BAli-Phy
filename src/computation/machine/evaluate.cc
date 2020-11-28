@@ -698,6 +698,98 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
             total_changeable_eval_with_call2++;
             return {r, result};
         }
+
+        assert( not has_step2(r) );
+        // The only we reason we are getting this here is to store created_regs on it,
+        // if we perform allocations AFTER using/forcing something changeable.
+        int s = get_shared_step(r);
+
+        int sp = regs.access(r).created_by.first;
+
+        try
+        {
+            RegOperationArgs2 Args(r, s, sp, *this);
+            auto O = expression_at(r).head().assert_is_a<Operation>()->op;
+            closure value = (*O)(Args);
+            total_reductions2++;
+            total_changeable_reductions2++;
+
+            int r2;
+            if (value.exp.is_index_var())
+            {
+                r2 = value.reg_for_index_var();
+            }
+            else
+            {
+                r2 = Args.allocate( std::move(value) ) ;
+                assert(regs.access(r2).created_by.first == s);
+                assert(not has_step1(r2));
+            }
+
+            auto [call,result] = incremental_evaluate2(r2, true);
+
+            assert(not prog_unshare[r].test(unshare_step_bit) or prog_steps[r] > 0);
+            bool reshare_step = prog_unshare[r].test(unshare_step_bit) and (steps[prog_steps[r]].call == call);
+
+            int t = tokens[root_token].children[0];
+            if (not reshare_step)
+            {
+                set_call(s, call);
+
+                tokens[t].vm_step.add_value(r, prog_steps[r]);
+                prog_steps[r] = s;
+            }
+            else
+            {
+                // Can we decrement the count for the called reg here?  Unless the original call count has already been subtracted?
+#ifndef NDEBUG
+                for(auto cr: steps[s].created_regs)
+                    assert(not reg_is_changeable(cr));
+#endif
+                if (not prog_unshare[r].test(call_decremented_bit) and reg_is_changeable_or_forcing(call))
+                {
+                    assert(prog_force_counts[call] >= 2);
+                    assert(prog_unshare[call].test(unshare_count_bit));
+                    prog_force_counts[call]--;
+                }
+
+                destroy_step_and_created_regs(s);
+            }
+
+            bool reshare_result = reshare_step and prog_results[r] == result;
+            if (not reshare_result)
+            {
+                tokens[t].vm_result.add_value(r, prog_results[r]);
+                set_result_for_reg(r);
+            }
+
+            prog_unshare[r].reset(unshare_result_bit);
+            prog_unshare[r].reset(unshare_step_bit);
+            prog_unshare[r].reset(call_decremented_bit);
+
+            // Evaluate the regs from non-changeable reduction steps leading to this changeable step.
+            if (not reg_is_forced(r))
+                force_regs_before_step(r);
+
+            return {r, result};
+        }
+        catch (error_exception& e)
+        {
+            if (log_verbose)
+                throw_reg_exception(*this, root_token, r, e, true);
+            else
+                throw;
+        }
+        catch (myexception& e)
+        {
+            throw_reg_exception(*this, root_token, r, e, true);
+        }
+        catch (const std::exception& ee)
+        {
+            myexception e;
+            e<<ee.what();
+            throw_reg_exception(*this, root_token, r, e, true);
+        }
     }
     else if (unevaluated_reg_is_index_var_no_force(r))
     {
@@ -828,8 +920,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
             try
             {
-                bool first_eval = reg_is_unevaluated(r);
-                int n_forces = first_eval ? regs[r].forced_regs.size() : 0;
+                int n_forces = regs[r].forced_regs.size();
 
                 RegOperationArgs2 Args(r, s, sp, *this);
                 auto O = expression_at(r).head().assert_is_a<Operation>()->op;
@@ -865,50 +956,17 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
                     auto [call,result] = incremental_evaluate2(r2, true);
 
-                    assert(not prog_unshare[r].test(unshare_step_bit) or prog_steps[r] > 0);
-                    bool reshare_step = prog_unshare[r].test(unshare_step_bit) and (steps[prog_steps[r]].call == call);
-
                     int t = tokens[root_token].children[0];
-                    if (not reshare_step)
-                    {
-                        set_call(s, call);
+                    set_call(s, call);
 
-                        tokens[t].vm_step.add_value(r, prog_steps[r]);
-                        prog_steps[r] = s;
-                    }
-                    else
-                    {
-                        // Can we decrement the count for the called reg here?  Unless the original call count has already been subtracted?
-#ifndef NDEBUG
-                        for(auto cr: steps[s].created_regs)
-                            assert(not reg_is_changeable(cr));
-#endif
-                        if (not prog_unshare[r].test(call_decremented_bit) and reg_is_changeable_or_forcing(call))
-                        {
-                            assert(prog_force_counts[call] >= 2);
-                            assert(prog_unshare[call].test(unshare_count_bit));
-                            prog_force_counts[call]--;
-                        }
+                    tokens[t].vm_step.add_value(r, prog_steps[r]);
+                    prog_steps[r] = s;
 
-                        destroy_step_and_created_regs(s);
-                    }
-
-                    bool reshare_result = reshare_step and prog_results[r] == result;
-                    if (not reshare_result)
-                    {
-                        tokens[t].vm_result.add_value(r, prog_results[r]);
-                        set_result_for_reg(r);
-                    }
-
-                    prog_unshare[r].reset(unshare_result_bit);
-                    prog_unshare[r].reset(unshare_step_bit);
-                    prog_unshare[r].reset(call_decremented_bit);
+                    tokens[t].vm_result.add_value(r, prog_results[r]);
+                    set_result_for_reg(r);
 
                     // Evaluate the regs from non-changeable reduction steps leading to this changeable step.
-                    if (first_eval)
-                        regs[r].n_regs_forced_before_step = n_forces;
-                    else if (not reg_is_forced(r))
-                        force_regs_before_step(r);
+                    regs[r].n_regs_forced_before_step = n_forces;
 
                     return {r, result};
                 }
