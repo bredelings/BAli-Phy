@@ -1139,10 +1139,15 @@ log_double_t Parameters::prior_alignment() const
 
 void Parameters::cache_likelihood_branches() const
 {
-    auto branches = t().branches_in(subst_root());
-    for(int i=0; i < n_data_partitions();i++)
-        for(auto b: branches)
-            (*this)[i].cache(b);
+    // We currently can't cache values except by running the program.
+    // Unfortunately, this runs calc_root unnecessarily.
+    probability();
+
+    // This WAS more efficient, since it avoided doing a calc_root.
+//    auto branches = t().branches_in(subst_root());
+//    for(int i=0; i < n_data_partitions();i++)
+//        for(auto b: branches)
+//            (*this)[i].cache(b);
 }
 
 void Parameters::select_root(int b) const
