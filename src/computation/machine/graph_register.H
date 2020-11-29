@@ -136,8 +136,6 @@ public:
 
     std::pair<int, int> index_var_ref;
 
-    int n_regs_forced_before_step = 0;
-
     bitmask_8 flags;
 
     void mark_unconditionally_evaluated();
