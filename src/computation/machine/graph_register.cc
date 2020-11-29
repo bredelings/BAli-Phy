@@ -200,7 +200,6 @@ void reg::clear()
     truncate(called_by_index_vars);
     created_by = {0,0};
     index_var_ref = {0,0};
-    n_regs_forced_before_step = 0;
     flags.reset();
 }
 
@@ -218,7 +217,6 @@ void reg::check_cleared() const
     assert(created_by.second == 0);
     assert(index_var_ref.first == 0);
     assert(index_var_ref.second == 0);
-    assert(n_regs_forced_before_step == 0);
     assert(flags.none());
 }
 
@@ -244,8 +242,6 @@ reg& reg::operator=(reg&& R) noexcept
 
     index_var_ref = std::move(R.index_var_ref);
 
-    n_regs_forced_before_step = R.n_regs_forced_before_step;
-
     flags = R.flags;
 
     return *this;
@@ -262,7 +258,6 @@ reg::reg(reg&& R) noexcept
      called_by_index_vars ( std::move( R.called_by_index_vars) ),
      created_by( std::move(R.created_by) ),
      index_var_ref( std::move(R.index_var_ref) ),
-     n_regs_forced_before_step( R.n_regs_forced_before_step ),
      flags ( R.flags )
 { }
 
@@ -1048,17 +1043,22 @@ bool reg_heap::has_result2(int r) const
 void reg_heap::force_regs_before_step(int r)
 {
     assert(reg_is_changeable(r));
-    assert(has_result2(r));
-    assert(not reg_is_forced(r));
 
     // We can't use a range-for here because regs[r] can be moved
     // during the loop if we do evaluation.
-    int N = regs[r].n_regs_forced_before_step;
-    for(int i=0; i < N; i++)
-    {
-        auto [r2,_] = regs[r].forced_regs[i];
+    bool zero_count = not reg_is_forced(r);
 
-        incremental_evaluate2(r2, true);
+    for(auto [r2,_]: regs[r].forced_regs)
+    {
+        incremental_evaluate2(r2, zero_count);
+
+        assert(reg_is_constant_with_force(r2) or has_result2(r2));
+        assert(reg_is_forced(r2));
+    }
+
+    for(auto [r2,_]: regs[r].used_regs)
+    {
+        incremental_evaluate2(r2, zero_count);
 
         assert(reg_is_constant_with_force(r2) or has_result2(r2));
         assert(reg_is_forced(r2));
