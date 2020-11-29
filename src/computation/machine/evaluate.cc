@@ -455,15 +455,83 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 }
 
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
-class RegOperationArgs2 final: public OperationArgs
+class RegOperationArgs2Changeable final: public OperationArgs
+{
+    const int r;
+
+    const int s;
+
+    const bool zero_count;
+
+    const closure& current_closure() const {return memory().closure_at(r);}
+
+    bool evaluate_changeables() const {return true;}
+
+    /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
+    int evaluate_reg_force(int r2)
+        {
+            auto [r3, result] = M.incremental_evaluate2(r2, zero_count);
+
+            return result;
+        }
+
+    /// Evaluate the reg r2, record a dependency on r2, and return the reg following call chains.
+    int evaluate_reg_use(int r2)
+        {
+            // Compute the value, and follow index_var chains (which are not changeable).
+            auto [r3, result] = M.incremental_evaluate2(r2, zero_count);
+
+            return result;
+        }
+
+    const closure& evaluate_reg_to_closure(int r2)
+        {
+            int r3 = evaluate_reg_use(r2);
+            return M[r3];
+        }
+
+    const closure& evaluate_reg_to_closure_(int r2)
+        {
+            int r3 = evaluate_reg_force(r2);
+            return M[r3];
+        }
+
+public:
+
+    void make_changeable() {}
+
+    // If we unreference regs that evaluate to a variable, then we unreference p->let q=2 in q
+    // and point references to q instead of p.  But then it would not be true that a variable can
+    // only be referenced if the slot that created it is still referenced.
+
+    int allocate_reg()
+        {
+            int r = OperationArgs::allocate_reg();
+            M.mark_reg_created_by_step(r, s);
+            return r;
+        }
+
+    void set_effect(const effect& e)
+        {
+            memory().mark_step_with_effect(s);
+            e.register_effect(M, s);
+        }
+
+    RegOperationArgs2Changeable* clone() const {return new RegOperationArgs2Changeable(*this);}
+
+    RegOperationArgs2Changeable(int r_, int s_, reg_heap& m)
+        :OperationArgs(m), r(r_), s(s_), zero_count(not M.reg_is_forced(r))
+        { }
+};
+
+/// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
+class RegOperationArgs2Unevaluated final: public OperationArgs
 {
     const int r;
 
     const int s;
 
     const int sp;  // creator step
-
-    const bool first_eval;
 
     const bool zero_count;
 
@@ -477,10 +545,7 @@ class RegOperationArgs2 final: public OperationArgs
             auto [r3, result] = M.incremental_evaluate2(r2, zero_count);
 
             if (M.reg_is_changeable_or_forcing(r3))
-            {
-                if (first_eval)
-                    M.set_forced_reg(r, r3);
-            }
+                M.set_forced_reg(r, r3);
 
             return result;
         }
@@ -496,14 +561,10 @@ class RegOperationArgs2 final: public OperationArgs
             if (M.reg_is_to_changeable(r3))
             {
                 make_changeable();
-                if (first_eval)
-                    M.set_used_reg(r, r3);
+                M.set_used_reg(r, r3);
             }
             else if (M.reg_is_changeable_or_forcing(r3))
-            {
-                if (first_eval)
-                    M.set_forced_reg(r, r3);
-            }
+                M.set_forced_reg(r, r3);
 
             return result;
         }
@@ -549,10 +610,10 @@ public:
             e.register_effect(M, s);
         }
 
-    RegOperationArgs2* clone() const {return new RegOperationArgs2(*this);}
+    RegOperationArgs2Unevaluated* clone() const {return new RegOperationArgs2Unevaluated(*this);}
 
-    RegOperationArgs2(int r_, int s_, int sp_, reg_heap& m)
-        :OperationArgs(m), r(r_), s(s_), sp(sp_), first_eval(m.reg_is_unevaluated(r)), zero_count(not M.reg_is_forced(r))
+    RegOperationArgs2Unevaluated(int r_, int s_, int sp_, reg_heap& m)
+        :OperationArgs(m), r(r_), s(s_), sp(sp_), zero_count(not M.reg_is_forced(r))
         { }
 };
 
@@ -704,11 +765,9 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
         // if we perform allocations AFTER using/forcing something changeable.
         int s = get_shared_step(r);
 
-        int sp = regs.access(r).created_by.first;
-
         try
         {
-            RegOperationArgs2 Args(r, s, sp, *this);
+            RegOperationArgs2Changeable Args(r, s, *this);
             auto O = expression_at(r).head().assert_is_a<Operation>()->op;
             closure value = (*O)(Args);
             total_reductions2++;
@@ -922,7 +981,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
             {
                 int n_forces = regs[r].forced_regs.size();
 
-                RegOperationArgs2 Args(r, s, sp, *this);
+                RegOperationArgs2Unevaluated Args(r, s, sp, *this);
                 auto O = expression_at(r).head().assert_is_a<Operation>()->op;
                 closure value = (*O)(Args);
                 total_reductions2++;
