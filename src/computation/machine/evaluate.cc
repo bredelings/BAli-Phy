@@ -374,9 +374,6 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 
             try
             {
-                bool first_eval = reg_is_unevaluated(r);
-                int n_forces = first_eval ? regs[r].forced_regs.size() : 0;
-
                 RegOperationArgs1 Args(r, s, sp, *this);
                 auto O = expression_at(r).head().assert_is_a<Operation>()->op;
                 closure value = (*O)(Args);
@@ -423,9 +420,6 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                         tokens[t].vm_step.add_value(r, non_computed_index);
                     }
 
-                    if (first_eval)
-                        regs[r].n_regs_forced_before_step = n_forces;
-
                     assert(not reg_is_unevaluated(r));
                     return {r, result};
                 }
@@ -470,18 +464,21 @@ class RegOperationArgs2Changeable final: public OperationArgs
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
     int evaluate_reg_force(int r2)
         {
-            auto [r3, result] = M.incremental_evaluate2(r2, zero_count);
+            r2 = M.follow_index_var_no_force(r2);
 
-            return result;
+            assert(M.reg_is_constant(r2) or M.has_result2(r2));
+
+            return M.value_for_reg(r2);
         }
 
     /// Evaluate the reg r2, record a dependency on r2, and return the reg following call chains.
     int evaluate_reg_use(int r2)
         {
-            // Compute the value, and follow index_var chains (which are not changeable).
-            auto [r3, result] = M.incremental_evaluate2(r2, zero_count);
+            r2 = M.follow_index_var_no_force(r2);
 
-            return result;
+            assert(M.reg_is_constant(r2) or M.has_result2(r2));
+
+            return M.value_for_reg(r2);
         }
 
     const closure& evaluate_reg_to_closure(int r2)
@@ -765,6 +762,9 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
         // if we perform allocations AFTER using/forcing something changeable.
         int s = get_shared_step(r);
 
+        // Evaluate the regs from non-changeable reduction steps leading to this changeable step.
+        force_regs_before_step(r);
+
         try
         {
             RegOperationArgs2Changeable Args(r, s, *this);
@@ -825,10 +825,6 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
             prog_unshare[r].reset(unshare_result_bit);
             prog_unshare[r].reset(unshare_step_bit);
             prog_unshare[r].reset(call_decremented_bit);
-
-            // Evaluate the regs from non-changeable reduction steps leading to this changeable step.
-            if (not reg_is_forced(r))
-                force_regs_before_step(r);
 
             return {r, result};
         }
@@ -979,8 +975,6 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
             try
             {
-                int n_forces = regs[r].forced_regs.size();
-
                 RegOperationArgs2Unevaluated Args(r, s, sp, *this);
                 auto O = expression_at(r).head().assert_is_a<Operation>()->op;
                 closure value = (*O)(Args);
@@ -1023,9 +1017,6 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
                     tokens[t].vm_result.add_value(r, prog_results[r]);
                     set_result_for_reg(r);
-
-                    // Evaluate the regs from non-changeable reduction steps leading to this changeable step.
-                    regs[r].n_regs_forced_before_step = n_forces;
 
                     return {r, result};
                 }
