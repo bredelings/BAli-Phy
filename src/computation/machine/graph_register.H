@@ -639,6 +639,7 @@ public:
 private:  
     std::pair<int,int> incremental_evaluate1_(int R);
     std::pair<int,int> incremental_evaluate2_(int R);
+    std::pair<int,int> incremental_evaluate2_changeable_(int R);
     std::pair<int,int> incremental_evaluate2_unevaluated_(int R);
     int incremental_evaluate_unchangeable_(int R);
 
