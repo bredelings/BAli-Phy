@@ -578,11 +578,14 @@ void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_r
 void reg_heap::evaluate_forced_invalid_regs(const std::vector<int>& unshared_regs)
 {
     for(int r: unshared_regs | views::reverse)
+    {
         if (reg_is_forced(r) and not has_result2(r))
         {
             incremental_evaluate2(r,false);
             assert(has_result2(r));
         }
+        prog_unshare[r].reset(different_result_bit);
+    }
 
 #ifndef NDEBUG
     for(int r: unshared_regs | views::reverse)

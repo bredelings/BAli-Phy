@@ -1040,7 +1040,7 @@ bool reg_heap::has_result2(int r) const
     return (not prog_unshare[r].test(unshare_result_bit)) and has_result1(r);
 }
 
-void reg_heap::force_regs_before_step(int r)
+bool reg_heap::force_regs_check_same_inputs(int r)
 {
     assert(reg_is_changeable(r));
 
@@ -1056,13 +1056,19 @@ void reg_heap::force_regs_before_step(int r)
         assert(reg_is_forced(r2));
     }
 
+    // We can only have the same inputs as a previous step if we have a step from the
+    // previous program that was marked invalid.
+    bool same_inputs = prog_unshare[r].test(unshare_step_bit);
     for(auto [r2,_]: regs[r].used_regs)
     {
         incremental_evaluate2(r2, zero_count);
 
         assert(reg_is_constant_with_force(r2) or has_result2(r2));
         assert(reg_is_forced(r2));
+
+        same_inputs = same_inputs and not prog_unshare[r2].test(different_result_bit);
     }
+    return same_inputs;
 }
 
 void reg_heap::force_reg_no_call(int r)

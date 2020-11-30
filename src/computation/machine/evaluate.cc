@@ -738,13 +738,18 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 set_call(s, call);
             }
 
-            // r gets its value from S.
-            int t = tokens[root_token].children[0];
+            // I think we can only get get here if the step is valid, but the result is invalid.
+            assert(prog_unshare[r].test(unshare_result_bit));
+
+            // If the result has changed, mark it with a bit.
+            if (prog_results[r] != result) prog_unshare[r].set(different_result_bit);
 
             // FIXME: How to avoid resharing results of changed modifiables?  Since the step is not shared, we should not reshare.
-            bool reshare_result = prog_unshare[r].test(unshare_result_bit) and (prog_results[r] == result);
+            //        Perhaps we could mark modifiables with the different_result bit.
+            bool reshare_result = not prog_unshare[r].test(different_result_bit);
             if (not reshare_result)
             {
+                int t = tokens[root_token].children[0];
                 tokens[t].vm_result.add_value(r, prog_results[r]);
                 set_result_for_reg( r );
             }
@@ -758,15 +763,48 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
         }
 
         assert( not has_step2(r) );
-        // The only we reason we are getting this here is to store created_regs on it,
-        // if we perform allocations AFTER using/forcing something changeable.
-        int s = get_shared_step(r);
 
         // Evaluate the regs from non-changeable reduction steps leading to this changeable step.
-        force_regs_before_step(r);
+        bool same_inputs = force_regs_check_same_inputs(r);
+        if (same_inputs)
+        {
+            assert(prog_unshare[r].test(unshare_step_bit));
+            assert(prog_unshare[r].test(unshare_result_bit));
+            assert(has_step1(r));
+            int s = prog_steps[r];
+            int r2 = steps[s].call;
+
+            auto [call,result] = incremental_evaluate2(r2, true);
+
+            // Un-increment called reg if we have NOT decremented it already.
+            if (not prog_unshare[r].test(call_decremented_bit) and reg_is_changeable_or_forcing(call))
+            {
+                assert(prog_force_counts[call] >= 2);
+                assert(prog_unshare[call].test(unshare_count_bit));
+                prog_force_counts[call]--;
+            }
+
+            if (prog_results[r] != result)
+            {
+                int t = tokens[root_token].children[0];
+                // Unshare result.
+                tokens[t].vm_result.add_value(r, prog_results[r]);
+                // Set result for current program.
+                set_result_for_reg(r);
+                // Mark result different
+                prog_unshare[r].set(different_result_bit);
+            }
+
+            prog_unshare[r].reset(unshare_result_bit);
+            prog_unshare[r].reset(unshare_step_bit);
+            prog_unshare[r].reset(call_decremented_bit);
+
+            return {r, result};
+        }
 
         try
         {
+            int s = get_shared_step(r);
             RegOperationArgs2Changeable Args(r, s, *this);
             auto O = expression_at(r).head().assert_is_a<Operation>()->op;
             closure value = (*O)(Args);
@@ -815,7 +853,9 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
                 destroy_step_and_created_regs(s);
             }
 
-            bool reshare_result = reshare_step and prog_results[r] == result;
+            if (prog_unshare[r].test(unshare_result_bit) and prog_results[r] != result) prog_unshare[r].set(different_result_bit);
+
+            bool reshare_result = reshare_step and not prog_unshare[r].test(different_result_bit);
             if (not reshare_result)
             {
                 tokens[t].vm_result.add_value(r, prog_results[r]);
@@ -870,7 +910,10 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
         {
             auto [r3, result3] = incremental_evaluate2(r2, not reg_is_forced(r));
 
-            bool reshare_result = prog_unshare[r].test(unshare_result_bit) and prog_results[r] == result3;
+            if (prog_unshare[r].test(unshare_result_bit) and prog_results[r] != result3)
+                prog_unshare[r].set(different_result_bit);
+
+            bool reshare_result = prog_unshare[r].test(unshare_result_bit) and not prog_unshare[r].test(different_result_bit);
             if (not reshare_result)
             {
                 int t = tokens[root_token].children[0];
