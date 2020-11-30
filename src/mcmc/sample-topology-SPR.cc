@@ -1201,12 +1201,15 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
     //------------- Accept or reject the proposed topology -------------//
     int C2 = tri->choose();
 
-    // If the alignment is not variable, then we should always accept on this second move.
+    // It used to be that, if the alignment is not variable, then we should always accept the proposal.
+    // However, now that we're not including the branch-length priors and other priors, this can fail.
     //
     // If the alignment is variable, then we might still choose C2==0 because of the
     // different node orders in sample_tri( ).
-    if (not P.variable_alignment()) 
-	assert(C2 == 1);
+    if (not P.variable_alignment())
+    {
+	// assert(C2 == 1);
+    }
 
     // If the move violates alignment constraints the we can't accept it.
     if (C2 == -1) return false;
