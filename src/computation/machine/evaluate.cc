@@ -774,15 +774,8 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
             int s = prog_steps[r];
             int r2 = steps[s].call;
 
-            auto [call,result] = incremental_evaluate2(r2, true);
-
-            // Un-increment called reg if we have NOT decremented it already.
-            if (not prog_unshare[r].test(call_decremented_bit) and reg_is_changeable_or_forcing(call))
-            {
-                assert(prog_force_counts[call] >= 2);
-                assert(prog_unshare[call].test(unshare_count_bit));
-                prog_force_counts[call]--;
-            }
+            // Since the call is unchanged, we only need to increment the call count if its been decremented
+            auto [call,result] = incremental_evaluate2(r2, prog_unshare[r].test(call_decremented_bit));
 
             if (prog_results[r] != result)
             {
