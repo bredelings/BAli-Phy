@@ -678,6 +678,49 @@ pair<int,int> reg_heap::incremental_evaluate2(int r, bool do_count)
     return result;
 }
 
+pair<int,int> reg_heap::incremental_evaluate2_(int r)
+{
+    assert(regs.is_valid_address(r));
+    assert(regs.is_used(r));
+
+#ifndef NDEBUG
+    if (reg_has_value(r))
+    {
+        expression_ref E = access_value_for_reg(r).exp;
+        assert(is_WHNF(E));
+        assert(not E.head().is_a<expression>());
+        assert(not reg_is_index_var_no_force(r));
+        assert(not reg_is_unevaluated(r));
+    }
+    if (unevaluated_reg_is_index_var_no_force(r))
+        assert(not reg_has_value(r));
+#endif
+
+    if (reg_is_constant_no_force(r)) return {r,r};
+
+    else if (reg_is_constant_with_force(r))
+    {
+        if (not reg_is_forced(r))
+            force_reg_no_call(r);
+
+        return {r, r};
+    }
+    else if (reg_is_changeable(r))
+        return incremental_evaluate2_changeable_(r);
+    else if (unevaluated_reg_is_index_var_no_force(r))
+    {
+        int r2 = closure_at(r).reg_for_index_var();
+        return incremental_evaluate2(r2, false);
+    }
+    else if (reg_is_index_var_with_force(r))
+        return incremental_evaluate2_index_var_with_force_(r);
+    else
+        return incremental_evaluate2_unevaluated_(r);
+
+    std::cerr<<"incremental_evaluate2: unreachable?";
+    std::abort();
+}
+
 pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
 {
     assert(regs.is_valid_address(r));
@@ -1034,49 +1077,6 @@ pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
         throw_reg_exception(*this, root_token, r, e, true);
     }
 
-    std::abort();
-}
-
-pair<int,int> reg_heap::incremental_evaluate2_(int r)
-{
-    assert(regs.is_valid_address(r));
-    assert(regs.is_used(r));
-
-#ifndef NDEBUG
-    if (reg_has_value(r))
-    {
-        expression_ref E = access_value_for_reg(r).exp;
-        assert(is_WHNF(E));
-        assert(not E.head().is_a<expression>());
-        assert(not reg_is_index_var_no_force(r));
-        assert(not reg_is_unevaluated(r));
-    }
-    if (unevaluated_reg_is_index_var_no_force(r))
-        assert(not reg_has_value(r));
-#endif
-
-    if (reg_is_constant_no_force(r)) return {r,r};
-
-    else if (reg_is_constant_with_force(r))
-    {
-        if (not reg_is_forced(r))
-            force_reg_no_call(r);
-
-        return {r, r};
-    }
-    else if (reg_is_changeable(r))
-        return incremental_evaluate2_changeable_(r);
-    else if (unevaluated_reg_is_index_var_no_force(r))
-    {
-        int r2 = closure_at(r).reg_for_index_var();
-        return incremental_evaluate2(r2, false);
-    }
-    else if (reg_is_index_var_with_force(r))
-        return incremental_evaluate2_index_var_with_force_(r);
-    else
-        return incremental_evaluate2_unevaluated_(r);
-
-    std::cerr<<"incremental_evaluate2: unreachable?";
     std::abort();
 }
 
