@@ -818,42 +818,16 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
 
             auto [call,result] = incremental_evaluate2(r2, true);
 
-            assert(not prog_unshare[r].test(unshare_step_bit) or prog_steps[r] > 0);
-            bool reshare_step = prog_unshare[r].test(unshare_step_bit) and (steps[prog_steps[r]].call == call);
-
             int t = tokens[root_token].children[0];
-            if (not reshare_step)
-            {
-                set_call(s, call);
+            set_call(s, call);
 
-                tokens[t].vm_step.add_value(r, prog_steps[r]);
-                prog_steps[r] = s;
-            }
-            else
-            {
-                // Can we decrement the count for the called reg here?  Unless the original call count has already been subtracted?
-#ifndef NDEBUG
-                for(auto cr: steps[s].created_regs)
-                    assert(not reg_is_changeable(cr));
-#endif
-                if (not prog_unshare[r].test(call_decremented_bit) and reg_is_changeable_or_forcing(call))
-                {
-                    assert(prog_force_counts[call] >= 2);
-                    assert(prog_unshare[call].test(unshare_count_bit));
-                    prog_force_counts[call]--;
-                }
-
-                destroy_step_and_created_regs(s);
-            }
+            tokens[t].vm_step.add_value(r, prog_steps[r]);
+            prog_steps[r] = s;
 
             if (prog_unshare[r].test(unshare_result_bit) and prog_results[r] != result) prog_unshare[r].set(different_result_bit);
 
-            bool reshare_result = reshare_step and not prog_unshare[r].test(different_result_bit);
-            if (not reshare_result)
-            {
-                tokens[t].vm_result.add_value(r, prog_results[r]);
-                set_result_for_reg(r);
-            }
+            tokens[t].vm_result.add_value(r, prog_results[r]);
+            set_result_for_reg(r);
 
             prog_unshare[r].reset(unshare_result_bit);
             prog_unshare[r].reset(unshare_step_bit);
