@@ -678,6 +678,175 @@ pair<int,int> reg_heap::incremental_evaluate2(int r, bool do_count)
     return result;
 }
 
+pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
+{
+    assert(regs.is_valid_address(r));
+    assert(regs.is_used(r));
+    assert(reg_is_unevaluated(r));
+
+#ifndef NDEBUG
+    if (reg_has_value(r))
+    {
+        expression_ref E = access_value_for_reg(r).exp;
+        assert(is_WHNF(E));
+        assert(not E.head().is_a<expression>());
+        assert(not reg_is_index_var_no_force(r));
+        assert(not reg_is_unevaluated(r));
+    }
+    if (unevaluated_reg_is_index_var_no_force(r))
+        assert(not reg_has_value(r));
+#endif
+
+    while (1)
+    {
+        assert(expression_at(r));
+
+        /*---------- Below here, there is no call, and no value. ------------*/
+        if (expression_at(r).is_index_var())
+        {
+            assert( not reg_is_changeable(r) );
+
+            assert( not reg_has_value(r) );
+
+            assert( not reg_has_call(r) );
+
+            assert( not has_step1(r) );
+
+            int r2 = closure_at(r).reg_for_index_var();
+
+            if (regs[r].forced_regs.empty())
+            {
+                // Return the end of the index_var chain.
+                // We used to update the index_var to point to the end of the chain.
+
+                auto [r3, result] = incremental_evaluate2(r2, false);
+
+                mark_reg_index_var_no_force(r);
+                return {r3,result};
+            }
+
+            auto [r3, result] = incremental_evaluate2(r2, true);
+
+            if (reg_is_to_changeable(r3))
+                mark_reg_index_var_with_force_to_changeable(r);
+            else
+                mark_reg_index_var_with_force_to_nonchangeable(r);
+
+            if (not reg_is_constant_no_force(r3))
+                set_index_var_ref(r,r3);
+
+            assert(not has_result1(r));
+
+            int t = tokens[root_token].children[0];
+            tokens[t].vm_result.add_value(r, prog_results[r]);
+
+            prog_results[r] = result;
+
+            assert(not prog_unshare[r].test(unshare_result_bit));
+            assert(not reg_is_unevaluated(r));
+            return {r, result};
+        }
+
+        // Check for WHNF *OR* heap variables
+        else if (is_WHNF(expression_at(r)))
+        {
+            if (regs[r].forced_regs.empty())
+                mark_reg_constant_no_force(r);
+            else
+                mark_reg_constant_with_force(r);
+
+            assert( not has_step1(r) );
+            assert( not has_result1(r) );
+            assert( not reg_is_unevaluated(r) );
+
+            return {r,r};
+        }
+
+#ifndef NDEBUG
+        else if (expression_at(r).head().is_a<Trim>())
+            std::abort();
+#endif
+
+        // 3. Reduction: Operation (includes @, case, +, etc.)
+        else
+        {
+            assert( not has_step2(r) );
+            // The only we reason we are getting this here is to store created_regs on it,
+            // if we perform allocations AFTER using/forcing something changeable.
+            int s = get_shared_step(r);
+
+            int sp = regs.access(r).created_by.first;
+
+            try
+            {
+                RegOperationArgs2Unevaluated Args(r, s, sp, *this);
+                auto O = expression_at(r).head().assert_is_a<Operation>()->op;
+                closure value = (*O)(Args);
+                total_reductions2++;
+
+                // If the reduction doesn't depend on modifiable, then replace E with the value.
+                if (not Args.used_changeable)
+                {
+                    assert( not reg_has_call(r) );
+                    assert( not reg_has_value(r) );
+                    assert( regs[r].used_regs.empty() );
+                    assert( steps[s].created_regs.empty() ); // Any allocations should have gone to sp
+                    set_C( r, std::move(value) );
+                    steps.reclaim_used(s);
+                }
+                else
+                {
+                    total_changeable_reductions2++;
+                    mark_reg_changeable(r);
+
+                    int r2;
+                    if (value.exp.is_index_var())
+                    {
+                        r2 = value.reg_for_index_var();
+                    }
+                    else
+                    {
+                        r2 = Args.allocate( std::move(value) ) ;
+                        assert(regs.access(r2).created_by.first == s);
+                        assert(not has_step1(r2));
+                    }
+
+                    auto [call,result] = incremental_evaluate2(r2, true);
+
+                    int t = tokens[root_token].children[0];
+                    set_call(s, call);
+
+                    tokens[t].vm_step.add_value(r, prog_steps[r]);
+                    prog_steps[r] = s;
+
+                    tokens[t].vm_result.add_value(r, prog_results[r]);
+                    set_result_for_reg(r);
+
+                    return {r, result};
+                }
+            }
+            catch (error_exception& e)
+            {
+                if (log_verbose)
+                    throw_reg_exception(*this, root_token, r, e, true);
+                else
+                    throw;
+            }
+            catch (myexception& e)
+            {
+                throw_reg_exception(*this, root_token, r, e, true);
+            }
+            catch (const std::exception& ee)
+            {
+                myexception e;
+                e<<ee.what();
+                throw_reg_exception(*this, root_token, r, e, true);
+            }
+        }
+    }
+
+}
+
 pair<int,int> reg_heap::incremental_evaluate2_(int r)
 {
     assert(regs.is_valid_address(r));
@@ -897,159 +1066,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
         }
     }
     else
-        assert(reg_is_unevaluated(r));
-
-    while (1)
-    {
-        assert(expression_at(r));
-
-#ifndef NDEBUG
-        //    std::cerr<<"   statement: "<<r<<":   "<<regs.access(r).E.print()<<std::endl;
-#endif
-
-        /*---------- Below here, there is no call, and no value. ------------*/
-        if (expression_at(r).is_index_var())
-        {
-            assert( not reg_is_changeable(r) );
-
-            assert( not reg_has_value(r) );
-
-            assert( not reg_has_call(r) );
-
-            assert( not has_step1(r) );
-
-            int r2 = closure_at(r).reg_for_index_var();
-
-            if (regs[r].forced_regs.empty())
-            {
-                // Return the end of the index_var chain.
-                // We used to update the index_var to point to the end of the chain.
-
-                auto [r3, result] = incremental_evaluate2(r2, false);
-
-                mark_reg_index_var_no_force(r);
-                return {r3,result};
-            }
-
-            auto [r3, result] = incremental_evaluate2(r2, true);
-
-            if (reg_is_to_changeable(r3))
-                mark_reg_index_var_with_force_to_changeable(r);
-            else
-                mark_reg_index_var_with_force_to_nonchangeable(r);
-
-            if (not reg_is_constant_no_force(r3))
-                set_index_var_ref(r,r3);
-
-            assert(not has_result1(r));
-
-            int t = tokens[root_token].children[0];
-            tokens[t].vm_result.add_value(r, prog_results[r]);
-
-            prog_results[r] = result;
-
-            assert(not prog_unshare[r].test(unshare_result_bit));
-            assert(not reg_is_unevaluated(r));
-            return {r, result};
-        }
-
-        // Check for WHNF *OR* heap variables
-        else if (is_WHNF(expression_at(r)))
-        {
-            if (regs[r].forced_regs.empty())
-                mark_reg_constant_no_force(r);
-            else
-                mark_reg_constant_with_force(r);
-
-            assert( not has_step1(r) );
-            assert( not has_result1(r) );
-            assert( not reg_is_unevaluated(r) );
-
-            return {r,r};
-        }
-
-#ifndef NDEBUG
-        else if (expression_at(r).head().is_a<Trim>())
-            std::abort();
-#endif
-
-        // 3. Reduction: Operation (includes @, case, +, etc.)
-        else
-        {
-            assert( not has_step2(r) );
-            // The only we reason we are getting this here is to store created_regs on it,
-            // if we perform allocations AFTER using/forcing something changeable.
-            int s = get_shared_step(r);
-
-            int sp = regs.access(r).created_by.first;
-
-            try
-            {
-                RegOperationArgs2Unevaluated Args(r, s, sp, *this);
-                auto O = expression_at(r).head().assert_is_a<Operation>()->op;
-                closure value = (*O)(Args);
-                total_reductions2++;
-
-                // If the reduction doesn't depend on modifiable, then replace E with the value.
-                if (not Args.used_changeable)
-                {
-                    assert( not reg_has_call(r) );
-                    assert( not reg_has_value(r) );
-                    assert( regs[r].used_regs.empty() );
-                    assert( steps[s].created_regs.empty() ); // Any allocations should have gone to sp
-                    set_C( r, std::move(value) );
-                    steps.reclaim_used(s);
-                }
-                else
-                {
-                    total_changeable_reductions2++;
-                    mark_reg_changeable(r);
-
-                    int r2;
-                    if (value.exp.is_index_var())
-                    {
-                        r2 = value.reg_for_index_var();
-                    }
-                    else
-                    {
-                        r2 = Args.allocate( std::move(value) ) ;
-                        assert(regs.access(r2).created_by.first == s);
-                        assert(not has_step1(r2));
-                    }
-
-                    auto [call,result] = incremental_evaluate2(r2, true);
-
-                    int t = tokens[root_token].children[0];
-                    set_call(s, call);
-
-                    tokens[t].vm_step.add_value(r, prog_steps[r]);
-                    prog_steps[r] = s;
-
-                    tokens[t].vm_result.add_value(r, prog_results[r]);
-                    set_result_for_reg(r);
-
-                    return {r, result};
-                }
-            }
-            catch (error_exception& e)
-            {
-                if (log_verbose)
-                    throw_reg_exception(*this, root_token, r, e, true);
-                else
-                    throw;
-            }
-            catch (myexception& e)
-            {
-                throw_reg_exception(*this, root_token, r, e, true);
-            }
-            catch (const std::exception& ee)
-            {
-                myexception e;
-                e<<ee.what();
-                throw_reg_exception(*this, root_token, r, e, true);
-            }
-        }
-    }
+        return incremental_evaluate2_unevaluated_(r);
 
     std::cerr<<"incremental_evaluate2: unreachable?";
     std::abort();
