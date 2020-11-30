@@ -160,6 +160,7 @@ constexpr int unshare_result_bit = 1;
 constexpr int unshare_step_bit   = 2;
 constexpr int unshare_count_bit  = 3;
 constexpr int call_decremented_bit = 4;
+constexpr int different_result_bit = 5;
 
 // How do we handle parameters?
 // * well, parameters could be reg's, so that a separate reg must be a separate parameter.
@@ -567,7 +568,7 @@ public:
     int result_for_reg(int r) const;
     bool reg_has_call(int r) const;
     int call_for_reg(int r) const;
-    void force_regs_before_step(int r);
+    bool force_regs_check_same_inputs(int r);
     void force_reg_no_call(int r);
     void force_reg_with_call(int r);
 
