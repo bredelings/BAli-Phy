@@ -847,6 +847,157 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
 
 }
 
+pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
+{
+    total_changeable_eval2++;
+
+    if (has_result2(r))
+    {
+        total_changeable_eval_with_result2++;
+
+        if (not reg_is_forced(r))
+            force_reg_with_call(r);
+
+        int result = result_for_reg(r);
+        return {r, result};
+    }
+
+    // If we know what to call, then call it and use it to set the value
+    if (has_step2(r))
+    {
+        int s = step_index_for_reg(r);
+        // Evaluate S, looking through unchangeable redirections
+        auto [call, result] = incremental_evaluate2(steps[s].call, not reg_is_forced(r));
+
+        // If computation_for_reg(r).call can be evaluated to refer to S w/o moving through any changable operations,
+        // then it should be safe to change computation_for_reg(r).call to refer to S, even if r is changeable.
+        if (call != call_for_reg(r))
+        {
+            // This should only ever happen for modifiable values set with set_reg_value( ).
+            // In such cases, we need this, because the value we set could evaluate to an index_var.
+            // Otherwise, we set the call AFTER we have evaluated to a changeable or a constant.
+            clear_call_for_reg(r);
+            set_call(s, call);
+        }
+
+        // I think we can only get get here if the step is valid, but the result is invalid.
+        assert(prog_unshare[r].test(unshare_result_bit));
+
+        // If the result has changed, mark it with a bit.
+        if (prog_results[r] != result) prog_unshare[r].set(different_result_bit);
+
+        // FIXME: How to avoid resharing results of changed modifiables?  Since the step is not shared, we should not reshare.
+        //        Perhaps we could mark modifiables with the different_result bit.
+        bool reshare_result = not prog_unshare[r].test(different_result_bit);
+        if (not reshare_result)
+        {
+            int t = tokens[root_token].children[0];
+            tokens[t].vm_result.add_value(r, prog_results[r]);
+            set_result_for_reg( r );
+        }
+        prog_unshare[r].reset(unshare_result_bit);
+
+        if (not reg_is_forced(r))
+            force_reg_no_call(r);
+
+        total_changeable_eval_with_call2++;
+        return {r, result};
+    }
+
+    assert( not has_step2(r) );
+
+    // Evaluate the regs from non-changeable reduction steps leading to this changeable step.
+    bool same_inputs = force_regs_check_same_inputs(r);
+    if (same_inputs)
+    {
+        assert(prog_unshare[r].test(unshare_step_bit));
+        assert(prog_unshare[r].test(unshare_result_bit));
+        assert(has_step1(r));
+        int s = prog_steps[r];
+        int r2 = steps[s].call;
+
+        // Since the call is unchanged, we only need to increment the call count if its been decremented
+        auto [call,result] = incremental_evaluate2(r2, prog_unshare[r].test(call_decremented_bit));
+
+        if (prog_results[r] != result)
+        {
+            int t = tokens[root_token].children[0];
+            // Unshare result.
+            tokens[t].vm_result.add_value(r, prog_results[r]);
+            // Set result for current program.
+            set_result_for_reg(r);
+            // Mark result different
+            prog_unshare[r].set(different_result_bit);
+        }
+
+        prog_unshare[r].reset(unshare_result_bit);
+        prog_unshare[r].reset(unshare_step_bit);
+        prog_unshare[r].reset(call_decremented_bit);
+
+        return {r, result};
+    }
+
+    try
+    {
+        int s = get_shared_step(r);
+        RegOperationArgs2Changeable Args(r, s, *this);
+        auto O = expression_at(r).head().assert_is_a<Operation>()->op;
+        closure value = (*O)(Args);
+        total_reductions2++;
+        total_changeable_reductions2++;
+
+        int r2;
+        if (value.exp.is_index_var())
+        {
+            r2 = value.reg_for_index_var();
+        }
+        else
+        {
+            r2 = Args.allocate( std::move(value) ) ;
+            assert(regs.access(r2).created_by.first == s);
+            assert(not has_step1(r2));
+        }
+
+        auto [call,result] = incremental_evaluate2(r2, true);
+
+        int t = tokens[root_token].children[0];
+        set_call(s, call);
+
+        tokens[t].vm_step.add_value(r, prog_steps[r]);
+        prog_steps[r] = s;
+
+        if (prog_unshare[r].test(unshare_result_bit) and prog_results[r] != result) prog_unshare[r].set(different_result_bit);
+
+        tokens[t].vm_result.add_value(r, prog_results[r]);
+        set_result_for_reg(r);
+
+        prog_unshare[r].reset(unshare_result_bit);
+        prog_unshare[r].reset(unshare_step_bit);
+        prog_unshare[r].reset(call_decremented_bit);
+
+        return {r, result};
+    }
+    catch (error_exception& e)
+    {
+        if (log_verbose)
+            throw_reg_exception(*this, root_token, r, e, true);
+        else
+            throw;
+    }
+    catch (myexception& e)
+    {
+        throw_reg_exception(*this, root_token, r, e, true);
+    }
+    catch (const std::exception& ee)
+    {
+        myexception e;
+        e<<ee.what();
+        throw_reg_exception(*this, root_token, r, e, true);
+    }
+
+    std::abort();
+}
+
 pair<int,int> reg_heap::incremental_evaluate2_(int r)
 {
     assert(regs.is_valid_address(r));
@@ -875,153 +1026,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
         return {r, r};
     }
     else if (reg_is_changeable(r))
-    {
-        total_changeable_eval2++;
-
-        if (has_result2(r))
-        {
-            total_changeable_eval_with_result2++;
-
-            if (not reg_is_forced(r))
-                force_reg_with_call(r);
-
-            int result = result_for_reg(r);
-            return {r, result};
-        }
-
-        // If we know what to call, then call it and use it to set the value
-        if (has_step2(r))
-        {
-            int s = step_index_for_reg(r);
-            // Evaluate S, looking through unchangeable redirections
-            auto [call, result] = incremental_evaluate2(steps[s].call, not reg_is_forced(r));
-
-            // If computation_for_reg(r).call can be evaluated to refer to S w/o moving through any changable operations,
-            // then it should be safe to change computation_for_reg(r).call to refer to S, even if r is changeable.
-            if (call != call_for_reg(r))
-            {
-                // This should only ever happen for modifiable values set with set_reg_value( ).
-                // In such cases, we need this, because the value we set could evaluate to an index_var.
-                // Otherwise, we set the call AFTER we have evaluated to a changeable or a constant.
-                clear_call_for_reg(r);
-                set_call(s, call);
-            }
-
-            // I think we can only get get here if the step is valid, but the result is invalid.
-            assert(prog_unshare[r].test(unshare_result_bit));
-
-            // If the result has changed, mark it with a bit.
-            if (prog_results[r] != result) prog_unshare[r].set(different_result_bit);
-
-            // FIXME: How to avoid resharing results of changed modifiables?  Since the step is not shared, we should not reshare.
-            //        Perhaps we could mark modifiables with the different_result bit.
-            bool reshare_result = not prog_unshare[r].test(different_result_bit);
-            if (not reshare_result)
-            {
-                int t = tokens[root_token].children[0];
-                tokens[t].vm_result.add_value(r, prog_results[r]);
-                set_result_for_reg( r );
-            }
-            prog_unshare[r].reset(unshare_result_bit);
-
-            if (not reg_is_forced(r))
-                force_reg_no_call(r);
-
-            total_changeable_eval_with_call2++;
-            return {r, result};
-        }
-
-        assert( not has_step2(r) );
-
-        // Evaluate the regs from non-changeable reduction steps leading to this changeable step.
-        bool same_inputs = force_regs_check_same_inputs(r);
-        if (same_inputs)
-        {
-            assert(prog_unshare[r].test(unshare_step_bit));
-            assert(prog_unshare[r].test(unshare_result_bit));
-            assert(has_step1(r));
-            int s = prog_steps[r];
-            int r2 = steps[s].call;
-
-            // Since the call is unchanged, we only need to increment the call count if its been decremented
-            auto [call,result] = incremental_evaluate2(r2, prog_unshare[r].test(call_decremented_bit));
-
-            if (prog_results[r] != result)
-            {
-                int t = tokens[root_token].children[0];
-                // Unshare result.
-                tokens[t].vm_result.add_value(r, prog_results[r]);
-                // Set result for current program.
-                set_result_for_reg(r);
-                // Mark result different
-                prog_unshare[r].set(different_result_bit);
-            }
-
-            prog_unshare[r].reset(unshare_result_bit);
-            prog_unshare[r].reset(unshare_step_bit);
-            prog_unshare[r].reset(call_decremented_bit);
-
-            return {r, result};
-        }
-
-        try
-        {
-            int s = get_shared_step(r);
-            RegOperationArgs2Changeable Args(r, s, *this);
-            auto O = expression_at(r).head().assert_is_a<Operation>()->op;
-            closure value = (*O)(Args);
-            total_reductions2++;
-            total_changeable_reductions2++;
-
-            int r2;
-            if (value.exp.is_index_var())
-            {
-                r2 = value.reg_for_index_var();
-            }
-            else
-            {
-                r2 = Args.allocate( std::move(value) ) ;
-                assert(regs.access(r2).created_by.first == s);
-                assert(not has_step1(r2));
-            }
-
-            auto [call,result] = incremental_evaluate2(r2, true);
-
-            int t = tokens[root_token].children[0];
-            set_call(s, call);
-
-            tokens[t].vm_step.add_value(r, prog_steps[r]);
-            prog_steps[r] = s;
-
-            if (prog_unshare[r].test(unshare_result_bit) and prog_results[r] != result) prog_unshare[r].set(different_result_bit);
-
-            tokens[t].vm_result.add_value(r, prog_results[r]);
-            set_result_for_reg(r);
-
-            prog_unshare[r].reset(unshare_result_bit);
-            prog_unshare[r].reset(unshare_step_bit);
-            prog_unshare[r].reset(call_decremented_bit);
-
-            return {r, result};
-        }
-        catch (error_exception& e)
-        {
-            if (log_verbose)
-                throw_reg_exception(*this, root_token, r, e, true);
-            else
-                throw;
-        }
-        catch (myexception& e)
-        {
-            throw_reg_exception(*this, root_token, r, e, true);
-        }
-        catch (const std::exception& ee)
-        {
-            myexception e;
-            e<<ee.what();
-            throw_reg_exception(*this, root_token, r, e, true);
-        }
-    }
+        return incremental_evaluate2_changeable_(r);
     else if (unevaluated_reg_is_index_var_no_force(r))
     {
         int r2 = closure_at(r).reg_for_index_var();
