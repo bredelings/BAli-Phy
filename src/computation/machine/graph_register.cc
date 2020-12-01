@@ -840,7 +840,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     {
         auto it2 = likelihoods2.find(r_likelihood);
 
-        if (it2 == priors2.end())
+        if (it2 == likelihoods2.end())
             R.likelihood_ratio /= likelihood1;
         else
         {
@@ -853,7 +853,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     {
         auto it1 = likelihoods1.find(r_likelihood);
 
-        if (it1 == priors2.end())
+        if (it1 == likelihoods1.end())
             R.likelihood_ratio *= likelihood2;
     }
 
