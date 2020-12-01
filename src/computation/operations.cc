@@ -130,6 +130,21 @@ closure apply_op(OperationArgs& Args)
     }
 }
 
+closure get_op(OperationArgs& Args)
+{
+    // Resizing of the memory can occur here, invalidating previously computed pointers
+    // to closures.  The *index* within the memory shouldn't change, though.
+    const closure object = Args.evaluate_slot_to_closure(1);
+
+    int n = Args.reference(0).as_int();
+
+    assert(n >= 0 and n < object.exp.size());
+
+    int r = object.reg_for_slot(n);
+
+    return {index_var(0),{r}};
+}
+
 closure case_op(OperationArgs& Args)
 {
     extern long total_case_op;

@@ -28,6 +28,18 @@ struct Apply: public Operation
     Apply():Operation(-1,apply_op,"@") {}
 };
 
+closure get_op(OperationArgs&);
+
+struct Get: public Operation
+{
+    virtual Get* clone() const {return new Get(*this);}
+
+    type_constant type() const {return get_type;}
+
+    Get():Operation(1, get_op, "get") {}
+};
+
+
 closure case_op(OperationArgs&);
 
 struct Case: public Operation

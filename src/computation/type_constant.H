@@ -26,6 +26,7 @@ enum type_constant {null_type=0,
                     seq_type=20,
                     join_type=21,
                     reg_var_type=22,
+                    get_type=23,
                     unknown_type
 };
 
