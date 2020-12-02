@@ -312,8 +312,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
             auto [r3, result] = incremental_evaluate1(r2);
 
             // Update the index_var to point to the end of the index_var_no_force chain.
-            if (r2 != r3)
-                set_C(r, {index_var(0),{r3}});
+            if (r2 != r3) regs[r].C.Env[0] = r3;
 
             if (regs[r].forced_regs.empty())
             {
@@ -761,8 +760,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
             auto [r3, result] = incremental_evaluate2(r2, has_forces);
 
             // Update the index_var to point to the end of the index_var_no_force chain.
-            if (r2 != r3)
-                set_C(r, {index_var(0),{r3}});
+            if (r2 != r3) regs[r].C.Env[0] = r3;
 
             if (not has_forces)
             {
