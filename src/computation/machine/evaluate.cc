@@ -311,16 +311,16 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 
             auto [r3, result] = incremental_evaluate1(r2);
 
+            // Update the index_var to point to the end of the index_var_no_force chain.
+            if (r2 != r3)
+                set_C(r, {index_var(0),{r3}});
+
             if (regs[r].forced_regs.empty())
             {
-                // Return the end of the index_var chain.
-                // We used to update the index_var to point to the end of the chain.
-
                 mark_reg_index_var_no_force(r);
                 return {r3,result};
             }
-
-            if (reg_is_to_changeable(r3))
+            else if (reg_is_to_changeable(r3))
                 mark_reg_index_var_with_force_to_changeable(r);
             else
                 mark_reg_index_var_with_force_to_nonchangeable(r);
@@ -755,22 +755,21 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
 
             assert( not has_step1(r) );
 
+            bool has_forces = not regs[r].forced_regs.empty();
+
             int r2 = closure_at(r).reg_for_index_var();
+            auto [r3, result] = incremental_evaluate2(r2, has_forces);
 
-            if (regs[r].forced_regs.empty())
+            // Update the index_var to point to the end of the index_var_no_force chain.
+            if (r2 != r3)
+                set_C(r, {index_var(0),{r3}});
+
+            if (not has_forces)
             {
-                // Return the end of the index_var chain.
-                // We used to update the index_var to point to the end of the chain.
-
-                auto [r3, result] = incremental_evaluate2(r2, false);
-
                 mark_reg_index_var_no_force(r);
                 return {r3,result};
             }
-
-            auto [r3, result] = incremental_evaluate2(r2, true);
-
-            if (reg_is_to_changeable(r3))
+            else if (reg_is_to_changeable(r3))
                 mark_reg_index_var_with_force_to_changeable(r);
             else
                 mark_reg_index_var_with_force_to_nonchangeable(r);
