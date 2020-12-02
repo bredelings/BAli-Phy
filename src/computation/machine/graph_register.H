@@ -675,6 +675,8 @@ public:
     reg_heap(const Program& P);
 };
 
+expression_ref opt_normalize(const expression_ref& R);
+
 expression_ref graph_normalize(const expression_ref& R);
 
 void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o);

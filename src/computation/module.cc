@@ -796,7 +796,7 @@ void Module::optimize(const Program& P)
                 // This won't float things to the top level!
                 auto name = decl.sub()[0].as_<var>().name;
                 auto body = decl.sub()[1];
-                body = graph_normalize(body);
+                body = opt_normalize(body);
 
                 new_decls.push_back(AST_node("Decl") + decl.sub()[0] + body);
             }

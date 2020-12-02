@@ -1,5 +1,6 @@
 #include <iostream>
 #include <unordered_map>
+#include "range/v3/all.hpp"
 #include "computation/machine/graph_register.H"
 #include "operations.H"
 #include "computation/expression/let.H"
@@ -15,6 +16,7 @@
 #include "computation/expression/expression.H" // for is_reglike( )
 
 
+
 using std::optional;
 using std::string;
 using std::vector;
@@ -24,6 +26,99 @@ using std::map;
 
 using std::cerr;
 using std::endl;
+
+namespace views = ranges::views;
+
+
+expression_ref opt_normalize(const expression_ref& E)
+{
+    if (not E) return E;
+
+    // 1. Var
+    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
+    if (not E.size()) return E;
+  
+    // 2. Lambda
+    if (E.head().is_a<lambda>())
+    {
+	assert(E.size() == 2);
+	object_ptr<expression> V = E.as_expression().clone();
+	V->sub[1] = opt_normalize(E.sub()[1]);
+
+	return V;
+    }
+
+    // 6. Case
+    expression_ref object;
+    vector<expression_ref> patterns;
+    vector<expression_ref> bodies;
+    if (parse_case_expression(E, object, patterns, bodies))
+    {
+	// Normalize the object
+	object = opt_normalize(object);
+
+	const int L = patterns.size();
+	// Just normalize the bodies
+	for(int i=0;i<L;i++)
+	    bodies[i] = opt_normalize(bodies[i]);
+    
+	if (is_reglike(object))
+	    return make_case_expression(object, patterns, bodies);
+	else
+	{
+	    int var_index = get_safe_binder_index(E);
+	    auto x = var(var_index);
+
+	    return let_expression({{x,object}},make_case_expression(x, patterns, bodies));
+	}
+    }
+
+    // 4. Constructor
+    if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
+    {
+	int var_index = get_safe_binder_index(E);
+
+	object_ptr<expression> E2 = E.as_expression().clone();
+
+	// Actually we probably just need x[i] not to be free in E.sub()[i]
+	vector<pair<var, expression_ref>> decls;
+	for(int i=0;i<E2->size();i++)
+	{
+	    E2->sub[i] = opt_normalize(E.sub()[i]);
+
+	    if (not is_reglike(E2->sub[i]))
+	    {
+		auto x = var( var_index++ );
+
+		// 1. Let-bind the argument expression
+		decls.push_back( {x, E2->sub[i]} );
+
+		// 2. Replace the argument expression with the let var.
+		E2->sub[i] = x;
+	    }
+	}
+
+	return let_expression(decls, object_ptr<const expression>(E2));
+    }
+
+    // 5. Let 
+    if (is_let_expression(E))
+    {
+	auto decls = let_decls(E);
+	auto body  = let_body(E);
+
+	// Normalize the body
+	body = opt_normalize(body);
+
+	// Just normalize the bound statements
+	for(auto& decl: decls)
+	    decl.second = opt_normalize(decl.second);
+
+	return let_expression(decls, body);
+    }
+
+    throw myexception()<<"opt_normalize: I don't recognize expression '"+ E.print() + "'";
+}
 
 
 expression_ref graph_normalize(const expression_ref& E)
@@ -50,23 +145,67 @@ expression_ref graph_normalize(const expression_ref& E)
     vector<expression_ref> bodies;
     if (parse_case_expression(E, object, patterns, bodies))
     {
-	// Normalize the object
+        const int L = patterns.size();
+
+        // 1. Get a var that is not bound in the object AND isn't bound in any of the patterns.
+        auto var_index = get_safe_binder_index(E);
+	for(int i=0;i<L;i++)
+            var_index = std::max(var_index, get_safe_binder_index(patterns[i]));
+
+	// 2. Normalize the object
 	object = graph_normalize(object);
 
-	const int L = patterns.size();
-	// Just normalize the bodies
-	for(int i=0;i<L;i++)
-	    bodies[i] = graph_normalize(bodies[i]);
-    
-	if (is_reglike(object))
-	    return make_case_expression(object, patterns, bodies);
-	else
-	{
-	    int var_index = get_safe_binder_index(E);
-	    auto x = var(var_index);
+        // 3. Make the object a variable
+        CDecls decls;
+        if (not is_reglike(object))
+        {
+            auto x = var(var_index++);
+            decls.push_back({x,object});
+            object = x;
+        }
 
-	    return let_expression({{x,object}},make_case_expression(x, patterns, bodies));
-	}
+        // 4. Normalize the bodies AND let-bind all vars from the pattern binding.
+	for(int i=0;i<L;i++)
+        {
+            // normalize the bodies
+	    bodies[i] = graph_normalize(bodies[i]);
+
+            // let-bind each pattern var to an object field
+            if (patterns[i].is_expression())
+            {
+                CDecls alt_decls;
+                object_ptr<expression> pattern2 = patterns[i].as_expression().clone();
+                for(int j=0;j<patterns[i].size();j++)
+                {
+                    auto& v = patterns[i].sub()[j].as_<var>();
+                    if (not v.is_wildcard())
+                    {
+                        expression_ref F= Get()+j+object;
+                        alt_decls.push_back({v,F});
+                        pattern2->sub[j] = var(-1);
+                    }
+                }
+                patterns[i] = pattern2;
+                bodies[i] = let_expression(alt_decls,bodies[i]);
+            }
+
+            // The body must be reglike AFTER we add let-binders for pattern vars.
+            if (not is_reglike(bodies[i]))
+            {
+                auto b = var(var_index++);
+                decls.push_back( {b, bodies[i] } );
+                bodies[i] = b;
+            }
+        }
+    
+        // 5. Create the case expression
+        auto E2 = make_case_expression(object, patterns, bodies);
+
+        // 6. Create the let-bindings non-recursively, in reverse order
+        for(auto& decl: decls | views::reverse)
+            E2 = let_expression({decl}, E2);
+
+        return E2;
     }
 
     // 4. Constructor
