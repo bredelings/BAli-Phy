@@ -134,9 +134,14 @@ closure get_op(OperationArgs& Args)
 {
     // Resizing of the memory can occur here, invalidating previously computed pointers
     // to closures.  The *index* within the memory shouldn't change, though.
-    const closure object = Args.evaluate_slot_to_closure(1);
+    const closure object = Args.evaluate_slot_to_closure(0);
 
-    int n = Args.reference(0).as_int();
+    // Therefore, we must compute this *after* we do the computation above, since
+    // we're going to hold on to it.  Otherwise the held reference would become
+    // *invalid* after the call above!
+    const closure& C = Args.current_closure();
+
+    int n = C.exp.head().as_<Get>().n;
 
     assert(n >= 0 and n < object.exp.size());
 

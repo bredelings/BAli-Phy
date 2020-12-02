@@ -180,7 +180,7 @@ expression_ref graph_normalize(const expression_ref& E)
                     auto& v = patterns[i].sub()[j].as_<var>();
                     if (not v.is_wildcard())
                     {
-                        expression_ref F= Get()+j+object;
+                        expression_ref F= Get(j)+object;
                         alt_decls.push_back({v,F});
                         pattern2->sub[j] = var(-1);
                     }

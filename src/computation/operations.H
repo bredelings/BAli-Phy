@@ -32,11 +32,13 @@ closure get_op(OperationArgs&);
 
 struct Get: public Operation
 {
+    int n;
+
     virtual Get* clone() const {return new Get(*this);}
 
     type_constant type() const {return get_type;}
 
-    Get():Operation(1, get_op, "get") {}
+    Get(int i):Operation(1, get_op, "get:"+std::to_string(i)),n(i) {}
 };
 
 
