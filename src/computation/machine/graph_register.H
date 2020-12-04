@@ -345,9 +345,9 @@ public:
     void unregister_random_variable(const effect& e, int s);
 
     // the list of transition kernels
-    std::vector<int> transition_kernels_;
+    std::unordered_set<int> transition_kernels_;
 
-    const std::vector<int>& transition_kernels() const;
+    const std::unordered_set<int>& transition_kernels() const;
 
     void register_transition_kernel(const effect& e, int s);
     void unregister_transition_kernel(const effect& e, int s);
