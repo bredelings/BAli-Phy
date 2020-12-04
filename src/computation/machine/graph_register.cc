@@ -917,7 +917,8 @@ void reg_heap::register_transition_kernel(const effect& e, int s)
     assert(reg_is_constant(r_kernel));
 
     // Multiple steps from different contexts COULD register the same transition kernel.
-    transition_kernels_.push_back(s);
+    assert(not transition_kernels_.count(s));
+    transition_kernels_.insert(s);
 
     for(auto& handler: register_tk_handlers)
         handler(e,s);
@@ -930,21 +931,13 @@ void reg_heap::unregister_transition_kernel(const effect& e, int s)
     for(auto& handler: unregister_tk_handlers)
         handler(e,s);
 
-    std::optional<int> index;
-    for(int i=0;i<transition_kernels_.size();i++)
-        if (transition_kernels_[i] == s)
-            index = i;
+    if (not transition_kernels_.count(s))
+        throw myexception()<<"unregister_transition_kernel: transition kernel <r="<<E.kernel_reg<<",s="<<s<<"> not found!";
 
-    if (not index)
-        throw myexception()<<"unregister_transition_kernel: transition kernel <"<<E.kernel_reg<<"> not found!";
-
-    if (*index + 1 < transition_kernels_.size())
-        std::swap(transition_kernels_[*index], transition_kernels_.back());
-
-    transition_kernels_.pop_back();
+    transition_kernels_.erase(s);
 }
 
-const vector<int>& reg_heap::transition_kernels() const
+const std::unordered_set<int>& reg_heap::transition_kernels() const
 {
     return transition_kernels_;
 }
