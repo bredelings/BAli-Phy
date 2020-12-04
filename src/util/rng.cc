@@ -147,7 +147,13 @@ unsigned geometric(double p) {
 }
 
 unsigned binomial(int n, double p) {
+    assert(n >= 0);
     assert(0 <= p and p <= 1);
+
+    // Maybe the library already does these optimizations?
+    if (n == 0 or p == 0) return 0;
+    if (p == 1) return n;
+
     return std::binomial_distribution<>(n,p)(standard);
 }
 
