@@ -100,7 +100,7 @@ void register_likelihood::unregister_effect(reg_heap& M, int s) const
 
 bool register_transition_kernel::operator==(const register_transition_kernel& e) const
 {
-    return rate_reg == e.rate_reg and kernel_reg == e.kernel_reg;
+    return rate == e.rate and kernel_reg == e.kernel_reg;
 }
 
 bool register_transition_kernel::operator==(const Object& O) const
@@ -119,20 +119,20 @@ string register_transition_kernel::print() const
     return string("register_transition_kernel[")+std::to_string(kernel_reg)+"]";
 }
 
-register_transition_kernel::register_transition_kernel(int r1, int r2)
-    :rate_reg(r1), kernel_reg(r2)
+register_transition_kernel::register_transition_kernel(double r, int k)
+    :rate(r), kernel_reg(k)
 { }
 
 void register_transition_kernel::register_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 2)
-        std::cerr<<"register_transition_kernel["<<kernel_reg<<"]: REGISTER!\n";
+        std::cerr<<"register_transition_kernel[rate="<<rate<<",kernel="<<kernel_reg<<"]: REGISTER!\n";
     M.register_transition_kernel(*this, s);
 }
 
 void register_transition_kernel::unregister_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 2)
-        std::cerr<<"register_transition_kernel["<<kernel_reg<<"]: UNregister!\n";
+        std::cerr<<"register_transition_kernel[rate="<<rate<<",kernel="<<kernel_reg<<"]: UNREGISTER!\n";
     M.unregister_transition_kernel(*this, s);
 }
