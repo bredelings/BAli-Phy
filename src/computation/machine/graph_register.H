@@ -295,7 +295,16 @@ private:
     void register_effect_at_step(int s);
 
     void unregister_effect_at_step(int s);
+public:
+    const effect& get_effect(int s) const;
 
+    template <typename T>
+    const T& get_effect_as(int s) const
+    {
+        auto& e = get_effect(s);
+        return dynamic_cast<const T&>(e);
+    }
+private:
     void compute_initial_force_counts();
     void mark_unconditional_regs();
     void first_evaluate_program(int c);
