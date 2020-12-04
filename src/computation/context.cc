@@ -3,6 +3,7 @@
 #include <memory>
 #include "computation/context.H"
 #include "computation/machine/graph_register.H"
+#include "computation/machine/effects.H"
 #include "computation/program.H"
 #include "loader.H"
 #include "module.H"
@@ -167,50 +168,168 @@ expression_ref context_ref::recursive_evaluate(int i) const
 
 int get_reps(double x)
 {
+    assert(x >= 0.0);
+
+    if (x <= 0) return 0;
+
     int x_int = (int)x;
     double x_frac = x - x_int;
     return x_int + poisson(x_frac);
 }
 
-void context_ref::run_transition_kernels()
+double first_occurrence_time(double start, double end, int n)
 {
-    // unmap any transition kernels that are not currently used.
-    evaluate_program();
+    assert(n > 0);
 
-    vector<pair<double,int>> weighted_tks;
-    // Don't use a range-for, since the number of transition kernels could change
-    for(int i=0; i< memory()->transition_kernels().size(); ++i)
-    {
-        auto& [rate, r_kernel] = memory()->transition_kernels()[i];
-
-        // We could force new random variables here, which would be weird.
-        if (rate > 0)
-            weighted_tks.push_back({rate, r_kernel});
-    }
-
-    vector<int> order;
-
-    for(auto& [w,r]: weighted_tks)
-    {
-        memory()->mark_transition_kernel_active(r);
-
-        int n = get_reps(w);
-        for(int j=0;j<n;j++)
-            order.push_back(r);
-    }
-
-    random_shuffle(order);
-
-    for(int move: order)
-        if (memory()->transition_kernel_is_active(move))
-            perform_transition_kernel(move);
-
-    for(auto& [w,r]: weighted_tks)
-        memory()->clear_transition_kernel_active(r);
+    double u = uniform();
+    double x = -expm1(log(1.0-u)/double(n));
+    return start + (end-start)*x;
 }
 
-void context_ref::perform_transition_kernel(int r)
+struct tk_group
 {
+    int step;
+    double t0;
+    int n;
+};
+
+namespace std
+{
+    template<>
+    struct less<tk_group>
+    {
+        bool operator()(const tk_group& tk1, const tk_group& tk2) const
+            {
+                return tk1.t0 < tk2.t0;
+            }
+    };
+}
+
+void add_transition_kernel(const effect& e, int s, double t, set<tk_group>& tk_groups)
+{
+    auto& reg_tk = dynamic_cast<const ::register_transition_kernel&>(e);
+
+    // how many total
+    int n_total = get_reps(reg_tk.rate);
+    // how many in the remaining interval
+    int n_remaining = binomial(n_total, 1.0-t);
+
+    if (n_remaining > 0)
+    {
+        auto t0 = first_occurrence_time(t, 1.0, n_remaining);
+
+        tk_groups.insert({s, t0, n_remaining});
+    }
+}
+
+tk_group get_next_transition_kernel(set<tk_group>& tk_groups)
+{
+    // 1. Remove the first transition kernels
+    auto tk1 = *tk_groups.begin();
+    tk_groups.erase(tk_groups.begin());
+
+    // 2. Decrement the remaining instances
+    auto tk2 = tk1;
+    tk2.n--;
+
+    // 3. If there are no more occurrences, skip reinsertion.
+    if (tk2.n > 0)
+    {
+        // 4. Get a new first occurrence time.
+        tk2.t0 = first_occurrence_time(tk1.t0, 1.0, tk2.n);
+
+        // 5. Reinsert
+        tk_groups.insert(tk2);
+    }
+
+    return tk1;
+}
+
+void context_ref::run_transition_kernels()
+{
+    // 1.unmap any transition kernels that are not currently used.
+    evaluate_program();
+
+    // 2. Compute initial set of TK groups.
+    set<tk_group> tk_groups;
+    for(int s: memory()->transition_kernels())
+    {
+        auto& e = memory()->get_effect(s);
+        add_transition_kernel(e, s, 0, tk_groups);
+    }
+
+    std::set<int> tk_steps_removed;
+    std::set<int> tk_steps_added;
+
+    std::function<void(const effect&, int)> register_tk_handler = [&,this](const effect&, int s)
+    {
+        auto it = tk_steps_removed.find(s);
+        if (it != tk_steps_removed.end())
+            tk_steps_removed.erase(it);
+        else
+        {
+            assert(not tk_steps_added.count(s));
+            tk_steps_added.insert(s);
+        }
+    };
+
+    std::function<void(const effect&, int)> unregister_tk_handler = [&,this](const effect&, int s)
+    {
+        auto it = tk_steps_added.find(s);
+        if (it != tk_steps_added.end())
+            tk_steps_added.erase(it);
+        else
+        {
+            assert(not tk_steps_removed.count(s));
+            tk_steps_removed.insert(s);
+        }
+    };
+
+    memory()->register_tk_handlers.push_back(register_tk_handler);
+    memory()->unregister_tk_handlers.push_back(unregister_tk_handler);
+
+    while(not tk_groups.empty())
+    {
+        auto [s, t, _] = get_next_transition_kernel(tk_groups);
+
+        // Run the T.K.
+        perform_transition_kernel(s);
+
+        // Handle differences here.
+        evaluate_program();
+
+        // The transition kernel may not unregister itself.
+        assert(not tk_steps_removed.count(s));
+
+        // process tk_steps_removed
+        for(auto it = tk_groups.begin(); it != tk_groups.end();)
+        {
+            auto it0 = it;
+            if (tk_steps_removed.count(it0->step))
+                tk_groups.erase(it);
+            it++;
+        }
+
+        // process tk_steps_added
+        for(int s: tk_steps_added)
+        {
+            auto& e = memory()->get_effect(s);
+            add_transition_kernel(e, s, t, tk_groups);
+        }
+
+        tk_steps_added.clear();
+        tk_steps_removed.clear();
+    }
+
+    memory()->register_tk_handlers.pop_back();
+    memory()->unregister_tk_handlers.pop_back();
+}
+
+void context_ref::perform_transition_kernel(int s)
+{
+    auto e = memory()->get_effect_as< ::register_transition_kernel>(s);
+
+    int r = e.kernel_reg;
     assert(memory()->reg_is_constant(r));
     expression_ref E = {reg_var(r), get_context_index()};
     perform_expression(E);
