@@ -211,9 +211,8 @@ void context_ref::run_transition_kernels()
 
 void context_ref::perform_transition_kernel(int r)
 {
-    assert(memory()->reg_has_value(r));
-    int r2 = memory()->value_for_reg(r);
-    expression_ref E = {reg_var(r2), get_context_index()};
+    assert(memory()->reg_is_constant(r));
+    expression_ref E = {reg_var(r), get_context_index()};
     perform_expression(E);
 }
 
