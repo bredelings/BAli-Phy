@@ -902,16 +902,12 @@ void reg_heap::register_transition_kernel(const effect& e, int s)
 {
     auto& E = dynamic_cast<const ::register_transition_kernel&>(e);
 
-    int r_rate = E.rate_reg;
     int r_kernel = E.kernel_reg;
-
-    // We can't register index_vars -- they could go away!
-    assert(not reg_is_index_var_no_force(r_rate));
 
     assert(not reg_is_index_var_no_force(r_kernel));
 
     // Multiple steps from different contexts COULD register the same transition kernel.
-    transition_kernels_.push_back({r_rate, r_kernel});
+    transition_kernels_.push_back({E.rate, r_kernel});
 
     for(auto& handler: register_tk_handlers)
         handler(e,s);
@@ -942,7 +938,7 @@ void reg_heap::unregister_transition_kernel(const effect& e, int s)
     transition_kernels_.pop_back();
 }
 
-const vector<pair<int,int>>& reg_heap::transition_kernels() const
+const vector<pair<double,int>>& reg_heap::transition_kernels() const
 {
     return transition_kernels_;
 }

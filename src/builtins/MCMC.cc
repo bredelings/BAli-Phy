@@ -21,11 +21,7 @@ using std::vector;
 
 extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Args)
 {
-    Args.evaluate_slot_force(0);
-
-    int r_rate = Args.reg_for_slot(0);
-
-    r_rate = Args.memory().follow_index_var_no_force(r_rate);
+    double rate = Args.evaluate(0).as_double();
 
     Args.evaluate_slot_force(1);
 
@@ -33,7 +29,7 @@ extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Ar
 
     r_transition_kernel = Args.memory().follow_index_var_no_force(r_transition_kernel);
 
-    auto effect = new register_transition_kernel(r_rate, r_transition_kernel);
+    auto effect = new register_transition_kernel(rate, r_transition_kernel);
 
     Args.set_effect(*effect);
 
