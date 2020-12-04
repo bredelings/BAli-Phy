@@ -23,11 +23,7 @@ extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Ar
 {
     double rate = Args.evaluate(0).as_double();
 
-    Args.evaluate_slot_force(1);
-
-    int r_transition_kernel = Args.reg_for_slot(1);
-
-    r_transition_kernel = Args.memory().follow_index_var_no_force(r_transition_kernel);
+    int r_transition_kernel = Args.evaluate_reg_use(Args.reg_for_slot(1));
 
     auto effect = new register_transition_kernel(rate, r_transition_kernel);
 
