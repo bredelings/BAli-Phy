@@ -429,6 +429,14 @@ void reg_heap::unregister_effect_at_step(int s)
     e.as_<effect>().unregister_effect(*this, s);
 }
 
+const effect& reg_heap::get_effect(int s) const
+{
+    assert(not steps.is_free(s));
+    int r = steps[s].call;
+
+    return expression_at(r).as_<effect>();
+}
+
 void reg_heap::do_pending_effect_registrations()
 {
     // Don't modify `steps_pending_effect_registration` while we are walking it!
