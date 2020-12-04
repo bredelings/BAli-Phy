@@ -338,8 +338,8 @@ public:
 
     const std::vector<std::pair<int,int>>& transition_kernels() const;
 
-    void register_transition_kernel(int,int,int);
-    void unregister_transition_kernel(int,int);
+    void register_transition_kernel(const effect& e, int s);
+    void unregister_transition_kernel(const effect& e, int s);
 
     void mark_transition_kernel_active(int r);
     bool transition_kernel_is_active(int r);

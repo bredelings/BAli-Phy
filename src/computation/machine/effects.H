@@ -38,12 +38,11 @@ struct register_likelihood: public effect
     register_likelihood(int r, log_double_t lk);
 };
 
-class register_transition_kernel: public effect
+struct register_transition_kernel: public effect
 {
     int rate_reg;
     int kernel_reg;
 
-public:
     register_transition_kernel* clone() const {return new register_transition_kernel(*this);}
 
     bool operator==(const register_transition_kernel&) const;
