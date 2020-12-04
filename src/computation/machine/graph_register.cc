@@ -898,7 +898,7 @@ void reg_heap::unregister_random_variable(const effect& e, int s)
         handler(e, s);
 }
 
-void reg_heap::register_transition_kernel(int r_rate, int r_kernel, int /*s*/)
+void reg_heap::register_transition_kernel(int r_rate, int r_kernel, int s)
 {
     // We can't register index_vars -- they could go away!
     assert(not reg_is_index_var_no_force(r_rate));
@@ -907,10 +907,16 @@ void reg_heap::register_transition_kernel(int r_rate, int r_kernel, int /*s*/)
 
     // Multiple steps from different contexts COULD register the same transition kernel.
     transition_kernels_.push_back({r_rate, r_kernel});
+
+    for(auto& handler: register_tk_handlers)
+        handler(e,s);
 }
 
-void reg_heap::unregister_transition_kernel(int r_kernel, int /*s*/)
+void reg_heap::unregister_transition_kernel(int r_kernel, int s)
 {
+    for(auto& handler: unregister_tk_handlers)
+        handler(e,s);
+
     clear_transition_kernel_active(r_kernel);
 
     std::optional<int> index;

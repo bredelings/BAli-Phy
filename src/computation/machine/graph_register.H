@@ -182,6 +182,8 @@ class reg_heap: public Object
     std::vector<std::function<void(const effect&, int)>> unregister_likelihood_handlers;
     std::vector<std::function<void(const effect&, int)>> register_prior_handlers;
     std::vector<std::function<void(const effect&, int)>> unregister_prior_handlers;
+    std::vector<std::function<void(const effect&, int)>> register_tk_handlers;
+    std::vector<std::function<void(const effect&, int)>> unregister_tk_handlers;
 
     void resize(int s);
 
