@@ -181,10 +181,9 @@ void context_ref::run_transition_kernels()
     // Don't use a range-for, since the number of transition kernels could change
     for(int i=0; i< memory()->transition_kernels().size(); ++i)
     {
-        auto& [r_rate, r_kernel] = memory()->transition_kernels()[i];
+        auto& [rate, r_kernel] = memory()->transition_kernels()[i];
 
         // We could force new random variables here, which would be weird.
-        double rate = get_reg_value(r_rate).as_double();
         if (rate > 0)
             weighted_tks.push_back({rate, r_kernel});
     }

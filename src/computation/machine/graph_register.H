@@ -334,9 +334,9 @@ public:
     void unregister_random_variable(const effect& e, int s);
 
     // the list of transition kernels
-    std::vector<std::pair<int,int>> transition_kernels_;
+    std::vector<std::pair<double,int>> transition_kernels_;
 
-    const std::vector<std::pair<int,int>>& transition_kernels() const;
+    const std::vector<std::pair<double,int>>& transition_kernels() const;
 
     void register_transition_kernel(const effect& e, int s);
     void unregister_transition_kernel(const effect& e, int s);

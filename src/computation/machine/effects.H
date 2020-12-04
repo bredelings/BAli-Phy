@@ -40,7 +40,7 @@ struct register_likelihood: public effect
 
 struct register_transition_kernel: public effect
 {
-    int rate_reg;
+    double rate;
     int kernel_reg;
 
     register_transition_kernel* clone() const {return new register_transition_kernel(*this);}
@@ -53,7 +53,7 @@ struct register_transition_kernel: public effect
     void register_effect(reg_heap&,int) const;
     void unregister_effect(reg_heap&,int) const;
 
-    register_transition_kernel(int r1, int r2);
+    register_transition_kernel(double r, int k);
 };
 
 #endif
