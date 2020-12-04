@@ -82,7 +82,6 @@ struct Step
 
 // Bits in on regs[r].flags
 constexpr int reg_is_always_evaluated_bit = 6;
-constexpr int reg_has_active_tk_bit = 7;
 
 constexpr int non_computed_index = -1;
 
@@ -351,10 +350,6 @@ public:
 
     void register_transition_kernel(const effect& e, int s);
     void unregister_transition_kernel(const effect& e, int s);
-
-    void mark_transition_kernel_active(int r);
-    bool transition_kernel_is_active(int r);
-    void clear_transition_kernel_active(int r);
 
     /// Probably this would be non-parameter identifiers
     std::map<std::string, int> identifiers;
