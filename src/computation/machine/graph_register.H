@@ -182,9 +182,11 @@ class reg_heap: public Object
     std::vector<std::function<void(const effect&, int)>> unregister_likelihood_handlers;
     std::vector<std::function<void(const effect&, int)>> register_prior_handlers;
     std::vector<std::function<void(const effect&, int)>> unregister_prior_handlers;
+public:
     std::vector<std::function<void(const effect&, int)>> register_tk_handlers;
     std::vector<std::function<void(const effect&, int)>> unregister_tk_handlers;
 
+private:
     void resize(int s);
 
     void reclaim_used(int);
@@ -343,9 +345,9 @@ public:
     void unregister_random_variable(const effect& e, int s);
 
     // the list of transition kernels
-    std::vector<std::pair<double,int>> transition_kernels_;
+    std::vector<int> transition_kernels_;
 
-    const std::vector<std::pair<double,int>>& transition_kernels() const;
+    const std::vector<int>& transition_kernels() const;
 
     void register_transition_kernel(const effect& e, int s);
     void unregister_transition_kernel(const effect& e, int s);
