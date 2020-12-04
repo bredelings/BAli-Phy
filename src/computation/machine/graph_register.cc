@@ -908,14 +908,16 @@ void reg_heap::unregister_random_variable(const effect& e, int s)
 
 void reg_heap::register_transition_kernel(const effect& e, int s)
 {
+    assert(not steps.is_free(s));
+
     auto& E = dynamic_cast<const ::register_transition_kernel&>(e);
 
     int r_kernel = E.kernel_reg;
 
-    assert(not reg_is_index_var_no_force(r_kernel));
+    assert(reg_is_constant(r_kernel));
 
     // Multiple steps from different contexts COULD register the same transition kernel.
-    transition_kernels_.push_back({E.rate, r_kernel});
+    transition_kernels_.push_back(s);
 
     for(auto& handler: register_tk_handlers)
         handler(e,s);
@@ -925,20 +927,16 @@ void reg_heap::unregister_transition_kernel(const effect& e, int s)
 {
     auto& E = dynamic_cast<const ::register_transition_kernel&>(e);
 
-    int r_kernel = E.kernel_reg;
-
     for(auto& handler: unregister_tk_handlers)
         handler(e,s);
 
-    clear_transition_kernel_active(r_kernel);
-
     std::optional<int> index;
     for(int i=0;i<transition_kernels_.size();i++)
-        if (transition_kernels_[i].second == r_kernel)
+        if (transition_kernels_[i] == s)
             index = i;
 
     if (not index)
-        throw myexception()<<"unregister_transition_kernel: transition kernel <"<<r_kernel<<"> not found!";
+        throw myexception()<<"unregister_transition_kernel: transition kernel <"<<E.kernel_reg<<"> not found!";
 
     if (*index + 1 < transition_kernels_.size())
         std::swap(transition_kernels_[*index], transition_kernels_.back());
@@ -946,7 +944,7 @@ void reg_heap::unregister_transition_kernel(const effect& e, int s)
     transition_kernels_.pop_back();
 }
 
-const vector<pair<double,int>>& reg_heap::transition_kernels() const
+const vector<int>& reg_heap::transition_kernels() const
 {
     return transition_kernels_;
 }
@@ -1496,11 +1494,6 @@ void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
     insert_at_end(scan, stack); // inc_heads = yes
     insert_at_end(scan, temp); // yes
     insert_at_end(scan, heads); // yes
-
-    // FIXME: We want to remove all of these.
-    // * we should be able to remove random_variables_.  However, walking random_variables_ might find references to old, destroyed, variables then.
-    for(auto& [_,r]: transition_kernels_)
-        scan.push_back(r);
 
     if (keep_identifiers)
         for(const auto& [name,reg]: identifiers) // no
