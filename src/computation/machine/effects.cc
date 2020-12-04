@@ -127,12 +127,12 @@ void register_transition_kernel::register_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 2)
         std::cerr<<"register_transition_kernel["<<kernel_reg<<"]: REGISTER!\n";
-    M.register_transition_kernel(rate_reg, kernel_reg, s);
+    M.register_transition_kernel(*this, s);
 }
 
 void register_transition_kernel::unregister_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 2)
         std::cerr<<"register_transition_kernel["<<kernel_reg<<"]: UNregister!\n";
-    M.unregister_transition_kernel(kernel_reg, s);
+    M.unregister_transition_kernel(*this, s);
 }

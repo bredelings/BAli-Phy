@@ -898,8 +898,13 @@ void reg_heap::unregister_random_variable(const effect& e, int s)
         handler(e, s);
 }
 
-void reg_heap::register_transition_kernel(int r_rate, int r_kernel, int s)
+void reg_heap::register_transition_kernel(const effect& e, int s)
 {
+    auto& E = dynamic_cast<const ::register_transition_kernel&>(e);
+
+    int r_rate = E.rate_reg;
+    int r_kernel = E.kernel_reg;
+
     // We can't register index_vars -- they could go away!
     assert(not reg_is_index_var_no_force(r_rate));
 
@@ -912,8 +917,12 @@ void reg_heap::register_transition_kernel(int r_rate, int r_kernel, int s)
         handler(e,s);
 }
 
-void reg_heap::unregister_transition_kernel(int r_kernel, int s)
+void reg_heap::unregister_transition_kernel(const effect& e, int s)
 {
+    auto& E = dynamic_cast<const ::register_transition_kernel&>(e);
+
+    int r_kernel = E.kernel_reg;
+
     for(auto& handler: unregister_tk_handlers)
         handler(e,s);
 
