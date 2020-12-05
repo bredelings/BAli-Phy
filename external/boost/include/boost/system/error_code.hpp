@@ -287,13 +287,13 @@ public:
     {
     }
 
-    const char * name() const BOOST_NOEXCEPT
+    const char * name() const BOOST_NOEXCEPT BOOST_OVERRIDE
     {
         return "generic";
     }
 
-    std::string message( int ev ) const;
-    char const * message( int ev, char * buffer, std::size_t len ) const BOOST_NOEXCEPT;
+    std::string message( int ev ) const BOOST_OVERRIDE;
+    char const * message( int ev, char * buffer, std::size_t len ) const BOOST_NOEXCEPT BOOST_OVERRIDE;
 };
 
 class BOOST_SYMBOL_VISIBLE system_error_category: public error_category
@@ -305,15 +305,15 @@ public:
     {
     }
 
-    const char * name() const BOOST_NOEXCEPT
+    const char * name() const BOOST_NOEXCEPT BOOST_OVERRIDE
     {
         return "system";
     }
 
-    error_condition default_error_condition( int ev ) const BOOST_NOEXCEPT;
+    error_condition default_error_condition( int ev ) const BOOST_NOEXCEPT BOOST_OVERRIDE;
 
-    std::string message( int ev ) const;
-    char const * message( int ev, char * buffer, std::size_t len ) const BOOST_NOEXCEPT;
+    std::string message( int ev ) const BOOST_OVERRIDE;
+    char const * message( int ev, char * buffer, std::size_t len ) const BOOST_NOEXCEPT BOOST_OVERRIDE;
 };
 
 } // namespace detail
@@ -355,15 +355,16 @@ constexpr error_category const & generic_category() BOOST_NOEXCEPT
 
 #else // #if defined(BOOST_SYSTEM_HAS_CONSTEXPR)
 
+#if !defined(__SUNPRO_CC) // trailing __global is not supported
 inline error_category const & system_category() BOOST_NOEXCEPT BOOST_SYMBOL_VISIBLE;
+inline error_category const & generic_category() BOOST_NOEXCEPT BOOST_SYMBOL_VISIBLE;
+#endif
 
 inline error_category const & system_category() BOOST_NOEXCEPT
 {
     static const detail::system_error_category system_category_instance;
     return system_category_instance;
 }
-
-inline error_category const & generic_category() BOOST_NOEXCEPT BOOST_SYMBOL_VISIBLE;
 
 inline error_category const & generic_category() BOOST_NOEXCEPT
 {
@@ -514,7 +515,7 @@ public:
 
     BOOST_SYSTEM_CONSTEXPR explicit operator bool() const BOOST_NOEXCEPT  // true if error
     {
-        return val_ != 0;
+        return failed_;
     }
 
 #else
@@ -524,12 +525,12 @@ public:
 
     BOOST_SYSTEM_CONSTEXPR operator unspecified_bool_type() const BOOST_NOEXCEPT  // true if error
     {
-        return val_ != 0? unspecified_bool_true: 0;
+        return failed_? unspecified_bool_true: 0;
     }
 
     BOOST_SYSTEM_CONSTEXPR bool operator!() const BOOST_NOEXCEPT  // true if no error
     {
-        return val_ == 0;
+        return !failed_;
     }
 
 #endif
@@ -655,7 +656,7 @@ public:
 
     BOOST_SYSTEM_CONSTEXPR explicit operator bool() const BOOST_NOEXCEPT  // true if error
     {
-        return val_ != 0;
+        return failed_;
     }
 
 #else
@@ -665,12 +666,12 @@ public:
 
     BOOST_SYSTEM_CONSTEXPR operator unspecified_bool_type() const  BOOST_NOEXCEPT // true if error
     {
-        return val_ != 0? unspecified_bool_true: 0;
+        return failed_? unspecified_bool_true: 0;
     }
 
     BOOST_SYSTEM_CONSTEXPR bool operator!() const BOOST_NOEXCEPT // true if no error
     {
-        return val_ == 0;
+        return !failed_;
     }
 
 #endif
@@ -783,11 +784,11 @@ inline std::size_t hash_value( error_code const & ec )
 {
     error_category const & cat = ec.category();
 
-    boost::ulong_long_type id = cat.id_;
+    boost::ulong_long_type id_ = cat.id_;
 
-    if( id == 0 )
+    if( id_ == 0 )
     {
-        id = reinterpret_cast<boost::uintptr_t>( &cat );
+        id_ = reinterpret_cast<boost::uintptr_t>( &cat );
     }
 
     boost::ulong_long_type hv = ( boost::ulong_long_type( 0xCBF29CE4 ) << 32 ) + 0x84222325;
@@ -795,7 +796,7 @@ inline std::size_t hash_value( error_code const & ec )
 
     // id
 
-    hv ^= id;
+    hv ^= id_;
     hv *= prime;
 
     // value
