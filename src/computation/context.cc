@@ -292,6 +292,8 @@ void context_ref::run_transition_kernels()
     memory()->register_tk_handlers.push_back(register_tk_handler);
     memory()->unregister_tk_handlers.push_back(unregister_tk_handler);
 
+    auto& tk_groups_by_step = tk_groups.get<1>();
+
     while(not tk_groups.empty())
     {
         auto [s, t, _] = get_next_transition_kernel(tk_groups);
@@ -306,19 +308,14 @@ void context_ref::run_transition_kernels()
         assert(not tk_steps_removed.count(s));
 
         // process tk_steps_removed
-        for(auto it = tk_groups.begin(); it != tk_groups.end();)
-        {
-            auto it0 = it;
-            it++;
-            if (tk_steps_removed.count(it0->step))
-                tk_groups.erase(it0);
-        }
+        for(auto tk_step: tk_steps_removed)
+            tk_groups_by_step.erase(tk_step);
 
         // process tk_steps_added
-        for(int s: tk_steps_added)
+        for(int tk_step: tk_steps_added)
         {
-            auto& e = memory()->get_effect(s);
-            add_transition_kernel(e, s, t, tk_groups);
+            auto& e = memory()->get_effect(tk_step);
+            add_transition_kernel(e, tk_step, t, tk_groups);
         }
 
         tk_steps_added.clear();
