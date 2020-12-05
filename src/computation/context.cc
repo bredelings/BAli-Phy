@@ -305,9 +305,9 @@ void context_ref::run_transition_kernels()
         for(auto it = tk_groups.begin(); it != tk_groups.end();)
         {
             auto it0 = it;
-            if (tk_steps_removed.count(it0->step))
-                tk_groups.erase(it);
             it++;
+            if (tk_steps_removed.count(it0->step))
+                tk_groups.erase(it0);
         }
 
         // process tk_steps_added
