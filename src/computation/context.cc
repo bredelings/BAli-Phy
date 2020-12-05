@@ -17,6 +17,11 @@
 #include "util/log-level.H"
 #include "util/permute.H"
 
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/member.hpp>
+
 using std::string;
 using std::vector;
 using std::map;
@@ -193,19 +198,17 @@ struct tk_group
     int n;
 };
 
-namespace std
-{
-    template<>
-    struct less<tk_group>
-    {
-        bool operator()(const tk_group& tk1, const tk_group& tk2) const
-            {
-                return tk1.t0 < tk2.t0;
-            }
-    };
-}
+using namespace boost::multi_index;
 
-void add_transition_kernel(const effect& e, int s, double t, set<tk_group>& tk_groups)
+typedef multi_index_container<
+            tk_group,
+            indexed_by<
+                ordered_non_unique<member<tk_group,double,&tk_group::t0>>,
+                hashed_unique<member<tk_group,int,&tk_group::step>>
+            >
+        > set_tk_group;
+
+void add_transition_kernel(const effect& e, int s, double t, set_tk_group& tk_groups)
 {
     auto& reg_tk = dynamic_cast<const ::register_transition_kernel&>(e);
 
@@ -222,7 +225,7 @@ void add_transition_kernel(const effect& e, int s, double t, set<tk_group>& tk_g
     }
 }
 
-tk_group get_next_transition_kernel(set<tk_group>& tk_groups)
+tk_group get_next_transition_kernel(set_tk_group& tk_groups)
 {
     // 1. Remove the first transition kernels
     auto tk1 = *tk_groups.begin();
@@ -251,7 +254,8 @@ void context_ref::run_transition_kernels()
     evaluate_program();
 
     // 2. Compute initial set of TK groups.
-    set<tk_group> tk_groups;
+    set_tk_group tk_groups;
+
     for(int s: memory()->transition_kernels())
     {
         auto& e = memory()->get_effect(s);
