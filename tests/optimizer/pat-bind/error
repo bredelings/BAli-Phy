@@ -1,14 +1,16 @@
 size = 1   Test.#1 = 1
-size = 1   Test.#19 = Test.#3:Test.#7
+size = 1   Test.#13 = []
+size = 1   Test.#15 = Test.#3:Test.#7
+size = 2   Test.#16 = Data.List.map Test.#8 Test.#15
 size = 1   Test.#2 = 2
-size = 2   Test.#20 = Data.List.map Test.#8 Test.#19
 size = 1   Test.#3 = (Test.#1, Test.#2)
 size = 1   Test.#4 = 3
 size = 1   Test.#5 = 4
 size = 1   Test.#6 = (Test.#4, Test.#5)
 size = 1   Test.#7 = Test.#6:[]
-size = 4   Test.#8 = \#9 -> case #9 of {(#10, #11) -> let {#15 = Prelude:multiply #10 #10} in let {#16 = []} in #15:#16; _ -> []}
+size = 3   Test.#8 = \#9 -> case #9 of {(#10, #11) -> let {#12 = Prelude:multiply #10 #10} in #12:Test.#13; _ -> Test.$v#1}
+size = 1   Test.$v#1 = []
 size = 1   Test.x = 1
-size = 1   Test.xxs = Data.List.concat Test.#20
+size = 1   Test.xxs = Data.List.concat Test.#16
 size = 1   Test.xys = Test.#3:Test.#7
 size = 1   Test.y = 2
