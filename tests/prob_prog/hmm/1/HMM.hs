@@ -16,10 +16,7 @@ true_hidden_states = [1,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,
 
 hmm emission states = independent $ map emission states
 
-model n = do
-  hidden_state0 <- bernoulli 0.5
-  hidden_states <- markov transition_matrix hidden_state0
-  return $ take n $ hidden_states
+model n = replicateM n $ bernoulli 0.5
 
 main = do
   hidden_states <- random $ model 100
