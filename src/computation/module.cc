@@ -817,6 +817,9 @@ void Module::optimize(const Program& P)
 
             decl_groups = simplify_module(*P.get_module_loader(), small_decls_in, small_decls_in_free_vars, decl_groups);
 
+            if (P.get_module_loader()->fully_lazy)
+                float_out_from_module(decl_groups);
+
             decls = flatten(std::move(decl_groups));
             topdecls = make_topdecls(decls);
 
