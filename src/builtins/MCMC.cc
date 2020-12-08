@@ -332,6 +332,7 @@ using Bounds = Box<bounds<T>>;
 extern "C" closure builtin_function_inc_dec_mh(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
 
     //------------- 1a. Get the proposal ---------------
     int x_reg = Args.evaluate_slot_unchangeable(0);
@@ -343,16 +344,19 @@ extern "C" closure builtin_function_inc_dec_mh(OperationArgs& Args)
 
     //------------- 1c. Get context index --------------
     int c1 = Args.evaluate(2).as_int();
+    context_ref C1(M, c1);
 
     //------------- 1d. Get monad thread state ---------
     int state = Args.evaluate(3).as_int();
 
     //------------- 2. Perform the proposal ------------
-    auto& M = Args.memory();
-
     auto proposal = inc_dec_mh_proposal(x_reg, range);
 
+    if (log_verbose >= 3) std::cerr<<C1.get_logged_parameters()<<"\n";
+
     perform_MH_(M, c1, proposal);
+
+    if (log_verbose >= 3) std::cerr<<C1.get_logged_parameters()<<"\n";
 
     //------------- 4. Return the modified IO state ----
     return EPair(state+1,constructor("()",0));
@@ -420,6 +424,8 @@ extern "C" closure builtin_function_slice_sample_integer_random_variable(Operati
     int c1 = Args.evaluate(2).as_int();
     context_ref C1(M, c1);
 
+    if (log_verbose >= 3) std::cerr<<C1.get_logged_parameters()<<"\n";
+
     //------------- 1b. Get bounds --------------
     int bnds_reg = Args.reg_for_slot(1);
     auto bnds_result = M.precomputed_value_in_context(bnds_reg, c1);
@@ -448,6 +454,7 @@ extern "C" closure builtin_function_slice_sample_integer_random_variable(Operati
     double v1 = logp.current_value() + uniform();
     slice_sample(v1, logp, w, 100);
 
+    if (log_verbose >= 3) std::cerr<<C1.get_logged_parameters()<<"\n";
     if (log_verbose >= 3) std::cerr<<"   - Posterior evaluated "<<logp.count<<" times.\n";
 
     return EPair(state+1,constructor("()",0));
