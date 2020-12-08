@@ -1,7 +1,25 @@
 * 4.0 (unreleased)
- - Force edges. (20% slower)
- - Lazy random variable creation and destruction. (30% slower)
- - Add slice moves when variables are created.
+ + Lazy random variable creation and destruction.
+ - MCMC
+   - Add moves when variables are created for more distributions.
+   - Allow move to appear or disappear during an iteration.
+   - Allow rates of moves to change dynamically.
+   - Compute probability ratios by tracking registration events
+     for prior and likelihood terms.
+ - Graphical models
+   - Eliminate the closure stack.
+   - Add force edges, and allow forces from constants and index_var's.
+     - index_var's can have results, but not steps.
+     - Add index_var edges, which are fixed call edges.
+   - Combine unsharing and invalidation when we evaluate the program.
+   - Program evaluation tokens must be immediately adjacent.
+   - Avoid recomputing steps if inputs have the same memory location.
+     - Allow sharing steps in this case.
+   - Evaluate program
+     - Evaluate invalid regs that are unconditionally evaluated.
+     - Decrement force counts for calls of invalid steps.
+     - Evaluate conditional invalid regs with positive force counts.
+
 
 * 3.6 (unreleased)
  + Make the `"nested": true` form of JSON log format more readable.
