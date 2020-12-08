@@ -340,8 +340,8 @@ public:
     // the list of random variables
     std::unordered_map<int,int> random_variables;
 
-    void register_random_variable(const effect& e, int s);
-    void unregister_random_variable(const effect& e, int s);
+    void register_prior(const effect& e, int s);
+    void unregister_prior(const effect& e, int s);
 
     // the list of transition kernels
     std::unordered_set<int> transition_kernels_;
