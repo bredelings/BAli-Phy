@@ -198,7 +198,12 @@ float_lets(expression_ref& E, int level)
 {
     // 1. Var
     if (is_var(E))
+    {
+        auto x = E.as_<var>();
+        x = strip_level(x);
+        E = x;
         return {};
+    }
 
     // 2. Constant
     else if (not E.size())
