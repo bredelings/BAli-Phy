@@ -783,7 +783,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 //  auto L1 = likelihood_for_context(c1);
     evaluate_program(c1);
 
-    // 2. install handlers for register_random_variable and register_likelihood
+    // 2. install handlers for register_prior and register_likelihood
     std::unordered_map<int,log_double_t> priors1;
     std::unordered_map<int,log_double_t> priors2;
 
@@ -792,14 +792,14 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 
     std::function<void(const effect&, int)> register_prior_handler = [&,this](const effect& e, int)
     {
-        auto & E = dynamic_cast<const ::register_random_variable&>(e);
+        auto & E = dynamic_cast<const ::register_prior&>(e);
         assert(not priors2.count(E.variable_reg));
         priors2.insert({E.variable_reg, E.pdf});
     };
 
     std::function<void(const effect&, int)> unregister_prior_handler = [&,this](const effect& e, int)
     {
-        auto & E = dynamic_cast<const ::register_random_variable&>(e);
+        auto & E = dynamic_cast<const ::register_prior&>(e);
         assert(not priors1.count(E.variable_reg));
         priors1.insert({E.variable_reg, E.pdf});
     };
@@ -886,9 +886,9 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     return R;
 }
 
-void reg_heap::register_random_variable(const effect& e, int s)
+void reg_heap::register_prior(const effect& e, int s)
 {
-    auto& E = dynamic_cast<const ::register_random_variable&>(e);
+    auto& E = dynamic_cast<const ::register_prior&>(e);
     // We aren't supposed to ever register the same step twice.
     assert(not random_variables.count(s));
     random_variables[s] = E.variable_reg;
@@ -896,7 +896,7 @@ void reg_heap::register_random_variable(const effect& e, int s)
         handler(e, s);
 }
 
-void reg_heap::unregister_random_variable(const effect& e, int s)
+void reg_heap::unregister_prior(const effect& e, int s)
 {
     assert(random_variables.count(s));
     random_variables.erase(s);

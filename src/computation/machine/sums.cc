@@ -76,7 +76,7 @@ log_double_t reg_heap::prior_for_context(int c)
     for(auto [s, _]: random_variables)
     {
         auto r_pdf_effect = steps[s].call;
-	auto X = value_for_precomputed_reg(r_pdf_effect).exp.as_<::register_random_variable>().pdf;
+	auto X = value_for_precomputed_reg(r_pdf_effect).exp.as_<::register_prior>().pdf;
 
 	double t;
 	if (std::abs(X.log()) > std::abs(log_pr))
