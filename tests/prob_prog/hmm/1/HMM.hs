@@ -14,6 +14,10 @@ observations =  [1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0
 
 true_hidden_states = [1,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,0,0,0,0,1,1,1,0,1,0,1,1,1,0,1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1]
 
+n_diffs []     []                 = 0
+n_diffs (x:xs) (y:ys) | x == y    =     n_diffs xs ys
+                      | otherwise = 1 + n_diffs xs ys
+
 hmm emission states = independent $ map emission states
 
 model n = replicateM n $ bernoulli 0.5
@@ -21,5 +25,4 @@ model n = replicateM n $ bernoulli 0.5
 main = do
   hidden_states <- random $ model 100
   observe (hmm emission_matrix hidden_states) observations
-  return ["hidden_states" %=% hidden_states]
-  
+  return ["hidden_states" %=% hidden_states, "diffs" %=% n_diffs hidden_states true_hidden_states]
