@@ -301,7 +301,7 @@ expression_ref let_floater_state::set_level_maybe_MFE(const expression_ref& AE, 
 {
     int level2 = max_level(env, get_free_vars(AE));
     const auto& E = un_fv(AE);
-    if (level2 < level and not is_var(E) and not is_WHNF(E))
+    if (level2 < level and not is_var(E)) // and not is_WHNF(E))
     {
         auto E = set_level(AE, level2, env);
         var v = new_unique_var("$v", level2);
