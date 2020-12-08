@@ -4,49 +4,49 @@
 
 using std::string;
 
-bool register_random_variable::operator==(const register_random_variable& e) const
+bool register_prior::operator==(const register_prior& e) const
 {
     return variable_reg == e.variable_reg;
 }
 
-bool register_random_variable::operator==(const Object& O) const
+bool register_prior::operator==(const Object& O) const
 {
     if (this == &O) return true;
 
     if (typeid(*this) != typeid(O)) return false;
 
-    auto* e = dynamic_cast<const register_random_variable*>(&O);
+    auto* e = dynamic_cast<const register_prior*>(&O);
 
     return (*this) == *e;
 }
 
-string register_random_variable::print() const
+string register_prior::print() const
 {
-    return string("register_random_variable[")+std::to_string(variable_reg)+","+std::to_string(pdf)+"]";
+    return string("register_prior[")+std::to_string(variable_reg)+","+std::to_string(pdf)+"]";
 }
 
-register_random_variable::register_random_variable(int r, log_double_t pr)
+register_prior::register_prior(int r, log_double_t pr)
     :variable_reg(r), pdf(pr)
 { }
 
-void register_random_variable::register_effect(reg_heap& M, int s) const
+void register_prior::register_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 4)
     {
-        std::cerr<<"register_random_variable[var="<<variable_reg<<",pdf="<<pdf<<",step="<<s<<"]: ";
+        std::cerr<<"register_prior[var="<<variable_reg<<",pdf="<<pdf<<",step="<<s<<"]: ";
         std::cerr<<"  REGISTER! ("<<M.random_variables.size()<<" -> "<<M.random_variables.size()+1<<")\n";
     }
-    M.register_random_variable(*this, s);
+    M.register_prior(*this, s);
 }
 
-void register_random_variable::unregister_effect(reg_heap& M, int s) const
+void register_prior::unregister_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 4)
     {
-        std::cerr<<"register_random_variable[var="<<variable_reg<<",pdf="<<pdf<<",step="<<s<<"]: ";
+        std::cerr<<"register_prior[var="<<variable_reg<<",pdf="<<pdf<<",step="<<s<<"]: ";
         std::cerr<<"UNregister! ("<<M.random_variables.size()<<" -> "<<M.random_variables.size()-1<<")\n";
     }
-    M.unregister_random_variable(*this, s);
+    M.unregister_prior(*this, s);
 }
 
 //--------------------------------------------------------------------

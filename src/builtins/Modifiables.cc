@@ -108,7 +108,7 @@ extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 
     auto pdf = Args.evaluate(1).as_log_double();
 
-    auto effect = new register_random_variable(r_var, pdf);
+    auto effect = new register_prior(r_var, pdf);
 
     Args.set_effect(*effect);
 
