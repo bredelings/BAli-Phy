@@ -1140,6 +1140,11 @@ int reg_heap::result_for_reg(int r) const
     return prog_results[r];
 }
 
+bool reg_heap::regs_maybe_different_value(int r1, int r2) const
+{
+    return r1 != r2;
+}
+
 void reg_heap::set_result_for_reg(int r1)
 {
     // 1. Find called reg
