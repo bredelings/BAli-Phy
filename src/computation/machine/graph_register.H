@@ -236,6 +236,8 @@ public:
     bool reg_is_constant(int r) const;
     bool reg_is_changeable_or_forcing(int r) const;
     bool reg_is_to_changeable(int r) const;
+    bool reg_has_forces(int r) const;
+    bool reg_is_on_stack(int r) const;
 
     void set_used_reg(int r1, int r2);
     void set_forced_reg(int r1, int r2);
@@ -700,6 +702,16 @@ extern long total_tokens;
 inline bool reg_heap::reg_is_unevaluated(int r) const
 {
     return regs.access(r).type == reg::type_t::unevaluated;
+}
+
+inline bool reg_heap::reg_has_forces(int r) const
+{
+    return not regs[r].forced_regs.empty();
+}
+
+inline bool reg_heap::reg_is_on_stack(int r) const
+{
+    return regs[r].flags.test(3);
 }
 
 inline void reg_heap::mark_reg_unevaluated(int r)
