@@ -44,9 +44,13 @@ void do_remap(const reg_heap& M, vector<int>& remap, int r)
 
     const closure& C = M[r];
 
-    if (C.exp and C.exp.is_index_var() and (M.reg_is_unevaluated(r) or M.reg_is_index_var_no_force(r)))
+    // If we are currently evaluating a reg (i.e. its on the stack), it could have state UNEVALUTED but still have forces.
+    if (C.exp and C.exp.is_index_var() and
+        (not M.reg_is_on_stack(r)) and
+        (M.reg_is_unevaluated(r) or M.reg_is_index_var_no_force(r)))
     {
         assert(not M.has_result1(r));
+        assert(not M.reg_has_forces(r));
 
         int r2 = C.reg_for_index_var();
 
