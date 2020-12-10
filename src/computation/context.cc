@@ -494,10 +494,18 @@ expression_ref context_ref::evaluate_program() const
 
 json context_ref::get_logged_parameters() const
 {
+    // 1. Check if there is a logging head.
     if (not memory()->logging_head)
 	throw myexception()<<"No logging head has been set!";
 
+    // 2. Evaluate the program before doing non-program evaluation.
+    //    Otherwise any invalid regs are going to get unset instead of reshared.
+    evaluate_program();
+
+    // 3. Evaluate the logging head
     auto L = evaluate(*memory()->logging_head);
+
+    // 4. Check that the result is a JSON object.
     return L.as_checked<Box<json>>().value();
 }
 
