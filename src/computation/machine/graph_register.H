@@ -238,6 +238,7 @@ public:
     bool reg_is_to_changeable(int r) const;
     bool reg_has_forces(int r) const;
     bool reg_is_on_stack(int r) const;
+    bool regs_maybe_different_value(int r1, int r2) const;
 
     void set_used_reg(int r1, int r2);
     void set_forced_reg(int r1, int r2);
