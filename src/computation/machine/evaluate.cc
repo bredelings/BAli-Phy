@@ -293,7 +293,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
         assert(expression_at(r));
 
 #ifndef NDEBUG
-        //    std::cerr<<"   statement: "<<r<<":   "<<regs.access(r).E.print()<<std::endl;
+        //    std::cerr<<"   statement: "<<r<<":   "<<regs[r].E.print()<<std::endl;
 #endif
 
         /*---------- Below here, there is no call, and no value. ------------*/
@@ -369,7 +369,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
             // if we perform allocations AFTER using/forcing something changeable.
             int s = get_shared_step(r);
 
-            int sp = regs.access(r).created_by.first;
+            int sp = regs[r].created_by.first;
 
             try
             {
@@ -401,7 +401,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                     else
                     {
                         r2 = Args.allocate( std::move(value) ) ;
-                        assert(regs.access(r2).created_by.first == s);
+                        assert(regs[r2].created_by.first == s);
                         assert(not has_step1(r2));
                     }
 
@@ -815,7 +815,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
             // if we perform allocations AFTER using/forcing something changeable.
             int s = get_shared_step(r);
 
-            int sp = regs.access(r).created_by.first;
+            int sp = regs[r].created_by.first;
 
             try
             {
@@ -847,7 +847,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
                     else
                     {
                         r2 = Args.allocate( std::move(value) ) ;
-                        assert(regs.access(r2).created_by.first == s);
+                        assert(regs[r2].created_by.first == s);
                         assert(not has_step1(r2));
                     }
 
@@ -1036,7 +1036,7 @@ pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
         else
         {
             r2 = Args.allocate( std::move(value) ) ;
-            assert(regs.access(r2).created_by.first == s);
+            assert(regs[r2].created_by.first == s);
             assert(not has_step1(r2));
         }
 
