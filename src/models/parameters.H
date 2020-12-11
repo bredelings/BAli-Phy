@@ -131,7 +131,7 @@ public:
     TreeInterface t() const;
 
     /// Cached Transition Probabilities
-    const EVector& transition_P(int b) const;   // used only in sample_subst_history( ) in substitution.cc
+    const EVector& transition_P(int b) const;   // used only to force transition_Ps in sample-topology-SPR.cc [ SPR_search_attachment_points ]
   
     const EVector& get_sequence(int i) const;   // used in substitution.cc [get_leaf_seq_likelihoods, sample_subst_history], parsimony.cc [peel_muts_leaf_branch, accumulate_root_leaf]
 
