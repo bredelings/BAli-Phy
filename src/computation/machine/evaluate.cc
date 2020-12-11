@@ -906,10 +906,10 @@ pair<int,int> reg_heap::incremental_evaluate2_index_var_with_force_(int r)
     {
         auto [r3, result3] = incremental_evaluate2(r2, not reg_is_forced(r));
 
-        if (prog_unshare[r].test(unshare_result_bit) and prog_results[r] != result3)
+        if (prog_unshare[r].test(unshare_result_bit) and regs_maybe_different_value(prog_results[r],result3))
             prog_unshare[r].set(different_result_bit);
 
-        bool reshare_result = prog_unshare[r].test(unshare_result_bit) and not prog_unshare[r].test(different_result_bit);
+        bool reshare_result = prog_unshare[r].test(unshare_result_bit) and prog_results[r] == result3;
         if (not reshare_result)
         {
             int t = tokens[root_token].children[0];
@@ -963,11 +963,12 @@ pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
         assert(prog_unshare[r].test(unshare_result_bit));
 
         // If the result has changed, mark it with a bit.
-        if (prog_results[r] != result) prog_unshare[r].set(different_result_bit);
+        if (regs_maybe_different_value(prog_results[r],result))
+            prog_unshare[r].set(different_result_bit);
 
         // FIXME: How to avoid resharing results of changed modifiables?  Since the step is not shared, we should not reshare.
         //        Perhaps we could mark modifiables with the different_result bit.
-        bool reshare_result = not prog_unshare[r].test(different_result_bit);
+        bool reshare_result = prog_results[r] == result;
         if (not reshare_result)
         {
             int t = tokens[root_token].children[0];
@@ -989,6 +990,8 @@ pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
     bool same_inputs = force_regs_check_same_inputs(r);
     if (same_inputs)
     {
+        // FIXME -- merge with has_step2( )?
+
         assert(prog_unshare[r].test(unshare_step_bit));
         assert(prog_unshare[r].test(unshare_result_bit));
         assert(has_step1(r));
@@ -998,15 +1001,15 @@ pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
         // Since the call is unchanged, we only need to increment the call count if its been decremented
         auto [call,result] = incremental_evaluate2(r2, prog_unshare[r].test(call_decremented_bit));
 
-        if (prog_results[r] != result)
+        if (regs_maybe_different_value(prog_results[r],result))
+            prog_unshare[r].set(different_result_bit);
+
+        bool reshare_result = prog_results[r] == result;
+        if (not reshare_result)
         {
             int t = tokens[root_token].children[0];
-            // Unshare result.
             tokens[t].vm_result.add_value(r, prog_results[r]);
-            // Set result for current program.
             set_result_for_reg(r);
-            // Mark result different
-            prog_unshare[r].set(different_result_bit);
         }
 
         prog_unshare[r].reset(unshare_result_bit);
@@ -1045,7 +1048,8 @@ pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
         tokens[t].vm_step.add_value(r, prog_steps[r]);
         prog_steps[r] = s;
 
-        if (prog_unshare[r].test(unshare_result_bit) and prog_results[r] != result) prog_unshare[r].set(different_result_bit);
+        if (prog_unshare[r].test(unshare_result_bit) and regs_maybe_different_value(prog_results[r], result))
+            prog_unshare[r].set(different_result_bit);
 
         tokens[t].vm_result.add_value(r, prog_results[r]);
         set_result_for_reg(r);
