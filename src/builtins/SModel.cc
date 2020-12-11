@@ -1573,14 +1573,12 @@ extern "C" closure builtin_function_sample_root_sequence_SEV(OperationArgs& Args
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
     auto arg4 = Args.evaluate(4);
-    auto arg5 = Args.evaluate(5);
-    auto arg6 = Args.evaluate(6);
 
     return substitution::sample_root_sequence_SEV(arg0.as_<Likelihood_Cache_Branch>(),
-                                              arg1.as_<Likelihood_Cache_Branch>(),
-                                              arg2.as_<Likelihood_Cache_Branch>(),
-                                              arg3.as_<Box<Matrix>>(),
-                                              arg3.as_<EVector>());
+                                                  arg1.as_<Likelihood_Cache_Branch>(),
+                                                  arg2.as_<Likelihood_Cache_Branch>(),
+                                                  arg3.as_<Box<Matrix>>(),
+                                                  arg4.as_<EVector>());
 }
 
 extern "C" closure builtin_function_sample_internal_node_sequence(OperationArgs& Args)
