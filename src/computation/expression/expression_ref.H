@@ -55,6 +55,8 @@ public:
 		return (i == E2.as_index_var());
 		break;
 	    default:
+                if (ptr() == E2.ptr()) return true;
+
 		return (*ptr() == *E2.ptr());
 	    }
 	}
