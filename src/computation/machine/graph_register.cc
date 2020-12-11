@@ -1142,7 +1142,22 @@ int reg_heap::result_for_reg(int r) const
 
 bool reg_heap::regs_maybe_different_value(int r1, int r2) const
 {
-    return r1 != r2;
+    if (r1 == r2) return false;
+
+    auto& E1 = expression_at(r1);
+    auto& E2 = expression_at(r2);
+
+    if (E1.type() != E2.type()) return true;
+
+/*  FIXME: somehow, this causes an error!
+    if (E1.is_int() and E1.as_int() == E2.as_int())
+    {
+        assert(E1 == E2);
+        return false;
+    }
+*/
+
+    return true;
 }
 
 void reg_heap::set_result_for_reg(int r1)
