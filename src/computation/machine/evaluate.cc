@@ -177,21 +177,21 @@ pair<int,int> reg_heap::incremental_evaluate1(int r)
     assert(execution_allowed());
 
 #ifndef NDEBUG
-    if (regs.access(r).flags.test(3))
+    if (reg_is_on_stack(r))
         throw myexception()<<"Evaluating reg "<<r<<" that is already on the stack!";
-    else
-        regs.access(r).flags.set(3);
 #endif
+    regs[r].flags.set(3);
     stack.push_back(r);
+
     auto result = incremental_evaluate1_(r);
     assert(not reg_is_index_var_no_force(result.first));
     assert(not reg_is_unevaluated(result.first));
     assert(not reg_is_unevaluated(r));
+    assert(reg_is_on_stack(r));
+
     stack.pop_back();
-#ifndef NDEBUG
-    assert(regs.access(r).flags.test(3));
-    regs.access(r).flags.flip(3);
-#endif
+    regs[r].flags.reset(3);
+
     return result;
 }
 
@@ -656,21 +656,21 @@ pair<int,int> reg_heap::incremental_evaluate2(int r, bool do_count)
     assert(execution_allowed());
 
 #ifndef NDEBUG
-    if (regs.access(r).flags.test(3))
+    if (reg_is_on_stack(r))
         throw myexception()<<"Evaluating reg "<<r<<" that is already on the stack!";
-    else
-        regs.access(r).flags.set(3);
 #endif
+    regs[r].flags.set(3);
     stack.push_back(r);
+
     auto result = incremental_evaluate2_(r);
     assert(not reg_is_index_var_no_force(result.first));
     assert(not reg_is_unevaluated(result.first));
     assert(not reg_is_unevaluated(r));
+
+    assert(reg_is_on_stack(r));
     stack.pop_back();
-#ifndef NDEBUG
-    assert(regs.access(r).flags.test(3));
-    regs.access(r).flags.flip(3);
-#endif
+    regs[r].flags.reset(3);
+
     int r2 = result.first;
     if (do_count and reg_is_changeable_or_forcing(r2))
         inc_count(r2);
@@ -1139,21 +1139,22 @@ public:
         { }
 };
 
-int reg_heap::incremental_evaluate_unchangeable(int R)
+int reg_heap::incremental_evaluate_unchangeable(int r)
 {
 #ifndef NDEBUG
-    if (regs.access(R).flags.test(3))
-        throw myexception()<<"Evaluating reg "<<R<<" that is already on the stack!";
-    else
-        regs.access(R).flags.set(3);
+    if (reg_is_on_stack(r))
+        throw myexception()<<"Evaluating reg "<<r<<" that is already on the stack!";
 #endif
-    stack.push_back(R);
-    auto result = incremental_evaluate_unchangeable_(R);
+
+    regs[r].flags.set(3);
+    stack.push_back(r);
+
+    auto result = incremental_evaluate_unchangeable_(r);
+    assert(reg_is_on_stack(r));
+
     stack.pop_back();
-#ifndef NDEBUG
-    assert(regs.access(R).flags.test(3));
-    regs.access(R).flags.flip(3);
-#endif
+    regs[r].flags.reset(3);
+
     return result;
 }
 
