@@ -159,7 +159,10 @@ void minimally_connect_leaf_characters(alignment& A,const TreeInterface& t)
 	{
 	    // put present characters into the alignment.
 	    if (present[column])
-		A.set_value(column, n, alphabet::not_gap );
+            {
+                if (not A.character(column,n))
+                    A.set_value(column, n, alphabet::not_gap );
+            }
 	    else
 		A.set_value(column, n, alphabet::gap );
 	}
