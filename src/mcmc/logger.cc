@@ -41,6 +41,7 @@
 #include "tree-align/n_indels2.H"
 #include "substitution/parsimony.H"
 #include "alignment/alignment-util.H"
+#include "alignment/alignment-util2.H"
 #include "dp/2way.H"
 #include "computation/expression/bool.H"
 #include "computation/expression/constructor.H"
@@ -387,6 +388,7 @@ namespace MCMC {
         if (not P[p].has_IModel())
         {
             auto A = P[p].ancestral_sequence_alignment().as_<Box<alignment>>();
+            minimally_connect_leaf_characters(A, P.t());
 	    A.print_fasta_to_stream(output);
 	    output<<endl;
 	    return output.str();
