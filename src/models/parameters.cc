@@ -319,6 +319,11 @@ EVector data_partition::ancestral_sequences() const
     return DPC().ancestral_sequences_index.get_value(*P).as_<EVector>();
 }
 
+expression_ref data_partition::ancestral_sequence_alignment() const
+{
+    return DPC().ancestral_sequences_index.get_value(*P);
+}
+
 log_double_t data_partition::heated_likelihood() const 
 {
     // Don't waste time calculating likelihood if we're sampling from the prior.

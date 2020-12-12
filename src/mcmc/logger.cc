@@ -384,9 +384,17 @@ namespace MCMC {
 
 	const alphabet& a = P[p].get_alphabet();
 
-	alignment A = P[p].A();
+        if (not P[p].has_IModel())
+        {
+            auto A = P[p].ancestral_sequence_alignment().as_<Box<alignment>>();
+	    A.print_fasta_to_stream(output);
+	    output<<endl;
+	    return output.str();
+        }
 
-	// FIXME! Handle inferring N/X in leaf sequences for 1 or 2 sequences.
+        alignment A = P[p].A();
+
+        // FIXME! Handle inferring N/X in leaf sequences for 1 or 2 sequences.
 	if (P.t().n_leaves() <= 2)
 	{
 	    A.print_fasta_to_stream(output);

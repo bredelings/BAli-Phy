@@ -73,7 +73,8 @@ observe_partition_type_0 partition sequence_data subst_root = (transition_ps, cl
                                     array_to_vector $ sample_ancestral_sequences tree subst_root leaf_sequences as alphabet transition_ps f cls smap
 
 observe_partition_type_1 partition sequences subst_root = (transition_ps, cls, ancestral_sequences, likelihood)
-    where (compressed_alignment',column_counts,mapping) = compress_alignment $ alignment_from_sequences alphabet sequences
+    where a0 = alignment_from_sequences alphabet sequences
+          (compressed_alignment',column_counts,mapping) = compress_alignment $ a0
           tree = DP.get_tree partition
           n_leaves = numLeaves tree
           taxa = get_labels tree
@@ -102,11 +103,11 @@ observe_partition_type_1 partition sequences subst_root = (transition_ps, cls, a
                            peel_likelihood_SEV tree cls f subst_root column_counts
 --        This also needs the map from columns to compressed columns:
           ancestral_sequences = if n_leaves == 1 then
-                                    0
+                                    a0
                                 else if n_leaves == 2 then
-                                    0
+                                    a0
                                 else
-                                    array_to_vector $ sample_ancestral_sequences_SEV
+                                    let ancestral_states = array_to_vector $ sample_ancestral_sequences_SEV
                                          tree
                                          subst_root
                                          leaf_sequences
@@ -116,3 +117,4 @@ observe_partition_type_1 partition sequences subst_root = (transition_ps, cls, a
                                          cls
                                          smap
                                          mapping
+                                    in ancestral_sequence_alignment a0 ancestral_states smap

@@ -173,6 +173,8 @@ public:
 
     EVector ancestral_sequences() const;
 
+    expression_ref ancestral_sequence_alignment() const;
+
     // The prior, likelihood, and probability
     log_double_t prior_alignment() const;
     log_double_t likelihood() const;
