@@ -61,3 +61,6 @@ uncompress_alignment (a, counts, mapping) = builtin_uncompress_alignment a mappi
 
 -- Alignment -> Int -> EVector Int -> [EVector Int]
 leaf_sequence_counts a n counts = list_from_vector $ builtin_leaf_sequence_counts a n counts
+
+builtin builtin_ancestral_sequence_alignment 3 "ancestral_sequence_alignment" "Alignment"
+ancestral_sequence_alignment a0 states smap = builtin_ancestral_sequence_alignment a0 states smap

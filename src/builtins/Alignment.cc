@@ -10,8 +10,10 @@
 #include "dp/2way.H"
 #include "models/site-compression.H"
 #include "util/cmdline.H"
+
 using std::string;
 using std::vector;
+using std::pair;
 
 using Alphabet = PtrBox<alphabet>;
 
@@ -516,3 +518,49 @@ extern "C" closure builtin_function_reorder_alignment(OperationArgs& Args)
     return A2;
 }
 
+extern "C" closure builtin_function_ancestral_sequence_alignment(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& A0 = arg0.as_<Box<alignment>>().value();
+
+    auto& arg1 = Args.evaluate(1);
+    auto& states = arg1.as_<EVector>();
+
+    auto& arg2 = Args.evaluate(2);
+    auto& smap = arg2.as_<EVector>();
+
+    int n = states.size();
+    int L = states[0].as_<Vector<pair<int,int>>>().size();
+
+    object_ptr<Box<alignment>> A_(new Box<alignment>(A0.get_alphabet(), n, L));
+    auto& A = *A_;
+
+    assert(A0.length() == A.length());
+
+    for(int i=0;i<A.n_sequences();i++)
+    {
+        auto& node_states = states[i].as_<Vector<pair<int,int>>>();
+
+        if (i < A0.n_sequences())
+        {
+            A.seq(i) = A0.seq(i);
+            for(int c=0;c<A.length();c++)
+                A.set_value(c, i, A0(c,i));
+        }
+        else
+        {
+            A.seq(i).name = "A"+std::to_string(i);
+            for(int c=0;c<A.length();c++)
+            {
+                int state = node_states[c].second;
+                int letter = (state == -1)?-1:smap[state].as_int();
+                A.set_value(c, i, letter);
+            }
+        }
+    }
+
+    // FIXME - minimally-connect leaf characters in the machine!
+    // It might be a bit slower if we did that, though.
+
+    return A_;
+}
