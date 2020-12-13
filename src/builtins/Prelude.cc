@@ -409,6 +409,12 @@ extern "C" closure builtin_function_lessthanorequal(OperationArgs& Args)
 	throw myexception()<<"<=: object '"<<x.print()<<"' is not double, int, log_double, or char'";
 }
 
+extern "C" closure builtin_function_expToLogDouble(OperationArgs& Args)
+{
+    double d = Args.evaluate(0).as_double();
+    return {exp_to<log_double_t>(d)};
+}
+
 extern "C" closure builtin_function_doubleToLogDouble(OperationArgs& Args)
 {
     double d = Args.evaluate(0).as_double();

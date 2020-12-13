@@ -41,6 +41,7 @@ builtin round 1 "round" "Prelude"
 
 builtin doubleToInt 1 "doubleToInt" "Prelude"
 
+builtin expToLogDouble 1 "expToLogDouble" "Prelude"
 builtin doubleToLogDouble 1 "doubleToLogDouble" "Prelude"
 builtin intToDouble 1 "intToDouble" "Prelude"
 
