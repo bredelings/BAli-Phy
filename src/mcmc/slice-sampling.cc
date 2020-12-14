@@ -474,16 +474,15 @@ double slice_sample_(double x0, slice_function& g, double w, int m)
     assert(g.in_range(x0));
 
     double gx0 = g();
+    double gx0_v2 = gx0;
     if (log_verbose >= 4)
-    {
-	std::cerr<<" gx0 = "<<gx0<<std::endl;
-	std::cerr<<" g(x0) = "<<g(x0)<<std::endl;
-    }
-
+        gx0_v2 = g(x0);
 #ifndef NDEBUG
-    volatile double diff = gx0 - g(x0);
-    assert(std::abs(diff) < 1.0e-9);
+    else
+        gx0_v2 = g(x0);
 #endif
+    if (std::abs(gx0 - gx0_v2) > 1.0e-9)
+        throw myexception()<<"Error: slice_sampling: g() = "<<gx0<<"   g(x0) = "<<gx0_v2<<"   diff = "<<std::abs(gx0 - gx0_v2);
 
     // Determine the slice level, in log terms.
 
