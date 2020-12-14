@@ -31,7 +31,7 @@ register_prior::register_prior(int r, log_double_t pr)
 
 void register_prior::register_effect(reg_heap& M, int s) const
 {
-    if (log_verbose >= 4)
+    if (log_verbose >= 5)
     {
         std::cerr<<"register_prior[var="<<variable_reg<<",pdf="<<pdf<<",step="<<s<<"]: ";
         std::cerr<<"  REGISTER! ("<<M.random_variables.size()<<" -> "<<M.random_variables.size()+1<<")\n";
@@ -41,7 +41,7 @@ void register_prior::register_effect(reg_heap& M, int s) const
 
 void register_prior::unregister_effect(reg_heap& M, int s) const
 {
-    if (log_verbose >= 4)
+    if (log_verbose >= 5)
     {
         std::cerr<<"register_prior[var="<<variable_reg<<",pdf="<<pdf<<",step="<<s<<"]: ";
         std::cerr<<"UNregister! ("<<M.random_variables.size()<<" -> "<<M.random_variables.size()-1<<")\n";
@@ -78,7 +78,7 @@ register_likelihood::register_likelihood(int r, log_double_t lk)
 
 void register_likelihood::register_effect(reg_heap& M, int s) const
 {
-    if (log_verbose >= 4)
+    if (log_verbose >= 5)
     {
         std::cerr<<"register_likelihood["<<likelihood_reg<<", likelihood="<<likelihood<<", step="<<s<<"]: ";
         std::cerr<<"  REGISTER! ("<<M.likelihood_heads.size()<<" -> "<<M.likelihood_heads.size()+1<<")\n";
@@ -88,7 +88,7 @@ void register_likelihood::register_effect(reg_heap& M, int s) const
 
 void register_likelihood::unregister_effect(reg_heap& M, int s) const
 {
-    if (log_verbose >= 4)
+    if (log_verbose >= 5)
     {
         std::cerr<<"register_likelihood["<<likelihood_reg<<", likelihood="<<likelihood<<", step="<<s<<"]: ";
         std::cerr<<"UNregister! ("<<M.likelihood_heads.size()<<" -> "<<M.likelihood_heads.size()-1<<")\n";
@@ -125,14 +125,14 @@ register_transition_kernel::register_transition_kernel(double r, int k)
 
 void register_transition_kernel::register_effect(reg_heap& M, int s) const
 {
-    if (log_verbose >= 4)
+    if (log_verbose >= 5)
         std::cerr<<"register_transition_kernel[rate="<<rate<<",kernel="<<kernel_reg<<"]: REGISTER!\n";
     M.register_transition_kernel(*this, s);
 }
 
 void register_transition_kernel::unregister_effect(reg_heap& M, int s) const
 {
-    if (log_verbose >= 4)
+    if (log_verbose >= 5)
         std::cerr<<"register_transition_kernel[rate="<<rate<<",kernel="<<kernel_reg<<"]: UNREGISTER!\n";
     M.unregister_transition_kernel(*this, s);
 }
