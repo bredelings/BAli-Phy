@@ -8,7 +8,10 @@ builtin builtin_sample_binomial 3 "sample_binomial" "Distribution"
 
 binomial_bounds n = integer_between 0 n
 
-binomial_effect n x = x `seq` bnds `seq` add_move (\c -> slice_sample_integer_random_variable x bnds c) where bnds = c_range $ binomial_bounds n
+binomial_effect n x = x `seq` bnds `seq` do
+  add_move (\c -> slice_sample_integer_random_variable x bnds c)
+  add_move (\c -> inc_dec_mh x bnds c)
+      where bnds = c_range $ binomial_bounds n
 
 sample_binomial n p = RandomStructure (binomial_effect n) modifiable_structure $ liftIO (IOAction (\s->(s,builtin_sample_binomial n p s)))
 
