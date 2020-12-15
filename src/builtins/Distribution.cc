@@ -193,6 +193,25 @@ extern "C" closure builtin_function_sample_uniform_int(OperationArgs& Args)
     return { a1 + int(w*uniform()) };
 }
 
+extern "C" closure builtin_function_negative_binomial_density(OperationArgs& Args)
+{
+    int r = Args.evaluate(0).as_int();
+    double p = Args.evaluate(1).as_double();
+    int k = Args.evaluate(2).as_int();
+
+    return { ::binomial_pdf(r,p,k) };
+}
+
+extern "C" closure builtin_function_sample_negative_binomial(OperationArgs& Args)
+{
+    int r = Args.evaluate_(0).as_int();
+    double p = Args.evaluate_(1).as_double();
+
+    Args.make_changeable();
+
+    return { negative_binomial(r,p) };
+}
+
 extern "C" closure builtin_function_binomial_density(OperationArgs& Args)
 {
     int n = Args.evaluate(0).as_int();
