@@ -33,7 +33,7 @@
 #include <vector>                  // for vector
 #include "dp-engine.H"             // for DPengine
 #include "util/math/log-double.H"  // for log_double_t
-#ifndef NDEBUG
+#ifndef NDEBUG_DP
 #include "models/parameters.H"
 #endif
 class Parameters;
