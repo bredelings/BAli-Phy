@@ -1787,8 +1787,13 @@ void reg_heap::check_used_regs_in_token(int t) const
         assert(count >= 0);
     }
 
+    std::unordered_map<int,int> reg_to_result;
     for(auto [r,result]: tokens[t].delta_result())
     {
+        // Check that there are no duplicate regs.
+        assert(not reg_to_result.count(r));
+        reg_to_result[r] = result;
+
         // Deltas should not contain free regs except resets.
         assert(not regs.is_free(r) or result < 0);
 
@@ -1801,11 +1806,17 @@ void reg_heap::check_used_regs_in_token(int t) const
         // Only changeable or forcing regs can have results.
         if (result > 0)
             assert(reg_is_changeable_or_forcing(r));
+
     }
 
     bool root_child = tokens[t].parent == root_token and tokens[t].flags.test(0);
+    std::unordered_map<int,int> reg_to_step;
     for(auto [r,step]: tokens[t].delta_step())
     {
+        // Check that there are no duplicate regs.
+        assert(not reg_to_step.count(r));
+        reg_to_step[r] = step;
+
         // Deltas should not contain free regs except resets.
         assert(not regs.is_free(r) or step < 0);
 
@@ -1821,9 +1832,19 @@ void reg_heap::check_used_regs_in_token(int t) const
         else
             assert(prog_temp[r].test(result_bit));
 
+        // === Only regs with actual steps after here === //
+        if (step < 0) continue;
+
         // Only  changeable regs can have steps.
-        if (step > 0)
-            assert(reg_is_changeable(r));
+        assert(reg_is_changeable(r));
+
+        // Since this step is in a non-root token, any steps of its child regs should not be in more root-ward tokens.
+        // So they certainly should not be in the root token.
+        for(int r2: steps[step].created_regs)
+        {
+            assert(not has_step1(r2));
+            assert(not has_result1(r2));
+        }
     }
 
     // FIXME - nonlocal. The same result/step are not set in multiple places!
