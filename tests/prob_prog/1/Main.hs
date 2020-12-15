@@ -8,29 +8,33 @@ xs = read_file_as_double "xs"
 
 n_points = length xs
 
+cluster_dist = do
+  mean <- cauchy 0.0 1.0
+  sigma <- exponential 1.0
+  return (mean, sigma)
+
 prior = do
 
-  n_clusters <- (1+) `liftM` geometric 0.33
+  n <- (1+) `liftM` geometric 0.33
 
-  means <- independent $ repeat $ normal 0.0 10.0
-  sigmas <- independent $ repeat $ exponential 1.0
-  let all_dists = [normal mean sigma | (mean,sigma) <- zip means sigmas]
+  clusters <- iid n cluster_dist
 
-  let dists = take n_clusters all_dists
+  let dists = [normal mean sigma | (mean,sigma) <- clusters]
 
-  ps <- symmetric_dirichlet n_clusters 0.5
+  ps <- symmetric_dirichlet n 0.5
 
-  let loggers = ["n_clusters" %=% n_clusters,
+  let loggers = ["n_clusters" %=% n,
                  "weights" %=% ps,
-                 "mean" %=% take n_clusters means,
-                 "sigma" %=% take n_clusters sigmas]
+                 "clusters" %=% clusters]
 
   return (ps, dists, loggers)
+
+x ~> dist = observe dist x
 
 main = do
 
   (ps, dists, loggers) <- random $ prior
 
-  observe (iid n_points (mixture ps dists)) xs
+  xs ~> iid n_points (mixture ps dists)
 
   return loggers
