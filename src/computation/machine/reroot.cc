@@ -759,6 +759,14 @@ expression_ref reg_heap::unshare_regs2(int t)
 
 #ifdef DEBUG_MACHINE
     check_force_counts();
+
+    for(int r=1;r<regs.size();r++)
+    {
+        if (regs.is_free(r)) continue;
+
+        if (reg_is_changeable_or_forcing(r) and reg_is_forced(r))
+            assert(reg_exists(r));
+    }
 #endif
 
     // 9. Handle moving steps out of the root.
