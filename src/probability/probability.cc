@@ -413,6 +413,20 @@ double gamma_quantile(double p, double a, double b)
   }
 }
 
+
+// Hmm... If we make a Probability type, we could store it as x=log(p/(1-p))
+// p -> 1-p is just x -> (-x).  But p -> p^n seems quite messy.  Maybe we'd need to
+// make a special taylor series just for it.
+log_double_t negative_binomial_pdf(int r, double p, int k)
+{
+    if (k < 0) return 0;
+
+    log_double_t Pr;
+    Pr.log() = log_choose(k + r - 1, k) + r*log1p(-p) + k*log(p);
+
+    return Pr;
+}
+
 log_double_t binomial_pdf(int n, double p, int k)
 {
   if (k > n)
