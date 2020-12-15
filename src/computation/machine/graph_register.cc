@@ -1848,7 +1848,7 @@ void reg_heap::check_used_regs_in_token(int t) const
     }
 
     // FIXME - nonlocal. The same result/step are not set in multiple places!
-
+    // TODO: Use a map from step -> (reg,token)
     for(auto [reg,res]: tokens[t].delta_force_count())
         prog_temp[reg].reset(force_count_bit);
 
