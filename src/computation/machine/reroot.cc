@@ -584,8 +584,11 @@ void reg_heap::evaluate_forced_invalid_regs(const std::vector<int>& unshared_reg
             incremental_evaluate2(r,false);
             assert(has_result2(r));
         }
-        prog_unshare[r].reset(different_result_bit);
     }
+
+    // We can't clear the different_result_bit until evaluation is finished!
+    for(int r: unshared_regs)
+        prog_unshare[r].reset(different_result_bit);
 
 #ifndef NDEBUG
     for(int r: unshared_regs | views::reverse)
