@@ -5,7 +5,7 @@ import argparse
 import json
 
 parser = argparse.ArgumentParser(description="Average piecewise-constant function")
-parser.add_argument("N",type=int,default=100,help="Number of points in reconstruction")
+parser.add_argument("--N",type=int,default=100,help="Number of points in reconstruction")
 args = parser.parse_args()
 
 N = args.N
