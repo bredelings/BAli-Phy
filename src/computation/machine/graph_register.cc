@@ -1149,13 +1149,11 @@ bool reg_heap::regs_maybe_different_value(int r1, int r2) const
 
     if (E1.type() != E2.type()) return true;
 
-/*  FIXME: somehow, this causes an error!
     if (E1.is_int() and E1.as_int() == E2.as_int())
     {
         assert(E1 == E2);
         return false;
     }
-*/
 
     return true;
 }
