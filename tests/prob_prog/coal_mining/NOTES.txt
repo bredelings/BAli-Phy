@@ -1,4 +1,1 @@
 Here the number of components is supposed to peak at 3 and go up to 8.
-
-There is a crash at iteration 723 in slice sampling where we shrink
-the interval to 0...
