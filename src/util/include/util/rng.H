@@ -57,6 +57,9 @@ unsigned poisson(double mu);
 unsigned geometric(double p);
 
 // return a binomial random variate
+int negative_binomial(int r, double p);
+
+// return a binomial random variate
 unsigned binomial(int n, double p);
 
 // return a binomial random variate
