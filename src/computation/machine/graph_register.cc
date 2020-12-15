@@ -1472,6 +1472,7 @@ void reg_heap::reclaim_used(int r)
 {
     // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
     assert(not has_step1(r));
+    assert(not has_result1(r));
 
     // Clear any force counts.
     // This reg was in a tip token that could have forced it.  But no other programs will force it.
