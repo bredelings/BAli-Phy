@@ -146,6 +146,14 @@ unsigned geometric(double p) {
     return std::geometric_distribution<>(p)(standard);
 }
 
+int negative_binomial(int r, double p)
+{
+    assert(r >= 0);
+    assert(0 <= p and p <= 1);
+
+    return std::negative_binomial_distribution<>(r,p)(standard);
+}
+
 unsigned binomial(int n, double p) {
     assert(n >= 0);
     assert(0 <= p and p <= 1);
