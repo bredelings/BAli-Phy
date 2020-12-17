@@ -40,6 +40,8 @@ data Random a = RandomStructure (a->Effects) (a->Effects->a) (Random a)
 -- I feel sample_with_initial_value actually needs to run the sampler... and make the result come out of that.
 -- Maybe this needs to be equivalent to running the regular sample and then setting the value... 
 observe = Observe
+x ~> dist = observe dist x
+
 liftIO = LiftIO
 random = Lazy
 add_move = AddMove
