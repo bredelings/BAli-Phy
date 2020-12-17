@@ -6,7 +6,7 @@ xs = read_file_as_double "xs"
 
 ys = read_file_as_double "ys"
 
-sample_model = do
+prior = do
 
     b <- normal 0.0 1.0
 
@@ -18,10 +18,10 @@ sample_model = do
 
 main = do
 
-    (a, b, s) <- random $ sample_model
+    (a, b, s) <- random $ prior
 
     let f x = b * x + a
 
-    observe (independent [ normal (f x) s | x <- xs ]) ys
+    ys ~> independent [ normal (f x) s | x <- xs ]
 
     return ["b" %=% b, "a" %=% a, "s" %=% s]
