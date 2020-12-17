@@ -24,5 +24,5 @@ model n = replicateM n $ bernoulli 0.5
 
 main = do
   hidden_states <- random $ model 100
-  observe (hmm emission_matrix hidden_states) observations
+  observations ~> hmm emission_matrix hidden_states
   return ["hidden_states" %=% hidden_states, "diffs" %=% n_diffs hidden_states true_hidden_states]

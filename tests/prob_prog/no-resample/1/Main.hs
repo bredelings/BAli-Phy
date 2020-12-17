@@ -15,5 +15,5 @@ model = do
 
 main = do
     (total, loggers) <- random $ model
-    observe (normal total 1.0) 20.0
+    20.0 ~> normal total 1.0
     return loggers

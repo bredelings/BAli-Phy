@@ -14,5 +14,5 @@ model = do
 
 main = do
   (r,l) <- random $ model
-  observe (poisson $ intToDouble l) 6
+  6 ~> (poisson $ intToDouble l)
   return ["r" %=% r]

@@ -70,6 +70,6 @@ main = do
 
     (seq_dist, loggers) <- random $ model taxa tip_seq_lengths
 
-    observe seq_dist seq_data
+    seq_data ~> seq_dist
 
     return loggers

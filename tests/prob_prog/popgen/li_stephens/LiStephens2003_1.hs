@@ -20,6 +20,6 @@ main = do
 
     rho <- random $ model
 
-    observe (li_stephens_2003 rho) sequence_data
+    sequence_data ~> li_stephens_2003 rho
 
     return ["rho" %=% rho ]

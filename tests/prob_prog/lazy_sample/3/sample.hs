@@ -7,5 +7,5 @@ model = do
 
 main = do
   (mu,sigma) <- random $ model
-  observe (normal mu sigma) 1.0
+  1.0 ~> normal mu sigma
   return [ "mu" %=% mu, "sigma" %=% sigma]

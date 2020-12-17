@@ -7,5 +7,5 @@ model = do
 
 main = do
     zs <- random $ model
-    observe (normal (zs !! 2) 1.0) 10.0
+    10.0 ~> normal (zs !! 2) 1.0
     return ["zs" %=% zs]
