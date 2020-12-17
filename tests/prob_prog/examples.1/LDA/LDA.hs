@@ -36,5 +36,5 @@ model = do
 
 main = do
   (word_dists, loggers) <- random $ model
-  observe (independent word_dists) docs
+  docs ~> independent word_dists
   return loggers
