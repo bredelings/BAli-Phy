@@ -43,7 +43,7 @@ prior t1 t2 = do
 main = do
   (n, s, g, intervals) <- random $ prior 1851.0 1963.0
 
-  observe (poisson_processes intervals) times
+  times ~> poisson_processes intervals
 
   return [ "n" %=% n, "s" %=% s, "g" %=% g, "intervals" %=% intervals]
 
