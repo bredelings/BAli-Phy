@@ -29,8 +29,6 @@ prior = do
 
   return (ps, dists, loggers)
 
-x ~> dist = observe dist x
-
 main = do
 
   (ps, dists, loggers) <- random $ prior
