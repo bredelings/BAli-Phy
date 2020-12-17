@@ -21,7 +21,7 @@ main = do
 
   let dists = [normal mean sigma | (mean,sigma) <- params]
 
-  observe (independent dists) xs
+  xs ~> independent dists
 
   return ["alpha" %=% alpha
          ,"params" %=% params

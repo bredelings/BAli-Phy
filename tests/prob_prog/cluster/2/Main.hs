@@ -23,6 +23,6 @@ main = do
 
   (dists, loggers) <- random $ model
 
-  observe (independent dists) xs
+  xs ~> independent dists
 
   return loggers
