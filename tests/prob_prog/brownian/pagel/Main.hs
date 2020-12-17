@@ -78,6 +78,6 @@ main = do
 
   (lengths2, loggers) <- random $ model topology lengths
 
-  observe (phylo_brownian topology lengths2 sigma) xs
+  xs ~> phylo_brownian topology lengths2 sigma
 
   return loggers
