@@ -20,7 +20,7 @@ n_diffs (x:xs) (y:ys) | x == y    =     n_diffs xs ys
 
 hmm emission states = independent $ map emission states
 
-model n = replicateM n $ bernoulli 0.5
+model n = take n `liftM` markov transition_matrix 1
 
 main = do
   hidden_states <- random $ model 100
