@@ -1,6 +1,5 @@
 import           Probability
 import           Data.ReadFile
-import           System.Environment
 
 xs = read_file_as_double "xs"
 
@@ -12,16 +11,18 @@ prior = do
 
     a <- normal 0.0 1.0
 
-    s <- exponential 1.0
+    sigma <- exponential 1.0
 
-    return (a, b, s)
+    let loggers = ["b" %=% b, "a" %=% a, "sigma" %=% sigma]
+
+    return (a, b, sigma, loggers)
 
 main = do
 
-    (a, b, s) <- random $ prior
+    (a, b, sigma, loggers) <- random $ prior
 
     let f x = b * x + a
 
-    ys ~> independent [ normal (f x) s | x <- xs ]
+    ys ~> independent [ normal (f x) sigma | x <- xs ]
 
-    return ["b" %=% b, "a" %=% a, "s" %=% s]
+    return loggers
