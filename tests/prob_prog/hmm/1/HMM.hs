@@ -25,4 +25,7 @@ model n = take n `liftM` markov transition_matrix 1
 main = do
   hidden_states <- random $ model 100
   observations ~> hmm emission_matrix hidden_states
-  return ["hidden_states" %=% hidden_states, "diffs" %=% n_diffs hidden_states true_hidden_states]
+  return ["hidden_states" %=% hidden_states,
+          "diff-true" %=% n_diffs hidden_states true_hidden_states,
+          "diff-obs" %=% n_diffs hidden_states observations]
+
