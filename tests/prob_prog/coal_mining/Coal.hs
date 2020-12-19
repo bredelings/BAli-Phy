@@ -1,8 +1,8 @@
 import Probability
 
-import           Data.ReadFile
+import Data.CSV
 
-times = read_file_as_double "coal-times.dat"
+times = map read_double $ head $ read_csv "coal-times.dat"
 
 -- This feels pretty hacky
 truncated min max dist = do x <- dist

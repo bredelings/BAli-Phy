@@ -14,7 +14,6 @@ import Tree                 -- for Tree
 -- * implement readFile
 -- * move Tree.write_newick in Tree.Newick
 --   -
--- * replace read_file_as_double with some kind of read_csv function, followed by converting the strings to double
 -- * Make a TreeWithBranchLengths object.
 --   - ideally this implements Tree, but ALSO has functions related to branch lengths.
 --   - that requires the full type system though :-S
@@ -74,7 +73,7 @@ get_tree tree_file = do
 main = do
   (topology,lengths) <- liftIO $ get_tree tree_file
 
-  let xs = read_file_as_double xs_file
+  let xs = map read_double $ head $ read_csv xs_file
 
   (lengths2, loggers) <- sample $ model topology lengths
 

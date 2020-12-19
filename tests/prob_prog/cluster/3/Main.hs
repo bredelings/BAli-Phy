@@ -2,9 +2,9 @@ module Main where
 
 import Probability
 
-import Data.ReadFile
+import Data.CSV
 
-xs = read_file_as_double "xs"
+xs = map read_double $ head $ read_csv "xs"
 
 n_points = length xs
 
