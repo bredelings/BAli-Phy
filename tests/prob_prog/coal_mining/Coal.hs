@@ -1,17 +1,9 @@
 import Probability
+import Data.Frame
+import qualified Data.Map as M
 
-import Data.CSV
-
-times = map read_double $ head $ read_csv "coal-times.dat"
-
--- This feels pretty hacky
-truncated min max dist = do x <- dist
-                            if ok x then
-                                return x
-                            else
-                                truncated min max dist
-    where
-      ok x = x >= min && x <= max
+frame = readTable "coal-times.csv"
+times = map read_double $ (frame M.! "time")
 
 -- When we get polymorphism, maybe we can create an temporary array as a view on xs'
 -- I presume that using n directly is more efficient that using [length xs']
