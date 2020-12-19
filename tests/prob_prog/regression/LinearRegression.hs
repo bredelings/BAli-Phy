@@ -3,8 +3,8 @@ import           Data.Frame
 import qualified Data.Map as M
 
 frame = readTable "xy.csv"
-xs = map read_double (frame M.! "x")
-ys = map read_double (frame M.! "y")
+xs = frame $$ ("x",FDouble)
+ys = frame $$ ("y",FDouble)
 
 prior = do
 
