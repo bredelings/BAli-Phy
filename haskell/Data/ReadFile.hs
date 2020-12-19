@@ -10,5 +10,4 @@ read_file_lines filename = list_from_vector $ builtin_read_file_lines (list_to_s
 
 read_file_as_double filename = map cpp_string_to_double $ read_file_lines filename
 
-string_to_int    = cpp_string_to_int    . pack_cpp_string
-string_to_double = cpp_string_to_double . pack_cpp_string
+-- NOTE: we already have read_int and read_double for reading from Haskell strings.
