@@ -245,6 +245,22 @@ extern "C" closure builtin_function_negate(OperationArgs& Args)
 	throw myexception()<<"Negate: object '"<<x.print()<<"' is not double, int, or char'";
 }
 
+extern "C" closure builtin_function_abs(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+  
+    if (x.is_double())
+	return {std::abs(x.as_double())};
+    else if (x.is_log_double())
+	return {x};
+    else if (x.is_int())
+	return {std::abs(x.as_int())};
+    else if (x.is_char())
+	return {std::abs(x.as_char())};
+    else
+	throw myexception()<<"Negate: object '"<<x.print()<<"' is not double, int, or char'";
+}
+
 extern "C" closure builtin_function_get_n_args(OperationArgs& Args)
 {
     auto x = Args.evaluate(0);
