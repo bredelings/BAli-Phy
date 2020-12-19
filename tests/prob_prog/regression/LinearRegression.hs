@@ -1,9 +1,10 @@
 import           Probability
-import           Data.CSV
+import           Data.Frame
+import qualified Data.Map as M
 
-xs = map read_double $ head $ read_csv "x.csv"
-
-ys = map read_double $ head $ read_csv "y.csv"
+frame = readTable "xy.csv"
+xs = map read_double (frame M.! "x")
+ys = map read_double (frame M.! "y")
 
 prior = do
 
