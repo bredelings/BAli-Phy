@@ -1,9 +1,11 @@
 module Main where
 
 import Probability
-import Data.CSV
+import Data.Frame
+import qualified Data.Map as M
 
-xs = map read_double $ head $ read_csv "xs"
+frame = (readTable "x.csv") 
+xs = map read_double (frame M.! "x")
 
 n_points = length xs
 
