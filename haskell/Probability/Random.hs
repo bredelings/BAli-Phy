@@ -41,6 +41,7 @@ data Random a = RandomStructure (a->Effects) (a->Effects->a) (Random a)
 -- Maybe this needs to be equivalent to running the regular sample and then setting the value... 
 observe = Observe
 x ~> dist = observe dist x
+infix 0 ~>
 
 liftIO = LiftIO
 sample = Lazy
