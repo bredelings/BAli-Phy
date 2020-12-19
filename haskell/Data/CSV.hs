@@ -12,4 +12,4 @@ builtin builtin_read_csv 1 "read_csv" "Data"
 -- This gives the csv file as a list of rows
 read_csv :: String -> [ [ String ] ]
 read_csv file = builtin_read_csv (pack_cpp_string file)
--- read_csv file = map_vector_to_list (map_vector_to_list unpack_cpp_string) $ builtin_read_csv (pack_cpp_string file)
+
