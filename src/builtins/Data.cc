@@ -48,3 +48,9 @@ extern "C" closure builtin_function_string_to_double(OperationArgs& Args)
   string s = Args.evaluate(0).as_<String>();
   return {convertTo<double>(s)};
 }
+
+extern "C" closure builtin_function_string_to_int(OperationArgs& Args)
+{
+  string s = Args.evaluate(0).as_<String>();
+  return {convertTo<int>(s)};
+}
