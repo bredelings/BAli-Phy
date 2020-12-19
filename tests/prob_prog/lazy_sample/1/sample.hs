@@ -1,6 +1,6 @@
 import           Probability
 
-model = random $ do
+model = sample $ do
     x  <- normal 0.0 1.0
     ys <- independent (repeat $ normal 0.0 1.0)
     return $ (x * x) : (take 10 ys)

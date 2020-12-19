@@ -76,7 +76,7 @@ main = do
 
   let xs = read_file_as_double xs_file
 
-  (lengths2, loggers) <- random $ model topology lengths
+  (lengths2, loggers) <- sample $ model topology lengths
 
   xs ~> phylo_brownian topology lengths2 sigma
 

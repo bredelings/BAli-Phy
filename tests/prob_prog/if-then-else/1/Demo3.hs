@@ -2,7 +2,7 @@ module Demo3 where
 
 import           Probability
 
-main = random $ do
+main = sample $ do
     i <- bernoulli 0.5
     y <- normal 0.0 1.0
     z <- exponential 0.1

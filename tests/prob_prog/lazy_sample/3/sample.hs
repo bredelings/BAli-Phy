@@ -6,6 +6,6 @@ model = do
   return (x, sum $ take 10 $ map (^2) ys)
 
 main = do
-  (mu,sigma) <- random $ model
+  (mu,sigma) <- sample $ model
   1.0 ~> normal mu sigma
   return [ "mu" %=% mu, "sigma" %=% sigma]

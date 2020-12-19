@@ -14,6 +14,6 @@ model = do
     return (sum xs, loggers)
 
 main = do
-    (total, loggers) <- random $ model
+    (total, loggers) <- sample $ model
     20.0 ~> normal total 1.0
     return loggers
