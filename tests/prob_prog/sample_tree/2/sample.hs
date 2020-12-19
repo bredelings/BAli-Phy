@@ -2,7 +2,7 @@ import           Probability
 import           Tree
 import           Tree.Newick
 
-main = random $ do
+main = sample $ do
     tree <- uniform_topology 5
     let rtree = add_root tree 0
 

@@ -7,7 +7,7 @@ random_walk next x0 = do
 
 -- 20 element brownian bridge from 0.0 to 2.0
 main = do
-    walk <- random $ random_walk (\mu -> normal mu 1.0) 0.0
+    walk <- sample $ random_walk (\mu -> normal mu 1.0) 0.0
 
     let zs = take 19 walk
 

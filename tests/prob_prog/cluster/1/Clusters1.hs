@@ -15,9 +15,9 @@ cluster_dist = do
   return (mean,sigma)
 
 main = do
-  alpha <- random $ gamma 0.5 10.0
+  alpha <- sample $ gamma 0.5 10.0
 
-  params <- random $ dp n_points alpha cluster_dist
+  params <- sample $ dp n_points alpha cluster_dist
 
   let dists = [normal mean sigma | (mean,sigma) <- params]
 

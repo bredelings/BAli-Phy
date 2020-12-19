@@ -18,7 +18,7 @@ model = do
 
 main = do
 
-    rho <- random $ model
+    rho <- sample $ model
 
     sequence_data ~> li_stephens_2003 rho
 

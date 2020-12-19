@@ -68,7 +68,7 @@ main = do
         taxa            = map sequence_name seq_data
         tip_seq_lengths = get_sequence_lengths dna seq_data
 
-    (seq_dist, loggers) <- random $ model taxa tip_seq_lengths
+    (seq_dist, loggers) <- sample $ model taxa tip_seq_lengths
 
     seq_data ~> seq_dist
 

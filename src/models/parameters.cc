@@ -1869,7 +1869,7 @@ std::string generate_atmodel_program(int n_sequences,
         program.empty_stmt();
     }
 
-    program.perform(Tuple(var("atmodel"),var("loggers")), {var("$"),var("random"),{var("model"),taxon_names_var,sequence_data_var,imodel_training_var,heat_var,variable_alignment_var}});
+    program.perform(Tuple(var("atmodel"),var("loggers")), {var("$"),var("sample"),{var("model"),taxon_names_var,sequence_data_var,imodel_training_var,heat_var,variable_alignment_var}});
 
     for(int i=0; i < n_partitions; i++)
     {

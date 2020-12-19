@@ -43,7 +43,7 @@ observe = Observe
 x ~> dist = observe dist x
 
 liftIO = LiftIO
-random = Lazy
+sample = Lazy
 add_move = AddMove
 infixl 2 `with_effect`
 with_effect = WithEffect

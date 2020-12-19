@@ -41,7 +41,7 @@ prior t1 t2 = do
   return (n, s, g, intervals)
 
 main = do
-  (n, s, g, intervals) <- random $ prior 1851.0 1963.0
+  (n, s, g, intervals) <- sample $ prior 1851.0 1963.0
 
   times ~> poisson_processes intervals
 

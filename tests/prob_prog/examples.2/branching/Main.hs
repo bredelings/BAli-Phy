@@ -13,6 +13,6 @@ model = do
   return (r,l)
 
 main = do
-  (r,l) <- random $ model
+  (r,l) <- sample $ model
   6 ~> (poisson $ intToDouble l)
   return ["r" %=% r]

@@ -13,6 +13,6 @@ gaussianRandomWalk n dim = do
   return $ take n states
 
 main = do
-  states <- random $ gaussianRandomWalk 100 2
+  states <- sample $ gaussianRandomWalk 100 2
   return ["states" %=% states]
 

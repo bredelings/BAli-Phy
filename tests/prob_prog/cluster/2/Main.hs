@@ -21,7 +21,7 @@ model = do
 
 main = do
 
-  (dists, loggers) <- random $ model
+  (dists, loggers) <- sample $ model
 
   xs ~> independent dists
 

@@ -19,7 +19,7 @@ prior = do
 
 main = do
 
-    (a, b, sigma, loggers) <- random $ prior
+    (a, b, sigma, loggers) <- sample $ prior
 
     let f x = b * x + a
 
