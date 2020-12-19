@@ -1,9 +1,9 @@
 import           Probability
-import           Data.ReadFile
+import           Data.CSV
 
-xs = read_file_as_double "xs"
+xs = map read_double $ head $ read_csv "xs"
 
-ys = read_file_as_double "ys"
+ys = map read_double $ head $ read_csv "ys"
 
 prior = do
 
