@@ -7,5 +7,5 @@ model = do
   return (x,y)
 
 main = do
-  (x,y) <- random $ model
+  (x,y) <- sample $ model
   return []

@@ -6,6 +6,6 @@ model = do
     return $ (x * x) : (take 10 ys)
 
 main = do
-    zs <- random $ model
+    zs <- sample $ model
     10.0 ~> normal (zs !! 2) 1.0
     return ["zs" %=% zs]

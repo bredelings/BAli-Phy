@@ -31,7 +31,7 @@ prior = do
 
 main = do
 
-  (ps, dists, loggers) <- random $ prior
+  (ps, dists, loggers) <- sample $ prior
 
   xs ~> iid n_points (mixture ps dists)
 

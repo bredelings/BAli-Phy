@@ -21,5 +21,5 @@ model = do
   replicateM 100 gaussianMixture
 
 main = do
-  x <- random $ model
+  x <- sample $ model
   return ["x" %=% x]

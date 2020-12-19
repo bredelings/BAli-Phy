@@ -7,7 +7,7 @@ prior = do
     return (y,loggers)
 
 main = do
-    (y,loggers) <- random $ prior
+    (y,loggers) <- sample $ prior
 
     3.0 ~> normal y 1.0
 
