@@ -21,6 +21,7 @@ list_from_vector_of_size v n = go 0 n where
     go i s = get_vector_index v i:go (i+1) (s-1)
 
 list_from_vector v = list_from_vector_of_size v (vector_size v)
+vector_to_list = list_from_vector
 
 list_to_vector x = builtin_list_to_vector (deep_eval_list x)
 array_to_vector x = list_to_vector (elems x)
