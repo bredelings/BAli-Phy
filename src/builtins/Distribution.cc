@@ -119,6 +119,15 @@ extern "C" closure builtin_function_sample_cauchy(OperationArgs& Args)
     return { cauchy(a1, a2) };
 }
 
+extern "C" closure builtin_function_cauchy_quantile(OperationArgs& Args)
+{
+    double m = Args.evaluate(0).as_double();
+    double s = Args.evaluate(1).as_double();
+    double p = Args.evaluate(2).as_double();
+
+    return { cauchy_quantile(p, m ,s) };
+}
+
 // First convert N from tuple to list...
 // Second convert this builtin routine to just take two Vector<double> arguments.
 // Third convert all the expression_ref's here to "var" and use Distribution_Functions()
