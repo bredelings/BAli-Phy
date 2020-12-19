@@ -1,6 +1,5 @@
 import Probability
 import Data.Frame
-import qualified Data.Map as Map
 
 -- Shift the value when mu or sigma changes.
 normal' mu sigma = do
@@ -29,9 +28,9 @@ prior n_counties = do
 main = do
   let radon = readTable "radon.csv"
 
-  let floor_data = map read_double $ radon Map.! "floor"
-  let county_code_data = map read_int $ radon Map.! "county_code"
-  let log_radon_data = map read_double $ radon Map.! "log_radon"
+  let floor_data       = radon $$ ("floor",       FDouble)
+  let county_code_data = radon $$ ("county_code", FInt)
+  let log_radon_data   = radon $$ ("log_radon",   FDouble)
 
   let n_counties = length $ nub $ county_code_data
 
