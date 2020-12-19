@@ -257,6 +257,25 @@ double normal_quantile(double p, double mu, double sigma)
   }
 }
 
+double cauchy_quantile(double p, double m, double s)
+{
+  using boost::math::cauchy_distribution;
+
+  assert(p >= 0);
+  assert(p <= 1);
+  assert(s >= 0);
+  if (s == 0.0) return m;
+  try
+  {
+      return quantile(cauchy_distribution<>(m,s),p);
+  }
+  catch(const std::exception& e)
+  {
+      std::cerr<<"Warning: cauchy_quantile (p="<<p<<", m="<<m<<", s="<<s<<"), "<<e.what()<<std::endl;
+      return m;
+  }
+}
+
 log_double_t log_normal_pdf(double x, double mu, double sigma)
 {
   assert(sigma >= 0);
