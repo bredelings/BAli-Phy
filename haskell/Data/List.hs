@@ -233,7 +233,7 @@ findIndices p xs = [i | (i,x) <- zip [0..] xs, p x]
 zipWith z (a:as) (b:bs) =  z a b : zipWith z as bs
 zipWith _ _ _           =  []
 
-zipWith3 z (a:as) (b:bs) (c:cs) =  z a b c : zipWith z as bs cs
+zipWith3 z (a:as) (b:bs) (c:cs) =  z a b c : zipWith3 z as bs cs
 zipWith3 _ _ _ _                =  []
 
 zip = zipWith (,)
