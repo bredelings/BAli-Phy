@@ -3,7 +3,7 @@ module Main where
 import Probability
 import Data.Frame
 
-xs = (readTable "x.csv") $$ ("x", FDouble)
+xs = (readTable "x.csv") $$ ("x", AsDouble)
 
 n_points = length xs
 
