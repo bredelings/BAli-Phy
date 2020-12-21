@@ -2,8 +2,8 @@ import           Probability
 import           Data.Frame
 
 xy_data = readTable "xy.csv"
-xs = xy_data $$ ("x",FDouble)
-ys = xy_data $$ ("y",FDouble)
+xs = xy_data $$ ("x",AsDouble)
+ys = xy_data $$ ("y",AsDouble)
 
 prior = do
 

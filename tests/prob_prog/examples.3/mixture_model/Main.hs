@@ -24,7 +24,7 @@ prior n_components = do
 
 
 main = do
-  let observations = (readTable "x.csv") $$ ("x",FDouble)
+  let observations = (readTable "x.csv") $$ ("x",AsDouble)
   (w, mu, tau, loggers) <- sample $ prior 3
   observations ~> iid (length observations) (mixture w [ normal m s | (m, s) <- zip mu tau])
   return loggers

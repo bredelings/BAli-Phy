@@ -28,9 +28,9 @@ prior n_counties = do
 main = do
   let radon = readTable "radon.csv"
 
-  let floor_data       = radon $$ ("floor",       FDouble)
-  let county_code_data = radon $$ ("county_code", FInt)
-  let log_radon_data   = radon $$ ("log_radon",   FDouble)
+  let floor_data       = radon $$ ("floor",       AsDouble)
+  let county_code_data = radon $$ ("county_code", AsInt)
+  let log_radon_data   = radon $$ ("log_radon",   AsDouble)
 
   let n_counties = length $ nub $ county_code_data
 
