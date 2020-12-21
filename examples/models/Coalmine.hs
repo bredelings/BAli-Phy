@@ -1,1 +1,0 @@
-../../tests/prob_prog/demos/coalmine/Main.hs
