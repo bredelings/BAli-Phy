@@ -2,14 +2,14 @@ import           Probability
 import           Data.Frame
 
 xy_data = readTable "xy.csv"
-xs = xy_data $$ ("x",AsDouble)
-ys = xy_data $$ ("y",AsDouble)
+xs = xy_data $$ ("x", AsDouble)
+ys = xy_data $$ ("y", AsDouble)
 
 prior = do
 
-    b <- normal 0.0 1.0
+    b     <- normal 0.0 1.0
 
-    a <- normal 0.0 1.0
+    a     <- normal 0.0 1.0
 
     sigma <- exponential 1.0
 
