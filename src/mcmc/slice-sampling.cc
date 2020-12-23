@@ -634,7 +634,7 @@ double slice_sample(double x0, slice_function& g,double w, int m)
 {
     try
     {
-        return slice_sample_stepping_out_(x0, g, w, m);
+        return slice_sample_doubling_(x0, g, w, m);
     }
     catch (variables_changed_exception& e)
     {
