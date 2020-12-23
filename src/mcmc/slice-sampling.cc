@@ -23,6 +23,7 @@
 /// \brief This file implements classes and functions for uniform slice sampling.
 ///
 
+#include <tuple>
 #include "util/assert.hh"
 #include "slice-sampling.H"
 #include "util/rng.H"
@@ -411,16 +412,62 @@ find_slice_boundaries_stepping_out(double x0,slice_function& g,double logy, doub
 	    R += w;
     }
 
-    // Shrink interval to lower and upper bounds.
-
-    if (g.below_lower_bound(L)) L = *g.lower_bound;
-    if (g.above_upper_bound(R)) R = *g.upper_bound;
 
     assert(L < R);
 
     //  std::cerr<<"[]    L0 = "<<L<<"   x0 = "<<x0<<"   R0 = "<<R<<"\n";
 
-    return std::pair<double,double>(L,R);
+    return {L,R};
+}
+
+std::tuple<double,double,std::optional<double>,std::optional<double>>
+find_slice_boundaries_doubling(double x0,slice_function& g,double logy, double w, int K)
+{
+    assert(x0 + w > x0);
+    assert(g.in_range(x0));
+
+    double u = uniform()*w;
+    double L = x0 - u;
+    double R = L + w;
+    assert(L < x0);
+    assert(x0 < R);
+
+    std::optional<double> gL_cached;
+    auto gL = [&]() {
+        if (not gL_cached)
+            gL_cached = (g.in_range(L))?g(L):log_0;
+        return *gL_cached;
+    };
+
+    std::optional<double> gR_cached;
+    auto gR = [&]() {
+        if (not gR_cached)
+            gR_cached = (g.in_range(R))?g(R):log_0;
+        return *gR_cached;
+    };
+
+    //  std::cerr<<"!!    L0 = "<<L<<"   x0 = "<<x0<<"   R0 = "<<R<<"\n";
+    while ( K > 0 and (gL() > logy or gR() > logy))
+    {
+        if (uniform() < 0.5)
+        {
+            L -= (R-L);
+            gL_cached = {};
+        }
+        else
+        {
+            R += (R-L);
+            gR_cached = {};
+        }
+
+        K --;
+    }
+
+    assert(L < R);
+
+    //  std::cerr<<"[]    L0 = "<<L<<"   x0 = "<<x0<<"   R0 = "<<R<<"\n";
+
+    return {L,R,gL_cached,gR_cached};
 }
 
 // Does this x0 really need to be the original point?
@@ -428,6 +475,7 @@ find_slice_boundaries_stepping_out(double x0,slice_function& g,double logy, doub
 
 double search_interval(double x0,double L, double R, slice_function& g, double logy)
 {
+    // Shrink interval to lower and upper bounds.
     if (g.below_lower_bound(L)) L = *g.lower_bound;
     if (g.above_upper_bound(R)) R = *g.upper_bound;
 
@@ -467,7 +515,7 @@ double search_interval(double x0,double L, double R, slice_function& g, double l
     return x0;
 }
 
-bool pre_slice_sampling_check_OK(double x0, slice_function& g, double w)
+bool pre_slice_sampling_check_OK(double x0, slice_function& g)
 {
     // If x is not in the range then this could be a range that is reduced to avoid loss of precision.
     if (not g.in_range(x0))
@@ -492,10 +540,51 @@ bool pre_slice_sampling_check_OK(double x0, slice_function& g, double w)
     return true;
 }
 
+bool can_propose_same_interval_doubling(double x0, double x1, double w, double L, double R, std::optional<double> gL_cached, std::optional<double> gR_cached, slice_function& g, double log_y)
+{
+    bool D = false;
+
+    auto gL = [&]() {
+        if (not gL_cached)
+            gL_cached = (g.in_range(L))?g(L):log_0;
+        return *gL_cached;
+    };
+
+    auto gR = [&]() {
+        if (not gR_cached)
+            gR_cached = (g.in_range(R))?g(R):log_0;
+        return *gR_cached;
+    };
+
+    while (R-L > 1.1*w)
+    {
+        double M = (R+L)/2;
+
+        if ((x0 < M and x1 >= M) or (x0 >= M and x1 < M))
+            D = true;
+
+        if (x1 < M)
+        {
+            R = M;
+            gR_cached = {};
+        }
+        else
+        {
+            L = M;
+            gL_cached = {};
+        }
+
+        if (D and log_y >= gL() and log_y >= gR())
+            return false;
+    }
+
+    return true;
+}
+
 double slice_sample_stepping_out_(double x0, slice_function& g, double w, int m)
 {
     // 0. Check that the values are OK
-    if (not pre_slice_sampling_check_OK(x0, g, w))
+    if (not pre_slice_sampling_check_OK(x0, g))
         return x0;
 
     // 1. Determine the slice level, in log terms.
@@ -506,6 +595,28 @@ double slice_sample_stepping_out_(double x0, slice_function& g, double w, int m)
 
     // 3. Sample from the interval, shrinking it on each rejection
     return search_interval(x0,L,R,g,logy);
+}
+
+double slice_sample_doubling_(double x0, slice_function& g, double w, int m)
+{
+    // 0. Check that the values are OK
+    if (not pre_slice_sampling_check_OK(x0, g))
+        return x0;
+
+    // 1. Determine the slice level, in log terms.
+    double logy = g() - exponential(1);
+
+    // 2. Find the initial interval to sample from.
+    auto [L,R,gL_cached,gR_cached] = find_slice_boundaries_doubling(x0,g,logy,w,m);
+
+    // 3. Sample from the interval, shrinking it on each rejection
+    double x1 = search_interval(x0,L,R,g,logy);
+
+    // 4. Check that we can propose the same interval from x2
+    if (can_propose_same_interval_doubling(x0, x1, w, L, R, gL_cached, gR_cached, g, logy))
+        return x1;
+    else
+        return x0;
 }
 
 double slice_sample(double x0, slice_function& g,double w, int m)
@@ -697,7 +808,7 @@ std::pair<int,double> search_multi_intervals(vector<double>& X0,
 	assert(intervals[C].first <= X0[C] and X0[C] < intervals[C].second);
     }
 }
-					   
+
 std::pair<int,double> slice_sample_multi(vector<double>& X0, vector<slice_function*>& g, double w, int m)
 {
     int N = g.size();
