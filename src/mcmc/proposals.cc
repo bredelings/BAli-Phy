@@ -546,7 +546,7 @@ log_double_t move_subst_type_branch(context_ref& P)
 
     if (which_branch != -1)
     {
-	int new_branch = uniform(0, B-2);
+	int new_branch = uniform_int(0, B-2);
 	if (new_branch >= which_branch)
 	    new_branch++;
 
@@ -587,7 +587,7 @@ log_double_t realign_and_propose_parameter(context_ref& P, const vector<int>& pa
     // 3. Realign all branches using the new parameter value
 
     // 3.1 Choose an order to visit the branches
-    int toward_node = uniform(t.n_nodes()>2?t.n_leaves():0, t.n_nodes()-1);
+    int toward_node = uniform_int(t.n_nodes()>2?t.n_leaves():0, t.n_nodes()-1);
     vector<int> branches = walk_tree_path_toward_and_away(t, toward_node);
     if (uniform() < 0.5)
 	std::reverse(branches);

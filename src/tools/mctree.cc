@@ -618,7 +618,7 @@ std::pair<dynamic_bitset<>, int> solve_conflicts(const matrix<int>& conflicts,
 	if (m == 0) break;
 
 
-	int die_index = uniform(0, maxes.size()-1 );
+	int die_index = uniform_int(0, maxes.size()-1 );
 	if (die_index >= maxes.size()) die_index--;
 
 	int die = maxes[die_index];

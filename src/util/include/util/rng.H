@@ -73,5 +73,5 @@ unsigned long get_random_seed();
 unsigned long myrandom(unsigned long max);
 long myrandom(long min,long max);
 
-int uniform(int min, int max);
+int uniform_int(int min, int max);
 #endif
