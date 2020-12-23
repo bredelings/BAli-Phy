@@ -446,17 +446,26 @@ find_slice_boundaries_doubling(double x0,slice_function& g,double logy, double w
         return *gR_cached;
     };
 
-    //  std::cerr<<"!!    L0 = "<<L<<"   x0 = "<<x0<<"   R0 = "<<R<<"\n";
     while ( K > 0 and (gL() > logy or gR() > logy))
     {
+        if (log_verbose >= 4)
+            std::cerr<<"!!    L0 = "<<L<<" (g(L) = "<<gL()<<")  x0 = "<<x0<<"   R0 = "<<R<<" (g(R) = "<<gR()<<")\n";
+
+        double W2 = (R-L);
         if (uniform() < 0.5)
         {
-            L -= (R-L);
+            double L2 = L - W2;
+            if (not (L2 + w > L2))
+                break;
+            L = L2;
             gL_cached = {};
         }
         else
         {
-            R += (R-L);
+            double R2 = R + W2;
+            if (not (R2 - w < R2))
+                break;
+            R = R2;
             gR_cached = {};
         }
 
@@ -464,6 +473,7 @@ find_slice_boundaries_doubling(double x0,slice_function& g,double logy, double w
     }
 
     assert(L < R);
+    assert( L < (L+R)/2 and (L+R)/2 < R);
 
     //  std::cerr<<"[]    L0 = "<<L<<"   x0 = "<<x0<<"   R0 = "<<R<<"\n";
 
@@ -559,6 +569,7 @@ bool can_propose_same_interval_doubling(double x0, double x1, double w, double L
     while (R-L > 1.1*w)
     {
         double M = (R+L)/2;
+        assert( L < M and M < R);
 
         if ((x0 < M and x1 >= M) or (x0 >= M and x1 < M))
             D = true;
