@@ -451,6 +451,7 @@ double search_interval(double x0,double& L, double& R, slice_function& g,double 
 	else
 	    L = x1;
     }
+    std::cerr.precision(17);
     std::cerr<<"Warning!  Is size of the interval really ZERO?"<<std::endl;
     double logy_x0 = g(x0);  
     std::cerr<<"    L0 = "<<L0<<"   x0 = "<<x0<<"   R0 = "<<R0<<std::endl;
