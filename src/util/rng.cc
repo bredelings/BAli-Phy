@@ -66,7 +66,7 @@ double uniform()
     return std::uniform_real_distribution<>(0.0, 1.0)(standard);
 }
 
-int uniform(int min, int max)
+int uniform_int(int min, int max)
 {
     assert(min <= max);
     return std::uniform_int_distribution<unsigned long>(min, max)(standard);
@@ -74,12 +74,12 @@ int uniform(int min, int max)
 
 /// returns a value in [0,max-1]
 unsigned long myrandom(unsigned long max) {
-    return uniform(0, max-1);
+    return uniform_int(0, max-1);
 } 
 
 long myrandom(long min,long max) {
     assert(min < max);
-    return uniform(min,max-1);
+    return uniform_int(min,max-1);
 }
 
 double log_unif() {

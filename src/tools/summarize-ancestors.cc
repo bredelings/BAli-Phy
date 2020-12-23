@@ -421,7 +421,7 @@ pair<int,int> choose_representative_character(const matrix<int>& template_m, int
 
     int n = characters.size();
 
-    return characters[uniform(0,n-1)];
+    return characters[uniform_int(0,n-1)];
 }
 
 

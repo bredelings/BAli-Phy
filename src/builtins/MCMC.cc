@@ -233,7 +233,7 @@ Proposal uniform_avoid_mh_proposal(int a, int b, int x_reg)
                    throw myexception()<<"discrete_uniform_avoid_mh: value "<<x1<<" not in range ["<<a<<", "<<b<<"]";
 
                // 3. Propose a new value
-               int x2 = uniform(a,b-1);
+               int x2 = uniform_int(a,b-1);
                if (x2 >= x1) x2++;
 
                // 4. Set the new value
@@ -306,7 +306,7 @@ Proposal inc_dec_mh_proposal(int x_reg, const bounds<int>& range)
 
                // 3. Propose a new value
                int x2 = x1;
-               if (uniform(0,1) > 0.5)
+               if (uniform() > 0.5)
                    x2++;
                else
                    x2--;
