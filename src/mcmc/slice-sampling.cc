@@ -372,11 +372,12 @@ constant_sum_modifiable_slice_function::constant_sum_modifiable_slice_function(c
 std::pair<double,double> 
 find_slice_boundaries_stepping_out(double x0,slice_function& g,double logy, double w,int m)
 {
+    assert(x0 + w > x0);
     assert(g.in_range(x0));
 
     double u = uniform()*w;
     double L = x0 - u;
-    double R = x0 + (w-u);
+    double R = L + w;
     assert(L < x0);
     assert(x0 < R);
 
@@ -425,8 +426,11 @@ find_slice_boundaries_stepping_out(double x0,slice_function& g,double logy, doub
 // Does this x0 really need to be the original point?
 // I think it just serves to let you know which way the interval gets shrunk...
 
-double search_interval(double x0,double& L, double& R, slice_function& g,double logy)
+double search_interval(double x0,double L, double R, slice_function& g, double logy)
 {
+    if (g.below_lower_bound(L)) L = *g.lower_bound;
+    if (g.above_upper_bound(R)) R = *g.upper_bound;
+
     //  assert(g(x0) > g(L) and g(x0) > g(R));
     assert(g(x0) >= logy);
     assert(L < R);
@@ -463,13 +467,13 @@ double search_interval(double x0,double& L, double& R, slice_function& g,double 
     return x0;
 }
 
-double slice_sample_(double x0, slice_function& g, double w, int m)
+bool pre_slice_sampling_check_OK(double x0, slice_function& g, double w)
 {
     // If x is not in the range then this could be a range that is reduced to avoid loss of precision.
     if (not g.in_range(x0))
     {
         if (log_verbose >= 4) std::cerr<<x0<<" not in range!";
-        return x0;
+        return false;
     }
 
     assert(g.in_range(x0));
@@ -485,19 +489,22 @@ double slice_sample_(double x0, slice_function& g, double w, int m)
     if (std::abs(gx0 - gx0_v2) > 1.0e-9)
         throw myexception()<<"Error: slice_sampling: g() = "<<gx0<<"   g(x0) = "<<gx0_v2<<"   diff = "<<std::abs(gx0 - gx0_v2);
 
-    // Determine the slice level, in log terms.
+    return true;
+}
 
-    double logy = gx0 - exponential(1);
+double slice_sample_stepping_out_(double x0, slice_function& g, double w, int m)
+{
+    // 0. Check that the values are OK
+    if (not pre_slice_sampling_check_OK(x0, g, w))
+        return x0;
 
-    // Find the initial interval to sample from.
+    // 1. Determine the slice level, in log terms.
+    double logy = g() - exponential(1);
 
-    assert(x0 + w > x0);
-    std::pair<double,double> interval = find_slice_boundaries_stepping_out(x0,g,logy,w,m);
-    double L = interval.first;
-    double R = interval.second;
+    // 2. Find the initial interval to sample from.
+    auto [L,R] = find_slice_boundaries_stepping_out(x0,g,logy,w,m);
 
-    // Sample from the interval, shrinking it on each rejection
-
+    // 3. Sample from the interval, shrinking it on each rejection
     return search_interval(x0,L,R,g,logy);
 }
 
@@ -505,7 +512,7 @@ double slice_sample(double x0, slice_function& g,double w, int m)
 {
     try
     {
-        return slice_sample_(x0, g, w, m);
+        return slice_sample_stepping_out_(x0, g, w, m);
     }
     catch (variables_changed_exception& e)
     {
