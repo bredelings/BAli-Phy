@@ -367,7 +367,7 @@ extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
 	if (index == n_seen)
 	{
 	    // .. then select an unsend category.
-	    int a_index = n_seen + uniform(0,N+D-n_seen-1);
+	    int a_index = n_seen + uniform_int(0,N+D-n_seen-1);
 
 	    // Put the chosen category next in our list of seen categories
 	    if (n_seen < a_index)
