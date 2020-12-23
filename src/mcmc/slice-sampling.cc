@@ -446,6 +446,15 @@ find_slice_boundaries_doubling(double x0,slice_function& g,double logy, double w
         return *gR_cached;
     };
 
+    auto too_large = [](double L, double R, double w)
+    {
+        double M = (L+R)/2;
+        double W = R-L;
+        assert(W > 0);
+        bool ok = (L < M) and (M < R) and (W+w > W);
+        return not ok;
+    };
+
     while ( K > 0 and (gL() > logy or gR() > logy))
     {
         if (log_verbose >= 4)
@@ -455,7 +464,7 @@ find_slice_boundaries_doubling(double x0,slice_function& g,double logy, double w
         if (uniform() < 0.5)
         {
             double L2 = L - W2;
-            if (not (L2 + w > L2))
+            if (too_large(L2, R, w))
                 break;
             L = L2;
             gL_cached = {};
@@ -463,7 +472,7 @@ find_slice_boundaries_doubling(double x0,slice_function& g,double logy, double w
         else
         {
             double R2 = R + W2;
-            if (not (R2 - w < R2))
+            if (too_large(L, R2, w))
                 break;
             R = R2;
             gR_cached = {};
