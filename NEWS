@@ -4,6 +4,7 @@
    - Eliminate prior_no_alignment(), OS (other_subst) and OP (other_prior).
      Instead, compute the ratio of summing out the alignment to not summing it out.
  - MCMC
+   + Switch to slice sampling by "doubling", instead of "stepping out".
    - Add moves when variables are created for more distributions.
    - Allow move to appear or disappear during an iteration.
    - Allow rates of moves to change dynamically.
