@@ -3,6 +3,10 @@
  - Probabilities
    - Eliminate prior_no_alignment(), OS (other_subst) and OP (other_prior).
      Instead, compute the ratio of summing out the alignment to not summing it out.
+ - Haskell
+   + Add Data.CSV and Data.Frame to load data from CSV files.
+   - New distributions
+     + half_cauchy
  - MCMC
    + Switch to slice sampling by "doubling", instead of "stepping out".
    - Add moves when variables are created for more distributions.
