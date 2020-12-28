@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.6.3.
+// A Bison parser, made by GNU Bison 3.7.4.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
@@ -1224,213 +1224,213 @@ namespace yy {
       {
         switch (this->kind ())
     {
-      case 165: // maybe_src
-      case 166: // maybe_safe
-      case 168: // optqualified
+      case symbol_kind::S_maybe_src: // maybe_src
+      case symbol_kind::S_maybe_safe: // maybe_safe
+      case symbol_kind::S_optqualified: // optqualified
         value.move< bool > (std::move (that.value));
         break;
 
-      case 128: // "CHAR"
-      case 132: // "PRIMCHAR"
+      case symbol_kind::S_CHAR: // "CHAR"
+      case symbol_kind::S_PRIMCHAR: // "PRIMCHAR"
         value.move< char > (std::move (that.value));
         break;
 
-      case 131: // "RATIONAL"
-      case 137: // "PRIMDOUBLE"
+      case symbol_kind::S_RATIONAL: // "RATIONAL"
+      case symbol_kind::S_PRIMDOUBLE: // "PRIMDOUBLE"
         value.move< double > (std::move (that.value));
         break;
 
-      case 143: // module
-      case 146: // body
-      case 147: // body2
-      case 148: // top
-      case 149: // top1
-      case 150: // maybeexports
-      case 153: // export
-      case 157: // qcname_ext_w_wildcard
-      case 158: // qcname_ext
-      case 159: // qcname
-      case 164: // importdecl
-      case 170: // maybeimpspec
-      case 171: // impspec
-      case 177: // topdecl
-      case 178: // cl_decl
-      case 179: // ty_decl
-      case 180: // inst_decl
-      case 186: // tycl_hdr
-      case 195: // decllist
-      case 196: // binds
-      case 197: // wherebinds
-      case 200: // opt_sig
-      case 201: // opt_tyconsig
-      case 202: // sigtype
-      case 203: // sigtypedoc
-      case 209: // ctype
-      case 210: // ctypedoc
-      case 211: // context
-      case 212: // context_no_ops
-      case 213: // type
-      case 214: // typedoc
-      case 215: // btype
-      case 218: // tyapp
-      case 219: // atype_docs
-      case 220: // atype
-      case 221: // inst_type
-      case 227: // tv_bndr
-      case 228: // kind
-      case 231: // constr
-      case 232: // forall
-      case 233: // constr_stuff
-      case 236: // fielddecl
-      case 241: // decl_no_th
-      case 242: // decl
-      case 243: // rhs
-      case 245: // gdrh
-      case 246: // sigdecl
-      case 249: // exp
-      case 252: // exp10_top
-      case 253: // exp10
-      case 257: // aexp
-      case 258: // aexp1
-      case 259: // aexp2
-      case 260: // texp
-      case 262: // list
-      case 265: // transformqual
-      case 271: // alt
-      case 272: // alt_rhs
-      case 274: // ifgdpats
-      case 275: // gdpat
-      case 276: // pat
-      case 277: // bindpat
-      case 278: // apat
-      case 282: // stmt
-      case 283: // qual
-      case 330: // literal
+      case symbol_kind::S_module: // module
+      case symbol_kind::S_body: // body
+      case symbol_kind::S_body2: // body2
+      case symbol_kind::S_top: // top
+      case symbol_kind::S_top1: // top1
+      case symbol_kind::S_maybeexports: // maybeexports
+      case symbol_kind::S_export: // export
+      case symbol_kind::S_qcname_ext_w_wildcard: // qcname_ext_w_wildcard
+      case symbol_kind::S_qcname_ext: // qcname_ext
+      case symbol_kind::S_qcname: // qcname
+      case symbol_kind::S_importdecl: // importdecl
+      case symbol_kind::S_maybeimpspec: // maybeimpspec
+      case symbol_kind::S_impspec: // impspec
+      case symbol_kind::S_topdecl: // topdecl
+      case symbol_kind::S_cl_decl: // cl_decl
+      case symbol_kind::S_ty_decl: // ty_decl
+      case symbol_kind::S_inst_decl: // inst_decl
+      case symbol_kind::S_tycl_hdr: // tycl_hdr
+      case symbol_kind::S_decllist: // decllist
+      case symbol_kind::S_binds: // binds
+      case symbol_kind::S_wherebinds: // wherebinds
+      case symbol_kind::S_opt_sig: // opt_sig
+      case symbol_kind::S_opt_tyconsig: // opt_tyconsig
+      case symbol_kind::S_sigtype: // sigtype
+      case symbol_kind::S_sigtypedoc: // sigtypedoc
+      case symbol_kind::S_ctype: // ctype
+      case symbol_kind::S_ctypedoc: // ctypedoc
+      case symbol_kind::S_context: // context
+      case symbol_kind::S_context_no_ops: // context_no_ops
+      case symbol_kind::S_type: // type
+      case symbol_kind::S_typedoc: // typedoc
+      case symbol_kind::S_btype: // btype
+      case symbol_kind::S_tyapp: // tyapp
+      case symbol_kind::S_atype_docs: // atype_docs
+      case symbol_kind::S_atype: // atype
+      case symbol_kind::S_inst_type: // inst_type
+      case symbol_kind::S_tv_bndr: // tv_bndr
+      case symbol_kind::S_kind: // kind
+      case symbol_kind::S_constr: // constr
+      case symbol_kind::S_forall: // forall
+      case symbol_kind::S_constr_stuff: // constr_stuff
+      case symbol_kind::S_fielddecl: // fielddecl
+      case symbol_kind::S_decl_no_th: // decl_no_th
+      case symbol_kind::S_decl: // decl
+      case symbol_kind::S_rhs: // rhs
+      case symbol_kind::S_gdrh: // gdrh
+      case symbol_kind::S_sigdecl: // sigdecl
+      case symbol_kind::S_exp: // exp
+      case symbol_kind::S_exp10_top: // exp10_top
+      case symbol_kind::S_exp10: // exp10
+      case symbol_kind::S_aexp: // aexp
+      case symbol_kind::S_aexp1: // aexp1
+      case symbol_kind::S_aexp2: // aexp2
+      case symbol_kind::S_texp: // texp
+      case symbol_kind::S_list: // list
+      case symbol_kind::S_transformqual: // transformqual
+      case symbol_kind::S_alt: // alt
+      case symbol_kind::S_alt_rhs: // alt_rhs
+      case symbol_kind::S_ifgdpats: // ifgdpats
+      case symbol_kind::S_gdpat: // gdpat
+      case symbol_kind::S_pat: // pat
+      case symbol_kind::S_bindpat: // bindpat
+      case symbol_kind::S_apat: // apat
+      case symbol_kind::S_stmt: // stmt
+      case symbol_kind::S_qual: // qual
+      case symbol_kind::S_literal: // literal
         value.move< expression_ref > (std::move (that.value));
         break;
 
-      case 136: // "PRIMFLOAT"
+      case symbol_kind::S_PRIMFLOAT: // "PRIMFLOAT"
         value.move< float > (std::move (that.value));
         break;
 
-      case 130: // "INTEGER"
-      case 134: // "PRIMINTEGER"
-      case 135: // "PRIMWORD"
-      case 333: // commas
+      case symbol_kind::S_INTEGER: // "INTEGER"
+      case symbol_kind::S_PRIMINTEGER: // "PRIMINTEGER"
+      case symbol_kind::S_PRINTWORD: // "PRIMWORD"
+      case symbol_kind::S_commas: // commas
         value.move< int > (std::move (that.value));
         break;
 
-      case 172: // prec
+      case symbol_kind::S_prec: // prec
         value.move< std::optional<int> > (std::move (that.value));
         break;
 
-      case 167: // maybe_pkg
-      case 169: // maybeas
+      case symbol_kind::S_maybe_pkg: // maybe_pkg
+      case symbol_kind::S_maybeas: // maybeas
         value.move< std::optional<std::string> > (std::move (that.value));
         break;
 
-      case 118: // "VARID"
-      case 119: // "CONID"
-      case 120: // "VARSYM"
-      case 121: // "CONSYM"
-      case 122: // "QVARID"
-      case 123: // "QCONID"
-      case 124: // "QVARSYM"
-      case 125: // "QCONSYM"
-      case 126: // "IPDUPVARID"
-      case 127: // "LABELVARID"
-      case 129: // "STRING"
-      case 133: // "PRIMSTRING"
-      case 173: // infix
-      case 184: // data_or_newtype
-      case 206: // strict_mark
-      case 207: // strictness
-      case 287: // qcon
-      case 288: // gen_qcon
-      case 289: // con
-      case 291: // sysdcon_no_list
-      case 292: // sysdcon
-      case 293: // conop
-      case 294: // qconop
-      case 295: // gtycon
-      case 296: // ntgtycon
-      case 297: // oqtycon
-      case 298: // oqtycon_no_varcon
-      case 299: // qtyconop
-      case 300: // qtycondoc
-      case 301: // qtycon
-      case 302: // tycon
-      case 303: // qtyconsym
-      case 304: // tyconsym
-      case 305: // op
-      case 306: // varop
-      case 307: // qop
-      case 308: // qopm
-      case 309: // hole_op
-      case 310: // qvarop
-      case 311: // qvaropm
-      case 312: // tyvar
-      case 313: // tyvarop
-      case 314: // tyvarid
-      case 315: // var
-      case 316: // qvar
-      case 317: // qvarid
-      case 318: // varid
-      case 319: // qvarsym
-      case 320: // qvarsym_no_minus
-      case 321: // qvarsym1
-      case 322: // varsym
-      case 323: // varsym_no_minus
-      case 324: // special_id
-      case 325: // special_sym
-      case 326: // qconid
-      case 327: // conid
-      case 328: // qconsym
-      case 329: // consym
-      case 332: // modid
+      case symbol_kind::S_VARID: // "VARID"
+      case symbol_kind::S_CONID: // "CONID"
+      case symbol_kind::S_VARSYM: // "VARSYM"
+      case symbol_kind::S_CONSYM: // "CONSYM"
+      case symbol_kind::S_QVARID: // "QVARID"
+      case symbol_kind::S_QCONID: // "QCONID"
+      case symbol_kind::S_QVARSYM: // "QVARSYM"
+      case symbol_kind::S_QCONSYM: // "QCONSYM"
+      case symbol_kind::S_IPDUPVARID: // "IPDUPVARID"
+      case symbol_kind::S_LABELVARID: // "LABELVARID"
+      case symbol_kind::S_STRING: // "STRING"
+      case symbol_kind::S_PRIMSTRING: // "PRIMSTRING"
+      case symbol_kind::S_infix: // infix
+      case symbol_kind::S_data_or_newtype: // data_or_newtype
+      case symbol_kind::S_strict_mark: // strict_mark
+      case symbol_kind::S_strictness: // strictness
+      case symbol_kind::S_qcon: // qcon
+      case symbol_kind::S_gen_qcon: // gen_qcon
+      case symbol_kind::S_con: // con
+      case symbol_kind::S_sysdcon_no_list: // sysdcon_no_list
+      case symbol_kind::S_sysdcon: // sysdcon
+      case symbol_kind::S_conop: // conop
+      case symbol_kind::S_qconop: // qconop
+      case symbol_kind::S_gtycon: // gtycon
+      case symbol_kind::S_ntgtycon: // ntgtycon
+      case symbol_kind::S_oqtycon: // oqtycon
+      case symbol_kind::S_oqtycon_no_varcon: // oqtycon_no_varcon
+      case symbol_kind::S_qtyconop: // qtyconop
+      case symbol_kind::S_qtycondoc: // qtycondoc
+      case symbol_kind::S_qtycon: // qtycon
+      case symbol_kind::S_tycon: // tycon
+      case symbol_kind::S_qtyconsym: // qtyconsym
+      case symbol_kind::S_tyconsym: // tyconsym
+      case symbol_kind::S_op: // op
+      case symbol_kind::S_varop: // varop
+      case symbol_kind::S_qop: // qop
+      case symbol_kind::S_qopm: // qopm
+      case symbol_kind::S_hole_op: // hole_op
+      case symbol_kind::S_qvarop: // qvarop
+      case symbol_kind::S_qvaropm: // qvaropm
+      case symbol_kind::S_tyvar: // tyvar
+      case symbol_kind::S_tyvarop: // tyvarop
+      case symbol_kind::S_tyvarid: // tyvarid
+      case symbol_kind::S_var: // var
+      case symbol_kind::S_qvar: // qvar
+      case symbol_kind::S_qvarid: // qvarid
+      case symbol_kind::S_varid: // varid
+      case symbol_kind::S_qvarsym: // qvarsym
+      case symbol_kind::S_qvarsym_no_minus: // qvarsym_no_minus
+      case symbol_kind::S_qvarsym1: // qvarsym1
+      case symbol_kind::S_varsym: // varsym
+      case symbol_kind::S_varsym_no_minus: // varsym_no_minus
+      case symbol_kind::S_special_id: // special_id
+      case symbol_kind::S_special_sym: // special_sym
+      case symbol_kind::S_qconid: // qconid
+      case symbol_kind::S_conid: // conid
+      case symbol_kind::S_qconsym: // qconsym
+      case symbol_kind::S_consym: // consym
+      case symbol_kind::S_modid: // modid
         value.move< std::string > (std::move (that.value));
         break;
 
-      case 151: // exportlist
-      case 152: // exportlist1
-      case 155: // qcnames
-      case 156: // qcnames1
-      case 162: // importdecls
-      case 163: // importdecls_semi
-      case 175: // topdecls
-      case 176: // topdecls_semi
-      case 194: // decls
-      case 205: // sigtypes1
-      case 216: // btype_no_ops
-      case 217: // tyapps
-      case 223: // comma_types0
-      case 224: // comma_types1
-      case 226: // tv_bndrs
-      case 229: // constrs
-      case 230: // constrs1
-      case 234: // fielddecls
-      case 235: // fielddecls1
-      case 244: // gdrhs
-      case 250: // infixexp
-      case 251: // infixexp_top
-      case 256: // fexp
-      case 261: // tup_exprs
-      case 263: // lexps
-      case 264: // squals
-      case 266: // guardquals
-      case 267: // guardquals1
-      case 268: // altslist
-      case 269: // alts
-      case 270: // alts1
-      case 273: // gdpats
-      case 279: // apats1
-      case 280: // stmtlist
-      case 281: // stmts
+      case symbol_kind::S_exportlist: // exportlist
+      case symbol_kind::S_exportlist1: // exportlist1
+      case symbol_kind::S_qcnames: // qcnames
+      case symbol_kind::S_qcnames1: // qcnames1
+      case symbol_kind::S_importdecls: // importdecls
+      case symbol_kind::S_importdecls_semi: // importdecls_semi
+      case symbol_kind::S_topdecls: // topdecls
+      case symbol_kind::S_topdecls_semi: // topdecls_semi
+      case symbol_kind::S_decls: // decls
+      case symbol_kind::S_sigtypes1: // sigtypes1
+      case symbol_kind::S_btype_no_ops: // btype_no_ops
+      case symbol_kind::S_tyapps: // tyapps
+      case symbol_kind::S_comma_types0: // comma_types0
+      case symbol_kind::S_comma_types1: // comma_types1
+      case symbol_kind::S_tv_bndrs: // tv_bndrs
+      case symbol_kind::S_constrs: // constrs
+      case symbol_kind::S_constrs1: // constrs1
+      case symbol_kind::S_fielddecls: // fielddecls
+      case symbol_kind::S_fielddecls1: // fielddecls1
+      case symbol_kind::S_gdrhs: // gdrhs
+      case symbol_kind::S_infixexp: // infixexp
+      case symbol_kind::S_infixexp_top: // infixexp_top
+      case symbol_kind::S_fexp: // fexp
+      case symbol_kind::S_tup_exprs: // tup_exprs
+      case symbol_kind::S_lexps: // lexps
+      case symbol_kind::S_squals: // squals
+      case symbol_kind::S_guardquals: // guardquals
+      case symbol_kind::S_guardquals1: // guardquals1
+      case symbol_kind::S_altslist: // altslist
+      case symbol_kind::S_alts: // alts
+      case symbol_kind::S_alts1: // alts1
+      case symbol_kind::S_gdpats: // gdpats
+      case symbol_kind::S_apats1: // apats1
+      case symbol_kind::S_stmtlist: // stmtlist
+      case symbol_kind::S_stmts: // stmts
         value.move< std::vector<expression_ref> > (std::move (that.value));
         break;
 
-      case 174: // ops
-      case 204: // sig_vars
+      case symbol_kind::S_ops: // ops
+      case symbol_kind::S_sig_vars: // sig_vars
         value.move< std::vector<std::string> > (std::move (that.value));
         break;
 
@@ -1444,7 +1444,7 @@ namespace yy {
       /// Copy constructor.
       basic_symbol (const basic_symbol& that);
 
-      /// Constructor for valueless symbols, and symbols from each type.
+      /// Constructors for typed symbols.
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, location_type&& l)
         : Base (t)
@@ -1456,6 +1456,7 @@ namespace yy {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, bool&& v, location_type&& l)
         : Base (t)
@@ -1469,6 +1470,7 @@ namespace yy {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, char&& v, location_type&& l)
         : Base (t)
@@ -1482,6 +1484,7 @@ namespace yy {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, double&& v, location_type&& l)
         : Base (t)
@@ -1495,6 +1498,7 @@ namespace yy {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, expression_ref&& v, location_type&& l)
         : Base (t)
@@ -1508,6 +1512,7 @@ namespace yy {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, float&& v, location_type&& l)
         : Base (t)
@@ -1521,6 +1526,7 @@ namespace yy {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, int&& v, location_type&& l)
         : Base (t)
@@ -1534,6 +1540,7 @@ namespace yy {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::optional<int>&& v, location_type&& l)
         : Base (t)
@@ -1547,6 +1554,7 @@ namespace yy {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::optional<std::string>&& v, location_type&& l)
         : Base (t)
@@ -1560,6 +1568,7 @@ namespace yy {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::string&& v, location_type&& l)
         : Base (t)
@@ -1573,6 +1582,7 @@ namespace yy {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::vector<expression_ref>&& v, location_type&& l)
         : Base (t)
@@ -1586,6 +1596,7 @@ namespace yy {
         , location (l)
       {}
 #endif
+
 #if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::vector<std::string>&& v, location_type&& l)
         : Base (t)
@@ -1622,213 +1633,213 @@ namespace yy {
         // Value type destructor.
 switch (yykind)
     {
-      case 165: // maybe_src
-      case 166: // maybe_safe
-      case 168: // optqualified
+      case symbol_kind::S_maybe_src: // maybe_src
+      case symbol_kind::S_maybe_safe: // maybe_safe
+      case symbol_kind::S_optqualified: // optqualified
         value.template destroy< bool > ();
         break;
 
-      case 128: // "CHAR"
-      case 132: // "PRIMCHAR"
+      case symbol_kind::S_CHAR: // "CHAR"
+      case symbol_kind::S_PRIMCHAR: // "PRIMCHAR"
         value.template destroy< char > ();
         break;
 
-      case 131: // "RATIONAL"
-      case 137: // "PRIMDOUBLE"
+      case symbol_kind::S_RATIONAL: // "RATIONAL"
+      case symbol_kind::S_PRIMDOUBLE: // "PRIMDOUBLE"
         value.template destroy< double > ();
         break;
 
-      case 143: // module
-      case 146: // body
-      case 147: // body2
-      case 148: // top
-      case 149: // top1
-      case 150: // maybeexports
-      case 153: // export
-      case 157: // qcname_ext_w_wildcard
-      case 158: // qcname_ext
-      case 159: // qcname
-      case 164: // importdecl
-      case 170: // maybeimpspec
-      case 171: // impspec
-      case 177: // topdecl
-      case 178: // cl_decl
-      case 179: // ty_decl
-      case 180: // inst_decl
-      case 186: // tycl_hdr
-      case 195: // decllist
-      case 196: // binds
-      case 197: // wherebinds
-      case 200: // opt_sig
-      case 201: // opt_tyconsig
-      case 202: // sigtype
-      case 203: // sigtypedoc
-      case 209: // ctype
-      case 210: // ctypedoc
-      case 211: // context
-      case 212: // context_no_ops
-      case 213: // type
-      case 214: // typedoc
-      case 215: // btype
-      case 218: // tyapp
-      case 219: // atype_docs
-      case 220: // atype
-      case 221: // inst_type
-      case 227: // tv_bndr
-      case 228: // kind
-      case 231: // constr
-      case 232: // forall
-      case 233: // constr_stuff
-      case 236: // fielddecl
-      case 241: // decl_no_th
-      case 242: // decl
-      case 243: // rhs
-      case 245: // gdrh
-      case 246: // sigdecl
-      case 249: // exp
-      case 252: // exp10_top
-      case 253: // exp10
-      case 257: // aexp
-      case 258: // aexp1
-      case 259: // aexp2
-      case 260: // texp
-      case 262: // list
-      case 265: // transformqual
-      case 271: // alt
-      case 272: // alt_rhs
-      case 274: // ifgdpats
-      case 275: // gdpat
-      case 276: // pat
-      case 277: // bindpat
-      case 278: // apat
-      case 282: // stmt
-      case 283: // qual
-      case 330: // literal
+      case symbol_kind::S_module: // module
+      case symbol_kind::S_body: // body
+      case symbol_kind::S_body2: // body2
+      case symbol_kind::S_top: // top
+      case symbol_kind::S_top1: // top1
+      case symbol_kind::S_maybeexports: // maybeexports
+      case symbol_kind::S_export: // export
+      case symbol_kind::S_qcname_ext_w_wildcard: // qcname_ext_w_wildcard
+      case symbol_kind::S_qcname_ext: // qcname_ext
+      case symbol_kind::S_qcname: // qcname
+      case symbol_kind::S_importdecl: // importdecl
+      case symbol_kind::S_maybeimpspec: // maybeimpspec
+      case symbol_kind::S_impspec: // impspec
+      case symbol_kind::S_topdecl: // topdecl
+      case symbol_kind::S_cl_decl: // cl_decl
+      case symbol_kind::S_ty_decl: // ty_decl
+      case symbol_kind::S_inst_decl: // inst_decl
+      case symbol_kind::S_tycl_hdr: // tycl_hdr
+      case symbol_kind::S_decllist: // decllist
+      case symbol_kind::S_binds: // binds
+      case symbol_kind::S_wherebinds: // wherebinds
+      case symbol_kind::S_opt_sig: // opt_sig
+      case symbol_kind::S_opt_tyconsig: // opt_tyconsig
+      case symbol_kind::S_sigtype: // sigtype
+      case symbol_kind::S_sigtypedoc: // sigtypedoc
+      case symbol_kind::S_ctype: // ctype
+      case symbol_kind::S_ctypedoc: // ctypedoc
+      case symbol_kind::S_context: // context
+      case symbol_kind::S_context_no_ops: // context_no_ops
+      case symbol_kind::S_type: // type
+      case symbol_kind::S_typedoc: // typedoc
+      case symbol_kind::S_btype: // btype
+      case symbol_kind::S_tyapp: // tyapp
+      case symbol_kind::S_atype_docs: // atype_docs
+      case symbol_kind::S_atype: // atype
+      case symbol_kind::S_inst_type: // inst_type
+      case symbol_kind::S_tv_bndr: // tv_bndr
+      case symbol_kind::S_kind: // kind
+      case symbol_kind::S_constr: // constr
+      case symbol_kind::S_forall: // forall
+      case symbol_kind::S_constr_stuff: // constr_stuff
+      case symbol_kind::S_fielddecl: // fielddecl
+      case symbol_kind::S_decl_no_th: // decl_no_th
+      case symbol_kind::S_decl: // decl
+      case symbol_kind::S_rhs: // rhs
+      case symbol_kind::S_gdrh: // gdrh
+      case symbol_kind::S_sigdecl: // sigdecl
+      case symbol_kind::S_exp: // exp
+      case symbol_kind::S_exp10_top: // exp10_top
+      case symbol_kind::S_exp10: // exp10
+      case symbol_kind::S_aexp: // aexp
+      case symbol_kind::S_aexp1: // aexp1
+      case symbol_kind::S_aexp2: // aexp2
+      case symbol_kind::S_texp: // texp
+      case symbol_kind::S_list: // list
+      case symbol_kind::S_transformqual: // transformqual
+      case symbol_kind::S_alt: // alt
+      case symbol_kind::S_alt_rhs: // alt_rhs
+      case symbol_kind::S_ifgdpats: // ifgdpats
+      case symbol_kind::S_gdpat: // gdpat
+      case symbol_kind::S_pat: // pat
+      case symbol_kind::S_bindpat: // bindpat
+      case symbol_kind::S_apat: // apat
+      case symbol_kind::S_stmt: // stmt
+      case symbol_kind::S_qual: // qual
+      case symbol_kind::S_literal: // literal
         value.template destroy< expression_ref > ();
         break;
 
-      case 136: // "PRIMFLOAT"
+      case symbol_kind::S_PRIMFLOAT: // "PRIMFLOAT"
         value.template destroy< float > ();
         break;
 
-      case 130: // "INTEGER"
-      case 134: // "PRIMINTEGER"
-      case 135: // "PRIMWORD"
-      case 333: // commas
+      case symbol_kind::S_INTEGER: // "INTEGER"
+      case symbol_kind::S_PRIMINTEGER: // "PRIMINTEGER"
+      case symbol_kind::S_PRINTWORD: // "PRIMWORD"
+      case symbol_kind::S_commas: // commas
         value.template destroy< int > ();
         break;
 
-      case 172: // prec
+      case symbol_kind::S_prec: // prec
         value.template destroy< std::optional<int> > ();
         break;
 
-      case 167: // maybe_pkg
-      case 169: // maybeas
+      case symbol_kind::S_maybe_pkg: // maybe_pkg
+      case symbol_kind::S_maybeas: // maybeas
         value.template destroy< std::optional<std::string> > ();
         break;
 
-      case 118: // "VARID"
-      case 119: // "CONID"
-      case 120: // "VARSYM"
-      case 121: // "CONSYM"
-      case 122: // "QVARID"
-      case 123: // "QCONID"
-      case 124: // "QVARSYM"
-      case 125: // "QCONSYM"
-      case 126: // "IPDUPVARID"
-      case 127: // "LABELVARID"
-      case 129: // "STRING"
-      case 133: // "PRIMSTRING"
-      case 173: // infix
-      case 184: // data_or_newtype
-      case 206: // strict_mark
-      case 207: // strictness
-      case 287: // qcon
-      case 288: // gen_qcon
-      case 289: // con
-      case 291: // sysdcon_no_list
-      case 292: // sysdcon
-      case 293: // conop
-      case 294: // qconop
-      case 295: // gtycon
-      case 296: // ntgtycon
-      case 297: // oqtycon
-      case 298: // oqtycon_no_varcon
-      case 299: // qtyconop
-      case 300: // qtycondoc
-      case 301: // qtycon
-      case 302: // tycon
-      case 303: // qtyconsym
-      case 304: // tyconsym
-      case 305: // op
-      case 306: // varop
-      case 307: // qop
-      case 308: // qopm
-      case 309: // hole_op
-      case 310: // qvarop
-      case 311: // qvaropm
-      case 312: // tyvar
-      case 313: // tyvarop
-      case 314: // tyvarid
-      case 315: // var
-      case 316: // qvar
-      case 317: // qvarid
-      case 318: // varid
-      case 319: // qvarsym
-      case 320: // qvarsym_no_minus
-      case 321: // qvarsym1
-      case 322: // varsym
-      case 323: // varsym_no_minus
-      case 324: // special_id
-      case 325: // special_sym
-      case 326: // qconid
-      case 327: // conid
-      case 328: // qconsym
-      case 329: // consym
-      case 332: // modid
+      case symbol_kind::S_VARID: // "VARID"
+      case symbol_kind::S_CONID: // "CONID"
+      case symbol_kind::S_VARSYM: // "VARSYM"
+      case symbol_kind::S_CONSYM: // "CONSYM"
+      case symbol_kind::S_QVARID: // "QVARID"
+      case symbol_kind::S_QCONID: // "QCONID"
+      case symbol_kind::S_QVARSYM: // "QVARSYM"
+      case symbol_kind::S_QCONSYM: // "QCONSYM"
+      case symbol_kind::S_IPDUPVARID: // "IPDUPVARID"
+      case symbol_kind::S_LABELVARID: // "LABELVARID"
+      case symbol_kind::S_STRING: // "STRING"
+      case symbol_kind::S_PRIMSTRING: // "PRIMSTRING"
+      case symbol_kind::S_infix: // infix
+      case symbol_kind::S_data_or_newtype: // data_or_newtype
+      case symbol_kind::S_strict_mark: // strict_mark
+      case symbol_kind::S_strictness: // strictness
+      case symbol_kind::S_qcon: // qcon
+      case symbol_kind::S_gen_qcon: // gen_qcon
+      case symbol_kind::S_con: // con
+      case symbol_kind::S_sysdcon_no_list: // sysdcon_no_list
+      case symbol_kind::S_sysdcon: // sysdcon
+      case symbol_kind::S_conop: // conop
+      case symbol_kind::S_qconop: // qconop
+      case symbol_kind::S_gtycon: // gtycon
+      case symbol_kind::S_ntgtycon: // ntgtycon
+      case symbol_kind::S_oqtycon: // oqtycon
+      case symbol_kind::S_oqtycon_no_varcon: // oqtycon_no_varcon
+      case symbol_kind::S_qtyconop: // qtyconop
+      case symbol_kind::S_qtycondoc: // qtycondoc
+      case symbol_kind::S_qtycon: // qtycon
+      case symbol_kind::S_tycon: // tycon
+      case symbol_kind::S_qtyconsym: // qtyconsym
+      case symbol_kind::S_tyconsym: // tyconsym
+      case symbol_kind::S_op: // op
+      case symbol_kind::S_varop: // varop
+      case symbol_kind::S_qop: // qop
+      case symbol_kind::S_qopm: // qopm
+      case symbol_kind::S_hole_op: // hole_op
+      case symbol_kind::S_qvarop: // qvarop
+      case symbol_kind::S_qvaropm: // qvaropm
+      case symbol_kind::S_tyvar: // tyvar
+      case symbol_kind::S_tyvarop: // tyvarop
+      case symbol_kind::S_tyvarid: // tyvarid
+      case symbol_kind::S_var: // var
+      case symbol_kind::S_qvar: // qvar
+      case symbol_kind::S_qvarid: // qvarid
+      case symbol_kind::S_varid: // varid
+      case symbol_kind::S_qvarsym: // qvarsym
+      case symbol_kind::S_qvarsym_no_minus: // qvarsym_no_minus
+      case symbol_kind::S_qvarsym1: // qvarsym1
+      case symbol_kind::S_varsym: // varsym
+      case symbol_kind::S_varsym_no_minus: // varsym_no_minus
+      case symbol_kind::S_special_id: // special_id
+      case symbol_kind::S_special_sym: // special_sym
+      case symbol_kind::S_qconid: // qconid
+      case symbol_kind::S_conid: // conid
+      case symbol_kind::S_qconsym: // qconsym
+      case symbol_kind::S_consym: // consym
+      case symbol_kind::S_modid: // modid
         value.template destroy< std::string > ();
         break;
 
-      case 151: // exportlist
-      case 152: // exportlist1
-      case 155: // qcnames
-      case 156: // qcnames1
-      case 162: // importdecls
-      case 163: // importdecls_semi
-      case 175: // topdecls
-      case 176: // topdecls_semi
-      case 194: // decls
-      case 205: // sigtypes1
-      case 216: // btype_no_ops
-      case 217: // tyapps
-      case 223: // comma_types0
-      case 224: // comma_types1
-      case 226: // tv_bndrs
-      case 229: // constrs
-      case 230: // constrs1
-      case 234: // fielddecls
-      case 235: // fielddecls1
-      case 244: // gdrhs
-      case 250: // infixexp
-      case 251: // infixexp_top
-      case 256: // fexp
-      case 261: // tup_exprs
-      case 263: // lexps
-      case 264: // squals
-      case 266: // guardquals
-      case 267: // guardquals1
-      case 268: // altslist
-      case 269: // alts
-      case 270: // alts1
-      case 273: // gdpats
-      case 279: // apats1
-      case 280: // stmtlist
-      case 281: // stmts
+      case symbol_kind::S_exportlist: // exportlist
+      case symbol_kind::S_exportlist1: // exportlist1
+      case symbol_kind::S_qcnames: // qcnames
+      case symbol_kind::S_qcnames1: // qcnames1
+      case symbol_kind::S_importdecls: // importdecls
+      case symbol_kind::S_importdecls_semi: // importdecls_semi
+      case symbol_kind::S_topdecls: // topdecls
+      case symbol_kind::S_topdecls_semi: // topdecls_semi
+      case symbol_kind::S_decls: // decls
+      case symbol_kind::S_sigtypes1: // sigtypes1
+      case symbol_kind::S_btype_no_ops: // btype_no_ops
+      case symbol_kind::S_tyapps: // tyapps
+      case symbol_kind::S_comma_types0: // comma_types0
+      case symbol_kind::S_comma_types1: // comma_types1
+      case symbol_kind::S_tv_bndrs: // tv_bndrs
+      case symbol_kind::S_constrs: // constrs
+      case symbol_kind::S_constrs1: // constrs1
+      case symbol_kind::S_fielddecls: // fielddecls
+      case symbol_kind::S_fielddecls1: // fielddecls1
+      case symbol_kind::S_gdrhs: // gdrhs
+      case symbol_kind::S_infixexp: // infixexp
+      case symbol_kind::S_infixexp_top: // infixexp_top
+      case symbol_kind::S_fexp: // fexp
+      case symbol_kind::S_tup_exprs: // tup_exprs
+      case symbol_kind::S_lexps: // lexps
+      case symbol_kind::S_squals: // squals
+      case symbol_kind::S_guardquals: // guardquals
+      case symbol_kind::S_guardquals1: // guardquals1
+      case symbol_kind::S_altslist: // altslist
+      case symbol_kind::S_alts: // alts
+      case symbol_kind::S_alts1: // alts1
+      case symbol_kind::S_gdpats: // gdpats
+      case symbol_kind::S_apats1: // apats1
+      case symbol_kind::S_stmtlist: // stmtlist
+      case symbol_kind::S_stmts: // stmts
         value.template destroy< std::vector<expression_ref> > ();
         break;
 
-      case 174: // ops
-      case 204: // sig_vars
+      case symbol_kind::S_ops: // ops
+      case symbol_kind::S_sig_vars: // sig_vars
         value.template destroy< std::vector<std::string> > ();
         break;
 
@@ -1921,81 +1932,70 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, location_type l)
         : super_type(token_type (tok), std::move (l))
-      {
-        YY_ASSERT (tok == token::TOK_END || tok == token::TOK_YYerror || tok == token::TOK_YYUNDEF || tok == token::TOK_UNDERSCORE || tok == token::TOK_AS || tok == token::TOK_CASE || tok == token::TOK_CLASS || tok == token::TOK_DATA || tok == token::TOK_DEFAULT || tok == token::TOK_DERIVING || tok == token::TOK_DO || tok == token::TOK_ELSE || tok == token::TOK_HIDING || tok == token::TOK_IF || tok == token::TOK_IMPORT || tok == token::TOK_IN || tok == token::TOK_INFIX || tok == token::TOK_INFIXL || tok == token::TOK_INFIXR || tok == token::TOK_INSTANCE || tok == token::TOK_LET || tok == token::TOK_MODULE || tok == token::TOK_NEWTYPE || tok == token::TOK_OF || tok == token::TOK_QUALIFIED || tok == token::TOK_THEN || tok == token::TOK_TYPE || tok == token::TOK_WHERE || tok == token::TOK_BUILTIN || tok == token::TOK_FORALL || tok == token::TOK_FOREIGN || tok == token::TOK_EXPORT || tok == token::TOK_LABEL || tok == token::TOK_DYNAMIC || tok == token::TOK_SAFE || tok == token::TOK_INTERRUPTIBLE || tok == token::TOK_UNSAFE || tok == token::TOK_MDO || tok == token::TOK_FAMILY || tok == token::TOK_ROLE || tok == token::TOK_STDCALL || tok == token::TOK_CCALL || tok == token::TOK_CAPI || tok == token::TOK_PRIM || tok == token::TOK_JAVASCRIPT || tok == token::TOK_PROC || tok == token::TOK_REC || tok == token::TOK_GROUP || tok == token::TOK_BY || tok == token::TOK_USING || tok == token::TOK_PATTERN || tok == token::TOK_STATIC || tok == token::TOK_STOCK || tok == token::TOK_ANYCLASS || tok == token::TOK_VIA || tok == token::TOK_UNIT || tok == token::TOK_SIGNATURE || tok == token::TOK_DEPENDENCY || tok == token::TOK_INLINE_PRAG || tok == token::TOK_SPECIALIZE_PRAG || tok == token::TOK_SPECIALIZE_INLINE_PRAG || tok == token::TOK_SOURCE_PRAG || tok == token::TOK_RULES_PRAG || tok == token::TOK_CORE_PRAG || tok == token::TOK_SCC_PRAG || tok == token::TOK_GENERATED_PRAG || tok == token::TOK_DEPRECATED_PRAG || tok == token::TOK_WARNING_PRAG || tok == token::TOK_UNPACK_PRAG || tok == token::TOK_NOUNPACK_PRAG || tok == token::TOK_ANN_PRAG || tok == token::TOK_MINIMAL_PRAG || tok == token::TOK_CTYPE_PRAG || tok == token::TOK_OVERLAPPING_PRAG || tok == token::TOK_OVERLAPPABLE_PRAG || tok == token::TOK_OVERLAPS_PRAG || tok == token::TOK_INCOHERENT_PRAG || tok == token::TOK_COMPLETE_PRAG || tok == token::TOK_CLOSE_PRAG || tok == token::TOK_DOTDOT || tok == token::TOK_COLON || tok == token::TOK_DCOLON || tok == token::TOK_EQUAL || tok == token::TOK_LAM || tok == token::TOK_LCASE || tok == token::TOK_VBAR || tok == token::TOK_LARROW || tok == token::TOK_RARROW || tok == token::TOK_AT || tok == token::TOK_TILDE || tok == token::TOK_DARROW || tok == token::TOK_MINUS || tok == token::TOK_BANG || tok == token::TOK_STAR || tok == token::TOK_lARROWTAIL || tok == token::TOK_rARROWTAIL || tok == token::TOK_LARROWTAIL || tok == token::TOK_RARROWTAIL || tok == token::TOK_DOT || tok == token::TOK_TYPEAPP || tok == token::TOK_OCURLY || tok == token::TOK_CCURLY || tok == token::TOK_VOCURLY || tok == token::TOK_VCCURLY || tok == token::TOK_OBRACK || tok == token::TOK_CBRACK || tok == token::TOK_OPABRACK || tok == token::TOK_CPABRACK || tok == token::TOK_OPAREN || tok == token::TOK_CPAREN || tok == token::TOK_OUBXPAREN || tok == token::TOK_CUBXPAREN || tok == token::TOK_OPARENBAR || tok == token::TOK_CPARENBAR || tok == token::TOK_SEMI || tok == token::TOK_COMMA || tok == token::TOK_BACKQUOTE || tok == token::TOK_SIMPLEQUOTE || tok == 393 || tok == 394 || tok == 395);
-      }
 #else
       symbol_type (int tok, const location_type& l)
         : super_type(token_type (tok), l)
-      {
-        YY_ASSERT (tok == token::TOK_END || tok == token::TOK_YYerror || tok == token::TOK_YYUNDEF || tok == token::TOK_UNDERSCORE || tok == token::TOK_AS || tok == token::TOK_CASE || tok == token::TOK_CLASS || tok == token::TOK_DATA || tok == token::TOK_DEFAULT || tok == token::TOK_DERIVING || tok == token::TOK_DO || tok == token::TOK_ELSE || tok == token::TOK_HIDING || tok == token::TOK_IF || tok == token::TOK_IMPORT || tok == token::TOK_IN || tok == token::TOK_INFIX || tok == token::TOK_INFIXL || tok == token::TOK_INFIXR || tok == token::TOK_INSTANCE || tok == token::TOK_LET || tok == token::TOK_MODULE || tok == token::TOK_NEWTYPE || tok == token::TOK_OF || tok == token::TOK_QUALIFIED || tok == token::TOK_THEN || tok == token::TOK_TYPE || tok == token::TOK_WHERE || tok == token::TOK_BUILTIN || tok == token::TOK_FORALL || tok == token::TOK_FOREIGN || tok == token::TOK_EXPORT || tok == token::TOK_LABEL || tok == token::TOK_DYNAMIC || tok == token::TOK_SAFE || tok == token::TOK_INTERRUPTIBLE || tok == token::TOK_UNSAFE || tok == token::TOK_MDO || tok == token::TOK_FAMILY || tok == token::TOK_ROLE || tok == token::TOK_STDCALL || tok == token::TOK_CCALL || tok == token::TOK_CAPI || tok == token::TOK_PRIM || tok == token::TOK_JAVASCRIPT || tok == token::TOK_PROC || tok == token::TOK_REC || tok == token::TOK_GROUP || tok == token::TOK_BY || tok == token::TOK_USING || tok == token::TOK_PATTERN || tok == token::TOK_STATIC || tok == token::TOK_STOCK || tok == token::TOK_ANYCLASS || tok == token::TOK_VIA || tok == token::TOK_UNIT || tok == token::TOK_SIGNATURE || tok == token::TOK_DEPENDENCY || tok == token::TOK_INLINE_PRAG || tok == token::TOK_SPECIALIZE_PRAG || tok == token::TOK_SPECIALIZE_INLINE_PRAG || tok == token::TOK_SOURCE_PRAG || tok == token::TOK_RULES_PRAG || tok == token::TOK_CORE_PRAG || tok == token::TOK_SCC_PRAG || tok == token::TOK_GENERATED_PRAG || tok == token::TOK_DEPRECATED_PRAG || tok == token::TOK_WARNING_PRAG || tok == token::TOK_UNPACK_PRAG || tok == token::TOK_NOUNPACK_PRAG || tok == token::TOK_ANN_PRAG || tok == token::TOK_MINIMAL_PRAG || tok == token::TOK_CTYPE_PRAG || tok == token::TOK_OVERLAPPING_PRAG || tok == token::TOK_OVERLAPPABLE_PRAG || tok == token::TOK_OVERLAPS_PRAG || tok == token::TOK_INCOHERENT_PRAG || tok == token::TOK_COMPLETE_PRAG || tok == token::TOK_CLOSE_PRAG || tok == token::TOK_DOTDOT || tok == token::TOK_COLON || tok == token::TOK_DCOLON || tok == token::TOK_EQUAL || tok == token::TOK_LAM || tok == token::TOK_LCASE || tok == token::TOK_VBAR || tok == token::TOK_LARROW || tok == token::TOK_RARROW || tok == token::TOK_AT || tok == token::TOK_TILDE || tok == token::TOK_DARROW || tok == token::TOK_MINUS || tok == token::TOK_BANG || tok == token::TOK_STAR || tok == token::TOK_lARROWTAIL || tok == token::TOK_rARROWTAIL || tok == token::TOK_LARROWTAIL || tok == token::TOK_RARROWTAIL || tok == token::TOK_DOT || tok == token::TOK_TYPEAPP || tok == token::TOK_OCURLY || tok == token::TOK_CCURLY || tok == token::TOK_VOCURLY || tok == token::TOK_VCCURLY || tok == token::TOK_OBRACK || tok == token::TOK_CBRACK || tok == token::TOK_OPABRACK || tok == token::TOK_CPABRACK || tok == token::TOK_OPAREN || tok == token::TOK_CPAREN || tok == token::TOK_OUBXPAREN || tok == token::TOK_CUBXPAREN || tok == token::TOK_OPARENBAR || tok == token::TOK_CPARENBAR || tok == token::TOK_SEMI || tok == token::TOK_COMMA || tok == token::TOK_BACKQUOTE || tok == token::TOK_SIMPLEQUOTE || tok == 393 || tok == 394 || tok == 395);
-      }
 #endif
+      {
+        YY_ASSERT (tok == token::TOK_END
+                   || (token::TOK_YYerror <= tok && tok <= token::TOK_SIMPLEQUOTE)
+                   || (393 <= tok && tok <= 395));
+      }
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, char v, location_type l)
         : super_type(token_type (tok), std::move (v), std::move (l))
-      {
-        YY_ASSERT (tok == token::TOK_CHAR || tok == token::TOK_PRIMCHAR);
-      }
 #else
       symbol_type (int tok, const char& v, const location_type& l)
         : super_type(token_type (tok), v, l)
-      {
-        YY_ASSERT (tok == token::TOK_CHAR || tok == token::TOK_PRIMCHAR);
-      }
 #endif
+      {
+        YY_ASSERT (tok == token::TOK_CHAR
+                   || tok == token::TOK_PRIMCHAR);
+      }
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, double v, location_type l)
         : super_type(token_type (tok), std::move (v), std::move (l))
-      {
-        YY_ASSERT (tok == token::TOK_RATIONAL || tok == token::TOK_PRIMDOUBLE);
-      }
 #else
       symbol_type (int tok, const double& v, const location_type& l)
         : super_type(token_type (tok), v, l)
-      {
-        YY_ASSERT (tok == token::TOK_RATIONAL || tok == token::TOK_PRIMDOUBLE);
-      }
 #endif
+      {
+        YY_ASSERT (tok == token::TOK_RATIONAL
+                   || tok == token::TOK_PRIMDOUBLE);
+      }
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, float v, location_type l)
         : super_type(token_type (tok), std::move (v), std::move (l))
-      {
-        YY_ASSERT (tok == token::TOK_PRIMFLOAT);
-      }
 #else
       symbol_type (int tok, const float& v, const location_type& l)
         : super_type(token_type (tok), v, l)
+#endif
       {
         YY_ASSERT (tok == token::TOK_PRIMFLOAT);
       }
-#endif
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, int v, location_type l)
         : super_type(token_type (tok), std::move (v), std::move (l))
-      {
-        YY_ASSERT (tok == token::TOK_INTEGER || tok == token::TOK_PRIMINTEGER || tok == token::TOK_PRINTWORD);
-      }
 #else
       symbol_type (int tok, const int& v, const location_type& l)
         : super_type(token_type (tok), v, l)
-      {
-        YY_ASSERT (tok == token::TOK_INTEGER || tok == token::TOK_PRIMINTEGER || tok == token::TOK_PRINTWORD);
-      }
 #endif
+      {
+        YY_ASSERT (tok == token::TOK_INTEGER
+                   || (token::TOK_PRIMINTEGER <= tok && tok <= token::TOK_PRINTWORD));
+      }
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, std::string v, location_type l)
         : super_type(token_type (tok), std::move (v), std::move (l))
-      {
-        YY_ASSERT (tok == token::TOK_VARID || tok == token::TOK_CONID || tok == token::TOK_VARSYM || tok == token::TOK_CONSYM || tok == token::TOK_QVARID || tok == token::TOK_QCONID || tok == token::TOK_QVARSYM || tok == token::TOK_QCONSYM || tok == token::TOK_IPDUPVARID || tok == token::TOK_LABELVARID || tok == token::TOK_STRING || tok == token::TOK_PRIMSTRING);
-      }
 #else
       symbol_type (int tok, const std::string& v, const location_type& l)
         : super_type(token_type (tok), v, l)
-      {
-        YY_ASSERT (tok == token::TOK_VARID || tok == token::TOK_CONID || tok == token::TOK_VARSYM || tok == token::TOK_CONSYM || tok == token::TOK_QVARID || tok == token::TOK_QCONID || tok == token::TOK_QVARSYM || tok == token::TOK_QCONSYM || tok == token::TOK_IPDUPVARID || tok == token::TOK_LABELVARID || tok == token::TOK_STRING || tok == token::TOK_PRIMSTRING);
-      }
 #endif
+      {
+        YY_ASSERT ((token::TOK_VARID <= tok && tok <= token::TOK_LABELVARID)
+                   || tok == token::TOK_STRING
+                   || tok == token::TOK_PRIMSTRING);
+      }
     };
 
     /// Build a parser object.
@@ -4265,7 +4265,7 @@ switch (yykind)
       void move (by_state& that);
 
       /// The symbol kind (corresponding to \a state).
-      /// \a S_YYEMPTY when empty.
+      /// \a symbol_kind::S_YYEMPTY when empty.
       symbol_kind_type kind () const YY_NOEXCEPT;
 
       /// The state number used to denote an empty symbol.
@@ -4506,11 +4506,12 @@ switch (yykind)
      125,   126,   127,   128,   129,   130,   131,   132,   133,   134,
      135,   136,   137,   138,   139,   140
     };
-    const int user_token_number_max_ = 395;
+    // Last valid token kind.
+    const int code_max = 395;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
-    else if (t <= user_token_number_max_)
+    else if (t <= code_max)
       return YY_CAST (symbol_kind_type, translate_table[t]);
     else
       return symbol_kind::S_YYUNDEF;
@@ -4525,213 +4526,213 @@ switch (yykind)
   {
     switch (this->kind ())
     {
-      case 165: // maybe_src
-      case 166: // maybe_safe
-      case 168: // optqualified
+      case symbol_kind::S_maybe_src: // maybe_src
+      case symbol_kind::S_maybe_safe: // maybe_safe
+      case symbol_kind::S_optqualified: // optqualified
         value.copy< bool > (YY_MOVE (that.value));
         break;
 
-      case 128: // "CHAR"
-      case 132: // "PRIMCHAR"
+      case symbol_kind::S_CHAR: // "CHAR"
+      case symbol_kind::S_PRIMCHAR: // "PRIMCHAR"
         value.copy< char > (YY_MOVE (that.value));
         break;
 
-      case 131: // "RATIONAL"
-      case 137: // "PRIMDOUBLE"
+      case symbol_kind::S_RATIONAL: // "RATIONAL"
+      case symbol_kind::S_PRIMDOUBLE: // "PRIMDOUBLE"
         value.copy< double > (YY_MOVE (that.value));
         break;
 
-      case 143: // module
-      case 146: // body
-      case 147: // body2
-      case 148: // top
-      case 149: // top1
-      case 150: // maybeexports
-      case 153: // export
-      case 157: // qcname_ext_w_wildcard
-      case 158: // qcname_ext
-      case 159: // qcname
-      case 164: // importdecl
-      case 170: // maybeimpspec
-      case 171: // impspec
-      case 177: // topdecl
-      case 178: // cl_decl
-      case 179: // ty_decl
-      case 180: // inst_decl
-      case 186: // tycl_hdr
-      case 195: // decllist
-      case 196: // binds
-      case 197: // wherebinds
-      case 200: // opt_sig
-      case 201: // opt_tyconsig
-      case 202: // sigtype
-      case 203: // sigtypedoc
-      case 209: // ctype
-      case 210: // ctypedoc
-      case 211: // context
-      case 212: // context_no_ops
-      case 213: // type
-      case 214: // typedoc
-      case 215: // btype
-      case 218: // tyapp
-      case 219: // atype_docs
-      case 220: // atype
-      case 221: // inst_type
-      case 227: // tv_bndr
-      case 228: // kind
-      case 231: // constr
-      case 232: // forall
-      case 233: // constr_stuff
-      case 236: // fielddecl
-      case 241: // decl_no_th
-      case 242: // decl
-      case 243: // rhs
-      case 245: // gdrh
-      case 246: // sigdecl
-      case 249: // exp
-      case 252: // exp10_top
-      case 253: // exp10
-      case 257: // aexp
-      case 258: // aexp1
-      case 259: // aexp2
-      case 260: // texp
-      case 262: // list
-      case 265: // transformqual
-      case 271: // alt
-      case 272: // alt_rhs
-      case 274: // ifgdpats
-      case 275: // gdpat
-      case 276: // pat
-      case 277: // bindpat
-      case 278: // apat
-      case 282: // stmt
-      case 283: // qual
-      case 330: // literal
+      case symbol_kind::S_module: // module
+      case symbol_kind::S_body: // body
+      case symbol_kind::S_body2: // body2
+      case symbol_kind::S_top: // top
+      case symbol_kind::S_top1: // top1
+      case symbol_kind::S_maybeexports: // maybeexports
+      case symbol_kind::S_export: // export
+      case symbol_kind::S_qcname_ext_w_wildcard: // qcname_ext_w_wildcard
+      case symbol_kind::S_qcname_ext: // qcname_ext
+      case symbol_kind::S_qcname: // qcname
+      case symbol_kind::S_importdecl: // importdecl
+      case symbol_kind::S_maybeimpspec: // maybeimpspec
+      case symbol_kind::S_impspec: // impspec
+      case symbol_kind::S_topdecl: // topdecl
+      case symbol_kind::S_cl_decl: // cl_decl
+      case symbol_kind::S_ty_decl: // ty_decl
+      case symbol_kind::S_inst_decl: // inst_decl
+      case symbol_kind::S_tycl_hdr: // tycl_hdr
+      case symbol_kind::S_decllist: // decllist
+      case symbol_kind::S_binds: // binds
+      case symbol_kind::S_wherebinds: // wherebinds
+      case symbol_kind::S_opt_sig: // opt_sig
+      case symbol_kind::S_opt_tyconsig: // opt_tyconsig
+      case symbol_kind::S_sigtype: // sigtype
+      case symbol_kind::S_sigtypedoc: // sigtypedoc
+      case symbol_kind::S_ctype: // ctype
+      case symbol_kind::S_ctypedoc: // ctypedoc
+      case symbol_kind::S_context: // context
+      case symbol_kind::S_context_no_ops: // context_no_ops
+      case symbol_kind::S_type: // type
+      case symbol_kind::S_typedoc: // typedoc
+      case symbol_kind::S_btype: // btype
+      case symbol_kind::S_tyapp: // tyapp
+      case symbol_kind::S_atype_docs: // atype_docs
+      case symbol_kind::S_atype: // atype
+      case symbol_kind::S_inst_type: // inst_type
+      case symbol_kind::S_tv_bndr: // tv_bndr
+      case symbol_kind::S_kind: // kind
+      case symbol_kind::S_constr: // constr
+      case symbol_kind::S_forall: // forall
+      case symbol_kind::S_constr_stuff: // constr_stuff
+      case symbol_kind::S_fielddecl: // fielddecl
+      case symbol_kind::S_decl_no_th: // decl_no_th
+      case symbol_kind::S_decl: // decl
+      case symbol_kind::S_rhs: // rhs
+      case symbol_kind::S_gdrh: // gdrh
+      case symbol_kind::S_sigdecl: // sigdecl
+      case symbol_kind::S_exp: // exp
+      case symbol_kind::S_exp10_top: // exp10_top
+      case symbol_kind::S_exp10: // exp10
+      case symbol_kind::S_aexp: // aexp
+      case symbol_kind::S_aexp1: // aexp1
+      case symbol_kind::S_aexp2: // aexp2
+      case symbol_kind::S_texp: // texp
+      case symbol_kind::S_list: // list
+      case symbol_kind::S_transformqual: // transformqual
+      case symbol_kind::S_alt: // alt
+      case symbol_kind::S_alt_rhs: // alt_rhs
+      case symbol_kind::S_ifgdpats: // ifgdpats
+      case symbol_kind::S_gdpat: // gdpat
+      case symbol_kind::S_pat: // pat
+      case symbol_kind::S_bindpat: // bindpat
+      case symbol_kind::S_apat: // apat
+      case symbol_kind::S_stmt: // stmt
+      case symbol_kind::S_qual: // qual
+      case symbol_kind::S_literal: // literal
         value.copy< expression_ref > (YY_MOVE (that.value));
         break;
 
-      case 136: // "PRIMFLOAT"
+      case symbol_kind::S_PRIMFLOAT: // "PRIMFLOAT"
         value.copy< float > (YY_MOVE (that.value));
         break;
 
-      case 130: // "INTEGER"
-      case 134: // "PRIMINTEGER"
-      case 135: // "PRIMWORD"
-      case 333: // commas
+      case symbol_kind::S_INTEGER: // "INTEGER"
+      case symbol_kind::S_PRIMINTEGER: // "PRIMINTEGER"
+      case symbol_kind::S_PRINTWORD: // "PRIMWORD"
+      case symbol_kind::S_commas: // commas
         value.copy< int > (YY_MOVE (that.value));
         break;
 
-      case 172: // prec
+      case symbol_kind::S_prec: // prec
         value.copy< std::optional<int> > (YY_MOVE (that.value));
         break;
 
-      case 167: // maybe_pkg
-      case 169: // maybeas
+      case symbol_kind::S_maybe_pkg: // maybe_pkg
+      case symbol_kind::S_maybeas: // maybeas
         value.copy< std::optional<std::string> > (YY_MOVE (that.value));
         break;
 
-      case 118: // "VARID"
-      case 119: // "CONID"
-      case 120: // "VARSYM"
-      case 121: // "CONSYM"
-      case 122: // "QVARID"
-      case 123: // "QCONID"
-      case 124: // "QVARSYM"
-      case 125: // "QCONSYM"
-      case 126: // "IPDUPVARID"
-      case 127: // "LABELVARID"
-      case 129: // "STRING"
-      case 133: // "PRIMSTRING"
-      case 173: // infix
-      case 184: // data_or_newtype
-      case 206: // strict_mark
-      case 207: // strictness
-      case 287: // qcon
-      case 288: // gen_qcon
-      case 289: // con
-      case 291: // sysdcon_no_list
-      case 292: // sysdcon
-      case 293: // conop
-      case 294: // qconop
-      case 295: // gtycon
-      case 296: // ntgtycon
-      case 297: // oqtycon
-      case 298: // oqtycon_no_varcon
-      case 299: // qtyconop
-      case 300: // qtycondoc
-      case 301: // qtycon
-      case 302: // tycon
-      case 303: // qtyconsym
-      case 304: // tyconsym
-      case 305: // op
-      case 306: // varop
-      case 307: // qop
-      case 308: // qopm
-      case 309: // hole_op
-      case 310: // qvarop
-      case 311: // qvaropm
-      case 312: // tyvar
-      case 313: // tyvarop
-      case 314: // tyvarid
-      case 315: // var
-      case 316: // qvar
-      case 317: // qvarid
-      case 318: // varid
-      case 319: // qvarsym
-      case 320: // qvarsym_no_minus
-      case 321: // qvarsym1
-      case 322: // varsym
-      case 323: // varsym_no_minus
-      case 324: // special_id
-      case 325: // special_sym
-      case 326: // qconid
-      case 327: // conid
-      case 328: // qconsym
-      case 329: // consym
-      case 332: // modid
+      case symbol_kind::S_VARID: // "VARID"
+      case symbol_kind::S_CONID: // "CONID"
+      case symbol_kind::S_VARSYM: // "VARSYM"
+      case symbol_kind::S_CONSYM: // "CONSYM"
+      case symbol_kind::S_QVARID: // "QVARID"
+      case symbol_kind::S_QCONID: // "QCONID"
+      case symbol_kind::S_QVARSYM: // "QVARSYM"
+      case symbol_kind::S_QCONSYM: // "QCONSYM"
+      case symbol_kind::S_IPDUPVARID: // "IPDUPVARID"
+      case symbol_kind::S_LABELVARID: // "LABELVARID"
+      case symbol_kind::S_STRING: // "STRING"
+      case symbol_kind::S_PRIMSTRING: // "PRIMSTRING"
+      case symbol_kind::S_infix: // infix
+      case symbol_kind::S_data_or_newtype: // data_or_newtype
+      case symbol_kind::S_strict_mark: // strict_mark
+      case symbol_kind::S_strictness: // strictness
+      case symbol_kind::S_qcon: // qcon
+      case symbol_kind::S_gen_qcon: // gen_qcon
+      case symbol_kind::S_con: // con
+      case symbol_kind::S_sysdcon_no_list: // sysdcon_no_list
+      case symbol_kind::S_sysdcon: // sysdcon
+      case symbol_kind::S_conop: // conop
+      case symbol_kind::S_qconop: // qconop
+      case symbol_kind::S_gtycon: // gtycon
+      case symbol_kind::S_ntgtycon: // ntgtycon
+      case symbol_kind::S_oqtycon: // oqtycon
+      case symbol_kind::S_oqtycon_no_varcon: // oqtycon_no_varcon
+      case symbol_kind::S_qtyconop: // qtyconop
+      case symbol_kind::S_qtycondoc: // qtycondoc
+      case symbol_kind::S_qtycon: // qtycon
+      case symbol_kind::S_tycon: // tycon
+      case symbol_kind::S_qtyconsym: // qtyconsym
+      case symbol_kind::S_tyconsym: // tyconsym
+      case symbol_kind::S_op: // op
+      case symbol_kind::S_varop: // varop
+      case symbol_kind::S_qop: // qop
+      case symbol_kind::S_qopm: // qopm
+      case symbol_kind::S_hole_op: // hole_op
+      case symbol_kind::S_qvarop: // qvarop
+      case symbol_kind::S_qvaropm: // qvaropm
+      case symbol_kind::S_tyvar: // tyvar
+      case symbol_kind::S_tyvarop: // tyvarop
+      case symbol_kind::S_tyvarid: // tyvarid
+      case symbol_kind::S_var: // var
+      case symbol_kind::S_qvar: // qvar
+      case symbol_kind::S_qvarid: // qvarid
+      case symbol_kind::S_varid: // varid
+      case symbol_kind::S_qvarsym: // qvarsym
+      case symbol_kind::S_qvarsym_no_minus: // qvarsym_no_minus
+      case symbol_kind::S_qvarsym1: // qvarsym1
+      case symbol_kind::S_varsym: // varsym
+      case symbol_kind::S_varsym_no_minus: // varsym_no_minus
+      case symbol_kind::S_special_id: // special_id
+      case symbol_kind::S_special_sym: // special_sym
+      case symbol_kind::S_qconid: // qconid
+      case symbol_kind::S_conid: // conid
+      case symbol_kind::S_qconsym: // qconsym
+      case symbol_kind::S_consym: // consym
+      case symbol_kind::S_modid: // modid
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
-      case 151: // exportlist
-      case 152: // exportlist1
-      case 155: // qcnames
-      case 156: // qcnames1
-      case 162: // importdecls
-      case 163: // importdecls_semi
-      case 175: // topdecls
-      case 176: // topdecls_semi
-      case 194: // decls
-      case 205: // sigtypes1
-      case 216: // btype_no_ops
-      case 217: // tyapps
-      case 223: // comma_types0
-      case 224: // comma_types1
-      case 226: // tv_bndrs
-      case 229: // constrs
-      case 230: // constrs1
-      case 234: // fielddecls
-      case 235: // fielddecls1
-      case 244: // gdrhs
-      case 250: // infixexp
-      case 251: // infixexp_top
-      case 256: // fexp
-      case 261: // tup_exprs
-      case 263: // lexps
-      case 264: // squals
-      case 266: // guardquals
-      case 267: // guardquals1
-      case 268: // altslist
-      case 269: // alts
-      case 270: // alts1
-      case 273: // gdpats
-      case 279: // apats1
-      case 280: // stmtlist
-      case 281: // stmts
+      case symbol_kind::S_exportlist: // exportlist
+      case symbol_kind::S_exportlist1: // exportlist1
+      case symbol_kind::S_qcnames: // qcnames
+      case symbol_kind::S_qcnames1: // qcnames1
+      case symbol_kind::S_importdecls: // importdecls
+      case symbol_kind::S_importdecls_semi: // importdecls_semi
+      case symbol_kind::S_topdecls: // topdecls
+      case symbol_kind::S_topdecls_semi: // topdecls_semi
+      case symbol_kind::S_decls: // decls
+      case symbol_kind::S_sigtypes1: // sigtypes1
+      case symbol_kind::S_btype_no_ops: // btype_no_ops
+      case symbol_kind::S_tyapps: // tyapps
+      case symbol_kind::S_comma_types0: // comma_types0
+      case symbol_kind::S_comma_types1: // comma_types1
+      case symbol_kind::S_tv_bndrs: // tv_bndrs
+      case symbol_kind::S_constrs: // constrs
+      case symbol_kind::S_constrs1: // constrs1
+      case symbol_kind::S_fielddecls: // fielddecls
+      case symbol_kind::S_fielddecls1: // fielddecls1
+      case symbol_kind::S_gdrhs: // gdrhs
+      case symbol_kind::S_infixexp: // infixexp
+      case symbol_kind::S_infixexp_top: // infixexp_top
+      case symbol_kind::S_fexp: // fexp
+      case symbol_kind::S_tup_exprs: // tup_exprs
+      case symbol_kind::S_lexps: // lexps
+      case symbol_kind::S_squals: // squals
+      case symbol_kind::S_guardquals: // guardquals
+      case symbol_kind::S_guardquals1: // guardquals1
+      case symbol_kind::S_altslist: // altslist
+      case symbol_kind::S_alts: // alts
+      case symbol_kind::S_alts1: // alts1
+      case symbol_kind::S_gdpats: // gdpats
+      case symbol_kind::S_apats1: // apats1
+      case symbol_kind::S_stmtlist: // stmtlist
+      case symbol_kind::S_stmts: // stmts
         value.copy< std::vector<expression_ref> > (YY_MOVE (that.value));
         break;
 
-      case 174: // ops
-      case 204: // sig_vars
+      case symbol_kind::S_ops: // ops
+      case symbol_kind::S_sig_vars: // sig_vars
         value.copy< std::vector<std::string> > (YY_MOVE (that.value));
         break;
 
@@ -4764,213 +4765,213 @@ switch (yykind)
     super_type::move (s);
     switch (this->kind ())
     {
-      case 165: // maybe_src
-      case 166: // maybe_safe
-      case 168: // optqualified
+      case symbol_kind::S_maybe_src: // maybe_src
+      case symbol_kind::S_maybe_safe: // maybe_safe
+      case symbol_kind::S_optqualified: // optqualified
         value.move< bool > (YY_MOVE (s.value));
         break;
 
-      case 128: // "CHAR"
-      case 132: // "PRIMCHAR"
+      case symbol_kind::S_CHAR: // "CHAR"
+      case symbol_kind::S_PRIMCHAR: // "PRIMCHAR"
         value.move< char > (YY_MOVE (s.value));
         break;
 
-      case 131: // "RATIONAL"
-      case 137: // "PRIMDOUBLE"
+      case symbol_kind::S_RATIONAL: // "RATIONAL"
+      case symbol_kind::S_PRIMDOUBLE: // "PRIMDOUBLE"
         value.move< double > (YY_MOVE (s.value));
         break;
 
-      case 143: // module
-      case 146: // body
-      case 147: // body2
-      case 148: // top
-      case 149: // top1
-      case 150: // maybeexports
-      case 153: // export
-      case 157: // qcname_ext_w_wildcard
-      case 158: // qcname_ext
-      case 159: // qcname
-      case 164: // importdecl
-      case 170: // maybeimpspec
-      case 171: // impspec
-      case 177: // topdecl
-      case 178: // cl_decl
-      case 179: // ty_decl
-      case 180: // inst_decl
-      case 186: // tycl_hdr
-      case 195: // decllist
-      case 196: // binds
-      case 197: // wherebinds
-      case 200: // opt_sig
-      case 201: // opt_tyconsig
-      case 202: // sigtype
-      case 203: // sigtypedoc
-      case 209: // ctype
-      case 210: // ctypedoc
-      case 211: // context
-      case 212: // context_no_ops
-      case 213: // type
-      case 214: // typedoc
-      case 215: // btype
-      case 218: // tyapp
-      case 219: // atype_docs
-      case 220: // atype
-      case 221: // inst_type
-      case 227: // tv_bndr
-      case 228: // kind
-      case 231: // constr
-      case 232: // forall
-      case 233: // constr_stuff
-      case 236: // fielddecl
-      case 241: // decl_no_th
-      case 242: // decl
-      case 243: // rhs
-      case 245: // gdrh
-      case 246: // sigdecl
-      case 249: // exp
-      case 252: // exp10_top
-      case 253: // exp10
-      case 257: // aexp
-      case 258: // aexp1
-      case 259: // aexp2
-      case 260: // texp
-      case 262: // list
-      case 265: // transformqual
-      case 271: // alt
-      case 272: // alt_rhs
-      case 274: // ifgdpats
-      case 275: // gdpat
-      case 276: // pat
-      case 277: // bindpat
-      case 278: // apat
-      case 282: // stmt
-      case 283: // qual
-      case 330: // literal
+      case symbol_kind::S_module: // module
+      case symbol_kind::S_body: // body
+      case symbol_kind::S_body2: // body2
+      case symbol_kind::S_top: // top
+      case symbol_kind::S_top1: // top1
+      case symbol_kind::S_maybeexports: // maybeexports
+      case symbol_kind::S_export: // export
+      case symbol_kind::S_qcname_ext_w_wildcard: // qcname_ext_w_wildcard
+      case symbol_kind::S_qcname_ext: // qcname_ext
+      case symbol_kind::S_qcname: // qcname
+      case symbol_kind::S_importdecl: // importdecl
+      case symbol_kind::S_maybeimpspec: // maybeimpspec
+      case symbol_kind::S_impspec: // impspec
+      case symbol_kind::S_topdecl: // topdecl
+      case symbol_kind::S_cl_decl: // cl_decl
+      case symbol_kind::S_ty_decl: // ty_decl
+      case symbol_kind::S_inst_decl: // inst_decl
+      case symbol_kind::S_tycl_hdr: // tycl_hdr
+      case symbol_kind::S_decllist: // decllist
+      case symbol_kind::S_binds: // binds
+      case symbol_kind::S_wherebinds: // wherebinds
+      case symbol_kind::S_opt_sig: // opt_sig
+      case symbol_kind::S_opt_tyconsig: // opt_tyconsig
+      case symbol_kind::S_sigtype: // sigtype
+      case symbol_kind::S_sigtypedoc: // sigtypedoc
+      case symbol_kind::S_ctype: // ctype
+      case symbol_kind::S_ctypedoc: // ctypedoc
+      case symbol_kind::S_context: // context
+      case symbol_kind::S_context_no_ops: // context_no_ops
+      case symbol_kind::S_type: // type
+      case symbol_kind::S_typedoc: // typedoc
+      case symbol_kind::S_btype: // btype
+      case symbol_kind::S_tyapp: // tyapp
+      case symbol_kind::S_atype_docs: // atype_docs
+      case symbol_kind::S_atype: // atype
+      case symbol_kind::S_inst_type: // inst_type
+      case symbol_kind::S_tv_bndr: // tv_bndr
+      case symbol_kind::S_kind: // kind
+      case symbol_kind::S_constr: // constr
+      case symbol_kind::S_forall: // forall
+      case symbol_kind::S_constr_stuff: // constr_stuff
+      case symbol_kind::S_fielddecl: // fielddecl
+      case symbol_kind::S_decl_no_th: // decl_no_th
+      case symbol_kind::S_decl: // decl
+      case symbol_kind::S_rhs: // rhs
+      case symbol_kind::S_gdrh: // gdrh
+      case symbol_kind::S_sigdecl: // sigdecl
+      case symbol_kind::S_exp: // exp
+      case symbol_kind::S_exp10_top: // exp10_top
+      case symbol_kind::S_exp10: // exp10
+      case symbol_kind::S_aexp: // aexp
+      case symbol_kind::S_aexp1: // aexp1
+      case symbol_kind::S_aexp2: // aexp2
+      case symbol_kind::S_texp: // texp
+      case symbol_kind::S_list: // list
+      case symbol_kind::S_transformqual: // transformqual
+      case symbol_kind::S_alt: // alt
+      case symbol_kind::S_alt_rhs: // alt_rhs
+      case symbol_kind::S_ifgdpats: // ifgdpats
+      case symbol_kind::S_gdpat: // gdpat
+      case symbol_kind::S_pat: // pat
+      case symbol_kind::S_bindpat: // bindpat
+      case symbol_kind::S_apat: // apat
+      case symbol_kind::S_stmt: // stmt
+      case symbol_kind::S_qual: // qual
+      case symbol_kind::S_literal: // literal
         value.move< expression_ref > (YY_MOVE (s.value));
         break;
 
-      case 136: // "PRIMFLOAT"
+      case symbol_kind::S_PRIMFLOAT: // "PRIMFLOAT"
         value.move< float > (YY_MOVE (s.value));
         break;
 
-      case 130: // "INTEGER"
-      case 134: // "PRIMINTEGER"
-      case 135: // "PRIMWORD"
-      case 333: // commas
+      case symbol_kind::S_INTEGER: // "INTEGER"
+      case symbol_kind::S_PRIMINTEGER: // "PRIMINTEGER"
+      case symbol_kind::S_PRINTWORD: // "PRIMWORD"
+      case symbol_kind::S_commas: // commas
         value.move< int > (YY_MOVE (s.value));
         break;
 
-      case 172: // prec
+      case symbol_kind::S_prec: // prec
         value.move< std::optional<int> > (YY_MOVE (s.value));
         break;
 
-      case 167: // maybe_pkg
-      case 169: // maybeas
+      case symbol_kind::S_maybe_pkg: // maybe_pkg
+      case symbol_kind::S_maybeas: // maybeas
         value.move< std::optional<std::string> > (YY_MOVE (s.value));
         break;
 
-      case 118: // "VARID"
-      case 119: // "CONID"
-      case 120: // "VARSYM"
-      case 121: // "CONSYM"
-      case 122: // "QVARID"
-      case 123: // "QCONID"
-      case 124: // "QVARSYM"
-      case 125: // "QCONSYM"
-      case 126: // "IPDUPVARID"
-      case 127: // "LABELVARID"
-      case 129: // "STRING"
-      case 133: // "PRIMSTRING"
-      case 173: // infix
-      case 184: // data_or_newtype
-      case 206: // strict_mark
-      case 207: // strictness
-      case 287: // qcon
-      case 288: // gen_qcon
-      case 289: // con
-      case 291: // sysdcon_no_list
-      case 292: // sysdcon
-      case 293: // conop
-      case 294: // qconop
-      case 295: // gtycon
-      case 296: // ntgtycon
-      case 297: // oqtycon
-      case 298: // oqtycon_no_varcon
-      case 299: // qtyconop
-      case 300: // qtycondoc
-      case 301: // qtycon
-      case 302: // tycon
-      case 303: // qtyconsym
-      case 304: // tyconsym
-      case 305: // op
-      case 306: // varop
-      case 307: // qop
-      case 308: // qopm
-      case 309: // hole_op
-      case 310: // qvarop
-      case 311: // qvaropm
-      case 312: // tyvar
-      case 313: // tyvarop
-      case 314: // tyvarid
-      case 315: // var
-      case 316: // qvar
-      case 317: // qvarid
-      case 318: // varid
-      case 319: // qvarsym
-      case 320: // qvarsym_no_minus
-      case 321: // qvarsym1
-      case 322: // varsym
-      case 323: // varsym_no_minus
-      case 324: // special_id
-      case 325: // special_sym
-      case 326: // qconid
-      case 327: // conid
-      case 328: // qconsym
-      case 329: // consym
-      case 332: // modid
+      case symbol_kind::S_VARID: // "VARID"
+      case symbol_kind::S_CONID: // "CONID"
+      case symbol_kind::S_VARSYM: // "VARSYM"
+      case symbol_kind::S_CONSYM: // "CONSYM"
+      case symbol_kind::S_QVARID: // "QVARID"
+      case symbol_kind::S_QCONID: // "QCONID"
+      case symbol_kind::S_QVARSYM: // "QVARSYM"
+      case symbol_kind::S_QCONSYM: // "QCONSYM"
+      case symbol_kind::S_IPDUPVARID: // "IPDUPVARID"
+      case symbol_kind::S_LABELVARID: // "LABELVARID"
+      case symbol_kind::S_STRING: // "STRING"
+      case symbol_kind::S_PRIMSTRING: // "PRIMSTRING"
+      case symbol_kind::S_infix: // infix
+      case symbol_kind::S_data_or_newtype: // data_or_newtype
+      case symbol_kind::S_strict_mark: // strict_mark
+      case symbol_kind::S_strictness: // strictness
+      case symbol_kind::S_qcon: // qcon
+      case symbol_kind::S_gen_qcon: // gen_qcon
+      case symbol_kind::S_con: // con
+      case symbol_kind::S_sysdcon_no_list: // sysdcon_no_list
+      case symbol_kind::S_sysdcon: // sysdcon
+      case symbol_kind::S_conop: // conop
+      case symbol_kind::S_qconop: // qconop
+      case symbol_kind::S_gtycon: // gtycon
+      case symbol_kind::S_ntgtycon: // ntgtycon
+      case symbol_kind::S_oqtycon: // oqtycon
+      case symbol_kind::S_oqtycon_no_varcon: // oqtycon_no_varcon
+      case symbol_kind::S_qtyconop: // qtyconop
+      case symbol_kind::S_qtycondoc: // qtycondoc
+      case symbol_kind::S_qtycon: // qtycon
+      case symbol_kind::S_tycon: // tycon
+      case symbol_kind::S_qtyconsym: // qtyconsym
+      case symbol_kind::S_tyconsym: // tyconsym
+      case symbol_kind::S_op: // op
+      case symbol_kind::S_varop: // varop
+      case symbol_kind::S_qop: // qop
+      case symbol_kind::S_qopm: // qopm
+      case symbol_kind::S_hole_op: // hole_op
+      case symbol_kind::S_qvarop: // qvarop
+      case symbol_kind::S_qvaropm: // qvaropm
+      case symbol_kind::S_tyvar: // tyvar
+      case symbol_kind::S_tyvarop: // tyvarop
+      case symbol_kind::S_tyvarid: // tyvarid
+      case symbol_kind::S_var: // var
+      case symbol_kind::S_qvar: // qvar
+      case symbol_kind::S_qvarid: // qvarid
+      case symbol_kind::S_varid: // varid
+      case symbol_kind::S_qvarsym: // qvarsym
+      case symbol_kind::S_qvarsym_no_minus: // qvarsym_no_minus
+      case symbol_kind::S_qvarsym1: // qvarsym1
+      case symbol_kind::S_varsym: // varsym
+      case symbol_kind::S_varsym_no_minus: // varsym_no_minus
+      case symbol_kind::S_special_id: // special_id
+      case symbol_kind::S_special_sym: // special_sym
+      case symbol_kind::S_qconid: // qconid
+      case symbol_kind::S_conid: // conid
+      case symbol_kind::S_qconsym: // qconsym
+      case symbol_kind::S_consym: // consym
+      case symbol_kind::S_modid: // modid
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
-      case 151: // exportlist
-      case 152: // exportlist1
-      case 155: // qcnames
-      case 156: // qcnames1
-      case 162: // importdecls
-      case 163: // importdecls_semi
-      case 175: // topdecls
-      case 176: // topdecls_semi
-      case 194: // decls
-      case 205: // sigtypes1
-      case 216: // btype_no_ops
-      case 217: // tyapps
-      case 223: // comma_types0
-      case 224: // comma_types1
-      case 226: // tv_bndrs
-      case 229: // constrs
-      case 230: // constrs1
-      case 234: // fielddecls
-      case 235: // fielddecls1
-      case 244: // gdrhs
-      case 250: // infixexp
-      case 251: // infixexp_top
-      case 256: // fexp
-      case 261: // tup_exprs
-      case 263: // lexps
-      case 264: // squals
-      case 266: // guardquals
-      case 267: // guardquals1
-      case 268: // altslist
-      case 269: // alts
-      case 270: // alts1
-      case 273: // gdpats
-      case 279: // apats1
-      case 280: // stmtlist
-      case 281: // stmts
+      case symbol_kind::S_exportlist: // exportlist
+      case symbol_kind::S_exportlist1: // exportlist1
+      case symbol_kind::S_qcnames: // qcnames
+      case symbol_kind::S_qcnames1: // qcnames1
+      case symbol_kind::S_importdecls: // importdecls
+      case symbol_kind::S_importdecls_semi: // importdecls_semi
+      case symbol_kind::S_topdecls: // topdecls
+      case symbol_kind::S_topdecls_semi: // topdecls_semi
+      case symbol_kind::S_decls: // decls
+      case symbol_kind::S_sigtypes1: // sigtypes1
+      case symbol_kind::S_btype_no_ops: // btype_no_ops
+      case symbol_kind::S_tyapps: // tyapps
+      case symbol_kind::S_comma_types0: // comma_types0
+      case symbol_kind::S_comma_types1: // comma_types1
+      case symbol_kind::S_tv_bndrs: // tv_bndrs
+      case symbol_kind::S_constrs: // constrs
+      case symbol_kind::S_constrs1: // constrs1
+      case symbol_kind::S_fielddecls: // fielddecls
+      case symbol_kind::S_fielddecls1: // fielddecls1
+      case symbol_kind::S_gdrhs: // gdrhs
+      case symbol_kind::S_infixexp: // infixexp
+      case symbol_kind::S_infixexp_top: // infixexp_top
+      case symbol_kind::S_fexp: // fexp
+      case symbol_kind::S_tup_exprs: // tup_exprs
+      case symbol_kind::S_lexps: // lexps
+      case symbol_kind::S_squals: // squals
+      case symbol_kind::S_guardquals: // guardquals
+      case symbol_kind::S_guardquals1: // guardquals1
+      case symbol_kind::S_altslist: // altslist
+      case symbol_kind::S_alts: // alts
+      case symbol_kind::S_alts1: // alts1
+      case symbol_kind::S_gdpats: // gdpats
+      case symbol_kind::S_apats1: // apats1
+      case symbol_kind::S_stmtlist: // stmtlist
+      case symbol_kind::S_stmts: // stmts
         value.move< std::vector<expression_ref> > (YY_MOVE (s.value));
         break;
 
-      case 174: // ops
-      case 204: // sig_vars
+      case symbol_kind::S_ops: // ops
+      case symbol_kind::S_sig_vars: // sig_vars
         value.move< std::vector<std::string> > (YY_MOVE (s.value));
         break;
 
@@ -5036,8 +5037,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5040 "parser.hh"
-
+#line 5041 "parser.hh"
 
 
 
