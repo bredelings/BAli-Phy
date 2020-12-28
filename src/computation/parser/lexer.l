@@ -102,7 +102,7 @@ qvarsym      {qual}{varsym}
 qconsym      {qual}{consym}
 
 floating_point      {numspc}{decimal}\.{decimal}{exponent}?|{numspc}{decimal}{exponent}
-hex_floating_point  {numspc}{hexadecimal}\.{hexadecimal}{exponent}?|{numspc}{hexadecimal}{binexponent}
+hex_floating_point  {numspc}{hexadecimal}\.{hexadecimal}{bin_exponent}?|{numspc}{hexadecimal}{bin_exponent}
 
 negative     \-
 signed       {negative}?
