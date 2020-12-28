@@ -62,7 +62,7 @@ large        {asclarge}|{unilarge}
 
 unismall     \x02
 ascsmall     [a-z]
-small        {ascsmall}|{unismall}|\_
+small        {ascsmall}|{unismall}|_
 
 unigraphic   \x06
 graphic      {small}|{large}|{symbol}|{digit}|{special}|{unigraphic}|\"\'
