@@ -18,6 +18,20 @@ class TreeInterface
     const context& get_const_context() const;
           context& get_context();
 
+          std::vector<int>& affected_nodes();
+    const std::vector<int>& affected_nodes() const;
+
+          std::vector<std::vector<int>*>& branches_from_affected_nodes();
+    const std::vector<std::vector<int>*>& branches_from_affected_nodes() const;
+
+    std::vector<int>*& branches_from_affected_node(int n)
+    {
+        return branches_from_affected_nodes()[n];
+    }
+    std::vector<int>* branches_from_affected_node(int n) const
+    {
+        return branches_from_affected_nodes()[n];
+    }
 public:
     const Parameters* P;
 
