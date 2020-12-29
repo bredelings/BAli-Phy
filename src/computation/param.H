@@ -5,7 +5,7 @@
 #include "computation/expression/expression_ref.H"
 #include "util/bounds.H"
 
-class context;
+class context_ref;
 
 enum class eval_strategy {unset, unchangeable, precomputed, changeable};
 
@@ -16,13 +16,13 @@ class param
     eval_strategy strategy=eval_strategy::unset;
 
 public:
-    expression_ref ref(const context& C) const;
+    expression_ref ref(const context_ref& C) const;
 
-    expression_ref get_value(const context& C) const;
-    void set_value(context& C, const expression_ref& v) const;
+    expression_ref get_value(const context_ref& C) const;
+    void set_value(context_ref& C, const expression_ref& v) const;
 
     std::optional<expression_ref> constant_value() const {return value;}
-    std::optional<int> is_modifiable(const context& C) const;
+    std::optional<int> is_modifiable(const context_ref& C) const;
 
     param& operator=(const param&) = default;
 
@@ -35,12 +35,12 @@ public:
     param(const expression_ref& v):value(v) {}
 };
 
-param get_param(context& C, const expression_ref& E, eval_strategy s = eval_strategy::changeable);
+param get_param(context_ref& C, const expression_ref& E, eval_strategy s = eval_strategy::changeable);
 
 class ConstParam
 {
     param x;
-    const context* C;
+    const context_ref* C;
 public:
     expression_ref ref() const;
 
@@ -53,13 +53,13 @@ public:
     explicit operator bool();
 
     ConstParam();
-    ConstParam(param, const context*);
+    ConstParam(param, const context_ref*);
 };
 
 class Param
 {
     param x;
-    context* C;
+    context_ref* C;
 public:
     expression_ref ref() const;
 
@@ -72,7 +72,7 @@ public:
     explicit operator bool();
 
     Param();
-    Param(param, context*);
+    Param(param, context_ref*);
 };
 
 #endif
