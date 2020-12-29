@@ -128,7 +128,7 @@ public:
 
     alignment A() const;                        // used in dp-alignment-sums.cc (debug), mcmc/logger.cc (log), sample-alignment.cc (debug), sample-node.cc (debug), mcmc/setup.cc [fraction_non_gap]
 
-    TreeInterface t() const;
+    ParametersTreeInterface t() const;
 
     /// Cached Transition Probabilities
     const EVector& transition_P(int b) const;   // used only to force transition_Ps in sample-topology-SPR.cc [ SPR_search_attachment_points ]
@@ -301,7 +301,7 @@ struct parameters_constants: public Object
 class Parameters: public Model
 {
     friend class data_partition;
-    friend class TreeInterface;
+    friend class ParametersTreeInterface;
 public:
     object_ptr<parameters_constants> PC;
     object_ptr<tree_constants> TC;
@@ -339,7 +339,7 @@ public:
 
     std::optional<int> scale_index_for_partition(int i) const {return PC->scale_for_partition[i];}
   
-    TreeInterface t() const;
+    ParametersTreeInterface t() const;
 
     std::vector<std::string> get_labels() const;
   

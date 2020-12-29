@@ -459,3 +459,63 @@ extern "C" closure builtin_function_slice_sample_integer_random_variable(Operati
 
     return EPair(state+1,constructor("()",0));
 }
+
+extern "C" closure builtin_function_walk_tree_sample_alignment(OperationArgs& Args)
+{
+    // can I do the walk_tree part in Haskell?
+
+    // in C++ I compute changeable things to walk to tree, but do not construct
+    // a dependence graph representing what the C++ routine does.
+    return {0};
+}
+
+extern "C" closure builtin_function_sample_alignments_one(OperationArgs& Args)
+{
+    // int b = evaluate(1).as_int();
+
+    // int c = evaluate( ).as_int()
+
+    // hmm = context(c).get_branch_HMM(b)
+
+    // 0. get the original context
+
+    // 1. P.select_root(b)
+
+    // 2. If b points to a leaf node, reverse it
+
+    // 3. #if debug #then copy the initial context -> P0 #endif
+
+    // 4. For each partition,
+    //       [matrix,ratio] <- sample the alignment
+    //       total_ratio *= ratio
+
+    // 5. the end (do we really do anything with the total_ratio?)
+    return {0};
+}
+
+
+/// walk_tree_sample_alignments
+
+/// realign_from_tips
+
+/// sample_node
+
+/// sample_two_nodes
+
+/// SPR_flat
+
+/// SPR_nodes
+
+/// SPR_all
+
+/// walk_tree_sample_branch_lengths
+
+/// walk_tree_NNI_and_lengths
+
+/// walk_tree_NNI
+
+/// scale_scales_only (MH)
+
+/// scale_scales_only (slice)
+
+

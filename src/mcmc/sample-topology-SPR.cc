@@ -360,7 +360,7 @@ spr_range spr_full_range(const TreeInterface& T, const tree_edge& b_parent)
 struct spr_info
 {
 public:
-    const TreeInterface T;
+    const TreeInterface& T;
 
     /// The branch pointing AWAY from the subtree to prune
     tree_edge b_parent;

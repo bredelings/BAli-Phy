@@ -25,6 +25,6 @@
 class TreeInferface;
 
 /// Map leaf nodes of T to the leaf sequences of A
-alignment link_A(alignment A, const std::vector<std::string>& labels, TreeInterface T, bool internal_sequences=true);
+alignment link_A(alignment A, const std::vector<std::string>& labels, const TreeInterface& T, bool internal_sequences=true);
 
 #endif

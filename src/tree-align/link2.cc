@@ -19,7 +19,7 @@ using std::string;
 /// \param A A multiple sequence alignment.
 ///
 
-alignment link_A(alignment A, const vector<string>& labels, TreeInterface T, bool internal_sequences)
+alignment link_A(alignment A, const vector<string>& labels, const TreeInterface& T, bool internal_sequences)
 {
     //------ IF sequences < leaf nodes THEN complain ---------//
     if (A.n_sequences() < T.n_leaves())
