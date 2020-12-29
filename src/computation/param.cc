@@ -6,7 +6,7 @@
 
 using std::optional;
 
-expression_ref param::ref(const context& C) const
+expression_ref param::ref(const context_ref& C) const
 {
     if (head)
         return C.get_expression(*head);
@@ -14,7 +14,7 @@ expression_ref param::ref(const context& C) const
         return *value;
 }
 
-optional<int> param::is_modifiable(const context& C) const
+optional<int> param::is_modifiable(const context_ref& C) const
 {
     if (head)
         return C.compute_expression_is_modifiable_reg(*head);
@@ -22,7 +22,7 @@ optional<int> param::is_modifiable(const context& C) const
         return {};
 }
 
-expression_ref param::get_value(const context& C) const
+expression_ref param::get_value(const context_ref& C) const
 {
     if (head)
     {
@@ -43,7 +43,7 @@ expression_ref param::get_value(const context& C) const
         return *value;
 }
 
-void param::set_value(context& C, const expression_ref& v) const
+void param::set_value(context_ref& C, const expression_ref& v) const
 {
     if (value)
     {
@@ -58,7 +58,7 @@ void param::set_value(context& C, const expression_ref& v) const
 
 // for use with maybe_modifiable_structure
 
-param get_param(context& C, const expression_ref& E, eval_strategy s)
+param get_param(context_ref& C, const expression_ref& E, eval_strategy s)
 {
     if (E.head() == constructor("Modifiable",1))
     {
@@ -107,7 +107,7 @@ ConstParam::operator bool()
 ConstParam::ConstParam()
 {}
 
-ConstParam::ConstParam(param x_, const context* C_)
+ConstParam::ConstParam(param x_, const context_ref* C_)
     :x(x_),C(C_)
 {}
 
@@ -144,6 +144,6 @@ Param::operator bool()
 Param::Param()
 {}
 
-Param::Param(param x_, context* C_)
+Param::Param(param x_, context_ref* C_)
     :x(x_),C(C_)
 {}
