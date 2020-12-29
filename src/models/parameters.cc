@@ -410,7 +410,7 @@ EVector unaligned_alignments_on_tree(const Tree& t, const vector<vector<int>>& s
     return alignments;
 }
 
-vector<param> get_params_from_list(context* C, const expression_ref& list, std::optional<int> check_size = {})
+vector<param> get_params_from_list(context_ref* C, const expression_ref& list, std::optional<int> check_size = {})
 {
     vector<param> params;
     expression_ref structure = C->evaluate_expression({var("Parameters.maybe_modifiable_structure"), list});
@@ -428,7 +428,7 @@ vector<param> get_params_from_list(context* C, const expression_ref& list, std::
     return params;
 }
 
-vector<param> get_params_from_array(context* C, const expression_ref& array, std::optional<int> check_size = {})
+vector<param> get_params_from_array(context_ref* C, const expression_ref& array, std::optional<int> check_size = {})
 {
     vector<param> params;
     expression_ref structure = C->evaluate_expression({var("Parameters.maybe_modifiable_structure"), array});
@@ -582,7 +582,7 @@ vector<int> edges_connecting_to_node(const Tree& T, int n)
     return branch_list_;
 }
 
-void tree_constants::register_branch_lengths(context* C, const expression_ref& branch_lengths_exp)
+void tree_constants::register_branch_lengths(context_ref* C, const expression_ref& branch_lengths_exp)
 {
     int B = parameters_for_tree_branch.size()/2;
     if (B == 0) return;
@@ -593,10 +593,9 @@ void tree_constants::register_branch_lengths(context* C, const expression_ref& b
     branch_durations = get_params_from_list(C, branch_lengths, B);
 }
 
-tree_constants::tree_constants(context* C, const vector<string>& labels, int tree_head_)
+tree_constants::tree_constants(context_ref* C, int tree_head_)
     :tree_head(tree_head_),
-     n_leaves(0),
-     node_labels(labels)
+     n_leaves(0)
 {
     //------------------------- Create the tree structure -----------------------//
     auto tree_structure = C->evaluate_expression({var("Parameters.maybe_modifiable_structure"), C->get_expression(tree_head)});
@@ -617,8 +616,6 @@ tree_constants::tree_constants(context* C, const vector<string>& labels, int tre
 
     if (log_verbose >= 3)
         std::cerr<<"num_branches = "<<C->evaluate_expression({var("Parameters.maybe_modifiable_structure"), {var("Tree.numBranches"), C->get_expression(tree_head)}})<<"\n\n";;
-
-    assert(node_labels.size() == n_nodes);
 
     for(int n=0; n < n_nodes; n++)
     {
@@ -645,6 +642,14 @@ tree_constants::tree_constants(context* C, const vector<string>& labels, int tre
 
         parameters_for_tree_branch.push_back( std::tuple<param, param, param>{m_source, m_source_index, m_target} );
     }
+}
+
+tree_constants::tree_constants(context_ref* C, const vector<string>& labels, int tree_head_)
+    :tree_constants(C, tree_head_)
+{
+    node_labels = labels;
+    int n_nodes = parameters_for_tree_node.size();
+    assert(node_labels.size() == n_nodes);
 }
 
 expression_ref tree_expression(const SequenceTree& T)
