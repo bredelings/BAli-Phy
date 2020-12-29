@@ -398,6 +398,11 @@ const std::vector<std::vector<int>*>& ModifiablesTreeInterface::branches_from_af
     return branches_from_affected_nodes_;
 }
 
+ModifiablesTreeInterface::ModifiablesTreeInterface(context* c, int tree_head)
+    :C(c),TC(new tree_constants(c,tree_head))
+{
+}
+
 vector<int> branches_from_leaves(const TreeInterface& t) 
 {
     vector<int> branch_list;
