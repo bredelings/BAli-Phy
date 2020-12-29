@@ -37,42 +37,4 @@ public:
 
 param get_param(context_ref& C, const expression_ref& E, eval_strategy s = eval_strategy::changeable);
 
-class ConstParam
-{
-    param x;
-    const context_ref* C;
-public:
-    expression_ref ref() const;
-
-    expression_ref get_value() const;
-
-    std::optional<expression_ref> constant_value() const;
-
-    std::optional<int> is_modifiable() const;
-
-    explicit operator bool();
-
-    ConstParam();
-    ConstParam(param, const context_ref*);
-};
-
-class Param
-{
-    param x;
-    context_ref* C;
-public:
-    expression_ref ref() const;
-
-    expression_ref get_value() const;
-    void set_value(const expression_ref& v) const;
-
-    std::optional<expression_ref> constant_value() const;
-    std::optional<int> is_modifiable() const;
-
-    explicit operator bool();
-
-    Param();
-    Param(param, context_ref*);
-};
-
 #endif
