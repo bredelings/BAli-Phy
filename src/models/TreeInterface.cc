@@ -8,12 +8,27 @@ using std::vector;
 using std::string;
 using boost::dynamic_bitset;
 
+const tree_constants& TreeInterface::get_tree_constants() const
+{
+    return *P->TC;
+}
+
+const context& TreeInterface::get_const_context() const
+{
+    return *P;
+}
+
+context& TreeInterface::get_context()
+{
+    return *const_cast<Parameters*>(P);
+}
+
 int TreeInterface::n_nodes() const {
-    return P->TC->parameters_for_tree_node.size();
+    return get_tree_constants().parameters_for_tree_node.size();
 }
 
 int TreeInterface::n_leaves() const {
-    return P->TC->n_leaves;
+    return get_tree_constants().n_leaves;
 }
 
 int TreeInterface::n_leaf_branches() const {
@@ -21,14 +36,14 @@ int TreeInterface::n_leaf_branches() const {
 }
 
 int TreeInterface::n_branches() const {
-    return P->TC->parameters_for_tree_branch.size()/2;
+    return get_tree_constants().parameters_for_tree_branch.size()/2;
 }
 
 int TreeInterface::degree(int n) const {
     if (P->branches_from_affected_node[n])
 	return P->branches_from_affected_node[n]->size();
     else
-	return P->TC->parameters_for_tree_node[n].size();
+	return get_tree_constants().parameters_for_tree_node[n].size();
 }
 
 int TreeInterface::branch_out(int n, int i) const
@@ -36,7 +51,7 @@ int TreeInterface::branch_out(int n, int i) const
     if (P->branches_from_affected_node[n])
 	return (*P->branches_from_affected_node[n])[i];
   
-    return P->TC->parameters_for_tree_node[n][i].get_value(*P).as_int();
+    return get_tree_constants().parameters_for_tree_node[n][i].get_value(get_const_context()).as_int();
 }
 
 int TreeInterface::branch_in(int n, int i) const {
@@ -230,17 +245,17 @@ bool TreeInterface::subtree_contains_branch(int b1,int b2) const
 
 
 int TreeInterface::source(int b) const {
-    return std::get<0>(P->TC->parameters_for_tree_branch[b]).get_value(*P).as_int();
+    return std::get<0>(get_tree_constants().parameters_for_tree_branch[b]).get_value(get_const_context()).as_int();
 }
 
 int TreeInterface::source_index(int b) const {
-    return std::get<1>(P->TC->parameters_for_tree_branch[b]).get_value(*P).as_int();
+    return std::get<1>(get_tree_constants().parameters_for_tree_branch[b]).get_value(get_const_context()).as_int();
 }
 
 int TreeInterface::target(int b) const {
-    return std::get<2>(P->TC->parameters_for_tree_branch[b]).get_value(*P).as_int();
+    return std::get<2>(get_tree_constants().parameters_for_tree_branch[b]).get_value(get_const_context()).as_int();
 }
-  
+
 int TreeInterface::undirected(int b) const {
     return (b % n_branches());
 }
@@ -264,7 +279,7 @@ bool TreeInterface::is_leaf_branch(int b) const {
 bool TreeInterface::is_internal_branch(int b) const {
     return not is_leaf_branch(b);
 }
-  
+
 int TreeInterface::search_branch(int n1, int n2) const
 {
     for(int i=0;i<degree(n1);i++)
@@ -312,20 +327,20 @@ tree_edge TreeInterface::edge(int n1, int n2) const
 double TreeInterface::branch_length(int b) const
 {
     b %= n_branches();
-    return P->TC->branch_durations[b].get_value(*P).as_double();
+    return get_tree_constants().branch_durations[b].get_value(get_const_context()).as_double();
 }
 
 bool TreeInterface::can_set_branch_length(int b)
 {
     b %= n_branches();
-    return bool(P->TC->branch_durations[b].is_modifiable(*P));
+    return bool(get_tree_constants().branch_durations[b].is_modifiable(get_const_context()));
 }
 
 void TreeInterface::set_branch_length(int b, double l)
 {
     b %= n_branches();
-    auto& R = P->TC->branch_durations[b];
-    R.set_value(*const_cast<Parameters*>(P), l);
+    auto& R = get_tree_constants().branch_durations[b];
+    R.set_value(get_context(), l);
 }
 
 vector<int> branches_from_leaves(const TreeInterface& t) 
@@ -517,7 +532,7 @@ vector<int> edges_connecting_to_node(const Tree& T, int n);
  */
 void TreeInterface::read_tree_node(const Tree& T, int n)
 {
-    assert(P->TC->parameters_for_tree_node[n].size() == T.node(n).degree());
+    assert(get_tree_constants().parameters_for_tree_node[n].size() == T.node(n).degree());
 
     // These are the edges we seek to impose.
     vector<int> edges = edges_connecting_to_node(T,n);
@@ -527,8 +542,8 @@ void TreeInterface::read_tree_node(const Tree& T, int n)
     for(int i=0;i<edges.size();i++)
     {
 	int b = edges[i];
-	P->TC->parameters_for_tree_node[n][i].set_value(*const_cast<Parameters*>(P), b);
-	std::get<1>(P->TC->parameters_for_tree_branch[b]).set_value(*const_cast<Parameters*>(P), i);
+	get_tree_constants().parameters_for_tree_node[n][i].set_value(get_context(), b);
+	std::get<1>(get_tree_constants().parameters_for_tree_branch[b]).set_value(get_context(), i);
     }
 }
 
@@ -539,8 +554,8 @@ void TreeInterface::read_tree(const Tree& T)
 
     for(int b=0; b < 2*T.n_branches(); b++)
     {
-        std::get<0>(P->TC->parameters_for_tree_branch[b]).set_value(*const_cast<Parameters*>(P), (int)T.directed_branch(b).source());
-        std::get<2>(P->TC->parameters_for_tree_branch[b]).set_value(*const_cast<Parameters*>(P), (int)T.directed_branch(b).target());
+        std::get<0>(get_tree_constants().parameters_for_tree_branch[b]).set_value(get_context(), (int)T.directed_branch(b).source());
+        std::get<2>(get_tree_constants().parameters_for_tree_branch[b]).set_value(get_context(), (int)T.directed_branch(b).target());
     }
 }
 
@@ -575,8 +590,8 @@ void TreeInterface::reconnect_branch(int s1, int t1, int t2)
     branches_from_affected_node[t2]->push_back(b2);
 
     // Update branch source and target nodes
-    std::get<2>(P->TC->parameters_for_tree_branch[b1]).set_value(*const_cast<Parameters*>(P), t2);
-    std::get<0>(P->TC->parameters_for_tree_branch[b2]).set_value(*const_cast<Parameters*>(P), t2);
+    std::get<2>(get_tree_constants().parameters_for_tree_branch[b1]).set_value(get_context(), t2);
+    std::get<0>(get_tree_constants().parameters_for_tree_branch[b2]).set_value(get_context(), t2);
 }
 
 void TreeInterface::begin_modify_topology()
@@ -591,17 +606,17 @@ void TreeInterface::begin_modify_topology()
 void TreeInterface::end_modify_node(int n)
 {
     assert(P->branches_from_affected_node[n]);
-    assert(P->TC->parameters_for_tree_node[n].size() == P->branches_from_affected_node[n]->size());
+    assert(get_tree_constants().parameters_for_tree_node[n].size() == P->branches_from_affected_node[n]->size());
 
     // These are the current edges.
     const auto& branches = *P->branches_from_affected_node[n];
 
-    assert(branches.size() == P->TC->parameters_for_tree_node[n].size());
+    assert(branches.size() == get_tree_constants().parameters_for_tree_node[n].size());
     for(int i=0;i<branches.size();i++)
     {
 	int b = branches[i];
-	P->TC->parameters_for_tree_node[n][i].set_value(*const_cast<Parameters*>(P), b);
-	std::get<1>(P->TC->parameters_for_tree_branch[b]).set_value(*const_cast<Parameters*>(P), i);
+	get_tree_constants().parameters_for_tree_node[n][i].set_value(get_context(), b);
+	std::get<1>(get_tree_constants().parameters_for_tree_branch[b]).set_value(get_context(), i);
     }
 
     delete P->branches_from_affected_node[n];
