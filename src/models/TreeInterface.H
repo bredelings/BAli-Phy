@@ -5,12 +5,19 @@
 #include <string>                                   // for string
 #include <vector>                                   // for vector
 #include "tree/tree.H"                              // for tree_edge, Tree (...
+class context;
 class Parameters;
+class tree_constants;
 
 class TreeInterface
 {
     void read_tree_node(const Tree&, int n);
     void end_modify_node(int n);
+
+    const tree_constants& get_tree_constants() const;
+    const context& get_const_context() const;
+          context& get_context();
+
 public:
     const Parameters* P;
 
