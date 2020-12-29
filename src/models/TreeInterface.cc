@@ -363,6 +363,41 @@ const std::vector<std::vector<int>*>& ParametersTreeInterface::branches_from_aff
     return P->branches_from_affected_node;
 }
 
+const tree_constants& ModifiablesTreeInterface::get_tree_constants() const
+{
+    return *TC;
+}
+
+const context& ModifiablesTreeInterface::get_const_context() const
+{
+    return *C;
+}
+
+context& ModifiablesTreeInterface::get_context()
+{
+    return *const_cast<context*>(C);
+}
+
+std::vector<int>& ModifiablesTreeInterface::affected_nodes()
+{
+    return affected_nodes_;
+}
+
+const std::vector<int>& ModifiablesTreeInterface::affected_nodes() const
+{
+    return affected_nodes_;
+}
+
+std::vector<std::vector<int>*>& ModifiablesTreeInterface::branches_from_affected_nodes()
+{
+    return branches_from_affected_nodes_;
+}
+
+const std::vector<std::vector<int>*>& ModifiablesTreeInterface::branches_from_affected_nodes() const
+{
+    return branches_from_affected_nodes_;
+}
+
 vector<int> branches_from_leaves(const TreeInterface& t) 
 {
     vector<int> branch_list;

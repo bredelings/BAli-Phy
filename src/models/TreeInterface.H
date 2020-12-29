@@ -118,6 +118,27 @@ public:
     constexpr ParametersTreeInterface(const Parameters* p):P(p) {};
 };
 
+class ModifiablesTreeInterface: public TreeInterface
+{
+    const tree_constants& get_tree_constants() const;
+    const context& get_const_context() const;
+          context& get_context();
+
+          std::vector<int>& affected_nodes();
+    const std::vector<int>& affected_nodes() const;
+
+          std::vector<std::vector<int>*>& branches_from_affected_nodes();
+    const std::vector<std::vector<int>*>& branches_from_affected_nodes() const;
+
+    std::vector<int> affected_nodes_;
+    std::vector<std::vector<int>*> branches_from_affected_nodes_;
+    const tree_constants* TC;
+    const context* C;
+public:
+
+    ModifiablesTreeInterface(const context* c):C(c) {};
+};
+
 double tree_length(const TreeInterface& t);
 
 std::vector<int> branches_from_leaves(const TreeInterface& t);
