@@ -14,15 +14,15 @@ class TreeInterface
     void read_tree_node(const Tree&, int n);
     void end_modify_node(int n);
 
-    const tree_constants& get_tree_constants() const;
-    const context& get_const_context() const;
-          context& get_context();
+    virtual const tree_constants& get_tree_constants() const = 0;
+    virtual const context& get_const_context() const = 0;
+    virtual       context& get_context() = 0;
 
-          std::vector<int>& affected_nodes();
-    const std::vector<int>& affected_nodes() const;
+    virtual       std::vector<int>& affected_nodes() = 0;
+    virtual const std::vector<int>& affected_nodes() const = 0;
 
-          std::vector<std::vector<int>*>& branches_from_affected_nodes();
-    const std::vector<std::vector<int>*>& branches_from_affected_nodes() const;
+    virtual       std::vector<std::vector<int>*>& branches_from_affected_nodes() = 0;
+    virtual const std::vector<std::vector<int>*>& branches_from_affected_nodes() const = 0;
 
     std::vector<int>*& branches_from_affected_node(int n)
     {
@@ -33,8 +33,6 @@ class TreeInterface
         return branches_from_affected_nodes()[n];
     }
 public:
-    const Parameters* P;
-
     int n_nodes() const;
     int n_branches() const;
     int n_leaves() const;
@@ -99,7 +97,25 @@ public:
     void reconnect_branch(int s1, int t1, int t2);
     void end_modify_topology();
 
-    constexpr TreeInterface(const Parameters* p):P(p) {};
+    virtual ~TreeInterface() = default;
+};
+
+class ParametersTreeInterface: public TreeInterface
+{
+    const tree_constants& get_tree_constants() const;
+    const context& get_const_context() const;
+          context& get_context();
+
+          std::vector<int>& affected_nodes();
+    const std::vector<int>& affected_nodes() const;
+
+          std::vector<std::vector<int>*>& branches_from_affected_nodes();
+    const std::vector<std::vector<int>*>& branches_from_affected_nodes() const;
+
+public:
+    const Parameters* P;
+
+    constexpr ParametersTreeInterface(const Parameters* p):P(p) {};
 };
 
 double tree_length(const TreeInterface& t);

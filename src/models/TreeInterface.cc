@@ -8,41 +8,6 @@ using std::vector;
 using std::string;
 using boost::dynamic_bitset;
 
-const tree_constants& TreeInterface::get_tree_constants() const
-{
-    return *P->TC;
-}
-
-const context& TreeInterface::get_const_context() const
-{
-    return *P;
-}
-
-context& TreeInterface::get_context()
-{
-    return *const_cast<Parameters*>(P);
-}
-
-std::vector<int>& TreeInterface::affected_nodes()
-{
-    return const_cast<Parameters*>(P)->affected_nodes;
-}
-
-const std::vector<int>& TreeInterface::affected_nodes() const
-{
-    return P->affected_nodes;
-}
-
-std::vector<std::vector<int>*>& TreeInterface::branches_from_affected_nodes()
-{
-    return const_cast<Parameters*>(P)->branches_from_affected_node;
-}
-
-const std::vector<std::vector<int>*>& TreeInterface::branches_from_affected_nodes() const
-{
-    return P->branches_from_affected_node;
-}
-
 int TreeInterface::n_nodes() const {
     return get_tree_constants().parameters_for_tree_node.size();
 }
@@ -361,6 +326,41 @@ void TreeInterface::set_branch_length(int b, double l)
     b %= n_branches();
     auto& R = get_tree_constants().branch_durations[b];
     R.set_value(get_context(), l);
+}
+
+const tree_constants& ParametersTreeInterface::get_tree_constants() const
+{
+    return *P->TC;
+}
+
+const context& ParametersTreeInterface::get_const_context() const
+{
+    return *P;
+}
+
+context& ParametersTreeInterface::get_context()
+{
+    return *const_cast<Parameters*>(P);
+}
+
+std::vector<int>& ParametersTreeInterface::affected_nodes()
+{
+    return const_cast<Parameters*>(P)->affected_nodes;
+}
+
+const std::vector<int>& ParametersTreeInterface::affected_nodes() const
+{
+    return P->affected_nodes;
+}
+
+std::vector<std::vector<int>*>& ParametersTreeInterface::branches_from_affected_nodes()
+{
+    return const_cast<Parameters*>(P)->branches_from_affected_node;
+}
+
+const std::vector<std::vector<int>*>& ParametersTreeInterface::branches_from_affected_nodes() const
+{
+    return P->branches_from_affected_node;
 }
 
 vector<int> branches_from_leaves(const TreeInterface& t) 
