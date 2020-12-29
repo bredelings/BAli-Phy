@@ -13,6 +13,8 @@
 #include "mcmc/slice-sampling.H"
 #include "mcmc/proposals.H"
 #include "computation/operations.H"      // for is_seq( )
+#include "models/TreeInterface.H"
+#include "mcmc/sample.H"
 
 using boost::dynamic_pointer_cast;
 
@@ -462,6 +464,19 @@ extern "C" closure builtin_function_slice_sample_integer_random_variable(Operati
 
 extern "C" closure builtin_function_walk_tree_sample_alignment(OperationArgs& Args)
 {
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
+
+    //------------- 1a. Get argument X -----------------
+    int tree_reg = Args.evaluate_slot_unchangeable(0);
+
+    int c1 = Args.evaluate(2).as_int();
+    context_ref C1(M, c1);
+    ModifiablesTreeInterface T(&C1,tree_reg);
+
+    int subst_root = T.n_nodes()-1;
+    auto branches = walk_tree_path(T, subst_root);
+
     // can I do the walk_tree part in Haskell?
 
     // in C++ I compute changeable things to walk to tree, but do not construct
