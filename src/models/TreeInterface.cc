@@ -23,6 +23,26 @@ context& TreeInterface::get_context()
     return *const_cast<Parameters*>(P);
 }
 
+std::vector<int>& TreeInterface::affected_nodes()
+{
+    return const_cast<Parameters*>(P)->affected_nodes;
+}
+
+const std::vector<int>& TreeInterface::affected_nodes() const
+{
+    return P->affected_nodes;
+}
+
+std::vector<std::vector<int>*>& TreeInterface::branches_from_affected_nodes()
+{
+    return const_cast<Parameters*>(P)->branches_from_affected_node;
+}
+
+const std::vector<std::vector<int>*>& TreeInterface::branches_from_affected_nodes() const
+{
+    return P->branches_from_affected_node;
+}
+
 int TreeInterface::n_nodes() const {
     return get_tree_constants().parameters_for_tree_node.size();
 }
@@ -40,16 +60,16 @@ int TreeInterface::n_branches() const {
 }
 
 int TreeInterface::degree(int n) const {
-    if (P->branches_from_affected_node[n])
-	return P->branches_from_affected_node[n]->size();
+    if (branches_from_affected_node(n))
+	return branches_from_affected_node(n)->size();
     else
 	return get_tree_constants().parameters_for_tree_node[n].size();
 }
 
 int TreeInterface::branch_out(int n, int i) const
 {
-    if (P->branches_from_affected_node[n])
-	return (*P->branches_from_affected_node[n])[i];
+    if (branches_from_affected_node(n))
+	return (*branches_from_affected_node(n))[i];
   
     return get_tree_constants().parameters_for_tree_node[n][i].get_value(get_const_context()).as_int();
 }
@@ -566,28 +586,25 @@ void TreeInterface::reconnect_branch(int s1, int t1, int t2)
     if (is_leaf_node(s1)) b1 = s1;
     int b2 = reverse(b1);
 
-    auto& affected_nodes = const_cast<Parameters*>(P)->affected_nodes;
-    auto& branches_from_affected_node = const_cast<Parameters*>(P)->branches_from_affected_node;
-  
-    if (not branches_from_affected_node[t1])
+    if (not branches_from_affected_node(t1))
     {
-	affected_nodes.push_back(t1);
+	affected_nodes().push_back(t1);
 	auto v = new vector<int>();
 	for(int i=0; i<degree(t1); i++)
 	    v->push_back(branch_out(t1, i));
-	branches_from_affected_node[t1] = v;
+	branches_from_affected_node(t1) = v;
     }
-    remove_element(*branches_from_affected_node[t1], b2);
+    remove_element(*branches_from_affected_node(t1), b2);
 
-    if (not branches_from_affected_node[t2])
+    if (not branches_from_affected_node(t2))
     {
-	affected_nodes.push_back(t2);
+	affected_nodes().push_back(t2);
 	auto v = new vector<int>();
 	for(int i=0; i<degree(t2); i++)
 	    v->push_back(branch_out(t2, i));
-	branches_from_affected_node[t2] = v;
+	branches_from_affected_node(t2) = v;
     }
-    branches_from_affected_node[t2]->push_back(b2);
+    branches_from_affected_node(t2)->push_back(b2);
 
     // Update branch source and target nodes
     std::get<2>(get_tree_constants().parameters_for_tree_branch[b1]).set_value(get_context(), t2);
@@ -597,19 +614,19 @@ void TreeInterface::reconnect_branch(int s1, int t1, int t2)
 void TreeInterface::begin_modify_topology()
 {
 #ifndef NDEBUG
-    for(auto p: P->branches_from_affected_node)
+    for(auto p: branches_from_affected_nodes())
 	assert(not p);
-    assert(P->affected_nodes.empty());
+    assert(affected_nodes().empty());
 #endif
 }
 
 void TreeInterface::end_modify_node(int n)
 {
-    assert(P->branches_from_affected_node[n]);
-    assert(get_tree_constants().parameters_for_tree_node[n].size() == P->branches_from_affected_node[n]->size());
+    assert(branches_from_affected_node(n));
+    assert(get_tree_constants().parameters_for_tree_node[n].size() == branches_from_affected_node(n)->size());
 
     // These are the current edges.
-    const auto& branches = *P->branches_from_affected_node[n];
+    const auto& branches = *branches_from_affected_node(n);
 
     assert(branches.size() == get_tree_constants().parameters_for_tree_node[n].size());
     for(int i=0;i<branches.size();i++)
@@ -619,21 +636,21 @@ void TreeInterface::end_modify_node(int n)
 	std::get<1>(get_tree_constants().parameters_for_tree_branch[b]).set_value(get_context(), i);
     }
 
-    delete P->branches_from_affected_node[n];
-    const_cast<Parameters*>(P)->branches_from_affected_node[n] = nullptr;
+    delete branches_from_affected_node(n);
+    branches_from_affected_node(n) = nullptr;
 }
 
 void TreeInterface::end_modify_topology()
 {
-    for(int n: P->affected_nodes)
+    for(int n: affected_nodes())
 	end_modify_node(n);
   
-    const_cast<Parameters*>(P)->affected_nodes.clear();
+    affected_nodes().clear();
 
 #ifndef NDEBUG
-    for(auto p: P->branches_from_affected_node)
+    for(auto p: branches_from_affected_nodes())
 	assert(not p);
-    assert(P->affected_nodes.empty());
+    assert(affected_nodes().empty());
 #endif
 }
 
