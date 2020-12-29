@@ -226,12 +226,12 @@ struct tree_constants: public Object
 
     std::vector<std::string> node_labels;
   
-    void register_branch_lengths(context_ref*, const expression_ref&);
+    void register_branch_lengths(context_ref&, const expression_ref&);
 
     tree_constants* clone() const {return new tree_constants(*this);}
 
-    tree_constants(context_ref*, int);
-    tree_constants(context_ref*, const std::vector<std::string>&, int);
+    tree_constants(context_ref&, int);
+    tree_constants(context_ref&, const std::vector<std::string>&, int);
 };
 
 struct parameters_constants: public Object
