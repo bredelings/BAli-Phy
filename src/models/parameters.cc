@@ -149,7 +149,7 @@ alignment data_partition::A() const
     return get_alignment(get_alphabet(), DPC().seqs, DPC().sequences, M);
 }
 
-TreeInterface data_partition::t() const
+ParametersTreeInterface data_partition::t() const
 {
     return P->t();
 }
@@ -717,7 +717,7 @@ mutable_data_partition Parameters::get_data_partition(int i)
     return mutable_data_partition(this,i);
 }
 
-TreeInterface Parameters::t() const
+ParametersTreeInterface Parameters::t() const
 {
     return {this};
 }
