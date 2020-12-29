@@ -5,7 +5,7 @@
 #include <string>                                   // for string
 #include <vector>                                   // for vector
 #include "tree/tree.H"                              // for tree_edge, Tree (...
-class context;
+class context_ref;
 class Parameters;
 class tree_constants;
 
@@ -15,8 +15,8 @@ class TreeInterface
     void end_modify_node(int n);
 
     virtual const tree_constants& get_tree_constants() const = 0;
-    virtual const context& get_const_context() const = 0;
-    virtual       context& get_context() = 0;
+    virtual const context_ref& get_const_context() const = 0;
+    virtual       context_ref& get_context() = 0;
 
     virtual       std::vector<int>& affected_nodes() = 0;
     virtual const std::vector<int>& affected_nodes() const = 0;
@@ -103,8 +103,8 @@ public:
 class ParametersTreeInterface: public TreeInterface
 {
     const tree_constants& get_tree_constants() const;
-    const context& get_const_context() const;
-          context& get_context();
+    const context_ref& get_const_context() const;
+          context_ref& get_context();
 
           std::vector<int>& affected_nodes();
     const std::vector<int>& affected_nodes() const;
@@ -121,8 +121,8 @@ public:
 class ModifiablesTreeInterface: public TreeInterface
 {
     const tree_constants& get_tree_constants() const;
-    const context& get_const_context() const;
-          context& get_context();
+    const context_ref& get_const_context() const;
+          context_ref& get_context();
 
           std::vector<int>& affected_nodes();
     const std::vector<int>& affected_nodes() const;
@@ -130,13 +130,13 @@ class ModifiablesTreeInterface: public TreeInterface
           std::vector<std::vector<int>*>& branches_from_affected_nodes();
     const std::vector<std::vector<int>*>& branches_from_affected_nodes() const;
 
-    const context* C;
+    const context_ref* C;
     std::vector<int> affected_nodes_;
     std::vector<std::vector<int>*> branches_from_affected_nodes_;
     const tree_constants* TC;
 public:
 
-    ModifiablesTreeInterface(context* c, int tree_head_);
+    ModifiablesTreeInterface(context_ref* c, int tree_head_);
 };
 
 double tree_length(const TreeInterface& t);
