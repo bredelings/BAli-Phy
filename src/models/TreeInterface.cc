@@ -370,12 +370,12 @@ const tree_constants& ModifiablesTreeInterface::get_tree_constants() const
 
 const context_ref& ModifiablesTreeInterface::get_const_context() const
 {
-    return *C;
+    return C;
 }
 
 context_ref& ModifiablesTreeInterface::get_context()
 {
-    return *const_cast<context_ref*>(C);
+    return const_cast<context_ref&>(C);
 }
 
 std::vector<int>& ModifiablesTreeInterface::affected_nodes()
@@ -398,7 +398,7 @@ const std::vector<std::vector<int>*>& ModifiablesTreeInterface::branches_from_af
     return branches_from_affected_nodes_;
 }
 
-ModifiablesTreeInterface::ModifiablesTreeInterface(context_ref* c, int tree_head)
+ModifiablesTreeInterface::ModifiablesTreeInterface(context_ref& c, int tree_head)
     :C(c),TC(new tree_constants(c,tree_head))
 {
 }

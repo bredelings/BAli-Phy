@@ -472,7 +472,7 @@ extern "C" closure builtin_function_walk_tree_sample_alignment(OperationArgs& Ar
 
     int c1 = Args.evaluate(2).as_int();
     context_ref C1(M, c1);
-    ModifiablesTreeInterface T(&C1,tree_reg);
+    ModifiablesTreeInterface T(C1,tree_reg);
 
     int subst_root = T.n_nodes()-1;
     auto branches = walk_tree_path(T, subst_root);

@@ -410,17 +410,17 @@ EVector unaligned_alignments_on_tree(const Tree& t, const vector<vector<int>>& s
     return alignments;
 }
 
-vector<param> get_params_from_list(context_ref* C, const expression_ref& list, std::optional<int> check_size = {})
+vector<param> get_params_from_list(context_ref& C, const expression_ref& list, std::optional<int> check_size = {})
 {
     vector<param> params;
-    expression_ref structure = C->evaluate_expression({var("Parameters.maybe_modifiable_structure"), list});
+    expression_ref structure = C.evaluate_expression({var("Parameters.maybe_modifiable_structure"), list});
 
     if (log_verbose >= 3)
         std::cerr<<"structure = "<<structure<<"\n\n";
 
     auto vec = *list_to_evector(structure);
     for(auto& e: vec)
-        params.push_back( get_param(*C, e) );
+        params.push_back( get_param(C, e) );
 
     if (check_size and (params.size() != *check_size))
         throw myexception()<<"Expected a list of length "<<*check_size<<", but got one of length "<<params.size()<<"!";
@@ -428,16 +428,16 @@ vector<param> get_params_from_list(context_ref* C, const expression_ref& list, s
     return params;
 }
 
-vector<param> get_params_from_array(context_ref* C, const expression_ref& array, std::optional<int> check_size = {})
+vector<param> get_params_from_array(context_ref& C, const expression_ref& array, std::optional<int> check_size = {})
 {
     vector<param> params;
-    expression_ref structure = C->evaluate_expression({var("Parameters.maybe_modifiable_structure"), array});
+    expression_ref structure = C.evaluate_expression({var("Parameters.maybe_modifiable_structure"), array});
 
     if (log_verbose >= 3)
         std::cerr<<"structure = "<<structure<<"\n\n";
 
     for(auto& e: structure.sub())
-        params.push_back( get_param(*C, e) );
+        params.push_back( get_param(C, e) );
 
     if (check_size and (params.size() != *check_size))
         throw myexception()<<"Expected an array "<<*check_size<<", but got one of length "<<params.size()<<"!";
@@ -512,7 +512,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 
         /* Initialize params -- from alignments.ref(*p) */
         auto as = expression_ref{var("Bio.Alignment.pairwise_alignments"), alignment_on_tree};
-        pairwise_alignment_for_branch = get_params_from_array(p, as, 2*B);
+        pairwise_alignment_for_branch = get_params_from_array(*p, as, 2*B);
 
         auto seq_lengths = expression_ref{var("Bio.Alignment.sequence_lengths"),alignment_on_tree};
         for(int n=0;n<t.n_nodes();n++)
@@ -582,23 +582,23 @@ vector<int> edges_connecting_to_node(const Tree& T, int n)
     return branch_list_;
 }
 
-void tree_constants::register_branch_lengths(context_ref* C, const expression_ref& branch_lengths_exp)
+void tree_constants::register_branch_lengths(context_ref& C, const expression_ref& branch_lengths_exp)
 {
     int B = parameters_for_tree_branch.size()/2;
     if (B == 0) return;
 
-    int branch_lengths_index = C->add_compute_expression( branch_lengths_exp );
-    auto branch_lengths = C->get_expression(branch_lengths_index);
+    int branch_lengths_index = C.add_compute_expression( branch_lengths_exp );
+    auto branch_lengths = C.get_expression(branch_lengths_index);
 
     branch_durations = get_params_from_list(C, branch_lengths, B);
 }
 
-tree_constants::tree_constants(context_ref* C, int tree_head_)
+tree_constants::tree_constants(context_ref& C, int tree_head_)
     :tree_head(tree_head_),
      n_leaves(0)
 {
     //------------------------- Create the tree structure -----------------------//
-    auto tree_structure = C->evaluate_expression({var("Parameters.maybe_modifiable_structure"), C->get_expression(tree_head)});
+    auto tree_structure = C.evaluate_expression({var("Parameters.maybe_modifiable_structure"), C.get_expression(tree_head)});
     if (log_verbose >= 3)
         std::cerr<<"tree = "<<tree_structure<<"\n\n";
 
@@ -615,7 +615,7 @@ tree_constants::tree_constants(context_ref* C, int tree_head_)
     int n_branches         = tree_structure.sub()[3].as_int();
 
     if (log_verbose >= 3)
-        std::cerr<<"num_branches = "<<C->evaluate_expression({var("Parameters.maybe_modifiable_structure"), {var("Tree.numBranches"), C->get_expression(tree_head)}})<<"\n\n";;
+        std::cerr<<"num_branches = "<<C.evaluate_expression({var("Parameters.maybe_modifiable_structure"), {var("Tree.numBranches"), C.get_expression(tree_head)}})<<"\n\n";;
 
     for(int n=0; n < n_nodes; n++)
     {
@@ -624,7 +624,7 @@ tree_constants::tree_constants(context_ref* C, int tree_head_)
 
         vector<param> m_edges;
         for(auto& edge: *edges)
-            m_edges.push_back(get_param(*C,edge));
+            m_edges.push_back(get_param(C,edge));
 
         parameters_for_tree_node.push_back ( m_edges );
 
@@ -636,15 +636,15 @@ tree_constants::tree_constants(context_ref* C, int tree_head_)
         auto nodes = nodes_for_edge.sub()[b];
 
         assert(has_constructor(nodes,"(,,,)"));
-        param m_source = get_param(*C, nodes.sub()[0]);
-        param m_source_index = get_param(*C, nodes.sub()[1]);
-        param m_target = get_param(*C, nodes.sub()[2]);
+        param m_source = get_param(C, nodes.sub()[0]);
+        param m_source_index = get_param(C, nodes.sub()[1]);
+        param m_target = get_param(C, nodes.sub()[2]);
 
         parameters_for_tree_branch.push_back( std::tuple<param, param, param>{m_source, m_source_index, m_target} );
     }
 }
 
-tree_constants::tree_constants(context_ref* C, const vector<string>& labels, int tree_head_)
+tree_constants::tree_constants(context_ref& C, const vector<string>& labels, int tree_head_)
     :tree_constants(C, tree_head_)
 {
     node_labels = labels;
@@ -2066,7 +2066,7 @@ Parameters::Parameters(const Program& prog,
     // 2. Set up the TreeInterface mapping to the tree inside the machine
 
     int tree_index = add_compute_expression( {var("BAliPhy.ATModel.tree"), my_atmodel()} );
-    TC = new tree_constants(this, labels, tree_index);
+    TC = new tree_constants(*this, labels, tree_index);
 
     // 3. Remap the input tree to have the same label_string <-> node-number mapping FOR LEAVES.
     // FIXME: We need ALL the nodes to have the right label_string <-> node-number mapping in
@@ -2088,12 +2088,12 @@ Parameters::Parameters(const Program& prog,
     /* --------------------------------------------------------------- */
 
     // R1. Register branch lengths
-    TC->register_branch_lengths(this, {var("BAliPhy.ATModel.branch_lengths"),my_atmodel()});
+    TC->register_branch_lengths(*this, {var("BAliPhy.ATModel.branch_lengths"),my_atmodel()});
 
     param scales_list = add_compute_expression( {var("BAliPhy.ATModel.scales"),my_atmodel()} );
 
     // R2. Register individual scales
-    PC->branch_scales_ = get_params_from_list(this, scales_list.ref(*this));
+    PC->branch_scales_ = get_params_from_list(*this, scales_list.ref(*this));
 
 #ifndef NDEBUG
     evaluate_expression( {var("Tree.numNodes"), my_tree()});
@@ -2132,7 +2132,7 @@ Parameters::Parameters(const Program& prog,
     // R5. Register branch categories
     auto maybe_branch_cats = evaluate_expression( {var("BAliPhy.ATModel.branch_categories"), my_atmodel()} );
     if (has_constructor(maybe_branch_cats,"Data.Maybe.Just"))
-        PC->branch_categories = get_params_from_list(this, {fromJust,{var("BAliPhy.ATModel.branch_categories"), my_atmodel()}}, tt.n_branches());
+        PC->branch_categories = get_params_from_list(*this, {fromJust,{var("BAliPhy.ATModel.branch_categories"), my_atmodel()}}, tt.n_branches());
 
     // create data partitions
 
