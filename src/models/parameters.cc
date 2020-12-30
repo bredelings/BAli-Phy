@@ -683,33 +683,9 @@ expression_ref tree_expression(const SequenceTree& T)
     return {tree_con, node_branches_array, branch_nodes_array, T.n_nodes(), T.n_branches()};
 }
 
-bool Parameters::variable_alignment_from_param() const
-{
-    assert(PC);
-    auto e = PC->variable_alignment.get_value(*this);
-    return is_bool_true(e);
-}
-
 bool Parameters::variable_alignment() const
 {
-    assert(variable_alignment_from_param() == variable_alignment_);
     return variable_alignment_;
-}
-
-void Parameters::variable_alignment(bool b)
-{
-    variable_alignment_ = b;
-
-    // Ignore requests to turn on alignment variation when there is no imodel or internal nodes
-    if (not n_imodels())
-        variable_alignment_ = false;
-
-    if (variable_alignment_from_param() != variable_alignment_)
-        PC->variable_alignment.set_value(*this, variable_alignment_);
-
-    // turning ON alignment variation
-    if (variable_alignment())
-        assert(n_imodels() > 0);
 }
 
 data_partition Parameters::get_data_partition(int i) const
@@ -1290,12 +1266,6 @@ expression_ref Parameters::my_subst_root() const
 {
     assert(PC);
     return PC->subst_root.ref(*this);
-}
-
-expression_ref Parameters::my_variable_alignment() const
-{
-    assert(PC);
-    return PC->variable_alignment.ref(*this);
 }
 
 expression_ref Parameters::heat_exp() const

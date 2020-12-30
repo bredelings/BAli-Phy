@@ -315,8 +315,6 @@ private:
     std::vector<int> affected_nodes;
     std::vector<std::vector<int>*> branches_from_affected_node;
 
-    bool variable_alignment_from_param() const;
-
 public:
 
             data_partition get_data_partition(int i) const;
@@ -395,9 +393,7 @@ public:
     expression_ref my_partition_ancestral_sequences() const;
 
     // bool
-    expression_ref my_variable_alignment() const;
     bool variable_alignment() const;
-    void variable_alignment(bool b);
 
     // int
     expression_ref my_subst_root() const;
