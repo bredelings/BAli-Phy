@@ -236,7 +236,6 @@ struct tree_constants: public Object
 
 struct parameters_constants: public Object
 {
-    param heat;
     param subst_root;
     param atmodel_export;
     param atmodel;
@@ -304,8 +303,6 @@ class Parameters: public Model
 public:
     object_ptr<parameters_constants> PC;
     object_ptr<tree_constants> TC;
-
-    int beta_index;
 
     bool variable_alignment_;
 
@@ -404,11 +401,6 @@ public:
     // int
     int  get_branch_category(int b) const;
     void set_branch_category(int b, int cat);
-
-    // double
-    expression_ref heat_exp() const;
-    void set_beta(double b);
-    double get_beta() const;
 
     // double
     const param& branch_scale(int i) const;

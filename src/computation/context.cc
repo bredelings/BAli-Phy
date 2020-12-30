@@ -449,6 +449,17 @@ prob_ratios_t context_ref::heated_probability_ratios(const context_ref& C1) cons
     return ratio;
 }
 
+double context_ref::get_beta() const
+{
+    return 1.0;
+}
+
+void context_ref::set_beta(double)
+{
+    //FIXME: We need to * make a context into a pair (token,heat), or
+    //                  * make a beta reg in the machine that won't be forgotten when unused.
+    throw myexception()<<"Setting heat/beta for a context is not implemented.  See  context.cc";
+}
 log_double_t context_ref::heated_likelihood() const
 {
     // Don't waste time calculating likelihood if we're sampling from the prior.
