@@ -1567,7 +1567,6 @@ std::string generate_atmodel_program(int n_sequences,
 
     do_block sample_atmodel;
     var heat_var("heat");
-    var variable_alignment_var("variable_alignment");
     var subst_root_var("subst_root");
     var modifiable("Parameters.modifiable");
 
@@ -1577,7 +1576,6 @@ std::string generate_atmodel_program(int n_sequences,
 
     program.let({
             {heat_var           , {modifiable, 1.0}},
-            {variable_alignment_var, {modifiable, make_Bool(variable_alignment)}},
             {subst_root_var,         {modifiable, n_nodes-1}}
         });
     program.empty_stmt();
@@ -1780,7 +1778,7 @@ std::string generate_atmodel_program(int n_sequences,
             sample_atmodel.let(leaf_sequence_lengths, {var("get_sequence_lengths"), alphabet,  {var("!!"),var("sequence_data"),i}});
 
             // alignment_on_tree <- sample $ random_alignment tree hmms model leaf_seqs_array p->my_variable_alignment()
-            sample_atmodel.perform(alignment_on_tree, {var("random_alignment"), tree_var, branch_hmms, imodel, leaf_sequence_lengths, variable_alignment_var});
+            sample_atmodel.perform(alignment_on_tree, {var("random_alignment"), tree_var, branch_hmms, imodel, leaf_sequence_lengths});
             sample_atmodel.empty_stmt();
         }
         else
@@ -1825,7 +1823,7 @@ std::string generate_atmodel_program(int n_sequences,
         program.empty_stmt();
     }
 
-    program.perform(Tuple(var("atmodel"),var("loggers")), {var("$"),var("sample"),{var("model"),taxon_names_var,sequence_data_var,heat_var,variable_alignment_var}});
+    program.perform(Tuple(var("atmodel"),var("loggers")), {var("$"),var("sample"),{var("model"),taxon_names_var,sequence_data_var,heat_var}});
 
     for(int i=0; i < n_partitions; i++)
     {
@@ -1889,12 +1887,11 @@ std::string generate_atmodel_program(int n_sequences,
                                  var("likelihoods"),
                                  sequence_data_var,
                                  heat_var,
-                                 variable_alignment_var,
                                  subst_root_var,
                                  taxon_names_var},
 
                            var("loggers")));
-    program_file<<"\nmodel taxa sequence_data heat variable_alignment = "<<sample_atmodel.get_expression().print()<<"\n";
+    program_file<<"\nmodel taxa sequence_data heat = "<<sample_atmodel.get_expression().print()<<"\n";
 
     program_file<<"\nmain = "<<program.get_expression().print();
 
@@ -2031,7 +2028,6 @@ Parameters::Parameters(const Program& prog,
     t().read_tree(tt);
 
     PC->heat               = get_param(*this, evaluate_expression({var("Parameters.maybe_modifiable_structure"),{var("BAliPhy.ATModel.heat"), my_atmodel_export()}}));
-    PC->variable_alignment = get_param(*this, evaluate_expression({var("Parameters.maybe_modifiable_structure"),{var("BAliPhy.ATModel.variable_alignment"), my_atmodel_export()}}));
     PC->subst_root         = get_param(*this, evaluate_expression({var("Parameters.maybe_modifiable_structure"),{var("BAliPhy.ATModel.subst_root"), my_atmodel_export()}}));
 
     /* --------------------------------------------------------------- */
