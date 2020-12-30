@@ -608,7 +608,7 @@ log_double_t realign_and_propose_parameter(context_ref& P, const vector<int>& pa
 	    {
 		{
 		    // Calculate the proposal probability for the backward move.
-		    auto matrix_old = sample_alignment_forward(PP[j], old_hmms[j][b], b);
+		    auto matrix_old = sample_alignment_forward(PP[j], PP.t(), old_hmms[j][b], b);
 		    auto a_old = PP[j].get_pairwise_alignment(b);
 		    vector<int> path_old = A2::get_path_from_pairwise_alignment(a_old);
 		    ratio *= matrix_old->path_P(path_old);
