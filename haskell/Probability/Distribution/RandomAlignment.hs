@@ -42,11 +42,11 @@ alignment_pr_top as tree hmms = product' $ map (alignment_branch_pr as hmms) [0 
 alignment_pr_bot as tree (_, lengthp) = (product' $ map (lengthp . seqlength as tree) (internal_nodes tree)) ^ 2
 alignment_pr1 length (_, lengthp) = lengthp length
 
+-- FIXME: Maybe the alignment argument should be last?
+-- QUESTION: Should I be passing the tree in here separately?
 alignment_pr (AlignmentOnTree tree n_seqs ls as) hmms model | numNodes tree < 1 = error "Tree only has " ++ numNodes ++ " nodes."
                                                             | numNodes tree == 1 = alignment_pr1 (ls ! 0) model
                                                             | otherwise = (alignment_pr_top as tree hmms) / (alignment_pr_bot as tree model)
-
-alignment_pr' alignment hmms model var_a = if var_a then alignment_pr alignment hmms model else doubleToLogDouble 1.0
 
 force_alignment a@(AlignmentOnTree tree n_seqs ls as) = force_ls `seq` force_as where
     force_as = force_struct as
@@ -59,9 +59,9 @@ triggered_modifiable_alignment value effect = (raw_a, triggered_a) where
     effect'     = force_alignment raw_a `seq` effect
     triggered_a = effect' `seq` raw_a
 
-random_alignment tree hmms model tip_lengths var_a = Distribution (\a -> [alignment_pr' a hmms model var_a])
-                                                                  (no_quantile "random_alignment")
-                                                                  (RandomStructure do_nothing triggered_modifiable_alignment do_sample)
-                                                                  ()
+random_alignment tree hmms model tip_lengths = Distribution (\a -> [alignment_pr a hmms model])
+                                                            (no_quantile "random_alignment")
+                                                            (RandomStructure do_nothing triggered_modifiable_alignment do_sample)
+                                                            ()
     where do_sample = sample_alignment tree hmms tip_lengths
 
