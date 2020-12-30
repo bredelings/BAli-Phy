@@ -484,6 +484,26 @@ void sample_alignments_one(context_ref& C, TreeInterface& t, int b)
 
     vector< vector< shared_ptr<DPmatrixSimple> > > Matrices(1);
     log_double_t total_ratio = 1.0;
+    for(int i=0;i<c.size();i++)
+    {
+
+/*
+	for(int j=0;j<c[i].n_data_partitions();j++)
+	    if (c[i][j].variable_alignment())
+	    {
+                auto [M, ratio] = sample_alignment_base(c[i][j], b);
+                total_ratio *= ratio;
+		Matrices[i].push_back(M);
+		// If Pr_sum_all_paths() == 0, then the alignment for this partition will be unchanged.
+#ifndef NDEBUG
+		c[i][j].likelihood();  // check the likelihood calculation
+#endif
+	    }
+	    else
+		Matrices[i].push_back(shared_ptr<DPmatrixSimple>());
+*/
+
+    }
 }
 
 extern "C" closure builtin_function_walk_tree_sample_alignment(OperationArgs& Args)
