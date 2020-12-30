@@ -237,7 +237,6 @@ struct tree_constants: public Object
 struct parameters_constants: public Object
 {
     param heat;
-    param variable_alignment;
     param subst_root;
     param atmodel_export;
     param atmodel;
