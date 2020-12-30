@@ -135,8 +135,8 @@ public:
     log_double_t likelihood() const;
     log_double_t probability() const;
 
-    virtual double get_beta() const {return 1.0;}
-    virtual void set_beta(double) {std::abort();}
+    virtual double get_beta() const;
+    virtual void set_beta(double);
     log_double_t heated_likelihood() const;
     log_double_t heated_probability() const;
 

@@ -1162,16 +1162,6 @@ int Parameters::subst_root() const
     return PC->subst_root.get_value(*this).as_int();
 }
 
-void Parameters::set_beta(double b)
-{
-    PC->heat.set_value(*this, b);
-}
-
-double Parameters::get_beta() const
-{
-    return PC->heat.get_value(*this).as_double();
-}
-
 int Parameters::get_branch_category(int b) const
 {
     return PC->branch_categories[b].get_value(*this).as_int();
@@ -1266,12 +1256,6 @@ expression_ref Parameters::my_subst_root() const
 {
     assert(PC);
     return PC->subst_root.ref(*this);
-}
-
-expression_ref Parameters::heat_exp() const
-{
-    assert(PC);
-    return PC->heat.ref(*this);
 }
 
 int num_distinct(const vector<optional<int>>& v)
@@ -1566,7 +1550,6 @@ std::string generate_atmodel_program(int n_sequences,
     do_block program;
 
     do_block sample_atmodel;
-    var heat_var("heat");
     var subst_root_var("subst_root");
     var modifiable("Parameters.modifiable");
 
@@ -1575,7 +1558,6 @@ std::string generate_atmodel_program(int n_sequences,
     var taxon_names_var("taxa");
 
     program.let({
-            {heat_var           , {modifiable, 1.0}},
             {subst_root_var,         {modifiable, n_nodes-1}}
         });
     program.empty_stmt();
@@ -1698,7 +1680,7 @@ std::string generate_atmodel_program(int n_sequences,
         auto imodel_var = bind_and_log(false, prefix, imodel, code.is_action(), code.has_loggers(), sample_atmodel, program_loggers);
 
         var imodel_var2("imodel_"+std::to_string(i+1));
-        sample_atmodel.let(imodel_var2, {imodel_var, tree_var, heat_var});
+        sample_atmodel.let(imodel_var2, {imodel_var, tree_var});
         imodels.push_back(imodel_var2);
     }
     sample_atmodel.empty_stmt();
@@ -1823,7 +1805,7 @@ std::string generate_atmodel_program(int n_sequences,
         program.empty_stmt();
     }
 
-    program.perform(Tuple(var("atmodel"),var("loggers")), {var("$"),var("sample"),{var("model"),taxon_names_var,sequence_data_var,heat_var}});
+    program.perform(Tuple(var("atmodel"),var("loggers")), {var("$"),var("sample"),{var("prior"),taxon_names_var,sequence_data_var}});
 
     for(int i=0; i < n_partitions; i++)
     {
@@ -1886,12 +1868,11 @@ std::string generate_atmodel_program(int n_sequences,
                                  var("anc_seqs"),
                                  var("likelihoods"),
                                  sequence_data_var,
-                                 heat_var,
                                  subst_root_var,
                                  taxon_names_var},
 
                            var("loggers")));
-    program_file<<"\nmodel taxa sequence_data heat = "<<sample_atmodel.get_expression().print()<<"\n";
+    program_file<<"\nprior taxa sequence_data = "<<sample_atmodel.get_expression().print()<<"\n";
 
     program_file<<"\nmain = "<<program.get_expression().print();
 
@@ -2027,7 +2008,6 @@ Parameters::Parameters(const Program& prog,
     // 4. Load the specified tree TOPOLOGY into the machine. (branch lengths are loaded later).
     t().read_tree(tt);
 
-    PC->heat               = get_param(*this, evaluate_expression({var("Parameters.maybe_modifiable_structure"),{var("BAliPhy.ATModel.heat"), my_atmodel_export()}}));
     PC->subst_root         = get_param(*this, evaluate_expression({var("Parameters.maybe_modifiable_structure"),{var("BAliPhy.ATModel.subst_root"), my_atmodel_export()}}));
 
     /* --------------------------------------------------------------- */
