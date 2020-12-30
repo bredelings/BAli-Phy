@@ -976,12 +976,23 @@ move_pruned_subtree(Parameters& P,
     return tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>{b, c, x, std::move(alignments_next)};
 }
 
+// NOTE: Computing subst_likelihood(P) * alignment_prior(P) would double the amount of pivoting.
 log_double_t subst_likelihood_and_alignment_prior(const Parameters& P)
 {
     log_double_t Pr = 1.0;
 
     for(int j=0;j<P.n_data_partitions();j++)
         Pr *= P[j].heated_likelihood() * P[j].prior_alignment();
+
+    return Pr;
+}
+
+log_double_t subst_likelihood(const Parameters& P)
+{
+    log_double_t Pr = 1.0;
+
+    for(int j=0;j<P.n_data_partitions();j++)
+        Pr *= P[j].heated_likelihood();
 
     return Pr;
 }
@@ -1007,11 +1018,16 @@ void set_attachment_probability(spr_attachment_probabilities& Pr, const spr_atta
     int n0 = subtree_edge.node2;
     set_lengths_at_location(p2, n0, L, target_edge, locations);
 
-    // 3. Resample the alignment and compute the sampling probability.
-    auto A_sampling_pr = (sum_out_A) ? pr_sum_out_A_tri(p2, a23_constraint, nodes_) : log_double_t(1.0);
-
-    // 4. Compute likelihood and probability
-    Pr[target_edge] = subst_likelihood_and_alignment_prior(p2) / A_sampling_pr;
+    // 3a. Compute substitution likelihood AND alignment probability.
+    if (sum_out_A)
+    {
+        //Resample the alignment and compute the sampling probability.
+        auto A_sampling_pr = pr_sum_out_A_tri(p2, a23_constraint, nodes_);
+        Pr[target_edge] = subst_likelihood_and_alignment_prior(p2) / A_sampling_pr;
+    }
+    // 3b. Compute substitution likelihood
+    else
+        Pr[target_edge] = subst_likelihood(p2);
 
 #ifdef DEBUG_SPR_ALL
     Pr.LLL[target_edge] = p2.heated_likelihood();
@@ -1054,7 +1070,7 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
     }
     else
     {
-	Pr[I.initial_edge] = subst_likelihood_and_alignment_prior(P);
+	Pr[I.initial_edge] = subst_likelihood(P);
         P.set_root(root_node);
     }
 
