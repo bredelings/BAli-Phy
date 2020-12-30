@@ -245,7 +245,6 @@ struct parameters_constants: public Object
     param partition_cond_likes;
     param partition_ancestral_seqs;
     param partition_transition_ps;
-    param imodel_training;
     param sequence_names;
 
     std::vector<param> branch_categories;
@@ -415,11 +414,6 @@ public:
     expression_ref heat_exp() const;
     void set_beta(double b);
     double get_beta() const;
-
-    // bool
-    expression_ref imodel_training_exp() const;
-    bool get_imodel_training() const;
-    void set_imodel_training(bool) const;
 
     // double
     const param& branch_scale(int i) const;
