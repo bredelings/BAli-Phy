@@ -17,7 +17,7 @@ sample_imodel topology = do
     mean_length <- do
         l <- exponential 10.0
         return (l + 1.0)
-    let imodel  = rs07 logLambda mean_length topology 1.0 False
+    let imodel  = rs07 logLambda mean_length topology
         loggers = ["logLambda" %=% logLambda, "mean_length" %=% mean_length]
     return (imodel, loggers)
 
@@ -37,7 +37,7 @@ sample_alignment topology ts imodel scale tip_seq_lengths = do
     let n_branches = numBranches topology
         ds         = listArray' $ map (* scale) ts
         hmms       = branch_hmms imodel ds n_branches
-    alignment_on_tree <- random_alignment topology hmms imodel tip_seq_lengths True
+    alignment_on_tree <- random_alignment topology hmms imodel tip_seq_lengths
     return $ Bio.Alignment.pairwise_alignments alignment_on_tree
 
 model taxa tip_seq_lengths = do
