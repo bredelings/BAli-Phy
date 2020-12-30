@@ -132,8 +132,6 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
         if (proc_id >= beta.size())
             throw myexception()<<"not enough temperatures given: only got "<<beta.size()<<", wanted at least "<<proc_id+1;
 
-        P.beta_index = proc_id;
-
         P.set_beta(beta[proc_id]);
 
         P.PC->beta_series.push_back(beta[proc_id]);

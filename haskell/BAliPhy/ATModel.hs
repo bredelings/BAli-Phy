@@ -31,7 +31,6 @@ data ATModelExport = ATModelExport
       get_all_ancestral_sequences :: [Array Int ConditionalLikelihoodVector],
       get_all_likelihoods :: [Double],
       leaf_sequences :: [Array Int LeafSequence],
-      heat :: Double,
       subst_root :: Int,
       sequence_names :: EVector
     }

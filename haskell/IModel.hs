@@ -10,16 +10,18 @@ builtin builtin_rs07_lengthp 2 "rs07_lengthp" "Alignment"
 
 rs05_lengthp m l = doubleToLogDouble (builtin_rs05_lengthp m l)
 
-rs05 logRate meanIndelLength tau tree heat = (\d b -> m, rs05_lengthp m) where
+rs05 logRate meanIndelLength tau tree = (\d b -> m, rs05_lengthp m) where
+      heat = 1.0
+      training = False
       rate = exp logRate
       x = exp (-2.0*rate)
       delta = x/(1.0+x)
       epsilon = (meanIndelLength-1.0)/meanIndelLength
-      m = rs05_branch_HMM epsilon delta tau heat False
+      m = rs05_branch_HMM epsilon delta tau heat training
 
 rs07_lengthp e l = doubleToLogDouble (builtin_rs07_lengthp e l)
 
-rs07 logLambda meanIndelLength tree heat = (\d b ->rs07_branch_HMM epsilon (lambda*d!b) heat False, rs07_lengthp epsilon)
+rs07 logLambda meanIndelLength tree = (\d b ->rs07_branch_HMM epsilon (lambda*d!b) 1.0 False, rs07_lengthp epsilon)
     where lambda = exp logLambda
           epsilon = (meanIndelLength-1.0)/meanIndelLength
 
@@ -44,4 +46,4 @@ rs07_relaxed_rates_model tree = do
    let epsilon = meanIndelLengthMinus1/(1.0 + meanIndelLengthMinus1)
        lambdas = map exp logLambdas
 
-   return $ (\d b heat -> rs07_branch_HMM epsilon (lambdas!!b * d!b) heat, \l -> rs07_lengthp epsilon l)
+   return $ (\d b -> rs07_branch_HMM epsilon (lambdas!!b * d!b), \l -> rs07_lengthp epsilon l)
