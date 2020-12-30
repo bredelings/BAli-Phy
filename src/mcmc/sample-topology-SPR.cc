@@ -1056,13 +1056,15 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
     {
 	Pr[I.initial_edge] = subst_likelihood_and_alignment_prior(P);
         P.set_root(root_node);
-        for(int j=0;j<P.n_data_partitions();j++)
-        {
-            int b0 = P.t().find_branch(subtree_edge);
-            P[j].cache(b0);
-            P[j].transition_P(b0);
-        }
     }
+
+    for(int j=0;j<P.n_data_partitions();j++)
+    {
+        int b0 = P.t().find_branch(subtree_edge);
+        P[j].cache(b0);
+        P[j].transition_P(b0);
+    }
+
 #ifdef DEBUG_SPR_ALL
     Pr.LLL[I.initial_edge] = P.heated_likelihood();
 #endif
