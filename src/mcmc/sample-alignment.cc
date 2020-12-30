@@ -41,11 +41,9 @@ using std::shared_ptr;
 using boost::dynamic_bitset;
 using namespace A2;
 
-shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const indel::PairHMM& hmm, int b)
+shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const TreeInterface& t, const indel::PairHMM& hmm, int b)
 {
     assert(P.variable_alignment());
-
-    auto t = P.t();
 
     int bb = t.reverse(b);
 
@@ -93,7 +91,7 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const inde
 
 pair<shared_ptr<DPmatrixSimple>,log_double_t> sample_alignment_base(mutable_data_partition P, const indel::PairHMM& hmm, int b) 
 {
-    auto Matrices = sample_alignment_forward(P, hmm, b);
+    auto Matrices = sample_alignment_forward(P, P.t(), hmm, b);
 
     // If the DP matrix ended up having probability 0, don't try to sample a path through it!
     if (Matrices->Pr_sum_all_paths() <= 0.0)
