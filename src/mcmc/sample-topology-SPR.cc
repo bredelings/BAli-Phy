@@ -1053,8 +1053,6 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
     int root_node = subtree_edge.node2;
     // Because the attachment node keeps its name, this will stay in effect throughout the likelihood calculations.
 
-    P.variable_alignment(false);
-
     spr_info I(P.t(), subtree_edge, range);
 
     if (I.n_attachment_branches() == 1) return spr_attachment_probabilities();
