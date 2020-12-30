@@ -535,9 +535,6 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	out_both<<endl;
     }
 
-    if (P.as<Parameters>()->variable_alignment() and not args.count("tree"))
-	P.as<Parameters>()->variable_alignment(false);
-
     // 1. First sample (a) scale of the tree
     {
 	MoveAll pre_burnin("pre-burnin");
@@ -660,10 +657,6 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	}
     }
     out_both<<endl;
-
-    // Set all alignments that COULD be variable back to being variable.
-    P.as<Parameters>()->variable_alignment(true);
-
 
     // 4. Then do an initial tree search - SPR - with variable alignment
     if (P->contains_key("pre-burnin-A") or P->contains_key("pre-burnin-A-post"))
