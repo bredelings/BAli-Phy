@@ -1181,17 +1181,6 @@ void Parameters::set_root(int node) const
     assert(subst_root() == node);
 }
 
-bool Parameters::get_imodel_training() const
-{
-    return is_bool_true( PC->imodel_training.get_value(*this) );
-}
-
-void Parameters::set_imodel_training(bool t) const
-{
-    const context* C = this;
-    PC->imodel_training.set_value(*const_cast<context*>(C), t);
-}
-
 int Parameters::subst_root() const
 {
     return PC->subst_root.get_value(*this).as_int();
@@ -1313,12 +1302,6 @@ expression_ref Parameters::heat_exp() const
 {
     assert(PC);
     return PC->heat.ref(*this);
-}
-
-expression_ref Parameters::imodel_training_exp() const
-{
-    assert(PC);
-    return PC->imodel_training.ref(*this);
 }
 
 int num_distinct(const vector<optional<int>>& v)
@@ -1613,7 +1596,6 @@ std::string generate_atmodel_program(int n_sequences,
     do_block program;
 
     do_block sample_atmodel;
-    var imodel_training_var("imodel_training");
     var heat_var("heat");
     var variable_alignment_var("variable_alignment");
     var subst_root_var("subst_root");
@@ -1624,7 +1606,6 @@ std::string generate_atmodel_program(int n_sequences,
     var taxon_names_var("taxa");
 
     program.let({
-            {imodel_training_var, {modifiable, make_Bool(false)}},
             {heat_var           , {modifiable, 1.0}},
             {variable_alignment_var, {modifiable, make_Bool(variable_alignment)}},
             {subst_root_var,         {modifiable, n_nodes-1}}
@@ -1749,7 +1730,7 @@ std::string generate_atmodel_program(int n_sequences,
         auto imodel_var = bind_and_log(false, prefix, imodel, code.is_action(), code.has_loggers(), sample_atmodel, program_loggers);
 
         var imodel_var2("imodel_"+std::to_string(i+1));
-        sample_atmodel.let(imodel_var2, {imodel_var, tree_var, heat_var, imodel_training_var});
+        sample_atmodel.let(imodel_var2, {imodel_var, tree_var, heat_var});
         imodels.push_back(imodel_var2);
     }
     sample_atmodel.empty_stmt();
@@ -1874,7 +1855,7 @@ std::string generate_atmodel_program(int n_sequences,
         program.empty_stmt();
     }
 
-    program.perform(Tuple(var("atmodel"),var("loggers")), {var("$"),var("sample"),{var("model"),taxon_names_var,sequence_data_var,imodel_training_var,heat_var,variable_alignment_var}});
+    program.perform(Tuple(var("atmodel"),var("loggers")), {var("$"),var("sample"),{var("model"),taxon_names_var,sequence_data_var,heat_var,variable_alignment_var}});
 
     for(int i=0; i < n_partitions; i++)
     {
@@ -1937,14 +1918,13 @@ std::string generate_atmodel_program(int n_sequences,
                                  var("anc_seqs"),
                                  var("likelihoods"),
                                  sequence_data_var,
-                                 imodel_training_var,
                                  heat_var,
                                  variable_alignment_var,
                                  subst_root_var,
                                  taxon_names_var},
 
                            var("loggers")));
-    program_file<<"\nmodel taxa sequence_data imodel_training heat variable_alignment = "<<sample_atmodel.get_expression().print()<<"\n";
+    program_file<<"\nmodel taxa sequence_data heat variable_alignment = "<<sample_atmodel.get_expression().print()<<"\n";
 
     program_file<<"\nmain = "<<program.get_expression().print();
 
@@ -2080,7 +2060,6 @@ Parameters::Parameters(const Program& prog,
     // 4. Load the specified tree TOPOLOGY into the machine. (branch lengths are loaded later).
     t().read_tree(tt);
 
-    PC->imodel_training    = get_param(*this, evaluate_expression({var("Parameters.maybe_modifiable_structure"),{var("BAliPhy.ATModel.imodel_training"), my_atmodel_export()}}));
     PC->heat               = get_param(*this, evaluate_expression({var("Parameters.maybe_modifiable_structure"),{var("BAliPhy.ATModel.heat"), my_atmodel_export()}}));
     PC->variable_alignment = get_param(*this, evaluate_expression({var("Parameters.maybe_modifiable_structure"),{var("BAliPhy.ATModel.variable_alignment"), my_atmodel_export()}}));
     PC->subst_root         = get_param(*this, evaluate_expression({var("Parameters.maybe_modifiable_structure"),{var("BAliPhy.ATModel.subst_root"), my_atmodel_export()}}));

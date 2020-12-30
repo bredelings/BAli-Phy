@@ -31,7 +31,6 @@ data ATModelExport = ATModelExport
       get_all_ancestral_sequences :: [Array Int ConditionalLikelihoodVector],
       get_all_likelihoods :: [Double],
       leaf_sequences :: [Array Int LeafSequence],
-      imodel_training :: Bool,
       heat :: Double,
       variable_alignment :: Bool,
       subst_root :: Int,
