@@ -527,18 +527,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 
 	for(int i=0;i<n_pre_burnin;i++)
 	{
-	    // turn training on
-	    {
-		Parameters& PP = *P.as<Parameters>();
-		PP.set_imodel_training(true);
-	    }
-
 	    pre_burnin.iterate(P,Stats);
-	    // turn training off
-	    {
-		Parameters& PP = *P.as<Parameters>();
-		PP.set_imodel_training(false);
-	    }
 
 	    log_preburnin(out_both, *P, "(S)+(L)+(P)+Alignment", i);
 	    show_parameters(out_log, *P);
@@ -679,12 +668,6 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
     // 4. Then do an initial tree search - SPR - with variable alignment
     if (P->contains_key("pre-burnin-A") or P->contains_key("pre-burnin-A-post"))
     {
-	// turn training on
-	{
-	    Parameters& PP = *P.as<Parameters>();
-	    PP.set_imodel_training(true);
-	}
-
 	MoveAll pre_burnin("pre-burnin+A");
 	pre_burnin.add(4,get_scale_slice_moves(*P.as<Parameters>()));
 	if (all_scales_modifiable(*P))
@@ -698,18 +681,6 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_
 	// enable and disable moves
 	enable_disable_transition_kernels(pre_burnin,args);
 
-	for(int i=0;i<n_pre_burnin;i++)
-	{
-	    log_preburnin(out_both, *P, "SPR+A (training)", i);
-	    show_parameters(out_log,*P);
-	    pre_burnin.iterate(P,Stats);
-	}
-
-	// turn training back off
-	{
-	    Parameters& PP = *P.as<Parameters>();
-	    PP.set_imodel_training(false);
-	}
 	for(int i=0;i<n_pre_burnin;i++)
 	{
 	    log_preburnin(out_both, *P, "SPR+A", i);

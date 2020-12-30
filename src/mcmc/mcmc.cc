@@ -974,17 +974,12 @@ namespace MCMC {
 	P->compile();
 #endif
 
-	int alignment_burnin_iterations = P->load_value("alignment-burnin",10);
-
 	if (owned_ptr<Parameters> PP = P.as<Parameters>())
 	{
 	    auto t = PP->t();
 
 	    //--------- Determine some values for this chain -----------//
 	    if (subsample <= 0) subsample = 2*int(log(t.n_leaves()))+1;
-
-	    if (alignment_burnin_iterations > 0)
-		PP->set_imodel_training(true);
 	}
 
 	//---------------- Run the MCMC chain -------------------//
@@ -992,10 +987,6 @@ namespace MCMC {
 	{
 	    if (owned_ptr<Parameters> PP = P.as<Parameters>())
 	    {
-		// Free temporarily fixed parameters at iteration 5
-		if (iterations == alignment_burnin_iterations)
-		    PP->set_imodel_training(false);
-
 		// Change the temperature according to the pattern suggested
 		if (iterations < PP->PC->beta_series.size())
 		    PP->set_beta( PP->PC->beta_series[iterations] );
