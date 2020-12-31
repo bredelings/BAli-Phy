@@ -7,7 +7,7 @@
 #include "tree/tree.H"                              // for tree_edge, Tree (...
 class context_ref;
 class Parameters;
-class tree_constants;
+struct tree_constants;
 
 class TreeInterface
 {
