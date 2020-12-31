@@ -1483,9 +1483,6 @@ std::string generate_atmodel_program(int n_sequences,
 {
     int n_partitions = filename_ranges.size();
 
-    for(auto& i: i_mapping)
-        if (i)
-            variable_alignment = true;
 
     int n_leaves   = n_sequences;
     int n_nodes    = (n_leaves==1)?1:2*n_leaves - 2;
