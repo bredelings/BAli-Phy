@@ -1483,7 +1483,6 @@ std::string generate_atmodel_program(int n_sequences,
 {
     int n_partitions = filename_ranges.size();
 
-    bool variable_alignment = false;
     for(auto& i: i_mapping)
         if (i)
             variable_alignment = true;
