@@ -790,28 +790,28 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     std::unordered_map<int,log_double_t> likelihoods1;
     std::unordered_map<int,log_double_t> likelihoods2;
 
-    std::function<void(const effect&, int)> register_prior_handler = [&,this](const effect& e, int)
+    std::function<void(const effect&, int)> register_prior_handler = [&](const effect& e, int)
     {
         auto & E = dynamic_cast<const ::register_prior&>(e);
         assert(not priors2.count(E.variable_reg));
         priors2.insert({E.variable_reg, E.pdf});
     };
 
-    std::function<void(const effect&, int)> unregister_prior_handler = [&,this](const effect& e, int)
+    std::function<void(const effect&, int)> unregister_prior_handler = [&](const effect& e, int)
     {
         auto & E = dynamic_cast<const ::register_prior&>(e);
         assert(not priors1.count(E.variable_reg));
         priors1.insert({E.variable_reg, E.pdf});
     };
 
-    std::function<void(const effect&, int)> register_likelihood_handler = [&,this](const effect& e, int)
+    std::function<void(const effect&, int)> register_likelihood_handler = [&](const effect& e, int)
     {
         auto & E = dynamic_cast<const register_likelihood&>(e);
         assert(not likelihoods2.count(E.likelihood_reg));
         likelihoods2.insert({E.likelihood_reg, E.likelihood});
     };
 
-    std::function<void(const effect&, int)> unregister_likelihood_handler = [&,this](const effect& e, int)
+    std::function<void(const effect&, int)> unregister_likelihood_handler = [&](const effect& e, int)
     {
         auto & E = dynamic_cast<const register_likelihood&>(e);
         assert(not likelihoods1.count(E.likelihood_reg));
