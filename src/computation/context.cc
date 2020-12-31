@@ -265,7 +265,7 @@ void context_ref::run_transition_kernels()
     std::set<int> tk_steps_removed;
     std::set<int> tk_steps_added;
 
-    std::function<void(const effect&, int)> register_tk_handler = [&,this](const effect&, int s)
+    std::function<void(const effect&, int)> register_tk_handler = [&](const effect&, int s)
     {
         auto it = tk_steps_removed.find(s);
         if (it != tk_steps_removed.end())
@@ -277,7 +277,7 @@ void context_ref::run_transition_kernels()
         }
     };
 
-    std::function<void(const effect&, int)> unregister_tk_handler = [&,this](const effect&, int s)
+    std::function<void(const effect&, int)> unregister_tk_handler = [&](const effect&, int s)
     {
         auto it = tk_steps_added.find(s);
         if (it != tk_steps_added.end())
