@@ -3,10 +3,6 @@ module Main where
 import Probability
 import Data.Frame
 
-xs = (readTable "x.csv") $$ ("x", AsDouble)
-
-n_points = length xs
-
 cluster_dist = do
   mean <- cauchy 0.0 1.0
   sigma <- exponential 1.0
@@ -28,10 +24,19 @@ prior = do
 
   return (ps, dists, loggers)
 
-main = do
+observe_data xs = do
 
   (ps, dists, loggers) <- sample $ prior
+
+  let n_points = length xs
 
   xs ~> iid n_points (mixture ps dists)
 
   return loggers
+
+main = do
+  let xs = readTable "x.csv" $$ ("x", AsDouble)
+
+  let model = observe_data xs
+
+  mcmc model
