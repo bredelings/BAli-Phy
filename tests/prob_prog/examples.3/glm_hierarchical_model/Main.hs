@@ -37,11 +37,11 @@ observe_data floor_values county_code_values log_radon_data = do
 
 main = do
 
-  let radon = readTable "radon.csv"
+  radon <- readTable "radon.csv"
 
   let floor_values       = radon $$ ("floor",       AsDouble)
-  let county_code_values = radon $$ ("county_code", AsInt)
-  let log_radon_data   = radon $$ ("log_radon",   AsDouble)
+      county_code_values = radon $$ ("county_code", AsInt)
+      log_radon_data     = radon $$ ("log_radon",   AsDouble)
 
   let model = observe_data floor_values county_code_values log_radon_data
 
