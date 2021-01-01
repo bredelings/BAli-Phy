@@ -20,12 +20,14 @@ n_diffs (x:xs) (y:ys) | x == y    =     n_diffs xs ys
 
 hmm emission states = independent $ map emission states
 
-model n = take n `liftM` markov transition_matrix 1
+prior n = take n `liftM` markov transition_matrix 1
 
-main = do
-  hidden_states <- sample $ model 100
+observe_data n = do
+  hidden_states <- sample $ prior n
   observations ~> hmm emission_matrix hidden_states
   return ["hidden_states" %=% hidden_states,
           "diff-true" %=% n_diffs hidden_states true_hidden_states,
           "diff-obs" %=% n_diffs hidden_states observations]
 
+main = do
+  mcmc $ observe_data 100
