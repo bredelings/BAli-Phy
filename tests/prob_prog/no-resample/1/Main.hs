@@ -7,13 +7,16 @@ my_iid n dist =
             return (x : xs)
     in  if n == 0 then return [] else body
 
-model = do
+prior = do
     n  <- geometric 0.25
     xs <- my_iid n (normal 0.0 1.0)
     let loggers = ["n" %=% n, "xs" %=% xs]
     return (sum xs, loggers)
 
-main = do
-    (total, loggers) <- sample $ model
-    20.0 ~> normal total 1.0
+observe_data x = do
+    (total, loggers) <- sample $ prior
+    x ~> normal total 1.0
     return loggers
+
+main = do
+  mcmc $ observe_data 20.0
