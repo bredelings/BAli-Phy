@@ -4,7 +4,7 @@ fib 0 = 0
 fib 1 = 1
 fib n = fib (n-2) + fib (n-1)
 
-model = do
+prior = do
   r <- poisson 4.0
   l <- if 4 < r
        then return 6
@@ -12,7 +12,12 @@ model = do
                return $ fib (2 + r) + tmp
   return (r,l)
 
-main = do
-  (r,l) <- sample $ model
-  6 ~> (poisson $ intToDouble l)
+observe_data n = do
+  (r,l) <- sample $ prior
+  n ~> (poisson $ intToDouble l)
   return ["r" %=% r]
+
+main = do
+  let model = observe_data 6
+
+  mcmc model
