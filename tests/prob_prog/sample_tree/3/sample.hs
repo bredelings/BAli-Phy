@@ -3,7 +3,7 @@ import           Probability
 import           Tree
 import           Tree.Newick
 
-main = sample $ do
+model = sample $ do
     tree <- uniform_topology 5
     let rtree = add_root tree 0
 
@@ -16,3 +16,6 @@ main = sample $ do
     -- can we _observe_ from this? -- why or why not?
 
     return ["tree" %=% write_newick rtree, "xs" %=% xs, "ps" %=% ps]
+
+main = do
+  mcmc model

@@ -2,7 +2,7 @@ import           Probability
 import           Tree
 import           Tree.Newick
 
-main = sample $ do
+model = sample $ do
     tree <- uniform_topology 5
     let rtree = add_root tree 0
 
@@ -13,3 +13,6 @@ main = sample $ do
     xs <- mfix (\xs -> independent [ normal (mu xs p) 1.0 | n <- nodes rtree, let p = parentNode rtree n ])
 
     return ["tree" %=% write_newick rtree, "xs" %=% xs, "ps" %=% ps]
+
+main = do
+  mcmc model
