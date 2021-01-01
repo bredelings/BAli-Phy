@@ -142,6 +142,7 @@ run_lazy' rate (WithEffect action effect) = unsafeInterleaveIO $ do
   return (effect_result `seq` result)
 
 gen_model_no_alphabet m = run_strict' 1.0 m
+mcmc = gen_model_no_alphabet
 add_null_program_result p = do result <- p
                                return (Nothing,result)
 
