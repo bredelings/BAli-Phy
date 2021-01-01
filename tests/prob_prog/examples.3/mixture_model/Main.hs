@@ -23,8 +23,16 @@ prior n_components = do
   return (w, mu, tau, loggers)
 
 
+observe_data observations = do
+  (w, mu, tau, loggers) <- sample $ prior 3
+
+  observations ~> iid (length observations) (mixture w [ normal m s | (m, s) <- zip mu tau])
+
+  return loggers
+
 main = do
   let observations = (readTable "x.csv") $$ ("x",AsDouble)
-  (w, mu, tau, loggers) <- sample $ prior 3
-  observations ~> iid (length observations) (mixture w [ normal m s | (m, s) <- zip mu tau])
-  return loggers
+
+  let model = observe_data observations
+
+  mcmc model

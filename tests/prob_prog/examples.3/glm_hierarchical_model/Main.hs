@@ -25,17 +25,25 @@ prior n_counties = do
   return (dist, loggers)
 
 
-main = do
-  let radon = readTable "radon.csv"
+observe_data floor_values county_code_values log_radon_data = do
 
-  let floor_data       = radon $$ ("floor",       AsDouble)
-  let county_code_data = radon $$ ("county_code", AsInt)
-  let log_radon_data   = radon $$ ("log_radon",   AsDouble)
-
-  let n_counties = length $ nub $ county_code_data
+  let n_counties = length $ nub $ county_code_values
 
   (dist, loggers) <- sample $ prior n_counties
 
-  log_radon_data ~> independent [ dist county_code floor | (floor,county_code) <- zip floor_data county_code_data]
+  log_radon_data ~> independent [ dist county_code floor | (floor,county_code) <- zip floor_values county_code_values]
 
   return loggers
+
+main = do
+
+  let radon = readTable "radon.csv"
+
+  let floor_values       = radon $$ ("floor",       AsDouble)
+  let county_code_values = radon $$ ("county_code", AsInt)
+  let log_radon_data   = radon $$ ("log_radon",   AsDouble)
+
+  let model = observe_data floor_values county_code_values log_radon_data
+
+  mcmc model
+
