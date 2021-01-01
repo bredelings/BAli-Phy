@@ -1542,6 +1542,8 @@ std::string generate_atmodel_program(int n_sequences,
     program_file<<"\nsample_topology_1 taxa = uniform_labelled_topology taxa\n";
 
     /* --------------------------------------------------------------- */
+    do_block main;
+
     do_block program;
 
     do_block sample_atmodel;
@@ -1703,16 +1705,16 @@ std::string generate_atmodel_program(int n_sequences,
         vector<expression_ref> filenames_;
         for(auto& filename: filenames)
             filenames_.push_back(String(filename));
-        program.let(filenames_var,get_list(filenames_));
+        main.let(filenames_var,get_list(filenames_));
     }
 
     var filename_to_seqs("filename_to_seqs");
     {
         expression_ref body = Tuple(var("filename"),{var("load_sequences"),var("filename")});
         vector<expression_ref> quals = { PatQual(var("filename"),filenames_var) };
-        program.let(filename_to_seqs,{var("Map.fromList"), list_comprehension( body, quals)});
+        main.let(filename_to_seqs,{var("Map.fromList"), list_comprehension( body, quals)});
     }
-    program.empty_stmt();
+    main.empty_stmt();
 
     for(int i=0; i < n_partitions; i++)
     {
@@ -1726,11 +1728,11 @@ std::string generate_atmodel_program(int n_sequences,
         expression_ref loaded_sequences = {var("Map.!"),filename_to_seqs,String(filename_ranges[i].first)};
         if (not filename_ranges[i].second.empty())
             loaded_sequences = {var("select_range"), String(filename_ranges[i].second), loaded_sequences};
-        program.let(sequence_data_var, loaded_sequences);
+        main.let(sequence_data_var, loaded_sequences);
 
         // L2. Alignment ...
         sequence_data.push_back(sequence_data_var);
-        program.empty_stmt();
+        main.empty_stmt();
 
         // L3. scale_P ...
         expression_ref scale = scales[scale_index];
@@ -1797,11 +1799,12 @@ std::string generate_atmodel_program(int n_sequences,
         std::cout<<sample_atmodel.get_expression()<<std::endl;
 
     var sequence_data_var("sequence_data");
-    program.let(sequence_data_var, get_list(sequence_data));
-    program.empty_stmt();
+    main.let(sequence_data_var, get_list(sequence_data));
+    main.empty_stmt();
     if (n_partitions > 0)
     {
-        program.let(taxon_names_var, {var("map"),var("sequence_name"),var("sequence_data1")});
+        expression_ref sequence_data1 = {var("!!"),var("sequence_data"),0};
+        program.let(taxon_names_var, {var("map"),var("sequence_name"),sequence_data1});
         program.empty_stmt();
     }
 
@@ -1818,7 +1821,7 @@ std::string generate_atmodel_program(int n_sequences,
         var cls_var("cls_part"+part);
         var ancestral_sequences_var("ancestral_sequences_part"+part);
         var likelihood_var("likelihood_part"+part);
-        var sequence_data_var("sequence_data"+part);
+        expression_ref sequence_data_var = {var("!!"),var("sequence_data"),i};
 
         var partition("part"+part);
         program.let(partition,{var("!!"),{var("partitions"),var("atmodel")},i});
@@ -1874,7 +1877,11 @@ std::string generate_atmodel_program(int n_sequences,
                            var("loggers")));
     program_file<<"\nprior taxa sequence_data = "<<sample_atmodel.get_expression().print()<<"\n";
 
-    program_file<<"\nmain = "<<program.get_expression().print();
+    program_file<<"\nobserve_data sequence_data = "<<program.get_expression().print()<<"\n";
+
+    main.let(var("model"),{var("observe_data"),var("sequence_data")});
+    main.perform({var("mcmc"),var("model")});
+    program_file<<"\nmain = "<<main.get_expression().print()<<"\n";
 
     return program_file.str();
 }
