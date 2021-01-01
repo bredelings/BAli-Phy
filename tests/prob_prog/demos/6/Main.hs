@@ -9,7 +9,7 @@ random_walk_n n next x0 = do
     xs <- random_walk next x0
     return (take n xs)
 
-main = do
+model = do
 
     p <- sample $ beta 10.0 1.0
 
@@ -34,3 +34,6 @@ main = do
     2.0 ~> normal (last z) 1.0
 
     return ["p" %=% p, "n" %=% n, "q" %=% q, "x" %=% x, "w" %=% w, "y" %=% y, "z" %=% z]
+
+main = do
+  mcmc model

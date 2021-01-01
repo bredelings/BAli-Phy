@@ -1,6 +1,6 @@
 import           Probability
 
-main = sample $ do
+model = sample $ do
 
     xs <- iid 10 (normal 0.0 1.0)
 
@@ -8,3 +8,5 @@ main = sample $ do
 
     return ["xs" %=% xs, "squares" %=% ys, "sum" %=% sum ys]
 
+main = do
+  mcmc model
