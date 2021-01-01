@@ -12,7 +12,9 @@ gaussianRandomWalk n dim = do
   states <- markov transition state0
   return $ take n states
 
-main = do
+model = do
   states <- sample $ gaussianRandomWalk 100 2
   return ["states" %=% states]
 
+main = do
+  mcmc model
