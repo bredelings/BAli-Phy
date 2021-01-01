@@ -9,7 +9,7 @@ csv_to_frame :: [ [ String ] ] -> Map String [String]
 
 csv_to_frame (header:rows) = Map.fromList [(field_name, map (!!i) rows) | (i,field_name) <- zip [0..] header]
 
-readTable = csv_to_frame . read_csv
+readTable filename = csv_to_frame `liftM` read_csv filename
 
 data FieldType = AsDouble | AsInt | AsString
 

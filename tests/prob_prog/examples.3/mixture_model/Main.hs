@@ -23,16 +23,22 @@ prior n_components = do
   return (w, mu, tau, loggers)
 
 
-observe_data observations = do
+observe_data xs = do
+
   (w, mu, tau, loggers) <- sample $ prior 3
 
-  observations ~> iid (length observations) (mixture w [ normal m s | (m, s) <- zip mu tau])
+  let n_points = length xs
+
+  xs ~> iid n_points (mixture w [ normal m s | (m, s) <- zip mu tau])
 
   return loggers
 
 main = do
-  let observations = (readTable "x.csv") $$ ("x",AsDouble)
 
-  let model = observe_data observations
+  frame <- readTable "x.csv"
+
+  let xs = frame $$ ("x",AsDouble)
+
+  let model = observe_data xs
 
   mcmc model
