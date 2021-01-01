@@ -40,7 +40,7 @@ sample_alignment topology ts imodel scale tip_seq_lengths = do
     alignment_on_tree <- random_alignment topology hmms imodel tip_seq_lengths
     return $ Bio.Alignment.pairwise_alignments alignment_on_tree
 
-model taxa tip_seq_lengths = do
+prior taxa tip_seq_lengths = do
 
     topology <- uniform_labelled_topology taxa
 
@@ -63,13 +63,16 @@ model taxa tip_seq_lengths = do
 
     return (ctmc_on_tree topology root as smodel ts scale, loggers)
 
-main = do
-    let seq_data        = load_sequences "5d-muscle.fasta"
-        taxa            = map sequence_name seq_data
+observe_data seq_data = do
+    let taxa            = map sequence_name seq_data
         tip_seq_lengths = get_sequence_lengths dna seq_data
 
-    (seq_dist, loggers) <- sample $ model taxa tip_seq_lengths
+    (seq_dist, loggers) <- sample $ prior taxa tip_seq_lengths
 
     seq_data ~> seq_dist
 
     return loggers
+
+main = do
+  let seq_data        = load_sequences "5d-muscle.fasta"
+  mcmc $ observe_data seq_data
