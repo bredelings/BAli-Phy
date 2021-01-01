@@ -1,10 +1,6 @@
 import           Probability
 import           Data.Frame
 
-xy_data = readTable "xy.csv"
-xs = xy_data $$ ("x", AsDouble)
-ys = xy_data $$ ("y", AsDouble)
-
 prior = do
 
     b     <- normal 0.0 1.0
@@ -17,12 +13,22 @@ prior = do
 
     return (a, b, sigma, loggers)
 
-main = do
+observe_data xs observed_ys = do
 
     (a, b, sigma, loggers) <- sample $ prior
 
     let f x = b * x + a
 
-    ys ~> independent [ normal (f x) sigma | x <- xs ]
+    observed_ys ~> independent [ normal (f x) sigma | x <- xs ]
 
     return loggers
+
+main = do
+  let xy_data = readTable "xy.csv"
+      xs = xy_data $$ ("x", AsDouble)
+      ys = xy_data $$ ("y", AsDouble)
+
+  let model = observe_data xs ys
+
+  mcmc model
+
