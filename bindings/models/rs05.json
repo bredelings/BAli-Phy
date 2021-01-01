@@ -1,7 +1,7 @@
 {
     "name": "rs05",
     "result_type": "IndelModel",
-    "call": "IModel.rs05[@log_prob,@mean_length,@tau]",
+    "call": "IModel.rs05[@log_prob,@mean_length,@tau,@topology]",
     "import": ["IModel"],
     "title": "Redelings & Suchard (2005) model of insertions and deletions",
     "citation":{"type": "article",
@@ -26,6 +26,11 @@
             "arg_name": "tau",
             "arg_type": "Double",
             "default_value": "0.001"
+        },
+        {
+            "arg_name": "topology",
+            "arg_type": "Topology",
+            "default_value": "get_state[topology]"
         }
     ],
     "extract": "all"

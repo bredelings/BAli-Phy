@@ -1483,7 +1483,6 @@ std::string generate_atmodel_program(int n_sequences,
 {
     int n_partitions = filename_ranges.size();
 
-
     int n_leaves   = n_sequences;
     int n_nodes    = (n_leaves==1)?1:2*n_leaves - 2;
     int n_branches = (n_leaves==1)?0:2*n_leaves - 3;
@@ -1669,15 +1668,20 @@ std::string generate_atmodel_program(int n_sequences,
     for(int i=0;i<IMs.size();i++)
     {
         string prefix = "I" + convertToString(i+1);
-        expression_ref imodel = var("sample_imodel_"+std::to_string(i+1));
 
         auto code = IMs[i].code;
-        code.E = imodel;
-        auto imodel_var = bind_and_log(false, prefix, imodel, code.is_action(), code.has_loggers(), sample_atmodel, program_loggers);
 
-        var imodel_var2("imodel_"+std::to_string(i+1));
-        sample_atmodel.let(imodel_var2, {imodel_var, tree_var});
-        imodels.push_back(imodel_var2);
+        expression_ref imodel = var("sample_imodel_"+std::to_string(i+1));
+        for(auto& state_name: code.used_states)
+        {
+            if (state_name == "topology")
+                imodel = {imodel, tree_var};
+        }
+
+        auto imodel_var = var("imodel_"+std::to_string(i+1));
+        auto log_imodel = var("log_"+imodel_var.name);
+        bind_and_log(false, imodel_var, log_imodel, prefix, imodel, code.is_action(), code.has_loggers(), sample_atmodel, program_loggers);
+        imodels.push_back(imodel_var);
     }
     sample_atmodel.empty_stmt();
 
