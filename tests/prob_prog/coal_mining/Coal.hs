@@ -38,8 +38,11 @@ observe_data times_data = do
 
 
 main = do
-  let frame = readTable "coal-times.csv"
-      times = map read_double $ (frame M.! "time")
+
+  frame <- readTable "coal-times.csv"
+
+  let times = frame $$ ("time", AsDouble)
 
   let model = observe_data times
+
   mcmc model

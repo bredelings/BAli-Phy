@@ -30,7 +30,9 @@ observe_data xs = do
 
 main = do
 
-  let xs = readTable "x.csv" $$ ("x", AsDouble)
+  xtable <- readTable "x.csv"
+
+  let xs = xtable $$ ("x", AsDouble)
 
   let model = observe_data xs
 

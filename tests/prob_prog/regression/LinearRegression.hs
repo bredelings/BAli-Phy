@@ -24,8 +24,9 @@ observe_data xs observed_ys = do
     return loggers
 
 main = do
-  let xy_data = readTable "xy.csv"
-      xs = xy_data $$ ("x", AsDouble)
+  xy_data <- readTable "xy.csv"
+
+  let xs = xy_data $$ ("x", AsDouble)
       ys = xy_data $$ ("y", AsDouble)
 
   let model = observe_data xs ys
