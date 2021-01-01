@@ -1859,7 +1859,7 @@ std::string generate_atmodel_program(int n_sequences,
     program.let(var("anc_seqs"),get_list(anc_seqs));
     program.let(var("likelihoods"),get_list(likelihoods));
     program.empty_stmt();
-    program.perform({var("observe"),{var("fake_dist"),var("likelihoods")}, sequence_data_var});
+    program.perform({var("~>"),sequence_data_var,{var("fake_dist"),var("likelihoods")}});
     program.empty_stmt();
     program.finish_return(Tuple({var("ATModelExport"),
                                  var("atmodel"),
