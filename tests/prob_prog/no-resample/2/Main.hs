@@ -6,9 +6,12 @@ prior = do
     let loggers = ["n" %=% n, "y" %=% y]
     return (y,loggers)
 
-main = do
+observe_data x = do
     (y,loggers) <- sample $ prior
 
-    3.0 ~> normal y 1.0
+    x ~> normal y 1.0
 
     return loggers
+
+main = do
+  mcmc $ observe_data 3.0
