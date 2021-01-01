@@ -21,7 +21,8 @@ observe_data sequence_data = do
     return ["rho" %=% rho ]
 
 main = do
-  let filename = getArgs !! 0
+  args <- getArgs
+  let filename = args !! 0
       sequence_data = load_alignment dna filename
 
   let model = observe_data sequence_data
