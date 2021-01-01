@@ -1549,7 +1549,6 @@ int reg_heap::add_program(const expression_ref& E)
         return *program_result_head;
     }
 
-    P = {var("Probability.Random.gen_model_no_alphabet"), P};
     if (program->type == Program::exe_type::log_list)
     {
         // 2. If the program doesn't return a pair, make it a pair
