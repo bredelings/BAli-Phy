@@ -8,8 +8,10 @@ cluster_dist = do
   return (mean,sigma)
 
 prior n_points = do
-  alpha <- sample $ gamma 0.5 10.0
-  params <- sample $ dp n_points alpha cluster_dist
+
+  alpha <- gamma 0.5 10.0
+
+  params <- dp n_points alpha cluster_dist
 
   let loggers = ["alpha" %=% alpha, "params" %=% params]
 
@@ -21,7 +23,7 @@ observe_data xs = do
 
   (alpha, params, loggers) <- sample $ prior n_points
 
-  xs ~> [normal mean sigma | (mean,sigma) <- params]
+  xs ~> independent [normal mean sigma | (mean,sigma) <- params]
 
   return loggers
 
