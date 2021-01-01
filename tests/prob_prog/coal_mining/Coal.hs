@@ -2,9 +2,6 @@ import Probability
 import Data.Frame
 import qualified Data.Map as M
 
-frame = readTable "coal-times.csv"
-times = map read_double $ (frame M.! "time")
-
 -- When we get polymorphism, maybe we can create an temporary array as a view on xs'
 -- I presume that using n directly is more efficient that using [length xs']
 orderedSample n dist = do
@@ -32,11 +29,17 @@ prior t1 t2 = do
 
   return (n, s, g, intervals)
 
-main = do
+observe_data times_data = do
   (n, s, g, intervals) <- sample $ prior 1851.0 1963.0
 
-  times ~> poisson_processes intervals
+  times_data ~> poisson_processes intervals
 
   return [ "n" %=% n, "s" %=% s, "g" %=% g, "intervals" %=% intervals]
 
 
+main = do
+  let frame = readTable "coal-times.csv"
+      times = map read_double $ (frame M.! "time")
+
+  let model = observe_data times
+  mcmc model
