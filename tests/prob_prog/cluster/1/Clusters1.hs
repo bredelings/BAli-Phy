@@ -1,11 +1,5 @@
-module Main where
-
 import Probability
 import Data.Frame
-
-xs = (readTable "x.csv") $$ ("x", AsDouble)
-
-n_points = length xs
 
 cluster_dist = do
   mean <- normal 0.0 10.0
@@ -13,15 +7,30 @@ cluster_dist = do
   let sigma = 1.0/prec
   return (mean,sigma)
 
-main = do
+prior n_points = do
   alpha <- sample $ gamma 0.5 10.0
-
   params <- sample $ dp n_points alpha cluster_dist
 
-  let dists = [normal mean sigma | (mean,sigma) <- params]
+  let loggers = ["alpha" %=% alpha, "params" %=% params]
 
-  xs ~> independent dists
+  return (alpha, params, loggers)
 
-  return ["alpha" %=% alpha
-         ,"params" %=% params
-         ]
+observe_data xs = do
+
+  let n_points = length xs
+
+  (alpha, params, loggers) <- sample $ prior n_points
+
+  xs ~> [normal mean sigma | (mean,sigma) <- params]
+
+  return loggers
+
+
+main = do
+
+  let xs = readTable "x.csv" $$ ("x", AsDouble)
+
+  let model = observe_data xs
+
+  mcmc model
+
