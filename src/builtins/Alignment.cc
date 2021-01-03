@@ -518,6 +518,64 @@ extern "C" closure builtin_function_reorder_alignment(OperationArgs& Args)
     return A2;
 }
 
+extern "C" closure builtin_function_select_alignment_columns(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& A0 = arg0.as_<Box<alignment>>().value();
+
+    auto arg1 = Args.evaluate(1);
+    auto& sites = arg1.as_<EVector>();
+
+    int N = A0.n_sequences();
+    int L = sites.size();
+    object_ptr<Box<alignment>> A1(new Box<alignment>(A0.get_alphabet(), N, L));
+
+    for(int i=0;i<sites.size();i++)
+    {
+        int site = sites[i].as_int();
+        for(int j=0;j<N;j++)
+        {
+            int letter = A0(site,j);
+            A1->set_value(i, j, letter);
+        }
+    }
+
+    return A1;
+}
+
+extern "C" closure builtin_function_select_alignment_pairs(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& A0 = arg0.as_<Box<alignment>>().value();
+
+    auto arg1 = Args.evaluate(1);
+    auto& sites = arg1.as_<EVector>();
+
+    auto arg2 = Args.evaluate(2);
+    auto d = arg2.poly_cast<alphabet,Doublets>();
+    if (not d)
+        throw myexception()<<"select_alignment_pairs: no a doublet alphabet!";
+    const Doublets& doublets = *d;
+
+    int N = A0.n_sequences();
+    int L = sites.size();
+    object_ptr<Box<alignment>> A1(new Box<alignment>(A0.get_alphabet(), N, L));
+
+    for(int i=0;i<sites.size();i++)
+    {
+        auto [site1,site2] = (pair<int,int>)sites[i].as_<EPair>();
+        for(int j=0;j<N;j++)
+        {
+            int nuc1 = A0(site1,j);
+            int nuc2 = A0(site2,j);
+            int doublet = doublets.get_doublet(nuc1,nuc2);
+            A1->set_value(i, j, doublet);
+        }
+    }
+
+    return A1;
+}
+
 extern "C" closure builtin_function_ancestral_sequence_alignment(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
