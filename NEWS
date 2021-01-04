@@ -6,6 +6,8 @@
 * 3.6 (unreleased)
  + Make the `"nested": true` form of JSON log format more readable.
  + Connect 3D MDS points with lines.
+ + Speed up fixed-alignment analyses.
+ + Sample ancestral states for fixed alignments with column compression.
  + Update command-line model language
    - Replace getAlphabet builtin with get_state[alphabet]
    - Add get_state[branch_categories]
