@@ -64,3 +64,10 @@ leaf_sequence_counts a n counts = list_from_vector $ builtin_leaf_sequence_count
 
 builtin builtin_ancestral_sequence_alignment 3 "ancestral_sequence_alignment" "Alignment"
 ancestral_sequence_alignment a0 states smap = builtin_ancestral_sequence_alignment a0 states smap
+
+builtin builtin_select_alignment_columns 2 "select_alignment_columns" "Alignment"
+select_alignment_columns alignment sites = builtin_select_alignment_columns alignment (list_to_vector sites)
+
+builtin builtin_select_alignment_pairs 3 "select_alignment_pairs" "Alignment"
+select_alignment_pairs alignment sites doublets = builtin_select_alignment_pairs alignment sites' doublets
+    where sites' = list_to_vector $ map (\(x,y) -> c_pair x y) sites
