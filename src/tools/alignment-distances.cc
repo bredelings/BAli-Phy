@@ -220,7 +220,10 @@ long int pairwise_alignment_distance_asymmetric(int i, int j, const matrix<int>&
     {
 	int col1 = CI1[i][k];
 	int col2 = CI2[i][k];
-	if (M1(j, col1) != M2(j, col2))
+
+	assert(M1(col1,i) == M2(col2,i));
+
+	if (M1(col1,j) != M2(col2,j))
 	    diff++;
     }
     return diff;
