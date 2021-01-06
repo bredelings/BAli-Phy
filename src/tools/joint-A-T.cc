@@ -36,6 +36,45 @@ using po::variables_map;
 using std::vector;
 using std::string;
 using std::endl;
+using std::optional;
+
+// See tools/read-trees.{H,cc}
+// See alignment/load.{H,cc}
+
+optional<string> line_reader::next_one()
+{
+    std::string line;
+    if (portable_getline(file,line))
+        return line;
+    else
+        return {};
+}
+
+line_reader::line_reader(std::istream& f)
+    :file_reader<string>(f)
+{ }
+
+
+optional<string> alignment_reader::next_one()
+{
+    if (not find_alignment(file)) return {};
+
+    string alignment_string;
+    string line;
+    while(portable_getline(file,line) and line.size())
+    {
+        alignment_string += line;
+        alignment_string += "\n";
+    }
+
+    assert(alignment_string.size() > 0 and alignment_string[0] == '>');
+    return alignment_string;
+}
+
+alignment_reader::alignment_reader(std::istream& f)
+    :file_reader<string>(f)
+{ }
+
 
 const std::vector<std::string>& joint_A_T::leaf_names() const
 {
@@ -95,7 +134,7 @@ joint_A_T get_multiple_joint_A_T(const variables_map& args,bool internal)
     auto t_files = args["trees"].as<vector<string>>();
 
     // This is just for the trees, I think.
-    unsigned subsample = args["subsample"].as<unsigned>();
+    unsigned factor = args["subsample"].as<unsigned>();
 
     if (a_files.size() != t_files.size())
         throw myexception()<<"The number of alignments files ("<<a_files.size()<<") and the number of trees files ("<<t_files.size()<<") don't match!";
@@ -106,8 +145,38 @@ joint_A_T get_multiple_joint_A_T(const variables_map& args,bool internal)
         checked_ifstream a_file(a_files[i], "alignment samples file");
         checked_ifstream t_file(t_files[i], "tree samples file");
 
-        vector<alignment> A = load_alignments(a_file, get_alphabet_name(args));
-        vector<SequenceTree> T = load_trees(t_file, 0, subsample);
+        auto stream = zip(alignment_reader(a_file),subsample(factor,line_reader(t_file)));
+
+        vector<alignment> A;
+        vector<SequenceTree> T;
+        if (auto x = stream.next_one())
+        {
+            auto [a,t] = *x;
+            std::istringstream astringfile(a);
+            auto aa = load_next_alignment(astringfile, get_alphabet_name(args));
+            auto tt = parse_sequence_tree(t);
+            if (tt)
+            {
+                A.push_back(aa);
+                T.push_back(*tt);
+            }
+        }
+
+        auto& alph = A.front().get_alphabet();
+        vector<string> names = sequence_names(A.front());
+
+        while (auto x = stream.next_one())
+        {
+            auto [a,t] = *x;
+            std::istringstream astringfile(a);
+            auto aa = load_next_alignment(astringfile, alph, names);
+            auto tt = parse_sequence_tree(t);
+            if (tt)
+            {
+                A.push_back(aa);
+                T.push_back(*tt);
+            }
+        }
 
         J.load(A,T,internal);
     }

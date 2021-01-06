@@ -22,11 +22,101 @@
 
 #include <string>
 #include <vector>
+#include <optional>
 #include <boost/program_options.hpp>
 
 #include "tree/sequencetree.H"
 #include "alignment/alignment.H"
 
+// This is like read-trees.H.  Maybe we should use range-v3...
+
+template <typename T>
+struct reader
+{
+    typedef T value_type;
+
+    virtual bool done() const = 0;
+
+    virtual std::optional<T> next_one() = 0;
+    virtual void skip_one() { next_one();}
+
+    void skip(int n) { for(int i=0;i<n and not done();i++) skip_one();}
+    std::optional<T> next(int n=1) { skip(n-1); return next_one();}
+
+    virtual ~reader() = default;
+};
+
+template <typename T>
+class file_reader: public reader<T>
+{
+protected:
+    std::istream& file;
+public:
+    bool done() const {return not file;}
+
+    file_reader(std::istream& f):file(f) {}
+};
+
+class line_reader: public file_reader<std::string>
+{
+public:
+    std::optional<std::string> next_one();
+
+    line_reader(std::istream&);
+};
+
+class alignment_reader: public file_reader<std::string>
+{
+public:
+    std::optional<std::string> next_one();
+
+    alignment_reader(std::istream&);
+};
+
+template <typename R>
+class subsample: public reader<typename R::value_type>
+{
+    int factor;
+    R stream;
+public:
+    bool done() const {return stream.done();}
+
+    std::optional<typename R::value_type> next_one()
+    {
+        auto v = stream.next_one();
+        if (v)
+            stream.skip(factor-1);
+        return v;
+    }
+
+    subsample(int i, const R& r)
+        :factor(i), stream(r)
+        { }
+};
+
+template <typename R1, typename R2>
+class zip: public reader<std::pair<typename R1::value_type,typename R2::value_type>>
+{
+    R1 stream1;
+    R2 stream2;
+
+public:
+    bool done() const {return stream1.done() or stream2.done();}
+
+    std::optional<std::pair<typename R1::value_type,typename R2::value_type>> next_one()
+    {
+        auto v1 = stream1.next_one();
+        auto v2 = stream2.next_one();
+        if (v1 and v2)
+            return {{*v1,*v2}};
+        else
+            return {};
+    }
+
+    zip(const R1& r1, const R2& r2)
+        :stream1(r1),stream2(r2)
+        { }
+};
 
 //--------------------------- Class joint_A_T ----------------------------//
 class joint_A_T: public std::vector<std::pair<alignment,SequenceTree>>
