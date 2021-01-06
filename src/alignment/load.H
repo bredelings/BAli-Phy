@@ -37,6 +37,14 @@ std::vector<alignment> load_alignments(std::istream& ifile, const std::string& n
 
 std::optional<std::vector<sequence>> find_load_next_sequences(std::istream& ifile);
 
+std::istream& find_alignment(std::istream& ifile);
+
+alignment load_next_alignment(std::istream& ifile, const std::string&);
+
+alignment load_next_alignment(std::istream& ifile, const alphabet& a);
+
+alignment load_next_alignment(std::istream& ifile, const alphabet& a, const std::vector<std::string>& names);
+
 alignment find_first_alignment(std::istream& ifile, const std::string& alph_name);
 
 alignment find_last_alignment(std::istream& ifile, const std::string& alph_name);
