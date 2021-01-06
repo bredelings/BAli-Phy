@@ -60,6 +60,19 @@ RootedSequenceTree load_T(const variables_map& args) {
     return load_tree_from_file(filename);
 }
 
+std::optional<SequenceTree> parse_sequence_tree(const string& text)
+{
+    RootedSequenceTree T;
+    try {
+        T.parse(text);
+        return T;
+    }
+    catch (...)
+    {
+        return {};
+    }
+}
+
 vector<SequenceTree> load_trees(const vector<string>& lines) 
 {
     if (lines.size() == 0)

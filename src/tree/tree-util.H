@@ -28,6 +28,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 RootedSequenceTree load_T(const boost::program_options::variables_map& args);
 RootedSequenceTree load_tree_from_file(const std::string_view& filename);
 
+std::optional<SequenceTree> parse_sequence_tree(const std::string& text);
 
 std::vector<SequenceTree> load_trees(const std::vector<std::string>& lines);
 std::vector<SequenceTree> load_trees(std::istream& file,int skip=0,int subsample=1,int max=-1) ;
