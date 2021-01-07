@@ -173,7 +173,7 @@ vector<pair<string,dynamic_bitset<>>> get_branch_queries_from_tree(SequenceTree 
             auto split = branch_partition(Q,b);
             groups.push_back({name, split});
 
-            if (log_verbose)
+            if (log_verbose >= 2)
             {
                 std::cerr<<name<<" = ";
                 for(int i=0;i<split.size();i++)
