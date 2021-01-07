@@ -612,6 +612,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
         ("alignments,A", value<vector<string>>()->composing(),"File of alignment samples")
         ("trees,T", value<vector<string>>()->composing(), "File of corresponding tree samples")
         ("subsample,x",value<unsigned>()->default_value(10),"factor by which to sub-sample trees")
+        ("max,m",value<unsigned>()->default_value(500),"Thin (alignment,tree) pairs down to this number of samples.")
         ;
 
     options_description ancestors("Ancestor query options");

@@ -28,6 +28,7 @@
 #include "tree/tree-util.H"
 
 #include "util/myexception.H"
+#include "util/log-level.H"
 #include "util/io.H"
 
 namespace po = boost::program_options;
@@ -130,22 +131,75 @@ joint_A_T get_joint_A_T(const variables_map& args,bool internal)
     return joint_A_T(A,T,internal);
 }
 
+template<typename T>
+void remove_unordered(vector<T>& v, int i)
+{
+    if (i < int(v.size())-1)
+        std::swap(v[i], v.back());
+    v.pop_back();
+}
+
+template <typename T>
+void thin_by_half(vector<T>& v1)
+{
+    vector<T> v2;
+    for(int i=0;i<v1.size()/2;i++)
+        v2.push_back(std::move(v1[i*2]));
+    std::swap(v1,v2);
+}
+
+int kill(int i, int total, int max)
+{
+    // We have this many extra Ts
+    const int extra = total - max;
+    return int( double(i+0.5)*total/extra);
+}
+
+template <typename T>
+bool thin_down_to(vector<T>& v1,optional<int> M)
+{
+    if (not M) return false;
+
+    int total = v1.size();
+    int max = *M;
+    if (total <= max) return false;
+
+    assert(total <= max*2);
+
+    int k = 0;
+    int j = 0;
+    vector<T> v2;
+    for(int i=0;i<max;i++,j++)
+    {
+        while ( j == kill(k, total , max) )
+        {
+            j++;
+            k++;
+        }
+        v2.push_back(std::move(v1[j]));
+    }
+    std::swap(v1, v2);
+    assert(v1.size() == max);
+
+    return true;
+}
+
 joint_A_T get_multiple_joint_A_T(const variables_map& args,bool internal)
 {
     auto a_filenames = args["alignments"].as<vector<string>>();
     auto t_filenames = args["trees"].as<vector<string>>();
 
     // This is just for the trees, I think.
-    unsigned factor = args["subsample"].as<unsigned>();
+    unsigned alignment_thin_factor = args["subsample"].as<unsigned>();
 
-    unsigned max = args["max"].as<unsigned>();
+    optional<int> max;
+    if (args.count("max"))
+        max = args["max"].as<unsigned>();
 
     if (a_filenames.size() != t_filenames.size())
         throw myexception()<<"The number of alignments files ("<<a_filenames.size()<<") and the number of trees files ("<<t_filenames.size()<<") don't match!";
 
     int N = a_filenames.size();
-
-    vector<vector<pair<string,string>>> A_T_strings(N);
 
     vector<shared_ptr<checked_ifstream>> a_files;
     vector<shared_ptr<checked_ifstream>> t_files;
@@ -158,48 +212,73 @@ joint_A_T get_multiple_joint_A_T(const variables_map& args,bool internal)
     vector<shared_ptr<reader<pair<string,string>>>> readers;
     for(int i=0;i<N;i++)
     {
-        auto r = new zip(alignment_reader(*a_files[i]),subsample(factor,line_reader(*t_files[i])));
+        auto r = new zip(alignment_reader(*a_files[i]),subsample(alignment_thin_factor,line_reader(*t_files[i])));
         readers.push_back(shared_ptr<reader<pair<string,string>>>(r));
     }
 
-    joint_A_T J;
-    for(int i=0;i<a_files.size();i++)
+    int factor = 1;
+    vector<pair<string,string>> A_T_strings(N);
+
+    while(not readers.empty())
     {
-        auto& stream = readers[i];
-
-        vector<alignment> A;
-        vector<SequenceTree> T;
-        if (auto x = stream->next_one())
+        // Do one round of reading.
+        for(int i=0;i<readers.size();i++)
         {
-            auto [a,t] = *x;
-            std::istringstream astringfile(a);
-            auto aa = load_next_alignment(astringfile, get_alphabet_name(args));
-            auto tt = parse_sequence_tree(t);
-            if (tt)
+            auto at = readers[i]->next(factor);
+            if (not at)
             {
-                A.push_back(aa);
-                T.push_back(*tt);
+                remove_unordered(readers,i);
+                i--;
             }
+            else
+                A_T_strings.push_back(std::move(*at));
         }
 
-        auto& alph = A.front().get_alphabet();
-        vector<string> names = sequence_names(A.front());
-
-        while (auto x = stream->next_one())
+        if (max and A_T_strings.size() > (*max)*2)
         {
-            auto [a,t] = *x;
-            std::istringstream astringfile(a);
-            auto aa = load_next_alignment(astringfile, alph, names);
-            auto tt = parse_sequence_tree(t);
-            if (tt)
+            int old_size = A_T_strings.size();
+            thin_by_half(A_T_strings);
+            factor *= 2;
+            if (log_verbose)
             {
-                A.push_back(aa);
-                T.push_back(*tt);
+                std::cerr<<"Halving: Shrinking from "<<old_size<<" to "<<A_T_strings.size()<<" samples.\n";
+                std::cerr<<"  Increasing subsampling from "<<factor/2<<" to "<<factor<<".\n";
             }
         }
-
-        J.load(A,T,internal);
     }
+    if (max)
+        thin_down_to(A_T_strings, *max);
+
+    vector<alignment> A;
+    vector<SequenceTree> T;
+    shared_ptr<const alphabet> alph;
+    vector<string> names;
+    auto f = [&](const pair<string,string>& at)
+        {
+            auto& [a,t] = at;
+            auto tt = parse_sequence_tree(t);
+            if (not tt) return;
+
+            std::istringstream astringfile(a);
+            alignment aa;
+            if (not alph)
+            {
+                aa = load_next_alignment(astringfile, get_alphabet_name(args));
+                alph = shared_ptr<const alphabet>(aa.get_alphabet().clone());
+                names = sequence_names(aa);
+            }
+            else
+                aa = load_next_alignment(astringfile, *alph, names);
+
+            A.push_back(aa);
+            T.push_back(*tt);
+        };
+
+    for(auto& at: A_T_strings)
+        f(at);
+
+    joint_A_T J;
+    J.load(A,T,internal);
 
     return J;
 }
