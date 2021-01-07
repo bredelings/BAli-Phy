@@ -25,20 +25,9 @@
 #include <optional>
 #include <boost/program_options.hpp>
 #include "util/file-readers.H"
-
+#include "alignment/load.H"
 #include "tree/sequencetree.H"
 #include "alignment/alignment.H"
-
-// This is like read-trees.H.  Maybe we should use range-v3...
-
-class alignment_reader: public file_reader<std::string>
-{
-public:
-    std::optional<std::string> next_one();
-
-    alignment_reader(std::istream&);
-};
-
 
 //--------------------------- Class joint_A_T ----------------------------//
 class joint_A_T: public std::vector<std::pair<alignment,SequenceTree>>

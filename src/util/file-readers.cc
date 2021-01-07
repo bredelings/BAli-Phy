@@ -5,6 +5,9 @@
 using std::optional;
 using std::string;
 
+// See tools/read-trees.{H,cc}
+// See alignment/load.{H,cc}
+
 optional<string> line_reader::next_one()
 {
     std::string line;

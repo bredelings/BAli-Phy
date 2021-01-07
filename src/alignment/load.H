@@ -9,6 +9,7 @@
 #include "sequence/sequence.H"
 #include "sequence/alphabet.H"
 #include "alignment.H"
+#include "util/file-readers.H"
 
 std::string get_alphabet_name(const boost::program_options::variables_map& args);
 
@@ -48,5 +49,14 @@ alignment load_next_alignment(std::istream& ifile, const alphabet& a, const std:
 alignment find_first_alignment(std::istream& ifile, const std::string& alph_name);
 
 alignment find_last_alignment(std::istream& ifile, const std::string& alph_name);
+
+class alignment_reader: public file_reader<std::string>
+{
+public:
+    std::optional<std::string> next_one();
+
+    alignment_reader(std::istream&);
+};
+
 
 #endif

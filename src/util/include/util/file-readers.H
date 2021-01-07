@@ -13,6 +13,8 @@
 #include <iostream>
 #include "util/log-level.H"
 
+// This is like "read-trees.H" and "alignment/load.H"
+// Maybe we should use range-v3...
 
 template <typename T>
 struct reader

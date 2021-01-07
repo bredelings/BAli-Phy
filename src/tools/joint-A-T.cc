@@ -41,30 +41,6 @@ using std::string;
 using std::endl;
 using std::optional;
 
-// See tools/read-trees.{H,cc}
-// See alignment/load.{H,cc}
-
-optional<string> alignment_reader::next_one()
-{
-    if (not find_alignment(file)) return {};
-
-    string alignment_string;
-    string line;
-    while(portable_getline(file,line) and line.size())
-    {
-        alignment_string += line;
-        alignment_string += "\n";
-    }
-
-    assert(alignment_string.size() > 0 and alignment_string[0] == '>');
-    return alignment_string;
-}
-
-alignment_reader::alignment_reader(std::istream& f)
-    :file_reader<string>(f)
-{ }
-
-
 const std::vector<std::string>& joint_A_T::leaf_names() const
 {
     return *leaf_names_;
