@@ -44,20 +44,6 @@ using std::optional;
 // See tools/read-trees.{H,cc}
 // See alignment/load.{H,cc}
 
-optional<string> line_reader::next_one()
-{
-    std::string line;
-    if (portable_getline(file,line))
-        return line;
-    else
-        return {};
-}
-
-line_reader::line_reader(std::istream& f)
-    :file_reader<string>(f)
-{ }
-
-
 optional<string> alignment_reader::next_one()
 {
     if (not find_alignment(file)) return {};
@@ -139,51 +125,6 @@ void remove_unordered(vector<T>& v, int i)
     v.pop_back();
 }
 
-template <typename T>
-void thin_by_half(vector<T>& v1)
-{
-    vector<T> v2;
-    for(int i=0;i<v1.size()/2;i++)
-        v2.push_back(std::move(v1[i*2]));
-    std::swap(v1,v2);
-}
-
-int kill(int i, int total, int max)
-{
-    // We have this many extra Ts
-    const int extra = total - max;
-    return int( double(i+0.5)*total/extra);
-}
-
-template <typename T>
-bool thin_down_to(vector<T>& v1,optional<int> M)
-{
-    if (not M) return false;
-
-    int total = v1.size();
-    int max = *M;
-    if (total <= max) return false;
-
-    assert(total <= max*2);
-
-    int k = 0;
-    int j = 0;
-    vector<T> v2;
-    for(int i=0;i<max;i++,j++)
-    {
-        while ( j == kill(k, total , max) )
-        {
-            j++;
-            k++;
-        }
-        v2.push_back(std::move(v1[j]));
-    }
-    std::swap(v1, v2);
-    assert(v1.size() == max);
-
-    return true;
-}
-
 joint_A_T get_multiple_joint_A_T(const variables_map& args,bool internal)
 {
     auto a_filenames = args["alignments"].as<vector<string>>();
@@ -217,7 +158,7 @@ joint_A_T get_multiple_joint_A_T(const variables_map& args,bool internal)
     }
 
     int factor = 1;
-    vector<pair<string,string>> A_T_strings(N);
+    vector<pair<string,string>> A_T_strings;
 
     while(not readers.empty())
     {
