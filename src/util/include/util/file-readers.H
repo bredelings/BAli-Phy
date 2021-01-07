@@ -13,8 +13,14 @@
 #include <iostream>
 #include "util/log-level.H"
 
-// This is like "read-trees.H" and "alignment/load.H"
-// Maybe we should use range-v3...
+
+#include "range/v3/all.hpp"
+
+// See "tools/read-trees.H" - it implements almost the same interface on either Tree or RootedTree.
+// See "alignment/load.H" - it implements alignment loading with better error handling.
+
+// We should be able to use range-v3 instead -- there is already a views::getlines( ) range, for example.
+// * also, separating position from evaluation should allow laziness..
 
 template <typename T>
 struct reader

@@ -58,5 +58,20 @@ public:
     alignment_reader(std::istream&);
 };
 
+/*
+#include "range/v3/all.hpp"
+
+class alignments_range: public ranges::view_facade<alignments_range>
+{
+    std::istream& file;
+    std::optional<alignment> current;
+    friend ranges::range_access;
+    std::string const & read() const;
+    bool equal(ranges::default_sentinel_t) const;
+    void next();
+public:
+    explicit alignments_range(std::istream&);
+};
+*/
 
 #endif
