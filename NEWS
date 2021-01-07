@@ -22,6 +22,9 @@
      - Handle functions in a cleaner way.
      - Eliminate %>=% in favor of just %=% and %>%.
  - Make modifiable structures instantiate either all their fields or none.
+ - Fixes
+   + fix crash in alignment-distances NxN
+   + decrease time and memory for summarize-alignments
 
 * 3.5 (Mar 2, 2020)
  + Reconstruct ancestral sequences by default.
