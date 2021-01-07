@@ -34,6 +34,8 @@ namespace po = boost::program_options;
 using po::variables_map;
 
 using std::vector;
+using std::pair;
+using std::shared_ptr;
 using std::string;
 using std::endl;
 using std::optional;
@@ -130,26 +132,44 @@ joint_A_T get_joint_A_T(const variables_map& args,bool internal)
 
 joint_A_T get_multiple_joint_A_T(const variables_map& args,bool internal)
 {
-    auto a_files = args["alignments"].as<vector<string>>();
-    auto t_files = args["trees"].as<vector<string>>();
+    auto a_filenames = args["alignments"].as<vector<string>>();
+    auto t_filenames = args["trees"].as<vector<string>>();
 
     // This is just for the trees, I think.
     unsigned factor = args["subsample"].as<unsigned>();
 
-    if (a_files.size() != t_files.size())
-        throw myexception()<<"The number of alignments files ("<<a_files.size()<<") and the number of trees files ("<<t_files.size()<<") don't match!";
+    unsigned max = args["max"].as<unsigned>();
+
+    if (a_filenames.size() != t_filenames.size())
+        throw myexception()<<"The number of alignments files ("<<a_filenames.size()<<") and the number of trees files ("<<t_filenames.size()<<") don't match!";
+
+    int N = a_filenames.size();
+
+    vector<vector<pair<string,string>>> A_T_strings(N);
+
+    vector<shared_ptr<checked_ifstream>> a_files;
+    vector<shared_ptr<checked_ifstream>> t_files;
+    for(int i=0;i<N;i++)
+    {
+        a_files.push_back( std::make_shared<checked_ifstream>(a_filenames[i], "alignment samples file") );
+        t_files.push_back( std::make_shared<checked_ifstream>(t_filenames[i], "tree samples file") );
+    }
+
+    vector<shared_ptr<reader<pair<string,string>>>> readers;
+    for(int i=0;i<N;i++)
+    {
+        auto r = new zip(alignment_reader(*a_files[i]),subsample(factor,line_reader(*t_files[i])));
+        readers.push_back(shared_ptr<reader<pair<string,string>>>(r));
+    }
 
     joint_A_T J;
     for(int i=0;i<a_files.size();i++)
     {
-        checked_ifstream a_file(a_files[i], "alignment samples file");
-        checked_ifstream t_file(t_files[i], "tree samples file");
-
-        auto stream = zip(alignment_reader(a_file),subsample(factor,line_reader(t_file)));
+        auto& stream = readers[i];
 
         vector<alignment> A;
         vector<SequenceTree> T;
-        if (auto x = stream.next_one())
+        if (auto x = stream->next_one())
         {
             auto [a,t] = *x;
             std::istringstream astringfile(a);
@@ -165,7 +185,7 @@ joint_A_T get_multiple_joint_A_T(const variables_map& args,bool internal)
         auto& alph = A.front().get_alphabet();
         vector<string> names = sequence_names(A.front());
 
-        while (auto x = stream.next_one())
+        while (auto x = stream->next_one())
         {
             auto [a,t] = *x;
             std::istringstream astringfile(a);
