@@ -6,6 +6,13 @@
 #include <string>
 #include <istream>
 #include <utility>
+#include <list>
+#include <algorithm>
+#include <functional>
+#include <exception>
+#include <iostream>
+#include "util/log-level.H"
+
 
 template <typename T>
 struct reader
@@ -130,6 +137,96 @@ bool thin_down_to(std::vector<T>& v1, std::optional<int> M)
     assert(v1.size() == max);
 
     return true;
+}
+
+template <typename T>
+void thin_by_half(std::list<T>& Ts)
+{
+    // Remove every other alignment
+    for(auto loc = Ts.begin();loc!=Ts.end();)
+    {
+	auto j = loc++;
+
+	Ts.erase(j);
+
+	if (loc == Ts.end())  break;
+
+	loc++;
+    }
+}
+
+template <typename T>
+bool thin_down_to(std::list<T>& Ts,int max)
+{
+    int total = Ts.size();
+    if (total <= max or max == -1)  return false;
+
+    assert(total <= max*2);
+
+    // We have this many extra Ts
+    const int extra = total - max;
+
+    std::vector<int> kill(extra);
+    for(int i=0;i<kill.size();i++)
+	kill[i] = int( double(i+0.5)*total/extra);
+    std::reverse(kill.begin(),kill.end());
+
+    int i=0;
+    for(auto loc = Ts.begin();loc!=Ts.end();i++) {
+	if (i == kill.back()) {
+	    kill.pop_back();
+	    auto j = loc++;
+	    Ts.erase(j);
+	    total--;
+	}
+	else
+	    loc++;
+    }
+    assert(kill.empty());
+    return true;
+}
+
+template <typename T>
+void insert_and_maybe_thin(T&& t, std::list<T>& Ts, int max, int& subsample)
+{
+    Ts.push_back(std::move(t));
+
+    // If there are too many alignments
+    if (max != -1 and Ts.size() > 2*max)
+    {
+	// start skipping twice as many alignments
+	subsample *= 2;
+
+	if (log_verbose >= 1) std::cerr<<"Went from "<<Ts.size();
+	thin_by_half(Ts);
+	if (log_verbose >= 1) std::cerr<<" to "<<Ts.size()<<" alignments.\n";
+    }
+}
+
+template <typename T>
+void load_more(std::list<T>& Ts,
+	       std::function<std::optional<T>(void)> next,
+	       std::function<void(int)> skip,
+	       int max,
+	       int subsample=1) 
+{
+    try {
+	while(auto t = next())
+	{
+	    // add the T and thin if possible
+	    insert_and_maybe_thin(std::move(*t), Ts, max, subsample);
+
+	    // skip over Ts due to subsampling
+	    skip(subsample-1);
+	}
+    }
+    // If we had a problem reading elements, still do the thinning.
+    catch (std::exception& e) {
+	thin_down_to(Ts, max);
+
+	throw;
+    }
+    thin_down_to(Ts, max);
 }
 
 #endif

@@ -3,6 +3,7 @@
 #include "alignment-util.H"
 #include "util/io.H"
 #include "util/mapping.H"
+#include "util/file-readers.H"
 
 extern int log_verbose;
 
@@ -224,95 +225,6 @@ optional<alignment> find_load_next_alignment(istream& ifile, const alphabet& a, 
 {
     if (not find_alignment(ifile)) return {};
     return load_next_alignment(ifile, a, names);
-}
-
-template <typename T>
-void thin_by_half(list<T>& Ts)
-{
-    // Remove every other alignment
-    for(auto loc = Ts.begin();loc!=Ts.end();) 
-    {
-	auto j = loc++; 
-
-	Ts.erase(j);
-
-	if (loc == Ts.end())  break;
-
-	loc++;
-    }
-}
-
-template <typename T>
-bool thin_down_to(list<T>& Ts,int max)
-{
-    int total = Ts.size();
-    if (total <= max or max == -1)  return false;
-
-    assert(total <= max*2);
-
-    // We have this many extra Ts
-    const int extra = total - max;
-  
-    vector<int> kill(extra);
-    for(int i=0;i<kill.size();i++)
-	kill[i] = int( double(i+0.5)*total/extra);
-    std::reverse(kill.begin(),kill.end());
-  
-    int i=0;
-    for(auto loc = Ts.begin();loc!=Ts.end();i++) {
-	if (i == kill.back()) {
-	    kill.pop_back();
-	    auto j = loc++;
-	    Ts.erase(j);
-	    total--;
-	}
-	else
-	    loc++;
-    }
-    assert(kill.empty());
-    return true;
-}
-
-void insert_and_maybe_thin(alignment t, list<alignment>& Ts, int max, int& subsample)
-{
-    Ts.push_back(std::move(t));
-
-    // If there are too many alignments
-    if (max != -1 and Ts.size() > 2*max)
-    {
-	// start skipping twice as many alignments
-	subsample *= 2;
-
-	if (log_verbose >= 1) cerr<<"Went from "<<Ts.size();
-	thin_by_half(Ts);
-	if (log_verbose >= 1) cerr<<" to "<<Ts.size()<<" alignments.\n";
-    }
-}
-
-template <typename T>
-void load_more(list<T>& Ts, 
-	       std::function<optional<T>(void)> next,
-	       std::function<void(int)> skip,
-	       int max,
-	       int subsample=1) 
-{
-    try {
-	while(auto A = next())
-	{
-	    // add the T and thin if possible
-	    insert_and_maybe_thin(*A, Ts, max, subsample);
-
-	    // skip over Ts due to subsampling
-	    skip(subsample-1);
-	}
-    }
-    // If we had a problem reading elements, still do the thinning.
-    catch (std::exception& e) {
-	thin_down_to(Ts, max);
-
-	throw;
-    }
-    thin_down_to(Ts, max);
 }
 
 void load_more_alignments(list<alignment>& alignments, istream& ifile, const vector<string>& names, 
