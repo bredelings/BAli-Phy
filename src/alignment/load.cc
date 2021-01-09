@@ -451,34 +451,11 @@ alignment_reader::alignment_reader(std::istream& f)
 { }
 
 
-std::string const & fasta_blocks::read() const
-{
-    assert(file);
-
-    if (not current)
-        current = read_next_alignment(*file);
-
-    return current.value();
-}
-
 void fasta_blocks::next()
 {
-    // If we are BEFORE the current alignment, then go to the end of it.
-    if (not current)
-        read_next_alignment(*file);
-
-    // Clear the last alignment.
-    current = {};
-
     find_alignment(*file);
     if (not *file)
         file = nullptr;
-}
-
-fasta_blocks::fasta_blocks(std::istream& f)
-    :file(&f)
-{
-    find_alignment(*file);
-    if (not *file)
-        file = nullptr;
+    else
+        current = read_next_alignment(*file);
 }

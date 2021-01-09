@@ -64,7 +64,7 @@ class fasta_blocks: public ranges::view_facade<fasta_blocks,ranges::unknown>
 {
     friend ranges::range_access;
     std::istream* file;
-    mutable std::optional<std::string> current;
+    std::string current;
 
     class cursor
     {
@@ -83,7 +83,7 @@ class fasta_blocks: public ranges::view_facade<fasta_blocks,ranges::unknown>
         }
         const std::string& read() const
         {
-            return rng_->read();
+            return rng_->current;
         }
         bool equal(ranges::default_sentinel_t) const
         {
@@ -95,7 +95,6 @@ class fasta_blocks: public ranges::view_facade<fasta_blocks,ranges::unknown>
         }
     };
     void next();
-    const std::string & read() const;
 
     cursor begin_cursor()
     {
@@ -103,7 +102,11 @@ class fasta_blocks: public ranges::view_facade<fasta_blocks,ranges::unknown>
     }
 
 public:
-    explicit fasta_blocks(std::istream&);
+    explicit fasta_blocks(std::istream& f)
+        :file(&f)
+    {
+        next();
+    }
 };
 
 
