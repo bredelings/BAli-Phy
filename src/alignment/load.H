@@ -58,20 +58,53 @@ public:
     alignment_reader(std::istream&);
 };
 
-/*
 #include "range/v3/all.hpp"
 
-class alignments_range: public ranges::view_facade<alignments_range>
+class fasta_blocks: public ranges::view_facade<fasta_blocks,ranges::unknown>
 {
-    std::istream& file;
-    std::optional<alignment> current;
     friend ranges::range_access;
-    std::string const & read() const;
-    bool equal(ranges::default_sentinel_t) const;
+    std::istream* file;
+    mutable std::optional<std::string> current;
+
+    class cursor
+    {
+        friend ranges::range_access;
+        using single_pass = std::true_type;
+        fasta_blocks * rng_ = nullptr;
+
+    public:
+        cursor() = default;
+        explicit cursor(fasta_blocks * rng)
+            : rng_(rng)
+        {}
+        void next()
+        {
+            rng_->next();
+        }
+        const std::string& read() const
+        {
+            return rng_->read();
+        }
+        bool equal(ranges::default_sentinel_t) const
+        {
+            return !rng_->file;
+        }
+        bool equal(cursor that) const
+        {
+            return !rng_->file == !that.rng_->file;
+        }
+    };
     void next();
+    const std::string & read() const;
+
+    cursor begin_cursor()
+    {
+        return cursor{this};
+    }
+
 public:
-    explicit alignments_range(std::istream&);
+    explicit fasta_blocks(std::istream&);
 };
-*/
+
 
 #endif

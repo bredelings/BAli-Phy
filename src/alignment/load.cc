@@ -424,10 +424,8 @@ alignment find_last_alignment(std::istream& ifile, const string& alph_name)
     return A;
 }
 
-optional<string> alignment_reader::next_one()
+string read_next_alignment(std::istream& file)
 {
-    if (not find_alignment(file)) return {};
-
     string alignment_string;
     string line;
     while(portable_getline(file,line) and line.size())
@@ -440,8 +438,47 @@ optional<string> alignment_reader::next_one()
     return alignment_string;
 }
 
+
+optional<string> alignment_reader::next_one()
+{
+    if (not find_alignment(file)) return {};
+
+    return read_next_alignment(file);
+}
+
 alignment_reader::alignment_reader(std::istream& f)
     :file_reader<string>(f)
 { }
 
 
+std::string const & fasta_blocks::read() const
+{
+    assert(file);
+
+    if (not current)
+        current = read_next_alignment(*file);
+
+    return current.value();
+}
+
+void fasta_blocks::next()
+{
+    // If we are BEFORE the current alignment, then go to the end of it.
+    if (not current)
+        read_next_alignment(*file);
+
+    // Clear the last alignment.
+    current = {};
+
+    find_alignment(*file);
+    if (not *file)
+        file = nullptr;
+}
+
+fasta_blocks::fasta_blocks(std::istream& f)
+    :file(&f)
+{
+    find_alignment(*file);
+    if (not *file)
+        file = nullptr;
+}
