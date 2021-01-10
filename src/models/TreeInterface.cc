@@ -728,3 +728,24 @@ void check_tree(const Tree&, const TreeInterface&)
 #endif
 
 
+// This could create loops it we don't check that the subtrees are disjoint.
+// br{1,2} point out of the subtrees.  b{1,2} point into the subtrees, towards the other subtree.
+void NNI(TreeInterface& T, int br1, int br2)
+{
+    int b1 = T.reverse(br1);
+    int b2 = T.reverse(br2);
+
+    int s1 = T.source(b1);
+    int t1 = T.target(b1);
+
+    int s2 = T.source(b2);
+    int t2 = T.target(b2);
+
+    //  assert(not t().subtree_contains(br1,s2));
+    //  assert(not t().subtree_contains(br2,s1));
+
+    T.begin_modify_topology();
+    T.reconnect_branch(s1,t1,t2);
+    T.reconnect_branch(s2,t2,t1);
+    T.end_modify_topology();
+}
