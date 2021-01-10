@@ -153,4 +153,6 @@ std::string write(const TreeInterface& T, const std::vector<double>& L, const st
 std::string write(const TreeInterface& T, const std::vector<std::string>& names, bool print_lengths=true); 
 
 void check_tree(const Tree&, const TreeInterface&);
+
+void NNI(TreeInterface& T, int b1, int b2);
 #endif
