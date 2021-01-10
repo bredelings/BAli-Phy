@@ -774,22 +774,8 @@ void Parameters::end_modify_topology()
 // br{1,2} point out of the subtrees.  b{1,2} point into the subtrees, towards the other subtree.
 void Parameters::exchange_subtrees(int br1, int br2)
 {
-    int b1 = t().reverse(br1);
-    int b2 = t().reverse(br2);
-
-    int s1 = t().source(b1);
-    int t1 = t().target(b1);
-
-    int s2 = t().source(b2);
-    int t2 = t().target(b2);
-
-    //  assert(not t().subtree_contains(br1,s2));
-    //  assert(not t().subtree_contains(br2,s1));
-
-    begin_modify_topology();
-    reconnect_branch(s1,t1,t2);
-    reconnect_branch(s2,t2,t1);
-    end_modify_topology();
+    auto T = t();
+    ::NNI(T, br1, br2);
 }
 
 #include "dp/hmm.H"
