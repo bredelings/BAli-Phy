@@ -465,7 +465,7 @@ extern "C" closure builtin_function_slice_sample_integer_random_variable(Operati
     return EPair(state+1,constructor("()",0));
 }
 
-void sample_tri_one(context_ref& C1, TreeInterface& t, int b)
+void sample_tri_one(context_ref& /*C1*/, TreeInterface& /*t*/, int /*b*/)
 {
 }
 
@@ -506,12 +506,95 @@ void sample_alignments_one(context_ref& C, TreeInterface& t, int b)
     }
 }
 
-extern "C" closure builtin_function_walk_tree_sample_alignment(OperationArgs& Args)
+
+void NNI(context_ref& c, int tree_reg, int b1, int b2)
+{
+    ModifiablesTreeInterface T(c,tree_reg);
+
+    NNI(T, b1, b2);
+}
+
+void NNI_move(context_ref& C1, int tree_reg, int b)
+{
+    ModifiablesTreeInterface T(C1,tree_reg);
+
+    if (T.is_leaf_branch(b)) return;
+
+    // set subst_root(s)
+
+    // get the name of neighboring branches.
+    vector<int> branches;
+    T.append_branches_after(T.reverse(b), branches);
+    T.append_branches_after(b, branches);
+
+    vector<context> c(3,C1);
+
+    NNI(c[1], tree_reg, branches[0], branches[2]);
+    NNI(c[2], tree_reg, branches[0], branches[3]);
+
+    //------------ Select the topology --------------//
+    vector<log_double_t> pr(3);
+    for(int i=0;i<3;i++)
+        pr[i] = c[i].heated_probability();
+
+    int j = choose_MH(0,pr);
+
+    //---------- Set the selected topology ----------//
+    C1 = c[j];
+}
+
+extern "C" closure builtin_function_NNI_on_branch_unsafe(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
 
-    double cube_fraction = 0;
+    //------------- 1a. Get argument X -----------------//
+    int tree_reg = Args.evaluate_slot_unchangeable(0);
+
+    int b = Args.evaluate(1).as_int();
+
+    int c1 = Args.evaluate(2).as_int();
+
+    //------------ 2. Make a TreeInterface -------------//
+    context_ref C1(M, c1);
+
+    NNI_move(C1, tree_reg, b);
+
+    return constructor("()",0);
+}
+
+extern "C" closure builtin_function_walk_tree_sample_NNI_unsafe(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
+
+    //------------- 1a. Get argument X -----------------//
+    int tree_reg = Args.evaluate_slot_unchangeable(0);
+
+    int c1 = Args.evaluate(1).as_int();
+
+    //------------ 2. Make a TreeInterface -------------//
+    context_ref C1(M, c1);
+    ModifiablesTreeInterface T(C1,tree_reg);
+
+    //------------ 3. Get the substitution root --------//
+
+    // FIXME: encode the subst_root in the tree somehow?
+    int subst_root = T.n_nodes()-1;
+
+    //------------ 4. Walk the tree and realign --------//
+    auto branches = walk_tree_path(T, subst_root);
+
+    for(int branch: branches)
+        NNI_move(C1, tree_reg, branch);
+
+    return constructor("()",0);
+}
+
+extern "C" closure builtin_function_walk_tree_sample_alignment(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
 
     //------------- 1a. Get argument X -----------------//
     int tree_reg = Args.evaluate_slot_unchangeable(0);
@@ -542,10 +625,10 @@ extern "C" closure builtin_function_walk_tree_sample_alignment(OperationArgs& Ar
         }
     }
 
-    return {0};
+    return constructor("()",0);
 }
 
-extern "C" closure builtin_function_sample_alignments_one(OperationArgs& Args)
+extern "C" closure builtin_function_sample_alignments_one(OperationArgs&)
 {
     // int b = evaluate(1).as_int();
 
@@ -566,7 +649,7 @@ extern "C" closure builtin_function_sample_alignments_one(OperationArgs& Args)
     //       total_ratio *= ratio
 
     // 5. the end (do we really do anything with the total_ratio?)
-    return {0};
+    return constructor("()",0);
 }
 
 
