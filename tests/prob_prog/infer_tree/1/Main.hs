@@ -15,7 +15,7 @@ import           Probability.Distribution.OnTree
 --         2. no topology moves included.
 sample_imodel topology = do
     logLambda   <- log_laplace (-4.0) 0.707
-    mean_length <- (1.0+) `liftM` exponential 10.0
+    mean_length <- (1.0+) <$> exponential 10.0
 
     let imodel  = rs07 logLambda mean_length topology
     let loggers = ["logLambda" %=% logLambda, "mean_length" %=% mean_length]
