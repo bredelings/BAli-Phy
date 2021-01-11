@@ -14,24 +14,22 @@ import           IModel
 --         2. no topology moves included.
 sample_imodel topology = do
     logLambda   <- log_laplace (-4.0) 0.707
-    mean_length <- do
-        l <- exponential 10.0
-        return (l + 1.0)
+    mean_length <- (1.0+) `liftM` exponential 10.0
+
     let imodel  = rs07 logLambda mean_length topology
-        loggers = ["logLambda" %=% logLambda, "mean_length" %=% mean_length]
+    let loggers = ["logLambda" %=% logLambda, "mean_length" %=% mean_length]
+
     return (imodel, loggers)
 
-sample_smodel branch_cats = do
+sample_smodel = do
     pi     <- dirichlet_on ["A", "C", "G", "T"] [1.0, 1.0, 1.0, 1.0]
     kappa1 <- log_normal 0.0 1.0
     kappa2 <- log_normal 0.0 1.0
 
-    -- If we generalize e.g. transition_ps, we wouldn't need to write (mmm $ unit_mixture $ ) in from of tn93
-    let pi'            = frequencies_from_dict dna pi
-        smodel         = mmm branch_cats $ unit_mixture $ tn93 dna kappa1 kappa2 pi'
-        smodel_loggers = ["kappa1" %=% kappa1, "kappa2" %=% kappa2, "pi" %=% pi]
+    let tn93_model = tn93 dna kappa1 kappa2 (frequencies_from_dict dna pi)
+    let loggers = ["kappa1" %=% kappa1, "kappa2" %=% kappa2, "pi" %=% pi]
 
-    return (smodel, smodel_loggers)
+    return (tn93_model, loggers)
 
 sample_alignment topology ts imodel scale tip_seq_lengths = do
     let n_branches = numBranches topology
@@ -46,13 +44,12 @@ prior taxa tip_seq_lengths = do
 
     let b           = numBranches topology
         root        = targetNode topology 0
-        branch_cats = replicate b 0
 
     ts                        <- iid b (gamma 0.5 (2.0 / intToDouble b))
 
     scale                     <- gamma 0.5 2.0
 
-    (smodel, smodel_loggers) <- sample_smodel branch_cats
+    (smodel, smodel_loggers) <- sample_smodel
 
     (imodel, imodel_loggers) <- sample_imodel topology
 
