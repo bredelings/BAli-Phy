@@ -21,6 +21,18 @@ write_newick (LabelledTree rt@(RootedTree tree root _) labels) = write_newick_no
           (s,e) = bounds labels_array
           label_for_node node = if node >= s && node <= e then labels_array!node else ""
 
+write_newick' (tree@(Tree _ _ _ _), lengths) = write_newick' (add_root tree 0, lengths)
+write_newick' (rt@(RootedTree tree root _), lengths) = write_newick_node rt label_for_node where
+    label_for_node node = show node ++ case parentBranch rt node of Just b -> ":" ++ show (lengths!b') where b' = min b (reverseEdge tree b)
+                                                                    Nothing -> []
+
+write_newick' (LabelledTree t@(Tree _ _ _ _) labels,lengths) = write_newick' (LabelledTree (add_root t 0) labels, lengths)
+write_newick' (LabelledTree rt@(RootedTree tree root _) labels, lengths) = write_newick_node rt label_for_node
+    where labels_array = listArray' labels
+          (s,e) = bounds labels_array
+          label_for_node_only node = if node >= s && node <= e then labels_array!node else ""
+          label_for_node node = label_for_node_only node ++ case parentBranch rt node of Just b -> ":" ++ show (lengths!b') where b' = min b (reverseEdge tree b)
+                                                                                         Nothing -> []
 
 write_newick_node (RootedTree tree root _) label_for_node = (write_branches_and_node tree (edgesOutOfNode tree root) root) ++ ";" where
 
