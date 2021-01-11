@@ -1,1 +1,1 @@
--m infer.hs --test
+-m Main.hs --test
