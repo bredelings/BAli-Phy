@@ -7,11 +7,14 @@ module Prelude (module Prelude,
                 module Data.List,
                 module Data.Array,
                 module Data.Function,
+                module Data.Functor,
                 module Data.Ord,
                 module Foreign.Pair,
                 module Foreign.Vector,
                 module Foreign.String,
+                module Control.Applicative,
                 module Control.Monad,
+                module Compiler.Base,
                 module Compiler.Base,
                 module Compiler.IO,
                 module Compiler.ST,
@@ -34,7 +37,9 @@ import Data.Maybe
 import Data.List
 import Data.Array
 import Data.Function
+import Data.Functor
 import Data.Ord
+import Control.Applicative
 import Control.Monad
 import Foreign.Pair
 import Foreign.Vector
@@ -49,8 +54,6 @@ builtin is_int 1 "is_int" "Prelude"
 builtin builtin_show 1 "show" "Prelude"
 builtin builtin_read_int 1 "read_int" "Prelude"
 builtin builtin_read_double 1 "read_double" "Prelude"
-
-fmap = map
 
 undefined = error "Prelude.undefined"
 
