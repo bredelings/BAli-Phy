@@ -13,26 +13,28 @@ import Parse
 
 import Data.Char
 
+-- We need to handle adding (i) root (ii) labels (iii) branch lengths.
+-- Can we do this more generically?
+
+label_for_node rt@(RootedTree tree root _) = (\node -> show node)
+label_for_node (LabelledTree rt@(RootedTree tree root _) labels) = go
+    where labels_array = listArray' labels
+          (s,e) = bounds labels_array
+          go node | node >= s && node <= e  = labels_array!node
+                  | otherwise               = ""
+label_for_node (tree,lengths) = (\node -> sublabel_for_node node ++ branch_label (parentBranch tree node))
+    where sublabel_for_node = label_for_node tree
+          branch_label (Just b) = ":" ++ show (lengths!b') where b' = min b (reverseEdge tree b)
+          branch_label Nothing  = ""
+
 write_newick tree@(Tree _ _ _ _) = write_newick (add_root tree 0)
-write_newick rt@(RootedTree tree root _) = write_newick_node rt (\node -> show node)
+write_newick rt@(RootedTree tree root _) = write_newick_node rt (label_for_node rt)
 write_newick (LabelledTree t@(Tree _ _ _ _) labels) = write_newick (LabelledTree (add_root t 0) labels)
-write_newick (LabelledTree rt@(RootedTree tree root _) labels) = write_newick_node rt label_for_node
-    where labels_array = listArray' labels
-          (s,e) = bounds labels_array
-          label_for_node node = if node >= s && node <= e then labels_array!node else ""
-
-write_newick' (tree@(Tree _ _ _ _), lengths) = write_newick' (add_root tree 0, lengths)
-write_newick' (rt@(RootedTree tree root _), lengths) = write_newick_node rt label_for_node where
-    label_for_node node = show node ++ case parentBranch rt node of Just b -> ":" ++ show (lengths!b') where b' = min b (reverseEdge tree b)
-                                                                    Nothing -> []
-
-write_newick' (LabelledTree t@(Tree _ _ _ _) labels,lengths) = write_newick' (LabelledTree (add_root t 0) labels, lengths)
-write_newick' (LabelledTree rt@(RootedTree tree root _) labels, lengths) = write_newick_node rt label_for_node
-    where labels_array = listArray' labels
-          (s,e) = bounds labels_array
-          label_for_node_only node = if node >= s && node <= e then labels_array!node else ""
-          label_for_node node = label_for_node_only node ++ case parentBranch rt node of Just b -> ":" ++ show (lengths!b') where b' = min b (reverseEdge tree b)
-                                                                                         Nothing -> []
+write_newick lt@(LabelledTree rt@(RootedTree tree root _) labels) = write_newick_node rt (label_for_node lt)
+write_newick (tree@(Tree _ _ _ _), lengths) = write_newick (add_root tree 0, lengths)
+write_newick x@(rt@(RootedTree tree root _), lengths) = write_newick_node rt (label_for_node x)
+write_newick (LabelledTree t@(Tree _ _ _ _) labels,lengths) = write_newick (LabelledTree (add_root t 0) labels, lengths)
+write_newick x@(LabelledTree rt@(RootedTree tree root _) labels, lengths) = write_newick_node rt (label_for_node x)
 
 write_newick_node (RootedTree tree root _) label_for_node = (write_branches_and_node tree (edgesOutOfNode tree root) root) ++ ";" where
 
