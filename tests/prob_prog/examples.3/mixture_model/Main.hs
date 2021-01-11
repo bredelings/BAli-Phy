@@ -15,7 +15,7 @@ main_generate = sample $ generate 1000
 prior n_components = do
 
   w <- symmetric_dirichlet n_components 1.0
-  mu <- sort `liftM` iid n_components (cauchy 0.0 1.0)
+  mu <- sort <$> iid n_components (cauchy 0.0 1.0)
   tau <- iid n_components (gamma 1.0 1.0)
 
   let loggers = [ "dists" %=% zip w (zip mu tau) ]

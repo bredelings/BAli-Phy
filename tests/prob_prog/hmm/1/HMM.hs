@@ -20,7 +20,7 @@ n_diffs (x:xs) (y:ys) | x == y    =     n_diffs xs ys
 
 hmm emission states = independent $ map emission states
 
-prior n = take n `liftM` markov transition_matrix 1
+prior n = take n <$> markov transition_matrix 1
 
 observe_data n = do
   hidden_states <- sample $ prior n
