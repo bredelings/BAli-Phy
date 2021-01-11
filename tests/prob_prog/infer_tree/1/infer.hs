@@ -9,6 +9,7 @@ import           SModel
 import           SModel.Nucleotides
 import           SModel.Frequency -- for frequencies_from_dict
 import           IModel
+import           Probability.Distribution.OnTree
 
 -- issues: 1. likelihood seems wrong - -1300 vs -700.
 --         2. no topology moves included.
