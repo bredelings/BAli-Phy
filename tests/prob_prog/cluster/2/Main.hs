@@ -10,7 +10,7 @@ cluster_dist = do
 
 prior = do
 
-  n <- (1+) `liftM` geometric 0.33
+  n <- (1+) <$> geometric 0.33
 
   clusters <- iid n cluster_dist
 

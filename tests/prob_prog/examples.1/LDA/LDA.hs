@@ -17,7 +17,7 @@ word_dist_for_doc word_frequencies_for_topic nwords = do
 prior doc_lengths = do
   word_frequencies_for_topic <- iid ntopics word_frequencies_dist
       
-  (word_dists, topic_frequencies) <- unzip `liftM` independent [word_dist_for_doc word_frequencies_for_topic nwords | nwords <- doc_lengths]
+  (word_dists, topic_frequencies) <- unzip <$> independent [word_dist_for_doc word_frequencies_for_topic nwords | nwords <- doc_lengths]
 
   let loggers = ["word_frequencies_for_topic" %=% word_frequencies_for_topic,
                  "topic_frequencies_for_doc" %=% topic_frequencies]
