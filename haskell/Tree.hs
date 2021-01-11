@@ -61,7 +61,7 @@ targetNode  tree b = let (_,_,t,_) = nodesForEdge tree b in t
 reverseEdge tree b = let (_,_,_,r) = nodesForEdge tree b in r
 edgeForNodes t (n1,n2) = head [b | b <- (edgesOutOfNode t n1), (targetNode t b)==n2]
 nodeDegree t n = length (edgesOutOfNode t n)
-neighbors t n = fmap (targetNode t) (edgesOutOfNode t n)
+neighbors t n = map (targetNode t) (edgesOutOfNode t n)
 edgesBeforeEdge t b = let (source,index,_,_) = nodesForEdge t b
                       in map (reverseEdge t) $ remove_element index $ edgesOutOfNode t source
 edgesAfterEdge t b  = map (reverseEdge t) $ edgesBeforeEdge t $ reverseEdge t b
