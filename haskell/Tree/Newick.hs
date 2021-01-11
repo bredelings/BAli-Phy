@@ -13,14 +13,18 @@ import Parse
 
 import Data.Char
 
-write_newick t@(Tree _ _ _ _) = write_newick_node 0 t
-write_newick rt@(RootedTree t r _) = write_newick_node r t
-write_newick rt@(LabelledTree t labels) = write_newick t
+write_newick tree@(Tree _ _ _ _) = write_newick (add_root tree 0)
+write_newick rt@(RootedTree tree root _) = write_newick_node rt (\node -> show node)
+write_newick (LabelledTree t@(Tree _ _ _ _) labels) = write_newick (LabelledTree (add_root t 0) labels)
+write_newick (LabelledTree rt@(RootedTree tree root _) labels) = write_newick_node rt label_for_node
+    where labels_array = listArray' labels
+          (s,e) = bounds labels_array
+          label_for_node node = if node >= s && node <= e then labels_array!node else ""
 
 
---FIXME: write the labels for a Labelled tree!
-write_newick_node root tree = (write_branches_and_node tree (edgesOutOfNode tree root) root) ++ ";" where
-    write_branches_and_node tree branches node = write_branches tree branches ++ show node
+write_newick_node (RootedTree tree root _) label_for_node = (write_branches_and_node tree (edgesOutOfNode tree root) root) ++ ";" where
+
+    write_branches_and_node tree branches node = write_branches tree branches ++ label_for_node node
 
     write_branches tree [] = ""
     write_branches tree branches = "(" ++ text ++ ")" where
