@@ -67,11 +67,6 @@ p `chainl1` op = do {a <- p; rest a}
 
 char c = satisfy (c ==)
 
--- This should be defined in Data.Functor
-f <$> x = do {result <- x ; return (f result)}
--- This should be defined .. where?  Applicative?             
-f <*> x = do {fresult <- f ; xresult <- x ; return (fresult xresult)}
-
 -- where to define read_int, read_double?
 natural = read_int <$> some digit
 

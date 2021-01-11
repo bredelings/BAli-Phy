@@ -37,8 +37,6 @@ f <=< g = flip (>=>)
 forever as = do as
                 forever as
 
-void f = do x <- f
-            return ()
 --
 
 -- join is implemented in Compiler.base
