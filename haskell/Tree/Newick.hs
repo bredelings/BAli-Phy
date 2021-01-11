@@ -19,9 +19,8 @@ import Data.Char
 label_for_node rt@(RootedTree tree root _) = (\node -> show node)
 label_for_node (LabelledTree rt@(RootedTree tree root _) labels) = go
     where labels_array = listArray' labels
-          (s,e) = bounds labels_array
-          go node | node >= s && node <= e  = labels_array!node
-                  | otherwise               = ""
+          go node | inRange (bounds labels_array) node  = labels_array!node
+                  | otherwise                           = ""
 label_for_node (tree,lengths) = (\node -> sublabel_for_node node ++ branch_label (parentBranch tree node))
     where sublabel_for_node = label_for_node tree
           branch_label (Just b) = ":" ++ show (lengths!b') where b' = min b (reverseEdge tree b)
