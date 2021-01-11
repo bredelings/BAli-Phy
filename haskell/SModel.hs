@@ -376,17 +376,3 @@ empirical a filename = builtin_empirical a (list_to_string filename)
 wag_frequencies a = zip (letters a) (list_from_vector $ builtin_wag_frequencies a)
 lg_frequencies a = zip (letters a) (list_from_vector $ builtin_lg_frequencies a)
 
--- FIXME: need polymorphism.
---        This needs to be after weighted_frequency_matrix.
---        Because we have no polymorphism, wfm needs to be defined after MixtureModel and MixtureModels.
-subst_like_on_tree topology root as smodel ts scale seqs = substitution_likelihood topology root seqs' as alphabet ps f smap
-    where taxa = get_labels topology
-          f = weighted_frequency_matrix smodel
-          ds = listArray' $ map (scale*) ts
-          ps = transition_p_index (SingleBranchLengthModel topology ds smodel)
-          seqs' = listArray' $ map (sequence_to_indices alphabet) $ reorder_sequences taxa seqs
-          alphabet = getAlphabet smodel
-          smap = get_smap smodel
-
-ctmc_on_tree topology root as smodel ts scale =
-    Distribution (\seqs -> [subst_like_on_tree topology root as smodel ts scale seqs]) (no_quantile "ctmc_on_tree") () ()
