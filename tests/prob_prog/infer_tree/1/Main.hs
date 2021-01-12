@@ -1,13 +1,9 @@
+import           Probability
 import           Bio.Alignment               hiding ( sample_alignment )
 import           Bio.Alphabet
-import           Probability
 import           Tree
 import           Tree.Newick
-import           Data.BitVector
-import           SModel.Likelihood
 import           SModel
-import           SModel.Nucleotides
-import           SModel.Frequency -- for frequencies_from_dict
 import           IModel
 import           Probability.Distribution.OnTree
 
