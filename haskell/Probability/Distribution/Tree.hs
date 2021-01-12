@@ -3,6 +3,7 @@ module Probability.Distribution.Tree where
 import           Tree
 import           Probability.Random
 import           Probability.Distribution.Uniform
+import           MCMC
 
 xrange start end | start < end = start : xrange (start + 1) end
                  | otherwise   = []
@@ -87,6 +88,8 @@ triggered_modifiable_tree n value effect = (raw_tree, triggered_tree) where
     raw_tree       = modifiable_cayley_tree n modifiable value
     effect'        = force_tree raw_tree `seq` effect
     triggered_tree = modifiable_cayley_tree n (effect' `seq`) raw_tree
+
+uniform_topology_effect tree = tree `seq` add_move (walk_tree_sample_nni_unsafe tree)
 
 uniform_topology n = Distribution (\tree -> [uniform_topology_pr n])
                                   (no_quantile "uniform_topology")
