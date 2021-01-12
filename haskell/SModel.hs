@@ -3,7 +3,8 @@ module SModel (module SModel,
                module SModel.Doublets,
                module SModel.Codons,
                module SModel.ReversibleMarkov,
-               module SModel.Likelihood) where 
+               module SModel.Likelihood,
+               frequencies_from_dict) where
 import Probability
 import Bio.Alphabet
 import Bio.Sequence

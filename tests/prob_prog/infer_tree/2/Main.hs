@@ -4,7 +4,6 @@ import           Bio.Sequence
 import           Tree
 import           Tree.Newick
 import           SModel
-import           SModel.Frequency -- for frequencies_from_dict
 import           Probability.Distribution.OnTree
 
 sample_smodel = do
