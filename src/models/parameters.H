@@ -216,7 +216,7 @@ struct smodel_methods
 struct tree_constants: public Object
 {
     // The tree
-    int tree_head = -1;
+    expression_ref tree_exp;
     std::vector<std::vector<param>> parameters_for_tree_node;
     std::vector<std::tuple<param,param,param>> parameters_for_tree_branch;
 
@@ -230,8 +230,8 @@ struct tree_constants: public Object
 
     tree_constants* clone() const {return new tree_constants(*this);}
 
-    tree_constants(context_ref&, int);
-    tree_constants(context_ref&, const std::vector<std::string>&, int);
+    tree_constants(context_ref&, const expression_ref&);
+    tree_constants(context_ref&, const std::vector<std::string>&, const expression_ref&);
 };
 
 struct parameters_constants: public Object
