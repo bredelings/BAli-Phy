@@ -3,6 +3,7 @@
 #include "models/parameters.H"
 #include "util/range.H"
 #include "util/set.H"
+#include "computation/expression/reg_var.H"
 
 using std::vector;
 using std::string;
@@ -398,8 +399,8 @@ const std::vector<std::vector<int>*>& ModifiablesTreeInterface::branches_from_af
     return branches_from_affected_nodes_;
 }
 
-ModifiablesTreeInterface::ModifiablesTreeInterface(context_ref& c, int tree_head)
-    :C(c),TC(new tree_constants(c,tree_head))
+ModifiablesTreeInterface::ModifiablesTreeInterface(context_ref& c, int tree_reg)
+    :C(c),TC(new tree_constants(c,reg_var(tree_reg)))
 {
 }
 

@@ -593,12 +593,12 @@ void tree_constants::register_branch_lengths(context_ref& C, const expression_re
     branch_durations = get_params_from_list(C, branch_lengths, B);
 }
 
-tree_constants::tree_constants(context_ref& C, int tree_head_)
-    :tree_head(tree_head_),
+tree_constants::tree_constants(context_ref& C, const expression_ref& E)
+    :tree_exp(E),
      n_leaves(0)
 {
     //------------------------- Create the tree structure -----------------------//
-    auto tree_structure = C.evaluate_expression({var("Parameters.maybe_modifiable_structure"), C.get_expression(tree_head)});
+    auto tree_structure = C.evaluate_expression({var("Parameters.maybe_modifiable_structure"), tree_exp});
     if (log_verbose >= 3)
         std::cerr<<"tree = "<<tree_structure<<"\n\n";
 
@@ -615,7 +615,7 @@ tree_constants::tree_constants(context_ref& C, int tree_head_)
     int n_branches         = tree_structure.sub()[3].as_int();
 
     if (log_verbose >= 3)
-        std::cerr<<"num_branches = "<<C.evaluate_expression({var("Parameters.maybe_modifiable_structure"), {var("Tree.numBranches"), C.get_expression(tree_head)}})<<"\n\n";;
+        std::cerr<<"num_branches = "<<C.evaluate_expression({var("Parameters.maybe_modifiable_structure"), {var("Tree.numBranches"), tree_exp}})<<"\n\n";;
 
     for(int n=0; n < n_nodes; n++)
     {
@@ -644,8 +644,8 @@ tree_constants::tree_constants(context_ref& C, int tree_head_)
     }
 }
 
-tree_constants::tree_constants(context_ref& C, const vector<string>& labels, int tree_head_)
-    :tree_constants(C, tree_head_)
+tree_constants::tree_constants(context_ref& C, const vector<string>& labels, const expression_ref& E)
+    :tree_constants(C, E)
 {
     node_labels = labels;
     int n_nodes = parameters_for_tree_node.size();
@@ -1199,7 +1199,7 @@ void Parameters::set_branch_scale(int s, double x)
 expression_ref Parameters::my_tree() const
 {
     assert(TC);
-    return get_expression(TC->tree_head);
+    return TC->tree_exp;
 }
 
 expression_ref Parameters::my_atmodel() const
@@ -1987,7 +1987,7 @@ Parameters::Parameters(const Program& prog,
     // 2. Set up the TreeInterface mapping to the tree inside the machine
 
     int tree_index = add_compute_expression( {var("BAliPhy.ATModel.tree"), my_atmodel()} );
-    TC = new tree_constants(*this, labels, tree_index);
+    TC = new tree_constants(*this, labels, get_expression(tree_index));
 
     // 3. Remap the input tree to have the same label_string <-> node-number mapping FOR LEAVES.
     // FIXME: We need ALL the nodes to have the right label_string <-> node-number mapping in
