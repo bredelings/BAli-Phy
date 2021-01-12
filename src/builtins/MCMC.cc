@@ -506,6 +506,28 @@ void sample_alignments_one(context_ref& C, TreeInterface& t, int b)
     }
 }
 
+/*
+  So, we have
+
+      a --x-> b ---> c --w-> d
+        <-y--   <---   <-z--
+
+And we want to change to
+
+      d --z-> b ---> c --y-> a
+        <-w--   <---   <-x--
+
+So, target(z) changes from c to b
+    source(w) changes from c to b
+    target(x) changes from b to c
+    source(y) changes from b to c
+
+    out(b,i) changes from y to w
+    out(c,j) changes from w to y
+
+    we need to find out the i and j.
+ */
+
 
 void NNI(context_ref& c, int tree_reg, int b1, int b2)
 {
