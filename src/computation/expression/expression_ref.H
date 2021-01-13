@@ -295,12 +295,24 @@ public:
 
     expression_ref& operator=(const expression_ref& E)
 	{
-	    destroy_ptr();
-	    type_ = E.type_;
-	    if (is_object_type())
-		new (&O) otype(E.ptr());
-	    else
-		d = E.d;
+            if (is_object_type())
+            {
+                if (E.is_object_type())
+                    O = E.O;
+                else
+                {
+                    (&O)->~otype();
+                    d = E.d;
+                }
+            }
+            else
+            {
+                if (E.is_object_type())
+                    new (&O) otype(E.ptr());
+                else
+                    d = E.d;
+            }
+            type_ = E.type_;
 	    return *this;
 	}
 
