@@ -597,8 +597,10 @@ tree_constants::tree_constants(context_ref& C, const expression_ref& E)
     :tree_exp(E),
      n_leaves(0)
 {
+    int tree_reg = E.as_<reg_var>().target;
+
     //------------------------- Create the tree structure -----------------------//
-    auto tree_structure = C.evaluate_expression({var("Parameters.maybe_modifiable_structure"), tree_exp});
+    auto tree_structure = C.maybe_modifiable_structure(tree_reg);
     if (log_verbose >= 3)
         std::cerr<<"tree = "<<tree_structure<<"\n\n";
 
