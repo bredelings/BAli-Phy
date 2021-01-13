@@ -41,6 +41,8 @@ add_root t r = rt
           nb = numBranches t * 2
           rt = RootedTree t r (mkArray nb check_away_from_root)
 
+make_rooted tree = add_root tree (numNodes tree - 1)
+
 away_from_root (RootedTree t r arr) b = arr!b
 away_from_root (LabelledTree t _) b = away_from_root t b
 

@@ -26,13 +26,13 @@ label_for_node (tree,lengths) = (\node -> sublabel_for_node node ++ branch_label
           branch_label (Just b) = ":" ++ show (lengths!b') where b' = min b (reverseEdge tree b)
           branch_label Nothing  = ""
 
-write_newick tree@(Tree _ _ _ _) = write_newick (add_root tree 0)
+write_newick tree@(Tree _ _ _ _) = write_newick (make_rooted tree)
 write_newick rt@(RootedTree tree root _) = write_newick_node rt (label_for_node rt)
-write_newick (LabelledTree t@(Tree _ _ _ _) labels) = write_newick (LabelledTree (add_root t 0) labels)
+write_newick (LabelledTree t@(Tree _ _ _ _) labels) = write_newick (LabelledTree (make_rooted t) labels)
 write_newick lt@(LabelledTree rt@(RootedTree tree root _) labels) = write_newick_node rt (label_for_node lt)
-write_newick (tree@(Tree _ _ _ _), lengths) = write_newick (add_root tree 0, lengths)
+write_newick (tree@(Tree _ _ _ _), lengths) = write_newick (make_rooted tree, lengths)
 write_newick x@(rt@(RootedTree tree root _), lengths) = write_newick_node rt (label_for_node x)
-write_newick (LabelledTree t@(Tree _ _ _ _) labels,lengths) = write_newick (LabelledTree (add_root t 0) labels, lengths)
+write_newick (LabelledTree t@(Tree _ _ _ _) labels,lengths) = write_newick (LabelledTree (make_rooted t) labels, lengths)
 write_newick x@(LabelledTree rt@(RootedTree tree root _) labels, lengths) = write_newick_node rt (label_for_node x)
 
 write_newick_node (RootedTree tree root _) label_for_node = (write_branches_and_node tree (edgesOutOfNode tree root) root) ++ ";" where
