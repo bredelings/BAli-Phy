@@ -358,6 +358,7 @@ EVector context_ref::get_modifiable_values(const std::vector<int>& indices) cons
 
 expression_ref context_ref::maybe_modifiable_structure(int r)
 {
+    get_reg_value(r);
     return memory()->maybe_modifiable_structure(r);
 }
 
