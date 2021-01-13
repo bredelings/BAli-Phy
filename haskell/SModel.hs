@@ -262,7 +262,7 @@ log_normal_rates sigmaOverMu n base = rate_mixture_unif_bins base (log_normal_ra
 --dp base rates fraction = rate_mixture base dist where dist = zip fraction rates
 free_rates rates fractions base = scaled_mixture (replicate (length fractions) base) rates fractions
 
-transition_p_index smodel_on_tree = mkArray n_branches (list_to_vector . branch_transition_p smodel_on_tree) where tree = get_tree smodel_on_tree
+transition_p_index smodel_on_tree = mkArray n_branches (list_to_vector . branch_transition_p smodel_on_tree) where tree = get_tree' smodel_on_tree
                                                                                                                    n_branches = numBranches tree
 
 -- * OK... so a mixture of rate matrices is NOT the same as a mixture of exponentiated matrices, because the rate matrices are scaled relative to each other.
@@ -314,7 +314,7 @@ transition_p_index smodel_on_tree = mkArray n_branches (list_to_vector . branch_
 -- So, how are we going to handle rate scaling?  That should be part of the model!
 
 data SingleBranchLengthModel a = SingleBranchLengthModel Tree (Array Int Double) a
-get_tree (SingleBranchLengthModel t _ _) = t
+get_tree' (SingleBranchLengthModel t _ _) = t        -- Avoid aliasing with get_tree from DataPartition
 
 get_smap (ReversibleMarkov _ s _ _ _ _ _) = s
 get_smap (MixtureModel ((_,m):_)) = get_smap m

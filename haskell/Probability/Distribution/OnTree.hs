@@ -24,9 +24,8 @@ ctmc_on_tree topology root as smodel ts scale =
     Distribution (\seqs -> [subst_like_on_tree topology root as smodel ts scale seqs]) (no_quantile "ctmc_on_tree") () ()
 
 subst_likelihood_fixed_A (topology,lengths) smodel sequences = likelihood
-    where (_,_,_,likelihood) = observe_partition_type_1 partition sequences subst_root
+    where (_,_,_,likelihood) = observe_partition_type_1 topology lengths smodel sequences subst_root
           subst_root = numNodes topology - 1
-          partition = Partition smodel Nothing lengths topology Nothing Nothing
 
 ctmc_on_tree_fixed_A tree smodel =
     Distribution (\seqs -> [subst_likelihood_fixed_A tree smodel seqs]) (no_quantile "ctmc_on_tree_fixed_A") () ()

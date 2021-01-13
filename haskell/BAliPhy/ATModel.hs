@@ -42,7 +42,7 @@ observe_partition_type_0 partition sequence_data subst_root = (transition_ps, cl
           leaf_sequences = listArray' $ map (sequence_to_indices alphabet) $ reorder_sequences taxa sequence_data
           as = pairwise_alignments (DP.get_alignment partition)
           distances = DP.get_branch_lengths partition
-          smodel = DP.smodel partition
+          smodel = DP.get_smodel partition
           alphabet = getAlphabet smodel
           smap   = stateLetters smodel
           smodel_on_tree = SModel.SingleBranchLengthModel tree distances smodel
@@ -69,15 +69,12 @@ observe_partition_type_0 partition sequence_data subst_root = (transition_ps, cl
                                 else
                                     array_to_vector $ sample_ancestral_sequences tree subst_root leaf_sequences as alphabet transition_ps f cls smap
 
-observe_partition_type_1 partition sequences subst_root = (transition_ps, cls, ancestral_sequences, likelihood)
+observe_partition_type_1 tree distances smodel sequences subst_root = (transition_ps, cls, ancestral_sequences, likelihood)
     where a0 = alignment_from_sequences alphabet sequences
           (compressed_alignment',column_counts,mapping) = compress_alignment $ a0
-          tree = DP.get_tree partition
           n_leaves = numLeaves tree
           taxa = get_labels tree
           compressed_alignment = reorder_alignment taxa compressed_alignment'
-          distances = DP.get_branch_lengths partition
-          smodel = DP.smodel partition
           alphabet = getAlphabet smodel
           smap   = stateLetters smodel
           smodel_on_tree = SModel.SingleBranchLengthModel tree distances smodel
