@@ -669,6 +669,8 @@ public:
 
     const closure& lazy_evaluate_unchangeable(int& R);
 
+    expression_ref maybe_modifiable_structure(int r);
+
     std::vector<int>& get_scratch_list() const;
     void release_scratch_list() const;
 
