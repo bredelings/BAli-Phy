@@ -1554,7 +1554,7 @@ std::string generate_atmodel_program(int n_sequences,
 
     // P1. Topology
     auto tree_var = var("topology1");
-    sample_atmodel.perform(tree_var, {var("sample_topology_1"),taxon_names_var});
+    sample_atmodel.perform(tree_var, {var("SamplingRate"),0.0,{var("sample_topology_1"),taxon_names_var}});
 
     // P2. Branch lengths
     expression_ref branch_lengths = List();
