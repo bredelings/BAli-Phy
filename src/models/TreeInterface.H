@@ -131,9 +131,9 @@ class ModifiablesTreeInterface: public TreeInterface
     const std::vector<std::vector<int>*>& branches_from_affected_nodes() const;
 
     const context_ref& C;
+    const tree_constants* TC;
     std::vector<int> affected_nodes_;
     std::vector<std::vector<int>*> branches_from_affected_nodes_;
-    const tree_constants* TC;
 public:
 
     ModifiablesTreeInterface(context_ref& c, int tree_head_);
