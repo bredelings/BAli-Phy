@@ -127,6 +127,7 @@ int main(int argc,char* argv[])
                 auto h = json::parse(line);
                 if (not h.count("version"))
                     throw myexception()<<"JSON log file does not have a valid header line: no \"version\" field.";
+                h["nested"] = false;
                 std::cout<<h.dump()<<"\n";
             }
 
