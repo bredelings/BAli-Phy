@@ -10,10 +10,10 @@ data HMM
 data PairwiseAlignment
 
 data Partition = Partition {
-      smodel :: SModel,
-      imodel :: Maybe IModel,
+      get_smodel :: SModel,
+      get_imodel :: Maybe IModel,
       get_branch_lengths  :: Array Int  Double,
       get_tree :: Tree,
       get_alignment :: AlignmentOnTree,
-      hmms :: Maybe (Array Int HMM)
+      get_hmms :: Maybe (Array Int HMM)
     }

@@ -492,7 +492,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         auto tree = expression_ref{var("BAliPhy.ATModel.DataPartition.get_tree"), partition};
         auto taxa = expression_ref{var("Tree.get_labels"),tree};
         leaf_sequences_exp = {var("Bio.Sequence.reorder_sequences"),taxa,leaf_sequences_exp};
-        auto smodel = expression_ref{var("BAliPhy.ATModel.DataPartition.smodel"),partition};
+        auto smodel = expression_ref{var("BAliPhy.ATModel.DataPartition.get_smodel"),partition};
         auto alphabet = expression_ref{var("SModel.getAlphabet"),smodel};
         leaf_sequences_exp = {var("Data.List.map"), {var("Bio.Sequence.sequence_to_indices"),alphabet},leaf_sequences_exp};
 
@@ -524,7 +524,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
             // D = Params.substitutionBranchLengths!scale_index
 
             // R5. Register probabilities of each sequence length
-            expression_ref model = {fromJust,{var("BAliPhy.ATModel.DataPartition.imodel"),partition}};
+            expression_ref model = {fromJust,{var("BAliPhy.ATModel.DataPartition.get_imodel"),partition}};
             expression_ref lengthp = {snd,model};
             for(int n=0;n<sequence_length_pr_indices.size();n++)
             {
@@ -533,7 +533,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
             }
 
             // R6. Register branch HMMs
-            param hmms = p->add_compute_expression({fromJust,{var("BAliPhy.ATModel.DataPartition.hmms"),partition}});
+            param hmms = p->add_compute_expression({fromJust,{var("BAliPhy.ATModel.DataPartition.get_hmms"),partition}});
             for(int b=0;b<B;b++)
                 branch_HMMs.push_back( p->add_compute_expression( {var("Data.Array.!"), hmms.ref(*p), b} ) );
 
@@ -1824,8 +1824,14 @@ std::string generate_atmodel_program(int n_sequences,
             assert(not i_mapping[i]);
             assert(likelihood_calculator == 1);
 
+            var tree("tree_part"+part);
+            var distances("distances_part"+part);
+            var smodel("smodel_part"+part);
+            program.let(tree,{var("get_tree"),partition});
+            program.let(distances,{var("get_branch_lengths"),partition});
+            program.let(smodel,{var("get_smodel"),partition});
             program.let(Tuple(transition_ps, cls_var, ancestral_sequences_var, likelihood_var),
-                        {var("observe_partition_type_1"), partition, sequence_data_var, subst_root_var});
+                        {var("observe_partition_type_1"), tree, distances, smodel,sequence_data_var, subst_root_var});
         }
         else
             std::abort();
