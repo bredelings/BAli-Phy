@@ -35,14 +35,11 @@ data ATModelExport = ATModelExport
       sequence_names :: EVector
     }
 
-observe_partition_type_0 partition sequence_data subst_root = (transition_ps, cls, ancestral_sequences, likelihood)
-    where tree = DP.get_tree partition
-          n_leaves = numLeaves tree
+observe_partition_type_0 tree distances alignment smodel sequence_data subst_root = (transition_ps, cls, ancestral_sequences, likelihood)
+    where n_leaves = numLeaves tree
+          as = pairwise_alignments alignment
           taxa = get_labels tree
           leaf_sequences = listArray' $ map (sequence_to_indices alphabet) $ reorder_sequences taxa sequence_data
-          as = pairwise_alignments (DP.get_alignment partition)
-          distances = DP.get_branch_lengths partition
-          smodel = DP.get_smodel partition
           alphabet = getAlphabet smodel
           smap   = stateLetters smodel
           smodel_on_tree = SModel.SingleBranchLengthModel tree distances smodel

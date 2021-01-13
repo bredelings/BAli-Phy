@@ -1814,22 +1814,24 @@ std::string generate_atmodel_program(int n_sequences,
         var partition("part"+part);
         program.let(partition,{var("!!"),{var("partitions"),var("atmodel")},i});
 
+        var tree("tree_part"+part);
+        var distances("distances_part"+part);
+        var smodel("smodel_part"+part);
+        program.let(tree,{var("get_tree"),partition});
+        program.let(distances,{var("get_branch_lengths"),partition});
+        program.let(smodel,{var("get_smodel"),partition});
         if (likelihood_calculator == 0)
         {
+            var alignment("alignment_part"+part);
+            program.let(alignment,{var("get_alignment"),partition});
             program.let(Tuple(transition_ps, cls_var, ancestral_sequences_var, likelihood_var),
-                        {var("observe_partition_type_0"), partition, sequence_data_var, subst_root_var});
+                        {var("observe_partition_type_0"), tree, distances, alignment, smodel, sequence_data_var, subst_root_var});
         }
         else if (likelihood_calculator == 1)
         {
             assert(not i_mapping[i]);
             assert(likelihood_calculator == 1);
 
-            var tree("tree_part"+part);
-            var distances("distances_part"+part);
-            var smodel("smodel_part"+part);
-            program.let(tree,{var("get_tree"),partition});
-            program.let(distances,{var("get_branch_lengths"),partition});
-            program.let(smodel,{var("get_smodel"),partition});
             program.let(Tuple(transition_ps, cls_var, ancestral_sequences_var, likelihood_var),
                         {var("observe_partition_type_1"), tree, distances, smodel,sequence_data_var, subst_root_var});
         }
