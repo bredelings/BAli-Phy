@@ -93,7 +93,7 @@ uniform_topology_effect tree = tree `seq` add_move (walk_tree_sample_nni_unsafe 
 
 uniform_topology n = Distribution (\tree -> [uniform_topology_pr n])
                                   (no_quantile "uniform_topology")
-                                  (RandomStructure do_nothing (triggered_modifiable_tree n) (random_tree n))
+                                  (RandomStructure uniform_topology_effect (triggered_modifiable_tree n) (random_tree n))
                                   (TreeRange n)
 
 uniform_labelled_topology taxa = do
