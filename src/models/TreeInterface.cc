@@ -400,7 +400,9 @@ const std::vector<std::vector<int>*>& ModifiablesTreeInterface::branches_from_af
 }
 
 ModifiablesTreeInterface::ModifiablesTreeInterface(context_ref& c, int tree_reg)
-    :C(c),TC(new tree_constants(c,reg_var(tree_reg)))
+    :C(c),
+     TC(new tree_constants(c,reg_var(tree_reg))),
+     branches_from_affected_nodes_(n_nodes())
 {
 }
 
