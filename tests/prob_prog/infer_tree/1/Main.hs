@@ -43,11 +43,11 @@ prior taxa tip_seq_lengths = do
     let b           = numBranches topology
         root        = targetNode topology 0
 
-    ts                        <- iid b (gamma 0.5 (2.0 / intToDouble b))
+    times                     <- iid b (gamma 0.5 (2.0 / intToDouble b))
 
     scale                     <- gamma 0.5 2.0
 
-    let distances = map (scale*) ts
+    let distances = map (scale*) times
         tree      = branch_length_tree topology distances
 
     (smodel, smodel_loggers) <- sample_smodel
@@ -58,7 +58,7 @@ prior taxa tip_seq_lengths = do
 
     let loggers = ["topology" %=% write_newick tree, "scale" %=% scale, "tn93" %>% smodel_loggers, "rs07" %>% imodel_loggers]
 
-    return (ctmc_on_tree topology root as smodel ts scale, loggers)
+    return (ctmc_on_tree tree root as smodel, loggers)
 
 observe_data seq_data = do
     let taxa            = map sequence_name seq_data
