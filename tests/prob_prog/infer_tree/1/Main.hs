@@ -29,7 +29,9 @@ sample_smodel = do
     return (tn93_model, loggers)
 
 -- Here, hmms should be a property of the imodel on the tree, like the transition_ps
--- are a property of smodelOnTree (or however it is spelled).
+--   are a property of smodelOnTree (or however it is spelled).
+-- However, we currently pass them in to random_alignment because we need to export
+--   them, and its not clear how to get them out if we generate them inside random-alignment.
 sample_alignment (topology,ds) imodel tip_seq_lengths = do
     let n_branches = numBranches topology
         hmms       = branch_hmms imodel ds n_branches
