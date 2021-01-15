@@ -97,3 +97,5 @@ tree_from_edges num_nodes edges = Tree nodesArray (listArray' branches) num_node
     branches = [ let Just (s,t) = find_branch b
                      Just i     = elemIndex b (nodesArray!s)
                  in (s,i,t,reverse b) | b <- [0..2*num_branches-1] ]
+
+branch_length_tree topology lengths = (topology, listArray' lengths)

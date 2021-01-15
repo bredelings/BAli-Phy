@@ -23,9 +23,9 @@ prior taxa = do
     let b = numBranches topology
     times <- iid b (gamma 0.5 (2.0 / intToDouble b))
     scale <- gamma 0.5 2.0
-    let distances = listArray' $ map (scale *) times
+    let distances = map (scale *) times
 
-    let tree      = (topology, distances)
+    let tree      = branch_length_tree topology distances
 
     (smodel, sloggers) <- sample_smodel
 
