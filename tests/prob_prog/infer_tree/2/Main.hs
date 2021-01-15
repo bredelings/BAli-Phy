@@ -6,8 +6,8 @@ import           Tree.Newick
 import           SModel
 import           Probability.Distribution.OnTree
 
-sample_smodel = do
-    freqs  <- dirichlet_on ["A", "C", "G", "T"] [1.0, 1.0, 1.0, 1.0]
+smodel_prior = do
+    freqs  <- symmetric_dirichlet_on ["A", "C", "G", "T"] 1.0
     kappa1 <- log_normal 0.0 1.0
     kappa2 <- log_normal 0.0 1.0
 
@@ -16,7 +16,8 @@ sample_smodel = do
 
     return (tn93_model, loggers)
 
-prior taxa = do
+
+tree_prior taxa = do
 
     topology <- uniform_labelled_topology taxa
 
@@ -27,11 +28,20 @@ prior taxa = do
 
     let tree      = branch_length_tree topology distances
 
-    (smodel, sloggers) <- sample_smodel
+    let loggers   = ["tree" %=% write_newick tree, "scale" %=% scale]
+    return (tree, loggers)
 
-    let loggers = ["tree" %=% write_newick tree, "T" %=% times, "scale" %=% scale, "tn93" %>% sloggers]
+
+prior taxa = do
+
+    (tree  , tree_loggers) <- tree_prior taxa
+
+    (smodel, sloggers    ) <- smodel_prior
+
+    let loggers = tree_loggers ++ ["tn93" %>% sloggers]
 
     return (tree, smodel, loggers)
+
 
 observe_data seq_data = do
     let taxa = map sequence_name seq_data
