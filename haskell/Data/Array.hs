@@ -39,3 +39,5 @@ indices = range . bounds
 elems   arr = [ arr!ix | ix <- indices arr ]
 
 assocs  arr = [ (ix, arr!ix) | ix <- indices arr ]
+
+arrayMap f arr = mkArray (numElements arr) (\i -> f (arr!i))
