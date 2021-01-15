@@ -32,10 +32,11 @@ smodel_prior = do
 --   are a property of smodelOnTree (or however it is spelled).
 -- However, we currently pass them in to random_alignment because we need to export
 --   them, and its not clear how to get them out if we generate them inside random-alignment.
-sample_alignment (topology,ds) imodel tip_seq_lengths = do
-    let n_branches = numBranches topology
+sample_alignment tree imodel tip_seq_lengths = do
+    let n_branches = numBranches tree
+        ds         = Tree.branch_lengths tree
         hmms       = branch_hmms imodel ds n_branches
-    alignment_on_tree <- random_alignment topology hmms imodel tip_seq_lengths
+    alignment_on_tree <- random_alignment tree hmms imodel tip_seq_lengths
     return $ Bio.Alignment.pairwise_alignments alignment_on_tree
 
 tree_prior taxa = do
@@ -57,13 +58,11 @@ prior taxa tip_seq_lengths = do
 
     (tree,tree_loggers)       <- tree_prior taxa
 
-    let (topology,_) = tree
-
-    let root        = targetNode topology 0
+    let root        = targetNode tree 0
 
     (smodel, smodel_loggers) <- smodel_prior
 
-    (imodel, imodel_loggers) <- imodel_prior topology
+    (imodel, imodel_loggers) <- imodel_prior tree
 
     as                       <- Main.sample_alignment tree imodel tip_seq_lengths
 

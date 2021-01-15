@@ -39,6 +39,8 @@ numBranches (LabelledTree t _)     = numBranches t
 numBranches (BranchLengthTree t _) = numBranches t
 numBranches (NodeHeightTree t _)   = numBranches t
 
+branch_length_tree topology lengths = BranchLengthTree topology (listArray' lengths)
+
 branch_lengths   (BranchLengthTree _ ds) = ds
 branch_lengths t@(NodeHeightTree _ hs)   = mkArray (numBranches t) (\b -> branch_length t b)
 
@@ -136,4 +138,4 @@ tree_from_edges num_nodes edges = Tree nodesArray (listArray' branches) num_node
                      Just i     = elemIndex b (nodesArray!s)
                  in (s,i,t,reverse b) | b <- [0..2*num_branches-1] ]
 
-branch_length_tree topology lengths = (topology, listArray' lengths)
+

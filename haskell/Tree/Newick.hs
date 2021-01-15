@@ -21,7 +21,7 @@ label_for_node (LabelledTree rt@(RootedTree tree root _) labels) = go
     where labels_array = listArray' labels
           go node | inRange (bounds labels_array) node  = labels_array!node
                   | otherwise                           = ""
-label_for_node (tree,lengths) = (\node -> sublabel_for_node node ++ branch_label (parentBranch tree node))
+label_for_node (BranchLengthTree tree lengths) = (\node -> sublabel_for_node node ++ branch_label (parentBranch tree node))
     where sublabel_for_node = label_for_node tree
           branch_label (Just b) = ":" ++ show (lengths!b') where b' = min b (reverseEdge tree b)
           branch_label Nothing  = ""
@@ -30,10 +30,11 @@ write_newick tree@(Tree _ _ _ _) = write_newick (make_rooted tree)
 write_newick rt@(RootedTree tree root _) = write_newick_node rt (label_for_node rt)
 write_newick (LabelledTree t@(Tree _ _ _ _) labels) = write_newick (LabelledTree (make_rooted t) labels)
 write_newick lt@(LabelledTree rt@(RootedTree tree root _) labels) = write_newick_node rt (label_for_node lt)
-write_newick (tree@(Tree _ _ _ _), lengths) = write_newick (make_rooted tree, lengths)
-write_newick x@(rt@(RootedTree tree root _), lengths) = write_newick_node rt (label_for_node x)
-write_newick (LabelledTree t@(Tree _ _ _ _) labels,lengths) = write_newick (LabelledTree (make_rooted t) labels, lengths)
-write_newick x@(LabelledTree rt@(RootedTree tree root _) labels, lengths) = write_newick_node rt (label_for_node x)
+
+write_newick blt@(BranchLengthTree (Tree _ _ _ _) _)                         = write_newick $ make_rooted blt
+write_newick blt@(BranchLengthTree (LabelledTree (Tree _ _ _ _) _) _)        = write_newick $ make_rooted blt
+write_newick blt@(BranchLengthTree rt@(RootedTree _ _ _) _)                  = write_newick_node rt (label_for_node blt)
+write_newick blt@(BranchLengthTree (LabelledTree rt@(RootedTree _ _ _) _) _) = write_newick_node rt (label_for_node blt)
 
 write_newick_node (RootedTree tree root _) label_for_node = (write_branches_and_node tree (edgesOutOfNode tree root) root) ++ ";" where
 
@@ -71,13 +72,13 @@ node_label = quoted_label <|> unquoted_label
 
 
 -- I don't want to REQUIRE a branch length
-branch_length = ( string ":" >> spaces >> optionMaybe (token parse_double) ) <|> return Nothing
+branch_length_p = ( string ":" >> spaces >> optionMaybe (token parse_double) ) <|> return Nothing
 
 subtree = do children <- option [] descendant_list
              spaces
              node_label <- optionMaybe node_label
              spaces
-             branch_length <- branch_length
+             branch_length <- branch_length_p
              return (Newick node_label branch_length children)
 
 descendant_list = do
