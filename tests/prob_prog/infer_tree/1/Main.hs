@@ -28,9 +28,10 @@ sample_smodel = do
 
     return (tn93_model, loggers)
 
-sample_alignment topology ts imodel scale tip_seq_lengths = do
+-- Here, hmms should be a property of the imodel on the tree, like the transition_ps
+-- are a property of smodelOnTree (or however it is spelled).
+sample_alignment (topology,ds) imodel tip_seq_lengths = do
     let n_branches = numBranches topology
-        ds         = listArray' $ map (* scale) ts
         hmms       = branch_hmms imodel ds n_branches
     alignment_on_tree <- random_alignment topology hmms imodel tip_seq_lengths
     return $ Bio.Alignment.pairwise_alignments alignment_on_tree
@@ -46,14 +47,16 @@ prior taxa tip_seq_lengths = do
 
     scale                     <- gamma 0.5 2.0
 
+    let distances = map (scale*) ts
+        tree      = branch_length_tree topology distances
+
     (smodel, smodel_loggers) <- sample_smodel
 
-    (imodel, imodel_loggers) <- sample_imodel topology
+    (imodel, imodel_loggers) <- sample_imodel tree
 
-    as                       <- Main.sample_alignment topology ts imodel scale tip_seq_lengths
+    as                       <- Main.sample_alignment tree imodel tip_seq_lengths
 
-    let loggers =
-            ["topology" %=% write_newick topology, "T" %=% ts, "scale" %=% scale, "tn93" %>% smodel_loggers, "rs07" %>% imodel_loggers]
+    let loggers = ["topology" %=% write_newick tree, "scale" %=% scale, "tn93" %>% smodel_loggers, "rs07" %>% imodel_loggers]
 
     return (ctmc_on_tree topology root as smodel ts scale, loggers)
 
