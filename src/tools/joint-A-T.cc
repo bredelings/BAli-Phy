@@ -180,13 +180,40 @@ joint_A_T get_multiple_joint_A_T(const variables_map& args,bool internal)
             alignment aa;
             if (not alph)
             {
-                aa = load_next_alignment(astringfile, get_alphabet_name(args));
-                alph = shared_ptr<const alphabet>(aa.get_alphabet().clone());
-                names = sequence_names(aa);
+                try
+                {
+                    aa = load_next_alignment(astringfile, get_alphabet_name(args));
+                    names = sequence_names(aa);
+                    alph = shared_ptr<const alphabet>(aa.get_alphabet().clone());
+                }
+                catch(myexception& e)
+                {
+                    names = {};
+                    alph = {};
+                    std::cerr<<"Warning: Skipping bad alignment:"<<endl;
+                    std::cerr<<"  Exception: "<<e.what()<<endl;
+                    return;
+                }
             }
             else
-                aa = load_next_alignment(astringfile, *alph, names);
+            {
+                try
+                {
+                    aa = load_next_alignment(astringfile, *alph, names);
+                }
+                catch(myexception& e)
+                {
+                    std::cerr<<"Warning: Skipping bad alignment:"<<endl;
+                    std::cerr<<"  Exception: "<<e.what()<<endl;
+                    return;
+                }
+            }
 
+            // FIXME: We could get all the sequence names, but miss part of the last sequence.
+            //        So technically we should maybe check that the sequences are the right length.
+            //
+            //        We COULD require that there is a blank line after the alignment.  Then we'd know
+            //        We got the whole thing.  Or an END mark, like //.
             A.push_back(aa);
             T.push_back(*tt);
         };
