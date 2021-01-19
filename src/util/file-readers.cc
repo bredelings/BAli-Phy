@@ -8,17 +8,16 @@ using std::string;
 // See tools/read-trees.{H,cc}
 // See alignment/load.{H,cc}
 
-optional<string> line_reader::next_one()
+void line_reader::next()
 {
-    std::string line;
-    if (portable_getline(file,line))
-        return line;
-    else
-        return {};
+    if (not done())
+        portable_getline(file,current);
 }
 
 line_reader::line_reader(std::istream& f)
     :file_reader<string>(f)
-{ }
+{
+    next();
+}
 
 

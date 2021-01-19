@@ -52,8 +52,10 @@ alignment find_last_alignment(std::istream& ifile, const std::string& alph_name)
 
 class alignment_reader: public file_reader<std::string>
 {
+    std::string current;
 public:
-    std::optional<std::string> next_one();
+    const std::string& read() const {return current;}
+    void next();
 
     alignment_reader(std::istream&);
 };

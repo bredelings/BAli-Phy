@@ -28,15 +28,19 @@ struct reader
     typedef T value_type;
 
     virtual bool done() const = 0;
-
-    virtual std::optional<T> next_one() = 0;
-    virtual void skip_one() { next_one();}
-
-    void skip(int n) { for(int i=0;i<n and not done();i++) skip_one();}
-    std::optional<T> next(int n=1) { skip(n-1); return next_one();}
+    virtual const T& read() const = 0;
+    virtual void next() = 0;
 
     virtual ~reader() = default;
 };
+
+template <typename T>
+void skip(reader<T>& r, int n)
+{
+    assert(n >= 1);
+    for(int i=0;i<n and not r.done();i++)
+        r.next();
+}
 
 template <typename T>
 class file_reader: public reader<T>
@@ -51,8 +55,10 @@ public:
 
 class line_reader: public file_reader<std::string>
 {
+    std::string current;
 public:
-    std::optional<std::string> next_one();
+    const std::string& read() const {return current;}
+    void next();
 
     line_reader(std::istream&);
 };
@@ -63,15 +69,12 @@ class subsample: public reader<typename R::value_type>
     int factor;
     R stream;
 public:
+
+    const typename R::value_type& read() const {return stream.read();}
+
     bool done() const {return stream.done();}
 
-    std::optional<typename R::value_type> next_one()
-    {
-        auto v = stream.next_one();
-        if (v)
-            stream.skip(factor-1);
-        return v;
-    }
+    void next() {skip(stream, factor);}
 
     subsample(int i, const R& r)
         :factor(i), stream(r)
@@ -83,23 +86,33 @@ class zip: public reader<std::pair<typename R1::value_type,typename R2::value_ty
 {
     R1 stream1;
     R2 stream2;
+    std::pair<typename R1::value_type, typename R2::value_type> current;
 
 public:
     bool done() const {return stream1.done() or stream2.done();}
 
-    std::optional<std::pair<typename R1::value_type,typename R2::value_type>> next_one()
+    const std::pair<typename R1::value_type,typename R2::value_type>&
+    read() const
     {
-        auto v1 = stream1.next_one();
-        auto v2 = stream2.next_one();
-        if (v1 and v2)
-            return {{*v1,*v2}};
+        return current;
+    }
+
+    void next()
+    {
+        stream1.next();
+        stream2.next();
+        if (not done())
+            current = std::pair(stream1.read(), stream2.read());
         else
-            return {};
+            current = {};
     }
 
     zip(const R1& r1, const R2& r2)
         :stream1(r1),stream2(r2)
-        { }
+        {
+            if (not done())
+                current = std::pair(stream1.read(), stream2.read());
+        }
 };
 
 template <typename T>

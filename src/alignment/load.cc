@@ -439,23 +439,25 @@ string read_next_alignment(std::istream& file)
 }
 
 
-optional<string> alignment_reader::next_one()
+void alignment_reader::next()
 {
-    if (not find_alignment(file)) return {};
-
-    return read_next_alignment(file);
+    find_alignment(file);
+    if (file)
+        current = read_next_alignment(file);
 }
 
 alignment_reader::alignment_reader(std::istream& f)
     :file_reader<string>(f)
-{ }
+{
+    next();
+}
 
 
 void fasta_blocks::next()
 {
     find_alignment(*file);
-    if (not *file)
-        file = nullptr;
-    else
+    if (*file)
         current = read_next_alignment(*file);
+    else
+        file = nullptr;
 }

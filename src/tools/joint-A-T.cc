@@ -136,19 +136,19 @@ joint_A_T get_multiple_joint_A_T(const variables_map& args,bool internal)
     int factor = 1;
     vector<pair<string,string>> A_T_strings;
 
-    while(not readers.empty())
+    bool done = false;
+    while(not done)
     {
+        done = true;
         // Do one round of reading.
         for(int i=0;i<readers.size();i++)
         {
-            auto at = readers[i]->next(factor);
-            if (not at)
+            if (not readers[i]->done())
             {
-                remove_unordered(readers,i);
-                i--;
+                done = false;
+                A_T_strings.push_back(readers[i]->read());
+                skip(*readers[i], factor);
             }
-            else
-                A_T_strings.push_back(std::move(*at));
         }
 
         if (max and A_T_strings.size() > (*max)*2)
