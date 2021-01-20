@@ -424,6 +424,8 @@ alignment find_last_alignment(std::istream& ifile, const string& alph_name)
     return A;
 }
 
+// After reading the alignment, we will have
+// `not file` if there is not a blank line.
 string read_next_alignment(std::istream& file)
 {
     string alignment_string;
@@ -434,8 +436,13 @@ string read_next_alignment(std::istream& file)
         alignment_string += "\n";
     }
 
-    assert(alignment_string.size() > 0 and alignment_string[0] == '>');
-    return alignment_string;
+    if (file)
+    {
+        assert(alignment_string.size() > 0 and alignment_string[0] == '>');
+        return alignment_string;
+    }
+    else
+        return {};
 }
 
 
