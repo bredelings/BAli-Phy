@@ -78,6 +78,7 @@ jobs:
           echo "DEVELOPER_DIR=/Applications/Xcode_${{ matrix.version }}.app/Contents/Developer" >> $GITHUB_ENV
           echo "CC=ccache clang" >> $GITHUB_ENV
           echo "CXX=ccache clang++" >> $GITHUB_ENV
+          ccache --set-config=cache_dir=$HOME/.ccache
 
     - name: Install meson
       run: |
@@ -111,6 +112,7 @@ jobs:
 
     - name: Build
       run: |
+        ccache -p
         ccache -s
         ninja -C build install -j4
         ccache -s
