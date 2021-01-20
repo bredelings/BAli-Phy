@@ -136,12 +136,6 @@ jobs:
       run: |
         echo ::set-output name=version::$(echo $GITHUB_REF | cut -d / -f 3)
 
-    - name: Test (windows)
-      if: matrix.name == 'windows'
-      run: |
-        export PATH=$HOME/local/bin:$PATH
-        wine64 bali-phy --help
-
     - name: Test (not windows)
       if: matrix.name != 'windows'
       run: |
