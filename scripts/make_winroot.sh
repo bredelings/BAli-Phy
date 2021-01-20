@@ -18,7 +18,6 @@ c = ['ccache','/usr/bin/x86_64-w64-mingw32-gcc']
 cpp = ['ccache','/usr/bin/x86_64-w64-mingw32-g++']
 ar = '/usr/bin/x86_64-w64-mingw32-ar'
 strip = '/usr/bin/x86_64-w64-mingw32-strip'
-pkgconfig = '${SYSROOT}/bin/pkg-config'
 exe_wrapper = 'wine64' # A command used to run generated executables.
 
 # We need these compiler args to find BOOST, which doesn't use pkg-config
