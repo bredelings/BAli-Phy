@@ -58,7 +58,7 @@ jobs:
         python-version: 3.8
 
     - name: Install (Linux)
-      if: runner.arch == 'linux64'
+      if: runner.os == 'Linux' && matrix.name != 'windows'
       run: |
         sudo apt install -y pandoc libcairo2-dev ccache
         sudo rm -rf /usr/local/share/boost
@@ -73,7 +73,7 @@ jobs:
         fi
 
     - name: Install (Linux -> Windows [cross])
-      if: runner.arch == 'win64'
+      if: matrix.name == 'windows'
       run: |
         sudo apt install -y pandoc ccache 
         sudo apt install -y dos2unix g++mingw-w64 wine64
