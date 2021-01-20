@@ -75,6 +75,7 @@ jobs:
     - name: Install (Linux -> Windows [cross])
       if: matrix.name == 'windows'
       run: |
+        sudo apt update
         sudo apt install -y pandoc ccache 
         sudo apt install -y dos2unix g++-mingw-w64 wine64 zstd
 
