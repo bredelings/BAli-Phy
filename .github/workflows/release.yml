@@ -132,7 +132,9 @@ jobs:
 
     - name: Build
       run: |
+        ccache -s
         ninja -C build install -j4
+        ccache -s
 
     - name: Get version
       id: get_version
