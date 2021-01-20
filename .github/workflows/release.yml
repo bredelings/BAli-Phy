@@ -110,13 +110,11 @@ jobs:
          restore-keys: |
            ${{ matrix.name }}-ccache-
 
-
-    - name: Install BOOST and set up build (Windows meson cross compile)
+    - name: Make windows root and generate cross file
       if: matrix.name == 'windows'
       # This command also generates the cross file 
       run: |
         ${GITHUB_WORKSPACE}/scripts/make_winroot.sh
-        export MESON_ARGS="${MESON_ARGS} --cross_file=win64-cross.txt"
 
     - name: Configure
       run: |
@@ -125,7 +123,10 @@ jobs:
           export CXXFLAGS="-mmacosx-version-min=10.14"
           export LDFLAGS="-mmacosx-version-min=10.14"
         fi
-        meson build --prefix=$HOME/local --buildtype=release -Db_ndebug=true ${MESON_ARGS}
+        if [ "${{ matrix.arch }}" = "win64" ]; then
+          ARGS="${ARGS} --cross_file=win64-cross.txt"
+        fi
+        meson build --prefix=$HOME/local --buildtype=release -Db_ndebug=true ${ARGS}
 
     - name: Build
       run: |
