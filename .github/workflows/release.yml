@@ -132,6 +132,7 @@ jobs:
 
     - name: Build
       run: |
+        ccache -p
         ccache -s
         ninja -C build install -j4
         ccache -s
