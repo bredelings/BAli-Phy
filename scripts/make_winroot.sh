@@ -45,6 +45,9 @@ echo "3. Installing boost to ${SYSROOT}"
 echo
 cd ${SYSROOT}
 PKGS="boost-1.75.0-2 libwinpthread-git-9.0.0.6090.ad98746a-1"
+# We are going to build out own boost, for now.
+# Do we need libwinpthread?  There's a system version in /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll
+PKGS=""
 for PKG in ${PKGS} ; do
     FILE=mingw-w64-x86_64-${PKG}-any.pkg.tar.zst
     rm -f ${FILE}
