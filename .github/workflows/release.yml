@@ -136,6 +136,18 @@ jobs:
       run: |
         echo ::set-output name=version::$(echo $GITHUB_REF | cut -d / -f 3)
 
+    - name: Test (windows)
+      if: matrix.name == 'windows'
+      run: |
+        export PATH=$HOME/local/bin:$PATH
+        wine64 bali-phy --help
+
+    - name: Test (not windows)
+      if: matrix.name != 'windows'
+      run: |
+        export PATH=$HOME/local/bin:$PATH
+        bali-phy --help
+
     - name: Create tarball
       id: create_tarball
       run: |
@@ -149,11 +161,6 @@ jobs:
         cp -a $OUTPUT $PACKAGE
         tar -zcf $TAR ${PACKAGE}
         echo ::set-output name=archive::${TAR}
-
-    - name: Test
-      run: |
-        export PATH=$HOME/local/bin:$PATH
-        bali-phy --help
 
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
