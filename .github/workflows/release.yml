@@ -124,7 +124,7 @@ jobs:
           export LDFLAGS="-mmacosx-version-min=10.14"
         fi
         if [ "${{ matrix.arch }}" = "win64" ]; then
-          ARGS="${ARGS} --cross_file=win64-cross.txt"
+          ARGS="${ARGS} --cross-file=win64-cross.txt"
         fi
         meson build --prefix=$HOME/local --buildtype=release -Db_ndebug=true ${ARGS}
 
