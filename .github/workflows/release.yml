@@ -76,7 +76,7 @@ jobs:
       if: matrix.name == 'windows'
       run: |
         sudo apt install -y pandoc ccache 
-        sudo apt install -y dos2unix g++-mingw-w64 wine64
+        sudo apt install -y dos2unix g++-mingw-w64 wine64 zstd
 
     - name: Install (macOS)
       if: runner.os == 'macOS'
@@ -110,7 +110,7 @@ jobs:
          restore-keys: |
            ${{ matrix.name }}-ccache-
 
-    - name: Make windows root and generate cross file
+    - name: Make windows sysroot and generate cross file
       if: matrix.name == 'windows'
       # This command also generates the cross file 
       run: |
