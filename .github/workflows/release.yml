@@ -148,14 +148,17 @@ jobs:
         export PATH=$HOME/local/bin:$PATH
         bali-phy --help
 
+    - name: Copy shared libs (Linux)
+      if: matrix.arch == 'linux64'
+      run: |
+        OUTPUT=$HOME/local
+        CC=gcc-${{ matrix.version }}
+        cp $(${CC} -print-file-name=libstdc++.so.6) $OUTPUT/lib/bali-phy/libstdc++.so.6
+
     - name: Create tarball
       id: create_tarball
       run: |
         OUTPUT=$HOME/local
-        if [ "$RUNNER_OS" = "Linux" ]; then
-          CC=gcc-${{ matrix.version }}
-          cp $(${CC} -print-file-name=libstdc++.so.6) $OUTPUT/lib/bali-phy/libstdc++.so.6
-        fi
         PACKAGE=bali-phy-${{ steps.get_version.outputs.version }}
         TAR=${PACKAGE}-${{ matrix.arch }}.tar.gz
         cp -a $OUTPUT $PACKAGE
