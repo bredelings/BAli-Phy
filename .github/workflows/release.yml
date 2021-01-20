@@ -86,6 +86,7 @@ jobs:
           echo "DEVELOPER_DIR=/Applications/Xcode_${{ matrix.version }}.app/Contents/Developer" >> $GITHUB_ENV
           echo "CC=ccache clang" >> $GITHUB_ENV
           echo "CXX=ccache clang++" >> $GITHUB_ENV
+          ccache --set-config=cache_dir=$HOME/.ccache
 
     - name: Install meson
       run: |
@@ -108,9 +109,7 @@ jobs:
     - name: ccache cache files
       uses: actions/cache@v2
       with:
-         path: |
-           ~/.ccache
-           ~/Library/Caches/ccache
+         path: ~/.ccache
          key: ${{ matrix.name }}-ccache-${{ steps.ccache_cache_timestamp.outputs.timestamp }}
          restore-keys: |
            ${{ matrix.name }}-ccache-
