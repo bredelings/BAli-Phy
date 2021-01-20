@@ -6,13 +6,13 @@ on:
       - "*"
 
 jobs:
-  createrelease:
-    name: createrelease
+  create_release:
+    name: Create release
     runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
-    - uses: actions/checkout@v2
-
-    - name: create release
+    - name: Create release
       id: create_release
       uses: actions/create-release@v1
       env:
@@ -23,17 +23,8 @@ jobs:
         draft: true
         prerelease: false
 
-    - name: Output Release URL File
-      run: echo "${{ steps.create_release.outputs.upload_url }}" > release_url.txt
-
-    - name: Save Release URL File for publish
-      uses: actions/upload-artifact@v1
-      with:
-        name: release_url
-        path: release_url.txt
-
   build_and_upload:
-    needs: [createrelease]
+    needs: create_release
     strategy:
       matrix:
         name: [ubuntu-gcc-9,
@@ -135,7 +126,7 @@ jobs:
           cp $(${CC} -print-file-name=libstdc++.so.6) $OUTPUT/lib/bali-phy/libstdc++.so.6
         fi
         PACKAGE=bali-phy-${{ steps.get_version.outputs.version }}
-        TAR=bali-phy-${{ steps.get_version.outputs.version }}-${{ matrix.arch }}.tar.gz
+        TAR=${PACKAGE}-${{ matrix.arch }}.tar.gz
         cp -a $OUTPUT $PACKAGE
         tar -zcf $TAR ${PACKAGE}
         echo ::set-output name=archive::${TAR}
@@ -145,24 +136,12 @@ jobs:
         export PATH=$HOME/local/bin:$PATH
         bali-phy --help
 
-    - name: Load Release URL File from release job
-      uses: actions/download-artifact@v1
-      with:
-        name: release_url
-
-    - name: Get release file name & upload URL
-      id: get_release_info
-      run: |
-        value=`cat release_url/release_url.txt`
-        echo ::set-output name=upload_url::$value
-
     - name: Upload Release Asset
-      id: upload-release-asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.get_release_info.outputs.upload_url }}
+        upload_url: ${{ needs.create_release.outputs.upload_url }}
         asset_path: ./${{ steps.create_tarball.outputs.archive }}
         asset_name: ${{ steps.create_tarball.outputs.archive }}
         asset_content_type: application/zip
