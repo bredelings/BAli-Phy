@@ -54,7 +54,7 @@ class alignment_reader: public file_reader<std::string>
 {
     std::string current;
 public:
-    const std::string& read() const {return current;}
+    const std::string& read() const {assert(not done()); return current;}
     void next();
 
     alignment_reader(std::istream&);
