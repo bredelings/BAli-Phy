@@ -1,25 +1,5 @@
 #!/bin/bash
 
-# 0. parse command line arguments
-while echo $1 | grep ^- > /dev/null; do
-    # intercept help while parsing "-key value" pairs
-    if [ "$1" = "--help" ] || [ "$1" = "-h" ]
-    then
-        echo 'Command line options are:
--h                              : print this help and exit.
--ccache          <true|false>   : set to true to add ccache to crossfile
-
-Example:
-  ./make_winroot.sh -help true'
-        exit
-    fi
-
-    # parse pairs
-    eval $( echo $1 | sed 's/-//g' | tr -d '\012')=$2
-    shift
-    shift
-done
-
 SYSROOT=$HOME/win_root
 
 # 1. Make sysroot
@@ -34,8 +14,8 @@ echo
 echo "2. Writing cross file to '${CROSSNAME}'"
 cat > "${CROSSNAME}" <<EOF
 [binaries]
-c = '/usr/bin/x86_64-w64-mingw32-gcc'
-cpp = '/usr/bin/x86_64-w64-mingw32-g++'
+c = ['ccache','/usr/bin/x86_64-w64-mingw32-gcc']
+cpp = ['ccache','/usr/bin/x86_64-w64-mingw32-g++']
 ar = '/usr/bin/x86_64-w64-mingw32-ar'
 strip = '/usr/bin/x86_64-w64-mingw32-strip'
 pkgconfig = '${SYSROOT}/bin/pkg-config'
