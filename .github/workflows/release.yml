@@ -44,6 +44,12 @@ jobs:
             version: "11.3.1"
             arch: "mac64"
 
+          - name: windows
+            os: ubuntu-latest
+            compiler: mingw
+            version: "N/A"
+            arch: "win64"
+
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
@@ -52,7 +58,7 @@ jobs:
         python-version: 3.8
 
     - name: Install (Linux)
-      if: runner.os == 'Linux'
+      if: runner.arch == 'linux64'
       run: |
         sudo apt install -y pandoc libcairo2-dev ccache
         sudo rm -rf /usr/local/share/boost
@@ -66,12 +72,17 @@ jobs:
           echo "CXX=ccache clang++-${{ matrix.version }}" >> $GITHUB_ENV
         fi
 
+    - name: Install (Linux -> Windows [cross])
+      if: runner.arch == 'win64'
+      run: |
+        sudo apt install -y pandoc ccache 
+        sudo apt install -y dos2unix g++mingw-w64 wine64
+
     - name: Install (macOS)
       if: runner.os == 'macOS'
       run: |
           brew install pkg-config pandoc cairo ccache coreutils
           sudo xcode-select -switch /Applications/Xcode_${{ matrix.version }}.app
-
 
     - name: Install meson
       run: |
@@ -99,6 +110,14 @@ jobs:
          restore-keys: |
            ${{ matrix.name }}-ccache-
 
+
+    - name: Install BOOST and set up build (Windows meson cross compile)
+      if: matrix.name == 'windows'
+      # This command also generates the cross file 
+      run: |
+        ${GITHUB_WORKSPACE}/scripts/make_winroot.sh -ccache true
+        export MESON_ARGS="${MESON_ARGS} --cross_file=win64-cross.txt"
+
     - name: Configure
       run: |
         if [ "$RUNNER_OS" = "macOS" ]; then
@@ -106,7 +125,7 @@ jobs:
           export CXXFLAGS="-mmacosx-version-min=10.14"
           export LDFLAGS="-mmacosx-version-min=10.14"
         fi
-        meson build --prefix=$HOME/local --buildtype=release -Db_ndebug=true
+        meson build --prefix=$HOME/local --buildtype=release -Db_ndebug=true ${MESON_ARGS}
 
     - name: Build
       run: |
