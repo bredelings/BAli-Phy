@@ -110,7 +110,7 @@ namespace sequence_format {
 		    else
 			continue;
 		}
-	
+
 		// add the letters in
 		letters += line;
 	    }
