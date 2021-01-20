@@ -75,7 +75,9 @@ jobs:
       if: runner.os == 'macOS'
       run: |
           brew install pkg-config pandoc cairo ccache coreutils
-          sudo xcode-select -switch /Applications/Xcode_${{ matrix.version }}.app
+          echo "DEVELOPER_DIR=/Applications/Xcode_${{ matrix.version }}.app/Contents/Developer" >> $GITHUB_ENV
+          echo "CC=ccache clang" >> $GITHUB_ENV
+          echo "CXX=ccache clang++" >> $GITHUB_ENV
 
     - name: Install meson
       run: |
@@ -109,7 +111,9 @@ jobs:
 
     - name: Build
       run: |
+        ccache -s
         ninja -C build install -j4
+        ccache -s
 
     - name: Test
       run: |
