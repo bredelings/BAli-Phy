@@ -114,7 +114,7 @@ jobs:
           export CXXFLAGS="-mmacosx-version-min=10.14"
           export LDFLAGS="-mmacosx-version-min=10.14"
         fi
-        meson build --prefix=$HOME/local --buildtype=release
+        meson build --prefix=$HOME/local --buildtype=release -Db_ndebug=true
 
     - name: Build
       run: |
