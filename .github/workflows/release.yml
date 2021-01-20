@@ -45,7 +45,7 @@ jobs:
             arch: "mac64"
 
           - name: windows
-            os: ubuntu-latest
+            os: ubuntu-20.04
             compiler: mingw
             version: "N/A"
             arch: "win64"
