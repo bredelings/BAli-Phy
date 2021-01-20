@@ -81,6 +81,30 @@ public:
         { }
 };
 
+template <typename R, typename F>
+class transform: public reader<typename R::value_type>
+{
+    R stream;
+    F func;
+    mutable std::optional<decltype(func(stream.read()))> current;
+public:
+
+    const typename R::value_type& read() const
+    {
+        if (not current)
+            current = func(stream.read());
+        return *current;
+    }
+
+    bool done() const {return stream.done();}
+
+    void next() { stream.next() ; if (current) current = {}; }
+
+    transform(const R& r,const F& f)
+        :stream(r),func(f)
+    { }
+};
+
 template <typename R1, typename R2>
 class zip: public reader<std::pair<typename R1::value_type,typename R2::value_type>>
 {
