@@ -22,13 +22,14 @@ pkgconfig = '${SYSROOT}/bin/pkg-config'
 exe_wrapper = 'wine64' # A command used to run generated executables.
 
 # We need these compiler args to find BOOST, which doesn't use pkg-config
-[properties]
+[built-in options]
 c_args = ['-I${SYSROOT}/mingw64/include']
 c_link_args = ['-L${SYSROOT}/mingw64/lib']
 
 cpp_args = ['-I${SYSROOT}/mingw64/include']
 cpp_link_args = ['-L${SYSROOT}/mingw64/lib']
 
+[properties]
 sys_root = '${SYSROOT}'
 pkg_config_libdir = '${SYSROOT}/mingw64/lib/pkgconfig' 
 
