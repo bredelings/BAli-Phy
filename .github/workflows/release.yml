@@ -115,7 +115,7 @@ jobs:
       if: matrix.name == 'windows'
       # This command also generates the cross file 
       run: |
-        ${GITHUB_WORKSPACE}/scripts/make_winroot.sh -ccache true
+        ${GITHUB_WORKSPACE}/scripts/make_winroot.sh
         export MESON_ARGS="${MESON_ARGS} --cross_file=win64-cross.txt"
 
     - name: Configure
