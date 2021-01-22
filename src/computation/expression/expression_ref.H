@@ -295,6 +295,7 @@ public:
 
     expression_ref& operator=(const expression_ref& E)
 	{
+            auto etype = E.type();
             if (is_object_type())
             {
                 if (E.is_object_type())
@@ -312,7 +313,7 @@ public:
                 else
                     d = E.d;
             }
-            type_ = E.type_;
+            type_ = etype;
 	    return *this;
 	}
 
