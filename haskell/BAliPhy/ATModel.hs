@@ -35,14 +35,14 @@ data ATModelExport = ATModelExport
       sequence_names :: EVector
     }
 
-observe_partition_type_0 tree distances alignment smodel sequence_data subst_root = (transition_ps, cls, ancestral_sequences, likelihood)
+observe_partition_type_0 tree alignment smodel sequence_data subst_root = (transition_ps, cls, ancestral_sequences, likelihood)
     where n_leaves = numLeaves tree
           as = pairwise_alignments alignment
           taxa = get_labels tree
           leaf_sequences = listArray' $ map (sequence_to_indices alphabet) $ reorder_sequences taxa sequence_data
           alphabet = getAlphabet smodel
           smap   = stateLetters smodel
-          smodel_on_tree = SModel.SingleBranchLengthModel tree distances smodel
+          smodel_on_tree = SingleBranchLengthModel tree smodel
           transition_ps = transition_p_index smodel_on_tree
           f = weighted_frequency_matrix smodel
           cls = cached_conditional_likelihoods
@@ -66,7 +66,7 @@ observe_partition_type_0 tree distances alignment smodel sequence_data subst_roo
                                 else
                                     array_to_vector $ sample_ancestral_sequences tree subst_root leaf_sequences as alphabet transition_ps f cls smap
 
-observe_partition_type_1 tree distances smodel sequences subst_root = (transition_ps, cls, ancestral_sequences, likelihood)
+observe_partition_type_1 tree smodel sequences subst_root = (transition_ps, cls, ancestral_sequences, likelihood)
     where a0 = alignment_from_sequences alphabet sequences
           (compressed_alignment',column_counts,mapping) = compress_alignment $ a0
           n_leaves = numLeaves tree
@@ -74,7 +74,7 @@ observe_partition_type_1 tree distances smodel sequences subst_root = (transitio
           compressed_alignment = reorder_alignment taxa compressed_alignment'
           alphabet = getAlphabet smodel
           smap   = stateLetters smodel
-          smodel_on_tree = SModel.SingleBranchLengthModel tree distances smodel
+          smodel_on_tree = SingleBranchLengthModel tree smodel
           leaf_sequences = listArray' $ sequences_from_alignment compressed_alignment
           transition_ps = transition_p_index smodel_on_tree
           f = weighted_frequency_matrix smodel

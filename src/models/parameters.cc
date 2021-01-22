@@ -604,6 +604,11 @@ tree_constants::tree_constants(context_ref& C, const expression_ref& E)
     if (log_verbose >= 3)
         std::cerr<<"tree = "<<tree_structure<<"\n\n";
 
+    if (has_constructor(tree_structure,"Tree.BranchLengthTree"))
+    {
+        assert(tree_structure.sub().size() == 2);
+        tree_structure = tree_structure.sub()[0];
+    }
     if (has_constructor(tree_structure,"Tree.LabelledTree"))
     {
         assert(tree_structure.sub().size() == 2);
@@ -1553,8 +1558,8 @@ std::string generate_atmodel_program(int n_sequences,
     // Therefore, we are constructing a list with values [(prefix1,(Just value1, loggers1)), (prefix1, (Just value1, loggers2))
 
     // P1. Topology
-    auto tree_var = var("topology1");
-    sample_atmodel.perform(tree_var, {var("SamplingRate"),0.0,{var("sample_topology_1"),taxon_names_var}});
+    auto topology_var = var("topology1");
+    sample_atmodel.perform(topology_var, {var("SamplingRate"),0.0,{var("sample_topology_1"),taxon_names_var}});
 
     // P2. Branch lengths
     expression_ref branch_lengths = List();
@@ -1562,17 +1567,20 @@ std::string generate_atmodel_program(int n_sequences,
     {
         string var_name = "branch_lengths";
         auto code = branch_length_model.code;
-        expression_ref E = {var("sample_"+var_name),tree_var};
+        expression_ref E = {var("sample_"+var_name),topology_var};
         E = {var("SamplingRate"),0.0,E};
 
         branch_lengths = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), sample_atmodel, program_loggers);
     }
+    // P3. Branch-length tree
+    auto tree_var = var("tree1");
+    sample_atmodel.let(tree_var, {var("branch_length_tree"),topology_var,branch_lengths});
 
     set<string> used_states;
     for(int i=0;i<SMs.size();i++)
         add(used_states, SMs[i].code.used_states);
 
-    // P3. Branch categories
+    // P4. Branch categories
     expression_ref maybe_branch_categories = var("Nothing");
     expression_ref branch_categories;
     if (used_states.count("branch_categories"))
@@ -1583,7 +1591,7 @@ std::string generate_atmodel_program(int n_sequences,
         maybe_branch_categories = {var("Just"),branch_categories_var};
     }
 
-    // P4. Scales
+    // P5. Scales
     vector<expression_ref> scales;
     for(int i=0; i<scaleMs.size(); i++)
     {
@@ -1601,6 +1609,22 @@ std::string generate_atmodel_program(int n_sequences,
     if (auto l = logger("scale", get_list(scales), List()) )
         program_loggers.push_back( l );
 
+    // P6. Branch-length trees
+    vector<expression_ref> branch_dist_trees;
+    for(int i=0; i < n_partitions; i++)
+    {
+        string part = std::to_string(i+1);
+        int scale_index = *scale_mapping[i];
+
+        // L1. scale_P ...
+        expression_ref scale = scales[scale_index];
+
+        // L2. tree_part<i> = scale_branch_lengths scale tree
+        var branch_dist_tree("tree_part"+part);
+        sample_atmodel.let(branch_dist_tree, {var("scale_branch_lengths"),scale,tree_var});
+        branch_dist_trees.push_back(branch_dist_tree);
+    }
+
     // P5. Distances
     for(int i=0; i < n_partitions; i++)
     {
@@ -1612,10 +1636,7 @@ std::string generate_atmodel_program(int n_sequences,
 
         // L2. distances_P = map (*scale_P) branch_lengths
         var distances("distances_part"+part);
-        {
-            var x("x");
-            sample_atmodel.let(distances, {var("listArray'"),{var("map"), lambda_quantify(x,{var("*"),scale,x}), branch_lengths}});
-        }
+        sample_atmodel.let(distances, {var("Tree.branch_lengths"),branch_dist_trees[i]});
     }
     sample_atmodel.empty_stmt();
 
@@ -1750,7 +1771,7 @@ std::string generate_atmodel_program(int n_sequences,
             sample_atmodel.let(leaf_sequence_lengths, {var("get_sequence_lengths"), alphabet,  {var("!!"),var("sequence_data"),i}});
 
             // alignment_on_tree <- sample $ random_alignment tree hmms model leaf_seqs_array p->my_variable_alignment()
-            sample_atmodel.perform(alignment_on_tree, {var("random_alignment"), tree_var, branch_hmms, imodel, leaf_sequence_lengths});
+            sample_atmodel.perform(alignment_on_tree, {var("random_alignment"), branch_dist_trees[i], branch_hmms, imodel, leaf_sequence_lengths});
             sample_atmodel.empty_stmt();
         }
         else
@@ -1825,7 +1846,7 @@ std::string generate_atmodel_program(int n_sequences,
             var alignment("alignment_part"+part);
             program.let(alignment,{var("get_alignment"),partition});
             program.let(Tuple(transition_ps, cls_var, ancestral_sequences_var, likelihood_var),
-                        {var("observe_partition_type_0"), tree, distances, alignment, smodel, sequence_data_var, subst_root_var});
+                        {var("observe_partition_type_0"), tree, alignment, smodel, sequence_data_var, subst_root_var});
         }
         else if (likelihood_calculator == 1)
         {
@@ -1833,7 +1854,7 @@ std::string generate_atmodel_program(int n_sequences,
             assert(likelihood_calculator == 1);
 
             program.let(Tuple(transition_ps, cls_var, ancestral_sequences_var, likelihood_var),
-                        {var("observe_partition_type_1"), tree, distances, smodel,sequence_data_var, subst_root_var});
+                        {var("observe_partition_type_1"), tree, smodel,sequence_data_var, subst_root_var});
         }
         else
             std::abort();
