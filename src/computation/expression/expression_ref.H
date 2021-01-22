@@ -293,27 +293,30 @@ public:
     expression_ref(const String& s):expression_ref(s.clone()) { }
     expression_ref(const std::initializer_list<expression_ref>&);
 
+    void swap(expression_ref& E) noexcept
+        {
+            static_assert(sizeof(d) >= sizeof(O));
+            std::swap(d, E.d);
+            std::swap(type_, E.type_);
+        }
+
     expression_ref& operator=(const expression_ref& E)
 	{
-            auto etype = E.type();
-            if (is_object_type())
-            {
-                if (E.is_object_type())
-                    O = E.O;
-                else
-                {
-                    (&O)->~otype();
-                    d = E.d;
-                }
-            }
-            else
-            {
-                if (E.is_object_type())
-                    new (&O) otype(E.ptr());
-                else
-                    d = E.d;
-            }
-            type_ = etype;
+            // If *this points to a structure containing E,
+            // then E can get destroyed during the operation.
+            // That means we can't access E.type_ after the assignment of E.O
+
+            // By constructing a temporary here we
+            // * increment the reference of E.O (if its a pointer)
+            // * copy E.type_, so that we can use it safely.
+
+            expression_ref(E).swap(*this);
+	    return *this;
+	}
+
+    expression_ref& operator=(expression_ref&& E) noexcept
+	{
+            swap(E);
 	    return *this;
 	}
 
@@ -323,6 +326,11 @@ public:
 		new (&O) otype(E.ptr());
 	    else
 		d = E.d;
+	}
+
+    expression_ref(expression_ref&& E) noexcept
+	{
+	    swap(E);
 	}
 
     inline ~expression_ref() {destroy_ptr();}
