@@ -1,6 +1,7 @@
 module MCMC where
 
 import Foreign.Pair
+import Foreign.Vector
 import Range
 
 builtin register_transition_kernel 2 "register_transition_kernel" "MCMC"
@@ -24,10 +25,12 @@ builtin builtin_slice_sample_integer_random_variable 4 "slice_sample_integer_ran
 slice_sample_integer_random_variable x bnds c = IOAction (pair_from_c . builtin_slice_sample_integer_random_variable x bnds c)
 
 -- This is "unsafe" because it doesn't update alignments
-builtin builtin_nni_on_branch_unsafe 3 "walk_tree_sample_NNI_unsafe" "MCMC"
-nni_on_branch_unsafe tree branch c = IOAction (\s->(s,builtin_nni_on_branch_unsafe tree branch c))
+builtin builtin_walk_tree_path 2 "walk_tree_path" "MCMC"
+walk_tree_path tree c = vector_to_list $ builtin_walk_tree_path tree c
 
 
 -- This is "unsafe" because it doesn't update alignments
-builtin builtin_walk_tree_sample_nni_unsafe 2 "walk_tree_sample_NNI_unsafe" "MCMC"
-walk_tree_sample_nni_unsafe tree c = IOAction (\s->(s, builtin_walk_tree_sample_nni_unsafe tree c))
+builtin builtin_nni_on_branch_unsafe 3 "NNI_on_branch_unsafe" "MCMC"
+nni_on_branch_unsafe tree branch c = IOAction (\s->(s,builtin_nni_on_branch_unsafe tree branch c))
+
+walk_tree_sample_nni_unsafe tree c = sequence_ [ nni_on_branch_unsafe tree branch c | branch <- walk_tree_path tree c]

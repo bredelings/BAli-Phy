@@ -565,27 +565,7 @@ void NNI_move(context_ref& C1, int tree_reg, int b)
     C1 = c[j];
 }
 
-extern "C" closure builtin_function_NNI_on_branch_unsafe(OperationArgs& Args)
-{
-    assert(not Args.evaluate_changeables());
-    auto& M = Args.memory();
-
-    //------------- 1a. Get argument X -----------------//
-    int tree_reg = Args.evaluate_slot_unchangeable(0);
-
-    int b = Args.evaluate(1).as_int();
-
-    int c1 = Args.evaluate(2).as_int();
-
-    //------------ 2. Make a TreeInterface -------------//
-    context_ref C1(M, c1);
-
-    NNI_move(C1, tree_reg, b);
-
-    return constructor("()",0);
-}
-
-extern "C" closure builtin_function_walk_tree_sample_NNI_unsafe(OperationArgs& Args)
+extern "C" closure builtin_function_walk_tree_path(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
@@ -607,8 +587,29 @@ extern "C" closure builtin_function_walk_tree_sample_NNI_unsafe(OperationArgs& A
     //------------ 4. Walk the tree and realign --------//
     auto branches = walk_tree_path(T, subst_root);
 
+    object_ptr<EVector> v (new EVector);
     for(int branch: branches)
-        NNI_move(C1, tree_reg, branch);
+        v->push_back(branch);
+
+    return v;
+}
+
+extern "C" closure builtin_function_NNI_on_branch_unsafe(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
+
+    //------------- 1a. Get argument X -----------------//
+    int tree_reg = Args.evaluate_slot_unchangeable(0);
+
+    int b = Args.evaluate(1).as_int();
+
+    int c1 = Args.evaluate(2).as_int();
+
+    //------------ 2. Make a TreeInterface -------------//
+    context_ref C1(M, c1);
+
+    NNI_move(C1, tree_reg, b);
 
     return constructor("()",0);
 }
