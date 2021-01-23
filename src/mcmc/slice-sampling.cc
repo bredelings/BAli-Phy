@@ -451,7 +451,7 @@ find_slice_boundaries_doubling(double x0,slice_function& g,double logy, double w
         double M = (L+R)/2;
         double W = R-L;
         assert(W > 0);
-        bool ok = (L < M) and (M < R) and (W+w > W);
+        bool ok = (L < M) and (M < R) and (W+w > W) and (L-w < L) and (R+w>R);
         return not ok;
     };
 
