@@ -12,8 +12,10 @@ data PairwiseAlignment
 data Partition = Partition {
       get_smodel :: SModel,
       get_imodel :: Maybe IModel,
-      get_branch_lengths  :: Array Int  Double,
-      get_tree :: Tree,
+      get_tree :: TreeWithBranchLengths,
       get_alignment :: AlignmentOnTree,
       get_hmms :: Maybe (Array Int HMM)
     }
+
+
+get_branch_lengths = branch_lengths . get_tree

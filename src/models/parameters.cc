@@ -1782,7 +1782,7 @@ std::string generate_atmodel_program(int n_sequences,
         }
 
         // FIXME - to make an AT *model* we probably need to remove the data from here.
-        partitions.push_back({var("Partition"), smodel, maybe_imodel, distances, tree_var, alignment_on_tree, maybe_hmms});
+        partitions.push_back({var("Partition"), smodel, maybe_imodel, tree_var, alignment_on_tree, maybe_hmms});
     }
 
     // FIXME - we need to observe the likelihoods for each partition here.
