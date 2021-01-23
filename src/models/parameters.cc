@@ -410,41 +410,6 @@ EVector unaligned_alignments_on_tree(const Tree& t, const vector<vector<int>>& s
     return alignments;
 }
 
-vector<param> get_params_from_list(context_ref& C, const expression_ref& list, std::optional<int> check_size = {})
-{
-    vector<param> params;
-    expression_ref structure = C.evaluate_expression({var("Parameters.maybe_modifiable_structure"), list});
-
-    if (log_verbose >= 3)
-        std::cerr<<"structure = "<<structure<<"\n\n";
-
-    auto vec = *list_to_evector(structure);
-    for(auto& e: vec)
-        params.push_back( get_param(C, e) );
-
-    if (check_size and (params.size() != *check_size))
-        throw myexception()<<"Expected a list of length "<<*check_size<<", but got one of length "<<params.size()<<"!";
-
-    return params;
-}
-
-vector<param> get_params_from_array(context_ref& C, const expression_ref& array, std::optional<int> check_size = {})
-{
-    vector<param> params;
-    expression_ref structure = C.evaluate_expression({var("Parameters.maybe_modifiable_structure"), array});
-
-    if (log_verbose >= 3)
-        std::cerr<<"structure = "<<structure<<"\n\n";
-
-    for(auto& e: structure.sub())
-        params.push_back( get_param(C, e) );
-
-    if (check_size and (params.size() != *check_size))
-        throw myexception()<<"Expected an array "<<*check_size<<", but got one of length "<<params.size()<<"!";
-
-    return params;
-}
-
 data_partition_constants::data_partition_constants(Parameters* p, int i, const alphabet& a_, int like_calc)
     :conditional_likelihoods_for_branch(2*p->t().n_branches()),
      sequence_length_indices(p->t().n_nodes()),
