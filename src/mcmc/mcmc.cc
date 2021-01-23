@@ -378,7 +378,7 @@ namespace MCMC {
 	    std::cerr<<endl<<endl;
 	}
 
-	double v2 = slice_sample(v1,slice_levels,W,100);
+	double v2 = slice_sample(v1,slice_levels,W, 50);
 
 	if (log_verbose >= 4)
 	{

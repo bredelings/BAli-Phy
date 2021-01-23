@@ -130,7 +130,7 @@ void slice_sample_branch_length(owned_ptr<Model>& P,MoveStats& Stats,int b)
     // NOTE - it is OK to depend on L below -- IF AND ONLY IF the likelihood is unimodal.
     double w = sigma*(PP.branch_mean()+L);
     branch_length_slice_function logp(PP,b);
-    double L2 = slice_sample(L,logp,w,100);
+    double L2 = slice_sample(L,logp,w,50);
 
     //---------- Record Statistics - -------------//
     result.totals[0] = abs(L2 - L);
@@ -165,7 +165,7 @@ void alignment_slice_sample_branch_length(owned_ptr<Model>& P,MoveStats& Stats,i
     // NOTE - it is OK to depend on L below -- IF AND ONLY IF the likelihood is unimodal.
     double w = sigma*(PP.branch_mean()+L);
     alignment_branch_length_slice_function logp(PP,b);
-    double L2 = slice_sample(L,logp,w,100);
+    double L2 = slice_sample(L,logp,w,50);
 
     //---------- Record Statistics - -------------//
     result.totals[0] = abs(L2 - L);
@@ -345,7 +345,7 @@ void slide_node(owned_ptr<Model>& P, MoveStats& Stats,int b)
     {
 	slide_node_slice_function logp(*PP,b);
 	double w = (logp.x0 + logp.y0) * P->load_value("slide_branch_slice_window",0.3);
-	double L1b = slice_sample(logp,w,100);
+	double L1b = slice_sample(logp,w,50);
     
 	MCMC::Result result(2);
 	result.totals[0] = 2.0*abs(L1b-L1a);

@@ -407,7 +407,7 @@ extern "C" closure builtin_function_slice_sample_real_random_variable(OperationA
     // OK, this is a bit problematic.
     double w = 1.0;
 
-    slice_sample(logp, w, 100);
+    slice_sample(logp, w, 50);
 
     if (log_verbose >= 3) std::cerr<<"   - Posterior evaluated "<<logp.count<<" times.\n";
 
@@ -457,7 +457,7 @@ extern "C" closure builtin_function_slice_sample_integer_random_variable(Operati
     double w = 1.0;
 
     double v1 = logp.current_value() + uniform();
-    slice_sample(v1, logp, w, 100);
+    slice_sample(v1, logp, w, 50);
 
     if (log_verbose >= 3) std::cerr<<C1.get_logged_parameters()<<"\n";
     if (log_verbose >= 3) std::cerr<<"   - Posterior evaluated "<<logp.count<<" times.\n";
