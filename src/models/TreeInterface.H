@@ -5,9 +5,31 @@
 #include <string>                                   // for string
 #include <vector>                                   // for vector
 #include "tree/tree.H"                              // for tree_edge, Tree (...
+#include "computation/param.H"
+
 class context_ref;
 class Parameters;
-struct tree_constants;
+
+struct tree_constants: public Object
+{
+    // The tree
+    expression_ref tree_exp;
+    std::vector<std::vector<param>> parameters_for_tree_node;
+    std::vector<std::tuple<param,param,param>> parameters_for_tree_branch;
+
+    std::vector<param> branch_durations;
+
+    int n_leaves;
+
+    std::vector<std::string> node_labels;
+
+    void register_branch_lengths(context_ref&, const expression_ref&);
+
+    tree_constants* clone() const {return new tree_constants(*this);}
+
+    tree_constants(context_ref&, const expression_ref&);
+    tree_constants(context_ref&, const std::vector<std::string>&, const expression_ref&);
+};
 
 class TreeInterface
 {
