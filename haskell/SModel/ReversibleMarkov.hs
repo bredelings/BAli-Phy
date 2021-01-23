@@ -59,3 +59,6 @@ gtr_sym' es' a = gtr_sym es a where lpairs = all_pairs (letters a)
 plus_f   a pi s   = gtr a s pi
 plus_fe  a s      = plus_f a (uniform_frequencies a) s
 plus_gwf a pi f s = reversible_markov a (simple_smap a) (s %*% plus_gwf_matrix pi' f) pi' where pi' = list_to_vector pi
+
+plus_f'  a pi s   = plus_f a (frequencies_from_dict a pi) s
+plus_gwf'  a pi f s = plus_gwf a (frequencies_from_dict a pi) f s
