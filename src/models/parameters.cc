@@ -1514,6 +1514,7 @@ std::string generate_atmodel_program(int n_sequences,
     }
 
     // P5. Distances
+    vector<expression_ref> distances;
     for(int i=0; i < n_partitions; i++)
     {
         string part = std::to_string(i+1);
@@ -1523,8 +1524,7 @@ std::string generate_atmodel_program(int n_sequences,
         expression_ref scale = scales[scale_index];
 
         // L2. distances_P = map (*scale_P) branch_lengths
-        var distances("distances_part"+part);
-        sample_atmodel.let(distances, {var("Tree.branch_lengths"),branch_dist_trees[i]});
+        distances.push_back( {var("Tree.branch_lengths"),branch_dist_trees[i]} );
     }
     sample_atmodel.empty_stmt();
 
@@ -1642,7 +1642,6 @@ std::string generate_atmodel_program(int n_sequences,
         expression_ref maybe_hmms   = var("Nothing");
 
         // Sample the alignment
-        var distances("distances_part"+part);
         var alignment_on_tree("alignment_on_tree_part"+part);
         if (imodel_index)
         {
@@ -1650,7 +1649,7 @@ std::string generate_atmodel_program(int n_sequences,
             expression_ref imodel = imodels[*imodel_index];
 
             var branch_hmms("branch_hmms_part"+part);
-            sample_atmodel.let(branch_hmms, {var("branch_hmms"), imodel, distances, n_branches});
+            sample_atmodel.let(branch_hmms, {var("branch_hmms"), imodel, distances[i], n_branches});
             maybe_imodel = {var("Just"), imodel};
             maybe_hmms   = {var("Just"), branch_hmms};
 
