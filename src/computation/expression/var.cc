@@ -224,3 +224,8 @@ bool is_wildcard(const expression_ref& E)
 	return false;
 }
 
+expression_ref wildcard()
+{
+    return var(-1);
+}
+

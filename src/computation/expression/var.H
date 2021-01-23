@@ -55,6 +55,8 @@ struct var: public Object, public occurrence_info
     var(const std::string& s,int i):index(i),name(s) {assert(name != "_");}
 };
 
+expression_ref wildcard();
+
 var qualified_var(const std::string&);
 
 bool is_var(const expression_ref&);
