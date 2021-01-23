@@ -1712,26 +1712,21 @@ std::string generate_atmodel_program(int n_sequences,
         string part = std::to_string(i+1);
         int likelihood_calculator = like_calcs[i];
 
-        // L0. scale_P ...
+        // let DataPartition smodel imodel tree alignment hmms = partitions atmodel !! i
+        expression_ref smodel = var("smodel_part"+part);
+        expression_ref imodel = wildcard();
+        expression_ref tree = var("tree_part"+part);
+        expression_ref alignment = (likelihood_calculator == 0)?var("alignment_part"+part):wildcard();
+        expression_ref hmms = wildcard();
+        program.let({var("Partition"),smodel, imodel, tree, alignment, hmms},{var("!!"),{var("partitions"),var("atmodel")},i});
+
         var transition_ps("transition_ps_part"+part);
         var cls_var("cls_part"+part);
         var ancestral_sequences_var("ancestral_sequences_part"+part);
         var likelihood_var("likelihood_part"+part);
         expression_ref sequence_data_var = {var("!!"),var("sequence_data"),i};
-
-        var partition("part"+part);
-        program.let(partition,{var("!!"),{var("partitions"),var("atmodel")},i});
-
-        var tree("tree_part"+part);
-        var distances("distances_part"+part);
-        var smodel("smodel_part"+part);
-        program.let(tree,{var("get_tree"),partition});
-        program.let(distances,{var("get_branch_lengths"),partition});
-        program.let(smodel,{var("get_smodel"),partition});
         if (likelihood_calculator == 0)
         {
-            var alignment("alignment_part"+part);
-            program.let(alignment,{var("get_alignment"),partition});
             program.let(Tuple(transition_ps, cls_var, ancestral_sequences_var, likelihood_var),
                         {var("observe_partition_type_0"), tree, alignment, smodel, sequence_data_var, subst_root_var});
         }
