@@ -380,16 +380,6 @@ namespace MCMC {
 
 	double v2 = slice_sample(v1,slice_levels,W,100);
 
-	if (n_learning_iterations-- > 0) 
-	{
-	    n_tries++;
-	    total_movement += std::abs(v2 - v1);
-      
-	    double W_predicted = 4.0*total_movement/n_tries;
-	    if (n_tries > 3)
-		W = 0.95*W + 0.05*W_predicted;
-	}
-
 	if (log_verbose >= 4)
 	{
 	    show_parameters(std::cerr,P);
