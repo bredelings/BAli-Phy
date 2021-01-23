@@ -24,10 +24,8 @@ slice_sample_real_random_variable x bnds c = IOAction (pair_from_c . builtin_sli
 builtin builtin_slice_sample_integer_random_variable 4 "slice_sample_integer_random_variable" "MCMC"
 slice_sample_integer_random_variable x bnds c = IOAction (pair_from_c . builtin_slice_sample_integer_random_variable x bnds c)
 
--- This is "unsafe" because it doesn't update alignments
 builtin builtin_walk_tree_path 2 "walk_tree_path" "MCMC"
 walk_tree_path tree c = vector_to_list $ builtin_walk_tree_path tree c
-
 
 -- This is "unsafe" because it doesn't update alignments
 builtin builtin_nni_on_branch_unsafe 3 "NNI_on_branch_unsafe" "MCMC"
