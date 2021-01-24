@@ -23,15 +23,6 @@ remove_n n list = do
     (xs, list_minus_n) <- remove_n (n - 1) list_minus_1
     return ((x : xs), list_minus_n)
 
--- choose 2 leaves, connect them to an internal node, and put that internal node on the list of leaves
--- This is I think gives more weight to more balanced trees?
-random_tree_edges [l1]     _        = return []
-random_tree_edges [l1, l2] _        = return [(l1, l2)]
-random_tree_edges leaves   (i : is) = do
-    ([l1, l2], leaves') <- remove_n 2 leaves
-    other_edges         <- random_tree_edges (i : leaves') is
-    return $ [(l1, i), (l2, i)] ++ other_edges
-
 -- Create a tree of size n-1, choose an edge at random, and insert the next leaf there.
 uniform_topology_edges [l1]     _        = return []
 uniform_topology_edges [l1, l2] _        = return [(l1, l2)]
@@ -99,3 +90,13 @@ uniform_topology n = Distribution (\tree -> [uniform_topology_pr n])
 uniform_labelled_topology taxa = do
   topology <- uniform_topology (length taxa)
   return $ add_labels topology taxa
+
+----
+-- choose 2 leaves, connect them to an internal node, and put that internal node on the list of leaves
+-- This is I think gives more weight to more balanced trees?
+uniform_ordered_tree_edges [l1]     _        = return []
+uniform_ordered_tree_edges [l1, l2] _        = return [(l1, l2)]
+uniform_ordered_tree_edges leaves   (i : is) = do
+    ([l1, l2], leaves') <- remove_n 2 leaves
+    other_edges         <- uniform_ordered_tree_edges (i : leaves') is
+    return $ [(l1, i), (l2, i)] ++ other_edges
