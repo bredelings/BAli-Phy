@@ -44,6 +44,7 @@ branch_length_tree topology lengths = BranchLengthTree topology (listArray' leng
 branch_lengths   (BranchLengthTree _ ds) = ds
 branch_lengths t@(NodeHeightTree _ hs)   = mkArray (numBranches t) (\b -> branch_length t b)
 
+node_height_tree topology heights = NodeHeightTree topology (listArray' heights)
 node_height (NodeHeightTree t hs) n = hs!n
 
 branch_length (BranchLengthTree _ ds) b = ds!b
