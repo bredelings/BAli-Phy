@@ -45,6 +45,7 @@ branch_lengths   (BranchLengthTree _ ds) = ds
 branch_lengths t@(NodeHeightTree _ hs)   = mkArray (numBranches t) (\b -> branch_length t b)
 
 node_height (NodeHeightTree t hs) n = hs!n
+
 branch_length (BranchLengthTree _ ds) b = ds!b
 branch_length (NodeHeightTree t   hs) b = abs (hs!source - hs!target)
     where source = sourceNode t b
