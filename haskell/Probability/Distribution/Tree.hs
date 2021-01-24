@@ -41,8 +41,8 @@ uniform_topology_edges (l : ls) (i : is) = do
     return $ [(l, i), (x, i), (i, y)] ++ es2
 
 -- We could rewrite uniform_topology_edges to automatically flip and sort the branches with leaf branches first.
-random_tree 1 = return $ Tree (listArray' [[]]) (listArray' []) 1 0
-random_tree n = do
+sample_uniform_topology 1 = return $ Tree (listArray' [[]]) (listArray' []) 1 0
+sample_uniform_topology n = do
     let num_nodes = 2 * n - 2
     edges <- uniform_topology_edges [0 .. n - 1] [n .. num_nodes - 1]
     -- This flipping is suppose flip edges from (internal,leaf) -> (leaf, internal)
@@ -93,7 +93,7 @@ uniform_topology_effect tree = tree `seq` add_move (walk_tree_sample_nni_unsafe 
 
 uniform_topology n = Distribution (\tree -> [uniform_topology_pr n])
                                   (no_quantile "uniform_topology")
-                                  (RandomStructure uniform_topology_effect (triggered_modifiable_tree n) (random_tree n))
+                                  (RandomStructure uniform_topology_effect (triggered_modifiable_tree n) (sample_uniform_topology n))
                                   (TreeRange n)
 
 uniform_labelled_topology taxa = do
