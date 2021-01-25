@@ -136,3 +136,33 @@ uniform_time_tree_pr age n_leaves tree = factor0 : [factor n | n <- [0 .. 2*n_le
           factor n = case parentNode tree n of Nothing -> possible
                                                Just b  -> require $ height n <= height p
                                                    where p = targetNode tree b
+
+-- rooted_tree: force / modifiable / triggered_modifiable
+force_rooted_tree rtree@(RootedTree unrooted_tree root_node _) = root_node `seq` force_tree unrooted_tree
+
+-- leaves   nodes  branches
+-- 1        1      0
+-- 2        3      2
+-- 3        5      4
+-- 4        7      6
+modifiable_rooted_tree modf (RootedTree tree root_node _) = add_root (Tree (listArray' nodes) (listArray' branches) n_nodes) root_node where
+    n_nodes = numNodes tree
+    n_leaves = (n_nodes + 1) `div` 2
+    n_nodes = 2*n_leaves - 1
+    n_branches = n_nodes - 1
+
+    degree node | n_leaves == 1      = 0
+                | node < n_leaves    = 1
+                | node == root_node  = 2
+                | node < n_nodes     = 3
+                | otherwise          = error $ "modifiable_rooted_tree: unknown node"++show node
+
+    reverse b = (b + n_branches) `mod` (2*n_branches)
+
+    nodes    = [ mapn (degree node) modf (edgesOutOfNode tree node) | node <- xrange 0 n_nodes ]
+
+    branches = [ (modf s, modf i, modf t, reverse b) | b <- xrange 0 (n_branches * 2),
+                                                       let (s, i, t, _) = nodesForEdge tree b ]
+
+-- our current modifiable tree structure requires the node to have a constrant degree.
+
