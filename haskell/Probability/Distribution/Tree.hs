@@ -3,6 +3,7 @@ module Probability.Distribution.Tree where
 import           Tree
 import           Probability.Random
 import           Probability.Distribution.Uniform
+import           Probability.Distribution.List
 import           MCMC
 
 xrange start end | start < end = start : xrange (start + 1) end
@@ -107,3 +108,9 @@ sample_uniform_ordered_tree n = do
   -- The number of edges should be 2*n-1, unchangably.
   let Tree es ns nn nb = tree_from_edges num_nodes sorted_edges
   return $ make_rooted (Tree es ns nn (nn - 1))
+
+sample_uniform_time_tree age n = do
+  topology <- sample_uniform_ordered_tree n
+  heights <- sort <$> iid (n-2) (uniform 0.0 age)
+  let all_heights = replicate n 0.0 ++ heights ++ [age]
+  return $ node_height_tree topology all_heights
