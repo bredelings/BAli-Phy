@@ -3,13 +3,17 @@ import           Probability
 import           Tree
 import           Tree.Newick
 
-model = sample $ do
-    tree <- sample_uniform_time_tree 1.0 5 -- uniform_time_tree 1.0 5
---    tree <- uniform_time_tree 1.0 5
-    let ltree = add_labels tree ["a","b","c","d","e"]
-    let pr = uniform_time_tree_pr 1.0 5 ltree
+n_leaves = 3
 
-    let ps    = map (show . parentNode tree) [0 .. 5]
+allStrings = [ c : s | s <- "" : allStrings, c <- ['a','b','c','d','e','f','g','h','i','j'] ]
+
+model = sample $ do
+    tree <- sample_uniform_time_tree 1.0 n_leaves
+--    tree <- uniform_time_tree 1.0 n_leaves
+    let ltree = add_labels tree (take n_leaves allStrings)
+    let pr = uniform_time_tree_pr 1.0 n_leaves ltree
+
+    let ps    = map (\n -> show (n, parentNode tree n)) [0 .. numNodes tree - 1]
 
     rec let mu node = case parentNode tree node of
                 Nothing   -> 0.0
