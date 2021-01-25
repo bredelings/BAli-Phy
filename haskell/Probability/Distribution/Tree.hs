@@ -95,6 +95,14 @@ uniform_labelled_topology taxa = do
 ----
 -- choose 2 leaves, connect them to an internal node, and put that internal node on the list of leaves
 -- This is I think gives more weight to more balanced trees?
+
+-- * actually I'm not sure the likelihood handles degree-2 nodes.
+-- * imodels might not handle degree-2 nodes.
+-- * we also assume that each node has a constant degree.
+--   + can we ensure that the root index is constant, and also the highest?
+-- * can we map the rooted tree onto an unrooted tree with the root removed?  not sure..
+--   + this makes reconstructing the ancestral sequence at the root more challenging.
+
 uniform_ordered_tree_edges [l1]     _        = return []
 uniform_ordered_tree_edges leaves   (i : is) = do
     ([l1, l2], leaves') <- remove_n 2 leaves
