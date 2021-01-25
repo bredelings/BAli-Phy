@@ -16,8 +16,8 @@ import Data.Char
 -- We need to handle adding (i) root (ii) labels (iii) branch lengths.
 -- Can we do this more generically?
 
-label_for_node rt@(RootedTree tree root _) = (\node -> show node)
-label_for_node (LabelledTree rt@(RootedTree tree root _) labels) = go
+label_for_node (RootedTree _ _ _) = (\node -> show node)
+label_for_node (LabelledTree _ labels) = go
     where labels_array = listArray' labels
           go node | inRange (bounds labels_array) node  = labels_array!node
                   | otherwise                           = ""
