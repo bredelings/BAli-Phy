@@ -44,12 +44,12 @@ tree_constants::tree_constants(context_ref& C, const expression_ref& E)
         assert(tree_structure.sub().size() == 2);
         tree_structure = tree_structure.sub()[0];
     }
-    assert(tree_structure.sub().size() == 4);
+    assert(tree_structure.sub().size() == 3);
 
     auto edges_out_of_node = tree_structure.sub()[0];
     auto nodes_for_edge    = tree_structure.sub()[1];
     int n_nodes            = tree_structure.sub()[2].as_int();
-    int n_branches         = tree_structure.sub()[3].as_int();
+    int n_branches         = n_nodes - 1;
 
     if (log_verbose >= 3)
         std::cerr<<"num_branches = "<<C.evaluate_expression({var("Parameters.maybe_modifiable_structure"), {var("Tree.numBranches"), tree_exp}})<<"\n\n";;

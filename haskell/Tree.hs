@@ -1,6 +1,6 @@
 module Tree where
 
-data Tree = Tree (Array Int [Int]) (Array Int (Int,Int,Int,Int)) Int Int
+data Tree = Tree (Array Int [Int]) (Array Int (Int,Int,Int,Int)) Int
 -- Polymorphism here really should be handled with a class that has the members below
 -- If we allow adding branches to functions later, we could move polymorphic definitions into files. e.g. for show.
 data RootedTree = RootedTree Tree Int (Array Int Bool)
@@ -15,25 +15,25 @@ data BranchLengthTree = BranchLengthTree Tree (Array Double)
 
 data NodeHeightTree   = NodeHeightTree RootedTree (Array Double)
 
-edgesOutOfNode (Tree nodesArray _ _ _) node = nodesArray ! node
+edgesOutOfNode (Tree nodesArray _ _) node = nodesArray ! node
 edgesOutOfNode (RootedTree t _ _) node      = edgesOutOfNode t node
 edgesOutOfNode (LabelledTree t _) node      = edgesOutOfNode t node
 edgesOutOfNode (BranchLengthTree t _) node  = edgesOutOfNode t node
 edgesOutOfNode (NodeHeightTree t _) node    = edgesOutOfNode t node
 
-nodesForEdge (Tree _ branchesArray _ _) edgeIndex = branchesArray ! edgeIndex
+nodesForEdge (Tree _ branchesArray _) edgeIndex = branchesArray ! edgeIndex
 nodesForEdge (RootedTree t _ _) edgeIndex         = nodesForEdge t edgeIndex
 nodesForEdge (LabelledTree t _) edgeIndex         = nodesForEdge t edgeIndex
 nodesForEdge (BranchLengthTree t _) edgeIndex     = nodesForEdge t edgeIndex
 nodesForEdge (NodeHeightTree t _) edgeIndex       = nodesForEdge t edgeIndex
 
-numNodes (Tree _ _ n _)         = n
+numNodes (Tree _ _ n)         = n
 numNodes (RootedTree t _ _)     = numNodes t
 numNodes (LabelledTree t _)     = numNodes t
 numNodes (BranchLengthTree t _) = numNodes t
 numNodes (NodeHeightTree t _)   = numNodes t
 
-numBranches (Tree _ _ _ n)         = n
+numBranches t@(Tree _ _ _)         = numNodes t - 1
 numBranches (RootedTree t _ _)     = numBranches t
 numBranches (LabelledTree t _)     = numBranches t
 numBranches (BranchLengthTree t _) = numBranches t
@@ -64,13 +64,13 @@ root (LabelledTree t _) = root t
 remove_root (RootedTree t _ _) = t
 remove_root (LabelledTree t labels) = LabelledTree (remove_root t) labels
 
-get_labels (Tree _ _ _ _)          = error "get_labels: trying to get labels from an unlabelled tree!"
+get_labels (Tree _ _ _)          = error "get_labels: trying to get labels from an unlabelled tree!"
 get_labels (RootedTree _ _ _)      = error "get_labels: trying to get labels from an unlabelled tree!"
 get_labels (LabelledTree _ labels) = labels
 get_labels (BranchLengthTree t _)  = get_labels t
 get_labels (NodeHeightTree t _)    = get_labels t
 
-add_labels t@(Tree _ _ _ _)      labels   = LabelledTree t labels
+add_labels t@(Tree _ _ _)      labels   = LabelledTree t labels
 add_labels rt@(RootedTree _ _ _) labels   = LabelledTree rt labels
 add_labels (LabelledTree _ _)    labels   = error "add_labels: trying to add labels to an already-labelled tree!"
 add_labels (BranchLengthTree t ds) labels = BranchLengthTree (add_labels t labels) ds
@@ -89,7 +89,7 @@ away_from_root (RootedTree t r arr    ) b = arr!b
 away_from_root (LabelledTree t _      ) b = away_from_root t b
 away_from_root (BranchLengthTree t _  ) b = away_from_root t b
 away_from_root (NodeHeightTree   t _  ) b = away_from_root t b
-away_from_root (Tree _ _ _ _          ) b = error "away_from_root: unrooted tree!"
+away_from_root (Tree _ _ _            ) b = error "away_from_root: unrooted tree!"
 
 toward_root    rt b = not $ away_from_root rt b
 
@@ -122,9 +122,9 @@ remove_element _ []     = []
 remove_element 0 (x:xs) = xs
 remove_element i (x:xs) = x:(remove_element (i-1) xs)
 
-tree_from_edges num_nodes edges = Tree nodesArray (listArray' branches) num_nodes num_branches where
+tree_from_edges num_nodes edges = Tree nodesArray (listArray' branches) num_nodes where
 
-    num_branches   = length edges
+    num_branches   = num_nodes - 1
 
     branch_edges   = forward_edges++backward_edges where
         forward_edges  = zip [0..] edges

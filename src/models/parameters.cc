@@ -575,7 +575,7 @@ expression_ref tree_expression(const SequenceTree& T)
 
     expression_ref tree_con = var("Tree.Tree");
 
-    return {tree_con, node_branches_array, branch_nodes_array, T.n_nodes(), T.n_branches()};
+    return {tree_con, node_branches_array, branch_nodes_array, T.n_nodes()};
 }
 
 bool Parameters::variable_alignment() const
