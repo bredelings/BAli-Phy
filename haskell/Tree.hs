@@ -122,7 +122,7 @@ remove_element _ []     = []
 remove_element 0 (x:xs) = xs
 remove_element i (x:xs) = x:(remove_element (i-1) xs)
 
-tree_from_edges num_nodes edges = Tree nodesArray (listArray' branches) num_nodes where
+tree_from_edges num_nodes edges = Tree nodesArray (listArray (2*num_branches) branches) num_nodes where
 
     num_branches   = num_nodes - 1
 
@@ -134,7 +134,7 @@ tree_from_edges num_nodes edges = Tree nodesArray (listArray' branches) num_node
 
     find_branch b = listToMaybe [(s,t) | (b',(s,t)) <- branch_edges, b==b']
 
-    nodesArray = listArray' nodes where
+    nodesArray = listArray num_nodes nodes where
         nodes = [ [b | (b,(x,y)) <- branch_edges, x==n] | n <- [0..num_nodes-1]]
 
     branches = [ let Just (s,t) = find_branch b
