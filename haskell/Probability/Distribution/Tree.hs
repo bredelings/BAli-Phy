@@ -171,9 +171,11 @@ triggered_modifiable_rooted_tree = triggered_modifiable_structure modifiable_roo
 -- A uniform-ordered-history distribution would need to augment nodes with an Int order, instead of a Double order.
 
 -- node_height_tree: force / modifiable / triggered_modifiable
-force_time_tree nhtree@(NodeHeightTree rooted_tree heights) = force_rooted_tree rooted_tree `seq` force_struct heights
+force_time_tree (NodeHeightTree rooted_tree heights) = force_rooted_tree rooted_tree `seq` force_struct heights
 
 modifiable_time_tree modf (NodeHeightTree rooted_tree' heights') = NodeHeightTree rooted_tree heights where
     rooted_tree = modifiable_rooted_tree modf rooted_tree'
     heights     = arrayMap modf heights'
+
+triggered_modifiable_time_tree = triggered_modifiable_structure modifiable_time_tree force_time_tree
 
