@@ -60,6 +60,7 @@ numLeaves t = length $ leaf_nodes t
 
 root (RootedTree _ r _) = r
 root (LabelledTree t _) = root t
+root (NodeHeightTree t _) = root t
 
 remove_root (RootedTree t _ _) = t
 remove_root (LabelledTree t labels) = LabelledTree (remove_root t) labels

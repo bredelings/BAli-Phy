@@ -179,7 +179,9 @@ modifiable_time_tree modf (NodeHeightTree rooted_tree' heights') = NodeHeightTre
 
 triggered_modifiable_time_tree = triggered_modifiable_structure modifiable_time_tree force_time_tree
 
-uniform_time_tree_effect = do_nothing
+uniform_time_tree_effect tree = tree `seq` sequence_ [ add_move (\c -> slice_sample_real_random_variable (node_height!node) bnds c)
+                                                     | node <- [0..numNodes tree], nodes /= root tree
+                                                     ] where bnds = above 0.0
 
 uniform_time_tree age n = Distribution (uniform_time_tree_pr age n)
                                        (no_quantile "uniform_time_tree")
