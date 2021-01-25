@@ -8,8 +8,7 @@ n_leaves = 3
 allStrings = [ c : s | s <- "" : allStrings, c <- ['a','b','c','d','e','f','g','h','i','j'] ]
 
 model = sample $ do
-    tree <- sample_uniform_time_tree 1.0 n_leaves
---    tree <- uniform_time_tree 1.0 n_leaves
+    tree <- uniform_time_tree 1.0 n_leaves
     let ltree = add_labels tree (take n_leaves allStrings)
     let pr = uniform_time_tree_pr 1.0 n_leaves ltree
 
@@ -21,7 +20,7 @@ model = sample $ do
         xs <- independent [ normal (mu node) 1.0 | node <- nodes tree ]
   -- can we _observe_ from this? -- why or why not?
 
-    return ["tree" %=% write_newick ltree,"pr" %=% pr, "xs" %=% xs, "ps" %=% ps]
+    return ["tree" %=% write_newick tree] --,"pr" %=% pr, "xs" %=% xs, "ps" %=% ps]
 
 main = do
   mcmc model
