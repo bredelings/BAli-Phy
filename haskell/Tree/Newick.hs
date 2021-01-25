@@ -25,6 +25,10 @@ label_for_node (BranchLengthTree tree lengths) = (\node -> sublabel_for_node nod
     where sublabel_for_node = label_for_node tree
           branch_label (Just b) = ":" ++ show (lengths!b') where b' = min b (reverseEdge tree b)
           branch_label Nothing  = ""
+label_for_node nht@(NodeHeightTree tree _) = (\node -> sublabel_for_node node ++ branch_label (parentBranch tree node))
+    where sublabel_for_node = label_for_node tree
+          branch_label (Just b) = ":" ++ show (branch_length nht b)
+          branch_label Nothing  = ""
 
 write_newick tree@(Tree _ _ _ _) = write_newick (make_rooted tree)
 write_newick rt@(RootedTree tree root _) = write_newick_node rt (label_for_node rt)
@@ -35,6 +39,9 @@ write_newick blt@(BranchLengthTree (Tree _ _ _ _) _)                         = w
 write_newick blt@(BranchLengthTree (LabelledTree (Tree _ _ _ _) _) _)        = write_newick $ make_rooted blt
 write_newick blt@(BranchLengthTree rt@(RootedTree _ _ _) _)                  = write_newick_node rt (label_for_node blt)
 write_newick blt@(BranchLengthTree (LabelledTree rt@(RootedTree _ _ _) _) _) = write_newick_node rt (label_for_node blt)
+
+write_newick nht@(NodeHeightTree rt@(RootedTree _ _ _) _)                  = write_newick_node rt (label_for_node nht)
+write_newick nht@(NodeHeightTree (LabelledTree rt@(RootedTree _ _ _) _) _) = write_newick_node rt (label_for_node nht)
 
 write_newick_node (RootedTree tree root _) label_for_node = (write_branches_and_node tree (edgesOutOfNode tree root) root) ++ ";" where
 
