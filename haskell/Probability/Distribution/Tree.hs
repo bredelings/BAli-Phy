@@ -99,3 +99,11 @@ uniform_ordered_tree_edges leaves   (i : is) = do
     ([l1, l2], leaves') <- remove_n 2 leaves
     other_edges         <- uniform_ordered_tree_edges (i : leaves') is
     return $ [(l1, i), (l2, i)] ++ other_edges
+
+sample_uniform_ordered_tree n = do
+  let num_nodes = 2 * n - 1
+  edges <- uniform_ordered_tree_edges [0..n-1] [n..]
+  let sorted_edges     = sortOn fst edges
+  -- The number of edges should be 2*n-1, unchangably.
+  let Tree es ns nn nb = tree_from_edges num_nodes sorted_edges
+  return $ make_rooted (Tree es ns nn (nn - 1))
