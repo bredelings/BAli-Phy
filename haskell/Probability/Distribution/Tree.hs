@@ -166,6 +166,8 @@ modifiable_rooted_tree modf (RootedTree tree root_node _) = add_root (Tree (list
 
 -- our current modifiable tree structure requires the node to have a constrant degree.
 
+triggered_modifiable_rooted_tree = triggered_modifiable_structure modifiable_rooted_tree force_rooted_tree
+
 -- A uniform-ordered-history distribution would need to augment nodes with an Int order, instead of a Double order.
 
 -- node_height_tree: force / modifiable / triggered_modifiable
