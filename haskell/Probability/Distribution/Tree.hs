@@ -122,3 +122,14 @@ sample_uniform_time_tree age n = do
   heights <- sort <$> iid (n-2) (uniform 0.0 age)
   let all_heights = replicate n 0.0 ++ heights ++ [age]
   return $ node_height_tree topology all_heights
+
+possible = doubleToLogDouble 1.0
+impossible = doubleToLogDouble 0.0
+require p = if p then possible else impossible
+
+uniform_time_tree_pr age n_leaves tree = factor0 : [factor n | n <- [0 .. 2*n_leaves-2] ]
+    where factor0 = doubleToLogDouble age ** intToDouble (2-n_leaves)
+          height = node_height tree
+          factor n = case parentNode tree n of Nothing -> possible
+                                               Just b  -> require $ height n <= height p
+                                                   where p = targetNode tree b
