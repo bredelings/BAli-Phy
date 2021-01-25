@@ -114,9 +114,12 @@ run_strict' rate (Lazy r) = run_lazy' rate r
 --       SOMETHING `seq` result.  And this means that we need to frequently
 --       intersperse unsafeInterleaveIO to avoid `seq`-ing on previous statements.
 
-modifiable_structure value effect = let x = modifiable value
-                                        triggered_x = effect `seq` x
-                                    in (x, triggered_x)
+triggered_modifiable_structure mod_structure force_structure value effect = (raw_x, triggered_x)
+    where raw_x       = mod_structure modifiable value
+          effect'     = force_structure raw_x `seq` effect
+          triggered_x = mod_structure (effect' `seq`) raw_x
+
+modifiable_structure = triggered_modifiable_structure ($) id
 
 run_lazy' rate (LiftIO a) = a
 run_lazy' rate (IOAndPass f g) = do
