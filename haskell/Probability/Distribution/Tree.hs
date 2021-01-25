@@ -95,7 +95,6 @@ uniform_labelled_topology taxa = do
 -- choose 2 leaves, connect them to an internal node, and put that internal node on the list of leaves
 -- This is I think gives more weight to more balanced trees?
 uniform_ordered_tree_edges [l1]     _        = return []
-uniform_ordered_tree_edges [l1, l2] _        = return [(l1, l2)]
 uniform_ordered_tree_edges leaves   (i : is) = do
     ([l1, l2], leaves') <- remove_n 2 leaves
     other_edges         <- uniform_ordered_tree_edges (i : leaves') is
