@@ -93,7 +93,7 @@ uniform_topology n = Distribution (\tree -> [uniform_topology_pr n])
 
 uniform_labelled_topology taxa = do
   topology <- uniform_topology (length taxa)
-  return $ add_labels topology taxa
+  return $ add_labels taxa topology
 
 ----
 -- choose 2 leaves, connect them to an internal node, and put that internal node on the list of leaves

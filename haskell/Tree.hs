@@ -71,11 +71,11 @@ get_labels (LabelledTree _ labels) = labels
 get_labels (BranchLengthTree t _)  = get_labels t
 get_labels (NodeHeightTree t _)    = get_labels t
 
-add_labels t@(Tree _ _ _)      labels   = LabelledTree t labels
-add_labels rt@(RootedTree _ _ _) labels   = LabelledTree rt labels
-add_labels (LabelledTree _ _)    labels   = error "add_labels: trying to add labels to an already-labelled tree!"
-add_labels (BranchLengthTree t ds) labels = BranchLengthTree (add_labels t labels) ds
-add_labels (NodeHeightTree t hs) labels   = NodeHeightTree (add_labels t labels) hs
+add_labels labels t@(Tree _ _ _)          = LabelledTree t labels
+add_labels labels rt@(RootedTree _ _ _)   = LabelledTree rt labels
+add_labels labels (LabelledTree _ _)      = error "add_labels: trying to add labels to an already-labelled tree!"
+add_labels labels (BranchLengthTree t ds) = BranchLengthTree (add_labels labels t) ds
+add_labels labels (NodeHeightTree t hs)   = NodeHeightTree (add_labels labels t) hs
 
 add_root (LabelledTree t labels) r = LabelledTree (add_root t r) labels
 add_root (BranchLengthTree t ds) r = BranchLengthTree (add_root t r) ds
