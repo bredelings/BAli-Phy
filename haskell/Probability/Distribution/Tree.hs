@@ -57,9 +57,10 @@ force_tree tree@(Tree nodes branches n_nodes) = force_nodes `seq` force_branches
 -- 2        2      1
 -- 3        4      3
 -- 4        6      5
-modifiable_cayley_tree n_leaves modf tree = Tree (listArray' nodes) (listArray' branches) n_nodes where
-    n_nodes | n_leaves == 1  = 1
-            | otherwise      = 2*n_leaves - 2
+modifiable_cayley_tree modf tree = Tree (listArray' nodes) (listArray' branches) n_nodes where
+    n_nodes = numNodes tree
+    n_leaves | n_nodes == 1  = 1
+             | otherwise     = (n_nodes+2) `div` 2
     n_branches = n_nodes - 1
     degree node | n_leaves == 1   = 0
                 | node < n_leaves = 1
@@ -79,16 +80,16 @@ uniform_topology_pr n = uniform_topology_pr (n - 1) / (doubleToLogDouble $ intTo
 
 -- We don't want to force all fields of the tree when _any_ tree field is accessed, only when a _random_ field is accessed.
 -- This is why triggered tree still uses 'tree' as input to 'modifiable_tree'.
-triggered_modifiable_tree n value effect = (raw_tree, triggered_tree) where
-    raw_tree       = modifiable_cayley_tree n modifiable value
+triggered_modifiable_tree value effect = (raw_tree, triggered_tree) where
+    raw_tree       = modifiable_cayley_tree modifiable value
     effect'        = force_tree raw_tree `seq` effect
-    triggered_tree = modifiable_cayley_tree n (effect' `seq`) raw_tree
+    triggered_tree = modifiable_cayley_tree (effect' `seq`) raw_tree
 
 uniform_topology_effect tree = tree `seq` add_move (walk_tree_sample_nni_unsafe tree)
 
 uniform_topology n = Distribution (\tree -> [uniform_topology_pr n])
                                   (no_quantile "uniform_topology")
-                                  (RandomStructure uniform_topology_effect (triggered_modifiable_tree n) (sample_uniform_topology n))
+                                  (RandomStructure uniform_topology_effect triggered_modifiable_tree (sample_uniform_topology n))
                                   (TreeRange n)
 
 uniform_labelled_topology taxa = do
@@ -179,7 +180,7 @@ modifiable_time_tree modf (TimeTree rooted_tree' times') = TimeTree rooted_tree 
 
 triggered_modifiable_time_tree = triggered_modifiable_structure modifiable_time_tree force_time_tree
 
-uniform_time_tree_effect tree = tree `seq` sequence_ [ add_move (\c -> slice_sample_real_random_variable (node_time!node) bnds c)
+uniform_time_tree_effect tree = tree `seq` sequence_ [ add_move $ slice_sample_real_random_variable (node_time!node) bnds
                                                      | node <- [0..numNodes tree], nodes /= root tree
                                                      ] where bnds = above 0.0
 
