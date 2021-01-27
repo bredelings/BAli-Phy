@@ -122,9 +122,9 @@ sample_uniform_ordered_tree n = do
 
 sample_uniform_time_tree age n = do
   topology <- sample_uniform_ordered_tree n
-  heights <- sort <$> iid (n-2) (uniform 0.0 age)
-  let all_heights = replicate n 0.0 ++ heights ++ [age]
-  return $ node_height_tree topology all_heights
+  times <- sort <$> iid (n-2) (uniform 0.0 age)
+  let all_times = replicate n 0.0 ++ times ++ [age]
+  return $ time_tree topology all_times
 
 possible = doubleToLogDouble 1.0
 impossible = doubleToLogDouble 0.0
@@ -132,9 +132,9 @@ require p = if p then possible else impossible
 
 uniform_time_tree_pr age n_leaves tree = factor0 : [factor n | n <- [0 .. 2*n_leaves-2] ]
     where factor0 = doubleToLogDouble age ** intToDouble (2-n_leaves)
-          height = node_height tree
+          time = node_time tree
           factor n = case parentNode tree n of Nothing -> possible
-                                               Just b  -> require $ height n <= height p
+                                               Just b  -> require $ time n <= time p
                                                    where p = targetNode tree b
 
 -- rooted_tree: force / modifiable / triggered_modifiable
@@ -170,16 +170,16 @@ triggered_modifiable_rooted_tree = triggered_modifiable_structure modifiable_roo
 
 -- A uniform-ordered-history distribution would need to augment nodes with an Int order, instead of a Double order.
 
--- node_height_tree: force / modifiable / triggered_modifiable
-force_time_tree (NodeHeightTree rooted_tree heights) = force_rooted_tree rooted_tree `seq` force_struct heights
+-- time_tree: force / modifiable / triggered_modifiable
+force_time_tree (TimeTree rooted_tree times) = force_rooted_tree rooted_tree `seq` force_struct times
 
-modifiable_time_tree modf (NodeHeightTree rooted_tree' heights') = NodeHeightTree rooted_tree heights where
+modifiable_time_tree modf (TimeTree rooted_tree' times') = TimeTree rooted_tree times where
     rooted_tree = modifiable_rooted_tree modf rooted_tree'
-    heights     = arrayMap modf heights'
+    times     = arrayMap modf times'
 
 triggered_modifiable_time_tree = triggered_modifiable_structure modifiable_time_tree force_time_tree
 
-uniform_time_tree_effect tree = tree `seq` sequence_ [ add_move (\c -> slice_sample_real_random_variable (node_height!node) bnds c)
+uniform_time_tree_effect tree = tree `seq` sequence_ [ add_move (\c -> slice_sample_real_random_variable (node_time!node) bnds c)
                                                      | node <- [0..numNodes tree], nodes /= root tree
                                                      ] where bnds = above 0.0
 
