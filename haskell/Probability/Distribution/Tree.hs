@@ -80,10 +80,7 @@ uniform_topology_pr n = uniform_topology_pr (n - 1) / (doubleToLogDouble $ intTo
 
 -- We don't want to force all fields of the tree when _any_ tree field is accessed, only when a _random_ field is accessed.
 -- This is why triggered tree still uses 'tree' as input to 'modifiable_tree'.
-triggered_modifiable_tree value effect = (raw_tree, triggered_tree) where
-    raw_tree       = modifiable_cayley_tree modifiable value
-    effect'        = force_tree raw_tree `seq` effect
-    triggered_tree = modifiable_cayley_tree (effect' `seq`) raw_tree
+triggered_modifiable_tree = triggered_modifiable_structure modifiable_cayley_tree force_tree
 
 uniform_topology_effect tree = tree `seq` add_move (walk_tree_sample_nni_unsafe tree)
 
