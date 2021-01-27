@@ -5,7 +5,7 @@ import           Tree.Newick
 
 model = sample $ do
     tree <- uniform_topology 5
-    let rtree = add_root tree 0
+    let rtree = add_root 0 tree
 
     let ps    = map (show . parentNode rtree) [0 .. 5]
 

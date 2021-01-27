@@ -48,7 +48,7 @@ substitution_likelihood t root seqs as alpha ps f smap = let cl = cached_conditi
                                                          in peel_likelihood t cl as f root
 
 sample_ancestral_sequences t root seqs as alpha ps f cl smap =
-    let rt = add_root t root
+    let rt = add_root root t
         ancestor_seqs = mkArray (numNodes t) ancestor_for_node
         ancestor_for_node n = ancestor_for_branch n (parentBranch rt n)
         ancestor_for_branch n Nothing = sample_root_sequence (cl!b0) (cl!b1) (cl!b2) (as!b0) (as!b1) (as!b2) f where [b0,b1,b2] = edgesTowardNode t n
@@ -88,7 +88,7 @@ peel_likelihood_SEV t cl f root counts = let branches_in = map (reverseEdge t) (
                                          case branches_in of [b1,b2,b3]-> calc_root_probability_SEV (cl!b1) (cl!b2) (cl!b3) f counts
 
 sample_ancestral_sequences_SEV t root seqs alpha ps f cl smap col_to_compressed =
-    let rt = add_root t root
+    let rt = add_root root t
         ancestor_seqs = mkArray (numNodes t) ancestor_for_node
         ancestor_for_node n = ancestor_for_branch n (parentBranch rt n)
         ancestor_for_branch n Nothing = sample_root_sequence_SEV (cl!b0) (cl!b1) (cl!b2) f col_to_compressed where [b0,b1,b2] = edgesTowardNode t n

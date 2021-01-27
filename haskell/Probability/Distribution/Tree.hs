@@ -118,7 +118,7 @@ sample_uniform_ordered_tree n = do
   let sorted_edges     = sortOn fst edges
   -- The number of edges should be 2*n-1, unchangably.
   let utree = tree_from_edges num_nodes sorted_edges
-  return $ add_root utree (num_nodes - 1)
+  return $ add_root (num_nodes - 1) utree
 
 sample_uniform_time_tree age n = do
   topology <- sample_uniform_ordered_tree n
@@ -145,7 +145,7 @@ force_rooted_tree rtree@(RootedTree unrooted_tree root_node _) = root_node `seq`
 -- 2        3      2
 -- 3        5      4
 -- 4        7      6
-modifiable_rooted_tree modf (RootedTree tree root_node _) = add_root (Tree (listArray' nodes) (listArray' branches) n_nodes) root_node where
+modifiable_rooted_tree modf (RootedTree tree root_node _) = add_root root_node $ Tree (listArray' nodes) (listArray' branches) n_nodes where
     n_nodes = numNodes tree
     n_leaves = (n_nodes + 1) `div` 2
     n_nodes = 2*n_leaves - 1

@@ -77,14 +77,14 @@ add_labels labels (LabelledTree _ _)      = error "add_labels: trying to add lab
 add_labels labels (BranchLengthTree t ds) = BranchLengthTree (add_labels labels t) ds
 add_labels labels (NodeHeightTree t hs)   = NodeHeightTree (add_labels labels t) hs
 
-add_root (LabelledTree t labels) r = LabelledTree (add_root t r) labels
-add_root (BranchLengthTree t ds) r = BranchLengthTree (add_root t r) ds
-add_root t r = rt
+add_root r (LabelledTree t labels) = LabelledTree (add_root r t) labels
+add_root r (BranchLengthTree t ds) = BranchLengthTree (add_root r t) ds
+add_root r t = rt
     where check_away_from_root b = (sourceNode rt b == root rt) || (or $ map (away_from_root rt) (edgesBeforeEdge rt b))
           nb = numBranches t * 2
           rt = RootedTree t r (mkArray nb check_away_from_root)
 
-make_rooted tree = add_root tree (numNodes tree - 1)
+make_rooted tree = add_root (numNodes tree - 1) tree
 
 away_from_root (RootedTree t r arr    ) b = arr!b
 away_from_root (LabelledTree t _      ) b = away_from_root t b
