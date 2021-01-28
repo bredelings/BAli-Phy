@@ -11,7 +11,7 @@ smodel_prior = do
     kappa1 <- log_normal 0.0 1.0
     kappa2 <- log_normal 0.0 1.0
 
-    let tn93_model = tn93 dna kappa1 kappa2 (frequencies_from_dict dna freqs)
+    let tn93_model = tn93' dna kappa1 kappa2 freqs
     let loggers    = ["kappa1" %=% kappa1, "kappa2" %=% kappa2, "frequencies" %=% freqs]
 
     return (tn93_model, loggers)
