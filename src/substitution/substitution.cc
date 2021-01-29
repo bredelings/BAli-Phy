@@ -1185,7 +1185,7 @@ namespace substitution {
                 for(int j=0; j<matrix_size; j++)
                     R[j] *= scale_factor;
             }
-            LCB3->scale(i2) = scale;
+            LCB3->scale(i3) = scale;
 
             if (nongap1) i1++;
             if (nongap2) i2++;
