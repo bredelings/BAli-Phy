@@ -146,7 +146,6 @@ force_rooted_tree rtree@(RootedTree unrooted_tree root_node _) = root_node `seq`
 modifiable_rooted_tree modf (RootedTree tree root_node _) = add_root root_node $ Tree (listArray' nodes) (listArray' branches) n_nodes where
     n_nodes = numNodes tree
     n_leaves = (n_nodes + 1) `div` 2
-    n_nodes = 2*n_leaves - 1
     n_branches = n_nodes - 1
 
     degree node | n_leaves == 1      = 0
