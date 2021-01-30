@@ -20,13 +20,17 @@ builtin sample_leaf_sequence 7 "sample_leaf_node_sequence" "SModel"
 builtin bitmask_from_alignment 2 "bitmask_from_alignment" "Alignment"
 builtin peel_leaf_branch_SEV 5 "peel_leaf_branch_SEV" "SModel"
 builtin peel_internal_branch_SEV 4 "peel_internal_branch_SEV" "SModel"
+builtin peel_deg2_branch_SEV 3 "peel_deg2_branch_SEV" "SModel"
 builtin calc_root_probability_SEV 5 "calc_root_probability_SEV" "SModel"
+builtin calc_root_deg2_probability_SEV 4 "calc_root_deg2_probability_SEV" "SModel"
 builtin peel_likelihood_2_SEV 5 "peel_likelihood_2_SEV" "SModel"
 builtin peel_likelihood_1_SEV 4 "peel_likelihood_1_SEV" "SModel"
 
 -- ancestral sequence sampling for SEV
 builtin sample_root_sequence_SEV 5 "sample_root_sequence_SEV" "SModel"
+builtin sample_root_deg2_sequence_SEV 4 "sample_root_deg2_sequence_SEV" "SModel"
 builtin sample_internal_sequence_SEV 5 "sample_internal_node_sequence_SEV" "SModel"
+builtin sample_deg2_sequence_SEV 4 "sample_deg2_node_sequence_SEV" "SModel"
 builtin sample_leaf_sequence_SEV 7 "sample_leaf_node_sequence_SEV" "SModel"
 
 
@@ -81,17 +85,20 @@ cached_conditional_likelihoods_SEV t seqs alpha ps f a smap =
     let lc    = mkArray (2*numBranches t) lcf
         lcf b = let bb = b `mod` (numBranches t) in
                 case edgesBeforeEdge t b of []      -> peel_leaf_branch_SEV (seqs!sourceNode t b) alpha (ps!bb) (bitmask_from_alignment a $ sourceNode t b) smap
+                                            [b1]    -> peel_deg2_branch_SEV (lc!b1) (ps!bb) f
                                             [b1,b2] -> peel_internal_branch_SEV (lc!b1) (lc!b2) (ps!bb) f
     in lc
 
 peel_likelihood_SEV t cl f root counts = let branches_in = map (reverseEdge t) (edgesOutOfNode t root) in
                                          case branches_in of [b1,b2,b3]-> calc_root_probability_SEV (cl!b1) (cl!b2) (cl!b3) f counts
+                                                             [b1,b2] -> calc_root_deg2_probability_SEV (cl!b1) (cl!b2) f counts
 
 sample_ancestral_sequences_SEV t root seqs alpha ps f cl smap col_to_compressed =
     let rt = add_root root t
         ancestor_seqs = mkArray (numNodes t) ancestor_for_node
         ancestor_for_node n = ancestor_for_branch n (parentBranch rt n)
-        ancestor_for_branch n Nothing = sample_root_sequence_SEV (cl!b0) (cl!b1) (cl!b2) f col_to_compressed where [b0,b1,b2] = edgesTowardNode t n
+        ancestor_for_branch n Nothing = case edgesTowardNode t n of [b0,b1,b2] -> sample_root_sequence_SEV (cl!b0) (cl!b1) (cl!b2) f col_to_compressed
+                                                                    [b0,b1]    -> sample_root_sequence_SEV (cl!b0) (cl!b1) f col_to_compressed
         ancestor_for_branch n (Just to_p) = let p = targetNode t to_p
                                                 parent_seq = ancestor_seqs!p
                                                 b0 = reverseEdge t to_p
@@ -105,6 +112,11 @@ sample_ancestral_sequences_SEV t root seqs alpha ps f cl smap col_to_compressed 
                                                           alpha
                                                           smap
                                                           col_to_compressed
+                                                 [b1] -> sample_internal_sequence_SEV
+                                                               parent_seq
+                                                               ps_for_b0
+                                                               (cl!b1)
+                                                               col_to_compressed
                                                  [b1,b2] -> sample_internal_sequence_SEV
                                                                parent_seq
                                                                ps_for_b0
