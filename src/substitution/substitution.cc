@@ -646,6 +646,7 @@ namespace substitution {
     }
 
 
+    // Generalize to degree n>=1?
     log_double_t calc_root_deg2_probability_SEV(const Likelihood_Cache_Branch* LCB1,
                                                 const Likelihood_Cache_Branch* LCB2,
                                                 const Matrix& F,
@@ -1306,6 +1307,7 @@ namespace substitution {
         return LCB3;
     }
 
+    // Generalize to degree n>=1?
     Likelihood_Cache_Branch*
     peel_deg2_branch_SEV(const Likelihood_Cache_Branch* LCB1,
                          const EVector& transition_P,
