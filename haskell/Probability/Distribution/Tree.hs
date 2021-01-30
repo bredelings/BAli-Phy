@@ -176,9 +176,9 @@ modifiable_time_tree modf (TimeTree rooted_tree' times') = TimeTree rooted_tree 
 
 triggered_modifiable_time_tree = triggered_modifiable_structure modifiable_time_tree force_time_tree
 
-uniform_time_tree_effect tree = tree `seq` sequence_ [ add_move $ slice_sample_real_random_variable (node_time!node) bnds
-                                                     | node <- [0..numNodes tree], nodes /= root tree
-                                                     ] where bnds = above 0.0
+uniform_time_tree_effect tree = tree `seq` sequence_ [ bnds `seq` t `seq` add_move $ slice_sample_real_random_variable t bnds
+                                                     | node <- [0..numNodes tree - 1], nodes /= root tree, let t = node_time tree node
+                                                     ] where bnds = c_range $ above 0.0
 
 uniform_time_tree age n = Distribution (uniform_time_tree_pr age n)
                                        (no_quantile "uniform_time_tree")
