@@ -638,7 +638,7 @@ namespace substitution {
         log_double_t Pr = total;
         if (std::isnan(Pr.log()))
         {
-            std::cerr<<"calc_root_deg2_probability_SEV: probability is NaN!";
+            std::cerr<<"calc_root_probability_SEV: probability is NaN!";
             return log_double_t(0.0);
         }
         Pr.log() += log_scale_min * scale;
