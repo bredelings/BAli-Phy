@@ -1841,6 +1841,46 @@ namespace substitution {
         return ancestral_characters;
     }
 
+    // Generalize to degree n>=1?
+    Vector<pair<int,int>> sample_root_deg2_sequence_SEV(const Likelihood_Cache_Branch& cache1,
+                                                        const Likelihood_Cache_Branch& cache2,
+                                                        const Matrix& F,
+                                                        const EVector& compressed_col_for_col)
+    {
+        // 1. Construct a scratch CL matrix, and check that dimensions match inputs
+        int n_models = F.size1();
+        int n_states = F.size2();
+        assert(n_models == cache1.n_models());
+        assert(n_states == cache1.n_states());
+        assert(n_models == cache2.n_models());
+        assert(n_states == cache2.n_states());
+        Matrix S(n_models, n_states);
+        const int matrix_size = n_models * n_states;
+
+        // 2. Map each compressed column to an SEV index (or missing).
+        auto allbits = cache1.bits | cache2.bits;
+
+        auto index_for_column1 = get_index_for_column(cache1.bits);
+        auto index_for_column2 = get_index_for_column(cache2.bits);
+
+        // 3. Walk the alignment and sample (model,letter) for ancestral sequence
+        int L = compressed_col_for_col.size();
+        Vector<pair<int,int>> ancestral_characters(L,{-1,-1});
+        for(int c = 0; c < L; c++)
+        {
+            int c2 = compressed_col_for_col[c].as_int();
+            if (not allbits.test(c2)) continue;
+            S = F;
+            if (auto i1 = index_for_column1[c2])
+                element_prod_modify(S.begin(), cache1[*i1], matrix_size);
+            if (auto i2 = index_for_column2[c2])
+                element_prod_modify(S.begin(), cache2[*i2], matrix_size);
+
+            ancestral_characters[c] = sample( S );
+        }
+        return ancestral_characters;
+    }
+
     Vector<pair<int,int>> sample_internal_node_sequence(const Vector<pair<int,int>>& parent_seq,
                                                         const EVector& transition_Ps,
                                                         const Likelihood_Cache_Branch& cache1,
@@ -1939,7 +1979,42 @@ namespace substitution {
         return ancestral_characters;
     }
 
-    
+
+    // Generalize to degree n>=1?
+    Vector<pair<int,int>> sample_deg2_node_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
+                                                        const EVector& transition_Ps,
+                                                        const Likelihood_Cache_Branch& cache,
+                                                        const EVector& compressed_col_for_col)
+    {
+        // 1. Construct a scratch matrix and check that dimensions match inputs
+        const int n_models  = transition_Ps.size();
+        const int n_states  = transition_Ps[0].as_<Box<Matrix>>().size1();
+        assert(n_models == cache.n_models());
+        assert(n_states == cache.n_states());
+        Matrix S(n_models, n_states);
+        const int matrix_size = n_models * n_states;
+
+        auto index_for_column = get_index_for_column(cache.bits);
+
+        // 3. Walk the alignment and sample (model,letter) for ancestral sequence
+        int L = compressed_col_for_col.size();
+        Vector<pair<int,int>> ancestral_characters(L,{-1,-1});
+        for(int c = 0; c < L; c++)
+        {
+            int c2 = compressed_col_for_col[c].as_int();
+            if (not cache.bits.test(c2)) continue;
+
+            calc_transition_prob_from_parent(S, parent_seq[c], transition_Ps);
+
+            if (auto i = index_for_column[c2])
+                element_prod_modify(S.begin(), cache[*i], matrix_size);
+
+            ancestral_characters[c] = sample(S);
+        }
+        return ancestral_characters;
+    }
+
+
     Vector<pair<int,int>> sample_leaf_node_sequence(const Vector<pair<int,int>>& parent_seq,
                                                     const EVector& transition_Ps,
                                                     const EVector& sequence,
