@@ -1417,6 +1417,11 @@ namespace substitution {
 			     const Likelihood_Cache_Branch* LCB2,
 			     const EVector& transition_P,
 			     const Matrix& F);
+
+    Likelihood_Cache_Branch*
+    peel_deg2_branch_SEV(const Likelihood_Cache_Branch* LCB1,
+                         const EVector& transition_P,
+                         const Matrix& /*F*/);
 }
 
 extern "C" closure builtin_function_alignment_index2(OperationArgs& Args)
@@ -1466,6 +1471,17 @@ extern "C" closure builtin_function_peel_internal_branch_SEV(OperationArgs& Args
 						  arg3.as_<Box<Matrix>>());
 }
 
+extern "C" closure builtin_function_peel_deg2_branch_SEV(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+
+    return substitution::peel_deg2_branch_SEV(&arg0.as_<Likelihood_Cache_Branch>(),
+                                              arg1.as_<EVector>(),
+                                              arg2.as_<Box<Matrix>>());
+}
+
 namespace substitution {
     Vector<pair<int,int>> sample_root_sequence(const Likelihood_Cache_Branch& cache0,
                                                const Likelihood_Cache_Branch& cache1,
@@ -1474,6 +1490,11 @@ namespace substitution {
                                                const pairwise_alignment_t& A1,
                                                const pairwise_alignment_t& A2,
                                                const Matrix& F);
+
+    Vector<pair<int,int>> sample_root_deg2_sequence_SEV(const Likelihood_Cache_Branch& cache1,
+                                                        const Likelihood_Cache_Branch& cache2,
+                                                        const Matrix& F,
+                                                        const EVector& compressed_col_for_col);
 
     Vector<pair<int,int>> sample_internal_node_sequence(const Vector<pair<int,int>>& parent_seq,
                                                         const EVector& transition_Ps,
@@ -1504,6 +1525,11 @@ namespace substitution {
                                                             const Likelihood_Cache_Branch& cache2,
                                                             const EVector& compressed_col_for_col);
 
+    Vector<pair<int,int>> sample_deg2_node_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
+                                                        const EVector& transition_Ps,
+                                                        const Likelihood_Cache_Branch& cache,
+                                                        const EVector& compressed_col_for_col);
+
     Vector<pair<int,int>> sample_leaf_node_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
                                                         const EVector& transition_Ps,
                                                         const EVector& sequence,
@@ -1525,6 +1551,11 @@ namespace substitution {
 					   const Likelihood_Cache_Branch* LCB3,
 					   const Matrix& F,
 					   const EVector& counts);
+
+    log_double_t calc_root_deg2_probability_SEV(const Likelihood_Cache_Branch* LCB1,
+                                                const Likelihood_Cache_Branch* LCB2,
+                                                const Matrix& F,
+                                                const EVector& counts);
 }
 
 extern "C" closure builtin_function_calc_root_probability(OperationArgs& Args)
@@ -1581,6 +1612,19 @@ extern "C" closure builtin_function_sample_root_sequence_SEV(OperationArgs& Args
                                                   arg4.as_<EVector>());
 }
 
+extern "C" closure builtin_function_sample_root_deg2_sequence_SEV(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+
+    return substitution::sample_root_deg2_sequence_SEV(arg0.as_<Likelihood_Cache_Branch>(),
+                                                       arg1.as_<Likelihood_Cache_Branch>(),
+                                                       arg2.as_<Box<Matrix>>(),
+                                                       arg3.as_<EVector>());
+}
+
 extern "C" closure builtin_function_sample_internal_node_sequence(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
@@ -1615,6 +1659,19 @@ extern "C" closure builtin_function_sample_internal_node_sequence_SEV(OperationA
                                                            arg2.as_<Likelihood_Cache_Branch>(),
                                                            arg3.as_<Likelihood_Cache_Branch>(),
                                                            arg4.as_<EVector>());
+}
+
+extern "C" closure builtin_function_sample_deg2_node_sequence_SEV(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+
+    return substitution::sample_deg2_node_sequence_SEV(arg0.as_<Vector<pair<int,int>>>(),
+                                                       arg1.as_<EVector>(),
+                                                       arg2.as_<Likelihood_Cache_Branch>(),
+                                                       arg3.as_<EVector>());
 }
 
 extern "C" closure builtin_function_sample_leaf_node_sequence(OperationArgs& Args)
@@ -1668,6 +1725,20 @@ extern "C" closure builtin_function_calc_root_probability_SEV(OperationArgs& Arg
 							      &arg2.as_<Likelihood_Cache_Branch>(),
 							      arg3.as_<Box<Matrix>>(),
 							      arg4.as_<EVector>());
+    return {Pr};
+}
+
+extern "C" closure builtin_function_calc_root_deg2_probability_SEV(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+
+    log_double_t Pr = substitution::calc_root_deg2_probability_SEV(&arg0.as_<Likelihood_Cache_Branch>(),
+                                                                   &arg1.as_<Likelihood_Cache_Branch>(),
+                                                                   arg2.as_<Box<Matrix>>(),
+                                                                   arg3.as_<EVector>());
     return {Pr};
 }
 
