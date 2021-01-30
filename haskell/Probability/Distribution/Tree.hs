@@ -132,8 +132,7 @@ uniform_time_tree_pr age n_leaves tree = factor0 : [factor n | n <- [0 .. 2*n_le
     where factor0 = doubleToLogDouble age ** intToDouble (2-n_leaves)
           time = node_time tree
           factor n = case parentNode tree n of Nothing -> possible
-                                               Just b  -> require $ time n <= time p
-                                                   where p = targetNode tree b
+                                               Just p  -> require $ time n <= time p
 
 -- rooted_tree: force / modifiable / triggered_modifiable
 force_rooted_tree rtree@(RootedTree unrooted_tree root_node _) = root_node `seq` force_tree unrooted_tree
