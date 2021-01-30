@@ -19,10 +19,12 @@ builtin builtin_inc_dec_mh 4 "inc_dec_mh" "MCMC"
 inc_dec_mh x bnds c = IOAction (pair_from_c . builtin_inc_dec_mh x bnds c)
 
 builtin builtin_slice_sample_real_random_variable 4 "slice_sample_real_random_variable" "MCMC"
-slice_sample_real_random_variable x bnds c = IOAction (pair_from_c . builtin_slice_sample_real_random_variable x bnds c)
+slice_sample_real_random_variable x bnds = x `seq` c_bnds `seq` (\c -> IOAction (pair_from_c . builtin_slice_sample_real_random_variable x c_bnds c))
+    where c_bnds = c_range $ bnds
 
 builtin builtin_slice_sample_integer_random_variable 4 "slice_sample_integer_random_variable" "MCMC"
-slice_sample_integer_random_variable x bnds c = IOAction (pair_from_c . builtin_slice_sample_integer_random_variable x bnds c)
+slice_sample_integer_random_variable x bnds = x `seq` c_bnds `seq` (\c -> IOAction (pair_from_c . builtin_slice_sample_integer_random_variable x c_bnds c))
+    where c_bnds = c_range $ bnds
 
 builtin builtin_walk_tree_path 2 "walk_tree_path" "MCMC"
 walk_tree_path tree c = vector_to_list $ builtin_walk_tree_path tree c
