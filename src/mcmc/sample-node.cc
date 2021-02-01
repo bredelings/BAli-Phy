@@ -117,18 +117,29 @@ shared_ptr<DParrayConstrained> sample_node_base(mutable_data_partition P,const v
     if (Matrices->Pr_sum_all_paths() <= 0.0)
     {
 	std::cerr<<"sample_node_base( ): All paths have probability 0!"<<std::endl;
-	return Matrices;
+
+        // Computing likelihoods when pairwise alignments disagree about internal sequence
+        // lengths can yield memory access errors.
+        for(int i=0;i<3;i++)
+        {
+            int b = P.t().find_branch(nodes[0],nodes[i+1]);
+            P.unset_pairwise_alignment(b);
+        }
     }
+    else
+    {
 
-    vector<int> path_g = Matrices->sample_path();
-    vector<int> path = Matrices->ungeneralize(path_g);
+        vector<int> path_g = Matrices->sample_path();
+        vector<int> path = Matrices->ungeneralize(path_g);
 
-    for(int i=0;i<3;i++) {
-	int b = P.t().find_branch(nodes[0],nodes[i+1]);
-	P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i));
+        for(int i=0;i<3;i++)
+        {
+            int b = P.t().find_branch(nodes[0],nodes[i+1]);
+            P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i));
+        }
+
+        assert(valid(P.A()));
     }
-
-    assert(valid(P.A()));
 
     return Matrices;
 }
@@ -163,7 +174,15 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     for(int i=0;i<p.size();i++) {
 	for(int j=0;j<p[i].n_data_partitions();j++) 
 	    if (p[i][j].variable_alignment())
+            {
 		Matrices[i].push_back( sample_node_base(p[i][j],nodes[i]) );
+		if (Matrices[i].back()->Pr_sum_all_paths() <= 0.0)
+                {
+		    std::cerr<<"Pr = 0   i = "<<i<<"   j="<<j<<" \n";
+                    // Avoid calculating likelihoods and priors if the alignment is unset.
+                    return -1;
+                }
+            }
 	    else
 		Matrices[i].push_back( shared_ptr<DParrayConstrained>() );
     }
