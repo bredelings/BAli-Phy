@@ -96,17 +96,7 @@ sample_two_nodes_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a1
 
     Matrices->forward();
 
-    // If the DP matrix ended up having probability 0, don't try to sample a path through it!
-    if (Matrices->Pr_sum_all_paths() <= 0.0) 
-    {
-	std::cerr<<"sample_two_nodes_base( ): All paths have probability 0!"<<std::endl;
-	return Matrices;
-    }
-
     //------------- Sample a path from the matrix -------------------//
-
-    vector<int> path_g = Matrices->sample_path();
-    vector<int> path = Matrices->ungeneralize(path_g);
 
     const auto& nodes = order.nodes;
 
@@ -115,11 +105,31 @@ sample_two_nodes_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a1
     int b25 = P.t().find_branch(nodes[2],nodes[5]);
     int b35 = P.t().find_branch(nodes[3],nodes[5]);
     int b45 = P.t().find_branch(nodes[4],nodes[5]);
-    P.set_pairwise_alignment(b04, get_pairwise_alignment_from_path(path, *Matrices, 0, 4));
-    P.set_pairwise_alignment(b14, get_pairwise_alignment_from_path(path, *Matrices, 1, 4));
-    P.set_pairwise_alignment(b25, get_pairwise_alignment_from_path(path, *Matrices, 2, 5));
-    P.set_pairwise_alignment(b35, get_pairwise_alignment_from_path(path, *Matrices, 3, 5));
-    P.set_pairwise_alignment(b45, get_pairwise_alignment_from_path(path, *Matrices, 4, 5));
+
+    // If the DP matrix ended up having probability 0, don't try to sample a path through it!
+    if (Matrices->Pr_sum_all_paths() <= 0.0) 
+    {
+	std::cerr<<"sample_two_nodes_base( ): All paths have probability 0!"<<std::endl;
+
+        // Compute likelihood when pairwise alignments disagree about internal sequence length
+        // we can get memory access errors.
+        P.unset_pairwise_alignment(b04);
+        P.unset_pairwise_alignment(b14);
+        P.unset_pairwise_alignment(b25);
+        P.unset_pairwise_alignment(b35);
+        P.unset_pairwise_alignment(b45);
+    }
+    else
+    {
+        vector<int> path_g = Matrices->sample_path();
+        vector<int> path = Matrices->ungeneralize(path_g);
+
+        P.set_pairwise_alignment(b04, get_pairwise_alignment_from_path(path, *Matrices, 0, 4));
+        P.set_pairwise_alignment(b14, get_pairwise_alignment_from_path(path, *Matrices, 1, 4));
+        P.set_pairwise_alignment(b25, get_pairwise_alignment_from_path(path, *Matrices, 2, 5));
+        P.set_pairwise_alignment(b35, get_pairwise_alignment_from_path(path, *Matrices, 3, 5));
+        P.set_pairwise_alignment(b45, get_pairwise_alignment_from_path(path, *Matrices, 4, 5));
+    }
 
     return Matrices;
 }
@@ -162,7 +172,11 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
 	    {
 		Matrices[i].push_back(sample_two_nodes_base(p[i][j], *a123456[j], order[i], order[0]));
 		if (Matrices[i].back()->Pr_sum_all_paths() <= 0.0)
+                {
 		    std::cerr<<"Pr = 0   i = "<<i<<"   j="<<j<<" \n";
+                    // Avoid calculating likelihoods and priors if the alignment is unset.
+                    return -1;
+                }
 #ifndef NDEBUG
 		p[i][j].likelihood();  // check the likelihood calculation
 #endif
