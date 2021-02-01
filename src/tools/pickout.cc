@@ -20,6 +20,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <optional>
 #include "util/assert.hh"
 #include "util/myexception.H"
 #include "util/string/join.H"
