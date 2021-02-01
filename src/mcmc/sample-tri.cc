@@ -287,6 +287,11 @@ log_double_t pr_sum_out_A_tri(Parameters P, const vector<optional<vector<HMM::bi
     {
 	if (P[j].variable_alignment()) {
 	    auto Matrices = tri_sample_alignment_base(P[j], nodes, *a23[j], -1);
+            if (Matrices->Pr_sum_all_paths() <= 0.0)
+            {
+                std::cerr<<"pr_sum_out_A_tri( ): All paths have probability 0!"<<std::endl;
+                return log_double_t(0.0);
+            }
 	    Pr *= Matrices->Pr_sum_all_paths();
 	    Pr *= pow(other_subst(P[j], nodes), P[j].get_beta());
 	    Pr *= other_prior(P[j], nodes);
