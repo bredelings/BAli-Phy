@@ -84,7 +84,7 @@ struct sample_A3_multi_calculation
 
     virtual std::shared_ptr<DPengine> compute_matrix(int,int) = 0;
 
-    void run_dp();
+    bool run_dp();
 
     sample_A3_multi_calculation(std::vector<Parameters>&,const std::vector< std::vector<int> >& nodes_,
 				 bool do_OS,bool do_OP,int b=-1);

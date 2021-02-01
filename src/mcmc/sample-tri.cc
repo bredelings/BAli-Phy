@@ -292,7 +292,7 @@ log_double_t pr_sum_out_A_tri(Parameters P, const vector<optional<vector<HMM::bi
     return Pr;
 }
 
-void sample_A3_multi_calculation::run_dp()
+bool sample_A3_multi_calculation::run_dp()
 {
     assert(p.size() == nodes.size());
 
@@ -315,10 +315,13 @@ void sample_A3_multi_calculation::run_dp()
     for(int i=0;i<p.size();i++) 
     {
 	Matrices[i].resize(p[i].n_data_partitions());
-	for(int j=0;j<p[i].n_data_partitions();j++) {
+	for(int j=0;j<p[i].n_data_partitions();j++)
 	    if (p[i][j].variable_alignment())
+            {
 		Matrices[i][j] = compute_matrix(i,j);
-	}
+                if (Matrices[i][j]->Pr_sum_all_paths() <= 0.0)
+                    return false;
+            }
     }
 
     //-------- Calculate corrections to path probabilities ---------//
@@ -358,6 +361,7 @@ void sample_A3_multi_calculation::run_dp()
 		Pr[i] *= p[i][j].heated_likelihood();
     }
     assert(Pr[0] > 0.0);
+    return true;
 }
 
 void sample_A3_multi_calculation::set_proposal_probabilities(const vector<log_double_t>& r)
