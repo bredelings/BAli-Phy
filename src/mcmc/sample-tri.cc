@@ -518,10 +518,10 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 	    tri = shared_ptr<sample_A3_multi_calculation>(new sample_cube_multi_calculation(p, nodes, do_OS, do_OP));
 	else
 	    tri = shared_ptr<sample_A3_multi_calculation>(new sample_tri_multi_calculation(p, nodes, do_OS, do_OP));
-	tri->run_dp();
+	bool ok = tri->run_dp();
 
 	// The DP matrix construction didn't work.
-	if (tri->Pr[0] <= 0.0) return -1;
+	if (not ok) return -1;
 
 	tri->set_proposal_probabilities(rho);
 
@@ -542,10 +542,10 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 
 	//----------------- Part 1: Forward -----------------//
 	sample_tri_multi_calculation tri1(p, nodes, do_OS, do_OP, bandwidth);
-	tri1.run_dp();
+	bool ok = tri1.run_dp();
 
 	// The DP matrix construction didn't work.
-	if (tri1.Pr[0] <= 0.0) return -1;
+	if (not ok) return -1;
 
 	tri1.set_proposal_probabilities(rho);
 
@@ -567,10 +567,10 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 	std::abort();
 
 	sample_tri_multi_calculation tri2(p2, nodes, do_OS, do_OP, bandwidth);
-	tri2.run_dp();
+	bool ok2 = tri2.run_dp();
 
 	// The DP matrix construction didn't work.
-	if (tri2.Pr[0] <= 0.0) return -1;
+	if (not ok2) return -1;
 
 	tri2.set_proposal_probabilities(rho);
 

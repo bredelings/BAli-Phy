@@ -1158,7 +1158,12 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
 	tri = shared_ptr<sample_A3_multi_calculation>(new sample_cube_multi_calculation(p, nodes, true, true));
     else
 	tri = shared_ptr<sample_A3_multi_calculation>(new sample_tri_multi_calculation(p, nodes, true, true));
-    tri->run_dp();
+
+    bool ok = tri->run_dp();
+
+    // Fail early if some of the alternatives failed sampling.
+    if (not ok)
+        return false;
 
     //--------- Compute PrL2: reverse proposal probabilities ---------//
 
