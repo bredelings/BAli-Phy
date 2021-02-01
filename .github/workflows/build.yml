@@ -133,14 +133,16 @@ jobs:
       if: matrix.name != 'windows'
       run: |
         export PATH=$HOME/local/bin:$PATH
+        export seed=$RANDOM
+        echo "Running tests with seed=$seed"
         echo ::group::Test suite
         cd tests
-        ./run-tests.py bali-phy
+        ./run-tests.py bali-phy --seed=$seed
         cd
         echo ::endgroup::
         echo ::group::testiphy
         git clone https://gitlab.com/testiphy/testiphy.git
         cd testiphy
         which bali-phy || true
-        ./testiphy bali-phy
+        ./testiphy bali-phy --seed=$seed
         echo ::endgroup::
