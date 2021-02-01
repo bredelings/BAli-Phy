@@ -146,19 +146,25 @@ shared_ptr<DPcubeSimple> cube_sample_alignment_base(mutable_data_partition P, co
     // If the DP matrix ended up having probability 0, don't try to sample a path through it!
     if (Matrices->Pr_sum_all_paths() <= 0.0) 
     {
-#ifndef NDEBUG_DP
-	Matrices->clear();
-#endif
-	return Matrices;
+        // Computing likelihoods when pairwise alignments disagree about internal sequence
+        // lengths can yield memory access errors.
+        for(int i=0;i<3;i++)
+        {
+            int b = t.find_branch(nodes[0],nodes[i+1]);
+            P.unset_pairwise_alignment(b);
+        }
     }
+    else
+    {
+        vector<int> path_g = Matrices->sample_path();
 
-    vector<int> path_g = Matrices->sample_path();
+        vector<int> path = Matrices->ungeneralize(path_g);
 
-    vector<int> path = Matrices->ungeneralize(path_g);
-
-    for(int i=0;i<3;i++) {
-	int b = t.find_branch(nodes[0],nodes[i+1]);
-	P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i));
+        for(int i=0;i<3;i++)
+        {
+            int b = t.find_branch(nodes[0],nodes[i+1]);
+            P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i));
+        }
     }
 
 #ifdef NDEBUG_DP
