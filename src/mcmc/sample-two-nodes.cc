@@ -111,8 +111,8 @@ sample_two_nodes_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a1
     {
 	std::cerr<<"sample_two_nodes_base( ): All paths have probability 0!"<<std::endl;
 
-        // Compute likelihood when pairwise alignments disagree about internal sequence length
-        // we can get memory access errors.
+        // Computing likelihoods when pairwise alignments disagree about internal sequence
+        // lengths can yield memory access errors.
         P.unset_pairwise_alignment(b04);
         P.unset_pairwise_alignment(b14);
         P.unset_pairwise_alignment(b25);
