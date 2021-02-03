@@ -255,11 +255,11 @@ void Module::compile(const Program& P)
 
     add_local_symbols();
 
-    perform_exports();
-
     // Currently we do "renaming" here.
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
     rename(P);
+
+    perform_exports();
 
     desugar(P);
 
