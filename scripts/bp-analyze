@@ -574,7 +574,7 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
         print(" done.")
         return alignment_names
 
-class BAliPhy2_1Run(BAliPhyRun):
+class BAliPhy2_3Run(BAliPhyRun):
     def __init__(self,mcmc_output, **kwargs):
         super().__init__(mcmc_output, **kwargs)
         self.log_file = check_file_exists(path.join(self.get_dir(),'C1.p'))
@@ -582,7 +582,7 @@ class BAliPhy2_1Run(BAliPhyRun):
         self.smodels = self.find_models("subst model", "smodels")
         self.imodels = self.find_models("indel model", "imodels")
         self.scale_models = None
-        logging.debug(f"BAliPhy2_1Run: {mcmc_output}")
+        logging.debug(f"BAliPhy2_3Run: {mcmc_output}")
 
     def find_models(self, name1, name2):
         models = []
@@ -660,13 +660,13 @@ def get_bali_phy3_runs(mcmc_args):
         raise Exception(f"{good} appear to be BAli-Phy 3 runs, but {bad} do not!")
     return runs
 
-def get_bali_phy2_1_runs(mcmc_args):
+def get_bali_phy2_3_runs(mcmc_args):
     runs = []
     good = []
     bad = []
     for mcmc_dir in mcmc_args:
         if path.exists(mcmc_dir) and path.exists(path.join(mcmc_dir,'C1.out')) and path.exists(path.join(mcmc_dir,'C1.p')):
-            runs.append(BAliPhy2_1Run(mcmc_dir))
+            runs.append(BAliPhy2_3Run(mcmc_dir))
             good.append(mcmc_dir)
         else:
             bad.append(mcmc_dir)
@@ -746,7 +746,7 @@ def construct_runs(mcmc_outputs):
     run_groups = []
     run_groups.append( get_bali_phy3_runs(mcmc_outputs) )
 
-    run_groups.append( get_bali_phy2_1_runs(mcmc_outputs) )
+    run_groups.append( get_bali_phy2_3_runs(mcmc_outputs) )
 
     run_groups.append( get_phylobayes_runs(mcmc_outputs) )
 
