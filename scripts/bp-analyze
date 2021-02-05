@@ -156,7 +156,7 @@ def get_x3d_of_mds(point_string):
         if lastgroup is not None and lastgroup == group:
             tmp=lastpoint+[xx,yy,zz]
             xyzs=' '.join([str(t) for t in tmp])
-            line = f"<transform><shape><appearance><material emissiveColor='{color}'/></appearance><lineset vertexCount='2'><coordinate point='{xyzs}'/></lineset></shape></transform>\n"
+            line = f"<transform><shape><appearance><material ambientIntensity='0.9' diffuseColor='{color}' specularColor='{color}' transparency='0.95'/></appearance><lineset vertexCount='2'><coordinate point='{xyzs}'/></lineset></shape></transform>\n"
             lines += line
         spheres += sphere
         seen[group] += 1
