@@ -581,7 +581,7 @@ class BAliPhy2_1Run(BAliPhyRun):
 
         self.smodels = self.find_models("subst model", "smodels")
         self.imodels = self.find_models("indel model", "imodels")
-        self.scale_models = self.find_models("scale model", "scales")
+        self.scale_models = None
         logging.debug(f"BAliPhy2_1Run: {mcmc_output}")
 
     def find_models(self, name1, name2):
@@ -2244,8 +2244,10 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         section += '<h3 style="clear:both"><a class="anchor" name="imodel"></a>Indel model (+priors)</h3>\n'
         section += print_models("I",self.get_imodels())
 
-        section += '<h3 style="clear:both"><a class="anchor" name="scales"></a>Scales (+priors)</h3>\n'
-        section += print_models("scale",self.get_scale_models());
+        if (self.get_scale_models()):
+            section += '<h3 style="clear:both"><a class="anchor" name="scales"></a>Scales (+priors)</h3>\n'
+            section += print_models("scale",self.get_scale_models());
+
         return section
 
     def section_end(self):
