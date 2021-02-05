@@ -135,24 +135,29 @@ def get_x3d_of_mds(point_string):
         scale = "{s} {s} {s}".format(s=size)
 
         if group == 1:
-            color = rgb_to_color(hsv_to_rgb(interpolate(seen[group], num[group], 0.833333, 1.0),
-                                            interpolate(seen[group], num[group], 0.3,      1.0),
+            color = rgb_to_color(hsv_to_rgb(interpolate(seen[group], num[group], 11/12, 1),
+                                            interpolate(seen[group], num[group], 0.4,      1.0),
                                             1)
                                 )
         elif group == 2:
-            color = rgb_to_color(hsv_to_rgb(interpolate(seen[group], num[group], 0.5     , 0.666666),
-                                            interpolate(seen[group], num[group], 0.3,      1.0),
+            color = rgb_to_color(hsv_to_rgb(interpolate(seen[group], num[group], 7/12     , 8/12),
+                                            interpolate(seen[group], num[group], 0.4,      1.0),
                                             1)
                                 )
         elif group == 3:
-            color = rgb_to_color(hsv_to_rgb(interpolate(seen[group], num[group], 0.166666, 0.333333),
-                                            interpolate(seen[group], num[group], 0.3,      1.0),
+            color = rgb_to_color(hsv_to_rgb(interpolate(seen[group], num[group], 3/12, 4/12),
+                                            interpolate(seen[group], num[group], 0.4,      1.0),
+                                            1)
+                                )
+        elif group == 4:
+            color = rgb_to_color(hsv_to_rgb(interpolate(seen[group], num[group], 9/12, 10/12),
+                                            interpolate(seen[group], num[group], 0.4,      1.0),
                                             1)
                                 )
         else:
             color = "1 0 0"
 
-        sphere = f"<transform translation='{xx} {yy} {zz}' scale='{scale}'><shape><appearance><material diffuseColor='{color}'/></material></appearance><sphere></sphere></shape></transform>\n"
+        sphere = f"<transform translation='{xx} {yy} {zz}' scale='{scale}'><shape><appearance><material specularColor='{color}' shininess='0.8' ambientIntensity='0.8' diffuseColor='{color}'/></material></appearance><sphere></sphere></shape></transform>\n"
         if lastgroup is not None and lastgroup == group:
             tmp=lastpoint+[xx,yy,zz]
             xyzs=' '.join([str(t) for t in tmp])
@@ -1382,7 +1387,12 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             return
         print ("\nGenerate MDS plots of topology burnin: ", end='',flush=True)
 
-        N = 400
+        if self.n_chains() >= 4:
+            N=275
+        elif self.n_chains() == 3:
+            N=350
+        else:
+            N=400
         dist_cmd = ['trees-distances','matrix','--max={}'.format(N),'--jitter=0.3']
         if self.subsample is not None and self.subsample != 1:
             dist_cmd.append("--subsample={}".format(self.subsample))
@@ -1456,10 +1466,10 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             if not more_recent_than_all_of(matfile,tree_files):
                 self.exec_show(dist_cmd + tree_files,outfile=matfile)
 
-            if not more_recent_than_all_of(outfile,tree_files):
+            if not more_recent_than(outfile,matfile):
                 self.Rexec(script, L+[matfile, outfile])
 
-            if not more_recent_than_all_of(outfile3d,tree_files):
+            if not more_recent_than(outfile3d,outfile):
                 script3d = self.get_libexec_script("tree-plot4-3D.R")
                 point_string = self.Rexec(script3d, L+[matfile])
                 self.write_x3d_file("Results", "tree-MDS.points", point_string)
