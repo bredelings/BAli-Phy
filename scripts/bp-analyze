@@ -548,15 +548,15 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
 
     def find_smodel_indices(self):
         indices = self.find_partition_values('smodel-index')
-        return [None if index == '--' else int(index) for index in indices]
+        return [None if index == '--' or index == '-1' else int(index) for index in indices]
 
     def find_imodel_indices(self):
         indices = self.find_partition_values('imodel-index')
-        return [None if index == '--' else int(index) for index in indices]
+        return [None if index == '--' or index == '-1' else int(index) for index in indices]
 
     def find_scale_model_indices(self):
         indices= self.find_partition_values('scale-index')
-        return [None if index == '--' else int(index) for index in indices]
+        return [None if index == '--' or index == '-1' else int(index) for index in indices]
 
     def find_alphabets(self):
         return self.find_partition_values('alphabet')
@@ -579,8 +579,8 @@ class BAliPhy2_1Run(BAliPhyRun):
         super().__init__(mcmc_output, **kwargs)
         self.log_file = check_file_exists(path.join(self.get_dir(),'C1.p'))
 
-        self.smodels = self.find_models("subst models", "smodels")
-        self.imodels = self.find_models("indel models", "imodels")
+        self.smodels = self.find_models("subst model", "smodels")
+        self.imodels = self.find_models("indel model", "imodels")
         self.scale_models = self.find_models("scale model", "scales")
         logging.debug(f"BAliPhy2_1Run: {mcmc_output}")
 
@@ -666,7 +666,7 @@ def get_bali_phy2_1_runs(mcmc_args):
     bad = []
     for mcmc_dir in mcmc_args:
         if path.exists(mcmc_dir) and path.exists(path.join(mcmc_dir,'C1.out')) and path.exists(path.join(mcmc_dir,'C1.p')):
-            runs.append(BAliPhy3Run(mcmc_dir))
+            runs.append(BAliPhy2_1Run(mcmc_dir))
             good.append(mcmc_dir)
         else:
             bad.append(mcmc_dir)
