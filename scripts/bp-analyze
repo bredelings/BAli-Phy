@@ -1409,8 +1409,6 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         script3d = self.get_libexec_script(f"tree-plot-3D.R")
         outfile3d = "Results/tree-MDS.points.html"
 
-        # what if there are fewer than N points in the file???
-
         L = [ str(min([N,int((get_n_lines(tf)-self.burnin)/self.subsample)])) for tf in tree_files]
 
         if not more_recent_than_all_of(matfile, tree_files):
