@@ -28,19 +28,19 @@ yw = (maxy-miny)
 plot(points,type="n",ylab="",xlab="",axes=F)
 
 
-colorseq1 = hsv(seq(from=0.9,to=1,     length=N1),
+colorseq1 = hsv(seq(from=11/12,to=1,     length=N1),
                 seq(from=0.2,to=1,     length=N1),
                 1)
 
-colorseq2 = hsv(seq(from=0.15,to=0.25,     length=N2),
+colorseq2 = hsv(seq(from=7/12,to=8/12,length=N2),
                 seq(from=0.2,to=1,     length=N2),
                 1)
 
-colorseq3 = hsv(seq(from=0.4,to=0.5,     length=N3),
+colorseq3 = hsv(seq(from=3/12,to=4/12,length=N3),
                 seq(from=0.2,to=1,     length=N3),
                 1)
 
-colorseq4 = hsv(seq(from=0.65,to=0.75,     length=N4),
+colorseq4 = hsv(seq(from=9/12,to=10/12,     length=N4),
                 seq(from=0.2,to=1,     length=N4),
                 1)
 
