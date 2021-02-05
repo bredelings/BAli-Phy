@@ -409,7 +409,7 @@ class MCMCRun(object):
 class LogFileRun(MCMCRun):
     def __init__(self,mcmc_output,**kwargs):
         super().__init__(mcmc_output, **kwargs)
-        self.log_file = mcmc_output+".log"
+        self.log_file = mcmc_output
         logging.debug(f"LogFileRun: {mcmc_output}")
 
     def n_iterations(self):
@@ -422,7 +422,7 @@ class LogFileRun(MCMCRun):
 class TreeFileRun(MCMCRun):
     def __init__(self, mcmc_output, **kwargs):
         super().__init__(mcmc_output, **kwargs)
-        self.trees_file = mcmc_output+".trees"
+        self.trees_file = mcmc_output
         logging.debug(f"TreeFileRun: {mcmc_output}")
 
     def n_iterations(self):
@@ -707,8 +707,11 @@ def get_tree_runs(mcmc_args):
     good = []
     bad = []
     for run_name in mcmc_args:
-        if path.exists(run_name+".trees") and not path.exists(run_name+".log"):
+        if path.exists(run_name) and run_name.endswith(".trees"):
             runs.append(TreeFileRun(run_name))
+            good.append(run_name)
+        elif path.exists(run_name+".trees") and not path.exists(run_name+".log"):
+            runs.append(TreeFileRun(run_name+".trees"))
             good.append(run_name)
         else:
             bad.append(run_name)
@@ -721,8 +724,11 @@ def get_log_runs(mcmc_args):
     good = []
     bad = []
     for run_name in mcmc_args:
-        if not path.exists(run_name+".trees") and path.exists(run_name+".log"):
+        if path.exists(run_name) and run_name.endswith(".log"):
             runs.append(LogFileRun(run_name))
+            good.append(run_name)
+        elif not path.exists(run_name+".trees") and path.exists(run_name+".log"):
+            runs.append(LogFileRun(run_name+".log"))
             good.append(run_name)
         else:
             bad.append(run_name)
