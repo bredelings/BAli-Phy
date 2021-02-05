@@ -12,12 +12,6 @@ L = dim(M)[1]
 library(stats)
 points = cmdscale(M)
 
-args = commandArgs(trailingOnly=T)
-N1 = as.numeric(args[1])
-N2 = as.numeric(args[2])
-N3 = as.numeric(args[3])
-print(c(N1,N2,N3))
-
 #library(MASS)
 #mds = isoMDS(M)
 #points = mds$points
