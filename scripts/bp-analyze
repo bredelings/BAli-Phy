@@ -1426,7 +1426,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                 point_string = self.Rexec(script3d, [str(L1),str(L2),matfile])
                 self.write_x3d_file("Results","tree-1-2.points",point_string)
 
-        elif self.n_chains() >= 3:
+        elif self.n_chains() == 3:
             script = self.get_libexec_script("tree-plot3.R")
             tree_files = self.get_trees_files()[0:3]
             [tf1,tf2,tf3] = tree_files
@@ -1446,6 +1446,23 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                 script3d = self.get_libexec_script("tree-plot3-3D.R")
                 point_string = self.Rexec(script3d, [str(L1), str(L2), str(L3), matfile])
                 self.write_x3d_file("Results", "tree-1-2-3.points", point_string)
+        elif self.n_chains() >= 4:
+            script = self.get_libexec_script("tree-plot4.R")
+            tree_files = self.get_trees_files()[0:4]
+            L = [ str(min([N,int((get_n_lines(tf)-self.burnin)/self.subsample)])) for tf in tree_files]
+            matfile = "Results/tree-MDS.M"
+            outfile = "Results/tree-MDS.svg"
+            outfile3d = "Results/tree-MDS.points.html"
+            if not more_recent_than_all_of(matfile,tree_files):
+                self.exec_show(dist_cmd + tree_files,outfile=matfile)
+
+            if not more_recent_than_all_of(outfile,tree_files):
+                self.Rexec(script, L+[matfile, outfile])
+
+            if not more_recent_than_all_of(outfile3d,tree_files):
+                script3d = self.get_libexec_script("tree-plot4-3D.R")
+                point_string = self.Rexec(script3d, L+[matfile])
+                self.write_x3d_file("Results", "tree-MDS.points", point_string)
         print(" done.")
 
     def write_x3d_file(self,dir,filename,point_string):
@@ -2049,13 +2066,17 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
     def section_tree_mixing2(self):
         section = ""
         assert(self.has_trees())
-        if self.n_chains() >= 3:
+        if self.n_chains() >= 4:
+            MDS_figure = "tree-MDS.svg"
+            MDS_figure_3d = "tree-MDS.points"
+            if self.n_chains() == 4:
+                MDS_title = "4 chains"
+            else:
+                MDS_title = "the first 4 chains"
+        elif self.n_chains() == 3:
             MDS_figure = "tree-1-2-3.svg"
             MDS_figure_3d = "tree-1-2-3.points"
-            if self.n_chains() == 3:
-                MDS_title = "3 chains"
-            else:
-                MDS_title = "the first 3 chains"
+            MDS_title = "3 chains"
         elif self.n_chains() == 2:
             MDS_figure = "tree-1-2.svg"
             MDS_figure_3d = "tree-1-2.points"

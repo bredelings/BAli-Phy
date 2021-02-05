@@ -56,6 +56,7 @@ install_data('scripts/bp-analyze', install_mode: 'rwxr-xr-x', install_dir: 'bin'
 install_data('scripts/bali-phy-pkg', install_mode: 'rwxr-xr-x', install_dir: 'bin')
 install_data(['scripts/compare-runs.R', 'scripts/compare-runs2.R', 'scripts/tree-plot1.R',
               'scripts/tree-plot2.R', 'scripts/tree-plot3.R', 'scripts/tree-plot2-3D.R',
+              'scripts/tree-plot4.R', 'scripts/tree-plot4-3D.R',
               'scripts/tree-plot1-3D.R', 'scripts/tree-plot3-3D.R'],
              install_dir:'lib/bali-phy/libexec')
 
