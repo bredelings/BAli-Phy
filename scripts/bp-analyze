@@ -2233,7 +2233,8 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate an HTML report summarizing MCMC runs for BAli-Phy and other software.",
-                                     epilog= "Example: bp-analyze analysis-dir-1 analysis-dir-2")
+                                     epilog= "Examples:\n   bp-analyze analysis-dir-1/ analysis-dir-2/\n   bp-analyze trees1.trees trees2.trees\n   bp-analyze log1.log log2.log",
+                                     formatter_class=argparse.RawTextHelpFormatter)
 
     parser.add_argument("mcmc_outputs", default=['.'], help="Subdirectories with MCMC runs",nargs='*')
     parser.add_argument("--clean", default=False,help="Delete generated files",action='store_true')
@@ -2242,9 +2243,9 @@ if __name__ == '__main__':
     parser.add_argument("--subsample",metavar='NUM',type=int,default=1,help="Keep only every NUM iterations")
     parser.add_argument("--until",type=int,default=None)
     parser.add_argument("--prune", default=None,help="Taxa to remove")
-    parser.add_argument("--muscle")
-    parser.add_argument("--probcons")
-    parser.add_argument("--mafft")
+#    parser.add_argument("--muscle")
+#    parser.add_argument("--probcons")
+#    parser.add_argument("--mafft")
     parser.add_argument("--subpartitions",default=False,action='store_true')
     args = parser.parse_args()
 
