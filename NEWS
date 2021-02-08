@@ -28,8 +28,7 @@
      - Decrement force counts for calls of invalid steps.
      - Evaluate conditional invalid regs with positive force counts.
 
-
-* 3.6 (unreleased)
+* 3.6.0 (Feb 5, 2021)
  + Make the `"nested": true` form of JSON log format more readable.
  + Connect 3D MDS points with lines.
  + Speed up fixed-alignment analyses.
