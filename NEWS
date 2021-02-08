@@ -1,20 +1,25 @@
 * 4.0 (unreleased)
  + Lazy random variable creation and destruction.
+ - MCMC
+   + Switch to slice sampling by "doubling", instead of "stepping out".
+ - Probabilistic programming: models
+   + Rooted trees
+     - Allow sampling time trees.
+     - Add MCMC moves to estimate node times.
+   + Add NNI moves for unrooted trees.
+   - Add Data.CSV and Data.Frame modules to load data from CSV files.
+   - New distributions
+     + half_cauchy
+     + negative_binomial
+     + poission_process
+   - MCMC
+     - Allow rates of moves to change dynamically.
+     - Allow move to appear or disappear during an iteration.
+     - Add moves when variables are created for more distributions.
  - Probabilities
    - Eliminate prior_no_alignment(), OS (other_subst) and OP (other_prior).
      Instead, compute the ratio of summing out the alignment to not summing it out.
- - Haskell
-   + Add Data.CSV and Data.Frame to load data from CSV files.
-   - New distributions
-     + half_cauchy
- - MCMC
-   + Switch to slice sampling by "doubling", instead of "stepping out".
-   - Add moves when variables are created for more distributions.
-   - Allow move to appear or disappear during an iteration.
-   - Allow rates of moves to change dynamically.
-   - Compute probability ratios by tracking registration events
-     for prior and likelihood terms.
- - Graphical models
+ - Probabilistic programming: machinery
    - Eliminate the closure stack.
    - Add force edges, and allow forces from constants and index_var's.
      - index_var's can have results, but not steps.
@@ -27,6 +32,8 @@
      - Evaluate invalid regs that are unconditionally evaluated.
      - Decrement force counts for calls of invalid steps.
      - Evaluate conditional invalid regs with positive force counts.
+   - Compute probability ratios by tracking registration events
+     for prior and likelihood terms.
 
 * 3.6.0 (Feb 5, 2021)
  + Make the `"nested": true` form of JSON log format more readable.
