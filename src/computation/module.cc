@@ -1270,14 +1270,10 @@ void Module::def_constructor(const std::string& cname, int arity)
     declare_symbol( {cname, constructor_symbol, arity, -1, unknown_fix, {}} );
 }
 
-void Module::declare_fixities()
+void Module::declare_fixities(const expression_ref& decls)
 {
-    if (not topdecls) return;
-
-    assert(is_AST(topdecls,"TopDecls"));
-
     // 0. Get names that are being declared.
-    for(const auto& decl: topdecls.sub())
+    for(const auto& decl: decls.sub())
         if (is_AST(decl,"FixityDecl"))
         {
             // Determine fixity.
@@ -1304,6 +1300,20 @@ void Module::declare_fixities()
                 declare_fixity(name, precedence, fixity);
             }
         }
+}
+
+void Module::declare_fixities()
+{
+    if (not topdecls) return;
+
+    assert(is_AST(topdecls,"TopDecls"));
+
+    // 0. Get names that are being declared.
+    declare_fixities(topdecls);
+
+    for(const auto& topdecl: topdecls.sub())
+        if (is_AST(topdecl,"Class"))
+            declare_fixities(topdecl.sub()[1]);
 }
 
 void Module::add_local_symbols()

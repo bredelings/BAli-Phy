@@ -143,6 +143,8 @@ public:
 
     void declare_fixities();
 
+    void declare_fixities(const expression_ref& decls);
+
     void add_local_symbols();
 
     void perform_imports(const Program&);
