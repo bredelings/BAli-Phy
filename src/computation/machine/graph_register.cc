@@ -1039,11 +1039,14 @@ bool reg_heap::force_regs_check_same_inputs(int r)
     assert(reg_is_changeable(r));
 
     // We can't use a range-for here because regs[r] can be moved
-    // during the loop if we do evaluation.
-    bool zero_count = not reg_is_forced(r);
+    // during the loop if we do evaluation, and the range-for saves
+    // the location of regs[r] from before it was moved.
 
-    for(auto [r2,_]: regs[r].forced_regs)
+    bool zero_count = not reg_is_forced(r);
+    for(int i=0;i<regs[r].forced_regs.size();i++)
     {
+        auto [r2,_] = regs[r].forced_regs[i];
+
         incremental_evaluate2(r2, zero_count);
 
         assert(reg_is_constant_with_force(r2) or has_result2(r2));
@@ -1053,8 +1056,10 @@ bool reg_heap::force_regs_check_same_inputs(int r)
     // We can only have the same inputs as a previous step if we have a step from the
     // previous program that was marked invalid.
     bool same_inputs = prog_unshare[r].test(unshare_step_bit);
-    for(auto [r2,_]: regs[r].used_regs)
+    for(int i=0;i<regs[r].used_regs.size();i++)
     {
+        auto [r2,_] = regs[r].used_regs[i];
+
         incremental_evaluate2(r2, zero_count);
 
         assert(reg_is_constant_with_force(r2) or has_result2(r2));
