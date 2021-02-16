@@ -447,7 +447,9 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
     std::abort();
 }
 
-/// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
+/// Evaluate regs when called from a changeable reg.
+/// Since the reg has already been marked changable, dependencies have already been recorded.
+/// Used regs and forced regs should already be up-to-date, having been forced by force_regs_check_same_inputs( ).
 class RegOperationArgs2Changeable final: public OperationArgs
 {
     const int r;
@@ -460,7 +462,7 @@ class RegOperationArgs2Changeable final: public OperationArgs
 
     bool evaluate_changeables() const {return true;}
 
-    /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
+    /// We don't need to evaluate r2 or record dependencies -- this should already have happened.
     int evaluate_reg_force(int r2)
         {
             r2 = M.follow_index_var_no_force(r2);
@@ -470,7 +472,7 @@ class RegOperationArgs2Changeable final: public OperationArgs
             return M.value_for_reg(r2);
         }
 
-    /// Evaluate the reg r2, record a dependency on r2, and return the reg following call chains.
+    /// We don't need to evaluate r2 or record dependencies -- this should already have happened.
     int evaluate_reg_use(int r2)
         {
             r2 = M.follow_index_var_no_force(r2);
