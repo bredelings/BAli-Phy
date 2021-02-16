@@ -267,6 +267,20 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 
 	    return expression_ref{E.head(),decls};
 	}
+        else if (n.type == "Class")
+        {
+            auto constraints = E.sub()[0];
+            auto binds = E.sub()[1];
+            binds = desugar(binds);
+            return expression_ref(E.head(),{constraints, binds});
+        }
+        else if (n.type == "Instance")
+        {
+            auto inst_header = E.sub()[0];
+            auto binds = E.sub()[1];
+            binds = desugar(binds);
+            return expression_ref(E.head(),{inst_header, binds});
+        }
 	else if (n.type == "Decl")
 	{
 	    v[1] = desugar_rhs(v[1]);
