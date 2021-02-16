@@ -208,6 +208,23 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 
     auto v = E.sub();
 
+    if (is_AST(E,"Class"))
+    {
+        auto constraints = E.sub()[0];
+        auto binds = E.sub()[1];
+
+        binds = rename_infix(m, binds);
+        return expression_ref(AST_node("Class"),{constraints,binds});
+    }
+    else if (is_AST(E,"Instance"))
+    {
+        auto inst_type = E.sub()[0];
+        auto binds = E.sub()[1];
+
+        binds = rename_infix(m, binds);
+        return expression_ref(AST_node("Instance"),{inst_type,binds});
+    }
+
     for(auto& e: v)
 	e = rename_infix(m, e);
 
