@@ -1148,7 +1148,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency:</para>
-      <programlisting language="java">gtr[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]</programlisting>
+      <programlisting language="java">gtr[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]</programlisting>
       <para>Frequencies can also be specified using functions:</para>
 
       <para>
@@ -1283,10 +1283,10 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency:</para>
-      <programlisting language="java">wag+f[pi=List[Pair["A",0.047],Pair["R",0.19],...]]</programlisting>
+      <programlisting language="java">wag+f[pi=List[Tuple["A",0.047],Tuple["R",0.19],...]]</programlisting>
       <para>Frequencies can also be specified using functions:</para>
       <para>
-	<programlisting language="java">wag+f[pi=Frequencies.uniform]]</programlisting>
+	<programlisting language="java">wag+f[pi=Frequencies.uniform]</programlisting>
       </para>
 
       <informaltable>
@@ -1421,9 +1421,9 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
-      <programlisting language="java">hky85[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]+x2
+      <programlisting language="java">hky85[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]+x2
 
-hky85_sym+x2_sym+f[pi=List[Pair["AA",0.01],Pair["AC",0.01],Pair["AG",0.01],Pair["AU",0.22],Pair["CA",0.01],Pair["CC",0.01],Pair["CG",0.22],Pair["CU",0.01],Pair["GA",0.01],Pair["GC",0.22],Pair["GG",0.01],Pair["GU",0.01],Pair["UA",0.22],Pair["UC",0.01],Pair["UG",0.01],Pair["UU",0.01]]]</programlisting>
+hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tuple["AU",0.22],Tuple["CA",0.01],Tuple["CC",0.01],Tuple["CG",0.22],Tuple["CU",0.01],Tuple["GA",0.01],Tuple["GC",0.22],Tuple["GG",0.01],Tuple["GU",0.01],Tuple["UA",0.22],Tuple["UC",0.01],Tuple["UG",0.01],Tuple["UU",0.01]]]</programlisting>
 
       <para>Frequencies can also be specified using functions:</para>
       <!-- para>
@@ -1530,7 +1530,7 @@ hky85_sym+x2_sym+f[pi=List[Pair["AA",0.01],Pair["AC",0.01],Pair["AG",0.01],Pair[
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
-      <programlisting language="java">hky85[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]+x3</programlisting>
+      <programlisting language="java">hky85[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]+x3</programlisting>
       <para>Frequencies can also be specified using functions:</para>
       <para>
 	<programlisting language="java">hky85_sym+x3_sym+f[pi=f1x4]            // nucleotide frequencies are estimated</programlisting>
@@ -1760,8 +1760,8 @@ o	      <row>
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
-      <programlisting language="java">gy94[pi=List[Pair["AAA",0.01],Pair["C",0.02],...]]
-mg94[pi=List[Pair["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]]
+      <programlisting language="java">gy94[pi=List[Tuple["AAA",0.01],Tuple["C",0.02],...]]
+mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 </programlisting>
       <para>Frequencies can also be specified using functions:</para>
       <para>
@@ -2277,7 +2277,7 @@ The <userinput>help</userinput> command can be used to determine the default val
   <para>Some types contain parameters.  For example <userinput>List[Int]</userinput> indicates a list of integers and <userinput>List[Double]</userinput> indicates a list of real numbers.  In order to indicate a list of unknown type, we use a <emphasis>type variable</emphasis> <userinput>a</userinput> and write <userinput>List[a]</userinput>.  Type variables always begin with a lower-case letter.  They are able to match any specific type, and their value is found by pattern-matching.  For example, the function <userinput>add[x,y]</userinput> takes two arguments of type <userinput>a</userinput> and has a result of type <userinput>a</userinput>.  Thus:
 <programlisting>add[1,2]        // arguments are a=Int, so result is of type Int
 add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programlisting>
-<userinput>Pair[a,b]</userinput> is a parameterized type that can be specialized to (for example) <userinput>Pair[String,Double]</userinput> and <userinput>Pair[Int,Int]</userinput>.
+<userinput>Tuple[a,b]</userinput> is a parameterized type that can be specialized to (for example) <userinput>Tuple[String,Double]</userinput> and <userinput>Tuple[Int,Int]</userinput>.
   </para>
 
   <para>Types for components of substitution models are often parameterized by type of the alphabet.  For example, hky85 has a result type of <userinput>RevCTMC[a]</userinput>, where <userinput>a</userinput> could be <userinput>DNA</userinput> or <userinput>RNA</userinput>.  The use of alphabet types in substitution models prevents combining substitution models with mismatched alphabets.
@@ -2901,20 +2901,20 @@ The stabilization criterion is the same one described above for numerical values
 
     <para>In order to compile BAli-Phy, you need
     <itemizedlist>
-      <listitem>a <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://en.wikipedia.org/wiki/C%2B%2B14">C++14</link> compiler</listitem>
-      <listitem><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://mesonbuild.com">meson</link> (version >= 0.45)</listitem>
+      <listitem>a <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://en.wikipedia.org/wiki/C%2B%2B14">C++17</link> compiler</listitem>
+      <listitem><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://mesonbuild.com">meson</link> (version >= 0.53)</listitem>
     </itemizedlist>
-    We recommend the GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>) version 5.0 (or higher) or the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link> compiler version 3.5.0 or higher. The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cairographics.org/">Cairo</link> graphics library is optional, but if it is missing, the <command>drawtree</command> tool that is used to draw consensus trees won&apos;t be built. See also <xref linkend="software_req"/>. </para>
+    We recommend the GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>) version 9.0 (or higher) or the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link> compiler version 8 or higher. The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cairographics.org/">Cairo</link> graphics library is optional, but if it is missing, the <command>drawtree</command> tool that is used to draw consensus trees won&apos;t be built. See also <xref linkend="software_req"/>. </para>
 
     <section><info><title>Linux</title></info>
     <para>On Debian and Ubuntu, you can type:
 <screen><prompt>%</prompt> <userinput>sudo apt-get install g++ git libcairo2-dev pandoc</userinput></screen>
 
     </para>
-If your version of Debian or Ubuntu is recent enough to contain meson version 0.45 or higher, you can install meson with apt-get:
+If your version of Debian or Ubuntu is recent enough to contain meson version 0.53 or higher, you can install meson with apt-get:
 <screen><prompt>%</prompt> <userinput>sudo apt-get install meson</userinput>
 <prompt>%</prompt> <userinput>dpkg -s meson | grep Version</userinput>
-Version: 0.45.1-2
+Version: 0.53
 </screen>
 Otherwise you can install meson through pip3:
 <screen><prompt>%</prompt> <userinput>sudo apt-get install python3 python3-pip ninja</userinput>
