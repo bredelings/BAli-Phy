@@ -944,6 +944,53 @@ double li_stephens_2003_theta(int n)
     return theta;
 }
 
+double emission_probability(int copied_letter, int emitted_letter, double emission_diff_state, double emission_same_state, bool all_previous_missing)
+{
+    // Emission is 1.0 if missing data at i2
+    if (emitted_letter < 0)
+    {
+        // Emitting an N or -
+        return 1.0;
+    }
+    else
+    {
+        // Emitting an A, T, G, or C
+        if (copied_letter >= 0)
+        {
+            // Copying from an A, T, G, or C
+            return (copied_letter == emitted_letter) ? emission_same_state : emission_diff_state;
+        }
+        else
+        {
+            // Copying from an N or -.
+
+            // We aren't including the probability for sampling the letters of the first haplotype.
+            // If all previous haplotypes are N/-, we should set this to 1.0.
+            if (all_previous_missing)
+                return 1.0;
+            else
+            {
+                // How to copy a letter from an N or -?
+                // Ideas. Ideally, we'd like to integrate over all possibilities for all the missing states,
+                //        accounting for linkage.
+
+                // *1. Assume we can set the missing state to agree with us -- not theoretically valid.
+
+                //  2. Average over the previous state, assuming that it is drawn at random from previous non-missing
+                //     states in this column.
+
+                //  3. Is there an exact solution for the distribution of this letter given previous letters, if we ignore
+                //     linkage?
+
+                double p_same_state = 1.0;
+                double p_diff_state = 1.0 - p_same_state;
+                return p_same_state*emission_same_state + p_diff_state*emission_diff_state;
+            }
+        }
+    }
+}
+
+// Question: do we want to actually distinguish between N and -?
 log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment& A, const vector<int>& d, int k, double rho, double theta)
 {
     // 1. Determine mutation probabilities when copying from a given parent.
@@ -968,19 +1015,15 @@ log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment&
         double dist = d[column1] - prev_column;
         double transition_diff_parent = (1.0-exp(-rho*dist/k))/k;
         double transition_same_parent = 1.0 - (k-1)*transition_diff_parent;
+        int emitted_letter = A(column1,k);
 
+        bool all_previous_missing = true;
         for(int i2=0;i2<k;i2++)
         {
             // Emission is 1.0 if missing data at i2
-            double emission_i2 = 1.0;
-            if (A(column1,i2) >=0)
-            {
-                if (A(column1,k) >=0)
-                    emission_i2 = (A(column1,i2) == A(column1,k)) ? emission_same_state : emission_diff_state;
-                // Emission is 0.5 if copying from missing data?
-                else
-                    emission_i2 = 0.5;
-            }
+            int copied_letter  = A(column1,i2);
+            double emission_i2 = emission_probability( copied_letter, emitted_letter, emission_diff_state, emission_same_state, all_previous_missing );
+            if (copied_letter >= 0) all_previous_missing = false;
 
             double total = 0;
             for(int i1=0;i1<k;i1++)
