@@ -1273,6 +1273,14 @@ bool is_variant_column(const alignment& A, int c)
     return false;
 }
 
+bool is_column_with_gap(const alignment& A, int c)
+{
+    for(int i=0;i<A.n_sequences();i++)
+	if (A(c,i) == alphabet::gap)
+	    return true;
+    return false;
+}
+
 int count_variant_columns(const alignment& A, int c1, int c2)
 {
     int count = 0;
@@ -1362,12 +1370,12 @@ vector<int> find_columns(const alignment& A, const std::function<bool(int)>& kee
 
 dynamic_bitset<> gap_columns(const alignment& A)
 {
-    return find_columns(A, [](const alignment&A, int c) {return n_characters(A,c) != A.n_sequences();});
+    return find_columns(A, is_column_with_gap);
 }
 
 vector<int> gap_columns(const alignment& A, int label)
 {
-    return find_columns(A, [](const alignment&A, int c) {return n_characters(A,c) != A.n_sequences();}, label);
+    return find_columns(A, is_column_with_gap, label);
 }
 
 dynamic_bitset<> variant_columns(const alignment& A)

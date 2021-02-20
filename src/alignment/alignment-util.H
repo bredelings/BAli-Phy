@@ -185,6 +185,8 @@ bool is_masked_column(const alignment& A, int c);
 
 bool is_variant_column(const alignment& A, int c);
 
+bool is_column_with_gap(const alignment& A, int c);
+
 int count_variant_columns(const alignment& A, int c1, int c2);
 
 void remove_columns(alignment& A, const std::function<bool(int)>& remove);
