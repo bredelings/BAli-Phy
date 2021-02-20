@@ -2981,8 +2981,8 @@ The command <command>bali-phy</command> and its associated tools should then be 
     </section>
       <section><info><title>Options: compiler and linker flags</title></info>
 	
-      <para>You can select the C++ compiler by setting the CXX variable.  A useful example of this is to use <command>g++-8</command> on systems where <command>g++</command> invokes a compiler that is too old:
- <screen><prompt>%</prompt> <userinput>CXX=g++-8 meson build --prefix=&#36;HOME/Applications/bali-phy-&version; --buildtype=release</userinput></screen>
+      <para>You can select the C++ compiler by setting the CXX variable.  A useful example of this is to use <command>g++-9</command> on systems where <command>g++</command> invokes a compiler that is too old:
+ <screen><prompt>%</prompt> <userinput>CXX=g++-9 meson build --prefix=&#36;HOME/Applications/bali-phy-&version; --buildtype=release</userinput></screen>
  You may also set compiler and linker options using the CPPFLAGS, CXXFLAGS, and LDFLAGS variables.  For example, you can instruct the compiler to use all the features of your chip, instead of producing generic code that will run anywhere:
  <screen><prompt>%</prompt> <userinput>CXXFLAGS="-mtune=native -march=native" meson --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>
 
