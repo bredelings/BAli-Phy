@@ -1115,7 +1115,7 @@ log_double_t deploid_01_plaf_only_CSD(const EVector& alt_allele_frequency, const
 extern "C" closure builtin_function_deploid_01_probability_haplotypes_plaf_only(OperationArgs& Args)
 {
     // 1. Population-Level Allele Frequencies (PLAF) - an EVector of double.
-    auto arg0 = Args.evaluate(1);
+    auto arg0 = Args.evaluate(0);
     auto& plaf = arg0.as_<EVector>();
 
     // 2. Haplotypes - an EVector of EVector of Int
