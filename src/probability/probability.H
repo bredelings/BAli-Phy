@@ -71,6 +71,8 @@ double cauchy_quantile(double p, double m, double s);
 
 log_double_t negative_binomial_pdf(int r, double p, int k);
 
+log_double_t beta_binomial_pdf(int n, double a, double b, int k);
+
 log_double_t binomial_pdf(int n, double p, int k);
 
 log_double_t geometric_pdf(double p, int n);

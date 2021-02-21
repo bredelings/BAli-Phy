@@ -467,6 +467,34 @@ log_double_t binomial_pdf(int n, double p, int k)
     return Pr;
 }
 
+
+log_double_t L_gamma(double x)
+{
+    return exp_to<log_double_t>(std::lgamma(x));
+}
+
+log_double_t L_beta(double x, double y)
+{
+    return L_gamma(x) * L_gamma(y) / L_gamma(x+y);
+}
+
+log_double_t beta_binomial_pdf(int n, double a, double b, int k)
+{
+    assert(n >= 0);
+    assert(a >= 0);
+    assert(b >= 0);
+
+    if (k < 0) return 0;
+    if (k > n) return 0;
+
+    // pr = choose(n,k) * beta(k+a, n-k+b) / beta(a,b);
+    auto pr = L_beta(k+a, n-k+b) / L_beta(a,b);
+
+    // choose(n,k) = 1/[(n+1) * beta(n-k+1,k+1)]
+    pr /= L_beta(n-k+1,k+1);
+    pr /= (n+1);
+
+    return pr;
 }
 
 log_double_t bernoulli_pdf(double p, int k)
