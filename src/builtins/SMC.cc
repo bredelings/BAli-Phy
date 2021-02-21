@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "math/pow2.H"
+#include "math/logprod.H"
 #include "util/matrix.H"
 #include "util/range.H"
 #include "util/math/log-double.H"
@@ -1095,31 +1096,38 @@ extern "C" closure builtin_function_li_stephens_2003_composite_likelihood(Operat
 //   Technically, this could be a VCF, but that would take a lot of space.
 //   Maybe just the first 3 fields - site,ref,alt?
 
-/*
-log_double_t deploid_01_frequency_only_CSD(const vector<int>& sites, vector<double> alt_allele_frequency, vector<pair<int,int>> reads, double p_miscopy)
+log_double_t deploid_01_plaf_only_CSD(const EVector& alt_allele_frequency, const EVector& haplotype)
 {
+    assert(alt_allele_frequency.size() == haplotype.size());
+
+    log_prod total;
+    for(int site=0; site < haplotype.size(); site++)
+    {
+        int h = haplotype[site].as_int();
+        double f = alt_allele_frequency[site].as_double();
+        double p = h?f:1.0-f;
+        total *= p;
+    }
+    log_double_t Pr = total;
+    return {Pr};
 }
 
-extern "C" closure builtin_function_deploid_01_plaf_only_composite_likelihood(OperationArgs& Args)
+extern "C" closure builtin_function_deploid_01_probability_haplotypes_plaf_only(OperationArgs& Args)
 {
-    // 1. Mixture weights - an EVector of double.
-    auto arg0 = Args.evaluate(0);
-    auto& weights = arg0.as_<EVector>();
+    // 1. Population-Level Allele Frequencies (PLAF) - an EVector of double.
+    auto arg0 = Args.evaluate(1);
+    auto& plaf = arg0.as_<EVector>();
 
-    // 3. Haplotypes - an EVector of EVector of Int
+    // 2. Haplotypes - an EVector of EVector of Int
     auto arg1 = Args.evaluate(1);
     auto& haplotypes = arg1.as_<EVector>();
 
-    // 4. Reads = EVector of EPair of Int
-    auto arg2 = Args.evaluate(2);
-    auto& reads = arg2.as_<EVector>();
+    log_double_t Pr = 1.0;
+    for(auto& haplotype: haplotypes)
+        Pr *= deploid_01_plaf_only_CSD(plaf, haplotype.as_<EVector>());
 
-    // 1. Population-Level Allele Frequencies (PLAF) - an EVector of double.
-    auto arg3 = Args.evaluate(3);
-    auto& plaf = arg3.as_<EVector>();
-
+    return {Pr};
 }
-*/
 
 double wsaf_at_site(int site, const EVector& weights, const EVector& haplotypes)
 {
