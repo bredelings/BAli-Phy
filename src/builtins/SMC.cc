@@ -9,6 +9,7 @@
 #include "alignment/alignment.H"
 #include "alignment/alignment-util.H"
 #include "probability/choose.H"
+#include "probability/probability.H"
 #include "computation/machine/args.H"
 
 #include <Eigen/Dense>
@@ -1081,3 +1082,108 @@ extern "C" closure builtin_function_li_stephens_2003_composite_likelihood(Operat
     return { Pr };
 }
 
+// OK, for DEploid, we could take
+// (a1) 0/1 panel + VCF
+// (a2) 0/1 plaf  + VCF
+
+// (b) ATGC panel + VCF
+// (b) ATGC plaf  + VCF
+
+// (c) ATGC complete sequences.
+
+// Can we write out a kind of "patch file" for each iteration?
+//   Technically, this could be a VCF, but that would take a lot of space.
+//   Maybe just the first 3 fields - site,ref,alt?
+
+/*
+log_double_t deploid_01_frequency_only_CSD(const vector<int>& sites, vector<double> alt_allele_frequency, vector<pair<int,int>> reads, double p_miscopy)
+{
+}
+
+extern "C" closure builtin_function_deploid_01_plaf_only_composite_likelihood(OperationArgs& Args)
+{
+    // 1. Mixture weights - an EVector of double.
+    auto arg0 = Args.evaluate(0);
+    auto& weights = arg0.as_<EVector>();
+
+    // 3. Haplotypes - an EVector of EVector of Int
+    auto arg1 = Args.evaluate(1);
+    auto& haplotypes = arg1.as_<EVector>();
+
+    // 4. Reads = EVector of EPair of Int
+    auto arg2 = Args.evaluate(2);
+    auto& reads = arg2.as_<EVector>();
+
+    // 1. Population-Level Allele Frequencies (PLAF) - an EVector of double.
+    auto arg3 = Args.evaluate(3);
+    auto& plaf = arg3.as_<EVector>();
+
+}
+*/
+
+double wsaf_at_site(int site, const EVector& weights, const EVector& haplotypes)
+{
+    int num_strains = weights.size();
+
+    double q = 0;
+    for(int j=0;j<num_strains;j++)
+    {
+        double w = weights[j].as_double();
+        double h = haplotypes[j].as_<EVector>()[site].as_int();
+        assert(h == 0 or h == 1);
+        q += w*h;
+    }
+
+    return q;
+}
+
+// Pr(D|h, w, n, \psi) where psi includes
+// * e = error rate
+// * c = concentration parameter for beta in beta-binomial
+extern "C" closure builtin_function_deploid_01_probability_of_reads(OperationArgs& Args)
+{
+    // 1a. Mixture weights - an EVector of double.
+    auto arg0 = Args.evaluate(0);
+    auto& weights = arg0.as_<EVector>();
+
+    // 1b. Haplotypes - an EVector of EVector of Int
+    auto arg1 = Args.evaluate(1);
+    auto& haplotypes = arg1.as_<EVector>();
+
+    // 1c. Reads = EVector of EPair of Int
+    auto arg2 = Args.evaluate(2);
+    auto& reads = arg2.as_<EVector>();
+
+    // 1d. Error rate
+    double error_rate = Args.evaluate(3).as_double();
+    assert(0 <= error_rate and error_rate <= 1.0);
+
+    // 1e. Beta concentration parameter
+    double c = Args.evaluate(4).as_double();
+    assert(c > 0);
+
+    int num_strains = weights.size();
+    assert(haplotypes.size() == weights.size());
+
+    int num_sites = reads.size();
+#ifndef NDEBUG
+    for(int i=0;i<num_strains;i++)
+        assert(haplotypes[i].as_<EVector>().size() == num_sites);
+#endif
+
+    // 2. Accumulate observation probabilities!
+    log_double_t Pr = 1.0;
+    for(int site=0; site<num_sites; site++)
+    {
+        int ref = reads[site].as_<EPair>().first.as_int();
+        int alt = reads[site].as_<EPair>().second.as_int();
+
+        double q = wsaf_at_site(site, weights, haplotypes);
+
+        double pi = q + error_rate*(1.0 - 2.0*q);
+
+        Pr *= beta_binomial_pdf(ref+alt, c*pi, c*(1.0-pi), alt);
+    }
+
+    return { Pr };
+}
