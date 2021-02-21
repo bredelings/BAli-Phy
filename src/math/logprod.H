@@ -22,6 +22,7 @@
 
 #include <cmath>
 #include "util/assert.hh"
+#include "util/math/log-double.H"
 #include <iostream>
 
 struct log_prod_underflow
