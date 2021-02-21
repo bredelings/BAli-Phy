@@ -448,19 +448,25 @@ log_double_t negative_binomial_pdf(int r, double p, int k)
 
 log_double_t binomial_pdf(int n, double p, int k)
 {
-  if (k > n)
-    return 0;
+    assert(n >= 0);
+    assert(p >= 0.0 and p <= 1.0);
 
-  if (p == 0) 
-    return (k == 0) ? 1 : 0;
+    if (k < 0) return 0;
 
-  if (p == 1)
-    return (k == n) ? 1 : 0;
+    if (k > n) return 0;
 
-  log_double_t Pr;
-  Pr.log() = log_choose (n, k) + k*log (p) + (n - k)*log1p (-p);
+    if (p == 0)
+        return (k == 0) ? 1 : 0;
 
-  return Pr;
+    if (p == 1)
+        return (k == n) ? 1 : 0;
+
+    log_double_t Pr;
+    Pr.log() = log_choose (n, k) + k*log (p) + (n - k)*log1p (-p);
+
+    return Pr;
+}
+
 }
 
 log_double_t bernoulli_pdf(double p, int k)
