@@ -1068,7 +1068,7 @@ extern "C" closure builtin_function_li_stephens_2003_composite_likelihood(Operat
 
     int n = A.n_sequences();
 
-    auto variant_columns = find_columns(A, [&](int c){return is_variant_column(A,c);});
+    auto variant_columns = find_columns(A, [&](int c){return is_variant_column(A,c) and not is_column_with_gap(A,c);});
     alignment A2 = select_columns(A, variant_columns);
 
     double theta_ish = li_stephens_2003_theta(n);
