@@ -1129,6 +1129,29 @@ extern "C" closure builtin_function_deploid_01_probability_haplotypes_plaf_only(
     return {Pr};
 }
 
+// In theory we could construct this in Haskell by something like
+//    haplotype <- independant [ bernoulli f | f <- frequencies ]
+// In that case redrawing individual element would come automatically.
+extern "C" closure builtin_function_deploid_01_sample_haplotype_from_plaf(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& alt_allele_frequency = arg0.as_<EVector>();
+
+    int num_sites = alt_allele_frequency.size();
+
+    object_ptr<EVector> H (new EVector(num_sites));
+    auto& haplotype = *H;
+    for(int site=0; site < num_sites; site++)
+    {
+        double f = alt_allele_frequency[site].as_double();
+        if (bernoulli(f))
+            haplotype[site] = 1;
+        else
+            haplotype[site] = 0;
+    }
+    return H;
+}
+
 double wsaf_at_site(int site, const EVector& weights, const EVector& haplotypes)
 {
     int num_strains = weights.size();
