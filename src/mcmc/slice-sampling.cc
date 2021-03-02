@@ -575,11 +575,13 @@ bool can_propose_same_interval_doubling(double x0, double x1, double w, double L
         return *gR_cached;
     };
 
-    while (R-L > 1.1*w)
+    bool ok = true;
+    while (ok and R-L > 1.1*w)
     {
         double M = (R+L)/2;
         assert( L < M and M < R);
 
+        // Check if x0 and x1 are in different halves of the interval.
         if ((x0 < M and x1 >= M) or (x0 >= M and x1 < M))
             D = true;
 
@@ -595,10 +597,20 @@ bool can_propose_same_interval_doubling(double x0, double x1, double w, double L
         }
 
         if (D and log_y >= gL() and log_y >= gR())
-            return false;
+            ok = false;
     }
 
-    return true;
+    // FIXME - this is clunky.  Do we really want to set x by evaluate g( )?
+    if (D)
+    {
+        // We may have set x to L or R, so reset it to the right values.
+        if (ok)
+            g(x1);
+        else
+            g(x0);
+    }
+
+    return ok;
 }
 
 double slice_sample_stepping_out_(double x0, slice_function& g, double w, int m)
@@ -617,6 +629,8 @@ double slice_sample_stepping_out_(double x0, slice_function& g, double w, int m)
     return search_interval(x0,L,R,g,logy);
 }
 
+// We need to SET the value INSIDE this routine.
+// Are we assuming that calling g sets the value?
 double slice_sample_doubling_(double x0, slice_function& g, double w, int m)
 {
     // 0. Check that the values are OK
@@ -633,6 +647,7 @@ double slice_sample_doubling_(double x0, slice_function& g, double w, int m)
     double x1 = search_interval(x0,L,R,g,logy);
 
     // 4. Check that we can propose the same interval from x2
+    // We need to SET the value INSIDE this routine if we recompute g().
     if (can_propose_same_interval_doubling(x0, x1, w, L, R, gL_cached, gR_cached, g, logy))
         return x1;
     else

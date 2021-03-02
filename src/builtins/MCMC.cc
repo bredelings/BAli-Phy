@@ -404,9 +404,13 @@ extern "C" closure builtin_function_slice_sample_real_random_variable(OperationA
 
     random_variable_slice_function logp(C1, bnds.as_<Bounds<double>>(), x_reg);
 
-    // OK, this is a bit problematic.
+    // Tuning this would be better.
+    // However, we now find slice boundaries by doubling instead of stepping out.
+    // Therefore the cost of not being tuned is more limited.
     double w = 1.0;
 
+    // NOTE: Although this function returns a value, we are expecting the
+    //       slice_sample routine to the variable to the final value.
     slice_sample(logp, w, 50);
 
     if (log_verbose >= 3) std::cerr<<"   - Posterior evaluated "<<logp.count<<" times.\n";

@@ -378,6 +378,8 @@ namespace MCMC {
 	    std::cerr<<endl<<endl;
 	}
 
+        // NOTE: Although this function returns a value, we are expecting the
+        //       slice_sample routine to set the variable to the final value.
 	double v2 = slice_sample(v1,slice_levels,W, 50);
 
 	if (log_verbose >= 4)
