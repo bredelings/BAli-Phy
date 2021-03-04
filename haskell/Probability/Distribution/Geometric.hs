@@ -9,10 +9,10 @@ builtin builtin_sample_geometric 2 "sample_geometric" "Distribution"
 
 geometric_bounds = integer_above 0
 
-geometric_effect x = x `seq` bnds `seq` do
-  add_move (\c -> slice_sample_integer_random_variable x bnds c)
-  add_move (\c -> inc_dec_mh x bnds c)
-      where bnds = getIntegerBounds geometric_bounds
+geometric_effect x = do
+  let bnds = getIntegerBounds geometric_bounds
+  add_move $ slice_sample_integer_random_variable x bnds
+  add_move $ inc_dec_mh x bnds
 
 sample_geometric p_success = RandomStructure geometric_effect modifiable_structure $ liftIO (IOAction (\s->(s,builtin_sample_geometric p_success s)))
 
