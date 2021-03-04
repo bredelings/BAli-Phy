@@ -1,4 +1,4 @@
-module Data.CSV ( read_csv )
+module Data.CSV ( read_csv, read_tsv )
     where
 
 import Foreign.String
