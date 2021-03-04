@@ -14,6 +14,8 @@ extern "C" closure builtin_function_read_csv(OperationArgs& Args)
 {
   const string filename = Args.evaluate(0).as_<String>();
 
+  const char sep = Args.evaluate(1).as_char();
+
   checked_ifstream text_file(filename,"csv file");
 
   EVector vec_all_lines;
@@ -25,7 +27,7 @@ extern "C" closure builtin_function_read_csv(OperationArgs& Args)
       // See https://tools.ietf.org/html/rfc4180
       // Probably I should write an actual parser.
       EVector vec_line;
-      for(auto field: split(line, ','))
+      for(auto field: split(line, sep))
           vec_line.push_back(String(field));
       vec_all_lines.push_back(vec_line);
   }
