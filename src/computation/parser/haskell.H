@@ -1,0 +1,21 @@
+#ifndef HASKELL_H
+#define HASKELL_H
+
+#include <string>
+#include <utility>
+#include "computation/object.H"
+#include "computation/expression/expression_ref.H"
+#include "located.H"
+
+struct Class: public Object
+{
+    Located<expression_ref> class_header;
+    Located<expression_ref> decls;
+
+    Class* clone() const { return new Class(*this);}
+    Class(const Located<expression_ref>& ch, const Located<expression_ref>& ds): class_header(ch), decls(ds) {}
+};
+
+typedef Located<Class> LClass;
+
+#endif
