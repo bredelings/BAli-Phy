@@ -3,9 +3,12 @@
 #include "location.hh"
 
 template <typename T>
-struct Located: public Object, public yy::location, public T
+struct Located: public Object
 {
 public:
+    yy::location loc;
+    T obj;
+
     Located<T>* clone() const {return new Located<T>(*this);}
 
     Located<T>& operator=(const Located<T>& t) = default;
@@ -20,14 +23,12 @@ public:
     Located() = default;
     Located(const Located<T>&) = default;
     Located(Located<T>&&) = default;
-    Located(const location& loc, const T& t):location(loc),T(t) {}
+    Located(const yy::location& l, const T& t):loc(l),obj(t) {}
 };
 
 template <typename T>
 inline std::string Located<T>::print() const {
-    const T& t = *this;
-    const yy::location& l = *this;
-    return "[" + convertToString(t) + "@" + convertToString(l) + "]";
+    return "[" + convertToString(loc) + "@" + convertToString(obj) + "]";
 }
 
 template <typename T>
