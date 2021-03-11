@@ -18,6 +18,7 @@
   # include "computation/operations.H"
   # include "computation/expression/list.H"
   # include "computation/expression/tuple.H"
+  # include "computation/parser/haskell.H"
 
   class driver;
 
@@ -661,7 +662,7 @@ topdecl: cl_decl                               {$$ = $1;}
 |        "builtin" varop INTEGER STRING STRING {$$ = make_builtin_expr($2,$3,$4,$5);}
 |        "builtin" varop INTEGER STRING        {$$ = make_builtin_expr($2,$3,$4);}
 
-cl_decl: "class" tycl_hdr /*fds*/ wherebinds   {$$ = expression_ref(AST_node("Class"),{$2,$3});}
+cl_decl: "class" tycl_hdr /*fds*/ wherebinds   {$$ = Class({@2,$2},{@3,$3});}
 
 ty_decl: "type" type "=" ctypedoc                                          {}
 |        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = make_data_or_newtype($1,$3,$4);}

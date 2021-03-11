@@ -107,6 +107,8 @@ public:
 
     std::string name;
 
+    std::shared_ptr<std::string> filename;
+
     bool is_resolved() const {return resolved;}
 
     bool is_optimized() const {return optimized;}

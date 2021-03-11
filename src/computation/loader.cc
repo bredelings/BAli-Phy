@@ -96,16 +96,21 @@ Module module_loader::load_module_from_file(const string& filename) const
     {
 	try
 	{
+            auto fname = std::make_shared<string>(filename);
+
 	    string file_contents = read_file(filename,"module");
 
 	    auto lang_options = language_options(file_contents);
 
-	    auto m = parse_module_file(file_contents, filename);
+	    auto m = parse_module_file(file_contents, *fname);
 
 	    if (dump_parsed)
 		std::cout<<m<<std::endl;
 
 	    modules.insert( {filename, Module(m, lang_options)} );
+
+            // Save a reference to the string that we allocated, so we can clean it up later.
+            modules.at(filename).filename = fname;
 	}
 	catch (myexception& e)
 	{

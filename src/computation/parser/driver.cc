@@ -79,7 +79,7 @@ int
 driver::parse_string (const string& file_contents, const std::string &input_name)
 {
   file = input_name;
-  location.initialize (&file);
+  location.initialize (&input_name);
   scan_begin (file_contents);
   yy::parser parser (*this);
   parser.set_debug_level (trace_parsing);

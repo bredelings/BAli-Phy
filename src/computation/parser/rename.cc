@@ -10,6 +10,7 @@
 #include "computation/expression/tuple.H"
 #include "computation/expression/constructor.H"
 #include "computation/expression/AST_node.H"
+#include "computation/parser/haskell.H"
 #include "util/set.H"
 
 using std::string;
@@ -204,19 +205,17 @@ expression_ref unapply(const expression_ref& E)
 
 expression_ref rename_infix(const Module& m, const expression_ref& E)
 {
+    if (E.is_a<Class>())
+    {
+        auto& C = E.as_<Class>();
+        return Class(C.class_header, {C.decls.loc, rename_infix(m, C.decls.obj)});
+    }
+
     if (not E.is_expression()) return E;
 
     auto v = E.sub();
 
-    if (is_AST(E,"Class"))
-    {
-        auto constraints = E.sub()[0];
-        auto binds = E.sub()[1];
-
-        binds = rename_infix(m, binds);
-        return expression_ref(AST_node("Class"),{constraints,binds});
-    }
-    else if (is_AST(E,"Instance"))
+    if (is_AST(E,"Instance"))
     {
         auto inst_type = E.sub()[0];
         auto binds = E.sub()[1];
@@ -731,10 +730,10 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
             add(bound_names, rename_pattern(id, top));
             decl = expression_ref(AST_node("Decl:sigtype"),{id,type});
         }
-        if (is_AST(decl,"Class"))
+        if (decl.is_a<Class>())
         {
-            auto class_header = decl.sub()[0];
-            auto class_decls = decl.sub()[1];
+            auto& C = decl.as_<Class>();
+            auto class_decls = C.decls.obj;
             assert(is_AST(class_decls, "Decls"));
             auto cdecls = class_decls.sub();
             for(auto& cdecl: cdecls)
@@ -749,7 +748,7 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
                     cdecl = expression_ref(AST_node("Decl:sigtype"),{id,type});
                 }
             class_decls = expression_ref(AST_node("Decls"),cdecls);
-            decl = expression_ref(AST_node("Class"),{class_header, class_decls});
+            decl = Class(C.class_header, {C.decls.loc, class_decls});
         }
         if (is_AST(decl,"Instance"))
         {
@@ -775,16 +774,16 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
     {
 	if (is_AST(decl,"Decl"))
 	    decl = rename_decl(decl, bound2);
-        if (is_AST(decl,"Class"))
+        if (decl.is_a<Class>())
         {
-            auto class_header = decl.sub()[0];
-            auto class_decls = decl.sub()[1];
+            auto& C = decl.as_<Class>();
+            auto class_decls = C.decls.obj;
             auto cdecls = class_decls.sub();
             for(auto& cdecl: cdecls)
                 if (is_AST(cdecl,"Decl"))
                     cdecl = rename_decl(cdecl, bound2);
             class_decls = expression_ref(AST_node("Decls"),cdecls);
-            decl = expression_ref(AST_node("Class"),{class_header, class_decls});
+            decl = Class(C.class_header, {C.decls.loc,class_decls});
         }
         if (is_AST(decl,"Instance"))
         {

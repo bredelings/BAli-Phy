@@ -20,6 +20,7 @@
 #include "desugar.H"
 #include "util/assert.hh"
 #include "util/range.H"
+#include "computation/parser/haskell.H"
 
 using std::string;
 using std::vector;
@@ -249,6 +250,12 @@ failable_expression desugar_state::desugar_rhs(const expression_ref& E)
 
 expression_ref desugar_state::desugar(const expression_ref& E)
 {
+    if (E.is_a<Class>())
+    {
+        auto& C = E.as_<Class>();
+        return Class(C.class_header, {C.decls.loc, desugar(C.decls.obj)});
+    }
+
     vector<expression_ref> v = E.copy_sub();
 
     if (E.head().is_a<AST_node>())
@@ -267,13 +274,6 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 
 	    return expression_ref{E.head(),decls};
 	}
-        else if (n.type == "Class")
-        {
-            auto constraints = E.sub()[0];
-            auto binds = E.sub()[1];
-            binds = desugar(binds);
-            return expression_ref(E.head(),{constraints, binds});
-        }
         else if (n.type == "Instance")
         {
             auto inst_header = E.sub()[0];
