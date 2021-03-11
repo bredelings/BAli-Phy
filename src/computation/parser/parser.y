@@ -1108,7 +1108,7 @@ tup_tail: texp commas_tup_tail
 */
 /* ------------- List expressions -------------------------------- */
 
-list: texp                       { $$ = {AST_node("id",":"),$1,AST_node("id","[]")}; }
+list: texp                       { $$ = make_list({$1}); }
 |     lexps                      { $$ = make_list($1); }
 |     texp ".."                  { $$ = expression_ref(AST_node("enumFrom"),{$1}); }
 |     texp "," exp ".."          { $$ = expression_ref(AST_node("enumFromThen"),{$1,$3}); }
