@@ -12,6 +12,7 @@ computation_sources = [
 
   'parser/desugar.cc','parser/desugar-case.cc', 'parser/rename.cc',
   'parser/driver.cc', 'parser/lexer.cc', 'parser/parser.cc',
+  'parser/haskell.cc',
 
   'expression/operator.cc', 'expression/expression.cc','expression/constructor.cc',
   'expression/expression_ref.cc','expression/AST_node.cc',

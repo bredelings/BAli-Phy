@@ -16,6 +16,14 @@ struct Class: public Object
     Class(const Located<expression_ref>& ch, const Located<expression_ref>& ds): class_header(ch), decls(ds) {}
 };
 
+struct HList: public Object
+{
+    std::vector<expression_ref> elements;
+    HList* clone() const { return new HList(*this);}
+    std::string print() const;
+    HList(const std::vector<expression_ref>& es): elements(es) {}
+};
+
 typedef Located<Class> LClass;
 
 #endif
