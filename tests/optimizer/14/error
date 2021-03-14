@@ -1,18 +1,23 @@
 size = 1   Main.#1 = 'f'
-size = 1   Main.#2 = Main.#1:[]
-size = 1   Main.#21 = 'f'
-size = 1   Main.#22 = Main.#21:[]
-size = 1   Main.#23 = Compiler.Base.error Main.#22
-size = 1   Main.#3 = "case: failed pattern match"
-size = 1   Main.#32 = "Main.f3: pattern match failure"
-size = 1   Main.#33 = Foreign.String.unpack_cpp_string Main.#32
-size = 1   Main.#34 = Compiler.Base.error Main.#33
-size = 1   Main.#4 = Foreign.String.unpack_cpp_string Main.#3
+size = 1   Main.#2 = []
+size = 1   Main.#23 = 'f'
+size = 1   Main.#24 = []
+size = 1   Main.#25 = Main.#23:Main.#24
+size = 1   Main.#26 = Compiler.Base.error Main.#25
+size = 1   Main.#27 = []
+size = 1   Main.#3 = Main.#1:Main.#2
+size = 1   Main.#36 = "Main.f3: pattern match failure"
+size = 1   Main.#37 = Foreign.String.unpack_cpp_string Main.#36
+size = 1   Main.#38 = Compiler.Base.error Main.#37
+size = 1   Main.#39 = []
+size = 1   Main.#4 = []
 size = 1   Main.#5 = "case: failed pattern match"
 size = 1   Main.#6 = Foreign.String.unpack_cpp_string Main.#5
-size = 1   Main.$v#1 = Compiler.Base.error Main.#4
-size = 1   Main.$v#2 = Compiler.Base.error Main.#6
-size = 7   Main.f = \#7 #8 -> let {fail1#1 = case #7 of {[] -> Main.fail2#1; #9:#10 -> let {$v#3 = #9:[]} in case #8 of {[] -> $v#3; #11:#12 -> Main.fail2#1; _ -> Main.$v#1}; _ -> Main.$v#2}} in case #7 of {#15:#16 -> case #8 of {#17:#18 -> #16 Data.List.++ #18; _ -> fail1#1}; _ -> fail1#1}
-size = 5   Main.f2 = \#24 #25 -> case #24 of {#26:#27 -> let {$v#4 = #26:[]} in case #25 of {#28:#29 -> #27 Data.List.++ #29; [] -> $v#4; _ -> Main.#23}; _ -> Main.#23}
-size = 5   Main.f3 = \#35 #36 -> case #35 of {#37:#38 -> let {$v#5 = #37:[]} in case #36 of {#39:#40 -> #38 Data.List.++ #40; [] -> $v#5; _ -> Main.#34}; _ -> Main.#34}
-size = 1   Main.fail2#1 = Compiler.Base.error Main.#2
+size = 1   Main.#7 = "case: failed pattern match"
+size = 1   Main.#8 = Foreign.String.unpack_cpp_string Main.#7
+size = 1   Main.$v#1 = Compiler.Base.error Main.#6
+size = 1   Main.$v#2 = Compiler.Base.error Main.#8
+size = 7   Main.f = \#9 #10 -> let {fail1#1 = case #9 of {[] -> Main.fail2#1; #11:#12 -> let {$v#3 = #11:Main.#4} in case #10 of {[] -> $v#3; #13:#14 -> Main.fail2#1; _ -> Main.$v#1}; _ -> Main.$v#2}} in case #9 of {#17:#18 -> case #10 of {#19:#20 -> #18 Data.List.++ #20; _ -> fail1#1}; _ -> fail1#1}
+size = 5   Main.f2 = \#28 #29 -> case #28 of {#30:#31 -> let {$v#4 = #30:Main.#27} in case #29 of {#32:#33 -> #31 Data.List.++ #33; [] -> $v#4; _ -> Main.#26}; _ -> Main.#26}
+size = 5   Main.f3 = \#40 #41 -> case #40 of {#42:#43 -> let {$v#5 = #42:Main.#39} in case #41 of {#44:#45 -> #43 Data.List.++ #45; [] -> $v#5; _ -> Main.#38}; _ -> Main.#38}
+size = 1   Main.fail2#1 = Compiler.Base.error Main.#3

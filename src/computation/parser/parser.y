@@ -1648,14 +1648,9 @@ expression_ref yy_make_tuple(const vector<expression_ref>& tup_exprs)
     return t;
 }
 
-
-expression_ref make_list(const vector<expression_ref>& pquals)
+expression_ref make_list(const vector<expression_ref>& elements)
 {
-    expression_ref L = AST_node("id","[]");
-    expression_ref cons = AST_node("id",":");
-    for(int i=pquals.size()-1;i>=0;i--)
-	L = {cons,pquals[i],L};
-    return L;
+    return HList(elements);
 }
 
 expression_ref make_alts(const vector<expression_ref>& alts)

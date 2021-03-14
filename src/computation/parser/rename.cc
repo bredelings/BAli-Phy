@@ -8,6 +8,7 @@
 #include "computation/module.H"
 #include "computation/expression/apply.H"
 #include "computation/expression/tuple.H"
+#include "computation/expression/list.H"
 #include "computation/expression/constructor.H"
 #include "computation/expression/AST_node.H"
 #include "computation/parser/haskell.H"
@@ -163,8 +164,17 @@ expression_ref shift_list(vector<expression_ref>& v)
 
 // The issue here is to rewrite @ f x y -> f x y
 // so that f is actually the head.
-expression_ref unapply(const expression_ref& E)
+expression_ref unapply(expression_ref E)
 {
+    if (E.is_a<HList>())
+    {
+        auto& L = E.as_<HList>();
+        vector<expression_ref> patterns = L.elements;
+        for(auto& pattern: patterns)
+            pattern = unapply(pattern);
+        return HList(patterns);
+    }
+
     if (not E.size()) return E;
 
     auto head = E.head();
@@ -210,6 +220,14 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
         auto& C = E.as_<Class>();
         return Class(C.class_header, {C.decls.loc, rename_infix(m, C.decls.obj)});
     }
+    else if (E.is_a<HList>())
+    {
+        auto& L = E.as_<HList>();
+        vector<expression_ref> elements;
+        for(auto& element: L.elements)
+            elements.push_back(rename_infix(m, element));
+        return HList(elements);
+    }
 
     if (not E.is_expression()) return E;
 
@@ -231,7 +249,7 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     {
 	/* lhs */
 	v[0] = unapply(v[0]);
-	assert(is_AST(v[0],"id"));
+	assert(is_AST(v[0],"id") or v[0].is_a<HList>());
     }
     else if (is_AST(E,"alt"))
     {
@@ -372,6 +390,16 @@ typedef set<string> bound_var_info;
 // analyze a `let decls body` statement, we rename the variables in the decls at the same time that
 // we accumulate the bound variables.  We then use the combined list of bound variables to rename the body.
 
+bound_var_info intersection(const bound_var_info& bv1, const bound_var_info& bv2)
+{
+    bound_var_info I;
+    for(auto& v: bv1)
+ 	if (bv2.count(v))
+            I.insert(v);
+
+    return I;
+}
+
 bool disjoint_add(bound_var_info& bv1, const bound_var_info& bv2)
 {
     for(auto& v: bv2)
@@ -399,9 +427,11 @@ struct renamer_state
 //    var get_fresh_var(const string& name) {return var(name,var_index++);}
 
 
+    bound_var_info find_vars_in_patterns(const vector<expression_ref>& pats, bool top = false);
     bound_var_info find_vars_in_pattern(const expression_ref& pat, bool top = false);
     bound_var_info find_bound_vars_in_stmt(const expression_ref& stmt);
     bound_var_info find_bound_vars_in_decls(const expression_ref& stmt);
+    bound_var_info rename_patterns(vector<expression_ref>& pat, bool top = false);
     bound_var_info rename_pattern(expression_ref& pat, bool top = false);
     bound_var_info rename_decl_head(expression_ref& decl, bool is_top_level);
     expression_ref rename_decl(const expression_ref& decl, const bound_var_info& bound);
@@ -419,6 +449,26 @@ expression_ref rename(const Module& m, const expression_ref& E)
     return Rn.rename(E,set<string>());
 }
 
+bound_var_info renamer_state::find_vars_in_patterns(const vector<expression_ref>& pats, bool top)
+{
+    bound_var_info bound;
+
+    for(auto& pat: pats)
+    {
+        auto bound_here = find_vars_in_pattern(pat, top);
+        auto overlap = intersection(bound, bound_here);
+        if (not overlap.empty())
+        {
+            auto name = *overlap.begin();
+            throw myexception()<<"Pattern uses a variable '"<<name<<"' twice!";
+        }
+        add(bound, bound_here);
+    }
+
+    return bound;
+}
+
+// FIXME - can we just call rename_pattern on this directly???
 // Convert ids to vars in pattern, and return a set of all names for vars (excluding wildcards, of course)
 // A single variable is a valid "pattern" for the purposes of this function.
 bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bool top)
@@ -449,6 +499,12 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
 	if (overlap)
 	    throw myexception()<<"Pattern '"<<pat<<"' uses a variable twice!";
 	return bound;
+    }
+
+    if (pat.is_a<HList>())
+    {
+        auto& L = pat.as_<HList>();
+        return find_vars_in_patterns(L.elements);
     }
 
     // 4. Handle literal values
@@ -482,22 +538,27 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
     if (S.arity != pat.size())
 	throw myexception()<<"Constructor '"<<id<<"' arity "<<S.arity<<" doesn't match pattern '"<<pat<<"'!";
 
-    head = constructor(S.name, S.arity);
-
-    bound_var_info bound;
-    // Rename the arguments
-    bool overlap = false;
-    if (pat.size())
-        for(auto& e: pat.sub())
-        {
-            auto bound_here =  find_vars_in_pattern(e, top);
-            overlap = overlap or not disjoint_add(bound, bound_here);
-        }
-
-    if (overlap)
-	throw myexception()<<"Pattern '"<<pat<<"' uses a variable twice!";
-
     // 11. Return the variables bound
+    return find_vars_in_patterns(pat.copy_sub());
+}
+
+bound_var_info renamer_state::rename_patterns(vector<expression_ref>& patterns, bool top)
+{
+    bound_var_info bound;
+
+    // Rename the arguments
+    for(auto& e: patterns)
+    {
+	auto bound_here =  rename_pattern(e, top);
+        auto overlap = intersection(bound, bound_here);
+        if (not overlap.empty())
+        {
+            auto name = *overlap.begin();
+            throw myexception()<<"Pattern uses a variable '"<<name<<"' twice!";
+        }
+	add(bound, bound_here);
+    }
+
     return bound;
 }
 
@@ -540,6 +601,16 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
 	return bound;
     }
     
+    //4. Handle List pattern.
+    if (pat.is_a<HList>())
+    {
+        auto& L = pat.as_<HList>();
+        auto patterns = L.elements;
+        auto bound = rename_patterns(patterns,top);
+        pat = HList(patterns);
+        return bound;
+    }
+
     // 4. Handle literal values
     if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double()) return {};
 
@@ -576,7 +647,7 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
     head = constructor(S.name, S.arity);
 
     // 8. Rename arguments and accumulate bound variables
-    vector<expression_ref> args = pat.copy_sub();;
+    vector<expression_ref> args = pat.copy_sub();
 
     bound_var_info bound;
     // Rename the arguments
@@ -587,14 +658,14 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
 	overlap = overlap or not disjoint_add(bound, bound_here);
     }
 
+    if (overlap)
+	throw myexception()<<"Pattern '"<<pat<<"' uses a variable twice!";
+
     // 10. Construct the renamed pattern
     if (args.size())
 	pat = expression_ref{head,args};
     else
 	pat = head;
-
-    if (overlap)
-	throw myexception()<<"Pattern '"<<pat<<"' uses a variable twice!";
 
     // 11. Return the variables bound
     return bound;
@@ -620,7 +691,7 @@ expression_ref renamer_state::rename_decl(const expression_ref& decl, const boun
     //
     //    We deal with these here, since they are only in scope for this decl, whereas e.g. f is in scope
     //      for all decls in the decls group.
-    bool pattern_bind = f.is_a<constructor>();
+    bool pattern_bind = f.is_a<constructor>() or f.is_a<HList>();
     if (not pattern_bind)
     {
 	assert(f.is_a<var>());
@@ -679,16 +750,17 @@ bound_var_info renamer_state::rename_decl_head(expression_ref& decl, bool is_top
     auto w = decl.sub();
     auto& lhs = w[0];
     auto head = lhs.head();
-    assert(is_AST(head,"id"));
+    // FIXME??
+    assert(is_AST(head,"id") or head.is_a<HList>());
     // For a constructor pattern, rename the whole lhs.
-    if (is_haskell_con_name(head.as_<AST_node>().value))
+    if (head.is_a<HList>() or (is_AST(head,"id") and is_haskell_con_name(head.as_<AST_node>().value)))
     {
-        add(bound_names,rename_pattern(lhs, is_top_level));
+        add(bound_names, rename_pattern(lhs, is_top_level));
     }
     // For a function pattern, just rename the variable being defined
     else if (lhs.size())
     {
-        add(bound_names,rename_pattern(head, is_top_level));
+        add(bound_names, rename_pattern(head, is_top_level));
         lhs = expression_ref{head,lhs.sub()};
     }
     // For a variable pattern, the variable being defined is the whole lhs
@@ -903,6 +975,14 @@ bound_var_info renamer_state::rename_stmt(expression_ref& stmt, const bound_var_
 
 expression_ref renamer_state::rename(const expression_ref& E, const bound_var_info& bound)
 {
+    if (E.is_a<HList>())
+    {
+        auto& L = E.as_<HList>();
+        vector<expression_ref> elements;
+        for(auto& element: L.elements)
+            elements.push_back(rename(element, bound));
+        return HList(elements);
+    }
     vector<expression_ref> v = E.copy_sub();
       
     if (E.head().is_a<AST_node>())

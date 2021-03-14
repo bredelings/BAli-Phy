@@ -134,7 +134,7 @@ vector<expression_ref> desugar_state::parse_fundecls(const vector<expression_ref
 	    continue;
 	}
 
-	auto& lhs = decl.sub()[0];
+	auto lhs = desugar(decl.sub()[0]);
 	auto& rhs = decl.sub()[1];
 	auto& rhs_fail = rhs.as_<failable_expression>();
 
@@ -255,6 +255,14 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         auto& C = E.as_<Class>();
         return Class(C.class_header, {C.decls.loc, desugar(C.decls.obj)});
     }
+    else if (E.is_a<HList>())
+    {
+        auto& L = E.as_<HList>();
+        vector<expression_ref> elements;
+        for(auto& element: L.elements)
+            elements.push_back(desugar(element));
+        return get_list(elements);
+    }
 
     vector<expression_ref> v = E.copy_sub();
 
@@ -283,6 +291,8 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         }
 	else if (n.type == "Decl")
 	{
+
+            v[0] = desugar(v[0]);      // Desugar list and tuple patterns to constructors.
 	    v[1] = desugar_rhs(v[1]);
             // FIXME: don't desugar a Decl except from Decls
             // Pattern bindings should be processed before we get here!
@@ -367,10 +377,14 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	    expression_ref body = v.back();
 	    v.pop_back();
 
+            vector<expression_ref> args = v;
+            for(auto& arg: args)
+                arg = desugar(arg);
+
 	    // 2. Desugar the body, binding vars mentioned in the lambda patterns.
 	    body = desugar(body);
 
-	    return def_function({{v,failable_expression(body)}}, error("lambda: pattern match failure"));
+	    return def_function({{args,failable_expression(body)}}, error("lambda: pattern match failure"));
 	}
 	else if (n.type == "Do")
 	{
@@ -487,7 +501,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 		auto& pat = alt.sub()[0];
 		auto& rhs = alt.sub()[1];
 
-		patterns.push_back( pat );
+		patterns.push_back( desugar(pat) );
 		bodies.push_back( desugar_rhs(rhs) );
 	    }
 	    return case_expression(obj, patterns, bodies).result(error("case: failed pattern match"));

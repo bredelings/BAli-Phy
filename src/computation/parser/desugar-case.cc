@@ -16,6 +16,7 @@
 #include "computation/expression/lambda.H"
 #include "computation/expression/var.H"
 #include "computation/expression/constructor.H"
+#include "computation/parser/haskell.H"
 #include "desugar.H"
 #include "util/assert.hh"
 #include "util/range.H"
@@ -326,6 +327,11 @@ void desugar_state::clean_up_pattern(const expression_ref& x, equation_info_t& e
 	pat1 = var(-1);
     }
 
+    // case x of [y1,y2...] -> rhs => case x of (y1:(y2:...)) -> rhs
+    else if (pat1.is_a<HList>())
+    {
+        pat1 = get_list(pat1.as_<HList>().elements);
+    }
     // case x of ~pat -> rhs  =>  case x of _ -> let pat=x in rhs
     else if (is_AST(pat1,"LazyPattern"))
     {
