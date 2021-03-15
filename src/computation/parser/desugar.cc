@@ -104,13 +104,14 @@ failable_expression desugar_state::desugar_gdrh(const expression_ref& E)
 
 	    F.add_binding(binds);
 	}
-	else if (is_AST(guard,"PatQual"))
-	{
-	    auto& pat = guard.sub()[0];
-	    auto E = desugar(guard.sub()[1]);
+        else if (guard.is_a<Haskell::PatQual>())
+        {
+            auto &PQ = guard.as_<Haskell::PatQual>();
+            auto &pat = PQ.bindpat;
+            auto E = desugar(PQ.exp);
 
-	    F = case_expression(E,{pat},{F});
-	}
+            F = case_expression(E,{pat},{F});
+        }
 	else
 	    std::abort();
     }
@@ -345,10 +346,11 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 
 		if (is_AST(B, "SimpleQual"))
 		    E2 = AST_node("If") + B.sub()[0] + E2 + var("[]");
-		else if (is_AST(B, "PatQual"))
+		else if (B.is_a<Haskell::PatQual>())
 		{
-		    expression_ref p = B.sub()[0];
-		    expression_ref l = B.sub()[1];
+                    auto& PQ = B.as_<Haskell::PatQual>();
+		    expression_ref p = PQ.bindpat;
+		    expression_ref l = PQ.exp;
 		    if (is_irrefutable_pat(p))
 		    {
 			expression_ref f  = AST_node("Lambda") + p + E2;
@@ -425,10 +427,11 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 
 	    // do { p <- e ; stmts} => let {ok p = do {stmts}; ok _ = fail "..."} in e >>= ok
 	    // do { v <- e ; stmts} => e >>= (\v -> do {stmts})
-	    else if (is_AST(first,"PatQual"))
+	    else if (first.is_a<Haskell::PatQual>())
 	    {
-		expression_ref p = first.sub()[0];
-		expression_ref e = first.sub()[1];
+                auto& PQ = first.as_<Haskell::PatQual>();
+                expression_ref p = PQ.bindpat;
+		expression_ref e = PQ.exp;
 		expression_ref qop = var("Compiler.Base.>>=");
 
 		if (is_irrefutable_pat(p))

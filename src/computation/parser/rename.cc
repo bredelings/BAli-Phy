@@ -264,6 +264,17 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
             elements.push_back(rename_infix(m, element));
         return Haskell::Tuple(elements);
     }
+    else if (E.is_a<Haskell::PatQual>())
+    {
+        auto PQ = E.as_<Haskell::PatQual>();
+
+        PQ.bindpat = rename_infix(m, PQ.bindpat);
+        PQ.bindpat = unapply(PQ.bindpat);
+
+        PQ.exp = rename_infix(m, PQ.exp);
+
+        return PQ;
+    }
 
     if (not E.is_expression()) return E;
 
@@ -296,11 +307,6 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     {
 	for(int i=0;i<v.size()-1;i++)
 	    v[i] = unapply(v[i]);
-    }
-    else if (is_AST(E,"PatQual"))
-    {
-	/* pat */
-	v[0] = unapply(v[0]);
     }
     else if (is_apply(E.head()))
     {
@@ -928,8 +934,11 @@ bound_var_info renamer_state::find_bound_vars_in_stmt(const expression_ref& stmt
 {
     if (is_AST(stmt, "SimpleQual"))
 	return {};
-    else if (is_AST(stmt, "PatQual"))
-	return find_vars_in_pattern(stmt.sub()[0]);
+    else if (stmt.is_a<Haskell::PatQual>())
+    {
+        auto& PQ = stmt.as_<Haskell::PatQual>();
+        return find_vars_in_pattern(PQ.bindpat);
+    }
     else if (is_AST(stmt, "LetQual"))
         return find_bound_vars_in_decls(stmt.sub()[0]);
     else if (is_AST(stmt, "Rec"))
@@ -987,7 +996,7 @@ bound_var_info renamer_state::rename_rec_stmt(expression_ref& rec_stmt, const bo
 
     // 5. Construct rec_tuple_pattern <- mfix rec_lambda
     expression_ref mfix = AST_node("id","mfix");
-    rec_stmt = AST_node("PatQual")+rec_tuple_pattern + expression_ref{mfix, rec_lambda};
+    rec_stmt = Haskell::PatQual(rec_tuple_pattern, expression_ref{mfix, rec_lambda});
 
     // Combine the set of bound variables and rename our rewritten statement;
     return rename_stmt(rec_stmt, bound);
@@ -1000,12 +1009,12 @@ bound_var_info renamer_state::rename_stmt(expression_ref& stmt, const bound_var_
 	stmt = rename(stmt,bound);
 	return {};
     }
-    else if (is_AST(stmt, "PatQual"))
+    else if (stmt.is_a<Haskell::PatQual>())
     {
-	auto v = stmt.sub();
-	auto bound_vars = rename_pattern(v[0]);
-	v[1] = rename(v[1], bound);
-	stmt = expression_ref{stmt.head(),v};
+        auto PQ = stmt.as_<Haskell::PatQual>();
+	PQ.exp = rename(PQ.exp, bound);
+	auto bound_vars = rename_pattern(PQ.bindpat);
+        stmt = PQ;
 	return bound_vars;
     }
     else if (is_AST(stmt, "LetQual"))

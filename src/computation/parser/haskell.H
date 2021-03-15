@@ -35,6 +35,31 @@ struct Tuple: public Object
     Tuple(const std::vector<expression_ref>& es): elements(es) {}
 };
 
+struct LetQual: public Object
+{
+    expression_ref binds;
+    LetQual* clone() const { return new LetQual(*this);}
+    std::string print()  const;
+    LetQual(const expression_ref& b): binds(b) {}
+};
+
+struct SimpleQual: public Object
+{
+    expression_ref exp;
+    SimpleQual* clone() const { return new SimpleQual(*this);}
+    std::string print() const;
+    SimpleQual(const expression_ref &e): exp(e) {};
+};
+
+struct PatQual: public Object
+{
+    expression_ref bindpat;
+    expression_ref exp;
+    PatQual* clone() const { return new PatQual(*this);}
+    std::string print() const;
+    PatQual(const expression_ref &bp, const expression_ref& e): bindpat(bp), exp(e) {};
+};
+
 }
 
 #endif

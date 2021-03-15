@@ -23,4 +23,19 @@ string Tuple::print() const
     return "(" + join(parts,",") +")";
 }
 
+string LetQual::print() const
+{
+    return "let " + binds.print();
+}
+
+string SimpleQual::print() const
+{
+    return exp.print();
+}
+
+string PatQual::print() const
+{
+    return bindpat.print() + " <- " + exp.print();
+}
+
 }

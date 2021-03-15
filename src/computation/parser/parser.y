@@ -1198,7 +1198,7 @@ stmts: stmts ";" stmt  {$$ = $1; $$.push_back($3);}
 stmt: qual              {$$ = $1;}
 |     "rec" stmtlist    {$$ = new expression(AST_node("Rec"),{$2});}
 
-qual: bindpat "<-" exp  {$$ = new expression(AST_node("PatQual"),{$1,$3});}
+qual: bindpat "<-" exp  {$$ = Haskell::PatQual($1,$3);}
 |     exp               {$$ = new expression(AST_node("SimpleQual"),{$1});}
 |     "let" binds       {$$ = new expression(AST_node("LetQual"),{$2});}
 

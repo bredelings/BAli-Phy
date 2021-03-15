@@ -3226,7 +3226,7 @@ namespace yy {
 
   case 339: // qual: bindpat "<-" exp
 #line 1201 "parser.y"
-                        {yylhs.value.as < expression_ref > () = new expression(AST_node("PatQual"),{yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ()});}
+                        {yylhs.value.as < expression_ref > () = Haskell::PatQual(yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ());}
 #line 3231 "parser.cc"
     break;
 
