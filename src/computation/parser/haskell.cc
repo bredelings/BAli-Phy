@@ -9,5 +9,13 @@ string HList::print() const
     vector<string> parts;
     for(auto& element: elements)
         parts.push_back(element.print());
-    return "[" + join(parts,",") +"]";
+    return "H[" + join(parts,",") +"]";
+}
+
+string HTuple::print() const
+{
+    vector<string> parts;
+    for(auto& element: elements)
+        parts.push_back(element.print());
+    return "H(" + join(parts,",") +")";
 }

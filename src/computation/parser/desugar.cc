@@ -263,6 +263,14 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             elements.push_back(desugar(element));
         return get_list(elements);
     }
+    else if (E.is_a<HTuple>())
+    {
+        auto& T = E.as_<HTuple>();
+        vector<expression_ref> elements;
+        for(auto& element: T.elements)
+            elements.push_back(desugar(element));
+        return get_tuple(elements);
+    }
 
     vector<expression_ref> v = E.copy_sub();
 

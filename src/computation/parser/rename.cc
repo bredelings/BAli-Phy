@@ -174,6 +174,14 @@ expression_ref unapply(expression_ref E)
             pattern = unapply(pattern);
         return HList(patterns);
     }
+    else if (E.is_a<HTuple>())
+    {
+        auto& T = E.as_<HTuple>();
+        vector<expression_ref> patterns = T.elements;
+        for(auto& pattern: patterns)
+            pattern = unapply(pattern);
+        return HTuple(patterns);
+    }
 
     if (not E.size()) return E;
 
@@ -228,6 +236,14 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
             elements.push_back(rename_infix(m, element));
         return HList(elements);
     }
+    else if (E.is_a<HTuple>())
+    {
+        auto& T = E.as_<HTuple>();
+        vector<expression_ref> elements;
+        for(auto& element: T.elements)
+            elements.push_back(rename_infix(m, element));
+        return HTuple(elements);
+    }
 
     if (not E.is_expression()) return E;
 
@@ -249,7 +265,7 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     {
 	/* lhs */
 	v[0] = unapply(v[0]);
-	assert(is_AST(v[0],"id") or v[0].is_a<HList>());
+	assert(is_AST(v[0],"id") or v[0].is_a<HList>() or v[0].is_a<HTuple>());
     }
     else if (is_AST(E,"alt"))
     {
@@ -506,6 +522,11 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
         auto& L = pat.as_<HList>();
         return find_vars_in_patterns(L.elements);
     }
+    else if (pat.is_a<HTuple>())
+    {
+        auto& T = pat.as_<HTuple>();
+        return find_vars_in_patterns(T.elements);
+    }
 
     // 4. Handle literal values
     if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double()) return {};
@@ -610,6 +631,15 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
         pat = HList(patterns);
         return bound;
     }
+    //5. Handle List pattern.
+    else if (pat.is_a<HTuple>())
+    {
+        auto& T = pat.as_<HTuple>();
+        auto patterns = T.elements;
+        auto bound = rename_patterns(patterns,top);
+        pat = HTuple(patterns);
+        return bound;
+    }
 
     // 4. Handle literal values
     if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double()) return {};
@@ -691,7 +721,7 @@ expression_ref renamer_state::rename_decl(const expression_ref& decl, const boun
     //
     //    We deal with these here, since they are only in scope for this decl, whereas e.g. f is in scope
     //      for all decls in the decls group.
-    bool pattern_bind = f.is_a<constructor>() or f.is_a<HList>();
+    bool pattern_bind = f.is_a<constructor>() or f.is_a<HList>() or f.is_a<HTuple>();
     if (not pattern_bind)
     {
 	assert(f.is_a<var>());
@@ -751,9 +781,9 @@ bound_var_info renamer_state::rename_decl_head(expression_ref& decl, bool is_top
     auto& lhs = w[0];
     auto head = lhs.head();
     // FIXME??
-    assert(is_AST(head,"id") or head.is_a<HList>());
+    assert(is_AST(head,"id") or head.is_a<HList>() or head.is_a<HTuple>());
     // For a constructor pattern, rename the whole lhs.
-    if (head.is_a<HList>() or (is_AST(head,"id") and is_haskell_con_name(head.as_<AST_node>().value)))
+    if (head.is_a<HList>() or head.is_a<HTuple>() or (is_AST(head,"id") and is_haskell_con_name(head.as_<AST_node>().value)))
     {
         add(bound_names, rename_pattern(lhs, is_top_level));
     }
@@ -983,6 +1013,15 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
             elements.push_back(rename(element, bound));
         return HList(elements);
     }
+    else if (E.is_a<HTuple>())
+    {
+        auto& T = E.as_<HTuple>();
+        vector<expression_ref> elements;
+        for(auto& element: T.elements)
+            elements.push_back(rename(element, bound));
+        return HTuple(elements);
+    }
+
     vector<expression_ref> v = E.copy_sub();
       
     if (E.head().is_a<AST_node>())

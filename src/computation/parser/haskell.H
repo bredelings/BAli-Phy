@@ -24,6 +24,14 @@ struct HList: public Object
     HList(const std::vector<expression_ref>& es): elements(es) {}
 };
 
+struct HTuple: public Object
+{
+    std::vector<expression_ref> elements;
+    HTuple* clone() const { return new HTuple(*this);}
+    std::string print() const;
+    HTuple(const std::vector<expression_ref>& es): elements(es) {}
+};
+
 typedef Located<Class> LClass;
 
 #endif

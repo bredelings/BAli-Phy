@@ -1640,12 +1640,9 @@ expression_ref make_mdo(const vector<expression_ref>& stmts)
     return new expression(AST_node("MDo"), stmts);
 }
 
-expression_ref yy_make_tuple(const vector<expression_ref>& tup_exprs)
+expression_ref yy_make_tuple(const vector<expression_ref>& elements)
 {
-    expression_ref t = AST_node("id", tuple_head(tup_exprs.size()).name());
-    for(auto& e: tup_exprs)
-	t = {t,e};
-    return t;
+    return HTuple(elements);
 }
 
 expression_ref make_list(const vector<expression_ref>& elements)
