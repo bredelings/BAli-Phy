@@ -143,6 +143,10 @@ string desugar_get_func_name(const expression_ref& decl)
 bool is_pattern_binding(const expression_ref& decl)
 {
     assert(is_AST(decl,"Decl"));
+    if (decl.sub()[0].is_a<HList>())
+        return true;
+    if (decl.sub()[0].is_a<HTuple>())
+        return true;
     return is_haskell_con_name(get_func_name(decl));
 }
 
