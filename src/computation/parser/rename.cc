@@ -117,6 +117,22 @@ set<string> find_bound_vars(const expression_ref& E)
 	return bound;
 
     }
+    else if (E.is_a<HList>())
+    {
+        auto& L = E.as_<HList>();
+	set<string> bound;
+	for(const auto& e: L.elements)
+	    add(bound, find_bound_vars(e));
+	return bound;
+    }
+    else if (E.is_a<HTuple>())
+    {
+        auto& T = E.as_<HTuple>();
+	set<string> bound;
+	for(const auto& e: T.elements)
+	    add(bound, find_bound_vars(e));
+	return bound;
+    }
     else if (is_AST(E,"id"))
     {
 	auto& value = E.as_<AST_node>().value;
