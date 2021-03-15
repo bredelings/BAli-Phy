@@ -250,22 +250,22 @@ failable_expression desugar_state::desugar_rhs(const expression_ref& E)
 
 expression_ref desugar_state::desugar(const expression_ref& E)
 {
-    if (E.is_a<Class>())
+    if (E.is_a<Haskell::Class>())
     {
-        auto& C = E.as_<Class>();
-        return Class(C.class_header, {C.decls.loc, desugar(C.decls.obj)});
+        auto& C = E.as_<Haskell::Class>();
+        return Haskell::Class(C.class_header, {C.decls.loc, desugar(C.decls.obj)});
     }
-    else if (E.is_a<HList>())
+    else if (E.is_a<Haskell::List>())
     {
-        auto& L = E.as_<HList>();
+        auto& L = E.as_<Haskell::List>();
         vector<expression_ref> elements;
         for(auto& element: L.elements)
             elements.push_back(desugar(element));
         return get_list(elements);
     }
-    else if (E.is_a<HTuple>())
+    else if (E.is_a<Haskell::Tuple>())
     {
-        auto& T = E.as_<HTuple>();
+        auto& T = E.as_<Haskell::Tuple>();
         vector<expression_ref> elements;
         for(auto& element: T.elements)
             elements.push_back(desugar(element));

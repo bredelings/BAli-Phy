@@ -7,6 +7,9 @@
 #include "computation/expression/expression_ref.H"
 #include "located.H"
 
+namespace Haskell
+{
+
 struct Class: public Object
 {
     Located<expression_ref> class_header;
@@ -16,22 +19,22 @@ struct Class: public Object
     Class(const Located<expression_ref>& ch, const Located<expression_ref>& ds): class_header(ch), decls(ds) {}
 };
 
-struct HList: public Object
+struct List: public Object
 {
     std::vector<expression_ref> elements;
-    HList* clone() const { return new HList(*this);}
+    List* clone() const { return new List(*this);}
     std::string print() const;
-    HList(const std::vector<expression_ref>& es): elements(es) {}
+    List(const std::vector<expression_ref>& es): elements(es) {}
 };
 
-struct HTuple: public Object
+struct Tuple: public Object
 {
     std::vector<expression_ref> elements;
-    HTuple* clone() const { return new HTuple(*this);}
+    Tuple* clone() const { return new Tuple(*this);}
     std::string print() const;
-    HTuple(const std::vector<expression_ref>& es): elements(es) {}
+    Tuple(const std::vector<expression_ref>& es): elements(es) {}
 };
 
-typedef Located<Class> LClass;
+}
 
 #endif

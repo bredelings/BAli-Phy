@@ -23,6 +23,7 @@
 #include "computation/optimization/occurrence.H"
 #include "computation/optimization/float-out.H"
 #include "computation/optimization/inliner.H"
+#include "computation/parser/haskell.H"
 
 using std::pair;
 using std::map;
@@ -1312,8 +1313,8 @@ void Module::declare_fixities()
     declare_fixities(topdecls);
 
     for(const auto& topdecl: topdecls.sub())
-        if (is_AST(topdecl,"Class"))
-            declare_fixities(topdecl.sub()[1]);
+        if (topdecl.is_a<Haskell::Class>())
+            declare_fixities(topdecl.as_<Haskell::Class>().decls.obj);
 }
 
 void Module::add_local_symbols()

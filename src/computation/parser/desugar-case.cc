@@ -328,14 +328,14 @@ void desugar_state::clean_up_pattern(const expression_ref& x, equation_info_t& e
     }
 
     // case x of H[y1,y2...] -> rhs => case x of (y1:(y2:...)) -> rhs
-    else if (pat1.is_a<HList>())
+    else if (pat1.is_a<Haskell::List>())
     {
-        pat1 = get_list(pat1.as_<HList>().elements);
+        pat1 = get_list(pat1.as_<Haskell::List>().elements);
     }
     // case x of H(y1,y2...) -> rhs => case x of (y1,y2...) -> rhs
-    else if (pat1.is_a<HTuple>())
+    else if (pat1.is_a<Haskell::Tuple>())
     {
-        pat1 = get_tuple(pat1.as_<HTuple>().elements);
+        pat1 = get_tuple(pat1.as_<Haskell::Tuple>().elements);
     }
     // case x of ~pat -> rhs  =>  case x of _ -> let pat=x in rhs
     else if (is_AST(pat1,"LazyPattern"))

@@ -117,17 +117,17 @@ set<string> find_bound_vars(const expression_ref& E)
 	return bound;
 
     }
-    else if (E.is_a<HList>())
+    else if (E.is_a<Haskell::List>())
     {
-        auto& L = E.as_<HList>();
+        auto& L = E.as_<Haskell::List>();
 	set<string> bound;
 	for(const auto& e: L.elements)
 	    add(bound, find_bound_vars(e));
 	return bound;
     }
-    else if (E.is_a<HTuple>())
+    else if (E.is_a<Haskell::Tuple>())
     {
-        auto& T = E.as_<HTuple>();
+        auto& T = E.as_<Haskell::Tuple>();
 	set<string> bound;
 	for(const auto& e: T.elements)
 	    add(bound, find_bound_vars(e));
@@ -159,9 +159,9 @@ string desugar_get_func_name(const expression_ref& decl)
 bool is_pattern_binding(const expression_ref& decl)
 {
     assert(is_AST(decl,"Decl"));
-    if (decl.sub()[0].is_a<HList>())
+    if (decl.sub()[0].is_a<Haskell::List>())
         return true;
-    if (decl.sub()[0].is_a<HTuple>())
+    if (decl.sub()[0].is_a<Haskell::Tuple>())
         return true;
     return is_haskell_con_name(get_func_name(decl));
 }
@@ -186,21 +186,21 @@ expression_ref shift_list(vector<expression_ref>& v)
 // so that f is actually the head.
 expression_ref unapply(expression_ref E)
 {
-    if (E.is_a<HList>())
+    if (E.is_a<Haskell::List>())
     {
-        auto& L = E.as_<HList>();
+        auto& L = E.as_<Haskell::List>();
         vector<expression_ref> patterns = L.elements;
         for(auto& pattern: patterns)
             pattern = unapply(pattern);
-        return HList(patterns);
+        return Haskell::List(patterns);
     }
-    else if (E.is_a<HTuple>())
+    else if (E.is_a<Haskell::Tuple>())
     {
-        auto& T = E.as_<HTuple>();
+        auto& T = E.as_<Haskell::Tuple>();
         vector<expression_ref> patterns = T.elements;
         for(auto& pattern: patterns)
             pattern = unapply(pattern);
-        return HTuple(patterns);
+        return Haskell::Tuple(patterns);
     }
 
     if (not E.size()) return E;
@@ -243,26 +243,26 @@ expression_ref unapply(expression_ref E)
 
 expression_ref rename_infix(const Module& m, const expression_ref& E)
 {
-    if (E.is_a<Class>())
+    if (E.is_a<Haskell::Class>())
     {
-        auto& C = E.as_<Class>();
-        return Class(C.class_header, {C.decls.loc, rename_infix(m, C.decls.obj)});
+        auto& C = E.as_<Haskell::Class>();
+        return Haskell::Class(C.class_header, {C.decls.loc, rename_infix(m, C.decls.obj)});
     }
-    else if (E.is_a<HList>())
+    else if (E.is_a<Haskell::List>())
     {
-        auto& L = E.as_<HList>();
+        auto& L = E.as_<Haskell::List>();
         vector<expression_ref> elements;
         for(auto& element: L.elements)
             elements.push_back(rename_infix(m, element));
-        return HList(elements);
+        return Haskell::List(elements);
     }
-    else if (E.is_a<HTuple>())
+    else if (E.is_a<Haskell::Tuple>())
     {
-        auto& T = E.as_<HTuple>();
+        auto& T = E.as_<Haskell::Tuple>();
         vector<expression_ref> elements;
         for(auto& element: T.elements)
             elements.push_back(rename_infix(m, element));
-        return HTuple(elements);
+        return Haskell::Tuple(elements);
     }
 
     if (not E.is_expression()) return E;
@@ -285,7 +285,7 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     {
 	/* lhs */
 	v[0] = unapply(v[0]);
-	assert(is_AST(v[0],"id") or v[0].is_a<HList>() or v[0].is_a<HTuple>());
+	assert(is_AST(v[0],"id") or v[0].is_a<Haskell::List>() or v[0].is_a<Haskell::Tuple>());
     }
     else if (is_AST(E,"alt"))
     {
@@ -537,14 +537,14 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
 	return bound;
     }
 
-    if (pat.is_a<HList>())
+    if (pat.is_a<Haskell::List>())
     {
-        auto& L = pat.as_<HList>();
+        auto& L = pat.as_<Haskell::List>();
         return find_vars_in_patterns(L.elements);
     }
-    else if (pat.is_a<HTuple>())
+    else if (pat.is_a<Haskell::Tuple>())
     {
-        auto& T = pat.as_<HTuple>();
+        auto& T = pat.as_<Haskell::Tuple>();
         return find_vars_in_patterns(T.elements);
     }
 
@@ -643,21 +643,21 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
     }
     
     //4. Handle List pattern.
-    if (pat.is_a<HList>())
+    if (pat.is_a<Haskell::List>())
     {
-        auto& L = pat.as_<HList>();
+        auto& L = pat.as_<Haskell::List>();
         auto patterns = L.elements;
         auto bound = rename_patterns(patterns,top);
-        pat = HList(patterns);
+        pat = Haskell::List(patterns);
         return bound;
     }
     //5. Handle List pattern.
-    else if (pat.is_a<HTuple>())
+    else if (pat.is_a<Haskell::Tuple>())
     {
-        auto& T = pat.as_<HTuple>();
+        auto& T = pat.as_<Haskell::Tuple>();
         auto patterns = T.elements;
         auto bound = rename_patterns(patterns,top);
-        pat = HTuple(patterns);
+        pat = Haskell::Tuple(patterns);
         return bound;
     }
 
@@ -741,7 +741,7 @@ expression_ref renamer_state::rename_decl(const expression_ref& decl, const boun
     //
     //    We deal with these here, since they are only in scope for this decl, whereas e.g. f is in scope
     //      for all decls in the decls group.
-    bool pattern_bind = f.is_a<constructor>() or f.is_a<HList>() or f.is_a<HTuple>();
+    bool pattern_bind = f.is_a<constructor>() or f.is_a<Haskell::List>() or f.is_a<Haskell::Tuple>();
     if (not pattern_bind)
     {
 	assert(f.is_a<var>());
@@ -801,9 +801,9 @@ bound_var_info renamer_state::rename_decl_head(expression_ref& decl, bool is_top
     auto& lhs = w[0];
     auto head = lhs.head();
     // FIXME??
-    assert(is_AST(head,"id") or head.is_a<HList>() or head.is_a<HTuple>());
+    assert(is_AST(head,"id") or head.is_a<Haskell::List>() or head.is_a<Haskell::Tuple>());
     // For a constructor pattern, rename the whole lhs.
-    if (head.is_a<HList>() or head.is_a<HTuple>() or (is_AST(head,"id") and is_haskell_con_name(head.as_<AST_node>().value)))
+    if (head.is_a<Haskell::List>() or head.is_a<Haskell::Tuple>() or (is_AST(head,"id") and is_haskell_con_name(head.as_<AST_node>().value)))
     {
         add(bound_names, rename_pattern(lhs, is_top_level));
     }
@@ -852,9 +852,9 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
             add(bound_names, rename_pattern(id, top));
             decl = expression_ref(AST_node("Decl:sigtype"),{id,type});
         }
-        if (decl.is_a<Class>())
+        if (decl.is_a<Haskell::Class>())
         {
-            auto& C = decl.as_<Class>();
+            auto& C = decl.as_<Haskell::Class>();
             auto class_decls = C.decls.obj;
             assert(is_AST(class_decls, "Decls"));
             auto cdecls = class_decls.sub();
@@ -870,7 +870,7 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
                     cdecl = expression_ref(AST_node("Decl:sigtype"),{id,type});
                 }
             class_decls = expression_ref(AST_node("Decls"),cdecls);
-            decl = Class(C.class_header, {C.decls.loc, class_decls});
+            decl = Haskell::Class(C.class_header, {C.decls.loc, class_decls});
         }
         if (is_AST(decl,"Instance"))
         {
@@ -896,16 +896,16 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
     {
 	if (is_AST(decl,"Decl"))
 	    decl = rename_decl(decl, bound2);
-        if (decl.is_a<Class>())
+        if (decl.is_a<Haskell::Class>())
         {
-            auto& C = decl.as_<Class>();
+            auto& C = decl.as_<Haskell::Class>();
             auto class_decls = C.decls.obj;
             auto cdecls = class_decls.sub();
             for(auto& cdecl: cdecls)
                 if (is_AST(cdecl,"Decl"))
                     cdecl = rename_decl(cdecl, bound2);
             class_decls = expression_ref(AST_node("Decls"),cdecls);
-            decl = Class(C.class_header, {C.decls.loc,class_decls});
+            decl = Haskell::Class(C.class_header, {C.decls.loc,class_decls});
         }
         if (is_AST(decl,"Instance"))
         {
@@ -1025,21 +1025,21 @@ bound_var_info renamer_state::rename_stmt(expression_ref& stmt, const bound_var_
 
 expression_ref renamer_state::rename(const expression_ref& E, const bound_var_info& bound)
 {
-    if (E.is_a<HList>())
+    if (E.is_a<Haskell::List>())
     {
-        auto& L = E.as_<HList>();
+        auto& L = E.as_<Haskell::List>();
         vector<expression_ref> elements;
         for(auto& element: L.elements)
             elements.push_back(rename(element, bound));
-        return HList(elements);
+        return Haskell::List(elements);
     }
-    else if (E.is_a<HTuple>())
+    else if (E.is_a<Haskell::Tuple>())
     {
-        auto& T = E.as_<HTuple>();
+        auto& T = E.as_<Haskell::Tuple>();
         vector<expression_ref> elements;
         for(auto& element: T.elements)
             elements.push_back(rename(element, bound));
-        return HTuple(elements);
+        return Haskell::Tuple(elements);
     }
 
     vector<expression_ref> v = E.copy_sub();

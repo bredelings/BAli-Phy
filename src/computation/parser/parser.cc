@@ -1996,7 +1996,7 @@ namespace yy {
 
   case 79: // cl_decl: "class" tycl_hdr wherebinds
 #line 665 "parser.y"
-                                               {yylhs.value.as < expression_ref > () = Class({yystack_[1].location,yystack_[1].value.as < expression_ref > ()},{yystack_[0].location,yystack_[0].value.as < expression_ref > ()});}
+                                               {yylhs.value.as < expression_ref > () = Haskell::Class({yystack_[1].location,yystack_[1].value.as < expression_ref > ()},{yystack_[0].location,yystack_[0].value.as < expression_ref > ()});}
 #line 2001 "parser.cc"
     break;
 
@@ -6198,12 +6198,12 @@ expression_ref make_mdo(const vector<expression_ref>& stmts)
 
 expression_ref yy_make_tuple(const vector<expression_ref>& elements)
 {
-    return HTuple(elements);
+    return Haskell::Tuple(elements);
 }
 
 expression_ref make_list(const vector<expression_ref>& elements)
 {
-    return HList(elements);
+    return Haskell::List(elements);
 }
 
 expression_ref make_alts(const vector<expression_ref>& alts)

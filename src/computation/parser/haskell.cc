@@ -4,18 +4,23 @@
 using std::string;
 using std::vector;
 
-string HList::print() const
+namespace Haskell
+{
+
+string List::print() const
 {
     vector<string> parts;
     for(auto& element: elements)
         parts.push_back(element.print());
-    return "H[" + join(parts,",") +"]";
+    return "[" + join(parts,",") +"]";
 }
 
-string HTuple::print() const
+string Tuple::print() const
 {
     vector<string> parts;
     for(auto& element: elements)
         parts.push_back(element.print());
-    return "H(" + join(parts,",") +")";
+    return "(" + join(parts,",") +")";
+}
+
 }
