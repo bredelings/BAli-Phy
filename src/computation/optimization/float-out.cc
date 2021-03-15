@@ -307,6 +307,9 @@ void float_out_from_module(vector<CDecls>& module)
 
     for(auto& decl_group: module)
     {
+        // FIXME - should we remove empty groups before we get here?
+        if (decl_group.empty()) continue;
+
         auto [float_binds, level2] = float_out_from_decl_group(decl_group);
 
         assert(float_binds.level_binds.empty());
