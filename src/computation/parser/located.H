@@ -29,10 +29,7 @@ public:
 
 template <typename T>
 inline std::string Located<T>::print() const {
-    if (loc)
-        return "[" + convertToString(*loc) + "@" + convertToString(obj) + "]";
-    else
-        return "[0 @" + convertToString(obj) + "]";
+    return obj.print();
 }
 
 template <typename T>

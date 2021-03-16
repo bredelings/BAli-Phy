@@ -38,4 +38,9 @@ string PatQual::print() const
     return bindpat.print() + " <- " + exp.print();
 }
 
+string ID::print() const
+{
+    return name;
+}
+
 }

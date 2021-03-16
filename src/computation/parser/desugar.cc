@@ -272,6 +272,8 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             elements.push_back(desugar(element));
         return get_tuple(elements);
     }
+    else if (E.is_a<Located<Hs::ID>>())
+        std::abort();
 
     vector<expression_ref> v = E.copy_sub();
 
@@ -319,8 +321,6 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	{
 	    return var(-1);
 	}
-	else if (n.type == "id")
-	    std::abort();
 	else if (n.type == "ListComprehension")
 	{
 	    expression_ref E2 = E;

@@ -60,6 +60,17 @@ struct PatQual: public Object
     PatQual(const expression_ref &bp, const expression_ref& e): bindpat(bp), exp(e) {};
 };
 
+struct ID: public Object
+{
+    std::string name;
+    ID* clone() const { return new ID(*this);}
+    std::string print() const;
+    ID(const std::string& s):name(s) {}
+    ID(const char* s):name(s) {}
+};
+
 }
+
+namespace Hs = Haskell;
 
 #endif

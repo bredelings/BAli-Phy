@@ -38,7 +38,7 @@ expression_ref infix_parse_neg(const Module& m, const symbol_info& op1, deque<ex
 
 	E1 = infix_parse_neg(m, symbol_info("-",variable_symbol, 2,6,left_fix), T);
 
-	return infix_parse(m, op1, {AST_node("id","negate"),E1}, T);
+	return infix_parse(m, op1, {Located<Hs::ID>({},"negate"),E1}, T);
     }
     // If E1 is not a neg, E1 should be an expression, and the next thing should be an Op.
     else
@@ -47,11 +47,11 @@ expression_ref infix_parse_neg(const Module& m, const symbol_info& op1, deque<ex
 
 symbol_info get_op_sym(const Module& m, const expression_ref& O)
 {
-    if (not is_AST(O, "id"))
+    if (not O.is_a<Located<Hs::ID>>())
 	throw myexception()<<"Can't use expression '"<<O.print()<<"' as infix operator.";
 
     symbol_info op_sym;
-    auto name = O.as_<AST_node>().value;
+    auto name = O.as_<Located<Hs::ID>>().obj.name;
 
     if (m.is_declared( name ) )
 	op_sym = m.get_operator( name );
@@ -133,9 +133,9 @@ set<string> find_bound_vars(const expression_ref& E)
 	    add(bound, find_bound_vars(e));
 	return bound;
     }
-    else if (is_AST(E,"id"))
+    else if (E.is_a<Located<Hs::ID>>())
     {
-	auto& value = E.as_<AST_node>().value;
+        auto& value = E.as_<Located<Hs::ID>>().obj.name;
 	if (not is_haskell_con_name(value))
 	    return {value};
     }
@@ -146,8 +146,8 @@ string get_func_name(const expression_ref& decl)
 {
     assert(is_AST(decl,"Decl"));
     auto& lhs = decl.sub()[0];
-    assert(is_AST(lhs,"id"));
-    return lhs.head().as_<AST_node>().value;
+    assert(lhs.head().is_a<Located<Hs::ID>>());
+    return lhs.head().as_<Located<Hs::ID>>().obj.name;
 }
 
 string desugar_get_func_name(const expression_ref& decl)
@@ -296,7 +296,7 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     {
 	/* lhs */
 	v[0] = unapply(v[0]);
-	assert(is_AST(v[0],"id") or v[0].is_a<Haskell::List>() or v[0].is_a<Haskell::Tuple>());
+	assert(v[0].head().is_a<Located<Hs::ID>>() or v[0].is_a<Haskell::List>() or v[0].is_a<Haskell::Tuple>());
     }
     else if (is_AST(E,"alt"))
     {
@@ -382,7 +382,7 @@ expression_ref rename_infix_top(const Module& m, const expression_ref& decls)
         {
             for(auto& [field_name, constrs]: constructor_fields)
             {
-                expression_ref name = AST_node("id",field_name);
+                expression_ref name = Located<Hs::ID>({},field_name);
                 vector<expression_ref> alts;
 
                 for(auto& [ConName,pos]: constrs)
@@ -395,7 +395,7 @@ expression_ref rename_infix_top(const Module& m, const expression_ref& decls)
                         else
                             f.push_back(AST_node("WildcardPattern"));
 
-                    auto pattern = expression_ref{AST_node("id",ConName),f};
+                    expression_ref pattern = expression_ref{Located<Hs::ID>({},ConName),f};
                     expression_ref body = AST_node("rhs") + name;
                     alts.push_back(AST_node("alt") + pattern + body);
                 }
@@ -406,7 +406,7 @@ expression_ref rename_infix_top(const Module& m, const expression_ref& decls)
                     alts.push_back(AST_node("alt") + pattern + body);
                 }
 
-                AST_node x("id","#0");
+                Located<Hs::ID> x({},"#0");
                 expression_ref body = AST_node("Case") + x + expression_ref(AST_node("alts"),alts);
                 body = AST_node("Lambda") + x + body;
                 body = AST_node("rhs") + body;
@@ -559,9 +559,9 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
 
     // 5. Get the identifier name for head
     expression_ref head = pat.head();
-    if (not is_AST(head,"id"))
+    if (not head.is_a<Located<Hs::ID>>())
 	throw myexception()<<"Pattern '"<<pat<<"' doesn't start with an identifier!";
-    auto id = head.as_<AST_node>().value;
+    auto id = head.as_<Located<Hs::ID>>().obj.name;
 
     // 6. Handle if identifier is a variable
     if (not is_haskell_con_name(id))
@@ -672,9 +672,9 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
 
     // 5. Get the identifier name for head
     expression_ref head = pat.head();
-    if (not is_AST(head,"id"))
+    if (not head.is_a<Located<Hs::ID>>())
 	throw myexception()<<"Pattern '"<<pat<<"' doesn't start with an identifier!";
-    auto id = head.as_<AST_node>().value;
+    auto id = head.as_<Located<Hs::ID>>().obj.name;
 
     // 6. Handle if identifier is a variable
     if (not is_haskell_con_name(id))
@@ -806,10 +806,9 @@ bound_var_info renamer_state::rename_decl_head(expression_ref& decl, bool is_top
     auto w = decl.sub();
     auto& lhs = w[0];
     auto head = lhs.head();
-    // FIXME??
-    assert(is_AST(head,"id") or head.is_a<Haskell::List>() or head.is_a<Haskell::Tuple>());
+    assert(head.is_a<Located<Hs::ID>>() or head.is_a<Haskell::List>() or head.is_a<Haskell::Tuple>());
     // For a constructor pattern, rename the whole lhs.
-    if (head.is_a<Haskell::List>() or head.is_a<Haskell::Tuple>() or (is_AST(head,"id") and is_haskell_con_name(head.as_<AST_node>().value)))
+    if (head.is_a<Haskell::List>() or head.is_a<Haskell::Tuple>() or (head.is_a<Located<Hs::ID>>() and is_haskell_con_name(head.as_<Located<Hs::ID>>().obj.name)))
     {
         add(bound_names, rename_pattern(lhs, is_top_level));
     }
@@ -854,7 +853,7 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
         {
             auto id = decl.sub()[0];
             auto type = decl.sub()[1];
-            assert(is_AST(id,"id"));
+            assert(id.is_a<Located<Hs::ID>>());
             add(bound_names, rename_pattern(id, top));
             decl = expression_ref(AST_node("Decl:sigtype"),{id,type});
         }
@@ -871,7 +870,7 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
                 {
                     auto id = cdecl.sub()[0];
                     auto type = cdecl.sub()[1];
-                    assert(is_AST(id,"id"));
+                    assert(id.is_a<Located<Hs::ID>>());
                     add(bound_names, rename_pattern(id, true));
                     cdecl = expression_ref(AST_node("Decl:sigtype"),{id,type});
                 }
@@ -972,20 +971,20 @@ bound_var_info renamer_state::rename_rec_stmt(expression_ref& rec_stmt, const bo
     // 2. Construct the tuple
     vector<expression_ref> vars;
     for(auto& var_name: rec_bound)
-        vars.push_back(AST_node("id",var_name));
+        vars.push_back(Located<Hs::ID>({},var_name));
     expression_ref rec_tuple;
     if (vars.size() == 1)
         rec_tuple = vars[0];
     else
     {
-        rec_tuple = AST_node("id",tuple_head(vars.size()).name());
+        rec_tuple = Located<Hs::ID>({}, tuple_head(vars.size()).name());
         for(auto var: vars)
             rec_tuple = {rec_tuple, var};
     }
 
     // 3. Construct the do stmt
     auto stmts = rec_stmt.sub();
-    expression_ref rec_return = AST_node("id","return");
+    expression_ref rec_return = Located<Hs::ID>({},"return");
     expression_ref rec_return_stmt = {rec_return, rec_tuple};
     stmts.push_back(AST_node("SimpleQual")+rec_return_stmt);
     auto rec_do = expression_ref{AST_node{"Do"},stmts};
@@ -995,7 +994,7 @@ bound_var_info renamer_state::rename_rec_stmt(expression_ref& rec_stmt, const bo
     expression_ref rec_lambda = AST_node("Lambda") + (AST_node("LazyPattern")+rec_tuple_pattern) + rec_do;      // \ ~(b,c) -> do { ... }
 
     // 5. Construct rec_tuple_pattern <- mfix rec_lambda
-    expression_ref mfix = AST_node("id","mfix");
+    expression_ref mfix = Located<Hs::ID>({},"mfix");
     rec_stmt = Haskell::PatQual(rec_tuple_pattern, expression_ref{mfix, rec_lambda});
 
     // Combine the set of bound variables and rename our rewritten statement;
@@ -1049,6 +1048,29 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         for(auto& element: T.elements)
             elements.push_back(rename(element, bound));
         return Haskell::Tuple(elements);
+    }
+    else if (E.is_a<Located<Hs::ID>>())
+    {
+        auto& name = E.as_<Located<Hs::ID>>().obj.name;
+        auto& loc = E.as_<Located<Hs::ID>>().loc;
+
+        // Local vars bind id's tighter than global vars.
+        if (includes(bound,name))
+            return var(name);
+        // If the variable is free, then try top-level names.
+        else if (m.is_declared(name))
+        {
+            const symbol_info& S = m.lookup_symbol(name);
+            string qualified_name = S.name;
+            return var(qualified_name);
+        }
+        else
+        {
+            if (loc)
+                throw myexception()<<"Can't find id '"<<name<<"' at "<<*loc;
+            else
+                throw myexception()<<"Can't find id '"<<name<<"'";
+        }
     }
 
     vector<expression_ref> v = E.copy_sub();
@@ -1107,22 +1129,6 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	    rh = rename(rh, bound2);
 
 	    return expression_ref{E.head(),std::move(v)};
-	}
-	else if (n.type == "id")
-	{
-	    assert(v.empty());
-	    // Local vars bind id's tighter than global vars.
-	    if (includes(bound,n.value))
-		return var(n.value);
-	    // If the variable is free, then try top-level names.
-	    else if (m.is_declared(n.value))
-	    {
-		const symbol_info& S = m.lookup_symbol(n.value);
-		string qualified_name = S.name;
-		return var(qualified_name);
-	    }
-	    else
-		throw myexception()<<"Can't find id '"<<n.value<<"'";
 	}
 	else if (n.type == "ListComprehension")
 	{

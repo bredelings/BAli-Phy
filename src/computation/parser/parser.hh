@@ -73,7 +73,7 @@
   expression_ref make_context(const expression_ref& context, const expression_ref& type);
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
-  expression_ref make_id(const std::string& id);
+  Located<Hs::ID> make_id(const yy::location& loc, const std::string& id);
   expression_ref make_type_id(const std::string& id);
 
   expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebinds);
@@ -85,7 +85,7 @@
   expression_ref make_minus(const expression_ref& exp);
   expression_ref make_fexp(const std::vector<expression_ref>& args);
 
-  expression_ref make_as_pattern(const std::string& var, const expression_ref& body);
+  expression_ref make_as_pattern(const Located<Hs::ID>& x, const expression_ref& body);
   expression_ref make_lazy_pattern(const expression_ref& pat);
   expression_ref make_strict_pattern(const expression_ref& pat);
 

@@ -2668,7 +2668,7 @@ namespace yy {
 
   case 242: // infixexp: infixexp qop exp10
 #line 1030 "parser.y"
-                                {yylhs.value.as < std::vector<expression_ref> > () = yystack_[2].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(make_id(yystack_[1].value.as < std::string > ())); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
+                                {yylhs.value.as < std::vector<expression_ref> > () = yystack_[2].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(make_id(yystack_[1].location,yystack_[1].value.as < std::string > ())); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2673 "parser.cc"
     break;
 
@@ -2680,7 +2680,7 @@ namespace yy {
 
   case 244: // infixexp_top: infixexp_top qop exp10_top
 #line 1033 "parser.y"
-                                          {yylhs.value.as < std::vector<expression_ref> > () = yystack_[2].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(make_id(yystack_[1].value.as < std::string > ())); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
+                                          {yylhs.value.as < std::vector<expression_ref> > () = yystack_[2].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(make_id(yystack_[1].location,yystack_[1].value.as < std::string > ())); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
 #line 2685 "parser.cc"
     break;
 
@@ -2740,7 +2740,7 @@ namespace yy {
 
   case 258: // aexp: qvar "@" aexp
 #line 1056 "parser.y"
-                                 {yylhs.value.as < expression_ref > () = make_as_pattern(yystack_[2].value.as < std::string > (),yystack_[0].value.as < expression_ref > ());}
+                                 {yylhs.value.as < expression_ref > () = make_as_pattern(make_id(yystack_[2].location,yystack_[2].value.as < std::string > ()),yystack_[0].value.as < expression_ref > ());}
 #line 2745 "parser.cc"
     break;
 
@@ -2824,13 +2824,13 @@ namespace yy {
 
   case 272: // aexp2: qvar
 #line 1072 "parser.y"
-                              {yylhs.value.as < expression_ref > () = make_id(yystack_[0].value.as < std::string > ());}
+                              {yylhs.value.as < expression_ref > () = make_id(yystack_[0].location,yystack_[0].value.as < std::string > ());}
 #line 2829 "parser.cc"
     break;
 
   case 273: // aexp2: qcon
 #line 1073 "parser.y"
-                              {yylhs.value.as < expression_ref > () = make_id(yystack_[0].value.as < std::string > ());}
+                              {yylhs.value.as < expression_ref > () = make_id(yystack_[0].location,yystack_[0].value.as < std::string > ());}
 #line 2835 "parser.cc"
     break;
 
@@ -2884,13 +2884,13 @@ namespace yy {
 
   case 282: // texp: infixexp qop
 #line 1086 "parser.y"
-                      {yylhs.value.as < expression_ref > () = new expression(AST_node("LeftSection"),{make_infixexp(yystack_[1].value.as < std::vector<expression_ref> > ()),make_id(yystack_[0].value.as < std::string > ())});}
+                      {yylhs.value.as < expression_ref > () = new expression(AST_node("LeftSection"),{make_infixexp(yystack_[1].value.as < std::vector<expression_ref> > ()),make_id(yystack_[0].location,yystack_[0].value.as < std::string > ())});}
 #line 2889 "parser.cc"
     break;
 
   case 283: // texp: qopm infixexp
 #line 1087 "parser.y"
-                      {yylhs.value.as < expression_ref > () = new expression(AST_node("RightSection"),{make_id(yystack_[1].value.as < std::string > ()),make_infixexp(yystack_[0].value.as < std::vector<expression_ref> > ())});}
+                      {yylhs.value.as < expression_ref > () = new expression(AST_node("RightSection"),{make_id(yystack_[1].location,yystack_[1].value.as < std::string > ()),make_infixexp(yystack_[0].value.as < std::vector<expression_ref> > ())});}
 #line 2895 "parser.cc"
     break;
 
@@ -6099,9 +6099,9 @@ expression_ref make_tyapps(const std::vector<expression_ref>& tyapps)
     return E;
 }
 
-expression_ref make_id(const string& id)
+Located<Hs::ID> make_id(const yy::location& loc, const string& id)
 {
-    return AST_node("id",id);
+    return Located<Hs::ID>(loc, {id});
 }
 
 expression_ref make_type_id(const string& id)
@@ -6148,9 +6148,8 @@ expression_ref make_fexp(const vector<expression_ref>& args)
     }
 }
 
-expression_ref make_as_pattern(const string& var, const expression_ref& body)
+expression_ref make_as_pattern(const Located<Hs::ID>& x, const expression_ref& body)
 {
-    auto x = AST_node("id",var);
     return new expression(AST_node("AsPattern"), {x,body});
 }
 
