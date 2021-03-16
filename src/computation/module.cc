@@ -260,6 +260,18 @@ void Module::compile(const Program& P)
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
     rename(P);
 
+    if (topdecls)
+    {
+        // It should be possible to replace each of these (i) an object (ii) that is located.
+        vector<expression_ref> tmp;
+        for(auto& decl: topdecls.sub())
+            if (is_AST(decl,"Class") or is_AST(decl,"Decl:data") or is_AST(decl,"Data:newtype") or is_AST(decl,"instance") or is_AST(decl,"type_syn"))
+                tmp.push_back(decl);
+        class_and_type_decls.push_back(tmp);
+
+        find_type_groups();
+    }
+
     perform_exports();
 
     desugar(P);
@@ -416,6 +428,51 @@ void Module::rename(const Program& P)
     }
     if (P.get_module_loader()->dump_renamed)
         std::cout<<name<<"[renamed]:\n"<<topdecls<<"\n\n";
+}
+
+void Module::find_type_groups()
+{
+    // See equivalents in GHC Rename/Module.hs
+    // We are trying to find strongly connected components of
+    //  types, type classes, and instances.
+
+    // Shouldn't instances be AFTER everything?
+    // * We only have type class instances (ClsInstDecl), but GHC
+    //   also has data family instances and type family instances.
+
+    // GHC looks at types and classes first, then adds instances to the SCCs later.
+    
+    if (topdecls)
+    {
+        assert(is_AST(topdecls,"TopDecls"));
+        // go through topdecls and put classes, types,
+        // newtypes, and data members into 
+
+        // See function `rnTyClDecls`, which calls `depAnalTyClDecls`.
+        // * Dependency analysis on values can be done by name, since instances are not included.
+        // * Code is in GHC.Data.Graph.Directed.
+
+        // Q: How are instances grouped?
+        // 
+
+        // Input to the dependency analysis is a list of
+        // * (declaration, name, names that this declaration depends on)
+        // For GHC, this could include kind variables.
+
+        // We also look up the "parent" of the each name:
+        // * for a constructor, the "parent" is the type for the constructor.
+        // * for a field, the "parent" is the type for the field.
+        // * otherwise, there is no parent, and we just keep the name.
+
+        // For values, each value can have a body decl, a fixity decl, and a signature decl.
+        // So we can't use the decl itself as the key -- we have to use something like the name.
+
+        // It looks like GHC rename extracts the "free variables" from everything.
+        // For example: rnSrcInstDecl operates on ClsInstD, which wraps ClsInstDecl from Hs/Decl.hs
+
+        // FreeVars = OccEnv ID.  See Core/Opt/OccurAnal.hs.
+        // Looks like code for determining inlining
+    }
 }
 
 void Module::desugar(const Program& P)
@@ -1419,4 +1476,3 @@ symbol_info lookup_symbol(const string& name, const Program& P)
 
     std::abort();
 }
-

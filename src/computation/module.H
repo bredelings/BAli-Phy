@@ -94,8 +94,11 @@ public:
     expression_ref module;
     expression_ref body;
     expression_ref impdecls;
-    expression_ref topdecls;
     expression_ref exports;
+
+    expression_ref topdecls;
+
+    std::vector<std::vector<expression_ref>> class_and_type_decls;
 
     std::map<var,expression_ref> small_decls_in;
 
@@ -156,6 +159,8 @@ public:
     void rename_infix(const Program&);
 
     void rename(const Program&);
+
+    void find_type_groups();
 
     void desugar(const Program&);
 
