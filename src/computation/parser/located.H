@@ -1,12 +1,13 @@
 #ifndef LOCATED_H
 #include <iostream>
+#include <optional>
 #include "location.hh"
 
 template <typename T>
 struct Located: public Object
 {
 public:
-    yy::location loc;
+    std::optional<yy::location> loc;
     T obj;
 
     Located<T>* clone() const {return new Located<T>(*this);}
@@ -23,12 +24,15 @@ public:
     Located() = default;
     Located(const Located<T>&) = default;
     Located(Located<T>&&) = default;
-    Located(const yy::location& l, const T& t):loc(l),obj(t) {}
+    Located(const std::optional<yy::location>& l, const T& t):loc(l),obj(t) {}
 };
 
 template <typename T>
 inline std::string Located<T>::print() const {
-    return "[" + convertToString(loc) + "@" + convertToString(obj) + "]";
+    if (loc)
+        return "[" + convertToString(*loc) + "@" + convertToString(obj) + "]";
+    else
+        return "[0 @" + convertToString(obj) + "]";
 }
 
 template <typename T>
