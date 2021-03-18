@@ -10,6 +10,78 @@
 namespace Haskell
 {
 
+// HsDecl = type or class declaration
+//          instance declaration
+//          deriving declaration
+//          value declaration
+//          signature declaration
+//          standalone kind signature
+//          default declaration
+//          foreign declaration
+
+// HsBindLR<idLeft,idRight> = FunBind (variable or function bindings)
+//                              fun_extra :: free variables of the definition, after the renamer but before the typechecker
+//                              fun_id :: LIdP<idLeft>
+//                              fun_matches :: MatchGroup<idRight,LHsExpr<IdRight>>
+//                            PatBind
+//                              pat_extra ::
+//                              pat_lhs :: LPat<idLeft>
+//                              pat_rhs :: GRHSs<idRight,LHsExpr<IdRight>>
+//                            VarBind  (apparently introduced by the typechecker)
+//                              var_extra ::
+//                              var_id :: IdP<idLeft>
+//                              var_rhs :: LHsExpr<idRight>  --
+//                            AbsBinds (also output by the typechecker to record *typechecked* and *generalized* bindings)
+//
+/*
+ HsExpr =   HsVar LIdP
+          | HsUnboundVar OccName  -- "hole" or unbound variable
+          | HsConLikeOut ConLike
+          | HsRecFld AmbiguousFieldOcc
+          | -- overloaded label
+          | -- implicit parameter
+          | HsOverLit HsOverLit -- Overloaded literals
+          | HsLit HsLit -- Simple (non-overloaded) literals
+          | HsLam (MatchGroup (LHsExpr))
+          | -- lambda case
+          | HsApp -- Application
+          | -- visible type application
+          | OpApp LHsExpr LHsExpr LHsExpr -- ??
+          | NegApp LHsExpr SyntaxExpr -- negation .. why SyntaxExpr?
+          | HsPar LHsExpr -- parenthesized expression
+          | SectionL LHsExpr LHsExpr -- left operation section
+          | SectionR LHsExpr LHsExpr -- right operator section
+          | ExplicitTuple [LHsTupArg] Boxity -- tuple and sections
+          | -- unboxed sum types
+          | HsCase LHsExpr (MatchGroup LHsExpr) -- case expressions
+          | HsIf LHsExpr LHsExpr LHsExpr -- if expression
+          | -- multi-if
+          | HsLet LHsLocalBinds LHsExpr -- let expression
+          | HsDo (HsStmtContext [ExprLStmt] -- do expression
+          | ExplicitList [LHsExpr]
+          | RecordCon LIdP (constructor name) HsRecordBinds (the fields)
+          | RecordUpd ???
+          | ExprWithTySig LHsExpr LHsSigWcType NoGhcTc
+          | ArithSeq ArithSeqInfo
+
+LPat = WildPat          -- wildcard pattern
+     | VarPat LIdP      -- variable pattern
+     | LazyPat LPat     -- lazy pattern
+     | AsPat LIdP LPat  -- as pattern
+     | ParPat LPat      -- parenthesized pattern (?)
+     | BangPat LPat     -- bang pattern
+     | ListPat [LPat]   -- list pattern
+     | TuplePat [LPat] Boxity -- tuple patterns
+     | SumPat           -- sum pattern ??
+     | ConPat { pat_con :: located<ConLike> HsConPatDetails }
+     | ViewPat          -- view pattern
+     | SplicePat        -- splice pattern
+     | LitPat (HsLit)   -- non-overloaded literal
+     | NPat             -- natural pattern ??
+     | NPlusKPat        -- n+k patterns
+     | SigPat LPat (HsPatSigType NoGhcTc) -- pattern with a type signature?
+*/
+
 struct Class: public Object
 {
     Located<expression_ref> class_header;
