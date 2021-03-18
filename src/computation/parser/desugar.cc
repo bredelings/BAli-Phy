@@ -87,9 +87,10 @@ failable_expression desugar_state::desugar_gdrh(const expression_ref& E)
 
     for(auto& guard: std::reverse(guards.sub()))
     {
-	if (is_AST(guard,"SimpleQual"))
+	if (guard.is_a<Hs::SimpleQual>())
 	{
-	    auto condition = desugar(guard.sub()[0]);
+            auto& SQ = guard.as_<Hs::SimpleQual>();
+	    auto condition = desugar(SQ.exp);
 	    // F' = case True of True -> F
 	    if (is_bool_true(condition) or is_otherwise(condition))
 		;
@@ -330,13 +331,11 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	    // [ e | p<-l, Q]  =  let {ok p = [ e | Q ]; ok _ = []} in concatMap ok l
 	    // [ e | let decls, Q] = let decls in [ e | Q ]
 
-	    expression_ref True = AST_node("SimpleQual") + bool_true;
-
 	    assert(v.size() >= 2);
-	    if (v.size() == 2 and (v[0] == True))
+	    if (v.size() == 2 and v[0].is_a<Hs::SimpleQual>() and v[0].as_<Hs::SimpleQual>().exp == bool_true)
 		E2 = {var(":"),v[1],var("[]")};
 	    else if (v.size() == 2)
-		E2 = E.head() + v[0] + True + v[1];
+		E2 = E.head() + v[0] + Hs::SimpleQual(bool_true) + v[1];
 	    else
 	    {
 		// Pop the next qual from the FRONT of the list
@@ -344,8 +343,11 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 		v.erase(v.begin());
 		E2 = expression_ref{E.head(),v};
 
-		if (is_AST(B, "SimpleQual"))
-		    E2 = AST_node("If") + B.sub()[0] + E2 + var("[]");
+		if (B.is_a<Hs::SimpleQual>())
+                {
+                    auto cond = B.as_<Hs::SimpleQual>().exp;
+		    E2 = AST_node("If") + cond + E2 + var("[]");
+                }
 		else if (B.is_a<Haskell::PatQual>())
 		{
                     auto& PQ = B.as_<Haskell::PatQual>();
@@ -403,14 +405,14 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	    if (stmts.empty())
 		throw myexception()<<"Empty do block!";
 
-	    if (not is_AST(stmts.back(), "SimpleQual"))
+	    if (not stmts.back().is_a<Hs::SimpleQual>())
 		throw myexception()<<"The last statement in a do block must be an expression!";
 
 	    // do { e }  =>  e
 	    if (stmts.size() == 1) {
 		auto& stmt = stmts.front();
-		assert(is_AST(stmt, "SimpleQual"));
-		return desugar(stmt.sub()[0]);
+                auto exp = stmt.as_<Hs::SimpleQual>().exp;
+		return desugar(exp);
 	    }
 
 	    auto first = stmts[0];
@@ -419,9 +421,9 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	    expression_ref result;
       
 	    // do {e ; stmts }  =>  e >> do { stmts }
-	    if (is_AST(first,"SimpleQual"))
+	    if (first.is_a<Hs::SimpleQual>())
 	    {
-		expression_ref e = first.sub()[0];
+		expression_ref e = first.as_<Hs::SimpleQual>().exp;
 		result = {var("Compiler.Base.>>"), e, do_stmts};
 	    }
 

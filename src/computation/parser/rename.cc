@@ -275,6 +275,12 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 
         return PQ;
     }
+    else if (E.is_a<Haskell::SimpleQual>())
+    {
+        auto SQ = E.as_<Haskell::SimpleQual>();
+        SQ.exp = rename_infix(m, SQ.exp);
+        return SQ;
+    }
 
     if (not E.is_expression()) return E;
 
@@ -931,7 +937,7 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
 
 bound_var_info renamer_state::find_bound_vars_in_stmt(const expression_ref& stmt)
 {
-    if (is_AST(stmt, "SimpleQual"))
+    if (stmt.is_a<Hs::SimpleQual>())
 	return {};
     else if (stmt.is_a<Haskell::PatQual>())
     {
@@ -986,7 +992,7 @@ bound_var_info renamer_state::rename_rec_stmt(expression_ref& rec_stmt, const bo
     auto stmts = rec_stmt.sub();
     expression_ref rec_return = Located<Hs::ID>({},"return");
     expression_ref rec_return_stmt = {rec_return, rec_tuple};
-    stmts.push_back(AST_node("SimpleQual")+rec_return_stmt);
+    stmts.push_back(Hs::SimpleQual(rec_return_stmt));
     auto rec_do = expression_ref{AST_node{"Do"},stmts};
 
     // 4. Construct the lambda function
@@ -1003,9 +1009,11 @@ bound_var_info renamer_state::rename_rec_stmt(expression_ref& rec_stmt, const bo
 
 bound_var_info renamer_state::rename_stmt(expression_ref& stmt, const bound_var_info& bound)
 {
-    if (is_AST(stmt, "SimpleQual"))
+    if (stmt.is_a<Hs::SimpleQual>())
     {
-	stmt = rename(stmt,bound);
+        auto SQ = stmt.as_<Hs::SimpleQual>();
+	SQ.exp = rename(SQ.exp,bound);
+        stmt = SQ;
 	return {};
     }
     else if (stmt.is_a<Haskell::PatQual>())

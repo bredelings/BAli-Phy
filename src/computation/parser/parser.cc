@@ -3232,7 +3232,7 @@ namespace yy {
 
   case 340: // qual: exp
 #line 1202 "parser.y"
-                        {yylhs.value.as < expression_ref > () = new expression(AST_node("SimpleQual"),{yystack_[0].value.as < expression_ref > ()});}
+                        {yylhs.value.as < expression_ref > () = Hs::SimpleQual(yystack_[0].value.as < expression_ref > ());}
 #line 3237 "parser.cc"
     break;
 
