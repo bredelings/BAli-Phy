@@ -98,10 +98,10 @@ failable_expression desugar_state::desugar_gdrh(const expression_ref& E)
 	    else
 		F = case_expression(condition,{true},{F});
 	}
-	else if (is_AST(guard,"LetQual"))
+	else if (guard.is_a<Haskell::LetQual>())
 	{
-	    auto& decls = guard.sub()[0];
-	    auto binds = desugar_decls(decls);
+            auto& LQ = guard.as_<Haskell::LetQual>();
+	    auto binds = desugar_decls(LQ.binds);
 
 	    F.add_binding(binds);
 	}
@@ -376,8 +376,11 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 			E2 = AST_node("Let") + decls + body;
 		    }
 		}
-		else if (is_AST(B, "LetQual"))
-		    E2 = AST_node("Let") + B.sub()[0] + E2;
+		else if (B.is_a<Haskell::LetQual>())
+                {
+                    auto& LQ = B.as_<Haskell::LetQual>();
+		    E2 = AST_node("Let") + LQ.binds + E2;
+                }
 		else
 		    std::abort();
 	    }
@@ -461,10 +464,10 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 		}
 	    }
 	    // do {let decls ; rest} = let decls in do {stmts}
-	    else if (is_AST(first,"LetQual"))
+	    else if (first.is_a<Haskell::LetQual>())
 	    {
-		expression_ref decls = first.sub()[0];
-		result = AST_node("Let") + decls + do_stmts;
+                auto& LQ = first.as_<Haskell::LetQual>();
+		result = AST_node("Let") + LQ.binds + do_stmts;
 	    }
 	    else
 		std::abort();

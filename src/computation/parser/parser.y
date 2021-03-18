@@ -35,7 +35,7 @@
   expression_ref make_context(const expression_ref& context, const expression_ref& type);
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
-  Located<Hs::ID> make_id(const yy::location& loc, const std::string& id);
+  Located<Haskell::ID> make_id(const yy::location& loc, const std::string& id);
   expression_ref make_type_id(const std::string& id);
 
   expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebinds);
@@ -47,7 +47,7 @@
   expression_ref make_minus(const expression_ref& exp);
   expression_ref make_fexp(const std::vector<expression_ref>& args);
 
-  expression_ref make_as_pattern(const Located<Hs::ID>& x, const expression_ref& body);
+  expression_ref make_as_pattern(const Located<Haskell::ID>& x, const expression_ref& body);
   expression_ref make_lazy_pattern(const expression_ref& pat);
   expression_ref make_strict_pattern(const expression_ref& pat);
 
@@ -1199,8 +1199,8 @@ stmt: qual              {$$ = $1;}
 |     "rec" stmtlist    {$$ = new expression(AST_node("Rec"),{$2});}
 
 qual: bindpat "<-" exp  {$$ = Haskell::PatQual($1,$3);}
-|     exp               {$$ = Hs::SimpleQual($1);}
-|     "let" binds       {$$ = new expression(AST_node("LetQual"),{$2});}
+|     exp               {$$ = Haskell::SimpleQual($1);}
+|     "let" binds       {$$ = Haskell::LetQual($2);}
 
 
 /* ------------- Record Field Update/Construction ---------------- */
@@ -1543,9 +1543,9 @@ expression_ref make_tyapps(const std::vector<expression_ref>& tyapps)
     return E;
 }
 
-Located<Hs::ID> make_id(const yy::location& loc, const string& id)
+Located<Haskell::ID> make_id(const yy::location& loc, const string& id)
 {
-    return Located<Hs::ID>(loc, {id});
+    return Located<Haskell::ID>(loc, {id});
 }
 
 expression_ref make_type_id(const string& id)
@@ -1592,7 +1592,7 @@ expression_ref make_fexp(const vector<expression_ref>& args)
     }
 }
 
-expression_ref make_as_pattern(const Located<Hs::ID>& x, const expression_ref& body)
+expression_ref make_as_pattern(const Located<Haskell::ID>& x, const expression_ref& body)
 {
     return new expression(AST_node("AsPattern"), {x,body});
 }

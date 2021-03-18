@@ -3232,13 +3232,13 @@ namespace yy {
 
   case 340: // qual: exp
 #line 1202 "parser.y"
-                        {yylhs.value.as < expression_ref > () = Hs::SimpleQual(yystack_[0].value.as < expression_ref > ());}
+                        {yylhs.value.as < expression_ref > () = Haskell::SimpleQual(yystack_[0].value.as < expression_ref > ());}
 #line 3237 "parser.cc"
     break;
 
   case 341: // qual: "let" binds
 #line 1203 "parser.y"
-                        {yylhs.value.as < expression_ref > () = new expression(AST_node("LetQual"),{yystack_[0].value.as < expression_ref > ()});}
+                        {yylhs.value.as < expression_ref > () = Haskell::LetQual(yystack_[0].value.as < expression_ref > ());}
 #line 3243 "parser.cc"
     break;
 
@@ -6099,9 +6099,9 @@ expression_ref make_tyapps(const std::vector<expression_ref>& tyapps)
     return E;
 }
 
-Located<Hs::ID> make_id(const yy::location& loc, const string& id)
+Located<Haskell::ID> make_id(const yy::location& loc, const string& id)
 {
-    return Located<Hs::ID>(loc, {id});
+    return Located<Haskell::ID>(loc, {id});
 }
 
 expression_ref make_type_id(const string& id)
@@ -6148,7 +6148,7 @@ expression_ref make_fexp(const vector<expression_ref>& args)
     }
 }
 
-expression_ref make_as_pattern(const Located<Hs::ID>& x, const expression_ref& body)
+expression_ref make_as_pattern(const Located<Haskell::ID>& x, const expression_ref& body)
 {
     return new expression(AST_node("AsPattern"), {x,body});
 }

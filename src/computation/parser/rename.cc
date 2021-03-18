@@ -281,6 +281,12 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
         SQ.exp = rename_infix(m, SQ.exp);
         return SQ;
     }
+    else if (E.is_a<Haskell::LetQual>())
+    {
+        auto LQ = E.as_<Haskell::LetQual>();
+        LQ.binds = rename_infix(m, LQ.binds);
+        return LQ;
+    }
 
     if (not E.is_expression()) return E;
 
@@ -944,8 +950,11 @@ bound_var_info renamer_state::find_bound_vars_in_stmt(const expression_ref& stmt
         auto& PQ = stmt.as_<Haskell::PatQual>();
         return find_vars_in_pattern(PQ.bindpat);
     }
-    else if (is_AST(stmt, "LetQual"))
-        return find_bound_vars_in_decls(stmt.sub()[0]);
+    else if (stmt.is_a<Haskell::LetQual>())
+    {
+        auto& LQ = stmt.as_<Haskell::LetQual>();
+        return find_bound_vars_in_decls(LQ.binds);
+    }
     else if (is_AST(stmt, "Rec"))
         throw myexception()<<"find_bound_vars_in_stmt: should not have a rec stmt inside a rec stmt!";
     else
@@ -1024,11 +1033,11 @@ bound_var_info renamer_state::rename_stmt(expression_ref& stmt, const bound_var_
         stmt = PQ;
 	return bound_vars;
     }
-    else if (is_AST(stmt, "LetQual"))
+    else if (stmt.is_a<Haskell::LetQual>())
     {
-	auto v = stmt.sub();
-	auto bound_vars = rename_decls(v[0], bound);
-	stmt = expression_ref{stmt.head(),v};
+        auto LQ = stmt.as_<Haskell::LetQual>();
+	auto bound_vars = rename_decls(LQ.binds, bound);
+	stmt = LQ;
 	return bound_vars;
     }
     else if (is_AST(stmt, "Rec"))
