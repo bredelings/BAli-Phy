@@ -202,6 +202,16 @@ expression_ref unapply(expression_ref E)
             pattern = unapply(pattern);
         return Haskell::Tuple(patterns);
     }
+    else if (E.is_a<Haskell::AsPattern>())
+    {
+        auto& AP = E.as_<Haskell::AsPattern>();
+        return Haskell::AsPattern(AP.var, unapply(AP.pattern));
+    }
+    else if (E.is_a<Haskell::LazyPattern>())
+    {
+        auto LP = E.as_<Haskell::LazyPattern>();
+        return Haskell::LazyPattern(unapply(LP.pattern));
+    }
 
     if (not E.size()) return E;
 
@@ -286,6 +296,16 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
         auto LQ = E.as_<Haskell::LetQual>();
         LQ.binds = rename_infix(m, LQ.binds);
         return LQ;
+    }
+    else if (E.is_a<Haskell::AsPattern>())
+    {
+        auto& AP = E.as_<Haskell::AsPattern>();
+        return Haskell::AsPattern(AP.var, rename_infix(m,AP.pattern));
+    }
+    else if (E.is_a<Haskell::LazyPattern>())
+    {
+        auto LP = E.as_<Haskell::LazyPattern>();
+        return Haskell::LazyPattern(rename_infix(m,LP.pattern));
     }
 
     if (not E.is_expression()) return E;
@@ -405,14 +425,14 @@ expression_ref rename_infix_top(const Module& m, const expression_ref& decls)
                         if (i == pos)
                             f.push_back(name);
                         else
-                            f.push_back(AST_node("WildcardPattern"));
+                            f.push_back(Haskell::WildcardPattern());
 
                     expression_ref pattern = expression_ref{Located<Hs::ID>({},ConName),f};
                     expression_ref body = AST_node("rhs") + name;
                     alts.push_back(AST_node("alt") + pattern + body);
                 }
                 {
-                    expression_ref pattern = AST_node("WildcardPattern");
+                    expression_ref pattern = Haskell::WildcardPattern();
                     expression_ref body = error(field_name+": pattern match failure");
                     body = AST_node("rhs") + body;
                     alts.push_back(AST_node("alt") + pattern + body);
@@ -530,25 +550,24 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
     assert(not is_apply_exp(pat));
 
     // 1. Handle _
-    if (is_AST(pat,"WildcardPattern"))
+    if (pat.is_a<Haskell::WildcardPattern>())
 	return {};
 
     // 2. Handle ~pat
-    if (is_AST(pat,"LazyPattern"))
+    if (pat.is_a<Haskell::LazyPattern>())
     {
-	auto sub_pat = pat.sub()[0];
-	return rename_pattern(sub_pat, top);
+        auto LP = pat.as_<Haskell::LazyPattern>();
+        return find_vars_in_pattern(LP.pattern, top);
     }
 
     // 3. Handle x@pat
-    if (is_AST(pat,"AsPattern"))
+    if (pat.is_a<Haskell::AsPattern>())
     {
+        auto& AP = pat.as_<Haskell::AsPattern>();
 	assert(not top);
 
-	auto x = pat.sub()[0];
-	auto sub_pat = pat.sub()[1];
-	auto bound = find_vars_in_pattern(x, false);
-	bool overlap = not disjoint_add(bound, rename_pattern(sub_pat, false));
+	auto bound = find_vars_in_pattern(AP.var, false);
+	bool overlap = not disjoint_add(bound, find_vars_in_pattern(AP.pattern, false));
 
 	if (overlap)
 	    throw myexception()<<"Pattern '"<<pat<<"' uses a variable twice!";
@@ -628,33 +647,32 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
     assert(not is_apply_exp(pat));
 
     // 1. Handle _
-    if (is_AST(pat,"WildcardPattern"))
+    if (pat.is_a<Haskell::WildcardPattern>())
     {
+        // FIXME
 	pat = var(-1);
 	return {};
     }
 
     // 2. Handle ~pat
-    if (is_AST(pat,"LazyPattern"))
+    if (pat.is_a<Haskell::LazyPattern>())
     {
-	auto sub_pat = pat.sub()[0];
-	auto bound = rename_pattern(sub_pat, top);
-
-	pat = AST_node("LazyPattern")+sub_pat;
+        auto LP = pat.as_<Haskell::LazyPattern>();
+	auto bound = rename_pattern(LP.pattern, top);
+	pat = LP;
 	return bound;
     }
 
     // 3. Handle x@pat
-    if (is_AST(pat,"AsPattern"))
+    if (pat.is_a<Haskell::AsPattern>())
     {
+        auto AP = pat.as_<Haskell::AsPattern>();
 	assert(not top);
 
-	auto x = pat.sub()[0];
-	auto sub_pat = pat.sub()[1];
-	auto bound = rename_pattern(x, false);
-	bool overlap = not disjoint_add(bound, rename_pattern(sub_pat, false));
+	auto bound = rename_pattern(AP.var, false);
+	bool overlap = not disjoint_add(bound, rename_pattern(AP.pattern, false));
+	pat = AP;
 
-	pat = AST_node("AsPattern")+x+sub_pat;
 	if (overlap)
 	    throw myexception()<<"Pattern '"<<pat<<"' uses a variable twice!";
 	return bound;
@@ -1006,7 +1024,7 @@ bound_var_info renamer_state::rename_rec_stmt(expression_ref& rec_stmt, const bo
 
     // 4. Construct the lambda function
     expression_ref rec_tuple_pattern = unapply(rec_tuple); // This makes the tuple expression into a pattern by translating `@ (@ ((,) x))` into `(,) x y`
-    expression_ref rec_lambda = AST_node("Lambda") + (AST_node("LazyPattern")+rec_tuple_pattern) + rec_do;      // \ ~(b,c) -> do { ... }
+    expression_ref rec_lambda = AST_node("Lambda") + (Haskell::LazyPattern(rec_tuple_pattern)) + rec_do;      // \ ~(b,c) -> do { ... }
 
     // 5. Construct rec_tuple_pattern <- mfix rec_lambda
     expression_ref mfix = Located<Hs::ID>({},"mfix");
@@ -1089,6 +1107,8 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
                 throw myexception()<<"Can't find id '"<<name<<"'";
         }
     }
+    else if (E.is_a<Haskell::WildcardPattern>())
+        return var(-1);
 
     vector<expression_ref> v = E.copy_sub();
       
@@ -1105,10 +1125,6 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	}
 	else if (n.type == "Decl")
 	    std::abort();
-	else if (n.type == "WildcardPattern")
-	{
-	    return var(-1);
-	}
 	else if (n.type == "rhs")
 	{
 	    if (v.size() == 2)

@@ -2872,7 +2872,7 @@ namespace yy {
 
   case 280: // aexp2: "_"
 #line 1080 "parser.y"
-                              {yylhs.value.as < expression_ref > () = AST_node("WildcardPattern");}
+                              {yylhs.value.as < expression_ref > () = Haskell::WildcardPattern();}
 #line 2877 "parser.cc"
     break;
 
@@ -6148,14 +6148,14 @@ expression_ref make_fexp(const vector<expression_ref>& args)
     }
 }
 
-expression_ref make_as_pattern(const Located<Haskell::ID>& x, const expression_ref& body)
+expression_ref make_as_pattern(const Located<Haskell::ID>& x, const expression_ref& pat)
 {
-    return new expression(AST_node("AsPattern"), {x,body});
+    return Haskell::AsPattern(x,pat);
 }
 
 expression_ref make_lazy_pattern(const expression_ref& pat)
 {
-    return new expression(AST_node("LazyPattern"), {pat});
+    return Haskell::LazyPattern(pat);
 }
 
 expression_ref make_strict_pattern(const expression_ref& pat)

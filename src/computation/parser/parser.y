@@ -1077,7 +1077,7 @@ aexp2: qvar                   {$$ = make_id(@1,$1);}
 |      "(#" texp "#)"         {}
 |      "(#" tup_exprs "#)"    {}
 |      "[" list "]"           {$$ = $2;}
-|      "_"                    {$$ = AST_node("WildcardPattern");}
+|      "_"                    {$$ = Haskell::WildcardPattern();}
 /* Skip Template Haskell Extensions */
 
 /* ------------- Tuple expressions ------------------------------- */
@@ -1592,14 +1592,14 @@ expression_ref make_fexp(const vector<expression_ref>& args)
     }
 }
 
-expression_ref make_as_pattern(const Located<Haskell::ID>& x, const expression_ref& body)
+expression_ref make_as_pattern(const Located<Haskell::ID>& x, const expression_ref& pat)
 {
-    return new expression(AST_node("AsPattern"), {x,body});
+    return Haskell::AsPattern(x,pat);
 }
 
 expression_ref make_lazy_pattern(const expression_ref& pat)
 {
-    return new expression(AST_node("LazyPattern"), {pat});
+    return Haskell::LazyPattern(pat);
 }
 
 expression_ref make_strict_pattern(const expression_ref& pat)

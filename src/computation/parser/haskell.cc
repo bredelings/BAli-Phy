@@ -43,4 +43,21 @@ string ID::print() const
     return name;
 }
 
+string WildcardPattern::print() const
+{
+    return "_";
+}
+
+string LazyPattern::print() const
+{
+    // FIXME -- do we need parentheses around the pattern, and if so, when?
+    return "~"+pattern.print();
+}
+
+string AsPattern::print() const
+{
+    // FIXME -- do we need parentheses around the pattern, and if so, when?
+    return var.print()+"@"+pattern.print();
+}
+
 }

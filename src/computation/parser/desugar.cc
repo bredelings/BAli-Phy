@@ -275,6 +275,18 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     }
     else if (E.is_a<Located<Hs::ID>>())
         std::abort();
+    else if (E.is_a<Haskell::WildcardPattern>())
+        return var(-1);
+    else if (E.is_a<Haskell::AsPattern>())
+    {
+        auto& AP = E.as_<Haskell::AsPattern>();
+        return Haskell::AsPattern(AP.var, desugar(AP.pattern));
+    }
+    else if (E.is_a<Haskell::LazyPattern>())
+    {
+        auto LP = E.as_<Haskell::LazyPattern>();
+        return Haskell::LazyPattern(desugar(LP.pattern));
+    }
 
     vector<expression_ref> v = E.copy_sub();
 
@@ -318,10 +330,6 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	    std::abort();
 	else if (n.type == "gdrhs")
 	    std::abort();
-	else if (n.type == "WildcardPattern")
-	{
-	    return var(-1);
-	}
 	else if (n.type == "ListComprehension")
 	{
 	    expression_ref E2 = E;

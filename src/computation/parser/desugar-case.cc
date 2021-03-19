@@ -338,23 +338,23 @@ void desugar_state::clean_up_pattern(const expression_ref& x, equation_info_t& e
         pat1 = get_tuple(pat1.as_<Haskell::Tuple>().elements);
     }
     // case x of ~pat -> rhs  =>  case x of _ -> let pat=x in rhs
-    else if (is_AST(pat1,"LazyPattern"))
+    else if (pat1.is_a<Haskell::LazyPattern>())
     {
-	auto& pat2 = pat1.sub()[0];
+        auto& LP = pat1.as_<Haskell::LazyPattern>();
 	CDecls binds = {};
-	for(auto& y: get_free_indices(pat2))
-	    binds.push_back({y,case_expression(x, {pat2}, {failable_expression(y)}).result(error("lazy pattern: failed pattern match"))});
+	for(auto& y: get_free_indices(LP.pattern))
+	    binds.push_back({y,case_expression(x, {LP.pattern}, {failable_expression(y)}).result(error("lazy pattern: failed pattern match"))});
 	rhs.add_binding(binds);
 	pat1 = var(-1);
     }
 
     // case x of y@pat2 -> rhs  => case x of pat2 => let{y=x} in rhs
-    else if (is_AST(pat1,"AsPattern"))
+    else if (pat1.is_a<Haskell::AsPattern>())
     {
-	auto y = pat1.sub()[0].as_<var>();
-	auto pat2 = pat1.sub()[1];
+        auto& AP = pat1.as_<Haskell::AsPattern>();
+	auto y = AP.var.as_<var>();
 	rhs.add_binding({{y, x}});
-	pat1 = pat2;
+	pat1 = AP.pattern;
     }
 }
 

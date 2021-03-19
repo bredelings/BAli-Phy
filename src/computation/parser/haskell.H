@@ -141,6 +141,32 @@ struct ID: public Object
     ID(const char* s):name(s) {}
 };
 
+struct WildcardPattern: public Object
+{
+    WildcardPattern* clone() const { return new WildcardPattern(*this);}
+    std::string print() const;
+};
+
+struct LazyPattern: public Object
+{
+    expression_ref pattern;
+    LazyPattern* clone() const { return new LazyPattern(*this);}
+    std::string print() const;
+    LazyPattern(const expression_ref& p):pattern(p) {}
+};
+
+struct AsPattern: public Object
+{
+    expression_ref var;      // FIXME: change to a located ID after we stop changing the type from ID to var.
+    expression_ref pattern;
+
+    AsPattern* clone() const { return new AsPattern(*this);}
+    std::string print() const;
+    AsPattern(const expression_ref& v, const expression_ref& p):var(v),pattern(p) {}
+};
+
+
+
 }
 
 namespace Hs = Haskell;
