@@ -426,7 +426,7 @@ class LogFileRun(MCMCRun):
     def n_iterations(self):
         n = get_n_lines(self.get_log_file())-1
         if n <= 0:
-            print("Error: Log file '{}' has no samples!".format(self.get_log_file()))
+            print(f"Error: Log file '{self.get_log_file()}' has no samples!")
             exit(1)
         return n
 
@@ -439,7 +439,7 @@ class TreeFileRun(MCMCRun):
     def n_iterations(self):
         n = get_n_lines(self.get_trees_file())-1
         if n <= 0:
-            print("Error: Tree file '{}' has no samples!".format(self.get_tree_file()))
+            print(f"Error: Tree file '{self.get_tree_file()}' has no samples!")
             exit(1)
         return n
 
@@ -496,7 +496,7 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
         return self.branch_prior
 
     def get_n_sequences(self,p):
-        features = self.get_alignment_info(path.join(self.dir,"C1.P{}.initial.fasta".format(p+1)))
+        features = self.get_alignment_info(path.join(self.dir,f"C1.P{p+1}.initial.fasta"))
         return features["n_sequences"]
 
     def find_input_file_names_for_outfile(self,outfile):
@@ -576,7 +576,7 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
         print("Computing initial alignments: ",end='',flush=True)
         alignment_names = []
         for i in range(self.n_partitions()):
-            name="P{}.initial".format(i+1)
+            name = f"P{i+1}.initial"
             source = path.join(self.dir,"C1."+name+".fasta")
             dest=path.join("Results","Work",name+"-unordered.fasta")
             if not more_recent_than(dest,source):
@@ -751,7 +751,7 @@ def construct_runs(mcmc_outputs):
 
     for mcmc_output in mcmc_outputs:
         if not glob.glob(mcmc_output+'*'):
-            print("No file or directory '{}'".format(mcmc_output+'*'))
+            print(f"No file or directory '{mcmc_output+'*'}'")
             exit(1)
 
     run_groups = []
@@ -808,8 +808,8 @@ class Analysis(object):
 
         for i in range(len(self.mcmc_runs)):
             if self.mcmc_runs[i].get_command() != self.mcmc_runs[0].get_command():
-                print("WARNING: Commands differ!\n   {}\n   {}\n".format(self.mcmc_runs[0].get_command(),
-                                                                         self.mcmc_runs[i].get_command()))
+                print(f"WARNING: Commands differ!\n   {self.mcmc_runs[0].get_command()}\n   {self.mcmc_runs[i].get_command()}\n")
+
         self.get_input_files()
 
         self.tree_consensus_levels = [0.5,0.66,0.8,0.9,0.95,0.99,1.0]
@@ -1062,8 +1062,8 @@ class Analysis(object):
         if self.burnin is not None:
             for run in self.mcmc_runs:
                 if self.burnin > run.n_iterations():
-                    print("MCMC run {} has only {} iterations.".format(run.mcmc_output, run.n_iterations()))
-                    print("Error!  The burnin (specified as {}) cannot be higher than this.".format(self.burnin))
+                    print(f"MCMC run {run.mcmc_output} has only {run.n_iterations()} iterations.")
+                    print(f"Error!  The burnin (specified as {self.burnin}) cannot be higher than this.")
                     exit(1)
             return
 
@@ -1076,10 +1076,10 @@ class Analysis(object):
         min_i = arg_min(iterations)
 
         if max_iterations > 3*min_iterations:
-            print("The variation in run length between MCMC chains is too great.\n")
-            print("  Chain #{} has {} iterations.".format(max_i, max_iterations))
-            print("  Chain #{} has {} iterations.".format(min_i, min_iterations))
-            print("Not going to guess a burnin: please specify one.")
+            print( "The variation in run length between MCMC chains is too great.\n")
+            print(f"  Chain #{max_i} has {max_iterations} iterations.")
+            print(f"  Chain #{min_i} has {min_iterations} iterations.")
+            print( "Not going to guess a burnin: please specify one.")
             exit(1)
 
         self.burnin = int(0.1*min_iterations)
@@ -1093,11 +1093,11 @@ class Analysis(object):
         if not more_recent_than_all_of("Results/Report",log_files):
             cmd = ["statreport"] + log_files
             if self.subsample is not None and self.subsample != 1:
-                cmd.append("--subsample={}".format(self.subsample))
+                cmd.append(f"--subsample={self.subsample}")
             if self.burnin is not None:
-                cmd.append("--skip={}".format(self.burnin))
+                cmd.append(f"--skip={self.burnin}")
             if self.until is not None:
-                cmd.append("--until={}".format(self.until))
+                cmd.append(f"--until={self.until}")
             self.exec_show(cmd,outfile="Results/Report")
         print("done.")
 
@@ -1158,31 +1158,31 @@ class Analysis(object):
     def summarize_topology_distribution(self):
         assert(self.has_trees())
         print("\nSummarizing topology distribution: ",end='')
-        logging.debug("tree files = {}".format(self.get_trees_files()))
+        logging.debug(f"tree files = {self.get_trees_files()}")
         cmd = ['trees-consensus','--map-tree=Results/MAP.PP.tree','--greedy-consensus=Results/greedy.PP.tree','--report=Results/consensus']+self.get_trees_files()
         cmd.append("--support-levels=Results/c-levels.plot")
         if self.subpartitions:
             cmd.append("--sub-partitions")
             cmd.append("--extended-support-levels=Results/extended-c-levels.plot")
         if self.prune is not None:
-            cmd.append("--ignore={}".format(self.prune))
+            cmd.append(f"--ignore={self.prune}")
         if self.subsample is not None and self.subsample != 1:
-            cmd.append("--subsample={}".format(self.subsample))
+            cmd.append(f"--subsample={self.subsample}")
         if self.burnin is not None:
-            cmd.append("--skip={}".format(self.burnin))
+            cmd.append(f"--skip={self.burnin}")
         if self.until is not None:
-            cmd.append("--until={}".format(self.until))
+            cmd.append(f"--until={self.until}")
 
         self.trees = [("greedy","greedy"),("MAP","MAP")]
         tree_names=['Results/greedy.PP.tree','Results/MAP.PP.tree']
         consensus_trees=[]
         for level in self.tree_consensus_levels:
             value = int(level*100)
-            name = "c{}".format(value)
-            filename = "Results/{}.PP.tree".format(name)
+            name = f"c{value}"
+            filename = f"Results/{name}.PP.tree"
             tree_names.append(filename)
-            self.trees.append((name,'{}% consensus'.format(value)))
-            consensus_trees.append("{}:{}".format(level,filename))
+            self.trees.append((name,f'{value}% consensus'))
+            consensus_trees.append(f"{level}:{filename}")
         cmd.append("--consensus={}".format(','.join(consensus_trees)))
 
         extended_consensus_trees=[]
