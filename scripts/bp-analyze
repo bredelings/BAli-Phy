@@ -35,7 +35,7 @@ def print_model(model):
             name = arg[0]
             submodel = arg[1]
             (subassign, submodel) = print_model(submodel)
-            section += '<tr><td>{}</td><td>{}</td><td>{}</td></tr>\n'.format(name,subassign,submodel)
+            section += f'<tr><td>{name}</td><td>{subassign}</td><td>{submodel}</td></tr>\n'
         section += '</table>'
     return (assign, section)
 
@@ -44,9 +44,9 @@ def print_models(name,models):
     section = '<table class="models">\n'
     i = 1
     for model in models:
-        model_name =  "{}{}".format(name,i)
+        model_name =  f"{name}{i}"
         (assign, model_html) = print_model(model)
-        section += '<tr><td><a name="{m}" class="anchor"></a><span class="modelname">{m}</span></td><td>{a}</td><td>\n'.format(m=model_name,a=assign)
+        section += f'<tr><td><a name="{model_name}" class="anchor"></a><span class="modelname">{model_name}</span></td><td>{assign}</td><td>\n'
         section += model_html
         section += '</td></tr>\n'
         i += 1
@@ -85,7 +85,7 @@ def hsv_to_rgb(H,S,V):
 
 def rgb_to_color(rgb):
     (r,g,b) = rgb
-    return "{} {} {}".format(r,g,b)
+    return f"{r} {g} {b}"
 
 def interpolate(i,total,start,end):
     return start + (end-start)*(i/(total-1))
@@ -138,7 +138,7 @@ def get_x3d_of_mds(point_string):
         zz = (z - zmin)/zw*5.0 - 2.5
 
         size = 0.04
-        scale = "{s} {s} {s}".format(s=size)
+        scale = f"{size} {size} {size}"
 
         if group == 1:
             color = rgb_to_color(hsv_to_rgb(interpolate(seen[group], num[group], 11/12, 1),
@@ -192,9 +192,9 @@ def find_exe(name,message=None):
     exe = shutil.which(name)
     if exe is None:
         if message is not None:
-            print("Program '{}' not found: {}".format(name,message))
+            print(f"Program '{name}' not found: {message}")
         else:
-            print("Program '{}' not found.".format(name))
+            print(f"Program '{name}' not found.")
     return exe
 
 def get_n_lines(filename):
@@ -229,21 +229,21 @@ def first_all_same(xs):
 
 def get_unused_dir_name():
     for i in itertools.count(1):
-        dirname = "Results.{}".format(i)
+        dirname = f"Results.{i}"
         if not path.exists(dirname):
             return dirname
 
 def get_value_from_file(filename,attribute):
     with open(filename,'r',encoding='utf-8') as file:
         for line in file:
-            m = re.match('{} ([^ ]*)($| )'.format(attribute), line)
+            m = re.match(f'{attribute} ([^ ]*)($| )', line)
             if m:
                 return m.group(1)
     return None
 
 def check_file_exists(filename):
     if not path.exists(filename):
-        print("Error: I cannot find file '{}'".format(filename))
+        print(f"Error: I cannot find file '{filename}'")
         exit(1)
     return filename
 
@@ -512,7 +512,7 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
     def get_alignment_files(self):
         filenames = []
         for p in range(1,self.n_partitions()+1):
-            filename = path.join(self.get_dir(),'C1.P{}.fastas'.format(p))
+            filename = path.join(self.get_dir(),f'C1.P{p}.fastas')
             if not path.exists(filename):
                 filename = None
             filenames.append(filename)
@@ -636,8 +636,8 @@ class TreeLogFileRun(TreeFileRun,LogFileRun):
 class PhyloBayesRun(MCMCRun):
     def __init__(self,mcmc_output, **kwargs):
         super().__init__(mcmc_output, **kwargs)
-        self.log_file = check_file_exists("{}.trace".format(prefix))
-        self.out_file = check_file_exists("{}.log".format(prefix))
+        self.log_file = check_file_exists(f"{prefix}.trace")
+        self.out_file = check_file_exists(f"{prefix}.log")
         logging.debug(f"PhyloBayesRun: {mcmc_output}")
     
     def personality(self):
@@ -655,7 +655,7 @@ class BEASTRun(MCMCRun):
         for tree_file in glob.glob(path.join(self.get_dir(),'*,trees')):
             check_file_exists(tree_file)
             self.prefix = get_file_prefix(tree_file)
-            self.log_file = check_file_exists("{}.log".format(prefix))
+            self.log_file = check_file_exists(f"{prefix}.log")
 
 def get_bali_phy3_runs(mcmc_args):
     runs = []
@@ -771,7 +771,7 @@ def construct_runs(mcmc_outputs):
         if run_group:
             return run_group
 
-    print("Error: MCMC runs '{}' are not BAli-Phy, BEAST, or PhyloBayes run.".format(mcmc_outputs),file=sys.stderr)
+    print(f"Error: MCMC runs '{mcmc_outputs}' are not BAli-Phy, BEAST, or PhyloBayes run.", file=sys.stderr)
     exit(3)
         
 
@@ -804,7 +804,7 @@ class Analysis(object):
         prefix=path.dirname(path.dirname(self.trees_consensus_exe))
         self.libexecdir = path.join(prefix,"lib","bali-phy","libexec")
         if not path.exists(self.libexecdir):
-            print("Can't find bali-phy libexec path '{}'".format(self.libexecdir))
+            print("Can't find bali-phy libexec path '{self.libexecdir}'")
 
         for i in range(len(self.mcmc_runs)):
             if self.mcmc_runs[i].get_command() != self.mcmc_runs[0].get_command():
@@ -858,7 +858,7 @@ class Analysis(object):
     def get_libexec_script(self,file):
         filepath = path.join(self.libexecdir,file)
         if not path.exists(filepath):
-            print("Can't find script '{}'!".format(file))
+            print(f"Can't find script '{file}'!")
         return filepath
 
     def Rexec(self,script,args=[]):
@@ -935,20 +935,20 @@ class Analysis(object):
         return [run.get_alignments_files()[p] for run in self.mcmc_runs]
 
     def exec_show_result(self,cmd,**kwargs):
-        showcmd = ' '.join(["'{}'".format(word) for word in cmd])
+        showcmd = ' '.join([f"'{word}'" for word in cmd])
 
         subargs = dict()
         if "infile" in kwargs:
             infile = kwargs["infile"]
             subargs["stdin"] = open(infile,encoding='utf-8')
-            showcmd += " < '{}'".format(infile)
+            showcmd += f" < '{infile}'"
         elif "stdin" in kwargs:
             subargs["stdin"] = kwargs["stdin"]
 
         if "outfile" in kwargs:
             outfile = kwargs["outfile"]
             subargs["stdout"] = open(outfile,'w+',encoding='utf-8')
-            showcmd += " > '{}'".format(outfile)
+            showcmd += f" > '{outfile}'"
         elif "stdout" in kwargs:
             subargs["stdout"] = kwargs["stdout"]
         else:
@@ -965,14 +965,14 @@ class Analysis(object):
         print(showcmd,file=self.log_shell_cmds)
         result = subprocess.run(cmd,**subargs)
         if result.returncode != 0:
-            print("command: {}".format(showcmd),file=sys.stderr)
+            print(f"command: {showcmd}",file=sys.stderr)
             if "outfile" in kwargs and path.exists(kwargs["outfile"]):
                 os.remove(kwargs["outfile"])
             if "handler" in kwargs:
                 handler = kwargs["handler"]
                 handler(result.returncode)
         elif self.verbose:
-            print("\n\t{}\n".format(showcmd))
+            print(f"\n\t{showcmd}\n")
         return result
 
     def exec_show(self,cmd,**kwargs):
@@ -988,20 +988,20 @@ class Analysis(object):
 
         # Always record error messages in the log file.
         if err_message:
-            print("  err: {}".format(err_message),file=self.log_shell_cmds)
+            print(f"  err: {err_message}", file=self.log_shell_cmds)
         if self.verbose and out_message:
-            print("  out: {}".format(out_message),file=self.log_shell_cmds)
+            print(f"  out: {out_message}", file=self.log_shell_cmds)
 
         code = result.returncode
         if code != 0:
-            print(" exit: {}".format(code),file=sys.stderr)
+            print(f" exit: {code}", file=sys.stderr)
 
-            print(" exit: {}".format(code),file=self.log_shell_cmds)
+            print(f" exit: {code}", file=self.log_shell_cmds)
             if out_message:
-                print("  out: {}".format(out_message),file=self.log_shell_cmds)
-                print("  out: {}".format(out_message),file=sys.stdout)
+                print(f"  out: {out_message}", file=self.log_shell_cmds)
+                print(f"  out: {out_message}", file=sys.stdout)
             if err_message:
-                print("  err: {}".format(err_message),file=self.log_shell_cmds)
+                print(f"  err: {err_message}", file=self.log_shell_cmds)
 
             exit(code)
         return out_message
@@ -1043,7 +1043,7 @@ class Analysis(object):
         if not reuse and path.exists("Results"):
             new_dir_name = get_unused_dir_name()
             if path.exists("Results"):
-                print("Renaming 'Results/' to '{}'\n".format(new_dir_name))
+                print(f"Renaming 'Results/' to '{new_dir_name}'\n")
                 os.rename("Results",new_dir_name)
 
         if not path.exists("Results"):
