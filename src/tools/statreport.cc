@@ -682,16 +682,16 @@ int main(int argc,char* argv[])
 		decreasing_names.push_back(field_names[i]);
 	}
 
-	if (worst_Ne.index != -1)
+	if (worst_Ne.index)
 	    cout<<" Ne  >= "<<worst_Ne.value<<"    ("<<field_names[*worst_Ne.index]<<")"<<endl;
-	if (worst_burnin.index != -1)
+	if (worst_burnin.index)
 	    cout<<" min burnin <= "<<burnin_value(worst_burnin.value,tables.back().n_rows())<<"    ("<<field_names[*worst_burnin.index]<<")"<<endl;
 	if (tables.size() > 1) {
-	    if (worst_RCI.index != -1)
+	    if (worst_RCI.index)
 		cout<<" PSRF-80%CI <= "<<worst_RCI.value<<"    ("<<field_names[*worst_RCI.index]<<")"<<endl;
 	    //if (worst_RNe.index != -1)
 	    //cout<<" PSRF-Ne <= "<<worst_RNe.value<<"    ("<<field_names[worst_RNe.index]<<")"<<endl;
-	    if (worst_RCF.index != -1)
+	    if (worst_RCF.index)
 		cout<<" PSRF-RCF <= "<<worst_RCF.value<<"    ("<<field_names[*worst_RCF.index]<<")"<<endl;
 	}
 	if (increasing_names.size())
