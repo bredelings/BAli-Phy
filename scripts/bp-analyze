@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+# make R test for whether R (i) is found, (ii) runs, and (iii) can generate svgs
+# remove format statements in favor of fstrings
+# switch to pathlib
+# --outdir=dir : make this write code in directory dir
+# --outdir-exists=move,remove,fail
+
 import shutil
 import argparse
 import re
