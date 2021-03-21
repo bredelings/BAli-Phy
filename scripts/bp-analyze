@@ -1607,8 +1607,8 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             tree = self.outdir / "c50.tree"
             cmd = ['summarize-ancestors',template,'-n',tree,'-g',tree]
             for dir in [run.dir for run in self.mcmc_runs]:
-                cmd += ['-A',path.join(dir,f'C1.P{i+1}.fastas'),
-                        '-T',path.join(dir,'C1.trees')]
+                cmd += ['-A',dir / f'C1.P{i+1}.fastas',
+                        '-T',dir / 'C1.trees']
             output = self.outdir / f"P{i+1}.ancestors.fasta"
             if not more_recent_than_all_of(output,self.get_trees_files()+list(filter(lambda x:x is not None,flatten(self.get_alignments_files())))):
                 self.exec_show(cmd,outfile=output)
@@ -1990,17 +1990,17 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                 section += f'      <td style="padding-right:3em">{name}</td>\n'
                 section += f'      <td><a href="{alignment}.fasta">FASTA</a></td>\n'
 
-                if path.exists(path.join(self.outdir,alignment+".html")):
+                if path.exists(self.outdir / f"{alignment}.html" ):
                     section += f'      <td><a href="{alignment}.html">HTML</a></td>\n'
                 else:
                     section +=  '      <td></td>\n'
 
-                if path.exists(path.join(self.outdir,alignment+"-diff.html")):
+                if path.exists(self.outdir / f"{alignment}-diff.html" ):
                     section += f'      <td><a href="{alignment}-diff.html">Diff</a></td>\n'
                 else:
                     section +=  '      <td></td>\n'
 
-                if path.exists(path.join(self.outdir,alignment+"-AU.html")):
+                if path.exists(self.outdir / f"{alignment}-AU.html" ):
                     section += f'      <td><a href="{alignment}-AU.html">AU</a></td>\n'
                 else:
                     section +=  '      <td></td>\n'
@@ -2057,7 +2057,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
     <td style="width:40%;vertical-align:top">
       <h4 style=\"text-align:center\">Projection of RF distances for {MDS_title} (<a href=\"https://doi.org/10.1080/10635150590946961\">Hillis et al 2005</a>)</h4>
 """
-        if path.exists(path.join(self.outdir,MDS_figure)):
+        if path.exists( self.outdir / MDS_figure ):
             section += self.html_svg(MDS_figure,"90%","",[])
             section += f'<a href="{MDS_figure_3d}.html">3D</a>'
         else:
