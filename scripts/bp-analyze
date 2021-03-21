@@ -2,7 +2,6 @@
 
 # make R test for whether R (i) is found, (ii) runs, and (iii) can generate svgs
 # switch to pathlib
-# --outdir=dir : make this write code in directory dir
 # --outdir-exists=move,remove,fail
 
 import shutil
@@ -575,7 +574,8 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
     def find_alphabets(self):
         return self.find_partition_values('alphabet')
 
-    def compute_initial_alignments(self,outdir=Path("Results")):
+    # FIXME: move to Analysis class
+    def compute_initial_alignments(self,outdir):
         print("Computing initial alignments: ",end='',flush=True)
         alignment_names = []
         for i in range(self.n_partitions()):
@@ -781,7 +781,7 @@ def construct_runs(mcmc_outputs):
 
 class Analysis(object):
 
-    def __init__(self,args,mcmc_outputs):
+    def __init__(self,args,mcmc_outputs,outdir):
         self.mcmc_runs = construct_runs(mcmc_outputs)
 
         self.trees_consensus_exe = find_exe('trees-consensus', message="See the main for adding the bali-phy programs to your PATH.")
@@ -800,7 +800,7 @@ class Analysis(object):
         self.until = args.until
         self.verbose = args.verbose
         self.speed = 1
-        self.outdir = Path("Results")
+        self.outdir = Path(outdir)
 
         # map from alignment name to alphabet name
         self.alignments = list()
@@ -1056,7 +1056,7 @@ class Analysis(object):
         if not self.outdir.exists():
             os.mkdir(self.outdir)
             os.mkdir(self.outdir / "Work")
-            print("Creating new directory '{self.outdir}' for summary files.")
+            print(f"Creating new directory '{self.outdir}' for summary files.")
 
         self.write_analysis_property("burnin", self.burnin)
         self.write_analysis_property("subsample", self.subsample)
@@ -1378,28 +1378,28 @@ class Analysis(object):
             cmd = ['gnuplot']
             self.run_gnuplot(f"""\
 set terminal png size 300,300
-set output "Results/{srq}.SRQ.png"
+set output "{self.outdir / f'{srq}.SRQ.png'}"
 set key right bottom
 set xlabel "Regenerations (fraction)"
 set ylabel "Time (fraction)"
 set title "Scaled Regeneration Quantile (SRQ) plot: $srq"
-plot "Results/{srq}.SRQ" title "{srq}" with linespoints lw 1 lt 1, x title "Goal" lw 1 lt 3
+plot "{self.outdir / f'{srq}.SRQ'}" title "{srq}" with linespoints lw 1 lt 1, x title "Goal" lw 1 lt 3
 """)
         if self.subpartitions:
-            self.run_gnuplot("""\
+            self.run_gnuplot(f"""\
 set terminal svg
-set output "Results/c-levels.svg"
+set output "{self.outdir / 'c-levels.svg'}"
 set xlabel "Log10 posterior Odds (LOD)"
 set ylabel "Supported Splits"
 set style data lines
-plot [0:][0:] 'Results/c-levels.plot' title 'Full Splits','Results/extended-c-levels.plot' title 'Partial Splits'""")
+plot [0:][0:] '{self.outdir / "c-levels.plot"}' title 'Full Splits','{self.outdir / "extended-c-levels.plot"}' title 'Partial Splits'""")
         else:
-            self.run_gnuplot("""\
+            self.run_gnuplot(f"""\
 set terminal svg
-set output "Results/c-levels.svg"
+set output "{self.outdir / 'c-levels.svg'}"
 set xlabel "Log10 posterior Odds (LOD)"
 set ylabel "Supported Splits"
-plot [0:][0:] 'Results/c-levels.plot' with lines notitle
+plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 """)
     def compute_tree_MDS(self):
         if not self.R_exe:
@@ -1469,7 +1469,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 </html>""",file=x3d_file)
 
     def compute_initial_alignments(self):
-        names = self.run(0).compute_initial_alignments()
+        names = self.run(0).compute_initial_alignments(self.outdir)
         for i in range(len(names)):
             name = names[i]
             self.alignments.append((name, self.get_alphabets()[i], "Initial"))
@@ -2262,6 +2262,7 @@ if __name__ == '__main__':
     parser.add_argument("--subsample",metavar='NUM',type=int,default=1,help="Keep only every NUM iterations")
     parser.add_argument("--until",type=int,default=None)
     parser.add_argument("--prune", default=None,help="Taxa to remove")
+    parser.add_argument("--outdir", default="Results",help="Output directory")
 #    parser.add_argument("--muscle")
 #    parser.add_argument("--probcons")
 #    parser.add_argument("--mafft")
@@ -2275,4 +2276,4 @@ if __name__ == '__main__':
     for p in args.mcmc_outputs:
         mcmc_outputs.append(Path(p))
 
-    analysis = Analysis(args, mcmc_outputs)
+    analysis = Analysis(args, mcmc_outputs, args.outdir)
