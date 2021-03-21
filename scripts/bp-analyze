@@ -1651,7 +1651,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             #FIXME: We should only write sections that are not empty for this analysis!
             output += self.topbar()
             output += '<div class="content">\n'
-            output += "<h1>{}</h1>\n".format(title)
+            output += f"<h1>{title}</h1>\n"
             if self.has_model():
                 output += self.section_data_and_model()
             if self.has_parameters():
@@ -1668,7 +1668,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             output += self.section_end()
             print(output, file=index)
 
-        print("\nReport written to '{}".format(filename));
+        print(f"\nReport written to '{filename}")
 
     def html_header(self,title):
         section = """\
@@ -1676,7 +1676,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
 """
-        section += "<title>BAli-Phy: {}</title>\n".format(title);
+        section += f"<title>BAli-Phy: {title}</title>\n"
         section += """\
       <style type="text/css">
       body {margin:0; padding:0}
@@ -1770,25 +1770,25 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
   <tr><th>Partition</th><th>Sequences</th><th>Lengths</th><th>Alphabet</th><th>Substitution&nbsp;Model</th><th>Indel&nbsp;Model</th><th>Scale&nbsp;Model</th></tr>
 """
         for i in range(self.n_partitions()):
-            section += '<tr>\n'
-            section += '  <td>{}</td>\n'.format(i+1)
-            section += '  <td>{}</td>\n'.format(self.get_input_files()[i])
+            section +=  '<tr>\n'
+            section += f'  <td>{i+1}</td>\n'
+            section += f'  <td>{self.get_input_files()[i]}</td>\n'
 
-            features = self.get_alignment_info("Results/P{}.initial.fasta".format(i+1))
+            features = self.get_alignment_info(f"Results/P{i+1}.initial.fasta")
             minlength = features['min_length']
             maxlength = features['max_length']
-            section += '<td>{} - {}</td>\n'.format(minlength,maxlength)
+            section += f'<td>{minlength} - {maxlength}</td>\n'
 
             alphabet = self.get_alphabets()[i]
-            section += '<td>{}</td>\n'.format(alphabet)
+            section += f'<td>{alphabet}</td>\n'
 
             smodel = self.get_smodel_for_partition(i)
             if smodel:
                 smodel = smodel['main']
                 index = self.get_smodel_indices()[i]+1
-                target = "S{}".format(index)
-                link = '<a href="#{t}">{t}</a>'.format(t=target)
-                section += '<td>{} = {}</td>\n'.format(link,smodel)
+                target = f"S{index}"
+                link = f'<a href="#{target}">{target}</a>'
+                section += f'<td>{link} = {smodel}</td>\n'
             elif self.get_smodels() is not None:
                 section += '<td>none</td>\n'
             else:
@@ -1798,9 +1798,9 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             if imodel:
                 imodel = imodel['main']
                 index = self.get_imodel_indices()[i]+1
-                target = "I{}".format(index)
-                link = '<a href="#{t}">{t}</a>'.format(t=target)
-                section += '<td>{} = {}</td>\n'.format(link,imodel)
+                target = f"I{index}"
+                link = f'<a href="#{target}">{target}</a>'
+                section += f'<td>{link} = {smodel}</td>\n'
             elif self.get_imodels() is not None:
                 section += '<td>none</td>\n'
             else:
@@ -1810,13 +1810,13 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             if scale_model:
                 scale_model = scale_model['main']
                 index = self.get_scale_model_indices()[i]+1
-                target = "scale{}".format(index)
-                link = '<a href="#{t}">{t}</a>'.format(t=target)
+                target = f"scale{index}"
+                link = f'<a href="#{target}">{target}</a>'
                 assign = '='
                 if scale_model[0] == '~':
                     scale_model = scale_model[1:]
                     assign = '~'
-                section += '<td>{} {} {}</td>\n'.format(link,assign,scale_model)
+                section += f'<td>{link} {assign} {scale_model}</td>\n'
             elif self.get_scale_models() is not None:
                 section += '<td>none</td>\n'
             else:
@@ -1845,14 +1845,14 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                 continue
 
             row_style = "" if var in self.CI_low else 'style="font-style:italic"'
-            section += '<tr {}>\n'.format(row_style)
-            section += '  <td>{}</td>\n'.format(var)
-            section += '  <td>{}</td>\n'.format(self.median[var])
+            section += f'<tr {row_style}>\n'
+            section += f'  <td>{var}</td>\n'
+            section += f'  <td>{self.median[var]}</td>\n'
             if var in self.CI_low:
-                section += '  <td>({}, {})</td>\n'.format(self.CI_low[var], self.CI_high[var])
+                section += f'  <td>({self.CI_low[var]}, {self.CI_high[var]})</td>\n'
 
                 ACT_style = ' style="color:red"' if self.ESS[var] <= self.min_ESS else ""
-                section += '  <td {}>{}</td>\n'.format(ACT_style,self.ACT[var])
+                section += f'  <td {ACT_style}>{self.ACT[var]}</td>\n'
 
                 if self.ESS[var] < 100:
                     ESS_style = ' style="color:red"'
