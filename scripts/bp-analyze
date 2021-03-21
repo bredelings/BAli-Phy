@@ -1166,7 +1166,7 @@ class Analysis(object):
         assert(self.has_trees())
         print("\nSummarizing topology distribution: ",end='')
         logging.debug(f"tree files = {self.get_trees_files()}")
-        cmd = ['trees-consensus',f'--map-tree={self.outdir / "MAP.PP.tree"}',f'--greedy-consensus={self.outdir / "greedy.PP.tree"}','--report','Results/consensus']+self.get_trees_files()
+        cmd = ['trees-consensus',f'--map-tree={self.outdir / "MAP.PP.tree"}',f'--greedy-consensus={self.outdir / "greedy.PP.tree"}','--report',self.outdir / 'consensus']+self.get_trees_files()
         cmd.append(f"--support-levels={self.outdir / 'c-levels.plot'}")
         if self.subpartitions:
             cmd.append("--sub-partitions")
@@ -1314,8 +1314,8 @@ class Analysis(object):
 
         if not more_recent_than_all_of(self.outdir / "partitions.bs",self.get_trees_files()):
             cmd = ['trees-bootstrap',
-                   '--pred','Results/partitions.pred',
-                   '--LOD-table','Results/LOD-table',
+                   '--pred',self.outdir / 'partitions.pred',
+                   '--LOD-table',self.outdir / 'LOD-table',
                    '--pseudocount=1']
             cmd += self.get_trees_files()
             if self.prune is not None:
@@ -1348,7 +1348,7 @@ class Analysis(object):
         print("Generate SRQ plot for partitions: ",end='')
 
         if not more_recent_than_all_of(self.outdir / "partitions.SRQ",self.get_trees_files()):
-            cmd = ['trees-to-SRQ','Results/partitions.pred','--max-points=1000']
+            cmd = ['trees-to-SRQ',self.outdir / 'partitions.pred','--max-points=1000']
             if self.subsample is not None and self.subsample != 1:
                 cmd.append(f"--subsample={self.subsample}")
             if self.burnin is not None:
@@ -1362,7 +1362,7 @@ class Analysis(object):
 
         print("Generate SRQ plot for c50 tree: ", end='')
         if not more_recent_than_all_of(self.outdir / "c50.SRQ", self.get_trees_files()):
-            cmd = ['trees-to-SRQ','Results/c50.tree','--max-points=1000']
+            cmd = ['trees-to-SRQ',self.outdir / 'c50.tree','--max-points=1000']
             if self.subsample is not None and self.subsample != 1:
                 cmd.append(f"--subsample={self.subsample}")
             if self.burnin is not None:
@@ -1492,7 +1492,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                     cut_cmd.append(f"--until={self.until}")
                 p1 = subprocess.Popen(cut_cmd,  stdout=subprocess.PIPE)
 
-                chop_cmd=['alignment-chop-internal','--tree','Results/MAP.tree']
+                chop_cmd=['alignment-chop-internal','--tree',self.outdir / 'MAP.tree']
                 p2 = subprocess.Popen(chop_cmd, stdout=subprocess.PIPE, stdin=p1.stdout)
 
                 max_cmd=['alignment-max']
@@ -1638,10 +1638,10 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                         cut_cmd.append(f"--until={self.until}")
                     p1 = subprocess.Popen(cut_cmd,  stdout=subprocess.PIPE)
 
-                    chop_cmd=['alignment-chop-internal','--tree','Results/MAP.tree']
+                    chop_cmd=['alignment-chop-internal','--tree',self.outdir / 'MAP.tree']
                     p2 = subprocess.Popen(chop_cmd, stdout=subprocess.PIPE, stdin=p1.stdout)
 
-                    gild_cmd = ['alignment-gild',afile,'Results/MAP.tree','--max-alignments=500']
+                    gild_cmd = ['alignment-gild',afile,self.outdir / 'MAP.tree','--max-alignments=500']
                     self.exec_show(gild_cmd, stdin=p2.stdout, outfile=AUfile)
 
                     p1.wait()
@@ -2105,15 +2105,15 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 
 
         if self.has_trees():
-            min_NE_partition = self.get_value_from_file('Results/partitions.bs','min Ne =')
+            min_NE_partition = self.get_value_from_file(self.outdir / 'partitions.bs','min Ne =')
             section += f'<tr><td><b title=\"Effective Sample Size for bit-vectors of partition support (smallest)\">topological ESS</b></td><td>{min_NE_partition}</td></tr>\n'
 
-            asdsf = self.get_value_from_file('Results/partitions.bs','ASDSF\[min=0.100\] =')
+            asdsf = self.get_value_from_file(self.outdir / 'partitions.bs','ASDSF\[min=0.100\] =')
             if asdsf is None:
                 asdsf = "NA"
             section += f'<tr><td><b title=\"Average Standard Deviation of Split Frequencies\">ASDSF</b></td><td>{asdsf}</td></tr>'
 
-            msdsf = self.get_value_from_file('Results/partitions.bs','MSDSF =')
+            msdsf = self.get_value_from_file(self.outdir / 'partitions.bs','MSDSF =')
             if msdsf is None:
                 msdsf = "NA"
             section += f'<tr><td><b title=\"Maximum Standard Deviation of Split Frequencies\">MSDSF</b></td><td>{msdsf}</td></tr>'
@@ -2122,8 +2122,8 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         psrf_rcf = 'NA'
         if self.has_parameters():
             if self.get_log_files() and len(self.get_log_files()) >= 2:
-                psrf_80 = self.get_value_from_file('Results/Report','PSRF-80%CI <=')
-                psrf_rcf = self.get_value_from_file('Results/Report','PSRF-RCF <=')
+                psrf_80 = self.get_value_from_file(self.outdir / 'Report','PSRF-80%CI <=')
+                psrf_rcf = self.get_value_from_file(self.outdir / 'Report','PSRF-RCF <=')
             section += f'<tr><td><b>PSRF CI80%</b></td><td>{psrf_80}</td><tr>\n'
             section += f'<tr><td><b>PSRF RCF</b></td><td>{psrf_rcf}</td><tr>\n'
 
