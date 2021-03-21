@@ -10,6 +10,7 @@ import argparse
 import re
 import os
 from os import path
+from pathlib import Path
 import subprocess
 import json
 import itertools
@@ -226,10 +227,10 @@ def first_all_same(xs):
         raise Exception("Not all the same!")
     return xs[0]
 
-def get_unused_dir_name():
+def get_unused_dir_name(dirbase):
     for i in itertools.count(1):
-        dirname = f"Results.{i}"
-        if not path.exists(dirname):
+        dirname = Path(f"{dirbase}.{i}")
+        if not dirname.exists():
             return dirname
 
 def get_value_from_file(filename,attribute):
@@ -244,7 +245,7 @@ def check_file_exists(filename):
     if not path.exists(filename):
         print(f"Error: I cannot find file '{filename}'")
         exit(1)
-    return filename
+    return Path(filename)
 
 def arg_max(xs):
     arg = None
@@ -268,7 +269,7 @@ def arg_min(xs):
 
 class MCMCRun(object):
     def __init__(self, mcmc_output,**kwargs):
-        self.mcmc_output = mcmc_output
+        self.mcmc_output = Path(mcmc_output)
         self.out_file = None
         self.trees_file = None
         self.log_file = None
@@ -277,12 +278,12 @@ class MCMCRun(object):
         self.command = None
         self.version = None
 
-        if path.isdir(self.mcmc_output):
+        if self.mcmc_output.is_dir():
             self.dir = self.mcmc_output
             self.prefix = None
         else:
-            self.dir = path.dirname(self.mcmc_output)
-            self.prefix = path.basename(self.mcmc_output)
+            self.dir = self.mcmc_output.parent
+            self.prefix = self.mcmc_output.name
 
     def personality(self):
         return None
@@ -300,7 +301,7 @@ class MCMCRun(object):
         return False
 
     def get_parent_dir(self):
-        return path.dirname(path.abspath(self.get_dir()))
+        return self.dir.parent
 
     def get_version(self):
         return self.version
@@ -571,13 +572,13 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
     def find_alphabets(self):
         return self.find_partition_values('alphabet')
 
-    def compute_initial_alignments(self):
+    def compute_initial_alignments(self,outdir=Path("Results")):
         print("Computing initial alignments: ",end='',flush=True)
         alignment_names = []
         for i in range(self.n_partitions()):
             name = f"P{i+1}.initial"
-            source = path.join(self.dir,"C1."+name+".fasta")
-            dest=path.join("Results","Work",name+"-unordered.fasta")
+            source = Path(self.dir , f"C1.{name}.fasta")
+            dest= Path(outdir, "Work", name+"-unordered.fasta")
             if not more_recent_than(dest,source):
                 shutil.copyfile(source,dest)
             alignment_names.append(name)
@@ -796,6 +797,7 @@ class Analysis(object):
         self.until = args.until
         self.verbose = args.verbose
         self.speed = 1
+        self.outdir = Path("Results")
 
         # map from alignment name to alphabet name
         self.alignments = list()
@@ -817,7 +819,7 @@ class Analysis(object):
         self.determine_burnin()
         self.initialize_results_directory()
 
-        self.log_shell_cmds = open("Results/commands.log",'a+',encoding='utf-8')
+        self.log_shell_cmds = (self.outdir / "commands.log").open('a+',encoding='utf-8')
         print("-----------------------------------------------------------",file=self.log_shell_cmds)
 
         if self.has_parameters():
@@ -834,7 +836,7 @@ class Analysis(object):
             self.compute_ancestral_states()
             self.draw_alignments()
             self.compute_and_draw_AU_plots()
-        self.print_index_html("Results/index.html")
+        self.print_index_html(self.outdir / "index.html")
 
     def n_chains(self):
         return(len(self.mcmc_runs))
@@ -855,10 +857,10 @@ class Analysis(object):
         return self.mcmc_runs[p]
 
     def get_libexec_script(self,file):
-        filepath = path.join(self.libexecdir,file)
-        if not path.exists(filepath):
+        filename = path.join(self.libexecdir,file)
+        if not path.exists(filename):
             print(f"Can't find script '{file}'!")
-        return filepath
+        return filename
 
     def Rexec(self,script,args=[]):
         if not self.R_exe:
@@ -1006,12 +1008,14 @@ class Analysis(object):
         return out_message
 
     def load_analysis_properties(self):
-        if not path.exists("Results/properties.json"):
+        filename = self.outdir / "properties.json"
+        if not filename.exists():
             return dict()
-        return get_json_from_file("Results/properties.json")
+        return get_json_from_file(filename)
 
     def save_analysis_properties(self, properties):
-        with open('Results/properties.json', 'w') as outfile:
+        filename = self.outdir / "properties.json"
+        with filename.open('w') as outfile:
             json.dump(properties, outfile, indent=2)
 
     def read_analysis_property(self,key):
@@ -1028,7 +1032,8 @@ class Analysis(object):
         return properties
         
     def write_input_file_names(input_file_names):
-        with open("Results/input_files",w,encoding='utf-8') as out:
+        filename = self.outdir / "input_files"
+        with filename.open("w",encoding='utf-8') as out:
             print(input_file_names.join('\n'),file=out)
 
     def initialize_results_directory(self):
@@ -1039,16 +1044,16 @@ class Analysis(object):
         reuse = reuse and self.check_analysis_property("alignment_file_names",self.get_alignments_files())
         reuse = reuse and self.check_analysis_property("input_files", self.get_input_files())
 
-        if not reuse and path.exists("Results"):
-            new_dir_name = get_unused_dir_name()
-            if path.exists("Results"):
-                print(f"Renaming 'Results/' to '{new_dir_name}'\n")
-                os.rename("Results",new_dir_name)
+        if not reuse and self.outdir.exists():
+            new_dir_name = get_unused_dir_name(self.outdir)
+            if self.outdir.exists():
+                print(f"Renaming '{self.outdir}' to '{new_dir_name}'\n")
+                os.rename(self.outdir,new_dir_name)
 
-        if not path.exists("Results"):
-            print("Creating new directory Results/ for summary files.")
-            os.mkdir("Results")
-            os.mkdir("Results/Work")
+        if not self.outdir.exists():
+            os.mkdir(self.outdir)
+            os.mkdir(self.outdir / "Work")
+            print("Creating new directory '{self.outdir}' for summary files.")
 
         self.write_analysis_property("burnin", self.burnin)
         self.write_analysis_property("subsample", self.subsample)
@@ -1089,7 +1094,7 @@ class Analysis(object):
             return
 
         print("Summarizing distribution of numerical parameters: ",end='')
-        if not more_recent_than_all_of("Results/Report",log_files):
+        if not more_recent_than_all_of(self.outdir / "Report",log_files):
             cmd = ["statreport"] + log_files
             if self.subsample is not None and self.subsample != 1:
                 cmd.append(f"--subsample={self.subsample}")
@@ -1097,7 +1102,7 @@ class Analysis(object):
                 cmd.append(f"--skip={self.burnin}")
             if self.until is not None:
                 cmd.append(f"--until={self.until}")
-            self.exec_show(cmd,outfile="Results/Report")
+            self.exec_show(cmd,outfile=self.outdir / "Report")
         print("done.")
 
         print("Analyzing scalar variables: ",end='',flush=True)
@@ -1111,7 +1116,7 @@ class Analysis(object):
         self.PSRF_CI80 = dict()
         self.PSRF_RCF = dict()
 
-        with open("Results/Report",encoding='utf-8') as report:
+        with open(self.outdir / "Report",encoding='utf-8') as report:
             lines = report.readlines()
             i = 0
             while i < len(lines):
@@ -1643,7 +1648,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 
 
     def print_index_html(self,filename):
-        with open(filename,"w+",encoding='utf-8') as index:
+        with filename.open("w+",encoding='utf-8') as index:
             title = "MCMC Post-hoc Analysis"
             output  = self.html_header(title)
 
