@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 # make R test for whether R (i) is found, (ii) runs, and (iii) can generate svgs
-# remove format statements in favor of fstrings
 # switch to pathlib
 # --outdir=dir : make this write code in directory dir
 # --outdir-exists=move,remove,fail
@@ -2159,11 +2158,11 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         if something_common:
             section += "<p>"
         if all_same(commands):
-            section += "<b>command line</b>: {}</br>\n".format(commands[0])
+            section += f"<b>command line</b>: {commands[0]}</br>\n"
         if all_same(parent_dirs):
-            section += "<b>directory</b>: {}</br>\n".format(parent_dirs[0])
+            section += f"<b>directory</b>: {parent_dirs[0]}</br>\n"
         if all_same(versions):
-            section += "<b>version</b>: {}\n".format(versions[0])
+            section += f"<b>version</b>: {versions[0]}\n"
         if something_common:
             section += "</p>"
         #section += '<table style="width:100%">'."\n"
@@ -2184,21 +2183,21 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         for i in range(self.n_chains()):
             section += "<tr>\n"
 
-            section += "  <td>{}</td>\n".format(i+1)
+            section += f"  <td>{i+1}</td>\n"
             if not all_same(versions):
-                section += "  <td>{}</td>\n".format(versions[i])
+                section += f"  <td>{versions[i]}</td>\n"
 
-            section += "  <td>{}</td>\n".format(self.burnin)
-            section += "  <td>{}</td>\n".format(self.subsample)
+            section += f"  <td>{self.burnin}</td>\n"
+            section += f"  <td>{self.subsample}</td>\n"
 
             remaining = (self.run(i).n_iterations() - self.burnin)/self.subsample
-            section += "  <td>{}</td>\n".format(remaining)
+            section += f"  <td>{remaining}</td>\n"
 
             if not all_same(commands):
-                section += "  <td>{}</td>\n".format(commands[i])
-            section += "  <td>{}</td>\n".format(self.run(i).get_dir())
+                section += f"  <td>{commands[i]}</td>\n"
+            section += f"  <td>{self.run(i).get_dir()}</td>\n"
             if not all_same(parent_dirs):
-                section += "  <td>{}/td>\n".format(parent_dirs[i])
+                section += f"  <td>{parent_dirs[i]}/td>\n"
 
             section += "</tr>\n"
 
@@ -2212,9 +2211,9 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 #    $section .= "<table class=\"backlit2\">\n";
         section += "<table>\n"
         if self.get_topology_prior():
-            section += '<tr><td class="modelname">topology</td><td>{}</td></tr>'.format(self.get_topology_prior())
+            section += f'<tr><td class="modelname">topology</td><td>{self.get_topology_prior()}</td></tr>'
         if self.get_branch_length_prior():
-            section += '<tr><td class="modelname">branch lengths</td><td>{}</td></tr>'.format(self.get_branch_length_prior())
+            section += f'<tr><td class="modelname">branch lengths</td><td>{self.get_branch_length_prior()}</td></tr>'
         section += '</table>\n'
 
         section += '<h3 style="clear:both"><a class="anchor" name="smodel"></a>Substitution model (+priors)</h3>\n'
