@@ -718,7 +718,7 @@ def get_tree_runs(mcmc_args):
     good = []
     bad = []
     for run_name in mcmc_args:
-        if path.exists(run_name) and run_name.endswith(".trees"):
+        if path.exists(run_name) and str(run_name).endswith(".trees"):
             runs.append(TreeFileRun(run_name))
             good.append(run_name)
         elif path.exists(run_name+".trees") and not path.exists(run_name+".log"):
@@ -1163,11 +1163,11 @@ class Analysis(object):
         assert(self.has_trees())
         print("\nSummarizing topology distribution: ",end='')
         logging.debug(f"tree files = {self.get_trees_files()}")
-        cmd = ['trees-consensus','--map-tree=Results/MAP.PP.tree','--greedy-consensus=Results/greedy.PP.tree','--report=Results/consensus']+self.get_trees_files()
-        cmd.append("--support-levels=Results/c-levels.plot")
+        cmd = ['trees-consensus',f'--map-tree={self.outdir / "MAP.PP.tree"}',f'--greedy-consensus={self.outdir / "greedy.PP.tree"}','--report=Results/consensus']+self.get_trees_files()
+        cmd.append(f"--support-levels={self.outdir / 'c-levels.plot'}")
         if self.subpartitions:
             cmd.append("--sub-partitions")
-            cmd.append("--extended-support-levels=Results/extended-c-levels.plot")
+            cmd.append(f"--extended-support-levels={self.outdir / 'extended-c-levels.plot'}")
         if self.prune is not None:
             cmd.append(f"--ignore={self.prune}")
         if self.subsample is not None and self.subsample != 1:
@@ -1178,12 +1178,12 @@ class Analysis(object):
             cmd.append(f"--until={self.until}")
 
         self.trees = [("greedy","greedy"),("MAP","MAP")]
-        tree_names=['Results/greedy.PP.tree','Results/MAP.PP.tree']
+        tree_names=[self.outdir / 'greedy.PP.tree',self.outdir / 'MAP.PP.tree']
         consensus_trees=[]
         for level in self.tree_consensus_levels:
             value = int(level*100)
             name = f"c{value}"
-            filename = f"Results/{name}.PP.tree"
+            filename = self.outdir / f"{name}.PP.tree"
             tree_names.append(filename)
             self.trees.append((name,f'{value}% consensus'))
             consensus_trees.append(f"{level}:{filename}")
@@ -1191,25 +1191,31 @@ class Analysis(object):
 
         extended_consensus_trees=[]
         for level in self.tree_consensus_levels:
-            filename = f"Results/c{int(level*100)}.mtree"
+            filename = self.outdir / f"c{int(level*100)}.mtree"
             extended_consensus_trees.append(f"{level}:{filename}")
         if self.subpartitions:
             cmd.append("--extended-consensus={}".format(','.join(extended_consensus_trees)))
 
         extended_consensus_L=[]
         for level in self.tree_consensus_levels:
-            filename = f"Results/c{int(level*100)}.mlengths"
+            filename = self.outdir / f"c{int(level*100)}.mlengths"
             extended_consensus_L.append(f"{level}:{filename}")
         if self.subpartitions:
             cmd.append("--extended-consensus-L={}".format(','.join(extended_consensus_L)))
 
-        if not more_recent_than_all_of("Results/consensus", self.get_trees_files()):
+        if not more_recent_than_all_of(self.outdir / "consensus", self.get_trees_files()):
             self.exec_show(cmd)
         for tree in tree_names:
             if not path.exists(tree) or file_is_empty(tree):
                 raise Exception(f"Tree '{tree}' not found!")
-            assert(tree.endswith('.PP.tree'))
-            tree2 = tree[0:-8]+'.tree'
+            assert(str(tree).endswith('.PP.tree'))
+
+            # Replace suffix ".PP.tree" with just ".tree"
+            tree2 = tree
+            while tree2.suffix:
+                tree2 = tree2.with_suffix('')
+            tree2 = tree2.with_suffix('.tree')
+
             if not more_recent_than(tree2,tree):
                 self.exec_show(['tree-tool',tree,'--strip-internal-names','--name-all-nodes'],outfile=tree2)
         print(" done.")
@@ -1258,31 +1264,31 @@ class Analysis(object):
             value = int(level*100)
             tree = f"c{value}"
 
-            filename1 = f"Results/{tree}.tree"
-            filename2 = f"Results/{tree}.mtree"
+            filename1 = self.outdir / f"{tree}.tree"
+            filename2 = self.outdir / f"{tree}.mtree"
 
             if self.speed < 2 and path.exists(filename2):
-                cmd = ['draw-tree', f'Results/{tree}.mlengths', f'--out=Results/{tree}-mctree', '--draw-clouds=only']
-                if not more_recent_than(f"Results/{tree}-mctree.svg",filename2):
+                cmd = ['draw-tree', self.outdir / f'{tree}.mlengths', '--out', self.outdir / f'{tree}-mctree', '--draw-clouds=only']
+                if not more_recent_than(self.outdir / f"{tree}-mctree.svg",filename2):
                     self.exec_show(cmd + ['--output=svg'])
-                if not more_recent_than(f"Results/{tree}-mctree.pdf",filename2):
+                if not more_recent_than(self.outdir / f"{tree}-mctree.pdf",filename2):
                     self.exec_show(cmd + ['--output=pdf'])
 
-            if not more_recent_than(f"Results/{tree}-tree.pdf", filename1):
+            if not more_recent_than(self.outdir / f"{tree}-tree.pdf", filename1):
                 cmd = ['draw-tree',tree+".tree",'--layout=equal-daylight']
                 self.exec_show(cmd,cwd="Results")
-            if not more_recent_than(f"Results/{tree}-tree.svg", filename1):
+            if not more_recent_than(self.outdir / f"{tree}-tree.svg", filename1):
                 cmd = ['draw-tree',tree+".tree",'--layout=equal-daylight','--output=svg']
                 self.exec_show(cmd,cwd="Results")
             print(tree+' ',end='',flush=True)
 
         for tree in ['greedy','MAP']:
-            filename = f"Results/{tree}.tree"
+            filename = self.outdir / f"{tree}.tree"
             if path.exists(filename):
-                outname = f"Results/{tree}-tree"
-                if not more_recent_than(outname+".pdf", filename):
+                outname = self.outdir / f"{tree}-tree"
+                if not more_recent_than(outname.with_suffix(".pdf"), filename):
                     self.exec_show(['draw-tree', tree+'.tree','--layout=equal-daylight'],cwd="Results")
-                if not more_recent_than(outname+".svg", filename):
+                if not more_recent_than(outname.with_suffix(".svg"), filename):
                     self.exec_show(['draw-tree', tree+'.tree','--layout=equal-daylight','--output=svg'],cwd="Results")
             print(f'{tree} ', end='')
 
@@ -1291,19 +1297,19 @@ class Analysis(object):
     def compute_tree_mixing_diagnostics(self):
         print("\nGenerate mixing diagnostics for topologies ...",end='')
 
-        if not more_recent_than("Results/partitions","Results/consensus"):
+        if not more_recent_than(self.outdir / "partitions",self.outdir / "consensus"):
             self.exec_show(['pickout','--no-header','--large','pi'],
-                           infile="Results/consensus",
-                           outfile="Results/partitions")
+                           infile=self.outdir / "consensus",
+                           outfile=self.outdir / "partitions")
 
         # This just adds blank lines between the partitions.
-        if not more_recent_than("Results/partitions.pred","Results/partitions"):
-            with open("Results/partitions",encoding='utf-8') as infile:
-                with open("Results/partitions.pred","w+",encoding='utf-8') as outfile:
+        if not more_recent_than(self.outdir / "partitions.pred",self.outdir / "partitions"):
+            with open(self.outdir / "partitions",encoding='utf-8') as infile:
+                with open(self.outdir / "partitions.pred","w+",encoding='utf-8') as outfile:
                     for line in infile:
                         print(line,file=outfile)
 
-        if not more_recent_than_all_of("Results/partitions.bs",self.get_trees_files()):
+        if not more_recent_than_all_of(self.outdir / "partitions.bs",self.get_trees_files()):
             cmd = ['trees-bootstrap',
                    '--pred=Results/partitions.pred',
                    '--LOD-table=Results/LOD-table',
@@ -1317,20 +1323,20 @@ class Analysis(object):
                 cmd.append(f"--skip={self.burnin}")
             if self.until is not None:
                 cmd.append(f"--until={self.until}")
-            self.exec_show(cmd,outfile="Results/partitions.bs")
+            self.exec_show(cmd,outfile=self.outdir / "partitions.bs")
 
         if self.n_chains() < 2:
             print(" done.")
             return
 
-        if not more_recent_than_all_of("Results/convergence-PP.pdf",self.get_trees_files()):
+        if not more_recent_than_all_of(self.outdir / "convergence-PP.pdf",self.get_trees_files()):
             script = self.get_libexec_script("compare-runs.R")
-            self.Rexec(script,["Results/LOD-table","Results/convergence-PP.pdf"])
+            self.Rexec(script,[self.outdir / "LOD-table",self.outdir / "convergence-PP.pdf"])
 
-        if (not more_recent_than_all_of("Results/convergence1-PP.svg",self.get_trees_files()) or
-            not more_recent_than_all_of("Results/convergence2-PP.svg",self.get_trees_files())):
+        if (not more_recent_than_all_of(self.outdir / "convergence1-PP.svg",self.get_trees_files()) or
+            not more_recent_than_all_of(self.outdir / "convergence2-PP.svg",self.get_trees_files())):
             script = self.get_libexec_script("compare-runs2.R")
-            self.Rexec(script,["Results/LOD-table","Results/convergence1-PP.svg","Results/convergence2-PP.svg"])
+            self.Rexec(script,[self.outdir / "LOD-table",self.outdir / "convergence1-PP.svg",self.outdir / "convergence2-PP.svg"])
         print(" done.")
 
 
@@ -1338,7 +1344,7 @@ class Analysis(object):
         self.srq = []
         print("Generate SRQ plot for partitions: ",end='')
 
-        if not more_recent_than_all_of("Results/partitions.SRQ",self.get_trees_files()):
+        if not more_recent_than_all_of(self.outdir / "partitions.SRQ",self.get_trees_files()):
             cmd = ['trees-to-SRQ','Results/partitions.pred','--max-points=1000']
             if self.subsample is not None and self.subsample != 1:
                 cmd.append(f"--subsample={self.subsample}")
@@ -1347,12 +1353,12 @@ class Analysis(object):
             if self.until is not None:
                 cmd.append(f"--until={self.until}")
             cmd += self.get_trees_files()
-            self.exec_show(cmd,outfile="Results/partitions.SRQ")
+            self.exec_show(cmd,outfile=self.outdir / "partitions.SRQ")
         print("done.");
         self.srq.append("partitions")
 
         print("Generate SRQ plot for c50 tree: ", end='')
-        if not more_recent_than_all_of("Results/c50.SRQ", self.get_trees_files()):
+        if not more_recent_than_all_of(self.outdir / "c50.SRQ", self.get_trees_files()):
             cmd = ['trees-to-SRQ','Results/c50.tree','--max-points=1000']
             if self.subsample is not None and self.subsample != 1:
                 cmd.append(f"--subsample={self.subsample}")
@@ -1361,7 +1367,7 @@ class Analysis(object):
             if self.until is not None:
                 cmd.append(f"--until={self.until}")
             cmd += self.get_trees_files()
-            self.exec_show(cmd,outfile="Results/c50.SRQ")
+            self.exec_show(cmd,outfile=self.outdir / "c50.SRQ")
         print("done.");
         self.srq.append("c50")
 
@@ -1411,13 +1417,13 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             dist_cmd.append(f"--until={self.until}")
 
         tree_files = self.get_trees_files()[0:C]
-        matfile = "Results/tree-MDS.M"
+        matfile = self.outdir / "tree-MDS.M"
 
         script = self.get_libexec_script(f"tree-plot.R")
-        outfile = "Results/tree-MDS.svg"
+        outfile = self.outdir / "tree-MDS.svg"
 
         script3d = self.get_libexec_script(f"tree-plot-3D.R")
-        outfile3d = "Results/tree-MDS.points.html"
+        outfile3d = self.outdir / "tree-MDS.points.html"
 
         L = [ str(min([N,int((get_n_lines(tf)-self.burnin)/self.subsample)])) for tf in tree_files]
 
@@ -1475,7 +1481,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             afiles = self.get_alignments_for_partition(i)
             name = f"P{i+1}.max"
             self.alignments.append((name, self.get_alphabets()[i], "Best (WPD)"))
-            if not more_recent_than_all_of(f"Results/Work/{name}-unordered.fasta",afiles):
+            if not more_recent_than_all_of(self.outdir / f"Work/{name}-unordered.fasta",afiles):
                 cut_cmd=['cut-range']+afiles
                 if self.burnin is not None:
                     cut_cmd.append(f"--skip={self.burnin}")
@@ -1487,7 +1493,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                 p2 = subprocess.Popen(chop_cmd, stdout=subprocess.PIPE, stdin=p1.stdout)
 
                 max_cmd=['alignment-max']
-                self.exec_show(max_cmd,stdin=p2.stdout, outfile=f"Results/Work/{name}-unordered.fasta")
+                self.exec_show(max_cmd,stdin=p2.stdout, outfile=self.outdir / f"Work/{name}-unordered.fasta")
 
                 p1.wait()
                 p2.wait()
@@ -1509,10 +1515,10 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         assert(path.exists(outfile))
 
     def make_ordered_alignment(self,alignment):
-        ufilename = f"Results/Work/{alignment}-unordered.fasta"
-        filename = f"Results/{alignment}.fasta"
-        if not more_recent_than_all_of(filename, [ufilename,"Results/c50.tree"] ):
-            self.reorder_alignment_by_tree(ufilename,"Results/c50.tree",filename)
+        ufilename = self.outdir / f"Work/{alignment}-unordered.fasta"
+        filename = self.outdir / f"{alignment}.fasta"
+        if not more_recent_than_all_of(filename, [ufilename,self.outdir / "c50.tree"] ):
+            self.reorder_alignment_by_tree(ufilename,self.outdir / "c50.tree",filename)
         assert(path.exists(filename))
         return filename
 
@@ -1555,7 +1561,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 
         print("Drawing alignments: ", end='', flush=True)
         for (alignment,alphabet,name) in self.alignments:
-            filename = f"Results/{alignment}.fasta"
+            filename = self.outdir / f"{alignment}.fasta"
             color_scheme = self.color_scheme_for_alphabet(alphabet)
             self.draw_alignment(filename, color_scheme=color_scheme, ruler=True)
             print('*',end='',flush=True)
@@ -1564,12 +1570,12 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             if self.get_imodel_for_partition(i) is None:
                 continue
 
-            outfile = f"Results/P{i+1}.initial-diff.AU"
-            initial = f"Results/P{i+1}.initial.fasta"
-            wpd = f"Results/P{i+1}.max.fasta"
+            outfile = self.outdir / f"P{i+1}.initial-diff.AU"
+            initial = self.outdir / f"P{i+1}.initial.fasta"
+            wpd = self.outdir / f"P{i+1}.max.fasta"
             self.exec_show(['alignments-diff',initial,wpd],outfile=outfile)
 
-            outhtml = f"Results/P{i+1}.initial-diff.html"
+            outhtml = self.outdir / f"P{i+1}.initial-diff.html"
             self.exec_show(['alignment-draw',initial,'--scale=identity','--AU',outfile,'--show-ruler','--color-scheme=diff[1]+contrast'],outfile=outhtml)
             print("*",end='',flush=True);
 
@@ -1592,15 +1598,15 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 
             self.alignments.append((name,self.get_alphabets()[i], "Ancestral"))
 
-            template = f"Results/P{i+1}.max.fasta"
+            template = self.outdir / f"P{i+1}.max.fasta"
             if self.get_imodel_for_partition(i) is None:
-                template = f"Results/P{i+1}.initial.fasta"
-            tree = "Results/c50.tree"
+                template = self.outdir / f"P{i+1}.initial.fasta"
+            tree = self.outdir / "c50.tree"
             cmd = ['summarize-ancestors',template,'-n',tree,'-g',tree]
             for dir in [run.dir for run in self.mcmc_runs]:
                 cmd += ['-A',path.join(dir,f'C1.P{i+1}.fastas'),
                         '-T',path.join(dir,'C1.trees')]
-            output = f"Results/P{i+1}.ancestors.fasta"
+            output = self.outdir / f"P{i+1}.ancestors.fasta"
             if not more_recent_than_all_of(output,self.get_trees_files()+list(filter(lambda x:x is not None,flatten(self.get_alignments_files())))):
                 self.exec_show(cmd,outfile=output)
         print(" done.")
@@ -1615,12 +1621,12 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             m = re.match('^P([0-9]+).*',alignment)
             if m:
                 i = int(m.group(1))-1
-                afile = f"Results/{alignment}.fasta"
+                afile = self.outdir / f"{alignment}.fasta"
                 afiles = self.get_alignments_for_partition(i)
                 if None in afiles:
                     continue
                 print(f"Generating AU values for '{alignment}'...", end='',flush=True)
-                AUfile = f"Results/{alignment}-AU.prob"
+                AUfile = self.outdir / f"{alignment}-AU.prob"
                 if not more_recent_than_all_of(AUfile, afiles):
                     cut_cmd=['cut-range']+afiles
                     if self.burnin is not None:
@@ -1638,7 +1644,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                     p1.wait()
                     p2.wait()
 
-                html_file = f"Results/{alignment}-AU.html"
+                html_file = self.outdir / f"{alignment}-AU.html"
                 if not more_recent_than_all_of(html_file,[afile,AUfile]):
                     color_scheme=self.color_scheme_for_alphabet(alphabet)
                     color_scheme += "+fade+fade+fade+fade"
@@ -1778,7 +1784,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             section += f'  <td>{i+1}</td>\n'
             section += f'  <td>{self.get_input_files()[i]}</td>\n'
 
-            features = self.get_alignment_info(f"Results/P{i+1}.initial.fasta")
+            features = self.get_alignment_info(self.outdir / f"P{i+1}.initial.fasta")
             minlength = features['min_length']
             maxlength = features['max_length']
             section += f'<td>{minlength} - {maxlength}</td>\n'
@@ -1927,24 +1933,24 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
     <td><a href="{tree}-tree.pdf">PDF</a></td>
     <td><a href="{tree}-tree.svg">SVG</a></td>
 """
-            if self.subpartitions and (path.exists(f"Results/{tree}.mtree") or
-                                       path.exists(f"Results/{tree}-mctree.svg") or
-                                       path.exists(f"Results/{tree}-mctree.pdf")):
+            if self.subpartitions and (path.exists(self.outdir / f"{tree}.mtree") or
+                                       path.exists(self.outdir / f"{tree}-mctree.svg") or
+                                       path.exists(self.outdir / f"{tree}-mctree.pdf")):
                 section += '<td>MC Tree:</td>\n'
             else:
                 section +='<td></td>'
 
-            if self.subpartitions and path.exists(f"Results/{tree}.mtree"):
+            if self.subpartitions and path.exists(self.outdir / f"{tree}.mtree"):
                 section += f'<td><a href="{tree}.mtree">-L</a></td>\n'
             else:
                 section +='<td></td>'
 
-            if self.subpartitions and path.exists(f"Results/{tree}-mctree.pdf"):
+            if self.subpartitions and path.exists(self.outdir / f"{tree}-mctree.pdf"):
                 section += f'<td><a href="{tree}-mctree.pdf">PDF</a></td>\n'
             else:
                 section +='<td></td>'
 
-            if self.subpartitions and path.exists(f"Results/{tree}-mctree.svg"):
+            if self.subpartitions and path.exists(self.outdir / f"{tree}-mctree.svg"):
                 section += f'<td><a href="{tree}-mctree.svg">SVG</a></td>\n'
             else:
                 section +='<td></td>'
@@ -1996,7 +2002,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                 else:
                     section +=  '      <td></td>\n'
 
-                features = self.get_alignment_info(f"Results/{alignment}.fasta")
+                features = self.get_alignment_info(self.outdir / f"{alignment}.fasta")
                 section += f'<td style="text-align: center">{features["min_p_identity"]}%</td>\n'
                 section += f'<td style="text-align: center">{features["length"]}</td>\n'
                 section += f'<td style="text-align: center">{features["n_const"]} ({features["p_const"]}%)</td>\n'
@@ -2057,7 +2063,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         section += '</td>'
         section += '<td style="width:40%;vertical-align:top">'
         section += '<h4 style="text-align:center">Variation of split PPs across chains (<a href="https://doi.org/10.1080/10635150600812544">Beiko et al 2006</a>)</h4>'
-        if path.exists("Results/convergence1-PP.svg"):
+        if path.exists(self.outdir / "convergence1-PP.svg"):
             section += self.html_svg("convergence1-PP.svg","90%","",[])
         else:
             if not self.R_exe:
@@ -2067,7 +2073,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             else:
                 section += "<p>Not generated.</p>"
 
-        if path.exists("Results/convergence2-PP.svg"):
+        if path.exists(self.outdir / "convergence2-PP.svg"):
             section += "<br/><br/><br/><br/>"
             section += self.html_svg("convergence2-PP.svg","90%","",[])
         section += "</td>"
@@ -2087,10 +2093,10 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         min_NE = "NA"
         if self.has_parameters():
             if self.get_log_files():
-                burnin_before = self.get_value_from_file("Results/Report", 'min burnin <=')
+                burnin_before = self.get_value_from_file(self.outdir / "Report", 'min burnin <=')
                 if burnin_before == "Not":
                     burnin_before = "Not Converged!"
-                min_NE = self.get_value_from_file("Results/Report", 'Ne  >=')
+                min_NE = self.get_value_from_file(self.outdir / "Report", 'Ne  >=')
             section += f"<tr><td><b>scalar burnin</b></td><td>{burnin_before}</td></tr>\n"
             section += f"<tr><td><b>scalar ESS</b></td><td>{min_NE}</td></tr>\n"
 
