@@ -1860,10 +1860,10 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                     ESS_style = ' style="color:orange"'
                 else:
                     ESS_style = ''
-                section += '  <td {}>{}</td>\n'.format(ESS_style,self.ESS[var])
+                section += f'  <td {ESS_style}>{self.ESS[var]}</td>\n'
 
                 burnin_style = ' style="color:red"' if self.Burnin[var] == "Not Converged!" else ""
-                section += '  <td {}>{}</td>\n'.format(burnin_style,self.Burnin[var])
+                section += f'  <td {burnin_style}>{self.Burnin[var]}</td>\n'
 
                 if var in self.PSRF_CI80:
                     if self.PSRF_CI80[var] >= 1.2:
@@ -1872,7 +1872,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                         CI80_style = ' style="color:orange"'
                     else:
                         CI80_style = ''
-                    section += '  <td {}>{}</td>\n'.format(CI80_style,self.PSRF_CI80[var])
+                    section += f'  <td {CI80_style}>{self.PSRF_CI80[var]}</td>\n'
                 else:
                     section += '  <td>NA</td>\n'
 
@@ -1883,7 +1883,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                         RCF_style = ' style="color:orange"'
                     else:
                         RCF_style = ''
-                    section += '  <td {}>{}</td>\n'.format(RCF_style,self.PSRF_RCF[var])
+                    section += f'  <td {RCF_style}>{self.PSRF_RCF[var]}</td>\n'
                 else:
                     section += '  <td>NA</td>\n'
 
@@ -1915,33 +1915,33 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 """
         section += '<table>\n'
         for (tree,name) in self.trees:
-            section += """\
+            section += f"""\
   <tr>
     <td>{name}</td>
     <td><a href="{tree}.tree">Newick</a></td>
     <td>(<a href="{tree}.PP.tree">+PP</a>)</td>
     <td><a href="{tree}-tree.pdf">PDF</a></td>
     <td><a href="{tree}-tree.svg">SVG</a></td>
-""".format(name=name,tree=tree)
-            if self.subpartitions and (path.exists("Results/{}.mtree".format(tree)) or
-                                       path.exists("Results/{}-mctree.svg".format(tree)) or
-                                       path.exists("Results/{}-mctree.pdf".format(tree))):
+"""
+            if self.subpartitions and (path.exists(f"Results/{tree}.mtree") or
+                                       path.exists(f"Results/{tree}-mctree.svg") or
+                                       path.exists(f"Results/{tree}-mctree.pdf")):
                 section += '<td>MC Tree:</td>\n'
             else:
                 section +='<td></td>'
 
-            if self.subpartitions and path.exists("Results/{}.mtree".format(tree)):
-                section += '<td><a href="{}.mtree">-L</a></td>\n'.format(tree)
+            if self.subpartitions and path.exists(f"Results/{tree}.mtree"):
+                section += f'<td><a href="{tree}.mtree">-L</a></td>\n'
             else:
                 section +='<td></td>'
 
-            if self.subpartitions and path.exists("Results/{}-mctree.pdf".format(tree)):
-                section += '<td><a href="{}-mctree.pdf">PDF</a></td>\n'.format(tree)
+            if self.subpartitions and path.exists(f"Results/{tree}-mctree.pdf"):
+                section += f'<td><a href="{tree}-mctree.pdf">PDF</a></td>\n'
             else:
                 section +='<td></td>'
 
-            if self.subpartitions and path.exists("Results/{}-mctree.svg".format(tree)):
-                section += '<td><a href="{}-mctree.svg">SVG</a></td>\n'.format(tree)
+            if self.subpartitions and path.exists(f"Results/{tree}-mctree.svg"):
+                section += f'<td><a href="{tree}-mctree.svg">SVG</a></td>\n'
             else:
                 section +='<td></td>'
 
@@ -1955,7 +1955,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 
         section = '<h2 class="clear"><a class="anchor" name="alignment"></a>Alignment Distribution</h2>\n'
         for i in range(self.n_partitions()):
-            section += '<h3>Partition {}</h3>\n'.format(i+1)
+            section += f'<h3>Partition {i+1}</h3>\n'
             section += """\
   <table>
     <tr>
@@ -1971,7 +1971,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
     </tr>
 """.format(i+1)
             for (alignment,alphabet,name) in self.alignments:
-                if not alignment.startswith('P{}.'.format(i+1)):
+                if not alignment.startswith(f'P{i+1}.'):
                     continue
                 section += '    <tr>\n'
                 section += '      <td style="padding-right:3em">{}</td>\n'.format(name)
