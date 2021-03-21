@@ -1969,34 +1969,34 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
        <th style="padding-right:0.5em;padding-left:0.5em" title="Number of invariant columns">Constant</th>
        <th title="Number of parsimony-informative columns.">Informative</th>
     </tr>
-""".format(i+1)
+"""
             for (alignment,alphabet,name) in self.alignments:
                 if not alignment.startswith(f'P{i+1}.'):
                     continue
-                section += '    <tr>\n'
-                section += '      <td style="padding-right:3em">{}</td>\n'.format(name)
-                section += '      <td><a href="{}.fasta">FASTA</a></td>\n'.format(alignment)
+                section +=  '    <tr>\n'
+                section += f'      <td style="padding-right:3em">{name}</td>\n'
+                section += f'      <td><a href="{alignment}.fasta">FASTA</a></td>\n'
 
                 if path.exists(path.join("Results",alignment+".html")):
-                    section += '      <td><a href="{}.html">HTML</a></td>\n'.format(alignment)
+                    section += f'      <td><a href="{alignment}.html">HTML</a></td>\n'
                 else:
-                    section += '      <td></td>\n'
+                    section +=  '      <td></td>\n'
 
                 if path.exists(path.join("Results",alignment+"-diff.html")):
-                    section += '      <td><a href="{}-diff.html">Diff</a></td>\n'.format(alignment)
+                    section += f'      <td><a href="{alignment}-diff.html">Diff</a></td>\n'
                 else:
-                    section += '      <td></td>\n'
+                    section +=  '      <td></td>\n'
 
                 if path.exists(path.join("Results",alignment+"-AU.html")):
-                    section += '      <td><a href="{}-AU.html">AU</a></td>\n'.format(alignment)
+                    section += f'      <td><a href="{alignment}-AU.html">AU</a></td>\n'
                 else:
-                    section += '      <td></td>\n'
+                    section +=  '      <td></td>\n'
 
-                features = self.get_alignment_info("Results/{}.fasta".format(alignment))
-                section += '<td style="text-align: center">{}%</td>\n'.format(features['min_p_identity'])
-                section += '<td style="text-align: center">{}</td>\n'.format(features['length'])
-                section += '<td style="text-align: center">{} ({}%)</td>\n'.format(features['n_const'], features['p_const'])
-                section += '<td style="text-align: center">{} ({}%)</td>\n'.format(features['n_inform'], features['p_inform'])
+                features = self.get_alignment_info(f"Results/{alignment}.fasta")
+                section += f'<td style="text-align: center">{features["min_p_identity"]}%</td>\n'
+                section += f'<td style="text-align: center">{features["length"]}</td>\n'
+                section += f'<td style="text-align: center">{features["n_const"]} ({features["p_const"]}%)</td>\n'
+                section += f'<td style="text-align: center">{features["n_inform"]} ({features["p_inform"]}%)</td>\n'
 
                 section += '    </tr>\n'
             section += '  </table>\n'
@@ -2013,11 +2013,11 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
     def html_svg(self,url,width=None,height=None,classes=[],extra=None):
         classes.append('svg-image')
         class_=' '.join(classes)
-        svg = '<object data="{}" type="image/svg+xml" class="{}"'.format(url,class_)
+        svg = f'<object data="{url}" type="image/svg+xml" class="{class_}"'
         if width:
-            svg += " width={}".format(width)
+            svg += f" width={width}"
         if height:
-            svg += " height={}".format(height)
+            svg += f" height={height}"
         if extra:
             svg += " "+extra
         svg += ' ></object>'
@@ -2038,15 +2038,15 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         else:
             MDS_title = f"{C} chains"
 
-        section += """\
+        section += f"""\
 <table style="width:100%;clear:both">
   <tr>
     <td style="width:40%;vertical-align:top">
-      <h4 style=\"text-align:center\">Projection of RF distances for {} (<a href=\"https://doi.org/10.1080/10635150590946961\">Hillis et al 2005</a>)</h4>
-""".format(MDS_title)
+      <h4 style=\"text-align:center\">Projection of RF distances for {MDS_title} (<a href=\"https://doi.org/10.1080/10635150590946961\">Hillis et al 2005</a>)</h4>
+"""
         if path.exists(path.join("Results",MDS_figure)):
             section += self.html_svg(MDS_figure,"90%","",[])
-            section += '<a href="{}.html">3D</a>'.format(MDS_figure_3d)
+            section += f'<a href="{MDS_figure_3d}.html">3D</a>'
         else:
             if not self.R_exe:
                 section += "<p>Not generated: can't find R</p>"
@@ -2087,23 +2087,23 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                 if burnin_before == "Not":
                     burnin_before = "Not Converged!"
                 min_NE = self.get_value_from_file("Results/Report", 'Ne  >=')
-            section += "<tr><td><b>scalar burnin</b></td><td>{}</td></tr>\n".format(burnin_before)
-            section += "<tr><td><b>scalar ESS</b></td><td>{}</td></tr>\n".format(min_NE)
+            section += f"<tr><td><b>scalar burnin</b></td><td>{burnin_before}</td></tr>\n"
+            section += f"<tr><td><b>scalar ESS</b></td><td>{min_NE}</td></tr>\n"
 
 
         if self.has_trees():
             min_NE_partition = self.get_value_from_file('Results/partitions.bs','min Ne =')
-            section += '<tr><td><b title=\"Effective Sample Size for bit-vectors of partition support (smallest)\">topological ESS</b></td><td>{}</td></tr>\n'.format(min_NE_partition)
+            section += f'<tr><td><b title=\"Effective Sample Size for bit-vectors of partition support (smallest)\">topological ESS</b></td><td>{min_NE_partition}</td></tr>\n'
 
             asdsf = self.get_value_from_file('Results/partitions.bs','ASDSF\[min=0.100\] =')
             if asdsf is None:
                 asdsf = "NA"
-            section += '<tr><td><b title=\"Average Standard Deviation of Split Frequencies\">ASDSF</b></td><td>{}</td></tr>'.format(asdsf)
+            section += f'<tr><td><b title=\"Average Standard Deviation of Split Frequencies\">ASDSF</b></td><td>{asdsf}</td></tr>'
 
             msdsf = self.get_value_from_file('Results/partitions.bs','MSDSF =')
             if msdsf is None:
                 msdsf = "NA"
-            section += '<tr><td><b title=\"Maximum Standard Deviation of Split Frequencies\">MSDSF</b></td><td>{}</td></tr>'.format(msdsf)
+            section += f'<tr><td><b title=\"Maximum Standard Deviation of Split Frequencies\">MSDSF</b></td><td>{msdsf}</td></tr>'
 
         psrf_80 = 'NA'
         psrf_rcf = 'NA'
@@ -2111,8 +2111,8 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             if self.get_log_files() and len(self.get_log_files()) >= 2:
                 psrf_80 = self.get_value_from_file('Results/Report','PSRF-80%CI <=')
                 psrf_rcf = self.get_value_from_file('Results/Report','PSRF-RCF <=')
-            section += '<tr><td><b>PSRF CI80%</b></td><td>{}</td><tr>\n'.format(psrf_80)
-            section += '<tr><td><b>PSRF RCF</b></td><td>{}</td><tr>\n'.format(psrf_rcf)
+            section += f'<tr><td><b>PSRF CI80%</b></td><td>{psrf_80}</td><tr>\n'
+            section += f'<tr><td><b>PSRF RCF</b></td><td>{psrf_rcf}</td><tr>\n'
 
         section += '</table>\n'
         section += '</td>\n'
@@ -2129,20 +2129,20 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 
         print("")
         if burnin_before:
-            print("NOTE: burnin (scalar) <= {}".format(burnin_before))
+            print(f"NOTE: burnin (scalar) <= {burnin_before}")
         if min_NE:
-            print("NOTE: min_ESS (scalar)    = {}".format(min_NE))
+            print(f"NOTE: min_ESS (scalar)    = {min_NE}")
         if self.has_trees():
             if min_NE_partition:
-                print("NOTE: min_ESS (partition)    = {}".format(min_NE_partition))
+                print(f"NOTE: min_ESS (partition)    = {min_NE_partition}")
             if asdsf:
-                print("NOTE: ASDSF = {}".format(asdsf))
+                print(f"NOTE: ASDSF = {asdsf}")
             if msdsf:
-                print("NOTE: MSDSF = {}".format(msdsf))
+                print(f"NOTE: MSDSF = {msdsf}")
         if psrf_80:
-            print("NOTE: PSRF-80%CI = {}".format(psrf_80))
+            print(f"NOTE: PSRF-80%CI = {psrf_80}")
         if psrf_rcf:
-            print("NOTE: PSRF-RCF = {}".format(psrf_rcf))
+            print(f"NOTE: PSRF-RCF = {psrf_rcf}")
         return section
 
     def section_analysis(self):
