@@ -1166,7 +1166,7 @@ class Analysis(object):
         assert(self.has_trees())
         print("\nSummarizing topology distribution: ",end='')
         logging.debug(f"tree files = {self.get_trees_files()}")
-        cmd = ['trees-consensus',f'--map-tree={self.outdir / "MAP.PP.tree"}',f'--greedy-consensus={self.outdir / "greedy.PP.tree"}','--report=Results/consensus']+self.get_trees_files()
+        cmd = ['trees-consensus',f'--map-tree={self.outdir / "MAP.PP.tree"}',f'--greedy-consensus={self.outdir / "greedy.PP.tree"}','--report','Results/consensus']+self.get_trees_files()
         cmd.append(f"--support-levels={self.outdir / 'c-levels.plot'}")
         if self.subpartitions:
             cmd.append("--sub-partitions")
@@ -1314,8 +1314,8 @@ class Analysis(object):
 
         if not more_recent_than_all_of(self.outdir / "partitions.bs",self.get_trees_files()):
             cmd = ['trees-bootstrap',
-                   '--pred=Results/partitions.pred',
-                   '--LOD-table=Results/LOD-table',
+                   '--pred','Results/partitions.pred',
+                   '--LOD-table','Results/LOD-table',
                    '--pseudocount=1']
             cmd += self.get_trees_files()
             if self.prune is not None:
@@ -1492,7 +1492,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                     cut_cmd.append(f"--until={self.until}")
                 p1 = subprocess.Popen(cut_cmd,  stdout=subprocess.PIPE)
 
-                chop_cmd=['alignment-chop-internal','--tree=Results/MAP.tree']
+                chop_cmd=['alignment-chop-internal','--tree','Results/MAP.tree']
                 p2 = subprocess.Popen(chop_cmd, stdout=subprocess.PIPE, stdin=p1.stdout)
 
                 max_cmd=['alignment-max']
@@ -1638,7 +1638,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                         cut_cmd.append(f"--until={self.until}")
                     p1 = subprocess.Popen(cut_cmd,  stdout=subprocess.PIPE)
 
-                    chop_cmd=['alignment-chop-internal','--tree=Results/MAP.tree']
+                    chop_cmd=['alignment-chop-internal','--tree','Results/MAP.tree']
                     p2 = subprocess.Popen(chop_cmd, stdout=subprocess.PIPE, stdin=p1.stdout)
 
                     gild_cmd = ['alignment-gild',afile,'Results/MAP.tree','--max-alignments=500']
