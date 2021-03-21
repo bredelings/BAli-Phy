@@ -18,6 +18,9 @@ import glob
 import sys
 import logging
 
+def add_suffix(p,s):
+    return p.with_suffix(p.suffix+s)
+
 def print_model(model):
     main = model['main']
 
@@ -449,11 +452,11 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
     def __init__(self,mcmc_output,**kwargs):
         super().__init__(mcmc_output,**kwargs)
         self.prefix = 'C1'
-        self.out_file = check_file_exists(path.join(self.get_dir(),'C1.out'))
+        self.out_file = check_file_exists( self.get_dir() / 'C1.out')
         self.input_files = self.find_input_file_names_for_outfile(self.out_file)
-        self.trees_file = check_file_exists(path.join(self.get_dir(),'C1.trees'))
+        self.trees_file = check_file_exists( self.get_dir() / 'C1.trees')
         self.alignments_files = self.get_alignment_files()
-        self.MAP_file = check_file_exists(path.join(self.get_dir(),'C1.MAP'))
+        self.MAP_file = check_file_exists( self.get_dir() /'C1.MAP')
         self.command = self.find_header_attribute("command")
         self.version = self.find_header_attribute("VERSION").split('\s+')[0]
         self.find_tree_prior()
@@ -496,7 +499,7 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
         return self.branch_prior
 
     def get_n_sequences(self,p):
-        features = self.get_alignment_info(path.join(self.dir,f"C1.P{p+1}.initial.fasta"))
+        features = self.get_alignment_info( self.dir / "C1.P{p+1}.initial.fasta")
         return features["n_sequences"]
 
     def find_input_file_names_for_outfile(self,outfile):
@@ -512,7 +515,7 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
     def get_alignment_files(self):
         filenames = []
         for p in range(1,self.n_partitions()+1):
-            filename = path.join(self.get_dir(),f'C1.P{p}.fastas')
+            filename = self.get_dir() / f'C1.P{p}.fastas'
             if not path.exists(filename):
                 filename = None
             filenames.append(filename)
@@ -588,7 +591,7 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
 class BAliPhy2_3Run(BAliPhyRun):
     def __init__(self,mcmc_output, **kwargs):
         super().__init__(mcmc_output, **kwargs)
-        self.log_file = check_file_exists(path.join(self.get_dir(),'C1.p'))
+        self.log_file = check_file_exists( self.get_dir() / 'C1.p' )
 
         self.smodels = self.find_models("subst model", "smodels")
         self.imodels = self.find_models("indel model", "imodels")
@@ -612,8 +615,8 @@ class BAliPhy2_3Run(BAliPhyRun):
 class BAliPhy3Run(BAliPhyRun):
     def __init__(self,mcmc_output, **kwargs):
         super().__init__(mcmc_output, **kwargs)
-        self.log_file = check_file_exists(path.join(self.get_dir(),'C1.log'))
-        self.run_file = path.join(self.get_dir(),'C1.run.json')
+        self.log_file = check_file_exists( self.get_dir() / 'C1.log' )
+        self.run_file = self.get_dir() / 'C1.run.json'
         if not path.exists(self.run_file):
             self.run_file = None
         self.run_json = get_json_from_file(self.run_file)
@@ -652,7 +655,7 @@ class PhyloBayesRun(MCMCRun):
 class BEASTRun(MCMCRun):
     def __init__(self,mcmc_output, **kwargs):
         super().__init__(mcmc_output, **kwargs)
-        for tree_file in glob.glob(path.join(self.get_dir(),'*,trees')):
+        for tree_file in glob.glob( self.get_dir() / '*.trees'):
             check_file_exists(tree_file)
             self.prefix = get_file_prefix(tree_file)
             self.log_file = check_file_exists(f"{prefix}.log")
@@ -662,7 +665,7 @@ def get_bali_phy3_runs(mcmc_args):
     good = []
     bad = []
     for mcmc_dir in mcmc_args:
-        if path.exists(mcmc_dir) and path.exists(path.join(mcmc_dir,'C1.out')) and path.exists(path.join(mcmc_dir,'C1.log')):
+        if mcmc_dir.exists() and Path( mcmc_dir , 'C1.out').exists() and Path( mcmc_dir , 'C1.log' ).exists():
             runs.append(BAliPhy3Run(mcmc_dir))
             good.append(mcmc_dir)
         else:
@@ -676,7 +679,7 @@ def get_bali_phy2_3_runs(mcmc_args):
     good = []
     bad = []
     for mcmc_dir in mcmc_args:
-        if path.exists(mcmc_dir) and path.exists(path.join(mcmc_dir,'C1.out')) and path.exists(path.join(mcmc_dir,'C1.p')):
+        if path.exists(mcmc_dir) and path.exists( mcmc_dir / 'C1.out' ) and path.exists( mcmc_dir / 'C1.p'):
             runs.append(BAliPhy2_3Run(mcmc_dir))
             good.append(mcmc_dir)
         else:
@@ -690,7 +693,7 @@ def get_phylobayes_runs(mcmc_args):
     good = []
     bad = []
     for run_name in mcmc_args:
-        if path.exists(run_name+".treelist"):
+        if path.exists(add_suffix(run_name,'.treelist')):
             runs.append(PhyloBayesRun(run_name))
             good.append(run_name)
         else:
@@ -704,7 +707,7 @@ def get_tree_log_runs(mcmc_args):
     good = []
     bad = []
     for run_name in mcmc_args:
-        if path.exists(run_name+".trees") and path.exists(run_name+".log"):
+        if path.exists(str(run_name)+".trees") and path.exists(str(run_name)+".log"):
             runs.append(TreeLogFileRun(run_name))
             good.append(run_name)
         else:
@@ -721,8 +724,8 @@ def get_tree_runs(mcmc_args):
         if path.exists(run_name) and str(run_name).endswith(".trees"):
             runs.append(TreeFileRun(run_name))
             good.append(run_name)
-        elif path.exists(run_name+".trees") and not path.exists(run_name+".log"):
-            runs.append(TreeFileRun(run_name+".trees"))
+        elif add_suffix(run_name,".trees").exists() and not add_suffix(run_name,'.log').exists():
+            runs.append(TreeFileRun(add_suffix(run_name,".trees")))
             good.append(run_name)
         else:
             bad.append(run_name)
@@ -735,11 +738,11 @@ def get_log_runs(mcmc_args):
     good = []
     bad = []
     for run_name in mcmc_args:
-        if path.exists(run_name) and run_name.endswith(".log"):
+        if path.exists(run_name) and str(run_name).endswith(".log"):
             runs.append(LogFileRun(run_name))
             good.append(run_name)
-        elif not path.exists(run_name+".trees") and path.exists(run_name+".log"):
-            runs.append(LogFileRun(run_name+".log"))
+        elif not add_suffix(run_name,'.trees').exists() and add_suffix(run_name,'.log').exists():
+            runs.append(LogFileRun(add_suffix(run_name,".log")))
             good.append(run_name)
         else:
             bad.append(run_name)
@@ -750,7 +753,7 @@ def get_log_runs(mcmc_args):
 def construct_runs(mcmc_outputs):
 
     for mcmc_output in mcmc_outputs:
-        if not glob.glob(mcmc_output+'*'):
+        if not glob.glob(str(mcmc_output)+('*')):
             print(f"No file or directory '{mcmc_output+'*'}'")
             exit(1)
 
@@ -803,7 +806,7 @@ class Analysis(object):
         self.alignments = list()
 
         prefix=path.dirname(path.dirname(self.trees_consensus_exe))
-        self.libexecdir = path.join(prefix,"lib","bali-phy","libexec")
+        self.libexecdir = Path(prefix,"lib","bali-phy","libexec")
         if not path.exists(self.libexecdir):
             print("Can't find bali-phy libexec path '{self.libexecdir}'")
 
@@ -857,7 +860,7 @@ class Analysis(object):
         return self.mcmc_runs[p]
 
     def get_libexec_script(self,file):
-        filename = path.join(self.libexecdir,file)
+        filename = self.libexecdir / file
         if not path.exists(filename):
             print(f"Can't find script '{file}'!")
         return filename
@@ -1041,7 +1044,7 @@ class Analysis(object):
         reuse = reuse and self.check_analysis_property("subsample", self.subsample)
         reuse = reuse and self.check_analysis_property("until", self.until)
         reuse = reuse and self.check_analysis_property("prune", self.prune)
-        reuse = reuse and self.check_analysis_property("alignment_file_names",self.get_alignments_files())
+        reuse = reuse and self.check_analysis_property("alignment_file_names",[str(file) for file in self.get_alignments_files()])
         reuse = reuse and self.check_analysis_property("input_files", self.get_input_files())
 
         if not reuse and self.outdir.exists():
@@ -1060,7 +1063,7 @@ class Analysis(object):
         self.write_analysis_property("until", self.until)
         self.write_analysis_property("prune", self.prune)
         self.write_analysis_property("input_files", self.get_input_files())
-        self.write_analysis_property("alignment_file_names", self.get_alignments_files())
+        self.write_analysis_property("alignment_file_names", [str(file) for file in self.get_alignments_files()])
 
     def determine_burnin(self):
         if self.burnin is not None:
@@ -1276,10 +1279,10 @@ class Analysis(object):
 
             if not more_recent_than(self.outdir / f"{tree}-tree.pdf", filename1):
                 cmd = ['draw-tree',tree+".tree",'--layout=equal-daylight']
-                self.exec_show(cmd,cwd="Results")
+                self.exec_show(cmd,cwd=self.outdir)
             if not more_recent_than(self.outdir / f"{tree}-tree.svg", filename1):
                 cmd = ['draw-tree',tree+".tree",'--layout=equal-daylight','--output=svg']
-                self.exec_show(cmd,cwd="Results")
+                self.exec_show(cmd,cwd=self.outdir)
             print(tree+' ',end='',flush=True)
 
         for tree in ['greedy','MAP']:
@@ -1287,9 +1290,9 @@ class Analysis(object):
             if path.exists(filename):
                 outname = self.outdir / f"{tree}-tree"
                 if not more_recent_than(outname.with_suffix(".pdf"), filename):
-                    self.exec_show(['draw-tree', tree+'.tree','--layout=equal-daylight'],cwd="Results")
+                    self.exec_show(['draw-tree', tree+'.tree','--layout=equal-daylight'],cwd=self.outdir)
                 if not more_recent_than(outname.with_suffix(".svg"), filename):
-                    self.exec_show(['draw-tree', tree+'.tree','--layout=equal-daylight','--output=svg'],cwd="Results")
+                    self.exec_show(['draw-tree', tree+'.tree','--layout=equal-daylight','--output=svg'],cwd=self.outdir)
             print(f'{tree} ', end='')
 
         print(". done.")
@@ -1435,7 +1438,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 
         if not more_recent_than(outfile3d,matfile):
             point_string = self.Rexec(script3d, [matfile]+L)
-            self.write_x3d_file("Results", "tree-MDS.points", point_string)
+            self.write_x3d_file(self.outdir, "tree-MDS.points", point_string)
 
         print(" done.")
 
@@ -1443,7 +1446,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         assert(point_string is not None)
 
         if dir:
-            filename = path.join(dir,filename+".html")
+            filename = dir / (filename+".html")
         with open(filename,"w+",encoding='utf-8') as x3d_file:
             print("""\
 <html>
@@ -1987,17 +1990,17 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                 section += f'      <td style="padding-right:3em">{name}</td>\n'
                 section += f'      <td><a href="{alignment}.fasta">FASTA</a></td>\n'
 
-                if path.exists(path.join("Results",alignment+".html")):
+                if path.exists(path.join(self.outdir,alignment+".html")):
                     section += f'      <td><a href="{alignment}.html">HTML</a></td>\n'
                 else:
                     section +=  '      <td></td>\n'
 
-                if path.exists(path.join("Results",alignment+"-diff.html")):
+                if path.exists(path.join(self.outdir,alignment+"-diff.html")):
                     section += f'      <td><a href="{alignment}-diff.html">Diff</a></td>\n'
                 else:
                     section +=  '      <td></td>\n'
 
-                if path.exists(path.join("Results",alignment+"-AU.html")):
+                if path.exists(path.join(self.outdir,alignment+"-AU.html")):
                     section += f'      <td><a href="{alignment}-AU.html">AU</a></td>\n'
                 else:
                     section +=  '      <td></td>\n'
@@ -2054,7 +2057,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
     <td style="width:40%;vertical-align:top">
       <h4 style=\"text-align:center\">Projection of RF distances for {MDS_title} (<a href=\"https://doi.org/10.1080/10635150590946961\">Hillis et al 2005</a>)</h4>
 """
-        if path.exists(path.join("Results",MDS_figure)):
+        if path.exists(path.join(self.outdir,MDS_figure)):
             section += self.html_svg(MDS_figure,"90%","",[])
             section += f'<a href="{MDS_figure_3d}.html">3D</a>'
         else:
@@ -2268,4 +2271,8 @@ if __name__ == '__main__':
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
 
-    analysis = Analysis(args,args.mcmc_outputs)
+    mcmc_outputs = []
+    for p in args.mcmc_outputs:
+        mcmc_outputs.append(Path(p))
+
+    analysis = Analysis(args, mcmc_outputs)
