@@ -1187,15 +1187,15 @@ class Analysis(object):
 
         extended_consensus_trees=[]
         for level in self.tree_consensus_levels:
-            filename = "Results/c{}.mtree".format(int(level*100))
-            extended_consensus_trees.append("{}:{}".format(level,filename))
+            filename = f"Results/c{int(level*100)}.mtree"
+            extended_consensus_trees.append(f"{level}:{filename}")
         if self.subpartitions:
             cmd.append("--extended-consensus={}".format(','.join(extended_consensus_trees)))
 
         extended_consensus_L=[]
         for level in self.tree_consensus_levels:
-            filename = "Results/c{}.mlengths".format(int(level*100))
-            extended_consensus_L.append("{}:{}".format(level,filename))
+            filename = f"Results/c{int(level*100)}.mlengths"
+            extended_consensus_L.append(f"{level}:{filename}")
         if self.subpartitions:
             cmd.append("--extended-consensus-L={}".format(','.join(extended_consensus_L)))
 
@@ -1203,7 +1203,7 @@ class Analysis(object):
             self.exec_show(cmd)
         for tree in tree_names:
             if not path.exists(tree) or file_is_empty(tree):
-                raise Exception("Tree '{}' not found!".format(tree))
+                raise Exception(f"Tree '{tree}' not found!")
             assert(tree.endswith('.PP.tree'))
             tree2 = tree[0:-8]+'.tree'
             if not more_recent_than(tree2,tree):
@@ -1252,7 +1252,7 @@ class Analysis(object):
         print("Drawing trees: ",end='')
         for level in self.tree_consensus_levels:
             value = int(level*100)
-            tree = "c{}".format(value)
+            tree = f"c{value}"
 
             filename1 = f"Results/{tree}.tree"
             filename2 = f"Results/{tree}.mtree"
@@ -1363,7 +1363,7 @@ class Analysis(object):
 
         for srq in self.srq:
             cmd = ['gnuplot']
-            self.run_gnuplot("""\
+            self.run_gnuplot(f"""\
 set terminal png size 300,300
 set output "Results/{srq}.SRQ.png"
 set key right bottom
@@ -1371,7 +1371,7 @@ set xlabel "Regenerations (fraction)"
 set ylabel "Time (fraction)"
 set title "Scaled Regeneration Quantile (SRQ) plot: $srq"
 plot "Results/{srq}.SRQ" title "{srq}" with linespoints lw 1 lt 1, x title "Goal" lw 1 lt 3
-""".format(srq=srq))
+""")
         if self.subpartitions:
             self.run_gnuplot("""\
 set terminal svg
@@ -1505,8 +1505,8 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         assert(path.exists(outfile))
 
     def make_ordered_alignment(self,alignment):
-        ufilename = "Results/Work/{}-unordered.fasta".format(alignment)
-        filename = "Results/{}.fasta".format(alignment)
+        ufilename = f"Results/Work/{alignment}-unordered.fasta"
+        filename = f"Results/{alignment}.fasta"
         if not more_recent_than_all_of(filename, [ufilename,"Results/c50.tree"] ):
             self.reorder_alignment_by_tree(ufilename,"Results/c50.tree",filename)
         assert(path.exists(filename))
@@ -1551,7 +1551,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 
         print("Drawing alignments: ", end='', flush=True)
         for (alignment,alphabet,name) in self.alignments:
-            filename = "Results/{}.fasta".format(alignment)
+            filename = f"Results/{alignment}.fasta"
             color_scheme = self.color_scheme_for_alphabet(alphabet)
             self.draw_alignment(filename, color_scheme=color_scheme, ruler=True)
             print('*',end='',flush=True)
@@ -1560,12 +1560,12 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             if self.get_imodel_for_partition(i) is None:
                 continue
 
-            outfile = "Results/P{}.initial-diff.AU".format(i+1)
-            initial = "Results/P{}.initial.fasta".format(i+1)
-            wpd = "Results/P{}.max.fasta".format(i+1)
+            outfile = f"Results/P{i+1}.initial-diff.AU"
+            initial = f"Results/P{i+1}.initial.fasta"
+            wpd = f"Results/P{i+1}.max.fasta"
             self.exec_show(['alignments-diff',initial,wpd],outfile=outfile)
 
-            outhtml = "Results/P{}.initial-diff.html".format(i+1)
+            outhtml = f"Results/P{i+1}.initial-diff.html"
             self.exec_show(['alignment-draw',initial,'--scale=identity','--AU',outfile,'--show-ruler','--color-scheme=diff[1]+contrast'],outfile=outhtml)
             print("*",end='',flush=True);
 
@@ -1576,7 +1576,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         print("Computing ancestral state alignment: ",end='',flush=True)
         for i in range(self.n_partitions()):
             afiles = self.get_alignments_for_partition(i)
-            name = 'P{}.ancestors'.format(i+1)
+            name = f'P{i+1}.ancestors'
             if self.get_imodel_for_partition(i) is None:
                 bad = 0
                 for afile in afiles:
@@ -1588,15 +1588,15 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 
             self.alignments.append((name,self.get_alphabets()[i], "Ancestral"))
 
-            template = "Results/P{}.max.fasta".format(i+1)
+            template = f"Results/P{i+1}.max.fasta"
             if self.get_imodel_for_partition(i) is None:
-                template = "Results/P{}.initial.fasta".format(i+1)
+                template = f"Results/P{i+1}.initial.fasta"
             tree = "Results/c50.tree"
             cmd = ['summarize-ancestors',template,'-n',tree,'-g',tree]
             for dir in [run.dir for run in self.mcmc_runs]:
-                cmd += ['-A',path.join(dir,'C1.P{}.fastas'.format(i+1)),
+                cmd += ['-A',path.join(dir,f'C1.P{i+1}.fastas'),
                         '-T',path.join(dir,'C1.trees')]
-            output = "Results/P{}.ancestors.fasta".format(i+1)
+            output = f"Results/P{i+1}.ancestors.fasta"
             if not more_recent_than_all_of(output,self.get_trees_files()+list(filter(lambda x:x is not None,flatten(self.get_alignments_files())))):
                 self.exec_show(cmd,outfile=output)
         print(" done.")
@@ -1611,18 +1611,18 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             m = re.match('^P([0-9]+).*',alignment)
             if m:
                 i = int(m.group(1))-1
-                afile = "Results/{}.fasta".format(alignment)
+                afile = f"Results/{alignment}.fasta"
                 afiles = self.get_alignments_for_partition(i)
                 if None in afiles:
                     continue
-                print("Generating AU values for '{}'...".format(alignment),end='',flush=True)
-                AUfile = "Results/{}-AU.prob".format(alignment)
+                print(f"Generating AU values for '{alignment}'...", end='',flush=True)
+                AUfile = f"Results/{alignment}-AU.prob"
                 if not more_recent_than_all_of(AUfile, afiles):
                     cut_cmd=['cut-range']+afiles
                     if self.burnin is not None:
-                        cut_cmd.append("--skip={}".format(self.burnin))
+                        cut_cmd.append(f"--skip={self.burnin}")
                     if self.until is not None:
-                        cut_cmd.append("--until={}".format(self.until))
+                        cut_cmd.append(f"--until={self.until}")
                     p1 = subprocess.Popen(cut_cmd,  stdout=subprocess.PIPE)
 
                     chop_cmd=['alignment-chop-internal','--tree=Results/MAP.tree']
@@ -1634,7 +1634,7 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
                     p1.wait()
                     p2.wait()
 
-                html_file = "Results/{}-AU.html".format(alignment)
+                html_file = f"Results/{alignment}-AU.html"
                 if not more_recent_than_all_of(html_file,[afile,AUfile]):
                     color_scheme=self.color_scheme_for_alphabet(alphabet)
                     color_scheme += "+fade+fade+fade+fade"
