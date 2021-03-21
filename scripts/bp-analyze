@@ -1254,33 +1254,33 @@ class Analysis(object):
             value = int(level*100)
             tree = "c{}".format(value)
 
-            filename1 = "Results/{}.tree".format(tree)
-            filename2 = "Results/{}.mtree".format(tree)
+            filename1 = f"Results/{tree}.tree"
+            filename2 = f"Results/{tree}.mtree"
 
             if self.speed < 2 and path.exists(filename2):
-                cmd = ['draw-tree', 'Results/{}.mlengths'.format(tree), '--out=Results/{}-mctree'.format(tree), '--draw-clouds=only']
-                if not more_recent_than("Results/{}-mctree.svg".format(tree),filename2):
+                cmd = ['draw-tree', f'Results/{tree}.mlengths', f'--out=Results/{tree}-mctree', '--draw-clouds=only']
+                if not more_recent_than(f"Results/{tree}-mctree.svg",filename2):
                     self.exec_show(cmd + ['--output=svg'])
-                if not more_recent_than("Results/{}-mctree.pdf".format(tree),filename2):
+                if not more_recent_than(f"Results/{tree}-mctree.pdf",filename2):
                     self.exec_show(cmd + ['--output=pdf'])
 
-            if not more_recent_than("Results/{}-tree.pdf".format(tree), filename1):
+            if not more_recent_than(f"Results/{tree}-tree.pdf", filename1):
                 cmd = ['draw-tree',tree+".tree",'--layout=equal-daylight']
                 self.exec_show(cmd,cwd="Results")
-            if not more_recent_than("Results/{}-tree.svg".format(tree), filename1):
+            if not more_recent_than(f"Results/{tree}-tree.svg", filename1):
                 cmd = ['draw-tree',tree+".tree",'--layout=equal-daylight','--output=svg']
                 self.exec_show(cmd,cwd="Results")
             print(tree+' ',end='',flush=True)
 
         for tree in ['greedy','MAP']:
-            filename = "Results/{}.tree".format(tree)
+            filename = f"Results/{tree}.tree"
             if path.exists(filename):
-                outname = "Results/{}-tree".format(tree)
+                outname = f"Results/{tree}-tree"
                 if not more_recent_than(outname+".pdf", filename):
                     self.exec_show(['draw-tree', tree+'.tree','--layout=equal-daylight'],cwd="Results")
                 if not more_recent_than(outname+".svg", filename):
                     self.exec_show(['draw-tree', tree+'.tree','--layout=equal-daylight','--output=svg'],cwd="Results")
-            print('{} '.format(tree), end='')
+            print(f'{tree} ', end='')
 
         print(". done.")
 
@@ -1306,13 +1306,13 @@ class Analysis(object):
                    '--pseudocount=1']
             cmd += self.get_trees_files()
             if self.prune is not None:
-                cmd.append("--ignore={}".format(self.prune))
+                cmd.append(f"--ignore={self.prune}")
             if self.subsample is not None and self.subsample != 1:
-                cmd.append("--subsample={}".format(self.subsample))
+                cmd.append(f"--subsample={self.subsample}")
             if self.burnin is not None:
-                cmd.append("--skip={}".format(self.burnin))
+                cmd.append(f"--skip={self.burnin}")
             if self.until is not None:
-                cmd.append("--until={}".format(self.until))
+                cmd.append(f"--until={self.until}")
             self.exec_show(cmd,outfile="Results/partitions.bs")
 
         if self.n_chains() < 2:
@@ -1337,11 +1337,11 @@ class Analysis(object):
         if not more_recent_than_all_of("Results/partitions.SRQ",self.get_trees_files()):
             cmd = ['trees-to-SRQ','Results/partitions.pred','--max-points=1000']
             if self.subsample is not None and self.subsample != 1:
-                cmd.append("--subsample={}".format(self.subsample))
+                cmd.append(f"--subsample={self.subsample}")
             if self.burnin is not None:
-                cmd.append("--skip={}".format(self.burnin))
+                cmd.append(f"--skip={self.burnin}")
             if self.until is not None:
-                cmd.append("--until={}".format(self.until))
+                cmd.append(f"--until={self.until}")
             cmd += self.get_trees_files()
             self.exec_show(cmd,outfile="Results/partitions.SRQ")
         print("done.");
@@ -1351,11 +1351,11 @@ class Analysis(object):
         if not more_recent_than_all_of("Results/c50.SRQ", self.get_trees_files()):
             cmd = ['trees-to-SRQ','Results/c50.tree','--max-points=1000']
             if self.subsample is not None and self.subsample != 1:
-                cmd.append("--subsample={}".format(self.subsample))
+                cmd.append(f"--subsample={self.subsample}")
             if self.burnin is not None:
-                cmd.append("--skip={}".format(self.burnin))
+                cmd.append(f"--skip={self.burnin}")
             if self.until is not None:
-                cmd.append("--until={}".format(self.until))
+                cmd.append(f"--until={self.until}")
             cmd += self.get_trees_files()
             self.exec_show(cmd,outfile="Results/c50.SRQ")
         print("done.");
@@ -1398,13 +1398,13 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
         dist_cmd = ['trees-distances','matrix',f'--max={N}', '--jitter=0.3']
 
         if self.subsample is not None and self.subsample != 1:
-            dist_cmd.append("--subsample={}".format(self.subsample))
+            dist_cmd.append(f"--subsample={self.subsample}")
 
         if self.burnin is not None:
-            dist_cmd.append("--skip={}".format(self.burnin))
+            dist_cmd.append(f"--skip={self.burnin}")
 
         if self.until is not None:
-            dist_cmd.append("--until={}".format(self.until))
+            dist_cmd.append(f"--until={self.until}")
 
         tree_files = self.get_trees_files()[0:C]
         matfile = "Results/tree-MDS.M"
@@ -1469,21 +1469,21 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
             if self.get_imodel_for_partition(i) is None:
                 continue
             afiles = self.get_alignments_for_partition(i)
-            name = "P{}.max".format(i+1)
+            name = f"P{i+1}.max"
             self.alignments.append((name, self.get_alphabets()[i], "Best (WPD)"))
-            if not more_recent_than_all_of("Results/Work/{}-unordered.fasta".format(name),afiles):
+            if not more_recent_than_all_of(f"Results/Work/{name}-unordered.fasta",afiles):
                 cut_cmd=['cut-range']+afiles
                 if self.burnin is not None:
-                    cut_cmd.append("--skip={}".format(self.burnin))
+                    cut_cmd.append(f"--skip={self.burnin}")
                 if self.until is not None:
-                    cut_cmd.append("--until={}".format(self.until))
+                    cut_cmd.append(f"--until={self.until}")
                 p1 = subprocess.Popen(cut_cmd,  stdout=subprocess.PIPE)
 
                 chop_cmd=['alignment-chop-internal','--tree=Results/MAP.tree']
                 p2 = subprocess.Popen(chop_cmd, stdout=subprocess.PIPE, stdin=p1.stdout)
 
                 max_cmd=['alignment-max']
-                self.exec_show(max_cmd,stdin=p2.stdout, outfile="Results/Work/{}-unordered.fasta".format(name))
+                self.exec_show(max_cmd,stdin=p2.stdout, outfile=f"Results/Work/{name}-unordered.fasta")
 
                 p1.wait()
                 p2.wait()
@@ -1492,15 +1492,15 @@ plot [0:][0:] 'Results/c-levels.plot' with lines notitle
 
     def reorder_alignment_by_tree(self,alignment,tree,outfile):
         if not path.exists(tree):
-            print("Can't reorder alignment by tree '{}': tree file does not exist!".format(tree))
+            print(f"Can't reorder alignment by tree '{tree}': tree file does not exist!")
         if file_is_empty(tree):
-            print("Can't reorder alignment by tree '{}': tree file is empty!".format(tree))
+            print(f"Can't reorder alignment by tree '{tree}': tree file is empty!")
         if not path.exists(alignment):
-            print("Can't reorder alignment '{}' by tree: alignment file does not exist!".format(tree))
+            print(f"Can't reorder alignment '{tree}' by tree: alignment file does not exist!")
         if file_is_empty(alignment):
-            print("Can't reorder alignment '{}' by tree: alignment file is empty!".format(tree))
+            print(f"Can't reorder alignment '{tree}' by tree: alignment file is empty!")
         if not more_recent_than_all_of(outfile,[tree,alignment]):
-            cmd = ['alignment-cat', alignment, '--reorder-by-tree={}'.format(tree)]
+            cmd = ['alignment-cat', alignment, f'--reorder-by-tree={tree}']
             self.exec_show(cmd, outfile=outfile)
         assert(path.exists(outfile))
 
