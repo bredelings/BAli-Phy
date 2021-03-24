@@ -267,7 +267,7 @@ void Module::compile(const Program& P)
         // It should be possible to replace each of these (i) an object (ii) that is located.
         vector<expression_ref> tmp;
         for(auto& decl: topdecls.sub())
-            if (decl.is_a<Haskell::Class>() or is_AST(decl,"Decl:data") or is_AST(decl,"Data:newtype") or is_AST(decl,"instance") or is_AST(decl,"type_syn"))
+            if (decl.is_a<Haskell::ClassDecl>() or is_AST(decl,"Decl:data") or is_AST(decl,"Data:newtype") or is_AST(decl,"instance") or is_AST(decl,"type_syn"))
                 tmp.push_back(decl);
 
         class_and_type_decls = find_type_groups(tmp);
@@ -440,7 +440,7 @@ vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_
 
     for(auto& decl: initial_class_and_type_decls)
     {
-        if (decl.is_a<Haskell::Class>())
+        if (decl.is_a<Haskell::ClassDecl>())
         {
             // get name
             string name;
@@ -1404,8 +1404,8 @@ void Module::declare_fixities()
     declare_fixities(topdecls);
 
     for(const auto& topdecl: topdecls.sub())
-        if (topdecl.is_a<Haskell::Class>())
-            declare_fixities(topdecl.as_<Haskell::Class>().decls.obj);
+        if (topdecl.is_a<Haskell::ClassDecl>())
+            declare_fixities(topdecl.as_<Haskell::ClassDecl>().decls.obj);
 }
 
 void Module::add_local_symbols()

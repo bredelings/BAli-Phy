@@ -253,10 +253,10 @@ expression_ref unapply(expression_ref E)
 
 expression_ref rename_infix(const Module& m, const expression_ref& E)
 {
-    if (E.is_a<Haskell::Class>())
+    if (E.is_a<Haskell::ClassDecl>())
     {
-        auto& C = E.as_<Haskell::Class>();
-        return Haskell::Class(C.class_header, {C.decls.loc, rename_infix(m, C.decls.obj)});
+        auto& C = E.as_<Haskell::ClassDecl>();
+        return Haskell::ClassDecl(C.class_header, {C.decls.loc, rename_infix(m, C.decls.obj)});
     }
     else if (E.is_a<Haskell::List>())
     {
@@ -887,9 +887,9 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
             add(bound_names, rename_pattern(id, top));
             decl = expression_ref(AST_node("Decl:sigtype"),{id,type});
         }
-        if (decl.is_a<Haskell::Class>())
+        if (decl.is_a<Haskell::ClassDecl>())
         {
-            auto& C = decl.as_<Haskell::Class>();
+            auto& C = decl.as_<Haskell::ClassDecl>();
             auto class_decls = C.decls.obj;
             assert(is_AST(class_decls, "Decls"));
             auto cdecls = class_decls.sub();
@@ -905,7 +905,7 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
                     cdecl = expression_ref(AST_node("Decl:sigtype"),{id,type});
                 }
             class_decls = expression_ref(AST_node("Decls"),cdecls);
-            decl = Haskell::Class(C.class_header, {C.decls.loc, class_decls});
+            decl = Haskell::ClassDecl(C.class_header, {C.decls.loc, class_decls});
         }
         if (is_AST(decl,"Instance"))
         {
@@ -931,16 +931,16 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
     {
 	if (is_AST(decl,"Decl"))
 	    decl = rename_decl(decl, bound2);
-        if (decl.is_a<Haskell::Class>())
+        if (decl.is_a<Haskell::ClassDecl>())
         {
-            auto& C = decl.as_<Haskell::Class>();
+            auto& C = decl.as_<Haskell::ClassDecl>();
             auto class_decls = C.decls.obj;
             auto cdecls = class_decls.sub();
             for(auto& cdecl: cdecls)
                 if (is_AST(cdecl,"Decl"))
                     cdecl = rename_decl(cdecl, bound2);
             class_decls = expression_ref(AST_node("Decls"),cdecls);
-            decl = Haskell::Class(C.class_header, {C.decls.loc,class_decls});
+            decl = Haskell::ClassDecl(C.class_header, {C.decls.loc,class_decls});
         }
         if (is_AST(decl,"Instance"))
         {

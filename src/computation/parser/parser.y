@@ -662,7 +662,7 @@ topdecl: cl_decl                               {$$ = $1;}
 |        "builtin" varop INTEGER STRING STRING {$$ = make_builtin_expr($2,$3,$4,$5);}
 |        "builtin" varop INTEGER STRING        {$$ = make_builtin_expr($2,$3,$4);}
 
-cl_decl: "class" tycl_hdr /*fds*/ wherebinds   {$$ = Haskell::Class({@2,$2},{@3,$3});}
+cl_decl: "class" tycl_hdr /*fds*/ wherebinds   {$$ = Haskell::ClassDecl({@2,$2},{@3,$3});}
 
 ty_decl: "type" type "=" ctypedoc                                          {}
 |        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = make_data_or_newtype($1,$3,$4);}

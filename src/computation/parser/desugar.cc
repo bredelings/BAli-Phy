@@ -252,10 +252,10 @@ failable_expression desugar_state::desugar_rhs(const expression_ref& E)
 
 expression_ref desugar_state::desugar(const expression_ref& E)
 {
-    if (E.is_a<Haskell::Class>())
+    if (E.is_a<Haskell::ClassDecl>())
     {
-        auto& C = E.as_<Haskell::Class>();
-        return Haskell::Class(C.class_header, {C.decls.loc, desugar(C.decls.obj)});
+        auto& C = E.as_<Haskell::ClassDecl>();
+        return Haskell::ClassDecl(C.class_header, {C.decls.loc, desugar(C.decls.obj)});
     }
     else if (E.is_a<Haskell::List>())
     {

@@ -1996,7 +1996,7 @@ namespace yy {
 
   case 79: // cl_decl: "class" tycl_hdr wherebinds
 #line 665 "parser.y"
-                                               {yylhs.value.as < expression_ref > () = Haskell::Class({yystack_[1].location,yystack_[1].value.as < expression_ref > ()},{yystack_[0].location,yystack_[0].value.as < expression_ref > ()});}
+                                               {yylhs.value.as < expression_ref > () = Haskell::ClassDecl({yystack_[1].location,yystack_[1].value.as < expression_ref > ()},{yystack_[0].location,yystack_[0].value.as < expression_ref > ()});}
 #line 2001 "parser.cc"
     break;
 

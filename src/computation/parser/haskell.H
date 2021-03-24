@@ -82,13 +82,13 @@ LPat = WildPat          -- wildcard pattern
      | SigPat LPat (HsPatSigType NoGhcTc) -- pattern with a type signature?
 */
 
-struct Class: public Object
+struct ClassDecl: public Object
 {
     Located<expression_ref> class_header;
     Located<expression_ref> decls;
 
-    Class* clone() const { return new Class(*this);}
-    Class(const Located<expression_ref>& ch, const Located<expression_ref>& ds): class_header(ch), decls(ds) {}
+    ClassDecl* clone() const { return new ClassDecl(*this);}
+    ClassDecl(const Located<expression_ref>& ch, const Located<expression_ref>& ds): class_header(ch), decls(ds) {}
 };
 
 struct List: public Object
