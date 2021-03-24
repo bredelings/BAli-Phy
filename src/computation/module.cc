@@ -1,5 +1,6 @@
 #include <set>
 #include <regex>
+#include <tuple>
 #include "computation/module.H"
 #include "util/myexception.H"
 #include "util/range.H"
@@ -31,6 +32,7 @@ using std::set;
 using std::multiset;
 using std::string;
 using std::vector;
+using std::tuple;
 
 symbol_info::symbol_info(const std::string& s, symbol_type_t st, int a)
     :name(s), symbol_type(st), arity(a)
@@ -265,9 +267,10 @@ void Module::compile(const Program& P)
         // It should be possible to replace each of these (i) an object (ii) that is located.
         vector<expression_ref> tmp;
         for(auto& decl: topdecls.sub())
-            if (is_AST(decl,"Class") or is_AST(decl,"Decl:data") or is_AST(decl,"Data:newtype") or is_AST(decl,"instance") or is_AST(decl,"type_syn"))
+            if (decl.is_a<Haskell::Class>() or is_AST(decl,"Decl:data") or is_AST(decl,"Data:newtype") or is_AST(decl,"instance") or is_AST(decl,"type_syn"))
                 tmp.push_back(decl);
-        class_and_type_decls.push_back(tmp);
+        if (not tmp.empty())
+            class_and_type_decls.push_back(tmp);
 
         find_type_groups();
     }
@@ -432,6 +435,41 @@ void Module::rename(const Program& P)
 
 void Module::find_type_groups()
 {
+    assert(class_and_type_decls.size() <= 1);
+    if (class_and_type_decls.empty()) return;
+    vector<expression_ref> initial_class_and_type_decls = class_and_type_decls[0];
+
+    // [(name,decl,names-we-depend-on)]
+    vector<tuple<string,expression_ref,vector<string>>> class_type_no_instance_decls;
+
+    vector<tuple<expression_ref,vector<string>>> instance_decls;
+
+    for(auto& decl: initial_class_and_type_decls)
+    {
+        if (decl.is_a<Haskell::Class>())
+        {
+            // get name
+            string name;
+            // free type vars
+            vector<string> free_type_vars;
+            class_type_no_instance_decls.push_back({name,decl,free_type_vars});
+        }
+        else if (is_AST(decl,"Decl:data"))
+        {
+        }
+        else if (is_AST(decl,"Data:newtype"))
+        {
+        }
+        else if (is_AST(decl,"type_syn"))
+        {
+        }
+        else if (is_AST(decl,"instance"))
+        {
+        }
+        else
+            std::abort();
+    }
+
     // See equivalents in GHC Rename/Module.hs
     // We are trying to find strongly connected components of
     //  types, type classes, and instances.
@@ -442,37 +480,36 @@ void Module::find_type_groups()
 
     // GHC looks at types and classes first, then adds instances to the SCCs later.
     
-    if (topdecls)
-    {
-        assert(is_AST(topdecls,"TopDecls"));
-        // go through topdecls and put classes, types,
-        // newtypes, and data members into 
+    // go through topdecls and put classes, types,
+    // newtypes, and data members into 
 
-        // See function `rnTyClDecls`, which calls `depAnalTyClDecls`.
-        // * Dependency analysis on values can be done by name, since instances are not included.
-        // * Code is in GHC.Data.Graph.Directed.
+    // See function `rnTyClDecls`, which calls `depAnalTyClDecls`.
+    // * Dependency analysis on values can be done by name, since instances are not included.
+    // * Code is in GHC.Data.Graph.Directed.
 
-        // Q: How are instances grouped?
-        // 
+    // Q: How are instances grouped?
+    // A: Each instance needs to be at-or-after all the types/classes referenced,
+    //    Do instances depend on other instances?  Maybe this is check in the context...
+    //    e.g. instance Eq a => Eq [a] where
 
-        // Input to the dependency analysis is a list of
-        // * (declaration, name, names that this declaration depends on)
-        // For GHC, this could include kind variables.
+    // Input to the dependency analysis is a list of
+    // * (declaration, name, names that this declaration depends on)
 
-        // We also look up the "parent" of the each name:
-        // * for a constructor, the "parent" is the type for the constructor.
-        // * for a field, the "parent" is the type for the field.
-        // * otherwise, there is no parent, and we just keep the name.
+    // Q: How are default method declarations handled here?
+    //    Do they affect type class resolution?
+    //    Do we need to do more work on them when handling value decls?
 
-        // For values, each value can have a body decl, a fixity decl, and a signature decl.
-        // So we can't use the decl itself as the key -- we have to use something like the name.
+    // I don't think we need to look up "parents" unless we are promoting data constructors
+    // to types or kinds.
 
-        // It looks like GHC rename extracts the "free variables" from everything.
-        // For example: rnSrcInstDecl operates on ClsInstD, which wraps ClsInstDecl from Hs/Decl.hs
+    // For values, each value can have a body decl, a fixity decl, and a signature decl.
+    // So we can't use the decl itself as the key -- we have to use something like the name.
 
-        // FreeVars = OccEnv ID.  See Core/Opt/OccurAnal.hs.
-        // Looks like code for determining inlining
-    }
+    // It looks like GHC rename extracts the "free variables" from everything.
+    // For example: rnSrcInstDecl operates on ClsInstD, which wraps ClsInstDecl from Hs/Decl.hs
+
+    // FreeVars = OccEnv ID.  See Core/Opt/OccurAnal.hs.
+    // Looks like code for determining inlining
 }
 
 void Module::desugar(const Program& P)
