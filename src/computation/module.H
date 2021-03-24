@@ -160,7 +160,7 @@ public:
 
     void rename(const Program&);
 
-    void find_type_groups();
+    std::vector< std::vector< expression_ref > > find_type_groups(const std::vector<expression_ref>&);
 
     void desugar(const Program&);
 

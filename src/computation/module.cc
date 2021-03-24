@@ -269,10 +269,8 @@ void Module::compile(const Program& P)
         for(auto& decl: topdecls.sub())
             if (decl.is_a<Haskell::Class>() or is_AST(decl,"Decl:data") or is_AST(decl,"Data:newtype") or is_AST(decl,"instance") or is_AST(decl,"type_syn"))
                 tmp.push_back(decl);
-        if (not tmp.empty())
-            class_and_type_decls.push_back(tmp);
 
-        find_type_groups();
+        class_and_type_decls = find_type_groups(tmp);
     }
 
     perform_exports();
@@ -433,12 +431,8 @@ void Module::rename(const Program& P)
         std::cout<<name<<"[renamed]:\n"<<topdecls<<"\n\n";
 }
 
-void Module::find_type_groups()
+vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_ref>& initial_class_and_type_decls)
 {
-    assert(class_and_type_decls.size() <= 1);
-    if (class_and_type_decls.empty()) return;
-    vector<expression_ref> initial_class_and_type_decls = class_and_type_decls[0];
-
     // [(name,decl,names-we-depend-on)]
     vector<tuple<string,expression_ref,vector<string>>> class_type_no_instance_decls;
 
@@ -509,7 +503,10 @@ void Module::find_type_groups()
     // For example: rnSrcInstDecl operates on ClsInstD, which wraps ClsInstDecl from Hs/Decl.hs
 
     // FreeVars = OccEnv ID.  See Core/Opt/OccurAnal.hs.
+
     // Looks like code for determining inlining
+
+    return {};
 }
 
 void Module::desugar(const Program& P)
