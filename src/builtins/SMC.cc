@@ -12,6 +12,8 @@
 #include "probability/choose.H"
 #include "probability/probability.H"
 #include "computation/machine/args.H"
+#include "computation/expression/constructor.H"
+#include "computation/machine/graph_register.H"
 
 #include <Eigen/Dense>
 #include <unsupported/Eigen/MatrixFunctions>
@@ -1083,6 +1085,16 @@ extern "C" closure builtin_function_li_stephens_2003_composite_likelihood(Operat
     return { Pr };
 }
 
+int get_allele(const expression_ref& haplotype, int site)
+{
+    return haplotype.as_<EVector>()[site].as_int();
+}
+
+int get_allele(const expression_ref& haplotypes, int individual, int site)
+{
+    return get_allele(haplotypes.as_<EVector>()[individual], site);
+}
+
 // OK, for DEploid, we could take
 // (a1) 0/1 panel + VCF
 // (a2) 0/1 plaf  + VCF
@@ -1160,7 +1172,7 @@ double wsaf_at_site(int site, const EVector& weights, const EVector& haplotypes)
     for(int j=0;j<num_strains;j++)
     {
         double w = weights[j].as_double();
-        double h = haplotypes[j].as_<EVector>()[site].as_int();
+        double h = get_allele(haplotypes, j, site);
         assert(h == 0 or h == 1);
         q += w*h;
     }
@@ -1227,4 +1239,88 @@ extern "C" closure builtin_function_probability_of_reads01(OperationArgs& Args)
     }
 
     return { Pr };
+}
+
+matrix<log_double_t> emission_pr(int k, const EVector& data, const EVector& haplotypes, const EVector& weights, double error_rate, double concentration)
+{
+    int L = haplotypes[0].as_<EVector>().size();
+
+    auto E = matrix<log_double_t>(L,2);
+    for(int site=0; site<L; site++)
+    {
+        double current_wsaf = wsaf_at_site(site, weights, haplotypes);
+        for(int allele = 0; allele < 2; allele++)
+        {
+            int current_allele = get_allele(haplotypes, k, site);
+            double wsaf = current_wsaf + weights[k].as_double() * (current_allele - allele);
+            E(site, allele) = site_likelihood_for_reads01(data[site], wsaf, error_rate, concentration);
+        }
+    }
+    return E;
+}
+
+// We need the markov blanket for h[i]:
+//   Pr(h[i] | plaf) * Pr(data | h, w, rror_rates, c)
+
+// Therefore, we need(h[i], i, plaf, data, h, w, error_rate, c)
+
+extern "C" closure builtin_function_propose_haplotype_from_plaf(OperationArgs& Args)
+{
+    // 1. Get haplotype reg
+    int haplotype_reg = Args.evaluate_slot_unchangeable(0);
+
+    // 2. Get haplotype index
+    int haplotype_index = Args.evaluate(1).as_int();
+
+    // 3. Get frequencies
+    auto arg3 = Args.evaluate(2);
+    auto& frequencies = arg3.as_<EVector>();
+
+    // 4. Mixture weights = EVector of double.
+    auto arg4 = Args.evaluate(3);
+    auto& weights = arg4.as_<EVector>();
+
+    // 5. data = EVector of EPair of Int
+    auto arg5 = Args.evaluate(4);
+    auto& data = arg5.as_<EVector>();
+
+    // 6. haplotypes = EVector of EVector of Int
+    auto arg6 = Args.evaluate(5);
+    auto& haplotypes = arg6.as_<EVector>();
+
+    // 7. error_rate = double
+    double error_rate = Args.evaluate(6).as_double();
+
+    // 8. concentration = double
+    double concentration = Args.evaluate(7).as_double();
+
+    // 9. context index = int
+    int context_index = Args.evaluate(8).as_int();
+
+    int L = haplotypes[0].as_<EVector>().size();
+
+    auto E = emission_pr(haplotype_index, data, haplotypes, weights, error_rate, concentration);
+
+    EVector new_haplotype(L);
+
+    log_double_t ratio = 1;
+    for(int site = 0; site < L; site++)
+    {
+        double f = frequencies[site].as_double();
+        auto F0 = E(site,0)*(1.0 - f);
+        auto F1 = E(site,1)*f;
+        int old_allele = get_allele(haplotype_index, site);
+        int new_allele = choose2(F0, F1);
+        ratio *= (choose2_P(new_allele, F0, F1) / choose2_P(old_allele, F0, F1));
+        new_haplotype[site] = new_allele;
+    }
+    reg_heap& M = Args.memory();
+
+    auto haplotype_mod_reg = M.find_modifiable_reg(haplotype_reg);
+    if (not haplotype_mod_reg)
+        throw myexception()<<"propose_haplotype_from_plaf: haplotype is not modifiable!";
+
+    M.set_reg_value_in_context(*haplotype_mod_reg, new_haplotype, context_index);
+
+    return {ratio};
 }
