@@ -1096,6 +1096,8 @@ extern "C" closure builtin_function_li_stephens_2003_composite_likelihood(Operat
 //   Technically, this could be a VCF, but that would take a lot of space.
 //   Maybe just the first 3 fields - site,ref,alt?
 
+// CSD = conditional sampling distribution?
+
 log_double_t deploid_01_plaf_only_CSD(const EVector& alt_allele_frequency, const EVector& haplotype)
 {
     assert(alt_allele_frequency.size() == haplotype.size());
@@ -1112,7 +1114,7 @@ log_double_t deploid_01_plaf_only_CSD(const EVector& alt_allele_frequency, const
     return {Pr};
 }
 
-extern "C" closure builtin_function_deploid_01_probability_haplotypes_plaf_only(OperationArgs& Args)
+extern "C" closure builtin_function_haplotype01_from_plaf_probability(OperationArgs& Args)
 {
     // 1. Population-Level Allele Frequencies (PLAF) - an EVector of double.
     auto arg0 = Args.evaluate(0);
@@ -1120,11 +1122,9 @@ extern "C" closure builtin_function_deploid_01_probability_haplotypes_plaf_only(
 
     // 2. Haplotypes - an EVector of EVector of Int
     auto arg1 = Args.evaluate(1);
-    auto& haplotypes = arg1.as_<EVector>();
+    auto& haplotype = arg1.as_<EVector>();
 
-    log_double_t Pr = 1.0;
-    for(auto& haplotype: haplotypes)
-        Pr *= deploid_01_plaf_only_CSD(plaf, haplotype.as_<EVector>());
+    auto Pr = deploid_01_plaf_only_CSD(plaf, haplotype);
 
     return {Pr};
 }
@@ -1132,7 +1132,7 @@ extern "C" closure builtin_function_deploid_01_probability_haplotypes_plaf_only(
 // In theory we could construct this in Haskell by something like
 //    haplotype <- independant [ bernoulli f | f <- frequencies ]
 // In that case redrawing individual element would come automatically.
-extern "C" closure builtin_function_deploid_01_sample_haplotype_from_plaf(OperationArgs& Args)
+extern "C" closure builtin_function_sample_haplotype01_from_plaf(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto& alt_allele_frequency = arg0.as_<EVector>();
@@ -1171,7 +1171,7 @@ double wsaf_at_site(int site, const EVector& weights, const EVector& haplotypes)
 // Pr(D|h, w, n, \psi) where psi includes
 // * e = error rate
 // * c = concentration parameter for beta in beta-binomial
-extern "C" closure builtin_function_deploid_01_probability_of_reads(OperationArgs& Args)
+extern "C" closure builtin_function_probability_of_reads01(OperationArgs& Args)
 {
     // 1a. Mixture weights - an EVector of double.
     auto arg0 = Args.evaluate(0);

@@ -31,23 +31,3 @@ selfing_coalescence n_loci s = Distribution (selfing_coalescence_probability n_l
 
 li_stephens_2003 rho = Distribution (make_densities $ li_stephens_2003_composite_likelihood rho) (error "li_stephens_2003 has no quantile") () ()
 
-builtin builtin_deploid_01_sample_haplotype_from_plaf 1 "deploid_01_sample_haplotype_from_plaf" "SMC"
-deploid_01_sample_haplotype_from_plaf = builtin_deploid_01_sample_haplotype_from_plaf . list_to_vector
-
-builtin builtin_deploid_01_probability_haplotypes_plaf_only 1 "deploid_01_probability_haplotypes_plaf_only" "SMC"
-deploid_01_probability_haplotypes_plaf_only = builtin_deploid_01_probability_haplotypes_plaf_only . list_to_vector
-
--- This version does not use the builtins above.
-deploid_01_haplotype_from_plaf plafs = independent [ bernoulli f | f <- plafs ]
-
-builtin builtin_deploid_01_probability_of_reads 5 "deploid_01_probability_of_reads" "SMC"
-deploid_01_probability_of_reads weights haplotypes error_rate c reads = builtin_deploid_01_probability_of_reads weights' haplotypes' reads' error_rate c
-    where weights'    = list_to_vector weights
-          haplotypes' = list_to_vector haplotypes
-          reads'      = list_to_vector $ map (\(x,y) -> c_pair x y) reads
-
-deploid_01_reads_from_haps weights haplotypes error_rate c = Distribution
-                                                             (make_densities $ deploid_01_probability_of_reads weights haplotypes error_rate c)
-                                                             (error "no quantile")
-                                                             ()
-                                                             ()
