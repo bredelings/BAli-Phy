@@ -26,11 +26,20 @@ using std::vector;
 
 int choose2(log_double_t x, log_double_t y) 
 {
-    std::vector<log_double_t> Pr(2);
-    Pr[0] = x;
-    Pr[1] = y;
+    auto sum0 = x;
+    auto sum1 = x + y;
 
-    return choose_scratch(Pr);
+    log_double_t r = log_double_t(uniform()) * sum1;
+
+    if (r < sum0)
+        return 0;
+    if (r < sum1)
+        return 1;
+
+    choose_exception<log_double_t> c(0, {x,y});
+    c.prepend(":\n");
+    c.prepend(__PRETTY_FUNCTION__);
+    throw c;
 }
 
 template <> choose_exception<log_double_t>::choose_exception(int i, const std::vector<log_double_t>& V)
