@@ -42,6 +42,18 @@ int choose2(log_double_t x, log_double_t y)
     throw c;
 }
 
+log_double_t choose2_P(int k, log_double_t x, log_double_t y)
+{
+    assert(k == 0 or k == 1);
+    auto sum = x+y;
+    if (k==0)
+        return (x/sum);
+    else if (k==1)
+        return (y/sum);
+    else
+        std::abort();
+}
+
 template <> choose_exception<log_double_t>::choose_exception(int i, const std::vector<log_double_t>& V)
     :Pr(V)
 {

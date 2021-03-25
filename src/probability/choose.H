@@ -54,6 +54,8 @@ template <> choose_exception<log_double_t>::choose_exception(int i, const std::v
 /// Select from choice 0 or 1 in proportion to the probabilities given.
 int choose2(log_double_t, log_double_t);
 
+log_double_t choose2_P(int, log_double_t, log_double_t);
+
 /// Select from choices [0,P.size-1] in proportion to the probabilities given, using pre-allocated scratch space.
 template <typename F>
 int choose_scratch(const std::vector<F>& P, std::vector<F>& sum) 
