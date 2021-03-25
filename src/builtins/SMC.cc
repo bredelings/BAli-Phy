@@ -1168,6 +1168,13 @@ double wsaf_at_site(int site, const EVector& weights, const EVector& haplotypes)
     return q;
 }
 
+log_double_t site_likelihood_for_reads01(int ref, int alt, double wsaf, double error_rate, double c)
+{
+    double pi = wsaf + error_rate*(1.0 - 2.0*wsaf);
+
+    return beta_binomial_pdf(ref+alt, c*pi, c*(1.0-pi), alt);
+}
+
 // Pr(D|h, w, n, \psi) where psi includes
 // * e = error rate
 // * c = concentration parameter for beta in beta-binomial
@@ -1209,11 +1216,9 @@ extern "C" closure builtin_function_probability_of_reads01(OperationArgs& Args)
         int ref = reads[site].as_<EPair>().first.as_int();
         int alt = reads[site].as_<EPair>().second.as_int();
 
-        double q = wsaf_at_site(site, weights, haplotypes);
+        double wsaf = wsaf_at_site(site, weights, haplotypes);
 
-        double pi = q + error_rate*(1.0 - 2.0*q);
-
-        Pr *= beta_binomial_pdf(ref+alt, c*pi, c*(1.0-pi), alt);
+        Pr *= site_likelihood_for_reads01(ref, alt, wsaf, error_rate, c);
     }
 
     return { Pr };
