@@ -23,6 +23,7 @@ struct closure
 
     int reg_for_slot(int i) const
     {
+        assert(i < exp.sub().size());
 	int index = exp.sub()[i].as_index_var();
 	return lookup_in_env(index);
     }
