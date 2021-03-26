@@ -1122,7 +1122,7 @@ class RegOperationArgsUnchangeable final: public OperationArgs
 
     const closure& evaluate_reg_to_closure_(int r2)
         {
-            int r3 = evaluate_reg_use(r2);
+            int r3 = evaluate_reg_force(r2);
             assert(M.reg_is_constant_no_force(r3));
             return M[r3];
         }
