@@ -2204,6 +2204,7 @@ const closure& reg_heap::value_for_precomputed_reg(int r) const
 
 optional<int> reg_heap::precomputed_value_in_context(int r, int c)
 {
+    // QUESTION: Should I replace this with incremental_evaluate_unchangeable?
     r = follow_index_var_no_force(r);
 
     if (reg_is_constant(r)) return r;
