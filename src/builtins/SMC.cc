@@ -1146,8 +1146,10 @@ extern "C" closure builtin_function_haplotype01_from_plaf_probability(OperationA
 // In that case redrawing individual element would come automatically.
 extern "C" closure builtin_function_sample_haplotype01_from_plaf(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
+    auto arg0 = Args.evaluate_(0);
     auto& alt_allele_frequency = arg0.as_<EVector>();
+
+    Args.make_changeable();
 
     int num_sites = alt_allele_frequency.size();
 
