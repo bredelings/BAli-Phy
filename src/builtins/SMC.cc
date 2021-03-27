@@ -14,6 +14,7 @@
 #include "computation/machine/args.H"
 #include "computation/expression/constructor.H"
 #include "computation/machine/graph_register.H"
+#include "computation/context.H"
 
 #include <Eigen/Dense>
 #include <unsupported/Eigen/MatrixFunctions>
@@ -1179,11 +1180,17 @@ double wsaf_at_site(int site, const EVector& weights, const EVector& haplotypes)
         q += w*h;
     }
 
-    return q;
+    return std::min(q,1.0);
 }
 
 log_double_t site_likelihood_for_reads01(int ref, int alt, double wsaf, double error_rate, double c)
 {
+    assert(0 <= ref);
+    assert(0 <= alt);
+    assert(0 <= wsaf and wsaf <= 1.0);
+    assert(0 <= error_rate and error_rate <= 1.0);
+    assert(0 <= c);
+
     double pi = wsaf + error_rate*(1.0 - 2.0*wsaf);
 
     return beta_binomial_pdf(ref+alt, c*pi, c*(1.0-pi), alt);
@@ -1254,7 +1261,8 @@ matrix<log_double_t> emission_pr(int k, const EVector& data, const EVector& hapl
         for(int allele = 0; allele < 2; allele++)
         {
             int current_allele = get_allele(haplotypes, k, site);
-            double wsaf = current_wsaf + weights[k].as_double() * (current_allele - allele);
+            double wsaf = current_wsaf + weights[k].as_double() * (allele - current_allele);
+            wsaf = std::max(0.0,std::min(1.0,wsaf));
             E(site, allele) = site_likelihood_for_reads01(data[site], wsaf, error_rate, concentration);
         }
     }
@@ -1268,36 +1276,77 @@ matrix<log_double_t> emission_pr(int k, const EVector& data, const EVector& hapl
 
 extern "C" closure builtin_function_propose_haplotype_from_plaf(OperationArgs& Args)
 {
-    // 1. Get haplotype reg
-    int haplotype_reg = Args.evaluate_slot_unchangeable(0);
+    assert(not Args.evaluate_changeables());
 
-    // 2. Get haplotype index
-    int haplotype_index = Args.evaluate(1).as_int();
+    reg_heap& M = Args.memory();
 
-    // 3. Get frequencies
-    auto arg3 = Args.evaluate(2);
-    auto& frequencies = arg3.as_<EVector>();
+    // Q: When do we do Args.evaluate_slot_unchangeable(slot), and when do we do Args.reg_for_slot(slot)?
+    // A: But return a reg, but the first one returns the result, whereas the second one just returns the reg directly.
 
-    // 4. Mixture weights = EVector of double.
-    auto arg4 = Args.evaluate(3);
-    auto& weights = arg4.as_<EVector>();
+    // NOTE: For the haskell operation, these should be the last two arguments.
+    //       But for the builtin operation, lets make them the first two.
 
-    // 5. data = EVector of EPair of Int
-    auto arg5 = Args.evaluate(4);
-    auto& data = arg5.as_<EVector>();
+    // 0. context index = int
+    int context_index = Args.evaluate(0).as_int();
+    context_ref C(M,context_index);
 
-    // 6. haplotypes = EVector of EVector of Int
-    auto arg6 = Args.evaluate(5);
-    auto& haplotypes = arg6.as_<EVector>();
+    // 1. IO state = int
+    int io_state = Args.evaluate(1).as_int();
 
-    // 7. error_rate = double
-    double error_rate = Args.evaluate(6).as_double();
+    auto evaluate_slot = [&](int slot) {return C.evaluate_reg(Args.reg_for_slot(slot));};
 
-    // 8. concentration = double
-    double concentration = Args.evaluate(7).as_double();
+    // 2. Get haplotype reg
+    //   OK, so we want to look through changeables that are evaluated in context C, unless they are modifiables.
+    //   The current approach will do non-changeable computation, and then look through
+    //       (i) unevaluated seq
+    //       (ii) index_vars with no force effects.
+    //   FIXME: However, it WON'T look through evaluated changeables..
+    //   FIXME: PrecomputedOperationArgs WILL look through evaluated changeables, but will ALSO look through modifiables instead of finding them.
 
-    // 9. context index = int
-    int context_index = Args.evaluate(8).as_int();
+    //   SOLUTION?: so, we can look through index_var_with_force...
+    //   SOLUTION?: so, we can force the parameters of the proposal with `seq`... although
+    //                some might not get forced in the changeable program, but only when the move is run...
+
+    //   Can we execute the arguments to the move CHANGEABLY IN THE CONTEXT WE ARE MODIFYING?
+    //   And, what is the different between evaluating with RegOperationArgs1 and RegOperationArgs2?
+
+    // So, maybe we want to do incremental_evaluate_in_context(reg, context), which returns a reg?
+    // And also we might want to do find_modifiable_reg_in_context(reg, context), which evaluates the reg, and then walks calls?
+
+    // C.evaluate_slot(Args.current_closure(), 1)
+
+    // auto haplotype_mod_reg = C.find_modifiable_reg(haplotype_reg) = M.find_modifiable_reg_in_context(haplotype_reg, context_index);
+    
+    int haplotype_reg = Args.reg_for_slot(2);
+    if (auto haplotype_mod_reg = C.find_modifiable_reg(haplotype_reg))
+        haplotype_reg = *haplotype_mod_reg;
+    else
+        throw myexception()<<"propose_haplotype_from_plaf: haplotype reg "<<haplotype_reg<<" is not a modifiable!";
+
+    // 3. Get haplotype index
+    int haplotype_index = evaluate_slot(3).as_int();
+
+    // 4. Get frequencies
+    auto arg4 = evaluate_slot(4);
+    auto& frequencies = arg4.as_<EVector>();
+
+    // 5. Mixture weights = EVector of double.
+    auto arg5 = evaluate_slot(5);
+    auto& weights = arg5.as_<EVector>();
+
+    // 6. data = EVector of EPair of Int
+    auto arg6 = evaluate_slot(6);
+    auto& data = arg6.as_<EVector>();
+
+    // 7. haplotypes = EVector of EVector of Int
+    auto arg7 = evaluate_slot(7);
+    auto& haplotypes = arg7.as_<EVector>();
+
+    // 8. error_rate = double
+    double error_rate = evaluate_slot(8).as_double();
+
+    // 9. concentration = double
+    double concentration = evaluate_slot(9).as_double();
 
     int L = haplotypes[0].as_<EVector>().size();
 
@@ -1311,18 +1360,13 @@ extern "C" closure builtin_function_propose_haplotype_from_plaf(OperationArgs& A
         double f = frequencies[site].as_double();
         auto F0 = E(site,0)*(1.0 - f);
         auto F1 = E(site,1)*f;
-        int old_allele = get_allele(haplotype_index, site);
+        int old_allele = get_allele(haplotypes, haplotype_index, site);
         int new_allele = choose2(F0, F1);
-        ratio *= (choose2_P(new_allele, F0, F1) / choose2_P(old_allele, F0, F1));
+        ratio *= (choose2_P(old_allele, F0, F1) / choose2_P(new_allele, F0, F1));
         new_haplotype[site] = new_allele;
     }
-    reg_heap& M = Args.memory();
 
-    auto haplotype_mod_reg = M.find_modifiable_reg(haplotype_reg);
-    if (not haplotype_mod_reg)
-        throw myexception()<<"propose_haplotype_from_plaf: haplotype is not modifiable!";
+    C.set_reg_value(haplotype_reg, new_haplotype);
 
-    M.set_reg_value_in_context(*haplotype_mod_reg, new_haplotype, context_index);
-
-    return {ratio};
+    return EPair(io_state+1, ratio);
 }

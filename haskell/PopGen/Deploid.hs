@@ -31,3 +31,16 @@ reads01_from_haps weights haplotypes error_rate c = Distribution
                                                     (error "no quantile")
                                                     ()
                                                     ()
+
+builtin propose_haplotype_from_plaf'' 10 "propose_haplotype_from_plaf" "SMC"
+
+propose_haplotype_from_plaf' hap hap_index freqs w reads haps e c context io_state =
+    propose_haplotype_from_plaf'' context io_state hap hap_index freqs' w' reads' haps' e c
+           where
+             freqs' = list_to_vector freqs
+             w'     = list_to_vector w
+             reads' = list_to_vector $ map (\(x,y) -> c_pair x y) reads
+             haps'  = list_to_vector haps
+
+propose_haplotype_from_plaf hap hap_index freqs w reads haps e c context =
+    IOAction $ pair_from_c . propose_haplotype_from_plaf' hap hap_index freqs w reads haps e c context
