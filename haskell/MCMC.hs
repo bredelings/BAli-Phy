@@ -34,3 +34,35 @@ builtin builtin_nni_on_branch_unsafe 3 "NNI_on_branch_unsafe" "MCMC"
 nni_on_branch_unsafe tree branch c = IOAction (\s->(s,builtin_nni_on_branch_unsafe tree branch c))
 
 walk_tree_sample_nni_unsafe tree c = sequence_ [ nni_on_branch_unsafe tree branch c | branch <- walk_tree_path tree c]
+
+builtin builtin_copy_context 2 "copy_context" "MCMC"
+copy_context c = IOAction (pair_from_c . builtin_copy_context c)
+
+builtin builtin_release_context 2 "release_context" "MCMC"
+release_context c = IOAction (pair_from_c . builtin_release_context c)
+
+builtin builtin_switch_to_context 3 "switch_to_context" "MCMC"
+switch_to_context c1 c2  = IOAction (pair_from_c . builtin_switch_to_context c1 c2)
+
+builtin builtin_accept_MH 4 "accept_MH" "MCMC"
+accept_MH c1 c2 ratio  = IOAction (pair_from_c . builtin_accept_MH c1 c2 ratio)
+
+-- TODO: What if copy_context returns a Box<context>?
+--       Then if memory is tight, we would destroy the context object, and release the  context.
+--       This might take a while though if garbage-collection didn't happen immediately.
+--       And we might need to pivot back to c2 later to release it later.
+
+
+-- Proposal = Context -> IO LogDouble
+data Proposal
+data Context
+
+metropolis_hastings :: Proposal -> Context -> IO Bool
+metropolis_hastings proposal c1 = do
+  c2 <- copy_context c1
+  ratio <- proposal c2
+  accept <- accept_MH c1 c2 ratio
+  if accept then switch_to_context c1 c2 else return ()
+  release_context c2
+  return accept
+

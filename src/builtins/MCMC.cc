@@ -705,3 +705,83 @@ extern "C" closure builtin_function_sample_alignments_one(OperationArgs&)
 /// scale_scales_only (slice)
 
 
+// gibbs_sample_categorical x n pr
+
+
+extern "C" closure builtin_function_copy_context(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+
+    reg_heap& M = Args.memory();
+
+    int c1 = Args.evaluate(0).as_int();
+
+    int io_state = Args.evaluate(1).as_int();
+
+    int c2 = M.copy_context(c1);
+
+    //------------- 4. Return the modified IO state ----
+    return EPair(io_state+1, c2);
+}
+
+
+extern "C" closure builtin_function_release_context(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+
+    reg_heap& M = Args.memory();
+
+    int c = Args.evaluate(0).as_int();
+
+    int io_state = Args.evaluate(1).as_int();
+
+    M.release_context(c);
+
+    //------------- 4. Return the modified IO state ----
+    return EPair(io_state+1,constructor("()",0));
+}
+
+extern "C" closure builtin_function_switch_to_context(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+
+    reg_heap& M = Args.memory();
+
+    int c1 = Args.evaluate(0).as_int();
+
+    int c2 = Args.evaluate(1).as_int();
+
+    int io_state = Args.evaluate(2).as_int();
+
+    M.switch_to_context(c1,c2);
+
+    //------------- 4. Return the modified IO state ----
+    return EPair(io_state+1,constructor("()",0));
+}
+
+
+extern "C" closure builtin_function_accept_MH(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+
+    reg_heap& M = Args.memory();
+
+    int c1 = Args.evaluate(0).as_int();
+
+    int c2 = Args.evaluate(1).as_int();
+
+    log_double_t ratio = Args.evaluate(2).as_log_double();
+
+    int io_state = Args.evaluate(3).as_int();
+
+    context_ref C1(M,c1);
+
+    context_ref C2(M,c2);
+
+    bool accept = accept_MH(C1, C2, ratio);
+
+    //------------- 4. Return the modified IO state ----
+    return EPair(io_state+1, accept);
+}
+
+
