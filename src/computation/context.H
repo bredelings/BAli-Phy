@@ -95,6 +95,9 @@ public:
     /// Return the value of a particular index, computing it if necessary
     const expression_ref& perform_expression(const expression_ref&,bool=false) const;
 
+    /// Evaluate a particular reg and return the value.
+    const expression_ref& evaluate_reg(int r) const;
+
     /// Return a structure where all fields are evaluated and substituted.
     expression_ref recursive_evaluate_reg(int r) const;
 

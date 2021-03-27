@@ -376,6 +376,10 @@ private:
 public:
     std::optional<int> find_modifiable_reg(int R);
 
+    std::optional<int> find_precomputed_modifiable_reg_in_context(int R, int c);
+
+    std::optional<int> find_modifiable_reg_in_context(int R, int c);
+
     std::optional<int> compute_expression_is_modifiable_reg(int index);
 
     /*----- Random variables ----*/

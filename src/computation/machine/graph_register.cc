@@ -965,11 +965,72 @@ optional<int> reg_heap::find_update_modifiable_reg(int& R)
     }
     else
         return {};
+
+    // This does NOT handle index_var_with_force!
 }
 
 optional<int> reg_heap::find_modifiable_reg(int R)
 {
     return find_update_modifiable_reg(R);
+}
+
+// This is an evaluation loop that follows calls instead of results
+// so that it doesn't jump over modifiables.
+optional<int> reg_heap::find_precomputed_modifiable_reg_in_context(int r, int c)
+{
+    reroot_at_context(c);
+
+    while(true)
+    {
+        auto& C = closure_at(r);
+
+        if (reg_is_unevaluated(r))  // 0
+            return {};
+        else if (reg_is_index_var_no_force(r) or reg_is_index_var_with_force(r)) // 1, 4, 5
+            r = C.reg_for_index_var();
+        else if (reg_is_constant(r)) // 2, 6
+            return {};
+        else if (reg_is_changeable(r)) // 3
+        {
+            if (is_modifiable(C.exp))
+                return r;
+            else if (not reg_has_call(r))
+                return {};
+            else
+                r = call_for_reg(r);
+        }
+        else
+            std::abort();
+    }
+
+    // unreachable
+}
+
+
+optional<int> reg_heap::find_modifiable_reg_in_context(int R, int c1)
+{
+    // 1. Make a new context in which to do extra evaluation, so as to leave c1 unchanged.
+    int c2 = copy_context(c1);
+
+    // 2. Evaluate R in context c2, and get the first changeable reg on the path.
+    auto [r, _] = incremental_evaluate_in_context(R, c2);
+
+    // 3. Walk the call chain to find the modifiable, if any.
+    auto mod_reg = find_precomputed_modifiable_reg_in_context(r, c2);
+
+    // 4. Release the temporary context.
+    release_context(c2);
+
+    // 5. Check that mod_reg is executed in c1, where R may not be evaluated.
+    if (mod_reg)
+    {
+        assert(is_modifiable(expression_at(*mod_reg)));
+        if (not call_for_reg(*mod_reg))
+            mod_reg = {};
+    }
+    
+    // 6. Return the result.
+    return mod_reg;
 }
 
 int reg_heap::step_index_for_reg(int r) const 

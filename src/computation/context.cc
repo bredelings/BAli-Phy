@@ -139,6 +139,13 @@ const expression_ref& context_ref::perform_expression(const expression_ref& E,bo
     return evaluate_expression_( preprocess(E2), ec);
 }
 
+const expression_ref& context_ref::evaluate_reg(int r) const
+{
+    auto [r1, result] = memory()->incremental_evaluate_in_context(r, context_index);
+
+    return memory()->expression_at(result);
+}
+
 expression_ref context_ref::recursive_evaluate_reg(int r) const
 {
     closure C1 = memory()->lazy_evaluate(r, context_index);
@@ -535,7 +542,7 @@ int context_ref::get_compute_expression_reg(int index) const
 
 optional<int> context_ref::find_modifiable_reg(int r) const
 {
-    return memory()->find_modifiable_reg(r);
+    return memory()->find_modifiable_reg_in_context(r, context_index);
 }
 
 std::ostream& operator<<(std::ostream& o, const context_ref& C)
