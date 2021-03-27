@@ -35,6 +35,7 @@ data Random a = RandomStructure (a->Effects) (a->Effects->a) (Random a)
               | SamplingRate Double (Random a)
               | Lazy (Random a)
               | WithEffect (Random a) (Random a)
+              | PerformEffect Effect
               | LiftIO (IO a)
 
 -- I feel sample_with_initial_value actually needs to run the sampler... and make the result come out of that.
@@ -46,6 +47,7 @@ infix 0 ~>
 liftIO = LiftIO
 sample = Lazy
 add_move = AddMove
+perform_effect = PerformEffect
 infixl 2 `with_effect`
 with_effect = WithEffect
 
@@ -107,6 +109,7 @@ run_strict' rate (Observe dist datum) = go [register_likelihood term | term <- d
           go (x:xs) = x `seq` go xs
 run_strict' rate (Print s) = putStrLn (show s)
 run_strict' rate (Lazy r) = run_lazy' rate r
+run_strict' rate (PerformEffect e) = run_effects rate e `seq` return ()
 
 -- 1. Could we somehow implement slice sampling windows for non-contingent variables?
 
