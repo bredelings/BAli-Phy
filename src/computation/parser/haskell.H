@@ -84,6 +84,13 @@ LPat = WildPat          -- wildcard pattern
 
 struct ClassDecl: public Object
 {
+    // See PostProcess.hs: checkTyClHdr for checks and post-processing.
+
+    // Located<string> id;
+    // std::vector<Located<expression_ref>> type_args;
+    // std::optional<Located<expression_ref>> context;
+    // std::vector<Located<expression_ref>> signatures;
+    // std::vector<Located<expression_ref>> default_decls;
     Located<expression_ref> class_header;
     Located<expression_ref> decls;
 
