@@ -42,5 +42,5 @@ propose_haplotype_from_plaf' hap hap_index freqs w reads haps e c context io_sta
              reads' = list_to_vector $ map (\(x,y) -> c_pair x y) reads
              haps'  = list_to_vector haps
 
-propose_haplotype_from_plaf hap hap_index freqs w reads haps e c context =
-    IOAction $ pair_from_c . propose_haplotype_from_plaf' hap hap_index freqs w reads haps e c context
+propose_haplotype_from_plaf hap_index freqs w reads haps e c context =
+    IOAction $ pair_from_c . propose_haplotype_from_plaf' (haps !! hap_index) hap_index freqs w reads haps e c context
