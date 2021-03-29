@@ -70,7 +70,7 @@
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 
   expression_ref make_sig_vars(const std::vector<std::string>& sig_vars);
-  expression_ref make_data_or_newtype(const std::string& d_or_n, const expression_ref& tycls_hdr, const std::vector<expression_ref>& constrs);
+  expression_ref make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const expression_ref& tycls_hdr, const std::vector<expression_ref>& constrs);
   expression_ref make_class_decl(const expression_ref& cls_hdr, const Located<expression_ref>& decls);
   expression_ref make_context(const expression_ref& context, const expression_ref& type);
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
@@ -455,18 +455,21 @@ namespace yy {
     /// An auxiliary type to compute the largest semantic type.
     union union_type
     {
+      // data_or_newtype
+      char dummy1[sizeof (Haskell::DataOrNewtype)];
+
       // maybe_src
       // maybe_safe
       // optqualified
-      char dummy1[sizeof (bool)];
+      char dummy2[sizeof (bool)];
 
       // "CHAR"
       // "PRIMCHAR"
-      char dummy2[sizeof (char)];
+      char dummy3[sizeof (char)];
 
       // "RATIONAL"
       // "PRIMDOUBLE"
-      char dummy3[sizeof (double)];
+      char dummy4[sizeof (double)];
 
       // module
       // body
@@ -534,23 +537,23 @@ namespace yy {
       // stmt
       // qual
       // literal
-      char dummy4[sizeof (expression_ref)];
+      char dummy5[sizeof (expression_ref)];
 
       // "PRIMFLOAT"
-      char dummy5[sizeof (float)];
+      char dummy6[sizeof (float)];
 
       // "INTEGER"
       // "PRIMINTEGER"
       // "PRIMWORD"
       // commas
-      char dummy6[sizeof (int)];
+      char dummy7[sizeof (int)];
 
       // prec
-      char dummy7[sizeof (std::optional<int>)];
+      char dummy8[sizeof (std::optional<int>)];
 
       // maybe_pkg
       // maybeas
-      char dummy8[sizeof (std::optional<std::string>)];
+      char dummy9[sizeof (std::optional<std::string>)];
 
       // "VARID"
       // "CONID"
@@ -565,7 +568,6 @@ namespace yy {
       // "STRING"
       // "PRIMSTRING"
       // infix
-      // data_or_newtype
       // strict_mark
       // strictness
       // qcon
@@ -611,7 +613,7 @@ namespace yy {
       // qconsym
       // consym
       // modid
-      char dummy9[sizeof (std::string)];
+      char dummy10[sizeof (std::string)];
 
       // exportlist
       // exportlist1
@@ -648,11 +650,11 @@ namespace yy {
       // apats1
       // stmtlist
       // stmts
-      char dummy10[sizeof (std::vector<expression_ref>)];
+      char dummy11[sizeof (std::vector<expression_ref>)];
 
       // ops
       // sig_vars
-      char dummy11[sizeof (std::vector<std::string>)];
+      char dummy12[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1227,6 +1229,10 @@ namespace yy {
       {
         switch (this->kind ())
     {
+      case symbol_kind::S_data_or_newtype: // data_or_newtype
+        value.move< Haskell::DataOrNewtype > (std::move (that.value));
+        break;
+
       case symbol_kind::S_maybe_src: // maybe_src
       case symbol_kind::S_maybe_safe: // maybe_safe
       case symbol_kind::S_optqualified: // optqualified
@@ -1345,7 +1351,6 @@ namespace yy {
       case symbol_kind::S_STRING: // "STRING"
       case symbol_kind::S_PRIMSTRING: // "PRIMSTRING"
       case symbol_kind::S_infix: // infix
-      case symbol_kind::S_data_or_newtype: // data_or_newtype
       case symbol_kind::S_strict_mark: // strict_mark
       case symbol_kind::S_strictness: // strictness
       case symbol_kind::S_qcon: // qcon
@@ -1456,6 +1461,20 @@ namespace yy {
 #else
       basic_symbol (typename Base::kind_type t, const location_type& l)
         : Base (t)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Haskell::DataOrNewtype&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Haskell::DataOrNewtype& v, const location_type& l)
+        : Base (t)
+        , value (v)
         , location (l)
       {}
 #endif
@@ -1636,6 +1655,10 @@ namespace yy {
         // Value type destructor.
 switch (yykind)
     {
+      case symbol_kind::S_data_or_newtype: // data_or_newtype
+        value.template destroy< Haskell::DataOrNewtype > ();
+        break;
+
       case symbol_kind::S_maybe_src: // maybe_src
       case symbol_kind::S_maybe_safe: // maybe_safe
       case symbol_kind::S_optqualified: // optqualified
@@ -1754,7 +1777,6 @@ switch (yykind)
       case symbol_kind::S_STRING: // "STRING"
       case symbol_kind::S_PRIMSTRING: // "PRIMSTRING"
       case symbol_kind::S_infix: // infix
-      case symbol_kind::S_data_or_newtype: // data_or_newtype
       case symbol_kind::S_strict_mark: // strict_mark
       case symbol_kind::S_strictness: // strictness
       case symbol_kind::S_qcon: // qcon
@@ -4529,6 +4551,10 @@ switch (yykind)
   {
     switch (this->kind ())
     {
+      case symbol_kind::S_data_or_newtype: // data_or_newtype
+        value.copy< Haskell::DataOrNewtype > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_maybe_src: // maybe_src
       case symbol_kind::S_maybe_safe: // maybe_safe
       case symbol_kind::S_optqualified: // optqualified
@@ -4647,7 +4673,6 @@ switch (yykind)
       case symbol_kind::S_STRING: // "STRING"
       case symbol_kind::S_PRIMSTRING: // "PRIMSTRING"
       case symbol_kind::S_infix: // infix
-      case symbol_kind::S_data_or_newtype: // data_or_newtype
       case symbol_kind::S_strict_mark: // strict_mark
       case symbol_kind::S_strictness: // strictness
       case symbol_kind::S_qcon: // qcon
@@ -4768,6 +4793,10 @@ switch (yykind)
     super_type::move (s);
     switch (this->kind ())
     {
+      case symbol_kind::S_data_or_newtype: // data_or_newtype
+        value.move< Haskell::DataOrNewtype > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_maybe_src: // maybe_src
       case symbol_kind::S_maybe_safe: // maybe_safe
       case symbol_kind::S_optqualified: // optqualified
@@ -4886,7 +4915,6 @@ switch (yykind)
       case symbol_kind::S_STRING: // "STRING"
       case symbol_kind::S_PRIMSTRING: // "PRIMSTRING"
       case symbol_kind::S_infix: // infix
-      case symbol_kind::S_data_or_newtype: // data_or_newtype
       case symbol_kind::S_strict_mark: // strict_mark
       case symbol_kind::S_strictness: // strictness
       case symbol_kind::S_qcon: // qcon
@@ -5040,7 +5068,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5044 "parser.hh"
+#line 5072 "parser.hh"
 
 
 

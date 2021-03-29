@@ -375,10 +375,13 @@ expression_ref rename_infix_top(const Module& m, const expression_ref& decls)
 
     for(auto& decl: decls.sub())
     {
-        if (not is_AST(decl,"Decl:data")) continue;
-        if (decl.size() < 2) continue;
-        expression_ref constrs = decl.sub()[1];
+        if (not decl.is_a<Haskell::DataOrNewtypeDecl>()) continue;
+        auto D = decl.as_<Haskell::DataOrNewtypeDecl>();
+
+        expression_ref constrs = D.constructors;
+        if (not constrs) continue;
         assert(is_AST(constrs,"constrs"));
+        if (constrs.size() == 0) continue;
 
         // field -> con -> pos
         map<string,map<string,int>> constructor_fields;

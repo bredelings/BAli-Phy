@@ -106,6 +106,34 @@ struct ClassDecl: public Object
         {}
 };
 
+enum class DataOrNewtype {data,newtype};
+
+struct DataOrNewtypeDecl: public Object
+{
+    // See PostProcess.hs: checkTyClHdr for checks and post-processing.
+
+    DataOrNewtype data_or_newtype;
+    std::string name;
+    std::vector<expression_ref> type_args;
+    std::optional<expression_ref> context;
+
+    expression_ref constructors;
+
+    DataOrNewtypeDecl* clone() const { return new DataOrNewtypeDecl(*this);}
+
+    DataOrNewtypeDecl(DataOrNewtype dn,
+                      const std::string& s,
+                      const std::vector<expression_ref>& as,
+                      const std::optional<expression_ref> ct,
+                      const expression_ref& cs)
+        :data_or_newtype(dn),
+         name(s),
+         type_args(as),
+         context(ct),
+         constructors(cs)
+        {}
+};
+
 struct List: public Object
 {
     std::vector<expression_ref> elements;

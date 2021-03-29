@@ -32,7 +32,7 @@
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 
   expression_ref make_sig_vars(const std::vector<std::string>& sig_vars);
-  expression_ref make_data_or_newtype(const std::string& d_or_n, const expression_ref& tycls_hdr, const std::vector<expression_ref>& constrs);
+  expression_ref make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const expression_ref& tycls_hdr, const std::vector<expression_ref>& constrs);
   expression_ref make_class_decl(const expression_ref& cls_hdr, const Located<expression_ref>& decls);
   expression_ref make_context(const expression_ref& context, const expression_ref& type);
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
@@ -284,7 +284,7 @@
 %type <void> deriv_strategy_no_via
 %type <void> deriv_strategy_via
  */
-%type <std::string> data_or_newtype
+%type <Haskell::DataOrNewtype> data_or_newtype
  /* %type <void> opt_kind_sig */
 %type <expression_ref> tycl_hdr
 /* %type <void> capi_ctype 
@@ -727,8 +727,8 @@ at_decl_cls: "data" opt_family type opt_datafam_kind_sig
 |            "type" type opt_at_kind_inj_sig
 */
 
-data_or_newtype: "data"    {$$="data";}
-|                "newtype" {$$="newtype";}
+data_or_newtype: "data"    {$$=Haskell::DataOrNewtype::data;}
+|                "newtype" {$$=Haskell::DataOrNewtype::newtype;}
 
 opt_kind_sig: %empty
 |             "::" kind
@@ -1536,11 +1536,11 @@ check_type_or_class_header(const expression_ref& tycls_hdr)
     return {name, type_args, context};
 }
 
-expression_ref make_data_or_newtype(const string& d_or_n, const expression_ref& tycls_hdr, const vector<expression_ref>& constrs)
+expression_ref make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const expression_ref& tycls_hdr, const vector<expression_ref>& constrs)
 {
+    auto [name, type_args, context] = check_type_or_class_header(tycls_hdr);
     expression_ref c = new expression(AST_node("constrs"),constrs);
-    assert(d_or_n == "data" or d_or_n == "newtype");
-    return new expression(AST_node("Decl:"+d_or_n),{tycls_hdr,c});
+    return Haskell::DataOrNewtypeDecl(d_or_n, name, type_args, context, c);
 }
 
 expression_ref make_class_decl(const expression_ref& cls_hdr, const Located<expression_ref>& decls)

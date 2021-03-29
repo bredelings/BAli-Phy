@@ -267,7 +267,7 @@ void Module::compile(const Program& P)
         // It should be possible to replace each of these (i) an object (ii) that is located.
         vector<expression_ref> tmp;
         for(auto& decl: topdecls.sub())
-            if (decl.is_a<Haskell::ClassDecl>() or is_AST(decl,"Decl:data") or is_AST(decl,"Data:newtype") or is_AST(decl,"instance") or is_AST(decl,"type_syn"))
+            if (decl.is_a<Haskell::ClassDecl>() or decl.is_a<Haskell::DataOrNewtypeDecl>() or is_AST(decl,"instance") or is_AST(decl,"type_syn"))
                 tmp.push_back(decl);
 
         class_and_type_decls = find_type_groups(tmp);
@@ -442,19 +442,17 @@ vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_
     {
         if (decl.is_a<Haskell::ClassDecl>())
         {
-            // get name
             string name = decl.as_<Haskell::ClassDecl>().name;
-            // free type vars
             vector<string> free_type_vars;
-            class_type_no_instance_decls.push_back({name,decl,free_type_vars});
+            class_type_no_instance_decls.push_back({name, decl, free_type_vars});
         }
-        else if (is_AST(decl,"Decl:data"))
+        else if (decl.is_a<Haskell::DataOrNewtypeDecl>())
         {
+            string name = decl.as_<Haskell::DataOrNewtypeDecl>().name;
+            vector<string> free_type_vars;
+            class_type_no_instance_decls.push_back({name, decl, free_type_vars});
         }
-        else if (is_AST(decl,"Data:newtype"))
-        {
-        }
-        else if (is_AST(decl,"type_syn"))
+        else if (is_AST(decl,"type_syn")) // type x = y
         {
         }
         else if (is_AST(decl,"instance"))
@@ -1003,21 +1001,21 @@ void Module::load_constructors()
     vector<expression_ref> new_decls;
 
     for(const auto& decl: topdecls.sub())
-        if (is_AST(decl,"Decl:data"))
+        if (decl.is_a<Haskell::DataOrNewtypeDecl>())
         {
-            if (decl.size() >= 2)
-            {
-                expression_ref constrs = decl.sub()[1];
-                assert(is_AST(constrs,"constrs"));
-                for(const auto& constr: constrs.sub())
-                {
-                    auto arity = get_constructor_arity(constr);
-                    auto cname = get_constructor_name(constr);
+            auto constrs = decl.as_<Haskell::DataOrNewtypeDecl>().constructors;
+            if (not constrs) continue;
+            assert(is_AST(constrs,"constrs"));
+            if (constrs.size() == 0) continue;
 
-                    string qualified_name = name+"."+cname;
-                    expression_ref body = lambda_expression( constructor(qualified_name, arity) );
-                    new_decls.push_back(AST_node("Decl") + var(qualified_name) + body);
-                }
+            for(const auto& constr: constrs.sub())
+            {
+                auto arity = get_constructor_arity(constr);
+                auto cname = get_constructor_name(constr);
+
+                string qualified_name = name+"."+cname;
+                expression_ref body = lambda_expression( constructor(qualified_name, arity) );
+                new_decls.push_back(AST_node("Decl") + var(qualified_name) + body);
             }
             // Strip out the constructor definition here new_decls.push_back(decl);
         }
@@ -1449,17 +1447,17 @@ void Module::add_local_symbols()
             string bname = decl.sub()[0].as_<String>();
             def_function(bname);
         }
-        else if (is_AST(decl,"Decl:data"))
+        else if (decl.is_a<Haskell::DataOrNewtypeDecl>())
         {
-            if (decl.size() >= 2)
+            auto constrs = decl.as_<Haskell::DataOrNewtypeDecl>().constructors;
+            if (not constrs) continue;
+            assert(is_AST(constrs,"constrs"));
+
+            for(const auto& constr: constrs.sub())
             {
-                expression_ref constrs = decl.sub()[1];
-                for(const auto& constr: constrs.sub())
-                {
-                    auto arity = get_constructor_arity(constr);
-                    auto cname = get_constructor_name(constr);
-                    def_constructor(cname,arity);
-                }
+                auto arity = get_constructor_arity(constr);
+                auto cname = get_constructor_name(constr);
+                def_constructor(cname,arity);
             }
         }
 }
