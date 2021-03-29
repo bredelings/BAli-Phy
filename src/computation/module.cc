@@ -267,7 +267,7 @@ void Module::compile(const Program& P)
         // It should be possible to replace each of these (i) an object (ii) that is located.
         vector<expression_ref> tmp;
         for(auto& decl: topdecls.sub())
-            if (decl.is_a<Haskell::ClassDecl>() or decl.is_a<Haskell::DataOrNewtypeDecl>() or is_AST(decl,"instance") or is_AST(decl,"type_syn"))
+            if (decl.is_a<Haskell::ClassDecl>() or decl.is_a<Haskell::DataOrNewtypeDecl>() or is_AST(decl,"instance") or decl.is_a<Haskell::TypeSynonymDecl>())
                 tmp.push_back(decl);
 
         class_and_type_decls = find_type_groups(tmp);

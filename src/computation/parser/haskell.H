@@ -134,6 +134,25 @@ struct DataOrNewtypeDecl: public Object
         {}
 };
 
+struct TypeSynonymDecl: public Object
+{
+    // See PostProcess.hs: checkTyClHdr for checks and post-processing.
+
+    Located<expression_ref> type1;
+    Located<expression_ref> type2;
+
+    TypeSynonymDecl* clone() const { return new TypeSynonymDecl(*this);}
+
+    TypeSynonymDecl(const Located<expression_ref>& t1,
+                    const Located<expression_ref>& t2)
+        :type1(t1),
+         type2(t2)
+        {}
+};
+
+
+
+
 struct List: public Object
 {
     std::vector<expression_ref> elements;

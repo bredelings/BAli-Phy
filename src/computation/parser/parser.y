@@ -32,6 +32,7 @@
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 
   expression_ref make_sig_vars(const std::vector<std::string>& sig_vars);
+  Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& type1, const Located<expression_ref>& type2);
   expression_ref make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const expression_ref& tycls_hdr, const std::vector<expression_ref>& constrs);
   expression_ref make_class_decl(const expression_ref& cls_hdr, const Located<expression_ref>& decls);
   expression_ref make_context(const expression_ref& context, const expression_ref& type);
@@ -666,7 +667,7 @@ topdecl: cl_decl                               {$$ = $1;}
 
 cl_decl: "class" tycl_hdr /*fds*/ wherebinds   {$$ = make_class_decl($2,{@3,$3});}
 
-ty_decl: "type" type "=" ctypedoc                                          {}
+ty_decl: "type" type "=" ctypedoc                                          {$$ = make_type_synonym({@2,$2},{@4,$4});}
 |        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = make_data_or_newtype($1,$3,$4);}
 |        data_or_newtype capi_ctype tycl_hdr opt_kind_sig                  {}
 /* |        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family */
@@ -1534,6 +1535,11 @@ check_type_or_class_header(const expression_ref& tycls_hdr)
     name = type.as_<AST_node>().value;
 
     return {name, type_args, context};
+}
+
+Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& type1, const Located<expression_ref>& type2)
+{
+    return {type1, type2};
 }
 
 expression_ref make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const expression_ref& tycls_hdr, const vector<expression_ref>& constrs)
