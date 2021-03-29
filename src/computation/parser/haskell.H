@@ -86,16 +86,24 @@ struct ClassDecl: public Object
 {
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
-    // Located<string> id;
-    // std::vector<Located<expression_ref>> type_args;
-    // std::optional<Located<expression_ref>> context;
+    std::string name;
+    std::vector<expression_ref> type_args;
+    std::optional<expression_ref> context;
+
+    Located<expression_ref> decls;
     // std::vector<Located<expression_ref>> signatures;
     // std::vector<Located<expression_ref>> default_decls;
-    Located<expression_ref> class_header;
-    Located<expression_ref> decls;
 
     ClassDecl* clone() const { return new ClassDecl(*this);}
-    ClassDecl(const Located<expression_ref>& ch, const Located<expression_ref>& ds): class_header(ch), decls(ds) {}
+    ClassDecl(const std::string& s,
+              const std::vector<expression_ref>& as,
+              const std::optional<expression_ref> ct,
+              const Located<expression_ref>& ds)
+        :name(s),
+         type_args(as),
+         context(ct),
+         decls(ds)
+        {}
 };
 
 struct List: public Object

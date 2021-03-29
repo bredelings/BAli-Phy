@@ -50,6 +50,7 @@
   # include <string>
   # include <iostream>
   # include <vector>
+  # include <tuple>
   # include "computation/expression/expression_ref.H"
   # include "computation/expression/var.H"
   # include "computation/expression/AST_node.H"
@@ -70,6 +71,7 @@
 
   expression_ref make_sig_vars(const std::vector<std::string>& sig_vars);
   expression_ref make_data_or_newtype(const std::string& d_or_n, const expression_ref& tycls_hdr, const std::vector<expression_ref>& constrs);
+  expression_ref make_class_decl(const expression_ref& cls_hdr, const Located<expression_ref>& decls);
   expression_ref make_context(const expression_ref& context, const expression_ref& type);
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
@@ -105,7 +107,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 109 "parser.hh"
+#line 111 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -239,7 +241,7 @@
 #endif
 
 namespace yy {
-#line 243 "parser.hh"
+#line 245 "parser.hh"
 
 
 
@@ -5038,7 +5040,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5042 "parser.hh"
+#line 5044 "parser.hh"
 
 
 

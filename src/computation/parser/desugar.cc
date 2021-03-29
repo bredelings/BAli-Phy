@@ -254,8 +254,9 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 {
     if (E.is_a<Haskell::ClassDecl>())
     {
-        auto& C = E.as_<Haskell::ClassDecl>();
-        return Haskell::ClassDecl(C.class_header, {C.decls.loc, desugar(C.decls.obj)});
+        auto C = E.as_<Haskell::ClassDecl>();
+        C.decls.obj = desugar(C.decls.obj);
+        return C;
     }
     else if (E.is_a<Haskell::List>())
     {

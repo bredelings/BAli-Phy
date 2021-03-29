@@ -12,6 +12,7 @@
   # include <string>
   # include <iostream>
   # include <vector>
+  # include <tuple>
   # include "computation/expression/expression_ref.H"
   # include "computation/expression/var.H"
   # include "computation/expression/AST_node.H"
@@ -32,6 +33,7 @@
 
   expression_ref make_sig_vars(const std::vector<std::string>& sig_vars);
   expression_ref make_data_or_newtype(const std::string& d_or_n, const expression_ref& tycls_hdr, const std::vector<expression_ref>& constrs);
+  expression_ref make_class_decl(const expression_ref& cls_hdr, const Located<expression_ref>& decls);
   expression_ref make_context(const expression_ref& context, const expression_ref& type);
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
@@ -662,7 +664,7 @@ topdecl: cl_decl                               {$$ = $1;}
 |        "builtin" varop INTEGER STRING STRING {$$ = make_builtin_expr($2,$3,$4,$5);}
 |        "builtin" varop INTEGER STRING        {$$ = make_builtin_expr($2,$3,$4);}
 
-cl_decl: "class" tycl_hdr /*fds*/ wherebinds   {$$ = Haskell::ClassDecl({@2,$2},{@3,$3});}
+cl_decl: "class" tycl_hdr /*fds*/ wherebinds   {$$ = make_class_decl($2,{@3,$3});}
 
 ty_decl: "type" type "=" ctypedoc                                          {}
 |        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = make_data_or_newtype($1,$3,$4);}
@@ -1508,11 +1510,43 @@ expression_ref make_sig_vars(const vector<std::string>& sig_vars)
     return new expression(AST_node("sig_vars"),make_String_vec(sig_vars));
 }
 
+std::tuple<string, vector<expression_ref>, optional<expression_ref>>
+check_type_or_class_header(const expression_ref& tycls_hdr)
+{
+    string name;
+    vector<expression_ref> type_args;
+    optional<expression_ref> context;
+
+    assert(tycls_hdr.size() == 2);
+    if (tycls_hdr.sub()[0])
+        context = tycls_hdr.sub()[0];
+
+    auto type = tycls_hdr.sub()[1];
+    if (is_AST(type,"TypeApply"))
+    {
+        for(int i=1;i<type.sub().size();i++)
+            type_args.push_back(type.sub()[i]);
+        type = type.sub()[0];
+    }
+
+    if (not is_AST(type,"type_id"))
+        throw myexception()<<"Type or class header '"<<tycls_hdr<<"' has malformed type/class name";
+    name = type.as_<AST_node>().value;
+
+    return {name, type_args, context};
+}
+
 expression_ref make_data_or_newtype(const string& d_or_n, const expression_ref& tycls_hdr, const vector<expression_ref>& constrs)
 {
     expression_ref c = new expression(AST_node("constrs"),constrs);
     assert(d_or_n == "data" or d_or_n == "newtype");
     return new expression(AST_node("Decl:"+d_or_n),{tycls_hdr,c});
+}
+
+expression_ref make_class_decl(const expression_ref& cls_hdr, const Located<expression_ref>& decls)
+{
+    auto [name, type_args, context] = check_type_or_class_header(cls_hdr);
+    return Haskell::ClassDecl(name,type_args,context,decls);
 }
 
 expression_ref make_context(const expression_ref& context, const expression_ref& type)

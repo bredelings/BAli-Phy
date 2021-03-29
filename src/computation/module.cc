@@ -443,7 +443,7 @@ vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_
         if (decl.is_a<Haskell::ClassDecl>())
         {
             // get name
-            string name;
+            string name = decl.as_<Haskell::ClassDecl>().name;
             // free type vars
             vector<string> free_type_vars;
             class_type_no_instance_decls.push_back({name,decl,free_type_vars});
