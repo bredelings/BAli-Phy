@@ -288,6 +288,12 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         auto LP = E.as_<Haskell::LazyPattern>();
         return Haskell::LazyPattern(desugar(LP.pattern));
     }
+    else if (E.is_a<Haskell::InstanceDecl>())
+    {
+        auto I = E.as_<Haskell::InstanceDecl>();
+        I.decls.obj = desugar(I.decls.obj);
+        return I;
+    }
 
     vector<expression_ref> v = E.copy_sub();
 
@@ -307,13 +313,6 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 
 	    return expression_ref{E.head(),decls};
 	}
-        else if (n.type == "Instance")
-        {
-            auto inst_header = E.sub()[0];
-            auto binds = E.sub()[1];
-            binds = desugar(binds);
-            return expression_ref(E.head(),{inst_header, binds});
-        }
 	else if (n.type == "Decl")
 	{
 

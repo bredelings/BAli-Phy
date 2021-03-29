@@ -308,19 +308,16 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
         auto LP = E.as_<Haskell::LazyPattern>();
         return Haskell::LazyPattern(rename_infix(m,LP.pattern));
     }
+    else if (E.is_a<Haskell::InstanceDecl>())
+    {
+        auto I = E.as_<Haskell::InstanceDecl>();
+        I.decls.obj = rename_infix(m, I.decls.obj);
+        return I;
+    }
 
     if (not E.is_expression()) return E;
 
     auto v = E.sub();
-
-    if (is_AST(E,"Instance"))
-    {
-        auto inst_type = E.sub()[0];
-        auto binds = E.sub()[1];
-
-        binds = rename_infix(m, binds);
-        return expression_ref(AST_node("Instance"),{inst_type,binds});
-    }
 
     for(auto& e: v)
 	e = rename_infix(m, e);
@@ -911,21 +908,15 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
             C.decls.obj = expression_ref(AST_node("Decls"),cdecls);
             decl = C;
         }
-        if (is_AST(decl,"Instance"))
+        if (decl.is_a<Haskell::InstanceDecl>())
         {
-            auto instance_header = decl.sub()[0];
-            auto instance_decls = decl.sub()[1];
-            assert(is_AST(instance_decls, "Decls"));
-            auto idecls = instance_decls.sub();
+            auto I = decl.as_<Haskell::InstanceDecl>();
+            auto idecls = I.decls.obj.sub();
             for(auto& idecl: idecls)
                 if (is_AST(idecl,"Decl"))
                     rename_decl_head(idecl, true);
-                else if (is_AST(idecl,"Decl:sigtype"))
-                {
-                    // ??
-                }
-            instance_decls = expression_ref(AST_node("Decls"),idecls);
-            decl = expression_ref(AST_node("Instance"),{instance_header, instance_decls});
+            I.decls.obj = expression_ref(AST_node("Decls"),idecls);
+            decl = I;
         }
     }
 
@@ -946,16 +937,15 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
             C.decls.obj = expression_ref(AST_node("Decls"),cdecls);
             decl = C;
         }
-        if (is_AST(decl,"Instance"))
+        if (decl.is_a<Haskell::InstanceDecl>())
         {
-            auto instance_header = decl.sub()[0];
-            auto instance_decls = decl.sub()[1];
-            auto idecls = instance_decls.sub();
+            auto I = decl.as_<Haskell::InstanceDecl>();
+            auto idecls = I.decls.obj.sub();
             for(auto& idecl: idecls)
                 if (is_AST(idecl,"Decl"))
-                    idecl = rename_decl(idecl, bound2);
-            instance_decls = expression_ref(AST_node("Decls"),idecls);
-            decl = expression_ref(AST_node("Instance"),{instance_header, instance_decls});
+                    idecl = rename_decl(idecl,bound2);
+            I.decls.obj = expression_ref(AST_node("Decls"),idecls);
+            decl = I;
         }
     }
 

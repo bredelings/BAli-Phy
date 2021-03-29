@@ -150,7 +150,21 @@ struct TypeSynonymDecl: public Object
         {}
 };
 
+struct InstanceDecl: public Object
+{
+    // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
+    Located<expression_ref> type;
+    Located<expression_ref> decls;
+
+    InstanceDecl* clone() const { return new InstanceDecl(*this);}
+    
+    InstanceDecl(const Located<expression_ref>& t,
+                 const Located<expression_ref>& d)
+        :type(t),
+         decls(d)
+        {}
+};
 
 
 struct List: public Object

@@ -32,6 +32,7 @@
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 
   expression_ref make_sig_vars(const std::vector<std::string>& sig_vars);
+  Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const Located<expression_ref>& decls);
   Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& type1, const Located<expression_ref>& type2);
   expression_ref make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const expression_ref& tycls_hdr, const std::vector<expression_ref>& constrs);
   expression_ref make_class_decl(const expression_ref& cls_hdr, const Located<expression_ref>& decls);
@@ -673,7 +674,7 @@ ty_decl: "type" type "=" ctypedoc                                          {$$ =
 /* |        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family */
 /* |        "data" "family" type opt_datafam_kind_sig */
 
-inst_decl: "instance" overlap_pragma inst_type wherebinds                  {$$ = expression_ref(AST_node("Instance"),{$3,$4});}
+inst_decl: "instance" overlap_pragma inst_type wherebinds                  {$$ = make_instance_decl({@3,$3},{@4,$4});}
 /* |          "type" "instance" ty_fam_inst_eqn */
 /* |          data_or_newtype "instance" capi_ctype tycl_hdr constrs
    |          data_or_newtype "instance" capi_ctype opt_kind_sig */
@@ -1535,6 +1536,11 @@ check_type_or_class_header(const expression_ref& tycls_hdr)
     name = type.as_<AST_node>().value;
 
     return {name, type_args, context};
+}
+
+Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const Located<expression_ref>& decls)
+{
+    return {type, decls};
 }
 
 Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& type1, const Located<expression_ref>& type2)

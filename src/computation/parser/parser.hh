@@ -70,6 +70,7 @@
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 
   expression_ref make_sig_vars(const std::vector<std::string>& sig_vars);
+  Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const Located<expression_ref>& decls);
   Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& type1, const Located<expression_ref>& type2);
   expression_ref make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const expression_ref& tycls_hdr, const std::vector<expression_ref>& constrs);
   expression_ref make_class_decl(const expression_ref& cls_hdr, const Located<expression_ref>& decls);
@@ -108,7 +109,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 112 "parser.hh"
+#line 113 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -242,7 +243,7 @@
 #endif
 
 namespace yy {
-#line 246 "parser.hh"
+#line 247 "parser.hh"
 
 
 
@@ -5069,7 +5070,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5073 "parser.hh"
+#line 5074 "parser.hh"
 
 
 
