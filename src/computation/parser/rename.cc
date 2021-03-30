@@ -390,7 +390,7 @@ expression_ref rename_infix_top(const Module& m, const expression_ref& decls)
             if (not is_AST(constr,"TypeApply")) continue;
             if (constr.size() < 2) continue;
 
-            auto ConName = constr.sub()[0].as_<AST_node>().value;
+            auto ConName = constr.sub()[0].as_<Haskell::TypeVar>().name;
             auto fields = constr.sub()[1];
             if (not is_AST(fields,"FieldDecls")) continue;
 

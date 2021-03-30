@@ -79,7 +79,7 @@
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
   Located<Haskell::ID> make_id(const yy::location& loc, const std::string& id);
-  expression_ref make_type_id(const std::string& id);
+  expression_ref make_type_var(const std::string& id);
 
   expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebinds);
   expression_ref make_gdrhs(const std::vector<expression_ref>& gdrhs, const expression_ref& wherebinds);
