@@ -258,9 +258,25 @@ struct AsPattern: public Object
     AsPattern(const expression_ref& v, const expression_ref& p):var(v),pattern(p) {}
 };
 
-// add TupleType!
 // at some point, we need to distinguish between TuplePattern and TupleExpression...    
 
+struct TupleType: public Object
+{
+    std::vector<Type> element_types;
+
+    TupleType* clone() const { return new TupleType(*this);}
+    std::string print() const;
+    TupleType(const std::vector<Type>& v):element_types(v) {}
+};
+
+struct ListType: public Object
+{
+    Type element_type;
+
+    ListType* clone() const { return new ListType(*this);}
+    std::string print() const;
+    ListType(const Type& t):element_type(t) {};
+};
 
 struct TypeVar: public Object
 {

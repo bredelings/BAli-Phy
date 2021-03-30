@@ -60,6 +60,19 @@ string AsPattern::print() const
     return var.print()+"@"+pattern.print();
 }
 
+string TupleType::print() const
+{
+    vector<string> parts;
+    for(auto& element_type: element_types)
+        parts.push_back(element_type.print());
+    return "(" + join(parts,",") +")";
+}
+
+string ListType::print() const
+{
+    return "[" + element_type.print() + "]";
+}
+
 bool TypeVar::operator==(const TypeVar& v) const
 {
     return name == v.name;

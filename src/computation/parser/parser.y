@@ -41,7 +41,9 @@
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
   Located<Haskell::ID> make_id(const yy::location& loc, const std::string& id);
-  expression_ref make_type_var(const std::string& id);
+  Haskell::TypeVar make_type_var(const std::string& id);
+  Haskell::TupleType make_tuple_type(const std::vector<Haskell::Type>& tup_exprs);
+  Haskell::ListType make_list_type(const Haskell::Type& type);
 
   expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebinds);
   expression_ref make_gdrhs(const std::vector<expression_ref>& gdrhs, const expression_ref& wherebinds);
@@ -897,11 +899,11 @@ atype: ntgtycon                        {$$ = make_type_var($1);}
 |      strict_mark atype               {$$ = expression_ref(AST_node("strictness"),{$1,$2});}
 |      "{" fielddecls "}"              {$$ = expression_ref{AST_node("FieldDecls"),$2};}
 |      "(" ")"                         {$$ = make_type_var("()");}
-|      "(" comma_types1 "," ctype")"   {auto ts = $2;ts.push_back($4);$$ = expression_ref{AST_node("TupleType"),ts};}
+|      "(" comma_types1 "," ctype")"   {auto ts = $2;ts.push_back($4);$$ = make_tuple_type(ts);}
 |      "(#" "#)"                       {}
 |      "(#" comma_types1 "#)"          {}
 |      "(#" bar_types2   "#)"          {}
-|      "[" ctype "]"                   {$$ = expression_ref(AST_node("ListType"),{$2});}
+|      "[" ctype "]"                   {$$ = make_list_type($2);}
 |      "(" ctype ")"                   {$$ = $2;}
 |      "(" ctype "::" kind ")"         {$$ = expression_ref(AST_node("TypeOfKind"),{$2,$4});}
 /* Template Haskell */
@@ -1561,12 +1563,16 @@ Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expres
     return {name,type_args,context,decls};
 }
 
+// Can we change the context parsing rule to expect:
+// nothing
+// | ctype => header
+// | ( ctypes2 ) => header
 Haskell::Context make_context(const expression_ref& context)
 {
     vector<Haskell::Type> constraints;
-    if (context.is_a<Haskell::Tuple>())
+    if (context.is_a<Haskell::TupleType>())
     {
-        constraints = context.as_<Haskell::Tuple>().elements;
+        constraints = context.as_<Haskell::TupleType>().element_types;
     }
     else
         constraints.push_back(context);
@@ -1602,9 +1608,19 @@ Located<Haskell::ID> make_id(const yy::location& loc, const string& id)
     return Located<Haskell::ID>(loc, {id});
 }
 
-expression_ref make_type_var(const string& id)
+Haskell::TypeVar make_type_var(const string& id)
 {
     return Haskell::TypeVar(id);
+}
+
+Haskell::TupleType make_tuple_type(const std::vector<Haskell::Type>& types)
+{
+    return {types};
+}
+
+Haskell::ListType make_list_type(const Haskell::Type& type)
+{
+    return {type};
 }
 
 expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type)
