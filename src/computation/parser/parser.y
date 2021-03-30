@@ -1546,8 +1546,9 @@ Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_
                                                 const expression_ref& header, const vector<expression_ref>& constrs)
 {
     auto [name, type_args] = check_type_or_class_header(header);
-    expression_ref c = new expression(AST_node("constrs"),constrs);
-    return {d_or_n, name, type_args, context, c};
+    if (d_or_n == Haskell::DataOrNewtype::newtype and constrs.size() != 1)
+        throw myexception()<<"newtype '"<<name<<"' may only have 1 constructors with 1 field";
+    return {d_or_n, name, type_args, context, constrs};
 }
 
 Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const Located<expression_ref>& decls)

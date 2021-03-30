@@ -375,17 +375,15 @@ expression_ref rename_infix_top(const Module& m, const expression_ref& decls)
         if (not decl.is_a<Haskell::DataOrNewtypeDecl>()) continue;
         auto D = decl.as_<Haskell::DataOrNewtypeDecl>();
 
-        expression_ref constrs = D.constructors;
-        if (not constrs) continue;
-        assert(is_AST(constrs,"constrs"));
-        if (constrs.size() == 0) continue;
+        auto constrs = D.constructors;
+        if (constrs.empty()) continue;
 
         // field -> con -> pos
         map<string,map<string,int>> constructor_fields;
         // con -> arity
         map<string,int> arity;
 
-        for(auto& constr: constrs.sub())
+        for(auto& constr: constrs)
         {
             auto [con, args] = Haskell::decompose_type_apps(constr);
             if (args.empty()) continue;

@@ -1005,11 +1005,9 @@ void Module::load_constructors()
         if (decl.is_a<Haskell::DataOrNewtypeDecl>())
         {
             auto constrs = decl.as_<Haskell::DataOrNewtypeDecl>().constructors;
-            if (not constrs) continue;
-            assert(is_AST(constrs,"constrs"));
             if (constrs.size() == 0) continue;
 
-            for(const auto& constr: constrs.sub())
+            for(const auto& constr: constrs)
             {
                 auto arity = get_constructor_arity(constr);
                 auto cname = get_constructor_name(constr);
@@ -1451,10 +1449,9 @@ void Module::add_local_symbols()
         else if (decl.is_a<Haskell::DataOrNewtypeDecl>())
         {
             auto constrs = decl.as_<Haskell::DataOrNewtypeDecl>().constructors;
-            if (not constrs) continue;
-            assert(is_AST(constrs,"constrs"));
+            if (not constrs.size()) continue;
 
-            for(const auto& constr: constrs.sub())
+            for(const auto& constr: constrs)
             {
                 auto arity = get_constructor_arity(constr);
                 auto cname = get_constructor_name(constr);

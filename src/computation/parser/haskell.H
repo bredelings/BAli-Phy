@@ -140,7 +140,7 @@ struct DataOrNewtypeDecl: public Object
     std::vector<expression_ref> type_vars;
     Context context;
 
-    expression_ref constructors;
+    std::vector<expression_ref> constructors;
 
     DataOrNewtypeDecl* clone() const { return new DataOrNewtypeDecl(*this);}
 
@@ -148,7 +148,7 @@ struct DataOrNewtypeDecl: public Object
                       const std::string& s,
                       const std::vector<expression_ref>& as,
                       const Context& ct,
-                      const expression_ref& cs)
+                      const std::vector<expression_ref>& cs)
         :data_or_newtype(dn),
          name(s),
          type_vars(as),
