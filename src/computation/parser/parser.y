@@ -33,7 +33,7 @@
 
   expression_ref make_sig_vars(const std::vector<std::string>& sig_vars);
   Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const Located<expression_ref>& decls);
-  Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& type1, const Located<expression_ref>& type2);
+  Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
   Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const expression_ref& context,
                                                   const expression_ref& header, const std::vector<expression_ref>& constrs);
   Haskell::ClassDecl make_class_decl(const expression_ref& context, const expression_ref& header, const Located<expression_ref>& decls);
@@ -1540,9 +1540,10 @@ Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, co
     return {type, decls};
 }
 
-Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& type1, const Located<expression_ref>& type2)
+Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type)
 {
-    return {type1, type2};
+    auto [name, type_args] = check_type_or_class_header(lhs_type);
+    return {name, type_args, rhs_type};
 }
 
 Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const expression_ref&  context,

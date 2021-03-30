@@ -452,11 +452,16 @@ vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_
             vector<string> free_type_vars;
             class_type_no_instance_decls.push_back({name, decl, free_type_vars});
         }
-        else if (is_AST(decl,"type_syn")) // type x = y
+        else if (decl.is_a<Haskell::TypeSynonymDecl>())
         {
+            string name = decl.as_<Haskell::TypeSynonymDecl>().name;
+            vector<string> free_type_vars;
+            class_type_no_instance_decls.push_back({name, decl, free_type_vars});
         }
-        else if (is_AST(decl,"instance"))
+        else if (decl.is_a<Haskell::InstanceDecl>())
         {
+            vector<string> free_type_vars;
+            instance_decls.push_back({decl, free_type_vars});
         }
         else
             std::abort();

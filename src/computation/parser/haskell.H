@@ -138,15 +138,19 @@ struct TypeSynonymDecl: public Object
 {
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
-    Located<expression_ref> type1;
-    Located<expression_ref> type2;
+    std::string name;
+    std::vector<expression_ref> type_vars;
+
+    Located<expression_ref> rhs_type;
 
     TypeSynonymDecl* clone() const { return new TypeSynonymDecl(*this);}
 
-    TypeSynonymDecl(const Located<expression_ref>& t1,
-                    const Located<expression_ref>& t2)
-        :type1(t1),
-         type2(t2)
+    TypeSynonymDecl(const std::string& s,
+                    const std::vector<expression_ref>& tvs,
+                    const Located<expression_ref>& rhs)
+        :name(s),
+         type_vars(tvs),
+         rhs_type(rhs)
         {}
 };
 
