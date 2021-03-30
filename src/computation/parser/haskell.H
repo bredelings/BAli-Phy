@@ -87,7 +87,7 @@ struct ClassDecl: public Object
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
     std::string name;
-    std::vector<expression_ref> type_args;
+    std::vector<expression_ref> type_vars;
     std::optional<expression_ref> context;
 
     Located<expression_ref> decls;
@@ -100,7 +100,7 @@ struct ClassDecl: public Object
               const std::optional<expression_ref> ct,
               const Located<expression_ref>& ds)
         :name(s),
-         type_args(as),
+         type_vars(as),
          context(ct),
          decls(ds)
         {}
@@ -114,7 +114,7 @@ struct DataOrNewtypeDecl: public Object
 
     DataOrNewtype data_or_newtype;
     std::string name;
-    std::vector<expression_ref> type_args;
+    std::vector<expression_ref> type_vars;
     std::optional<expression_ref> context;
 
     expression_ref constructors;
@@ -128,7 +128,7 @@ struct DataOrNewtypeDecl: public Object
                       const expression_ref& cs)
         :data_or_newtype(dn),
          name(s),
-         type_args(as),
+         type_vars(as),
          context(ct),
          constructors(cs)
         {}
