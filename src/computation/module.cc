@@ -431,6 +431,8 @@ void Module::rename(const Program& P)
         std::cout<<name<<"[renamed]:\n"<<topdecls<<"\n\n";
 }
 
+// Q: how/when do we rename default method definitions?
+
 vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_ref>& initial_class_and_type_decls)
 {
     // [(name,decl,names-we-depend-on)]
