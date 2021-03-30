@@ -31,7 +31,7 @@
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 
-  expression_ref make_sig_vars(const std::vector<std::string>& sig_vars);
+  Haskell::FieldDecl make_field_decl(const std::vector<std::string>& field_names, const Haskell::Type& type);
   Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const Located<expression_ref>& decls);
   Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
   Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const Haskell::Context& context,
@@ -371,7 +371,7 @@
 %type <expression_ref> constr_stuff
 %type <std::vector<expression_ref>> fielddecls
 %type <std::vector<expression_ref>> fielddecls1
-%type <expression_ref> fielddecl
+%type <Haskell::FieldDecl> fielddecl
  /*
 %type <void> maybe_derivings
 %type <void> derivings
@@ -971,7 +971,7 @@ fielddecls: %empty              {}
 fielddecls1: fielddecls1 "," fielddecl  {$$ = $1; $$.push_back($3);}
 |            fielddecl                  {$$.push_back($1);}
 
-fielddecl: sig_vars "::" ctype          {$$ = new expression(AST_node("FieldDecl"),{make_sig_vars($1),$3});}
+fielddecl: sig_vars "::" ctype          {$$ = make_field_decl($1,$3);}
 
 maybe_derivings: %empty
 |                derivings
@@ -1512,11 +1512,6 @@ vector<expression_ref> make_String_vec(const vector<string>& strings)
     return Strings;
 }
 
-expression_ref make_sig_vars(const vector<std::string>& sig_vars)
-{
-    return new expression(AST_node("sig_vars"),make_String_vec(sig_vars));
-}
-
 // See PostProcess.hs:checkTyClHdr
 std::tuple<string, vector<expression_ref>>
 check_type_or_class_header(expression_ref type)
@@ -1529,6 +1524,11 @@ check_type_or_class_header(expression_ref type)
     auto name = type_head.as_<Haskell::TypeVar>().name;
 
     return {name, type_args};
+}
+
+Haskell::FieldDecl make_field_decl(const std::vector<std::string>& field_names, const Haskell::Type& type)
+{
+    return {field_names, type};
 }
 
 Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const Located<expression_ref>& decls)

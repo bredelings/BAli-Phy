@@ -69,7 +69,7 @@
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 
-  expression_ref make_sig_vars(const std::vector<std::string>& sig_vars);
+  Haskell::FieldDecl make_field_decl(const std::vector<std::string>& field_names, const Haskell::Type& type);
   Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const Located<expression_ref>& decls);
   Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
   Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const Haskell::Context& context,
@@ -468,18 +468,21 @@ namespace yy {
       // data_or_newtype
       char dummy2[sizeof (Haskell::DataOrNewtype)];
 
+      // fielddecl
+      char dummy3[sizeof (Haskell::FieldDecl)];
+
       // maybe_src
       // maybe_safe
       // optqualified
-      char dummy3[sizeof (bool)];
+      char dummy4[sizeof (bool)];
 
       // "CHAR"
       // "PRIMCHAR"
-      char dummy4[sizeof (char)];
+      char dummy5[sizeof (char)];
 
       // "RATIONAL"
       // "PRIMDOUBLE"
-      char dummy5[sizeof (double)];
+      char dummy6[sizeof (double)];
 
       // module
       // body
@@ -519,7 +522,6 @@ namespace yy {
       // constr
       // forall
       // constr_stuff
-      // fielddecl
       // decl_no_th
       // decl
       // rhs
@@ -544,26 +546,26 @@ namespace yy {
       // stmt
       // qual
       // literal
-      char dummy6[sizeof (expression_ref)];
+      char dummy7[sizeof (expression_ref)];
 
       // "PRIMFLOAT"
-      char dummy7[sizeof (float)];
+      char dummy8[sizeof (float)];
 
       // "INTEGER"
       // "PRIMINTEGER"
       // "PRIMWORD"
       // commas
-      char dummy8[sizeof (int)];
+      char dummy9[sizeof (int)];
 
       // prec
-      char dummy9[sizeof (std::optional<int>)];
+      char dummy10[sizeof (std::optional<int>)];
 
       // maybe_pkg
       // maybeas
-      char dummy10[sizeof (std::optional<std::string>)];
+      char dummy11[sizeof (std::optional<std::string>)];
 
       // tycl_hdr
-      char dummy11[sizeof (std::pair<Haskell::Context,expression_ref>)];
+      char dummy12[sizeof (std::pair<Haskell::Context,expression_ref>)];
 
       // "VARID"
       // "CONID"
@@ -623,7 +625,7 @@ namespace yy {
       // qconsym
       // consym
       // modid
-      char dummy12[sizeof (std::string)];
+      char dummy13[sizeof (std::string)];
 
       // exportlist
       // exportlist1
@@ -660,11 +662,11 @@ namespace yy {
       // apats1
       // stmtlist
       // stmts
-      char dummy13[sizeof (std::vector<expression_ref>)];
+      char dummy14[sizeof (std::vector<expression_ref>)];
 
       // ops
       // sig_vars
-      char dummy14[sizeof (std::vector<std::string>)];
+      char dummy15[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1248,6 +1250,10 @@ namespace yy {
         value.move< Haskell::DataOrNewtype > (std::move (that.value));
         break;
 
+      case symbol_kind::S_fielddecl: // fielddecl
+        value.move< Haskell::FieldDecl > (std::move (that.value));
+        break;
+
       case symbol_kind::S_maybe_src: // maybe_src
       case symbol_kind::S_maybe_safe: // maybe_safe
       case symbol_kind::S_optqualified: // optqualified
@@ -1302,7 +1308,6 @@ namespace yy {
       case symbol_kind::S_constr: // constr
       case symbol_kind::S_forall: // forall
       case symbol_kind::S_constr_stuff: // constr_stuff
-      case symbol_kind::S_fielddecl: // fielddecl
       case symbol_kind::S_decl_no_th: // decl_no_th
       case symbol_kind::S_decl: // decl
       case symbol_kind::S_rhs: // rhs
@@ -1510,6 +1515,20 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Haskell::FieldDecl&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Haskell::FieldDecl& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, bool&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -1708,6 +1727,10 @@ switch (yykind)
         value.template destroy< Haskell::DataOrNewtype > ();
         break;
 
+      case symbol_kind::S_fielddecl: // fielddecl
+        value.template destroy< Haskell::FieldDecl > ();
+        break;
+
       case symbol_kind::S_maybe_src: // maybe_src
       case symbol_kind::S_maybe_safe: // maybe_safe
       case symbol_kind::S_optqualified: // optqualified
@@ -1762,7 +1785,6 @@ switch (yykind)
       case symbol_kind::S_constr: // constr
       case symbol_kind::S_forall: // forall
       case symbol_kind::S_constr_stuff: // constr_stuff
-      case symbol_kind::S_fielddecl: // fielddecl
       case symbol_kind::S_decl_no_th: // decl_no_th
       case symbol_kind::S_decl: // decl
       case symbol_kind::S_rhs: // rhs
@@ -4610,6 +4632,10 @@ switch (yykind)
         value.copy< Haskell::DataOrNewtype > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_fielddecl: // fielddecl
+        value.copy< Haskell::FieldDecl > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_maybe_src: // maybe_src
       case symbol_kind::S_maybe_safe: // maybe_safe
       case symbol_kind::S_optqualified: // optqualified
@@ -4664,7 +4690,6 @@ switch (yykind)
       case symbol_kind::S_constr: // constr
       case symbol_kind::S_forall: // forall
       case symbol_kind::S_constr_stuff: // constr_stuff
-      case symbol_kind::S_fielddecl: // fielddecl
       case symbol_kind::S_decl_no_th: // decl_no_th
       case symbol_kind::S_decl: // decl
       case symbol_kind::S_rhs: // rhs
@@ -4858,6 +4883,10 @@ switch (yykind)
         value.move< Haskell::DataOrNewtype > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_fielddecl: // fielddecl
+        value.move< Haskell::FieldDecl > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_maybe_src: // maybe_src
       case symbol_kind::S_maybe_safe: // maybe_safe
       case symbol_kind::S_optqualified: // optqualified
@@ -4912,7 +4941,6 @@ switch (yykind)
       case symbol_kind::S_constr: // constr
       case symbol_kind::S_forall: // forall
       case symbol_kind::S_constr_stuff: // constr_stuff
-      case symbol_kind::S_fielddecl: // fielddecl
       case symbol_kind::S_decl_no_th: // decl_no_th
       case symbol_kind::S_decl: // decl
       case symbol_kind::S_rhs: // rhs
@@ -5130,7 +5158,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5134 "parser.hh"
+#line 5162 "parser.hh"
 
 
 

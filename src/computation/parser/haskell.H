@@ -118,6 +118,17 @@ struct ClassDecl: public Object
         {}
 };
 
+
+
+struct FieldDecl: public Object
+{
+    std::vector<std::string> field_names;
+    Type type;
+    FieldDecl* clone() const { return new FieldDecl(*this);}
+    FieldDecl() = default;  // so this can be a token value.
+    FieldDecl(const std::vector<std::string>& ns, const Type& t):field_names(ns),type(t) {}
+};
+
 enum class DataOrNewtype {data,newtype};
 
 struct DataOrNewtypeDecl: public Object
