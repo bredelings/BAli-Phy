@@ -44,6 +44,7 @@
   Haskell::TypeVar make_type_var(const std::string& id);
   Haskell::TupleType make_tuple_type(const std::vector<Haskell::Type>& tup_exprs);
   Haskell::ListType make_list_type(const Haskell::Type& type);
+  Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg);
 
   expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebinds);
   expression_ref make_gdrhs(const std::vector<expression_ref>& gdrhs, const expression_ref& wherebinds);
@@ -1520,20 +1521,12 @@ expression_ref make_sig_vars(const vector<std::string>& sig_vars)
 std::tuple<string, vector<expression_ref>>
 check_type_or_class_header(expression_ref type)
 {
-    string name;
-    vector<expression_ref> type_args;
-
-    if (is_AST(type,"TypeApply"))
-    {
-        for(int i=1;i<type.sub().size();i++)
-            type_args.push_back(type.sub()[i]);
-        type = type.sub()[0];
-    }
+    auto [type_head, type_args] = Haskell::decompose_type_apps(type);
 
     // FIXME -- add location!
-    if (not type.is_a<Haskell::TypeVar>())
+    if (not type_head.is_a<Haskell::TypeVar>())
         throw myexception()<<"Malformed type or class header '"<<type<<"'";
-    name = type.as_<Haskell::TypeVar>().name;
+    auto name = type_head.as_<Haskell::TypeVar>().name;
 
     return {name, type_args};
 }
@@ -1585,21 +1578,12 @@ expression_ref make_tv_bndrs(const vector<expression_ref>& tv_bndrs)
     return new expression(AST_node("tv_bndrs"),tv_bndrs);
 }
 
-expression_ref type_apply(const expression_ref& e1, const expression_ref& e2)
-{
-    if (is_AST(e1, "TypeApply"))
-	return e1 + e2;
-    else
-	return AST_node("TypeApply") + e1 + e2;
-}
-
-
 expression_ref make_tyapps(const std::vector<expression_ref>& tyapps)
 {
     assert(not tyapps.empty());
     expression_ref E = tyapps[0];
     for(int i=1;i<tyapps.size();i++)
-	E = type_apply(E,tyapps[i]);
+	E = make_type_app(E,tyapps[i]);
     return E;
 }
 
@@ -1621,6 +1605,11 @@ Haskell::TupleType make_tuple_type(const std::vector<Haskell::Type>& types)
 Haskell::ListType make_list_type(const Haskell::Type& type)
 {
     return {type};
+}
+
+Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg)
+{
+    return {head, arg};
 }
 
 expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type)

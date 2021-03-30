@@ -969,36 +969,31 @@ void Module::load_builtins(const module_loader& L)
 
 int get_constructor_arity(const expression_ref& constr)
 {
-    expression_ref type = constr;
-    if (is_AST(type,"TypeApply"))
+    auto [con,args] = Haskell::decompose_type_apps(constr);
+
+    if (args.size() >= 1 and is_AST(args[0],"FieldDecls"))
     {
-        if (type.size() >= 2 and is_AST(type.sub()[1],"FieldDecls"))
+        auto& fields = args[0];
+        // We could have e.g. f1,f2 :: Int, adding 2 to the arity.
+        int arity = 0;
+        for(auto& field_group: fields.sub())
         {
-            auto& fields = type.sub()[1];
-            // We could have e.g. f1,f2 :: Int, adding 2 to the arity.
-            int arity = 0;
-            for(auto& field_group: fields.sub())
-            {
-                assert(is_AST(field_group,"FieldDecl"));
-                auto& sig_vars = field_group.sub()[0];
-                assert(is_AST(sig_vars,"sig_vars"));
-                arity += sig_vars.size();
-            }
-            return arity;
+            assert(is_AST(field_group,"FieldDecl"));
+            auto& sig_vars = field_group.sub()[0];
+            assert(is_AST(sig_vars,"sig_vars"));
+            arity += sig_vars.size();
         }
-        else
-            return type.size()-1;
+        return arity;
     }
-    return 0;
+    else
+        return args.size();
 }
 
 string get_constructor_name(const expression_ref& constr)
 {
-    auto id = constr;
-    if (is_AST(id,"TypeApply"))
-        id = constr.sub()[0];
-    assert(id.is_a<Haskell::TypeVar>());
-    return id.as_<Haskell::TypeVar>().name;
+    auto [con,_] = Haskell::decompose_type_apps(constr);
+    assert(con.is_a<Haskell::TypeVar>());
+    return con.as_<Haskell::TypeVar>().name;
 }
 
 void Module::load_constructors()

@@ -289,6 +289,18 @@ struct TypeVar: public Object
     TypeVar(const std::string& s):name(s) {}
 };
 
+struct TypeApp: public Object
+{
+    Type head;
+    Type arg;
+
+    TypeApp* clone() const { return new TypeApp(*this);}
+    std::string print() const;
+    TypeApp(const Type& t1, const Type& t2):head(t1), arg(t2) {}
+};
+
+std::pair<Type,std::vector<Type>> decompose_type_apps(Type t);
+
 }
 
 namespace Hs = Haskell;

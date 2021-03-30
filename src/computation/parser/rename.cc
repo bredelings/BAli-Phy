@@ -387,11 +387,11 @@ expression_ref rename_infix_top(const Module& m, const expression_ref& decls)
 
         for(auto& constr: constrs.sub())
         {
-            if (not is_AST(constr,"TypeApply")) continue;
-            if (constr.size() < 2) continue;
+            auto [con, args] = Haskell::decompose_type_apps(constr);
+            if (args.empty()) continue;
 
-            auto ConName = constr.sub()[0].as_<Haskell::TypeVar>().name;
-            auto fields = constr.sub()[1];
+            auto ConName = con.as_<Haskell::TypeVar>().name;
+            auto fields = args[0];
             if (not is_AST(fields,"FieldDecls")) continue;
 
             int i = 0;

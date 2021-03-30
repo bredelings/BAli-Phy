@@ -94,4 +94,26 @@ string TypeVar::print() const
     return name;
 }
 
+string TypeApp::print() const
+{
+    if (arg.is_a<TypeApp>())
+        return head.print() + " (" + arg.print() + ")";
+    else
+        return head.print() + " " + arg.print();
+}
+
+std::pair<Type,std::vector<Type>> decompose_type_apps(Type t)
+{
+    std::vector<Type> args;
+    while(t.is_a<TypeApp>())
+    {
+        auto A = t.as_<TypeApp>();
+        args.push_back(A.arg);
+        t = A.head;
+    }
+    std::reverse(args.begin(), args.end());
+    return {t,args};
+}
+    
+
 }

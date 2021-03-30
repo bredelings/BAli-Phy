@@ -82,6 +82,7 @@
   Haskell::TypeVar make_type_var(const std::string& id);
   Haskell::TupleType make_tuple_type(const std::vector<Haskell::Type>& tup_exprs);
   Haskell::ListType make_list_type(const Haskell::Type& type);
+  Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg);
 
   expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebinds);
   expression_ref make_gdrhs(const std::vector<expression_ref>& gdrhs, const expression_ref& wherebinds);
@@ -112,7 +113,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 116 "parser.hh"
+#line 117 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -246,7 +247,7 @@
 #endif
 
 namespace yy {
-#line 250 "parser.hh"
+#line 251 "parser.hh"
 
 
 
@@ -5129,7 +5130,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5133 "parser.hh"
+#line 5134 "parser.hh"
 
 
 
