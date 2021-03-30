@@ -72,10 +72,10 @@
   expression_ref make_sig_vars(const std::vector<std::string>& sig_vars);
   Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const Located<expression_ref>& decls);
   Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
-  Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const expression_ref& context,
+  Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const Haskell::Context& context,
                                                   const expression_ref& header, const std::vector<expression_ref>& constrs);
-  Haskell::ClassDecl make_class_decl(const expression_ref& context, const expression_ref& header, const Located<expression_ref>& decls);
-  expression_ref make_context(const expression_ref& context, const expression_ref& type);
+  Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const Located<expression_ref>& decls);
+  Haskell::Context make_context(const expression_ref& context);
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
   Located<Haskell::ID> make_id(const yy::location& loc, const std::string& id);
@@ -458,21 +458,25 @@ namespace yy {
     /// An auxiliary type to compute the largest semantic type.
     union union_type
     {
+      // context
+      // context_no_ops
+      char dummy1[sizeof (Haskell::Context)];
+
       // data_or_newtype
-      char dummy1[sizeof (Haskell::DataOrNewtype)];
+      char dummy2[sizeof (Haskell::DataOrNewtype)];
 
       // maybe_src
       // maybe_safe
       // optqualified
-      char dummy2[sizeof (bool)];
+      char dummy3[sizeof (bool)];
 
       // "CHAR"
       // "PRIMCHAR"
-      char dummy3[sizeof (char)];
+      char dummy4[sizeof (char)];
 
       // "RATIONAL"
       // "PRIMDOUBLE"
-      char dummy4[sizeof (double)];
+      char dummy5[sizeof (double)];
 
       // module
       // body
@@ -500,8 +504,6 @@ namespace yy {
       // sigtypedoc
       // ctype
       // ctypedoc
-      // context
-      // context_no_ops
       // type
       // typedoc
       // btype
@@ -539,26 +541,26 @@ namespace yy {
       // stmt
       // qual
       // literal
-      char dummy5[sizeof (expression_ref)];
+      char dummy6[sizeof (expression_ref)];
 
       // "PRIMFLOAT"
-      char dummy6[sizeof (float)];
+      char dummy7[sizeof (float)];
 
       // "INTEGER"
       // "PRIMINTEGER"
       // "PRIMWORD"
       // commas
-      char dummy7[sizeof (int)];
+      char dummy8[sizeof (int)];
 
       // prec
-      char dummy8[sizeof (std::optional<int>)];
+      char dummy9[sizeof (std::optional<int>)];
 
       // maybe_pkg
       // maybeas
-      char dummy9[sizeof (std::optional<std::string>)];
+      char dummy10[sizeof (std::optional<std::string>)];
 
       // tycl_hdr
-      char dummy10[sizeof (std::pair<expression_ref,expression_ref>)];
+      char dummy11[sizeof (std::pair<Haskell::Context,expression_ref>)];
 
       // "VARID"
       // "CONID"
@@ -618,7 +620,7 @@ namespace yy {
       // qconsym
       // consym
       // modid
-      char dummy11[sizeof (std::string)];
+      char dummy12[sizeof (std::string)];
 
       // exportlist
       // exportlist1
@@ -655,11 +657,11 @@ namespace yy {
       // apats1
       // stmtlist
       // stmts
-      char dummy12[sizeof (std::vector<expression_ref>)];
+      char dummy13[sizeof (std::vector<expression_ref>)];
 
       // ops
       // sig_vars
-      char dummy13[sizeof (std::vector<std::string>)];
+      char dummy14[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1234,6 +1236,11 @@ namespace yy {
       {
         switch (this->kind ())
     {
+      case symbol_kind::S_context: // context
+      case symbol_kind::S_context_no_ops: // context_no_ops
+        value.move< Haskell::Context > (std::move (that.value));
+        break;
+
       case symbol_kind::S_data_or_newtype: // data_or_newtype
         value.move< Haskell::DataOrNewtype > (std::move (that.value));
         break;
@@ -1280,8 +1287,6 @@ namespace yy {
       case symbol_kind::S_sigtypedoc: // sigtypedoc
       case symbol_kind::S_ctype: // ctype
       case symbol_kind::S_ctypedoc: // ctypedoc
-      case symbol_kind::S_context: // context
-      case symbol_kind::S_context_no_ops: // context_no_ops
       case symbol_kind::S_type: // type
       case symbol_kind::S_typedoc: // typedoc
       case symbol_kind::S_btype: // btype
@@ -1343,7 +1348,7 @@ namespace yy {
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
-        value.move< std::pair<expression_ref,expression_ref> > (std::move (that.value));
+        value.move< std::pair<Haskell::Context,expression_ref> > (std::move (that.value));
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -1469,6 +1474,20 @@ namespace yy {
 #else
       basic_symbol (typename Base::kind_type t, const location_type& l)
         : Base (t)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Haskell::Context&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Haskell::Context& v, const location_type& l)
+        : Base (t)
+        , value (v)
         , location (l)
       {}
 #endif
@@ -1600,13 +1619,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::pair<expression_ref,expression_ref>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, std::pair<Haskell::Context,expression_ref>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::pair<expression_ref,expression_ref>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const std::pair<Haskell::Context,expression_ref>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1677,6 +1696,11 @@ namespace yy {
         // Value type destructor.
 switch (yykind)
     {
+      case symbol_kind::S_context: // context
+      case symbol_kind::S_context_no_ops: // context_no_ops
+        value.template destroy< Haskell::Context > ();
+        break;
+
       case symbol_kind::S_data_or_newtype: // data_or_newtype
         value.template destroy< Haskell::DataOrNewtype > ();
         break;
@@ -1723,8 +1747,6 @@ switch (yykind)
       case symbol_kind::S_sigtypedoc: // sigtypedoc
       case symbol_kind::S_ctype: // ctype
       case symbol_kind::S_ctypedoc: // ctypedoc
-      case symbol_kind::S_context: // context
-      case symbol_kind::S_context_no_ops: // context_no_ops
       case symbol_kind::S_type: // type
       case symbol_kind::S_typedoc: // typedoc
       case symbol_kind::S_btype: // btype
@@ -1786,7 +1808,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
-        value.template destroy< std::pair<expression_ref,expression_ref> > ();
+        value.template destroy< std::pair<Haskell::Context,expression_ref> > ();
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -4576,6 +4598,11 @@ switch (yykind)
   {
     switch (this->kind ())
     {
+      case symbol_kind::S_context: // context
+      case symbol_kind::S_context_no_ops: // context_no_ops
+        value.copy< Haskell::Context > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_data_or_newtype: // data_or_newtype
         value.copy< Haskell::DataOrNewtype > (YY_MOVE (that.value));
         break;
@@ -4622,8 +4649,6 @@ switch (yykind)
       case symbol_kind::S_sigtypedoc: // sigtypedoc
       case symbol_kind::S_ctype: // ctype
       case symbol_kind::S_ctypedoc: // ctypedoc
-      case symbol_kind::S_context: // context
-      case symbol_kind::S_context_no_ops: // context_no_ops
       case symbol_kind::S_type: // type
       case symbol_kind::S_typedoc: // typedoc
       case symbol_kind::S_btype: // btype
@@ -4685,7 +4710,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
-        value.copy< std::pair<expression_ref,expression_ref> > (YY_MOVE (that.value));
+        value.copy< std::pair<Haskell::Context,expression_ref> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -4821,6 +4846,11 @@ switch (yykind)
     super_type::move (s);
     switch (this->kind ())
     {
+      case symbol_kind::S_context: // context
+      case symbol_kind::S_context_no_ops: // context_no_ops
+        value.move< Haskell::Context > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_data_or_newtype: // data_or_newtype
         value.move< Haskell::DataOrNewtype > (YY_MOVE (s.value));
         break;
@@ -4867,8 +4897,6 @@ switch (yykind)
       case symbol_kind::S_sigtypedoc: // sigtypedoc
       case symbol_kind::S_ctype: // ctype
       case symbol_kind::S_ctypedoc: // ctypedoc
-      case symbol_kind::S_context: // context
-      case symbol_kind::S_context_no_ops: // context_no_ops
       case symbol_kind::S_type: // type
       case symbol_kind::S_typedoc: // typedoc
       case symbol_kind::S_btype: // btype
@@ -4930,7 +4958,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
-        value.move< std::pair<expression_ref,expression_ref> > (YY_MOVE (s.value));
+        value.move< std::pair<Haskell::Context,expression_ref> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -5099,7 +5127,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5103 "parser.hh"
+#line 5131 "parser.hh"
 
 
 

@@ -34,10 +34,10 @@
   expression_ref make_sig_vars(const std::vector<std::string>& sig_vars);
   Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const Located<expression_ref>& decls);
   Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
-  Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const expression_ref& context,
+  Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const Haskell::Context& context,
                                                   const expression_ref& header, const std::vector<expression_ref>& constrs);
-  Haskell::ClassDecl make_class_decl(const expression_ref& context, const expression_ref& header, const Located<expression_ref>& decls);
-  expression_ref make_context(const expression_ref& context, const expression_ref& type);
+  Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const Located<expression_ref>& decls);
+  Haskell::Context make_context(const expression_ref& context);
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
   Located<Haskell::ID> make_id(const yy::location& loc, const std::string& id);
@@ -289,7 +289,7 @@
  */
 %type <Haskell::DataOrNewtype> data_or_newtype
  /* %type <void> opt_kind_sig */
-%type <std::pair<expression_ref,expression_ref>> tycl_hdr
+%type <std::pair<Haskell::Context,expression_ref>> tycl_hdr
 /* %type <void> capi_ctype 
 
 
@@ -332,8 +332,8 @@
  /* %type <void> unpackedness */
 %type <expression_ref> ctype
 %type <expression_ref> ctypedoc
-%type <expression_ref> context
-%type <expression_ref> context_no_ops
+%type <Haskell::Context> context
+%type <Haskell::Context> context_no_ops
 %type <expression_ref> type
 %type <expression_ref> typedoc
 %type <expression_ref> btype
@@ -675,6 +675,7 @@ ty_decl: "type" type "=" ctypedoc                                          {$$ =
 /* |        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family */
 /* |        "data" "family" type opt_datafam_kind_sig */
 
+// inst_type -> sigtype -> ctype --maybe--> context => type
 inst_decl: "instance" overlap_pragma inst_type wherebinds                  {$$ = make_instance_decl({@3,$3},{@4,$4});}
 /* |          "type" "instance" ty_fam_inst_eqn */
 /* |          data_or_newtype "instance" capi_ctype tycl_hdr constrs
@@ -849,7 +850,7 @@ unpackedness: "{-# UNPACK" "#-"
 |             "{-# NOUNPACK" "#-"
 
 ctype: "forall" tv_bndrs "." ctype {$$ = new expression(AST_node("forall"),{make_tv_bndrs($2),$4});}
-|      context "=>" ctype          {$$ = new expression(AST_node("context"),{$1,$3});}
+|      context "=>" ctype          {$$ = $3;} // FIXME - add the context!
 /* |      ipvar "::" type             {} */
 |      type                        {$$ = $1;}
 
@@ -862,9 +863,9 @@ ctypedoc:  "forall" tv_bnrds "." ctypedoc
 |      typedoc
 */
 
-context: btype                     {$$ = $1;}
+context: btype                     {$$ = make_context($1);}
 
-context_no_ops: btype_no_ops       {$$ = make_tyapps($1);}
+context_no_ops: btype_no_ops       {$$ = make_context(make_tyapps($1));}
 
 type: btype                        {$$ = $1;}
 |     btype "->" ctype             {$$ = make_tyapps({make_type_id("->"),$1,$3});}
@@ -952,7 +953,7 @@ constrs: "=" constrs1           {$$ = $2;}
 constrs1: constrs1 "|" constr   {$$ = $1; $$.push_back($3);}
 |         constr                {$$.push_back($1);}
 
-constr: forall context_no_ops "=>" constr_stuff {$$ = make_context($2,$4);}
+constr: forall context_no_ops "=>" constr_stuff {$$ = $4;}  // expand the constructor AST struct to have a context.
 |       forall constr_stuff                     {$$ = $2;}
 
 forall: "forall" tv_bndrs "."   {if ($2.size()>1) $$ = make_tv_bndrs($2);}
@@ -1546,7 +1547,7 @@ Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_ty
     return {name, type_args, rhs_type};
 }
 
-Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const expression_ref&  context,
+Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const Haskell::Context&  context,
                                                 const expression_ref& header, const vector<expression_ref>& constrs)
 {
     auto [name, type_args] = check_type_or_class_header(header);
@@ -1554,15 +1555,23 @@ Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_
     return {d_or_n, name, type_args, context, c};
 }
 
-Haskell::ClassDecl make_class_decl(const expression_ref& context, const expression_ref& header, const Located<expression_ref>& decls)
+Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const Located<expression_ref>& decls)
 {
     auto [name, type_args] = check_type_or_class_header(header);
     return {name,type_args,context,decls};
 }
 
-expression_ref make_context(const expression_ref& context, const expression_ref& type)
+Haskell::Context make_context(const expression_ref& context)
 {
-    return new expression(AST_node("context"),{context,type});
+    vector<Haskell::Type> constraints;
+    if (context.is_a<Haskell::Tuple>())
+    {
+        constraints = context.as_<Haskell::Tuple>().elements;
+    }
+    else
+        constraints.push_back(context);
+
+    return {constraints};
 }
 
 expression_ref make_tv_bndrs(const vector<expression_ref>& tv_bndrs)

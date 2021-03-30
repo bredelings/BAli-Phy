@@ -82,13 +82,25 @@ LPat = WildPat          -- wildcard pattern
      | SigPat LPat (HsPatSigType NoGhcTc) -- pattern with a type signature?
 */
 
+typedef expression_ref Type;
+
+struct Context
+{
+    std::vector<Haskell::Type> constraints;
+    Context* clone() const { return new Context(*this);}
+
+    Context() = default;
+    Context(const Context&) = default;
+    Context(const std::vector<Haskell::Type>& cs): constraints(cs) {}
+};
+
 struct ClassDecl: public Object
 {
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
     std::string name;
     std::vector<expression_ref> type_vars;
-    std::optional<expression_ref> context;
+    Context context;
 
     Located<expression_ref> decls;
     // std::vector<Located<expression_ref>> signatures;
@@ -97,7 +109,7 @@ struct ClassDecl: public Object
     ClassDecl* clone() const { return new ClassDecl(*this);}
     ClassDecl(const std::string& s,
               const std::vector<expression_ref>& as,
-              const std::optional<expression_ref> ct,
+              const Context& ct,
               const Located<expression_ref>& ds)
         :name(s),
          type_vars(as),
@@ -115,7 +127,7 @@ struct DataOrNewtypeDecl: public Object
     DataOrNewtype data_or_newtype;
     std::string name;
     std::vector<expression_ref> type_vars;
-    std::optional<expression_ref> context;
+    Context context;
 
     expression_ref constructors;
 
@@ -124,7 +136,7 @@ struct DataOrNewtypeDecl: public Object
     DataOrNewtypeDecl(DataOrNewtype dn,
                       const std::string& s,
                       const std::vector<expression_ref>& as,
-                      const std::optional<expression_ref> ct,
+                      const Context& ct,
                       const expression_ref& cs)
         :data_or_newtype(dn),
          name(s),
@@ -158,6 +170,7 @@ struct InstanceDecl: public Object
 {
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
+    // This should be something like Eq a => Eq [a]
     Located<expression_ref> type;
     Located<expression_ref> decls;
 
@@ -245,7 +258,20 @@ struct AsPattern: public Object
     AsPattern(const expression_ref& v, const expression_ref& p):var(v),pattern(p) {}
 };
 
+// add TupleType!
+// at some point, we need to distinguish between TuplePattern and TupleExpression...    
 
+
+struct TypeVar: public Object
+{
+    std::string name;
+
+    bool operator==(const Object& o) const;
+    bool operator==(const TypeVar& v) const;
+    TypeVar* clone() const { return new TypeVar(*this);}
+    std::string print() const;
+    TypeVar(const std::string& s):name(s) {}
+};
 
 }
 

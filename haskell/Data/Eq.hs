@@ -31,3 +31,11 @@ x == y      = case equals_top x y of 1 -> False
                                      _ -> and [get_arg x i == get_arg y i | i <- [0..get_n_args x - 1]]
 
 x /= y = not (x == y)
+
+instance Eq a => Eq [a] where
+    []     == []     = True
+    (x:xs) == (y:ys) = (x == y) && xs == ys
+    _      == _      = False
+
+class (Eq a, Eq [a]) => Foo a where
+    fffff :: a -> a
