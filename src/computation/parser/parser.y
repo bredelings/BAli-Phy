@@ -34,8 +34,9 @@
   expression_ref make_sig_vars(const std::vector<std::string>& sig_vars);
   Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const Located<expression_ref>& decls);
   Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& type1, const Located<expression_ref>& type2);
-  Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const expression_ref& tycls_hdr, const std::vector<expression_ref>& constrs);
-  Haskell::ClassDecl make_class_decl(const expression_ref& cls_hdr, const Located<expression_ref>& decls);
+  Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const expression_ref& context,
+                                                  const expression_ref& header, const std::vector<expression_ref>& constrs);
+  Haskell::ClassDecl make_class_decl(const expression_ref& context, const expression_ref& header, const Located<expression_ref>& decls);
   expression_ref make_context(const expression_ref& context, const expression_ref& type);
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
@@ -288,7 +289,7 @@
  */
 %type <Haskell::DataOrNewtype> data_or_newtype
  /* %type <void> opt_kind_sig */
-%type <expression_ref> tycl_hdr
+%type <std::pair<expression_ref,expression_ref>> tycl_hdr
 /* %type <void> capi_ctype 
 
 
@@ -666,10 +667,10 @@ topdecl: cl_decl                               {$$ = $1;}
 |        "builtin" varop INTEGER STRING STRING {$$ = make_builtin_expr($2,$3,$4,$5);}
 |        "builtin" varop INTEGER STRING        {$$ = make_builtin_expr($2,$3,$4);}
 
-cl_decl: "class" tycl_hdr /*fds*/ wherebinds   {$$ = make_class_decl($2,{@3,$3});}
+cl_decl: "class" tycl_hdr /*fds*/ wherebinds   {$$ = make_class_decl($2.first,$2.second,{@3,$3});}
 
 ty_decl: "type" type "=" ctypedoc                                          {$$ = make_type_synonym({@2,$2},{@4,$4});}
-|        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = make_data_or_newtype($1,$3,$4);}
+|        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = make_data_or_newtype($1,$3.first,$3.second,$4);}
 |        data_or_newtype capi_ctype tycl_hdr opt_kind_sig                  {}
 /* |        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family */
 /* |        "data" "family" type opt_datafam_kind_sig */
@@ -742,8 +743,8 @@ opt_kind_sig: %empty
 
 /* opt_tyfam_at_kind_inj_sig: */
 
-tycl_hdr: context "=>" type  {$$ = expression_ref(AST_node("ClassHeader"),{$1,$3});}
-|         type               {$$ = expression_ref(AST_node("ClassHeader"),{{},$1});}
+tycl_hdr: context "=>" type  {$$ = {$1,$3};}
+|         type               {$$ = {{},$1};}
 
 capi_ctype: "{-# CTYPE" STRING STRING "#-}"
 |           "{-# CTYPE" STRING "#-}"
@@ -1512,18 +1513,13 @@ expression_ref make_sig_vars(const vector<std::string>& sig_vars)
     return new expression(AST_node("sig_vars"),make_String_vec(sig_vars));
 }
 
-std::tuple<string, vector<expression_ref>, optional<expression_ref>>
-check_type_or_class_header(const expression_ref& tycls_hdr)
+// See PostProcess.hs:checkTyClHdr
+std::tuple<string, vector<expression_ref>>
+check_type_or_class_header(expression_ref type)
 {
     string name;
     vector<expression_ref> type_args;
-    optional<expression_ref> context;
 
-    assert(tycls_hdr.size() == 2);
-    if (tycls_hdr.sub()[0])
-        context = tycls_hdr.sub()[0];
-
-    auto type = tycls_hdr.sub()[1];
     if (is_AST(type,"TypeApply"))
     {
         for(int i=1;i<type.sub().size();i++)
@@ -1531,11 +1527,12 @@ check_type_or_class_header(const expression_ref& tycls_hdr)
         type = type.sub()[0];
     }
 
+    // FIXME -- add location!
     if (not is_AST(type,"type_id"))
-        throw myexception()<<"Type or class header '"<<tycls_hdr<<"' has malformed type/class name";
+        throw myexception()<<"Malformed type or class header '"<<type<<"'";
     name = type.as_<AST_node>().value;
 
-    return {name, type_args, context};
+    return {name, type_args};
 }
 
 Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const Located<expression_ref>& decls)
@@ -1548,16 +1545,17 @@ Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& type1,
     return {type1, type2};
 }
 
-Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const expression_ref& tycls_hdr, const vector<expression_ref>& constrs)
+Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const expression_ref&  context,
+                                                const expression_ref& header, const vector<expression_ref>& constrs)
 {
-    auto [name, type_args, context] = check_type_or_class_header(tycls_hdr);
+    auto [name, type_args] = check_type_or_class_header(header);
     expression_ref c = new expression(AST_node("constrs"),constrs);
     return {d_or_n, name, type_args, context, c};
 }
 
-Haskell::ClassDecl make_class_decl(const expression_ref& cls_hdr, const Located<expression_ref>& decls)
+Haskell::ClassDecl make_class_decl(const expression_ref& context, const expression_ref& header, const Located<expression_ref>& decls)
 {
-    auto [name, type_args, context] = check_type_or_class_header(cls_hdr);
+    auto [name, type_args] = check_type_or_class_header(header);
     return {name,type_args,context,decls};
 }
 

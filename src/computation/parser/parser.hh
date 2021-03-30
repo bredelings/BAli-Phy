@@ -72,8 +72,9 @@
   expression_ref make_sig_vars(const std::vector<std::string>& sig_vars);
   Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const Located<expression_ref>& decls);
   Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& type1, const Located<expression_ref>& type2);
-  Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const expression_ref& tycls_hdr, const std::vector<expression_ref>& constrs);
-  Haskell::ClassDecl make_class_decl(const expression_ref& cls_hdr, const Located<expression_ref>& decls);
+  Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const expression_ref& context,
+                                                  const expression_ref& header, const std::vector<expression_ref>& constrs);
+  Haskell::ClassDecl make_class_decl(const expression_ref& context, const expression_ref& header, const Located<expression_ref>& decls);
   expression_ref make_context(const expression_ref& context, const expression_ref& type);
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
@@ -109,7 +110,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 113 "parser.hh"
+#line 114 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -243,7 +244,7 @@
 #endif
 
 namespace yy {
-#line 247 "parser.hh"
+#line 248 "parser.hh"
 
 
 
@@ -490,7 +491,6 @@ namespace yy {
       // cl_decl
       // ty_decl
       // inst_decl
-      // tycl_hdr
       // decllist
       // binds
       // wherebinds
@@ -557,6 +557,9 @@ namespace yy {
       // maybeas
       char dummy9[sizeof (std::optional<std::string>)];
 
+      // tycl_hdr
+      char dummy10[sizeof (std::pair<expression_ref,expression_ref>)];
+
       // "VARID"
       // "CONID"
       // "VARSYM"
@@ -615,7 +618,7 @@ namespace yy {
       // qconsym
       // consym
       // modid
-      char dummy10[sizeof (std::string)];
+      char dummy11[sizeof (std::string)];
 
       // exportlist
       // exportlist1
@@ -652,11 +655,11 @@ namespace yy {
       // apats1
       // stmtlist
       // stmts
-      char dummy11[sizeof (std::vector<expression_ref>)];
+      char dummy12[sizeof (std::vector<expression_ref>)];
 
       // ops
       // sig_vars
-      char dummy12[sizeof (std::vector<std::string>)];
+      char dummy13[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1268,7 +1271,6 @@ namespace yy {
       case symbol_kind::S_cl_decl: // cl_decl
       case symbol_kind::S_ty_decl: // ty_decl
       case symbol_kind::S_inst_decl: // inst_decl
-      case symbol_kind::S_tycl_hdr: // tycl_hdr
       case symbol_kind::S_decllist: // decllist
       case symbol_kind::S_binds: // binds
       case symbol_kind::S_wherebinds: // wherebinds
@@ -1338,6 +1340,10 @@ namespace yy {
       case symbol_kind::S_maybe_pkg: // maybe_pkg
       case symbol_kind::S_maybeas: // maybeas
         value.move< std::optional<std::string> > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_tycl_hdr: // tycl_hdr
+        value.move< std::pair<expression_ref,expression_ref> > (std::move (that.value));
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -1594,6 +1600,20 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::pair<expression_ref,expression_ref>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::pair<expression_ref,expression_ref>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::string&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -1694,7 +1714,6 @@ switch (yykind)
       case symbol_kind::S_cl_decl: // cl_decl
       case symbol_kind::S_ty_decl: // ty_decl
       case symbol_kind::S_inst_decl: // inst_decl
-      case symbol_kind::S_tycl_hdr: // tycl_hdr
       case symbol_kind::S_decllist: // decllist
       case symbol_kind::S_binds: // binds
       case symbol_kind::S_wherebinds: // wherebinds
@@ -1764,6 +1783,10 @@ switch (yykind)
       case symbol_kind::S_maybe_pkg: // maybe_pkg
       case symbol_kind::S_maybeas: // maybeas
         value.template destroy< std::optional<std::string> > ();
+        break;
+
+      case symbol_kind::S_tycl_hdr: // tycl_hdr
+        value.template destroy< std::pair<expression_ref,expression_ref> > ();
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -4590,7 +4613,6 @@ switch (yykind)
       case symbol_kind::S_cl_decl: // cl_decl
       case symbol_kind::S_ty_decl: // ty_decl
       case symbol_kind::S_inst_decl: // inst_decl
-      case symbol_kind::S_tycl_hdr: // tycl_hdr
       case symbol_kind::S_decllist: // decllist
       case symbol_kind::S_binds: // binds
       case symbol_kind::S_wherebinds: // wherebinds
@@ -4660,6 +4682,10 @@ switch (yykind)
       case symbol_kind::S_maybe_pkg: // maybe_pkg
       case symbol_kind::S_maybeas: // maybeas
         value.copy< std::optional<std::string> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_tycl_hdr: // tycl_hdr
+        value.copy< std::pair<expression_ref,expression_ref> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -4832,7 +4858,6 @@ switch (yykind)
       case symbol_kind::S_cl_decl: // cl_decl
       case symbol_kind::S_ty_decl: // ty_decl
       case symbol_kind::S_inst_decl: // inst_decl
-      case symbol_kind::S_tycl_hdr: // tycl_hdr
       case symbol_kind::S_decllist: // decllist
       case symbol_kind::S_binds: // binds
       case symbol_kind::S_wherebinds: // wherebinds
@@ -4902,6 +4927,10 @@ switch (yykind)
       case symbol_kind::S_maybe_pkg: // maybe_pkg
       case symbol_kind::S_maybeas: // maybeas
         value.move< std::optional<std::string> > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_tycl_hdr: // tycl_hdr
+        value.move< std::pair<expression_ref,expression_ref> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -5070,7 +5099,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5074 "parser.hh"
+#line 5103 "parser.hh"
 
 
 
