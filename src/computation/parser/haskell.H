@@ -321,6 +321,16 @@ struct ForallType: public Object
     ForallType(const std::vector<expression_ref>& tvb, const Type& t):type_var_binders(tvb), type(t) {}
 };
 
+struct ConstrainedType: public Object
+{
+    Context context;
+    Type type;
+
+    ConstrainedType* clone() const { return new ConstrainedType(*this);}
+    std::string print() const;
+    ConstrainedType(const Context& c, const Type& t):context(c), type(t) {}
+};
+
 std::pair<Type,std::vector<Type>> decompose_type_apps(Type t);
 
 }

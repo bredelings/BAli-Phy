@@ -126,6 +126,11 @@ string ForallType::print() const
     return "forall "+join(binders," ")+"."+type.print();
 }
 
+string ConstrainedType::print() const
+{
+    return context.print() + " => " + type.print();
+}
+
 std::string Context::print() const
 {
     vector<string> cs;

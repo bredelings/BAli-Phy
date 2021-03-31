@@ -46,6 +46,7 @@
   Haskell::ListType make_list_type(const Haskell::Type& type);
   Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg);
   expression_ref make_forall_type(const std::vector<expression_ref>& tv_bndrs, const Haskell::Type& t);
+  expression_ref make_constrained_type(const Haskell::Context& tv_bndrs, const Haskell::Type& t);
 
   expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebinds);
   expression_ref make_gdrhs(const std::vector<expression_ref>& gdrhs, const expression_ref& wherebinds);
@@ -854,7 +855,7 @@ unpackedness: "{-# UNPACK" "#-"
 |             "{-# NOUNPACK" "#-"
 
 ctype: "forall" tv_bndrs "." ctype {$$ = make_forall_type($2, $4);}
-|      context "=>" ctype          {$$ = $3;} // FIXME - add the context!
+|      context "=>" ctype          {$$ = make_constrained_type($1,$3);}
 /* |      ipvar "::" type             {} */
 |      type                        {$$ = $1;}
 
@@ -1620,6 +1621,14 @@ expression_ref make_forall_type(const std::vector<expression_ref>& tv_bndrs, con
         return t;
     else
         return Haskell::ForallType(tv_bndrs, t);
+}
+
+expression_ref make_constrained_type(const Haskell::Context& context, const Haskell::Type& t)
+{
+    if (context.constraints.empty())
+        return t;
+    else
+        return Haskell::ConstrainedType(context, t);
 }
 
 expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type)
