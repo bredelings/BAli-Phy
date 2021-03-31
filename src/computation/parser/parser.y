@@ -68,15 +68,15 @@
   expression_ref make_let(const expression_ref& binds, const expression_ref& body);
   expression_ref make_if(const expression_ref& cond, const expression_ref& alt_true, const expression_ref& alt_false);
   expression_ref make_case(const expression_ref& obj, const expression_ref& alts);
-  expression_ref make_do(const std::vector<expression_ref>& stmts);
-  expression_ref make_mdo(const std::vector<expression_ref>& stmts);
+  Haskell::Do make_do(const Haskell::Stmts& stmts);
+  Haskell::MDo make_mdo(const Haskell::Stmts& stmts);
   expression_ref yy_make_tuple(const std::vector<expression_ref>& tup_exprs);
 
   expression_ref make_list(const std::vector<expression_ref>& items);
   expression_ref make_alts(const std::vector<expression_ref>& alts);
   expression_ref yy_make_alt(const expression_ref& pat, const expression_ref& alt_rhs);
 
-  expression_ref make_stmts(const std::vector<expression_ref>& stmts);
+  Haskell::Stmts make_stmts(const std::vector<expression_ref>& stmts);
 
   expression_ref yy_make_string(const std::string&);
 }
@@ -434,7 +434,7 @@
 %type <expression_ref> apat
 %type <std::vector<expression_ref>> apats1
 
-%type <std::vector<expression_ref>> stmtlist
+%type <Haskell::Stmts> stmtlist
 %type <std::vector<expression_ref>> stmts
 %type <expression_ref> stmt
 
@@ -1210,8 +1210,8 @@ apats1: apats1 apat {$$ = $1; $$.push_back($2);}
 |       apat        {$$.push_back($1);}
 
 /* ------------- Statement sequences ----------------------------- */
-stmtlist: "{" stmts "}"        {$$ = $2;}
-|         VOCURLY stmts close  {$$ = $2;}
+stmtlist: "{" stmts "}"        {$$ = make_stmts($2);}
+|         VOCURLY stmts close  {$$ = make_stmts($2);}
 
 stmts: stmts ";" stmt  {$$ = $1; $$.push_back($3);}
 |      stmts ";"       {$$ = $1;}
@@ -1222,7 +1222,7 @@ stmts: stmts ";" stmt  {$$ = $1; $$.push_back($3);}
 |             %empty */
 
 stmt: qual              {$$ = $1;}
-|     "rec" stmtlist    {$$ = new expression(AST_node("Rec"),{$2});}
+|     "rec" stmtlist    {$$ = Haskell::RecStmt($2);}
 
 qual: bindpat "<-" exp  {$$ = Haskell::PatQual($1,$3);}
 |     exp               {$$ = Haskell::SimpleQual($1);}
@@ -1737,14 +1737,14 @@ expression_ref make_case(const expression_ref& obj, const expression_ref& alts)
     return new expression(AST_node("Case"), {obj, alts});
 }
 
-expression_ref make_do(const vector<expression_ref>& stmts)
+Haskell::Do make_do(const Haskell::Stmts& stmts)
 {
-    return new expression(AST_node("Do"), stmts);
+    return {stmts};
 }
 
-expression_ref make_mdo(const vector<expression_ref>& stmts)
+Haskell::MDo make_mdo(const Haskell::Stmts& stmts)
 {
-    return new expression(AST_node("MDo"), stmts);
+    return {stmts};
 }
 
 expression_ref yy_make_tuple(const vector<expression_ref>& elements)
@@ -1780,9 +1780,9 @@ expression_ref make_gdrh(const vector<expression_ref>& guardquals, const express
     return expression_ref(AST_node("gdrh"), {expression_ref(AST_node("guards"),guardquals),exp});
 }
 
-expression_ref make_stmts(const vector<expression_ref>& stmts)
+Haskell::Stmts make_stmts(const vector<expression_ref>& stmts)
 {
-    return new expression(AST_node("Stmts"), stmts);
+    return {stmts};
 }
 
 Haskell::FixityDecl make_fixity_decl(const Haskell::Fixity& fixity, optional<int>& prec, vector<string>& op_names)

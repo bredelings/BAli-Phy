@@ -106,15 +106,15 @@
   expression_ref make_let(const expression_ref& binds, const expression_ref& body);
   expression_ref make_if(const expression_ref& cond, const expression_ref& alt_true, const expression_ref& alt_false);
   expression_ref make_case(const expression_ref& obj, const expression_ref& alts);
-  expression_ref make_do(const std::vector<expression_ref>& stmts);
-  expression_ref make_mdo(const std::vector<expression_ref>& stmts);
+  Haskell::Do make_do(const Haskell::Stmts& stmts);
+  Haskell::MDo make_mdo(const Haskell::Stmts& stmts);
   expression_ref yy_make_tuple(const std::vector<expression_ref>& tup_exprs);
 
   expression_ref make_list(const std::vector<expression_ref>& items);
   expression_ref make_alts(const std::vector<expression_ref>& alts);
   expression_ref yy_make_alt(const expression_ref& pat, const expression_ref& alt_rhs);
 
-  expression_ref make_stmts(const std::vector<expression_ref>& stmts);
+  Haskell::Stmts make_stmts(const std::vector<expression_ref>& stmts);
 
   expression_ref yy_make_string(const std::string&);
 
@@ -479,22 +479,25 @@ namespace yy {
       // infix
       char dummy4[sizeof (Haskell::Fixity)];
 
+      // stmtlist
+      char dummy5[sizeof (Haskell::Stmts)];
+
       // strict_mark
       // strictness
-      char dummy5[sizeof (Haskell::StrictLazy)];
+      char dummy6[sizeof (Haskell::StrictLazy)];
 
       // maybe_src
       // maybe_safe
       // optqualified
-      char dummy6[sizeof (bool)];
+      char dummy7[sizeof (bool)];
 
       // "CHAR"
       // "PRIMCHAR"
-      char dummy7[sizeof (char)];
+      char dummy8[sizeof (char)];
 
       // "RATIONAL"
       // "PRIMDOUBLE"
-      char dummy8[sizeof (double)];
+      char dummy9[sizeof (double)];
 
       // module
       // body
@@ -558,26 +561,26 @@ namespace yy {
       // stmt
       // qual
       // literal
-      char dummy9[sizeof (expression_ref)];
+      char dummy10[sizeof (expression_ref)];
 
       // "PRIMFLOAT"
-      char dummy10[sizeof (float)];
+      char dummy11[sizeof (float)];
 
       // "INTEGER"
       // "PRIMINTEGER"
       // "PRIMWORD"
       // commas
-      char dummy11[sizeof (int)];
+      char dummy12[sizeof (int)];
 
       // prec
-      char dummy12[sizeof (std::optional<int>)];
+      char dummy13[sizeof (std::optional<int>)];
 
       // maybe_pkg
       // maybeas
-      char dummy13[sizeof (std::optional<std::string>)];
+      char dummy14[sizeof (std::optional<std::string>)];
 
       // tycl_hdr
-      char dummy14[sizeof (std::pair<Haskell::Context,expression_ref>)];
+      char dummy15[sizeof (std::pair<Haskell::Context,expression_ref>)];
 
       // "VARID"
       // "CONID"
@@ -634,7 +637,7 @@ namespace yy {
       // qconsym
       // consym
       // modid
-      char dummy15[sizeof (std::string)];
+      char dummy16[sizeof (std::string)];
 
       // exportlist
       // exportlist1
@@ -669,13 +672,12 @@ namespace yy {
       // alts1
       // gdpats
       // apats1
-      // stmtlist
       // stmts
-      char dummy16[sizeof (std::vector<expression_ref>)];
+      char dummy17[sizeof (std::vector<expression_ref>)];
 
       // ops
       // sig_vars
-      char dummy17[sizeof (std::vector<std::string>)];
+      char dummy18[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1264,6 +1266,10 @@ namespace yy {
         value.move< Haskell::Fixity > (std::move (that.value));
         break;
 
+      case symbol_kind::S_stmtlist: // stmtlist
+        value.move< Haskell::Stmts > (std::move (that.value));
+        break;
+
       case symbol_kind::S_strict_mark: // strict_mark
       case symbol_kind::S_strictness: // strictness
         value.move< Haskell::StrictLazy > (std::move (that.value));
@@ -1465,7 +1471,6 @@ namespace yy {
       case symbol_kind::S_alts1: // alts1
       case symbol_kind::S_gdpats: // gdpats
       case symbol_kind::S_apats1: // apats1
-      case symbol_kind::S_stmtlist: // stmtlist
       case symbol_kind::S_stmts: // stmts
         value.move< std::vector<expression_ref> > (std::move (that.value));
         break;
@@ -1548,6 +1553,20 @@ namespace yy {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const Haskell::Fixity& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Haskell::Stmts&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Haskell::Stmts& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1775,6 +1794,10 @@ switch (yykind)
         value.template destroy< Haskell::Fixity > ();
         break;
 
+      case symbol_kind::S_stmtlist: // stmtlist
+        value.template destroy< Haskell::Stmts > ();
+        break;
+
       case symbol_kind::S_strict_mark: // strict_mark
       case symbol_kind::S_strictness: // strictness
         value.template destroy< Haskell::StrictLazy > ();
@@ -1976,7 +1999,6 @@ switch (yykind)
       case symbol_kind::S_alts1: // alts1
       case symbol_kind::S_gdpats: // gdpats
       case symbol_kind::S_apats1: // apats1
-      case symbol_kind::S_stmtlist: // stmtlist
       case symbol_kind::S_stmts: // stmts
         value.template destroy< std::vector<expression_ref> > ();
         break;
@@ -4686,6 +4708,10 @@ switch (yykind)
         value.copy< Haskell::Fixity > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_stmtlist: // stmtlist
+        value.copy< Haskell::Stmts > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_strict_mark: // strict_mark
       case symbol_kind::S_strictness: // strictness
         value.copy< Haskell::StrictLazy > (YY_MOVE (that.value));
@@ -4887,7 +4913,6 @@ switch (yykind)
       case symbol_kind::S_alts1: // alts1
       case symbol_kind::S_gdpats: // gdpats
       case symbol_kind::S_apats1: // apats1
-      case symbol_kind::S_stmtlist: // stmtlist
       case symbol_kind::S_stmts: // stmts
         value.copy< std::vector<expression_ref> > (YY_MOVE (that.value));
         break;
@@ -4941,6 +4966,10 @@ switch (yykind)
 
       case symbol_kind::S_infix: // infix
         value.move< Haskell::Fixity > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_stmtlist: // stmtlist
+        value.move< Haskell::Stmts > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_strict_mark: // strict_mark
@@ -5144,7 +5173,6 @@ switch (yykind)
       case symbol_kind::S_alts1: // alts1
       case symbol_kind::S_gdpats: // gdpats
       case symbol_kind::S_apats1: // apats1
-      case symbol_kind::S_stmtlist: // stmtlist
       case symbol_kind::S_stmts: // stmts
         value.move< std::vector<expression_ref> > (YY_MOVE (s.value));
         break;
@@ -5216,7 +5244,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5220 "parser.hh"
+#line 5248 "parser.hh"
 
 
 

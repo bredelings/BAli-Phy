@@ -314,6 +314,28 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
         I.decls.obj = rename_infix(m, I.decls.obj);
         return I;
     }
+    else if (E.is_a<Haskell::RecStmt>())
+    {
+        auto R = E.as_<Haskell::RecStmt>();
+        for(auto& stmt: R.stmts.stmts)
+            stmt = rename_infix(m, stmt);
+        return R;
+    }
+    else if (E.is_a<Haskell::Do>())
+    {
+        auto D = E.as_<Haskell::Do>();
+        for(auto& stmt: D.stmts.stmts)
+            stmt = rename_infix(m, stmt);
+        return D;
+    }
+    else if (E.is_a<Haskell::MDo>())
+    {
+        throw myexception()<<"mdo is not handled yet!";
+        auto D = E.as_<Haskell::MDo>();
+        for(auto& stmt: D.stmts.stmts)
+            stmt = rename_infix(m, stmt);
+        return D;
+    }
 
     if (not E.is_expression()) return E;
 
@@ -963,7 +985,7 @@ bound_var_info renamer_state::find_bound_vars_in_stmt(const expression_ref& stmt
         auto& LQ = stmt.as_<Haskell::LetQual>();
         return find_bound_vars_in_decls(LQ.binds);
     }
-    else if (is_AST(stmt, "Rec"))
+    else if (stmt.is_a<Haskell::RecStmt>())
         throw myexception()<<"find_bound_vars_in_stmt: should not have a rec stmt inside a rec stmt!";
     else
 	std::abort();
@@ -985,7 +1007,7 @@ bound_var_info renamer_state::find_bound_vars_in_stmt(const expression_ref& stmt
 bound_var_info renamer_state::rename_rec_stmt(expression_ref& rec_stmt, const bound_var_info& bound)
 {
     bound_var_info rec_bound;
-    for(auto& stmt: rec_stmt.sub())
+    for(auto& stmt: rec_stmt.as_<Haskell::RecStmt>().stmts.stmts)
     {
         bool overlap = not disjoint_add(rec_bound, find_bound_vars_in_stmt(stmt));
 	if (overlap)
@@ -1006,11 +1028,11 @@ bound_var_info renamer_state::rename_rec_stmt(expression_ref& rec_stmt, const bo
     }
 
     // 3. Construct the do stmt
-    auto stmts = rec_stmt.sub();
+    auto stmts = rec_stmt.as_<Haskell::RecStmt>().stmts.stmts;
     expression_ref rec_return = Located<Hs::ID>({},"return");
     expression_ref rec_return_stmt = {rec_return, rec_tuple};
     stmts.push_back(Hs::SimpleQual(rec_return_stmt));
-    auto rec_do = expression_ref{AST_node{"Do"},stmts};
+    auto rec_do = Haskell::Do(Haskell::Stmts(stmts));
 
     // 4. Construct the lambda function
     expression_ref rec_tuple_pattern = unapply(rec_tuple); // This makes the tuple expression into a pattern by translating `@ (@ ((,) x))` into `(,) x y`
@@ -1048,7 +1070,7 @@ bound_var_info renamer_state::rename_stmt(expression_ref& stmt, const bound_var_
 	stmt = LQ;
 	return bound_vars;
     }
-    else if (is_AST(stmt, "Rec"))
+    else if (stmt.is_a<Haskell::RecStmt>())
     {
         return rename_rec_stmt(stmt, bound);
     }
@@ -1097,6 +1119,45 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
                 throw myexception()<<"Can't find id '"<<name<<"'";
         }
     }
+    else if (E.is_a<Haskell::RecStmt>())
+    {
+        auto bound2 = bound;
+        auto R = E.as_<Haskell::RecStmt>();
+        for(auto& stmt: R.stmts.stmts)
+            add(bound2, rename_stmt(stmt, bound2));
+        return R;
+    }
+    else if (E.is_a<Haskell::Do>())
+    {
+        auto bound2 = bound;
+        auto D = E.as_<Haskell::Do>();
+        for(auto& stmt: D.stmts.stmts)
+            add(bound2, rename_stmt(stmt, bound2));
+        return D;
+    }
+    else if (E.is_a<Haskell::MDo>())
+    {
+        /*
+         * See "The mdo notation" in https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#the-mdo-notation
+         *
+         * See ghc/compiler/rename/RnExpr.hs: Note [Segmenting mdo]
+         * What does rec {a;c  mean here?
+         *                b;d}
+         * I think it means rec {a;c;b;d}, but emphasizes that we have
+         * to issue all the stmts from the first recursive group a;c, before
+         * we issue any of the stmts from the second group b;d}.
+         */
+
+        // Hmm... as a dumb segmentation, we could take all the stmts except the last one and put them in a giant rec...
+        // FIXME: implement segmentation, and insert recs.
+
+        auto bound2 = bound;
+        auto MD = E.as_<Haskell::MDo>();
+        for(auto& stmt: MD.stmts.stmts)
+            add(bound2, rename_stmt(stmt, bound2));
+        return MD;
+    }
+
     else if (E.is_a<Haskell::WildcardPattern>())
         return var(-1);
 
@@ -1176,33 +1237,6 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 
 	    return expression_ref{E.head(),v};
 	}
-	else if (n.type == "Do")
-	{
-	    auto bound2 = bound;
-	    for(auto& stmt: v)
-		add(bound2, rename_stmt(stmt, bound2));
-	    return expression_ref{E.head(),v};
-	}
-	else if (n.type == "MDo")
-        {
-            /*
-             * See "The mdo notation" in https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#the-mdo-notation
-             *
-             * See ghc/compiler/rename/RnExpr.hs: Note [Segmenting mdo]
-             * What does rec {a;c  mean here?
-             *                b;d}
-             * I think it means rec {a;c;b;d}, but emphasizes that we have
-             * to issue all the stmts from the first recursive group a;c, before
-             * we issue any of the stmts from the second group b;d}.
-             */
-
-            // Hmm... as a dumb segmentation, we could take all the stmts except the last one and put them in a giant rec...
-            // FIXME: implement segmentation, and insert recs.
-	    auto bound2 = bound;
-	    for(auto& stmt: v)
-		add(bound2, rename_stmt(stmt, bound2));
-	    return expression_ref{E.head(),v};
-        }
 	else if (n.type == "Let")
 	{
 	    auto& decls = v[0];

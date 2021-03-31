@@ -294,6 +294,79 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         I.decls.obj = desugar(I.decls.obj);
         return I;
     }
+    else if (E.is_a<Haskell::Do>())
+    {
+        auto stmts = E.as_<Haskell::Do>().stmts.stmts;
+
+        if (stmts.empty())
+            throw myexception()<<"Empty do block!";
+
+        if (not stmts.back().is_a<Hs::SimpleQual>())
+            throw myexception()<<"The last statement in a do block must be an expression!";
+
+        // do { e }  =>  e
+        if (stmts.size() == 1) {
+            auto& stmt = stmts.front();
+            auto exp = stmt.as_<Hs::SimpleQual>().exp;
+            return desugar(exp);
+        }
+
+        auto first = stmts[0];
+        stmts.erase(stmts.begin());
+        expression_ref do_stmts = Haskell::Do(Haskell::Stmts(stmts));
+        expression_ref result;
+
+        // do {e ; stmts }  =>  e >> do { stmts }
+        if (first.is_a<Hs::SimpleQual>())
+        {
+            expression_ref e = first.as_<Hs::SimpleQual>().exp;
+            result = {var("Compiler.Base.>>"), e, do_stmts};
+        }
+
+        // do { p <- e ; stmts} => let {ok p = do {stmts}; ok _ = fail "..."} in e >>= ok
+        // do { v <- e ; stmts} => e >>= (\v -> do {stmts})
+        else if (first.is_a<Haskell::PatQual>())
+        {
+            auto& PQ = first.as_<Haskell::PatQual>();
+            expression_ref p = PQ.bindpat;
+            expression_ref e = PQ.exp;
+            expression_ref qop = var("Compiler.Base.>>=");
+
+            if (is_irrefutable_pat(p))
+            {
+                expression_ref lambda = AST_node("Lambda") + p + do_stmts;
+                result = {qop,e,lambda};
+            }
+            else
+            {
+                expression_ref ok = get_fresh_var("ok");
+                expression_ref lhs1 = ok + p;
+                expression_ref rhs1 = AST_node("rhs") + do_stmts;
+                expression_ref decl1 = AST_node("Decl") + lhs1 + rhs1;
+
+                expression_ref fail = {var("Compiler.Base.fail"),"Fail!"};
+                expression_ref lhs2 = ok + var(-1);
+                expression_ref rhs2 = AST_node("rhs") + fail;
+                expression_ref decl2 = AST_node("Decl") + lhs2 + rhs2;
+
+                expression_ref decls = AST_node("Decls") + decl1 +  decl2;
+
+                expression_ref body = {qop,e,ok};
+
+                result = AST_node("Let") + decls + body;
+            }
+        }
+        // do {let decls ; rest} = let decls in do {stmts}
+        else if (first.is_a<Haskell::LetQual>())
+        {
+            auto& LQ = first.as_<Haskell::LetQual>();
+            result = AST_node("Let") + LQ.binds + do_stmts;
+        }
+        else
+            std::abort();
+
+        return desugar(result);
+    }
 
     vector<expression_ref> v = E.copy_sub();
 
@@ -411,76 +484,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	}
 	else if (n.type == "Do")
 	{
-	    auto& stmts = v;
-
-	    if (stmts.empty())
-		throw myexception()<<"Empty do block!";
-
-	    if (not stmts.back().is_a<Hs::SimpleQual>())
-		throw myexception()<<"The last statement in a do block must be an expression!";
-
-	    // do { e }  =>  e
-	    if (stmts.size() == 1) {
-		auto& stmt = stmts.front();
-                auto exp = stmt.as_<Hs::SimpleQual>().exp;
-		return desugar(exp);
-	    }
-
-	    auto first = stmts[0];
-	    stmts.erase(stmts.begin());
-	    expression_ref do_stmts = expression_ref{AST_node("Do"),stmts};
-	    expression_ref result;
-      
-	    // do {e ; stmts }  =>  e >> do { stmts }
-	    if (first.is_a<Hs::SimpleQual>())
-	    {
-		expression_ref e = first.as_<Hs::SimpleQual>().exp;
-		result = {var("Compiler.Base.>>"), e, do_stmts};
-	    }
-
-	    // do { p <- e ; stmts} => let {ok p = do {stmts}; ok _ = fail "..."} in e >>= ok
-	    // do { v <- e ; stmts} => e >>= (\v -> do {stmts})
-	    else if (first.is_a<Haskell::PatQual>())
-	    {
-                auto& PQ = first.as_<Haskell::PatQual>();
-                expression_ref p = PQ.bindpat;
-		expression_ref e = PQ.exp;
-		expression_ref qop = var("Compiler.Base.>>=");
-
-		if (is_irrefutable_pat(p))
-		{
-		    expression_ref lambda = AST_node("Lambda") + p + do_stmts;
-		    result = {qop,e,lambda};
-		}
-		else
-		{
-		    expression_ref ok = get_fresh_var("ok");
-		    expression_ref lhs1 = ok + p;
-		    expression_ref rhs1 = AST_node("rhs") + do_stmts;
-		    expression_ref decl1 = AST_node("Decl") + lhs1 + rhs1;
-	  
-		    expression_ref fail = {var("Compiler.Base.fail"),"Fail!"};
-		    expression_ref lhs2 = ok + var(-1);
-		    expression_ref rhs2 = AST_node("rhs") + fail;
-		    expression_ref decl2 = AST_node("Decl") + lhs2 + rhs2;
-
-		    expression_ref decls = AST_node("Decls") + decl1 +  decl2;
-
-		    expression_ref body = {qop,e,ok};
-
-		    result = AST_node("Let") + decls + body;
-		}
-	    }
-	    // do {let decls ; rest} = let decls in do {stmts}
-	    else if (first.is_a<Haskell::LetQual>())
-	    {
-                auto& LQ = first.as_<Haskell::LetQual>();
-		result = AST_node("Let") + LQ.binds + do_stmts;
-	    }
-	    else
-		std::abort();
-
-	    return desugar(result);
+            std::abort();
 	}
 	else if (n.type == "If")
 	{

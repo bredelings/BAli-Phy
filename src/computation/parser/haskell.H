@@ -225,6 +225,17 @@ struct Tuple: public Object
     Tuple(const std::vector<expression_ref>& es): elements(es) {}
 };
 
+struct Stmts: public Object
+{
+    std::vector<expression_ref> stmts;
+
+    Stmts* clone() const { return new Stmts(*this);}
+    std::string print() const;
+
+    Stmts() = default;
+    Stmts(const std::vector<expression_ref>& v):stmts(v) {}
+};
+
 struct LetQual: public Object
 {
     expression_ref binds;
@@ -248,6 +259,16 @@ struct PatQual: public Object
     PatQual* clone() const { return new PatQual(*this);}
     std::string print() const;
     PatQual(const expression_ref &bp, const expression_ref& e): bindpat(bp), exp(e) {};
+};
+
+struct RecStmt: public Object
+{
+    Stmts stmts;
+
+    RecStmt* clone() const {return new RecStmt(*this);}
+    std::string print() const;
+
+    RecStmt(const Stmts& s):stmts(s) {}
 };
 
 struct ID: public Object
@@ -375,6 +396,29 @@ struct StrictLazyType: public Object
 };
 
 std::pair<Type,std::vector<Type>> decompose_type_apps(Type t);
+
+struct Do: public Object
+{
+    Stmts stmts;
+
+    Do* clone() const { return new Do(*this);}
+    std::string print() const;
+
+    Do() = default;
+    Do(const Stmts& s):stmts(s) {}
+};
+
+struct MDo: public Object
+{
+    Stmts stmts;
+
+    MDo* clone() const { return new MDo(*this);}
+    std::string print() const;
+
+    MDo() = default;
+    MDo(const Stmts& s):stmts(s) {}
+};
+
 
 }
 

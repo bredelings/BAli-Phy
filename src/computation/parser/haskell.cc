@@ -38,6 +38,11 @@ string PatQual::print() const
     return bindpat.print() + " <- " + exp.print();
 }
 
+string RecStmt::print() const
+{
+    return "rec " + stmts.print();
+}
+
 string ID::print() const
 {
     return name;
@@ -142,6 +147,24 @@ string StrictLazyType::print() const
 {
     string mark = (strict_lazy == StrictLazy::strict)?"!":"~";
     return mark + type.print();
+}
+
+string Stmts::print() const
+{
+    vector<string> stmt_string;
+    for(auto& stmt: stmts)
+        stmt_string.push_back(stmt.print());
+    return "{"+join(stmt_string,"\n;")+"\n}";
+}
+
+string Do::print() const
+{
+    return "do " + stmts.print();
+}
+
+string MDo::print() const
+{
+    return "mdo " + stmts.print();
 }
 
 std::pair<Type,std::vector<Type>> decompose_type_apps(Type t)
