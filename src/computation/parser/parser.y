@@ -45,6 +45,7 @@
   Haskell::TupleType make_tuple_type(const std::vector<Haskell::Type>& tup_exprs);
   Haskell::ListType make_list_type(const Haskell::Type& type);
   Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg);
+  expression_ref make_forall_type(const std::vector<expression_ref>& tv_bndrs, const Haskell::Type& t);
 
   expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebinds);
   expression_ref make_gdrhs(const std::vector<expression_ref>& gdrhs, const expression_ref& wherebinds);
@@ -852,7 +853,7 @@ strictness: "!" {$$ = "!";}
 unpackedness: "{-# UNPACK" "#-"
 |             "{-# NOUNPACK" "#-"
 
-ctype: "forall" tv_bndrs "." ctype {$$ = new expression(AST_node("forall"),{make_tv_bndrs($2),$4});}
+ctype: "forall" tv_bndrs "." ctype {$$ = make_forall_type($2, $4);}
 |      context "=>" ctype          {$$ = $3;} // FIXME - add the context!
 /* |      ipvar "::" type             {} */
 |      type                        {$$ = $1;}
@@ -1611,6 +1612,14 @@ Haskell::ListType make_list_type(const Haskell::Type& type)
 Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg)
 {
     return {head, arg};
+}
+
+expression_ref make_forall_type(const std::vector<expression_ref>& tv_bndrs, const Haskell::Type& t)
+{
+    if (tv_bndrs.empty())
+        return t;
+    else
+        return Haskell::ForallType(tv_bndrs, t);
 }
 
 expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type)

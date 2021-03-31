@@ -102,6 +102,14 @@ string TypeApp::print() const
         return head.print() + " " + arg.print();
 }
 
+string ForallType::print() const
+{
+    vector<string> binders;
+    for(auto& type_var_binder: type_var_binders)
+        binders.push_back(type_var_binder.print());
+    return "forall "+join(binders," ")+"."+type.print();
+}
+
 std::pair<Type,std::vector<Type>> decompose_type_apps(Type t)
 {
     std::vector<Type> args;

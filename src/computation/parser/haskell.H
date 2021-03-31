@@ -310,6 +310,16 @@ struct TypeApp: public Object
     TypeApp(const Type& t1, const Type& t2):head(t1), arg(t2) {}
 };
 
+struct ForallType: public Object
+{
+    std::vector<expression_ref> type_var_binders;
+    Type type;
+
+    ForallType* clone() const { return new ForallType(*this);}
+    std::string print() const;
+    ForallType(const std::vector<expression_ref>& tvb, const Type& t):type_var_binders(tvb), type(t) {}
+};
+
 std::pair<Type,std::vector<Type>> decompose_type_apps(Type t);
 
 }
