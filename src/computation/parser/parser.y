@@ -149,7 +149,7 @@
   GROUP         "group"
   BY            "by"
   USING         "using"
-  PATTERN       "pattern"
+ /*  PATTERN       "pattern" */
   STATIC        "static"
   STOCK         "stock"
   ANYCLASS      "anyclass"
@@ -573,7 +573,7 @@ exportlist1: exportlist1 "," export   {$$ = $1; $$.push_back($3);}
 
 export: qcname_ext export_subspec     {$$ = $1;} /* This ignores subspec */
 |       "module" modid                {$$ = AST_node("module",$2);}
-|       "pattern" qcon                {}
+/* |       "pattern" qcon                {} */
 
 export_subspec: %empty
 |              "(" qcnames ")"
@@ -774,7 +774,7 @@ roles:       role
 
 role:        VARID
 |            "_"
-*/
+
 pattern_synonym_decl: "pattern" pattern_synonym_lhs "=" pat
 |                     "pattern" pattern_synonym_lhs "<-" pat
 |                     "pattern" pattern_synonym_lhs "<-" pat where_decls
@@ -783,16 +783,20 @@ pattern_synonym_lhs: con vars0
 |                    varid conop varid
 |                    con "{" cvars1 "}"
 
+
 vars0: %empty
 |      varid vars0
 
+
 cvars1: varid vars0
+
 
 where_decls: "where" "{" decls "}"
 |            "where" VOCURLY decls close
 
 
 pattern_synonym_sig: "pattern" con_list "::" sigtypedoc
+*/
 
 /* ------------- Nested declarations ----------------------------- */
 
@@ -1014,7 +1018,7 @@ decl_no_th: sigdecl           {$$ = $1;}
 | "!" aexp rhs                {$$ = new expression(AST_node("Decl:Strict"),{($2),$3});}
 /* what is the opt_sig doing here? */
 | infixexp_top opt_sig rhs    {$$ = new expression(AST_node("Decl"),{make_infixexp($1),$3});}
-| pattern_synonym_decl        {}
+/* | pattern_synonym_decl        {} */
 /* | docdel */
 
 decl: decl_no_th              {$$ = $1;}
@@ -1034,7 +1038,7 @@ gdrh: "|" guardquals "=" exp  {$$ = make_gdrh($2,$4);}
 sigdecl: infixexp_top "::" sigtypedoc        { $$ = expression_ref(AST_node("Decl:sigtype"),{make_infixexp($1),$3});}
 |        var "," sig_vars "::" sigtypedoc {}
 |        infix prec ops  { $$ = make_fixity_decl($1,$2,$3); }
-|        pattern_synonym_sig {}
+/* |        pattern_synonym_sig {}  */
 |        "{-# COMPLETE" con_list opt_tyconsig "#-}" {}
 |        "{-# INLINE" activation qvar "#-}" {}
 |        "{-# SCC" qvar "#-}" {}
@@ -1042,6 +1046,7 @@ sigdecl: infixexp_top "::" sigtypedoc        { $$ = expression_ref(AST_node("Dec
 |        "{-# SPECIALISE" activation qvar "::" sigtypes1 "#-}" {}
 |        "{-# SPECIALISE_INLINE" activation qvar "::" sigtypes1 "#-}" {}
 |        "{-# SPECIALISE" "instance" inst_type "#-}" {}
+
 
 activation: %empty
 |           explicit_activation
