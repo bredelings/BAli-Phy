@@ -89,6 +89,7 @@ struct Context
     std::vector<Haskell::Type> constraints;
     Context* clone() const { return new Context(*this);}
 
+    std::string print() const;
     Context() = default;
     Context(const Context&) = default;
     Context(const std::vector<Haskell::Type>& cs): constraints(cs) {}

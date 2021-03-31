@@ -110,6 +110,19 @@ string ForallType::print() const
     return "forall "+join(binders," ")+"."+type.print();
 }
 
+std::string Context::print() const
+{
+    vector<string> cs;
+    for(auto& constraint: constraints)
+        cs.push_back(constraint.print());
+
+    string result = join(cs,", ");
+    if (cs.size() == 1)
+        return result;
+    else
+        return "(" + result + ")";
+}
+
 std::pair<Type,std::vector<Type>> decompose_type_apps(Type t)
 {
     std::vector<Type> args;
