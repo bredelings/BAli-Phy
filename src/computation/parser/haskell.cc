@@ -83,6 +83,11 @@ string TypeVarOfKind::print() const
     return name + "::" + kind.print();
 }
 
+string TypeOfKind::print() const
+{
+    return type.print() + "::" + kind.print();
+}
+
 string parenthesize_type(const expression_ref& t)
 {
     if (t.is_a<TypeVar>() or t.is_a<TupleType>() or t.is_a<ListType>())

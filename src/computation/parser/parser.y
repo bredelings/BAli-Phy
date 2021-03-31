@@ -43,6 +43,7 @@
   Located<Haskell::ID> make_id(const yy::location& loc, const std::string& id);
   Haskell::TypeVar make_type_var(const std::string& id);
   Haskell::TypeVarOfKind make_type_var_of_kind(const std::string& id, const Haskell::Type& kind);
+  Haskell::TypeOfKind make_type_of_kind(const Haskell::Type& id, const Haskell::Type& kind);
   Haskell::TupleType make_tuple_type(const std::vector<Haskell::Type>& tup_exprs);
   Haskell::ListType make_list_type(const Haskell::Type& type);
   Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg);
@@ -920,7 +921,7 @@ atype: ntgtycon                        {$$ = make_type_var($1);}
 */
 |      "[" ctype "]"                   {$$ = make_list_type($2);}
 |      "(" ctype ")"                   {$$ = $2;}
-|      "(" ctype "::" kind ")"         {$$ = expression_ref(AST_node("TypeOfKind"),{$2,$4});}
+|      "(" ctype "::" kind ")"         {$$ = make_type_of_kind($2,$4);}
 /* Template Haskell */
 
 inst_type: sigtype                     {$$ = $1;}
@@ -1617,6 +1618,11 @@ Haskell::TypeVar make_type_var(const string& id)
 Haskell::TypeVarOfKind make_type_var_of_kind(const string& id, const Haskell::Type& kind)
 {
     return {id, kind};
+}
+
+Haskell::TypeOfKind make_type_of_kind(const Haskell::Type& type, const Haskell::Type& kind)
+{
+    return {type, kind};
 }
 
 Haskell::TupleType make_tuple_type(const std::vector<Haskell::Type>& types)
