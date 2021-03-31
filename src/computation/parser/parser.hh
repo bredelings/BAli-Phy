@@ -111,7 +111,7 @@
   expression_ref yy_make_tuple(const std::vector<expression_ref>& tup_exprs);
 
   expression_ref make_list(const std::vector<expression_ref>& items);
-  expression_ref make_alts(const std::vector<expression_ref>& alts);
+  Haskell::Alts make_alts(const std::vector<expression_ref>& alts);
   expression_ref yy_make_alt(const expression_ref& pat, const expression_ref& alt_rhs);
 
   Haskell::Stmts make_stmts(const std::vector<expression_ref>& stmts);

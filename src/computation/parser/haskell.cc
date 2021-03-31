@@ -167,6 +167,14 @@ string MDo::print() const
     return "mdo " + stmts.print();
 }
 
+string Alts::print() const
+{
+    vector<string> alt_string;
+    for(auto& alt: alts)
+        alt_string.push_back(alt.print());
+    return "{" + join(alt_string, "\n;") + "\n}";
+}
+
 std::pair<Type,std::vector<Type>> decompose_type_apps(Type t)
 {
     std::vector<Type> args;

@@ -336,6 +336,13 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
             stmt = rename_infix(m, stmt);
         return D;
     }
+    else if (E.is_a<Haskell::Alts>())
+    {
+        auto A = E.as_<Haskell::Alts>();
+        for(auto& alt: A.alts)
+            alt = rename_infix(m, alt);
+        return A;
+    }
 
     if (not E.is_expression()) return E;
 
@@ -458,7 +465,7 @@ expression_ref rename_infix_top(const Module& m, const expression_ref& decls)
                 }
 
                 Located<Hs::ID> x({},"#0");
-                expression_ref body = AST_node("Case") + x + expression_ref(AST_node("alts"),alts);
+                expression_ref body = AST_node("Case") + x + Haskell::Alts(alts);
                 body = AST_node("Lambda") + x + body;
                 body = AST_node("rhs") + body;
 
@@ -1157,7 +1164,13 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
             add(bound2, rename_stmt(stmt, bound2));
         return MD;
     }
-
+    else if (E.is_a<Haskell::Alts>())
+    {
+        auto A = E.as_<Haskell::Alts>();
+        for(auto& alt: A.alts)
+            alt = rename(alt,bound);
+        return A;
+    }
     else if (E.is_a<Haskell::WildcardPattern>())
         return var(-1);
 

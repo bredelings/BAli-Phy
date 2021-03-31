@@ -519,8 +519,8 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	else if (n.type == "Case")
 	{
 	    expression_ref obj = desugar(v[0]);
-	    assert(is_AST(v[1],"alts"));
-	    vector<expression_ref> alts = v[1].sub();
+	    assert(v[1].is_a<Haskell::Alts>());
+	    vector<expression_ref> alts = v[1].as_<Haskell::Alts>().alts;
 	    vector<expression_ref> patterns;
 	    vector<failable_expression> bodies;
 	    for(const auto& alt: alts)

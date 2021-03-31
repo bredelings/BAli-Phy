@@ -419,6 +419,16 @@ struct MDo: public Object
     MDo(const Stmts& s):stmts(s) {}
 };
 
+struct Alts: public Object
+{
+    std::vector<expression_ref> alts;
+    Alts* clone() const { return new Alts(*this);}
+    std::string print() const;
+
+    Alts() = default;
+    Alts(const std::vector<expression_ref>& v):alts(v) {};
+};
+
 
 }
 
