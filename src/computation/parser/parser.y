@@ -900,16 +900,23 @@ tyapp: atype                       {$$ = $1;}
 
 atype_docs: atype /* FIX */        {$$ = $1;}
 
+/* '*' is either a binary type operator (m * n) or the * kind, unless the StarIsType
+ * extension is enabled.
+ * Do I need a separate rule for it if I'm not using StarIsType?
+ */
+
 atype: ntgtycon                        {$$ = make_type_var($1);}
 |      tyvar                           {$$ = make_type_var($1);}
-|      "*"                             {$$ = AST_node("kind_star");}
+|      "*"                             {$$ = make_type_var("*");}
 |      strict_mark atype               {$$ = make_strict_lazy_type($1,$2);}
 |      "{" fielddecls "}"              {$$ = expression_ref{AST_node("FieldDecls"),$2};}
 |      "(" ")"                         {$$ = make_type_var("()");}
 |      "(" comma_types1 "," ctype")"   {auto ts = $2;ts.push_back($4);$$ = make_tuple_type(ts);}
+/*
 |      "(#" "#)"                       {}
 |      "(#" comma_types1 "#)"          {}
 |      "(#" bar_types2   "#)"          {}
+*/
 |      "[" ctype "]"                   {$$ = make_list_type($2);}
 |      "(" ctype ")"                   {$$ = $2;}
 |      "(" ctype "::" kind ")"         {$$ = expression_ref(AST_node("TypeOfKind"),{$2,$4});}
@@ -926,8 +933,10 @@ comma_types0: comma_types1             {$$ = $1;}
 comma_types1: ctype                    {$$.push_back($1);}
 |             comma_types1 "," ctype   {$$ = $1; $$.push_back($3);}
 
+/*
 bar_types2: ctype "|" ctype
 |           ctype "|" bar_types2
+*/
 
 tv_bndrs:   tv_bndrs tv_bndr   {$$ = $1; $$.push_back($2);}
 |           %empty             {}
