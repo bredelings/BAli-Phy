@@ -73,22 +73,6 @@ string ListType::print() const
     return "[" + element_type.print() + "]";
 }
 
-bool TypeVar::operator==(const TypeVar& v) const
-{
-    return name == v.name;
-}
-
-bool TypeVar::operator==(const Object& o) const
-{
-    if (this == &o) return true;
-
-    auto tv = dynamic_cast<const TypeVar*>(&o);
-
-    if (not tv) return false;
-
-    return (*this == *tv);
-}
-
 string TypeVar::print() const
 {
     return name;

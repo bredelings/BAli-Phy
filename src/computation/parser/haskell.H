@@ -294,8 +294,6 @@ struct TypeVar: public Object
 {
     std::string name;
 
-    bool operator==(const Object& o) const;
-    bool operator==(const TypeVar& v) const;
     TypeVar* clone() const { return new TypeVar(*this);}
     std::string print() const;
     TypeVar(const std::string& s):name(s) {}
