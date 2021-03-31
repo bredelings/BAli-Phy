@@ -999,7 +999,9 @@ bound_var_info renamer_state::find_bound_vars_in_stmt(const expression_ref& stmt
 }
 
         /*
-         * See "Recursive binding groups" in https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#the-recursive-do-notation
+         * See "Recursive binding groups" in https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/recursive_do.html
+         *
+         * "Like let and where bindings, name shadowing is not allowed within an mdo-expression or a rec-block"
          *
          * As an example:           ===>
          *   rec { b <- f a c              (b,c) <- mfix (\ ~(b,c) -> do { b <- f a c
@@ -1145,8 +1147,20 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
     else if (E.is_a<Haskell::MDo>())
     {
         /*
-         * See "The mdo notation" in https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#the-mdo-notation
+         * See "The mdo notation" in https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/recursive_do.html
          *
+         * "Like let and where bindings, name shadowing is not allowed within an mdo-expression or a rec-block"
+         *
+         * mdo { a <- getChar      ===> do { a <- getChar
+         *     ; b <- f a c                ; rec { b <- f a c
+         *     ; c <- f b a                ;     ; c <- f b a }
+         *     ; z <- h a b                ; z <- h a b
+         *     ; d <- g d e                ; rec { d <- g d e
+         *     ; e <- g a z                ;     ; e <- g a z }
+         *     ; putChar c }               ; putChar c }
+         */
+
+        /*
          * See ghc/compiler/rename/RnExpr.hs: Note [Segmenting mdo]
          * What does rec {a;c  mean here?
          *                b;d}
