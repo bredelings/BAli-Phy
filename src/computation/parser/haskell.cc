@@ -20,7 +20,7 @@ string Tuple::print() const
     vector<string> parts;
     for(auto& element: elements)
         parts.push_back(element.print());
-    return "(" + join(parts,",") +")";
+    return "(" + join(parts,", ") +")";
 }
 
 string LetQual::print() const
@@ -65,7 +65,7 @@ string TupleType::print() const
     vector<string> parts;
     for(auto& element_type: element_types)
         parts.push_back(element_type.print());
-    return "(" + join(parts,",") +")";
+    return "(" + join(parts,", ") +")";
 }
 
 string ListType::print() const
@@ -94,12 +94,28 @@ string TypeVar::print() const
     return name;
 }
 
+string parenthesize_type(const expression_ref& t)
+{
+    if (t.is_a<TypeVar>() or t.is_a<TupleType>() or t.is_a<ListType>())
+        return t.print();
+    else
+        return "(" + t.print() + ")";
+}
+
 string TypeApp::print() const
 {
-    if (arg.is_a<TypeApp>())
-        return head.print() + " (" + arg.print() + ")";
-    else
-        return head.print() + " " + arg.print();
+    if (head.is_a<TypeApp>())
+    {
+        auto& H = head.as_<TypeApp>();
+        if (H.head.is_a<TypeVar>())
+        {
+            auto& A = H.head.as_<TypeVar>();
+            if (A.name == "->")
+                return H.arg.print() + " -> " + arg.print();
+        }
+    }
+
+    return head.print() + " " + parenthesize_type(arg);
 }
 
 string ForallType::print() const
