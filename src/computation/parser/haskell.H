@@ -331,6 +331,18 @@ struct ConstrainedType: public Object
     ConstrainedType(const Context& c, const Type& t):context(c), type(t) {}
 };
 
+enum class StrictLazy {strict,lazy};
+
+struct StrictLazyType: public Object
+{
+    StrictLazy strict_lazy;
+    Type type;
+
+    StrictLazyType* clone() const { return new StrictLazyType(*this);}
+    std::string print() const;
+    StrictLazyType(const StrictLazy& sl, const Type& t):strict_lazy(sl), type(t) {}
+};
+
 std::pair<Type,std::vector<Type>> decompose_type_apps(Type t);
 
 }

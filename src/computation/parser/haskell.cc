@@ -144,6 +144,12 @@ std::string Context::print() const
         return "(" + result + ")";
 }
 
+string StrictLazyType::print() const
+{
+    string mark = (strict_lazy == StrictLazy::strict)?"!":"~";
+    return mark + type.print();
+}
+
 std::pair<Type,std::vector<Type>> decompose_type_apps(Type t)
 {
     std::vector<Type> args;

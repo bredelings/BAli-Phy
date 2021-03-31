@@ -45,6 +45,7 @@
   Haskell::TupleType make_tuple_type(const std::vector<Haskell::Type>& tup_exprs);
   Haskell::ListType make_list_type(const Haskell::Type& type);
   Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg);
+  Haskell::StrictLazyType make_strict_lazy_type(const Haskell::StrictLazy&, const Haskell::Type& t);
   expression_ref make_forall_type(const std::vector<expression_ref>& tv_bndrs, const Haskell::Type& t);
   expression_ref make_constrained_type(const Haskell::Context& tv_bndrs, const Haskell::Type& t);
 
@@ -332,9 +333,8 @@
 %type <std::vector<std::string>> sig_vars
 %type <std::vector<expression_ref>> sigtypes1
 
-%type <std::string> strict_mark
-%type <std::string> strictness
- /* %type <void> unpackedness */
+%type <Haskell::StrictLazy> strict_mark
+%type <Haskell::StrictLazy> strictness
 %type <expression_ref> ctype
 %type <expression_ref> ctypedoc
 %type <Haskell::Context> context
@@ -505,7 +505,7 @@
 %type  <int> bars
 */
 
-%expect 143
+%expect 141
 
  /* Having vector<> as a type seems to be causing trouble with the printer */
  /* %printer { yyoutput << $$; } <*>; */
@@ -845,14 +845,18 @@ sigtypes1: sigtype               {$$.push_back($1);}
 /* ------------- Types ------------------------------------------- */
 
 strict_mark: strictness                     {$$ = $1;}
+/*
 |            unpackedness                   {}
 |            unpackedness strictness        {$$ = $2;}
+*/
 
-strictness: "!" {$$ = "!";}
-|           "~" {$$ = "~";}
+strictness: "!" {$$ = Haskell::StrictLazy::strict;}
+|           "~" {$$ = Haskell::StrictLazy::lazy;}
 
-unpackedness: "{-# UNPACK" "#-"
-|             "{-# NOUNPACK" "#-"
+/*
+unpackedness: "{-# UNPACK" "#-}"
+|             "{-# NOUNPACK" "#-}"
+*/
 
 ctype: "forall" tv_bndrs "." ctype {$$ = make_forall_type($2, $4);}
 |      context "=>" ctype          {$$ = make_constrained_type($1,$3);}
@@ -899,7 +903,7 @@ atype_docs: atype /* FIX */        {$$ = $1;}
 atype: ntgtycon                        {$$ = make_type_var($1);}
 |      tyvar                           {$$ = make_type_var($1);}
 |      "*"                             {$$ = AST_node("kind_star");}
-|      strict_mark atype               {$$ = expression_ref(AST_node("strictness"),{$1,$2});}
+|      strict_mark atype               {$$ = make_strict_lazy_type($1,$2);}
 |      "{" fielddecls "}"              {$$ = expression_ref{AST_node("FieldDecls"),$2};}
 |      "(" ")"                         {$$ = make_type_var("()");}
 |      "(" comma_types1 "," ctype")"   {auto ts = $2;ts.push_back($4);$$ = make_tuple_type(ts);}
@@ -1613,6 +1617,11 @@ Haskell::ListType make_list_type(const Haskell::Type& type)
 Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg)
 {
     return {head, arg};
+}
+
+Haskell::StrictLazyType make_strict_lazy_type(const Haskell::StrictLazy& sl, const Haskell::Type& t)
+{
+    return {sl, t};
 }
 
 expression_ref make_forall_type(const std::vector<expression_ref>& tv_bndrs, const Haskell::Type& t)
