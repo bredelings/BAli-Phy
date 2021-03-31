@@ -299,6 +299,16 @@ struct TypeVar: public Object
     TypeVar(const std::string& s):name(s) {}
 };
 
+struct TypeVarOfKind: public Object
+{
+    std::string name;
+    Type kind;
+
+    TypeVarOfKind* clone() const { return new TypeVarOfKind(*this);}
+    std::string print() const;
+    TypeVarOfKind(const std::string& s,const Type& k):name(s),kind(k) {}
+};
+
 struct TypeApp: public Object
 {
     Type head;

@@ -42,6 +42,7 @@
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
   Located<Haskell::ID> make_id(const yy::location& loc, const std::string& id);
   Haskell::TypeVar make_type_var(const std::string& id);
+  Haskell::TypeVarOfKind make_type_var_of_kind(const std::string& id, const Haskell::Type& kind);
   Haskell::TupleType make_tuple_type(const std::vector<Haskell::Type>& tup_exprs);
   Haskell::ListType make_list_type(const Haskell::Type& type);
   Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg);
@@ -928,7 +929,7 @@ deriv_types: typedoc
 |            typedoc "," deriv_types
 
 comma_types0: comma_types1             {$$ = $1;}
-|             %empty                   {}
+|             %empty                   { /* default construction OK */ }
 
 comma_types1: ctype                    {$$.push_back($1);}
 |             comma_types1 "," ctype   {$$ = $1; $$.push_back($3);}
@@ -939,10 +940,10 @@ bar_types2: ctype "|" ctype
 */
 
 tv_bndrs:   tv_bndrs tv_bndr   {$$ = $1; $$.push_back($2);}
-|           %empty             {}
+|           %empty             { /* default construction OK */}
 
 tv_bndr:    tyvar                   {$$ = make_type_var($1);}
-|           "(" tyvar "::" kind ")" {$$ = new expression(AST_node("type_of_kind"),{make_type_var($2),$4});}
+|           "(" tyvar "::" kind ")" {$$ = make_type_var_of_kind($2,$4);}
 
 
 /* fds are functional dependencies = FunDeps 
@@ -1611,6 +1612,11 @@ Located<Haskell::ID> make_id(const yy::location& loc, const string& id)
 Haskell::TypeVar make_type_var(const string& id)
 {
     return Haskell::TypeVar(id);
+}
+
+Haskell::TypeVarOfKind make_type_var_of_kind(const string& id, const Haskell::Type& kind)
+{
+    return {id, kind};
 }
 
 Haskell::TupleType make_tuple_type(const std::vector<Haskell::Type>& types)
