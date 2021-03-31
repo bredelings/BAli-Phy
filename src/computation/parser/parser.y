@@ -31,6 +31,7 @@
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 
+  Haskell::Type make_kind(const Haskell::Type& kind);
   Haskell::FieldDecl make_field_decl(const std::vector<std::string>& field_names, const Haskell::Type& type);
   Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const Located<expression_ref>& decls);
   Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
@@ -962,7 +963,7 @@ varids0:    %empty
 
 /* ------------- Kinds ------------------------------------------- */
 
-kind: ctype  {$$ = $1;}
+kind: ctype  {$$ = make_kind($1);}
 
 
 
@@ -1608,6 +1609,33 @@ expression_ref make_tyapps(const std::vector<expression_ref>& tyapps)
 Located<Haskell::ID> make_id(const yy::location& loc, const string& id)
 {
     return Located<Haskell::ID>(loc, {id});
+}
+
+bool check_kind(const Haskell::Type& kind)
+{
+    auto [kind_head, kind_args] = Haskell::decompose_type_apps(kind);
+
+    if (not kind_head.is_a<Haskell::TypeVar>()) return false;
+
+    auto V = kind_head.as_<Haskell::TypeVar>();
+    if (kind_args.empty())
+    {
+        return (V.name == "*");
+    }
+    else if (kind_args.size() == 2)
+    {
+        return (V.name == "->") and check_kind(kind_args[0]) and check_kind(kind_args[1]);
+    }
+    else
+        return false;
+}
+
+Haskell::Type make_kind(const Haskell::Type& kind)
+{
+    if (not check_kind(kind))
+        throw myexception()<<"Kind '"<<kind<<"' is malformed";
+
+    return kind;
 }
 
 Haskell::TypeVar make_type_var(const string& id)
