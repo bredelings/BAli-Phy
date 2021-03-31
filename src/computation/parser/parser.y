@@ -49,6 +49,7 @@
   Haskell::ListType make_list_type(const Haskell::Type& type);
   Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg);
   Haskell::StrictLazyType make_strict_lazy_type(const Haskell::StrictLazy&, const Haskell::Type& t);
+  Haskell::FieldDecls make_field_decls(const std::vector<Haskell::FieldDecl>&);
   expression_ref make_forall_type(const std::vector<expression_ref>& tv_bndrs, const Haskell::Type& t);
   expression_ref make_constrained_type(const Haskell::Context& tv_bndrs, const Haskell::Type& t);
 
@@ -374,8 +375,8 @@
 %type <expression_ref> constr
 %type <expression_ref> forall
 %type <expression_ref> constr_stuff
-%type <std::vector<expression_ref>> fielddecls
-%type <std::vector<expression_ref>> fielddecls1
+%type <std::vector<Haskell::FieldDecl>> fielddecls
+%type <std::vector<Haskell::FieldDecl>> fielddecls1
 %type <Haskell::FieldDecl> fielddecl
  /*
 %type <void> maybe_derivings
@@ -912,7 +913,7 @@ atype: ntgtycon                        {$$ = make_type_var($1);}
 |      tyvar                           {$$ = make_type_var($1);}
 |      "*"                             {$$ = make_type_var("*");}
 |      strict_mark atype               {$$ = make_strict_lazy_type($1,$2);}
-|      "{" fielddecls "}"              {$$ = expression_ref{AST_node("FieldDecls"),$2};}
+|      "{" fielddecls "}"              {$$ = make_field_decls($2);}
 |      "(" ")"                         {$$ = make_type_var("()");}
 |      "(" comma_types1 "," ctype")"   {auto ts = $2;ts.push_back($4);$$ = make_tuple_type(ts);}
 /*
@@ -1666,6 +1667,11 @@ Haskell::ListType make_list_type(const Haskell::Type& type)
 Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg)
 {
     return {head, arg};
+}
+
+Haskell::FieldDecls make_field_decls(const std::vector<Haskell::FieldDecl>& ds)
+{
+    return {ds};
 }
 
 Haskell::StrictLazyType make_strict_lazy_type(const Haskell::StrictLazy& sl, const Haskell::Type& t)

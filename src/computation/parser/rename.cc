@@ -418,16 +418,13 @@ expression_ref rename_infix_top(const Module& m, const expression_ref& decls)
             if (args.empty()) continue;
 
             auto ConName = con.as_<Haskell::TypeVar>().name;
-            auto fields = args[0];
-            if (not is_AST(fields,"FieldDecls")) continue;
+            if (not args[0].is_a<Haskell::FieldDecls>()) continue;
+            auto fields = args[0].as_<Haskell::FieldDecls>();
 
             int i = 0;
-            for(auto& field_group: fields.sub())
+            for(auto& field_group: fields.field_decls)
             {
-                assert(field_group.is_a<Haskell::FieldDecl>());
-                auto& FD = field_group.as_<Haskell::FieldDecl>();
-
-                for(auto& field_name: FD.field_names)
+                for(auto& field_name: field_group.field_names)
                 {
                     constructor_fields[field_name][ConName] = i;
                     i++;

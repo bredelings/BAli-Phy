@@ -971,17 +971,14 @@ int get_constructor_arity(const expression_ref& constr)
 {
     auto [con,args] = Haskell::decompose_type_apps(constr);
 
-    if (args.size() == 1 and is_AST(args[0],"FieldDecls"))
+    if (args.size() == 1 and args[0].is_a<Haskell::FieldDecls>())
     {
-        auto& fields = args[0];
+        auto& fields = args[0].as_<Haskell::FieldDecls>();
         // We could have e.g. f1,f2 :: Int, adding 2 to the arity.
         int arity = 0;
-        for(auto& field_group: fields.sub())
-        {
-            assert(field_group.is_a<Haskell::FieldDecl>());
-            auto& FD = field_group.as_<Haskell::FieldDecl>();
-            arity += FD.field_names.size();
-        }
+        for(auto& field_group: fields.field_decls)
+            arity += field_group.field_names.size();
+
         return arity;
     }
     else

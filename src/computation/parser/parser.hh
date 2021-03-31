@@ -87,6 +87,7 @@
   Haskell::ListType make_list_type(const Haskell::Type& type);
   Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg);
   Haskell::StrictLazyType make_strict_lazy_type(const Haskell::StrictLazy&, const Haskell::Type& t);
+  Haskell::FieldDecls make_field_decls(const std::vector<Haskell::FieldDecl>&);
   expression_ref make_forall_type(const std::vector<expression_ref>& tv_bndrs, const Haskell::Type& t);
   expression_ref make_constrained_type(const Haskell::Context& tv_bndrs, const Haskell::Type& t);
 
@@ -119,7 +120,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 123 "parser.hh"
+#line 124 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -253,7 +254,7 @@
 #endif
 
 namespace yy {
-#line 257 "parser.hh"
+#line 258 "parser.hh"
 
 
 
@@ -640,6 +641,10 @@ namespace yy {
       // modid
       char dummy16[sizeof (std::string)];
 
+      // fielddecls
+      // fielddecls1
+      char dummy17[sizeof (std::vector<Haskell::FieldDecl>)];
+
       // exportlist
       // exportlist1
       // qcnames
@@ -657,8 +662,6 @@ namespace yy {
       // tv_bndrs
       // constrs
       // constrs1
-      // fielddecls
-      // fielddecls1
       // gdrhs
       // infixexp
       // infixexp_top
@@ -674,11 +677,11 @@ namespace yy {
       // gdpats
       // apats1
       // stmts
-      char dummy17[sizeof (std::vector<expression_ref>)];
+      char dummy18[sizeof (std::vector<expression_ref>)];
 
       // ops
       // sig_vars
-      char dummy18[sizeof (std::vector<std::string>)];
+      char dummy19[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1439,6 +1442,11 @@ namespace yy {
         value.move< std::string > (std::move (that.value));
         break;
 
+      case symbol_kind::S_fielddecls: // fielddecls
+      case symbol_kind::S_fielddecls1: // fielddecls1
+        value.move< std::vector<Haskell::FieldDecl> > (std::move (that.value));
+        break;
+
       case symbol_kind::S_exportlist: // exportlist
       case symbol_kind::S_exportlist1: // exportlist1
       case symbol_kind::S_qcnames: // qcnames
@@ -1456,8 +1464,6 @@ namespace yy {
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_constrs: // constrs
       case symbol_kind::S_constrs1: // constrs1
-      case symbol_kind::S_fielddecls: // fielddecls
-      case symbol_kind::S_fielddecls1: // fielddecls1
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
@@ -1729,6 +1735,20 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<Haskell::FieldDecl>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<Haskell::FieldDecl>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::vector<expression_ref>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -1967,6 +1987,11 @@ switch (yykind)
         value.template destroy< std::string > ();
         break;
 
+      case symbol_kind::S_fielddecls: // fielddecls
+      case symbol_kind::S_fielddecls1: // fielddecls1
+        value.template destroy< std::vector<Haskell::FieldDecl> > ();
+        break;
+
       case symbol_kind::S_exportlist: // exportlist
       case symbol_kind::S_exportlist1: // exportlist1
       case symbol_kind::S_qcnames: // qcnames
@@ -1984,8 +2009,6 @@ switch (yykind)
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_constrs: // constrs
       case symbol_kind::S_constrs1: // constrs1
-      case symbol_kind::S_fielddecls: // fielddecls
-      case symbol_kind::S_fielddecls1: // fielddecls1
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
@@ -4881,6 +4904,11 @@ switch (yykind)
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_fielddecls: // fielddecls
+      case symbol_kind::S_fielddecls1: // fielddecls1
+        value.copy< std::vector<Haskell::FieldDecl> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_exportlist: // exportlist
       case symbol_kind::S_exportlist1: // exportlist1
       case symbol_kind::S_qcnames: // qcnames
@@ -4898,8 +4926,6 @@ switch (yykind)
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_constrs: // constrs
       case symbol_kind::S_constrs1: // constrs1
-      case symbol_kind::S_fielddecls: // fielddecls
-      case symbol_kind::S_fielddecls1: // fielddecls1
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
@@ -5141,6 +5167,11 @@ switch (yykind)
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_fielddecls: // fielddecls
+      case symbol_kind::S_fielddecls1: // fielddecls1
+        value.move< std::vector<Haskell::FieldDecl> > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_exportlist: // exportlist
       case symbol_kind::S_exportlist1: // exportlist1
       case symbol_kind::S_qcnames: // qcnames
@@ -5158,8 +5189,6 @@ switch (yykind)
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_constrs: // constrs
       case symbol_kind::S_constrs1: // constrs1
-      case symbol_kind::S_fielddecls: // fielddecls
-      case symbol_kind::S_fielddecls1: // fielddecls1
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
@@ -5245,7 +5274,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5249 "parser.hh"
+#line 5278 "parser.hh"
 
 
 
