@@ -27,7 +27,7 @@
   expression_ref make_body(const std::vector<expression_ref>& imports, const std::vector<expression_ref>& topdecls);
 
   expression_ref make_exports(const std::vector<expression_ref>& exports);
-  expression_ref make_infix(const std::string& infix, std::optional<int>& prec, std::vector<std::string>& ops);
+  Haskell::FixityDecl make_fixity_decl(const Haskell::Fixity& fixity, std::optional<int>& prec, std::vector<std::string>& ops);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 
@@ -280,7 +280,7 @@
 %type <expression_ref> impspec
 
 %type <std::optional<int>> prec
-%type <std::string> infix
+%type <Haskell::Fixity> infix
 %type <std::vector<std::string>> ops
 
 
@@ -640,9 +640,9 @@ impspec: "(" exportlist ")"           { $$ = expression_ref{AST_node("only"),$2}
 prec: %empty       { }
 |     INTEGER      { $$ = $1; }
 
-infix: "infix"     { $$ = "infix";  }
-|      "infixl"    { $$ = "infixl"; }
-|      "infixr"    { $$ = "infixr"; }
+infix: "infix"     { $$ = Haskell::Fixity::infix; }
+|      "infixl"    { $$ = Haskell::Fixity::infixl; }
+|      "infixr"    { $$ = Haskell::Fixity::infixr; }
 
 ops:   ops "," op  { $$ = $1; $$.push_back($3); }
 |      op          { $$ = {$1}; }
@@ -1031,7 +1031,7 @@ gdrh: "|" guardquals "=" exp  {$$ = make_gdrh($2,$4);}
 
 sigdecl: infixexp_top "::" sigtypedoc        { $$ = expression_ref(AST_node("Decl:sigtype"),{make_infixexp($1),$3});}
 |        var "," sig_vars "::" sigtypedoc {}
-|        infix prec ops  { $$ = make_infix($1,$2,$3); }
+|        infix prec ops  { $$ = make_fixity_decl($1,$2,$3); }
 |        pattern_synonym_sig {}
 |        "{-# COMPLETE" con_list opt_tyconsig "#-}" {}
 |        "{-# INLINE" activation qvar "#-}" {}
@@ -1785,17 +1785,9 @@ expression_ref make_stmts(const vector<expression_ref>& stmts)
     return new expression(AST_node("Stmts"), stmts);
 }
 
-expression_ref make_infix(const string& infix, optional<int>& prec, vector<string>& op_names)
+Haskell::FixityDecl make_fixity_decl(const Haskell::Fixity& fixity, optional<int>& prec, vector<string>& op_names)
 {
-    expression_ref ops = new expression(AST_node("Ops"), make_String_vec(op_names));
-
-    vector<expression_ref> e;
-    e.push_back(String(infix));
-    if (prec)
-	e.push_back(*prec);
-    e.push_back(ops);
-
-    return new expression(AST_node("FixityDecl"),e);
+    return {fixity, prec, op_names};
 }
 
 expression_ref yy_make_string(const std::string& s)

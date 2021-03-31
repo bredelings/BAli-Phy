@@ -65,7 +65,7 @@
   expression_ref make_body(const std::vector<expression_ref>& imports, const std::vector<expression_ref>& topdecls);
 
   expression_ref make_exports(const std::vector<expression_ref>& exports);
-  expression_ref make_infix(const std::string& infix, std::optional<int>& prec, std::vector<std::string>& ops);
+  Haskell::FixityDecl make_fixity_decl(const Haskell::Fixity& fixity, std::optional<int>& prec, std::vector<std::string>& ops);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 
@@ -476,22 +476,25 @@ namespace yy {
       // fielddecl
       char dummy3[sizeof (Haskell::FieldDecl)];
 
+      // infix
+      char dummy4[sizeof (Haskell::Fixity)];
+
       // strict_mark
       // strictness
-      char dummy4[sizeof (Haskell::StrictLazy)];
+      char dummy5[sizeof (Haskell::StrictLazy)];
 
       // maybe_src
       // maybe_safe
       // optqualified
-      char dummy5[sizeof (bool)];
+      char dummy6[sizeof (bool)];
 
       // "CHAR"
       // "PRIMCHAR"
-      char dummy6[sizeof (char)];
+      char dummy7[sizeof (char)];
 
       // "RATIONAL"
       // "PRIMDOUBLE"
-      char dummy7[sizeof (double)];
+      char dummy8[sizeof (double)];
 
       // module
       // body
@@ -555,26 +558,26 @@ namespace yy {
       // stmt
       // qual
       // literal
-      char dummy8[sizeof (expression_ref)];
+      char dummy9[sizeof (expression_ref)];
 
       // "PRIMFLOAT"
-      char dummy9[sizeof (float)];
+      char dummy10[sizeof (float)];
 
       // "INTEGER"
       // "PRIMINTEGER"
       // "PRIMWORD"
       // commas
-      char dummy10[sizeof (int)];
+      char dummy11[sizeof (int)];
 
       // prec
-      char dummy11[sizeof (std::optional<int>)];
+      char dummy12[sizeof (std::optional<int>)];
 
       // maybe_pkg
       // maybeas
-      char dummy12[sizeof (std::optional<std::string>)];
+      char dummy13[sizeof (std::optional<std::string>)];
 
       // tycl_hdr
-      char dummy13[sizeof (std::pair<Haskell::Context,expression_ref>)];
+      char dummy14[sizeof (std::pair<Haskell::Context,expression_ref>)];
 
       // "VARID"
       // "CONID"
@@ -588,7 +591,6 @@ namespace yy {
       // "LABELVARID"
       // "STRING"
       // "PRIMSTRING"
-      // infix
       // qcon
       // gen_qcon
       // con
@@ -632,7 +634,7 @@ namespace yy {
       // qconsym
       // consym
       // modid
-      char dummy14[sizeof (std::string)];
+      char dummy15[sizeof (std::string)];
 
       // exportlist
       // exportlist1
@@ -669,11 +671,11 @@ namespace yy {
       // apats1
       // stmtlist
       // stmts
-      char dummy15[sizeof (std::vector<expression_ref>)];
+      char dummy16[sizeof (std::vector<expression_ref>)];
 
       // ops
       // sig_vars
-      char dummy16[sizeof (std::vector<std::string>)];
+      char dummy17[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1258,6 +1260,10 @@ namespace yy {
         value.move< Haskell::FieldDecl > (std::move (that.value));
         break;
 
+      case symbol_kind::S_infix: // infix
+        value.move< Haskell::Fixity > (std::move (that.value));
+        break;
+
       case symbol_kind::S_strict_mark: // strict_mark
       case symbol_kind::S_strictness: // strictness
         value.move< Haskell::StrictLazy > (std::move (that.value));
@@ -1380,7 +1386,6 @@ namespace yy {
       case symbol_kind::S_LABELVARID: // "LABELVARID"
       case symbol_kind::S_STRING: // "STRING"
       case symbol_kind::S_PRIMSTRING: // "PRIMSTRING"
-      case symbol_kind::S_infix: // infix
       case symbol_kind::S_qcon: // qcon
       case symbol_kind::S_gen_qcon: // gen_qcon
       case symbol_kind::S_con: // con
@@ -1529,6 +1534,20 @@ namespace yy {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const Haskell::FieldDecl& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Haskell::Fixity&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Haskell::Fixity& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1752,6 +1771,10 @@ switch (yykind)
         value.template destroy< Haskell::FieldDecl > ();
         break;
 
+      case symbol_kind::S_infix: // infix
+        value.template destroy< Haskell::Fixity > ();
+        break;
+
       case symbol_kind::S_strict_mark: // strict_mark
       case symbol_kind::S_strictness: // strictness
         value.template destroy< Haskell::StrictLazy > ();
@@ -1874,7 +1897,6 @@ switch (yykind)
       case symbol_kind::S_LABELVARID: // "LABELVARID"
       case symbol_kind::S_STRING: // "STRING"
       case symbol_kind::S_PRIMSTRING: // "PRIMSTRING"
-      case symbol_kind::S_infix: // infix
       case symbol_kind::S_qcon: // qcon
       case symbol_kind::S_gen_qcon: // gen_qcon
       case symbol_kind::S_con: // con
@@ -4660,6 +4682,10 @@ switch (yykind)
         value.copy< Haskell::FieldDecl > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_infix: // infix
+        value.copy< Haskell::Fixity > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_strict_mark: // strict_mark
       case symbol_kind::S_strictness: // strictness
         value.copy< Haskell::StrictLazy > (YY_MOVE (that.value));
@@ -4782,7 +4808,6 @@ switch (yykind)
       case symbol_kind::S_LABELVARID: // "LABELVARID"
       case symbol_kind::S_STRING: // "STRING"
       case symbol_kind::S_PRIMSTRING: // "PRIMSTRING"
-      case symbol_kind::S_infix: // infix
       case symbol_kind::S_qcon: // qcon
       case symbol_kind::S_gen_qcon: // gen_qcon
       case symbol_kind::S_con: // con
@@ -4914,6 +4939,10 @@ switch (yykind)
         value.move< Haskell::FieldDecl > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_infix: // infix
+        value.move< Haskell::Fixity > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_strict_mark: // strict_mark
       case symbol_kind::S_strictness: // strictness
         value.move< Haskell::StrictLazy > (YY_MOVE (s.value));
@@ -5036,7 +5065,6 @@ switch (yykind)
       case symbol_kind::S_LABELVARID: // "LABELVARID"
       case symbol_kind::S_STRING: // "STRING"
       case symbol_kind::S_PRIMSTRING: // "PRIMSTRING"
-      case symbol_kind::S_infix: // infix
       case symbol_kind::S_qcon: // qcon
       case symbol_kind::S_gen_qcon: // gen_qcon
       case symbol_kind::S_con: // con
@@ -5188,7 +5216,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5192 "parser.hh"
+#line 5220 "parser.hh"
 
 
 

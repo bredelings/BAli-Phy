@@ -9,8 +9,14 @@
 #include "computation/expression/var.H"
 #include <utility>                                  // for pair
 #include <iostream>
+#include "computation/parser/haskell.H"
 
-enum fixity_t {unknown_fix=0, non_fix=1, left_fix=2, right_fix=3};
+constexpr auto unknown_fix = Haskell::Fixity::unknown;
+constexpr auto left_fix = Haskell::Fixity::infixl;
+constexpr auto right_fix = Haskell::Fixity::infixr;
+constexpr auto non_fix = Haskell::Fixity::infix;
+typedef Haskell::Fixity fixity_t;
+
 enum symbol_type_t {variable_symbol = 0, constructor_symbol = 1, type_symbol = 3, unknown_symbol = 4};
 
 struct symbol_info

@@ -1363,31 +1363,16 @@ void Module::declare_fixities(const expression_ref& decls)
 {
     // 0. Get names that are being declared.
     for(const auto& decl: decls.sub())
-        if (is_AST(decl,"FixityDecl"))
+        if (decl.is_a<Haskell::FixityDecl>())
         {
-            // Determine fixity.
-            string f = decl.sub()[0].as_<String>();
-            fixity_t fixity = unknown_fix;
-            if (f == "infixl")
-                fixity = left_fix;
-            else if (f == "infixr")
-                fixity = right_fix;
-            else if (f == "infix")
-                fixity = non_fix;
-            else
-                std::abort();
+            auto FD = decl.as_<Haskell::FixityDecl>();
 
             // Determine precedence.
-            int precedence = 9;
-            if (decl.size() == 3)
-                precedence = decl.sub()[1].as_int();
+            int precedence = (FD.precedence)?*FD.precedence:9;
 
             // Find op names and declare fixity and precedence.
-            for(const auto& op: decl.sub().back().sub())
-            {
-                string name = op.as_<String>();
-                declare_fixity(name, precedence, fixity);
-            }
+            for(const auto& name: FD.names)
+                declare_fixity(name, precedence, FD.fixity);
         }
 }
 

@@ -119,7 +119,20 @@ struct ClassDecl: public Object
         {}
 };
 
+enum class Fixity {infixl, infix, infixr, unknown};
 
+struct FixityDecl: public Object
+{
+    Fixity fixity;
+    std::optional<int> precedence;
+    std::vector<std::string> names;
+
+//    std::string print()  const;
+    FixityDecl* clone() const { return new FixityDecl(*this);}
+
+    FixityDecl() = default;  // so this can be a token value.
+    FixityDecl(Fixity f, std::optional<int> oi, const std::vector<std::string>& v): fixity(f), precedence(oi), names(v) {}
+};
 
 struct FieldDecl: public Object
 {
