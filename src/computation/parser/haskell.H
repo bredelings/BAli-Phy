@@ -133,11 +133,12 @@ struct FixityDecl: public Object
     FixityDecl() = default;  // so this can be a token value.
     FixityDecl(Fixity f, std::optional<int> oi, const std::vector<std::string>& v): fixity(f), precedence(oi), names(v) {}
 };
-struct FieldDecl: public Object
+
+struct FieldDecl
 {
     std::vector<std::string> field_names;
     Type type;
-    FieldDecl* clone() const { return new FieldDecl(*this);}
+
     FieldDecl() = default;       // so this can be a token value.
     FieldDecl(const std::vector<std::string>& ns, const Type& t):field_names(ns),type(t) {}
 };
